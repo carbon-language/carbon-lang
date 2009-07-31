@@ -60,7 +60,7 @@ namespace {
       for (BasicBlock::iterator I = BB.begin(), E = BB.end(); I != E; ++I)
         if (CallInst *CI = dyn_cast<CallInst>(I)) {
           if (!CI->use_empty())
-            CI->replaceAllUsesWith(BB.getContext().getNullValue(CI->getType()));
+            CI->replaceAllUsesWith(Constant::getNullValue(CI->getType()));
           CI->getParent()->getInstList().erase(CI);
           break;
         }

@@ -239,8 +239,6 @@ Function *CodeExtractor::constructFunction(const Values &inputs,
   DOUT << "inputs: " << inputs.size() << "\n";
   DOUT << "outputs: " << outputs.size() << "\n";
 
-  LLVMContext &Context = header->getContext();
-
   // This function returns unsigned, outputs will go back by reference.
   switch (NumExitBlocks) {
   case 0:
@@ -304,7 +302,7 @@ Function *CodeExtractor::constructFunction(const Values &inputs,
     Value *RewriteVal;
     if (AggregateArgs) {
       Value *Idx[2];
-      Idx[0] = Context.getNullValue(Type::Int32Ty);
+      Idx[0] = Constant::getNullValue(Type::Int32Ty);
       Idx[1] = ConstantInt::get(Type::Int32Ty, i);
       TerminatorInst *TI = newFunction->begin()->getTerminator();
       GetElementPtrInst *GEP = 
@@ -352,8 +350,6 @@ Function *CodeExtractor::constructFunction(const Values &inputs,
 void CodeExtractor::
 emitCallAndSwitchStatement(Function *newFunction, BasicBlock *codeReplacer,
                            Values &inputs, Values &outputs) {
-  LLVMContext &Context = codeReplacer->getContext();
-  
   // Emit a call to the new function, passing in: *pointer to struct (if
   // aggregating parameters), or plan inputs and allocated memory for outputs
   std::vector<Value*> params, StructValues, ReloadOutputs;
@@ -394,7 +390,7 @@ emitCallAndSwitchStatement(Function *newFunction, BasicBlock *codeReplacer,
 
     for (unsigned i = 0, e = inputs.size(); i != e; ++i) {
       Value *Idx[2];
-      Idx[0] = Context.getNullValue(Type::Int32Ty);
+      Idx[0] = Constant::getNullValue(Type::Int32Ty);
       Idx[1] = ConstantInt::get(Type::Int32Ty, i);
       GetElementPtrInst *GEP =
         GetElementPtrInst::Create(Struct, Idx, Idx + 2,
@@ -420,7 +416,7 @@ emitCallAndSwitchStatement(Function *newFunction, BasicBlock *codeReplacer,
     Value *Output = 0;
     if (AggregateArgs) {
       Value *Idx[2];
-      Idx[0] = Context.getNullValue(Type::Int32Ty);
+      Idx[0] = Constant::getNullValue(Type::Int32Ty);
       Idx[1] = ConstantInt::get(Type::Int32Ty, FirstOut + i);
       GetElementPtrInst *GEP
         = GetElementPtrInst::Create(Struct, Idx, Idx + 2,
@@ -442,7 +438,7 @@ emitCallAndSwitchStatement(Function *newFunction, BasicBlock *codeReplacer,
 
   // Now we can emit a switch statement using the call as a value.
   SwitchInst *TheSwitch =
-      SwitchInst::Create(Context.getNullValue(Type::Int16Ty),
+      SwitchInst::Create(Constant::getNullValue(Type::Int16Ty),
                          codeReplacer, 0, codeReplacer);
 
   // Since there may be multiple exits from the original region, make the new
@@ -521,7 +517,7 @@ emitCallAndSwitchStatement(Function *newFunction, BasicBlock *codeReplacer,
             if (DominatesDef) {
               if (AggregateArgs) {
                 Value *Idx[2];
-                Idx[0] = Context.getNullValue(Type::Int32Ty);
+                Idx[0] = Constant::getNullValue(Type::Int32Ty);
                 Idx[1] = ConstantInt::get(Type::Int32Ty,FirstOut+out);
                 GetElementPtrInst *GEP =
                   GetElementPtrInst::Create(OAI, Idx, Idx + 2,
@@ -559,7 +555,7 @@ emitCallAndSwitchStatement(Function *newFunction, BasicBlock *codeReplacer,
     } else {
       // Otherwise we must have code extracted an unwind or something, just
       // return whatever we want.
-      ReturnInst::Create(Context.getNullValue(OldFnRetTy), TheSwitch);
+      ReturnInst::Create(Constant::getNullValue(OldFnRetTy), TheSwitch);
     }
 
     TheSwitch->eraseFromParent();

@@ -856,7 +856,7 @@ the loop again and exiting the loop.  Any future code is emitted in the
     NamedValues.erase(VarName);
   
   // for expr always returns 0.0.
-  return TheFunction->getContext().getNullValue(Type::DoubleTy);
+  return Constant::getNullValue(Type::DoubleTy);
 }
 </pre>
 </div>

@@ -576,7 +576,6 @@ Function *ArgPromotion::DoPromotion(Function *F,
     AttributesVec.push_back(AttributeWithIndex::get(~0, attrs));
 
   const Type *RetTy = FTy->getReturnType();
-  LLVMContext &Context = RetTy->getContext();
 
   // Work around LLVM bug PR56: the CWriter cannot emit varargs functions which
   // have zero fixed arguments.
@@ -681,7 +680,7 @@ Function *ArgPromotion::DoPromotion(Function *F,
       }
 
     if (ExtraArgHack)
-      Args.push_back(Context.getNullValue(Type::Int32Ty));
+      Args.push_back(Constant::getNullValue(Type::Int32Ty));
 
     // Push any varargs arguments on the list
     for (; AI != CS.arg_end(); ++AI, ++ArgIndex) {
@@ -845,7 +844,7 @@ Function *ArgPromotion::DoPromotion(Function *F,
 
   // Notify the alias analysis implementation that we inserted a new argument.
   if (ExtraArgHack)
-    AA.copyValue(Context.getNullValue(Type::Int32Ty), NF->arg_begin());
+    AA.copyValue(Constant::getNullValue(Type::Int32Ty), NF->arg_begin());
 
 
   // Tell the alias analysis that the old function is about to disappear.

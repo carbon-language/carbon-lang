@@ -32,49 +32,6 @@ LLVMContext& llvm::getGlobalContext() {
 LLVMContext::LLVMContext() : pImpl(new LLVMContextImpl(*this)) { }
 LLVMContext::~LLVMContext() { delete pImpl; }
 
-// Constant accessors
-
-// Constructor to create a '0' constant of arbitrary type...
-static const uint64_t zero[2] = {0, 0};
-Constant* LLVMContext::getNullValue(const Type* Ty) {
-  switch (Ty->getTypeID()) {
-  case Type::IntegerTyID:
-    return ConstantInt::get(Ty, 0);
-  case Type::FloatTyID:
-    return ConstantFP::get(Ty->getContext(), APFloat(APInt(32, 0)));
-  case Type::DoubleTyID:
-    return ConstantFP::get(Ty->getContext(), APFloat(APInt(64, 0)));
-  case Type::X86_FP80TyID:
-    return ConstantFP::get(Ty->getContext(), APFloat(APInt(80, 2, zero)));
-  case Type::FP128TyID:
-    return ConstantFP::get(Ty->getContext(),
-                           APFloat(APInt(128, 2, zero), true));
-  case Type::PPC_FP128TyID:
-    return ConstantFP::get(Ty->getContext(), APFloat(APInt(128, 2, zero)));
-  case Type::PointerTyID:
-    return ConstantPointerNull::get(cast<PointerType>(Ty));
-  case Type::StructTyID:
-  case Type::ArrayTyID:
-  case Type::VectorTyID:
-    return ConstantAggregateZero::get(Ty);
-  default:
-    // Function, Label, or Opaque type?
-    assert(!"Cannot create a null constant of that type!");
-    return 0;
-  }
-}
-
-Constant* LLVMContext::getAllOnesValue(const Type* Ty) {
-  if (const IntegerType* ITy = dyn_cast<IntegerType>(Ty))
-    return ConstantInt::get(*this, APInt::getAllOnesValue(ITy->getBitWidth()));
-  
-  std::vector<Constant*> Elts;
-  const VectorType* VTy = cast<VectorType>(Ty);
-  Elts.resize(VTy->getNumElements(), getAllOnesValue(VTy->getElementType()));
-  assert(Elts[0] && "Not a vector integer type!");
-  return cast<ConstantVector>(ConstantVector::get(Elts));
-}
-
 // MDNode accessors
 MDNode* LLVMContext::getMDNode(Value* const* Vals, unsigned NumVals) {
   return pImpl->getMDNode(Vals, NumVals);

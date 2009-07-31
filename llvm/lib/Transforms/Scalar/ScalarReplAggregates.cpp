@@ -329,7 +329,6 @@ void SROA::DoScalarReplacement(AllocationInst *AI,
                                std::vector<AllocationInst*> &WorkList) {
   DOUT << "Found inst to SROA: " << *AI;
   SmallVector<AllocaInst*, 32> ElementAllocas;
-  LLVMContext &Context = AI->getContext();
   if (const StructType *ST = dyn_cast<StructType>(AI->getAllocatedType())) {
     ElementAllocas.reserve(ST->getNumContainedTypes());
     for (unsigned i = 0, e = ST->getNumContainedTypes(); i != e; ++i) {
@@ -418,7 +417,7 @@ void SROA::DoScalarReplacement(AllocationInst *AI,
       // expanded itself once the worklist is rerun.
       //
       SmallVector<Value*, 8> NewArgs;
-      NewArgs.push_back(Context.getNullValue(Type::Int32Ty));
+      NewArgs.push_back(Constant::getNullValue(Type::Int32Ty));
       NewArgs.append(GEPI->op_begin()+3, GEPI->op_end());
       RepValue = GetElementPtrInst::Create(AllocaToUse, NewArgs.begin(),
                                            NewArgs.end(), "", GEPI);
@@ -512,7 +511,6 @@ static bool AllUsersAreLoads(Value *Ptr) {
 ///
 void SROA::isSafeUseOfAllocation(Instruction *User, AllocationInst *AI,
                                  AllocaInfo &Info) {
-  LLVMContext &Context = User->getContext();
   if (BitCastInst *C = dyn_cast<BitCastInst>(User))
     return isSafeUseOfBitCastedAllocation(C, AI, Info);
 
@@ -532,7 +530,7 @@ void SROA::isSafeUseOfAllocation(Instruction *User, AllocationInst *AI,
 
   // The GEP is not safe to transform if not of the form "GEP <ptr>, 0, <cst>".
   if (I == E ||
-      I.getOperand() != Context.getNullValue(I.getOperand()->getType())) {
+      I.getOperand() != Constant::getNullValue(I.getOperand()->getType())) {
     return MarkUnsafe(Info);
   }
 
@@ -766,7 +764,7 @@ void SROA::RewriteMemIntrinUserOfAlloca(MemIntrinsic *MI, Instruction *BCInst,
   const Type *BytePtrTy = MI->getRawDest()->getType();
   bool SROADest = MI->getRawDest() == BCInst;
   
-  Constant *Zero = Context.getNullValue(Type::Int32Ty);
+  Constant *Zero = Constant::getNullValue(Type::Int32Ty);
 
   for (unsigned i = 0, e = NewElts.size(); i != e; ++i) {
     // If this is a memcpy/memmove, emit a GEP of the other element address.
@@ -821,7 +819,7 @@ void SROA::RewriteMemIntrinUserOfAlloca(MemIntrinsic *MI, Instruction *BCInst,
       Constant *StoreVal;
       if (ConstantInt *CI = dyn_cast<ConstantInt>(MI->getOperand(2))) {
         if (CI->isZero()) {
-          StoreVal = Context.getNullValue(EltTy);  // 0.0, null, 0, <0,0>
+          StoreVal = Constant::getNullValue(EltTy);  // 0.0, null, 0, <0,0>
         } else {
           // If EltTy is a vector type, get the element type.
           const Type *ValTy = EltTy->getScalarType();
@@ -1041,10 +1039,8 @@ void SROA::RewriteLoadUserOfWholeAlloca(LoadInst *LI, AllocationInst *AI,
     ArrayEltBitOffset = TD->getTypeAllocSizeInBits(ArrayEltTy);
   }    
   
-  LLVMContext &Context = LI->getContext();
-  
   Value *ResultVal = 
-    Context.getNullValue(IntegerType::get(AllocaSizeBits));
+    Constant::getNullValue(IntegerType::get(AllocaSizeBits));
   
   for (unsigned i = 0, e = NewElts.size(); i != e; ++i) {
     // Load the value from the alloca.  If the NewElt is an aggregate, cast
@@ -1189,10 +1185,8 @@ void SROA::CleanupGEP(GetElementPtrInst *GEPI) {
   if (isa<ConstantInt>(I.getOperand()))
     return;
 
-  LLVMContext &Context = GEPI->getContext();
-
   if (NumElements == 1) {
-    GEPI->setOperand(2, Context.getNullValue(Type::Int32Ty));
+    GEPI->setOperand(2, Constant::getNullValue(Type::Int32Ty));
     return;
   } 
     
@@ -1200,11 +1194,11 @@ void SROA::CleanupGEP(GetElementPtrInst *GEPI) {
   // All users of the GEP must be loads.  At each use of the GEP, insert
   // two loads of the appropriate indexed GEP and select between them.
   Value *IsOne = new ICmpInst(GEPI, ICmpInst::ICMP_NE, I.getOperand(), 
-                              Context.getNullValue(I.getOperand()->getType()),
+                              Constant::getNullValue(I.getOperand()->getType()),
                               "isone");
   // Insert the new GEP instructions, which are properly indexed.
   SmallVector<Value*, 8> Indices(GEPI->op_begin()+1, GEPI->op_end());
-  Indices[1] = Context.getNullValue(Type::Int32Ty);
+  Indices[1] = Constant::getNullValue(Type::Int32Ty);
   Value *ZeroIdx = GetElementPtrInst::Create(GEPI->getOperand(0),
                                              Indices.begin(),
                                              Indices.end(),

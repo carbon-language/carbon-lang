@@ -2211,7 +2211,7 @@ bool LLParser::ConvertGlobalValIDToValue(const Type *Ty, ValID &ID,
     // FIXME: LabelTy should not be a first-class type.
     if (!Ty->isFirstClassType() || Ty == Type::LabelTy)
       return Error(ID.Loc, "invalid type for null constant");
-    V = Context.getNullValue(Ty);
+    V = Constant::getNullValue(Ty);
     return false;
   case ValID::t_Constant:
     if (ID.ConstantVal->getType() != Ty)

@@ -295,7 +295,7 @@ TEST_F(ValueHandle, CallbackVH_DeletionCanRAUW) {
 
   private:
     virtual void deleted() {
-      getValPtr()->replaceAllUsesWith(Context->getNullValue(Type::Int32Ty));
+      getValPtr()->replaceAllUsesWith(Constant::getNullValue(Type::Int32Ty));
       setValPtr(NULL);
     }
     virtual void allUsesReplacedWith(Value *new_value) {

@@ -327,11 +327,11 @@ LLVM_FOR_EACH_VALUE_SUBCLASS(LLVM_DEFINE_VALUE_CAST)
 /*--.. Operations on constants of any type .................................--*/
 
 LLVMValueRef LLVMConstNull(LLVMTypeRef Ty) {
-  return wrap(getGlobalContext().getNullValue(unwrap(Ty)));
+  return wrap(Constant::getNullValue(unwrap(Ty)));
 }
 
 LLVMValueRef LLVMConstAllOnes(LLVMTypeRef Ty) {
-  return wrap(getGlobalContext().getAllOnesValue(unwrap(Ty)));
+  return wrap(Constant::getAllOnesValue(unwrap(Ty)));
 }
 
 LLVMValueRef LLVMGetUndef(LLVMTypeRef Ty) {

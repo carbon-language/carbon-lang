@@ -2100,7 +2100,7 @@ const SCEV *ScalarEvolution::getNegativeSCEV(const SCEV *V) {
   const Type *Ty = V->getType();
   Ty = getEffectiveSCEVType(Ty);
   return getMulExpr(V,
-                  getConstant(cast<ConstantInt>(getContext().getAllOnesValue(Ty))));
+                  getConstant(cast<ConstantInt>(Constant::getAllOnesValue(Ty))));
 }
 
 /// getNotSCEV - Return a SCEV corresponding to ~V = -1-V
@@ -2112,7 +2112,7 @@ const SCEV *ScalarEvolution::getNotSCEV(const SCEV *V) {
   const Type *Ty = V->getType();
   Ty = getEffectiveSCEVType(Ty);
   const SCEV *AllOnes =
-                   getConstant(cast<ConstantInt>(getContext().getAllOnesValue(Ty)));
+                   getConstant(cast<ConstantInt>(Constant::getAllOnesValue(Ty)));
   return getMinusSCEV(AllOnes, V);
 }
 
@@ -3479,10 +3479,10 @@ GetAddressedElementFromGlobal(LLVMContext &Context, GlobalVariable *GV,
     } else if (isa<ConstantAggregateZero>(Init)) {
       if (const StructType *STy = dyn_cast<StructType>(Init->getType())) {
         assert(Idx < STy->getNumElements() && "Bad struct index!");
-        Init = Context.getNullValue(STy->getElementType(Idx));
+        Init = Constant::getNullValue(STy->getElementType(Idx));
       } else if (const ArrayType *ATy = dyn_cast<ArrayType>(Init->getType())) {
         if (Idx >= ATy->getNumElements()) return 0;  // Bogus program
-        Init = Context.getNullValue(ATy->getElementType());
+        Init = Constant::getNullValue(ATy->getElementType());
       } else {
         llvm_unreachable("Unknown constant aggregate type!");
       }

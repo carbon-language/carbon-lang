@@ -917,7 +917,7 @@ Value *llvm::FindInsertedValue(Value *V, const unsigned *idx_begin,
                                                               idx_begin,
                                                               idx_end));
   else if (isa<ConstantAggregateZero>(V))
-    return Context.getNullValue(ExtractValueInst::getIndexedType(PTy, 
+    return Constant::getNullValue(ExtractValueInst::getIndexedType(PTy, 
                                                                   idx_begin,
                                                                   idx_end));
   else if (Constant *C = dyn_cast<Constant>(V)) {

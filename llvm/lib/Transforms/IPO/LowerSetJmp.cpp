@@ -427,7 +427,7 @@ void LowerSetJmp::TransformSetJmpCall(CallInst* Inst)
   PHINode* PHI = PHINode::Create(Type::Int32Ty, "SetJmpReturn", Inst);
 
   // Coming from a call to setjmp, the return is 0.
-  PHI->addIncoming(Inst->getContext().getNullValue(Type::Int32Ty), ABlock);
+  PHI->addIncoming(Constant::getNullValue(Type::Int32Ty), ABlock);
 
   // Add the case for this setjmp's number...
   SwitchValuePair SVP = GetSJSwitch(Func, GetRethrowBB(Func));

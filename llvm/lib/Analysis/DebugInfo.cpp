@@ -476,7 +476,7 @@ DIFactory::DIFactory(Module &m)
 /// getCastToEmpty - Return this descriptor as a Constant* with type '{}*'.
 /// This is only valid when the descriptor is non-null.
 Constant *DIFactory::getCastToEmpty(DIDescriptor D) {
-  if (D.isNull()) return VMContext.getNullValue(EmptyStructPtr);
+  if (D.isNull()) return llvm::Constant::getNullValue(EmptyStructPtr);
   return ConstantExpr::getBitCast(D.getGV(), EmptyStructPtr);
 }
 
@@ -576,7 +576,7 @@ DICompileUnit DIFactory::CreateCompileUnit(unsigned LangID,
                                            unsigned RunTimeVer) {
   Constant *Elts[] = {
     GetTagConstant(dwarf::DW_TAG_compile_unit),
-    VMContext.getNullValue(EmptyStructPtr),
+    llvm::Constant::getNullValue(EmptyStructPtr),
     ConstantInt::get(Type::Int32Ty, LangID),
     GetStringConstant(Filename),
     GetStringConstant(Directory),
@@ -737,7 +737,7 @@ DISubprogram DIFactory::CreateSubprogram(DIDescriptor Context,
 
   Constant *Elts[] = {
     GetTagConstant(dwarf::DW_TAG_subprogram),
-    VMContext.getNullValue(EmptyStructPtr),
+    llvm::Constant::getNullValue(EmptyStructPtr),
     getCastToEmpty(Context),
     GetStringConstant(Name),
     GetStringConstant(DisplayName),
@@ -769,7 +769,7 @@ DIFactory::CreateGlobalVariable(DIDescriptor Context, const std::string &Name,
                                 bool isDefinition, llvm::GlobalVariable *Val) {
   Constant *Elts[] = {
     GetTagConstant(dwarf::DW_TAG_variable),
-    VMContext.getNullValue(EmptyStructPtr),
+    llvm::Constant::getNullValue(EmptyStructPtr),
     getCastToEmpty(Context),
     GetStringConstant(Name),
     GetStringConstant(DisplayName),

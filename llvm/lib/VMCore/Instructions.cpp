@@ -1613,11 +1613,11 @@ BinaryOperator *BinaryOperator::CreateNot(LLVMContext &Context,
                                           Instruction *InsertBefore) {
   Constant *C;
   if (const VectorType *PTy = dyn_cast<VectorType>(Op->getType())) {
-    C = Context.getAllOnesValue(PTy->getElementType());
+    C = Constant::getAllOnesValue(PTy->getElementType());
     C = ConstantVector::get(
                               std::vector<Constant*>(PTy->getNumElements(), C));
   } else {
-    C = Context.getAllOnesValue(Op->getType());
+    C = Constant::getAllOnesValue(Op->getType());
   }
   
   return new BinaryOperator(Instruction::Xor, Op, C,
@@ -1630,11 +1630,11 @@ BinaryOperator *BinaryOperator::CreateNot(LLVMContext &Context,
   Constant *AllOnes;
   if (const VectorType *PTy = dyn_cast<VectorType>(Op->getType())) {
     // Create a vector of all ones values.
-    Constant *Elt = Context.getAllOnesValue(PTy->getElementType());
+    Constant *Elt = Constant::getAllOnesValue(PTy->getElementType());
     AllOnes = ConstantVector::get(
                             std::vector<Constant*>(PTy->getNumElements(), Elt));
   } else {
-    AllOnes = Context.getAllOnesValue(Op->getType());
+    AllOnes = Constant::getAllOnesValue(Op->getType());
   }
   
   return new BinaryOperator(Instruction::Xor, Op, AllOnes,

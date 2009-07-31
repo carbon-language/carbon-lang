@@ -23,7 +23,6 @@
 
 void llvm::InsertProfilingInitCall(Function *MainFn, const char *FnName,
                                    GlobalValue *Array) {
-  LLVMContext &Context = MainFn->getContext();
   const Type *ArgVTy = 
     PointerType::getUnqual(PointerType::getUnqual(Type::Int8Ty));
   const PointerType *UIntPtr = PointerType::getUnqual(Type::Int32Ty);
@@ -35,15 +34,15 @@ void llvm::InsertProfilingInitCall(Function *MainFn, const char *FnName,
   // This could force argc and argv into programs that wouldn't otherwise have
   // them, but instead we just pass null values in.
   std::vector<Value*> Args(4);
-  Args[0] = Context.getNullValue(Type::Int32Ty);
-  Args[1] = Context.getNullValue(ArgVTy);
+  Args[0] = Constant::getNullValue(Type::Int32Ty);
+  Args[1] = Constant::getNullValue(ArgVTy);
 
   // Skip over any allocas in the entry block.
   BasicBlock *Entry = MainFn->begin();
   BasicBlock::iterator InsertPos = Entry->begin();
   while (isa<AllocaInst>(InsertPos)) ++InsertPos;
 
-  std::vector<Constant*> GEPIndices(2, Context.getNullValue(Type::Int32Ty));
+  std::vector<Constant*> GEPIndices(2, Constant::getNullValue(Type::Int32Ty));
   unsigned NumElements = 0;
   if (Array) {
     Args[2] = ConstantExpr::getGetElementPtr(Array, &GEPIndices[0],
@@ -101,8 +100,6 @@ void llvm::InsertProfilingInitCall(Function *MainFn, const char *FnName,
 
 void llvm::IncrementCounterInBlock(BasicBlock *BB, unsigned CounterNum,
                                    GlobalValue *CounterArray) {
-  LLVMContext &Context = BB->getContext();
-
   // Insert the increment after any alloca or PHI instructions...
   BasicBlock::iterator InsertPos = BB->getFirstNonPHI();
   while (isa<AllocaInst>(InsertPos))
@@ -110,7 +107,7 @@ void llvm::IncrementCounterInBlock(BasicBlock *BB, unsigned CounterNum,
 
   // Create the getelementptr constant expression
   std::vector<Constant*> Indices(2);
-  Indices[0] = Context.getNullValue(Type::Int32Ty);
+  Indices[0] = Constant::getNullValue(Type::Int32Ty);
   Indices[1] = ConstantInt::get(Type::Int32Ty, CounterNum);
   Constant *ElementPtr = 
     ConstantExpr::getGetElementPtr(CounterArray, &Indices[0],

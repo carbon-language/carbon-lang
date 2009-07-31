@@ -115,8 +115,6 @@ FunctionPass *llvm::createLowerInvokePass(const TargetLowering *TLI) {
 // doInitialization - Make sure that there is a prototype for abort in the
 // current module.
 bool LowerInvoke::doInitialization(Module &M) {
-  LLVMContext &Context = M.getContext();
-  
   const Type *VoidPtrTy = PointerType::getUnqual(Type::Int8Ty);
   AbortMessage = 0;
   if (ExpensiveEHSupport) {
@@ -143,7 +141,7 @@ bool LowerInvoke::doInitialization(Module &M) {
     if (!(JBListHead = M.getGlobalVariable("llvm.sjljeh.jblist", PtrJBList))) {
       JBListHead = new GlobalVariable(M, PtrJBList, false,
                                       GlobalValue::LinkOnceAnyLinkage,
-                                      Context.getNullValue(PtrJBList),
+                                      Constant::getNullValue(PtrJBList),
                                       "llvm.sjljeh.jblist");
     }
 
@@ -177,8 +175,6 @@ bool LowerInvoke::doInitialization(Module &M) {
 }
 
 void LowerInvoke::createAbortMessage(Module *M) {
-  LLVMContext &Context = M->getContext();
-
   if (ExpensiveEHSupport) {
     // The abort message for expensive EH support tells the user that the
     // program 'unwound' without an 'invoke' instruction.
@@ -189,7 +185,7 @@ void LowerInvoke::createAbortMessage(Module *M) {
     GlobalVariable *MsgGV = new GlobalVariable(*M, Msg->getType(), true,
                                                GlobalValue::InternalLinkage,
                                                Msg, "abortmsg");
-    std::vector<Constant*> GEPIdx(2, Context.getNullValue(Type::Int32Ty));
+    std::vector<Constant*> GEPIdx(2, Constant::getNullValue(Type::Int32Ty));
     AbortMessage = ConstantExpr::getGetElementPtr(MsgGV, &GEPIdx[0], 2);
   } else {
     // The abort message for cheap EH support tells the user that EH is not
@@ -202,7 +198,7 @@ void LowerInvoke::createAbortMessage(Module *M) {
     GlobalVariable *MsgGV = new GlobalVariable(*M, Msg->getType(), true,
                                                GlobalValue::InternalLinkage,
                                                Msg, "abortmsg");
-    std::vector<Constant*> GEPIdx(2, Context.getNullValue(Type::Int32Ty));
+    std::vector<Constant*> GEPIdx(2, Constant::getNullValue(Type::Int32Ty));
     AbortMessage = ConstantExpr::getGetElementPtr(MsgGV, &GEPIdx[0], 2);
   }
 }
@@ -223,7 +219,6 @@ void LowerInvoke::writeAbortMessage(Instruction *IB) {
 }
 
 bool LowerInvoke::insertCheapEHSupport(Function &F) {
-  LLVMContext &Context = F.getContext();
   bool Changed = false;
   for (Function::iterator BB = F.begin(), E = F.end(); BB != E; ++BB)
     if (InvokeInst *II = dyn_cast<InvokeInst>(BB->getTerminator())) {
@@ -256,7 +251,7 @@ bool LowerInvoke::insertCheapEHSupport(Function &F) {
       // Insert a return instruction.  This really should be a "barrier", as it
       // is unreachable.
       ReturnInst::Create(F.getReturnType() == Type::VoidTy ? 0 :
-                         Context.getNullValue(F.getReturnType()), UI);
+                         Constant::getNullValue(F.getReturnType()), UI);
 
       // Remove the unwind instruction now.
       BB->getInstList().erase(UI);
@@ -271,7 +266,6 @@ bool LowerInvoke::insertCheapEHSupport(Function &F) {
 void LowerInvoke::rewriteExpensiveInvoke(InvokeInst *II, unsigned InvokeNo,
                                          AllocaInst *InvokeNum,
                                          SwitchInst *CatchSwitch) {
-  LLVMContext &Context = II->getContext();
   ConstantInt *InvokeNoC = ConstantInt::get(Type::Int32Ty, InvokeNo);
 
   // If the unwind edge has phi nodes, split the edge.
@@ -291,7 +285,7 @@ void LowerInvoke::rewriteExpensiveInvoke(InvokeInst *II, unsigned InvokeNo,
 
   BasicBlock::iterator NI = II->getNormalDest()->getFirstNonPHI();
   // nonvolatile.
-  new StoreInst(Context.getNullValue(Type::Int32Ty), InvokeNum, false, NI);
+  new StoreInst(Constant::getNullValue(Type::Int32Ty), InvokeNum, false, NI);
 
   // Add a switch case to our unwind block.
   CatchSwitch->addCase(InvokeNoC, II->getUnwindDest());
@@ -433,8 +427,6 @@ bool LowerInvoke::insertExpensiveEHSupport(Function &F) {
   std::vector<UnwindInst*> Unwinds;
   std::vector<InvokeInst*> Invokes;
 
-  LLVMContext &Context = F.getContext();
-
   for (Function::iterator BB = F.begin(), E = F.end(); BB != E; ++BB)
     if (ReturnInst *RI = dyn_cast<ReturnInst>(BB->getTerminator())) {
       // Remember all return instructions in case we insert an invoke into this
@@ -482,7 +474,7 @@ bool LowerInvoke::insertExpensiveEHSupport(Function &F) {
                      "jblink", F.begin()->begin());
 
     std::vector<Value*> Idx;
-    Idx.push_back(Context.getNullValue(Type::Int32Ty));
+    Idx.push_back(Constant::getNullValue(Type::Int32Ty));
     Idx.push_back(ConstantInt::get(Type::Int32Ty, 1));
     OldJmpBufPtr = GetElementPtrInst::Create(JmpBuf, Idx.begin(), Idx.end(),
                                              "OldBuf",
@@ -535,7 +527,7 @@ bool LowerInvoke::insertExpensiveEHSupport(Function &F) {
     // Compare the return value to zero.
     Value *IsNormal = new ICmpInst(EntryBB->getTerminator(),
                                    ICmpInst::ICMP_EQ, SJRet,
-                                   Context.getNullValue(SJRet->getType()),
+                                   Constant::getNullValue(SJRet->getType()),
                                    "notunwind");
     // Nuke the uncond branch.
     EntryBB->getTerminator()->eraseFromParent();
@@ -569,14 +561,14 @@ bool LowerInvoke::insertExpensiveEHSupport(Function &F) {
 
   // Load the JBList, if it's null, then there was no catch!
   Value *NotNull = new ICmpInst(*UnwindHandler, ICmpInst::ICMP_NE, BufPtr,
-                                Context.getNullValue(BufPtr->getType()),
+                                Constant::getNullValue(BufPtr->getType()),
                                 "notnull");
   BranchInst::Create(UnwindBlock, TermBlock, NotNull, UnwindHandler);
 
   // Create the block to do the longjmp.
   // Get a pointer to the jmpbuf and longjmp.
   std::vector<Value*> Idx;
-  Idx.push_back(Context.getNullValue(Type::Int32Ty));
+  Idx.push_back(Constant::getNullValue(Type::Int32Ty));
   Idx.push_back(ConstantInt::get(Type::Int32Ty, 0));
   Idx[0] = GetElementPtrInst::Create(BufPtr, Idx.begin(), Idx.end(), "JmpBuf",
                                      UnwindBlock);

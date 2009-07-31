@@ -43,6 +43,48 @@ using namespace llvm;
 // Becomes a no-op when multithreading is disabled.
 ManagedStatic<sys::SmartRWMutex<true> > ConstantsLock;
 
+// Constructor to create a '0' constant of arbitrary type...
+static const uint64_t zero[2] = {0, 0};
+Constant* Constant::getNullValue(const Type* Ty) {
+  switch (Ty->getTypeID()) {
+  case Type::IntegerTyID:
+    return ConstantInt::get(Ty, 0);
+  case Type::FloatTyID:
+    return ConstantFP::get(Ty->getContext(), APFloat(APInt(32, 0)));
+  case Type::DoubleTyID:
+    return ConstantFP::get(Ty->getContext(), APFloat(APInt(64, 0)));
+  case Type::X86_FP80TyID:
+    return ConstantFP::get(Ty->getContext(), APFloat(APInt(80, 2, zero)));
+  case Type::FP128TyID:
+    return ConstantFP::get(Ty->getContext(),
+                           APFloat(APInt(128, 2, zero), true));
+  case Type::PPC_FP128TyID:
+    return ConstantFP::get(Ty->getContext(), APFloat(APInt(128, 2, zero)));
+  case Type::PointerTyID:
+    return ConstantPointerNull::get(cast<PointerType>(Ty));
+  case Type::StructTyID:
+  case Type::ArrayTyID:
+  case Type::VectorTyID:
+    return ConstantAggregateZero::get(Ty);
+  default:
+    // Function, Label, or Opaque type?
+    assert(!"Cannot create a null constant of that type!");
+    return 0;
+  }
+}
+
+Constant* Constant::getAllOnesValue(const Type* Ty) {
+  if (const IntegerType* ITy = dyn_cast<IntegerType>(Ty))
+    return ConstantInt::get(Ty->getContext(),
+                            APInt::getAllOnesValue(ITy->getBitWidth()));
+  
+  std::vector<Constant*> Elts;
+  const VectorType* VTy = cast<VectorType>(Ty);
+  Elts.resize(VTy->getNumElements(), getAllOnesValue(VTy->getElementType()));
+  assert(Elts[0] && "Not a vector integer type!");
+  return cast<ConstantVector>(ConstantVector::get(Elts));
+}
+
 void Constant::destroyConstantImpl() {
   // When a Constant is destroyed, there may be lingering
   // references to the constant by other constants in the constant pool.  These
@@ -148,7 +190,7 @@ void Constant::getVectorElements(LLVMContext &Context,
   const VectorType *VT = cast<VectorType>(getType());
   if (isa<ConstantAggregateZero>(this)) {
     Elts.assign(VT->getNumElements(), 
-                Context.getNullValue(VT->getElementType()));
+                Constant::getNullValue(VT->getElementType()));
     return;
   }
   
@@ -296,14 +338,13 @@ Constant* ConstantFP::get(const Type* Ty, double V) {
 
 ConstantFP* ConstantFP::getNegativeZero(const Type* Ty) {
   LLVMContext &Context = Ty->getContext();
-  APFloat apf = cast <ConstantFP>(Context.getNullValue(Ty))->getValueAPF();
+  APFloat apf = cast <ConstantFP>(Constant::getNullValue(Ty))->getValueAPF();
   apf.changeSign();
   return get(Context, apf);
 }
 
 
 Constant* ConstantFP::getZeroValueForNegation(const Type* Ty) {
-  LLVMContext &Context = Ty->getContext();
   if (const VectorType *PTy = dyn_cast<VectorType>(Ty))
     if (PTy->getElementType()->isFloatingPoint()) {
       std::vector<Constant*> zeros(PTy->getNumElements(),
@@ -314,7 +355,7 @@ Constant* ConstantFP::getZeroValueForNegation(const Type* Ty) {
   if (Ty->isFloatingPoint()) 
     return getNegativeZero(Ty);
 
-  return Context.getNullValue(Ty);
+  return Constant::getNullValue(Ty);
 }
 
 
@@ -1751,18 +1792,16 @@ Constant *ConstantExpr::get(unsigned Opcode, Constant *C1, Constant *C2) {
 Constant* ConstantExpr::getSizeOf(const Type* Ty) {
   // sizeof is implemented as: (i64) gep (Ty*)null, 1
   // Note that a non-inbounds gep is used, as null isn't within any object.
-  LLVMContext &Context = Ty->getContext();
   Constant *GEPIdx = ConstantInt::get(Type::Int32Ty, 1);
   Constant *GEP = getGetElementPtr(
-                 Context.getNullValue(PointerType::getUnqual(Ty)), &GEPIdx, 1);
+                 Constant::getNullValue(PointerType::getUnqual(Ty)), &GEPIdx, 1);
   return getCast(Instruction::PtrToInt, GEP, Type::Int64Ty);
 }
 
 Constant* ConstantExpr::getAlignOf(const Type* Ty) {
-  LLVMContext &Context = Ty->getContext();
   // alignof is implemented as: (i64) gep ({i8,Ty}*)null, 0, 1
   const Type *AligningTy = StructType::get(Type::Int8Ty, Ty, NULL);
-  Constant *NullPtr = Context.getNullValue(AligningTy->getPointerTo());
+  Constant *NullPtr = Constant::getNullValue(AligningTy->getPointerTo());
   Constant *Zero = ConstantInt::get(Type::Int32Ty, 0);
   Constant *One = ConstantInt::get(Type::Int32Ty, 1);
   Constant *Indices[2] = { Zero, One };
@@ -2029,8 +2068,7 @@ Constant* ConstantExpr::getFNeg(Constant* C) {
 Constant* ConstantExpr::getNot(Constant* C) {
   assert(C->getType()->isIntOrIntVector() &&
          "Cannot NOT a nonintegral value!");
-  LLVMContext &Context = C->getType()->getContext();
-  return get(Instruction::Xor, C, Context.getAllOnesValue(C->getType()));
+  return get(Instruction::Xor, C, Constant::getAllOnesValue(C->getType()));
 }
 
 Constant* ConstantExpr::getAdd(Constant* C1, Constant* C2) {

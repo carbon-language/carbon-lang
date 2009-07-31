@@ -308,8 +308,6 @@ BasicAliasAnalysis::getModRefInfo(CallSite CS1, CallSite CS2) {
 AliasAnalysis::AliasResult
 BasicAliasAnalysis::alias(const Value *V1, unsigned V1Size,
                           const Value *V2, unsigned V2Size) {
-  LLVMContext &Context = V1->getType()->getContext();
-
   // Strip off any constant expression casts if they exist
   if (const ConstantExpr *CE = dyn_cast<ConstantExpr>(V1))
     if (CE->isCast() && isa<PointerType>(CE->getOperand(0)->getType()))
@@ -394,13 +392,13 @@ BasicAliasAnalysis::alias(const Value *V1, unsigned V1Size,
     // the base pointers.
     while (isGEP(GEP1->getOperand(0)) &&
            GEP1->getOperand(1) ==
-           Context.getNullValue(GEP1->getOperand(1)->getType()))
+           Constant::getNullValue(GEP1->getOperand(1)->getType()))
       GEP1 = cast<User>(GEP1->getOperand(0));
     const Value *BasePtr1 = GEP1->getOperand(0);
 
     while (isGEP(GEP2->getOperand(0)) &&
            GEP2->getOperand(1) ==
-           Context.getNullValue(GEP2->getOperand(1)->getType()))
+           Constant::getNullValue(GEP2->getOperand(1)->getType()))
       GEP2 = cast<User>(GEP2->getOperand(0));
     const Value *BasePtr2 = GEP2->getOperand(0);
 
@@ -480,7 +478,7 @@ BasicAliasAnalysis::alias(const Value *V1, unsigned V1Size,
             for (unsigned i = 0; i != GEPOperands.size(); ++i)
               if (!isa<ConstantInt>(GEPOperands[i]))
                 GEPOperands[i] =
-                  Context.getNullValue(GEPOperands[i]->getType());
+                  Constant::getNullValue(GEPOperands[i]->getType());
             int64_t Offset =
               TD->getIndexedOffset(BasePtr->getType(),
                                    &GEPOperands[0],
@@ -696,7 +694,7 @@ BasicAliasAnalysis::CheckGEPInstructions(
           // TargetData::getIndexedOffset.
           for (i = 0; i != MaxOperands; ++i)
             if (!isa<ConstantInt>(GEP1Ops[i]))
-              GEP1Ops[i] = Context.getNullValue(GEP1Ops[i]->getType());
+              GEP1Ops[i] = Constant::getNullValue(GEP1Ops[i]->getType());
           // Okay, now get the offset.  This is the relative offset for the full
           // instruction.
           int64_t Offset1 = TD->getIndexedOffset(GEPPointerTy, GEP1Ops,
@@ -740,7 +738,7 @@ BasicAliasAnalysis::CheckGEPInstructions(
   const Type *ZeroIdxTy = GEPPointerTy;
   for (unsigned i = 0; i != FirstConstantOper; ++i) {
     if (!isa<StructType>(ZeroIdxTy))
-      GEP1Ops[i] = GEP2Ops[i] = Context.getNullValue(Type::Int32Ty);
+      GEP1Ops[i] = GEP2Ops[i] = Constant::getNullValue(Type::Int32Ty);
 
     if (const CompositeType *CT = dyn_cast<CompositeType>(ZeroIdxTy))
       ZeroIdxTy = CT->getTypeAtIndex(GEP1Ops[i]);
@@ -755,7 +753,7 @@ BasicAliasAnalysis::CheckGEPInstructions(
     // If they are equal, use a zero index...
     if (Op1 == Op2 && BasePtr1Ty == BasePtr2Ty) {
       if (!isa<ConstantInt>(Op1))
-        GEP1Ops[i] = GEP2Ops[i] = Context.getNullValue(Op1->getType());
+        GEP1Ops[i] = GEP2Ops[i] = Constant::getNullValue(Op1->getType());
       // Otherwise, just keep the constants we have.
     } else {
       if (Op1) {
@@ -800,7 +798,7 @@ BasicAliasAnalysis::CheckGEPInstructions(
               return MayAlias;  // Be conservative with out-of-range accesses
           }
         } else {  // Conservatively assume the minimum value for this index
-          GEP2Ops[i] = Context.getNullValue(Op2->getType());
+          GEP2Ops[i] = Constant::getNullValue(Op2->getType());
         }
       }
     }

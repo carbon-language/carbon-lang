@@ -135,6 +135,13 @@ public:
            "implemented for all constants that have operands!");
     assert(0 && "Constants that do not have operands cannot be using 'From'!");
   }
+  
+  static Constant* getNullValue(const Type* Ty);
+  
+  /// @returns the value for an integer constant of the given type that has all
+  /// its bits set to true.
+  /// @brief Get the all ones value
+  static Constant* getAllOnesValue(const Type* Ty);
 };
 
 } // End llvm namespace

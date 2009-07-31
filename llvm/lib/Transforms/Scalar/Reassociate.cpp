@@ -201,7 +201,7 @@ static BinaryOperator *isReassociableOp(Value *V, unsigned Opcode) {
 static Instruction *LowerNegateToMultiply(Instruction *Neg,
                               std::map<AssertingVH<>, unsigned> &ValueRankMap,
                               LLVMContext &Context) {
-  Constant *Cst = Neg->getContext().getAllOnesValue(Neg->getType());
+  Constant *Cst = Constant::getAllOnesValue(Neg->getType());
 
   Instruction *Res = BinaryOperator::CreateMul(Neg->getOperand(1), Cst, "",Neg);
   ValueRankMap.erase(Neg);
@@ -563,8 +563,6 @@ Value *Reassociate::OptimizeExpression(BinaryOperator *I,
   bool IterateOptimization = false;
   if (Ops.size() == 1) return Ops[0].Op;
 
-  LLVMContext &Context = I->getContext();
-
   unsigned Opcode = I->getOpcode();
   
   if (Constant *V1 = dyn_cast<Constant>(Ops[Ops.size()-2].Op))
@@ -626,10 +624,10 @@ Value *Reassociate::OptimizeExpression(BinaryOperator *I,
         if (FoundX != i) {
           if (Opcode == Instruction::And) {   // ...&X&~X = 0
             ++NumAnnihil;
-            return Context.getNullValue(X->getType());
+            return Constant::getNullValue(X->getType());
           } else if (Opcode == Instruction::Or) {   // ...|X|~X = -1
             ++NumAnnihil;
-            return Context.getAllOnesValue(X->getType());
+            return Constant::getAllOnesValue(X->getType());
           }
         }
       }
@@ -648,7 +646,7 @@ Value *Reassociate::OptimizeExpression(BinaryOperator *I,
           assert(Opcode == Instruction::Xor);
           if (e == 2) {
             ++NumAnnihil;
-            return Context.getNullValue(Ops[0].Op->getType());
+            return Constant::getNullValue(Ops[0].Op->getType());
           }
           // ... X^X -> ...
           Ops.erase(Ops.begin()+i, Ops.begin()+i+2);
@@ -673,7 +671,7 @@ Value *Reassociate::OptimizeExpression(BinaryOperator *I,
           // Remove X and -X from the operand list.
           if (Ops.size() == 2) {
             ++NumAnnihil;
-            return Context.getNullValue(X->getType());
+            return Constant::getNullValue(X->getType());
           } else {
             Ops.erase(Ops.begin()+i);
             if (i < FoundX)

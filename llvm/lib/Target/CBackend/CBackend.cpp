@@ -1236,7 +1236,7 @@ void CWriter::printConstant(Constant *CPV, bool Static) {
       Out << '{';
       if (AT->getNumElements()) {
         Out << ' ';
-        Constant *CZ = CPV->getContext().getNullValue(AT->getElementType());
+        Constant *CZ = Constant::getNullValue(AT->getElementType());
         printConstant(CZ, Static);
         for (unsigned i = 1, e = AT->getNumElements(); i != e; ++i) {
           Out << ", ";
@@ -1261,7 +1261,7 @@ void CWriter::printConstant(Constant *CPV, bool Static) {
       assert(isa<ConstantAggregateZero>(CPV) || isa<UndefValue>(CPV));
       const VectorType *VT = cast<VectorType>(CPV->getType());
       Out << "{ ";
-      Constant *CZ = CPV->getContext().getNullValue(VT->getElementType());
+      Constant *CZ = Constant::getNullValue(VT->getElementType());
       printConstant(CZ, Static);
       for (unsigned i = 1, e = VT->getNumElements(); i != e; ++i) {
         Out << ", ";
@@ -1283,12 +1283,10 @@ void CWriter::printConstant(Constant *CPV, bool Static) {
       Out << '{';
       if (ST->getNumElements()) {
         Out << ' ';
-        printConstant(
-                 CPV->getContext().getNullValue(ST->getElementType(0)), Static);
+        printConstant(Constant::getNullValue(ST->getElementType(0)), Static);
         for (unsigned i = 1, e = ST->getNumElements(); i != e; ++i) {
           Out << ", ";
-          printConstant(
-            CPV->getContext().getNullValue(ST->getElementType(i)), Static);
+          printConstant(Constant::getNullValue(ST->getElementType(i)), Static);
         }
       }
       Out << " }";

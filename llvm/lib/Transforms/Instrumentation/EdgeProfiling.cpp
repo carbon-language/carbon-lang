@@ -67,7 +67,7 @@ bool EdgeProfiler::runOnModule(Module &M) {
   const Type *ATy = ArrayType::get(Type::Int32Ty, NumEdges);
   GlobalVariable *Counters =
     new GlobalVariable(M, ATy, false, GlobalValue::InternalLinkage,
-                       M.getContext().getNullValue(ATy), "EdgeProfCounters");
+                       Constant::getNullValue(ATy), "EdgeProfCounters");
 
   // Instrument all of the edges...
   unsigned i = 0;

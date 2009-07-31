@@ -1761,7 +1761,7 @@ namespace {
         switch (BO->getOpcode()) {
           case Instruction::And: {
             // "and i32 %a, %b" EQ -1 then %a EQ -1 and %b EQ -1
-            ConstantInt *CI = cast<ConstantInt>(Context->getAllOnesValue(Ty));
+            ConstantInt *CI = cast<ConstantInt>(Constant::getAllOnesValue(Ty));
             if (Canonical == CI) {
               add(CI, Op0, ICmpInst::ICMP_EQ, NewContext);
               add(CI, Op1, ICmpInst::ICMP_EQ, NewContext);
@@ -1769,7 +1769,7 @@ namespace {
           } break;
           case Instruction::Or: {
             // "or i32 %a, %b" EQ 0 then %a EQ 0 and %b EQ 0
-            Constant *Zero = Context->getNullValue(Ty);
+            Constant *Zero = Constant::getNullValue(Ty);
             if (Canonical == Zero) {
               add(Zero, Op0, ICmpInst::ICMP_EQ, NewContext);
               add(Zero, Op1, ICmpInst::ICMP_EQ, NewContext);
@@ -1793,10 +1793,10 @@ namespace {
             }
             if (Canonical == LHS) {
               if (isa<ConstantInt>(Canonical))
-                add(RHS, Context->getNullValue(Ty), ICmpInst::ICMP_EQ,
+                add(RHS, Constant::getNullValue(Ty), ICmpInst::ICMP_EQ,
                     NewContext);
             } else if (isRelatedBy(LHS, Canonical, ICmpInst::ICMP_NE)) {
-              add(RHS, Context->getNullValue(Ty), ICmpInst::ICMP_NE,
+              add(RHS, Constant::getNullValue(Ty), ICmpInst::ICMP_NE,
                   NewContext);
             }
           } break;
@@ -1841,10 +1841,10 @@ namespace {
         }
         // TODO: The GEPI indices are all zero. Copy from definition to operand,
         // jumping the type plane as needed.
-        if (isRelatedBy(GEPI, Context->getNullValue(GEPI->getType()),
+        if (isRelatedBy(GEPI, Constant::getNullValue(GEPI->getType()),
                         ICmpInst::ICMP_NE)) {
           Value *Ptr = GEPI->getPointerOperand();
-          add(Ptr, Context->getNullValue(Ptr->getType()), ICmpInst::ICMP_NE,
+          add(Ptr, Constant::getNullValue(Ptr->getType()), ICmpInst::ICMP_NE,
               NewContext);
         }
       } else if (CastInst *CI = dyn_cast<CastInst>(I)) {
@@ -1898,9 +1898,9 @@ namespace {
         const Type *Ty = BO->getType();
         assert(!Ty->isFPOrFPVector() && "Float in work queue!");
 
-        Constant *Zero = Context->getNullValue(Ty);
+        Constant *Zero = Constant::getNullValue(Ty);
         Constant *One = ConstantInt::get(Ty, 1);
-        ConstantInt *AllOnes = cast<ConstantInt>(Context->getAllOnesValue(Ty));
+        ConstantInt *AllOnes = cast<ConstantInt>(Constant::getAllOnesValue(Ty));
 
         switch (Opcode) {
           default: break;
@@ -2121,9 +2121,9 @@ namespace {
         // TODO: The GEPI indices are all zero. Copy from operand to definition,
         // jumping the type plane as needed.
         Value *Ptr = GEPI->getPointerOperand();
-        if (isRelatedBy(Ptr, Context->getNullValue(Ptr->getType()),
+        if (isRelatedBy(Ptr, Constant::getNullValue(Ptr->getType()),
                         ICmpInst::ICMP_NE)) {
-          add(GEPI, Context->getNullValue(GEPI->getType()), ICmpInst::ICMP_NE,
+          add(GEPI, Constant::getNullValue(GEPI->getType()), ICmpInst::ICMP_NE,
               NewContext);
         }
       }
@@ -2515,7 +2515,7 @@ namespace {
 
   void PredicateSimplifier::Forwards::visitAllocaInst(AllocaInst &AI) {
     VRPSolver VRP(VN, IG, UB, VR, PS->DTDFS, PS->modified, &AI);
-    VRP.add(AI.getContext().getNullValue(AI.getType()),
+    VRP.add(Constant::getNullValue(AI.getType()),
             &AI, ICmpInst::ICMP_NE);
     VRP.solve();
   }
@@ -2526,7 +2526,7 @@ namespace {
     if (isa<Constant>(Ptr)) return;
 
     VRPSolver VRP(VN, IG, UB, VR, PS->DTDFS, PS->modified, &LI);
-    VRP.add(LI.getContext().getNullValue(Ptr->getType()),
+    VRP.add(Constant::getNullValue(Ptr->getType()),
             Ptr, ICmpInst::ICMP_NE);
     VRP.solve();
   }
@@ -2536,7 +2536,7 @@ namespace {
     if (isa<Constant>(Ptr)) return;
 
     VRPSolver VRP(VN, IG, UB, VR, PS->DTDFS, PS->modified, &SI);
-    VRP.add(SI.getContext().getNullValue(Ptr->getType()),
+    VRP.add(Constant::getNullValue(Ptr->getType()),
             Ptr, ICmpInst::ICMP_NE);
     VRP.solve();
   }
@@ -2574,7 +2574,7 @@ namespace {
       case Instruction::SDiv: {
         Value *Divisor = BO.getOperand(1);
         VRPSolver VRP(VN, IG, UB, VR, PS->DTDFS, PS->modified, &BO);
-        VRP.add(BO.getContext().getNullValue(Divisor->getType()), 
+        VRP.add(Constant::getNullValue(Divisor->getType()), 
                 Divisor, ICmpInst::ICMP_NE);
         VRP.solve();
         break;

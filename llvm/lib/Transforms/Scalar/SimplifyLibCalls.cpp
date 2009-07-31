@@ -679,7 +679,7 @@ struct VISIBILITY_HIDDEN StrChrOpt : public LibCallOptimization {
     uint64_t i = 0;
     while (1) {
       if (i == Str.size())    // Didn't find the char.  strchr returns null.
-        return Context->getNullValue(CI->getType());
+        return Constant::getNullValue(CI->getType());
       // Did we find our match?
       if (Str[i] == CharValue)
         break;
@@ -918,7 +918,7 @@ struct VISIBILITY_HIDDEN MemCmpOpt : public LibCallOptimization {
     Value *LHS = CI->getOperand(1), *RHS = CI->getOperand(2);
 
     if (LHS == RHS)  // memcmp(s,s,x) -> 0
-      return Context->getNullValue(CI->getType());
+      return Constant::getNullValue(CI->getType());
 
     // Make sure we have a constant length.
     ConstantInt *LenC = dyn_cast<ConstantInt>(CI->getOperand(3));
@@ -926,7 +926,7 @@ struct VISIBILITY_HIDDEN MemCmpOpt : public LibCallOptimization {
     uint64_t Len = LenC->getZExtValue();
 
     if (Len == 0) // memcmp(s1,s2,0) -> 0
-      return Context->getNullValue(CI->getType());
+      return Constant::getNullValue(CI->getType());
 
     if (Len == 1) { // memcmp(S1,S2,1) -> *LHS - *RHS
       Value *LHSV = B.CreateLoad(CastToCStr(LHS, B), "lhsv");
@@ -1163,7 +1163,7 @@ struct VISIBILITY_HIDDEN FFSOpt : public LibCallOptimization {
     // Constant fold.
     if (ConstantInt *CI = dyn_cast<ConstantInt>(Op)) {
       if (CI->getValue() == 0)  // ffs(0) -> 0.
-        return Context->getNullValue(CI->getType());
+        return Constant::getNullValue(CI->getType());
       return ConstantInt::get(Type::Int32Ty, // ffs(c) -> cttz(c)+1
                               CI->getValue().countTrailingZeros()+1);
     }
@@ -1176,7 +1176,7 @@ struct VISIBILITY_HIDDEN FFSOpt : public LibCallOptimization {
     V = B.CreateAdd(V, ConstantInt::get(V->getType(), 1), "tmp");
     V = B.CreateIntCast(V, Type::Int32Ty, false, "tmp");
     
-    Value *Cond = B.CreateICmpNE(Op, Context->getNullValue(ArgType), "tmp");
+    Value *Cond = B.CreateICmpNE(Op, Constant::getNullValue(ArgType), "tmp");
     return B.CreateSelect(Cond, V, ConstantInt::get(Type::Int32Ty, 0));
   }
 };
@@ -1235,7 +1235,7 @@ struct VISIBILITY_HIDDEN AbsOpt : public LibCallOptimization {
     // abs(x) -> x >s -1 ? x : -x
     Value *Op = CI->getOperand(1);
     Value *Pos = B.CreateICmpSGT(Op, 
-                             Context->getAllOnesValue(Op->getType()),
+                             Constant::getAllOnesValue(Op->getType()),
                                  "ispos");
     Value *Neg = B.CreateNeg(Op, "neg");
     return B.CreateSelect(Pos, Op, Neg);
@@ -1371,7 +1371,7 @@ struct VISIBILITY_HIDDEN SPrintFOpt : public LibCallOptimization {
       Value *Ptr = CastToCStr(CI->getOperand(1), B);
       B.CreateStore(V, Ptr);
       Ptr = B.CreateGEP(Ptr, ConstantInt::get(Type::Int32Ty, 1), "nul");
-      B.CreateStore(Context->getNullValue(Type::Int8Ty), Ptr);
+      B.CreateStore(Constant::getNullValue(Type::Int8Ty), Ptr);
       
       return ConstantInt::get(CI->getType(), 1);
     }

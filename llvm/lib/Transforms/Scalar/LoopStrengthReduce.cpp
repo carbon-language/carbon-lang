@@ -1577,9 +1577,7 @@ void LoopStrengthReduce::StrengthReduceStridedIVUsers(const SCEV *const &Stride,
   BasicBlock *LatchBlock = L->getLoopLatch();
   Instruction *IVIncInsertPt = LatchBlock->getTerminator();
 
-  LLVMContext &Context = Preheader->getContext();
-
-  Value *CommonBaseV = Context.getNullValue(ReplacedTy);
+  Value *CommonBaseV = Constant::getNullValue(ReplacedTy);
 
   const SCEV *RewriteFactor = SE->getIntegerSCEV(0, ReplacedTy);
   IVExpr   ReuseIV(SE->getIntegerSCEV(0, Type::Int32Ty),

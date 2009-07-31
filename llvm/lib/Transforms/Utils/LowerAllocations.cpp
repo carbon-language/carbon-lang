@@ -103,8 +103,6 @@ bool LowerAllocations::runOnBasicBlock(BasicBlock &BB) {
   bool Changed = false;
   assert(MallocFunc && FreeFunc && "Pass not initialized!");
 
-  LLVMContext &Context = BB.getContext();
-
   BasicBlock::InstListType &BBIL = BB.getInstList();
 
   const TargetData &TD = getAnalysis<TargetData>();
@@ -156,7 +154,7 @@ bool LowerAllocations::runOnBasicBlock(BasicBlock &BB) {
       if (MCall->getType() != Type::VoidTy)
         MCast = new BitCastInst(MCall, MI->getType(), "", I);
       else
-        MCast = Context.getNullValue(MI->getType());
+        MCast = Constant::getNullValue(MI->getType());
 
       // Replace all uses of the old malloc inst with the cast inst
       MI->replaceAllUsesWith(MCast);

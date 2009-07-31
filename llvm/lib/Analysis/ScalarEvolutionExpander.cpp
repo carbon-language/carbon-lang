@@ -285,7 +285,7 @@ Value *SCEVExpander::expandAddToGEP(const SCEV *const *op_begin,
     Ops = NewOps;
     AnyNonZeroIndices |= !ScaledOps.empty();
     Value *Scaled = ScaledOps.empty() ?
-                    getContext().getNullValue(Ty) :
+                    Constant::getNullValue(Ty) :
                     expandCodeFor(SE.getAddExpr(ScaledOps), Ty);
     GepIndices.push_back(Scaled);
 
@@ -401,7 +401,7 @@ Value *SCEVExpander::visitMulExpr(const SCEVMulExpr *S) {
 
   // -1 * ...  --->  0 - ...
   if (FirstOp == 1)
-    V = InsertBinop(Instruction::Sub, getContext().getNullValue(Ty), V);
+    V = InsertBinop(Instruction::Sub, Constant::getNullValue(Ty), V);
   return V;
 }
 
@@ -523,7 +523,7 @@ Value *SCEVExpander::visitAddRecExpr(const SCEVAddRecExpr *S) {
     BasicBlock *Preheader = L->getLoopPreheader();
     PHINode *PN = PHINode::Create(Ty, "indvar", Header->begin());
     InsertedValues.insert(PN);
-    PN->addIncoming(getContext().getNullValue(Ty), Preheader);
+    PN->addIncoming(Constant::getNullValue(Ty), Preheader);
 
     pred_iterator HPI = pred_begin(Header);
     assert(HPI != pred_end(Header) && "Loop with zero preds???");

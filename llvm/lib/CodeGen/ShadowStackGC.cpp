@@ -294,10 +294,10 @@ bool ShadowStackGC::initializeCustomLowering(Module &M) {
     // linkage!
     Head = new GlobalVariable(M, StackEntryPtrTy, false,
                               GlobalValue::LinkOnceAnyLinkage,
-                              M.getContext().getNullValue(StackEntryPtrTy),
+                              Constant::getNullValue(StackEntryPtrTy),
                               "llvm_gc_root_chain");
   } else if (Head->hasExternalLinkage() && Head->isDeclaration()) {
-    Head->setInitializer(M.getContext().getNullValue(StackEntryPtrTy));
+    Head->setInitializer(Constant::getNullValue(StackEntryPtrTy));
     Head->setLinkage(GlobalValue::LinkOnceAnyLinkage);
   }
 

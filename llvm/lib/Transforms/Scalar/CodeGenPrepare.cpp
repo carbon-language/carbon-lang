@@ -560,8 +560,6 @@ static bool IsNonLocalValue(Value *V, BasicBlock *BB) {
 bool CodeGenPrepare::OptimizeMemoryInst(Instruction *MemoryInst, Value *Addr,
                                         const Type *AccessTy,
                                         DenseMap<Value*,Value*> &SunkAddrs) {
-  LLVMContext &Context = MemoryInst->getContext();
-
   // Figure out what addressing mode will be built up for this operation.
   SmallVector<Instruction*, 16> AddrModeInsts;
   ExtAddrMode AddrMode = AddressingModeMatcher::Match(Addr, AccessTy,MemoryInst,
@@ -658,7 +656,7 @@ bool CodeGenPrepare::OptimizeMemoryInst(Instruction *MemoryInst, Value *Addr,
     }
 
     if (Result == 0)
-      SunkAddr = Context.getNullValue(Addr->getType());
+      SunkAddr = Constant::getNullValue(Addr->getType());
     else
       SunkAddr = new IntToPtrInst(Result, Addr->getType(), "sunkaddr",InsertPt);
   }

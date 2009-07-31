@@ -65,14 +65,6 @@ public:
   LLVMContext();
   ~LLVMContext();
   
-  // Constant accessors
-  Constant* getNullValue(const Type* Ty);
-  
-  /// @returns the value for an integer constant of the given type that has all
-  /// its bits set to true.
-  /// @brief Get the all ones value
-  Constant* getAllOnesValue(const Type* Ty);
-  
   // MDNode accessors
   MDNode* getMDNode(Value* const* Vals, unsigned NumVals);
   

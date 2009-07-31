@@ -601,8 +601,6 @@ bool DAE::RemoveDeadStuffFromFunction(Function *F) {
   const Type *NRetTy = NULL;
   unsigned RetCount = NumRetVals(F);
   
-  LLVMContext &Context = RetTy->getContext();
-  
   // -1 means unused, other numbers are the new index
   SmallVector<int, 5> NewRetIdxs(RetCount, -1);
   std::vector<const Type*> RetTypes;
@@ -797,7 +795,7 @@ bool DAE::RemoveDeadStuffFromFunction(Function *F) {
       } else if (New->getType() == Type::VoidTy) {
         // Our return value has uses, but they will get removed later on.
         // Replace by null for now.
-        Call->replaceAllUsesWith(Context.getNullValue(Call->getType()));
+        Call->replaceAllUsesWith(Constant::getNullValue(Call->getType()));
       } else {
         assert(isa<StructType>(RetTy) &&
                "Return type changed, but not into a void. The old return type"
@@ -860,7 +858,7 @@ bool DAE::RemoveDeadStuffFromFunction(Function *F) {
     } else {
       // If this argument is dead, replace any uses of it with null constants
       // (these are guaranteed to become unused later on).
-      I->replaceAllUsesWith(Context.getNullValue(I->getType()));
+      I->replaceAllUsesWith(Constant::getNullValue(I->getType()));
     }
 
   // If we change the return value of the function we must rewrite any return

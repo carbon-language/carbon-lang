@@ -898,7 +898,7 @@ bool BitcodeReader::ParseConstants() {
       CurTy = TypeList[Record[0]];
       continue;  // Skip the ValueList manipulation.
     case bitc::CST_CODE_NULL:      // NULL
-      V = Context.getNullValue(CurTy);
+      V = Constant::getNullValue(CurTy);
       break;
     case bitc::CST_CODE_INTEGER:   // INTEGER: [intval]
       if (!isa<IntegerType>(CurTy) || Record.empty())
@@ -993,7 +993,7 @@ bool BitcodeReader::ParseConstants() {
       std::vector<Constant*> Elts;
       for (unsigned i = 0; i != Size; ++i)
         Elts.push_back(ConstantInt::get(EltTy, Record[i]));
-      Elts.push_back(Context.getNullValue(EltTy));
+      Elts.push_back(Constant::getNullValue(EltTy));
       V = ConstantArray::get(ATy, Elts);
       break;
     }

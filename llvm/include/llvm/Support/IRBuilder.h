@@ -705,13 +705,13 @@ public:
 
   /// CreateIsNull - Return an i1 value testing if \arg Arg is null.
   Value *CreateIsNull(Value *Arg, const char *Name = "") {
-    return CreateICmpEQ(Arg, Context.getNullValue(Arg->getType()),
+    return CreateICmpEQ(Arg, Constant::getNullValue(Arg->getType()),
                         Name);
   }
 
   /// CreateIsNotNull - Return an i1 value testing if \arg Arg is not null.
   Value *CreateIsNotNull(Value *Arg, const char *Name = "") {
-    return CreateICmpNE(Arg, Context.getNullValue(Arg->getType()),
+    return CreateICmpNE(Arg, Constant::getNullValue(Arg->getType()),
                         Name);
   }
 

@@ -1108,8 +1108,6 @@ static bool LinkAppendingVars(Module *M,
                               std::string *ErrorMsg) {
   if (AppendingVars.empty()) return false; // Nothing to do.
 
-  LLVMContext &Context = M->getContext();
-
   // Loop over the multimap of appending vars, processing any variables with the
   // same name, forming a new appending global variable with both of the
   // initializers merged together, then rewrite references to the old variables
@@ -1169,7 +1167,7 @@ static bool LinkAppendingVars(Module *M,
           Inits.push_back(I->getOperand(i));
       } else {
         assert(isa<ConstantAggregateZero>(G1->getInitializer()));
-        Constant *CV = Context.getNullValue(T1->getElementType());
+        Constant *CV = Constant::getNullValue(T1->getElementType());
         for (unsigned i = 0, e = T1->getNumElements(); i != e; ++i)
           Inits.push_back(CV);
       }
@@ -1178,7 +1176,7 @@ static bool LinkAppendingVars(Module *M,
           Inits.push_back(I->getOperand(i));
       } else {
         assert(isa<ConstantAggregateZero>(G2->getInitializer()));
-        Constant *CV = Context.getNullValue(T2->getElementType());
+        Constant *CV = Constant::getNullValue(T2->getElementType());
         for (unsigned i = 0, e = T2->getNumElements(); i != e; ++i)
           Inits.push_back(CV);
       }

@@ -215,7 +215,7 @@ static Constant *FoldBitCast(Constant *C, const Type *DestTy,
       SmallVector<Constant*, 32> Result;
       if (NumDstElt < NumSrcElt) {
         // Handle: bitcast (<4 x i32> <i32 0, i32 1, i32 2, i32 3> to <2 x i64>)
-        Constant *Zero = Context.getNullValue(DstEltTy);
+        Constant *Zero = Constant::getNullValue(DstEltTy);
         unsigned Ratio = NumSrcElt/NumDstElt;
         unsigned SrcBitSize = SrcEltTy->getPrimitiveSizeInBits();
         unsigned SrcElt = 0;
@@ -419,7 +419,7 @@ Constant *llvm::ConstantFoldInstOperands(unsigned Opcode, const Type *DestTy,
                       if (ElemIdx.ult(APInt(ElemIdx.getBitWidth(),
                                             AT->getNumElements()))) {
                         Constant *Index[] = {
-                          Context.getNullValue(CE->getType()),
+                          Constant::getNullValue(CE->getType()),
                           ConstantInt::get(Context, ElemIdx)
                         };
                         return
@@ -486,7 +486,7 @@ Constant *llvm::ConstantFoldCompareInstOperands(unsigned Predicate,
         // proper extension or truncation.
         Constant *C = ConstantExpr::getIntegerCast(CE0->getOperand(0),
                                                    IntPtrTy, false);
-        Constant *NewOps[] = { C, Context.getNullValue(C->getType()) };
+        Constant *NewOps[] = { C, Constant::getNullValue(C->getType()) };
         return ConstantFoldCompareInstOperands(Predicate, NewOps, 2,
                                                Context, TD);
       }
@@ -496,7 +496,7 @@ Constant *llvm::ConstantFoldCompareInstOperands(unsigned Predicate,
       if (CE0->getOpcode() == Instruction::PtrToInt && 
           CE0->getType() == IntPtrTy) {
         Constant *C = CE0->getOperand(0);
-        Constant *NewOps[] = { C, Context.getNullValue(C->getType()) };
+        Constant *NewOps[] = { C, Constant::getNullValue(C->getType()) };
         // FIXME!
         return ConstantFoldCompareInstOperands(Predicate, NewOps, 2,
                                                Context, TD);
@@ -543,7 +543,7 @@ Constant *llvm::ConstantFoldCompareInstOperands(unsigned Predicate,
 Constant *llvm::ConstantFoldLoadThroughGEPConstantExpr(Constant *C, 
                                                        ConstantExpr *CE,
                                                        LLVMContext &Context) {
-  if (CE->getOperand(1) != Context.getNullValue(CE->getOperand(1)->getType()))
+  if (CE->getOperand(1) != Constant::getNullValue(CE->getOperand(1)->getType()))
     return 0;  // Do not allow stepping over the value!
   
   // Loop over all of the operands, tracking down which value we are
@@ -558,7 +558,7 @@ Constant *llvm::ConstantFoldLoadThroughGEPConstantExpr(Constant *C,
       if (ConstantStruct *CS = dyn_cast<ConstantStruct>(C)) {
         C = CS->getOperand(El);
       } else if (isa<ConstantAggregateZero>(C)) {
-        C = Context.getNullValue(STy->getElementType(El));
+        C = Constant::getNullValue(STy->getElementType(El));
       } else if (isa<UndefValue>(C)) {
         C = UndefValue::get(STy->getElementType(El));
       } else {
@@ -571,7 +571,7 @@ Constant *llvm::ConstantFoldLoadThroughGEPConstantExpr(Constant *C,
         if (ConstantArray *CA = dyn_cast<ConstantArray>(C))
           C = CA->getOperand(CI->getZExtValue());
         else if (isa<ConstantAggregateZero>(C))
-          C = Context.getNullValue(ATy->getElementType());
+          C = Constant::getNullValue(ATy->getElementType());
         else if (isa<UndefValue>(C))
           C = UndefValue::get(ATy->getElementType());
         else
@@ -582,7 +582,7 @@ Constant *llvm::ConstantFoldLoadThroughGEPConstantExpr(Constant *C,
         if (ConstantVector *CP = dyn_cast<ConstantVector>(C))
           C = CP->getOperand(CI->getZExtValue());
         else if (isa<ConstantAggregateZero>(C))
-          C = Context.getNullValue(PTy->getElementType());
+          C = Constant::getNullValue(PTy->getElementType());
         else if (isa<UndefValue>(C))
           C = UndefValue::get(PTy->getElementType());
         else
@@ -741,7 +741,7 @@ llvm::ConstantFoldCall(Function *F,
           if (V >= -0.0)
             return ConstantFoldFP(sqrt, V, Ty, Context);
           else // Undefined
-            return Context.getNullValue(Ty);
+            return Constant::getNullValue(Ty);
         }
         break;
       case 's':

@@ -650,8 +650,6 @@ bool BugDriver::debugMiscompilation() {
 ///
 static void CleanupAndPrepareModules(BugDriver &BD, Module *&Test,
                                      Module *Safe) {
-  LLVMContext &Context = BD.getContext(); 
-  
   // Clean up the modules, removing extra cruft that we don't need anymore...
   Test = BD.performFinalCleanups(Test);
 
@@ -723,7 +721,7 @@ static void CleanupAndPrepareModules(BugDriver &BD, Module *&Test,
         // sbyte* so it matches the signature of the resolver function.
 
         // GetElementPtr *funcName, ulong 0, ulong 0
-        std::vector<Constant*> GEPargs(2, Context.getNullValue(Type::Int32Ty));
+        std::vector<Constant*> GEPargs(2, Constant::getNullValue(Type::Int32Ty));
         Value *GEP =
                 ConstantExpr::getGetElementPtr(funcName, &GEPargs[0], 2);
         std::vector<Value*> ResolverArgs;

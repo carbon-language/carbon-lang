@@ -261,10 +261,10 @@ static Constant *getAggregateConstantElement(Constant *Agg, Constant *Idx,
   } else if (isa<ConstantAggregateZero>(Agg)) {
     if (const StructType *STy = dyn_cast<StructType>(Agg->getType())) {
       if (IdxV < STy->getNumElements())
-        return Context.getNullValue(STy->getElementType(IdxV));
+        return Constant::getNullValue(STy->getElementType(IdxV));
     } else if (const SequentialType *STy =
                dyn_cast<SequentialType>(Agg->getType())) {
-      return Context.getNullValue(STy->getElementType());
+      return Constant::getNullValue(STy->getElementType());
     }
   } else if (isa<UndefValue>(Agg)) {
     if (const StructType *STy = dyn_cast<StructType>(Agg->getType())) {
@@ -550,7 +550,7 @@ static GlobalVariable *SRAGlobal(GlobalVariable *GV, const TargetData &TD,
 
   DOUT << "PERFORMING GLOBAL SRA ON: " << *GV;
 
-  Constant *NullInt = Context.getNullValue(Type::Int32Ty);
+  Constant *NullInt = Constant::getNullValue(Type::Int32Ty);
 
   // Loop over all of the uses of the global, replacing the constantexpr geps,
   // with smaller constantexpr geps or direct references.
@@ -828,10 +828,10 @@ static GlobalVariable *OptimizeGlobalAddressOfMalloc(GlobalVariable *GV,
     Type *NewTy = ArrayType::get(MI->getAllocatedType(),
                                  NElements->getZExtValue());
     MallocInst *NewMI =
-      new MallocInst(NewTy, Context.getNullValue(Type::Int32Ty),
+      new MallocInst(NewTy, Constant::getNullValue(Type::Int32Ty),
                      MI->getAlignment(), MI->getName(), MI);
     Value* Indices[2];
-    Indices[0] = Indices[1] = Context.getNullValue(Type::Int32Ty);
+    Indices[0] = Indices[1] = Constant::getNullValue(Type::Int32Ty);
     Value *NewGEP = GetElementPtrInst::Create(NewMI, Indices, Indices + 2,
                                               NewMI->getName()+".el0", MI);
     MI->replaceAllUsesWith(NewGEP);
@@ -1187,7 +1187,7 @@ static void RewriteHeapSROALoadUser(Instruction *LoadUser,
                                    Context);
     
     Value *New = new ICmpInst(SCI, SCI->getPredicate(), NPtr,
-                              Context.getNullValue(NPtr->getType()), 
+                              Constant::getNullValue(NPtr->getType()), 
                               SCI->getName());
     SCI->replaceAllUsesWith(New);
     SCI->eraseFromParent();
@@ -1286,7 +1286,7 @@ static GlobalVariable *PerformHeapAllocSRoA(GlobalVariable *GV, MallocInst *MI,
     GlobalVariable *NGV =
       new GlobalVariable(*GV->getParent(),
                          PFieldTy, false, GlobalValue::InternalLinkage,
-                         Context.getNullValue(PFieldTy),
+                         Constant::getNullValue(PFieldTy),
                          GV->getName() + ".f" + Twine(FieldNo), GV,
                          GV->isThreadLocal());
     FieldGlobals.push_back(NGV);
@@ -1312,7 +1312,7 @@ static GlobalVariable *PerformHeapAllocSRoA(GlobalVariable *GV, MallocInst *MI,
   Value *RunningOr = 0;
   for (unsigned i = 0, e = FieldMallocs.size(); i != e; ++i) {
     Value *Cond = new ICmpInst(MI, ICmpInst::ICMP_EQ, FieldMallocs[i],
-                              Context.getNullValue(FieldMallocs[i]->getType()),
+                              Constant::getNullValue(FieldMallocs[i]->getType()),
                                   "isnull");
     if (!RunningOr)
       RunningOr = Cond;   // First seteq
@@ -1339,7 +1339,7 @@ static GlobalVariable *PerformHeapAllocSRoA(GlobalVariable *GV, MallocInst *MI,
   for (unsigned i = 0, e = FieldGlobals.size(); i != e; ++i) {
     Value *GVVal = new LoadInst(FieldGlobals[i], "tmp", NullPtrBlock);
     Value *Cmp = new ICmpInst(*NullPtrBlock, ICmpInst::ICMP_NE, GVVal, 
-                              Context.getNullValue(GVVal->getType()),
+                              Constant::getNullValue(GVVal->getType()),
                               "tmp");
     BasicBlock *FreeBlock = BasicBlock::Create("free_it", OrigBB->getParent());
     BasicBlock *NextBlock = BasicBlock::Create("next", OrigBB->getParent());
@@ -1347,7 +1347,7 @@ static GlobalVariable *PerformHeapAllocSRoA(GlobalVariable *GV, MallocInst *MI,
 
     // Fill in FreeBlock.
     new FreeInst(GVVal, FreeBlock);
-    new StoreInst(Context.getNullValue(GVVal->getType()), FieldGlobals[i],
+    new StoreInst(Constant::getNullValue(GVVal->getType()), FieldGlobals[i],
                   FreeBlock);
     BranchInst::Create(NextBlock, FreeBlock);
     
@@ -1387,7 +1387,7 @@ static GlobalVariable *PerformHeapAllocSRoA(GlobalVariable *GV, MallocInst *MI,
     // Insert a store of null into each global.
     for (unsigned i = 0, e = FieldGlobals.size(); i != e; ++i) {
       const PointerType *PT = cast<PointerType>(FieldGlobals[i]->getType());
-      Constant *Null = Context.getNullValue(PT->getElementType());
+      Constant *Null = Constant::getNullValue(PT->getElementType());
       new StoreInst(Null, FieldGlobals[i], SI);
     }
     // Erase the original store.
@@ -1958,7 +1958,7 @@ static GlobalVariable *InstallGlobalCtors(GlobalVariable *GCL,
     } else {
       const Type *FTy = FunctionType::get(Type::VoidTy, false);
       const PointerType *PFTy = PointerType::getUnqual(FTy);
-      CSVals[1] = Context.getNullValue(PFTy);
+      CSVals[1] = Constant::getNullValue(PFTy);
       CSVals[0] = ConstantInt::get(Type::Int32Ty, 2147483647);
     }
     CAList.push_back(ConstantStruct::get(CSVals));
@@ -2053,7 +2053,7 @@ static Constant *EvaluateStoreInto(Constant *Init, Constant *Val,
         Elts.push_back(cast<Constant>(*i));
     } else if (isa<ConstantAggregateZero>(Init)) {
       for (unsigned i = 0, e = STy->getNumElements(); i != e; ++i)
-        Elts.push_back(Context.getNullValue(STy->getElementType(i)));
+        Elts.push_back(Constant::getNullValue(STy->getElementType(i)));
     } else if (isa<UndefValue>(Init)) {
       for (unsigned i = 0, e = STy->getNumElements(); i != e; ++i)
         Elts.push_back(UndefValue::get(STy->getElementType(i)));
@@ -2080,7 +2080,7 @@ static Constant *EvaluateStoreInto(Constant *Init, Constant *Val,
       for (User::op_iterator i = CA->op_begin(), e = CA->op_end(); i != e; ++i)
         Elts.push_back(cast<Constant>(*i));
     } else if (isa<ConstantAggregateZero>(Init)) {
-      Constant *Elt = Context.getNullValue(ATy->getElementType());
+      Constant *Elt = Constant::getNullValue(ATy->getElementType());
       Elts.assign(ATy->getNumElements(), Elt);
     } else if (isa<UndefValue>(Init)) {
       Constant *Elt = UndefValue::get(ATy->getElementType());
@@ -2369,7 +2369,7 @@ static bool EvaluateStaticConstructor(Function *F) {
     // silly, e.g. storing the address of the alloca somewhere and using it
     // later.  Since this is undefined, we'll just make it be null.
     if (!Tmp->use_empty())
-      Tmp->replaceAllUsesWith(F->getContext().getNullValue(Tmp->getType()));
+      Tmp->replaceAllUsesWith(Constant::getNullValue(Tmp->getType()));
     delete Tmp;
   }
   

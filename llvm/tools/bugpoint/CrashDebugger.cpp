@@ -298,8 +298,7 @@ bool ReduceCrashingBlocks::TestBlocks(std::vector<const BasicBlock*> &BBs) {
         if (isa<StructType>(BBTerm->getType()))
            BBTerm->replaceAllUsesWith(UndefValue::get(BBTerm->getType()));
         else if (BB->getTerminator()->getType() != Type::VoidTy)
-          BBTerm->replaceAllUsesWith(
-                               BD.getContext().getNullValue(BBTerm->getType()));
+          BBTerm->replaceAllUsesWith(Constant::getNullValue(BBTerm->getType()));
 
         // Replace the old terminator instruction.
         BB->getInstList().pop_back();

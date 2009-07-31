@@ -813,12 +813,12 @@ void SCCPSolver::visitBinaryOperator(Instruction &I) {
         if (NonOverdefVal->isUndefined()) {
           // Could annihilate value.
           if (I.getOpcode() == Instruction::And)
-            markConstant(IV, &I, Context->getNullValue(I.getType()));
+            markConstant(IV, &I, Constant::getNullValue(I.getType()));
           else if (const VectorType *PT = dyn_cast<VectorType>(I.getType()))
-            markConstant(IV, &I, Context->getAllOnesValue(PT));
+            markConstant(IV, &I, Constant::getAllOnesValue(PT));
           else
             markConstant(IV, &I,
-                         Context->getAllOnesValue(I.getType()));
+                         Constant::getAllOnesValue(I.getType()));
           return;
         } else {
           if (I.getOpcode() == Instruction::And) {
@@ -1134,7 +1134,7 @@ void SCCPSolver::visitLoadInst(LoadInst &I) {
     if (isa<ConstantPointerNull>(Ptr) && 
         cast<PointerType>(Ptr->getType())->getAddressSpace() == 0) {
       // load null -> null
-      markConstant(IV, &I, Context->getNullValue(I.getType()));
+      markConstant(IV, &I, Constant::getNullValue(I.getType()));
       return;
     }
 
@@ -1376,22 +1376,22 @@ bool SCCPSolver::ResolvedUndefsIn(Function &F) {
         // to be handled here, because we don't know whether the top part is 1's
         // or 0's.
         assert(Op0LV.isUndefined());
-        markForcedConstant(LV, I, Context->getNullValue(ITy));
+        markForcedConstant(LV, I, Constant::getNullValue(ITy));
         return true;
       case Instruction::Mul:
       case Instruction::And:
         // undef * X -> 0.   X could be zero.
         // undef & X -> 0.   X could be zero.
-        markForcedConstant(LV, I, Context->getNullValue(ITy));
+        markForcedConstant(LV, I, Constant::getNullValue(ITy));
         return true;
 
       case Instruction::Or:
         // undef | X -> -1.   X could be -1.
         if (const VectorType *PTy = dyn_cast<VectorType>(ITy))
           markForcedConstant(LV, I,
-                             Context->getAllOnesValue(PTy));
+                             Constant::getAllOnesValue(PTy));
         else          
-          markForcedConstant(LV, I, Context->getAllOnesValue(ITy));
+          markForcedConstant(LV, I, Constant::getAllOnesValue(ITy));
         return true;
 
       case Instruction::SDiv:
@@ -1404,7 +1404,7 @@ bool SCCPSolver::ResolvedUndefsIn(Function &F) {
         
         // undef / X -> 0.   X could be maxint.
         // undef % X -> 0.   X could be 1.
-        markForcedConstant(LV, I, Context->getNullValue(ITy));
+        markForcedConstant(LV, I, Constant::getNullValue(ITy));
         return true;
         
       case Instruction::AShr:
@@ -1425,7 +1425,7 @@ bool SCCPSolver::ResolvedUndefsIn(Function &F) {
         
         // X >> undef -> 0.  X could be 0.
         // X << undef -> 0.  X could be 0.
-        markForcedConstant(LV, I, Context->getNullValue(ITy));
+        markForcedConstant(LV, I, Constant::getNullValue(ITy));
         return true;
       case Instruction::Select:
         // undef ? X : Y  -> X or Y.  There could be commonality between X/Y.

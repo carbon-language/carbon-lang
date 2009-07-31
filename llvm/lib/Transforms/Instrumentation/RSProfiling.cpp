@@ -350,7 +350,7 @@ void RSProfilers_std::IncrementCounterInBlock(BasicBlock *BB, unsigned CounterNu
   
   // Create the getelementptr constant expression
   std::vector<Constant*> Indices(2);
-  Indices[0] = BB->getContext().getNullValue(Type::Int32Ty);
+  Indices[0] = Constant::getNullValue(Type::Int32Ty);
   Indices[1] = ConstantInt::get(Type::Int32Ty, CounterNum);
   Constant *ElementPtr =ConstantExpr::getGetElementPtr(CounterArray,
                                                         &Indices[0], 2);
