@@ -39,7 +39,8 @@ namespace sys {
   /// @returns -1=cancelled, 0=untriggered, 1=triggered
   int AlarmStatus();
 
-  /// Sleep for n seconds.
+  /// Sleep for n seconds. Warning: mixing calls to Sleep() and other *Alarm
+  /// calls may be a bad idea on some platforms (source: Linux man page).
   /// @returns nothing.
   void Sleep(unsigned n);
 
