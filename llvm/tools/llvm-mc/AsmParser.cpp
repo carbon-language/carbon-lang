@@ -17,6 +17,7 @@
 #include "llvm/ADT/Twine.h"
 #include "llvm/MC/MCContext.h"
 #include "llvm/MC/MCInst.h"
+#include "llvm/MC/MCSection.h"
 #include "llvm/MC/MCStreamer.h"
 #include "llvm/MC/MCSymbol.h"
 #include "llvm/Support/SourceMgr.h"
@@ -641,7 +642,12 @@ bool AsmParser::ParseDirectiveDarwinSection() {
     return TokError("unexpected token in '.section' directive");
   Lexer.Lex();
 
-  Out.SwitchSection(Ctx.GetSection(Section.c_str()));
+  // FIXME: Arch specific.
+  MCSection *S = Ctx.GetSection(Section);
+  if (S == 0)
+    S = MCSection::Create(Section, Ctx);
+  
+  Out.SwitchSection(S);
   return false;
 }
 
@@ -657,7 +663,12 @@ bool AsmParser::ParseDirectiveSectionSwitch(const char *Section,
     SectionStr += Directives;
   }
   
-  Out.SwitchSection(Ctx.GetSection(Section));
+  // FIXME: Arch specific.
+  MCSection *S = Ctx.GetSection(Section);
+  if (S == 0)
+    S = MCSection::Create(Section, Ctx);
+  
+  Out.SwitchSection(S);
   return false;
 }
 

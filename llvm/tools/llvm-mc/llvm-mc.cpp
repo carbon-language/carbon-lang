@@ -13,6 +13,7 @@
 //===----------------------------------------------------------------------===//
 
 #include "llvm/MC/MCContext.h"
+#include "llvm/MC/MCSection.h"
 #include "llvm/MC/MCStreamer.h"
 #include "llvm/ADT/OwningPtr.h"
 #include "llvm/Support/CommandLine.h"
@@ -189,8 +190,8 @@ static int AssembleInput(const char *ProgName) {
   OwningPtr<MCStreamer> Str(createAsmStreamer(Ctx, outs()));
 
   // FIXME: Target hook & command line option for initial section.
-  Str.get()->SwitchSection(Ctx.GetSection("__TEXT,__text,"
-                                          "regular,pure_instructions"));
+  Str.get()->SwitchSection(MCSection::Create("__TEXT,__text,"
+                                             "regular,pure_instructions", Ctx));
 
   AsmParser Parser(SrcMgr, Ctx, *Str.get());
   OwningPtr<TargetAsmParser> TAP(GetTargetAsmParser(ProgName, Parser));
