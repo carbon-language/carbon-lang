@@ -14,21 +14,28 @@
 #include "llvm/MC/MCValue.h"
 using namespace llvm;
 
-MCContext::MCContext()
-{
+MCContext::MCContext() {
 }
 
 MCContext::~MCContext() {
 }
 
-MCSection *MCContext::GetSection(const StringRef &Name) {
-  MCSection *&Entry = Sections[Name];
-  
-  if (!Entry)
-    Entry = new (*this) MCSection(Name);
-
-  return Entry;
+MCSection *MCContext::GetSection(const StringRef &Name) const {
+  StringMap<MCSection*>::const_iterator I = Sections.find(Name);
+  return I != Sections.end() ? I->second : 0;
 }
+
+
+MCSection::MCSection(const StringRef &_Name, MCContext &Ctx) : Name(_Name) {
+  MCSection *&Entry = Ctx.Sections[Name];
+  assert(Entry == 0 && "Multiple sections with the same name created");
+  Entry = this;
+}
+
+MCSection *MCSection::Create(const StringRef &Name, MCContext &Ctx) {
+  return new (Ctx) MCSection(Name, Ctx);
+}
+
 
 MCSymbol *MCContext::CreateSymbol(const StringRef &Name) {
   assert(Name[0] != '\0' && "Normal symbols cannot be unnamed!");

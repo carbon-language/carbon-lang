@@ -25,13 +25,13 @@ namespace llvm {
   class MCSection {
     std::string Name;
   private:
-    friend class MCContext;
-    MCSection(const StringRef &_Name) : Name(_Name) {}
-    
     MCSection(const MCSection&);      // DO NOT IMPLEMENT
     void operator=(const MCSection&); // DO NOT IMPLEMENT
+    MCSection(const StringRef &_Name, MCContext &Ctx);
   public:
 
+    static MCSection *Create(const StringRef &_Name, MCContext &Ctx);
+    
     const std::string &getName() const { return Name; }
   };
 

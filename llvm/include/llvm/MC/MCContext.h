@@ -42,12 +42,14 @@ namespace llvm {
     /// objects.
     BumpPtrAllocator Allocator;
 
+    friend class MCSection;
   public:
     MCContext();
     ~MCContext();
 
-    /// GetSection - Get or create a new section with the given @param Name.
-    MCSection *GetSection(const StringRef &Name);
+    /// GetSection - Look up a section with the given @param Name, returning
+    /// null if it doesn't exist.
+    MCSection *GetSection(const StringRef &Name) const;
     
     /// CreateSymbol - Create a new symbol with the specified @param Name.
     ///
