@@ -42,7 +42,7 @@ namespace llvm {
 
     /// Reset state.  Can be used to allow a coalescer run by
     /// PassManager to be run again by the register allocator.
-    virtual void reset(MachineFunction &mf) {};
+    virtual void reset(MachineFunction &mf) {}
 
     /// Register allocators must call this from their own
     /// getAnalysisUsage to cover the case where the coalescer is not
@@ -51,7 +51,7 @@ namespace llvm {
     /// which to invalidate when running the register allocator or any
     /// pass that might call coalescing.  The long-term solution is to
     /// allow hierarchies of PassManagers.
-    virtual void getAnalysisUsage(AnalysisUsage &AU) const {};
+    virtual void getAnalysisUsage(AnalysisUsage &AU) const {}
   }; 
 
   /// An abstract interface for register allocators to interact with
@@ -68,7 +68,7 @@ namespace llvm {
   ///
   ///   public:
   ///     LinearScanRegallocQuery(LiveIntervals &intervals) 
-  ///         : li(intervals) {};
+  ///         : li(intervals) {}
   ///
   ///     /// This is pretty slow and conservative, but since linear scan
   ///     /// allocation doesn't pre-compute interference information it's
@@ -85,14 +85,14 @@ namespace llvm {
   ///           interferences.insert(&iv->second);
   ///         }
   ///       }
-  ///     };
+  ///     }
   ///
   ///     /// This is *really* slow and stupid.  See above.
   ///     int getNumberOfInterferences(const LiveInterval &a) const {
   ///       IntervalSet intervals;
   ///       getInterferences(intervals, a);
   ///       return intervals.size();
-  ///     };
+  ///     }
   ///   };  
   ///
   ///   In the allocator:
@@ -108,14 +108,14 @@ namespace llvm {
   public:
     typedef SmallPtrSet<const LiveInterval *, 8> IntervalSet;
 
-    virtual ~RegallocQuery() {};
+    virtual ~RegallocQuery() {}
     
     /// Return whether two live ranges interfere.
     virtual bool interfere(const LiveInterval &a,
                            const LiveInterval &b) const {
       // A naive test
       return a.overlaps(b);
-    };
+    }
 
     /// Return the set of intervals that interfere with this one.
     virtual void getInterferences(IntervalSet &interferences,
@@ -129,7 +129,7 @@ namespace llvm {
     /// coalescing or other modifications.
     virtual void updateDataForMerge(const LiveInterval &a,
                                     const LiveInterval &b,
-                                    const MachineInstr &copy) {};
+                                    const MachineInstr &copy) {}
 
     /// Allow the register allocator to communicate when it doesn't
     /// want a copy coalesced.  This may be due to assumptions made by
