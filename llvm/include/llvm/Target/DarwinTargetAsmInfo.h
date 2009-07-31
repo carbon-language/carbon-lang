@@ -25,8 +25,6 @@ namespace llvm {
 
   struct DarwinTargetAsmInfo : public TargetAsmInfo {
     explicit DarwinTargetAsmInfo(const TargetMachine &TM);
-    virtual bool emitUsedDirectiveFor(const GlobalValue *GV,
-                                      Mangler *Mang) const;
   };
 }
 

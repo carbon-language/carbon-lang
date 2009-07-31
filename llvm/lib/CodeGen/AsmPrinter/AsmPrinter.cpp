@@ -564,7 +564,7 @@ void AsmPrinter::EmitLLVMUsedList(Constant *List) {
   for (unsigned i = 0, e = InitList->getNumOperands(); i != e; ++i) {
     const GlobalValue *GV =
       dyn_cast<GlobalValue>(InitList->getOperand(i)->stripPointerCasts());
-    if (GV && TAI->emitUsedDirectiveFor(GV, Mang)) {
+    if (GV && getObjFileLowering().shouldEmitUsedDirectiveFor(GV, Mang)) {
       O << Directive;
       EmitConstantValueOnly(InitList->getOperand(i));
       O << '\n';

@@ -585,6 +585,29 @@ getSectionForMergeableConstant(SectionKind Kind) const {
   return ReadOnlySection;  // .const
 }
 
+/// shouldEmitUsedDirectiveFor - This hook allows targets to selectively decide
+/// not to emit the UsedDirective for some symbols in llvm.used.
+// FIXME: REMOVE this (rdar://7071300)
+bool TargetLoweringObjectFileMachO::
+shouldEmitUsedDirectiveFor(const GlobalValue *GV, Mangler *Mang) const {
+  /// On Darwin, internally linked data beginning with "L" or "l" does not have
+  /// the directive emitted (this occurs in ObjC metadata).
+  if (!GV) return false;
+    
+  // Check whether the mangled name has the "Private" or "LinkerPrivate" prefix.
+  if (GV->hasLocalLinkage() && !isa<Function>(GV)) {
+    // FIXME: ObjC metadata is currently emitted as internal symbols that have
+    // \1L and \0l prefixes on them.  Fix them to be Private/LinkerPrivate and
+    // this horrible hack can go away.
+    const std::string &Name = Mang->getMangledName(GV);
+    if (Name[0] == 'L' || Name[0] == 'l')
+      return false;
+  }
+  
+  return true;
+}
+
+
 //===----------------------------------------------------------------------===//
 //                                  COFF
 //===----------------------------------------------------------------------===//

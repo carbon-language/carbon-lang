@@ -23,8 +23,6 @@
 namespace llvm {
   template <typename T> class SmallVectorImpl;
   class TargetMachine;
-  class GlobalValue;
-  class Mangler;
   
   // DWARF encoding query type
   namespace DwarfEncoding {
@@ -429,14 +427,6 @@ namespace llvm {
     /// Measure the specified inline asm to determine an approximation of its
     /// length.
     virtual unsigned getInlineAsmLength(const char *Str) const;
-
-    /// emitUsedDirectiveFor - This hook allows targets to selectively decide
-    /// not to emit the UsedDirective for some symbols in llvm.used.
-// FIXME: REMOVE this (rdar://7071300)
-    virtual bool emitUsedDirectiveFor(const GlobalValue *GV,
-                                      Mangler *) const {
-      return (GV!=0);
-    }
 
     /// PreferredEHDataFormat - This hook allows the target to select data
     /// format used for encoding pointers in exception handling data. Reason is

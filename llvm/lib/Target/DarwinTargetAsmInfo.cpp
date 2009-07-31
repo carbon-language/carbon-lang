@@ -79,23 +79,3 @@ DarwinTargetAsmInfo::DarwinTargetAsmInfo(const TargetMachine &TM)
   DwarfMacroInfoSection = ".section __DWARF,__debug_macinfo,regular,debug";
 }
 
-/// emitUsedDirectiveFor - On Darwin, internally linked data beginning with
-/// the PrivateGlobalPrefix or the LinkerPrivateGlobalPrefix does not have the
-/// directive emitted (this occurs in ObjC metadata).
-bool DarwinTargetAsmInfo::emitUsedDirectiveFor(const GlobalValue* GV,
-                                               Mangler *Mang) const {
-  if (!GV) return false;
-  
-  // Check whether the mangled name has the "Private" or "LinkerPrivate" prefix.
-  if (GV->hasLocalLinkage() && !isa<Function>(GV)) {
-    // FIXME: ObjC metadata is currently emitted as internal symbols that have
-    // \1L and \0l prefixes on them.  Fix them to be Private/LinkerPrivate and
-    // this horrible hack can go away.
-    const std::string &Name = Mang->getMangledName(GV);
-    if (Name[0] == 'L' || Name[0] == 'l')
-      return false;
-  }
-
-  return true;
-}
-

@@ -259,6 +259,13 @@ public:
   const MCSection *getTextSection() const { return TextSection; }
   const MCSection *getDataSection() const { return DataSection; }
   
+  /// shouldEmitUsedDirectiveFor - This hook allows targets to selectively
+  /// decide not to emit the UsedDirective for some symbols in llvm.used.
+  /// FIXME: REMOVE this (rdar://7071300)
+  virtual bool shouldEmitUsedDirectiveFor(const GlobalValue *GV,
+                                          Mangler *) const {
+    return (GV!=0);
+  }
   
   /// getSectionForMergeableConstant - Given a mergeable constant with the
   /// specified size and relocation information, return a section that it
@@ -368,6 +375,12 @@ public:
   
   virtual const MCSection *
   getSectionForMergeableConstant(SectionKind Kind) const;
+  
+  /// shouldEmitUsedDirectiveFor - This hook allows targets to selectively
+  /// decide not to emit the UsedDirective for some symbols in llvm.used.
+  /// FIXME: REMOVE this (rdar://7071300)
+  virtual bool shouldEmitUsedDirectiveFor(const GlobalValue *GV,
+                                          Mangler *) const;
 };
 
 
