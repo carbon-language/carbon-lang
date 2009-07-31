@@ -23,6 +23,8 @@ add_llvm_library(LLVMCodeGen
   MachineBasicBlock.cpp
   MachineDominators.cpp
   MachineFunction.cpp
+  MachineFunctionAnalysis.cpp
+  MachineFunctionPass.cpp
   MachineInstr.cpp
   MachineLICM.cpp
   MachineLoopInfo.cpp

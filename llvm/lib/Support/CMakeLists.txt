@@ -3,7 +3,6 @@ add_llvm_library(LLVMSupport
   APInt.cpp
   APSInt.cpp
   Allocator.cpp
-  Annotation.cpp
   CommandLine.cpp
   ConstantRange.cpp
   Debug.cpp
