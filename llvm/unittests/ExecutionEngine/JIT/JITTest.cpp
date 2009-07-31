@@ -75,7 +75,7 @@ TEST(JIT, GlobalInFunction) {
       GTy,
       false,  // Not constant.
       GlobalValue::InternalLinkage,
-      context.getNullValue(GTy),
+      Constant::getNullValue(GTy),
       "myglobal");
 
   // Make a function that points to a global.

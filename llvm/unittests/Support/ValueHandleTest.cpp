@@ -312,11 +312,11 @@ TEST_F(ValueHandle, CallbackVH_DeletionCanRAUW) {
   RVH = BitcastV.get();
   std::auto_ptr<BinaryOperator> BitcastUser(
     BinaryOperator::CreateAdd(RVH, 
-                              getGlobalContext().getNullValue(Type::Int32Ty)));
+                              Constant::getNullValue(Type::Int32Ty)));
   EXPECT_EQ(BitcastV.get(), BitcastUser->getOperand(0));
   BitcastV.reset();  // Would crash without the ValueHandler.
-  EXPECT_EQ(getGlobalContext().getNullValue(Type::Int32Ty), RVH.AURWArgument);
-  EXPECT_EQ(getGlobalContext().getNullValue(Type::Int32Ty),
+  EXPECT_EQ(Constant::getNullValue(Type::Int32Ty), RVH.AURWArgument);
+  EXPECT_EQ(Constant::getNullValue(Type::Int32Ty),
             BitcastUser->getOperand(0));
 }
 
