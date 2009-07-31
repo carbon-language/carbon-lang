@@ -2901,24 +2901,18 @@ void SelectionDAGLowering::visitTargetIntrinsic(CallInst &I,
     Ops.push_back(Op);
   }
 
-  std::vector<MVT> VTArray;
-  if (I.getType() != Type::VoidTy) {
-    MVT VT = TLI.getValueType(I.getType());
-    if (VT.isVector()) {
-      const VectorType *DestTy = cast<VectorType>(I.getType());
-      MVT EltVT = TLI.getValueType(DestTy->getElementType());
-
-      VT = MVT::getVectorVT(EltVT, DestTy->getNumElements());
-      assert(VT != MVT::Other && "Intrinsic uses a non-legal type?");
-    }
-
-    assert(TLI.isTypeLegal(VT) && "Intrinsic uses a non-legal type?");
-    VTArray.push_back(VT);
+  SmallVector<MVT, 4> ValueVTs;
+  ComputeValueVTs(TLI, I.getType(), ValueVTs);
+#ifndef NDEBUG
+  for (unsigned Val = 0, E = ValueVTs.size(); Val != E; ++Val) {
+    assert(TLI.isTypeLegal(ValueVTs[Val]) &&
+           "Intrinsic uses a non-legal type?");
   }
+#endif // NDEBUG
   if (HasChain)
-    VTArray.push_back(MVT::Other);
+    ValueVTs.push_back(MVT::Other);
 
-  SDVTList VTs = DAG.getVTList(&VTArray[0], VTArray.size());
+  SDVTList VTs = DAG.getVTList(ValueVTs.data(), ValueVTs.size());
 
   // Create the node.
   SDValue Result;
