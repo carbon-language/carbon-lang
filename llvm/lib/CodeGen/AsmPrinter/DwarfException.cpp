@@ -557,7 +557,7 @@ void DwarfException::EmitExceptionTable() {
 #if 0
   // FIXME: This should default to what the system wants, not just "absptr".
   if (!TypeInfos.empty() || !FilterIds.empty()) {
-    Asm->EmitInt8(TAI->PreferredEHDataFormat(DwarfEncoding::Data, true));
+    Asm->EmitInt8(TAI->PreferredEHDataFormat());
     // FIXME: The comment here should correspond with what PreferredEHDataFormat
     // returned.
     Asm->EOL("TType format (DW_EH_PE_xxxxx)");

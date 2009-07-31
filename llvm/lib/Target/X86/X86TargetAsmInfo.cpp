@@ -91,19 +91,10 @@ X86DarwinTargetAsmInfo::X86DarwinTargetAsmInfo(const X86TargetMachine &TM):
   DwarfExceptionSection = ".section __DATA,__gcc_except_tab";
 }
 
-unsigned
-X86DarwinTargetAsmInfo::PreferredEHDataFormat(DwarfEncoding::Target Reason,
-                                              bool Global) const {
+unsigned X86DarwinTargetAsmInfo::PreferredEHDataFormat() const {
   const X86Subtarget *Subtarget = &TM.getSubtarget<X86Subtarget>();
-
-  if (Subtarget->getDarwinVers() > 9) {
-    if ((Reason == DwarfEncoding::Data || Reason == DwarfEncoding::Functions)
-        && Global)
-      return DW_EH_PE_pcrel | DW_EH_PE_indirect | DW_EH_PE_sdata4;
-
-    if (Reason == DwarfEncoding::CodeLabels || !Global)
-      return DW_EH_PE_pcrel;
-  }
+  if (Subtarget->getDarwinVers() > 9)
+    return DW_EH_PE_pcrel | DW_EH_PE_indirect | DW_EH_PE_sdata4;
 
   return DW_EH_PE_absptr;
 }
@@ -155,8 +146,7 @@ X86ELFTargetAsmInfo::X86ELFTargetAsmInfo(const X86TargetMachine &TM) :
 }
 
 unsigned
-X86ELFTargetAsmInfo::PreferredEHDataFormat(DwarfEncoding::Target Reason,
-                                           bool Global) const {
+X86ELFTargetAsmInfo::PreferredEHDataFormat() const {
   CodeModel::Model CM = TM.getCodeModel();
   bool is64Bit = TM.getSubtarget<X86Subtarget>().is64Bit();
 
@@ -171,32 +161,24 @@ X86ELFTargetAsmInfo::PreferredEHDataFormat(DwarfEncoding::Target Reason,
       // - code model is small OR
       // - code model is medium and we're emitting externally visible symbols
       //   or any code symbols
-      if (CM == CodeModel::Small ||
-          (CM == CodeModel::Medium && (Global ||
-                                       Reason != DwarfEncoding::Data)))
+      if (CM == CodeModel::Small || CM == CodeModel::Medium)
         Format = DW_EH_PE_sdata4;
       else
         Format = DW_EH_PE_sdata8;
     }
 
-    if (Global)
-      Format |= DW_EH_PE_indirect;
-
+    Format |= DW_EH_PE_indirect;
     return (Format | DW_EH_PE_pcrel);
-  } else {
-    if (is64Bit &&
-        (CM == CodeModel::Small ||
-         (CM == CodeModel::Medium && Reason != DwarfEncoding::Data)))
-      return DW_EH_PE_udata4;
-    else
-      return DW_EH_PE_absptr;
   }
+  
+  if (is64Bit && CM == CodeModel::Small)
+    return DW_EH_PE_udata4;
+  return DW_EH_PE_absptr;
 }
 
 
 unsigned
-X86COFFTargetAsmInfo::PreferredEHDataFormat(DwarfEncoding::Target Reason,
-                                            bool Global) const {
+X86COFFTargetAsmInfo::PreferredEHDataFormat() const {
   CodeModel::Model CM = TM.getCodeModel();
   bool is64Bit = TM.getSubtarget<X86Subtarget>().is64Bit();
 
@@ -211,23 +193,17 @@ X86COFFTargetAsmInfo::PreferredEHDataFormat(DwarfEncoding::Target Reason,
       // - code model is small OR
       // - code model is medium and we're emitting externally visible symbols
       //   or any code symbols
-      if (CM == CodeModel::Small ||
-          (CM == CodeModel::Medium && (Global ||
-                                       Reason != DwarfEncoding::Data)))
+      if (CM == CodeModel::Small || CM == CodeModel::Medium)
         Format = DW_EH_PE_sdata4;
       else
         Format = DW_EH_PE_sdata8;
     }
 
-    if (Global)
-      Format |= DW_EH_PE_indirect;
-
+    Format |= DW_EH_PE_indirect;
     return (Format | DW_EH_PE_pcrel);
   }
   
-  if (is64Bit &&
-      (CM == CodeModel::Small ||
-       (CM == CodeModel::Medium && Reason != DwarfEncoding::Data)))
+  if (is64Bit && CM == CodeModel::Small)
     return DW_EH_PE_udata4;
   return DW_EH_PE_absptr;
 }

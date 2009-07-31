@@ -37,22 +37,19 @@ namespace llvm {
 
   struct X86DarwinTargetAsmInfo : public X86TargetAsmInfo<DarwinTargetAsmInfo> {
     explicit X86DarwinTargetAsmInfo(const X86TargetMachine &TM);
-    virtual unsigned PreferredEHDataFormat(DwarfEncoding::Target Reason,
-                                           bool Global) const;
+    virtual unsigned PreferredEHDataFormat() const;
     virtual const char *getEHGlobalPrefix() const;
   };
 
   struct X86ELFTargetAsmInfo : public X86TargetAsmInfo<ELFTargetAsmInfo> {
     explicit X86ELFTargetAsmInfo(const X86TargetMachine &TM);
-    virtual unsigned PreferredEHDataFormat(DwarfEncoding::Target Reason,
-                                           bool Global) const;
+    virtual unsigned PreferredEHDataFormat() const;
   };
 
   struct X86COFFTargetAsmInfo : public X86TargetAsmInfo<COFFTargetAsmInfo> {
     explicit X86COFFTargetAsmInfo(const X86TargetMachine &TM) :
       X86TargetAsmInfo<COFFTargetAsmInfo>(TM) {}
-    virtual unsigned PreferredEHDataFormat(DwarfEncoding::Target Reason,
-                                           bool Global) const;
+    virtual unsigned PreferredEHDataFormat() const;
   };
   
 

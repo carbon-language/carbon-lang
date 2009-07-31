@@ -148,8 +148,7 @@ unsigned TargetAsmInfo::getInlineAsmLength(const char *Str) const {
   return Length;
 }
 
-unsigned TargetAsmInfo::PreferredEHDataFormat(DwarfEncoding::Target Reason,
-                                              bool Global) const {
+unsigned TargetAsmInfo::PreferredEHDataFormat() const {
   return dwarf::DW_EH_PE_absptr;
 }
 

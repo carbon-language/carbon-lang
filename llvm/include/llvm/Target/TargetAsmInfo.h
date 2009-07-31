@@ -24,15 +24,6 @@ namespace llvm {
   template <typename T> class SmallVectorImpl;
   class TargetMachine;
   
-  // DWARF encoding query type
-  namespace DwarfEncoding {
-    enum Target {
-      Data       = 0,
-      CodeLabels = 1,
-      Functions  = 2
-    };
-  }
-
   /// TargetAsmInfo - This class is intended to be used as a base class for asm
   /// properties and features specific to the target.
   class TargetAsmInfo {
@@ -429,11 +420,8 @@ namespace llvm {
     virtual unsigned getInlineAsmLength(const char *Str) const;
 
     /// PreferredEHDataFormat - This hook allows the target to select data
-    /// format used for encoding pointers in exception handling data. Reason is
-    /// 0 for data, 1 for code labels, 2 for function pointers. Global is true
-    /// if the symbol can be relocated.
-    virtual unsigned PreferredEHDataFormat(DwarfEncoding::Target Reason,
-                                           bool Global) const;
+    /// format used for encoding pointers in exception handling data.
+    virtual unsigned PreferredEHDataFormat() const;
 
 
     /// getSLEB128Size - Compute the number of bytes required for a signed
