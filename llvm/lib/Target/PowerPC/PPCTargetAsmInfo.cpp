@@ -34,27 +34,6 @@ PPCDarwinTargetAsmInfo::PPCDarwinTargetAsmInfo(const PPCTargetMachine &TM) :
   SupportsWeakOmittedEHFrame = false;
 }
 
-/// PreferredEHDataFormat - This hook allows the target to select data
-/// format used for encoding pointers in exception handling data. Reason is
-/// 0 for data, 1 for code labels, 2 for function pointers. Global is true
-/// if the symbol can be relocated.
-unsigned
-PPCDarwinTargetAsmInfo::PreferredEHDataFormat(DwarfEncoding::Target Reason,
-                                              bool Global) const {
-  const PPCSubtarget *Subtarget = &TM.getSubtarget<PPCSubtarget>();
-
-  if (Subtarget->getDarwinVers() > 9) {
-    if ((Reason == DwarfEncoding::Data || Reason == DwarfEncoding::Functions)
-        && Global)
-      return DW_EH_PE_pcrel | DW_EH_PE_indirect | DW_EH_PE_sdata4;
-
-    if (Reason == DwarfEncoding::CodeLabels || !Global)
-      return DW_EH_PE_pcrel;
-  }
-
-  return DW_EH_PE_absptr;
-}
-
 const char *PPCDarwinTargetAsmInfo::getEHGlobalPrefix() const {
   const PPCSubtarget* Subtarget = &TM.getSubtarget<PPCSubtarget>();
   if (Subtarget->getDarwinVers() > 9)
@@ -104,16 +83,6 @@ PPCLinuxTargetAsmInfo::PPCLinuxTargetAsmInfo(const PPCTargetMachine &TM) :
   DwarfExceptionSection = "\t.section\t.gcc_except_table,\"a\",@progbits";
 }
 
-/// PreferredEHDataFormat - This hook allows the target to select data
-/// format used for encoding pointers in exception handling data. Reason is
-/// 0 for data, 1 for code labels, 2 for function pointers. Global is true
-/// if the symbol can be relocated.
-unsigned
-PPCLinuxTargetAsmInfo::PreferredEHDataFormat(DwarfEncoding::Target Reason,
-                                             bool Global) const {
-  // We really need to write something here.
-  return TargetAsmInfo::PreferredEHDataFormat(Reason, Global);
-}
 
 // Instantiate default implementation.
 TEMPLATE_INSTANTIATION(class PPCTargetAsmInfo<TargetAsmInfo>);

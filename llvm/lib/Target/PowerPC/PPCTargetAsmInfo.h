@@ -46,15 +46,11 @@ namespace llvm {
 
   struct PPCDarwinTargetAsmInfo : public PPCTargetAsmInfo<DarwinTargetAsmInfo> {
     explicit PPCDarwinTargetAsmInfo(const PPCTargetMachine &TM);
-    virtual unsigned PreferredEHDataFormat(DwarfEncoding::Target Reason,
-                                           bool Global) const;
     virtual const char *getEHGlobalPrefix() const;
   };
 
   struct PPCLinuxTargetAsmInfo : public PPCTargetAsmInfo<ELFTargetAsmInfo> {
     explicit PPCLinuxTargetAsmInfo(const PPCTargetMachine &TM);
-    virtual unsigned PreferredEHDataFormat(DwarfEncoding::Target Reason,
-                                           bool Global) const;
   };
 
 } // namespace llvm
