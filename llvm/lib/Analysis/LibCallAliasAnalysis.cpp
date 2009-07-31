@@ -16,7 +16,6 @@
 #include "llvm/Analysis/LibCallSemantics.h"
 #include "llvm/Function.h"
 #include "llvm/Pass.h"
-#include "llvm/Target/TargetData.h"
 using namespace llvm;
   
 // Register this pass...
@@ -37,7 +36,6 @@ LibCallAliasAnalysis::~LibCallAliasAnalysis() {
 
 void LibCallAliasAnalysis::getAnalysisUsage(AnalysisUsage &AU) const {
   AliasAnalysis::getAnalysisUsage(AU);
-  AU.addRequired<TargetData>();
   AU.setPreservesAll();                         // Does not transform code
 }
 
