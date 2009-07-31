@@ -71,6 +71,20 @@ struct ConstantCreator<ConstantAggregateZero, Type, ValType> {
 };
 
 template<>
+struct ConvertConstantType<ConstantVector, VectorType> {
+  static void convert(ConstantVector *OldC, const VectorType *NewTy) {
+    // Make everyone now use a constant of the new type...
+    std::vector<Constant*> C;
+    for (unsigned i = 0, e = OldC->getNumOperands(); i != e; ++i)
+      C.push_back(cast<Constant>(OldC->getOperand(i)));
+    Constant *New = ConstantVector::get(NewTy, C);
+    assert(New != OldC && "Didn't replace constant??");
+    OldC->uncheckedReplaceAllUsesWith(New);
+    OldC->destroyConstant();    // This constant is now dead, destroy it.
+  }
+};
+
+template<>
 struct ConvertConstantType<ConstantAggregateZero, Type> {
   static void convert(ConstantAggregateZero *OldC, const Type *NewTy) {
     // Make everyone now use a constant of the new type...
@@ -110,17 +124,41 @@ struct ConvertConstantType<ConstantStruct, StructType> {
   }
 };
 
+// ConstantPointerNull does not take extra "value" argument...
+template<class ValType>
+struct ConstantCreator<ConstantPointerNull, PointerType, ValType> {
+  static ConstantPointerNull *create(const PointerType *Ty, const ValType &V){
+    return new ConstantPointerNull(Ty);
+  }
+};
+
 template<>
-struct ConvertConstantType<ConstantVector, VectorType> {
-  static void convert(ConstantVector *OldC, const VectorType *NewTy) {
+struct ConvertConstantType<ConstantPointerNull, PointerType> {
+  static void convert(ConstantPointerNull *OldC, const PointerType *NewTy) {
     // Make everyone now use a constant of the new type...
-    std::vector<Constant*> C;
-    for (unsigned i = 0, e = OldC->getNumOperands(); i != e; ++i)
-      C.push_back(cast<Constant>(OldC->getOperand(i)));
-    Constant *New = ConstantVector::get(NewTy, C);
+    Constant *New = ConstantPointerNull::get(NewTy);
     assert(New != OldC && "Didn't replace constant??");
     OldC->uncheckedReplaceAllUsesWith(New);
-    OldC->destroyConstant();    // This constant is now dead, destroy it.
+    OldC->destroyConstant();     // This constant is now dead, destroy it.
+  }
+};
+
+// UndefValue does not take extra "value" argument...
+template<class ValType>
+struct ConstantCreator<UndefValue, Type, ValType> {
+  static UndefValue *create(const Type *Ty, const ValType &V) {
+    return new UndefValue(Ty);
+  }
+};
+
+template<>
+struct ConvertConstantType<UndefValue, Type> {
+  static void convert(UndefValue *OldC, const Type *NewTy) {
+    // Make everyone now use a constant of the new type.
+    Constant *New = UndefValue::get(NewTy);
+    assert(New != OldC && "Didn't replace constant??");
+    OldC->uncheckedReplaceAllUsesWith(New);
+    OldC->destroyConstant();     // This constant is now dead, destroy it.
   }
 };
 
@@ -449,6 +487,10 @@ class LLVMContextImpl {
                    ConstantVector> VectorConstantsTy;
   VectorConstantsTy VectorConstants;
   
+  ValueMap<char, PointerType, ConstantPointerNull> NullPtrConstants;
+  
+  ValueMap<char, Type, UndefValue> UndefValueConstants;
+  
   LLVMContext &Context;
   ConstantInt *TheTrueVal;
   ConstantInt *TheFalseVal;
@@ -464,6 +506,8 @@ class LLVMContextImpl {
   friend class ConstantAggregateZero;
   friend class MDNode;
   friend class MDString;
+  friend class ConstantPointerNull;
+  friend class UndefValue;
 public:
   LLVMContextImpl(LLVMContext &C);
 };

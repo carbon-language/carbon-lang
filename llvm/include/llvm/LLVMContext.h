@@ -63,6 +63,9 @@ class LLVMContext {
   friend class ConstantAggregateZero;
   friend class MDNode;
   friend class MDString;
+  friend class ConstantPointerNull;
+  friend class UndefValue;
+  friend class ConstantExpr;
 public:
   LLVMContext();
   ~LLVMContext();

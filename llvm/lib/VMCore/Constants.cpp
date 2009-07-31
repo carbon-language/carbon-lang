@@ -40,9 +40,6 @@ using namespace llvm;
 //                              Constant Class
 //===----------------------------------------------------------------------===//
 
-// Becomes a no-op when multithreading is disabled.
-ManagedStatic<sys::SmartRWMutex<true> > ConstantsLock;
-
 // Constructor to create a '0' constant of arbitrary type...
 static const uint64_t zero[2] = {0, 0};
 Constant* Constant::getNullValue(const Type* Ty) {
@@ -1208,30 +1205,6 @@ Constant *ConstantVector::getSplatValue() {
 //---- ConstantPointerNull::get() implementation...
 //
 
-namespace llvm {
-  // ConstantPointerNull does not take extra "value" argument...
-  template<class ValType>
-  struct ConstantCreator<ConstantPointerNull, PointerType, ValType> {
-    static ConstantPointerNull *create(const PointerType *Ty, const ValType &V){
-      return new ConstantPointerNull(Ty);
-    }
-  };
-
-  template<>
-  struct ConvertConstantType<ConstantPointerNull, PointerType> {
-    static void convert(ConstantPointerNull *OldC, const PointerType *NewTy) {
-      // Make everyone now use a constant of the new type...
-      Constant *New = ConstantPointerNull::get(NewTy);
-      assert(New != OldC && "Didn't replace constant??");
-      OldC->uncheckedReplaceAllUsesWith(New);
-      OldC->destroyConstant();     // This constant is now dead, destroy it.
-    }
-  };
-}
-
-static ManagedStatic<ValueMap<char, PointerType, 
-                              ConstantPointerNull> > NullPtrConstants;
-
 static char getValType(ConstantPointerNull *) {
   return 0;
 }
@@ -1239,14 +1212,14 @@ static char getValType(ConstantPointerNull *) {
 
 ConstantPointerNull *ConstantPointerNull::get(const PointerType *Ty) {
   // Implicitly locked.
-  return NullPtrConstants->getOrCreate(Ty, 0);
+  return Ty->getContext().pImpl->NullPtrConstants.getOrCreate(Ty, 0);
 }
 
 // destroyConstant - Remove the constant from the constant table...
 //
 void ConstantPointerNull::destroyConstant() {
   // Implicitly locked.
-  NullPtrConstants->remove(this);
+  getType()->getContext().pImpl->NullPtrConstants.remove(this);
   destroyConstantImpl();
 }
 
@@ -1254,44 +1227,20 @@ void ConstantPointerNull::destroyConstant() {
 //---- UndefValue::get() implementation...
 //
 
-namespace llvm {
-  // UndefValue does not take extra "value" argument...
-  template<class ValType>
-  struct ConstantCreator<UndefValue, Type, ValType> {
-    static UndefValue *create(const Type *Ty, const ValType &V) {
-      return new UndefValue(Ty);
-    }
-  };
-
-  template<>
-  struct ConvertConstantType<UndefValue, Type> {
-    static void convert(UndefValue *OldC, const Type *NewTy) {
-      // Make everyone now use a constant of the new type.
-      Constant *New = UndefValue::get(NewTy);
-      assert(New != OldC && "Didn't replace constant??");
-      OldC->uncheckedReplaceAllUsesWith(New);
-      OldC->destroyConstant();     // This constant is now dead, destroy it.
-    }
-  };
-}
-
-static ManagedStatic<ValueMap<char, Type, UndefValue> > UndefValueConstants;
-
 static char getValType(UndefValue *) {
   return 0;
 }
 
-
 UndefValue *UndefValue::get(const Type *Ty) {
   // Implicitly locked.
-  return UndefValueConstants->getOrCreate(Ty, 0);
+  return Ty->getContext().pImpl->UndefValueConstants.getOrCreate(Ty, 0);
 }
 
 // destroyConstant - Remove the constant from the constant table.
 //
 void UndefValue::destroyConstant() {
   // Implicitly locked.
-  UndefValueConstants->remove(this);
+  getType()->getContext().pImpl->UndefValueConstants.remove(this);
   destroyConstantImpl();
 }
 
