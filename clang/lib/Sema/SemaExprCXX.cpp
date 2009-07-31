@@ -875,6 +875,7 @@ Sema::PerformImplicitConversion(Expr *&From, QualType ToType,
     // constructor or conversion operator, and then cope with the standard
     // conversions.
     ImpCastExprToType(From, ToType.getNonReferenceType(), 
+                      CastExpr::CK_Unknown,
                       ToType->isLValueReferenceType());
     return false;
 
@@ -1008,6 +1009,7 @@ Sema::PerformImplicitConversion(Expr *&From, QualType ToType,
     // FIXME: Not sure about lvalue vs rvalue here in the presence of rvalue
     // references.
     ImpCastExprToType(From, ToType.getNonReferenceType(), 
+                      CastExpr::CK_Unknown,
                       ToType->isLValueReferenceType());
     break;
 

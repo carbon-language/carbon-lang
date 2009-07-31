@@ -2972,7 +2972,9 @@ public:
   /// ImpCastExprToType - If Expr is not of type 'Type', insert an implicit
   /// cast.  If there is already an implicit cast, merge into the existing one.
   /// If isLvalue, the result of the cast is an lvalue.
-  void ImpCastExprToType(Expr *&Expr, QualType Type, bool isLvalue = false);
+  void ImpCastExprToType(Expr *&Expr, QualType Type, 
+                         CastExpr::CastKind Kind = CastExpr::CK_Unknown,
+                         bool isLvalue = false);
 
   // UsualUnaryConversions - promotes integers (C99 6.3.1.1p2) and converts
   // functions and arrays to their respective pointers (C99 6.3.2.1).

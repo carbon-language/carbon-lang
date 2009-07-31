@@ -2016,7 +2016,7 @@ Sema::PerformObjectArgumentInitialization(Expr *&From, CXXMethodDecl *Method) {
                                    From->getSourceRange()))
     return true;
 
-  ImpCastExprToType(From, DestType, /*isLvalue=*/true);
+  ImpCastExprToType(From, DestType, CastExpr::CK_Unknown, /*isLvalue=*/true);
   return false;
 }
 
@@ -4476,6 +4476,7 @@ Sema::BuildCallToObjectOfClassType(Scope *S, Expr *Object,
     // FIXME: Represent the user-defined conversion in the AST!
     ImpCastExprToType(Object,
                       Conv->getConversionType().getNonReferenceType(),
+                      CastExpr::CK_Unknown,
                       Conv->getConversionType()->isLValueReferenceType());
     return ActOnCallExpr(S, ExprArg(*this, Object), LParenLoc,
                          MultiExprArg(*this, (ExprTy**)Args, NumArgs),

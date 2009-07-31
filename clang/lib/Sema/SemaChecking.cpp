@@ -348,7 +348,8 @@ bool Sema::SemaBuiltinAtomicOverloaded(CallExpr *TheCall) {
   
   // If the first type needs to be converted (e.g. void** -> int*), do it now.
   if (BuiltinFT->getArgType(0) != FirstArg->getType()) {
-    ImpCastExprToType(FirstArg, BuiltinFT->getArgType(0), false);
+    ImpCastExprToType(FirstArg, BuiltinFT->getArgType(0), CastExpr::CK_Unknown,
+                      /*isLvalue=*/false);
     TheCall->setArg(0, FirstArg);
   }
   
@@ -376,7 +377,8 @@ bool Sema::SemaBuiltinAtomicOverloaded(CallExpr *TheCall) {
     // pass in 42.  The 42 gets converted to char.  This is even more strange
     // for things like 45.123 -> char, etc.
     // FIXME: Do this check.  
-    ImpCastExprToType(Arg, ValType, false);
+    ImpCastExprToType(Arg, ValType, CastExpr::CK_Unknown,
+                      /*isLvalue=*/false);
     TheCall->setArg(i+1, Arg);
   }
   

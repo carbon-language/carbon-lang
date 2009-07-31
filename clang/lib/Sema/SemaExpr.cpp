@@ -1045,7 +1045,8 @@ Sema::PerformObjectMemberConversion(Expr *&From, NamedDecl *Member) {
                                        From->getSourceRange().getBegin(),
                                        From->getSourceRange()))
         return true;
-      ImpCastExprToType(From, DestType, /*isLvalue=*/true);
+      ImpCastExprToType(From, DestType, CastExpr::CK_DerivedToBase,
+                        /*isLvalue=*/true);
     }
   return false;
 }

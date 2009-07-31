@@ -1167,7 +1167,10 @@ public:
     CK_BitCast,
     
     /// CK_NoOp - Used for const_cast.
-    CK_NoOp
+    CK_NoOp,
+    
+    /// CK_DerivedToBase - Derived to base class casts.
+    CK_DerivedToBase
   };
   
 private:
