@@ -36,6 +36,7 @@ def getTests(cfg, inputs):
         
         if not os.path.isdir(path):
             yield path
+            continue
 
         foundOne = False
         for dirpath,dirnames,filenames in os.walk(path):
