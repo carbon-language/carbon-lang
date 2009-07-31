@@ -378,9 +378,35 @@ public:
     if (E->getType()->isUnionType()) {
       const llvm::Type *Ty = ConvertType(E->getType());
       Expr *SubExpr = E->getSubExpr();
-      return EmitUnion(CGM.EmitConstantExpr(SubExpr, SubExpr->getType(), CGF), 
-                       Ty);
+      
+      llvm::Constant *C = 
+        CGM.EmitConstantExpr(SubExpr, SubExpr->getType(), CGF);
+      if (!C)
+        return 0;
+      
+      // Build a struct with the union sub-element as the first member,
+      // and padded to the appropriate size
+      std::vector<llvm::Constant*> Elts;
+      std::vector<const llvm::Type*> Types;
+      Elts.push_back(C);
+      Types.push_back(C->getType());
+      unsigned CurSize = CGM.getTargetData().getTypeAllocSize(C->getType());
+      unsigned TotalSize = CGM.getTargetData().getTypeAllocSize(Ty);
+      
+      assert(CurSize <= TotalSize && "Union size mismatch!");
+      if (unsigned NumPadBytes = TotalSize - CurSize) {
+        const llvm::Type *Ty = llvm::Type::Int8Ty;
+        if (NumPadBytes > 1)
+          Ty = llvm::ArrayType::get(Ty, NumPadBytes);
+        
+        Elts.push_back(llvm::Constant::getNullValue(Ty));
+        Types.push_back(Ty);
+      }
+      
+      llvm::StructType* STy = llvm::StructType::get(Types, false);
+      return llvm::ConstantStruct::get(STy, Elts);
     }
+    
     // Explicit and implicit no-op casts
     QualType Ty = E->getType(), SubTy = E->getSubExpr()->getType();
     if (CGM.getContext().hasSameUnqualifiedType(Ty, SubTy)) {
