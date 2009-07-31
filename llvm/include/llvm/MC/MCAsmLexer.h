@@ -66,6 +66,22 @@ public:
 
   SMLoc getLoc() const;
 
+  /// getStringContents - Get the contents of a string token (without quotes).
+  StringRef getStringContents() const { 
+    assert(Kind == String && "This token isn't a string!");
+    return Str.slice(1, Str.size() - 1);
+  }
+
+  /// getIdentifier - Get the identifier string for the current token, which
+  /// should be an identifier or a string. This gets the portion of the string
+  /// which should be used as the identifier, e.g., it does not include the
+  /// quotes on strings.
+  StringRef getIdentifier() const {
+    if (Kind == Identifier)
+      return getString();
+    return getStringContents();
+  }
+
   /// getString - Get the string for the current token, this includes all
   /// characters (for example, the quotes on strings) in the token.
   ///
@@ -77,7 +93,7 @@ public:
   // also not generally what we want (it is nicer for recovery etc. to lex 123br
   // as a single token, then diagnose as an invalid number).
   int64_t getIntVal() const { 
-    assert(Kind == Integer && "This token isn't an integer");
+    assert(Kind == Integer && "This token isn't an integer!");
     return IntVal; 
   }
 };

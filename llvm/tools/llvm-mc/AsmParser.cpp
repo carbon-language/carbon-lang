@@ -97,10 +97,11 @@ bool AsmParser::ParsePrimaryExpr(AsmExpr *&Res) {
       return true;
     Res = new AsmUnaryExpr(AsmUnaryExpr::LNot, Res);
     return false;
+  case AsmToken::String:
   case AsmToken::Identifier: {
     // This is a label, this should be parsed as part of an expression, to
     // handle things like LFOO+4.
-    MCSymbol *Sym = Ctx.GetOrCreateSymbol(Lexer.getTok().getString());
+    MCSymbol *Sym = Ctx.GetOrCreateSymbol(Lexer.getTok().getIdentifier());
 
     // If this is use of an undefined symbol then mark it external.
     if (!Sym->getSection() && !Ctx.GetSymbolValue(Sym))
@@ -112,7 +113,7 @@ bool AsmParser::ParsePrimaryExpr(AsmExpr *&Res) {
   }
   case AsmToken::Integer:
     Res = new AsmConstantExpr(Lexer.getTok().getIntVal());
-    Lexer.Lex(); // Eat identifier.
+    Lexer.Lex(); // Eat token.
     return false;
   case AsmToken::LParen:
     Lexer.Lex(); // Eat the '('.
@@ -309,6 +310,7 @@ bool AsmParser::ParseStatement() {
     Lexer.Lex();
     return false;
   case AsmToken::Identifier:
+  case AsmToken::String:
     break;
   // TODO: Recurse on local labels etc.
   }
@@ -316,7 +318,7 @@ bool AsmParser::ParseStatement() {
   // If we have an identifier, handle it as the key symbol.
   AsmToken ID = Lexer.getTok();
   SMLoc IDLoc = ID.getLoc();
-  StringRef IDVal = ID.getString();
+  StringRef IDVal = ID.getIdentifier();
   
   // Consume the identifier, see what is after it.
   switch (Lexer.Lex().getKind()) {
@@ -970,7 +972,7 @@ bool AsmParser::ParseDirectiveComm(bool IsLocal) {
   if (Lexer.isNot(AsmToken::Identifier))
     return TokError("expected identifier in directive");
   
-  // handle the identifier as the key symbol.
+  // Handle the identifier as the key symbol.
   SMLoc IDLoc = Lexer.getLoc();
   MCSymbol *Sym = Ctx.GetOrCreateSymbol(Lexer.getTok().getString());
   Lexer.Lex();
@@ -1172,7 +1174,7 @@ bool AsmParser::ParseDirectiveDarwinLsym() {
   if (Lexer.isNot(AsmToken::Identifier))
     return TokError("expected identifier in directive");
   
-  // handle the identifier as the key symbol.
+  // Handle the identifier as the key symbol.
   SMLoc IDLoc = Lexer.getLoc();
   MCSymbol *Sym = Ctx.GetOrCreateSymbol(Lexer.getTok().getString());
   Lexer.Lex();
