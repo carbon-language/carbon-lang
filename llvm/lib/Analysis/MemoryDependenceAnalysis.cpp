@@ -24,7 +24,6 @@
 #include "llvm/ADT/STLExtras.h"
 #include "llvm/Support/PredIteratorCache.h"
 #include "llvm/Support/Debug.h"
-#include "llvm/Target/TargetData.h"
 using namespace llvm;
 
 STATISTIC(NumCacheNonLocal, "Number of fully cached non-local responses");
@@ -70,12 +69,10 @@ void MemoryDependenceAnalysis::releaseMemory() {
 void MemoryDependenceAnalysis::getAnalysisUsage(AnalysisUsage &AU) const {
   AU.setPreservesAll();
   AU.addRequiredTransitive<AliasAnalysis>();
-  AU.addRequiredTransitive<TargetData>();
 }
 
 bool MemoryDependenceAnalysis::runOnFunction(Function &) {
   AA = &getAnalysis<AliasAnalysis>();
-  TD = &getAnalysis<TargetData>();
   if (PredCache == 0)
     PredCache.reset(new PredIteratorCache());
   return false;
@@ -111,10 +108,10 @@ getCallSiteDependencyFrom(CallSite CS, bool isReadOnlyCall,
     uint64_t PointerSize = 0;
     if (StoreInst *S = dyn_cast<StoreInst>(Inst)) {
       Pointer = S->getPointerOperand();
-      PointerSize = TD->getTypeStoreSize(S->getOperand(0)->getType());
+      PointerSize = AA->getTypeStoreSize(S->getOperand(0)->getType());
     } else if (VAArgInst *V = dyn_cast<VAArgInst>(Inst)) {
       Pointer = V->getOperand(0);
-      PointerSize = TD->getTypeStoreSize(V->getType());
+      PointerSize = AA->getTypeStoreSize(V->getType());
     } else if (FreeInst *F = dyn_cast<FreeInst>(Inst)) {
       Pointer = F->getPointerOperand();
       
@@ -184,7 +181,7 @@ getPointerDependencyFrom(Value *MemPtr, uint64_t MemSize, bool isLoad,
     // a load depends on another must aliased load from the same value.
     if (LoadInst *LI = dyn_cast<LoadInst>(Inst)) {
       Value *Pointer = LI->getPointerOperand();
-      uint64_t PointerSize = TD->getTypeStoreSize(LI->getType());
+      uint64_t PointerSize = AA->getTypeStoreSize(LI->getType());
       
       // If we found a pointer, check if it could be the same as our pointer.
       AliasAnalysis::AliasResult R =
@@ -210,7 +207,7 @@ getPointerDependencyFrom(Value *MemPtr, uint64_t MemSize, bool isLoad,
       // Ok, this store might clobber the query pointer.  Check to see if it is
       // a must alias: in this case, we want to return this as a def.
       Value *Pointer = SI->getPointerOperand();
-      uint64_t PointerSize = TD->getTypeStoreSize(SI->getOperand(0)->getType());
+      uint64_t PointerSize = AA->getTypeStoreSize(SI->getOperand(0)->getType());
       
       // If we found a pointer, check if it could be the same as our pointer.
       AliasAnalysis::AliasResult R =
@@ -301,7 +298,7 @@ MemDepResult MemoryDependenceAnalysis::getDependency(Instruction *QueryInst) {
       LocalCache = MemDepResult::getClobber(--BasicBlock::iterator(ScanPos));
     else {
       MemPtr = SI->getPointerOperand();
-      MemSize = TD->getTypeStoreSize(SI->getOperand(0)->getType());
+      MemSize = AA->getTypeStoreSize(SI->getOperand(0)->getType());
     }
   } else if (LoadInst *LI = dyn_cast<LoadInst>(QueryInst)) {
     // If this is a volatile load, don't mess around with it.  Just return the
@@ -310,7 +307,7 @@ MemDepResult MemoryDependenceAnalysis::getDependency(Instruction *QueryInst) {
       LocalCache = MemDepResult::getClobber(--BasicBlock::iterator(ScanPos));
     else {
       MemPtr = LI->getPointerOperand();
-      MemSize = TD->getTypeStoreSize(LI->getType());
+      MemSize = AA->getTypeStoreSize(LI->getType());
     }
   } else if (isa<CallInst>(QueryInst) || isa<InvokeInst>(QueryInst)) {
     CallSite QueryCS = CallSite::get(QueryInst);
@@ -512,7 +509,7 @@ getNonLocalPointerDependency(Value *Pointer, bool isLoad, BasicBlock *FromBB,
   // We know that the pointer value is live into FromBB find the def/clobbers
   // from presecessors.
   const Type *EltTy = cast<PointerType>(Pointer->getType())->getElementType();
-  uint64_t PointeeSize = TD->getTypeStoreSize(EltTy);
+  uint64_t PointeeSize = AA->getTypeStoreSize(EltTy);
   
   // This is the set of blocks we've inspected, and the pointer we consider in
   // each block.  Because of critical edges, we currently bail out if querying
