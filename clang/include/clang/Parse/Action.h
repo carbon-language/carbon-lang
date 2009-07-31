@@ -410,10 +410,10 @@ public:
     return TypeResult();
   }
   
-  enum TagKind {
-    TK_Reference,   // Reference to a tag:  'struct foo *X;'
-    TK_Declaration, // Fwd decl of a tag:   'struct foo;'
-    TK_Definition   // Definition of a tag: 'struct foo { int X; } Y;'
+  enum TagUseKind {
+    TUK_Reference,   // Reference to a tag:  'struct foo *X;'
+    TUK_Declaration, // Fwd decl of a tag:   'struct foo;'
+    TUK_Definition   // Definition of a tag: 'struct foo { int X; } Y;'
   };
 
   /// \brief The parser has encountered a tag (e.g., "class X") that should be
@@ -424,9 +424,10 @@ public:
   /// \param TagSpec an instance of DeclSpec::TST, indicating what kind of tag 
   /// this is (struct/union/enum/class).
   ///
-  /// \param TK the kind of tag we have encountered, which can be a reference
-  /// to a (possibly pre-existing) tag, a declaration of that tag, or the
-  /// beginning of a definition of that tag.
+  /// \param TUK how the tag we have encountered is being used, which
+  /// can be a reference to a (possibly pre-existing) tag, a
+  /// declaration of that tag, or the beginning of a definition of
+  /// that tag.
   ///
   /// \param KWLoc the location of the "struct", "class", "union", or "enum" 
   /// keyword.
@@ -456,7 +457,7 @@ public:
   /// by the action module.
   ///
   /// \returns the declaration to which this tag refers.
-  virtual DeclPtrTy ActOnTag(Scope *S, unsigned TagSpec, TagKind TK,
+  virtual DeclPtrTy ActOnTag(Scope *S, unsigned TagSpec, TagUseKind TUK,
                              SourceLocation KWLoc, const CXXScopeSpec &SS,
                              IdentifierInfo *Name, SourceLocation NameLoc,
                              AttributeList *Attr, AccessSpecifier AS,
@@ -1478,7 +1479,7 @@ public:
   /// \param TagSpec whether this declares a class, struct, or union
   /// (template)
   ///
-  /// \param TK whether this is a declaration or a definition
+  /// \param TUK whether this is a declaration or a definition
   /// 
   /// \param KWLoc the location of the 'class', 'struct', or 'union'
   /// keyword.
@@ -1498,7 +1499,7 @@ public:
   /// parameter lists (such as a missing \c template<> prior to a
   /// specialization); the parser does not check this condition.
   virtual DeclResult
-  ActOnClassTemplateSpecialization(Scope *S, unsigned TagSpec, TagKind TK,
+  ActOnClassTemplateSpecialization(Scope *S, unsigned TagSpec, TagUseKind TUK,
                                    SourceLocation KWLoc, 
                                    const CXXScopeSpec &SS,
                                    TemplateTy Template,

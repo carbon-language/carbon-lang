@@ -3851,16 +3851,16 @@ bool Sema::isAcceptableTagRedeclaration(const TagDecl *Previous,
 
 /// ActOnTag - This is invoked when we see 'struct foo' or 'struct {'.  In the
 /// former case, Name will be non-null.  In the later case, Name will be null.
-/// TagSpec indicates what kind of tag this is. TK indicates whether this is a
+/// TagSpec indicates what kind of tag this is. TUK indicates whether this is a
 /// reference/declaration/definition of a tag.
-Sema::DeclPtrTy Sema::ActOnTag(Scope *S, unsigned TagSpec, TagKind TK,
+Sema::DeclPtrTy Sema::ActOnTag(Scope *S, unsigned TagSpec, TagUseKind TUK,
                                SourceLocation KWLoc, const CXXScopeSpec &SS,
                                IdentifierInfo *Name, SourceLocation NameLoc,
                                AttributeList *Attr, AccessSpecifier AS,
                                MultiTemplateParamsArg TemplateParameterLists,
                                bool &OwnedDecl) {
   // If this is not a definition, it must have a name.
-  assert((Name != 0 || TK == TK_Definition) &&
+  assert((Name != 0 || TUK == TUK_Definition) &&
          "Nameless record must be a definition!");
 
   OwnedDecl = false;
@@ -3873,7 +3873,7 @@ Sema::DeclPtrTy Sema::ActOnTag(Scope *S, unsigned TagSpec, TagKind TK,
   case DeclSpec::TST_enum:   Kind = TagDecl::TK_enum; break;
   }
   
-  if (TK != TK_Reference) {
+  if (TUK != TUK_Reference) {
     if (TemplateParameterList *TemplateParams
           = MatchTemplateParametersToScopeSpecifier(KWLoc, SS,
                         (TemplateParameterList**)TemplateParameterLists.get(),
@@ -3882,7 +3882,7 @@ Sema::DeclPtrTy Sema::ActOnTag(Scope *S, unsigned TagSpec, TagKind TK,
         // This is a declaration or definition of a class template (which may
         // be a member of another template).
         OwnedDecl = false;
-        DeclResult Result = CheckClassTemplate(S, TagSpec, TK, KWLoc,
+        DeclResult Result = CheckClassTemplate(S, TagSpec, TUK, KWLoc,
                                                SS, Name, NameLoc, Attr,
                                                move(TemplateParameterLists),
                                                AS);
@@ -3934,7 +3934,7 @@ Sema::DeclPtrTy Sema::ActOnTag(Scope *S, unsigned TagSpec, TagKind TK,
     // shouldn't be. Doing so can result in ambiguities that we
     // shouldn't be diagnosing.
     LookupResult R = LookupName(S, Name, LookupTagName,
-                                /*RedeclarationOnly=*/(TK != TK_Reference));
+                                /*RedeclarationOnly=*/(TUK != TUK_Reference));
     if (R.isAmbiguous()) {
       DiagnoseAmbiguousLookup(R, Name, NameLoc);
       // FIXME: This is not best way to recover from case like:
@@ -3949,7 +3949,7 @@ Sema::DeclPtrTy Sema::ActOnTag(Scope *S, unsigned TagSpec, TagKind TK,
     else
       PrevDecl = R;
 
-    if (!getLangOptions().CPlusPlus && TK != TK_Reference) {
+    if (!getLangOptions().CPlusPlus && TUK != TUK_Reference) {
       // FIXME: This makes sure that we ignore the contexts associated
       // with C structs, unions, and enums when looking for a matching
       // tag declaration or definition. See the similar lookup tweak
@@ -3974,7 +3974,7 @@ Sema::DeclPtrTy Sema::ActOnTag(Scope *S, unsigned TagSpec, TagKind TK,
       // If this is a use of a previous tag, or if the tag is already declared
       // in the same scope (so that the definition/declaration completes or
       // rementions the tag), reuse the decl.
-      if (TK == TK_Reference || isDeclInScope(PrevDecl, SearchDC, S)) {
+      if (TUK == TUK_Reference || isDeclInScope(PrevDecl, SearchDC, S)) {
         // Make sure that this wasn't declared as an enum and now used as a
         // struct or something similar.
         if (!isAcceptableTagRedeclaration(PrevTagDecl, Kind, KWLoc, *Name)) {
@@ -4007,11 +4007,11 @@ Sema::DeclPtrTy Sema::ActOnTag(Scope *S, unsigned TagSpec, TagKind TK,
           // for the consumer of this Decl to know it doesn't own it.
           // For our current ASTs this shouldn't be a problem, but will
           // need to be changed with DeclGroups.
-          if (TK == TK_Reference)
+          if (TUK == TUK_Reference)
             return DeclPtrTy::make(PrevDecl);
 
           // Diagnose attempts to redefine a tag.
-          if (TK == TK_Definition) {
+          if (TUK == TUK_Definition) {
             if (TagDecl *Def = PrevTagDecl->getDefinition(Context)) {
               Diag(NameLoc, diag::err_redefinition) << Name;
               Diag(Def->getLocation(), diag::note_previous_definition);
@@ -4068,7 +4068,7 @@ Sema::DeclPtrTy Sema::ActOnTag(Scope *S, unsigned TagSpec, TagKind TK,
         PrevDecl = 0;
       }
     }
-  } else if (TK == TK_Reference && SS.isEmpty() && Name &&
+  } else if (TUK == TUK_Reference && SS.isEmpty() && Name &&
              (Kind != TagDecl::TK_enum || !getLangOptions().CPlusPlus)) {
     // C++ [basic.scope.pdecl]p5:
     //   -- for an elaborated-type-specifier of the form 
@@ -4123,7 +4123,7 @@ CreateNewDecl:
     New = EnumDecl::Create(Context, SearchDC, Loc, Name, KWLoc,
                            cast_or_null<EnumDecl>(PrevDecl));
     // If this is an undefined enum, warn.
-    if (TK != TK_Definition && !Invalid)  {
+    if (TUK != TUK_Definition && !Invalid)  {
       unsigned DK = getLangOptions().CPlusPlus? diag::err_forward_ref_enum
                                               : diag::ext_forward_ref_enum;
       Diag(Loc, DK);
@@ -4199,7 +4199,7 @@ CreateNewDecl:
   if (!Invalid)
     SetMemberAccessSpecifier(New, PrevDecl, AS);
 
-  if (TK == TK_Definition)
+  if (TUK == TUK_Definition)
     New->startDefinition();
   
   // If this has an identifier, add it to the scope stack.

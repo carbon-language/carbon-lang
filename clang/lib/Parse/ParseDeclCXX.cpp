@@ -570,15 +570,15 @@ void Parser::ParseClassSpecifier(tok::TokenKind TagTokKind,
   // this is a forward declaration.  If we have 'struct foo {...' or
   // 'struct foo :...' then this is a definition. Otherwise we have
   // something like 'struct foo xyz', a reference.
-  Action::TagKind TK;
+  Action::TagUseKind TUK;
   if (Tok.is(tok::l_brace) || (getLang().CPlusPlus && Tok.is(tok::colon)))
-    TK = Action::TK_Definition;
+    TUK = Action::TUK_Definition;
   else if (Tok.is(tok::semi) && !DS.isFriendSpecified())
-    TK = Action::TK_Declaration;
+    TUK = Action::TUK_Declaration;
   else
-    TK = Action::TK_Reference;
+    TUK = Action::TUK_Reference;
 
-  if (!Name && !TemplateId && TK != Action::TK_Definition) {
+  if (!Name && !TemplateId && TUK != Action::TUK_Definition) {
     // We have a declaration or reference to an anonymous class.
     Diag(StartLoc, diag::err_anon_type_definition)
       << DeclSpec::getSpecifierName(TagType);
@@ -595,11 +595,11 @@ void Parser::ParseClassSpecifier(tok::TokenKind TagTokKind,
   Action::DeclResult TagOrTempResult;
   TemplateParameterLists *TemplateParams = TemplateInfo.TemplateParams;
 
-  // FIXME: When TK == TK_Reference and we have a template-id, we need
+  // FIXME: When TUK == TUK_Reference and we have a template-id, we need
   // to turn that template-id into a type.
 
   bool Owned = false;
-  if (TemplateId && TK != Action::TK_Reference) {
+  if (TemplateId && TUK != Action::TUK_Reference) {
     // Explicit specialization, class template partial specialization,
     // or explicit instantiation.
     ASTTemplateArgsPtr TemplateArgsPtr(Actions, 
@@ -607,7 +607,7 @@ void Parser::ParseClassSpecifier(tok::TokenKind TagTokKind,
                                        TemplateId->getTemplateArgIsType(),
                                        TemplateId->NumArgs);
     if (TemplateInfo.Kind == ParsedTemplateInfo::ExplicitInstantiation &&
-        TK == Action::TK_Declaration) {
+        TUK == Action::TUK_Declaration) {
       // This is an explicit instantiation of a class template.
       TagOrTempResult
         = Actions.ActOnExplicitInstantiation(CurScope, 
@@ -636,7 +636,7 @@ void Parser::ParseClassSpecifier(tok::TokenKind TagTokKind,
         // but it actually has a definition. Most likely, this was
         // meant to be an explicit specialization, but the user forgot
         // the '<>' after 'template'.
-        assert(TK == Action::TK_Definition && "Expected a definition here");
+        assert(TUK == Action::TUK_Definition && "Expected a definition here");
 
         SourceLocation LAngleLoc 
           = PP.getLocForEndOfToken(TemplateInfo.TemplateLoc);
@@ -659,7 +659,7 @@ void Parser::ParseClassSpecifier(tok::TokenKind TagTokKind,
 
       // Build the class template specialization.
       TagOrTempResult
-        = Actions.ActOnClassTemplateSpecialization(CurScope, TagType, TK,
+        = Actions.ActOnClassTemplateSpecialization(CurScope, TagType, TUK,
                        StartLoc, SS,
                        TemplateTy::make(TemplateId->Template), 
                        TemplateId->TemplateNameLoc, 
@@ -674,7 +674,7 @@ void Parser::ParseClassSpecifier(tok::TokenKind TagTokKind,
     }
     TemplateId->Destroy();
   } else if (TemplateInfo.Kind == ParsedTemplateInfo::ExplicitInstantiation &&
-             TK == Action::TK_Declaration) {
+             TUK == Action::TUK_Declaration) {
     // Explicit instantiation of a member of a class template
     // specialization, e.g.,
     //
@@ -687,12 +687,12 @@ void Parser::ParseClassSpecifier(tok::TokenKind TagTokKind,
                                            NameLoc, Attr);
   } else {
     if (TemplateInfo.Kind == ParsedTemplateInfo::ExplicitInstantiation &&
-        TK == Action::TK_Definition) {
+        TUK == Action::TUK_Definition) {
       // FIXME: Diagnose this particular error.
     }
 
     // Declaration or definition of a class type
-    TagOrTempResult = Actions.ActOnTag(CurScope, TagType, TK, StartLoc, SS, 
+    TagOrTempResult = Actions.ActOnTag(CurScope, TagType, TUK, StartLoc, SS, 
                                        Name, NameLoc, Attr, AS,
                                   Action::MultiTemplateParamsArg(Actions, 
                                     TemplateParams? &(*TemplateParams)[0] : 0,
@@ -710,7 +710,7 @@ void Parser::ParseClassSpecifier(tok::TokenKind TagTokKind,
       ParseCXXMemberSpecification(StartLoc, TagType, TagOrTempResult.get());
     else
       ParseStructUnionBody(StartLoc, TagType, TagOrTempResult.get());
-  else if (TK == Action::TK_Definition) {
+  else if (TUK == Action::TUK_Definition) {
     // FIXME: Complain that we have a base-specifier list but no
     // definition.
     Diag(Tok, diag::err_expected_lbrace);

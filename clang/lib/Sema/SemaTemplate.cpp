@@ -438,14 +438,14 @@ Sema::ActOnTemplateParameterList(unsigned Depth,
 }
 
 Sema::DeclResult
-Sema::CheckClassTemplate(Scope *S, unsigned TagSpec, TagKind TK,
+Sema::CheckClassTemplate(Scope *S, unsigned TagSpec, TagUseKind TUK,
                          SourceLocation KWLoc, const CXXScopeSpec &SS,
                          IdentifierInfo *Name, SourceLocation NameLoc,
                          AttributeList *Attr,
                          MultiTemplateParamsArg TemplateParameterLists,
                          AccessSpecifier AS) {
   assert(TemplateParameterLists.size() > 0 && "No template parameter lists?");
-  assert(TK != TK_Reference && "Can only declare or define class templates");
+  assert(TUK != TUK_Reference && "Can only declare or define class templates");
   bool Invalid = false;
 
   // Check that we can declare a template here.
@@ -515,7 +515,7 @@ Sema::CheckClassTemplate(Scope *S, unsigned TagSpec, TagKind TK,
     }
 
     // Check for redefinition of this class template.
-    if (TK == TK_Definition) {
+    if (TUK == TUK_Definition) {
       if (TagDecl *Def = PrevRecordDecl->getDefinition(Context)) {
         Diag(NameLoc, diag::err_redefinition) << Name;
         Diag(Def->getLocation(), diag::note_previous_definition);
@@ -577,7 +577,7 @@ Sema::CheckClassTemplate(Scope *S, unsigned TagSpec, TagKind TK,
   NewClass->setLexicalDeclContext(CurContext);
   NewTemplate->setLexicalDeclContext(CurContext);
 
-  if (TK == TK_Definition)
+  if (TUK == TUK_Definition)
     NewClass->startDefinition();
 
   if (Attr)
@@ -2346,7 +2346,8 @@ bool Sema::CheckClassTemplatePartialSpecializationArgs(
 }
 
 Sema::DeclResult
-Sema::ActOnClassTemplateSpecialization(Scope *S, unsigned TagSpec, TagKind TK,
+Sema::ActOnClassTemplateSpecialization(Scope *S, unsigned TagSpec,
+                                       TagUseKind TUK,
                                        SourceLocation KWLoc, 
                                        const CXXScopeSpec &SS,
                                        TemplateTy TemplateD,
@@ -2472,10 +2473,10 @@ Sema::ActOnClassTemplateSpecialization(Scope *S, unsigned TagSpec, TagKind TK,
       //   -- The argument list of the specialization shall not be identical 
       //      to the implicit argument list of the primary template. 
       Diag(TemplateNameLoc, diag::err_partial_spec_args_match_primary_template)
-        << (TK == TK_Definition)
+        << (TUK == TUK_Definition)
         << CodeModificationHint::CreateRemoval(SourceRange(LAngleLoc, 
                                                            RAngleLoc));
-      return CheckClassTemplate(S, TagSpec, TK, KWLoc, SS,
+      return CheckClassTemplate(S, TagSpec, TUK, KWLoc, SS,
                                 ClassTemplate->getIdentifier(),
                                 TemplateNameLoc,
                                 Attr,
@@ -2613,7 +2614,7 @@ Sema::ActOnClassTemplateSpecialization(Scope *S, unsigned TagSpec, TagKind TK,
   Specialization->setSpecializationKind(TSK_ExplicitSpecialization);
 
   // Check that this isn't a redefinition of this specialization.
-  if (TK == TK_Definition) {
+  if (TUK == TUK_Definition) {
     if (RecordDecl *Def = Specialization->getDefinition(Context)) {
       // FIXME: Should also handle explicit specialization after implicit
       // instantiation with a special diagnostic.
@@ -2652,7 +2653,7 @@ Sema::ActOnClassTemplateSpecialization(Scope *S, unsigned TagSpec, TagKind TK,
   Specialization->setLexicalDeclContext(CurContext);
   
   // We may be starting the definition of this specialization.
-  if (TK == TK_Definition)
+  if (TUK == TUK_Definition)
     Specialization->startDefinition();
 
   // Add the specialization into its lexical context, so that it can
@@ -2892,7 +2893,7 @@ Sema::ActOnExplicitInstantiation(Scope *S, SourceLocation TemplateLoc,
                                  AttributeList *Attr) {
 
   bool Owned = false;
-  DeclPtrTy TagD = ActOnTag(S, TagSpec, Action::TK_Reference,
+  DeclPtrTy TagD = ActOnTag(S, TagSpec, Action::TUK_Reference,
                             KWLoc, SS, Name, NameLoc, Attr, AS_none,
                             MultiTemplateParamsArg(*this, 0, 0), Owned);
   if (!TagD)

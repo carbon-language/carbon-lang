@@ -193,7 +193,7 @@ namespace {
       return TypeResult();
     }
   
-    virtual DeclPtrTy ActOnTag(Scope *S, unsigned TagType, TagKind TK,
+    virtual DeclPtrTy ActOnTag(Scope *S, unsigned TagType, TagUseKind TUK,
                                SourceLocation KWLoc, const CXXScopeSpec &SS,
                                IdentifierInfo *Name, SourceLocation NameLoc,
                                AttributeList *Attr, AccessSpecifier AS,

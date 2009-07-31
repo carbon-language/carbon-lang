@@ -1577,15 +1577,15 @@ void Parser::ParseEnumSpecifier(SourceLocation StartLoc, DeclSpec &DS,
   // enum foo {..};  void bar() { enum foo; }    <- new foo in bar.
   // enum foo {..};  void bar() { enum foo x; }  <- use of old foo.
   //
-  Action::TagKind TK;
+  Action::TagUseKind TUK;
   if (Tok.is(tok::l_brace))
-    TK = Action::TK_Definition;
+    TUK = Action::TUK_Definition;
   else if (Tok.is(tok::semi))
-    TK = Action::TK_Declaration;
+    TUK = Action::TUK_Declaration;
   else
-    TK = Action::TK_Reference;
+    TUK = Action::TUK_Reference;
   bool Owned = false;
-  DeclPtrTy TagDecl = Actions.ActOnTag(CurScope, DeclSpec::TST_enum, TK,
+  DeclPtrTy TagDecl = Actions.ActOnTag(CurScope, DeclSpec::TST_enum, TUK,
                                        StartLoc, SS, Name, NameLoc, Attr, AS,
                                        Action::MultiTemplateParamsArg(Actions),
                                        Owned);

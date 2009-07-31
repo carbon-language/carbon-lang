@@ -542,7 +542,7 @@ public:
                                     SourceLocation NewTagLoc,
                                     const IdentifierInfo &Name);
 
-  virtual DeclPtrTy ActOnTag(Scope *S, unsigned TagSpec, TagKind TK,
+  virtual DeclPtrTy ActOnTag(Scope *S, unsigned TagSpec, TagUseKind TUK,
                              SourceLocation KWLoc, const CXXScopeSpec &SS,
                              IdentifierInfo *Name, SourceLocation NameLoc,
                              AttributeList *Attr, AccessSpecifier AS,
@@ -2129,7 +2129,7 @@ public:
                                           TemplateParameterList **ParamLists,
                                           unsigned NumParamLists);
                                                 
-  DeclResult CheckClassTemplate(Scope *S, unsigned TagSpec, TagKind TK,
+  DeclResult CheckClassTemplate(Scope *S, unsigned TagSpec, TagUseKind TUK,
                                 SourceLocation KWLoc, const CXXScopeSpec &SS,
                                 IdentifierInfo *Name, SourceLocation NameLoc,
                                 AttributeList *Attr,
@@ -2182,7 +2182,7 @@ public:
                                         bool &MirrorsPrimaryTemplate);
 
   virtual DeclResult
-  ActOnClassTemplateSpecialization(Scope *S, unsigned TagSpec, TagKind TK,
+  ActOnClassTemplateSpecialization(Scope *S, unsigned TagSpec, TagUseKind TUK,
                                    SourceLocation KWLoc, 
                                    const CXXScopeSpec &SS,
                                    TemplateTy Template,
