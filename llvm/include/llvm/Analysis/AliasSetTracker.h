@@ -259,12 +259,19 @@ class AliasSetTracker {
     virtual void deleted();
   public:
     ASTCallbackVH(Value *V, AliasSetTracker *AST = 0);
+    ASTCallbackVH &operator=(Value *V);
+  };
+  /// ASTCallbackVHDenseMapInfo - Traits to tell DenseMap that ASTCallbackVH
+  /// is not a POD (it needs its destructor called).
+  struct ASTCallbackVHDenseMapInfo : public DenseMapInfo<Value *> {
+    static bool isPod() { return false; }
   };
 
   AliasAnalysis &AA;
   ilist<AliasSet> AliasSets;
 
-  typedef DenseMap<ASTCallbackVH, AliasSet::PointerRec*, DenseMapInfo<Value*> >
+  typedef DenseMap<ASTCallbackVH, AliasSet::PointerRec*,
+                   ASTCallbackVHDenseMapInfo>
     PointerMapType;
 
   // Map from pointers to their node

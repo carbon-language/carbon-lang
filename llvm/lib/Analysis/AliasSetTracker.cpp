@@ -586,10 +586,12 @@ void AliasSetTracker::ASTCallbackVH::deleted() {
 }
 
 AliasSetTracker::ASTCallbackVH::ASTCallbackVH(Value *V, AliasSetTracker *ast)
-  : CallbackVH(V == DenseMapInfo<Value *>::getEmptyKey() ? 0 :
-               V == DenseMapInfo<Value *>::getTombstoneKey() ? 0 :
-               V),
-    AST(ast) {}
+  : CallbackVH(V), AST(ast) {}
+
+AliasSetTracker::ASTCallbackVH &
+AliasSetTracker::ASTCallbackVH::operator=(Value *V) {
+  return *this = ASTCallbackVH(V, AST);
+}
 
 //===----------------------------------------------------------------------===//
 //                            AliasSetPrinter Pass
