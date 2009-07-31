@@ -171,6 +171,25 @@ ConstantInt::ConstantInt(const IntegerType *Ty, const APInt& V)
   assert(V.getBitWidth() == Ty->getBitWidth() && "Invalid constant for type");
 }
 
+ConstantInt* ConstantInt::getTrue(LLVMContext &Context) {
+  LLVMContextImpl *pImpl = Context.pImpl;
+  sys::SmartScopedWriter<true>(pImpl->ConstantsLock);
+  if (pImpl->TheTrueVal)
+    return pImpl->TheTrueVal;
+  else
+    return (pImpl->TheTrueVal = ConstantInt::get(IntegerType::get(1), 1));
+}
+
+ConstantInt* ConstantInt::getFalse(LLVMContext &Context) {
+  LLVMContextImpl *pImpl = Context.pImpl;
+  sys::SmartScopedWriter<true>(pImpl->ConstantsLock);
+  if (pImpl->TheFalseVal)
+    return pImpl->TheFalseVal;
+  else
+    return (pImpl->TheFalseVal = ConstantInt::get(IntegerType::get(1), 0));
+}
+
+
 // Get a ConstantInt from an APInt. Note that the value stored in the DenseMap 
 // as the key, is a DenseMapAPIntKeyInfo::KeyTy which has provided the
 // operator== and operator!= to ensure that the DenseMap doesn't attempt to
@@ -1386,8 +1405,7 @@ static inline Constant *getFoldedCast(
   Instruction::CastOps opc, Constant *C, const Type *Ty) {
   assert(Ty->isFirstClassType() && "Cannot cast to an aggregate type!");
   // Fold a few common cases
-  if (Constant *FC = 
-                    ConstantFoldCastInstruction(getGlobalContext(), opc, C, Ty))
+  if (Constant *FC = ConstantFoldCastInstruction(Ty->getContext(), opc, C, Ty))
     return FC;
 
   // Look up the constant in the table first to ensure uniqueness
@@ -1631,8 +1649,8 @@ Constant *ConstantExpr::getTy(const Type *ReqTy, unsigned Opcode,
          "Operand types in binary constant expression should match");
 
   if (ReqTy == C1->getType() || ReqTy == Type::Int1Ty)
-    if (Constant *FC = ConstantFoldBinaryInstruction(
-                                            getGlobalContext(), Opcode, C1, C2))
+    if (Constant *FC = ConstantFoldBinaryInstruction(ReqTy->getContext(),
+                                                     Opcode, C1, C2))
       return FC;          // Fold a few common cases...
 
   std::vector<Constant*> argVec(1, C1); argVec.push_back(C2);
@@ -1765,7 +1783,7 @@ Constant *ConstantExpr::getSelectTy(const Type *ReqTy, Constant *C,
 
   if (ReqTy == V1->getType())
     if (Constant *SC = ConstantFoldSelectInstruction(
-                                                getGlobalContext(), C, V1, V2))
+                                                ReqTy->getContext(), C, V1, V2))
       return SC;        // Fold common cases
 
   std::vector<Constant*> argVec(3, C);
@@ -1786,7 +1804,7 @@ Constant *ConstantExpr::getGetElementPtrTy(const Type *ReqTy, Constant *C,
          "GEP indices invalid!");
 
   if (Constant *FC = ConstantFoldGetElementPtr(
-                               getGlobalContext(), C, (Constant**)Idxs, NumIdx))
+                              ReqTy->getContext(), C, (Constant**)Idxs, NumIdx))
     return FC;          // Fold a few common cases...
 
   assert(isa<PointerType>(C->getType()) &&
@@ -1826,7 +1844,7 @@ ConstantExpr::getICmp(unsigned short pred, Constant* LHS, Constant* RHS) {
          pred <= ICmpInst::LAST_ICMP_PREDICATE && "Invalid ICmp Predicate");
 
   if (Constant *FC = ConstantFoldCompareInstruction(
-                                             getGlobalContext(),pred, LHS, RHS))
+                                             LHS->getContext(), pred, LHS, RHS))
     return FC;          // Fold a few common cases...
 
   // Look up the constant in the table first to ensure uniqueness
@@ -1846,7 +1864,7 @@ ConstantExpr::getFCmp(unsigned short pred, Constant* LHS, Constant* RHS) {
   assert(pred <= FCmpInst::LAST_FCMP_PREDICATE && "Invalid FCmp Predicate");
 
   if (Constant *FC = ConstantFoldCompareInstruction(
-                                            getGlobalContext(), pred, LHS, RHS))
+                                            LHS->getContext(), pred, LHS, RHS))
     return FC;          // Fold a few common cases...
 
   // Look up the constant in the table first to ensure uniqueness
@@ -1863,7 +1881,7 @@ ConstantExpr::getFCmp(unsigned short pred, Constant* LHS, Constant* RHS) {
 Constant *ConstantExpr::getExtractElementTy(const Type *ReqTy, Constant *Val,
                                             Constant *Idx) {
   if (Constant *FC = ConstantFoldExtractElementInstruction(
-                                                  getGlobalContext(), Val, Idx))
+                                                ReqTy->getContext(), Val, Idx))
     return FC;          // Fold a few common cases...
   // Look up the constant in the table first to ensure uniqueness
   std::vector<Constant*> ArgVec(1, Val);
@@ -1886,7 +1904,7 @@ Constant *ConstantExpr::getExtractElement(Constant *Val, Constant *Idx) {
 Constant *ConstantExpr::getInsertElementTy(const Type *ReqTy, Constant *Val,
                                            Constant *Elt, Constant *Idx) {
   if (Constant *FC = ConstantFoldInsertElementInstruction(
-                                            getGlobalContext(), Val, Elt, Idx))
+                                            ReqTy->getContext(), Val, Elt, Idx))
     return FC;          // Fold a few common cases...
   // Look up the constant in the table first to ensure uniqueness
   std::vector<Constant*> ArgVec(1, Val);
@@ -1912,7 +1930,7 @@ Constant *ConstantExpr::getInsertElement(Constant *Val, Constant *Elt,
 Constant *ConstantExpr::getShuffleVectorTy(const Type *ReqTy, Constant *V1,
                                            Constant *V2, Constant *Mask) {
   if (Constant *FC = ConstantFoldShuffleVectorInstruction(
-                                              getGlobalContext(), V1, V2, Mask))
+                                            ReqTy->getContext(), V1, V2, Mask))
     return FC;          // Fold a few common cases...
   // Look up the constant in the table first to ensure uniqueness
   std::vector<Constant*> ArgVec(1, V1);
@@ -1946,7 +1964,7 @@ Constant *ConstantExpr::getInsertValueTy(const Type *ReqTy, Constant *Agg,
   assert(Agg->getType()->isFirstClassType() &&
          "Non-first-class type for constant InsertValue expression");
   Constant *FC = ConstantFoldInsertValueInstruction(
-                                    getGlobalContext(), Agg, Val, Idxs, NumIdx);
+                                  ReqTy->getContext(), Agg, Val, Idxs, NumIdx);
   assert(FC && "InsertValue constant expr couldn't be folded!");
   return FC;
 }
@@ -1973,7 +1991,7 @@ Constant *ConstantExpr::getExtractValueTy(const Type *ReqTy, Constant *Agg,
   assert(Agg->getType()->isFirstClassType() &&
          "Non-first-class type for constant extractvalue expression");
   Constant *FC = ConstantFoldExtractValueInstruction(
-                                         getGlobalContext(), Agg, Idxs, NumIdx);
+                                        ReqTy->getContext(), Agg, Idxs, NumIdx);
   assert(FC && "ExtractValue constant expr couldn't be folded!");
   return FC;
 }

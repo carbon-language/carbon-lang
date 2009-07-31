@@ -1398,9 +1398,9 @@ Constant *llvm::ConstantFoldCompareInstruction(LLVMContext &Context,
       // Don't try to evaluate aliases.  External weak GV can be null.
       if (!isa<GlobalAlias>(GV) && !GV->hasExternalWeakLinkage()) {
         if (pred == ICmpInst::ICMP_EQ)
-          return Context.getFalse();
+          return ConstantInt::getFalse(Context);
         else if (pred == ICmpInst::ICMP_NE)
-          return Context.getTrue();
+          return ConstantInt::getTrue(Context);
       }
   // icmp eq/ne(GV,null) -> false/true
   } else if (C2->isNullValue()) {
@@ -1408,9 +1408,9 @@ Constant *llvm::ConstantFoldCompareInstruction(LLVMContext &Context,
       // Don't try to evaluate aliases.  External weak GV can be null.
       if (!isa<GlobalAlias>(GV) && !GV->hasExternalWeakLinkage()) {
         if (pred == ICmpInst::ICMP_EQ)
-          return Context.getFalse();
+          return ConstantInt::getFalse(Context);
         else if (pred == ICmpInst::ICMP_NE)
-          return Context.getTrue();
+          return ConstantInt::getTrue(Context);
       }
   }
 
@@ -1446,8 +1446,8 @@ Constant *llvm::ConstantFoldCompareInstruction(LLVMContext &Context,
     APFloat::cmpResult R = C1V.compare(C2V);
     switch (pred) {
     default: llvm_unreachable("Invalid FCmp Predicate"); return 0;
-    case FCmpInst::FCMP_FALSE: return Context.getFalse();
-    case FCmpInst::FCMP_TRUE:  return Context.getTrue();
+    case FCmpInst::FCMP_FALSE: return ConstantInt::getFalse(Context);
+    case FCmpInst::FCMP_TRUE:  return ConstantInt::getTrue(Context);
     case FCmpInst::FCMP_UNO:
       return ConstantInt::get(Type::Int1Ty, R==APFloat::cmpUnordered);
     case FCmpInst::FCMP_ORD:

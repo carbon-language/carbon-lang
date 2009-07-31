@@ -2871,8 +2871,8 @@ bool InstCombiner::SimplifyDivRemOfSelect(BinaryOperator &I) {
         *I = SI->getOperand(NonNullOperand);
         AddToWorkList(BBI);
       } else if (*I == SelectCond) {
-        *I = NonNullOperand == 1 ? Context->getTrue() :
-                                   Context->getFalse();
+        *I = NonNullOperand == 1 ? ConstantInt::getTrue(*Context) :
+                                   ConstantInt::getFalse(*Context);
         AddToWorkList(BBI);
       }
     }
@@ -3366,7 +3366,7 @@ static Value *getICmpValue(bool sign, unsigned code, Value *LHS, Value *RHS,
                            LLVMContext *Context) {
   switch (code) {
   default: llvm_unreachable("Illegal ICmp code!");
-  case  0: return Context->getFalse();
+  case  0: return ConstantInt::getFalse(*Context);
   case  1: 
     if (sign)
       return new ICmpInst(*Context, ICmpInst::ICMP_SGT, LHS, RHS);
@@ -3389,7 +3389,7 @@ static Value *getICmpValue(bool sign, unsigned code, Value *LHS, Value *RHS,
       return new ICmpInst(*Context, ICmpInst::ICMP_SLE, LHS, RHS);
     else
       return new ICmpInst(*Context, ICmpInst::ICMP_ULE, LHS, RHS);
-  case  7: return Context->getTrue();
+  case  7: return ConstantInt::getTrue(*Context);
   }
 }
 
@@ -3435,7 +3435,7 @@ static Value *getFCmpValue(bool isordered, unsigned code,
       return new FCmpInst(*Context, FCmpInst::FCMP_OLE, LHS, RHS);
     else
       return new FCmpInst(*Context, FCmpInst::FCMP_ULE, LHS, RHS);
-  case  7: return Context->getTrue();
+  case  7: return ConstantInt::getTrue(*Context);
   }
 }
 
@@ -3820,7 +3820,7 @@ Instruction *InstCombiner::FoldAndOfICmps(Instruction &I,
     case ICmpInst::ICMP_EQ:         // (X == 13 & X == 15) -> false
     case ICmpInst::ICMP_UGT:        // (X == 13 & X >  15) -> false
     case ICmpInst::ICMP_SGT:        // (X == 13 & X >  15) -> false
-      return ReplaceInstUsesWith(I, Context->getFalse());
+      return ReplaceInstUsesWith(I, ConstantInt::getFalse(*Context));
     case ICmpInst::ICMP_NE:         // (X == 13 & X != 15) -> X == 13
     case ICmpInst::ICMP_ULT:        // (X == 13 & X <  15) -> X == 13
     case ICmpInst::ICMP_SLT:        // (X == 13 & X <  15) -> X == 13
@@ -3858,7 +3858,7 @@ Instruction *InstCombiner::FoldAndOfICmps(Instruction &I,
     default: llvm_unreachable("Unknown integer condition code!");
     case ICmpInst::ICMP_EQ:         // (X u< 13 & X == 15) -> false
     case ICmpInst::ICMP_UGT:        // (X u< 13 & X u> 15) -> false
-      return ReplaceInstUsesWith(I, Context->getFalse());
+      return ReplaceInstUsesWith(I, ConstantInt::getFalse(*Context));
     case ICmpInst::ICMP_SGT:        // (X u< 13 & X s> 15) -> no change
       break;
     case ICmpInst::ICMP_NE:         // (X u< 13 & X != 15) -> X u< 13
@@ -3873,7 +3873,7 @@ Instruction *InstCombiner::FoldAndOfICmps(Instruction &I,
     default: llvm_unreachable("Unknown integer condition code!");
     case ICmpInst::ICMP_EQ:         // (X s< 13 & X == 15) -> false
     case ICmpInst::ICMP_SGT:        // (X s< 13 & X s> 15) -> false
-      return ReplaceInstUsesWith(I, Context->getFalse());
+      return ReplaceInstUsesWith(I, ConstantInt::getFalse(*Context));
     case ICmpInst::ICMP_UGT:        // (X s< 13 & X u> 15) -> no change
       break;
     case ICmpInst::ICMP_NE:         // (X s< 13 & X != 15) -> X < 13
@@ -3937,7 +3937,7 @@ Instruction *InstCombiner::FoldAndOfFCmps(Instruction &I, FCmpInst *LHS,
         // If either of the constants are nans, then the whole thing returns
         // false.
         if (LHSC->getValueAPF().isNaN() || RHSC->getValueAPF().isNaN())
-          return ReplaceInstUsesWith(I, Context->getFalse());
+          return ReplaceInstUsesWith(I, ConstantInt::getFalse(*Context));
         return new FCmpInst(*Context, FCmpInst::FCMP_ORD, 
                             LHS->getOperand(0), RHS->getOperand(0));
       }
@@ -3968,7 +3968,7 @@ Instruction *InstCombiner::FoldAndOfFCmps(Instruction &I, FCmpInst *LHS,
       return new FCmpInst(*Context, (FCmpInst::Predicate)Op0CC, Op0LHS, Op0RHS);
     
     if (Op0CC == FCmpInst::FCMP_FALSE || Op1CC == FCmpInst::FCMP_FALSE)
-      return ReplaceInstUsesWith(I, Context->getFalse());
+      return ReplaceInstUsesWith(I, ConstantInt::getFalse(*Context));
     if (Op0CC == FCmpInst::FCMP_TRUE)
       return ReplaceInstUsesWith(I, RHS);
     if (Op1CC == FCmpInst::FCMP_TRUE)
@@ -3992,7 +3992,7 @@ Instruction *InstCombiner::FoldAndOfFCmps(Instruction &I, FCmpInst *LHS,
       // uno && oeq -> uno && (ord && eq) -> false
       // uno && ord -> false
       if (!Op0Ordered)
-        return ReplaceInstUsesWith(I, Context->getFalse());
+        return ReplaceInstUsesWith(I, ConstantInt::getFalse(*Context));
       // ord && ueq -> ord && (uno || eq) -> oeq
       return cast<Instruction>(getFCmpValue(true, Op1Pred,
                                             Op0LHS, Op0RHS, Context));
@@ -4553,7 +4553,7 @@ Instruction *InstCombiner::FoldOrOfICmps(Instruction &I,
     case ICmpInst::ICMP_NE:          // (X != 13 | X != 15) -> true
     case ICmpInst::ICMP_ULT:         // (X != 13 | X u< 15) -> true
     case ICmpInst::ICMP_SLT:         // (X != 13 | X s< 15) -> true
-      return ReplaceInstUsesWith(I, Context->getTrue());
+      return ReplaceInstUsesWith(I, ConstantInt::getTrue(*Context));
     }
     break;
   case ICmpInst::ICMP_ULT:
@@ -4608,7 +4608,7 @@ Instruction *InstCombiner::FoldOrOfICmps(Instruction &I,
       break;
     case ICmpInst::ICMP_NE:         // (X u> 13 | X != 15) -> true
     case ICmpInst::ICMP_ULT:        // (X u> 13 | X u< 15) -> true
-      return ReplaceInstUsesWith(I, Context->getTrue());
+      return ReplaceInstUsesWith(I, ConstantInt::getTrue(*Context));
     case ICmpInst::ICMP_SLT:        // (X u> 13 | X s< 15) -> no change
       break;
     }
@@ -4623,7 +4623,7 @@ Instruction *InstCombiner::FoldOrOfICmps(Instruction &I,
       break;
     case ICmpInst::ICMP_NE:         // (X s> 13 | X != 15) -> true
     case ICmpInst::ICMP_SLT:        // (X s> 13 | X s< 15) -> true
-      return ReplaceInstUsesWith(I, Context->getTrue());
+      return ReplaceInstUsesWith(I, ConstantInt::getTrue(*Context));
     case ICmpInst::ICMP_ULT:        // (X s> 13 | X u< 15) -> no change
       break;
     }
@@ -4642,7 +4642,7 @@ Instruction *InstCombiner::FoldOrOfFCmps(Instruction &I, FCmpInst *LHS,
         // If either of the constants are nans, then the whole thing returns
         // true.
         if (LHSC->getValueAPF().isNaN() || RHSC->getValueAPF().isNaN())
-          return ReplaceInstUsesWith(I, Context->getTrue());
+          return ReplaceInstUsesWith(I, ConstantInt::getTrue(*Context));
         
         // Otherwise, no need to compare the two constants, compare the
         // rest.
@@ -4675,7 +4675,7 @@ Instruction *InstCombiner::FoldOrOfFCmps(Instruction &I, FCmpInst *LHS,
       return new FCmpInst(*Context, (FCmpInst::Predicate)Op0CC,
                           Op0LHS, Op0RHS);
     if (Op0CC == FCmpInst::FCMP_TRUE || Op1CC == FCmpInst::FCMP_TRUE)
-      return ReplaceInstUsesWith(I, Context->getTrue());
+      return ReplaceInstUsesWith(I, ConstantInt::getTrue(*Context));
     if (Op0CC == FCmpInst::FCMP_FALSE)
       return ReplaceInstUsesWith(I, RHS);
     if (Op1CC == FCmpInst::FCMP_FALSE)
@@ -5061,7 +5061,7 @@ Instruction *InstCombiner::visitXor(BinaryOperator &I) {
   
   
   if (ConstantInt *RHS = dyn_cast<ConstantInt>(Op1)) {
-    if (RHS == Context->getTrue() && Op0->hasOneUse()) {
+    if (RHS == ConstantInt::getTrue(*Context) && Op0->hasOneUse()) {
       // xor (cmp A, B), true = not (cmp A, B) = !cmp A, B
       if (ICmpInst *ICI = dyn_cast<ICmpInst>(Op0))
         return new ICmpInst(*Context, ICI->getInversePredicate(),
@@ -5079,7 +5079,7 @@ Instruction *InstCombiner::visitXor(BinaryOperator &I) {
           Instruction::CastOps Opcode = Op0C->getOpcode();
           if (Opcode == Instruction::ZExt || Opcode == Instruction::SExt) {
             if (RHS == ConstantExpr::getCast(Opcode, 
-                                             Context->getTrue(),
+                                             ConstantInt::getTrue(*Context),
                                              Op0C->getDestTy())) {
               Instruction *NewCI = InsertNewInstBefore(CmpInst::Create(
                                      *Context,
@@ -5731,9 +5731,9 @@ Instruction *InstCombiner::FoldFCmp_IntToFP_Cst(FCmpInst &I,
     Pred = ICmpInst::ICMP_NE;
     break;
   case FCmpInst::FCMP_ORD:
-    return ReplaceInstUsesWith(I, Context->getTrue());
+    return ReplaceInstUsesWith(I, ConstantInt::getTrue(*Context));
   case FCmpInst::FCMP_UNO:
-    return ReplaceInstUsesWith(I, Context->getFalse());
+    return ReplaceInstUsesWith(I, ConstantInt::getFalse(*Context));
   }
   
   const IntegerType *IntTy = cast<IntegerType>(LHSI->getOperand(0)->getType());
@@ -5753,8 +5753,8 @@ Instruction *InstCombiner::FoldFCmp_IntToFP_Cst(FCmpInst &I,
     if (SMax.compare(RHS) == APFloat::cmpLessThan) {  // smax < 13123.0
       if (Pred == ICmpInst::ICMP_NE  || Pred == ICmpInst::ICMP_SLT ||
           Pred == ICmpInst::ICMP_SLE)
-        return ReplaceInstUsesWith(I, Context->getTrue());
-      return ReplaceInstUsesWith(I, Context->getFalse());
+        return ReplaceInstUsesWith(I, ConstantInt::getTrue(*Context));
+      return ReplaceInstUsesWith(I, ConstantInt::getFalse(*Context));
     }
   } else {
     // If the RHS value is > UnsignedMax, fold the comparison. This handles
@@ -5765,8 +5765,8 @@ Instruction *InstCombiner::FoldFCmp_IntToFP_Cst(FCmpInst &I,
     if (UMax.compare(RHS) == APFloat::cmpLessThan) {  // umax < 13123.0
       if (Pred == ICmpInst::ICMP_NE  || Pred == ICmpInst::ICMP_ULT ||
           Pred == ICmpInst::ICMP_ULE)
-        return ReplaceInstUsesWith(I, Context->getTrue());
-      return ReplaceInstUsesWith(I, Context->getFalse());
+        return ReplaceInstUsesWith(I, ConstantInt::getTrue(*Context));
+      return ReplaceInstUsesWith(I, ConstantInt::getFalse(*Context));
     }
   }
   
@@ -5778,8 +5778,8 @@ Instruction *InstCombiner::FoldFCmp_IntToFP_Cst(FCmpInst &I,
     if (SMin.compare(RHS) == APFloat::cmpGreaterThan) { // smin > 12312.0
       if (Pred == ICmpInst::ICMP_NE || Pred == ICmpInst::ICMP_SGT ||
           Pred == ICmpInst::ICMP_SGE)
-        return ReplaceInstUsesWith(I, Context->getTrue());
-      return ReplaceInstUsesWith(I, Context->getFalse());
+        return ReplaceInstUsesWith(I, ConstantInt::getTrue(*Context));
+      return ReplaceInstUsesWith(I, ConstantInt::getFalse(*Context));
     }
   }
 
@@ -5801,14 +5801,14 @@ Instruction *InstCombiner::FoldFCmp_IntToFP_Cst(FCmpInst &I,
       switch (Pred) {
       default: llvm_unreachable("Unexpected integer comparison!");
       case ICmpInst::ICMP_NE:  // (float)int != 4.4   --> true
-        return ReplaceInstUsesWith(I, Context->getTrue());
+        return ReplaceInstUsesWith(I, ConstantInt::getTrue(*Context));
       case ICmpInst::ICMP_EQ:  // (float)int == 4.4   --> false
-        return ReplaceInstUsesWith(I, Context->getFalse());
+        return ReplaceInstUsesWith(I, ConstantInt::getFalse(*Context));
       case ICmpInst::ICMP_ULE:
         // (float)int <= 4.4   --> int <= 4
         // (float)int <= -4.4  --> false
         if (RHS.isNegative())
-          return ReplaceInstUsesWith(I, Context->getFalse());
+          return ReplaceInstUsesWith(I, ConstantInt::getFalse(*Context));
         break;
       case ICmpInst::ICMP_SLE:
         // (float)int <= 4.4   --> int <= 4
@@ -5820,7 +5820,7 @@ Instruction *InstCombiner::FoldFCmp_IntToFP_Cst(FCmpInst &I,
         // (float)int < -4.4   --> false
         // (float)int < 4.4    --> int <= 4
         if (RHS.isNegative())
-          return ReplaceInstUsesWith(I, Context->getFalse());
+          return ReplaceInstUsesWith(I, ConstantInt::getFalse(*Context));
         Pred = ICmpInst::ICMP_ULE;
         break;
       case ICmpInst::ICMP_SLT:
@@ -5833,7 +5833,7 @@ Instruction *InstCombiner::FoldFCmp_IntToFP_Cst(FCmpInst &I,
         // (float)int > 4.4    --> int > 4
         // (float)int > -4.4   --> true
         if (RHS.isNegative())
-          return ReplaceInstUsesWith(I, Context->getTrue());
+          return ReplaceInstUsesWith(I, ConstantInt::getTrue(*Context));
         break;
       case ICmpInst::ICMP_SGT:
         // (float)int > 4.4    --> int > 4
@@ -5845,7 +5845,7 @@ Instruction *InstCombiner::FoldFCmp_IntToFP_Cst(FCmpInst &I,
         // (float)int >= -4.4   --> true
         // (float)int >= 4.4    --> int > 4
         if (!RHS.isNegative())
-          return ReplaceInstUsesWith(I, Context->getTrue());
+          return ReplaceInstUsesWith(I, ConstantInt::getTrue(*Context));
         Pred = ICmpInst::ICMP_UGT;
         break;
       case ICmpInst::ICMP_SGE:
@@ -5869,9 +5869,9 @@ Instruction *InstCombiner::visitFCmpInst(FCmpInst &I) {
 
   // Fold trivial predicates.
   if (I.getPredicate() == FCmpInst::FCMP_FALSE)
-    return ReplaceInstUsesWith(I, Context->getFalse());
+    return ReplaceInstUsesWith(I, ConstantInt::getFalse(*Context));
   if (I.getPredicate() == FCmpInst::FCMP_TRUE)
-    return ReplaceInstUsesWith(I, Context->getTrue());
+    return ReplaceInstUsesWith(I, ConstantInt::getTrue(*Context));
   
   // Simplify 'fcmp pred X, X'
   if (Op0 == Op1) {
@@ -5880,11 +5880,11 @@ Instruction *InstCombiner::visitFCmpInst(FCmpInst &I) {
     case FCmpInst::FCMP_UEQ:    // True if unordered or equal
     case FCmpInst::FCMP_UGE:    // True if unordered, greater than, or equal
     case FCmpInst::FCMP_ULE:    // True if unordered, less than, or equal
-      return ReplaceInstUsesWith(I, Context->getTrue());
+      return ReplaceInstUsesWith(I, ConstantInt::getTrue(*Context));
     case FCmpInst::FCMP_OGT:    // True if ordered and greater than
     case FCmpInst::FCMP_OLT:    // True if ordered and less than
     case FCmpInst::FCMP_ONE:    // True if ordered and operands are unequal
-      return ReplaceInstUsesWith(I, Context->getFalse());
+      return ReplaceInstUsesWith(I, ConstantInt::getFalse(*Context));
       
     case FCmpInst::FCMP_UNO:    // True if unordered: isnan(X) | isnan(Y)
     case FCmpInst::FCMP_ULT:    // True if unordered or less than
@@ -5915,11 +5915,11 @@ Instruction *InstCombiner::visitFCmpInst(FCmpInst &I) {
     if (ConstantFP *CFP = dyn_cast<ConstantFP>(RHSC)) {
       if (CFP->getValueAPF().isNaN()) {
         if (FCmpInst::isOrdered(I.getPredicate()))   // True if ordered and...
-          return ReplaceInstUsesWith(I, Context->getFalse());
+          return ReplaceInstUsesWith(I, ConstantInt::getFalse(*Context));
         assert(FCmpInst::isUnordered(I.getPredicate()) &&
                "Comparison must be either ordered or unordered!");
         // True if unordered.
-        return ReplaceInstUsesWith(I, Context->getTrue());
+        return ReplaceInstUsesWith(I, ConstantInt::getTrue(*Context));
       }
     }
     
@@ -6069,22 +6069,22 @@ Instruction *InstCombiner::visitICmpInst(ICmpInst &I) {
     default: break;
     case ICmpInst::ICMP_ULE:
       if (CI->isMaxValue(false))                 // A <=u MAX -> TRUE
-        return ReplaceInstUsesWith(I, Context->getTrue());
+        return ReplaceInstUsesWith(I, ConstantInt::getTrue(*Context));
       return new ICmpInst(*Context, ICmpInst::ICMP_ULT, Op0,
                           AddOne(CI, Context));
     case ICmpInst::ICMP_SLE:
       if (CI->isMaxValue(true))                  // A <=s MAX -> TRUE
-        return ReplaceInstUsesWith(I, Context->getTrue());
+        return ReplaceInstUsesWith(I, ConstantInt::getTrue(*Context));
       return new ICmpInst(*Context, ICmpInst::ICMP_SLT, Op0,
                           AddOne(CI, Context));
     case ICmpInst::ICMP_UGE:
       if (CI->isMinValue(false))                 // A >=u MIN -> TRUE
-        return ReplaceInstUsesWith(I, Context->getTrue());
+        return ReplaceInstUsesWith(I, ConstantInt::getTrue(*Context));
       return new ICmpInst(*Context, ICmpInst::ICMP_UGT, Op0,
                           SubOne(CI, Context));
     case ICmpInst::ICMP_SGE:
       if (CI->isMinValue(true))                  // A >=s MIN -> TRUE
-        return ReplaceInstUsesWith(I, Context->getTrue());
+        return ReplaceInstUsesWith(I, ConstantInt::getTrue(*Context));
       return new ICmpInst(*Context, ICmpInst::ICMP_SGT, Op0,
                           SubOne(CI, Context));
     }
@@ -6144,17 +6144,17 @@ Instruction *InstCombiner::visitICmpInst(ICmpInst &I) {
     default: llvm_unreachable("Unknown icmp opcode!");
     case ICmpInst::ICMP_EQ:
       if (Op0Max.ult(Op1Min) || Op0Min.ugt(Op1Max))
-        return ReplaceInstUsesWith(I, Context->getFalse());
+        return ReplaceInstUsesWith(I, ConstantInt::getFalse(*Context));
       break;
     case ICmpInst::ICMP_NE:
       if (Op0Max.ult(Op1Min) || Op0Min.ugt(Op1Max))
-        return ReplaceInstUsesWith(I, Context->getTrue());
+        return ReplaceInstUsesWith(I, ConstantInt::getTrue(*Context));
       break;
     case ICmpInst::ICMP_ULT:
       if (Op0Max.ult(Op1Min))          // A <u B -> true if max(A) < min(B)
-        return ReplaceInstUsesWith(I, Context->getTrue());
+        return ReplaceInstUsesWith(I, ConstantInt::getTrue(*Context));
       if (Op0Min.uge(Op1Max))          // A <u B -> false if min(A) >= max(B)
-        return ReplaceInstUsesWith(I, Context->getFalse());
+        return ReplaceInstUsesWith(I, ConstantInt::getFalse(*Context));
       if (Op1Min == Op0Max)            // A <u B -> A != B if max(A) == min(B)
         return new ICmpInst(*Context, ICmpInst::ICMP_NE, Op0, Op1);
       if (ConstantInt *CI = dyn_cast<ConstantInt>(Op1)) {
@@ -6170,9 +6170,9 @@ Instruction *InstCombiner::visitICmpInst(ICmpInst &I) {
       break;
     case ICmpInst::ICMP_UGT:
       if (Op0Min.ugt(Op1Max))          // A >u B -> true if min(A) > max(B)
-        return ReplaceInstUsesWith(I, Context->getTrue());
+        return ReplaceInstUsesWith(I, ConstantInt::getTrue(*Context));
       if (Op0Max.ule(Op1Min))          // A >u B -> false if max(A) <= max(B)
-        return ReplaceInstUsesWith(I, Context->getFalse());
+        return ReplaceInstUsesWith(I, ConstantInt::getFalse(*Context));
 
       if (Op1Max == Op0Min)            // A >u B -> A != B if min(A) == max(B)
         return new ICmpInst(*Context, ICmpInst::ICMP_NE, Op0, Op1);
@@ -6189,9 +6189,9 @@ Instruction *InstCombiner::visitICmpInst(ICmpInst &I) {
       break;
     case ICmpInst::ICMP_SLT:
       if (Op0Max.slt(Op1Min))          // A <s B -> true if max(A) < min(C)
-        return ReplaceInstUsesWith(I, Context->getTrue());
+        return ReplaceInstUsesWith(I, ConstantInt::getTrue(*Context));
       if (Op0Min.sge(Op1Max))          // A <s B -> false if min(A) >= max(C)
-        return ReplaceInstUsesWith(I, Context->getFalse());
+        return ReplaceInstUsesWith(I, ConstantInt::getFalse(*Context));
       if (Op1Min == Op0Max)            // A <s B -> A != B if max(A) == min(B)
         return new ICmpInst(*Context, ICmpInst::ICMP_NE, Op0, Op1);
       if (ConstantInt *CI = dyn_cast<ConstantInt>(Op1)) {
@@ -6202,9 +6202,9 @@ Instruction *InstCombiner::visitICmpInst(ICmpInst &I) {
       break;
     case ICmpInst::ICMP_SGT:
       if (Op0Min.sgt(Op1Max))          // A >s B -> true if min(A) > max(B)
-        return ReplaceInstUsesWith(I, Context->getTrue());
+        return ReplaceInstUsesWith(I, ConstantInt::getTrue(*Context));
       if (Op0Max.sle(Op1Min))          // A >s B -> false if max(A) <= min(B)
-        return ReplaceInstUsesWith(I, Context->getFalse());
+        return ReplaceInstUsesWith(I, ConstantInt::getFalse(*Context));
 
       if (Op1Max == Op0Min)            // A >s B -> A != B if min(A) == max(B)
         return new ICmpInst(*Context, ICmpInst::ICMP_NE, Op0, Op1);
@@ -6217,30 +6217,30 @@ Instruction *InstCombiner::visitICmpInst(ICmpInst &I) {
     case ICmpInst::ICMP_SGE:
       assert(!isa<ConstantInt>(Op1) && "ICMP_SGE with ConstantInt not folded!");
       if (Op0Min.sge(Op1Max))          // A >=s B -> true if min(A) >= max(B)
-        return ReplaceInstUsesWith(I, Context->getTrue());
+        return ReplaceInstUsesWith(I, ConstantInt::getTrue(*Context));
       if (Op0Max.slt(Op1Min))          // A >=s B -> false if max(A) < min(B)
-        return ReplaceInstUsesWith(I, Context->getFalse());
+        return ReplaceInstUsesWith(I, ConstantInt::getFalse(*Context));
       break;
     case ICmpInst::ICMP_SLE:
       assert(!isa<ConstantInt>(Op1) && "ICMP_SLE with ConstantInt not folded!");
       if (Op0Max.sle(Op1Min))          // A <=s B -> true if max(A) <= min(B)
-        return ReplaceInstUsesWith(I, Context->getTrue());
+        return ReplaceInstUsesWith(I, ConstantInt::getTrue(*Context));
       if (Op0Min.sgt(Op1Max))          // A <=s B -> false if min(A) > max(B)
-        return ReplaceInstUsesWith(I, Context->getFalse());
+        return ReplaceInstUsesWith(I, ConstantInt::getFalse(*Context));
       break;
     case ICmpInst::ICMP_UGE:
       assert(!isa<ConstantInt>(Op1) && "ICMP_UGE with ConstantInt not folded!");
       if (Op0Min.uge(Op1Max))          // A >=u B -> true if min(A) >= max(B)
-        return ReplaceInstUsesWith(I, Context->getTrue());
+        return ReplaceInstUsesWith(I, ConstantInt::getTrue(*Context));
       if (Op0Max.ult(Op1Min))          // A >=u B -> false if max(A) < min(B)
-        return ReplaceInstUsesWith(I, Context->getFalse());
+        return ReplaceInstUsesWith(I, ConstantInt::getFalse(*Context));
       break;
     case ICmpInst::ICMP_ULE:
       assert(!isa<ConstantInt>(Op1) && "ICMP_ULE with ConstantInt not folded!");
       if (Op0Max.ule(Op1Min))          // A <=u B -> true if max(A) <= min(B)
-        return ReplaceInstUsesWith(I, Context->getTrue());
+        return ReplaceInstUsesWith(I, ConstantInt::getTrue(*Context));
       if (Op0Min.ugt(Op1Max))          // A <=u B -> false if min(A) > max(B)
-        return ReplaceInstUsesWith(I, Context->getFalse());
+        return ReplaceInstUsesWith(I, ConstantInt::getFalse(*Context));
       break;
     }
 
@@ -6653,7 +6653,7 @@ Instruction *InstCombiner::FoldICmpDivCst(ICmpInst &ICI, BinaryOperator *DivI,
   default: llvm_unreachable("Unhandled icmp opcode!");
   case ICmpInst::ICMP_EQ:
     if (LoOverflow && HiOverflow)
-      return ReplaceInstUsesWith(ICI, Context->getFalse());
+      return ReplaceInstUsesWith(ICI, ConstantInt::getFalse(*Context));
     else if (HiOverflow)
       return new ICmpInst(*Context, DivIsSigned ? ICmpInst::ICMP_SGE : 
                           ICmpInst::ICMP_UGE, X, LoBound);
@@ -6664,7 +6664,7 @@ Instruction *InstCombiner::FoldICmpDivCst(ICmpInst &ICI, BinaryOperator *DivI,
       return InsertRangeTest(X, LoBound, HiBound, DivIsSigned, true, ICI);
   case ICmpInst::ICMP_NE:
     if (LoOverflow && HiOverflow)
-      return ReplaceInstUsesWith(ICI, Context->getTrue());
+      return ReplaceInstUsesWith(ICI, ConstantInt::getTrue(*Context));
     else if (HiOverflow)
       return new ICmpInst(*Context, DivIsSigned ? ICmpInst::ICMP_SLT : 
                           ICmpInst::ICMP_ULT, X, LoBound);
@@ -6676,16 +6676,16 @@ Instruction *InstCombiner::FoldICmpDivCst(ICmpInst &ICI, BinaryOperator *DivI,
   case ICmpInst::ICMP_ULT:
   case ICmpInst::ICMP_SLT:
     if (LoOverflow == +1)   // Low bound is greater than input range.
-      return ReplaceInstUsesWith(ICI, Context->getTrue());
+      return ReplaceInstUsesWith(ICI, ConstantInt::getTrue(*Context));
     if (LoOverflow == -1)   // Low bound is less than input range.
-      return ReplaceInstUsesWith(ICI, Context->getFalse());
+      return ReplaceInstUsesWith(ICI, ConstantInt::getFalse(*Context));
     return new ICmpInst(*Context, Pred, X, LoBound);
   case ICmpInst::ICMP_UGT:
   case ICmpInst::ICMP_SGT:
     if (HiOverflow == +1)       // High bound greater than input range.
-      return ReplaceInstUsesWith(ICI, Context->getFalse());
+      return ReplaceInstUsesWith(ICI, ConstantInt::getFalse(*Context));
     else if (HiOverflow == -1)  // High bound less than input range.
-      return ReplaceInstUsesWith(ICI, Context->getTrue());
+      return ReplaceInstUsesWith(ICI, ConstantInt::getTrue(*Context));
     if (Pred == ICmpInst::ICMP_UGT)
       return new ICmpInst(*Context, ICmpInst::ICMP_UGE, X, HiBound);
     else
@@ -6854,9 +6854,9 @@ Instruction *InstCombiner::visitICmpInstWithInstAndIntCst(ICmpInst &ICI,
             // As a special case, check to see if this means that the
             // result is always true or false now.
             if (ICI.getPredicate() == ICmpInst::ICMP_EQ)
-              return ReplaceInstUsesWith(ICI, Context->getFalse());
+              return ReplaceInstUsesWith(ICI, ConstantInt::getFalse(*Context));
             if (ICI.getPredicate() == ICmpInst::ICMP_NE)
-              return ReplaceInstUsesWith(ICI, Context->getTrue());
+              return ReplaceInstUsesWith(ICI, ConstantInt::getTrue(*Context));
           } else {
             ICI.setOperand(1, NewCst);
             Constant *NewAndCST;
@@ -7277,9 +7277,9 @@ Instruction *InstCombiner::visitICmpInstWithCastAndCast(ICmpInst &ICI) {
   // First, handle some easy cases. We know the result cannot be equal at this
   // point so handle the ICI.isEquality() cases
   if (ICI.getPredicate() == ICmpInst::ICMP_EQ)
-    return ReplaceInstUsesWith(ICI, Context->getFalse());
+    return ReplaceInstUsesWith(ICI, ConstantInt::getFalse(*Context));
   if (ICI.getPredicate() == ICmpInst::ICMP_NE)
-    return ReplaceInstUsesWith(ICI, Context->getTrue());
+    return ReplaceInstUsesWith(ICI, ConstantInt::getTrue(*Context));
 
   // Evaluate the comparison for LT (we invert for GT below). LE and GE cases
   // should have been folded away previously and not enter in here.
@@ -7287,9 +7287,9 @@ Instruction *InstCombiner::visitICmpInstWithCastAndCast(ICmpInst &ICI) {
   if (isSignedCmp) {
     // We're performing a signed comparison.
     if (cast<ConstantInt>(CI)->getValue().isNegative())
-      Result = Context->getFalse();          // X < (small) --> false
+      Result = ConstantInt::getFalse(*Context);          // X < (small) --> false
     else
-      Result = Context->getTrue();           // X < (large) --> true
+      Result = ConstantInt::getTrue(*Context);           // X < (large) --> true
   } else {
     // We're performing an unsigned comparison.
     if (isSignedExt) {
@@ -7300,7 +7300,7 @@ Instruction *InstCombiner::visitICmpInstWithCastAndCast(ICmpInst &ICI) {
                                    LHSCIOp, NegOne, ICI.getName()), ICI);
     } else {
       // Unsigned extend & unsigned compare -> always true.
-      Result = Context->getTrue();
+      Result = ConstantInt::getTrue(*Context);
     }
   }
 
@@ -8441,7 +8441,7 @@ Instruction *InstCombiner::commonIntCastTransforms(CastInst &CI) {
     // cast (xor bool X, true) to int  --> xor (cast bool X to int), 1
     if (isa<ZExtInst>(CI) && SrcBitSize == 1 && 
         SrcI->getOpcode() == Instruction::Xor &&
-        Op1 == Context->getTrue() &&
+        Op1 == ConstantInt::getTrue(*Context) &&
         (!Op0->hasOneUse() || !isa<CmpInst>(Op0))) {
       Value *New = InsertCastBefore(Instruction::ZExt, Op0, DestTy, CI);
       return BinaryOperator::CreateXor(New,
@@ -10061,7 +10061,7 @@ Instruction *InstCombiner::visitCallSite(CallSite CS) {
       Instruction *OldCall = CS.getInstruction();
       // If the call and callee calling conventions don't match, this call must
       // be unreachable, as the call is undefined.
-      new StoreInst(Context->getTrue(),
+      new StoreInst(ConstantInt::getTrue(*Context),
                 UndefValue::get(PointerType::getUnqual(Type::Int1Ty)), 
                                   OldCall);
       if (!OldCall->use_empty())
@@ -10075,7 +10075,7 @@ Instruction *InstCombiner::visitCallSite(CallSite CS) {
     // This instruction is not reachable, just remove it.  We insert a store to
     // undef so that we know that this code is not reachable, despite the fact
     // that we can't modify the CFG here.
-    new StoreInst(Context->getTrue(),
+    new StoreInst(ConstantInt::getTrue(*Context),
                UndefValue::get(PointerType::getUnqual(Type::Int1Ty)),
                   CS.getInstruction());
 
@@ -10086,7 +10086,7 @@ Instruction *InstCombiner::visitCallSite(CallSite CS) {
     if (InvokeInst *II = dyn_cast<InvokeInst>(CS.getInstruction())) {
       // Don't break the CFG, insert a dummy cond branch.
       BranchInst::Create(II->getNormalDest(), II->getUnwindDest(),
-                         Context->getTrue(), II);
+                         ConstantInt::getTrue(*Context), II);
     }
     return EraseInstFromFunction(*CS.getInstruction());
   }
@@ -11425,7 +11425,7 @@ Instruction *InstCombiner::visitFreeInst(FreeInst &FI) {
   // free undef -> unreachable.
   if (isa<UndefValue>(Op)) {
     // Insert a new store to null because we cannot modify the CFG here.
-    new StoreInst(Context->getTrue(),
+    new StoreInst(ConstantInt::getTrue(*Context),
            UndefValue::get(PointerType::getUnqual(Type::Int1Ty)), &FI);
     return EraseInstFromFunction(FI);
   }

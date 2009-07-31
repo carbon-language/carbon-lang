@@ -73,10 +73,6 @@ public:
   /// @brief Get the all ones value
   Constant* getAllOnesValue(const Type* Ty);
   
-  // ConstantInt accessors
-  ConstantInt* getTrue();
-  ConstantInt* getFalse();
-        
   // MDNode accessors
   MDNode* getMDNode(Value* const* Vals, unsigned NumVals);
   

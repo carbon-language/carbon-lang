@@ -442,7 +442,7 @@ void SCCPSolver::getFeasibleSuccessors(TerminatorInst &TI,
         Succs[0] = Succs[1] = true;
       } else if (BCValue.isConstant()) {
         // Constant condition variables mean the branch can only go a single way
-        Succs[BCValue.getConstant() == Context->getFalse()] = true;
+        Succs[BCValue.getConstant() == ConstantInt::getFalse(*Context)] = true;
       }
     }
   } else if (isa<InvokeInst>(&TI)) {
@@ -487,7 +487,7 @@ bool SCCPSolver::isEdgeFeasible(BasicBlock *From, BasicBlock *To) {
 
         // Constant condition variables mean the branch can only go a single way
         return BI->getSuccessor(BCValue.getConstant() ==
-                                       Context->getFalse()) == To;
+                                       ConstantInt::getFalse(*Context)) == To;
       }
       return false;
     }
@@ -1488,7 +1488,7 @@ bool SCCPSolver::ResolvedUndefsIn(Function &F) {
     // as undef, then further analysis could think the undef went another way
     // leading to an inconsistent set of conclusions.
     if (BranchInst *BI = dyn_cast<BranchInst>(TI)) {
-      BI->setCondition(Context->getFalse());
+      BI->setCondition(ConstantInt::getFalse(*Context));
     } else {
       SwitchInst *SI = cast<SwitchInst>(TI);
       SI->setCondition(SI->getCaseValue(1));

@@ -1753,11 +1753,11 @@ bool LLParser::ParseValID(ValID &ID) {
     ID.Kind = ValID::t_APFloat;
     break;
   case lltok::kw_true:
-    ID.ConstantVal = Context.getTrue();
+    ID.ConstantVal = ConstantInt::getTrue(Context);
     ID.Kind = ValID::t_Constant;
     break;
   case lltok::kw_false:
-    ID.ConstantVal = Context.getFalse();
+    ID.ConstantVal = ConstantInt::getFalse(Context);
     ID.Kind = ValID::t_Constant;
     break;
   case lltok::kw_null: ID.Kind = ValID::t_Null; break;

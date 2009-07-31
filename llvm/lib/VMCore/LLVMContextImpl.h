@@ -469,20 +469,6 @@ public:
   
   MDNode *getMDNode(Value*const* Vals, unsigned NumVals);
   
-  ConstantInt *getTrue() {
-    if (TheTrueVal)
-      return TheTrueVal;
-    else
-      return (TheTrueVal = ConstantInt::get(IntegerType::get(1), 1));
-  }
-  
-  ConstantInt *getFalse() {
-    if (TheFalseVal)
-      return TheFalseVal;
-    else
-      return (TheFalseVal = ConstantInt::get(IntegerType::get(1), 0));
-  }
-  
   void erase(MDString *M);
   void erase(MDNode *M);
 };

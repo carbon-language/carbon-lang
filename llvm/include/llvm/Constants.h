@@ -56,6 +56,9 @@ protected:
     return User::operator new(s, 0);
   }
 public:
+  static ConstantInt* getTrue(LLVMContext &Context);
+  static ConstantInt* getFalse(LLVMContext &Context);
+  
   /// If Ty is a vector type, return a Constant with a splat of the given
   /// value. Otherwise return a ConstantInt for the given value.
   static Constant* get(const Type* Ty, uint64_t V, bool isSigned = false);

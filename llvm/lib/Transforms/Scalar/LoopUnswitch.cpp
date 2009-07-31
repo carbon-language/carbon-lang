@@ -235,7 +235,7 @@ bool LoopUnswitch::processCurrentLoop() {
         Value *LoopCond = FindLIVLoopCondition(BI->getCondition(), 
                                                currentLoop, Changed);
         if (LoopCond && UnswitchIfProfitable(LoopCond, 
-                                             Context.getTrue())) {
+                                             ConstantInt::getTrue(Context))) {
           ++NumBranches;
           return true;
         }
@@ -265,7 +265,7 @@ bool LoopUnswitch::processCurrentLoop() {
         Value *LoopCond = FindLIVLoopCondition(SI->getCondition(), 
                                                currentLoop, Changed);
         if (LoopCond && UnswitchIfProfitable(LoopCond, 
-                                             Context.getTrue())) {
+                                             ConstantInt::getTrue(Context))) {
           ++NumSelects;
           return true;
         }
@@ -354,10 +354,10 @@ bool LoopUnswitch::IsTrivialUnswitchCondition(Value *Cond, Constant **Val,
     // this.
     if ((LoopExitBB = isTrivialLoopExitBlock(currentLoop, 
                                              BI->getSuccessor(0)))) {
-      if (Val) *Val = Context.getTrue();
+      if (Val) *Val = ConstantInt::getTrue(Context);
     } else if ((LoopExitBB = isTrivialLoopExitBlock(currentLoop, 
                                                     BI->getSuccessor(1)))) {
-      if (Val) *Val = Context.getFalse();
+      if (Val) *Val = ConstantInt::getFalse(Context);
     }
   } else if (SwitchInst *SI = dyn_cast<SwitchInst>(HeaderTerm)) {
     // If this isn't a switch on Cond, we can't handle it.
@@ -513,7 +513,7 @@ void LoopUnswitch::EmitPreheaderBranchOnCondition(Value *LIC, Constant *Val,
   Value *BranchVal = LIC;
   if (!isa<ConstantInt>(Val) || Val->getType() != Type::Int1Ty)
     BranchVal = new ICmpInst(InsertPt, ICmpInst::ICMP_EQ, LIC, Val, "tmp");
-  else if (Val != Val->getContext().getTrue())
+  else if (Val != ConstantInt::getTrue(Val->getContext()))
     // We want to enter the new loop when the condition is true.
     std::swap(TrueDest, FalseDest);
 
@@ -952,7 +952,7 @@ void LoopUnswitch::RewriteLoopBodyWithConditionConstant(Loop *L, Value *LIC,
               
               Instruction* OldTerm = Old->getTerminator();
               BranchInst::Create(Split, SISucc,
-                                 Context.getTrue(), OldTerm);
+                                 ConstantInt::getTrue(Context), OldTerm);
 
               LPM->deleteSimpleAnalysisValue(Old->getTerminator(), L);
               Old->getTerminator()->eraseFromParent();

@@ -75,19 +75,6 @@ Constant* LLVMContext::getAllOnesValue(const Type* Ty) {
   return cast<ConstantVector>(ConstantVector::get(Elts));
 }
 
-// ConstantInt accessors.
-ConstantInt* LLVMContext::getTrue() {
-  assert(this && "Context not initialized!");
-  assert(pImpl && "Context not initialized!");
-  return pImpl->getTrue();
-}
-
-ConstantInt* LLVMContext::getFalse() {
-  assert(this && "Context not initialized!");
-  assert(pImpl && "Context not initialized!");
-  return pImpl->getFalse();
-}
-
 // MDNode accessors
 MDNode* LLVMContext::getMDNode(Value* const* Vals, unsigned NumVals) {
   return pImpl->getMDNode(Vals, NumVals);
