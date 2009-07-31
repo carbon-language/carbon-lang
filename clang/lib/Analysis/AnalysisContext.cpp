@@ -18,6 +18,7 @@
 #include "clang/AST/Decl.h"
 #include "clang/AST/DeclObjC.h"
 #include "clang/AST/ParentMap.h"
+#include "llvm/Support/ErrorHandling.h"
 
 using namespace clang;
 
@@ -33,7 +34,7 @@ Stmt *AnalysisContext::getBody() {
   else if (ObjCMethodDecl *MD = dyn_cast<ObjCMethodDecl>(D))
     return MD->getBody();
 
-  assert(0 && "unknown code decl");
+  llvm::llvm_unreachable("unknown code decl");
 }
 
 CFG *AnalysisContext::getCFG() {
