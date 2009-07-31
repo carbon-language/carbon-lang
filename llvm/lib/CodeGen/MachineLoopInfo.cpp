@@ -41,4 +41,5 @@ bool MachineLoopInfo::runOnMachineFunction(MachineFunction &) {
 void MachineLoopInfo::getAnalysisUsage(AnalysisUsage &AU) const {
   AU.setPreservesAll();
   AU.addRequired<MachineDominatorTree>();
+  MachineFunctionPass::getAnalysisUsage(AU);
 }

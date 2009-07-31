@@ -24,19 +24,25 @@
 
 namespace llvm {
 
-  // FIXME: This pass should declare that the pass does not invalidate any LLVM
-  // passes.
-struct MachineFunctionPass : public FunctionPass {
+/// MachineFunctionPass - This class adapts the FunctionPass interface to
+/// allow convenient creation of passes that operate on the MachineFunction
+/// representation. Instead of overriding runOnFunction, subclasses
+/// override runOnMachineFunction.
+class MachineFunctionPass : public FunctionPass {
+protected:
   explicit MachineFunctionPass(intptr_t ID) : FunctionPass(ID) {}
   explicit MachineFunctionPass(void *ID) : FunctionPass(ID) {}
 
-protected:
   /// runOnMachineFunction - This method must be overloaded to perform the
   /// desired machine code transformation or analysis.
   ///
   virtual bool runOnMachineFunction(MachineFunction &MF) = 0;
 
-public:
+  /// getAnalysisUsage - Subclasses that override getAnalysisUsage
+  /// must call this.
+  virtual void getAnalysisUsage(AnalysisUsage &AU) const;
+
+private:
   bool runOnFunction(Function &F);
 };
 
