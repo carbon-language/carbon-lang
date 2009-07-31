@@ -1,4 +1,4 @@
-// RUN: llvm-mc %s -o -
+// RUN: llvm-mc -triple i386-unknown-unknown %s -o -
 
 	.text
 	.align	4,0x90

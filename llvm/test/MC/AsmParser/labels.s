@@ -1,6 +1,6 @@
 // RUN: llvm-mc -triple i386-unknown-unknown %s | FileCheck %s
 
-        .data:
+        .data
 // CHECK: a:
 a:
         .long 0
@@ -11,7 +11,7 @@ a:
 "a$b":
         .long 0
 
-        .text:
+        .text
 foo:    
 // CHECK: val:"a$b"
         addl $24, "a$b"(%eax)    
