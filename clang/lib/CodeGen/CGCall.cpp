@@ -513,7 +513,7 @@ void CodeGenFunction::EmitFunctionProlog(const CGFunctionInfo &FI,
     if (FD->hasImplicitReturnZero()) {
       QualType RetTy = FD->getResultType().getUnqualifiedType();
       const llvm::Type* LLVMTy = CGM.getTypes().ConvertType(RetTy);
-      llvm::Constant* Zero = CGM.getLLVMContext().getNullValue(LLVMTy);
+      llvm::Constant* Zero = llvm::Constant::getNullValue(LLVMTy);
       Builder.CreateStore(Zero, ReturnValue);
     }
   }

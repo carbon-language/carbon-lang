@@ -501,7 +501,7 @@ BlockModule::GetAddrOfGlobalBlock(const BlockExpr *BE, const char * n) {
   llvm::Constant *DescriptorFields[2];
 
   // Reserved
-  DescriptorFields[0] = getModule().getContext().getNullValue(UnsignedLongTy);
+  DescriptorFields[0] = llvm::Constant::getNullValue(UnsignedLongTy);
 
   // Block literal size. For global blocks we just use the size of the generic
   // block literal struct.
@@ -543,7 +543,7 @@ BlockModule::GetAddrOfGlobalBlock(const BlockExpr *BE, const char * n) {
     llvm::ConstantInt::get(IntTy, BLOCK_IS_GLOBAL | BLOCK_HAS_DESCRIPTOR);
 
   // Reserved
-  LiteralFields[2] = getModule().getContext().getNullValue(IntTy);
+  LiteralFields[2] = llvm::Constant::getNullValue(IntTy);
 
   // Function
   LiteralFields[3] = Fn;

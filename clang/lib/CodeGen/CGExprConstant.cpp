@@ -85,7 +85,7 @@ class VISIBILITY_HIDDEN ConstStructBuilder {
           if (NumBytes > 1) 
             Ty = llvm::ArrayType::get(Ty, NumBytes);
           
-          llvm::Constant *Padding = CGM.getLLVMContext().getNullValue(Ty);
+          llvm::Constant *Padding = llvm::Constant::getNullValue(Ty);
           PackedElements.push_back(Padding);
           ElementOffsetInBytes += getSizeInBytes(Padding);
         }
@@ -253,7 +253,7 @@ class VISIBILITY_HIDDEN ConstStructBuilder {
     if (NumBytes > 1) 
       Ty = llvm::ArrayType::get(Ty, NumBytes);
 
-    llvm::Constant *C = CGM.getLLVMContext().getNullValue(Ty);
+    llvm::Constant *C = llvm::Constant::getNullValue(Ty);
     Elements.push_back(C);
     assert(getAlignment(C) == 1 && "Padding must have 1 byte alignment!");
     
@@ -427,7 +427,7 @@ public:
     // Initialize remaining array elements.
     // FIXME: This doesn't handle member pointers correctly!
     for (; i < NumElements; ++i)
-      Elts.push_back(VMContext.getNullValue(ElemTy));
+      Elts.push_back(llvm::Constant::getNullValue(ElemTy));
 
     if (RewriteType) {
       // FIXME: Try to avoid packing the array
@@ -519,7 +519,7 @@ public:
     // FIXME: This doesn't handle member pointers correctly!
     for (unsigned i = 0; i < SType->getNumElements(); ++i) {
       const llvm::Type *FieldTy = SType->getElementType(i);
-      Elts.push_back(VMContext.getNullValue(FieldTy));
+      Elts.push_back(llvm::Constant::getNullValue(FieldTy));
     }
 
     // Copy initializer elements. Skip padding fields.
@@ -574,7 +574,7 @@ public:
       if (NumPadBytes > 1)
         Ty = llvm::ArrayType::get(Ty, NumPadBytes);
 
-      Elts.push_back(VMContext.getNullValue(Ty));
+      Elts.push_back(llvm::Constant::getNullValue(Ty));
       Types.push_back(Ty);
     }
 
@@ -597,14 +597,14 @@ public:
            Field != FieldEnd; ++Field)
         assert(Field->isUnnamedBitfield() && "Only unnamed bitfields allowed");
 #endif
-      return VMContext.getNullValue(Ty);
+      return llvm::Constant::getNullValue(Ty);
     }
 
     if (curField->isBitField()) {
       // Create a dummy struct for bit-field insertion
       unsigned NumElts = CGM.getTargetData().getTypeAllocSize(Ty);
       llvm::Constant* NV = 
-        VMContext.getNullValue(llvm::Type::Int8Ty);
+        llvm::Constant::getNullValue(llvm::Type::Int8Ty);
       std::vector<llvm::Constant*> Elts(NumElts, NV);
 
       InsertBitfieldIntoStruct(Elts, curField, ILE->getInit(0));
@@ -644,7 +644,7 @@ public:
     }
 
     for (; i < NumElements; ++i)
-      Elts.push_back(VMContext.getNullValue(ElemTy));
+      Elts.push_back(llvm::Constant::getNullValue(ElemTy));
 
     return llvm::ConstantVector::get(VType, Elts);    
   }
@@ -917,5 +917,5 @@ llvm::Constant *CodeGenModule::EmitConstantExpr(const Expr *E,
 llvm::Constant *CodeGenModule::EmitNullConstant(QualType T) {
   // Always return an LLVM null constant for now; this will change when we
   // get support for IRGen of member pointers.
-  return getLLVMContext().getNullValue(getTypes().ConvertType(T));
+  return llvm::Constant::getNullValue(getTypes().ConvertType(T));
 }

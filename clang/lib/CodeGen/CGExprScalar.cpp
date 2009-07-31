@@ -121,10 +121,10 @@ public:
     return llvm::ConstantInt::get(ConvertType(E->getType()), E->getValue());
   }
   Value *VisitCXXZeroInitValueExpr(const CXXZeroInitValueExpr *E) {
-    return VMContext.getNullValue(ConvertType(E->getType()));
+    return llvm::Constant::getNullValue(ConvertType(E->getType()));
   }
   Value *VisitGNUNullExpr(const GNUNullExpr *E) {
-    return VMContext.getNullValue(ConvertType(E->getType()));
+    return llvm::Constant::getNullValue(ConvertType(E->getType()));
   }
   Value *VisitTypesCompatibleExpr(const TypesCompatibleExpr *E) {
     return llvm::ConstantInt::get(ConvertType(E->getType()),
@@ -213,7 +213,7 @@ public:
     // Emit remaining default initializers
     for (/* Do not initialize i*/; i < NumVectorElements; ++i) {
       Value *Idx = llvm::ConstantInt::get(llvm::Type::Int32Ty, i);
-      llvm::Value *NewV = VMContext.getNullValue(ElementType);
+      llvm::Value *NewV = llvm::Constant::getNullValue(ElementType);
       V = Builder.CreateInsertElement(V, NewV, Idx);
     }
     
@@ -221,7 +221,7 @@ public:
   }
   
   Value *VisitImplicitValueInitExpr(const ImplicitValueInitExpr *E) {
-    return VMContext.getNullValue(ConvertType(E->getType()));
+    return llvm::Constant::getNullValue(ConvertType(E->getType()));
   }
   Value *VisitImplicitCastExpr(const ImplicitCastExpr *E);
   Value *VisitCastExpr(const CastExpr *E) {
@@ -387,7 +387,7 @@ Value *ScalarExprEmitter::EmitConversionToBool(Value *Src, QualType SrcType) {
   
   if (SrcType->isRealFloatingType()) {
     // Compare against 0.0 for fp scalars.
-    llvm::Value *Zero = VMContext.getNullValue(Src->getType());
+    llvm::Value *Zero = llvm::Constant::getNullValue(Src->getType());
     return Builder.CreateFCmpUNE(Src, Zero, "tobool");
   }
   
@@ -410,7 +410,7 @@ Value *ScalarExprEmitter::EmitConversionToBool(Value *Src, QualType SrcType) {
   }
   
   // Compare against an integer or pointer null.
-  llvm::Value *Zero = VMContext.getNullValue(Src->getType());
+  llvm::Value *Zero = llvm::Constant::getNullValue(Src->getType());
   return Builder.CreateICmpNE(Src, Zero, "tobool");
 }
 
@@ -838,7 +838,7 @@ Value *ScalarExprEmitter::VisitUnaryImag(const UnaryOperator *E) {
     CGF.EmitLValue(Op);
   else
     CGF.EmitScalarExpr(Op, true);
-  return VMContext.getNullValue(ConvertType(E->getType()));
+  return llvm::Constant::getNullValue(ConvertType(E->getType()));
 }
 
 Value *ScalarExprEmitter::VisitUnaryOffsetOf(const UnaryOperator *E)
@@ -1311,7 +1311,7 @@ Value *ScalarExprEmitter::VisitBinLAnd(const BinaryOperator *E) {
     
     // 0 && RHS: If it is safe, just elide the RHS, and return 0.
     if (!CGF.ContainsLabel(E->getRHS()))
-      return VMContext.getNullValue(CGF.LLVMIntTy);
+      return llvm::Constant::getNullValue(CGF.LLVMIntTy);
   }
   
   llvm::BasicBlock *ContBlock = CGF.createBasicBlock("land.end");

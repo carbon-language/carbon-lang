@@ -481,7 +481,7 @@ void CodeGenFunction::EmitObjCForCollectionStmt(const ObjCForCollectionStmt &S){
   llvm::BasicBlock *SetStartMutations = createBasicBlock("setstartmutations");
   
   llvm::Value *Limit = Builder.CreateLoad(LimitPtr);
-  llvm::Value *Zero = VMContext.getNullValue(UnsignedLongLTy);
+  llvm::Value *Zero = llvm::Constant::getNullValue(UnsignedLongLTy);
 
   llvm::Value *IsZero = Builder.CreateICmpEQ(Limit, Zero, "iszero");
   Builder.CreateCondBr(IsZero, NoElements, SetStartMutations);
@@ -611,7 +611,7 @@ void CodeGenFunction::EmitObjCForCollectionStmt(const ObjCForCollectionStmt &S){
     LValue LV = EmitLValue(cast<Expr>(S.getElement()));
     
     // Set the value to null.
-    Builder.CreateStore(VMContext.getNullValue(ConvertType(ElementTy)),
+    Builder.CreateStore(llvm::Constant::getNullValue(ConvertType(ElementTy)),
                         LV.getAddress());
   }
 

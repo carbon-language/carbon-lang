@@ -810,7 +810,7 @@ void CodeGenModule::EmitGlobalVarDefinition(const VarDecl *D) {
     // exists. A use may still exists, however, so we still may need
     // to do a RAUW.
     assert(!ASTTy->isIncompleteType() && "Unexpected incomplete type");
-    Init = getLLVMContext().getNullValue(getTypes().ConvertTypeForMem(ASTTy));
+    Init = llvm::Constant::getNullValue(getTypes().ConvertTypeForMem(ASTTy));
   } else {
     Init = EmitConstantExpr(D->getInit(), D->getType());
     if (!Init) {
@@ -1192,7 +1192,7 @@ static void appendFieldAndPadding(CodeGenModule &CGM,
   // Append padding
   for (int i = StructFieldNo + 1; i < NextStructFieldNo; i++) {
     llvm::Constant *C = 
-      CGM.getLLVMContext().getNullValue(STy->getElementType(StructFieldNo + 1));
+      llvm::Constant::getNullValue(STy->getElementType(StructFieldNo + 1));
     
     Fields.push_back(C);
   }
@@ -1268,7 +1268,7 @@ CodeGenModule::GetAddrOfConstantCFString(const StringLiteral *Literal) {
   if (llvm::Constant *C = Entry.getValue())
     return C;
   
-  llvm::Constant *Zero = getLLVMContext().getNullValue(llvm::Type::Int32Ty);
+  llvm::Constant *Zero = llvm::Constant::getNullValue(llvm::Type::Int32Ty);
   llvm::Constant *Zeros[] = { Zero, Zero };
   
   // If we don't already have it, get __CFConstantStringClassReference.
