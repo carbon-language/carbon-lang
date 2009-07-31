@@ -20,7 +20,7 @@
 using namespace llvm;
 
 namespace {
-class X86Operand;
+struct X86Operand;
 
 class X86ATTAsmParser : public TargetAsmParser {
   MCAsmParser &Parser;
