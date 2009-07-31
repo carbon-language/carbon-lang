@@ -1515,11 +1515,35 @@ QualType ASTContext::getExtVectorType(QualType vecType, unsigned NumElts) {
 QualType ASTContext::getDependentSizedExtVectorType(QualType vecType, 
                                                     Expr *SizeExpr,
                                                     SourceLocation AttrLoc) {
-  DependentSizedExtVectorType *New =
-      new (*this,8) DependentSizedExtVectorType(vecType, QualType(), 
-                                                SizeExpr, AttrLoc);
-
-  DependentSizedExtVectorTypes.push_back(New);
+  llvm::FoldingSetNodeID ID;
+  DependentSizedExtVectorType::Profile(ID, *this, getCanonicalType(vecType), 
+                                       SizeExpr);
+  
+  void *InsertPos = 0;
+  DependentSizedExtVectorType *Canon
+    = DependentSizedExtVectorTypes.FindNodeOrInsertPos(ID, InsertPos);
+  DependentSizedExtVectorType *New;
+  if (Canon) {
+    // We already have a canonical version of this array type; use it as
+    // the canonical type for a newly-built type.
+    New = new (*this,8) DependentSizedExtVectorType(*this, vecType,
+                                                    QualType(Canon, 0),
+                                                    SizeExpr, AttrLoc);
+  } else {
+    QualType CanonVecTy = getCanonicalType(vecType);
+    if (CanonVecTy == vecType) {
+      New = new (*this,8) DependentSizedExtVectorType(*this, vecType, 
+                                                      QualType(), SizeExpr, 
+                                                      AttrLoc);
+      DependentSizedExtVectorTypes.InsertNode(New, InsertPos);
+    } else {
+      QualType Canon = getDependentSizedExtVectorType(CanonVecTy, SizeExpr,
+                                                      SourceLocation());
+      New = new (*this,8) DependentSizedExtVectorType(*this, vecType, Canon,
+                                                      SizeExpr, AttrLoc);
+    }
+  }
+  
   Types.push_back(New);
   return QualType(New, 0);
 }

@@ -1235,21 +1235,23 @@ public:
 ///   typedef T __attribute__((ext_vector_type(Size))) type;
 /// }
 /// @endcode
-class DependentSizedExtVectorType : public Type {
+class DependentSizedExtVectorType : public Type, public llvm::FoldingSetNode {
+  ASTContext &Context;
   Expr *SizeExpr;
   /// ElementType - The element type of the array.
   QualType ElementType;
   SourceLocation loc;
   
-  DependentSizedExtVectorType(QualType ElementType, QualType can, 
-                              Expr *SizeExpr, SourceLocation loc)
+  DependentSizedExtVectorType(ASTContext &Context, QualType ElementType, 
+                              QualType can, Expr *SizeExpr, SourceLocation loc)
     : Type (DependentSizedExtVector, can, true), 
-    SizeExpr(SizeExpr), ElementType(ElementType), loc(loc) {}
+      Context(Context), SizeExpr(SizeExpr), ElementType(ElementType), 
+      loc(loc) {}
   friend class ASTContext;
   virtual void Destroy(ASTContext& C);
 
 public:
-  const Expr *getSizeExpr() const { return SizeExpr; }
+  Expr *getSizeExpr() const { return SizeExpr; }
   QualType getElementType() const { return ElementType; }
   SourceLocation getAttributeLoc() const { return loc; }
 
@@ -1260,6 +1262,13 @@ public:
     return T->getTypeClass() == DependentSizedExtVector; 
   }
   static bool classof(const DependentSizedExtVectorType *) { return true; } 
+
+  void Profile(llvm::FoldingSetNodeID &ID) {
+    Profile(ID, Context, getElementType(), getSizeExpr());
+  }
+  
+  static void Profile(llvm::FoldingSetNodeID &ID, ASTContext &Context,
+                      QualType ElementType, Expr *SizeExpr);
 };
   
 

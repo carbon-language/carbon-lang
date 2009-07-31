@@ -24,3 +24,15 @@ void f1(T (&array)[M + N]) { }
 
 template<typename T, int M, int N>
 void f1(T (&array)[M + N]) { } // expected-error{{redefinition}}
+
+// Test dependently-sized extended vector type canonicalization
+template<typename T, int N, int M>
+struct X2 {
+  typedef T __attribute__((ext_vector_type(N))) type1;
+  typedef T __attribute__((ext_vector_type(M))) type2;
+  typedef T __attribute__((ext_vector_type(N))) type3;
+  
+  void f0(type1); // expected-note{{previous}}
+  void f0(type2);
+  void f0(type3); // expected-error{{redeclared}}
+};

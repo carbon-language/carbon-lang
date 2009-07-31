@@ -76,6 +76,14 @@ void DependentSizedArrayType::Profile(llvm::FoldingSetNodeID &ID,
   E->Profile(ID, Context, true);
 }
 
+void 
+DependentSizedExtVectorType::Profile(llvm::FoldingSetNodeID &ID, 
+                                     ASTContext &Context,
+                                     QualType ElementType, Expr *SizeExpr) {
+  ID.AddPointer(ElementType.getAsOpaquePtr());
+  SizeExpr->Profile(ID, Context, true);
+}
+
 void DependentSizedExtVectorType::Destroy(ASTContext& C) {
   // FIXME: Deallocate size expression, once we're cloning properly.
 //  if (SizeExpr)
