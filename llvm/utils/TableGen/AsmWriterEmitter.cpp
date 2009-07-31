@@ -34,13 +34,19 @@ static bool isIdentChar(char C) {
 namespace llvm {  
   struct AsmWriterOperand {
     enum OpType {
+      // Output this text surrounded by quotes to the asm.
       isLiteralTextOperand, 
+      // This is the name of a routine to call to print the operand.
       isMachineInstrOperand,
+      // Output this text verbatim to the asm writer.  It is code that
+      // will output some text to the asm.
       isLiteralStatementOperand
     } OperandType;
 
     /// Str - For isLiteralTextOperand, this IS the literal text.  For
-    /// isMachineInstrOperand, this is the PrinterMethodName for the operand.
+    /// isMachineInstrOperand, this is the PrinterMethodName for the operand..
+    /// For isLiteralStatementOperand, this is the code to insert verbatim 
+    /// into the asm writer.
     std::string Str;
 
     /// MiOpNo - For isMachineInstrOperand, this is the operand number of the
@@ -85,29 +91,6 @@ namespace llvm {
     std::vector<AsmWriterOperand> Operands;
     const CodeGenInstruction *CGI;
 
-    /// MAX_GROUP_NESTING_LEVEL - The maximum number of group nesting
-    /// levels we ever expect to see in an asm operand.
-    static const int MAX_GROUP_NESTING_LEVEL = 10;
-
-    /// GroupLevel - The level of nesting of the current operand
-    /// group, such as [reg + (reg + offset)].  -1 means we are not in
-    /// a group.
-    int GroupLevel;
-
-    /// GroupDelim - Remember the delimeter for a group operand.
-    char GroupDelim[MAX_GROUP_NESTING_LEVEL];
-
-    /// ReadingWhitespace - Tell whether we just read some whitespace.
-    bool ReadingWhitespace;
-
-    /// InGroup - Determine whether we are in the middle of an
-    /// operand group.
-    bool InGroup() const { return GroupLevel != -1; }
-
-    /// InWhitespace - Determine whether we are in the middle of
-    /// emitting whitespace.
-    bool InWhitespace() const { return ReadingWhitespace; }
-
     AsmWriterInst(const CodeGenInstruction &CGI, unsigned Variant);
 
     /// MatchesAllButOneOp - If this instruction is exactly identical to the
@@ -137,14 +120,6 @@ std::string AsmWriterOperand::getCode() const {
     return Str;
   }
 
-  if (OperandType == isLiteralStatementOperand) {
-    return Str;
-  }
-
-  if (OperandType == isLiteralStatementOperand) {
-    return Str;
-  }
-
   std::string Result = Str + "(MI";
   if (MIOpNo != ~0U)
     Result += ", " + utostr(MIOpNo);
@@ -157,8 +132,7 @@ std::string AsmWriterOperand::getCode() const {
 /// ParseAsmString - Parse the specified Instruction's AsmString into this
 /// AsmWriterInst.
 ///
-AsmWriterInst::AsmWriterInst(const CodeGenInstruction &CGI, unsigned Variant)
-    : GroupLevel(-1), ReadingWhitespace(false) {
+AsmWriterInst::AsmWriterInst(const CodeGenInstruction &CGI, unsigned Variant) {
   this->CGI = &CGI;
   unsigned CurVariant = ~0U;  // ~0 if we are outside a {.|.|.} region, other #.
 
@@ -181,84 +155,22 @@ AsmWriterInst::AsmWriterInst(const CodeGenInstruction &CGI, unsigned Variant)
         for (; LastEmitted != DollarPos; ++LastEmitted)
           switch (AsmString[LastEmitted]) {
           case '\n':
-            assert(!InGroup() && "Missing matching group delimeter");
-            ReadingWhitespace = false;
             AddLiteralString("\\n");
             break;
           case '\t': 
-            if (!InGroup()) {
-              ReadingWhitespace = true;
-            }
-            AddLiteralString("\\t"); 
+            Operands.push_back(
+              // We recognize a tab as an operand delimeter.  Either
+              // output column padding if enabled or emit a space.
+              AsmWriterOperand("PadToColumn(OperandColumn++);\n",
+                               AsmWriterOperand::isLiteralStatementOperand));
             break;
           case '"':
-            if (InWhitespace() && !InGroup())
-              Operands.push_back(
-                AsmWriterOperand(
-                  "O.PadToColumn(TAI->getOperandColumn(OperandColumn++));\n",
-                  AsmWriterOperand::isLiteralStatementOperand));
-            ReadingWhitespace = false;
             AddLiteralString("\\\"");
             break;
           case '\\':
-            if (InWhitespace() && !InGroup())
-              Operands.push_back(
-                AsmWriterOperand(
-                  "O.PadToColumn(TAI->getOperandColumn(OperandColumn++));\n",
-                  AsmWriterOperand::isLiteralStatementOperand));
-            ReadingWhitespace = false;
             AddLiteralString("\\\\");
             break;
-
-          case '(':  // Fallthrough
-          case '[':
-            if (InWhitespace() && !InGroup())
-              Operands.push_back(
-                AsmWriterOperand(
-                  "O.PadToColumn(TAI->getOperandColumn(OperandColumn++));\n",
-                  AsmWriterOperand::isLiteralStatementOperand));
-            ReadingWhitespace = false;
-
-            ++GroupLevel;
-            assert(GroupLevel < MAX_GROUP_NESTING_LEVEL
-                   && "Exceeded maximum operand group nesting level");
-            GroupDelim[GroupLevel] = AsmString[LastEmitted];
-            AddLiteralString(std::string(1, AsmString[LastEmitted]));
-            break;
-
-          case ')':  // Fallthrough
-          case ']':
-            if (InWhitespace() && !InGroup())
-              Operands.push_back(
-                AsmWriterOperand(
-                  "O.PadToColumn(TAI->getOperandColumn(OperandColumn++));\n",
-                  AsmWriterOperand::isLiteralStatementOperand));
-            ReadingWhitespace = false;
-
-            if (AsmString[LastEmitted] == ')')
-              assert(GroupDelim[GroupLevel] == '(' && "Mismatched delimeters");
-            else
-              assert(GroupDelim[GroupLevel] == '[' && "Mismatched delimeters");
-            
-            --GroupLevel;
-            assert(GroupLevel > -2 && "Too many end delimeters!");
-            AddLiteralString(std::string(1, AsmString[LastEmitted]));
-            break;
-            
           default:
-            if (AsmString[LastEmitted] != ' ' &&
-                AsmString[LastEmitted] != '\t') {
-              if (!InGroup() && InWhitespace())
-                Operands.push_back(
-                  AsmWriterOperand(
-                    "O.PadToColumn(TAI->getOperandColumn(OperandColumn++));\n",
-                    AsmWriterOperand::isLiteralStatementOperand));
-              ReadingWhitespace = false;
-            }
-            else 
-              if (!InGroup())
-                ReadingWhitespace = true;
-
             AddLiteralString(std::string(1, AsmString[LastEmitted]));
             break;
           }
@@ -269,33 +181,15 @@ AsmWriterInst::AsmWriterInst(const CodeGenInstruction &CGI, unsigned Variant)
       if (DollarPos+1 != AsmString.size() &&
           (CurVariant == Variant || CurVariant == ~0U)) {
         if (AsmString[DollarPos+1] == 'n') {
-          assert(!InGroup() && "Missing matching group delimeter");
-          ReadingWhitespace = false;
           AddLiteralString("\\n");
         } else if (AsmString[DollarPos+1] == 't') {
-          if (!InGroup()) {
-            ReadingWhitespace = true;
-          }
-          AddLiteralString("\\t");
+          Operands.push_back(
+            // We recognize a tab as an operand delimeter.  Either
+            // output column padding if enabled or emit a space.
+            AsmWriterOperand("PadToColumn(OperandColumn++);\n",
+                             AsmWriterOperand::isLiteralStatementOperand));
         } else if (std::string("${|}\\").find(AsmString[DollarPos+1]) 
                    != std::string::npos) {
-          if (InWhitespace() && !InGroup())
-            Operands.push_back(
-              AsmWriterOperand(
-                "O.PadToColumn(TAI->getOperandColumn(OperandColumn++));\n",
-                AsmWriterOperand::isLiteralStatementOperand));
-          ReadingWhitespace = false;
-
-          if (AsmString[DollarPos+1] == '{') {
-            ++GroupLevel;
-            assert(GroupLevel < MAX_GROUP_NESTING_LEVEL
-                   && "Exceeded maximum operand group nesting level");
-            GroupDelim[GroupLevel] = AsmString[DollarPos+1];
-          } else if (AsmString[DollarPos+1] == '}') {
-            assert(GroupDelim[GroupLevel] == '{' && "Mismatched delimeters");
-            --GroupLevel;
-            assert(GroupLevel > -2 && "Too many end delimeters!");
-          }
           AddLiteralString(std::string(1, AsmString[DollarPos+1]));
         } else {
           throw "Non-supported escaped character found in instruction '" +
@@ -325,23 +219,10 @@ AsmWriterInst::AsmWriterInst(const CodeGenInstruction &CGI, unsigned Variant)
     } else if (DollarPos+1 != AsmString.size() &&
                AsmString[DollarPos+1] == '$') {
       if (CurVariant == Variant || CurVariant == ~0U) {
-        if (InWhitespace() && !InGroup())
-          Operands.push_back(
-            AsmWriterOperand(
-              "O.PadToColumn(TAI->getOperandColumn(OperandColumn++));\n",
-              AsmWriterOperand::isLiteralStatementOperand));
-        ReadingWhitespace = false;
         AddLiteralString("$");  // "$$" -> $
       }
       LastEmitted = DollarPos+2;
     } else {
-      if (InWhitespace() && !InGroup())
-        Operands.push_back(
-          AsmWriterOperand(
-            "O.PadToColumn(TAI->getOperandColumn(OperandColumn++));\n",
-            AsmWriterOperand::isLiteralStatementOperand));
-      ReadingWhitespace = false;
-
       // Get the name of the variable.
       std::string::size_type VarEnd = DollarPos+1;
  
@@ -852,6 +733,8 @@ void AsmWriterEmitter::run(raw_ostream &O) {
     << "  if (TAI->getOperandColumn(1) > 0) {\n"
     << "    // Don't emit trailing whitespace, let the column padding do it.  This\n"
     << "    // guarantees that a stray long opcode + tab won't upset the alignment.\n"
+    << "    // We need to handle this special case here because sometimes the initial\n"
+    << "    // mnemonic string includes a tab or space and sometimes it doesn't.\n"
     << "    unsigned OpLength = std::strlen(AsmStrs+(Bits & " << (1 << AsmStrBits)-1 << "));\n"
     << "    if (OpLength > 0 &&\n"
     << "        ((AsmStrs+(Bits & " << (1 << AsmStrBits)-1 << "))[OpLength-1] == ' ' ||\n"

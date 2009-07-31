@@ -847,8 +847,28 @@ void AsmPrinter::EmitAlignment(unsigned NumBits, const GlobalValue *GV,
   }
   O << '\n';
 }
-
     
+/// PadToColumn - This gets called every time a tab is emitted.  If
+/// column padding is turned on, we replace the tab with the
+/// appropriate amount of padding.  If not, we replace the tab with a
+/// space, except for the first operand so that initial operands are
+/// always lined up by tabs.
+void AsmPrinter::PadToColumn(unsigned Operand) const {
+  if (TAI->getOperandColumn(Operand) > 0) {
+    O.PadToColumn(TAI->getOperandColumn(Operand), 1);
+  }
+  else {
+    if (Operand == 1) {
+      // Emit the tab after the mnemonic.
+      O << '\t';
+    }
+    else {
+      // Replace the tab with a space.
+      O << ' ';
+    }
+  }
+}
+
 /// EmitZeros - Emit a block of zeros.
 ///
 void AsmPrinter::EmitZeros(uint64_t NumZeros, unsigned AddrSpace) const {

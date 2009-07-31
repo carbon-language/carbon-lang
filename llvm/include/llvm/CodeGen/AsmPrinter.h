@@ -226,11 +226,10 @@ namespace llvm {
                                        unsigned AsmVariant, 
                                        const char *ExtraCode);
     
-    
     /// PrintGlobalVariable - Emit the specified global variable and its
     /// initializer to the output stream.
     virtual void PrintGlobalVariable(const GlobalVariable *GV) = 0;
-    
+
     /// SetupMachineFunction - This should be called when a new MachineFunction
     /// is being processed from runOnMachineFunction.
     void SetupMachineFunction(MachineFunction &MF);
@@ -357,6 +356,13 @@ namespace llvm {
     void EmitComments(const MCInst &MI) const;
 
   protected:
+    /// PadToColumn - This gets called every time a tab is emitted.  If
+    /// column padding is turned on, we replace the tab with the
+    /// appropriate amount of padding.  If not, we replace the tab with a
+    /// space, except for the first operand so that initial operands are
+    /// always lined up by tabs.
+    void PadToColumn(unsigned Operand) const;
+
     /// EmitZeros - Emit a block of zeros.
     ///
     void EmitZeros(uint64_t NumZeros, unsigned AddrSpace = 0) const;

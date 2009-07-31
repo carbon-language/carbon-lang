@@ -1,5 +1,5 @@
 ; RUN: llvm-as < %s | llc -march=x86-64 -mtriple=x86_64-linux-gnu -relocation-model=pic -regalloc=local > %t
-; RUN: grep {leaq	foo@TLSGD(%rip), %rdi} %t
+; RUN: grep {leaq foo@TLSGD(%rip), %rdi} %t
 
 @foo = internal thread_local global i32 100
 
