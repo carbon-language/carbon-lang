@@ -75,12 +75,51 @@ namespace {
 
 }
 
+/// NeedsQuoting - Return true if the string \arg Str needs quoting, i.e., it
+/// does not match [a-zA-Z_.][a-zA-Z0-9_.]*.
+//
+// FIXME: This could be more permissive, do we care?
+static inline bool NeedsQuoting(const StringRef &Str) {
+  if (Str.empty())
+    return true;
+
+  // Check that first character is in [a-zA-Z_.].
+  if (!((Str[0] >= 'a' && Str[0] <= 'z') ||
+        (Str[0] >= 'A' && Str[0] <= 'Z') ||
+        (Str[0] == '_' || Str[0] == '.')))
+    return true;
+
+  // Check subsequent characters are in [a-zA-Z0-9_.].
+  for (unsigned i = 1, e = Str.size(); i != e; ++i)
+    if (!((Str[i] >= 'a' && Str[i] <= 'z') ||
+          (Str[i] >= 'A' && Str[i] <= 'Z') ||
+          (Str[i] >= '0' && Str[i] <= '9') ||
+          (Str[i] == '_' || Str[i] == '.')))
+      return true;
+
+  return false;
+}
+
+/// Allow printing sections directly to a raw_ostream with proper quoting.
+static inline raw_ostream &operator<<(raw_ostream &os, const MCSection *S) {
+  if (NeedsQuoting(S->getName()))
+    return os << '"' << S->getName() << '"';
+  return os << S->getName();
+}
+
+/// Allow printing symbols directly to a raw_ostream with proper quoting.
+static inline raw_ostream &operator<<(raw_ostream &os, const MCSymbol *S) {
+  if (NeedsQuoting(S->getName()))
+    return os << '"' << S->getName() << '"';
+  return os << S->getName();
+}
+
 /// Allow printing values directly to a raw_ostream.
 static inline raw_ostream &operator<<(raw_ostream &os, const MCValue &Value) {
   if (Value.getSymA()) {
-    os << Value.getSymA()->getName();
+    os << Value.getSymA();
     if (Value.getSymB())
-      os << " - " << Value.getSymB()->getName();
+      os << " - " << Value.getSymB();
     if (Value.getConstant())
       os << " + " << Value.getConstant();
   } else {
@@ -108,7 +147,7 @@ void MCAsmStreamer::SwitchSection(MCSection *Section) {
     // FIXME: Really we would like the segment, flags, etc. to be separate
     // values instead of embedded in the name. Not all assemblers understand all
     // this stuff though.
-    OS << ".section " << Section->getName() << "\n";
+    OS << ".section " << Section << "\n";
   }
 }
 
@@ -118,7 +157,7 @@ void MCAsmStreamer::EmitLabel(MCSymbol *Symbol) {
   assert(!getContext().GetSymbolValue(Symbol) && 
          "Cannot emit symbol which was directly assigned to!");
 
-  OS << Symbol->getName() << ":\n";
+  OS << Symbol << ":\n";
   Symbol->setSection(CurSection);
   Symbol->setExternal(false);
 }
@@ -135,9 +174,9 @@ void MCAsmStreamer::EmitAssignment(MCSymbol *Symbol, const MCValue &Value,
   assert(!Symbol->getSection() && "Cannot assign to a label!");
 
   if (MakeAbsolute) {
-    OS << ".set " << Symbol->getName() << ", " << Value << '\n';
+    OS << ".set " << Symbol << ", " << Value << '\n';
   } else {
-    OS << Symbol->getName() << " = " << Value << '\n';
+    OS << Symbol << " = " << Value << '\n';
   }
 
   getContext().SetSymbolValue(Symbol, Value);
@@ -160,15 +199,15 @@ void MCAsmStreamer::EmitSymbolAttribute(MCSymbol *Symbol,
   case WeakReference: OS << ".weak_reference"; break;
   }
 
-  OS << ' ' << Symbol->getName() << '\n';
+  OS << ' ' << Symbol << '\n';
 }
 
 void MCAsmStreamer::EmitSymbolDesc(MCSymbol *Symbol, unsigned DescValue) {
-  OS << ".desc" << ' ' << Symbol->getName() << ',' << DescValue << '\n';
+  OS << ".desc" << ' ' << Symbol << ',' << DescValue << '\n';
 }
 
 void MCAsmStreamer::EmitLocalSymbol(MCSymbol *Symbol, const MCValue &Value) {
-  OS << ".lsym" << ' ' << Symbol->getName() << ',' << Value << '\n';
+  OS << ".lsym" << ' ' << Symbol << ',' << Value << '\n';
 }
 
 void MCAsmStreamer::EmitCommonSymbol(MCSymbol *Symbol, unsigned Size,
@@ -177,7 +216,7 @@ void MCAsmStreamer::EmitCommonSymbol(MCSymbol *Symbol, unsigned Size,
     OS << ".lcomm";
   else
     OS << ".comm";
-  OS << ' ' << Symbol->getName() << ',' << Size;
+  OS << ' ' << Symbol << ',' << Size;
   if (Pow2Alignment != 0)
     OS << ',' << Pow2Alignment;
   OS << '\n';
@@ -189,9 +228,9 @@ void MCAsmStreamer::EmitZerofill(MCSection *Section, MCSymbol *Symbol,
   // FIXME: Really we would like the segment and section names as well as the
   // section type to be separate values instead of embedded in the name. Not
   // all assemblers understand all this stuff though.
-  OS << ".zerofill " << Section->getName();
+  OS << ".zerofill " << Section;
   if (Symbol != NULL) {
-    OS << ',' << Symbol->getName() << ',' << Size;
+    OS << ',' << Symbol << ',' << Size;
     if (Pow2Alignment != 0)
       OS << ',' << Pow2Alignment;
   }
