@@ -289,9 +289,11 @@ unsigned SelectionDAGISel::MakeReg(MVT VT) {
 
 void SelectionDAGISel::getAnalysisUsage(AnalysisUsage &AU) const {
   AU.addRequired<AliasAnalysis>();
+  AU.addPreserved<AliasAnalysis>();
   AU.addRequired<GCModuleInfo>();
+  AU.addPreserved<GCModuleInfo>();
   AU.addRequired<DwarfWriter>();
-  AU.setPreservesAll();
+  AU.addPreserved<DwarfWriter>();
   MachineFunctionPass::getAnalysisUsage(AU);
 }
 
