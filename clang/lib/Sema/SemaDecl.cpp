@@ -5169,7 +5169,9 @@ void Sema::ActOnEnumBody(SourceLocation EnumLoc, SourceLocation LBraceLoc,
     
     // Adjust the Expr initializer and type.
     if (ECD->getInitExpr())
-      ECD->setInitExpr(new (Context) ImplicitCastExpr(NewTy, ECD->getInitExpr(), 
+      ECD->setInitExpr(new (Context) ImplicitCastExpr(NewTy, 
+                                                      CastExpr::CK_Unknown, 
+                                                      ECD->getInitExpr(), 
                                                       /*isLvalue=*/false));
     if (getLangOptions().CPlusPlus)
       // C++ [dcl.enum]p4: Following the closing brace of an

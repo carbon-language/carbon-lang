@@ -460,6 +460,8 @@ unsigned PCHStmtReader::VisitObjCIsaExpr(ObjCIsaExpr *E) {
 unsigned PCHStmtReader::VisitCastExpr(CastExpr *E) {
   VisitExpr(E);
   E->setSubExpr(cast<Expr>(StmtStack.back()));
+  E->setCastKind((CastExpr::CastKind)Record[Idx++]);
+
   return 1;
 }
 

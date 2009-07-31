@@ -1154,9 +1154,27 @@ public:
 /// representation in the source code (ExplicitCastExpr's derived
 /// classes).
 class CastExpr : public Expr {
+public:
+  /// CastKind - the kind of cast this represents.
+  enum CastKind {
+    /// CK_Unknown - Unknown cast kind.
+    /// FIXME: The goal is to get rid of this and make all casts have a 
+    /// kind so that the AST client doesn't have to try to figure out what's
+    /// going on.
+    CK_Unknown,
+    
+    /// CK_BitCast - Used for reinterpret_cast.
+    CK_BitCast,
+    
+    /// CK_NoOp - Used for const_cast.
+    CK_NoOp
+  };
+  
+private:
+  CastKind Kind;
   Stmt *Op;
 protected:
-  CastExpr(StmtClass SC, QualType ty, Expr *op) : 
+  CastExpr(StmtClass SC, QualType ty, CastKind kind, Expr *op) : 
     Expr(SC, ty,
          // Cast expressions are type-dependent if the type is
          // dependent (C++ [temp.dep.expr]p3).
@@ -1164,13 +1182,16 @@ protected:
          // Cast expressions are value-dependent if the type is
          // dependent or if the subexpression is value-dependent.
          ty->isDependentType() || (op && op->isValueDependent())), 
-    Op(op) {}
+    Kind(kind), Op(op) {}
   
   /// \brief Construct an empty cast.
   CastExpr(StmtClass SC, EmptyShell Empty) 
     : Expr(SC, Empty) { }
   
 public:
+  CastKind getCastKind() const { return Kind; }
+  void setCastKind(CastKind K) { Kind = K; }
+  
   Expr *getSubExpr() { return cast<Expr>(Op); }
   const Expr *getSubExpr() const { return cast<Expr>(Op); }
   void setSubExpr(Expr *E) { Op = E; }
@@ -1213,8 +1234,8 @@ class ImplicitCastExpr : public CastExpr {
   bool LvalueCast;
 
 public:
-  ImplicitCastExpr(QualType ty, Expr *op, bool Lvalue) : 
-    CastExpr(ImplicitCastExprClass, ty, op), LvalueCast(Lvalue) { }
+  ImplicitCastExpr(QualType ty, CastKind kind, Expr *op, bool Lvalue) : 
+    CastExpr(ImplicitCastExprClass, ty, kind, op), LvalueCast(Lvalue) { }
 
   /// \brief Construct an empty implicit cast.
   explicit ImplicitCastExpr(EmptyShell Shell) 
@@ -1259,8 +1280,9 @@ class ExplicitCastExpr : public CastExpr {
   QualType TypeAsWritten;
 
 protected:
-  ExplicitCastExpr(StmtClass SC, QualType exprTy, Expr *op, QualType writtenTy) 
-    : CastExpr(SC, exprTy, op), TypeAsWritten(writtenTy) {}
+  ExplicitCastExpr(StmtClass SC, QualType exprTy, CastKind kind, Expr *op, 
+                   QualType writtenTy) 
+    : CastExpr(SC, exprTy, kind, op), TypeAsWritten(writtenTy) {}
 
   /// \brief Construct an empty explicit cast.
   ExplicitCastExpr(StmtClass SC, EmptyShell Shell) 
@@ -1291,9 +1313,9 @@ class CStyleCastExpr : public ExplicitCastExpr {
   SourceLocation LPLoc; // the location of the left paren
   SourceLocation RPLoc; // the location of the right paren
 public:
-  CStyleCastExpr(QualType exprTy, Expr *op, QualType writtenTy, 
+  CStyleCastExpr(QualType exprTy, CastKind kind, Expr *op, QualType writtenTy, 
                     SourceLocation l, SourceLocation r) : 
-    ExplicitCastExpr(CStyleCastExprClass, exprTy, op, writtenTy), 
+    ExplicitCastExpr(CStyleCastExprClass, exprTy, kind, op, writtenTy), 
     LPLoc(l), RPLoc(r) {}
 
   /// \brief Construct an empty C-style explicit cast.

@@ -3075,8 +3075,8 @@ Sema::ActOnCastExpr(SourceLocation LParenLoc, TypeTy *Ty,
   if (CheckCastTypes(SourceRange(LParenLoc, RParenLoc), castType, castExpr))
     return ExprError();
   return Owned(new (Context) CStyleCastExpr(castType.getNonReferenceType(),
-                                            castExpr, castType,
-                                            LParenLoc, RParenLoc));
+                                            CastExpr::CK_Unknown, castExpr, 
+                                            castType, LParenLoc, RParenLoc));
 }
 
 /// Note that lhs is not null here, even if this is the gnu "x ?: y" extension.

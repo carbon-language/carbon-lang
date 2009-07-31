@@ -428,6 +428,7 @@ void PCHStmtWriter::VisitObjCIsaExpr(ObjCIsaExpr *E) {
 void PCHStmtWriter::VisitCastExpr(CastExpr *E) {
   VisitExpr(E);
   Writer.WriteSubStmt(E->getSubExpr());
+  Record.push_back(E->getCastKind()); // FIXME: stable encoding
 }
 
 void PCHStmtWriter::VisitBinaryOperator(BinaryOperator *E) {

@@ -856,6 +856,7 @@ Sema::OwningExprResult TemplateExprInstantiator::VisitImplicitCastExpr(
 
   ImplicitCastExpr *ICE = 
     new (SemaRef.Context) ImplicitCastExpr(E->getType(),
+                                           E->getCastKind(),
                                            (Expr *)SubExpr.release(),
                                            E->isLvalueCast());
   return SemaRef.Owned(ICE);

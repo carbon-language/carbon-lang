@@ -94,7 +94,7 @@
 		35D55B270D81D8C60092E734 /* BasicValueFactory.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 35D55B240D81D8C60092E734 /* BasicValueFactory.cpp */; };
 		35D55B280D81D8C60092E734 /* CFRefCount.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 35D55B250D81D8C60092E734 /* CFRefCount.cpp */; };
 		35E194690ECB82FB00F21733 /* SemaCXXScopeSpec.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 35E194670ECB82FB00F21733 /* SemaCXXScopeSpec.cpp */; };
-		35E1946A0ECB82FB00F21733 /* SemaNamedCast.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 35E194680ECB82FB00F21733 /* SemaNamedCast.cpp */; };
+		35E1946A0ECB82FB00F21733 /* SemaCXXCast.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 35E194680ECB82FB00F21733 /* SemaCXXCast.cpp */; };
 		35E1946D0ECB83C100F21733 /* PTHLexer.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 35E1946C0ECB83C100F21733 /* PTHLexer.cpp */; };
 		35EE48B10E0C4CCA00715C54 /* DeclCXX.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 35EE48AF0E0C4CCA00715C54 /* DeclCXX.cpp */; };
 		35EE48B20E0C4CCA00715C54 /* ParentMap.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 35EE48B00E0C4CCA00715C54 /* ParentMap.cpp */; };
@@ -337,7 +337,7 @@
 		1A2A54AE0FD1DD1C00F4CE45 /* PrintPreprocessedOutput.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = PrintPreprocessedOutput.cpp; path = lib/Frontend/PrintPreprocessedOutput.cpp; sourceTree = "<group>"; };
 		1A2A54AF0FD1DD1C00F4CE45 /* RewriteBlocks.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = RewriteBlocks.cpp; path = lib/Frontend/RewriteBlocks.cpp; sourceTree = "<group>"; };
 		1A2A54B00FD1DD1C00F4CE45 /* RewriteMacros.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = RewriteMacros.cpp; path = lib/Frontend/RewriteMacros.cpp; sourceTree = "<group>"; };
-		1A2A54B10FD1DD1C00F4CE45 /* RewriteObjC.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = RewriteObjC.cpp; path = lib/Frontend/RewriteObjC.cpp; sourceTree = "<group>"; };
+		1A2A54B10FD1DD1C00F4CE45 /* RewriteObjC.cpp */ = {isa = PBXFileReference; fileEncoding = 4; indentWidth = 2; lastKnownFileType = sourcecode.cpp.cpp; name = RewriteObjC.cpp; path = lib/Frontend/RewriteObjC.cpp; sourceTree = "<group>"; tabWidth = 2; };
 		1A2A54B20FD1DD1C00F4CE45 /* RewriteTest.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = RewriteTest.cpp; path = lib/Frontend/RewriteTest.cpp; sourceTree = "<group>"; };
 		1A2A54B30FD1DD1C00F4CE45 /* StmtXML.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = StmtXML.cpp; path = lib/Frontend/StmtXML.cpp; sourceTree = "<group>"; };
 		1A2A54B40FD1DD1C00F4CE45 /* Warnings.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = Warnings.cpp; path = lib/Frontend/Warnings.cpp; sourceTree = "<group>"; };
@@ -458,7 +458,7 @@
 		35D55B250D81D8C60092E734 /* CFRefCount.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = CFRefCount.cpp; path = lib/Analysis/CFRefCount.cpp; sourceTree = "<group>"; };
 		35D55B290D81D8E50092E734 /* BasicValueFactory.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = BasicValueFactory.h; path = clang/Analysis/PathSensitive/BasicValueFactory.h; sourceTree = "<group>"; };
 		35E194670ECB82FB00F21733 /* SemaCXXScopeSpec.cpp */ = {isa = PBXFileReference; fileEncoding = 4; indentWidth = 2; lastKnownFileType = sourcecode.cpp.cpp; name = SemaCXXScopeSpec.cpp; path = lib/Sema/SemaCXXScopeSpec.cpp; sourceTree = "<group>"; tabWidth = 2; };
-		35E194680ECB82FB00F21733 /* SemaNamedCast.cpp */ = {isa = PBXFileReference; fileEncoding = 4; indentWidth = 2; lastKnownFileType = sourcecode.cpp.cpp; name = SemaNamedCast.cpp; path = lib/Sema/SemaNamedCast.cpp; sourceTree = "<group>"; tabWidth = 2; };
+		35E194680ECB82FB00F21733 /* SemaCXXCast.cpp */ = {isa = PBXFileReference; fileEncoding = 4; indentWidth = 2; lastKnownFileType = sourcecode.cpp.cpp; name = SemaCXXCast.cpp; path = lib/Sema/SemaCXXCast.cpp; sourceTree = "<group>"; tabWidth = 2; };
 		35E1946C0ECB83C100F21733 /* PTHLexer.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = PTHLexer.cpp; sourceTree = "<group>"; };
 		35EE48AD0E0C4CB200715C54 /* DeclCXX.h */ = {isa = PBXFileReference; fileEncoding = 4; indentWidth = 2; lastKnownFileType = sourcecode.c.h; name = DeclCXX.h; path = clang/AST/DeclCXX.h; sourceTree = "<group>"; tabWidth = 2; };
 		35EE48AE0E0C4CB200715C54 /* ParentMap.h */ = {isa = PBXFileReference; fileEncoding = 4; indentWidth = 2; lastKnownFileType = sourcecode.c.h; name = ParentMap.h; path = clang/AST/ParentMap.h; sourceTree = "<group>"; tabWidth = 2; };
@@ -1062,7 +1062,7 @@
 				DE67E70E0C020ECF00F66BC5 /* SemaExprCXX.cpp */,
 				3599299A0DE2425300A8A33E /* SemaInit.cpp */,
 				357EA27C0F2526F300439B60 /* SemaLookup.cpp */,
-				35E194680ECB82FB00F21733 /* SemaNamedCast.cpp */,
+				35E194680ECB82FB00F21733 /* SemaCXXCast.cpp */,
 				35585DBE0EAFBC4500D0A97A /* SemaOverload.cpp */,
 				35585DBF0EAFBC4500D0A97A /* SemaOverload.h */,
 				DE67E70C0C020ECA00F66BC5 /* SemaStmt.cpp */,
@@ -1625,7 +1625,7 @@
 				3557D1A90EB136B100C59739 /* InheritViz.cpp in Sources */,
 				3557D1F00EB13BB700C59739 /* SemaInherit.cpp in Sources */,
 				35E194690ECB82FB00F21733 /* SemaCXXScopeSpec.cpp in Sources */,
-				35E1946A0ECB82FB00F21733 /* SemaNamedCast.cpp in Sources */,
+				35E1946A0ECB82FB00F21733 /* SemaCXXCast.cpp in Sources */,
 				35E1946D0ECB83C100F21733 /* PTHLexer.cpp in Sources */,
 				3537AA0E0ECD08A4008F7CDC /* PreprocessorLexer.cpp in Sources */,
 				DE8823CB0ED0046600CBC30A /* APValue.cpp in Sources */,

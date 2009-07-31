@@ -217,7 +217,8 @@ void Sema::ImpCastExprToType(Expr *&Expr, QualType Ty, bool isLvalue) {
     ImpCast->setType(Ty);
     ImpCast->setLvalueCast(isLvalue);
   } else 
-    Expr = new (Context) ImplicitCastExpr(Ty, Expr, isLvalue);
+    Expr = new (Context) ImplicitCastExpr(Ty, CastExpr::CK_Unknown, Expr, 
+                                          isLvalue);
 }
 
 void Sema::DeleteExpr(ExprTy *E) {

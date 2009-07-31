@@ -112,9 +112,9 @@ private:
   SourceLocation Loc; // the location of the casting op
 
 protected:
-  CXXNamedCastExpr(StmtClass SC, QualType ty, Expr *op, QualType writtenTy, 
-                   SourceLocation l)
-    : ExplicitCastExpr(SC, ty, op, writtenTy), Loc(l) {}
+  CXXNamedCastExpr(StmtClass SC, QualType ty, CastKind kind, Expr *op, 
+                   QualType writtenTy, SourceLocation l)
+    : ExplicitCastExpr(SC, ty, kind, op, writtenTy), Loc(l) {}
 
 public:
   const char *getCastName() const;
@@ -148,8 +148,9 @@ public:
 /// @c static_cast<int>(1.0).
 class CXXStaticCastExpr : public CXXNamedCastExpr {
 public:
-  CXXStaticCastExpr(QualType ty, Expr *op, QualType writtenTy, SourceLocation l)
-    : CXXNamedCastExpr(CXXStaticCastExprClass, ty, op, writtenTy, l) {}
+  CXXStaticCastExpr(QualType ty, CastKind kind, Expr *op, QualType writtenTy, 
+                    SourceLocation l)
+    : CXXNamedCastExpr(CXXStaticCastExprClass, ty, kind, op, writtenTy, l) {}
 
   static bool classof(const Stmt *T) { 
     return T->getStmtClass() == CXXStaticCastExprClass;
@@ -165,8 +166,9 @@ public:
 /// @c dynamic_cast<Derived*>(BasePtr).
 class CXXDynamicCastExpr : public CXXNamedCastExpr {
 public:
-  CXXDynamicCastExpr(QualType ty, Expr *op, QualType writtenTy, SourceLocation l)
-    : CXXNamedCastExpr(CXXDynamicCastExprClass, ty, op, writtenTy, l) {}
+  CXXDynamicCastExpr(QualType ty, CastKind kind, Expr *op, QualType writtenTy, 
+                     SourceLocation l)
+    : CXXNamedCastExpr(CXXDynamicCastExprClass, ty, kind, op, writtenTy, l) {}
 
   static bool classof(const Stmt *T) { 
     return T->getStmtClass() == CXXDynamicCastExprClass;
@@ -184,7 +186,8 @@ class CXXReinterpretCastExpr : public CXXNamedCastExpr {
 public:
   CXXReinterpretCastExpr(QualType ty, Expr *op, QualType writtenTy, 
                          SourceLocation l)
-    : CXXNamedCastExpr(CXXReinterpretCastExprClass, ty, op, writtenTy, l) {}
+    : CXXNamedCastExpr(CXXReinterpretCastExprClass, ty, CK_BitCast, op, 
+                       writtenTy, l) {}
 
   static bool classof(const Stmt *T) { 
     return T->getStmtClass() == CXXReinterpretCastExprClass;
@@ -201,7 +204,7 @@ class CXXConstCastExpr : public CXXNamedCastExpr {
 public:
   CXXConstCastExpr(QualType ty, Expr *op, QualType writtenTy, 
                    SourceLocation l)
-    : CXXNamedCastExpr(CXXConstCastExprClass, ty, op, writtenTy, l) {}
+    : CXXNamedCastExpr(CXXConstCastExprClass, ty, CK_NoOp, op, writtenTy, l) {}
 
   static bool classof(const Stmt *T) { 
     return T->getStmtClass() == CXXConstCastExprClass;
@@ -529,9 +532,9 @@ class CXXFunctionalCastExpr : public ExplicitCastExpr {
   SourceLocation RParenLoc;
 public:
   CXXFunctionalCastExpr(QualType ty, QualType writtenTy, 
-                        SourceLocation tyBeginLoc, Expr *castExpr,
-                        SourceLocation rParenLoc) : 
-    ExplicitCastExpr(CXXFunctionalCastExprClass, ty, castExpr, writtenTy),
+                        SourceLocation tyBeginLoc, CastKind kind, 
+                        Expr *castExpr, SourceLocation rParenLoc) : 
+    ExplicitCastExpr(CXXFunctionalCastExprClass, ty, kind, castExpr, writtenTy),
     TyBeginLoc(tyBeginLoc), RParenLoc(rParenLoc) {}
 
   SourceLocation getTypeBeginLoc() const { return TyBeginLoc; }

@@ -123,7 +123,8 @@ Sema::ActOnCXXNamedCast(SourceLocation OpLoc, tok::TokenKind Kind,
     if (!TypeDependent)
       CheckDynamicCast(*this, Ex, DestType, OpRange, DestRange);
     return Owned(new (Context)CXXDynamicCastExpr(DestType.getNonReferenceType(),
-                                                 Ex, DestType, OpLoc));
+                                                 CastExpr::CK_Unknown, Ex, 
+                                                 DestType, OpLoc));
 
   case tok::kw_reinterpret_cast:
     if (!TypeDependent)
@@ -136,7 +137,8 @@ Sema::ActOnCXXNamedCast(SourceLocation OpLoc, tok::TokenKind Kind,
     if (!TypeDependent)
       CheckStaticCast(*this, Ex, DestType, OpRange);
     return Owned(new (Context) CXXStaticCastExpr(DestType.getNonReferenceType(),
-                                                 Ex, DestType, OpLoc));
+                                                 CastExpr::CK_Unknown, Ex, 
+                                                 DestType, OpLoc));
   }
 
   return ExprError();

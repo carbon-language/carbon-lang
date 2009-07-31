@@ -207,8 +207,9 @@ Sema::ActOnCXXTypeConstructExpr(SourceRange TypeRange, TypeTy *TypeRep,
       return ExprError();
     exprs.release();
     return Owned(new (Context) CXXFunctionalCastExpr(Ty.getNonReferenceType(),
-                                                     Ty, TyBeginLoc, Exprs[0],
-                                                     RParenLoc));
+                                                     Ty, TyBeginLoc, 
+                                                     CastExpr::CK_Unknown, 
+                                                     Exprs[0], RParenLoc));
   }
 
   if (const RecordType *RT = Ty->getAs<RecordType>()) {

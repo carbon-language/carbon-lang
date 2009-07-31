@@ -1155,9 +1155,11 @@ Stmt *RewriteObjC::RewriteObjCIvarRefExpr(ObjCIvarRefExpr *IV,
                                           SourceLocation(), II);
       assert(RD && "RewriteObjCIvarRefExpr(): Can't find RecordDecl");
       QualType castT = Context->getPointerType(Context->getTagDeclType(RD));
-      CastExpr *castExpr = new (Context) CStyleCastExpr(castT, IV->getBase(),
-                                                         castT,SourceLocation(),
-                                                         SourceLocation());
+      CastExpr *castExpr = new (Context) CStyleCastExpr(castT, 
+                                                        CastExpr::CK_Unknown,
+                                                        IV->getBase(),
+                                                        castT,SourceLocation(),
+                                                        SourceLocation());
       // Don't forget the parens to enforce the proper binding.
       ParenExpr *PE = new (Context) ParenExpr(IV->getBase()->getLocStart(),
                                                IV->getBase()->getLocEnd(),
@@ -1200,7 +1202,9 @@ Stmt *RewriteObjC::RewriteObjCIvarRefExpr(ObjCIvarRefExpr *IV,
                                           SourceLocation(), II);
       assert(RD && "RewriteObjCIvarRefExpr(): Can't find RecordDecl");
       QualType castT = Context->getPointerType(Context->getTagDeclType(RD));
-      CastExpr *castExpr = new (Context) CStyleCastExpr(castT, IV->getBase(),
+      CastExpr *castExpr = new (Context) CStyleCastExpr(castT, 
+                                                        CastExpr::CK_Unknown,
+                                                        IV->getBase(),
                                                         castT, SourceLocation(),
                                                         SourceLocation());
       // Don't forget the parens to enforce the proper binding.
@@ -1500,6 +1504,7 @@ Stmt *RewriteObjC::RewriteObjCSynchronizedStmt(ObjCAtSynchronizedStmt *S) {
   buf += "  if (!_rethrow) objc_exception_try_exit(&_stack);\n";
   buf += "  objc_sync_exit(";
   Expr *syncExpr = new (Context) CStyleCastExpr(Context->getObjCIdType(), 
+                                                CastExpr::CK_Unknown,
                                                 S->getSynchExpr(), 
                                                 Context->getObjCIdType(),
                                                 SourceLocation(),
@@ -1781,7 +1786,9 @@ CallExpr *RewriteObjC::SynthesizeCallToFunctionDecl(
                                      
   // Now, we cast the reference to a pointer to the objc_msgSend type.
   QualType pToFunc = Context->getPointerType(msgSendType);
-  ImplicitCastExpr *ICE = new (Context) ImplicitCastExpr(pToFunc, DRE, 
+  ImplicitCastExpr *ICE = new (Context) ImplicitCastExpr(pToFunc, 
+                                                         CastExpr::CK_Unknown,
+                                                         DRE, 
                                                /*isLvalue=*/false);
   
   const FunctionType *FT = msgSendType->getAsFunctionType();
@@ -2142,8 +2149,11 @@ Stmt *RewriteObjC::RewriteObjCStringLiteral(ObjCStringLiteral *Exp) {
                                  Context->getPointerType(DRE->getType()), 
                                  SourceLocation());
   // cast to NSConstantString *
-  CastExpr *cast = new (Context) CStyleCastExpr(Exp->getType(), Unop, 
-                                         Exp->getType(), SourceLocation(), SourceLocation());
+  CastExpr *cast = new (Context) CStyleCastExpr(Exp->getType(), 
+                                                CastExpr::CK_Unknown,
+                                                Unop, Exp->getType(), 
+                                                SourceLocation(), 
+                                                SourceLocation());
   ReplaceStmt(Exp, cast);
   // delete Exp; leak for now, see RewritePropertySetter() usage for more info.
   return cast;
@@ -2272,6 +2282,7 @@ Stmt *RewriteObjC::SynthMessageExpr(ObjCMessageExpr *Exp) {
       // set the receiver to self, the first argument to all methods.
       InitExprs.push_back(
         new (Context) CStyleCastExpr(Context->getObjCIdType(), 
+                                     CastExpr::CK_Unknown,
                      new (Context) DeclRefExpr(CurMethodDef->getSelfDecl(), 
                                      Context->getObjCIdType(),
                                      SourceLocation()),
@@ -2290,6 +2301,7 @@ Stmt *RewriteObjC::SynthMessageExpr(ObjCMessageExpr *Exp) {
       // To turn off a warning, type-cast to 'id'
       InitExprs.push_back( // set 'super class', using objc_getClass().
         new (Context) CStyleCastExpr(Context->getObjCIdType(), 
+                                     CastExpr::CK_Unknown,
                               Cls, Context->getObjCIdType(),
                               SourceLocation(), SourceLocation())); 
       // struct objc_super
@@ -2314,7 +2326,8 @@ Stmt *RewriteObjC::SynthMessageExpr(ObjCMessageExpr *Exp) {
                                  Context->getPointerType(SuperRep->getType()), 
                                  SourceLocation());
         SuperRep = new (Context) CStyleCastExpr(Context->getPointerType(superType), 
-                                 SuperRep, Context->getPointerType(superType),
+                                 CastExpr::CK_Unknown, SuperRep, 
+                                 Context->getPointerType(superType),
                                  SourceLocation(), SourceLocation()); 
       } else {      
         // (struct objc_super) { <exprs from above> }
@@ -2355,6 +2368,7 @@ Stmt *RewriteObjC::SynthMessageExpr(ObjCMessageExpr *Exp) {
       
       InitExprs.push_back(
         new (Context) CStyleCastExpr(Context->getObjCIdType(), 
+                                     CastExpr::CK_Unknown,
                      new (Context) DeclRefExpr(CurMethodDef->getSelfDecl(), 
                                      Context->getObjCIdType(),
                                      SourceLocation()),
@@ -2374,6 +2388,7 @@ Stmt *RewriteObjC::SynthMessageExpr(ObjCMessageExpr *Exp) {
       InitExprs.push_back(
         // set 'super class', using objc_getClass().
         new (Context) CStyleCastExpr(Context->getObjCIdType(), 
+                                     CastExpr::CK_Unknown,
         Cls, Context->getObjCIdType(), SourceLocation(), SourceLocation())); 
       // struct objc_super
       QualType superType = getSuperStructType();
@@ -2397,6 +2412,7 @@ Stmt *RewriteObjC::SynthMessageExpr(ObjCMessageExpr *Exp) {
                                  Context->getPointerType(SuperRep->getType()), 
                                  SourceLocation());
         SuperRep = new (Context) CStyleCastExpr(Context->getPointerType(superType), 
+                                 CastExpr::CK_Unknown,
                                  SuperRep, Context->getPointerType(superType),
                                  SourceLocation(), SourceLocation()); 
       } else {
@@ -2412,7 +2428,8 @@ Stmt *RewriteObjC::SynthMessageExpr(ObjCMessageExpr *Exp) {
       // Foo<Proto> *.
       while (CStyleCastExpr *CE = dyn_cast<CStyleCastExpr>(recExpr))
         recExpr = CE->getSubExpr();
-      recExpr = new (Context) CStyleCastExpr(Context->getObjCIdType(), recExpr,
+      recExpr = new (Context) CStyleCastExpr(Context->getObjCIdType(), 
+                                      CastExpr::CK_Unknown, recExpr,
                                       Context->getObjCIdType(), 
                                       SourceLocation(), SourceLocation());
       MsgExprs.push_back(recExpr);
@@ -2438,7 +2455,9 @@ Stmt *RewriteObjC::SynthMessageExpr(ObjCMessageExpr *Exp) {
       QualType type = ICE->getType()->isObjCQualifiedIdType()
                                 ? Context->getObjCIdType()
                                 : ICE->getType();
-      userExpr = new (Context) CStyleCastExpr(type, userExpr, type, SourceLocation(), SourceLocation());
+      userExpr = new (Context) CStyleCastExpr(type, CastExpr::CK_Unknown,
+                                              userExpr, type, SourceLocation(), 
+                                              SourceLocation());
     }
     // Make id<P...> cast into an 'id' cast.
     else if (CStyleCastExpr *CE = dyn_cast<CStyleCastExpr>(userExpr)) {
@@ -2446,6 +2465,7 @@ Stmt *RewriteObjC::SynthMessageExpr(ObjCMessageExpr *Exp) {
         while ((CE = dyn_cast<CStyleCastExpr>(userExpr)))
           userExpr = CE->getSubExpr();
         userExpr = new (Context) CStyleCastExpr(Context->getObjCIdType(), 
+                                                CastExpr::CK_Unknown,
                                 userExpr, Context->getObjCIdType(), 
                                 SourceLocation(), SourceLocation());
       }
@@ -2497,7 +2517,8 @@ Stmt *RewriteObjC::SynthMessageExpr(ObjCMessageExpr *Exp) {
   // If we don't do this cast, we get the following bizarre warning/note:
   // xx.m:13: warning: function called through a non-compatible type
   // xx.m:13: note: if this code is reached, the program will abort
-  cast = new (Context) CStyleCastExpr(Context->getPointerType(Context->VoidTy), DRE, 
+  cast = new (Context) CStyleCastExpr(Context->getPointerType(Context->VoidTy), 
+                                      CastExpr::CK_Unknown, DRE, 
                                Context->getPointerType(Context->VoidTy),
                                SourceLocation(), SourceLocation());
     
@@ -2507,7 +2528,9 @@ Stmt *RewriteObjC::SynthMessageExpr(ObjCMessageExpr *Exp) {
     // If we don't have a method decl, force a variadic cast.
     Exp->getMethodDecl() ? Exp->getMethodDecl()->isVariadic() : true, 0);
   castType = Context->getPointerType(castType);
-  cast = new (Context) CStyleCastExpr(castType, cast, castType, SourceLocation(), SourceLocation());
+  cast = new (Context) CStyleCastExpr(castType, CastExpr::CK_Unknown, cast, 
+                                      castType, SourceLocation(), 
+                                      SourceLocation());
 
   // Don't forget the parens to enforce the proper binding.
   ParenExpr *PE = new (Context) ParenExpr(SourceLocation(), SourceLocation(), cast);
@@ -2527,7 +2550,8 @@ Stmt *RewriteObjC::SynthMessageExpr(ObjCMessageExpr *Exp) {
     DeclRefExpr *STDRE = new (Context) DeclRefExpr(MsgSendStretFlavor, msgSendType, 
                                          SourceLocation());
     // Need to cast objc_msgSend_stret to "void *" (see above comment).
-    cast = new (Context) CStyleCastExpr(Context->getPointerType(Context->VoidTy), STDRE, 
+    cast = new (Context) CStyleCastExpr(Context->getPointerType(Context->VoidTy), 
+                                        CastExpr::CK_Unknown, STDRE, 
                                  Context->getPointerType(Context->VoidTy),
                                  SourceLocation(), SourceLocation());
     // Now do the "normal" pointer to function cast.
@@ -2535,7 +2559,8 @@ Stmt *RewriteObjC::SynthMessageExpr(ObjCMessageExpr *Exp) {
       &ArgTypes[0], ArgTypes.size(),
       Exp->getMethodDecl() ? Exp->getMethodDecl()->isVariadic() : false, 0);
     castType = Context->getPointerType(castType);
-    cast = new (Context) CStyleCastExpr(castType, cast, castType, SourceLocation(), SourceLocation());
+    cast = new (Context) CStyleCastExpr(castType, CastExpr::CK_Unknown,
+                                        cast, castType, SourceLocation(), SourceLocation());
     
     // Don't forget the parens to enforce the proper binding.
     PE = new (Context) ParenExpr(SourceLocation(), SourceLocation(), cast);
@@ -2606,8 +2631,9 @@ Stmt *RewriteObjC::RewriteObjCProtocolExpr(ObjCProtocolExpr *Exp) {
   Expr *DerefExpr = new (Context) UnaryOperator(DRE, UnaryOperator::AddrOf,
                              Context->getPointerType(DRE->getType()),
                              SourceLocation());
-  CastExpr *castExpr = new (Context) CStyleCastExpr(DerefExpr->getType(), DerefExpr, 
-                                          DerefExpr->getType(), 
+  CastExpr *castExpr = new (Context) CStyleCastExpr(DerefExpr->getType(), 
+                                                    CastExpr::CK_Unknown, 
+                                          DerefExpr, DerefExpr->getType(), 
                                           SourceLocation(), SourceLocation());
   ReplaceStmt(Exp, castExpr);
   ProtocolExprDecls.insert(Exp->getProtocol());
@@ -3925,7 +3951,9 @@ Stmt *RewriteObjC::SynthesizeBlockCall(CallExpr *Exp) {
     
   PtrToFuncCastType = Context->getPointerType(PtrToFuncCastType);
   
-  CastExpr *BlkCast = new (Context) CStyleCastExpr(PtrBlock, Exp->getCallee(),
+  CastExpr *BlkCast = new (Context) CStyleCastExpr(PtrBlock, 
+                                                   CastExpr::CK_Unknown,
+                                                   Exp->getCallee(),
                                                    PtrBlock, SourceLocation(),
                                                    SourceLocation());
   // Don't forget the parens to enforce the proper binding.
@@ -3939,7 +3967,8 @@ Stmt *RewriteObjC::SynthesizeBlockCall(CallExpr *Exp) {
   MemberExpr *ME = new (Context) MemberExpr(PE, true, FD, SourceLocation(),
                                             FD->getType());
   
-  CastExpr *FunkCast = new (Context) CStyleCastExpr(PtrToFuncCastType, ME,
+  CastExpr *FunkCast = new (Context) CStyleCastExpr(PtrToFuncCastType,
+                                                    CastExpr::CK_Unknown, ME,
                                                     PtrToFuncCastType,
                                                     SourceLocation(),
                                                     SourceLocation());
@@ -4207,7 +4236,8 @@ Stmt *RewriteObjC::SynthBlockInitExpr(BlockExpr *Exp) {
   FD = SynthBlockInitFunctionDecl(Func.c_str());
   DeclRefExpr *Arg = new (Context) DeclRefExpr(FD, FD->getType(),
                                                SourceLocation());
-  CastExpr *castExpr = new (Context) CStyleCastExpr(Context->VoidPtrTy, Arg, 
+  CastExpr *castExpr = new (Context) CStyleCastExpr(Context->VoidPtrTy, 
+                                          CastExpr::CK_Unknown, Arg, 
                                           Context->VoidPtrTy, SourceLocation(),
                                                     SourceLocation());
   InitExprs.push_back(castExpr); 
@@ -4216,7 +4246,8 @@ Stmt *RewriteObjC::SynthBlockInitExpr(BlockExpr *Exp) {
     std::string Buf = "__" + FuncName + "_block_copy_" + BlockNumber;
     FD = SynthBlockInitFunctionDecl(Buf.c_str());
     Arg = new (Context) DeclRefExpr(FD, FD->getType(), SourceLocation());
-    castExpr = new (Context) CStyleCastExpr(Context->VoidPtrTy, Arg, 
+    castExpr = new (Context) CStyleCastExpr(Context->VoidPtrTy, 
+                                            CastExpr::CK_Unknown, Arg, 
                                   Context->VoidPtrTy, SourceLocation(),
                                             SourceLocation());
     InitExprs.push_back(castExpr); 
@@ -4224,7 +4255,8 @@ Stmt *RewriteObjC::SynthBlockInitExpr(BlockExpr *Exp) {
     Buf = "__" + FuncName + "_block_dispose_" + BlockNumber;
     FD = SynthBlockInitFunctionDecl(Buf.c_str());
     Arg = new (Context) DeclRefExpr(FD, FD->getType(), SourceLocation());
-    castExpr = new (Context) CStyleCastExpr(Context->VoidPtrTy, Arg, 
+    castExpr = new (Context) CStyleCastExpr(Context->VoidPtrTy, 
+                                            CastExpr::CK_Unknown, Arg, 
                                   Context->VoidPtrTy, SourceLocation(),
                                             SourceLocation());
     InitExprs.push_back(castExpr); 
@@ -4242,8 +4274,10 @@ Stmt *RewriteObjC::SynthBlockInitExpr(BlockExpr *Exp) {
       } else if (isTopLevelBlockPointerType((*I)->getType())) {
         FD = SynthBlockInitFunctionDecl((*I)->getNameAsCString());
         Arg = new (Context) DeclRefExpr(FD, FD->getType(), SourceLocation());
-        Exp = new (Context) CStyleCastExpr(Context->VoidPtrTy, Arg, 
-                                 Context->VoidPtrTy, SourceLocation(),
+        Exp = new (Context) CStyleCastExpr(Context->VoidPtrTy, 
+                                           CastExpr::CK_Unknown, Arg, 
+                                           Context->VoidPtrTy, 
+                                           SourceLocation(),
                                            SourceLocation());
       } else {
         FD = SynthBlockInitFunctionDecl((*I)->getNameAsCString());
@@ -4267,7 +4301,8 @@ Stmt *RewriteObjC::SynthBlockInitExpr(BlockExpr *Exp) {
   NewRep = new (Context) UnaryOperator(NewRep, UnaryOperator::AddrOf,
                              Context->getPointerType(NewRep->getType()), 
                              SourceLocation());
-  NewRep = new (Context) CStyleCastExpr(FType, NewRep, FType, SourceLocation(),
+  NewRep = new (Context) CStyleCastExpr(FType, CastExpr::CK_Unknown, NewRep, 
+                                        FType, SourceLocation(),
                                         SourceLocation());
   BlockDeclRefs.clear();
   BlockByRefDecls.clear();
