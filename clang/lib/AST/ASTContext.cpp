@@ -2118,9 +2118,25 @@ TemplateName ASTContext::getCanonicalTemplateName(TemplateName Name) {
 
   // If this template name refers to a set of overloaded function templates, 
   /// the canonical template name merely stores the set of function templates.
-  if (OverloadedFunctionDecl *Ovl = Name.getAsOverloadedFunctionDecl())
-    // FIXME: Can't really canonicalize a set of overloaded functions, can we?
-    return TemplateName(Ovl);
+  if (OverloadedFunctionDecl *Ovl = Name.getAsOverloadedFunctionDecl()) {
+    OverloadedFunctionDecl *CanonOvl = 0;
+    for (OverloadedFunctionDecl::function_iterator F = Ovl->function_begin(),
+                                                FEnd = Ovl->function_end();
+         F != FEnd; ++F) {
+      Decl *Canon = F->get()->getCanonicalDecl();
+      if (CanonOvl || Canon != F->get()) {
+        if (!CanonOvl)
+          CanonOvl = OverloadedFunctionDecl::Create(*this, 
+                                                    Ovl->getDeclContext(), 
+                                                    Ovl->getDeclName());
+        
+        CanonOvl->addOverload(
+                    AnyFunctionDecl::getFromNamedDecl(cast<NamedDecl>(Canon)));
+      }
+    }
+    
+    return TemplateName(CanonOvl? CanonOvl : Ovl);
+  }
   
   DependentTemplateName *DTN = Name.getAsDependentTemplateName();
   assert(DTN && "Non-dependent template names must refer to template decls.");

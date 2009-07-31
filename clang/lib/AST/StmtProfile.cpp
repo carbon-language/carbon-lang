@@ -603,8 +603,7 @@ void StmtProfiler::VisitObjCIsaExpr(ObjCIsaExpr *S) {
 
 void StmtProfiler::VisitDecl(Decl *D) {
   if (Canonical && D) {
-    if (NonTypeTemplateParmDecl *NTTP 
-        = dyn_cast<NonTypeTemplateParmDecl>(D)) {
+    if (NonTypeTemplateParmDecl *NTTP = dyn_cast<NonTypeTemplateParmDecl>(D)) {
       ID.AddInteger(NTTP->getDepth());
       ID.AddInteger(NTTP->getIndex());
       VisitType(NTTP->getType());
@@ -612,6 +611,29 @@ void StmtProfiler::VisitDecl(Decl *D) {
     }
     
     // FIXME: Template template parameters?
+    
+    if (OverloadedFunctionDecl *Ovl = dyn_cast<OverloadedFunctionDecl>(D)) {
+      // Canonicalize all of the function declarations within the overload
+      // set.
+      llvm::SmallVector<Decl *, 4> Functions;
+      for (OverloadedFunctionDecl::function_iterator F = Ovl->function_begin(),
+                                                  FEnd = Ovl->function_end();
+           F != FEnd; ++F)
+        Functions.push_back(F->get()->getCanonicalDecl());
+      
+      // Sorting the functions based on the point means that the ID generated
+      // will be different from one execution of the compiler to another.
+      // Since these IDs don't persist over time, the change in ordering will
+      // not affect compilation.
+      std::sort(Functions.begin(), Functions.end());
+      
+      for (llvm::SmallVector<Decl *, 4>::iterator F = Functions.begin(),
+                                               FEnd = Functions.end();
+           F != FEnd; ++F)
+        VisitDecl(*F);
+
+      return;
+    }
   }
   
   ID.AddPointer(D? D->getCanonicalDecl() : 0);

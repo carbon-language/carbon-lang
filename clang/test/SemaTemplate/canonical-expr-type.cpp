@@ -15,6 +15,23 @@ void f0(T x, __typeof__((f)(N)) y) { }
 template<typename U, U M>
 void f0(U u, __typeof__(f(M))) { } // expected-error{{redefinition}}
 
+// Test insane typeof(expr) overload set canonicalization
+void f(int);
+void f(double);
+
+template<typename T, T N>
+void f0a(T x, __typeof__(f(N)) y) { } // expected-note{{previous}}
+
+void f(int);
+
+template<typename T, T N>
+void f0a(T x, __typeof__(f(N)) y) { } // expected-error{{redefinition}}
+
+void f(float);
+
+template<typename T, T N>
+void f0a(T x, __typeof__(f(N)) y) { }
+
 // Test dependently-sized array canonicalization
 template<typename T, int N, int M>
 void f1(T (&array)[N + M]) { } // expected-note{{previous}}
