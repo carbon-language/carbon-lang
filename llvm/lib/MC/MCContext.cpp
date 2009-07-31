@@ -25,18 +25,6 @@ MCSection *MCContext::GetSection(const StringRef &Name) const {
   return I != Sections.end() ? I->second : 0;
 }
 
-
-MCSection::MCSection(const StringRef &_Name, MCContext &Ctx) : Name(_Name) {
-  MCSection *&Entry = Ctx.Sections[Name];
-  assert(Entry == 0 && "Multiple sections with the same name created");
-  Entry = this;
-}
-
-MCSection *MCSection::Create(const StringRef &Name, MCContext &Ctx) {
-  return new (Ctx) MCSection(Name, Ctx);
-}
-
-
 MCSymbol *MCContext::CreateSymbol(const StringRef &Name) {
   assert(Name[0] != '\0' && "Normal symbols cannot be unnamed!");
 
