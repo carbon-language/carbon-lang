@@ -107,8 +107,7 @@ RValue CodeGenFunction::EmitCXXMemberCallExpr(const CXXMemberCallExpr *CE) {
 
   const FunctionProtoType *FPT = MD->getType()->getAsFunctionProtoType();
 
-  // FIXME: It isn't just virtual as written, but all virtual functions.
-  if (MD->isVirtualAsWritten()) {
+  if (MD->isVirtual()) {
     ErrorUnsupported(CE, "virtual dispatch");
   }
 
@@ -491,21 +490,54 @@ const char *CodeGenModule::getMangledCXXDtorName(const CXXDestructorDecl *D,
   return UniqueMangledName(Name.begin(), Name.end());
 }
 
+llvm::Value *CodeGenFunction::GenerateVtable(const CXXRecordDecl *RD) {
+  const llvm::FunctionType *FTy;
+  FTy = llvm::FunctionType::get(llvm::Type::VoidTy,
+                                std::vector<const llvm::Type*>(), false);
+
+  llvm::SmallString<256> OutName;
+  llvm::raw_svector_ostream Out(OutName);
+  QualType ClassTy;
+  // FIXME: What is the design on getTagDeclType when it requires casting
+  // away const?  mutable?
+  ClassTy = getContext().getTagDeclType(const_cast<CXXRecordDecl*>(RD));
+  mangleCXXVtable(ClassTy, getContext(), Out);
+  const char *Name = OutName.c_str();
+  llvm::Value *vtable = CGM.CreateRuntimeFunction(FTy, Name);
+  llvm::SmallVector<CXXMethodDecl *,32> methods;
+  typedef CXXRecordDecl::method_iterator meth_iter;
+  for (meth_iter mi = RD->method_begin(), me = RD->method_end(); mi != me;
+       ++mi) {
+    if (mi->isVirtual())
+      methods.push_back(*mi);
+  }
+
+  llvm::Type *Ptr8Ty;
+  Ptr8Ty = llvm::PointerType::get(llvm::Type::Int8Ty, 0);
+  vtable = Builder.CreateBitCast(vtable, Ptr8Ty);
+  // FIXME: finish layout for virtual bases and fix for 32-bit
+  int64_t offset = 16;
+  vtable = Builder.CreateGEP(vtable,
+                             llvm::ConstantInt::get(llvm::Type::Int64Ty,
+                                                    offset));
+  return vtable;
+}
+
 /// EmitCtorPrologue - This routine generates necessary code to initialize
 /// base classes and non-static data members belonging to this constructor.
 void CodeGenFunction::EmitCtorPrologue(const CXXConstructorDecl *CD) {
   const CXXRecordDecl *ClassDecl = cast<CXXRecordDecl>(CD->getDeclContext());
-  assert(!ClassDecl->isPolymorphic()
-         && "FIXME: virtual table initialization unsupported");
   assert(ClassDecl->getNumVBases() == 0
          && "FIXME: virtual base initialization unsupported");
+  llvm::Value *LoadOfThis = 0;
+
   
   for (CXXConstructorDecl::init_const_iterator B = CD->init_begin(),
        E = CD->init_end();
        B != E; ++B) {
     CXXBaseOrMemberInitializer *Member = (*B);
     if (Member->isBaseInitializer()) {
-      llvm::Value *LoadOfThis = LoadCXXThis();
+      LoadOfThis = LoadCXXThis();
       Type *BaseType = Member->getBaseClass();
       CXXRecordDecl *BaseClassDecl = 
         cast<CXXRecordDecl>(BaseType->getAs<RecordType>()->getDecl());
@@ -522,7 +554,7 @@ void CodeGenFunction::EmitCtorPrologue(const CXXConstructorDecl *CD) {
       assert(!getContext().getAsArrayType(FieldType) 
              && "FIXME. Field arrays initialization unsupported");
 
-      llvm::Value *LoadOfThis = LoadCXXThis();
+      LoadOfThis = LoadCXXThis();
       LValue LHS = EmitLValueForField(LoadOfThis, Field, false, 0);
       if (FieldType->getAs<RecordType>()) {
         
@@ -543,6 +575,19 @@ void CodeGenFunction::EmitCtorPrologue(const CXXConstructorDecl *CD) {
       else
         EmitStoreThroughLValue(RValue::get(RHS), LHS, FieldType);
     }
+  }
+
+  // Initialize the vtable pointer
+  if (ClassDecl->isPolymorphic() || ClassDecl->getNumVBases()) {
+    if (!LoadOfThis)
+      LoadOfThis = LoadCXXThis();
+    llvm::Value *VtableField;
+    llvm::Type *Ptr8Ty, *PtrPtr8Ty;
+    Ptr8Ty = llvm::PointerType::get(llvm::Type::Int8Ty, 0);
+    PtrPtr8Ty = llvm::PointerType::get(Ptr8Ty, 0);
+    VtableField = Builder.CreateBitCast(LoadOfThis, PtrPtr8Ty);
+    llvm::Value *vtable = GenerateVtable(ClassDecl);
+    Builder.CreateStore(vtable, VtableField);
   }
 }
 

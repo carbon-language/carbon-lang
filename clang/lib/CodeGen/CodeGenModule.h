@@ -373,7 +373,7 @@ public:
                                     CXXDtorType Type);
 
   void EmitTentativeDefinition(const VarDecl *D);
-  
+
   enum GVALinkage {
     GVA_Internal,
     GVA_C99Inline,

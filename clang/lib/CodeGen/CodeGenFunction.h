@@ -358,6 +358,8 @@ public:
   /// legal to call this function even if there is no current insertion point.
   void FinishFunction(SourceLocation EndLoc=SourceLocation());
 
+  llvm::Value *GenerateVtable(const CXXRecordDecl *RD);
+
   void EmitCtorPrologue(const CXXConstructorDecl *CD);
   
   /// EmitDtorEpilogue - Emit all code that comes at the end of class's

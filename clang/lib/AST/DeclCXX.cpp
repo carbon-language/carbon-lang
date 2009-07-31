@@ -377,6 +377,8 @@ QualType CXXMethodDecl::getThisType(ASTContext &C) const {
   if (ClassTemplateDecl *TD = getParent()->getDescribedClassTemplate())
     ClassTy = TD->getInjectedClassNameType(C);
   else
+    // FIXME: What is the design on getTagDeclType when it requires casting
+    // away const?  mutable?
     ClassTy = C.getTagDeclType(const_cast<CXXRecordDecl*>(getParent()));
   ClassTy = ClassTy.getWithAdditionalQualifiers(getTypeQualifiers());
   return C.getPointerType(ClassTy);
@@ -652,7 +654,7 @@ CXXConstructorDecl::setBaseOrMemberInitializers(
       AllToInit.push_back(Member);
     } 
   }
-  
+
   NumInitializers = AllToInit.size();
   if (NumInitializers > 0) {
     NumBaseOrMemberInitializers = NumInitializers;

@@ -19,6 +19,7 @@
 #define LLVM_CLANG_CODEGEN_MANGLE_H
 
 #include "CGCXX.h"
+#include "clang/AST/Type.h"
 
 namespace llvm {
   class raw_ostream;
@@ -35,6 +36,7 @@ namespace clang {
                   llvm::raw_ostream &os);
   void mangleGuardVariable(const VarDecl *D, ASTContext &Context,
                            llvm::raw_ostream &os);
+  void mangleCXXVtable(QualType T, ASTContext &Context, llvm::raw_ostream &os);
   void mangleCXXCtor(const CXXConstructorDecl *D, CXXCtorType Type,
                      ASTContext &Context, llvm::raw_ostream &os);
   void mangleCXXDtor(const CXXDestructorDecl *D, CXXDtorType Type,
