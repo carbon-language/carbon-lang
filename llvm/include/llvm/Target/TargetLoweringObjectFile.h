@@ -35,32 +35,18 @@ protected:
   
   /// TextSection - Section directive for standard text.
   ///
-  const MCSection *TextSection;           // Defaults to ".text".
+  const MCSection *TextSection;
   
   /// DataSection - Section directive for standard data.
   ///
-  const MCSection *DataSection;           // Defaults to ".data".
+  const MCSection *DataSection;
   
+  /// BSSSection - Section that is default initialized to zero.
+  const MCSection *BSSSection;
   
-  
-  // FIXME: SINK THESE.
-  const MCSection *BSSSection_;
-
-  /// ReadOnlySection - This is the directive that is emitted to switch to a
-  /// read-only section for constant data (e.g. data declared const,
-  /// jump tables).
-  const MCSection *ReadOnlySection;       // Defaults to NULL
-  
-  /// TLSDataSection - Section directive for Thread Local data.
-  ///
-  const MCSection *TLSDataSection;        // Defaults to ".tdata".
-  
-  /// TLSBSSSection - Section directive for Thread Local uninitialized data.
-  /// Null if this target doesn't support a BSS section.
-  ///
-  const MCSection *TLSBSSSection;         // Defaults to ".tbss".
-  
-  const MCSection *CStringSection_;
+  /// ReadOnlySection - Section that is readonly and can contain arbitrary
+  /// initialized data.
+  const MCSection *ReadOnlySection;
   
 public:
   // FIXME: NONPUB.
@@ -87,7 +73,7 @@ public:
   /// FIXME: REMOVE this (rdar://7071300)
   virtual bool shouldEmitUsedDirectiveFor(const GlobalValue *GV,
                                           Mangler *) const {
-    return (GV!=0);
+    return GV != 0;
   }
   
   /// getSectionForMergeableConstant - Given a mergeable constant with the
@@ -141,6 +127,26 @@ protected:
 class TargetLoweringObjectFileELF : public TargetLoweringObjectFile {
   bool AtIsCommentChar;  // True if @ is the comment character on this target.
   bool HasCrazyBSS;
+protected:
+  /// TLSDataSection - Section directive for Thread Local data.
+  ///
+  const MCSection *TLSDataSection;        // Defaults to ".tdata".
+  
+  /// TLSBSSSection - Section directive for Thread Local uninitialized data.
+  /// Null if this target doesn't support a BSS section.
+  ///
+  const MCSection *TLSBSSSection;         // Defaults to ".tbss".
+  
+  const MCSection *CStringSection;
+  
+  const MCSection *DataRelSection;
+  const MCSection *DataRelLocalSection;
+  const MCSection *DataRelROSection;
+  const MCSection *DataRelROLocalSection;
+  
+  const MCSection *MergeableConst4Section;
+  const MCSection *MergeableConst8Section;
+  const MCSection *MergeableConst16Section;
 public:
   /// ELF Constructor - AtIsCommentChar is true if the CommentCharacter from TAI
   /// is "@".
@@ -166,20 +172,12 @@ public:
   virtual const MCSection *
   SelectSectionForGlobal(const GlobalValue *GV, SectionKind Kind,
                          Mangler *Mang, const TargetMachine &TM) const;
-protected:
-  const MCSection *DataRelSection;
-  const MCSection *DataRelLocalSection;
-  const MCSection *DataRelROSection;
-  const MCSection *DataRelROLocalSection;
-  
-  const MCSection *MergeableConst4Section;
-  const MCSection *MergeableConst8Section;
-  const MCSection *MergeableConst16Section;
 };
 
   
   
 class TargetLoweringObjectFileMachO : public TargetLoweringObjectFile {
+  const MCSection *CStringSection;
   const MCSection *TextCoalSection;
   const MCSection *ConstTextCoalSection;
   const MCSection *ConstDataCoalSection;

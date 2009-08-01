@@ -32,11 +32,8 @@ using namespace llvm;
 TargetLoweringObjectFile::TargetLoweringObjectFile() : Ctx(0) {
   TextSection = 0;
   DataSection = 0;
-  BSSSection_ = 0;
+  BSSSection = 0;
   ReadOnlySection = 0;
-  TLSDataSection = 0;
-  TLSBSSSection = 0;
-  CStringSection_ = 0;
 }
 
 TargetLoweringObjectFile::~TargetLoweringObjectFile() {
@@ -222,8 +219,8 @@ TargetLoweringObjectFile::SelectSectionForGlobal(const GlobalValue *GV,
   if (Kind.isText())
     return getTextSection();
   
-  if (Kind.isBSS() && BSSSection_ != 0)
-    return BSSSection_;
+  if (Kind.isBSS() && BSSSection != 0)
+    return BSSSection;
   
   if (Kind.isReadOnly() && ReadOnlySection != 0)
     return ReadOnlySection;
@@ -261,16 +258,16 @@ void TargetLoweringObjectFileELF::Initialize(MCContext &Ctx,
                                              const TargetMachine &TM) {
   TargetLoweringObjectFile::Initialize(Ctx, TM);
   if (!HasCrazyBSS)
-    BSSSection_ = getOrCreateSection("\t.bss", true,
-                                     SectionKind::get(SectionKind::BSS));
+    BSSSection = getOrCreateSection("\t.bss", true,
+                                    SectionKind::get(SectionKind::BSS));
   else
     // PPC/Linux doesn't support the .bss directive, it needs .section .bss.
     // FIXME: Does .section .bss work everywhere??
     // FIXME2: this should just be handle by the section printer.  We should get
     // away from syntactic view of the sections and MCSection should just be a
     // semantic view.
-    BSSSection_ = getOrCreateSection("\t.bss", false,
-                                     SectionKind::get(SectionKind::BSS));
+    BSSSection = getOrCreateSection("\t.bss", false,
+                                    SectionKind::get(SectionKind::BSS));
 
     
   TextSection = getOrCreateSection("\t.text", true,
@@ -283,7 +280,7 @@ void TargetLoweringObjectFileELF::Initialize(MCContext &Ctx,
   TLSDataSection =
     getOrCreateSection("\t.tdata", false,
                        SectionKind::get(SectionKind::ThreadData));
-  CStringSection_ = getOrCreateSection("\t.rodata.str", true,
+  CStringSection = getOrCreateSection("\t.rodata.str", true,
                                SectionKind::get(SectionKind::MergeableCString));
 
   TLSBSSSection = getOrCreateSection("\t.tbss", false, 
@@ -423,7 +420,7 @@ SelectSectionForGlobal(const GlobalValue *GV, SectionKind Kind,
   if (Kind.isText()) return TextSection;
   
   if (Kind.isMergeableCString()) {
-   assert(CStringSection_ && "Should have string section prefix");
+   assert(CStringSection && "Should have string section prefix");
     
     // We also need alignment here.
     // FIXME: this is getting the alignment of the character, not the
@@ -431,7 +428,7 @@ SelectSectionForGlobal(const GlobalValue *GV, SectionKind Kind,
     unsigned Align = 
       TM.getTargetData()->getPreferredAlignment(cast<GlobalVariable>(GV));
     
-    std::string Name = CStringSection_->getName() + "1." + utostr(Align);
+    std::string Name = CStringSection->getName() + "1." + utostr(Align);
     return getOrCreateSection(Name.c_str(), false,
                               SectionKind::get(SectionKind::MergeableCString));
   }
@@ -451,7 +448,7 @@ SelectSectionForGlobal(const GlobalValue *GV, SectionKind Kind,
   if (Kind.isThreadData())           return TLSDataSection;
   if (Kind.isThreadBSS())            return TLSBSSSection;
   
-  if (Kind.isBSS())                  return BSSSection_;
+  if (Kind.isBSS())                  return BSSSection;
   
   if (Kind.isDataNoRel())            return DataSection;
   if (Kind.isDataRelLocal())         return DataRelLocalSection;
@@ -493,7 +490,7 @@ void TargetLoweringObjectFileMachO::Initialize(MCContext &Ctx,
   DataSection = getOrCreateSection("\t.data", true, 
                                    SectionKind::get(SectionKind::DataRel));
   
-  CStringSection_ = getOrCreateSection("\t.cstring", true,
+  CStringSection = getOrCreateSection("\t.cstring", true,
                                SectionKind::get(SectionKind::MergeableCString));
   FourByteConstantSection = getOrCreateSection("\t.literal4\n", true,
                                 SectionKind::get(SectionKind::MergeableConst4));
@@ -554,7 +551,7 @@ SelectSectionForGlobal(const GlobalValue *GV, SectionKind Kind,
     if (Size) {
       unsigned Align = TD.getPreferredAlignment(cast<GlobalVariable>(GV));
       if (Align <= 32)
-        return CStringSection_;
+        return CStringSection;
     }
     
     return ReadOnlySection;

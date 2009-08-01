@@ -19,8 +19,8 @@ void PIC16TargetObjectFile::Initialize(MCContext &Ctx, const TargetMachine &tm){
   TargetLoweringObjectFile::Initialize(Ctx, tm);
   TM = &tm;
   
-  BSSSection_  = getOrCreateSection("udata.# UDATA", false, 
-                                    SectionKind::get(SectionKind::BSS));
+  BSSSection = getOrCreateSection("udata.# UDATA", false, 
+                                  SectionKind::get(SectionKind::BSS));
   ReadOnlySection = getOrCreateSection("romdata.# ROMDATA", false,
                                        SectionKind::get(SectionKind::ReadOnly));
   DataSection = getOrCreateSection("idata.# IDATA", false,
