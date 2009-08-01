@@ -808,7 +808,7 @@ class ThumbI<dag oops, dag iops, AddrMode am, SizeFlagVal sz,
 class TI<dag oops, dag iops, string asm, list<dag> pattern>
   : ThumbI<oops, iops, AddrModeNone, Size2Bytes, asm, "", pattern>;
 
-// BL, BLX(1) are translated by assembler into two instructions
+// tBL, tBX instructions
 class TIx2<dag oops, dag iops, string asm, list<dag> pattern>
   : ThumbI<oops, iops, AddrModeNone, Size4Bytes, asm, "", pattern>;
 

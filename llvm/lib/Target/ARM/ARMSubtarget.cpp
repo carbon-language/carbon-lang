@@ -75,6 +75,10 @@ ARMSubtarget::ARMSubtarget(const Module &M, const std::string &FS,
     }
   }
 
+  // Thumb2 implies at least V6T2.
+  if (ARMArchVersion < V6T2 && ThumbMode >= Thumb2)
+    ARMArchVersion = V6T2;
+
   if (Len >= 10) {
     if (TT.find("-darwin") != std::string::npos)
       // arm-darwin

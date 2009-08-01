@@ -263,7 +263,7 @@ ARMTargetLowering::ARMTargetLowering(TargetMachine &TM)
   } else {
     setOperationAction(ISD::MUL,     MVT::i64, Expand);
     setOperationAction(ISD::MULHU,   MVT::i32, Expand);
-    if (!Subtarget->isThumb1Only() && !Subtarget->hasV6Ops())
+    if (!Subtarget->hasV6Ops())
       setOperationAction(ISD::MULHS, MVT::i32, Expand);
   }
   setOperationAction(ISD::SHL_PARTS, MVT::i32, Expand);
@@ -985,8 +985,8 @@ SDValue ARMTargetLowering::LowerCALL(SDValue Op, SelectionDAG &DAG) {
 
   // FIXME: handle tail calls differently.
   unsigned CallOpc;
-  if (Subtarget->isThumb1Only()) {
-    if (!Subtarget->hasV5TOps() && (!isDirect || isARMFunc))
+  if (Subtarget->isThumb()) {
+    if ((!isDirect || isARMFunc) && !Subtarget->hasV5TOps())
       CallOpc = ARMISD::CALL_NOLINK;
     else
       CallOpc = isARMFunc ? ARMISD::CALL : ARMISD::tCALL;
