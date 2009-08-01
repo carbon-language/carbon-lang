@@ -28,16 +28,27 @@ namespace llvm {
   /// creates these.
   class MCSection {
     std::string Name;
+    
+    /// IsDirective - This is true if the section name is a directive, not
+    /// something that should be printed with ".section".
+    ///
+    /// FIXME: This is a hack.  Switch to a semantic view of the section instead
+    /// of a syntactic one.
+    bool IsDirective;
+    
     MCSection(const MCSection&);      // DO NOT IMPLEMENT
     void operator=(const MCSection&); // DO NOT IMPLEMENT
   protected:
-    MCSection(const StringRef &Name, SectionKind K, MCContext &Ctx);
+    MCSection(const StringRef &Name, bool IsDirective, SectionKind K,
+              MCContext &Ctx);
     SectionKind Kind;
   public:
     virtual ~MCSection();
 
-    static MCSection *Create(const StringRef &Name, SectionKind K,
-                             MCContext &Ctx);
+    bool isDirective() const { return IsDirective; }
+    
+    static MCSection *Create(const StringRef &Name, bool IsDirective, 
+                             SectionKind K, MCContext &Ctx);
     
     const std::string &getName() const { return Name; }
     SectionKind getKind() const { return Kind; }

@@ -122,25 +122,14 @@ public:
     
   };
   
-private:
+protected:
   Kind K : 6;
   
-  /// Weak - This is true if the referenced symbol is weak (i.e. linkonce,
-  /// weak, weak_odr, etc).  This is orthogonal from the categorization.
-  bool Weak : 1;
-  
-  /// ExplicitSection - This is true if the global had a section explicitly
-  /// specified on it.
-  bool ExplicitSection : 1;
 public:
   
   // FIXME: REMOVE.
   Kind getKind() const { return K; }
-  
-  bool isWeak() const { return Weak; }
-  bool hasExplicitSection() const { return ExplicitSection; }
-  
-  
+
   bool isMetadata() const { return K == Metadata; }
   bool isText() const { return K == Text; }
   
@@ -193,16 +182,41 @@ public:
     return K == ReadOnlyWithRelLocal;
   }
   
-  static SectionKind get(Kind K, bool isWeak = false,
-                         bool hasExplicitSection = false) {
+  static SectionKind get(Kind K) {
     SectionKind Res;
     Res.K = K;
-    Res.Weak = isWeak;
-    Res.ExplicitSection = hasExplicitSection;
     return Res;
   }
 };
 
+  
+/// SectionInfo - This class is a target-independent classification of a global
+/// which is used to simplify target-specific code by exposing common
+/// predicates.
+class SectionInfo : public SectionKind {
+  /// Weak - This is true if the referenced symbol is weak (i.e. linkonce,
+  /// weak, weak_odr, etc).  This is orthogonal from the categorization.
+  bool Weak : 1;
+  
+public:
+  
+  /// Weak - This is true if the referenced symbol is weak (i.e. linkonce,
+  /// weak, weak_odr, etc).  This is orthogonal from the categorization.
+  bool isWeak() const { return Weak; }
+  
+  static SectionInfo get(Kind K, bool isWeak = false) {
+    SectionInfo Res;
+    Res.K = K;
+    Res.Weak = isWeak;
+    return Res;
+  }
+  static SectionInfo get(SectionKind K, bool isWeak = false) {
+    SectionInfo Res;
+    *(SectionKind*)&Res = K;
+    Res.Weak = isWeak;
+    return Res;
+  }
+};
   
 class TargetLoweringObjectFile {
   MCContext *Ctx;
@@ -243,7 +257,7 @@ public:
   // FIXME: NONPUB.
   const MCSection *getOrCreateSection(const char *Name,
                                       bool isDirective,
-                                      SectionKind::Kind K) const;
+                                      SectionKind K) const;
 public:
   
   virtual ~TargetLoweringObjectFile();
@@ -277,8 +291,8 @@ public:
   /// section flags based on the name of the section specified for a global
   /// variable, it can implement this.  This is used on ELF systems so that
   /// ".tbss" gets the TLS bit set etc.
-  virtual SectionKind::Kind getKindForNamedSection(const char *Section,
-                                                   SectionKind::Kind K) const{
+  virtual SectionKind getKindForNamedSection(const char *Section,
+                                             SectionKind K) const {
     return K;
   }
   
@@ -295,7 +309,7 @@ public:
   /// getFlagsForNamedSection.
   virtual const MCSection *
   getSpecialCasedSectionGlobals(const GlobalValue *GV, Mangler *Mang,
-                                SectionKind Kind) const {
+                                SectionInfo Kind) const {
     return 0;
   }
   
@@ -308,7 +322,7 @@ public:
   
 protected:
   virtual const MCSection *
-  SelectSectionForGlobal(const GlobalValue *GV, SectionKind Kind,
+  SelectSectionForGlobal(const GlobalValue *GV, SectionInfo Kind,
                          Mangler *Mang, const TargetMachine &TM) const;
 };
   
@@ -335,13 +349,13 @@ public:
   virtual const MCSection *
   getSectionForMergeableConstant(SectionKind Kind) const;
   
-  virtual SectionKind::Kind getKindForNamedSection(const char *Section,
-                                                   SectionKind::Kind K) const;
+  virtual SectionKind getKindForNamedSection(const char *Section,
+                                             SectionKind K) const;
   void getSectionFlagsAsString(SectionKind Kind,
                                SmallVectorImpl<char> &Str) const;
   
   virtual const MCSection *
-  SelectSectionForGlobal(const GlobalValue *GV, SectionKind Kind,
+  SelectSectionForGlobal(const GlobalValue *GV, SectionInfo Kind,
                          Mangler *Mang, const TargetMachine &TM) const;
 protected:
   const MCSection *DataRelSection;
@@ -370,7 +384,7 @@ public:
   virtual void Initialize(MCContext &Ctx, const TargetMachine &TM);
 
   virtual const MCSection *
-  SelectSectionForGlobal(const GlobalValue *GV, SectionKind Kind,
+  SelectSectionForGlobal(const GlobalValue *GV, SectionInfo Kind,
                          Mangler *Mang, const TargetMachine &TM) const;
   
   virtual const MCSection *
@@ -393,7 +407,7 @@ public:
                                        SmallVectorImpl<char> &Str) const;
   
   virtual const MCSection *
-  SelectSectionForGlobal(const GlobalValue *GV, SectionKind Kind,
+  SelectSectionForGlobal(const GlobalValue *GV, SectionInfo Kind,
                          Mangler *Mang, const TargetMachine &TM) const;
 };
 

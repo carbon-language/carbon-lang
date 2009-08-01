@@ -151,7 +151,7 @@ void AsmPrinter::SwitchToSection(const MCSection *NS) {
     // If section is named we need to switch into it via special '.section'
     // directive and also append funky flags. Otherwise - section name is just
     // some magic assembler directive.
-    if (NS->getKind().hasExplicitSection()) {
+    if (!NS->isDirective()) {
       SmallString<32> FlagsStr;
       
       getObjFileLowering().getSectionFlagsAsString(NS->getKind(), FlagsStr);
@@ -336,16 +336,16 @@ void AsmPrinter::EmitConstantPool(MachineConstantPool *MCP) {
     SectionKind Kind;
     switch (CPE.getRelocationInfo()) {
     default: llvm_unreachable("Unknown section kind");
-    case 2: Kind = SectionKind::get(SectionKind::ReadOnlyWithRel, false); break;
+    case 2: Kind = SectionKind::get(SectionKind::ReadOnlyWithRel); break;
     case 1:
-      Kind = SectionKind::get(SectionKind::ReadOnlyWithRelLocal,false);
+      Kind = SectionKind::get(SectionKind::ReadOnlyWithRelLocal);
       break;
     case 0:
     switch (TM.getTargetData()->getTypeAllocSize(CPE.getType())) {
-    case 4:  Kind = SectionKind::get(SectionKind::MergeableConst4,false); break;
-    case 8:  Kind = SectionKind::get(SectionKind::MergeableConst8,false); break;
-    case 16: Kind = SectionKind::get(SectionKind::MergeableConst16,false);break;
-    default: Kind = SectionKind::get(SectionKind::MergeableConst,false); break;
+    case 4:  Kind = SectionKind::get(SectionKind::MergeableConst4); break;
+    case 8:  Kind = SectionKind::get(SectionKind::MergeableConst8); break;
+    case 16: Kind = SectionKind::get(SectionKind::MergeableConst16);break;
+    default: Kind = SectionKind::get(SectionKind::MergeableConst); break;
     }
     }
 
@@ -427,8 +427,7 @@ void AsmPrinter::EmitJumpTableInfo(MachineJumpTableInfo *MJTI,
 
   bool JTInDiffSection = false;
   if ((IsPic && !(LoweringInfo && LoweringInfo->usesGlobalOffsetTable())) ||
-      !JumpTableDataSection ||
-      FuncSection->getKind().isWeak()) {
+      !JumpTableDataSection || F->isWeakForLinker()) {
     // In PIC mode, we need to emit the jump table to the same section as the
     // function body itself, otherwise the label differences won't make sense.
     // We should also do if the section name is NULL or function is declared in

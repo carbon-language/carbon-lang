@@ -81,26 +81,31 @@ static bool isConstantString(const Constant *C) {
   return false;
 }
 
-static SectionKind::Kind SectionKindForGlobal(const GlobalValue *GV,
-                                              const TargetMachine &TM) {
+/// SectionKindForGlobal - This is a top-level target-independent classifier for
+/// a global variable.  Given an global variable and information from TM, it
+/// classifies the global in a variety of ways that make various target
+/// implementations simpler.  The target implementation is free to ignore this
+/// extra info of course.
+static SectionKind SectionKindForGlobal(const GlobalValue *GV,
+                                        const TargetMachine &TM) {
   Reloc::Model ReloModel = TM.getRelocationModel();
   
   // Early exit - functions should be always in text sections.
   const GlobalVariable *GVar = dyn_cast<GlobalVariable>(GV);
   if (GVar == 0)
-    return SectionKind::Text;
+    return SectionKind::get(SectionKind::Text);
 
   
   // Handle thread-local data first.
   if (GVar->isThreadLocal()) {
     if (isSuitableForBSS(GVar))
-      return SectionKind::ThreadBSS;
-    return SectionKind::ThreadData;
+      return SectionKind::get(SectionKind::ThreadBSS);
+    return SectionKind::get(SectionKind::ThreadData);
   }
 
   // Variable can be easily put to BSS section.
   if (isSuitableForBSS(GVar))
-    return SectionKind::BSS;
+    return SectionKind::get(SectionKind::BSS);
 
   Constant *C = GVar->getInitializer();
   
@@ -116,16 +121,16 @@ static SectionKind::Kind SectionKindForGlobal(const GlobalValue *GV,
       // If initializer is a null-terminated string, put it in a "cstring"
       // section if the target has it.
       if (isConstantString(C))
-        return SectionKind::MergeableCString;
+        return SectionKind::get(SectionKind::MergeableCString);
       
       // Otherwise, just drop it into a mergable constant section.  If we have
       // a section for this size, use it, otherwise use the arbitrary sized
       // mergable section.
       switch (TM.getTargetData()->getTypeAllocSize(C->getType())) {
-      case 4:  return SectionKind::MergeableConst4;
-      case 8:  return SectionKind::MergeableConst8;
-      case 16: return SectionKind::MergeableConst16;
-      default: return SectionKind::MergeableConst;
+      case 4:  return SectionKind::get(SectionKind::MergeableConst4);
+      case 8:  return SectionKind::get(SectionKind::MergeableConst8);
+      case 16: return SectionKind::get(SectionKind::MergeableConst16);
+      default: return SectionKind::get(SectionKind::MergeableConst);
       }
       
     case Constant::LocalRelocation:
@@ -135,11 +140,11 @@ static SectionKind::Kind SectionKindForGlobal(const GlobalValue *GV,
       // the linker doesn't take relocations into consideration when it tries to
       // merge entries in the section.
       if (ReloModel == Reloc::Static)
-        return SectionKind::ReadOnly;
+        return SectionKind::get(SectionKind::ReadOnly);
               
       // Otherwise, the dynamic linker needs to fix it up, put it in the
       // writable data.rel.local section.
-      return SectionKind::ReadOnlyWithRelLocal;
+      return SectionKind::get(SectionKind::ReadOnlyWithRelLocal);
               
     case Constant::GlobalRelocations:
       // In static relocation model, the linker will resolve all addresses, so
@@ -148,11 +153,11 @@ static SectionKind::Kind SectionKindForGlobal(const GlobalValue *GV,
       // the linker doesn't take relocations into consideration when it tries to
       // merge entries in the section.
       if (ReloModel == Reloc::Static)
-        return SectionKind::ReadOnly;
+        return SectionKind::get(SectionKind::ReadOnly);
       
       // Otherwise, the dynamic linker needs to fix it up, put it in the
       // writable data.rel section.
-      return SectionKind::ReadOnlyWithRel;
+      return SectionKind::get(SectionKind::ReadOnlyWithRel);
     }
   }
 
@@ -162,16 +167,16 @@ static SectionKind::Kind SectionKindForGlobal(const GlobalValue *GV,
   // globals together onto fewer pages, improving the locality of the dynamic
   // linker.
   if (ReloModel == Reloc::Static)
-    return SectionKind::DataNoRel;
+    return SectionKind::get(SectionKind::DataNoRel);
 
   switch (C->getRelocationInfo()) {
   default: llvm_unreachable("unknown relocation info kind");
   case Constant::NoRelocation:
-    return SectionKind::DataNoRel;
+    return SectionKind::get(SectionKind::DataNoRel);
   case Constant::LocalRelocation:
-    return SectionKind::DataRelLocal;
+    return SectionKind::get(SectionKind::DataRelLocal);
   case Constant::GlobalRelocations:
-    return SectionKind::DataRel;
+    return SectionKind::get(SectionKind::DataRel);
   }
 }
 
@@ -184,47 +189,44 @@ SectionForGlobal(const GlobalValue *GV, Mangler *Mang,
   assert(!GV->isDeclaration() && !GV->hasAvailableExternallyLinkage() &&
          "Can only be used for global definitions");
   
-  SectionKind::Kind GVKind = SectionKindForGlobal(GV, TM);
+  SectionKind Kind = SectionKindForGlobal(GV, TM);
+  SectionInfo Info = SectionInfo::get(Kind, GV->isWeakForLinker());
   
-  SectionKind Kind = SectionKind::get(GVKind, GV->isWeakForLinker(),
-                                      GV->hasSection());
-
-
   // Select section name.
   if (GV->hasSection()) {
     // If the target has special section hacks for specifically named globals,
     // return them now.
-    if (const MCSection *TS = getSpecialCasedSectionGlobals(GV, Mang, Kind))
+    if (const MCSection *TS = getSpecialCasedSectionGlobals(GV, Mang, Info))
       return TS;
     
     // If the target has magic semantics for certain section names, make sure to
     // pick up the flags.  This allows the user to write things with attribute
     // section and still get the appropriate section flags printed.
-    GVKind = getKindForNamedSection(GV->getSection().c_str(), GVKind);
+    Kind = getKindForNamedSection(GV->getSection().c_str(), Kind);
     
-    return getOrCreateSection(GV->getSection().c_str(), false, GVKind);
+    return getOrCreateSection(GV->getSection().c_str(), false, Kind);
   }
 
   
   // Use default section depending on the 'type' of global
-  return SelectSectionForGlobal(GV, Kind, Mang, TM);
+  return SelectSectionForGlobal(GV, Info, Mang, TM);
 }
 
 // Lame default implementation. Calculate the section name for global.
 const MCSection *
 TargetLoweringObjectFile::SelectSectionForGlobal(const GlobalValue *GV,
-                                                 SectionKind Kind,
+                                                 SectionInfo Info,
                                                  Mangler *Mang,
                                                  const TargetMachine &TM) const{
-  assert(!Kind.isThreadLocal() && "Doesn't support TLS");
+  assert(!Info.isThreadLocal() && "Doesn't support TLS");
   
-  if (Kind.isText())
+  if (Info.isText())
     return getTextSection();
   
-  if (Kind.isBSS() && BSSSection_ != 0)
+  if (Info.isBSS() && BSSSection_ != 0)
     return BSSSection_;
   
-  if (Kind.isReadOnly() && ReadOnlySection != 0)
+  if (Info.isReadOnly() && ReadOnlySection != 0)
     return ReadOnlySection;
 
   return getDataSection();
@@ -244,12 +246,10 @@ getSectionForMergeableConstant(SectionKind Kind) const {
 
 
 const MCSection *TargetLoweringObjectFile::
-getOrCreateSection(const char *Name, bool isDirective,
-                   SectionKind::Kind Kind) const {
+getOrCreateSection(const char *Name, bool isDirective, SectionKind Kind) const {
   if (MCSection *S = Ctx->GetSection(Name))
     return S;
-  SectionKind K = SectionKind::get(Kind, false /*weak*/, !isDirective);
-  return MCSection::Create(Name, K, *Ctx);
+  return MCSection::Create(Name, isDirective, Kind, *Ctx);
 }
 
 
@@ -262,45 +262,55 @@ void TargetLoweringObjectFileELF::Initialize(MCContext &Ctx,
                                              const TargetMachine &TM) {
   TargetLoweringObjectFile::Initialize(Ctx, TM);
   if (!HasCrazyBSS)
-    BSSSection_ = getOrCreateSection("\t.bss", true, SectionKind::BSS);
+    BSSSection_ = getOrCreateSection("\t.bss", true,
+                                     SectionKind::get(SectionKind::BSS));
   else
     // PPC/Linux doesn't support the .bss directive, it needs .section .bss.
     // FIXME: Does .section .bss work everywhere??
-    BSSSection_ = getOrCreateSection("\t.bss", false, SectionKind::BSS);
+    // FIXME2: this should just be handle by the section printer.  We should get
+    // away from syntactic view of the sections and MCSection should just be a
+    // semantic view.
+    BSSSection_ = getOrCreateSection("\t.bss", false,
+                                     SectionKind::get(SectionKind::BSS));
 
     
-  TextSection = getOrCreateSection("\t.text", true, SectionKind::Text);
-  DataSection = getOrCreateSection("\t.data", true, SectionKind::DataRel);
+  TextSection = getOrCreateSection("\t.text", true,
+                                   SectionKind::get(SectionKind::Text));
+  DataSection = getOrCreateSection("\t.data", true,
+                                   SectionKind::get(SectionKind::DataRel));
   ReadOnlySection =
-    getOrCreateSection("\t.rodata", false, SectionKind::ReadOnly);
+    getOrCreateSection("\t.rodata", false,
+                       SectionKind::get(SectionKind::ReadOnly));
   TLSDataSection =
-    getOrCreateSection("\t.tdata", false, SectionKind::ThreadData);
+    getOrCreateSection("\t.tdata", false,
+                       SectionKind::get(SectionKind::ThreadData));
   CStringSection_ = getOrCreateSection("\t.rodata.str", true,
-                                       SectionKind::MergeableCString);
+                               SectionKind::get(SectionKind::MergeableCString));
 
-  TLSBSSSection = getOrCreateSection("\t.tbss", false, SectionKind::ThreadBSS);
+  TLSBSSSection = getOrCreateSection("\t.tbss", false, 
+                                     SectionKind::get(SectionKind::ThreadBSS));
 
   DataRelSection = getOrCreateSection("\t.data.rel", false,
-                                      SectionKind::DataRel);
+                                      SectionKind::get(SectionKind::DataRel));
   DataRelLocalSection = getOrCreateSection("\t.data.rel.local", false,
-                                           SectionKind::DataRelLocal);
+                                   SectionKind::get(SectionKind::DataRelLocal));
   DataRelROSection = getOrCreateSection("\t.data.rel.ro", false,
-                                        SectionKind::ReadOnlyWithRel);
+                                SectionKind::get(SectionKind::ReadOnlyWithRel));
   DataRelROLocalSection =
     getOrCreateSection("\t.data.rel.ro.local", false,
-                       SectionKind::ReadOnlyWithRelLocal);
+                       SectionKind::get(SectionKind::ReadOnlyWithRelLocal));
     
   MergeableConst4Section = getOrCreateSection(".rodata.cst4", false,
-                                              SectionKind::MergeableConst4);
+                                SectionKind::get(SectionKind::MergeableConst4));
   MergeableConst8Section = getOrCreateSection(".rodata.cst8", false,
-                                              SectionKind::MergeableConst8);
+                                SectionKind::get(SectionKind::MergeableConst8));
   MergeableConst16Section = getOrCreateSection(".rodata.cst16", false,
-                                               SectionKind::MergeableConst16);
+                               SectionKind::get(SectionKind::MergeableConst16));
 }
 
 
-SectionKind::Kind TargetLoweringObjectFileELF::
-getKindForNamedSection(const char *Name, SectionKind::Kind K) const {
+SectionKind TargetLoweringObjectFileELF::
+getKindForNamedSection(const char *Name, SectionKind K) const {
   if (Name[0] != '.') return K;
   
   // Some lame default implementation based on some magic section names.
@@ -308,19 +318,19 @@ getKindForNamedSection(const char *Name, SectionKind::Kind K) const {
       strncmp(Name, ".llvm.linkonce.b.", 17) == 0 ||
       strncmp(Name, ".gnu.linkonce.sb.", 17) == 0 ||
       strncmp(Name, ".llvm.linkonce.sb.", 18) == 0)
-    return SectionKind::BSS;
+    return SectionKind::get(SectionKind::BSS);
   
   if (strcmp(Name, ".tdata") == 0 ||
       strncmp(Name, ".tdata.", 7) == 0 ||
       strncmp(Name, ".gnu.linkonce.td.", 17) == 0 ||
       strncmp(Name, ".llvm.linkonce.td.", 18) == 0)
-    return SectionKind::ThreadData;
+    return SectionKind::get(SectionKind::ThreadData);
   
   if (strcmp(Name, ".tbss") == 0 ||
       strncmp(Name, ".tbss.", 6) == 0 ||
       strncmp(Name, ".gnu.linkonce.tb.", 17) == 0 ||
       strncmp(Name, ".llvm.linkonce.tb.", 18) == 0)
-    return SectionKind::ThreadBSS;
+    return SectionKind::get(SectionKind::ThreadBSS);
   
   return K;
 }
@@ -400,20 +410,20 @@ static const char *getSectionPrefixForUniqueGlobal(SectionKind Kind) {
 }
 
 const MCSection *TargetLoweringObjectFileELF::
-SelectSectionForGlobal(const GlobalValue *GV, SectionKind Kind,
+SelectSectionForGlobal(const GlobalValue *GV, SectionInfo Info,
                        Mangler *Mang, const TargetMachine &TM) const {
   
   // If this global is linkonce/weak and the target handles this by emitting it
   // into a 'uniqued' section name, create and return the section now.
-  if (Kind.isWeak()) {
-    const char *Prefix = getSectionPrefixForUniqueGlobal(Kind);
+  if (Info.isWeak()) {
+    const char *Prefix = getSectionPrefixForUniqueGlobal(Info);
     std::string Name = Mang->makeNameProper(GV->getNameStr());
-    return getOrCreateSection((Prefix+Name).c_str(), false, Kind.getKind());
+    return getOrCreateSection((Prefix+Name).c_str(), false, Info);
   }
   
-  if (Kind.isText()) return TextSection;
+  if (Info.isText()) return TextSection;
   
-  if (Kind.isMergeableCString()) {
+  if (Info.isMergeableCString()) {
    assert(CStringSection_ && "Should have string section prefix");
     
     // We also need alignment here.
@@ -424,32 +434,32 @@ SelectSectionForGlobal(const GlobalValue *GV, SectionKind Kind,
     
     std::string Name = CStringSection_->getName() + "1." + utostr(Align);
     return getOrCreateSection(Name.c_str(), false,
-                              SectionKind::MergeableCString);
+                              SectionKind::get(SectionKind::MergeableCString));
   }
   
-  if (Kind.isMergeableConst()) {
-    if (Kind.isMergeableConst4())
+  if (Info.isMergeableConst()) {
+    if (Info.isMergeableConst4())
       return MergeableConst4Section;
-    if (Kind.isMergeableConst8())
+    if (Info.isMergeableConst8())
       return MergeableConst8Section;
-    if (Kind.isMergeableConst16())
+    if (Info.isMergeableConst16())
       return MergeableConst16Section;
     return ReadOnlySection;  // .const
   }
   
-  if (Kind.isReadOnly())             return ReadOnlySection;
+  if (Info.isReadOnly())             return ReadOnlySection;
   
-  if (Kind.isThreadData())           return TLSDataSection;
-  if (Kind.isThreadBSS())            return TLSBSSSection;
+  if (Info.isThreadData())           return TLSDataSection;
+  if (Info.isThreadBSS())            return TLSBSSSection;
   
-  if (Kind.isBSS())                  return BSSSection_;
+  if (Info.isBSS())                  return BSSSection_;
   
-  if (Kind.isDataNoRel())            return DataSection;
-  if (Kind.isDataRelLocal())         return DataRelLocalSection;
-  if (Kind.isDataRel())              return DataRelSection;
-  if (Kind.isReadOnlyWithRelLocal()) return DataRelROLocalSection;
+  if (Info.isDataNoRel())            return DataSection;
+  if (Info.isDataRelLocal())         return DataRelLocalSection;
+  if (Info.isDataRel())              return DataRelSection;
+  if (Info.isReadOnlyWithRelLocal()) return DataRelROLocalSection;
   
-  assert(Kind.isReadOnlyWithRel() && "Unknown section kind");
+  assert(Info.isReadOnlyWithRel() && "Unknown section kind");
   return DataRelROSection;
 }
 
@@ -479,58 +489,65 @@ getSectionForMergeableConstant(SectionKind Kind) const {
 void TargetLoweringObjectFileMachO::Initialize(MCContext &Ctx,
                                                const TargetMachine &TM) {
   TargetLoweringObjectFile::Initialize(Ctx, TM);
-  TextSection = getOrCreateSection("\t.text", true, SectionKind::Text);
-  DataSection = getOrCreateSection("\t.data", true, SectionKind::DataRel);
+  TextSection = getOrCreateSection("\t.text", true,
+                                   SectionKind::get(SectionKind::Text));
+  DataSection = getOrCreateSection("\t.data", true, 
+                                   SectionKind::get(SectionKind::DataRel));
   
   CStringSection_ = getOrCreateSection("\t.cstring", true,
-                                       SectionKind::MergeableCString);
+                               SectionKind::get(SectionKind::MergeableCString));
   FourByteConstantSection = getOrCreateSection("\t.literal4\n", true,
-                                               SectionKind::MergeableConst4);
+                                SectionKind::get(SectionKind::MergeableConst4));
   EightByteConstantSection = getOrCreateSection("\t.literal8\n", true,
-                                                SectionKind::MergeableConst8);
+                                SectionKind::get(SectionKind::MergeableConst8));
   
   // ld_classic doesn't support .literal16 in 32-bit mode, and ld64 falls back
   // to using it in -static mode.
   if (TM.getRelocationModel() != Reloc::Static &&
       TM.getTargetData()->getPointerSize() == 32)
     SixteenByteConstantSection = 
-      getOrCreateSection("\t.literal16\n", true, SectionKind::MergeableConst16);
+      getOrCreateSection("\t.literal16\n", true, 
+                         SectionKind::get(SectionKind::MergeableConst16));
   else
     SixteenByteConstantSection = 0;
   
-  ReadOnlySection = getOrCreateSection("\t.const", true, SectionKind::ReadOnly);
+  ReadOnlySection = getOrCreateSection("\t.const", true, 
+                                       SectionKind::get(SectionKind::ReadOnly));
   
   TextCoalSection =
   getOrCreateSection("\t__TEXT,__textcoal_nt,coalesced,pure_instructions",
-                     false, SectionKind::Text);
+                     false, SectionKind::get(SectionKind::Text));
   ConstTextCoalSection = getOrCreateSection("\t__TEXT,__const_coal,coalesced",
-                                            false, SectionKind::Text);
+                                            false,
+                                           SectionKind::get(SectionKind::Text));
   ConstDataCoalSection = getOrCreateSection("\t__DATA,__const_coal,coalesced",
-                                            false, SectionKind::Text);
+                                            false, 
+                                          SectionKind::get(SectionKind::Text));
   ConstDataSection = getOrCreateSection("\t.const_data", true,
-                                        SectionKind::ReadOnlyWithRel);
+                                SectionKind::get(SectionKind::ReadOnlyWithRel));
   DataCoalSection = getOrCreateSection("\t__DATA,__datacoal_nt,coalesced",
-                                       false, SectionKind::DataRel);
+                                       false,
+                                       SectionKind::get(SectionKind::DataRel));
 }
 
 const MCSection *TargetLoweringObjectFileMachO::
-SelectSectionForGlobal(const GlobalValue *GV, SectionKind Kind,
+SelectSectionForGlobal(const GlobalValue *GV, SectionInfo Info,
                        Mangler *Mang, const TargetMachine &TM) const {
-  assert(!Kind.isThreadLocal() && "Darwin doesn't support TLS");
+  assert(!Info.isThreadLocal() && "Darwin doesn't support TLS");
   
-  if (Kind.isText())
-    return Kind.isWeak() ? TextCoalSection : TextSection;
+  if (Info.isText())
+    return Info.isWeak() ? TextCoalSection : TextSection;
   
   // If this is weak/linkonce, put this in a coalescable section, either in text
   // or data depending on if it is writable.
-  if (Kind.isWeak()) {
-    if (Kind.isReadOnly())
+  if (Info.isWeak()) {
+    if (Info.isReadOnly())
       return ConstTextCoalSection;
     return DataCoalSection;
   }
   
   // FIXME: Alignment check should be handled by section classifier.
-  if (Kind.isMergeableCString()) {
+  if (Info.isMergeableCString()) {
     Constant *C = cast<GlobalVariable>(GV)->getInitializer();
     const Type *Ty = cast<ArrayType>(C->getType())->getElementType();
     const TargetData &TD = *TM.getTargetData();
@@ -544,24 +561,24 @@ SelectSectionForGlobal(const GlobalValue *GV, SectionKind Kind,
     return ReadOnlySection;
   }
   
-  if (Kind.isMergeableConst()) {
-    if (Kind.isMergeableConst4())
+  if (Info.isMergeableConst()) {
+    if (Info.isMergeableConst4())
       return FourByteConstantSection;
-    if (Kind.isMergeableConst8())
+    if (Info.isMergeableConst8())
       return EightByteConstantSection;
-    if (Kind.isMergeableConst16() && SixteenByteConstantSection)
+    if (Info.isMergeableConst16() && SixteenByteConstantSection)
       return SixteenByteConstantSection;
     return ReadOnlySection;  // .const
   }
   
   // FIXME: ROData -> const in -static mode that is relocatable but they happen
   // by the static linker.  Why not mergeable?
-  if (Kind.isReadOnly())
+  if (Info.isReadOnly())
     return ReadOnlySection;
 
   // If this is marked const, put it into a const section.  But if the dynamic
   // linker needs to write to it, put it in the data segment.
-  if (Kind.isReadOnlyWithRel())
+  if (Info.isReadOnlyWithRel())
     return ConstDataSection;
   
   // Otherwise, just drop the variable in the normal data section.
@@ -615,8 +632,10 @@ shouldEmitUsedDirectiveFor(const GlobalValue *GV, Mangler *Mang) const {
 void TargetLoweringObjectFileCOFF::Initialize(MCContext &Ctx,
                                               const TargetMachine &TM) {
   TargetLoweringObjectFile::Initialize(Ctx, TM);
-  TextSection = getOrCreateSection("\t.text", true, SectionKind::Text);
-  DataSection = getOrCreateSection("\t.data", true, SectionKind::DataRel);
+  TextSection = getOrCreateSection("\t.text", true,
+                                   SectionKind::get(SectionKind::Text));
+  DataSection = getOrCreateSection("\t.data", true,
+                                   SectionKind::get(SectionKind::DataRel));
 }
 
 void TargetLoweringObjectFileCOFF::
@@ -642,26 +661,25 @@ static const char *getCOFFSectionPrefixForUniqueGlobal(SectionKind Kind) {
 
 
 const MCSection *TargetLoweringObjectFileCOFF::
-SelectSectionForGlobal(const GlobalValue *GV, SectionKind Kind,
+SelectSectionForGlobal(const GlobalValue *GV, SectionInfo Info,
                        Mangler *Mang, const TargetMachine &TM) const {
-  assert(!Kind.isThreadLocal() && "Doesn't support TLS");
+  assert(!Info.isThreadLocal() && "Doesn't support TLS");
   
   // If this global is linkonce/weak and the target handles this by emitting it
   // into a 'uniqued' section name, create and return the section now.
-  if (Kind.isWeak()) {
-    const char *Prefix = getCOFFSectionPrefixForUniqueGlobal(Kind);
-    // FIXME: Use mangler interface (PR4584).
-    std::string Name = Prefix+GV->getNameStr();
-    return getOrCreateSection(Name.c_str(), false, Kind.getKind());
+  if (Info.isWeak()) {
+    const char *Prefix = getCOFFSectionPrefixForUniqueGlobal(Info);
+    std::string Name = Mang->makeNameProper(GV->getNameStr());
+    return getOrCreateSection((Prefix+Name).c_str(), false, Info);
   }
   
-  if (Kind.isText())
+  if (Info.isText())
     return getTextSection();
   
-  if (Kind.isBSS() && BSSSection_ != 0)
+  if (Info.isBSS() && BSSSection_ != 0)
     return BSSSection_;
   
-  if (Kind.isReadOnly() && ReadOnlySection != 0)
+  if (Info.isReadOnly() && ReadOnlySection != 0)
     return ReadOnlySection;
   
   return getDataSection();

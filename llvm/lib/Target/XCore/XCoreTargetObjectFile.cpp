@@ -16,9 +16,12 @@ using namespace llvm;
 void XCoreTargetObjectFile::Initialize(MCContext &Ctx, const TargetMachine &TM){
   TargetLoweringObjectFileELF::Initialize(Ctx, TM);
 
-  TextSection = getOrCreateSection("\t.text", true, SectionKind::Text);
-  DataSection = getOrCreateSection("\t.dp.data", false, SectionKind::DataRel);
-  BSSSection_ = getOrCreateSection("\t.dp.bss", false, SectionKind::BSS);
+  TextSection = getOrCreateSection("\t.text", true, 
+                                   SectionKind::get(SectionKind::Text));
+  DataSection = getOrCreateSection("\t.dp.data", false, 
+                                   SectionKind::get(SectionKind::DataRel));
+  BSSSection_ = getOrCreateSection("\t.dp.bss", false, 
+                                   SectionKind::get(SectionKind::BSS));
   
   // TLS globals are lowered in the backend to arrays indexed by the current
   // thread id. After lowering they require no special handling by the linker
@@ -29,8 +32,8 @@ void XCoreTargetObjectFile::Initialize(MCContext &Ctx, const TargetMachine &TM){
   if (TM.getSubtarget<XCoreSubtarget>().isXS1A())
     // FIXME: Why is this writable ("datarel")???
     ReadOnlySection = getOrCreateSection("\t.dp.rodata", false,
-                                         SectionKind::DataRel);
+                                        SectionKind::get(SectionKind::DataRel));
   else
     ReadOnlySection = getOrCreateSection("\t.cp.rodata", false,
-                                         SectionKind::ReadOnly);
+                                       SectionKind::get(SectionKind::ReadOnly));
 }

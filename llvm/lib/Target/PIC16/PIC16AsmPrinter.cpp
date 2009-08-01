@@ -73,7 +73,7 @@ bool PIC16AsmPrinter::runOnMachineFunction(MachineFunction &MF) {
  
   const MCSection *fCodeSection = 
     getObjFileLowering().getOrCreateSection(codeSection, false, 
-                                            SectionKind::Text);
+                                           SectionKind::get(SectionKind::Text));
   // Start the Code Section.
   O <<  "\n";
   SwitchToSection(fCodeSection);
@@ -350,7 +350,7 @@ void PIC16AsmPrinter::EmitFunctionFrame(MachineFunction &MF) {
 
   const MCSection *fPDataSection =
     getObjFileLowering().getOrCreateSection(SectionName, false,
-                                            SectionKind::DataRel);
+                                        SectionKind::get(SectionKind::DataRel));
   SwitchToSection(fPDataSection);
   
   // Emit function frame label
