@@ -415,7 +415,7 @@ SelectSectionForGlobal(const GlobalValue *GV, SectionInfo Info,
   
   // If this global is linkonce/weak and the target handles this by emitting it
   // into a 'uniqued' section name, create and return the section now.
-  if (Info.isWeak()) {
+  if (GV->isWeakForLinker()) {
     const char *Prefix = getSectionPrefixForUniqueGlobal(Info);
     std::string Name = Mang->makeNameProper(GV->getNameStr());
     return getOrCreateSection((Prefix+Name).c_str(), false, Info);
@@ -536,11 +536,11 @@ SelectSectionForGlobal(const GlobalValue *GV, SectionInfo Info,
   assert(!Info.isThreadLocal() && "Darwin doesn't support TLS");
   
   if (Info.isText())
-    return Info.isWeak() ? TextCoalSection : TextSection;
+    return GV->isWeakForLinker() ? TextCoalSection : TextSection;
   
   // If this is weak/linkonce, put this in a coalescable section, either in text
   // or data depending on if it is writable.
-  if (Info.isWeak()) {
+  if (GV->isWeakForLinker()) {
     if (Info.isReadOnly())
       return ConstTextCoalSection;
     return DataCoalSection;
@@ -667,7 +667,7 @@ SelectSectionForGlobal(const GlobalValue *GV, SectionInfo Info,
   
   // If this global is linkonce/weak and the target handles this by emitting it
   // into a 'uniqued' section name, create and return the section now.
-  if (Info.isWeak()) {
+  if (GV->isWeakForLinker()) {
     const char *Prefix = getCOFFSectionPrefixForUniqueGlobal(Info);
     std::string Name = Mang->makeNameProper(GV->getNameStr());
     return getOrCreateSection((Prefix+Name).c_str(), false, Info);
