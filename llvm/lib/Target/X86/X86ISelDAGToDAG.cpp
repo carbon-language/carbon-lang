@@ -142,10 +142,6 @@ namespace {
     /// make the right decision when generating code for different targets.
     const X86Subtarget *Subtarget;
 
-    /// CurBB - Current BB being isel'd.
-    ///
-    MachineBasicBlock *CurBB;
-
     /// OptForSize - If true, selector should try to optimize for code size
     /// instead of performance.
     bool OptForSize;
@@ -639,8 +635,7 @@ void X86DAGToDAGISel::PreprocessForFPConvert() {
 /// InstructionSelectBasicBlock - This callback is invoked by SelectionDAGISel
 /// when it has created a SelectionDAG for us to codegen.
 void X86DAGToDAGISel::InstructionSelect() {
-  CurBB = BB;  // BB can change as result of isel.
-  const Function *F = CurDAG->getMachineFunction().getFunction();
+  const Function *F = MF->getFunction();
   OptForSize = F->hasFnAttr(Attribute::OptimizeForSize);
 
   DEBUG(BB->dump());
@@ -1405,7 +1400,6 @@ bool X86DAGToDAGISel::TryFoldLoad(SDValue P, SDValue N,
 /// initialize the global base register, if necessary.
 ///
 SDNode *X86DAGToDAGISel::getGlobalBaseReg() {
-  MachineFunction *MF = CurBB->getParent();
   unsigned GlobalBaseReg = getInstrInfo()->getGlobalBaseReg(MF);
   return CurDAG->getRegister(GlobalBaseReg, TLI.getPointerTy()).getNode();
 }
