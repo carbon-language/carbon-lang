@@ -51,10 +51,6 @@ X86DarwinTargetAsmInfo::X86DarwinTargetAsmInfo(const X86TargetMachine &TM):
     Data64bitsDirective = 0;       // we can't emit a 64-bit unit
   ZeroDirective = "\t.space\t";  // ".space N" emits N zeros.
   ZeroFillDirective = "\t.zerofill\t";  // Uses .zerofill
-  if (TM.getRelocationModel() != Reloc::Static)
-    ConstantPoolSection = "\t.const_data";
-  else
-    ConstantPoolSection = "\t.const\n";
   LCOMMDirective = "\t.lcomm\t";
 
   // Leopard and above support aligned common symbols.
@@ -110,7 +106,6 @@ X86DarwinTargetAsmInfo::getEHGlobalPrefix() const {
 X86ELFTargetAsmInfo::X86ELFTargetAsmInfo(const X86TargetMachine &TM) :
   X86TargetAsmInfo<ELFTargetAsmInfo>(TM) {
 
-  CStringSection = ".rodata.str";
   PrivateGlobalPrefix = ".L";
   WeakRefDirective = "\t.weak\t";
   SetDirective = "\t.set\t";

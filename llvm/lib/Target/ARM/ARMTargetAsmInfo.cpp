@@ -62,7 +62,6 @@ ARMELFTargetAsmInfo::ARMELFTargetAsmInfo(const ARMBaseTargetMachine &TM):
   NeedsSet = false;
   HasLEB128 = true;
   AbsoluteDebugSectionOffsets = true;
-  CStringSection = ".rodata.str";
   PrivateGlobalPrefix = ".L";
   WeakRefDirective = "\t.weak\t";
   SetDirective = "\t.set\t";

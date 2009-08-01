@@ -23,7 +23,6 @@ PPCDarwinTargetAsmInfo::PPCDarwinTargetAsmInfo(const PPCTargetMachine &TM) :
   PPCTargetAsmInfo<DarwinTargetAsmInfo>(TM) {
   PCSymbol = ".";
   CommentString = ";";
-  ConstantPoolSection = "\t.const\t";
   UsedDirective = "\t.no_dead_strip\t";
   SupportsExceptionHandling = true;
   
@@ -46,14 +45,10 @@ PPCLinuxTargetAsmInfo::PPCLinuxTargetAsmInfo(const PPCTargetMachine &TM) :
   CommentString = "#";
   GlobalPrefix = "";
   PrivateGlobalPrefix = ".L";
-  ConstantPoolSection = "\t.section .rodata.cst4\t";
-  JumpTableDataSection = ".section .rodata.cst4";
-  CStringSection = ".rodata.str";
   StaticCtorsSection = ".section\t.ctors,\"aw\",@progbits";
   StaticDtorsSection = ".section\t.dtors,\"aw\",@progbits";
   UsedDirective = "\t# .no_dead_strip\t";
   WeakRefDirective = "\t.weak\t";
-  BSSSection = "\t.section\t\".sbss\",\"aw\",@nobits";
 
   // Debug Information
   AbsoluteDebugSectionOffsets = true;

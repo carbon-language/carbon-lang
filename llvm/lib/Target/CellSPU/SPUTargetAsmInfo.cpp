@@ -26,8 +26,6 @@ SPULinuxTargetAsmInfo::SPULinuxTargetAsmInfo(const SPUTargetMachine &TM) :
   CommentString = "#";
   GlobalPrefix = "";
   PrivateGlobalPrefix = ".L";
-  // This corresponds to what the gcc SPU compiler emits, for consistency.
-  CStringSection = ".rodata.str";
 
   // Has leb128, .loc and .file
   HasLEB128 = true;

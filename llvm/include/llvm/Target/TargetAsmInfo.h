@@ -35,12 +35,6 @@ namespace llvm {
     // Properties to be set by the target writer, used to configure asm printer.
     //
 
-    /// BSSSection - Section directive for uninitialized data.  Null if this
-    /// target doesn't support a BSS section.
-    ///
-/// FIXME: REMOVE.
-    const char *BSSSection;               // Default to ".bss".
-
     /// ZeroFillDirective - Directive for emitting a global to the ZeroFill
     /// section on this target.  Null if this target doesn't support zerofill.
     const char *ZeroFillDirective;        // Default is null.
@@ -212,10 +206,6 @@ namespace llvm {
     /// section with the section name and this suffix printed.
     const char *SectionEndDirectiveSuffix;// Defaults to null.
     
-    /// ConstantPoolSection - This is the section that we SwitchToSection right
-    /// before emitting the constant pool for a function.
-    const char *ConstantPoolSection;      // Defaults to "\t.section .rodata"
-
     /// JumpTableDataSection - This is the section that we SwitchToSection right
     /// before emitting the jump tables for a function when the relocation model
     /// is not PIC.
@@ -224,13 +214,6 @@ namespace llvm {
     /// JumpTableDirective - if non-null, the directive to emit before a jump
     /// table.
     const char *JumpTableDirective;
-
-    /// CStringSection - If not null, this allows for special handling of
-    /// cstring constants (null terminated string that does not contain any
-    /// other null bytes) on this target. This is commonly supported as
-    /// ".cstring".
-/// FIXME: REMOVE.
-    const char *CStringSection;           // Defaults to NULL
 
     /// StaticCtorsSection - This is the directive that is emitted to switch to
     /// a section to emit the static constructor list.
@@ -450,9 +433,6 @@ namespace llvm {
 
     // Accessors.
     //
-    const char *getBSSSection() const {
-      return BSSSection;
-    }
     const char *getZeroFillDirective() const {
       return ZeroFillDirective;
     }
@@ -558,14 +538,8 @@ namespace llvm {
     const char *getSectionEndDirectiveSuffix() const {
       return SectionEndDirectiveSuffix;
     }
-    const char *getConstantPoolSection() const {
-      return ConstantPoolSection;
-    }
     const char *getJumpTableDataSection() const {
       return JumpTableDataSection;
-    }
-    const char *getCStringSection() const {
-      return CStringSection;
     }
     const char *getStaticCtorsSection() const {
       return StaticCtorsSection;

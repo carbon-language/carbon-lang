@@ -20,7 +20,6 @@ SystemZTargetAsmInfo::SystemZTargetAsmInfo(const SystemZTargetMachine &TM)
   : ELFTargetAsmInfo(TM) {
   AlignmentIsInBytes = true;
 
-  CStringSection = ".rodata.str";
   PrivateGlobalPrefix = ".L";
   WeakRefDirective = "\t.weak\t";
   SetDirective = "\t.set\t";

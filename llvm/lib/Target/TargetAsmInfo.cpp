@@ -29,7 +29,6 @@
 using namespace llvm;
 
 TargetAsmInfo::TargetAsmInfo(const TargetMachine &tm) : TM(tm) {
-  BSSSection = "\t.bss";
   ZeroFillDirective = 0;
   NonexecutableStackDirective = 0;
   NeedsSet = false;
@@ -70,10 +69,8 @@ TargetAsmInfo::TargetAsmInfo(const TargetMachine &tm) : TM(tm) {
   TextSectionStartSuffix = "";
   DataSectionStartSuffix = "";
   SectionEndDirectiveSuffix = 0;
-  ConstantPoolSection = "\t.section .rodata";
   JumpTableDataSection = "\t.section .rodata";
   JumpTableDirective = 0;
-  CStringSection = 0;
   // FIXME: Flags are ELFish - replace with normal section stuff.
   StaticCtorsSection = "\t.section .ctors,\"aw\",@progbits";
   StaticDtorsSection = "\t.section .dtors,\"aw\",@progbits";

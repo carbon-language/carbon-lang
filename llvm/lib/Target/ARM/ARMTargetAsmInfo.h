@@ -32,7 +32,6 @@ namespace llvm {
       BaseTAI::AlignmentIsInBytes = false;
       BaseTAI::Data64bitsDirective = 0;
       BaseTAI::CommentString = "@";
-      BaseTAI::ConstantPoolSection = "\t.text\n";
       BaseTAI::COMMDirectiveTakesAlignment = false;
       BaseTAI::InlineAsmStart = "@ InlineAsm Start";
       BaseTAI::InlineAsmEnd = "@ InlineAsm End";

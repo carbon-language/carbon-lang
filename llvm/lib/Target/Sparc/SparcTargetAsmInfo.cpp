@@ -22,9 +22,7 @@ SparcELFTargetAsmInfo::SparcELFTargetAsmInfo(const TargetMachine &TM)
   Data64bitsDirective = 0;  // .xword is only supported by V9.
   ZeroDirective = "\t.skip\t";
   CommentString = "!";
-  ConstantPoolSection = "\t.section \".rodata\",#alloc\n";
   COMMDirectiveTakesAlignment = true;
-  CStringSection=".rodata.str";
 }
 
 

@@ -18,7 +18,6 @@ XCoreTargetAsmInfo::XCoreTargetAsmInfo(const TargetMachine &TM)
   Data64bitsDirective = 0;
   ZeroDirective = "\t.space\t";
   CommentString = "#";
-  ConstantPoolSection = "\t.section\t.cp.rodata,\"ac\",@progbits";
   JumpTableDataSection = "\t.section\t.dp.data,\"awd\",@progbits";
   PrivateGlobalPrefix = ".L";
   AscizDirective = ".asciiz";
