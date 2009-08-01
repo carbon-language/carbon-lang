@@ -309,7 +309,6 @@ bool SelectionDAGISel::runOnMachineFunction(MachineFunction &mf) {
   // Get alias analysis for load/store combining.
   AA = &getAnalysis<AliasAnalysis>();
 
-  TargetMachine &TM = TLI.getTargetMachine();
   MF = &mf;
   const TargetInstrInfo &TII = *TM.getInstrInfo();
   const TargetRegisterInfo &TRI = *TM.getRegisterInfo();
