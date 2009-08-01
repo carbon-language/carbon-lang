@@ -35,7 +35,8 @@ class ShLexer:
         # If it has special characters, the fast path failed.
         if ('|' in chunk or '&' in chunk or 
             '<' in chunk or '>' in chunk or
-            "'" in chunk or '"' in chunk):
+            "'" in chunk or '"' in chunk or
+            '\\' in chunk):
             return None
         
         self.pos = self.pos - 1 + len(chunk)
@@ -67,6 +68,14 @@ class ShLexer:
             elif c == '"':
                 self.eat()
                 str += self.lex_arg_quoted('"')
+            elif c == '\\':
+                # Outside of a string, '\\' escapes everything.
+                self.eat()
+                if self.pos == self.end:
+                    Util.warning("escape at end of quoted argument in: %r" % 
+                                 self.data)
+                    return str
+                str += self.eat()
             else:
                 str += self.eat()
         return str
@@ -78,8 +87,8 @@ class ShLexer:
             if c == delim:
                 return str
             elif c == '\\' and delim == '"':
-                # Shell escaping is just '\"' to avoid termination, no actual
-                # escaping.
+                # Inside a '"' quoted string, '\\' only escapes the quote
+                # character and backslash, otherwise it is preserved.
                 if self.pos == self.end:
                     Util.warning("escape at end of quoted argument in: %r" % 
                                  self.data)
@@ -214,7 +223,7 @@ class ShParser:
     
     def look(self):
         next = self.lex()
-        if next:
+        if next is not None:
             self.tokens = itertools.chain([next], self.tokens)
         return next
     
@@ -310,6 +319,10 @@ class TestShLexer(unittest.TestCase):
                          ["hello\\world"])
         self.assertEqual(self.lex(""" he"llo wo"rld """),
                          ["hello world"])
+        self.assertEqual(self.lex(""" a\\ b a\\\\b """),
+                         ["a b", "a\\b"])
+        self.assertEqual(self.lex(""" "" "" """),
+                         ["", ""])
 
 class TestShParse(unittest.TestCase):
     def parse(self, str):
@@ -318,6 +331,8 @@ class TestShParse(unittest.TestCase):
     def test_basic(self):
         self.assertEqual(self.parse('echo hello'),
                          Pipeline([Command(['echo', 'hello'], [])], False))
+        self.assertEqual(self.parse('echo ""'),
+                         Pipeline([Command(['echo', ''], [])], False))
 
     def test_redirection(self):
         self.assertEqual(self.parse('echo hello > c'),
@@ -370,6 +385,6 @@ class TestShParse(unittest.TestCase):
                                  Pipeline([Command(['b'], [])], False)),
                              '||',
                              Pipeline([Command(['c'], [])], False)))
-        
+
 if __name__ == '__main__':
     unittest.main()
