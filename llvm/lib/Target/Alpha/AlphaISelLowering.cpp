@@ -40,6 +40,8 @@ public:
                                      SectionKind::get(SectionKind::Text));
     DataSection = getOrCreateSection("_data", true, 
                                      SectionKind::get(SectionKind::DataRel));
+    ReadOnlySection = getOrCreateSection("_rodata", true, 
+                                     SectionKind::get(SectionKind::ReadOnly));
   }
 };
 }
