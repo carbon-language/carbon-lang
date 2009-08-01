@@ -5,6 +5,7 @@ import signal
 import subprocess
 import sys
 
+import ShUtil
 import Util
 
 kSystemName = platform.system()
@@ -20,6 +21,117 @@ class TestStatus:
     @staticmethod
     def getName(code): 
         return TestStatus.kNames[code]
+
+def executeShCmd(cmd, cfg, cwd, results):
+    if isinstance(cmd, ShUtil.Seq):
+        if cmd.op == ';':
+            res = executeShCmd(cmd.lhs, cfg, cwd, results)
+            if res is None:
+                return res
+
+            return executeShCmd(cmd.rhs, cfg, cwd, results)
+
+        if cmd.op == '&':
+            Util.warning("unsupported test command: '&'")
+            return None
+
+        if cmd.op == '||':
+            res = executeShCmd(cmd.lhs, cfg, cwd, results)
+            if res is None:
+                return res
+
+            if res != 0:
+                res = executeShCmd(cmd.rhs, cfg, cwd, results)
+            return res
+        if cmd.op == '&&':
+            res = executeShCmd(cmd.lhs, cfg, cwd, results)
+            if res is None:
+                return res
+
+            if res == 0:
+                res = executeShCmd(cmd.rhs, cfg, cwd, results)
+            return res
+            
+        raise ValueError,'Unknown shell command: %r' % cmd.op
+
+    assert isinstance(cmd, ShUtil.Pipeline)
+    procs = []
+    input = subprocess.PIPE
+    for j in cmd.commands:
+        # FIXME: This is broken, it doesn't account for the accumulative nature
+        # of redirects.
+        stdin = input
+        stdout = stderr = subprocess.PIPE
+        for r in j.redirects:
+            if r[0] == ('>',2):
+                stderr = open(r[1], 'w')
+            elif r[0] == ('>&',2) and r[1] == '1':
+                stderr = subprocess.STDOUT
+            elif r[0] == ('>',):
+                stdout = open(r[1], 'w')
+            elif r[0] == ('<',):
+                stdin = open(r[1], 'r')
+            else:
+                return None
+
+        procs.append(subprocess.Popen(j.args, cwd=cwd,
+                                      stdin = stdin,
+                                      stdout = stdout,
+                                      stderr = stderr,
+                                      env = cfg.environment))
+
+        # Immediately close stdin for any process taking stdin from us.
+        if stdin == subprocess.PIPE:
+            procs[-1].stdin.close()
+            procs[-1].stdin = None
+
+        if stdout == subprocess.PIPE:
+            input = procs[-1].stdout
+        else:
+            input = subprocess.PIPE
+    
+    # FIXME: There is a potential for deadlock here, when we have a pipe and
+    # some process other than the last one ends up blocked on stderr.
+    procData = [None] * len(procs)
+    procData[-1] = procs[-1].communicate()
+    for i in range(len(procs) - 1):
+        if procs[i].stdout is not None:
+            out = procs[i].stdout.read()
+        else:
+            out = ''
+        if procs[i].stderr is not None:
+            err = procs[i].stderr.read()
+        else:
+            err = ''
+        procData[i] = (out,err)
+
+    # FIXME: Fix tests to work with pipefail, and make exitCode max across
+    # procs.
+    for i,(out,err) in enumerate(procData):
+        exitCode = res = procs[i].wait()
+        results.append((cmd.commands[i], out, err, res))
+
+    if cmd.negate:
+        exitCode = not exitCode
+
+    return exitCode
+        
+def executeScriptInternal(cfg, commands, cwd):
+    cmd = ShUtil.ShParser(' &&\n'.join(commands)).parse()
+
+    results = []
+    exitCode = executeShCmd(cmd, cfg, cwd, results)
+    if exitCode is None:
+        return None
+
+    out = err = ''
+    for i,(cmd, cmd_out,cmd_err,res) in enumerate(results):
+        out += 'Command %d: %s\n' % (i, ' '.join('"%s"' % s for s in cmd.args))
+        out += 'Command %d Result: %r\n' % (i, res)
+        out += 'Command %d Output:\n%s\n\n' % (i, cmd_out)
+        out += 'Command %d Stderr:\n%s\n\n' % (i, cmd_err)
+
+    return out, err, exitCode
 
 def executeScript(cfg, script, commands, cwd):
     # Write script file
@@ -49,10 +161,6 @@ def executeScript(cfg, script, commands, cwd):
                          env=cfg.environment)
     out,err = p.communicate()
     exitCode = p.wait()
-
-    # Detect Ctrl-C in subprocess.
-    if exitCode == -signal.SIGINT:
-        raise KeyboardInterrupt
 
     return out, err, exitCode
 
@@ -118,8 +226,26 @@ def runOneTest(cfg, testPath, tmpBase):
         # Strip off '&&'
         scriptLines[i] = ln[:-2]
 
-    out, err, exitCode = executeScript(cfg, script, scriptLines, 
-                                       os.path.dirname(testPath))
+    if not cfg.useExternalShell:
+        res = executeScriptInternal(cfg, scriptLines, os.path.dirname(testPath))
+
+        if res is not None:
+            out, err, exitCode = res
+        elif True:
+            return (TestStatus.Fail, 
+                    "Unable to execute internally:\n%s\n" 
+                    % '\n'.join(scriptLines))
+        else:
+            out, err, exitCode = executeScript(cfg, script, scriptLines, 
+                                               os.path.dirname(testPath))
+    else:
+        out, err, exitCode = executeScript(cfg, script, scriptLines, 
+                                           os.path.dirname(testPath))
+
+    # Detect Ctrl-C in subprocess.
+    if exitCode == -signal.SIGINT:
+        raise KeyboardInterrupt
+
     if xfailLines:
         ok = exitCode != 0
         status = (TestStatus.XPass, TestStatus.XFail)[ok]

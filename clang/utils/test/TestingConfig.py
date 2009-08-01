@@ -19,6 +19,7 @@ class TestingConfig:
         # Variables set internally.
         self.root = None
         self.useValgrind = None
+        self.useExternalShell = None
 
         # FIXME: These need to move into a substitutions mechanism.
         self.clang = None

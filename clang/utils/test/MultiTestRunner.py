@@ -249,6 +249,9 @@ def main():
     group.add_option("", "--path", dest="path",
                      help="Additional paths to add to testing environment",
                      action="append", type=str, default=[])
+    group.add_option("", "--no-sh", dest="useExternalShell",
+                     help="Run tests using an external shell",
+                     action="store_false", default=True)
     group.add_option("", "--vg", dest="useValgrind",
                      help="Run tests under valgrind",
                      action="store_true", default=False)
@@ -314,6 +317,7 @@ def main():
     cfg.clang = opts.clang
     cfg.clangcc = opts.clangcc
     cfg.useValgrind = opts.useValgrind
+    cfg.useExternalShell = opts.useExternalShell
 
     # FIXME: It could be worth loading these in parallel with testing.
     allTests = list(getTests(cfg, args))
