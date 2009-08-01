@@ -336,16 +336,16 @@ void AsmPrinter::EmitConstantPool(MachineConstantPool *MCP) {
     SectionKind Kind;
     switch (CPE.getRelocationInfo()) {
     default: llvm_unreachable("Unknown section kind");
-    case 2: Kind = SectionKind::get(SectionKind::ReadOnlyWithRel); break;
+    case 2: Kind = SectionKind::getReadOnlyWithRel(); break;
     case 1:
-      Kind = SectionKind::get(SectionKind::ReadOnlyWithRelLocal);
+      Kind = SectionKind::getReadOnlyWithRelLocal();
       break;
     case 0:
     switch (TM.getTargetData()->getTypeAllocSize(CPE.getType())) {
-    case 4:  Kind = SectionKind::get(SectionKind::MergeableConst4); break;
-    case 8:  Kind = SectionKind::get(SectionKind::MergeableConst8); break;
-    case 16: Kind = SectionKind::get(SectionKind::MergeableConst16);break;
-    default: Kind = SectionKind::get(SectionKind::MergeableConst); break;
+    case 4:  Kind = SectionKind::getMergeableConst4(); break;
+    case 8:  Kind = SectionKind::getMergeableConst8(); break;
+    case 16: Kind = SectionKind::getMergeableConst16();break;
+    default: Kind = SectionKind::getMergeableConst(); break;
     }
     }
 
@@ -430,8 +430,7 @@ void AsmPrinter::EmitJumpTableInfo(MachineJumpTableInfo *MJTI,
   } else {
     // Otherwise, drop it in the readonly section.
     const MCSection *ReadOnlySection = 
-      getObjFileLowering().getSectionForConstant(
-                                       SectionKind::get(SectionKind::ReadOnly));
+      getObjFileLowering().getSectionForConstant(SectionKind::getReadOnly());
     SwitchToSection(ReadOnlySection);
     JTInDiffSection = true;
   }

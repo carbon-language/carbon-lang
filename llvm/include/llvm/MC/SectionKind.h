@@ -117,7 +117,6 @@ public:
   
 protected:
   Kind K : 8;
-  
 public:
   
   bool isMetadata() const { return K == Metadata; }
@@ -176,6 +175,25 @@ public:
     SectionKind Res;
     Res.K = K;
     return Res;
+  }
+  
+  static SectionKind getMetadata() { return get(Metadata); }
+  static SectionKind getText() { return get(Text); }
+  static SectionKind getReadOnly() { return get(ReadOnly); }
+  static SectionKind getMergeableCString() { return get(MergeableCString); }
+  static SectionKind getMergeableConst() { return get(MergeableConst); }
+  static SectionKind getMergeableConst4() { return get(MergeableConst4); }
+  static SectionKind getMergeableConst8() { return get(MergeableConst8); }
+  static SectionKind getMergeableConst16() { return get(MergeableConst16); }
+  static SectionKind getThreadBSS() { return get(ThreadBSS); }
+  static SectionKind getThreadData() { return get(ThreadData); }
+  static SectionKind getBSS() { return get(BSS); }
+  static SectionKind getDataRel() { return get(DataRel); }
+  static SectionKind getDataRelLocal() { return get(DataRelLocal); }
+  static SectionKind getDataNoRel() { return get(DataNoRel); }
+  static SectionKind getReadOnlyWithRel() { return get(ReadOnlyWithRel); }
+  static SectionKind getReadOnlyWithRelLocal(){
+    return get(ReadOnlyWithRelLocal);
   }
 };
   
