@@ -314,8 +314,8 @@ bool SelectionDAGISel::runOnMachineFunction(MachineFunction &mf) {
   const TargetInstrInfo &TII = *TM.getInstrInfo();
   const TargetRegisterInfo &TRI = *TM.getRegisterInfo();
 
-  if (MF->getFunction()->hasGC())
-    GFI = &getAnalysis<GCModuleInfo>().getFunctionInfo(*MF->getFunction());
+  if (Fn.hasGC())
+    GFI = &getAnalysis<GCModuleInfo>().getFunctionInfo(Fn);
   else
     GFI = 0;
   RegInfo = &MF->getRegInfo();
@@ -550,10 +550,10 @@ void SelectionDAGISel::ComputeLiveOutVRegInfo() {
     // Only install this information if it tells us something.
     if (NumSignBits != 1 || KnownZero != 0 || KnownOne != 0) {
       DestReg -= TargetRegisterInfo::FirstVirtualRegister;
-      FunctionLoweringInfo &FLI = CurDAG->getFunctionLoweringInfo();
-      if (DestReg >= FLI.LiveOutRegInfo.size())
-        FLI.LiveOutRegInfo.resize(DestReg+1);
-      FunctionLoweringInfo::LiveOutInfo &LOI = FLI.LiveOutRegInfo[DestReg];
+      if (DestReg >= FuncInfo->LiveOutRegInfo.size())
+        FuncInfo->LiveOutRegInfo.resize(DestReg+1);
+      FunctionLoweringInfo::LiveOutInfo &LOI =
+        FuncInfo->LiveOutRegInfo[DestReg];
       LOI.NumSignBits = NumSignBits;
       LOI.KnownOne = KnownOne;
       LOI.KnownZero = KnownZero;
@@ -569,7 +569,7 @@ void SelectionDAGISel::CodeGenAndEmitDAG() {
   if (ViewDAGCombine1 || ViewLegalizeTypesDAGs || ViewLegalizeDAGs ||
       ViewDAGCombine2 || ViewDAGCombineLT || ViewISelDAGs || ViewSchedDAGs ||
       ViewSUnitDAGs)
-    BlockName = CurDAG->getMachineFunction().getFunction()->getNameStr() + ":" +
+    BlockName = MF->getFunction()->getNameStr() + ":" +
                 BB->getBasicBlock()->getNameStr();
 
   DOUT << "Initial selection DAG:\n";
@@ -1224,7 +1224,7 @@ SelectInlineAsmMemoryOperands(std::vector<SDValue> &Ops) {
       }
       
       // Add this to the output node.
-      MVT IntPtrTy = CurDAG->getTargetLoweringInfo().getPointerTy();
+      MVT IntPtrTy = TLI.getPointerTy();
       Ops.push_back(CurDAG->getTargetConstant(4/*MEM*/ | (SelOps.size()<< 3),
                                               IntPtrTy));
       Ops.insert(Ops.end(), SelOps.begin(), SelOps.end());
