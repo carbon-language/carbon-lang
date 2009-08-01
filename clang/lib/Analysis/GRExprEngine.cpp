@@ -1241,6 +1241,9 @@ GRExprEngine::NodeTy* GRExprEngine::EvalLocation(Stmt* Ex, NodeTy* Pred,
   if (!StNotNull)
     return NULL;
 
+  // FIXME: Temporarily disable out-of-bounds checking until we make
+  // the logic reflect recent changes to CastRegion and friends.
+#if 0
   // Check for out-of-bound array access.
   if (isa<loc::MemRegionVal>(LV)) {
     const MemRegion* R = cast<loc::MemRegionVal>(LV).getRegion();
@@ -1278,6 +1281,7 @@ GRExprEngine::NodeTy* GRExprEngine::EvalLocation(Stmt* Ex, NodeTy* Pred,
       StNotNull = StInBound;
     }
   }
+#endif
   
   // Generate a new node indicating the checks succeed.
   return Builder->generateNode(Ex, StNotNull, Pred,
@@ -1316,7 +1320,8 @@ static bool EvalOSAtomicCompareAndSwap(ExplodedNodeSet<GRState>& Dst,
     return false;
   
   Expr *theValueExpr = CE->getArg(2);
-  const PointerType *theValueType = theValueExpr->getType()->getAs<PointerType>();
+  const PointerType *theValueType =
+    theValueExpr->getType()->getAs<PointerType>();
   
   // theValueType not a pointer?
   if (!theValueType)

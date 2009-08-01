@@ -13,7 +13,10 @@ void foo( void )
   struct load_wine *cmd = (void*) &wonky[1];
   cmd = cmd;
   char *p = (void*) &wonky[1];
-  *p = 1; 
+  *p = 1;  // no-warning
   kernel_tea_cheese_t *q = &wonky[1];
-  kernel_tea_cheese_t r = *q; // expected-warning{{out-of-bound memory position}}
+  // This test case tests both the RegionStore logic (doesn't crash) and
+  // the out-of-bounds checking.  We don't expect the warning for now since
+  // out-of-bound checking is temporarily disabled.
+  kernel_tea_cheese_t r = *q; // eventually-warning{{out-of-bound memory position}}
 }
