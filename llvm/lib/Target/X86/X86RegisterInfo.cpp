@@ -1451,13 +1451,20 @@ namespace {
            RegNum < RI.getLastVirtReg(); ++RegNum)
         MaxAlign = std::max(MaxAlign, RI.getRegClass(RegNum)->getAlignment());
 
-      FFI->setMaxAlignment(MaxAlign);
+      if (FFI->getMaxAlignment() == MaxAlign)
+        return false;
 
-      return false;
+      FFI->setMaxAlignment(MaxAlign);
+      return true;
     }
 
     virtual const char *getPassName() const {
       return "X86 Maximal Stack Alignment Calculator";
+    }
+
+    virtual void getAnalysisUsage(AnalysisUsage &AU) const {
+      AU.setPreservesCFG();
+      MachineFunctionPass::getAnalysisUsage(AU);
     }
   };
 
