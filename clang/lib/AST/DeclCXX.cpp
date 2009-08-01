@@ -348,8 +348,9 @@ CXXMethodDecl::method_iterator CXXMethodDecl::begin_overridden_methods() const {
     return 0;
   
   OverriddenMethodsMapTy::iterator it = OverriddenMethods->find(this);
-  if (it == OverriddenMethods->end())
+  if (it == OverriddenMethods->end() || it->second->empty())
     return 0;
+
   return &(*it->second)[0];
 }
 
@@ -358,7 +359,7 @@ CXXMethodDecl::method_iterator CXXMethodDecl::end_overridden_methods() const {
     return 0;
   
   OverriddenMethodsMapTy::iterator it = OverriddenMethods->find(this);
-  if (it == OverriddenMethods->end())
+  if (it == OverriddenMethods->end() || it->second->empty())
     return 0;
 
   return &(*it->second)[it->second->size()];
