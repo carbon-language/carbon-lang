@@ -16,9 +16,7 @@
 
 #include <string>
 #include "llvm/ADT/StringRef.h"
-
-// FIXME: HORRIBLE HACK: major layering violation to get an enum.
-#include "llvm/Target/TargetLoweringObjectFile.h"
+#include "llvm/MC/SectionKind.h"
 
 namespace llvm {
   class MCContext;
