@@ -2,6 +2,9 @@ import itertools
 
 import Util
 
+# FIXME: It would be nice to at least match a few other things like `...`, $(
+# ... ), $VAR, etc., if only so we can nicely say "we don't support this".
+
 class ShLexer:
     def __init__(self, data):
         self.data = data
@@ -82,9 +85,12 @@ class ShLexer:
                                  self.data)
                     return str
                 c = self.eat()
-                if c != delim:
+                if c == '"': # 
+                    str += '"'
+                elif c == '\\':
                     str += '\\'
-                str += c
+                else:
+                    str += '\\' + c
             else:
                 str += c
         Util.warning("missing quote character in %r" % self.data)
@@ -135,6 +141,7 @@ class ShLexer:
                 return ('<&',)
             if self.maybe_eat('>'):
                 return ('<<',)
+            return (c,)
 
         return self.lex_arg(c)
 
@@ -282,8 +289,9 @@ class TestShLexer(unittest.TestCase):
         return list(ShLexer(str).lex())
 
     def test_basic(self):
-        self.assertEqual(self.lex('a|b>c&d'),
-                         ['a', ('|',), 'b', ('>',), 'c', ('&',), 'd'])
+        self.assertEqual(self.lex('a|b>c&d<e'),
+                         ['a', ('|',), 'b', ('>',), 'c', ('&',), 'd', 
+                          ('<',), 'e'])
 
     def test_redirection_tokens(self):
         self.assertEqual(self.lex('a2>c'),
@@ -298,6 +306,8 @@ class TestShLexer(unittest.TestCase):
                          ['hello"world'])
         self.assertEqual(self.lex(""" "hello\\'world" """),
                          ["hello\\'world"])
+        self.assertEqual(self.lex(""" "hello\\\\world" """),
+                         ["hello\\world"])
         self.assertEqual(self.lex(""" he"llo wo"rld """),
                          ["hello world"])
 
