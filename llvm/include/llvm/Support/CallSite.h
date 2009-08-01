@@ -40,8 +40,6 @@ public:
   CallSite(CallInst *CI) : I(reinterpret_cast<Instruction*>(CI), true) {}
   CallSite(InvokeInst *II) : I(reinterpret_cast<Instruction*>(II), false) {}
   CallSite(Instruction *C);
-  CallSite(const CallSite &CS) : I(CS.I) {}
-  CallSite &operator=(const CallSite &CS) { I = CS.I; return *this; }
 
   bool operator==(const CallSite &CS) const { return I == CS.I; }
   bool operator!=(const CallSite &CS) const { return I != CS.I; }
