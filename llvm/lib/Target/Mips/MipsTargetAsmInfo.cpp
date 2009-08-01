@@ -24,7 +24,6 @@ MipsTargetAsmInfo::MipsTargetAsmInfo(const MipsTargetMachine &TM)
   Data32bitsDirective         = "\t.word\t";
   Data64bitsDirective         = NULL;
   PrivateGlobalPrefix         = "$";
-  JumpTableDataSection        = "\t.rdata";
   CommentString               = "#";
   ZeroDirective               = "\t.space\t";
 
