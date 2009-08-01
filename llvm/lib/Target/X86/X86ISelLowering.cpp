@@ -1280,7 +1280,7 @@ static bool CallIsStructReturn(CallSDNode *TheCall) {
   return TheCall->getArgFlags(0).isSRet();
 }
 
-/// ArgsAreStructReturn - Determines whether a FORMAL_ARGUMENTS node uses struct
+/// ArgsAreStructReturn - Determines whether a function uses struct
 /// return semantics.
 static bool ArgsAreStructReturn(SDValue Op) {
   unsigned NumArgs = Op.getNode()->getNumValues() - 1;
@@ -1290,9 +1290,8 @@ static bool ArgsAreStructReturn(SDValue Op) {
   return cast<ARG_FLAGSSDNode>(Op.getOperand(3))->getArgFlags().isSRet();
 }
 
-/// IsCalleePop - Determines whether a CALL or FORMAL_ARGUMENTS node requires
-/// the callee to pop its own arguments. Callee pop is necessary to support tail
-/// calls.
+/// IsCalleePop - Determines whether the callee is required to pop its
+/// own arguments. Callee pop is necessary to support tail calls.
 bool X86TargetLowering::IsCalleePop(bool IsVarArg, unsigned CallingConv) {
   if (IsVarArg)
     return false;
@@ -1449,7 +1448,7 @@ X86TargetLowering::LowerFORMAL_ARGUMENTS(SDValue Op, SelectionDAG &DAG) {
         llvm_unreachable("Unknown argument type!");
       }
 
-      unsigned Reg = DAG.getMachineFunction().addLiveIn(VA.getLocReg(), RC);
+      unsigned Reg = MF.addLiveIn(VA.getLocReg(), RC);
       SDValue ArgValue = DAG.getCopyFromReg(Root, dl, Reg, RegVT);
 
       // If this is an 8 or 16-bit value, it is really passed promoted to 32
@@ -1486,8 +1485,7 @@ X86TargetLowering::LowerFORMAL_ARGUMENTS(SDValue Op, SelectionDAG &DAG) {
   // The x86-64 ABI for returning structs by value requires that we copy
   // the sret argument into %rax for the return. Save the argument into
   // a virtual register so that we can access it from the return points.
-  if (Is64Bit && DAG.getMachineFunction().getFunction()->hasStructRetAttr()) {
-    MachineFunction &MF = DAG.getMachineFunction();
+  if (Is64Bit && MF.getFunction()->hasStructRetAttr()) {
     X86MachineFunctionInfo *FuncInfo = MF.getInfo<X86MachineFunctionInfo>();
     unsigned Reg = FuncInfo->getSRetReturnReg();
     if (!Reg) {
@@ -1971,7 +1969,7 @@ SDValue X86TargetLowering::LowerCALL(SDValue Op, SelectionDAG &DAG) {
                              Callee,InFlag);
     Callee = DAG.getRegister(Opc, getPointerTy());
     // Add register as live out.
-    DAG.getMachineFunction().getRegInfo().addLiveOut(Opc);
+    MF.getRegInfo().addLiveOut(Opc);
   }
 
   // Returns a chain & a flag for retval copy to use.
