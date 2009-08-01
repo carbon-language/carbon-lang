@@ -190,6 +190,24 @@ def findConfigPath(root):
 
     raise ValueError,"Unable to find config file %r" % kConfigName
 
+def runTests(opts, provider):
+    # If only using one testing thread, don't use threads at all; this lets us
+    # profile, among other things.
+    if opts.numThreads == 1:
+        t = Tester(provider)
+        t.run()
+        return
+
+    # Otherwise spin up the testing threads and wait for them to finish.
+    testers = [Tester(provider) for i in range(opts.numThreads)]
+    for t in testers:
+        t.start()
+    try:
+        for t in testers:
+            t.join()
+    except KeyboardInterrupt:
+        sys.exit(1)
+
 def main():
     global options
     from optparse import OptionParser, OptionGroup
@@ -323,19 +341,13 @@ def main():
         if not progressBar:
             print header
 
+    # Don't create more threads than tests.
+    opts.numThreads = min(len(tests), opts.numThreads)
+
+    startTime = time.time()
     display = TestingProgressDisplay(opts, len(tests), progressBar)
     provider = TestProvider(cfg, opts, tests, display)
-
-    testers = [Tester(provider) for i in range(opts.numThreads)]
-    startTime = time.time()
-    for t in testers:
-        t.start()
-    try:
-        for t in testers:
-            t.join()
-    except KeyboardInterrupt:
-        sys.exit(1)
-
+    runTests(opts, provider)
     display.finish()
 
     if not opts.quiet:
