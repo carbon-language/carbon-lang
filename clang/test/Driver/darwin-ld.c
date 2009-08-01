@@ -1,6 +1,5 @@
 // Check that ld gets arch_multiple.
 
-// RUN: unset MACOSX_DEPLOYMENT_TARGET &&
 // RUN: clang -ccc-host-triple i386-apple-darwin9 -arch i386 -arch x86_64 %s -### -o foo 2> %t.log &&
 // RUN: grep '".*ld" .*"-arch_multiple" "-final_output" "foo"' %t.log &&
 
