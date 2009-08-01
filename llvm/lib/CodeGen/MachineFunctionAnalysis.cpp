@@ -29,6 +29,10 @@ MachineFunctionAnalysis::MachineFunctionAnalysis(TargetMachine &tm,
   FunctionPass(&ID), TM(tm), OptLevel(OL), MF(0) {
 }
 
+MachineFunctionAnalysis::~MachineFunctionAnalysis() {
+  assert(!MF && "MachineFunctionAnalysis left initialized!");
+}
+
 bool MachineFunctionAnalysis::runOnFunction(Function &F) {
   assert(!MF && "MachineFunctionAnalysis already initialized!");
   MF = new MachineFunction(&F, TM);

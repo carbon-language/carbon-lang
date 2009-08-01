@@ -33,7 +33,7 @@ public:
   static char ID;
   explicit MachineFunctionAnalysis(TargetMachine &tm,
                                    CodeGenOpt::Level OL = CodeGenOpt::Default);
-
+  ~MachineFunctionAnalysis();
 
   MachineFunction &getMF() const { return *MF; }
   CodeGenOpt::Level getOptLevel() const { return OptLevel; }
