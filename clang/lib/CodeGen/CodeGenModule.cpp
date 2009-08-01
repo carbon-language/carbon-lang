@@ -1493,7 +1493,8 @@ void CodeGenModule::EmitNamespace(const NamespaceDecl *ND) {
 
 // EmitLinkageSpec - Emit all declarations in a linkage spec.
 void CodeGenModule::EmitLinkageSpec(const LinkageSpecDecl *LSD) {
-  if (LSD->getLanguage() != LinkageSpecDecl::lang_c) {
+  if (LSD->getLanguage() != LinkageSpecDecl::lang_c &&
+      LSD->getLanguage() != LinkageSpecDecl::lang_cxx) {
     ErrorUnsupported(LSD, "linkage spec");
     return;
   }
