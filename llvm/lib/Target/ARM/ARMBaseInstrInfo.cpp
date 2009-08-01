@@ -466,9 +466,14 @@ unsigned ARMBaseInstrInfo::GetInstSizeInBytes(const MachineInstr *MI) const {
       // FIXME: If we know the size of the function is less than (1 << 16) *2
       // bytes, we can use 16-bit entries instead. Then there won't be an
       // alignment issue.
-      unsigned InstSize = (Opc == ARM::tBR_JTr || Opc == ARM::t2BR_JT)
-        ? 2 : 4;
-      return getNumJTEntries(JT, JTI) * EntrySize + InstSize;
+      unsigned InstSize = (Opc == ARM::tBR_JTr || Opc == ARM::t2BR_JT) ? 2 : 4;
+      unsigned NumEntries = getNumJTEntries(JT, JTI);
+      if (Opc == ARM::t2TBB && (NumEntries & 1))
+        // Make sure the instruction that follows TBB is 2-byte aligned.
+        // FIXME: Constant island pass should insert an "ALIGN" instruction
+        // instead.
+        ++NumEntries;
+      return NumEntries * EntrySize + InstSize;
     }
     default:
       // Otherwise, pseudo-instruction sizes are zero.

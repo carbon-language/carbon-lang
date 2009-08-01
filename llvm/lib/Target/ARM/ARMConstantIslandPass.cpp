@@ -132,6 +132,7 @@ namespace {
     bool HasFarJump;
 
     const TargetInstrInfo *TII;
+    const ARMSubtarget *STI;
     ARMFunctionInfo *AFI;
     bool isThumb;
     bool isThumb1;
@@ -227,6 +228,8 @@ bool ARMConstantIslands::runOnMachineFunction(MachineFunction &MF) {
 
   TII = MF.getTarget().getInstrInfo();
   AFI = MF.getInfo<ARMFunctionInfo>();
+  STI = &MF.getTarget().getSubtarget<ARMSubtarget>();
+
   isThumb = AFI->isThumbFunction();
   isThumb1 = AFI->isThumb1OnlyFunction();
   isThumb2 = AFI->isThumb2Function();
@@ -281,6 +284,9 @@ bool ARMConstantIslands::runOnMachineFunction(MachineFunction &MF) {
     MadeChange = true;
   }
 
+  // Let's see if we can use tbb / tbh to do jump tables.
+  MadeChange |= OptimizeThumb2JumpTables(MF);
+
   // After a while, this might be made debug-only, but it is not expensive.
   verify(MF);
 
@@ -288,9 +294,6 @@ bool ARMConstantIslands::runOnMachineFunction(MachineFunction &MF) {
   // Undo the spill / restore of LR if possible.
   if (isThumb && !HasFarJump && AFI->isLRSpilledForFarJump())
     MadeChange |= UndoLRSpillRestore();
-
-  // Let's see if we can use tbb / tbh to do jump tables.
-  MadeChange |= OptimizeThumb2JumpTables(MF);
 
   BBSizes.clear();
   BBOffsets.clear();
@@ -464,6 +467,8 @@ void ARMConstantIslands::InitialFunctionScan(MachineFunction &MF,
           bool NegOk = false;
           bool IsSoImm = false;
 
+          // FIXME: Temporary workaround until I can figure out what's going on.
+          unsigned Slack = T2JumpTables.empty() ? 0 : 4;
           switch (Opc) {
           default:
             llvm_unreachable("Unknown addressing mode for CP reference!");
@@ -513,7 +518,7 @@ void ARMConstantIslands::InitialFunctionScan(MachineFunction &MF,
           // Remember that this is a user of a CP entry.
           unsigned CPI = I->getOperand(op).getIndex();
           MachineInstr *CPEMI = CPEMIs[CPI];
-          unsigned MaxOffs = ((1 << Bits)-1) * Scale;
+          unsigned MaxOffs = ((1 << Bits)-1) * Scale - Slack;
           CPUsers.push_back(CPUser(I, CPEMI, MaxOffs, NegOk, IsSoImm));
 
           // Increment corresponding CPEntry reference count.
@@ -675,7 +680,7 @@ MachineBasicBlock *ARMConstantIslands::SplitBlockBeforeInstr(MachineInstr *MI) {
 
   // We removed instructions from UserMBB, subtract that off from its size.
   // Add 2 or 4 to the block to count the unconditional branch we added to it.
-  unsigned delta = isThumb1 ? 2 : 4;
+  int delta = isThumb1 ? 2 : 4;
   BBSizes[OrigBBI] -= NewBBSize - delta;
 
   // ...and adjust BBOffsets for NewBB accordingly.
@@ -1362,7 +1367,10 @@ bool ARMConstantIslands::OptimizeThumb2JumpTables(MachineFunction &MF) {
       // sure all the branches are forward.
       if (ByteOk && (DstOffset - JTOffset) > ((1<<8)-1)*2)
         ByteOk = false;
-      if (HalfWordOk && (DstOffset - JTOffset) > ((1<<16)-1)*2)
+      unsigned TBHLimit = ((1<<16)-1)*2;
+      if (STI->isTargetDarwin())
+        TBHLimit >>= 1;  // FIXME: Work around an assembler bug.
+      if (HalfWordOk && (DstOffset - JTOffset) > TBHLimit)
         HalfWordOk = false;
       if (!ByteOk && !HalfWordOk)
         break;
@@ -1406,23 +1414,33 @@ bool ARMConstantIslands::OptimizeThumb2JumpTables(MachineFunction &MF) {
       MachineInstr *LeaMI = --PrevI;
       if (LeaMI->getOpcode() != ARM::t2LEApcrelJT ||
           LeaMI->getOperand(0).getReg() != BaseReg)
-        LeaMI = 0;
+        OptOk = false;
 
-      if (OptOk) {
-        unsigned Opc = ByteOk ? ARM::t2TBB : ARM::t2TBH;
-        AddDefaultPred(BuildMI(MBB, MI->getDebugLoc(), TII->get(Opc))
-                       .addReg(IdxReg, getKillRegState(IdxRegKill))
-                       .addJumpTableIndex(JTI, JTOP.getTargetFlags())
-                       .addImm(MI->getOperand(JTOpIdx+1).getImm()));
-        // FIXME: Insert an "ALIGN" instruction to ensure the next instruction
-        // is 2-byte aligned. For now, asm printer will fix it up.
-        AddrMI->eraseFromParent();
-        if (LeaMI)
-          LeaMI->eraseFromParent();
-        MI->eraseFromParent();
-        ++NumTBs;
-        MadeChange = true;
-      }
+      if (!OptOk)
+        continue;
+
+      unsigned Opc = ByteOk ? ARM::t2TBB : ARM::t2TBH;
+      MachineInstr *NewJTMI = BuildMI(MBB, MI->getDebugLoc(), TII->get(Opc))
+        .addReg(IdxReg, getKillRegState(IdxRegKill))
+        .addJumpTableIndex(JTI, JTOP.getTargetFlags())
+        .addImm(MI->getOperand(JTOpIdx+1).getImm());
+      // FIXME: Insert an "ALIGN" instruction to ensure the next instruction
+      // is 2-byte aligned. For now, asm printer will fix it up.
+      unsigned NewSize = TII->GetInstSizeInBytes(NewJTMI);
+      unsigned OrigSize = TII->GetInstSizeInBytes(AddrMI);
+      OrigSize += TII->GetInstSizeInBytes(LeaMI);
+      OrigSize += TII->GetInstSizeInBytes(MI);
+
+      AddrMI->eraseFromParent();
+      LeaMI->eraseFromParent();
+      MI->eraseFromParent();
+
+      int delta = OrigSize - NewSize;
+      BBSizes[MBB->getNumber()] -= delta;
+      AdjustBBOffsetsAfter(MBB, -delta);
+
+      ++NumTBs;
+      MadeChange = true;
     }
   }
 

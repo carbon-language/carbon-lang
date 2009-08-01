@@ -749,7 +749,21 @@ def t2BFC : T2I<(outs GPR:$dst), (ins GPR:$src, bf_inv_mask_imm:$imm),
 
 // FIXME: A8.6.18  BFI - Bitfield insert (Encoding T1)
 
+/*
 defm t2ORN  : T2I_bin_irs<"orn", BinOpFrag<(or  node:$LHS, (not node:$RHS))>>;
+*/
+// FIXME: Disable this pattern on Darwin to workaround an assembler bug.
+def t2ORNri : T2sI<(outs GPR:$dst), (ins GPR:$lhs, t2_so_imm:$rhs),
+                   "orn", " $dst, $lhs, $rhs",
+                   [(set GPR:$dst, (or GPR:$lhs, (not t2_so_imm:$rhs)))]>,
+                   Requires<[IsThumb2, IsNotDarwin]>;
+
+def t2ORNrr : T2sI<(outs GPR:$dst), (ins GPR:$lhs, GPR:$rhs),
+                   "orn", " $dst, $lhs, $rhs",
+                   [(set GPR:$dst, (or GPR:$lhs, (not GPR:$rhs)))]>;
+def t2ORNrs : T2sI<(outs GPR:$dst), (ins GPR:$lhs, t2_so_reg:$rhs),
+                   "orn", " $dst, $lhs, $rhs",
+                   [(set GPR:$dst, (or GPR:$lhs, (not t2_so_reg:$rhs)))]>;
 
 // Prefer over of t2EORri ra, rb, -1 because mvn has 16-bit version
 let AddedComplexity = 1 in
@@ -759,8 +773,10 @@ defm t2MVN  : T2I_un_irs  <"mvn", UnOpFrag<(not node:$Src)>, 1, 1>;
 def : T2Pat<(and     GPR:$src, t2_so_imm_not:$imm),
             (t2BICri GPR:$src, t2_so_imm_not:$imm)>;
 
+// FIXME: Disable this pattern on Darwin to workaround an assembler bug.
 def : T2Pat<(or      GPR:$src, t2_so_imm_not:$imm),
-            (t2ORNri GPR:$src, t2_so_imm_not:$imm)>;
+            (t2ORNri GPR:$src, t2_so_imm_not:$imm)>,
+            Requires<[IsThumb2, IsNotDarwin]>;
 
 def : T2Pat<(t2_so_imm_not:$src),
             (t2MVNi t2_so_imm_not:$src)>;
@@ -1037,15 +1053,16 @@ def t2BR_JT :
           "mov pc, $target\n$jt",
           [(ARMbr2jt GPR:$target, GPR:$index, tjumptable:$jt, imm:$id)]>;
 
+// FIXME: Add a non-pc based case that can be predicated.
 def t2TBB :
-    T2I<(outs),
+    T2JTI<(outs),
         (ins tb_addrmode:$index, jt2block_operand:$jt, i32imm:$id),
-        "tbb", " $index\n$jt", []>;
+        "tbb $index\n$jt", []>;
 
 def t2TBH :
-    T2I<(outs),
+    T2JTI<(outs),
         (ins tb_addrmode:$index, jt2block_operand:$jt, i32imm:$id),
-        "tbh", " $index\n$jt", []>;
+        "tbh $index\n$jt", []>;
 } // isNotDuplicable, isIndirectBranch
 
 } // isBranch, isTerminator, isBarrier
