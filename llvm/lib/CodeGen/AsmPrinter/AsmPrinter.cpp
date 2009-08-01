@@ -910,6 +910,16 @@ void AsmPrinter::EmitConstantValueOnly(const Constant *CV) {
     const TargetData *TD = TM.getTargetData();
     unsigned Opcode = CE->getOpcode();    
     switch (Opcode) {
+    case Instruction::Trunc:
+    case Instruction::ZExt:
+    case Instruction::SExt:
+    case Instruction::FPTrunc:
+    case Instruction::FPExt:
+    case Instruction::UIToFP:
+    case Instruction::SIToFP:
+    case Instruction::FPToUI:
+    case Instruction::FPToSI:
+      llvm_unreachable("FIXME: Don't support this constant cast expr");
     case Instruction::GetElementPtr: {
       // generate a symbolic expression for the byte address
       const Constant *ptrVal = CE->getOperand(0);
@@ -934,17 +944,6 @@ void AsmPrinter::EmitConstantValueOnly(const Constant *CV) {
       }
       break;
     }
-    case Instruction::Trunc:
-    case Instruction::ZExt:
-    case Instruction::SExt:
-    case Instruction::FPTrunc:
-    case Instruction::FPExt:
-    case Instruction::UIToFP:
-    case Instruction::SIToFP:
-    case Instruction::FPToUI:
-    case Instruction::FPToSI:
-      llvm_unreachable("FIXME: Don't yet support this kind of constant cast expr");
-      break;
     case Instruction::BitCast:
       return EmitConstantValueOnly(CE->getOperand(0));
 
@@ -965,12 +964,13 @@ void AsmPrinter::EmitConstantValueOnly(const Constant *CV) {
 
       // We can emit the pointer value into this slot if the slot is an
       // integer slot greater or equal to the size of the pointer.
-      if (TD->getTypeAllocSize(Ty) >= TD->getTypeAllocSize(Op->getType()))
+      if (TD->getTypeAllocSize(Ty) == TD->getTypeAllocSize(Op->getType()))
         return EmitConstantValueOnly(Op);
 
       O << "((";
       EmitConstantValueOnly(Op);
-      APInt ptrMask = APInt::getAllOnesValue(TD->getTypeAllocSizeInBits(Ty));
+      APInt ptrMask =
+        APInt::getAllOnesValue(TD->getTypeAllocSizeInBits(Op->getType()));
       
       SmallString<40> S;
       ptrMask.toStringUnsigned(S);
