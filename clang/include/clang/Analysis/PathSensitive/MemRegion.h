@@ -35,6 +35,10 @@ namespace clang {
 class MemRegionManager;
 class MemSpaceRegion;  
       
+//===----------------------------------------------------------------------===//
+// Base region classes.
+//===----------------------------------------------------------------------===//
+  
 /// MemRegion - The root abstract class for all memory regions.
 class MemRegion : public llvm::FoldingSetNode {
 public:
@@ -134,13 +138,39 @@ public:
   }
   
   MemRegionManager* getMemRegionManager() const;
-
+  
   bool isSubRegionOf(const MemRegion* R) const;
-
+  
   static bool classof(const MemRegion* R) {
     return R->getKind() > MemSpaceRegionKind;
   }
 };
+ 
+//===----------------------------------------------------------------------===//
+// Auxillary data classes for use with MemRegions.
+//===----------------------------------------------------------------------===//
+
+class ElementRegion;
+  
+class RegionRawOffset : public std::pair<const MemRegion*, int64_t> {
+private:
+  friend class ElementRegion;
+
+  RegionRawOffset(const MemRegion* reg, int64_t offset = 0)
+    : std::pair<const MemRegion*, int64_t>(reg, offset) {}
+
+public: 
+  // FIXME: Eventually support symbolic offsets.
+  int64_t getByteOffset() const { return second; }
+  const MemRegion *getRegion() const { return first; }
+
+  void dumpToStream(llvm::raw_ostream& os) const;
+  void dump() const;
+};
+
+//===----------------------------------------------------------------------===//
+// MemRegion subclasses.
+//===----------------------------------------------------------------------===//  
 
 /// AllocaRegion - A region that represents an untyped blob of bytes created
 ///  by a call to 'alloca'.
@@ -523,6 +553,8 @@ public:
     return ElementType;
   }
   
+  RegionRawOffset getAsRawOffset() const;
+  
   void dumpToStream(llvm::raw_ostream& os) const;
 
   void Profile(llvm::FoldingSetNodeID& ID) const;
@@ -531,7 +563,7 @@ public:
     return R->getKind() == ElementRegionKind;
   }
 };
-  
+
 template<typename RegionTy>
 const RegionTy* MemRegion::getAs() const {
   if (const RegionTy* RT = dyn_cast<RegionTy>(this))
@@ -627,6 +659,7 @@ public:
   ///   object).
   ObjCIvarRegion* getObjCIvarRegion(const ObjCIvarDecl* ivd,
                                     const MemRegion* superRegion);
+  
   CodeTextRegion* getCodeTextRegion(SymbolRef sym, QualType t);
   CodeTextRegion* getCodeTextRegion(const FunctionDecl* fd, QualType t);
   

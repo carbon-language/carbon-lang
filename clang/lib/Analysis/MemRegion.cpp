@@ -15,6 +15,7 @@
 
 #include "llvm/Support/raw_ostream.h"
 #include "clang/Analysis/PathSensitive/MemRegion.h"
+#include "clang/Analysis/PathSensitive/ValueManager.h"
 
 using namespace clang;
 
@@ -171,7 +172,8 @@ void CompoundLiteralRegion::dumpToStream(llvm::raw_ostream& os) const {
 }
 
 void ElementRegion::dumpToStream(llvm::raw_ostream& os) const {
-  os << superRegion << '[' << Index << ']';
+  os << "element{" << superRegion << ','
+     << Index << ',' << getElementType().getAsString() << '}';
 }
 
 void FieldRegion::dumpToStream(llvm::raw_ostream& os) const {
@@ -194,10 +196,18 @@ void VarRegion::dumpToStream(llvm::raw_ostream& os) const {
   os << cast<VarDecl>(D)->getNameAsString();
 }
 
+void RegionRawOffset::dump() const {
+  dumpToStream(llvm::errs());
+}
+
+void RegionRawOffset::dumpToStream(llvm::raw_ostream& os) const {
+  os << "raw_offset{" << getRegion() << ',' << getByteOffset() << '}';
+}
+
 //===----------------------------------------------------------------------===//
 // MemRegionManager methods.
 //===----------------------------------------------------------------------===//
-  
+
 MemSpaceRegion* MemRegionManager::LazyAllocate(MemSpaceRegion*& region) {  
   if (!region) {  
     region = (MemSpaceRegion*) A.Allocate<MemSpaceRegion>();
@@ -306,7 +316,6 @@ AllocaRegion* MemRegionManager::getAllocaRegion(const Expr* E, unsigned cnt) {
   return getRegion<AllocaRegion>(E, cnt);
 }
 
-
 const MemSpaceRegion *MemRegion::getMemorySpace() const {
   const MemRegion *R = this;
   const SubRegion* SR = dyn_cast<SubRegion>(this);
@@ -381,7 +390,7 @@ const MemRegion *MemRegion::getBaseRegion() const {
       // want to strip away ElementRegions, however, where the index is 0.
       SVal index = ER->getIndex();
       if (nonloc::ConcreteInt *CI = dyn_cast<nonloc::ConcreteInt>(&index)) {
-        if (CI->getValue().getZExtValue() == 0) {
+        if (CI->getValue().getSExtValue() == 0) {
           R = ER->getSuperRegion();
           continue;
         }
@@ -391,3 +400,57 @@ const MemRegion *MemRegion::getBaseRegion() const {
   }
   return R;
 }
+
+// FIXME: Merge with the implementation of the same method in Store.cpp
+static bool IsCompleteType(ASTContext &Ctx, QualType Ty) {
+  if (const RecordType *RT = Ty->getAs<RecordType>()) {
+    const RecordDecl *D = RT->getDecl();
+    if (!D->getDefinition(Ctx))
+      return false;
+  }
+
+  return true;
+}
+
+RegionRawOffset ElementRegion::getAsRawOffset() const {
+  int64_t offset = 0;
+  const ElementRegion *ER = this;
+  const MemRegion *superR = NULL;
+  ASTContext &C = getContext();
+  
+  // FIXME: Handle multi-dimensional arrays.
+
+  while (ER) {
+    superR = ER->getSuperRegion();
+    
+    // FIXME: generalize to symbolic offsets.
+    SVal index = ER->getIndex();
+    if (nonloc::ConcreteInt *CI = dyn_cast<nonloc::ConcreteInt>(&index)) {
+      // Update the offset.
+      int64_t i = CI->getValue().getSExtValue();
+      
+      if (i != 0) {
+        QualType elemType = ER->getElementType();
+        
+        // If we are pointing to an incomplete type, go no further.
+        if (!IsCompleteType(C, elemType)) {
+          superR = ER;
+          break;
+        }
+        
+        int64_t size = (int64_t) (C.getTypeSize(elemType) / 8);
+        offset += (i * size);
+      }
+
+      // Go to the next ElementRegion (if any).
+      ER = dyn_cast<ElementRegion>(superR);
+      continue;
+    }
+    
+    return NULL;
+  }
+  
+  assert(superR && "super region cannot be NULL");
+  return RegionRawOffset(superR, offset);
+}
+

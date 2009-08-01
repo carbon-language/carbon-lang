@@ -65,7 +65,7 @@ void SymSymExpr::dumpToStream(llvm::raw_ostream& os) const {
 }
 
 void SymbolConjured::dumpToStream(llvm::raw_ostream& os) const {
-  os << "conj_$" << getSymbolID();
+  os << "conj_$" << getSymbolID() << '{' << T.getAsString() << '}';
 }
 
 void SymbolDerived::dumpToStream(llvm::raw_ostream& os) const {
@@ -206,6 +206,14 @@ bool SymbolReaper::maybeDead(SymbolRef sym) {
 bool SymbolReaper::isLive(SymbolRef sym) {
   if (TheLiving.contains(sym))
     return true;
+  
+  if (const SymbolDerived *derived = dyn_cast<SymbolDerived>(sym)) {
+    if (isLive(derived->getParentSymbol())) {
+      markLive(sym);
+      return true;
+    }
+    return false;
+  }
   
   // Interogate the symbol.  It may derive from an input value to
   // the analyzed function/method.

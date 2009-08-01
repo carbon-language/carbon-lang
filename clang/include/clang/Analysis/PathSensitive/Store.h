@@ -198,7 +198,8 @@ public:
 
 private:
   CastResult MakeElementRegion(const GRState *state, const MemRegion *region,
-                               QualType pointeeTy, QualType castToTy);
+                               QualType pointeeTy, QualType castToTy,
+                               uint64_t index = 0);
 };
 
 // FIXME: Do we still need this?

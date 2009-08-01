@@ -50,11 +50,11 @@ class ValueManager {
 public:
   ValueManager(llvm::BumpPtrAllocator &alloc, ASTContext &context,
                GRStateManager &stateMgr)
-               : Context(context), BasicVals(Context, alloc),
-                 SymMgr(Context, BasicVals, alloc),
-                 MemMgr(Context, alloc), StateMgr(stateMgr),
-                 ArrayIndexTy(Context.IntTy),
-                 ArrayIndexWidth(Context.getTypeSize(ArrayIndexTy))  
+               : Context(context), BasicVals(context, alloc),
+                 SymMgr(context, BasicVals, alloc),
+                 MemMgr(context, alloc), StateMgr(stateMgr),
+                 ArrayIndexTy(context.IntTy),
+                 ArrayIndexWidth(context.getTypeSize(ArrayIndexTy))  
   {
     // FIXME: Generalize later.
     SVator.reset(clang::CreateSimpleSValuator(*this));
