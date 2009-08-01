@@ -18,7 +18,7 @@ XCoreTargetAsmInfo::XCoreTargetAsmInfo(const TargetMachine &TM)
   Data64bitsDirective = 0;
   ZeroDirective = "\t.space\t";
   CommentString = "#";
-  JumpTableDataSection = "\t.section\t.dp.data,\"awd\",@progbits";
+    
   PrivateGlobalPrefix = ".L";
   AscizDirective = ".asciiz";
   WeakDefDirective = "\t.weak\t";

@@ -206,11 +206,6 @@ namespace llvm {
     /// section with the section name and this suffix printed.
     const char *SectionEndDirectiveSuffix;// Defaults to null.
     
-    /// JumpTableDataSection - This is the section that we SwitchToSection right
-    /// before emitting the jump tables for a function when the relocation model
-    /// is not PIC.
-    const char *JumpTableDataSection;     // Defaults to "\t.section .rodata"
-    
     /// JumpTableDirective - if non-null, the directive to emit before a jump
     /// table.
     const char *JumpTableDirective;
@@ -537,9 +532,6 @@ namespace llvm {
     }
     const char *getSectionEndDirectiveSuffix() const {
       return SectionEndDirectiveSuffix;
-    }
-    const char *getJumpTableDataSection() const {
-      return JumpTableDataSection;
     }
     const char *getStaticCtorsSection() const {
       return StaticCtorsSection;

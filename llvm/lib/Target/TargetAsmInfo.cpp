@@ -69,7 +69,6 @@ TargetAsmInfo::TargetAsmInfo(const TargetMachine &tm) : TM(tm) {
   TextSectionStartSuffix = "";
   DataSectionStartSuffix = "";
   SectionEndDirectiveSuffix = 0;
-  JumpTableDataSection = "\t.section .rodata";
   JumpTableDirective = 0;
   // FIXME: Flags are ELFish - replace with normal section stuff.
   StaticCtorsSection = "\t.section .ctors,\"aw\",@progbits";

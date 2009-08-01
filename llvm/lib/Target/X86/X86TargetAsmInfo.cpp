@@ -228,7 +228,6 @@ X86WinTargetAsmInfo::X86WinTargetAsmInfo(const X86TargetMachine &TM):
 
   AlignmentIsInBytes = true;
 
-  JumpTableDataSection = NULL;
   SwitchToSectionDirective = "";
   TextSectionStartSuffix = "\tSEGMENT PARA 'CODE'";
   DataSectionStartSuffix = "\tSEGMENT PARA 'DATA'";

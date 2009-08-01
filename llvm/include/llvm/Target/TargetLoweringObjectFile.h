@@ -45,7 +45,9 @@ protected:
   const MCSection *BSSSection;
   
   /// ReadOnlySection - Section that is readonly and can contain arbitrary
-  /// initialized data.
+  /// initialized data.  Targets are not required to have a readonly section.
+  /// If they don't, various bits of code will fall back to using the data
+  /// section for constants.
   const MCSection *ReadOnlySection;
   
 public:
@@ -76,11 +78,9 @@ public:
     return GV != 0;
   }
   
-  /// getSectionForMergeableConstant - Given a mergeable constant with the
-  /// specified size and relocation information, return a section that it
-  /// should be placed in.
-  virtual const MCSection *
-  getSectionForMergeableConstant(SectionKind Kind) const;
+  /// getSectionForConstant - Given a constant with the SectionKind, return a
+  /// section that it should be placed in.
+  virtual const MCSection *getSectionForConstant(SectionKind Kind) const;
   
   /// getKindForNamedSection - If this target wants to be able to override
   /// section flags based on the name of the section specified for a global
@@ -158,11 +158,9 @@ public:
   virtual void Initialize(MCContext &Ctx, const TargetMachine &TM);
   
   
-  /// getSectionForMergeableConstant - Given a mergeable constant with the
-  /// specified size and relocation information, return a section that it
-  /// should be placed in.
-  virtual const MCSection *
-  getSectionForMergeableConstant(SectionKind Kind) const;
+  /// getSectionForConstant - Given a constant with the SectionKind, return a
+  /// section that it should be placed in.
+  virtual const MCSection *getSectionForConstant(SectionKind Kind) const;
   
   virtual SectionKind getKindForNamedSection(const char *Section,
                                              SectionKind K) const;
@@ -194,8 +192,7 @@ public:
   SelectSectionForGlobal(const GlobalValue *GV, SectionKind Kind,
                          Mangler *Mang, const TargetMachine &TM) const;
   
-  virtual const MCSection *
-  getSectionForMergeableConstant(SectionKind Kind) const;
+  virtual const MCSection *getSectionForConstant(SectionKind Kind) const;
   
   /// shouldEmitUsedDirectiveFor - This hook allows targets to selectively
   /// decide not to emit the UsedDirective for some symbols in llvm.used.

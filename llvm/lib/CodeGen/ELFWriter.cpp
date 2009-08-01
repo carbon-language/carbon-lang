@@ -178,7 +178,13 @@ void ELFWriter::addExternalSymbol(const char *External) {
 // Get jump table section on the section name returned by TAI
 ELFSection &ELFWriter::getJumpTableSection() {
   unsigned Align = TM.getTargetData()->getPointerABIAlignment();
-  return getSection(TAI->getJumpTableDataSection(),
+  
+  const TargetLoweringObjectFile &TLOF =
+    TM.getTargetLowering()->getObjFileLowering();
+
+  return getSection(TLOF.getSectionForConstant(
+                                      SectionKind::get(SectionKind::ReadOnly))
+                    ->getName(),
                     ELFSection::SHT_PROGBITS,
                     ELFSection::SHF_ALLOC, Align);
 }
@@ -204,7 +210,7 @@ ELFSection &ELFWriter::getConstantPoolSection(MachineConstantPoolEntry &CPE) {
   const TargetLoweringObjectFile &TLOF =
     TM.getTargetLowering()->getObjFileLowering();
 
-  return getSection(TLOF.getSectionForMergeableConstant(Kind)->getName(),
+  return getSection(TLOF.getSectionForConstant(Kind)->getName(),
                     ELFSection::SHT_PROGBITS,
                     ELFSection::SHF_MERGE | ELFSection::SHF_ALLOC,
                     CPE.getAlignment());

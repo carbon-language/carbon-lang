@@ -349,8 +349,7 @@ void AsmPrinter::EmitConstantPool(MachineConstantPool *MCP) {
     }
     }
 
-    const MCSection *S =
-      getObjFileLowering().getSectionForMergeableConstant(Kind);
+    const MCSection *S = getObjFileLowering().getSectionForConstant(Kind);
     
     // The number of sections are small, just do a linear search from the
     // last section to the first.
@@ -419,22 +418,21 @@ void AsmPrinter::EmitJumpTableInfo(MachineJumpTableInfo *MJTI,
   // the appropriate section.
   TargetLowering *LoweringInfo = TM.getTargetLowering();
 
-  const char *JumpTableDataSection = TAI->getJumpTableDataSection();
   const Function *F = MF.getFunction();
-  
-  const MCSection *FuncSection =
-    getObjFileLowering().SectionForGlobal(F, Mang, TM);
-
   bool JTInDiffSection = false;
-  if ((IsPic && !LoweringInfo->usesGlobalOffsetTable()) ||
-      !JumpTableDataSection || F->isWeakForLinker()) {
+  if (F->isWeakForLinker() ||
+      (IsPic && !LoweringInfo->usesGlobalOffsetTable())) {
     // In PIC mode, we need to emit the jump table to the same section as the
     // function body itself, otherwise the label differences won't make sense.
     // We should also do if the section name is NULL or function is declared in
     // discardable section.
-    SwitchToSection(FuncSection);
+    SwitchToSection(getObjFileLowering().SectionForGlobal(F, Mang, TM));
   } else {
-    SwitchToDataSection(JumpTableDataSection);
+    // Otherwise, drop it in the readonly section.
+    const MCSection *ReadOnlySection = 
+      getObjFileLowering().getSectionForConstant(
+                                       SectionKind::get(SectionKind::ReadOnly));
+    SwitchToSection(ReadOnlySection);
     JTInDiffSection = true;
   }
   

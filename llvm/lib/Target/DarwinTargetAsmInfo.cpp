@@ -49,8 +49,6 @@ DarwinTargetAsmInfo::DarwinTargetAsmInfo(const TargetMachine &TM)
   HiddenDirective = "\t.private_extern ";
     
   // Sections:
-  JumpTableDataSection = "\t.const";
-
   if (TM.getRelocationModel() == Reloc::Static) {
     StaticCtorsSection = ".constructor";
     StaticDtorsSection = ".destructor";
