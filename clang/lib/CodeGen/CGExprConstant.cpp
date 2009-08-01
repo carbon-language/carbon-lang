@@ -270,7 +270,7 @@ class VISIBILITY_HIDDEN ConstStructBuilder {
     AppendPadding(NumPadBytes);
   }
   
-  bool Build(const InitListExpr *ILE) {
+  bool Build(InitListExpr *ILE) {
     RecordDecl *RD = ILE->getType()->getAs<RecordType>()->getDecl();
     const ASTRecordLayout &Layout = CGM.getContext().getASTRecordLayout(RD);
     
@@ -280,6 +280,9 @@ class VISIBILITY_HIDDEN ConstStructBuilder {
          FieldEnd = RD->field_end(); 
          ElementNo < ILE->getNumInits() && Field != FieldEnd;
          ++Field, ++FieldNo) {
+      if (RD->isUnion() && ILE->getInitializedFieldInUnion() != *Field)
+        continue;
+
       if (Field->isBitField()) {
         if (!Field->getIdentifier())
           continue;
@@ -330,7 +333,7 @@ class VISIBILITY_HIDDEN ConstStructBuilder {
   
 public:
   static llvm::Constant *BuildStruct(CodeGenModule &CGM, CodeGenFunction *CGF,
-                                     const InitListExpr *ILE) {
+                                     InitListExpr *ILE) {
     ConstStructBuilder Builder(CGM, CGF);
     
     if (!Builder.Build(ILE))
