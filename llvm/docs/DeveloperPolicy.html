@@ -287,9 +287,12 @@ svn diff
 </ul>
   
 <p>We prefer for this to be handled before submission but understand that it
-   isn't possible to test all of this for every submission.  Our nightly testing
-   infrastructure normally finds these problems.  A good rule of thumb is to
-   check the nightly testers for regressions the day after your change.</p>
+   isn't possible to test all of this for every submission.  Our build bots and
+   nightly testing infrastructure normally finds these problems.  A good rule of
+   thumb is to check the nightly testers for regressions the day after your
+   change.  Build bots will directly email you if a group of commits that
+   included yours caused a failure.  You are expected to check the build bot
+   messages to see if they are your fault and, if so, fix the breakage.</p>
 
 <p>Commits that violate these quality standards (e.g. are very broken) may be
    reverted. This is necessary when the change blocks other developers from
