@@ -1,4 +1,4 @@
-; RUN: llvm-as < %s | llc -march=thumb -mattr=+thumb2 | FileCheck %s
+; RUN: llvm-as < %s | llc -march=thumb -mattr=+thumb2 -mtriple=armv6-apple-darwin10 | FileCheck %s
 
 @t = weak global i32 ()* null           ; <i32 ()**> [#uses=1]
 
