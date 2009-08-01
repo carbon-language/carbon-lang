@@ -199,6 +199,9 @@ void InitHeaderSearch::AddDefaultSystemIncludePaths(const LangOptions &Lang) {
 
     // FreeBSD
     AddPath("/usr/include/c++/4.2", System, true, false, false);
+
+    // AuroraUX
+    AddPath("/opt/gcc4/include/c++/4.2.4", System, true, false, false);
   }
 
   AddPath("/usr/local/include", System, false, false, false);
