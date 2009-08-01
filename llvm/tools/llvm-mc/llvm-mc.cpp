@@ -192,6 +192,7 @@ static int AssembleInput(const char *ProgName) {
   // FIXME: Target hook & command line option for initial section.
   Str.get()->SwitchSection(MCSection::Create("__TEXT,__text,"
                                              "regular,pure_instructions",
+                                             false,
                                             SectionKind::get(SectionKind::Text),
                                              Ctx));
 
