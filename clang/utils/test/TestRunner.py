@@ -26,20 +26,13 @@ def executeShCmd(cmd, cfg, cwd, results):
     if isinstance(cmd, ShUtil.Seq):
         if cmd.op == ';':
             res = executeShCmd(cmd.lhs, cfg, cwd, results)
-            if res is None:
-                return res
-
             return executeShCmd(cmd.rhs, cfg, cwd, results)
 
         if cmd.op == '&':
-            Util.warning("unsupported test command: '&'")
-            return None
+            raise NotImplementedError,"unsupported test command: '&'"
 
         if cmd.op == '||':
             res = executeShCmd(cmd.lhs, cfg, cwd, results)
-            if res is None:
-                return res
-
             if res != 0:
                 res = executeShCmd(cmd.rhs, cfg, cwd, results)
             return res
@@ -72,7 +65,7 @@ def executeShCmd(cmd, cfg, cwd, results):
             elif r[0] == ('<',):
                 stdin = open(r[1], 'r')
             else:
-                return None
+                raise NotImplementedError,"Unsupported redirect: %r" % r
 
         procs.append(subprocess.Popen(j.args, cwd=cwd,
                                       stdin = stdin,
@@ -120,9 +113,14 @@ def executeScriptInternal(cfg, commands, cwd):
     cmd = ShUtil.ShParser(' &&\n'.join(commands)).parse()
 
     results = []
-    exitCode = executeShCmd(cmd, cfg, cwd, results)
-    if exitCode is None:
-        return None
+    try:
+        exitCode = executeShCmd(cmd, cfg, cwd, results)
+    except:
+        import traceback
+
+        out = ''
+        err = 'Exception during script execution:\n%s\n' % traceback.format_exc()
+        return out, err, 127
 
     out = err = ''
     for i,(cmd, cmd_out,cmd_err,res) in enumerate(results):
