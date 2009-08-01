@@ -52,10 +52,16 @@ ifdef IGNORE_TESTS
 RUNTESTFLAGS += --ignore "$(strip $(IGNORE_TESTS))"
 endif
 
+# Both AuroraUX & Solaris do not have the -m flag for ulimit
+ifeq ($(OS),SunOS)
+ULIMIT=ulimit -t 600 ; ulimit -d 512000 ; ulimit -v 512000 ;
+else
+ULIMIT=ulimit -t 600 ; ulimit -d 512000 ; ulimit -m 512000 ; ulimit -v 512000 ;
+endif
+
 ifneq ($(RUNTEST),)
 check-local:: site.exp
-	( ulimit -t 600 ; ulimit -d 512000 ; \
-	  ulimit -m 512000 ; ulimit -v 512000 ; \
+	( $(ULIMIT) \
 	  PATH="$(LLVMToolDir):$(LLVM_SRC_ROOT)/test/Scripts:$(PATH)" \
 	  $(RUNTEST) $(RUNTESTFLAGS) )
 else
@@ -78,8 +84,7 @@ check-one: site.exp $(TCLSH)
 	  echo "proc verbose args { }" ; \
 	  echo "source $(LLVM_SRC_ROOT)/test/lib/llvm.exp" ; \
 	  echo "RunLLVMTests $(TESTPATH)" ) | \
-	( ulimit -t 600 ; ulimit -d 512000 ; \
-	  ulimit -m 512000 ; ulimit -v 512000 ; \
+	( $(ULIMIT) \
 	  PATH="$(LLVMToolDir):$(LLVM_SRC_ROOT)/test/Scripts:$(PATH)" \
 	  $(TCLSH) )
 endif
