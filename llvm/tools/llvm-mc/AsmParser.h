@@ -84,6 +84,10 @@ private:
   bool ParsePrimaryExpr(AsmExpr *&Res);
   bool ParseBinOpRHS(unsigned Precedence, AsmExpr *&Res);
   bool ParseParenExpr(AsmExpr *&Res);
+
+  /// ParseIdentifier - Parse an identifier or string (as a quoted identifier)
+  /// and set \arg Res to the identifier contents.
+  bool ParseIdentifier(StringRef &Res);
   
   // Directive Parsing.
   bool ParseDirectiveDarwinSection(); // Darwin specific ".section".

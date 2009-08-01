@@ -303,25 +303,22 @@ bool AsmParser::ParseBinOpRHS(unsigned Precedence, AsmExpr *&Res) {
 ///   ::= Label* Directive ...Operands... EndOfStatement
 ///   ::= Label* Identifier OperandList* EndOfStatement
 bool AsmParser::ParseStatement() {
-  switch (Lexer.getKind()) {
-  default:
-    return TokError("unexpected token at start of statement");
-  case AsmToken::EndOfStatement:
+  if (Lexer.is(AsmToken::EndOfStatement)) {
     Lexer.Lex();
     return false;
-  case AsmToken::Identifier:
-  case AsmToken::String:
-    break;
-  // TODO: Recurse on local labels etc.
   }
-  
-  // If we have an identifier, handle it as the key symbol.
+
+  // Statements always start with an identifier.
   AsmToken ID = Lexer.getTok();
   SMLoc IDLoc = ID.getLoc();
-  StringRef IDVal = ID.getIdentifier();
-  
-  // Consume the identifier, see what is after it.
-  switch (Lexer.Lex().getKind()) {
+  StringRef IDVal;
+  if (ParseIdentifier(IDVal))
+    return TokError("unexpected token at start of statement");
+
+  // FIXME: Recurse on local labels?
+
+  // See what kind of statement we have.
+  switch (Lexer.getKind()) {
   case AsmToken::Colon: {
     // identifier ':'   -> Label.
     Lexer.Lex();
@@ -603,15 +600,30 @@ bool AsmParser::ParseAssignment(const StringRef &Name, bool IsDotSet) {
   return false;
 }
 
+/// ParseIdentifier:
+///   ::= identifier
+///   ::= string
+bool AsmParser::ParseIdentifier(StringRef &Res) {
+  if (Lexer.isNot(AsmToken::Identifier) &&
+      Lexer.isNot(AsmToken::String))
+    return true;
+
+  Res = Lexer.getTok().getIdentifier();
+
+  Lexer.Lex(); // Consume the identifier token.
+
+  return false;
+}
+
 /// ParseDirectiveSet:
 ///   ::= .set identifier ',' expression
 bool AsmParser::ParseDirectiveSet() {
-  if (Lexer.isNot(AsmToken::Identifier))
-    return TokError("expected identifier after '.set' directive");
+  StringRef Name;
 
-  StringRef Name = Lexer.getTok().getString();
+  if (ParseIdentifier(Name))
+    return TokError("expected identifier after '.set' directive");
   
-  if (Lexer.Lex().isNot(AsmToken::Comma))
+  if (Lexer.isNot(AsmToken::Comma))
     return TokError("unexpected token in '.set'");
   Lexer.Lex();
 
@@ -623,21 +635,24 @@ bool AsmParser::ParseDirectiveSet() {
 /// FIXME: This should actually parse out the segment, section, attributes and
 /// sizeof_stub fields.
 bool AsmParser::ParseDirectiveDarwinSection() {
-  if (Lexer.isNot(AsmToken::Identifier))
+  StringRef SectionName;
+
+  if (ParseIdentifier(SectionName))
     return TokError("expected identifier after '.section' directive");
   
-  std::string Section = Lexer.getTok().getString();
-  Lexer.Lex();
-  
+  std::string Section = SectionName;
+
+  // FIXME: This doesn't work, we lose quoting on things
+
   // Accept a comma separated list of modifiers.
   while (Lexer.is(AsmToken::Comma)) {
-    Lexer.Lex();
-    
-    if (Lexer.isNot(AsmToken::Identifier))
+    Lexer.Lex(); // Consume the comma.
+
+    StringRef ModifierName;    
+    if (ParseIdentifier(ModifierName))
       return TokError("expected identifier in '.section' directive");
     Section += ',';
-    Section += Lexer.getTok().getString().str();
-    Lexer.Lex();
+    Section += ModifierName;
   }
   
   if (Lexer.isNot(AsmToken::EndOfStatement))
@@ -910,11 +925,12 @@ bool AsmParser::ParseDirectiveAlign(bool IsPow2, unsigned ValueSize) {
 bool AsmParser::ParseDirectiveSymbolAttribute(MCStreamer::SymbolAttr Attr) {
   if (Lexer.isNot(AsmToken::EndOfStatement)) {
     for (;;) {
-      if (Lexer.isNot(AsmToken::Identifier))
+      StringRef Name;
+
+      if (ParseIdentifier(Name))
         return TokError("expected identifier in directive");
       
-      MCSymbol *Sym = Ctx.GetOrCreateSymbol(Lexer.getTok().getString());
-      Lexer.Lex();
+      MCSymbol *Sym = Ctx.GetOrCreateSymbol(Name);
 
       // If this is use of an undefined symbol then mark it external.
       if (!Sym->getSection() && !Ctx.GetSymbolValue(Sym))
@@ -938,13 +954,12 @@ bool AsmParser::ParseDirectiveSymbolAttribute(MCStreamer::SymbolAttr Attr) {
 /// ParseDirectiveDarwinSymbolDesc
 ///  ::= .desc identifier , expression
 bool AsmParser::ParseDirectiveDarwinSymbolDesc() {
-  if (Lexer.isNot(AsmToken::Identifier))
+  StringRef Name;
+  if (ParseIdentifier(Name))
     return TokError("expected identifier in directive");
   
-  // handle the identifier as the key symbol.
-  SMLoc IDLoc = Lexer.getLoc();
-  MCSymbol *Sym = Ctx.GetOrCreateSymbol(Lexer.getTok().getString());
-  Lexer.Lex();
+  // Handle the identifier as the key symbol.
+  MCSymbol *Sym = Ctx.GetOrCreateSymbol(Name);
 
   if (Lexer.isNot(AsmToken::Comma))
     return TokError("unexpected token in '.desc' directive");
@@ -969,13 +984,13 @@ bool AsmParser::ParseDirectiveDarwinSymbolDesc() {
 /// ParseDirectiveComm
 ///  ::= ( .comm | .lcomm ) identifier , size_expression [ , align_expression ]
 bool AsmParser::ParseDirectiveComm(bool IsLocal) {
-  if (Lexer.isNot(AsmToken::Identifier))
+  SMLoc IDLoc = Lexer.getLoc();
+  StringRef Name;
+  if (ParseIdentifier(Name))
     return TokError("expected identifier in directive");
   
   // Handle the identifier as the key symbol.
-  SMLoc IDLoc = Lexer.getLoc();
-  MCSymbol *Sym = Ctx.GetOrCreateSymbol(Lexer.getTok().getString());
-  Lexer.Lex();
+  MCSymbol *Sym = Ctx.GetOrCreateSymbol(Name);
 
   if (Lexer.isNot(AsmToken::Comma))
     return TokError("unexpected token in directive");
@@ -1027,6 +1042,8 @@ bool AsmParser::ParseDirectiveComm(bool IsLocal) {
 ///  ::= .zerofill segname , sectname [, identifier , size_expression [
 ///      , align_expression ]]
 bool AsmParser::ParseDirectiveDarwinZerofill() {
+  // FIXME: Handle quoted names here.
+
   if (Lexer.isNot(AsmToken::Identifier))
     return TokError("expected segment name after '.zerofill' directive");
   std::string Section = Lexer.getTok().getString();
@@ -1171,13 +1188,12 @@ bool AsmParser::ParseDirectiveAbort() {
 /// ParseDirectiveLsym
 ///  ::= .lsym identifier , expression
 bool AsmParser::ParseDirectiveDarwinLsym() {
-  if (Lexer.isNot(AsmToken::Identifier))
+  StringRef Name;
+  if (ParseIdentifier(Name))
     return TokError("expected identifier in directive");
   
   // Handle the identifier as the key symbol.
-  SMLoc IDLoc = Lexer.getLoc();
-  MCSymbol *Sym = Ctx.GetOrCreateSymbol(Lexer.getTok().getString());
-  Lexer.Lex();
+  MCSymbol *Sym = Ctx.GetOrCreateSymbol(Name);
 
   if (Lexer.isNot(AsmToken::Comma))
     return TokError("unexpected token in '.lsym' directive");
