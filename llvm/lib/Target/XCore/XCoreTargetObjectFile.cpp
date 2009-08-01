@@ -20,14 +20,14 @@ void XCoreTargetObjectFile::Initialize(MCContext &Ctx, const TargetMachine &TM){
                                    SectionKind::get(SectionKind::Text));
   DataSection = getOrCreateSection("\t.dp.data", false, 
                                    SectionKind::get(SectionKind::DataRel));
-  BSSSection_ = getOrCreateSection("\t.dp.bss", false, 
-                                   SectionKind::get(SectionKind::BSS));
+  BSSSection = getOrCreateSection("\t.dp.bss", false, 
+                                  SectionKind::get(SectionKind::BSS));
   
   // TLS globals are lowered in the backend to arrays indexed by the current
   // thread id. After lowering they require no special handling by the linker
   // and can be placed in the standard data / bss sections.
   TLSDataSection = DataSection;
-  TLSBSSSection = BSSSection_;
+  TLSBSSSection = BSSSection;
   
   if (TM.getSubtarget<XCoreSubtarget>().isXS1A())
     // FIXME: Why is this writable ("datarel")???
