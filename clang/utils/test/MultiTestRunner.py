@@ -215,8 +215,8 @@ def main():
                       help="Path to root test directory",
                       action="store", default=None)
     parser.add_option("", "--config", dest="config",
-                      help="Testing configuration file [default='%default']",
-                      action="store", default=kConfigName)
+                      help="Testing configuration file [default='%s']" % kConfigName,
+                      action="store", default=None)
     
     group = OptionGroup(parser, "Output Format")
     # FIXME: I find these names very confusing, although I like the
