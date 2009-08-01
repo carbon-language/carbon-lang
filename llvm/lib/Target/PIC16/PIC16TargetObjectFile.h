@@ -62,9 +62,9 @@ namespace llvm {
     /// section assignment of a global.
     virtual const MCSection *
     getSpecialCasedSectionGlobals(const GlobalValue *GV, Mangler *Mang,
-                                  SectionInfo Info) const;
+                                  SectionKind Kind) const;
     virtual const MCSection *SelectSectionForGlobal(const GlobalValue *GV,
-                                                    SectionInfo Info,
+                                                    SectionKind Kind,
                                                     Mangler *Mang,
                                                     const TargetMachine&) const;
   private:

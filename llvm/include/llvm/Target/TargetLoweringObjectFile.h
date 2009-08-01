@@ -26,35 +26,7 @@ namespace llvm {
   class Mangler;
   class TargetMachine;
   
-  
-/// SectionInfo - This class is a target-independent classification of a global
-/// which is used to simplify target-specific code by exposing common
-/// predicates.
-class SectionInfo : public SectionKind {
-  /// Weak - This is true if the referenced symbol is weak (i.e. linkonce,
-  /// weak, weak_odr, etc).  This is orthogonal from the categorization.
-  bool Weak : 1;
-  
-public:
-  
-  /// Weak - This is true if the referenced symbol is weak (i.e. linkonce,
-  /// weak, weak_odr, etc).  This is orthogonal from the categorization.
-  bool isWeak() const { return Weak; }
-  
-  static SectionInfo get(Kind K, bool isWeak = false) {
-    SectionInfo Res;
-    Res.K = K;
-    Res.Weak = isWeak;
-    return Res;
-  }
-  static SectionInfo get(SectionKind K, bool isWeak = false) {
-    SectionInfo Res;
-    *(SectionKind*)&Res = K;
-    Res.Weak = isWeak;
-    return Res;
-  }
-};
-  
+ 
 class TargetLoweringObjectFile {
   MCContext *Ctx;
 protected:
@@ -146,7 +118,7 @@ public:
   /// getFlagsForNamedSection.
   virtual const MCSection *
   getSpecialCasedSectionGlobals(const GlobalValue *GV, Mangler *Mang,
-                                SectionInfo Kind) const {
+                                SectionKind Kind) const {
     return 0;
   }
   
@@ -159,7 +131,7 @@ public:
   
 protected:
   virtual const MCSection *
-  SelectSectionForGlobal(const GlobalValue *GV, SectionInfo Kind,
+  SelectSectionForGlobal(const GlobalValue *GV, SectionKind Kind,
                          Mangler *Mang, const TargetMachine &TM) const;
 };
   
@@ -192,7 +164,7 @@ public:
                                SmallVectorImpl<char> &Str) const;
   
   virtual const MCSection *
-  SelectSectionForGlobal(const GlobalValue *GV, SectionInfo Kind,
+  SelectSectionForGlobal(const GlobalValue *GV, SectionKind Kind,
                          Mangler *Mang, const TargetMachine &TM) const;
 protected:
   const MCSection *DataRelSection;
@@ -221,7 +193,7 @@ public:
   virtual void Initialize(MCContext &Ctx, const TargetMachine &TM);
 
   virtual const MCSection *
-  SelectSectionForGlobal(const GlobalValue *GV, SectionInfo Kind,
+  SelectSectionForGlobal(const GlobalValue *GV, SectionKind Kind,
                          Mangler *Mang, const TargetMachine &TM) const;
   
   virtual const MCSection *
@@ -244,7 +216,7 @@ public:
                                        SmallVectorImpl<char> &Str) const;
   
   virtual const MCSection *
-  SelectSectionForGlobal(const GlobalValue *GV, SectionInfo Kind,
+  SelectSectionForGlobal(const GlobalValue *GV, SectionKind Kind,
                          Mangler *Mang, const TargetMachine &TM) const;
 };
 

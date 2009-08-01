@@ -190,13 +190,12 @@ SectionForGlobal(const GlobalValue *GV, Mangler *Mang,
          "Can only be used for global definitions");
   
   SectionKind Kind = SectionKindForGlobal(GV, TM);
-  SectionInfo Info = SectionInfo::get(Kind, GV->isWeakForLinker());
   
   // Select section name.
   if (GV->hasSection()) {
     // If the target has special section hacks for specifically named globals,
     // return them now.
-    if (const MCSection *TS = getSpecialCasedSectionGlobals(GV, Mang, Info))
+    if (const MCSection *TS = getSpecialCasedSectionGlobals(GV, Mang, Kind))
       return TS;
     
     // If the target has magic semantics for certain section names, make sure to
@@ -209,24 +208,24 @@ SectionForGlobal(const GlobalValue *GV, Mangler *Mang,
 
   
   // Use default section depending on the 'type' of global
-  return SelectSectionForGlobal(GV, Info, Mang, TM);
+  return SelectSectionForGlobal(GV, Kind, Mang, TM);
 }
 
 // Lame default implementation. Calculate the section name for global.
 const MCSection *
 TargetLoweringObjectFile::SelectSectionForGlobal(const GlobalValue *GV,
-                                                 SectionInfo Info,
+                                                 SectionKind Kind,
                                                  Mangler *Mang,
                                                  const TargetMachine &TM) const{
-  assert(!Info.isThreadLocal() && "Doesn't support TLS");
+  assert(!Kind.isThreadLocal() && "Doesn't support TLS");
   
-  if (Info.isText())
+  if (Kind.isText())
     return getTextSection();
   
-  if (Info.isBSS() && BSSSection_ != 0)
+  if (Kind.isBSS() && BSSSection_ != 0)
     return BSSSection_;
   
-  if (Info.isReadOnly() && ReadOnlySection != 0)
+  if (Kind.isReadOnly() && ReadOnlySection != 0)
     return ReadOnlySection;
 
   return getDataSection();
@@ -410,20 +409,20 @@ static const char *getSectionPrefixForUniqueGlobal(SectionKind Kind) {
 }
 
 const MCSection *TargetLoweringObjectFileELF::
-SelectSectionForGlobal(const GlobalValue *GV, SectionInfo Info,
+SelectSectionForGlobal(const GlobalValue *GV, SectionKind Kind,
                        Mangler *Mang, const TargetMachine &TM) const {
   
   // If this global is linkonce/weak and the target handles this by emitting it
   // into a 'uniqued' section name, create and return the section now.
   if (GV->isWeakForLinker()) {
-    const char *Prefix = getSectionPrefixForUniqueGlobal(Info);
+    const char *Prefix = getSectionPrefixForUniqueGlobal(Kind);
     std::string Name = Mang->makeNameProper(GV->getNameStr());
-    return getOrCreateSection((Prefix+Name).c_str(), false, Info);
+    return getOrCreateSection((Prefix+Name).c_str(), false, Kind);
   }
   
-  if (Info.isText()) return TextSection;
+  if (Kind.isText()) return TextSection;
   
-  if (Info.isMergeableCString()) {
+  if (Kind.isMergeableCString()) {
    assert(CStringSection_ && "Should have string section prefix");
     
     // We also need alignment here.
@@ -437,29 +436,29 @@ SelectSectionForGlobal(const GlobalValue *GV, SectionInfo Info,
                               SectionKind::get(SectionKind::MergeableCString));
   }
   
-  if (Info.isMergeableConst()) {
-    if (Info.isMergeableConst4())
+  if (Kind.isMergeableConst()) {
+    if (Kind.isMergeableConst4())
       return MergeableConst4Section;
-    if (Info.isMergeableConst8())
+    if (Kind.isMergeableConst8())
       return MergeableConst8Section;
-    if (Info.isMergeableConst16())
+    if (Kind.isMergeableConst16())
       return MergeableConst16Section;
     return ReadOnlySection;  // .const
   }
   
-  if (Info.isReadOnly())             return ReadOnlySection;
+  if (Kind.isReadOnly())             return ReadOnlySection;
   
-  if (Info.isThreadData())           return TLSDataSection;
-  if (Info.isThreadBSS())            return TLSBSSSection;
+  if (Kind.isThreadData())           return TLSDataSection;
+  if (Kind.isThreadBSS())            return TLSBSSSection;
   
-  if (Info.isBSS())                  return BSSSection_;
+  if (Kind.isBSS())                  return BSSSection_;
   
-  if (Info.isDataNoRel())            return DataSection;
-  if (Info.isDataRelLocal())         return DataRelLocalSection;
-  if (Info.isDataRel())              return DataRelSection;
-  if (Info.isReadOnlyWithRelLocal()) return DataRelROLocalSection;
+  if (Kind.isDataNoRel())            return DataSection;
+  if (Kind.isDataRelLocal())         return DataRelLocalSection;
+  if (Kind.isDataRel())              return DataRelSection;
+  if (Kind.isReadOnlyWithRelLocal()) return DataRelROLocalSection;
   
-  assert(Info.isReadOnlyWithRel() && "Unknown section kind");
+  assert(Kind.isReadOnlyWithRel() && "Unknown section kind");
   return DataRelROSection;
 }
 
@@ -531,23 +530,23 @@ void TargetLoweringObjectFileMachO::Initialize(MCContext &Ctx,
 }
 
 const MCSection *TargetLoweringObjectFileMachO::
-SelectSectionForGlobal(const GlobalValue *GV, SectionInfo Info,
+SelectSectionForGlobal(const GlobalValue *GV, SectionKind Kind,
                        Mangler *Mang, const TargetMachine &TM) const {
-  assert(!Info.isThreadLocal() && "Darwin doesn't support TLS");
+  assert(!Kind.isThreadLocal() && "Darwin doesn't support TLS");
   
-  if (Info.isText())
+  if (Kind.isText())
     return GV->isWeakForLinker() ? TextCoalSection : TextSection;
   
   // If this is weak/linkonce, put this in a coalescable section, either in text
   // or data depending on if it is writable.
   if (GV->isWeakForLinker()) {
-    if (Info.isReadOnly())
+    if (Kind.isReadOnly())
       return ConstTextCoalSection;
     return DataCoalSection;
   }
   
   // FIXME: Alignment check should be handled by section classifier.
-  if (Info.isMergeableCString()) {
+  if (Kind.isMergeableCString()) {
     Constant *C = cast<GlobalVariable>(GV)->getInitializer();
     const Type *Ty = cast<ArrayType>(C->getType())->getElementType();
     const TargetData &TD = *TM.getTargetData();
@@ -561,24 +560,24 @@ SelectSectionForGlobal(const GlobalValue *GV, SectionInfo Info,
     return ReadOnlySection;
   }
   
-  if (Info.isMergeableConst()) {
-    if (Info.isMergeableConst4())
+  if (Kind.isMergeableConst()) {
+    if (Kind.isMergeableConst4())
       return FourByteConstantSection;
-    if (Info.isMergeableConst8())
+    if (Kind.isMergeableConst8())
       return EightByteConstantSection;
-    if (Info.isMergeableConst16() && SixteenByteConstantSection)
+    if (Kind.isMergeableConst16() && SixteenByteConstantSection)
       return SixteenByteConstantSection;
     return ReadOnlySection;  // .const
   }
   
   // FIXME: ROData -> const in -static mode that is relocatable but they happen
   // by the static linker.  Why not mergeable?
-  if (Info.isReadOnly())
+  if (Kind.isReadOnly())
     return ReadOnlySection;
 
   // If this is marked const, put it into a const section.  But if the dynamic
   // linker needs to write to it, put it in the data segment.
-  if (Info.isReadOnlyWithRel())
+  if (Kind.isReadOnlyWithRel())
     return ConstDataSection;
   
   // Otherwise, just drop the variable in the normal data section.
@@ -661,25 +660,25 @@ static const char *getCOFFSectionPrefixForUniqueGlobal(SectionKind Kind) {
 
 
 const MCSection *TargetLoweringObjectFileCOFF::
-SelectSectionForGlobal(const GlobalValue *GV, SectionInfo Info,
+SelectSectionForGlobal(const GlobalValue *GV, SectionKind Kind,
                        Mangler *Mang, const TargetMachine &TM) const {
-  assert(!Info.isThreadLocal() && "Doesn't support TLS");
+  assert(!Kind.isThreadLocal() && "Doesn't support TLS");
   
   // If this global is linkonce/weak and the target handles this by emitting it
   // into a 'uniqued' section name, create and return the section now.
   if (GV->isWeakForLinker()) {
-    const char *Prefix = getCOFFSectionPrefixForUniqueGlobal(Info);
+    const char *Prefix = getCOFFSectionPrefixForUniqueGlobal(Kind);
     std::string Name = Mang->makeNameProper(GV->getNameStr());
-    return getOrCreateSection((Prefix+Name).c_str(), false, Info);
+    return getOrCreateSection((Prefix+Name).c_str(), false, Kind);
   }
   
-  if (Info.isText())
+  if (Kind.isText())
     return getTextSection();
   
-  if (Info.isBSS() && BSSSection_ != 0)
+  if (Kind.isBSS() && BSSSection_ != 0)
     return BSSSection_;
   
-  if (Info.isReadOnly() && ReadOnlySection != 0)
+  if (Kind.isReadOnly() && ReadOnlySection != 0)
     return ReadOnlySection;
   
   return getDataSection();

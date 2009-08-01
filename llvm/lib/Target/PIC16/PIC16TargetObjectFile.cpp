@@ -166,14 +166,14 @@ PIC16TargetObjectFile::getSectionForAuto(const GlobalVariable *GV) const {
 // multiple data sections if required.
 const MCSection *
 PIC16TargetObjectFile::SelectSectionForGlobal(const GlobalValue *GV1,
-                                              SectionInfo Info,
+                                              SectionKind Kind,
                                               Mangler *Mang,
                                               const TargetMachine &TM) const {
   // We select the section based on the initializer here, so it really
   // has to be a GlobalVariable.
   const GlobalVariable *GV = dyn_cast<GlobalVariable>(GV1); 
   if (!GV)
-    return TargetLoweringObjectFile::SelectSectionForGlobal(GV1, Info, Mang,TM);
+    return TargetLoweringObjectFile::SelectSectionForGlobal(GV1, Kind, Mang,TM);
 
   // Record External Var Decls.
   if (GV->isDeclaration()) {
@@ -207,7 +207,7 @@ PIC16TargetObjectFile::SelectSectionForGlobal(const GlobalValue *GV1,
     return getROSectionForGlobal(GV);
 
   // Else let the default implementation take care of it.
-  return TargetLoweringObjectFile::SelectSectionForGlobal(GV, Info, Mang,TM);
+  return TargetLoweringObjectFile::SelectSectionForGlobal(GV, Kind, Mang,TM);
 }
 
 PIC16TargetObjectFile::~PIC16TargetObjectFile() {
@@ -229,7 +229,7 @@ PIC16TargetObjectFile::~PIC16TargetObjectFile() {
 const MCSection *
 PIC16TargetObjectFile::getSpecialCasedSectionGlobals(const GlobalValue *GV,
                                                      Mangler *Mang,
-                                                     SectionInfo Info) const {
+                                                     SectionKind Kind) const {
   // If GV has a sectin name or section address create that section now.
   if (GV->hasSection()) {
     if (const GlobalVariable *GVar = cast<GlobalVariable>(GV)) {

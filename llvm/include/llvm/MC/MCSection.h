@@ -43,12 +43,12 @@ namespace llvm {
   public:
     virtual ~MCSection();
 
-    bool isDirective() const { return IsDirective; }
-    
     static MCSection *Create(const StringRef &Name, bool IsDirective, 
                              SectionKind K, MCContext &Ctx);
     
     const std::string &getName() const { return Name; }
+    bool isDirective() const { return IsDirective; }
+    
     SectionKind getKind() const { return Kind; }
   };
 
