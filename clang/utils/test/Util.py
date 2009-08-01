@@ -1,4 +1,4 @@
-import os, sys
+import errno, os, sys
 
 def warning(msg):
     print >>sys.stderr, '%s: warning: %s' % (sys.argv[0], msg)
