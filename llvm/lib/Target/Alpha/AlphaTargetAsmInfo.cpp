@@ -21,6 +21,5 @@ AlphaTargetAsmInfo::AlphaTargetAsmInfo(const AlphaTargetMachine &TM)
   AlignmentIsInBytes = false;
   PrivateGlobalPrefix = "$";
   JumpTableDirective = ".gprel32";
-  JumpTableDataSection = "\t.section .rodata\n";
   WeakRefDirective = "\t.weak\t";
 }
