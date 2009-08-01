@@ -11,11 +11,11 @@ void test2() {
   
   while (0) while(0) do ; while(0);
 
-  for (0;0;0)
+  for ((void)0;0;(void)0)
     for (;;)
-      for (9;0;2)
+      for ((void)9;0;(void)2)
         ;
-  for (int X = 0; 0; 0);
+  for (int X = 0; 0; (void)0);
 }
 
 void test3() {

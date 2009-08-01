@@ -43,7 +43,7 @@ void test4() {
     ;
   (_Bool)ve2;  // expected-error {{arithmetic or pointer type is required}}
 
-  for (; ;ve2)
+  for (; ;ve2) // expected-warning {{expression result unused}}
     ;
   (void)ve2;
   ve2;         // expected-warning {{expression result unused}}

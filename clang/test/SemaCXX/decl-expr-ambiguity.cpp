@@ -12,7 +12,7 @@ void f() {
   __typeof(int)(a,5)<<a; // expected-error {{function-style cast to a builtin type can only take one argument}}
   void(a), ++a; // expected-warning {{expression result unused}}
   if (int(a)+1) {}
-  for (int(a)+1;;) {}
+  for (int(a)+1;;) {} // expected-warning {{expression result unused}}
   a = sizeof(int()+1);
   a = sizeof(int(1));
   typeof(int()+1) a2; // expected-error {{extension used}}
