@@ -1025,11 +1025,10 @@ public:
 
   class iterator {
     typename TreeTy::iterator itr;
-
-    iterator() {}
     iterator(TreeTy* t) : itr(t) {}
     friend class ImmutableSet<ValT,ValInfo>;
   public:
+    iterator() {}
     inline value_type_ref operator*() const { return itr->getValue(); }
     inline iterator& operator++() { ++itr; return *this; }
     inline iterator  operator++(int) { iterator tmp(*this); ++itr; return tmp; }
