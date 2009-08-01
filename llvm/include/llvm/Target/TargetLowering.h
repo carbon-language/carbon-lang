@@ -1085,6 +1085,7 @@ public:
     assert(0 && "Not Implemented");
     return NULL;    // this is here to silence compiler errors
   }
+
   //===--------------------------------------------------------------------===//
   // Lowering methods - These methods must be implemented by targets so that
   // the SelectionDAGLowering code knows how to lower these.
