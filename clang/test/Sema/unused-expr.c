@@ -67,6 +67,10 @@ void t4(int a) {
   
   for (;;)
     b == 5; // expected-warning{{expression result unused}}
+    
+  for (b == 1;;) {} // expected-warning{{expression result unused}}
+  for (;b == 1;) {}
+  for (;;b == 1) {} // expected-warning{{expression result unused}}
 }
 
 

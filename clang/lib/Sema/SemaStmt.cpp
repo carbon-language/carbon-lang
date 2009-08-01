@@ -649,6 +649,8 @@ Sema::ActOnForStmt(SourceLocation ForLoc, SourceLocation LParenLoc,
         << SecondType << Second->getSourceRange());
   }
   
+  DiagnoseUnusedExprResult(First);
+  DiagnoseUnusedExprResult(Third);
   DiagnoseUnusedExprResult(Body);
 
   first.release();
