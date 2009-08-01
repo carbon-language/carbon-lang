@@ -26,8 +26,10 @@
 #include "llvm/Function.h"
 #include "llvm/Pass.h"
 #include "llvm/Type.h"
+#include "llvm/CodeGen/MachineDominators.h"
 #include "llvm/CodeGen/MachineFunctionPass.h"
 #include "llvm/CodeGen/MachineModuleInfo.h"
+#include "llvm/CodeGen/MachineLoopInfo.h"
 #include "llvm/CodeGen/MachineRegisterInfo.h"
 #include "llvm/Support/CFG.h"
 #include "llvm/Support/Compiler.h"
@@ -88,6 +90,7 @@ namespace {
   class VISIBILITY_HIDDEN UnreachableMachineBlockElim :
         public MachineFunctionPass {
     virtual bool runOnMachineFunction(MachineFunction &F);
+    virtual void getAnalysisUsage(AnalysisUsage &AU) const;
     MachineModuleInfo *MMI;
   public:
     static char ID; // Pass identification, replacement for typeid
@@ -102,10 +105,18 @@ Y("unreachable-mbb-elimination",
 
 const PassInfo *const llvm::UnreachableMachineBlockElimID = &Y;
 
+void UnreachableMachineBlockElim::getAnalysisUsage(AnalysisUsage &AU) const {
+  AU.addPreserved<MachineLoopInfo>();
+  AU.addPreserved<MachineDominatorTree>();
+  MachineFunctionPass::getAnalysisUsage(AU);
+}
+
 bool UnreachableMachineBlockElim::runOnMachineFunction(MachineFunction &F) {
   SmallPtrSet<MachineBasicBlock*, 8> Reachable;
 
   MMI = getAnalysisIfAvailable<MachineModuleInfo>();
+  MachineDominatorTree *MDT = getAnalysisIfAvailable<MachineDominatorTree>();
+  MachineLoopInfo *MLI = getAnalysisIfAvailable<MachineLoopInfo>();
 
   // Mark all reachable blocks.
   for (df_ext_iterator<MachineFunction*, SmallPtrSet<MachineBasicBlock*, 8> >
@@ -122,6 +133,10 @@ bool UnreachableMachineBlockElim::runOnMachineFunction(MachineFunction &F) {
     // Test for deadness.
     if (!Reachable.count(BB)) {
       DeadBlocks.push_back(BB);
+
+      // Update dominator and loop info.
+      if (MLI) MLI->removeBlock(BB);
+      if (MDT && MDT->getNode(BB)) MDT->eraseNode(BB);
 
       while (BB->succ_begin() != BB->succ_end()) {
         MachineBasicBlock* succ = *BB->succ_begin();
