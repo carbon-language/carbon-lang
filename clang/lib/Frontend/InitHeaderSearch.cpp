@@ -202,6 +202,7 @@ void InitHeaderSearch::AddDefaultSystemIncludePaths(const LangOptions &Lang) {
 
     // AuroraUX
     AddPath("/opt/gcc4/include/c++/4.2.4", System, true, false, false);
+    AddPath("/opt/gcc4/include/c++/4.2.4/i386-pc-solaris2.11", System, true, false, false);
   }
 
   AddPath("/usr/local/include", System, false, false, false);
