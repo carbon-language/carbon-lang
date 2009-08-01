@@ -675,9 +675,6 @@ SelectSectionForGlobal(const GlobalValue *GV, SectionKind Kind,
   if (Kind.isText())
     return getTextSection();
   
-  if (Kind.isReadOnly() && ReadOnlySection != 0)
-    return ReadOnlySection;
-  
   return getDataSection();
 }
 
