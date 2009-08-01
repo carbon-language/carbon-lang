@@ -35,6 +35,7 @@ namespace {
     FPRegKiller() : MachineFunctionPass(&ID) {}
 
     virtual void getAnalysisUsage(AnalysisUsage &AU) const {
+      AU.setPreservesCFG();
       AU.addPreservedID(MachineLoopInfoID);
       AU.addPreservedID(MachineDominatorsID);
       MachineFunctionPass::getAnalysisUsage(AU);
