@@ -1,20 +1,3 @@
-#!/usr/bin/env python
-#
-#  TestRunner.py - This script is used to run arbitrary unit tests.  Unit
-#  tests must contain the command used to run them in the input file, starting
-#  immediately after a "RUN:" string.
-#
-#  This runner recognizes and replaces the following strings in the command:
-#
-#     %s - Replaced with the input name of the program, or the program to
-#          execute, as appropriate.
-#     %S - Replaced with the directory where the input resides.
-#     %llvmgcc - llvm-gcc command
-#     %llvmgxx - llvm-g++ command
-#     %prcontext - prcontext.tcl script
-#     %t - temporary file name (derived from testcase name)
-#
-
 import errno
 import os
 import platform
@@ -39,7 +22,7 @@ class TestStatus:
     def getName(code): 
         return TestStatus.kNames[code]
 
-def executeScript(cfg, script, commands, cwd, useValgrind):
+def executeScript(cfg, script, commands, cwd):
     # Write script file
     f = open(script,'w')
     if kSystemName == 'Windows':
@@ -53,9 +36,9 @@ def executeScript(cfg, script, commands, cwd, useValgrind):
         command = ['cmd','/c', script]
     else:
         command = ['/bin/sh', script]
-        if useValgrind:
+        if cfg.useValgrind:
             # FIXME: Running valgrind on sh is overkill. We probably could just
-            # ron on clang with no real loss.
+            # run on clang with no real loss.
             command = ['valgrind', '-q',
                        '--tool=memcheck', '--leak-check=no', '--trace-children=yes',
                        '--error-exitcode=123'] + command
@@ -75,7 +58,7 @@ def executeScript(cfg, script, commands, cwd, useValgrind):
     return out, err, exitCode
 
 import StringIO
-def runOneTest(cfg, testPath, tmpBase, clang, clangcc, useValgrind):
+def runOneTest(cfg, testPath, tmpBase):
     # Make paths absolute.
     tmpBase = os.path.abspath(tmpBase)
     testPath = os.path.abspath(testPath)
@@ -90,8 +73,8 @@ def runOneTest(cfg, testPath, tmpBase, clang, clangcc, useValgrind):
     substitutions = [('%s', testPath),
                      ('%S', os.path.dirname(testPath)),
                      ('%t', tmpBase + '.tmp'),
-                     (' clang ', ' ' + clang + ' '),
-                     (' clang-cc ', ' ' + clangcc + ' ')]
+                     (' clang ', ' ' + cfg.clang + ' '),
+                     (' clang-cc ', ' ' + cfg.clangcc + ' ')]
 
     # Collect the test lines from the script.
     scriptLines = []
@@ -137,8 +120,7 @@ def runOneTest(cfg, testPath, tmpBase, clang, clangcc, useValgrind):
         scriptLines[i] = ln[:-2]
 
     out, err, exitCode = executeScript(cfg, script, scriptLines, 
-                                       os.path.dirname(testPath),
-                                       useValgrind)
+                                       os.path.dirname(testPath))
     if xfailLines:
         ok = exitCode != 0
         status = (TestStatus.XPass, TestStatus.XFail)[ok]

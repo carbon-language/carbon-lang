@@ -167,14 +167,12 @@ class Tester(threading.Thread):
             opts = self.provider.opts
             startTime = time.time()
             code, output = TestRunner.runOneTest(self.provider.config, 
-                                                 path, base, 
-                                                 opts.clang, opts.clangcc,
-                                                 opts.useValgrind)
+                                                 path, base)
             elapsed = time.time() - startTime
         except KeyboardInterrupt:
             # This is a sad hack. Unfortunately subprocess goes
             # bonkers with ctrl-c and we start forking merrily.
-            print 'Ctrl-C detected, goodbye.'
+            print '\nCtrl-C detected, goodbye.'
             os.kill(0,9)
 
         self.provider.setResult(index, TestResult(path, code, output, elapsed))
@@ -312,6 +310,10 @@ def main():
         opts.clang = TestRunner.inferClang(cfg)
     if opts.clangcc is None:
         opts.clangcc = TestRunner.inferClangCC(cfg, opts.clang)
+
+    cfg.clang = opts.clang
+    cfg.clangcc = opts.clangcc
+    cfg.useValgrind = opts.useValgrind
 
     # FIXME: It could be worth loading these in parallel with testing.
     allTests = list(getTests(cfg, args))

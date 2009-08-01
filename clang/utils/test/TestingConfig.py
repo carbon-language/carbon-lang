@@ -13,9 +13,13 @@ class TestingConfig:
                              environment = data.get('environment', {}))
 
     def __init__(self, suffixes, environment):
-        self.root = None
         self.suffixes = set(suffixes)
         self.environment = dict(environment)
-        
 
+        # Variables set internally.
+        self.root = None
+        self.useValgrind = None
 
+        # FIXME: These need to move into a substitutions mechanism.
+        self.clang = None
+        self.clangcc = None
