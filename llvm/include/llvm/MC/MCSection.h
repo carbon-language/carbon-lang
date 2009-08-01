@@ -31,35 +31,20 @@ namespace llvm {
     MCSection(const MCSection&);      // DO NOT IMPLEMENT
     void operator=(const MCSection&); // DO NOT IMPLEMENT
   protected:
-    MCSection(const StringRef &Name, MCContext &Ctx);
-    // FIXME: HACK.
+    MCSection(const StringRef &Name, SectionKind K, MCContext &Ctx);
     SectionKind Kind;
   public:
     virtual ~MCSection();
 
-    static MCSection *Create(const StringRef &Name, MCContext &Ctx);
+    static MCSection *Create(const StringRef &Name, SectionKind K,
+                             MCContext &Ctx);
     
     const std::string &getName() const { return Name; }
     SectionKind getKind() const { return Kind; }
   };
 
-  /// MCSectionWithKind - This is used by targets that use the SectionKind enum
-  /// to classify their sections.
-  class MCSectionWithKind : public MCSection {
-    MCSectionWithKind(const StringRef &Name, SectionKind K, MCContext &Ctx) 
-      : MCSection(Name, Ctx) {
-      Kind = K;
-    }
-  public:
-    
-    static MCSectionWithKind *Create(const StringRef &Name, SectionKind K,
-                                     MCContext &Ctx);
-
-  };
   
-  
-  
-  typedef MCSectionWithKind MCSectionELF;
+  typedef MCSection MCSectionELF;
   
 } // end namespace llvm
 

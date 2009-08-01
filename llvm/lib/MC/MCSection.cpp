@@ -14,18 +14,15 @@ using namespace llvm;
 MCSection::~MCSection() {
 }
 
-MCSection::MCSection(const StringRef &N, MCContext &Ctx) : Name(N) {
+MCSection::MCSection(const StringRef &N, SectionKind K, MCContext &Ctx)
+  : Name(N), Kind(K) {
   MCSection *&Entry = Ctx.Sections[Name];
   assert(Entry == 0 && "Multiple sections with the same name created");
   Entry = this;
 }
 
-MCSection *MCSection::Create(const StringRef &Name, MCContext &Ctx) {
-  return new (Ctx) MCSection(Name, Ctx);
+MCSection *MCSection::Create(const StringRef &Name, SectionKind K,
+                             MCContext &Ctx) {
+  return new (Ctx) MCSection(Name, K, Ctx);
 }
 
-
-MCSectionWithKind *
-MCSectionWithKind::Create(const StringRef &Name, SectionKind K, MCContext &Ctx){
-  return new (Ctx) MCSectionWithKind(Name, K, Ctx);
-}

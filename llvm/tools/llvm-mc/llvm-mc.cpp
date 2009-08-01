@@ -191,7 +191,9 @@ static int AssembleInput(const char *ProgName) {
 
   // FIXME: Target hook & command line option for initial section.
   Str.get()->SwitchSection(MCSection::Create("__TEXT,__text,"
-                                             "regular,pure_instructions", Ctx));
+                                             "regular,pure_instructions",
+                                            SectionKind::get(SectionKind::Text),
+                                             Ctx));
 
   AsmParser Parser(SrcMgr, Ctx, *Str.get());
   OwningPtr<TargetAsmParser> TAP(GetTargetAsmParser(ProgName, Parser));

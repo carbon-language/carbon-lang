@@ -249,7 +249,7 @@ getOrCreateSection(const char *Name, bool isDirective,
   if (MCSection *S = Ctx->GetSection(Name))
     return S;
   SectionKind K = SectionKind::get(Kind, false /*weak*/, !isDirective);
-  return MCSectionWithKind::Create(Name, K, *Ctx);
+  return MCSection::Create(Name, K, *Ctx);
 }
 
 
