@@ -426,7 +426,7 @@ void AsmPrinter::EmitJumpTableInfo(MachineJumpTableInfo *MJTI,
     getObjFileLowering().SectionForGlobal(F, Mang, TM);
 
   bool JTInDiffSection = false;
-  if ((IsPic && !(LoweringInfo && LoweringInfo->usesGlobalOffsetTable())) ||
+  if ((IsPic && !LoweringInfo->usesGlobalOffsetTable()) ||
       !JumpTableDataSection || F->isWeakForLinker()) {
     // In PIC mode, we need to emit the jump table to the same section as the
     // function body itself, otherwise the label differences won't make sense.
