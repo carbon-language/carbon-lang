@@ -127,9 +127,6 @@ protected:
   
 public:
   
-  // FIXME: REMOVE.
-  Kind getKind() const { return K; }
-
   bool isMetadata() const { return K == Metadata; }
   bool isText() const { return K == Text; }
   
