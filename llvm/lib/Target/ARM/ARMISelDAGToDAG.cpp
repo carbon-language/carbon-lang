@@ -1101,12 +1101,25 @@ SDNode *ARMDAGToDAGISel::Select(SDValue Op) {
       SDValue CPTmp2;
       if (Subtarget->isThumb()) {
         if (SelectT2ShifterOperandReg(Op, N1, CPTmp0, CPTmp1)) {
+          unsigned SOVal = cast<ConstantSDNode>(CPTmp1)->getZExtValue();
+          unsigned SOShOp = ARM_AM::getSORegShOp(SOVal);
+          unsigned Opc = 0;
+          switch (SOShOp) {
+          case ARM_AM::lsl: Opc = ARM::t2MOVCClsl; break;
+          case ARM_AM::lsr: Opc = ARM::t2MOVCClsr; break;
+          case ARM_AM::asr: Opc = ARM::t2MOVCCasr; break;
+          case ARM_AM::ror: Opc = ARM::t2MOVCCror; break;
+          default:
+            llvm_unreachable("Unknown so_reg opcode!");
+            break;
+          }
+          SDValue SOShImm =
+            CurDAG->getTargetConstant(ARM_AM::getSORegOffset(SOVal), MVT::i32);
           SDValue Tmp2 = CurDAG->getTargetConstant(((unsigned)
                                    cast<ConstantSDNode>(N2)->getZExtValue()),
                                    MVT::i32);
-          SDValue Ops[] = { N0, CPTmp0, CPTmp1, Tmp2, N3, InFlag };
-          return CurDAG->SelectNodeTo(Op.getNode(),
-                                      ARM::t2MOVCCs, MVT::i32,Ops, 6);
+          SDValue Ops[] = { N0, CPTmp0, SOShImm, Tmp2, N3, InFlag };
+          return CurDAG->SelectNodeTo(Op.getNode(), Opc, MVT::i32,Ops, 6);
         }
       } else {
         if (SelectShifterOperandReg(Op, N1, CPTmp0, CPTmp1, CPTmp2)) {

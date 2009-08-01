@@ -980,14 +980,22 @@ def t2MOVCCr : T2I<(outs GPR:$dst), (ins GPR:$false, GPR:$true),
       [/*(set GPR:$dst, (ARMcmov GPR:$false, GPR:$true, imm:$cc, CCR:$ccr))*/]>,
                 RegConstraint<"$false = $dst">;
 
-def t2MOVCCs : T2I<(outs GPR:$dst), (ins GPR:$false, t2_so_reg:$true),
-                   "mov", ".w $dst, $true",
-[/*(set GPR:$dst, (ARMcmov GPR:$false, t2_so_reg:$true, imm:$cc, CCR:$ccr))*/]>,
-                   RegConstraint<"$false = $dst">;
-
 def t2MOVCCi : T2I<(outs GPR:$dst), (ins GPR:$false, t2_so_imm:$true),
                    "mov", ".w $dst, $true",
 [/*(set GPR:$dst, (ARMcmov GPR:$false, t2_so_imm:$true, imm:$cc, CCR:$ccr))*/]>,
+                   RegConstraint<"$false = $dst">;
+
+def t2MOVCClsl : T2I<(outs GPR:$dst), (ins GPR:$false, GPR:$true, i32imm:$rhs),
+                   "lsl", ".w $dst, $true, $rhs", []>,
+                   RegConstraint<"$false = $dst">;
+def t2MOVCClsr : T2I<(outs GPR:$dst), (ins GPR:$false, GPR:$true, i32imm:$rhs),
+                   "lsr", ".w $dst, $true, $rhs", []>,
+                   RegConstraint<"$false = $dst">;
+def t2MOVCCasr : T2I<(outs GPR:$dst), (ins GPR:$false, GPR:$true, i32imm:$rhs),
+                   "asr", ".w $dst, $true, $rhs", []>,
+                   RegConstraint<"$false = $dst">;
+def t2MOVCCror : T2I<(outs GPR:$dst), (ins GPR:$false, GPR:$true, i32imm:$rhs),
+                   "ror", ".w $dst, $true, $rhs", []>,
                    RegConstraint<"$false = $dst">;
 
 //===----------------------------------------------------------------------===//

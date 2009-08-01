@@ -61,3 +61,38 @@ entry:
     %tmp1.s = select i1 %tmp, i32 2, i32 3
     ret i32 %tmp1.s
 }
+
+define i32 @f7(i32 %a, i32 %b, i32 %c) {
+entry:
+; CHECK: f7:
+; CHECK: it hi
+; CHECK: lsrhi.w
+    %tmp1 = icmp ugt i32 %a, %b
+    %tmp2 = udiv i32 %c, 3
+    %tmp3 = select i1 %tmp1, i32 %tmp2, i32 3
+    ret i32 %tmp3
+}
+
+define i32 @f8(i32 %a, i32 %b, i32 %c) {
+entry:
+; CHECK: f8:
+; CHECK: it lo
+; CHECK: lsllo.w
+    %tmp1 = icmp ult i32 %a, %b
+    %tmp2 = mul i32 %c, 4
+    %tmp3 = select i1 %tmp1, i32 %tmp2, i32 3
+    ret i32 %tmp3
+}
+
+define i32 @f9(i32 %a, i32 %b, i32 %c) {
+entry:
+; CHECK: f9:
+; CHECK: it ge
+; CHECK: rorge.w
+    %tmp1 = icmp sge i32 %a, %b
+    %tmp2 = shl i32 %c, 10
+    %tmp3 = lshr i32 %c, 22
+    %tmp4 = or i32 %tmp2, %tmp3
+    %tmp5 = select i1 %tmp1, i32 %tmp4, i32 3
+    ret i32 %tmp5
+}
