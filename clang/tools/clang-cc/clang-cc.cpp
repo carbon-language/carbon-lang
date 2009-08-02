@@ -650,7 +650,7 @@ struct OptLevelParser : public llvm::cl::parser<unsigned> {
     if (llvm::cl::parser<unsigned>::parse(O, ArgName, Arg, Val))
       return true;
     if (Val > 3)
-      return O.error(": '" + Arg + "' invalid optimization level!");
+      return O.error("'" + Arg + "' invalid optimization level!");
     return false;
   }
 };
