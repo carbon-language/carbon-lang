@@ -109,6 +109,12 @@ static HANDLE RedirectIO(const Path *path, int fd, std::string* ErrMsg) {
                                       DWORD cbJobObjectInfoLength);
 #endif
 
+/// ArgNeedsQuotes - Check whether argument needs to be quoted when calling
+/// CreateProcess.
+static bool ArgNeedsQuotes(const char *Str) {  
+  return Str[0] == '\0' || strchr(Str, ' ') != 0;
+}
+
 bool
 Program::Execute(const Path& path,
                  const char** args,
@@ -124,13 +130,13 @@ Program::Execute(const Path& path,
 
   // Windows wants a command line, not an array of args, to pass to the new
   // process.  We have to concatenate them all, while quoting the args that
-  // have embedded spaces.
+  // have embedded spaces (or are empty).
 
   // First, determine the length of the command line.
   unsigned len = 0;
   for (unsigned i = 0; args[i]; i++) {
     len += strlen(args[i]) + 1;
-    if (strchr(args[i], ' '))
+    if (ArgNeedsQuotes(args[i]))
       len += 2;
   }
 
@@ -141,7 +147,7 @@ Program::Execute(const Path& path,
   for (unsigned i = 0; args[i]; i++) {
     const char *arg = args[i];
     size_t len = strlen(arg);
-    bool needsQuoting = strchr(arg, ' ') != 0;
+    bool needsQuoting = ArgNeedsQuotes(arg);
     if (needsQuoting)
       *p++ = '"';
     memcpy(p, arg, len);
