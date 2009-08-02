@@ -12,9 +12,6 @@
 //===----------------------------------------------------------------------===//
 
 #include "ARMTargetAsmInfo.h"
-#include "ARMTargetMachine.h"
-#include <cstring>
-#include <cctype>
 using namespace llvm;
 
 const char *const llvm::arm_asm_table[] = {
@@ -43,10 +40,7 @@ const char *const llvm::arm_asm_table[] = {
   0,0
 };
 
-ARMDarwinTargetAsmInfo::ARMDarwinTargetAsmInfo(const ARMBaseTargetMachine &TM):
-  ARMTargetAsmInfo<DarwinTargetAsmInfo>(TM) {
-  Subtarget = &TM.getSubtarget<ARMSubtarget>();
-
+ARMDarwinTargetAsmInfo::ARMDarwinTargetAsmInfo() {
   ZeroDirective = "\t.space\t";
   ZeroFillDirective = "\t.zerofill\t";  // Uses .zerofill
   SetDirective = "\t.set\t";
@@ -55,10 +49,7 @@ ARMDarwinTargetAsmInfo::ARMDarwinTargetAsmInfo(const ARMBaseTargetMachine &TM):
   SupportsDebugInformation = true;
 }
 
-ARMELFTargetAsmInfo::ARMELFTargetAsmInfo(const ARMBaseTargetMachine &TM):
-  ARMTargetAsmInfo<TargetAsmInfo>(TM) {
-  Subtarget = &TM.getSubtarget<ARMSubtarget>();
-
+ARMELFTargetAsmInfo::ARMELFTargetAsmInfo() {
   NeedsSet = false;
   HasLEB128 = true;
   AbsoluteDebugSectionOffsets = true;
@@ -82,4 +73,5 @@ ARMELFTargetAsmInfo::ARMELFTargetAsmInfo(const ARMBaseTargetMachine &TM):
 }
 
 // Instantiate default implementation.
+TEMPLATE_INSTANTIATION(class ARMTargetAsmInfo<DarwinTargetAsmInfo>);
 TEMPLATE_INSTANTIATION(class ARMTargetAsmInfo<TargetAsmInfo>);

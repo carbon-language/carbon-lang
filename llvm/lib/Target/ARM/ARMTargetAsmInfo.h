@@ -11,11 +11,9 @@
 //
 //===----------------------------------------------------------------------===//
 
-#ifndef ARMTARGETASMINFO_H
-#define ARMTARGETASMINFO_H
+#ifndef LLVM_ARMTARGETASMINFO_H
+#define LLVM_ARMTARGETASMINFO_H
 
-#include "ARMTargetMachine.h"
-#include "llvm/Target/TargetAsmInfo.h"
 #include "llvm/Target/DarwinTargetAsmInfo.h"
 #include "llvm/Support/Compiler.h"
 
@@ -25,7 +23,7 @@ namespace llvm {
 
   template <class BaseTAI>
   struct ARMTargetAsmInfo : public BaseTAI {
-    explicit ARMTargetAsmInfo(const ARMBaseTargetMachine &TM) {
+    explicit ARMTargetAsmInfo() {
       BaseTAI::AsmTransCBE = arm_asm_table;
 
       BaseTAI::AlignmentIsInBytes = false;
@@ -36,18 +34,17 @@ namespace llvm {
       BaseTAI::InlineAsmEnd = "@ InlineAsm End";
       BaseTAI::LCOMMDirective = "\t.lcomm\t";
     }
-
-    const ARMSubtarget *Subtarget;
   };
 
+  EXTERN_TEMPLATE_INSTANTIATION(class ARMTargetAsmInfo<DarwinTargetAsmInfo>);
   EXTERN_TEMPLATE_INSTANTIATION(class ARMTargetAsmInfo<TargetAsmInfo>);
 
   struct ARMDarwinTargetAsmInfo : public ARMTargetAsmInfo<DarwinTargetAsmInfo> {
-    explicit ARMDarwinTargetAsmInfo(const ARMBaseTargetMachine &TM);
+    explicit ARMDarwinTargetAsmInfo();
   };
 
   struct ARMELFTargetAsmInfo : public ARMTargetAsmInfo<TargetAsmInfo> {
-    explicit ARMELFTargetAsmInfo(const ARMBaseTargetMachine &TM);
+    explicit ARMELFTargetAsmInfo();
   };
 
 } // namespace llvm

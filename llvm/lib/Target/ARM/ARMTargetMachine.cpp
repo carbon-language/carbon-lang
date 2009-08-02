@@ -78,9 +78,9 @@ const TargetAsmInfo *ARMBaseTargetMachine::createTargetAsmInfo() const {
   switch (Subtarget.TargetType) {
   default: llvm_unreachable("Unknown ARM subtarget kind");
   case ARMSubtarget::isDarwin:
-    return new ARMDarwinTargetAsmInfo(*this);
+    return new ARMDarwinTargetAsmInfo();
   case ARMSubtarget::isELF:
-    return new ARMELFTargetAsmInfo(*this);
+    return new ARMELFTargetAsmInfo();
   }
 }
 
