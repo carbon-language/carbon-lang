@@ -1059,7 +1059,7 @@ void X86RegisterInfo::emitPrologue(MachineFunction &MF) const {
       emitSPUpdate(MBB, MBBI, StackPtr, -(int64_t)NumBytes, Is64Bit, TII);
   }
 
-  if (!HasFP && needsFrameMoves && NumBytes) {
+  if (!HasFP && needsFrameMoves) {
     // Mark end of stack pointer adjustment.
     unsigned LabelId = MMI->NextLabelID();
     BuildMI(MBB, MBBI, DL, TII.get(X86::DBG_LABEL)).addImm(LabelId);
