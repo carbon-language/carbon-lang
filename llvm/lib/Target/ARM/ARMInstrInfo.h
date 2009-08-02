@@ -25,6 +25,7 @@ namespace llvm {
 
 class ARMInstrInfo : public ARMBaseInstrInfo {
   ARMRegisterInfo RI;
+  const ARMSubtarget &Subtarget;
 public:
   explicit ARMInstrInfo(const ARMSubtarget &STI);
 
@@ -44,6 +45,9 @@ public:
   void reMaterialize(MachineBasicBlock &MBB, MachineBasicBlock::iterator MI,
                      unsigned DestReg, unsigned SubIdx,
                      const MachineInstr *Orig) const;
+
+  virtual unsigned getInlineAsmLength(const char *Str,
+                                      const TargetAsmInfo &TAI) const;
 };
 
 }

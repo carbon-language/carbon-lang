@@ -12,9 +12,28 @@
 //===----------------------------------------------------------------------===//
 
 #include "llvm/Target/TargetInstrInfo.h"
+#include "llvm/Target/TargetAsmInfo.h"
 #include "llvm/Target/TargetRegisterInfo.h"
 #include "llvm/Support/ErrorHandling.h"
 using namespace llvm;
+
+//===----------------------------------------------------------------------===//
+//  TargetOperandInfo
+//===----------------------------------------------------------------------===//
+
+/// getRegClass - Get the register class for the operand, handling resolution
+/// of "symbolic" pointer register classes etc.  If this is not a register
+/// operand, this returns null.
+const TargetRegisterClass *
+TargetOperandInfo::getRegClass(const TargetRegisterInfo *TRI) const {
+  if (isLookupPtrRegClass())
+    return TRI->getPointerRegClass(RegClass);
+  return TRI->getRegClass(RegClass);
+}
+
+//===----------------------------------------------------------------------===//
+//  TargetInstrInfo
+//===----------------------------------------------------------------------===//
 
 TargetInstrInfo::TargetInstrInfo(const TargetInstrDesc* Desc,
                                  unsigned numOpcodes)
@@ -44,13 +63,33 @@ bool TargetInstrInfo::isUnpredicatedTerminator(const MachineInstr *MI) const {
   return !isPredicated(MI);
 }
 
-/// getRegClass - Get the register class for the operand, handling resolution
-/// of "symbolic" pointer register classes etc.  If this is not a register
-/// operand, this returns null.
-const TargetRegisterClass *
-TargetOperandInfo::getRegClass(const TargetRegisterInfo *TRI) const {
-  if (isLookupPtrRegClass())
-    return TRI->getPointerRegClass(RegClass);
-  return TRI->getRegClass(RegClass);
-}
 
+/// Measure the specified inline asm to determine an approximation of its
+/// length.
+/// Comments (which run till the next SeparatorChar or newline) do not
+/// count as an instruction.
+/// Any other non-whitespace text is considered an instruction, with
+/// multiple instructions separated by SeparatorChar or newlines.
+/// Variable-length instructions are not handled here; this function
+/// may be overloaded in the target code to do that.
+unsigned TargetInstrInfo::getInlineAsmLength(const char *Str,
+                                             const TargetAsmInfo &TAI) const {
+  
+  
+  // Count the number of instructions in the asm.
+  bool atInsnStart = true;
+  unsigned Length = 0;
+  for (; *Str; ++Str) {
+    if (*Str == '\n' || *Str == TAI.getSeparatorChar())
+      atInsnStart = true;
+    if (atInsnStart && !isspace(*Str)) {
+      Length += TAI.getMaxInstLength();
+      atInsnStart = false;
+    }
+    if (atInsnStart && strncmp(Str, TAI.getCommentString(),
+                               strlen(TAI.getCommentString())) == 0)
+      atInsnStart = false;
+  }
+  
+  return Length;
+}

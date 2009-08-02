@@ -20,7 +20,6 @@
 #include "llvm/Target/TargetInstrInfo.h"
 
 namespace llvm {
-  class ARMSubtarget;
 
 /// ARMII - This namespace holds all of the target specific flags that
 /// instruction info tracks.
@@ -160,7 +159,7 @@ namespace ARMII {
 class ARMBaseInstrInfo : public TargetInstrInfoImpl {
 protected:
   // Can be only subclassed.
-  explicit ARMBaseInstrInfo(const ARMSubtarget &sti);
+  explicit ARMBaseInstrInfo();
 public:
   // Return the non-pre/post incrementing version of 'Opc'. Return 0
   // if there is not such an opcode.

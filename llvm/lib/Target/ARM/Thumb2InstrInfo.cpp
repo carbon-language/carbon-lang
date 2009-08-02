@@ -23,8 +23,7 @@
 
 using namespace llvm;
 
-Thumb2InstrInfo::Thumb2InstrInfo(const ARMSubtarget &STI)
-  : ARMBaseInstrInfo(STI), RI(*this, STI) {
+Thumb2InstrInfo::Thumb2InstrInfo(const ARMSubtarget &STI) : RI(*this, STI) {
 }
 
 unsigned Thumb2InstrInfo::getUnindexedOpcode(unsigned Opc) const {

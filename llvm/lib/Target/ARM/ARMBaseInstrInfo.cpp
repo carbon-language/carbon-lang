@@ -30,7 +30,7 @@ static cl::opt<bool>
 EnableARM3Addr("enable-arm-3-addr-conv", cl::Hidden,
                cl::desc("Enable ARM 2-addr to 3-addr conv"));
 
-ARMBaseInstrInfo::ARMBaseInstrInfo(const ARMSubtarget &sti)
+ARMBaseInstrInfo::ARMBaseInstrInfo()
   : TargetInstrInfoImpl(ARMInsts, array_lengthof(ARMInsts)) {
 }
 
@@ -415,7 +415,7 @@ unsigned ARMBaseInstrInfo::GetInstSizeInBytes(const MachineInstr *MI) const {
   default: {
     // If this machine instr is an inline asm, measure it.
     if (MI->getOpcode() == ARM::INLINEASM)
-      return TAI->getInlineAsmLength(MI->getOperand(0).getSymbolName());
+      return getInlineAsmLength(MI->getOperand(0).getSymbolName(), *TAI);
     if (MI->isLabel())
       return 0;
     switch (Opc) {

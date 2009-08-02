@@ -22,8 +22,7 @@
 
 using namespace llvm;
 
-Thumb1InstrInfo::Thumb1InstrInfo(const ARMSubtarget &STI)
-  : ARMBaseInstrInfo(STI), RI(*this, STI) {
+Thumb1InstrInfo::Thumb1InstrInfo(const ARMSubtarget &STI) : RI(*this, STI) {
 }
 
 unsigned Thumb1InstrInfo::getUnindexedOpcode(unsigned Opc) const {

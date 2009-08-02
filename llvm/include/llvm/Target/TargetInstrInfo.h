@@ -19,6 +19,7 @@
 
 namespace llvm {
 
+class TargetAsmInfo;
 class TargetRegisterClass;
 class TargetRegisterInfo;
 class LiveVariables;
@@ -456,9 +457,15 @@ public:
     return 0;
   }
 
-  /// GetFunctionSizeInBytes - Returns the size of the specified MachineFunction.
+  /// GetFunctionSizeInBytes - Returns the size of the specified
+  /// MachineFunction.
   /// 
   virtual unsigned GetFunctionSizeInBytes(const MachineFunction &MF) const = 0;
+  
+  /// Measure the specified inline asm to determine an approximation of its
+  /// length.
+  virtual unsigned getInlineAsmLength(const char *Str,
+                                      const TargetAsmInfo &TAI) const;
 };
 
 /// TargetInstrInfoImpl - This is the default implementation of

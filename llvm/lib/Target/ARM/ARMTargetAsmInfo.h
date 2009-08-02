@@ -38,8 +38,6 @@ namespace llvm {
     }
 
     const ARMSubtarget *Subtarget;
-
-    virtual unsigned getInlineAsmLength(const char *Str) const;
   };
 
   EXTERN_TEMPLATE_INSTANTIATION(class ARMTargetAsmInfo<TargetAsmInfo>);

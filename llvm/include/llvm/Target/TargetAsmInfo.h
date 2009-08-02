@@ -375,10 +375,6 @@ namespace llvm {
     explicit TargetAsmInfo();
     virtual ~TargetAsmInfo();
 
-    /// Measure the specified inline asm to determine an approximation of its
-    /// length.
-    virtual unsigned getInlineAsmLength(const char *Str) const;
-
     /// getSLEB128Size - Compute the number of bytes required for a signed
     /// leb128 value.
     static unsigned getSLEB128Size(int Value);
@@ -413,6 +409,9 @@ namespace llvm {
     }
     bool needsSet() const {
       return NeedsSet;
+    }
+    unsigned getMaxInstLength() const {
+      return MaxInstLength;
     }
     const char *getPCSymbol() const {
       return PCSymbol;

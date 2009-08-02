@@ -768,7 +768,7 @@ unsigned PPCInstrInfo::GetInstSizeInBytes(const MachineInstr *MI) const {
   case PPC::INLINEASM: {       // Inline Asm: Variable size.
     const MachineFunction *MF = MI->getParent()->getParent();
     const char *AsmStr = MI->getOperand(0).getSymbolName();
-    return MF->getTarget().getTargetAsmInfo()->getInlineAsmLength(AsmStr);
+    return getInlineAsmLength(AsmStr, *MF->getTarget().getTargetAsmInfo());
   }
   case PPC::DBG_LABEL:
   case PPC::EH_LABEL:

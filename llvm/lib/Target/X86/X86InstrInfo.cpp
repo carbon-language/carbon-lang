@@ -2979,9 +2979,9 @@ static unsigned GetInstSizeWithDesc(const MachineInstr &MI,
       break;
     case TargetInstrInfo::INLINEASM: {
       const MachineFunction *MF = MI.getParent()->getParent();
-      const char *AsmStr = MI.getOperand(0).getSymbolName();
-      const TargetAsmInfo* AI = MF->getTarget().getTargetAsmInfo();
-      FinalSize += AI->getInlineAsmLength(AsmStr);
+      const TargetInstrInfo &TII = *MF->getTarget().getInstrInfo();
+      FinalSize += TII.getInlineAsmLength(MI.getOperand(0).getSymbolName(),
+                                          *MF->getTarget().getTargetAsmInfo());
       break;
     }
     case TargetInstrInfo::DBG_LABEL:
