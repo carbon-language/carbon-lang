@@ -13,8 +13,7 @@
 
 #include "llvm/Target/TargetInstrInfo.h"
 #include "llvm/Target/TargetRegisterInfo.h"
-#include "llvm/Constant.h"
-#include "llvm/DerivedTypes.h"
+#include "llvm/Support/ErrorHandling.h"
 using namespace llvm;
 
 TargetInstrInfo::TargetInstrInfo(const TargetInstrDesc* Desc,
@@ -24,6 +23,14 @@ TargetInstrInfo::TargetInstrInfo(const TargetInstrDesc* Desc,
 
 TargetInstrInfo::~TargetInstrInfo() {
 }
+
+/// insertNoop - Insert a noop into the instruction stream at the specified
+/// point.
+void TargetInstrInfo::insertNoop(MachineBasicBlock &MBB, 
+                                 MachineBasicBlock::iterator MI) const {
+  llvm_unreachable("Target didn't implement insertNoop!");
+}
+
 
 bool TargetInstrInfo::isUnpredicatedTerminator(const MachineInstr *MI) const {
   const TargetInstrDesc &TID = MI->getDesc();
