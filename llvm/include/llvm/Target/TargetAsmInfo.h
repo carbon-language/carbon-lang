@@ -383,11 +383,6 @@ namespace llvm {
     /// length.
     virtual unsigned getInlineAsmLength(const char *Str) const;
 
-    /// PreferredEHDataFormat - This hook allows the target to select data
-    /// format used for encoding pointers in exception handling data.
-    virtual unsigned PreferredEHDataFormat() const;
-
-
     /// getSLEB128Size - Compute the number of bytes required for a signed
     /// leb128 value.
     static unsigned getSLEB128Size(int Value);

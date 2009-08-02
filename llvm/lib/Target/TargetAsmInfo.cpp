@@ -140,10 +140,6 @@ unsigned TargetAsmInfo::getInlineAsmLength(const char *Str) const {
   return Length;
 }
 
-unsigned TargetAsmInfo::PreferredEHDataFormat() const {
-  return dwarf::DW_EH_PE_absptr;
-}
-
 unsigned TargetAsmInfo::getULEB128Size(unsigned Value) {
   unsigned Size = 0;
   do {

@@ -86,14 +86,6 @@ X86DarwinTargetAsmInfo::X86DarwinTargetAsmInfo(const X86TargetMachine &TM):
   ".section __TEXT,__eh_frame,coalesced,no_toc+strip_static_syms+live_support";
 }
 
-unsigned X86DarwinTargetAsmInfo::PreferredEHDataFormat() const {
-  const X86Subtarget *Subtarget = &TM.getSubtarget<X86Subtarget>();
-  if (Subtarget->getDarwinVers() > 9)
-    return DW_EH_PE_pcrel | DW_EH_PE_indirect | DW_EH_PE_sdata4;
-
-  return DW_EH_PE_absptr;
-}
-
 const char *
 X86DarwinTargetAsmInfo::getEHGlobalPrefix() const {
   const X86Subtarget* Subtarget = &TM.getSubtarget<X86Subtarget>();
@@ -137,70 +129,6 @@ X86ELFTargetAsmInfo::X86ELFTargetAsmInfo(const X86TargetMachine &TM) :
   if (TM.getSubtarget<X86Subtarget>().isLinux())
     NonexecutableStackDirective = "\t.section\t.note.GNU-stack,\"\",@progbits";
 }
-
-unsigned
-X86ELFTargetAsmInfo::PreferredEHDataFormat() const {
-  CodeModel::Model CM = TM.getCodeModel();
-  bool is64Bit = TM.getSubtarget<X86Subtarget>().is64Bit();
-
-  if (TM.getRelocationModel() == Reloc::PIC_) {
-    unsigned Format = 0;
-
-    if (!is64Bit)
-      // 32 bit targets always encode pointers as 4 bytes
-      Format = DW_EH_PE_sdata4;
-    else {
-      // 64 bit targets encode pointers in 4 bytes iff:
-      // - code model is small OR
-      // - code model is medium and we're emitting externally visible symbols
-      //   or any code symbols
-      if (CM == CodeModel::Small || CM == CodeModel::Medium)
-        Format = DW_EH_PE_sdata4;
-      else
-        Format = DW_EH_PE_sdata8;
-    }
-
-    Format |= DW_EH_PE_indirect;
-    return (Format | DW_EH_PE_pcrel);
-  }
-  
-  if (is64Bit && CM == CodeModel::Small)
-    return DW_EH_PE_udata4;
-  return DW_EH_PE_absptr;
-}
-
-
-unsigned
-X86COFFTargetAsmInfo::PreferredEHDataFormat() const {
-  CodeModel::Model CM = TM.getCodeModel();
-  bool is64Bit = TM.getSubtarget<X86Subtarget>().is64Bit();
-
-  if (TM.getRelocationModel() == Reloc::PIC_) {
-    unsigned Format = 0;
-
-    if (!is64Bit)
-      // 32 bit targets always encode pointers as 4 bytes
-      Format = DW_EH_PE_sdata4;
-    else {
-      // 64 bit targets encode pointers in 4 bytes iff:
-      // - code model is small OR
-      // - code model is medium and we're emitting externally visible symbols
-      //   or any code symbols
-      if (CM == CodeModel::Small || CM == CodeModel::Medium)
-        Format = DW_EH_PE_sdata4;
-      else
-        Format = DW_EH_PE_sdata8;
-    }
-
-    Format |= DW_EH_PE_indirect;
-    return (Format | DW_EH_PE_pcrel);
-  }
-  
-  if (is64Bit && CM == CodeModel::Small)
-    return DW_EH_PE_udata4;
-  return DW_EH_PE_absptr;
-}
-
 
 
 X86WinTargetAsmInfo::X86WinTargetAsmInfo(const X86TargetMachine &TM):
