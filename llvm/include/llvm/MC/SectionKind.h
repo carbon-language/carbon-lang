@@ -26,7 +26,6 @@ namespace llvm {
 /// in order to explain the predicates below.
 ///
 class SectionKind {
-public:
   enum Kind {
     /// Metadata - Debug info sections or other metadata.
     Metadata,
@@ -113,10 +112,7 @@ public:
                /// linked image.
                ReadOnlyWithRelLocal
     
-  };
-  
-protected:
-  Kind K : 8;
+  } K : 8;
 public:
   
   bool isMetadata() const { return K == Metadata; }
