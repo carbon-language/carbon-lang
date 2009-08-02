@@ -672,8 +672,9 @@ def NBITTST: F1<(outs JustCC:$cc), (ins D:$src1, uimm5mask:$src2),
 
 def ONES: F2<(outs D16L:$dst), (ins D:$src),
               "$dst = ones $src;",
-              [(set D16L:$dst, (trunc (ctpop D:$src)))]>;
+              [(set D16L:$dst, (int_bfin_ones D:$src))]>;
 
+def : Pat<(i16 (trunc (ctpop D:$src))), (ONES D:$src)>;
 def : Pat<(ctpop D:$src), (MOVEzext (ONES D:$src))>;
 
 //===----------------------------------------------------------------------===//
@@ -810,11 +811,51 @@ def MUL32: F1<(outs D:$dst), (ins D:$src1, D:$src2),
 // Table C-18. External Exent Management Instructions
 //===----------------------------------------------------------------------===//
 
+def IDLE : F1<(outs), (ins), "idle;", [(int_bfin_idle)]>;
+def CSYNC : F1<(outs), (ins), "csync;", [(int_bfin_csync)]>;
+def SSYNC : F1<(outs), (ins), "ssync;", [(int_bfin_ssync)]>;
+def EMUEXCPT : F1<(outs), (ins), "emuexcpt;", []>;
+def CLI : F1<(outs D:$mask), (ins), "cli $mask;", []>;
+def STI : F1<(outs), (ins D:$mask), "sti $mask;", []>;
+def RAISE : F1<(outs), (ins i32imm:$itr), "raise $itr;", []>;
+def EXCPT : F1<(outs), (ins i32imm:$exc), "excpt $exc;", []>;
+def NOP : F1<(outs), (ins), "nop;", []>;
+def MNOP : F2<(outs), (ins), "mnop;", []>;
+def ABORT : F1<(outs), (ins), "abort;", []>;
+
 //===----------------------------------------------------------------------===//
 // Table C-19. Cache Control Instructions
 //===----------------------------------------------------------------------===//
 
+//===----------------------------------------------------------------------===//
 // Table C-20. Video Pixel Operations Instructions
+//===----------------------------------------------------------------------===//
+
+def ALIGN8 : F2<(outs D:$dst), (ins D:$src1, D:$src2),
+                "$dst = align8($src1, $src2);",
+                [(set D:$dst, (or (shl D:$src1, (i32 24)),
+                                  (srl D:$src2, (i32 8))))]>;
+
+def ALIGN16 : F2<(outs D:$dst), (ins D:$src1, D:$src2),
+                 "$dst = align16($src1, $src2);",
+                 [(set D:$dst, (or (shl D:$src1, (i32 16)),
+                                   (srl D:$src2, (i32 16))))]>;
+
+def ALIGN24 : F2<(outs D:$dst), (ins D:$src1, D:$src2),
+                 "$dst = align16($src1, $src2);",
+                 [(set D:$dst, (or (shl D:$src1, (i32 8)),
+                                   (srl D:$src2, (i32 24))))]>;
+
+def DISALGNEXCPT : F2<(outs), (ins), "disalignexcpt;", []>;
+
+// This is really two instructions in parallel, but we don't support vliw yet
+def DISALGNEXCPT_LOAD : F2<(outs D:$dst), (ins I:$ptr),
+                           "disalignexcpt \\|\\| $dst = [$ptr];",
+                           [(set D:$dst, (int_bfin_loadbytes I:$ptr))]>;
+
+// TODO: BYTEOP3P, BYTEOP16P, BYTEOP1P, BYTEOP2P, BYTEOP16M, SAA,
+//       BYTEPACK, BYTEUNPACK
+
 // Table C-21. Vector Operations Instructions
 
 // Patterns
