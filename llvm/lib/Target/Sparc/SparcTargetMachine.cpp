@@ -25,7 +25,7 @@ extern "C" void LLVMInitializeSparcTarget() {
 
 const TargetAsmInfo *SparcTargetMachine::createTargetAsmInfo() const {
   // FIXME: Handle Solaris subtarget someday :)
-  return new SparcELFTargetAsmInfo(*this);
+  return new SparcELFTargetAsmInfo();
 }
 
 /// SparcTargetMachine ctor - Create an ILP32 architecture model

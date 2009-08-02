@@ -18,11 +18,8 @@
 
 namespace llvm {
 
-  // Forward declaration.
-  class TargetMachine;
-
   struct SparcELFTargetAsmInfo : public TargetAsmInfo {
-    explicit SparcELFTargetAsmInfo(const TargetMachine &TM);
+    explicit SparcELFTargetAsmInfo();
   };
 
 } // namespace llvm
