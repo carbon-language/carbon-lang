@@ -362,7 +362,7 @@ CXXMethodDecl::method_iterator CXXMethodDecl::end_overridden_methods() const {
   if (it == OverriddenMethods->end() || it->second->empty())
     return 0;
 
-  return &(*it->second)[it->second->size()];
+  return &(*it->second)[0] + it->second->size();
 }
 
 QualType CXXMethodDecl::getThisType(ASTContext &C) const {
