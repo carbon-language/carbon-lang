@@ -22,6 +22,7 @@
 #include "llvm/CodeGen/MachineFunction.h"
 #include "llvm/ExecutionEngine/JITEventListener.h"
 #include "llvm/Support/Debug.h"
+#include "llvm/Support/raw_ostream.h"
 #include "llvm/System/Errno.h"
 #include "llvm/Config/config.h"
 #include <stddef.h>
@@ -112,7 +113,7 @@ void OProfileJITEventListener::NotifyFunctionEmitted(
                            reinterpret_cast<uint64_t>(FnStart),
                            FnStart, FnSize) == -1) {
     DEBUG(errs() << "Failed to tell OProfile about native function " 
-          << Fn.getName() << " at [" 
+          << F.getName() << " at [" 
           << FnStart << "-" << ((char*)FnStart + FnSize) << "]\n");
     return;
   }
@@ -152,8 +153,8 @@ void OProfileJITEventListener::NotifyFreeingMachineCode(
     const Function &F, void *FnStart) {
   assert(FnStart && "Invalid function pointer");
   if (op_unload_native_code(Agent, reinterpret_cast<uint64_t>(FnStart)) == -1) {
-    DOUT << "Failed to tell OProfile about unload of native function "
-         << F.getName() << " at " << FnStart << "\n";
+    DEBUG(errs() << "Failed to tell OProfile about unload of native function "
+                 << F.getName() << " at " << FnStart << "\n");
   }
 }
 
