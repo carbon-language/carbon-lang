@@ -15,6 +15,11 @@
 #include "llvm/MC/MCSection.h"
 using namespace llvm;
 
+PIC16TargetObjectFile::PIC16TargetObjectFile()
+  : ExternalVarDecls(0), ExternalVarDefs(0) 
+{
+}
+
 void PIC16TargetObjectFile::Initialize(MCContext &Ctx, const TargetMachine &tm){
   TargetLoweringObjectFile::Initialize(Ctx, tm);
   TM = &tm;

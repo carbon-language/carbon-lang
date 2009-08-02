@@ -52,7 +52,8 @@ namespace llvm {
     mutable std::vector<PIC16Section*> ROSections;
     mutable PIC16Section *ExternalVarDecls;
     mutable PIC16Section *ExternalVarDefs;
-    
+
+    PIC16TargetObjectFile();
     ~PIC16TargetObjectFile();
     
     void Initialize(MCContext &Ctx, const TargetMachine &TM);
