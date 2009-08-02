@@ -83,15 +83,15 @@ ARMELFTargetAsmInfo::ARMELFTargetAsmInfo(const ARMBaseTargetMachine &TM):
 
 /// Count the number of comma-separated arguments.
 /// Do not try to detect errors.
-template <class BaseTAI>
-unsigned ARMTargetAsmInfo<BaseTAI>::countArguments(const char* p) const {
+static unsigned countArguments(const char* p,
+                               const TargetAsmInfo &TAI) {
   unsigned count = 0;
   while (*p && isspace(*p) && *p != '\n')
     p++;
   count++;
   while (*p && *p!='\n' &&
-         strncmp(p, BaseTAI::CommentString,
-                 strlen(BaseTAI::CommentString))!=0) {
+         strncmp(p, TAI.getCommentString(),
+                 strlen(TAI.getCommentString())) != 0) {
     if (*p==',')
       count++;
     p++;
@@ -101,8 +101,7 @@ unsigned ARMTargetAsmInfo<BaseTAI>::countArguments(const char* p) const {
 
 /// Count the length of a string enclosed in quote characters.
 /// Do not try to detect errors.
-template <class BaseTAI>
-unsigned ARMTargetAsmInfo<BaseTAI>::countString(const char* p) const {
+static unsigned countString(const char *p) {
   unsigned count = 0;
   while (*p && isspace(*p) && *p!='\n')
     p++;
@@ -197,17 +196,17 @@ unsigned ARMTargetAsmInfo<BaseTAI>::getInlineAsmLength(const char *s) const {
         // Some generate code, but this is only interesting in the text section.
         else if (inTextSection) {
           if (strncmp(Str, ".long", strlen(".long"))==0)
-            Length += 4*countArguments(Str+strlen(".long"));
+            Length += 4*countArguments(Str+strlen(".long"), *this);
           else if (strncmp(Str, ".short", strlen(".short"))==0)
-            Length += 2*countArguments(Str+strlen(".short"));
+            Length += 2*countArguments(Str+strlen(".short"), *this);
           else if (strncmp(Str, ".byte", strlen(".byte"))==0)
-            Length += 1*countArguments(Str+strlen(".byte"));
+            Length += 1*countArguments(Str+strlen(".byte"), *this);
           else if (strncmp(Str, ".single", strlen(".single"))==0)
-            Length += 4*countArguments(Str+strlen(".single"));
+            Length += 4*countArguments(Str+strlen(".single"), *this);
           else if (strncmp(Str, ".double", strlen(".double"))==0)
-            Length += 8*countArguments(Str+strlen(".double"));
+            Length += 8*countArguments(Str+strlen(".double"), *this);
           else if (strncmp(Str, ".quad", strlen(".quad"))==0)
-            Length += 16*countArguments(Str+strlen(".quad"));
+            Length += 16*countArguments(Str+strlen(".quad"), *this);
           else if (strncmp(Str, ".ascii", strlen(".ascii"))==0)
             Length += countString(Str+strlen(".ascii"));
           else if (strncmp(Str, ".asciz", strlen(".asciz"))==0)
