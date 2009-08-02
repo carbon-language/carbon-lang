@@ -14,15 +14,12 @@
 #ifndef SystemZTARGETASMINFO_H
 #define SystemZTARGETASMINFO_H
 
-#include "llvm/Target/ELFTargetAsmInfo.h"
+#include "llvm/Target/TargetAsmInfo.h"
 
 namespace llvm {
 
-  // Forward declaration.
-  class SystemZTargetMachine;
-
   struct SystemZTargetAsmInfo : public TargetAsmInfo {
-    explicit SystemZTargetAsmInfo(const SystemZTargetMachine &TM);
+    explicit SystemZTargetAsmInfo();
   };
 
 } // namespace llvm

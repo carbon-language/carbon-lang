@@ -16,7 +16,7 @@
 
 using namespace llvm;
 
-SystemZTargetAsmInfo::SystemZTargetAsmInfo(const SystemZTargetMachine &TM) {
+SystemZTargetAsmInfo::SystemZTargetAsmInfo() {
   AlignmentIsInBytes = true;
 
   PrivateGlobalPrefix = ".L";

@@ -24,8 +24,7 @@ extern "C" void LLVMInitializeSystemZTarget() {
 }
 
 const TargetAsmInfo *SystemZTargetMachine::createTargetAsmInfo() const {
-  // FIXME: Handle Solaris subtarget someday :)
-  return new SystemZTargetAsmInfo(*this);
+  return new SystemZTargetAsmInfo();
 }
 
 /// SystemZTargetMachine ctor - Create an ILP64 architecture model
