@@ -21,3 +21,4 @@ using namespace llvm;
 
 LLVMContextImpl::LLVMContextImpl(LLVMContext &C) :
     Context(C), TheTrueVal(0), TheFalseVal(0) { }
+
