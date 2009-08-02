@@ -41,7 +41,7 @@ ARMBaseTargetMachine::ARMBaseTargetMachine(const Target &T,
                                            const std::string &FS,
                                            bool isThumb)
   : LLVMTargetMachine(T),
-    Subtarget(M, FS, isThumb),
+    Subtarget(M.getTargetTriple(), FS, isThumb),
     FrameInfo(Subtarget),
     JITInfo(),
     InstrItins(Subtarget.getInstrItineraryData()) {

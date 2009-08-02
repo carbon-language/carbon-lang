@@ -24,7 +24,7 @@ MSP430TargetMachine::MSP430TargetMachine(const Target &T,
                                          const Module &M,
                                          const std::string &FS) :
   LLVMTargetMachine(T),
-  Subtarget(*this, M, FS),
+  Subtarget(M.getTargetTriple(), FS),
   // FIXME: Check TargetData string.
   DataLayout("e-p:16:8:8-i8:8:8-i16:8:8-i32:8:8"),
   InstrInfo(*this), TLInfo(*this),

@@ -36,7 +36,7 @@ AlphaTargetMachine::AlphaTargetMachine(const Target &T, const Module &M,
     DataLayout("e-f128:128:128"),
     FrameInfo(TargetFrameInfo::StackGrowsDown, 16, 0),
     JITInfo(*this),
-    Subtarget(M, FS),
+    Subtarget(M.getTargetTriple(), FS),
     TLInfo(*this) {
   setRelocationModel(Reloc::PIC_);
 }

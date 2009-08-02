@@ -15,7 +15,7 @@
 #include "X86Subtarget.h"
 #include "X86InstrInfo.h"
 #include "X86GenSubtarget.inc"
-#include "llvm/Module.h"
+#include "llvm/GlobalValue.h"
 #include "llvm/Support/CommandLine.h"
 #include "llvm/Support/Debug.h"
 #include "llvm/Target/TargetMachine.h"
@@ -383,7 +383,8 @@ static const char *GetCurrentX86CPU() {
   }
 }
 
-X86Subtarget::X86Subtarget(const Module &M, const std::string &FS, bool is64Bit)
+X86Subtarget::X86Subtarget(const std::string &TT, const std::string &FS, 
+                           bool is64Bit)
   : AsmFlavor(AsmWriterFlavor)
   , PICStyle(PICStyles::None)
   , X86SSELevel(NoMMXSSE)
@@ -434,7 +435,6 @@ X86Subtarget::X86Subtarget(const Module &M, const std::string &FS, bool is64Bit)
 
   // Set the boolean corresponding to the current target triple, or the default
   // if one cannot be determined, to true.
-  const std::string& TT = M.getTargetTriple();
   if (TT.length() > 5) {
     size_t Pos;
     if ((Pos = TT.find("-darwin")) != std::string::npos) {

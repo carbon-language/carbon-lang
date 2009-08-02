@@ -18,14 +18,13 @@
 #include <string>
 
 namespace llvm {
-  class Module;
-  
+
 class SparcSubtarget : public TargetSubtarget {
   bool IsV9;
   bool V8DeprecatedInsts;
   bool IsVIS;
 public:
-  SparcSubtarget(const Module &M, const std::string &FS);
+  SparcSubtarget(const std::string &TT, const std::string &FS);
 
   bool isV9() const { return IsV9; }
   bool isVIS() const { return IsVIS; }

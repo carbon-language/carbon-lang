@@ -19,7 +19,7 @@
 
 using namespace llvm;
 
-SystemZSubtarget::SystemZSubtarget(const TargetMachine &TM, const Module &M,
+SystemZSubtarget::SystemZSubtarget(const std::string &TT, 
                                    const std::string &FS):
   HasZ10Insts(false) {
   std::string CPU = "z9";

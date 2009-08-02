@@ -19,7 +19,6 @@
 #include <string>
 
 namespace llvm {
-class Module;
 
 class PIC16Subtarget : public TargetSubtarget {
 
@@ -28,9 +27,9 @@ class PIC16Subtarget : public TargetSubtarget {
 
 public:
   /// This constructor initializes the data members to match that
-  /// of the specified module.
+  /// of the specified triple.
   ///
-  PIC16Subtarget(const Module &M, const std::string &FS, bool Cooper);
+  PIC16Subtarget(const std::string &TT, const std::string &FS, bool Cooper);
   
   /// isCooper - Returns true if the target ISA is Cooper.
   bool isCooper() const { return IsCooper; }

@@ -13,15 +13,11 @@
 
 #include "SPUSubtarget.h"
 #include "SPU.h"
-#include "llvm/Module.h"
-#include "llvm/Target/TargetMachine.h"
 #include "SPUGenSubtarget.inc"
 
 using namespace llvm;
 
-SPUSubtarget::SPUSubtarget(const TargetMachine &tm, const Module &M,
-                           const std::string &FS) :
-  TM(tm),
+SPUSubtarget::SPUSubtarget(const std::string &TT, const std::string &FS) :
   StackAlignment(16),
   ProcDirective(SPU::DEFAULT_PROC),
   UseLargeMem(false)

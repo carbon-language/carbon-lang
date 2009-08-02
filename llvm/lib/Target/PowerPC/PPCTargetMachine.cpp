@@ -37,7 +37,7 @@ const TargetAsmInfo *PPCTargetMachine::createTargetAsmInfo() const {
 PPCTargetMachine::PPCTargetMachine(const Target&T, const Module &M, 
                                    const std::string &FS, bool is64Bit)
   : LLVMTargetMachine(T),
-    Subtarget(*this, M, FS, is64Bit),
+    Subtarget(M.getTargetTriple(), FS, is64Bit),
     DataLayout(Subtarget.getTargetDataString()), InstrInfo(*this),
     FrameInfo(*this, is64Bit), JITInfo(*this, is64Bit), TLInfo(*this),
     InstrItins(Subtarget.getInstrItineraryData()), MachOWriterInfo(*this) {

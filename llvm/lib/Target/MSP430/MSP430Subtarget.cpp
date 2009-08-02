@@ -14,12 +14,10 @@
 #include "MSP430Subtarget.h"
 #include "MSP430.h"
 #include "MSP430GenSubtarget.inc"
-#include "llvm/Target/TargetMachine.h"
 
 using namespace llvm;
 
-MSP430Subtarget::MSP430Subtarget(const TargetMachine &TM, const Module &M,
-                                 const std::string &FS) {
+MSP430Subtarget::MSP430Subtarget(const std::string &TT, const std::string &FS) {
   std::string CPU = "generic";
 
   // Parse features string.

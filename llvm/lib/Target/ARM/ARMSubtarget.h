@@ -19,7 +19,6 @@
 #include <string>
 
 namespace llvm {
-class Module;
 
 class ARMSubtarget : public TargetSubtarget {
 protected:
@@ -73,9 +72,9 @@ protected:
   } TargetABI;
 
   /// This constructor initializes the data members to match that
-  /// of the specified module.
+  /// of the specified triple.
   ///
-  ARMSubtarget(const Module &M, const std::string &FS, bool isThumb);
+  ARMSubtarget(const std::string &TT, const std::string &FS, bool isThumb);
 
   /// getMaxInlineSizeThreshold - Returns the maximum memset / memcpy size
   /// that still makes it profitable to inline the call.

@@ -20,7 +20,6 @@
 #include <string>
 
 namespace llvm {
-class Module;
 
 class XCoreSubtarget : public TargetSubtarget {
   bool IsXS1A;
@@ -28,10 +27,9 @@ class XCoreSubtarget : public TargetSubtarget {
 
 public:
   /// This constructor initializes the data members to match that
-  /// of the specified module.
+  /// of the specified triple.
   ///
-  XCoreSubtarget(const TargetMachine &TM, const Module &M, 
-                const std::string &FS);
+  XCoreSubtarget(const std::string &TT, const std::string &FS);
 
   bool isXS1A() const { return IsXS1A; }
   bool isXS1B() const { return IsXS1B; }

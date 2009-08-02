@@ -20,7 +20,6 @@
 #include <string>
 
 namespace llvm {
-class Module;
 
 class MipsSubtarget : public TargetSubtarget {
 
@@ -99,8 +98,8 @@ public:
   unsigned getTargetABI() const { return MipsABI; }
 
   /// This constructor initializes the data members to match that
-  /// of the specified module.
-  MipsSubtarget(const TargetMachine &TM, const Module &M, 
+  /// of the specified triple.
+  MipsSubtarget(const TargetMachine &TM, const std::string &TT, 
                 const std::string &FS, bool little);
   
   /// ParseSubtargetFeatures - Parses features string setting specified 

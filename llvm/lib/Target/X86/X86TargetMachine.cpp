@@ -62,7 +62,7 @@ X86_64TargetMachine::X86_64TargetMachine(const Target &T, const Module &M,
 X86TargetMachine::X86TargetMachine(const Target &T, const Module &M, 
                                    const std::string &FS, bool is64Bit)
   : LLVMTargetMachine(T), 
-    Subtarget(M, FS, is64Bit),
+    Subtarget(M.getTargetTriple(), FS, is64Bit),
     DataLayout(Subtarget.getDataLayout()),
     FrameInfo(TargetFrameInfo::StackGrowsDown,
               Subtarget.getStackAlignment(), Subtarget.is64Bit() ? -8 : -4),

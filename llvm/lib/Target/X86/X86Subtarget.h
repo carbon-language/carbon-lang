@@ -18,7 +18,6 @@
 #include <string>
 
 namespace llvm {
-class Module;
 class GlobalValue;
 class TargetMachine;
   
@@ -101,7 +100,7 @@ protected:
   unsigned MaxInlineSizeThreshold;
 
 private:
-  /// Is64Bit - True if the processor supports 64-bit instructions and module
+  /// Is64Bit - True if the processor supports 64-bit instructions and
   /// pointer size is 64 bit.
   bool Is64Bit;
 
@@ -111,9 +110,9 @@ public:
   } TargetType;
 
   /// This constructor initializes the data members to match that
-  /// of the specified module.
+  /// of the specified triple.
   ///
-  X86Subtarget(const Module &M, const std::string &FS, bool is64Bit);
+  X86Subtarget(const std::string &TT, const std::string &FS, bool is64Bit);
 
   /// getStackAlignment - Returns the minimum alignment known to hold of the
   /// stack frame on entry to the function and which must be maintained by every

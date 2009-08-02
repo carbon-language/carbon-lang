@@ -13,7 +13,7 @@
 
 #include "PPCSubtarget.h"
 #include "PPC.h"
-#include "llvm/Module.h"
+#include "llvm/GlobalValue.h"
 #include "llvm/Target/TargetMachine.h"
 #include "PPCGenSubtarget.inc"
 #include <cstdlib>
@@ -57,10 +57,9 @@ static const char *GetCurrentPowerPCCPU() {
 #endif
 
 
-PPCSubtarget::PPCSubtarget(const TargetMachine &tm, const Module &M,
-                           const std::string &FS, bool is64Bit)
-  : TM(tm)
-  , StackAlignment(16)
+PPCSubtarget::PPCSubtarget(const std::string &TT, const std::string &FS,
+                           bool is64Bit)
+  : StackAlignment(16)
   , DarwinDirective(PPC::DIR_NONE)
   , IsGigaProcessor(false)
   , Has64BitSupport(false)
@@ -95,7 +94,6 @@ PPCSubtarget::PPCSubtarget(const TargetMachine &tm, const Module &M,
   
   // Set the boolean corresponding to the current target triple, or the default
   // if one cannot be determined, to true.
-  const std::string &TT = M.getTargetTriple();
   if (TT.length() > 7) {
     // Determine which version of darwin this is.
     size_t DarwinPos = TT.find("-darwin");
@@ -138,7 +136,8 @@ void PPCSubtarget::SetJITMode() {
 /// hasLazyResolverStub - Return true if accesses to the specified global have
 /// to go through a dyld lazy resolution stub.  This means that an extra load
 /// is required to get the address of the global.
-bool PPCSubtarget::hasLazyResolverStub(const GlobalValue *GV) const {
+bool PPCSubtarget::hasLazyResolverStub(const GlobalValue *GV,
+                                       const TargetMachine &TM) const {
   // We never hae stubs if HasLazyResolverStubs=false or if in static mode.
   if (!HasLazyResolverStubs || TM.getRelocationModel() == Reloc::Static)
     return false;

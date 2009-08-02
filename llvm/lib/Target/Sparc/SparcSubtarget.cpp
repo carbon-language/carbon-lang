@@ -22,7 +22,7 @@ namespace {
                           cl::desc("Enable V9 instructions in the V8 target"));
 }
 
-SparcSubtarget::SparcSubtarget(const Module &M, const std::string &FS) {
+SparcSubtarget::SparcSubtarget(const std::string &TT, const std::string &FS) {
   // Set the default features.
   IsV9 = false;
   V8DeprecatedInsts = false;

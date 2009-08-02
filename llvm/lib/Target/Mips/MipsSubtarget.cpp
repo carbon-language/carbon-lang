@@ -14,7 +14,6 @@
 #include "MipsSubtarget.h"
 #include "Mips.h"
 #include "MipsGenSubtarget.inc"
-#include "llvm/Module.h"
 #include "llvm/Support/CommandLine.h"
 using namespace llvm;
 
@@ -25,7 +24,7 @@ static cl::opt<bool>
 AbsoluteCall("enable-mips-absolute-call", cl::Hidden,
              cl::desc("Enable absolute call within abicall"));
 
-MipsSubtarget::MipsSubtarget(const TargetMachine &TM, const Module &M, 
+MipsSubtarget::MipsSubtarget(const TargetMachine &TM, const std::string &TT,
                              const std::string &FS, bool little) : 
   MipsArchVersion(Mips1), MipsABI(O32), IsLittle(little), IsSingleFloat(false),
   IsFP64bit(false), IsGP64bit(false), HasVFPU(false), HasABICall(true), 
@@ -37,7 +36,6 @@ MipsSubtarget::MipsSubtarget(const TargetMachine &TM, const Module &M,
 
   // Parse features string.
   ParseSubtargetFeatures(FS, CPU);
-  const std::string& TT = M.getTargetTriple();
 
   // Is the target system Linux ?
   if (TT.find("linux") == std::string::npos)

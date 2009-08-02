@@ -25,7 +25,7 @@ using namespace llvm;
 PIC16TargetMachine::PIC16TargetMachine(const Target &T, const Module &M, 
                                        const std::string &FS, bool Cooper)
 : LLVMTargetMachine(T),
-  Subtarget(M, FS, Cooper),
+  Subtarget(M.getTargetTriple(), FS, Cooper),
   DataLayout("e-p:16:8:8-i8:8:8-i16:8:8-i32:8:8"), 
   InstrInfo(*this), TLInfo(*this),
   FrameInfo(TargetFrameInfo::StackGrowsUp, 8, 0) { }

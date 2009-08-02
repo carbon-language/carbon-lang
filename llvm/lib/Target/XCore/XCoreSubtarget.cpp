@@ -16,8 +16,7 @@
 #include "XCoreGenSubtarget.inc"
 using namespace llvm;
 
-XCoreSubtarget::XCoreSubtarget(const TargetMachine &TM, const Module &M, 
-                             const std::string &FS)
+XCoreSubtarget::XCoreSubtarget(const std::string &TT, const std::string &FS)
   : IsXS1A(false),
     IsXS1B(false)
 {

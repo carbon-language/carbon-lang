@@ -16,7 +16,7 @@
 #include "AlphaGenSubtarget.inc"
 using namespace llvm;
 
-AlphaSubtarget::AlphaSubtarget(const Module &M, const std::string &FS)
+AlphaSubtarget::AlphaSubtarget(const std::string &TT, const std::string &FS)
   : HasCT(false) {
   std::string CPU = "generic";
 

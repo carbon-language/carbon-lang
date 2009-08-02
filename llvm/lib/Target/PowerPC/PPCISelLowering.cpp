@@ -1201,7 +1201,7 @@ SDValue PPCTargetLowering::LowerGlobalAddress(SDValue Op,
 
   Lo = DAG.getNode(ISD::ADD, dl, PtrVT, Hi, Lo);
 
-  if (!TM.getSubtarget<PPCSubtarget>().hasLazyResolverStub(GV))
+  if (!TM.getSubtarget<PPCSubtarget>().hasLazyResolverStub(GV, TM))
     return Lo;
 
   // If the global is weak or external, we have to go through the lazy

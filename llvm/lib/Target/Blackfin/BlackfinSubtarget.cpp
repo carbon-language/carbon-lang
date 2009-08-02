@@ -16,8 +16,7 @@
 
 using namespace llvm;
 
-BlackfinSubtarget::BlackfinSubtarget(const TargetMachine &TM,
-                                     const Module &M,
+BlackfinSubtarget::BlackfinSubtarget(const std::string &TT,
                                      const std::string &FS)
   : sdram(false),
     icplb(false),

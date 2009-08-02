@@ -16,7 +16,7 @@
 
 using namespace llvm;
 
-PIC16Subtarget::PIC16Subtarget(const Module &M, const std::string &FS, 
+PIC16Subtarget::PIC16Subtarget(const std::string &TT, const std::string &FS, 
                                bool Cooper)
   :IsCooper(Cooper)
 {

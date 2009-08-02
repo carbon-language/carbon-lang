@@ -13,8 +13,6 @@
 
 #include "ARMSubtarget.h"
 #include "ARMGenSubtarget.inc"
-#include "llvm/Module.h"
-#include "llvm/Target/TargetMachine.h"
 #include "llvm/Target/TargetOptions.h"
 #include "llvm/Support/CommandLine.h"
 using namespace llvm;
@@ -23,7 +21,7 @@ static cl::opt<bool>
 ReserveR9("arm-reserve-r9", cl::Hidden,
           cl::desc("Reserve R9, making it unavailable as GPR"));
 
-ARMSubtarget::ARMSubtarget(const Module &M, const std::string &FS,
+ARMSubtarget::ARMSubtarget(const std::string &TT, const std::string &FS,
                            bool isThumb)
   : ARMArchVersion(V4T)
   , ARMFPUType(None)
@@ -45,7 +43,6 @@ ARMSubtarget::ARMSubtarget(const Module &M, const std::string &FS,
 
   // Set the boolean corresponding to the current target triple, or the default
   // if one cannot be determined, to true.
-  const std::string& TT = M.getTargetTriple();
   unsigned Len = TT.length();
   unsigned Idx = 0;
 

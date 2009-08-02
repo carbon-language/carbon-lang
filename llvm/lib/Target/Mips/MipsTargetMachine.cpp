@@ -42,7 +42,7 @@ MipsTargetMachine::
 MipsTargetMachine(const Target &T, const Module &M, const std::string &FS, 
                   bool isLittle=false):
   LLVMTargetMachine(T),
-  Subtarget(*this, M, FS, isLittle), 
+  Subtarget(*this, M.getTargetTriple(), FS, isLittle), 
   DataLayout(isLittle ? std::string("e-p:32:32:32-i8:8:32-i16:16:32") :
                         std::string("E-p:32:32:32-i8:8:32-i16:16:32")), 
   InstrInfo(*this), 

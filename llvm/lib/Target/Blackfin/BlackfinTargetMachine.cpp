@@ -32,7 +32,7 @@ BlackfinTargetMachine::BlackfinTargetMachine(const Target &T,
                                              const std::string &FS)
   : LLVMTargetMachine(T),
     DataLayout("e-p:32:32-i64:32-f64:32"),
-    Subtarget(*this, M, FS),
+    Subtarget(M.getTargetTriple(), FS),
     TLInfo(*this),
     InstrInfo(Subtarget),
     FrameInfo(TargetFrameInfo::StackGrowsDown, 4, 0) {
