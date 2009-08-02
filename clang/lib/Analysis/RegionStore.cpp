@@ -347,7 +347,7 @@ public:
   
   /// RemoveDeadBindings - Scans the RegionStore of 'state' for dead values.
   ///  It returns a new Store with these values removed.
-  Store RemoveDeadBindings(const GRState *state, Stmt* Loc, SymbolReaper& SymReaper,
+  void RemoveDeadBindings(GRState &state, Stmt* Loc, SymbolReaper& SymReaper,
                           llvm::SmallVectorImpl<const MemRegion*>& RegionRoots);
 
   //===------------------------------------------------------------------===//
@@ -1630,11 +1630,11 @@ static void UpdateLiveSymbols(SVal X, SymbolReaper& SymReaper) {
     SymReaper.markLive(*SI);
 }
 
-Store RegionStoreManager::RemoveDeadBindings(const GRState *state, Stmt* Loc, 
-                                             SymbolReaper& SymReaper,
+void RegionStoreManager::RemoveDeadBindings(GRState &state, Stmt* Loc, 
+                                            SymbolReaper& SymReaper,
                            llvm::SmallVectorImpl<const MemRegion*>& RegionRoots)
 {  
-  Store store = state->getStore();
+  Store store = state.getStore();
   RegionBindingsTy B = GetRegionBindings(store);
   
   // Lazily constructed backmap from MemRegions to SubRegions.
@@ -1643,7 +1643,7 @@ Store RegionStoreManager::RemoveDeadBindings(const GRState *state, Stmt* Loc,
   
   // The backmap from regions to subregions.
   llvm::OwningPtr<RegionStoreSubRegionMap>
-  SubRegions(getRegionStoreSubRegionMap(state));
+  SubRegions(getRegionStoreSubRegionMap(&state));
   
   // Do a pass over the regions in the store.  For VarRegions we check if
   // the variable is still live and if so add it to the list of live roots.
@@ -1657,7 +1657,7 @@ Store RegionStoreManager::RemoveDeadBindings(const GRState *state, Stmt* Loc,
   }
   
   // Scan the default bindings for "intermediate" roots.
-  RegionDefaultValue::MapTy DVM = state->get<RegionDefaultValue>();
+  RegionDefaultValue::MapTy DVM = state.get<RegionDefaultValue>();
   for (RegionDefaultValue::MapTy::iterator I = DVM.begin(), E = DVM.end();
        I != E; ++I) {
     const MemRegion *R = I.getKey();
@@ -1765,7 +1765,8 @@ Store RegionStoreManager::RemoveDeadBindings(const GRState *state, Stmt* Loc,
   
   // FIXME: remove default bindings as well.
 
-  return store;
+  // Write the store back.
+  state.setStore(store);
 }
 
 //===----------------------------------------------------------------------===//

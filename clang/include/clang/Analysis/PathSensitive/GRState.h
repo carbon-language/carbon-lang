@@ -122,6 +122,8 @@ public:
   ///  is a mapping from locations to values.
   Store getStore() const { return St; }
   
+  void setStore(Store s) { St = s; }
+  
   /// getGDM - Return the generic data map associated with this state.
   GenericDataMap getGDM() const { return GDM; }
   

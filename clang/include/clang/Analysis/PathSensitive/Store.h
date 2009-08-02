@@ -156,8 +156,8 @@ public:
   ///  method returns NULL.
   virtual const MemRegion* getSelfRegion(Store store) = 0;
 
-  virtual Store RemoveDeadBindings(const GRState *state,
-                                   Stmt* Loc, SymbolReaper& SymReaper,
+  virtual void RemoveDeadBindings(GRState &state, Stmt* Loc,
+                                  SymbolReaper& SymReaper,
                       llvm::SmallVectorImpl<const MemRegion*>& RegionRoots) = 0;
 
   virtual const GRState *BindDecl(const GRState *state, const VarDecl *vd, 

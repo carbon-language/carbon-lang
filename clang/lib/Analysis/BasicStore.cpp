@@ -93,10 +93,9 @@ public:
   const MemRegion* getSelfRegion(Store) { return SelfRegion; }
     
   /// RemoveDeadBindings - Scans a BasicStore of 'state' for dead values.
-  ///  It returns a new Store with these values removed.
-  Store RemoveDeadBindings(const GRState *state, Stmt* Loc,
-                     SymbolReaper& SymReaper,
-                     llvm::SmallVectorImpl<const MemRegion*>& RegionRoots);
+  ///  It updatees the GRState object in place with the values removed.
+  void RemoveDeadBindings(GRState &state, Stmt* Loc, SymbolReaper& SymReaper,
+                          llvm::SmallVectorImpl<const MemRegion*>& RegionRoots);
 
   void iterBindings(Store store, BindingsHandler& f);
 
@@ -379,13 +378,12 @@ Store BasicStoreManager::Remove(Store store, Loc loc) {
   }
 }
 
-Store
-BasicStoreManager::RemoveDeadBindings(const GRState *state, Stmt* Loc,
+void
+BasicStoreManager::RemoveDeadBindings(GRState &state, Stmt* Loc,
                                       SymbolReaper& SymReaper,
-                          llvm::SmallVectorImpl<const MemRegion*>& RegionRoots)
-{
-  
-  Store store = state->getStore();
+                           llvm::SmallVectorImpl<const MemRegion*>& RegionRoots)
+{  
+  Store store = state.getStore();
   BindingsTy B = GetBindings(store);
   typedef SVal::symbol_iterator symbol_iterator;
   
@@ -426,7 +424,7 @@ BasicStoreManager::RemoveDeadBindings(const GRState *state, Stmt* Loc,
           break;
         
         Marked.insert(MR);        
-        SVal X = Retrieve(state, loc::MemRegionVal(MR)).getSVal();
+        SVal X = Retrieve(&state, loc::MemRegionVal(MR)).getSVal();
     
         // FIXME: We need to handle symbols nested in region definitions.
         for (symbol_iterator SI=X.symbol_begin(),SE=X.symbol_end();SI!=SE;++SI)
@@ -459,7 +457,8 @@ BasicStoreManager::RemoveDeadBindings(const GRState *state, Stmt* Loc,
     }
   }
 
-  return store;
+  // Write the store back.
+  state.setStore(store);
 }
 
 Store BasicStoreManager::scanForIvars(Stmt *B, const Decl* SelfDecl, Store St) {
