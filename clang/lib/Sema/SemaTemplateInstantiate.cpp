@@ -32,7 +32,7 @@ Sema::getTemplateInstantiationArgs(NamedDecl *D) {
   // Template arguments for a class template specialization.
   if (ClassTemplateSpecializationDecl *Spec 
         = dyn_cast<ClassTemplateSpecializationDecl>(D))
-    return Spec->getTemplateArgs();
+    return Spec->getTemplateInstantiationArgs();
 
   // Template arguments for a function template specialization.
   if (FunctionDecl *Function = dyn_cast<FunctionDecl>(D))
@@ -50,7 +50,7 @@ Sema::getTemplateInstantiationArgs(NamedDecl *D) {
 
   ClassTemplateSpecializationDecl *EnclosingTemplate 
     = cast<ClassTemplateSpecializationDecl>(EnclosingTemplateCtx);
-  return EnclosingTemplate->getTemplateArgs();
+  return EnclosingTemplate->getTemplateInstantiationArgs();
 }
 
 Sema::InstantiatingTemplate::
@@ -1011,6 +1011,7 @@ Sema::InstantiateClassTemplateSpecialization(
     //      instantiation is generated from that specialization.
     Pattern = Matched[0].first;
     TemplateArgs = Matched[0].second;
+    ClassTemplateSpec->setInstantiationOf(Matched[0].first, Matched[0].second);
   } else if (Matched.size() > 1) {
     //   -- If more than one matching specialization is found, the
     //      partial order rules (14.5.4.2) are used to determine

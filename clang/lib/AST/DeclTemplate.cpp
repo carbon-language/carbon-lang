@@ -415,6 +415,22 @@ ClassTemplateSpecializationDecl::Create(ASTContext &Context,
   return Result;
 }
 
+void ClassTemplateSpecializationDecl::Destroy(ASTContext &C) {
+  if (SpecializedPartialSpecialization *PartialSpec 
+        = SpecializedTemplate.dyn_cast<SpecializedPartialSpecialization*>())
+    C.Deallocate(PartialSpec);
+  
+  CXXRecordDecl::Destroy(C);
+}
+
+ClassTemplateDecl *
+ClassTemplateSpecializationDecl::getSpecializedTemplate() const { 
+  if (SpecializedPartialSpecialization *PartialSpec 
+      = SpecializedTemplate.dyn_cast<SpecializedPartialSpecialization*>())
+    return PartialSpec->PartialSpecialization->getSpecializedTemplate();
+  return SpecializedTemplate.get<ClassTemplateDecl*>();
+}
+
 //===----------------------------------------------------------------------===//
 // ClassTemplatePartialSpecializationDecl Implementation
 //===----------------------------------------------------------------------===//

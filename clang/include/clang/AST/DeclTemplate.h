@@ -869,8 +869,23 @@ enum TemplateSpecializationKind {
 /// \endcode
 class ClassTemplateSpecializationDecl 
   : public CXXRecordDecl, public llvm::FoldingSetNode {
+    
+  /// \brief Structure that stores information about a class template 
+  /// specialization that was instantiated from a class template partial
+  /// specialization.
+  struct SpecializedPartialSpecialization {
+    /// \brief The class template partial specialization from which this
+    /// class template specialization was instantiated.
+    ClassTemplatePartialSpecializationDecl *PartialSpecialization;
+    
+    /// \brief The template argument list deduced for the class template
+    /// partial specialization itself.
+    TemplateArgumentList *TemplateArgs;
+  };
+    
   /// \brief The template that this specialization specializes
-  ClassTemplateDecl *SpecializedTemplate;
+  llvm::PointerUnion<ClassTemplateDecl *, SpecializedPartialSpecialization *>
+    SpecializedTemplate;
 
   /// \brief The template arguments used to describe this specialization.
   TemplateArgumentList TemplateArgs;
@@ -893,11 +908,13 @@ public:
          TemplateArgumentListBuilder &Builder,
          ClassTemplateSpecializationDecl *PrevDecl);
 
-  /// \brief Retrieve the template that this specialization specializes.
-  ClassTemplateDecl *getSpecializedTemplate() const { 
-    return SpecializedTemplate; 
-  }
+  virtual void Destroy(ASTContext& C);
 
+  /// \brief Retrieve the template that this specialization specializes.
+  ClassTemplateDecl *getSpecializedTemplate() const;
+
+  /// \brief Retrieve the template arguments of the class template 
+  /// specialization.
   const TemplateArgumentList &getTemplateArgs() const { 
     return TemplateArgs;
   }
@@ -912,6 +929,56 @@ public:
     SpecializationKind = TSK;
   }
 
+  /// \brief If this class template specialization is an instantiation of
+  /// a template (rather than an explicit specialization), return the
+  /// class template or class template partial specialization from which it
+  /// was instantiated.
+  llvm::PointerUnion<ClassTemplateDecl *, 
+                     ClassTemplatePartialSpecializationDecl *>
+  getInstantiatedFrom() const {
+    if (getSpecializationKind() != TSK_ImplicitInstantiation &&
+        getSpecializationKind() != TSK_ExplicitInstantiation)
+      return (ClassTemplateDecl*)0;
+    
+    if (SpecializedPartialSpecialization *PartialSpec 
+          = SpecializedTemplate.dyn_cast<SpecializedPartialSpecialization*>())
+      return PartialSpec->PartialSpecialization;
+    
+    return const_cast<ClassTemplateDecl*>(
+                             SpecializedTemplate.get<ClassTemplateDecl*>());
+  }
+    
+  /// \brief Retrieve the set of template arguments that should be used
+  /// to instantiate members of the class template or class template partial
+  /// specialization from which this class template specialization was
+  /// instantiated.
+  ///
+  /// \returns For a class template specialization instantiated from the primary
+  /// template, this function will return the same template arguments as
+  /// getTemplateArgs(). For a class template specialization instantiated from
+  /// a class template partial specialization, this function will return the
+  /// deduced template arguments for the class template partial specialization
+  /// itself.
+  const TemplateArgumentList &getTemplateInstantiationArgs() const {
+    if (SpecializedPartialSpecialization *PartialSpec 
+        = SpecializedTemplate.dyn_cast<SpecializedPartialSpecialization*>())
+      return *PartialSpec->TemplateArgs;
+    
+    return getTemplateArgs();
+  }
+    
+  /// \brief Note that this class template specialization is actually an
+  /// instantiation of the given class template partial specialization whose
+  /// template arguments have been deduced.
+  void setInstantiationOf(ClassTemplatePartialSpecializationDecl *PartialSpec,
+                          TemplateArgumentList *TemplateArgs) {
+    SpecializedPartialSpecialization *PS 
+      = new (getASTContext()) SpecializedPartialSpecialization();
+    PS->PartialSpecialization = PartialSpec;
+    PS->TemplateArgs = TemplateArgs;
+    SpecializedTemplate = PS;
+  }
+    
   /// \brief Sets the type of this specialization as it was written by
   /// the user. This will be a class template specialization type.
   void setTypeAsWritten(QualType T) {
