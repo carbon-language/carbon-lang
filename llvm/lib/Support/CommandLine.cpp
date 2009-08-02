@@ -187,17 +187,17 @@ static inline bool ProvideOption(Option *Handler, const char *ArgName,
       if (i+1 < argc) {     // Steal the next argument, like for '-o filename'
         Value = argv[++i];
       } else {
-        return Handler->error(" requires a value!");
+        return Handler->error("requires a value!");
       }
     }
     break;
   case ValueDisallowed:
     if (NumAdditionalVals > 0)
-      return Handler->error(": multi-valued option specified"
+      return Handler->error("multi-valued option specified"
       " with ValueDisallowed modifier!");
 
     if (Value)
-      return Handler->error(" does not allow a value! '" +
+      return Handler->error("does not allow a value! '" +
                             std::string(Value) + "' specified.");
     break;
   case ValueOptional:
@@ -229,7 +229,7 @@ static inline bool ProvideOption(Option *Handler, const char *ArgName,
       if (i+1 < argc) {
         Value = argv[++i];
       } else {
-        return Handler->error(": not enough values!");
+        return Handler->error("not enough values!");
       }
       if (Handler->addOccurrence(i, ArgName, Value, MultiArg))
         return true;
@@ -470,7 +470,7 @@ void cl::ParseCommandLineOptions(int argc, char **argv,
         // unless there is only one positional argument...
         if (PositionalOpts.size() > 2)
           ErrorParsing |=
-            Opt->error(" error - this positional option will never be matched, "
+            Opt->error("error - this positional option will never be matched, "
                        "because it does not Require a value, and a "
                        "cl::ConsumeAfter option is active!");
       } else if (UnboundedFound && !Opt->ArgStr[0]) {
@@ -478,7 +478,7 @@ void cl::ParseCommandLineOptions(int argc, char **argv,
         // not specified after an option that eats all extra arguments, or this
         // one will never get any!
         //
-        ErrorParsing |= Opt->error(" error - option can never match, because "
+        ErrorParsing |= Opt->error("error - option can never match, because "
                                    "another positional argument will match an "
                                    "unbounded number of values, and this option"
                                    " does not require a value!");
@@ -737,7 +737,7 @@ void cl::ParseCommandLineOptions(int argc, char **argv,
     case Required:
     case OneOrMore:
       if (I->second->getNumOccurrences() == 0) {
-        I->second->error(" must be specified at least once!");
+        I->second->error("must be specified at least once!");
         ErrorParsing = true;
       }
       // Fall through
@@ -788,16 +788,16 @@ bool Option::addOccurrence(unsigned pos, const char *ArgName,
   switch (getNumOccurrencesFlag()) {
   case Optional:
     if (NumOccurrences > 1)
-      return error(": may only occur zero or one times!", ArgName);
+      return error("may only occur zero or one times!", ArgName);
     break;
   case Required:
     if (NumOccurrences > 1)
-      return error(": must occur exactly one time!", ArgName);
+      return error("must occur exactly one time!", ArgName);
     // Fall through
   case OneOrMore:
   case ZeroOrMore:
   case ConsumeAfter: break;
-  default: return error(": bad num occurrences flag value!");
+  default: return error("bad num occurrences flag value!");
   }
 
   return handleOccurrence(pos, ArgName, Value);
@@ -873,7 +873,7 @@ bool parser<bool>::parse(Option &O, const char *ArgName,
   } else if (Arg == "false" || Arg == "FALSE" || Arg == "False" || Arg == "0") {
     Value = false;
   } else {
-    return O.error(": '" + Arg +
+    return O.error("'" + Arg +
                    "' is invalid value for boolean argument! Try 0 or 1");
   }
   return false;
@@ -890,7 +890,7 @@ bool parser<boolOrDefault>::parse(Option &O, const char *ArgName,
              || Arg == "False" || Arg == "0") {
     Value = BOU_FALSE;
   } else {
-    return O.error(": '" + Arg +
+    return O.error("'" + Arg +
                    "' is invalid value for boolean argument! Try 0 or 1");
   }
   return false;
@@ -903,7 +903,7 @@ bool parser<int>::parse(Option &O, const char *ArgName,
   char *End;
   Value = (int)strtol(Arg.c_str(), &End, 0);
   if (*End != 0)
-    return O.error(": '" + Arg + "' value invalid for integer argument!");
+    return O.error("'" + Arg + "' value invalid for integer argument!");
   return false;
 }
 
@@ -918,7 +918,7 @@ bool parser<unsigned>::parse(Option &O, const char *ArgName,
   if (((V == ULONG_MAX) && (errno == ERANGE))
       || (*End != 0)
       || (Value != V))
-    return O.error(": '" + Arg + "' value invalid for uint argument!");
+    return O.error("'" + Arg + "' value invalid for uint argument!");
   return false;
 }
 
@@ -929,7 +929,7 @@ static bool parseDouble(Option &O, const std::string &Arg, double &Value) {
   char *End;
   Value = strtod(ArgStart, &End);
   if (*End != 0)
-    return O.error(": '" +Arg+ "' value invalid for floating point argument!");
+    return O.error("'" + Arg + "' value invalid for floating point argument!");
   return false;
 }
 

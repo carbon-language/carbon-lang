@@ -473,7 +473,7 @@ public:
         return false;
       }
 
-    return O.error(": Cannot find option named '" + ArgVal + "'!");
+    return O.error("Cannot find option named '" + ArgVal + "'!");
   }
 
   /// addLiteralOption - Add an entry to the mapping table.
@@ -770,7 +770,7 @@ public:
 
   bool setLocation(Option &O, DataType &L) {
     if (Location)
-      return O.error(": cl::location(x) specified more than once!");
+      return O.error("cl::location(x) specified more than once!");
     Location = &L;
     return false;
   }
@@ -964,7 +964,7 @@ public:
 
   bool setLocation(Option &O, StorageClass &L) {
     if (Location)
-      return O.error(": cl::location(x) specified more than once!");
+      return O.error("cl::location(x) specified more than once!");
     Location = &L;
     return false;
   }
@@ -1139,7 +1139,7 @@ public:
 
   bool setLocation(Option &O, unsigned &L) {
     if (Location)
-      return O.error(": cl::location(x) specified more than once!");
+      return O.error("cl::location(x) specified more than once!");
     Location = &L;
     return false;
   }
@@ -1317,15 +1317,15 @@ class alias : public Option {
 
   void done() {
     if (!hasArgStr())
-      error(": cl::alias must have argument name specified!");
+      error("cl::alias must have argument name specified!");
     if (AliasFor == 0)
-      error(": cl::alias must have an cl::aliasopt(option) specified!");
+      error("cl::alias must have an cl::aliasopt(option) specified!");
       addArgument();
   }
 public:
   void setAliasFor(Option &O) {
     if (AliasFor)
-      error(": cl::alias must only have one cl::aliasopt(...) specified!");
+      error("cl::alias must only have one cl::aliasopt(...) specified!");
     AliasFor = &O;
   }
 

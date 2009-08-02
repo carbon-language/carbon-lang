@@ -1883,7 +1883,7 @@ our example, we implement <tt>parse</tt> as:</p>
 
     default:
       <i>// Print an error message if unrecognized character!</i>
-      <b>return</b> O.error(": '" + Arg + "' value invalid for file size argument!");
+      <b>return</b> O.error("'" + Arg + "' value invalid for file size argument!");
     }
   }
 }
