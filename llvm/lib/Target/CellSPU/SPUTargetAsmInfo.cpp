@@ -12,16 +12,17 @@
 //===----------------------------------------------------------------------===//
 
 #include "SPUTargetAsmInfo.h"
-#include "SPUTargetMachine.h"
-#include "llvm/Function.h"
-#include "llvm/Support/Compiler.h"
-#include "llvm/Support/Dwarf.h"
-
 using namespace llvm;
-using namespace llvm::dwarf;
 
-SPULinuxTargetAsmInfo::SPULinuxTargetAsmInfo(const SPUTargetMachine &TM) :
-    SPUTargetAsmInfo<TargetAsmInfo>(TM) {
+SPULinuxTargetAsmInfo::SPULinuxTargetAsmInfo() {
+  ZeroDirective = "\t.space\t";
+  SetDirective = "\t.set";
+  Data64bitsDirective = "\t.quad\t";
+  AlignmentIsInBytes = false;
+  LCOMMDirective = "\t.lcomm\t";
+  InlineAsmStart = "# InlineAsm Start";
+  InlineAsmEnd = "# InlineAsm End";
+      
   PCSymbol = ".";
   CommentString = "#";
   GlobalPrefix = "";
@@ -50,6 +51,3 @@ SPULinuxTargetAsmInfo::SPULinuxTargetAsmInfo(const SPUTargetMachine &TM) :
   SupportsExceptionHandling = false;
 }
 
-
-// Instantiate default implementation.
-TEMPLATE_INSTANTIATION(class SPUTargetAsmInfo<TargetAsmInfo>);

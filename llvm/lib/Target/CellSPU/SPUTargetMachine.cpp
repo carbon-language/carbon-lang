@@ -34,10 +34,8 @@ SPUFrameInfo::getCalleeSaveSpillSlots(unsigned &NumEntries) const {
   return &LR[0];
 }
 
-const TargetAsmInfo *
-SPUTargetMachine::createTargetAsmInfo() const
-{
-  return new SPULinuxTargetAsmInfo(*this);
+const TargetAsmInfo *SPUTargetMachine::createTargetAsmInfo() const {
+  return new SPULinuxTargetAsmInfo();
 }
 
 SPUTargetMachine::SPUTargetMachine(const Target &T, const Module &M, 
@@ -48,8 +46,7 @@ SPUTargetMachine::SPUTargetMachine(const Target &T, const Module &M,
     InstrInfo(*this),
     FrameInfo(*this),
     TLInfo(*this),
-    InstrItins(Subtarget.getInstrItineraryData())
-{
+    InstrItins(Subtarget.getInstrItineraryData()) {
   // For the time being, use static relocations, since there's really no
   // support for PIC yet.
   setRelocationModel(Reloc::Static);
@@ -59,10 +56,8 @@ SPUTargetMachine::SPUTargetMachine(const Target &T, const Module &M,
 // Pass Pipeline Configuration
 //===----------------------------------------------------------------------===//
 
-bool
-SPUTargetMachine::addInstSelector(PassManagerBase &PM,
-                                  CodeGenOpt::Level OptLevel)
-{
+bool SPUTargetMachine::addInstSelector(PassManagerBase &PM,
+                                       CodeGenOpt::Level OptLevel) {
   // Install an instruction selector.
   PM.add(createSPUISelDag(*this));
   return false;
