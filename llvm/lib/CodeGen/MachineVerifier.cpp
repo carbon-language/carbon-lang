@@ -365,7 +365,8 @@ MachineVerifier::visitMachineOperand(const MachineOperand *MO, unsigned MONum)
           addRegWithSubRegs(regsKilled, Reg);
       }
       // Explicit use of a dead register.
-      if (!MO->isImplicit() && !regsLive.count(Reg)) {
+      // A register use marked <undef> is OK.
+      if (!MO->isImplicit() && !MO->isUndef() && !regsLive.count(Reg)) {
         if (TargetRegisterInfo::isPhysicalRegister(Reg)) {
           // Reserved registers may be used even when 'dead'.
           if (!isReserved(Reg))
