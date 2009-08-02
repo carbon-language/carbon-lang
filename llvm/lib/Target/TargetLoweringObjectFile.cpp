@@ -34,6 +34,8 @@ TargetLoweringObjectFile::TargetLoweringObjectFile() : Ctx(0) {
   DataSection = 0;
   BSSSection = 0;
   ReadOnlySection = 0;
+  StaticCtorSection = 0;
+  StaticDtorSection = 0;
 }
 
 TargetLoweringObjectFile::~TargetLoweringObjectFile() {
@@ -295,6 +297,11 @@ void TargetLoweringObjectFileELF::Initialize(MCContext &Ctx,
                                 SectionKind::getMergeableConst8());
   MergeableConst16Section = getOrCreateSection(".rodata.cst16", false,
                                SectionKind::getMergeableConst16());
+
+  StaticCtorSection =
+    getOrCreateSection(".ctors", false, SectionKind::getDataRel());
+  StaticDtorSection =
+    getOrCreateSection(".dtors", false, SectionKind::getDataRel());
 }
 
 
@@ -517,6 +524,19 @@ void TargetLoweringObjectFileMachO::Initialize(MCContext &Ctx,
   DataCoalSection = getOrCreateSection("\t__DATA,__datacoal_nt,coalesced",
                                        false,
                                        SectionKind::getDataRel());
+
+  if (TM.getRelocationModel() == Reloc::Static) {
+    StaticCtorSection =
+      getOrCreateSection(".constructor", true, SectionKind::getDataRel());
+    StaticDtorSection =
+      getOrCreateSection(".destructor", true, SectionKind::getDataRel());
+  } else {
+    StaticCtorSection =
+      getOrCreateSection(".mod_init_func", true, SectionKind::getDataRel());
+    StaticDtorSection =
+      getOrCreateSection(".mod_term_func", true, SectionKind::getDataRel());
+  }
+  
 }
 
 const MCSection *TargetLoweringObjectFileMachO::
@@ -624,6 +644,10 @@ void TargetLoweringObjectFileCOFF::Initialize(MCContext &Ctx,
                                    SectionKind::getText());
   DataSection = getOrCreateSection("\t.data", true,
                                    SectionKind::getDataRel());
+  StaticCtorSection =
+    getOrCreateSection(".ctors", false, SectionKind::getDataRel());
+  StaticDtorSection =
+    getOrCreateSection(".dtors", false, SectionKind::getDataRel());
 }
 
 void TargetLoweringObjectFileCOFF::

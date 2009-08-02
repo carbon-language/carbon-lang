@@ -70,9 +70,6 @@ TargetAsmInfo::TargetAsmInfo(const TargetMachine &tm) : TM(tm) {
   DataSectionStartSuffix = "";
   SectionEndDirectiveSuffix = 0;
   JumpTableDirective = 0;
-  // FIXME: Flags are ELFish - replace with normal section stuff.
-  StaticCtorsSection = "\t.section .ctors,\"aw\",@progbits";
-  StaticDtorsSection = "\t.section .dtors,\"aw\",@progbits";
   GlobalDirective = "\t.globl\t";
   SetDirective = 0;
   LCOMMDirective = 0;

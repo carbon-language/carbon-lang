@@ -20,6 +20,7 @@
 #include "ARMRegisterInfo.h"
 #include "ARMSubtarget.h"
 #include "ARMTargetMachine.h"
+#include "ARMTargetObjectFile.h"
 #include "llvm/CallingConv.h"
 #include "llvm/Constants.h"
 #include "llvm/Function.h"
@@ -34,7 +35,6 @@
 #include "llvm/CodeGen/MachineRegisterInfo.h"
 #include "llvm/CodeGen/PseudoSourceValue.h"
 #include "llvm/CodeGen/SelectionDAG.h"
-#include "llvm/Target/TargetLoweringObjectFile.h"
 #include "llvm/Target/TargetOptions.h"
 #include "llvm/ADT/VectorExtras.h"
 #include "llvm/Support/ErrorHandling.h"
@@ -107,7 +107,7 @@ void ARMTargetLowering::addQRTypeForNEON(MVT VT) {
 static TargetLoweringObjectFile *createTLOF(TargetMachine &TM) {
   if (TM.getSubtarget<ARMSubtarget>().isTargetDarwin())
     return new TargetLoweringObjectFileMachO();
-  return new TargetLoweringObjectFileELF(true);
+  return new ARMElfTargetObjectFile();
 }
 
 ARMTargetLowering::ARMTargetLowering(TargetMachine &TM)

@@ -24,8 +24,6 @@ COFFTargetAsmInfo::COFFTargetAsmInfo(const TargetMachine &TM)
   COMMDirectiveTakesAlignment = false;
   HasDotTypeDotSizeDirective = false;
   HasSingleParameterDotFile = false;
-  StaticCtorsSection = "\t.section .ctors,\"aw\"";
-  StaticDtorsSection = "\t.section .dtors,\"aw\"";
   HiddenDirective = NULL;
   PrivateGlobalPrefix = "L";  // Prefix for private global symbols
   WeakRefDirective = "\t.weak\t";

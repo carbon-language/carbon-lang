@@ -50,6 +50,14 @@ protected:
   /// section for constants.
   const MCSection *ReadOnlySection;
   
+  /// StaticCtorSection - This section contains the static constructor pointer
+  /// list.
+  const MCSection *StaticCtorSection;
+
+  /// StaticDtorSection - This section contains the static destructor pointer
+  /// list.
+  const MCSection *StaticDtorSection;
+  
 public:
   // FIXME: NONPUB.
   const MCSection *getOrCreateSection(const char *Name,
@@ -69,7 +77,10 @@ public:
   
   const MCSection *getTextSection() const { return TextSection; }
   const MCSection *getDataSection() const { return DataSection; }
-  
+
+  const MCSection *getStaticCtorSection() const { return StaticCtorSection; }
+  const MCSection *getStaticDtorSection() const { return StaticDtorSection; }
+
   /// shouldEmitUsedDirectiveFor - This hook allows targets to selectively
   /// decide not to emit the UsedDirective for some symbols in llvm.used.
   /// FIXME: REMOVE this (rdar://7071300)

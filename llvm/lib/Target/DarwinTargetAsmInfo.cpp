@@ -48,15 +48,6 @@ DarwinTargetAsmInfo::DarwinTargetAsmInfo(const TargetMachine &TM)
   WeakRefDirective = "\t.weak_reference ";
   HiddenDirective = "\t.private_extern ";
     
-  // Sections:
-  if (TM.getRelocationModel() == Reloc::Static) {
-    StaticCtorsSection = ".constructor";
-    StaticDtorsSection = ".destructor";
-  } else {
-    StaticCtorsSection = ".mod_init_func";
-    StaticDtorsSection = ".mod_term_func";
-  }
-    
   // _foo.eh symbols are currently always exported so that the linker knows
   // about them.  This may not strictly be necessary on 10.6 and later, but it
   // doesn't hurt anything.

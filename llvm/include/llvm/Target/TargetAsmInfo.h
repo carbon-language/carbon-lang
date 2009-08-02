@@ -210,16 +210,6 @@ namespace llvm {
     /// table.
     const char *JumpTableDirective;
 
-    /// StaticCtorsSection - This is the directive that is emitted to switch to
-    /// a section to emit the static constructor list.
-    /// Defaults to "\t.section .ctors,\"aw\",@progbits".
-    const char *StaticCtorsSection;
-
-    /// StaticDtorsSection - This is the directive that is emitted to switch to
-    /// a section to emit the static destructor list.
-    /// Defaults to "\t.section .dtors,\"aw\",@progbits".
-    const char *StaticDtorsSection;
-
     //===--- Global Variable Emission Directives --------------------------===//
     
     /// GlobalDirective - This is the directive used to declare a global entity.
@@ -532,12 +522,6 @@ namespace llvm {
     }
     const char *getSectionEndDirectiveSuffix() const {
       return SectionEndDirectiveSuffix;
-    }
-    const char *getStaticCtorsSection() const {
-      return StaticCtorsSection;
-    }
-    const char *getStaticDtorsSection() const {
-      return StaticDtorsSection;
     }
     const char *getGlobalDirective() const {
       return GlobalDirective;

@@ -78,13 +78,6 @@ ARMELFTargetAsmInfo::ARMELFTargetAsmInfo(const ARMBaseTargetMachine &TM):
   DwarfRangesSection =  "\t.section\t.debug_ranges,\"\",%progbits";
   DwarfMacroInfoSection = "\t.section\t.debug_macinfo,\"\",%progbits";
 
-  if (Subtarget->isAAPCS_ABI()) {
-    StaticCtorsSection = "\t.section .init_array,\"aw\",%init_array";
-    StaticDtorsSection = "\t.section .fini_array,\"aw\",%fini_array";
-  } else {
-    StaticCtorsSection = "\t.section .ctors,\"aw\",%progbits";
-    StaticDtorsSection = "\t.section .dtors,\"aw\",%progbits";
-  }
   SupportsDebugInformation = true;
 }
 
