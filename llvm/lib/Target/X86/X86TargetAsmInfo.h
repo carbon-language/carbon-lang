@@ -37,7 +37,6 @@ namespace llvm {
 
   struct X86DarwinTargetAsmInfo : public X86TargetAsmInfo<DarwinTargetAsmInfo> {
     explicit X86DarwinTargetAsmInfo(const X86TargetMachine &TM);
-    virtual const char *getEHGlobalPrefix() const;
   };
 
   struct X86ELFTargetAsmInfo : public X86TargetAsmInfo<ELFTargetAsmInfo> {

@@ -86,14 +86,6 @@ X86DarwinTargetAsmInfo::X86DarwinTargetAsmInfo(const X86TargetMachine &TM):
   ".section __TEXT,__eh_frame,coalesced,no_toc+strip_static_syms+live_support";
 }
 
-const char *
-X86DarwinTargetAsmInfo::getEHGlobalPrefix() const {
-  const X86Subtarget* Subtarget = &TM.getSubtarget<X86Subtarget>();
-  if (Subtarget->getDarwinVers() > 9)
-    return PrivateGlobalPrefix;
-  return "";
-}
-
 X86ELFTargetAsmInfo::X86ELFTargetAsmInfo(const X86TargetMachine &TM) :
   X86TargetAsmInfo<ELFTargetAsmInfo>(TM) {
 

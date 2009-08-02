@@ -32,13 +32,6 @@ PPCDarwinTargetAsmInfo::PPCDarwinTargetAsmInfo(const PPCTargetMachine &TM) :
   SupportsWeakOmittedEHFrame = false;
 }
 
-const char *PPCDarwinTargetAsmInfo::getEHGlobalPrefix() const {
-  const PPCSubtarget* Subtarget = &TM.getSubtarget<PPCSubtarget>();
-  if (Subtarget->getDarwinVers() > 9)
-    return PrivateGlobalPrefix;
-  return "";
-}
-
 PPCLinuxTargetAsmInfo::PPCLinuxTargetAsmInfo(const PPCTargetMachine &TM) :
   PPCTargetAsmInfo<ELFTargetAsmInfo>(TM) {
   CommentString = "#";

@@ -46,7 +46,6 @@ namespace llvm {
 
   struct PPCDarwinTargetAsmInfo : public PPCTargetAsmInfo<DarwinTargetAsmInfo> {
     explicit PPCDarwinTargetAsmInfo(const PPCTargetMachine &TM);
-    virtual const char *getEHGlobalPrefix() const;
   };
 
   struct PPCLinuxTargetAsmInfo : public PPCTargetAsmInfo<ELFTargetAsmInfo> {
