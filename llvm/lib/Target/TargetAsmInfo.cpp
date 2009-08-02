@@ -108,7 +108,6 @@ TargetAsmInfo::TargetAsmInfo(const TargetMachine &tm) : TM(tm) {
   DwarfRangesSection = ".debug_ranges";
   DwarfMacroInfoSection = ".debug_macinfo";
   DwarfEHFrameSection = ".eh_frame";
-  DwarfExceptionSection = ".gcc_except_table";
   AsmTransCBE = 0;
 }
 

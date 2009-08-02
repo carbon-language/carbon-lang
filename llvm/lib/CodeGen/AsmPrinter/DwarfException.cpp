@@ -20,10 +20,11 @@
 #include "llvm/Support/Timer.h"
 #include "llvm/Support/raw_ostream.h"
 #include "llvm/Target/TargetAsmInfo.h"
-#include "llvm/Target/TargetRegisterInfo.h"
 #include "llvm/Target/TargetData.h"
 #include "llvm/Target/TargetFrameInfo.h"
+#include "llvm/Target/TargetLoweringObjectFile.h"
 #include "llvm/Target/TargetOptions.h"
+#include "llvm/Target/TargetRegisterInfo.h"
 #include "llvm/ADT/StringExtras.h"
 using namespace llvm;
 
@@ -539,10 +540,8 @@ void DwarfException::EmitExceptionTable() {
   unsigned SizeAlign = (4 - TotalSize) & 3;
 
   // Begin the exception table.
-  //MCSection *LSDASection = TAI->getLSDASection();
-  //Asm->SwitchToSection(LSDASection);
-  
-  Asm->SwitchToDataSection(TAI->getDwarfExceptionSection());
+  const MCSection *LSDASection = Asm->getObjFileLowering().getLSDASection();
+  Asm->SwitchToSection(LSDASection);
   Asm->EmitAlignment(2, 0, 0, false);
   O << "GCC_except_table" << SubprogramCount << ":\n";
 

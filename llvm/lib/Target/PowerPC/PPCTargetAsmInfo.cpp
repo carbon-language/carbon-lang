@@ -28,7 +28,6 @@ PPCDarwinTargetAsmInfo::PPCDarwinTargetAsmInfo(const PPCTargetMachine &TM) :
   
   DwarfEHFrameSection =
    ".section __TEXT,__eh_frame,coalesced,no_toc+strip_static_syms+live_support";
-  DwarfExceptionSection = ".section __DATA,__gcc_except_tab";
   GlobalEHDirective = "\t.globl\t";
   SupportsWeakOmittedEHFrame = false;
 }
@@ -73,7 +72,6 @@ PPCLinuxTargetAsmInfo::PPCLinuxTargetAsmInfo(const PPCTargetMachine &TM) :
     SupportsExceptionHandling = true;
   AbsoluteEHSectionOffsets = false;
   DwarfEHFrameSection = "\t.section\t.eh_frame,\"aw\",@progbits";
-  DwarfExceptionSection = "\t.section\t.gcc_except_table,\"a\",@progbits";
 }
 
 

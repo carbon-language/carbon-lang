@@ -84,7 +84,6 @@ X86DarwinTargetAsmInfo::X86DarwinTargetAsmInfo(const X86TargetMachine &TM):
   AbsoluteEHSectionOffsets = false;
   DwarfEHFrameSection =
   ".section __TEXT,__eh_frame,coalesced,no_toc+strip_static_syms+live_support";
-  DwarfExceptionSection = ".section __DATA,__gcc_except_tab";
 }
 
 unsigned X86DarwinTargetAsmInfo::PreferredEHDataFormat() const {
@@ -133,7 +132,6 @@ X86ELFTargetAsmInfo::X86ELFTargetAsmInfo(const X86TargetMachine &TM) :
   SupportsExceptionHandling = true;
   AbsoluteEHSectionOffsets = false;
   DwarfEHFrameSection = "\t.section\t.eh_frame,\"aw\",@progbits";
-  DwarfExceptionSection = "\t.section\t.gcc_except_table,\"a\",@progbits";
 
   // On Linux we must declare when we can use a non-executable stack.
   if (TM.getSubtarget<X86Subtarget>().isLinux())

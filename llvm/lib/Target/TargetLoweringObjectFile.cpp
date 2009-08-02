@@ -36,6 +36,7 @@ TargetLoweringObjectFile::TargetLoweringObjectFile() : Ctx(0) {
   ReadOnlySection = 0;
   StaticCtorSection = 0;
   StaticDtorSection = 0;
+  LSDASection = 0;
 }
 
 TargetLoweringObjectFile::~TargetLoweringObjectFile() {
@@ -302,6 +303,14 @@ void TargetLoweringObjectFileELF::Initialize(MCContext &Ctx,
     getOrCreateSection(".ctors", false, SectionKind::getDataRel());
   StaticDtorSection =
     getOrCreateSection(".dtors", false, SectionKind::getDataRel());
+  
+  
+  // FIXME: We're emitting LSDA info into a readonly section on ELF, even though
+  // it contains relocatable pointers.  In PIC mode, this is probably a big
+  // runtime hit for C++ apps.  Either the contents of the LSDA need to be
+  // adjusted or this should be a data section.
+  LSDASection =
+    getOrCreateSection(".gcc_except_table", false, SectionKind::getReadOnly());
 }
 
 
@@ -537,6 +546,8 @@ void TargetLoweringObjectFileMachO::Initialize(MCContext &Ctx,
       getOrCreateSection(".mod_term_func", true, SectionKind::getDataRel());
   }
   
+  LSDASection = getOrCreateSection("__DATA,__gcc_except_tab", false,
+                                   SectionKind::getDataRel());
 }
 
 const MCSection *TargetLoweringObjectFileMachO::

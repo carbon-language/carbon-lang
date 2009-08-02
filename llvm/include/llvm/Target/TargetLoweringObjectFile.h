@@ -58,6 +58,10 @@ protected:
   /// list.
   const MCSection *StaticDtorSection;
   
+  /// LSDASection - If exception handling is supported by the target, this is
+  /// the section the Language Specific Data Area information is emitted to.
+  const MCSection *LSDASection;
+  
 public:
   // FIXME: NONPUB.
   const MCSection *getOrCreateSection(const char *Name,
@@ -77,10 +81,10 @@ public:
   
   const MCSection *getTextSection() const { return TextSection; }
   const MCSection *getDataSection() const { return DataSection; }
-
   const MCSection *getStaticCtorSection() const { return StaticCtorSection; }
   const MCSection *getStaticDtorSection() const { return StaticDtorSection; }
-
+  const MCSection *getLSDASection() const { return LSDASection; }
+  
   /// shouldEmitUsedDirectiveFor - This hook allows targets to selectively
   /// decide not to emit the UsedDirective for some symbols in llvm.used.
   /// FIXME: REMOVE this (rdar://7071300)
