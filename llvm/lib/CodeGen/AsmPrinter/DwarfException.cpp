@@ -557,40 +557,45 @@ void DwarfException::EmitExceptionTable() {
   Asm->EOL("LPStart format (DW_EH_PE_omit)");
 
 #if 0
-  // FIXME: This should default to what the system wants, not just "absptr".
   if (TypeInfos.empty() && FilterIds.empty()) {
+    // If there are no typeinfos or filters, there is nothing to emit, optimize
+    // by specifying the "omit" encoding.
     Asm->EmitInt8(dwarf::DW_EH_PE_omit);
     Asm->EOL("TType format (DW_EH_PE_omit)");
   } else {
-    // FIXME: Instead of using "PreferredEHDataFormat", we should use a simple
-    // approach to determine what needs to happen.  Basically, if the target
-    // wants the LSDA to be emitted into a read-only segment (like .text) then
-    // (unless in static mode) it can't output direct pointers to the typeinfo
-    // objects, which may be in an arbitrary locations.  Instead, it has to use
-    // and indirect stub pointer to get to the typeinfo.
+    // Okay, we have actual filters or typeinfos to emit.  As such, we need to
+    // pick a type encoding for them.  We're about to emit a list of pointers to
+    // typeinfo objects at the end of the LSDA.  However, unless we're in static
+    // mode, this reference will require a relocation by the dynamic linker.
     //
-    // If the target wants to dump the LSDA's into a segment writable by the
-    // dynamic linker, then it can just use a normal pointer, and the dynamic
-    // linker will fix it up.
-    
-    // TODO: Replace the getDwarfExceptionSection() callback on TAI with a new
-    // getLSDASection() method on TLOF.  Merge and sanitize the implementations,
-    // and figure out what the ".gcc_except_table" directive expands to on elf
-    // systems.
-    
-    // 
-    //if (LSDASection->isWritable()) {
-    //Asm->EmitInt8(DW_EH_PE_absptr);
-    //} else {
-    //Asm->EmitInt8(DW_EH_PE_pcrel | DW_EH_PE_indirect | DW_EH_PE_sdata4);
-    //}
-    
-    Asm->EmitInt8(TAI->PreferredEHDataFormat());
-    
-    
-    // FIXME: The comment here should correspond with what PreferredEHDataFormat
-    // returned.
-    Asm->EOL("TType format (DW_EH_PE_xxxxx)");
+    // Because of this, we have a couple of options:
+    //   1) If we are in -static mode, we can always use an absolute reference
+    //      from the LSDA, because the static linker will resolve it.
+    //   2) Otherwise, if the LSDA section is writable, we can output the direct
+    //      reference to the typeinfo and allow the dynamic linker to relocate
+    //      it.  Since it is in a writable section, the dynamic linker won't
+    //      have a problem.
+    //   3) Finally, if we're in PIC mode and the LDSA section isn't writable,
+    //      we need to use some form of indirection.  For example, on Darwin,
+    //      we can output a statically-relocatable reference to a dyld stub. The
+    //      offset to the stub is constant, but the contents are in a section
+    //      that is updated by the dynamic linker.  This is easy enough, but we
+    //      need to tell the personality function of the unwinder to indirect
+    //      through the dyld stub.
+    //
+    // FIXME: When this is actually implemented, we'll have to emit the stubs
+    // somewhere.  This predicate should be moved to a shared location that is
+    // in target-independent code.
+    //
+    if (LSDASection->isWritable() ||
+        Asm->TM.getRelocationModel() == Reloc::Static) {
+      Asm->EmitInt8(DW_EH_PE_absptr);
+      Asm->EOL("TType format (DW_EH_PE_absptr)");
+    } else {
+      Asm->EmitInt8(DW_EH_PE_pcrel | DW_EH_PE_indirect | DW_EH_PE_sdata4);
+      Asm->EOL("TType format (DW_EH_PE_pcrel | DW_EH_PE_indirect"
+               " | DW_EH_PE_sdata4)");
+    }
     Asm->EmitULEB128Bytes(TypeOffset);
     Asm->EOL("TType base offset");
   }
