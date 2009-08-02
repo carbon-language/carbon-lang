@@ -23,7 +23,17 @@ namespace llvm {
   class Module;
 
   class BlackfinSubtarget : public TargetSubtarget {
-    bool ssyncWorkaround;
+    bool sdram;
+    bool icplb;
+    bool wa_mi_shift;
+    bool wa_csync;
+    bool wa_specld;
+    bool wa_mmr_stall;
+    bool wa_lcregs;
+    bool wa_hwloop;
+    bool wa_ind_call;
+    bool wa_killed_mmr;
+    bool wa_rets;
   public:
     BlackfinSubtarget(const TargetMachine &TM, const Module &M,
                       const std::string &FS);
