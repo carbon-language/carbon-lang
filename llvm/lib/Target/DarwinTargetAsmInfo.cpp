@@ -37,8 +37,9 @@ DarwinTargetAsmInfo::DarwinTargetAsmInfo() {
   HiddenDirective = "\t.private_extern ";
     
   // _foo.eh symbols are currently always exported so that the linker knows
-  // about them.  This may not strictly be necessary on 10.6 and later, but it
+  // about them.  This is not necessary on 10.6 and later, but it
   // doesn't hurt anything.
+  // FIXME: I need to get this from Triple.
   Is_EHSymbolPrivate = false;
     
   DwarfAbbrevSection = ".section __DWARF,__debug_abbrev,regular,debug";
