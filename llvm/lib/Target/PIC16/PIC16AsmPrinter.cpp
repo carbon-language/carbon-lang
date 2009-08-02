@@ -238,7 +238,7 @@ bool PIC16AsmPrinter::doInitialization(Module &M) {
   // Set the section names for all globals.
   for (Module::global_iterator I = M.global_begin(), E = M.global_end();
        I != E; ++I)
-    if (!I->isDeclaration())
+    if (!I->isDeclaration() && !I->hasAvailableExternallyLinkage())
       I->setSection(getObjFileLowering().
                     SectionForGlobal(I, Mang,TM)->getName());
 
