@@ -909,9 +909,6 @@ void CodeGenFunction::EmitAsmStmt(const AsmStmt &S) {
     if (Info.isReadWrite()) {
       InOutConstraints += ',';
 
-      const Expr *InputExpr = S.getOutputExpr(i);
-      llvm::Value *Arg = EmitAsmInput(S, Info, InputExpr, InOutConstraints);
-      
       if (Info.allowsRegister())
         InOutConstraints += llvm::utostr(i);
       else
