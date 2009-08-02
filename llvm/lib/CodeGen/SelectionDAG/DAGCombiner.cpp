@@ -2829,7 +2829,8 @@ SDValue DAGCombiner::visitSELECT(SDNode *N) {
     // Check against MVT::Other for SELECT_CC, which is a workaround for targets
     // having to say they don't support SELECT_CC on every type the DAG knows
     // about, since there is no way to mark an opcode illegal at all value types
-    if (TLI.isOperationLegalOrCustom(ISD::SELECT_CC, MVT::Other))
+    if (TLI.isOperationLegalOrCustom(ISD::SELECT_CC, MVT::Other) &&
+        TLI.isOperationLegalOrCustom(ISD::SELECT_CC, VT))
       return DAG.getNode(ISD::SELECT_CC, N->getDebugLoc(), VT,
                          N0.getOperand(0), N0.getOperand(1),
                          N1, N2, N0.getOperand(2));
