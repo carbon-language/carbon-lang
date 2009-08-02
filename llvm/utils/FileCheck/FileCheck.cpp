@@ -153,7 +153,7 @@ static void CanonicalizeCheckStrings(std::vector<std::pair<std::string, SMLoc> >
 /// CanonicalizeInputFile - Remove duplicate horizontal space from the specified
 /// memory buffer, free it, and return a new one.
 static MemoryBuffer *CanonicalizeInputFile(MemoryBuffer *MB) {
-  std::vector<char> NewFile;
+  SmallVector<char, 16> NewFile;
   NewFile.reserve(MB->getBufferSize());
   
   for (const char *Ptr = MB->getBufferStart(), *End = MB->getBufferEnd();
@@ -173,7 +173,8 @@ static MemoryBuffer *CanonicalizeInputFile(MemoryBuffer *MB) {
   
   // Free the old buffer and return a new one.
   MemoryBuffer *MB2 =
-    MemoryBuffer::getMemBufferCopy(&NewFile[0], &NewFile[0]+NewFile.size(),
+    MemoryBuffer::getMemBufferCopy(NewFile.data(), 
+                                   NewFile.data() + NewFile.size(),
                                    MB->getBufferIdentifier());
 
   delete MB;
