@@ -31,7 +31,7 @@ MSP430TargetMachine::MSP430TargetMachine(const Target &T,
   FrameInfo(TargetFrameInfo::StackGrowsDown, 2, -2) { }
 
 const TargetAsmInfo *MSP430TargetMachine::createTargetAsmInfo() const {
-  return new MSP430TargetAsmInfo(*this);
+  return new MSP430TargetAsmInfo();
 }
 
 bool MSP430TargetMachine::addInstSelector(PassManagerBase &PM,

@@ -17,9 +17,8 @@
 #include "llvm/Target/TargetAsmInfo.h"
 
 namespace llvm {
-  class TargetMachine;
   struct MSP430TargetAsmInfo : public TargetAsmInfo {
-    explicit MSP430TargetAsmInfo(const TargetMachine &TM);
+    explicit MSP430TargetAsmInfo();
   };
 
 } // namespace llvm

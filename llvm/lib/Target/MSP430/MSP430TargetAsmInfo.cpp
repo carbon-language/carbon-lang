@@ -14,6 +14,6 @@
 #include "MSP430TargetAsmInfo.h"
 using namespace llvm;
 
-MSP430TargetAsmInfo::MSP430TargetAsmInfo(const TargetMachine &TM) {
+MSP430TargetAsmInfo::MSP430TargetAsmInfo() {
   AlignmentIsInBytes = false;
 }
