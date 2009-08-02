@@ -315,58 +315,6 @@ namespace llvm {
     /// DwarfSectionOffsetDirective - Special section offset directive.
     const char* DwarfSectionOffsetDirective; // Defaults to NULL
     
-    /// DwarfAbbrevSection - Section directive for Dwarf abbrev.
-    ///
-    const char *DwarfAbbrevSection; // Defaults to ".debug_abbrev".
-
-    /// DwarfInfoSection - Section directive for Dwarf info.
-    ///
-    const char *DwarfInfoSection; // Defaults to ".debug_info".
-
-    /// DwarfLineSection - Section directive for Dwarf info.
-    ///
-    const char *DwarfLineSection; // Defaults to ".debug_line".
-    
-    /// DwarfFrameSection - Section directive for Dwarf info.
-    ///
-    const char *DwarfFrameSection; // Defaults to ".debug_frame".
-    
-    /// DwarfPubNamesSection - Section directive for Dwarf info.
-    ///
-    const char *DwarfPubNamesSection; // Defaults to ".debug_pubnames".
-    
-    /// DwarfPubTypesSection - Section directive for Dwarf info.
-    ///
-    const char *DwarfPubTypesSection; // Defaults to ".debug_pubtypes".
-
-    /// DwarfDebugInlineSection - Section directive for inline info.
-    ///
-    const char *DwarfDebugInlineSection; // Defaults to ".debug_inlined"
-
-    /// DwarfStrSection - Section directive for Dwarf info.
-    ///
-    const char *DwarfStrSection; // Defaults to ".debug_str".
-
-    /// DwarfLocSection - Section directive for Dwarf info.
-    ///
-    const char *DwarfLocSection; // Defaults to ".debug_loc".
-
-    /// DwarfARangesSection - Section directive for Dwarf info.
-    ///
-    const char *DwarfARangesSection; // Defaults to ".debug_aranges".
-
-    /// DwarfRangesSection - Section directive for Dwarf info.
-    ///
-    const char *DwarfRangesSection; // Defaults to ".debug_ranges".
-
-    /// DwarfMacroInfoSection - Section directive for DWARF macro info.
-    ///
-    const char *DwarfMacroInfoSection; // Defaults to ".debug_macinfo".
-    
-    /// DwarfEHFrameSection - Section directive for Exception frames.
-    ///
-    const char *DwarfEHFrameSection; // Defaults to ".eh_frame".
-    
     //===--- CBE Asm Translation Table -----------------------------------===//
 
     const char *const *AsmTransCBE; // Defaults to empty
@@ -583,45 +531,6 @@ namespace llvm {
     }
     const char *getDwarfSectionOffsetDirective() const {
       return DwarfSectionOffsetDirective;
-    }
-    const char *getDwarfAbbrevSection() const {
-      return DwarfAbbrevSection;
-    }
-    const char *getDwarfInfoSection() const {
-      return DwarfInfoSection;
-    }
-    const char *getDwarfLineSection() const {
-      return DwarfLineSection;
-    }
-    const char *getDwarfFrameSection() const {
-      return DwarfFrameSection;
-    }
-    const char *getDwarfPubNamesSection() const {
-      return DwarfPubNamesSection;
-    }
-    const char *getDwarfPubTypesSection() const {
-      return DwarfPubTypesSection;
-    }
-    const char *getDwarfDebugInlineSection() const {
-      return DwarfDebugInlineSection;
-    }
-    const char *getDwarfStrSection() const {
-      return DwarfStrSection;
-    }
-    const char *getDwarfLocSection() const {
-      return DwarfLocSection;
-    }
-    const char *getDwarfARangesSection() const {
-      return DwarfARangesSection;
-    }
-    const char *getDwarfRangesSection() const {
-      return DwarfRangesSection;
-    }
-    const char *getDwarfMacroInfoSection() const {
-      return DwarfMacroInfoSection;
-    }
-    const char *getDwarfEHFrameSection() const {
-      return DwarfEHFrameSection;
     }
     const char *const *getAsmCBE() const {
       return AsmTransCBE;

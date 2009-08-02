@@ -66,6 +66,20 @@ protected:
   /// the section the EH Frame is emitted to.
   const MCSection *EHFrameSection;
   
+  // Dwarf sections for debug info.  If a target supports debug info, these must
+  // be set.
+  const MCSection *DwarfAbbrevSection;
+  const MCSection *DwarfInfoSection;
+  const MCSection *DwarfLineSection;
+  const MCSection *DwarfFrameSection;
+  const MCSection *DwarfPubNamesSection;
+  const MCSection *DwarfPubTypesSection;
+  const MCSection *DwarfDebugInlineSection;
+  const MCSection *DwarfStrSection;
+  const MCSection *DwarfLocSection;
+  const MCSection *DwarfARangesSection;
+  const MCSection *DwarfRangesSection;
+  const MCSection *DwarfMacroInfoSection;
   
 public:
   // FIXME: NONPUB.
@@ -90,7 +104,23 @@ public:
   const MCSection *getStaticDtorSection() const { return StaticDtorSection; }
   const MCSection *getLSDASection() const { return LSDASection; }
   const MCSection *getEHFrameSection() const { return EHFrameSection; }
-
+  const MCSection *getDwarfAbbrevSection() const { return DwarfAbbrevSection; }
+  const MCSection *getDwarfInfoSection() const { return DwarfInfoSection; }
+  const MCSection *getDwarfLineSection() const { return DwarfLineSection; }
+  const MCSection *getDwarfFrameSection() const { return DwarfFrameSection; }
+  const MCSection *getDwarfPubNamesSection() const{return DwarfPubNamesSection;}
+  const MCSection *getDwarfPubTypesSection() const{return DwarfPubTypesSection;}
+  const MCSection *getDwarfDebugInlineSection() const {
+    return DwarfDebugInlineSection;
+  }
+  const MCSection *getDwarfStrSection() const { return DwarfStrSection; }
+  const MCSection *getDwarfLocSection() const { return DwarfLocSection; }
+  const MCSection *getDwarfARangesSection() const { return DwarfARangesSection;}
+  const MCSection *getDwarfRangesSection() const { return DwarfRangesSection; }
+  const MCSection *getDwarfMacroInfoSection() const {
+    return DwarfMacroInfoSection;
+  }
+  
   /// shouldEmitUsedDirectiveFor - This hook allows targets to selectively
   /// decide not to emit the UsedDirective for some symbols in llvm.used.
   /// FIXME: REMOVE this (rdar://7071300)

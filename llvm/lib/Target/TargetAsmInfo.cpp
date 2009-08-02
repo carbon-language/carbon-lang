@@ -84,18 +84,7 @@ TargetAsmInfo::TargetAsmInfo() {
   GlobalEHDirective = 0;
   SupportsWeakOmittedEHFrame = true;
   DwarfSectionOffsetDirective = 0;
-  DwarfAbbrevSection = ".debug_abbrev";
-  DwarfInfoSection = ".debug_info";
-  DwarfLineSection = ".debug_line";
-  DwarfFrameSection = ".debug_frame";
-  DwarfPubNamesSection = ".debug_pubnames";
-  DwarfPubTypesSection = ".debug_pubtypes";
-  DwarfDebugInlineSection = ".debug_inlined";
-  DwarfStrSection = ".debug_str";
-  DwarfLocSection = ".debug_loc";
-  DwarfARangesSection = ".debug_aranges";
-  DwarfRangesSection = ".debug_ranges";
-  DwarfMacroInfoSection = ".debug_macinfo";
+
   AsmTransCBE = 0;
 }
 

@@ -74,7 +74,6 @@ X86DarwinTargetAsmInfo::X86DarwinTargetAsmInfo(const X86TargetMachine &TM):
   ProtectedDirective = "\t.globl\t";
 
   SupportsDebugInformation = true;
-  DwarfDebugInlineSection = ".section __DWARF,__debug_inlined,regular,debug";
   DwarfUsesInlineInfoSection = true;
 
   // Exceptions handling
@@ -98,17 +97,6 @@ X86ELFTargetAsmInfo::X86ELFTargetAsmInfo(const X86TargetMachine &TM) :
   // Debug Information
   AbsoluteDebugSectionOffsets = true;
   SupportsDebugInformation = true;
-  DwarfAbbrevSection =  "\t.section\t.debug_abbrev,\"\",@progbits";
-  DwarfInfoSection =    "\t.section\t.debug_info,\"\",@progbits";
-  DwarfLineSection =    "\t.section\t.debug_line,\"\",@progbits";
-  DwarfFrameSection =   "\t.section\t.debug_frame,\"\",@progbits";
-  DwarfPubNamesSection ="\t.section\t.debug_pubnames,\"\",@progbits";
-  DwarfPubTypesSection ="\t.section\t.debug_pubtypes,\"\",@progbits";
-  DwarfStrSection =     "\t.section\t.debug_str,\"\",@progbits";
-  DwarfLocSection =     "\t.section\t.debug_loc,\"\",@progbits";
-  DwarfARangesSection = "\t.section\t.debug_aranges,\"\",@progbits";
-  DwarfRangesSection =  "\t.section\t.debug_ranges,\"\",@progbits";
-  DwarfMacroInfoSection = "\t.section\t.debug_macinfo,\"\",@progbits";
 
   // Exceptions handling
   SupportsExceptionHandling = true;

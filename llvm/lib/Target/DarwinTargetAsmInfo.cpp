@@ -41,17 +41,5 @@ DarwinTargetAsmInfo::DarwinTargetAsmInfo() {
   // doesn't hurt anything.
   // FIXME: I need to get this from Triple.
   Is_EHSymbolPrivate = false;
-    
-  DwarfAbbrevSection = ".section __DWARF,__debug_abbrev,regular,debug";
-  DwarfInfoSection = ".section __DWARF,__debug_info,regular,debug";
-  DwarfLineSection = ".section __DWARF,__debug_line,regular,debug";
-  DwarfFrameSection = ".section __DWARF,__debug_frame,regular,debug";
-  DwarfPubNamesSection = ".section __DWARF,__debug_pubnames,regular,debug";
-  DwarfPubTypesSection = ".section __DWARF,__debug_pubtypes,regular,debug";
-  DwarfStrSection = ".section __DWARF,__debug_str,regular,debug";
-  DwarfLocSection = ".section __DWARF,__debug_loc,regular,debug";
-  DwarfARangesSection = ".section __DWARF,__debug_aranges,regular,debug";
-  DwarfRangesSection = ".section __DWARF,__debug_ranges,regular,debug";
-  DwarfMacroInfoSection = ".section __DWARF,__debug_macinfo,regular,debug";
 }
 

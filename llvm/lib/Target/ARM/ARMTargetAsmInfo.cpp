@@ -57,17 +57,6 @@ ARMELFTargetAsmInfo::ARMELFTargetAsmInfo() {
   WeakRefDirective = "\t.weak\t";
   SetDirective = "\t.set\t";
   DwarfRequiresFrameSection = false;
-  DwarfAbbrevSection =  "\t.section\t.debug_abbrev,\"\",%progbits";
-  DwarfInfoSection =    "\t.section\t.debug_info,\"\",%progbits";
-  DwarfLineSection =    "\t.section\t.debug_line,\"\",%progbits";
-  DwarfFrameSection =   "\t.section\t.debug_frame,\"\",%progbits";
-  DwarfPubNamesSection ="\t.section\t.debug_pubnames,\"\",%progbits";
-  DwarfPubTypesSection ="\t.section\t.debug_pubtypes,\"\",%progbits";
-  DwarfStrSection =     "\t.section\t.debug_str,\"\",%progbits";
-  DwarfLocSection =     "\t.section\t.debug_loc,\"\",%progbits";
-  DwarfARangesSection = "\t.section\t.debug_aranges,\"\",%progbits";
-  DwarfRangesSection =  "\t.section\t.debug_ranges,\"\",%progbits";
-  DwarfMacroInfoSection = "\t.section\t.debug_macinfo,\"\",%progbits";
 
   SupportsDebugInformation = true;
 }

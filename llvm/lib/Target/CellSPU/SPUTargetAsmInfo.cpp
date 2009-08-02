@@ -34,17 +34,6 @@ SPULinuxTargetAsmInfo::SPULinuxTargetAsmInfo() {
 
   SupportsDebugInformation = true;
   NeedsSet = true;
-  DwarfAbbrevSection =  "\t.section        .debug_abbrev,\"\",@progbits";
-  DwarfInfoSection =    "\t.section        .debug_info,\"\",@progbits";
-  DwarfLineSection =    "\t.section        .debug_line,\"\",@progbits";
-  DwarfFrameSection =   "\t.section        .debug_frame,\"\",@progbits";
-  DwarfPubNamesSection = "\t.section        .debug_pubnames,\"\",@progbits";
-  DwarfPubTypesSection = "\t.section        .debug_pubtypes,\"\",progbits";
-  DwarfStrSection =     "\t.section        .debug_str,\"MS\",@progbits,1";
-  DwarfLocSection =     "\t.section        .debug_loc,\"\",@progbits";
-  DwarfARangesSection = "\t.section        .debug_aranges,\"\",@progbits";
-  DwarfRangesSection =  "\t.section        .debug_ranges,\"\",@progbits";
-  DwarfMacroInfoSection = 0;  // macro info not supported.
 
   // Exception handling is not supported on CellSPU (think about it: you only
   // have 256K for code+data. Would you support exception handling?)

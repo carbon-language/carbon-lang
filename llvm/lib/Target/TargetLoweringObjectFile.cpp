@@ -38,6 +38,19 @@ TargetLoweringObjectFile::TargetLoweringObjectFile() : Ctx(0) {
   StaticDtorSection = 0;
   LSDASection = 0;
   EHFrameSection = 0;
+
+  DwarfAbbrevSection = 0;
+  DwarfInfoSection = 0;
+  DwarfLineSection = 0;
+  DwarfFrameSection = 0;
+  DwarfPubNamesSection = 0;
+  DwarfPubTypesSection = 0;
+  DwarfDebugInlineSection = 0;
+  DwarfStrSection = 0;
+  DwarfLocSection = 0;
+  DwarfARangesSection = 0;
+  DwarfRangesSection = 0;
+  DwarfMacroInfoSection = 0;
 }
 
 TargetLoweringObjectFile::~TargetLoweringObjectFile() {
@@ -305,6 +318,7 @@ void TargetLoweringObjectFileELF::Initialize(MCContext &Ctx,
   StaticDtorSection =
     getOrCreateSection(".dtors", false, SectionKind::getDataRel());
   
+  // Exception Handling Sections.
   
   // FIXME: We're emitting LSDA info into a readonly section on ELF, even though
   // it contains relocatable pointers.  In PIC mode, this is probably a big
@@ -314,6 +328,30 @@ void TargetLoweringObjectFileELF::Initialize(MCContext &Ctx,
     getOrCreateSection(".gcc_except_table", false, SectionKind::getReadOnly());
   EHFrameSection =
     getOrCreateSection(".eh_frame", false, SectionKind::getDataRel());
+  
+  // Debug Info Sections.
+  DwarfAbbrevSection = 
+    getOrCreateSection(".debug_abbrev", false, SectionKind::getMetadata());
+  DwarfInfoSection = 
+    getOrCreateSection(".debug_info", false, SectionKind::getMetadata());
+  DwarfLineSection = 
+    getOrCreateSection(".debug_line", false, SectionKind::getMetadata());
+  DwarfFrameSection = 
+    getOrCreateSection(".debug_frame", false, SectionKind::getMetadata());
+  DwarfPubNamesSection = 
+    getOrCreateSection(".debug_pubnames", false, SectionKind::getMetadata());
+  DwarfPubTypesSection = 
+    getOrCreateSection(".debug_pubtypes", false, SectionKind::getMetadata());
+  DwarfStrSection = 
+    getOrCreateSection(".debug_str", false, SectionKind::getMetadata());
+  DwarfLocSection = 
+    getOrCreateSection(".debug_loc", false, SectionKind::getMetadata());
+  DwarfARangesSection = 
+    getOrCreateSection(".debug_aranges", false, SectionKind::getMetadata());
+  DwarfRangesSection = 
+    getOrCreateSection(".debug_ranges", false, SectionKind::getMetadata());
+  DwarfMacroInfoSection = 
+    getOrCreateSection(".debug_macinfo", false, SectionKind::getMetadata());
 }
 
 
@@ -549,11 +587,52 @@ void TargetLoweringObjectFileMachO::Initialize(MCContext &Ctx,
       getOrCreateSection(".mod_term_func", true, SectionKind::getDataRel());
   }
   
+  // Exception Handling.
   LSDASection = getOrCreateSection("__DATA,__gcc_except_tab", false,
                                    SectionKind::getDataRel());
   EHFrameSection =
     getOrCreateSection("__TEXT,__eh_frame,coalesced,no_toc+strip_static_syms"
                        "+live_support", false, SectionKind::getReadOnly());
+
+  // Debug Information.
+  // FIXME: Don't use 'directive' syntax: need flags for debug/regular??
+  // FIXME: Need __DWARF segment.
+  DwarfAbbrevSection = 
+    getOrCreateSection(".section __DWARF,__debug_abbrev,regular,debug", true,
+                       SectionKind::getMetadata());
+  DwarfInfoSection =  
+    getOrCreateSection(".section __DWARF,__debug_info,regular,debug", true,
+                       SectionKind::getMetadata());
+  DwarfLineSection =  
+    getOrCreateSection(".section __DWARF,__debug_line,regular,debug", true,
+                       SectionKind::getMetadata());
+  DwarfFrameSection =  
+    getOrCreateSection(".section __DWARF,__debug_frame,regular,debug", true,
+                       SectionKind::getMetadata());
+  DwarfPubNamesSection =  
+    getOrCreateSection(".section __DWARF,__debug_pubnames,regular,debug", true,
+                       SectionKind::getMetadata());
+  DwarfPubTypesSection =  
+    getOrCreateSection(".section __DWARF,__debug_pubtypes,regular,debug", true,
+                       SectionKind::getMetadata());
+  DwarfStrSection =  
+    getOrCreateSection(".section __DWARF,__debug_str,regular,debug", true,
+                       SectionKind::getMetadata());
+  DwarfLocSection =  
+    getOrCreateSection(".section __DWARF,__debug_loc,regular,debug", true,
+                       SectionKind::getMetadata());
+  DwarfARangesSection =  
+    getOrCreateSection(".section __DWARF,__debug_aranges,regular,debug", true,
+                       SectionKind::getMetadata());
+  DwarfRangesSection =  
+    getOrCreateSection(".section __DWARF,__debug_ranges,regular,debug", true,
+                       SectionKind::getMetadata());
+  DwarfMacroInfoSection =  
+    getOrCreateSection(".section __DWARF,__debug_macinfo,regular,debug", true,
+                       SectionKind::getMetadata());
+  DwarfDebugInlineSection = 
+    getOrCreateSection(".section __DWARF,__debug_inlined,regular,debug", true,
+                       SectionKind::getMetadata());
 }
 
 const MCSection *TargetLoweringObjectFileMachO::
@@ -665,6 +744,43 @@ void TargetLoweringObjectFileCOFF::Initialize(MCContext &Ctx,
     getOrCreateSection(".ctors", false, SectionKind::getDataRel());
   StaticDtorSection =
     getOrCreateSection(".dtors", false, SectionKind::getDataRel());
+  
+  
+  // Debug info.
+  // FIXME: Don't use 'directive' mode here.
+  DwarfAbbrevSection =  
+    getOrCreateSection("\t.section\t.debug_abbrev,\"dr\"",
+                       true, SectionKind::getMetadata());
+  DwarfInfoSection =    
+    getOrCreateSection("\t.section\t.debug_info,\"dr\"",
+                       true, SectionKind::getMetadata());
+  DwarfLineSection =    
+    getOrCreateSection("\t.section\t.debug_line,\"dr\"",
+                       true, SectionKind::getMetadata());
+  DwarfFrameSection =   
+    getOrCreateSection("\t.section\t.debug_frame,\"dr\"",
+                       true, SectionKind::getMetadata());
+  DwarfPubNamesSection =
+    getOrCreateSection("\t.section\t.debug_pubnames,\"dr\"",
+                       true, SectionKind::getMetadata());
+  DwarfPubTypesSection =
+    getOrCreateSection("\t.section\t.debug_pubtypes,\"dr\"",
+                       true, SectionKind::getMetadata());
+  DwarfStrSection =     
+    getOrCreateSection("\t.section\t.debug_str,\"dr\"",
+                       true, SectionKind::getMetadata());
+  DwarfLocSection =     
+    getOrCreateSection("\t.section\t.debug_loc,\"dr\"",
+                       true, SectionKind::getMetadata());
+  DwarfARangesSection = 
+    getOrCreateSection("\t.section\t.debug_aranges,\"dr\"",
+                       true, SectionKind::getMetadata());
+  DwarfRangesSection =  
+    getOrCreateSection("\t.section\t.debug_ranges,\"dr\"",
+                       true, SectionKind::getMetadata());
+  DwarfMacroInfoSection = 
+    getOrCreateSection("\t.section\t.debug_macinfo,\"dr\"",
+                       true, SectionKind::getMetadata());
 }
 
 void TargetLoweringObjectFileCOFF::
