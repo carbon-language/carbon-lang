@@ -105,9 +105,8 @@ CodeGenFunction::CreateStaticBlockVarDecl(const VarDecl &D,
   const llvm::Type *LTy = CGM.getTypes().ConvertTypeForMem(Ty);
   return new llvm::GlobalVariable(CGM.getModule(), LTy,
                                   Ty.isConstant(getContext()), Linkage,
-                                  llvm::Constant::getNullValue(LTy), Name,
-                                  0, D.isThreadSpecified(),
-                                  Ty.getAddressSpace());
+                                  CGM.EmitNullConstant(D.getType()), Name, 0, 
+                                  D.isThreadSpecified(), Ty.getAddressSpace());
 }
 
 void CodeGenFunction::EmitStaticBlockVarDecl(const VarDecl &D) { 

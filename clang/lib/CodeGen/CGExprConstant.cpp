@@ -772,5 +772,5 @@ llvm::Constant *CodeGenModule::EmitConstantExpr(const Expr *E,
 llvm::Constant *CodeGenModule::EmitNullConstant(QualType T) {
   // Always return an LLVM null constant for now; this will change when we
   // get support for IRGen of member pointers.
-  return llvm::Constant::getNullValue(getTypes().ConvertType(T));
+  return llvm::Constant::getNullValue(getTypes().ConvertTypeForMem(T));
 }
