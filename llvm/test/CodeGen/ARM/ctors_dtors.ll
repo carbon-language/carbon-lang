@@ -1,15 +1,15 @@
-; RUN: llvm-as <  %s | llc -mtriple=arm-apple-darwin | \
-; RUN:   grep {\\.mod_init_func}
-; RUN: llvm-as < %s | llc -mtriple=arm-apple-darwin | \
-; RUN:   grep {\\.mod_term_func} 
-; RUN: llvm-as  < %s | llc -mtriple=arm-linux-gnu | \
-; RUN:   grep {\\.section \\.ctors,"aw",.progbits}
-; RUN: llvm-as < %s | llc -mtriple=arm-linux-gnu | \
-; RUN:   grep {\\.section \\.dtors,"aw",.progbits}
-; RUN: llvm-as < %s | llc -mtriple=arm-linux-gnueabi | \
-; RUN:   grep {\\.section \\.init_array,"aw",.init_array}
-; RUN: llvm-as < %s | llc -mtriple=arm-linux-gnueabi | \
-; RUN:   grep {\\.section \\.fini_array,"aw",.fini_array}
+; RUN: llvm-as <  %s | llc -mtriple=arm-apple-darwin | FileCheck %s -check-prefix=DARWIN
+; RUN: llvm-as  < %s | llc -mtriple=arm-linux-gnu | FileCheck %s -check-prefix=ELF
+; RUN: llvm-as < %s | llc -mtriple=arm-linux-gnueabi | FileCheck %s -check-prefix=GNUEABI
+
+; DARWIN: .mod_init_func
+; DARWIN: .mod_term_func
+
+; ELF: .section .ctors,"aw",%progbits
+; ELF: .section .dtors,"aw",%progbits
+
+; GNUEABI: .section .init_array,"aw",%init_array
+; GNUEABI: .section .fini_array,"aw",%fini_array
 
 @llvm.global_ctors = appending global [1 x { i32, void ()* }] [ { i32, void ()* } { i32 65535, void ()* @__mf_init } ]                ; <[1 x { i32, void ()* }]*> [#uses=0]
 @llvm.global_dtors = appending global [1 x { i32, void ()* }] [ { i32, void ()* } { i32 65535, void ()* @__mf_fini } ]                ; <[1 x { i32, void ()* }]*> [#uses=0]
