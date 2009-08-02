@@ -17,7 +17,6 @@
 #include "PPCTargetMachine.h"
 #include "llvm/Target/TargetAsmInfo.h"
 #include "llvm/Target/DarwinTargetAsmInfo.h"
-#include "llvm/Target/ELFTargetAsmInfo.h"
 #include "llvm/Support/Compiler.h"
 
 namespace llvm {

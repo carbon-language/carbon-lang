@@ -16,7 +16,6 @@
 
 #include "ARMTargetMachine.h"
 #include "llvm/Target/TargetAsmInfo.h"
-#include "llvm/Target/ELFTargetAsmInfo.h"
 #include "llvm/Target/DarwinTargetAsmInfo.h"
 #include "llvm/Support/Compiler.h"
 

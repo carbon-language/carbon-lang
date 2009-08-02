@@ -266,7 +266,7 @@ unsigned ELFWriter::getGlobalELFType(const GlobalValue *GV) {
 }
 
 // getElfSectionFlags - Get the ELF Section Header flags based
-// on the flags defined in ELFTargetAsmInfo.
+// on the flags defined in SectionKind.h.
 unsigned ELFWriter::getElfSectionFlags(SectionKind Kind) {
   unsigned ElfSectionFlags = ELFSection::SHF_ALLOC;
 

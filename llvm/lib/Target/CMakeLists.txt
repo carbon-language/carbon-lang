@@ -1,7 +1,6 @@
 add_llvm_library(LLVMTarget
   COFFTargetAsmInfo.cpp
   DarwinTargetAsmInfo.cpp
-  ELFTargetAsmInfo.cpp
   SubtargetFeature.cpp
   Target.cpp
   TargetAsmInfo.cpp
