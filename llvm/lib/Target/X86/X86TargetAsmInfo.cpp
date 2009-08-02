@@ -82,8 +82,6 @@ X86DarwinTargetAsmInfo::X86DarwinTargetAsmInfo(const X86TargetMachine &TM):
   GlobalEHDirective = "\t.globl\t";
   SupportsWeakOmittedEHFrame = false;
   AbsoluteEHSectionOffsets = false;
-  DwarfEHFrameSection =
-  ".section __TEXT,__eh_frame,coalesced,no_toc+strip_static_syms+live_support";
 }
 
 X86ELFTargetAsmInfo::X86ELFTargetAsmInfo(const X86TargetMachine &TM) :
@@ -115,7 +113,6 @@ X86ELFTargetAsmInfo::X86ELFTargetAsmInfo(const X86TargetMachine &TM) :
   // Exceptions handling
   SupportsExceptionHandling = true;
   AbsoluteEHSectionOffsets = false;
-  DwarfEHFrameSection = "\t.section\t.eh_frame,\"aw\",@progbits";
 
   // On Linux we must declare when we can use a non-executable stack.
   if (TM.getSubtarget<X86Subtarget>().isLinux())

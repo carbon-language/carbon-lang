@@ -26,8 +26,6 @@ PPCDarwinTargetAsmInfo::PPCDarwinTargetAsmInfo(const PPCTargetMachine &TM) :
   UsedDirective = "\t.no_dead_strip\t";
   SupportsExceptionHandling = true;
   
-  DwarfEHFrameSection =
-   ".section __TEXT,__eh_frame,coalesced,no_toc+strip_static_syms+live_support";
   GlobalEHDirective = "\t.globl\t";
   SupportsWeakOmittedEHFrame = false;
 }
@@ -64,7 +62,6 @@ PPCLinuxTargetAsmInfo::PPCLinuxTargetAsmInfo(const PPCTargetMachine &TM) :
   if (!TM.getSubtargetImpl()->isPPC64())
     SupportsExceptionHandling = true;
   AbsoluteEHSectionOffsets = false;
-  DwarfEHFrameSection = "\t.section\t.eh_frame,\"aw\",@progbits";
 }
 
 

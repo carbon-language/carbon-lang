@@ -37,6 +37,7 @@ TargetLoweringObjectFile::TargetLoweringObjectFile() : Ctx(0) {
   StaticCtorSection = 0;
   StaticDtorSection = 0;
   LSDASection = 0;
+  EHFrameSection = 0;
 }
 
 TargetLoweringObjectFile::~TargetLoweringObjectFile() {
@@ -311,6 +312,8 @@ void TargetLoweringObjectFileELF::Initialize(MCContext &Ctx,
   // adjusted or this should be a data section.
   LSDASection =
     getOrCreateSection(".gcc_except_table", false, SectionKind::getReadOnly());
+  EHFrameSection =
+    getOrCreateSection(".eh_frame", false, SectionKind::getDataRel());
 }
 
 
@@ -548,6 +551,9 @@ void TargetLoweringObjectFileMachO::Initialize(MCContext &Ctx,
   
   LSDASection = getOrCreateSection("__DATA,__gcc_except_tab", false,
                                    SectionKind::getDataRel());
+  EHFrameSection =
+    getOrCreateSection("__TEXT,__eh_frame,coalesced,no_toc+strip_static_syms"
+                       "+live_support", false, SectionKind::getReadOnly());
 }
 
 const MCSection *TargetLoweringObjectFileMachO::

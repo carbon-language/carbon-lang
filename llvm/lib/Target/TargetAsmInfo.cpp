@@ -96,7 +96,6 @@ TargetAsmInfo::TargetAsmInfo() {
   DwarfARangesSection = ".debug_aranges";
   DwarfRangesSection = ".debug_ranges";
   DwarfMacroInfoSection = ".debug_macinfo";
-  DwarfEHFrameSection = ".eh_frame";
   AsmTransCBE = 0;
 }
 
