@@ -27,7 +27,6 @@
 
 using namespace clang;
 
-#define USE_REGION_CASTS 0
 #define HEAP_UNDEFINED 0
 
 // Actual Store type.
@@ -57,36 +56,6 @@ public:
   bool supportsFields() const { return SupportsFields; }
   bool supportsRemaining() const { return SupportsRemaining; }
 };
-}
-
-//===----------------------------------------------------------------------===//
-// Region "Views"
-//===----------------------------------------------------------------------===//
-//
-//  MemRegions can be layered on top of each other.  This GDM entry tracks
-//  what are the MemRegions that layer a given MemRegion.
-//
-typedef llvm::ImmutableSet<const MemRegion*> RegionViews;
-namespace { class VISIBILITY_HIDDEN RegionViewMap {}; }
-static int RegionViewMapIndex = 0;
-namespace clang {
-  template<> struct GRStateTrait<RegionViewMap> 
-    : public GRStatePartialTrait<llvm::ImmutableMap<const MemRegion*,
-                                                    RegionViews> > {
-                                                      
-    static void* GDMIndex() { return &RegionViewMapIndex; }
-  };
-}
-
-// RegionCasts records the current cast type of a region.
-namespace { class VISIBILITY_HIDDEN RegionCasts {}; }
-static int RegionCastsIndex = 0;
-namespace clang {
-  template<> struct GRStateTrait<RegionCasts>
-    : public GRStatePartialTrait<llvm::ImmutableMap<const MemRegion*, 
-                                                    QualType> > {
-    static void* GDMIndex() { return &RegionCastsIndex; }
-  };
 }
 
 //===----------------------------------------------------------------------===//
@@ -186,7 +155,6 @@ public:
 class VISIBILITY_HIDDEN RegionStoreManager : public StoreManager {
   const RegionStoreFeatures Features;
   RegionBindingsTy::Factory RBFactory;
-  RegionViews::Factory RVFactory;
 
   const MemRegion* SelfRegion;
   const ImplicitParamDecl *SelfDecl;
@@ -196,7 +164,6 @@ public:
     : StoreManager(mgr),
       Features(f),
       RBFactory(mgr.getAllocator()),
-      RVFactory(mgr.getAllocator()),
       SelfRegion(0), SelfDecl(0) {
     if (const ObjCMethodDecl* MD =
           dyn_cast<ObjCMethodDecl>(&StateMgr.getCodeDecl()))
@@ -371,13 +338,6 @@ public:
   // Utility methods.
   //===------------------------------------------------------------------===//
   
-  const GRState *setCastType(const GRState *state, const MemRegion* R,
-                             QualType T);
-
-  const QualType *getCastType(const GRState *state, const MemRegion *R) {
-    return state->get<RegionCasts>(R);
-  }
-
   static inline RegionBindingsTy GetRegionBindings(Store store) {
    return RegionBindingsTy(static_cast<const RegionBindingsTy::TreeTy*>(store));
   }
@@ -399,27 +359,6 @@ public:
 };
 
 } // end anonymous namespace
-
-static bool isGenericPtr(ASTContext &Ctx, QualType Ty) {
-  if (Ty->isObjCIdType() || Ty->isObjCQualifiedIdType())
-    return true;
-
-  while (true) {
-    Ty = Ctx.getCanonicalType(Ty);
-    
-    if (Ty->isVoidType())
-      return true;
-    
-    if (const PointerType *PT = Ty->getAs<PointerType>()) {
-      Ty = PT->getPointeeType();
-      continue;
-    }
-    
-    break;
-  }
-  
-  return false;
-}
 
 //===----------------------------------------------------------------------===//
 // RegionStore creation.
@@ -751,20 +690,7 @@ SVal RegionStoreManager::getSizeInElements(const GRState *state,
         // return the size as signed integer.
         return ValMgr.makeIntVal(CAT->getSize(), false);
       }
-      
-      const QualType* CastTy = state->get<RegionCasts>(VR);
-      
-      // If the VarRegion is cast to other type, compute the size with respect to
-      // that type.
-      if (CastTy) {
-        QualType EleTy =cast<PointerType>(CastTy->getTypePtr())->getPointeeType();
-        QualType VarTy = VR->getValueType(getContext());
-        uint64_t EleSize = getContext().getTypeSize(EleTy);
-        uint64_t VarSize = getContext().getTypeSize(VarTy);
-        assert(VarSize != 0);
-        return ValMgr.makeIntVal(VarSize/EleSize, false);
-      }
-      
+
       // Clients can use ordinary variables as if they were arrays.  These
       // essentially are arrays of size 1.
       return ValMgr.makeIntVal(1, false);
@@ -836,28 +762,16 @@ SVal RegionStoreManager::EvalBinOp(const GRState *state,
   switch (MR->getKind()) {
     case MemRegion::SymbolicRegionKind: {
       const SymbolicRegion *SR = cast<SymbolicRegion>(MR);
-      QualType T;
-#if USE_REGION_CASTS
-      // If the SymbolicRegion was cast to another type, use that type.
-      if (const QualType *t = state->get<RegionCasts>(SR))
-        T = *t;
-      else 
-#endif
-      {
-        // Otherwise use the symbol's type.
-        SymbolRef Sym = SR->getSymbol();
-        T = Sym->getType(getContext());
-      }
-      
+      SymbolRef Sym = SR->getSymbol();
+      QualType T = Sym->getType(getContext());      
       QualType EleTy = T->getAs<PointerType>()->getPointeeType();        
       SVal ZeroIdx = ValMgr.makeZeroArrayIndex();
       ER = MRMgr.getElementRegion(EleTy, ZeroIdx, SR, getContext());
       break;        
     }
     case MemRegion::AllocaRegionKind: {
-      // Get the alloca region's current cast type.
       const AllocaRegion *AR = cast<AllocaRegion>(MR);
-      QualType T = *(state->get<RegionCasts>(AR));
+      QualType T = getContext().CharTy; // Create an ElementRegion of bytes.
       QualType EleTy = T->getAs<PointerType>()->getPointeeType();
       SVal ZeroIdx = ValMgr.makeZeroArrayIndex();
       ER = MRMgr.getElementRegion(EleTy, ZeroIdx, AR, getContext());
@@ -1549,51 +1463,6 @@ const GRState *RegionStoreManager::KillStruct(const GRState *state,
   }
 
   return state->makeWithStore(store);
-}
-
-//===----------------------------------------------------------------------===//
-// Region views.
-//===----------------------------------------------------------------------===//
-
-const GRState *RegionStoreManager::AddRegionView(const GRState *state,
-                                             const MemRegion* View,
-                                             const MemRegion* Base) {
-
-  // First, retrieve the region view of the base region.
-  const RegionViews* d = state->get<RegionViewMap>(Base);
-  RegionViews L = d ? *d : RVFactory.GetEmptySet();
-
-  // Now add View to the region view.
-  L = RVFactory.Add(L, View);
-
-  // Create a new state with the new region view.
-  return state->set<RegionViewMap>(Base, L);
-}
-
-const GRState *RegionStoreManager::RemoveRegionView(const GRState *state,
-                                                const MemRegion* View,
-                                                const MemRegion* Base) {
-  // Retrieve the region view of the base region.
-  const RegionViews* d = state->get<RegionViewMap>(Base);
-
-  // If the base region has no view, return.
-  if (!d)
-    return state;
-
-  // Remove the view.
-  return state->set<RegionViewMap>(Base, RVFactory.Remove(*d, View));
-}
-
-const GRState *RegionStoreManager::setCastType(const GRState *state, 
-					       const MemRegion* R, QualType T) {
-  // We do not record generic cast type, since we are using cast type to
-  // invlidate regions, and generic type is meaningless for invalidating
-  // regions.
-  // If the region already has a cast type before, that type is preserved.
-  // FIXME: is this the right thing to do?
-  if (isGenericPtr(getContext(), T))
-    return state;
-  return state->set<RegionCasts>(R, T);
 }
 
 const GRState *RegionStoreManager::setDefaultValue(const GRState *state,

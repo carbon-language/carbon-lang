@@ -43,13 +43,6 @@ protected:
 
   StoreManager(GRStateManager &stateMgr);
 
-protected:
-  virtual const GRState *AddRegionView(const GRState *state,
-                                        const MemRegion *view,
-                                        const MemRegion *base) {
-    return state;
-  }
-  
 public:  
   virtual ~StoreManager() {}
   
@@ -134,16 +127,7 @@ public:
   ///  a MemRegion* to a specific location type.  'R' is the region being
   ///  casted and 'CastToTy' the result type of the cast.
   CastResult CastRegion(const GRState *state, const MemRegion *region,
-                        QualType CastToTy);
-  
-  virtual const GRState *setCastType(const GRState *state, const MemRegion* R,
-                                     QualType T) {
-    return state;
-  }
-
-  virtual const QualType *getCastType(const GRState *state, const MemRegion *R){
-    return 0;
-  }
+                        QualType CastToTy);  
 
   /// EvalBinOp - Perform pointer arithmetic.
   virtual SVal EvalBinOp(const GRState *state, BinaryOperator::Opcode Op,
