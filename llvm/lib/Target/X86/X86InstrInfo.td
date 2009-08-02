@@ -3467,6 +3467,7 @@ def : Pat<(X86tcret (i32 tglobaladdr:$dst), imm:$off),
 def : Pat<(X86tcret (i32 texternalsym:$dst), imm:$off),
           (TCRETURNdi texternalsym:$dst, imm:$off)>;
 
+// Normal calls, with various flavors of addresses.
 def : Pat<(X86call (i32 tglobaladdr:$dst)),
           (CALLpcrel32 tglobaladdr:$dst)>;
 def : Pat<(X86call (i32 texternalsym:$dst)),
