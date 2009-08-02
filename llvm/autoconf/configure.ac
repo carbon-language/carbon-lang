@@ -227,6 +227,7 @@ AC_CACHE_CHECK([target architecture],[llvm_cv_target_arch],
   xcore-*)                llvm_cv_target_arch="XCore" ;;
   msp430-*)               llvm_cv_target_arch="MSP430" ;;
   s390x-*)                llvm_cv_target_arch="SystemZ" ;;
+  bfin-*)                 llvm_cv_target_arch="Blackfin" ;;
   *)                      llvm_cv_target_arch="Unknown" ;;
 esac])
 
@@ -341,18 +342,19 @@ then
   AC_SUBST(JIT,[[]])
 else
   case "$llvm_cv_target_arch" in
-    x86)     AC_SUBST(TARGET_HAS_JIT,1) ;;
-    Sparc)   AC_SUBST(TARGET_HAS_JIT,0) ;;
-    PowerPC) AC_SUBST(TARGET_HAS_JIT,1) ;;
-    x86_64)  AC_SUBST(TARGET_HAS_JIT,1) ;;
-    Alpha)   AC_SUBST(TARGET_HAS_JIT,1) ;;
-    ARM)     AC_SUBST(TARGET_HAS_JIT,0) ;;
-    Mips)    AC_SUBST(TARGET_HAS_JIT,0) ;;
-    PIC16)   AC_SUBST(TARGET_HAS_JIT,0) ;;
-    XCore)   AC_SUBST(TARGET_HAS_JIT,0) ;;
-    MSP430)  AC_SUBST(TARGET_HAS_JIT,0) ;;
-    SystemZ) AC_SUBST(TARGET_HAS_JIT,0) ;;
-    *)       AC_SUBST(TARGET_HAS_JIT,0) ;;
+    x86)         AC_SUBST(TARGET_HAS_JIT,1) ;;
+    Sparc)       AC_SUBST(TARGET_HAS_JIT,0) ;;
+    PowerPC)     AC_SUBST(TARGET_HAS_JIT,1) ;;
+    x86_64)      AC_SUBST(TARGET_HAS_JIT,1) ;;
+    Alpha)       AC_SUBST(TARGET_HAS_JIT,1) ;;
+    ARM)         AC_SUBST(TARGET_HAS_JIT,0) ;;
+    Mips)        AC_SUBST(TARGET_HAS_JIT,0) ;;
+    PIC16)       AC_SUBST(TARGET_HAS_JIT,0) ;;
+    XCore)       AC_SUBST(TARGET_HAS_JIT,0) ;;
+    MSP430)      AC_SUBST(TARGET_HAS_JIT,0) ;;
+    SystemZ)     AC_SUBST(TARGET_HAS_JIT,0) ;;
+    Blackfin)    AC_SUBST(TARGET_HAS_JIT,0) ;;
+    *)           AC_SUBST(TARGET_HAS_JIT,0) ;;
   esac
 fi
 
@@ -401,41 +403,43 @@ AC_ARG_ENABLE([targets],AS_HELP_STRING([--enable-targets],
     [Build specific host targets: all,host-only,{target-name} (default=all)]),,
     enableval=all)
 case "$enableval" in
-  all) TARGETS_TO_BUILD="X86 Sparc PowerPC Alpha ARM Mips CellSPU PIC16 XCore MSP430 SystemZ CBackend MSIL CppBackend" ;;
+  all) TARGETS_TO_BUILD="X86 Sparc PowerPC Alpha ARM Mips CellSPU PIC16 XCore MSP430 SystemZ Blackfin CBackend MSIL CppBackend" ;;
   host-only)
     case "$llvm_cv_target_arch" in
-      x86)     TARGETS_TO_BUILD="X86" ;;
-      x86_64)  TARGETS_TO_BUILD="X86" ;;
-      Sparc)   TARGETS_TO_BUILD="Sparc" ;;
-      PowerPC) TARGETS_TO_BUILD="PowerPC" ;;
-      Alpha)   TARGETS_TO_BUILD="Alpha" ;;
-      ARM)     TARGETS_TO_BUILD="ARM" ;;
-      Mips)    TARGETS_TO_BUILD="Mips" ;;
+      x86)         TARGETS_TO_BUILD="X86" ;;
+      x86_64)      TARGETS_TO_BUILD="X86" ;;
+      Sparc)       TARGETS_TO_BUILD="Sparc" ;;
+      PowerPC)     TARGETS_TO_BUILD="PowerPC" ;;
+      Alpha)       TARGETS_TO_BUILD="Alpha" ;;
+      ARM)         TARGETS_TO_BUILD="ARM" ;;
+      Mips)        TARGETS_TO_BUILD="Mips" ;;
       CellSPU|SPU) TARGETS_TO_BUILD="CellSPU" ;;
-      PIC16)   TARGETS_TO_BUILD="PIC16" ;;
-      XCore)   TARGETS_TO_BUILD="XCore" ;;
-      MSP430)  TARGETS_TO_BUILD="MSP430" ;;
-      SystemZ) TARGETS_TO_BUILD="SystemZ" ;;
+      PIC16)       TARGETS_TO_BUILD="PIC16" ;;
+      XCore)       TARGETS_TO_BUILD="XCore" ;;
+      MSP430)      TARGETS_TO_BUILD="MSP430" ;;
+      SystemZ)     TARGETS_TO_BUILD="SystemZ" ;;
+      Blackfin)    TARGETS_TO_BUILD="Blackfin" ;;
       *)       AC_MSG_ERROR([Can not set target to build]) ;;
     esac
     ;;
   *)for a_target in `echo $enableval|sed -e 's/,/ /g' ` ; do
       case "$a_target" in
-        x86)     TARGETS_TO_BUILD="X86 $TARGETS_TO_BUILD" ;;
-        x86_64)  TARGETS_TO_BUILD="X86 $TARGETS_TO_BUILD" ;;
-        sparc)   TARGETS_TO_BUILD="Sparc $TARGETS_TO_BUILD" ;;
-        powerpc) TARGETS_TO_BUILD="PowerPC $TARGETS_TO_BUILD" ;;
-        alpha)   TARGETS_TO_BUILD="Alpha $TARGETS_TO_BUILD" ;;
-        arm)     TARGETS_TO_BUILD="ARM $TARGETS_TO_BUILD" ;;
-        mips)    TARGETS_TO_BUILD="Mips $TARGETS_TO_BUILD" ;;
-        spu)     TARGETS_TO_BUILD="CellSPU $TARGETS_TO_BUILD" ;;
-        pic16)   TARGETS_TO_BUILD="PIC16 $TARGETS_TO_BUILD" ;;
-        xcore)   TARGETS_TO_BUILD="XCore $TARGETS_TO_BUILD" ;;
-        msp430)  TARGETS_TO_BUILD="MSP430 $TARGETS_TO_BUILD" ;;
-        systemz) TARGETS_TO_BUILD="SystemZ $TARGETS_TO_BUILD" ;;
-        cbe)     TARGETS_TO_BUILD="CBackend $TARGETS_TO_BUILD" ;;
-        msil)    TARGETS_TO_BUILD="MSIL $TARGETS_TO_BUILD" ;;
-        cpp)     TARGETS_TO_BUILD="CppBackend $TARGETS_TO_BUILD" ;;
+        x86)      TARGETS_TO_BUILD="X86 $TARGETS_TO_BUILD" ;;
+        x86_64)   TARGETS_TO_BUILD="X86 $TARGETS_TO_BUILD" ;;
+        sparc)    TARGETS_TO_BUILD="Sparc $TARGETS_TO_BUILD" ;;
+        powerpc)  TARGETS_TO_BUILD="PowerPC $TARGETS_TO_BUILD" ;;
+        alpha)    TARGETS_TO_BUILD="Alpha $TARGETS_TO_BUILD" ;;
+        arm)      TARGETS_TO_BUILD="ARM $TARGETS_TO_BUILD" ;;
+        mips)     TARGETS_TO_BUILD="Mips $TARGETS_TO_BUILD" ;;
+        spu)      TARGETS_TO_BUILD="CellSPU $TARGETS_TO_BUILD" ;;
+        pic16)    TARGETS_TO_BUILD="PIC16 $TARGETS_TO_BUILD" ;;
+        xcore)    TARGETS_TO_BUILD="XCore $TARGETS_TO_BUILD" ;;
+        msp430)   TARGETS_TO_BUILD="MSP430 $TARGETS_TO_BUILD" ;;
+        systemz)  TARGETS_TO_BUILD="SystemZ $TARGETS_TO_BUILD" ;;
+        blackfin) TARGETS_TO_BUILD="Blackfin $TARGETS_TO_BUILD" ;;
+        cbe)      TARGETS_TO_BUILD="CBackend $TARGETS_TO_BUILD" ;;
+        msil)     TARGETS_TO_BUILD="MSIL $TARGETS_TO_BUILD" ;;
+        cpp)      TARGETS_TO_BUILD="CppBackend $TARGETS_TO_BUILD" ;;
         *) AC_MSG_ERROR([Unrecognized target $a_target]) ;;
       esac
   done
