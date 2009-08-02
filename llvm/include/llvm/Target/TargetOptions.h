@@ -16,6 +16,15 @@
 #define LLVM_TARGET_TARGETOPTIONS_H
 
 namespace llvm {
+  // Possible float ABI settings. Used with FloatABIType in TargetOptions.h.
+  namespace FloatABI {
+    enum ABIType {
+      Default, // Target-specific (either soft of hard depending on triple, etc).
+      Soft, // Soft float.
+      Hard  // Hard float.
+    };
+  }
+  
   /// PrintMachineCode - This flag is enabled when the -print-machineinstrs
   /// option is specified on the command line, and should enable debugging
   /// output from the code generator.
