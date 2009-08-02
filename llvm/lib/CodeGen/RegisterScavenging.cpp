@@ -57,6 +57,14 @@ static bool RedefinesSuperRegPart(const MachineInstr *MI,
   return RedefinesSuperRegPart(MI, MO.getReg(), TRI);
 }
 
+bool RegScavenger::isSuperRegUsed(unsigned Reg) const {
+  for (const unsigned *SuperRegs = TRI->getSuperRegisters(Reg);
+       unsigned SuperReg = *SuperRegs; ++SuperRegs)
+    if (isUsed(SuperReg))
+      return true;
+  return false;
+}
+
 /// setUsed - Set the register and its sub-registers as being used.
 void RegScavenger::setUsed(unsigned Reg) {
   RegsAvailable.reset(Reg);
@@ -218,7 +226,7 @@ void RegScavenger::forward() {
     const MachineOperand MO = *UseMOs[i].first;
     unsigned Reg = MO.getReg();
 
-    assert(isUsed(Reg) && "Using an undefined register!");
+    assert((MO.isImplicit() || isUsed(Reg)) && "Using an undefined register!");
 
     if (MO.isKill() && !isReserved(Reg)) {
       KillRegs.set(Reg);
@@ -269,7 +277,8 @@ void RegScavenger::forward() {
 
     // Implicit def is allowed to "re-define" any register. Similarly,
     // implicitly defined registers can be clobbered.
-    assert((isReserved(Reg) || isUnused(Reg) ||
+    assert((MO.isImplicit() || isReserved(Reg) || isUnused(Reg) ||
+            isSuperRegUsed(Reg) ||
             isLiveInButUnusedBefore(Reg, MI, MBB, TRI, MRI)) &&
            "Re-defining a live register!");
     setUsed(Reg);

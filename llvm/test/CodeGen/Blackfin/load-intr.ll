@@ -1,7 +1,4 @@
 ; RUN: llvm-as < %s | llc -march=bfin -verify-machineinstrs | FileCheck %s
-; XFAIL: *
-; Assertion failed: (isUsed(Reg) && "Using an undefined register!"),
-; function forward, file lib/CodeGen/RegisterScavenging.cpp, line 221.
 
 define i16 @f(i32* %p) nounwind {
 entry:
