@@ -37,11 +37,11 @@ public:
   void Initialize(MCContext &Ctx, const TargetMachine &TM) {
     TargetLoweringObjectFile::Initialize(Ctx, TM);
     TextSection = getOrCreateSection("_text", true, 
-                                     SectionKind::get(SectionKind::Text));
+                                     SectionKind::getText());
     DataSection = getOrCreateSection("_data", true, 
-                                     SectionKind::get(SectionKind::DataRel));
+                                     SectionKind::getDataRel());
     ReadOnlySection = getOrCreateSection("_rodata", true, 
-                                     SectionKind::get(SectionKind::ReadOnly));
+                                         SectionKind::getReadOnly());
   }
 };
 }

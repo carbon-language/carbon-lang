@@ -20,26 +20,26 @@ void PIC16TargetObjectFile::Initialize(MCContext &Ctx, const TargetMachine &tm){
   TM = &tm;
   
   BSSSection = getOrCreateSection("udata.# UDATA", false, 
-                                  SectionKind::get(SectionKind::BSS));
+                                  SectionKind::getBSS());
   ReadOnlySection = getOrCreateSection("romdata.# ROMDATA", false,
-                                       SectionKind::get(SectionKind::ReadOnly));
+                                       SectionKind::getReadOnly());
   DataSection = getOrCreateSection("idata.# IDATA", false,
-                                   SectionKind::get(SectionKind::DataRel));
+                                   SectionKind::getDataRel());
   
   // Need because otherwise a .text symbol is emitted by DwarfWriter
   // in BeginModule, and gpasm cribbs for that .text symbol.
   TextSection = getOrCreateSection("", true,
-                                   SectionKind::get(SectionKind::Text));
+                                   SectionKind::getText());
 
   ROSections.push_back(new PIC16Section(ReadOnlySection));
   
   // FIXME: I don't know what the classification of these sections really is.
   ExternalVarDecls = new PIC16Section(getOrCreateSection("ExternalVarDecls",
                                                          false,
-                                      SectionKind::get(SectionKind::Metadata)));
+                                      SectionKind::getMetadata()));
   ExternalVarDefs = new PIC16Section(getOrCreateSection("ExternalVarDefs",
                                                         false,
-                                      SectionKind::get(SectionKind::Metadata)));
+                                      SectionKind::getMetadata()));
 }
 
 
@@ -69,7 +69,7 @@ PIC16TargetObjectFile::getBSSSectionForGlobal(const GlobalVariable *GV) const {
     std::string name = PAN::getUdataSectionName(BSSSections.size());
     const MCSection *NewSection = getOrCreateSection(name.c_str(), false,
                                                      // FIXME.
-                                       SectionKind::get(SectionKind::Metadata));
+                                                    SectionKind::getMetadata());
 
     FoundBSS = new PIC16Section(NewSection);
 
@@ -111,7 +111,7 @@ PIC16TargetObjectFile::getIDATASectionForGlobal(const GlobalVariable *GV) const{
     std::string name = PAN::getIdataSectionName(IDATASections.size());
     const MCSection *NewSection = getOrCreateSection(name.c_str(), false,
                                                    // FIXME.
-                                       SectionKind::get(SectionKind::Metadata));
+                                                    SectionKind::getMetadata());
 
     FoundIDATA = new PIC16Section(NewSection);
 
@@ -147,7 +147,7 @@ PIC16TargetObjectFile::getSectionForAuto(const GlobalVariable *GV) const {
     const MCSection *NewSection = getOrCreateSection(name.c_str(),
                                                      // FIXME.
                                                      false,
-                                       SectionKind::get(SectionKind::Metadata));
+                                       SectionKind::getMetadata());
 
     FoundAutoSec = new PIC16Section(NewSection);
 
@@ -300,7 +300,7 @@ PIC16TargetObjectFile::CreateBSSSectionForGlobal(const GlobalVariable *GV,
   PIC16Section *NewBSS = FoundBSS;
   if (NewBSS == NULL) {
     const MCSection *NewSection = getOrCreateSection(Name.c_str(), false,
-                                            SectionKind::get(SectionKind::BSS));
+                                            SectionKind::getBSS());
     NewBSS = new PIC16Section(NewSection);
     BSSSections.push_back(NewBSS);
   }
@@ -353,7 +353,7 @@ PIC16TargetObjectFile::CreateIDATASectionForGlobal(const GlobalVariable *GV,
   if (NewIDATASec == NULL) {
     const MCSection *NewSection = getOrCreateSection(Name.c_str(), false,
                                                    // FIXME:
-                                       SectionKind::get(SectionKind::Metadata));
+                                       SectionKind::getMetadata());
     NewIDATASec = new PIC16Section(NewSection);
     IDATASections.push_back(NewIDATASec);
   }
@@ -392,7 +392,7 @@ PIC16TargetObjectFile::CreateROSectionForGlobal(const GlobalVariable *GV,
   PIC16Section *NewRomSec = FoundROSec;
   if (NewRomSec == NULL) {
     const MCSection *NewSection = getOrCreateSection(Name.c_str(), false,
-                                       SectionKind::get(SectionKind::ReadOnly));
+                                       SectionKind::getReadOnly());
     NewRomSec = new PIC16Section(NewSection);
     ROSections.push_back(NewRomSec);
   }

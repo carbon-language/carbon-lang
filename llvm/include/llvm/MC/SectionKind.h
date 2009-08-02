@@ -170,12 +170,13 @@ public:
   bool isReadOnlyWithRelLocal() const {
     return K == ReadOnlyWithRelLocal;
   }
-  
+private: 
   static SectionKind get(Kind K) {
     SectionKind Res;
     Res.K = K;
     return Res;
   }
+public:
   
   static SectionKind getMetadata() { return get(Metadata); }
   static SectionKind getText() { return get(Text); }

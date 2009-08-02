@@ -193,7 +193,7 @@ static int AssembleInput(const char *ProgName) {
   Str.get()->SwitchSection(MCSection::Create("__TEXT,__text,"
                                              "regular,pure_instructions",
                                              false,
-                                            SectionKind::get(SectionKind::Text),
+                                            SectionKind::getText(),
                                              Ctx));
 
   AsmParser Parser(SrcMgr, Ctx, *Str.get());
