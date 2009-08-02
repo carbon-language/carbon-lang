@@ -45,8 +45,6 @@ PPCLinuxTargetAsmInfo::PPCLinuxTargetAsmInfo(const PPCTargetMachine &TM) :
   CommentString = "#";
   GlobalPrefix = "";
   PrivateGlobalPrefix = ".L";
-  StaticCtorsSection = ".section\t.ctors,\"aw\",@progbits";
-  StaticDtorsSection = ".section\t.dtors,\"aw\",@progbits";
   UsedDirective = "\t# .no_dead_strip\t";
   WeakRefDirective = "\t.weak\t";
 
