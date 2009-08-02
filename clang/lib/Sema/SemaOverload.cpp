@@ -3496,8 +3496,10 @@ Sema::isBetterOverloadCandidate(const OverloadCandidate& Cand1,
   //      template for F1 is more specialized than the template for F2 
   //      according to the partial ordering rules described in 14.5.5.2, or, 
   //      if not that,
-  
-  // FIXME: Implement partial ordering of function templates.
+  if (Cand1.Function && Cand1.Function->getPrimaryTemplate() &&
+      Cand2.Function && Cand2.Function->getPrimaryTemplate())
+    // FIXME: Implement partial ordering of function templates.
+    Diag(SourceLocation(), diag::unsup_function_template_partial_ordering);
 
   //   -- the context is an initialization by user-defined conversion
   //      (see 8.5, 13.3.1.5) and the standard conversion sequence
