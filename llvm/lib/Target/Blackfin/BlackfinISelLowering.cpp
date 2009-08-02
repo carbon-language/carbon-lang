@@ -498,33 +498,103 @@ unsigned BlackfinTargetLowering::getFunctionAlignment(const Function *F) const {
 /// constraint it is for this target.
 BlackfinTargetLowering::ConstraintType
 BlackfinTargetLowering::getConstraintType(const std::string &Constraint) const {
-  if (Constraint.size() == 1) {
-    switch (Constraint[0]) {
-    default:  break;
-    case 'r': return C_RegisterClass;
-    }
+  if (Constraint.size() != 1)
+    return TargetLowering::getConstraintType(Constraint);
+
+  switch (Constraint[0]) {
+    // Standard constraints
+  case 'r':
+    return C_RegisterClass;
+
+    // Blackfin-specific constraints
+  case 'a':
+  case 'd':
+  case 'z':
+  case 'D':
+  case 'W':
+  case 'e':
+  case 'b':
+  case 'v':
+  case 'f':
+  case 'c':
+  case 't':
+  case 'u':
+  case 'k':
+  case 'x':
+  case 'y':
+  case 'w':
+    return C_RegisterClass;
+  case 'A':
+  case 'B':
+  case 'C':
+  case 'Z':
+  case 'Y':
+    return C_Register;
   }
+
+  // Not implemented: q0-q7, qA. Use {R2} etc instead
 
   return TargetLowering::getConstraintType(Constraint);
 }
 
+/// getRegForInlineAsmConstraint - Return register no and class for a C_Register
+/// constraint.
 std::pair<unsigned, const TargetRegisterClass*> BlackfinTargetLowering::
 getRegForInlineAsmConstraint(const std::string &Constraint, MVT VT) const {
-  if (Constraint.size() == 1) {
-    switch (Constraint[0]) {
-    case 'r':
-      return std::make_pair(0U, BF::DRegisterClass);
-    }
+  typedef std::pair<unsigned, const TargetRegisterClass*> Pair;
+  using namespace BF;
+
+  if (Constraint.size() != 1)
+    return TargetLowering::getRegForInlineAsmConstraint(Constraint, VT);
+
+  switch (Constraint[0]) {
+    // Standard constraints
+  case 'r':
+    return Pair(0U, VT == MVT::i16 ? D16RegisterClass : DPRegisterClass);
+
+    // Blackfin-specific constraints
+  case 'a': return Pair(0U, PRegisterClass);
+  case 'd': return Pair(0U, DRegisterClass);
+  case 'e': return Pair(0U, AccuRegisterClass);
+  case 'A': return Pair(A0, AccuRegisterClass);
+  case 'B': return Pair(A1, AccuRegisterClass);
+  case 'b': return Pair(0U, IRegisterClass);
+  case 'v': return Pair(0U, BRegisterClass);
+  case 'f': return Pair(0U, MRegisterClass);
+  case 'C': return Pair(CC, JustCCRegisterClass);
+  case 'x': return Pair(0U, GRRegisterClass);
+  case 'w': return Pair(0U, ALLRegisterClass);
+  case 'Z': return Pair(P3, PRegisterClass);
+  case 'Y': return Pair(P1, PRegisterClass);
   }
+
+  // Not implemented: q0-q7, qA. Use {R2} etc instead.
+  // Constraints z, D, W, c, t, u, k, and y use non-existing classes, defer to
+  // getRegClassForInlineAsmConstraint()
 
   return TargetLowering::getRegForInlineAsmConstraint(Constraint, VT);
 }
 
 std::vector<unsigned> BlackfinTargetLowering::
-getRegClassForInlineAsmConstraint(const std::string &Constraint,
-                                  MVT VT) const {
+getRegClassForInlineAsmConstraint(const std::string &Constraint, MVT VT) const {
+  using namespace BF;
+
   if (Constraint.size() != 1)
     return std::vector<unsigned>();
+
+  switch (Constraint[0]) {
+  case 'z': return make_vector<unsigned>(P0, P1, P2, 0);
+  case 'D': return make_vector<unsigned>(R0, R2, R4, R6, 0);
+  case 'W': return make_vector<unsigned>(R1, R3, R5, R7, 0);
+  case 'c': return make_vector<unsigned>(I0, I1, I2, I3,
+                                         B0, B1, B2, B3,
+                                         L0, L1, L2, L3, 0);
+  case 't': return make_vector<unsigned>(LT0, LT1, 0);
+  case 'u': return make_vector<unsigned>(LB0, LB1, 0);
+  case 'k': return make_vector<unsigned>(LC0, LC1, 0);
+  case 'y': return make_vector<unsigned>(RETS, RETN, RETI, RETX, RETE,
+                                         ASTAT, SEQSTAT, USP, 0);
+  }
 
   return std::vector<unsigned>();
 }

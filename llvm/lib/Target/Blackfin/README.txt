@@ -41,6 +41,56 @@ should keep track of:
 It's a hack combining two instructions by concatenation.
 
 * Inline Assembly
+
+These are the GCC constraints from bfin/constraints.md:
+
+| Code  | Register class                            | LLVM |
+|-------+-------------------------------------------+------|
+| a     | P                                         | C    |
+| d     | D                                         | C    |
+| z     | Call clobbered P (P0, P1, P2)             | X    |
+| D     | EvenD                                     | X    |
+| W     | OddD                                      | X    |
+| e     | Accu                                      | C    |
+| A     | A0                                        | S    |
+| B     | A1                                        | S    |
+| b     | I                                         | C    |
+| v     | B                                         | C    |
+| f     | M                                         | C    |
+| c     | Circular I, B, L                          | X    |
+| C     | JustCC                                    | S    |
+| t     | LoopTop                                   | X    |
+| u     | LoopBottom                                | X    |
+| k     | LoopCount                                 | X    |
+| x     | GR                                        | C    |
+| y     | RET*, ASTAT, SEQSTAT, USP                 | X    |
+| w     | ALL                                       | C    |
+| Z     | The FD-PIC GOT pointer (P3)               | S    |
+| Y     | The FD-PIC function pointer register (P1) | S    |
+| q0-q7 | R0-R7 individually                        |      |
+| qA    | P0                                        |      |
+|-------+-------------------------------------------+------|
+| Code  | Constant                                  |      |
+|-------+-------------------------------------------+------|
+| J     | 1<<N, N<32                                |      |
+| Ks3   | imm3                                      |      |
+| Ku3   | uimm3                                     |      |
+| Ks4   | imm4                                      |      |
+| Ku4   | uimm4                                     |      |
+| Ks5   | imm5                                      |      |
+| Ku5   | uimm5                                     |      |
+| Ks7   | imm7                                      |      |
+| KN7   | -imm7                                     |      |
+| Ksh   | imm16                                     |      |
+| Kuh   | uimm16                                    |      |
+| L     | ~(1<<N)                                   |      |
+| M1    | 0xff                                      |      |
+| M2    | 0xffff                                    |      |
+| P0-P4 | 0-4                                       |      |
+| PA    | Macflag, not M                            |      |
+| PB    | Macflag, only M                           |      |
+| Q     | Symbol                                    |      |
+
 ** TODO Support all register classes
 * DAG combiner
 ** Create test case for each Illegal SETCC case

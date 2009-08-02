@@ -281,6 +281,8 @@ def P : RegisterClass<"BF", [i32], 32, [P0, P1, P2, P3, P4, P5, FP, SP]> {
 
 def I : RegisterClass<"BF", [i32], 32, [I0, I1, I2, I3]>;
 def M : RegisterClass<"BF", [i32], 32, [M0, M1, M2, M3]>;
+def B : RegisterClass<"BF", [i32], 32, [B0, B1, B2, B3]>;
+def L : RegisterClass<"BF", [i32], 32, [L0, L1, L2, L3]>;
 
 def DP : RegisterClass<"BF", [i32], 32,
     [R0, R1, R2, R3, R4, R5, R6, R7,
@@ -378,3 +380,6 @@ def AnyCC   : RegisterClass<"BF", [i32], 8, [CC, NCC]> {
 def StatBit : RegisterClass<"BF", [i1], 8,
     [AZ, AN, CC, AQ, AC0, AC1, AV0, AV0S, AV1, AV1S, V, VS]>;
 }
+
+// Should be i40, but that isn't defined. It is not a legal type yet anyway.
+def Accu : RegisterClass<"BF", [i64], 64, [A0, A1]>;
