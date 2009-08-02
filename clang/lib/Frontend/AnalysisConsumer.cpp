@@ -234,6 +234,11 @@ void AnalysisConsumer::HandleTranslationUnit(ASTContext &C) {
       if (ObjCImplementationDecl* ID = dyn_cast<ObjCImplementationDecl>(*I))
         HandleCode(ID, 0, ObjCImplementationActions);
   }
+  
+  // Explicitly destroy the PathDiagnosticClient.  This will flush its output.
+  // FIXME: This should be replaced with something that doesn't rely on
+  // side-effects in PathDiagnosticClient's destructor.
+  PD.reset(NULL);
 }
 
 void AnalysisConsumer::HandleCode(Decl* D, Stmt* Body, Actions& actions) {
