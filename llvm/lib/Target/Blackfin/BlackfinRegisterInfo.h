@@ -1,0 +1,114 @@
+//===- BlackfinRegisterInfo.h - Blackfin Register Information ..-*- C++ -*-===//
+//
+//                     The LLVM Compiler Infrastructure
+//
+// This file is distributed under the University of Illinois Open Source
+// License. See LICENSE.TXT for details.
+//
+//===----------------------------------------------------------------------===//
+//
+// This file contains the Blackfin implementation of the TargetRegisterInfo
+// class.
+//
+//===----------------------------------------------------------------------===//
+
+#ifndef BLACKFINREGISTERINFO_H
+#define BLACKFINREGISTERINFO_H
+
+#include "llvm/Target/TargetRegisterInfo.h"
+#include "BlackfinGenRegisterInfo.h.inc"
+
+namespace llvm {
+
+  class BlackfinSubtarget;
+  class TargetInstrInfo;
+  class Type;
+
+  template<unsigned N>
+  static inline bool isImm(int x) {
+    return x >= -(1<<(N-1)) && x < (1<<(N-1));
+  }
+
+  template<unsigned N>
+  static inline bool isUimm(unsigned x) {
+    return x < (1<<N);
+  }
+
+  // Subregister indices, keep in sync with BlackfinRegisterInfo.td
+  enum BfinSubregIdx {
+    bfin_subreg_lo16 = 1,
+    bfin_subreg_hi16 = 2,
+    bfin_subreg_lo32 = 3
+  };
+
+  struct BlackfinRegisterInfo : public BlackfinGenRegisterInfo {
+    BlackfinSubtarget &Subtarget;
+    const TargetInstrInfo &TII;
+
+    BlackfinRegisterInfo(BlackfinSubtarget &st, const TargetInstrInfo &tii);
+
+    /// Code Generation virtual methods...
+    const unsigned *getCalleeSavedRegs(const MachineFunction *MF = 0) const;
+
+    const TargetRegisterClass* const*
+    getCalleeSavedRegClasses(const MachineFunction *MF = 0) const;
+
+    BitVector getReservedRegs(const MachineFunction &MF) const;
+
+    // getSubReg implemented by tablegen
+
+    const TargetRegisterClass *getPointerRegClass(unsigned Kind = 0) const {
+      return &BF::PRegClass;
+    }
+
+    const TargetRegisterClass *getPhysicalRegisterRegClass(unsigned reg,
+                                                           MVT VT) const;
+
+    bool hasFP(const MachineFunction &MF) const;
+
+    // bool hasReservedCallFrame(MachineFunction &MF) const;
+
+    bool requiresRegisterScavenging(const MachineFunction &MF) const;
+
+    void eliminateCallFramePseudoInstr(MachineFunction &MF,
+                                       MachineBasicBlock &MBB,
+                                       MachineBasicBlock::iterator I) const;
+
+    void eliminateFrameIndex(MachineBasicBlock::iterator II,
+                             int SPAdj, RegScavenger *RS = NULL) const;
+
+    void processFunctionBeforeCalleeSavedScan(MachineFunction &MF,
+                                              RegScavenger *RS) const;
+
+    void processFunctionBeforeFrameFinalized(MachineFunction &MF) const;
+
+    void emitPrologue(MachineFunction &MF) const;
+    void emitEpilogue(MachineFunction &MF, MachineBasicBlock &MBB) const;
+
+    unsigned getFrameRegister(MachineFunction &MF) const;
+    int getFrameIndexOffset(MachineFunction &MF, int FI) const;
+    unsigned getRARegister() const;
+
+    // Exception handling queries.
+    unsigned getEHExceptionRegister() const;
+    unsigned getEHHandlerRegister() const;
+
+    int getDwarfRegNum(unsigned RegNum, bool isEH) const;
+
+    // Utility functions
+    void adjustRegister(MachineBasicBlock &MBB,
+                        MachineBasicBlock::iterator I,
+                        DebugLoc DL,
+                        unsigned Reg,
+                        unsigned ScratchReg,
+                        int delta) const;
+    void loadConstant(MachineBasicBlock &MBB,
+                      MachineBasicBlock::iterator I,
+                      DebugLoc DL,
+                      unsigned Reg,
+                      int value) const;
+  };
+
+} // end namespace llvm
+
+#endif

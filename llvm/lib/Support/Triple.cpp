@@ -23,6 +23,7 @@ const char *Triple::getArchTypeName(ArchType Kind) {
     
   case alpha:   return "alpha";
   case arm:     return "arm";
+  case bfin:    return "bfin";
   case cellspu: return "cellspu";
   case mips:    return "mips";
   case mipsel:  return "mipsel";
@@ -107,6 +108,8 @@ void Triple::Parse() const {
     Arch = sparc;
   else if (ArchName == "s390x")
     Arch = systemz;
+  else if (ArchName == "bfin")
+    Arch = bfin;
   else
     Arch = UnknownArch;
 

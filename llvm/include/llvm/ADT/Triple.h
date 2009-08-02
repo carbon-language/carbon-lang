@@ -38,6 +38,7 @@ public:
     
     alpha,   // alpha
     arm,     // arm, armv.*
+    bfin,    // blackfin
     cellspu, // spu, cellspu
     mips,    // mips, mipsallegrex
     mipsel,  // mipsel, mipsallegrexel, psp
