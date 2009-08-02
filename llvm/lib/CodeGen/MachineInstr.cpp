@@ -1041,6 +1041,9 @@ bool MachineInstr::addRegisterKilled(unsigned IncomingReg,
         if (MO.isKill())
           // The register is already marked kill.
           return true;
+        if (isPhysReg && isRegTiedToDefOperand(i))
+          // Two-address uses of physregs must not be marked kill.
+          return true;
         MO.setIsKill();
         Found = true;
       }

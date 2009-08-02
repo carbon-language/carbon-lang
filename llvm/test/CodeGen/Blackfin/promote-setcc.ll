@@ -1,7 +1,4 @@
 ; RUN: llvm-as < %s | llc -march=bfin > %t
-; XFAIL: *
-; Assertion failed: (isUsed(Reg) && "Using an undefined register!"),
-; function forward, file RegisterScavenging.cpp, line 259.
 
 ; The DAG combiner may sometimes create illegal i16 SETCC operations when run
 ; after LegalizeOps. Try to tease out all the optimizations in
