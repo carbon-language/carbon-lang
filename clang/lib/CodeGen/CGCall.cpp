@@ -594,7 +594,7 @@ void CodeGenFunction::EmitFunctionProlog(const CGFunctionInfo &FI,
       // Name the arguments used in expansion and increment AI.
       unsigned Index = 0;
       for (; AI != End; ++AI, ++Index)
-        AI->setName(Name + "." + llvm::utostr(Index));
+        AI->setName(Name + "." + llvm::Twine(Index));
       continue;
     }
 
