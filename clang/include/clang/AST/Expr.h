@@ -1170,7 +1170,10 @@ public:
     CK_NoOp,
     
     /// CK_DerivedToBase - Derived to base class casts.
-    CK_DerivedToBase
+    CK_DerivedToBase,
+    
+    /// CK_Dynamic - Dynamic cast.
+    CK_Dynamic
   };
   
 private:

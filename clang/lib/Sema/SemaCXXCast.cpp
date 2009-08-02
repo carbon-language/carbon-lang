@@ -45,7 +45,8 @@ static void CheckStaticCast(Sema &Self, Expr *&SrcExpr, QualType DestType,
                             const SourceRange &OpRange);
 static void CheckDynamicCast(Sema &Self, Expr *&SrcExpr, QualType DestType,
                              const SourceRange &OpRange,
-                             const SourceRange &DestRange);
+                             const SourceRange &DestRange, 
+                             CastExpr::CastKind &Kind);
 
 static bool CastsAwayConstness(Sema &Self, QualType SrcType, QualType DestType);
 
@@ -119,13 +120,13 @@ Sema::ActOnCXXNamedCast(SourceLocation OpLoc, tok::TokenKind Kind,
     return Owned(new (Context) CXXConstCastExpr(DestType.getNonReferenceType(),
                                                 Ex, DestType, OpLoc));
 
-  case tok::kw_dynamic_cast:
+  case tok::kw_dynamic_cast: {
+    CastExpr::CastKind Kind = CastExpr::CK_Unknown;
     if (!TypeDependent)
-      CheckDynamicCast(*this, Ex, DestType, OpRange, DestRange);
+      CheckDynamicCast(*this, Ex, DestType, OpRange, DestRange, Kind);
     return Owned(new (Context)CXXDynamicCastExpr(DestType.getNonReferenceType(),
-                                                 CastExpr::CK_Unknown, Ex, 
-                                                 DestType, OpLoc));
-
+                                                 Kind, Ex, DestType, OpLoc));
+  }
   case tok::kw_reinterpret_cast:
     if (!TypeDependent)
       CheckReinterpretCast(*this, Ex, DestType, OpRange, DestRange);
@@ -192,10 +193,10 @@ CastsAwayConstness(Sema &Self, QualType SrcType, QualType DestType)
 /// CheckDynamicCast - Check that a dynamic_cast\<DestType\>(SrcExpr) is valid.
 /// Refer to C++ 5.2.7 for details. Dynamic casts are used mostly for runtime-
 /// checked downcasts in class hierarchies.
-void
+static void
 CheckDynamicCast(Sema &Self, Expr *&SrcExpr, QualType DestType,
                  const SourceRange &OpRange,
-                 const SourceRange &DestRange)
+                 const SourceRange &DestRange, CastExpr::CastKind &Kind)
 {
   QualType OrigDestType = DestType, OrigSrcType = SrcExpr->getType();
   DestType = Self.Context.getCanonicalType(DestType);
@@ -292,6 +293,7 @@ CheckDynamicCast(Sema &Self, Expr *&SrcExpr, QualType DestType,
   if (DestRecord && Self.IsDerivedFrom(SrcPointee, DestPointee)) {
     Self.CheckDerivedToBaseConversion(SrcPointee, DestPointee,
                                       OpRange.getBegin(), OpRange);
+    Kind = CastExpr::CK_DerivedToBase;
     // Diagnostic already emitted on error.
     return;
   }
@@ -305,6 +307,7 @@ CheckDynamicCast(Sema &Self, Expr *&SrcExpr, QualType DestType,
   }
 
   // Done. Everything else is run-time checks.
+  Kind = CastExpr::CK_Dynamic;
 }
 
 /// CheckConstCast - Check that a const_cast\<DestType\>(SrcExpr) is valid.
