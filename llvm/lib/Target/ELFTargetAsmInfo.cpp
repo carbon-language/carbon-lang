@@ -15,7 +15,3 @@
 #include "llvm/Target/ELFTargetAsmInfo.h"
 #include "llvm/ADT/SmallVector.h"
 using namespace llvm;
-
-ELFTargetAsmInfo::ELFTargetAsmInfo(const TargetMachine &TM)
-  : TargetAsmInfo(TM) {
-}

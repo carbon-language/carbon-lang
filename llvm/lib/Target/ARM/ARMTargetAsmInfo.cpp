@@ -56,7 +56,7 @@ ARMDarwinTargetAsmInfo::ARMDarwinTargetAsmInfo(const ARMBaseTargetMachine &TM):
 }
 
 ARMELFTargetAsmInfo::ARMELFTargetAsmInfo(const ARMBaseTargetMachine &TM):
-  ARMTargetAsmInfo<ELFTargetAsmInfo>(TM) {
+  ARMTargetAsmInfo<TargetAsmInfo>(TM) {
   Subtarget = &TM.getSubtarget<ARMSubtarget>();
 
   NeedsSet = false;

@@ -21,7 +21,7 @@ using namespace llvm;
 using namespace llvm::dwarf;
 
 SPULinuxTargetAsmInfo::SPULinuxTargetAsmInfo(const SPUTargetMachine &TM) :
-    SPUTargetAsmInfo<ELFTargetAsmInfo>(TM) {
+    SPUTargetAsmInfo<TargetAsmInfo>(TM) {
   PCSymbol = ".";
   CommentString = "#";
   GlobalPrefix = "";

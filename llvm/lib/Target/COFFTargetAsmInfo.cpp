@@ -16,9 +16,7 @@
 #include "llvm/ADT/SmallVector.h"
 using namespace llvm;
 
-COFFTargetAsmInfo::COFFTargetAsmInfo(const TargetMachine &TM)
-  : TargetAsmInfo(TM) {
-
+COFFTargetAsmInfo::COFFTargetAsmInfo() {
   GlobalPrefix = "_";
   LCOMMDirective = "\t.lcomm\t";
   COMMDirectiveTakesAlignment = false;

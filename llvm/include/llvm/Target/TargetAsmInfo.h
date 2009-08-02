@@ -22,15 +22,11 @@
 
 namespace llvm {
   template <typename T> class SmallVectorImpl;
-  class TargetMachine;
   
   /// TargetAsmInfo - This class is intended to be used as a base class for asm
   /// properties and features specific to the target.
   class TargetAsmInfo {
   protected:
-    /// TM - The current TargetMachine.
-    const TargetMachine &TM;
-
     //===------------------------------------------------------------------===//
     // Properties to be set by the target writer, used to configure asm printer.
     //
@@ -376,7 +372,7 @@ namespace llvm {
     const char *const *AsmTransCBE; // Defaults to empty
 
   public:
-    explicit TargetAsmInfo(const TargetMachine &TM);
+    explicit TargetAsmInfo();
     virtual ~TargetAsmInfo();
 
     /// Measure the specified inline asm to determine an approximation of its

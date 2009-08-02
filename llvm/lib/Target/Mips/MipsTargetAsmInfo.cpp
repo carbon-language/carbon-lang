@@ -15,9 +15,7 @@
 #include "MipsTargetMachine.h"
 using namespace llvm;
 
-MipsTargetAsmInfo::MipsTargetAsmInfo(const MipsTargetMachine &TM)
-  : ELFTargetAsmInfo(TM) {
-
+MipsTargetAsmInfo::MipsTargetAsmInfo(const MipsTargetMachine &TM) {
   AlignmentIsInBytes          = false;
   COMMDirectiveTakesAlignment = true;
   Data16bitsDirective         = "\t.half\t";

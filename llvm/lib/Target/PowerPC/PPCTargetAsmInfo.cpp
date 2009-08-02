@@ -33,7 +33,7 @@ PPCDarwinTargetAsmInfo::PPCDarwinTargetAsmInfo(const PPCTargetMachine &TM) :
 }
 
 PPCLinuxTargetAsmInfo::PPCLinuxTargetAsmInfo(const PPCTargetMachine &TM) :
-  PPCTargetAsmInfo<ELFTargetAsmInfo>(TM) {
+  PPCTargetAsmInfo<TargetAsmInfo>(TM) {
   CommentString = "#";
   GlobalPrefix = "";
   PrivateGlobalPrefix = ".L";

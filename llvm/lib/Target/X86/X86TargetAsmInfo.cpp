@@ -87,7 +87,7 @@ X86DarwinTargetAsmInfo::X86DarwinTargetAsmInfo(const X86TargetMachine &TM):
 }
 
 X86ELFTargetAsmInfo::X86ELFTargetAsmInfo(const X86TargetMachine &TM) :
-  X86TargetAsmInfo<ELFTargetAsmInfo>(TM) {
+  X86TargetAsmInfo<TargetAsmInfo>(TM) {
 
   PrivateGlobalPrefix = ".L";
   WeakRefDirective = "\t.weak\t";

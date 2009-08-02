@@ -14,10 +14,11 @@
 #ifndef MSP430TARGETASMINFO_H
 #define MSP430TARGETASMINFO_H
 
-#include "llvm/Target/ELFTargetAsmInfo.h"
+#include "llvm/Target/TargetAsmInfo.h"
 
 namespace llvm {
-  struct MSP430TargetAsmInfo : public ELFTargetAsmInfo {
+  class TargetMachine;
+  struct MSP430TargetAsmInfo : public TargetAsmInfo {
     explicit MSP430TargetAsmInfo(const TargetMachine &TM);
   };
 

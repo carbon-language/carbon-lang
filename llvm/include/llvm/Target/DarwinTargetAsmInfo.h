@@ -24,7 +24,7 @@ namespace llvm {
   class Mangler;
 
   struct DarwinTargetAsmInfo : public TargetAsmInfo {
-    explicit DarwinTargetAsmInfo(const TargetMachine &TM);
+    explicit DarwinTargetAsmInfo();
   };
 }
 

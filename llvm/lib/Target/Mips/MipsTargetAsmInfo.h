@@ -14,13 +14,13 @@
 #ifndef MIPSTARGETASMINFO_H
 #define MIPSTARGETASMINFO_H
 
-#include "llvm/Target/ELFTargetAsmInfo.h"
+#include "llvm/Target/TargetAsmInfo.h"
 
 namespace llvm {
   // Forward declaration.
   class MipsTargetMachine;
 
-  struct MipsTargetAsmInfo : public ELFTargetAsmInfo {
+  struct MipsTargetAsmInfo : public TargetAsmInfo {
     explicit MipsTargetAsmInfo(const MipsTargetMachine &TM);
   };
 

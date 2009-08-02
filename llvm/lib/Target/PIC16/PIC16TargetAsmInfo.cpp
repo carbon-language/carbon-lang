@@ -20,8 +20,7 @@
 using namespace llvm;
 
 PIC16TargetAsmInfo::
-PIC16TargetAsmInfo(const PIC16TargetMachine &TM) 
-  : TargetAsmInfo(TM) {
+PIC16TargetAsmInfo(const PIC16TargetMachine &TM) {
   CommentString = ";";
   GlobalPrefix = PAN::getTagName(PAN::PREFIX_SYMBOL);
   GlobalDirective = "\tglobal\t";

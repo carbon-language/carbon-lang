@@ -12,22 +12,10 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include "llvm/Constants.h"
-#include "llvm/DerivedTypes.h"
-#include "llvm/Function.h"
-#include "llvm/GlobalVariable.h"
-#include "llvm/ADT/StringExtras.h"
-#include "llvm/Support/ErrorHandling.h"
-#include "llvm/Support/Mangler.h"
 #include "llvm/Target/DarwinTargetAsmInfo.h"
-#include "llvm/Target/TargetMachine.h"
-#include "llvm/Target/TargetData.h"
-
 using namespace llvm;
 
-DarwinTargetAsmInfo::DarwinTargetAsmInfo(const TargetMachine &TM) 
-  : TargetAsmInfo(TM) {
- 
+DarwinTargetAsmInfo::DarwinTargetAsmInfo() {
   // Common settings for all Darwin targets.
   // Syntax:
   GlobalPrefix = "_";

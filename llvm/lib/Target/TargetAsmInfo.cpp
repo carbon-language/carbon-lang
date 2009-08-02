@@ -17,7 +17,7 @@
 #include <cstring>
 using namespace llvm;
 
-TargetAsmInfo::TargetAsmInfo(const TargetMachine &tm) : TM(tm) {
+TargetAsmInfo::TargetAsmInfo() {
   ZeroFillDirective = 0;
   NonexecutableStackDirective = 0;
   NeedsSet = false;

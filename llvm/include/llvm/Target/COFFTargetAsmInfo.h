@@ -15,7 +15,7 @@
 namespace llvm {
   class COFFTargetAsmInfo : public TargetAsmInfo {
   protected:
-    explicit COFFTargetAsmInfo(const TargetMachine &TM);
+    explicit COFFTargetAsmInfo();
       
   };
 }

@@ -14,11 +14,11 @@
 #ifndef XCORETARGETASMINFO_H
 #define XCORETARGETASMINFO_H
 
-#include "llvm/Target/ELFTargetAsmInfo.h"
+#include "llvm/Target/TargetAsmInfo.h"
 
 namespace llvm {
-
-  class XCoreTargetAsmInfo : public ELFTargetAsmInfo {
+  class TargetMachine;
+  class XCoreTargetAsmInfo : public TargetAsmInfo {
   public:
     explicit XCoreTargetAsmInfo(const TargetMachine &TM);
   };

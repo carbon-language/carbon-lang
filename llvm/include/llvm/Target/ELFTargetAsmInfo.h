@@ -19,9 +19,7 @@
 
 namespace llvm {
 
-  struct ELFTargetAsmInfo : public TargetAsmInfo {
-    ELFTargetAsmInfo(const TargetMachine &TM);
-  };
+  
 }
 
 

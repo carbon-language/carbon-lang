@@ -21,7 +21,7 @@ namespace llvm {
   // Forward declaration.
   class SystemZTargetMachine;
 
-  struct SystemZTargetAsmInfo : public ELFTargetAsmInfo {
+  struct SystemZTargetAsmInfo : public TargetAsmInfo {
     explicit SystemZTargetAsmInfo(const SystemZTargetMachine &TM);
   };
 

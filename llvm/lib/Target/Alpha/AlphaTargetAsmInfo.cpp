@@ -16,8 +16,7 @@
 
 using namespace llvm;
 
-AlphaTargetAsmInfo::AlphaTargetAsmInfo(const AlphaTargetMachine &TM)
-  : TargetAsmInfo(TM) {
+AlphaTargetAsmInfo::AlphaTargetAsmInfo(const AlphaTargetMachine &TM) {
   AlignmentIsInBytes = false;
   PrivateGlobalPrefix = "$";
   JumpTableDirective = ".gprel32";

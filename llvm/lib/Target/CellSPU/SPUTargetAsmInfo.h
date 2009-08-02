@@ -15,7 +15,6 @@
 #define SPUTARGETASMINFO_H
 
 #include "llvm/Target/TargetAsmInfo.h"
-#include "llvm/Target/ELFTargetAsmInfo.h"
 #include "SPUTargetMachine.h"
 #include "SPUSubtarget.h"
 
@@ -26,8 +25,7 @@ namespace llvm {
   
   template <class BaseTAI>
   struct SPUTargetAsmInfo : public BaseTAI {
-    explicit SPUTargetAsmInfo(const SPUTargetMachine &TM):
-      BaseTAI(TM) {
+    explicit SPUTargetAsmInfo(const SPUTargetMachine &TM) {
       /* (unused today)
        * const SPUSubtarget *Subtarget = &TM.getSubtarget<SPUSubtarget>(); */
 
@@ -41,7 +39,7 @@ namespace llvm {
     }
   };
   
-  struct SPULinuxTargetAsmInfo : public SPUTargetAsmInfo<ELFTargetAsmInfo> {
+  struct SPULinuxTargetAsmInfo : public SPUTargetAsmInfo<TargetAsmInfo> {
     explicit SPULinuxTargetAsmInfo(const SPUTargetMachine &TM);
   };
 } // namespace llvm

@@ -24,8 +24,7 @@ namespace llvm {
 
   template <class BaseTAI>
   struct PPCTargetAsmInfo : public BaseTAI {
-    explicit PPCTargetAsmInfo(const PPCTargetMachine &TM):
-      BaseTAI(TM) {
+    explicit PPCTargetAsmInfo(const PPCTargetMachine &TM) {
       const PPCSubtarget *Subtarget = &TM.getSubtarget<PPCSubtarget>();
       bool isPPC64 = Subtarget->isPPC64();
 
@@ -48,7 +47,7 @@ namespace llvm {
     explicit PPCDarwinTargetAsmInfo(const PPCTargetMachine &TM);
   };
 
-  struct PPCLinuxTargetAsmInfo : public PPCTargetAsmInfo<ELFTargetAsmInfo> {
+  struct PPCLinuxTargetAsmInfo : public PPCTargetAsmInfo<TargetAsmInfo> {
     explicit PPCLinuxTargetAsmInfo(const PPCTargetMachine &TM);
   };
 

@@ -14,14 +14,14 @@
 #ifndef SPARCTARGETASMINFO_H
 #define SPARCTARGETASMINFO_H
 
-#include "llvm/Target/ELFTargetAsmInfo.h"
+#include "llvm/Target/TargetAsmInfo.h"
 
 namespace llvm {
 
   // Forward declaration.
   class TargetMachine;
 
-  struct SparcELFTargetAsmInfo : public ELFTargetAsmInfo {
+  struct SparcELFTargetAsmInfo : public TargetAsmInfo {
     explicit SparcELFTargetAsmInfo(const TargetMachine &TM);
   };
 
