@@ -23,8 +23,6 @@
 
 namespace llvm {
 
-  class Module;
-
   class BlackfinTargetMachine : public LLVMTargetMachine {
     const TargetData DataLayout;
     BlackfinSubtarget Subtarget;
@@ -36,7 +34,7 @@ namespace llvm {
     virtual const TargetAsmInfo *createTargetAsmInfo() const;
 
   public:
-    BlackfinTargetMachine(const Target &T, const Module &M,
+    BlackfinTargetMachine(const Target &T, const std::string &TT,
                           const std::string &FS);
 
     virtual const BlackfinInstrInfo *getInstrInfo() const { return &InstrInfo; }
@@ -51,7 +49,6 @@ namespace llvm {
       return const_cast<BlackfinTargetLowering*>(&TLInfo);
     }
     virtual const TargetData *getTargetData() const { return &DataLayout; }
-    static unsigned getModuleMatchQuality(const Module &M);
     virtual bool addInstSelector(PassManagerBase &PM,
                                  CodeGenOpt::Level OptLevel);
   };

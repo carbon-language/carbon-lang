@@ -14,7 +14,6 @@
 #include "AlphaJITInfo.h"
 #include "AlphaTargetAsmInfo.h"
 #include "AlphaTargetMachine.h"
-#include "llvm/Module.h"
 #include "llvm/PassManager.h"
 #include "llvm/Support/FormattedStream.h"
 #include "llvm/Target/TargetRegistry.h"
@@ -30,13 +29,13 @@ const TargetAsmInfo *AlphaTargetMachine::createTargetAsmInfo() const {
   return new AlphaTargetAsmInfo();
 }
 
-AlphaTargetMachine::AlphaTargetMachine(const Target &T, const Module &M, 
+AlphaTargetMachine::AlphaTargetMachine(const Target &T, const std::string &TT,
                                        const std::string &FS)
   : LLVMTargetMachine(T),
     DataLayout("e-f128:128:128"),
     FrameInfo(TargetFrameInfo::StackGrowsDown, 16, 0),
     JITInfo(*this),
-    Subtarget(M.getTargetTriple(), FS),
+    Subtarget(TT, FS),
     TLInfo(*this) {
   setRelocationModel(Reloc::PIC_);
 }

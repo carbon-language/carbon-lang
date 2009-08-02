@@ -24,7 +24,8 @@ class formatted_raw_ostream;
 struct CPPTargetMachine : public TargetMachine {
   const TargetData DataLayout;       // Calculates type size & alignment
 
-  CPPTargetMachine(const Target &T, const Module &M, const std::string &FS)
+  CPPTargetMachine(const Target &T, const Module &M,
+                   const std::string &FS)
     : TargetMachine(T), DataLayout(&M) {}
 
   virtual bool WantsWholeFile() const { return true; }

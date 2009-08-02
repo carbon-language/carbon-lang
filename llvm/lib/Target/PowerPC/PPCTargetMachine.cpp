@@ -14,7 +14,6 @@
 #include "PPC.h"
 #include "PPCTargetAsmInfo.h"
 #include "PPCTargetMachine.h"
-#include "llvm/Module.h"
 #include "llvm/PassManager.h"
 #include "llvm/Target/TargetOptions.h"
 #include "llvm/Target/TargetRegistry.h"
@@ -34,10 +33,10 @@ const TargetAsmInfo *PPCTargetMachine::createTargetAsmInfo() const {
     return new PPCLinuxTargetAsmInfo(*this);
 }
 
-PPCTargetMachine::PPCTargetMachine(const Target&T, const Module &M, 
+PPCTargetMachine::PPCTargetMachine(const Target&T, const std::string &TT,
                                    const std::string &FS, bool is64Bit)
   : LLVMTargetMachine(T),
-    Subtarget(M.getTargetTriple(), FS, is64Bit),
+    Subtarget(TT, FS, is64Bit),
     DataLayout(Subtarget.getTargetDataString()), InstrInfo(*this),
     FrameInfo(*this, is64Bit), JITInfo(*this, is64Bit), TLInfo(*this),
     InstrItins(Subtarget.getInstrItineraryData()), MachOWriterInfo(*this) {
@@ -54,15 +53,15 @@ PPCTargetMachine::PPCTargetMachine(const Target&T, const Module &M,
 /// groups, which typically degrades performance.
 bool PPCTargetMachine::getEnableTailMergeDefault() const { return false; }
 
-PPC32TargetMachine::PPC32TargetMachine(const Target &T, const Module &M, 
+PPC32TargetMachine::PPC32TargetMachine(const Target &T, const std::string &TT, 
                                        const std::string &FS) 
-  : PPCTargetMachine(T, M, FS, false) {
+  : PPCTargetMachine(T, TT, FS, false) {
 }
 
 
-PPC64TargetMachine::PPC64TargetMachine(const Target &T, const Module &M, 
+PPC64TargetMachine::PPC64TargetMachine(const Target &T, const std::string &TT, 
                                        const std::string &FS)
-  : PPCTargetMachine(T, M, FS, true) {
+  : PPCTargetMachine(T, TT, FS, true) {
 }
 
 

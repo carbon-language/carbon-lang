@@ -23,8 +23,6 @@
 
 namespace llvm {
 
-class Module;
-
 class SparcTargetMachine : public LLVMTargetMachine {
   const TargetData DataLayout;       // Calculates type size & alignment
   SparcSubtarget Subtarget;
@@ -36,7 +34,8 @@ protected:
   virtual const TargetAsmInfo *createTargetAsmInfo() const;
   
 public:
-  SparcTargetMachine(const Target &T, const Module &M, const std::string &FS);
+  SparcTargetMachine(const Target &T, const std::string &TT,
+                     const std::string &FS);
 
   virtual const SparcInstrInfo *getInstrInfo() const { return &InstrInfo; }
   virtual const TargetFrameInfo  *getFrameInfo() const { return &FrameInfo; }

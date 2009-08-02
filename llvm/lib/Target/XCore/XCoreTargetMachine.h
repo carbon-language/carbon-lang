@@ -23,8 +23,6 @@
 
 namespace llvm {
 
-class Module;
-
 class XCoreTargetMachine : public LLVMTargetMachine {
   XCoreSubtarget Subtarget;
   const TargetData DataLayout;       // Calculates type size & alignment
@@ -36,7 +34,8 @@ protected:
   virtual const TargetAsmInfo *createTargetAsmInfo() const;
 
 public:
-  XCoreTargetMachine(const Target &T, const Module &M, const std::string &FS);
+  XCoreTargetMachine(const Target &T, const std::string &TT,
+                     const std::string &FS);
 
   virtual const XCoreInstrInfo *getInstrInfo() const { return &InstrInfo; }
   virtual const XCoreFrameInfo *getFrameInfo() const { return &FrameInfo; }

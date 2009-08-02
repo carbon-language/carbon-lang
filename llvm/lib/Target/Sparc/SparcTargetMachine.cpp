@@ -13,7 +13,6 @@
 #include "SparcTargetAsmInfo.h"
 #include "SparcTargetMachine.h"
 #include "Sparc.h"
-#include "llvm/Module.h"
 #include "llvm/PassManager.h"
 #include "llvm/Target/TargetRegistry.h"
 using namespace llvm;
@@ -30,11 +29,11 @@ const TargetAsmInfo *SparcTargetMachine::createTargetAsmInfo() const {
 
 /// SparcTargetMachine ctor - Create an ILP32 architecture model
 ///
-SparcTargetMachine::SparcTargetMachine(const Target &T, const Module &M, 
+SparcTargetMachine::SparcTargetMachine(const Target &T, const std::string &TT, 
                                        const std::string &FS)
   : LLVMTargetMachine(T),
     DataLayout("E-p:32:32-f128:128:128"),
-    Subtarget(M.getTargetTriple(), FS), TLInfo(*this), InstrInfo(Subtarget),
+    Subtarget(TT, FS), TLInfo(*this), InstrInfo(Subtarget),
     FrameInfo(TargetFrameInfo::StackGrowsDown, 8, 0) {
 }
 

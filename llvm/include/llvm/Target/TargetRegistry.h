@@ -23,6 +23,9 @@
 // FIXME: We shouldn't need this header, but we need it until there is a
 // different interface to get the TargetAsmInfo.
 #include "llvm/Target/TargetMachine.h"
+// FIXME: We shouldn't need this header, but we need it until there is a
+// different interface to the target machines.
+#include "llvm/Module.h"
 #include <string>
 #include <cassert>
 
@@ -317,6 +320,19 @@ namespace llvm {
   template<class TargetMachineImpl>
   struct RegisterTargetMachine {
     RegisterTargetMachine(Target &T) {
+      TargetRegistry::RegisterTargetMachine(T, &Allocator);
+    }
+
+  private:
+    static TargetMachine *Allocator(const Target &T, const Module &M,
+                                    const std::string &FS) {
+      return new TargetMachineImpl(T, M.getTargetTriple(), FS);
+    }
+  };
+
+  template<class TargetMachineImpl>
+  struct RegisterTargetMachineDeprecated {
+    RegisterTargetMachineDeprecated(Target &T) {
       TargetRegistry::RegisterTargetMachine(T, &Allocator);
     }
 

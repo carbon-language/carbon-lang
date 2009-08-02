@@ -26,8 +26,6 @@
 
 namespace llvm {
 
-class Module;
-
 class ARMBaseTargetMachine : public LLVMTargetMachine {
 protected:
   ARMSubtarget        Subtarget;
@@ -39,8 +37,8 @@ private:
   Reloc::Model        DefRelocModel;    // Reloc model before it's overridden.
 
 public:
-  ARMBaseTargetMachine(const Target &T, const Module &M, const std::string &FS, 
-                       bool isThumb);
+  ARMBaseTargetMachine(const Target &T, const std::string &TT,
+                       const std::string &FS, bool isThumb);
 
   virtual const ARMFrameInfo     *getFrameInfo() const { return &FrameInfo; }
   virtual       ARMJITInfo       *getJITInfo()         { return &JITInfo; }
@@ -79,7 +77,8 @@ class ARMTargetMachine : public ARMBaseTargetMachine {
   const TargetData    DataLayout;       // Calculates type size & alignment
   ARMTargetLowering   TLInfo;
 public:
-  ARMTargetMachine(const Target &T, const Module &M, const std::string &FS);
+  ARMTargetMachine(const Target &T, const std::string &TT,
+                   const std::string &FS);
 
   virtual const ARMRegisterInfo  *getRegisterInfo() const {
     return &InstrInfo.getRegisterInfo();
@@ -91,9 +90,6 @@ public:
 
   virtual const ARMInstrInfo     *getInstrInfo() const { return &InstrInfo; }
   virtual const TargetData       *getTargetData() const { return &DataLayout; }
-
-  static unsigned getJITMatchQuality();
-  static unsigned getModuleMatchQuality(const Module &M);
 };
 
 /// ThumbTargetMachine - Thumb target machine.
@@ -105,7 +101,8 @@ class ThumbTargetMachine : public ARMBaseTargetMachine {
   const TargetData    DataLayout;   // Calculates type size & alignment
   ARMTargetLowering   TLInfo;
 public:
-  ThumbTargetMachine(const Target &T, const Module &M, const std::string &FS);
+  ThumbTargetMachine(const Target &T, const std::string &TT,
+                     const std::string &FS);
 
   /// returns either Thumb1RegisterInfo of Thumb2RegisterInfo
   virtual const ARMBaseRegisterInfo *getRegisterInfo() const {
@@ -119,9 +116,6 @@ public:
   /// returns either Thumb1InstrInfo or Thumb2InstrInfo
   virtual const ARMBaseInstrInfo *getInstrInfo() const { return InstrInfo; }
   virtual const TargetData       *getTargetData() const { return &DataLayout; }
-
-  static unsigned getJITMatchQuality();
-  static unsigned getModuleMatchQuality(const Module &M);
 };
 
 } // end namespace llvm

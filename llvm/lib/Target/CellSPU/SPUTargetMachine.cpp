@@ -15,7 +15,6 @@
 #include "SPURegisterNames.h"
 #include "SPUTargetAsmInfo.h"
 #include "SPUTargetMachine.h"
-#include "llvm/Module.h"
 #include "llvm/PassManager.h"
 #include "llvm/CodeGen/RegAllocRegistry.h"
 #include "llvm/CodeGen/SchedulerRegistry.h"
@@ -38,10 +37,10 @@ const TargetAsmInfo *SPUTargetMachine::createTargetAsmInfo() const {
   return new SPULinuxTargetAsmInfo();
 }
 
-SPUTargetMachine::SPUTargetMachine(const Target &T, const Module &M, 
+SPUTargetMachine::SPUTargetMachine(const Target &T, const std::string &TT,
                                    const std::string &FS)
   : LLVMTargetMachine(T),
-    Subtarget(M.getTargetTriple(), FS),
+    Subtarget(TT, FS),
     DataLayout(Subtarget.getTargetDataString()),
     InstrInfo(*this),
     FrameInfo(*this),

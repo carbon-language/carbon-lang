@@ -14,17 +14,16 @@
 #include "MSP430.h"
 #include "MSP430TargetAsmInfo.h"
 #include "MSP430TargetMachine.h"
-#include "llvm/Module.h"
 #include "llvm/PassManager.h"
 #include "llvm/CodeGen/Passes.h"
 #include "llvm/Target/TargetAsmInfo.h"
 using namespace llvm;
 
 MSP430TargetMachine::MSP430TargetMachine(const Target &T,
-                                         const Module &M,
+                                         const std::string &TT,
                                          const std::string &FS) :
   LLVMTargetMachine(T),
-  Subtarget(M.getTargetTriple(), FS),
+  Subtarget(TT, FS),
   // FIXME: Check TargetData string.
   DataLayout("e-p:16:8:8-i8:8:8-i16:8:8-i32:8:8"),
   InstrInfo(*this), TLInfo(*this),

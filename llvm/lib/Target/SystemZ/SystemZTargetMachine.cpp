@@ -13,7 +13,6 @@
 #include "SystemZTargetAsmInfo.h"
 #include "SystemZTargetMachine.h"
 #include "SystemZ.h"
-#include "llvm/Module.h"
 #include "llvm/PassManager.h"
 #include "llvm/Target/TargetRegistry.h"
 using namespace llvm;
@@ -30,10 +29,10 @@ const TargetAsmInfo *SystemZTargetMachine::createTargetAsmInfo() const {
 /// SystemZTargetMachine ctor - Create an ILP64 architecture model
 ///
 SystemZTargetMachine::SystemZTargetMachine(const Target &T,
-                                           const Module &M,
+                                           const std::string &TT,
                                            const std::string &FS)
   : LLVMTargetMachine(T),
-    Subtarget(M.getTargetTriple(), FS),
+    Subtarget(TT, FS),
     DataLayout("E-p:64:64:64-i8:8:16-i16:16:16-i32:32:32-i64:64:64-f32:32:32"
                "-f64:64:64-f128:128:128-a0:16:16"),
     InstrInfo(*this), TLInfo(*this),
@@ -48,15 +47,4 @@ bool SystemZTargetMachine::addInstSelector(PassManagerBase &PM,
   // Install an instruction selector.
   PM.add(createSystemZISelDag(*this, OptLevel));
   return false;
-}
-
-unsigned SystemZTargetMachine::getModuleMatchQuality(const Module &M) {
-  std::string TT = M.getTargetTriple();
-
-  // We strongly match s390x
-  if (TT.size() >= 5 && TT[0] == 's' && TT[1] == '3' && TT[2] == '9' &&
-      TT[3] == '0' &&  TT[4] == 'x')
-    return 20;
-
-  return 0;
 }

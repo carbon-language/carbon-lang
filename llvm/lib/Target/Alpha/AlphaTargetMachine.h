@@ -38,7 +38,8 @@ protected:
   virtual const TargetAsmInfo *createTargetAsmInfo() const;
 
 public:
-  AlphaTargetMachine(const Target &T, const Module &M, const std::string &FS);
+  AlphaTargetMachine(const Target &T, const std::string &TT,
+                     const std::string &FS);
 
   virtual const AlphaInstrInfo *getInstrInfo() const { return &InstrInfo; }
   virtual const TargetFrameInfo  *getFrameInfo() const { return &FrameInfo; }

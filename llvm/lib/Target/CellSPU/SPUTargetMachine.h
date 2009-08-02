@@ -40,7 +40,8 @@ protected:
   virtual const TargetAsmInfo *createTargetAsmInfo() const;
 
 public:
-  SPUTargetMachine(const Target &T, const Module &M, const std::string &FS);
+  SPUTargetMachine(const Target &T, const std::string &TT,
+                   const std::string &FS);
 
   /// Return the subtarget implementation object
   virtual const SPUSubtarget     *getSubtargetImpl() const {

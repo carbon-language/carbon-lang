@@ -41,7 +41,8 @@ protected:
   virtual const TargetAsmInfo *createTargetAsmInfo() const;
 
 public:
-  SystemZTargetMachine(const Target &T, const Module &M, const std::string &FS);
+  SystemZTargetMachine(const Target &T, const std::string &TT,
+                       const std::string &FS);
 
   virtual const TargetFrameInfo *getFrameInfo() const { return &FrameInfo; }
   virtual const SystemZInstrInfo *getInstrInfo() const  { return &InstrInfo; }
@@ -57,7 +58,6 @@ public:
   }
 
   virtual bool addInstSelector(PassManagerBase &PM, CodeGenOpt::Level OptLevel);
-  static unsigned getModuleMatchQuality(const Module &M);
 }; // SystemZTargetMachine.
 
 } // end namespace llvm

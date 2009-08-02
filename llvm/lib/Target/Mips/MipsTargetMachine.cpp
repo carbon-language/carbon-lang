@@ -14,15 +14,14 @@
 #include "Mips.h"
 #include "MipsTargetAsmInfo.h"
 #include "MipsTargetMachine.h"
-#include "llvm/Module.h"
 #include "llvm/PassManager.h"
 #include "llvm/Target/TargetRegistry.h"
 using namespace llvm;
 
 extern "C" void LLVMInitializeMipsTarget() {
   // Register the target.
-  RegisterTargetMachine<MipsTargetMachine> X(TheMipsTarget);
-  RegisterTargetMachine<MipselTargetMachine> Y(TheMipselTarget);
+  RegisterTargetMachineDeprecated<MipsTargetMachine> X(TheMipsTarget);
+  RegisterTargetMachineDeprecated<MipselTargetMachine> Y(TheMipselTarget);
 }
 
 const TargetAsmInfo *MipsTargetMachine::
@@ -39,7 +38,7 @@ createTargetAsmInfo() const
 // an easier handling.
 // Using CodeModel::Large enables different CALL behavior.
 MipsTargetMachine::
-MipsTargetMachine(const Target &T, const Module &M, const std::string &FS, 
+MipsTargetMachine(const Target &T, const Module &M, const std::string &FS,
                   bool isLittle=false):
   LLVMTargetMachine(T),
   Subtarget(*this, M.getTargetTriple(), FS, isLittle), 

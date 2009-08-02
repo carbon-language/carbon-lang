@@ -14,7 +14,6 @@
 #include "ARMTargetAsmInfo.h"
 #include "ARMFrameInfo.h"
 #include "ARM.h"
-#include "llvm/Module.h"
 #include "llvm/PassManager.h"
 #include "llvm/CodeGen/Passes.h"
 #include "llvm/Support/CommandLine.h"
@@ -37,29 +36,29 @@ extern "C" void LLVMInitializeARMTarget() {
 /// TargetMachine ctor - Create an ARM architecture model.
 ///
 ARMBaseTargetMachine::ARMBaseTargetMachine(const Target &T,
-                                           const Module &M,
+                                           const std::string &TT,
                                            const std::string &FS,
                                            bool isThumb)
   : LLVMTargetMachine(T),
-    Subtarget(M.getTargetTriple(), FS, isThumb),
+    Subtarget(TT, FS, isThumb),
     FrameInfo(Subtarget),
     JITInfo(),
     InstrItins(Subtarget.getInstrItineraryData()) {
   DefRelocModel = getRelocationModel();
 }
 
-ARMTargetMachine::ARMTargetMachine(const Target &T, const Module &M, 
+ARMTargetMachine::ARMTargetMachine(const Target &T, const std::string &TT,
                                    const std::string &FS)
-  : ARMBaseTargetMachine(T, M, FS, false), InstrInfo(Subtarget),
+  : ARMBaseTargetMachine(T, TT, FS, false), InstrInfo(Subtarget),
     DataLayout(Subtarget.isAPCS_ABI() ?
                std::string("e-p:32:32-f64:32:32-i64:32:32") :
                std::string("e-p:32:32-f64:64:64-i64:64:64")),
     TLInfo(*this) {
 }
 
-ThumbTargetMachine::ThumbTargetMachine(const Target &T, const Module &M, 
+ThumbTargetMachine::ThumbTargetMachine(const Target &T, const std::string &TT,
                                        const std::string &FS)
-  : ARMBaseTargetMachine(T, M, FS, true),
+  : ARMBaseTargetMachine(T, TT, FS, true),
     DataLayout(Subtarget.isAPCS_ABI() ?
                std::string("e-p:32:32-f64:32:32-i64:32:32-"
                            "i16:16:32-i8:8:32-i1:8:32-a:0:32") :

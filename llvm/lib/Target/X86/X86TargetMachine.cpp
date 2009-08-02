@@ -14,7 +14,6 @@
 #include "X86TargetAsmInfo.h"
 #include "X86TargetMachine.h"
 #include "X86.h"
-#include "llvm/Module.h"
 #include "llvm/PassManager.h"
 #include "llvm/CodeGen/MachineFunction.h"
 #include "llvm/CodeGen/Passes.h"
@@ -46,23 +45,23 @@ const TargetAsmInfo *X86TargetMachine::createTargetAsmInfo() const {
   }
 }
 
-X86_32TargetMachine::X86_32TargetMachine(const Target &T, const Module &M, 
+X86_32TargetMachine::X86_32TargetMachine(const Target &T, const std::string &TT,
                                          const std::string &FS)
-  : X86TargetMachine(T, M, FS, false) {
+  : X86TargetMachine(T, TT, FS, false) {
 }
 
 
-X86_64TargetMachine::X86_64TargetMachine(const Target &T, const Module &M, 
+X86_64TargetMachine::X86_64TargetMachine(const Target &T, const std::string &TT,
                                          const std::string &FS)
-  : X86TargetMachine(T, M, FS, true) {
+  : X86TargetMachine(T, TT, FS, true) {
 }
 
 /// X86TargetMachine ctor - Create an X86 target.
 ///
-X86TargetMachine::X86TargetMachine(const Target &T, const Module &M, 
+X86TargetMachine::X86TargetMachine(const Target &T, const std::string &TT, 
                                    const std::string &FS, bool is64Bit)
   : LLVMTargetMachine(T), 
-    Subtarget(M.getTargetTriple(), FS, is64Bit),
+    Subtarget(TT, FS, is64Bit),
     DataLayout(Subtarget.getDataLayout()),
     FrameInfo(TargetFrameInfo::StackGrowsDown,
               Subtarget.getStackAlignment(), Subtarget.is64Bit() ? -8 : -4),
