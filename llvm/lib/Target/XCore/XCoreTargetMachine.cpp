@@ -18,7 +18,7 @@
 using namespace llvm;
 
 const TargetAsmInfo *XCoreTargetMachine::createTargetAsmInfo() const {
-  return new XCoreTargetAsmInfo(*this);
+  return new XCoreTargetAsmInfo();
 }
 
 /// XCoreTargetMachine ctor - Create an ILP32 architecture model

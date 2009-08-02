@@ -17,10 +17,9 @@
 #include "llvm/Target/TargetAsmInfo.h"
 
 namespace llvm {
-  class TargetMachine;
   class XCoreTargetAsmInfo : public TargetAsmInfo {
   public:
-    explicit XCoreTargetAsmInfo(const TargetMachine &TM);
+    explicit XCoreTargetAsmInfo();
   };
 
 } // namespace llvm

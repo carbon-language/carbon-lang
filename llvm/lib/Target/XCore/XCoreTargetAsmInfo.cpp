@@ -10,7 +10,7 @@
 #include "XCoreTargetAsmInfo.h"
 using namespace llvm;
 
-XCoreTargetAsmInfo::XCoreTargetAsmInfo(const TargetMachine &TM) {
+XCoreTargetAsmInfo::XCoreTargetAsmInfo() {
   SupportsDebugInformation = true;
   Data16bitsDirective = "\t.short\t";
   Data32bitsDirective = "\t.long\t";
