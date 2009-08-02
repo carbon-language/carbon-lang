@@ -42,3 +42,22 @@ for.body:
 for.end:
   ret void
 }
+
+;; x[6] = x[6]
+
+define void @f3(...) nounwind {
+entry:
+  br label %for.body
+
+for.body:
+  %i = phi i64 [ 0, %entry ], [ %i.next, %for.body ]
+  %x = load i32* getelementptr ([256 x i32]* @x, i32 0, i64 6)
+  store i32 %x, i32* getelementptr ([256 x i32]* @x, i32 0, i64 6)
+; CHECK: 0,1: dep
+  %i.next = add i64 %i, 1
+  %exitcond = icmp eq i64 %i.next, 256
+  br i1 %exitcond, label %for.end, label %for.body
+
+for.end:
+  ret void
+}
