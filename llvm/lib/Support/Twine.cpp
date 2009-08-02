@@ -12,9 +12,12 @@
 using namespace llvm;
 
 std::string Twine::str() const {
+  // FIXME: This should probably use the toVector implementation, once that is
+  // efficient.
   std::string Res;
   raw_string_ostream OS(Res);
   print(OS);
+  OS.flush();
   return Res;
 }
 
