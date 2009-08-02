@@ -27,7 +27,7 @@ extern "C" void LLVMInitializeAlphaTarget() {
 }
 
 const TargetAsmInfo *AlphaTargetMachine::createTargetAsmInfo() const {
-  return new AlphaTargetAsmInfo(*this);
+  return new AlphaTargetAsmInfo();
 }
 
 AlphaTargetMachine::AlphaTargetMachine(const Target &T, const Module &M, 

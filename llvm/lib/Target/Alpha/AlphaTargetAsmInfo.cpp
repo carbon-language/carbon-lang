@@ -11,12 +11,10 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include "AlphaTargetMachine.h"
 #include "AlphaTargetAsmInfo.h"
-
 using namespace llvm;
 
-AlphaTargetAsmInfo::AlphaTargetAsmInfo(const AlphaTargetMachine &TM) {
+AlphaTargetAsmInfo::AlphaTargetAsmInfo() {
   AlignmentIsInBytes = false;
   PrivateGlobalPrefix = "$";
   JumpTableDirective = ".gprel32";

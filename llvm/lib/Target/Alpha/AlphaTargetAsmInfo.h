@@ -18,11 +18,8 @@
 
 namespace llvm {
 
-  // Forward declaration.
-  class AlphaTargetMachine;
-
   struct AlphaTargetAsmInfo : public TargetAsmInfo {
-    explicit AlphaTargetAsmInfo(const AlphaTargetMachine &TM);
+    explicit AlphaTargetAsmInfo();
   };
 
 } // namespace llvm
