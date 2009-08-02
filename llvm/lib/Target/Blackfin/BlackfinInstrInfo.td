@@ -672,9 +672,8 @@ def NBITTST: F1<(outs JustCC:$cc), (ins D:$src1, uimm5mask:$src2),
 
 def ONES: F2<(outs D16L:$dst), (ins D:$src),
               "$dst = ones $src;",
-              [(set D16L:$dst, (int_bfin_ones D:$src))]>;
+              [(set D16L:$dst, (trunc (ctpop D:$src)))]>;
 
-def : Pat<(i16 (trunc (ctpop D:$src))), (ONES D:$src)>;
 def : Pat<(ctpop D:$src), (MOVEzext (ONES D:$src))>;
 
 //===----------------------------------------------------------------------===//
@@ -847,11 +846,6 @@ def ALIGN24 : F2<(outs D:$dst), (ins D:$src1, D:$src2),
                                    (srl D:$src2, (i32 24))))]>;
 
 def DISALGNEXCPT : F2<(outs), (ins), "disalignexcpt;", []>;
-
-// This is really two instructions in parallel, but we don't support vliw yet
-def DISALGNEXCPT_LOAD : F2<(outs D:$dst), (ins I:$ptr),
-                           "disalignexcpt \\|\\| $dst = [$ptr];",
-                           [(set D:$dst, (int_bfin_loadbytes I:$ptr))]>;
 
 // TODO: BYTEOP3P, BYTEOP16P, BYTEOP1P, BYTEOP2P, BYTEOP16M, SAA,
 //       BYTEPACK, BYTEUNPACK

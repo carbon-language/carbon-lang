@@ -32,20 +32,3 @@ let TargetPrefix = "bfin" in {
           Intrinsic<[llvm_void_ty]>;
 
 }
-
-//===----------------------------------------------------------------------===//
-// Miscellaneous GCC-compatible builtins.
-//
-
-let TargetPrefix = "bfin" in {
-
-  // Almost identical to ctpop except for the type signature
-  def int_bfin_ones : GCCBuiltin<"__builtin_bfin_ones">,
-          Intrinsic<[llvm_i16_ty], [llvm_i32_ty], [IntrNoMem]>;
-
-  // Load unaligned pointer, ignoring the low bits. Like *(p&~3).
-  // This uses the disalignexcpt instruction
-  def int_bfin_loadbytes : GCCBuiltin<"__builtin_bfin_loadbytes">,
-          Intrinsic<[llvm_i32_ty], [llvm_ptr_ty], [IntrReadArgMem]>;
-
-}
