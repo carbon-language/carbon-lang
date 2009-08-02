@@ -36,21 +36,21 @@ public:
   enum ArchType {
     UnknownArch,
     
-    alpha,   // alpha
-    arm,     // arm, armv.*
-    bfin,    // blackfin
-    cellspu, // spu, cellspu
-    mips,    // mips, mipsallegrex
-    mipsel,  // mipsel, mipsallegrexel, psp
-    msp430,  // msp430
-    ppc,     // powerpc
-    ppc64,   // powerpc64
-    sparc,   // sparc
-    systemz, // s390x
-    thumb,   // thumb, thumbv.*
-    x86,     // i[3-9]86
-    x86_64,  // amd64, x86_64
-    xcore,   // xcore
+    alpha,   // Alpha: alpha
+    arm,     // ARM; arm, armv.*
+    bfin,    // Blackfin: bfin
+    cellspu, // CellSPU: spu, cellspu
+    mips,    // MIPS: mips, mipsallegrex
+    mipsel,  // MIPSEL: mipsel, mipsallegrexel, psp
+    msp430,  // MPS430: msp430
+    ppc,     // PPC: powerpc
+    ppc64,   // PPC64: powerpc64
+    sparc,   // Sparc: sparc
+    systemz, // SystemZ: s390x
+    thumb,   // Thumb: thumb, thumbv.*
+    x86,     // X86: i[3-9]86
+    x86_64,  // X86-64: amd64, x86_64
+    xcore,   // XCore: xcore
 
     InvalidArch
   };
