@@ -71,13 +71,17 @@ StoreManager::CastRegion(const GRState *state, const MemRegion* R,
   // Now assume we are casting from pointer to pointer. Other cases should
   // already be handled.
   QualType PointeeTy = CastToTy->getAs<PointerType>()->getPointeeType();
+  QualType CanonPointeeTy = Ctx.getCanonicalType(PointeeTy);
+
+  // Handle casts to void*.  We just pass the region through.
+  if (CanonPointeeTy.getUnqualifiedType() == Ctx.VoidTy)
+    return CastResult(state, R);
   
-  // Handle casts from compatible types or to void*.
+  // Handle casts from compatible types.
   if (R->isBoundable())
     if (const TypedRegion *TR = dyn_cast<TypedRegion>(R)) {
       QualType ObjTy = Ctx.getCanonicalType(TR->getValueType(Ctx));
-      QualType CanonPointeeTy = Ctx.getCanonicalType(PointeeTy);
-      if (CanonPointeeTy == ObjTy || CanonPointeeTy == Ctx.VoidTy)
+      if (CanonPointeeTy == ObjTy)
         return CastResult(state, R);
     }
 

@@ -491,3 +491,11 @@ void test_invalidate_cast_int() {
 static NSNumber *test_ivar_offset(id self, SEL _cmd, Ivar inIvar) {
   return [[[NSNumber allocWithZone:((void*)0)] initWithBool:*(_Bool *)((char *)self + ivar_getOffset(inIvar))] autorelease];
 }
+
+// Reduced from a crash in StoreManager::CastRegion involving a divide-by-zero.
+// This resulted from not properly handling region casts to 'const void*'.
+void test_cast_const_voidptr() {
+  char x[10];
+  char *p = &x[1];
+  const void* q = p;
+}
