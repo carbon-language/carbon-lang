@@ -917,8 +917,8 @@ void CodeGenFunction::EmitAsmStmt(const AsmStmt &S) {
       else
         InOutConstraints += OutputConstraint;
 
-      InOutArgTypes.push_back(Arg->getType());
-      InOutArgs.push_back(Arg);
+      InOutArgTypes.push_back(Dest.getAddress()->getType());
+      InOutArgs.push_back(Dest.getAddress());
     }
   }
   
