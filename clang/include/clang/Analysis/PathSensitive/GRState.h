@@ -127,6 +127,8 @@ public:
   /// getGDM - Return the generic data map associated with this state.
   GenericDataMap getGDM() const { return GDM; }
   
+  void setGDM(GenericDataMap gdm) { GDM = gdm; }
+  
   /// Profile - Profile the contents of a GRState object for use
   ///  in a FoldingSet.
   static void Profile(llvm::FoldingSetNodeID& ID, const GRState* V) {

@@ -1763,10 +1763,40 @@ void RegionStoreManager::RemoveDeadBindings(GRState &state, Stmt* Loc,
       SymReaper.maybeDead(*SI);
   }
   
-  // FIXME: remove default bindings as well.
-
+  // Remove dead 'default' bindings.  
+  RegionDefaultValue::MapTy NewDVM = DVM;
+  RegionDefaultValue::MapTy::Factory &DVMFactory = 
+    state.get_context<RegionDefaultValue>();
+  
+  for (RegionDefaultValue::MapTy::iterator I = DVM.begin(), E = DVM.end();
+       I != E; ++I) {
+    const MemRegion *R = I.getKey();
+    
+    // If this region live?  Is so, none of its symbols are dead.
+    if (Marked.count(R))
+      continue;
+    
+    // Remove this dead region.
+    NewDVM = DVMFactory.Remove(NewDVM, R);
+    
+    // Mark all non-live symbols that this region references as dead.
+    if (const SymbolicRegion* SymR = dyn_cast<SymbolicRegion>(R))
+      SymReaper.maybeDead(SymR->getSymbol());
+    
+    SVal X = I.getData();
+    SVal::symbol_iterator SI = X.symbol_begin(), SE = X.symbol_end();
+    for (; SI != SE; ++SI)
+      SymReaper.maybeDead(*SI);
+  }
+  
   // Write the store back.
   state.setStore(store);
+  
+  // Write the updated default bindings back.
+  // FIXME: Right now this involves a fetching of a persistent state.
+  //  We can do better.
+  if (DVM != NewDVM)
+    state.setGDM(state.set<RegionDefaultValue>(NewDVM)->getGDM());
 }
 
 //===----------------------------------------------------------------------===//
