@@ -12,15 +12,15 @@
 //===----------------------------------------------------------------------===//
 
 #include "PIC16TargetAsmInfo.h"
-#include "PIC16TargetMachine.h"
-#include "llvm/GlobalValue.h"
-#include "llvm/GlobalVariable.h"
-#include "llvm/DerivedTypes.h"
 
+// FIXME: Layering violation to get enums and static function, should be moved
+// to separate headers.
+#include "PIC16.h"
+#include "PIC16ISelLowering.h"
 using namespace llvm;
 
 PIC16TargetAsmInfo::
-PIC16TargetAsmInfo(const PIC16TargetMachine &TM) {
+PIC16TargetAsmInfo() {
   CommentString = ";";
   GlobalPrefix = PAN::getTagName(PAN::PREFIX_SYMBOL);
   GlobalDirective = "\tglobal\t";

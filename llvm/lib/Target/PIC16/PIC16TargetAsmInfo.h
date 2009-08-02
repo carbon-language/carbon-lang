@@ -17,17 +17,12 @@
 #include "llvm/Target/TargetAsmInfo.h"
 
 namespace llvm {
-
-  // Forward declaration.
-  class PIC16TargetMachine;
-      
   class PIC16TargetAsmInfo : public TargetAsmInfo {
     const char *RomData8bitsDirective;
     const char *RomData16bitsDirective;
     const char *RomData32bitsDirective;
   public:    
-    PIC16TargetAsmInfo(const PIC16TargetMachine &TM);
-
+    PIC16TargetAsmInfo();
     
     virtual const char *getDataASDirective(unsigned size, unsigned AS) const;
   };

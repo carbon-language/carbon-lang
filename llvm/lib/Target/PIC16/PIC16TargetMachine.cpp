@@ -38,7 +38,7 @@ CooperTargetMachine::CooperTargetMachine(const Target &T, const Module &M,
 
 
 const TargetAsmInfo *PIC16TargetMachine::createTargetAsmInfo() const {
-  return new PIC16TargetAsmInfo(*this);
+  return new PIC16TargetAsmInfo();
 }
 
 bool PIC16TargetMachine::addInstSelector(PassManagerBase &PM,
