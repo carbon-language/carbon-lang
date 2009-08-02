@@ -1,7 +1,7 @@
 ; RUN: llvm-as < %s | llc -march=bfin -verify-machineinstrs
-; XFAIL: *
-; Assertion failed: (isUsed(Reg) && "Using an undefined register!"),
-; function forward, file RegisterScavenging.cpp, line 182.
+
+; These functions have just the right size to annoy the register scavenger: They
+; use all the scratch registers, but not all the callee-saved registers.
 
 define void @test_add(i64 %AL, i64 %AH, i64 %BL, i64 %BH, i64* %RL, i64* %RH) {
 entry:

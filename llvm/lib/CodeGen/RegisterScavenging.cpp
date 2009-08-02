@@ -471,8 +471,15 @@ unsigned RegScavenger::scavengeRegister(const TargetRegisterClass *RC,
     Reg = Candidates.find_next(Reg);
   }
 
-  assert(ScavengedReg == 0 && 
+  assert(ScavengedReg == 0 &&
          "Scavenger slot is live, unable to scavenge another register!");
+
+  // Make sure SReg is marked as used. It could be considered available if it is
+  // one of the callee saved registers, but hasn't been spilled.
+  if (!isUsed(SReg)) {
+    MBB->addLiveIn(SReg);
+    setUsed(SReg);
+  }
 
   // Spill the scavenged register before I.
   TII->storeRegToStackSlot(*MBB, I, SReg, true, ScavengingFrameIndex, RC);
