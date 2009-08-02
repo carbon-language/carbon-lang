@@ -170,6 +170,17 @@ sub Analyze {
   
   my @PrintArgs;
   my $dir;
+
+  if ($RunAnalyzer) {
+    if (defined $ResultFile) {
+      push @CmdArgs,'-o';
+      push @CmdArgs, $ResultFile;
+    }
+    elsif (defined $HtmlDir) {
+      push @CmdArgs,'-o';
+      push @CmdArgs, $HtmlDir;
+    }
+  }
   
   if ($Verbose) {
     $dir = getcwd();
@@ -186,17 +197,6 @@ sub Analyze {
   }
   elsif ($Verbose == 2) {
     print STDERR "#SHELL (cd '$dir' && @PrintArgs)\n";
-  }
-  
-  if ($RunAnalyzer) {
-    if (defined $ResultFile) {
-      push @CmdArgs,'-o';
-      push @CmdArgs, $ResultFile;
-    }
-    elsif (defined $HtmlDir) {
-      push @CmdArgs,'-o';
-      push @CmdArgs, $HtmlDir;
-    }
   }
   
   if (defined $ENV{'CCC_UBI'}) {   
