@@ -811,7 +811,6 @@ void CodeGenModule::EmitGlobalVarDefinition(const VarDecl *D) {
     // to do a RAUW.
     assert(!ASTTy->isIncompleteType() && "Unexpected incomplete type");
     Init = EmitNullConstant(D->getType());
-    Init = llvm::Constant::getNullValue(getTypes().ConvertTypeForMem(ASTTy));
   } else {
     Init = EmitConstantExpr(D->getInit(), D->getType());
     if (!Init) {
