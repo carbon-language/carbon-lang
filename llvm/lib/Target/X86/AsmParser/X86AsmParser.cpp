@@ -372,7 +372,7 @@ Match_X86_Op_REG(const X86Operand &Op, MCOperand *MCOps, unsigned NumOps) {
   if (Op.Kind != X86Operand::Register)
     return true;
 
-  MCOps[0].MakeReg(Op.getReg());
+  MCOps[0] = MCOperand::CreateReg(Op.getReg());
   return false;
 }
 
@@ -384,7 +384,7 @@ Match_X86_Op_IMM(const X86Operand &Op, MCOperand *MCOps, unsigned NumOps) {
   if (Op.Kind != X86Operand::Immediate)
     return true;
 
-  MCOps[0].MakeMCValue(Op.getImm());
+  MCOps[0] = MCOperand::CreateMCValue(Op.getImm());
   return false;
 }
 
@@ -396,10 +396,10 @@ static bool Match_X86_Op_LMEM(const X86Operand &Op,
   if (Op.Kind != X86Operand::Memory)
     return true;
 
-  MCOps[0].MakeReg(Op.getMemBaseReg());
-  MCOps[1].MakeImm(Op.getMemScale());
-  MCOps[2].MakeReg(Op.getMemIndexReg());
-  MCOps[3].MakeMCValue(Op.getMemDisp());
+  MCOps[0] = MCOperand::CreateReg(Op.getMemBaseReg());
+  MCOps[1] = MCOperand::CreateImm(Op.getMemScale());
+  MCOps[2] = MCOperand::CreateReg(Op.getMemIndexReg());
+  MCOps[3] = MCOperand::CreateMCValue(Op.getMemDisp());
 
   return false;  
 }
@@ -412,7 +412,7 @@ static bool Match_X86_Op_MEM(const X86Operand &Op,
   if (Match_X86_Op_LMEM(Op, MCOps, 4))
     return true;
 
-  MCOps[4].MakeReg(Op.getMemSegReg());
+  MCOps[4] = MCOperand::CreateReg(Op.getMemSegReg());
 
   return false;  
 }

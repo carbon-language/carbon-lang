@@ -725,11 +725,12 @@ void X86ATTAsmPrinter::printMachineInstruction(const MachineInstr *MI) {
       
       MCOperand MCOp;
       if (MO.isReg()) {
-        MCOp.MakeReg(MO.getReg());
+        MCOp = MCOperand::CreateReg(MO.getReg());
       } else if (MO.isImm()) {
-        MCOp.MakeImm(MO.getImm());
+        MCOp = MCOperand::CreateImm(MO.getImm());
       } else if (MO.isMBB()) {
-        MCOp.MakeMBBLabel(getFunctionNumber(), MO.getMBB()->getNumber());
+        MCOp = MCOperand::CreateMBBLabel(getFunctionNumber(), 
+                                         MO.getMBB()->getNumber());
       } else {
         llvm_unreachable("Unimp");
       }

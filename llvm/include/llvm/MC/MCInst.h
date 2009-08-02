@@ -94,22 +94,30 @@ public:
     MCValueVal = Val;
   }
   
-  void MakeReg(unsigned Reg) {
-    Kind = kRegister;
-    RegVal = Reg;
+  static MCOperand CreateReg(unsigned Reg) {
+    MCOperand Op;
+    Op.Kind = kRegister;
+    Op.RegVal = Reg;
+    return Op;
   }
-  void MakeImm(int64_t Val) {
-    Kind = kImmediate;
-    ImmVal = Val;
+  static MCOperand CreateImm(int64_t Val) {
+    MCOperand Op;
+    Op.Kind = kImmediate;
+    Op.ImmVal = Val;
+    return Op;
   }
-  void MakeMBBLabel(unsigned Fn, unsigned MBB) {
-    Kind = kMBBLabel;
-    MBBLabel.FunctionNo = Fn;
-    MBBLabel.BlockNo = MBB;
+  static MCOperand CreateMBBLabel(unsigned Fn, unsigned MBB) {
+    MCOperand Op;
+    Op.Kind = kMBBLabel;
+    Op.MBBLabel.FunctionNo = Fn;
+    Op.MBBLabel.BlockNo = MBB;
+    return Op;
   }
-  void MakeMCValue(const MCValue &Val) {
-    Kind = kMCValue;
-    MCValueVal = Val;
+  static MCOperand CreateMCValue(const MCValue &Val) {
+    MCOperand Op;
+    Op.Kind = kMCValue;
+    Op.MCValueVal = Val;
+    return Op;
   }
 };
 

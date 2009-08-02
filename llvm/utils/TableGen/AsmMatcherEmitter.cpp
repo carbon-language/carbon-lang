@@ -258,7 +258,7 @@ void AsmMatcherEmitter::run(raw_ostream &OS) {
       if (!MatchedOperands.count(i)) {
         OS << "\n";
         OS << "  // FIXME: Nothing matched Ops[" << i << "]!\n";
-        OS << "  Ops[" << i << "].MakeReg(0);\n";
+        OS << "  Ops[" << i << "] = MCOperand::CreateReg(0);\n";
         OS << "\n";
       }
 
