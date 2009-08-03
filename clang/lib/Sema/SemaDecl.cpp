@@ -3201,9 +3201,7 @@ void Sema::ActOnUninitializedDecl(DeclPtrTy dcl,
         else { 
           if (!RD->hasTrivialConstructor())
             InitializeVarWithConstructor(Var, Constructor, InitType, 0, 0);
-          // FIXME. Must do all that is needed to destroy the object
-          // on scope exit. For now, just mark the destructor as used.
-          MarkDestructorReferenced(Var->getLocation(), InitType);
+          FinalizeVarWithDestructor(Var, InitType);
         }
       }
     }

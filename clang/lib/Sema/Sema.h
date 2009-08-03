@@ -1673,9 +1673,9 @@ public:
                                     QualType DeclInitType, 
                                     Expr **Exprs, unsigned NumExprs);
 
-  /// MarkDestructorReferenced - Prepare for calling destructor on the
-  /// constructed decl.
-  void MarkDestructorReferenced(SourceLocation Loc, QualType DeclInitType);
+  /// FinalizeVarWithDestructor - Prepare for calling destructor on the
+  /// constructed variable.
+  void FinalizeVarWithDestructor(VarDecl *VD, QualType DeclInitType);
   
   /// DefineImplicitDefaultConstructor - Checks for feasibility of 
   /// defining this constructor as the default constructor.

@@ -2371,14 +2371,14 @@ void Sema::InitializeVarWithConstructor(VarDecl *VD,
   VD->setInit(Context, Temp);
 }
 
-void Sema::MarkDestructorReferenced(SourceLocation Loc, QualType DeclInitType)
+void Sema::FinalizeVarWithDestructor(VarDecl *VD, QualType DeclInitType)
 {
   CXXRecordDecl *ClassDecl = cast<CXXRecordDecl>(
                                   DeclInitType->getAs<RecordType>()->getDecl());
   if (!ClassDecl->hasTrivialDestructor())
     if (CXXDestructorDecl *Destructor = 
         const_cast<CXXDestructorDecl*>(ClassDecl->getDestructor(Context)))
-      MarkDeclarationReferenced(Loc, Destructor);
+      MarkDeclarationReferenced(VD->getLocation(), Destructor);
 }
 
 /// AddCXXDirectInitializerToDecl - This action is called immediately after 
@@ -2447,9 +2447,7 @@ void Sema::AddCXXDirectInitializerToDecl(DeclPtrTy Dcl,
       VDecl->setCXXDirectInitializer(true);
       InitializeVarWithConstructor(VDecl, Constructor, DeclInitType, 
                                    (Expr**)Exprs.release(), NumExprs);
-      // FIXME. Must do all that is needed to destroy the object
-      // on scope exit. For now, just mark the destructor as used.
-      MarkDestructorReferenced(VDecl->getLocation(), DeclInitType);
+      FinalizeVarWithDestructor(VDecl, DeclInitType);
     }
     return;
   }
