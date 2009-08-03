@@ -5470,7 +5470,10 @@ CGObjCNonFragileABIMac::EmitTryOrSynchronizedStmt(CodeGen::CodeGenFunction &CGF,
 
   // We use a cleanup unless there was already a catch all.
   if (!HasCatchAll) {
-    SelectorArgs.push_back(llvm::ConstantInt::get(llvm::Type::Int32Ty, 0));
+    // Even though this is a cleanup, treat it as a catch all to avoid the C++
+    // personality behavior of terminating the process if only cleanups are
+    // found in the exception handling stack.
+    SelectorArgs.push_back(llvm::Constant::getNullValue(ObjCTypes.Int8PtrTy));
     Handlers.push_back(std::make_pair((const ParmVarDecl*) 0, (const Stmt*) 0));
   }
 
