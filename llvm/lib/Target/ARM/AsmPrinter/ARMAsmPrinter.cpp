@@ -253,18 +253,19 @@ bool ARMAsmPrinter::runOnMachineFunction(MachineFunction &MF) {
   // NOTE: we don't print out constant pools here, they are handled as
   // instructions.
 
-  O << "\n";
+  O << '\n';
+  
   // Print out labels for the function.
   const Function *F = MF.getFunction();
+  SwitchToSection(getObjFileLowering().SectionForGlobal(F, Mang, TM));
+
   switch (F->getLinkage()) {
   default: llvm_unreachable("Unknown linkage type!");
   case Function::PrivateLinkage:
   case Function::LinkerPrivateLinkage:
   case Function::InternalLinkage:
-    SwitchToTextSection("\t.text", F);
     break;
   case Function::ExternalLinkage:
-    SwitchToTextSection("\t.text", F);
     O << "\t.globl\t" << CurrentFnName << "\n";
     break;
   case Function::WeakAnyLinkage:
@@ -272,8 +273,6 @@ bool ARMAsmPrinter::runOnMachineFunction(MachineFunction &MF) {
   case Function::LinkOnceAnyLinkage:
   case Function::LinkOnceODRLinkage:
     if (Subtarget->isTargetDarwin()) {
-      SwitchToTextSection(
-                ".section __TEXT,__textcoal_nt,coalesced,pure_instructions", F);
       O << "\t.globl\t" << CurrentFnName << "\n";
       O << "\t.weak_definition\t" << CurrentFnName << "\n";
     } else {
