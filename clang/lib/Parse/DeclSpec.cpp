@@ -16,6 +16,7 @@
 #include "clang/Lex/Preprocessor.h"
 #include "clang/Basic/LangOptions.h"
 #include "llvm/ADT/STLExtras.h"
+#include "llvm/Support/ErrorHandling.h"
 #include <cstring>
 using namespace clang;
 
@@ -104,9 +105,13 @@ unsigned DeclSpec::getParsedSpecifiers() const {
   return Res;
 }
 
+template <class T> static bool BadSpecifier(T TPrev, const char *&PrevSpec) {
+  PrevSpec = DeclSpec::getSpecifierName(TPrev);
+  return true;
+} 
+
 const char *DeclSpec::getSpecifierName(DeclSpec::SCS S) {
   switch (S) {
-  default: assert(0 && "Unknown typespec!");
   case DeclSpec::SCS_unspecified: return "unspecified";
   case DeclSpec::SCS_typedef:     return "typedef";
   case DeclSpec::SCS_extern:      return "extern";
@@ -116,45 +121,40 @@ const char *DeclSpec::getSpecifierName(DeclSpec::SCS S) {
   case DeclSpec::SCS_private_extern: return "__private_extern__";
   case DeclSpec::SCS_mutable:     return "mutable";
   }
+  llvm::llvm_unreachable("Unknown typespec!");
 }
 
-bool DeclSpec::BadSpecifier(SCS S, const char *&PrevSpec) {
-  PrevSpec = getSpecifierName(S);
-  return true;
-}
-
-bool DeclSpec::BadSpecifier(TSW W, const char *&PrevSpec) {
+const char *DeclSpec::getSpecifierName(TSW W) {
   switch (W) {
-  case TSW_unspecified: PrevSpec = "unspecified"; break;
-  case TSW_short:       PrevSpec = "short"; break;
-  case TSW_long:        PrevSpec = "long"; break;
-  case TSW_longlong:    PrevSpec = "long long"; break;
+  case TSW_unspecified: return "unspecified";
+  case TSW_short:       return "short";
+  case TSW_long:        return "long";
+  case TSW_longlong:    return "long long";
   }
-  return true;
+  llvm::llvm_unreachable("Unknown typespec!");
 }
 
-bool DeclSpec::BadSpecifier(TSC C, const char *&PrevSpec) {
+const char *DeclSpec::getSpecifierName(TSC C) {
   switch (C) {
-  case TSC_unspecified: PrevSpec = "unspecified"; break;
-  case TSC_imaginary:   PrevSpec = "imaginary"; break;
-  case TSC_complex:     PrevSpec = "complex"; break;
+  case TSC_unspecified: return "unspecified";
+  case TSC_imaginary:   return "imaginary";
+  case TSC_complex:     return "complex";
   }
-  return true;
+  llvm::llvm_unreachable("Unknown typespec!");
 }
 
 
-bool DeclSpec::BadSpecifier(TSS S, const char *&PrevSpec) {
+const char *DeclSpec::getSpecifierName(TSS S) {
   switch (S) {
-  case TSS_unspecified: PrevSpec = "unspecified"; break;
-  case TSS_signed:      PrevSpec = "signed"; break;
-  case TSS_unsigned:    PrevSpec = "unsigned"; break;
+  case TSS_unspecified: return "unspecified";
+  case TSS_signed:      return "signed";
+  case TSS_unsigned:    return "unsigned";
   }
-  return true;
+  llvm::llvm_unreachable("Unknown typespec!");
 }
 
 const char *DeclSpec::getSpecifierName(DeclSpec::TST T) {
   switch (T) {
-  default: assert(0 && "Unknown typespec!");
   case DeclSpec::TST_unspecified: return "unspecified";
   case DeclSpec::TST_void:        return "void";
   case DeclSpec::TST_char:        return "char";
@@ -175,23 +175,21 @@ const char *DeclSpec::getSpecifierName(DeclSpec::TST T) {
   case DeclSpec::TST_typename:    return "type-name";
   case DeclSpec::TST_typeofType:
   case DeclSpec::TST_typeofExpr:  return "typeof";
-  case DeclSpec::TST_auto:       return "auto";
+  case DeclSpec::TST_auto:        return "auto";
+  case DeclSpec::TST_decltype:    return "(decltype)";
+  case DeclSpec::TST_error:       return "(error)";
   }
+  llvm::llvm_unreachable("Unknown typespec!");
 }
 
-bool DeclSpec::BadSpecifier(TST T, const char *&PrevSpec) {
-  PrevSpec = getSpecifierName(T);
-  return true;
-}
-
-bool DeclSpec::BadSpecifier(TQ T, const char *&PrevSpec) {
+const char *DeclSpec::getSpecifierName(TQ T) {
   switch (T) {
-  case DeclSpec::TQ_unspecified: PrevSpec = "unspecified"; break;
-  case DeclSpec::TQ_const:       PrevSpec = "const"; break;
-  case DeclSpec::TQ_restrict:    PrevSpec = "restrict"; break;
-  case DeclSpec::TQ_volatile:    PrevSpec = "volatile"; break;
+  case DeclSpec::TQ_unspecified: return "unspecified";
+  case DeclSpec::TQ_const:       return "const";
+  case DeclSpec::TQ_restrict:    return "restrict";
+  case DeclSpec::TQ_volatile:    return "volatile";
   }
-  return true;
+  llvm::llvm_unreachable("Unknown typespec!");
 }
 
 bool DeclSpec::SetStorageClassSpec(SCS S, SourceLocation Loc,

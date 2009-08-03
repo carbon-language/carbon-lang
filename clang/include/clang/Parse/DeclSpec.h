@@ -155,13 +155,6 @@ private:
   SourceLocation FS_inlineLoc, FS_virtualLoc, FS_explicitLoc;
   SourceLocation FriendLoc;
   
-  bool BadSpecifier(TST T, const char *&PrevSpec);
-  bool BadSpecifier(TQ T, const char *&PrevSpec);
-  bool BadSpecifier(TSS T, const char *&PrevSpec);
-  bool BadSpecifier(TSC T, const char *&PrevSpec);
-  bool BadSpecifier(TSW T, const char *&PrevSpec);
-  bool BadSpecifier(SCS T, const char *&PrevSpec);
-  
   DeclSpec(const DeclSpec&);       // DO NOT IMPLEMENT
   void operator=(const DeclSpec&); // DO NOT IMPLEMENT
 public:  
@@ -219,6 +212,10 @@ public:
   /// getSpecifierName - Turn a type-specifier-type into a string like "_Bool"
   /// or "union".
   static const char *getSpecifierName(DeclSpec::TST T);
+  static const char *getSpecifierName(DeclSpec::TQ Q);
+  static const char *getSpecifierName(DeclSpec::TSS S);
+  static const char *getSpecifierName(DeclSpec::TSC C);
+  static const char *getSpecifierName(DeclSpec::TSW W);
   static const char *getSpecifierName(DeclSpec::SCS S);
   
   // type-qualifiers
