@@ -421,7 +421,7 @@ printFCCOperand(const MachineInstr *MI, int opNum, const char *Modifier) {
 }
 
 bool MipsAsmPrinter::doInitialization(Module &M) {
-  // FIXME: Use SwitchToDataSection.
+  // FIXME: Use SwitchToSection.
   
   // Tell the assembler which ABI we are using
   O << "\t.section .mdebug." << emitCurrentABIString() << '\n';
