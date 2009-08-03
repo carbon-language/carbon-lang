@@ -67,6 +67,15 @@ class LoopDependenceAnalysis : public LoopPass {
   /// created. The third argument is set to the pair found or created.
   bool findOrInsertDependencePair(Value*, Value*, DependencePair*&);
 
+  /// isLoopInvariant - True if a given SCEV is invariant in all loops of the
+  /// loop-nest starting at the innermost loop L.
+  bool isLoopInvariant(const SCEV*) const;
+
+  /// isAffine - An SCEV is affine with respect to the loop-nest starting at
+  /// the innermost loop L if it is of the form A+B*X where A, B are invariant
+  /// in the loop-nest and X is a induction variable in the loop-nest.
+  bool isAffine(const SCEV*) const;
+
   /// TODO: doc
   DependenceResult analyseSubscript(const SCEV*, const SCEV*, Subscript*) const;
   DependenceResult analysePair(DependencePair*) const;

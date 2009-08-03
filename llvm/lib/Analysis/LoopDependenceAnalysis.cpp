@@ -25,6 +25,7 @@
 #include "llvm/Analysis/LoopDependenceAnalysis.h"
 #include "llvm/Analysis/LoopPass.h"
 #include "llvm/Analysis/ScalarEvolution.h"
+#include "llvm/Analysis/ScalarEvolutionExpressions.h"
 #include "llvm/Instructions.h"
 #include "llvm/Operator.h"
 #include "llvm/Support/Allocator.h"
@@ -123,6 +124,18 @@ bool LoopDependenceAnalysis::findOrInsertDependencePair(Value *A,
   return false;
 }
 
+bool LoopDependenceAnalysis::isLoopInvariant(const SCEV *S) const {
+  for (const Loop *L = this->L; L != 0; L = L->getParentLoop())
+    if (!S->isLoopInvariant(L))
+      return false;
+  return true;
+}
+
+bool LoopDependenceAnalysis::isAffine(const SCEV *S) const {
+  const SCEVAddRecExpr *rec = dyn_cast<SCEVAddRecExpr>(S);
+  return isLoopInvariant(S) || (rec && rec->isAffine());
+}
+
 LoopDependenceAnalysis::DependenceResult
 LoopDependenceAnalysis::analyseSubscript(const SCEV *A,
                                          const SCEV *B,
@@ -132,6 +145,11 @@ LoopDependenceAnalysis::analyseSubscript(const SCEV *A,
   if (A == B) {
     DEBUG(errs() << "  -> [D] same SCEV\n");
     return Dependent;
+  }
+
+  if (!isAffine(A) || !isAffine(B)) {
+    DEBUG(errs() << "  -> [?] not affine\n");
+    return Unknown;
   }
 
   // TODO: Implement ZIV/SIV/MIV testers.
