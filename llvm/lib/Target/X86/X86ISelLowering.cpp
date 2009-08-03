@@ -4448,9 +4448,7 @@ X86TargetLowering::LowerSCALAR_TO_VECTOR(SDValue Op, SelectionDAG &DAG) {
                                                Op.getOperand(0))));
 
   if (Op.getValueType() == MVT::v1i64 && Op.getOperand(0).getValueType() == MVT::i64)
-    return DAG.getNode(ISD::BIT_CONVERT, dl, MVT::v1i64,
-                       DAG.getNode(ISD::SCALAR_TO_VECTOR, dl, MVT::v1i64,
-                                   Op.getOperand(0)));
+    return DAG.getNode(ISD::SCALAR_TO_VECTOR, dl, MVT::v1i64, Op.getOperand(0));
 
   SDValue AnyExt = DAG.getNode(ISD::ANY_EXTEND, dl, MVT::i32, Op.getOperand(0));
   MVT VT = MVT::v2i32;
