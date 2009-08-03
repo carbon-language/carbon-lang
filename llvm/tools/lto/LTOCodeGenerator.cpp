@@ -76,7 +76,7 @@ LTOCodeGenerator::LTOCodeGenerator()
       _linker("LinkTimeOptimizer", "ld-temp.o", _context), _target(NULL),
       _emitDwarfDebugInfo(false), _scopeRestrictionsDone(false),
       _codeModel(LTO_CODEGEN_PIC_MODEL_DYNAMIC),
-      _nativeObjectFile(NULL), _gccPath(NULL), _assemblerPath(NULL)
+      _nativeObjectFile(NULL), _assemblerPath(NULL)
 {
     InitializeAllTargets();
     InitializeAllAsmPrinters();
@@ -124,13 +124,6 @@ bool LTOCodeGenerator::setCodePICModel(lto_codegen_model model,
     }
     errMsg = "unknown pic model";
     return true;
-}
-
-void LTOCodeGenerator::setGccPath(const char* path)
-{
-    if ( _gccPath )
-        delete _gccPath;
-    _gccPath = new sys::Path(path);
 }
 
 void LTOCodeGenerator::setAssemblerPath(const char* path)
@@ -240,9 +233,6 @@ bool LTOCodeGenerator::assemble(const std::string& asmPath,
     if ( _assemblerPath ) {
         tool = *_assemblerPath;
         needsCompilerOptions = false;
-    }
-    else if ( _gccPath ) {
-        tool = *_gccPath;
     } else {
         // find compiler driver
         tool = sys::Program::FindProgramByName("gcc");
