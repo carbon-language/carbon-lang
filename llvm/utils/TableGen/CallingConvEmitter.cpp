@@ -186,6 +186,10 @@ void CallingConvEmitter::EmitAction(Record *Action,
       Record *DestTy = Action->getValueAsDef("DestTy");
       O << IndentStr << "LocVT = " << getEnumName(getValueType(DestTy)) <<";\n";
       O << IndentStr << "LocInfo = CCValAssign::BCvt;\n";
+    } else if (Action->isSubClassOf("CCPassIndirect")) {
+      Record *DestTy = Action->getValueAsDef("DestTy");
+      O << IndentStr << "LocVT = " << getEnumName(getValueType(DestTy)) <<";\n";
+      O << IndentStr << "LocInfo = CCValAssign::Indirect;\n";
     } else if (Action->isSubClassOf("CCPassByVal")) {
       int Size = Action->getValueAsInt("Size");
       int Align = Action->getValueAsInt("Align");

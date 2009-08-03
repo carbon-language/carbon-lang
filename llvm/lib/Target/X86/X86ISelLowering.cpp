@@ -1408,6 +1408,7 @@ X86TargetLowering::LowerFORMAL_ARGUMENTS(SDValue Op, SelectionDAG &DAG) {
 
   SmallVector<SDValue, 8> ArgValues;
   unsigned LastVal = ~0U;
+  SDValue ArgValue;
   for (unsigned i = 0, e = ArgLocs.size(); i != e; ++i) {
     CCValAssign &VA = ArgLocs[i];
     // TODO: If an arg is passed in two places (e.g. reg and stack), skip later
@@ -1435,7 +1436,7 @@ X86TargetLowering::LowerFORMAL_ARGUMENTS(SDValue Op, SelectionDAG &DAG) {
         llvm_unreachable("Unknown argument type!");
 
       unsigned Reg = MF.addLiveIn(VA.getLocReg(), RC);
-      SDValue ArgValue = DAG.getCopyFromReg(Root, dl, Reg, RegVT);
+      ArgValue = DAG.getCopyFromReg(Root, dl, Reg, RegVT);
 
       // If this is an 8 or 16-bit value, it is really passed promoted to 32
       // bits.  Insert an assert[sz]ext to capture this, then truncate to the
@@ -1450,8 +1451,7 @@ X86TargetLowering::LowerFORMAL_ARGUMENTS(SDValue Op, SelectionDAG &DAG) {
         ArgValue = DAG.getNode(ISD::BIT_CONVERT, dl, RegVT, ArgValue,
                                DAG.getValueType(VA.getValVT()));
 
-      if (VA.getLocInfo() != CCValAssign::Full &&
-          VA.getLocInfo() != CCValAssign::BCvt) {
+      if (VA.isExtInLoc()) {
         // Handle MMX values passed in XMM regs.
         if (RegVT.isVector()) {
           ArgValue = DAG.getNode(ISD::EXTRACT_VECTOR_ELT, dl, MVT::i64,
@@ -1460,12 +1460,16 @@ X86TargetLowering::LowerFORMAL_ARGUMENTS(SDValue Op, SelectionDAG &DAG) {
         } else
           ArgValue = DAG.getNode(ISD::TRUNCATE, dl, VA.getValVT(), ArgValue);
       }
-
-      ArgValues.push_back(ArgValue);
     } else {
       assert(VA.isMemLoc());
-      ArgValues.push_back(LowerMemArgument(Op, DAG, VA, MFI, CC, Root, i));
+      ArgValue = LowerMemArgument(Op, DAG, VA, MFI, CC, Root, i);
     }
+
+    // If value is passed via pointer - do a load.
+    if (VA.getLocInfo() == CCValAssign::Indirect)
+      ArgValue = DAG.getLoad(VA.getValVT(), dl, Root, ArgValue, NULL, 0);
+
+    ArgValues.push_back(ArgValue);
   }
 
   // The x86-64 ABI for returning structs by value requires that we copy
@@ -1747,6 +1751,15 @@ SDValue X86TargetLowering::LowerCALL(SDValue Op, SelectionDAG &DAG) {
     case CCValAssign::BCvt:
       Arg = DAG.getNode(ISD::BIT_CONVERT, dl, RegVT, Arg);
       break;
+    case CCValAssign::Indirect: {
+      // Store the argument.
+      SDValue SpillSlot = DAG.CreateStackTemporary(VA.getValVT());
+      int FI = cast<FrameIndexSDNode>(SpillSlot)->getIndex();
+      Chain = DAG.getStore(Chain, dl, Arg, SpillSlot,
+                           PseudoSourceValue::getFixedStack(FI), 0);
+      Arg = SpillSlot;
+      break;
+    }
     }
 
     if (VA.isRegLoc()) {

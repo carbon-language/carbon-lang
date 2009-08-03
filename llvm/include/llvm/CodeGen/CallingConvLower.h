@@ -33,32 +33,33 @@ public:
     SExt,   // The value is sign extended in the location.
     ZExt,   // The value is zero extended in the location.
     AExt,   // The value is extended with undefined upper bits.
-    BCvt    // The value is bit-converted in the location.
+    BCvt,   // The value is bit-converted in the location.
+    Indirect // The location contains pointer to the value.
     // TODO: a subset of the value is in the location.
   };
 private:
   /// ValNo - This is the value number begin assigned (e.g. an argument number).
   unsigned ValNo;
-  
+
   /// Loc is either a stack offset or a register number.
   unsigned Loc;
-  
+
   /// isMem - True if this is a memory loc, false if it is a register loc.
   bool isMem : 1;
-  
+
   /// isCustom - True if this arg/retval requires special handling.
   bool isCustom : 1;
 
   /// Information about how the value is assigned.
   LocInfo HTP : 6;
-  
+
   /// ValVT - The type of the value being assigned.
   MVT ValVT;
 
   /// LocVT - The type of the location being assigned to.
   MVT LocVT;
 public:
-    
+
   static CCValAssign getReg(unsigned ValNo, MVT ValVT,
                             unsigned RegNo, MVT LocVT,
                             LocInfo HTP) {
@@ -95,7 +96,7 @@ public:
     Ret.LocVT = LocVT;
     return Ret;
   }
-  
+
   static CCValAssign getCustomMem(unsigned ValNo, MVT ValVT,
                                   unsigned Offset, MVT LocVT,
                                   LocInfo HTP) {
@@ -110,14 +111,18 @@ public:
 
   bool isRegLoc() const { return !isMem; }
   bool isMemLoc() const { return isMem; }
-  
+
   bool needsCustom() const { return isCustom; }
 
   unsigned getLocReg() const { assert(isRegLoc()); return Loc; }
   unsigned getLocMemOffset() const { assert(isMemLoc()); return Loc; }
   MVT getLocVT() const { return LocVT; }
-  
+
   LocInfo getLocInfo() const { return HTP; }
+  bool isExtInLoc() const {
+    return (HTP == AExt || HTP == SExt || HTP == ZExt);
+  }
+
 };
 
 /// CCAssignFn - This function assigns a location for Val, updating State to
@@ -143,22 +148,22 @@ class CCState {
   const TargetRegisterInfo &TRI;
   SmallVector<CCValAssign, 16> &Locs;
   LLVMContext &Context;
-  
+
   unsigned StackOffset;
   SmallVector<uint32_t, 16> UsedRegs;
 public:
   CCState(unsigned CC, bool isVarArg, const TargetMachine &TM,
           SmallVector<CCValAssign, 16> &locs, LLVMContext &C);
-  
+
   void addLoc(const CCValAssign &V) {
     Locs.push_back(V);
   }
-  
+
   LLVMContext &getContext() const { return Context; }
   const TargetMachine &getTarget() const { return TM; }
   unsigned getCallingConv() const { return CallingConv; }
   bool isVarArg() const { return IsVarArg; }
-  
+
   unsigned getNextStackOffset() const { return StackOffset; }
 
   /// isAllocated - Return true if the specified register (or an alias) is
@@ -166,15 +171,15 @@ public:
   bool isAllocated(unsigned Reg) const {
     return UsedRegs[Reg/32] & (1 << (Reg&31));
   }
-  
+
   /// AnalyzeFormalArguments - Analyze an ISD::FORMAL_ARGUMENTS node,
   /// incorporating info about the formals into this state.
   void AnalyzeFormalArguments(SDNode *TheArgs, CCAssignFn Fn);
-  
+
   /// AnalyzeReturn - Analyze the returned values of an ISD::RET node,
   /// incorporating info about the result values into this state.
   void AnalyzeReturn(SDNode *TheRet, CCAssignFn Fn);
-  
+
   /// AnalyzeCallOperands - Analyze an ISD::CALL node, incorporating info
   /// about the passed values into this state.
   void AnalyzeCallOperands(CallSDNode *TheCall, CCAssignFn Fn);
@@ -188,7 +193,7 @@ public:
   /// AnalyzeCallResult - Analyze the return values of an ISD::CALL node,
   /// incorporating info about the passed values into this state.
   void AnalyzeCallResult(CallSDNode *TheCall, CCAssignFn Fn);
-  
+
   /// AnalyzeCallResult - Same as above except it's specialized for calls which
   /// produce a single value.
   void AnalyzeCallResult(MVT VT, CCAssignFn Fn);
@@ -201,7 +206,7 @@ public:
         return i;
     return NumRegs;
   }
-  
+
   /// AllocateReg - Attempt to allocate one register.  If it is not available,
   /// return zero.  Otherwise, return the register, marking it and any aliases
   /// as allocated.

@@ -109,6 +109,12 @@ class CCBitConvertToType<ValueType destTy> : CCAction {
   ValueType DestTy = destTy;
 }
 
+/// CCPassIndirect - If applied, this stores the value to stack and passes the pointer
+/// as normal argument.
+class CCPassIndirect<ValueType destTy> : CCAction {
+  ValueType DestTy = destTy;
+}
+
 /// CCDelegateTo - This action invokes the specified sub-calling-convention.  It
 /// is successful if the specified CC matches.
 class CCDelegateTo<CallingConv cc> : CCAction {
