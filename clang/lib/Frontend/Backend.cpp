@@ -223,7 +223,8 @@ bool BackendConsumer::AddEmitPasses(std::string &Error) {
         Features.AddFeature(*it);
       FeaturesStr = Features.getString();
     }
-    TargetMachine *TM = TheTarget->createTargetMachine(*TheModule, FeaturesStr);
+    TargetMachine *TM = TheTarget->createTargetMachine(*TheModule, Triple, 
+                                                       FeaturesStr);
     
     // Set register scheduler & allocation policy.
     RegisterScheduler::setDefault(createDefaultScheduler);
