@@ -78,59 +78,6 @@ TargetLoweringObjectFile &AsmPrinter::getObjFileLowering() const {
   return TM.getTargetLowering()->getObjFileLowering();
 }
 
-
-/// SwitchToTextSection - Switch to the specified text section of the executable
-/// if we are not already in it!
-///
-void AsmPrinter::SwitchToTextSection(const char *NewSection,
-                                     const GlobalValue *GV) {
-  std::string NS;
-  if (GV && GV->hasSection())
-    NS = TAI->getSwitchToSectionDirective() + GV->getSection();
-  else
-    NS = NewSection;
-  
-  // If we're already in this section, we're done.
-  if (CurrentSection == NS) return;
-
-  // Close the current section, if applicable.
-  if (TAI->getSectionEndDirectiveSuffix() && !CurrentSection.empty())
-    O << CurrentSection << TAI->getSectionEndDirectiveSuffix() << '\n';
-
-  CurrentSection = NS;
-
-  if (!CurrentSection.empty())
-    O << CurrentSection << TAI->getTextSectionStartSuffix() << '\n';
-
-  IsInTextSection = true;
-}
-
-/// SwitchToDataSection - Switch to the specified data section of the executable
-/// if we are not already in it!
-///
-void AsmPrinter::SwitchToDataSection(const char *NewSection,
-                                     const GlobalValue *GV) {
-  std::string NS;
-  if (GV && GV->hasSection())
-    NS = TAI->getSwitchToSectionDirective() + GV->getSection();
-  else
-    NS = NewSection;
-  
-  // If we're already in this section, we're done.
-  if (CurrentSection == NS) return;
-
-  // Close the current section, if applicable.
-  if (TAI->getSectionEndDirectiveSuffix() && !CurrentSection.empty())
-    O << CurrentSection << TAI->getSectionEndDirectiveSuffix() << '\n';
-
-  CurrentSection = NS;
-  
-  if (!CurrentSection.empty())
-    O << CurrentSection << TAI->getDataSectionStartSuffix() << '\n';
-
-  IsInTextSection = false;
-}
-
 /// SwitchToSection - Switch to the specified section of the executable if we
 /// are not already in it!  If "NS" is null, then this causes us to exit the
 /// current section and not reenter another one.  This is generally used for
@@ -210,7 +157,7 @@ bool AsmPrinter::doInitialization(Module &M) {
       << '\n' << TAI->getCommentString()
       << " End of file scope inline assembly\n";
 
-  SwitchToDataSection("");   // Reset back to no section.
+  SwitchToSection(0);   // Reset back to no section to close off sections.
   
   if (TAI->doesSupportDebugInformation() ||
       TAI->doesSupportExceptionHandling()) {
@@ -241,7 +188,7 @@ bool AsmPrinter::doFinalization(Module &M) {
     // to stuff that is actually used.  Note that doing so would require targets
     // to notice uses in operands (due to constant exprs etc).  This should
     // happen with the MC stuff eventually.
-    SwitchToDataSection("");
+    SwitchToSection(0);
 
     // Print out module-level global variables here.
     for (Module::const_global_iterator I = M.global_begin(), E = M.global_end();
@@ -250,8 +197,7 @@ bool AsmPrinter::doFinalization(Module &M) {
         O << TAI->getWeakRefDirective() << Mang->getMangledName(I) << '\n';
     }
     
-    for (Module::const_iterator I = M.begin(), E = M.end();
-         I != E; ++I) {
+    for (Module::const_iterator I = M.begin(), E = M.end(); I != E; ++I) {
       if (I->hasExternalWeakLinkage())
         O << TAI->getWeakRefDirective() << Mang->getMangledName(I) << '\n';
     }
