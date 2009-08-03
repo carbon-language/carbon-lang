@@ -83,3 +83,20 @@ NamedMDNode::NamedMDNode(const Twine &N, MetadataBase*const* MDs,
   if (ParentModule)
     ParentModule->getNamedMDList().push_back(this);
 }
+
+/// eraseFromParent - Drop all references and remove the node from parent
+/// module.
+void NamedMDNode::eraseFromParent() {
+  dropAllReferences();
+  getParent()->getNamedMDList().erase(this);
+}
+
+/// dropAllReferences - Remove all uses and clear node vector.
+void NamedMDNode::dropAllReferences() {
+  // FIXME: Update metadata use list.
+  Node.clear();
+}
+
+NamedMDNode::~NamedMDNode() {
+  dropAllReferences();
+}

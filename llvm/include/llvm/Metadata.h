@@ -200,6 +200,15 @@ public:
     return new NamedMDNode(N, MDs, NumMDs, M);
   }
 
+  /// eraseFromParent - Drop all references and remove the node from parent
+  /// module.
+  void eraseFromParent();
+
+  /// dropAllReferences - Remove all uses and clear node vector.
+  void dropAllReferences();
+
+  ~NamedMDNode();
+
   typedef SmallVectorImpl<WeakMetadataVH>::const_iterator const_elem_iterator;
 
   /// getParent - Get the module that holds this named metadata collection.
