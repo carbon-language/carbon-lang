@@ -421,8 +421,12 @@ int llvm::rewriteT2FrameIndex(MachineInstr &MI, unsigned FrameRegIdx,
       if (AddrMode == ARMII::AddrMode5)
         // FIXME: Not consistent.
         ImmedOffset |= 1 << NumBits;
-      else
+      else {
         ImmedOffset = -ImmedOffset;
+        if (ImmedOffset == 0)
+          // Change the opcode back if the encoded offset is zero.
+          MI.setDesc(TII.get(positiveOffsetOpcode(NewOpc)));
+      }
     }
     ImmOp.ChangeToImmediate(ImmedOffset);
     Offset &= ~(Mask*Scale);
