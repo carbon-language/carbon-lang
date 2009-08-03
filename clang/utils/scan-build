@@ -383,32 +383,25 @@ sub ScanFile {
   my $BugCategory;
   my $BugPathLength = 1;
   my $BugLine = 0;
-  my $found = 0;
 
   while (<IN>) {
-
-    last if ($found == 5);
+    last if (/<!-- BUGMETAEND -->/);
 
     if (/<!-- BUGTYPE (.*) -->$/) {
       $BugType = $1;
-      ++$found;
     }
     elsif (/<!-- BUGFILE (.*) -->$/) {
       $BugFile = abs_path($1);
       UpdatePrefix($BugFile);
-      ++$found;
     }
     elsif (/<!-- BUGPATHLENGTH (.*) -->$/) {
       $BugPathLength = $1;
-      ++$found;
     }
     elsif (/<!-- BUGLINE (.*) -->$/) {
       $BugLine = $1;    
-      ++$found;
     }
     elsif (/<!-- BUGCATEGORY (.*) -->$/) {
       $BugCategory = $1;
-      ++$found;
     }
   }
 
