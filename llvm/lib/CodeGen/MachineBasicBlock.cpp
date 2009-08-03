@@ -153,12 +153,14 @@ static inline void OutputReg(raw_ostream &os, unsigned RegNo,
     os << " %reg" << RegNo;
 }
 
-void MachineBasicBlock::print(std::ostream &OS) const {
+void MachineBasicBlock::print(std::ostream &OS,
+                              const PrefixPrinter &prefix) const {
   raw_os_ostream RawOS(OS);
-  print(RawOS);
+  print(RawOS, prefix);
 }
 
-void MachineBasicBlock::print(raw_ostream &OS) const {
+void MachineBasicBlock::print(raw_ostream &OS,
+                              const PrefixPrinter &prefix) const {
   const MachineFunction *MF = getParent();
   if(!MF) {
     OS << "Can't print out MachineBasicBlock because parent MachineFunction"
@@ -191,7 +193,7 @@ void MachineBasicBlock::print(raw_ostream &OS) const {
   }
   
   for (const_iterator I = begin(); I != end(); ++I) {
-    OS << "\t";
+    prefix(OS, *I) << "\t";
     I->print(OS, &getParent()->getTarget());
   }
 

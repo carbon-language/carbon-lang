@@ -20,6 +20,7 @@
 
 #include "llvm/ADT/ilist.h"
 #include "llvm/Support/DebugLoc.h"
+#include "llvm/CodeGen/Dump.h"
 #include "llvm/CodeGen/MachineBasicBlock.h"
 #include "llvm/Support/Allocator.h"
 #include "llvm/Support/Recycler.h"
@@ -206,8 +207,12 @@ public:
   /// print - Print out the MachineFunction in a format suitable for debugging
   /// to the specified stream.
   ///
-  void print(std::ostream &OS) const;
-  void print(std::ostream *OS) const { if (OS) print(*OS); }
+  void print(std::ostream &OS, 
+             const PrefixPrinter &prefix = PrefixPrinter()) const;
+  void print(std::ostream *OS,
+             const PrefixPrinter &prefix = PrefixPrinter()) const {
+    if (OS) print(*OS, prefix); 
+  }
 
   /// viewCFG - This function is meant for use from the debugger.  You can just
   /// say 'call F->viewCFG()' and a ghostview window should pop up from the
