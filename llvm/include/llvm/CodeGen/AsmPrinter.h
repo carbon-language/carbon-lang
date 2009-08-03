@@ -60,6 +60,10 @@ namespace llvm {
     typedef gcp_map_type::iterator gcp_iterator;
     gcp_map_type GCMetadataPrinters;
 
+    /// CurrentSection - The current section we are emitting to.  This is
+    /// controlled and used by the SwitchToSection method.
+    const MCSection *CurrentSection;
+    
   protected:
     /// MMI - If available, this is a pointer to the current MachineModuleInfo.
     MachineModuleInfo *MMI;
@@ -110,14 +114,9 @@ namespace llvm {
     ///
     std::string CurrentFnName;
     
-    /// CurrentSection - The current section we are emitting to.  This is
-    /// controlled and used by the SwitchSection method.
-    std::string CurrentSection;
-    const MCSection *CurrentSection_;
-
-    /// IsInTextSection - True if the current section we are emitting to is a
-    /// text section.
-    bool IsInTextSection;
+    /// getCurrentSection() - Return the current section we are emitting to.
+    const MCSection *getCurrentSection() const { return CurrentSection; }
+    
 
     /// VerboseAsm - Emit comments in assembly output if this is true.
     ///

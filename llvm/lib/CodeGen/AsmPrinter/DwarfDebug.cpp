@@ -1463,7 +1463,7 @@ void DwarfDebug::EndFunction(MachineFunction *MF) {
   // Get function line info.
   if (!Lines.empty()) {
     // Get section line info.
-    unsigned ID = SectionMap.insert(Asm->CurrentSection_);
+    unsigned ID = SectionMap.insert(Asm->getCurrentSection());
     if (SectionSourceLines.size() < ID) SectionSourceLines.resize(ID);
     std::vector<SrcLineInfo> &SectionLineInfos = SectionSourceLines[ID-1];
     // Append the function info to section info.

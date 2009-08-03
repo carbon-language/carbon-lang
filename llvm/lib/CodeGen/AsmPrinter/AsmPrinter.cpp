@@ -55,8 +55,9 @@ AsmPrinter::AsmPrinter(formatted_raw_ostream &o, TargetMachine &tm,
     OutContext(*new MCContext()),
     OutStreamer(*createAsmStreamer(OutContext, O)),
 
-    IsInTextSection(false), LastMI(0), LastFn(0), Counter(~0U),
+    LastMI(0), LastFn(0), Counter(~0U),
     PrevDLT(0, ~0U, ~0U) {
+  CurrentSection = 0;
   DW = 0; MMI = 0;
   switch (AsmVerbose) {
   case cl::BOU_UNSET: VerboseAsm = VDef;  break;
@@ -86,20 +87,16 @@ TargetLoweringObjectFile &AsmPrinter::getObjFileLowering() const {
 /// FIXME: Remove support for null sections.
 ///
 void AsmPrinter::SwitchToSection(const MCSection *NS) {
-  const std::string &NewSection = NS ? NS->getName() : "";
-
   // If we're already in this section, we're done.
-  if (CurrentSection == NewSection) return;
+  if (CurrentSection == NS) return;
 
   // Close the current section, if applicable.
-  if (TAI->getSectionEndDirectiveSuffix() && !CurrentSection.empty())
-    O << CurrentSection << TAI->getSectionEndDirectiveSuffix() << '\n';
+  if (NS != 0 && TAI->getSectionEndDirectiveSuffix())
+    O << NS->getName() << TAI->getSectionEndDirectiveSuffix() << '\n';
 
-  // FIXME: Make CurrentSection a Section* in the future
-  CurrentSection = NewSection;
-  CurrentSection_ = NS;
+  CurrentSection = NS;
 
-  if (!CurrentSection.empty()) {
+  if (NS != 0) {
     // If section is named we need to switch into it via special '.section'
     // directive and also append funky flags. Otherwise - section name is just
     // some magic assembler directive.
@@ -109,15 +106,12 @@ void AsmPrinter::SwitchToSection(const MCSection *NS) {
       getObjFileLowering().getSectionFlagsAsString(NS->getKind(), FlagsStr);
 
       O << TAI->getSwitchToSectionDirective()
-        << CurrentSection
-        << FlagsStr.c_str();
+        << CurrentSection->getName() << FlagsStr.c_str();
     } else {
-      O << CurrentSection;
+      O << CurrentSection->getName();
     }
     O << TAI->getDataSectionStartSuffix() << '\n';
   }
-
-  IsInTextSection = NS ? NS->getKind().isText() : false;
 }
 
 void AsmPrinter::getAnalysisUsage(AnalysisUsage &AU) const {
@@ -787,12 +781,11 @@ void AsmPrinter::EmitAlignment(unsigned NumBits, const GlobalValue *GV,
   if (TAI->getAlignmentIsInBytes()) NumBits = 1 << NumBits;
   O << TAI->getAlignDirective() << NumBits;
 
-  unsigned FillValue = TAI->getTextAlignFillValue();
-  UseFillExpr &= IsInTextSection && FillValue;
-  if (UseFillExpr) {
-    O << ',';
-    PrintHex(FillValue);
-  }
+  if (CurrentSection && CurrentSection->getKind().isText())
+    if (unsigned FillValue = TAI->getTextAlignFillValue()) {
+      O << ',';
+      PrintHex(FillValue);
+    }
   O << '\n';
 }
     
