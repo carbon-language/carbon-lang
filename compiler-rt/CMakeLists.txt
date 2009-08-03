@@ -1,7 +1,7 @@
 # See docs/CMake.html for instructions about how to build Compiler-RT with CMake.
 
-project(CompilerRT)
-cmake_minimum_required(VERSION 2.6.1)
+PROJECT( CompilerRT )
+CMAKE_MINIMUM_REQUIRED( VERSION 2.6 )
 
 set(PACKAGE_NAME compiler-rt)
 set(PACKAGE_VERSION 1.0svn)
@@ -30,5 +30,3 @@ ADD_SUBDIRECTORY( lib )
 # Tests are being ignored for until the very basics are working.
 # ADD_SUBDIRECTORY( test )
 
-# Creates a shared lib .so
-ADD_LIBRARY( ${PROJECT_NAME} SHARED ${SRCS})
