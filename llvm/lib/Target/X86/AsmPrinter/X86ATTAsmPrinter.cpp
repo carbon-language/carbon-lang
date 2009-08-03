@@ -169,23 +169,22 @@ void X86ATTAsmPrinter::emitFunctionHeader(const MachineFunction &MF) {
     DecorateCygMingName(CurrentFnName, F);
 
   SwitchToSection(getObjFileLowering().SectionForGlobal(F, Mang, TM));
+  EmitAlignment(FnAlign, F);
+
   switch (F->getLinkage()) {
   default: llvm_unreachable("Unknown linkage type!");
   case Function::InternalLinkage:  // Symbols default to internal.
   case Function::PrivateLinkage:
   case Function::LinkerPrivateLinkage:
-    EmitAlignment(FnAlign, F);
     break;
   case Function::DLLExportLinkage:
   case Function::ExternalLinkage:
-    EmitAlignment(FnAlign, F);
     O << "\t.globl\t" << CurrentFnName << '\n';
     break;
   case Function::LinkOnceAnyLinkage:
   case Function::LinkOnceODRLinkage:
   case Function::WeakAnyLinkage:
   case Function::WeakODRLinkage:
-    EmitAlignment(FnAlign, F);
     if (Subtarget->isTargetDarwin()) {
       O << "\t.globl\t" << CurrentFnName << '\n';
       O << TAI->getWeakDefDirective() << CurrentFnName << '\n';
