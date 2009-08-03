@@ -882,6 +882,9 @@ RegionStoreManager::Retrieve(const GRState *state, Loc L, QualType T) {
     MR = MRMgr.getElementRegion(T, idx, MR, Ctx);
   }
   
+  if (isa<CodeTextRegion>(MR))
+    return SValuator::CastResult(state, UnknownVal());
+  
   // FIXME: Perhaps this method should just take a 'const MemRegion*' argument
   //  instead of 'Loc', and have the other Loc cases handled at a higher level.
   const TypedRegion *R = cast<TypedRegion>(MR);
@@ -1000,7 +1003,6 @@ SVal RegionStoreManager::RetrieveElement(const GRState* state,
   if (R->getIndex().isZeroConstant()) {
     if (const TypedRegion *superTR = dyn_cast<TypedRegion>(superR)) {
       ASTContext &Ctx = getContext();
-
       if (IsAnyPointerOrIntptr(superTR->getValueType(Ctx), Ctx)) {
         QualType valTy = R->getValueType(Ctx);
         if (IsAnyPointerOrIntptr(valTy, Ctx)) {

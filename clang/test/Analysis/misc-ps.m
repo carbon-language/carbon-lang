@@ -499,3 +499,12 @@ void test_cast_const_voidptr() {
   char *p = &x[1];
   const void* q = p;
 }
+
+// Reduced from a crash when analyzing Wine.  This test handles loads from
+// function addresses.
+typedef long (*FARPROC)();
+FARPROC test_load_func(FARPROC origfun) {
+  if (!*(unsigned char*) origfun)
+    return origfun;
+  return 0;
+}
