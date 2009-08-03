@@ -47,10 +47,6 @@ void DAGTypeLegalizer::SoftenFloatResult(SDNode *N, unsigned ResNo) {
         errs() << "\n");
   SDValue R = SDValue();
 
-  // See if the target wants to custom handle softening this result.
-  if (CustomLowerNode(N, N->getValueType(ResNo), true))
-        return;
-
   switch (N->getOpcode()) {
   default:
 #ifndef NDEBUG
@@ -538,10 +534,6 @@ bool DAGTypeLegalizer::SoftenFloatOperand(SDNode *N, unsigned OpNo) {
   DEBUG(errs() << "Soften float operand " << OpNo << ": "; N->dump(&DAG);
         errs() << "\n");
   SDValue Res = SDValue();
-
-  // See if target wants to custom handle softening this operand.
-  if (CustomLowerNode(N, N->getOperand(OpNo).getValueType(), false))
-     return false;
 
   switch (N->getOpcode()) {
   default:
