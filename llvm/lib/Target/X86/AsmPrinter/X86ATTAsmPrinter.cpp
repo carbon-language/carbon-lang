@@ -899,7 +899,8 @@ bool X86ATTAsmPrinter::doFinalization(Module &M) {
   }
 
   if (Subtarget->isTargetDarwin()) {
-    SwitchToDataSection("");
+    //TargetLoweringObjectFileMachO &TLOFMacho = 
+    //  static_cast<TargetLoweringObjectFileMachO &>(getObjFileLowering());
     
     // Add the (possibly multiple) personalities to the set of global value
     // stubs.  Only referenced functions get into the Personalities list.
