@@ -188,8 +188,8 @@ SDValue BlackfinTargetLowering::LowerFORMAL_ARGUMENTS(SDValue Op,
       MVT RegVT = VA.getLocVT();
       TargetRegisterClass *RC = VA.getLocReg() == BF::P0 ?
         BF::PRegisterClass : BF::DRegisterClass;
-      assert(RC->contains(VA.getLocReg()));
-      assert(RC->hasType(RegVT));
+      assert(RC->contains(VA.getLocReg()) && "Unexpected regclass in CCState");
+      assert(RC->hasType(RegVT) && "Unexpected regclass in CCState");
 
       unsigned Reg = MF.getRegInfo().createVirtualRegister(RC);
       MF.getRegInfo().addLiveIn(VA.getLocReg(), Reg);
@@ -210,7 +210,7 @@ SDValue BlackfinTargetLowering::LowerFORMAL_ARGUMENTS(SDValue Op,
 
       ArgValues.push_back(ArgValue);
     } else {
-      assert(VA.isMemLoc());
+      assert(VA.isMemLoc() && "CCValAssign must be RegLoc or MemLoc");
       unsigned ObjSize = VA.getLocVT().getStoreSizeInBits()/8;
       int FI = MFI->CreateFixedObject(ObjSize, VA.getLocMemOffset());
       SDValue FIN = DAG.getFrameIndex(FI, MVT::i32);
@@ -331,10 +331,10 @@ SDValue BlackfinTargetLowering::LowerCALL(SDValue Op, SelectionDAG &DAG) {
     if (VA.isRegLoc()) {
       RegsToPass.push_back(std::make_pair(VA.getLocReg(), Arg));
     } else {
-      assert(VA.isMemLoc());
+      assert(VA.isMemLoc() && "CCValAssign must be RegLoc or MemLoc");
       int Offset = VA.getLocMemOffset();
-      assert(Offset%4 == 0);
-      assert(VA.getLocVT()==MVT::i32);
+      assert(Offset%4 == 0 && "Unaligned LocMemOffset");
+      assert(VA.getLocVT()==MVT::i32 && "Illegal CCValAssign type");
       SDValue SPN = DAG.getCopyFromReg(Chain, dl, BF::SP, MVT::i32);
       SDValue OffsetN = DAG.getIntPtrConstant(Offset);
       OffsetN = DAG.getNode(ISD::ADD, dl, MVT::i32, SPN, OffsetN);

@@ -126,13 +126,15 @@ void BlackfinRegisterInfo::adjustRegister(MachineBasicBlock &MBB,
   // We must load delta into ScratchReg and add that.
   loadConstant(MBB, I, DL, ScratchReg, delta);
   if (BF::PRegClass.contains(Reg)) {
-    assert (BF::PRegClass.contains(ScratchReg));
+    assert(BF::PRegClass.contains(ScratchReg) &&
+           "ScratchReg must be a P register");
     BuildMI(MBB, I, DL, TII.get(BF::ADDpp), Reg)
       .addReg(Reg, RegState::Kill)
       .addReg(ScratchReg, RegState::Kill);
   } else {
-    assert (BF::DRegClass.contains(Reg));
-    assert (BF::DRegClass.contains(ScratchReg));
+    assert(BF::DRegClass.contains(Reg) && "Reg must be a D or P register");
+    assert(BF::DRegClass.contains(ScratchReg) &&
+           "ScratchReg must be a D register");
     BuildMI(MBB, I, DL, TII.get(BF::ADD), Reg)
       .addReg(Reg, RegState::Kill)
       .addReg(ScratchReg, RegState::Kill);
@@ -179,11 +181,12 @@ eliminateCallFramePseudoInstr(MachineFunction &MF,
   if (!hasReservedCallFrame(MF)) {
     int64_t Amount = I->getOperand(0).getImm();
     if (Amount != 0) {
-      assert(Amount%4 == 0);
+      assert(Amount%4 == 0 && "Unaligned call frame size");
       if (I->getOpcode() == BF::ADJCALLSTACKDOWN) {
         adjustRegister(MBB, I, I->getDebugLoc(), BF::SP, BF::P1, -Amount);
       } else {
-        assert(I->getOpcode() == BF::ADJCALLSTACKUP);
+        assert(I->getOpcode() == BF::ADJCALLSTACKUP &&
+               "Unknown call frame pseudo instruction");
         adjustRegister(MBB, I, I->getDebugLoc(), BF::SP, BF::P1, Amount);
       }
     }
@@ -207,22 +210,23 @@ static unsigned findScratchRegister(MachineBasicBlock::iterator II,
 void BlackfinRegisterInfo::eliminateFrameIndex(MachineBasicBlock::iterator II,
                                                int SPAdj,
                                                RegScavenger *RS) const {
-  unsigned i;
   MachineInstr &MI = *II;
   MachineBasicBlock &MBB = *MI.getParent();
   MachineFunction &MF = *MBB.getParent();
   DebugLoc DL = MI.getDebugLoc();
 
-  for (i=0; !MI.getOperand(i).isFI(); i++) {
-    assert(i < MI.getNumOperands() && "Instr doesn't have FrameIndex operand!");
+  unsigned FIPos;
+  for (FIPos=0; !MI.getOperand(FIPos).isFI(); ++FIPos) {
+    assert(FIPos < MI.getNumOperands() &&
+           "Instr doesn't have FrameIndex operand!");
   }
-  int FrameIndex = MI.getOperand(i).getIndex();
-  assert(i+1 < MI.getNumOperands() && MI.getOperand(i+1).isImm());
+  int FrameIndex = MI.getOperand(FIPos).getIndex();
+  assert(FIPos+1 < MI.getNumOperands() && MI.getOperand(FIPos+1).isImm());
   int Offset = MF.getFrameInfo()->getObjectOffset(FrameIndex)
-    + MI.getOperand(i+1).getImm();
+    + MI.getOperand(FIPos+1).getImm();
   unsigned BaseReg = BF::FP;
   if (hasFP(MF)) {
-    assert(SPAdj==0);
+    assert(SPAdj==0 && "Unexpected SP adjust in function with frame pointer");
   } else {
     BaseReg = BF::SP;
     Offset += MF.getFrameInfo()->getStackSize() + SPAdj;
@@ -234,10 +238,10 @@ void BlackfinRegisterInfo::eliminateFrameIndex(MachineBasicBlock::iterator II,
   case BF::STORE32fi:
     isStore = true;
   case BF::LOAD32fi: {
-    assert(Offset%4 == 0 && "Badly aligned i32 stack access");
-    assert(i==1);
-    MI.getOperand(i).ChangeToRegister(BaseReg, false);
-    MI.getOperand(i+1).setImm(Offset);
+    assert(Offset%4 == 0 && "Unaligned i32 stack access");
+    assert(FIPos==1 && "Bad frame index operand");
+    MI.getOperand(FIPos).ChangeToRegister(BaseReg, false);
+    MI.getOperand(FIPos+1).setImm(Offset);
     if (isUimm<6>(Offset)) {
       MI.setDesc(TII.get(isStore
                          ? BF::STORE32p_uimm6m4
@@ -248,7 +252,7 @@ void BlackfinRegisterInfo::eliminateFrameIndex(MachineBasicBlock::iterator II,
       MI.setDesc(TII.get(isStore
                          ? BF::STORE32fp_nimm7m4
                          : BF::LOAD32fp_nimm7m4));
-      MI.getOperand(i+1).setImm(-Offset);
+      MI.getOperand(FIPos+1).setImm(-Offset);
       return;
     }
     if (isImm<18>(Offset)) {
@@ -263,12 +267,12 @@ void BlackfinRegisterInfo::eliminateFrameIndex(MachineBasicBlock::iterator II,
     break;
   }
   case BF::ADDpp: {
-    assert(MI.getOperand(0).isReg());
+    assert(MI.getOperand(0).isReg() && "ADD instruction needs a register");
     unsigned DestReg = MI.getOperand(0).getReg();
     // We need to produce a stack offset in a P register. We emit:
     // P0 = offset;
     // P0 = BR + P0;
-    assert(i==1);
+    assert(FIPos==1 && "Bad frame index operand");
     loadConstant(MBB, II, DL, DestReg, Offset);
     MI.getOperand(1).ChangeToRegister(DestReg, false, false, true);
     MI.getOperand(2).ChangeToRegister(BaseReg, false);
@@ -277,11 +281,11 @@ void BlackfinRegisterInfo::eliminateFrameIndex(MachineBasicBlock::iterator II,
   case BF::STORE16fi:
     isStore = true;
   case BF::LOAD16fi: {
-    assert(Offset%2 == 0 && "Badly aligned i16 stack access");
-    assert(i==1);
+    assert(Offset%2 == 0 && "Unaligned i16 stack access");
+    assert(FIPos==1 && "Bad frame index operand");
     // We need a P register to use as an address
     unsigned ScratchReg = findScratchRegister(II, RS, &BF::PRegClass, SPAdj);
-    assert(ScratchReg);
+    assert(ScratchReg && "Could not scavenge register");
     loadConstant(MBB, II, DL, ScratchReg, Offset);
     BuildMI(MBB, II, DL, TII.get(BF::ADDpp), ScratchReg)
       .addReg(ScratchReg, RegState::Kill)
@@ -293,10 +297,10 @@ void BlackfinRegisterInfo::eliminateFrameIndex(MachineBasicBlock::iterator II,
   }
   case BF::STORE8fi: {
     // This is an AnyCC spill, we need a scratch register.
-    assert(i==1);
+    assert(FIPos==1 && "Bad frame index operand");
     MachineOperand SpillReg = MI.getOperand(0);
     unsigned ScratchReg = findScratchRegister(II, RS, &BF::DRegClass, SPAdj);
-    assert(ScratchReg);
+    assert(ScratchReg && "Could not scavenge register");
     if (SpillReg.getReg()==BF::NCC) {
       BuildMI(MBB, II, DL, TII.get(BF::MOVENCC_z), ScratchReg)
         .addOperand(SpillReg);
@@ -309,20 +313,20 @@ void BlackfinRegisterInfo::eliminateFrameIndex(MachineBasicBlock::iterator II,
     // STORE D
     MI.setDesc(TII.get(BF::STORE8p_imm16));
     MI.getOperand(0).ChangeToRegister(ScratchReg, false, false, true);
-    MI.getOperand(i).ChangeToRegister(BaseReg, false);
-    MI.getOperand(i+1).setImm(Offset);
+    MI.getOperand(FIPos).ChangeToRegister(BaseReg, false);
+    MI.getOperand(FIPos+1).setImm(Offset);
     break;
   }
   case BF::LOAD8fi: {
     // This is an restore, we need a scratch register.
-    assert(i==1);
+    assert(FIPos==1 && "Bad frame index operand");
     MachineOperand SpillReg = MI.getOperand(0);
     unsigned ScratchReg = findScratchRegister(II, RS, &BF::DRegClass, SPAdj);
-    assert(ScratchReg);
+    assert(ScratchReg && "Could not scavenge register");
     MI.setDesc(TII.get(BF::LOAD32p_imm16_8z));
     MI.getOperand(0).ChangeToRegister(ScratchReg, true);
-    MI.getOperand(i).ChangeToRegister(BaseReg, false);
-    MI.getOperand(i+1).setImm(Offset);
+    MI.getOperand(FIPos).ChangeToRegister(BaseReg, false);
+    MI.getOperand(FIPos+1).setImm(Offset);
     ++II;
     if (SpillReg.getReg()==BF::CC) {
       // CC = D
@@ -376,8 +380,8 @@ void BlackfinRegisterInfo::emitPrologue(MachineFunction &MF) const {
   }
 
   if (!hasFP(MF)) {
-    // So far we only support FP elimination on leaf functions
-    assert(!MFI->hasCalls());
+    assert(!MFI->hasCalls() &&
+           "FP elimination on a non-leaf function is not supported");
     adjustRegister(MBB, MBBI, dl, BF::SP, BF::P1, -FrameSize);
     return;
   }
@@ -417,8 +421,8 @@ void BlackfinRegisterInfo::emitEpilogue(MachineFunction &MF,
   assert(FrameSize%4 == 0 && "Misaligned frame size");
 
   if (!hasFP(MF)) {
-    // So far we only support FP elimination on leaf functions
-    assert(!MFI->hasCalls());
+    assert(!MFI->hasCalls() &&
+           "FP elimination on a non-leaf function is not supported");
     adjustRegister(MBB, MBBI, dl, BF::SP, BF::P1, FrameSize);
     return;
   }
