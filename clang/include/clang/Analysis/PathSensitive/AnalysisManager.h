@@ -23,7 +23,9 @@ namespace clang {
 
 class AnalysisManager : public BugReporterData {
   AnalysisContextManager ContextMgr;
-  AnalysisContext *CurrentContext;
+  AnalysisContext *RootContext;
+
+  LocationContextManager LocCtxMgr;
 
   ASTContext &Ctx;
   Diagnostic &Diags;
@@ -57,7 +59,7 @@ public:
       VisualizeEGDot(vizdot), VisualizeEGUbi(vizubi), PurgeDead(purge),
       EagerlyAssume(eager), TrimGraph(trim) {
 
-    CurrentContext = ContextMgr.getContext(d);
+    RootContext = ContextMgr.getContext(d);
   }
     
   AnalysisManager(ASTContext &ctx, Diagnostic &diags, 
@@ -73,21 +75,21 @@ public:
       VisualizeEGDot(vizdot), VisualizeEGUbi(vizubi), PurgeDead(purge),
       EagerlyAssume(eager), TrimGraph(trim) {
 
-    CurrentContext = 0;
+    RootContext = 0;
   }
 
   void setContext(Decl *D) {
-    CurrentContext = ContextMgr.getContext(D);
+    RootContext = ContextMgr.getContext(D);
   }
     
   Decl *getCodeDecl() const { 
     assert (AScope == ScopeDecl);
-    return CurrentContext->getDecl();
+    return RootContext->getDecl();
   }
     
   Stmt *getBody() const {
     assert (AScope == ScopeDecl);
-    return CurrentContext->getBody();
+    return RootContext->getBody();
   }
     
   StoreManagerCreator getStoreManagerCreator() {
@@ -99,15 +101,15 @@ public:
   }
     
   virtual CFG *getCFG() {
-    return CurrentContext->getCFG();
+    return RootContext->getCFG();
   }
     
   virtual ParentMap &getParentMap() {
-    return CurrentContext->getParentMap();
+    return RootContext->getParentMap();
   }
 
   virtual LiveVariables *getLiveVariables() {
-    return CurrentContext->getLiveVariables();
+    return RootContext->getLiveVariables();
   }
     
   virtual ASTContext &getContext() {
@@ -128,6 +130,10 @@ public:
     
   virtual PathDiagnosticClient *getPathDiagnosticClient() {
     return PD.get();      
+  }
+
+  StackFrameContext *getRootStackFrame() {
+    return LocCtxMgr.getStackFrame(RootContext, 0, 0);
   }
     
   bool shouldVisualizeGraphviz() const { return VisualizeEGDot; }

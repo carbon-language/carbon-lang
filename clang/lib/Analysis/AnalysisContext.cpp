@@ -72,3 +72,53 @@ AnalysisContext *AnalysisContextManager::getContext(Decl *D) {
   Ctx.setDecl(D);
   return &Ctx;
 }
+
+void LocationContext::Profile(llvm::FoldingSetNodeID &ID, ContextKind k,
+                              AnalysisContext *ctx, LocationContext *parent) {
+  ID.AddInteger(k);
+  ID.AddPointer(ctx);
+  ID.AddPointer(parent);
+}
+
+void StackFrameContext::Profile(llvm::FoldingSetNodeID &ID,AnalysisContext *ctx,
+                                LocationContext *parent, Stmt *s) {
+  LocationContext::Profile(ID, StackFrame, ctx, parent);
+  ID.AddPointer(s);
+}
+
+void ScopeContext::Profile(llvm::FoldingSetNodeID &ID, AnalysisContext *ctx,
+                           LocationContext *parent, Stmt *s) {
+  LocationContext::Profile(ID, Scope, ctx, parent);
+  ID.AddPointer(s);
+}
+
+StackFrameContext *LocationContextManager::getStackFrame(AnalysisContext *ctx, 
+                                             LocationContext *parent, Stmt *s) {
+  llvm::FoldingSetNodeID ID;
+  StackFrameContext::Profile(ID, ctx, parent, s);
+  void *InsertPos;
+
+  StackFrameContext *f = 
+   cast_or_null<StackFrameContext>(Contexts.FindNodeOrInsertPos(ID, InsertPos));
+  if (!f) {
+    f = new StackFrameContext(ctx, parent, s);
+    Contexts.InsertNode(f, InsertPos);
+  }
+  return f;
+}
+
+ScopeContext *LocationContextManager::getScope(AnalysisContext *ctx,
+                                             LocationContext *parent, Stmt *s) {
+  llvm::FoldingSetNodeID ID;
+  ScopeContext::Profile(ID, ctx, parent, s);
+  void *InsertPos;
+  
+  ScopeContext *scope =
+    cast_or_null<ScopeContext>(Contexts.FindNodeOrInsertPos(ID, InsertPos));
+
+  if (!scope) {
+    scope = new ScopeContext(ctx, parent, s);
+    Contexts.InsertNode(scope, InsertPos);
+  }
+  return scope;
+}
