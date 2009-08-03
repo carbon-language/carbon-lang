@@ -1448,8 +1448,7 @@ X86TargetLowering::LowerFORMAL_ARGUMENTS(SDValue Op, SelectionDAG &DAG) {
         ArgValue = DAG.getNode(ISD::AssertZext, dl, RegVT, ArgValue,
                                DAG.getValueType(VA.getValVT()));
       else if (VA.getLocInfo() == CCValAssign::BCvt)
-        ArgValue = DAG.getNode(ISD::BIT_CONVERT, dl, RegVT, ArgValue,
-                               DAG.getValueType(VA.getValVT()));
+        ArgValue = DAG.getNode(ISD::BIT_CONVERT, dl, VA.getValVT(), ArgValue);
 
       if (VA.isExtInLoc()) {
         // Handle MMX values passed in XMM regs.
