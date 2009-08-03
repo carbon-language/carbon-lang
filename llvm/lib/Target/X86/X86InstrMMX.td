@@ -164,10 +164,10 @@ def MMX_MOVD64to64rr : MMXRI<0x6E, MRMSrcReg, (outs VR64:$dst), (ins GR64:$src),
                              []>;
 
 let neverHasSideEffects = 1 in {
-def MMX_MOVD64from64rr : MMXRI<0x7F, MRMDestReg,
+def MMX_MOVD64from64rr : MMXRI<0x7E, MRMDestReg,
                                (outs GR64:$dst), (ins VR64:$src),
                                "movq\t{$src, $dst|$dst, $src}", []>;
-def MMX_MOVD64rrv164 : MMXI<0x6F, MRMSrcReg, (outs VR64:$dst), (ins GR64:$src),
+def MMX_MOVD64rrv164 : MMXI<0x6E, MRMSrcReg, (outs VR64:$dst), (ins GR64:$src),
                             "movq\t{$src, $dst|$dst, $src}",
                             [(set VR64:$dst, (v1i64 (scalar_to_vector GR64:$src)))]>;
 }
