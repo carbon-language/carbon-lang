@@ -43,6 +43,8 @@ mailing list</a>.</p>
 
 <h2 id="build">Building Clang and Working with the Code</h2>
 
+<h3 id="buildNix">On Unix-like Systems</h3>
+
 <p>If you would like to check out and build Clang, the current procedure is as
 follows:</p>
 
@@ -119,6 +121,65 @@ the latest sources in the LLVM tree. You can update your toplevel LLVM project
 and all (possibly unrelated) projects inside it with <tt><b>make
 update</b></tt>. This will run <tt>svn update</tt> on all subdirectories related
 to subversion. </p>
+
+<h3 id="buildWindows">Using Visual Studio</h3>
+
+<p>The following details setting up for and building Clang on Windows using
+Visual Studio:</p>
+
+<ol>
+  <li>Get the required tools:</li>
+  <ul>
+    <li><b>Subversion</b>.  Source code control program.  Get it from:
+        <a href="http://subversion.tigris.org/getting.html">
+        http://subversion.tigris.org/getting.html</a></li>
+    <li><b>cmake</b>.  This is used for generating Visual Studio solution and
+        project files.  Get it from:
+        <a href="http://www.cmake.org/cmake/resources/software.html">
+        http://www.cmake.org/cmake/resources/software.html</a></li>
+    <li><b>Visual Studio 2005</b>
+        (VS 2008 may work also - cmake outputs VS2005 project files)</li>
+    <li><b>Python</b>.  This is need only if you will be running the tests
+        (which is essential, if you will be developing for clang).
+        Get it from:
+        <a href="http://www.python.org/download">
+        http://www.python.org/download</a></li>
+  </ul>
+
+  <li>Checkout LLVM:</li>
+  <ul>
+    <li><tt>svn co http://llvm.org/svn/llvm-project/llvm/trunk llvm</tt></li>
+  </ul>
+  <li>Checkout Clang:</li>
+  <ul>
+     <li><tt>cd llvm\tools</tt>
+     <li><tt>svn co http://llvm.org/svn/llvm-project/cfe/trunk clang</tt></li>
+  </ul>
+  <li>Run cmake to generate the Visual Studio solution and project files:</li>
+  <ul>
+    <li><tt>cd ..</tt>  (Change directory back to the llvm top.)</li>
+    <li><tt>cmake .</tt></li>
+    <li>The above, if successful, will have created an LLVM.sln file in the
+       llvm directory.
+  </ul>
+  <li>Build Clang:</li>
+  <ul>
+    <li>Open LLVM.sln in Visual Studio.</li>
+    <li>Build the "clang-cc" project for just the compiler front end.
+       Alternatively, build the "clang" project for the compiler driver
+       (note that the driver is currently broken on Windows),
+       or the "ALL_BUILD" project to build everything, including tools.</li>
+  </ul>
+  <li>Try it out (assuming you added llvm/debug/bin to your path).  (See the
+    running examples from above.)</li>
+  <li>See <a href="hacking.html#testingWindows">
+     Hacking on clang - Testing using Visual Studio on Windows</a> for information
+     on running regression tests on Windows.</li>
+</ol>
+
+<p>Note that once you have checked out both llvm and clang, to synchronize
+to the latest code base, use the <tt>svn update</tt> command in both the
+llvm and llvm\tools\clang directories, as they are separate repositories.</p>
 
 <a name="driver"><h2>High-Level Compiler Driver (Drop-in Substitute for GCC)</h2></a>
 

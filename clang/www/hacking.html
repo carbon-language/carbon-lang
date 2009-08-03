@@ -22,6 +22,11 @@
       <li><a href="#docs">Developer Documentation</a></li>
       <li><a href="#debugging">Debugging</a></li>
       <li><a href="#testing">Testing</a></li>
+      <ul>
+	    <li><a href="#testingNonWindows">Testing on Unix-like Systems</a></li>
+	    <li><a href="#testingWindows">Testing using Visual Studio on Windows</a></li>
+	  </ul>
+      <li><a href="#patches">Creating Patch Files</a></li>
       <li><a href="#irgen">LLVM IR Generation</a></li>
     </ul>
     
@@ -61,12 +66,52 @@
   <h2 id="testing">Testing</h2>
   <!--=====================================================================-->
   
+  <p><i>[Note: The test running mechanism is currently under revision, so the
+  following might change shortly.]</i></p>
+  
+  <!--=====================================================================-->
+  <h3 id="testingNonWindows">Testing on Unix-like Systems</h3>
+  <!--=====================================================================-->
+  
   <p>Clang includes a basic regression suite in the tree which can be
   run with <tt>make test</tt> from the top-level clang directory, or
-  just <tt>make</tt> in the <em>test</em> sub-directory. <tt>make
-  report</tt> can be used after running the tests to summarize the
-  results, and <tt>make VERBOSE=1</tt> can be used to show more detail
+  just <tt>make</tt> in the <em>test</em> sub-directory.
+  <tt>make VERBOSE=1</tt> can be used to show more detail
   about what is being run.</p>
+
+  <p>The tests primarily consist of a test runner script running the compiler
+  under test on individual test files grouped in the directories under the
+  test directory.  The individual test files include comments at the
+  beginning indicating the Clang compile options to use, to be read
+  by the test runner. Embedded comments also can do things like telling
+  the test runner that an error is expected at the current line.
+  Any output files produced by the test will be placed under
+  a created Output directory.</p>
+  
+  <p>During the run of <tt>make test</tt>, the terminal output will
+  display a line similar to the following:</p>
+  
+  <ul><tt>--- Running clang tests for i686-pc-linux-gnu ---</tt></ul>
+  
+  <p>followed by a line continually overwritten with the current test
+  file being compiled, and an overall completion percentage.</p>
+  
+  <p>After the <tt>make test</tt> run completes, the absence of any
+  <tt>Failing Tests (count):</tt> message indicates that no tests
+  failed unexpectedly.  If any tests did fail, the
+  <tt>Failing Tests (count):</tt> message will be followed by a list
+  of the test source file paths that failed.  For example:</p>
+
+  <tt><pre>
+  Failing Tests (3):
+      /home/john/llvm/tools/clang/test/SemaCXX/member-name-lookup.cpp
+      /home/john/llvm/tools/clang/test/SemaCXX/namespace-alias.cpp
+      /home/john/llvm/tools/clang/test/SemaCXX/using-directive.cpp
+  </pre></tt>
+
+  <p>If you used the <tt>make VERBOSE=1</tt> option, the terminal
+  output will reflect the error messages from the compiler and
+  test runner.</p>
 
   <p>The regression suite can also be run with Valgrind by running
   <tt>make test VG=1</tt> in the top-level clang directory.</p>
@@ -77,6 +122,48 @@
   override LLVMGCC, as in: <tt>make LLVMGCC="ccc -std=gnu89"
   TEST=nightly report</tt> (make sure ccc is in your PATH or use the
   full path).</p>
+  
+  <!--=====================================================================-->
+  <h3 id="testingWindows">Testing using Visual Studio on Windows</h3>
+  <!--=====================================================================-->
+
+  <p>The cmake build tool is set up to create Visual Studio project files
+  for running the tests, "clang-test" being the root.
+  Unfortunately, the test runner scripts presently don't work on Windows.
+  This will be fixed during the test runner revision in progress.</p>
+  
+  <p>Note that the current and coming revised test runner is based on
+  Python, which must be installed.  Find Python at:
+  <a href="http://www.python.org/download">http://www.python.org/download</a>.
+  Download the latest stable version (2.6.2 at the time of this writing).</p>
+
+  <!--=====================================================================-->
+  <h2 id="patches">Creating Patch Files</h2>
+  <!--=====================================================================-->
+
+  <p>To return changes to the Clang team, unless you have checkin
+  privileges, the prefered way is to send patch files to the
+  cfe-commits mailing list, with an explanation of what the patch is for.
+  Or, if you have questions, or want to have a wider discussion of what
+  you are doing, such as if you are new to Clang development, you can use
+  the cfe-dev mailing list also.
+  </p>
+  
+  <p>To create these patch files, change directory
+  to the llvm/tools/clang root and run:</p>
+  
+  <ul><tt>svn diff (relative path) >(patch file name)</tt></ul>
+
+  <p>For example, for getting the diffs of all of clang:</p>
+  
+  <ul><tt>svn diff . >~/mypatchfile.patch</tt></ul>
+
+  <p>For example, for getting the diffs of a single file:</p>
+  
+  <ul><tt>svn diff lib/Parse/ParseDeclCXX.cpp >~/ParseDeclCXX.patch</tt></ul>
+
+  <p>Note that the paths embedded in the patch depend on where you run it,
+  so changing directory to the llvm/tools/clang directory is recommended.</p>
 
   <!--=====================================================================-->
   <h2 id="irgen">LLVM IR Generation</h2>
