@@ -105,8 +105,12 @@ unsigned DeclSpec::getParsedSpecifiers() const {
   return Res;
 }
 
-template <class T> static bool BadSpecifier(T TPrev, const char *&PrevSpec) {
+template <class T> static bool BadSpecifier(T TNew, T TPrev,
+                                            const char *&PrevSpec,
+                                            unsigned &DiagID) {
   PrevSpec = DeclSpec::getSpecifierName(TPrev);
+  DiagID = (TNew == TPrev ? diag::ext_duplicate_declspec
+            : diag::err_invalid_decl_spec_combination);
   return true;
 } 
 
@@ -193,9 +197,10 @@ const char *DeclSpec::getSpecifierName(TQ T) {
 }
 
 bool DeclSpec::SetStorageClassSpec(SCS S, SourceLocation Loc,
-                                   const char *&PrevSpec) {
+                                   const char *&PrevSpec,
+                                   unsigned &DiagID) {
   if (StorageClassSpec != SCS_unspecified)
-    return BadSpecifier((SCS)StorageClassSpec, PrevSpec);
+    return BadSpecifier(S, (SCS)StorageClassSpec, PrevSpec, DiagID);
   StorageClassSpec = S;
   StorageClassSpecLoc = Loc;
   assert((unsigned)S == StorageClassSpec && "SCS constants overflow bitfield");
@@ -203,9 +208,11 @@ bool DeclSpec::SetStorageClassSpec(SCS S, SourceLocation Loc,
 }
 
 bool DeclSpec::SetStorageClassSpecThread(SourceLocation Loc, 
-                                         const char *&PrevSpec) {
+                                         const char *&PrevSpec,
+                                         unsigned &DiagID) {
   if (SCS_thread_specified) {
     PrevSpec = "__thread";
+    DiagID = diag::ext_duplicate_declspec;
     return true;
   }
   SCS_thread_specified = true;
@@ -218,39 +225,46 @@ bool DeclSpec::SetStorageClassSpecThread(SourceLocation Loc,
 /// and ignore the request if invalid (e.g. "extern" then "auto" is
 /// specified).
 bool DeclSpec::SetTypeSpecWidth(TSW W, SourceLocation Loc,
-                                const char *&PrevSpec) {
+                                const char *&PrevSpec,
+                                unsigned &DiagID) {
   if (TypeSpecWidth != TSW_unspecified &&
       // Allow turning long -> long long.
       (W != TSW_longlong || TypeSpecWidth != TSW_long))
-    return BadSpecifier((TSW)TypeSpecWidth, PrevSpec);
+    return BadSpecifier(W, (TSW)TypeSpecWidth, PrevSpec, DiagID);
   TypeSpecWidth = W;
   TSWLoc = Loc;
   return false;
 }
 
 bool DeclSpec::SetTypeSpecComplex(TSC C, SourceLocation Loc, 
-                                  const char *&PrevSpec) {
+                                  const char *&PrevSpec,
+                                  unsigned &DiagID) {
   if (TypeSpecComplex != TSC_unspecified)
-    return BadSpecifier((TSC)TypeSpecComplex, PrevSpec);
+    return BadSpecifier(C, (TSC)TypeSpecComplex, PrevSpec, DiagID);
   TypeSpecComplex = C;
   TSCLoc = Loc;
   return false;
 }
 
 bool DeclSpec::SetTypeSpecSign(TSS S, SourceLocation Loc, 
-                               const char *&PrevSpec) {
+                               const char *&PrevSpec,
+                               unsigned &DiagID) {
   if (TypeSpecSign != TSS_unspecified)
-    return BadSpecifier((TSS)TypeSpecSign, PrevSpec);
+    return BadSpecifier(S, (TSS)TypeSpecSign, PrevSpec, DiagID);
   TypeSpecSign = S;
   TSSLoc = Loc;
   return false;
 }
 
 bool DeclSpec::SetTypeSpecType(TST T, SourceLocation Loc,
-                               const char *&PrevSpec, void *Rep,
-                               bool Owned) {
-  if (TypeSpecType != TST_unspecified)
-    return BadSpecifier((TST)TypeSpecType, PrevSpec);
+                               const char *&PrevSpec,
+                               unsigned &DiagID,
+                               void *Rep, bool Owned) {
+  if (TypeSpecType != TST_unspecified) {
+    PrevSpec = DeclSpec::getSpecifierName((TST) TypeSpecType);
+    DiagID = diag::err_invalid_decl_spec_combination;
+    return true;
+  }
   TypeSpecType = T;
   TypeRep = Rep;
   TSTLoc = Loc;
@@ -266,10 +280,10 @@ bool DeclSpec::SetTypeSpecError() {
 }
 
 bool DeclSpec::SetTypeQual(TQ T, SourceLocation Loc, const char *&PrevSpec,
-                           const LangOptions &Lang) {
+                           unsigned &DiagID, const LangOptions &Lang) {
   // Duplicates turn into warnings pre-C99.
   if ((TypeQualifiers & T) && !Lang.C99)
-    return BadSpecifier(T, PrevSpec);
+    return BadSpecifier(T, T, PrevSpec, DiagID);
   TypeQualifiers |= T;
   
   switch (T) {
@@ -281,33 +295,38 @@ bool DeclSpec::SetTypeQual(TQ T, SourceLocation Loc, const char *&PrevSpec,
   return false;
 }
 
-bool DeclSpec::SetFunctionSpecInline(SourceLocation Loc, const char *&PrevSpec){
+bool DeclSpec::SetFunctionSpecInline(SourceLocation Loc, const char *&PrevSpec,
+                                     unsigned &DiagID) {
   // 'inline inline' is ok.
   FS_inline_specified = true;
   FS_inlineLoc = Loc;
   return false;
 }
 
-bool DeclSpec::SetFunctionSpecVirtual(SourceLocation Loc, const char *&PrevSpec){
+bool DeclSpec::SetFunctionSpecVirtual(SourceLocation Loc, const char *&PrevSpec,
+                                      unsigned &DiagID) {
   // 'virtual virtual' is ok.
   FS_virtual_specified = true;
   FS_virtualLoc = Loc;
   return false;
 }
 
-bool DeclSpec::SetFunctionSpecExplicit(SourceLocation Loc, const char *&PrevSpec){
+bool DeclSpec::SetFunctionSpecExplicit(SourceLocation Loc, const char *&PrevSpec,
+                                       unsigned &DiagID) {
   // 'explicit explicit' is ok.
   FS_explicit_specified = true;
   FS_explicitLoc = Loc;
   return false;
 }
 
-bool DeclSpec::SetFriendSpec(SourceLocation Loc, const char *&PrevSpec) {
+bool DeclSpec::SetFriendSpec(SourceLocation Loc, const char *&PrevSpec,
+                             unsigned &DiagID) {
   if (Friend_specified) {
     PrevSpec = "friend";
+    DiagID = diag::ext_duplicate_declspec;
     return true;
   }
-  
+
   Friend_specified = true;
   FriendLoc = Loc;
   return false;

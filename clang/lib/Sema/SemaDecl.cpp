@@ -1394,6 +1394,7 @@ Sema::DeclPtrTy Sema::BuildAnonymousStructOrUnion(Scope *S, DeclSpec &DS,
   bool Invalid = false;
   if (getLangOptions().CPlusPlus) {
     const char* PrevSpec = 0;
+    unsigned DiagID;
     // C++ [class.union]p3:
     //   Anonymous unions declared in a named namespace or in the
     //   global namespace shall be declared static.
@@ -1405,7 +1406,8 @@ Sema::DeclPtrTy Sema::BuildAnonymousStructOrUnion(Scope *S, DeclSpec &DS,
       Invalid = true;
 
       // Recover by adding 'static'.
-      DS.SetStorageClassSpec(DeclSpec::SCS_static, SourceLocation(), PrevSpec);
+      DS.SetStorageClassSpec(DeclSpec::SCS_static, SourceLocation(),
+                             PrevSpec, DiagID);
     } 
     // C++ [class.union]p3:
     //   A storage class is not allowed in a declaration of an
@@ -1418,7 +1420,7 @@ Sema::DeclPtrTy Sema::BuildAnonymousStructOrUnion(Scope *S, DeclSpec &DS,
 
       // Recover by removing the storage specifier.
       DS.SetStorageClassSpec(DeclSpec::SCS_unspecified, SourceLocation(),
-                             PrevSpec);
+                             PrevSpec, DiagID);
     }
 
     // C++ [class.union]p2: 
@@ -3434,8 +3436,9 @@ void Sema::ActOnFinishKNRParamDeclarations(Scope *S, Declarator &D,
         // type.
         DeclSpec DS;
         const char* PrevSpec; // unused
+        unsigned DiagID; // unused
         DS.SetTypeSpecType(DeclSpec::TST_int, FTI.ArgInfo[i].IdentLoc, 
-                           PrevSpec);
+                           PrevSpec, DiagID);
         Declarator ParamD(DS, Declarator::KNRTypeListContext);
         ParamD.SetIdentifier(FTI.ArgInfo[i].Ident, FTI.ArgInfo[i].IdentLoc);
         FTI.ArgInfo[i].Param = ActOnParamDeclarator(S, ParamD);
@@ -3688,7 +3691,8 @@ NamedDecl *Sema::ImplicitlyDefineFunction(SourceLocation Loc,
   // Set a Declarator for the implicit definition: int foo();
   const char *Dummy;
   DeclSpec DS;
-  bool Error = DS.SetTypeSpecType(DeclSpec::TST_int, Loc, Dummy);
+  unsigned DiagID;
+  bool Error = DS.SetTypeSpecType(DeclSpec::TST_int, Loc, Dummy, DiagID);
   Error = Error; // Silence warning.
   assert(!Error && "Error setting up implicit decl!");
   Declarator D(DS, Declarator::BlockContext);

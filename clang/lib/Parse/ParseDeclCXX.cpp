@@ -410,10 +410,11 @@ void Parser::ParseDecltypeSpecifier(DeclSpec &DS) {
     return;
 
   const char *PrevSpec = 0;
+  unsigned DiagID;
   // Check for duplicate type specifiers (e.g. "int decltype(a)").
   if (DS.SetTypeSpecType(DeclSpec::TST_decltype, StartLoc, PrevSpec, 
-                         Result.release()))
-    Diag(StartLoc, diag::err_invalid_decl_spec_combination) << PrevSpec;
+                         DiagID, Result.release()))
+    Diag(StartLoc, DiagID) << PrevSpec;
 }
 
 /// ParseClassName - Parse a C++ class-name, which names a class. Note
@@ -716,15 +717,16 @@ void Parser::ParseClassSpecifier(tok::TokenKind TagTokKind,
     Diag(Tok, diag::err_expected_lbrace);
   }
 
-  const char *PrevSpec = 0;
   if (TagOrTempResult.isInvalid()) {
     DS.SetTypeSpecError();
     return;
   }
   
-  if (DS.SetTypeSpecType(TagType, StartLoc, PrevSpec, 
+  const char *PrevSpec = 0;
+  unsigned DiagID;
+  if (DS.SetTypeSpecType(TagType, StartLoc, PrevSpec, DiagID,
                          TagOrTempResult.get().getAs<void>(), Owned))
-    Diag(StartLoc, diag::err_invalid_decl_spec_combination) << PrevSpec;
+    Diag(StartLoc, DiagID) << PrevSpec;
   
   if (DS.isFriendSpecified())
     Actions.ActOnFriendDecl(CurScope, DS.getFriendSpecLoc(), 

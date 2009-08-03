@@ -610,6 +610,7 @@ Parser::OwningExprResult Parser::ParseCXXCondition() {
 void Parser::ParseCXXSimpleTypeSpecifier(DeclSpec &DS) {
   DS.SetRangeStart(Tok.getLocation());
   const char *PrevSpec;
+  unsigned DiagID;
   SourceLocation Loc = Tok.getLocation();
   
   switch (Tok.getKind()) {
@@ -622,50 +623,50 @@ void Parser::ParseCXXSimpleTypeSpecifier(DeclSpec &DS) {
 
   // type-name
   case tok::annot_typename: {
-    DS.SetTypeSpecType(DeclSpec::TST_typename, Loc, PrevSpec,
+    DS.SetTypeSpecType(DeclSpec::TST_typename, Loc, PrevSpec, DiagID,
                        Tok.getAnnotationValue());
     break;
   }
     
   // builtin types
   case tok::kw_short:
-    DS.SetTypeSpecWidth(DeclSpec::TSW_short, Loc, PrevSpec);
+    DS.SetTypeSpecWidth(DeclSpec::TSW_short, Loc, PrevSpec, DiagID);
     break;
   case tok::kw_long:
-    DS.SetTypeSpecWidth(DeclSpec::TSW_long, Loc, PrevSpec);
+    DS.SetTypeSpecWidth(DeclSpec::TSW_long, Loc, PrevSpec, DiagID);
     break;
   case tok::kw_signed:
-    DS.SetTypeSpecSign(DeclSpec::TSS_signed, Loc, PrevSpec);
+    DS.SetTypeSpecSign(DeclSpec::TSS_signed, Loc, PrevSpec, DiagID);
     break;
   case tok::kw_unsigned:
-    DS.SetTypeSpecSign(DeclSpec::TSS_unsigned, Loc, PrevSpec);
+    DS.SetTypeSpecSign(DeclSpec::TSS_unsigned, Loc, PrevSpec, DiagID);
     break;
   case tok::kw_void:
-    DS.SetTypeSpecType(DeclSpec::TST_void, Loc, PrevSpec);
+    DS.SetTypeSpecType(DeclSpec::TST_void, Loc, PrevSpec, DiagID);
     break;
   case tok::kw_char:
-    DS.SetTypeSpecType(DeclSpec::TST_char, Loc, PrevSpec);
+    DS.SetTypeSpecType(DeclSpec::TST_char, Loc, PrevSpec, DiagID);
     break;
   case tok::kw_int:
-    DS.SetTypeSpecType(DeclSpec::TST_int, Loc, PrevSpec);
+    DS.SetTypeSpecType(DeclSpec::TST_int, Loc, PrevSpec, DiagID);
     break;
   case tok::kw_float:
-    DS.SetTypeSpecType(DeclSpec::TST_float, Loc, PrevSpec);
+    DS.SetTypeSpecType(DeclSpec::TST_float, Loc, PrevSpec, DiagID);
     break;
   case tok::kw_double:
-    DS.SetTypeSpecType(DeclSpec::TST_double, Loc, PrevSpec);
+    DS.SetTypeSpecType(DeclSpec::TST_double, Loc, PrevSpec, DiagID);
     break;
   case tok::kw_wchar_t:
-    DS.SetTypeSpecType(DeclSpec::TST_wchar, Loc, PrevSpec);
+    DS.SetTypeSpecType(DeclSpec::TST_wchar, Loc, PrevSpec, DiagID);
     break;
   case tok::kw_char16_t:
-    DS.SetTypeSpecType(DeclSpec::TST_char16, Loc, PrevSpec);
+    DS.SetTypeSpecType(DeclSpec::TST_char16, Loc, PrevSpec, DiagID);
     break;
   case tok::kw_char32_t:
-    DS.SetTypeSpecType(DeclSpec::TST_char32, Loc, PrevSpec);
+    DS.SetTypeSpecType(DeclSpec::TST_char32, Loc, PrevSpec, DiagID);
     break;
   case tok::kw_bool:
-    DS.SetTypeSpecType(DeclSpec::TST_bool, Loc, PrevSpec);
+    DS.SetTypeSpecType(DeclSpec::TST_bool, Loc, PrevSpec, DiagID);
     break;
   
   // GNU typeof support.
@@ -696,15 +697,16 @@ void Parser::ParseCXXSimpleTypeSpecifier(DeclSpec &DS) {
 bool Parser::ParseCXXTypeSpecifierSeq(DeclSpec &DS) {
   DS.SetRangeStart(Tok.getLocation());
   const char *PrevSpec = 0;
-  int isInvalid = 0;
+  unsigned DiagID;
+  bool isInvalid = 0;
 
   // Parse one or more of the type specifiers.
-  if (!ParseOptionalTypeSpecifier(DS, isInvalid, PrevSpec)) {
+  if (!ParseOptionalTypeSpecifier(DS, isInvalid, PrevSpec, DiagID)) {
     Diag(Tok, diag::err_operator_missing_type_specifier);
     return true;
   }
   
-  while (ParseOptionalTypeSpecifier(DS, isInvalid, PrevSpec)) ;
+  while (ParseOptionalTypeSpecifier(DS, isInvalid, PrevSpec, DiagID)) ;
 
   return false;
 }

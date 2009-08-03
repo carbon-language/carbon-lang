@@ -522,8 +522,9 @@ Parser::ParseDeclarationOrFunctionDefinition(AccessSpecifier AS) {
       return DeclGroupPtrTy();
     }
     const char *PrevSpec = 0;
-    if (DS.SetTypeSpecType(DeclSpec::TST_unspecified, AtLoc, PrevSpec))
-      Diag(AtLoc, diag::err_invalid_decl_spec_combination) << PrevSpec;
+    unsigned DiagID;
+    if (DS.SetTypeSpecType(DeclSpec::TST_unspecified, AtLoc, PrevSpec, DiagID))
+      Diag(AtLoc, DiagID) << PrevSpec;
     
     DeclPtrTy TheDecl;
     if (Tok.isObjCAtKeyword(tok::objc_protocol))
@@ -619,9 +620,10 @@ Parser::DeclPtrTy Parser::ParseFunctionDefinition(Declarator &D,
   // declaration-specifiers are completely optional in the grammar.
   if (getLang().ImplicitInt && D.getDeclSpec().isEmpty()) {
     const char *PrevSpec;
+    unsigned DiagID;
     D.getMutableDeclSpec().SetTypeSpecType(DeclSpec::TST_int,
                                            D.getIdentifierLoc(),
-                                           PrevSpec);
+                                           PrevSpec, DiagID);
     D.SetRangeBegin(D.getDeclSpec().getSourceRange().getBegin());
   }
 

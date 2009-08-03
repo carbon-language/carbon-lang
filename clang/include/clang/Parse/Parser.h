@@ -923,8 +923,9 @@ private:
   void ParseDeclarationSpecifiers(DeclSpec &DS, 
                 const ParsedTemplateInfo &TemplateInfo = ParsedTemplateInfo(),
                                   AccessSpecifier AS = AS_none);
-  bool ParseOptionalTypeSpecifier(DeclSpec &DS, int &isInvalid, 
+  bool ParseOptionalTypeSpecifier(DeclSpec &DS, bool &isInvalid, 
                                   const char *&PrevSpec,
+                                  unsigned &DiagID,
                const ParsedTemplateInfo &TemplateInfo = ParsedTemplateInfo());
 
   void ParseSpecifierQualifierList(DeclSpec &DS);

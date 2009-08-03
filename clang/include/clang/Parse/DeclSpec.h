@@ -267,27 +267,44 @@ public:
   void SetRangeStart(SourceLocation Loc) { Range.setBegin(Loc); }
   void SetRangeEnd(SourceLocation Loc) { Range.setEnd(Loc); }
   
-  /// These methods set the specified attribute of the DeclSpec, but return true
-  /// and ignore the request if invalid (e.g. "extern" then "auto" is
-  /// specified).  The name of the previous specifier is returned in prevspec.
-  bool SetStorageClassSpec(SCS S, SourceLocation Loc, const char *&PrevSpec);
-  bool SetStorageClassSpecThread(SourceLocation Loc, const char *&PrevSpec);
-  bool SetTypeSpecWidth(TSW W, SourceLocation Loc, const char *&PrevSpec);
-  bool SetTypeSpecComplex(TSC C, SourceLocation Loc, const char *&PrevSpec);
-  bool SetTypeSpecSign(TSS S, SourceLocation Loc, const char *&PrevSpec);
+  /// These methods set the specified attribute of the DeclSpec and
+  /// return false if there was no error.  If an error occurs (for
+  /// example, if we tried to set "auto" on a spec with "extern"
+  /// already set), they return true and set PrevSpec and DiagID
+  /// such that
+  ///   Diag(Loc, DiagID) << PrevSpec;
+  /// will yield a useful result.
+  ///
+  /// TODO: use a more general approach that still allows these
+  /// diagnostics to be ignored when desired.
+  bool SetStorageClassSpec(SCS S, SourceLocation Loc, const char *&PrevSpec,
+                           unsigned &DiagID);
+  bool SetStorageClassSpecThread(SourceLocation Loc, const char *&PrevSpec,
+                                 unsigned &DiagID);
+  bool SetTypeSpecWidth(TSW W, SourceLocation Loc, const char *&PrevSpec,
+                        unsigned &DiagID);
+  bool SetTypeSpecComplex(TSC C, SourceLocation Loc, const char *&PrevSpec,
+                          unsigned &DiagID);
+  bool SetTypeSpecSign(TSS S, SourceLocation Loc, const char *&PrevSpec,
+                       unsigned &DiagID);
   bool SetTypeSpecType(TST T, SourceLocation Loc, const char *&PrevSpec,
-                       void *Rep = 0, bool Owned = false);
+                       unsigned &DiagID, void *Rep = 0, bool Owned = false);
   bool SetTypeSpecError();
   void UpdateTypeRep(void *Rep) { TypeRep = Rep; }
                   
   bool SetTypeQual(TQ T, SourceLocation Loc, const char *&PrevSpec,
-                   const LangOptions &Lang);
+                   unsigned &DiagID, const LangOptions &Lang);
   
-  bool SetFunctionSpecInline(SourceLocation Loc, const char *&PrevSpec);
-  bool SetFunctionSpecVirtual(SourceLocation Loc, const char *&PrevSpec);
-  bool SetFunctionSpecExplicit(SourceLocation Loc, const char *&PrevSpec);
+  bool SetFunctionSpecInline(SourceLocation Loc, const char *&PrevSpec,
+                             unsigned &DiagID);
+  bool SetFunctionSpecVirtual(SourceLocation Loc, const char *&PrevSpec,
+                              unsigned &DiagID);
+  bool SetFunctionSpecExplicit(SourceLocation Loc, const char *&PrevSpec,
+                               unsigned &DiagID);
   
-  bool SetFriendSpec(SourceLocation Loc, const char *&PrevSpec);
+  bool SetFriendSpec(SourceLocation Loc, const char *&PrevSpec,
+                     unsigned &DiagID);
+
   bool isFriendSpecified() const { return Friend_specified; }
   SourceLocation getFriendSpecLoc() const { return FriendLoc; }
 
