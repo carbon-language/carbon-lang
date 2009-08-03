@@ -854,14 +854,22 @@ bool PPCDarwinAsmPrinter::doInitialization(Module &M) {
 
   // Prime text sections so they are adjacent.  This reduces the likelihood a
   // large data or debug section causes a branch to exceed 16M limit.
-  SwitchToTextSection("\t.section __TEXT,__textcoal_nt,coalesced,"
-                      "pure_instructions");
+  
+  TargetLoweringObjectFileMachO &TLOFMacho = 
+    static_cast<TargetLoweringObjectFileMachO &>(getObjFileLowering());
+  SwitchToSection(TLOFMacho.getMachOSection("\t.section __TEXT,__textcoal_nt,"
+                                            "coalesced,pure_instructions", true,
+                                            SectionKind::getText()));
   if (TM.getRelocationModel() == Reloc::PIC_) {
-    SwitchToTextSection("\t.section __TEXT,__picsymbolstub1,symbol_stubs,"
-                          "pure_instructions,32");
+    SwitchToSection(TLOFMacho.getMachOSection("\t.section __TEXT,__picsymbolstu"
+                                              "b1,symbol_stubs,"
+                                              "pure_instructions,32", true,
+                                              SectionKind::getText()));
   } else if (TM.getRelocationModel() == Reloc::DynamicNoPIC) {
-    SwitchToTextSection("\t.section __TEXT,__symbol_stub1,symbol_stubs,"
-                        "pure_instructions,16");
+    SwitchToSection(TLOFMacho.getMachOSection("\t.section __TEXT,__symbol_stub1"
+                                              ",symbol_stubs,"
+                                              "pure_instructions,16", true,
+                                              SectionKind::getText()));
   }
   SwitchToSection(getObjFileLowering().getTextSection());
 
@@ -980,12 +988,23 @@ bool PPCDarwinAsmPrinter::doFinalization(Module &M) {
 
   bool isPPC64 = TD->getPointerSizeInBits() == 64;
 
+  // Darwin/PPC always uses mach-o.
+  TargetLoweringObjectFileMachO &TLOFMacho = 
+    static_cast<TargetLoweringObjectFileMachO &>(getObjFileLowering());
+
   // Output stubs for dynamically-linked functions
   if (TM.getRelocationModel() == Reloc::PIC_ && !FnStubs.empty()) {
+    const MCSection *StubSection = 
+      TLOFMacho.getMachOSection("\t.section __TEXT,__picsymbolstub1,"
+                                "symbol_stubs,pure_instructions,32", true,
+                                SectionKind::getText());
+    const MCSection *LSPSection = 
+      TLOFMacho.getMachOSection(".lazy_symbol_pointer", true,
+                                SectionKind::getMetadata());
+    
     for (StringMap<FnStubInfo>::iterator I = FnStubs.begin(), E = FnStubs.end();
          I != E; ++I) {
-      SwitchToTextSection("\t.section __TEXT,__picsymbolstub1,symbol_stubs,"
-                          "pure_instructions,32");
+      SwitchToSection(StubSection);
       EmitAlignment(4);
       const FnStubInfo &Info = I->second;
       O << Info.Stub << ":\n";
@@ -1002,16 +1021,23 @@ bool PPCDarwinAsmPrinter::doFinalization(Module &M) {
       O << "\tmtctr r12\n";
       O << "\tbctr\n";
       
-      SwitchToDataSection(".lazy_symbol_pointer");
+      SwitchToSection(LSPSection);
       O << Info.LazyPtr << ":\n";
       O << "\t.indirect_symbol " << I->getKeyData() << '\n';
       O << (isPPC64 ? "\t.quad" : "\t.long") << " dyld_stub_binding_helper\n";
     }
   } else if (!FnStubs.empty()) {
+    const MCSection *StubSection = 
+      TLOFMacho.getMachOSection("\t.section __TEXT,__symbol_stub1,symbol_stubs,"
+                                "pure_instructions,16", true,
+                                SectionKind::getText());
+    const MCSection *LSPSection = 
+      TLOFMacho.getMachOSection(".lazy_symbol_pointer", true,
+                                SectionKind::getMetadata());
+    
     for (StringMap<FnStubInfo>::iterator I = FnStubs.begin(), E = FnStubs.end();
          I != E; ++I) {
-      SwitchToTextSection("\t.section __TEXT,__symbol_stub1,symbol_stubs,"
-                          "pure_instructions,16");
+      SwitchToSection(StubSection);
       EmitAlignment(4);
       const FnStubInfo &Info = I->second;
       O << Info.Stub << ":\n";
@@ -1021,7 +1047,7 @@ bool PPCDarwinAsmPrinter::doFinalization(Module &M) {
       O << Info.LazyPtr << ")(r11)\n";
       O << "\tmtctr r12\n";
       O << "\tbctr\n";
-      SwitchToDataSection(".lazy_symbol_pointer");
+      SwitchToSection(LSPSection);
       O << Info.LazyPtr << ":\n";
       O << "\t.indirect_symbol " << I->getKeyData() << '\n';
       O << (isPPC64 ? "\t.quad" : "\t.long") << " dyld_stub_binding_helper\n";
@@ -1042,9 +1068,12 @@ bool PPCDarwinAsmPrinter::doFinalization(Module &M) {
     }
   }
 
-  // Output stubs for external and common global variables.
+  // Output macho stubs for external and common global variables.
   if (!GVStubs.empty()) {
-    SwitchToDataSection(".non_lazy_symbol_pointer");
+    const MCSection *TheSection = 
+      TLOFMacho.getMachOSection(".non_lazy_symbol_pointer", true,
+                                SectionKind::getMetadata());
+    SwitchToSection(TheSection);
     for (StringMap<std::string>::iterator I = GVStubs.begin(),
          E = GVStubs.end(); I != E; ++I) {
       O << I->second << ":\n";
