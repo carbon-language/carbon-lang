@@ -497,10 +497,9 @@ LowerGlobalAddress(SDValue Op, SelectionDAG &DAG)
   GlobalValue *GV = cast<GlobalAddressSDNode>(Op)->getGlobal();
   SDValue GA = DAG.getTargetGlobalAddress(GV, MVT::i32);
 
-  if (!Subtarget->hasABICall()) {
-    SDVTList VTs = DAG.getVTList(MVT::i32);
+  if (getTargetMachine().getRelocationModel() != Reloc::PIC_) {
     // %hi/%lo relocation
-    SDValue HiPart = DAG.getNode(MipsISD::Hi, dl, VTs, &GA, 1);
+    SDValue HiPart = DAG.getNode(MipsISD::Hi, dl, MVT::i32, GA);
     SDValue Lo = DAG.getNode(MipsISD::Lo, dl, MVT::i32, GA);
     return DAG.getNode(ISD::ADD, dl, MVT::i32, HiPart, Lo);
 
@@ -566,8 +565,7 @@ LowerConstantPool(SDValue Op, SelectionDAG &DAG)
   // but the asm printer currently doens't support this feature without
   // hacking it. This feature should come soon so we can uncomment the 
   // stuff below.
-  //if (!Subtarget->hasABICall() &&  
-  //    IsInSmallSection(getTargetData()->getTypeAllocSize(C->getType()))) {
+  //if (IsInSmallSection(C->getType())) {
   //  SDValue GPRelNode = DAG.getNode(MipsISD::GPRel, MVT::i32, CP);
   //  SDValue GOT = DAG.getGLOBAL_OFFSET_TABLE(MVT::i32);
   //  ResNode = DAG.getNode(ISD::ADD, MVT::i32, GOT, GPRelNode); 

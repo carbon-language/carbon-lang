@@ -20,8 +20,8 @@ using namespace llvm;
 
 extern "C" void LLVMInitializeMipsTarget() {
   // Register the target.
-  RegisterTargetMachineDeprecated<MipsTargetMachine> X(TheMipsTarget);
-  RegisterTargetMachineDeprecated<MipselTargetMachine> Y(TheMipselTarget);
+  RegisterTargetMachine<MipsTargetMachine> X(TheMipsTarget);
+  RegisterTargetMachine<MipselTargetMachine> Y(TheMipselTarget);
 }
 
 const TargetAsmInfo *MipsTargetMachine::
@@ -38,10 +38,10 @@ createTargetAsmInfo() const
 // an easier handling.
 // Using CodeModel::Large enables different CALL behavior.
 MipsTargetMachine::
-MipsTargetMachine(const Target &T, const Module &M, const std::string &FS,
+MipsTargetMachine(const Target &T, const std::string &TT, const std::string &FS,
                   bool isLittle=false):
   LLVMTargetMachine(T),
-  Subtarget(*this, M.getTargetTriple(), FS, isLittle), 
+  Subtarget(TT, FS, isLittle), 
   DataLayout(isLittle ? std::string("e-p:32:32:32-i8:8:32-i16:16:32") :
                         std::string("E-p:32:32:32-i8:8:32-i16:16:32")), 
   InstrInfo(*this), 
@@ -49,8 +49,12 @@ MipsTargetMachine(const Target &T, const Module &M, const std::string &FS,
   TLInfo(*this) 
 {
   // Abicall enables PIC by default
-  if (Subtarget.hasABICall())
-    setRelocationModel(Reloc::PIC_);  
+  if (getRelocationModel() == Reloc::Default) {
+    if (Subtarget.isABI_O32())
+      setRelocationModel(Reloc::PIC_);
+    else
+      setRelocationModel(Reloc::Static);
+  }
 
   // TODO: create an option to enable long calls, like -mlong-calls, 
   // that would be our CodeModel::Large. It must not work with Abicall.
@@ -59,8 +63,9 @@ MipsTargetMachine(const Target &T, const Module &M, const std::string &FS,
 }
 
 MipselTargetMachine::
-MipselTargetMachine(const Target &T, const Module &M, const std::string &FS) :
-  MipsTargetMachine(T, M, FS, true) {}
+MipselTargetMachine(const Target &T, const std::string &TT,
+                    const std::string &FS) :
+  MipsTargetMachine(T, TT, FS, true) {}
 
 // Install an instruction selector pass using 
 // the ISelDag to gen Mips code.

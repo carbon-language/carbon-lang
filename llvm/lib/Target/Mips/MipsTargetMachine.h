@@ -35,7 +35,7 @@ namespace llvm {
     virtual const TargetAsmInfo *createTargetAsmInfo() const;
     
   public:
-    MipsTargetMachine(const Target &T, const Module &M,
+    MipsTargetMachine(const Target &T, const std::string &TT,
                       const std::string &FS, bool isLittle);
     
     virtual const MipsInstrInfo   *getInstrInfo()     const 
@@ -66,7 +66,8 @@ namespace llvm {
 ///
 class MipselTargetMachine : public MipsTargetMachine {
 public:
-  MipselTargetMachine(const Target &T, const Module &M, const std::string &FS);
+  MipselTargetMachine(const Target &T, const std::string &TT,
+                      const std::string &FS);
 };
 
 } // End llvm namespace

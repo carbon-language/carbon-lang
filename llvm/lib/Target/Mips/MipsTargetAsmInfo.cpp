@@ -25,8 +25,6 @@ MipsTargetAsmInfo::MipsTargetAsmInfo(const MipsTargetMachine &TM) {
   CommentString               = "#";
   ZeroDirective               = "\t.space\t";
 
-  if (!TM.getSubtarget<MipsSubtarget>().hasABICall())
-    JumpTableDirective = "\t.word\t";
-  else
+  if (TM.getRelocationModel() == Reloc::PIC_)
     JumpTableDirective = "\t.gpword\t";
 }
