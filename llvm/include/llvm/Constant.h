@@ -17,6 +17,8 @@
 #include "llvm/User.h"
 
 namespace llvm {
+  class APInt;
+
   template<typename T> class SmallVectorImpl;
   class LLVMContext;
 
@@ -142,6 +144,10 @@ public:
   /// its bits set to true.
   /// @brief Get the all ones value
   static Constant* getAllOnesValue(const Type* Ty);
+
+  /// getIntegerValue - Return the value for an integer or pointer constant,
+  /// or a vector thereof, with the given scalar value.
+  static Constant* getIntegerValue(const Type* Ty, const APInt &V);
 };
 
 } // End llvm namespace

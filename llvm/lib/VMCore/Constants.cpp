@@ -70,6 +70,23 @@ Constant* Constant::getNullValue(const Type* Ty) {
   }
 }
 
+Constant* Constant::getIntegerValue(const Type* Ty, const APInt &V) {
+  const Type *ScalarTy = Ty->getScalarType();
+
+  // Create the base integer constant.
+  Constant *C = ConstantInt::get(Ty->getContext(), V);
+
+  // Convert an integer to a pointer, if necessary.
+  if (const PointerType *PTy = dyn_cast<PointerType>(ScalarTy))
+    C = ConstantExpr::getIntToPtr(C, PTy);
+
+  // Broadcast a scalar to a vector, if necessary.
+  if (const VectorType *VTy = dyn_cast<VectorType>(Ty))
+    C = ConstantVector::get(std::vector<Constant *>(VTy->getNumElements(), C));
+
+  return C;
+}
+
 Constant* Constant::getAllOnesValue(const Type* Ty) {
   if (const IntegerType* ITy = dyn_cast<IntegerType>(Ty))
     return ConstantInt::get(Ty->getContext(),
