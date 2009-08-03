@@ -1,4 +1,4 @@
-; RUN: llvm-as < %s | llc -march=x86-64 | grep movq | count 8
+; RUN: llvm-as < %s | llc -march=x86-64 | grep movd | count 4
 
 define i64 @foo(<1 x i64>* %p) {
   %t = load <1 x i64>* %p
