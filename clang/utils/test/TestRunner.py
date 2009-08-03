@@ -110,7 +110,8 @@ def executeShCmd(cmd, cfg, cwd, results):
     return exitCode
         
 def executeScriptInternal(cfg, commands, cwd):
-    cmd = ShUtil.ShParser(' &&\n'.join(commands)).parse()
+    cmd = ShUtil.ShParser(' &&\n'.join(commands), 
+                          kSystemName == 'Windows').parse()
 
     results = []
     try:

@@ -2,14 +2,12 @@ import itertools
 
 import Util
 
-# FIXME: It would be nice to at least match a few other things like `...`, $(
-# ... ), $VAR, etc., if only so we can nicely say "we don't support this".
-
 class ShLexer:
-    def __init__(self, data):
+    def __init__(self, data, win32Escapes = False):
         self.data = data
         self.pos = 0
         self.end = len(data)
+        self.win32Escapes = win32Escapes
 
     def eat(self):
         c = self.data[self.pos]
@@ -68,7 +66,7 @@ class ShLexer:
             elif c == '"':
                 self.eat()
                 str += self.lex_arg_quoted('"')
-            elif c == '\\':
+            elif not self.win32Escapes and c == '\\':
                 # Outside of a string, '\\' escapes everything.
                 self.eat()
                 if self.pos == self.end:
@@ -211,9 +209,9 @@ class Seq:
                    (other.lhs, other.op, other.rhs))
 
 class ShParser:
-    def __init__(self, data):
+    def __init__(self, data, win32Escapes = False):
         self.data = data
-        self.tokens = ShLexer(data).lex()
+        self.tokens = ShLexer(data, win32Escapes = win32Escapes).lex()
     
     def lex(self):
         try:
@@ -294,8 +292,8 @@ class ShParser:
 import unittest
 
 class TestShLexer(unittest.TestCase):
-    def lex(self, str):
-        return list(ShLexer(str).lex())
+    def lex(self, str, *args, **kwargs):
+        return list(ShLexer(str, *args, **kwargs).lex())
 
     def test_basic(self):
         self.assertEqual(self.lex('a|b>c&d<e'),
@@ -323,6 +321,8 @@ class TestShLexer(unittest.TestCase):
                          ["a b", "a\\b"])
         self.assertEqual(self.lex(""" "" "" """),
                          ["", ""])
+        self.assertEqual(self.lex(""" a\\ b """, win32Escapes = True),
+                         ['a\\', 'b'])
 
 class TestShParse(unittest.TestCase):
     def parse(self, str):
