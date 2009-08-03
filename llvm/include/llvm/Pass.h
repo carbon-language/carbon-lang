@@ -106,7 +106,7 @@ public:
   ///
   virtual void print(std::ostream &O, const Module *M) const;
   void print(std::ostream *O, const Module *M) const { if (O) print(*O, M); }
-  void dump() const; // dump - call print(std::cerr, 0);
+  void dump() const; // dump - Print to stderr.
 
   /// Each pass is responsible for assigning a pass manager to itself.
   /// PMS is the stack of available pass manager. 

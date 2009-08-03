@@ -62,8 +62,8 @@ namespace {
   char Printer::ID = 0;
 }
 
-/// Returns a newly-created MachineFunction Printer pass. The default output
-/// stream is std::cerr; the default banner is empty.
+/// Returns a newly-created MachineFunction Printer pass. The default banner is
+/// empty.
 ///
 FunctionPass *llvm::createMachineFunctionPrinterPass(std::ostream *OS,
                                                      const std::string &Banner){

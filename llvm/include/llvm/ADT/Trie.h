@@ -118,12 +118,12 @@ public:
 
 #if 0
     inline void dump() {
-      std::cerr << "Node: " << this << "\n"
+      llvm::cerr << "Node: " << this << "\n"
                 << "Label: " << Label << "\n"
                 << "Children:\n";
 
       for (iterator I = Children.begin(), E = Children.end(); I != E; ++I)
-        std::cerr << (*I)->Label << "\n";
+        llvm::cerr << (*I)->Label << "\n";
     }
 #endif
 

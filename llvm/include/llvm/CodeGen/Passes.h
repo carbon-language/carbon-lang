@@ -35,7 +35,7 @@ namespace llvm {
   FunctionPass *createUnreachableBlockEliminationPass();
 
   /// MachineFunctionPrinter pass - This pass prints out the machine function to
-  /// standard error, as a debugging tool.
+  /// the given stream, as a debugging tool.
   FunctionPass *createMachineFunctionPrinterPass(std::ostream *OS,
                                                  const std::string &Banner ="");
 

@@ -1366,7 +1366,7 @@ struct aliasopt {
 
 // extrahelp - provide additional help at the end of the normal help
 // output. All occurrences of cl::extrahelp will be accumulated and
-// printed to std::cerr at the end of the regular help, just before
+// printed to stderr at the end of the regular help, just before
 // exit is called.
 struct extrahelp {
   const char * morehelp;

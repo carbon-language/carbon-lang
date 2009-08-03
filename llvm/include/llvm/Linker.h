@@ -32,7 +32,7 @@ class LLVMContext;
 /// The Linker can link Modules from memory, bitcode files, or bitcode
 /// archives.  It retains a set of search paths in which to find any libraries
 /// presented to it. By default, the linker will generate error and warning
-/// messages to std::cerr but this capability can be turned off with the
+/// messages to stderr but this capability can be turned off with the
 /// QuietWarnings and QuietErrors flags. It can also be instructed to verbosely
 /// print out the linking actions it is taking with the Verbose flag.
 /// @brief The LLVM Linker.
@@ -52,9 +52,9 @@ class Linker {
     /// This enumeration is used to control various optional features of the
     /// linker.
     enum ControlFlags {
-      Verbose       = 1, ///< Print to std::cerr what steps the linker is taking
-      QuietWarnings = 2, ///< Don't print warnings to std::cerr.
-      QuietErrors   = 4  ///< Don't print errors to std::cerr.
+      Verbose       = 1, ///< Print to stderr what steps the linker is taking
+      QuietWarnings = 2, ///< Don't print warnings to stderr.
+      QuietErrors   = 4  ///< Don't print errors to stderr.
     };
 
   /// @}
@@ -114,7 +114,7 @@ class Linker {
     /// true, indicating an error occurred. At most one error is retained so
     /// this function always returns the last error that occurred. Note that if
     /// the Quiet control flag is not set, the error string will have already
-    /// been printed to std::cerr.
+    /// been printed to stderr.
     /// @brief Get the text of the last error that occurred.
     const std::string &getLastError() const { return Error; }
 

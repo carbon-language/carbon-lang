@@ -402,7 +402,7 @@ public:
   ///
   void print(const MachineFunction &MF, std::ostream &OS) const;
 
-  /// dump - Call print(MF, std::cerr) to be called from the debugger.
+  /// dump - Print the function to stderr.
   void dump(const MachineFunction &MF) const;
 };
 
