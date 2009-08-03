@@ -310,7 +310,13 @@ int main(int argc, char **argv) {
   // used by strange things like the C backend.
   if (Target.WantsWholeFile()) {
     PassManager PM;
-    PM.add(new TargetData(*Target.getTargetData()));
+
+    // Add the target data from the target machine, if it exists, or the module.
+    if (const TargetData *TD = Target.getTargetData())
+      PM.add(new TargetData(*TD));
+    else
+      PM.add(new TargetData(&mod));
+
     if (!NoVerify)
       PM.add(createVerifierPass());
 
@@ -328,7 +334,12 @@ int main(int argc, char **argv) {
     // Build up all of the passes that we want to do to the module.
     ExistingModuleProvider Provider(M.release());
     FunctionPassManager Passes(&Provider);
-    Passes.add(new TargetData(*Target.getTargetData()));
+
+    // Add the target data from the target machine, if it exists, or the module.
+    if (const TargetData *TD = Target.getTargetData())
+      Passes.add(new TargetData(*TD));
+    else
+      Passes.add(new TargetData(&mod));
 
 #ifndef NDEBUG
     if (!NoVerify)
