@@ -432,6 +432,18 @@ void CodeGenFunction::EmitLocalBlockVarDecl(const VarDecl &D) {
     }
   }
 
+  // Handle CXX destruction of variables.
+  // FIXME - destruction of arrays NYI.
+  if (const RecordType *RT = Ty->getAs<RecordType>())
+    if (CXXRecordDecl *ClassDecl = dyn_cast<CXXRecordDecl>(RT->getDecl())) {
+      if (!ClassDecl->hasTrivialDestructor()) {
+        const CXXDestructorDecl *D = ClassDecl->getDestructor(getContext());
+        assert(D && "EmitLocalBlockVarDecl - destructor is nul");
+        CleanupScope scope(*this);
+        EmitCXXDestructorCall(D, Dtor_Complete, DeclPtr);
+      }
+  }
+    
   // Handle the cleanup attribute
   if (const CleanupAttr *CA = D.getAttr<CleanupAttr>()) {
     const FunctionDecl *FD = CA->getFunctionDecl();
