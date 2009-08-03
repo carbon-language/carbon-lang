@@ -644,7 +644,7 @@ void Interpreter::visitUnwindInst(UnwindInst &I) {
 }
 
 void Interpreter::visitUnreachableInst(UnreachableInst &I) {
-  llvm_report_error("ERROR: Program executed an 'unreachable' instruction!");
+  llvm_report_error("Program executed an 'unreachable' instruction!");
 }
 
 void Interpreter::visitBranchInst(BranchInst &I) {

@@ -141,7 +141,7 @@ void *JIT::getPointerToNamedFunction(const std::string &Name,
       return RP;
 
   if (AbortOnFailure) {
-    llvm_report_error("ERROR: Program used external function '"+Name+
+    llvm_report_error("Program used external function '"+Name+
                       "' which could not be resolved!");
   }
   return 0;

@@ -749,7 +749,7 @@ void Emitter<CodeEmitter>::emitDataProcessingInstruction(
   const TargetInstrDesc &TID = MI.getDesc();
 
   if (TID.Opcode == ARM::BFC) {
-    llvm_report_error("ERROR: ARMv6t2 JIT is not yet supported.");
+    llvm_report_error("ARMv6t2 JIT is not yet supported.");
   }
 
   // Part of binary is determined by TableGn.

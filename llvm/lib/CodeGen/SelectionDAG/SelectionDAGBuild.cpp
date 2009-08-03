@@ -5074,7 +5074,7 @@ void SelectionDAGLowering::visitInlineAsm(CallSite CS) {
              Input.ConstraintVT.isInteger()) ||
             (OpInfo.ConstraintVT.getSizeInBits() !=
              Input.ConstraintVT.getSizeInBits())) {
-          llvm_report_error("llvm: error: Unsupported asm: input constraint"
+          llvm_report_error("Unsupported asm: input constraint"
                             " with a matching output constraint of incompatible"
                             " type!");
         }
@@ -5179,7 +5179,7 @@ void SelectionDAGLowering::visitInlineAsm(CallSite CS) {
       // Copy the output from the appropriate register.  Find a register that
       // we can use.
       if (OpInfo.AssignedRegs.Regs.empty()) {
-        llvm_report_error("llvm: error: Couldn't allocate output reg for"
+        llvm_report_error("Couldn't allocate output reg for"
                           " constraint '" + OpInfo.ConstraintCode + "'!");
       }
 
@@ -5233,8 +5233,7 @@ void SelectionDAGLowering::visitInlineAsm(CallSite CS) {
             || (OpFlag & 7) == 6 /* EARLYCLOBBER REGDEF */) {
           // Add (OpFlag&0xffff)>>3 registers to MatchedRegs.
           if (OpInfo.isIndirect) {
-            llvm_report_error("llvm: error: "
-                              "Don't know how to handle tied indirect "
+            llvm_report_error("Don't know how to handle tied indirect "
                               "register inputs yet!");
           }
           RegsForValue MatchedRegs;
@@ -5277,7 +5276,7 @@ void SelectionDAGLowering::visitInlineAsm(CallSite CS) {
         TLI.LowerAsmOperandForConstraint(InOperandVal, OpInfo.ConstraintCode[0],
                                          hasMemory, Ops, DAG);
         if (Ops.empty()) {
-          llvm_report_error("llvm: error: Invalid operand for inline asm"
+          llvm_report_error("Invalid operand for inline asm"
                             " constraint '" + OpInfo.ConstraintCode + "'!");
         }
 
@@ -5308,7 +5307,7 @@ void SelectionDAGLowering::visitInlineAsm(CallSite CS) {
 
       // Copy the input into the appropriate registers.
       if (OpInfo.AssignedRegs.Regs.empty()) {
-        llvm_report_error("llvm: error: Couldn't allocate input reg for"
+        llvm_report_error("Couldn't allocate input reg for"
                           " constraint '"+ OpInfo.ConstraintCode +"'!");
       }
 

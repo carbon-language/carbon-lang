@@ -112,7 +112,7 @@ public:
   /// @note This has to exist, because this is a pass, but it should never be
   /// used.
   TargetData() : ImmutablePass(&ID) {
-    llvm_report_error("ERROR: Bad TargetData ctor used.  "
+    llvm_report_error("Bad TargetData ctor used.  "
                       "Tool did not specify a TargetData to use?");
   }
 
