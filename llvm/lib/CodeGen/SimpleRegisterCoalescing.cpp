@@ -123,7 +123,8 @@ bool SimpleRegisterCoalescing::AdjustCopiesBackFrom(LiveInterval &IntA,
   assert(BValNo->def == CopyIdx && "Copy doesn't define the value?");
   
   // AValNo is the value number in A that defines the copy, A3 in the example.
-  LiveInterval::iterator ALR = IntA.FindLiveRangeContaining(CopyIdx-1);
+  unsigned CopyUseIdx = li_->getUseIndex(CopyIdx);
+  LiveInterval::iterator ALR = IntA.FindLiveRangeContaining(CopyUseIdx);
   assert(ALR != IntA.end() && "Live range not found!");
   VNInfo *AValNo = ALR->valno;
   // If it's re-defined by an early clobber somewhere in the live range, then
@@ -226,6 +227,12 @@ bool SimpleRegisterCoalescing::AdjustCopiesBackFrom(LiveInterval &IntA,
     ValLREndInst->getOperand(UIdx).setIsKill(false);
     IntB.removeKill(ValLR->valno, FillerStart);
   }
+
+  // If the copy instruction was killing the destination register before the
+  // merge, find the last use and trim the live range. That will also add the
+  // isKill marker.
+  if (CopyMI->killsRegister(IntA.reg))
+    TrimLiveIntervalToLastUse(CopyUseIdx, CopyMI->getParent(), IntA, ALR);
 
   ++numExtends;
   return true;
