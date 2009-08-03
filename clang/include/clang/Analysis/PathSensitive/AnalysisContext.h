@@ -16,6 +16,7 @@
 #define LLVM_CLANG_ANALYSIS_ANALYSISCONTEXT_H
 
 #include "llvm/ADT/OwningPtr.h"
+#include "llvm/ADT/FoldingSet.h"
 #include <map>
 
 namespace clang {
@@ -56,6 +57,40 @@ public:
   typedef std::map<Decl*, AnalysisContext>::iterator iterator;
 
   AnalysisContext *getContext(Decl *D);
+};
+
+class LocationContext : public llvm::FoldingSetNode {
+public:
+  enum ContextKind { StackFrame, Scope };
+
+private:
+  ContextKind Kind;
+  LocationContext *Parent;
+  AnalysisContext *Ctx;
+
+protected:
+  LocationContext(ContextKind k, LocationContext *parent, AnalysisContext *ctx)
+    : Kind(k), Parent(parent), Ctx(ctx) {}
+};
+
+class StackFrameContext : public LocationContext {
+  Stmt *CallSite;
+
+public:
+  StackFrameContext(Stmt *s, LocationContext *parent, AnalysisContext *ctx)
+    : LocationContext(StackFrame, parent, ctx), CallSite(s) {}
+};
+
+class ScopeContext : public LocationContext {
+  Stmt *Enter;
+
+public:
+  ScopeContext(Stmt *s, LocationContext *parent, AnalysisContext *ctx)
+    : LocationContext(Scope, parent, ctx), Enter(s) {}
+};
+
+class LocationContextManager {
+  llvm::FoldingSet<LocationContext> Contexts;
 };
 
 }
