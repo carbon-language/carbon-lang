@@ -1269,49 +1269,65 @@ void ARMAsmPrinter::PrintGlobalVariable(const GlobalVariable* GVar) {
 
 bool ARMAsmPrinter::doFinalization(Module &M) {
   if (Subtarget->isTargetDarwin()) {
-    SwitchToDataSection("");
-
+    // All darwin targets use mach-o.
+    TargetLoweringObjectFileMachO &TLOFMacho = 
+      static_cast<TargetLoweringObjectFileMachO &>(getObjFileLowering());
+    
     O << '\n';
-    // Output stubs for dynamically-linked functions
-    for (StringMap<FnStubInfo>::iterator I = FnStubs.begin(), E = FnStubs.end();
-         I != E; ++I) {
-      const FnStubInfo &Info = I->second;
+    
+    if (!FnStubs.empty()) {
+      const MCSection *StubSection;
       if (TM.getRelocationModel() == Reloc::PIC_)
-        SwitchToTextSection(".section __TEXT,__picsymbolstub4,symbol_stubs,"
-                            "none,16", 0);
+        StubSection = TLOFMacho.getMachOSection(".section __TEXT,__picsymbolstu"
+                                                "b4,symbol_stubs,none,16", true,
+                                                SectionKind::getText());
       else
-        SwitchToTextSection(".section __TEXT,__symbol_stub4,symbol_stubs,"
-                            "none,12", 0);
+        StubSection = TLOFMacho.getMachOSection(".section __TEXT,__symbol_stub4"
+                                                ",symbol_stubs,none,12", true,
+                                                SectionKind::getText());
 
-      EmitAlignment(2);
-      O << "\t.code\t32\n";
+      const MCSection *LazySymbolPointerSection
+        = TLOFMacho.getMachOSection(".lazy_symbol_pointer", true,
+                                    SectionKind::getMetadata());
+    
+      // Output stubs for dynamically-linked functions
+      for (StringMap<FnStubInfo>::iterator I = FnStubs.begin(),
+           E = FnStubs.end(); I != E; ++I) {
+        const FnStubInfo &Info = I->second;
+        
+        SwitchToSection(StubSection);
+        EmitAlignment(2);
+        O << "\t.code\t32\n";
 
-      O << Info.Stub << ":\n";
-      O << "\t.indirect_symbol " << I->getKeyData() << '\n';
-      O << "\tldr ip, " << Info.SLP << '\n';
-      if (TM.getRelocationModel() == Reloc::PIC_) {
-        O << Info.SCV << ":\n";
-        O << "\tadd ip, pc, ip\n";
+        O << Info.Stub << ":\n";
+        O << "\t.indirect_symbol " << I->getKeyData() << '\n';
+        O << "\tldr ip, " << Info.SLP << '\n';
+        if (TM.getRelocationModel() == Reloc::PIC_) {
+          O << Info.SCV << ":\n";
+          O << "\tadd ip, pc, ip\n";
+        }
+        O << "\tldr pc, [ip, #0]\n";
+        O << Info.SLP << ":\n";
+        O << "\t.long\t" << Info.LazyPtr;
+        if (TM.getRelocationModel() == Reloc::PIC_)
+          O << "-(" << Info.SCV << "+8)";
+        O << '\n';
+        
+        SwitchToSection(LazySymbolPointerSection);
+        O << Info.LazyPtr << ":\n";
+        O << "\t.indirect_symbol " << I->getKeyData() << "\n";
+        O << "\t.long\tdyld_stub_binding_helper\n";
       }
-      O << "\tldr pc, [ip, #0]\n";
-      O << Info.SLP << ":\n";
-      O << "\t.long\t" << Info.LazyPtr;
-      if (TM.getRelocationModel() == Reloc::PIC_)
-        O << "-(" << Info.SCV << "+8)";
       O << '\n';
-      
-      SwitchToDataSection(".lazy_symbol_pointer", 0);
-      O << Info.LazyPtr << ":\n";
-      O << "\t.indirect_symbol " << I->getKeyData() << "\n";
-      O << "\t.long\tdyld_stub_binding_helper\n";
     }
-    O << '\n';
-
+    
     // Output non-lazy-pointers for external and common global variables.
     if (!GVNonLazyPtrs.empty()) {
-      SwitchToDataSection("\t.non_lazy_symbol_pointer", 0);
-      for (StringMap<std::string>::iterator I =  GVNonLazyPtrs.begin(),
-             E = GVNonLazyPtrs.end(); I != E; ++I) {
+      SwitchToSection(TLOFMacho.getMachOSection(".non_lazy_symbol_pointer",
+                                                true,
+                                                SectionKind::getMetadata()));
+      for (StringMap<std::string>::iterator I = GVNonLazyPtrs.begin(),
+           E = GVNonLazyPtrs.end(); I != E; ++I) {
         O << I->second << ":\n";
         O << "\t.indirect_symbol " << I->getKeyData() << "\n";
         O << "\t.long\t0\n";
