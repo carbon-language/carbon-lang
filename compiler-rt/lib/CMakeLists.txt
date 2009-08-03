@@ -1,6 +1,10 @@
 #
 # Create a library called "CompilerRT" which includes the source files.
 
+#INCLUDE_DIRECTORIES(
+# ${CMAKE_CURRENT_BINARY_DIR}
+#)
+
 # Generic functions needed for each architecture
 
 SET( SRCS

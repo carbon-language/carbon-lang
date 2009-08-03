@@ -8,14 +8,13 @@ set(PACKAGE_VERSION 1.0svn)
 set(PACKAGE_STRING "${PACKAGE_NAME} ${PACKAGE_VERSION}")
 set(PACKAGE_BUGREPORT "llvmbugs@cs.uiuc.edu")
 
-if( CMAKE_SOURCE_DIR STREQUAL CMAKE_BINARY_DIR AND NOT MSVC_IDE )
-  message(FATAL_ERROR "In-source builds are not allowed.
-CMake would overwrite the makefiles distributed with Compiler-RT.
-Please create a directory and run cmake from there, passing the path
-to this source directory as the last argument.
-This process created the file `CMakeCache.txt' and the directory `CMakeFiles'.
-Please delete them.")
-endif()
+SET( CMAKE_MODULE_PATH ${CMAKE_SOURCE_DIR}/cmake/Modules )
+
+# Disallow in-source build
+INCLUDE( MacroEnsureOutOfSourceBuild )
+MACRO_ENSURE_OUT_OF_SOURCE_BUILD(
+ "${PROJECT_NAME} requires an out of source build. Please create a separate build directory and run 'cmake /path/to/${PROJECT_NAME} [options]' there."
+ )
 
 install(DIRECTORY include
   DESTINATION .
@@ -30,3 +29,5 @@ ADD_SUBDIRECTORY( lib )
 # Tests are being ignored for until the very basics are working.
 # ADD_SUBDIRECTORY( test )
 
+INCLUDE( ConfigureChecks.cmake )
+CONFIGURE_FILE( config.h.cmake ${CMAKE_CURRENT_BINARY_DIR}/config.h )

@@ -15,6 +15,10 @@
 #include <math.h>
 #include <complex.h>
 
+#if !defined(INFINITY) && defined(HUGE_VAL)
+#define INFINITY HUGE_VAL
+#endif
+
 // Returns: the quotient of (a + ib) / (c + id)
 
 double _Complex
