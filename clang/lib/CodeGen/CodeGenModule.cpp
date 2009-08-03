@@ -1251,6 +1251,9 @@ GetConstantCFStringEntry(llvm::StringMap<llvm::Constant*> &Map,
       AsBytes.push_back(Val & 0xFF);
     }
   }
+  // Append one extra null character, the second is automatically added by our
+  // caller.
+  AsBytes.push_back(0);
 
   IsUTF16 = true;
   return Map.GetOrCreateValue(llvm::StringRef(AsBytes.data(), AsBytes.size()));
