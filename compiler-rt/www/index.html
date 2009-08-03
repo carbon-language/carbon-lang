@@ -61,7 +61,29 @@
     <li>A target-independent implementation of the Apple "Blocks" runtime
         interfaces.</li>
    </ul>
-  
+
+  <!--=====================================================================-->
+  <h2 id="dir-structure">Source Structure</h2>
+  <!--=====================================================================-->
+
+   <p>A short explanation of the directory structure of compiler-rt:</p>
+
+   <p>For testing it is possible to build a generic library and an optimized library.
+       The optimized library is formed by overlaying the optimized versions onto the generic library.
+       Of course, some architectures have additional functions,
+       so the optimized library may have functions not found in the generic version.</p>
+
+   <ul>   
+    <li> lib/ Is a generic portable implementations.</li>
+    <li> lib/<arch> has optimized version for the following supported architectures:
+      <ul>
+      <li>i386</li>
+      <li>X86-64</li>
+      <li>PowerPC</li>
+      <li>PowerPC 64</li>
+      </ul></li>
+   </ul>
+    
   <!--=====================================================================-->
   <h2>Get it and get involved!</h2>
   <!--=====================================================================-->
