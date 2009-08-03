@@ -274,56 +274,37 @@ void HTMLDiagnostics::ReportDiag(const PathDiagnostic& D) {
   }
   
   // Embed meta-data tags.
-  
-  const std::string& BugDesc = D.getDescription();
-  
-  if (!BugDesc.empty()) {
-    std::string s;
-    llvm::raw_string_ostream os(s);
-    os << "\n<!-- BUGDESC " << BugDesc << " -->\n";
-    R.InsertStrBefore(SMgr.getLocForStartOfFile(FID), os.str());
-  }
-  
-  const std::string& BugType = D.getBugType();
-  if (!BugType.empty()) {
-    std::string s;
-    llvm::raw_string_ostream os(s);
-    os << "\n<!-- BUGTYPE " << BugType << " -->\n";
-    R.InsertStrBefore(SMgr.getLocForStartOfFile(FID), os.str());
-  }
-  
-  const std::string& BugCategory = D.getCategory();
-  
-  if (!BugCategory.empty()) {
-    std::string s;
-    llvm::raw_string_ostream os(s);
-    os << "\n<!-- BUGCATEGORY " << BugCategory << " -->\n";
-    R.InsertStrBefore(SMgr.getLocForStartOfFile(FID), os.str());
-  }
-  
   {
     std::string s;
     llvm::raw_string_ostream os(s);
+  
+    const std::string& BugDesc = D.getDescription();  
+    if (!BugDesc.empty())
+      os << "\n<!-- BUGDESC " << BugDesc << " -->\n";
+    
+    const std::string& BugType = D.getBugType();
+    if (!BugType.empty())
+      os << "\n<!-- BUGTYPE " << BugType << " -->\n";
+  
+    const std::string& BugCategory = D.getCategory();  
+    if (!BugCategory.empty())
+      os << "\n<!-- BUGCATEGORY " << BugCategory << " -->\n";
+
     os << "\n<!-- BUGFILE " << DirName << Entry->getName() << " -->\n";
-    R.InsertStrBefore(SMgr.getLocForStartOfFile(FID), os.str());
-  }
-  
-  {
-    std::string s;
-    llvm::raw_string_ostream os(s);
+
     os << "\n<!-- BUGLINE "
        << D.back()->getLocation().asLocation().getInstantiationLineNumber()
        << " -->\n";
+
+    os << "\n<!-- BUGPATHLENGTH " << D.size() << " -->\n";
+    
+    // Mark the end of the tags.
+    os << "\n<!-- BUGMETAEND -->\n";
+    
+    // Insert the text.
     R.InsertStrBefore(SMgr.getLocForStartOfFile(FID), os.str());
   }
   
-  {
-    std::string s;
-    llvm::raw_string_ostream os(s);
-    os << "\n<!-- BUGPATHLENGTH " << D.size() << " -->\n";
-    R.InsertStrBefore(SMgr.getLocForStartOfFile(FID), os.str());
-  }
-
   // Add CSS, header, and footer.
   
   html::AddHeaderFooterInternalBuiltinCSS(R, FID, Entry->getName());
