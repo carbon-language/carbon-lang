@@ -35,6 +35,10 @@
 namespace llvm {
 using namespace sys;
 
+Program::Program() : Pid_(0) {}
+
+Program::~Program() {}
+
 // This function just uses the PATH environment variable to find the program.
 Path
 Program::FindProgramByName(const std::string& progName) {

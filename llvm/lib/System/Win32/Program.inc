@@ -25,6 +25,16 @@
 namespace llvm {
 using namespace sys;
 
+Program::Program() : Pid_(0), Data(0) {}
+
+Program::~Program() {
+	if (Data) {
+		HANDLE hProcess = (HANDLE) Data;
+		CloseHandle(hProcess);
+		Data = 0;
+	}
+}
+
 // This function just uses the PATH environment variable to find the program.
 Path
 Program::FindProgramByName(const std::string& progName) {
@@ -122,6 +132,12 @@ Program::Execute(const Path& path,
                  const Path** redirects,
                  unsigned memoryLimit,
                  std::string* ErrMsg) {
+  if (Data) {
+    HANDLE hProcess = (HANDLE) Data;
+    CloseHandle(Data);
+    Data = 0;
+  }
+  
   if (!path.canExecute()) {
     if (ErrMsg)
       *ErrMsg = "program not executable";
@@ -250,9 +266,9 @@ Program::Execute(const Path& path,
     return false;
   }
   Pid_ = pi.dwProcessId;
-
+  Data = pi.hProcess;
+  
   // Make sure these get closed no matter what.
-  AutoHandle hProcess(pi.hProcess);
   AutoHandle hThread(pi.hThread);
 
   // Assign the process to a job if a memory limit is defined.
@@ -286,13 +302,13 @@ Program::Execute(const Path& path,
 int
 Program::Wait(unsigned secondsToWait,
               std::string* ErrMsg) {
-  if (Pid_ == 0) {
+  if (Data == 0) {
     MakeErrMsg(ErrMsg, "Process not started!");
     return -1;
   }
 
-  AutoHandle hProcess = OpenProcess(SYNCHRONIZE, FALSE, Pid_);
-
+  HANDLE hProcess = (HANDLE) Data;
+  
   // Wait for the process to terminate.
   DWORD millisecondsToWait = INFINITE;
   if (secondsToWait > 0)

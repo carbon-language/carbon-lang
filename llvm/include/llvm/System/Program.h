@@ -29,6 +29,9 @@ namespace sys {
   /// @since 1.4
   /// @brief An abstraction for finding and executing programs.
   class Program {
+    /// Opaque handle for target specific data.
+	void *Data;
+
     unsigned Pid_;
 
     // Noncopyable.
@@ -39,9 +42,9 @@ namespace sys {
     /// @{
   public:
 
-    Program() : Pid_(0)
-    {}
-
+    Program();
+	~Program();
+	
     /// Return process ID of this program.
     unsigned GetPid() { return Pid_; }
 
