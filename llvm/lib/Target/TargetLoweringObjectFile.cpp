@@ -532,6 +532,14 @@ getSectionForConstant(SectionKind Kind) const {
 //                                 MachO
 //===----------------------------------------------------------------------===//
 
+const MCSection *TargetLoweringObjectFileMachO::
+getMachOSection(const char *Name, bool isDirective, SectionKind K) {
+  // FOR NOW, Just forward.
+  return getOrCreateSection(Name, isDirective, K);  
+}
+
+
+
 void TargetLoweringObjectFileMachO::Initialize(MCContext &Ctx,
                                                const TargetMachine &TM) {
   TargetLoweringObjectFile::Initialize(Ctx, TM);
@@ -732,6 +740,11 @@ shouldEmitUsedDirectiveFor(const GlobalValue *GV, Mangler *Mang) const {
 //===----------------------------------------------------------------------===//
 //                                  COFF
 //===----------------------------------------------------------------------===//
+
+const MCSection *TargetLoweringObjectFileCOFF::
+getCOFFSection(const char *Name, bool isDirective, SectionKind K) {
+  return getOrCreateSection(Name, isDirective, K);
+}
 
 void TargetLoweringObjectFileCOFF::Initialize(MCContext &Ctx,
                                               const TargetMachine &TM) {

@@ -899,8 +899,9 @@ bool X86ATTAsmPrinter::doFinalization(Module &M) {
   }
 
   if (Subtarget->isTargetDarwin()) {
-    //TargetLoweringObjectFileMachO &TLOFMacho = 
-    //  static_cast<TargetLoweringObjectFileMachO &>(getObjFileLowering());
+    // All darwin targets use mach-o.
+    TargetLoweringObjectFileMachO &TLOFMacho = 
+      static_cast<TargetLoweringObjectFileMachO &>(getObjFileLowering());
     
     // Add the (possibly multiple) personalities to the set of global value
     // stubs.  Only referenced functions get into the Personalities list.
@@ -916,8 +917,11 @@ bool X86ATTAsmPrinter::doFinalization(Module &M) {
 
     // Output stubs for dynamically-linked functions
     if (!FnStubs.empty()) {
-      SwitchToDataSection("\t.section __IMPORT,__jump_table,symbol_stubs,"
-                          "self_modifying_code+pure_instructions,5", 0);
+      const MCSection *TheSection = 
+      TLOFMacho.getMachOSection("\t.section __IMPORT,__jump_table,symbol_stubs,"
+                                "self_modifying_code+pure_instructions,5", true,
+                                SectionKind::getMetadata());
+      SwitchToSection(TheSection);
       for (StringMap<std::string>::iterator I = FnStubs.begin(),
            E = FnStubs.end(); I != E; ++I)
         O << I->getKeyData() << ":\n" << "\t.indirect_symbol " << I->second
@@ -927,8 +931,11 @@ bool X86ATTAsmPrinter::doFinalization(Module &M) {
 
     // Output stubs for external and common global variables.
     if (!GVStubs.empty()) {
-      SwitchToDataSection(
-                    "\t.section __IMPORT,__pointers,non_lazy_symbol_pointers");
+      const MCSection *TheSection = 
+        TLOFMacho.getMachOSection("\t.section __IMPORT,__pointers,"
+                                  "non_lazy_symbol_pointers", true,
+                                  SectionKind::getMetadata());
+      SwitchToSection(TheSection);
       for (StringMap<std::string>::iterator I = GVStubs.begin(),
            E = GVStubs.end(); I != E; ++I)
         O << I->getKeyData() << ":\n\t.indirect_symbol "
@@ -963,16 +970,17 @@ bool X86ATTAsmPrinter::doFinalization(Module &M) {
   
   
   // Output linker support code for dllexported globals on windows.
-  if (!DLLExportedGVs.empty()) {
-    SwitchToDataSection(".section .drectve");
+  if (!DLLExportedGVs.empty() || !DLLExportedFns.empty()) {
+    // dllexport symbols only exist on coff targets.
+    TargetLoweringObjectFileCOFF &TLOFMacho = 
+      static_cast<TargetLoweringObjectFileCOFF&>(getObjFileLowering());
+    
+    SwitchToSection(TLOFMacho.getCOFFSection(".section .drectve", true,
+                                             SectionKind::getMetadata()));
   
     for (StringSet<>::iterator i = DLLExportedGVs.begin(),
          e = DLLExportedGVs.end(); i != e; ++i)
       O << "\t.ascii \" -export:" << i->getKeyData() << ",data\"\n";
-  }
-  
-  if (!DLLExportedFns.empty()) {
-    SwitchToDataSection(".section .drectve");
   
     for (StringSet<>::iterator i = DLLExportedFns.begin(),
          e = DLLExportedFns.end();

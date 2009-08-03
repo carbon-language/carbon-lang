@@ -26,7 +26,6 @@ namespace llvm {
   class Mangler;
   class TargetMachine;
   
- 
 class TargetLoweringObjectFile {
   MCContext *Ctx;
 protected:
@@ -250,6 +249,11 @@ public:
   /// FIXME: REMOVE this (rdar://7071300)
   virtual bool shouldEmitUsedDirectiveFor(const GlobalValue *GV,
                                           Mangler *) const;
+
+  /// getMachOSection - Return the MCSection for the specified mach-o section.
+  /// FIXME: Switch this to a semantic view eventually.
+  const MCSection *getMachOSection(const char *Name, bool isDirective,
+                                   SectionKind K);
 };
 
 
@@ -264,6 +268,11 @@ public:
   virtual const MCSection *
   SelectSectionForGlobal(const GlobalValue *GV, SectionKind Kind,
                          Mangler *Mang, const TargetMachine &TM) const;
+
+  /// getCOFFSection - Return the MCSection for the specified COFF section.
+  /// FIXME: Switch this to a semantic view eventually.
+  const MCSection *getCOFFSection(const char *Name, bool isDirective,
+                                  SectionKind K);
 };
 
 } // end namespace llvm
