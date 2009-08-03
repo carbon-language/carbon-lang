@@ -16,7 +16,7 @@
 #ifndef LLVM_MDNODE_H
 #define LLVM_MDNODE_H
 
-#include "llvm/Value.h"
+#include "llvm/User.h"
 #include "llvm/Type.h"
 #include "llvm/OperandTraits.h"
 #include "llvm/ADT/FoldingSet.h"
@@ -31,11 +31,17 @@ class LLVMContext;
 
 //===----------------------------------------------------------------------===//
 // MetadataBase  - A base class for MDNode, MDString and NamedMDNode.
-class MetadataBase : public Value {
+class MetadataBase : public User {
+private:
+  /// ReservedSpace - The number of operands actually allocated.  NumOperands is
+  /// the number actually in use.
+  unsigned ReservedSpace;
+
 protected:
   MetadataBase(const Type *Ty, unsigned scid)
-    : Value(Ty, scid) {}
+    : User(Ty, scid, NULL, 0), ReservedSpace(0) {}
 
+  void resizeOperands(unsigned NumOps);
 public:
   /// getType() specialization - Type is always MetadataTy.
   ///
@@ -64,13 +70,19 @@ public:
 /// MDString is always unnamd.
 class MDString : public MetadataBase {
   MDString(const MDString &);            // DO NOT IMPLEMENT
-  StringRef Str;
+  void *operator new(size_t, unsigned);  // DO NOT IMPLEMENT
+  unsigned getNumOperands();             // DO NOT IMPLEMENT
 
+  StringRef Str;
 protected:
   explicit MDString(const char *begin, unsigned l)
     : MetadataBase(Type::MetadataTy, Value::MDStringVal), Str(begin, l) {}
 
 public:
+  // Do not allocate any space for operands.
+  void *operator new(size_t s) {
+    return User::operator new(s, 0);
+  }
   static MDString *get(LLVMContext &Context, const StringRef &Str);
   
   StringRef getString() const { return Str; }
@@ -97,38 +109,49 @@ public:
 /// These contain a list of the values that represent the metadata. 
 /// MDNode is always unnamed.
 class MDNode : public MetadataBase, public FoldingSetNode {
-  MDNode(const MDNode &);      // DO NOT IMPLEMENT
+  MDNode(const MDNode &);                // DO NOT IMPLEMENT
+  void *operator new(size_t, unsigned);  // DO NOT IMPLEMENT
+  // getNumOperands - Make this only available for private uses.
+  unsigned getNumOperands() { return User::getNumOperands();  }
 
   SmallVector<WeakVH, 4> Node;
-  typedef SmallVectorImpl<WeakVH>::iterator elem_iterator;
-
 protected:
   explicit MDNode(Value*const* Vals, unsigned NumVals);
 public:
+  // Do not allocate any space for operands.
+  void *operator new(size_t s) {
+    return User::operator new(s, 0);
+  }
+  // Constructors and destructors.
   static MDNode *get(LLVMContext &Context, 
                      Value* const* Vals, unsigned NumVals);
-  
-  typedef SmallVectorImpl<WeakVH>::const_iterator const_elem_iterator;
 
+  /// dropAllReferences - Remove all uses and clear node vector.
+  void dropAllReferences();
+
+  /// ~MDNode - Destroy NamedMDNode.
+  ~MDNode();
+  
+  /// getElement - Return specified element.
   Value *getElement(unsigned i) const {
+    assert (getNumElements() > i && "Invalid element number!");
     return Node[i];
   }
 
+  /// getNumElements - Return number of MDNode elements.
   unsigned getNumElements() const {
     return Node.size();
   }
 
-  bool elem_empty() const {
-    return Node.empty();
-  }
-
-  const_elem_iterator elem_begin() const {
-    return Node.begin();
-  }
-
-  const_elem_iterator elem_end() const {
-    return Node.end();
-  }
+  // Element access
+  typedef SmallVectorImpl<WeakVH>::const_iterator const_elem_iterator;
+  typedef SmallVectorImpl<WeakVH>::iterator elem_iterator;
+  /// elem_empty - Return true if MDNode is empty.
+  bool elem_empty() const                { return Node.empty(); }
+  const_elem_iterator elem_begin() const { return Node.begin(); }
+  const_elem_iterator elem_end() const   { return Node.end();   }
+  elem_iterator elem_begin()             { return Node.begin(); }
+  elem_iterator elem_end()               { return Node.end();   }
 
   /// getType() specialization - Type is always MetadataTy.
   ///
@@ -183,9 +206,12 @@ template<typename ValueSubClass, typename ItemParentClass>
 
 class NamedMDNode : public MetadataBase, public ilist_node<NamedMDNode> {
   friend class SymbolTableListTraits<NamedMDNode, Module>;
-  NamedMDNode(const NamedMDNode &);      // DO NOT IMPLEMENT
-
   friend class LLVMContextImpl;
+
+  NamedMDNode(const NamedMDNode &);      // DO NOT IMPLEMENT
+  void *operator new(size_t, unsigned);  // DO NOT IMPLEMENT
+  // getNumOperands - Make this only available for private uses.
+  unsigned getNumOperands() { return User::getNumOperands();  }
 
   Module *Parent;
   SmallVector<WeakMetadataVH, 4> Node;
@@ -195,6 +221,10 @@ protected:
   explicit NamedMDNode(const Twine &N, MetadataBase*const* Vals, 
                        unsigned NumVals, Module *M = 0);
 public:
+  // Do not allocate any space for operands.
+  void *operator new(size_t s) {
+    return User::operator new(s, 0);
+  }
   static NamedMDNode *Create(const Twine &N, MetadataBase*const*MDs, 
                              unsigned NumMDs, Module *M = 0) {
     return new NamedMDNode(N, MDs, NumMDs, M);
@@ -207,39 +237,38 @@ public:
   /// dropAllReferences - Remove all uses and clear node vector.
   void dropAllReferences();
 
+  /// ~NamedMDNode - Destroy NamedMDNode.
   ~NamedMDNode();
-
-  typedef SmallVectorImpl<WeakMetadataVH>::const_iterator const_elem_iterator;
 
   /// getParent - Get the module that holds this named metadata collection.
   inline Module *getParent() { return Parent; }
   inline const Module *getParent() const { return Parent; }
   void setParent(Module *M) { Parent = M; }
 
+  /// getElement - Return specified element.
   MetadataBase *getElement(unsigned i) const {
+    assert (getNumElements() > i && "Invalid element number!");
     return Node[i];
   }
 
+  /// getNumElements - Return number of NamedMDNode elements.
   unsigned getNumElements() const {
     return Node.size();
   }
 
   /// addElement - Add metadata element.
   void addElement(MetadataBase *M) {
+    resizeOperands(0);
+    OperandList[NumOperands++] = M;
     Node.push_back(WeakMetadataVH(M));
   }
 
-  bool elem_empty() const {
-    return Node.empty();
-  }
-
-  const_elem_iterator elem_begin() const {
-    return Node.begin();
-  }
-
-  const_elem_iterator elem_end() const {
-    return Node.end();
-  }
+  typedef SmallVectorImpl<WeakMetadataVH>::const_iterator const_elem_iterator;
+  bool elem_empty() const                { return Node.empty(); }
+  const_elem_iterator elem_begin() const { return Node.begin(); }
+  const_elem_iterator elem_end() const   { return Node.end();   }
+  elem_iterator elem_begin()             { return Node.begin(); }
+  elem_iterator elem_end()               { return Node.end();   }
 
   /// getType() specialization - Type is always MetadataTy.
   ///
