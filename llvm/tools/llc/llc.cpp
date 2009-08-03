@@ -13,21 +13,20 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include "llvm/Bitcode/ReaderWriter.h"
-#include "llvm/CodeGen/FileWriters.h"
-#include "llvm/CodeGen/LinkAllCodegenComponents.h"
-#include "llvm/CodeGen/LinkAllAsmWriterComponents.h"
-#include "llvm/CodeGen/ObjectCodeEmitter.h"
-#include "llvm/Target/SubtargetFeature.h"
-#include "llvm/Target/TargetData.h"
-#include "llvm/Target/TargetMachine.h"
-#include "llvm/Target/TargetRegistry.h"
-#include "llvm/Transforms/Scalar.h"
 #include "llvm/LLVMContext.h"
 #include "llvm/Module.h"
 #include "llvm/ModuleProvider.h"
 #include "llvm/PassManager.h"
 #include "llvm/Pass.h"
+#include "llvm/ADT/Triple.h"
+#include "llvm/Analysis/Verifier.h"
+#include "llvm/Bitcode/ReaderWriter.h"
+#include "llvm/CodeGen/FileWriters.h"
+#include "llvm/CodeGen/LinkAllAsmWriterComponents.h"
+#include "llvm/CodeGen/LinkAllCodegenComponents.h"
+#include "llvm/CodeGen/ObjectCodeEmitter.h"
+#include "llvm/Config/config.h"
+#include "llvm/LinkAllVMCore.h"
 #include "llvm/Support/CommandLine.h"
 #include "llvm/Support/FileUtilities.h"
 #include "llvm/Support/FormattedStream.h"
@@ -35,11 +34,14 @@
 #include "llvm/Support/MemoryBuffer.h"
 #include "llvm/Support/PluginLoader.h"
 #include "llvm/Support/PrettyStackTrace.h"
-#include "llvm/Analysis/Verifier.h"
+#include "llvm/System/Host.h"
 #include "llvm/System/Signals.h"
-#include "llvm/Config/config.h"
-#include "llvm/LinkAllVMCore.h"
+#include "llvm/Target/SubtargetFeature.h"
+#include "llvm/Target/TargetData.h"
+#include "llvm/Target/TargetMachine.h"
+#include "llvm/Target/TargetRegistry.h"
 #include "llvm/Target/TargetSelect.h"
+#include "llvm/Transforms/Scalar.h"
 #include <memory>
 using namespace llvm;
 
@@ -234,8 +236,13 @@ int main(int argc, char **argv) {
   if (!TargetTriple.empty())
     mod.setTargetTriple(TargetTriple);
 
-  // Allocate target machine.  First, check whether the user has
-  // explicitly specified an architecture to compile for.
+  Triple TheTriple(mod.getTargetTriple());
+  if (TheTriple.getTriple().empty())
+    TheTriple.setTriple(sys::getHostTriple());
+
+  // Allocate target machine.  First, check whether the user has explicitly
+  // specified an architecture to compile for. If so we have to look it up by
+  // name, because it might be a backend that has no mapping to a target triple.
   const Target *TheTarget = 0;
   if (!MArch.empty()) {
     for (TargetRegistry::iterator it = TargetRegistry::begin(),
@@ -249,11 +256,17 @@ int main(int argc, char **argv) {
     if (!TheTarget) {
       errs() << argv[0] << ": error: invalid target '" << MArch << "'.\n";
       return 1;
-    }        
+    }
+
+    // Adjust the triple to match (if known), otherwise stick with the
+    // module/host triple.
+    Triple::ArchType Type = Triple::getArchTypeForLLVMName(MArch);
+    if (Type != Triple::UnknownArch)
+      TheTriple.setArch(Type);
   } else {
     std::string Err;
-    TheTarget = TargetRegistry::lookupTarget(mod.getTargetTriple(), 
-                                             /*FallbackToHost=*/true,
+    TheTarget = TargetRegistry::lookupTarget(TheTriple.getTriple(),
+                                             /*FallbackToHost=*/false,
                                              /*RequireJIT=*/false,
                                              Err);
     if (TheTarget == 0) {
@@ -275,7 +288,8 @@ int main(int argc, char **argv) {
   }
 
   std::auto_ptr<TargetMachine> 
-    target(TheTarget->createTargetMachine(mod, FeaturesStr));
+    target(TheTarget->createTargetMachine(mod, TheTriple.getTriple(),
+                                          FeaturesStr));
   assert(target.get() && "Could not allocate target machine!");
   TargetMachine &Target = *target.get();
 

@@ -24,6 +24,7 @@
 #include "llvm/Support/Mangler.h"
 #include "llvm/Support/MemoryBuffer.h"
 #include "llvm/Support/MathExtras.h"
+#include "llvm/System/Host.h"
 #include "llvm/System/Path.h"
 #include "llvm/System/Process.h"
 #include "llvm/Target/SubtargetFeature.h"
@@ -149,17 +150,22 @@ LTOModule* LTOModule::makeLTOModule(MemoryBuffer* buffer,
     OwningPtr<Module> m(ParseBitcodeFile(buffer, getGlobalContext(), &errMsg));
     if ( !m )
         return NULL;
+
+    std::string Triple = m->getTargetTriple();
+    if (Triple.empty())
+      Triple = sys::getHostTriple();
+
     // find machine architecture for this module
-    const Target* march = TargetRegistry::lookupTarget(m->getTargetTriple(), 
-                                                       /*FallbackToHost=*/true,
+    const Target* march = TargetRegistry::lookupTarget(Triple, 
+                                                       /*FallbackToHost=*/false,
                                                        /*RequireJIT=*/false,
                                                        errMsg);
     if ( march == NULL ) 
         return NULL;
 
     // construct LTModule, hand over ownership of module and target
-    std::string FeatureStr = getFeatureString(m->getTargetTriple().c_str());
-    TargetMachine* target = march->createTargetMachine(*m, FeatureStr);
+    std::string FeatureStr = getFeatureString(Triple.c_str());
+    TargetMachine* target = march->createTargetMachine(*m, Triple, FeatureStr);
     return new LTOModule(m.take(), target);
 }
 

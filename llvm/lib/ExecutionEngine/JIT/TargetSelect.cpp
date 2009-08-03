@@ -16,8 +16,10 @@
 #include "JIT.h"
 #include "llvm/Module.h"
 #include "llvm/ModuleProvider.h"
+#include "llvm/ADT/Triple.h"
 #include "llvm/Support/CommandLine.h"
-#include "llvm/Support/Streams.h"
+#include "llvm/Support/raw_ostream.h"
+#include "llvm/System/Host.h"
 #include "llvm/Target/SubtargetFeature.h"
 #include "llvm/Target/TargetMachine.h"
 #include "llvm/Target/TargetRegistry.h"
@@ -41,35 +43,28 @@ MAttrs("mattr",
 /// selectTarget - Pick a target either via -march or by guessing the native
 /// arch.  Add any CPU features specified via -mcpu or -mattr.
 TargetMachine *JIT::selectTarget(ModuleProvider *MP, std::string *ErrorStr) {
-  const Target *TheTarget = 0;
-  if (MArch.empty()) {
-    std::string Error;
-    TheTarget = TargetRegistry::getClosestTargetForJIT(Error);
-    if (TheTarget == 0) {
-      if (ErrorStr)
-        *ErrorStr = Error;
-      return 0;
-    }
-  } else {
-    for (TargetRegistry::iterator it = TargetRegistry::begin(),
-           ie = TargetRegistry::end(); it != ie; ++it) {
-      if (MArch == it->getName()) {
-        TheTarget = &*it;
-        break;
-      }
-    }
-    
-    if (TheTarget == 0) {
-      if (ErrorStr)
-        *ErrorStr = std::string("invalid target '" + MArch + "'.\n");
-      return 0;
-    }        
+  Triple TheTriple(sys::getHostTriple());
 
-    if (!TheTarget->hasJIT()) {
-      cerr << "WARNING: This target JIT is not designed for the host you are"
+  // Adjust the triple to match what the user requested.
+  if (!MArch.empty())
+    TheTriple.setArch(Triple::getArchTypeForLLVMName(MArch));
+
+  std::string Error;
+  const Target *TheTarget =
+    TargetRegistry::lookupTarget(TheTriple.getTriple(),
+                                 /*FallbackToHost=*/false,
+                                 /*RequireJIT=*/false,
+                                 Error);
+  if (TheTarget == 0) {
+    if (ErrorStr)
+      *ErrorStr = Error;
+    return 0;
+  }
+
+  if (!TheTarget->hasJIT()) {
+    errs() << "WARNING: This target JIT is not designed for the host you are"
            << " running.  If bad things happen, please choose a different "
            << "-march switch.\n";
-    }
   }
 
   // Package up features to be passed to target/subtarget
@@ -84,7 +79,8 @@ TargetMachine *JIT::selectTarget(ModuleProvider *MP, std::string *ErrorStr) {
 
   // Allocate a target...
   TargetMachine *Target = 
-    TheTarget->createTargetMachine(*MP->getModule(), FeaturesStr);
+    TheTarget->createTargetMachine(*MP->getModule(), TheTriple.getTriple(),
+                                   FeaturesStr);
   assert(Target && "Could not allocate target machine!");
   return Target;
 }

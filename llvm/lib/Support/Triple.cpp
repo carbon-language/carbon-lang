@@ -71,6 +71,41 @@ const char *Triple::getOSTypeName(OSType Kind) {
   return "<invalid>";
 }
 
+Triple::ArchType Triple::getArchTypeForLLVMName(const StringRef &Name) {
+  if (Name == "alpha")
+    return alpha;
+  if (Name == "arm")
+    return arm;
+  if (Name == "bfin")
+    return bfin;
+  if (Name == "cellspu")
+    return cellspu;
+  if (Name == "mips")
+    return mips;
+  if (Name == "mipsel")
+    return mipsel;
+  if (Name == "msp430")
+    return msp430;
+  if (Name == "ppc64")
+    return ppc64;
+  if (Name == "ppc")
+    return ppc;
+  if (Name == "sparc")
+    return sparc;
+  if (Name == "systemz")
+    return systemz;
+  if (Name == "thumb")
+    return thumb;
+  if (Name == "x86")
+    return x86;
+  if (Name == "x86_64")
+    return x86_64;
+  if (Name == "xcore")
+    return xcore;
+
+  return UnknownArch;
+}
+
 //
 
 void Triple::Parse() const {

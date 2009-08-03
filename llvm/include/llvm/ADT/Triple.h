@@ -95,7 +95,7 @@ public:
   /// @{
   
   Triple() : Data(""), Arch(InvalidArch) {}
-  explicit Triple(const char *Str) : Data(Str), Arch(InvalidArch) {}
+  explicit Triple(const StringRef &Str) : Data(Str), Arch(InvalidArch) {}
   explicit Triple(const char *ArchStr, const char *VendorStr, const char *OSStr)
     : Data(ArchStr), Arch(InvalidArch) {
     Data += '-';
@@ -211,6 +211,10 @@ public:
 
   /// getOSTypeName - Get the canonical name for the \arg Kind vendor.
   static const char *getOSTypeName(OSType Kind);
+
+  /// getArchTypeForLLVMName - The canonical type for the given LLVM
+  /// architecture name (e.g., "x86").
+  static ArchType getArchTypeForLLVMName(const StringRef &Str);
 
   /// @}
 };

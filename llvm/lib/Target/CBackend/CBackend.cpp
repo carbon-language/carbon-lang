@@ -24,6 +24,8 @@
 #include "llvm/Intrinsics.h"
 #include "llvm/IntrinsicInst.h"
 #include "llvm/InlineAsm.h"
+#include "llvm/ADT/StringExtras.h"
+#include "llvm/ADT/STLExtras.h"
 #include "llvm/Analysis/ConstantsScanner.h"
 #include "llvm/Analysis/FindUsedTypes.h"
 #include "llvm/Analysis/LoopInfo.h"
@@ -41,9 +43,7 @@
 #include "llvm/Support/InstVisitor.h"
 #include "llvm/Support/Mangler.h"
 #include "llvm/Support/MathExtras.h"
-#include "llvm/ADT/StringExtras.h"
-#include "llvm/ADT/STLExtras.h"
-#include "llvm/Support/MathExtras.h"
+#include "llvm/System/Host.h"
 #include "llvm/Config/config.h"
 #include <algorithm>
 #include <sstream>
@@ -3181,16 +3181,21 @@ std::string CWriter::InterpretASMConstraint(InlineAsm::ConstraintInfo& c) {
   
   // Grab the translation table from TargetAsmInfo if it exists.
   if (!TAsm) {
+    std::string Triple = TheModule->getTargetTriple();
+    if (Triple.empty())
+      Triple = llvm::sys::getHostTriple();
+
     std::string E;
     const Target *Match =
-      TargetRegistry::lookupTarget(TheModule->getTargetTriple(), 
-                                   /*FallbackToHost=*/true,
+      TargetRegistry::lookupTarget(Triple, 
+                                   /*FallbackToHost=*/false,
                                    /*RequireJIT=*/false,
                                    E);
     if (Match) {
       // Per platform Target Machines don't exist, so create it;
       // this must be done only once.
-      const TargetMachine* TM = Match->createTargetMachine(*TheModule, "");
+      const TargetMachine* TM = Match->createTargetMachine(*TheModule, Triple,
+                                                           "");
       TAsm = TM->getTargetAsmInfo();
     }
   }

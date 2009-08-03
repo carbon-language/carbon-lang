@@ -51,6 +51,7 @@ namespace llvm {
 
     typedef TargetMachine *(*TargetMachineCtorTy)(const Target &,
                                                   const Module &, 
+                                                  const std::string &,
                                                   const std::string &);
     typedef FunctionPass *(*AsmPrinterCtorTy)(formatted_raw_ostream &,
                                               TargetMachine &,
@@ -110,12 +111,21 @@ namespace llvm {
     /// hasAsmParser - Check if this target supports .s parsing.
     bool hasAsmParser() const { return AsmParserCtorFn != 0; }
 
-    /// createTargetMachine - Create a target specific machine implementation.
+    /// createTargetMachine - Create a target specific machine implementation
+    /// for the module \arg M and \arg Triple.
+    ///
+    /// \arg M - This argument is used for some machines to access the target
+    /// data.
+    /// \arg Triple - This argument is used to determine the target machine
+    /// feature set; it should always be provided. Generally this should be
+    /// either the target triple from the module, or the target triple of the
+    /// host if that does not exist.
     TargetMachine *createTargetMachine(const Module &M,
+                                       const std::string &Triple,
                                        const std::string &Features) const {
       if (!TargetMachineCtorFn)
         return 0;
-      return TargetMachineCtorFn(*this, M, Features);
+      return TargetMachineCtorFn(*this, M, Triple, Features);
     }
 
     /// createAsmPrinter - Create a target specific assembly printer pass.
@@ -325,8 +335,9 @@ namespace llvm {
 
   private:
     static TargetMachine *Allocator(const Target &T, const Module &M,
+                                    const std::string &TT,
                                     const std::string &FS) {
-      return new TargetMachineImpl(T, M.getTargetTriple(), FS);
+      return new TargetMachineImpl(T, TT, FS);
     }
   };
 
@@ -338,6 +349,7 @@ namespace llvm {
 
   private:
     static TargetMachine *Allocator(const Target &T, const Module &M,
+                                    const std::string &TT,
                                     const std::string &FS) {
       return new TargetMachineImpl(T, M, FS);
     }

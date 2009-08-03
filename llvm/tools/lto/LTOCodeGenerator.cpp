@@ -35,6 +35,7 @@
 #include "llvm/Support/MemoryBuffer.h"
 #include "llvm/Support/StandardPasses.h"
 #include "llvm/Support/SystemUtils.h"
+#include "llvm/System/Host.h"
 #include "llvm/System/Signals.h"
 #include "llvm/Target/SubtargetFeature.h"
 #include "llvm/Target/TargetOptions.h"
@@ -326,11 +327,15 @@ bool LTOCodeGenerator::assemble(const std::string& asmPath,
 bool LTOCodeGenerator::determineTarget(std::string& errMsg)
 {
     if ( _target == NULL ) {
+        std::string Triple = _linker.getModule()->getTargetTriple();
+        if (Triple.empty())
+          Triple = sys::getHostTriple();
+
         // create target machine from info for merged modules
         Module* mergedModule = _linker.getModule();
         const Target *march = 
-          TargetRegistry::lookupTarget(mergedModule->getTargetTriple(), 
-                                       /*FallbackToHost=*/true,
+          TargetRegistry::lookupTarget(Triple,
+                                       /*FallbackToHost=*/false,
                                        /*RequireJIT=*/false,
                                        errMsg);
         if ( march == NULL )
@@ -351,9 +356,8 @@ bool LTOCodeGenerator::determineTarget(std::string& errMsg)
         }
 
         // construct LTModule, hand over ownership of module and target
-        std::string FeatureStr =
-          getFeatureString(_linker.getModule()->getTargetTriple().c_str());
-        _target = march->createTargetMachine(*mergedModule, FeatureStr.c_str());
+        std::string FeatureStr = getFeatureString(Triple.c_str());
+        _target = march->createTargetMachine(*mergedModule, Triple, FeatureStr);
     }
     return false;
 }

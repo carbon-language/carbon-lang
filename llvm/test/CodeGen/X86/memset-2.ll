@@ -1,5 +1,7 @@
-; RUN: llvm-as < %s | llc -march=x86 | not grep rep
-; RUN: llvm-as < %s | llc -march=x86 | grep memset
+; RUN: llvm-as < %s | llc | not grep rep
+; RUN: llvm-as < %s | llc | grep memset
+
+target triple = "i386"
 
 declare void @llvm.memset.i32(i8*, i8, i32, i32) nounwind
 
