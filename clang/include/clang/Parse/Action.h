@@ -1904,7 +1904,8 @@ public:
   }
   
   /// ActOnPragmaUnused - Called on well formed #pragma unused(...).
-  virtual void ActOnPragmaUnused(ExprTy **Exprs, unsigned NumExprs,
+  virtual void ActOnPragmaUnused(const Token *Identifiers,
+                                 unsigned NumIdentifiers, Scope *CurScope,
                                  SourceLocation PragmaLoc, 
                                  SourceLocation LParenLoc,
                                  SourceLocation RParenLoc) {

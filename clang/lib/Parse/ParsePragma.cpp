@@ -126,7 +126,7 @@ void PragmaUnusedHandler::HandlePragma(Preprocessor &PP, Token &UnusedTok) {
   SourceLocation LParenLoc = Tok.getLocation();
   
   // Lex the declaration reference(s).
-  llvm::SmallVector<Action::ExprTy*, 5> Ex;
+  llvm::SmallVector<Token, 5> Identifiers;
   SourceLocation RParenLoc;
   bool LexID = true;
   
@@ -134,27 +134,13 @@ void PragmaUnusedHandler::HandlePragma(Preprocessor &PP, Token &UnusedTok) {
     PP.Lex(Tok);
     
     if (LexID) {
-      if (Tok.is(tok::identifier)) {            
-        Action::OwningExprResult Name = 
-          Actions.ActOnIdentifierExpr(parser.CurScope, Tok.getLocation(),
-                                      *Tok.getIdentifierInfo(), false);
-      
-        if (Name.isInvalid()) {
-          if (!Ex.empty())
-            Action::MultiExprArg Release(Actions, &Ex[0], Ex.size());
-          return;
-        }
-        
-        Ex.push_back(Name.release());        
+      if (Tok.is(tok::identifier)) {  
+        Identifiers.push_back(Tok);
         LexID = false;
         continue;
       }
 
-      // Illegal token! Release the parsed expressions (if any) and emit
-      // a warning.
-      if (!Ex.empty())
-        Action::MultiExprArg Release(Actions, &Ex[0], Ex.size());
-      
+      // Illegal token!
       PP.Diag(Tok.getLocation(), diag::warn_pragma_unused_expected_var);
       return;
     }
@@ -170,11 +156,7 @@ void PragmaUnusedHandler::HandlePragma(Preprocessor &PP, Token &UnusedTok) {
       break;
     }
     
-    // Illegal token! Release the parsed expressions (if any) and emit
-    // a warning.
-    if (!Ex.empty())
-      Action::MultiExprArg Release(Actions, &Ex[0], Ex.size());
-    
+    // Illegal token!
     PP.Diag(Tok.getLocation(), diag::warn_pragma_unused_expected_punc);
     return;
   }
@@ -188,10 +170,11 @@ void PragmaUnusedHandler::HandlePragma(Preprocessor &PP, Token &UnusedTok) {
 
   // Verify that we have a location for the right parenthesis.
   assert(RParenLoc.isValid() && "Valid '#pragma unused' must have ')'");
-  assert(!Ex.empty() && "Valid '#pragma unused' must have arguments");
+  assert(!Identifiers.empty() && "Valid '#pragma unused' must have arguments");
 
   // Perform the action to handle the pragma.    
-  Actions.ActOnPragmaUnused(&Ex[0], Ex.size(), UnusedLoc, LParenLoc, RParenLoc);
+  Actions.ActOnPragmaUnused(Identifiers.data(), Identifiers.size(),
+                            parser.CurScope, UnusedLoc, LParenLoc, RParenLoc);
 }
 
 // #pragma weak identifier

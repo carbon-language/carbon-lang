@@ -167,6 +167,8 @@ def warn_pragma_pack_pop_identifer_and_alignment : Warning<
   "specifying both a name and alignment to 'pop' is undefined">;
 def warn_pragma_pack_pop_failed : Warning<"#pragma pack(pop, ...) failed: %0">;
 
+def warn_pragma_unused_undeclared_var : Warning<
+  "undeclared variable %0 used as an argument for '#pragma unused'">;
 def warn_pragma_unused_expected_localvar : Warning<
   "only local variables can be arguments to '#pragma unused'">;
 def err_unsupported_pragma_weak : Error<

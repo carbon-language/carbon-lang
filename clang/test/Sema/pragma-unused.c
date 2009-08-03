@@ -16,7 +16,7 @@ void f2(void) {
 }
 
 void f3(void) {
-  #pragma unused(x) // expected-error{{use of undeclared identifier 'x'}}
+  #pragma unused(x) // expected-warning{{undeclared variable 'x' used as an argument for '#pragma unused'}}
 }
 
 void f4(void) {
@@ -26,7 +26,7 @@ void f4(void) {
 
 int k;
 void f5(void) {
-  #pragma unused(k) // expected-warning{{only local variables can be arguments to '#pragma unused' - ignored}}
+  #pragma unused(k) // expected-warning{{only local variables can be arguments to '#pragma unused'}}
 }
 
 void f6(void) {
@@ -34,5 +34,10 @@ void f6(void) {
   {
     #pragma unused(z) // no-warning
   }
+}
+
+void f7() {
+  int y;
+  #pragma unused(undeclared, undefined, y) // expected-warning{{undeclared variable 'undeclared' used as an argument for '#pragma unused'}} expected-warning{{undeclared variable 'undefined' used as an argument for '#pragma unused'}}
 }
 
