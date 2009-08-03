@@ -75,6 +75,10 @@ public:
 
     CurrentContext = 0;
   }
+
+  void setContext(Decl *D) {
+    CurrentContext = ContextMgr.getContext(D);
+  }
     
   Decl *getCodeDecl() const { 
     assert (AScope == ScopeDecl);

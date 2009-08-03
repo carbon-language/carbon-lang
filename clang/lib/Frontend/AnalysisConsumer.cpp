@@ -88,6 +88,8 @@ namespace {
     StoreManagerCreator CreateStoreMgr;
     ConstraintManagerCreator CreateConstraintMgr;
 
+    llvm::OwningPtr<AnalysisManager> Mgr;
+
     AnalysisConsumer(Diagnostic &diags, Preprocessor* pp,
                      PreprocessorFactory* ppf,
                      const LangOptions& lopts,
@@ -152,6 +154,12 @@ namespace {
     
     virtual void Initialize(ASTContext &Context) {
       Ctx = &Context;
+      Mgr.reset(new AnalysisManager(*Ctx, Diags, LOpts, PD.get(), 
+                                    CreateStoreMgr, CreateConstraintMgr,
+                                    Opts.AnalyzerDisplayProgress, 
+                                    Opts.VisualizeEGDot, Opts.VisualizeEGUbi, 
+                                    Opts.PurgeDead, Opts.EagerlyAssume,
+                                    Opts.TrimGraph));
     }
     
     virtual void HandleTopLevelDecl(DeclGroupRef D) {
@@ -215,14 +223,9 @@ void AnalysisConsumer::HandleTopLevelSingleDecl(Decl *D) {
 void AnalysisConsumer::HandleTranslationUnit(ASTContext &C) {
 
   if(!TranslationUnitActions.empty()) {
-    AnalysisManager mgr(*Ctx, Diags, LOpts, PD.get(), 
-                        CreateStoreMgr, CreateConstraintMgr,
-                        Opts.AnalyzerDisplayProgress, Opts.VisualizeEGDot,
-                        Opts.VisualizeEGUbi, Opts.PurgeDead, Opts.EagerlyAssume,
-                        Opts.TrimGraph);
     for (Actions::iterator I = TranslationUnitActions.begin(), 
          E = TranslationUnitActions.end(); I != E; ++I)
-      (*I)(mgr);  
+      (*I)(*Mgr);  
   }
 
   if (!ObjCImplementationActions.empty()) {
@@ -253,17 +256,11 @@ void AnalysisConsumer::HandleCode(Decl* D, Stmt* Body, Actions& actions) {
       !Ctx->getSourceManager().isFromMainFile(D->getLocation()))
     return;  
 
-  // Create an AnalysisManager that will manage the state for analyzing
-  // this method/function.
-  AnalysisManager mgr(D, *Ctx, Diags, LOpts, PD.get(), 
-                      CreateStoreMgr, CreateConstraintMgr,
-                      Opts.AnalyzerDisplayProgress, Opts.VisualizeEGDot,
-                      Opts.VisualizeEGUbi, Opts.PurgeDead, Opts.EagerlyAssume,
-                      Opts.TrimGraph);
+  Mgr->setContext(D);
   
   // Dispatch on the actions.  
   for (Actions::iterator I = actions.begin(), E = actions.end(); I != E; ++I)
-    (*I)(mgr);  
+    (*I)(*Mgr);  
 }
 
 //===----------------------------------------------------------------------===//
