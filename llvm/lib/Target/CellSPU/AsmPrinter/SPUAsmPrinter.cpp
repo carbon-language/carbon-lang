@@ -485,7 +485,6 @@ LinuxAsmPrinter::runOnMachineFunction(MachineFunction &MF)
 bool LinuxAsmPrinter::doInitialization(Module &M) {
   bool Result = AsmPrinter::doInitialization(M);
   DW = getAnalysisIfAvailable<DwarfWriter>();
-  SwitchToTextSection("\t.text");
   return Result;
 }
 
