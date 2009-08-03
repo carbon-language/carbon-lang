@@ -84,7 +84,10 @@ namespace {
     const std::string OutDir;
     AnalyzerOptions Opts;
 
-    llvm::OwningPtr<PathDiagnosticClient> PD;
+
+    // PD is owned by AnalysisManager.
+    PathDiagnosticClient *PD;
+
     StoreManagerCreator CreateStoreMgr;
     ConstraintManagerCreator CreateConstraintMgr;
 
@@ -107,7 +110,7 @@ namespace {
         switch (Opts.AnalysisDiagOpt) {
         default:
 #define ANALYSIS_DIAGNOSTICS(NAME, CMDFLAG, DESC, CREATEFN, AUTOCREATE) \
-          case PD_##NAME: PD.reset(CREATEFN(OutDir, PP, PPF)); break;
+          case PD_##NAME: PD = CREATEFN(OutDir, PP, PPF); break;
 #include "clang/Frontend/Analyses.def"
         }
       }
@@ -154,7 +157,7 @@ namespace {
     
     virtual void Initialize(ASTContext &Context) {
       Ctx = &Context;
-      Mgr.reset(new AnalysisManager(*Ctx, Diags, LOpts, PD.get(), 
+      Mgr.reset(new AnalysisManager(*Ctx, Diags, LOpts, PD, 
                                     CreateStoreMgr, CreateConstraintMgr,
                                     Opts.AnalyzerDisplayProgress, 
                                     Opts.VisualizeEGDot, Opts.VisualizeEGUbi, 
@@ -221,7 +224,6 @@ void AnalysisConsumer::HandleTopLevelSingleDecl(Decl *D) {
 }
 
 void AnalysisConsumer::HandleTranslationUnit(ASTContext &C) {
-
   if(!TranslationUnitActions.empty()) {
     for (Actions::iterator I = TranslationUnitActions.begin(), 
          E = TranslationUnitActions.end(); I != E; ++I)
@@ -237,11 +239,11 @@ void AnalysisConsumer::HandleTranslationUnit(ASTContext &C) {
       if (ObjCImplementationDecl* ID = dyn_cast<ObjCImplementationDecl>(*I))
         HandleCode(ID, 0, ObjCImplementationActions);
   }
-  
+
   // Explicitly destroy the PathDiagnosticClient.  This will flush its output.
   // FIXME: This should be replaced with something that doesn't rely on
   // side-effects in PathDiagnosticClient's destructor.
-  PD.reset(NULL);
+  Mgr.reset(NULL);
 }
 
 void AnalysisConsumer::HandleCode(Decl* D, Stmt* Body, Actions& actions) {
