@@ -137,26 +137,26 @@ def CC_X86_64_C : CallingConv<[
   // The 'nest' parameter, if any, is passed in R10.
   CCIfNest<CCAssignToReg<[R10]>>,
 
+  // The first 6 v1i64 vector arguments are passed in GPRs on Darwin.
+  CCIfType<[v1i64],
+            CCIfSubtarget<"isTargetDarwin()",
+            CCBitConvertToType<i64>>>,
+
   // The first 6 integer arguments are passed in integer registers.
   CCIfType<[i32], CCAssignToReg<[EDI, ESI, EDX, ECX, R8D, R9D]>>,
   CCIfType<[i64], CCAssignToReg<[RDI, RSI, RDX, RCX, R8 , R9 ]>>,
-  
-  // The first 8 FP/Vector arguments are passed in XMM registers.
-  CCIfType<[f32, f64, v16i8, v8i16, v4i32, v2i64, v4f32, v2f64],
-            CCIfSubtarget<"hasSSE1()",
-            CCAssignToReg<[XMM0, XMM1, XMM2, XMM3, XMM4, XMM5, XMM6, XMM7]>>>,
 
   // The first 8 MMX (except for v1i64) vector arguments are passed in XMM
   // registers on Darwin.
   CCIfType<[v8i8, v4i16, v2i32, v2f32],
             CCIfSubtarget<"isTargetDarwin()",
             CCIfSubtarget<"hasSSE2()",
-            CCAssignToReg<[XMM0, XMM1, XMM2, XMM3, XMM4, XMM5, XMM6, XMM7]>>>>,
+            CCPromoteToType<v2i64>>>>,
 
-  // The first 8 v1i64 vector arguments are passed in GPRs on Darwin.
-  CCIfType<[v1i64],
-            CCIfSubtarget<"isTargetDarwin()",
-            CCAssignToReg<[RDI, RSI, RDX, RCX, R8]>>>,
+  // The first 8 FP/Vector arguments are passed in XMM registers.
+  CCIfType<[f32, f64, v16i8, v8i16, v4i32, v2i64, v4f32, v2f64],
+            CCIfSubtarget<"hasSSE1()",
+            CCAssignToReg<[XMM0, XMM1, XMM2, XMM3, XMM4, XMM5, XMM6, XMM7]>>>,
  
   // Integer/FP values get stored in stack slots that are 8 bytes in size and
   // 8-byte aligned if there are no more registers to hold them.
