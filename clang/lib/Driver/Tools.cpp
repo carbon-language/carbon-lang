@@ -1818,12 +1818,19 @@ void openbsd::Link::ConstructJob(Compilation &C, const JobAction &JA,
   const Driver &D = getToolChain().getHost().getDriver();
   ArgStringList CmdArgs;
 
+  if ((!Args.hasArg(options::OPT_nostdlib)) &&
+     (!Args.hasArg(options::OPT_shared))) {
+    CmdArgs.push_back("-e");
+    CmdArgs.push_back("__start");
+  }
+
   if (Args.hasArg(options::OPT_static)) {
     CmdArgs.push_back("-Bstatic");
   } else {
     CmdArgs.push_back("--eh-frame-hdr");
+    CmdArgs.push_back("-Bdynamic");
     if (Args.hasArg(options::OPT_shared)) {
-      CmdArgs.push_back("-Bshareable");
+      CmdArgs.push_back("-shared");
     } else {
       CmdArgs.push_back("-dynamic-linker");
       CmdArgs.push_back("/usr/libexec/ld.so");
@@ -1850,6 +1857,10 @@ void openbsd::Link::ConstructJob(Compilation &C, const JobAction &JA,
     }
   }
 
+  CmdArgs.push_back(MakeFormattedString(Args,
+                           llvm::format("-L/usr/lib/gcc-lib/%s/3.3.5",
+                           getToolChain().getTripleString().c_str())));
+
   Args.AddAllArgs(CmdArgs, options::OPT_L);
   Args.AddAllArgs(CmdArgs, options::OPT_T_Group);
   Args.AddAllArgs(CmdArgs, options::OPT_e);
@@ -1873,10 +1884,15 @@ void openbsd::Link::ConstructJob(Compilation &C, const JobAction &JA,
 
   if (!Args.hasArg(options::OPT_nostdlib) &&
       !Args.hasArg(options::OPT_nodefaultlibs)) {
+    // FIXME: For some reason GCC passes -lgcc before adding
+    // the default system libraries. Just mimic this for now.
+    CmdArgs.push_back("-lgcc");
 
     if (Args.hasArg(options::OPT_pthread))
       CmdArgs.push_back("-pthread");
-    CmdArgs.push_back("-lc");
+    if (!Args.hasArg(options::OPT_shared))
+      CmdArgs.push_back("-lc");
+    CmdArgs.push_back("-lgcc");
   }
 
   if (!Args.hasArg(options::OPT_nostdlib) &&
