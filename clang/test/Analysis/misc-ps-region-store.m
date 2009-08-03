@@ -139,3 +139,18 @@ again:
     goto again;
   }
 }
+
+// Reduced test case from <rdar://problem/7114618>.
+// Basically a null check is performed on the field value, which is then
+// assigned to a variable and then checked again.
+struct s_7114618 { int *p; };
+void test_rdar_7114618(struct s_7114618 *s) {
+  if (s->p) {
+    int *p = s->p;
+    if (!p) {
+      // Infeasible
+      int *dead = 0;
+      *dead = 0xDEADBEEF; // no-warning
+    }
+  }
+}
