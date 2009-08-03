@@ -431,7 +431,7 @@ public:
 
   /// @brief Return the number of bits in the Vector type.
   inline unsigned getBitWidth() const {
-    return NumElements *getElementType()->getPrimitiveSizeInBits();
+    return NumElements * getElementType()->getPrimitiveSizeInBits();
   }
 
   // Implement the AbstractTypeUser interface.
