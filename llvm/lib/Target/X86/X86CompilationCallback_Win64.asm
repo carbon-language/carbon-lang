@@ -15,16 +15,17 @@ extrn X86CompilationCallback2: PROC
 
 .code
 X86CompilationCallback proc
-    ; Save all int arg registers into register spill area.
-    mov     [rsp+ 8], rcx
-    mov     [rsp+16], rdx
-    mov     [rsp+24], r8
-    mov     [rsp+32], r9
-
     push    rbp
 
     ; Save RSP.
     mov     rbp, rsp
+
+    ; Save all int arg registers
+    ; WARNING: We cannot use register spill area - we're generating stubs by hands!
+    push    rcx
+    push    rdx
+    push    r8
+    push    r9
 
     ; Align stack on 16-byte boundary.
     and     rsp, -16
@@ -52,15 +53,15 @@ X86CompilationCallback proc
     ; Restore RSP.
     mov     rsp, rbp
 
+    ; Restore all int arg registers
+    sub     rsp, 32
+    pop     r9
+    pop     r8
+    pop     rdx
+    pop     rcx
+
     ; Restore RBP.
     pop     rbp
-
-    ; Restore all int arg registers.
-    mov     r9,  [rsp+32]
-    mov     r8,  [rsp+24]
-    mov     rdx, [rsp+16]
-    mov     rcx, [rsp+ 8]
-
     ret
 X86CompilationCallback endp
 
