@@ -74,7 +74,7 @@ AsmPrinter::~AsmPrinter() {
   delete &OutContext;
 }
 
-const TargetLoweringObjectFile &AsmPrinter::getObjFileLowering() const {
+TargetLoweringObjectFile &AsmPrinter::getObjFileLowering() const {
   return TM.getTargetLowering()->getObjFileLowering();
 }
 

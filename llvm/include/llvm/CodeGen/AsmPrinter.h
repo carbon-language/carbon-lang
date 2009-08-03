@@ -77,7 +77,7 @@ namespace llvm {
     TargetMachine &TM;
     
     /// getObjFileLowering - Return information about object file lowering.
-    const TargetLoweringObjectFile &getObjFileLowering() const;
+    TargetLoweringObjectFile &getObjFileLowering() const;
     
     /// Target Asm Printer information.
     ///

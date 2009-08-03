@@ -107,7 +107,7 @@ public:
 
   TargetMachine &getTargetMachine() const { return TM; }
   const TargetData *getTargetData() const { return TD; }
-  const TargetLoweringObjectFile &getObjFileLowering() const { return TLOF; }
+  TargetLoweringObjectFile &getObjFileLowering() const { return TLOF; }
 
   bool isBigEndian() const { return !IsLittleEndian; }
   bool isLittleEndian() const { return IsLittleEndian; }
