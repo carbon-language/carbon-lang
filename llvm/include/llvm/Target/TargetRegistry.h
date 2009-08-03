@@ -199,14 +199,9 @@ namespace llvm {
     /// lookupTarget - Lookup a target based on a target triple.
     ///
     /// \param Triple - The triple to use for finding a target.
-    /// \param FallbackToHost - If true and no target is found for the given
-    /// \arg Triple, then the host's triple will be used.
-    /// \param RequireJIT - Require the target to support JIT compilation.
     /// \param Error - On failure, an error string describing why no target was
     /// found.
     static const Target *lookupTarget(const std::string &Triple,
-                                      bool FallbackToHost,
-                                      bool RequireJIT,
                                       std::string &Error);
 
     /// getClosestTargetForJIT - Pick the best target that is compatible with
@@ -214,9 +209,7 @@ namespace llvm {
     /// and sets the Error string to a reason.
     ///
     /// Mainted for compatibility through 2.6.
-    static const Target *getClosestTargetForJIT(std::string &Error) {
-      return lookupTarget("", true, true, Error);
-    }
+    static const Target *getClosestTargetForJIT(std::string &Error);
 
     /// @}
     /// @name Target Registration

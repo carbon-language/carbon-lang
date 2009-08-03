@@ -51,10 +51,7 @@ TargetMachine *JIT::selectTarget(ModuleProvider *MP, std::string *ErrorStr) {
 
   std::string Error;
   const Target *TheTarget =
-    TargetRegistry::lookupTarget(TheTriple.getTriple(),
-                                 /*FallbackToHost=*/false,
-                                 /*RequireJIT=*/false,
-                                 Error);
+    TargetRegistry::lookupTarget(TheTriple.getTriple(), Error);
   if (TheTarget == 0) {
     if (ErrorStr)
       *ErrorStr = Error;

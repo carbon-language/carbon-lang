@@ -3186,11 +3186,7 @@ std::string CWriter::InterpretASMConstraint(InlineAsm::ConstraintInfo& c) {
       Triple = llvm::sys::getHostTriple();
 
     std::string E;
-    const Target *Match =
-      TargetRegistry::lookupTarget(Triple, 
-                                   /*FallbackToHost=*/false,
-                                   /*RequireJIT=*/false,
-                                   E);
+    const Target *Match = TargetRegistry::lookupTarget(Triple, E);
     if (Match) {
       // Per platform Target Machines don't exist, so create it;
       // this must be done only once.

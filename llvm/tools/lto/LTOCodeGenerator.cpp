@@ -333,11 +333,7 @@ bool LTOCodeGenerator::determineTarget(std::string& errMsg)
 
         // create target machine from info for merged modules
         Module* mergedModule = _linker.getModule();
-        const Target *march = 
-          TargetRegistry::lookupTarget(Triple,
-                                       /*FallbackToHost=*/false,
-                                       /*RequireJIT=*/false,
-                                       errMsg);
+        const Target *march = TargetRegistry::lookupTarget(Triple, errMsg);
         if ( march == NULL )
             return true;
 

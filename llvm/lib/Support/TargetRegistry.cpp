@@ -20,8 +20,6 @@ TargetRegistry::iterator TargetRegistry::begin() {
 }
 
 const Target *TargetRegistry::lookupTarget(const std::string &TT,
-                                           bool FallbackToHost,
-                                           bool RequireJIT,
                                            std::string &Error) {
   // Provide special warning when no targets are initialized.
   if (begin() == end()) {
@@ -31,9 +29,6 @@ const Target *TargetRegistry::lookupTarget(const std::string &TT,
   const Target *Best = 0, *EquallyBest = 0;
   unsigned BestQuality = 0;
   for (iterator it = begin(), ie = end(); it != ie; ++it) {
-    if (RequireJIT && !it->hasJIT())
-      continue;
-
     if (unsigned Qual = it->TripleMatchQualityFn(TT)) {
       if (!Best || Qual > BestQuality) {
         Best = &*it;
@@ -43,15 +38,6 @@ const Target *TargetRegistry::lookupTarget(const std::string &TT,
         EquallyBest = &*it;
     }
   }
-
-  // FIXME: Hack. If we only have an extremely weak match and the client
-  // requested to fall back to the host, then ignore it and try again.
-  if (BestQuality == 1 && FallbackToHost)
-    Best = 0;
-
-  // Fallback to the host triple if we didn't find anything.
-  if (!Best && FallbackToHost)
-    return lookupTarget(sys::getHostTriple(), false, RequireJIT, Error);
 
   if (!Best) {
     Error = "No available targets are compatible with this triple";
@@ -90,5 +76,16 @@ void TargetRegistry::RegisterTarget(Target &T,
   T.ShortDesc = ShortDesc;
   T.TripleMatchQualityFn = TQualityFn;
   T.HasJIT = HasJIT;
+}
+
+const Target *TargetRegistry::getClosestTargetForJIT(std::string &Error) {
+  const Target *TheTarget = lookupTarget(sys::getHostTriple(), Error);
+
+  if (TheTarget && !TheTarget->hasJIT()) {
+    Error = "No JIT compatible target available for this host";
+    return 0;
+  }
+
+  return TheTarget;
 }
 

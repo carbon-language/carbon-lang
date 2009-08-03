@@ -146,11 +146,7 @@ static TargetAsmParser *GetTargetAsmParser(const char *ProgName,
                                            MCAsmParser &Parser) {
   // Get the target specific parser.
   std::string Error;
-  const Target *TheTarget =
-    TargetRegistry::lookupTarget(TripleName, 
-                                 /*FallbackToHost=*/true,
-                                 /*RequireJIT=*/false,
-                                 Error);
+  const Target *TheTarget = TargetRegistry::lookupTarget(TripleName, Error);
   if (TheTarget == 0) {
     errs() << ProgName << ": error: unable to get target for '" << TripleName
            << "', see --version and --triple.\n";

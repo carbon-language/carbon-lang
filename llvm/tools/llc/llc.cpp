@@ -265,10 +265,7 @@ int main(int argc, char **argv) {
       TheTriple.setArch(Type);
   } else {
     std::string Err;
-    TheTarget = TargetRegistry::lookupTarget(TheTriple.getTriple(),
-                                             /*FallbackToHost=*/false,
-                                             /*RequireJIT=*/false,
-                                             Err);
+    TheTarget = TargetRegistry::lookupTarget(TheTriple.getTriple(), Err);
     if (TheTarget == 0) {
       errs() << argv[0] << ": error auto-selecting target for module '"
              << Err << "'.  Please use the -march option to explicitly "
