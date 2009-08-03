@@ -653,9 +653,11 @@ X86RegisterInfo::processFunctionBeforeCalleeSavedScan(MachineFunction &MF,
   if (hasFP(MF)) {
     assert((TailCallReturnAddrDelta <= 0) &&
            "The Delta should always be zero or negative");
+    const TargetFrameInfo &TFI = *MF.getTarget().getFrameInfo();
     // Create a frame entry for the EBP register that must be saved.
     int FrameIdx = MFI->CreateFixedObject(SlotSize,
-                                          (int)SlotSize * -2+
+                                          -(int)SlotSize +
+                                          TFI.getOffsetOfLocalArea() +
                                           TailCallReturnAddrDelta);
     assert(FrameIdx == MFI->getObjectIndexBegin() &&
            "Slot for EBP register must be last in order to be found!");
