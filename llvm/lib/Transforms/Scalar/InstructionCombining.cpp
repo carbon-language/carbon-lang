@@ -1014,7 +1014,7 @@ Value *InstCombiner::SimplifyDemandedUseBits(Value *V, APInt DemandedMask,
     if ((DemandedMask & (RHSKnownZero|RHSKnownOne)) == DemandedMask) { 
       // all known
       if ((RHSKnownOne & LHSKnownOne) == RHSKnownOne) {
-        Constant *AndC = ConstantInt::get(*Context, 
+        Constant *AndC = ConstantInt::get(VTy, 
                                           ~RHSKnownOne & DemandedMask);
         Instruction *And = 
           BinaryOperator::CreateAnd(I->getOperand(0), AndC, "tmp");
@@ -1407,7 +1407,7 @@ Value *InstCombiner::SimplifyDemandedUseBits(Value *V, APInt DemandedMask,
   // If the client is only demanding bits that we know, return the known
   // constant.
   if ((DemandedMask & (RHSKnownZero|RHSKnownOne)) == DemandedMask) {
-    Constant *C = ConstantInt::get(*Context, RHSKnownOne);
+    Constant *C = ConstantInt::get(VTy, RHSKnownOne);
     if (isa<PointerType>(V->getType()))
       C = ConstantExpr::getIntToPtr(C, V->getType());
     return C;
