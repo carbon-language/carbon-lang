@@ -1228,7 +1228,7 @@ LowerCallResult(SDValue Chain, SDValue InFlag, CallSDNode *TheCall,
                                    MVT::v2i64, InFlag).getValue(1);
         Val = Chain.getValue(0);
         Val = DAG.getNode(ISD::EXTRACT_VECTOR_ELT, dl, MVT::i64,
-                          Val, DAG.getConstant(0, MVT::i64));        
+                          Val, DAG.getConstant(0, MVT::i64));
       } else {
         Chain = DAG.getCopyFromReg(Chain, dl, VA.getLocReg(),
                                    MVT::i64, InFlag).getValue(1);
@@ -1628,8 +1628,9 @@ X86TargetLowering::LowerMemOpCallTo(CallSDNode *TheCall, SelectionDAG &DAG,
                                     const CCValAssign &VA,
                                     SDValue Chain,
                                     SDValue Arg, ISD::ArgFlagsTy Flags) {
+  const unsigned FirstStackArgOffset = (Subtarget->isTargetWin64() ? 32 : 0);
   DebugLoc dl = TheCall->getDebugLoc();
-  unsigned LocMemOffset = VA.getLocMemOffset();
+  unsigned LocMemOffset = FirstStackArgOffset + VA.getLocMemOffset();
   SDValue PtrOff = DAG.getIntPtrConstant(LocMemOffset);
   PtrOff = DAG.getNode(ISD::ADD, dl, getPointerTy(), StackPtr, PtrOff);
   if (Flags.isByVal()) {

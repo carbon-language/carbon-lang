@@ -484,15 +484,18 @@ bool X86RegisterInfo::hasReservedSpillSlot(MachineFunction &MF, unsigned Reg,
 
 int
 X86RegisterInfo::getFrameIndexOffset(MachineFunction &MF, int FI) const {
-  int Offset = MF.getFrameInfo()->getObjectOffset(FI) + SlotSize;
-  uint64_t StackSize = MF.getFrameInfo()->getStackSize();
+  const TargetFrameInfo &TFI = *MF.getTarget().getFrameInfo();
+  MachineFrameInfo *MFI = MF.getFrameInfo();
+
+  int Offset = MFI->getObjectOffset(FI) - TFI.getOffsetOfLocalArea();
+  uint64_t StackSize = MFI->getStackSize();
 
   if (needsStackRealignment(MF)) {
     if (FI < 0)
       // Skip the saved EBP
       Offset += SlotSize;
     else {
-      unsigned Align = MF.getFrameInfo()->getObjectAlignment(FI);
+      unsigned Align = MFI->getObjectAlignment(FI);
       assert( (-(Offset + StackSize)) % Align == 0);
       Align = 0;
       return Offset + StackSize;
@@ -622,14 +625,14 @@ void X86RegisterInfo::eliminateFrameIndex(MachineBasicBlock::iterator II,
 void
 X86RegisterInfo::processFunctionBeforeCalleeSavedScan(MachineFunction &MF,
                                                       RegScavenger *RS) const {
-  MachineFrameInfo *FFI = MF.getFrameInfo();
+  MachineFrameInfo *MFI = MF.getFrameInfo();
 
   // Calculate and set max stack object alignment early, so we can decide
   // whether we will need stack realignment (and thus FP).
-  unsigned MaxAlign = std::max(FFI->getMaxAlignment(),
-                               calculateMaxStackAlignment(FFI));
+  unsigned MaxAlign = std::max(MFI->getMaxAlignment(),
+                               calculateMaxStackAlignment(MFI));
 
-  FFI->setMaxAlignment(MaxAlign);
+  MFI->setMaxAlignment(MaxAlign);
 
   X86MachineFunctionInfo *X86FI = MF.getInfo<X86MachineFunctionInfo>();
   int32_t TailCallReturnAddrDelta = X86FI->getTCReturnAddrDelta();
@@ -643,18 +646,18 @@ X86RegisterInfo::processFunctionBeforeCalleeSavedScan(MachineFunction &MF,
     //     ...
     //   }
     //   [EBP]
-    MF.getFrameInfo()->
-      CreateFixedObject(-TailCallReturnAddrDelta,
-                        (-1*SlotSize)+TailCallReturnAddrDelta);
+    MFI->CreateFixedObject(-TailCallReturnAddrDelta,
+                           (-1*SlotSize)+TailCallReturnAddrDelta);
   }
+
   if (hasFP(MF)) {
     assert((TailCallReturnAddrDelta <= 0) &&
            "The Delta should always be zero or negative");
     // Create a frame entry for the EBP register that must be saved.
-    int FrameIdx = MF.getFrameInfo()->CreateFixedObject(SlotSize,
-                                                        (int)SlotSize * -2+
-                                                       TailCallReturnAddrDelta);
-    assert(FrameIdx == MF.getFrameInfo()->getObjectIndexBegin() &&
+    int FrameIdx = MFI->CreateFixedObject(SlotSize,
+                                          (int)SlotSize * -2+
+                                          TailCallReturnAddrDelta);
+    assert(FrameIdx == MFI->getObjectIndexBegin() &&
            "Slot for EBP register must be last in order to be found!");
     FrameIdx = 0;
   }
@@ -886,6 +889,11 @@ void X86RegisterInfo::emitPrologue(MachineFunction &MF) const {
     if (HasFP) MinSize += SlotSize;
     StackSize = std::max(MinSize,
                          StackSize > 128 ? StackSize - 128 : 0);
+    MFI->setStackSize(StackSize);
+  } else if (Subtarget->isTargetWin64()) {
+    // We need to always allocate 32 bytes as register spill area.
+    // FIXME: we might reuse these 32 bytes for leaf functions.
+    StackSize += 32;
     MFI->setStackSize(StackSize);
   }
 

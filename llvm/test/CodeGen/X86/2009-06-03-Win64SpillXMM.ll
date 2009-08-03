@@ -1,7 +1,7 @@
 ; RUN: llvm-as < %s | llc -o %t1 -f
-; RUN: grep "subq.*\\\$40, \\\%rsp" %t1
-; RUN: grep "movaps	\\\%xmm8, \\\(\\\%rsp\\\)" %t1
-; RUN: grep "movaps	\\\%xmm7, 16\\\(\\\%rsp\\\)" %t1
+; RUN: grep "subq.*\\\$72, \\\%rsp" %t1
+; RUN: grep "movaps	\\\%xmm8, 32\\\(\\\%rsp\\\)" %t1
+; RUN: grep "movaps	\\\%xmm7, 48\\\(\\\%rsp\\\)" %t1
 target triple = "x86_64-mingw64"
 
 define i32 @a() nounwind {

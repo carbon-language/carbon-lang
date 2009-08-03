@@ -128,13 +128,37 @@ let isCall = 1 in
     def CALL64pcrel32 : Ii32<0xE8, RawFrm,
                           (outs), (ins i64i32imm_pcrel:$dst, variable_ops),
                           "call\t$dst", []>,
-                        Requires<[In64BitMode]>;
+                        Requires<[In64BitMode, NotWin64]>;
     def CALL64r       : I<0xFF, MRM2r, (outs), (ins GR64:$dst, variable_ops),
-                          "call\t{*}$dst", [(X86call GR64:$dst)]>;
+                          "call\t{*}$dst", [(X86call GR64:$dst)]>,
+                        Requires<[NotWin64]>;
     def CALL64m       : I<0xFF, MRM2m, (outs), (ins i64mem:$dst, variable_ops),
-                          "call\t{*}$dst", [(X86call (loadi64 addr:$dst))]>;
+                          "call\t{*}$dst", [(X86call (loadi64 addr:$dst))]>,
+                        Requires<[NotWin64]>;
   }
 
+  // FIXME: We need to teach codegen about single list of call-clobbered registers.
+let isCall = 1 in
+  // All calls clobber the non-callee saved registers. RSP is marked as
+  // a use to prevent stack-pointer assignments that appear immediately
+  // before calls from potentially appearing dead. Uses for argument
+  // registers are added manually.
+  let Defs = [RAX, RCX, RDX, R8, R9, R10, R11,
+              FP0, FP1, FP2, FP3, FP4, FP5, FP6, ST0, ST1,
+              MM0, MM1, MM2, MM3, MM4, MM5, MM6, MM7,
+              XMM0, XMM1, XMM2, XMM3, XMM4, XMM5, EFLAGS],
+      Uses = [RSP] in {
+    def WINCALL64pcrel32 : I<0xE8, RawFrm,
+                             (outs), (ins i64i32imm:$dst, variable_ops),
+                             "call\t${dst:call}", [(X86call imm:$dst)]>,
+                           Requires<[IsWin64]>;
+    def WINCALL64r       : I<0xFF, MRM2r, (outs), (ins GR64:$dst, variable_ops),
+                             "call\t{*}$dst",
+                             [(X86call GR64:$dst)]>, Requires<[IsWin64]>;
+    def WINCALL64m       : I<0xFF, MRM2m, (outs), (ins i64mem:$dst, variable_ops),
+                             "call\t{*}$dst",
+                             [(X86call (loadi64 addr:$dst))]>, Requires<[IsWin64]>;
+  }
 
 
 let isCall = 1, isTerminator = 1, isReturn = 1, isBarrier = 1 in
@@ -1495,9 +1519,14 @@ def : Pat<(store (i64 (X86Wrapper texternalsym:$src)), addr:$dst),
 // Direct PC relative function call for small code model. 32-bit displacement
 // sign extended to 64-bit.
 def : Pat<(X86call (i64 tglobaladdr:$dst)),
-          (CALL64pcrel32 tglobaladdr:$dst)>;
+          (CALL64pcrel32 tglobaladdr:$dst)>, Requires<[NotWin64]>;
 def : Pat<(X86call (i64 texternalsym:$dst)),
-          (CALL64pcrel32 texternalsym:$dst)>;
+          (CALL64pcrel32 texternalsym:$dst)>, Requires<[NotWin64]>;
+
+def : Pat<(X86call (i64 tglobaladdr:$dst)),
+          (WINCALL64pcrel32 tglobaladdr:$dst)>, Requires<[IsWin64]>;
+def : Pat<(X86call (i64 texternalsym:$dst)),
+          (WINCALL64pcrel32 texternalsym:$dst)>, Requires<[IsWin64]>;
 
 def : Pat<(X86tailcall (i64 tglobaladdr:$dst)),
           (CALL64pcrel32 tglobaladdr:$dst)>;

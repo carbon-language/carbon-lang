@@ -64,7 +64,9 @@ X86TargetMachine::X86TargetMachine(const Target &T, const std::string &TT,
     Subtarget(TT, FS, is64Bit),
     DataLayout(Subtarget.getDataLayout()),
     FrameInfo(TargetFrameInfo::StackGrowsDown,
-              Subtarget.getStackAlignment(), Subtarget.is64Bit() ? -8 : -4),
+              Subtarget.getStackAlignment(),
+              (Subtarget.isTargetWin64() ? -40 :
+               (Subtarget.is64Bit() ? -8 : -4))),
     InstrInfo(*this), JITInfo(*this), TLInfo(*this), ELFWriterInfo(*this) {
   DefRelocModel = getRelocationModel();
       
