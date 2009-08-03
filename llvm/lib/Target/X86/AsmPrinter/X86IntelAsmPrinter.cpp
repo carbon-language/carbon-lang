@@ -143,7 +143,8 @@ bool X86IntelAsmPrinter::runOnMachineFunction(MachineFunction &MF) {
 
   decorateName(CurrentFnName, F);
 
-  SwitchToTextSection("_text", F);
+  SwitchToSection(getObjFileLowering().SectionForGlobal(F, Mang, TM));
+
   switch (F->getLinkage()) {
   default: llvm_unreachable("Unsupported linkage type!");
   case Function::PrivateLinkage:
@@ -494,14 +495,14 @@ void X86IntelAsmPrinter::PrintGlobalVariable(const GlobalVariable *GV) {
   case GlobalValue::LinkOnceODRLinkage:
   case GlobalValue::WeakAnyLinkage:
   case GlobalValue::WeakODRLinkage:
-    SwitchToDataSection("");
+    SwitchToSection(0);
     O << name << "?\tSEGEMNT PARA common 'COMMON'\n";
     bCustomSegment = true;
     // FIXME: the default alignment is 16 bytes, but 1, 2, 4, and 256
     // are also available.
     break;
   case GlobalValue::AppendingLinkage:
-    SwitchToDataSection("");
+    SwitchToSection(0);
     O << name << "?\tSEGMENT PARA public 'DATA'\n";
     bCustomSegment = true;
     // FIXME: the default alignment is 16 bytes, but 1, 2, 4, and 256
@@ -538,7 +539,7 @@ void X86IntelAsmPrinter::PrintGlobalVariable(const GlobalVariable *GV) {
 bool X86IntelAsmPrinter::doFinalization(Module &M) {
   // Output linker support code for dllexported globals
   if (!DLLExportedGVs.empty() || !DLLExportedFns.empty()) {
-    SwitchToDataSection("");
+    SwitchToSection(0);
     O << "; WARNING: The following code is valid only with MASM v8.x"
       << "and (possible) higher\n"
       << "; This version of MASM is usually shipped with Microsoft "
@@ -548,24 +549,23 @@ bool X86IntelAsmPrinter::doFinalization(Module &M) {
       << "; dllexported symbols in the earlier versions of MASM in fully "
       << "automatic way\n\n";
     O << "_drectve\t segment info alias('.drectve')\n";
-  }
 
-  for (StringSet<>::iterator i = DLLExportedGVs.begin(),
-         e = DLLExportedGVs.end();
-         i != e; ++i)
-    O << "\t db ' /EXPORT:" << i->getKeyData() << ",data'\n";
+    for (StringSet<>::iterator i = DLLExportedGVs.begin(),
+           e = DLLExportedGVs.end();
+           i != e; ++i)
+      O << "\t db ' /EXPORT:" << i->getKeyData() << ",data'\n";
 
-  for (StringSet<>::iterator i = DLLExportedFns.begin(),
-         e = DLLExportedFns.end();
-         i != e; ++i)
-    O << "\t db ' /EXPORT:" << i->getKeyData() << "'\n";
+    for (StringSet<>::iterator i = DLLExportedFns.begin(),
+           e = DLLExportedFns.end();
+           i != e; ++i)
+      O << "\t db ' /EXPORT:" << i->getKeyData() << "'\n";
 
-  if (!DLLExportedGVs.empty() || !DLLExportedFns.empty())
     O << "_drectve\t ends\n";
+  }
 
   // Bypass X86SharedAsmPrinter::doFinalization().
   bool Result = AsmPrinter::doFinalization(M);
-  SwitchToDataSection("");
+  SwitchToSection(0);
   O << "\tend\n";
   return Result;
 }
