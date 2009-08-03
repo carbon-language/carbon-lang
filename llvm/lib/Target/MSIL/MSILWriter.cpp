@@ -42,7 +42,7 @@ namespace llvm {
                                           CodeGenFileType FileType,
                                           CodeGenOpt::Level OptLevel);
 
-    virtual const TargetData *getTargetData() const { return &DataLayout; }
+    virtual const TargetData *getTargetData() const { return 0; }
   };
 }
 

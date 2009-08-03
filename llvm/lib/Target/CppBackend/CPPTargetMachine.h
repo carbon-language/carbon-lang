@@ -34,7 +34,7 @@ struct CPPTargetMachine : public TargetMachine {
                                         CodeGenFileType FileType,
                                         CodeGenOpt::Level OptLevel);
 
-  virtual const TargetData *getTargetData() const { return &DataLayout; }
+  virtual const TargetData *getTargetData() const { return 0; }
 };
 
 extern Target TheCppBackendTarget;
