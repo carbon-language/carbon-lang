@@ -2312,10 +2312,24 @@ static SDValue LowerEXTRACT_VECTOR_ELT(SDValue Op, SelectionDAG &DAG) {
   return DAG.getNode(ISD::TRUNCATE, dl, VT, Op);
 }
 
-static SDValue LowerCONCAT_VECTORS(SDValue Op) {
-  if (Op.getValueType().is128BitVector() && Op.getNumOperands() == 2)
-    return Op;
-  return SDValue();
+static SDValue LowerCONCAT_VECTORS(SDValue Op, SelectionDAG &DAG) {
+  // The only time a CONCAT_VECTORS operation can have legal types is when
+  // two 64-bit vectors are concatenated to a 128-bit vector.
+  assert(Op.getValueType().is128BitVector() && Op.getNumOperands() == 2 &&
+         "unexpected CONCAT_VECTORS");
+  DebugLoc dl = Op.getDebugLoc();
+  SDValue Val = DAG.getUNDEF(MVT::v2f64);
+  SDValue Op0 = Op.getOperand(0);
+  SDValue Op1 = Op.getOperand(1);
+  if (Op0.getOpcode() != ISD::UNDEF)
+    Val = DAG.getNode(ISD::INSERT_VECTOR_ELT, dl, MVT::v2f64, Val,
+                      DAG.getNode(ISD::BIT_CONVERT, dl, MVT::f64, Op0),
+                      DAG.getIntPtrConstant(0));
+  if (Op1.getOpcode() != ISD::UNDEF)
+    Val = DAG.getNode(ISD::INSERT_VECTOR_ELT, dl, MVT::v2f64, Val,
+                      DAG.getNode(ISD::BIT_CONVERT, dl, MVT::f64, Op1),
+                      DAG.getIntPtrConstant(1));
+  return DAG.getNode(ISD::BIT_CONVERT, dl, Op.getValueType(), Val);
 }
 
 SDValue ARMTargetLowering::LowerOperation(SDValue Op, SelectionDAG &DAG) {
@@ -2351,7 +2365,7 @@ SDValue ARMTargetLowering::LowerOperation(SDValue Op, SelectionDAG &DAG) {
   case ISD::VECTOR_SHUFFLE: return LowerVECTOR_SHUFFLE(Op, DAG);
   case ISD::SCALAR_TO_VECTOR: return LowerSCALAR_TO_VECTOR(Op, DAG);
   case ISD::EXTRACT_VECTOR_ELT: return LowerEXTRACT_VECTOR_ELT(Op, DAG);
-  case ISD::CONCAT_VECTORS: return LowerCONCAT_VECTORS(Op);
+  case ISD::CONCAT_VECTORS: return LowerCONCAT_VECTORS(Op, DAG);
   }
   return SDValue();
 }

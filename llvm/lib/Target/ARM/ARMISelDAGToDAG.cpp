@@ -1267,27 +1267,6 @@ SDNode *ARMDAGToDAGISel::Select(SDValue Op) {
                                  MVT::Other, Ops, 3);
   }
 
-  case ISD::CONCAT_VECTORS: {
-    MVT VT = Op.getValueType();
-    assert(VT.is128BitVector() && Op.getNumOperands() == 2 &&
-           "unexpected CONCAT_VECTORS");
-    SDValue N0 = Op.getOperand(0);
-    SDValue N1 = Op.getOperand(1);
-    SDNode *Result =
-      CurDAG->getTargetNode(TargetInstrInfo::IMPLICIT_DEF, dl, VT);
-    if (N0.getOpcode() != ISD::UNDEF)
-      Result = CurDAG->getTargetNode(TargetInstrInfo::INSERT_SUBREG, dl, VT,
-                                     SDValue(Result, 0), N0,
-                                     CurDAG->getTargetConstant(arm_dsubreg_0,
-                                                               MVT::i32));
-    if (N1.getOpcode() != ISD::UNDEF)
-      Result = CurDAG->getTargetNode(TargetInstrInfo::INSERT_SUBREG, dl, VT,
-                                     SDValue(Result, 0), N1,
-                                     CurDAG->getTargetConstant(arm_dsubreg_1,
-                                                               MVT::i32));
-    return Result;
-  }
-
   case ISD::VECTOR_SHUFFLE: {
     MVT VT = Op.getValueType();
 
