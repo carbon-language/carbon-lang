@@ -80,6 +80,7 @@ public:
 
   void setContext(Decl *D) {
     RootContext = ContextMgr.getContext(D);
+    DisplayedFunction = false;
   }
     
   Decl *getCodeDecl() const { 
