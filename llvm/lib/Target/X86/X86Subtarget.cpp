@@ -18,12 +18,13 @@
 #include "llvm/GlobalValue.h"
 #include "llvm/Support/CommandLine.h"
 #include "llvm/Support/Debug.h"
+#include "llvm/Support/raw_ostream.h"
 #include "llvm/Target/TargetMachine.h"
 #include "llvm/Target/TargetOptions.h"
 using namespace llvm;
 
 #if defined(_MSC_VER)
-    #include <intrin.h>
+#include <intrin.h>
 #endif
 
 static cl::opt<X86Subtarget::AsmWriterFlavorTy>
@@ -427,9 +428,9 @@ X86Subtarget::X86Subtarget(const std::string &TT, const std::string &FS,
   if (Is64Bit)
     HasX86_64 = true;
 
-  DOUT << "Subtarget features: SSELevel " << X86SSELevel
-       << ", 3DNowLevel " << X863DNowLevel
-       << ", 64bit " << HasX86_64 << "\n";
+  DEBUG(errs() << "Subtarget features: SSELevel " << X86SSELevel
+               << ", 3DNowLevel " << X863DNowLevel
+               << ", 64bit " << HasX86_64 << "\n");
   assert((!Is64Bit || HasX86_64) &&
          "64-bit code requested on a subtarget that doesn't support it!");
 

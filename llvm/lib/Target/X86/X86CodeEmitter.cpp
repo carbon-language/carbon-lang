@@ -466,7 +466,7 @@ template<class CodeEmitter>
 void Emitter<CodeEmitter>::emitInstruction(
                               const MachineInstr &MI,
                               const TargetInstrDesc *Desc) {
-  DOUT << MI;
+  DEBUG(errs() << MI);
 
   MCE.processDebugLoc(MI.getDebugLoc());
 
@@ -597,11 +597,11 @@ void Emitter<CodeEmitter>::emitInstruction(
     if (CurOp != NumOps) {
       const MachineOperand &MO = MI.getOperand(CurOp++);
 
-      DOUT << "RawFrm CurOp " << CurOp << "\n";
-      DOUT << "isMBB " << MO.isMBB() << "\n";
-      DOUT << "isGlobal " << MO.isGlobal() << "\n";
-      DOUT << "isSymbol " << MO.isSymbol() << "\n";
-      DOUT << "isImm " << MO.isImm() << "\n";
+      DEBUG(errs() << "RawFrm CurOp " << CurOp << "\n");
+      DEBUG(errs() << "isMBB " << MO.isMBB() << "\n");
+      DEBUG(errs() << "isGlobal " << MO.isGlobal() << "\n");
+      DEBUG(errs() << "isSymbol " << MO.isSymbol() << "\n");
+      DEBUG(errs() << "isImm " << MO.isImm() << "\n");
 
       if (MO.isMBB()) {
         emitPCRelativeBlockAddress(MO.getMBB());

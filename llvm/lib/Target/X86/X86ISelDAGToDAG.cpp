@@ -647,12 +647,12 @@ void X86DAGToDAGISel::InstructionSelect() {
 
   // Codegen the basic block.
 #ifndef NDEBUG
-  DOUT << "===== Instruction selection begins:\n";
+  DEBUG(errs() << "===== Instruction selection begins:\n");
   Indent = 0;
 #endif
   SelectRoot(*CurDAG);
 #ifndef NDEBUG
-  DOUT << "===== Instruction selection ends:\n";
+  DEBUG(errs() << "===== Instruction selection ends:\n");
 #endif
 
   CurDAG->RemoveDeadNodes();
@@ -805,7 +805,7 @@ bool X86DAGToDAGISel::MatchAddressRecursively(SDValue N, X86ISelAddressMode &AM,
                                               unsigned Depth) {
   bool is64Bit = Subtarget->is64Bit();
   DebugLoc dl = N.getDebugLoc();
-  DOUT << "MatchAddress: "; DEBUG(AM.dump());
+  DEBUG(errs() << "MatchAddress: "); DEBUG(AM.dump());
   // Limit recursion.
   if (Depth > 5)
     return MatchAddressBase(N, AM);
@@ -1581,17 +1581,17 @@ SDNode *X86DAGToDAGISel::Select(SDValue N) {
   DebugLoc dl = Node->getDebugLoc();
   
 #ifndef NDEBUG
-  DOUT << std::string(Indent, ' ') << "Selecting: ";
+  DEBUG(errs() << std::string(Indent, ' ') << "Selecting: ");
   DEBUG(Node->dump(CurDAG));
-  DOUT << "\n";
+  DEBUG(errs() << "\n");
   Indent += 2;
 #endif
 
   if (Node->isMachineOpcode()) {
 #ifndef NDEBUG
-    DOUT << std::string(Indent-2, ' ') << "== ";
+    DEBUG(errs() << std::string(Indent-2, ' ') << "== ");
     DEBUG(Node->dump(CurDAG));
-    DOUT << "\n";
+    DEBUG(errs() << "\n");
     Indent -= 2;
 #endif
     return NULL;   // Already selected.
@@ -1689,9 +1689,9 @@ SDNode *X86DAGToDAGISel::Select(SDValue N) {
       InFlag = Result.getValue(2);
       ReplaceUses(N.getValue(0), Result);
 #ifndef NDEBUG
-      DOUT << std::string(Indent-2, ' ') << "=> ";
+      DEBUG(errs() << std::string(Indent-2, ' ') << "=> ");
       DEBUG(Result.getNode()->dump(CurDAG));
-      DOUT << "\n";
+      DEBUG(errs() << "\n");
 #endif
     }
     // Copy the high half of the result, if it is needed.
@@ -1717,9 +1717,9 @@ SDNode *X86DAGToDAGISel::Select(SDValue N) {
       }
       ReplaceUses(N.getValue(1), Result);
 #ifndef NDEBUG
-      DOUT << std::string(Indent-2, ' ') << "=> ";
+      DEBUG(errs() << std::string(Indent-2, ' ') << "=> ");
       DEBUG(Result.getNode()->dump(CurDAG));
-      DOUT << "\n";
+      DEBUG(errs() << "\n");
 #endif
     }
 
@@ -1859,9 +1859,9 @@ SDNode *X86DAGToDAGISel::Select(SDValue N) {
       InFlag = Result.getValue(2);
       ReplaceUses(N.getValue(0), Result);
 #ifndef NDEBUG
-      DOUT << std::string(Indent-2, ' ') << "=> ";
+      DEBUG(errs() << std::string(Indent-2, ' ') << "=> ");
       DEBUG(Result.getNode()->dump(CurDAG));
-      DOUT << "\n";
+      DEBUG(errs() << "\n");
 #endif
     }
     // Copy the remainder (high) result, if it is needed.
@@ -1888,9 +1888,9 @@ SDNode *X86DAGToDAGISel::Select(SDValue N) {
       }
       ReplaceUses(N.getValue(1), Result);
 #ifndef NDEBUG
-      DOUT << std::string(Indent-2, ' ') << "=> ";
+      DEBUG(errs() << std::string(Indent-2, ' ') << "=> ");
       DEBUG(Result.getNode()->dump(CurDAG));
-      DOUT << "\n";
+      DEBUG(errs() << "\n");
 #endif
     }
 
@@ -1946,12 +1946,12 @@ SDNode *X86DAGToDAGISel::Select(SDValue N) {
   SDNode *ResNode = SelectCode(N);
 
 #ifndef NDEBUG
-  DOUT << std::string(Indent-2, ' ') << "=> ";
+  DEBUG(errs() << std::string(Indent-2, ' ') << "=> ");
   if (ResNode == NULL || ResNode == N.getNode())
     DEBUG(N.getNode()->dump(CurDAG));
   else
     DEBUG(ResNode->dump(CurDAG));
-  DOUT << "\n";
+  DEBUG(errs() << "\n");
   Indent -= 2;
 #endif
 

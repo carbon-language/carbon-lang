@@ -348,10 +348,10 @@ X86CompilationCallback2(intptr_t *StackPtr, intptr_t RetAddr) {
 #endif
 
 #if 0
-  DOUT << "In callback! Addr=" << (void*)RetAddr
-       << " ESP=" << (void*)StackPtr
-       << ": Resolving call to function: "
-       << TheVM->getFunctionReferencedName((void*)RetAddr) << "\n";
+  DEBUG(errs() << "In callback! Addr=" << (void*)RetAddr
+               << " ESP=" << (void*)StackPtr
+               << ": Resolving call to function: "
+               << TheVM->getFunctionReferencedName((void*)RetAddr) << "\n");
 #endif
 
   // Sanity check to make sure this really is a call instruction.
