@@ -443,7 +443,7 @@ TemplateExprInstantiator::VisitCXXOperatorCallExpr(CXXOperatorCallExpr *E) {
          F = Overloads->function_begin(),
          FEnd = Overloads->function_end();
        F != FEnd; ++F)
-    Functions.insert(cast<FunctionDecl>(*F));
+    Functions.insert(*F);
   
   // Add any functions found via argument-dependent lookup.
   DeclarationName OpName 
