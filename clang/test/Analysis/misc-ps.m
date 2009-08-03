@@ -508,3 +508,17 @@ FARPROC test_load_func(FARPROC origfun) {
     return origfun;
   return 0;
 }
+
+// Test passing-by-value an initialized struct variable.
+struct test_pass_val {
+  int x;
+  int y;
+};
+void test_pass_val_aux(struct test_pass_val s);
+void test_pass_val() {
+  struct test_pass_val s;
+  s.x = 1;
+//  s.y = 2;
+  test_pass_val_aux(s);
+}
+
