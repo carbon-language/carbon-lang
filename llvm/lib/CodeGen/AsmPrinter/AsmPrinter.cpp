@@ -132,9 +132,14 @@ void AsmPrinter::SwitchToDataSection(const char *NewSection,
 }
 
 /// SwitchToSection - Switch to the specified section of the executable if we
-/// are not already in it!
+/// are not already in it!  If "NS" is null, then this causes us to exit the
+/// current section and not reenter another one.  This is generally used for
+/// asmprinter hacks.
+///
+/// FIXME: Remove support for null sections.
+///
 void AsmPrinter::SwitchToSection(const MCSection *NS) {
-  const std::string &NewSection = NS->getName();
+  const std::string &NewSection = NS ? NS->getName() : "";
 
   // If we're already in this section, we're done.
   if (CurrentSection == NewSection) return;
@@ -165,7 +170,7 @@ void AsmPrinter::SwitchToSection(const MCSection *NS) {
     O << TAI->getDataSectionStartSuffix() << '\n';
   }
 
-  IsInTextSection = NS->getKind().isText();
+  IsInTextSection = NS ? NS->getKind().isText() : false;
 }
 
 void AsmPrinter::getAnalysisUsage(AnalysisUsage &AU) const {
