@@ -160,6 +160,13 @@ def GPR : RegisterClass<"ARM", [i32], 32, [R0, R1, R2, R3, R4, R5, R6,
       ARM::R4, ARM::R5, ARM::R6,
       ARM::R8, ARM::R10,ARM::R11,
       ARM::R7 };
+    // FP is R7, R9 is available as callee-saved register.
+    // This is used by non-Darwin platform in Thumb mode.
+    static const unsigned ARM_GPR_AO_5[] = {
+      ARM::R0, ARM::R1, ARM::R2, ARM::R3,
+      ARM::R12,ARM::LR,
+      ARM::R4, ARM::R5, ARM::R6,
+      ARM::R8, ARM::R9, ARM::R10,ARM::R11,ARM::R7 };
 
     GPRClass::iterator
     GPRClass::allocation_order_begin(const MachineFunction &MF) const {
@@ -173,6 +180,8 @@ def GPR : RegisterClass<"ARM", [i32], 32, [R0, R1, R2, R3, R4, R5, R6,
       } else {
         if (Subtarget.isR9Reserved())
           return ARM_GPR_AO_2;
+        else if (Subtarget.isThumb())
+          return ARM_GPR_AO_5;
         else
           return ARM_GPR_AO_1;
       }
@@ -193,6 +202,8 @@ def GPR : RegisterClass<"ARM", [i32], 32, [R0, R1, R2, R3, R4, R5, R6,
       } else {
         if (Subtarget.isR9Reserved())
           I = ARM_GPR_AO_2 + (sizeof(ARM_GPR_AO_2)/sizeof(unsigned));
+        else if (Subtarget.isThumb())
+          I = ARM_GPR_AO_5 + (sizeof(ARM_GPR_AO_5)/sizeof(unsigned));
         else
           I = ARM_GPR_AO_1 + (sizeof(ARM_GPR_AO_1)/sizeof(unsigned));
       }
