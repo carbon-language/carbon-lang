@@ -253,6 +253,7 @@ PIC16TargetLowering::PIC16TargetLowering(PIC16TargetMachine &TM)
   setOperationAction(ISD::STORE,  MVT::i8,  Legal);
   setOperationAction(ISD::STORE,  MVT::i16, Custom);
   setOperationAction(ISD::STORE,  MVT::i32, Custom);
+  setOperationAction(ISD::STORE,  MVT::i64, Custom);
 
   setOperationAction(ISD::ADDE,    MVT::i8,  Custom);
   setOperationAction(ISD::ADDC,    MVT::i8,  Custom);
@@ -593,8 +594,25 @@ SDValue PIC16TargetLowering::ExpandStore(SDNode *N, SelectionDAG &DAG) {
                                  getChain(Store3), getChain(Store4));
     return  DAG.getNode(ISD::TokenFactor, dl, MVT::Other, RetLo, RetHi);
 
-  }
-  else {
+  } else if (ValueType == MVT::i64) {
+    SDValue SrcLo, SrcHi;
+    GetExpandedParts(Src, DAG, SrcLo, SrcHi);
+    SDValue ChainLo = Chain, ChainHi = Chain;
+    if (Chain.getOpcode() == ISD::TokenFactor) {
+      ChainLo = Chain.getOperand(0);
+      ChainHi = Chain.getOperand(1);
+    }
+    SDValue Store1 = DAG.getStore(ChainLo, dl, SrcLo, Ptr, NULL,
+                                  0 + StoreOffset);
+
+    Ptr = DAG.getNode(ISD::ADD, dl, Ptr.getValueType(), Ptr,
+                      DAG.getConstant(4, Ptr.getValueType()));
+    SDValue Store2 = DAG.getStore(ChainHi, dl, SrcHi, Ptr, NULL,
+                                  1 + StoreOffset);
+
+    return DAG.getNode(ISD::TokenFactor, dl, MVT::Other, Store1,
+                       Store2);
+  } else {
     assert (0 && "value type not supported");
     return SDValue();
   }
