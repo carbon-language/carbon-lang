@@ -25,10 +25,10 @@ namespace llvm {
       // That will allow not treating these as "directives".
       if (TM.getSubtarget<ARMSubtarget>().isAAPCS_ABI()) {
         StaticCtorSection =
-          getOrCreateSection("\t.section .init_array,\"aw\",%init_array", false,
+          getOrCreateSection(".init_array,\"aw\",%init_array", false,
                              SectionKind::getDataRel());
         StaticDtorSection =
-          getOrCreateSection("\t.section .fini_array,\"aw\",%fini_array", false,
+          getOrCreateSection(".fini_array,\"aw\",%fini_array", false,
                              SectionKind::getDataRel());
       }
     }
