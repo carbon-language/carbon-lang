@@ -29,23 +29,40 @@ static std::string FlattenVariants(const std::string &AsmString,
   std::string Res = "";
   
   for (;;) {
-    // Add the prefix until the next '{', and split out the contents in the
-    // braces.
-    std::pair<StringRef, StringRef> Inner, Split = Cur.split('{');
+    // Find the start of the next variant string.
+    size_t VariantsStart = 0;
+    for (size_t e = Cur.size(); VariantsStart != e; ++VariantsStart)
+      if (Cur[VariantsStart] == '{' && 
+          (VariantsStart == 0 || Cur[VariantsStart-1] != '$'))
+        break;
 
-    Res += Split.first;
-    if (Split.second.empty())
+    // Add the prefix to the result.
+    Res += Cur.slice(0, VariantsStart);
+    if (VariantsStart == Cur.size())
       break;
 
-    Inner = Split.second.split('}');
+    ++VariantsStart; // Skip the '{'.
+
+    // Scan to the end of the variants string.
+    size_t VariantsEnd = VariantsStart;
+    unsigned NestedBraces = 1;
+    for (size_t e = Cur.size(); VariantsEnd != e; ++VariantsEnd) {
+      if (Cur[VariantsEnd] == '}') {
+        if (--NestedBraces == 0)
+          break;
+      } else if (Cur[VariantsEnd] == '{')
+        ++NestedBraces;
+    }
 
     // Select the Nth variant (or empty).
-    StringRef Selection = Inner.first;
+    StringRef Selection = Cur.slice(VariantsStart, VariantsEnd);
     for (unsigned i = 0; i != N; ++i)
       Selection = Selection.split('|').second;
     Res += Selection.split('|').first;
 
-    Cur = Inner.second;
+    assert(VariantsEnd != Cur.size() && 
+           "Unterminated variants in assembly string!");
+    Cur = Cur.substr(VariantsEnd + 1);
   } 
 
   return Res;
@@ -128,6 +145,12 @@ void AsmMatcherEmitter::run(raw_ostream &OS) {
       if (Form->getValue()->getAsString() == "Pseudo")
         continue;
 
+    // Ignore "PHI" node.
+    //
+    // FIXME: This is also a hack.
+    if (it->first == "PHI")
+      continue;
+
     // Ignore instructions with no .s string.
     //
     // FIXME: What are these?
@@ -137,12 +160,6 @@ void AsmMatcherEmitter::run(raw_ostream &OS) {
     // FIXME: Hack; ignore "lock".
     if (StringRef(CGI.AsmString).startswith("lock"))
       continue;
-
-    // FIXME: Hack.
-#if 0
-    if (1 && it->first != "SUB8mr")
-      continue;
-#endif
 
     std::string Flattened = FlattenVariants(CGI.AsmString, 0);
     SmallVector<StringRef, 8> Tokens;
@@ -167,9 +184,50 @@ void AsmMatcherEmitter::run(raw_ostream &OS) {
         }
       });
 
-    // FIXME: Ignore non-literal tokens.
-    if (std::find(Tokens[0].begin(), Tokens[0].end(), '$') != Tokens[0].end())
+    // FIXME: Ignore prefixes with non-literal tokens.
+    if (std::find(Tokens[0].begin(), Tokens[0].end(), '$') != Tokens[0].end()) {
+      DEBUG({
+          errs() << "warning: '" << it->first << "': "
+                 << "ignoring non-literal token '" << Tokens[0] << "', \n";
+        });
       continue;
+    }
+
+    // Ignore instructions with subreg specifiers, these are always fake
+    // instructions for simplifying codegen.
+    //
+    // FIXME: Is this true?
+    //
+    // Also, we ignore instructions which reference the operand multiple times;
+    // this implies a constraint we would not currently honor. These are
+    // currently always fake instructions for simplifying codegen.
+    //
+    // FIXME: Encode this assumption in the .td, so we can error out here.
+    std::set<std::string> OperandNames;
+    unsigned HasSubreg = 0, HasDuplicate = 0;
+    for (unsigned i = 1, e = Tokens.size(); i < e; ++i) {
+      if (Tokens[i][0] == '$' && 
+          std::find(Tokens[i].begin(), 
+                    Tokens[i].end(), ':') != Tokens[i].end())
+        HasSubreg = i;
+      if (Tokens[i][0] == '$' && !OperandNames.insert(Tokens[i]).second)
+        HasDuplicate = i;
+    }
+    if (HasSubreg) {
+      DEBUG({
+          errs() << "warning: '" << it->first << "': "
+                 << "ignoring instruction; operand with subreg attribute '" 
+                 << Tokens[HasSubreg] << "', \n";
+        });
+      continue;
+    } else if (HasDuplicate) {
+      DEBUG({
+          errs() << "warning: '" << it->first << "': "
+                 << "ignoring instruction; tied operand '" 
+                 << Tokens[HasSubreg] << "', \n";
+        });
+      continue;
+    }
 
     std::string FnName = "Match_" + Target.getName() + "_Inst_" + it->first;
     MatchFns.push_back(FnName);
