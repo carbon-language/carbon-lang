@@ -1616,6 +1616,8 @@ SDValue PIC16TargetLowering::LowerSUB(SDValue Op, SelectionDAG &DAG) {
 
   SDVTList Tys = DAG.getVTList(MVT::i8, MVT::Flag);
   switch (Op.getOpcode()) {
+    default:
+      assert (0 && "Opcode unknown."); 
     case ISD::SUBE:
       return DAG.getNode(Op.getOpcode(), dl, Tys, NewVal, Op.getOperand(1),
                          Op.getOperand(2));
@@ -1626,8 +1628,6 @@ SDValue PIC16TargetLowering::LowerSUB(SDValue Op, SelectionDAG &DAG) {
     case ISD::SUB:
       return DAG.getNode(Op.getOpcode(), dl, MVT::i8, NewVal, Op.getOperand(1));
       break;
-    default:
-      assert (0 && "Opcode unknown."); 
   }
 }
 
