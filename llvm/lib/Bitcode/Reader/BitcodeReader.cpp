@@ -34,6 +34,7 @@ void BitcodeReader::FreeState() {
   Buffer = 0;
   std::vector<PATypeHolder>().swap(TypeList);
   ValueList.clear();
+  MDValueList.clear();
   
   std::vector<AttrListPtr>().swap(MAttributes);
   std::vector<BasicBlock*>().swap(FunctionBBs);
@@ -312,6 +313,41 @@ void BitcodeReaderValueList::ResolveConstantForwardRefs() {
   }
 }
 
+void BitcodeReaderMDValueList::AssignValue(Value *V, unsigned Idx) {
+  if (Idx == size()) {
+    push_back(V);
+    return;
+  }
+  
+  if (Idx >= size())
+    resize(Idx+1);
+  
+  WeakVH &OldV = MDValuePtrs[Idx];
+  if (OldV == 0) {
+    OldV = V;
+    return;
+  }
+  
+  // If there was a forward reference to this value, replace it.
+  Value *PrevVal = OldV;
+  OldV->replaceAllUsesWith(V);
+  delete PrevVal;
+}
+
+Value *BitcodeReaderMDValueList::getValueFwdRef(unsigned Idx) {
+  if (Idx >= size())
+    resize(Idx + 1);
+  
+  if (Value *V = MDValuePtrs[Idx]) {
+    assert(V->getType() == Type::MetadataTy && "Type mismatch in value table!");
+    return V;
+  }
+  
+  // Create and return a placeholder, which will later be RAUW'd.
+  Value *V = new Argument(Type::MetadataTy);
+  MDValuePtrs[Idx] = V;
+  return V;
+}
 
 const Type *BitcodeReader::getTypeByID(unsigned ID, bool isTypeTable) {
   // If the TypeID is in range, return it.
@@ -700,7 +736,7 @@ bool BitcodeReader::ParseValueSymbolTable() {
 }
 
 bool BitcodeReader::ParseMetadata() {
-  unsigned NextValueNo = ValueList.size();
+  unsigned NextValueNo = MDValueList.size();
 
   if (Stream.EnterSubBlock(bitc::METADATA_BLOCK_ID))
     return Error("Malformed block record");
@@ -752,13 +788,13 @@ bool BitcodeReader::ParseMetadata() {
       unsigned Size = Record.size();
       SmallVector<MetadataBase*, 8> Elts;
       for (unsigned i = 0; i != Size; ++i) {
-        Value *MD = ValueList.getValueFwdRef(Record[i], Type::MetadataTy);
+        Value *MD = MDValueList.getValueFwdRef(Record[i]);
         if (MetadataBase *B = dyn_cast<MetadataBase>(MD))
         Elts.push_back(B);
       }
       Value *V = NamedMDNode::Create(Name.c_str(), Elts.data(), Elts.size(), 
                                      TheModule);
-      ValueList.AssignValue(V, NextValueNo++);
+      MDValueList.AssignValue(V, NextValueNo++);
       break;
     }
     case bitc::METADATA_NODE: {
@@ -769,13 +805,15 @@ bool BitcodeReader::ParseMetadata() {
       SmallVector<Value*, 8> Elts;
       for (unsigned i = 0; i != Size; i += 2) {
         const Type *Ty = getTypeByID(Record[i], false);
-        if (Ty != Type::VoidTy)
+        if (Ty == Type::MetadataTy)
+          Elts.push_back(MDValueList.getValueFwdRef(Record[i+1]));
+        else if (Ty != Type::VoidTy)
           Elts.push_back(ValueList.getValueFwdRef(Record[i+1], Ty));
         else
           Elts.push_back(NULL);
       }
       Value *V = MDNode::get(Context, &Elts[0], Elts.size());
-      ValueList.AssignValue(V, NextValueNo++);
+      MDValueList.AssignValue(V, NextValueNo++);
       break;
     }
     case bitc::METADATA_STRING: {
@@ -786,7 +824,7 @@ bool BitcodeReader::ParseMetadata() {
         String[i] = Record[i];
       Value *V = MDString::get(Context, 
                                StringRef(String.data(), String.size()));
-      ValueList.AssignValue(V, NextValueNo++);
+      MDValueList.AssignValue(V, NextValueNo++);
       break;
     }
     }

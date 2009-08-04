@@ -114,6 +114,18 @@ ValueEnumerator::ValueEnumerator(const Module *M) {
     TypeMap[Types[i].first] = i+1;
 }
 
+unsigned ValueEnumerator::getValueID(const Value *V) const {
+  if (isa<MetadataBase>(V)) {
+    ValueMapType::const_iterator I = MDValueMap.find(V);
+    assert(I != MDValueMap.end() && "Value not in slotcalculator!");
+    return I->second-1;
+  }
+  
+  ValueMapType::const_iterator I = ValueMap.find(V);
+  assert(I != ValueMap.end() && "Value not in slotcalculator!");
+  return I->second-1;
+}
+  
 // Optimize constant ordering.
 namespace {
   struct CstSortPredicate {
@@ -165,9 +177,51 @@ void ValueEnumerator::EnumerateValueSymbolTable(const ValueSymbolTable &VST) {
     EnumerateValue(VI->getValue());
 }
 
+void ValueEnumerator::EnumerateMetadata(const MetadataBase *MD) {
+  // Check to see if it's already in!
+  unsigned &MDValueID = MDValueMap[MD];
+  if (MDValueID) {
+    // Increment use count.
+    MDValues[MDValueID-1].second++;
+    return;
+  }
+
+  // Enumerate the type of this value.
+  EnumerateType(MD->getType());
+
+  if (const MDNode *N = dyn_cast<MDNode>(MD)) {
+    MDValues.push_back(std::make_pair(MD, 1U));
+    MDValueMap[MD] = MDValues.size();
+    MDValueID = MDValues.size();
+    for (MDNode::const_elem_iterator I = N->elem_begin(), E = N->elem_end();
+         I != E; ++I) {
+      if (*I)
+        EnumerateValue(*I);
+      else
+        EnumerateType(Type::VoidTy);
+    }
+    return;
+  } else if (const NamedMDNode *N = dyn_cast<NamedMDNode>(MD)) {
+    for(NamedMDNode::const_elem_iterator I = N->elem_begin(),
+          E = N->elem_end(); I != E; ++I) {
+      MetadataBase *M = *I;
+      EnumerateValue(M);
+    }
+    MDValues.push_back(std::make_pair(MD, 1U));
+    MDValueMap[MD] = Values.size();
+    return;
+  }
+
+  // Add the value.
+  MDValues.push_back(std::make_pair(MD, 1U));
+  MDValueID = MDValues.size();
+}
+
 void ValueEnumerator::EnumerateValue(const Value *V) {
   assert(V->getType() != Type::VoidTy && "Can't insert void values!");
-  
+  if (const MetadataBase *MB = dyn_cast<MetadataBase>(V))
+    return EnumerateMetadata(MB);
+
   // Check to see if it's already in!
   unsigned &ValueID = ValueMap[V];
   if (ValueID) {
@@ -205,31 +259,6 @@ void ValueEnumerator::EnumerateValue(const Value *V) {
       ValueMap[V] = Values.size();
       return;
     }
-  }
-
-  if (const MDNode *N = dyn_cast<MDNode>(V)) {
-    Values.push_back(std::make_pair(V, 1U));
-    ValueMap[V] = Values.size();
-    ValueID = Values.size();
-    for (MDNode::const_elem_iterator I = N->elem_begin(), E = N->elem_end();
-         I != E; ++I) {
-      if (*I)
-        EnumerateValue(*I);
-      else
-        EnumerateType(Type::VoidTy);
-    }
-    return;
-  }
-
-  if (const NamedMDNode *N = dyn_cast<NamedMDNode>(V)) {
-    for(NamedMDNode::const_elem_iterator I = N->elem_begin(),
-          E = N->elem_end(); I != E; ++I) {
-      MetadataBase *M = *I;
-      EnumerateValue(M);
-    }
-    Values.push_back(std::make_pair(V, 1U));
-    ValueMap[V] = Values.size();
-    return;
   }
 
   // Add the value.

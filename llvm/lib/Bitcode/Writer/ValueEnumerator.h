@@ -25,6 +25,7 @@ class Value;
 class BasicBlock;
 class Function;
 class Module;
+class MetadataBase;
 class AttrListPtr;
 class TypeSymbolTable;
 class ValueSymbolTable;
@@ -44,7 +45,9 @@ private:
   typedef DenseMap<const Value*, unsigned> ValueMapType;
   ValueMapType ValueMap;
   ValueList Values;
-  
+  ValueList MDValues;
+  ValueMapType MDValueMap;
+
   typedef DenseMap<void*, unsigned> AttributeMapType;
   AttributeMapType AttributeMap;
   std::vector<AttrListPtr> Attributes;
@@ -64,12 +67,8 @@ private:
 public:
   ValueEnumerator(const Module *M);
 
-  unsigned getValueID(const Value *V) const {
-    ValueMapType::const_iterator I = ValueMap.find(V);
-    assert(I != ValueMap.end() && "Value not in slotcalculator!");
-    return I->second-1;
-  }
-  
+  unsigned getValueID(const Value *V) const;
+
   unsigned getTypeID(const Type *T) const {
     TypeMapType::const_iterator I = TypeMap.find(T);
     assert(I != TypeMap.end() && "Type not in ValueEnumerator!");
@@ -91,6 +90,7 @@ public:
   }
   
   const ValueList &getValues() const { return Values; }
+  const ValueList &getMDValues() const { return MDValues; }
   const TypeList &getTypes() const { return Types; }
   const std::vector<const BasicBlock*> &getBasicBlocks() const {
     return BasicBlocks; 
@@ -108,6 +108,7 @@ public:
 private:
   void OptimizeConstants(unsigned CstStart, unsigned CstEnd);
     
+  void EnumerateMetadata(const MetadataBase *MD);
   void EnumerateValue(const Value *V);
   void EnumerateType(const Type *T);
   void EnumerateOperandType(const Value *V);

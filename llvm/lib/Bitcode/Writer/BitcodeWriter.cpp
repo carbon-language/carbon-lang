@@ -492,7 +492,7 @@ static void WriteMDNode(const MDNode *N,
 
 static void WriteModuleMetadata(const ValueEnumerator &VE,
                                 BitstreamWriter &Stream) {
-  const ValueEnumerator::ValueList &Vals = VE.getValues();
+  const ValueEnumerator::ValueList &Vals = VE.getMDValues();
   bool StartedMetadataBlock = false;
   unsigned MDSAbbrev = 0;
   SmallVector<uint64_t, 64> Record;
@@ -601,8 +601,6 @@ static void WriteConstants(unsigned FirstVal, unsigned LastVal,
   const Type *LastTy = 0;
   for (unsigned i = FirstVal; i != LastVal; ++i) {
     const Value *V = Vals[i].first;
-    if (isa<MetadataBase>(V))
-      continue;
     // If we need to switch types, do so now.
     if (V->getType() != LastTy) {
       LastTy = V->getType();
