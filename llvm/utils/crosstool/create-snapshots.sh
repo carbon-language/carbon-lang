@@ -11,31 +11,31 @@
 set -o nounset
 set -o errexit
 
-readonly REV="${1:-HEAD}"
+readonly LLVM_PROJECT_SVN="http://llvm.org/svn/llvm-project"
 
-runOnModule() {
+getLatestRevisionFromSVN() {
+  svn info ${LLVM_PROJECT_SVN} | egrep ^Revision | sed 's/^Revision: //'
+}
+
+readonly REV="${1:-$(getLatestRevisionFromSVN)}"
+
+createTarballFromSVN() {
   local module=$1
   local log="${module}.log"
-  echo "Running: svn co -r ${REV} ${module}; log in ${log}"
-  svn co -r ${REV} http://llvm.org/svn/llvm-project/${module}/trunk ${module} \
-      > ${log} 2>&1
-
-  # Delete all the ".svn" dirs; they take quite a lot of space.
-  echo "Cleaning up .svn dirs"
-  find ${module} -type d -name \.svn -print0 | xargs -0 /bin/rm -rf
+  echo "Running: svn export -r ${REV} ${module}; log in ${log}"
+  svn -q export -r ${REV} ${LLVM_PROJECT_SVN}/${module}/trunk \
+      ${module} > ${log} 2>&1
 
   # Create "module-revision.tar.bz2" packages from the SVN checkout dirs.
-  local revision=$(grep "Checked out revision" ${log} | \
-                   sed 's/[^0-9]\+\([0-9]\+\)[^0-9]\+/\1/')
-  local tarball="${module}-${revision}.tar.bz2"
+  local tarball="${module}-${REV}.tar.bz2"
   echo "Creating tarball: ${tarball}"
   tar cjf ${tarball} ${module}
 
-  echo "Cleaning SVN checkout dir ${module}"
+  echo "Cleaning up '${module}'"
   rm -rf ${module} ${log}
 }
 
 for module in "llvm" "llvm-gcc-4.2"; do
-  runOnModule ${module}
+  createTarballFromSVN ${module}
 done
 
