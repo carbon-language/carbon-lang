@@ -16,6 +16,7 @@
 #define LLVM_LLVMCONTEXT_IMPL_H
 
 #include "ConstantsContext.h"
+#include "TypesContext.h"
 #include "llvm/LLVMContext.h"
 #include "llvm/Constants.h"
 #include "llvm/DerivedTypes.h"
@@ -126,6 +127,8 @@ struct LLVMContextImpl {
   
   ConstantInt *TheTrueVal;
   ConstantInt *TheFalseVal;
+  
+  TypeMap<ArrayValType, ArrayType> ArrayTypes;
   
   LLVMContextImpl() : TheTrueVal(0), TheFalseVal(0) { }
 };
