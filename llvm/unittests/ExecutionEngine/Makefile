@@ -8,12 +8,11 @@
 ##===----------------------------------------------------------------------===##
 
 LEVEL = ../..
+TESTNAME = ExecutionEngine
+LINK_COMPONENTS := engine interpreter
 
 include $(LEVEL)/Makefile.config
 
 PARALLEL_DIRS = JIT
 
-include $(LEVEL)/Makefile.common
-
-clean::
-	$(Verb) $(RM) -f *Tests
+include $(LLVM_SRC_ROOT)/unittests/Makefile.unittest

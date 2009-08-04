@@ -179,7 +179,7 @@ void *ExecutionEngine::updateGlobalMapping(const GlobalValue *GV, void *Addr) {
     }
     
     if (!state.getGlobalAddressReverseMap(locked).empty())
-      state.getGlobalAddressReverseMap(locked).erase(Addr);
+      state.getGlobalAddressReverseMap(locked).erase(OldVal);
     return OldVal;
   }
   
