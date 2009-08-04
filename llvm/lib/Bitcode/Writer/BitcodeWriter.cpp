@@ -1083,7 +1083,7 @@ static void WriteValueSymbolTable(const ValueSymbolTable &VST,
     // VST_ENTRY:   [valueid, namechar x N]
     // VST_BBENTRY: [bbid, namechar x N]
     unsigned Code;
-    if (isa<BasicBlock>(SI->getValue())) {
+    if (isa<BasicBlock>(*SI->getValue())) {
       Code = bitc::VST_CODE_BBENTRY;
       if (isChar6)
         AbbrevToUse = VST_BBENTRY_6_ABBREV;

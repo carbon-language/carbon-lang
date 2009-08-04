@@ -38,7 +38,7 @@ class TypeSymbolTable;
 template<typename ValueTy> class StringMapEntry;
 template <typename ValueTy = Value>
 class AssertingVH;
-typedef StringMapEntry<Value*> ValueName;
+typedef StringMapEntry<AssertingVH<> > ValueName;
 class raw_ostream;
 class AssemblyAnnotationWriter;
 class ValueHandleBase;
