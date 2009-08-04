@@ -78,6 +78,9 @@ public:
   explicit TemplateName(QualifiedTemplateName *Qual) : Storage(Qual) { }
   explicit TemplateName(DependentTemplateName *Dep) : Storage(Dep) { }
 
+  /// \brief Determine whether this template name is NULL.
+  bool isNull() const { return Storage.isNull(); }
+  
   /// \brief Retrieve the the underlying template declaration that
   /// this template name refers to, if known.
   ///

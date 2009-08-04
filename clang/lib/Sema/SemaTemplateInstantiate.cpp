@@ -11,6 +11,7 @@
 //===----------------------------------------------------------------------===/
 
 #include "Sema.h"
+#include "TreeTransform.h"
 #include "clang/AST/ASTConsumer.h"
 #include "clang/AST/ASTContext.h"
 #include "clang/AST/Expr.h"
@@ -285,364 +286,94 @@ bool Sema::isSFINAEContext() const {
 // Template Instantiation for Types
 //===----------------------------------------------------------------------===/
 namespace {
-  class VISIBILITY_HIDDEN TemplateTypeInstantiator {
-    Sema &SemaRef;
+  class VISIBILITY_HIDDEN TemplateInstantiator 
+    : public TreeTransform<TemplateInstantiator> 
+  {
     const TemplateArgumentList &TemplateArgs;
     SourceLocation Loc;
     DeclarationName Entity;
 
   public:
-    TemplateTypeInstantiator(Sema &SemaRef, 
-                             const TemplateArgumentList &TemplateArgs,
-                             SourceLocation Loc,
-                             DeclarationName Entity) 
-      : SemaRef(SemaRef), TemplateArgs(TemplateArgs), 
-        Loc(Loc), Entity(Entity) { }
+    TemplateInstantiator(Sema &SemaRef, 
+                         const TemplateArgumentList &TemplateArgs,
+                         SourceLocation Loc,
+                         DeclarationName Entity) 
+    : TreeTransform<TemplateInstantiator>(SemaRef), TemplateArgs(TemplateArgs), 
+      Loc(Loc), Entity(Entity) { }
 
-    QualType operator()(QualType T) const { return Instantiate(T); }
-    
-    QualType Instantiate(QualType T) const;
-
-    // Declare instantiate functions for each type.
-#define TYPE(Class, Base)                                       \
-    QualType Instantiate##Class##Type(const Class##Type *T) const;
-#define ABSTRACT_TYPE(Class, Base)
-#include "clang/AST/TypeNodes.def"
-  };
-}
-
-QualType 
-TemplateTypeInstantiator::InstantiateExtQualType(const ExtQualType *T) const {
-  // FIXME: Implement this
-  assert(false && "Cannot instantiate ExtQualType yet");
-  return QualType();
-}
-
-QualType 
-TemplateTypeInstantiator::InstantiateBuiltinType(const BuiltinType *T) const {
-  assert(false && "Builtin types are not dependent and cannot be instantiated");
-  return QualType(T, 0);
-}
-
-QualType 
-TemplateTypeInstantiator::
-InstantiateFixedWidthIntType(const FixedWidthIntType *T) const {
-  // FIXME: Implement this
-  assert(false && "Cannot instantiate FixedWidthIntType yet");
-  return QualType();
-}
-
-QualType 
-TemplateTypeInstantiator::InstantiateComplexType(const ComplexType *T) const {
-  // FIXME: Implement this
-  assert(false && "Cannot instantiate ComplexType yet");
-  return QualType();
-}
-
-QualType 
-TemplateTypeInstantiator::InstantiatePointerType(const PointerType *T) const {
-  QualType PointeeType = Instantiate(T->getPointeeType());
-  if (PointeeType.isNull())
-    return QualType();
-
-  return SemaRef.BuildPointerType(PointeeType, 0, Loc, Entity);
-}
-
-QualType 
-TemplateTypeInstantiator::InstantiateBlockPointerType(
-                                            const BlockPointerType *T) const {
-  QualType PointeeType = Instantiate(T->getPointeeType());
-  if (PointeeType.isNull())
-    return QualType();
-  
-  return SemaRef.BuildBlockPointerType(PointeeType, 0, Loc, Entity);
-}
-
-QualType
-TemplateTypeInstantiator::InstantiateLValueReferenceType(
-                                        const LValueReferenceType *T) const {
-  QualType ReferentType = Instantiate(T->getPointeeType());
-  if (ReferentType.isNull())
-    return QualType();
-
-  return SemaRef.BuildReferenceType(ReferentType, true, 0, Loc, Entity);
-}
-
-QualType
-TemplateTypeInstantiator::InstantiateRValueReferenceType(
-                                        const RValueReferenceType *T) const {
-  QualType ReferentType = Instantiate(T->getPointeeType());
-  if (ReferentType.isNull())
-    return QualType();
-
-  return SemaRef.BuildReferenceType(ReferentType, false, 0, Loc, Entity);
-}
-
-QualType 
-TemplateTypeInstantiator::
-InstantiateMemberPointerType(const MemberPointerType *T) const {
-  QualType PointeeType = Instantiate(T->getPointeeType());
-  if (PointeeType.isNull())
-    return QualType();
-
-  QualType ClassType = Instantiate(QualType(T->getClass(), 0));
-  if (ClassType.isNull())
-    return QualType();
-
-  return SemaRef.BuildMemberPointerType(PointeeType, ClassType, 0, Loc, 
-                                        Entity);
-}
-
-QualType 
-TemplateTypeInstantiator::
-InstantiateConstantArrayType(const ConstantArrayType *T) const {
-  QualType ElementType = Instantiate(T->getElementType());
-  if (ElementType.isNull())
-    return ElementType;
-  
-  // Build a temporary integer literal to specify the size for
-  // BuildArrayType. Since we have already checked the size as part of
-  // creating the dependent array type in the first place, we know
-  // there aren't any errors. However, we do need to determine what
-  // C++ type to give the size expression.
-  llvm::APInt Size = T->getSize();
-  QualType Types[] = { 
-    SemaRef.Context.UnsignedCharTy, SemaRef.Context.UnsignedShortTy, 
-    SemaRef.Context.UnsignedIntTy, SemaRef.Context.UnsignedLongTy, 
-    SemaRef.Context.UnsignedLongLongTy, SemaRef.Context.UnsignedInt128Ty 
-  };
-  const unsigned NumTypes = sizeof(Types) / sizeof(QualType);
-  QualType SizeType;
-  for (unsigned I = 0; I != NumTypes; ++I)
-    if (Size.getBitWidth() == SemaRef.Context.getIntWidth(Types[I])) {
-      SizeType = Types[I];
-      break;
+    /// \brief Determine whether the given type \p T has already been 
+    /// transformed.
+    ///
+    /// For the purposes of template instantiation, a type has already been
+    /// transformed if it is NULL or if it is not dependent.
+    bool AlreadyTransformed(QualType T) {
+      return T.isNull() || !T->isDependentType();
     }
+        
+    /// \brief Returns the location of the entity being instantiated, if known.
+    SourceLocation getBaseLocation() { return Loc; }
+    
+    /// \brief Returns the name of the entity being instantiated, if any.
+    DeclarationName getBaseEntity() { return Entity; }
+    
+    /// \brief Transforms an expression by instantiating it with the given
+    /// template arguments.
+    Sema::OwningExprResult TransformExpr(Expr *E);
 
-  if (SizeType.isNull())
-    SizeType = SemaRef.Context.getFixedWidthIntType(Size.getBitWidth(), false);
-
-  IntegerLiteral ArraySize(Size, SizeType, Loc);
-  return SemaRef.BuildArrayType(ElementType, T->getSizeModifier(), 
-                                &ArraySize, T->getIndexTypeQualifier(), 
-                                SourceRange(), // FIXME: provide proper range?
-                                Entity);
+    /// \brief Transform the given declaration by instantiating a reference to
+    /// this declaration.
+    Decl *TransformDecl(Decl *D);
+    
+    /// \brief Transform the given nested-name-specifier by instantiating it.
+    NestedNameSpecifier *TransformNestedNameSpecifier(NestedNameSpecifier *NNS,
+                                                      SourceRange Range);
+    
+    /// \brief Transform the given template name by instantiating it.
+    TemplateName TransformTemplateName(TemplateName Template);
+    
+    /// \brief Transform the given template argument by instantiating it.
+    TemplateArgument TransformTemplateArgument(const TemplateArgument &Arg);
+    
+    /// \brief Transforms a template type parameter type by performing 
+    /// substitution of the corresponding template type argument.
+    QualType TransformTemplateTypeParmType(const TemplateTypeParmType *T);
+  };
 }
 
-QualType
-TemplateTypeInstantiator::InstantiateConstantArrayWithExprType
-(const ConstantArrayWithExprType *T) const {
-  return InstantiateConstantArrayType(T);
+Sema::OwningExprResult TemplateInstantiator::TransformExpr(Expr *E) {
+  return getSema().InstantiateExpr(E, TemplateArgs);
 }
 
-QualType
-TemplateTypeInstantiator::InstantiateConstantArrayWithoutExprType
-(const ConstantArrayWithoutExprType *T) const {
-  return InstantiateConstantArrayType(T);
+Decl *TemplateInstantiator::TransformDecl(Decl *D) {
+  return SemaRef.InstantiateCurrentDeclRef(cast_or_null<NamedDecl>(D));
 }
 
-QualType 
-TemplateTypeInstantiator::
-InstantiateIncompleteArrayType(const IncompleteArrayType *T) const {
-  QualType ElementType = Instantiate(T->getElementType());
-  if (ElementType.isNull())
-    return ElementType;
-  
-  return SemaRef.BuildArrayType(ElementType, T->getSizeModifier(), 
-                                0, T->getIndexTypeQualifier(),
-                                SourceRange(), // FIXME: provide proper range?
-                                Entity);
+NestedNameSpecifier *
+TemplateInstantiator::TransformNestedNameSpecifier(NestedNameSpecifier *NNS,
+                                                   SourceRange Range) {
+  return getSema().InstantiateNestedNameSpecifier(NNS, Range, TemplateArgs);
 }
 
-QualType
-TemplateTypeInstantiator::
-InstantiateVariableArrayType(const VariableArrayType *T) const {
-  // FIXME: Implement this
-  assert(false && "Cannot instantiate VariableArrayType yet");
-  return QualType();
+TemplateName 
+TemplateInstantiator::TransformTemplateName(TemplateName Template) {
+  return getSema().InstantiateTemplateName(Template, /*FIXME*/Loc, 
+                                           TemplateArgs);
 }
 
-QualType 
-TemplateTypeInstantiator::
-InstantiateDependentSizedArrayType(const DependentSizedArrayType *T) const {
-  Expr *ArraySize = T->getSizeExpr();
-  assert(ArraySize->isValueDependent() && 
-         "dependent sized array types must have value dependent size expr");
-  
-  // Instantiate the element type if needed
-  QualType ElementType = T->getElementType();
-  if (ElementType->isDependentType()) {
-    ElementType = Instantiate(ElementType);
-    if (ElementType.isNull())
-      return QualType();
-  }
-  
-  // Instantiate the size expression
-  EnterExpressionEvaluationContext Unevaluated(SemaRef, Action::Unevaluated);
-  Sema::OwningExprResult InstantiatedArraySize = 
-    SemaRef.InstantiateExpr(ArraySize, TemplateArgs);
-  if (InstantiatedArraySize.isInvalid())
-    return QualType();
-  
-  return SemaRef.BuildArrayType(ElementType, T->getSizeModifier(),
-                                InstantiatedArraySize.takeAs<Expr>(),
-                                T->getIndexTypeQualifier(),
-                                SourceRange(), // FIXME: provide proper range?
-                                Entity);
+TemplateArgument 
+TemplateInstantiator::TransformTemplateArgument(const TemplateArgument &Arg) {
+  return getSema().Instantiate(Arg, TemplateArgs);
 }
 
 QualType 
-TemplateTypeInstantiator::
-InstantiateDependentSizedExtVectorType(
-                                const DependentSizedExtVectorType *T) const {
-
-  // Instantiate the element type if needed.
-  QualType ElementType = T->getElementType();
-  if (ElementType->isDependentType()) {
-    ElementType = Instantiate(ElementType);
-    if (ElementType.isNull())
-      return QualType();
-  }
-
-  // The expression in a dependent-sized extended vector type is not
-  // potentially evaluated.
-  EnterExpressionEvaluationContext Unevaluated(SemaRef, Action::Unevaluated);
-
-  // Instantiate the size expression.
-  const Expr *SizeExpr = T->getSizeExpr();
-  Sema::OwningExprResult InstantiatedArraySize = 
-    SemaRef.InstantiateExpr(const_cast<Expr *>(SizeExpr), TemplateArgs);
-  if (InstantiatedArraySize.isInvalid())
-    return QualType();
-  
-  return SemaRef.BuildExtVectorType(ElementType,
-                                    SemaRef.Owned(
-                                      InstantiatedArraySize.takeAs<Expr>()),
-                                    T->getAttributeLoc());
-}
-
-QualType 
-TemplateTypeInstantiator::InstantiateVectorType(const VectorType *T) const {
-  // FIXME: Implement this
-  assert(false && "Cannot instantiate VectorType yet");
-  return QualType();
-}
-
-QualType 
-TemplateTypeInstantiator::InstantiateExtVectorType(
-                                              const ExtVectorType *T) const {
-  // FIXME: Implement this
-  assert(false && "Cannot instantiate ExtVectorType yet");
-  return QualType();
-}
-
-QualType 
-TemplateTypeInstantiator::
-InstantiateFunctionProtoType(const FunctionProtoType *T) const {
-  QualType ResultType = Instantiate(T->getResultType());
-  if (ResultType.isNull())
-    return ResultType;
-
-  llvm::SmallVector<QualType, 4> ParamTypes;
-  for (FunctionProtoType::arg_type_iterator Param = T->arg_type_begin(),
-                                         ParamEnd = T->arg_type_end(); 
-       Param != ParamEnd; ++Param) {
-    QualType P = Instantiate(*Param);
-    if (P.isNull())
-      return P;
-
-    ParamTypes.push_back(P);
-  }
-
-  return SemaRef.BuildFunctionType(ResultType, ParamTypes.data(), 
-                                   ParamTypes.size(),
-                                   T->isVariadic(), T->getTypeQuals(),
-                                   Loc, Entity);
-}
-
-QualType 
-TemplateTypeInstantiator::
-InstantiateFunctionNoProtoType(const FunctionNoProtoType *T) const {
-  assert(false && "Functions without prototypes cannot be dependent.");
-  return QualType();
-}
-
-QualType 
-TemplateTypeInstantiator::InstantiateTypedefType(const TypedefType *T) const {
-  TypedefDecl *Typedef 
-    = cast_or_null<TypedefDecl>(
-                           SemaRef.InstantiateCurrentDeclRef(T->getDecl()));
-  if (!Typedef)
-    return QualType();
-  
-  return SemaRef.Context.getTypeDeclType(Typedef);
-}
-
-QualType 
-TemplateTypeInstantiator::InstantiateTypeOfExprType(
-                                              const TypeOfExprType *T) const {
-  // The expression in a typeof is not potentially evaluated.
-  EnterExpressionEvaluationContext Unevaluated(SemaRef, Action::Unevaluated);
-  
-  Sema::OwningExprResult E 
-    = SemaRef.InstantiateExpr(T->getUnderlyingExpr(), TemplateArgs);
-  if (E.isInvalid())
-    return QualType();
-
-  return SemaRef.BuildTypeofExprType(E.takeAs<Expr>());
-}
-
-QualType 
-TemplateTypeInstantiator::InstantiateTypeOfType(const TypeOfType *T) const {
-  QualType Underlying = Instantiate(T->getUnderlyingType());
-  if (Underlying.isNull())
-    return QualType();
-
-  return SemaRef.Context.getTypeOfType(Underlying);
-}
-
-QualType
-TemplateTypeInstantiator::InstantiateDecltypeType(const DecltypeType *T) const {
-  // C++0x [dcl.type.simple]p4:
-  //   The operand of the decltype specifier is an unevaluated operand.
-  EnterExpressionEvaluationContext Unevaluated(SemaRef,
-                                               Action::Unevaluated);
-  
-  Sema::OwningExprResult E 
-    = SemaRef.InstantiateExpr(T->getUnderlyingExpr(), TemplateArgs);
-
-  if (E.isInvalid())
-    return QualType();
-  
-  return SemaRef.BuildDecltypeType(E.takeAs<Expr>());
-}
-
-QualType 
-TemplateTypeInstantiator::InstantiateRecordType(const RecordType *T) const {
-  RecordDecl *Record 
-    = cast_or_null<RecordDecl>(SemaRef.InstantiateCurrentDeclRef(T->getDecl()));
-  if (!Record)
-    return QualType();
-  
-  return SemaRef.Context.getTypeDeclType(Record);
-}
-
-QualType 
-TemplateTypeInstantiator::InstantiateEnumType(const EnumType *T) const {
-  EnumDecl *Enum 
-    = cast_or_null<EnumDecl>(SemaRef.InstantiateCurrentDeclRef(T->getDecl()));
-  if (!Enum)
-    return QualType();
-  
-  return SemaRef.Context.getTypeDeclType(Enum);
-}
-
-QualType 
-TemplateTypeInstantiator::
-InstantiateTemplateTypeParmType(const TemplateTypeParmType *T) const {
+TemplateInstantiator::TransformTemplateTypeParmType(
+                                              const TemplateTypeParmType *T) {
   if (T->getDepth() == 0) {
     // Replace the template type parameter with its corresponding
     // template argument.
+    
+    // FIXME: When dealing with member templates, we might end up with multiple
+    /// levels of template arguments that we're substituting into concurrently.
     
     // If the corresponding template argument is NULL or doesn't exist, it's 
     // because we are performing instantiation from explicitly-specified 
@@ -661,112 +392,10 @@ InstantiateTemplateTypeParmType(const TemplateTypeParmType *T) const {
   // the template parameter list of a member template inside the
   // template we are instantiating). Create a new template type
   // parameter with the template "level" reduced by one.
-  return SemaRef.Context.getTemplateTypeParmType(T->getDepth() - 1,
-                                                 T->getIndex(),
-                                                 T->isParameterPack(),
-                                                 T->getName());
-}
-
-QualType 
-TemplateTypeInstantiator::
-InstantiateTemplateSpecializationType(
-                                  const TemplateSpecializationType *T) const {
-  llvm::SmallVector<TemplateArgument, 4> InstantiatedTemplateArgs;
-  InstantiatedTemplateArgs.reserve(T->getNumArgs());
-  for (TemplateSpecializationType::iterator Arg = T->begin(), ArgEnd = T->end();
-       Arg != ArgEnd; ++Arg) {
-    TemplateArgument InstArg = SemaRef.Instantiate(*Arg, TemplateArgs);
-    if (InstArg.isNull())
-      return QualType();
-
-    InstantiatedTemplateArgs.push_back(InstArg);
-  }
-
-  // FIXME: We're missing the locations of the template name, '<', and '>'.
-
-  TemplateName Name = SemaRef.InstantiateTemplateName(T->getTemplateName(),
-                                                      Loc, 
-                                                      TemplateArgs);
-
-  return SemaRef.CheckTemplateIdType(Name, Loc, SourceLocation(),
-                                     InstantiatedTemplateArgs.data(),
-                                     InstantiatedTemplateArgs.size(),
-                                     SourceLocation());
-}
-
-QualType 
-TemplateTypeInstantiator::
-InstantiateQualifiedNameType(const QualifiedNameType *T) const {
-  // When we instantiated a qualified name type, there's no point in
-  // keeping the qualification around in the instantiated result. So,
-  // just instantiate the named type.
-  return (*this)(T->getNamedType());
-}
-
-QualType 
-TemplateTypeInstantiator::
-InstantiateTypenameType(const TypenameType *T) const {
-  if (const TemplateSpecializationType *TemplateId = T->getTemplateId()) {
-    // When the typename type refers to a template-id, the template-id
-    // is dependent and has enough information to instantiate the
-    // result of the typename type. Since we don't care about keeping
-    // the spelling of the typename type in template instantiations,
-    // we just instantiate the template-id.
-    return InstantiateTemplateSpecializationType(TemplateId);
-  }
-
-  NestedNameSpecifier *NNS 
-    = SemaRef.InstantiateNestedNameSpecifier(T->getQualifier(), 
-                                             SourceRange(Loc),
-                                             TemplateArgs);
-  if (!NNS)
-    return QualType();
-
-  return SemaRef.CheckTypenameType(NNS, *T->getIdentifier(), SourceRange(Loc));
-}
-
-QualType 
-TemplateTypeInstantiator::
-InstantiateObjCObjectPointerType(const ObjCObjectPointerType *T) const {
-  assert(false && "Objective-C types cannot be dependent");
-  return QualType();
-}
-
-QualType
-TemplateTypeInstantiator::
-InstantiateObjCInterfaceType(const ObjCInterfaceType *T) const {
-  assert(false && "Objective-C types cannot be dependent");
-  return QualType();
-}
-
-/// \brief The actual implementation of Sema::InstantiateType().
-QualType TemplateTypeInstantiator::Instantiate(QualType T) const {
-  // If T is not a dependent type, there is nothing to do.
-  if (!T->isDependentType())
-    return T;
-
-  QualType Result;
-  switch (T->getTypeClass()) {
-#define TYPE(Class, Base)                                               \
-  case Type::Class:                                                     \
-    Result = Instantiate##Class##Type(cast<Class##Type>(T.getTypePtr()));  \
-    break;
-#define ABSTRACT_TYPE(Class, Base)
-#include "clang/AST/TypeNodes.def"
-  }
-
-  // C++ [dcl.ref]p1:
-  //   [...] Cv-qualified references are ill-formed except when
-  //   the cv-qualifiers are introduced through the use of a
-  //   typedef (7.1.3) or of a template type argument (14.3), in
-  //   which case the cv-qualifiers are ignored.
-  // 
-  // The same rule applies to function types.
-  // FIXME: what about address-space and Objective-C GC qualifiers?
-  if (!Result.isNull() && T.getCVRQualifiers() &&
-      !Result->isFunctionType() && !Result->isReferenceType())
-    Result = Result.getWithAdditionalQualifiers(T.getCVRQualifiers());
-  return Result;
+  return getSema().Context.getTemplateTypeParmType(T->getDepth() - 1,
+                                                   T->getIndex(),
+                                                   T->isParameterPack(),
+                                                   T->getName());
 }
 
 /// \brief Instantiate the type T with a given set of template arguments.
@@ -806,8 +435,8 @@ QualType Sema::InstantiateType(QualType T,
   if (!T->isDependentType())
     return T;
 
-  TemplateTypeInstantiator Instantiator(*this, TemplateArgs, Loc, Entity);
-  return Instantiator(T);
+  TemplateInstantiator Instantiator(*this, TemplateArgs, Loc, Entity);
+  return Instantiator.TransformType(T);
 }
 
 /// \brief Instantiate the base class specifiers of the given class
