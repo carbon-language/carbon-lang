@@ -198,10 +198,6 @@ namespace llvm {
     /// directive for data sections.
     const char *DataSectionStartSuffix;   // Defaults to "".
     
-    /// SectionEndDirectiveSuffix - If non-null, the asm printer will close each
-    /// section with the section name and this suffix printed.
-    const char *SectionEndDirectiveSuffix;// Defaults to null.
-    
     /// JumpTableDirective - if non-null, the directive to emit before a jump
     /// table.
     const char *JumpTableDirective;
@@ -453,9 +449,6 @@ namespace llvm {
     }
     const char *getDataSectionStartSuffix() const {
       return DataSectionStartSuffix;
-    }
-    const char *getSectionEndDirectiveSuffix() const {
-      return SectionEndDirectiveSuffix;
     }
     const char *getGlobalDirective() const {
       return GlobalDirective;

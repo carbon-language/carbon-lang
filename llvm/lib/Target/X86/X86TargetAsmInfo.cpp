@@ -134,7 +134,6 @@ X86WinTargetAsmInfo::X86WinTargetAsmInfo(const X86TargetMachine &TM):
   SwitchToSectionDirective = "";
   TextSectionStartSuffix = "\tSEGMENT PARA 'CODE'";
   DataSectionStartSuffix = "\tSEGMENT PARA 'DATA'";
-  SectionEndDirectiveSuffix = "\tends\n";
 }
 
 // Instantiate default implementation.

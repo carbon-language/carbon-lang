@@ -90,10 +90,6 @@ void AsmPrinter::SwitchToSection(const MCSection *NS) {
   // If we're already in this section, we're done.
   if (CurrentSection == NS) return;
 
-  // Close the current section, if applicable.
-  if (NS != 0 && TAI->getSectionEndDirectiveSuffix())
-    O << NS->getName() << TAI->getSectionEndDirectiveSuffix() << '\n';
-
   CurrentSection = NS;
 
   if (NS != 0) {

@@ -57,7 +57,6 @@ TargetAsmInfo::TargetAsmInfo() {
   SwitchToSectionDirective = "\t.section\t";
   TextSectionStartSuffix = "";
   DataSectionStartSuffix = "";
-  SectionEndDirectiveSuffix = 0;
   JumpTableDirective = 0;
   GlobalDirective = "\t.globl\t";
   SetDirective = 0;
