@@ -596,8 +596,6 @@ static void WriteValues(unsigned FirstVal, unsigned LastVal,
       }  
 
     }
-    if (isa<MetadataBase>(V))
-      continue;
     // If we need to switch types, do so now.
     if (V->getType() != LastTy) {
       LastTy = V->getType();
