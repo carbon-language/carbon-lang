@@ -473,50 +473,48 @@ static uint64_t GetOptimizationFlags(const Value *V) {
   return Flags;
 }
 
-static void WriteMDNode(const MDNode *N,
+/// WriteValues - Write Constants and Metadata.
+/// This function could use some refactoring help.
+static void WriteValues(unsigned FirstVal, unsigned LastVal,
                         const ValueEnumerator &VE,
-                        BitstreamWriter &Stream,
-                        SmallVector<uint64_t, 64> &Record) {
-  for (unsigned i = 0, e = N->getNumElements(); i != e; ++i) {
-    if (N->getElement(i)) {
-      Record.push_back(VE.getTypeID(N->getElement(i)->getType()));
-      Record.push_back(VE.getValueID(N->getElement(i)));
-    } else {
-      Record.push_back(VE.getTypeID(Type::VoidTy));
-      Record.push_back(0);
-    }
-  }
-  Stream.EmitRecord(bitc::METADATA_NODE, Record, 0);
-  Record.clear();
-}
+                        BitstreamWriter &Stream, bool isGlobal) {
+  if (FirstVal == LastVal) return;
 
-static void WriteModuleMetadata(const ValueEnumerator &VE,
-                                BitstreamWriter &Stream) {
-  const ValueEnumerator::ValueList &Vals = VE.getValues();
-  bool StartedMetadataBlock = false;
+  // MODULE_BLOCK_ID is 0, which is not handled here. So it is OK to use
+  // 0 as the initializer to indicate that block is not set.
+  enum bitc::BlockIDs LastBlockID = bitc::MODULE_BLOCK_ID;
+
+  unsigned AggregateAbbrev = 0;
+  unsigned String8Abbrev = 0;
+  unsigned CString7Abbrev = 0;
+  unsigned CString6Abbrev = 0;
   unsigned MDSAbbrev = 0;
+
   SmallVector<uint64_t, 64> Record;
-  for (unsigned i = 0, e = Vals.size(); i != e; ++i) {
-    
-    if (const MDNode *N = dyn_cast<MDNode>(Vals[i].first)) {
-      if (!StartedMetadataBlock) {
-        Stream.EnterSubblock(bitc::METADATA_BLOCK_ID, 3);
-        StartedMetadataBlock = true;
-      }
-      WriteMDNode(N, VE, Stream, Record);
-    } else if (const MDString *MDS = dyn_cast<MDString>(Vals[i].first)) {
-      if (!StartedMetadataBlock)  {
-        Stream.EnterSubblock(bitc::METADATA_BLOCK_ID, 3);
+
+  const ValueEnumerator::ValueList &Vals = VE.getValues();
+  const Type *LastTy = 0;
+  for (unsigned i = FirstVal; i != LastVal; ++i) {
+    const Value *V = Vals[i].first;
+    if (isa<MetadataBase>(V)) {
+      if (LastBlockID != bitc::METADATA_BLOCK_ID) {
+        // Exit privious block.
+        if (LastBlockID != bitc::MODULE_BLOCK_ID)
+          Stream.ExitBlock();
         
+        LastBlockID = bitc::METADATA_BLOCK_ID;
+        Stream.EnterSubblock(bitc::METADATA_BLOCK_ID, 3);
+      }
+    }
+    if (const MDString *MDS = dyn_cast<MDString>(V)) {
+      if (MDSAbbrev == 0) {
         // Abbrev for METADATA_STRING.
         BitCodeAbbrev *Abbv = new BitCodeAbbrev();
         Abbv->Add(BitCodeAbbrevOp(bitc::METADATA_STRING));
         Abbv->Add(BitCodeAbbrevOp(BitCodeAbbrevOp::Array));
         Abbv->Add(BitCodeAbbrevOp(BitCodeAbbrevOp::Fixed, 8));
         MDSAbbrev = Stream.EmitAbbrev(Abbv);
-        StartedMetadataBlock = true;
       }
-      
       // Code: [strchar x N]
       const char *StrBegin = MDS->begin();
       for (unsigned i = 0, e = MDS->length(); i != e; ++i)
@@ -525,12 +523,21 @@ static void WriteModuleMetadata(const ValueEnumerator &VE,
       // Emit the finished record.
       Stream.EmitRecord(bitc::METADATA_STRING, Record, MDSAbbrev);
       Record.clear();
-    } else if (const NamedMDNode *NMD = dyn_cast<NamedMDNode>(Vals[i].first)) {
-      if (!StartedMetadataBlock)  {
-        Stream.EnterSubblock(bitc::METADATA_BLOCK_ID, 3);
-        StartedMetadataBlock = true;
+      continue;
+    } else if (const MDNode *N = dyn_cast<MDNode>(V)) {
+      for (unsigned i = 0, e = N->getNumElements(); i != e; ++i) {
+        if (N->getElement(i)) {
+          Record.push_back(VE.getTypeID(N->getElement(i)->getType()));
+          Record.push_back(VE.getValueID(N->getElement(i)));
+        } else {
+          Record.push_back(VE.getTypeID(Type::VoidTy));
+          Record.push_back(0);
+        }
       }
-
+      Stream.EmitRecord(bitc::METADATA_NODE, Record, 0);
+      Record.clear();
+      continue;
+    } else if (const NamedMDNode *NMD = dyn_cast<NamedMDNode>(V)) {
       // Write name.
       std::string Str = NMD->getNameStr();
       const char *StrBegin = Str.c_str();
@@ -538,7 +545,7 @@ static void WriteModuleMetadata(const ValueEnumerator &VE,
         Record.push_back(StrBegin[i]);
       Stream.EmitRecord(bitc::METADATA_NAME, Record, 0/*TODO*/);
       Record.clear();
-
+      
       // Write named metadata elements.
       for (unsigned i = 0, e = NMD->getNumElements(); i != e; ++i) {
         if (NMD->getElement(i)) 
@@ -548,59 +555,49 @@ static void WriteModuleMetadata(const ValueEnumerator &VE,
       }
       Stream.EmitRecord(bitc::METADATA_NAMED_NODE, Record, 0);
       Record.clear();
+      continue;
     }
-  }
-  
-  if (StartedMetadataBlock)
-    Stream.ExitBlock();    
-}
 
-static void WriteConstants(unsigned FirstVal, unsigned LastVal,
-                           const ValueEnumerator &VE,
-                           BitstreamWriter &Stream, bool isGlobal) {
-  if (FirstVal == LastVal) return;
-  
-  Stream.EnterSubblock(bitc::CONSTANTS_BLOCK_ID, 4);
+    // If we need to switch block, do so now.
+    if (LastBlockID != bitc::CONSTANTS_BLOCK_ID) {
+      // Exit privious block.
+      if (LastBlockID != bitc::MODULE_BLOCK_ID)
+        Stream.ExitBlock();        
 
-  unsigned AggregateAbbrev = 0;
-  unsigned String8Abbrev = 0;
-  unsigned CString7Abbrev = 0;
-  unsigned CString6Abbrev = 0;
-  // If this is a constant pool for the module, emit module-specific abbrevs.
-  if (isGlobal) {
-    // Abbrev for CST_CODE_AGGREGATE.
-    BitCodeAbbrev *Abbv = new BitCodeAbbrev();
-    Abbv->Add(BitCodeAbbrevOp(bitc::CST_CODE_AGGREGATE));
-    Abbv->Add(BitCodeAbbrevOp(BitCodeAbbrevOp::Array));
-    Abbv->Add(BitCodeAbbrevOp(BitCodeAbbrevOp::Fixed, Log2_32_Ceil(LastVal+1)));
-    AggregateAbbrev = Stream.EmitAbbrev(Abbv);
+      LastBlockID = bitc::CONSTANTS_BLOCK_ID;
+      Stream.EnterSubblock(bitc::CONSTANTS_BLOCK_ID, 4);
+      // If this is a constant pool for the module, emit module-specific abbrevs.
+      if (isGlobal) {
+        // Abbrev for CST_CODE_AGGREGATE.
+        BitCodeAbbrev *Abbv = new BitCodeAbbrev();
+        Abbv->Add(BitCodeAbbrevOp(bitc::CST_CODE_AGGREGATE));
+        Abbv->Add(BitCodeAbbrevOp(BitCodeAbbrevOp::Array));
+        Abbv->Add(BitCodeAbbrevOp(BitCodeAbbrevOp::Fixed, Log2_32_Ceil(LastVal+1)));
+        AggregateAbbrev = Stream.EmitAbbrev(Abbv);
+        
+        // Abbrev for CST_CODE_STRING.
+        Abbv = new BitCodeAbbrev();
+        Abbv->Add(BitCodeAbbrevOp(bitc::CST_CODE_STRING));
+        Abbv->Add(BitCodeAbbrevOp(BitCodeAbbrevOp::Array));
+        Abbv->Add(BitCodeAbbrevOp(BitCodeAbbrevOp::Fixed, 8));
+        String8Abbrev = Stream.EmitAbbrev(Abbv);
 
-    // Abbrev for CST_CODE_STRING.
-    Abbv = new BitCodeAbbrev();
-    Abbv->Add(BitCodeAbbrevOp(bitc::CST_CODE_STRING));
-    Abbv->Add(BitCodeAbbrevOp(BitCodeAbbrevOp::Array));
-    Abbv->Add(BitCodeAbbrevOp(BitCodeAbbrevOp::Fixed, 8));
-    String8Abbrev = Stream.EmitAbbrev(Abbv);
-    // Abbrev for CST_CODE_CSTRING.
-    Abbv = new BitCodeAbbrev();
-    Abbv->Add(BitCodeAbbrevOp(bitc::CST_CODE_CSTRING));
-    Abbv->Add(BitCodeAbbrevOp(BitCodeAbbrevOp::Array));
-    Abbv->Add(BitCodeAbbrevOp(BitCodeAbbrevOp::Fixed, 7));
-    CString7Abbrev = Stream.EmitAbbrev(Abbv);
-    // Abbrev for CST_CODE_CSTRING.
-    Abbv = new BitCodeAbbrev();
-    Abbv->Add(BitCodeAbbrevOp(bitc::CST_CODE_CSTRING));
-    Abbv->Add(BitCodeAbbrevOp(BitCodeAbbrevOp::Array));
-    Abbv->Add(BitCodeAbbrevOp(BitCodeAbbrevOp::Char6));
-    CString6Abbrev = Stream.EmitAbbrev(Abbv);
-  }  
-  
-  SmallVector<uint64_t, 64> Record;
+        // Abbrev for CST_CODE_CSTRING.
+        Abbv = new BitCodeAbbrev();
+        Abbv->Add(BitCodeAbbrevOp(bitc::CST_CODE_CSTRING));
+        Abbv->Add(BitCodeAbbrevOp(BitCodeAbbrevOp::Array));
+        Abbv->Add(BitCodeAbbrevOp(BitCodeAbbrevOp::Fixed, 7));
+        CString7Abbrev = Stream.EmitAbbrev(Abbv);
 
-  const ValueEnumerator::ValueList &Vals = VE.getValues();
-  const Type *LastTy = 0;
-  for (unsigned i = FirstVal; i != LastVal; ++i) {
-    const Value *V = Vals[i].first;
+        // Abbrev for CST_CODE_CSTRING.
+        Abbv = new BitCodeAbbrev();
+        Abbv->Add(BitCodeAbbrevOp(bitc::CST_CODE_CSTRING));
+        Abbv->Add(BitCodeAbbrevOp(BitCodeAbbrevOp::Array));
+        Abbv->Add(BitCodeAbbrevOp(BitCodeAbbrevOp::Char6));
+        CString6Abbrev = Stream.EmitAbbrev(Abbv);
+      }  
+
+    }
     if (isa<MetadataBase>(V))
       continue;
     // If we need to switch types, do so now.
@@ -802,7 +799,7 @@ static void WriteModuleConstants(const ValueEnumerator &VE,
   // We know globalvalues have been emitted by WriteModuleInfo.
   for (unsigned i = 0, e = Vals.size(); i != e; ++i) {
     if (!isa<GlobalValue>(Vals[i].first)) {
-      WriteConstants(i, Vals.size(), VE, Stream, true);
+      WriteValues(i, Vals.size(), VE, Stream, true);
       return;
     }
   }
@@ -1131,7 +1128,7 @@ static void WriteFunction(const Function &F, ValueEnumerator &VE,
   // If there are function-local constants, emit them now.
   unsigned CstStart, CstEnd;
   VE.getFunctionConstantRange(CstStart, CstEnd);
-  WriteConstants(CstStart, CstEnd, VE, Stream, false);
+  WriteValues(CstStart, CstEnd, VE, Stream, false);
   
   // Keep a running idea of what the instruction ID is. 
   unsigned InstID = CstEnd;
@@ -1384,9 +1381,6 @@ static void WriteModule(const Module *M, BitstreamWriter &Stream) {
   // Emit constants.
   WriteModuleConstants(VE, Stream);
 
-  // Emit metadata.
-  WriteModuleMetadata(VE, Stream);
-
   // Emit function bodies.
   for (Module::const_iterator I = M->begin(), E = M->end(); I != E; ++I)
     if (!I->isDeclaration())
@@ -1397,7 +1391,7 @@ static void WriteModule(const Module *M, BitstreamWriter &Stream) {
   
   // Emit names for globals/functions etc.
   WriteValueSymbolTable(M->getValueSymbolTable(), VE, Stream);
-  
+
   Stream.ExitBlock();
 }
 
