@@ -1320,17 +1320,16 @@ SDValue ARMTargetLowering::LowerGLOBAL_OFFSET_TABLE(SDValue Op,
 
 SDValue
 ARMTargetLowering::LowerINTRINSIC_WO_CHAIN(SDValue Op, SelectionDAG &DAG) {
-  MVT PtrVT = DAG.getTargetLoweringInfo().getPointerTy();
   unsigned IntNo = cast<ConstantSDNode>(Op.getOperand(0))->getZExtValue();
   DebugLoc dl = Op.getDebugLoc();
   switch (IntNo) {
   default: return SDValue();    // Don't custom lower most intrinsics.
-  case Intrinsic::arm_thread_pointer:
-      return DAG.getNode(ARMISD::THREAD_POINTER, dl, PtrVT);
+  case Intrinsic::arm_thread_pointer: {
+    MVT PtrVT = DAG.getTargetLoweringInfo().getPointerTy();
+    return DAG.getNode(ARMISD::THREAD_POINTER, dl, PtrVT);
+  }
   case Intrinsic::eh_sjlj_setjmp:
-      SDValue Res = DAG.getNode(ARMISD::EH_SJLJ_SETJMP, dl, MVT::i32,
-                         Op.getOperand(1));
-      return Res;
+    return DAG.getNode(ARMISD::EH_SJLJ_SETJMP, dl, MVT::i32, Op.getOperand(1));
   }
 }
 
