@@ -909,13 +909,16 @@ void CodeGenFunction::EmitAsmStmt(const AsmStmt &S) {
     if (Info.isReadWrite()) {
       InOutConstraints += ',';
 
+      const Expr *InputExpr = S.getOutputExpr(i);
+      llvm::Value *Arg = EmitAsmInput(S, Info, InputExpr, InOutConstraints);
+      
       if (Info.allowsRegister())
         InOutConstraints += llvm::utostr(i);
       else
         InOutConstraints += OutputConstraint;
 
-      InOutArgTypes.push_back(Dest.getAddress()->getType());
-      InOutArgs.push_back(Dest.getAddress());
+      InOutArgTypes.push_back(Arg->getType());
+      InOutArgs.push_back(Arg);
     }
   }
   
