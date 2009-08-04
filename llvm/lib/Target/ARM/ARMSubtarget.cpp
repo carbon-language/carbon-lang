@@ -25,6 +25,7 @@ ARMSubtarget::ARMSubtarget(const std::string &TT, const std::string &FS,
                            bool isThumb)
   : ARMArchVersion(V4T)
   , ARMFPUType(None)
+  , UseNEONForSinglePrecisionFP(false)
   , IsThumb(isThumb)
   , ThumbMode(Thumb1)
   , IsR9Reserved(ReserveR9)

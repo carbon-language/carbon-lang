@@ -98,9 +98,9 @@ def FADDD  : ADbI<0b11100011, (outs DPR:$dst), (ins DPR:$a, DPR:$b),
                  "faddd", " $dst, $a, $b",
                  [(set DPR:$dst, (fadd DPR:$a, DPR:$b))]>;
 
-def FADDS  : ASbI<0b11100011, (outs SPR:$dst), (ins SPR:$a, SPR:$b),
-                 "fadds", " $dst, $a, $b",
-                 [(set SPR:$dst, (fadd SPR:$a, SPR:$b))]>;
+def FADDS  : ASbIn<0b11100011, (outs SPR:$dst), (ins SPR:$a, SPR:$b),
+                  "fadds", " $dst, $a, $b",
+                  [(set SPR:$dst, (fadd SPR:$a, SPR:$b))]>;
 
 // These are encoded as unary instructions.
 let Defs = [FPSCR] in {
@@ -125,9 +125,9 @@ def FMULD  : ADbI<0b11100010, (outs DPR:$dst), (ins DPR:$a, DPR:$b),
                  "fmuld", " $dst, $a, $b",
                  [(set DPR:$dst, (fmul DPR:$a, DPR:$b))]>;
 
-def FMULS  : ASbI<0b11100010, (outs SPR:$dst), (ins SPR:$a, SPR:$b),
-                 "fmuls", " $dst, $a, $b",
-                 [(set SPR:$dst, (fmul SPR:$a, SPR:$b))]>;
+def FMULS  : ASbIn<0b11100010, (outs SPR:$dst), (ins SPR:$a, SPR:$b),
+                  "fmuls", " $dst, $a, $b",
+                  [(set SPR:$dst, (fmul SPR:$a, SPR:$b))]>;
                  
 def FNMULD  : ADbI<0b11100010, (outs DPR:$dst), (ins DPR:$a, DPR:$b),
                   "fnmuld", " $dst, $a, $b",
@@ -154,9 +154,9 @@ def FSUBD  : ADbI<0b11100011, (outs DPR:$dst), (ins DPR:$a, DPR:$b),
   let Inst{6} = 1;
 }
 
-def FSUBS  : ASbI<0b11100011, (outs SPR:$dst), (ins SPR:$a, SPR:$b),
-                 "fsubs", " $dst, $a, $b",
-                 [(set SPR:$dst, (fsub SPR:$a, SPR:$b))]> {
+def FSUBS  : ASbIn<0b11100011, (outs SPR:$dst), (ins SPR:$a, SPR:$b),
+                  "fsubs", " $dst, $a, $b",
+                  [(set SPR:$dst, (fsub SPR:$a, SPR:$b))]> {
   let Inst{6} = 1;
 }
 
@@ -317,10 +317,10 @@ def FMACD : ADbI<0b11100000, (outs DPR:$dst), (ins DPR:$dstin, DPR:$a, DPR:$b),
                 [(set DPR:$dst, (fadd (fmul DPR:$a, DPR:$b), DPR:$dstin))]>,
                 RegConstraint<"$dstin = $dst">;
 
-def FMACS : ASbI<0b11100000, (outs SPR:$dst), (ins SPR:$dstin, SPR:$a, SPR:$b),
-                "fmacs", " $dst, $a, $b",
-                [(set SPR:$dst, (fadd (fmul SPR:$a, SPR:$b), SPR:$dstin))]>,
-                RegConstraint<"$dstin = $dst">;
+def FMACS : ASbIn<0b11100000, (outs SPR:$dst), (ins SPR:$dstin, SPR:$a, SPR:$b),
+                 "fmacs", " $dst, $a, $b",
+                 [(set SPR:$dst, (fadd (fmul SPR:$a, SPR:$b), SPR:$dstin))]>,
+                 RegConstraint<"$dstin = $dst">;
 
 def FMSCD : ADbI<0b11100001, (outs DPR:$dst), (ins DPR:$dstin, DPR:$a, DPR:$b),
                 "fmscd", " $dst, $a, $b",
@@ -339,8 +339,8 @@ def FNMACD : ADbI<0b11100000, (outs DPR:$dst), (ins DPR:$dstin, DPR:$a, DPR:$b),
   let Inst{6} = 1;
 }
 
-def FNMACS : ASbI<0b11100000, (outs SPR:$dst), (ins SPR:$dstin, SPR:$a, SPR:$b),
-                "fnmacs", " $dst, $a, $b",
+def FNMACS : ASbIn<0b11100000, (outs SPR:$dst), (ins SPR:$dstin, SPR:$a, SPR:$b),
+                  "fnmacs", " $dst, $a, $b",
              [(set SPR:$dst, (fadd (fneg (fmul SPR:$a, SPR:$b)), SPR:$dstin))]>,
                 RegConstraint<"$dstin = $dst"> {
   let Inst{6} = 1;

@@ -42,6 +42,9 @@ protected:
   /// ARMFPUType - Floating Point Unit type.
   ARMFPEnum ARMFPUType;
 
+  /// UseNEONForSinglePrecisionFP - if NEON is available use for FP
+  bool UseNEONForSinglePrecisionFP;
+
   /// IsThumb - True if we are in thumb mode, false if in ARM mode.
   bool IsThumb;
 
@@ -98,7 +101,9 @@ protected:
   bool hasVFP2() const { return ARMFPUType >= VFPv2; }
   bool hasVFP3() const { return ARMFPUType >= VFPv3; }
   bool hasNEON() const { return ARMFPUType >= NEON;  }
-
+  bool useNEONForSinglePrecisionFP() const { 
+    return hasNEON() && UseNEONForSinglePrecisionFP; }
+  
   bool isTargetDarwin() const { return TargetType == isDarwin; }
   bool isTargetELF() const { return TargetType == isELF; }
 

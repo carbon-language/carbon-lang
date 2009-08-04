@@ -32,6 +32,9 @@ def ArchV6T2    : SubtargetFeature<"v6t2", "ARMArchVersion", "V6T2",
                                    "ARM v6t2">;
 def ArchV7A     : SubtargetFeature<"v7a", "ARMArchVersion", "V7A",
                                    "ARM v7A">;
+def FeatureNEONFP : SubtargetFeature<"neonfp", "UseNEONForSinglePrecisionFP",
+                                     "true",
+                                     "Use NEON for single-precision FP">;
 def FeatureVFP2 : SubtargetFeature<"vfp2", "ARMFPUType", "VFPv2",
                                    "Enable VFP2 instructions">;
 def FeatureVFP3 : SubtargetFeature<"vfp3", "ARMFPUType", "VFPv3",

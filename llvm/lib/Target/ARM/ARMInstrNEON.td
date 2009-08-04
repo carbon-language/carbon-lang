@@ -283,6 +283,13 @@ class N3VQ<bit op24, bit op23, bits<2> op21_20, bits<4> op11_8, bit op4,
   let isCommutable = Commutable;
 }
 
+// Basic 3-register operations, scalar single-precision
+class N3VDs<SDNode OpNode, NeonI Inst>
+  : NEONFPPat<(f32 (OpNode SPR:$a, SPR:$b)),
+         (EXTRACT_SUBREG (Inst (INSERT_SUBREG (v2f32 (IMPLICIT_DEF)), SPR:$a, arm_ssubreg_0),
+                               (INSERT_SUBREG (v2f32 (IMPLICIT_DEF)), SPR:$b, arm_ssubreg_0)),
+          arm_ssubreg_0)>;
+
 // Basic 3-register intrinsics, both double- and quad-register.
 class N3VDInt<bit op24, bit op23, bits<2> op21_20, bits<4> op11_8, bit op4,
               string OpcodeStr, ValueType ResTy, ValueType OpTy,
@@ -318,6 +325,15 @@ class N3VQMulOp<bit op24, bit op23, bits<2> op21_20, bits<4> op11_8, bit op4,
         !strconcat(OpcodeStr, "\t$dst, $src2, $src3"), "$src1 = $dst",
         [(set QPR:$dst, (Ty (OpNode QPR:$src1,
                              (Ty (MulOp QPR:$src2, QPR:$src3)))))]>;
+
+// Multiply-Add/Sub operations, scalar single-precision
+class N3VDMulOps<SDNode MulNode, SDNode OpNode, NeonI Inst>
+  : NEONFPPat<(f32 (OpNode SPR:$acc, 
+                       (f32 (MulNode SPR:$a, SPR:$b)))),
+         (EXTRACT_SUBREG (Inst (INSERT_SUBREG (v2f32 (IMPLICIT_DEF)), SPR:$acc, arm_ssubreg_0),
+                               (INSERT_SUBREG (v2f32 (IMPLICIT_DEF)), SPR:$a, arm_ssubreg_0),
+                               (INSERT_SUBREG (v2f32 (IMPLICIT_DEF)), SPR:$b, arm_ssubreg_0)),
+          arm_ssubreg_0)>;
 
 // Neon 3-argument intrinsics, both double- and quad-register.
 // The destination register is also used as the first source operand register.
@@ -886,6 +902,9 @@ defm VADDHN   : N3VNInt_HSD<0,1,0b0100,0, "vaddhn.i", int_arm_neon_vaddhn, 1>;
 //   VRADDHN  : Vector Rounding Add and Narrow Returning High Half (D = Q + Q)
 defm VRADDHN  : N3VNInt_HSD<1,1,0b0100,0, "vraddhn.i", int_arm_neon_vraddhn, 1>;
 
+// Vector Add Operations used for single-precision FP
+def : N3VDs<fadd, VADDfd>;
+
 // Vector Multiply Operations.
 
 //   VMUL     : Vector Multiply (integer, polynomial and floating-point)
@@ -908,6 +927,9 @@ def  VMULLp   : N3VLInt<0, 1, 0b00, 0b1110, 0, "vmull.p8", v8i16, v8i8,
 //   VQDMULL  : Vector Saturating Doubling Multiply Long (Q = D * D)
 defm VQDMULL  : N3VLInt_HS<0,1,0b1101,0, "vqdmull.s", int_arm_neon_vqdmull, 1>;
 
+// Vector Multiply Operations used for single-precision FP
+def : N3VDs<fmul, VMULfd>;
+
 // Vector Multiply-Accumulate and Multiply-Subtract Operations.
 
 //   VMLA     : Vector Multiply Accumulate (integer and floating-point)
@@ -928,6 +950,9 @@ defm VMLSLs   : N3VLInt3_QHS<0,1,0b1010,0, "vmlsl.s", int_arm_neon_vmlsls>;
 defm VMLSLu   : N3VLInt3_QHS<1,1,0b1010,0, "vmlsl.u", int_arm_neon_vmlslu>;
 //   VQDMLSL  : Vector Saturating Doubling Multiply Subtract Long (Q -= D * D)
 defm VQDMLSL  : N3VLInt3_HS<0, 1, 0b1011, 0, "vqdmlsl.s", int_arm_neon_vqdmlsl>;
+
+// Vector Multiply-Accumulate/Subtract used for single-precision FP
+def : N3VDMulOps<fmul, fadd, VMLAfd>;
 
 // Vector Subtract Operations.
 
@@ -951,6 +976,9 @@ defm VQSUBu   : N3VInt_QHSD<1, 0, 0b0010, 1, "vqsub.u", int_arm_neon_vqsubu, 0>;
 defm VSUBHN   : N3VNInt_HSD<0,1,0b0110,0, "vsubhn.i", int_arm_neon_vsubhn, 0>;
 //   VRSUBHN  : Vector Rounding Subtract and Narrow Returning High Half (D=Q-Q)
 defm VRSUBHN  : N3VNInt_HSD<1,1,0b0110,0, "vrsubhn.i", int_arm_neon_vrsubhn, 0>;
+
+// Vector Sub Operations used for single-precision FP
+def : N3VDs<fsub, VSUBfd>;
 
 // Vector Comparisons.
 

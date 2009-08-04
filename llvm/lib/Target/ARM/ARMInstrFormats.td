@@ -1080,6 +1080,14 @@ class ASbI<bits<8> opcod, dag oops, dag iops, string opc,
   let Inst{11-8}  = 0b1010;
 }
 
+// Single precision, binary if no NEON
+// Same as ASbI except not available if NEON is enabled
+class ASbIn<bits<8> opcod, dag oops, dag iops, string opc,
+            string asm, list<dag> pattern>
+  : ASbI<opcod, oops, iops, opc, asm, pattern> {
+  list<Predicate> Predicates = [HasVFP2,DontUseNEONForFP];
+}
+
 // VFP conversion instructions
 class AVConv1I<bits<8> opcod1, bits<4> opcod2, bits<4> opcod3,
                dag oops, dag iops, string opc, string asm, list<dag> pattern>
@@ -1220,3 +1228,9 @@ class NVSetLane<bits<8> opcod1, bits<4> opcod2, bits<2> opcod3,
 class NVDup<bits<8> opcod1, bits<4> opcod2, bits<2> opcod3,
             dag oops, dag iops, string opc, string asm, list<dag> pattern>
   : NVLaneOp<opcod1, opcod2, opcod3, oops, iops, NEONDupFrm, opc, asm, pattern>;
+
+// NEONFPPat - Same as Pat<>, but requires that the compiler be using NEON
+// for single-precision FP.
+class NEONFPPat<dag pattern, dag result> : Pat<pattern, result> {
+  list<Predicate> Predicates = [HasNEON,UseNEONForFP];
+}
