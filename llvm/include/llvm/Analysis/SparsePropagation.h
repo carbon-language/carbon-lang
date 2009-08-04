@@ -31,7 +31,7 @@ namespace llvm {
   class BasicBlock;
   class Function;
   class SparseSolver;
-  class LLVMContext;
+  struct LLVMContext;
 
   template<typename T> class SmallVectorImpl;
   

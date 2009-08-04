@@ -8,7 +8,7 @@
 //===----------------------------------------------------------------------===//
 //
 //  This file implements LLVMContext, as a wrapper around the opaque
-// class LLVMContextImpl.
+// struct LLVMContextImpl.
 //
 //===----------------------------------------------------------------------===//
 
@@ -29,5 +29,18 @@ LLVMContext& llvm::getGlobalContext() {
   return *GlobalContext;
 }
 
-LLVMContext::LLVMContext() : pImpl(new LLVMContextImpl(*this)) { }
+LLVMContext::LLVMContext() : pImpl(new LLVMContextImpl()) { }
 LLVMContext::~LLVMContext() { delete pImpl; }
+
+GetElementPtrConstantExpr::GetElementPtrConstantExpr
+  (Constant *C,
+   const std::vector<Constant*> &IdxList,
+   const Type *DestTy)
+    : ConstantExpr(DestTy, Instruction::GetElementPtr,
+                   OperandTraits<GetElementPtrConstantExpr>::op_end(this)
+                   - (IdxList.size()+1),
+                   IdxList.size()+1) {
+  OperandList[0] = C;
+  for (unsigned i = 0, E = IdxList.size(); i != E; ++i)
+    OperandList[i+1] = IdxList[i];
+}

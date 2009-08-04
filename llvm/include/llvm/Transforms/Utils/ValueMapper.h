@@ -20,7 +20,7 @@
 namespace llvm {
   class Value;
   class Instruction;
-  class LLVMContext;
+  struct LLVMContext;
   typedef DenseMap<const Value *, Value *> ValueMapTy;
 
   Value *MapValue(const Value *V, ValueMapTy &VM, LLVMContext &Context);

@@ -42,7 +42,7 @@ typedef StringMapEntry<AssertingVH<> > ValueName;
 class raw_ostream;
 class AssemblyAnnotationWriter;
 class ValueHandleBase;
-class LLVMContext;
+struct LLVMContext;
 
 //===----------------------------------------------------------------------===//
 //                                 Value Class

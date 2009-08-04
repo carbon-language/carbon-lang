@@ -20,7 +20,7 @@ namespace llvm {
   class APInt;
 
   template<typename T> class SmallVectorImpl;
-  class LLVMContext;
+  struct LLVMContext;
 
 /// This is an important base class in LLVM. It provides the common facilities
 /// of all constant values in an LLVM program. A constant is a value that is

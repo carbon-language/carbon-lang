@@ -34,7 +34,7 @@ class ConstantStruct;
 class ConstantVector;
 class FunctionType;
 class IntegerType;
-class LLVMContextImpl;
+struct LLVMContextImpl;
 class MDNode;
 class MDString;
 class OpaqueType;

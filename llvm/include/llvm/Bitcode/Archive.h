@@ -32,7 +32,7 @@ class ModuleProvider;      // From VMCore
 class Module;              // From VMCore
 class Archive;             // Declared below
 class ArchiveMemberHeader; // Internal implementation class
-class LLVMContext;         // Global data
+struct LLVMContext;         // Global data
 
 /// This class is the main class manipulated by users of the Archive class. It
 /// holds information about one member of the Archive. It is also the element

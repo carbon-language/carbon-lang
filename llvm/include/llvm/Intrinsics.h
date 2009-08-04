@@ -23,7 +23,7 @@ namespace llvm {
 class Type;
 class FunctionType;
 class Function;
-class LLVMContext;
+struct LLVMContext;
 class Module;
 class AttrListPtr;
 

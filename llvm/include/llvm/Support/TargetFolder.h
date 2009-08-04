@@ -25,7 +25,7 @@
 namespace llvm {
 
 class TargetData;
-class LLVMContext;
+struct LLVMContext;
 
 /// TargetFolder - Create constants with target dependent folding.
 class TargetFolder {

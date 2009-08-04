@@ -21,7 +21,7 @@
 namespace llvm {
 
 class Module;
-class LLVMContext;
+struct LLVMContext;
 
 /// This class provides the core functionality of linking in LLVM. It retains a
 /// Module object which is the composite of the modules and libraries linked

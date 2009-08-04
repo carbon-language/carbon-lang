@@ -26,7 +26,7 @@
 
 namespace llvm {
   class MemoryBuffer;
-  class LLVMContext;
+  struct LLVMContext;
   
 //===----------------------------------------------------------------------===//
 //                          BitcodeReaderValueList Class

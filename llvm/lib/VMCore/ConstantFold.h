@@ -23,7 +23,7 @@ namespace llvm {
   class Value;
   class Constant;
   class Type;
-  class LLVMContext;
+  struct LLVMContext;
 
   // Constant fold various types of instruction...
   Constant *ConstantFoldCastInstruction(

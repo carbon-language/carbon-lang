@@ -22,7 +22,7 @@
 
 namespace llvm {
 
-class LLVMContext;
+struct LLVMContext;
 
 //===----------------------------------------------------------------------===//
 //                            TerminatorInst Class

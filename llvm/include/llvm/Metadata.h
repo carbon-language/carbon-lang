@@ -27,7 +27,7 @@
 
 namespace llvm {
 class Constant;
-class LLVMContext;
+struct LLVMContext;
 
 //===----------------------------------------------------------------------===//
 // MetadataBase  - A base class for MDNode, MDString and NamedMDNode.
@@ -206,7 +206,7 @@ template<typename ValueSubClass, typename ItemParentClass>
 
 class NamedMDNode : public MetadataBase, public ilist_node<NamedMDNode> {
   friend class SymbolTableListTraits<NamedMDNode, Module>;
-  friend class LLVMContextImpl;
+  friend struct LLVMContextImpl;
 
   NamedMDNode(const NamedMDNode &);      // DO NOT IMPLEMENT
   void *operator new(size_t, unsigned);  // DO NOT IMPLEMENT

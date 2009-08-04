@@ -26,7 +26,7 @@ namespace llvm {
 
 class GlobalValueRefMap;   // Used by ConstantVals.cpp
 class FunctionType;
-class LLVMContext;
+struct LLVMContext;
 
 template<> struct ilist_traits<Function>
   : public SymbolTableListTraits<Function, Module> {
