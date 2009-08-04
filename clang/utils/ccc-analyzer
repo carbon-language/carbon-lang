@@ -410,7 +410,7 @@ foreach (my $i = 0; $i < scalar(@ARGV); ++$i) {
   my ($ArgKey) = split /=/,$Arg,2;
 
   # Modes ccc-analyzer supports
-  if ($Arg eq '-E') { $Action = 'preprocess'; }
+  if ($Arg =~ /^-(E|MM?)$/) { $Action = 'preprocess'; }
   elsif ($Arg eq '-c') { $Action = 'compile'; }
   elsif ($Arg =~ /^-print-prog-name/) { exit 0; }
 
