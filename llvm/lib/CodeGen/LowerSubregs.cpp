@@ -103,7 +103,7 @@ bool LowerSubregsInstructionPass::LowerExtract(MachineInstr *MI) {
   MachineFunction &MF = *MBB->getParent();
   const TargetRegisterInfo &TRI = *MF.getTarget().getRegisterInfo();
   const TargetInstrInfo &TII = *MF.getTarget().getInstrInfo();
-  
+
   assert(MI->getOperand(0).isReg() && MI->getOperand(0).isDef() &&
          MI->getOperand(1).isReg() && MI->getOperand(1).isUse() &&
          MI->getOperand(2).isImm() && "Malformed extract_subreg");
@@ -117,23 +117,20 @@ bool LowerSubregsInstructionPass::LowerExtract(MachineInstr *MI) {
          "Extract supperg source must be a physical register");
   assert(TargetRegisterInfo::isPhysicalRegister(DstReg) &&
          "Extract destination must be in a physical register");
-         
+
   DOUT << "subreg: CONVERTING: " << *MI;
 
   if (SrcReg == DstReg) {
-    // No need to insert an identify copy instruction.
+    // No need to insert an identity copy instruction.
+    if (MI->getOperand(1).isKill()) {
+      // We must make sure the super-register gets killed.Replace the
+      // instruction with IMPLICIT_DEF.
+      MI->setDesc(TII.get(TargetInstrInfo::IMPLICIT_DEF));
+      MI->RemoveOperand(2);     // SubIdx
+      DOUT << "subreg: replace by: " << *MI;
+      return true;
+    }
     DOUT << "subreg: eliminated!";
-    // Find the kill of the destination register's live range, and insert
-    // a kill of the source register at that point.
-    if (MI->getOperand(1).isKill() && !MI->getOperand(0).isDead())
-      for (MachineBasicBlock::iterator MII =
-             next(MachineBasicBlock::iterator(MI));
-           MII != MBB->end(); ++MII)
-        if (MII->killsRegister(DstReg, &TRI)) {
-          MII->addRegisterKilled(SuperReg, &TRI, /*AddIfNotFound=*/true);
-          DOUT << "\nsubreg: killed here: " << *MII;
-          break;
-        }
   } else {
     // Insert copy
     const TargetRegisterClass *TRCS = TRI.getPhysicalRegisterRegClass(DstReg);
