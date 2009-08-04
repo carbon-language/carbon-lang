@@ -117,22 +117,28 @@ bool CGRecordLayoutBuilder::LayoutField(const FieldDecl *D,
     return true;
   }
   
-  const llvm::Type *Ty = Types.ConvertTypeForMemRecursive(D->getType());
-
-  // Check if the field is aligned.
-  if (const AlignedAttr *PA = D->getAttr<AlignedAttr>()) {
-    unsigned FieldAlign = PA->getAlignment();
-   
-    if (!Packed && getTypeAlignment(Ty) > FieldAlign)
-      return false;
-  }
-   
   assert(FieldOffset % 8 == 0 && "FieldOffset is not on a byte boundary!");
-  
   uint64_t FieldOffsetInBytes = FieldOffset / 8;
   
-  // Append padding if necessary.
-  AppendPadding(FieldOffsetInBytes, Ty);
+  const llvm::Type *Ty = Types.ConvertTypeForMemRecursive(D->getType());
+  unsigned TypeAlignment = getTypeAlignment(Ty);
+
+  // Round up the field offset to the alignment of the field type.
+  uint64_t AlignedNextFieldOffsetInBytes = 
+    llvm::RoundUpToAlignment(NextFieldOffsetInBytes, TypeAlignment);
+
+  if (FieldOffsetInBytes < AlignedNextFieldOffsetInBytes) {
+    assert(!Packed && "Could not place field even with packed struct!");
+    return false;
+  }
+  
+  if (AlignedNextFieldOffsetInBytes < FieldOffsetInBytes) {
+    // Even with alignment, the field offset is not at the right place,
+    // insert padding.
+    uint64_t PaddingInBytes = FieldOffsetInBytes - NextFieldOffsetInBytes;
+    
+    AppendBytes(PaddingInBytes);
+  }
   
   // Now append the field.
   LLVMFields.push_back(LLVMFieldInfo(D, FieldTypes.size()));
