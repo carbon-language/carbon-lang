@@ -52,21 +52,9 @@ class VectorType;
 /// infrastructure, including the type and constant uniquing tables.
 /// LLVMContext itself provides no locking guarantees, so you should be careful
 /// to have one context per thread.
-class LLVMContext {
+struct LLVMContext {
   LLVMContextImpl* pImpl;
   
-  friend class ConstantInt;
-  friend class ConstantFP;
-  friend class ConstantStruct;
-  friend class ConstantArray;
-  friend class ConstantVector;
-  friend class ConstantAggregateZero;
-  friend class MDNode;
-  friend class MDString;
-  friend class ConstantPointerNull;
-  friend class UndefValue;
-  friend class ConstantExpr;
-public:
   LLVMContext();
   ~LLVMContext();
 };
