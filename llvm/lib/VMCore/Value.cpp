@@ -57,14 +57,6 @@ Value::Value(const Type *ty, unsigned scid)
 }
 
 Value::~Value() {
-  // If this value is named, destroy the name.  This should not be in a symtab
-  // at this point.
-  if (Name)
-    Name->Destroy();
-  
-  // There should be no uses of this object anymore, remove it.
-  LeakDetector::removeGarbageObject(this);
-  
   // Notify all ValueHandles (if present) that this value is going away.
   if (HasValueHandle)
     ValueHandleBase::ValueIsDeleted(this);
@@ -84,6 +76,14 @@ Value::~Value() {
   }
 #endif
   assert(use_empty() && "Uses remain when a value is destroyed!");
+
+  // If this value is named, destroy the name.  This should not be in a symtab
+  // at this point.
+  if (Name)
+    Name->Destroy();
+  
+  // There should be no uses of this object anymore, remove it.
+  LeakDetector::removeGarbageObject(this);
 }
 
 /// hasNUses - Return true if this Value has exactly N users.

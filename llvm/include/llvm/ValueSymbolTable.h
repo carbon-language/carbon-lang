@@ -17,7 +17,6 @@
 #include "llvm/Value.h"
 #include "llvm/ADT/StringMap.h"
 #include "llvm/Support/DataTypes.h"
-#include "llvm/Support/ValueHandle.h"
 
 namespace llvm {
   template<typename ValueSubClass, typename ItemParentClass>
@@ -45,7 +44,7 @@ class ValueSymbolTable {
 /// @{
 public:
   /// @brief A mapping of names to values.
-  typedef StringMap<AssertingVH<> > ValueMap;
+  typedef StringMap<Value*> ValueMap;
 
   /// @brief An iterator over a ValueMap.
   typedef ValueMap::iterator iterator;
