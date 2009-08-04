@@ -135,8 +135,10 @@ static SectionKind SectionKindForGlobal(const GlobalValue *GV,
       // If initializer is a null-terminated string, put it in a "cstring"
       // section if the target has it.
       if (isConstantString(C))
-        return SectionKind::getMergeableCString();
+        return SectionKind::getMergeable1ByteCString();
       
+      // FIXME: Detect 2/4 byte strings.
+        
       // Otherwise, just drop it into a mergable constant section.  If we have
       // a section for this size, use it, otherwise use the arbitrary sized
       // mergable section.
@@ -290,8 +292,10 @@ void TargetLoweringObjectFileELF::Initialize(MCContext &Ctx,
     getOrCreateSection("\t.rodata", false, SectionKind::getReadOnly());
   TLSDataSection =
     getOrCreateSection("\t.tdata", false, SectionKind::getThreadData());
+  
+  // FIXME: No reason to make this.
   CStringSection = getOrCreateSection("\t.rodata.str", true,
-                               SectionKind::getMergeableCString());
+                               SectionKind::getMergeable1ByteCString());
 
   TLSBSSSection = getOrCreateSection("\t.tbss", false, 
                                      SectionKind::getThreadBSS());
@@ -392,12 +396,16 @@ getSectionFlagsAsString(SectionKind Kind, SmallVectorImpl<char> &Str) const {
     Str.push_back('x');
   if (Kind.isWriteable())
     Str.push_back('w');
-  if (Kind.isMergeableCString() ||
+  if (Kind.isMergeable1ByteCString() ||
+      Kind.isMergeable2ByteCString() ||
+      Kind.isMergeable4ByteCString() ||
       Kind.isMergeableConst4() ||
       Kind.isMergeableConst8() ||
       Kind.isMergeableConst16())
     Str.push_back('M');
-  if (Kind.isMergeableCString())
+  if (Kind.isMergeable1ByteCString() ||
+      Kind.isMergeable2ByteCString() ||
+      Kind.isMergeable4ByteCString())
     Str.push_back('S');
   if (Kind.isThreadLocal())
     Str.push_back('T');
@@ -419,11 +427,15 @@ getSectionFlagsAsString(SectionKind Kind, SmallVectorImpl<char> &Str) const {
   
   Str.append(KindStr, KindStr+strlen(KindStr));
   
-  if (Kind.isMergeableCString()) {
-    // TODO: Eventually handle multiple byte character strings.  For now, all
-    // mergable C strings are single byte.
+  if (Kind.isMergeable1ByteCString()) {
     Str.push_back(',');
     Str.push_back('1');
+  } else if (Kind.isMergeable2ByteCString()) {
+    Str.push_back(',');
+    Str.push_back('2');
+  } else if (Kind.isMergeable4ByteCString()) {
+    Str.push_back(',');
+    Str.push_back('4');
   } else if (Kind.isMergeableConst4()) {
     Str.push_back(',');
     Str.push_back('4');
@@ -469,7 +481,9 @@ SelectSectionForGlobal(const GlobalValue *GV, SectionKind Kind,
   
   if (Kind.isText()) return TextSection;
   
-  if (Kind.isMergeableCString()) {
+  if (Kind.isMergeable1ByteCString() ||
+      Kind.isMergeable2ByteCString() ||
+      Kind.isMergeable4ByteCString()) {
    assert(CStringSection && "Should have string section prefix");
     
     // We also need alignment here.
@@ -478,9 +492,17 @@ SelectSectionForGlobal(const GlobalValue *GV, SectionKind Kind,
     unsigned Align = 
       TM.getTargetData()->getPreferredAlignment(cast<GlobalVariable>(GV));
     
-    std::string Name = CStringSection->getName() + "1." + utostr(Align);
-    return getOrCreateSection(Name.c_str(), false,
-                              SectionKind::getMergeableCString());
+    const char *SizeSpec = "1.";
+    if (Kind.isMergeable2ByteCString())
+      SizeSpec = "2.";
+    else if (Kind.isMergeable4ByteCString())
+      SizeSpec = "4.";
+    else
+      assert(Kind.isMergeable1ByteCString() && "unknown string width");
+    
+    
+    std::string Name = CStringSection->getName() + SizeSpec + utostr(Align);
+    return getOrCreateSection(Name.c_str(), false, Kind);
   }
   
   if (Kind.isMergeableConst()) {
@@ -549,7 +571,7 @@ void TargetLoweringObjectFileMachO::Initialize(MCContext &Ctx,
                                    SectionKind::getDataRel());
   
   CStringSection = getOrCreateSection("\t.cstring", true,
-                               SectionKind::getMergeableCString());
+                               SectionKind::getMergeable1ByteCString());
   FourByteConstantSection = getOrCreateSection("\t.literal4\n", true,
                                 SectionKind::getMergeableConst4());
   EightByteConstantSection = getOrCreateSection("\t.literal8\n", true,
@@ -660,7 +682,7 @@ SelectSectionForGlobal(const GlobalValue *GV, SectionKind Kind,
   }
   
   // FIXME: Alignment check should be handled by section classifier.
-  if (Kind.isMergeableCString()) {
+  if (Kind.isMergeable1ByteCString()) {
     Constant *C = cast<GlobalVariable>(GV)->getInitializer();
     const Type *Ty = cast<ArrayType>(C->getType())->getElementType();
     const TargetData &TD = *TM.getTargetData();

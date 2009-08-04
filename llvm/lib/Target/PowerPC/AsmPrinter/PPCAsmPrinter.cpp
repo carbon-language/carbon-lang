@@ -905,6 +905,7 @@ void PPCDarwinAsmPrinter::PrintGlobalVariable(const GlobalVariable *GVar) {
     getObjFileLowering().SectionForGlobal(GVar, Mang, TM);
   SwitchToSection(TheSection);
 
+  /// FIXME: Drive this off the section!
   if (C->isNullValue() && /* FIXME: Verify correct */
       !GVar->hasSection() &&
       (GVar->hasLocalLinkage() || GVar->hasExternalLinkage() ||

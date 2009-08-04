@@ -38,13 +38,20 @@ class SectionKind {
     /// SectionKind are not mergeable.
     ReadOnly,
 
-        /// MergeableCString - This is a special section for nul-terminated
-        /// strings.  The linker can unique the C strings, knowing their
-        /// semantics.  Because it uniques based on the nul terminators, the
-        /// compiler can't put strings in this section that have embeded nuls
-        /// in them.
-        MergeableCString,
+        /// MergableCString - Any null-terminated string which allows merging.
+        /// These values are known to end in a nul value of the specified size,
+        /// not otherwise contain a nul value, and be mergable.  This allows the
+        /// linker to unique the strings if it so desires.
+
+           /// Mergeable1ByteCString - 1 byte mergable, null terminated, string.
+           Mergeable1ByteCString,
     
+           /// Mergeable2ByteCString - 2 byte mergable, null terminated, string.
+           Mergeable2ByteCString,
+
+           /// Mergeable4ByteCString - 4 byte mergable, null terminated, string.
+           Mergeable4ByteCString,
+
         /// MergeableConst - These are sections for merging fixed-length
         /// constants together.  For example, this can be used to unique
         /// constant pool entries etc.
@@ -119,15 +126,22 @@ public:
   bool isText() const { return K == Text; }
   
   bool isReadOnly() const {
-    return K == ReadOnly || K == MergeableCString || isMergeableConst();
+    return K == ReadOnly || isMergeableCString() ||
+           isMergeableConst();
   }
 
-  bool isMergeableCString() const { return K == MergeableCString; }
+  bool isMergeableCString() const {
+    return K == Mergeable1ByteCString || K == Mergeable2ByteCString ||
+           K == Mergeable4ByteCString;
+  }
+  bool isMergeable1ByteCString() const { return K == Mergeable1ByteCString; }
+  bool isMergeable2ByteCString() const { return K == Mergeable2ByteCString; }
+  bool isMergeable4ByteCString() const { return K == Mergeable4ByteCString; }
+  
   bool isMergeableConst() const {
     return K == MergeableConst || K == MergeableConst4 ||
            K == MergeableConst8 || K == MergeableConst16;
   }
-  
   bool isMergeableConst4() const { return K == MergeableConst4; }
   bool isMergeableConst8() const { return K == MergeableConst8; }
   bool isMergeableConst16() const { return K == MergeableConst16; }
@@ -177,7 +191,15 @@ public:
   static SectionKind getMetadata() { return get(Metadata); }
   static SectionKind getText() { return get(Text); }
   static SectionKind getReadOnly() { return get(ReadOnly); }
-  static SectionKind getMergeableCString() { return get(MergeableCString); }
+  static SectionKind getMergeable1ByteCString() {
+    return get(Mergeable1ByteCString);
+  }
+  static SectionKind getMergeable2ByteCString() {
+    return get(Mergeable2ByteCString);
+  }
+  static SectionKind getMergeable4ByteCString() {
+    return get(Mergeable4ByteCString);
+  }
   static SectionKind getMergeableConst() { return get(MergeableConst); }
   static SectionKind getMergeableConst4() { return get(MergeableConst4); }
   static SectionKind getMergeableConst8() { return get(MergeableConst8); }

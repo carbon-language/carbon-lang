@@ -788,6 +788,7 @@ void X86ATTAsmPrinter::PrintGlobalVariable(const GlobalVariable* GVar) {
     getObjFileLowering().SectionForGlobal(GVar, Mang, TM);
   SwitchToSection(TheSection);
 
+  // FIXME: get this stuff from section kind flags.
   if (C->isNullValue() && !GVar->hasSection() &&
       // Don't put things that should go in the cstring section into "comm".
       !TheSection->getKind().isMergeableCString()) {
