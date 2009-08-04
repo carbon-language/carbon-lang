@@ -122,11 +122,6 @@ namespace llvm {
         return 0;
       return TargetMachineCtorFn(*this, Triple, Features);
     }
-    TargetMachine *createTargetMachine(const Module &M,
-                                       const std::string &Triple,
-                                       const std::string &Features) const {
-      return createTargetMachine(Triple, Features);
-    }
 
     /// createAsmPrinter - Create a target specific assembly printer pass.
     FunctionPass *createAsmPrinter(formatted_raw_ostream &OS,
