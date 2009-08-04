@@ -1018,6 +1018,7 @@ class ARMTargetInfo : public TargetInfo {
     Armv4t,
     Armv5,
     Armv6,
+    Armv7a,
     XScale
   } ArmArch;
 public:
@@ -1025,7 +1026,9 @@ public:
     // FIXME: Are the defaults correct for ARM?
     DescriptionString = "e-p:32:32:32-i1:8:8-i8:8:8-i16:16:16-i32:32:32-"
                         "i64:64:64-f32:32:32-f64:64:64-v64:64:64-v128:64:64";
-    if (triple.find("arm-") == 0 || triple.find("armv6-") == 0)
+    if (triple.find("armv7-") == 0)
+      ArmArch = Armv7a;
+    else if (triple.find("arm-") == 0 || triple.find("armv6-") == 0)
       ArmArch = Armv6;
     else if (triple.find("armv5-") == 0)
       ArmArch = Armv5;
@@ -1050,7 +1053,10 @@ public:
     Define(Defs, "__LITTLE_ENDIAN__");
 
     // Subtarget options.
-    if (ArmArch == Armv6) {
+    if (ArmArch == Armv7a) {
+      Define(Defs, "__ARM_ARCH_7A__");
+      Define(Defs, "__THUMB_INTERWORK__");
+    } else if (ArmArch == Armv6) {
       Define(Defs, "__ARM_ARCH_6K__");
       Define(Defs, "__THUMB_INTERWORK__");
     } else if (ArmArch == Armv5) {
