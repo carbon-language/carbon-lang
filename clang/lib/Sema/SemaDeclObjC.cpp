@@ -1464,35 +1464,41 @@ void Sema::ProcessPropertyDecl(ObjCPropertyDecl *property,
     AddInstanceMethodToGlobalPool(SetterMethod);     
 }
 
+/// CompareMethodParamsInBaseAndSuper - This routine compares methods with
+/// identical selector names in current and its super classes and issues
+/// a warning if any of their argument types are incompatible.
 void Sema::CompareMethodParamsInBaseAndSuper(Decl *ClassDecl,
                                              ObjCMethodDecl *Method,
                                              bool IsInstance)  {
-  if (ObjCInterfaceDecl *ID = dyn_cast<ObjCInterfaceDecl>(ClassDecl))
-    while (ObjCInterfaceDecl *SD = ID->getSuperClass()) {
-      if (ObjCMethodDecl *SuperMethodDecl = 
-          SD->lookupMethod(Method->getSelector(), IsInstance)) {
-        ObjCMethodDecl::param_iterator ParamI = Method->param_begin(),
-        E = Method->param_end();
-        ObjCMethodDecl::param_iterator PrevI = 
-        SuperMethodDecl->param_begin();
-        for (; ParamI != E; ++ParamI, ++PrevI) {
-          assert(PrevI != SuperMethodDecl->param_end() && "Param mismatch");
-          QualType T1 = Context.getCanonicalType((*ParamI)->getType());
-          QualType T2 = Context.getCanonicalType((*PrevI)->getType());
-          if (T1 != T2) {
-            AssignConvertType ConvTy = CheckAssignmentConstraints(T1, T2);
-            if (ConvTy == Incompatible || ConvTy == IncompatiblePointer) {
-              Diag((*ParamI)->getLocation(), diag::ext_typecheck_base_super) 
-                << T1 << T2;
-              Diag(SuperMethodDecl->getLocation(), 
-                   diag::note_previous_declaration);
-              return;
-            }
-          }
-        }
-      }
+  ObjCInterfaceDecl *ID = dyn_cast<ObjCInterfaceDecl>(ClassDecl);
+  if (ID == 0) return;
+  
+  while (ObjCInterfaceDecl *SD = ID->getSuperClass()) {
+    ObjCMethodDecl *SuperMethodDecl = 
+        SD->lookupMethod(Method->getSelector(), IsInstance);
+    if (SuperMethodDecl == 0) {
       ID = SD;
+      continue;
     }
+    ObjCMethodDecl::param_iterator ParamI = Method->param_begin(),
+      E = Method->param_end();
+    ObjCMethodDecl::param_iterator PrevI = SuperMethodDecl->param_begin();
+    for (; ParamI != E; ++ParamI, ++PrevI) {
+      // Number of parameters are the same and is guaranteed by selector match.
+      assert(PrevI != SuperMethodDecl->param_end() && "Param mismatch");
+      QualType T1 = Context.getCanonicalType((*ParamI)->getType());
+      QualType T2 = Context.getCanonicalType((*PrevI)->getType());
+      // If type of arguement of method in this class does not match its
+      // respective argument type in the super class method, issue warning;
+      if (!Context.typesAreCompatible(T1, T2)) {
+        Diag((*ParamI)->getLocation(), diag::ext_typecheck_base_super) 
+          << T1 << T2;
+        Diag(SuperMethodDecl->getLocation(), diag::note_previous_declaration);
+        return;
+      }
+    }
+    ID = SD;
+  }
 }
 
 // Note: For class/category implemenations, allMethods/allProperties is
@@ -1540,6 +1546,8 @@ void Sema::ActOnAtEnd(SourceLocation AtEndLoc, DeclPtrTy classDecl,
         InsMap[Method->getSelector()] = Method;
         /// The following allows us to typecheck messages to "id".
         AddInstanceMethodToGlobalPool(Method);
+        // verify that the instance method conforms to the same definition of 
+        // parent methods if it shadows one.
         CompareMethodParamsInBaseAndSuper(ClassDecl, Method, true);
       }
     }
@@ -1558,6 +1566,8 @@ void Sema::ActOnAtEnd(SourceLocation AtEndLoc, DeclPtrTy classDecl,
         ClsMap[Method->getSelector()] = Method;
         /// The following allows us to typecheck messages to "Class".
         AddFactoryMethodToGlobalPool(Method);
+        // verify that the class method conforms to the same definition of 
+        // parent methods if it shadows one.
         CompareMethodParamsInBaseAndSuper(ClassDecl, Method, false);
       }
     }

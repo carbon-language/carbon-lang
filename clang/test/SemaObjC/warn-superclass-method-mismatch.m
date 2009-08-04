@@ -12,6 +12,8 @@
 -(void) method2: (Sub*) x;
 + method3: (int)x1 : (Base *)x2 : (float)x3; // expected-note {{previous declaration is here}}
 + mathod4: (id)x1;
+- method5: (int) x : (double) d; // expected-note {{previous declaration is here}}
+- method6: (int) x : (float) d; // expected-note {{previous declaration is here}}
 @end
 
 struct A {
@@ -25,6 +27,8 @@ struct A {
 + method3: (int)x1 : (Sub *)x2 : (float)x3;	// expected-warning {{method parameter type 'Sub *' does not match super class method parameter type 'Base *'}}
 + mathod4: (Base*)x1;
 -(void) method_r: (char)ch : (float*)f1 : (Sub*) x; // expected-warning {{method parameter type 'Sub *' does not match super class method parameter type 'int *'}}
+- method5: (int) x : (float) d; // expected-warning {{method parameter type 'float' does not match super class method parameter type 'double'}}
+- method6: (int) x : (double) d; // expected-warning {{method parameter type 'double' does not match super class method parameter type 'float'}}
 @end
 
 void f(Base *base, Sub *sub) {
