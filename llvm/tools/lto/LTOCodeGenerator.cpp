@@ -322,7 +322,6 @@ bool LTOCodeGenerator::determineTarget(std::string& errMsg)
           Triple = sys::getHostTriple();
 
         // create target machine from info for merged modules
-        Module* mergedModule = _linker.getModule();
         const Target *march = TargetRegistry::lookupTarget(Triple, errMsg);
         if ( march == NULL )
             return true;
@@ -343,7 +342,7 @@ bool LTOCodeGenerator::determineTarget(std::string& errMsg)
 
         // construct LTModule, hand over ownership of module and target
         std::string FeatureStr = getFeatureString(Triple.c_str());
-        _target = march->createTargetMachine(*mergedModule, Triple, FeatureStr);
+        _target = march->createTargetMachine(Triple, FeatureStr);
     }
     return false;
 }

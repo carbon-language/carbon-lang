@@ -76,8 +76,7 @@ TargetMachine *JIT::selectTarget(ModuleProvider *MP, std::string *ErrorStr) {
 
   // Allocate a target...
   TargetMachine *Target = 
-    TheTarget->createTargetMachine(*MP->getModule(), TheTriple.getTriple(),
-                                   FeaturesStr);
+    TheTarget->createTargetMachine(TheTriple.getTriple(), FeaturesStr);
   assert(Target && "Could not allocate target machine!");
   return Target;
 }

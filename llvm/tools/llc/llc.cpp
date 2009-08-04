@@ -285,8 +285,7 @@ int main(int argc, char **argv) {
   }
 
   std::auto_ptr<TargetMachine> 
-    target(TheTarget->createTargetMachine(mod, TheTriple.getTriple(),
-                                          FeaturesStr));
+    target(TheTarget->createTargetMachine(TheTriple.getTriple(), FeaturesStr));
   assert(target.get() && "Could not allocate target machine!");
   TargetMachine &Target = *target.get();
 

@@ -162,7 +162,7 @@ LTOModule* LTOModule::makeLTOModule(MemoryBuffer* buffer,
 
     // construct LTModule, hand over ownership of module and target
     std::string FeatureStr = getFeatureString(Triple.c_str());
-    TargetMachine* target = march->createTargetMachine(*m, Triple, FeatureStr);
+    TargetMachine* target = march->createTargetMachine(Triple, FeatureStr);
     return new LTOModule(m.take(), target);
 }
 

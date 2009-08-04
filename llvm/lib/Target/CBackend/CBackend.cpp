@@ -3190,8 +3190,7 @@ std::string CWriter::InterpretASMConstraint(InlineAsm::ConstraintInfo& c) {
     if (Match) {
       // Per platform Target Machines don't exist, so create it;
       // this must be done only once.
-      const TargetMachine* TM = Match->createTargetMachine(*TheModule, Triple,
-                                                           "");
+      const TargetMachine* TM = Match->createTargetMachine(Triple, "");
       TAsm = TM->getTargetAsmInfo();
     }
   }
