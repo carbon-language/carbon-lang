@@ -202,7 +202,7 @@ Program::Execute(const Path& path,
         execv(path.c_str(), (char**)args);
       // If the execve() failed, we should exit and let the parent pick up
       // our non-zero exit status.
-      exit(127);
+      exit(errno == ENOENT ? 127 : 126);
     }
 
     // Parent process: Break out of the switch to do our processing.
