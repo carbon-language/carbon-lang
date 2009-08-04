@@ -169,7 +169,7 @@ GetNestedPaths(llvm::SmallVectorImpl<const CXXRecordDecl *> &NestedBasePaths,
     if (i->isVirtual())
       continue;
     const CXXRecordDecl *Base = 
-        cast<CXXRecordDecl>(i->getType()->getAs<RecordType>()->getDecl());
+      cast<CXXRecordDecl>(i->getType()->getAs<RecordType>()->getDecl());
     if (Base == BaseClassDecl) {
       NestedBasePaths.push_back(BaseClassDecl);
       return true;
@@ -543,6 +543,23 @@ llvm::Value *CodeGenFunction::GenerateVtable(const CXXRecordDecl *RD) {
   int64_t offset = 0;
   methods.push_back(m); offset += LLVMPointerWidth;
   methods.push_back(GenerateRtti(RD)); offset += LLVMPointerWidth;
+
+  for (CXXRecordDecl::base_class_const_iterator i = RD->bases_begin(),
+         e = RD->bases_end(); i != e; ++i) {
+    if (i->isVirtual())
+      continue;
+    const CXXRecordDecl *Base = 
+      cast<CXXRecordDecl>(i->getType()->getAs<RecordType>()->getDecl());
+    for (meth_iter mi = Base->method_begin(), me = Base->method_end(); mi != me;
+         ++mi) {
+      if (mi->isVirtual()) {
+        m = CGM.GetAddrOfFunction(GlobalDecl(*mi));
+        m = llvm::ConstantExpr::getBitCast(m, Ptr8Ty);
+        methods.push_back(m);
+      }
+    }
+  }
+
   for (meth_iter mi = RD->method_begin(), me = RD->method_end(); mi != me;
        ++mi) {
     if (mi->isVirtual()) {
