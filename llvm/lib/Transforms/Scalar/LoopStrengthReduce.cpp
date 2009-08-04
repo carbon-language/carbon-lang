@@ -1637,7 +1637,7 @@ void LoopStrengthReduce::StrengthReduceStridedIVUsers(const SCEV *const &Stride,
       // do this by forcing a BitCast (noop cast) to be inserted into the
       // preheader in this case.
       if (!fitsInAddressMode(Base, getAccessType(Inst), TLI, false) &&
-          !isa<Instruction>(BaseV)) {
+          isa<Constant>(BaseV)) {
         // We want this constant emitted into the preheader! This is just
         // using cast as a copy so BitCast (no-op cast) is appropriate
         BaseV = new BitCastInst(BaseV, BaseV->getType(), "preheaderinsert",
