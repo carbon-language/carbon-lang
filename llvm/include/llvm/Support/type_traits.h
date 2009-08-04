@@ -49,6 +49,33 @@ struct is_class
     enum { value = sizeof(char) == sizeof(dont_use::is_class_helper<T>(0)) };
 };
 
+  
+// enable_if_c - Enable/disable a template based on a metafunction
+template<bool Cond, typename T = void>
+struct enable_if_c {
+  typedef T type;
+};
+
+template<typename T> struct enable_if_c<false, T> { };
+  
+// enable_if - Enable/disable a template based on a metafunction
+template<typename Cond, typename T = void>
+struct enable_if : public enable_if_c<Cond::value, T> { };
+
+namespace dont_use {
+  template<typename Base> char base_of_helper(const volatile Base*);
+  template<typename Base> double base_of_helper(...);
+}
+
+/// is_base_of - Metafunction to determine whether one type is a base class of
+/// (or identical to) another type.
+template<typename Base, typename Derived>
+struct is_base_of {
+  static const bool value 
+    = is_class<Base>::value && is_class<Derived>::value &&
+      sizeof(char) == sizeof(dont_use::base_of_helper<Base>((Derived*)0));
+};
+
 }
 
 #endif
