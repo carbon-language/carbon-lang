@@ -504,10 +504,6 @@ static void WriteValues(unsigned FirstVal, unsigned LastVal,
         
         LastBlockID = bitc::METADATA_BLOCK_ID;
         Stream.EnterSubblock(bitc::METADATA_BLOCK_ID, 3);
-      }
-    }
-    if (const MDString *MDS = dyn_cast<MDString>(V)) {
-      if (MDSAbbrev == 0) {
         // Abbrev for METADATA_STRING.
         BitCodeAbbrev *Abbv = new BitCodeAbbrev();
         Abbv->Add(BitCodeAbbrevOp(bitc::METADATA_STRING));
@@ -515,6 +511,8 @@ static void WriteValues(unsigned FirstVal, unsigned LastVal,
         Abbv->Add(BitCodeAbbrevOp(BitCodeAbbrevOp::Fixed, 8));
         MDSAbbrev = Stream.EmitAbbrev(Abbv);
       }
+    }
+    if (const MDString *MDS = dyn_cast<MDString>(V)) {
       // Code: [strchar x N]
       const char *StrBegin = MDS->begin();
       for (unsigned i = 0, e = MDS->length(); i != e; ++i)
