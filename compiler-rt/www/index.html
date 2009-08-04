@@ -47,20 +47,46 @@
    <p>The current feature set of compiler-rt is:</p>
 
    <ul>
-    <li>Full support for the libgcc interfaces required by these targets:
-      <ul>
-      <li>Darwin i386</li>
-      <li>Darwin X86-64</li>
-      <li>Darwin PowerPC</li>
-      <li>Darwin PowerPC 64</li>
-      </ul></li>
-      
+    <li>Full support for the libgcc interfaces on supported targets.</li>
     <li>High performance hand tuned implementations of commonly used functions
         like __floatundidf in assembly that are dramatically faster than the
         libgcc implementations.</li>
     <li>A target-independent implementation of the Apple "Blocks" runtime
         interfaces.</li>
    </ul>
+
+  <!--=====================================================================-->
+  <h2 id="requirements">Platform Support</h2>
+  <!--=====================================================================-->
+
+   <p>Compiler-RT is known to work on the following platforms:</p>
+
+   <li>Machine Architectures:
+    <ul>
+     <li>i386</li>
+     <li>X86-64</li>
+     <li>PowerPC</li>
+     <li>PowerPC 64</li>
+    </ul></li>
+
+   <table cellpadding="3" summary="Known Compiler-RT platforms">
+   <tr>
+     <th>OS</th>
+     <th>Arch</th>
+   </tr>
+   <tr>
+     <td>AuroraUX</td>
+     <td>All<sup>
+   </tr>
+   <tr>
+     <td>Linux</td>
+     <td>All<sup>
+   </tr>
+   <tr>
+     <td>Darwin</td>
+     <td>All<sup>
+   </tr>
+   </table>
 
   <!--=====================================================================-->
   <h2 id="dir-structure">Source Structure</h2>
