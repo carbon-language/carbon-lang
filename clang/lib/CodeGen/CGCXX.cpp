@@ -164,8 +164,6 @@ static bool
 GetNestedPaths(llvm::SmallVectorImpl<const CXXRecordDecl *> &NestedBasePaths,
                const CXXRecordDecl *ClassDecl,
                const CXXRecordDecl *BaseClassDecl) {
-  assert(!ClassDecl->isPolymorphic() && 
-         "FIXME: We don't support polymorphic classes yet!");
   for (CXXRecordDecl::base_class_const_iterator i = ClassDecl->bases_begin(),
       e = ClassDecl->bases_end(); i != e; ++i) {
     if (i->isVirtual())
@@ -493,10 +491,10 @@ const char *CodeGenModule::getMangledCXXDtorName(const CXXDestructorDecl *D,
 llvm::Constant *CodeGenFunction::GenerateRtti(const CXXRecordDecl *RD) {
   llvm::Type *Ptr8Ty;
   Ptr8Ty = llvm::PointerType::get(llvm::Type::Int8Ty, 0);
-  llvm::Constant *rtti = llvm::Constant::getNullValue(Ptr8Ty);
+  llvm::Constant *Rtti = llvm::Constant::getNullValue(Ptr8Ty);
 
   if (!getContext().getLangOptions().Rtti)
-    return rtti;
+    return Rtti;
 
   llvm::SmallString<256> OutName;
   llvm::raw_svector_ostream Out(OutName);
@@ -519,10 +517,10 @@ llvm::Constant *CodeGenFunction::GenerateRtti(const CXXRecordDecl *RD) {
   llvm::Constant *C;
   llvm::ArrayType *type = llvm::ArrayType::get(Ptr8Ty, info.size());
   C = llvm::ConstantArray::get(type, info);
-  rtti = new llvm::GlobalVariable(CGM.getModule(), type, true, linktype, C,
+  Rtti = new llvm::GlobalVariable(CGM.getModule(), type, true, linktype, C,
                                   Name);
-  rtti = llvm::ConstantExpr::getBitCast(rtti, Ptr8Ty);
-  return rtti;
+  Rtti = llvm::ConstantExpr::getBitCast(Rtti, Ptr8Ty);
+  return Rtti;
 }
 
 llvm::Value *CodeGenFunction::GenerateVtable(const CXXRecordDecl *RD) {
