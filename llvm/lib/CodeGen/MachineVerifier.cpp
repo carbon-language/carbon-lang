@@ -88,14 +88,6 @@ namespace {
           RV.push_back(*R);
     }
 
-    // Does RS contain any super-registers of Reg?
-    bool anySuperRegisters(const RegSet &RS, unsigned Reg) {
-      for (const unsigned *R = TRI->getSuperRegisters(Reg); *R; R++)
-        if (RS.count(*R))
-          return true;
-      return false;
-    }
-
     struct BBInfo {
       // Is this MBB reachable from the MF entry point?
       bool reachable;
@@ -151,7 +143,7 @@ namespace {
     DenseMap<const MachineBasicBlock*, BBInfo> MBBInfoMap;
 
     bool isReserved(unsigned Reg) {
-      return Reg < regsReserved.size() && regsReserved[Reg];
+      return Reg < regsReserved.size() && regsReserved.test(Reg);
     }
 
     void visitMachineFunctionBefore();
@@ -287,6 +279,16 @@ void
 MachineVerifier::visitMachineFunctionBefore()
 {
   regsReserved = TRI->getReservedRegs(*MF);
+
+  // A sub-register of a reserved register is also reserved
+  for (int Reg = regsReserved.find_first(); Reg>=0;
+       Reg = regsReserved.find_next(Reg)) {
+    for (const unsigned *Sub = TRI->getSubRegisters(Reg); *Sub; ++Sub) {
+      // FIXME: This should probably be:
+      // assert(regsReserved.test(*Sub) && "Non-reserved sub-register");
+      regsReserved.set(*Sub);
+    }
+  }
   markReachable(&MF->front());
 }
 
@@ -364,9 +366,8 @@ MachineVerifier::visitMachineOperand(const MachineOperand *MO, unsigned MONum)
             MI->getOperand(defIdx).getReg() == Reg)
           addRegWithSubRegs(regsKilled, Reg);
       }
-      // Explicit use of a dead register.
-      // A register use marked <undef> is OK.
-      if (!MO->isImplicit() && !MO->isUndef() && !regsLive.count(Reg)) {
+      // Use of a dead register. A register use marked <undef> is OK.
+      if (!MO->isUndef() && !regsLive.count(Reg)) {
         if (TargetRegisterInfo::isPhysicalRegister(Reg)) {
           // Reserved registers may be used even when 'dead'.
           if (!isReserved(Reg))
@@ -385,10 +386,7 @@ MachineVerifier::visitMachineOperand(const MachineOperand *MO, unsigned MONum)
     } else {
       // Register defined.
       // TODO: verify that earlyclobber ops are not used.
-      if (MO->isImplicit())
-        addRegWithSubRegs(regsImpDefined, Reg);
-      else
-        addRegWithSubRegs(regsDefined, Reg);
+      addRegWithSubRegs(regsDefined, Reg);
 
       if (MO->isDead())
         addRegWithSubRegs(regsDead, Reg);
@@ -462,10 +460,7 @@ MachineVerifier::visitMachineInstrAfter(const MachineInstr *MI)
          E = regsDefined.end(); I != E; ++I) {
     if (regsLive.count(*I)) {
       if (TargetRegisterInfo::isPhysicalRegister(*I)) {
-        // We allow double defines to physical registers with live
-        // super-registers.
-        if (!allowPhysDoubleDefs && !isReserved(*I) &&
-            !anySuperRegisters(regsLive, *I)) {
+        if (!allowPhysDoubleDefs && !isReserved(*I)) {
           report("Redefining a live physical register", MI);
           *OS << "Register " << TRI->getName(*I)
               << " was defined but already live.\n";
