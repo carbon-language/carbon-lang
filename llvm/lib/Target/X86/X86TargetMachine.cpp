@@ -29,8 +29,6 @@ extern "C" void LLVMInitializeX86Target() {
 }
 
 const TargetAsmInfo *X86TargetMachine::createTargetAsmInfo() const {
-  if (Subtarget.isFlavorIntel())
-    return new X86WinTargetAsmInfo(*this);
   switch (Subtarget.TargetType) {
   default: llvm_unreachable("unknown subtarget type");
   case X86Subtarget::isDarwin:
