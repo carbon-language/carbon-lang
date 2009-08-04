@@ -114,7 +114,12 @@ namespace llvm {
       VGETLANEs,    // sign-extend vector extract element
 
       // Vector duplicate lane (128-bit result only; 64-bit is a shuffle)
-      VDUPLANEQ     // splat a lane from a 64-bit vector to a 128-bit vector
+      VDUPLANEQ,    // splat a lane from a 64-bit vector to a 128-bit vector
+
+      // Vector load/store with (de)interleaving
+      VLD2D,
+      VLD3D,
+      VLD4D
     };
   }
 
@@ -237,6 +242,7 @@ namespace llvm {
     SDNode *LowerCallResult(SDValue Chain, SDValue InFlag, CallSDNode *TheCall,
                             unsigned CallingConv, SelectionDAG &DAG);
     SDValue LowerCALL(SDValue Op, SelectionDAG &DAG);
+    SDValue LowerINTRINSIC_W_CHAIN(SDValue Op, SelectionDAG &DAG);
     SDValue LowerINTRINSIC_WO_CHAIN(SDValue Op, SelectionDAG &DAG);
     SDValue LowerRET(SDValue Op, SelectionDAG &DAG);
     SDValue LowerGlobalAddressDarwin(SDValue Op, SelectionDAG &DAG);

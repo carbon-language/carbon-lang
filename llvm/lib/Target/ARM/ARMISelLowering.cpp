@@ -323,6 +323,7 @@ ARMTargetLowering::ARMTargetLowering(TargetMachine &TM)
 
   // We want to custom lower some of our intrinsics.
   setOperationAction(ISD::INTRINSIC_WO_CHAIN, MVT::Other, Custom);
+  setOperationAction(ISD::INTRINSIC_W_CHAIN, MVT::Other, Custom);
 
   setOperationAction(ISD::SETCC,     MVT::i32, Expand);
   setOperationAction(ISD::SETCC,     MVT::f32, Expand);
@@ -463,6 +464,9 @@ const char *ARMTargetLowering::getTargetNodeName(unsigned Opcode) const {
   case ARMISD::VGETLANEu:     return "ARMISD::VGETLANEu";
   case ARMISD::VGETLANEs:     return "ARMISD::VGETLANEs";
   case ARMISD::VDUPLANEQ:     return "ARMISD::VDUPLANEQ";
+  case ARMISD::VLD2D:         return "ARMISD::VLD2D";
+  case ARMISD::VLD3D:         return "ARMISD::VLD3D";
+  case ARMISD::VLD4D:         return "ARMISD::VLD4D";
   }
 }
 
@@ -1316,6 +1320,60 @@ SDValue ARMTargetLowering::LowerGLOBAL_OFFSET_TABLE(SDValue Op,
   SDValue Result = DAG.getLoad(PtrVT, dl, DAG.getEntryNode(), CPAddr, NULL, 0);
   SDValue PICLabel = DAG.getConstant(ARMPCLabelIndex++, MVT::i32);
   return DAG.getNode(ARMISD::PIC_ADD, dl, PtrVT, Result, PICLabel);
+}
+
+static SDValue LowerNeonVLDIntrinsic(SDValue Op, SelectionDAG &DAG,
+                                     unsigned Opcode, unsigned NumVecs) {
+  SDNode *Node = Op.getNode();
+  MVT VT = Node->getValueType(0);
+  DebugLoc dl = Op.getDebugLoc();
+
+  if (!VT.is64BitVector())
+    return SDValue(); // unimplemented
+
+  SDValue Ops[] = { Node->getOperand(0),
+                    Node->getOperand(1) };
+  SDVTList Tys = DAG.getVTList(MVT::Other, MVT::Flag);
+  SDValue Result = DAG.getNode(Opcode, dl, Tys, Ops, 2);
+
+  static const unsigned VLDRegs[] = {
+    ARM::D0, ARM::D1, ARM::D2, ARM::D3
+  };
+
+  SmallVector<SDValue, 4> ResultVals;
+  SDValue Chain = Result.getValue(0);
+  SDValue Flag = Result.getValue(1);
+  for (unsigned N = 0; N < NumVecs; ++N) {
+    Chain = DAG.getCopyFromReg(Chain, dl, VLDRegs[N], VT, Flag).getValue(1);
+    ResultVals.push_back(Chain.getValue(0));
+    Flag = Chain.getValue(2);
+  }
+  ResultVals.push_back(Chain);
+  return DAG.getNode(ISD::MERGE_VALUES, dl, Node->getVTList(),
+                     ResultVals.data(), NumVecs + 1);
+}
+
+SDValue
+ARMTargetLowering::LowerINTRINSIC_W_CHAIN(SDValue Op, SelectionDAG &DAG) {
+  unsigned IntNo = cast<ConstantSDNode>(Op.getOperand(1))->getZExtValue();
+  switch (IntNo) {
+  case Intrinsic::arm_neon_vld2i:
+  case Intrinsic::arm_neon_vld2f:
+    return LowerNeonVLDIntrinsic(Op, DAG, ARMISD::VLD2D, 2);
+  case Intrinsic::arm_neon_vld3i:
+  case Intrinsic::arm_neon_vld3f:
+    return LowerNeonVLDIntrinsic(Op, DAG, ARMISD::VLD3D, 3);
+  case Intrinsic::arm_neon_vld4i:
+  case Intrinsic::arm_neon_vld4f:
+    return LowerNeonVLDIntrinsic(Op, DAG, ARMISD::VLD4D, 4);
+  case Intrinsic::arm_neon_vst2i:
+  case Intrinsic::arm_neon_vst2f:
+  case Intrinsic::arm_neon_vst3i:
+  case Intrinsic::arm_neon_vst3f:
+  case Intrinsic::arm_neon_vst4i:
+  case Intrinsic::arm_neon_vst4f:
+  default: return SDValue();    // Don't custom lower most intrinsics.
+  }
 }
 
 SDValue
@@ -2354,6 +2412,7 @@ SDValue ARMTargetLowering::LowerOperation(SDValue Op, SelectionDAG &DAG) {
   case ISD::RETURNADDR:    break;
   case ISD::FRAMEADDR:     return LowerFRAMEADDR(Op, DAG);
   case ISD::GLOBAL_OFFSET_TABLE: return LowerGLOBAL_OFFSET_TABLE(Op, DAG);
+  case ISD::INTRINSIC_W_CHAIN: return LowerINTRINSIC_W_CHAIN(Op, DAG);
   case ISD::INTRINSIC_WO_CHAIN: return LowerINTRINSIC_WO_CHAIN(Op, DAG);
   case ISD::BIT_CONVERT:   return ExpandBIT_CONVERT(Op.getNode(), DAG);
   case ISD::SHL:

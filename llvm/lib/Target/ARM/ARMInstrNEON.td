@@ -68,6 +68,14 @@ def NEONvgetlanes : SDNode<"ARMISD::VGETLANEs", SDTARMVGETLN>;
 def NEONvduplaneq : SDNode<"ARMISD::VDUPLANEQ",
                            SDTypeProfile<1, 2, [SDTCisVT<2, i32>]>>;
 
+def SDTARMVLD     : SDTypeProfile<0, 1, [SDTCisPtrTy<0>]>;
+def NEONvld2d     : SDNode<"ARMISD::VLD2D", SDTARMVLD,
+                           [SDNPHasChain, SDNPOutFlag, SDNPMayLoad]>;
+def NEONvld3d     : SDNode<"ARMISD::VLD3D", SDTARMVLD,
+                           [SDNPHasChain, SDNPOutFlag, SDNPMayLoad]>;
+def NEONvld4d     : SDNode<"ARMISD::VLD4D", SDTARMVLD,
+                           [SDNPHasChain, SDNPOutFlag, SDNPMayLoad]>;
+
 //===----------------------------------------------------------------------===//
 // NEON operand definitions
 //===----------------------------------------------------------------------===//
