@@ -83,6 +83,10 @@ def imm0_4095_neg : PatLeaf<(i32 imm), [{
  return (uint32_t)(-N->getZExtValue()) < 4096; 
 }], imm_neg_XFORM>; 
 
+def imm0_255_neg : PatLeaf<(i32 imm), [{
+  return (uint32_t)(-N->getZExtValue()) < 255;
+}], imm_neg_XFORM>; 
+
 /// imm0_65535 predicate - True if the 32-bit immediate is in the range 
 /// [0.65535].
 def imm0_65535 : PatLeaf<(i32 imm), [{
@@ -619,12 +623,12 @@ def t2STRB_POST : T2Iidxldst<(outs GPR:$base_wb),
 let mayLoad = 1 in
 def t2LDM : T2XI<(outs),
                  (ins addrmode4:$addr, pred:$p, reglist:$dst1, variable_ops),
-                 "ldm${addr:submode}${p}.w $addr, $dst1", []>;
+                 "ldm${addr:submode}${p} $addr, $dst1", []>;
 
 let mayStore = 1 in
 def t2STM : T2XI<(outs),
                  (ins addrmode4:$addr, pred:$p, reglist:$src1, variable_ops),
-                 "stm${addr:submode}${p}.w $addr, $src1", []>;
+                 "stm${addr:submode}${p} $addr, $src1", []>;
 
 //===----------------------------------------------------------------------===//
 //  Move Instructions.
@@ -704,6 +708,9 @@ defm t2RSB  : T2I_rbin_is   <"rsb", BinOpFrag<(sub  node:$LHS, node:$RHS)>>;
 defm t2RSBS : T2I_rbin_s_is <"rsb", BinOpFrag<(subc node:$LHS, node:$RHS)>>;
 
 // (sub X, imm) gets canonicalized to (add X, -imm).  Match this form.
+let AddedComplexity = 1 in
+def : T2Pat<(add       GPR:$src, imm0_255_neg:$imm),
+            (t2SUBri   GPR:$src, imm0_255_neg:$imm)>;
 def : T2Pat<(add       GPR:$src, t2_so_imm_neg:$imm),
             (t2SUBri   GPR:$src, t2_so_imm_neg:$imm)>;
 def : T2Pat<(add       GPR:$src, imm0_4095_neg:$imm),
