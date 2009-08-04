@@ -101,8 +101,9 @@ bool ARMBaseTargetMachine::addPreRegAlloc(PassManagerBase &PM,
 
 bool ARMBaseTargetMachine::addPreEmitPass(PassManagerBase &PM,
                                           CodeGenOpt::Level OptLevel) {
-  // FIXME: temporarily disabling load / store optimization pass for Thumb mode.
-  if (OptLevel != CodeGenOpt::None && !DisableLdStOpti && !Subtarget.isThumb())
+  // FIXME: temporarily disabling load / store optimization pass for Thumb1 mode.
+  if (OptLevel != CodeGenOpt::None && !DisableLdStOpti &&
+      !Subtarget.isThumb1Only())
     PM.add(createARMLoadStoreOptimizationPass());
 
   if (OptLevel != CodeGenOpt::None &&

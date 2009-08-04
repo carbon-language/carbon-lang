@@ -615,12 +615,15 @@ bool ARMLoadStoreOpt::MergeBaseUpdateLoadStore(MachineBasicBlock &MBB,
     return false;
 
   bool isDPR = NewOpc == ARM::FLDMD || NewOpc == ARM::FSTMD;
-  unsigned Offset = isAM5
-    ? ARM_AM::getAM5Opc((AddSub == ARM_AM::sub) ? ARM_AM::db : ARM_AM::ia,
-                        true, isDPR ? 2 : 1)
-    : (isAM2
-       ? ARM_AM::getAM2Opc(AddSub, Bytes, ARM_AM::no_shift)
-       : Bytes);
+  unsigned Offset = 0;
+  if (isAM5)
+    Offset = ARM_AM::getAM5Opc((AddSub == ARM_AM::sub)
+                               ? ARM_AM::db
+                               : ARM_AM::ia, true, (isDPR ? 2 : 1));
+  else if (isAM2)
+    Offset = ARM_AM::getAM2Opc(AddSub, Bytes, ARM_AM::no_shift);
+  else
+    Offset = AddSub == ARM_AM::sub ? -Bytes : Bytes;
   if (isLd) {
     if (isAM5)
       // FLDMS, FLDMD
