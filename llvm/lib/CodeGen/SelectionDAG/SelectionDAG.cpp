@@ -1987,7 +1987,8 @@ void SelectionDAG::ComputeMaskedBits(SDValue Op, const APInt &Mask,
   case ISD::INTRINSIC_WO_CHAIN:
   case ISD::INTRINSIC_W_CHAIN:
   case ISD::INTRINSIC_VOID:
-      TLI.computeMaskedBitsForTargetNode(Op, Mask, KnownZero, KnownOne, *this);
+      TLI.computeMaskedBitsForTargetNode(Op, Mask, KnownZero, KnownOne, *this,
+                                         Depth);
     }
     return;
   }
