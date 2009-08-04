@@ -47,7 +47,7 @@ namespace clang {
 /// a new AST node.
 ///
 /// Subclasses can customize the transformation at various levels. The 
-/// most course-grained transformations involve replacing TransformType(),
+/// most coarse-grained transformations involve replacing TransformType(),
 /// TransformExpr(), TransformDecl(), TransformNestedNameSpecifier(),
 /// TransformTemplateName(), or TransformTemplateArgument() with entirely
 /// new implementations.
@@ -172,7 +172,10 @@ public:
   
   /// \brief Transform the given template argument.
   ///
-  /// FIXME: At the moment, subclasses must override this.
+  /// By default, this operation transforms the type, expression, or 
+  /// declaration stored within the template argument and constructs a 
+  /// new template argument from the transformed result. Subclasses may
+  /// override this function to provide alternate behavior.
   TemplateArgument TransformTemplateArgument(const TemplateArgument &Arg);
   
 #define ABSTRACT_TYPE(CLASS, PARENT)
@@ -397,6 +400,62 @@ public:
   }    
 };
   
+template<typename Derived>
+TemplateArgument 
+TreeTransform<Derived>::TransformTemplateArgument(const TemplateArgument &Arg) {
+  switch (Arg.getKind()) {
+  case TemplateArgument::Null:
+  case TemplateArgument::Integral:
+    return Arg;
+      
+  case TemplateArgument::Type: {
+    QualType T = getDerived().TransformType(Arg.getAsType());
+    if (T.isNull())
+      return TemplateArgument();
+    return TemplateArgument(Arg.getLocation(), T);
+  }
+      
+  case TemplateArgument::Declaration: {
+    Decl *D = getDerived().TransformDecl(Arg.getAsDecl());
+    if (!D)
+      return TemplateArgument();
+    return TemplateArgument(Arg.getLocation(), D);
+  }
+      
+  case TemplateArgument::Expression: {
+    // Template argument expressions are not potentially evaluated.
+    EnterExpressionEvaluationContext Unevaluated(getSema(), 
+                                                 Action::Unevaluated);
+    
+    Sema::OwningExprResult E = getDerived().TransformExpr(Arg.getAsExpr());
+    if (E.isInvalid())
+      return TemplateArgument();
+    return TemplateArgument(E.takeAs<Expr>());
+  }
+      
+  case TemplateArgument::Pack: {
+    llvm::SmallVector<TemplateArgument, 4> TransformedArgs;
+    TransformedArgs.reserve(Arg.pack_size());
+    for (TemplateArgument::pack_iterator A = Arg.pack_begin(), 
+                                      AEnd = Arg.pack_end();
+         A != AEnd; ++A) {
+      TemplateArgument TA = getDerived().TransformTemplateArgument(*A);
+      if (TA.isNull())
+        return TA;
+      
+      TransformedArgs.push_back(TA);
+    }
+    TemplateArgument Result;
+    Result.setArgumentPack(TransformedArgs.data(), TransformedArgs.size(), 
+                           true);
+    return Result;
+  }
+  }
+  
+  // Work around bogus GCC warning
+  return TemplateArgument();
+}
+
 //===----------------------------------------------------------------------===//
 // Type transformation
 //===----------------------------------------------------------------------===//
@@ -558,14 +617,22 @@ TreeTransform<Derived>::TransformConstantArrayWithExprType(
   if (ElementType.isNull())
     return QualType();
   
+  // Array bounds are not potentially evaluated contexts
+  EnterExpressionEvaluationContext Unevaluated(SemaRef, Action::Unevaluated);
+  
+  Sema::OwningExprResult Size = getDerived().TransformExpr(T->getSizeExpr());
+  if (Size.isInvalid())
+    return QualType();
+  
   if (!getDerived().AlwaysRebuild() &&
-      ElementType == T->getElementType())
+      ElementType == T->getElementType() &&
+      Size.get() == T->getSizeExpr())
     return QualType(T, 0);
   
   return getDerived().RebuildConstantArrayWithExprType(ElementType, 
                                                        T->getSizeModifier(),
                                                        T->getSize(),
-                                        /*FIXME: Transform?*/T->getSizeExpr(),
+                                                       Size.takeAs<Expr>(),
                                                    T->getIndexTypeQualifier(),
                                                        T->getBracketsRange());
 }
@@ -611,6 +678,9 @@ QualType TreeTransform<Derived>::TransformVariableArrayType(
   if (ElementType.isNull())
     return QualType();
   
+  // Array bounds are not potentially evaluated contexts
+  EnterExpressionEvaluationContext Unevaluated(SemaRef, Action::Unevaluated);
+
   Sema::OwningExprResult Size = getDerived().TransformExpr(T->getSizeExpr());
   if (Size.isInvalid())
     return QualType();
@@ -635,6 +705,9 @@ QualType TreeTransform<Derived>::TransformDependentSizedArrayType(
   QualType ElementType = getDerived().TransformType(T->getElementType());
   if (ElementType.isNull())
     return QualType();
+  
+  // Array bounds are not potentially evaluated contexts
+  EnterExpressionEvaluationContext Unevaluated(SemaRef, Action::Unevaluated);
   
   Sema::OwningExprResult Size = getDerived().TransformExpr(T->getSizeExpr());
   if (Size.isInvalid())
@@ -661,6 +734,9 @@ QualType TreeTransform<Derived>::TransformDependentSizedExtVectorType(
   if (ElementType.isNull())
     return QualType();
   
+  // Vector sizes are not potentially evaluated contexts
+  EnterExpressionEvaluationContext Unevaluated(SemaRef, Action::Unevaluated);
+
   Sema::OwningExprResult Size = getDerived().TransformExpr(T->getSizeExpr());
   if (Size.isInvalid())
     return QualType();
@@ -757,6 +833,9 @@ QualType TreeTransform<Derived>::TransformTypedefType(const TypedefType *T) {
 template<typename Derived>
 QualType TreeTransform<Derived>::TransformTypeOfExprType(
                                                     const TypeOfExprType *T) { 
+  // typeof expressions are not potentially evaluated contexts
+  EnterExpressionEvaluationContext Unevaluated(SemaRef, Action::Unevaluated);
+  
   Sema::OwningExprResult E = getDerived().TransformExpr(T->getUnderlyingExpr());
   if (E.isInvalid())
     return QualType();
@@ -785,6 +864,9 @@ QualType TreeTransform<Derived>::TransformTypeOfType(const TypeOfType *T) {
   
 template<typename Derived> 
 QualType TreeTransform<Derived>::TransformDecltypeType(const DecltypeType *T) { 
+  // decltype expressions are not potentially evaluated contexts
+  EnterExpressionEvaluationContext Unevaluated(SemaRef, Action::Unevaluated);
+  
   Sema::OwningExprResult E = getDerived().TransformExpr(T->getUnderlyingExpr());
   if (E.isInvalid())
     return QualType();

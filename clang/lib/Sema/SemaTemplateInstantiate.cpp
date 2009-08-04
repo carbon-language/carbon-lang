@@ -331,9 +331,6 @@ namespace {
     /// \brief Transform the given template name by instantiating it.
     TemplateName TransformTemplateName(TemplateName Template);
     
-    /// \brief Transform the given template argument by instantiating it.
-    TemplateArgument TransformTemplateArgument(const TemplateArgument &Arg);
-    
     /// \brief Transforms a template type parameter type by performing 
     /// substitution of the corresponding template type argument.
     QualType TransformTemplateTypeParmType(const TemplateTypeParmType *T);
@@ -358,11 +355,6 @@ TemplateName
 TemplateInstantiator::TransformTemplateName(TemplateName Template) {
   return getSema().InstantiateTemplateName(Template, /*FIXME*/Loc, 
                                            TemplateArgs);
-}
-
-TemplateArgument 
-TemplateInstantiator::TransformTemplateArgument(const TemplateArgument &Arg) {
-  return getSema().Instantiate(Arg, TemplateArgs);
 }
 
 QualType 
@@ -852,42 +844,7 @@ Sema::InstantiateTemplateName(TemplateName Name, SourceLocation Loc,
 
 TemplateArgument Sema::Instantiate(TemplateArgument Arg, 
                                    const TemplateArgumentList &TemplateArgs) {
-  switch (Arg.getKind()) {
-  case TemplateArgument::Null:
-    assert(false && "Should never have a NULL template argument");
-    break;
-    
-  case TemplateArgument::Type: {
-    QualType T = InstantiateType(Arg.getAsType(), TemplateArgs, 
-                                 Arg.getLocation(), DeclarationName());
-    if (T.isNull())
-      return TemplateArgument();
-    
-    return TemplateArgument(Arg.getLocation(), T);
-  }
-
-  case TemplateArgument::Declaration:
-    // FIXME: Template instantiation for template template parameters.
-    return Arg;
-
-  case TemplateArgument::Integral:
-    return Arg;
-
-  case TemplateArgument::Expression: {
-    // Template argument expressions are not potentially evaluated.
-    EnterExpressionEvaluationContext Unevaluated(*this, Action::Unevaluated);
-
-    Sema::OwningExprResult E = InstantiateExpr(Arg.getAsExpr(), TemplateArgs);
-    if (E.isInvalid())
-      return TemplateArgument();
-    return TemplateArgument(E.takeAs<Expr>());
-  }
-  
-  case TemplateArgument::Pack:
-    assert(0 && "FIXME: Implement!");
-    break;
-  }
-
-  assert(false && "Unhandled template argument kind");
-  return TemplateArgument();
+  TemplateInstantiator Instantiator(*this, TemplateArgs, SourceLocation(),
+                                    DeclarationName());
+  return Instantiator.TransformTemplateArgument(Arg);
 }
