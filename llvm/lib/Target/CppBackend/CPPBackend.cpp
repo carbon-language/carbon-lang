@@ -74,7 +74,7 @@ static cl::opt<std::string> NameToGenerate("cppfor", cl::Optional,
 
 extern "C" void LLVMInitializeCppBackendTarget() {
   // Register the target.
-  RegisterTargetMachineDeprecated<CPPTargetMachine> X(TheCppBackendTarget);
+  RegisterTargetMachine<CPPTargetMachine> X(TheCppBackendTarget);
 }
 
 namespace {

@@ -51,7 +51,7 @@ using namespace llvm;
 
 extern "C" void LLVMInitializeCBackendTarget() { 
   // Register the target.
-  RegisterTargetMachineDeprecated<CTargetMachine> X(TheCBackendTarget);
+  RegisterTargetMachine<CTargetMachine> X(TheCBackendTarget);
 }
 
 namespace {

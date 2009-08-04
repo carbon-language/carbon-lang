@@ -20,11 +20,8 @@
 namespace llvm {
 
 struct CTargetMachine : public TargetMachine {
-  const TargetData DataLayout;       // Calculates type size & alignment
-
-  CTargetMachine(const Target &T, const Module &M,
-                 const std::string &FS)
-    : TargetMachine(T), DataLayout(&M) {}
+  CTargetMachine(const Target &T, const std::string &TT, const std::string &FS)
+    : TargetMachine(T) {}
 
   virtual bool WantsWholeFile() const { return true; }
   virtual bool addPassesToEmitWholeFile(PassManager &PM,

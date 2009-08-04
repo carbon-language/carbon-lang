@@ -22,11 +22,9 @@ namespace llvm {
 class formatted_raw_ostream;
 
 struct CPPTargetMachine : public TargetMachine {
-  const TargetData DataLayout;       // Calculates type size & alignment
-
-  CPPTargetMachine(const Target &T, const Module &M,
+  CPPTargetMachine(const Target &T, const std::string &TT,
                    const std::string &FS)
-    : TargetMachine(T), DataLayout(&M) {}
+    : TargetMachine(T) {}
 
   virtual bool WantsWholeFile() const { return true; }
   virtual bool addPassesToEmitWholeFile(PassManager &PM,

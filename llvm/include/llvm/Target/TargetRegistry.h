@@ -23,9 +23,6 @@
 // FIXME: We shouldn't need this header, but we need it until there is a
 // different interface to get the TargetAsmInfo.
 #include "llvm/Target/TargetMachine.h"
-// FIXME: We shouldn't need this header, but we need it until there is a
-// different interface to the target machines.
-#include "llvm/Module.h"
 #include <string>
 #include <cassert>
 
@@ -50,7 +47,6 @@ namespace llvm {
     typedef unsigned (*TripleMatchQualityFnTy)(const std::string &TT);
 
     typedef TargetMachine *(*TargetMachineCtorTy)(const Target &,
-                                                  const Module &, 
                                                   const std::string &,
                                                   const std::string &);
     typedef FunctionPass *(*AsmPrinterCtorTy)(formatted_raw_ostream &,
@@ -120,12 +116,16 @@ namespace llvm {
     /// feature set; it should always be provided. Generally this should be
     /// either the target triple from the module, or the target triple of the
     /// host if that does not exist.
-    TargetMachine *createTargetMachine(const Module &M,
-                                       const std::string &Triple,
+    TargetMachine *createTargetMachine(const std::string &Triple,
                                        const std::string &Features) const {
       if (!TargetMachineCtorFn)
         return 0;
-      return TargetMachineCtorFn(*this, M, Triple, Features);
+      return TargetMachineCtorFn(*this, Triple, Features);
+    }
+    TargetMachine *createTargetMachine(const Module &M,
+                                       const std::string &Triple,
+                                       const std::string &Features) const {
+      return createTargetMachine(Triple, Features);
     }
 
     /// createAsmPrinter - Create a target specific assembly printer pass.
@@ -149,8 +149,6 @@ namespace llvm {
   };
 
   /// TargetRegistry - Generic interface to target specific features.
-  //
-  // FIXME: Provide Target* iterator.
   struct TargetRegistry {
     class iterator {
       const Target *Current;
@@ -327,24 +325,9 @@ namespace llvm {
     }
 
   private:
-    static TargetMachine *Allocator(const Target &T, const Module &M,
-                                    const std::string &TT,
+    static TargetMachine *Allocator(const Target &T, const std::string &TT,
                                     const std::string &FS) {
       return new TargetMachineImpl(T, TT, FS);
-    }
-  };
-
-  template<class TargetMachineImpl>
-  struct RegisterTargetMachineDeprecated {
-    RegisterTargetMachineDeprecated(Target &T) {
-      TargetRegistry::RegisterTargetMachine(T, &Allocator);
-    }
-
-  private:
-    static TargetMachine *Allocator(const Target &T, const Module &M,
-                                    const std::string &TT,
-                                    const std::string &FS) {
-      return new TargetMachineImpl(T, M, FS);
     }
   };
 

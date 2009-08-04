@@ -31,10 +31,8 @@ using namespace llvm;
 namespace llvm {
   // TargetMachine for the MSIL 
   struct VISIBILITY_HIDDEN MSILTarget : public TargetMachine {
-    const TargetData DataLayout;       // Calculates type size & alignment
-
-    MSILTarget(const Target &T, const Module &M, const std::string &FS)
-      : TargetMachine(T), DataLayout(&M) {}
+    MSILTarget(const Target &T, const std::string &TT, const std::string &FS)
+      : TargetMachine(T) {}
 
     virtual bool WantsWholeFile() const { return true; }
     virtual bool addPassesToEmitWholeFile(PassManager &PM,
@@ -48,7 +46,7 @@ namespace llvm {
 
 extern "C" void LLVMInitializeMSILTarget() {
   // Register the target.
-  RegisterTargetMachineDeprecated<MSILTarget> X(TheMSILTarget);
+  RegisterTargetMachine<MSILTarget> X(TheMSILTarget);
 }
 
 bool MSILModule::runOnModule(Module &M) {
