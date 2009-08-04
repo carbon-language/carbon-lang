@@ -596,8 +596,10 @@ void ARMAsmPrinter::printAddrMode4Operand(const MachineInstr *MI, int Op,
   ARM_AM::AMSubMode Mode = ARM_AM::getAM4SubMode(MO2.getImm());
   if (Modifier && strcmp(Modifier, "submode") == 0) {
     if (MO1.getReg() == ARM::SP) {
+      // FIXME
       bool isLDM = (MI->getOpcode() == ARM::LDM ||
-                    MI->getOpcode() == ARM::LDM_RET);
+                    MI->getOpcode() == ARM::LDM_RET ||
+                    MI->getOpcode() == ARM::t2LDM_RET);
       O << ARM_AM::getAMSubModeAltStr(Mode, isLDM);
     } else
       O << ARM_AM::getAMSubModeStr(Mode);

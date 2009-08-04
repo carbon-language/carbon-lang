@@ -143,12 +143,20 @@ static int getLoadStoreMultipleOpcode(int Opcode) {
   return 0;
 }
 
+static bool isT2i32Load(unsigned Opc) {
+  return Opc == ARM::t2LDRi12 || Opc == ARM::t2LDRi8;
+}
+
 static bool isi32Load(unsigned Opc) {
-  return Opc == ARM::LDR || Opc == ARM::t2LDRi12 || Opc == ARM::t2LDRi8;
+  return Opc == ARM::LDR || isT2i32Load(Opc);
+}
+
+static bool isT2i32Store(unsigned Opc) {
+  return Opc == ARM::t2STRi12 || Opc == ARM::t2STRi8;
 }
 
 static bool isi32Store(unsigned Opc) {
-  return Opc == ARM::STR || Opc == ARM::t2STRi12 || Opc == ARM::t2STRi8;
+  return Opc == ARM::STR || isT2i32Store(Opc);
 }
 
 /// MergeOps - Create and insert a LDM or STM with Base as base register and
@@ -211,7 +219,7 @@ ARMLoadStoreOpt::MergeOps(MachineBasicBlock &MBB,
   }
 
   bool isDPR = Opcode == ARM::FLDD || Opcode == ARM::FSTD;
-  bool isDef = Opcode == ARM::LDR || Opcode == ARM::FLDS || Opcode == ARM::FLDD;
+  bool isDef = isi32Load(Opcode) || Opcode == ARM::FLDS || Opcode == ARM::FLDD;
   Opcode = getLoadStoreMultipleOpcode(Opcode);
   MachineInstrBuilder MIB = (isAM4)
     ? BuildMI(MBB, MBBI, dl, TII->get(Opcode))
@@ -309,24 +317,18 @@ static ARMCC::CondCodes getInstrPredicate(MachineInstr *MI, unsigned &PredReg) {
 }
 
 static inline bool isMatchingDecrement(MachineInstr *MI, unsigned Base,
-                                       unsigned Bytes, ARMCC::CondCodes Pred,
-                                       unsigned PredReg, bool isThumb2) {
+                                       unsigned Bytes, unsigned Limit,
+                                       ARMCC::CondCodes Pred, unsigned PredReg){
   unsigned MyPredReg = 0;
   if (!MI)
     return false;
-  if (isThumb2) {
-    if (MI->getOpcode() != ARM::t2SUBri)
-      return false;
-    // Make sure the offset fits in 8 bits.
-    if (Bytes <= 0 || Bytes >= 0x100)
-      return false;
-  } else {
-    if (MI->getOpcode() != ARM::SUBri)
-      return false;
-    // Make sure the offset fits in 12 bits.
-    if (Bytes <= 0 || Bytes >= 0x1000)
-      return false;
-  }
+  if (MI->getOpcode() != ARM::t2SUBri &&
+      MI->getOpcode() != ARM::SUBri)
+    return false;
+
+  // Make sure the offset fits in 8 bits.
+  if (Bytes <= 0 || (Limit && Bytes >= Limit))
+    return false;
 
   return (MI->getOperand(0).getReg() == Base &&
           MI->getOperand(1).getReg() == Base &&
@@ -336,24 +338,18 @@ static inline bool isMatchingDecrement(MachineInstr *MI, unsigned Base,
 }
 
 static inline bool isMatchingIncrement(MachineInstr *MI, unsigned Base,
-                                       unsigned Bytes, ARMCC::CondCodes Pred,
-                                       unsigned PredReg, bool isThumb2) {
+                                       unsigned Bytes, unsigned Limit,
+                                       ARMCC::CondCodes Pred, unsigned PredReg){
   unsigned MyPredReg = 0;
   if (!MI)
     return false;
-  if (isThumb2) {
-    if (MI->getOpcode() != ARM::t2ADDri)
-      return false;
+  if (MI->getOpcode() != ARM::t2ADDri &&
+      MI->getOpcode() != ARM::ADDri)
+    return false;
+
+  if (Bytes <= 0 || (Limit && Bytes >= Limit))
     // Make sure the offset fits in 8 bits.
-    if (Bytes <= 0 || Bytes >= 0x100)
-      return false;
-  } else {
-    if (MI->getOpcode() != ARM::ADDri)
-      return false;
-    // Make sure the offset fits in 12 bits.
-    if (Bytes <= 0 || Bytes >= 0x1000)
-      return false;
-  }
+    return false;
 
   return (MI->getOperand(0).getReg() == Base &&
           MI->getOperand(1).getReg() == Base &&
@@ -379,6 +375,8 @@ static inline unsigned getLSMultipleTransferSize(MachineInstr *MI) {
     return 8;
   case ARM::LDM:
   case ARM::STM:
+  case ARM::t2LDM:
+  case ARM::t2STM:
     return (MI->getNumOperands() - 4) * 4;
   case ARM::FLDMS:
   case ARM::FSTMS:
@@ -428,13 +426,12 @@ bool ARMLoadStoreOpt::MergeBaseUpdateLSMultiple(MachineBasicBlock &MBB,
     if (MBBI != MBB.begin()) {
       MachineBasicBlock::iterator PrevMBBI = prior(MBBI);
       if (Mode == ARM_AM::ia &&
-          isMatchingDecrement(PrevMBBI, Base, Bytes, Pred, PredReg, isThumb2)) {
+          isMatchingDecrement(PrevMBBI, Base, Bytes, 0, Pred, PredReg)) {
         MI->getOperand(1).setImm(ARM_AM::getAM4ModeImm(ARM_AM::db, true));
         MBB.erase(PrevMBBI);
         return true;
       } else if (Mode == ARM_AM::ib &&
-                 isMatchingDecrement(PrevMBBI, Base, Bytes, Pred, PredReg,
-                                     isThumb2)) {
+                 isMatchingDecrement(PrevMBBI, Base, Bytes, 0, Pred, PredReg)) {
         MI->getOperand(1).setImm(ARM_AM::getAM4ModeImm(ARM_AM::da, true));
         MBB.erase(PrevMBBI);
         return true;
@@ -444,7 +441,7 @@ bool ARMLoadStoreOpt::MergeBaseUpdateLSMultiple(MachineBasicBlock &MBB,
     if (MBBI != MBB.end()) {
       MachineBasicBlock::iterator NextMBBI = next(MBBI);
       if ((Mode == ARM_AM::ia || Mode == ARM_AM::ib) &&
-          isMatchingIncrement(NextMBBI, Base, Bytes, Pred, PredReg, isThumb2)) {
+          isMatchingIncrement(NextMBBI, Base, Bytes, 0, Pred, PredReg)) {
         MI->getOperand(1).setImm(ARM_AM::getAM4ModeImm(Mode, true));
         if (NextMBBI == I) {
           Advance = true;
@@ -453,8 +450,7 @@ bool ARMLoadStoreOpt::MergeBaseUpdateLSMultiple(MachineBasicBlock &MBB,
         MBB.erase(NextMBBI);
         return true;
       } else if ((Mode == ARM_AM::da || Mode == ARM_AM::db) &&
-                 isMatchingDecrement(NextMBBI, Base, Bytes, Pred, PredReg,
-                                     isThumb2)) {
+                 isMatchingDecrement(NextMBBI, Base, Bytes, 0, Pred, PredReg)) {
         MI->getOperand(1).setImm(ARM_AM::getAM4ModeImm(Mode, true));
         if (NextMBBI == I) {
           Advance = true;
@@ -474,7 +470,7 @@ bool ARMLoadStoreOpt::MergeBaseUpdateLSMultiple(MachineBasicBlock &MBB,
     if (MBBI != MBB.begin()) {
       MachineBasicBlock::iterator PrevMBBI = prior(MBBI);
       if (Mode == ARM_AM::ia &&
-          isMatchingDecrement(PrevMBBI, Base, Bytes, Pred, PredReg, isThumb2)) {
+          isMatchingDecrement(PrevMBBI, Base, Bytes, 0, Pred, PredReg)) {
         MI->getOperand(1).setImm(ARM_AM::getAM5Opc(ARM_AM::db, true, Offset));
         MBB.erase(PrevMBBI);
         return true;
@@ -484,7 +480,7 @@ bool ARMLoadStoreOpt::MergeBaseUpdateLSMultiple(MachineBasicBlock &MBB,
     if (MBBI != MBB.end()) {
       MachineBasicBlock::iterator NextMBBI = next(MBBI);
       if (Mode == ARM_AM::ia &&
-          isMatchingIncrement(NextMBBI, Base, Bytes, Pred, PredReg, isThumb2)) {
+          isMatchingIncrement(NextMBBI, Base, Bytes, 0, Pred, PredReg)) {
         MI->getOperand(1).setImm(ARM_AM::getAM5Opc(ARM_AM::ia, true, Offset));
         if (NextMBBI == I) {
           Advance = true;
@@ -550,14 +546,16 @@ bool ARMLoadStoreOpt::MergeBaseUpdateLoadStore(MachineBasicBlock &MBB,
   unsigned Bytes = getLSMultipleTransferSize(MI);
   int Opcode = MI->getOpcode();
   DebugLoc dl = MI->getDebugLoc();
+  bool isAM5 = Opcode == ARM::FLDD || Opcode == ARM::FLDS ||
+    Opcode == ARM::FSTD || Opcode == ARM::FSTS;
   bool isAM2 = Opcode == ARM::LDR || Opcode == ARM::STR;
   if (isAM2 && ARM_AM::getAM2Offset(MI->getOperand(3).getImm()) != 0)
     return false;
-  else if (!isAM2 && !isThumb2 &&
-           ARM_AM::getAM5Offset(MI->getOperand(2).getImm()) != 0)
+  else if (isAM5 && ARM_AM::getAM5Offset(MI->getOperand(2).getImm()) != 0)
     return false;
-  else if (isThumb2 && MI->getOperand(2).getImm() != 0)
-    return false;
+  else if (isT2i32Load(Opcode) || isT2i32Store(Opcode))
+    if (MI->getOperand(2).getImm() != 0)
+      return false;
 
   bool isLd = isi32Load(Opcode) || Opcode == ARM::FLDS || Opcode == ARM::FLDD;
   // Can't do the merge if the destination register is the same as the would-be
@@ -570,14 +568,16 @@ bool ARMLoadStoreOpt::MergeBaseUpdateLoadStore(MachineBasicBlock &MBB,
   bool DoMerge = false;
   ARM_AM::AddrOpc AddSub = ARM_AM::add;
   unsigned NewOpc = 0;
+  // AM2 - 12 bits, thumb2 - 8 bits.
+  unsigned Limit = isAM5 ? 0 : (isAM2 ? 0x1000 : 0x100);
   if (MBBI != MBB.begin()) {
     MachineBasicBlock::iterator PrevMBBI = prior(MBBI);
-    if (isMatchingDecrement(PrevMBBI, Base, Bytes, Pred, PredReg, isThumb2)) {
+    if (isMatchingDecrement(PrevMBBI, Base, Bytes, Limit, Pred, PredReg)) {
       DoMerge = true;
       AddSub = ARM_AM::sub;
       NewOpc = getPreIndexedLoadStoreOpcode(Opcode);
-    } else if (isAM2 && isMatchingIncrement(PrevMBBI, Base, Bytes,
-                                            Pred, PredReg, isThumb2)) {
+    } else if (!isAM5 &&
+               isMatchingIncrement(PrevMBBI, Base, Bytes, Limit,Pred,PredReg)) {
       DoMerge = true;
       NewOpc = getPreIndexedLoadStoreOpcode(Opcode);
     }
@@ -587,13 +587,12 @@ bool ARMLoadStoreOpt::MergeBaseUpdateLoadStore(MachineBasicBlock &MBB,
 
   if (!DoMerge && MBBI != MBB.end()) {
     MachineBasicBlock::iterator NextMBBI = next(MBBI);
-    if (isAM2 && isMatchingDecrement(NextMBBI, Base, Bytes, Pred, PredReg,
-                                     isThumb2)) {
+    if (!isAM5 &&
+        isMatchingDecrement(NextMBBI, Base, Bytes, Limit, Pred, PredReg)) {
       DoMerge = true;
       AddSub = ARM_AM::sub;
       NewOpc = getPostIndexedLoadStoreOpcode(Opcode);
-    } else if (isMatchingIncrement(NextMBBI, Base, Bytes, Pred, PredReg,
-                                   isThumb2)) {
+    } else if (isMatchingIncrement(NextMBBI, Base, Bytes, Limit,Pred,PredReg)) {
       DoMerge = true;
       NewOpc = getPostIndexedLoadStoreOpcode(Opcode);
     }
@@ -610,36 +609,46 @@ bool ARMLoadStoreOpt::MergeBaseUpdateLoadStore(MachineBasicBlock &MBB,
     return false;
 
   bool isDPR = NewOpc == ARM::FLDMD || NewOpc == ARM::FSTMD;
-  unsigned Offset = isAM2
-    ? ARM_AM::getAM2Opc(AddSub, Bytes, ARM_AM::no_shift)
-    : (isThumb2
-       ? Bytes
-       : ARM_AM::getAM5Opc((AddSub == ARM_AM::sub) ? ARM_AM::db : ARM_AM::ia,
-                            true, isDPR ? 2 : 1));
+  unsigned Offset = isAM5
+    ? ARM_AM::getAM5Opc((AddSub == ARM_AM::sub) ? ARM_AM::db : ARM_AM::ia,
+                        true, isDPR ? 2 : 1)
+    : (isAM2
+       ? ARM_AM::getAM2Opc(AddSub, Bytes, ARM_AM::no_shift)
+       : Bytes);
   if (isLd) {
-    if (isAM2 || isThumb2)
-      // LDR_PRE, LDR_POST, t2LDR_PRE, t2LDR_POST
-      BuildMI(MBB, MBBI, dl, TII->get(NewOpc), MI->getOperand(0).getReg())
-        .addReg(Base, RegState::Define)
-        .addReg(Base).addReg(0).addImm(Offset).addImm(Pred).addReg(PredReg);
-    else if (!isThumb2)
+    if (isAM5)
       // FLDMS, FLDMD
       BuildMI(MBB, MBBI, dl, TII->get(NewOpc))
         .addReg(Base, getKillRegState(BaseKill))
         .addImm(Offset).addImm(Pred).addReg(PredReg)
         .addReg(MI->getOperand(0).getReg(), RegState::Define);
-  } else {
-    MachineOperand &MO = MI->getOperand(0);
-    if (isAM2 || isThumb2)
-      // STR_PRE, STR_POST, t2STR_PRE, t2STR_POST
-      BuildMI(MBB, MBBI, dl, TII->get(NewOpc), Base)
-        .addReg(MO.getReg(), getKillRegState(MO.isKill()))
+    else if (isAM2)
+      // LDR_PRE, LDR_POST,
+      BuildMI(MBB, MBBI, dl, TII->get(NewOpc), MI->getOperand(0).getReg())
+        .addReg(Base, RegState::Define)
         .addReg(Base).addReg(0).addImm(Offset).addImm(Pred).addReg(PredReg);
     else
+      // t2LDR_PRE, t2LDR_POST
+      BuildMI(MBB, MBBI, dl, TII->get(NewOpc), MI->getOperand(0).getReg())
+        .addReg(Base, RegState::Define)
+        .addReg(Base).addImm(Offset).addImm(Pred).addReg(PredReg);
+  } else {
+    MachineOperand &MO = MI->getOperand(0);
+    if (isAM5)
       // FSTMS, FSTMD
       BuildMI(MBB, MBBI, dl, TII->get(NewOpc)).addReg(Base).addImm(Offset)
         .addImm(Pred).addReg(PredReg)
         .addReg(MO.getReg(), getKillRegState(MO.isKill()));
+    else if (isAM2)
+      // STR_PRE, STR_POST
+      BuildMI(MBB, MBBI, dl, TII->get(NewOpc), Base)
+        .addReg(MO.getReg(), getKillRegState(MO.isKill()))
+        .addReg(Base).addReg(0).addImm(Offset).addImm(Pred).addReg(PredReg);
+    else
+      // t2STR_PRE, t2STR_POST
+      BuildMI(MBB, MBBI, dl, TII->get(NewOpc), Base)
+        .addReg(MO.getReg(), getKillRegState(MO.isKill()))
+        .addReg(Base).addImm(Offset).addImm(Pred).addReg(PredReg);
   }
   MBB.erase(MBBI);
 
@@ -1010,13 +1019,13 @@ bool ARMLoadStoreOpt::MergeReturnIntoLDM(MachineBasicBlock &MBB) {
     MachineInstr *PrevMI = prior(MBBI);
     if (PrevMI->getOpcode() == ARM::LDM || PrevMI->getOpcode() == ARM::t2LDM) {
       MachineOperand &MO = PrevMI->getOperand(PrevMI->getNumOperands()-1);
-      if (MO.getReg() == ARM::LR) {
-        unsigned NewOpc = isThumb2 ? ARM::t2LDM_RET : ARM::LDM_RET;
-        PrevMI->setDesc(TII->get(NewOpc));
-        MO.setReg(ARM::PC);
-        MBB.erase(MBBI);
-        return true;
-      }
+      if (MO.getReg() != ARM::LR)
+        return false;
+      unsigned NewOpc = isThumb2 ? ARM::t2LDM_RET : ARM::LDM_RET;
+      PrevMI->setDesc(TII->get(NewOpc));
+      MO.setReg(ARM::PC);
+      MBB.erase(MBBI);
+      return true;
     }
   }
   return false;
