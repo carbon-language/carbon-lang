@@ -593,11 +593,13 @@ void TargetLoweringObjectFileMachO::Initialize(MCContext &Ctx,
                                    SectionKind::getDataRel());
   
   CStringSection = getOrCreateSection("\t.cstring", true,
-                               SectionKind::getMergeable1ByteCString());
+                                      SectionKind::getMergeable1ByteCString());
+  UStringSection = getOrCreateSection("__TEXT,__ustring", false,
+                                      SectionKind::getMergeable2ByteCString());
   FourByteConstantSection = getOrCreateSection("\t.literal4\n", true,
-                                SectionKind::getMergeableConst4());
+                                             SectionKind::getMergeableConst4());
   EightByteConstantSection = getOrCreateSection("\t.literal8\n", true,
-                                SectionKind::getMergeableConst8());
+                                             SectionKind::getMergeableConst8());
   
   // ld_classic doesn't support .literal16 in 32-bit mode, and ld64 falls back
   // to using it in -static mode.
@@ -704,18 +706,15 @@ SelectSectionForGlobal(const GlobalValue *GV, SectionKind Kind,
   }
   
   // FIXME: Alignment check should be handled by section classifier.
-  if (Kind.isMergeable1ByteCString()) {
-    Constant *C = cast<GlobalVariable>(GV)->getInitializer();
-    const Type *Ty = cast<ArrayType>(C->getType())->getElementType();
-    const TargetData &TD = *TM.getTargetData();
-    unsigned Size = TD.getTypeAllocSize(Ty);
-    if (Size) {
-      unsigned Align = TD.getPreferredAlignment(cast<GlobalVariable>(GV));
-      if (Align <= 32)
+  if (Kind.isMergeable1ByteCString() ||
+      Kind.isMergeable2ByteCString()) {
+    if (TM.getTargetData()->getPreferredAlignment(
+                                              cast<GlobalVariable>(GV)) < 32) {
+      if (Kind.isMergeable1ByteCString())
         return CStringSection;
+      assert(Kind.isMergeable2ByteCString());
+      return UStringSection;
     }
-    
-    return ReadOnlySection;
   }
   
   if (Kind.isMergeableConst()) {
@@ -725,11 +724,10 @@ SelectSectionForGlobal(const GlobalValue *GV, SectionKind Kind,
       return EightByteConstantSection;
     if (Kind.isMergeableConst16() && SixteenByteConstantSection)
       return SixteenByteConstantSection;
-    return ReadOnlySection;  // .const
   }
-  
-  // FIXME: ROData -> const in -static mode that is relocatable but they happen
-  // by the static linker.  Why not mergeable?
+
+  // Otherwise, if it is readonly, but not something we can specially optimize,
+  // just drop it in .const.
   if (Kind.isReadOnly())
     return ReadOnlySection;
 

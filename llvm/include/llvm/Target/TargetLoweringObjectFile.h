@@ -224,6 +224,7 @@ public:
   
 class TargetLoweringObjectFileMachO : public TargetLoweringObjectFile {
   const MCSection *CStringSection;
+  const MCSection *UStringSection;
   const MCSection *TextCoalSection;
   const MCSection *ConstTextCoalSection;
   const MCSection *ConstDataCoalSection;
