@@ -19,6 +19,11 @@
 // Assumption:  right shift of signed negative is arithmetic shift
 
 #include <limits.h>
+#include <math.h>
+
+#if !defined(INFINITY) && defined(HUGE_VAL)
+#define INFINITY HUGE_VAL
+#endif
 
 // TODO: Improve this to minimal pre-processor hackish'ness.
 #if defined (__SVR4) && defined (__sun)

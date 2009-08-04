@@ -17,10 +17,6 @@
 #include <math.h>
 #include <complex.h>
 
-#if !defined(INFINITY) && defined(HUGE_VAL)
-#define INFINITY HUGE_VAL
-#endif
-
 // Returns: the product of a + ib and c + id
 
 long double _Complex
