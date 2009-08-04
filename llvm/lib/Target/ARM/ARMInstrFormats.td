@@ -1071,6 +1071,14 @@ class ASuI<bits<8> opcod1, bits<4> opcod2, bits<4> opcod3, dag oops, dag iops,
   let Inst{7-4}   = opcod3;
 }
 
+// Single precision, unary if no NEON
+// Same as ASuI except not available if NEON is enabled
+class ASuIn<bits<8> opcod1, bits<4> opcod2, bits<4> opcod3, dag oops, dag iops,
+           string opc, string asm, list<dag> pattern>
+  : ASuI<opcod1, opcod2, opcod2, oops, iops, opc, asm, pattern> {
+  list<Predicate> Predicates = [HasVFP2,DontUseNEONForFP];
+}
+
 // Single precision, binary
 class ASbI<bits<8> opcod, dag oops, dag iops, string opc,
            string asm, list<dag> pattern>

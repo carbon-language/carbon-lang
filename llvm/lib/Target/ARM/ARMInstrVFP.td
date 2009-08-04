@@ -168,9 +168,9 @@ def FABSD  : ADuI<0b11101011, 0b0000, 0b1100, (outs DPR:$dst), (ins DPR:$a),
                  "fabsd", " $dst, $a",
                  [(set DPR:$dst, (fabs DPR:$a))]>;
 
-def FABSS  : ASuI<0b11101011, 0b0000, 0b1100, (outs SPR:$dst), (ins SPR:$a),
-                 "fabss", " $dst, $a",
-                 [(set SPR:$dst, (fabs SPR:$a))]>;
+def FABSS  : ASuIn<0b11101011, 0b0000, 0b1100, (outs SPR:$dst), (ins SPR:$a),
+                  "fabss", " $dst, $a",
+                  [(set SPR:$dst, (fabs SPR:$a))]>;
 
 let Defs = [FPSCR] in {
 def FCMPEZD : ADuI<0b11101011, 0b0101, 0b1100, (outs), (ins DPR:$a),
@@ -208,9 +208,9 @@ def FNEGD  : ADuI<0b11101011, 0b0001, 0b0100, (outs DPR:$dst), (ins DPR:$a),
                  "fnegd", " $dst, $a",
                  [(set DPR:$dst, (fneg DPR:$a))]>;
 
-def FNEGS  : ASuI<0b11101011, 0b0001, 0b0100, (outs SPR:$dst), (ins SPR:$a),
-                 "fnegs", " $dst, $a",
-                 [(set SPR:$dst, (fneg SPR:$a))]>;
+def FNEGS  : ASuIn<0b11101011, 0b0001, 0b0100, (outs SPR:$dst), (ins SPR:$a),
+                  "fnegs", " $dst, $a",
+                  [(set SPR:$dst, (fneg SPR:$a))]>;
 
 def FSQRTD  : ADuI<0b11101011, 0b0001, 0b1100, (outs DPR:$dst), (ins DPR:$a),
                  "fsqrtd", " $dst, $a",

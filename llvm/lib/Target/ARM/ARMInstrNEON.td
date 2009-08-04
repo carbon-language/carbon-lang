@@ -246,6 +246,12 @@ class N2VQInt<bits<2> op24_23, bits<2> op21_20, bits<2> op19_18,
         (ins QPR:$src), !strconcat(OpcodeStr, "\t$dst, $src"), "",
         [(set QPR:$dst, (ResTy (IntOp (OpTy QPR:$src))))]>;
 
+// Basic 2-register operations, scalar single-precision
+class N2VDInts<SDNode OpNode, NeonI Inst>
+  : NEONFPPat<(f32 (OpNode SPR:$a)),
+         (EXTRACT_SUBREG (Inst (INSERT_SUBREG (v2f32 (IMPLICIT_DEF)), SPR:$a, arm_ssubreg_0)),
+          arm_ssubreg_0)>;
+
 // Narrow 2-register intrinsics.
 class N2VNInt<bits<2> op24_23, bits<2> op21_20, bits<2> op19_18,
               bits<2> op17_16, bits<5> op11_7, bit op6, bit op4,
@@ -1338,6 +1344,7 @@ def  VABSfd   : N2VDInt<0b11, 0b11, 0b10, 0b01, 0b01110, 0, "vabs.f32",
                         v2f32, v2f32, int_arm_neon_vabsf>;
 def  VABSfq   : N2VQInt<0b11, 0b11, 0b10, 0b01, 0b01110, 0, "vabs.f32",
                         v4f32, v4f32, int_arm_neon_vabsf>;
+def : N2VDInts<fabs, VABSfd>;
 
 //   VQABS    : Vector Saturating Absolute Value
 defm VQABS    : N2VInt_QHS<0b11, 0b11, 0b00, 0b01110, 0, "vqabs.s",
@@ -1372,6 +1379,7 @@ def  VNEGf32d : N2V<0b11, 0b11, 0b10, 0b01, 0b01111, 0, 0,
 def  VNEGf32q : N2V<0b11, 0b11, 0b10, 0b01, 0b01111, 1, 0,
                     (outs QPR:$dst), (ins QPR:$src), "vneg.f32\t$dst, $src", "",
                     [(set QPR:$dst, (v4f32 (fneg QPR:$src)))]>;
+def : N2VDInts<fneg, VNEGf32d>;
 
 def : Pat<(v8i8 (vneg_conv DPR:$src)), (VNEGs8d DPR:$src)>;
 def : Pat<(v4i16 (vneg_conv DPR:$src)), (VNEGs16d DPR:$src)>;
