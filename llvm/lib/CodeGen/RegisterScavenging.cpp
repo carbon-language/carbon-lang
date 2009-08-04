@@ -224,11 +224,13 @@ void RegScavenger::forward() {
   BitVector KillRegs(NumPhysRegs);
   for (unsigned i = 0, e = UseMOs.size(); i != e; ++i) {
     const MachineOperand MO = *UseMOs[i].first;
+    unsigned Idx = UseMOs[i].second;
     unsigned Reg = MO.getReg();
 
     assert(isUsed(Reg) && "Using an undefined register!");
 
-    if (MO.isKill() && !isReserved(Reg)) {
+    // Two-address operands implicitly kill.
+    if ((MO.isKill() || MI->isRegTiedToDefOperand(Idx)) && !isReserved(Reg)) {
       KillRegs.set(Reg);
 
       // Mark sub-registers as used.
@@ -251,8 +253,6 @@ void RegScavenger::forward() {
   for (unsigned i = 0, e = NumECs + NumDefs; i != e; ++i) {
     const MachineOperand &MO = (i < NumECs)
       ? *EarlyClobberMOs[i].first : *DefMOs[i-NumECs].first;
-    unsigned Idx = (i < NumECs)
-      ? EarlyClobberMOs[i].second : DefMOs[i-NumECs].second;
     unsigned Reg = MO.getReg();
     if (MO.isUndef())
       continue;
@@ -260,15 +260,6 @@ void RegScavenger::forward() {
     // If it's dead upon def, then it is now free.
     if (MO.isDead()) {
       setUnused(Reg, MI);
-      continue;
-    }
-
-    // Skip two-address destination operand.
-    unsigned UseIdx;
-    if (MI->isRegTiedToUseOperand(Idx, &UseIdx) &&
-        !MI->getOperand(UseIdx).isUndef()) {
-      assert(!MI->getOperand(UseIdx).isKill() &&
-             "Using an undefined register!");
       continue;
     }
 
