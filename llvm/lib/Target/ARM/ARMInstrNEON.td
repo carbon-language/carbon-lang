@@ -953,6 +953,7 @@ defm VQDMLSL  : N3VLInt3_HS<0, 1, 0b1011, 0, "vqdmlsl.s", int_arm_neon_vqdmlsl>;
 
 // Vector Multiply-Accumulate/Subtract used for single-precision FP
 def : N3VDMulOps<fmul, fadd, VMLAfd>;
+def : N3VDMulOps<fmul, fsub, VMLSfd>;
 
 // Vector Subtract Operations.
 

@@ -346,6 +346,11 @@ def FNMACS : ASbIn<0b11100000, (outs SPR:$dst), (ins SPR:$dstin, SPR:$a, SPR:$b)
   let Inst{6} = 1;
 }
 
+def : Pat<(fsub DPR:$dstin, (fmul DPR:$a, DPR:$b)),
+          (FNMACD DPR:$dstin, DPR:$a, DPR:$b)>, Requires<[DontUseNEONForFP]>;
+def : Pat<(fsub SPR:$dstin, (fmul SPR:$a, SPR:$b)),
+          (FNMACS SPR:$dstin, SPR:$a, SPR:$b)>, Requires<[DontUseNEONForFP]>;
+
 def FNMSCD : ADbI<0b11100001, (outs DPR:$dst), (ins DPR:$dstin, DPR:$a, DPR:$b),
                  "fnmscd", " $dst, $a, $b",
              [(set DPR:$dst, (fsub (fneg (fmul DPR:$a, DPR:$b)), DPR:$dstin))]>,

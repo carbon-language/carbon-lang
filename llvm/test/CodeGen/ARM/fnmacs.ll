@@ -1,4 +1,3 @@
-; XFAIL: *
 ; RUN: llvm-as < %s | llc -march=arm -mattr=+vfp2 | grep -E {fnmacs\\W*s\[0-9\]+,\\W*s\[0-9\]+,\\W*s\[0-9\]+} | count 1
 ; RUN: llvm-as < %s | llc -march=arm -mattr=+neon,+neonfp | grep -E {vmls.f32\\W*d\[0-9\]+,\\W*d\[0-9\]+,\\W*d\[0-9\]+} | count 1
 ; RUN: llvm-as < %s | llc -march=arm -mattr=+neon,-neonfp | grep -E {fnmacs\\W*s\[0-9\]+,\\W*s\[0-9\]+,\\W*s\[0-9\]+} | count 1
