@@ -267,7 +267,8 @@ void RegScavenger::forward() {
     unsigned UseIdx;
     if (MI->isRegTiedToUseOperand(Idx, &UseIdx) &&
         !MI->getOperand(UseIdx).isUndef()) {
-      assert(isUsed(Reg) && "Using an undefined register!");
+      assert(!MI->getOperand(UseIdx).isKill() &&
+             "Using an undefined register!");
       continue;
     }
 
