@@ -142,7 +142,7 @@ def VSTRQ : NI<(outs), (ins QPR:$src, GPR:$addr),
 //   VLD1     : Vector Load (multiple single elements)
 class VLD1D<string OpcodeStr, ValueType Ty, Intrinsic IntOp>
   : NLdSt<(outs DPR:$dst), (ins addrmode6:$addr),
-          !strconcat(OpcodeStr, "\t${dst:dregsingle}, $addr"),
+          !strconcat(OpcodeStr, "\t\\{$dst\\}, $addr"),
           [(set DPR:$dst, (Ty (IntOp addrmode6:$addr)))]>;
 class VLD1Q<string OpcodeStr, ValueType Ty, Intrinsic IntOp>
   : NLdSt<(outs QPR:$dst), (ins addrmode6:$addr),
@@ -164,7 +164,7 @@ def  VLD1q64  : VLD1Q<"vld1.64", v2i64, int_arm_neon_vld1i>;
 //   VST1     : Vector Store (multiple single elements)
 class VST1D<string OpcodeStr, ValueType Ty, Intrinsic IntOp>
   : NLdSt<(outs), (ins addrmode6:$addr, DPR:$src),
-          !strconcat(OpcodeStr, "\t${src:dregsingle}, $addr"),
+          !strconcat(OpcodeStr, "\t\\{$src\\}, $addr"),
           [(IntOp addrmode6:$addr, (Ty DPR:$src))]>;
 class VST1Q<string OpcodeStr, ValueType Ty, Intrinsic IntOp>
   : NLdSt<(outs), (ins addrmode6:$addr, QPR:$src),

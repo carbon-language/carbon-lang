@@ -348,8 +348,6 @@ void ARMAsmPrinter::printOperand(const MachineInstr *MI, int OpNum,
         O << '{'
           << TRI->getAsmName(DRegLo) << ',' << TRI->getAsmName(DRegHi)
           << '}';
-      } else if (Modifier && strcmp(Modifier, "dregsingle") == 0) {
-        O << '{' << TRI->getAsmName(Reg) << '}';
       } else {
         O << TRI->getAsmName(Reg);
       }
