@@ -1029,7 +1029,7 @@ my $ExitStatusFoundBugs = 0; # Exit status reflects whether bugs were found
 my @AnalysesToRun;
 my $StoreModel;
 my $ConstraintsModel;
-my $OutputFormat;
+my $OutputFormat = "html";
 
 if (!@ARGV) {
   DisplayHelp();
