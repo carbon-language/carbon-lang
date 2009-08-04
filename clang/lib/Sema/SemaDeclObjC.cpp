@@ -128,8 +128,7 @@ ActOnStartClassInterface(SourceLocation AtInterfaceLoc,
       Diag(SuperLoc, diag::err_recursive_superclass)
         << SuperName << ClassName << SourceRange(AtInterfaceLoc, ClassLoc);
       IDecl->setLocEnd(ClassLoc);
-    }
-    else {
+    } else {
       ObjCInterfaceDecl *SuperClassDecl = 
                                 dyn_cast_or_null<ObjCInterfaceDecl>(PrevDecl);
 
@@ -862,9 +861,8 @@ bool Sema::isPropertyReadonly(ObjCPropertyDecl *PDecl,
         dyn_cast<ObjCImplementationDecl>(OMD->getDeclContext())) {
       if (IMD->getInstanceMethod(PDecl->getSetterName()))
         return false;
-    }
-    else if (ObjCCategoryImplDecl *CIMD = 
-             dyn_cast<ObjCCategoryImplDecl>(OMD->getDeclContext())) {
+    } else if (ObjCCategoryImplDecl *CIMD = 
+               dyn_cast<ObjCCategoryImplDecl>(OMD->getDeclContext())) {
       if (CIMD->getInstanceMethod(PDecl->getSetterName()))
         return false;
     }
@@ -974,8 +972,7 @@ void Sema::MatchAllMethodDeclarations(const llvm::DenseSet<Selector> &InsMap,
       if (ImmediateClass)
         WarnUndefinedMethod(IMPDecl->getLocation(), *I, IncompleteImpl);
       continue;
-    }
-    else {
+    } else {
       ObjCMethodDecl *ImpMethodDecl = 
       IMPDecl->getInstanceMethod((*I)->getSelector());
       ObjCMethodDecl *IntfMethodDecl = 
@@ -998,8 +995,7 @@ void Sema::MatchAllMethodDeclarations(const llvm::DenseSet<Selector> &InsMap,
     if (!ClsMap.count((*I)->getSelector())) {
       if (ImmediateClass)
         WarnUndefinedMethod(IMPDecl->getLocation(), *I, IncompleteImpl);
-    }
-    else {
+    } else {
       ObjCMethodDecl *ImpMethodDecl =
         IMPDecl->getClassMethod((*I)->getSelector());
       ObjCMethodDecl *IntfMethodDecl = 
@@ -1136,10 +1132,9 @@ Sema::ActOnForwardClassDeclaration(SourceLocation AtClassLoc,
       if (!TDD || !isa<ObjCInterfaceType>(TDD->getUnderlyingType())) {
         Diag(AtClassLoc, diag::err_redefinition_different_kind) << IdentList[i];
         Diag(PrevDecl->getLocation(), diag::note_previous_definition);
-      }
-      else if (TDD) {
-        // a forward class declaration matching a typedef name of a class
-        // refers to the underlying class.
+      } else if (TDD) {
+        // a forward class declaration matching a typedef name of a class refers
+        // to the underlying class.
         if (ObjCInterfaceType * OI = 
               dyn_cast<ObjCInterfaceType>(TDD->getUnderlyingType()))
           PrevDecl = OI->getDecl();
@@ -1550,8 +1545,7 @@ void Sema::ActOnAtEnd(SourceLocation AtEndLoc, DeclPtrTy classDecl,
         // parent methods if it shadows one.
         CompareMethodParamsInBaseAndSuper(ClassDecl, Method, true);
       }
-    }
-    else {
+    } else {
       /// Check for class method of the same name with incompatible types
       const ObjCMethodDecl *&PrevMethod = ClsMap[Method->getSelector()];
       bool match = PrevMethod ? MatchTwoMethodDeclarations(Method, PrevMethod) 
@@ -1758,9 +1752,8 @@ Sema::DeclPtrTy Sema::ActOnMethodDeclaration(
     }
     if (AttrList)
       Diag(EndLoc, diag::warn_attribute_method_def);
-  } 
-  else if (ObjCCategoryImplDecl *CatImpDecl = 
-            dyn_cast<ObjCCategoryImplDecl>(ClassDecl)) {
+  } else if (ObjCCategoryImplDecl *CatImpDecl = 
+             dyn_cast<ObjCCategoryImplDecl>(ClassDecl)) {
     if (MethodType == tok::minus) {
       PrevMethod = CatImpDecl->getInstanceMethod(Sel);
       CatImpDecl->addInstanceMethod(ObjCMethod);
@@ -1913,8 +1906,7 @@ Sema::DeclPtrTy Sema::ActOnProperty(Scope *S, SourceLocation AtLoc,
             if (Attributes & ObjCDeclSpec::DQ_PR_copy)
               PIDecl->setPropertyAttributes(ObjCPropertyDecl::OBJC_PR_copy);
             PIDecl->setSetterName(SetterSel);
-          }
-          else
+          } else
             Diag(AtLoc, diag::err_use_continuation_class) 
               << CCPrimary->getDeclName();
           *isOverridingProperty = true;
@@ -2024,8 +2016,7 @@ Sema::DeclPtrTy Sema::ActOnPropertyImplDecl(SourceLocation AtLoc,
       Diag(PropertyLoc, diag::error_bad_property_decl) << IDecl->getDeclName();
       return DeclPtrTy();
     }
-  }
-  else if ((CatImplClass = dyn_cast<ObjCCategoryImplDecl>(ClassImpDecl))) {
+  } else if ((CatImplClass = dyn_cast<ObjCCategoryImplDecl>(ClassImpDecl))) {
     if (Synthesize) {
       Diag(AtLoc, diag::error_synthesize_category_decl);
       return DeclPtrTy();
@@ -2078,9 +2069,8 @@ Sema::DeclPtrTy Sema::ActOnPropertyImplDecl(SourceLocation AtLoc,
         Diag(PropertyLoc, diag::error_missing_property_ivar_decl) << PropertyId;
         // Note! I deliberately want it to fall thru so, we have a 
         // a property implementation and to avoid future warnings.
-    }
-    else if (getLangOptions().ObjCNonFragileABI &&
-             ClassDeclared != IDecl) {
+    } else if (getLangOptions().ObjCNonFragileABI &&
+               ClassDeclared != IDecl) {
       Diag(PropertyLoc, diag::error_ivar_in_superclass_use)
         << property->getDeclName() << Ivar->getDeclName() 
         << ClassDeclared->getDeclName();
@@ -2153,8 +2143,7 @@ Sema::DeclPtrTy Sema::ActOnPropertyImplDecl(SourceLocation AtLoc,
       return DeclPtrTy();
     }
     IC->addPropertyImplementation(PIDecl);
-  }
-  else {
+  } else {
     if (Synthesize)
       if (ObjCPropertyImplDecl *PPIDecl = 
           CatImplClass->FindPropertyImplIvarDecl(PropertyIvar)) {

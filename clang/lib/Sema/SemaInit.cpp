@@ -414,8 +414,8 @@ void InitListChecker::FillInValueInitializations(InitListExpr *ILE) {
       if (Init < NumInits && !hadError)
         ILE->setInit(Init, 
                      new (SemaRef.Context) ImplicitValueInitExpr(ElementType));
-    }
-    else if (InitListExpr *InnerILE =dyn_cast<InitListExpr>(ILE->getInit(Init)))
+    } else if (InitListExpr *InnerILE
+               = dyn_cast<InitListExpr>(ILE->getInit(Init)))
       FillInValueInitializations(InnerILE);
   }
 }
@@ -595,8 +595,7 @@ void InitListChecker::CheckListElementTypes(InitListExpr *IList,
                       false);
       CheckArrayType(IList, DeclType, Zero, SubobjectIsDesignatorContext, Index,
                      StructuredList, StructuredIndex);
-    }
-    else
+    } else
       assert(0 && "Aggregate that isn't a structure or array?!");
   } else if (DeclType->isVoidType() || DeclType->isFunctionType()) {
     // This type is invalid, issue a diagnostic.

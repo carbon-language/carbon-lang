@@ -751,8 +751,7 @@ bool Sema::SemaCheckStringLiteral(const Expr *E, const CallExpr *TheCall,
 
       if (const ArrayType *AT = Context.getAsArrayType(T)) {
         isConstant = AT->getElementType().isConstant(Context);
-      }
-      else if (const PointerType *PT = T->getAs<PointerType>()) {
+      } else if (const PointerType *PT = T->getAs<PointerType>()) {
         isConstant = T.isConstant(Context) && 
                      PT->getPointeeType().isConstant(Context);
       }
@@ -1205,9 +1204,8 @@ Sema::CheckReturnStackAddr(Expr *RetValExp, QualType lhsType,
       if (C->hasBlockDeclRefExprs())
         Diag(C->getLocStart(), diag::err_ret_local_block)
           << C->getSourceRange();
-  }
-  // Perform checking for stack values returned by reference.
-  else if (lhsType->isReferenceType()) {
+  } else if (lhsType->isReferenceType()) {
+    // Perform checking for stack values returned by reference.
     // Check for a reference to the stack
     if (DeclRefExpr *DR = EvalVal(RetValExp))
       Diag(DR->getLocStart(), diag::warn_ret_stack_ref)
@@ -1444,8 +1442,7 @@ void Sema::CheckFloatComparison(SourceLocation loc, Expr* lex, Expr *rex) {
     if (FloatingLiteral* FLL = dyn_cast<FloatingLiteral>(LeftExprSansParen)) {
       if (FLL->isExact())
         EmitWarning = false;
-    }
-    else
+    } else
       if (FloatingLiteral* FLR = dyn_cast<FloatingLiteral>(RightExprSansParen)){
         if (FLR->isExact())
           EmitWarning = false;

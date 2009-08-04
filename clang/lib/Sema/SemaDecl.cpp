@@ -3281,8 +3281,7 @@ Sema::DeclGroupPtrTy Sema::FinalizeDeclaratorGroup(Scope *S, const DeclSpec &DS,
                                 ArrayT->getElementType(),
                                 diag::err_illegal_decl_array_incomplete_type))
           IDecl->setInvalidDecl();
-      }
-      else if (IDecl->getStorageClass() == VarDecl::Static) {
+      } else if (IDecl->getStorageClass() == VarDecl::Static) {
         // C99 6.9.2p3: If the declaration of an identifier for an object is
         // a tentative definition and has internal linkage (C99 6.2.2p3), the
         // declared type shall not be an incomplete type.
@@ -3947,8 +3946,7 @@ Sema::DeclPtrTy Sema::ActOnTag(Scope *S, unsigned TagSpec, TagUseKind TUK,
       Name = 0;
       PrevDecl = 0;
       Invalid = true;
-    }
-    else
+    } else
       PrevDecl = R;
 
     if (!getLangOptions().CPlusPlus && TUK != TUK_Reference) {
@@ -4717,8 +4715,7 @@ Sema::DeclPtrTy Sema::ActOnIvar(Scope *S,
     ObjCInterfaceDecl* IDecl = IMPDecl->getClassInterface();
     assert(IDecl && "No class- ActOnIvar");
     EnclosingContext = cast_or_null<DeclContext>(IDecl);
-  }
-  else
+  } else
     EnclosingContext = dyn_cast<DeclContext>(EnclosingDecl);
   assert(EnclosingContext && "null DeclContext for ivar - ActOnIvar");
   
@@ -4857,12 +4854,11 @@ void Sema::ActOnFields(Scope* S,
       FD->setInvalidDecl();
       EnclosingDecl->setInvalidDecl();
       continue;
-    }
-    else if (getLangOptions().ObjC1 &&
-             getLangOptions().getGCMode() != LangOptions::NonGC &&
-             Record &&
-             (FD->getType()->isObjCObjectPointerType() ||
-              FD->getType().isObjCGCStrong()))
+    } else if (getLangOptions().ObjC1 &&
+               getLangOptions().getGCMode() != LangOptions::NonGC &&
+               Record &&
+               (FD->getType()->isObjCObjectPointerType() ||
+                FD->getType().isObjCGCStrong()))
       Record->setHasObjectMember(true);
     // Keep track of the number of named members.
     if (FD->getIdentifier())

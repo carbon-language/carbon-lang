@@ -756,8 +756,7 @@ static void HandleSentinelAttr(Decl *d, const AttributeList &Attr, Sema &S) {
         S.Diag(Attr.getLoc(), diag::warn_attribute_sentinel_not_variadic) << m;
         return;
       }
-    }
-    else {
+    } else {
       S.Diag(Attr.getLoc(), diag::warn_attribute_wrong_decl_type)
       << Attr.getName() << 6 /*function, method or block */;
       return;

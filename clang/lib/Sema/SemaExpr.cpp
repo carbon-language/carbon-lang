@@ -116,8 +116,7 @@ void Sema::DiagnoseSentinelCalls(NamedDecl *D, SourceLocation Loc,
     }
     warnNotEnoughArgs = (P != E || i >= NumArgs);
     isMethod = 1;
-  }
-  else if (FunctionDecl *FD = dyn_cast<FunctionDecl>(D)) {
+  } else if (FunctionDecl *FD = dyn_cast<FunctionDecl>(D)) {
     // skip over named parameters.
     ObjCMethodDecl::param_iterator P, E = FD->param_end();
     for (P = FD->param_begin(); (P != E && i < NumArgs); ++P) {
@@ -127,8 +126,7 @@ void Sema::DiagnoseSentinelCalls(NamedDecl *D, SourceLocation Loc,
         ++i;
     }
     warnNotEnoughArgs = (P != E || i >= NumArgs);
-  }
-  else if (VarDecl *V = dyn_cast<VarDecl>(D)) {
+  } else if (VarDecl *V = dyn_cast<VarDecl>(D)) {
     // block or function pointer call.
     QualType Ty = V->getType();
     if (Ty->isBlockPointerType() || Ty->isFunctionPointerType()) {
@@ -148,11 +146,9 @@ void Sema::DiagnoseSentinelCalls(NamedDecl *D, SourceLocation Loc,
       }
       if (Ty->isBlockPointerType())
         isMethod = 2;
-    }
-    else
+    } else
       return;
-  }
-  else
+  } else
     return;
 
   if (warnNotEnoughArgs) {
@@ -913,8 +909,7 @@ Sema::ActOnDeclarationNameExpr(Scope *S, SourceLocation Loc,
                                        SelfExpr.takeAs<Expr>(), true, true));
         }
       }
-    }
-    else if (getCurMethodDecl()->isInstanceMethod()) {
+    } else if (getCurMethodDecl()->isInstanceMethod()) {
       // We should warn if a local variable hides an ivar.
       ObjCInterfaceDecl *IFace = getCurMethodDecl()->getClassInterface();
       ObjCInterfaceDecl *ClassDeclared;
@@ -2355,9 +2350,8 @@ Sema::ActOnMemberReferenceExpr(Scope *S, ExprArg Base, SourceLocation OpLoc,
                 ClassOfMethodDecl != ClassDeclared)
               Diag(MemberLoc, diag::error_private_ivar_access) 
                 << IV->getDeclName();
-          }
-          // @protected
-          else if (!IDecl->isSuperClassOf(ClassOfMethodDecl))
+          } else if (!IDecl->isSuperClassOf(ClassOfMethodDecl))
+            // @protected
             Diag(MemberLoc, diag::error_protected_ivar_access) 
               << IV->getDeclName();
         }
@@ -4154,10 +4148,9 @@ QualType Sema::CheckCompareOperands(Expr *&lex, Expr *&rex, SourceLocation Loc,
         !RHSStripped->isNullPointerConstant(Context)) {
       literalString = lex;
       literalStringStripped = LHSStripped;
-    }
-    else if ((isa<StringLiteral>(RHSStripped) ||
-              isa<ObjCEncodeExpr>(RHSStripped)) &&
-             !LHSStripped->isNullPointerConstant(Context)) {
+    } else if ((isa<StringLiteral>(RHSStripped) ||
+                isa<ObjCEncodeExpr>(RHSStripped)) &&
+               !LHSStripped->isNullPointerConstant(Context)) {
       literalString = rex;
       literalStringStripped = RHSStripped;
     }
@@ -5804,9 +5797,8 @@ void Sema::MarkDeclarationReferenced(SourceLocation Loc, Decl *D) {
     if (Constructor->isImplicit() && Constructor->isDefaultConstructor()) {
         if (!Constructor->isUsed())
           DefineImplicitDefaultConstructor(Loc, Constructor);
-    }
-    else if (Constructor->isImplicit() && 
-             Constructor->isCopyConstructor(Context, TypeQuals)) {
+    } else if (Constructor->isImplicit() && 
+               Constructor->isCopyConstructor(Context, TypeQuals)) {
       if (!Constructor->isUsed())
         DefineImplicitCopyConstructor(Loc, Constructor, TypeQuals);
     }

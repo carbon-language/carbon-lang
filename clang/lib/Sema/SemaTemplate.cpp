@@ -681,10 +681,9 @@ bool Sema::CheckTemplateParameterList(TemplateParameterList *NewParams,
         PreviousDefaultArgLoc = NewTypeParm->getDefaultArgumentLoc();
       } else if (SawDefaultArgument)
         MissingDefaultArg = true;
-    } 
-    // Merge default arguments for non-type template parameters
-    else if (NonTypeTemplateParmDecl *NewNonTypeParm
+    } else if (NonTypeTemplateParmDecl *NewNonTypeParm
                = dyn_cast<NonTypeTemplateParmDecl>(*NewParam)) {
+      // Merge default arguments for non-type template parameters
       NonTypeTemplateParmDecl *OldNonTypeParm
         = OldParams? cast<NonTypeTemplateParmDecl>(*OldParam) : 0;
       if (OldNonTypeParm && OldNonTypeParm->hasDefaultArgument() && 
@@ -709,9 +708,8 @@ bool Sema::CheckTemplateParameterList(TemplateParameterList *NewParams,
         PreviousDefaultArgLoc = NewNonTypeParm->getDefaultArgumentLoc();
       } else if (SawDefaultArgument)
         MissingDefaultArg = true;      
-    }
+    } else {
     // Merge default arguments for template template parameters
-    else {
       TemplateTemplateParmDecl *NewTemplateParm
         = cast<TemplateTemplateParmDecl>(*NewParam);
       TemplateTemplateParmDecl *OldTemplateParm
@@ -2487,8 +2485,7 @@ Sema::ActOnClassTemplateSpecialization(Scope *S, unsigned TagSpec,
                                                    Converted.getFlatArguments(),
                                                    Converted.flatSize(),
                                                     Context);
-  }
-  else
+  } else
     ClassTemplateSpecializationDecl::Profile(ID,
                                              Converted.getFlatArguments(),
                                              Converted.flatSize(),

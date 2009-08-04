@@ -227,13 +227,13 @@ bool Sema::LookupInBases(CXXRecordDecl *Class,
         // return immediately.
         return FoundPath;
       }
-    } 
-    // C++ [class.member.lookup]p2:
-    //   A member name f in one sub-object B hides a member name f in
-    //   a sub-object A if A is a base class sub-object of B. Any
-    //   declarations that are so hidden are eliminated from
-    //   consideration.
-    else if (VisitBase && LookupInBases(BaseRecord, Criteria, Paths)) {
+    } else if (VisitBase && LookupInBases(BaseRecord, Criteria, Paths)) {
+      // C++ [class.member.lookup]p2:
+      //   A member name f in one sub-object B hides a member name f in
+      //   a sub-object A if A is a base class sub-object of B. Any
+      //   declarations that are so hidden are eliminated from
+      //   consideration.
+
       // There is a path to a base class that meets the criteria. If we're not
       // collecting paths or finding ambiguities, we're done.
       FoundPath = true;

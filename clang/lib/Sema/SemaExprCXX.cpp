@@ -414,9 +414,8 @@ Sema::BuildCXXNew(SourceLocation StartLoc, bool UseGlobal,
   unsigned NumConsArgs = ConstructorArgs.size();
   if (AllocType->isDependentType()) {
     // Skip all the checks.
-  }
-  else if ((RT = AllocType->getAs<RecordType>()) &&
-            !AllocType->isAggregateType()) {
+  } else if ((RT = AllocType->getAs<RecordType>()) &&
+             !AllocType->isAggregateType()) {
     Constructor = PerformInitializationByConstructor(
                       AllocType, ConsArgs, NumConsArgs,
                       TypeLoc,

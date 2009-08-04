@@ -612,11 +612,10 @@ TemplateDeclInstantiator::InstantiateFunctionType(FunctionDecl *D,
       if (PInst->getType()->isVoidType()) {
         SemaRef.Diag(PInst->getLocation(), diag::err_param_with_void_type);
         PInst->setInvalidDecl();
-      }
-      else if (SemaRef.RequireNonAbstractType(PInst->getLocation(), 
-                                              PInst->getType(),
-                                              diag::err_abstract_type_in_decl,
-                                              Sema::AbstractParamType))
+      } else if (SemaRef.RequireNonAbstractType(PInst->getLocation(), 
+                                                PInst->getType(),
+                                                diag::err_abstract_type_in_decl,
+                                                Sema::AbstractParamType))
         PInst->setInvalidDecl();
 
       Params.push_back(PInst);

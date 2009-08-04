@@ -509,9 +509,8 @@ Sema::IsStandardConversion(Expr* From, QualType ToType,
 
     // FIXME: Doesn't see through to qualifiers behind a typedef!
     FromType = FromType.getUnqualifiedType();
-  }
-  // Array-to-pointer conversion (C++ 4.2)
-  else if (FromType->isArrayType()) {
+  } else if (FromType->isArrayType()) {
+    // Array-to-pointer conversion (C++ 4.2)
     SCS.First = ICK_Array_To_Pointer;
 
     // An lvalue or rvalue of type "array of N T" or "array of unknown
@@ -532,19 +531,17 @@ Sema::IsStandardConversion(Expr* From, QualType ToType,
       SCS.ToTypePtr = ToType.getAsOpaquePtr();
       return true;
     }
-  }
-  // Function-to-pointer conversion (C++ 4.3).
-  else if (FromType->isFunctionType() && argIsLvalue == Expr::LV_Valid) {
+  } else if (FromType->isFunctionType() && argIsLvalue == Expr::LV_Valid) {
+    // Function-to-pointer conversion (C++ 4.3).
     SCS.First = ICK_Function_To_Pointer;
 
     // An lvalue of function type T can be converted to an rvalue of
     // type "pointer to T." The result is a pointer to the
     // function. (C++ 4.3p1).
     FromType = Context.getPointerType(FromType);
-  }
-  // Address of overloaded function (C++ [over.over]).
-  else if (FunctionDecl *Fn 
+  } else if (FunctionDecl *Fn 
              = ResolveAddressOfOverloadedFunction(From, ToType, false)) {
+    // Address of overloaded function (C++ [over.over]).
     SCS.First = ICK_Function_To_Pointer;
 
     // We were able to resolve the address of the overloaded function,
@@ -566,9 +563,8 @@ Sema::IsStandardConversion(Expr* From, QualType ToType,
                     Context.getTypeDeclType(M->getParent()).getTypePtr());
     } else
       FromType = Context.getPointerType(FromType);
-  }
-  // We don't require any conversions for the first step.
-  else {
+  } else {
+    // We don't require any conversions for the first step.
     SCS.First = ICK_Identity;
   }
 
@@ -583,79 +579,67 @@ Sema::IsStandardConversion(Expr* From, QualType ToType,
     // The unqualified versions of the types are the same: there's no
     // conversion to do.
     SCS.Second = ICK_Identity;
-  }
-  // Integral promotion (C++ 4.5).  
-  else if (IsIntegralPromotion(From, FromType, ToType)) {
+  } else if (IsIntegralPromotion(From, FromType, ToType)) {
+    // Integral promotion (C++ 4.5).  
     SCS.Second = ICK_Integral_Promotion;
     FromType = ToType.getUnqualifiedType();
-  } 
-  // Floating point promotion (C++ 4.6).
-  else if (IsFloatingPointPromotion(FromType, ToType)) {
+  } else if (IsFloatingPointPromotion(FromType, ToType)) {
+    // Floating point promotion (C++ 4.6).
     SCS.Second = ICK_Floating_Promotion;
     FromType = ToType.getUnqualifiedType();
-  } 
-  // Complex promotion (Clang extension)
-  else if (IsComplexPromotion(FromType, ToType)) {
+  } else if (IsComplexPromotion(FromType, ToType)) {
+    // Complex promotion (Clang extension)
     SCS.Second = ICK_Complex_Promotion;
     FromType = ToType.getUnqualifiedType();
-  }
-  // Integral conversions (C++ 4.7).
-  // FIXME: isIntegralType shouldn't be true for enums in C++.
-  else if ((FromType->isIntegralType() || FromType->isEnumeralType()) &&
+  } else if ((FromType->isIntegralType() || FromType->isEnumeralType()) &&
            (ToType->isIntegralType() && !ToType->isEnumeralType())) {
+    // Integral conversions (C++ 4.7).
+    // FIXME: isIntegralType shouldn't be true for enums in C++.
     SCS.Second = ICK_Integral_Conversion;
     FromType = ToType.getUnqualifiedType();
-  }
-  // Floating point conversions (C++ 4.8).
-  else if (FromType->isFloatingType() && ToType->isFloatingType()) {
+  } else if (FromType->isFloatingType() && ToType->isFloatingType()) {
+    // Floating point conversions (C++ 4.8).
     SCS.Second = ICK_Floating_Conversion;
     FromType = ToType.getUnqualifiedType();
-  }
-  // Complex conversions (C99 6.3.1.6)
-  else if (FromType->isComplexType() && ToType->isComplexType()) {
+  } else if (FromType->isComplexType() && ToType->isComplexType()) {
+    // Complex conversions (C99 6.3.1.6)
     SCS.Second = ICK_Complex_Conversion;
     FromType = ToType.getUnqualifiedType();
-  }
-  // Floating-integral conversions (C++ 4.9).
-  // FIXME: isIntegralType shouldn't be true for enums in C++.
-  else if ((FromType->isFloatingType() &&
-            ToType->isIntegralType() && !ToType->isBooleanType() &&
-                                        !ToType->isEnumeralType()) ||
-           ((FromType->isIntegralType() || FromType->isEnumeralType()) && 
-            ToType->isFloatingType())) {
+  } else if ((FromType->isFloatingType() &&
+              ToType->isIntegralType() && (!ToType->isBooleanType() &&
+                                           !ToType->isEnumeralType())) ||
+             ((FromType->isIntegralType() || FromType->isEnumeralType()) && 
+              ToType->isFloatingType())) {
+    // Floating-integral conversions (C++ 4.9).
+    // FIXME: isIntegralType shouldn't be true for enums in C++.
     SCS.Second = ICK_Floating_Integral;
     FromType = ToType.getUnqualifiedType();
-  }
-  // Complex-real conversions (C99 6.3.1.7)
-  else if ((FromType->isComplexType() && ToType->isArithmeticType()) ||
-           (ToType->isComplexType() && FromType->isArithmeticType())) {
+  } else if ((FromType->isComplexType() && ToType->isArithmeticType()) ||
+             (ToType->isComplexType() && FromType->isArithmeticType())) {
+    // Complex-real conversions (C99 6.3.1.7)
     SCS.Second = ICK_Complex_Real;
     FromType = ToType.getUnqualifiedType();
-  }
-  // Pointer conversions (C++ 4.10).
-  else if (IsPointerConversion(From, FromType, ToType, FromType, 
-                               IncompatibleObjC)) {
+  } else if (IsPointerConversion(From, FromType, ToType, FromType, 
+                                 IncompatibleObjC)) {
+    // Pointer conversions (C++ 4.10).
     SCS.Second = ICK_Pointer_Conversion;
     SCS.IncompatibleObjC = IncompatibleObjC;
-  }
-  // Pointer to member conversions (4.11).
-  else if (IsMemberPointerConversion(From, FromType, ToType, FromType)) {
+  } else if (IsMemberPointerConversion(From, FromType, ToType, FromType)) {
+    // Pointer to member conversions (4.11).
     SCS.Second = ICK_Pointer_Member;
-  }
-  // Boolean conversions (C++ 4.12).
-  else if (ToType->isBooleanType() &&
-           (FromType->isArithmeticType() ||
-            FromType->isEnumeralType() ||
-            FromType->isPointerType() ||
-            FromType->isBlockPointerType() ||
-            FromType->isMemberPointerType() ||
-            FromType->isNullPtrType())) {
+  } else if (ToType->isBooleanType() &&
+             (FromType->isArithmeticType() ||
+              FromType->isEnumeralType() ||
+              FromType->isPointerType() ||
+              FromType->isBlockPointerType() ||
+              FromType->isMemberPointerType() ||
+              FromType->isNullPtrType())) {
+    // Boolean conversions (C++ 4.12).
     SCS.Second = ICK_Boolean_Conversion;
     FromType = Context.BoolTy;
-  }
-  // Compatible conversions (Clang extension for C function overloading)
-  else if (!getLangOptions().CPlusPlus && 
-           Context.typesAreCompatible(ToType, FromType)) {
+  } else if (!getLangOptions().CPlusPlus && 
+             Context.typesAreCompatible(ToType, FromType)) {
+    // Compatible conversions (Clang extension for C function overloading)
     SCS.Second = ICK_Compatible_Conversion;
   } else {
     // No second conversion required.
@@ -4660,8 +4644,7 @@ void Sema::FixOverloadedFunctionReference(Expr *E, FunctionDecl *Fn) {
       if (Method->isStatic()) {
         // Do nothing: static member functions aren't any different
         // from non-member functions.
-      }
-      else if (QualifiedDeclRefExpr *DRE 
+      } else if (QualifiedDeclRefExpr *DRE 
                  = dyn_cast<QualifiedDeclRefExpr>(UnOp->getSubExpr())) {
         // We have taken the address of a pointer to member
         // function. Perform the computation here so that we get the

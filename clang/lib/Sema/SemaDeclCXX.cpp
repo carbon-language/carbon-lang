@@ -986,8 +986,7 @@ void Sema::ActOnMemInitializers(DeclPtrTy ConstructorDecl,
           Diag(PrevMember->getSourceLocation(),
                diag::warn_base_initialized) 
                 << BaseClass->getDesugaredType(true);
-        }
-        else {
+        } else {
           FieldDecl *Field = PrevMember->getMember();
           Diag(PrevMember->getSourceLocation(),
                diag::warn_field_initialized) 
@@ -2165,14 +2164,12 @@ void Sema::DefineImplicitDefaultConstructor(SourceLocation CurrentLocation,
           err = true;
         }
       }
-    }
-    else if (FieldType->isReferenceType()) {
+    } else if (FieldType->isReferenceType()) {
       Diag(CurrentLocation, diag::err_unintialized_member) 
         << Context.getTagDeclType(ClassDecl) << 0 << Field->getDeclName();
       Diag((*Field)->getLocation(), diag::note_declared_at);
       err = true;
-    }
-    else if (FieldType.isConstQualified()) {
+    } else if (FieldType.isConstQualified()) {
       Diag(CurrentLocation, diag::err_unintialized_member) 
         << Context.getTagDeclType(ClassDecl) << 1 << Field->getDeclName();
        Diag((*Field)->getLocation(), diag::note_declared_at);
@@ -2269,15 +2266,13 @@ void Sema::DefineImplicitOverloadedAssign(SourceLocation CurrentLocation,
       if (CXXMethodDecl *FieldAssignOpMethod = 
           getAssignOperatorMethod(MethodDecl->getParamDecl(0), FieldClassDecl))
         MarkDeclarationReferenced(CurrentLocation, FieldAssignOpMethod);
-    }
-    else if (FieldType->isReferenceType()) {
+    } else if (FieldType->isReferenceType()) {
       Diag(ClassDecl->getLocation(), diag::err_uninitialized_member_for_assign) 
       << Context.getTagDeclType(ClassDecl) << 0 << Field->getDeclName();
       Diag(Field->getLocation(), diag::note_declared_at);
       Diag(CurrentLocation, diag::note_first_required_here);
       err = true;
-    }
-    else if (FieldType.isConstQualified()) {
+    } else if (FieldType.isConstQualified()) {
       Diag(ClassDecl->getLocation(), diag::err_uninitialized_member_for_assign) 
       << Context.getTagDeclType(ClassDecl) << 1 << Field->getDeclName();
       Diag(Field->getLocation(), diag::note_declared_at);
