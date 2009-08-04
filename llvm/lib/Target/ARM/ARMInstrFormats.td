@@ -808,6 +808,10 @@ class ThumbI<dag oops, dag iops, AddrMode am, SizeFlagVal sz,
 class TI<dag oops, dag iops, string asm, list<dag> pattern>
   : ThumbI<oops, iops, AddrModeNone, Size2Bytes, asm, "", pattern>;
 
+// Two-address instructions
+class TIt<dag oops, dag iops, string asm, list<dag> pattern>
+  : ThumbI<oops, iops, AddrModeNone, Size2Bytes, asm, "$lhs = $dst", pattern>;
+
 // tBL, tBX instructions
 class TIx2<dag oops, dag iops, string asm, list<dag> pattern>
   : ThumbI<oops, iops, AddrModeNone, Size4Bytes, asm, "", pattern>;

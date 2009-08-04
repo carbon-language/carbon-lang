@@ -127,10 +127,11 @@ PseudoInst<(outs), (ins i32imm:$amt),
            [(ARMcallseq_start imm:$amt)]>, Requires<[IsThumb1Only]>;
 }
 
+// For both thumb1 and thumb2.
 let isNotDuplicable = 1 in
-def tPICADD : T1It<(outs tGPR:$dst), (ins tGPR:$lhs, pclabel:$cp),
-                  "$cp:\n\tadd $dst, pc",
-                  [(set tGPR:$dst, (ARMpic_add tGPR:$lhs, imm:$cp))]>;
+def tPICADD : TIt<(outs GPR:$dst), (ins GPR:$lhs, pclabel:$cp),
+                 "$cp:\n\tadd $dst, pc",
+                 [(set GPR:$dst, (ARMpic_add GPR:$lhs, imm:$cp))]>;
 
 // PC relative add.
 def tADDrPCi : T1I<(outs tGPR:$dst), (ins i32imm:$rhs),

@@ -422,12 +422,6 @@ multiclass T2I_bin_rrot<string opc, PatFrag opnode> {
 //  Miscellaneous Instructions.
 //
 
-let isNotDuplicable = 1 in
-def t2PICADD : T2XI<(outs GPR:$dst), (ins GPR:$lhs, pclabel:$cp),
-                    "$cp:\n\tadd.w $dst, $lhs, pc",
-                    [(set GPR:$dst, (ARMpic_add GPR:$lhs, imm:$cp))]>;
-
-
 // LEApcrel - Load a pc-relative address into a register without offending the
 // assembler.
 def t2LEApcrel : T2XI<(outs GPR:$dst), (ins i32imm:$label, pred:$p),

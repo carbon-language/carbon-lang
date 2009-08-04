@@ -17,7 +17,7 @@ define i32 @test1() {
 ; DYNAMIC: .long L_G$non_lazy_ptr
 
 ; PIC: _test1
-; PIC: add.w r0, r0, pc
+; PIC: add r0, pc
 ; PIC: .long L_G$non_lazy_ptr-(LPC0+4)
 
 ; LINUX: test1
