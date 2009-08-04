@@ -63,6 +63,17 @@ BitVector
 BlackfinRegisterInfo::getReservedRegs(const MachineFunction &MF) const {
   using namespace BF;
   BitVector Reserved(getNumRegs());
+  Reserved.set(AZ);
+  Reserved.set(AN);
+  Reserved.set(AQ);
+  Reserved.set(AC0);
+  Reserved.set(AC1);
+  Reserved.set(AV0);
+  Reserved.set(AV0S);
+  Reserved.set(AV1);
+  Reserved.set(AV1S);
+  Reserved.set(V);
+  Reserved.set(VS);
   Reserved.set(L0);
   Reserved.set(L1);
   Reserved.set(L2);
