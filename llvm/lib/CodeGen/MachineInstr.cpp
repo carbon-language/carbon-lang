@@ -1030,7 +1030,7 @@ bool MachineInstr::addRegisterKilled(unsigned IncomingReg,
   SmallVector<unsigned,4> DeadOps;
   for (unsigned i = 0, e = getNumOperands(); i != e; ++i) {
     MachineOperand &MO = getOperand(i);
-    if (!MO.isReg() || !MO.isUse())
+    if (!MO.isReg() || !MO.isUse() || MO.isUndef())
       continue;
     unsigned Reg = MO.getReg();
     if (!Reg)
@@ -1041,8 +1041,6 @@ bool MachineInstr::addRegisterKilled(unsigned IncomingReg,
         if (MO.isKill())
           // The register is already marked kill.
           return true;
-        // This operand can no longer be undef since Reg is live-in.
-        MO.setIsUndef(false);
         if (isPhysReg && isRegTiedToDefOperand(i))
           // Two-address uses of physregs must not be marked kill.
           return true;
