@@ -187,8 +187,6 @@ protected:
   ///
   const MCSection *TLSBSSSection;         // Defaults to ".tbss".
   
-  const MCSection *CStringSection;
-  
   const MCSection *DataRelSection;
   const MCSection *DataRelLocalSection;
   const MCSection *DataRelROSection;

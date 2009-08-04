@@ -320,10 +320,6 @@ void TargetLoweringObjectFileELF::Initialize(MCContext &Ctx,
   TLSDataSection =
     getOrCreateSection("\t.tdata", false, SectionKind::getThreadData());
   
-  // FIXME: No reason to make this.
-  CStringSection = getOrCreateSection("\t.rodata.str", true,
-                               SectionKind::getMergeable1ByteCString());
-
   TLSBSSSection = getOrCreateSection("\t.tbss", false, 
                                      SectionKind::getThreadBSS());
 
@@ -511,7 +507,6 @@ SelectSectionForGlobal(const GlobalValue *GV, SectionKind Kind,
   if (Kind.isMergeable1ByteCString() ||
       Kind.isMergeable2ByteCString() ||
       Kind.isMergeable4ByteCString()) {
-   assert(CStringSection && "Should have string section prefix");
     
     // We also need alignment here.
     // FIXME: this is getting the alignment of the character, not the
@@ -519,16 +514,16 @@ SelectSectionForGlobal(const GlobalValue *GV, SectionKind Kind,
     unsigned Align = 
       TM.getTargetData()->getPreferredAlignment(cast<GlobalVariable>(GV));
     
-    const char *SizeSpec = "1.";
+    const char *SizeSpec = ".rodata.str1.";
     if (Kind.isMergeable2ByteCString())
-      SizeSpec = "2.";
+      SizeSpec = ".rodata.str2.";
     else if (Kind.isMergeable4ByteCString())
-      SizeSpec = "4.";
+      SizeSpec = ".rodata.str4.";
     else
       assert(Kind.isMergeable1ByteCString() && "unknown string width");
     
     
-    std::string Name = CStringSection->getName() + SizeSpec + utostr(Align);
+    std::string Name = SizeSpec + utostr(Align);
     return getOrCreateSection(Name.c_str(), false, Kind);
   }
   
