@@ -79,18 +79,33 @@ static bool isSuitableForBSS(const GlobalVariable *GV) {
   return true;
 }
 
-static bool isConstantString(const Constant *C) {
+/// IsNullTerminatedString - Return true if the specified constant (which is
+/// known to have a type that is an array of 1/2/4 byte elements) ends with a
+/// nul value and contains no other nuls in it.
+static bool IsNullTerminatedString(const Constant *C) {
+  const ArrayType *ATy = cast<ArrayType>(C->getType());
+  
   // First check: is we have constant array of i8 terminated with zero
-  const ConstantArray *CVA = dyn_cast<ConstantArray>(C);
-  // Check, if initializer is a null-terminated string
-  if (CVA && CVA->isCString())
+  if (const ConstantArray *CVA = dyn_cast<ConstantArray>(C)) {
+    if (ATy->getNumElements() == 0) return false;
+
+    ConstantInt *Null =
+      dyn_cast<ConstantInt>(CVA->getOperand(ATy->getNumElements()-1));
+    if (Null == 0 || Null->getZExtValue() != 0)
+      return false; // Not null terminated.
+    
+    // Verify that the null doesn't occur anywhere else in the string.
+    for (unsigned i = 0, e = ATy->getNumElements()-1; i != e; ++i)
+      // Reject constantexpr elements etc.
+      if (!isa<ConstantInt>(CVA->getOperand(i)) ||
+          CVA->getOperand(i) == Null)
+        return false;
     return true;
+  }
 
   // Another possibility: [1 x i8] zeroinitializer
   if (isa<ConstantAggregateZero>(C))
-    if (const ArrayType *Ty = dyn_cast<ArrayType>(C->getType()))
-      return (Ty->getElementType() == Type::Int8Ty &&
-              Ty->getNumElements() == 1);
+    return ATy->getNumElements() == 1;
 
   return false;
 }
@@ -133,11 +148,23 @@ static SectionKind SectionKindForGlobal(const GlobalValue *GV,
     default: llvm_unreachable("unknown relocation info kind");
     case Constant::NoRelocation:
       // If initializer is a null-terminated string, put it in a "cstring"
-      // section if the target has it.
-      if (isConstantString(C))
-        return SectionKind::getMergeable1ByteCString();
-      
-      // FIXME: Detect 2/4 byte strings.
+      // section of the right width.
+      if (const ArrayType *ATy = dyn_cast<ArrayType>(C->getType())) {
+        if (const IntegerType *ITy = 
+              dyn_cast<IntegerType>(ATy->getElementType())) {
+          if ((ITy->getBitWidth() == 8 || ITy->getBitWidth() == 16 ||
+               ITy->getBitWidth() == 32) &&
+              IsNullTerminatedString(C)) {
+            if (ITy->getBitWidth() == 8)
+              return SectionKind::getMergeable1ByteCString();
+            if (ITy->getBitWidth() == 16)
+              return SectionKind::getMergeable2ByteCString();
+                                         
+            assert(ITy->getBitWidth() == 32 && "Unknown width");
+            return SectionKind::getMergeable4ByteCString();
+          }
+        }
+      }
         
       // Otherwise, just drop it into a mergable constant section.  If we have
       // a section for this size, use it, otherwise use the arbitrary sized
