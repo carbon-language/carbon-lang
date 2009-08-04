@@ -818,19 +818,19 @@ bool ArrayType::isValidElementType(const Type *ElemTy) {
   return true;
 }
 
-static ManagedStatic<TypeMap<VectorValType, VectorType> > VectorTypes;
-
 VectorType *VectorType::get(const Type *ElementType, unsigned NumElements) {
   assert(ElementType && "Can't get vector of <null> types!");
 
   VectorValType PVT(ElementType, NumElements);
   VectorType *PT = 0;
   
+  LLVMContextImpl *pImpl = ElementType->getContext().pImpl;
+  
   sys::SmartScopedLock<true> L(*TypeMapLock);
-  PT = VectorTypes->get(PVT);
+  PT = pImpl->VectorTypes.get(PVT);
     
   if (!PT) {
-    VectorTypes->add(PVT, PT = new VectorType(ElementType, NumElements));
+    pImpl->VectorTypes.add(PVT, PT = new VectorType(ElementType, NumElements));
   }
 #ifdef DEBUG_MERGE_TYPES
   DOUT << "Derived new type: " << *PT << "\n";
@@ -1130,11 +1130,13 @@ void ArrayType::typeBecameConcrete(const DerivedType *AbsTy) {
 //
 void VectorType::refineAbstractType(const DerivedType *OldType,
                                    const Type *NewType) {
-  VectorTypes->RefineAbstractType(this, OldType, NewType);
+  LLVMContextImpl *pImpl = OldType->getContext().pImpl;
+  pImpl->VectorTypes.RefineAbstractType(this, OldType, NewType);
 }
 
 void VectorType::typeBecameConcrete(const DerivedType *AbsTy) {
-  VectorTypes->TypeBecameConcrete(this, AbsTy);
+  LLVMContextImpl *pImpl = AbsTy->getContext().pImpl;
+  pImpl->VectorTypes.TypeBecameConcrete(this, AbsTy);
 }
 
 // refineAbstractType - Called when a contained type is found to be more

@@ -129,6 +129,7 @@ struct LLVMContextImpl {
   ConstantInt *TheFalseVal;
   
   TypeMap<ArrayValType, ArrayType> ArrayTypes;
+  TypeMap<VectorValType, VectorType> VectorTypes;
   
   LLVMContextImpl() : TheTrueVal(0), TheFalseVal(0) { }
 };
