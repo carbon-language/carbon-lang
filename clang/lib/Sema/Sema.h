@@ -2872,6 +2872,10 @@ public:
                                 const IdentifierInfo *Name);
   void ComparePropertiesInBaseAndSuper(ObjCInterfaceDecl *IDecl);
   
+  void CompareMethodParamsInBaseAndSuper(Decl *IDecl, 
+                                         ObjCMethodDecl *MethodDecl,
+                                         bool IsInstance);
+  
   void MergeProtocolPropertiesIntoClass(Decl *CDecl,
                                         DeclPtrTy MergeProtocols);
   

@@ -1464,6 +1464,37 @@ void Sema::ProcessPropertyDecl(ObjCPropertyDecl *property,
     AddInstanceMethodToGlobalPool(SetterMethod);     
 }
 
+void Sema::CompareMethodParamsInBaseAndSuper(Decl *ClassDecl,
+                                             ObjCMethodDecl *Method,
+                                             bool IsInstance)  {
+  if (ObjCInterfaceDecl *ID = dyn_cast<ObjCInterfaceDecl>(ClassDecl))
+    while (ObjCInterfaceDecl *SD = ID->getSuperClass()) {
+      if (ObjCMethodDecl *SuperMethodDecl = 
+          SD->lookupMethod(Method->getSelector(), IsInstance)) {
+        ObjCMethodDecl::param_iterator ParamI = Method->param_begin(),
+        E = Method->param_end();
+        ObjCMethodDecl::param_iterator PrevI = 
+        SuperMethodDecl->param_begin();
+        for (; ParamI != E; ++ParamI, ++PrevI) {
+          assert(PrevI != SuperMethodDecl->param_end() && "Param mismatch");
+          QualType T1 = Context.getCanonicalType((*ParamI)->getType());
+          QualType T2 = Context.getCanonicalType((*PrevI)->getType());
+          if (T1 != T2) {
+            AssignConvertType ConvTy = CheckAssignmentConstraints(T1, T2);
+            if (ConvTy == Incompatible || ConvTy == IncompatiblePointer) {
+              Diag((*ParamI)->getLocation(), diag::ext_typecheck_base_super) 
+                << T1 << T2;
+              Diag(SuperMethodDecl->getLocation(), 
+                   diag::note_previous_declaration);
+              return;
+            }
+          }
+        }
+      }
+      ID = SD;
+    }
+}
+
 // Note: For class/category implemenations, allMethods/allProperties is
 // always null.
 void Sema::ActOnAtEnd(SourceLocation AtEndLoc, DeclPtrTy classDecl,
@@ -1509,6 +1540,7 @@ void Sema::ActOnAtEnd(SourceLocation AtEndLoc, DeclPtrTy classDecl,
         InsMap[Method->getSelector()] = Method;
         /// The following allows us to typecheck messages to "id".
         AddInstanceMethodToGlobalPool(Method);
+        CompareMethodParamsInBaseAndSuper(ClassDecl, Method, true);
       }
     }
     else {
@@ -1526,6 +1558,7 @@ void Sema::ActOnAtEnd(SourceLocation AtEndLoc, DeclPtrTy classDecl,
         ClsMap[Method->getSelector()] = Method;
         /// The following allows us to typecheck messages to "Class".
         AddFactoryMethodToGlobalPool(Method);
+        CompareMethodParamsInBaseAndSuper(ClassDecl, Method, false);
       }
     }
   }
