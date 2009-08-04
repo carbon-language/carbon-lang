@@ -176,13 +176,19 @@ ARMLoadStoreOpt::MergeOps(MachineBasicBlock &MBB,
 
   ARM_AM::AMSubMode Mode = ARM_AM::ia;
   bool isAM4 = isi32Load(Opcode) || isi32Store(Opcode);
-  if (isAM4 && Offset == 4)
+  if (isAM4 && Offset == 4) {
+    if (isThumb2)
+      // Thumb2 does not support ldmib / stmib.
+      return false;
     Mode = ARM_AM::ib;
-  else if (isAM4 && Offset == -4 * (int)NumRegs + 4)
+  } else if (isAM4 && Offset == -4 * (int)NumRegs + 4) {
+    if (isThumb2)
+      // Thumb2 does not support ldmda / stmda.
+      return false;
     Mode = ARM_AM::da;
-  else if (isAM4 && Offset == -4 * (int)NumRegs)
+  } else if (isAM4 && Offset == -4 * (int)NumRegs) {
     Mode = ARM_AM::db;
-  else if (Offset != 0) {
+  } else if (Offset != 0) {
     // If starting offset isn't zero, insert a MI to materialize a new base.
     // But only do so if it is cost effective, i.e. merging more than two
     // loads / stores.
