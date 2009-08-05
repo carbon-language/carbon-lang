@@ -870,7 +870,15 @@ void CodeGenModule::EmitGlobalVarDefinition(const VarDecl *D) {
   }
 
   GV->setInitializer(Init);
-  GV->setConstant(D->getType().isConstant(Context));
+
+  // If it is safe to mark the global 'constant', do so now.
+  GV->setConstant(false);
+  if (D->getType().isConstant(Context)) {
+    // FIXME: In C++, if the variable has a non-trivial ctor/dtor or any mutable
+    // members, it cannot be declared "LLVM const".
+    GV->setConstant(true);
+  }
+  
   GV->setAlignment(getContext().getDeclAlignInBytes(D));
 
   // Set the llvm linkage type as appropriate.
@@ -880,13 +888,18 @@ void CodeGenModule::EmitGlobalVarDefinition(const VarDecl *D) {
     GV->setLinkage(llvm::Function::DLLImportLinkage);
   else if (D->hasAttr<DLLExportAttr>())
     GV->setLinkage(llvm::Function::DLLExportLinkage);
-  else if (D->hasAttr<WeakAttr>())
-    GV->setLinkage(llvm::GlobalVariable::WeakAnyLinkage);
-  else if (!CompileOpts.NoCommon &&
+  else if (D->hasAttr<WeakAttr>()) {
+    if (GV->isConstant())
+      GV->setLinkage(llvm::GlobalVariable::WeakODRLinkage);
+    else
+      GV->setLinkage(llvm::GlobalVariable::WeakAnyLinkage);
+  } else if (!CompileOpts.NoCommon &&
            !D->hasExternalStorage() && !D->getInit() &&
-           !D->getAttr<SectionAttr>())
+           !D->getAttr<SectionAttr>()) {
     GV->setLinkage(llvm::GlobalVariable::CommonLinkage);
-  else
+    // common vars aren't constant even if declared const.
+    GV->setConstant(false);
+  } else
     GV->setLinkage(llvm::GlobalVariable::ExternalLinkage);
 
   SetCommonAttributes(D, GV);
