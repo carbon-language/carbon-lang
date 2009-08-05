@@ -564,9 +564,10 @@ define i32 @main() {                                              <i>; i32()* </
       global scope.
       Symbols with "<tt>common</tt>" linkage are merged in the same way as
       <tt>weak symbols</tt>, and they may not be deleted if unreferenced.
-      Further, <tt>common</tt> symbols may not have an explicit section, and
-      must have a zero initializer.  Functions and aliases may not have common
-      linkage.</dd>
+      <tt>common</tt> symbols may not have an explicit section,
+      must have a zero initializer, and may not be marked '<a 
+      href="#globalvars"><tt>constant</tt></a>'.  Functions and aliases may not
+      have common linkage.</dd>
 
 
   <dt><tt><b><a name="linkage_appending">appending</a></b></tt>: </dt>

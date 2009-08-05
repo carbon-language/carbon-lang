@@ -378,11 +378,14 @@ void Verifier::visitGlobalVariable(GlobalVariable &GV) {
             "Global variable initializer type does not match global "
             "variable type!", &GV);
 
-    // If the global has common linkage, it must have a zero initializer.
-    if (GV.hasCommonLinkage())
+    // If the global has common linkage, it must have a zero initializer and
+    // cannot be constant.
+    if (GV.hasCommonLinkage()) {
       Assert1(GV.getInitializer()->isNullValue(),
               "'common' global must have a zero initializer!", &GV);
-    
+      Assert1(!GV.isConstant(), "'common' global may not be marked constant!",
+              &GV);
+    }
     
     // Verify that any metadata used in a global initializer points only to
     // other globals.
