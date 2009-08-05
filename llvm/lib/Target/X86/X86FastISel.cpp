@@ -1351,6 +1351,14 @@ bool X86FastISel::X86SelectCall(Instruction *I) {
       ArgVT = VA.getLocVT();
       break;
     }
+    case CCValAssign::BCvt: {
+      unsigned BC = FastEmit_r(ArgVT.getSimpleVT(), VA.getLocVT().getSimpleVT(),
+                               ISD::BIT_CONVERT, Arg);
+      assert(BC != 0 && "Failed to emit a bitcast!");
+      Arg = BC;
+      ArgVT = VA.getLocVT();
+      break;
+    }
     }
     
     if (VA.isRegLoc()) {
