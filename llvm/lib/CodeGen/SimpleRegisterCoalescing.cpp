@@ -804,12 +804,26 @@ void SimpleRegisterCoalescing::RemoveUnnecessaryKills(unsigned Reg,
   for (MachineRegisterInfo::use_iterator UI = mri_->use_begin(Reg),
          UE = mri_->use_end(); UI != UE; ++UI) {
     MachineOperand &UseMO = UI.getOperand();
-    if (UseMO.isKill()) {
-      MachineInstr *UseMI = UseMO.getParent();
-      unsigned UseIdx = li_->getUseIndex(li_->getInstructionIndex(UseMI));
-      const LiveRange *UI = LI.getLiveRangeContaining(UseIdx);
-      if (!UI || !LI.isKill(UI->valno, UseIdx+1))
+    if (!UseMO.isKill())
+      continue;
+    MachineInstr *UseMI = UseMO.getParent();
+    unsigned UseIdx = li_->getUseIndex(li_->getInstructionIndex(UseMI));
+    const LiveRange *UI = LI.getLiveRangeContaining(UseIdx);
+    if (!UI || !LI.isKill(UI->valno, UseIdx+1)) {
+      if (UI->valno->def != UseIdx+1) {
+        // Interesting problem. After coalescing reg1027's def and kill are both
+        // at the same point:  %reg1027,0.000000e+00 = [56,814:0)  0@70-(814)
+        //
+        // bb5:
+        // 60	%reg1027<def> = t2MOVr %reg1027, 14, %reg0, %reg0
+        // 68	%reg1027<def> = t2LDRi12 %reg1027<kill>, 8, 14, %reg0
+        // 76	t2CMPzri %reg1038<kill,undef>, 0, 14, %reg0, %CPSR<imp-def>
+        // 84	%reg1027<def> = t2MOVr %reg1027, 14, %reg0, %reg0
+        // 96	t2Bcc mbb<bb5,0x2030910>, 1, %CPSR<kill>
+        //
+        // Do not remove the kill marker on t2LDRi12.
         UseMO.setIsKill(false);
+      }
     }
   }
 }
