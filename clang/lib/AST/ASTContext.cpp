@@ -1616,7 +1616,8 @@ QualType ASTContext::getFunctionType(QualType ResultTy,const QualType *ArgArray,
 
     Canonical = getFunctionType(getCanonicalType(ResultTy),
                                 CanonicalArgs.data(), NumArgs,
-                                isVariadic, TypeQuals, NoReturn);
+                                isVariadic, TypeQuals, false,
+                                false, 0, 0, NoReturn);
 
     // Get the new insert position for the node we care about.
     FunctionProtoType *NewIP =

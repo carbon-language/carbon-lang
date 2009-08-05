@@ -25,3 +25,11 @@ void f4() {
   return;  // expected-warning {{function 'f4' declared 'noreturn' should not return}}
 }
 
+// PR4685
+extern void f5 (unsigned long) __attribute__ ((__noreturn__));
+
+void
+f5 (unsigned long size)
+{
+  
+}
