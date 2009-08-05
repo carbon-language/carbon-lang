@@ -451,7 +451,7 @@ the <tt>RegisterTarget</tt> template to register the target. For example, the Sp
 Target llvm::TheSparcTarget;
 
 extern "C" void LLVMInitializeSparcTargetInfo() { 
-  RegisterTarget<Triple::sparc, /*HasJIT=*/false> 
+  RegisterTarget&lt;Triple::sparc, /*HasJIT=*/false&gt;
     X(TheSparcTarget, "sparc", "Sparc");
 }
 </pre>
@@ -469,7 +469,7 @@ example. Here is an example of registering the Sparc assembly printer:
 <div class="doc_code">
 <pre>
 extern "C" void LLVMInitializeSparcAsmPrinter() { 
-  RegisterAsmPrinter<SparcAsmPrinter> X(TheSparcTarget);
+  RegisterAsmPrinter&lt;SparcAsmPrinter&gt; X(TheSparcTarget);
 }
 </pre>
 </div>

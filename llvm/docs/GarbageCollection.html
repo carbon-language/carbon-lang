@@ -334,11 +334,11 @@ void visitGCRoots(void (*Visitor)(void **Root, const void *Meta)) {
     
     // For roots [0, NumMeta), the metadata pointer is in the FrameMap.
     for (unsigned e = R->Map->NumMeta; i != e; ++i)
-      Visitor(&R->Roots[i], R->Map->Meta[i]);
+      Visitor(&amp;R->Roots[i], R->Map->Meta[i]);
     
     // For roots [NumMeta, NumRoots), the metadata pointer is null.
     for (unsigned e = R->Map->NumRoots; i != e; ++i)
-      Visitor(&R->Roots[i], NULL);
+      Visitor(&amp;R->Roots[i], NULL);
   }
 }</pre></div>
 
@@ -398,7 +398,7 @@ program.</p>
 </div>
 
 <div class="doc_code"><tt>
-  define <i>ty</i> @<i>name</i>(...) <u>gc "<i>name</i>"</u> { ...
+  define <i>ty</i> @<i>name</i>(...) <span style="text-decoration: underline">gc "<i>name</i>"</span> { ...
 </tt></div>
 
 <div class="doc_text">

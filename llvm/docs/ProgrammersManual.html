@@ -30,11 +30,12 @@
       <li><a href="#isa">The <tt>isa&lt;&gt;</tt>, <tt>cast&lt;&gt;</tt>
 and <tt>dyn_cast&lt;&gt;</tt> templates</a> </li>
       <li><a href="#string_apis">Passing strings (the <tt>StringRef</tt>
-and <tt>Twine</tt> classes)</li>
+and <tt>Twine</tt> classes)</a>
         <ul>
           <li><a href="#StringRef">The <tt>StringRef</tt> class</a> </li>
           <li><a href="#Twine">The <tt>Twine</tt> class</a> </li>
         </ul>
+      </li>
       <li><a href="#DEBUG">The <tt>DEBUG()</tt> macro and <tt>-debug</tt>
 option</a>
         <ul>
@@ -86,9 +87,9 @@ option</a></li>
       <li><a href="#dss_othermap">Other Map-Like Container Options</a></li>
     </ul></li>
     <li><a href="#ds_string">String-like containers</a>
-    <ul>
-       <!-- todo -->
-    </ul></li>
+    <!--<ul>
+       todo
+    </ul>--></li>
     <li><a href="#ds_bit">BitVector-like containers</a>
     <ul>
       <li><a href="#dss_bitvector">A dense bitvector</a></li>
@@ -525,7 +526,7 @@ it can be efficiently rendered directly into a character array.  This avoids
 unnecessary heap allocation involved in constructing the temporary results of
 string concatenation. See
 "<tt><a href="/doxygen/classllvm_1_1Twine_8h-source.html">llvm/ADT/Twine.h</a></tt>"
-for more information.</p></tt>
+for more information.</p>
 
 <p>As with a <tt>StringRef</tt>, <tt>Twine</tt> objects point to external memory
 and should almost never be stored or mentioned directly.  They are intended
