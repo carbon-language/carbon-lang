@@ -1747,8 +1747,8 @@ void Sema::CheckConversionDeclarator(Declarator &D, QualType &R,
                                      FunctionDecl::StorageClass& SC) {
   // C++ [class.conv.fct]p1:
   //   Neither parameter types nor return type can be specified. The
-  //   type of a conversion function (8.3.5) is “function taking no
-  //   parameter returning conversion-type-id.” 
+  //   type of a conversion function (8.3.5) is "function taking no
+  //   parameter returning conversion-type-id." 
   if (SC == FunctionDecl::Static) {
     if (!D.isInvalidType())
       Diag(D.getIdentifierLoc(), diag::err_conv_function_not_member)
@@ -1974,8 +1974,8 @@ Sema::DeclPtrTy Sema::ActOnUsingDirective(Scope *S,
     //   unqualified name lookup (3.4.1), the names appear as if they
     //   were declared in the nearest enclosing namespace which
     //   contains both the using-directive and the nominated
-    //   namespace. [Note: in this context, “contains” means “contains
-    //   directly or indirectly”. ]
+    //   namespace. [Note: in this context, "contains" means "contains
+    //   directly or indirectly". ]
 
     // Find enclosing context containing both using-directive and
     // nominated namespace.
@@ -2612,8 +2612,8 @@ Sema::CompareReferenceRelationship(QualType T1, QualType T2,
   QualType UnqualT2 = T2.getUnqualifiedType();
 
   // C++ [dcl.init.ref]p4:
-  //   Given types “cv1 T1” and “cv2 T2,” “cv1 T1” is
-  //   reference-related to “cv2 T2” if T1 is the same type as T2, or 
+  //   Given types "cv1 T1" and "cv2 T2," "cv1 T1" is
+  //   reference-related to "cv2 T2" if T1 is the same type as T2, or 
   //   T1 is a base class of T2.
   if (UnqualT1 == UnqualT2)
     DerivedToBase = false;
@@ -2626,7 +2626,7 @@ Sema::CompareReferenceRelationship(QualType T1, QualType T2,
   // least).
 
   // C++ [dcl.init.ref]p4:
-  //   "cv1 T1” is reference-compatible with “cv2 T2” if T1 is
+  //   "cv1 T1" is reference-compatible with "cv2 T2" if T1 is
   //   reference-related to T2 and cv1 is the same cv-qualification
   //   as, or greater cv-qualification than, cv2. For purposes of
   //   overload resolution, cases for which cv1 is greater
@@ -2699,8 +2699,8 @@ Sema::CheckReferenceInit(Expr *&Init, QualType DeclType,
     ICS->ConversionKind = ImplicitConversionSequence::BadConversion;
 
   // C++ [dcl.init.ref]p5:
-  //   A reference to type “cv1 T1” is initialized by an expression
-  //   of type “cv2 T2” as follows:
+  //   A reference to type "cv1 T1" is initialized by an expression
+  //   of type "cv2 T2" as follows:
 
   //     -- If the initializer expression
 
@@ -2717,8 +2717,8 @@ Sema::CheckReferenceInit(Expr *&Init, QualType DeclType,
   }
 
   bool BindsDirectly = false;
-  //       -- is an lvalue (but is not a bit-field), and “cv1 T1” is
-  //          reference-compatible with “cv2 T2,” or
+  //       -- is an lvalue (but is not a bit-field), and "cv1 T1" is
+  //          reference-compatible with "cv2 T2," or
   //
   // Note that the bit-field check is skipped if we are just computing
   // the implicit conversion sequence (C++ [over.best.ics]p2).
@@ -2759,8 +2759,8 @@ Sema::CheckReferenceInit(Expr *&Init, QualType DeclType,
   }
 
   //       -- has a class type (i.e., T2 is a class type) and can be
-  //          implicitly converted to an lvalue of type “cv3 T3,”
-  //          where “cv1 T1” is reference-compatible with “cv3 T3”
+  //          implicitly converted to an lvalue of type "cv3 T3,"
+  //          where "cv1 T1" is reference-compatible with "cv3 T3"
   //          92) (this conversion is selected by enumerating the
   //          applicable conversion functions (13.3.1.6) and choosing
   //          the best one through overload resolution (13.3)),
@@ -2863,15 +2863,15 @@ Sema::CheckReferenceInit(Expr *&Init, QualType DeclType,
   }
 
   //       -- If the initializer expression is an rvalue, with T2 a
-  //          class type, and “cv1 T1” is reference-compatible with
-  //          “cv2 T2,” the reference is bound in one of the
+  //          class type, and "cv1 T1" is reference-compatible with
+  //          "cv2 T2," the reference is bound in one of the
   //          following ways (the choice is implementation-defined):
   //
   //          -- The reference is bound to the object represented by
   //             the rvalue (see 3.10) or to a sub-object within that
   //             object.
   //
-  //          -- A temporary of type “cv1 T2” [sic] is created, and
+  //          -- A temporary of type "cv1 T2" [sic] is created, and
   //             a constructor is called to copy the entire rvalue
   //             object into the temporary. The reference is bound to
   //             the temporary or to a sub-object within the
@@ -2906,7 +2906,7 @@ Sema::CheckReferenceInit(Expr *&Init, QualType DeclType,
     return false;
   }
 
-  //       -- Otherwise, a temporary of type “cv1 T1” is created and
+  //       -- Otherwise, a temporary of type "cv1 T1" is created and
   //          initialized from the initializer expression using the
   //          rules for a non-reference copy initialization (8.5). The
   //          reference is then bound to the temporary. If T1 is

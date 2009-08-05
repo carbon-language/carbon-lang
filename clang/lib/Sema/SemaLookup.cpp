@@ -654,8 +654,8 @@ Sema::CppLookupName(Scope *S, DeclarationName Name,
   // ...During unqualified name lookup (3.4.1), the names appear as if
   // they were declared in the nearest enclosing namespace which contains
   // both the using-directive and the nominated namespace.
-  // [Note: in this context, “contains” means “contains directly or
-  // indirectly”. 
+  // [Note: in this context, "contains" means "contains directly or
+  // indirectly". 
   //
   // For example:
   // namespace A { int i; }
@@ -1687,10 +1687,10 @@ void Sema::LookupOverloadedOperatorName(OverloadedOperatorKind Op, Scope *S,
   //        unqualified function calls (3.4.2) except that all member
   //        functions are ignored. However, if no operand has a class
   //        type, only those non-member functions in the lookup set
-  //        that have a first parameter of type T1 or “reference to
-  //        (possibly cv-qualified) T1”, when T1 is an enumeration
+  //        that have a first parameter of type T1 or "reference to
+  //        (possibly cv-qualified) T1", when T1 is an enumeration
   //        type, or (if there is a right operand) a second parameter
-  //        of type T2 or “reference to (possibly cv-qualified) T2”,
+  //        of type T2 or "reference to (possibly cv-qualified) T2",
   //        when T2 is an enumeration type, are candidate functions.
   DeclarationName OpName = Context.DeclarationNames.getCXXOperatorName(Op);
   LookupResult Operators = LookupName(S, OpName, LookupOperatorName);

@@ -4359,7 +4359,7 @@ Sema::BuildCallToObjectOfClassType(Scope *S, Expr *Object,
   
   // C++ [over.call.object]p1:
   //  If the primary-expression E in the function call syntax
-  //  evaluates to a class object of type “cv T”, then the set of
+  //  evaluates to a class object of type "cv T", then the set of
   //  candidate functions includes at least the function call
   //  operators of T. The function call operators of T are obtained by
   //  ordinary lookup of the name operator() in the context of

@@ -44,7 +44,7 @@ using namespace clang;
 //     MemoryMgmt/Tasks/MemoryManagementRules.html
 //
 // "You take ownership of an object if you create it using a method whose name
-//  begins with “alloc” or “new” or contains “copy” (for example, alloc, 
+//  begins with "alloc" or "new" or contains "copy" (for example, alloc, 
 //  newObject, or mutableCopy), or if you send it a retain message. You are
 //  responsible for relinquishing ownership of objects you own using release
 //  or autorelease. Any other time you receive an object, you must
