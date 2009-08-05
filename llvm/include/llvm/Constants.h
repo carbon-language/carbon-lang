@@ -407,8 +407,10 @@ protected:
 public:
   // ConstantStruct accessors
   static Constant* get(const StructType* T, const std::vector<Constant*>& V);
-  static Constant* get(const std::vector<Constant*>& V, bool Packed = false);
-  static Constant* get(Constant* const *Vals, unsigned NumVals,
+  static Constant* get(LLVMContext &Context, 
+                       const std::vector<Constant*>& V, bool Packed = false);
+  static Constant* get(LLVMContext &Context,
+                       Constant* const *Vals, unsigned NumVals,
                        bool Packed = false);
   
   /// Transparently provide more efficient getOperand methods.

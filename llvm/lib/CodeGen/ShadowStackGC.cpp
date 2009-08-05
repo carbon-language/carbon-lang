@@ -206,12 +206,12 @@ Constant *ShadowStackGC::GetFrameMap(Function &F) {
   };
 
   Constant *DescriptorElts[] = {
-    ConstantStruct::get(BaseElts, 2),
+    ConstantStruct::get(F.getContext(), BaseElts, 2),
     ConstantArray::get(ArrayType::get(VoidPtr, NumMeta),
                        Metadata.begin(), NumMeta)
   };
 
-  Constant *FrameMap = ConstantStruct::get(DescriptorElts, 2);
+  Constant *FrameMap = ConstantStruct::get(F.getContext(), DescriptorElts, 2);
 
   std::string TypeName("gc_map.");
   TypeName += utostr(NumMeta);
@@ -245,7 +245,7 @@ const Type* ShadowStackGC::GetConcreteStackEntryType(Function &F) {
   EltTys.push_back(StackEntryTy);
   for (size_t I = 0; I != Roots.size(); I++)
     EltTys.push_back(Roots[I].second->getAllocatedType());
-  Type *Ty = StructType::get(EltTys);
+  Type *Ty = StructType::get(F.getContext(), EltTys);
 
   std::string TypeName("gc_stackentry.");
   TypeName += F.getName();
@@ -265,7 +265,7 @@ bool ShadowStackGC::initializeCustomLowering(Module &M) {
   std::vector<const Type*> EltTys;
   EltTys.push_back(Type::Int32Ty); // 32 bits is ok up to a 32GB stack frame. :)
   EltTys.push_back(Type::Int32Ty); // Specifies length of variable length array.
-  StructType *FrameMapTy = StructType::get(EltTys);
+  StructType *FrameMapTy = StructType::get(M.getContext(), EltTys);
   M.addTypeName("gc_map", FrameMapTy);
   PointerType *FrameMapPtrTy = PointerType::getUnqual(FrameMapTy);
 
@@ -279,7 +279,7 @@ bool ShadowStackGC::initializeCustomLowering(Module &M) {
   EltTys.clear();
   EltTys.push_back(PointerType::getUnqual(RecursiveTy));
   EltTys.push_back(FrameMapPtrTy);
-  PATypeHolder LinkTyH = StructType::get(EltTys);
+  PATypeHolder LinkTyH = StructType::get(M.getContext(), EltTys);
 
   RecursiveTy->refineAbstractTypeTo(LinkTyH.get());
   StackEntryTy = cast<StructType>(LinkTyH.get());

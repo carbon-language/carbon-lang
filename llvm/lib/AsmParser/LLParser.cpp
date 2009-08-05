@@ -1381,7 +1381,7 @@ bool LLParser::ParseStructType(PATypeHolder &Result, bool Packed) {
   Lex.Lex(); // Consume the '{'
   
   if (EatIfPresent(lltok::rbrace)) {
-    Result = StructType::get(Packed);
+    Result = StructType::get(Context, Packed);
     return false;
   }
 
@@ -1413,7 +1413,7 @@ bool LLParser::ParseStructType(PATypeHolder &Result, bool Packed) {
   std::vector<const Type*> ParamsListTy;
   for (unsigned i = 0, e = ParamsList.size(); i != e; ++i)
     ParamsListTy.push_back(ParamsList[i].get());
-  Result = HandleUpRefs(StructType::get(ParamsListTy, Packed));
+  Result = HandleUpRefs(StructType::get(Context, ParamsListTy, Packed));
   return false;
 }
 
@@ -1772,7 +1772,8 @@ bool LLParser::ParseValID(ValID &ID) {
         ParseToken(lltok::rbrace, "expected end of struct constant"))
       return true;
     
-    ID.ConstantVal = ConstantStruct::get(Elts.data(), Elts.size(), false);
+    ID.ConstantVal = ConstantStruct::get(Context, Elts.data(),
+                                         Elts.size(), false);
     ID.Kind = ValID::t_Constant;
     return false;
   }
@@ -1792,7 +1793,7 @@ bool LLParser::ParseValID(ValID &ID) {
     
     if (isPackedStruct) {
       ID.ConstantVal =
-        ConstantStruct::get(Elts.data(), Elts.size(), true);
+        ConstantStruct::get(Context, Elts.data(), Elts.size(), true);
       ID.Kind = ValID::t_Constant;
       return false;
     }

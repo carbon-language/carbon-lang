@@ -292,7 +292,7 @@ void BitcodeReaderValueList::ResolveConstantForwardRefs() {
         NewC = ConstantArray::get(UserCA->getType(), &NewOps[0],
                                         NewOps.size());
       } else if (ConstantStruct *UserCS = dyn_cast<ConstantStruct>(UserC)) {
-        NewC = ConstantStruct::get(&NewOps[0], NewOps.size(),
+        NewC = ConstantStruct::get(Context, &NewOps[0], NewOps.size(),
                                          UserCS->getType()->isPacked());
       } else if (isa<ConstantVector>(UserC)) {
         NewC = ConstantVector::get(&NewOps[0], NewOps.size());
@@ -580,7 +580,7 @@ bool BitcodeReader::ParseTypeTable() {
       std::vector<const Type*> EltTys;
       for (unsigned i = 1, e = Record.size(); i != e; ++i)
         EltTys.push_back(getTypeByID(Record[i], true));
-      ResultTy = StructType::get(EltTys, Record[0]);
+      ResultTy = StructType::get(Context, EltTys, Record[0]);
       break;
     }
     case bitc::TYPE_CODE_ARRAY:     // ARRAY: [numelts, eltty]

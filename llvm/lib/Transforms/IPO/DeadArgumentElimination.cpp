@@ -638,7 +638,7 @@ bool DAE::RemoveDeadStuffFromFunction(Function *F) {
       // something and {} into void.
       // Make the new struct packed if we used to return a packed struct
       // already.
-      NRetTy = StructType::get(RetTypes, STy->isPacked());
+      NRetTy = StructType::get(STy->getContext(), RetTypes, STy->isPacked());
     else if (RetTypes.size() == 1)
       // One return type? Just a simple value then, but only if we didn't use to
       // return a struct with that simple value before.

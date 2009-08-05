@@ -849,22 +849,23 @@ bool VectorType::isValidElementType(const Type *ElemTy) {
 // Struct Type Factory...
 //
 
-static ManagedStatic<TypeMap<StructValType, StructType> > StructTypes;
-
-StructType *StructType::get(const std::vector<const Type*> &ETypes, 
+StructType *StructType::get(LLVMContext &Context,
+                            const std::vector<const Type*> &ETypes, 
                             bool isPacked) {
   StructValType STV(ETypes, isPacked);
   StructType *ST = 0;
   
+  LLVMContextImpl *pImpl = Context.pImpl;
+  
   sys::SmartScopedLock<true> L(*TypeMapLock);
-  ST = StructTypes->get(STV);
+  ST = pImpl->StructTypes.get(STV);
     
   if (!ST) {
     // Value not found.  Derive a new type!
     ST = (StructType*) operator new(sizeof(StructType) +
                                     sizeof(PATypeHandle) * ETypes.size());
     new (ST) StructType(ETypes, isPacked);
-    StructTypes->add(STV, ST);
+    pImpl->StructTypes.add(STV, ST);
   }
 #ifdef DEBUG_MERGE_TYPES
   DOUT << "Derived new type: " << *ST << "\n";
@@ -872,7 +873,7 @@ StructType *StructType::get(const std::vector<const Type*> &ETypes,
   return ST;
 }
 
-StructType *StructType::get(const Type *type, ...) {
+StructType *StructType::get(LLVMContext &Context, const Type *type, ...) {
   va_list ap;
   std::vector<const llvm::Type*> StructFields;
   va_start(ap, type);
@@ -880,7 +881,7 @@ StructType *StructType::get(const Type *type, ...) {
     StructFields.push_back(type);
     type = va_arg(ap, llvm::Type*);
   }
-  return llvm::StructType::get(StructFields);
+  return llvm::StructType::get(Context, StructFields);
 }
 
 bool StructType::isValidElementType(const Type *ElemTy) {
@@ -1146,11 +1147,13 @@ void VectorType::typeBecameConcrete(const DerivedType *AbsTy) {
 //
 void StructType::refineAbstractType(const DerivedType *OldType,
                                     const Type *NewType) {
-  StructTypes->RefineAbstractType(this, OldType, NewType);
+  LLVMContextImpl *pImpl = OldType->getContext().pImpl;
+  pImpl->StructTypes.RefineAbstractType(this, OldType, NewType);
 }
 
 void StructType::typeBecameConcrete(const DerivedType *AbsTy) {
-  StructTypes->TypeBecameConcrete(this, AbsTy);
+  LLVMContextImpl *pImpl = AbsTy->getContext().pImpl;
+  pImpl->StructTypes.TypeBecameConcrete(this, AbsTy);
 }
 
 // refineAbstractType - Called when a contained type is found to be more

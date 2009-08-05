@@ -519,7 +519,7 @@ Constant *llvm::ConstantFoldInsertValueInstruction(LLVMContext &Context,
       Ops[i] = const_cast<Constant*>(Op);
     }
     if (isa<StructType>(AggTy))
-      return ConstantStruct::get(Ops);
+      return ConstantStruct::get(Context, Ops);
     else
       return ConstantArray::get(cast<ArrayType>(AggTy), Ops);
   }
@@ -548,7 +548,7 @@ Constant *llvm::ConstantFoldInsertValueInstruction(LLVMContext &Context,
       Ops[i] = const_cast<Constant*>(Op);
     }
     if (isa<StructType>(AggTy))
-      return ConstantStruct::get(Ops);
+      return ConstantStruct::get(Context, Ops);
     else
       return ConstantArray::get(cast<ArrayType>(AggTy), Ops);
   }
@@ -565,7 +565,7 @@ Constant *llvm::ConstantFoldInsertValueInstruction(LLVMContext &Context,
     }
     Constant *C;
     if (isa<StructType>(Agg->getType()))
-      C = ConstantStruct::get(Ops);
+      C = ConstantStruct::get(Context, Ops);
     else
       C = ConstantArray::get(cast<ArrayType>(Agg->getType()), Ops);
     return C;

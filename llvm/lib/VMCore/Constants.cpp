@@ -532,18 +532,20 @@ Constant* ConstantStruct::get(const StructType* T,
   return ConstantAggregateZero::get(T);
 }
 
-Constant* ConstantStruct::get(const std::vector<Constant*>& V, bool packed) {
+Constant* ConstantStruct::get(LLVMContext &Context,
+                              const std::vector<Constant*>& V, bool packed) {
   std::vector<const Type*> StructEls;
   StructEls.reserve(V.size());
   for (unsigned i = 0, e = V.size(); i != e; ++i)
     StructEls.push_back(V[i]->getType());
-  return get(StructType::get(StructEls, packed), V);
+  return get(StructType::get(Context, StructEls, packed), V);
 }
 
-Constant* ConstantStruct::get(Constant* const *Vals, unsigned NumVals,
+Constant* ConstantStruct::get(LLVMContext &Context,
+                              Constant* const *Vals, unsigned NumVals,
                               bool Packed) {
   // FIXME: make this the primary ctor method.
-  return get(std::vector<Constant*>(Vals, Vals+NumVals), Packed);
+  return get(Context, std::vector<Constant*>(Vals, Vals+NumVals), Packed);
 }
 
 ConstantVector::ConstantVector(const VectorType *T,
@@ -1355,7 +1357,8 @@ Constant* ConstantExpr::getSizeOf(const Type* Ty) {
 
 Constant* ConstantExpr::getAlignOf(const Type* Ty) {
   // alignof is implemented as: (i64) gep ({i8,Ty}*)null, 0, 1
-  const Type *AligningTy = StructType::get(Type::Int8Ty, Ty, NULL);
+  const Type *AligningTy = StructType::get(Ty->getContext(),
+                                           Type::Int8Ty, Ty, NULL);
   Constant *NullPtr = Constant::getNullValue(AligningTy->getPointerTo());
   Constant *Zero = ConstantInt::get(Type::Int32Ty, 0);
   Constant *One = ConstantInt::get(Type::Int32Ty, 1);

@@ -217,7 +217,7 @@ LLVMTypeRef LLVMStructType(LLVMTypeRef *ElementTypes,
                    *E = ElementTypes + ElementCount; I != E; ++I)
     Tys.push_back(unwrap(*I));
   
-  return wrap(StructType::get(Tys, Packed != 0));
+  return wrap(StructType::get(getGlobalContext(), Tys, Packed != 0));
 }
 
 unsigned LLVMCountStructElementTypes(LLVMTypeRef StructTy) {
@@ -411,7 +411,8 @@ LLVMValueRef LLVMConstArray(LLVMTypeRef ElementTy,
 
 LLVMValueRef LLVMConstStruct(LLVMValueRef *ConstantVals, unsigned Count,
                              int Packed) {
-  return wrap(ConstantStruct::get(unwrap<Constant>(ConstantVals, Count),
+  return wrap(ConstantStruct::get(getGlobalContext(),
+                                  unwrap<Constant>(ConstantVals, Count),
                                   Count, Packed != 0));
 }
 

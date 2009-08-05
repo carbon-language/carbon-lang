@@ -128,7 +128,7 @@ bool LowerInvoke::doInitialization(Module &M) {
       Elements.push_back(JmpBufTy);
       OpaqueType *OT = OpaqueType::get();
       Elements.push_back(PointerType::getUnqual(OT));
-      PATypeHolder JBLType(StructType::get(Elements));
+      PATypeHolder JBLType(StructType::get(M.getContext(), Elements));
       OT->refineAbstractTypeTo(JBLType.get());  // Complete the cycle.
       JBLinkTy = JBLType.get();
       M.addTypeName("llvm.sjljeh.jmpbufty", JBLinkTy);

@@ -31,6 +31,7 @@ class PointerValType;
 class VectorValType;
 class IntegerValType;
 class APInt;
+struct LLVMContext;
 
 class DerivedType : public Type {
   friend class Type;
@@ -240,20 +241,22 @@ public:
   /// StructType::get - This static method is the primary way to create a
   /// StructType.
   ///
-  static StructType *get(const std::vector<const Type*> &Params,
+  static StructType *get(LLVMContext &Context, 
+                         const std::vector<const Type*> &Params,
                          bool isPacked=false);
 
   /// StructType::get - Create an empty structure type.
   ///
-  static StructType *get(bool isPacked=false) {
-    return get(std::vector<const Type*>(), isPacked);
+  static StructType *get(LLVMContext &Context, bool isPacked=false) {
+    return get(Context, std::vector<const Type*>(), isPacked);
   }
 
   /// StructType::get - This static method is a convenience method for
   /// creating structure types by specifying the elements as arguments.
   /// Note that this method always returns a non-packed struct.  To get
   /// an empty struct, pass NULL, NULL.
-  static StructType *get(const Type *type, ...) END_WITH_NULL;
+  static StructType *get(LLVMContext &Context, 
+                         const Type *type, ...) END_WITH_NULL;
 
   /// isValidElementType - Return true if the specified type is valid as a
   /// element type.

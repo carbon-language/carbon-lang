@@ -146,7 +146,7 @@ static void EmitTypeForValueType(raw_ostream &OS, MVT::SimpleValueType VT) {
     OS << "IntegerType::get(" << BitWidth << ")";
   } else if (VT == MVT::Other) {
     // MVT::OtherVT is used to mean the empty struct type here.
-    OS << "StructType::get()";
+    OS << "StructType::get(Context)";
   } else if (VT == MVT::f32) {
     OS << "Type::FloatTy";
   } else if (VT == MVT::f64) {
@@ -177,7 +177,7 @@ static void EmitTypeGenerate(raw_ostream &OS,
     return;
   }
 
-  OS << "StructType::get(";
+  OS << "StructType::get(Context, ";
 
   for (std::vector<Record*>::const_iterator
          I = ArgTypes.begin(), E = ArgTypes.end(); I != E; ++I) {

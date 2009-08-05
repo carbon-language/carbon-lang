@@ -275,7 +275,7 @@ Function *CodeExtractor::constructFunction(const Values &inputs,
 
   if (AggregateArgs && (inputs.size() + outputs.size() > 0)) {
     PointerType *StructPtr =
-           PointerType::getUnqual(StructType::get(paramTy));
+           PointerType::getUnqual(StructType::get(M->getContext(), paramTy));
     paramTy.clear();
     paramTy.push_back(StructPtr);
   }
@@ -382,7 +382,7 @@ emitCallAndSwitchStatement(Function *newFunction, BasicBlock *codeReplacer,
       ArgTypes.push_back((*v)->getType());
 
     // Allocate a struct at the beginning of this function
-    Type *StructArgTy = StructType::get(ArgTypes);
+    Type *StructArgTy = StructType::get(newFunction->getContext(), ArgTypes);
     Struct =
       new AllocaInst(StructArgTy, 0, "structArg",
                      codeReplacer->getParent()->begin()->begin());
