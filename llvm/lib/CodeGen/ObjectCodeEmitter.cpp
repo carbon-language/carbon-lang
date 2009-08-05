@@ -55,8 +55,7 @@ void ObjectCodeEmitter::emitDWordBE(uint64_t W) {
   BO->emitDWordBE(W);
 }
 
-/// emitAlignment - Move the CurBufferPtr pointer up the the specified
-/// alignment (saturated to BufferEnd of course).
+/// emitAlignment - Align 'BO' to the necessary alignment boundary.
 void ObjectCodeEmitter::emitAlignment(unsigned Alignment /* 0 */,
                                       uint8_t fill /* 0 */) {
   BO->emitAlignment(Alignment, fill);
@@ -137,6 +136,8 @@ uintptr_t ObjectCodeEmitter::getConstantPoolEntrySection(unsigned Index) const {
   assert(CPSections.size() > Index && "CP not emitted!");
   return CPSections[Index];
 }
+
+/// getNoopSize - Returns the size of the no operation instruction 
 
 } // end namespace llvm
 

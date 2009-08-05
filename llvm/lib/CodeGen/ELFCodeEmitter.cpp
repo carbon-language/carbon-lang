@@ -40,7 +40,7 @@ void ELFCodeEmitter::startFunction(MachineFunction &MF) {
         << MF.getFunction()->getName() << "\n");
 
   // Get the ELF Section that this function belongs in.
-  ES = &EW.getTextSection();
+  ES = &EW.getTextSection(MF.getFunction());
 
   // Set the desired binary object to be used by the code emitters
   setBinaryObject(ES);
@@ -52,7 +52,7 @@ void ELFCodeEmitter::startFunction(MachineFunction &MF) {
   ES->emitAlignment(Align);
 
   // Update the section alignment if needed.
-  if (ES->Align < Align) ES->Align = Align;
+  ES->Align = std::max(ES->Align, Align);
 
   // Record the function start offset
   FnStartOff = ES->getCurrentPCOffset();
@@ -73,7 +73,7 @@ bool ELFCodeEmitter::finishFunction(MachineFunction &MF) {
                                 EW.getGlobalELFVisibility(F));
   FnSym->SectionIdx = ES->SectionIdx;
   FnSym->Size = ES->getCurrentPCOffset()-FnStartOff;
-  EW.addGlobalSymbol(F);
+  EW.addGlobalSymbol(F, true);
 
   // Offset from start of Section
   FnSym->Value = FnStartOff;
@@ -83,22 +83,21 @@ bool ELFCodeEmitter::finishFunction(MachineFunction &MF) {
 
   // Patch up Jump Table Section relocations to use the real MBBs offsets
   // now that the MBB label offsets inside the function are known.
-  ELFSection &JTSection = EW.getJumpTableSection();
-  for (std::vector<MachineRelocation>::iterator MRI = JTRelocations.begin(),
-       MRE = JTRelocations.end(); MRI != MRE; ++MRI) {
-    MachineRelocation &MR = *MRI;
-    unsigned MBBOffset = getMachineBasicBlockAddress(MR.getBasicBlock());
-    MR.setResultPointer((void*)MBBOffset);
-    MR.setConstantVal(ES->SectionIdx);
-    JTSection.addRelocation(MR);
+  if (!MF.getJumpTableInfo()->isEmpty()) {
+    ELFSection &JTSection = EW.getJumpTableSection();
+    for (std::vector<MachineRelocation>::iterator MRI = JTRelocations.begin(),
+         MRE = JTRelocations.end(); MRI != MRE; ++MRI) {
+      MachineRelocation &MR = *MRI;
+      unsigned MBBOffset = getMachineBasicBlockAddress(MR.getBasicBlock());
+      MR.setResultPointer((void*)MBBOffset);
+      MR.setConstantVal(ES->SectionIdx);
+      JTSection.addRelocation(MR);
+    }
   }
 
-  // Relocations
-  // -----------
   // If we have emitted any relocations to function-specific objects such as
   // basic blocks, constant pools entries, or jump tables, record their
-  // addresses now so that we can rewrite them with the correct addresses
-  // later.
+  // addresses now so that we can rewrite them with the correct addresses later
   for (unsigned i = 0, e = Relocations.size(); i != e; ++i) {
     MachineRelocation &MR = Relocations[i];
     intptr_t Addr;
@@ -115,6 +114,7 @@ bool ELFCodeEmitter::finishFunction(MachineFunction &MF) {
       MR.setConstantVal(CPSections[MR.getConstantPoolIndex()]);
       MR.setResultPointer((void*)Addr);
     } else if (MR.isJumpTableIndex()) {
+      ELFSection &JTSection = EW.getJumpTableSection();
       Addr = getJumpTableEntryAddress(MR.getJumpTableIndex());
       MR.setConstantVal(JTSection.SectionIdx);
       MR.setResultPointer((void*)Addr);

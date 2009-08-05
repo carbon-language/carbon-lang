@@ -33,6 +33,7 @@ namespace llvm {
   class ObjectCodeEmitter;
   class TargetAsmInfo;
   class TargetELFWriterInfo;
+  class TargetLoweringObjectFile;
   class raw_ostream;
   class SectionKind;
   class MCContext;
@@ -66,6 +67,7 @@ namespace llvm {
     /// Target machine description.
     TargetMachine &TM;
 
+    /// Context object for machine code objects.
     MCContext &OutContext;
     
     /// Target Elf Writer description.
@@ -77,6 +79,10 @@ namespace llvm {
     /// MCE - The MachineCodeEmitter object that we are exposing to emit machine
     /// code for functions to the .o file.
     ELFCodeEmitter *ElfCE;
+
+    /// TLOF - Target Lowering Object File, provide section names for globals 
+    /// and other object file specific stuff
+    const TargetLoweringObjectFile &TLOF;
 
     /// TAI - Target Asm Info, provide information about section names for
     /// globals and other target specific stuff.
@@ -176,13 +182,6 @@ namespace llvm {
       return *SN;
     }
 
-    /// TODO: support mangled names here to emit the right .text section
-    /// for c++ object files.
-    ELFSection &getTextSection() {
-      return getSection(".text", ELFSection::SHT_PROGBITS,
-                        ELFSection::SHF_EXECINSTR | ELFSection::SHF_ALLOC);
-    }
-
     ELFSection &getNonExecStackSection() {
       return getSection(".note.GNU-stack", ELFSection::SHT_PROGBITS, 0, 1);
     }
@@ -213,21 +212,24 @@ namespace llvm {
       return getSection("", ELFSection::SHT_NULL, 0);
     }
 
+    ELFSection &getCtorSection();
+    ELFSection &getDtorSection();
     ELFSection &getJumpTableSection();
     ELFSection &getConstantPoolSection(MachineConstantPoolEntry &CPE);
+    ELFSection &getTextSection(Function *F);
     ELFSection &getRelocSection(ELFSection &S);
 
     // Helpers for obtaining ELF specific info.
     unsigned getGlobalELFBinding(const GlobalValue *GV);
     unsigned getGlobalELFType(const GlobalValue *GV);
     unsigned getGlobalELFVisibility(const GlobalValue *GV);
-    unsigned getElfSectionFlags(SectionKind Kind);
+    unsigned getElfSectionFlags(SectionKind Kind, bool IsAlloc = true);
 
-    // addGlobalSymbol - Add a global to be processed and to the
-    // global symbol lookup, use a zero index for non private symbols
-    // because the table index will be determined later.
-    void addGlobalSymbol(const GlobalValue *GV);
-
+    // addGlobalSymbol - Add a global to be processed and to 
+    // the global symbol lookup, use a zero index because the table 
+    // index will be determined later.
+    void addGlobalSymbol(const GlobalValue *GV, bool AddToLookup = false);
+    
     // addExternalSymbol - Add the external to be processed and to the
     // external symbol lookup, use a zero index because the symbol
     // table index will be determined later
@@ -246,7 +248,10 @@ namespace llvm {
     void EmitGlobalConstant(const Constant *C, ELFSection &GblS);
     void EmitGlobalConstantStruct(const ConstantStruct *CVS,
                                   ELFSection &GblS);
-    ELFSection &getGlobalSymELFSection(const GlobalVariable *GV, ELFSym &Sym);
+    void emitGlobalDataRelocation(const GlobalValue *GV, unsigned Size, 
+                                  ELFSection &GblS);
+    bool EmitSpecialLLVMGlobal(const GlobalVariable *GV);
+    void EmitXXStructorList(Constant *List, ELFSection &Xtor);
     void EmitRelocations();
     void EmitRelocation(BinaryObject &RelSec, ELFRelocation &Rel, bool HasRelA);
     void EmitSectionHeader(BinaryObject &SHdrTab, const ELFSection &SHdr);

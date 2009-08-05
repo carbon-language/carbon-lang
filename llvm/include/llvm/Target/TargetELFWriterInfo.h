@@ -89,14 +89,6 @@ namespace llvm {
                      : (hasRelocationAddend() ? 12 : 8);
     }
 
-    /// hasCustomJumpTableIndexRelTy - Returns true if the target has a
-    /// specific relocation type for a jump table index.
-    virtual bool hasCustomJumpTableIndexRelTy() const { return false; }
-
-    /// getJumpTableIndexRelTy - Returns the target specific relocation type
-    /// for a jump table index.
-    virtual unsigned getJumpTableIndexRelTy() const { return 0; }
-
     /// getRelocationType - Returns the target specific ELF Relocation type.
     /// 'MachineRelTy' contains the object code independent relocation type
     virtual unsigned getRelocationType(unsigned MachineRelTy) const = 0;
@@ -107,7 +99,8 @@ namespace llvm {
 
     /// getDefaultAddendForRelTy - Gets the default addend value for a
     /// relocation entry based on the target ELF relocation type.
-    virtual long int getDefaultAddendForRelTy(unsigned RelTy) const = 0;
+    virtual long int getDefaultAddendForRelTy(unsigned RelTy,
+                                              long int Modifier = 0) const = 0;
 
     /// getRelTySize - Returns the size of relocatable field in bits
     virtual unsigned getRelocationTySize(unsigned RelTy) const = 0;

@@ -49,19 +49,10 @@ namespace llvm {
     /// ELF relocation entry.
     virtual bool hasRelocationAddend() const { return is64Bit ? true : false; }
 
-    /// hasCustomJumpTableIndexRelTy - Returns true if the target has a
-    /// specific relocation type for a jump table index.
-    virtual bool hasCustomJumpTableIndexRelTy() const {
-      return is64Bit ? true : false;
-    }
-
-    /// getJumpTableIndexRelTy - Returns the target specific relocation type
-    /// for a jump table index.
-    virtual unsigned getJumpTableIndexRelTy() const { return R_X86_64_32S; }
-
     /// getDefaultAddendForRelTy - Gets the default addend value for a
     /// relocation entry based on the target ELF relocation type.
-    virtual long int getDefaultAddendForRelTy(unsigned RelTy) const;
+    virtual long int getDefaultAddendForRelTy(unsigned RelTy,
+                                              long int Modifier = 0) const;
 
     /// getRelTySize - Returns the size of relocatable field in bits
     virtual unsigned getRelocationTySize(unsigned RelTy) const;

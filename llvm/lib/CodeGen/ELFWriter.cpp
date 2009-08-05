@@ -76,6 +76,7 @@ ObjectCodeEmitter *llvm::AddELFWriter(PassManagerBase &PM,
 ELFWriter::ELFWriter(raw_ostream &o, TargetMachine &tm)
   : MachineFunctionPass(&ID), O(o), TM(tm),
     OutContext(*new MCContext()),
+    TLOF(TM.getTargetLowering()->getObjFileLowering()),
     is64Bit(TM.getTargetData()->getPointerSizeInBits() == 64),
     isLittleEndian(TM.getTargetData()->isLittleEndian()),
     ElfHdr(isLittleEndian, is64Bit) {
@@ -99,8 +100,6 @@ ELFWriter::~ELFWriter() {
 // the module to the ELF file.
 bool ELFWriter::doInitialization(Module &M) {
   // Initialize TargetLoweringObjectFile.
-  const TargetLoweringObjectFile &TLOF =
-    TM.getTargetLowering()->getObjFileLowering();
   const_cast<TargetLoweringObjectFile&>(TLOF).Initialize(OutContext, TM);
   
   Mang = new Mangler(M);
@@ -160,11 +159,13 @@ bool ELFWriter::doInitialization(Module &M) {
   return false;
 }
 
-// addGlobalSymbol - Add a global to be processed and to the
-// global symbol lookup, use a zero index for non private symbols
-// because the table index will be determined later.
-void ELFWriter::addGlobalSymbol(const GlobalValue *GV) {
+// addGlobalSymbol - Add a global to be processed and to the global symbol 
+// lookup, use a zero index because the table index will be determined later.
+void ELFWriter::addGlobalSymbol(const GlobalValue *GV, 
+                                bool AddToLookup /* = false */) {
   PendingGlobals.insert(GV);
+  if (AddToLookup) 
+    GblSymLookup[GV] = 0;
 }
 
 // addExternalSymbol - Add the external to be processed and to the
@@ -175,20 +176,39 @@ void ELFWriter::addExternalSymbol(const char *External) {
   ExtSymLookup[External] = 0;
 }
 
-// Get jump table section on the section name returned by TAI
-ELFSection &ELFWriter::getJumpTableSection() {
-  unsigned Align = TM.getTargetData()->getPointerABIAlignment();
-  
-  const TargetLoweringObjectFile &TLOF =
-    TM.getTargetLowering()->getObjFileLowering();
-
-  return getSection(TLOF.getSectionForConstant(SectionKind::getReadOnly())
-                    ->getName(),
-                    ELFSection::SHT_PROGBITS,
-                    ELFSection::SHF_ALLOC, Align);
+// getCtorSection - Get the static constructor section
+ELFSection &ELFWriter::getCtorSection() {
+  const MCSection *Ctor = TLOF.getStaticCtorSection();
+  return getSection(Ctor->getName(), ELFSection::SHT_PROGBITS, 
+                    getElfSectionFlags(Ctor->getKind()));
 }
 
-// Get a constant pool section based on the section name returned by TAI
+// getDtorSection - Get the static destructor section
+ELFSection &ELFWriter::getDtorSection() {
+  const MCSection *Dtor = TLOF.getStaticDtorSection();
+  return getSection(Dtor->getName(), ELFSection::SHT_PROGBITS, 
+                    getElfSectionFlags(Dtor->getKind()));
+}
+
+// getTextSection - Get the text section for the specified function
+ELFSection &ELFWriter::getTextSection(Function *F) {
+  const MCSection *Text = TLOF.SectionForGlobal(F, Mang, TM);
+  return getSection(Text->getName(), ELFSection::SHT_PROGBITS,
+                    getElfSectionFlags(Text->getKind()));
+}
+
+// getJumpTableSection - Get a read only section for constants when 
+// emitting jump tables. TODO: add PIC support
+ELFSection &ELFWriter::getJumpTableSection() {
+  const MCSection *JT = TLOF.getSectionForConstant(SectionKind::getReadOnly());
+  return getSection(JT->getName(), 
+                    ELFSection::SHT_PROGBITS,
+                    getElfSectionFlags(JT->getKind()), 
+                    TM.getTargetData()->getPointerABIAlignment());
+}
+
+// getConstantPoolSection - Get a constant pool section based on the machine 
+// constant pool entry type and relocation info.
 ELFSection &ELFWriter::getConstantPoolSection(MachineConstantPoolEntry &CPE) {
   SectionKind Kind;
   switch (CPE.getRelocationInfo()) {
@@ -206,17 +226,14 @@ ELFSection &ELFWriter::getConstantPoolSection(MachineConstantPoolEntry &CPE) {
     }
   }
 
-  const TargetLoweringObjectFile &TLOF =
-    TM.getTargetLowering()->getObjFileLowering();
-
   return getSection(TLOF.getSectionForConstant(Kind)->getName(),
                     ELFSection::SHT_PROGBITS,
-                    ELFSection::SHF_MERGE | ELFSection::SHF_ALLOC,
+                    getElfSectionFlags(Kind),
                     CPE.getAlignment());
 }
 
-// Return the relocation section of section 'S'. 'RelA' is true
-// if the relocation section contains entries with addends.
+// getRelocSection - Return the relocation section of section 'S'. 'RelA' 
+// is true if the relocation section contains entries with addends.
 ELFSection &ELFWriter::getRelocSection(ELFSection &S) {
   unsigned SectionHeaderTy = TEW->hasRelocationAddend() ?
                               ELFSection::SHT_RELA : ELFSection::SHT_REL;
@@ -248,7 +265,7 @@ unsigned ELFWriter::getGlobalELFBinding(const GlobalValue *GV) {
   if (GV->hasInternalLinkage())
     return ELFSym::STB_LOCAL;
 
-  if (GV->hasWeakLinkage())
+  if (GV->isWeakForLinker())
     return ELFSym::STB_WEAK;
 
   return ELFSym::STB_GLOBAL;
@@ -267,9 +284,11 @@ unsigned ELFWriter::getGlobalELFType(const GlobalValue *GV) {
 
 // getElfSectionFlags - Get the ELF Section Header flags based
 // on the flags defined in SectionKind.h.
-unsigned ELFWriter::getElfSectionFlags(SectionKind Kind) {
-  unsigned ElfSectionFlags = ELFSection::SHF_ALLOC;
-
+unsigned ELFWriter::getElfSectionFlags(SectionKind Kind, bool IsAlloc) {
+  unsigned ElfSectionFlags = 0;
+  
+  if (IsAlloc)
+    ElfSectionFlags |= ELFSection::SHF_ALLOC;
   if (Kind.isText())
     ElfSectionFlags |= ELFSection::SHF_EXECINSTR;
   if (Kind.isWriteable())
@@ -287,7 +306,8 @@ unsigned ELFWriter::getElfSectionFlags(SectionKind Kind) {
 // isELFUndefSym - the symbol has no section and must be placed in
 // the symbol table with a reference to the null section.
 static bool isELFUndefSym(const GlobalValue *GV) {
-  return GV->isDeclaration();
+  // Functions which make up until this point references are an undef symbol
+  return GV->isDeclaration() || (isa<Function>(GV));
 }
 
 // isELFBssSym - for an undef or null value, the symbol must go to a bss
@@ -305,7 +325,7 @@ static bool isELFCommonSym(const GlobalVariable *GV) {
 }
 
 // isELFDataSym - if the symbol is an initialized but no null constant
-// it must go to some kind of data section gathered from TAI
+// it must go to some kind of data section
 static bool isELFDataSym(const Constant *CV) {
   return (!(CV->isNullValue() || isa<UndefValue>(CV)));
 }
@@ -317,27 +337,22 @@ void ELFWriter::EmitGlobal(const GlobalValue *GV) {
   if (GblSymLookup.find(GV) != GblSymLookup.end())
     return;
 
-  // If the global is a function already emited in the text section
-  // just add it to the global symbol lookup with a zero index to be
-  // patched up later.
-  if (isa<Function>(GV) && !GV->isDeclaration()) {
-    GblSymLookup[GV] = 0;
-    return;
-  }
-
   // Handle ELF Bind, Visibility and Type for the current symbol
   unsigned SymBind = getGlobalELFBinding(GV);
-  ELFSym *GblSym = ELFSym::getGV(GV, SymBind, getGlobalELFType(GV),
-                                 getGlobalELFVisibility(GV));
+  unsigned SymType = getGlobalELFType(GV);
 
-  if (isELFUndefSym(GV)) {
-    GblSym->SectionIdx = ELFSection::SHN_UNDEF;
-  } else {
+  // All undef symbols have the same binding, type and visibily and
+  // are classified regardless of their type.
+  ELFSym *GblSym = isELFUndefSym(GV) ? ELFSym::getUndefGV(GV)
+    : ELFSym::getGV(GV, SymBind, SymType, getGlobalELFVisibility(GV));
+
+  if (!isELFUndefSym(GV)) {
     assert(isa<GlobalVariable>(GV) && "GV not a global variable!");
     const GlobalVariable *GVar = dyn_cast<GlobalVariable>(GV);
 
-    const TargetLoweringObjectFile &TLOF =
-      TM.getTargetLowering()->getObjFileLowering();
+    // Handle special llvm globals
+    if (EmitSpecialLLVMGlobal(GVar))
+      return;
 
     // Get the ELF section where this global belongs from TLOF
     const MCSection *S = TLOF.SectionForGlobal(GV, Mang, TM);
@@ -474,39 +489,106 @@ void ELFWriter::EmitGlobalConstant(const Constant *CV, ELFSection &GblS) {
     for (unsigned I = 0, E = PTy->getNumElements(); I < E; ++I)
       EmitGlobalConstant(CP->getOperand(I), GblS);
     return;
-  } else if (const GlobalValue *GV = dyn_cast<GlobalValue>(CV)) {
-    // This is a constant address for a global variable or function and
-    // therefore must be referenced using a relocation entry.
-
-    // Check if the referenced symbol is already emitted
-    if (GblSymLookup.find(GV) == GblSymLookup.end())
-      EmitGlobal(GV);
-
-    // Create the relocation entry for the global value
-    MachineRelocation MR =
-      MachineRelocation::getGV(GblS.getCurrentPCOffset(),
-                               TEW->getAbsoluteLabelMachineRelTy(),
-                               const_cast<GlobalValue*>(GV));
-
-    // Fill the data entry with zeros
-    for (unsigned i=0; i < Size; ++i)
-      GblS.emitByte(0);
-
-    // Add the relocation entry for the current data section
-    GblS.addRelocation(MR);
-    return;
   } else if (const ConstantExpr *CE = dyn_cast<ConstantExpr>(CV)) {
     if (CE->getOpcode() == Instruction::BitCast) {
       EmitGlobalConstant(CE->getOperand(0), GblS);
       return;
     }
-    // See AsmPrinter::EmitConstantValueOnly for other ConstantExpr types
-    llvm_unreachable("Unsupported ConstantExpr type");
+    std::string msg(CE->getOpcodeName());
+    raw_string_ostream ErrorMsg(msg);
+    ErrorMsg << ": Unsupported ConstantExpr type";
+    llvm_report_error(ErrorMsg.str());
+  } else if (CV->getType()->getTypeID() == Type::PointerTyID) {
+    // Fill the data entry with zeros or emit a relocation entry
+    if (isa<ConstantPointerNull>(CV)) {
+      for (unsigned i=0; i < Size; ++i)
+        GblS.emitByte(0);
+    } else {
+      emitGlobalDataRelocation(cast<const GlobalValue>(CV), 
+                               TD->getPointerSize(), GblS);
+    }
+    return;
+  } else if (const GlobalValue *GV = dyn_cast<GlobalValue>(CV)) {
+    // This is a constant address for a global variable or function and
+    // therefore must be referenced using a relocation entry.
+    emitGlobalDataRelocation(GV, Size, GblS);
+    return;
   }
 
-  llvm_unreachable("Unknown global constant type");
+  std::string msg;
+  raw_string_ostream ErrorMsg(msg);
+  ErrorMsg << "Constant unimp for type: " << *CV->getType();
+  llvm_report_error(ErrorMsg.str());
 }
 
+void ELFWriter::emitGlobalDataRelocation(const GlobalValue *GV, unsigned Size,
+                                         ELFSection &GblS) {
+  // Create the relocation entry for the global value
+  MachineRelocation MR =
+    MachineRelocation::getGV(GblS.getCurrentPCOffset(),
+                             TEW->getAbsoluteLabelMachineRelTy(),
+                             const_cast<GlobalValue*>(GV));
+
+  // Fill the data entry with zeros
+  for (unsigned i=0; i < Size; ++i)
+    GblS.emitByte(0);
+
+  // Add the relocation entry for the current data section
+  GblS.addRelocation(MR);
+}
+
+/// EmitSpecialLLVMGlobal - Check to see if the specified global is a
+/// special global used by LLVM.  If so, emit it and return true, otherwise
+/// do nothing and return false.
+bool ELFWriter::EmitSpecialLLVMGlobal(const GlobalVariable *GV) {
+  if (GV->getName() == "llvm.used")
+    llvm_unreachable("not implemented yet");
+
+  // Ignore debug and non-emitted data.  This handles llvm.compiler.used.
+  if (GV->getSection() == "llvm.metadata" ||
+      GV->hasAvailableExternallyLinkage())
+    return true;
+  
+  if (!GV->hasAppendingLinkage()) return false;
+
+  assert(GV->hasInitializer() && "Not a special LLVM global!");
+  
+  const TargetData *TD = TM.getTargetData();
+  unsigned Align = TD->getPointerPrefAlignment();
+  if (GV->getName() == "llvm.global_ctors") {
+    ELFSection &Ctor = getCtorSection();
+    Ctor.emitAlignment(Align);
+    EmitXXStructorList(GV->getInitializer(), Ctor);
+    return true;
+  } 
+  
+  if (GV->getName() == "llvm.global_dtors") {
+    ELFSection &Dtor = getDtorSection();
+    Dtor.emitAlignment(Align);
+    EmitXXStructorList(GV->getInitializer(), Dtor);
+    return true;
+  }
+  
+  return false;
+}
+
+/// EmitXXStructorList - Emit the ctor or dtor list.  This just emits out the 
+/// function pointers, ignoring the init priority.
+void ELFWriter::EmitXXStructorList(Constant *List, ELFSection &Xtor) {
+  // Should be an array of '{ int, void ()* }' structs.  The first value is the
+  // init priority, which we ignore.
+  if (!isa<ConstantArray>(List)) return;
+  ConstantArray *InitList = cast<ConstantArray>(List);
+  for (unsigned i = 0, e = InitList->getNumOperands(); i != e; ++i)
+    if (ConstantStruct *CS = dyn_cast<ConstantStruct>(InitList->getOperand(i))){
+      if (CS->getNumOperands() != 2) return;  // Not array of 2-element structs.
+
+      if (CS->getOperand(1)->isNullValue())
+        return;  // Found a null terminator, exit printing.
+      // Emit the function pointer.
+      EmitGlobalConstant(CS->getOperand(1), Xtor);
+    }
+}
 
 bool ELFWriter::runOnMachineFunction(MachineFunction &MF) {
   // Nothing to do here, this is all done through the ElfCE object above.
@@ -638,7 +720,8 @@ void ELFWriter::EmitRelocations() {
           Addend = PrivateSyms[SymIdx]->Value;
           SymIdx = SectionList[SectionIdx]->getSymbolTableIndex();
         } else {
-          Addend = TEW->getDefaultAddendForRelTy(RelType);
+          int64_t GlobalOffset = MR.getConstantVal();
+          Addend = TEW->getDefaultAddendForRelTy(RelType, GlobalOffset);
         }
       } else if (MR.isExternalSymbol()) {
         const char *ExtSym = MR.getExternalSymbol();
@@ -648,29 +731,26 @@ void ELFWriter::EmitRelocations() {
         // Get the symbol index for the section symbol
         unsigned SectionIdx = MR.getConstantVal();
         SymIdx = SectionList[SectionIdx]->getSymbolTableIndex();
-        Addend = (uint64_t)MR.getResultPointer();
+
+        // The symbol offset inside the section
+        int64_t SymOffset = (int64_t)MR.getResultPointer();
 
         // For pc relative relocations where symbols are defined in the same
         // section they are referenced, ignore the relocation entry and patch
         // the relocatable field with the symbol offset directly.
         if (S.SectionIdx == SectionIdx && TEW->isPCRelativeRel(RelType)) {
-          int64_t Value = TEW->computeRelocation(Addend, RelOffset, RelType);
+          int64_t Value = TEW->computeRelocation(SymOffset, RelOffset, RelType);
           RelocateField(S, RelOffset, Value, RelTySize);
           continue;
         }
 
-        // Handle Jump Table Index relocation
-        if ((SectionIdx == getJumpTableSection().SectionIdx) &&
-            TEW->hasCustomJumpTableIndexRelTy()) {
-          RelType = TEW->getJumpTableIndexRelTy();
-          RelTySize = TEW->getRelocationTySize(RelType);
-        }
+        Addend = TEW->getDefaultAddendForRelTy(RelType, SymOffset);
       }
 
       // The target without addend on the relocation symbol must be
       // patched in the relocation place itself to contain the addend
-      if (!HasRelA)
-        RelocateField(S, RelOffset, Addend, RelTySize);
+      // otherwise write zeros to make sure there is no garbage there
+      RelocateField(S, RelOffset, HasRelA ? 0 : Addend, RelTySize);
 
       // Get the relocation entry and emit to the relocation section
       ELFRelocation Rel(RelOffset, SymIdx, RelType, HasRelA, Addend);

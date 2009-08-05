@@ -39,6 +39,8 @@ unsigned X86ELFWriterInfo::getRelocationType(unsigned MachineRelTy) const {
       return R_X86_64_PC32;
     case X86::reloc_absolute_word:
       return R_X86_64_32;
+    case X86::reloc_absolute_word_sext:
+      return R_X86_64_32S;
     case X86::reloc_absolute_dword:
       return R_X86_64_64;
     case X86::reloc_picrel_word:
@@ -51,6 +53,7 @@ unsigned X86ELFWriterInfo::getRelocationType(unsigned MachineRelTy) const {
       return R_386_PC32;
     case X86::reloc_absolute_word:
       return R_386_32;
+    case X86::reloc_absolute_word_sext:
     case X86::reloc_absolute_dword:
     case X86::reloc_picrel_word:
     default:
@@ -60,20 +63,22 @@ unsigned X86ELFWriterInfo::getRelocationType(unsigned MachineRelTy) const {
   return 0;
 }
 
-long int X86ELFWriterInfo::getDefaultAddendForRelTy(unsigned RelTy) const {
+long int X86ELFWriterInfo::getDefaultAddendForRelTy(unsigned RelTy,
+                                                    long int Modifier) const {
   if (is64Bit) {
     switch(RelTy) {
-    case R_X86_64_PC32: return -4;
+    case R_X86_64_PC32: return Modifier - 4;
     case R_X86_64_32:
+    case R_X86_64_32S:
     case R_X86_64_64:
-      return 0;
+      return Modifier;
     default:
       llvm_unreachable("unknown x86_64 relocation type");
     }
   } else {
     switch(RelTy) {
-      case R_386_PC32: return -4;
-      case R_386_32: return 0;
+      case R_386_PC32: return Modifier - 4;
+      case R_386_32: return Modifier;
     default:
       llvm_unreachable("unknown x86 relocation type");
     }
