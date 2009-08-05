@@ -174,6 +174,11 @@ namespace llvm {
       return substr(0, Prefix.Length).equals(Prefix);
     }
 
+    /// endswith - Check if this string ends with the given \arg Suffix.
+    bool endswith(const StringRef &Suffix) const {
+      return slice(size() - Suffix.Length, size()).equals(Suffix);
+    }
+
     /// @}
   };
 
