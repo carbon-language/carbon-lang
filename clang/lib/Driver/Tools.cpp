@@ -367,6 +367,11 @@ void Clang::ConstructJob(Compilation &C, const JobAction &JA,
     }
   }
 
+  if (Arg *A = Args.getLastArg(options::OPT_mcmodel_EQ)) {
+    CmdArgs.push_back("-code-model");
+    CmdArgs.push_back(A->getValue(Args));
+  }
+
   // FIXME: Use iterator.
   for (ArgList::const_iterator
          it = Args.begin(), ie = Args.end(); it != ie; ++it) {
