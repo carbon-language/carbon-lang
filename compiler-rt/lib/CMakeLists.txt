@@ -34,3 +34,4 @@ SET( SRCS
 
 # Creates a shared lib .so
 ADD_LIBRARY( ${PROJECT_NAME} SHARED ${SRCS} )
+#ADD_LIBRARY( ${PROJECT_NAME} STATIC ${SRCS} )

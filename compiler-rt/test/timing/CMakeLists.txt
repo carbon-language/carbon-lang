@@ -1,23 +1,17 @@
-PROJECT( timing )
 
-SET( SRCS
- lshrdi3.c
- floatundixf.c
- floatdixf.c
- umoddi3.c
- udivdi3.c
- negdi2.c
- ashrdi3.c
- muldi3.c
- ashldi3.c
- divdi3.c
- floatundisf.c
- floatdidf.c
- floatdisf.c
- moddi3.c
- floatundidf.c
- )
-
-ADD_LIBRARY( ${PROJECT_NAME} SHARED ${SRCS})
-# ADD_EXECUTABLE( ${PROJECT_NAME} ${SRCS} )
-# TARGET_LINK_LIBRARIES( ${PROJECT_NAME} ${LIBS} )
+# create tests
+MACRO_ADD_CHECK_TEST( lshrdi3 lshrdi3.c ${TEST_TARGET_LIBRARIES} )
+MACRO_ADD_CHECK_TEST( floatundixf floatundixf.c ${TEST_TARGET_LIBRARIES} )
+MACRO_ADD_CHECK_TEST( floatdixf floatdixf.c ${TEST_TARGET_LIBRARIES} )
+MACRO_ADD_CHECK_TEST( umoddi3 umoddi3.c ${TEST_TARGET_LIBRARIES} )
+MACRO_ADD_CHECK_TEST( udivdi3 udivdi3.c ${TEST_TARGET_LIBRARIES} )
+MACRO_ADD_CHECK_TEST( negdi2 negdi2.c ${TEST_TARGET_LIBRARIES} )
+MACRO_ADD_CHECK_TEST( ashrdi3 ashrdi3.c ${TEST_TARGET_LIBRARIES} )
+MACRO_ADD_CHECK_TEST( muldi3 muldi3.c ${TEST_TARGET_LIBRARIES} )
+MACRO_ADD_CHECK_TEST( ashldi3 ashldi3.c ${TEST_TARGET_LIBRARIES} )
+MACRO_ADD_CHECK_TEST( divdi3 divdi3.c ${TEST_TARGET_LIBRARIES} )
+MACRO_ADD_CHECK_TEST( floatundisf floatundisf.c ${TEST_TARGET_LIBRARIES} )
+MACRO_ADD_CHECK_TEST( floatdidf floatdidf.c ${TEST_TARGET_LIBRARIES} )
+MACRO_ADD_CHECK_TEST( floatdisf floatdisf.c ${TEST_TARGET_LIBRARIES} )
+MACRO_ADD_CHECK_TEST( moddi3 moddi3.c ${TEST_TARGET_LIBRARIES} )
+MACRO_ADD_CHECK_TEST( floatundidf floatundidf.c ${TEST_TARGET_LIBRARIES} )

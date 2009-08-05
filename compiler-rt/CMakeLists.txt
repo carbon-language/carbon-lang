@@ -10,11 +10,17 @@ set(PACKAGE_BUGREPORT "llvmbugs@cs.uiuc.edu")
 
 SET( CMAKE_MODULE_PATH ${CMAKE_SOURCE_DIR}/cmake/Modules )
 
+# add definitions
+include(DefineCompilerFlags)
+
 # Disallow in-source build
 INCLUDE( MacroEnsureOutOfSourceBuild )
 MACRO_ENSURE_OUT_OF_SOURCE_BUILD(
  "${PROJECT_NAME} requires an out of source build. Please create a separate build directory and run 'cmake /path/to/${PROJECT_NAME} [options]' there."
  )
+
+INCLUDE( ConfigureChecks.cmake )
+CONFIGURE_FILE( config.h.cmake ${CMAKE_CURRENT_BINARY_DIR}/config.h )
 
 install(DIRECTORY include
   DESTINATION .
@@ -25,9 +31,9 @@ install(DIRECTORY include
 
 # BlocksRuntime - some random cruft that got thrown in at the last minute, ignoring for now.
 # ADD_SUBDIRECTORY( BlocksRuntime )
-ADD_SUBDIRECTORY( lib )
-# Tests are being ignored for until the very basics are working.
-# ADD_SUBDIRECTORY( test )
 
-INCLUDE( ConfigureChecks.cmake )
-CONFIGURE_FILE( config.h.cmake ${CMAKE_CURRENT_BINARY_DIR}/config.h )
+ADD_SUBDIRECTORY( lib )
+
+# Tests are being ignored for until the very basics are working.
+# INCLUDE( MacroAddCheckTest )
+# ADD_SUBDIRECTORY( test )

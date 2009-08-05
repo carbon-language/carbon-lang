@@ -12,5 +12,3 @@ CHECK_INCLUDE_FILE( sys/byteorder.h HAVE_SYS_BYTEORDER_H )
 
 # FUNCTIONS
 #CHECK_FUNCTION_EXISTS( strlcpy HAVE_STRLCPY )
-
-#Example ConfigureChecks.cmake
