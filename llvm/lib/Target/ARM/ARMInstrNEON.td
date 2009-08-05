@@ -285,9 +285,11 @@ class N2VQInt<bits<2> op24_23, bits<2> op21_20, bits<2> op19_18,
 // Basic 2-register operations, scalar single-precision
 class N2VDInts<SDNode OpNode, NeonI Inst>
   : NEONFPPat<(f32 (OpNode SPR:$a)),
-              (EXTRACT_SUBREG (Inst (INSERT_SUBREG (v2f32 (IMPLICIT_DEF)),
-                                     SPR:$a, arm_ssubreg_0)),
-              arm_ssubreg_0)>;
+              (EXTRACT_SUBREG (COPY_TO_REGCLASS 
+                  (Inst (INSERT_SUBREG (v2f32 (IMPLICIT_DEF)), 
+                                        SPR:$a, arm_ssubreg_0)),
+                               DPR_VFP2),
+               arm_ssubreg_0)>;
 
 // Narrow 2-register intrinsics.
 class N2VNInt<bits<2> op24_23, bits<2> op21_20, bits<2> op19_18,
@@ -329,11 +331,13 @@ class N3VQ<bit op24, bit op23, bits<2> op21_20, bits<4> op11_8, bit op4,
 // Basic 3-register operations, scalar single-precision
 class N3VDs<SDNode OpNode, NeonI Inst>
   : NEONFPPat<(f32 (OpNode SPR:$a, SPR:$b)),
-              (EXTRACT_SUBREG (Inst (INSERT_SUBREG (v2f32 (IMPLICIT_DEF)),
-                                                   SPR:$a, arm_ssubreg_0),
-                                    (INSERT_SUBREG (v2f32 (IMPLICIT_DEF)),
-                                                   SPR:$b, arm_ssubreg_0)),
-              arm_ssubreg_0)>;
+              (EXTRACT_SUBREG (COPY_TO_REGCLASS
+                  (Inst (INSERT_SUBREG (v2f32 (IMPLICIT_DEF)),
+                                        SPR:$a, arm_ssubreg_0),
+                        (INSERT_SUBREG (v2f32 (IMPLICIT_DEF)),
+                                        SPR:$b, arm_ssubreg_0)),
+                               DPR_VFP2),
+               arm_ssubreg_0)>;
 
 // Basic 3-register intrinsics, both double- and quad-register.
 class N3VDInt<bit op24, bit op23, bits<2> op21_20, bits<4> op11_8, bit op4,
@@ -375,12 +379,14 @@ class N3VQMulOp<bit op24, bit op23, bits<2> op21_20, bits<4> op11_8, bit op4,
 class N3VDMulOps<SDNode MulNode, SDNode OpNode, NeonI Inst>
   : NEONFPPat<(f32 (OpNode SPR:$acc, 
                        (f32 (MulNode SPR:$a, SPR:$b)))),
-              (EXTRACT_SUBREG (Inst (INSERT_SUBREG (v2f32 (IMPLICIT_DEF)),
-                                                   SPR:$acc, arm_ssubreg_0),
-                                    (INSERT_SUBREG (v2f32 (IMPLICIT_DEF)),
-                                                   SPR:$a, arm_ssubreg_0),
-                                    (INSERT_SUBREG (v2f32 (IMPLICIT_DEF)),
-                                                   SPR:$b, arm_ssubreg_0)),
+              (EXTRACT_SUBREG (COPY_TO_REGCLASS
+                  (Inst (INSERT_SUBREG (v2f32 (IMPLICIT_DEF)),
+                                        SPR:$acc, arm_ssubreg_0),
+                        (INSERT_SUBREG (v2f32 (IMPLICIT_DEF)),
+                                        SPR:$a, arm_ssubreg_0),
+                        (INSERT_SUBREG (v2f32 (IMPLICIT_DEF)),
+                                        SPR:$b, arm_ssubreg_0)),
+                               DPR_VFP2),
                arm_ssubreg_0)>;
 
 // Neon 3-argument intrinsics, both double- and quad-register.

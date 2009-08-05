@@ -610,23 +610,29 @@ ARMBaseInstrInfo::copyRegToReg(MachineBasicBlock &MBB,
   if (I != MBB.end()) DL = I->getDebugLoc();
 
   if (DestRC != SrcRC) {
-    // Not yet supported!
-    return false;
+    if (((DestRC == ARM::DPRRegisterClass) && (SrcRC == ARM::DPR_VFP2RegisterClass)) ||
+        ((SrcRC == ARM::DPRRegisterClass) && (DestRC == ARM::DPR_VFP2RegisterClass))) {
+      // Allow copy between DPR and DPR_VFP2.
+    } else {
+      return false;
+    }
   }
 
-  if (DestRC == ARM::GPRRegisterClass)
+  if (DestRC == ARM::GPRRegisterClass) {
     AddDefaultCC(AddDefaultPred(BuildMI(MBB, I, DL, get(ARM::MOVr),
                                         DestReg).addReg(SrcReg)));
-  else if (DestRC == ARM::SPRRegisterClass)
+  } else if (DestRC == ARM::SPRRegisterClass) {
     AddDefaultPred(BuildMI(MBB, I, DL, get(ARM::FCPYS), DestReg)
                    .addReg(SrcReg));
-  else if (DestRC == ARM::DPRRegisterClass)
+  } else if ((DestRC == ARM::DPRRegisterClass) ||
+             (DestRC == ARM::DPR_VFP2RegisterClass)) {
     AddDefaultPred(BuildMI(MBB, I, DL, get(ARM::FCPYD), DestReg)
                    .addReg(SrcReg));
-  else if (DestRC == ARM::QPRRegisterClass)
+  } else if (DestRC == ARM::QPRRegisterClass) {
     BuildMI(MBB, I, DL, get(ARM::VMOVQ), DestReg).addReg(SrcReg);
-  else
+  } else {
     return false;
+  }
 
   return true;
 }
