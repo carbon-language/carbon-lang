@@ -1284,7 +1284,7 @@ SDNode *ARMDAGToDAGISel::Select(SDValue Op) {
       MVT HalfVT;
       unsigned Opc = 0;
       switch (VT.getVectorElementType().getSimpleVT()) {
-      default: assert(false && "unhandled VDUP splat type");
+      default: llvm_unreachable("unhandled VDUP splat type");
       case MVT::i8:  Opc = ARM::VDUPLN8q;  HalfVT = MVT::v8i8; break;
       case MVT::i16: Opc = ARM::VDUPLN16q; HalfVT = MVT::v4i16; break;
       case MVT::i32: Opc = ARM::VDUPLN32q; HalfVT = MVT::v2i32; break;
@@ -1303,6 +1303,62 @@ SDNode *ARMDAGToDAGISel::Select(SDValue Op) {
     }
 
     break;
+  }
+
+  case ARMISD::VLD2D: {
+    MVT VT = Op.getValueType();
+    SDValue MemAddr, MemUpdate, MemOpc;
+    if (!SelectAddrMode6(Op, N->getOperand(1), MemAddr, MemUpdate, MemOpc))
+        return NULL;
+    unsigned Opc;
+    switch (VT.getSimpleVT()) {
+    default: llvm_unreachable("unhandled VLD2D type");
+    case MVT::v8i8:  Opc = ARM::VLD2d8; break;
+    case MVT::v4i16: Opc = ARM::VLD2d16; break;
+    case MVT::v2f32:
+    case MVT::v2i32: Opc = ARM::VLD2d32; break;
+    case MVT::v1i64: Opc = ARM::VLD2d64; break;
+    }
+    const SDValue Ops[] = { MemAddr, MemUpdate, MemOpc };
+    return CurDAG->getTargetNode(Opc, dl, VT, VT, MVT::Other, Ops, 3);
+  }
+
+  case ARMISD::VLD3D: {
+    MVT VT = Op.getValueType();
+    SDValue MemAddr, MemUpdate, MemOpc;
+    if (!SelectAddrMode6(Op, N->getOperand(1), MemAddr, MemUpdate, MemOpc))
+        return NULL;
+    unsigned Opc;
+    switch (VT.getSimpleVT()) {
+    default: llvm_unreachable("unhandled VLD3D type");
+    case MVT::v8i8:  Opc = ARM::VLD3d8; break;
+    case MVT::v4i16: Opc = ARM::VLD3d16; break;
+    case MVT::v2f32:
+    case MVT::v2i32: Opc = ARM::VLD3d32; break;
+    case MVT::v1i64: Opc = ARM::VLD3d64; break;
+    }
+    const SDValue Ops[] = { MemAddr, MemUpdate, MemOpc };
+    return CurDAG->getTargetNode(Opc, dl, VT, VT, VT, MVT::Other, Ops, 3);
+  }
+
+  case ARMISD::VLD4D: {
+    MVT VT = Op.getValueType();
+    SDValue MemAddr, MemUpdate, MemOpc;
+    if (!SelectAddrMode6(Op, N->getOperand(1), MemAddr, MemUpdate, MemOpc))
+        return NULL;
+    unsigned Opc;
+    switch (VT.getSimpleVT()) {
+    default: llvm_unreachable("unhandled VLD4D type");
+    case MVT::v8i8:  Opc = ARM::VLD4d8; break;
+    case MVT::v4i16: Opc = ARM::VLD4d16; break;
+    case MVT::v2f32:
+    case MVT::v2i32: Opc = ARM::VLD4d32; break;
+    case MVT::v1i64: Opc = ARM::VLD4d64; break;
+    }
+    const SDValue Ops[] = { MemAddr, MemUpdate, MemOpc };
+    std::vector<MVT> ResTys(4, VT);
+    ResTys.push_back(MVT::Other);
+    return CurDAG->getTargetNode(Opc, dl, ResTys, Ops, 3);
   }
   }
 

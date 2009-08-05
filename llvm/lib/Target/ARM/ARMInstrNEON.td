@@ -68,13 +68,18 @@ def NEONvgetlanes : SDNode<"ARMISD::VGETLANEs", SDTARMVGETLN>;
 def NEONvduplaneq : SDNode<"ARMISD::VDUPLANEQ",
                            SDTypeProfile<1, 2, [SDTCisVT<2, i32>]>>;
 
-def SDTARMVLD     : SDTypeProfile<0, 1, [SDTCisPtrTy<0>]>;
-def NEONvld2d     : SDNode<"ARMISD::VLD2D", SDTARMVLD,
-                           [SDNPHasChain, SDNPOutFlag, SDNPMayLoad]>;
-def NEONvld3d     : SDNode<"ARMISD::VLD3D", SDTARMVLD,
-                           [SDNPHasChain, SDNPOutFlag, SDNPMayLoad]>;
-def NEONvld4d     : SDNode<"ARMISD::VLD4D", SDTARMVLD,
-                           [SDNPHasChain, SDNPOutFlag, SDNPMayLoad]>;
+def SDTARMVLD2    : SDTypeProfile<2, 1, [SDTCisSameAs<0, 1>, SDTCisPtrTy<2>]>;
+def SDTARMVLD3    : SDTypeProfile<3, 1, [SDTCisSameAs<0, 1>,
+                                         SDTCisSameAs<0, 2>, SDTCisPtrTy<3>]>;
+def SDTARMVLD4    : SDTypeProfile<4, 1, [SDTCisSameAs<0, 1>,
+                                         SDTCisSameAs<0, 2>,
+                                         SDTCisSameAs<0, 3>, SDTCisPtrTy<4>]>;
+def NEONvld2d     : SDNode<"ARMISD::VLD2D", SDTARMVLD2,
+                           [SDNPHasChain, SDNPMayLoad]>;
+def NEONvld3d     : SDNode<"ARMISD::VLD3D", SDTARMVLD3,
+                           [SDNPHasChain, SDNPMayLoad]>;
+def NEONvld4d     : SDNode<"ARMISD::VLD4D", SDTARMVLD4,
+                           [SDNPHasChain, SDNPMayLoad]>;
 
 //===----------------------------------------------------------------------===//
 // NEON operand definitions
@@ -182,6 +187,37 @@ def  VST1q16  : VST1Q<"vst1.16", v8i16, int_arm_neon_vst1i>;
 def  VST1q32  : VST1Q<"vst1.32", v4i32, int_arm_neon_vst1i>;
 def  VST1qf   : VST1Q<"vst1.32", v4f32, int_arm_neon_vst1f>;
 def  VST1q64  : VST1Q<"vst1.64", v2i64, int_arm_neon_vst1i>;
+
+//   VLD2     : Vector Load (multiple 2-element structures)
+class VLD2D<string OpcodeStr>
+  : NLdSt<(outs DPR:$dst1, DPR:$dst2), (ins addrmode6:$addr),
+          !strconcat(OpcodeStr, "\t\\{$dst1,$dst2\\}, $addr"), []>;
+
+def  VLD2d8   : VLD2D<"vld2.8">;
+def  VLD2d16  : VLD2D<"vld2.16">;
+def  VLD2d32  : VLD2D<"vld2.32">;
+def  VLD2d64  : VLD2D<"vld2.64">;
+
+//   VLD3     : Vector Load (multiple 3-element structures)
+class VLD3D<string OpcodeStr>
+  : NLdSt<(outs DPR:$dst1, DPR:$dst2, DPR:$dst3), (ins addrmode6:$addr),
+          !strconcat(OpcodeStr, "\t\\{$dst1,$dst2,$dst3\\}, $addr"), []>;
+
+def  VLD3d8   : VLD3D<"vld3.8">;
+def  VLD3d16  : VLD3D<"vld3.16">;
+def  VLD3d32  : VLD3D<"vld3.32">;
+def  VLD3d64  : VLD3D<"vld3.64">;
+
+//   VLD4     : Vector Load (multiple 4-element structures)
+class VLD4D<string OpcodeStr>
+  : NLdSt<(outs DPR:$dst1, DPR:$dst2, DPR:$dst3, DPR:$dst4),
+          (ins addrmode6:$addr),
+          !strconcat(OpcodeStr, "\t\\{$dst1,$dst2,$dst3,$dst4\\}, $addr"), []>;
+
+def  VLD4d8   : VLD4D<"vld4.8">;
+def  VLD4d16  : VLD4D<"vld4.16">;
+def  VLD4d32  : VLD4D<"vld4.32">;
+def  VLD4d64  : VLD4D<"vld4.64">;
 
 
 //===----------------------------------------------------------------------===//

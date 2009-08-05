@@ -93,6 +93,8 @@ bool ARMBaseTargetMachine::addInstSelector(PassManagerBase &PM,
 
 bool ARMBaseTargetMachine::addPreRegAlloc(PassManagerBase &PM,
                                           CodeGenOpt::Level OptLevel) {
+  // Call NEON pre-alloc pass here.
+
   // FIXME: temporarily disabling load / store optimization pass for Thumb mode.
   if (OptLevel != CodeGenOpt::None && !DisableLdStOpti && !Subtarget.isThumb())
     PM.add(createARMLoadStoreOptimizationPass(true));

@@ -1323,7 +1323,7 @@ SDValue ARMTargetLowering::LowerGLOBAL_OFFSET_TABLE(SDValue Op,
 }
 
 static SDValue LowerNeonVLDIntrinsic(SDValue Op, SelectionDAG &DAG,
-                                     unsigned Opcode, unsigned NumVecs) {
+                                     unsigned Opcode) {
   SDNode *Node = Op.getNode();
   MVT VT = Node->getValueType(0);
   DebugLoc dl = Op.getDebugLoc();
@@ -1332,25 +1332,8 @@ static SDValue LowerNeonVLDIntrinsic(SDValue Op, SelectionDAG &DAG,
     return SDValue(); // unimplemented
 
   SDValue Ops[] = { Node->getOperand(0),
-                    Node->getOperand(1) };
-  SDVTList Tys = DAG.getVTList(MVT::Other, MVT::Flag);
-  SDValue Result = DAG.getNode(Opcode, dl, Tys, Ops, 2);
-
-  static const unsigned VLDRegs[] = {
-    ARM::D0, ARM::D1, ARM::D2, ARM::D3
-  };
-
-  SmallVector<SDValue, 4> ResultVals;
-  SDValue Chain = Result.getValue(0);
-  SDValue Flag = Result.getValue(1);
-  for (unsigned N = 0; N < NumVecs; ++N) {
-    Chain = DAG.getCopyFromReg(Chain, dl, VLDRegs[N], VT, Flag).getValue(1);
-    ResultVals.push_back(Chain.getValue(0));
-    Flag = Chain.getValue(2);
-  }
-  ResultVals.push_back(Chain);
-  return DAG.getNode(ISD::MERGE_VALUES, dl, Node->getVTList(),
-                     ResultVals.data(), NumVecs + 1);
+                    Node->getOperand(2) };
+  return DAG.getNode(Opcode, dl, Node->getVTList(), Ops, 2);
 }
 
 SDValue
@@ -1359,13 +1342,13 @@ ARMTargetLowering::LowerINTRINSIC_W_CHAIN(SDValue Op, SelectionDAG &DAG) {
   switch (IntNo) {
   case Intrinsic::arm_neon_vld2i:
   case Intrinsic::arm_neon_vld2f:
-    return LowerNeonVLDIntrinsic(Op, DAG, ARMISD::VLD2D, 2);
+    return LowerNeonVLDIntrinsic(Op, DAG, ARMISD::VLD2D);
   case Intrinsic::arm_neon_vld3i:
   case Intrinsic::arm_neon_vld3f:
-    return LowerNeonVLDIntrinsic(Op, DAG, ARMISD::VLD3D, 3);
+    return LowerNeonVLDIntrinsic(Op, DAG, ARMISD::VLD3D);
   case Intrinsic::arm_neon_vld4i:
   case Intrinsic::arm_neon_vld4f:
-    return LowerNeonVLDIntrinsic(Op, DAG, ARMISD::VLD4D, 4);
+    return LowerNeonVLDIntrinsic(Op, DAG, ARMISD::VLD4D);
   case Intrinsic::arm_neon_vst2i:
   case Intrinsic::arm_neon_vst2f:
   case Intrinsic::arm_neon_vst3i:
