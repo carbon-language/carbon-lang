@@ -32,7 +32,7 @@ Sema::ActOnCXXConversionFunctionExpr(Scope *S, SourceLocation OperatorLoc,
                                      const CXXScopeSpec &SS,
                                      bool isAddressOfOperand) {
   QualType ConvType = QualType::getFromOpaquePtr(Ty);
-  QualType ConvTypeCanon = Context.getCanonicalType(ConvType);
+  CanQualType ConvTypeCanon = Context.getCanonicalType(ConvType);
   DeclarationName ConvName 
     = Context.DeclarationNames.getCXXConversionFunctionName(ConvTypeCanon);
   return ActOnDeclarationNameExpr(S, OperatorLoc, ConvName, HasTrailingLParen,

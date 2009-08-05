@@ -2380,15 +2380,15 @@ PCHReader::ReadDeclarationName(const RecordData &Record, unsigned &Idx) {
 
   case DeclarationName::CXXConstructorName:
     return Context->DeclarationNames.getCXXConstructorName(
-                                                      GetType(Record[Idx++]));
+                          Context->getCanonicalType(GetType(Record[Idx++])));
 
   case DeclarationName::CXXDestructorName:
     return Context->DeclarationNames.getCXXDestructorName(
-                                                      GetType(Record[Idx++]));
+                          Context->getCanonicalType(GetType(Record[Idx++])));
 
   case DeclarationName::CXXConversionFunctionName:
     return Context->DeclarationNames.getCXXConversionFunctionName(
-                                                      GetType(Record[Idx++]));
+                          Context->getCanonicalType(GetType(Record[Idx++])));
 
   case DeclarationName::CXXOperatorName:
     return Context->DeclarationNames.getCXXOperatorName(

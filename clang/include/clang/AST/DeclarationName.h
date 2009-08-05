@@ -15,6 +15,7 @@
 
 #include "clang/Basic/IdentifierTable.h"
 #include "clang/AST/Type.h"
+#include "clang/AST/CanonicalType.h"
 
 namespace llvm {
   template <typename T> struct DenseMapInfo;
@@ -290,19 +291,19 @@ public:
 
   /// getCXXConstructorName - Returns the name of a C++ constructor
   /// for the given Type.
-  DeclarationName getCXXConstructorName(QualType Ty) {
+  DeclarationName getCXXConstructorName(CanQualType Ty) {
     return getCXXSpecialName(DeclarationName::CXXConstructorName, Ty);
   }
 
   /// getCXXDestructorName - Returns the name of a C++ destructor
   /// for the given Type.
-  DeclarationName getCXXDestructorName(QualType Ty) {
+  DeclarationName getCXXDestructorName(CanQualType Ty) {
     return getCXXSpecialName(DeclarationName::CXXDestructorName, Ty);
   }
 
   /// getCXXConversionFunctionName - Returns the name of a C++
   /// conversion function for the given Type.
-  DeclarationName getCXXConversionFunctionName(QualType Ty) {
+  DeclarationName getCXXConversionFunctionName(CanQualType Ty) {
     return getCXXSpecialName(DeclarationName::CXXConversionFunctionName, Ty);
   }
 
@@ -310,7 +311,7 @@ public:
   /// of C++ name, e.g., for a constructor, destructor, or conversion
   /// function.
   DeclarationName getCXXSpecialName(DeclarationName::NameKind Kind, 
-                                    QualType Ty);
+                                    CanQualType Ty);
 
   /// getCXXOperatorName - Get the name of the overloadable C++
   /// operator corresponding to Op.

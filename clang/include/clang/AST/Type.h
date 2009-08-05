@@ -19,6 +19,7 @@
 #include "clang/AST/NestedNameSpecifier.h"
 #include "clang/AST/TemplateName.h"
 #include "llvm/Support/Casting.h"
+#include "llvm/Support/type_traits.h"
 #include "llvm/ADT/APSInt.h"
 #include "llvm/ADT/FoldingSet.h"
 #include "llvm/ADT/PointerIntPair.h"
@@ -178,11 +179,11 @@ public:
 
   /// operator==/!= - Indicate whether the specified types and qualifiers are
   /// identical.
-  bool operator==(const QualType &RHS) const {
-    return Value == RHS.Value;
+  friend bool operator==(const QualType &LHS, const QualType &RHS) {
+    return LHS.Value == RHS.Value;
   }
-  bool operator!=(const QualType &RHS) const {
-    return Value != RHS.Value;
+  friend bool operator!=(const QualType &LHS, const QualType &RHS) {
+    return LHS.Value != RHS.Value;
   }
   std::string getAsString() const;
 
@@ -251,6 +252,7 @@ public:
   // CVR qualifiers go in low bits.
   enum { NumLowBitsAvailable = 0 };
 };
+    
 } // end namespace llvm
 
 namespace clang {

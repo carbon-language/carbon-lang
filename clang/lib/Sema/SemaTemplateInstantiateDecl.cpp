@@ -484,7 +484,7 @@ Decl *TemplateDeclInstantiator::VisitCXXDestructorDecl(CXXDestructorDecl *D) {
 
   // Build the instantiated destructor declaration.
   CXXRecordDecl *Record = cast<CXXRecordDecl>(Owner);
-  QualType ClassTy = 
+  CanQualType ClassTy = 
     SemaRef.Context.getCanonicalType(SemaRef.Context.getTypeDeclType(Record));
   CXXDestructorDecl *Destructor
     = CXXDestructorDecl::Create(SemaRef.Context, Record,
@@ -517,7 +517,7 @@ Decl *TemplateDeclInstantiator::VisitCXXConversionDecl(CXXConversionDecl *D) {
   // Build the instantiated conversion declaration.
   CXXRecordDecl *Record = cast<CXXRecordDecl>(Owner);
   QualType ClassTy = SemaRef.Context.getTypeDeclType(Record);
-  QualType ConvTy 
+  CanQualType ConvTy 
     = SemaRef.Context.getCanonicalType(T->getAsFunctionType()->getResultType());
   CXXConversionDecl *Conversion
     = CXXConversionDecl::Create(SemaRef.Context, Record,

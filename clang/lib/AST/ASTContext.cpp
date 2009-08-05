@@ -2070,18 +2070,19 @@ QualType ASTContext::getPointerDiffType() const {
 /// include typedefs, 'typeof' operators, etc. The returned type is guaranteed
 /// to be free of any of these, allowing two canonical types to be compared
 /// for exact equality with a simple pointer comparison.
-QualType ASTContext::getCanonicalType(QualType T) {
+CanQualType ASTContext::getCanonicalType(QualType T) {
   QualType CanType = T.getTypePtr()->getCanonicalTypeInternal();
   
   // If the result has type qualifiers, make sure to canonicalize them as well.
   unsigned TypeQuals = T.getCVRQualifiers() | CanType.getCVRQualifiers();
-  if (TypeQuals == 0) return CanType;
+  if (TypeQuals == 0) 
+    return CanQualType::CreateUnsafe(CanType);
 
   // If the type qualifiers are on an array type, get the canonical type of the
   // array with the qualifiers applied to the element type.
   ArrayType *AT = dyn_cast<ArrayType>(CanType);
   if (!AT)
-    return CanType.getQualifiedType(TypeQuals);
+    return CanQualType::CreateUnsafe(CanType.getQualifiedType(TypeQuals));
   
   // Get the canonical version of the element with the extra qualifiers on it.
   // This can recursively sink qualifiers through multiple levels of arrays.
@@ -2089,25 +2090,29 @@ QualType ASTContext::getCanonicalType(QualType T) {
   NewEltTy = getCanonicalType(NewEltTy);
   
   if (ConstantArrayType *CAT = dyn_cast<ConstantArrayType>(AT))
-    return getConstantArrayType(NewEltTy, CAT->getSize(),CAT->getSizeModifier(),
-                                CAT->getIndexTypeQualifier());
+    return CanQualType::CreateUnsafe(
+             getConstantArrayType(NewEltTy, CAT->getSize(),
+                                  CAT->getSizeModifier(),
+                                  CAT->getIndexTypeQualifier()));
   if (IncompleteArrayType *IAT = dyn_cast<IncompleteArrayType>(AT))
-    return getIncompleteArrayType(NewEltTy, IAT->getSizeModifier(),
-                                  IAT->getIndexTypeQualifier());
+    return CanQualType::CreateUnsafe(
+             getIncompleteArrayType(NewEltTy, IAT->getSizeModifier(),
+                                    IAT->getIndexTypeQualifier()));
   
   if (DependentSizedArrayType *DSAT = dyn_cast<DependentSizedArrayType>(AT))
-    return getDependentSizedArrayType(NewEltTy,
-                                      DSAT->getSizeExpr(),
-                                      DSAT->getSizeModifier(),
-                                      DSAT->getIndexTypeQualifier(),
-                                      DSAT->getBracketsRange());
+    return CanQualType::CreateUnsafe(
+             getDependentSizedArrayType(NewEltTy,
+                                        DSAT->getSizeExpr(),
+                                        DSAT->getSizeModifier(),
+                                        DSAT->getIndexTypeQualifier(),
+                                        DSAT->getBracketsRange()));
 
   VariableArrayType *VAT = cast<VariableArrayType>(AT);
-  return getVariableArrayType(NewEltTy,
-                              VAT->getSizeExpr(),
-                              VAT->getSizeModifier(),
-                              VAT->getIndexTypeQualifier(),
-                              VAT->getBracketsRange());
+  return CanQualType::CreateUnsafe(getVariableArrayType(NewEltTy,
+                                                        VAT->getSizeExpr(),
+                                                        VAT->getSizeModifier(),
+                                                  VAT->getIndexTypeQualifier(),
+                                                     VAT->getBracketsRange()));
 }
 
 TemplateName ASTContext::getCanonicalTemplateName(TemplateName Name) {
@@ -2250,7 +2255,7 @@ const ArrayType *ASTContext::getAsArrayType(QualType T) {
   
   // If we get here, we either have type qualifiers on the type, or we have
   // sugar such as a typedef in the way.  If we have type qualifiers on the type
-  // we must propagate them down into the elemeng type.
+  // we must propagate them down into the element type.
   unsigned CVRQuals = T.getCVRQualifiers();
   unsigned AddrSpace = 0;
   Type *Ty = T.getTypePtr();

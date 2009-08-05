@@ -304,7 +304,8 @@ CXXRecordDecl::getDestructor(ASTContext &Context) {
   QualType ClassType = Context.getTypeDeclType(this);
   
   DeclarationName Name 
-    = Context.DeclarationNames.getCXXDestructorName(ClassType);
+    = Context.DeclarationNames.getCXXDestructorName(
+                                          Context.getCanonicalType(ClassType));
 
   DeclContext::lookup_iterator I, E;
   llvm::tie(I, E) = lookup(Name); 

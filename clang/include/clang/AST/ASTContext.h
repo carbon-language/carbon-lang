@@ -22,6 +22,7 @@
 #include "clang/AST/PrettyPrinter.h"
 #include "clang/AST/TemplateName.h"
 #include "clang/AST/Type.h"
+#include "clang/AST/CanonicalType.h"
 #include "llvm/ADT/DenseMap.h"
 #include "llvm/ADT/FoldingSet.h"
 #include "llvm/ADT/OwningPtr.h"
@@ -700,7 +701,7 @@ public:
   /// include typedefs, 'typeof' operators, etc. The returned type is guaranteed
   /// to be free of any of these, allowing two canonical types to be compared
   /// for exact equality with a simple pointer comparison.
-  QualType getCanonicalType(QualType T);
+  CanQualType getCanonicalType(QualType T);
   const Type *getCanonicalType(const Type *T) {
     return T->getCanonicalTypeInternal().getTypePtr();
   }

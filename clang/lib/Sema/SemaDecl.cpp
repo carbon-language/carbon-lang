@@ -1553,21 +1553,21 @@ DeclarationName Sema::GetNameForDeclarator(Declarator &D) {
 
   case Declarator::DK_Constructor: {
     QualType Ty = QualType::getFromOpaquePtr(D.getDeclaratorIdType());
-    Ty = Context.getCanonicalType(Ty);
-    return Context.DeclarationNames.getCXXConstructorName(Ty);
+    return Context.DeclarationNames.getCXXConstructorName(
+                                                Context.getCanonicalType(Ty));
   }
 
   case Declarator::DK_Destructor: {
     QualType Ty = QualType::getFromOpaquePtr(D.getDeclaratorIdType());
-    Ty = Context.getCanonicalType(Ty);
-    return Context.DeclarationNames.getCXXDestructorName(Ty);
+    return Context.DeclarationNames.getCXXDestructorName(
+                                                Context.getCanonicalType(Ty));
   }
 
   case Declarator::DK_Conversion: {
     // FIXME: We'd like to keep the non-canonical type for diagnostics!
     QualType Ty = QualType::getFromOpaquePtr(D.getDeclaratorIdType());
-    Ty = Context.getCanonicalType(Ty);
-    return Context.DeclarationNames.getCXXConversionFunctionName(Ty);
+    return Context.DeclarationNames.getCXXConversionFunctionName(
+                                                Context.getCanonicalType(Ty));
   }
 
   case Declarator::DK_Operator:
@@ -2736,9 +2736,9 @@ void Sema::CheckFunctionDeclaration(FunctionDecl *NewFD, NamedDecl *&PrevDecl,
       CXXRecordDecl *Record = cast<CXXRecordDecl>(NewFD->getParent());
       QualType ClassType = Context.getTypeDeclType(Record);
       if (!ClassType->isDependentType()) {
-        ClassType = Context.getCanonicalType(ClassType);
         DeclarationName Name 
-          = Context.DeclarationNames.getCXXDestructorName(ClassType);
+          = Context.DeclarationNames.getCXXDestructorName(
+                                        Context.getCanonicalType(ClassType));
         if (NewFD->getDeclName() != Name) {
           Diag(NewFD->getLocation(), diag::err_destructor_name);
           return NewFD->setInvalidDecl();  

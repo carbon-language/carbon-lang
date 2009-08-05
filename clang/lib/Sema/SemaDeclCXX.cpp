@@ -1259,8 +1259,8 @@ void Sema::ActOnFinishCXXMemberSpecification(Scope* S, SourceLocation RLoc,
 /// [special]p1).  This routine can only be executed just before the
 /// definition of the class is complete.
 void Sema::AddImplicitlyDeclaredMembersToClass(CXXRecordDecl *ClassDecl) {
-  QualType ClassType = Context.getTypeDeclType(ClassDecl);
-  ClassType = Context.getCanonicalType(ClassType);
+  CanQualType ClassType 
+    = Context.getCanonicalType(Context.getTypeDeclType(ClassDecl));
 
   // FIXME: Implicit declarations have exception specifications, which are
   // the union of the specifications of the implicitly called functions.
