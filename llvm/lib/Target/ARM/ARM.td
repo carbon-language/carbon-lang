@@ -32,9 +32,6 @@ def ArchV6T2    : SubtargetFeature<"v6t2", "ARMArchVersion", "V6T2",
                                    "ARM v6t2">;
 def ArchV7A     : SubtargetFeature<"v7a", "ARMArchVersion", "V7A",
                                    "ARM v7A">;
-def FeatureNEONFP : SubtargetFeature<"neonfp", "UseNEONForSinglePrecisionFP",
-                                     "true",
-                                     "Use NEON for single-precision FP">;
 def FeatureVFP2 : SubtargetFeature<"vfp2", "ARMFPUType", "VFPv2",
                                    "Enable VFP2 instructions">;
 def FeatureVFP3 : SubtargetFeature<"vfp3", "ARMFPUType", "VFPv3",
@@ -43,6 +40,9 @@ def FeatureNEON : SubtargetFeature<"neon", "ARMFPUType", "NEON",
                                    "Enable NEON instructions">;
 def FeatureThumb2 : SubtargetFeature<"thumb2", "ThumbMode", "Thumb2",
                                      "Enable Thumb2 instructions">;
+def FeatureNEONFP : SubtargetFeature<"neonfp", "UseNEONForSinglePrecisionFP",
+                                     "true",
+                                     "Use NEON for single-precision FP">;
 
 //===----------------------------------------------------------------------===//
 // ARM Processors supported.
@@ -113,7 +113,7 @@ def : Processor<"arm1156t2f-s",     V6Itineraries,
 
 // V7 Processors.
 def : Processor<"cortex-a8",        CortexA8Itineraries,
-                [ArchV7A, FeatureThumb2, FeatureNEON]>;
+                [ArchV7A, FeatureThumb2, FeatureNEON, FeatureNEONFP]>;
 def : Processor<"cortex-a9",        V7Itineraries,
                 [ArchV7A, FeatureThumb2, FeatureNEON]>;
 

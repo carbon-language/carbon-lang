@@ -42,7 +42,9 @@ protected:
   /// ARMFPUType - Floating Point Unit type.
   ARMFPEnum ARMFPUType;
 
-  /// UseNEONForSinglePrecisionFP - if NEON is available use for FP
+  /// UseNEONForSinglePrecisionFP - if the NEONFP attribute has been
+  /// specified. Use the method useNEONForSinglePrecisionFP() to
+  /// determine if NEON should actually be used.
   bool UseNEONForSinglePrecisionFP;
 
   /// IsThumb - True if we are in thumb mode, false if in ARM mode.
