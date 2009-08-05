@@ -1816,7 +1816,6 @@ namespace {
     Out << "int main(int argc, char**argv) {\n";
     Out << "  Module* Mod = " << fname << "();\n";
     Out << "  verifyModule(*Mod, PrintMessageAction);\n";
-    Out << "  outs().flush();\n";
     Out << "  PassManager PM;\n";
     Out << "  PM.add(createPrintModulePass(&outs()));\n";
     Out << "  PM.run(*Mod);\n";
