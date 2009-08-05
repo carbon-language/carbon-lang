@@ -3160,16 +3160,15 @@ bool CWriter::visitBuiltinCall(CallInst &I, Intrinsic::ID ID,
   case Intrinsic::dbg_stoppoint: {
     // If we use writeOperand directly we get a "u" suffix which is rejected
     // by gcc.
-    std::stringstream SPIStr;
     DbgStopPointInst &SPI = cast<DbgStopPointInst>(I);
-    SPI.getDirectory()->print(SPIStr);
+    std::string dir;
+    GetConstantStringInfo(SPI.getDirectory(), dir);
+    std::string file;
+    GetConstantStringInfo(SPI.getFileName(), file);
     Out << "\n#line "
         << SPI.getLine()
-        << " \"";
-    Out << SPIStr.str();
-    SPIStr.clear();
-    SPI.getFileName()->print(SPIStr);
-    Out << SPIStr.str() << "\"\n";
+        << " \""
+        << dir << '/' << file << "\"\n";
     return true;
   }
   case Intrinsic::x86_sse_cmp_ss:
