@@ -21,31 +21,7 @@
 
 namespace llvm {
 
-class APFloat;
-class APInt;
-class ArrayType;
-class Constant;
-class ConstantAggregateZero;
-class ConstantArray;
-class ConstantFP;
-class ConstantInt;
-class ConstantPointerNull;
-class ConstantStruct;
-class ConstantVector;
-class FunctionType;
-class IntegerType;
 struct LLVMContextImpl;
-class MDNode;
-class MDString;
-class OpaqueType;
-class PointerType;
-class StringRef;
-class StructType;
-class Type;
-class UndefValue;
-class Use;
-class Value;
-class VectorType;
 
 /// This is an important class for using LLVM in a threaded context.  It
 /// (opaquely) owns and manages the core "global" data of LLVM's core 

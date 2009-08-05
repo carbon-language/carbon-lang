@@ -19,6 +19,8 @@
 
 namespace llvm {
 
+class StringRef;
+
 /// This class provides a symbol table of name/type pairs with operations to
 /// support constructing, searching and iterating over the symbol table. The
 /// class derives from AbstractTypeUser so that the contents of the symbol
