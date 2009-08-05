@@ -901,8 +901,6 @@ bool StructType::isValidElementType(const Type *ElemTy) {
 // Pointer Type Factory...
 //
 
-static ManagedStatic<TypeMap<PointerValType, PointerType> > PointerTypes;
-
 PointerType *PointerType::get(const Type *ValueType, unsigned AddressSpace) {
   assert(ValueType && "Can't get a pointer to <null> type!");
   assert(ValueType != Type::VoidTy &&
@@ -912,12 +910,14 @@ PointerType *PointerType::get(const Type *ValueType, unsigned AddressSpace) {
 
   PointerType *PT = 0;
   
+  LLVMContextImpl *pImpl = ValueType->getContext().pImpl;
+  
   sys::SmartScopedLock<true> L(*TypeMapLock);
-  PT = PointerTypes->get(PVT);
+  PT = pImpl->PointerTypes.get(PVT);
   
   if (!PT) {
     // Value not found.  Derive a new type!
-    PointerTypes->add(PVT, PT = new PointerType(ValueType, AddressSpace));
+    pImpl->PointerTypes.add(PVT, PT = new PointerType(ValueType, AddressSpace));
   }
 #ifdef DEBUG_MERGE_TYPES
   DOUT << "Derived new type: " << *PT << "\n";
@@ -1158,11 +1158,13 @@ void StructType::typeBecameConcrete(const DerivedType *AbsTy) {
 //
 void PointerType::refineAbstractType(const DerivedType *OldType,
                                      const Type *NewType) {
-  PointerTypes->RefineAbstractType(this, OldType, NewType);
+  LLVMContextImpl *pImpl = OldType->getContext().pImpl;
+  pImpl->PointerTypes.RefineAbstractType(this, OldType, NewType);
 }
 
 void PointerType::typeBecameConcrete(const DerivedType *AbsTy) {
-  PointerTypes->TypeBecameConcrete(this, AbsTy);
+  LLVMContextImpl *pImpl = AbsTy->getContext().pImpl;
+  pImpl->PointerTypes.TypeBecameConcrete(this, AbsTy);
 }
 
 bool SequentialType::indexValid(const Value *V) const {

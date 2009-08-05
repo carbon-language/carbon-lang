@@ -130,6 +130,7 @@ struct LLVMContextImpl {
   
   TypeMap<ArrayValType, ArrayType> ArrayTypes;
   TypeMap<VectorValType, VectorType> VectorTypes;
+  TypeMap<PointerValType, PointerType> PointerTypes;
   
   LLVMContextImpl() : TheTrueVal(0), TheFalseVal(0) { }
 };
