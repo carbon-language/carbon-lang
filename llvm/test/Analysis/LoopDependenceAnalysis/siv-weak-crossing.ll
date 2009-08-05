@@ -13,8 +13,8 @@ entry:
 for.body:
   %i = phi i64 [ 0, %entry ], [ %i.next, %for.body ]
   %i.255 = sub i64 255, %i
-  %y.ld.addr = getelementptr [256 x i32]* @y, i64 0, i64 %i.255
-  %x.ld.addr = getelementptr [256 x i32]* @x, i64 0, i64 %i
+  %y.ld.addr = getelementptr [256 x i32]* @y, i64 0, i64 %i
+  %x.ld.addr = getelementptr [256 x i32]* @x, i64 0, i64 %i.255
   %x.st.addr = getelementptr [256 x i32]* @x, i64 0, i64 %i
   %x = load i32* %x.ld.addr     ; 0
   %y = load i32* %y.ld.addr     ; 1
@@ -39,9 +39,9 @@ entry:
 
 for.body:
   %i = phi i64 [ 0, %entry ], [ %i.next, %for.body ]
-  %i.255 = sub i64 0, %i
+  %i.255 = sub i64 255, %i
   %y.ld.addr = getelementptr [256 x i32]* @y, i64 0, i64 %i
-  %x.ld.addr = getelementptr [256 x i32]* @x, i64 1, i64 %i.255
+  %x.ld.addr = getelementptr [256 x i32]* @x, i64 0, i64 %i.255
   %x.st.addr = getelementptr [256 x i32]* @x, i64 0, i64 %i
   %x = load i32* %x.ld.addr     ; 0
   %y = load i32* %y.ld.addr     ; 1
