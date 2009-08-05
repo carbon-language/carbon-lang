@@ -235,7 +235,7 @@ namespace llvm {
     SDValue GetF64FormalArgument(CCValAssign &VA, CCValAssign &NextVA,
                                  SDValue &Root, SelectionDAG &DAG, DebugLoc dl);
 
-    CCAssignFn *CCAssignFnForNode(unsigned CC, bool Return) const;
+    CCAssignFn *CCAssignFnForNode(unsigned CC, bool Return, bool isVarArg) const;
     SDValue LowerMemOpCallTo(SDValue Chain, SDValue StackPtr, SDValue Arg,
                              DebugLoc dl, SelectionDAG &DAG,
                              const CCValAssign &VA,

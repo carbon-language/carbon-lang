@@ -1108,6 +1108,11 @@ bool ARMAsmPrinter::doInitialization(Module &M) {
     O << "\t.eabi_attribute " << ARMBuildAttrs::ABI_align8_needed << ", 1\n"
       << "\t.eabi_attribute " << ARMBuildAttrs::ABI_align8_preserved << ", 1\n";
 
+    // Hard float.  Use both S and D registers and conform to AAPCS-VFP.
+    if (Subtarget->isAAPCS_ABI() && FloatABIType == FloatABI::Hard)
+      O << "\t.eabi_attribute " << ARMBuildAttrs::ABI_HardFP_use << ", 3\n"
+        << "\t.eabi_attribute " << ARMBuildAttrs::ABI_VFP_args << ", 1\n";
+
     // FIXME: Should we signal R9 usage?
   }
 
