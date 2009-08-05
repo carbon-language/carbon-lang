@@ -29,6 +29,7 @@
 #include "llvm/Analysis/ConstantsScanner.h"
 #include "llvm/Analysis/FindUsedTypes.h"
 #include "llvm/Analysis/LoopInfo.h"
+#include "llvm/Analysis/ValueTracking.h"
 #include "llvm/CodeGen/Passes.h"
 #include "llvm/CodeGen/IntrinsicLowering.h"
 #include "llvm/Transforms/Scalar.h"
@@ -1811,6 +1812,30 @@ static SpecialGlobalClass getGlobalVariableClass(const GlobalVariable *GV) {
   return NotSpecial;
 }
 
+// PrintEscapedString - Print each character of the specified string, escaping
+// it if it is not printable or if it is an escape char.
+static void PrintEscapedString(const char *Str, unsigned Length,
+                               raw_ostream &Out) {
+  for (unsigned i = 0; i != Length; ++i) {
+    unsigned char C = Str[i];
+    if (isprint(C) && C != '\\' && C != '"')
+      Out << C;
+    else if (C == '\\')
+      Out << "\\\\";
+    else if (C == '\"')
+      Out << "\\\"";
+    else if (C == '\t')
+      Out << "\\t";
+    else
+      Out << "\\x" << hexdigit(C >> 4) << hexdigit(C & 0x0F);
+  }
+}
+
+// PrintEscapedString - Print each character of the specified string, escaping
+// it if it is not printable or if it is an escape char.
+static void PrintEscapedString(const std::string &Str, raw_ostream &Out) {
+  PrintEscapedString(Str.c_str(), Str.size(), Out);
+}
 
 bool CWriter::doInitialization(Module &M) {
   FunctionPass::doInitialization(M);
@@ -1865,6 +1890,29 @@ bool CWriter::doInitialization(Module &M) {
   // First output all the declarations for the program, because C requires
   // Functions & globals to be declared before they are used.
   //
+  if (!M.getModuleInlineAsm().empty()) {
+    Out << "/* Module asm statements */\n"
+        << "asm(";
+
+    // Split the string into lines, to make it easier to read the .ll file.
+    std::string Asm = M.getModuleInlineAsm();
+    size_t CurPos = 0;
+    size_t NewLine = Asm.find_first_of('\n', CurPos);
+    while (NewLine != std::string::npos) {
+      // We found a newline, print the portion of the asm string from the
+      // last newline up to this newline.
+      Out << "\"";
+      PrintEscapedString(std::string(Asm.begin()+CurPos, Asm.begin()+NewLine),
+                         Out);
+      Out << "\\n\"\n";
+      CurPos = NewLine+1;
+      NewLine = Asm.find_first_of('\n', CurPos);
+    }
+    Out << "\"";
+    PrintEscapedString(std::string(Asm.begin()+CurPos, Asm.end()), Out);
+    Out << "\");\n"
+        << "/* End Module asm statements */\n";
+  }
 
   // Loop over the symbol table, emitting all named constants...
   printModuleTypes(M.getTypeSymbolTable());
