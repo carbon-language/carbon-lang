@@ -1,6 +1,6 @@
-; RUN: llvm-as < %s | llc -march=x86 -mattr=+sse2 -no-implicit-float
+; RUN: llvm-as < %s | llc -march=x86 -mattr=+sse2
 
-define double @t(double %x) nounwind ssp {
+define double @t(double %x) nounwind ssp noimplicitfloat {
 entry:
 	br i1 false, label %return, label %bb3
 
