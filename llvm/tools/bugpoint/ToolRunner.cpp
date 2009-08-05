@@ -698,8 +698,10 @@ int GCC::ExecuteProgram(const std::string &ProgramFile,
   else {
     ProgramArgs.push_back(RemoteClientPath.c_str());
     ProgramArgs.push_back(RemoteHost.c_str());
-    ProgramArgs.push_back("-l");
-    ProgramArgs.push_back(RemoteUser.c_str());
+    if (!RemoteUser.empty()) {
+      ProgramArgs.push_back("-l");
+      ProgramArgs.push_back(RemoteUser.c_str());
+    }
     if (!RemotePort.empty()) {
       ProgramArgs.push_back("-p");
       ProgramArgs.push_back(RemotePort.c_str());
