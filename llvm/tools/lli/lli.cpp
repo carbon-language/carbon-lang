@@ -31,7 +31,6 @@
 #include "llvm/System/Process.h"
 #include "llvm/System/Signals.h"
 #include "llvm/Target/TargetSelect.h"
-#include <iostream>
 #include <cerrno>
 using namespace llvm;
 
