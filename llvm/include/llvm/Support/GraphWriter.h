@@ -252,8 +252,12 @@ public:
     if (SrcNodePort >= 0)
       O << ":s" << SrcNodePort;
     O << " -> Node" << DestNodeID;
-    if (DestNodePort >= 0)
-      O << ":d" << DestNodePort;
+    if (DestNodePort >= 0) {
+      if (DOTTraits::hasEdgeDestLabels())
+	O << ":d" << DestNodePort;
+      else
+	O << ":s" << DestNodePort;
+    }
 
     if (!Attrs.empty())
       O << "[" << Attrs << "]";
