@@ -190,14 +190,6 @@ namespace llvm {
     /// this.
     const char *SwitchToSectionDirective; // Defaults to "\t.section\t"
     
-    /// TextSectionStartSuffix - This is printed after each start of section
-    /// directive for text sections.
-    const char *TextSectionStartSuffix;   // Defaults to "".
-
-    /// DataSectionStartSuffix - This is printed after each start of section
-    /// directive for data sections.
-    const char *DataSectionStartSuffix;   // Defaults to "".
-    
     /// JumpTableDirective - if non-null, the directive to emit before a jump
     /// table.
     const char *JumpTableDirective;
@@ -443,12 +435,6 @@ namespace llvm {
     }
     const char *getSwitchToSectionDirective() const {
       return SwitchToSectionDirective;
-    }
-    const char *getTextSectionStartSuffix() const {
-      return TextSectionStartSuffix;
-    }
-    const char *getDataSectionStartSuffix() const {
-      return DataSectionStartSuffix;
     }
     const char *getGlobalDirective() const {
       return GlobalDirective;

@@ -130,10 +130,6 @@ X86WinTargetAsmInfo::X86WinTargetAsmInfo(const X86TargetMachine &TM):
   HasSingleParameterDotFile = false;
 
   AlignmentIsInBytes = true;
-
-  SwitchToSectionDirective = "";
-  TextSectionStartSuffix = "\tSEGMENT PARA 'CODE'";
-  DataSectionStartSuffix = "\tSEGMENT PARA 'DATA'";
 }
 
 // Instantiate default implementation.

@@ -55,8 +55,6 @@ TargetAsmInfo::TargetAsmInfo() {
   AlignmentIsInBytes = true;
   TextAlignFillValue = 0;
   SwitchToSectionDirective = "\t.section\t";
-  TextSectionStartSuffix = "";
-  DataSectionStartSuffix = "";
   JumpTableDirective = 0;
   GlobalDirective = "\t.globl\t";
   SetDirective = 0;
