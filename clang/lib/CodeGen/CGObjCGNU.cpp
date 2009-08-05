@@ -189,7 +189,7 @@ void CGObjCGNU::EmitClassRef(const std::string &className) {
         llvm::GlobalValue::ExternalLinkage, 0, symbolName);
   }
   new llvm::GlobalVariable(TheModule, ClassSymbol->getType(), true,
-    llvm::GlobalValue::CommonLinkage, ClassSymbol, symbolRef);
+    llvm::GlobalValue::WeakAnyLinkage, ClassSymbol, symbolRef);
 }
 
 static std::string SymbolNameForClass(const std::string &ClassName) {
@@ -1580,7 +1580,7 @@ llvm::GlobalVariable *CGObjCGNU::ObjCIvarOffsetVariable(
     llvm::ConstantInt *OffsetGuess =
       llvm::ConstantInt::get(LongTy, Offset, "ivar");
     IvarOffsetGV = new llvm::GlobalVariable(TheModule, LongTy, false,
-        llvm::GlobalValue::CommonLinkage, OffsetGuess, Name);
+        llvm::GlobalValue::WeakAnyLinkage, OffsetGuess, Name);
   }
   return IvarOffsetGV;
 }
