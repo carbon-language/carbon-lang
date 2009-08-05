@@ -1,22 +1,23 @@
-//===-- subvdi3.c - Implement __subvdi3 -----------------------------------===//
-//
-//                     The LLVM Compiler Infrastructure
-//
-// This file is distributed under the University of Illinois Open Source
-// License. See LICENSE.TXT for details.
-//
-//===----------------------------------------------------------------------===//
-//
-// This file implements __subvdi3 for the compiler_rt library.
-//
-//===----------------------------------------------------------------------===//
+/* ===-- subvdi3.c - Implement __subvdi3 -----------------------------------===
+ *
+ *      	       The LLVM Compiler Infrastructure
+ *
+ * This file is distributed under the University of Illinois Open Source
+ * License. See LICENSE.TXT for details.
+ *
+ * ===----------------------------------------------------------------------===
+ *
+ * This file implements __subvdi3 for the compiler_rt library.
+ *
+ * ===----------------------------------------------------------------------===
+ */
 
 #include "int_lib.h"
 #include <stdlib.h>
 
-// Returns: a - b
+/* Returns: a - b */
 
-// Effects: aborts if a - b overflows
+/* Effects: aborts if a - b overflows */
 
 di_int
 __subvdi3(di_int a, di_int b)

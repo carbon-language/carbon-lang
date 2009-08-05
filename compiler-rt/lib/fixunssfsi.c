@@ -1,27 +1,30 @@
-//===-- fixunssfsi.c - Implement __fixunssfsi -----------------------------===//
-//
-//                     The LLVM Compiler Infrastructure
-//
-// This file is distributed under the University of Illinois Open Source
-// License. See LICENSE.TXT for details.
-//
-//===----------------------------------------------------------------------===//
-//
-// This file implements __fixunssfsi for the compiler_rt library.
-//
-//===----------------------------------------------------------------------===//
+/* ===-- fixunssfsi.c - Implement __fixunssfsi -----------------------------===
+ *
+ *                     The LLVM Compiler Infrastructure
+ *
+ * This file is distributed under the University of Illinois Open Source
+ * License. See LICENSE.TXT for details.
+ *
+ * ===----------------------------------------------------------------------===
+ *
+ * This file implements __fixunssfsi for the compiler_rt library.
+ *
+ * ===----------------------------------------------------------------------===
+ */
 
 #include "int_lib.h"
 
-// Returns: convert a to a unsigned int, rounding toward zero.
-//          Negative values all become zero.
+/* Returns: convert a to a unsigned int, rounding toward zero.
+ *          Negative values all become zero.
+ */
 
-// Assumption: float is a IEEE 32 bit floating point type 
-//             su_int is a 32 bit integral type
-//             value in float is representable in su_int or is negative 
-//                 (no range checking performed)
+/* Assumption: float is a IEEE 32 bit floating point type 
+ *             su_int is a 32 bit integral type
+ *             value in float is representable in su_int or is negative 
+ *                 (no range checking performed)
+ */
 
-// seee eeee emmm mmmm mmmm mmmm mmmm mmmm
+/* seee eeee emmm mmmm mmmm mmmm mmmm mmmm */
 
 su_int
 __fixunssfsi(float a)

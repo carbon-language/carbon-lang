@@ -1,30 +1,34 @@
-//===-- fixunsxfti.c - Implement __fixunsxfti -----------------------------===//
-//
-//                     The LLVM Compiler Infrastructure
-//
-// This file is distributed under the University of Illinois Open Source
-// License. See LICENSE.TXT for details.
-//
-//===----------------------------------------------------------------------===//
-//
-// This file implements __fixunsxfti for the compiler_rt library.
-//
-//===----------------------------------------------------------------------===//
+/* ===-- fixunsxfti.c - Implement __fixunsxfti -----------------------------===
+ *
+ *      	       The LLVM Compiler Infrastructure
+ *
+ * This file is distributed under the University of Illinois Open Source
+ * License. See LICENSE.TXT for details.
+ *
+ * ===----------------------------------------------------------------------===
+ *
+ * This file implements __fixunsxfti for the compiler_rt library.
+ *
+ * ===----------------------------------------------------------------------===
+ */
 
 #if __x86_64
 
 #include "int_lib.h"
 
-// Returns: convert a to a unsigned long long, rounding toward zero.
-//          Negative values all become zero.
+/* Returns: convert a to a unsigned long long, rounding toward zero.
+ *          Negative values all become zero.
+ */
 
-// Assumption: long double is an intel 80 bit floating point type padded with 6 bytes
-//             tu_int is a 64 bit integral type
-//             value in long double is representable in tu_int or is negative 
-//                 (no range checking performed)
+/* Assumption: long double is an intel 80 bit floating point type padded with 6 bytes
+ *             tu_int is a 64 bit integral type
+ *             value in long double is representable in tu_int or is negative 
+ *                 (no range checking performed)
+ */
 
-// gggg gggg gggg gggg gggg gggg gggg gggg | gggg gggg gggg gggg seee eeee eeee eeee |
-// 1mmm mmmm mmmm mmmm mmmm mmmm mmmm mmmm | mmmm mmmm mmmm mmmm mmmm mmmm mmmm mmmm
+/* gggg gggg gggg gggg gggg gggg gggg gggg | gggg gggg gggg gggg seee eeee eeee eeee |
+ * 1mmm mmmm mmmm mmmm mmmm mmmm mmmm mmmm | mmmm mmmm mmmm mmmm mmmm mmmm mmmm mmmm
+ */
 
 tu_int
 __fixunsxfti(long double a)

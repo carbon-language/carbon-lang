@@ -1,29 +1,32 @@
-//===-- fixunsdfti.c - Implement __fixunsdfti -----------------------------===//
-//
-//                     The LLVM Compiler Infrastructure
-//
-// This file is distributed under the University of Illinois Open Source
-// License. See LICENSE.TXT for details.
-//
-//===----------------------------------------------------------------------===//
-//
-// This file implements __fixunsdfti for the compiler_rt library.
-//
-//===----------------------------------------------------------------------===//
+/* ===-- fixunsdfti.c - Implement __fixunsdfti -----------------------------===
+ *
+ *                     The LLVM Compiler Infrastructure
+ *
+ * This file is distributed under the University of Illinois Open Source
+ * License. See LICENSE.TXT for details.
+ *
+ * ===----------------------------------------------------------------------===
+ *
+ * This file implements __fixunsdfti for the compiler_rt library.
+ *
+ * ===----------------------------------------------------------------------===
+ */
 
 #if __x86_64
 
 #include "int_lib.h"
 
-// Returns: convert a to a unsigned long long, rounding toward zero.
-//          Negative values all become zero.
+/* Returns: convert a to a unsigned long long, rounding toward zero.
+ *          Negative values all become zero.
+ */
 
-// Assumption: double is a IEEE 64 bit floating point type 
-//             tu_int is a 64 bit integral type
-//             value in double is representable in tu_int or is negative 
-//                 (no range checking performed)
+/* Assumption: double is a IEEE 64 bit floating point type 
+ *             tu_int is a 64 bit integral type
+ *             value in double is representable in tu_int or is negative 
+ *                 (no range checking performed)
+ */
 
-// seee eeee eeee mmmm mmmm mmmm mmmm mmmm | mmmm mmmm mmmm mmmm mmmm mmmm mmmm mmmm
+/* seee eeee eeee mmmm mmmm mmmm mmmm mmmm | mmmm mmmm mmmm mmmm mmmm mmmm mmmm mmmm */
 
 tu_int
 __fixunsdfti(double a)
