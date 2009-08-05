@@ -29,7 +29,7 @@ void llvm::DisplayGraph(const sys::Path &Filename, bool wait,
   args.push_back(Filename.c_str());
   args.push_back(0);
   
-  cerr << "Running 'Graphviz' program... " << std::flush;
+  cerr << "Running 'Graphviz' program... ";
   if (sys::Program::ExecuteAndWait(Graphviz, &args[0],0,0,0,0,&ErrMsg)) {
      cerr << "Error viewing graph " << Filename << ": " << ErrMsg << "\n";
   }
@@ -98,7 +98,7 @@ void llvm::DisplayGraph(const sys::Path &Filename, bool wait,
   args.push_back(PSFilename.c_str());
   args.push_back(0);
   
-  cerr << "Running '" << prog << "' program... " << std::flush;
+  cerr << "Running '" << prog << "' program... ";
 
   if (sys::Program::ExecuteAndWait(prog, &args[0],0,0,0,0,&ErrMsg)) {
      cerr << "Error viewing graph " << Filename << ": '" << ErrMsg << "\n";
@@ -133,7 +133,7 @@ void llvm::DisplayGraph(const sys::Path &Filename, bool wait,
   args.push_back(Filename.c_str());
   args.push_back(0);
   
-  cerr << "Running 'dotty' program... " << std::flush;
+  cerr << "Running 'dotty' program... ";
   if (sys::Program::ExecuteAndWait(dotty, &args[0],0,0,0,0,&ErrMsg)) {
      cerr << "Error viewing graph " << Filename << ": " << ErrMsg << "\n";
   } else {
