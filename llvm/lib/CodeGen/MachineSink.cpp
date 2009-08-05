@@ -7,7 +7,12 @@
 //
 //===----------------------------------------------------------------------===//
 //
-// This pass 
+// This pass moves instructions into successor blocks, when possible, so that
+// they aren't executed on paths where their results aren't needed.
+//
+// This pass is not intended to be a replacement or a complete alternative
+// for an LLVM-IR-level sinking pass. It is only designed to sink simple
+// constructs that are not exposed before lowering and instruction selection.
 //
 //===----------------------------------------------------------------------===//
 
@@ -31,7 +36,7 @@ namespace {
     const TargetInstrInfo *TII;
     MachineFunction       *CurMF; // Current MachineFunction
     MachineRegisterInfo  *RegInfo; // Machine register information
-    MachineDominatorTree *DT;   // Machine dominator tree for the current Loop
+    MachineDominatorTree *DT;   // Machine dominator tree
 
   public:
     static char ID; // Pass identification
@@ -152,7 +157,7 @@ bool MachineSinking::SinkInstruction(MachineInstr *MI, bool &SawStore) {
   // also sink them down before their first use in the block.  This xform has to
   // be careful not to *increase* register pressure though, e.g. sinking
   // "x = y + z" down if it kills y and z would increase the live ranges of y
-  // and z only the shrink the live range of x.
+  // and z and only shrink the live range of x.
   
   // Loop over all the operands of the specified instruction.  If there is
   // anything we can't handle, bail out.
