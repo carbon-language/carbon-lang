@@ -36,11 +36,11 @@ class TargetLoweringObjectFileAlpha : public TargetLoweringObjectFile {
 public:
   void Initialize(MCContext &Ctx, const TargetMachine &TM) {
     TargetLoweringObjectFile::Initialize(Ctx, TM);
-    TextSection = getOrCreateSection("_text", true, 
+    TextSection = getOrCreateSection(".text", true, 
                                      SectionKind::getText());
-    DataSection = getOrCreateSection("_data", true, 
+    DataSection = getOrCreateSection(".data", true, 
                                      SectionKind::getDataRel());
-    ReadOnlySection = getOrCreateSection("_rodata", true, 
+    ReadOnlySection = getOrCreateSection(".rodata", true, 
                                          SectionKind::getReadOnly());
   }
 };
