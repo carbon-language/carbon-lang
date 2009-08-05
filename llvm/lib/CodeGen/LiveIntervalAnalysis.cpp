@@ -106,6 +106,23 @@ void LiveIntervals::releaseMemory() {
   }
 }
 
+static bool CanTurnIntoImplicitDef(MachineInstr *MI, unsigned Reg,
+                                   const TargetInstrInfo *tii_) {
+  unsigned SrcReg, DstReg, SrcSubReg, DstSubReg;
+  if (tii_->isMoveInstr(*MI, SrcReg, DstReg, SrcSubReg, DstSubReg) &&
+      Reg == SrcReg)
+    return true;
+
+  if ((MI->getOpcode() == TargetInstrInfo::INSERT_SUBREG ||
+       MI->getOpcode() == TargetInstrInfo::SUBREG_TO_REG) &&
+      MI->getOperand(2).getReg() == Reg)
+    return true;
+  if (MI->getOpcode() == TargetInstrInfo::EXTRACT_SUBREG &&
+      MI->getOperand(1).getReg() == Reg)
+    return true;
+  return false;
+}
+
 /// processImplicitDefs - Process IMPLICIT_DEF instructions and make sure
 /// there is one implicit_def for each use. Add isUndef marker to
 /// implicit_def defs and their uses.
@@ -132,7 +149,7 @@ void LiveIntervals::processImplicitDefs() {
       bool ChangedToImpDef = false;
       for (unsigned i = 0, e = MI->getNumOperands(); i != e; ++i) {
         MachineOperand& MO = MI->getOperand(i);
-        if (!MO.isReg() || !MO.isUse())
+        if (!MO.isReg() || !MO.isUse() || MO.isUndef())
           continue;
         unsigned Reg = MO.getReg();
         if (!Reg)
@@ -140,9 +157,7 @@ void LiveIntervals::processImplicitDefs() {
         if (!ImpDefRegs.count(Reg))
           continue;
         // Use is a copy, just turn it into an implicit_def.
-        unsigned SrcReg, DstReg, SrcSubReg, DstSubReg;
-        if (tii_->isMoveInstr(*MI, SrcReg, DstReg, SrcSubReg, DstSubReg) &&
-            Reg == SrcReg) {
+        if (CanTurnIntoImplicitDef(MI, Reg, tii_)) {
           bool isKill = MO.isKill();
           MI->setDesc(tii_->get(TargetInstrInfo::IMPLICIT_DEF));
           for (int j = MI->getNumOperands() - 1, ee = 0; j > ee; --j)
@@ -154,8 +169,15 @@ void LiveIntervals::processImplicitDefs() {
         }
 
         MO.setIsUndef();
-        if (MO.isKill() || MI->isRegTiedToDefOperand(i))
+        if (MO.isKill() || MI->isRegTiedToDefOperand(i)) {
+          // Make sure other uses of 
+          for (unsigned j = i+1; j != e; ++j) {
+            MachineOperand &MOJ = MI->getOperand(j);
+            if (MOJ.isReg() && MOJ.isUse() && MOJ.getReg() == Reg)
+              MOJ.setIsUndef();
+          }
           ImpDefRegs.erase(Reg);
+        }
       }
 
       if (ChangedToImpDef) {

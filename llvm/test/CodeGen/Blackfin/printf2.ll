@@ -1,7 +1,4 @@
 ; RUN: llvm-as < %s | llc -march=bfin
-; XFAIL: *
-; Assertion failed: (isUsed(Reg) && "Using an undefined register!"),
-; function forward, file RegisterScavenging.cpp, line 182.
 
 declare i32 @printf(i8*, ...)
 
