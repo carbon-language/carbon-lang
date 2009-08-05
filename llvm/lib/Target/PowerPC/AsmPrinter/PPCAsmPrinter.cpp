@@ -646,8 +646,6 @@ bool PPCLinuxAsmPrinter::runOnMachineFunction(MachineFunction &MF) {
   // Emit post-function debug information.
   DW->EndFunction(&MF);
 
-  O.flush();
-
   // We didn't modify anything.
   return false;
 }

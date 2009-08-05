@@ -183,8 +183,6 @@ bool X86IntelAsmPrinter::runOnMachineFunction(MachineFunction &MF) {
 
   O << CurrentFnName << "\tendp\n";
 
-  O.flush();
-
   // We didn't modify anything.
   return false;
 }

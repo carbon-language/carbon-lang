@@ -284,8 +284,6 @@ bool X86ATTAsmPrinter::runOnMachineFunction(MachineFunction &MF) {
   // Print out jump tables referenced by the function.
   EmitJumpTableInfo(MF.getJumpTableInfo(), MF);
 
-  O.flush();
-
   // We didn't modify anything.
   return false;
 }

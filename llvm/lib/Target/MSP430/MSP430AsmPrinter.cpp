@@ -134,8 +134,6 @@ bool MSP430AsmPrinter::runOnMachineFunction(MachineFunction &MF) {
   if (TAI->hasDotTypeDotSizeDirective())
     O << "\t.size\t" << CurrentFnName << ", .-" << CurrentFnName << '\n';
 
-  O.flush();
-
   // We didn't modify anything
   return false;
 }
