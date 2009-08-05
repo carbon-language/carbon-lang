@@ -540,9 +540,12 @@ llvm::Value *CodeGenFunction::GenerateVtable(const CXXRecordDecl *RD) {
   llvm::Type *Ptr8Ty;
   Ptr8Ty = llvm::PointerType::get(llvm::Type::Int8Ty, 0);
   m = llvm::Constant::getNullValue(Ptr8Ty);
-  int64_t offset = 0;
-  methods.push_back(m); offset += LLVMPointerWidth;
-  methods.push_back(GenerateRtti(RD)); offset += LLVMPointerWidth;
+  int64_t Offset = 0;
+  methods.push_back(m); Offset += LLVMPointerWidth;
+  methods.push_back(GenerateRtti(RD)); Offset += LLVMPointerWidth;
+
+  const ASTRecordLayout &Layout = getContext().getASTRecordLayout(RD);
+  const CXXRecordDecl *PrimaryBase = Layout.getPrimaryBase();
 
   for (CXXRecordDecl::base_class_const_iterator i = RD->bases_begin(),
          e = RD->bases_end(); i != e; ++i) {
@@ -550,7 +553,37 @@ llvm::Value *CodeGenFunction::GenerateVtable(const CXXRecordDecl *RD) {
       continue;
     const CXXRecordDecl *Base = 
       cast<CXXRecordDecl>(i->getType()->getAs<RecordType>()->getDecl());
+    if (PrimaryBase != Base) {
+      const ASTRecordLayout &Layout = getContext().getASTRecordLayout(RD);
+      int64_t BaseOffset = -(Layout.getBaseClassOffset(Base) / 8);
+      m = llvm::ConstantInt::get(llvm::Type::Int64Ty, BaseOffset);
+      m = llvm::ConstantExpr::getIntToPtr(m, Ptr8Ty);
+      methods.push_back(m);
+      // FIXME: GenerateRtti for Base in RD.
+      m = llvm::Constant::getNullValue(Ptr8Ty);
+      methods.push_back(m);
+    }
     for (meth_iter mi = Base->method_begin(), me = Base->method_end(); mi != me;
+         ++mi) {
+      if (mi->isVirtual()) {
+        m = CGM.GetAddrOfFunction(GlobalDecl(*mi));
+        m = llvm::ConstantExpr::getBitCast(m, Ptr8Ty);
+        methods.push_back(m);
+      }
+    }
+    if (PrimaryBase == Base) {
+      for (meth_iter mi = RD->method_begin(), me = RD->method_end(); mi != me;
+           ++mi) {
+        if (mi->isVirtual()) {
+          m = CGM.GetAddrOfFunction(GlobalDecl(*mi));
+          m = llvm::ConstantExpr::getBitCast(m, Ptr8Ty);
+          methods.push_back(m);
+        }
+      }
+    }
+  }
+  if (PrimaryBase == 0) {
+    for (meth_iter mi = RD->method_begin(), me = RD->method_end(); mi != me;
          ++mi) {
       if (mi->isVirtual()) {
         m = CGM.GetAddrOfFunction(GlobalDecl(*mi));
@@ -560,14 +593,6 @@ llvm::Value *CodeGenFunction::GenerateVtable(const CXXRecordDecl *RD) {
     }
   }
 
-  for (meth_iter mi = RD->method_begin(), me = RD->method_end(); mi != me;
-       ++mi) {
-    if (mi->isVirtual()) {
-      m = CGM.GetAddrOfFunction(GlobalDecl(*mi));
-      m = llvm::ConstantExpr::getBitCast(m, Ptr8Ty);
-      methods.push_back(m);
-    }
-  }
   llvm::Constant *C;
   llvm::ArrayType *type = llvm::ArrayType::get(Ptr8Ty, methods.size());
   C = llvm::ConstantArray::get(type, methods);
@@ -577,7 +602,7 @@ llvm::Value *CodeGenFunction::GenerateVtable(const CXXRecordDecl *RD) {
   // FIXME: finish layout for virtual bases
   vtable = Builder.CreateGEP(vtable,
                              llvm::ConstantInt::get(llvm::Type::Int64Ty,
-                                                    offset/8));
+                                                    Offset/8));
   return vtable;
 }
 

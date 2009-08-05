@@ -11,6 +11,7 @@
 #define LLVM_CLANG_AST_RECORDLAYOUTBUILDER_H
 
 #include "llvm/ADT/SmallVector.h"
+#include "llvm/ADT/SmallSet.h"
 #include "llvm/Support/DataTypes.h"
 
 namespace clang {
@@ -35,6 +36,8 @@ class ASTRecordLayoutBuilder {
   
   uint64_t NonVirtualSize;
   unsigned NonVirtualAlignment;
+  const CXXRecordDecl *PrimaryBase;
+
   llvm::SmallVector<const CXXRecordDecl *, 4> Bases;
   llvm::SmallVector<uint64_t, 4> BaseOffsets;
   
@@ -48,6 +51,11 @@ class ASTRecordLayoutBuilder {
   void LayoutFields(const RecordDecl *D);
   void LayoutField(const FieldDecl *D);
 
+  void SelectPrimaryBase(const CXXRecordDecl *RD);
+  void SelectPrimaryForBase(const CXXRecordDecl *RD,
+                     llvm::SmallSet<const CXXRecordDecl*, 32> &IndirectPrimary);
+  void setPrimaryBase(const CXXRecordDecl *PB) { PrimaryBase = PB; }
+  bool IsNearlyEmpty(const CXXRecordDecl *RD);
   void LayoutVtable(const CXXRecordDecl *RD);
   void LayoutNonVirtualBases(const CXXRecordDecl *RD);
   void LayoutNonVirtualBase(const CXXRecordDecl *RD);

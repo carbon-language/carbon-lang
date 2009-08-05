@@ -54,6 +54,9 @@ class ASTRecordLayout {
     /// which is the alignment of the object without virtual bases.
     uint64_t NonVirtualAlign;
     
+    /// PrimaryBase - The primary base for our vtable.
+    const CXXRecordDecl *PrimaryBase;
+
     /// BaseOffsets - Contains a map from base classes to their offset.
     /// FIXME: Does it make sense to store offsets for virtual base classes
     /// here?
@@ -83,8 +86,8 @@ class ASTRecordLayout {
   ASTRecordLayout(uint64_t size, unsigned alignment, uint64_t datasize,
                   const uint64_t *fieldoffsets, unsigned fieldcount,
                   uint64_t nonvirtualsize, unsigned nonvirtualalign,
-                  const CXXRecordDecl **bases, const uint64_t *baseoffsets,
-                  unsigned basecount)
+                  const CXXRecordDecl *PB, const CXXRecordDecl **bases,
+                  const uint64_t *baseoffsets, unsigned basecount)
   : Size(size), DataSize(datasize), FieldOffsets(0), Alignment(alignment),
   FieldCount(fieldcount), CXXInfo(new CXXRecordLayoutInfo) {
     if (FieldCount > 0)  {
@@ -93,6 +96,7 @@ class ASTRecordLayout {
         FieldOffsets[i] = fieldoffsets[i];
     }
     
+    CXXInfo->PrimaryBase = PB;
     CXXInfo->NonVirtualSize = nonvirtualsize;
     CXXInfo->NonVirtualAlign = nonvirtualalign;
     for (unsigned i = 0; i != basecount; ++i)
@@ -146,6 +150,13 @@ public:
     return CXXInfo->NonVirtualAlign;
   }
   
+  /// getPrimaryBase - Get the primary base.
+  const CXXRecordDecl *getPrimaryBase() const {
+    assert(CXXInfo && "Record layout does not have C++ specific info!");
+    
+    return CXXInfo->PrimaryBase;
+  }
+
   /// getBaseClassOffset - Get the offset, in bits, for the given base class.
   uint64_t getBaseClassOffset(const CXXRecordDecl *Base) const {
     assert(CXXInfo && "Record layout does not have C++ specific info!");
