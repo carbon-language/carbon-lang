@@ -27,6 +27,7 @@ class Function;
 class BasicBlock;
 
 class ProfileInfoLoader {
+  const std::string &Filename;
   Module &M;
   std::vector<std::string> CommandLines;
   std::vector<unsigned>    FunctionCounts;
@@ -43,46 +44,28 @@ public:
   unsigned getNumExecutions() const { return CommandLines.size(); }
   const std::string &getExecution(unsigned i) const { return CommandLines[i]; }
 
-  // getFunctionCounts - This method is used by consumers of function counting
-  // information.  If we do not directly have function count information, we
-  // compute it from other, more refined, types of profile information.
-  //
-  void getFunctionCounts(std::vector<std::pair<Function*, unsigned> > &Counts);
+  const std::string &getFileName() const { return Filename; }
 
-  // hasAccurateBlockCounts - Return true if we can synthesize accurate block
-  // frequency information from whatever we have.
+  // getRawFunctionCounts - This method is used by consumers of function
+  // counting information.
   //
-  bool hasAccurateBlockCounts() const {
-    return !BlockCounts.empty() || !EdgeCounts.empty();
+  const std::vector<unsigned> &getRawFunctionCounts() const {
+    return FunctionCounts;
   }
 
-  // hasAccurateEdgeCounts - Return true if we can synthesize accurate edge
-  // frequency information from whatever we have.
-  //
-  bool hasAccurateEdgeCounts() const {
-    return !EdgeCounts.empty();
-  }
-
-  // getBlockCounts - This method is used by consumers of block counting
-  // information.  If we do not directly have block count information, we
-  // compute it from other, more refined, types of profile information.
-  //
-  void getBlockCounts(std::vector<std::pair<BasicBlock*, unsigned> > &Counts);
-
-  // getEdgeCounts - This method is used by consumers of edge counting
-  // information.  If we do not directly have edge count information, we compute
-  // it from other, more refined, types of profile information.
-  //
-  // Edges are represented as a pair, where the first element is the basic block
-  // and the second element is the successor number.
-  //
-  typedef std::pair<BasicBlock*, unsigned> Edge;
-  void getEdgeCounts(std::vector<std::pair<Edge, unsigned> > &Counts);
-
-  // getBBTrace - This method is used by consumers of basic-block trace
+  // getRawBlockCounts - This method is used by consumers of block counting
   // information.
   //
-  void getBBTrace(std::vector<BasicBlock *> &Trace);
+  const std::vector<unsigned> &getRawBlockCounts() const {
+    return BlockCounts;
+  }
+
+  // getEdgeCounts - This method is used by consumers of edge counting
+  // information.
+  //
+  const std::vector<unsigned> &getRawEdgeCounts() const {
+    return EdgeCounts;
+  }
 };
 
 } // End llvm namespace

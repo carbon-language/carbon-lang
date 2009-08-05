@@ -20,6 +20,7 @@
 #include "llvm/Assembly/AsmAnnotationWriter.h"
 #include "llvm/Analysis/ProfileInfo.h"
 #include "llvm/Analysis/ProfileInfoLoader.h"
+#include "llvm/Analysis/Passes.h"
 #include "llvm/Bitcode/ReaderWriter.h"
 #include "llvm/Support/CommandLine.h"
 #include "llvm/Support/ManagedStatic.h"
@@ -67,48 +68,38 @@ struct PairSecondSortReverse
 
 namespace {
   class ProfileAnnotator : public AssemblyAnnotationWriter {
-    std::map<const Function  *, unsigned> &FuncFreqs;
-    std::map<const BasicBlock*, unsigned> &BlockFreqs;
-    std::map<ProfileInfoLoader::Edge, unsigned> &EdgeFreqs;
+    ProfileInfo &PI;
   public:
-    ProfileAnnotator(std::map<const Function  *, unsigned> &FF,
-                     std::map<const BasicBlock*, unsigned> &BF,
-                     std::map<ProfileInfoLoader::Edge, unsigned> &EF)
-      : FuncFreqs(FF), BlockFreqs(BF), EdgeFreqs(EF) {}
+    ProfileAnnotator(ProfileInfo& pi) : PI(pi) {}
 
     virtual void emitFunctionAnnot(const Function *F, raw_ostream &OS) {
-      OS << ";;; %" << F->getName() << " called " << FuncFreqs[F]
+      OS << ";;; %" << F->getName() << " called " << PI.getExecutionCount(F)
          << " times.\n;;;\n";
     }
     virtual void emitBasicBlockStartAnnot(const BasicBlock *BB,
                                           raw_ostream &OS) {
-      if (BlockFreqs.empty()) return;
-      std::map<const BasicBlock *, unsigned>::const_iterator I =
-        BlockFreqs.find(BB);
-      if (I != BlockFreqs.end())
-        OS << "\t;;; Basic block executed " << I->second << " times.\n";
+      unsigned w = PI.getExecutionCount(BB);
+      if (w != 0)
+        OS << "\t;;; Basic block executed " << w << " times.\n";
       else
         OS << "\t;;; Never executed!\n";
     }
 
     virtual void emitBasicBlockEndAnnot(const BasicBlock *BB, raw_ostream &OS) {
-      if (EdgeFreqs.empty()) return;
-
       // Figure out how many times each successor executed.
-      std::vector<std::pair<const BasicBlock*, unsigned> > SuccCounts;
-      const TerminatorInst *TI = BB->getTerminator();
+      std::vector<std::pair<ProfileInfo::Edge, unsigned> > SuccCounts;
 
-      std::map<ProfileInfoLoader::Edge, unsigned>::iterator I =
-        EdgeFreqs.lower_bound(std::make_pair(const_cast<BasicBlock*>(BB), 0U));
-      for (; I != EdgeFreqs.end() && I->first.first == BB; ++I)
-        if (I->second)
-          SuccCounts.push_back(std::make_pair(TI->getSuccessor(I->first.second),
-                                              I->second));
+      const TerminatorInst *TI = BB->getTerminator();
+      for (unsigned s = 0, e = TI->getNumSuccessors(); s != e; ++s) {
+        BasicBlock* Succ = TI->getSuccessor(s);
+        SuccCounts.push_back(std::make_pair(std::make_pair(BB,Succ),
+                                            PI.getEdgeWeight(BB,Succ)));
+      }
       if (!SuccCounts.empty()) {
         OS << "\t;;; Out-edge counts:";
         for (unsigned i = 0, e = SuccCounts.size(); i != e; ++i)
-          OS << " [" << SuccCounts[i].second << " -> "
-             << SuccCounts[i].first->getName() << "]";
+          OS << " [" << (SuccCounts[i]).second << " -> "
+             << (SuccCounts[i]).first.second->getName() << "]";
         OS << "\n";
       }
     }
@@ -139,17 +130,26 @@ namespace {
 char ProfileInfoPrinterPass::ID = 0;
 
 bool ProfileInfoPrinterPass::runOnModule(Module &M) {
+  ProfileInfo &PI = getAnalysis<ProfileInfo>();
   std::map<const Function  *, unsigned> FuncFreqs;
   std::map<const BasicBlock*, unsigned> BlockFreqs;
-  std::map<ProfileInfoLoader::Edge, unsigned> EdgeFreqs;
+  std::map<ProfileInfo::Edge, unsigned> EdgeFreqs;
 
   // Output a report. Eventually, there will be multiple reports selectable on
   // the command line, for now, just keep things simple.
 
   // Emit the most frequent function table...
   std::vector<std::pair<Function*, unsigned> > FunctionCounts;
-  PIL.getFunctionCounts(FunctionCounts);
-  FuncFreqs.insert(FunctionCounts.begin(), FunctionCounts.end());
+  std::vector<std::pair<BasicBlock*, unsigned> > Counts;
+  for (Module::iterator FI = M.begin(), FE = M.end(); FI != FE; ++FI) {
+    unsigned w = PI.getExecutionCount(FI);
+    if (w != (unsigned) -1)
+      FunctionCounts.push_back(std::make_pair(FI,PI.getExecutionCount(FI)));
+    for (Function::iterator BB = FI->begin(), BBE = FI->end(); 
+         BB != BBE; ++BB) {
+      Counts.push_back(std::make_pair(BB,PI.getExecutionCount(BB)));
+    }
+  }
 
   // Sort by the frequency, backwards.
   sort(FunctionCounts.begin(), FunctionCounts.end(),
@@ -190,54 +190,39 @@ bool ProfileInfoPrinterPass::runOnModule(Module &M) {
 
   std::set<Function*> FunctionsToPrint;
 
-  // If we have block count information, print out the LLVM module with
-  // frequency annotations.
-  if (PIL.hasAccurateBlockCounts()) {
-    std::vector<std::pair<BasicBlock*, unsigned> > Counts;
-    PIL.getBlockCounts(Counts);
-
-    TotalExecutions = 0;
-    for (unsigned i = 0, e = Counts.size(); i != e; ++i)
-      TotalExecutions += Counts[i].second;
-
-    // Sort by the frequency, backwards.
-    sort(Counts.begin(), Counts.end(),
-              PairSecondSortReverse<BasicBlock*>());
-
-    std::cout << "\n===" << std::string(73, '-') << "===\n";
-    std::cout << "Top 20 most frequently executed basic blocks:\n\n";
-
-    // Print out the function frequencies...
-    std::cout <<" ##      %% \tFrequency\n";
-    unsigned BlocksToPrint = Counts.size();
-    if (BlocksToPrint > 20) BlocksToPrint = 20;
-    for (unsigned i = 0; i != BlocksToPrint; ++i) {
-      if (Counts[i].second == 0) break;
-      Function *F = Counts[i].first->getParent();
-      std::cout << std::setw(3) << i+1 << ". " 
-        << std::setw(5) << std::setprecision(2) 
-        << Counts[i].second/(double)TotalExecutions*100 << "% "
-        << std::setw(5) << Counts[i].second << "/"
-        << TotalExecutions << "\t"
-        << F->getNameStr() << "() - "
-        << Counts[i].first->getNameStr() << "\n";
-      FunctionsToPrint.insert(F);
-    }
-
-    BlockFreqs.insert(Counts.begin(), Counts.end());
-  }
-
-  if (PIL.hasAccurateEdgeCounts()) {
-    std::vector<std::pair<ProfileInfoLoader::Edge, unsigned> > Counts;
-    PIL.getEdgeCounts(Counts);
-    EdgeFreqs.insert(Counts.begin(), Counts.end());
+  TotalExecutions = 0;
+  for (unsigned i = 0, e = Counts.size(); i != e; ++i)
+    TotalExecutions += Counts[i].second;
+  
+  // Sort by the frequency, backwards.
+  sort(Counts.begin(), Counts.end(),
+       PairSecondSortReverse<BasicBlock*>());
+  
+  std::cout << "\n===" << std::string(73, '-') << "===\n";
+  std::cout << "Top 20 most frequently executed basic blocks:\n\n";
+  
+  // Print out the function frequencies...
+  std::cout <<" ##      %% \tFrequency\n";
+  unsigned BlocksToPrint = Counts.size();
+  if (BlocksToPrint > 20) BlocksToPrint = 20;
+  for (unsigned i = 0; i != BlocksToPrint; ++i) {
+    if (Counts[i].second == 0) break;
+    Function *F = Counts[i].first->getParent();
+    std::cout << std::setw(3) << i+1 << ". " 
+              << std::setw(5) << std::setprecision(2) 
+              << Counts[i].second/(double)TotalExecutions*100 << "% "
+              << std::setw(5) << Counts[i].second << "/"
+              << TotalExecutions << "\t"
+              << F->getNameStr() << "() - "
+              << Counts[i].first->getNameStr() << "\n";
+    FunctionsToPrint.insert(F);
   }
 
   if (PrintAnnotatedLLVM || PrintAllCode) {
     std::cout << "\n===" << std::string(73, '-') << "===\n";
     std::cout << "Annotated LLVM code for the module:\n\n";
-
-    ProfileAnnotator PA(FuncFreqs, BlockFreqs, EdgeFreqs);
+  
+    ProfileAnnotator PA(PI);
 
     if (FunctionsToPrint.empty() || PrintAllCode)
       M.print(std::cout, &PA);

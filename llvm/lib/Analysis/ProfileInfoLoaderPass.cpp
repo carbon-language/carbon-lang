@@ -14,6 +14,7 @@
 
 #include "llvm/BasicBlock.h"
 #include "llvm/InstrTypes.h"
+#include "llvm/Module.h"
 #include "llvm/Pass.h"
 #include "llvm/Analysis/Passes.h"
 #include "llvm/Analysis/ProfileInfo.h"
@@ -69,23 +70,25 @@ Pass *llvm::createProfileLoaderPass(const std::string &Filename) {
 bool LoaderPass::runOnModule(Module &M) {
   ProfileInfoLoader PIL("profile-loader", Filename, M);
   EdgeCounts.clear();
-  bool PrintedWarning = false;
 
-  std::vector<std::pair<ProfileInfoLoader::Edge, unsigned> > ECs;
-  PIL.getEdgeCounts(ECs);
-  for (unsigned i = 0, e = ECs.size(); i != e; ++i) {
-    BasicBlock *BB = ECs[i].first.first;
-    unsigned SuccNum = ECs[i].first.second;
-    TerminatorInst *TI = BB->getTerminator();
-    if (SuccNum >= TI->getNumSuccessors()) {
-      if (!PrintedWarning) {
-        cerr << "WARNING: profile information is inconsistent with "
-             << "the current program!\n";
-        PrintedWarning = true;
+  std::vector<unsigned> ECs = PIL.getRawEdgeCounts();
+  // Instrument all of the edges...
+  unsigned i = 0;
+  for (Module::iterator F = M.begin(), E = M.end(); F != E; ++F)
+    for (Function::iterator BB = F->begin(), E = F->end(); BB != E; ++BB) {
+      // Okay, we have to add a counter of each outgoing edge.  If the
+      // outgoing edge is not critical don't split it, just insert the counter
+      // in the source or destination of the edge.
+      TerminatorInst *TI = BB->getTerminator();
+      for (unsigned s = 0, e = TI->getNumSuccessors(); s != e; ++s) {
+        if (i < ECs.size())
+          EdgeCounts[std::make_pair(BB, TI->getSuccessor(s))]+= ECs[i++];
       }
-    } else {
-      EdgeCounts[std::make_pair(BB, TI->getSuccessor(SuccNum))]+= ECs[i].second;
     }
+ 
+  if (i != ECs.size()) {
+    cerr << "WARNING: profile information is inconsistent with "
+         << "the current program!\n";
   }
 
   return false;
