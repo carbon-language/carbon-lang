@@ -254,7 +254,13 @@ bool LowerSubregsInstructionPass::LowerInsert(MachineInstr *MI) {
     // Insert sub-register copy
     const TargetRegisterClass *TRC0= TRI.getPhysicalRegisterRegClass(DstSubReg);
     const TargetRegisterClass *TRC1= TRI.getPhysicalRegisterRegClass(InsReg);
-    TII.copyRegToReg(*MBB, MI, DstSubReg, InsReg, TRC0, TRC1);
+    if (MI->getOperand(2).isUndef())
+      // If the source register being inserted is undef, then this becomes an
+      // implicit_def.
+      BuildMI(*MBB, MI, MI->getDebugLoc(),
+              TII.get(TargetInstrInfo::IMPLICIT_DEF), DstSubReg);
+    else
+      TII.copyRegToReg(*MBB, MI, DstSubReg, InsReg, TRC0, TRC1);
     MachineBasicBlock::iterator CopyMI = MI;
     --CopyMI;
 
@@ -270,7 +276,7 @@ bool LowerSubregsInstructionPass::LowerInsert(MachineInstr *MI) {
     }
 
     // Make sure the inserted register gets killed
-    if (MI->getOperand(2).isKill())
+    if (MI->getOperand(2).isKill() && !MI->getOperand(2).isUndef())
       TransferKillFlag(MI, InsReg, TRI);
   }
 
