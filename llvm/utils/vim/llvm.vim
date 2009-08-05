@@ -50,8 +50,9 @@ syn keyword llvmKeyword except deplibs
 syn keyword llvmKeyword volatile fastcc coldcc cc ccc
 syn keyword llvmKeyword x86_stdcallcc x86_fastcallcc
 syn keyword llvmKeyword signext zeroext inreg sret nounwind noreturn
-syn keyword llvmKeyword nocapture byval nest readnone readonly
+syn keyword llvmKeyword nocapture byval nest readnone readonly noalias
 syn keyword llvmKeyword noinline alwaysinline optsize ssp sspreq
+syn keyword llvmKeyword noredzone noimplicitfloat naked
 syn keyword llvmKeyword module asm align tail to
 syn keyword llvmKeyword addrspace section alias sideeffect c gc
 syn keyword llvmKeyword target datalayout triple
