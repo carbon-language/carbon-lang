@@ -126,6 +126,10 @@ public:
     return getValue(0, Ctx.getTypeSize(Ctx.VoidPtrTy), isUnsigned);
   }
 
+  inline const llvm::APSInt &getIntWithPtrWidth(uint64_t X, bool isUnsigned) {
+    return getValue(X, Ctx.getTypeSize(Ctx.VoidPtrTy), isUnsigned);
+  }
+
   inline const llvm::APSInt& getTruthValue(bool b, QualType T) {
     return getValue(b ? 1 : 0, Ctx.getTypeSize(T), false);
   }

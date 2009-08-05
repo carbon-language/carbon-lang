@@ -2568,8 +2568,17 @@ void GRExprEngine::VisitUnaryOperator(UnaryOperator* U, NodeTy* Pred,
       BinaryOperator::Opcode Op = U->isIncrementOp() ? BinaryOperator::Add
                                                      : BinaryOperator::Sub;
 
-      SVal Result = EvalBinOp(state, Op, V2, ValMgr.makeIntVal(1U,U->getType()),
-                              U->getType());    
+      // If the UnaryOperator has non-location type, use its type to create the
+      // constant value. If the UnaryOperator has location type, create the
+      // constant with int type and pointer width.
+      SVal RHS;
+
+      if (U->getType()->isAnyPointerType())
+        RHS = ValMgr.makeIntValWithPtrWidth(1, false);
+      else
+        RHS = ValMgr.makeIntVal(1, U->getType());
+
+      SVal Result = EvalBinOp(state, Op, V2, RHS, U->getType());    
       
       // Conjure a new symbol if necessary to recover precision.
       if (Result.isUnknown() || !getConstraintManager().canReasonAbout(Result)){

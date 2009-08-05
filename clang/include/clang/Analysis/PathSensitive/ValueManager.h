@@ -152,6 +152,10 @@ public:
     return nonloc::ConcreteInt(BasicVals.getIntValue(X, isUnsigned));
   }
 
+  NonLoc makeIntValWithPtrWidth(uint64_t X, bool isUnsigned) {
+    return nonloc::ConcreteInt(BasicVals.getIntWithPtrWidth(X, isUnsigned));
+  }
+
   NonLoc makeIntVal(uint64_t X, unsigned BitWidth, bool isUnsigned) {
     return nonloc::ConcreteInt(BasicVals.getValue(X, BitWidth, isUnsigned));
   }
