@@ -883,7 +883,8 @@ void CodeGenModule::EmitGlobalVarDefinition(const VarDecl *D) {
   else if (D->hasAttr<WeakAttr>())
     GV->setLinkage(llvm::GlobalVariable::WeakAnyLinkage);
   else if (!CompileOpts.NoCommon &&
-           (!D->hasExternalStorage() && !D->getInit()))
+           !D->hasExternalStorage() && !D->getInit() &&
+           !D->getAttr<SectionAttr>())
     GV->setLinkage(llvm::GlobalVariable::CommonLinkage);
   else
     GV->setLinkage(llvm::GlobalVariable::ExternalLinkage);
