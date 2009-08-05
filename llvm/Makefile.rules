@@ -1212,7 +1212,7 @@ install-local::
 uninstall-local::
 	$(Echo) Uninstall circumvented with NO_INSTALL
 else
-DestTool = $(PROJ_bindir)/$(TOOLNAME)
+DestTool = $(PROJ_bindir)/$(TOOLNAME)$(EXEEXT)
 
 install-local:: $(DestTool)
 
