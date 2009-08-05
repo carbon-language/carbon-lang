@@ -2396,6 +2396,7 @@ void Sema::InitializeVarWithConstructor(VarDecl *VD,
                                      DeclInitType, Constructor, 
                                      false, Exprs, NumExprs);  
   MarkDeclarationReferenced(VD->getLocation(), Constructor);
+  Temp = MaybeCreateCXXExprWithTemporaries(Temp, /*DestroyTemps=*/true);
   VD->setInit(Context, Temp);
 }
 
