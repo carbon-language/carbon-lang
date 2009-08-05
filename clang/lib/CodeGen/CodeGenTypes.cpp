@@ -237,7 +237,7 @@ const llvm::Type *CodeGenTypes::ConvertNewType(QualType T) {
   case Type::Complex: {
     const llvm::Type *EltTy = 
       ConvertTypeRecursive(cast<ComplexType>(Ty).getElementType());
-    return llvm::StructType::get(EltTy, EltTy, NULL);
+    return llvm::StructType::get(TheModule.getContext(), EltTy, EltTy, NULL);
   }
   case Type::LValueReference:
   case Type::RValueReference: {
@@ -360,7 +360,8 @@ const llvm::Type *CodeGenTypes::ConvertNewType(QualType T) {
 
     QualType ETy = cast<MemberPointerType>(Ty).getPointeeType();
     if (ETy->isFunctionType()) {
-      return llvm::StructType::get(ConvertType(Context.getPointerDiffType()), 
+      return llvm::StructType::get(TheModule.getContext(),
+                                   ConvertType(Context.getPointerDiffType()), 
                                    ConvertType(Context.getPointerDiffType()),
                                    NULL);
     } else

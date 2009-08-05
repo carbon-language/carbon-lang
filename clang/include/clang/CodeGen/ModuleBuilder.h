@@ -18,7 +18,7 @@
 #include <string>
 
 namespace llvm {
-  class LLVMContext;
+  struct LLVMContext;
   class Module;
 }
 

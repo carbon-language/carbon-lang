@@ -298,7 +298,8 @@ CGRecordLayoutBuilder::ComputeLayout(CodeGenTypes &Types,
   
   Builder.Layout(D);
 
-  const llvm::Type *Ty = llvm::StructType::get(Builder.FieldTypes,
+  const llvm::Type *Ty = llvm::StructType::get(Types.getLLVMContext(),
+                                               Builder.FieldTypes,
                                                Builder.Packed);
   
   // Add all the field numbers.

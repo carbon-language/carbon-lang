@@ -1002,7 +1002,7 @@ void CodeGenFunction::EmitAsmStmt(const AsmStmt &S) {
   else if (ResultRegTypes.size() == 1)
     ResultType = ResultRegTypes[0];
   else
-    ResultType = llvm::StructType::get(ResultRegTypes);
+    ResultType = llvm::StructType::get(VMContext, ResultRegTypes);
   
   const llvm::FunctionType *FTy = 
     llvm::FunctionType::get(ResultType, ArgTypes, false);

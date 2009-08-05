@@ -237,7 +237,7 @@ const llvm::Type *CodeGenFunction::BuildByRefType(QualType Ty,
   assert((Align <= unsigned(Target.getPointerAlign(0))/8)
          && "Can't align more than pointer yet");
   Types[needsCopyDispose*2 + 4] = LTy;
-  return llvm::StructType::get(Types, false);
+  return llvm::StructType::get(VMContext, Types, false);
 }
 
 /// EmitLocalBlockVarDecl - Emit code and set up an entry in LocalDeclMap for a

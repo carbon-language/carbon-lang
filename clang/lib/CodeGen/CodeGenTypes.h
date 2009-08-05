@@ -14,6 +14,7 @@
 #ifndef CLANG_CODEGEN_CODEGENTYPES_H
 #define CLANG_CODEGEN_CODEGENTYPES_H
 
+#include "llvm/Module.h"
 #include "llvm/ADT/DenseMap.h"
 #include "llvm/ADT/SmallSet.h"
 #include <vector>
@@ -27,6 +28,7 @@ namespace llvm {
   class PATypeHolder;
   class TargetData;
   class Type;
+  struct LLVMContext;
 }
 
 namespace clang {
@@ -146,6 +148,7 @@ public:
   TargetInfo &getTarget() const { return Target; }
   ASTContext &getContext() const { return Context; }
   const ABIInfo &getABIInfo() const;
+  llvm::LLVMContext &getLLVMContext() { return TheModule.getContext(); }
 
   /// ConvertType - Convert type T into a llvm::Type.  
   const llvm::Type *ConvertType(QualType T);

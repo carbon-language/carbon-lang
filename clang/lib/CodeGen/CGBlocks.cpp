@@ -48,7 +48,7 @@ BuildDescriptorBlockDecl(bool BlockHasCopyDispose, uint64_t Size,
     Elts.push_back(BuildDestroyHelper(Ty, NoteForHelper));
   }
 
-  C = llvm::ConstantStruct::get(Elts);
+  C = llvm::ConstantStruct::get(VMContext, Elts);
 
   C = new llvm::GlobalVariable(CGM.getModule(), C->getType(), true,
                                llvm::GlobalValue::InternalLinkage,
@@ -161,7 +161,7 @@ llvm::Value *CodeGenFunction::BuildBlockLiteralTmp(const BlockExpr *BE) {
       Elts[0] = CGM.getNSConcreteGlobalBlock();
       Elts[1] = llvm::ConstantInt::get(IntTy, flags|BLOCK_IS_GLOBAL);
 
-      C = llvm::ConstantStruct::get(Elts);
+      C = llvm::ConstantStruct::get(VMContext, Elts);
 
       char Name[32];
       sprintf(Name, "__block_holder_tmp_%d", CGM.getGlobalUniqueCount());
@@ -189,7 +189,7 @@ llvm::Value *CodeGenFunction::BuildBlockLiteralTmp(const BlockExpr *BE) {
         Types[i+5] = ConvertType(Ty);
     }
 
-    llvm::StructType *Ty = llvm::StructType::get(Types, true);
+    llvm::StructType *Ty = llvm::StructType::get(VMContext, Types, true);
 
     llvm::AllocaInst *A = CreateTempAlloca(Ty);
     A->setAlignment(subBlockAlign);
@@ -310,7 +310,8 @@ const llvm::Type *BlockModule::getBlockDescriptorType() {
   //   unsigned long reserved;
   //   unsigned long block_size;
   // };
-  BlockDescriptorType = llvm::StructType::get(UnsignedLongTy,
+  BlockDescriptorType = llvm::StructType::get(UnsignedLongTy->getContext(),
+                                              UnsignedLongTy,
                                               UnsignedLongTy,
                                               NULL);
 
@@ -337,7 +338,8 @@ const llvm::Type *BlockModule::getGenericBlockLiteralType() {
   //   void (*__invoke)(void *);
   //   struct __block_descriptor *__descriptor;
   // };
-  GenericBlockLiteralType = llvm::StructType::get(PtrToInt8Ty,
+  GenericBlockLiteralType = llvm::StructType::get(IntTy->getContext(),
+                                                  PtrToInt8Ty,
                                                   IntTy,
                                                   IntTy,
                                                   PtrToInt8Ty,
@@ -369,7 +371,8 @@ const llvm::Type *BlockModule::getGenericExtendedBlockLiteralType() {
   //   void *__copy_func_helper_decl;
   //   void *__destroy_func_decl;
   // };
-  GenericExtendedBlockLiteralType = llvm::StructType::get(PtrToInt8Ty,
+  GenericExtendedBlockLiteralType = llvm::StructType::get(IntTy->getContext(),
+                                                          PtrToInt8Ty,
                                                           IntTy,
                                                           IntTy,
                                                           PtrToInt8Ty,
@@ -511,7 +514,7 @@ BlockModule::GetAddrOfGlobalBlock(const BlockExpr *BE, const char * n) {
                       llvm::ConstantInt::get(UnsignedLongTy,BlockLiteralSize);
 
   llvm::Constant *DescriptorStruct =
-    llvm::ConstantStruct::get(&DescriptorFields[0], 2);
+    llvm::ConstantStruct::get(VMContext, &DescriptorFields[0], 2);
 
   llvm::GlobalVariable *Descriptor =
     new llvm::GlobalVariable(getModule(), DescriptorStruct->getType(), true,
@@ -552,7 +555,7 @@ BlockModule::GetAddrOfGlobalBlock(const BlockExpr *BE, const char * n) {
   LiteralFields[4] = Descriptor;
 
   llvm::Constant *BlockLiteralStruct =
-    llvm::ConstantStruct::get(&LiteralFields[0], 5);
+    llvm::ConstantStruct::get(VMContext, &LiteralFields[0], 5);
 
   llvm::GlobalVariable *BlockLiteral =
     new llvm::GlobalVariable(getModule(), BlockLiteralStruct->getType(), true,

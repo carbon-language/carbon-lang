@@ -340,7 +340,8 @@ public:
       return 0;
     
     llvm::Constant *Result = 
-      llvm::ConstantStruct::get(Builder.Elements, Builder.Packed);
+      llvm::ConstantStruct::get(CGF->getLLVMContext(),
+                                Builder.Elements, Builder.Packed);
 
     assert(llvm::RoundUpToAlignment(Builder.NextFieldOffsetInBytes,
                                     Builder.getAlignment(Result)) == 
@@ -406,7 +407,8 @@ public:
         Types.push_back(Ty);
       }
       
-      llvm::StructType* STy = llvm::StructType::get(Types, false);
+      llvm::StructType* STy = llvm::StructType::get(C->getType()->getContext(),
+                                                    Types, false);
       return llvm::ConstantStruct::get(STy, Elts);
     }
     
@@ -463,7 +465,8 @@ public:
       std::vector<const llvm::Type*> Types;
       for (unsigned i = 0; i < Elts.size(); ++i)
         Types.push_back(Elts[i]->getType());
-      const llvm::StructType *SType = llvm::StructType::get(Types, true);
+      const llvm::StructType *SType = llvm::StructType::get(AType->getContext(), 
+                                                            Types, true);
       return llvm::ConstantStruct::get(SType, Elts);
     }
 
@@ -731,7 +734,7 @@ llvm::Constant *CodeGenModule::EmitConstantExpr(const Expr *E,
       Complex[1] = llvm::ConstantInt::get(VMContext, 
                                           Result.Val.getComplexIntImag());
       
-      return llvm::ConstantStruct::get(Complex, 2);
+      return llvm::ConstantStruct::get(VMContext, Complex, 2);
     }
     case APValue::Float:
       return llvm::ConstantFP::get(VMContext, Result.Val.getFloat());
@@ -743,7 +746,7 @@ llvm::Constant *CodeGenModule::EmitConstantExpr(const Expr *E,
       Complex[1] = llvm::ConstantFP::get(VMContext,
                                          Result.Val.getComplexFloatImag());
       
-      return llvm::ConstantStruct::get(Complex, 2);
+      return llvm::ConstantStruct::get(VMContext, Complex, 2);
     }
     case APValue::Vector: {
       llvm::SmallVector<llvm::Constant *, 4> Inits;

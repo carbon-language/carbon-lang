@@ -875,7 +875,7 @@ ABIArgInfo X86_64ABIInfo::classifyReturnType(QualType RetTy,
     // %st1.
   case ComplexX87:
     assert(Hi == ComplexX87 && "Unexpected ComplexX87 classification.");
-    ResType = llvm::StructType::get(llvm::Type::X86_FP80Ty,
+    ResType = llvm::StructType::get(VMContext, llvm::Type::X86_FP80Ty,
                                     llvm::Type::X86_FP80Ty,
                                     NULL);
     break;
@@ -892,10 +892,12 @@ ABIArgInfo X86_64ABIInfo::classifyReturnType(QualType RetTy,
   case NoClass: break;
 
   case Integer:
-    ResType = llvm::StructType::get(ResType, llvm::Type::Int64Ty, NULL);
+    ResType = llvm::StructType::get(VMContext, ResType,
+                                    llvm::Type::Int64Ty, NULL);
     break;
   case SSE:
-    ResType = llvm::StructType::get(ResType, llvm::Type::DoubleTy, NULL);
+    ResType = llvm::StructType::get(VMContext, ResType,
+                                    llvm::Type::DoubleTy, NULL);
     break;
 
     // AMD64-ABI 3.2.3p4: Rule 5. If the class is SSEUP, the eightbyte
@@ -915,7 +917,8 @@ ABIArgInfo X86_64ABIInfo::classifyReturnType(QualType RetTy,
     // preceeded by X87. In such situations we follow gcc and pass the
     // extra bits in an SSE reg.
     if (Lo != X87)
-      ResType = llvm::StructType::get(ResType, llvm::Type::DoubleTy, NULL);
+      ResType = llvm::StructType::get(VMContext, ResType,
+                                      llvm::Type::DoubleTy, NULL);
     break;
   }
 
@@ -985,7 +988,8 @@ ABIArgInfo X86_64ABIInfo::classifyArgumentType(QualType Ty, ASTContext &Context,
 
   case NoClass: break;
   case Integer:
-    ResType = llvm::StructType::get(ResType, llvm::Type::Int64Ty, NULL);
+    ResType = llvm::StructType::get(VMContext, ResType,
+                                    llvm::Type::Int64Ty, NULL);
     ++neededInt;
     break;
 
@@ -993,7 +997,8 @@ ABIArgInfo X86_64ABIInfo::classifyArgumentType(QualType Ty, ASTContext &Context,
     // memory), except in situations involving unions.
   case X87Up:
   case SSE:
-    ResType = llvm::StructType::get(ResType, llvm::Type::DoubleTy, NULL);
+    ResType = llvm::StructType::get(VMContext, ResType,
+                                    llvm::Type::DoubleTy, NULL);
     ++neededSSE;
     break;
 
@@ -1214,7 +1219,8 @@ llvm::Value *X86_64ABIInfo::EmitVAArg(llvm::Value *VAListAddr, QualType Ty,
                             llvm::ConstantInt::get(llvm::Type::Int32Ty, 16));
       const llvm::Type *DblPtrTy =
         llvm::PointerType::getUnqual(llvm::Type::DoubleTy);
-      const llvm::StructType *ST = llvm::StructType::get(llvm::Type::DoubleTy,
+      const llvm::StructType *ST = llvm::StructType::get(VMContext,
+                                                         llvm::Type::DoubleTy,
                                                          llvm::Type::DoubleTy,
                                                          NULL);
       llvm::Value *V, *Tmp = CGF.CreateTempAlloca(ST);
@@ -1355,7 +1361,7 @@ ABIArgInfo ARMABIInfo::classifyArgumentType(QualType Ty,
   }
   std::vector<const llvm::Type*> LLVMFields;
   LLVMFields.push_back(llvm::ArrayType::get(ElemTy, SizeRegs));
-  const llvm::Type* STy = llvm::StructType::get(LLVMFields, true);
+  const llvm::Type* STy = llvm::StructType::get(VMContext, LLVMFields, true);
   return ABIArgInfo::getCoerce(STy);
 }
 
