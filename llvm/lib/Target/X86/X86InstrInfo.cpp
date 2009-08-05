@@ -1697,10 +1697,18 @@ bool X86InstrInfo::copyRegToReg(MachineBasicBlock &MBB,
     CommonRC = SrcRC;
   else if (!DestRC->hasSubClass(SrcRC)) {
     // Neither of GR64_NOREX or GR64_NOSP is a superclass of the other,
-    // but we want to copy then as GR64.
-    if ((SrcRC == &X86::GR64RegClass || SrcRC->hasSuperClass(&X86::GR64RegClass)) &&
-        (DestRC == &X86::GR64RegClass || DestRC->hasSuperClass(&X86::GR64RegClass)))
+    // but we want to copy then as GR64. Similarly, for GR32_NOREX and
+    // GR32_NOSP, copy as GR32.
+    if ((SrcRC == &X86::GR64RegClass ||
+         SrcRC->hasSuperClass(&X86::GR64RegClass)) &&
+        (DestRC == &X86::GR64RegClass ||
+         DestRC->hasSuperClass(&X86::GR64RegClass)))
       CommonRC = &X86::GR64RegClass;
+    else if ((SrcRC == &X86::GR32RegClass ||
+              SrcRC->hasSuperClass(&X86::GR32RegClass)) &&
+             (DestRC == &X86::GR32RegClass ||
+              DestRC->hasSuperClass(&X86::GR32RegClass)))
+      CommonRC = &X86::GR32RegClass;
     else
       CommonRC = 0;
   }
