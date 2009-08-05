@@ -748,9 +748,6 @@ APInt IntegerType::getMask() const {
   return APInt::getAllOnesValue(getBitWidth());
 }
 
-// Define the actual map itself now...
-static ManagedStatic<TypeMap<FunctionValType, FunctionType> > FunctionTypes;
-
 FunctionValType FunctionValType::get(const FunctionType *FT) {
   // Build up a FunctionValType
   std::vector<const Type *> ParamTypes;
@@ -768,14 +765,16 @@ FunctionType *FunctionType::get(const Type *ReturnType,
   FunctionValType VT(ReturnType, Params, isVarArg);
   FunctionType *FT = 0;
   
+  LLVMContextImpl *pImpl = ReturnType->getContext().pImpl;
+  
   sys::SmartScopedLock<true> L(*TypeMapLock);
-  FT = FunctionTypes->get(VT);
+  FT = pImpl->FunctionTypes.get(VT);
   
   if (!FT) {
     FT = (FunctionType*) operator new(sizeof(FunctionType) +
                                     sizeof(PATypeHandle)*(Params.size()+1));
     new (FT) FunctionType(ReturnType, Params, isVarArg);
-    FunctionTypes->add(VT, FT);
+    pImpl->FunctionTypes.add(VT, FT);
   }
 
 #ifdef DEBUG_MERGE_TYPES
@@ -1101,11 +1100,13 @@ void DerivedType::notifyUsesThatTypeBecameConcrete() {
 //
 void FunctionType::refineAbstractType(const DerivedType *OldType,
                                       const Type *NewType) {
-  FunctionTypes->RefineAbstractType(this, OldType, NewType);
+  LLVMContextImpl *pImpl = OldType->getContext().pImpl;
+  pImpl->FunctionTypes.RefineAbstractType(this, OldType, NewType);
 }
 
 void FunctionType::typeBecameConcrete(const DerivedType *AbsTy) {
-  FunctionTypes->TypeBecameConcrete(this, AbsTy);
+  LLVMContextImpl *pImpl = AbsTy->getContext().pImpl;
+  pImpl->FunctionTypes.TypeBecameConcrete(this, AbsTy);
 }
 
 
