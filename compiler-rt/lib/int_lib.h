@@ -20,56 +20,11 @@
 /* Assumption:  right shift of signed negative is arithmetic shift */
 
 #include <limits.h>
+#include "endianness.h"
 #include <math.h>
 
 #if !defined(INFINITY) && defined(HUGE_VAL)
 #define INFINITY HUGE_VAL
-#endif
-
-/* TODO: Improve this to minimal pre-processor hackish'ness. */
-#if defined (__SVR4) && defined (__sun)
-/* config.h build via CMake. */
-/* #include <config.h> */
-
-/* Solaris header for endian and byte swap */
-/* #if defined HAVE_SYS_BYTEORDER_H */
-#include <sys/byteorder.h>
-
-/* Solaris defines endian by setting _LITTLE_ENDIAN or _BIG_ENDIAN */
-#ifdef _BIG_ENDIAN
-# define IS_BIG_ENDIAN
-#endif
-#ifdef _LITTLE_ENDIAN
-# define IS_LITTLE_ENDIAN
-#endif
-
-#ifdef IS_BIG_ENDIAN
-#define __BIG_ENDIAN__ 1
-#define __LITTLE_ENDIAN__ 0
-#endif
-#ifdef IS_LITTLE_ENDIAN
-#define __BIG_ENDIAN__ 0
-#define __LITTLE_ENDIAN__ 1
-#endif
-
-#endif /* End of Solaris ifdef. */
-
-#ifdef __LITTLE_ENDIAN__
-#if __LITTLE_ENDIAN__
-#define _YUGA_LITTLE_ENDIAN 1
-#define _YUGA_BIG_ENDIAN    0
-#endif
-#endif
-
-#ifdef __BIG_ENDIAN__
-#if __BIG_ENDIAN__
-#define _YUGA_LITTLE_ENDIAN 0
-#define _YUGA_BIG_ENDIAN    1
-#endif
-#endif
-
-#if !defined(_YUGA_LITTLE_ENDIAN) || !defined(_YUGA_BIG_ENDIAN)
-#error unable to determine endian
 #endif
 
 typedef      int si_int;

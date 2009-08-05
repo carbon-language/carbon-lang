@@ -1,27 +1,29 @@
-//===-- fixsfti.c - Implement __fixsfti -----------------------------------===//
-//
-//                     The LLVM Compiler Infrastructure
-//
-// This file is distributed under the University of Illinois Open Source
-// License. See LICENSE.TXT for details.
-//
-//===----------------------------------------------------------------------===//
-//
-// This file implements __fixsfti for the compiler_rt library.
-//
-//===----------------------------------------------------------------------===//
+/* ===-- fixsfti.c - Implement __fixsfti -----------------------------------===
+ *
+ *                     The LLVM Compiler Infrastructure
+ *
+ * This file is distributed under the University of Illinois Open Source
+ * License. See LICENSE.TXT for details.
+ *
+ * ===----------------------------------------------------------------------===
+ *
+ * This file implements __fixsfti for the compiler_rt library.
+ *
+ * ===----------------------------------------------------------------------===
+ */
 
 #if __x86_64
 
 #include "int_lib.h"
 
-// Returns: convert a to a signed long long, rounding toward zero.
+/* Returns: convert a to a signed long long, rounding toward zero. */
 
-// Assumption: float is a IEEE 32 bit floating point type 
-//             su_int is a 32 bit integral type
-//             value in float is representable in ti_int (no range checking performed)
+/* Assumption: float is a IEEE 32 bit floating point type 
+ *             su_int is a 32 bit integral type
+ *             value in float is representable in ti_int (no range checking performed)
+ */
 
-// seee eeee emmm mmmm mmmm mmmm mmmm mmmm
+/* seee eeee emmm mmmm mmmm mmmm mmmm mmmm */
 
 ti_int
 __fixsfti(float a)

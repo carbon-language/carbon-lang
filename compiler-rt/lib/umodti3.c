@@ -1,15 +1,16 @@
-//===-- umodti3.c - Implement __umodti3 -----------------------------------===//
-//
-//                     The LLVM Compiler Infrastructure
-//
-// This file is distributed under the University of Illinois Open Source
-// License. See LICENSE.TXT for details.
-//
-//===----------------------------------------------------------------------===//
-//
-// This file implements __umodti3 for the compiler_rt library.
-//
-//===----------------------------------------------------------------------===//
+/* ===-- umodti3.c - Implement __umodti3 -----------------------------------===
+ *
+ *                     The LLVM Compiler Infrastructure
+ *
+ * This file is distributed under the University of Illinois Open Source
+ * License. See LICENSE.TXT for details.
+ *
+ * ===----------------------------------------------------------------------===
+ *
+ * This file implements __umodti3 for the compiler_rt library.
+ *
+ * ===----------------------------------------------------------------------===
+ */
 
 #if __x86_64
 
@@ -17,7 +18,7 @@
 
 tu_int __udivmodti4(tu_int a, tu_int b, tu_int* rem);
 
-// Returns: a % b
+/* Returns: a % b */
 
 tu_int
 __umodti3(tu_int a, tu_int b)

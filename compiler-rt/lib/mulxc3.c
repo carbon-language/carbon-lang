@@ -1,15 +1,16 @@
-//===-- mulxc3.c - Implement __mulxc3 -------------------------------------===//
-//
-//                     The LLVM Compiler Infrastructure
-//
-// This file is distributed under the University of Illinois Open Source
-// License. See LICENSE.TXT for details.
-//
-//===----------------------------------------------------------------------===//
-//
-// This file implements __mulxc3 for the compiler_rt library.
-//
-//===----------------------------------------------------------------------===//
+/* ===-- mulxc3.c - Implement __mulxc3 -------------------------------------===
+ *
+ *                     The LLVM Compiler Infrastructure
+ *
+ * This file is distributed under the University of Illinois Open Source
+ * License. See LICENSE.TXT for details.
+ *
+ * ===----------------------------------------------------------------------===
+ *
+ * This file implements __mulxc3 for the compiler_rt library.
+ *
+ * ===----------------------------------------------------------------------===
+ */
 
 #if !_ARCH_PPC
 
@@ -17,7 +18,7 @@
 #include <math.h>
 #include <complex.h>
 
-// Returns: the product of a + ib and c + id
+/* Returns: the product of a + ib and c + id */
 
 long double _Complex
 __mulxc3(long double __a, long double __b, long double __c, long double __d)

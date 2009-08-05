@@ -1,22 +1,23 @@
-//===-- mulvsi3.c - Implement __mulvsi3 -----------------------------------===//
-//
-//                     The LLVM Compiler Infrastructure
-//
-// This file is distributed under the University of Illinois Open Source
-// License. See LICENSE.TXT for details.
-//
-//===----------------------------------------------------------------------===//
-//
-// This file implements __mulvsi3 for the compiler_rt library.
-//
-//===----------------------------------------------------------------------===//
+/* ===-- mulvsi3.c - Implement __mulvsi3 -----------------------------------===
+ *
+ *                     The LLVM Compiler Infrastructure
+ *
+ * This file is distributed under the University of Illinois Open Source
+ * License. See LICENSE.TXT for details.
+ *
+ * ===----------------------------------------------------------------------===
+ *
+ * This file implements __mulvsi3 for the compiler_rt library.
+ *
+ * ===----------------------------------------------------------------------===
+ */
 
 #include "int_lib.h"
 #include <stdlib.h>
 
-// Returns: a * b
+/* Returns: a * b */
 
-// Effects: aborts if a * b overflows
+/* Effects: aborts if a * b overflows */
 
 si_int
 __mulvsi3(si_int a, si_int b)
