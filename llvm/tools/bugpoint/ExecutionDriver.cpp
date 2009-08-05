@@ -177,8 +177,7 @@ bool BugDriver::initializeExecutionEnvironment() {
                                                  &ToolArgv, &GCCToolArgv);
     break;
   case Custom:
-    Interpreter = AbstractInterpreter::createCustom(getToolName(), Message,
-                                                    CustomExecCommand);
+    Interpreter = AbstractInterpreter::createCustom(Message, CustomExecCommand);
     break;
   default:
     Message = "Sorry, this back-end is not supported by bugpoint right now!\n";
@@ -200,7 +199,7 @@ bool BugDriver::initializeExecutionEnvironment() {
         InterpreterSel == CBE_bug) {
       SafeInterpreterSel = RunLLC;
       SafeToolArgs.push_back("--relocation-model=pic");
-      SafeInterpreter = AbstractInterpreter::createLLC(Path, Message,
+      SafeInterpreter = AbstractInterpreter::createLLC(Path.c_str(), Message,
                                                        &SafeToolArgs,
                                                        &GCCToolArgv);
     }
@@ -210,7 +209,7 @@ bool BugDriver::initializeExecutionEnvironment() {
         InterpreterSel == LLC_Safe) {
       SafeInterpreterSel = RunLLC;
       SafeToolArgs.push_back("--relocation-model=pic");
-      SafeInterpreter = AbstractInterpreter::createLLC(Path, Message,
+      SafeInterpreter = AbstractInterpreter::createLLC(Path.c_str(), Message,
                                                        &SafeToolArgs,
                                                        &GCCToolArgv);
     }
@@ -221,7 +220,7 @@ bool BugDriver::initializeExecutionEnvironment() {
     if (!SafeInterpreter &&
         InterpreterSel != RunCBE) {
       SafeInterpreterSel = RunCBE;
-      SafeInterpreter = AbstractInterpreter::createCBE(Path, Message,
+      SafeInterpreter = AbstractInterpreter::createCBE(Path.c_str(), Message,
                                                        &SafeToolArgs,
                                                        &GCCToolArgv);
     }
@@ -230,7 +229,7 @@ bool BugDriver::initializeExecutionEnvironment() {
         InterpreterSel != RunJIT) {
       SafeInterpreterSel = RunLLC;
       SafeToolArgs.push_back("--relocation-model=pic");
-      SafeInterpreter = AbstractInterpreter::createLLC(Path, Message,
+      SafeInterpreter = AbstractInterpreter::createLLC(Path.c_str(), Message,
                                                        &SafeToolArgs,
                                                        &GCCToolArgv);
     }
@@ -241,17 +240,17 @@ bool BugDriver::initializeExecutionEnvironment() {
     break;
   case RunLLC:
     SafeToolArgs.push_back("--relocation-model=pic");
-    SafeInterpreter = AbstractInterpreter::createLLC(Path, Message,
+    SafeInterpreter = AbstractInterpreter::createLLC(Path.c_str(), Message,
                                                      &SafeToolArgs,
                                                      &GCCToolArgv);
     break;
   case RunCBE:
-    SafeInterpreter = AbstractInterpreter::createCBE(Path, Message,
+    SafeInterpreter = AbstractInterpreter::createCBE(Path.c_str(), Message,
                                                      &SafeToolArgs,
                                                      &GCCToolArgv);
     break;
   case Custom:
-    SafeInterpreter = AbstractInterpreter::createCustom(Path, Message,
+    SafeInterpreter = AbstractInterpreter::createCustom(Message,
                                                         CustomExecCommand);
     break;
   default:
@@ -261,7 +260,7 @@ bool BugDriver::initializeExecutionEnvironment() {
   }
   if (!SafeInterpreter) { outs() << Message << "\nExiting.\n"; exit(1); }
   
-  gcc = GCC::create(getToolName(), Message, &GCCToolArgv);
+  gcc = GCC::create(Message, &GCCToolArgv);
   if (!gcc) { outs() << Message << "\nExiting.\n"; exit(1); }
 
   // If there was an error creating the selected interpreter, quit with error.

@@ -41,6 +41,11 @@
 #include <cstring>
 using namespace llvm;
 
+// Rightly this should go in a header file but it just seems such a waste.
+namespace llvm {
+extern void Optimize(Module*);
+}
+
 // Input/Output Options
 static cl::list<std::string> InputFilenames(cl::Positional, cl::OneOrMore,
   cl::desc("<input bitcode files>"));
@@ -409,7 +414,8 @@ static void EmitShellScript(char **argv) {
   // support windows systems, we copy the llvm-stub.exe executable from the
   // build tree to the destination file.
   std::string ErrMsg;  
-  sys::Path llvmstub = FindExecutable("llvm-stub.exe", argv[0]);
+  sys::Path llvmstub = FindExecutable("llvm-stub.exe", argv[0],
+                                      reinterpret_cast<void *>(&Optimize));
   if (llvmstub.isEmpty())
     PrintAndExit("Could not find llvm-stub.exe executable!");
 
@@ -498,11 +504,6 @@ static void BuildLinkItems(
       Items.push_back(std::make_pair(*libIt++, true));
     }
   }
-}
-
-// Rightly this should go in a header file but it just seems such a waste.
-namespace llvm {
-extern void Optimize(Module*);
 }
 
 int main(int argc, char **argv, char **envp) {
@@ -640,11 +641,12 @@ int main(int argc, char **argv, char **envp) {
         sys::RemoveFileOnSignal(sys::Path(OutputFilename));
 
         // Determine the locations of the llc and gcc programs.
-        sys::Path llc = FindExecutable("llc", argv[0]);
+        sys::Path llc = FindExecutable("llc", argv[0],
+                                       reinterpret_cast<void *>(&Optimize));
         if (llc.isEmpty())
           PrintAndExit("Failed to find llc");
 
-        sys::Path gcc = FindExecutable("gcc", argv[0]);
+        sys::Path gcc = sys::Program::FindProgramByName("gcc");
         if (gcc.isEmpty())
           PrintAndExit("Failed to find gcc");
 
@@ -669,11 +671,12 @@ int main(int argc, char **argv, char **envp) {
         sys::RemoveFileOnSignal(sys::Path(OutputFilename));
 
         // Determine the locations of the llc and gcc programs.
-        sys::Path llc = FindExecutable("llc", argv[0]);
+        sys::Path llc = FindExecutable("llc", argv[0],
+                                       reinterpret_cast<void *>(&Optimize));
         if (llc.isEmpty())
           PrintAndExit("Failed to find llc");
 
-        sys::Path gcc = FindExecutable("gcc", argv[0]);
+        sys::Path gcc = sys::Program::FindProgramByName("gcc");
         if (gcc.isEmpty())
           PrintAndExit("Failed to find gcc");
 

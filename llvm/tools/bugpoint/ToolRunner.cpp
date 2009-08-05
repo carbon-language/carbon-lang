@@ -228,10 +228,12 @@ int LLI::ExecuteProgram(const std::string &Bitcode,
 }
 
 // LLI create method - Try to find the LLI executable
-AbstractInterpreter *AbstractInterpreter::createLLI(const std::string &ProgPath,
+AbstractInterpreter *AbstractInterpreter::createLLI(const char *Argv0,
                                                     std::string &Message,
                                      const std::vector<std::string> *ToolArgs) {
-  std::string LLIPath = FindExecutable("lli", ProgPath).toString();
+  std::string LLIPath =
+    FindExecutable("lli", Argv0,
+                   reinterpret_cast<void *>(&createLLI)).toString();
   if (!LLIPath.empty()) {
     Message = "Found lli: " + LLIPath + "\n";
     return new LLI(LLIPath, ToolArgs);
@@ -298,7 +300,6 @@ int CustomExecutor::ExecuteProgram(const std::string &Bitcode,
 // Custom execution environment create method, takes the execution command
 // as arguments
 AbstractInterpreter *AbstractInterpreter::createCustom(
-                    const std::string &ProgramPath,
                     std::string &Message,
                     const std::string &ExecCommandLine) {
 
@@ -332,7 +333,7 @@ AbstractInterpreter *AbstractInterpreter::createCustom(
     pos = ExecCommandLine.find_first_of(delimiters, lastPos);
   }
 
-  std::string CmdPath = FindExecutable(Command, ProgramPath).toString();
+  std::string CmdPath = sys::Program::FindProgramByName(Command).toString();
   if (CmdPath.empty()) {
     Message = 
       std::string("Cannot find '") + Command + 
@@ -414,18 +415,20 @@ int LLC::ExecuteProgram(const std::string &Bitcode,
 
 /// createLLC - Try to find the LLC executable
 ///
-LLC *AbstractInterpreter::createLLC(const std::string &ProgramPath,
+LLC *AbstractInterpreter::createLLC(const char *Argv0,
                                     std::string &Message,
                                     const std::vector<std::string> *Args,
                                     const std::vector<std::string> *GCCArgs) {
-  std::string LLCPath = FindExecutable("llc", ProgramPath).toString();
+  std::string LLCPath =
+    FindExecutable("llc", Argv0,
+                   reinterpret_cast<void *>(&createLLC)).toString();
   if (LLCPath.empty()) {
     Message = "Cannot find `llc' in executable directory or PATH!\n";
     return 0;
   }
 
   Message = "Found llc: " + LLCPath + "\n";
-  GCC *gcc = GCC::create(ProgramPath, Message, GCCArgs);
+  GCC *gcc = GCC::create(Message, GCCArgs);
   if (!gcc) {
     errs() << Message << "\n";
     exit(1);
@@ -501,9 +504,11 @@ int JIT::ExecuteProgram(const std::string &Bitcode,
 
 /// createJIT - Try to find the LLI executable
 ///
-AbstractInterpreter *AbstractInterpreter::createJIT(const std::string &ProgPath,
+AbstractInterpreter *AbstractInterpreter::createJIT(const char *Argv0,
                    std::string &Message, const std::vector<std::string> *Args) {
-  std::string LLIPath = FindExecutable("lli", ProgPath).toString();
+  std::string LLIPath =
+    FindExecutable("lli", Argv0,
+                   reinterpret_cast<void *>(&createJIT)).toString();
   if (!LLIPath.empty()) {
     Message = "Found lli: " + LLIPath + "\n";
     return new JIT(LLIPath, Args);
@@ -577,11 +582,13 @@ int CBE::ExecuteProgram(const std::string &Bitcode,
 
 /// createCBE - Try to find the 'llc' executable
 ///
-CBE *AbstractInterpreter::createCBE(const std::string &ProgramPath,
+CBE *AbstractInterpreter::createCBE(const char *Argv0,
                                     std::string &Message,
                                     const std::vector<std::string> *Args,
                                     const std::vector<std::string> *GCCArgs) {
-  sys::Path LLCPath = FindExecutable("llc", ProgramPath);
+  sys::Path LLCPath =
+    FindExecutable("llc", Argv0,
+                   reinterpret_cast<void *>(&createCBE));
   if (LLCPath.isEmpty()) {
     Message =
       "Cannot find `llc' in executable directory or PATH!\n";
@@ -589,7 +596,7 @@ CBE *AbstractInterpreter::createCBE(const std::string &ProgramPath,
   }
 
   Message = "Found llc: " + LLCPath.toString() + "\n";
-  GCC *gcc = GCC::create(ProgramPath, Message, GCCArgs);
+  GCC *gcc = GCC::create(Message, GCCArgs);
   if (!gcc) {
     errs() << Message << "\n";
     exit(1);
@@ -827,9 +834,9 @@ int GCC::MakeSharedObject(const std::string &InputFile, FileType fileType,
 
 /// create - Try to find the `gcc' executable
 ///
-GCC *GCC::create(const std::string &ProgramPath, std::string &Message,
+GCC *GCC::create(std::string &Message,
                  const std::vector<std::string> *Args) {
-  sys::Path GCCPath = FindExecutable("gcc", ProgramPath);
+  sys::Path GCCPath = sys::Program::FindProgramByName("gcc");
   if (GCCPath.isEmpty()) {
     Message = "Cannot find `gcc' in executable directory or PATH!\n";
     return 0;
@@ -837,7 +844,7 @@ GCC *GCC::create(const std::string &ProgramPath, std::string &Message,
 
   sys::Path RemoteClientPath;
   if (!RemoteClient.empty())
-    RemoteClientPath = FindExecutable(RemoteClient.c_str(), ProgramPath);
+    RemoteClientPath = sys::Program::FindProgramByName(RemoteClient);
 
   Message = "Found gcc: " + GCCPath.toString() + "\n";
   return new GCC(GCCPath, RemoteClientPath, Args);

@@ -40,12 +40,12 @@ bool CheckBitcodeOutputToConsole(
 );
 
 /// FindExecutable - Find a named executable, giving the argv[0] of program
-/// being executed. This allows us to find another LLVM tool if it is built into
-/// the same directory, but that directory is neither the current directory, nor
-/// in the PATH.  If the executable cannot be found, return an empty string.
+/// being executed. This allows us to find another LLVM tool if it is built in
+/// the same directory.  If the executable cannot be found, return an
+/// empty string.
 /// @brief Find a named executable.
 sys::Path FindExecutable(const std::string &ExeName,
-                         const std::string &ProgramPath);
+                         const char *Argv0, void *MainAddr);
 
 } // End llvm namespace
 

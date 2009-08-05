@@ -167,7 +167,7 @@ bool BugDriver::runPasses(const std::vector<const PassInfo*> &Passes,
     args[n++] = "-q";
     args[n++] = tool.c_str();
   } else
-    args[n++] = ToolName.c_str();
+    args[n++] = ToolName;
 
   args[n++] = "-as-child";
   args[n++] = "-child-output";

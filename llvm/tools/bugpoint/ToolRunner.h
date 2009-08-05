@@ -57,7 +57,7 @@ class GCC {
 public:
   enum FileType { AsmFile, CFile };
 
-  static GCC *create(const std::string &ProgramPath, std::string &Message,
+  static GCC *create(std::string &Message,
                      const std::vector<std::string> *Args);
 
   /// ExecuteProgram - Execute the program specified by "ProgramFile" (which is
@@ -93,23 +93,20 @@ public:
 ///
 class AbstractInterpreter {
 public:
-  static CBE *createCBE(const std::string &ProgramPath, std::string &Message,
+  static CBE *createCBE(const char *Argv0, std::string &Message,
                         const std::vector<std::string> *Args = 0,
                         const std::vector<std::string> *GCCArgs = 0);
-  static LLC *createLLC(const std::string &ProgramPath, std::string &Message,
+  static LLC *createLLC(const char *Argv0, std::string &Message,
                         const std::vector<std::string> *Args = 0,
                         const std::vector<std::string> *GCCArgs = 0);
 
-  static AbstractInterpreter* createLLI(const std::string &ProgramPath,
-                                        std::string &Message,
+  static AbstractInterpreter* createLLI(const char *Argv0, std::string &Message,
                                         const std::vector<std::string> *Args=0);
 
-  static AbstractInterpreter* createJIT(const std::string &ProgramPath,
-                                        std::string &Message,
+  static AbstractInterpreter* createJIT(const char *Argv0, std::string &Message,
                                         const std::vector<std::string> *Args=0);
 
-  static AbstractInterpreter* createCustom(const std::string &ProgramPath,
-                                           std::string &Message,
+  static AbstractInterpreter* createCustom(std::string &Message,
                                            const std::string &ExecCommandLine);
 
 

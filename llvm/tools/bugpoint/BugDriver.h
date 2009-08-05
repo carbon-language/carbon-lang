@@ -44,7 +44,7 @@ extern bool BugpointIsInterrupted;
 
 class BugDriver {
   LLVMContext& Context;
-  const std::string ToolName;  // Name of bugpoint
+  const char *ToolName;            // argv[0] of bugpoint
   std::string ReferenceOutputFile; // Name of `good' output file
   Module *Program;             // The raw program, linked together
   std::vector<const PassInfo*> PassesToRun;
@@ -64,7 +64,7 @@ public:
   BugDriver(const char *toolname, bool as_child, bool find_bugs,
             unsigned timeout, unsigned memlimit, LLVMContext& ctxt);
 
-  const std::string &getToolName() const { return ToolName; }
+  const char *getToolName() const { return ToolName; }
 
   LLVMContext& getContext() { return Context; }
 
