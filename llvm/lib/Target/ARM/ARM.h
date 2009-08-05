@@ -103,7 +103,7 @@ FunctionPass *createARMObjectCodeEmitterPass(ARMBaseTargetMachine &TM,
 
 FunctionPass *createARMLoadStoreOptimizationPass(bool PreAlloc = false);
 FunctionPass *createARMConstantIslandPass();
-
+FunctionPass *createNEONPreAllocPass();
 FunctionPass *createThumb2ITBlockPass();
 
 extern Target TheARMTarget, TheThumbTarget;

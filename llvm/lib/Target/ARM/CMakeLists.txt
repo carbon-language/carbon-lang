@@ -26,6 +26,7 @@ add_llvm_target(ARMCodeGen
   ARMSubtarget.cpp
   ARMTargetAsmInfo.cpp
   ARMTargetMachine.cpp
+  NEONPreAllocPass.cpp
   Thumb1InstrInfo.cpp
   Thumb1RegisterInfo.cpp
   Thumb2ITBlockPass.cpp
