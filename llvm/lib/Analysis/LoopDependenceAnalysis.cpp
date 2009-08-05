@@ -195,28 +195,44 @@ LoopDependenceAnalysis::analysePair(DependencePair *P) const {
 
   // FIXME: Is filtering coupled subscripts necessary?
 
-  // Analyse indices pairwise (FIXME: use GetGEPOperands from BasicAA), adding
+  // Collect GEP operand pairs (FIXME: use GetGEPOperands from BasicAA), adding
   // trailing zeroes to the smaller GEP, if needed.
-  GEPOperator::const_op_iterator aIdx = aGEP->idx_begin(),
-                                 aEnd = aGEP->idx_end(),
-                                 bIdx = bGEP->idx_begin(),
-                                 bEnd = bGEP->idx_end();
-  while (aIdx != aEnd && bIdx != bEnd) {
+  typedef SmallVector<std::pair<const SCEV*, const SCEV*>, 4> GEPOpdPairsTy;
+  GEPOpdPairsTy opds;
+  for(GEPOperator::const_op_iterator aIdx = aGEP->idx_begin(),
+                                     aEnd = aGEP->idx_end(),
+                                     bIdx = bGEP->idx_begin(),
+                                     bEnd = bGEP->idx_end();
+      aIdx != aEnd && bIdx != bEnd;
+      aIdx += (aIdx != aEnd), bIdx += (bIdx != bEnd)) {
     const SCEV* aSCEV = (aIdx != aEnd) ? SE->getSCEV(*aIdx) : GetZeroSCEV(SE);
     const SCEV* bSCEV = (bIdx != bEnd) ? SE->getSCEV(*bIdx) : GetZeroSCEV(SE);
+    opds.push_back(std::make_pair(aSCEV, bSCEV));
+  }
+
+  if (!opds.empty() && opds[0].first != opds[0].second) {
+    // We cannot (yet) handle arbitrary GEP pointer offsets. By limiting
+    //
+    // TODO: this could be relaxed by adding the size of the underlying object
+    // to the first subscript. If we have e.g. (GEP x,0,i; GEP x,2,-i) and we
+    // know that x is a [100 x i8]*, we could modify the first subscript to be
+    // (i, 200-i) instead of (i, -i).
+    return Unknown;
+  }
+
+  // Now analyse the collected operand pairs (skipping the GEP ptr offsets).
+  for (GEPOpdPairsTy::const_iterator i = opds.begin() + 1, end = opds.end();
+       i != end; ++i) {
     Subscript subscript;
-    DependenceResult result = analyseSubscript(aSCEV, bSCEV, &subscript);
+    DependenceResult result = analyseSubscript(i->first, i->second, &subscript);
     if (result != Dependent) {
       // We either proved independence or failed to analyse this subscript.
       // Further subscripts will not improve the situation, so abort early.
       return result;
     }
     P->Subscripts.push_back(subscript);
-    if (aIdx != aEnd) ++aIdx;
-    if (bIdx != bEnd) ++bIdx;
   }
-  // Either there were no subscripts or all subscripts were analysed to be
-  // dependent; in both cases we know the accesses are dependent.
+  // We successfully analysed all subscripts but failed to prove independence.
   return Dependent;
 }
 
