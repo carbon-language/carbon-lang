@@ -2356,13 +2356,16 @@ void Sema::DefineImplicitCopyConstructor(SourceLocation CurrentLocation,
   CopyConstructor->setUsed();
 }
 
-void Sema::InitializeVarWithConstructor(VarDecl *VD, 
-                                        CXXConstructorDecl *Constructor,
-                                        QualType DeclInitType, 
-                                        Expr **Exprs, unsigned NumExprs) {
-  CXXConstructExpr *Temp = CXXConstructExpr::Create(Context, DeclInitType, 
+/// BuildCXXConstructExpr - Creates a complete call to a constructor,
+/// including handling of its default argument expressions.
+Expr *Sema::BuildCXXConstructExpr(ASTContext &C,
+                                  QualType DeclInitType, 
+                                  CXXConstructorDecl *Constructor,
+                                  bool Elidable,
+                                  Expr **Exprs, unsigned NumExprs) {
+  CXXConstructExpr *Temp = CXXConstructExpr::Create(C, DeclInitType, 
                                                     Constructor, 
-                                                    false, Exprs, NumExprs);
+                                                    Elidable, Exprs, NumExprs);
   // default arguments must be added to constructor call expression.
   FunctionDecl *FDecl = cast<FunctionDecl>(Constructor);
   unsigned NumArgsInProto = FDecl->param_size();
@@ -2379,10 +2382,19 @@ void Sema::InitializeVarWithConstructor(VarDecl *VD,
       for (unsigned I = 0, N = E->getNumTemporaries(); I != N; ++I)
         ExprTemporaries.push_back(E->getTemporary(I));
     }
-    Expr *Arg = new (Context) CXXDefaultArgExpr(FDecl->getParamDecl(j));
+    Expr *Arg = new (C) CXXDefaultArgExpr(FDecl->getParamDecl(j));
     Temp->setArg(j, Arg);
   }
-  
+  return Temp;
+}
+
+void Sema::InitializeVarWithConstructor(VarDecl *VD, 
+                                        CXXConstructorDecl *Constructor,
+                                        QualType DeclInitType, 
+                                        Expr **Exprs, unsigned NumExprs) {
+  Expr *Temp = BuildCXXConstructExpr(Context,
+                                     DeclInitType, Constructor, 
+                                     false, Exprs, NumExprs);  
   MarkDeclarationReferenced(VD->getLocation(), Constructor);
   VD->setInit(Context, Temp);
 }

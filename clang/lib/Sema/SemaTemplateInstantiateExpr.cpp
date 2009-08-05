@@ -1073,11 +1073,11 @@ TemplateExprInstantiator::VisitCXXConstructExpr(CXXConstructExpr *E) {
     Args.push_back(ArgInst.takeAs<Expr>());
   }
 
-  return SemaRef.Owned(CXXConstructExpr::Create(SemaRef.Context, T,
-                                                E->getConstructor(), 
-                                                E->isElidable(),
-                                                Args.takeAs<Expr>(), 
-                                                Args.size()));
+  return SemaRef.Owned(SemaRef.BuildCXXConstructExpr(SemaRef.Context, T,
+                                             E->getConstructor(), 
+                                             E->isElidable(),
+                                             Args.takeAs<Expr>(), 
+                                             Args.size()));
 }
 
 Sema::OwningExprResult 

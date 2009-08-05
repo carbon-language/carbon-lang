@@ -1672,6 +1672,14 @@ public:
                                     CXXConstructorDecl *Constructor,
                                     QualType DeclInitType, 
                                     Expr **Exprs, unsigned NumExprs);
+  
+  /// BuildCXXConstructExpr - Creates a complete call to a constructor,
+  /// including handling of its default argument expressions.
+  Expr * BuildCXXConstructExpr(ASTContext &C,
+                               QualType DeclInitType,
+                               CXXConstructorDecl *Constructor,
+                               bool Elidable,
+                               Expr **Exprs, unsigned NumExprs);
 
   /// FinalizeVarWithDestructor - Prepare for calling destructor on the
   /// constructed variable.
