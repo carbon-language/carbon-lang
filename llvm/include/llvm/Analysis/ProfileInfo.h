@@ -42,6 +42,12 @@ namespace llvm {
     // BasicBlock to the entry block to indicate how many times the function was
     // entered.
     std::map<Edge, unsigned> EdgeCounts;
+
+    // BlockCounts - Count the number of times a block is executed.
+    std::map<const BasicBlock*, unsigned> BlockCounts;
+
+    // FunctionCounts - Count the number of times a function is executed.
+    std::map<const Function*, unsigned> FunctionCounts;
   public:
     static char ID; // Class identification, replacement for typeinfo
     virtual ~ProfileInfo();  // We want to be subclassed

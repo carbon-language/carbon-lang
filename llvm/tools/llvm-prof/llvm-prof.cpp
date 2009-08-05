@@ -142,9 +142,8 @@ bool ProfileInfoPrinterPass::runOnModule(Module &M) {
   std::vector<std::pair<Function*, unsigned> > FunctionCounts;
   std::vector<std::pair<BasicBlock*, unsigned> > Counts;
   for (Module::iterator FI = M.begin(), FE = M.end(); FI != FE; ++FI) {
-    unsigned w = PI.getExecutionCount(FI);
-    if (w != (unsigned) -1)
-      FunctionCounts.push_back(std::make_pair(FI,PI.getExecutionCount(FI)));
+    if (FI->isDeclaration()) continue;
+    FunctionCounts.push_back(std::make_pair(FI,PI.getExecutionCount(FI)));
     for (Function::iterator BB = FI->begin(), BBE = FI->end(); 
          BB != BBE; ++BB) {
       Counts.push_back(std::make_pair(BB,PI.getExecutionCount(BB)));
@@ -209,7 +208,7 @@ bool ProfileInfoPrinterPass::runOnModule(Module &M) {
     if (Counts[i].second == 0) break;
     Function *F = Counts[i].first->getParent();
     std::cout << std::setw(3) << i+1 << ". " 
-              << std::setw(5) << std::setprecision(2) 
+              << std::setw(5) << std::setprecision(3) 
               << Counts[i].second/(double)TotalExecutions*100 << "% "
               << std::setw(5) << Counts[i].second << "/"
               << TotalExecutions << "\t"

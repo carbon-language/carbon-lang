@@ -27,6 +27,9 @@ char ProfileInfo::ID = 0;
 ProfileInfo::~ProfileInfo() {}
 
 unsigned ProfileInfo::getExecutionCount(const BasicBlock *BB) const {
+  if (BlockCounts.find(BB) != BlockCounts.end()) 
+    return BlockCounts.find(BB)->second;
+
   pred_const_iterator PI = pred_begin(BB), PE = pred_end(BB);
 
   // Are there zero predecessors of this block?
@@ -76,7 +79,9 @@ unsigned ProfileInfo::getExecutionCount(const BasicBlock *BB) const {
 }
 
 unsigned ProfileInfo::getExecutionCount(const Function *F) const {
-  if (F->isDeclaration()) return -1;
+  if (FunctionCounts.find(F) != FunctionCounts.end())
+    return FunctionCounts.find(F)->second;
+
   return getExecutionCount(&F->getEntryBlock());
 }
 

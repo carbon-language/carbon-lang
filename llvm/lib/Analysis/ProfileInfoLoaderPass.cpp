@@ -72,21 +72,29 @@ bool LoaderPass::runOnModule(Module &M) {
   EdgeCounts.clear();
 
   std::vector<unsigned> ECs = PIL.getRawEdgeCounts();
+  std::vector<unsigned> BCs = PIL.getRawBlockCounts();
+  std::vector<unsigned> FCs = PIL.getRawFunctionCounts();
   // Instrument all of the edges...
-  unsigned i = 0;
-  for (Module::iterator F = M.begin(), E = M.end(); F != E; ++F)
+  unsigned ei = 0;
+  unsigned bi = 0;
+  unsigned fi = 0;
+  for (Module::iterator F = M.begin(), E = M.end(); F != E; ++F) {
+    if (F->isDeclaration()) continue;
+    if (fi<FCs.size()) FunctionCounts[F] = FCs[fi++];
     for (Function::iterator BB = F->begin(), E = F->end(); BB != E; ++BB) {
+      if (bi<BCs.size()) BlockCounts[BB] = BCs[bi++];
       // Okay, we have to add a counter of each outgoing edge.  If the
       // outgoing edge is not critical don't split it, just insert the counter
       // in the source or destination of the edge.
       TerminatorInst *TI = BB->getTerminator();
       for (unsigned s = 0, e = TI->getNumSuccessors(); s != e; ++s) {
-        if (i < ECs.size())
-          EdgeCounts[std::make_pair(BB, TI->getSuccessor(s))]+= ECs[i++];
+        if (ei < ECs.size())
+          EdgeCounts[std::make_pair(BB, TI->getSuccessor(s))]+= ECs[ei++];
       }
     }
+  }
  
-  if (i != ECs.size()) {
+  if (ei != ECs.size()) {
     cerr << "WARNING: profile information is inconsistent with "
          << "the current program!\n";
   }
