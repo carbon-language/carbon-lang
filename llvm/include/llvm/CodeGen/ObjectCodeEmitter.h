@@ -109,6 +109,13 @@ public:
   /// noted with this interface.
   void addRelocation(const MachineRelocation& relocation);
 
+  /// earlyResolveAddresses - True if the code emitter can use symbol addresses 
+  /// during code emission time. The JIT is capable of doing this because it
+  /// creates jump tables or constant pools in memory on the fly while the
+  /// object code emitters rely on a linker to have real addresses and should
+  /// use relocations instead.
+  bool earlyResolveAddresses() const { return false; }
+
   /// startFunction - This callback is invoked when the specified function is
   /// about to be code generated.  This initializes the BufferBegin/End/Ptr
   /// fields.

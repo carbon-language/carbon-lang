@@ -87,7 +87,7 @@ template<class CodeEmitter>
                               intptr_t PCAdj = 0);
 
     void emitDisplacementField(const MachineOperand *RelocOp, int DispVal,
-                               intptr_t PCAdj = 0);
+                               intptr_t Adj = 0, bool IsPCRel = true);
 
     void emitRegModRMByte(unsigned ModRMReg, unsigned RegOpcodeField);
     void emitRegModRMByte(unsigned RegOpcodeField);
@@ -175,7 +175,7 @@ void Emitter<CodeEmitter>::emitGlobalAddress(GlobalValue *GV, unsigned Reloc,
                                 intptr_t PCAdj /* = 0 */,
                                 bool NeedStub /* = false */,
                                 bool Indirect /* = false */) {
-  intptr_t RelocCST = 0;
+  intptr_t RelocCST = Disp;
   if (Reloc == X86::reloc_picrel_word)
     RelocCST = PICBaseOffset;
   else if (Reloc == X86::reloc_pcrel_word)
@@ -309,34 +309,42 @@ static bool gvNeedsNonLazyPtr(const MachineOperand &GVOp,
 
 template<class CodeEmitter>
 void Emitter<CodeEmitter>::emitDisplacementField(const MachineOperand *RelocOp,
-                                                 int DispVal, intptr_t PCAdj) {
+                                                 int DispVal,
+                                                 intptr_t Adj /* = 0 */,
+                                                 bool IsPCRel /* = true */) {
   // If this is a simple integer displacement that doesn't require a relocation,
   // emit it now.
   if (!RelocOp) {
     emitConstant(DispVal, 4);
     return;
   }
-  
+
   // Otherwise, this is something that requires a relocation.  Emit it as such
   // now.
   if (RelocOp->isGlobal()) {
     // In 64-bit static small code model, we could potentially emit absolute.
-    // But it's probably not beneficial.
+    // But it's probably not beneficial. If the MCE supports using RIP directly
+    // do it, otherwise fallback to absolute (this is determined by IsPCRel). 
     //  89 05 00 00 00 00     mov    %eax,0(%rip)  # PC-relative
     //  89 04 25 00 00 00 00  mov    %eax,0x0      # Absolute
-    unsigned rt = Is64BitMode ? X86::reloc_pcrel_word
+    unsigned rt = Is64BitMode ?
+      (IsPCRel ? X86::reloc_pcrel_word : X86::reloc_absolute_word_sext)
       : (IsPIC ? X86::reloc_picrel_word : X86::reloc_absolute_word);
     bool NeedStub = isa<Function>(RelocOp->getGlobal());
     bool Indirect = gvNeedsNonLazyPtr(*RelocOp, TM);
     emitGlobalAddress(RelocOp->getGlobal(), rt, RelocOp->getOffset(),
-                      PCAdj, NeedStub, Indirect);
+                      Adj, NeedStub, Indirect);
   } else if (RelocOp->isCPI()) {
-    unsigned rt = Is64BitMode ? X86::reloc_pcrel_word : X86::reloc_picrel_word;
+    unsigned rt = Is64BitMode ?
+      (IsPCRel ? X86::reloc_pcrel_word : X86::reloc_absolute_word_sext)
+      : (IsPCRel ? X86::reloc_picrel_word : X86::reloc_absolute_word);
     emitConstPoolAddress(RelocOp->getIndex(), rt,
-                         RelocOp->getOffset(), PCAdj);
+                         RelocOp->getOffset(), Adj);
   } else if (RelocOp->isJTI()) {
-    unsigned rt = Is64BitMode ? X86::reloc_pcrel_word : X86::reloc_picrel_word;
-    emitJumpTableAddress(RelocOp->getIndex(), rt, PCAdj);
+    unsigned rt = Is64BitMode ?
+      (IsPCRel ? X86::reloc_pcrel_word : X86::reloc_absolute_word_sext)
+      : (IsPCRel ? X86::reloc_picrel_word : X86::reloc_absolute_word);
+    emitJumpTableAddress(RelocOp->getIndex(), rt, Adj);
   } else {
     llvm_unreachable("Unknown value to relocate!");
   }
@@ -354,14 +362,14 @@ void Emitter<CodeEmitter>::emitMemModRMByte(const MachineInstr &MI,
   if (Op3.isGlobal()) {
     DispForReloc = &Op3;
   } else if (Op3.isCPI()) {
-    if (Is64BitMode || IsPIC) {
+    if (!MCE.earlyResolveAddresses() || Is64BitMode || IsPIC) {
       DispForReloc = &Op3;
     } else {
       DispVal += MCE.getConstantPoolEntryAddress(Op3.getIndex());
       DispVal += Op3.getOffset();
     }
   } else if (Op3.isJTI()) {
-    if (Is64BitMode || IsPIC) {
+    if (!MCE.earlyResolveAddresses() || Is64BitMode || IsPIC) {
       DispForReloc = &Op3;
     } else {
       DispVal += MCE.getJumpTableEntryAddress(Op3.getIndex());
@@ -376,17 +384,23 @@ void Emitter<CodeEmitter>::emitMemModRMByte(const MachineInstr &MI,
 
   unsigned BaseReg = Base.getReg();
 
+  // Indicate that the displacement will use an pcrel or absolute reference
+  // by default. MCEs able to resolve addresses on-the-fly use pcrel by default
+  // while others, unless explicit asked to use RIP, use absolute references.
+  bool IsPCRel = MCE.earlyResolveAddresses() ? true : false;
+
   // Is a SIB byte needed?
+  // If no BaseReg, issue a RIP relative instruction only if the MCE can 
+  // resolve addresses on-the-fly, otherwise use SIB (Intel Manual 2A, table
+  // 2-7) and absolute references.
   if ((!Is64BitMode || DispForReloc || BaseReg != 0) &&
-      IndexReg.getReg() == 0 &&
-      (BaseReg == 0 || BaseReg == X86::RIP ||
-       getX86RegNum(BaseReg) != N86::ESP)) {
-    if (BaseReg == 0 ||
-        BaseReg == X86::RIP) {  // Just a displacement?
+      IndexReg.getReg() == 0 && 
+      ((BaseReg == 0 && MCE.earlyResolveAddresses()) || BaseReg == X86::RIP || 
+       (BaseReg != 0 && getX86RegNum(BaseReg) != N86::ESP))) {
+    if (BaseReg == 0 || BaseReg == X86::RIP) {  // Just a displacement?
       // Emit special case [disp32] encoding
       MCE.emitByte(ModRMByte(0, RegOpcodeField, 5));
-      
-      emitDisplacementField(DispForReloc, DispVal, PCAdj);
+      emitDisplacementField(DispForReloc, DispVal, PCAdj, true);
     } else {
       unsigned BaseRegNo = getX86RegNum(BaseReg);
       if (!DispForReloc && DispVal == 0 && BaseRegNo != N86::EBP) {
@@ -399,7 +413,7 @@ void Emitter<CodeEmitter>::emitMemModRMByte(const MachineInstr &MI,
       } else {
         // Emit the most general non-SIB encoding: [REG+disp32]
         MCE.emitByte(ModRMByte(2, RegOpcodeField, BaseRegNo));
-        emitDisplacementField(DispForReloc, DispVal, PCAdj);
+        emitDisplacementField(DispForReloc, DispVal, PCAdj, IsPCRel);
       }
     }
 
@@ -435,13 +449,13 @@ void Emitter<CodeEmitter>::emitMemModRMByte(const MachineInstr &MI,
     unsigned SS = SSTable[Scale.getImm()];
 
     if (BaseReg == 0) {
-      // Handle the SIB byte for the case where there is no base.  The
-      // displacement has already been output.
+      // Handle the SIB byte for the case where there is no base, see Intel 
+      // Manual 2A, table 2-7. The displacement has already been output.
       unsigned IndexRegNo;
       if (IndexReg.getReg())
         IndexRegNo = getX86RegNum(IndexReg.getReg());
-      else
-        IndexRegNo = 4;   // For example [ESP+1*<noreg>+4]
+      else // Examples: [ESP+1*<noreg>+4] or [scaled idx]+disp32 (MOD=0,BASE=5)
+        IndexRegNo = 4;
       emitSIBByte(SS, IndexRegNo, 5);
     } else {
       unsigned BaseRegNo = getX86RegNum(BaseReg);
@@ -457,7 +471,7 @@ void Emitter<CodeEmitter>::emitMemModRMByte(const MachineInstr &MI,
     if (ForceDisp8) {
       emitConstant(DispVal, 1);
     } else if (DispVal != 0 || ForceDisp32) {
-      emitDisplacementField(DispForReloc, DispVal, PCAdj);
+      emitDisplacementField(DispForReloc, DispVal, PCAdj, IsPCRel);
     }
   }
 }

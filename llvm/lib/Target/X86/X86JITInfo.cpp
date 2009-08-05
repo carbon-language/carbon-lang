@@ -538,6 +538,7 @@ void X86JITInfo::relocate(void *Function, MachineRelocation *MR,
       break;
     }
     case X86::reloc_absolute_word:
+    case X86::reloc_absolute_word_sext:
       // Absolute relocation, just add the relocated value to the value already
       // in memory.
       *((unsigned*)RelocPos) += (unsigned)ResultPtr;

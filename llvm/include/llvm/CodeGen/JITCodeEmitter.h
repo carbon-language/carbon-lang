@@ -289,6 +289,13 @@ public:
     return CurBufferPtr-BufferBegin;
   }
 
+  /// earlyResolveAddresses - True if the code emitter can use symbol addresses 
+  /// during code emission time. The JIT is capable of doing this because it
+  /// creates jump tables or constant pools in memory on the fly while the
+  /// object code emitters rely on a linker to have real addresses and should
+  /// use relocations instead.
+  bool earlyResolveAddresses() const { return true; }
+
   /// addRelocation - Whenever a relocatable address is needed, it should be
   /// noted with this interface.
   virtual void addRelocation(const MachineRelocation &MR) = 0;
