@@ -458,31 +458,10 @@ X86Subtarget::X86Subtarget(const std::string &TT, const std::string &FS,
       TargetType = isWindows;
     } else if (TT.find("windows") != std::string::npos) {
       TargetType = isWindows;
-    }
-    else if (TT.find("-cl") != std::string::npos) {
+    } else if (TT.find("-cl") != std::string::npos) {
       TargetType = isDarwin;
       DarwinVers = 9;
     }
-  } else if (TT.empty()) {
-#if defined(__CYGWIN__)
-    TargetType = isCygwin;
-#elif defined(__MINGW32__) || defined(__MINGW64__)
-    TargetType = isMingw;
-#elif defined(__APPLE__)
-    TargetType = isDarwin;
-#if __APPLE_CC__ > 5400
-    DarwinVers = 9;  // GCC 5400+ is Leopard.
-#else
-    DarwinVers = 8;  // Minimum supported darwin is Tiger.
-#endif
-    
-#elif defined(_WIN32) || defined(_WIN64)
-    TargetType = isWindows;
-#elif defined(__linux__)
-    // Linux doesn't imply ELF, but we don't currently support anything else.
-    TargetType = isELF;
-    IsLinux = true;
-#endif
   }
 
   // If the asm syntax hasn't been overridden on the command line, use whatever

@@ -81,10 +81,6 @@ ARMSubtarget::ARMSubtarget(const std::string &TT, const std::string &FS,
     if (TT.find("-darwin") != std::string::npos)
       // arm-darwin
       TargetType = isDarwin;
-  } else if (TT.empty()) {
-#if defined(__APPLE__)
-    TargetType = isDarwin;
-#endif
   }
 
   if (TT.find("eabi") != std::string::npos)

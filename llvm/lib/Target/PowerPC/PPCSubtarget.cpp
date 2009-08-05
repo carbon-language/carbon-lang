@@ -103,15 +103,6 @@ PPCSubtarget::PPCSubtarget(const std::string &TT, const std::string &FS,
       else
         DarwinVers = 8;  // Minimum supported darwin is Tiger.
     }
-  } else if (TT.empty()) {
-    // Try to autosense the subtarget from the host compiler.
-#if defined(__APPLE__)
-#if __APPLE_CC__ > 5400
-    DarwinVers = 9;  // GCC 5400+ is Leopard.
-#else
-    DarwinVers = 8;  // Minimum supported darwin is Tiger.
-#endif
-#endif
   }
 
   // Set up darwin-specific properties.
