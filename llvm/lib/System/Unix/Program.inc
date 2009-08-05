@@ -53,7 +53,8 @@ Program::FindProgramByName(const std::string& progName) {
   if (progName.find('/') != std::string::npos)
     return temp;
 
-  // At this point, the file name is valid and its not executable
+  // At this point, the file name does not contain slashes. Search for it
+  // through the directories specified in the PATH environment variable.
 
   // Get the path. If its empty, we can't do anything to find it.
   const char *PathStr = getenv("PATH");
