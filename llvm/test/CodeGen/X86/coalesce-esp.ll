@@ -1,4 +1,4 @@
-; RUN: llvm-as < %s | llc | grep {movl	%esp, %eax}
+; RUN: llvm-as < %s | llc -strict-index-regclass | grep {movl	%esp, %eax}
 ; PR4572
 
 ; Don't coalesce with %esp if it would end up putting %esp in

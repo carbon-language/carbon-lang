@@ -1,7 +1,7 @@
 ; RUN: llvm-as < %s | llc -mtriple=x86_64-apple-darwin10 -relocation-model=pic -disable-fp-elim -color-ss-with-regs -stats -info-output-file - > %t
 ; RUN:   grep stackcoloring %t | grep "loads eliminated" 
 ; RUN:   grep stackcoloring %t | grep "stack slot refs replaced with reg refs"  | grep 5
-; RUN:   grep asm-printer %t   | grep 182
+; RUN:   grep asm-printer %t   | grep 180
 
 	type { [62 x %struct.Bitvec*] }		; type %0
 	type { i8* }		; type %1
