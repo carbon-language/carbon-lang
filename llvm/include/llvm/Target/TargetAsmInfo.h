@@ -361,8 +361,11 @@ namespace llvm {
     const char *getCommentString() const {
       return CommentString;
     }
-    unsigned getOperandColumn(int operand) const {
-      return FirstOperandColumn + (MaxOperandLength+1)*(operand-1);
+    unsigned getFirstOperandColumn() const {
+      return FirstOperandColumn;
+    }
+    unsigned getMaxOperandLength() const {
+      return MaxOperandLength;
     }
     const char *getGlobalPrefix() const {
       return GlobalPrefix;

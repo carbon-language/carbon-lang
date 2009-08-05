@@ -327,6 +327,12 @@ namespace llvm {
     void EmitComments(const MCInst &MI) const;
 
   protected:
+    /// getOperandColumn - Return the output column number (zero-based)
+    /// for operand % "operand."  If TargetAsmInfo has FirstOperandColumn
+    /// == 0 or MaxOperandLength == 0, return 0, meaning column alignment
+    /// is disabled.
+    unsigned getOperandColumn(int operand) const;
+
     /// PadToColumn - This gets called every time a tab is emitted.  If
     /// column padding is turned on, we replace the tab with the
     /// appropriate amount of padding.  If not, we replace the tab with a

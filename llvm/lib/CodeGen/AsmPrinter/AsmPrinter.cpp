@@ -782,6 +782,20 @@ void AsmPrinter::EmitAlignment(unsigned NumBits, const GlobalValue *GV,
     }
   O << '\n';
 }
+
+/// getOperandColumn - Return the output column number (zero-based)
+/// for operand % "operand."  If TargetAsmInfo has FirstOperandColumn
+/// == 0 or MaxOperandLength == 0, return 0, meaning column alignment
+/// is disabled.
+unsigned AsmPrinter::getOperandColumn(int operand) const {
+  if (TAI->getFirstOperandColumn() > 0 && TAI->getMaxOperandLength() > 0) {
+    return TAI->getFirstOperandColumn()
+      + (TAI->getMaxOperandLength()+1)*(operand-1);
+  }
+  else {
+    return 0;
+  }
+}
     
 /// PadToColumn - This gets called every time a tab is emitted.  If
 /// column padding is turned on, we replace the tab with the
@@ -789,8 +803,8 @@ void AsmPrinter::EmitAlignment(unsigned NumBits, const GlobalValue *GV,
 /// space, except for the first operand so that initial operands are
 /// always lined up by tabs.
 void AsmPrinter::PadToColumn(unsigned Operand) const {
-  if (TAI->getOperandColumn(Operand) > 0) {
-    O.PadToColumn(TAI->getOperandColumn(Operand), 1);
+  if (getOperandColumn(Operand) > 0) {
+    O.PadToColumn(getOperandColumn(Operand), 1);
   }
   else {
     if (Operand == 1) {

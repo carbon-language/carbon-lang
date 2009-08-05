@@ -148,8 +148,6 @@ AsmWriterInst::AsmWriterInst(const CodeGenInstruction &CGI, unsigned Variant) {
 
     // Emit a constant string fragment.
 
-    // TODO: Recognize an operand separator to determine when to pad
-    // to the next operator.
     if (DollarPos != LastEmitted) {
       if (CurVariant == Variant || CurVariant == ~0U) {
         for (; LastEmitted != DollarPos; ++LastEmitted)
@@ -727,30 +725,10 @@ void AsmWriterEmitter::run(raw_ostream &O) {
 
   O << "  // Emit the opcode for the instruction.\n"
     << "  unsigned Bits = OpInfo[MI->getOpcode()];\n"
-    << "  if (Bits == 0) return false;\n\n";
-  
-  O << "  unsigned OperandColumn = 1;\n\n"
-    << "  if (TAI->getOperandColumn(1) > 0) {\n"
-    << "    // Don't emit trailing whitespace, let the column padding do it.  This\n"
-    << "    // guarantees that a stray long opcode + tab won't upset the alignment.\n"
-    << "    // We need to handle this special case here because sometimes the initial\n"
-    << "    // mnemonic string includes a tab or space and sometimes it doesn't.\n"
-    << "    unsigned OpLength = std::strlen(AsmStrs+(Bits & " << (1 << AsmStrBits)-1 << "));\n"
-    << "    if (OpLength > 0 &&\n"
-    << "        ((AsmStrs+(Bits & " << (1 << AsmStrBits)-1 << "))[OpLength-1] == ' ' ||\n"
-    << "         (AsmStrs+(Bits & " << (1 << AsmStrBits)-1 << "))[OpLength-1] == '\\t')) {\n"
-    << "      do {\n"
-    << "        --OpLength;\n"
-    << "      } while ((AsmStrs+(Bits & " << (1 << AsmStrBits)-1 << "))[OpLength-1] == ' ' ||\n"
-    << "               (AsmStrs+(Bits & " << (1 << AsmStrBits)-1 << "))[OpLength-1] == '\\t');\n"
-    << "      for (unsigned Idx = 0; Idx < OpLength; ++Idx)\n"
-    << "        O << (AsmStrs+(Bits & " << (1 << AsmStrBits)-1 << "))[Idx];\n"
-    << "      O.PadToColumn(TAI->getOperandColumn(OperandColumn++), 1);\n"
-    << "    }\n"
-    << "  } else {\n"
-    << "    O << AsmStrs+(Bits & " << (1 << AsmStrBits)-1 << ");\n"
-    << "  }\n\n";
-  
+    << "  if (Bits == 0) return false;\n"
+    << "  O << AsmStrs+(Bits & " << (1 << AsmStrBits)-1 << ");\n\n";
+
+  O << "  unsigned OperandColumn = 1;\n\n";
 
   // Output the table driven operand information.
   BitsLeft = 32-AsmStrBits;
