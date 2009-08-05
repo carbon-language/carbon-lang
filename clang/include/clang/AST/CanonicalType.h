@@ -139,7 +139,7 @@ public:
   }
   
   /// \brief If the canonical type is a reference type, returns the type that
-  /// it refers to; otherwise, 
+  /// it refers to; otherwise, returns the type itself.
   CanQual<Type> getNonReferenceType() const;
   
   /// \brief Retrieve the internal representation of this canonical type.
