@@ -18,7 +18,6 @@
 
 #include <llvm/Config/config.h>
 #include "Unix.h"
-#include <iostream>
 #if HAVE_SYS_STAT_H
 #include <sys/stat.h>
 #endif
@@ -213,12 +212,6 @@ Program::Execute(const Path& path,
     default:
       break;
   }
-
-  // Make sure stderr and stdout have been flushed
-  std::cerr << std::flush;
-  std::cout << std::flush;
-  fsync(1);
-  fsync(2);
 
   Pid_ = child;
 
