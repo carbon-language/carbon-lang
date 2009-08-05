@@ -552,19 +552,22 @@ define i32 @main() {                                              <i>; i32()* </
       translation unit that uses it.  Unreferenced <tt>linkonce</tt> globals are
       allowed to be discarded.</dd>
 
-  <dt><tt><b><a name="linkage_common">common</a></b></tt>: </dt>
-  <dd>"<tt>common</tt>" linkage is exactly the same as <tt>linkonce</tt>
-     linkage, except that unreferenced <tt>common</tt> globals may not be
-     discarded.  This is used for globals that may be emitted in multiple
-     translation units, but that are not guaranteed to be emitted into every
-     translation unit that uses them.  One example of this is tentative
-     definitions in C, such as "<tt>int X;</tt>" at global scope.</dd>
-
   <dt><tt><b><a name="linkage_weak">weak</a></b></tt>: </dt>
-  <dd>"<tt>weak</tt>" linkage is the same as <tt>common</tt> linkage, except
-      that some targets may choose to emit different assembly sequences for them
-      for target-dependent reasons.  This is used for globals that are declared
-      "weak" in C source code.</dd>
+  <dd>"<tt>weak</tt>" linkage has the same merging semantics as
+      <tt>linkonce</tt> linkage, except that unreferenced globals with
+      <tt>weak</tt> linkage may not be discarded.  This is used for globals that
+      are declared "weak" in C source code.</dd>
+
+  <dt><tt><b><a name="linkage_common">common</a></b></tt>: </dt>
+  <dd>"<tt>common</tt>" linkage is most similar to "<tt>weak</tt>" linkage, but
+      they are used for tentative definitions in C, such as "<tt>int X;</tt>" at
+      global scope.
+      Symbols with "<tt>common</tt>" linkage are merged in the same way as
+      <tt>weak symbols</tt>, and they may not be deleted if unreferenced.
+      Further, <tt>common</tt> symbols may not have an explicit section, and
+      must have a zero initializer.  Functions and aliases may not have common
+      linkage.</dd>
+
 
   <dt><tt><b><a name="linkage_appending">appending</a></b></tt>: </dt>
   <dd>"<tt>appending</tt>" linkage may only be applied to global variables of

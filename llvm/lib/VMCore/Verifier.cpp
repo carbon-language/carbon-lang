@@ -378,6 +378,12 @@ void Verifier::visitGlobalVariable(GlobalVariable &GV) {
             "Global variable initializer type does not match global "
             "variable type!", &GV);
 
+    // If the global has common linkage, it must have a zero initializer.
+    if (GV.hasCommonLinkage())
+      Assert1(GV.getInitializer()->isNullValue(),
+              "'common' global must have a zero initializer!", &GV);
+    
+    
     // Verify that any metadata used in a global initializer points only to
     // other globals.
     if (MDNode *FirstNode = dyn_cast<MDNode>(GV.getInitializer())) {
@@ -544,6 +550,7 @@ void Verifier::visitFunction(Function &F) {
   const FunctionType *FT = F.getFunctionType();
   unsigned NumArgs = F.arg_size();
 
+  Assert1(!F.hasCommonLinkage(), "Functions may not have common linkage", &F);
   Assert2(FT->getNumParams() == NumArgs,
           "# formal arguments must match # of arguments for function type!",
           &F, FT);

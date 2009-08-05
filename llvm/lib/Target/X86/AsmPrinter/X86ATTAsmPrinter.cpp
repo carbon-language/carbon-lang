@@ -782,8 +782,13 @@ void X86ATTAsmPrinter::PrintGlobalVariable(const GlobalVariable* GVar) {
   if (Subtarget->isTargetELF())
     O << "\t.type\t" << name << ",@object\n";
 
+  
+  SectionKind GVKind = TargetLoweringObjectFile::getKindForGlobal(GVar, TM);
+  
+  
+  
   const MCSection *TheSection =
-    getObjFileLowering().SectionForGlobal(GVar, Mang, TM);
+    getObjFileLowering().SectionForGlobal(GVar, GVKind, Mang, TM);
   SwitchToSection(TheSection);
 
   // FIXME: get this stuff from section kind flags.
