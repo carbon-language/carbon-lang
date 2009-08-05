@@ -395,9 +395,13 @@ CXXConstructExpr::CXXConstructExpr(ASTContext &C, StmtClass SC, QualType T,
        (T->isDependentType() ||
         CallExpr::hasAnyValueDependentArguments(args, numargs))),
   Constructor(D), Elidable(elidable), Args(0), NumArgs(numargs) {
+    // leave room for default arguments;
+    FunctionDecl *FDecl = cast<FunctionDecl>(D);
+    unsigned NumArgsInProto = FDecl->param_size();
+    NumArgs += (NumArgsInProto - numargs);
     if (NumArgs > 0) {
       Args = new (C) Stmt*[NumArgs];
-      for (unsigned i = 0; i < NumArgs; ++i)
+      for (unsigned i = 0; i < numargs; ++i)
         Args[i] = args[i];
     }
 }

@@ -2360,8 +2360,29 @@ void Sema::InitializeVarWithConstructor(VarDecl *VD,
                                         CXXConstructorDecl *Constructor,
                                         QualType DeclInitType, 
                                         Expr **Exprs, unsigned NumExprs) {
-  Expr *Temp = CXXConstructExpr::Create(Context, DeclInitType, Constructor, 
-                                        false, Exprs, NumExprs);
+  CXXConstructExpr *Temp = CXXConstructExpr::Create(Context, DeclInitType, 
+                                                    Constructor, 
+                                                    false, Exprs, NumExprs);
+  // default arguments must be added to constructor call expression.
+  FunctionDecl *FDecl = cast<FunctionDecl>(Constructor);
+  unsigned NumArgsInProto = FDecl->param_size();
+  for (unsigned j = NumExprs; j != NumArgsInProto; j++) {
+    Expr *DefaultExpr = FDecl->getParamDecl(j)->getDefaultArg();
+    
+    // If the default expression creates temporaries, we need to
+    // push them to the current stack of expression temporaries so they'll
+    // be properly destroyed.
+    if (CXXExprWithTemporaries *E 
+        = dyn_cast_or_null<CXXExprWithTemporaries>(DefaultExpr)) {
+      assert(!E->shouldDestroyTemporaries() && 
+             "Can't destroy temporaries in a default argument expr!");
+      for (unsigned I = 0, N = E->getNumTemporaries(); I != N; ++I)
+        ExprTemporaries.push_back(E->getTemporary(I));
+    }
+    Expr *Arg = new (Context) CXXDefaultArgExpr(FDecl->getParamDecl(j));
+    Temp->setArg(j, Arg);
+  }
+  
   MarkDeclarationReferenced(VD->getLocation(), Constructor);
   VD->setInit(Context, Temp);
 }

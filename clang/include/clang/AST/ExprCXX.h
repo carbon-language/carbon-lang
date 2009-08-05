@@ -511,6 +511,12 @@ public:
 
   unsigned getNumArgs() const { return NumArgs; }
 
+  /// setArg - Set the specified argument.
+  void setArg(unsigned Arg, Expr *ArgExpr) {
+    assert(Arg < NumArgs && "Arg access out of range!");
+    Args[Arg] = ArgExpr;
+  }
+
   virtual SourceRange getSourceRange() const { return SourceRange(); }
 
   static bool classof(const Stmt *T) { 
