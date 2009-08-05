@@ -141,12 +141,26 @@ public:
     return K;
   }
   
+  /// getKindForGlobal - Classify the specified global variable into a set of
+  /// target independent categories embodied in SectionKind.
+  static SectionKind getKindForGlobal(const GlobalValue *GV,
+                                      const TargetMachine &TM);
+  
+  /// SectionForGlobal - This method computes the appropriate section to emit
+  /// the specified global variable or function definition.  This should not
+  /// be passed external (or available externally) globals.
+  const MCSection *SectionForGlobal(const GlobalValue *GV,
+                                    SectionKind Kind, Mangler *Mang,
+                                    const TargetMachine &TM) const;
+  
   /// SectionForGlobal - This method computes the appropriate section to emit
   /// the specified global variable or function definition.  This should not
   /// be passed external (or available externally) globals.
   const MCSection *SectionForGlobal(const GlobalValue *GV,
                                     Mangler *Mang,
-                                    const TargetMachine &TM) const;
+                                    const TargetMachine &TM) const {
+    return SectionForGlobal(GV, getKindForGlobal(GV, TM), Mang, TM);
+  }
   
   /// getSpecialCasedSectionGlobals - Allow the target to completely override
   /// section assignment of a global.

@@ -110,13 +110,16 @@ static bool IsNullTerminatedString(const Constant *C) {
   return false;
 }
 
-/// SectionKindForGlobal - This is a top-level target-independent classifier for
+/// getKindForGlobal - This is a top-level target-independent classifier for
 /// a global variable.  Given an global variable and information from TM, it
 /// classifies the global in a variety of ways that make various target
 /// implementations simpler.  The target implementation is free to ignore this
 /// extra info of course.
-static SectionKind SectionKindForGlobal(const GlobalValue *GV,
-                                        const TargetMachine &TM) {
+SectionKind TargetLoweringObjectFile::getKindForGlobal(const GlobalValue *GV,
+                                                       const TargetMachine &TM){
+  assert(!GV->isDeclaration() && !GV->hasAvailableExternallyLinkage() &&
+         "Can only be used for global definitions");
+  
   Reloc::Model ReloModel = TM.getRelocationModel();
   
   // Early exit - functions should be always in text sections.
@@ -227,13 +230,8 @@ static SectionKind SectionKindForGlobal(const GlobalValue *GV,
 /// the specified global variable or function definition.  This should not
 /// be passed external (or available externally) globals.
 const MCSection *TargetLoweringObjectFile::
-SectionForGlobal(const GlobalValue *GV, Mangler *Mang,
+SectionForGlobal(const GlobalValue *GV, SectionKind Kind, Mangler *Mang,
                  const TargetMachine &TM) const {
-  assert(!GV->isDeclaration() && !GV->hasAvailableExternallyLinkage() &&
-         "Can only be used for global definitions");
-  
-  SectionKind Kind = SectionKindForGlobal(GV, TM);
-  
   // Select section name.
   if (GV->hasSection()) {
     // If the target has special section hacks for specifically named globals,
@@ -253,6 +251,7 @@ SectionForGlobal(const GlobalValue *GV, Mangler *Mang,
   // Use default section depending on the 'type' of global
   return SelectSectionForGlobal(GV, Kind, Mang, TM);
 }
+
 
 // Lame default implementation. Calculate the section name for global.
 const MCSection *
