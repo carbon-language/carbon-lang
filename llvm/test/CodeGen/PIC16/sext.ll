@@ -1,5 +1,4 @@
 ; RUN: llvm-as < %s | llc -march=pic16
-; XFAIL: *
 
 @main.auto.c = internal global i8 0		; <i8*> [#uses=1]
 

@@ -403,7 +403,7 @@ PIC16TargetLowering::MakePIC16Libcall(PIC16ISD::PIC16Libcall Call,
     Entry.isZExt = !isSigned;
     Args.push_back(Entry);
   }
-  SDValue Callee = DAG.getExternalSymbol(getPIC16LibcallName(Call), MVT::i8);
+  SDValue Callee = DAG.getExternalSymbol(getPIC16LibcallName(Call), MVT::i16);
 
    const Type *RetTy = RetVT.getTypeForMVT();
    std::pair<SDValue,SDValue> CallInfo = 
