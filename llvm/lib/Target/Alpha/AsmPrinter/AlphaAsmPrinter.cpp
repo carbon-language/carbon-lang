@@ -17,7 +17,6 @@
 #include "AlphaInstrInfo.h"
 #include "AlphaTargetMachine.h"
 #include "llvm/Module.h"
-#include "llvm/Metadata.h"
 #include "llvm/Type.h"
 #include "llvm/Assembly/Writer.h"
 #include "llvm/CodeGen/AsmPrinter.h"
@@ -209,8 +208,6 @@ void AlphaAsmPrinter::PrintGlobalVariable(const GlobalVariable *GVar) {
 
   std::string name = Mang->getMangledName(GVar);
   Constant *C = GVar->getInitializer();
-  if (isa<MDNode>(C) || isa<MDString>(C))
-    return;
   unsigned Size = TD->getTypeAllocSize(C->getType());
   unsigned Align = TD->getPreferredAlignmentLog(GVar);
 

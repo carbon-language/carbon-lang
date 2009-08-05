@@ -23,7 +23,6 @@
 #include "llvm/CallingConv.h"
 #include "llvm/DerivedTypes.h"
 #include "llvm/Module.h"
-#include "llvm/Metadata.h"
 #include "llvm/Type.h"
 #include "llvm/ADT/Statistic.h"
 #include "llvm/ADT/StringExtras.h"
@@ -771,8 +770,6 @@ void X86ATTAsmPrinter::PrintGlobalVariable(const GlobalVariable* GVar) {
 
   std::string name = Mang->getMangledName(GVar);
   Constant *C = GVar->getInitializer();
-  if (isa<MDNode>(C) || isa<MDString>(C))
-    return;
   const Type *Type = C->getType();
   unsigned Size = TD->getTypeAllocSize(Type);
   unsigned Align = TD->getPreferredAlignmentLog(GVar);

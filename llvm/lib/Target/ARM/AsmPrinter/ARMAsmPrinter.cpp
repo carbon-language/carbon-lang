@@ -21,7 +21,6 @@
 #include "ARMMachineFunctionInfo.h"
 #include "llvm/Constants.h"
 #include "llvm/Module.h"
-#include "llvm/Metadata.h"
 #include "llvm/CodeGen/AsmPrinter.h"
 #include "llvm/CodeGen/DwarfWriter.h"
 #include "llvm/CodeGen/MachineModuleInfo.h"
@@ -1146,8 +1145,6 @@ void ARMAsmPrinter::PrintGlobalVariable(const GlobalVariable* GVar) {
 
   std::string name = Mang->getMangledName(GVar);
   Constant *C = GVar->getInitializer();
-  if (isa<MDNode>(C) || isa<MDString>(C))
-    return;
   const Type *Type = C->getType();
   unsigned Size = TD->getTypeAllocSize(Type);
   unsigned Align = TD->getPreferredAlignmentLog(GVar);
