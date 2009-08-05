@@ -705,7 +705,7 @@ bool X86DAGToDAGISel::MatchLoad(SDValue N, X86ISelAddressMode &AM) {
 /// MatchWrapper - Try to match X86ISD::Wrapper and X86ISD::WrapperRIP nodes
 /// into an addressing mode.  These wrap things that will resolve down into a
 /// symbol reference.  If no match is possible, this returns true, otherwise it
-/// returns false.  
+/// returns false.
 bool X86DAGToDAGISel::MatchWrapper(SDValue N, X86ISelAddressMode &AM) {
   // If the addressing mode already has a symbol as the displacement, we can
   // never match another symbol.
@@ -713,28 +713,27 @@ bool X86DAGToDAGISel::MatchWrapper(SDValue N, X86ISelAddressMode &AM) {
     return true;
 
   SDValue N0 = N.getOperand(0);
-  
+  CodeModel::Model M = TM.getCodeModel();
+
   // Handle X86-64 rip-relative addresses.  We check this before checking direct
   // folding because RIP is preferable to non-RIP accesses.
   if (Subtarget->is64Bit() &&
       // Under X86-64 non-small code model, GV (and friends) are 64-bits, so
       // they cannot be folded into immediate fields.
       // FIXME: This can be improved for kernel and other models?
-      TM.getCodeModel() == CodeModel::Small &&
-      
+      (M == CodeModel::Small || CodeModel::Kernel) &&
       // Base and index reg must be 0 in order to use %rip as base and lowering
       // must allow RIP.
       !AM.hasBaseOrIndexReg() && N.getOpcode() == X86ISD::WrapperRIP) {
-  
     if (GlobalAddressSDNode *G = dyn_cast<GlobalAddressSDNode>(N0)) {
       int64_t Offset = AM.Disp + G->getOffset();
-      if (!isInt32(Offset)) return true;
+      if (!X86::isOffsetSuitableForCodeModel(Offset, M)) return true;
       AM.GV = G->getGlobal();
       AM.Disp = Offset;
       AM.SymbolFlags = G->getTargetFlags();
     } else if (ConstantPoolSDNode *CP = dyn_cast<ConstantPoolSDNode>(N0)) {
       int64_t Offset = AM.Disp + CP->getOffset();
-      if (!isInt32(Offset)) return true;
+      if (!X86::isOffsetSuitableForCodeModel(Offset, M)) return true;
       AM.CP = CP->getConstVal();
       AM.Align = CP->getAlignment();
       AM.Disp = Offset;
@@ -747,7 +746,7 @@ bool X86DAGToDAGISel::MatchWrapper(SDValue N, X86ISelAddressMode &AM) {
       AM.JT = J->getIndex();
       AM.SymbolFlags = J->getTargetFlags();
     }
-  
+
     if (N.getOpcode() == X86ISD::WrapperRIP)
       AM.setBaseReg(CurDAG->getRegister(X86::RIP, MVT::i64));
     return false;
@@ -757,7 +756,7 @@ bool X86DAGToDAGISel::MatchWrapper(SDValue N, X86ISelAddressMode &AM) {
   // X86-32 always and X86-64 when in -static -mcmodel=small mode.  In 64-bit
   // mode, this results in a non-RIP-relative computation.
   if (!Subtarget->is64Bit() ||
-      (TM.getCodeModel() == CodeModel::Small &&
+      ((M == CodeModel::Small || M == CodeModel::Kernel) &&
        TM.getRelocationModel() == Reloc::Static)) {
     if (GlobalAddressSDNode *G = dyn_cast<GlobalAddressSDNode>(N0)) {
       AM.GV = G->getGlobal();
@@ -809,7 +808,9 @@ bool X86DAGToDAGISel::MatchAddressRecursively(SDValue N, X86ISelAddressMode &AM,
   // Limit recursion.
   if (Depth > 5)
     return MatchAddressBase(N, AM);
-  
+
+  CodeModel::Model M = TM.getCodeModel();
+
   // If this is already a %rip relative address, we can only merge immediates
   // into it.  Instead of handling this in every case, we handle it here.
   // RIP relative addressing: %rip + 32-bit displacement!
@@ -818,10 +819,11 @@ bool X86DAGToDAGISel::MatchAddressRecursively(SDValue N, X86ISelAddressMode &AM,
     // displacements.  It isn't very important, but this should be fixed for
     // consistency.
     if (!AM.ES && AM.JT != -1) return true;
-    
+
     if (ConstantSDNode *Cst = dyn_cast<ConstantSDNode>(N)) {
       int64_t Val = AM.Disp + Cst->getSExtValue();
-      if (isInt32(Val)) {
+      if (X86::isOffsetSuitableForCodeModel(Val, M,
+                                            AM.hasSymbolicDisplacement())) {
         AM.Disp = Val;
         return false;
       }
@@ -833,7 +835,9 @@ bool X86DAGToDAGISel::MatchAddressRecursively(SDValue N, X86ISelAddressMode &AM,
   default: break;
   case ISD::Constant: {
     uint64_t Val = cast<ConstantSDNode>(N)->getSExtValue();
-    if (!is64Bit || isInt32(AM.Disp + Val)) {
+    if (!is64Bit ||
+        X86::isOffsetSuitableForCodeModel(AM.Disp + Val, M,
+                                          AM.hasSymbolicDisplacement())) {
       AM.Disp += Val;
       return false;
     }
@@ -889,7 +893,9 @@ bool X86DAGToDAGISel::MatchAddressRecursively(SDValue N, X86ISelAddressMode &AM,
           ConstantSDNode *AddVal =
             cast<ConstantSDNode>(ShVal.getNode()->getOperand(1));
           uint64_t Disp = AM.Disp + (AddVal->getSExtValue() << Val);
-          if (!is64Bit || isInt32(Disp))
+          if (!is64Bit ||
+              X86::isOffsetSuitableForCodeModel(Disp, M,
+                                                AM.hasSymbolicDisplacement()))
             AM.Disp = Disp;
           else
             AM.IndexReg = ShVal;
@@ -931,7 +937,9 @@ bool X86DAGToDAGISel::MatchAddressRecursively(SDValue N, X86ISelAddressMode &AM,
               cast<ConstantSDNode>(MulVal.getNode()->getOperand(1));
             uint64_t Disp = AM.Disp + AddVal->getSExtValue() *
                                       CN->getZExtValue();
-            if (!is64Bit || isInt32(Disp))
+            if (!is64Bit ||
+                X86::isOffsetSuitableForCodeModel(Disp, M,
+                                                  AM.hasSymbolicDisplacement()))
               AM.Disp = Disp;
             else
               Reg = N.getNode()->getOperand(0);
@@ -1050,7 +1058,9 @@ bool X86DAGToDAGISel::MatchAddressRecursively(SDValue N, X86ISelAddressMode &AM,
           // Address could not have picked a GV address for the displacement.
           AM.GV == NULL &&
           // On x86-64, the resultant disp must fit in 32-bits.
-          (!is64Bit || isInt32(AM.Disp + Offset)) &&
+          (!is64Bit ||
+           X86::isOffsetSuitableForCodeModel(AM.Disp + Offset, M,
+                                             AM.hasSymbolicDisplacement())) &&
           // Check to see if the LHS & C is zero.
           CurDAG->MaskedValueIsZero(N.getOperand(0), CN->getAPIntValue())) {
         AM.Disp += Offset;

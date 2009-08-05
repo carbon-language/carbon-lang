@@ -2126,6 +2126,36 @@ SDValue X86TargetLowering::getReturnAddressFrameIndex(SelectionDAG &DAG) {
 }
 
 
+bool X86::isOffsetSuitableForCodeModel(int64_t Offset, CodeModel::Model M,
+                                       bool hasSymbolicDisplacement) {
+  // Offset should fit into 32 bit immediate field.
+  if (!isInt32(Offset))
+    return false;
+
+  // If we don't have a symbolic displacement - we don't have any extra
+  // restrictions.
+  if (!hasSymbolicDisplacement)
+    return true;
+
+  // FIXME: Some tweaks might be needed for medium code model.
+  if (M != CodeModel::Small && M != CodeModel::Kernel)
+    return false;
+
+  // For small code model we assume that latest object is 16MB before end of 31
+  // bits boundary. We may also accept pretty large negative constants knowing
+  // that all objects are in the positive half of address space.
+  if (M == CodeModel::Small && Offset < 16*1024*1024)
+    return true;
+
+  // For kernel code model we know that all object resist in the negative half
+  // of 32bits address space. We may not accept negative offsets, since they may
+  // be just off and we may accept pretty large positive ones.
+  if (M == CodeModel::Kernel && Offset > 0)
+    return true;
+
+  return false;
+}
+
 /// TranslateX86CC - do a one to one translation of a ISD::CondCode to the X86
 /// specific condition code, returning the condition code and the LHS/RHS of the
 /// comparison to make.
@@ -4440,9 +4470,10 @@ X86TargetLowering::LowerConstantPool(SDValue Op, SelectionDAG &DAG) {
   // global base reg.
   unsigned char OpFlag = 0;
   unsigned WrapperKind = X86ISD::Wrapper;
-  
+  CodeModel::Model M = getTargetMachine().getCodeModel();
+
   if (Subtarget->isPICStyleRIPRel() &&
-      getTargetMachine().getCodeModel() == CodeModel::Small)
+      (M == CodeModel::Small || M == CodeModel::Kernel))
     WrapperKind = X86ISD::WrapperRIP;
   else if (Subtarget->isPICStyleGOT())
     OpFlag = X86II::MO_GOTOFF;
@@ -4472,9 +4503,10 @@ SDValue X86TargetLowering::LowerJumpTable(SDValue Op, SelectionDAG &DAG) {
   // global base reg.
   unsigned char OpFlag = 0;
   unsigned WrapperKind = X86ISD::Wrapper;
-  
+  CodeModel::Model M = getTargetMachine().getCodeModel();
+
   if (Subtarget->isPICStyleRIPRel() &&
-      getTargetMachine().getCodeModel() == CodeModel::Small)
+      (M == CodeModel::Small || M == CodeModel::Kernel))
     WrapperKind = X86ISD::WrapperRIP;
   else if (Subtarget->isPICStyleGOT())
     OpFlag = X86II::MO_GOTOFF;
@@ -4505,8 +4537,10 @@ X86TargetLowering::LowerExternalSymbol(SDValue Op, SelectionDAG &DAG) {
   // global base reg.
   unsigned char OpFlag = 0;
   unsigned WrapperKind = X86ISD::Wrapper;
+  CodeModel::Model M = getTargetMachine().getCodeModel();
+
   if (Subtarget->isPICStyleRIPRel() &&
-      getTargetMachine().getCodeModel() == CodeModel::Small)
+      (M == CodeModel::Small || M == CodeModel::Kernel))
     WrapperKind = X86ISD::WrapperRIP;
   else if (Subtarget->isPICStyleGOT())
     OpFlag = X86II::MO_GOTOFF;
@@ -4540,8 +4574,10 @@ X86TargetLowering::LowerGlobalAddress(const GlobalValue *GV, DebugLoc dl,
   // offset if it is legal.
   unsigned char OpFlags =
     Subtarget->ClassifyGlobalReference(GV, getTargetMachine());
+  CodeModel::Model M = getTargetMachine().getCodeModel();
   SDValue Result;
-  if (OpFlags == X86II::MO_NO_FLAG && isInt32(Offset)) {
+  if (OpFlags == X86II::MO_NO_FLAG &&
+      X86::isOffsetSuitableForCodeModel(Offset, M)) {
     // A direct static reference to a global.
     Result = DAG.getTargetGlobalAddress(GV, getPointerTy(), Offset);
     Offset = 0;
@@ -4550,7 +4586,7 @@ X86TargetLowering::LowerGlobalAddress(const GlobalValue *GV, DebugLoc dl,
   }
   
   if (Subtarget->isPICStyleRIPRel() &&
-      getTargetMachine().getCodeModel() == CodeModel::Small)
+      (M == CodeModel::Small || M == CodeModel::Kernel))
     Result = DAG.getNode(X86ISD::WrapperRIP, dl, getPointerTy(), Result);
   else
     Result = DAG.getNode(X86ISD::Wrapper, dl, getPointerTy(), Result);
@@ -7049,32 +7085,28 @@ const char *X86TargetLowering::getTargetNodeName(unsigned Opcode) const {
 bool X86TargetLowering::isLegalAddressingMode(const AddrMode &AM,
                                               const Type *Ty) const {
   // X86 supports extremely general addressing modes.
+  CodeModel::Model M = getTargetMachine().getCodeModel();
 
   // X86 allows a sign-extended 32-bit immediate field as a displacement.
-  if (AM.BaseOffs <= -(1LL << 32) || AM.BaseOffs >= (1LL << 32)-1)
+  if (!X86::isOffsetSuitableForCodeModel(AM.BaseOffs, M, AM.BaseGV != NULL))
     return false;
 
   if (AM.BaseGV) {
     unsigned GVFlags =
       Subtarget->ClassifyGlobalReference(AM.BaseGV, getTargetMachine());
-    
+
     // If a reference to this global requires an extra load, we can't fold it.
     if (isGlobalStubReference(GVFlags))
       return false;
-    
+
     // If BaseGV requires a register for the PIC base, we cannot also have a
     // BaseReg specified.
     if (AM.HasBaseReg && isGlobalRelativeToPICBase(GVFlags))
       return false;
 
-    // X86-64 only supports addr of globals in small code model.
-    if (Subtarget->is64Bit()) {
-      if (getTargetMachine().getCodeModel() != CodeModel::Small)
-        return false;
-      // If lower 4G is not available, then we must use rip-relative addressing.
-      if (AM.BaseOffs || AM.Scale > 1)
-        return false;
-    }
+    // If lower 4G is not available, then we must use rip-relative addressing.
+    if (Subtarget->is64Bit() && (AM.BaseOffs || AM.Scale > 1))
+      return false;
   }
 
   switch (AM.Scale) {
