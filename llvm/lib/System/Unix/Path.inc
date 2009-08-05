@@ -344,10 +344,8 @@ Path Path::GetMainExecutable(const char *argv0, void *MainAddr) {
 #elif defined(__linux__) || defined(__CYGWIN__)
   char exe_path[MAXPATHLEN];
   ssize_t len = readlink("/proc/self/exe", exe_path, sizeof(exe_path));
-  if (len > 0 && len < MAXPATHLEN - 1) {
-    exe_path[len] = '\0';
-    return Path(std::string(exe_path));
-  }
+  if (len >= 0)
+    return Path(std::string(exe_path, len));
 #elif defined(HAVE_DLFCN_H)
   // Use dladdr to get executable path if available.
   Dl_info DLInfo;
