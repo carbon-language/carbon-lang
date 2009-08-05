@@ -137,7 +137,5 @@ uintptr_t ObjectCodeEmitter::getConstantPoolEntrySection(unsigned Index) const {
   return CPSections[Index];
 }
 
-/// getNoopSize - Returns the size of the no operation instruction 
-
 } // end namespace llvm
 
