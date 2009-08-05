@@ -94,7 +94,6 @@ MipsTargetLowering(MipsTargetMachine &TM)
   // Mips Custom Operations
   setOperationAction(ISD::GlobalAddress,      MVT::i32,   Custom);
   setOperationAction(ISD::GlobalTLSAddress,   MVT::i32,   Custom);
-  setOperationAction(ISD::RET,                MVT::Other, Custom);
   setOperationAction(ISD::JumpTable,          MVT::i32,   Custom);
   setOperationAction(ISD::ConstantPool,       MVT::i32,   Custom);
   setOperationAction(ISD::SELECT,             MVT::f32,   Custom);
@@ -182,16 +181,13 @@ LowerOperation(SDValue Op, SelectionDAG &DAG)
   {
     case ISD::AND:                return LowerANDOR(Op, DAG);
     case ISD::BRCOND:             return LowerBRCOND(Op, DAG);
-    case ISD::CALL:               return LowerCALL(Op, DAG);
     case ISD::ConstantPool:       return LowerConstantPool(Op, DAG);
     case ISD::DYNAMIC_STACKALLOC: return LowerDYNAMIC_STACKALLOC(Op, DAG);
-    case ISD::FORMAL_ARGUMENTS:   return LowerFORMAL_ARGUMENTS(Op, DAG);
     case ISD::FP_TO_SINT:         return LowerFP_TO_SINT(Op, DAG);
     case ISD::GlobalAddress:      return LowerGlobalAddress(Op, DAG);
     case ISD::GlobalTLSAddress:   return LowerGlobalTLSAddress(Op, DAG);
     case ISD::JumpTable:          return LowerJumpTable(Op, DAG);
     case ISD::OR:                 return LowerANDOR(Op, DAG);
-    case ISD::RET:                return LowerRET(Op, DAG);
     case ISD::SELECT:             return LowerSELECT(Op, DAG);
     case ISD::SETCC:              return LowerSETCC(Op, DAG);
   }
@@ -580,13 +576,6 @@ LowerConstantPool(SDValue Op, SelectionDAG &DAG)
 
 //===----------------------------------------------------------------------===//
 //                      Calling Convention Implementation
-//
-//  The lower operations present on calling convention works on this order:
-//      LowerCALL (virt regs --> phys regs, virt regs --> stack) 
-//      LowerFORMAL_ARGUMENTS (phys --> virt regs, stack --> virt regs)
-//      LowerRET (virt regs --> phys regs)
-//      LowerCALL (phys regs --> virt regs)
-//
 //===----------------------------------------------------------------------===//
 
 #include "MipsGenCallingConv.inc"
@@ -671,38 +660,37 @@ static bool CC_MipsO32(unsigned ValNo, MVT ValVT,
 }
 
 //===----------------------------------------------------------------------===//
-//                  CALL Calling Convention Implementation
+//                  Call Calling Convention Implementation
 //===----------------------------------------------------------------------===//
 
-/// LowerCALL - functions arguments are copied from virtual regs to 
+/// LowerCall - functions arguments are copied from virtual regs to
 /// (physical regs)/(stack frame), CALLSEQ_START and CALLSEQ_END are emitted.
 /// TODO: isVarArg, isTailCall.
-SDValue MipsTargetLowering::
-LowerCALL(SDValue Op, SelectionDAG &DAG)
-{
+SDValue
+MipsTargetLowering::LowerCall(SDValue Chain, SDValue Callee,
+                              unsigned CallConv, bool isVarArg,
+                              bool isTailCall,
+                              const SmallVectorImpl<ISD::OutputArg> &Outs,
+                              const SmallVectorImpl<ISD::InputArg> &Ins,
+                              DebugLoc dl, SelectionDAG &DAG,
+                              SmallVectorImpl<SDValue> &InVals) {
+
   MachineFunction &MF = DAG.getMachineFunction();
-
-  CallSDNode *TheCall = cast<CallSDNode>(Op.getNode());
-  SDValue Chain = TheCall->getChain();
-  SDValue Callee = TheCall->getCallee();
-  bool isVarArg = TheCall->isVarArg();
-  unsigned CC = TheCall->getCallingConv();
-  DebugLoc dl = TheCall->getDebugLoc();
-
   MachineFrameInfo *MFI = MF.getFrameInfo();
 
   // Analyze operands of the call, assigning locations to each operand.
   SmallVector<CCValAssign, 16> ArgLocs;
-  CCState CCInfo(CC, isVarArg, getTargetMachine(), ArgLocs, *DAG.getContext());
+  CCState CCInfo(CallConv, isVarArg, getTargetMachine(), ArgLocs,
+                 *DAG.getContext());
 
   // To meet O32 ABI, Mips must always allocate 16 bytes on
   // the stack (even if less than 4 are used as arguments)
   if (Subtarget->isABI_O32()) {
     int VTsize = MVT(MVT::i32).getSizeInBits()/8;
     MFI->CreateFixedObject(VTsize, (VTsize*3));
-    CCInfo.AnalyzeCallOperands(TheCall, CC_MipsO32);
+    CCInfo.AnalyzeCallOperands(Outs, CC_MipsO32);
   } else
-    CCInfo.AnalyzeCallOperands(TheCall, CC_Mips);
+    CCInfo.AnalyzeCallOperands(Outs, CC_Mips);
   
   // Get a count of how many bytes are to be pushed on the stack.
   unsigned NumBytes = CCInfo.getNextStackOffset();
@@ -719,7 +707,7 @@ LowerCALL(SDValue Op, SelectionDAG &DAG)
 
   // Walk the register/memloc assignments, inserting copies/loads.
   for (unsigned i = 0, e = ArgLocs.size(); i != e; ++i) {
-    SDValue Arg = TheCall->getArg(i);
+    SDValue Arg = Outs[i].Val;
     CCValAssign &VA = ArgLocs[i];
 
     // Promote the value if needed.
@@ -859,76 +847,69 @@ LowerCALL(SDValue Op, SelectionDAG &DAG)
 
   // Handle result values, copying them out of physregs into vregs that we
   // return.
-  return SDValue(LowerCallResult(Chain, InFlag, TheCall, CC, DAG), Op.getResNo());
+  return LowerCallResult(Chain, InFlag, CallConv, isVarArg,
+                         Ins, dl, DAG, InVals);
 }
 
-/// LowerCallResult - Lower the result values of an ISD::CALL into the
-/// appropriate copies out of appropriate physical registers.  This assumes that
-/// Chain/InFlag are the input chain/flag to use, and that TheCall is the call
-/// being lowered. Returns a SDNode with the same number of values as the 
-/// ISD::CALL.
-SDNode *MipsTargetLowering::
-LowerCallResult(SDValue Chain, SDValue InFlag, CallSDNode *TheCall, 
-        unsigned CallingConv, SelectionDAG &DAG) {
-  
-  bool isVarArg = TheCall->isVarArg();
-  DebugLoc dl = TheCall->getDebugLoc();
+/// LowerCallResult - Lower the result values of a call into the
+/// appropriate copies out of appropriate physical registers.
+SDValue
+MipsTargetLowering::LowerCallResult(SDValue Chain, SDValue InFlag,
+                                    unsigned CallConv, bool isVarArg,
+                                    const SmallVectorImpl<ISD::InputArg> &Ins,
+                                    DebugLoc dl, SelectionDAG &DAG,
+                                    SmallVectorImpl<SDValue> &InVals) {
 
   // Assign locations to each value returned by this call.
   SmallVector<CCValAssign, 16> RVLocs;
-  CCState CCInfo(CallingConv, isVarArg, getTargetMachine(),
+  CCState CCInfo(CallConv, isVarArg, getTargetMachine(),
                  RVLocs, *DAG.getContext());
 
-  CCInfo.AnalyzeCallResult(TheCall, RetCC_Mips);
-  SmallVector<SDValue, 8> ResultVals;
+  CCInfo.AnalyzeCallResult(Ins, RetCC_Mips);
 
   // Copy all of the result registers out of their specified physreg.
   for (unsigned i = 0; i != RVLocs.size(); ++i) {
     Chain = DAG.getCopyFromReg(Chain, dl, RVLocs[i].getLocReg(),
-                                 RVLocs[i].getValVT(), InFlag).getValue(1);
+                               RVLocs[i].getValVT(), InFlag).getValue(1);
     InFlag = Chain.getValue(2);
-    ResultVals.push_back(Chain.getValue(0));
+    InVals.push_back(Chain.getValue(0));
   }
-  
-  ResultVals.push_back(Chain);
 
-  // Merge everything together with a MERGE_VALUES node.
-  return DAG.getNode(ISD::MERGE_VALUES, dl, TheCall->getVTList(),
-                     &ResultVals[0], ResultVals.size()).getNode();
+  return Chain;
 }
 
 //===----------------------------------------------------------------------===//
-//             FORMAL_ARGUMENTS Calling Convention Implementation
+//             Formal Arguments Calling Convention Implementation
 //===----------------------------------------------------------------------===//
 
-/// LowerFORMAL_ARGUMENTS - transform physical registers into
+/// LowerFormalArguments - transform physical registers into
 /// virtual registers and generate load operations for
 /// arguments places on the stack.
 /// TODO: isVarArg
-SDValue MipsTargetLowering::
-LowerFORMAL_ARGUMENTS(SDValue Op, SelectionDAG &DAG) 
-{
-  SDValue Root = Op.getOperand(0);
+SDValue
+MipsTargetLowering::LowerFormalArguments(SDValue Chain,
+                                         unsigned CallConv, bool isVarArg,
+                                         const SmallVectorImpl<ISD::InputArg>
+                                           &Ins,
+                                         DebugLoc dl, SelectionDAG &DAG,
+                                         SmallVectorImpl<SDValue> &InVals) {
+
   MachineFunction &MF = DAG.getMachineFunction();
   MachineFrameInfo *MFI = MF.getFrameInfo();
   MipsFunctionInfo *MipsFI = MF.getInfo<MipsFunctionInfo>();
-  DebugLoc dl = Op.getDebugLoc();
-
-  bool isVarArg = cast<ConstantSDNode>(Op.getOperand(2))->getZExtValue() != 0;
-  unsigned CC = DAG.getMachineFunction().getFunction()->getCallingConv();
 
   unsigned StackReg = MF.getTarget().getRegisterInfo()->getFrameRegister(MF);
 
   // Assign locations to all of the incoming arguments.
   SmallVector<CCValAssign, 16> ArgLocs;
-  CCState CCInfo(CC, isVarArg, getTargetMachine(), ArgLocs, *DAG.getContext());
+  CCState CCInfo(CallConv, isVarArg, getTargetMachine(),
+                 ArgLocs, *DAG.getContext());
 
   if (Subtarget->isABI_O32())
-    CCInfo.AnalyzeFormalArguments(Op.getNode(), CC_MipsO32);
+    CCInfo.AnalyzeFormalArguments(Ins, CC_MipsO32);
   else
-    CCInfo.AnalyzeFormalArguments(Op.getNode(), CC_Mips);
+    CCInfo.AnalyzeFormalArguments(Ins, CC_Mips);
 
-  SmallVector<SDValue, 16> ArgValues;
   SDValue StackPtr;
 
   unsigned FirstStackArgLoc = (Subtarget->isABI_EABI() ? 0 : 16);
@@ -949,12 +930,12 @@ LowerFORMAL_ARGUMENTS(SDValue Op, SelectionDAG &DAG)
         if (!Subtarget->isSingleFloat()) 
           RC = Mips::AFGR64RegisterClass;
       } else  
-        llvm_unreachable("RegVT not supported by FORMAL_ARGUMENTS Lowering");
+        llvm_unreachable("RegVT not supported by LowerFormalArguments Lowering");
 
       // Transform the arguments stored on 
       // physical registers into virtual ones
       unsigned Reg = AddLiveIn(DAG.getMachineFunction(), VA.getLocReg(), RC);
-      SDValue ArgValue = DAG.getCopyFromReg(Root, dl, Reg, RegVT);
+      SDValue ArgValue = DAG.getCopyFromReg(Chain, dl, Reg, RegVT);
       
       // If this is an 8 or 16-bit value, it has been passed promoted 
       // to 32 bits.  Insert an assert[sz]ext to capture this, then 
@@ -978,14 +959,14 @@ LowerFORMAL_ARGUMENTS(SDValue Op, SelectionDAG &DAG)
         if (RegVT == MVT::i32 && VA.getValVT() == MVT::f64) {
           unsigned Reg2 = AddLiveIn(DAG.getMachineFunction(), 
                                     VA.getLocReg()+1, RC);
-          SDValue ArgValue2 = DAG.getCopyFromReg(Root, dl, Reg2, RegVT);
+          SDValue ArgValue2 = DAG.getCopyFromReg(Chain, dl, Reg2, RegVT);
           SDValue Hi = DAG.getNode(ISD::BIT_CONVERT, dl, MVT::f32, ArgValue);
           SDValue Lo = DAG.getNode(ISD::BIT_CONVERT, dl, MVT::f32, ArgValue2);
           ArgValue = DAG.getNode(ISD::BUILD_PAIR, dl, MVT::f64, Lo, Hi);
         }
       }
 
-      ArgValues.push_back(ArgValue);
+      InVals.push_back(ArgValue);
 
       // To meet ABI, when VARARGS are passed on registers, the registers
       // must have their values written to the caller stack frame. 
@@ -1007,7 +988,7 @@ LowerFORMAL_ARGUMENTS(SDValue Op, SelectionDAG &DAG)
       
         // emit ISD::STORE whichs stores the 
         // parameter value to a stack Location
-        ArgValues.push_back(DAG.getStore(Root, dl, ArgValue, PtrOff, NULL, 0));
+        InVals.push_back(DAG.getStore(Chain, dl, ArgValue, PtrOff, NULL, 0));
       }
 
     } else { // VA.isRegLoc()
@@ -1030,7 +1011,7 @@ LowerFORMAL_ARGUMENTS(SDValue Op, SelectionDAG &DAG)
 
       // Create load nodes to retrieve arguments from the stack
       SDValue FIN = DAG.getFrameIndex(FI, getPointerTy());
-      ArgValues.push_back(DAG.getLoad(VA.getValVT(), dl, Root, FIN, NULL, 0));
+      InVals.push_back(DAG.getLoad(VA.getValVT(), dl, Chain, FIN, NULL, 0));
     }
   }
 
@@ -1043,36 +1024,33 @@ LowerFORMAL_ARGUMENTS(SDValue Op, SelectionDAG &DAG)
       Reg = MF.getRegInfo().createVirtualRegister(getRegClassFor(MVT::i32));
       MipsFI->setSRetReturnReg(Reg);
     }
-    SDValue Copy = DAG.getCopyToReg(DAG.getEntryNode(), dl, Reg, ArgValues[0]);
-    Root = DAG.getNode(ISD::TokenFactor, dl, MVT::Other, Copy, Root);
+    SDValue Copy = DAG.getCopyToReg(DAG.getEntryNode(), dl, Reg, InVals[0]);
+    Chain = DAG.getNode(ISD::TokenFactor, dl, MVT::Other, Copy, Chain);
   }
 
-  ArgValues.push_back(Root);
-
-  // Return the new list of results.
-  return DAG.getNode(ISD::MERGE_VALUES, dl, Op.getNode()->getVTList(),
-                     &ArgValues[0], ArgValues.size()).getValue(Op.getResNo());
+  return Chain;
 }
 
 //===----------------------------------------------------------------------===//
 //               Return Value Calling Convention Implementation
 //===----------------------------------------------------------------------===//
 
-SDValue MipsTargetLowering::
-LowerRET(SDValue Op, SelectionDAG &DAG)
-{
+SDValue
+MipsTargetLowering::LowerReturn(SDValue Chain,
+                                unsigned CallConv, bool isVarArg,
+                                const SmallVectorImpl<ISD::OutputArg> &Outs,
+                                DebugLoc dl, SelectionDAG &DAG) {
+
   // CCValAssign - represent the assignment of
   // the return value to a location
   SmallVector<CCValAssign, 16> RVLocs;
-  unsigned CC   = DAG.getMachineFunction().getFunction()->getCallingConv();
-  bool isVarArg = DAG.getMachineFunction().getFunction()->isVarArg();
-  DebugLoc dl = Op.getDebugLoc();
 
   // CCState - Info about the registers and stack slot.
-  CCState CCInfo(CC, isVarArg, getTargetMachine(), RVLocs, *DAG.getContext());
+  CCState CCInfo(CallConv, isVarArg, getTargetMachine(),
+                 RVLocs, *DAG.getContext());
 
-  // Analize return values of ISD::RET
-  CCInfo.AnalyzeReturn(Op.getNode(), RetCC_Mips);
+  // Analize return values.
+  CCInfo.AnalyzeReturn(Outs, RetCC_Mips);
 
   // If this is the first return lowered for this function, add 
   // the regs to the liveout set for the function.
@@ -1082,8 +1060,6 @@ LowerRET(SDValue Op, SelectionDAG &DAG)
         DAG.getMachineFunction().getRegInfo().addLiveOut(RVLocs[i].getLocReg());
   }
 
-  // The chain is always operand #0
-  SDValue Chain = Op.getOperand(0);
   SDValue Flag;
 
   // Copy the result values into the output registers.
@@ -1091,10 +1067,8 @@ LowerRET(SDValue Op, SelectionDAG &DAG)
     CCValAssign &VA = RVLocs[i];
     assert(VA.isRegLoc() && "Can only return in registers!");
 
-    // ISD::RET => ret chain, (regnum1,val1), ...
-    // So i*2+1 index only the regnums
     Chain = DAG.getCopyToReg(Chain, dl, VA.getLocReg(), 
-                             Op.getOperand(i*2+1), Flag);
+                             Outs[i].Val, Flag);
 
     // guarantee that all emitted copies are
     // stuck together, avoiding something bad

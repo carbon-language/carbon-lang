@@ -125,9 +125,6 @@ def retflag       : SDNode<"PPCISD::RET_FLAG", SDTNone,
 def PPCtc_return : SDNode<"PPCISD::TC_RETURN", SDT_PPCTC_ret,
                         [SDNPHasChain,  SDNPOptInFlag]>;
 
-def PPCtailcall : SDNode<"PPCISD::TAILCALL",     SDT_PPCCall,
-                        [SDNPHasChain, SDNPOutFlag, SDNPOptInFlag]>;
-
 def PPCvcmp       : SDNode<"PPCISD::VCMP" , SDT_PPCvcmp, []>;
 def PPCvcmp_o     : SDNode<"PPCISD::VCMPo", SDT_PPCvcmp, [SDNPOutFlag]>;
 

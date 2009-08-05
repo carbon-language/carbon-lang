@@ -124,9 +124,6 @@ def X86callseq_end :
 def X86call    : SDNode<"X86ISD::CALL",     SDT_X86Call,
                         [SDNPHasChain, SDNPOutFlag, SDNPOptInFlag]>;
 
-def X86tailcall: SDNode<"X86ISD::TAILCALL",     SDT_X86Call,
-                        [SDNPHasChain, SDNPOutFlag, SDNPOptInFlag]>;
-
 def X86rep_stos: SDNode<"X86ISD::REP_STOS", SDTX86RepStr,
                         [SDNPHasChain, SDNPInFlag, SDNPOutFlag, SDNPMayStore]>;
 def X86rep_movs: SDNode<"X86ISD::REP_MOVS", SDTX86RepStr,
@@ -621,10 +618,6 @@ let isCall = 1 in
   }
 
 // Tail call stuff.
-
-def TAILCALL : I<0, Pseudo, (outs), (ins),
-                         "#TAILCALL",
-                         []>;
 
 let isCall = 1, isTerminator = 1, isReturn = 1, isBarrier = 1 in
 def TCRETURNdi : I<0, Pseudo, (outs), (ins i32imm:$dst, i32imm:$offset, variable_ops),
@@ -3452,14 +3445,6 @@ def : Pat<(store (i32 (X86Wrapper texternalsym:$src)), addr:$dst),
 
 // Calls
 // tailcall stuff
-def : Pat<(X86tailcall GR32:$dst),
-          (TAILCALL)>;
-
-def : Pat<(X86tailcall (i32 tglobaladdr:$dst)),
-          (TAILCALL)>;
-def : Pat<(X86tailcall (i32 texternalsym:$dst)),
-          (TAILCALL)>;
-
 def : Pat<(X86tcret GR32:$dst, imm:$off),
           (TCRETURNri GR32:$dst, imm:$off)>;
 

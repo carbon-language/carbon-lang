@@ -92,10 +92,24 @@ namespace llvm {
     const XCoreSubtarget &Subtarget;
   
     // Lower Operand helpers
-    SDValue LowerCCCArguments(SDValue Op, SelectionDAG &DAG);
-    SDValue LowerCCCCallTo(SDValue Op, SelectionDAG &DAG, unsigned CC);
-    SDNode *LowerCallResult(SDValue Chain, SDValue InFlag, CallSDNode*TheCall,
-                            unsigned CallingConv, SelectionDAG &DAG);
+    SDValue LowerCCCArguments(SDValue Chain,
+                              unsigned CallConv,
+                              bool isVarArg,
+                              const SmallVectorImpl<ISD::InputArg> &Ins,
+                              DebugLoc dl, SelectionDAG &DAG,
+                              SmallVectorImpl<SDValue> &InVals);
+    SDValue LowerCCCCallTo(SDValue Chain, SDValue Callee,
+                           unsigned CallConv, bool isVarArg,
+                           bool isTailCall,
+                           const SmallVectorImpl<ISD::OutputArg> &Outs,
+                           const SmallVectorImpl<ISD::InputArg> &Ins,
+                           DebugLoc dl, SelectionDAG &DAG,
+                           SmallVectorImpl<SDValue> &InVals);
+    SDValue LowerCallResult(SDValue Chain, SDValue InFlag,
+                            unsigned CallConv, bool isVarArg,
+                            const SmallVectorImpl<ISD::InputArg> &Ins,
+                            DebugLoc dl, SelectionDAG &DAG,
+                            SmallVectorImpl<SDValue> &InVals);
     SDValue getReturnAddressFrameIndex(SelectionDAG &DAG);
     SDValue getGlobalAddressWrapper(SDValue GA, GlobalValue *GV,
                                     SelectionDAG &DAG);
@@ -103,9 +117,6 @@ namespace llvm {
     // Lower Operand specifics
     SDValue LowerLOAD(SDValue Op, SelectionDAG &DAG);
     SDValue LowerSTORE(SDValue Op, SelectionDAG &DAG);
-    SDValue LowerRET(SDValue Op, SelectionDAG &DAG);
-    SDValue LowerCALL(SDValue Op, SelectionDAG &DAG);
-    SDValue LowerFORMAL_ARGUMENTS(SDValue Op, SelectionDAG &DAG);
     SDValue LowerGlobalAddress(SDValue Op, SelectionDAG &DAG);
     SDValue LowerGlobalTLSAddress(SDValue Op, SelectionDAG &DAG);
     SDValue LowerConstantPool(SDValue Op, SelectionDAG &DAG);
@@ -124,6 +135,29 @@ namespace llvm {
     SDValue ExpandADDSUB(SDNode *Op, SelectionDAG &DAG);
 
     virtual SDValue PerformDAGCombine(SDNode *N, DAGCombinerInfo &DCI) const;
+
+    virtual SDValue
+      LowerFormalArguments(SDValue Chain,
+                           unsigned CallConv,
+                           bool isVarArg,
+                           const SmallVectorImpl<ISD::InputArg> &Ins,
+                           DebugLoc dl, SelectionDAG &DAG,
+                           SmallVectorImpl<SDValue> &InVals);
+
+    virtual SDValue
+      LowerCall(SDValue Chain, SDValue Callee,
+                unsigned CallConv, bool isVarArg,
+                bool isTailCall,
+                const SmallVectorImpl<ISD::OutputArg> &Outs,
+                const SmallVectorImpl<ISD::InputArg> &Ins,
+                DebugLoc dl, SelectionDAG &DAG,
+                SmallVectorImpl<SDValue> &InVals);
+
+    virtual SDValue
+      LowerReturn(SDValue Chain,
+                  unsigned CallConv, bool isVarArg,
+                  const SmallVectorImpl<ISD::OutputArg> &Outs,
+                  DebugLoc dl, SelectionDAG &DAG);
   };
 }
 

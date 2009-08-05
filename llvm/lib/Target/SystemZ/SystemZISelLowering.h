@@ -28,7 +28,7 @@ namespace llvm {
       /// Return with a flag operand. Operand 0 is the chain operand.
       RET_FLAG,
 
-      /// CALL/TAILCALL - These operations represent an abstract call
+      /// CALL - These operations represent an abstract call
       /// instruction, which includes a bunch of information.
       CALL,
 
@@ -69,20 +69,11 @@ namespace llvm {
       return 1;
     }
 
-    SDValue LowerFORMAL_ARGUMENTS(SDValue Op, SelectionDAG &DAG);
-    SDValue LowerRET(SDValue Op, SelectionDAG &DAG);
-    SDValue LowerCALL(SDValue Op, SelectionDAG &DAG);
     SDValue LowerBR_CC(SDValue Op, SelectionDAG &DAG);
     SDValue LowerSELECT_CC(SDValue Op, SelectionDAG &DAG);
     SDValue LowerGlobalAddress(SDValue Op, SelectionDAG &DAG);
     SDValue LowerJumpTable(SDValue Op, SelectionDAG &DAG);
     SDValue LowerConstantPool(SDValue Op, SelectionDAG &DAG);
-
-    SDValue LowerCCCArguments(SDValue Op, SelectionDAG &DAG);
-    SDValue LowerCCCCallTo(SDValue Op, SelectionDAG &DAG, unsigned CC);
-    SDNode* LowerCallResult(SDValue Chain, SDValue InFlag,
-                            CallSDNode *TheCall,
-                            unsigned CallingConv, SelectionDAG &DAG);
 
     SDValue EmitCmp(SDValue LHS, SDValue RHS,
                     ISD::CondCode CC, SDValue &SystemZCC,
@@ -93,6 +84,48 @@ namespace llvm {
                                                    MachineBasicBlock *BB) const;
 
   private:
+    SDValue LowerCCCCallTo(SDValue Chain, SDValue Callee,
+                           unsigned CallConv, bool isVarArg,
+                           bool isTailCall,
+                           const SmallVectorImpl<ISD::OutputArg> &Outs,
+                           const SmallVectorImpl<ISD::InputArg> &Ins,
+                           DebugLoc dl, SelectionDAG &DAG,
+                           SmallVectorImpl<SDValue> &InVals);
+
+    SDValue LowerCCCArguments(SDValue Chain,
+                              unsigned CallConv,
+                              bool isVarArg,
+                              const SmallVectorImpl<ISD::InputArg> &Ins,
+                              DebugLoc dl,
+                              SelectionDAG &DAG,
+                              SmallVectorImpl<SDValue> &InVals);
+
+    SDValue LowerCallResult(SDValue Chain, SDValue InFlag,
+                            unsigned CallConv, bool isVarArg,
+                            const SmallVectorImpl<ISD::InputArg> &Ins,
+                            DebugLoc dl, SelectionDAG &DAG,
+                            SmallVectorImpl<SDValue> &InVals);
+
+    virtual SDValue
+      LowerFormalArguments(SDValue Chain,
+                           unsigned CallConv, bool isVarArg,
+                           const SmallVectorImpl<ISD::InputArg> &Ins,
+                           DebugLoc dl, SelectionDAG &DAG,
+                           SmallVectorImpl<SDValue> &InVals);
+    virtual SDValue
+      LowerCall(SDValue Chain, SDValue Callee,
+                unsigned CallConv, bool isVarArg, bool isTailCall,
+                const SmallVectorImpl<ISD::OutputArg> &Outs,
+                const SmallVectorImpl<ISD::InputArg> &Ins,
+                DebugLoc dl, SelectionDAG &DAG,
+                SmallVectorImpl<SDValue> &InVals);
+
+    virtual SDValue
+      LowerReturn(SDValue Chain,
+                  unsigned CallConv, bool isVarArg,
+                  const SmallVectorImpl<ISD::OutputArg> &Outs,
+                  DebugLoc dl, SelectionDAG &DAG);
+
     const SystemZSubtarget &Subtarget;
     const SystemZTargetMachine &TM;
     const SystemZRegisterInfo *RegInfo;

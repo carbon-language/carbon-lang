@@ -345,7 +345,6 @@ def vsetcc     : SDNode<"ISD::VSETCC"     , SDTSetCC>;
 def brcond     : SDNode<"ISD::BRCOND"     , SDTBrcond, [SDNPHasChain]>;
 def brind      : SDNode<"ISD::BRIND"      , SDTBrind,  [SDNPHasChain]>;
 def br         : SDNode<"ISD::BR"         , SDTBr,     [SDNPHasChain]>;
-def ret        : SDNode<"ISD::RET"        , SDTNone,   [SDNPHasChain]>;
 def trap       : SDNode<"ISD::TRAP"       , SDTNone,
                         [SDNPHasChain, SDNPSideEffect]>;
 

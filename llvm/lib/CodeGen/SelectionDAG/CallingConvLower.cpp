@@ -57,15 +57,16 @@ void CCState::MarkAllocated(unsigned Reg) {
       UsedRegs[Reg/32] |= 1 << (Reg&31);
 }
 
-/// AnalyzeFormalArguments - Analyze an ISD::FORMAL_ARGUMENTS node,
+/// AnalyzeFormalArguments - Analyze an array of argument values,
 /// incorporating info about the formals into this state.
-void CCState::AnalyzeFormalArguments(SDNode *TheArgs, CCAssignFn Fn) {
-  unsigned NumArgs = TheArgs->getNumValues()-1;
-  
+void
+CCState::AnalyzeFormalArguments(const SmallVectorImpl<ISD::InputArg> &Ins,
+                                CCAssignFn Fn) {
+  unsigned NumArgs = Ins.size();
+
   for (unsigned i = 0; i != NumArgs; ++i) {
-    MVT ArgVT = TheArgs->getValueType(i);
-    ISD::ArgFlagsTy ArgFlags =
-      cast<ARG_FLAGSSDNode>(TheArgs->getOperand(3+i))->getArgFlags();
+    MVT ArgVT = Ins[i].VT;
+    ISD::ArgFlagsTy ArgFlags = Ins[i].Flags;
     if (Fn(i, ArgVT, ArgVT, CCValAssign::Full, ArgFlags, *this)) {
 #ifndef NDEBUG
       cerr << "Formal argument #" << i << " has unhandled type "
@@ -76,14 +77,14 @@ void CCState::AnalyzeFormalArguments(SDNode *TheArgs, CCAssignFn Fn) {
   }
 }
 
-/// AnalyzeReturn - Analyze the returned values of an ISD::RET node,
+/// AnalyzeReturn - Analyze the returned values of a return,
 /// incorporating info about the result values into this state.
-void CCState::AnalyzeReturn(SDNode *TheRet, CCAssignFn Fn) {
+void CCState::AnalyzeReturn(const SmallVectorImpl<ISD::OutputArg> &Outs,
+                            CCAssignFn Fn) {
   // Determine which register each value should be copied into.
-  for (unsigned i = 0, e = TheRet->getNumOperands() / 2; i != e; ++i) {
-    MVT VT = TheRet->getOperand(i*2+1).getValueType();
-    ISD::ArgFlagsTy ArgFlags =
-      cast<ARG_FLAGSSDNode>(TheRet->getOperand(i*2+2))->getArgFlags();
+  for (unsigned i = 0, e = Outs.size(); i != e; ++i) {
+    MVT VT = Outs[i].Val.getValueType();
+    ISD::ArgFlagsTy ArgFlags = Outs[i].Flags;
     if (Fn(i, VT, VT, CCValAssign::Full, ArgFlags, *this)) {
 #ifndef NDEBUG
       cerr << "Return operand #" << i << " has unhandled type "
@@ -95,13 +96,14 @@ void CCState::AnalyzeReturn(SDNode *TheRet, CCAssignFn Fn) {
 }
 
 
-/// AnalyzeCallOperands - Analyze an ISD::CALL node, incorporating info
-/// about the passed values into this state.
-void CCState::AnalyzeCallOperands(CallSDNode *TheCall, CCAssignFn Fn) {
-  unsigned NumOps = TheCall->getNumArgs();
+/// AnalyzeCallOperands - Analyze the outgoing arguments to a call,
+/// incorporating info about the passed values into this state.
+void CCState::AnalyzeCallOperands(const SmallVectorImpl<ISD::OutputArg> &Outs,
+                                  CCAssignFn Fn) {
+  unsigned NumOps = Outs.size();
   for (unsigned i = 0; i != NumOps; ++i) {
-    MVT ArgVT = TheCall->getArg(i).getValueType();
-    ISD::ArgFlagsTy ArgFlags = TheCall->getArgFlags(i);
+    MVT ArgVT = Outs[i].Val.getValueType();
+    ISD::ArgFlagsTy ArgFlags = Outs[i].Flags;
     if (Fn(i, ArgVT, ArgVT, CCValAssign::Full, ArgFlags, *this)) {
 #ifndef NDEBUG
       cerr << "Call operand #" << i << " has unhandled type "
@@ -131,14 +133,13 @@ void CCState::AnalyzeCallOperands(SmallVectorImpl<MVT> &ArgVTs,
   }
 }
 
-/// AnalyzeCallResult - Analyze the return values of an ISD::CALL node,
+/// AnalyzeCallResult - Analyze the return values of a call,
 /// incorporating info about the passed values into this state.
-void CCState::AnalyzeCallResult(CallSDNode *TheCall, CCAssignFn Fn) {
-  for (unsigned i = 0, e = TheCall->getNumRetVals(); i != e; ++i) {
-    MVT VT = TheCall->getRetValType(i);
-    ISD::ArgFlagsTy Flags = ISD::ArgFlagsTy();
-    if (TheCall->isInreg())
-      Flags.setInReg();
+void CCState::AnalyzeCallResult(const SmallVectorImpl<ISD::InputArg> &Ins,
+                                CCAssignFn Fn) {
+  for (unsigned i = 0, e = Ins.size(); i != e; ++i) {
+    MVT VT = Ins[i].VT;
+    ISD::ArgFlagsTy Flags = Ins[i].Flags;
     if (Fn(i, VT, VT, CCValAssign::Full, Flags, *this)) {
 #ifndef NDEBUG
       cerr << "Call result #" << i << " has unhandled type "

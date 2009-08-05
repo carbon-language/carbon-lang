@@ -754,8 +754,6 @@ def : Pat<(call tglobaladdr:$dst),
 def : Pat<(call texternalsym:$dst),
           (CALL texternalsym:$dst)>;
 
-def : Pat<(ret), (RETL)>;
-
 // Map integer extload's to zextloads.
 def : Pat<(i32 (extloadi1 ADDRrr:$src)), (LDUBrr ADDRrr:$src)>;
 def : Pat<(i32 (extloadi1 ADDRri:$src)), (LDUBri ADDRri:$src)>;

@@ -1,14 +1,17 @@
-; RUN: llvm-as < %s | llc -tailcallopt -march=x86-64 | grep TAILCALL
+; RUN: llvm-as < %s | llc -tailcallopt -march=x86-64 | FileCheck %s
+
 ; Check that lowered arguments on the stack do not overwrite each other.
-; Move param %in1 to temp register (%eax).
-; RUN: llvm-as < %s | llc -tailcallopt -march=x86-64 -x86-asm-syntax=att | grep {movl	40(%rsp), %eax}
-; Add %in1 %p1 to another temporary register (%r9d).
-; RUN: llvm-as < %s | llc -tailcallopt -march=x86-64 -x86-asm-syntax=att | grep {movl	%edi, %r10d}
-; RUN: llvm-as < %s | llc -tailcallopt -march=x86-64 -x86-asm-syntax=att | grep {addl	32(%rsp), %r10d}
+; Add %in1 %p1 to a different temporary register (%eax).
+; CHECK: movl  %edi, %eax
+; CHECK: addl  32(%rsp), %eax
+; Move param %in1 to temp register (%r10d).
+; CHECK: movl  40(%rsp), %r10d
 ; Move result of addition to stack.
-; RUN: llvm-as < %s | llc -tailcallopt -march=x86-64 -x86-asm-syntax=att | grep {movl	%r10d, 40(%rsp)}
+; CHECK: movl  %eax, 40(%rsp)
 ; Move param %in2 to stack.
-; RUN: llvm-as < %s | llc -tailcallopt -march=x86-64 -x86-asm-syntax=att | grep {movl	%eax, 32(%rsp)}
+; CHECK: movl  %r10d, 32(%rsp)
+; Eventually, do a TAILCALL
+; CHECK: TAILCALL
 
 declare fastcc i32 @tailcallee(i32 %p1, i32 %p2, i32 %p3, i32 %p4, i32 %p5, i32 %p6, i32 %a, i32 %b)
 

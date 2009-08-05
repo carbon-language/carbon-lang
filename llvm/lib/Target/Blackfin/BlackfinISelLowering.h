@@ -51,10 +51,27 @@ namespace llvm {
   private:
     SDValue LowerGlobalAddress(SDValue Op, SelectionDAG &DAG);
     SDValue LowerJumpTable(SDValue Op, SelectionDAG &DAG);
-    SDValue LowerFORMAL_ARGUMENTS(SDValue Op, SelectionDAG &DAG);
-    SDValue LowerRET(SDValue Op, SelectionDAG &DAG);
-    SDValue LowerCALL(SDValue Op, SelectionDAG &DAG);
     SDValue LowerADDE(SDValue Op, SelectionDAG &DAG);
+
+    virtual SDValue
+      LowerFormalArguments(SDValue Chain,
+                           unsigned CallConv, bool isVarArg,
+                           const SmallVectorImpl<ISD::InputArg> &Ins,
+                           DebugLoc dl, SelectionDAG &DAG,
+                           SmallVectorImpl<SDValue> &InVals);
+    virtual SDValue
+      LowerCall(SDValue Chain, SDValue Callee,
+                unsigned CallConv, bool isVarArg, bool isTailCall,
+                const SmallVectorImpl<ISD::OutputArg> &Outs,
+                const SmallVectorImpl<ISD::InputArg> &Ins,
+                DebugLoc dl, SelectionDAG &DAG,
+                SmallVectorImpl<SDValue> &InVals);
+
+    virtual SDValue
+      LowerReturn(SDValue Chain,
+                  unsigned CallConv, bool isVarArg,
+                  const SmallVectorImpl<ISD::OutputArg> &Outs,
+                  DebugLoc dl, SelectionDAG &DAG);
   };
 } // end namespace llvm
 

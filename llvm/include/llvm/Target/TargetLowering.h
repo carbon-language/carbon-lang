@@ -1091,16 +1091,27 @@ public:
   // the SelectionDAGLowering code knows how to lower these.
   //
 
-  /// LowerArguments - This hook must be implemented to indicate how we should
-  /// lower the arguments for the specified function, into the specified DAG.
-  virtual void
-  LowerArguments(Function &F, SelectionDAG &DAG,
-                 SmallVectorImpl<SDValue>& ArgValues, DebugLoc dl);
+  /// LowerFormalArguments - This hook must be implemented to lower the
+  /// incoming (formal) arguments, described by the Ins array, into the
+  /// specified DAG. The implementation should fill in the InVals array
+  /// with legal-type argument values, and return the resulting token
+  /// chain value.
+  ///
+  virtual SDValue
+    LowerFormalArguments(SDValue Chain,
+                         unsigned CallConv, bool isVarArg,
+                         const SmallVectorImpl<ISD::InputArg> &Ins,
+                         DebugLoc dl, SelectionDAG &DAG,
+                         SmallVectorImpl<SDValue> &InVals) {
+    assert(0 && "Not Implemented");
+    return SDValue();    // this is here to silence compiler errors
+  }
 
-  /// LowerCallTo - This hook lowers an abstract call to a function into an
+  /// LowerCallTo - This function lowers an abstract call to a function into an
   /// actual call.  This returns a pair of operands.  The first element is the
   /// return value for the function (if RetTy is not VoidTy).  The second
-  /// element is the outgoing token chain.
+  /// element is the outgoing token chain. It calls LowerCall to do the actual
+  /// lowering.
   struct ArgListEntry {
     SDValue Node;
     const Type* Ty;
@@ -1116,11 +1127,47 @@ public:
       isSRet(false), isNest(false), isByVal(false), Alignment(0) { }
   };
   typedef std::vector<ArgListEntry> ArgListTy;
-  virtual std::pair<SDValue, SDValue>
+  std::pair<SDValue, SDValue>
   LowerCallTo(SDValue Chain, const Type *RetTy, bool RetSExt, bool RetZExt,
               bool isVarArg, bool isInreg, unsigned NumFixedArgs,
-              unsigned CallingConv, bool isTailCall, SDValue Callee,
-              ArgListTy &Args, SelectionDAG &DAG, DebugLoc dl);
+              unsigned CallConv, bool isTailCall, bool isReturnValueUsed,
+              SDValue Callee, ArgListTy &Args, SelectionDAG &DAG, DebugLoc dl);
+
+  /// LowerCall - This hook must be implemented to lower calls into the
+  /// the specified DAG. The outgoing arguments to the call are described
+  /// by the Outs array, and the values to be returned by the call are
+  /// described by the Ins array. The implementation should fill in the
+  /// InVals array with legal-type return values from the call, and return
+  /// the resulting token chain value.
+  ///
+  /// The isTailCall flag here is normative. If it is true, the
+  /// implementation must emit a tail call. The
+  /// IsEligibleForTailCallOptimization hook should be used to catch
+  /// cases that cannot be handled.
+  ///
+  virtual SDValue
+    LowerCall(SDValue Chain, SDValue Callee,
+              unsigned CallConv, bool isVarArg, bool isTailCall,
+              const SmallVectorImpl<ISD::OutputArg> &Outs,
+              const SmallVectorImpl<ISD::InputArg> &Ins,
+              DebugLoc dl, SelectionDAG &DAG,
+              SmallVectorImpl<SDValue> &InVals) {
+    assert(0 && "Not Implemented");
+    return SDValue();    // this is here to silence compiler errors
+  }
+
+  /// LowerReturn - This hook must be implemented to lower outgoing
+  /// return values, described by the Outs array, into the specified
+  /// DAG. The implementation should return the resulting token chain
+  /// value.
+  ///
+  virtual SDValue
+    LowerReturn(SDValue Chain, unsigned CallConv, bool isVarArg,
+                const SmallVectorImpl<ISD::OutputArg> &Outs,
+                DebugLoc dl, SelectionDAG &DAG) {
+    assert(0 && "Not Implemented");
+    return SDValue();    // this is here to silence compiler errors
+  }
 
   /// EmitTargetCodeForMemcpy - Emit target-specific code that performs a
   /// memcpy. This can be used by targets to provide code sequences for cases
@@ -1216,18 +1263,16 @@ public:
 
   /// IsEligibleForTailCallOptimization - Check whether the call is eligible for
   /// tail call optimization. Targets which want to do tail call optimization
-  /// should override this function. 
-  virtual bool IsEligibleForTailCallOptimization(CallSDNode *Call, 
-                                                 SDValue Ret, 
-                                                 SelectionDAG &DAG) const {
+  /// should override this function.
+  virtual bool
+  IsEligibleForTailCallOptimization(SDValue Callee,
+                                    unsigned CalleeCC,
+                                    bool isVarArg,
+                                    const SmallVectorImpl<ISD::InputArg> &Ins,
+                                    SelectionDAG& DAG) const {
+    // Conservative default: no calls are eligible.
     return false;
   }
-
-  /// CheckTailCallReturnConstraints - Check whether CALL node immediatly
-  /// preceeds the RET node and whether the return uses the result of the node
-  /// or is a void return. This function can be used by the target to determine
-  /// eligiblity of tail call optimization.
-  static bool CheckTailCallReturnConstraints(CallSDNode *TheCall, SDValue Ret); 
 
   /// GetPossiblePreceedingTailCall - Get preceeding TailCallNodeOpCode node if
   /// it exists. Skip a possible ISD::TokenFactor.

@@ -319,7 +319,6 @@ public:
   SDValue getExternalSymbol(const char *Sym, DebugLoc dl, MVT VT);
   SDValue getTargetExternalSymbol(const char *Sym, MVT VT,
                                   unsigned char TargetFlags = 0);
-  SDValue getArgFlags(ISD::ArgFlagsTy Flags);
   SDValue getValueType(MVT);
   SDValue getRegister(unsigned Reg, MVT VT);
   SDValue getDbgStopPoint(DebugLoc DL, SDValue Root, 
@@ -460,6 +459,12 @@ public:
                   SDValue N1, SDValue N2, SDValue N3, SDValue N4,
                   SDValue N5);
 
+  /// getStackArgumentTokenFactor - Compute a TokenFactor to force all
+  /// the incoming stack arguments to be loaded from the stack. This is
+  /// used in tail call lowering to protect stack arguments from being
+  /// clobbered.
+  SDValue getStackArgumentTokenFactor(SDValue Chain);
+
   SDValue getMemcpy(SDValue Chain, DebugLoc dl, SDValue Dst, SDValue Src,
                     SDValue Size, unsigned Align, bool AlwaysInline,
                     const Value *DstSV, uint64_t DstSVOff,
@@ -533,13 +538,6 @@ public:
 
   /// getMergeValues - Create a MERGE_VALUES node from the given operands.
   SDValue getMergeValues(const SDValue *Ops, unsigned NumOps, DebugLoc dl);
-
-  /// getCall - Create a CALL node from the given information.
-  ///
-  SDValue getCall(unsigned CallingConv, DebugLoc dl, bool IsVarArgs,
-                  bool IsTailCall, bool isInreg, SDVTList VTs,
-                  const SDValue *Operands, unsigned NumOperands,
-                  unsigned NumFixedArgs);
 
   /// getLoad - Loads are not normal binary operators: their result type is not
   /// determined by their operands, and they produce a value AND a token chain.

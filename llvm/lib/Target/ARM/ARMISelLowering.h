@@ -225,7 +225,7 @@ namespace llvm {
     void addQRTypeForNEON(MVT VT);
 
     typedef SmallVector<std::pair<unsigned, SDValue>, 8> RegsToPassVector;
-    void PassF64ArgInRegs(CallSDNode *TheCall, SelectionDAG &DAG,
+    void PassF64ArgInRegs(DebugLoc dl, SelectionDAG &DAG,
                           SDValue Chain, SDValue &Arg,
                           RegsToPassVector &RegsToPass,
                           CCValAssign &VA, CCValAssign &NextVA,
@@ -236,15 +236,12 @@ namespace llvm {
                                  SDValue &Root, SelectionDAG &DAG, DebugLoc dl);
 
     CCAssignFn *CCAssignFnForNode(unsigned CC, bool Return) const;
-    SDValue LowerMemOpCallTo(CallSDNode *TheCall, SelectionDAG &DAG,
-                             const SDValue &StackPtr, const CCValAssign &VA,
-                             SDValue Chain, SDValue Arg, ISD::ArgFlagsTy Flags);
-    SDNode *LowerCallResult(SDValue Chain, SDValue InFlag, CallSDNode *TheCall,
-                            unsigned CallingConv, SelectionDAG &DAG);
-    SDValue LowerCALL(SDValue Op, SelectionDAG &DAG);
+    SDValue LowerMemOpCallTo(SDValue Chain, SDValue StackPtr, SDValue Arg,
+                             DebugLoc dl, SelectionDAG &DAG,
+                             const CCValAssign &VA,
+                             ISD::ArgFlagsTy Flags);
     SDValue LowerINTRINSIC_W_CHAIN(SDValue Op, SelectionDAG &DAG);
     SDValue LowerINTRINSIC_WO_CHAIN(SDValue Op, SelectionDAG &DAG);
-    SDValue LowerRET(SDValue Op, SelectionDAG &DAG);
     SDValue LowerGlobalAddressDarwin(SDValue Op, SelectionDAG &DAG);
     SDValue LowerGlobalAddressELF(SDValue Op, SelectionDAG &DAG);
     SDValue LowerGlobalTLSAddress(SDValue Op, SelectionDAG &DAG);
@@ -253,7 +250,6 @@ namespace llvm {
     SDValue LowerToTLSExecModels(GlobalAddressSDNode *GA,
                                    SelectionDAG &DAG);
     SDValue LowerGLOBAL_OFFSET_TABLE(SDValue Op, SelectionDAG &DAG);
-    SDValue LowerFORMAL_ARGUMENTS(SDValue Op, SelectionDAG &DAG);
     SDValue LowerBR_JT(SDValue Op, SelectionDAG &DAG);
     SDValue LowerFRAMEADDR(SDValue Op, SelectionDAG &DAG);
 
@@ -264,6 +260,33 @@ namespace llvm {
                                       bool AlwaysInline,
                                       const Value *DstSV, uint64_t DstSVOff,
                                       const Value *SrcSV, uint64_t SrcSVOff);
+    SDValue LowerCallResult(SDValue Chain, SDValue InFlag,
+                            unsigned CallConv, bool isVarArg,
+                            const SmallVectorImpl<ISD::InputArg> &Ins,
+                            DebugLoc dl, SelectionDAG &DAG,
+                            SmallVectorImpl<SDValue> &InVals);
+
+    virtual SDValue
+      LowerFormalArguments(SDValue Chain,
+                           unsigned CallConv, bool isVarArg,
+                           const SmallVectorImpl<ISD::InputArg> &Ins,
+                           DebugLoc dl, SelectionDAG &DAG,
+                           SmallVectorImpl<SDValue> &InVals);
+
+    virtual SDValue
+      LowerCall(SDValue Chain, SDValue Callee,
+                unsigned CallConv, bool isVarArg,
+                bool isTailCall,
+                const SmallVectorImpl<ISD::OutputArg> &Outs,
+                const SmallVectorImpl<ISD::InputArg> &Ins,
+                DebugLoc dl, SelectionDAG &DAG,
+                SmallVectorImpl<SDValue> &InVals);
+
+    virtual SDValue
+      LowerReturn(SDValue Chain,
+                  unsigned CallConv, bool isVarArg,
+                  const SmallVectorImpl<ISD::OutputArg> &Outs,
+                  DebugLoc dl, SelectionDAG &DAG);
   };
 }
 

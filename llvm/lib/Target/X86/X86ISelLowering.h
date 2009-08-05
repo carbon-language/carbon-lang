@@ -85,7 +85,7 @@ namespace llvm {
       /// as.
       FST,
 
-      /// CALL/TAILCALL - These operations represent an abstract X86 call
+      /// CALL - These operations represent an abstract X86 call
       /// instruction, which includes a bunch of information.  In particular the
       /// operands of these node are:
       ///
@@ -102,12 +102,8 @@ namespace llvm {
       ///     #1 - The first register result value (optional)
       ///     #2 - The second register result value (optional)
       ///
-      /// The CALL vs TAILCALL distinction boils down to whether the callee is
-      /// known not to modify the caller's stack frame, as is standard with
-      /// LLVM.
       CALL,
-      TAILCALL,
-      
+
       /// RDTSC_DAG - This operation implements the lowering for 
       /// readcyclecounter
       RDTSC_DAG,
@@ -508,9 +504,12 @@ namespace llvm {
     /// IsEligibleForTailCallOptimization - Check whether the call is eligible
     /// for tail call optimization. Targets which want to do tail call
     /// optimization should implement this function.
-    virtual bool IsEligibleForTailCallOptimization(CallSDNode *TheCall, 
-                                                   SDValue Ret, 
-                                                   SelectionDAG &DAG) const;
+    virtual bool
+    IsEligibleForTailCallOptimization(SDValue Callee,
+                                      unsigned CalleeCC,
+                                      bool isVarArg,
+                                      const SmallVectorImpl<ISD::InputArg> &Ins,
+                                      SelectionDAG& DAG) const;
 
     virtual const X86Subtarget* getSubtarget() {
       return Subtarget;
@@ -563,26 +562,30 @@ namespace llvm {
     bool X86ScalarSSEf32;
     bool X86ScalarSSEf64;
 
-    SDNode *LowerCallResult(SDValue Chain, SDValue InFlag, CallSDNode *TheCall,
-                            unsigned CallingConv, SelectionDAG &DAG);
-
-    SDValue LowerMemArgument(SDValue Op, SelectionDAG &DAG,
-                               const CCValAssign &VA,  MachineFrameInfo *MFI,
-                               unsigned CC, SDValue Root, unsigned i);
-
-    SDValue LowerMemOpCallTo(CallSDNode *TheCall, SelectionDAG &DAG,
-                               const SDValue &StackPtr,
-                               const CCValAssign &VA, SDValue Chain,
-                               SDValue Arg, ISD::ArgFlagsTy Flags);
+    SDValue LowerCallResult(SDValue Chain, SDValue InFlag,
+                            unsigned CallConv, bool isVarArg,
+                            const SmallVectorImpl<ISD::InputArg> &Ins,
+                            DebugLoc dl, SelectionDAG &DAG,
+                            SmallVectorImpl<SDValue> &InVals);
+    SDValue LowerMemArgument(SDValue Chain,
+                             unsigned CallConv,
+                             const SmallVectorImpl<ISD::InputArg> &ArgInfo,
+                             DebugLoc dl, SelectionDAG &DAG,
+                             const CCValAssign &VA,  MachineFrameInfo *MFI,
+                              unsigned i);
+    SDValue LowerMemOpCallTo(SDValue Chain, SDValue StackPtr, SDValue Arg,
+                             DebugLoc dl, SelectionDAG &DAG,
+                             const CCValAssign &VA,
+                             ISD::ArgFlagsTy Flags);
 
     // Call lowering helpers.
-    bool IsCalleePop(bool isVarArg, unsigned CallingConv);
+    bool IsCalleePop(bool isVarArg, unsigned CallConv);
     SDValue EmitTailCallLoadRetAddr(SelectionDAG &DAG, SDValue &OutRetAddr,
                                 SDValue Chain, bool IsTailCall, bool Is64Bit,
                                 int FPDiff, DebugLoc dl);
 
-    CCAssignFn *CCAssignFnForNode(unsigned CallingConv) const;
-    NameDecorationStyle NameDecorationForFORMAL_ARGUMENTS(SDValue Op);
+    CCAssignFn *CCAssignFnForNode(unsigned CallConv) const;
+    NameDecorationStyle NameDecorationForCallConv(unsigned CallConv);
     unsigned GetAlignedArgumentStackSize(unsigned StackSize, SelectionDAG &DAG);
 
     std::pair<SDValue,SDValue> FP_TO_INTHelper(SDValue Op, SelectionDAG &DAG,
@@ -619,10 +622,7 @@ namespace llvm {
     SDValue LowerBRCOND(SDValue Op, SelectionDAG &DAG);
     SDValue LowerMEMSET(SDValue Op, SelectionDAG &DAG);
     SDValue LowerJumpTable(SDValue Op, SelectionDAG &DAG);
-    SDValue LowerCALL(SDValue Op, SelectionDAG &DAG);
-    SDValue LowerRET(SDValue Op, SelectionDAG &DAG);
     SDValue LowerDYNAMIC_STACKALLOC(SDValue Op, SelectionDAG &DAG);
-    SDValue LowerFORMAL_ARGUMENTS(SDValue Op, SelectionDAG &DAG);
     SDValue LowerVASTART(SDValue Op, SelectionDAG &DAG);
     SDValue LowerVAARG(SDValue Op, SelectionDAG &DAG);
     SDValue LowerVACOPY(SDValue Op, SelectionDAG &DAG);
@@ -641,6 +641,26 @@ namespace llvm {
     SDValue LowerCMP_SWAP(SDValue Op, SelectionDAG &DAG);
     SDValue LowerLOAD_SUB(SDValue Op, SelectionDAG &DAG);
     SDValue LowerREADCYCLECOUNTER(SDValue Op, SelectionDAG &DAG);
+
+    virtual SDValue
+      LowerFormalArguments(SDValue Chain,
+                           unsigned CallConv, bool isVarArg,
+                           const SmallVectorImpl<ISD::InputArg> &Ins,
+                           DebugLoc dl, SelectionDAG &DAG,
+                           SmallVectorImpl<SDValue> &InVals);
+    virtual SDValue
+      LowerCall(SDValue Chain, SDValue Callee,
+                unsigned CallConv, bool isVarArg, bool isTailCall,
+                const SmallVectorImpl<ISD::OutputArg> &Outs,
+                const SmallVectorImpl<ISD::InputArg> &Ins,
+                DebugLoc dl, SelectionDAG &DAG,
+                SmallVectorImpl<SDValue> &InVals);
+
+    virtual SDValue
+      LowerReturn(SDValue Chain,
+                  unsigned CallConv, bool isVarArg,
+                  const SmallVectorImpl<ISD::OutputArg> &Outs,
+                  DebugLoc dl, SelectionDAG &DAG);
 
     void ReplaceATOMIC_BINARY_64(SDNode *N, SmallVectorImpl<SDValue> &Results,
                                  SelectionDAG &DAG, unsigned NewOp);

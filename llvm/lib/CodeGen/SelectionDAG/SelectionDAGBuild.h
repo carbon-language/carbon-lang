@@ -363,13 +363,20 @@ public:
   /// GFI - Garbage collection metadata for the function.
   GCFunctionInfo *GFI;
 
+  /// HasTailCall - This is set to true if a call in the current
+  /// block has been translated as a tail call. In this case,
+  /// no subsequent DAG nodes should be created.
+  ///
+  bool HasTailCall;
+
   LLVMContext *Context;
 
   SelectionDAGLowering(SelectionDAG &dag, TargetLowering &tli,
                        FunctionLoweringInfo &funcinfo,
                        CodeGenOpt::Level ol)
     : CurDebugLoc(DebugLoc::getUnknownLoc()), 
-      TLI(tli), DAG(dag), FuncInfo(funcinfo), OptLevel(ol), 
+      TLI(tli), DAG(dag), FuncInfo(funcinfo), OptLevel(ol),
+      HasTailCall(false),
       Context(dag.getContext()) {
   }
 

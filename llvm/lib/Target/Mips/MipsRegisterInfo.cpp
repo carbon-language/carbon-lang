@@ -212,7 +212,7 @@ getReservedRegs(const MachineFunction &MF) const
 //   The emitted instruction will be something like:
 //     lw REGX, 16+StackSize(SP)
 //
-// Since the total stack size is unknown on LowerFORMAL_ARGUMENTS, all
+// Since the total stack size is unknown on LowerFormalArguments, all
 // stack references (ObjectOffset) created to reference the function 
 // arguments, are negative numbers. This way, on eliminateFrameIndex it's
 // possible to detect those references and the offsets are adjusted to
@@ -234,7 +234,7 @@ void MipsRegisterInfo::adjustMipsStackFrame(MachineFunction &MF) const
   int TopCPUSavedRegOff = -1, TopFPUSavedRegOff = -1;
 
   // Replace the dummy '0' SPOffset by the negative offsets, as explained on 
-  // LowerFORMAL_ARGUMENTS. Leaving '0' for while is necessary to avoid 
+  // LowerFormalArguments. Leaving '0' for while is necessary to avoid
   // the approach done by calculateFrameObjectOffsets to the stack frame.
   MipsFI->adjustLoadArgsFI(MFI);
   MipsFI->adjustStoreVarArgsFI(MFI); 
@@ -378,7 +378,7 @@ eliminateFrameIndex(MachineBasicBlock::iterator II, int SPAdj,
   DOUT << "stackSize  : " << stackSize << "\n";
   #endif
 
-  // as explained on LowerFORMAL_ARGUMENTS, detect negative offsets 
+  // as explained on LowerFormalArguments, detect negative offsets
   // and adjust SPOffsets considering the final stack size.
   int Offset = ((spOffset < 0) ? (stackSize + (-(spOffset+4))) : (spOffset));
   Offset    += MI.getOperand(i-1).getImm();

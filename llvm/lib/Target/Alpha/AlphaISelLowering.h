@@ -82,9 +82,11 @@ namespace llvm {
     // Friendly names for dumps
     const char *getTargetNodeName(unsigned Opcode) const;
 
-    SDValue LowerCALL(SDValue Op, SelectionDAG &DAG);
-    SDNode *LowerCallResult(SDValue Chain, SDValue InFlag, CallSDNode *TheCall,
-                            unsigned CallingConv, SelectionDAG &DAG);
+    SDValue LowerCallResult(SDValue Chain, SDValue InFlag,
+                            unsigned CallConv, bool isVarArg,
+                            const SmallVectorImpl<ISD::InputArg> &Ins,
+                            DebugLoc dl, SelectionDAG &DAG,
+                            SmallVectorImpl<SDValue> &InVals);
 
     ConstraintType getConstraintType(const std::string &Constraint) const;
 
@@ -107,6 +109,26 @@ namespace llvm {
     void LowerVAARG(SDNode *N, SDValue &Chain, SDValue &DataPtr,
                     SelectionDAG &DAG);
 
+    virtual SDValue
+      LowerFormalArguments(SDValue Chain,
+                           unsigned CallConv, bool isVarArg,
+                           const SmallVectorImpl<ISD::InputArg> &Ins,
+                           DebugLoc dl, SelectionDAG &DAG,
+                           SmallVectorImpl<SDValue> &InVals);
+
+    virtual SDValue
+      LowerCall(SDValue Chain, SDValue Callee,
+                unsigned CallConv, bool isVarArg, bool isTailCall,
+                const SmallVectorImpl<ISD::OutputArg> &Outs,
+                const SmallVectorImpl<ISD::InputArg> &Ins,
+                DebugLoc dl, SelectionDAG &DAG,
+                SmallVectorImpl<SDValue> &InVals);
+
+    virtual SDValue
+      LowerReturn(SDValue Chain,
+                  unsigned CallConv, bool isVarArg,
+                  const SmallVectorImpl<ISD::OutputArg> &Outs,
+                  DebugLoc dl, SelectionDAG &DAG);
   };
 }
 

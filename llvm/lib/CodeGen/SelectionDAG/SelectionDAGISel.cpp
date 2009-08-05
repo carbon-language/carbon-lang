@@ -366,139 +366,35 @@ static void copyCatchInfo(BasicBlock *SrcBB, BasicBlock *DestBB,
     }
 }
 
-/// IsFixedFrameObjectWithPosOffset - Check if object is a fixed frame object and
-/// whether object offset >= 0.
-static bool
-IsFixedFrameObjectWithPosOffset(MachineFrameInfo *MFI, SDValue Op) {
-  if (!isa<FrameIndexSDNode>(Op)) return false;
-
-  FrameIndexSDNode * FrameIdxNode = dyn_cast<FrameIndexSDNode>(Op);
-  int FrameIdx =  FrameIdxNode->getIndex();
-  return MFI->isFixedObjectIndex(FrameIdx) &&
-    MFI->getObjectOffset(FrameIdx) >= 0;
-}
-
-/// IsPossiblyOverwrittenArgumentOfTailCall - Check if the operand could
-/// possibly be overwritten when lowering the outgoing arguments in a tail
-/// call. Currently the implementation of this call is very conservative and
-/// assumes all arguments sourcing from FORMAL_ARGUMENTS or a CopyFromReg with
-/// virtual registers would be overwritten by direct lowering.
-static bool IsPossiblyOverwrittenArgumentOfTailCall(SDValue Op,
-                                                    MachineFrameInfo *MFI) {
-  RegisterSDNode * OpReg = NULL;
-  if (Op.getOpcode() == ISD::FORMAL_ARGUMENTS ||
-      (Op.getOpcode()== ISD::CopyFromReg &&
-       (OpReg = dyn_cast<RegisterSDNode>(Op.getOperand(1))) &&
-       (OpReg->getReg() >= TargetRegisterInfo::FirstVirtualRegister)) ||
-      (Op.getOpcode() == ISD::LOAD &&
-       IsFixedFrameObjectWithPosOffset(MFI, Op.getOperand(1))) ||
-      (Op.getOpcode() == ISD::MERGE_VALUES &&
-       Op.getOperand(Op.getResNo()).getOpcode() == ISD::LOAD &&
-       IsFixedFrameObjectWithPosOffset(MFI, Op.getOperand(Op.getResNo()).
-                                       getOperand(1))))
-    return true;
-  return false;
-}
-
-/// CheckDAGForTailCallsAndFixThem - This Function looks for CALL nodes in the
-/// DAG and fixes their tailcall attribute operand.
-static void CheckDAGForTailCallsAndFixThem(SelectionDAG &DAG, 
-                                           const TargetLowering& TLI) {
-  SDNode * Ret = NULL;
-  SDValue Terminator = DAG.getRoot();
-
-  // Find RET node.
-  if (Terminator.getOpcode() == ISD::RET) {
-    Ret = Terminator.getNode();
-  }
- 
-  // Fix tail call attribute of CALL nodes.
-  for (SelectionDAG::allnodes_iterator BE = DAG.allnodes_begin(),
-         BI = DAG.allnodes_end(); BI != BE; ) {
-    --BI;
-    if (CallSDNode *TheCall = dyn_cast<CallSDNode>(BI)) {
-      SDValue OpRet(Ret, 0);
-      SDValue OpCall(BI, 0);
-      bool isMarkedTailCall = TheCall->isTailCall();
-      // If CALL node has tail call attribute set to true and the call is not
-      // eligible (no RET or the target rejects) the attribute is fixed to
-      // false. The TargetLowering::IsEligibleForTailCallOptimization function
-      // must correctly identify tail call optimizable calls.
-      if (!isMarkedTailCall) continue;
-      if (Ret==NULL ||
-          !TLI.IsEligibleForTailCallOptimization(TheCall, OpRet, DAG)) {
-        // Not eligible. Mark CALL node as non tail call. Note that we
-        // can modify the call node in place since calls are not CSE'd.
-        TheCall->setNotTailCall();
-      } else {
-        // Look for tail call clobbered arguments. Emit a series of
-        // copyto/copyfrom virtual register nodes to protect them.
-        SmallVector<SDValue, 32> Ops;
-        SDValue Chain = TheCall->getChain(), InFlag;
-        Ops.push_back(Chain);
-        Ops.push_back(TheCall->getCallee());
-        for (unsigned i = 0, e = TheCall->getNumArgs(); i != e; ++i) {
-          SDValue Arg = TheCall->getArg(i);
-          bool isByVal = TheCall->getArgFlags(i).isByVal();
-          MachineFunction &MF = DAG.getMachineFunction();
-          MachineFrameInfo *MFI = MF.getFrameInfo();
-          if (!isByVal &&
-              IsPossiblyOverwrittenArgumentOfTailCall(Arg, MFI)) {
-            MVT VT = Arg.getValueType();
-            unsigned VReg = MF.getRegInfo().
-              createVirtualRegister(TLI.getRegClassFor(VT));
-            Chain = DAG.getCopyToReg(Chain, Arg.getDebugLoc(),
-                                     VReg, Arg, InFlag);
-            InFlag = Chain.getValue(1);
-            Arg = DAG.getCopyFromReg(Chain, Arg.getDebugLoc(),
-                                     VReg, VT, InFlag);
-            Chain = Arg.getValue(1);
-            InFlag = Arg.getValue(2);
-          }
-          Ops.push_back(Arg);
-          Ops.push_back(TheCall->getArgFlagsVal(i));
-        }
-        // Link in chain of CopyTo/CopyFromReg.
-        Ops[0] = Chain;
-        DAG.UpdateNodeOperands(OpCall, Ops.begin(), Ops.size());
-      }
-    }
-  }
-}
-
 void SelectionDAGISel::SelectBasicBlock(BasicBlock *LLVMBB,
                                         BasicBlock::iterator Begin,
                                         BasicBlock::iterator End) {
   SDL->setCurrentBasicBlock(BB);
 
-  // Lower all of the non-terminator instructions.
-  for (BasicBlock::iterator I = Begin; I != End; ++I)
+  // Lower all of the non-terminator instructions. If a call is emitted
+  // as a tail call, cease emitting nodes for this block.
+  for (BasicBlock::iterator I = Begin; I != End && !SDL->HasTailCall; ++I)
     if (!isa<TerminatorInst>(I))
       SDL->visit(*I);
 
-  // Ensure that all instructions which are used outside of their defining
-  // blocks are available as virtual registers.  Invoke is handled elsewhere.
-  for (BasicBlock::iterator I = Begin; I != End; ++I)
-    if (!isa<PHINode>(I) && !isa<InvokeInst>(I))
-      SDL->CopyToExportRegsIfNeeded(I);
+  if (!SDL->HasTailCall) {
+    // Ensure that all instructions which are used outside of their defining
+    // blocks are available as virtual registers.  Invoke is handled elsewhere.
+    for (BasicBlock::iterator I = Begin; I != End; ++I)
+      if (!isa<PHINode>(I) && !isa<InvokeInst>(I))
+        SDL->CopyToExportRegsIfNeeded(I);
 
-  // Handle PHI nodes in successor blocks.
-  if (End == LLVMBB->end()) {
-    HandlePHINodesInSuccessorBlocks(LLVMBB);
+    // Handle PHI nodes in successor blocks.
+    if (End == LLVMBB->end()) {
+      HandlePHINodesInSuccessorBlocks(LLVMBB);
 
-    // Lower the terminator after the copies are emitted.
-    SDL->visit(*LLVMBB->getTerminator());
+      // Lower the terminator after the copies are emitted.
+      SDL->visit(*LLVMBB->getTerminator());
+    }
   }
     
   // Make sure the root of the DAG is up-to-date.
   CurDAG->setRoot(SDL->getControlRoot());
-
-  // Check whether calls in this block are real tail calls. Fix up CALL nodes
-  // with correct tailcall attribute so that the target can rely on the tailcall
-  // attribute indicating whether the call is really eligible for tail call
-  // optimization.
-  if (PerformTailCallOpt)
-    CheckDAGForTailCallsAndFixThem(*CurDAG, TLI);
 
   // Final step, emit the lowered DAG as machine code.
   CodeGenAndEmitDAG();

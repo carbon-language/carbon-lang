@@ -20,8 +20,8 @@
 // type i8 which must be promoted.
 //
 // This does not legalize vector manipulations like ISD::BUILD_VECTOR,
-// or operations that happen to take a vector which are custom-lowered like
-// ISD::CALL; the legalization for such operations never produces nodes
+// or operations that happen to take a vector which are custom-lowered;
+// the legalization for such operations never produces nodes
 // with illegal types, so it's okay to put off legalizing them until
 // SelectionDAG::Legalize runs.
 //

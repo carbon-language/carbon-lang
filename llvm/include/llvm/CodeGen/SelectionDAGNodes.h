@@ -97,7 +97,7 @@ namespace ISD {
     AssertSext, AssertZext,
 
     // Various leaf nodes.
-    BasicBlock, VALUETYPE, ARG_FLAGS, CONDCODE, Register,
+    BasicBlock, VALUETYPE, CONDCODE, Register,
     Constant, ConstantFP,
     GlobalAddress, GlobalTLSAddress, FrameIndex,
     JumpTable, ConstantPool, ExternalSymbol,
@@ -179,38 +179,6 @@ namespace ISD {
 
     // UNDEF - An undefined node
     UNDEF,
-
-    /// FORMAL_ARGUMENTS(CHAIN, CC#, ISVARARG, FLAG0, ..., FLAGn) - This node
-    /// represents the formal arguments for a function.  CC# is a Constant value
-    /// indicating the calling convention of the function, and ISVARARG is a
-    /// flag that indicates whether the function is varargs or not. This node
-    /// has one result value for each incoming argument, plus one for the output
-    /// chain. It must be custom legalized. See description of CALL node for
-    /// FLAG argument contents explanation.
-    ///
-    FORMAL_ARGUMENTS,
-
-    /// RV1, RV2...RVn, CHAIN = CALL(CHAIN, CALLEE,
-    ///                              ARG0, FLAG0, ARG1, FLAG1, ... ARGn, FLAGn)
-    /// This node represents a fully general function call, before the legalizer
-    /// runs.  This has one result value for each argument / flag pair, plus
-    /// a chain result. It must be custom legalized. Flag argument indicates
-    /// misc. argument attributes. Currently:
-    /// Bit 0 - signness
-    /// Bit 1 - 'inreg' attribute
-    /// Bit 2 - 'sret' attribute
-    /// Bit 4 - 'byval' attribute
-    /// Bit 5 - 'nest' attribute
-    /// Bit 6-9 - alignment of byval structures
-    /// Bit 10-26 - size of byval structures
-    /// Bits 31:27 - argument ABI alignment in the first argument piece and
-    /// alignment '1' in other argument pieces.
-    ///
-    /// CALL nodes use the CallSDNode subclass of SDNode, which
-    /// additionally carries information about the calling convention,
-    /// whether the call is varargs, and if it's marked as a tail call.
-    ///
-    CALL,
 
     // EXTRACT_ELEMENT - This is used to get the lower or upper (determined by
     // a Constant, which is required to be operand #1) half of the integer or
@@ -514,12 +482,6 @@ namespace ISD {
     // compare, rather than as a combined SetCC node.  The operands in order are
     // chain, cc, lhs, rhs, block to branch to if condition is true.
     BR_CC,
-
-    // RET - Return from function.  The first operand is the chain,
-    // and any subsequent operands are pairs of return value and return value
-    // attributes (see CALL for description of attributes) for the function.
-    // This operation can have variable number of operands.
-    RET,
 
     // INLINEASM - Represents an inline asm block.  This node always has two
     // return values: a chain and a flag result.  The inputs are as follows:
@@ -2234,80 +2196,41 @@ namespace ISD {
     /// getRawBits - Represent the flags as a bunch of bits.
     uint64_t getRawBits() const { return Flags; }
   };
+
+  /// InputArg - This struct carries flags and type information about a
+  /// single incoming (formal) argument or incoming (from the perspective
+  /// of the caller) return value virtual register.
+  ///
+  struct InputArg {
+    ArgFlagsTy Flags;
+    MVT VT;
+    bool Used;
+
+    InputArg() : VT(MVT::Other), Used(false) {}
+    InputArg(ISD::ArgFlagsTy flags, MVT vt, bool used)
+      : Flags(flags), VT(vt), Used(used) {
+      assert(VT.isSimple() &&
+             "InputArg value type must be Simple!");
+    }
+  };
+
+  /// OutputArg - This struct carries flags and a value for a
+  /// single outgoing (actual) argument or outgoing (from the perspective
+  /// of the caller) return value virtual register.
+  ///
+  struct OutputArg {
+    ArgFlagsTy Flags;
+    SDValue Val;
+    bool IsFixed;
+
+    OutputArg() : IsFixed(false) {}
+    OutputArg(ISD::ArgFlagsTy flags, SDValue val, bool isfixed)
+      : Flags(flags), Val(val), IsFixed(isfixed) {
+      assert(Val.getValueType().isSimple() &&
+             "OutputArg value type must be Simple!");
+    }
+  };
 }
-
-/// ARG_FLAGSSDNode - Leaf node holding parameter flags.
-class ARG_FLAGSSDNode : public SDNode {
-  ISD::ArgFlagsTy TheFlags;
-  friend class SelectionDAG;
-  explicit ARG_FLAGSSDNode(ISD::ArgFlagsTy Flags)
-    : SDNode(ISD::ARG_FLAGS, DebugLoc::getUnknownLoc(),
-             getSDVTList(MVT::Other)), TheFlags(Flags) {
-  }
-public:
-  ISD::ArgFlagsTy getArgFlags() const { return TheFlags; }
-
-  static bool classof(const ARG_FLAGSSDNode *) { return true; }
-  static bool classof(const SDNode *N) {
-    return N->getOpcode() == ISD::ARG_FLAGS;
-  }
-};
-
-/// CallSDNode - Node for calls -- ISD::CALL.
-class CallSDNode : public SDNode {
-  unsigned CallingConv;
-  bool IsVarArg;
-  bool IsTailCall;
-  unsigned NumFixedArgs;
-  // We might eventually want a full-blown Attributes for the result; that
-  // will expand the size of the representation.  At the moment we only
-  // need Inreg.
-  bool Inreg;
-  friend class SelectionDAG;
-  CallSDNode(unsigned cc, DebugLoc dl, bool isvararg, bool istailcall,
-             bool isinreg, SDVTList VTs, const SDValue *Operands,
-             unsigned numOperands, unsigned numFixedArgs)
-    : SDNode(ISD::CALL, dl, VTs, Operands, numOperands),
-      CallingConv(cc), IsVarArg(isvararg), IsTailCall(istailcall),
-      NumFixedArgs(numFixedArgs), Inreg(isinreg) {}
-public:
-  unsigned getCallingConv() const { return CallingConv; }
-  unsigned isVarArg() const { return IsVarArg; }
-  unsigned isTailCall() const { return IsTailCall; }
-  unsigned isInreg() const { return Inreg; }
-
-  /// Set this call to not be marked as a tail call. Normally setter
-  /// methods in SDNodes are unsafe because it breaks the CSE map,
-  /// but we don't include the tail call flag for calls so it's ok
-  /// in this case.
-  void setNotTailCall() { IsTailCall = false; }
-
-  SDValue getChain() const { return getOperand(0); }
-  SDValue getCallee() const { return getOperand(1); }
-
-  unsigned getNumArgs() const { return (getNumOperands() - 2) / 2; }
-  unsigned getNumFixedArgs() const {
-    if (isVarArg())
-      return NumFixedArgs;
-    else
-      return getNumArgs();
-  }
-  SDValue getArg(unsigned i) const { return getOperand(2+2*i); }
-  SDValue getArgFlagsVal(unsigned i) const {
-    return getOperand(3+2*i);
-  }
-  ISD::ArgFlagsTy getArgFlags(unsigned i) const {
-    return cast<ARG_FLAGSSDNode>(getArgFlagsVal(i).getNode())->getArgFlags();
-  }
-
-  unsigned getNumRetVals() const { return getNumValues() - 1; }
-  MVT getRetValType(unsigned i) const { return getValueType(i); }
-
-  static bool classof(const CallSDNode *) { return true; }
-  static bool classof(const SDNode *N) {
-    return N->getOpcode() == ISD::CALL;
-  }
-};
 
 /// VTSDNode - This class is used to represent MVT's, which are used
 /// to parameterize some operations.
@@ -2491,7 +2414,7 @@ typedef LoadSDNode LargestSDNode;
 /// MostAlignedSDNode - The SDNode class with the greatest alignment
 /// requirement.
 ///
-typedef ARG_FLAGSSDNode MostAlignedSDNode;
+typedef GlobalAddressSDNode MostAlignedSDNode;
 
 namespace ISD {
   /// isNormalLoad - Returns true if the specified node is a non-extending

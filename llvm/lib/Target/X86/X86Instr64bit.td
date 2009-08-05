@@ -1528,23 +1528,7 @@ def : Pat<(X86call (i64 tglobaladdr:$dst)),
 def : Pat<(X86call (i64 texternalsym:$dst)),
           (WINCALL64pcrel32 texternalsym:$dst)>, Requires<[IsWin64]>;
 
-def : Pat<(X86tailcall (i64 tglobaladdr:$dst)),
-          (CALL64pcrel32 tglobaladdr:$dst)>;
-def : Pat<(X86tailcall (i64 texternalsym:$dst)),
-          (CALL64pcrel32 texternalsym:$dst)>;
-
-def : Pat<(X86tailcall GR64:$dst),
-          (CALL64r GR64:$dst)>;
-
-
 // tailcall stuff
-def : Pat<(X86tailcall GR32:$dst),
-          (TAILCALL)>;
-def : Pat<(X86tailcall (i64 tglobaladdr:$dst)),
-          (TAILCALL)>;
-def : Pat<(X86tailcall (i64 texternalsym:$dst)),
-          (TAILCALL)>;
-
 def : Pat<(X86tcret GR64:$dst, imm:$off),
           (TCRETURNri64 GR64:$dst, imm:$off)>;
 

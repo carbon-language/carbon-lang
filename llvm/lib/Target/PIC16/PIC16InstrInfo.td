@@ -115,6 +115,8 @@ def PIC16Brcond : SDNode<"PIC16ISD::BRCOND", SDT_PIC16Brcond,
 def PIC16Selecticc : SDNode<"PIC16ISD::SELECT_ICC", SDT_PIC16Selecticc, 
                          [SDNPInFlag]>;
 
+def PIC16ret       : SDNode<"PIC16ISD::RET", SDTNone, [SDNPHasChain]>;
+
 //===----------------------------------------------------------------------===//
 // PIC16 Operand Definitions.
 //===----------------------------------------------------------------------===//
@@ -493,7 +495,7 @@ def pagesel :
 // Return insn.
 let isTerminator = 1, isBarrier = 1, isReturn = 1 in
 def Return : 
-  ControlFormat<0, (outs), (ins), "return", [(ret)]>;
+  ControlFormat<0, (outs), (ins), "return", [(PIC16ret)]>;
 
 //===----------------------------------------------------------------------===//
 // PIC16 Replacment Patterns.

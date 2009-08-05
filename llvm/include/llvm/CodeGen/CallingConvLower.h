@@ -172,17 +172,20 @@ public:
     return UsedRegs[Reg/32] & (1 << (Reg&31));
   }
 
-  /// AnalyzeFormalArguments - Analyze an ISD::FORMAL_ARGUMENTS node,
+  /// AnalyzeFormalArguments - Analyze an array of argument values,
   /// incorporating info about the formals into this state.
-  void AnalyzeFormalArguments(SDNode *TheArgs, CCAssignFn Fn);
+  void AnalyzeFormalArguments(const SmallVectorImpl<ISD::InputArg> &Ins,
+                              CCAssignFn Fn);
 
-  /// AnalyzeReturn - Analyze the returned values of an ISD::RET node,
+  /// AnalyzeReturn - Analyze the returned values of a return,
   /// incorporating info about the result values into this state.
-  void AnalyzeReturn(SDNode *TheRet, CCAssignFn Fn);
+  void AnalyzeReturn(const SmallVectorImpl<ISD::OutputArg> &Outs,
+                     CCAssignFn Fn);
 
-  /// AnalyzeCallOperands - Analyze an ISD::CALL node, incorporating info
-  /// about the passed values into this state.
-  void AnalyzeCallOperands(CallSDNode *TheCall, CCAssignFn Fn);
+  /// AnalyzeCallOperands - Analyze the outgoing arguments to a call,
+  /// incorporating info about the passed values into this state.
+  void AnalyzeCallOperands(const SmallVectorImpl<ISD::OutputArg> &Outs,
+                           CCAssignFn Fn);
 
   /// AnalyzeCallOperands - Same as above except it takes vectors of types
   /// and argument flags.
@@ -190,9 +193,10 @@ public:
                            SmallVectorImpl<ISD::ArgFlagsTy> &Flags,
                            CCAssignFn Fn);
 
-  /// AnalyzeCallResult - Analyze the return values of an ISD::CALL node,
+  /// AnalyzeCallResult - Analyze the return values of a call,
   /// incorporating info about the passed values into this state.
-  void AnalyzeCallResult(CallSDNode *TheCall, CCAssignFn Fn);
+  void AnalyzeCallResult(const SmallVectorImpl<ISD::InputArg> &Ins,
+                         CCAssignFn Fn);
 
   /// AnalyzeCallResult - Same as above except it's specialized for calls which
   /// produce a single value.

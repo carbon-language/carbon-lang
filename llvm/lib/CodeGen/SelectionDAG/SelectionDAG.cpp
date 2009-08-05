@@ -366,9 +366,6 @@ static void AddNodeIDCustom(FoldingSetNodeID &ID, const SDNode *N) {
   case ISD::ExternalSymbol:
     llvm_unreachable("Should only be used on nodes with operands");
   default: break;  // Normal nodes don't need extra info.
-  case ISD::ARG_FLAGS:
-    ID.AddInteger(cast<ARG_FLAGSSDNode>(N)->getArgFlags().getRawBits());
-    break;
   case ISD::TargetConstant:
   case ISD::Constant:
     ID.AddPointer(cast<ConstantSDNode>(N)->getConstantIntValue());
@@ -428,12 +425,6 @@ static void AddNodeIDCustom(FoldingSetNodeID &ID, const SDNode *N) {
     else
       ID.AddPointer(CP->getConstVal());
     ID.AddInteger(CP->getTargetFlags());
-    break;
-  }
-  case ISD::CALL: {
-    const CallSDNode *Call = cast<CallSDNode>(N);
-    ID.AddInteger(Call->getCallingConv());
-    ID.AddInteger(Call->isVarArg());
     break;
   }
   case ISD::LOAD: {
@@ -1098,20 +1089,6 @@ SDValue SelectionDAG::getBasicBlock(MachineBasicBlock *MBB) {
     return SDValue(E, 0);
   SDNode *N = NodeAllocator.Allocate<BasicBlockSDNode>();
   new (N) BasicBlockSDNode(MBB);
-  CSEMap.InsertNode(N, IP);
-  AllNodes.push_back(N);
-  return SDValue(N, 0);
-}
-
-SDValue SelectionDAG::getArgFlags(ISD::ArgFlagsTy Flags) {
-  FoldingSetNodeID ID;
-  AddNodeIDNode(ID, ISD::ARG_FLAGS, getVTList(MVT::Other), 0, 0);
-  ID.AddInteger(Flags.getRawBits());
-  void *IP = 0;
-  if (SDNode *E = CSEMap.FindNodeOrInsertPos(ID, IP))
-    return SDValue(E, 0);
-  SDNode *N = NodeAllocator.Allocate<ARG_FLAGSSDNode>();
-  new (N) ARG_FLAGSSDNode(Flags);
   CSEMap.InsertNode(N, IP);
   AllNodes.push_back(N);
   return SDValue(N, 0);
@@ -2995,6 +2972,29 @@ SDValue SelectionDAG::getNode(unsigned Opcode, DebugLoc DL, MVT VT,
   return getNode(Opcode, DL, VT, Ops, 5);
 }
 
+/// getStackArgumentTokenFactor - Compute a TokenFactor to force all
+/// the incoming stack arguments to be loaded from the stack.
+SDValue SelectionDAG::getStackArgumentTokenFactor(SDValue Chain) {
+  SmallVector<SDValue, 8> ArgChains;
+
+  // Include the original chain at the beginning of the list. When this is
+  // used by target LowerCall hooks, this helps legalize find the
+  // CALLSEQ_BEGIN node.
+  ArgChains.push_back(Chain);
+
+  // Add a chain value for each stack argument.
+  for (SDNode::use_iterator U = getEntryNode().getNode()->use_begin(),
+       UE = getEntryNode().getNode()->use_end(); U != UE; ++U)
+    if (LoadSDNode *L = dyn_cast<LoadSDNode>(*U))
+      if (FrameIndexSDNode *FI = dyn_cast<FrameIndexSDNode>(L->getBasePtr()))
+        if (FI->getIndex() < 0)
+          ArgChains.push_back(SDValue(L, 1));
+
+  // Build a tokenfactor for all the chains.
+  return getNode(ISD::TokenFactor, Chain.getDebugLoc(), MVT::Other,
+                 &ArgChains[0], ArgChains.size());
+}
+
 /// getMemsetValue - Vectorized representation of the memset value
 /// operand.
 static SDValue getMemsetValue(SDValue Value, MVT VT, SelectionDAG &DAG,
@@ -3386,6 +3386,7 @@ SDValue SelectionDAG::getMemcpy(SDValue Chain, DebugLoc dl, SDValue Dst,
   std::pair<SDValue,SDValue> CallResult =
     TLI.LowerCallTo(Chain, Type::VoidTy,
                     false, false, false, false, 0, CallingConv::C, false,
+                    /*isReturnValueUsed=*/false,
                     getExternalSymbol(TLI.getLibcallName(RTLIB::MEMCPY), 
                                       TLI.getPointerTy()),
                     Args, *this, dl);
@@ -3433,6 +3434,7 @@ SDValue SelectionDAG::getMemmove(SDValue Chain, DebugLoc dl, SDValue Dst,
   std::pair<SDValue,SDValue> CallResult =
     TLI.LowerCallTo(Chain, Type::VoidTy,
                     false, false, false, false, 0, CallingConv::C, false,
+                    /*isReturnValueUsed=*/false,
                     getExternalSymbol(TLI.getLibcallName(RTLIB::MEMMOVE), 
                                       TLI.getPointerTy()),
                     Args, *this, dl);
@@ -3486,6 +3488,7 @@ SDValue SelectionDAG::getMemset(SDValue Chain, DebugLoc dl, SDValue Dst,
   std::pair<SDValue,SDValue> CallResult =
     TLI.LowerCallTo(Chain, Type::VoidTy,
                     false, false, false, false, 0, CallingConv::C, false,
+                    /*isReturnValueUsed=*/false,
                     getExternalSymbol(TLI.getLibcallName(RTLIB::MEMSET), 
                                       TLI.getPointerTy()),
                     Args, *this, dl);
@@ -3611,32 +3614,6 @@ SelectionDAG::getMemIntrinsicNode(unsigned Opcode, DebugLoc dl, SDVTList VTList,
     new (N) MemIntrinsicSDNode(Opcode, dl, VTList, Ops, NumOps, MemVT,
                                srcValue, SVOff, Align, Vol, ReadMem, WriteMem);
   }
-  AllNodes.push_back(N);
-  return SDValue(N, 0);
-}
-
-SDValue
-SelectionDAG::getCall(unsigned CallingConv, DebugLoc dl, bool IsVarArgs,
-                      bool IsTailCall, bool IsInreg, SDVTList VTs,
-                      const SDValue *Operands, unsigned NumOperands,
-                      unsigned NumFixedArgs) {
-  // Do not include isTailCall in the folding set profile.
-  FoldingSetNodeID ID;
-  AddNodeIDNode(ID, ISD::CALL, VTs, Operands, NumOperands);
-  ID.AddInteger(CallingConv);
-  ID.AddInteger(IsVarArgs);
-  void *IP = 0;
-  if (SDNode *E = CSEMap.FindNodeOrInsertPos(ID, IP)) {
-    // Instead of including isTailCall in the folding set, we just
-    // set the flag of the existing node.
-    if (!IsTailCall)
-      cast<CallSDNode>(E)->setNotTailCall();
-    return SDValue(E, 0);
-  }
-  SDNode *N = NodeAllocator.Allocate<CallSDNode>();
-  new (N) CallSDNode(CallingConv, dl, IsVarArgs, IsTailCall, IsInreg,
-                     VTs, Operands, NumOperands, NumFixedArgs);
-  CSEMap.InsertNode(N, IP);
   AllNodes.push_back(N);
   return SDValue(N, 0);
 }
@@ -5206,7 +5183,6 @@ std::string SDNode::getOperationName(const SelectionDAG *G) const {
   case ISD::AssertZext:    return "AssertZext";
 
   case ISD::BasicBlock:    return "BasicBlock";
-  case ISD::ARG_FLAGS:     return "ArgFlags";
   case ISD::VALUETYPE:     return "ValueType";
   case ISD::Register:      return "Register";
 
@@ -5254,8 +5230,6 @@ std::string SDNode::getOperationName(const SelectionDAG *G) const {
   case ISD::EH_LABEL:      return "eh_label";
   case ISD::DECLARE:       return "declare";
   case ISD::HANDLENODE:    return "handlenode";
-  case ISD::FORMAL_ARGUMENTS: return "formal_arguments";
-  case ISD::CALL:          return "call";
 
   // Unary operators
   case ISD::FABS:   return "fabs";
@@ -5364,7 +5338,6 @@ std::string SDNode::getOperationName(const SelectionDAG *G) const {
   case ISD::BR_JT:   return "br_jt";
   case ISD::BRCOND:  return "brcond";
   case ISD::BR_CC:   return "br_cc";
-  case ISD::RET:     return "ret";
   case ISD::CALLSEQ_START:  return "callseq_start";
   case ISD::CALLSEQ_END:    return "callseq_end";
 
@@ -5566,8 +5539,6 @@ void SDNode::print_details(raw_ostream &OS, const SelectionDAG *G) const {
       OS << "<" << M->MO.getValue() << ":" << M->MO.getOffset() << ">";
     else
       OS << "<null:" << M->MO.getOffset() << ">";
-  } else if (const ARG_FLAGSSDNode *N = dyn_cast<ARG_FLAGSSDNode>(this)) {
-    OS << N->getArgFlags().getArgFlagsString();
   } else if (const VTSDNode *N = dyn_cast<VTSDNode>(this)) {
     OS << ":" << N->getVT().getMVTString();
   }

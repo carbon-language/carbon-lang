@@ -823,11 +823,6 @@ SDValue SelectionDAGLegalize::LegalizeOp(SDValue Op) {
     // special case should be done as part of making LegalizeDAG non-recursive.
     SimpleFinishLegalizing = false;
     break;
-  case ISD::CALL:
-    // FIXME: Legalization for calls requires custom-lowering the call before
-    // legalizing the operands!  (I haven't looked into precisely why.)
-    SimpleFinishLegalizing = false;
-    break;
   case ISD::EXTRACT_ELEMENT:
   case ISD::FLT_ROUNDS_:
   case ISD::SADDO:
@@ -849,7 +844,6 @@ SDValue SelectionDAGLegalize::LegalizeOp(SDValue Op) {
   case ISD::TRAMPOLINE:
   case ISD::FRAMEADDR:
   case ISD::RETURNADDR:
-  case ISD::FORMAL_ARGUMENTS:
     // These operations lie about being legal: when they claim to be legal,
     // they should actually be custom-lowered.
     Action = TLI.getOperationAction(Node->getOpcode(), Node->getValueType(0));
@@ -887,7 +881,6 @@ SDValue SelectionDAGLegalize::LegalizeOp(SDValue Op) {
     case ISD::BR_JT:
     case ISD::BR_CC:
     case ISD::BRCOND:
-    case ISD::RET:
       // Branches tweak the chain to include LastCALLSEQ_END
       Ops[0] = DAG.getNode(ISD::TokenFactor, dl, MVT::Other, Ops[0],
                             LastCALLSEQ_END);
@@ -951,37 +944,7 @@ SDValue SelectionDAGLegalize::LegalizeOp(SDValue Op) {
     cerr << "NODE: "; Node->dump(&DAG); cerr << "\n";
 #endif
     llvm_unreachable("Do not know how to legalize this operator!");
-  case ISD::CALL:
-    // The only option for this is to custom lower it.
-    Tmp3 = TLI.LowerOperation(Result.getValue(0), DAG);
-    assert(Tmp3.getNode() && "Target didn't custom lower this node!");
-    // A call within a calling sequence must be legalized to something
-    // other than the normal CALLSEQ_END.  Violating this gets Legalize
-    // into an infinite loop.
-    assert ((!IsLegalizingCall ||
-             Node->getOpcode() != ISD::CALL ||
-             Tmp3.getNode()->getOpcode() != ISD::CALLSEQ_END) &&
-            "Nested CALLSEQ_START..CALLSEQ_END not supported.");
 
-    // The number of incoming and outgoing values should match; unless the final
-    // outgoing value is a flag.
-    assert((Tmp3.getNode()->getNumValues() == Result.getNode()->getNumValues() ||
-            (Tmp3.getNode()->getNumValues() == Result.getNode()->getNumValues() + 1 &&
-             Tmp3.getNode()->getValueType(Tmp3.getNode()->getNumValues() - 1) ==
-               MVT::Flag)) &&
-           "Lowering call/formal_arguments produced unexpected # results!");
-
-    // Since CALL/FORMAL_ARGUMENTS nodes produce multiple values, make sure to
-    // remember that we legalized all of them, so it doesn't get relegalized.
-    for (unsigned i = 0, e = Tmp3.getNode()->getNumValues(); i != e; ++i) {
-      if (Tmp3.getNode()->getValueType(i) == MVT::Flag)
-        continue;
-      Tmp1 = LegalizeOp(Tmp3.getValue(i));
-      if (Op.getResNo() == i)
-        Tmp2 = Tmp1;
-      AddLegalizedOperand(SDValue(Node, i), Tmp1);
-    }
-    return Tmp2;
   case ISD::BUILD_VECTOR:
     switch (TLI.getOperationAction(ISD::BUILD_VECTOR, Node->getValueType(0))) {
     default: llvm_unreachable("This action is not supported yet!");
@@ -1905,7 +1868,9 @@ SDValue SelectionDAGLegalize::ExpandLibCall(RTLIB::Libcall LC, SDNode *Node,
   const Type *RetTy = Node->getValueType(0).getTypeForMVT();
   std::pair<SDValue, SDValue> CallInfo =
     TLI.LowerCallTo(InChain, RetTy, isSigned, !isSigned, false, false,
-                    0, CallingConv::C, false, Callee, Args, DAG,
+                    0, CallingConv::C, false,
+                    /*isReturnValueUsed=*/true,
+                    Callee, Args, DAG,
                     Node->getDebugLoc());
 
   // Legalize the call sequence, starting with the chain.  This will advance
@@ -2311,6 +2276,7 @@ void SelectionDAGLegalize::ExpandNode(SDNode *Node,
     std::pair<SDValue, SDValue> CallResult =
       TLI.LowerCallTo(Node->getOperand(0), Type::VoidTy,
                       false, false, false, false, 0, CallingConv::C, false,
+                      /*isReturnValueUsed=*/true,
                       DAG.getExternalSymbol("abort", TLI.getPointerTy()),
                       Args, DAG, dl);
     Results.push_back(CallResult.second);

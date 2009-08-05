@@ -17,6 +17,7 @@
 #include "llvm/ADT/SmallSet.h"
 #include "llvm/Analysis/AliasAnalysis.h"
 #include "llvm/Constants.h"
+#include "llvm/Constants.h"
 #include "llvm/CallingConv.h"
 #include "llvm/DerivedTypes.h"
 #include "llvm/Function.h"
@@ -753,6 +754,7 @@ void SelectionDAGLowering::clear() {
   PendingExports.clear();
   DAG.clear();
   CurDebugLoc = DebugLoc::getUnknownLoc();
+  HasTailCall = false;
 }
 
 /// getRoot - Return the current virtual root of the Selection DAG,
@@ -934,14 +936,8 @@ SDValue SelectionDAGLowering::getValue(const Value *V) {
 
 
 void SelectionDAGLowering::visitRet(ReturnInst &I) {
-  if (I.getNumOperands() == 0) {
-    DAG.setRoot(DAG.getNode(ISD::RET, getCurDebugLoc(),
-                            MVT::Other, getControlRoot()));
-    return;
-  }
-
-  SmallVector<SDValue, 8> NewValues;
-  NewValues.push_back(getControlRoot());
+  SDValue Chain = getControlRoot();
+  SmallVector<ISD::OutputArg, 8> Outs;
   for (unsigned i = 0, e = I.getNumOperands(); i != e; ++i) {
     SmallVector<MVT, 4> ValueVTs;
     ComputeValueVTs(TLI, I.getOperand(i)->getType(), ValueVTs);
@@ -988,14 +984,16 @@ void SelectionDAGLowering::visitRet(ReturnInst &I) {
       else if (F->paramHasAttr(0, Attribute::ZExt))
         Flags.setZExt();
 
-      for (unsigned i = 0; i < NumParts; ++i) {
-        NewValues.push_back(Parts[i]);
-        NewValues.push_back(DAG.getArgFlags(Flags));
-      }
+      for (unsigned i = 0; i < NumParts; ++i)
+        Outs.push_back(ISD::OutputArg(Flags, Parts[i], /*isfixed=*/true));
     }
   }
-  DAG.setRoot(DAG.getNode(ISD::RET, getCurDebugLoc(), MVT::Other,
-                          &NewValues[0], NewValues.size()));
+
+  bool isVarArg = DAG.getMachineFunction().getFunction()->isVarArg();
+  unsigned CallConv = DAG.getMachineFunction().getFunction()->getCallingConv();
+  Chain = TLI.LowerReturn(Chain, CallConv, isVarArg,
+                          Outs, getCurDebugLoc(), DAG);
+  DAG.setRoot(Chain);
 }
 
 /// CopyToExportRegsIfNeeded - If the given value has virtual registers
@@ -4346,9 +4344,76 @@ SelectionDAGLowering::visitIntrinsicCall(CallInst &I, unsigned Intrinsic) {
   }
 }
 
+/// Test if the given instruction is in a position to be optimized
+/// with a tail-call. This roughly means that it's in a block with
+/// a return and there's nothing that needs to be scheduled
+/// between it and the return.
+///
+/// This function only tests target-independent requirements.
+/// For target-dependent requirements, a target should override
+/// TargetLowering::IsEligibleForTailCallOptimization.
+///
+static bool
+isInTailCallPosition(const Instruction *I, Attributes RetAttr,
+                     const TargetLowering &TLI) {
+  const BasicBlock *ExitBB = I->getParent();
+  const TerminatorInst *Term = ExitBB->getTerminator();
+  const ReturnInst *Ret = dyn_cast<ReturnInst>(Term);
+  const Function *F = ExitBB->getParent();
+
+  // The block must end in a return statement or an unreachable.
+  if (!Ret && !isa<UnreachableInst>(Term)) return false;
+
+  // If I will have a chain, make sure no other instruction that will have a
+  // chain interposes between I and the return.
+  if (I->mayHaveSideEffects() || I->mayReadFromMemory() ||
+      !I->isSafeToSpeculativelyExecute())
+    for (BasicBlock::const_iterator BBI = prior(prior(ExitBB->end())); ;
+         --BBI) {
+      if (&*BBI == I)
+        break;
+      if (BBI->mayHaveSideEffects() || BBI->mayReadFromMemory() ||
+          !BBI->isSafeToSpeculativelyExecute())
+        return false;
+    }
+
+  // If the block ends with a void return or unreachable, it doesn't matter
+  // what the call's return type is.
+  if (!Ret || Ret->getNumOperands() == 0) return true;
+
+  // Conservatively require the attributes of the call to match those of
+  // the return.
+  if (F->getAttributes().getRetAttributes() != RetAttr)
+    return false;
+
+  // Otherwise, make sure the unmodified return value of I is the return value.
+  for (const Instruction *U = dyn_cast<Instruction>(Ret->getOperand(0)); ;
+       U = dyn_cast<Instruction>(U->getOperand(0))) {
+    if (!U)
+      return false;
+    if (!U->hasOneUse())
+      return false;
+    if (U == I)
+      break;
+    // Check for a truly no-op truncate.
+    if (isa<TruncInst>(U) &&
+        TLI.isTruncateFree(U->getOperand(0)->getType(), U->getType()))
+      continue;
+    // Check for a truly no-op bitcast.
+    if (isa<BitCastInst>(U) &&
+        (U->getOperand(0)->getType() == U->getType() ||
+         (isa<PointerType>(U->getOperand(0)->getType()) &&
+          isa<PointerType>(U->getType()))))
+      continue;
+    // Otherwise it's not a true no-op.
+    return false;
+  }
+
+  return true;
+}
 
 void SelectionDAGLowering::LowerCallTo(CallSite CS, SDValue Callee,
-                                       bool IsTailCall,
+                                       bool isTailCall,
                                        MachineBasicBlock *LandingPad) {
   const PointerType *PT = cast<PointerType>(CS.getCalledValue()->getType());
   const FunctionType *FTy = cast<FunctionType>(PT->getElementType());
@@ -4358,8 +4423,9 @@ void SelectionDAGLowering::LowerCallTo(CallSite CS, SDValue Callee,
   TargetLowering::ArgListTy Args;
   TargetLowering::ArgListEntry Entry;
   Args.reserve(CS.arg_size());
+  unsigned j = 1;
   for (CallSite::arg_iterator i = CS.arg_begin(), e = CS.arg_end();
-       i != e; ++i) {
+       i != e; ++i, ++j) {
     SDValue ArgNode = getValue(*i);
     Entry.Node = ArgNode; Entry.Ty = (*i)->getType();
 
@@ -4385,17 +4451,38 @@ void SelectionDAGLowering::LowerCallTo(CallSite CS, SDValue Callee,
                              getControlRoot(), BeginLabel));
   }
 
+  // Check if target-independent constraints permit a tail call here.
+  // Target-dependent constraints are checked within TLI.LowerCallTo.
+  if (isTailCall &&
+      !isInTailCallPosition(CS.getInstruction(),
+                            CS.getAttributes().getRetAttributes(),
+                            TLI))
+    isTailCall = false;
+
   std::pair<SDValue,SDValue> Result =
     TLI.LowerCallTo(getRoot(), CS.getType(),
                     CS.paramHasAttr(0, Attribute::SExt),
                     CS.paramHasAttr(0, Attribute::ZExt), FTy->isVarArg(),
                     CS.paramHasAttr(0, Attribute::InReg), FTy->getNumParams(),
                     CS.getCallingConv(),
-                    IsTailCall && PerformTailCallOpt,
+                    isTailCall,
+                    !CS.getInstruction()->use_empty(),
                     Callee, Args, DAG, getCurDebugLoc());
-  if (CS.getType() != Type::VoidTy)
+  assert((isTailCall || CS.getType() == Type::VoidTy ||
+          Result.first.getNode()) &&
+         "Non-null value expected with non-void non-tail call!");
+  assert((isTailCall || Result.second.getNode()) &&
+         "Non-null chain expected with non-tail call!");
+  assert((Result.second.getNode() || !Result.first.getNode()) &&
+         "Null value expected with tail call!");
+  if (Result.first.getNode())
     setValue(CS.getInstruction(), Result.first);
-  DAG.setRoot(Result.second);
+  // As a special case, a null chain means that a tail call has
+  // been emitted and the DAG root is already updated.
+  if (Result.second.getNode())
+    DAG.setRoot(Result.second);
+  else
+    HasTailCall = true;
 
   if (LandingPad && MMI) {
     // Insert a label at the end of the invoke call to mark the try range.  This
@@ -4484,7 +4571,12 @@ void SelectionDAGLowering::visitCall(CallInst &I) {
   else
     Callee = DAG.getExternalSymbol(RenameFn, TLI.getPointerTy());
 
-  LowerCallTo(&I, Callee, I.isTailCall());
+  // Check if we can potentially perform a tail call. More detailed
+  // checking is be done within LowerCallTo, after more information
+  // about the call is known.
+  bool isTailCall = PerformTailCallOpt && I.isTailCall();
+
+  LowerCallTo(&I, Callee, isTailCall);
 }
 
 
@@ -5431,13 +5523,18 @@ void SelectionDAGLowering::visitMalloc(MallocInst &I) {
   Entry.Ty = TLI.getTargetData()->getIntPtrType();
   Args.push_back(Entry);
 
+  bool isTailCall = PerformTailCallOpt &&
+                    isInTailCallPosition(&I, Attribute::None, TLI);
   std::pair<SDValue,SDValue> Result =
     TLI.LowerCallTo(getRoot(), I.getType(), false, false, false, false,
-                    0, CallingConv::C, PerformTailCallOpt,
+                    0, CallingConv::C, isTailCall,
+                    /*isReturnValueUsed=*/true,
                     DAG.getExternalSymbol("malloc", IntPtr),
                     Args, DAG, getCurDebugLoc());
-  setValue(&I, Result.first);  // Pointers always fit in registers
-  DAG.setRoot(Result.second);
+  if (Result.first.getNode())
+    setValue(&I, Result.first);  // Pointers always fit in registers
+  if (Result.second.getNode())
+    DAG.setRoot(Result.second);
 }
 
 void SelectionDAGLowering::visitFree(FreeInst &I) {
@@ -5447,12 +5544,16 @@ void SelectionDAGLowering::visitFree(FreeInst &I) {
   Entry.Ty = TLI.getTargetData()->getIntPtrType();
   Args.push_back(Entry);
   MVT IntPtr = TLI.getPointerTy();
+  bool isTailCall = PerformTailCallOpt &&
+                    isInTailCallPosition(&I, Attribute::None, TLI);
   std::pair<SDValue,SDValue> Result =
     TLI.LowerCallTo(getRoot(), Type::VoidTy, false, false, false, false,
-                    0, CallingConv::C, PerformTailCallOpt,
+                    0, CallingConv::C, isTailCall,
+                    /*isReturnValueUsed=*/true,
                     DAG.getExternalSymbol("free", IntPtr), Args, DAG,
                     getCurDebugLoc());
-  DAG.setRoot(Result.second);
+  if (Result.second.getNode())
+    DAG.setRoot(Result.second);
 }
 
 void SelectionDAGLowering::visitVAStart(CallInst &I) {
@@ -5486,154 +5587,24 @@ void SelectionDAGLowering::visitVACopy(CallInst &I) {
                           DAG.getSrcValue(I.getOperand(2))));
 }
 
-/// TargetLowering::LowerArguments - This is the default LowerArguments
-/// implementation, which just inserts a FORMAL_ARGUMENTS node.  FIXME: When all
-/// targets are migrated to using FORMAL_ARGUMENTS, this hook should be
-/// integrated into SDISel.
-void TargetLowering::LowerArguments(Function &F, SelectionDAG &DAG,
-                                    SmallVectorImpl<SDValue> &ArgValues,
-                                    DebugLoc dl) {
-  // Add CC# and isVararg as operands to the FORMAL_ARGUMENTS node.
-  SmallVector<SDValue, 3+16> Ops;
-  Ops.push_back(DAG.getRoot());
-  Ops.push_back(DAG.getConstant(F.getCallingConv(), getPointerTy()));
-  Ops.push_back(DAG.getConstant(F.isVarArg(), getPointerTy()));
-
-  // Add one result value for each formal argument.
-  SmallVector<MVT, 16> RetVals;
-  unsigned j = 1;
-  for (Function::arg_iterator I = F.arg_begin(), E = F.arg_end();
-       I != E; ++I, ++j) {
-    SmallVector<MVT, 4> ValueVTs;
-    ComputeValueVTs(*this, I->getType(), ValueVTs);
-    for (unsigned Value = 0, NumValues = ValueVTs.size();
-         Value != NumValues; ++Value) {
-      MVT VT = ValueVTs[Value];
-      const Type *ArgTy = VT.getTypeForMVT();
-      ISD::ArgFlagsTy Flags;
-      unsigned OriginalAlignment =
-        getTargetData()->getABITypeAlignment(ArgTy);
-
-      if (F.paramHasAttr(j, Attribute::ZExt))
-        Flags.setZExt();
-      if (F.paramHasAttr(j, Attribute::SExt))
-        Flags.setSExt();
-      if (F.paramHasAttr(j, Attribute::InReg))
-        Flags.setInReg();
-      if (F.paramHasAttr(j, Attribute::StructRet))
-        Flags.setSRet();
-      if (F.paramHasAttr(j, Attribute::ByVal)) {
-        Flags.setByVal();
-        const PointerType *Ty = cast<PointerType>(I->getType());
-        const Type *ElementTy = Ty->getElementType();
-        unsigned FrameAlign = getByValTypeAlignment(ElementTy);
-        unsigned FrameSize  = getTargetData()->getTypeAllocSize(ElementTy);
-        // For ByVal, alignment should be passed from FE.  BE will guess if
-        // this info is not there but there are cases it cannot get right.
-        if (F.getParamAlignment(j))
-          FrameAlign = F.getParamAlignment(j);
-        Flags.setByValAlign(FrameAlign);
-        Flags.setByValSize(FrameSize);
-      }
-      if (F.paramHasAttr(j, Attribute::Nest))
-        Flags.setNest();
-      Flags.setOrigAlign(OriginalAlignment);
-
-      MVT RegisterVT = getRegisterType(VT);
-      unsigned NumRegs = getNumRegisters(VT);
-      for (unsigned i = 0; i != NumRegs; ++i) {
-        RetVals.push_back(RegisterVT);
-        ISD::ArgFlagsTy MyFlags = Flags;
-        if (NumRegs > 1 && i == 0)
-          MyFlags.setSplit();
-        // if it isn't first piece, alignment must be 1
-        else if (i > 0)
-          MyFlags.setOrigAlign(1);
-        Ops.push_back(DAG.getArgFlags(MyFlags));
-      }
-    }
-  }
-
-  RetVals.push_back(MVT::Other);
-
-  // Create the node.
-  SDNode *Result = DAG.getNode(ISD::FORMAL_ARGUMENTS, dl,
-                               DAG.getVTList(&RetVals[0], RetVals.size()),
-                               &Ops[0], Ops.size()).getNode();
-
-  // Prelower FORMAL_ARGUMENTS.  This isn't required for functionality, but
-  // allows exposing the loads that may be part of the argument access to the
-  // first DAGCombiner pass.
-  SDValue TmpRes = LowerOperation(SDValue(Result, 0), DAG);
-
-  // The number of results should match up, except that the lowered one may have
-  // an extra flag result.
-  assert((Result->getNumValues() == TmpRes.getNode()->getNumValues() ||
-          (Result->getNumValues()+1 == TmpRes.getNode()->getNumValues() &&
-           TmpRes.getValue(Result->getNumValues()).getValueType() == MVT::Flag))
-         && "Lowering produced unexpected number of results!");
-
-  // The FORMAL_ARGUMENTS node itself is likely no longer needed.
-  if (Result != TmpRes.getNode() && Result->use_empty()) {
-    HandleSDNode Dummy(DAG.getRoot());
-    DAG.RemoveDeadNode(Result);
-  }
-
-  Result = TmpRes.getNode();
-
-  unsigned NumArgRegs = Result->getNumValues() - 1;
-  DAG.setRoot(SDValue(Result, NumArgRegs));
-
-  // Set up the return result vector.
-  unsigned i = 0;
-  unsigned Idx = 1;
-  for (Function::arg_iterator I = F.arg_begin(), E = F.arg_end(); I != E;
-      ++I, ++Idx) {
-    SmallVector<MVT, 4> ValueVTs;
-    ComputeValueVTs(*this, I->getType(), ValueVTs);
-    for (unsigned Value = 0, NumValues = ValueVTs.size();
-         Value != NumValues; ++Value) {
-      MVT VT = ValueVTs[Value];
-      MVT PartVT = getRegisterType(VT);
-
-      unsigned NumParts = getNumRegisters(VT);
-      SmallVector<SDValue, 4> Parts(NumParts);
-      for (unsigned j = 0; j != NumParts; ++j)
-        Parts[j] = SDValue(Result, i++);
-
-      ISD::NodeType AssertOp = ISD::DELETED_NODE;
-      if (F.paramHasAttr(Idx, Attribute::SExt))
-        AssertOp = ISD::AssertSext;
-      else if (F.paramHasAttr(Idx, Attribute::ZExt))
-        AssertOp = ISD::AssertZext;
-
-      ArgValues.push_back(getCopyFromParts(DAG, dl, &Parts[0], NumParts,
-                                           PartVT, VT, AssertOp));
-    }
-  }
-  assert(i == NumArgRegs && "Argument register count mismatch!");
-}
-
-
 /// TargetLowering::LowerCallTo - This is the default LowerCallTo
-/// implementation, which just inserts an ISD::CALL node, which is later custom
-/// lowered by the target to something concrete.  FIXME: When all targets are
-/// migrated to using ISD::CALL, this hook should be integrated into SDISel.
+/// implementation, which just calls LowerCall.
+/// FIXME: When all targets are
+/// migrated to using LowerCall, this hook should be integrated into SDISel.
 std::pair<SDValue, SDValue>
 TargetLowering::LowerCallTo(SDValue Chain, const Type *RetTy,
                             bool RetSExt, bool RetZExt, bool isVarArg,
                             bool isInreg, unsigned NumFixedArgs,
-                            unsigned CallingConv, bool isTailCall,
+                            unsigned CallConv, bool isTailCall,
+                            bool isReturnValueUsed,
                             SDValue Callee,
                             ArgListTy &Args, SelectionDAG &DAG, DebugLoc dl) {
+
   assert((!isTailCall || PerformTailCallOpt) &&
          "isTailCall set when tail-call optimizations are disabled!");
 
-  SmallVector<SDValue, 32> Ops;
-  Ops.push_back(Chain);   // Op#0 - Chain
-  Ops.push_back(Callee);
-
   // Handle all of the outgoing arguments.
+  SmallVector<ISD::OutputArg, 32> Outs;
   for (unsigned i = 0, e = Args.size(); i != e; ++i) {
     SmallVector<MVT, 4> ValueVTs;
     ComputeValueVTs(*this, Args[i].Ty, ValueVTs);
@@ -5684,74 +5655,91 @@ TargetLowering::LowerCallTo(SDValue Chain, const Type *RetTy,
 
       getCopyToParts(DAG, dl, Op, &Parts[0], NumParts, PartVT, ExtendKind);
 
-      for (unsigned i = 0; i != NumParts; ++i) {
+      for (unsigned j = 0; j != NumParts; ++j) {
         // if it isn't first piece, alignment must be 1
-        ISD::ArgFlagsTy MyFlags = Flags;
-        if (NumParts > 1 && i == 0)
-          MyFlags.setSplit();
-        else if (i != 0)
-          MyFlags.setOrigAlign(1);
+        ISD::OutputArg MyFlags(Flags, Parts[j], i < NumFixedArgs);
+        if (NumParts > 1 && j == 0)
+          MyFlags.Flags.setSplit();
+        else if (j != 0)
+          MyFlags.Flags.setOrigAlign(1);
 
-        Ops.push_back(Parts[i]);
-        Ops.push_back(DAG.getArgFlags(MyFlags));
+        Outs.push_back(MyFlags);
       }
     }
   }
 
-  // Figure out the result value types. We start by making a list of
-  // the potentially illegal return value types.
-  SmallVector<MVT, 4> LoweredRetTys;
+  // Handle the incoming return values from the call.
+  SmallVector<ISD::InputArg, 32> Ins;
   SmallVector<MVT, 4> RetTys;
   ComputeValueVTs(*this, RetTy, RetTys);
-
-  // Then we translate that to a list of legal types.
   for (unsigned I = 0, E = RetTys.size(); I != E; ++I) {
     MVT VT = RetTys[I];
     MVT RegisterVT = getRegisterType(VT);
     unsigned NumRegs = getNumRegisters(VT);
-    for (unsigned i = 0; i != NumRegs; ++i)
-      LoweredRetTys.push_back(RegisterVT);
-  }
-
-  LoweredRetTys.push_back(MVT::Other);  // Always has a chain.
-
-  // Create the CALL node.
-  SDValue Res = DAG.getCall(CallingConv, dl,
-                            isVarArg, isTailCall, isInreg,
-                            DAG.getVTList(&LoweredRetTys[0],
-                                          LoweredRetTys.size()),
-                            &Ops[0], Ops.size(), NumFixedArgs
-                            );
-  Chain = Res.getValue(LoweredRetTys.size() - 1);
-
-  // Gather up the call result into a single value.
-  if (RetTy != Type::VoidTy && !RetTys.empty()) {
-    ISD::NodeType AssertOp = ISD::DELETED_NODE;
-
-    if (RetSExt)
-      AssertOp = ISD::AssertSext;
-    else if (RetZExt)
-      AssertOp = ISD::AssertZext;
-
-    SmallVector<SDValue, 4> ReturnValues;
-    unsigned RegNo = 0;
-    for (unsigned I = 0, E = RetTys.size(); I != E; ++I) {
-      MVT VT = RetTys[I];
-      MVT RegisterVT = getRegisterType(VT);
-      unsigned NumRegs = getNumRegisters(VT);
-      unsigned RegNoEnd = NumRegs + RegNo;
-      SmallVector<SDValue, 4> Results;
-      for (; RegNo != RegNoEnd; ++RegNo)
-        Results.push_back(Res.getValue(RegNo));
-      SDValue ReturnValue =
-        getCopyFromParts(DAG, dl, &Results[0], NumRegs, RegisterVT, VT,
-                         AssertOp);
-      ReturnValues.push_back(ReturnValue);
+    for (unsigned i = 0; i != NumRegs; ++i) {
+      ISD::InputArg MyFlags;
+      MyFlags.VT = RegisterVT;
+      MyFlags.Used = isReturnValueUsed;
+      if (RetSExt)
+        MyFlags.Flags.setSExt();
+      if (RetZExt)
+        MyFlags.Flags.setZExt();
+      if (isInreg)
+        MyFlags.Flags.setInReg();
+      Ins.push_back(MyFlags);
     }
-    Res = DAG.getNode(ISD::MERGE_VALUES, dl,
-                      DAG.getVTList(&RetTys[0], RetTys.size()),
-                      &ReturnValues[0], ReturnValues.size());
   }
+
+  // Check if target-dependent constraints permit a tail call here.
+  // Target-independent constraints should be checked by the caller.
+  if (isTailCall &&
+      !IsEligibleForTailCallOptimization(Callee, CallConv, isVarArg, Ins, DAG))
+    isTailCall = false;
+
+  SmallVector<SDValue, 4> InVals;
+  Chain = LowerCall(Chain, Callee, CallConv, isVarArg, isTailCall,
+                    Outs, Ins, dl, DAG, InVals);
+  assert((!isTailCall || InVals.empty()) && "Tail call had return SDValues!");
+
+  // For a tail call, the return value is merely live-out and there aren't
+  // any nodes in the DAG representing it. Return a special value to
+  // indicate that a tail call has been emitted and no more Instructions
+  // should be processed in the current block.
+  if (isTailCall) {
+    DAG.setRoot(Chain);
+    return std::make_pair(SDValue(), SDValue());
+  }
+
+  // Collect the legal value parts into potentially illegal values
+  // that correspond to the original function's return values.
+  ISD::NodeType AssertOp = ISD::DELETED_NODE;
+  if (RetSExt)
+    AssertOp = ISD::AssertSext;
+  else if (RetZExt)
+    AssertOp = ISD::AssertZext;
+  SmallVector<SDValue, 4> ReturnValues;
+  unsigned CurReg = 0;
+  for (unsigned I = 0, E = RetTys.size(); I != E; ++I) {
+    MVT VT = RetTys[I];
+    MVT RegisterVT = getRegisterType(VT);
+    unsigned NumRegs = getNumRegisters(VT);
+
+    SDValue ReturnValue =
+      getCopyFromParts(DAG, dl, &InVals[CurReg], NumRegs, RegisterVT, VT,
+                       AssertOp);
+    ReturnValues.push_back(ReturnValue);
+    CurReg += NumRegs;
+  }
+
+  // For a function returning void, there is no return value. We can't create
+  // such a node, so we just return a null return value in that case. In
+  // that case, nothing will actualy look at the value.
+  if (ReturnValues.empty())
+    return std::make_pair(SDValue(), Chain);
+
+  SDValue Res = DAG.getNode(ISD::MERGE_VALUES, dl,
+                            DAG.getVTList(&RetTys[0], RetTys.size()),
+                            &ReturnValues[0], ReturnValues.size());
 
   return std::make_pair(Res, Chain);
 }
@@ -5789,25 +5777,108 @@ void SelectionDAGISel::
 LowerArguments(BasicBlock *LLVMBB) {
   // If this is the entry block, emit arguments.
   Function &F = *LLVMBB->getParent();
-  SDValue OldRoot = SDL->DAG.getRoot();
-  SmallVector<SDValue, 16> Args;
-  TLI.LowerArguments(F, SDL->DAG, Args, SDL->getCurDebugLoc());
+  SelectionDAG &DAG = SDL->DAG;
+  SDValue OldRoot = DAG.getRoot();
+  DebugLoc dl = SDL->getCurDebugLoc();
+  const TargetData *TD = TLI.getTargetData();
 
-  unsigned a = 0;
-  for (Function::arg_iterator AI = F.arg_begin(), E = F.arg_end();
-       AI != E; ++AI) {
+  // Set up the incoming argument description vector.
+  SmallVector<ISD::InputArg, 16> Ins;
+  unsigned Idx = 1;
+  for (Function::arg_iterator I = F.arg_begin(), E = F.arg_end();
+       I != E; ++I, ++Idx) {
     SmallVector<MVT, 4> ValueVTs;
-    ComputeValueVTs(TLI, AI->getType(), ValueVTs);
+    ComputeValueVTs(TLI, I->getType(), ValueVTs);
+    bool isArgValueUsed = !I->use_empty();
+    for (unsigned Value = 0, NumValues = ValueVTs.size();
+         Value != NumValues; ++Value) {
+      MVT VT = ValueVTs[Value];
+      const Type *ArgTy = VT.getTypeForMVT();
+      ISD::ArgFlagsTy Flags;
+      unsigned OriginalAlignment =
+        TD->getABITypeAlignment(ArgTy);
+
+      if (F.paramHasAttr(Idx, Attribute::ZExt))
+        Flags.setZExt();
+      if (F.paramHasAttr(Idx, Attribute::SExt))
+        Flags.setSExt();
+      if (F.paramHasAttr(Idx, Attribute::InReg))
+        Flags.setInReg();
+      if (F.paramHasAttr(Idx, Attribute::StructRet))
+        Flags.setSRet();
+      if (F.paramHasAttr(Idx, Attribute::ByVal)) {
+        Flags.setByVal();
+        const PointerType *Ty = cast<PointerType>(I->getType());
+        const Type *ElementTy = Ty->getElementType();
+        unsigned FrameAlign = TLI.getByValTypeAlignment(ElementTy);
+        unsigned FrameSize  = TD->getTypeAllocSize(ElementTy);
+        // For ByVal, alignment should be passed from FE.  BE will guess if
+        // this info is not there but there are cases it cannot get right.
+        if (F.getParamAlignment(Idx))
+          FrameAlign = F.getParamAlignment(Idx);
+        Flags.setByValAlign(FrameAlign);
+        Flags.setByValSize(FrameSize);
+      }
+      if (F.paramHasAttr(Idx, Attribute::Nest))
+        Flags.setNest();
+      Flags.setOrigAlign(OriginalAlignment);
+
+      MVT RegisterVT = TLI.getRegisterType(VT);
+      unsigned NumRegs = TLI.getNumRegisters(VT);
+      for (unsigned i = 0; i != NumRegs; ++i) {
+        ISD::InputArg MyFlags(Flags, RegisterVT, isArgValueUsed);
+        if (NumRegs > 1 && i == 0)
+          MyFlags.Flags.setSplit();
+        // if it isn't first piece, alignment must be 1
+        else if (i > 0)
+          MyFlags.Flags.setOrigAlign(1);
+        Ins.push_back(MyFlags);
+      }
+    }
+  }
+
+  // Call the target to set up the argument values.
+  SmallVector<SDValue, 8> InVals;
+  SDValue NewRoot = TLI.LowerFormalArguments(DAG.getRoot(), F.getCallingConv(),
+                                             F.isVarArg(), Ins,
+                                             dl, DAG, InVals);
+  DAG.setRoot(NewRoot);
+
+  // Set up the argument values.
+  unsigned i = 0;
+  Idx = 1;
+  for (Function::arg_iterator I = F.arg_begin(), E = F.arg_end(); I != E;
+      ++I, ++Idx) {
+    SmallVector<SDValue, 4> ArgValues;
+    SmallVector<MVT, 4> ValueVTs;
+    ComputeValueVTs(TLI, I->getType(), ValueVTs);
     unsigned NumValues = ValueVTs.size();
-    if (!AI->use_empty()) {
-      SDL->setValue(AI, SDL->DAG.getMergeValues(&Args[a], NumValues,
-                                                SDL->getCurDebugLoc()));
+    for (unsigned Value = 0; Value != NumValues; ++Value) {
+      MVT VT = ValueVTs[Value];
+      MVT PartVT = TLI.getRegisterType(VT);
+      unsigned NumParts = TLI.getNumRegisters(VT);
+
+      if (!I->use_empty()) {
+        ISD::NodeType AssertOp = ISD::DELETED_NODE;
+        if (F.paramHasAttr(Idx, Attribute::SExt))
+          AssertOp = ISD::AssertSext;
+        else if (F.paramHasAttr(Idx, Attribute::ZExt))
+          AssertOp = ISD::AssertZext;
+
+        ArgValues.push_back(getCopyFromParts(DAG, dl, &InVals[i], NumParts,
+                                             PartVT, VT, AssertOp));
+      }
+      i += NumParts;
+    }
+    if (!I->use_empty()) {
+      SDL->setValue(I, DAG.getMergeValues(&ArgValues[0], NumValues,
+                                          SDL->getCurDebugLoc()));
       // If this argument is live outside of the entry block, insert a copy from
       // whereever we got it to the vreg that other BB's will reference it as.
-      SDL->CopyToExportRegsIfNeeded(AI);
+      SDL->CopyToExportRegsIfNeeded(I);
     }
-    a += NumValues;
   }
+  assert(i == InVals.size() && "Argument register count mismatch!");
 
   // Finally, if the target has anything special to do, allow it to do so.
   // FIXME: this should insert code into the DAG!

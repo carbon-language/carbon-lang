@@ -89,23 +89,45 @@ namespace llvm {
     const MipsSubtarget *Subtarget;
 
     // Lower Operand helpers
-    SDNode *LowerCallResult(SDValue Chain, SDValue InFlag, CallSDNode *TheCall,
-                            unsigned CallingConv, SelectionDAG &DAG);
+    SDValue LowerCallResult(SDValue Chain, SDValue InFlag,
+                            unsigned CallConv, bool isVarArg,
+                            const SmallVectorImpl<ISD::InputArg> &Ins,
+                            DebugLoc dl, SelectionDAG &DAG,
+                            SmallVectorImpl<SDValue> &InVals);
 
     // Lower Operand specifics
     SDValue LowerANDOR(SDValue Op, SelectionDAG &DAG);
     SDValue LowerBRCOND(SDValue Op, SelectionDAG &DAG);
-    SDValue LowerCALL(SDValue Op, SelectionDAG &DAG);
     SDValue LowerConstantPool(SDValue Op, SelectionDAG &DAG);
     SDValue LowerDYNAMIC_STACKALLOC(SDValue Op, SelectionDAG &DAG);
-    SDValue LowerFORMAL_ARGUMENTS(SDValue Op, SelectionDAG &DAG);
     SDValue LowerFP_TO_SINT(SDValue Op, SelectionDAG &DAG);
     SDValue LowerGlobalAddress(SDValue Op, SelectionDAG &DAG);
     SDValue LowerGlobalTLSAddress(SDValue Op, SelectionDAG &DAG);
     SDValue LowerJumpTable(SDValue Op, SelectionDAG &DAG);
-    SDValue LowerRET(SDValue Op, SelectionDAG &DAG);
     SDValue LowerSELECT(SDValue Op, SelectionDAG &DAG);
     SDValue LowerSETCC(SDValue Op, SelectionDAG &DAG);
+
+    virtual SDValue
+      LowerFormalArguments(SDValue Chain,
+                           unsigned CallConv, bool isVarArg,
+                           const SmallVectorImpl<ISD::InputArg> &Ins,
+                           DebugLoc dl, SelectionDAG &DAG,
+                           SmallVectorImpl<SDValue> &InVals);
+
+    virtual SDValue
+      LowerCall(SDValue Chain, SDValue Callee,
+                unsigned CallConv, bool isVarArg,
+                bool isTailCall,
+                const SmallVectorImpl<ISD::OutputArg> &Outs,
+                const SmallVectorImpl<ISD::InputArg> &Ins,
+                DebugLoc dl, SelectionDAG &DAG,
+                SmallVectorImpl<SDValue> &InVals);
+
+    virtual SDValue
+      LowerReturn(SDValue Chain,
+                  unsigned CallConv, bool isVarArg,
+                  const SmallVectorImpl<ISD::OutputArg> &Outs,
+                  DebugLoc dl, SelectionDAG &DAG);
 
     virtual MachineBasicBlock *EmitInstrWithCustomInserter(MachineInstr *MI,
                                                    MachineBasicBlock *MBB) const;

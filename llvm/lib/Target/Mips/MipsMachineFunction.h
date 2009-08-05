@@ -57,7 +57,7 @@ private:
   /// to be used on emitPrologue and processFunctionBeforeFrameFinalized.
   MipsFIHolder GPHolder;
 
-  /// On LowerFORMAL_ARGUMENTS the stack size is unknown, so the Stack 
+  /// On LowerFormalArguments the stack size is unknown, so the Stack
   /// Pointer Offset calculation of "not in register arguments" must be 
   /// postponed to emitPrologue. 
   SmallVector<MipsFIHolder, 16> FnLoadArgs;
@@ -65,7 +65,7 @@ private:
 
   // When VarArgs, we must write registers back to caller stack, preserving 
   // on register arguments. Since the stack size is unknown on 
-  // LowerFORMAL_ARGUMENTS, the Stack Pointer Offset calculation must be
+  // LowerFormalArguments, the Stack Pointer Offset calculation must be
   // postponed to emitPrologue. 
   SmallVector<MipsFIHolder, 4> FnStoreVarArgs;
   bool HasStoreVarArgs;
