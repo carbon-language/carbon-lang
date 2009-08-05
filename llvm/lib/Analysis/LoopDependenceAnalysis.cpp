@@ -136,6 +136,19 @@ bool LoopDependenceAnalysis::isAffine(const SCEV *S) const {
   return isLoopInvariant(S) || (rec && rec->isAffine());
 }
 
+bool LoopDependenceAnalysis::isZIVPair(const SCEV *A, const SCEV *B) const {
+  return isLoopInvariant(A) && isLoopInvariant(B);
+}
+
+LoopDependenceAnalysis::DependenceResult
+LoopDependenceAnalysis::analyseZIV(const SCEV *A,
+                                   const SCEV *B,
+                                   Subscript *S) const {
+  assert(isZIVPair(A, B));
+  const SCEV *diff = SE->getMinusSCEV(A, B);
+  return diff->isZero() ? Dependent : Independent;
+}
+
 LoopDependenceAnalysis::DependenceResult
 LoopDependenceAnalysis::analyseSubscript(const SCEV *A,
                                          const SCEV *B,
@@ -152,7 +165,10 @@ LoopDependenceAnalysis::analyseSubscript(const SCEV *A,
     return Unknown;
   }
 
-  // TODO: Implement ZIV/SIV/MIV testers.
+  if (isZIVPair(A, B))
+    return analyseZIV(A, B, S);
+
+  // TODO: Implement SIV/MIV testers.
 
   DEBUG(errs() << "  -> [?] cannot analyse subscript\n");
   return Unknown;

@@ -77,6 +77,8 @@ class LoopDependenceAnalysis : public LoopPass {
   bool isAffine(const SCEV*) const;
 
   /// TODO: doc
+  bool isZIVPair(const SCEV*, const SCEV*) const;
+  DependenceResult analyseZIV(const SCEV*, const SCEV*, Subscript*) const;
   DependenceResult analyseSubscript(const SCEV*, const SCEV*, Subscript*) const;
   DependenceResult analysePair(DependencePair*) const;
 

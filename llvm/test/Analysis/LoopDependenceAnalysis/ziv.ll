@@ -12,7 +12,7 @@ for.body:
   %i = phi i64 [ 0, %entry ], [ %i.next, %for.body ]
   %x = load i32* getelementptr ([256 x i32]* @x, i32 0, i64 6)
   store i32 %x, i32* getelementptr ([256 x i32]* @x, i32 0, i64 5)
-; CHECK: 0,1: dep
+; CHECK: 0,1: ind
   %i.next = add i64 %i, 1
   %exitcond = icmp eq i64 %i.next, 256
   br i1 %exitcond, label %for.end, label %for.body
@@ -34,7 +34,7 @@ for.body:
   %i = phi i64 [ 0, %entry ], [ %i.next, %for.body ]
   %x = load i32* %x.ld.addr
   store i32 %x, i32* %x.st.addr
-; CHECK: 0,1: dep
+; CHECK: 0,1: ind
   %i.next = add i64 %i, 1
   %exitcond = icmp eq i64 %i.next, 256
   br i1 %exitcond, label %for.end, label %for.body
