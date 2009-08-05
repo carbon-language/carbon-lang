@@ -119,12 +119,16 @@ class VISIBILITY_HIDDEN RegionStoreSubRegionMap : public SubRegionMap {
   SetTy::Factory F;
   Map M;
 public:
-  void add(const MemRegion* Parent, const MemRegion* SubRegion) {
+  bool add(const MemRegion* Parent, const MemRegion* SubRegion) {
     Map::iterator I = M.find(Parent);
-    if (I == M.end())
+
+    if (I == M.end()) {
       M.insert(std::make_pair(Parent, F.Add(F.GetEmptySet(), SubRegion)));
-    else
-      I->second = F.Add(I->second, SubRegion);
+      return true;
+    }
+
+    I->second = F.Add(I->second, SubRegion);
+    return false;
   }
     
   ~RegionStoreSubRegionMap() {}
@@ -405,9 +409,9 @@ RegionStoreManager::getRegionStoreSubRegionMap(const GRState *state) {
       continue;
 
     const MemRegion *superR = R->getSuperRegion();
-    M->add(superR, R);
-    if (const SubRegion *sr = dyn_cast<SubRegion>(superR))
-      WL.push_back(sr);
+    if (M->add(superR, R))
+      if (const SubRegion *sr = dyn_cast<SubRegion>(superR))
+        WL.push_back(sr);
   }
 
   return M;
