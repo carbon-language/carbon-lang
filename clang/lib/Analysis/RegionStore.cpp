@@ -121,8 +121,10 @@ class VISIBILITY_HIDDEN RegionStoreSubRegionMap : public SubRegionMap {
 public:
   void add(const MemRegion* Parent, const MemRegion* SubRegion) {
     Map::iterator I = M.find(Parent);
-    M.insert(std::make_pair(Parent, 
-             F.Add(I == M.end() ? F.GetEmptySet() : I->second, SubRegion)));
+    if (I == M.end())
+      M.insert(std::make_pair(Parent, F.Add(F.GetEmptySet(), SubRegion)));
+    else
+      I->second = F.Add(I->second, SubRegion);
   }
     
   ~RegionStoreSubRegionMap() {}

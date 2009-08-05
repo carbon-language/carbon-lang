@@ -522,3 +522,14 @@ void test_pass_val() {
   test_pass_val_aux(s);
 }
 
+// This is a reduced test case of a false positive that previously appeared
+// in RegionStoreManager.  Previously the array access resulted in dereferencing
+// an undefined value.
+int test_array_compound(int *q, int *r, int *z) {
+  int *array[] = { q, r, z };
+  int j = 0;
+  for (unsigned i = 0; i < 3 ; ++i)
+    if (*array[i]) ++j; // no-warning
+  return j;
+}
+
