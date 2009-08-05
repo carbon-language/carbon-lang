@@ -661,7 +661,7 @@ void CodeGenFunction::EmitCtorPrologue(const CXXConstructorDecl *CD) {
   }
 
   // Initialize the vtable pointer
-  if (ClassDecl->isPolymorphic() || ClassDecl->getNumVBases()) {
+  if (ClassDecl->isDynamicClass()) {
     if (!LoadOfThis)
       LoadOfThis = LoadCXXThis();
     llvm::Value *VtableField;
