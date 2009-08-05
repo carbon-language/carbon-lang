@@ -56,7 +56,8 @@ namespace {
     void TransferDeadFlag(MachineInstr *MI, unsigned DstReg,
                           const TargetRegisterInfo &TRI);
     void TransferKillFlag(MachineInstr *MI, unsigned SrcReg,
-                          const TargetRegisterInfo &TRI);
+                          const TargetRegisterInfo &TRI,
+                          bool AddIfNotFound = false);
   };
 
   char LowerSubregsInstructionPass::ID = 0;
@@ -88,10 +89,11 @@ LowerSubregsInstructionPass::TransferDeadFlag(MachineInstr *MI,
 void
 LowerSubregsInstructionPass::TransferKillFlag(MachineInstr *MI,
                                               unsigned SrcReg,
-                                              const TargetRegisterInfo &TRI) {
+                                              const TargetRegisterInfo &TRI,
+                                              bool AddIfNotFound) {
   for (MachineBasicBlock::iterator MII =
         prior(MachineBasicBlock::iterator(MI)); ; --MII) {
-    if (MII->addRegisterKilled(SrcReg, &TRI))
+    if (MII->addRegisterKilled(SrcReg, &TRI, AddIfNotFound))
       break;
     assert(MII != MI->getParent()->begin() &&
            "copyRegToReg output doesn't reference source register!");
@@ -142,7 +144,7 @@ bool LowerSubregsInstructionPass::LowerExtract(MachineInstr *MI) {
     if (MI->getOperand(0).isDead())
       TransferDeadFlag(MI, DstReg, TRI);
     if (MI->getOperand(1).isKill())
-      TransferKillFlag(MI, SrcReg, TRI);
+      TransferKillFlag(MI, SuperReg, TRI, true);
 
 #ifndef NDEBUG
     MachineBasicBlock::iterator dMI = MI;
