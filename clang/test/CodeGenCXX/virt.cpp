@@ -31,7 +31,20 @@ void A::foo2() { }
 
 int main() {
   A a;
+  B b;
 }
+
+// CHECK-LP64: __ZTV1B:
+// CHECK-LP64: .space 8
+// CHECK-LP64: .space 8
+// CHECK-LP64: .quad __ZN1B4bar1Ev
+// CHECK-LP64: .quad __ZN1B4bar2Ev
+
+// CHECK-LP32: __ZTV1B:
+// CHECK-LP32: .space 4
+// CHECK-LP32: .space 4
+// CHECK-LP32: .long __ZN1B4bar1Ev
+// CHECK-LP32: .long __ZN1B4bar2Ev
 
 // CHECK-LP64: __ZTV1A:
 // CHECK-LP64: .space 8
