@@ -309,7 +309,8 @@ void Clang::ConstructJob(Compilation &C, const JobAction &JA,
   if (Args.hasArg(options::OPT_ftime_report))
     CmdArgs.push_back("--time-passes");
   // FIXME: Set --enable-unsafe-fp-math.
-  if (!Args.hasArg(options::OPT_fomit_frame_pointer))
+  if (Args.hasArg(options::OPT_fno_omit_frame_pointer) ||
+      !Args.hasArg(options::OPT_fomit_frame_pointer))
     CmdArgs.push_back("--disable-fp-elim");
   if (!Args.hasFlag(options::OPT_fzero_initialized_in_bss,
                     options::OPT_fno_zero_initialized_in_bss,

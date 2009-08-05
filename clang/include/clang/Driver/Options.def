@@ -420,6 +420,7 @@ OPTION("-fno-inline-functions", fno_inline_functions, Flag, clang_ignored_f_Grou
 OPTION("-fno-inline", fno_inline, Flag, clang_ignored_f_Group, INVALID, "", 0, 0, 0)
 OPTION("-fno-keep-inline-functions", fno_keep_inline_functions, Flag, clang_ignored_f_Group, INVALID, "", 0, 0, 0)
 OPTION("-fno-math-errno", fno_math_errno, Flag, f_Group, INVALID, "", 0, 0, 0)
+OPTION("-fno-omit-frame-pointer", fno_omit_frame_pointer, Flag, f_Group, INVALID, "", 0, 0, 0)
 OPTION("-fno-pascal-strings", fno_pascal_strings, Flag, f_Group, INVALID, "", 0, 0, 0)
 OPTION("-fno-rtti", fno_rtti, Flag, f_Group, INVALID, "", 0, 0, 0)
 OPTION("-fno-show-column", fno_show_column, Flag, f_Group, INVALID, "", 0, 0, 0)
