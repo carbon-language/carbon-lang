@@ -31,23 +31,6 @@
 #include "llvm/Support/raw_ostream.h"
 using namespace llvm;
 
-namespace {
-class TargetLoweringObjectFileAlpha : public TargetLoweringObjectFile {
-public:
-  void Initialize(MCContext &Ctx, const TargetMachine &TM) {
-    TargetLoweringObjectFile::Initialize(Ctx, TM);
-    TextSection = getOrCreateSection(".text", true, 
-                                     SectionKind::getText());
-    DataSection = getOrCreateSection(".data", true, 
-                                     SectionKind::getDataRel());
-    ReadOnlySection = getOrCreateSection(".rodata", true, 
-                                         SectionKind::getReadOnly());
-  }
-};
-}
-  
-  
-
 /// AddLiveIn - This helper function adds the specified physical register to the
 /// MachineFunction as a live in value.  It also creates a corresponding virtual
 /// register for it.
@@ -60,7 +43,7 @@ static unsigned AddLiveIn(MachineFunction &MF, unsigned PReg,
 }
 
 AlphaTargetLowering::AlphaTargetLowering(TargetMachine &TM)
-  : TargetLowering(TM, new TargetLoweringObjectFileAlpha()) {
+  : TargetLowering(TM, new TargetLoweringObjectFileELF()) {
   // Set up the TargetLowering object.
   //I am having problems with shr n i8 1
   setShiftAmountType(MVT::i64);
