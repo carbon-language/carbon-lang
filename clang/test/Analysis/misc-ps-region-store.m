@@ -154,3 +154,15 @@ void test_rdar_7114618(struct s_7114618 *s) {
     }
   }
 }
+
+// Test pointers increment correctly.
+void f() {
+  int a[2];
+  a[1] = 3;
+  int *p = a;
+  p++;
+  if (*p != 3) {
+    int *q = 0;
+    *q = 3; // no-warning
+  }
+}
