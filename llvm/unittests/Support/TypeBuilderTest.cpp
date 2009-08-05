@@ -171,7 +171,7 @@ public:
     st.push_back(TypeBuilder<int, cross>::get(Context));
     st.push_back(TypeBuilder<int*, cross>::get(Context));
     st.push_back(TypeBuilder<void*[], cross>::get(Context));
-    static const StructType *const result = StructType::get(st);
+    static const StructType *const result = StructType::get(Context, st);
     return result;
   }
 
@@ -194,7 +194,7 @@ public:
     st.push_back(TypeBuilder<types::i<32>, cross>::get(Context));
     st.push_back(TypeBuilder<types::i<32>*, cross>::get(Context));
     st.push_back(TypeBuilder<types::i<8>*[], cross>::get(Context));
-    static const StructType *const result = StructType::get(st);
+    static const StructType *const result = StructType::get(Context, st);
     return result;
   }
 
@@ -211,19 +211,19 @@ public:
 namespace {
 
 TEST(TypeBuilderTest, Extensions) {
-  EXPECT_EQ(PointerType::getUnqual(StructType::get(
+  EXPECT_EQ(PointerType::getUnqual(StructType::get(getGlobalContext(), 
                                      TypeBuilder<int, false>::get(getGlobalContext()),
                                      TypeBuilder<int*, false>::get(getGlobalContext()),
                                      TypeBuilder<void*[], false>::get(getGlobalContext()),
                                      NULL)),
             (TypeBuilder<MyType*, false>::get(getGlobalContext())));
-  EXPECT_EQ(PointerType::getUnqual(StructType::get(
+  EXPECT_EQ(PointerType::getUnqual(StructType::get(getGlobalContext(), 
                                      TypeBuilder<types::i<32>, false>::get(getGlobalContext()),
                                      TypeBuilder<types::i<32>*, false>::get(getGlobalContext()),
                                      TypeBuilder<types::i<8>*[], false>::get(getGlobalContext()),
                                      NULL)),
             (TypeBuilder<MyPortableType*, false>::get(getGlobalContext())));
-  EXPECT_EQ(PointerType::getUnqual(StructType::get(
+  EXPECT_EQ(PointerType::getUnqual(StructType::get(getGlobalContext(), 
                                      TypeBuilder<types::i<32>, false>::get(getGlobalContext()),
                                      TypeBuilder<types::i<32>*, false>::get(getGlobalContext()),
                                      TypeBuilder<types::i<8>*[], false>::get(getGlobalContext()),
