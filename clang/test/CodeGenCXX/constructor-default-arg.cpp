@@ -34,6 +34,7 @@ int main()
 // CHECK-LP64: call	__ZN1XC1ERK1Xiii
 // CHECK-LP64: call	__ZN1XC1ERK1Xiii
 // CHECK-LP64: call	__ZN1XC1ERK1Xiii
+
 // CHECK-LP32: call	L__ZN1XC1ERK1Xiii
 // CHECK-LP32: call	L__ZN1XC1ERK1Xiii
 // CHECK-LP32: call	L__ZN1XC1ERK1Xiii
