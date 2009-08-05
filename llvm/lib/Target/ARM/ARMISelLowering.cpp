@@ -1461,21 +1461,17 @@ ARMTargetLowering::LowerFormalArguments(SDValue Chain,
       } else {
         TargetRegisterClass *RC;
 
-        if (FloatABIType == FloatABI::Hard && RegVT == MVT::f32)
+        if (RegVT == MVT::f32)
           RC = ARM::SPRRegisterClass;
-        else if (FloatABIType == FloatABI::Hard && RegVT == MVT::f64)
+        else if (RegVT == MVT::f64)
           RC = ARM::DPRRegisterClass;
-        else if (FloatABIType == FloatABI::Hard && RegVT == MVT::v2f64)
+        else if (RegVT == MVT::v2f64)
           RC = ARM::QPRRegisterClass;
-        else if (AFI->isThumb1OnlyFunction())
-          RC = ARM::tGPRRegisterClass;
+        else if (RegVT == MVT::i32)
+          RC = (AFI->isThumb1OnlyFunction() ?
+                ARM::tGPRRegisterClass : ARM::GPRRegisterClass);
         else
-          RC = ARM::GPRRegisterClass;
-
-        assert((RegVT == MVT::i32 || RegVT == MVT::f32 ||
-                (FloatABIType == FloatABI::Hard &&
-                 ((RegVT == MVT::f64) || (RegVT == MVT::v2f64)))) &&
-               "RegVT not supported by FORMAL_ARGUMENTS Lowering");
+          llvm_unreachable("RegVT not supported by FORMAL_ARGUMENTS Lowering");
 
         // Transform the arguments in physical registers into virtual ones.
         unsigned Reg = MF.addLiveIn(VA.getLocReg(), RC);
