@@ -42,11 +42,6 @@
 #include "llvm/Support/ErrorHandling.h"
 using namespace llvm;
 
-static cl::opt<bool>
-StrictIndexRegclass("strict-index-regclass",
-                    cl::desc("Use a special register class to avoid letting SP "
-                             "be used as an index"));
-
 X86RegisterInfo::X86RegisterInfo(X86TargetMachine &tm,
                                  const TargetInstrInfo &tii)
   : X86GenRegisterInfo(tm.getSubtarget<X86Subtarget>().is64Bit() ?
@@ -274,15 +269,9 @@ getPointerRegClass(unsigned Kind) const {
       return &X86::GR64RegClass;
     return &X86::GR32RegClass;
   case 1: // Normal GRPs except the stack pointer (for encoding reasons).
-    if (!StrictIndexRegclass) {
-      if (TM.getSubtarget<X86Subtarget>().is64Bit())
-        return &X86::GR64RegClass;
-      return &X86::GR32RegClass;
-    } else {
-      if (TM.getSubtarget<X86Subtarget>().is64Bit())
-        return &X86::GR64_NOSPRegClass;
-      return &X86::GR32_NOSPRegClass;
-    }
+    if (TM.getSubtarget<X86Subtarget>().is64Bit())
+      return &X86::GR64_NOSPRegClass;
+    return &X86::GR32_NOSPRegClass;
   }
 }
 

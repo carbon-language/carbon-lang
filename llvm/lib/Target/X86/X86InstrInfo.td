@@ -196,7 +196,7 @@ def i8mem_NOREX : Operand<i64> {
 
 def lea32mem : Operand<i32> {
   let PrintMethod = "printlea32mem";
-  let MIOperandInfo = (ops GR32, i8imm, GR32, i32imm);
+  let MIOperandInfo = (ops GR32, i8imm, GR32_NOSP, i32imm);
 }
 
 def SSECC : Operand<i8> {
