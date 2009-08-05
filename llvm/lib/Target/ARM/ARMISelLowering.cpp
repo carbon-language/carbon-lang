@@ -1460,13 +1460,12 @@ ARMTargetLowering::LowerFormalArguments(SDValue Chain,
 
       } else {
         TargetRegisterClass *RC;
-        bool IsHardFloatCC = (CallConv == CallingConv::ARM_AAPCS_VFP);
 
-        if (IsHardFloatCC && RegVT == MVT::f32)
+        if (FloatABIType == FloatABI::Hard && RegVT == MVT::f32)
           RC = ARM::SPRRegisterClass;
-        else if (IsHardFloatCC && RegVT == MVT::f64)
+        else if (FloatABIType == FloatABI::Hard && RegVT == MVT::f64)
           RC = ARM::DPRRegisterClass;
-        else if (IsHardFloatCC && RegVT == MVT::v2f64)
+        else if (FloatABIType == FloatABI::Hard && RegVT == MVT::v2f64)
           RC = ARM::QPRRegisterClass;
         else if (AFI->isThumb1OnlyFunction())
           RC = ARM::tGPRRegisterClass;
@@ -1474,7 +1473,7 @@ ARMTargetLowering::LowerFormalArguments(SDValue Chain,
           RC = ARM::GPRRegisterClass;
 
         assert((RegVT == MVT::i32 || RegVT == MVT::f32 ||
-                (IsHardFloatCC &&
+                (FloatABIType == FloatABI::Hard &&
                  ((RegVT == MVT::f64) || (RegVT == MVT::v2f64)))) &&
                "RegVT not supported by FORMAL_ARGUMENTS Lowering");
 
