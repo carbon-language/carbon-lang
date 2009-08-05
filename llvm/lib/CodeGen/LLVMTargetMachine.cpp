@@ -281,7 +281,9 @@ bool LLVMTargetMachine::addCommonCodeGenPasses(PassManagerBase &PM,
 
   // Perform stack slot coloring.
   if (OptLevel != CodeGenOpt::None)
-    PM.add(createStackSlotColoringPass(OptLevel >= CodeGenOpt::Aggressive));
+    // FIXME: Re-enable coloring with register when it's capable of adding
+    // kill markers.
+    PM.add(createStackSlotColoringPass(false));
 
   printAndVerify(PM);           // Print the register-allocated code
 
