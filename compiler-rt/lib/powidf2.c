@@ -1,19 +1,20 @@
-//===-- powidf2.cpp - Implement __powidf2 ---------------------------------===//
-//
-//                     The LLVM Compiler Infrastructure
-//
-// This file is distributed under the University of Illinois Open Source
-// License. See LICENSE.TXT for details.
-//
-//===----------------------------------------------------------------------===//
-//
-// This file implements __powidf2 for the compiler_rt library.
-//
-//===----------------------------------------------------------------------===//
+/* ===-- powidf2.cpp - Implement __powidf2 ---------------------------------===
+ *
+ *                     The LLVM Compiler Infrastructure
+ *
+ * This file is distributed under the University of Illinois Open Source
+ * License. See LICENSE.TXT for details.
+ *
+ * ===----------------------------------------------------------------------===
+ *
+ * This file implements __powidf2 for the compiler_rt library.
+ *
+ * ===----------------------------------------------------------------------===
+ */
 
 #include "int_lib.h"
 
-// Returns: a ^ b
+/* Returns: a ^ b */
 
 double
 __powidf2(double a, si_int b)

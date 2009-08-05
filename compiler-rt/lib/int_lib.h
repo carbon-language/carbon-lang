@@ -25,7 +25,7 @@
 
 #if !defined(INFINITY) && defined(HUGE_VAL)
 #define INFINITY HUGE_VAL
-#endif
+#endif /* INFINITY */
 
 typedef      int si_int;
 typedef unsigned su_int;
@@ -44,7 +44,7 @@ typedef union
 #else
         si_int high;
         su_int low;
-#endif
+#endif /* _YUGA_LITTLE_ENDIAN */
     };
 } dwords;
 
@@ -59,7 +59,7 @@ typedef union
 #else
         su_int high;
         su_int low;
-#endif
+#endif /* _YUGA_LITTLE_ENDIAN */
     };
 } udwords;
 
@@ -79,7 +79,7 @@ typedef union
 #else
         di_int high;
         du_int low;
-#endif
+#endif /* _YUGA_LITTLE_ENDIAN */
     };
 } twords;
 
@@ -94,11 +94,11 @@ typedef union
 #else
         du_int high;
         du_int low;
-#endif
+#endif /* _YUGA_LITTLE_ENDIAN */
     };
 } utwords;
 
-#endif
+#endif /* __x86_64 */
 
 typedef union
 {
@@ -120,7 +120,7 @@ typedef struct
 #else
     udwords high;
     udwords low;
-#endif
+#endif /* _YUGA_LITTLE_ENDIAN */
 } uqwords;
 
 typedef union
@@ -129,4 +129,4 @@ typedef union
     long double f;
 } long_double_bits;
 
-#endif
+#endif /* INT_LIB_H */
