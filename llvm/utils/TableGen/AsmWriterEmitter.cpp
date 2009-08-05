@@ -728,7 +728,9 @@ void AsmWriterEmitter::run(raw_ostream &O) {
     << "  if (Bits == 0) return false;\n"
     << "  O << AsmStrs+(Bits & " << (1 << AsmStrBits)-1 << ");\n\n";
 
-  O << "  unsigned OperandColumn = 1;\n\n";
+  // This variable may be unused, suppress build warnings.
+  O << "  unsigned OperandColumn = 1;\n";
+  O << "  (void) OperandColumn;\n\n";
 
   // Output the table driven operand information.
   BitsLeft = 32-AsmStrBits;
