@@ -505,6 +505,16 @@ def BSWAP64rm : RXYI<0x0FE3, (outs GR64:$dst), (ins rriaddr:$src),
                      "lrvg\t{$dst, $src}",
                      [(set GR64:$dst, (bswap (load rriaddr:$src)))]>;
 
+//def BSWAP16mr : RXYI<0xE33F, (outs), (ins rriaddr:$dst, GR32:$src),
+//                     "strvh\t{$src, $dst}",
+//                     [(truncstorei16 (bswap GR32:$src), rriaddr:$dst)]>;
+def BSWAP32mr : RXYI<0xE33E, (outs), (ins rriaddr:$dst, GR32:$src),
+                     "strv\t{$src, $dst}",
+                     [(truncstorei32 (bswap GR32:$src), rriaddr:$dst)]>;
+def BSWAP64mr : RXYI<0xE32F, (outs), (ins rriaddr:$dst, GR64:$src),
+                     "strvg\t{$src, $dst}",
+                     [(store (bswap GR64:$src), rriaddr:$dst)]>;
+
 //===----------------------------------------------------------------------===//
 // Arithmetic Instructions
 
@@ -538,6 +548,20 @@ def ADD64rr : RREI<0xB908, (outs GR64:$dst), (ins GR64:$src1, GR64:$src2),
                    [(set GR64:$dst, (add GR64:$src1, GR64:$src2)),
                     (implicit PSW)]>;
 }
+
+def ADD32rm   : RXI<0x5A, (outs GR32:$dst), (ins GR32:$src1, rriaddr12:$src2),
+                    "a\t{$dst, $src2}",
+                    [(set GR32:$dst, (add GR32:$src1, (load rriaddr12:$src2))),
+                     (implicit PSW)]>;
+def ADD32rmy  : RXYI<0xE35A, (outs GR32:$dst), (ins GR32:$src1, rriaddr:$src2),
+                     "ay\t{$dst, $src2}",
+                     [(set GR32:$dst, (add GR32:$src1, (load rriaddr:$src2))),
+                      (implicit PSW)]>;
+def ADD64rm   : RXYI<0xE308, (outs GR64:$dst), (ins GR64:$src1, rriaddr:$src2),
+                     "ag\t{$dst, $src2}",
+                     [(set GR64:$dst, (add GR64:$src1, (load rriaddr:$src2))),
+                      (implicit PSW)]>;
+
 
 def ADD32ri16 : RII<0xA7A,
                     (outs GR32:$dst), (ins GR32:$src1, s16imm:$src2),
@@ -580,13 +604,13 @@ def ADC64ri32 : RILI<0xC2A,
 
 let Uses = [PSW] in {
 def ADDE32rr : RREI<0xB998, (outs GR32:$dst), (ins GR32:$src1, GR32:$src2),
-                  "alcr\t{$dst, $src2}",
-                  [(set GR32:$dst, (adde GR32:$src1, GR32:$src2)),
-                   (implicit PSW)]>;
+                    "alcr\t{$dst, $src2}",
+                    [(set GR32:$dst, (adde GR32:$src1, GR32:$src2)),
+                     (implicit PSW)]>;
 def ADDE64rr : RREI<0xB988, (outs GR64:$dst), (ins GR64:$src1, GR64:$src2),
-                   "alcgr\t{$dst, $src2}",
-                   [(set GR64:$dst, (adde GR64:$src1, GR64:$src2)),
-                    (implicit PSW)]>;
+                    "alcgr\t{$dst, $src2}",
+                    [(set GR64:$dst, (adde GR64:$src1, GR64:$src2)),
+                     (implicit PSW)]>;
 }
 
 let isCommutable = 1 in { // X = AND Y, Z  == X = AND Z, Y
@@ -599,6 +623,19 @@ def AND64rr : RREI<0xB980,
                    "ngr\t{$dst, $src2}",
                    [(set GR64:$dst, (and GR64:$src1, GR64:$src2))]>;
 }
+
+def AND32rm   : RXI<0x54, (outs GR32:$dst), (ins GR32:$src1, rriaddr12:$src2),
+                    "n\t{$dst, $src2}",
+                    [(set GR32:$dst, (and GR32:$src1, (load rriaddr12:$src2))),
+                     (implicit PSW)]>;
+def AND32rmy  : RXYI<0xE354, (outs GR32:$dst), (ins GR32:$src1, rriaddr:$src2),
+                     "ny\t{$dst, $src2}",
+                     [(set GR32:$dst, (and GR32:$src1, (load rriaddr:$src2))),
+                      (implicit PSW)]>;
+def AND64rm   : RXYI<0xE360, (outs GR64:$dst), (ins GR64:$src1, rriaddr:$src2),
+                     "ng\t{$dst, $src2}",
+                     [(set GR64:$dst, (and GR64:$src1, (load rriaddr:$src2))),
+                      (implicit PSW)]>;
 
 def AND32rill16 : RII<0xA57,
                       (outs GR32:$dst), (ins GR32:$src1, i32imm:$src2),
@@ -651,6 +688,20 @@ def OR64rr : RREI<0xB981,
                   [(set GR64:$dst, (or GR64:$src1, GR64:$src2))]>;
 }
 
+def OR32rm   : RXI<0x56, (outs GR32:$dst), (ins GR32:$src1, rriaddr12:$src2),
+                   "o\t{$dst, $src2}",
+                   [(set GR32:$dst, (or GR32:$src1, (load rriaddr12:$src2))),
+                    (implicit PSW)]>;
+def OR32rmy  : RXYI<0xE356, (outs GR32:$dst), (ins GR32:$src1, rriaddr:$src2),
+                    "oy\t{$dst, $src2}",
+                    [(set GR32:$dst, (or GR32:$src1, (load rriaddr:$src2))),
+                     (implicit PSW)]>;
+def OR64rm   : RXYI<0xE381, (outs GR64:$dst), (ins GR64:$src1, rriaddr:$src2),
+                    "og\t{$dst, $src2}",
+                    [(set GR64:$dst, (or GR64:$src1, (load rriaddr:$src2))),
+                     (implicit PSW)]>;
+
+ // FIXME: Provide proper encoding!
 def OR32ri16  : RII<0xA5B,
                     (outs GR32:$dst), (ins GR32:$src1, i32imm:$src2),
                     "oill\t{$dst, $src2}",
@@ -699,6 +750,19 @@ def SUB64rr : RREI<0xB909,
                    "sgr\t{$dst, $src2}",
                    [(set GR64:$dst, (sub GR64:$src1, GR64:$src2))]>;
 
+def SUB32rm   : RXI<0x5B, (outs GR32:$dst), (ins GR32:$src1, rriaddr12:$src2),
+                    "s\t{$dst, $src2}",
+                    [(set GR32:$dst, (sub GR32:$src1, (load rriaddr12:$src2))),
+                     (implicit PSW)]>;
+def SUB32rmy  : RXYI<0xE35B, (outs GR32:$dst), (ins GR32:$src1, rriaddr:$src2),
+                     "sy\t{$dst, $src2}",
+                     [(set GR32:$dst, (sub GR32:$src1, (load rriaddr:$src2))),
+                      (implicit PSW)]>;
+def SUB64rm   : RXYI<0xE309, (outs GR64:$dst), (ins GR64:$src1, rriaddr:$src2),
+                     "sg\t{$dst, $src2}",
+                     [(set GR64:$dst, (sub GR64:$src1, (load rriaddr:$src2))),
+                      (implicit PSW)]>;
+ 
 def SBC32rr : RRI<0x1F,
                   (outs GR32:$dst), (ins GR32:$src1, GR32:$src2),
                   "slr\t{$dst, $src2}",
@@ -738,6 +802,19 @@ def XOR64rr : RREI<0xB982,
                    "xgr\t{$dst, $src2}",
                    [(set GR64:$dst, (xor GR64:$src1, GR64:$src2))]>;
 }
+
+def XOR32rm   : RXI<0x57,(outs GR32:$dst), (ins GR32:$src1, rriaddr12:$src2),
+                    "x\t{$dst, $src2}",
+                    [(set GR32:$dst, (xor GR32:$src1, (load rriaddr12:$src2))),
+                     (implicit PSW)]>;
+def XOR32rmy  : RXYI<0xE357, (outs GR32:$dst), (ins GR32:$src1, rriaddr:$src2),
+                     "xy\t{$dst, $src2}",
+                     [(set GR32:$dst, (xor GR32:$src1, (load rriaddr:$src2))),
+                      (implicit PSW)]>;
+def XOR64rm   : RXYI<0xE382, (outs GR64:$dst), (ins GR64:$src1, rriaddr:$src2),
+                     "xg\t{$dst, $src2}",
+                     [(set GR64:$dst, (xor GR64:$src1, (load rriaddr:$src2))),
+                      (implicit PSW)]>;
 
 def XOR32ri : RILI<0xC07,
                    (outs GR32:$dst), (ins GR32:$src1, i32imm:$src2),
