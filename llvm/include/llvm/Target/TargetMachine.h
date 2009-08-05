@@ -209,8 +209,7 @@ public:
 
   /// addPassesToEmitFile - Add passes to the specified pass manager to get the
   /// specified file emitted.  Typically this will involve several steps of code
-  /// generation.  If Fast is set to true, the code generator should emit code
-  /// as fast as possible, though the generated code may be less efficient.
+  /// generation.
   /// This method should return FileModel::Error if emission of this file type
   /// is not supported.
   ///
