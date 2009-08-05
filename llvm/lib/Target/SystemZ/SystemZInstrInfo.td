@@ -510,7 +510,7 @@ def BSWAP64rm : RXYI<0x0FE3, (outs GR64:$dst), (ins rriaddr:$src),
 //                     [(truncstorei16 (bswap GR32:$src), rriaddr:$dst)]>;
 def BSWAP32mr : RXYI<0xE33E, (outs), (ins rriaddr:$dst, GR32:$src),
                      "strv\t{$src, $dst}",
-                     [(truncstorei32 (bswap GR32:$src), rriaddr:$dst)]>;
+                     [(store (bswap GR32:$src), rriaddr:$dst)]>;
 def BSWAP64mr : RXYI<0xE32F, (outs), (ins rriaddr:$dst, GR64:$src),
                      "strvg\t{$src, $dst}",
                      [(store (bswap GR64:$src), rriaddr:$dst)]>;
