@@ -196,7 +196,7 @@ bool BugDriver::run() {
   // Make sure the reference output file gets deleted on exit from this
   // function, if appropriate.
   sys::Path ROF(ReferenceOutputFile);
-  FileRemover RemoverInstance(ROF, CreatedOutput);
+  FileRemover RemoverInstance(ROF, CreatedOutput && !SaveTemps);
 
   // Diff the output of the raw program against the reference output.  If it
   // matches, then we assume there is a miscompilation bug and try to 

@@ -22,6 +22,11 @@
 #include <sstream>
 using namespace llvm;
 
+namespace llvm {
+  cl::opt<bool>
+  SaveTemps("save-temps", cl::init(false), cl::desc("Save temporary files"));
+}
+
 namespace {
   cl::opt<std::string>
   RemoteClient("remote-client",
@@ -395,7 +400,7 @@ int LLC::ExecuteProgram(const std::string &Bitcode,
 
   sys::Path OutputAsmFile;
   OutputCode(Bitcode, OutputAsmFile);
-  FileRemover OutFileRemover(OutputAsmFile);
+  FileRemover OutFileRemover(OutputAsmFile, !SaveTemps);
 
   std::vector<std::string> GCCArgs(ArgsForGCC);
   GCCArgs.insert(GCCArgs.end(), SharedLibs.begin(), SharedLibs.end());
@@ -560,7 +565,7 @@ int CBE::ExecuteProgram(const std::string &Bitcode,
   sys::Path OutputCFile;
   OutputCode(Bitcode, OutputCFile);
 
-  FileRemover CFileRemove(OutputCFile);
+  FileRemover CFileRemove(OutputCFile, !SaveTemps);
 
   std::vector<std::string> GCCArgs(ArgsForGCC);
   GCCArgs.insert(GCCArgs.end(), SharedLibs.begin(), SharedLibs.end());
@@ -726,7 +731,7 @@ int GCC::ExecuteProgram(const std::string &ProgramFile,
         errs() << "\n";
         );
 
-  FileRemover OutputBinaryRemover(OutputBinary);
+  FileRemover OutputBinaryRemover(OutputBinary, !SaveTemps);
 
   if (RemoteClientPath.isEmpty()) {
     DEBUG(errs() << "<run locally>";);

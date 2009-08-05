@@ -17,11 +17,14 @@
 #ifndef BUGPOINT_TOOLRUNNER_H
 #define BUGPOINT_TOOLRUNNER_H
 
+#include "llvm/Support/CommandLine.h"
 #include "llvm/Support/SystemUtils.h"
 #include <exception>
 #include <vector>
 
 namespace llvm {
+
+extern cl::opt<bool> SaveTemps;
 
 class CBE;
 class LLC;
