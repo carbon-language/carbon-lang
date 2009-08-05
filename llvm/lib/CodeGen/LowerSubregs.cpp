@@ -242,9 +242,12 @@ bool LowerSubregsInstructionPass::LowerInsert(MachineInstr *MI) {
     // No need to insert an identity copy instruction. If the SrcReg was
     // <undef>, we need to make sure it is alive by inserting an IMPLICIT_DEF
     if (MI->getOperand(1).isUndef() && !MI->getOperand(0).isDead()) {
-      BuildMI(*MBB, MI, MI->getDebugLoc(),
-              TII.get(TargetInstrInfo::IMPLICIT_DEF), DstReg)
-        .addReg(InsReg, RegState::ImplicitKill);
+      MachineInstrBuilder MIB = BuildMI(*MBB, MI, MI->getDebugLoc(),
+                                TII.get(TargetInstrInfo::IMPLICIT_DEF), DstReg);
+      if (MI->getOperand(2).isUndef())
+        MIB.addReg(InsReg, RegState::Implicit | RegState::Undef);
+      else
+        MIB.addReg(InsReg, RegState::ImplicitKill);
     } else {
       DOUT << "subreg: eliminated!\n";
       MBB->erase(MI);
