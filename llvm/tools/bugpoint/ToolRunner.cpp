@@ -232,8 +232,7 @@ AbstractInterpreter *AbstractInterpreter::createLLI(const char *Argv0,
                                                     std::string &Message,
                                      const std::vector<std::string> *ToolArgs) {
   std::string LLIPath =
-    FindExecutable("lli", Argv0,
-                   reinterpret_cast<void *>(&createLLI)).toString();
+    FindExecutable("lli", Argv0, (void *)(intptr_t)&createLLI).toString();
   if (!LLIPath.empty()) {
     Message = "Found lli: " + LLIPath + "\n";
     return new LLI(LLIPath, ToolArgs);
@@ -420,8 +419,7 @@ LLC *AbstractInterpreter::createLLC(const char *Argv0,
                                     const std::vector<std::string> *Args,
                                     const std::vector<std::string> *GCCArgs) {
   std::string LLCPath =
-    FindExecutable("llc", Argv0,
-                   reinterpret_cast<void *>(&createLLC)).toString();
+    FindExecutable("llc", Argv0, (void *)(intptr_t)&createLLC).toString();
   if (LLCPath.empty()) {
     Message = "Cannot find `llc' in executable directory or PATH!\n";
     return 0;
@@ -507,8 +505,7 @@ int JIT::ExecuteProgram(const std::string &Bitcode,
 AbstractInterpreter *AbstractInterpreter::createJIT(const char *Argv0,
                    std::string &Message, const std::vector<std::string> *Args) {
   std::string LLIPath =
-    FindExecutable("lli", Argv0,
-                   reinterpret_cast<void *>(&createJIT)).toString();
+    FindExecutable("lli", Argv0, (void *)(intptr_t)&createJIT).toString();
   if (!LLIPath.empty()) {
     Message = "Found lli: " + LLIPath + "\n";
     return new JIT(LLIPath, Args);
@@ -587,8 +584,7 @@ CBE *AbstractInterpreter::createCBE(const char *Argv0,
                                     const std::vector<std::string> *Args,
                                     const std::vector<std::string> *GCCArgs) {
   sys::Path LLCPath =
-    FindExecutable("llc", Argv0,
-                   reinterpret_cast<void *>(&createCBE));
+    FindExecutable("llc", Argv0, (void *)(intptr_t)&createCBE);
   if (LLCPath.isEmpty()) {
     Message =
       "Cannot find `llc' in executable directory or PATH!\n";

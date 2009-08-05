@@ -415,7 +415,7 @@ static void EmitShellScript(char **argv) {
   // build tree to the destination file.
   std::string ErrMsg;  
   sys::Path llvmstub = FindExecutable("llvm-stub.exe", argv[0],
-                                      reinterpret_cast<void *>(&Optimize));
+                                      (void *)(intptr_t)&Optimize);
   if (llvmstub.isEmpty())
     PrintAndExit("Could not find llvm-stub.exe executable!");
 
@@ -642,7 +642,7 @@ int main(int argc, char **argv, char **envp) {
 
         // Determine the locations of the llc and gcc programs.
         sys::Path llc = FindExecutable("llc", argv[0],
-                                       reinterpret_cast<void *>(&Optimize));
+                                       (void *)(intptr_t)&Optimize);
         if (llc.isEmpty())
           PrintAndExit("Failed to find llc");
 
@@ -672,7 +672,7 @@ int main(int argc, char **argv, char **envp) {
 
         // Determine the locations of the llc and gcc programs.
         sys::Path llc = FindExecutable("llc", argv[0],
-                                       reinterpret_cast<void *>(&Optimize));
+                                       (void *)(intptr_t)&Optimize);
         if (llc.isEmpty())
           PrintAndExit("Failed to find llc");
 
