@@ -200,9 +200,13 @@ Program::Execute(const Path& path,
         execve(path.c_str(), (char**)args, (char**)envp);
       else
         execv(path.c_str(), (char**)args);
-      // If the execve() failed, we should exit and let the parent pick up
-      // our non-zero exit status.
-      exit(errno == ENOENT ? 127 : 126);
+      // If the execve() failed, we should exit. Follow Unix protocol and
+      // return 127 if the executable was not found, and 126 otherwise.
+      // Use _exit rather than exit so that atexit functions and static
+      // object destructors cloned from the parent process aren't
+      // redundantly run, and so that any data buffered in stdio buffers
+      // cloned from the parent aren't redundantly written out.
+      _exit(errno == ENOENT ? 127 : 126);
     }
 
     // Parent process: Break out of the switch to do our processing.
