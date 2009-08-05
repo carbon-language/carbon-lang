@@ -808,9 +808,9 @@ void SimpleRegisterCoalescing::RemoveUnnecessaryKills(unsigned Reg,
       continue;
     MachineInstr *UseMI = UseMO.getParent();
     unsigned UseIdx = li_->getUseIndex(li_->getInstructionIndex(UseMI));
-    const LiveRange *UI = LI.getLiveRangeContaining(UseIdx);
-    if (!UI || !LI.isKill(UI->valno, UseIdx+1)) {
-      if (UI->valno->def != UseIdx+1) {
+    const LiveRange *LR = LI.getLiveRangeContaining(UseIdx);
+    if (!LR || !LI.isKill(LR->valno, UseIdx+1)) {
+      if (LR->valno->def != UseIdx+1) {
         // Interesting problem. After coalescing reg1027's def and kill are both
         // at the same point:  %reg1027,0.000000e+00 = [56,814:0)  0@70-(814)
         //
