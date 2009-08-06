@@ -250,6 +250,11 @@ N: Morten Ofstad
 E: morten@hue.no
 D: Visual C++ compatibility fixes
 
+N: Jakob Stoklund Olesen
+E: stoklund@2pi.dk
+D: Machine code verifier
+D: Blackfin backend
+
 N: Richard Osborne
 E: richard@xmos.com
 D: XCore backend
