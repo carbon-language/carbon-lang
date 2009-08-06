@@ -340,7 +340,7 @@ public:
       return 0;
     
     llvm::Constant *Result = 
-      llvm::ConstantStruct::get(CGF->getLLVMContext(),
+      llvm::ConstantStruct::get(CGM.getLLVMContext(),
                                 Builder.Elements, Builder.Packed);
 
     assert(llvm::RoundUpToAlignment(Builder.NextFieldOffsetInBytes,
