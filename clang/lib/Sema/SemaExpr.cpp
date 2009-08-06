@@ -2103,7 +2103,11 @@ Action::OwningExprResult
 Sema::ActOnMemberReferenceExpr(Scope *S, ExprArg Base, SourceLocation OpLoc,
                                tok::TokenKind OpKind, SourceLocation MemberLoc,
                                IdentifierInfo &Member,
-                               DeclPtrTy ObjCImpDecl) {
+                               DeclPtrTy ObjCImpDecl, const CXXScopeSpec *SS) {
+  // FIXME: handle the CXXScopeSpec for proper lookup of qualified-ids
+  if (SS && SS->isInvalid())
+    return ExprError();
+
   Expr *BaseExpr = Base.takeAs<Expr>();
   assert(BaseExpr && "no record expression");
 
@@ -2126,9 +2130,6 @@ Sema::ActOnMemberReferenceExpr(Scope *S, ExprArg Base, SourceLocation OpLoc,
       BaseType = PT->getPointeeType();
     else if (BaseType->isObjCObjectPointerType())
       ;
-    else if (getLangOptions().CPlusPlus && BaseType->isRecordType())
-      return Owned(BuildOverloadedArrowExpr(S, BaseExpr, OpLoc,
-                                            MemberLoc, Member));
     else
       return ExprError(Diag(MemberLoc,
                             diag::err_typecheck_member_reference_arrow)
@@ -2164,11 +2165,37 @@ Sema::ActOnMemberReferenceExpr(Scope *S, ExprArg Base, SourceLocation OpLoc,
                                BaseExpr->getSourceRange()))
       return ExprError();
 
+    DeclContext *DC = RDecl;
+    if (SS && SS->isSet()) {
+      // If the member name was a qualified-id, look into the
+      // nested-name-specifier.
+      DC = computeDeclContext(*SS, false);
+      
+      // FIXME: If DC is not computable, we should build a 
+      // CXXUnresolvedMemberExpr.
+      assert(DC && "Cannot handle non-computable dependent contexts in lookup");
+    }
+
     // The record definition is complete, now make sure the member is valid.
-    // FIXME: Qualified name lookup for C++ is a bit more complicated than this.
     LookupResult Result
-      = LookupQualifiedName(RDecl, DeclarationName(&Member),
+      = LookupQualifiedName(DC, DeclarationName(&Member),  
                             LookupMemberName, false);
+
+    if (SS && SS->isSet())
+    {
+      QualType BaseTypeCanon 
+        = Context.getCanonicalType(BaseType).getUnqualifiedType();
+      QualType MemberTypeCanon 
+        = Context.getCanonicalType(
+            Context.getTypeDeclType(
+                     dyn_cast<TypeDecl>(Result.getAsDecl()->getDeclContext())));
+
+      if (BaseTypeCanon != MemberTypeCanon &&
+          !IsDerivedFrom(BaseTypeCanon, MemberTypeCanon))
+        return ExprError(Diag(SS->getBeginLoc(),
+                              diag::err_not_direct_base_or_virtual)
+                         << MemberTypeCanon << BaseTypeCanon);
+    }
 
     if (!Result)
       return ExprError(Diag(MemberLoc, diag::err_typecheck_no_member)

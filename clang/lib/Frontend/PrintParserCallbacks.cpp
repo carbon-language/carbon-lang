@@ -532,7 +532,8 @@ namespace {
                                                       tok::TokenKind OpKind,
                                                       SourceLocation MemberLoc,
                                                       IdentifierInfo &Member,
-                                                      DeclPtrTy ImplDecl) {
+                                                      DeclPtrTy ImplDecl,
+                                                      const CXXScopeSpec *SS=0) {
       Out << __FUNCTION__ << "\n";
       return ExprEmpty();
     }

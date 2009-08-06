@@ -14,6 +14,7 @@
 #include "Sema.h"
 #include "clang/AST/ASTContext.h"
 #include "clang/AST/DeclTemplate.h"
+#include "clang/AST/ExprCXX.h"
 #include "clang/AST/NestedNameSpecifier.h"
 #include "clang/Parse/DeclSpec.h"
 #include "llvm/ADT/STLExtras.h"
@@ -336,6 +337,55 @@ Sema::CXXScopeTy *Sema::ActOnCXXNestedNameSpecifier(Scope *S,
   return NestedNameSpecifier::Create(Context, Prefix, /*FIXME:*/false,
                                      T.getTypePtr());
 }
+
+Action::OwningExprResult
+Sema::ActOnCXXEnterMemberScope(Scope *S, CXXScopeSpec &SS, ExprArg Base,
+                               tok::TokenKind OpKind) {
+  Expr *BaseExpr = (Expr*)Base.get();
+  assert(BaseExpr && "no record expansion");
+
+  QualType BaseType = BaseExpr->getType();
+  // FIXME: handle dependent types
+  if (BaseType->isDependentType())
+    return move(Base);
+
+  // C++ [over.match.oper]p8:
+  //   [...] When operator->returns, the operator-> is applied  to the value 
+  //   returned, with the original second operand.
+  if (OpKind == tok::arrow) {
+    while (BaseType->isRecordType()) {
+      Base = BuildOverloadedArrowExpr(S, move(Base), BaseExpr->getExprLoc());
+      BaseExpr = (Expr*)Base.get();
+      if (BaseExpr == NULL)
+          return ExprError();
+      BaseType = BaseExpr->getType();
+    }
+  }
+
+  if (BaseType->isPointerType())
+    BaseType = BaseType->getPointeeType();
+
+  // We could end up with various non-record types here, such as extended 
+  // vector types or Objective-C interfaces. Just return early and let
+  // ActOnMemberReferenceExpr do the work.
+  if (!BaseType->isRecordType())
+    return move(Base);
+
+  SS.setRange(BaseExpr->getSourceRange());
+  SS.setScopeRep(
+    NestedNameSpecifier::Create(Context, 0, false, BaseType.getTypePtr())
+    );
+
+  if (S)
+    ActOnCXXEnterDeclaratorScope(S,SS);
+  return move(Base);
+}
+
+void Sema::ActOnCXXExitMemberScope(Scope *S, const CXXScopeSpec &SS) {
+  if (S && SS.isSet())
+    ActOnCXXExitDeclaratorScope(S,SS);
+}
+
 
 /// ActOnCXXEnterDeclaratorScope - Called when a C++ scope specifier (global
 /// scope or nested-name-specifier) is parsed, part of a declarator-id.

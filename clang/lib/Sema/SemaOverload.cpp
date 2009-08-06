@@ -4553,10 +4553,9 @@ Sema::BuildCallToObjectOfClassType(Scope *S, Expr *Object,
 /// BuildOverloadedArrowExpr - Build a call to an overloaded @c operator->
 ///  (if one exists), where @c Base is an expression of class type and 
 /// @c Member is the name of the member we're trying to find.
-Action::ExprResult 
-Sema::BuildOverloadedArrowExpr(Scope *S, Expr *Base, SourceLocation OpLoc,
-                               SourceLocation MemberLoc,
-                               IdentifierInfo &Member) {
+Sema::OwningExprResult
+Sema::BuildOverloadedArrowExpr(Scope *S, ExprArg BaseIn, SourceLocation OpLoc) {
+  Expr *Base = static_cast<Expr *>(BaseIn.get());
   assert(Base->getType()->isRecordType() && "left-hand side must have class type");
   
   // C++ [over.ref]p1:
@@ -4569,14 +4568,12 @@ Sema::BuildOverloadedArrowExpr(Scope *S, Expr *Base, SourceLocation OpLoc,
   DeclarationName OpName = Context.DeclarationNames.getCXXOperatorName(OO_Arrow);
   OverloadCandidateSet CandidateSet;
   const RecordType *BaseRecord = Base->getType()->getAs<RecordType>();
-  
+
   DeclContext::lookup_const_iterator Oper, OperEnd;
   for (llvm::tie(Oper, OperEnd) 
          = BaseRecord->getDecl()->lookup(OpName); Oper != OperEnd; ++Oper)
     AddMethodCandidate(cast<CXXMethodDecl>(*Oper), Base, 0, 0, CandidateSet,
                        /*SuppressUserConversions=*/false);
-
-  ExprOwningPtr<Expr> BasePtr(this, Base);
 
   // Perform overload resolution.
   OverloadCandidateSet::iterator Best;
@@ -4588,34 +4585,34 @@ Sema::BuildOverloadedArrowExpr(Scope *S, Expr *Base, SourceLocation OpLoc,
   case OR_No_Viable_Function:
     if (CandidateSet.empty())
       Diag(OpLoc, diag::err_typecheck_member_reference_arrow)
-        << BasePtr->getType() << BasePtr->getSourceRange();
+        << Base->getType() << Base->getSourceRange();
     else
       Diag(OpLoc, diag::err_ovl_no_viable_oper)
-        << "operator->" << BasePtr->getSourceRange();
+        << "operator->" << Base->getSourceRange();
     PrintOverloadCandidates(CandidateSet, /*OnlyViable=*/false);
-    return true;
+    return ExprError();
 
   case OR_Ambiguous:
     Diag(OpLoc,  diag::err_ovl_ambiguous_oper)
-      << "operator->" << BasePtr->getSourceRange();
+      << "operator->" << Base->getSourceRange();
     PrintOverloadCandidates(CandidateSet, /*OnlyViable=*/true);
-    return true;
+    return ExprError();
 
   case OR_Deleted:
     Diag(OpLoc,  diag::err_ovl_deleted_oper)
       << Best->Function->isDeleted()
-      << "operator->" << BasePtr->getSourceRange();
+      << "operator->" << Base->getSourceRange();
     PrintOverloadCandidates(CandidateSet, /*OnlyViable=*/true);
-    return true;
+    return ExprError();
   }
 
   // Convert the object parameter.
   CXXMethodDecl *Method = cast<CXXMethodDecl>(Best->Function);
   if (PerformObjectArgumentInitialization(Base, Method))
-    return true;
+    return ExprError();
 
   // No concerns about early exits now.
-  BasePtr.take();
+  BaseIn.release();
 
   // Build the operator call.
   Expr *FnExpr = new (Context) DeclRefExpr(Method, Method->getType(),
@@ -4624,8 +4621,7 @@ Sema::BuildOverloadedArrowExpr(Scope *S, Expr *Base, SourceLocation OpLoc,
   Base = new (Context) CXXOperatorCallExpr(Context, OO_Arrow, FnExpr, &Base, 1, 
                                  Method->getResultType().getNonReferenceType(),
                                  OpLoc);
-  return ActOnMemberReferenceExpr(S, ExprArg(*this, Base), OpLoc, tok::arrow,
-                                  MemberLoc, Member, DeclPtrTy()).release();
+  return Owned(Base);
 }
 
 /// FixOverloadedFunctionReference - E is an expression that refers to

@@ -1270,14 +1270,18 @@ TemplateExprInstantiator::VisitCXXUnresolvedMemberExpr(
   if (Base.isInvalid())
     return SemaRef.ExprError();
 
+  tok::TokenKind OpKind = E->isArrow() ? tok::arrow : tok::period;
+  CXXScopeSpec SS;
+  Base = SemaRef.ActOnCXXEnterMemberScope(0, SS, move(Base), OpKind);
   // FIXME: Instantiate the declaration name.
-  return SemaRef.ActOnMemberReferenceExpr(/*Scope=*/0,
+  Base = SemaRef.ActOnMemberReferenceExpr(/*Scope=*/0,
                                           move(Base), E->getOperatorLoc(),
-                                          E->isArrow()? tok::arrow 
-                                                      : tok::period,
+                                          OpKind,
                                           E->getMemberLoc(),
                               /*FIXME:*/*E->getMember().getAsIdentifierInfo(),
-                                   /*FIXME?*/Sema::DeclPtrTy::make((Decl*)0));
+                              /*FIXME?*/Sema::DeclPtrTy::make((Decl*)0));
+  SemaRef.ActOnCXXExitMemberScope(0, SS);
+  return move(Base);
 }
 
 //----------------------------------------------------------------------------

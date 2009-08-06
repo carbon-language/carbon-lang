@@ -919,6 +919,16 @@ Parser::ParsePostfixExpressionSuffix(OwningExprResult LHS) {
       tok::TokenKind OpKind = Tok.getKind();
       SourceLocation OpLoc = ConsumeToken();  // Eat the "." or "->" token.
 
+      CXXScopeSpec MemberSS;
+      CXXScopeSpec SS;
+      if (getLang().CPlusPlus && !LHS.isInvalid()) {
+        LHS = Actions.ActOnCXXEnterMemberScope(CurScope, MemberSS, move(LHS),
+                                               OpKind);
+        if (LHS.isInvalid())
+          break;
+        ParseOptionalCXXScopeSpecifier(SS);
+      }
+
       if (Tok.isNot(tok::identifier)) {
         Diag(Tok, diag::err_expected_ident);
         return ExprError();
@@ -928,8 +938,12 @@ Parser::ParsePostfixExpressionSuffix(OwningExprResult LHS) {
         LHS = Actions.ActOnMemberReferenceExpr(CurScope, move(LHS), OpLoc,
                                                OpKind, Tok.getLocation(),
                                                *Tok.getIdentifierInfo(),
-                                               ObjCImpDecl);
+                                               ObjCImpDecl, &SS);
       }
+
+      if (getLang().CPlusPlus)
+        Actions.ActOnCXXExitMemberScope(CurScope, MemberSS);
+
       ConsumeToken();
       break;
     }

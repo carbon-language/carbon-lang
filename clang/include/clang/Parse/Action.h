@@ -236,6 +236,27 @@ public:
     return 0; 
   }
 
+  /// ActOnCXXEnterMemberScope - Called when a C++ class member accessor ('.'
+  /// or '->') is parsed. After this method is called, according to
+  /// [C++ 3.4.5p4], qualified-ids should be looked up in the contexts of both
+  /// the entire postfix-expression and the scope of the class of the object
+  /// expression.
+  /// 'SS' should be an empty CXXScopeSpec to be filled with the class's scope.
+  virtual OwningExprResult ActOnCXXEnterMemberScope(Scope *S,
+                                                    CXXScopeSpec &SS,
+                                                    ExprArg Base,
+                                                    tok::TokenKind OpKind) {
+    return ExprEmpty();
+  }
+
+  /// ActOnCXXExitMemberScope - Called when a postfix-expression that previously
+  /// invoked ActOnCXXEnterMemberScope() is finished. 'SS' is the same
+  /// CXXScopeSpec that was passed to ActOnCXXEnterMemberScope. Used to
+  /// indicate that names should revert to being looked up in the defining
+  /// scope.
+  virtual void ActOnCXXExitMemberScope(Scope *S, const CXXScopeSpec &SS) {
+  }
+
   /// ActOnCXXEnterDeclaratorScope - Called when a C++ scope specifier (global
   /// scope or nested-name-specifier) is parsed, part of a declarator-id.
   /// After this method is called, according to [C++ 3.4.3p3], names should be
@@ -820,7 +841,8 @@ public:
                                                     tok::TokenKind OpKind,
                                                     SourceLocation MemberLoc,
                                                     IdentifierInfo &Member,
-                                                    DeclPtrTy ObjCImpDecl) {
+                                                    DeclPtrTy ObjCImpDecl,
+                                                const CXXScopeSpec *SS = 0) {
     return ExprEmpty();
   }
 
