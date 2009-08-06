@@ -7,6 +7,7 @@
 struct B {
   virtual void bar1();
   virtual void bar2();
+  int b;
 };
 void B::bar1() { }
 void B::bar2() { }
@@ -18,21 +19,41 @@ struct C {
 void C::bee1() { }
 void C::bee2() { }
 
-static_assert (sizeof (B) == (sizeof(void *)), "vtable pointer layout");
+struct D {
+  virtual void boo();
+};
+void D::boo() { }
 
-class A : public B, public C {
+struct E {
+  int e;
+};
+
+static_assert (sizeof (C) == (sizeof(void *)), "vtable pointer layout");
+
+class A : public E, public B, public C, /* virtual */ public D {
 public:
   virtual void foo1();
   virtual void foo2();
   A() { }
-} *a;
+  int a;
+} *ap;
 void A::foo1() { }
 void A::foo2() { }
 
 int main() {
   A a;
   B b;
+  ap->e = 1;
+  ap->b = 2;
 }
+
+// CHECK-LP32: main:
+// CHECK-LP32: movl $1, 8(%eax)
+// CHECK-LP32: movl $2, 4(%eax)
+
+// CHECK-LP64: main:
+// CHECK-LP64: movl $1, 12(%rax)
+// CHECK-LP64: movl $2, 8(%rax)
 
 // CHECK-LP64: __ZTV1B:
 // CHECK-LP64: .space 8
@@ -53,7 +74,7 @@ int main() {
 // CHECK-LP64: .quad __ZN1B4bar2Ev
 // CHECK-LP64: .quad __ZN1A4foo1Ev
 // CHECK-LP64: .quad __ZN1A4foo2Ev
-// CHECK-LP64: .quad 18446744073709551608
+// CHECK-LP64: .quad 18446744073709551600
 // CHECK-LP64: .space 8
 // CHECK-LP64: .quad __ZN1C4bee1Ev
 // CHECK-LP64: .quad __ZN1C4bee2Ev
@@ -65,7 +86,7 @@ int main() {
 // CHECK-LP32: .long __ZN1B4bar2Ev
 // CHECK-LP32: .long __ZN1A4foo1Ev
 // CHECK-LP32: .long __ZN1A4foo2Ev
-// CHECK-LP32: .long 4294967292
+// CHECK-LP32: .long 4294967284
 // CHECK-LP32: .space 4
 // CHECK-LP32: .long __ZN1C4bee1Ev
 // CHECK-LP32: .long __ZN1C4bee2Ev

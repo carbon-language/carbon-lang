@@ -25,10 +25,14 @@ ASTRecordLayoutBuilder::ASTRecordLayoutBuilder(ASTContext &Ctx)
   : Ctx(Ctx), Size(0), Alignment(8), StructPacking(0), NextOffset(0),
   IsUnion(false), NonVirtualSize(0), NonVirtualAlignment(8) {}
 
+/// LayoutVtable - Lay out the vtable and set PrimaryBase.
 void ASTRecordLayoutBuilder::LayoutVtable(const CXXRecordDecl *RD) {
   // FIXME: audit indirect virtual bases
-  if (!RD->isPolymorphic() && !RD->getNumVBases())
+  if (!RD->isPolymorphic() && !RD->getNumVBases()) {
+    // There is no primary base in this case.
+    setPrimaryBase(0);
     return;
+  }
 
   SelectPrimaryBase(RD);
   if (PrimaryBase == 0) {
@@ -46,7 +50,9 @@ ASTRecordLayoutBuilder::LayoutNonVirtualBases(const CXXRecordDecl *RD) {
     if (!i->isVirtual()) {
       const CXXRecordDecl *Base = 
         cast<CXXRecordDecl>(i->getType()->getAs<RecordType>()->getDecl());
-      LayoutNonVirtualBase(Base);
+      // Skip the PrimaryBase here, as it is laid down first.
+      if (Base != PrimaryBase)
+        LayoutNonVirtualBase(Base);
     }
   }
 }
@@ -186,12 +192,10 @@ void ASTRecordLayoutBuilder::Layout(const RecordDecl *D) {
   // If this is a C++ class, lay out the nonvirtual bases.
   if (const CXXRecordDecl *RD = dyn_cast<CXXRecordDecl>(D)) {
     LayoutVtable(RD);
+    // PrimaryBase goes first.
+    if (PrimaryBase)
+      LayoutNonVirtualBase(PrimaryBase);
     LayoutNonVirtualBases(RD);
-
-    // FIXME: audit indirect virtual bases
-    assert (RD->getNumVBases() == 0
-            && "FIXME: We don't support virtual bases yet!");
-    // FIXME: We need to layout the virtual bases in the complete object layout.
   }
 
   LayoutFields(D);
