@@ -119,7 +119,10 @@ namespace llvm {
       // Vector load/store with (de)interleaving
       VLD2D,
       VLD3D,
-      VLD4D
+      VLD4D,
+      VST2D,
+      VST3D,
+      VST4D
     };
   }
 
