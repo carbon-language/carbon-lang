@@ -64,10 +64,16 @@ namespace llvm {
     virtual const MCSection *
     getSpecialCasedSectionGlobals(const GlobalValue *GV, Mangler *Mang,
                                   SectionKind Kind) const;
+    
     virtual const MCSection *SelectSectionForGlobal(const GlobalValue *GV,
                                                     SectionKind Kind,
                                                     Mangler *Mang,
                                                     const TargetMachine&) const;
+
+    const MCSection *getSectionForFunction(const std::string &FnName) const;
+    const MCSection *getSectionForFunctionFrame(const std::string &FnName)const;
+    
+    
   private:
     std::string getSectionNameForSym(const std::string &Sym) const;
 

@@ -68,12 +68,8 @@ bool PIC16AsmPrinter::runOnMachineFunction(MachineFunction &MF) {
   EmitAutos(CurrentFnName);
 
   // Now emit the instructions of function in its code section.
-  std::string T = PAN::getCodeSectionName(CurrentFnName);
-  const char *codeSection = T.c_str();
- 
   const MCSection *fCodeSection = 
-    getObjFileLowering().getOrCreateSection(codeSection, false, 
-                                           SectionKind::getText());
+    getObjFileLowering().getSectionForFunction(CurrentFnName);
   // Start the Code Section.
   O <<  "\n";
   SwitchToSection(fCodeSection);
@@ -347,12 +343,9 @@ void PIC16AsmPrinter::EmitFunctionFrame(MachineFunction &MF) {
   const TargetData *TD = TM.getTargetData();
   // Emit the data section name.
   O << "\n"; 
-  std::string T = PAN::getFrameSectionName(CurrentFnName);
-  const char *SectionName = T.c_str();
-
+  
   const MCSection *fPDataSection =
-    getObjFileLowering().getOrCreateSection(SectionName, false,
-                                        SectionKind::getDataRel());
+    getObjFileLowering().getSectionForFunctionFrame(CurrentFnName);
   SwitchToSection(fPDataSection);
   
   // Emit function frame label

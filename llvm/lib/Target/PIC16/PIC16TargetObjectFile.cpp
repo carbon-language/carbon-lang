@@ -16,8 +16,7 @@
 using namespace llvm;
 
 PIC16TargetObjectFile::PIC16TargetObjectFile()
-  : ExternalVarDecls(0), ExternalVarDefs(0) 
-{
+  : ExternalVarDecls(0), ExternalVarDefs(0) {
 }
 
 void PIC16TargetObjectFile::Initialize(MCContext &Ctx, const TargetMachine &tm){
@@ -47,6 +46,18 @@ void PIC16TargetObjectFile::Initialize(MCContext &Ctx, const TargetMachine &tm){
                                       SectionKind::getMetadata()));
 }
 
+const MCSection *PIC16TargetObjectFile::
+getSectionForFunction(const std::string &FnName) const {
+  std::string T = PAN::getCodeSectionName(FnName);
+  return getOrCreateSection(T.c_str(), false, SectionKind::getText());
+}
+
+
+const MCSection *PIC16TargetObjectFile::
+getSectionForFunctionFrame(const std::string &FnName) const {
+  std::string T = PAN::getFrameSectionName(FnName);
+  return getOrCreateSection(T.c_str(), false, SectionKind::getDataRel());
+}
 
 const MCSection *
 PIC16TargetObjectFile::getBSSSectionForGlobal(const GlobalVariable *GV) const {

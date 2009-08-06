@@ -37,6 +37,10 @@ namespace llvm {
     virtual const char *getPassName() const {
       return "PIC16 Assembly Printer";
     }
+    
+    PIC16TargetObjectFile &getObjFileLowering() const {
+      return (PIC16TargetObjectFile &)AsmPrinter::getObjFileLowering();
+    }
 
     bool runOnMachineFunction(MachineFunction &F);
     void printOperand(const MachineInstr *MI, int opNum);
