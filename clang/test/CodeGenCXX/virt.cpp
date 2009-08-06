@@ -26,6 +26,10 @@ void D::boo() { }
 
 struct D1 {
   virtual void bar();
+  virtual void bar2();
+  virtual void bar3();
+  virtual void bar4();
+  virtual void bar5();
   void *d1;
 };
 void D1::bar() { }
@@ -125,10 +129,18 @@ int main() {
 // CHECK-LP32: .long __ZTI1F
 // CHECK-LP32: .long __ZN1D3booEv
 // CHECK-LP32: .long __ZN1F3fooEv
-// CHECK-LP32 .space 4
+// CHECK-LP32: .space 4
+// CHECK-LP32: .space 4
+// CHECK-LP32: .space 4
+// CHECK-LP32: .space 4
+// CHECK-LP32: .space 4
 // CHECK-LP32: .long 4294967288
 // CHECK-LP32: .long __ZTI1F
 // CHECK-LP32: .long __ZN2D13barEv
+// CHECK-LP32: .long __ZN2D14bar2Ev
+// CHECK-LP32: .long __ZN2D14bar3Ev
+// CHECK-LP32: .long __ZN2D14bar4Ev
+// CHECK-LP32: .long __ZN2D14bar5Ev
 
 // CHECK-LP64: __ZTV1F:
 // CHECK-LP64 .space 8
@@ -138,7 +150,15 @@ int main() {
 // CHECK-LP64: .quad __ZTI1F
 // CHECK-LP64: .quad __ZN1D3booEv
 // CHECK-LP64: .quad __ZN1F3fooEv
-// CHECK-LP64 .space 8
+// CHECK-LP64: .space 8
+// CHECK-LP64: .space 8
+// CHECK-LP64: .space 8
+// CHECK-LP64: .space 8
+// CHECK-LP64: .space 8
 // CHECK-LP64: .quad 18446744073709551600
 // CHECK-LP64: .quad __ZTI1F
 // CHECK-LP64: .quad __ZN2D13barEv
+// CHECK-LP64: .quad __ZN2D14bar2Ev
+// CHECK-LP64: .quad __ZN2D14bar3Ev
+// CHECK-LP64: .quad __ZN2D14bar4Ev
+// CHECK-LP64: .quad __ZN2D14bar5Ev
