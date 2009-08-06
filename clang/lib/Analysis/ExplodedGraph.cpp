@@ -51,7 +51,7 @@ void ExplodedNode::Profile(llvm::FoldingSetNodeID& ID,
                            const ProgramPoint& Loc,
                            const GRState* state) {
   ID.Add(Loc);
-  state->Profile(ID);
+  ID.AddPointer(state);
 }
 
 void ExplodedNode::addPredecessor(ExplodedNode* V) {
