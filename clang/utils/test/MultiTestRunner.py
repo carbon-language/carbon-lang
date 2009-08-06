@@ -288,7 +288,8 @@ def main():
         if opts.config:
             opts.root = os.path.dirname(opts.config)
         else:
-            opts.root = os.path.commonprefix(inputs)
+            opts.root = os.path.commonprefix([os.path.abspath(p)
+                                              for p in inputs])
 
     # Find the config file, if not specified.
     if not opts.config:
