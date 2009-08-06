@@ -575,6 +575,7 @@ namespace {
         nl(Out);
       }
       Out << "StructType* " << typeName << " = StructType::get("
+          << "mod->getContext(), "
           << typeName << "_fields, /*isPacked=*/"
           << (ST->isPacked() ? "true" : "false") << ");";
       nl(Out);
