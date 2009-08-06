@@ -196,7 +196,6 @@ class VLD2D<string OpcodeStr>
 def  VLD2d8   : VLD2D<"vld2.8">;
 def  VLD2d16  : VLD2D<"vld2.16">;
 def  VLD2d32  : VLD2D<"vld2.32">;
-def  VLD2d64  : VLD2D<"vld2.64">;
 
 //   VLD3     : Vector Load (multiple 3-element structures)
 class VLD3D<string OpcodeStr>
@@ -206,7 +205,6 @@ class VLD3D<string OpcodeStr>
 def  VLD3d8   : VLD3D<"vld3.8">;
 def  VLD3d16  : VLD3D<"vld3.16">;
 def  VLD3d32  : VLD3D<"vld3.32">;
-def  VLD3d64  : VLD3D<"vld3.64">;
 
 //   VLD4     : Vector Load (multiple 4-element structures)
 class VLD4D<string OpcodeStr>
@@ -217,7 +215,6 @@ class VLD4D<string OpcodeStr>
 def  VLD4d8   : VLD4D<"vld4.8">;
 def  VLD4d16  : VLD4D<"vld4.16">;
 def  VLD4d32  : VLD4D<"vld4.32">;
-def  VLD4d64  : VLD4D<"vld4.64">;
 
 
 //===----------------------------------------------------------------------===//

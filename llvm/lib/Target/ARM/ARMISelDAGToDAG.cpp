@@ -1317,7 +1317,6 @@ SDNode *ARMDAGToDAGISel::Select(SDValue Op) {
     case MVT::v4i16: Opc = ARM::VLD2d16; break;
     case MVT::v2f32:
     case MVT::v2i32: Opc = ARM::VLD2d32; break;
-    case MVT::v1i64: Opc = ARM::VLD2d64; break;
     }
     const SDValue Ops[] = { MemAddr, MemUpdate, MemOpc };
     return CurDAG->getTargetNode(Opc, dl, VT, VT, MVT::Other, Ops, 3);
@@ -1335,7 +1334,6 @@ SDNode *ARMDAGToDAGISel::Select(SDValue Op) {
     case MVT::v4i16: Opc = ARM::VLD3d16; break;
     case MVT::v2f32:
     case MVT::v2i32: Opc = ARM::VLD3d32; break;
-    case MVT::v1i64: Opc = ARM::VLD3d64; break;
     }
     const SDValue Ops[] = { MemAddr, MemUpdate, MemOpc };
     return CurDAG->getTargetNode(Opc, dl, VT, VT, VT, MVT::Other, Ops, 3);
@@ -1353,7 +1351,6 @@ SDNode *ARMDAGToDAGISel::Select(SDValue Op) {
     case MVT::v4i16: Opc = ARM::VLD4d16; break;
     case MVT::v2f32:
     case MVT::v2i32: Opc = ARM::VLD4d32; break;
-    case MVT::v1i64: Opc = ARM::VLD4d64; break;
     }
     const SDValue Ops[] = { MemAddr, MemUpdate, MemOpc };
     std::vector<MVT> ResTys(4, VT);
