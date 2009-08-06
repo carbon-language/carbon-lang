@@ -315,6 +315,9 @@ public:
   
   SVal RetrieveLazySymbol(const GRState *state, const TypedRegion *R);
   
+  SVal RetrieveFieldOrElementCommon(const GRState *state, const TypedRegion *R,
+                                    QualType Ty, const MemRegion *superR);
+  
   SValuator::CastResult CastRetrievedVal(SVal val, const GRState *state,
                                          const TypedRegion *R, QualType castTy);
 
@@ -1053,109 +1056,66 @@ SVal RegionStoreManager::RetrieveElement(const GRState* state,
     }
   }
 
-  // Check if the super region has a default value.
-  if (const SVal *D = state->get<RegionDefaultValue>(superR)) {
-    if (D->hasConjuredSymbol())
-      return ValMgr.getRegionValueSymbolVal(R);
-    else
-      return *D;
-  }
-
-  // Check if the super region has a binding.
+  // Check if the immediate super region has a direct binding.
   if (const SVal *V = B.lookup(superR)) {
     if (SymbolRef parentSym = V->getAsSymbol())
       return ValMgr.getDerivedRegionValueSymbolVal(parentSym, R);
 
     if (V->isUnknownOrUndef())
       return *V;
-    
-    // Handle LazyCompoundVals below.
-    if (const nonloc::LazyCompoundVal *LVC =
-          dyn_cast<nonloc::LazyCompoundVal>(V)) {
-      return RetrieveElement(LVC->getState(),
-                             MRMgr.getElementRegionWithSuper(R,
-                                                             LVC->getRegion()));
-    }
+
+    // Handle LazyCompoundVals for the immediate super region.  Other cases
+    // are handled in 'RetrieveFieldOrElementCommon'.
+    if (const nonloc::LazyCompoundVal *LCV = 
+        dyn_cast<nonloc::LazyCompoundVal>(V)) {
       
+      R = MRMgr.getElementRegionWithSuper(R, LCV->getRegion());
+      return RetrieveElement(LCV->getState(), R);
+    }
+    
     // Other cases: give up.
     return UnknownVal();
   }
   
-  // Lazy binding?
-  const GRState *lazyBindingState = NULL;
-  const MemRegion *LazyBindingRegion = NULL;
-  llvm::tie(lazyBindingState, LazyBindingRegion) = GetLazyBinding(B, R);
-  
-  if (lazyBindingState) {
-    assert(LazyBindingRegion && "Lazy-binding region not set");
-    return RetrieveElement(lazyBindingState,
-                           cast<ElementRegion>(LazyBindingRegion));
-  }
-
-  // Default value cases.
-#if 0
-  if (R->hasHeapStorage()) {
-      // FIXME: If the region has heap storage and we know nothing special
-      // about its bindings, should we instead return UnknownVal?  Seems like
-      // we should only return UndefinedVal in the cases where we know the value
-      // will be undefined.
-    return UndefinedVal();
-  }
-#endif
-  
-  if (R->hasStackStorage() && !R->hasParametersStorage()) {
-    // Currently we don't reason specially about Clang-style vectors.  Check
-    // if superR is a vector and if so return Unknown.
-    if (const TypedRegion *typedSuperR = dyn_cast<TypedRegion>(superR)) {
-      if (typedSuperR->getValueType(getContext())->isVectorType())
-        return UnknownVal();
-    }
-
-    return UndefinedVal();
-  }
-
-  QualType Ty = R->getValueType(getContext());
-
-  return ValMgr.getRegionValueSymbolValOrUnknown(R, Ty);
+  return RetrieveFieldOrElementCommon(state, R, R->getElementType(), superR);
 }
 
 SVal RegionStoreManager::RetrieveField(const GRState* state, 
                                        const FieldRegion* R) {
-  QualType Ty = R->getValueType(getContext());
 
   // Check if the region has a binding.
   RegionBindings B = GetRegionBindings(state->getStore());
   if (const SVal* V = B.lookup(R))
     return *V;
 
-  const MemRegion* superR = R->getSuperRegion();
+  QualType Ty = R->getValueType(getContext());
+  return RetrieveFieldOrElementCommon(state, R, Ty, R->getSuperRegion());
+}
+  
+SVal RegionStoreManager::RetrieveFieldOrElementCommon(const GRState *state,
+                                                      const TypedRegion *R,
+                                                      QualType Ty,
+                                                      const MemRegion *superR) {
+
+  // At this point we have already checked in either RetrieveElement or 
+  // RetrieveField if 'R' has a direct binding.
+  
+  RegionBindings B = GetRegionBindings(state->getStore());
+    
   while (superR) {
     if (const Optional<SVal> &D = getDefaultBinding(state, superR)) {
       if (SymbolRef parentSym = D->getAsSymbol())
         return ValMgr.getDerivedRegionValueSymbolVal(parentSym, R);
-
+      
       if (D->isZeroConstant())
         return ValMgr.makeZeroVal(Ty);
-      
-      if (const nonloc::LazyCompoundVal *LCV =
-            dyn_cast<nonloc::LazyCompoundVal>(D)) {
-        const FieldRegion *FR =
-          MRMgr.getFieldRegionWithSuper(R, LCV->getRegion());
-        return RetrieveField(LCV->getState(), FR);
-      }
-
+            
       if (D->isUnknown())
         return *D;
-
+      
       assert(0 && "Unknown default value");
     }
     
-    if (const SVal *V = B.lookup(superR)) {
-      // Handle LazyCompoundVals below.
-      if (isa<nonloc::CompoundVal>(*V))
-        break;
-    }
-   
     // If our super region is a field or element itself, walk up the region
     // hierarchy to see if there is a default value installed in an ancestor.
     if (isa<FieldRegion>(superR) || isa<ElementRegion>(superR)) {
@@ -1168,28 +1128,38 @@ SVal RegionStoreManager::RetrieveField(const GRState* state,
   
   // Lazy binding?
   const GRState *lazyBindingState = NULL;
-  const MemRegion *LazyBindingRegion = NULL;
-  llvm::tie(lazyBindingState, LazyBindingRegion) = GetLazyBinding(B, R);
+  const MemRegion *lazyBindingRegion = NULL;
+  llvm::tie(lazyBindingState, lazyBindingRegion) = GetLazyBinding(B, R);
   
   if (lazyBindingState) {
-    assert(LazyBindingRegion && "Lazy-binding region not set");
+    assert(lazyBindingRegion && "Lazy-binding region not set");
+    
+    if (isa<ElementRegion>(R))
+      return RetrieveElement(lazyBindingState,
+                             cast<ElementRegion>(lazyBindingRegion));
+    
     return RetrieveField(lazyBindingState,
-                        cast<FieldRegion>(LazyBindingRegion));
-  }
-
-#if HEAP_UNDEFINED
-  // FIXME: Is this correct?  Should it be UnknownVal?
-  if (R->hasHeapStorage())
-    return UndefinedVal();
-#endif
+                         cast<FieldRegion>(lazyBindingRegion));
+  } 
   
-  if (R->hasStackStorage() && !R->hasParametersStorage())
+  if (R->hasStackStorage() && !R->hasParametersStorage()) {
+    
+    if (isa<ElementRegion>(R)) {
+      // Currently we don't reason specially about Clang-style vectors.  Check
+      // if superR is a vector and if so return Unknown.
+      if (const TypedRegion *typedSuperR = dyn_cast<TypedRegion>(superR)) {
+        if (typedSuperR->getValueType(getContext())->isVectorType())
+          return UnknownVal();
+      }      
+    }
+    
     return UndefinedVal();
-
+  }
+  
   // All other values are symbolic.
   return ValMgr.getRegionValueSymbolValOrUnknown(R, Ty);
 }
-
+  
 SVal RegionStoreManager::RetrieveObjCIvar(const GRState* state, 
                                           const ObjCIvarRegion* R) {
 
