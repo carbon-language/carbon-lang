@@ -86,6 +86,10 @@ public:
   /// basic block.
   void enterBasicBlock(MachineBasicBlock *mbb);
 
+  /// initRegState - allow resetting register state info for multiple
+  /// passes over/within the same function.
+  void initRegState();
+
   /// forward / backward - Move the internal MBB iterator and update register
   /// states.
   void forward();
