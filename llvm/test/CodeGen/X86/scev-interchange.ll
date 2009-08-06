@@ -1,10 +1,8 @@
 ; RUN: llvm-as < %s | llc -march=x86-64
 
 target datalayout = "e-p:64:64:64-i1:8:8-i8:8:8-i16:16:16-i32:32:32-i64:64:64-f32:32:32-f64:64:64-v64:64:64-v128:128:128-a0:0:64-s0:64:64-f80:128:128"
-	%struct..0__pthread_mutex_s = type { i32, i32, i32, i32, i32, i32, %struct.__pthread_list_t }
 	%"struct.DataOutBase::GmvFlags" = type { i32 }
 	%"struct.FE_DGPNonparametric<3>" = type { [1156 x i8], i32, %"struct.PolynomialSpace<1>" }
-	%"struct.FE_Q<3>" = type { %"struct.FE_DGPNonparametric<3>", %"struct.std::vector<int,std::allocator<int> >" }
 	%"struct.FiniteElementData<1>" = type { i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32 }
 	%struct.Line = type { [2 x i32] }
 	%"struct.PolynomialSpace<1>" = type { %"struct.std::vector<Polynomials::Polynomial<double>,std::allocator<Polynomials::Polynomial<double> > >", i32, %"struct.std::vector<int,std::allocator<int> >", %"struct.std::vector<int,std::allocator<int> >" }
@@ -12,9 +10,6 @@ target datalayout = "e-p:64:64:64-i1:8:8-i8:8:8-i16:16:16-i32:32:32-i64:64:64-f3
 	%struct.Subscriptor = type { i32 (...)**, i32, %"struct.std::type_info"* }
 	%"struct.TableBase<2,double>" = type { %struct.Subscriptor, double*, i32, %"struct.TableIndices<2>" }
 	%"struct.TableIndices<2>" = type { %struct.Line }
-	%struct.__pthread_list_t = type { %struct.__pthread_list_t*, %struct.__pthread_list_t* }
-	%struct.pthread_attr_t = type { i64, [48 x i8] }
-	%struct.pthread_mutex_t = type { %struct..0__pthread_mutex_s }
 	%"struct.std::_Bit_const_iterator" = type { %"struct.std::_Bit_iterator_base" }
 	%"struct.std::_Bit_iterator_base" = type { i64*, i32 }
 	%"struct.std::_Bvector_base<std::allocator<bool> >" = type { %"struct.std::_Bvector_base<std::allocator<bool> >::_Bvector_impl" }
@@ -33,21 +28,6 @@ target datalayout = "e-p:64:64:64-i1:8:8-i8:8:8-i16:16:16-i32:32:32-i64:64:64-f3
 	%"struct.std::vector<double,std::allocator<double> >" = type { %"struct.std::_Vector_base<double,std::allocator<double> >" }
 	%"struct.std::vector<int,std::allocator<int> >" = type { %"struct.std::_Vector_base<int,std::allocator<int> >" }
 	%"struct.std::vector<std::vector<bool, std::allocator<bool> >,std::allocator<std::vector<bool, std::allocator<bool> > > >" = type { %"struct.std::_Vector_base<std::vector<bool, std::allocator<bool> >,std::allocator<std::vector<bool, std::allocator<bool> > > >" }
-
-@_ZL20__gthrw_pthread_oncePiPFvvE = alias weak i32 (i32*, void ()*)* @pthread_once		; <i32 (i32*, void ()*)*> [#uses=0]
-@_ZL27__gthrw_pthread_getspecificj = alias weak i8* (i32)* @pthread_getspecific		; <i8* (i32)*> [#uses=0]
-@_ZL27__gthrw_pthread_setspecificjPKv = alias weak i32 (i32, i8*)* @pthread_setspecific		; <i32 (i32, i8*)*> [#uses=0]
-@_ZL22__gthrw_pthread_createPmPK14pthread_attr_tPFPvS3_ES3_ = alias weak i32 (i64*, %struct.pthread_attr_t*, i8* (i8*)*, i8*)* @pthread_create		; <i32 (i64*, %struct.pthread_attr_t*, i8* (i8*)*, i8*)*> [#uses=0]
-@_ZL22__gthrw_pthread_cancelm = alias weak i32 (i64)* @pthread_cancel		; <i32 (i64)*> [#uses=0]
-@_ZL26__gthrw_pthread_mutex_lockP15pthread_mutex_t = alias weak i32 (%struct.pthread_mutex_t*)* @pthread_mutex_lock		; <i32 (%struct.pthread_mutex_t*)*> [#uses=0]
-@_ZL29__gthrw_pthread_mutex_trylockP15pthread_mutex_t = alias weak i32 (%struct.pthread_mutex_t*)* @pthread_mutex_trylock		; <i32 (%struct.pthread_mutex_t*)*> [#uses=0]
-@_ZL28__gthrw_pthread_mutex_unlockP15pthread_mutex_t = alias weak i32 (%struct.pthread_mutex_t*)* @pthread_mutex_unlock		; <i32 (%struct.pthread_mutex_t*)*> [#uses=0]
-@_ZL26__gthrw_pthread_mutex_initP15pthread_mutex_tPK19pthread_mutexattr_t = alias weak i32 (%struct.pthread_mutex_t*, %"struct.DataOutBase::GmvFlags"*)* @pthread_mutex_init		; <i32 (%struct.pthread_mutex_t*, %"struct.DataOutBase::GmvFlags"*)*> [#uses=0]
-@_ZL26__gthrw_pthread_key_createPjPFvPvE = alias weak i32 (i32*, void (i8*)*)* @pthread_key_create		; <i32 (i32*, void (i8*)*)*> [#uses=0]
-@_ZL26__gthrw_pthread_key_deletej = alias weak i32 (i32)* @pthread_key_delete		; <i32 (i32)*> [#uses=0]
-@_ZL30__gthrw_pthread_mutexattr_initP19pthread_mutexattr_t = alias weak i32 (%"struct.DataOutBase::GmvFlags"*)* @pthread_mutexattr_init		; <i32 (%"struct.DataOutBase::GmvFlags"*)*> [#uses=0]
-@_ZL33__gthrw_pthread_mutexattr_settypeP19pthread_mutexattr_ti = alias weak i32 (%"struct.DataOutBase::GmvFlags"*, i32)* @pthread_mutexattr_settype		; <i32 (%"struct.DataOutBase::GmvFlags"*, i32)*> [#uses=0]
-@_ZL33__gthrw_pthread_mutexattr_destroyP19pthread_mutexattr_t = alias weak i32 (%"struct.DataOutBase::GmvFlags"*)* @pthread_mutexattr_destroy		; <i32 (%"struct.DataOutBase::GmvFlags"*)*> [#uses=0]
 
 declare void @_Unwind_Resume(i8*)
 
@@ -71,7 +51,7 @@ declare fastcc void @_ZN11FE_Q_Helper12_GLOBAL__N_116invert_numberingERKSt6vecto
 
 declare fastcc void @_ZN4FE_QILi3EE14get_dpo_vectorEj(%"struct.std::vector<int,std::allocator<int> >"* noalias nocapture sret, i32)
 
-define fastcc void @_ZN4FE_QILi3EEC1Ej(%"struct.FE_Q<3>"* %this, i32 %degree) {
+define fastcc void @_ZN4FE_QILi3EEC1Ej(i32 %degree) {
 entry:
 	invoke fastcc void @_ZNSt6vectorIbSaIbEEC1EmRKbRKS0_(%"struct.std::vector<bool,std::allocator<bool> >"* undef, i64 1, i8* undef)
 			to label %invcont.i unwind label %lpad.i
@@ -356,31 +336,3 @@ lpad204.i:		; preds = %invcont86.i
 }
 
 declare fastcc void @_ZN11Polynomials19LagrangeEquidistant23generate_complete_basisEj(%"struct.std::vector<Polynomials::Polynomial<double>,std::allocator<Polynomials::Polynomial<double> > >"* noalias nocapture sret, i32)
-
-declare i32 @pthread_once(i32*, void ()*)
-
-declare i8* @pthread_getspecific(i32)
-
-declare i32 @pthread_setspecific(i32, i8*)
-
-declare i32 @pthread_create(i64*, %struct.pthread_attr_t*, i8* (i8*)*, i8*)
-
-declare i32 @pthread_cancel(i64)
-
-declare i32 @pthread_mutex_lock(%struct.pthread_mutex_t*)
-
-declare i32 @pthread_mutex_trylock(%struct.pthread_mutex_t*)
-
-declare i32 @pthread_mutex_unlock(%struct.pthread_mutex_t*)
-
-declare i32 @pthread_mutex_init(%struct.pthread_mutex_t*, %"struct.DataOutBase::GmvFlags"*)
-
-declare i32 @pthread_key_create(i32*, void (i8*)*)
-
-declare i32 @pthread_key_delete(i32)
-
-declare i32 @pthread_mutexattr_init(%"struct.DataOutBase::GmvFlags"*)
-
-declare i32 @pthread_mutexattr_settype(%"struct.DataOutBase::GmvFlags"*, i32)
-
-declare i32 @pthread_mutexattr_destroy(%"struct.DataOutBase::GmvFlags"*)
