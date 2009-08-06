@@ -3371,8 +3371,8 @@ Sema::DeclPtrTy Sema::ActOnFriendDecl(Scope *S,
     // Also, definitions currently get treated in a way that causes
     // this error, so only report it if we didn't see a definition.
     else if (RD->getDeclContext() == CurContext &&
-             !(getLangOptions().CPlusPlus0x || getLangOptions().GNUMode))
-      Diag(DS.getFriendSpecLoc(), diag::extwarn_friend_inner_class);
+             !getLangOptions().CPlusPlus0x)
+      Diag(DS.getFriendSpecLoc(), diag::ext_friend_inner_class);
 
     return DeclPtrTy::make(RD);
   }
