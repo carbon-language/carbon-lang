@@ -610,8 +610,7 @@ namespace llvm {
   /// isInlinedFnEnd - Return true if REI is ending an inlined function.
   bool isInlinedFnEnd(DbgRegionEndInst &REI, const Function *CurrentFn);
 
-  /// DebugInfoEnumrator - This object collects DebugInfo from
-  /// the module.
+  /// DebugInfoFinder - This object collects DebugInfo from a module.
   class DebugInfoFinder {
 
   public:
