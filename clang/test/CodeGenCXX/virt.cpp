@@ -30,7 +30,7 @@ struct E {
 
 static_assert (sizeof (C) == (sizeof(void *)), "vtable pointer layout");
 
-class A : public E, public B, public C, /* virtual */ public D {
+class A : public E, public B, public C {
 public:
   virtual void foo1();
   virtual void foo2();
@@ -90,3 +90,23 @@ int main() {
 // CHECK-LP32: .space 4
 // CHECK-LP32: .long __ZN1C4bee1Ev
 // CHECK-LP32: .long __ZN1C4bee2Ev
+
+struct D1 {
+  virtual void bar();
+  void *d1;
+};
+void D1::bar() { }
+
+class F : virtual public D1, virtual public D {
+public:
+  virtual void foo();
+  void *f;
+};
+void F::foo() { }
+
+void test2() {
+  F f;
+  f.f = 0;
+}
+  
+static_assert(sizeof(F) == sizeof(void*)*4, "invalid vbase size");

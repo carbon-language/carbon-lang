@@ -623,10 +623,8 @@ llvm::Value *CodeGenFunction::GenerateVtable(const CXXRecordDecl *RD) {
 /// base classes and non-static data members belonging to this constructor.
 void CodeGenFunction::EmitCtorPrologue(const CXXConstructorDecl *CD) {
   const CXXRecordDecl *ClassDecl = cast<CXXRecordDecl>(CD->getDeclContext());
-  assert(ClassDecl->getNumVBases() == 0
-         && "FIXME: virtual base initialization unsupported");
+  // FIXME: Add vbase initialization
   llvm::Value *LoadOfThis = 0;
-
   
   for (CXXConstructorDecl::init_const_iterator B = CD->init_begin(),
        E = CD->init_end();

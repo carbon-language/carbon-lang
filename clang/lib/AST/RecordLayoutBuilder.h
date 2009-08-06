@@ -58,7 +58,9 @@ class ASTRecordLayoutBuilder {
   bool IsNearlyEmpty(const CXXRecordDecl *RD);
   void LayoutVtable(const CXXRecordDecl *RD);
   void LayoutNonVirtualBases(const CXXRecordDecl *RD);
-  void LayoutNonVirtualBase(const CXXRecordDecl *RD);
+  void LayoutBaseNonVirtually(const CXXRecordDecl *RD);
+  void LayoutVirtualBase(const CXXRecordDecl *RD);
+  void LayoutVirtualBases(const CXXRecordDecl *RD);
   
   /// FinishLayout - Finalize record layout. Adjust record size based on the
   /// alignment.

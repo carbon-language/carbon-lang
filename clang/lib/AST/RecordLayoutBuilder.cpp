@@ -52,7 +52,7 @@ ASTRecordLayoutBuilder::LayoutNonVirtualBases(const CXXRecordDecl *RD) {
         cast<CXXRecordDecl>(i->getType()->getAs<RecordType>()->getDecl());
       // Skip the PrimaryBase here, as it is laid down first.
       if (Base != PrimaryBase)
-        LayoutNonVirtualBase(Base);
+        LayoutBaseNonVirtually(Base);
     }
   }
 }
@@ -155,7 +155,22 @@ void ASTRecordLayoutBuilder::SelectPrimaryBase(const CXXRecordDecl *RD) {
   return;
 }
 
-void ASTRecordLayoutBuilder::LayoutNonVirtualBase(const CXXRecordDecl *RD) {
+void ASTRecordLayoutBuilder::LayoutVirtualBase(const CXXRecordDecl *RD) {
+  LayoutBaseNonVirtually(RD);
+}
+
+void ASTRecordLayoutBuilder::LayoutVirtualBases(const CXXRecordDecl *RD) {
+  // FIXME: audit indirect virtual bases
+  for (CXXRecordDecl::base_class_const_iterator i = RD->vbases_begin(),
+         e = RD->vbases_end(); i != e; ++i) {
+    const CXXRecordDecl *Base = 
+      cast<CXXRecordDecl>(i->getType()->getAs<RecordType>()->getDecl());
+    if (Base != PrimaryBase)
+      LayoutVirtualBase(Base);
+  }
+}
+
+void ASTRecordLayoutBuilder::LayoutBaseNonVirtually(const CXXRecordDecl *RD) {
   const ASTRecordLayout &BaseInfo = Ctx.getASTRecordLayout(RD);
     assert(BaseInfo.getDataSize() > 0 && 
            "FIXME: Handle empty classes.");
@@ -190,11 +205,12 @@ void ASTRecordLayoutBuilder::Layout(const RecordDecl *D) {
     UpdateAlignment(AA->getAlignment());
 
   // If this is a C++ class, lay out the nonvirtual bases.
-  if (const CXXRecordDecl *RD = dyn_cast<CXXRecordDecl>(D)) {
+  const CXXRecordDecl *RD = dyn_cast<CXXRecordDecl>(D);
+  if (RD) {
     LayoutVtable(RD);
     // PrimaryBase goes first.
     if (PrimaryBase)
-      LayoutNonVirtualBase(PrimaryBase);
+      LayoutBaseNonVirtually(PrimaryBase);
     LayoutNonVirtualBases(RD);
   }
 
@@ -202,6 +218,9 @@ void ASTRecordLayoutBuilder::Layout(const RecordDecl *D) {
   
   NonVirtualSize = Size;
   NonVirtualAlignment = Alignment;
+
+  if (RD)
+    LayoutVirtualBases(RD);
 
   // Finally, round the size of the total struct up to the alignment of the
   // struct itself.
