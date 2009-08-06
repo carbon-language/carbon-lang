@@ -200,13 +200,11 @@ short PIC16DbgInfo::getStorageClass(DIGlobalVariable DIGV) {
 /// required initializations.
 void PIC16DbgInfo::BeginModule(Module &M) {
   // Emit file directive for module.
-  SmallVector<GlobalVariable *, 2> CUs;
-  SmallVector<GlobalVariable *, 4> GVs;
-  SmallVector<GlobalVariable *, 4> SPs;
-  CollectDebugInfoAnchors(M, CUs, GVs, SPs);
-  if (!CUs.empty()) {
+  DebugInfoFinder DbgFinder;
+  DbgFinder.processModule(M);
+  if (DbgFinder.compile_unit_count() != 0) {
     // FIXME : What if more then one CUs are present in a module ?
-    GlobalVariable *CU = CUs[0];
+    GlobalVariable *CU = *DbgFinder.compile_unit_begin();
     EmitDebugDirectives = true;
     SwitchToCU(CU);
   }
@@ -431,15 +429,11 @@ void PIC16DbgInfo::EmitSymbol(std::string Name, short Class, unsigned short
 /// EmitVarDebugInfo - Emit debug information for all variables.
 ///
 void PIC16DbgInfo::EmitVarDebugInfo(Module &M) {
-  SmallVector<GlobalVariable *, 2> CUs;
-  SmallVector<GlobalVariable *, 4> GVs;
-  SmallVector<GlobalVariable *, 4> SPs;
-  CollectDebugInfoAnchors(M, CUs, GVs, SPs);
-  if (GVs.empty())
-    return;
+  DebugInfoFinder DbgFinder;
+  DbgFinder.processModule(M);
 
-  for (SmallVector<GlobalVariable *, 4>::iterator I = GVs.begin(),
-         E = GVs.end(); I != E; ++I)  {
+  for (DebugInfoFinder::iterator I = DbgFinder.global_variable_begin(),
+         E = DbgFinder.global_variable_end(); I != E; ++I) {
     DIGlobalVariable DIGV(*I);
     DIType Ty = DIGV.getType();
     unsigned short TypeNo = 0;
