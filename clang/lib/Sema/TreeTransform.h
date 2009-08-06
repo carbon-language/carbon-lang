@@ -14,6 +14,7 @@
 #define LLVM_CLANG_SEMA_TREETRANSFORM_H
 
 #include "Sema.h"
+#include "clang/Sema/SemaDiagnostic.h"
 #include <algorithm>
 
 namespace clang {
@@ -156,12 +157,15 @@ public:
   /// \brief Transform the given declaration, which is referenced from a type
   /// or expression.
   ///
-  /// Subclasses must override this.
-  Decl *TransformDecl(Decl *D);
+  /// By default, acts as the identity function on declarations. Subclasses
+  /// may override this function to provide alternate behavior.
+  Decl *TransformDecl(Decl *D) { return D; }
   
   /// \brief Transform the given nested-name-specifier.
   ///
-  /// Subclasses must override this.
+  /// By default, transforms all of the types and declarations within the 
+  /// nested-name-specifier. Subclasses may override this function to provide
+  /// alternate behavior.
   NestedNameSpecifier *TransformNestedNameSpecifier(NestedNameSpecifier *NNS,
                                                     SourceRange Range);
   
@@ -397,9 +401,97 @@ public:
                                const IdentifierInfo *Id) {
     return SemaRef.CheckTypenameType(NNS, *Id,
                                   SourceRange(getDerived().getBaseLocation()));
-  }    
+  }
+  
+  /// \brief Build a new nested-name-specifier given the prefix and an
+  /// identifier that names the next step in the nested-name-specifier.
+  ///
+  /// By default, performs semantic analysis when building the new
+  /// nested-name-specifier. Subclasses may override this routine to provide
+  /// different behavior.
+  NestedNameSpecifier *RebuildNestedNameSpecifier(NestedNameSpecifier *Prefix,
+                                                  SourceRange Range,
+                                                  IdentifierInfo &II);
+
+  /// \brief Build a new nested-name-specifier given the prefix and the
+  /// namespace named in the next step in the nested-name-specifier.
+  ///
+  /// By default, performs semantic analysis when building the new
+  /// nested-name-specifier. Subclasses may override this routine to provide
+  /// different behavior.
+  NestedNameSpecifier *RebuildNestedNameSpecifier(NestedNameSpecifier *Prefix,
+                                                  SourceRange Range,
+                                                  NamespaceDecl *NS);
+
+  /// \brief Build a new nested-name-specifier given the prefix and the
+  /// type named in the next step in the nested-name-specifier.
+  ///
+  /// By default, performs semantic analysis when building the new
+  /// nested-name-specifier. Subclasses may override this routine to provide
+  /// different behavior.
+  NestedNameSpecifier *RebuildNestedNameSpecifier(NestedNameSpecifier *Prefix,
+                                                  SourceRange Range,
+                                                  bool TemplateKW,
+                                                  QualType T);
 };
   
+template<typename Derived>
+NestedNameSpecifier *
+TreeTransform<Derived>::TransformNestedNameSpecifier(NestedNameSpecifier *NNS,
+                                                     SourceRange Range) {
+  // Instantiate the prefix of this nested name specifier.
+  NestedNameSpecifier *Prefix = NNS->getPrefix();
+  if (Prefix) {
+    Prefix = getDerived().TransformNestedNameSpecifier(Prefix, Range);
+    if (!Prefix)
+      return 0;
+  }
+  
+  switch (NNS->getKind()) {
+  case NestedNameSpecifier::Identifier:
+    assert(Prefix && 
+           "Can't have an identifier nested-name-specifier with no prefix");
+    if (!getDerived().AlwaysRebuild() && Prefix == NNS->getPrefix())
+      return NNS;
+      
+    return getDerived().RebuildNestedNameSpecifier(Prefix, Range, 
+                                                   *NNS->getAsIdentifier());
+      
+  case NestedNameSpecifier::Namespace: {
+    NamespaceDecl *NS 
+      = cast_or_null<NamespaceDecl>(
+                            getDerived().TransformDecl(NNS->getAsNamespace()));
+    if (!getDerived().AlwaysRebuild() && 
+        Prefix == NNS->getPrefix() &&
+        NS == NNS->getAsNamespace())
+      return NNS;
+    
+    return getDerived().RebuildNestedNameSpecifier(Prefix, Range, NS);
+  }
+      
+  case NestedNameSpecifier::Global:
+    // There is no meaningful transformation that one could perform on the
+    // global scope.
+    return NNS;
+      
+  case NestedNameSpecifier::TypeSpecWithTemplate:
+  case NestedNameSpecifier::TypeSpec: {
+    QualType T = getDerived().TransformType(QualType(NNS->getAsType(), 0));
+    if (!getDerived().AlwaysRebuild() &&
+        Prefix == NNS->getPrefix() &&
+        T == QualType(NNS->getAsType(), 0))
+      return NNS;
+    
+    return getDerived().RebuildNestedNameSpecifier(Prefix, Range, 
+                  NNS->getKind() == NestedNameSpecifier::TypeSpecWithTemplate,    
+                                                   T);
+  }
+  }
+  
+  // Required to silence a GCC warning
+  return 0;  
+}
+
 template<typename Derived>
 TemplateArgument 
 TreeTransform<Derived>::TransformTemplateArgument(const TemplateArgument &Arg) {
@@ -1210,6 +1302,45 @@ QualType TreeTransform<Derived>::RebuildTemplateSpecializationType(
   return SemaRef.CheckTemplateIdType(Template, getDerived().getBaseLocation(),
                                      SourceLocation(), Args, NumArgs, 
                                      SourceLocation());  
+}
+  
+template<typename Derived>
+NestedNameSpecifier *
+TreeTransform<Derived>::RebuildNestedNameSpecifier(NestedNameSpecifier *Prefix,
+                                                   SourceRange Range,
+                                                   IdentifierInfo &II) {
+  CXXScopeSpec SS;
+  // FIXME: The source location information is all wrong.
+  SS.setRange(Range);
+  SS.setScopeRep(Prefix);
+  return static_cast<NestedNameSpecifier *>(
+                    SemaRef.ActOnCXXNestedNameSpecifier(0, SS, Range.getEnd(), 
+                                                        Range.getEnd(), II));
+}
+
+template<typename Derived>
+NestedNameSpecifier *
+TreeTransform<Derived>::RebuildNestedNameSpecifier(NestedNameSpecifier *Prefix,
+                                                   SourceRange Range,
+                                                   NamespaceDecl *NS) {
+  return NestedNameSpecifier::Create(SemaRef.Context, Prefix, NS);
+}
+
+template<typename Derived>
+NestedNameSpecifier *
+TreeTransform<Derived>::RebuildNestedNameSpecifier(NestedNameSpecifier *Prefix,
+                                                   SourceRange Range,
+                                                   bool TemplateKW,
+                                                   QualType T) {
+  if (T->isDependentType() || T->isRecordType() ||
+      (SemaRef.getLangOptions().CPlusPlus0x && T->isEnumeralType())) {
+    assert(T.getCVRQualifiers() == 0 && "Can't get cv-qualifiers here");
+    return NestedNameSpecifier::Create(SemaRef.Context, Prefix, TemplateKW,
+                                       T.getTypePtr());
+  }
+  
+  SemaRef.Diag(Range.getBegin(), diag::err_nested_name_spec_non_tag) << T;
+  return 0;
 }
   
 } // end namespace clang

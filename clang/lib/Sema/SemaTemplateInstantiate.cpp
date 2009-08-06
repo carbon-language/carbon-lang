@@ -324,10 +324,6 @@ namespace {
     /// this declaration.
     Decl *TransformDecl(Decl *D);
     
-    /// \brief Transform the given nested-name-specifier by instantiating it.
-    NestedNameSpecifier *TransformNestedNameSpecifier(NestedNameSpecifier *NNS,
-                                                      SourceRange Range);
-    
     /// \brief Transform the given template name by instantiating it.
     TemplateName TransformTemplateName(TemplateName Template);
     
@@ -343,12 +339,6 @@ Sema::OwningExprResult TemplateInstantiator::TransformExpr(Expr *E) {
 
 Decl *TemplateInstantiator::TransformDecl(Decl *D) {
   return SemaRef.InstantiateCurrentDeclRef(cast_or_null<NamedDecl>(D));
-}
-
-NestedNameSpecifier *
-TemplateInstantiator::TransformNestedNameSpecifier(NestedNameSpecifier *NNS,
-                                                   SourceRange Range) {
-  return getSema().InstantiateNestedNameSpecifier(NNS, Range, TemplateArgs);
 }
 
 TemplateName 
@@ -722,59 +712,9 @@ NestedNameSpecifier *
 Sema::InstantiateNestedNameSpecifier(NestedNameSpecifier *NNS,
                                      SourceRange Range,
                                      const TemplateArgumentList &TemplateArgs) {
-  // Instantiate the prefix of this nested name specifier.
-  NestedNameSpecifier *Prefix = NNS->getPrefix();
-  if (Prefix) {
-    Prefix = InstantiateNestedNameSpecifier(Prefix, Range, TemplateArgs);
-    if (!Prefix)
-      return 0;
-  }
-
-  switch (NNS->getKind()) {
-  case NestedNameSpecifier::Identifier: {
-    assert(Prefix && 
-           "Can't have an identifier nested-name-specifier with no prefix");
-    CXXScopeSpec SS;
-    // FIXME: The source location information is all wrong.
-    SS.setRange(Range);
-    SS.setScopeRep(Prefix);
-    return static_cast<NestedNameSpecifier *>(
-                                 ActOnCXXNestedNameSpecifier(0, SS,
-                                                             Range.getEnd(),
-                                                             Range.getEnd(),
-                                                    *NNS->getAsIdentifier()));
-    break;
-  }
-
-  case NestedNameSpecifier::Namespace:
-  case NestedNameSpecifier::Global:
-    return NNS;
-    
-  case NestedNameSpecifier::TypeSpecWithTemplate:
-  case NestedNameSpecifier::TypeSpec: {
-    QualType T = QualType(NNS->getAsType(), 0);
-    if (!T->isDependentType())
-      return NNS;
-
-    T = InstantiateType(T, TemplateArgs, Range.getBegin(), DeclarationName());
-    if (T.isNull())
-      return 0;
-
-    if (T->isDependentType() || T->isRecordType() ||
-        (getLangOptions().CPlusPlus0x && T->isEnumeralType())) {
-      assert(T.getCVRQualifiers() == 0 && "Can't get cv-qualifiers here");
-      return NestedNameSpecifier::Create(Context, Prefix, 
-                 NNS->getKind() == NestedNameSpecifier::TypeSpecWithTemplate,
-                                         T.getTypePtr());
-    }
-
-    Diag(Range.getBegin(), diag::err_nested_name_spec_non_tag) << T;
-    return 0;
-  }
-  }
-
-  // Required to silence a GCC warning
-  return 0;
+  TemplateInstantiator Instantiator(*this, TemplateArgs, Range.getBegin(),
+                                    DeclarationName());
+  return Instantiator.TransformNestedNameSpecifier(NNS, Range);
 }
 
 TemplateName

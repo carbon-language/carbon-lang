@@ -2181,8 +2181,7 @@ Sema::ActOnMemberReferenceExpr(Scope *S, ExprArg Base, SourceLocation OpLoc,
       = LookupQualifiedName(DC, DeclarationName(&Member),  
                             LookupMemberName, false);
 
-    if (SS && SS->isSet())
-    {
+    if (SS && SS->isSet()) {
       QualType BaseTypeCanon 
         = Context.getCanonicalType(BaseType).getUnqualifiedType();
       QualType MemberTypeCanon 
