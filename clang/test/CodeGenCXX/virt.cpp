@@ -42,6 +42,8 @@ void test2() {
   F f;
   static int sz = (char *)(&f.f) - (char *)(&f);
   j = sz;
+  // FIXME: These should result in a frontend constant a la fold, no run time
+  // initializer
   // CHECK-LP32: movl $4, __ZZ5test2vE2sz
   // CHECK-LP64: movl $8, __ZZ5test2vE2sz(%rip)
 }
