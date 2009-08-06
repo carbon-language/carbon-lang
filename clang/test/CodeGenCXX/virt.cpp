@@ -126,7 +126,7 @@ int main() {
 // CHECK-LP32: .long __ZN1D3booEv
 // CHECK-LP32: .long __ZN1F3fooEv
 // CHECK-LP32 .space 4
-// CHECK-LP32 .long -8
+// CHECK-LP32: .long 4294967288
 // CHECK-LP32: .long __ZTI1F
 // CHECK-LP32: .long __ZN2D13barEv
 
