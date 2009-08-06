@@ -576,6 +576,18 @@ llvm::Value *CodeGenFunction::GenerateVtable(const CXXRecordDecl *RD) {
   const ASTRecordLayout &Layout = getContext().getASTRecordLayout(RD);
   const CXXRecordDecl *PrimaryBase = Layout.getPrimaryBase();
 
+  // The primary base comes first.
+  if (PrimaryBase)
+    GenerateVtableForBase(PrimaryBase, methods);
+  for (meth_iter mi = RD->method_begin(), me = RD->method_end(); mi != me;
+       ++mi) {
+    if (mi->isVirtual()) {
+      m = CGM.GetAddrOfFunction(GlobalDecl(*mi));
+      m = llvm::ConstantExpr::getBitCast(m, Ptr8Ty);
+      methods.push_back(m);
+    }
+  }
+
   for (CXXRecordDecl::base_class_const_iterator i = RD->bases_begin(),
          e = RD->bases_end(); i != e; ++i) {
     if (i->isVirtual())
@@ -591,29 +603,10 @@ llvm::Value *CodeGenFunction::GenerateVtable(const CXXRecordDecl *RD) {
       // FIXME: GenerateRtti for Base in RD.
       m = llvm::Constant::getNullValue(Ptr8Ty);
       methods.push_back(m);
-    }
-    GenerateVtableForBase(Base, methods);
-    if (PrimaryBase == Base) {
-      for (meth_iter mi = RD->method_begin(), me = RD->method_end(); mi != me;
-           ++mi) {
-        if (mi->isVirtual()) {
-          m = CGM.GetAddrOfFunction(GlobalDecl(*mi));
-          m = llvm::ConstantExpr::getBitCast(m, Ptr8Ty);
-          methods.push_back(m);
-        }
-      }
+      GenerateVtableForBase(Base, methods);
     }
   }
-  if (PrimaryBase == 0) {
-    for (meth_iter mi = RD->method_begin(), me = RD->method_end(); mi != me;
-         ++mi) {
-      if (mi->isVirtual()) {
-        m = CGM.GetAddrOfFunction(GlobalDecl(*mi));
-        m = llvm::ConstantExpr::getBitCast(m, Ptr8Ty);
-        methods.push_back(m);
-      }
-    }
-  }
+
   // FIXME: finish layout for virtual bases
   // FIXME: audit indirect virtual bases
   for (CXXRecordDecl::base_class_const_iterator i = RD->vbases_begin(),

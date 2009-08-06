@@ -123,8 +123,8 @@ int main() {
 // CHECK-LP32 .space 4
 // CHECK-LP32: .space 4
 // CHECK-LP32: .space 4
-// CHECK-LP32 .long __ZN1D3booEv
-// CHECK-LP32 .long __ZN1F3fooEv
+// CHECK-LP32: .long __ZN1D3booEv
+// CHECK-LP32: .long __ZN1F3fooEv
 // CHECK-LP32 .space 4
 // CHECK-LP32 .long -8
 // CHECK-LP32 .space 4
@@ -136,10 +136,9 @@ int main() {
 // CHECK-LP64 .space 8
 // CHECK-LP64: .space 8
 // CHECK-LP64: .space 8
-// CHECK-LP64 .quad __ZN1D3booEv
-// CHECK-LP64 .quad __ZN1F3fooEv
+// CHECK-LP64: .quad __ZN1D3booEv
+// CHECK-LP64: .quad __ZN1F3fooEv
 // CHECK-LP64 .space 8
 // CHECK-LP64 .space -16
 // CHECK-LP64 .space 8
 // CHECK-LP64: .quad __ZN2D13barEv
-
