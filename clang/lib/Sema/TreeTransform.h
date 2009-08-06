@@ -1177,7 +1177,7 @@ template<typename Derived>
 QualType TreeTransform<Derived>::TransformTypenameType(const TypenameType *T) {
   NestedNameSpecifier *NNS
     = getDerived().TransformNestedNameSpecifier(T->getQualifier(),
-                                SourceRange(getDerived().getBaseLocation()));
+                        SourceRange(/*FIXME:*/getDerived().getBaseLocation()));
   if (!NNS)
     return QualType();
   

@@ -2321,6 +2321,9 @@ public:
                              const IdentifierInfo &II,
                              SourceRange Range);
 
+  QualType RebuildTypeInCurrentInstantiation(QualType T, SourceLocation Loc,
+                                             DeclarationName Name);
+
   /// \brief Describes the result of template argument deduction.
   ///
   /// The TemplateDeductionResult enumeration describes the result of

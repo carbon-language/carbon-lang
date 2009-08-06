@@ -10,12 +10,14 @@
 //===----------------------------------------------------------------------===/
 
 #include "Sema.h"
+#include "TreeTransform.h"
 #include "clang/AST/ASTContext.h"
 #include "clang/AST/Expr.h"
 #include "clang/AST/ExprCXX.h"
 #include "clang/AST/DeclTemplate.h"
 #include "clang/Parse/DeclSpec.h"
 #include "clang/Basic/LangOptions.h"
+#include "llvm/Support/Compiler.h"
 
 using namespace clang;
 
@@ -3056,4 +3058,121 @@ Sema::CheckTypenameType(NestedNameSpecifier *NNS, const IdentifierInfo &II,
     Diag(Referenced->getLocation(), diag::note_typename_refers_here)
       << Name;
   return QualType();
+}
+
+namespace {
+  // See Sema::RebuildTypeInCurrentInstantiation
+  class VISIBILITY_HIDDEN CurrentInstantiationRebuilder 
+    : public TreeTransform<CurrentInstantiationRebuilder> 
+  {
+    SourceLocation Loc;
+    DeclarationName Entity;
+    
+  public:
+    CurrentInstantiationRebuilder(Sema &SemaRef, 
+                                  SourceLocation Loc,
+                                  DeclarationName Entity) 
+    : TreeTransform<CurrentInstantiationRebuilder>(SemaRef), 
+      Loc(Loc), Entity(Entity) { }
+    
+    /// \brief Determine whether the given type \p T has already been 
+    /// transformed.
+    ///
+    /// For the purposes of type reconstruction, a type has already been
+    /// transformed if it is NULL or if it is not dependent.
+    bool AlreadyTransformed(QualType T) {
+      return T.isNull() || !T->isDependentType();
+    }
+    
+    /// \brief Returns the location of the entity whose type is being 
+    /// rebuilt.
+    SourceLocation getBaseLocation() { return Loc; }
+    
+    /// \brief Returns the name of the entity whose type is being rebuilt.
+    DeclarationName getBaseEntity() { return Entity; }
+    
+    /// \brief Transforms an expression by returning the expression itself
+    /// (an identity function).
+    ///
+    /// FIXME: This is completely unsafe; we will need to actually clone the
+    /// expressions.
+    Sema::OwningExprResult TransformExpr(Expr *E) {
+      return getSema().Owned(E);
+    }
+    
+    /// \brief Transforms a typename type by determining whether the type now
+    /// refers to a member of the current instantiation, and then
+    /// type-checking and building a QualifiedNameType (when possible).
+    QualType TransformTypenameType(const TypenameType *T);
+  };
+}
+
+QualType 
+CurrentInstantiationRebuilder::TransformTypenameType(const TypenameType *T) {
+  NestedNameSpecifier *NNS
+    = TransformNestedNameSpecifier(T->getQualifier(),
+                              /*FIXME:*/SourceRange(getBaseLocation()));
+  if (!NNS)
+    return QualType();
+
+  // If the nested-name-specifier did not change, and we cannot compute the
+  // context corresponding to the nested-name-specifier, then this
+  // typename type will not change; exit early.
+  CXXScopeSpec SS;
+  SS.setRange(SourceRange(getBaseLocation()));
+  SS.setScopeRep(NNS);
+  if (NNS == T->getQualifier() && getSema().computeDeclContext(SS) == 0)
+    return QualType(T, 0);
+  
+  // Rebuild the typename type, which will probably turn into a 
+  // QualifiedNameType.
+  if (const TemplateSpecializationType *TemplateId = T->getTemplateId()) {
+    QualType NewTemplateId 
+      = TransformType(QualType(TemplateId, 0));
+    if (NewTemplateId.isNull())
+      return QualType();
+    
+    if (NNS == T->getQualifier() &&
+        NewTemplateId == QualType(TemplateId, 0))
+      return QualType(T, 0);
+    
+    return getDerived().RebuildTypenameType(NNS, NewTemplateId);
+  }
+  
+  return getDerived().RebuildTypenameType(NNS, T->getIdentifier());
+}
+
+/// \brief Rebuilds a type within the context of the current instantiation.
+///
+/// The type \p T is part of the type of an out-of-line member definition of 
+/// a class template (or class template partial specialization) that was parsed
+/// and constructed before we entered the scope of the class template (or 
+/// partial specialization thereof). This routine will rebuild that type now
+/// that we have entered the declarator's scope, which may produce different
+/// canonical types, e.g.,
+///
+/// \code
+/// template<typename T>
+/// struct X {
+///   typedef T* pointer;
+///   pointer data();
+/// };
+///
+/// template<typename T>
+/// typename X<T>::pointer X<T>::data() { ... }
+/// \endcode
+///
+/// Here, the type "typename X<T>::pointer" will be created as a TypenameType,
+/// since we do not know that we can look into X<T> when we parsed the type.
+/// This function will rebuild the type, performing the lookup of "pointer"
+/// in X<T> and returning a QualifiedNameType whose canonical type is the same
+/// as the canonical type of T*, allowing the return types of the out-of-line
+/// definition and the declaration to match.
+QualType Sema::RebuildTypeInCurrentInstantiation(QualType T, SourceLocation Loc,
+                                                 DeclarationName Name) {
+  if (T.isNull() || !T->isDependentType())
+    return T;
+  
+  CurrentInstantiationRebuilder Rebuilder(*this, Loc, Name);
+  return Rebuilder.TransformType(T);
 }

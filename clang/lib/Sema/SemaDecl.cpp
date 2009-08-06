@@ -1628,6 +1628,30 @@ Sema::HandleDeclarator(Scope *S, Declarator &D,
          (S->getFlags() & Scope::TemplateParamScope) != 0)
     S = S->getParent();
   
+  // If this is an out-of-line definition of a member of a class template
+  // or class template partial specialization, we may need to rebuild the
+  // type specifier in the declarator. See RebuildTypeInCurrentInstantiation()
+  // for more information.
+  // FIXME: cope with decltype(expr) and typeof(expr) once the rebuilder can
+  // handle expressions properly.
+  DeclSpec &DS = const_cast<DeclSpec&>(D.getDeclSpec());
+  if (D.getCXXScopeSpec().isSet() && !D.getCXXScopeSpec().isInvalid() &&
+      isDependentScopeSpecifier(D.getCXXScopeSpec()) &&
+      (DS.getTypeSpecType() == DeclSpec::TST_typename ||
+       DS.getTypeSpecType() == DeclSpec::TST_typeofType ||
+       DS.getTypeSpecType() == DeclSpec::TST_typeofExpr ||
+       DS.getTypeSpecType() == DeclSpec::TST_decltype)) {
+    if (DeclContext *DC = computeDeclContext(D.getCXXScopeSpec(), true)) {
+      QualType T = QualType::getFromOpaquePtr(DS.getTypeRep());
+      EnterDeclaratorContext(S, DC);
+      T = RebuildTypeInCurrentInstantiation(T, D.getIdentifierLoc(), Name);
+      ExitDeclaratorContext(S);
+      if (T.isNull())
+        return DeclPtrTy();
+      DS.UpdateTypeRep(T.getAsOpaquePtr());
+    }
+  }
+  
   DeclContext *DC;
   NamedDecl *PrevDecl;
   NamedDecl *New;
