@@ -139,6 +139,6 @@ int main() {
 // CHECK-LP64: .quad __ZN1D3booEv
 // CHECK-LP64: .quad __ZN1F3fooEv
 // CHECK-LP64 .space 8
-// CHECK-LP64 .space -16
-// CHECK-LP64:.quad __ZTI1F
+// CHECK-LP64: .quad 18446744073709551600
+// CHECK-LP64: .quad __ZTI1F
 // CHECK-LP64: .quad __ZN2D13barEv
