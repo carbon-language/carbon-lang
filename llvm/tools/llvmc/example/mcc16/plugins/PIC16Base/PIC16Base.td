@@ -55,7 +55,7 @@ def llvm_ld_lto : Tool<[
  (in_language "llvm-bitcode"),
  (out_language "llvm-bitcode"),
  (output_suffix "bc"),
- (cmd_line "$CALL(GetBinDir)llvm-ld -L $CALL(GetStdLibsDir) -l std $INFILE -o $OUTFILE"),
+ (cmd_line "$CALL(GetBinDir)llvm-ld -L $CALL(GetStdLibsDir) -l std $INFILE -b $OUTFILE"),
  (actions (case
           (switch_on "g"), (append_cmd "-disable-opt"),
           (not_empty "Wo,"), (unpack_values "Wo,"))),
