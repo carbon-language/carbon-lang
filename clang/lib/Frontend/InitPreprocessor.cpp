@@ -305,7 +305,13 @@ static void InitializePredefinedMacros(const TargetInfo &TI,
     DefineBuiltinMacro(Buf, "__EXCEPTIONS=1");
     DefineBuiltinMacro(Buf, "__GNUG__=4");
     DefineBuiltinMacro(Buf, "__GXX_WEAK__=1");
-    DefineBuiltinMacro(Buf, "__cplusplus=1");
+    if (LangOpts.GNUMode)
+      DefineBuiltinMacro(Buf, "__cplusplus=1");
+    else 
+      // C++ [cpp.predefined]p1:
+      //   The name_ _cplusplusis defined to the value199711Lwhen compiling a 
+      //   C++ translation unit.
+      DefineBuiltinMacro(Buf, "__cplusplus=199711L");
     DefineBuiltinMacro(Buf, "__private_extern__=extern");
   }
   
