@@ -120,7 +120,7 @@ void ASTRecordLayoutBuilder::SelectPrimaryBase(const CXXRecordDecl *RD) {
     return;
   }
 
-  // First, we compute all the primary bases for all of out direct and indirect
+  // First, we compute all the primary bases for all of our direct and indirect
   // non-virtual bases, and record all their primary base classes.
   const CXXRecordDecl *FirstPrimary = 0;
   llvm::SmallSet<const CXXRecordDecl*, 32> IndirectPrimary;
