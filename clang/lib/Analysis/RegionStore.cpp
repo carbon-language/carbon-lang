@@ -31,7 +31,7 @@ using namespace clang;
 #define USE_EXPLICIT_COMPOUND 0
 
 // Actual Store type.
-typedef llvm::ImmutableMap<const MemRegion*, SVal> RegionBindingsTy;
+typedef llvm::ImmutableMap<const MemRegion*, SVal> RegionBindings;
 
 //===----------------------------------------------------------------------===//
 // Fine-grained control of RegionStoreManager.
@@ -95,6 +95,8 @@ namespace clang {
    static void* GDMIndex() { return &RegionDefaultValueIndex; }
  };
 }
+
+typedef RegionDefaultValue::MapTy RegionDefaultBindings;
 
 //===----------------------------------------------------------------------===//
 // Utility functions.
@@ -163,7 +165,7 @@ public:
 
 class VISIBILITY_HIDDEN RegionStoreManager : public StoreManager {
   const RegionStoreFeatures Features;
-  RegionBindingsTy::Factory RBFactory;
+  RegionBindings::Factory RBFactory;
 
   const MemRegion* SelfRegion;
   const ImplicitParamDecl *SelfDecl;
@@ -249,9 +251,9 @@ public:
                                   const Expr *E, unsigned Count);
   
 private:
-  void RemoveSubRegionBindings(RegionBindingsTy &B,
-                               RegionDefaultValue::MapTy &DVM,
-                               RegionDefaultValue::MapTy::Factory &DVMFactory,
+  void RemoveSubRegionBindings(RegionBindings &B,
+                               RegionDefaultBindings &DVM,
+                               RegionDefaultBindings::Factory &DVMFactory,
                                const MemRegion *R,
                                RegionStoreSubRegionMap &M);
   
@@ -320,7 +322,7 @@ public:
   SVal RetrieveArray(const GRState *St, const TypedRegion* R);
   
   std::pair<const GRState*, const MemRegion*>
-  GetLazyBinding(RegionBindingsTy B, const MemRegion *R);
+  GetLazyBinding(RegionBindings B, const MemRegion *R);
   
   const GRState* CopyLazyBindings(nonloc::LazyCompoundVal V,
                                   const GRState *state,
@@ -346,8 +348,8 @@ public:
   // Utility methods.
   //===------------------------------------------------------------------===//
   
-  static inline RegionBindingsTy GetRegionBindings(Store store) {
-   return RegionBindingsTy(static_cast<const RegionBindingsTy::TreeTy*>(store));
+  static inline RegionBindings GetRegionBindings(Store store) {
+   return RegionBindings(static_cast<const RegionBindings::TreeTy*>(store));
   }
 
   void print(Store store, llvm::raw_ostream& Out, const char* nl,
@@ -394,17 +396,17 @@ RegionStoreSubRegionMap::process(llvm::SmallVectorImpl<const SubRegion*> &WL,
 
 RegionStoreSubRegionMap*
 RegionStoreManager::getRegionStoreSubRegionMap(const GRState *state) {
-  RegionBindingsTy B = GetRegionBindings(state->getStore());
+  RegionBindings B = GetRegionBindings(state->getStore());
   RegionStoreSubRegionMap *M = new RegionStoreSubRegionMap();
   
   llvm::SmallVector<const SubRegion*, 10> WL;
 
-  for (RegionBindingsTy::iterator I=B.begin(), E=B.end(); I!=E; ++I)
+  for (RegionBindings::iterator I=B.begin(), E=B.end(); I!=E; ++I)
     if (const SubRegion *R = dyn_cast<SubRegion>(I.getKey()))
       M->process(WL, R);
     
-  RegionDefaultValue::MapTy DVM = state->get<RegionDefaultValue>();
-  for (RegionDefaultValue::MapTy::iterator I = DVM.begin(), E = DVM.end();
+  RegionDefaultBindings DVM = state->get<RegionDefaultValue>();
+  for (RegionDefaultBindings::iterator I = DVM.begin(), E = DVM.end();
        I != E; ++I) 
     if (const SubRegion *R = dyn_cast<SubRegion>(I.getKey()))
       M->process(WL, R);
@@ -429,9 +431,9 @@ SubRegionMap *RegionStoreManager::getSubRegionMap(const GRState *state) {
 //===----------------------------------------------------------------------===//
 
 void
-RegionStoreManager::RemoveSubRegionBindings(RegionBindingsTy &B,
-                                 RegionDefaultValue::MapTy &DVM,
-                                 RegionDefaultValue::MapTy::Factory &DVMFactory,
+RegionStoreManager::RemoveSubRegionBindings(RegionBindings &B,
+                                 RegionDefaultBindings &DVM,
+                                 RegionDefaultBindings::Factory &DVMFactory,
                                  const MemRegion *R,
                                  RegionStoreSubRegionMap &M) {
   
@@ -460,9 +462,9 @@ const GRState *RegionStoreManager::InvalidateRegion(const GRState *state,
     llvm::OwningPtr<RegionStoreSubRegionMap>
       SubRegions(getRegionStoreSubRegionMap(state));
     
-    RegionBindingsTy B = GetRegionBindings(state->getStore());
-    RegionDefaultValue::MapTy DVM = state->get<RegionDefaultValue>();  
-    RegionDefaultValue::MapTy::Factory &DVMFactory =
+    RegionBindings B = GetRegionBindings(state->getStore());
+    RegionDefaultBindings DVM = state->get<RegionDefaultValue>();  
+    RegionDefaultBindings::Factory &DVMFactory =
       state->get_context<RegionDefaultValue>();
     
     RemoveSubRegionBindings(B, DVM, DVMFactory, R, *SubRegions.get());    
@@ -929,8 +931,8 @@ RegionStoreManager::Retrieve(const GRState *state, Loc L, QualType T) {
   if (const VarRegion *VR = dyn_cast<VarRegion>(R))
     return CastRetrievedVal(RetrieveVar(state, VR), state, VR, T);
 
-  RegionBindingsTy B = GetRegionBindings(state->getStore());
-  RegionBindingsTy::data_type* V = B.lookup(R);
+  RegionBindings B = GetRegionBindings(state->getStore());
+  RegionBindings::data_type* V = B.lookup(R);
 
   // Check if the region has a binding.
   if (V)
@@ -958,7 +960,7 @@ RegionStoreManager::Retrieve(const GRState *state, Loc L, QualType T) {
 }
   
 std::pair<const GRState*, const MemRegion*>
-RegionStoreManager::GetLazyBinding(RegionBindingsTy B, const MemRegion *R) {
+RegionStoreManager::GetLazyBinding(RegionBindings B, const MemRegion *R) {
 
   if (const nonloc::LazyCompoundVal *V =
         dyn_cast_or_null<nonloc::LazyCompoundVal>(B.lookup(R)))
@@ -987,7 +989,7 @@ RegionStoreManager::GetLazyBinding(RegionBindingsTy B, const MemRegion *R) {
 SVal RegionStoreManager::RetrieveElement(const GRState* state,
                                          const ElementRegion* R) {
   // Check if the region has a binding.
-  RegionBindingsTy B = GetRegionBindings(state->getStore());
+  RegionBindings B = GetRegionBindings(state->getStore());
   if (const SVal* V = B.lookup(R))
     return *V;
 
@@ -1101,7 +1103,7 @@ SVal RegionStoreManager::RetrieveField(const GRState* state,
   QualType Ty = R->getValueType(getContext());
 
   // Check if the region has a binding.
-  RegionBindingsTy B = GetRegionBindings(state->getStore());
+  RegionBindings B = GetRegionBindings(state->getStore());
   if (const SVal* V = B.lookup(R))
     return *V;
 
@@ -1171,7 +1173,7 @@ SVal RegionStoreManager::RetrieveObjCIvar(const GRState* state,
                                           const ObjCIvarRegion* R) {
 
     // Check if the region has a binding.
-  RegionBindingsTy B = GetRegionBindings(state->getStore());
+  RegionBindings B = GetRegionBindings(state->getStore());
 
   if (const SVal* V = B.lookup(R))
     return *V;
@@ -1194,7 +1196,7 @@ SVal RegionStoreManager::RetrieveVar(const GRState *state,
                                      const VarRegion *R) {
   
   // Check if the region has a binding.
-  RegionBindingsTy B = GetRegionBindings(state->getStore());
+  RegionBindings B = GetRegionBindings(state->getStore());
   
   if (const SVal* V = B.lookup(R))
     return *V;
@@ -1296,7 +1298,7 @@ Store RegionStoreManager::Remove(Store store, Loc L) {
     R = cast<loc::MemRegionVal>(L).getRegion();
   
   if (R) {
-    RegionBindingsTy B = GetRegionBindings(store);  
+    RegionBindings B = GetRegionBindings(store);  
     return RBFactory.Remove(B, R).getRoot();
   }
   
@@ -1339,7 +1341,7 @@ const GRState *RegionStoreManager::Bind(const GRState *state, Loc L, SVal V) {
   }
   
   // Perform the binding.
-  RegionBindingsTy B = GetRegionBindings(state->getStore());
+  RegionBindings B = GetRegionBindings(state->getStore());
   return state->makeWithStore(RBFactory.Add(B, R, V).getRoot());
 }
 
@@ -1499,8 +1501,8 @@ const GRState *RegionStoreManager::KillStruct(const GRState *state,
 
   // Remove all bindings for the subregions of the struct.
   Store store = state->getStore();
-  RegionBindingsTy B = GetRegionBindings(store);
-  for (RegionBindingsTy::iterator I = B.begin(), E = B.end(); I != E; ++I) {
+  RegionBindings B = GetRegionBindings(store);
+  for (RegionBindings::iterator I = B.begin(), E = B.end(); I != E; ++I) {
     const MemRegion* R = I.getKey();
     if (const SubRegion* subRegion = dyn_cast<SubRegion>(R))
       if (subRegion->isSubRegionOf(R))
@@ -1521,9 +1523,9 @@ RegionStoreManager::CopyLazyBindings(nonloc::LazyCompoundVal V,
                                      const TypedRegion *R) {
 
   // Nuke the old bindings stemming from R.
-  RegionBindingsTy B = GetRegionBindings(state->getStore());
-  RegionDefaultValue::MapTy DVM = state->get<RegionDefaultValue>();
-  RegionDefaultValue::MapTy::Factory &DVMFactory =
+  RegionBindings B = GetRegionBindings(state->getStore());
+  RegionDefaultBindings DVM = state->get<RegionDefaultValue>();
+  RegionDefaultBindings::Factory &DVMFactory =
     state->get_context<RegionDefaultValue>();
 
   llvm::OwningPtr<RegionStoreSubRegionMap> 
@@ -1540,7 +1542,7 @@ RegionStoreManager::CopyLazyBindings(nonloc::LazyCompoundVal V,
 //===----------------------------------------------------------------------===//
 // State pruning.
 //===----------------------------------------------------------------------===//
-
+  
 static void UpdateLiveSymbols(SVal X, SymbolReaper& SymReaper) {
   if (loc::MemRegionVal *XR = dyn_cast<loc::MemRegionVal>(&X)) {
     const MemRegion *R = XR->getRegion();
@@ -1565,13 +1567,114 @@ static void UpdateLiveSymbols(SVal X, SymbolReaper& SymReaper) {
   for (SVal::symbol_iterator SI=X.symbol_begin(), SE=X.symbol_end();SI!=SE;++SI)
     SymReaper.markLive(*SI);
 }
+  
+namespace {
+class VISIBILITY_HIDDEN TreeScanner {
+  RegionBindings B;
+  RegionDefaultBindings DB;
+  SymbolReaper &SymReaper;
+  llvm::DenseSet<const MemRegion*> &Marked;
+  llvm::DenseSet<const LazyCompoundValData*> &ScannedLazyVals;
+  RegionStoreSubRegionMap &M;
+  RegionStoreManager &RS;
+  llvm::SmallVectorImpl<const MemRegion*> &RegionRoots;
+  const bool MarkKeys;
+public:
+  TreeScanner(RegionBindings b, RegionDefaultBindings db,
+              SymbolReaper &symReaper,
+              llvm::DenseSet<const MemRegion*> &marked,
+              llvm::DenseSet<const LazyCompoundValData*> &scannedLazyVals,
+              RegionStoreSubRegionMap &m, RegionStoreManager &rs,
+              llvm::SmallVectorImpl<const MemRegion*> &regionRoots,
+              bool markKeys = true)
+    : B(b), DB(db), SymReaper(symReaper), Marked(marked),
+      ScannedLazyVals(scannedLazyVals), M(m),
+      RS(rs), RegionRoots(regionRoots), MarkKeys(markKeys) {}
+  
+  void scanTree(const MemRegion *R);
+};
+} // end anonymous namespace
+    
+  
+void TreeScanner::scanTree(const MemRegion *R) {
+  if (MarkKeys) {
+    if (Marked.count(R))
+      return;    
+  
+    Marked.insert(R);
+  }
+  
+  // Mark the symbol for any live SymbolicRegion as "live".  This means we
+  // should continue to track that symbol.
+  if (const SymbolicRegion* SymR = dyn_cast<SymbolicRegion>(R))
+    SymReaper.markLive(SymR->getSymbol());
+  
+  // Get the data binding for R (if any).
+  const SVal* Xptr = B.lookup(R);
+  
+    // Check for lazy bindings.
+  if (const nonloc::LazyCompoundVal *V =
+      dyn_cast_or_null<nonloc::LazyCompoundVal>(Xptr)) {
+    
+    const LazyCompoundValData *D = V->getCVData();    
+
+    if (!ScannedLazyVals.count(D)) {
+      // Scan the bindings in the LazyCompoundVal.
+      ScannedLazyVals.insert(D);
+      
+      // FIXME: Cache subregion maps.
+      const GRState *lazyState = D->getState();
+
+      llvm::OwningPtr<RegionStoreSubRegionMap>
+        lazySM(RS.getRegionStoreSubRegionMap(lazyState));
+      
+      Store lazyStore = lazyState->getStore();
+      RegionBindings lazyB = RS.GetRegionBindings(lazyStore);
+      
+      RegionDefaultBindings lazyDB = lazyState->get<RegionDefaultValue>();
+      
+      // Scan the bindings.
+      TreeScanner scan(lazyB, lazyDB, SymReaper, Marked, ScannedLazyVals,
+                       *lazySM.get(), RS, RegionRoots, false);
+      
+      scan.scanTree(D->getRegion());
+    }
+  }
+  else {      
+      // No direct binding? Get the default binding for R (if any).    
+    if (!Xptr)
+      Xptr = DB.lookup(R);
+    
+      // Direct or default binding?
+    if (Xptr) {
+      SVal X = *Xptr;
+      UpdateLiveSymbols(X, SymReaper); // Update the set of live symbols.
+      
+        // If X is a region, then add it to the RegionRoots.
+      if (const MemRegion *RX = X.getAsRegion()) {
+        RegionRoots.push_back(RX);
+          // Mark the super region of the RX as live.
+          // e.g.: int x; char *y = (char*) &x; if (*y) ... 
+          // 'y' => element region. 'x' is its super region.
+        if (const SubRegion *SR = dyn_cast<SubRegion>(RX)) {
+          RegionRoots.push_back(SR->getSuperRegion());
+        }
+      }
+    }
+  }
+    
+  RegionStoreSubRegionMap::iterator I, E;    
+
+  for (llvm::tie(I, E) = M.begin_end(R); I != E; ++I)
+    scanTree(*I);
+}
 
 void RegionStoreManager::RemoveDeadBindings(GRState &state, Stmt* Loc, 
                                             SymbolReaper& SymReaper,
                            llvm::SmallVectorImpl<const MemRegion*>& RegionRoots)
 {  
   Store store = state.getStore();
-  RegionBindingsTy B = GetRegionBindings(store);
+  RegionBindings B = GetRegionBindings(store);
   
   // Lazily constructed backmap from MemRegions to SubRegions.
   typedef llvm::ImmutableSet<const MemRegion*> SubRegionsTy;
@@ -1587,14 +1690,14 @@ void RegionStoreManager::RemoveDeadBindings(GRState &state, Stmt* Loc,
   llvm::SmallVector<const MemRegion*, 10> IntermediateRoots;
   
   // Scan the direct bindings for "intermediate" roots.
-  for (RegionBindingsTy::iterator I = B.begin(), E = B.end(); I != E; ++I) {
+  for (RegionBindings::iterator I = B.begin(), E = B.end(); I != E; ++I) {
     const MemRegion *R = I.getKey();
     IntermediateRoots.push_back(R);
   }
   
   // Scan the default bindings for "intermediate" roots.
-  RegionDefaultValue::MapTy DVM = state.get<RegionDefaultValue>();
-  for (RegionDefaultValue::MapTy::iterator I = DVM.begin(), E = DVM.end();
+  RegionDefaultBindings DVM = state.get<RegionDefaultValue>();
+  for (RegionDefaultBindings::iterator I = DVM.begin(), E = DVM.end();
        I != E; ++I) {
     const MemRegion *R = I.getKey();
     IntermediateRoots.push_back(R);
@@ -1627,60 +1730,21 @@ void RegionStoreManager::RemoveDeadBindings(GRState &state, Stmt* Loc,
   
   // Process the worklist of RegionRoots.  This performs a "mark-and-sweep"
   // of the store.  We want to find all live symbols and dead regions.  
-  llvm::SmallPtrSet<const MemRegion*, 10> Marked;  
-  while (!RegionRoots.empty()) {
-    // Dequeue the next region on the worklist.
-    const MemRegion* R = RegionRoots.back();
-    RegionRoots.pop_back();
-    
-    // Check if we have already processed this region.
-    if (Marked.count(R))
-      continue;
-    
-    // Mark this region as processed.  This is needed for termination in case
-    // a region is referenced more than once.
-    Marked.insert(R);
-    
-    // Mark the symbol for any live SymbolicRegion as "live".  This means we
-    // should continue to track that symbol.
-    if (const SymbolicRegion* SymR = dyn_cast<SymbolicRegion>(R))
-      SymReaper.markLive(SymR->getSymbol());
-    
-    // Get the data binding for R (if any).
-    const SVal* Xptr = B.lookup(R);    
-    if (!Xptr) {
-      // No direct binding? Get the default binding for R (if any).
-      Xptr = DVM.lookup(R);
-    }
+  llvm::DenseSet<const MemRegion*> Marked;
+  llvm::DenseSet<const LazyCompoundValData*> LazyVals;
+  TreeScanner TS(B, DVM, SymReaper, Marked, LazyVals, *SubRegions.get(),
+                 *this, RegionRoots);
 
-    // Direct or default binding?
-    if (Xptr) {
-      SVal X = *Xptr;
-      UpdateLiveSymbols(X, SymReaper); // Update the set of live symbols.
-      
-      // If X is a region, then add it to the RegionRoots.
-      if (const MemRegion *RX = X.getAsRegion()) {
-        RegionRoots.push_back(RX);
-        // Mark the super region of the RX as live.
-        // e.g.: int x; char *y = (char*) &x; if (*y) ... 
-        // 'y' => element region. 'x' is its super region.
-        if (const SubRegion *SR = dyn_cast<SubRegion>(RX)) {
-          RegionRoots.push_back(SR->getSuperRegion());
-        }
-      }
-    }
+  while (!RegionRoots.empty()) {
+    const MemRegion *R = RegionRoots.back();
+    RegionRoots.pop_back();
+    TS.scanTree(R);
+  }  
     
-    // Get the subregions of R.  These are RegionRoots as well since they
-    // represent values that are also bound to R.
-    RegionStoreSubRegionMap::iterator I, E;    
-    for (llvm::tie(I, E) = SubRegions->begin_end(R); I != E; ++I)
-      RegionRoots.push_back(*I);
-  }
-  
   // We have now scanned the store, marking reachable regions and symbols
   // as live.  We now remove all the regions that are dead from the store
   // as well as update DSymbols with the set symbols that are now dead.  
-  for (RegionBindingsTy::iterator I = B.begin(), E = B.end(); I != E; ++I) {
+  for (RegionBindings::iterator I = B.begin(), E = B.end(); I != E; ++I) {
     const MemRegion* R = I.getKey();
     // If this region live?  Is so, none of its symbols are dead.
     if (Marked.count(R))
@@ -1700,11 +1764,11 @@ void RegionStoreManager::RemoveDeadBindings(GRState &state, Stmt* Loc,
   }
   
   // Remove dead 'default' bindings.  
-  RegionDefaultValue::MapTy NewDVM = DVM;
-  RegionDefaultValue::MapTy::Factory &DVMFactory = 
+  RegionDefaultBindings NewDVM = DVM;
+  RegionDefaultBindings::Factory &DVMFactory = 
     state.get_context<RegionDefaultValue>();
   
-  for (RegionDefaultValue::MapTy::iterator I = DVM.begin(), E = DVM.end();
+  for (RegionDefaultBindings::iterator I = DVM.begin(), E = DVM.end();
        I != E; ++I) {
     const MemRegion *R = I.getKey();
     
@@ -1725,9 +1789,6 @@ void RegionStoreManager::RemoveDeadBindings(GRState &state, Stmt* Loc,
       SymReaper.maybeDead(*SI);
   }
   
-  // FIXME: Do a pass over nonloc::LazyCompoundVals and the symbols
-  // that they reference.
-  
   // Write the store back.
   state.setStore(store);
   
@@ -1744,9 +1805,9 @@ void RegionStoreManager::RemoveDeadBindings(GRState &state, Stmt* Loc,
 
 void RegionStoreManager::print(Store store, llvm::raw_ostream& OS,
                                const char* nl, const char *sep) {
-  RegionBindingsTy B = GetRegionBindings(store);
+  RegionBindings B = GetRegionBindings(store);
   OS << "Store (direct bindings):" << nl;
   
-  for (RegionBindingsTy::iterator I = B.begin(), E = B.end(); I != E; ++I)
+  for (RegionBindings::iterator I = B.begin(), E = B.end(); I != E; ++I)
     OS << ' ' << I.getKey() << " : " << I.getData() << nl;  
 }

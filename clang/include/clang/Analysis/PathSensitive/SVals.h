@@ -343,6 +343,9 @@ class LazyCompoundVal : public NonLoc {
   LazyCompoundVal(const LazyCompoundValData *D)
     : NonLoc(LazyCompoundValKind, D) {}
 public:
+  const LazyCompoundValData *getCVData() const {
+    return static_cast<const LazyCompoundValData*>(Data);
+  }
   const GRState *getState() const;
   const TypedRegion *getRegion() const;
   
