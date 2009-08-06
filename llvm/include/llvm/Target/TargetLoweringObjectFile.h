@@ -80,8 +80,7 @@ protected:
   const MCSection *DwarfRangesSection;
   const MCSection *DwarfMacroInfoSection;
   
-public:
-  // FIXME: NONPUB.
+protected:
   const MCSection *getOrCreateSection(const char *Name,
                                       bool isDirective,
                                       SectionKind K) const;
@@ -132,15 +131,6 @@ public:
   /// section that it should be placed in.
   virtual const MCSection *getSectionForConstant(SectionKind Kind) const;
   
-  /// getKindForNamedSection - If this target wants to be able to override
-  /// section flags based on the name of the section specified for a global
-  /// variable, it can implement this.  This is used on ELF systems so that
-  /// ".tbss" gets the TLS bit set etc.
-  virtual SectionKind getKindForNamedSection(const char *Section,
-                                             SectionKind K) const {
-    return K;
-  }
-  
   /// getKindForGlobal - Classify the specified global variable into a set of
   /// target independent categories embodied in SectionKind.
   static SectionKind getKindForGlobal(const GlobalValue *GV,
@@ -162,10 +152,17 @@ public:
     return SectionForGlobal(GV, getKindForGlobal(GV, TM), Mang, TM);
   }
   
+  
+  
+  /// getExplicitSectionGlobal - Targets should implement this method to assign
+  /// a section to globals with an explicit section specfied.  The
+  /// implementation of this method can assume that GV->hasSection() is true.
+  virtual const MCSection *
+  getExplicitSectionGlobal(const GlobalValue *GV, SectionKind Kind, 
+                           Mangler *Mang, const TargetMachine &TM) const = 0;
+  
   /// getSpecialCasedSectionGlobals - Allow the target to completely override
   /// section assignment of a global.
-  /// FIXME: ELIMINATE this by making PIC16 implement ADDRESS with
-  /// getFlagsForNamedSection.
   virtual const MCSection *
   getSpecialCasedSectionGlobals(const GlobalValue *GV, Mangler *Mang,
                                 SectionKind Kind) const {
@@ -224,8 +221,11 @@ public:
   /// section that it should be placed in.
   virtual const MCSection *getSectionForConstant(SectionKind Kind) const;
   
-  virtual SectionKind getKindForNamedSection(const char *Section,
-                                             SectionKind K) const;
+  
+  virtual const MCSection *
+  getExplicitSectionGlobal(const GlobalValue *GV, SectionKind Kind, 
+                           Mangler *Mang, const TargetMachine &TM) const;
+  
   void getSectionFlagsAsString(SectionKind Kind,
                                SmallVectorImpl<char> &Str) const;
   
@@ -255,6 +255,10 @@ public:
   SelectSectionForGlobal(const GlobalValue *GV, SectionKind Kind,
                          Mangler *Mang, const TargetMachine &TM) const;
   
+  virtual const MCSection *
+  getExplicitSectionGlobal(const GlobalValue *GV, SectionKind Kind, 
+                           Mangler *Mang, const TargetMachine &TM) const;
+  
   virtual const MCSection *getSectionForConstant(SectionKind Kind) const;
   
   /// shouldEmitUsedDirectiveFor - This hook allows targets to selectively
@@ -274,6 +278,10 @@ public:
 class TargetLoweringObjectFileCOFF : public TargetLoweringObjectFile {
 public:
   virtual void Initialize(MCContext &Ctx, const TargetMachine &TM);
+  
+  virtual const MCSection *
+  getExplicitSectionGlobal(const GlobalValue *GV, SectionKind Kind, 
+                           Mangler *Mang, const TargetMachine &TM) const;
   
   virtual void getSectionFlagsAsString(SectionKind Kind,
                                        SmallVectorImpl<char> &Str) const;

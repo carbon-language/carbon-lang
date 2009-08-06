@@ -242,28 +242,26 @@ PIC16TargetObjectFile::~PIC16TargetObjectFile() {
 
 /// getSpecialCasedSectionGlobals - Allow the target to completely override
 /// section assignment of a global.
-const MCSection *
-PIC16TargetObjectFile::getSpecialCasedSectionGlobals(const GlobalValue *GV,
-                                                     Mangler *Mang,
-                                                     SectionKind Kind) const {
-  // If GV has a sectin name or section address create that section now.
-  if (GV->hasSection()) {
-    if (const GlobalVariable *GVar = cast<GlobalVariable>(GV)) {
-      std::string SectName = GVar->getSection();
-      // If address for a variable is specified, get the address and create
-      // section.
-      std::string AddrStr = "Address=";
-      if (SectName.compare(0, AddrStr.length(), AddrStr) == 0) {
-        std::string SectAddr = SectName.substr(AddrStr.length());
-        return CreateSectionForGlobal(GVar, Mang, SectAddr);
-      }
-       
-      // Create the section specified with section attribute. 
-      return CreateSectionForGlobal(GVar, Mang);
+const MCSection *PIC16TargetObjectFile::
+getExplicitSectionGlobal(const GlobalValue *GV, SectionKind Kind, 
+                         Mangler *Mang, const TargetMachine &TM) const {
+  assert(GV->hasSection());
+  
+  if (const GlobalVariable *GVar = cast<GlobalVariable>(GV)) {
+    std::string SectName = GVar->getSection();
+    // If address for a variable is specified, get the address and create
+    // section.
+    std::string AddrStr = "Address=";
+    if (SectName.compare(0, AddrStr.length(), AddrStr) == 0) {
+      std::string SectAddr = SectName.substr(AddrStr.length());
+      return CreateSectionForGlobal(GVar, Mang, SectAddr);
     }
+     
+    // Create the section specified with section attribute. 
+    return CreateSectionForGlobal(GVar, Mang);
   }
 
-  return 0;
+  return getOrCreateSection(GV->getSection().c_str(), false, Kind);
 }
 
 // Create a new section for global variable. If Addr is given then create

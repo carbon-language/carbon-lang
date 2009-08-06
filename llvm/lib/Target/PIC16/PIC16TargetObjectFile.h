@@ -59,11 +59,9 @@ namespace llvm {
     void Initialize(MCContext &Ctx, const TargetMachine &TM);
 
     
-    /// getSpecialCasedSectionGlobals - Allow the target to completely override
-    /// section assignment of a global.
     virtual const MCSection *
-    getSpecialCasedSectionGlobals(const GlobalValue *GV, Mangler *Mang,
-                                  SectionKind Kind) const;
+    getExplicitSectionGlobal(const GlobalValue *GV, SectionKind Kind, 
+                             Mangler *Mang, const TargetMachine &TM) const;
     
     virtual const MCSection *SelectSectionForGlobal(const GlobalValue *GV,
                                                     SectionKind Kind,

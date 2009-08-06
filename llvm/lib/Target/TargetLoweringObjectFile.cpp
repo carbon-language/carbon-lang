@@ -233,20 +233,9 @@ const MCSection *TargetLoweringObjectFile::
 SectionForGlobal(const GlobalValue *GV, SectionKind Kind, Mangler *Mang,
                  const TargetMachine &TM) const {
   // Select section name.
-  if (GV->hasSection()) {
-    // If the target has special section hacks for specifically named globals,
-    // return them now.
-    if (const MCSection *TS = getSpecialCasedSectionGlobals(GV, Mang, Kind))
-      return TS;
-    
-    // If the target has magic semantics for certain section names, make sure to
-    // pick up the flags.  This allows the user to write things with attribute
-    // section and still get the appropriate section flags printed.
-    Kind = getKindForNamedSection(GV->getSection().c_str(), Kind);
-    
-    return getOrCreateSection(GV->getSection().c_str(), false, Kind);
-  }
-
+  if (GV->hasSection())
+    return getExplicitSectionGlobal(GV, Kind, Mang, TM);
+  
   
   // Use default section depending on the 'type' of global
   return SelectSectionForGlobal(GV, Kind, Mang, TM);
@@ -381,8 +370,8 @@ void TargetLoweringObjectFileELF::Initialize(MCContext &Ctx,
 }
 
 
-SectionKind TargetLoweringObjectFileELF::
-getKindForNamedSection(const char *Name, SectionKind K) const {
+static SectionKind 
+getELFKindForNamedSection(const char *Name, SectionKind K) {
   if (Name[0] != '.') return K;
   
   // Some lame default implementation based on some magic section names.
@@ -407,6 +396,17 @@ getKindForNamedSection(const char *Name, SectionKind K) const {
   return K;
 }
 
+const MCSection *TargetLoweringObjectFileELF::
+getExplicitSectionGlobal(const GlobalValue *GV, SectionKind Kind, 
+                         Mangler *Mang, const TargetMachine &TM) const {
+  // Infer section flags from the section name if we can.
+  Kind = getELFKindForNamedSection(GV->getSection().c_str(), Kind);
+  
+  return getOrCreateSection(GV->getSection().c_str(), false, Kind);
+}
+      
+      
+      
 void TargetLoweringObjectFileELF::
 getSectionFlagsAsString(SectionKind Kind, SmallVectorImpl<char> &Str) const {
   Str.push_back(',');
@@ -689,6 +689,12 @@ void TargetLoweringObjectFileMachO::Initialize(MCContext &Ctx,
 }
 
 const MCSection *TargetLoweringObjectFileMachO::
+getExplicitSectionGlobal(const GlobalValue *GV, SectionKind Kind, 
+                         Mangler *Mang, const TargetMachine &TM) const {
+  return getOrCreateSection(GV->getSection().c_str(), false, Kind);
+}
+
+const MCSection *TargetLoweringObjectFileMachO::
 SelectSectionForGlobal(const GlobalValue *GV, SectionKind Kind,
                        Mangler *Mang, const TargetMachine &TM) const {
   assert(!Kind.isThreadLocal() && "Darwin doesn't support TLS");
@@ -836,6 +842,13 @@ void TargetLoweringObjectFileCOFF::Initialize(MCContext &Ctx,
     getOrCreateSection("\t.section\t.debug_macinfo,\"dr\"",
                        true, SectionKind::getMetadata());
 }
+
+const MCSection *TargetLoweringObjectFileCOFF::
+getExplicitSectionGlobal(const GlobalValue *GV, SectionKind Kind, 
+                         Mangler *Mang, const TargetMachine &TM) const {
+  return getOrCreateSection(GV->getSection().c_str(), false, Kind);
+}
+
 
 void TargetLoweringObjectFileCOFF::
 getSectionFlagsAsString(SectionKind Kind, SmallVectorImpl<char> &Str) const {
