@@ -528,7 +528,7 @@ DIArray DIFactory::GetOrCreateArray(DIDescriptor *Tys, unsigned NumTys) {
   // If we already have this array, just return the uniqued version.
   DIDescriptor &Entry = SimpleConstantCache[Init];
   if (!Entry.isNull()) return DIArray(Entry.getGV());
-  
+
   GlobalVariable *GV = new GlobalVariable(M, Init->getType(), true,
                                           GlobalValue::InternalLinkage,
                                           Init, "llvm.dbg.array");
@@ -1195,36 +1195,6 @@ namespace llvm {
     Unit.getFilename(File);
     Unit.getDirectory(Dir);
     return true;
-  }
-
-  /// CollectDebugInfoAnchors - Collect debugging information anchors.
-  void CollectDebugInfoAnchors(Module &M,
-                               SmallVector<GlobalVariable *, 2> &CUs,
-                               SmallVector<GlobalVariable *, 4> &GVs,
-                               SmallVector<GlobalVariable *, 4> &SPs) {
-
-    for (Module::global_iterator GVI = M.global_begin(), E = M.global_end();
-       GVI != E; GVI++) {
-      GlobalVariable *GV = GVI;
-      if (GV->hasName() && GV->getName().startswith("llvm.dbg")
-          && GV->isConstant() && GV->hasInitializer()) {
-        DICompileUnit C(GV);
-        if (C.isNull() == false) {
-          CUs.push_back(GV);
-          continue;
-        }
-        DIGlobalVariable G(GV);
-        if (G.isNull() == false) {
-          GVs.push_back(GV);
-          continue;
-        }
-        DISubprogram S(GV);
-        if (S.isNull() == false) {
-          SPs.push_back(GV);
-          continue;
-        }
-      }
-    }
   }
 
   /// isValidDebugInfoIntrinsic - Return true if SPI is a valid debug 

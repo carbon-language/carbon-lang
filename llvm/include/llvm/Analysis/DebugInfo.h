@@ -563,12 +563,6 @@ namespace llvm {
                        std::string &Type, unsigned &LineNo, std::string &File,
                        std::string &Dir); 
 
-  /// CollectDebugInfoAnchors - Collect debugging information anchors.
-  void CollectDebugInfoAnchors(Module &M,
-                               SmallVector<GlobalVariable *, 2> &CompileUnits,
-                               SmallVector<GlobalVariable *, 4> &GlobalVars,
-                               SmallVector<GlobalVariable *, 4> &Subprograms);
-
   /// isValidDebugInfoIntrinsic - Return true if SPI is a valid debug 
   /// info intrinsic.
   bool isValidDebugInfoIntrinsic(DbgStopPointInst &SPI, 
