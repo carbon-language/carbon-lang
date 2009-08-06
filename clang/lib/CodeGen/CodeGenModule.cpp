@@ -645,7 +645,11 @@ llvm::Constant *CodeGenModule::GetOrCreateLLVMFunction(const char *MangledName,
     else if (const CXXConstructorDecl *CD = dyn_cast<CXXConstructorDecl>(FD)) {
       const CXXRecordDecl *ClassDecl = 
         cast<CXXRecordDecl>(CD->getDeclContext());
-      if (!ClassDecl->hasUserDeclaredConstructor())
+      if (CD->isCopyConstructor(getContext())) {
+        if (!ClassDecl->hasUserDeclaredCopyConstructor())
+          DeferredDeclsToEmit.push_back(D);
+      }
+      else if (!ClassDecl->hasUserDeclaredConstructor())
         DeferredDeclsToEmit.push_back(D);
     }
   }

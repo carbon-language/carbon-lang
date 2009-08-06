@@ -240,13 +240,22 @@ void CodeGenFunction::GenerateCode(const FunctionDecl *FD,
   }
   else 
     if (const CXXConstructorDecl *CD = dyn_cast<CXXConstructorDecl>(FD)) {
-      assert(
-             !cast<CXXRecordDecl>(CD->getDeclContext())->
-              hasUserDeclaredConstructor() &&
-             "bogus constructor is being synthesize");
-      StartFunction(FD, FD->getResultType(), Fn, Args, SourceLocation());
-      EmitCtorPrologue(CD);
-      FinishFunction();
+      const CXXRecordDecl *ClassDecl = 
+        cast<CXXRecordDecl>(CD->getDeclContext());
+      (void) ClassDecl;
+      if (CD->isCopyConstructor(getContext())) {
+        assert(!ClassDecl->hasUserDeclaredCopyConstructor() &&
+               "bogus constructor is being synthesize");
+        StartFunction(FD, FD->getResultType(), Fn, Args, SourceLocation());
+        FinishFunction();
+      }
+      else {
+        assert(!ClassDecl->hasUserDeclaredConstructor() &&
+               "bogus constructor is being synthesize");
+        StartFunction(FD, FD->getResultType(), Fn, Args, SourceLocation());
+        EmitCtorPrologue(CD);
+        FinishFunction();
+      }
     }
     
   // Destroy the 'this' declaration.
