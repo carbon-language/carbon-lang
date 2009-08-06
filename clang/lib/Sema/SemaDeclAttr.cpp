@@ -1212,7 +1212,8 @@ static void HandleFormatAttr(Decl *d, const AttributeList &Attr, Sema &S) {
   default: break;
   case 5: Supported = !memcmp(Format, "scanf", 5); break;
   case 6: Supported = !memcmp(Format, "printf", 6); break;
-  case 7: Supported = !memcmp(Format, "strfmon", 7); break;
+  case 7: Supported = !memcmp(Format, "printf0", 7) ||
+                      !memcmp(Format, "strfmon", 7); break;
   case 8:
     Supported = (is_strftime = !memcmp(Format, "strftime", 8)) ||
                 (is_NSString = !memcmp(Format, "NSString", 8)) ||

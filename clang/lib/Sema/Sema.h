@@ -3308,6 +3308,7 @@ private:
   Action::OwningExprResult CheckBlockCall(NamedDecl *NDecl, CallExpr *TheCall);
   SourceLocation getLocationOfStringLiteralByte(const StringLiteral *SL,
                                                 unsigned ByteNo) const;
+  bool CheckablePrintfAttr(const FormatAttr *Format, CallExpr *TheCall);
   bool CheckObjCString(Expr *Arg);
   bool SemaBuiltinVAStart(CallExpr *TheCall);
   bool SemaBuiltinUnorderedCompare(CallExpr *TheCall);

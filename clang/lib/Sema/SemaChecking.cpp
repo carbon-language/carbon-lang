@@ -84,6 +84,21 @@ SourceLocation Sema::getLocationOfStringLiteralByte(const StringLiteral *SL,
   }
 }
 
+/// CheckablePrintfAttr - does a function call have a "printf" attribute
+/// and arguments that merit checking?
+bool Sema::CheckablePrintfAttr(const FormatAttr *Format, CallExpr *TheCall) {
+  if (Format->getType() == "printf") return true;
+  if (Format->getType() == "printf0") {
+    // printf0 allows null "format" string; if so don't check format/args
+    unsigned format_idx = Format->getFormatIdx() - 1;
+    if (format_idx < TheCall->getNumArgs()) {
+      Expr *Format = TheCall->getArg(format_idx)->IgnoreParenCasts();
+      if (!Format->isNullPointerConstant(Context))
+        return true;
+    }
+  }
+  return false;
+}
 
 /// CheckFunctionCall - Check a direct function call for various correctness
 /// and safety properties not strictly enforced by the C type system.
@@ -167,7 +182,7 @@ Sema::CheckFunctionCall(FunctionDecl *FDecl, CallExpr *TheCall) {
 
   // Printf checking.
   if (const FormatAttr *Format = FDecl->getAttr<FormatAttr>()) {
-    if (Format->getType() == "printf") {
+    if (CheckablePrintfAttr(Format, TheCall)) {
       bool HasVAListArg = Format->getFirstArg() == 0;
       if (!HasVAListArg) {
         if (const FunctionProtoType *Proto 
@@ -201,7 +216,7 @@ Sema::CheckBlockCall(NamedDecl *NDecl, CallExpr *TheCall) {
   QualType Ty = V->getType();
   if (!Ty->isBlockPointerType())
     return move(TheCallResult);
-  if (Format->getType() == "printf") {
+  if (CheckablePrintfAttr(Format, TheCall)) {
       bool HasVAListArg = Format->getFirstArg() == 0;
       if (!HasVAListArg) {
         const FunctionType *FT = 
