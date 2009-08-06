@@ -144,9 +144,8 @@ LoopDependenceAnalysis::DependenceResult
 LoopDependenceAnalysis::analyseZIV(const SCEV *A,
                                    const SCEV *B,
                                    Subscript *S) const {
-  assert(isZIVPair(A, B));
-  const SCEV *diff = SE->getMinusSCEV(A, B);
-  return diff->isZero() ? Dependent : Independent;
+  assert(isZIVPair(A, B) && "Attempted to ZIV-test non-ZIV SCEVs!");
+  return A == B ? Dependent : Independent;
 }
 
 LoopDependenceAnalysis::DependenceResult
