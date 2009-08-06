@@ -993,6 +993,12 @@ void SelectionDAGLowering::visitRet(ReturnInst &I) {
   unsigned CallConv = DAG.getMachineFunction().getFunction()->getCallingConv();
   Chain = TLI.LowerReturn(Chain, CallConv, isVarArg,
                           Outs, getCurDebugLoc(), DAG);
+
+  // Verify that the target's LowerReturn behaved as expected.
+  assert(Chain.getNode() && Chain.getValueType() == MVT::Other &&
+         "LowerReturn didn't return a valid chain!");
+
+  // Update the DAG with the new chain value resulting from return lowering.
   DAG.setRoot(Chain);
 }
 
@@ -5696,7 +5702,20 @@ TargetLowering::LowerCallTo(SDValue Chain, const Type *RetTy,
   SmallVector<SDValue, 4> InVals;
   Chain = LowerCall(Chain, Callee, CallConv, isVarArg, isTailCall,
                     Outs, Ins, dl, DAG, InVals);
-  assert((!isTailCall || InVals.empty()) && "Tail call had return SDValues!");
+
+  // Verify that the target's LowerCall behaved as expected.
+  assert(Chain.getNode() && Chain.getValueType() == MVT::Other &&
+         "LowerCall didn't return a valid chain!");
+  assert((!isTailCall || InVals.empty()) &&
+         "LowerCall emitted a return value for a tail call!");
+  assert((isTailCall || InVals.size() == Ins.size()) &&
+         "LowerCall didn't emit the correct number of values!");
+  DEBUG(for (unsigned i = 0, e = Ins.size(); i != e; ++i) {
+          assert(InVals[i].getNode() &&
+                 "LowerCall emitted a null value!");
+          assert(Ins[i].VT == InVals[i].getValueType() &&
+                 "LowerCall emitted a value with the wrong type!");
+        });
 
   // For a tail call, the return value is merely live-out and there aren't
   // any nodes in the DAG representing it. Return a special value to
@@ -5839,6 +5858,20 @@ LowerArguments(BasicBlock *LLVMBB) {
   SDValue NewRoot = TLI.LowerFormalArguments(DAG.getRoot(), F.getCallingConv(),
                                              F.isVarArg(), Ins,
                                              dl, DAG, InVals);
+
+  // Verify that the target's LowerFormalArguments behaved as expected.
+  assert(NewRoot.getNode() && NewRoot.getValueType() == MVT::Other &&
+         "LowerFormalArguments didn't return a valid chain!");
+  assert(InVals.size() == Ins.size() &&
+         "LowerFormalArguments didn't emit the correct number of values!");
+  DEBUG(for (unsigned i = 0, e = Ins.size(); i != e; ++i) {
+          assert(InVals[i].getNode() &&
+                 "LowerFormalArguments emitted a null value!");
+          assert(Ins[i].VT == InVals[i].getValueType() &&
+                 "LowerFormalArguments emitted a value with the wrong type!");
+        });
+
+  // Update the DAG with the new chain value resulting from argument lowering.
   DAG.setRoot(NewRoot);
 
   // Set up the argument values.
