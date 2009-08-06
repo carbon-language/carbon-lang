@@ -514,10 +514,10 @@ llvm::Constant *CodeGenFunction::GenerateRtti(const CXXRecordDecl *RD) {
   llvm::GlobalVariable::LinkageTypes linktype;
   linktype = llvm::GlobalValue::WeakAnyLinkage;
   std::vector<llvm::Constant *> info;
-  assert (0 && "FIXME: implement rtti descriptor");
+  // assert (0 && "FIXME: implement rtti descriptor");
   // FIXME: descriptor
   info.push_back(llvm::Constant::getNullValue(Ptr8Ty));
-  assert (0 && "FIXME: implement rtti ts");
+  // assert (0 && "FIXME: implement rtti ts");
   // FIXME: TS
   info.push_back(llvm::Constant::getNullValue(Ptr8Ty));
 
@@ -531,14 +531,43 @@ llvm::Constant *CodeGenFunction::GenerateRtti(const CXXRecordDecl *RD) {
 }
 
 void CodeGenFunction::GenerateVtableForBase(const CXXRecordDecl *RD,
-                                       std::vector<llvm::Constant *> &methods) {
+                                            const CXXRecordDecl *Class,
+                                            llvm::Constant *rtti,
+                                         std::vector<llvm::Constant *> &methods,
+                                            bool isPrimary) {
   typedef CXXRecordDecl::method_iterator meth_iter;
   llvm::Type *Ptr8Ty;
   Ptr8Ty = llvm::PointerType::get(llvm::Type::Int8Ty, 0);
+  llvm::Constant *m = llvm::Constant::getNullValue(Ptr8Ty);
+
+  if (RD && !RD->isDynamicClass())
+    return;
+  if (RD) {
+    const ASTRecordLayout &Layout = getContext().getASTRecordLayout(Class);
+    int64_t BaseOffset = -(Layout.getBaseClassOffset(RD) / 8);
+    m = llvm::ConstantInt::get(llvm::Type::Int64Ty, BaseOffset);
+    m = llvm::ConstantExpr::getIntToPtr(m, Ptr8Ty);
+  }
+  methods.push_back(m);
+  methods.push_back(rtti);
+
+  if (RD)
+    for (meth_iter mi = RD->method_begin(), me = RD->method_end(); mi != me;
+         ++mi) {
+      if (mi->isVirtual()) {
+        m = CGM.GetAddrOfFunction(GlobalDecl(*mi));
+        m = llvm::ConstantExpr::getBitCast(m, Ptr8Ty);
+        methods.push_back(m);
+      }
+    }
+  if (!isPrimary)
+    return;
+
+  // And add the virtuals for the class to the primary vtable.
+  RD = Class;
   for (meth_iter mi = RD->method_begin(), me = RD->method_end(); mi != me;
        ++mi) {
     if (mi->isVirtual()) {
-      llvm::Constant *m;
       m = CGM.GetAddrOfFunction(GlobalDecl(*mi));
       m = llvm::ConstantExpr::getBitCast(m, Ptr8Ty);
       methods.push_back(m);
@@ -559,29 +588,19 @@ llvm::Value *CodeGenFunction::GenerateVtable(const CXXRecordDecl *RD) {
   linktype = llvm::GlobalValue::WeakAnyLinkage;
   std::vector<llvm::Constant *> methods;
   typedef CXXRecordDecl::method_iterator meth_iter;
-  llvm::Constant *m;
   llvm::Type *Ptr8Ty;
   Ptr8Ty = llvm::PointerType::get(llvm::Type::Int8Ty, 0);
-  m = llvm::Constant::getNullValue(Ptr8Ty);
   int64_t Offset = 0;
-  methods.push_back(m); Offset += LLVMPointerWidth;
-  methods.push_back(GenerateRtti(RD)); Offset += LLVMPointerWidth;
+  llvm::Constant *rtti = GenerateRtti(RD);
+
+  Offset += LLVMPointerWidth;
+  Offset += LLVMPointerWidth;
 
   const ASTRecordLayout &Layout = getContext().getASTRecordLayout(RD);
   const CXXRecordDecl *PrimaryBase = Layout.getPrimaryBase();
 
   // The primary base comes first.
-  if (PrimaryBase)
-    GenerateVtableForBase(PrimaryBase, methods);
-  for (meth_iter mi = RD->method_begin(), me = RD->method_end(); mi != me;
-       ++mi) {
-    if (mi->isVirtual()) {
-      m = CGM.GetAddrOfFunction(GlobalDecl(*mi));
-      m = llvm::ConstantExpr::getBitCast(m, Ptr8Ty);
-      methods.push_back(m);
-    }
-  }
-
+  GenerateVtableForBase(PrimaryBase, RD, rtti, methods, true);
   for (CXXRecordDecl::base_class_const_iterator i = RD->bases_begin(),
          e = RD->bases_end(); i != e; ++i) {
     if (i->isVirtual())
@@ -589,15 +608,7 @@ llvm::Value *CodeGenFunction::GenerateVtable(const CXXRecordDecl *RD) {
     const CXXRecordDecl *Base = 
       cast<CXXRecordDecl>(i->getType()->getAs<RecordType>()->getDecl());
     if (PrimaryBase != Base) {
-      const ASTRecordLayout &Layout = getContext().getASTRecordLayout(RD);
-      int64_t BaseOffset = -(Layout.getBaseClassOffset(Base) / 8);
-      m = llvm::ConstantInt::get(llvm::Type::Int64Ty, BaseOffset);
-      m = llvm::ConstantExpr::getIntToPtr(m, Ptr8Ty);
-      methods.push_back(m);
-      // FIXME: GenerateRtti for Base in RD.
-      m = llvm::Constant::getNullValue(Ptr8Ty);
-      methods.push_back(m);
-      GenerateVtableForBase(Base, methods);
+      GenerateVtableForBase(Base, RD, rtti, methods);
     }
   }
 
@@ -608,7 +619,7 @@ llvm::Value *CodeGenFunction::GenerateVtable(const CXXRecordDecl *RD) {
     const CXXRecordDecl *Base = 
       cast<CXXRecordDecl>(i->getType()->getAs<RecordType>()->getDecl());
     if (Base != PrimaryBase)
-      GenerateVtableForBase(Base, methods);
+      GenerateVtableForBase(Base, RD, rtti, methods);
   }
 
   llvm::Constant *C;

@@ -1,6 +1,6 @@
-// RUN: clang-cc -triple x86_64-apple-darwin -frtti=0 -std=c++0x -O3 -S %s -o %t-64.s &&
+// RUN: clang-cc -triple x86_64-apple-darwin -std=c++0x -O3 -S %s -o %t-64.s &&
 // RUN: FileCheck -check-prefix LP64 --input-file=%t-64.s %s &&
-// RUN: clang-cc -triple i386-apple-darwin -frtti=0 -std=c++0x -O3 -S %s -o %t-32.s &&
+// RUN: clang-cc -triple i386-apple-darwin -std=c++0x -O3 -S %s -o %t-32.s &&
 // RUN: FileCheck -check-prefix LP32 -input-file=%t-32.s %s &&
 // RUN: true
 
@@ -83,37 +83,37 @@ int main() {
 
 // CHECK-LP64: __ZTV1B:
 // CHECK-LP64: .space 8
-// CHECK-LP64: .space 8
+// CHECK-LP64: .quad __ZTI1B
 // CHECK-LP64: .quad __ZN1B4bar1Ev
 // CHECK-LP64: .quad __ZN1B4bar2Ev
 
 // CHECK-LP32: __ZTV1B:
 // CHECK-LP32: .space 4
-// CHECK-LP32: .space 4
+// CHECK-LP32: .long __ZTI1B
 // CHECK-LP32: .long __ZN1B4bar1Ev
 // CHECK-LP32: .long __ZN1B4bar2Ev
 
 // CHECK-LP64: __ZTV1A:
 // CHECK-LP64: .space 8
-// CHECK-LP64: .space 8
+// CHECK-LP64: .quad __ZTI1A
 // CHECK-LP64: .quad __ZN1B4bar1Ev
 // CHECK-LP64: .quad __ZN1B4bar2Ev
 // CHECK-LP64: .quad __ZN1A4foo1Ev
 // CHECK-LP64: .quad __ZN1A4foo2Ev
 // CHECK-LP64: .quad 18446744073709551600
-// CHECK-LP64: .space 8
+// CHECK-LP64: .quad __ZTI1A
 // CHECK-LP64: .quad __ZN1C4bee1Ev
 // CHECK-LP64: .quad __ZN1C4bee2Ev
 
 // CHECK-LP32: __ZTV1A:
 // CHECK-LP32: .space 4
-// CHECK-LP32: .space 4
+// CHECK-LP32: .long __ZTI1A
 // CHECK-LP32: .long __ZN1B4bar1Ev
 // CHECK-LP32: .long __ZN1B4bar2Ev
 // CHECK-LP32: .long __ZN1A4foo1Ev
 // CHECK-LP32: .long __ZN1A4foo2Ev
 // CHECK-LP32: .long 4294967284
-// CHECK-LP32: .space 4
+// CHECK-LP32: .long __ZTI1A
 // CHECK-LP32: .long __ZN1C4bee1Ev
 // CHECK-LP32: .long __ZN1C4bee2Ev
 
@@ -122,12 +122,12 @@ int main() {
 // CHECK-LP32 .long 8
 // CHECK-LP32 .space 4
 // CHECK-LP32: .space 4
-// CHECK-LP32: .space 4
+// CHECK-LP32: .long __ZTI1F
 // CHECK-LP32: .long __ZN1D3booEv
 // CHECK-LP32: .long __ZN1F3fooEv
 // CHECK-LP32 .space 4
 // CHECK-LP32 .long -8
-// CHECK-LP32 .space 4
+// CHECK-LP32: .long __ZTI1F
 // CHECK-LP32: .long __ZN2D13barEv
 
 // CHECK-LP64: __ZTV1F:
@@ -135,10 +135,10 @@ int main() {
 // CHECK-LP64 .quad 16
 // CHECK-LP64 .space 8
 // CHECK-LP64: .space 8
-// CHECK-LP64: .space 8
+// CHECK-LP64: .quad __ZTI1F
 // CHECK-LP64: .quad __ZN1D3booEv
 // CHECK-LP64: .quad __ZN1F3fooEv
 // CHECK-LP64 .space 8
 // CHECK-LP64 .space -16
-// CHECK-LP64 .space 8
+// CHECK-LP64:.quad __ZTI1F
 // CHECK-LP64: .quad __ZN2D13barEv

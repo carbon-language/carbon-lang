@@ -360,7 +360,10 @@ public:
 
   llvm::Constant *GenerateRtti(const CXXRecordDecl *RD);
   void GenerateVtableForBase(const CXXRecordDecl *RD,
-                             std::vector<llvm::Constant *> &methods);
+                             const CXXRecordDecl *Class,
+                             llvm::Constant *rtti,
+                             std::vector<llvm::Constant *> &methods,
+                             bool isPrimary = false);
   llvm::Value *GenerateVtable(const CXXRecordDecl *RD);
 
   void EmitCtorPrologue(const CXXConstructorDecl *CD);
