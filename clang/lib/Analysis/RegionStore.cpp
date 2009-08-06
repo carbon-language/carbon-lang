@@ -18,6 +18,7 @@
 #include "clang/Analysis/PathSensitive/GRState.h"
 #include "clang/Analysis/PathSensitive/GRStateTrait.h"
 #include "clang/Analysis/Analyses/LiveVariables.h"
+#include "clang/Analysis/Support/Optional.h"
 #include "clang/Basic/TargetInfo.h"
 
 #include "llvm/ADT/ImmutableMap.h"
@@ -186,6 +187,11 @@ public:
   SubRegionMap *getSubRegionMap(const GRState *state);
     
   RegionStoreSubRegionMap *getRegionStoreSubRegionMap(const GRState *state);
+  
+  
+  /// getDefaultBinding - Returns an SVal* representing an optional default
+  ///  binding associated with a region and its subregions.
+  Optional<SVal> getDefaultBinding(const GRState *state, const MemRegion *R);
   
   /// getLValueString - Returns an SVal representing the lvalue of a
   ///  StringLiteral.  Within RegionStore a StringLiteral has an
@@ -829,6 +835,17 @@ SVal RegionStoreManager::EvalBinOp(const GRState *state,
 // Loading values from regions.
 //===----------------------------------------------------------------------===//
 
+Optional<SVal> RegionStoreManager::getDefaultBinding(const GRState *state,
+                                                     const MemRegion *R) {
+  
+  if (R->isBoundable())
+    if (const TypedRegion *TR = dyn_cast<TypedRegion>(R))
+      if (TR->getValueType(getContext())->isUnionType())
+        return UnknownVal();
+
+  return Optional<SVal>::create(state->get<RegionDefaultValue>(R));
+}
+
 static bool IsReinterpreted(QualType RTy, QualType UsedTy, ASTContext &Ctx) {
   RTy = Ctx.getCanonicalType(RTy);
   UsedTy = Ctx.getCanonicalType(UsedTy);
@@ -911,6 +928,10 @@ RegionStoreManager::Retrieve(const GRState *state, Loc L, QualType T) {
 
   if (RTy->isStructureType())
     return SValuator::CastResult(state, RetrieveStruct(state, R));
+  
+  // FIXME: Handle unions.
+  if (RTy->isUnionType())
+    return SValuator::CastResult(state, UnknownVal());
 
   if (RTy->isArrayType())
     return SValuator::CastResult(state, RetrieveArray(state, R));
@@ -1109,7 +1130,7 @@ SVal RegionStoreManager::RetrieveField(const GRState* state,
 
   const MemRegion* superR = R->getSuperRegion();
   while (superR) {
-    if (const SVal* D = state->get<RegionDefaultValue>(superR)) {
+    if (const Optional<SVal> &D = getDefaultBinding(state, superR)) {
       if (SymbolRef parentSym = D->getAsSymbol())
         return ValMgr.getDerivedRegionValueSymbolVal(parentSym, R);
 

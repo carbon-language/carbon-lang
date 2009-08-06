@@ -32,10 +32,12 @@ extern NSString * const NSConnectionReplyMode;
 
 // PR 2948 (testcase; crash on VisitLValue for union types)
 // http://llvm.org/bugs/show_bug.cgi?id=2948
-
 void checkaccess_union() {
   int ret = 0, status;
-  if (((((__extension__ (((union {  // expected-warning {{ Branch condition evaluates to an uninitialized value.}}
+  // Since RegionStore doesn't handle unions yet,
+  // this branch condition won't be triggered
+  // as involving an uninitialized value.  
+  if (((((__extension__ (((union {  // no-warning
     __typeof (status) __in; int __i;}
     )
     {
@@ -43,7 +45,6 @@ void checkaccess_union() {
       ).__i))) & 0xff00) >> 8) == 1)
         ret = 1;
 }
-
 
 // Check our handling of fields being invalidated by function calls.
 struct test2_struct { int x; int y; char* s; };
