@@ -1344,7 +1344,8 @@ bool Sema::IsUserDefinedConversion(Expr *From, QualType ToType,
              = ToRecordDecl->lookup(ConstructorName);
            Con != ConEnd; ++Con) {
         CXXConstructorDecl *Constructor = cast<CXXConstructorDecl>(*Con);
-        if (Constructor->isConvertingConstructor())
+        if (!Constructor->isInvalidDecl() &&
+            Constructor->isConvertingConstructor())
           AddOverloadCandidate(Constructor, &From, 1, CandidateSet,
                                /*SuppressUserConversions=*/true, ForceRValue);
       }
