@@ -15,6 +15,7 @@
 
 #include "Sema.h"
 #include "clang/Sema/SemaDiagnostic.h"
+#include "clang/AST/Expr.h"
 #include <algorithm>
 
 namespace clang {
@@ -149,9 +150,16 @@ public:
   /// other clients.
   QualType AddTypeQualifiers(QualType T, unsigned CVRQualifiers);
        
-  /// \brief Transform the given expression.
+  /// \brief Transform the given statement.
   ///
   /// FIXME: At the moment, subclasses must override this.
+  Sema::OwningStmtResult TransformStmt(Stmt *S);
+  
+  /// \brief Transform the given expression.
+  ///
+  /// By default, invokes the derived class's TransformStmt() and downcasts
+  /// the result. Subclasses may override this function to provide alternate
+  /// behavior.
   Sema::OwningExprResult TransformExpr(Expr *E);
   
   /// \brief Transform the given declaration, which is referenced from a type
@@ -467,6 +475,15 @@ public:
                                    const IdentifierInfo &II);
 };
   
+template<typename Derived>
+Sema::OwningExprResult TreeTransform<Derived>::TransformExpr(Expr *E) {
+  Sema::OwningStmtResult Result = getDerived().TransformStmt(E);
+  if (Result.isInvalid())
+    return SemaRef.ExprError();
+  
+  return SemaRef.Owned(cast_or_null<Stmt>(Result.takeAs<Stmt>()));
+}
+
 template<typename Derived>
 NestedNameSpecifier *
 TreeTransform<Derived>::TransformNestedNameSpecifier(NestedNameSpecifier *NNS,
