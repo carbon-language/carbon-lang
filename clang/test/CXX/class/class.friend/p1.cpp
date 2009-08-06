@@ -32,8 +32,8 @@ class A {
   void a_member();
   friend void A::a_member(); // expected-error {{ friends cannot be members of the declaring class }}
   friend void a_member(); // okay (because we ignore class scopes when looking up friends)
-  friend class A::AInner; // expected-error {{ friends cannot be members of the declaring class }}
-  friend class AInner; // expected-error {{ friends cannot be members of the declaring class }}
+  friend class A::AInner; // this is okay as an extension
+  friend class AInner; // okay, refers to ::AInner
 
   friend void Derived::missing_member(); // expected-error {{ no function named 'missing_member' with type 'void ()' was found in the specified scope }}
 

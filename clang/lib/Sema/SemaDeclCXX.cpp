@@ -3359,12 +3359,20 @@ Sema::DeclPtrTy Sema::ActOnFriendDecl(Scope *S,
       Diag(DS.getFriendSpecLoc(), diag::err_friend_decl_defines_class)
         << RD->getSourceRange();
 
-    // C++ [class.friend]p1: A friend of a class is a function or
-    //   class that is not a member of the class . . .
-    // Definitions currently get treated in a way that causes this
-    // error, so only report it if we didn't see a definition.
-    else if (RD->getDeclContext() == CurContext)
-      Diag(DS.getFriendSpecLoc(), diag::err_friend_is_member);
+    // C++98 [class.friend]p1: A friend of a class is a function
+    //   or class that is not a member of the class . . .
+    // But that's a silly restriction which nobody implements for
+    // inner classes, and C++0x removes it anyway, so we only report
+    // this 
+    // But no-one implements it that way, and C++0x removes this
+    // restriction, so we only report it (as a warning) if we're being
+    // pedantic.  Ideally this would real -pedantic mode 
+    // 
+    // Also, definitions currently get treated in a way that causes
+    // this error, so only report it if we didn't see a definition.
+    else if (RD->getDeclContext() == CurContext &&
+             !(getLangOptions().CPlusPlus0x || getLangOptions().GNUMode))
+      Diag(DS.getFriendSpecLoc(), diag::extwarn_friend_inner_class);
 
     return DeclPtrTy::make(RD);
   }
@@ -3468,7 +3476,10 @@ Sema::DeclPtrTy Sema::ActOnFriendDecl(Scope *S,
 
     // C++ [class.friend]p1: A friend of a class is a function or
     //   class that is not a member of the class . . .
-    if (FD && DC == CurContext)
+    // C++0x changes this for both friend types and functions.
+    // Most C++ 98 compilers do seem to give an error here, so
+    // we do, too.
+    if (FD && DC == CurContext && !getLangOptions().CPlusPlus0x)
       Diag(DS.getFriendSpecLoc(), diag::err_friend_is_member);
   }
 

@@ -299,6 +299,8 @@ def err_unexpected_friend : Error<
   "friends can only be classes or functions">;
 def err_friend_is_member : Error<
   "friends cannot be members of the declaring class">;
+def extwarn_friend_inner_class : ExtWarn<
+  "C++ 98 does not allow inner classes as friends">;
 def err_unelaborated_friend_type : Error<
   "must specify '%select{class|union}0' in a friend "
   "%select{class|union}0 declaration">;
