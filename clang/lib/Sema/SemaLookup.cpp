@@ -1677,6 +1677,26 @@ ObjCCategoryImplDecl *Sema::LookupObjCCategoryImpl(IdentifierInfo *II) {
   return cast_or_null<ObjCCategoryImplDecl>(D);
 }
 
+// Attempts to find a declaration in the given declaration context
+// with exactly the given type.  Returns null if no such declaration
+// was found.
+Decl *Sema::LookupQualifiedNameWithType(DeclContext *DC,
+                                        DeclarationName Name,
+                                        QualType T) {
+  LookupResult result =
+    LookupQualifiedName(DC, Name, LookupOrdinaryName, true);
+
+  CanQualType CQT = Context.getCanonicalType(T);
+
+  for (LookupResult::iterator ir = result.begin(), ie = result.end();
+       ir != ie; ++ir)
+    if (FunctionDecl *CurFD = dyn_cast<FunctionDecl>(*ir))
+      if (Context.getCanonicalType(CurFD->getType()) == CQT)
+        return CurFD;
+
+  return NULL;
+}
+
 void Sema::LookupOverloadedOperatorName(OverloadedOperatorKind Op, Scope *S,
                                         QualType T1, QualType T2, 
                                         FunctionSet &Functions) {

@@ -398,6 +398,24 @@ void DeclSpec::Finish(Diagnostic &D, Preprocessor &PP) {
     }
   }
 
+  // C++ [class.friend]p6:
+  //   No storage-class-specifier shall appear in the decl-specifier-seq
+  //   of a friend declaration.
+  if (isFriendSpecified() && getStorageClassSpec()) {
+    DeclSpec::SCS SC = getStorageClassSpec();
+    const char *SpecName = getSpecifierName(SC);
+
+    SourceLocation SCLoc = getStorageClassSpecLoc();
+    SourceLocation SCEndLoc = SCLoc.getFileLocWithOffset(strlen(SpecName));
+
+    Diag(D, SCLoc, SrcMgr, diag::err_friend_storage_spec)
+      << SpecName
+      << CodeModificationHint::CreateRemoval(SourceRange(SCLoc, SCEndLoc));
+
+    ClearStorageClassSpecs();
+  }
+
+
   // Okay, now we can infer the real type.
   
   // TODO: return "auto function" and other bad things based on the real type.

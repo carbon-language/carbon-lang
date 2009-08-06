@@ -1192,6 +1192,9 @@ public:
   LookupResult LookupQualifiedName(DeclContext *LookupCtx, DeclarationName Name,
                                    LookupNameKind NameKind, 
                                    bool RedeclarationOnly = false);
+  Decl *LookupQualifiedNameWithType(DeclContext *LookupCtx,
+                                    DeclarationName Name,
+                                    QualType T);
   LookupResult LookupParsedName(Scope *S, const CXXScopeSpec *SS, 
                                 DeclarationName Name,
                                 LookupNameKind NameKind, 
@@ -2001,8 +2004,8 @@ public:
                                                  ExprArg AssertExpr,
                                                  ExprArg AssertMessageExpr);
   
-  virtual bool ActOnFriendDecl(Scope *S, SourceLocation FriendLoc,
-                               DeclPtrTy Dcl);
+  virtual DeclPtrTy ActOnFriendDecl(Scope *S,
+                    llvm::PointerUnion<const DeclSpec*,Declarator*> D);
 
   QualType CheckConstructorDeclarator(Declarator &D, QualType R,
                                       FunctionDecl::StorageClass& SC);

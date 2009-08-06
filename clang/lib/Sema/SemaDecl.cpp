@@ -1275,6 +1275,9 @@ Sema::DeclPtrTy Sema::ParsedFreeStandingDeclSpec(Scope *S, DeclSpec &DS) {
     if (!DS.getTypeRep()) // We probably had an error
       return DeclPtrTy();
 
+    // Note that the above type specs guarantee that the
+    // type rep is a Decl, whereas in many of the others
+    // it's a Type.
     Tag = dyn_cast<TagDecl>(static_cast<Decl *>(DS.getTypeRep()));
   }
 
@@ -3973,7 +3976,8 @@ Sema::DeclPtrTy Sema::ActOnTag(Scope *S, unsigned TagSpec, TagUseKind TUK,
       // If this is a use of a previous tag, or if the tag is already declared
       // in the same scope (so that the definition/declaration completes or
       // rementions the tag), reuse the decl.
-      if (TUK == TUK_Reference || isDeclInScope(PrevDecl, SearchDC, S)) {
+      if (TUK == TUK_Reference || TUK == TUK_Friend ||
+          isDeclInScope(PrevDecl, SearchDC, S)) {
         // Make sure that this wasn't declared as an enum and now used as a
         // struct or something similar.
         if (!isAcceptableTagRedeclaration(PrevTagDecl, Kind, KWLoc, *Name)) {
@@ -4009,6 +4013,11 @@ Sema::DeclPtrTy Sema::ActOnTag(Scope *S, unsigned TagSpec, TagUseKind TUK,
           if (TUK == TUK_Reference)
             return DeclPtrTy::make(PrevDecl);
 
+          // If this is a friend, make sure we create the new
+          // declaration in the appropriate semantic context.
+          if (TUK == TUK_Friend)
+            SearchDC = PrevDecl->getDeclContext();
+
           // Diagnose attempts to redefine a tag.
           if (TUK == TUK_Definition) {
             if (TagDecl *Def = PrevTagDecl->getDefinition(Context)) {
@@ -4039,7 +4048,8 @@ Sema::DeclPtrTy Sema::ActOnTag(Scope *S, unsigned TagSpec, TagUseKind TUK,
           }
         }
         // If we get here we have (another) forward declaration or we
-        // have a definition.  Just create a new decl.        
+        // have a definition.  Just create a new decl.
+
       } else {
         // If we get here, this is a definition of a new tag type in a nested
         // scope, e.g. "struct foo; void bar() { struct foo; }", just create a 
@@ -4101,6 +4111,18 @@ Sema::DeclPtrTy Sema::ActOnTag(Scope *S, unsigned TagSpec, TagUseKind TUK,
            ((S->getFlags() & Scope::DeclScope) == 0) ||
            (S->getEntity() && 
             ((DeclContext *)S->getEntity())->isTransparentContext()))
+      S = S->getParent();
+
+  } else if (TUK == TUK_Friend && SS.isEmpty() && Name) {
+    // C++ [namespace.memdef]p3:
+    //   If a friend declaration in a non-local class first declares a
+    //   class or function, the friend class or function is a member of
+    //   the innermost enclosing namespace.
+    while (!SearchDC->isNamespace() && !SearchDC->isTranslationUnit())
+      SearchDC = SearchDC->getParent();
+
+    // The entity of a decl scope is a DeclContext; see PushDeclContext.
+    while (S->getEntity() != SearchDC)
       S = S->getParent();
   }
 
@@ -4195,14 +4217,14 @@ CreateNewDecl:
   New->setLexicalDeclContext(CurContext);
 
   // Set the access specifier.
-  if (!Invalid)
+  if (!Invalid && TUK != TUK_Friend)
     SetMemberAccessSpecifier(New, PrevDecl, AS);
 
   if (TUK == TUK_Definition)
     New->startDefinition();
   
   // If this has an identifier, add it to the scope stack.
-  if (Name) {
+  if (Name && TUK != TUK_Friend) {
     S = getNonFieldDeclScope(S);
     PushOnScopeChains(New, S);
   } else {

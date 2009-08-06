@@ -22,6 +22,7 @@
 #include "clang/Parse/DeclSpec.h"
 #include "clang/Parse/Ownership.h"
 #include "llvm/Support/PrettyStackTrace.h"
+#include "llvm/ADT/PointerUnion.h"
 
 namespace clang {
   // Semantic.
@@ -413,7 +414,8 @@ public:
   enum TagUseKind {
     TUK_Reference,   // Reference to a tag:  'struct foo *X;'
     TUK_Declaration, // Fwd decl of a tag:   'struct foo;'
-    TUK_Definition   // Definition of a tag: 'struct foo { int X; } Y;'
+    TUK_Definition,  // Definition of a tag: 'struct foo { int X; } Y;'
+    TUK_Friend       // Friend declaration:  'friend struct foo;'
   };
 
   /// \brief The parser has encountered a tag (e.g., "class X") that should be
@@ -1109,12 +1111,11 @@ public:
   }
 
   /// ActOnFriendDecl - This action is called when a friend declaration is
-  /// encountered. Returns false on success.
-  virtual bool ActOnFriendDecl(Scope *S, SourceLocation FriendLoc,
-                               DeclPtrTy Dcl) {
-    return false;
+  /// encountered.
+  virtual DeclPtrTy ActOnFriendDecl(Scope *S,
+                        llvm::PointerUnion<const DeclSpec*,Declarator*> D) {
+    return DeclPtrTy();
   }
-  
 
   //===------------------------- C++ Expressions --------------------------===//
 

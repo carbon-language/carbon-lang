@@ -27,7 +27,11 @@ Parser::ParseCXXInlineMethodDef(AccessSpecifier AS, Declarator &D) {
   assert((Tok.is(tok::l_brace) || Tok.is(tok::colon) || Tok.is(tok::kw_try)) &&
          "Current token not a '{', ':' or 'try'!");
 
-  DeclPtrTy FnD = Actions.ActOnCXXMemberDeclarator(CurScope, AS, D, 0, 0);
+  DeclPtrTy FnD;
+  if (D.getDeclSpec().isFriendSpecified())
+    FnD = Actions.ActOnFriendDecl(CurScope, &D);
+  else
+    FnD = Actions.ActOnCXXMemberDeclarator(CurScope, AS, D, 0, 0);
 
   HandleMemberFunctionDefaultArgs(D, FnD);
 

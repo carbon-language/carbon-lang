@@ -708,7 +708,8 @@ bool Parser::ParseImplicitInt(DeclSpec &DS, CXXScopeSpec *SS,
 ///
 void Parser::ParseDeclarationSpecifiers(DeclSpec &DS,
                                         const ParsedTemplateInfo &TemplateInfo,
-                                        AccessSpecifier AS) {
+                                        AccessSpecifier AS,
+                                        DeclSpecContext DSContext) {
   DS.SetRangeStart(Tok.getLocation());
   while (1) {
     bool isInvalid = false;
@@ -968,7 +969,13 @@ void Parser::ParseDeclarationSpecifiers(DeclSpec &DS,
 
     // friend
     case tok::kw_friend:
-      isInvalid = DS.SetFriendSpec(Loc, PrevSpec, DiagID);
+      if (DSContext == DSC_class)
+        isInvalid = DS.SetFriendSpec(Loc, PrevSpec, DiagID);
+      else {
+        PrevSpec = ""; // not actually used by the diagnostic
+        DiagID = diag::err_friend_invalid_in_context;
+        isInvalid = true;
+      }
       break;
       
     // type-specifier

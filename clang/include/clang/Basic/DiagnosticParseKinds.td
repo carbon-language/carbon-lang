@@ -35,6 +35,7 @@ def err_invalid_short_spec : Error<"'short %0' is invalid">;
 def err_invalid_long_spec : Error<"'long %0' is invalid">;
 def err_invalid_longlong_spec : Error<"'long long %0' is invalid">;
 def err_invalid_complex_spec : Error<"'_Complex %0' is invalid">;
+def err_friend_storage_spec : Error<"'%0' is invalid in friend declarations">;
 
 def ext_ident_list_in_param : Extension<
   "type-less parameter names in function declaration">;
@@ -152,6 +153,8 @@ def err_typename_invalid_functionspec : Error<
   "type name does not allow function specifier to be specified">;
 def err_invalid_decl_spec_combination : Error<
   "cannot combine with previous '%0' declaration specifier">;
+def err_friend_invalid_in_context : Error<
+  "'friend' used outside of class">;
 def err_unknown_typename : Error<
   "unknown type name %0">;
 def err_use_of_tag_name_without_tag : Error<

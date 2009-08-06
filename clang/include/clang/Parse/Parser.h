@@ -906,6 +906,14 @@ private:
 
   //===--------------------------------------------------------------------===//
   // C99 6.7: Declarations.
+
+  /// A context for parsing declaration specifiers.  TODO: flesh this
+  /// out, there are other significant restrictions on specifiers than
+  /// would be best implemented in the parser.
+  enum DeclSpecContext {
+    DSC_normal, // normal context
+    DSC_class   // class context, enables 'friend'
+  };
   
   DeclGroupPtrTy ParseDeclaration(unsigned Context, SourceLocation &DeclEnd);
   DeclGroupPtrTy ParseSimpleDeclaration(unsigned Context,
@@ -922,7 +930,8 @@ private:
                         AccessSpecifier AS);
   void ParseDeclarationSpecifiers(DeclSpec &DS, 
                 const ParsedTemplateInfo &TemplateInfo = ParsedTemplateInfo(),
-                                  AccessSpecifier AS = AS_none);
+                                  AccessSpecifier AS = AS_none,
+                                  DeclSpecContext DSC = DSC_normal);
   bool ParseOptionalTypeSpecifier(DeclSpec &DS, bool &isInvalid, 
                                   const char *&PrevSpec,
                                   unsigned &DiagID,

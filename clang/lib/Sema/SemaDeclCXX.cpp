@@ -550,6 +550,8 @@ Sema::ActOnCXXMemberDeclarator(Scope *S, AccessSpecifier AS, Declarator &D,
 
   bool isFunc = D.isFunctionDeclarator();
 
+  assert(!DS.isFriendSpecified());
+
   // C++ 9.2p6: A member shall not be declared to have automatic storage
   // duration (auto, register) or with the extern storage-class-specifier.
   // C++ 7.1.1p8: The mutable specifier can be applied only to names of class
@@ -3302,13 +3304,208 @@ Sema::DeclPtrTy Sema::ActOnStaticAssertDeclaration(SourceLocation AssertLoc,
   return DeclPtrTy::make(Decl);
 }
 
-bool Sema::ActOnFriendDecl(Scope *S, SourceLocation FriendLoc, DeclPtrTy Dcl) {
-  if (!(S->getFlags() & Scope::ClassScope)) {
-    Diag(FriendLoc, diag::err_friend_decl_outside_class);
-    return true;
+Sema::DeclPtrTy Sema::ActOnFriendDecl(Scope *S,
+                       llvm::PointerUnion<const DeclSpec*,Declarator*> DU) {
+  Declarator *D = DU.dyn_cast<Declarator*>();
+  const DeclSpec &DS = (D ? D->getDeclSpec() : *DU.get<const DeclSpec*>());
+
+  assert(DS.isFriendSpecified());
+  assert(DS.getStorageClassSpec() == DeclSpec::SCS_unspecified);
+
+  // If there's no declarator, then this can only be a friend class
+  // declaration (or else it's just invalid).
+  if (!D) {
+
+    // C++ [class.friend]p2:
+    //   An elaborated-type-specifier shall be used in a friend declaration
+    //   for a class.*
+    //   * The class-key of the elaborated-type-specifier is required.
+    CXXRecordDecl *RD = 0;
+
+    switch (DS.getTypeSpecType()) {
+    case DeclSpec::TST_class:
+    case DeclSpec::TST_struct:
+    case DeclSpec::TST_union:
+      RD = dyn_cast_or_null<CXXRecordDecl>(static_cast<Decl*>(DS.getTypeRep()));
+      if (!RD) return DeclPtrTy();
+      break;
+
+    case DeclSpec::TST_typename:
+      if (const RecordType *RT = 
+          ((const Type*) DS.getTypeRep())->getAs<RecordType>())
+        RD = dyn_cast<CXXRecordDecl>(RT->getDecl());
+      // fallthrough
+    default:
+      if (RD) {
+        Diag(DS.getFriendSpecLoc(), diag::err_unelaborated_friend_type)
+          << (RD->isUnion())
+          << CodeModificationHint::CreateInsertion(DS.getTypeSpecTypeLoc(),
+                                      RD->isUnion() ? " union" : " class");
+        return DeclPtrTy::make(RD);
+      }
+
+      Diag(DS.getFriendSpecLoc(), diag::err_unexpected_friend)
+        << DS.getSourceRange();
+      return DeclPtrTy();
+    }
+
+    // The record declaration we get from friend declarations is not
+    // canonicalized; see ActOnTag.
+    assert(RD);
+
+    // C++ [class.friend]p2: A class shall not be defined inside
+    //   a friend declaration.
+    if (RD->isDefinition())
+      Diag(DS.getFriendSpecLoc(), diag::err_friend_decl_defines_class)
+        << RD->getSourceRange();
+
+    // C++ [class.friend]p1: A friend of a class is a function or
+    //   class that is not a member of the class . . .
+    // Definitions currently get treated in a way that causes this
+    // error, so only report it if we didn't see a definition.
+    else if (RD->getDeclContext() == CurContext)
+      Diag(DS.getFriendSpecLoc(), diag::err_friend_is_member);
+
+    return DeclPtrTy::make(RD);
   }
-  
-  return false;
+
+  // We have a declarator.
+  assert(D);
+
+  SourceLocation Loc = D->getIdentifierLoc();
+  QualType T = GetTypeForDeclarator(*D, S);
+
+  // C++ [class.friend]p1
+  //   A friend of a class is a function or class....
+  // Note that this sees through typedefs, which is intended.
+  if (!T->isFunctionType()) {
+    Diag(Loc, diag::err_unexpected_friend);
+
+    // It might be worthwhile to try to recover by creating an
+    // appropriate declaration.
+    return DeclPtrTy();
+  }
+
+  // C++ [namespace.memdef]p3
+  //  - If a friend declaration in a non-local class first declares a
+  //    class or function, the friend class or function is a member
+  //    of the innermost enclosing namespace.
+  //  - The name of the friend is not found by simple name lookup
+  //    until a matching declaration is provided in that namespace
+  //    scope (either before or after the class declaration granting
+  //    friendship).
+  //  - If a friend function is called, its name may be found by the
+  //    name lookup that considers functions from namespaces and
+  //    classes associated with the types of the function arguments.
+  //  - When looking for a prior declaration of a class or a function
+  //    declared as a friend, scopes outside the innermost enclosing
+  //    namespace scope are not considered.
+
+  CXXScopeSpec &ScopeQual = D->getCXXScopeSpec();
+  DeclarationName Name = GetNameForDeclarator(*D);
+  assert(Name);
+
+  // The existing declaration we found.
+  FunctionDecl *FD = NULL;
+
+  // The context we found the declaration in, or in which we should
+  // create the declaration.
+  DeclContext *DC;
+
+  // FIXME: handle local classes
+
+  // Recover from invalid scope qualifiers as if they just weren't there.
+  if (!ScopeQual.isInvalid() && ScopeQual.isSet()) {
+    DC = computeDeclContext(ScopeQual);
+
+    // FIXME: handle dependent contexts
+    if (!DC) return DeclPtrTy();
+
+    Decl *Dec = LookupQualifiedNameWithType(DC, Name, T);
+
+    // If searching in that context implicitly found a declaration in
+    // a different context, treat it like it wasn't found at all.
+    // TODO: better diagnostics for this case.  Suggesting the right
+    // qualified scope would be nice...
+    if (!Dec || Dec->getDeclContext() != DC) {
+      D->setInvalidType();
+      Diag(Loc, diag::err_qualified_friend_not_found) << Name << T;
+      return DeclPtrTy();
+    }
+
+    // C++ [class.friend]p1: A friend of a class is a function or
+    //   class that is not a member of the class . . .
+    if (DC == CurContext)
+      Diag(DS.getFriendSpecLoc(), diag::err_friend_is_member);
+
+    FD = cast<FunctionDecl>(Dec);
+
+  // Otherwise walk out to the nearest namespace scope looking for matches.
+  } else {
+    // TODO: handle local class contexts.
+
+    DC = CurContext;
+    while (true) {
+      // Skip class contexts.  If someone can cite chapter and verse
+      // for this behavior, that would be nice --- it's what GCC and
+      // EDG do, and it seems like a reasonable intent, but the spec
+      // really only says that checks for unqualified existing
+      // declarations should stop at the nearest enclosing namespace,
+      // not that they should only consider the nearest enclosing
+      // namespace.
+      while (DC->isRecord()) DC = DC->getParent();
+
+      Decl *Dec = LookupQualifiedNameWithType(DC, Name, T);
+
+      // TODO: decide what we think about using declarations.
+      if (Dec) {
+        FD = cast<FunctionDecl>(Dec);
+        break;
+      }
+      if (DC->isFileContext()) break;
+      DC = DC->getParent();
+    }
+
+    // C++ [class.friend]p1: A friend of a class is a function or
+    //   class that is not a member of the class . . .
+    if (FD && DC == CurContext)
+      Diag(DS.getFriendSpecLoc(), diag::err_friend_is_member);
+  }
+
+  // If we didn't find something matching the type exactly, create
+  // a declaration.  This declaration should only be findable via
+  // argument-dependent lookup.
+  if (!FD) {
+    assert(DC->isFileContext());
+
+    // This implies that it has to be an operator or function.
+    if (D->getKind() == Declarator::DK_Constructor ||
+        D->getKind() == Declarator::DK_Destructor ||
+        D->getKind() == Declarator::DK_Conversion) {
+      Diag(Loc, diag::err_introducing_special_friend) <<
+        (D->getKind() == Declarator::DK_Constructor ? 0 :
+         D->getKind() == Declarator::DK_Destructor ? 1 : 2);
+      return DeclPtrTy();
+    }
+
+    bool Redeclaration = false;
+    NamedDecl *ND = ActOnFunctionDeclarator(S, *D, DC, T,
+                                            /* PrevDecl = */ NULL,
+                                            MultiTemplateParamsArg(*this),
+                                            /* isFunctionDef */ false,
+                                            Redeclaration);
+
+    FD = cast_or_null<FunctionDecl>(ND);
+
+    // Note that we're creating a declaration but *not* pushing
+    // it onto the scope chains.
+
+    // TODO: make accessible via argument-dependent lookup.
+  }
+
+  // TODO: actually register the function as a friend.
+
+  return DeclPtrTy::make(FD);
 }
 
 void Sema::SetDeclDeleted(DeclPtrTy dcl, SourceLocation DelLoc) {

@@ -567,15 +567,16 @@ void Parser::ParseClassSpecifier(tok::TokenKind TagTokKind,
     }
   }
 
-  // There are three options here.  If we have 'struct foo;', then
-  // this is a forward declaration.  If we have 'struct foo {...' or
+  // There are four options here.  If we have 'struct foo;', then this
+  // is either a forward declaration or a friend declaration, which
+  // have to be treated differently.  If we have 'struct foo {...' or
   // 'struct foo :...' then this is a definition. Otherwise we have
   // something like 'struct foo xyz', a reference.
   Action::TagUseKind TUK;
   if (Tok.is(tok::l_brace) || (getLang().CPlusPlus && Tok.is(tok::colon)))
     TUK = Action::TUK_Definition;
-  else if (Tok.is(tok::semi) && !DS.isFriendSpecified())
-    TUK = Action::TUK_Declaration;
+  else if (Tok.is(tok::semi))
+    TUK = DS.isFriendSpecified() ? Action::TUK_Friend : Action::TUK_Declaration;
   else
     TUK = Action::TUK_Reference;
 
@@ -600,7 +601,7 @@ void Parser::ParseClassSpecifier(tok::TokenKind TagTokKind,
   // to turn that template-id into a type.
 
   bool Owned = false;
-  if (TemplateId && TUK != Action::TUK_Reference) {
+  if (TemplateId && TUK != Action::TUK_Reference && TUK != Action::TUK_Friend) {
     // Explicit specialization, class template partial specialization,
     // or explicit instantiation.
     ASTTemplateArgsPtr TemplateArgsPtr(Actions, 
@@ -727,10 +728,6 @@ void Parser::ParseClassSpecifier(tok::TokenKind TagTokKind,
   if (DS.SetTypeSpecType(TagType, StartLoc, PrevSpec, DiagID,
                          TagOrTempResult.get().getAs<void>(), Owned))
     Diag(StartLoc, DiagID) << PrevSpec;
-  
-  if (DS.isFriendSpecified())
-    Actions.ActOnFriendDecl(CurScope, DS.getFriendSpecLoc(), 
-                            TagOrTempResult.get());
 }
 
 /// ParseBaseClause - Parse the base-clause of a C++ class [C++ class.derived]. 
@@ -951,24 +948,17 @@ void Parser::ParseCXXClassMemberDeclaration(AccessSpecifier AS) {
   // decl-specifier-seq:
   // Parse the common declaration-specifiers piece.
   DeclSpec DS;
-  ParseDeclarationSpecifiers(DS, ParsedTemplateInfo(), AS);
+  ParseDeclarationSpecifiers(DS, ParsedTemplateInfo(), AS, DSC_class);
 
   if (Tok.is(tok::semi)) {
     ConsumeToken();
-    // C++ 9.2p7: The member-declarator-list can be omitted only after a
-    // class-specifier or an enum-specifier or in a friend declaration.
-    // FIXME: Friend declarations.
-    switch (DS.getTypeSpecType()) {
-    case DeclSpec::TST_struct:
-    case DeclSpec::TST_union:
-    case DeclSpec::TST_class:
-    case DeclSpec::TST_enum:
+
+    if (DS.isFriendSpecified())
+      Actions.ActOnFriendDecl(CurScope, &DS);
+    else
       Actions.ParsedFreeStandingDeclSpec(CurScope, DS);
-      return;
-    default:
-      Diag(DSStart, diag::err_no_declarators);
-      return;
-    }
+
+    return;
   }
 
   Declarator DeclaratorInfo(DS, Declarator::MemberContext);
@@ -1066,11 +1056,17 @@ void Parser::ParseCXXClassMemberDeclaration(AccessSpecifier AS) {
     // NOTE: If Sema is the Action module and declarator is an instance field,
     // this call will *not* return the created decl; It will return null.
     // See Sema::ActOnCXXMemberDeclarator for details.
-    DeclPtrTy ThisDecl = Actions.ActOnCXXMemberDeclarator(CurScope, AS,
-                                                          DeclaratorInfo,
-                                                          BitfieldSize.release(),
-                                                          Init.release(),
-                                                          Deleted);
+
+    DeclPtrTy ThisDecl;
+    if (DS.isFriendSpecified()) {
+      // TODO: handle initializers, bitfields, 'delete'
+      ThisDecl = Actions.ActOnFriendDecl(CurScope, &DeclaratorInfo);
+    } else
+      ThisDecl = Actions.ActOnCXXMemberDeclarator(CurScope, AS,
+                                                  DeclaratorInfo,
+                                                  BitfieldSize.release(),
+                                                  Init.release(),
+                                                  Deleted);
     if (ThisDecl)
       DeclsInGroup.push_back(ThisDecl);
 
