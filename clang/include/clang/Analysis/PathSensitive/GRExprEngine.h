@@ -34,8 +34,8 @@ namespace clang {
 class GRExprEngine {  
 public:
   typedef GRState                  StateTy;
-  typedef ExplodedGraph<StateTy>      GraphTy;
-  typedef GraphTy::NodeTy             NodeTy;
+  typedef ExplodedGraph            GraphTy;
+  typedef GraphTy::NodeTy          NodeTy;
   
   // Builders.
   typedef GRStmtNodeBuilder<StateTy>          StmtNodeBuilder;

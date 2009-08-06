@@ -349,17 +349,6 @@ public:
   };
 };
   
-template<> struct GRTrait<GRState*> {
-  static inline void* toPtr(GRState* St)  { return (void*) St; }
-  static inline GRState* toState(void* P) { return (GRState*) P; }
-  static inline void Profile(llvm::FoldingSetNodeID& profile, GRState* St) {    
-    // At this point states have already been uniqued.  Just
-    // add the pointer.
-    profile.AddPointer(St);
-  }
-};
-  
-  
 class GRStateSet {
   typedef llvm::SmallPtrSet<const GRState*,5> ImplTy;
   ImplTy Impl;  
@@ -468,7 +457,7 @@ public:
   const GRState *getInitialState();
         
   ASTContext &getContext() { return ValueMgr.getContext(); }
-  const ASTContext &getContext() const { return ValueMgr.getContext(); }               
+  const ASTContext &getContext() const { return ValueMgr.getContext(); }
                  
   const Decl &getCodeDecl() { return codedecl; }
   GRTransferFuncs& getTransferFuncs() { return *TF; }

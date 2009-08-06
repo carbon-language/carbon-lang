@@ -341,11 +341,11 @@ void GRCoreEngineImpl::HandlePostStmt(const PostStmt& L, CFGBlock* B,
 
 /// GenerateNode - Utility method to generate nodes, hook up successors,
 ///  and add nodes to the worklist.
-void GRCoreEngineImpl::GenerateNode(const ProgramPoint& Loc, const void* State,
-                                    ExplodedNode* Pred) {
+void GRCoreEngineImpl::GenerateNode(const ProgramPoint& Loc, 
+                                    const GRState* State, ExplodedNode* Pred) {
   
   bool IsNew;
-  ExplodedNode* Node = G->getNodeImpl(Loc, State, &IsNew);
+  ExplodedNode* Node = G->getNode(Loc, State, &IsNew);
   
   if (Pred) 
     Node->addPredecessor(Pred);  // Link 'Node' with its predecessor.
@@ -383,7 +383,7 @@ void GRStmtNodeBuilderImpl::GenerateAutoTransition(ExplodedNode* N) {
   }
   
   bool IsNew;
-  ExplodedNode* Succ = Eng.G->getNodeImpl(Loc, N->State, &IsNew);
+  ExplodedNode* Succ = Eng.G->getNode(Loc, N->State, &IsNew);
   Succ->addPredecessor(N);
 
   if (IsNew)
@@ -426,7 +426,7 @@ static inline PostStmt GetPostLoc(const Stmt* S, ProgramPoint::Kind K,
 }
 
 ExplodedNode*
-GRStmtNodeBuilderImpl::generateNodeImpl(const Stmt* S, const void* State,
+GRStmtNodeBuilderImpl::generateNodeImpl(const Stmt* S, const GRState* State,
                                         ExplodedNode* Pred,
                                         ProgramPoint::Kind K,
                                         const void *tag) {
@@ -437,10 +437,10 @@ GRStmtNodeBuilderImpl::generateNodeImpl(const Stmt* S, const void* State,
 
 ExplodedNode*
 GRStmtNodeBuilderImpl::generateNodeImpl(const ProgramPoint &Loc,
-                                        const void* State,
+                                        const GRState* State,
                                         ExplodedNode* Pred) {
   bool IsNew;
-  ExplodedNode* N = Eng.G->getNodeImpl(Loc, State, &IsNew);
+  ExplodedNode* N = Eng.G->getNode(Loc, State, &IsNew);
   N->addPredecessor(Pred);
   Deferred.erase(Pred);
   
@@ -454,8 +454,8 @@ GRStmtNodeBuilderImpl::generateNodeImpl(const ProgramPoint &Loc,
   return NULL;  
 }
 
-ExplodedNode* GRBranchNodeBuilderImpl::generateNodeImpl(const void* State,
-                                                            bool branch) {
+ExplodedNode* GRBranchNodeBuilderImpl::generateNodeImpl(const GRState* State,
+                                                        bool branch) {
   
   // If the branch has been marked infeasible we should not generate a node.
   if (!isFeasible(branch))
@@ -464,7 +464,7 @@ ExplodedNode* GRBranchNodeBuilderImpl::generateNodeImpl(const void* State,
   bool IsNew;
   
   ExplodedNode* Succ =
-    Eng.G->getNodeImpl(BlockEdge(Src, branch ? DstT : DstF), State, &IsNew);
+    Eng.G->getNode(BlockEdge(Src, branch ? DstT : DstF), State, &IsNew);
   
   Succ->addPredecessor(Pred);
   
@@ -492,12 +492,12 @@ GRBranchNodeBuilderImpl::~GRBranchNodeBuilderImpl() {
 
 ExplodedNode*
 GRIndirectGotoNodeBuilderImpl::generateNodeImpl(const Iterator& I,
-                                                const void* St,
+                                                const GRState* St,
                                                 bool isSink) {
   bool IsNew;
   
   ExplodedNode* Succ =
-    Eng.G->getNodeImpl(BlockEdge(Src, I.getBlock()), St, &IsNew);
+    Eng.G->getNode(BlockEdge(Src, I.getBlock()), St, &IsNew);
               
   Succ->addPredecessor(Pred);
   
@@ -517,11 +517,11 @@ GRIndirectGotoNodeBuilderImpl::generateNodeImpl(const Iterator& I,
 
 ExplodedNode*
 GRSwitchNodeBuilderImpl::generateCaseStmtNodeImpl(const Iterator& I,
-                                                  const void* St) {
+                                                  const GRState* St) {
 
   bool IsNew;
   
-  ExplodedNode* Succ = Eng.G->getNodeImpl(BlockEdge(Src, I.getBlock()),
+  ExplodedNode* Succ = Eng.G->getNode(BlockEdge(Src, I.getBlock()),
                                                 St, &IsNew);  
   Succ->addPredecessor(Pred);
   
@@ -535,7 +535,7 @@ GRSwitchNodeBuilderImpl::generateCaseStmtNodeImpl(const Iterator& I,
 
 
 ExplodedNode*
-GRSwitchNodeBuilderImpl::generateDefaultCaseNodeImpl(const void* St,
+GRSwitchNodeBuilderImpl::generateDefaultCaseNodeImpl(const GRState* St,
                                                      bool isSink) {
   
   // Get the block for the default case.
@@ -544,7 +544,7 @@ GRSwitchNodeBuilderImpl::generateDefaultCaseNodeImpl(const void* St,
   
   bool IsNew;
   
-  ExplodedNode* Succ = Eng.G->getNodeImpl(BlockEdge(Src, DefaultBlock),
+  ExplodedNode* Succ = Eng.G->getNode(BlockEdge(Src, DefaultBlock),
                                                 St, &IsNew);  
   Succ->addPredecessor(Pred);
   
@@ -566,14 +566,14 @@ GREndPathNodeBuilderImpl::~GREndPathNodeBuilderImpl() {
 }
 
 ExplodedNode*
-GREndPathNodeBuilderImpl::generateNodeImpl(const void* State,
+GREndPathNodeBuilderImpl::generateNodeImpl(const GRState* State,
                                            const void *tag,
                                            ExplodedNode* P) {
   HasGeneratedNode = true;    
   bool IsNew;
   
   ExplodedNode* Node =
-    Eng.G->getNodeImpl(BlockEntrance(&B, tag), State, &IsNew);
+    Eng.G->getNode(BlockEntrance(&B, tag), State, &IsNew);
   
   Node->addPredecessor(P ? P : Pred);
   

@@ -1286,8 +1286,7 @@ BugReportEquivClass::~BugReportEquivClass() {
 GRBugReporter::~GRBugReporter() { FlushReports(); }
 BugReporterData::~BugReporterData() {}
 
-ExplodedGraph<GRState>&
-GRBugReporter::getGraph() { return Eng.getGraph(); }
+ExplodedGraph &GRBugReporter::getGraph() { return Eng.getGraph(); }
 
 GRStateManager&
 GRBugReporter::getStateManager() { return Eng.getStateManager(); }
@@ -1332,9 +1331,9 @@ void BugReporter::FlushReports() {
 // PathDiagnostics generation.
 //===----------------------------------------------------------------------===//
 
-static std::pair<std::pair<ExplodedGraph<GRState>*, NodeBackMap*>,
+static std::pair<std::pair<ExplodedGraph*, NodeBackMap*>,
                  std::pair<ExplodedNode*, unsigned> >
-MakeReportGraph(const ExplodedGraph<GRState>* G,
+MakeReportGraph(const ExplodedGraph* G,
                 const ExplodedNode** NStart,
                 const ExplodedNode** NEnd) {
   
@@ -1342,7 +1341,7 @@ MakeReportGraph(const ExplodedGraph<GRState>* G,
   // error nodes to the root.  In the new graph we should only have one 
   // error node unless there are two or more error nodes with the same minimum
   // path length.
-  ExplodedGraph<GRState>* GTrim;
+  ExplodedGraph* GTrim;
   InterExplodedGraphMap* NMap;
 
   llvm::DenseMap<const void*, const void*> InverseMap;
@@ -1350,7 +1349,7 @@ MakeReportGraph(const ExplodedGraph<GRState>* G,
   
   // Create owning pointers for GTrim and NMap just to ensure that they are
   // released when this function exists.
-  llvm::OwningPtr<ExplodedGraph<GRState> > AutoReleaseGTrim(GTrim);
+  llvm::OwningPtr<ExplodedGraph> AutoReleaseGTrim(GTrim);
   llvm::OwningPtr<InterExplodedGraphMap> AutoReleaseNMap(NMap);
   
   // Find the (first) error node in the trimmed graph.  We just need to consult
@@ -1358,7 +1357,7 @@ MakeReportGraph(const ExplodedGraph<GRState>* G,
   // in the new graph.
 
   std::queue<const ExplodedNode*> WS;
-  typedef llvm::DenseMap<const ExplodedNode*,unsigned> IndexMapTy;
+  typedef llvm::DenseMap<const ExplodedNode*, unsigned> IndexMapTy;
   IndexMapTy IndexMap;
 
   for (const ExplodedNode** I = NStart; I != NEnd; ++I)
@@ -1372,9 +1371,8 @@ MakeReportGraph(const ExplodedGraph<GRState>* G,
 
   // Create a new (third!) graph with a single path.  This is the graph
   // that will be returned to the caller.
-  ExplodedGraph<GRState> *GNew =
-    new ExplodedGraph<GRState>(GTrim->getCFG(), GTrim->getCodeDecl(),
-                               GTrim->getContext());
+  ExplodedGraph *GNew = new ExplodedGraph(GTrim->getCFG(), GTrim->getCodeDecl(),
+                                          GTrim->getContext());
   
   // Sometimes the trimmed graph can contain a cycle.  Perform a reverse BFS
   // to the root node, and then construct a new graph that contains only
@@ -1418,8 +1416,7 @@ MakeReportGraph(const ExplodedGraph<GRState>* G,
     
     // Create the equivalent node in the new graph with the same state
     // and location.
-    ExplodedNode* NewN =
-      GNew->getNode(N->getLocation(), N->getState());
+    ExplodedNode* NewN = GNew->getNode(N->getLocation(), N->getState());
     
     // Store the mapping to the original node.
     llvm::DenseMap<const void*, const void*>::iterator IMitr=InverseMap.find(N);
@@ -1576,7 +1573,7 @@ void GRBugReporter::GeneratePathDiagnostic(PathDiagnostic& PD,
   
   // Construct a new graph that contains only a single path from the error
   // node to a root.  
-  const std::pair<std::pair<ExplodedGraph<GRState>*, NodeBackMap*>,
+  const std::pair<std::pair<ExplodedGraph*, NodeBackMap*>,
   std::pair<ExplodedNode*, unsigned> >&
   GPair = MakeReportGraph(&getGraph(), &Nodes[0], &Nodes[0] + Nodes.size());
   
@@ -1588,7 +1585,7 @@ void GRBugReporter::GeneratePathDiagnostic(PathDiagnostic& PD,
   
   assert(R && "No original report found for sliced graph.");
   
-  llvm::OwningPtr<ExplodedGraph<GRState> > ReportGraph(GPair.first.first);
+  llvm::OwningPtr<ExplodedGraph> ReportGraph(GPair.first.first);
   llvm::OwningPtr<NodeBackMap> BackMap(GPair.first.second);
   const ExplodedNode *N = GPair.second.first;
  

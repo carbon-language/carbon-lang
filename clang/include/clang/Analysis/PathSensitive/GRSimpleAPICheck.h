@@ -26,7 +26,7 @@ class BugReporter;
 class ASTContext;
 class GRExprEngine;
 class PathDiagnosticClient;
-template <typename T> class ExplodedGraph;
+class ExplodedGraph;
   
   
 class GRSimpleAPICheck : public GRAuditor<GRState> {

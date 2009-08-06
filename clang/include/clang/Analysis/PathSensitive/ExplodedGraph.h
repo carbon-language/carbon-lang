@@ -48,7 +48,7 @@ class GREndPathNodebuilderImpl;
   
 class ExplodedNode : public llvm::FoldingSetNode {
 protected:
-  friend class ExplodedGraphImpl;
+  friend class ExplodedGraph;
   friend class GRCoreEngineImpl;
   friend class GRStmtNodeBuilderImpl;
   friend class GRBranchNodeBuilderImpl;
@@ -192,17 +192,19 @@ public:
   static void SetAuditor(Auditor* A);
 };
 
+// FIXME: Is this class necessary?
+class InterExplodedGraphMap {
+  llvm::DenseMap<const ExplodedNode*, ExplodedNode*> M;
+  friend class ExplodedGraph;  
 
-template <typename StateTy>
-struct GRTrait {
-  static inline void Profile(llvm::FoldingSetNodeID& ID, const StateTy* St) {
-    St->Profile(ID);
-  }
+public:
+  ExplodedNode* getMappedNode(const ExplodedNode* N) const;
+  
+  InterExplodedGraphMap() {};
+  virtual ~InterExplodedGraphMap() {}
 };
 
-class InterExplodedGraphMapImpl;
-
-class ExplodedGraphImpl {
+class ExplodedGraph {
 protected:
   friend class GRCoreEngineImpl;
   friend class GRStmtNodeBuilderImpl;
@@ -224,7 +226,10 @@ protected:
   /// EndNodes - The nodes in the simulation graph which have been
   ///  specially marked as the endpoint of an abstract simulation path.
   EndNodesTy EndNodes;
-  
+
+  /// Nodes - The nodes in the graph.
+  llvm::FoldingSet<ExplodedNode> Nodes;
+
   /// Allocator - BumpPtrAllocator to create nodes.
   llvm::BumpPtrAllocator Allocator;
   
@@ -241,14 +246,18 @@ protected:
   /// NumNodes - The number of nodes in the graph.
   unsigned NumNodes;
 
-  /// getNodeImpl - Retrieve the node associated with a (Location,State)
-  ///  pair, where 'State' is represented as an opaque void*.  This method
-  ///  is intended to be used only by GRCoreEngineImpl.
-  virtual ExplodedNode* getNodeImpl(const ProgramPoint& L,
-                                        const void* State,
-                                        bool* IsNew) = 0;
+public:
+  /// getNode - Retrieve the node associated with a (Location,State) pair,
+  ///  where the 'Location' is a ProgramPoint in the CFG.  If no node for
+  ///  this pair exists, it is created.  IsNew is set to true if
+  ///  the node was freshly created.
+
+  ExplodedNode* getNode(const ProgramPoint& L, const GRState *State,
+                        bool* IsNew = 0);
   
-  virtual ExplodedGraphImpl* MakeEmptyGraph() const = 0;
+  ExplodedGraph* MakeEmptyGraph() const {
+    return new ExplodedGraph(cfg, CodeDecl, Ctx);
+  }
 
   /// addRoot - Add an untyped node to the set of roots.
   ExplodedNode* addRoot(ExplodedNode* V) {
@@ -261,20 +270,52 @@ protected:
     EndNodes.push_back(V);
     return V;
   }
-  
-  // ctor.
-  ExplodedGraphImpl(CFG& c, Decl& cd, ASTContext& ctx)
+
+  ExplodedGraph(CFG& c, Decl& cd, ASTContext& ctx)
     : cfg(c), CodeDecl(cd), Ctx(ctx), NumNodes(0) {}
 
-public:
-  virtual ~ExplodedGraphImpl() {}
+  virtual ~ExplodedGraph() {}
 
   unsigned num_roots() const { return Roots.size(); }
   unsigned num_eops() const { return EndNodes.size(); }
   
   bool empty() const { return NumNodes == 0; }
   unsigned size() const { return NumNodes; }
+
+  // Iterators.
+  typedef ExplodedNode                        NodeTy;
+  typedef llvm::FoldingSet<ExplodedNode>      AllNodesTy;
+  typedef NodeTy**                            roots_iterator;
+  typedef NodeTy* const *                     const_roots_iterator;
+  typedef NodeTy**                            eop_iterator;
+  typedef NodeTy* const *                     const_eop_iterator;
+  typedef AllNodesTy::iterator                node_iterator;
+  typedef AllNodesTy::const_iterator          const_node_iterator;
   
+  node_iterator nodes_begin() { return Nodes.begin(); }
+
+  node_iterator nodes_end() { return Nodes.end(); }
+  
+  const_node_iterator nodes_begin() const { return Nodes.begin(); }
+  
+  const_node_iterator nodes_end() const { return Nodes.end(); }
+  
+  roots_iterator roots_begin() { return Roots.begin(); }
+  
+  roots_iterator roots_end() { return Roots.end(); }
+  
+  const_roots_iterator roots_begin() const { return Roots.begin(); }
+  
+  const_roots_iterator roots_end() const { return Roots.end(); }  
+
+  eop_iterator eop_begin() { return EndNodes.begin(); }
+    
+  eop_iterator eop_end() { return EndNodes.end(); }
+  
+  const_eop_iterator eop_begin() const { return EndNodes.begin(); }
+  
+  const_eop_iterator eop_end() const { return EndNodes.end(); }
+
   llvm::BumpPtrAllocator& getAllocator() { return Allocator; }
   CFG& getCFG() { return cfg; }
   ASTContext& getContext() { return Ctx; }
@@ -288,176 +329,14 @@ public:
   
   typedef llvm::DenseMap<const ExplodedNode*, ExplodedNode*> NodeMap;
 
-  ExplodedGraphImpl* Trim(const ExplodedNode* const * NBeg,
-                          const ExplodedNode* const * NEnd,
-                          InterExplodedGraphMapImpl *M,
-                    llvm::DenseMap<const void*, const void*> *InverseMap) const;
-};
-  
-class InterExplodedGraphMapImpl {
-  llvm::DenseMap<const ExplodedNode*, ExplodedNode*> M;
-  friend class ExplodedGraphImpl;  
-  void add(const ExplodedNode* From, ExplodedNode* To);
-  
-protected:
-  ExplodedNode* getMappedImplNode(const ExplodedNode* N) const;
-  
-  InterExplodedGraphMapImpl();
-public:
-  virtual ~InterExplodedGraphMapImpl() {}
-};
-  
-//===----------------------------------------------------------------------===//
-// Type-specialized ExplodedGraph classes.
-//===----------------------------------------------------------------------===//
-  
-class InterExplodedGraphMap : public InterExplodedGraphMapImpl {
-public:
-  InterExplodedGraphMap() {};
-  ~InterExplodedGraphMap() {};
-
-  ExplodedNode* getMappedNode(const ExplodedNode* N) const {
-    return static_cast<ExplodedNode*>(getMappedImplNode(N));
-  }
-};
-  
-template <typename STATE>
-class ExplodedGraph : public ExplodedGraphImpl {
-public:
-  typedef STATE                       StateTy;
-  typedef ExplodedNode      NodeTy;  
-  typedef llvm::FoldingSet<NodeTy>    AllNodesTy;
-  
-protected:  
-  virtual ExplodedNode* getNodeImpl(const ProgramPoint& L,
-                                    const void* State,
-                                    bool* IsNew) {
-    
-    return getNode(L, static_cast<const StateTy*>(State), IsNew);
-  }
-
-  /// Nodes - The nodes in the graph.
-  AllNodesTy Nodes;
-  
-protected:
-  virtual ExplodedGraphImpl* MakeEmptyGraph() const {
-    return new ExplodedGraph(cfg, CodeDecl, Ctx);
-  }  
-    
-public:
-  ExplodedGraph(CFG& c, Decl& cd, ASTContext& ctx)
-    : ExplodedGraphImpl(c, cd, ctx) {}
-  
-  /// getNode - Retrieve the node associated with a (Location,State) pair,
-  ///  where the 'Location' is a ProgramPoint in the CFG.  If no node for
-  ///  this pair exists, it is created.  IsNew is set to true if
-  ///  the node was freshly created.
-  NodeTy* getNode(const ProgramPoint& L, const GRState* State,
-                  bool* IsNew = NULL) {
-    
-    // Profile 'State' to determine if we already have an existing node.
-    llvm::FoldingSetNodeID profile;    
-    void* InsertPos = 0;
-    
-    NodeTy::Profile(profile, L, State);
-    NodeTy* V = Nodes.FindNodeOrInsertPos(profile, InsertPos);
-
-    if (!V) {
-      // Allocate a new node.
-      V = (NodeTy*) Allocator.Allocate<NodeTy>();
-      new (V) NodeTy(L, State);
-      
-      // Insert the node into the node set and return it.
-      Nodes.InsertNode(V, InsertPos);
-      
-      ++NumNodes;
-      
-      if (IsNew) *IsNew = true;
-    }
-    else
-      if (IsNew) *IsNew = false;
-
-    return V;
-  }
-  
-  // Iterators.
-  typedef NodeTy**                            roots_iterator;
-  typedef const NodeTy**                      const_roots_iterator;
-  typedef NodeTy**                            eop_iterator;
-  typedef const NodeTy**                      const_eop_iterator;
-  typedef typename AllNodesTy::iterator       node_iterator;
-  typedef typename AllNodesTy::const_iterator const_node_iterator;
-  
-  node_iterator nodes_begin() {
-    return Nodes.begin();
-  }
-
-  node_iterator nodes_end() {
-    return Nodes.end();
-  }
-  
-  const_node_iterator nodes_begin() const {
-    return Nodes.begin();
-  }
-  
-  const_node_iterator nodes_end() const {
-    return Nodes.end();
-  }
-  
-  roots_iterator roots_begin() {
-    return reinterpret_cast<roots_iterator>(Roots.begin());
-  }
-  
-  roots_iterator roots_end() { 
-    return reinterpret_cast<roots_iterator>(Roots.end());
-  }
-  
-  const_roots_iterator roots_begin() const { 
-    return const_cast<ExplodedGraph>(this)->roots_begin();
-  }
-  
-  const_roots_iterator roots_end() const { 
-    return const_cast<ExplodedGraph>(this)->roots_end();
-  }  
-
-  eop_iterator eop_begin() {
-    return reinterpret_cast<eop_iterator>(EndNodes.begin());
-  }
-    
-  eop_iterator eop_end() { 
-    return reinterpret_cast<eop_iterator>(EndNodes.end());
-  }
-  
-  const_eop_iterator eop_begin() const {
-    return const_cast<ExplodedGraph>(this)->eop_begin();
-  }
-  
-  const_eop_iterator eop_end() const {
-    return const_cast<ExplodedGraph>(this)->eop_end();
-  }
-  
   std::pair<ExplodedGraph*, InterExplodedGraphMap*>
   Trim(const NodeTy* const* NBeg, const NodeTy* const* NEnd,
-       llvm::DenseMap<const void*, const void*> *InverseMap = 0) const {
-    
-    if (NBeg == NEnd)
-      return std::make_pair((ExplodedGraph*) 0,
-                            (InterExplodedGraphMap*) 0);
-    
-    assert (NBeg < NEnd);
-    
-    const ExplodedNode* const* NBegImpl =
-      (const ExplodedNode* const*) NBeg;
-    const ExplodedNode* const* NEndImpl =
-      (const ExplodedNode* const*) NEnd;
-    
-    llvm::OwningPtr<InterExplodedGraphMap> M(new InterExplodedGraphMap());
+       llvm::DenseMap<const void*, const void*> *InverseMap = 0) const;
 
-    ExplodedGraphImpl* G = ExplodedGraphImpl::Trim(NBegImpl, NEndImpl, M.get(),
-                                                   InverseMap);
-
-    return std::make_pair(static_cast<ExplodedGraph*>(G), M.take());
-  }
+  ExplodedGraph* TrimInternal(const ExplodedNode* const * NBeg,
+                              const ExplodedNode* const * NEnd,
+                              InterExplodedGraphMap *M,
+                    llvm::DenseMap<const void*, const void*> *InverseMap) const;
 };
 
 class ExplodedNodeSet {

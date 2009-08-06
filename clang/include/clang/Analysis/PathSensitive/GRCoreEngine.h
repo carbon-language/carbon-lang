@@ -49,7 +49,7 @@ protected:
   friend class GREndPathNodeBuilderImpl;
     
   /// G - The simulation graph.  Each node is a (location,state) pair.
-  llvm::OwningPtr<ExplodedGraphImpl> G;
+  llvm::OwningPtr<ExplodedGraph> G;
       
   /// WList - A set of queued nodes that need to be processed by the
   ///  worklist algorithm.  It is up to the implementation of WList to decide
@@ -61,14 +61,14 @@ protected:
   ///   number of times different CFGBlocks have been visited along a path.
   GRBlockCounter::Factory BCounterFactory;
   
-  void GenerateNode(const ProgramPoint& Loc, const void* State,
+  void GenerateNode(const ProgramPoint& Loc, const GRState* State,
                     ExplodedNode* Pred);
   
   /// getInitialState - Gets the void* representing the initial 'state'
   ///  of the analysis.  This is simply a wrapper (implemented
   ///  in GRCoreEngine) that performs type erasure on the initial
   ///  state returned by the checker object.
-  virtual const void* getInitialState() = 0;
+  virtual const GRState* getInitialState() = 0;
   
   void HandleBlockEdge(const BlockEdge& E, ExplodedNode* Pred);
   void HandleBlockEntrance(const BlockEntrance& E, ExplodedNode* Pred);
@@ -98,7 +98,7 @@ private:
   GRCoreEngineImpl& operator=(const GRCoreEngineImpl&);
   
 protected:  
-  GRCoreEngineImpl(ExplodedGraphImpl* g, GRWorkList* wl)
+  GRCoreEngineImpl(ExplodedGraph* g, GRWorkList* wl)
     : G(g), WList(wl), BCounterFactory(g->getAllocator()) {}
   
 public:
@@ -142,16 +142,16 @@ public:
   }  
     
   ExplodedNode*
-  generateNodeImpl(const ProgramPoint &PP, const void* State,
+  generateNodeImpl(const ProgramPoint &PP, const GRState* State,
                    ExplodedNode* Pred);
   
   ExplodedNode*
-  generateNodeImpl(const Stmt* S, const void* State, ExplodedNode* Pred,
+  generateNodeImpl(const Stmt* S, const GRState* State, ExplodedNode* Pred,
                    ProgramPoint::Kind K = ProgramPoint::PostStmtKind,
                    const void *tag = 0);
 
   ExplodedNode*
-  generateNodeImpl(const Stmt* S, const void* State,
+  generateNodeImpl(const Stmt* S, const GRState* State,
                    ProgramPoint::Kind K = ProgramPoint::PostStmtKind,
                    const void *tag = 0) {
     ExplodedNode* N = getLastNode();
@@ -160,7 +160,7 @@ public:
   }
   
   ExplodedNode*
-  generateNodeImpl(const Stmt* S, const void* State, const void *tag = 0) {
+  generateNodeImpl(const Stmt* S, const GRState* State, const void *tag = 0) {
     ExplodedNode* N = getLastNode();
     assert (N && "Predecessor of new node is infeasible.");
     return generateNodeImpl(S, State, N, ProgramPoint::PostStmtKind, tag);
@@ -325,10 +325,10 @@ public:
   ~GRBranchNodeBuilderImpl();
   
   ExplodedNode* getPredecessor() const { return Pred; }
-  const ExplodedGraphImpl& getGraph() const { return *Eng.G; }
+  const ExplodedGraph& getGraph() const { return *Eng.G; }
   GRBlockCounter getBlockCounter() const { return Eng.WList->getBlockCounter();}
     
-  ExplodedNode* generateNodeImpl(const void* State, bool branch);
+  ExplodedNode* generateNodeImpl(const GRState* State, bool branch);
   
   CFGBlock* getTargetBlock(bool branch) const {
     return branch ? DstT : DstF;
@@ -349,7 +349,7 @@ public:
 template<typename STATE>
 class GRBranchNodeBuilder {
   typedef STATE                                  StateTy;
-  typedef ExplodedGraph<StateTy>                 GraphTy;
+  typedef ExplodedGraph                          GraphTy;
   typedef typename GraphTy::NodeTy               NodeTy;
   
   GRBranchNodeBuilderImpl& NB;
@@ -425,7 +425,7 @@ public:
   Iterator begin() { return Iterator(DispatchBlock.succ_begin()); }
   Iterator end() { return Iterator(DispatchBlock.succ_end()); }
   
-  ExplodedNode* generateNodeImpl(const Iterator& I, const void* State,
+  ExplodedNode* generateNodeImpl(const Iterator& I, const GRState* State,
                                      bool isSink);
   
   Expr* getTarget() const { return E; }
@@ -435,7 +435,7 @@ public:
 template<typename STATE>
 class GRIndirectGotoNodeBuilder {
   typedef STATE                                  StateTy;
-  typedef ExplodedGraph<StateTy>                 GraphTy;
+  typedef ExplodedGraph                          GraphTy;
   typedef typename GraphTy::NodeTy               NodeTy;
 
   GRIndirectGotoNodeBuilderImpl& NB;
@@ -492,9 +492,9 @@ public:
   Iterator end() { return Iterator(Src->succ_rend()); }
   
   ExplodedNode* generateCaseStmtNodeImpl(const Iterator& I,
-                                             const void* State);
+                                             const GRState* State);
   
-  ExplodedNode* generateDefaultCaseNodeImpl(const void* State,
+  ExplodedNode* generateDefaultCaseNodeImpl(const GRState* State,
                                                 bool isSink);
   
   Expr* getCondition() const { return Condition; }
@@ -504,7 +504,7 @@ public:
 template<typename STATE>
 class GRSwitchNodeBuilder {
   typedef STATE                                  StateTy;
-  typedef ExplodedGraph<StateTy>                 GraphTy;
+  typedef ExplodedGraph                          GraphTy;
   typedef typename GraphTy::NodeTy               NodeTy;
   
   GRSwitchNodeBuilderImpl& NB;
@@ -554,7 +554,7 @@ public:
     return getBlockCounter().getNumVisited(B.getBlockID());
   }  
   
-  ExplodedNode* generateNodeImpl(const void* State,
+  ExplodedNode* generateNodeImpl(const GRState* State,
                                      const void *tag = 0,
                                      ExplodedNode *P = 0);
     
@@ -604,13 +604,13 @@ public:
   typedef SUBENGINE                              SubEngineTy; 
   typedef typename SubEngineTy::StateTy          StateTy;
   typedef typename StateTy::ManagerTy            StateManagerTy;
-  typedef ExplodedGraph<StateTy>                 GraphTy;
+  typedef ExplodedGraph                          GraphTy;
   typedef typename GraphTy::NodeTy               NodeTy;
 
 protected:
   SubEngineTy& SubEngine;
   
-  virtual const void* getInitialState() {
+  virtual const GRState* getInitialState() {
     return SubEngine.getInitialState();
   }
   

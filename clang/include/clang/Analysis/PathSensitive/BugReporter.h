@@ -358,15 +358,15 @@ public:
   
   /// getEngine - Return the analysis engine used to analyze a given
   ///  function or method.
-  GRExprEngine& getEngine() { return Eng; }
+  GRExprEngine &getEngine() { return Eng; }
 
   /// getGraph - Get the exploded graph created by the analysis engine
   ///  for the analyzed method or function.
-  ExplodedGraph<GRState>& getGraph();
+  ExplodedGraph &getGraph();
   
   /// getStateManager - Return the state manager used by the analysis
   ///  engine.
-  GRStateManager& getStateManager();
+  GRStateManager &getStateManager();
   
   virtual void GeneratePathDiagnostic(PathDiagnostic& PD,
                                       BugReportEquivClass& R);
@@ -402,7 +402,7 @@ public:
   
   GRBugReporter& getBugReporter() { return BR; }  
   
-  ExplodedGraph<GRState>& getGraph() { return BR.getGraph(); }
+  ExplodedGraph &getGraph() { return BR.getGraph(); }
   
   void addNotableSymbol(SymbolRef Sym) {
     // FIXME: For now forward to GRBugReporter.

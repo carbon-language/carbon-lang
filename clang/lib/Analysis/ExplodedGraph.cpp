@@ -127,13 +127,56 @@ ExplodedNode::NodeGroup::~NodeGroup() {
   if (getKind() == SizeOther) delete &getVector(getPtr());
 }
 
-ExplodedGraphImpl*
-ExplodedGraphImpl::Trim(const ExplodedNode* const* BeginSources,
-                        const ExplodedNode* const* EndSources,
-                        InterExplodedGraphMapImpl* M,
-                        llvm::DenseMap<const void*, const void*> *InverseMap) 
-const {
+ExplodedNode *ExplodedGraph::getNode(const ProgramPoint& L, 
+                                     const GRState* State, bool* IsNew) {
+  // Profile 'State' to determine if we already have an existing node.
+  llvm::FoldingSetNodeID profile;    
+  void* InsertPos = 0;
   
+  NodeTy::Profile(profile, L, State);
+  NodeTy* V = Nodes.FindNodeOrInsertPos(profile, InsertPos);
+  
+  if (!V) {
+    // Allocate a new node.
+    V = (NodeTy*) Allocator.Allocate<NodeTy>();
+    new (V) NodeTy(L, State);
+    
+    // Insert the node into the node set and return it.
+    Nodes.InsertNode(V, InsertPos);
+    
+    ++NumNodes;
+    
+    if (IsNew) *IsNew = true;
+  }
+  else
+    if (IsNew) *IsNew = false;
+  
+  return V;
+}
+
+std::pair<ExplodedGraph*, InterExplodedGraphMap*>
+ExplodedGraph::Trim(const NodeTy* const* NBeg, const NodeTy* const* NEnd,
+               llvm::DenseMap<const void*, const void*> *InverseMap) const {
+  
+  if (NBeg == NEnd)
+    return std::make_pair((ExplodedGraph*) 0,
+                          (InterExplodedGraphMap*) 0);
+  
+  assert (NBeg < NEnd);
+
+  llvm::OwningPtr<InterExplodedGraphMap> M(new InterExplodedGraphMap());
+  
+  ExplodedGraph* G = TrimInternal(NBeg, NEnd, M.get(), InverseMap);
+  
+  return std::make_pair(static_cast<ExplodedGraph*>(G), M.take());
+}
+
+ExplodedGraph*
+ExplodedGraph::TrimInternal(const ExplodedNode* const* BeginSources,
+                            const ExplodedNode* const* EndSources,
+                            InterExplodedGraphMap* M,
+                   llvm::DenseMap<const void*, const void*> *InverseMap) const {
+
   typedef llvm::DenseSet<const ExplodedNode*> Pass1Ty;
   Pass1Ty Pass1;
   
@@ -177,7 +220,7 @@ const {
     return 0;
 
   // Create an empty graph.
-  ExplodedGraphImpl* G = MakeEmptyGraph();
+  ExplodedGraph* G = MakeEmptyGraph();
   
   // ===- Pass 2 (forward DFS to construct the new graph) -===  
   while (!WL2.empty()) {
@@ -190,7 +233,7 @@ const {
     
     // Create the corresponding node in the new graph and record the mapping
     // from the old node to the new node.
-    ExplodedNode* NewN = G->getNodeImpl(N->getLocation(), N->State, NULL);
+    ExplodedNode* NewN = G->getNode(N->getLocation(), N->State, NULL);
     Pass2[N] = NewN;
     
     // Also record the reverse mapping from the new node to the old node.
@@ -238,12 +281,10 @@ const {
 }
 
 ExplodedNode*
-InterExplodedGraphMapImpl::getMappedImplNode(const ExplodedNode* N) const {
+InterExplodedGraphMap::getMappedNode(const ExplodedNode* N) const {
   llvm::DenseMap<const ExplodedNode*, ExplodedNode*>::iterator I =
     M.find(N);
 
   return I == M.end() ? 0 : I->second;
 }
-
-InterExplodedGraphMapImpl::InterExplodedGraphMapImpl() {}
 
