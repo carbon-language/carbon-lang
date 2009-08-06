@@ -111,7 +111,7 @@ void NSErrorCheck::EmitRetTyWarning(BugReporter& BR, Decl& CodeDecl) {
   os << " accepting ";
   os << (isNSErrorWarning ? "NSError**" : "CFErrorRef*");
   os << " should have a non-void return value to indicate whether or not an "
-        "error occured.";
+        "error occurred";
   
   BR.EmitBasicReport(isNSErrorWarning
                      ? "Bad return type when passing NSError**"
