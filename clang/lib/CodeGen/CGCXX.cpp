@@ -536,6 +536,22 @@ llvm::Constant *CodeGenFunction::GenerateRtti(const CXXRecordDecl *RD) {
   return Rtti;
 }
 
+void CodeGenFunction::GenerateVtableForBase(const CXXRecordDecl *RD,
+                                       std::vector<llvm::Constant *> &methods) {
+  typedef CXXRecordDecl::method_iterator meth_iter;
+  llvm::Type *Ptr8Ty;
+  Ptr8Ty = llvm::PointerType::get(llvm::Type::Int8Ty, 0);
+  for (meth_iter mi = RD->method_begin(), me = RD->method_end(); mi != me;
+       ++mi) {
+    if (mi->isVirtual()) {
+      llvm::Constant *m;
+      m = CGM.GetAddrOfFunction(GlobalDecl(*mi));
+      m = llvm::ConstantExpr::getBitCast(m, Ptr8Ty);
+      methods.push_back(m);
+    }
+  }
+}
+
 llvm::Value *CodeGenFunction::GenerateVtable(const CXXRecordDecl *RD) {
   llvm::SmallString<256> OutName;
   llvm::raw_svector_ostream Out(OutName);
@@ -576,14 +592,7 @@ llvm::Value *CodeGenFunction::GenerateVtable(const CXXRecordDecl *RD) {
       m = llvm::Constant::getNullValue(Ptr8Ty);
       methods.push_back(m);
     }
-    for (meth_iter mi = Base->method_begin(), me = Base->method_end(); mi != me;
-         ++mi) {
-      if (mi->isVirtual()) {
-        m = CGM.GetAddrOfFunction(GlobalDecl(*mi));
-        m = llvm::ConstantExpr::getBitCast(m, Ptr8Ty);
-        methods.push_back(m);
-      }
-    }
+    GenerateVtableForBase(Base, methods);
     if (PrimaryBase == Base) {
       for (meth_iter mi = RD->method_begin(), me = RD->method_end(); mi != me;
            ++mi) {
@@ -605,6 +614,15 @@ llvm::Value *CodeGenFunction::GenerateVtable(const CXXRecordDecl *RD) {
       }
     }
   }
+  // FIXME: finish layout for virtual bases
+  // FIXME: audit indirect virtual bases
+  for (CXXRecordDecl::base_class_const_iterator i = RD->vbases_begin(),
+         e = RD->vbases_end(); i != e; ++i) {
+    const CXXRecordDecl *Base = 
+      cast<CXXRecordDecl>(i->getType()->getAs<RecordType>()->getDecl());
+    if (Base != PrimaryBase)
+      GenerateVtableForBase(Base, methods);
+  }
 
   llvm::Constant *C;
   llvm::ArrayType *type = llvm::ArrayType::get(Ptr8Ty, methods.size());
@@ -612,7 +630,6 @@ llvm::Value *CodeGenFunction::GenerateVtable(const CXXRecordDecl *RD) {
   llvm::Value *vtable = new llvm::GlobalVariable(CGM.getModule(), type, true,
                                                  linktype, C, Name);
   vtable = Builder.CreateBitCast(vtable, Ptr8Ty);
-  // FIXME: finish layout for virtual bases
   vtable = Builder.CreateGEP(vtable,
                              llvm::ConstantInt::get(llvm::Type::Int64Ty,
                                                     Offset/8));
