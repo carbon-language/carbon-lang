@@ -62,7 +62,7 @@ protected:
   GRBlockCounter::Factory BCounterFactory;
   
   void GenerateNode(const ProgramPoint& Loc, const void* State,
-                    ExplodedNodeImpl* Pred);
+                    ExplodedNode* Pred);
   
   /// getInitialState - Gets the void* representing the initial 'state'
   ///  of the analysis.  This is simply a wrapper (implemented
@@ -70,14 +70,14 @@ protected:
   ///  state returned by the checker object.
   virtual const void* getInitialState() = 0;
   
-  void HandleBlockEdge(const BlockEdge& E, ExplodedNodeImpl* Pred);
-  void HandleBlockEntrance(const BlockEntrance& E, ExplodedNodeImpl* Pred);
-  void HandleBlockExit(CFGBlock* B, ExplodedNodeImpl* Pred);
+  void HandleBlockEdge(const BlockEdge& E, ExplodedNode* Pred);
+  void HandleBlockEntrance(const BlockEntrance& E, ExplodedNode* Pred);
+  void HandleBlockExit(CFGBlock* B, ExplodedNode* Pred);
   void HandlePostStmt(const PostStmt& S, CFGBlock* B,
-                      unsigned StmtIdx, ExplodedNodeImpl *Pred);
+                      unsigned StmtIdx, ExplodedNode *Pred);
   
   void HandleBranch(Stmt* Cond, Stmt* Term, CFGBlock* B,
-                    ExplodedNodeImpl* Pred);  
+                    ExplodedNode* Pred);  
   
   virtual void ProcessEndPath(GREndPathNodeBuilderImpl& Builder) = 0;  
   
@@ -115,23 +115,23 @@ class GRStmtNodeBuilderImpl {
   GRCoreEngineImpl& Eng;
   CFGBlock& B;
   const unsigned Idx;
-  ExplodedNodeImpl* Pred;
-  ExplodedNodeImpl* LastNode;  
+  ExplodedNode* Pred;
+  ExplodedNode* LastNode;  
   
-  typedef llvm::SmallPtrSet<ExplodedNodeImpl*,5> DeferredTy;
+  typedef llvm::SmallPtrSet<ExplodedNode*,5> DeferredTy;
   DeferredTy Deferred;
   
-  void GenerateAutoTransition(ExplodedNodeImpl* N);
+  void GenerateAutoTransition(ExplodedNode* N);
   
 public:
   GRStmtNodeBuilderImpl(CFGBlock* b, unsigned idx,
-                    ExplodedNodeImpl* N, GRCoreEngineImpl* e);      
+                    ExplodedNode* N, GRCoreEngineImpl* e);      
   
   ~GRStmtNodeBuilderImpl();
   
-  ExplodedNodeImpl* getBasePredecessor() const { return Pred; }
+  ExplodedNode* getBasePredecessor() const { return Pred; }
   
-  ExplodedNodeImpl* getLastNode() const {
+  ExplodedNode* getLastNode() const {
     return LastNode ? (LastNode->isSink() ? NULL : LastNode) : NULL;
   }
   
@@ -141,27 +141,27 @@ public:
     return getBlockCounter().getNumVisited(B.getBlockID());
   }  
     
-  ExplodedNodeImpl*
+  ExplodedNode*
   generateNodeImpl(const ProgramPoint &PP, const void* State,
-                   ExplodedNodeImpl* Pred);
+                   ExplodedNode* Pred);
   
-  ExplodedNodeImpl*
-  generateNodeImpl(const Stmt* S, const void* State, ExplodedNodeImpl* Pred,
+  ExplodedNode*
+  generateNodeImpl(const Stmt* S, const void* State, ExplodedNode* Pred,
                    ProgramPoint::Kind K = ProgramPoint::PostStmtKind,
                    const void *tag = 0);
 
-  ExplodedNodeImpl*
+  ExplodedNode*
   generateNodeImpl(const Stmt* S, const void* State,
                    ProgramPoint::Kind K = ProgramPoint::PostStmtKind,
                    const void *tag = 0) {
-    ExplodedNodeImpl* N = getLastNode();
+    ExplodedNode* N = getLastNode();
     assert (N && "Predecessor of new node is infeasible.");
     return generateNodeImpl(S, State, N, K, tag);
   }
   
-  ExplodedNodeImpl*
+  ExplodedNode*
   generateNodeImpl(const Stmt* S, const void* State, const void *tag = 0) {
-    ExplodedNodeImpl* N = getLastNode();
+    ExplodedNode* N = getLastNode();
     assert (N && "Predecessor of new node is infeasible.");
     return generateNodeImpl(S, State, N, ProgramPoint::PostStmtKind, tag);
   }
@@ -181,7 +181,7 @@ class GRStmtNodeBuilder  {
 public:
   typedef STATE                       StateTy;
   typedef typename StateTy::ManagerTy StateManagerTy;
-  typedef ExplodedNode<StateTy>       NodeTy;
+  typedef ExplodedNode       NodeTy;
   
 private:
   GRStmtNodeBuilderImpl& NB;
@@ -242,7 +242,7 @@ public:
   }
   
   const StateTy* GetState(NodeTy* Pred) const {
-    if ((ExplodedNodeImpl*) Pred == NB.getBasePredecessor())
+    if ((ExplodedNode*) Pred == NB.getBasePredecessor())
       return CleanedState;
     else
       return Pred->getState();
@@ -252,12 +252,12 @@ public:
     CleanedState = St;
   }
   
-  NodeTy* MakeNode(ExplodedNodeSet<StateTy>& Dst, Stmt* S,
+  NodeTy* MakeNode(ExplodedNodeSet& Dst, Stmt* S,
                    NodeTy* Pred, const StateTy* St) {
     return MakeNode(Dst, S, Pred, St, PointKind);
   }
   
-  NodeTy* MakeNode(ExplodedNodeSet<StateTy>& Dst, Stmt* S,
+  NodeTy* MakeNode(ExplodedNodeSet& Dst, Stmt* S,
                    NodeTy* Pred, const StateTy* St, ProgramPoint::Kind K) {    
     
     const StateTy* PredState = GetState(Pred);
@@ -284,7 +284,7 @@ public:
     return N;
   }
   
-  NodeTy* MakeSinkNode(ExplodedNodeSet<StateTy>& Dst, Stmt* S,
+  NodeTy* MakeSinkNode(ExplodedNodeSet& Dst, Stmt* S,
                        NodeTy* Pred, const StateTy* St) { 
     bool Tmp = BuildSinks;
     BuildSinks = true;
@@ -305,9 +305,9 @@ class GRBranchNodeBuilderImpl {
   CFGBlock* Src;
   CFGBlock* DstT;
   CFGBlock* DstF;
-  ExplodedNodeImpl* Pred;
+  ExplodedNode* Pred;
 
-  typedef llvm::SmallVector<ExplodedNodeImpl*,3> DeferredTy;
+  typedef llvm::SmallVector<ExplodedNode*,3> DeferredTy;
   DeferredTy Deferred;
   
   bool GeneratedTrue;
@@ -317,18 +317,18 @@ class GRBranchNodeBuilderImpl {
   
 public:
   GRBranchNodeBuilderImpl(CFGBlock* src, CFGBlock* dstT, CFGBlock* dstF,
-                          ExplodedNodeImpl* pred, GRCoreEngineImpl* e) 
+                          ExplodedNode* pred, GRCoreEngineImpl* e) 
   : Eng(*e), Src(src), DstT(dstT), DstF(dstF), Pred(pred),
     GeneratedTrue(false), GeneratedFalse(false),
     InFeasibleTrue(!DstT), InFeasibleFalse(!DstF) {}
   
   ~GRBranchNodeBuilderImpl();
   
-  ExplodedNodeImpl* getPredecessor() const { return Pred; }
+  ExplodedNode* getPredecessor() const { return Pred; }
   const ExplodedGraphImpl& getGraph() const { return *Eng.G; }
   GRBlockCounter getBlockCounter() const { return Eng.WList->getBlockCounter();}
     
-  ExplodedNodeImpl* generateNodeImpl(const void* State, bool branch);
+  ExplodedNode* generateNodeImpl(const void* State, bool branch);
   
   CFGBlock* getTargetBlock(bool branch) const {
     return branch ? DstT : DstF;
@@ -395,9 +395,9 @@ class GRIndirectGotoNodeBuilderImpl {
   CFGBlock* Src;
   CFGBlock& DispatchBlock;
   Expr* E;
-  ExplodedNodeImpl* Pred;  
+  ExplodedNode* Pred;  
 public:
-  GRIndirectGotoNodeBuilderImpl(ExplodedNodeImpl* pred, CFGBlock* src,
+  GRIndirectGotoNodeBuilderImpl(ExplodedNode* pred, CFGBlock* src,
                                 Expr* e, CFGBlock* dispatch,
                                 GRCoreEngineImpl* eng)
   : Eng(*eng), Src(src), DispatchBlock(*dispatch), E(e), Pred(pred) {}
@@ -425,7 +425,7 @@ public:
   Iterator begin() { return Iterator(DispatchBlock.succ_begin()); }
   Iterator end() { return Iterator(DispatchBlock.succ_end()); }
   
-  ExplodedNodeImpl* generateNodeImpl(const Iterator& I, const void* State,
+  ExplodedNode* generateNodeImpl(const Iterator& I, const void* State,
                                      bool isSink);
   
   Expr* getTarget() const { return E; }
@@ -463,9 +463,9 @@ class GRSwitchNodeBuilderImpl {
   GRCoreEngineImpl& Eng;
   CFGBlock* Src;
   Expr* Condition;
-  ExplodedNodeImpl* Pred;  
+  ExplodedNode* Pred;  
 public:
-  GRSwitchNodeBuilderImpl(ExplodedNodeImpl* pred, CFGBlock* src,
+  GRSwitchNodeBuilderImpl(ExplodedNode* pred, CFGBlock* src,
                           Expr* condition, GRCoreEngineImpl* eng)
   : Eng(*eng), Src(src), Condition(condition), Pred(pred) {}
   
@@ -491,10 +491,10 @@ public:
   Iterator begin() { return Iterator(Src->succ_rbegin()+1); }
   Iterator end() { return Iterator(Src->succ_rend()); }
   
-  ExplodedNodeImpl* generateCaseStmtNodeImpl(const Iterator& I,
+  ExplodedNode* generateCaseStmtNodeImpl(const Iterator& I,
                                              const void* State);
   
-  ExplodedNodeImpl* generateDefaultCaseNodeImpl(const void* State,
+  ExplodedNode* generateDefaultCaseNodeImpl(const void* State,
                                                 bool isSink);
   
   Expr* getCondition() const { return Condition; }
@@ -536,17 +536,17 @@ public:
 class GREndPathNodeBuilderImpl {
   GRCoreEngineImpl& Eng;
   CFGBlock& B;
-  ExplodedNodeImpl* Pred;  
+  ExplodedNode* Pred;  
   bool HasGeneratedNode;
   
 public:
-  GREndPathNodeBuilderImpl(CFGBlock* b, ExplodedNodeImpl* N,
+  GREndPathNodeBuilderImpl(CFGBlock* b, ExplodedNode* N,
                            GRCoreEngineImpl* e)
     : Eng(*e), B(*b), Pred(N), HasGeneratedNode(false) {}      
   
   ~GREndPathNodeBuilderImpl();
   
-  ExplodedNodeImpl* getPredecessor() const { return Pred; }
+  ExplodedNode* getPredecessor() const { return Pred; }
     
   GRBlockCounter getBlockCounter() const { return Eng.WList->getBlockCounter();}
   
@@ -554,9 +554,9 @@ public:
     return getBlockCounter().getNumVisited(B.getBlockID());
   }  
   
-  ExplodedNodeImpl* generateNodeImpl(const void* State,
+  ExplodedNode* generateNodeImpl(const void* State,
                                      const void *tag = 0,
-                                     ExplodedNodeImpl *P = 0);
+                                     ExplodedNode *P = 0);
     
   CFGBlock* getBlock() const { return &B; }
 };
@@ -565,7 +565,7 @@ public:
 template<typename STATE>
 class GREndPathNodeBuilder  {
   typedef STATE                   StateTy;
-  typedef ExplodedNode<StateTy>   NodeTy;
+  typedef ExplodedNode   NodeTy;
   
   GREndPathNodeBuilderImpl& NB;
   

@@ -178,8 +178,8 @@ public:
   GenericNodeBuilder(GREndPathNodeBuilder<GRState> &enb)
   : SNB(0), S(0), tag(0), ENB(&enb) {}
   
-  ExplodedNode<GRState> *MakeNode(const GRState *state,
-                                  ExplodedNode<GRState> *Pred) {
+  ExplodedNode *MakeNode(const GRState *state,
+                                  ExplodedNode *Pred) {
     if (SNB)
       return SNB->generateNode(PostStmt(S, tag), state, Pred);
     
@@ -1853,21 +1853,21 @@ private:
   const GRState * Update(const GRState * state, SymbolRef sym, RefVal V, ArgEffect E,
                     RefVal::Kind& hasErr);
 
-  void ProcessNonLeakError(ExplodedNodeSet<GRState>& Dst,
+  void ProcessNonLeakError(ExplodedNodeSet& Dst,
                            GRStmtNodeBuilder<GRState>& Builder,
                            Expr* NodeExpr, Expr* ErrorExpr,
-                           ExplodedNode<GRState>* Pred,
+                           ExplodedNode* Pred,
                            const GRState* St,
                            RefVal::Kind hasErr, SymbolRef Sym);
   
   const GRState * HandleSymbolDeath(const GRState * state, SymbolRef sid, RefVal V,
                                llvm::SmallVectorImpl<SymbolRef> &Leaked);
     
-  ExplodedNode<GRState>* ProcessLeaks(const GRState * state,
+  ExplodedNode* ProcessLeaks(const GRState * state,
                                       llvm::SmallVectorImpl<SymbolRef> &Leaked,
                                       GenericNodeBuilder &Builder,
                                       GRExprEngine &Eng,
-                                      ExplodedNode<GRState> *Pred = 0);
+                                      ExplodedNode *Pred = 0);
   
 public:  
   CFRefCount(ASTContext& Ctx, bool gcenabled, const LangOptions& lopts)
@@ -1888,40 +1888,40 @@ public:
   bool isGCEnabled() const { return Summaries.isGCEnabled(); }
   const LangOptions& getLangOptions() const { return LOpts; }
   
-  const RetainSummary *getSummaryOfNode(const ExplodedNode<GRState> *N) const {
+  const RetainSummary *getSummaryOfNode(const ExplodedNode *N) const {
     SummaryLogTy::const_iterator I = SummaryLog.find(N);
     return I == SummaryLog.end() ? 0 : I->second;
   }
   
   // Calls.
 
-  void EvalSummary(ExplodedNodeSet<GRState>& Dst,
+  void EvalSummary(ExplodedNodeSet& Dst,
                    GRExprEngine& Eng,
                    GRStmtNodeBuilder<GRState>& Builder,
                    Expr* Ex,
                    Expr* Receiver,
                    const RetainSummary& Summ,
                    ExprIterator arg_beg, ExprIterator arg_end,
-                   ExplodedNode<GRState>* Pred);
+                   ExplodedNode* Pred);
     
-  virtual void EvalCall(ExplodedNodeSet<GRState>& Dst,
+  virtual void EvalCall(ExplodedNodeSet& Dst,
                         GRExprEngine& Eng,
                         GRStmtNodeBuilder<GRState>& Builder,
                         CallExpr* CE, SVal L,
-                        ExplodedNode<GRState>* Pred);  
+                        ExplodedNode* Pred);  
   
   
-  virtual void EvalObjCMessageExpr(ExplodedNodeSet<GRState>& Dst,
+  virtual void EvalObjCMessageExpr(ExplodedNodeSet& Dst,
                                    GRExprEngine& Engine,
                                    GRStmtNodeBuilder<GRState>& Builder,
                                    ObjCMessageExpr* ME,
-                                   ExplodedNode<GRState>* Pred);
+                                   ExplodedNode* Pred);
   
-  bool EvalObjCMessageExprAux(ExplodedNodeSet<GRState>& Dst,
+  bool EvalObjCMessageExprAux(ExplodedNodeSet& Dst,
                               GRExprEngine& Engine,
                               GRStmtNodeBuilder<GRState>& Builder,
                               ObjCMessageExpr* ME,
-                              ExplodedNode<GRState>* Pred);
+                              ExplodedNode* Pred);
 
   // Stores.  
   virtual void EvalBind(GRStmtNodeBuilderRef& B, SVal location, SVal val);
@@ -1931,24 +1931,24 @@ public:
   virtual void EvalEndPath(GRExprEngine& Engine,
                            GREndPathNodeBuilder<GRState>& Builder);
   
-  virtual void EvalDeadSymbols(ExplodedNodeSet<GRState>& Dst,
+  virtual void EvalDeadSymbols(ExplodedNodeSet& Dst,
                                GRExprEngine& Engine,
                                GRStmtNodeBuilder<GRState>& Builder,
-                               ExplodedNode<GRState>* Pred,
+                               ExplodedNode* Pred,
                                Stmt* S, const GRState* state,
                                SymbolReaper& SymReaper);
   
-  std::pair<ExplodedNode<GRState>*, const GRState *>
+  std::pair<ExplodedNode*, const GRState *>
   HandleAutoreleaseCounts(const GRState * state, GenericNodeBuilder Bd,
-                          ExplodedNode<GRState>* Pred, GRExprEngine &Eng,
+                          ExplodedNode* Pred, GRExprEngine &Eng,
                           SymbolRef Sym, RefVal V, bool &stop);
   // Return statements.
   
-  virtual void EvalReturn(ExplodedNodeSet<GRState>& Dst,
+  virtual void EvalReturn(ExplodedNodeSet& Dst,
                           GRExprEngine& Engine,
                           GRStmtNodeBuilder<GRState>& Builder,
                           ReturnStmt* S,
-                          ExplodedNode<GRState>* Pred);
+                          ExplodedNode* Pred);
 
   // Assumptions.
 
@@ -2123,11 +2123,11 @@ namespace {
     const CFRefCount &TF;
   public:
     CFRefReport(CFRefBug& D, const CFRefCount &tf,
-                ExplodedNode<GRState> *n, SymbolRef sym)
+                ExplodedNode *n, SymbolRef sym)
       : RangedBugReport(D, D.getDescription(), n), Sym(sym), TF(tf) {}
 
     CFRefReport(CFRefBug& D, const CFRefCount &tf,
-                ExplodedNode<GRState> *n, SymbolRef sym, const char* endText)
+                ExplodedNode *n, SymbolRef sym, const char* endText)
       : RangedBugReport(D, D.getDescription(), endText, n), Sym(sym), TF(tf) {}
     
     virtual ~CFRefReport() {}
@@ -2151,12 +2151,12 @@ namespace {
     SymbolRef getSymbol() const { return Sym; }
     
     PathDiagnosticPiece* getEndPath(BugReporterContext& BRC,
-                                    const ExplodedNode<GRState>* N);
+                                    const ExplodedNode* N);
     
     std::pair<const char**,const char**> getExtraDescriptiveText();
     
-    PathDiagnosticPiece* VisitNode(const ExplodedNode<GRState>* N,
-                                   const ExplodedNode<GRState>* PrevN,
+    PathDiagnosticPiece* VisitNode(const ExplodedNode* N,
+                                   const ExplodedNode* PrevN,
                                    BugReporterContext& BRC);
   };
 
@@ -2165,11 +2165,11 @@ namespace {
     const MemRegion* AllocBinding;
   public:
     CFRefLeakReport(CFRefBug& D, const CFRefCount &tf,
-                    ExplodedNode<GRState> *n, SymbolRef sym,
+                    ExplodedNode *n, SymbolRef sym,
                     GRExprEngine& Eng);
     
     PathDiagnosticPiece* getEndPath(BugReporterContext& BRC,
-                                    const ExplodedNode<GRState>* N);
+                                    const ExplodedNode* N);
     
     SourceLocation getLocation() const { return AllocSite; }
   };  
@@ -2273,8 +2273,8 @@ static inline bool contains(const llvm::SmallVectorImpl<ArgEffect>& V,
   return false;
 }
 
-PathDiagnosticPiece* CFRefReport::VisitNode(const ExplodedNode<GRState>* N,
-                                            const ExplodedNode<GRState>* PrevN,
+PathDiagnosticPiece* CFRefReport::VisitNode(const ExplodedNode* N,
+                                            const ExplodedNode* PrevN,
                                             BugReporterContext& BRC) {
   
   if (!isa<PostStmt>(N->getLocation()))
@@ -2548,13 +2548,13 @@ namespace {
   };  
 }
 
-static std::pair<const ExplodedNode<GRState>*,const MemRegion*>
-GetAllocationSite(GRStateManager& StateMgr, const ExplodedNode<GRState>* N,
+static std::pair<const ExplodedNode*,const MemRegion*>
+GetAllocationSite(GRStateManager& StateMgr, const ExplodedNode* N,
                   SymbolRef Sym) {
   
   // Find both first node that referred to the tracked symbol and the
   // memory location that value was store to.
-  const ExplodedNode<GRState>* Last = N;
+  const ExplodedNode* Last = N;
   const MemRegion* FirstBinding = 0;  
   
   while (N) {
@@ -2577,7 +2577,7 @@ GetAllocationSite(GRStateManager& StateMgr, const ExplodedNode<GRState>* N,
 
 PathDiagnosticPiece*
 CFRefReport::getEndPath(BugReporterContext& BRC,
-                        const ExplodedNode<GRState>* EndN) {
+                        const ExplodedNode* EndN) {
   // Tell the BugReporterContext to report cases when the tracked symbol is
   // assigned to different variables, etc.
   BRC.addNotableSymbol(Sym);
@@ -2586,7 +2586,7 @@ CFRefReport::getEndPath(BugReporterContext& BRC,
 
 PathDiagnosticPiece*
 CFRefLeakReport::getEndPath(BugReporterContext& BRC,
-                            const ExplodedNode<GRState>* EndN){
+                            const ExplodedNode* EndN){
   
   // Tell the BugReporterContext to report cases when the tracked symbol is
   // assigned to different variables, etc.
@@ -2595,7 +2595,7 @@ CFRefLeakReport::getEndPath(BugReporterContext& BRC,
   // We are reporting a leak.  Walk up the graph to get to the first node where
   // the symbol appeared, and also get the first VarDecl that tracked object
   // is stored to.
-  const ExplodedNode<GRState>* AllocNode = 0;
+  const ExplodedNode* AllocNode = 0;
   const MemRegion* FirstBinding = 0;
   
   llvm::tie(AllocNode, FirstBinding) =
@@ -2611,7 +2611,7 @@ CFRefLeakReport::getEndPath(BugReporterContext& BRC,
   // Compute an actual location for the leak.  Sometimes a leak doesn't
   // occur at an actual statement (e.g., transition between blocks; end
   // of function) so we need to walk the graph and compute a real location.
-  const ExplodedNode<GRState>* LeakN = EndN;
+  const ExplodedNode* LeakN = EndN;
   PathDiagnosticLocation L;
   
   while (LeakN) {
@@ -2674,7 +2674,7 @@ CFRefLeakReport::getEndPath(BugReporterContext& BRC,
 }
 
 CFRefLeakReport::CFRefLeakReport(CFRefBug& D, const CFRefCount &tf,
-                                 ExplodedNode<GRState> *n,
+                                 ExplodedNode *n,
                                  SymbolRef sym, GRExprEngine& Eng)
 : CFRefReport(D, tf, n, sym)
 {
@@ -2687,7 +2687,7 @@ CFRefLeakReport::CFRefLeakReport(CFRefBug& D, const CFRefCount &tf,
   // Note that this is *not* the trimmed graph; we are guaranteed, however,
   // that all ancestor nodes that represent the allocation site have the
   // same SourceLocation.
-  const ExplodedNode<GRState>* AllocNode = 0;
+  const ExplodedNode* AllocNode = 0;
   
   llvm::tie(AllocNode, AllocBinding) =  // Set AllocBinding.
     GetAllocationSite(Eng.getStateManager(), getEndNode(), getSymbol());
@@ -2741,14 +2741,14 @@ static QualType GetReturnType(const Expr* RetE, ASTContext& Ctx) {
   return RetTy;
 }
 
-void CFRefCount::EvalSummary(ExplodedNodeSet<GRState>& Dst,
+void CFRefCount::EvalSummary(ExplodedNodeSet& Dst,
                              GRExprEngine& Eng,
                              GRStmtNodeBuilder<GRState>& Builder,
                              Expr* Ex,
                              Expr* Receiver,
                              const RetainSummary& Summ,
                              ExprIterator arg_beg, ExprIterator arg_end,
-                             ExplodedNode<GRState>* Pred) {
+                             ExplodedNode* Pred) {
   
   // Get the state.
   const GRState *state = Builder.GetState(Pred);
@@ -2962,11 +2962,11 @@ void CFRefCount::EvalSummary(ExplodedNodeSet<GRState>& Dst,
 }
 
 
-void CFRefCount::EvalCall(ExplodedNodeSet<GRState>& Dst,
+void CFRefCount::EvalCall(ExplodedNodeSet& Dst,
                           GRExprEngine& Eng,
                           GRStmtNodeBuilder<GRState>& Builder,
                           CallExpr* CE, SVal L,
-                          ExplodedNode<GRState>* Pred) {
+                          ExplodedNode* Pred) {
   const FunctionDecl* FD = L.getAsFunctionDecl();
   RetainSummary* Summ = !FD ? Summaries.getDefaultSummary() 
                         : Summaries.getSummary(const_cast<FunctionDecl*>(FD));
@@ -2976,11 +2976,11 @@ void CFRefCount::EvalCall(ExplodedNodeSet<GRState>& Dst,
               CE->arg_begin(), CE->arg_end(), Pred);
 }
 
-void CFRefCount::EvalObjCMessageExpr(ExplodedNodeSet<GRState>& Dst,
+void CFRefCount::EvalObjCMessageExpr(ExplodedNodeSet& Dst,
                                      GRExprEngine& Eng,
                                      GRStmtNodeBuilder<GRState>& Builder,
                                      ObjCMessageExpr* ME,
-                                     ExplodedNode<GRState>* Pred) {  
+                                     ExplodedNode* Pred) {  
   RetainSummary* Summ = 0;
   
   if (Expr* Receiver = ME->getReceiver()) {
@@ -3096,11 +3096,11 @@ void CFRefCount::EvalBind(GRStmtNodeBuilderRef& B, SVal location, SVal val) {
 
  // Return statements.
 
-void CFRefCount::EvalReturn(ExplodedNodeSet<GRState>& Dst,
+void CFRefCount::EvalReturn(ExplodedNodeSet& Dst,
                             GRExprEngine& Eng,
                             GRStmtNodeBuilder<GRState>& Builder,
                             ReturnStmt* S,
-                            ExplodedNode<GRState>* Pred) {
+                            ExplodedNode* Pred) {
   
   Expr* RetE = S->getRetValue();
   if (!RetE)
@@ -3202,7 +3202,7 @@ void CFRefCount::EvalReturn(ExplodedNodeSet<GRState>& Dst,
         // Generate an error node.
         static int ReturnOwnLeakTag = 0;
         state = state->set<RefBindings>(Sym, X);
-        ExplodedNode<GRState> *N =
+        ExplodedNode *N =
           Builder.generateNode(PostStmt(S, &ReturnOwnLeakTag), state, Pred);
         if (N) {
           CFRefReport *report =
@@ -3223,7 +3223,7 @@ void CFRefCount::EvalReturn(ExplodedNodeSet<GRState>& Dst,
         
         static int ReturnNotOwnedForOwnedTag = 0;
         state = state->set<RefBindings>(Sym, X ^ RefVal::ErrorReturnedNotOwned);
-        if (ExplodedNode<GRState> *N =
+        if (ExplodedNode *N =
               Builder.generateNode(PostStmt(S, &ReturnNotOwnedForOwnedTag),
                                    state, Pred)) {
             CFRefReport *report =
@@ -3403,9 +3403,9 @@ const GRState * CFRefCount::Update(const GRState * state, SymbolRef sym,
 // Handle dead symbols and end-of-path.
 //===----------------------------------------------------------------------===//
 
-std::pair<ExplodedNode<GRState>*, const GRState *>
+std::pair<ExplodedNode*, const GRState *>
 CFRefCount::HandleAutoreleaseCounts(const GRState * state, GenericNodeBuilder Bd,
-                                    ExplodedNode<GRState>* Pred,
+                                    ExplodedNode* Pred,
                                     GRExprEngine &Eng,
                                     SymbolRef Sym, RefVal V, bool &stop) {
  
@@ -3437,7 +3437,7 @@ CFRefCount::HandleAutoreleaseCounts(const GRState * state, GenericNodeBuilder Bd
       V.setAutoreleaseCount(0);
     }
     state = state->set<RefBindings>(Sym, V);
-    ExplodedNode<GRState> *N = Bd.MakeNode(state, Pred);
+    ExplodedNode *N = Bd.MakeNode(state, Pred);
     stop = (N == 0);
     return std::make_pair(N, state);
   }    
@@ -3448,7 +3448,7 @@ CFRefCount::HandleAutoreleaseCounts(const GRState * state, GenericNodeBuilder Bd
   V = V ^ RefVal::ErrorOverAutorelease;
   state = state->set<RefBindings>(Sym, V);
 
-  if (ExplodedNode<GRState> *N = Bd.MakeNode(state, Pred)) {
+  if (ExplodedNode *N = Bd.MakeNode(state, Pred)) {
     N->markAsSink();
     
     std::string sbuf;
@@ -3469,7 +3469,7 @@ CFRefCount::HandleAutoreleaseCounts(const GRState * state, GenericNodeBuilder Bd
     BR->EmitReport(report);
   }
   
-  return std::make_pair((ExplodedNode<GRState>*)0, state);
+  return std::make_pair((ExplodedNode*)0, state);
 }
 
 const GRState *
@@ -3486,18 +3486,18 @@ CFRefCount::HandleSymbolDeath(const GRState * state, SymbolRef sid, RefVal V,
   return state->set<RefBindings>(sid, V ^ RefVal::ErrorLeak);
 }
 
-ExplodedNode<GRState>*
+ExplodedNode*
 CFRefCount::ProcessLeaks(const GRState * state,
                          llvm::SmallVectorImpl<SymbolRef> &Leaked,
                          GenericNodeBuilder &Builder,
                          GRExprEngine& Eng,
-                         ExplodedNode<GRState> *Pred) {
+                         ExplodedNode *Pred) {
   
   if (Leaked.empty())
     return Pred;
   
   // Generate an intermediate node representing the leak point.
-  ExplodedNode<GRState> *N = Builder.MakeNode(state, Pred);
+  ExplodedNode *N = Builder.MakeNode(state, Pred);
   
   if (N) {
     for (llvm::SmallVectorImpl<SymbolRef>::iterator
@@ -3520,7 +3520,7 @@ void CFRefCount::EvalEndPath(GRExprEngine& Eng,
   const GRState *state = Builder.getState();
   GenericNodeBuilder Bd(Builder);
   RefBindings B = state->get<RefBindings>();  
-  ExplodedNode<GRState> *Pred = 0;
+  ExplodedNode *Pred = 0;
 
   for (RefBindings::iterator I = B.begin(), E = B.end(); I != E; ++I) {
     bool stop = false;
@@ -3541,10 +3541,10 @@ void CFRefCount::EvalEndPath(GRExprEngine& Eng,
   ProcessLeaks(state, Leaked, Bd, Eng, Pred);
 }
 
-void CFRefCount::EvalDeadSymbols(ExplodedNodeSet<GRState>& Dst,
+void CFRefCount::EvalDeadSymbols(ExplodedNodeSet& Dst,
                                  GRExprEngine& Eng,
                                  GRStmtNodeBuilder<GRState>& Builder,
-                                 ExplodedNode<GRState>* Pred,
+                                 ExplodedNode* Pred,
                                  Stmt* S,
                                  const GRState* state,
                                  SymbolReaper& SymReaper) {
@@ -3596,10 +3596,10 @@ void CFRefCount::EvalDeadSymbols(ExplodedNodeSet<GRState>& Dst,
   Builder.MakeNode(Dst, S, Pred, state);
 }
 
-void CFRefCount::ProcessNonLeakError(ExplodedNodeSet<GRState>& Dst,
+void CFRefCount::ProcessNonLeakError(ExplodedNodeSet& Dst,
                                      GRStmtNodeBuilder<GRState>& Builder,
-                                     Expr* NodeExpr, Expr* ErrorExpr,                        
-                                     ExplodedNode<GRState>* Pred,
+                                     Expr* NodeExpr, Expr* ErrorExpr,
+                                     ExplodedNode* Pred,
                                      const GRState* St,
                                      RefVal::Kind hasErr, SymbolRef Sym) {
   Builder.BuildSinks = true;

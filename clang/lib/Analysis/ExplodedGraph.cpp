@@ -13,6 +13,7 @@
 //===----------------------------------------------------------------------===//
 
 #include "clang/Analysis/PathSensitive/ExplodedGraph.h"
+#include "clang/Analysis/PathSensitive/GRState.h"
 #include "clang/AST/Stmt.h"
 #include "llvm/ADT/DenseSet.h"
 #include "llvm/ADT/DenseMap.h"
@@ -26,27 +27,34 @@ using namespace clang;
 //===----------------------------------------------------------------------===//
 
 // An out of line virtual method to provide a home for the class vtable.
-ExplodedNodeImpl::Auditor::~Auditor() {}
+ExplodedNode::Auditor::~Auditor() {}
 
 #ifndef NDEBUG
-static ExplodedNodeImpl::Auditor* NodeAuditor = 0;
+static ExplodedNode::Auditor* NodeAuditor = 0;
 #endif
 
-void ExplodedNodeImpl::SetAuditor(ExplodedNodeImpl::Auditor* A) {
+void ExplodedNode::SetAuditor(ExplodedNode::Auditor* A) {
 #ifndef NDEBUG
   NodeAuditor = A;
 #endif
 }
 
 //===----------------------------------------------------------------------===//
-// ExplodedNodeImpl.
+// ExplodedNode.
 //===----------------------------------------------------------------------===//
 
-static inline std::vector<ExplodedNodeImpl*>& getVector(void* P) {
-  return *reinterpret_cast<std::vector<ExplodedNodeImpl*>*>(P);
+static inline std::vector<ExplodedNode*>& getVector(void* P) {
+  return *reinterpret_cast<std::vector<ExplodedNode*>*>(P);
 }
 
-void ExplodedNodeImpl::addPredecessor(ExplodedNodeImpl* V) {
+void ExplodedNode::Profile(llvm::FoldingSetNodeID& ID,
+                           const ProgramPoint& Loc,
+                           const GRState* state) {
+  ID.Add(Loc);
+  state->Profile(ID);
+}
+
+void ExplodedNode::addPredecessor(ExplodedNode* V) {
   assert (!V->isSink());
   Preds.addNode(V);
   V->Succs.addNode(this);
@@ -55,14 +63,14 @@ void ExplodedNodeImpl::addPredecessor(ExplodedNodeImpl* V) {
 #endif
 }
 
-void ExplodedNodeImpl::NodeGroup::addNode(ExplodedNodeImpl* N) {
+void ExplodedNode::NodeGroup::addNode(ExplodedNode* N) {
   
   assert ((reinterpret_cast<uintptr_t>(N) & Mask) == 0x0);
   assert (!getFlag());
   
   if (getKind() == Size1) {
-    if (ExplodedNodeImpl* NOld = getNode()) {
-      std::vector<ExplodedNodeImpl*>* V = new std::vector<ExplodedNodeImpl*>();
+    if (ExplodedNode* NOld = getNode()) {
+      std::vector<ExplodedNode*>* V = new std::vector<ExplodedNode*>();
       assert ((reinterpret_cast<uintptr_t>(V) & Mask) == 0x0);
       V->push_back(NOld);
       V->push_back(N);
@@ -82,7 +90,7 @@ void ExplodedNodeImpl::NodeGroup::addNode(ExplodedNodeImpl* N) {
 }
 
 
-unsigned ExplodedNodeImpl::NodeGroup::size() const {
+unsigned ExplodedNode::NodeGroup::size() const {
   if (getFlag())
     return 0;
   
@@ -92,50 +100,50 @@ unsigned ExplodedNodeImpl::NodeGroup::size() const {
     return getVector(getPtr()).size();
 }
 
-ExplodedNodeImpl** ExplodedNodeImpl::NodeGroup::begin() const {
+ExplodedNode** ExplodedNode::NodeGroup::begin() const {
   if (getFlag())
     return NULL;
   
   if (getKind() == Size1)
-    return (ExplodedNodeImpl**) (getPtr() ? &P : NULL);
+    return (ExplodedNode**) (getPtr() ? &P : NULL);
   else
-    return const_cast<ExplodedNodeImpl**>(&*(getVector(getPtr()).begin()));
+    return const_cast<ExplodedNode**>(&*(getVector(getPtr()).begin()));
 }
 
-ExplodedNodeImpl** ExplodedNodeImpl::NodeGroup::end() const {
+ExplodedNode** ExplodedNode::NodeGroup::end() const {
   if (getFlag())
     return NULL;
   
   if (getKind() == Size1)
-    return (ExplodedNodeImpl**) (getPtr() ? &P+1 : NULL);
+    return (ExplodedNode**) (getPtr() ? &P+1 : NULL);
   else {
     // Dereferencing end() is undefined behaviour. The vector is not empty, so
     // we can dereference the last elem and then add 1 to the result.
-    return const_cast<ExplodedNodeImpl**>(&getVector(getPtr()).back()) + 1;
+    return const_cast<ExplodedNode**>(&getVector(getPtr()).back()) + 1;
   }
 }
 
-ExplodedNodeImpl::NodeGroup::~NodeGroup() {
+ExplodedNode::NodeGroup::~NodeGroup() {
   if (getKind() == SizeOther) delete &getVector(getPtr());
 }
 
 ExplodedGraphImpl*
-ExplodedGraphImpl::Trim(const ExplodedNodeImpl* const* BeginSources,
-                        const ExplodedNodeImpl* const* EndSources,
+ExplodedGraphImpl::Trim(const ExplodedNode* const* BeginSources,
+                        const ExplodedNode* const* EndSources,
                         InterExplodedGraphMapImpl* M,
                         llvm::DenseMap<const void*, const void*> *InverseMap) 
 const {
   
-  typedef llvm::DenseSet<const ExplodedNodeImpl*> Pass1Ty;
+  typedef llvm::DenseSet<const ExplodedNode*> Pass1Ty;
   Pass1Ty Pass1;
   
-  typedef llvm::DenseMap<const ExplodedNodeImpl*, ExplodedNodeImpl*> Pass2Ty;
+  typedef llvm::DenseMap<const ExplodedNode*, ExplodedNode*> Pass2Ty;
   Pass2Ty& Pass2 = M->M;
   
-  llvm::SmallVector<const ExplodedNodeImpl*, 10> WL1, WL2;
+  llvm::SmallVector<const ExplodedNode*, 10> WL1, WL2;
 
   // ===- Pass 1 (reverse DFS) -===
-  for (const ExplodedNodeImpl* const* I = BeginSources; I != EndSources; ++I) {
+  for (const ExplodedNode* const* I = BeginSources; I != EndSources; ++I) {
     assert(*I);
     WL1.push_back(*I);
   }
@@ -143,7 +151,7 @@ const {
   // Process the first worklist until it is empty.  Because it is a std::list
   // it acts like a FIFO queue.
   while (!WL1.empty()) {
-    const ExplodedNodeImpl *N = WL1.back();
+    const ExplodedNode *N = WL1.back();
     WL1.pop_back();
     
     // Have we already visited this node?  If so, continue to the next one.
@@ -160,7 +168,7 @@ const {
     }
       
     // Visit our predecessors and enqueue them.
-    for (ExplodedNodeImpl** I=N->Preds.begin(), **E=N->Preds.end(); I!=E; ++I)
+    for (ExplodedNode** I=N->Preds.begin(), **E=N->Preds.end(); I!=E; ++I)
       WL1.push_back(*I);
   }
   
@@ -173,7 +181,7 @@ const {
   
   // ===- Pass 2 (forward DFS to construct the new graph) -===  
   while (!WL2.empty()) {
-    const ExplodedNodeImpl* N = WL2.back();
+    const ExplodedNode* N = WL2.back();
     WL2.pop_back();
     
     // Skip this node if we have already processed it.
@@ -182,7 +190,7 @@ const {
     
     // Create the corresponding node in the new graph and record the mapping
     // from the old node to the new node.
-    ExplodedNodeImpl* NewN = G->getNodeImpl(N->getLocation(), N->State, NULL);
+    ExplodedNode* NewN = G->getNodeImpl(N->getLocation(), N->State, NULL);
     Pass2[N] = NewN;
     
     // Also record the reverse mapping from the new node to the old node.
@@ -197,7 +205,7 @@ const {
 
     // Walk through the predecessors of 'N' and hook up their corresponding
     // nodes in the new graph (if any) to the freshly created node.
-    for (ExplodedNodeImpl **I=N->Preds.begin(), **E=N->Preds.end(); I!=E; ++I) {
+    for (ExplodedNode **I=N->Preds.begin(), **E=N->Preds.end(); I!=E; ++I) {
       Pass2Ty::iterator PI = Pass2.find(*I);
       if (PI == Pass2.end())
         continue;
@@ -209,7 +217,7 @@ const {
     // been created, we should hook them up as successors.  Otherwise, enqueue
     // the new nodes from the original graph that should have nodes created
     // in the new graph.
-    for (ExplodedNodeImpl **I=N->Succs.begin(), **E=N->Succs.end(); I!=E; ++I) {
+    for (ExplodedNode **I=N->Succs.begin(), **E=N->Succs.end(); I!=E; ++I) {
       Pass2Ty::iterator PI = Pass2.find(*I);      
       if (PI != Pass2.end()) {
         PI->second->addPredecessor(NewN);
@@ -229,9 +237,9 @@ const {
   return G;
 }
 
-ExplodedNodeImpl*
-InterExplodedGraphMapImpl::getMappedImplNode(const ExplodedNodeImpl* N) const {
-  llvm::DenseMap<const ExplodedNodeImpl*, ExplodedNodeImpl*>::iterator I =
+ExplodedNode*
+InterExplodedGraphMapImpl::getMappedImplNode(const ExplodedNode* N) const {
+  llvm::DenseMap<const ExplodedNode*, ExplodedNode*>::iterator I =
     M.find(N);
 
   return I == M.end() ? 0 : I->second;

@@ -38,17 +38,17 @@ public:
 
   // Calls.
   
-  virtual void EvalCall(ExplodedNodeSet<GRState>& Dst,
+  virtual void EvalCall(ExplodedNodeSet& Dst,
                         GRExprEngine& Engine,
                         GRStmtNodeBuilder<GRState>& Builder,
                         CallExpr* CE, SVal L,
-                        ExplodedNode<GRState>* Pred) {}
+                        ExplodedNode* Pred) {}
   
-  virtual void EvalObjCMessageExpr(ExplodedNodeSet<GRState>& Dst,
+  virtual void EvalObjCMessageExpr(ExplodedNodeSet& Dst,
                                    GRExprEngine& Engine,
                                    GRStmtNodeBuilder<GRState>& Builder,
                                    ObjCMessageExpr* ME,
-                                   ExplodedNode<GRState>* Pred) {}
+                                   ExplodedNode* Pred) {}
   
   // Stores.
   
@@ -60,19 +60,19 @@ public:
                            GREndPathNodeBuilder<GRState>& Builder) {}
   
   
-  virtual void EvalDeadSymbols(ExplodedNodeSet<GRState>& Dst,
+  virtual void EvalDeadSymbols(ExplodedNodeSet& Dst,
                                GRExprEngine& Engine,
                                GRStmtNodeBuilder<GRState>& Builder,
-                               ExplodedNode<GRState>* Pred,
+                               ExplodedNode* Pred,
                                Stmt* S, const GRState* state,
                                SymbolReaper& SymReaper) {}
   
   // Return statements.  
-  virtual void EvalReturn(ExplodedNodeSet<GRState>& Dst,
+  virtual void EvalReturn(ExplodedNodeSet& Dst,
                           GRExprEngine& Engine,
                           GRStmtNodeBuilder<GRState>& Builder,
                           ReturnStmt* S,
-                          ExplodedNode<GRState>* Pred) {}
+                          ExplodedNode* Pred) {}
 
   // Assumptions.  
   virtual const GRState* EvalAssume(const GRState *state,

@@ -74,7 +74,7 @@ public:
   BasicObjCFoundationChecks(ASTContext& ctx, BugReporter& br) 
     : BT(0), BR(br), Ctx(ctx) {}
         
-  bool Audit(ExplodedNode<GRState>* N, GRStateManager&);
+  bool Audit(ExplodedNode* N, GRStateManager&);
   
 private:  
   void WarnNilArg(NodeTy* N, const ObjCMessageExpr* ME, unsigned Arg) {    
@@ -103,7 +103,7 @@ clang::CreateBasicObjCFoundationChecks(ASTContext& Ctx, BugReporter& BR) {
 
 
 
-bool BasicObjCFoundationChecks::Audit(ExplodedNode<GRState>* N,
+bool BasicObjCFoundationChecks::Audit(ExplodedNode* N,
                                       GRStateManager&) {
   
   const ObjCMessageExpr* ME =
@@ -254,10 +254,10 @@ public:
   
   ~AuditCFNumberCreate() {}
   
-  bool Audit(ExplodedNode<GRState>* N, GRStateManager&);
+  bool Audit(ExplodedNode* N, GRStateManager&);
   
 private:
-  void AddError(const TypedRegion* R, const Expr* Ex, ExplodedNode<GRState> *N,
+  void AddError(const TypedRegion* R, const Expr* Ex, ExplodedNode *N,
                 uint64_t SourceSize, uint64_t TargetSize, uint64_t NumberKind);  
 };
 } // end anonymous namespace
@@ -355,7 +355,7 @@ static const char* GetCFNumberTypeStr(uint64_t i) {
 }
 #endif
 
-bool AuditCFNumberCreate::Audit(ExplodedNode<GRState>* N,GRStateManager&){  
+bool AuditCFNumberCreate::Audit(ExplodedNode* N,GRStateManager&){  
   const CallExpr* CE =
     cast<CallExpr>(cast<PostStmt>(N->getLocation()).getStmt());
   const Expr* Callee = CE->getCallee();  
@@ -422,7 +422,7 @@ bool AuditCFNumberCreate::Audit(ExplodedNode<GRState>* N,GRStateManager&){
 }
 
 void AuditCFNumberCreate::AddError(const TypedRegion* R, const Expr* Ex,
-                                   ExplodedNode<GRState> *N,
+                                   ExplodedNode *N,
                                    uint64_t SourceSize, uint64_t TargetSize,
                                    uint64_t NumberKind) {
   
@@ -478,12 +478,12 @@ public:
   
   ~AuditCFRetainRelease() {}
   
-  bool Audit(ExplodedNode<GRState>* N, GRStateManager&);
+  bool Audit(ExplodedNode* N, GRStateManager&);
 };
 } // end anonymous namespace
 
 
-bool AuditCFRetainRelease::Audit(ExplodedNode<GRState>* N, GRStateManager&) {
+bool AuditCFRetainRelease::Audit(ExplodedNode* N, GRStateManager&) {
   const CallExpr* CE = cast<CallExpr>(cast<PostStmt>(N->getLocation()).getStmt());
   
   // If the CallExpr doesn't have exactly 1 argument just give up checking.

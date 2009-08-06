@@ -48,8 +48,8 @@ class ParentMap;
 class BugReporterVisitor {
 public:
   virtual ~BugReporterVisitor();
-  virtual PathDiagnosticPiece* VisitNode(const ExplodedNode<GRState>* N,
-                                         const ExplodedNode<GRState>* PrevN,
+  virtual PathDiagnosticPiece* VisitNode(const ExplodedNode* N,
+                                         const ExplodedNode* PrevN,
                                          BugReporterContext& BRC) = 0;
   
   virtual bool isOwnedByReporterContext() { return true; }
@@ -61,7 +61,7 @@ protected:
   BugType& BT;
   std::string ShortDescription;
   std::string Description;
-  const ExplodedNode<GRState> *EndNode;
+  const ExplodedNode *EndNode;
   SourceRange R;
   
 protected:
@@ -76,15 +76,15 @@ public:
   class NodeResolver {
   public:
     virtual ~NodeResolver() {}
-    virtual const ExplodedNode<GRState>*
-            getOriginalNode(const ExplodedNode<GRState>* N) = 0;
+    virtual const ExplodedNode*
+            getOriginalNode(const ExplodedNode* N) = 0;
   };
   
-  BugReport(BugType& bt, const char* desc, const ExplodedNode<GRState> *n)
+  BugReport(BugType& bt, const char* desc, const ExplodedNode *n)
     : BT(bt), Description(desc), EndNode(n) {}
   
   BugReport(BugType& bt, const char* shortDesc, const char* desc,
-            const ExplodedNode<GRState> *n)
+            const ExplodedNode *n)
   : BT(bt), ShortDescription(shortDesc), Description(desc), EndNode(n) {}
 
   virtual ~BugReport();
@@ -95,7 +95,7 @@ public:
   BugType& getBugType() { return BT; }
   
   // FIXME: Perhaps this should be moved into a subclass?
-  const ExplodedNode<GRState>* getEndNode() const { return EndNode; }
+  const ExplodedNode* getEndNode() const { return EndNode; }
   
   // FIXME: Do we need this?  Maybe getLocation() should return a ProgramPoint
   // object.
@@ -116,7 +116,7 @@ public:
   
   // FIXME: Perhaps move this into a subclass.
   virtual PathDiagnosticPiece* getEndPath(BugReporterContext& BRC,
-                                          const ExplodedNode<GRState>* N);
+                                          const ExplodedNode* N);
   
   /// getLocation - Return the "definitive" location of the reported bug.
   ///  While a bug can span an entire path, usually there is a specific
@@ -128,12 +128,12 @@ public:
   virtual void getRanges(BugReporter& BR,const SourceRange*& beg,
                          const SourceRange*& end);
 
-  virtual PathDiagnosticPiece* VisitNode(const ExplodedNode<GRState>* N,
-                                         const ExplodedNode<GRState>* PrevN,
+  virtual PathDiagnosticPiece* VisitNode(const ExplodedNode* N,
+                                         const ExplodedNode* PrevN,
                                          BugReporterContext& BR);
   
   virtual void registerInitialVisitors(BugReporterContext& BRC,
-                                       const ExplodedNode<GRState>* N) {}
+                                       const ExplodedNode* N) {}
 };
 
 //===----------------------------------------------------------------------===//
@@ -217,11 +217,11 @@ public:
 class RangedBugReport : public BugReport {
   std::vector<SourceRange> Ranges;
 public:
-  RangedBugReport(BugType& D, const char* description, ExplodedNode<GRState> *n)
+  RangedBugReport(BugType& D, const char* description, ExplodedNode *n)
     : BugReport(D, description, n) {}
   
   RangedBugReport(BugType& D, const char *shortDescription,
-                  const char *description, ExplodedNode<GRState> *n)
+                  const char *description, ExplodedNode *n)
   : BugReport(D, shortDescription, description, n) {}
   
   ~RangedBugReport();
@@ -465,14 +465,14 @@ public:
   
 namespace bugreporter {
   
-const Stmt *GetDerefExpr(const ExplodedNode<GRState> *N);
-const Stmt *GetReceiverExpr(const ExplodedNode<GRState> *N);
-const Stmt *GetDenomExpr(const ExplodedNode<GRState> *N);
-const Stmt *GetCalleeExpr(const ExplodedNode<GRState> *N);
-const Stmt *GetRetValExpr(const ExplodedNode<GRState> *N);
+const Stmt *GetDerefExpr(const ExplodedNode *N);
+const Stmt *GetReceiverExpr(const ExplodedNode *N);
+const Stmt *GetDenomExpr(const ExplodedNode *N);
+const Stmt *GetCalleeExpr(const ExplodedNode *N);
+const Stmt *GetRetValExpr(const ExplodedNode *N);
 
 void registerTrackNullOrUndefValue(BugReporterContext& BRC, const Stmt *S,
-                                   const ExplodedNode<GRState>* N);
+                                   const ExplodedNode* N);
 
 } // end namespace clang::bugreporter
   

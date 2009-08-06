@@ -49,17 +49,17 @@ static inline const Stmt* GetStmt(ProgramPoint P) {
   return 0;
 }
 
-static inline const ExplodedNode<GRState>*
-GetPredecessorNode(const ExplodedNode<GRState>* N) {
+static inline const ExplodedNode*
+GetPredecessorNode(const ExplodedNode* N) {
   return N->pred_empty() ? NULL : *(N->pred_begin());
 }
 
-static inline const ExplodedNode<GRState>*
-GetSuccessorNode(const ExplodedNode<GRState>* N) {
+static inline const ExplodedNode*
+GetSuccessorNode(const ExplodedNode* N) {
   return N->succ_empty() ? NULL : *(N->succ_begin());
 }
 
-static const Stmt* GetPreviousStmt(const ExplodedNode<GRState>* N) {
+static const Stmt* GetPreviousStmt(const ExplodedNode* N) {
   for (N = GetPredecessorNode(N); N; N = GetPredecessorNode(N))
     if (const Stmt *S = GetStmt(N->getLocation()))
       return S;
@@ -67,7 +67,7 @@ static const Stmt* GetPreviousStmt(const ExplodedNode<GRState>* N) {
   return 0;
 }
 
-static const Stmt* GetNextStmt(const ExplodedNode<GRState>* N) {
+static const Stmt* GetNextStmt(const ExplodedNode* N) {
   for (N = GetSuccessorNode(N); N; N = GetSuccessorNode(N))
     if (const Stmt *S = GetStmt(N->getLocation())) {
       // Check if the statement is '?' or '&&'/'||'.  These are "merges",
@@ -96,7 +96,7 @@ static const Stmt* GetNextStmt(const ExplodedNode<GRState>* N) {
 }
 
 static inline const Stmt*
-GetCurrentOrPreviousStmt(const ExplodedNode<GRState>* N) {  
+GetCurrentOrPreviousStmt(const ExplodedNode* N) {  
   if (const Stmt *S = GetStmt(N->getLocation()))
     return S;
   
@@ -104,7 +104,7 @@ GetCurrentOrPreviousStmt(const ExplodedNode<GRState>* N) {
 }
         
 static inline const Stmt*
-GetCurrentOrNextStmt(const ExplodedNode<GRState>* N) {  
+GetCurrentOrNextStmt(const ExplodedNode* N) {  
   if (const Stmt *S = GetStmt(N->getLocation()))
     return S;
           
@@ -115,8 +115,8 @@ GetCurrentOrNextStmt(const ExplodedNode<GRState>* N) {
 // PathDiagnosticBuilder and its associated routines and helper objects.
 //===----------------------------------------------------------------------===//
 
-typedef llvm::DenseMap<const ExplodedNode<GRState>*,
-const ExplodedNode<GRState>*> NodeBackMap;
+typedef llvm::DenseMap<const ExplodedNode*,
+const ExplodedNode*> NodeBackMap;
 
 namespace {
 class VISIBILITY_HIDDEN NodeMapClosure : public BugReport::NodeResolver {
@@ -125,7 +125,7 @@ public:
   NodeMapClosure(NodeBackMap *m) : M(*m) {}
   ~NodeMapClosure() {}
   
-  const ExplodedNode<GRState>* getOriginalNode(const ExplodedNode<GRState>* N) {
+  const ExplodedNode* getOriginalNode(const ExplodedNode* N) {
     NodeBackMap::iterator I = M.find(N);
     return I == M.end() ? 0 : I->second;
   }
@@ -146,10 +146,10 @@ public:
     addVisitor(R);
   }
   
-  PathDiagnosticLocation ExecutionContinues(const ExplodedNode<GRState>* N);
+  PathDiagnosticLocation ExecutionContinues(const ExplodedNode* N);
   
   PathDiagnosticLocation ExecutionContinues(llvm::raw_string_ostream& os,
-                                            const ExplodedNode<GRState>* N);
+                                            const ExplodedNode* N);
   
   ParentMap& getParentMap() {
     if (PM.get() == 0)
@@ -185,7 +185,7 @@ public:
 } // end anonymous namespace
 
 PathDiagnosticLocation
-PathDiagnosticBuilder::ExecutionContinues(const ExplodedNode<GRState>* N) {
+PathDiagnosticBuilder::ExecutionContinues(const ExplodedNode* N) {
   if (const Stmt *S = GetNextStmt(N))
     return PathDiagnosticLocation(S, getSourceManager());
 
@@ -194,7 +194,7 @@ PathDiagnosticBuilder::ExecutionContinues(const ExplodedNode<GRState>* N) {
   
 PathDiagnosticLocation
 PathDiagnosticBuilder::ExecutionContinues(llvm::raw_string_ostream& os,
-                                          const ExplodedNode<GRState>* N) {
+                                          const ExplodedNode* N) {
 
   // Slow, but probably doesn't matter.
   if (os.str().empty())
@@ -327,7 +327,7 @@ PathDiagnosticBuilder::getEnclosingStmtLocation(const Stmt *S) {
 //===----------------------------------------------------------------------===//
 
 static const VarDecl*
-GetMostRecentVarDeclBinding(const ExplodedNode<GRState>* N,
+GetMostRecentVarDeclBinding(const ExplodedNode* N,
                             GRStateManager& VMgr, SVal X) {
   
   for ( ; N ; N = N->pred_empty() ? 0 : *N->pred_begin()) {
@@ -366,14 +366,14 @@ class VISIBILITY_HIDDEN NotableSymbolHandler
   const GRState* PrevSt;
   const Stmt* S;
   GRStateManager& VMgr;
-  const ExplodedNode<GRState>* Pred;
+  const ExplodedNode* Pred;
   PathDiagnostic& PD; 
   BugReporter& BR;
   
 public:
   
   NotableSymbolHandler(SymbolRef sym, const GRState* prevst, const Stmt* s,
-                       GRStateManager& vmgr, const ExplodedNode<GRState>* pred,
+                       GRStateManager& vmgr, const ExplodedNode* pred,
                        PathDiagnostic& pd, BugReporter& br)
   : Sym(sym), PrevSt(prevst), S(s), VMgr(vmgr), Pred(pred), PD(pd), BR(br) {}
   
@@ -440,12 +440,12 @@ public:
 };
 }
 
-static void HandleNotableSymbol(const ExplodedNode<GRState>* N,
+static void HandleNotableSymbol(const ExplodedNode* N,
                                 const Stmt* S,
                                 SymbolRef Sym, BugReporter& BR,
                                 PathDiagnostic& PD) {
   
-  const ExplodedNode<GRState>* Pred = N->pred_empty() ? 0 : *N->pred_begin();
+  const ExplodedNode* Pred = N->pred_empty() ? 0 : *N->pred_begin();
   const GRState* PrevSt = Pred ? Pred->getState() : 0;
   
   if (!PrevSt)
@@ -463,13 +463,13 @@ class VISIBILITY_HIDDEN ScanNotableSymbols
 : public StoreManager::BindingsHandler {
   
   llvm::SmallSet<SymbolRef, 10> AlreadyProcessed;
-  const ExplodedNode<GRState>* N;
+  const ExplodedNode* N;
   const Stmt* S;
   GRBugReporter& BR;
   PathDiagnostic& PD;
   
 public:
-  ScanNotableSymbols(const ExplodedNode<GRState>* n, const Stmt* s,
+  ScanNotableSymbols(const ExplodedNode* n, const Stmt* s,
                      GRBugReporter& br, PathDiagnostic& pd)
   : N(n), S(s), BR(br), PD(pd) {}
   
@@ -503,10 +503,10 @@ static void CompactPathDiagnostic(PathDiagnostic &PD, const SourceManager& SM);
 
 static void GenerateMinimalPathDiagnostic(PathDiagnostic& PD,
                                           PathDiagnosticBuilder &PDB,
-                                          const ExplodedNode<GRState> *N) {
+                                          const ExplodedNode *N) {
 
   SourceManager& SMgr = PDB.getSourceManager();
-  const ExplodedNode<GRState>* NextNode = N->pred_empty() 
+  const ExplodedNode* NextNode = N->pred_empty() 
                                         ? NULL : *(N->pred_begin());
   while (NextNode) {
     N = NextNode;    
@@ -1113,12 +1113,12 @@ void EdgeBuilder::addContext(const Stmt *S) {
 
 static void GenerateExtensivePathDiagnostic(PathDiagnostic& PD,
                                             PathDiagnosticBuilder &PDB,
-                                            const ExplodedNode<GRState> *N) {
+                                            const ExplodedNode *N) {
   
   
   EdgeBuilder EB(PD, PDB);
 
-  const ExplodedNode<GRState>* NextNode = N->pred_empty() 
+  const ExplodedNode* NextNode = N->pred_empty() 
                                         ? NULL : *(N->pred_begin());
   while (NextNode) {
     N = NextNode;
@@ -1221,7 +1221,7 @@ const Stmt* BugReport::getStmt(BugReporter& BR) const {
 
 PathDiagnosticPiece*
 BugReport::getEndPath(BugReporterContext& BRC,
-                      const ExplodedNode<GRState>* EndPathNode) {
+                      const ExplodedNode* EndPathNode) {
   
   const Stmt* S = getStmt(BRC.getBugReporter());
   
@@ -1269,8 +1269,8 @@ SourceLocation BugReport::getLocation() const {
   return FullSourceLoc();
 }
 
-PathDiagnosticPiece* BugReport::VisitNode(const ExplodedNode<GRState>* N,
-                                          const ExplodedNode<GRState>* PrevN,
+PathDiagnosticPiece* BugReport::VisitNode(const ExplodedNode* N,
+                                          const ExplodedNode* PrevN,
                                           BugReporterContext &BRC) {
   return NULL;
 }
@@ -1333,17 +1333,17 @@ void BugReporter::FlushReports() {
 //===----------------------------------------------------------------------===//
 
 static std::pair<std::pair<ExplodedGraph<GRState>*, NodeBackMap*>,
-                 std::pair<ExplodedNode<GRState>*, unsigned> >
+                 std::pair<ExplodedNode*, unsigned> >
 MakeReportGraph(const ExplodedGraph<GRState>* G,
-                const ExplodedNode<GRState>** NStart,
-                const ExplodedNode<GRState>** NEnd) {
+                const ExplodedNode** NStart,
+                const ExplodedNode** NEnd) {
   
   // Create the trimmed graph.  It will contain the shortest paths from the
   // error nodes to the root.  In the new graph we should only have one 
   // error node unless there are two or more error nodes with the same minimum
   // path length.
   ExplodedGraph<GRState>* GTrim;
-  InterExplodedGraphMap<GRState>* NMap;
+  InterExplodedGraphMap* NMap;
 
   llvm::DenseMap<const void*, const void*> InverseMap;
   llvm::tie(GTrim, NMap) = G->Trim(NStart, NEnd, &InverseMap);
@@ -1351,18 +1351,18 @@ MakeReportGraph(const ExplodedGraph<GRState>* G,
   // Create owning pointers for GTrim and NMap just to ensure that they are
   // released when this function exists.
   llvm::OwningPtr<ExplodedGraph<GRState> > AutoReleaseGTrim(GTrim);
-  llvm::OwningPtr<InterExplodedGraphMap<GRState> > AutoReleaseNMap(NMap);
+  llvm::OwningPtr<InterExplodedGraphMap> AutoReleaseNMap(NMap);
   
   // Find the (first) error node in the trimmed graph.  We just need to consult
   // the node map (NMap) which maps from nodes in the original graph to nodes
   // in the new graph.
 
-  std::queue<const ExplodedNode<GRState>*> WS;
-  typedef llvm::DenseMap<const ExplodedNode<GRState>*,unsigned> IndexMapTy;
+  std::queue<const ExplodedNode*> WS;
+  typedef llvm::DenseMap<const ExplodedNode*,unsigned> IndexMapTy;
   IndexMapTy IndexMap;
 
-  for (const ExplodedNode<GRState>** I = NStart; I != NEnd; ++I)
-    if (const ExplodedNode<GRState> *N = NMap->getMappedNode(*I)) {
+  for (const ExplodedNode** I = NStart; I != NEnd; ++I)
+    if (const ExplodedNode *N = NMap->getMappedNode(*I)) {
       unsigned NodeIndex = (I - NStart) / sizeof(*I);
       WS.push(N);
       IndexMap[*I] = NodeIndex;
@@ -1382,10 +1382,10 @@ MakeReportGraph(const ExplodedGraph<GRState>* G,
   llvm::DenseMap<const void*,unsigned> Visited;
   
   unsigned cnt = 0;
-  const ExplodedNode<GRState>* Root = 0;
+  const ExplodedNode* Root = 0;
   
   while (!WS.empty()) {
-    const ExplodedNode<GRState>* Node = WS.front();
+    const ExplodedNode* Node = WS.front();
     WS.pop();
     
     if (Visited.find(Node) != Visited.end())
@@ -1398,7 +1398,7 @@ MakeReportGraph(const ExplodedGraph<GRState>* G,
       break;
     }
     
-    for (ExplodedNode<GRState>::const_pred_iterator I=Node->pred_begin(),
+    for (ExplodedNode::const_pred_iterator I=Node->pred_begin(),
          E=Node->pred_end(); I!=E; ++I)
       WS.push(*I);
   }
@@ -1407,24 +1407,24 @@ MakeReportGraph(const ExplodedGraph<GRState>* G,
   
   // Now walk from the root down the BFS path, always taking the successor
   // with the lowest number.
-  ExplodedNode<GRState> *Last = 0, *First = 0;  
+  ExplodedNode *Last = 0, *First = 0;  
   NodeBackMap *BM = new NodeBackMap();
   unsigned NodeIndex = 0;
   
-  for ( const ExplodedNode<GRState> *N = Root ;;) {
+  for ( const ExplodedNode *N = Root ;;) {
     // Lookup the number associated with the current node.
     llvm::DenseMap<const void*,unsigned>::iterator I = Visited.find(N);
     assert(I != Visited.end());
     
     // Create the equivalent node in the new graph with the same state
     // and location.
-    ExplodedNode<GRState>* NewN =
+    ExplodedNode* NewN =
       GNew->getNode(N->getLocation(), N->getState());
     
     // Store the mapping to the original node.
     llvm::DenseMap<const void*, const void*>::iterator IMitr=InverseMap.find(N);
     assert(IMitr != InverseMap.end() && "No mapping to original node.");
-    (*BM)[NewN] = (const ExplodedNode<GRState>*) IMitr->second;
+    (*BM)[NewN] = (const ExplodedNode*) IMitr->second;
     
     // Link up the new node with the previous node.
     if (Last)
@@ -1434,7 +1434,7 @@ MakeReportGraph(const ExplodedGraph<GRState>* G,
     
     // Are we at the final node?
     IndexMapTy::iterator IMI =
-      IndexMap.find((const ExplodedNode<GRState>*)(IMitr->second));
+      IndexMap.find((const ExplodedNode*)(IMitr->second));
     if (IMI != IndexMap.end()) {
       First = NewN;
       NodeIndex = IMI->second;
@@ -1443,8 +1443,8 @@ MakeReportGraph(const ExplodedGraph<GRState>* G,
     
     // Find the next successor node.  We choose the node that is marked
     // with the lowest DFS number.
-    ExplodedNode<GRState>::const_succ_iterator SI = N->succ_begin();
-    ExplodedNode<GRState>::const_succ_iterator SE = N->succ_end();
+    ExplodedNode::const_succ_iterator SI = N->succ_begin();
+    ExplodedNode::const_succ_iterator SE = N->succ_end();
     N = 0;
     
     for (unsigned MinVal = 0; SI != SE; ++SI) {
@@ -1564,10 +1564,10 @@ static void CompactPathDiagnostic(PathDiagnostic &PD, const SourceManager& SM) {
 void GRBugReporter::GeneratePathDiagnostic(PathDiagnostic& PD,
                                            BugReportEquivClass& EQ) {
  
-  std::vector<const ExplodedNode<GRState>*> Nodes;
+  std::vector<const ExplodedNode*> Nodes;
   
   for (BugReportEquivClass::iterator I=EQ.begin(), E=EQ.end(); I!=E; ++I) {
-    const ExplodedNode<GRState>* N = I->getEndNode();
+    const ExplodedNode* N = I->getEndNode();
     if (N) Nodes.push_back(N);
   }
   
@@ -1577,7 +1577,7 @@ void GRBugReporter::GeneratePathDiagnostic(PathDiagnostic& PD,
   // Construct a new graph that contains only a single path from the error
   // node to a root.  
   const std::pair<std::pair<ExplodedGraph<GRState>*, NodeBackMap*>,
-  std::pair<ExplodedNode<GRState>*, unsigned> >&
+  std::pair<ExplodedNode*, unsigned> >&
   GPair = MakeReportGraph(&getGraph(), &Nodes[0], &Nodes[0] + Nodes.size());
   
   // Find the BugReport with the original location.
@@ -1590,7 +1590,7 @@ void GRBugReporter::GeneratePathDiagnostic(PathDiagnostic& PD,
   
   llvm::OwningPtr<ExplodedGraph<GRState> > ReportGraph(GPair.first.first);
   llvm::OwningPtr<NodeBackMap> BackMap(GPair.first.second);
-  const ExplodedNode<GRState> *N = GPair.second.first;
+  const ExplodedNode *N = GPair.second.first;
  
   // Start building the path diagnostic... 
   PathDiagnosticBuilder PDB(*this, R, BackMap.get(), getPathDiagnosticClient());

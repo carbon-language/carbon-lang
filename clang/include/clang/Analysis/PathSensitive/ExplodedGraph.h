@@ -28,8 +28,9 @@
 
 namespace clang {
 
+class GRState;
 class GRCoreEngineImpl;
-class ExplodedNodeImpl;
+class ExplodedNode;
 class CFG;
 class ASTContext;
 
@@ -45,7 +46,7 @@ class GREndPathNodebuilderImpl;
 // on top of these classes.
 //===----------------------------------------------------------------------===//
   
-class ExplodedNodeImpl : public llvm::FoldingSetNode {
+class ExplodedNode : public llvm::FoldingSetNode {
 protected:
   friend class ExplodedGraphImpl;
   friend class GRCoreEngineImpl;
@@ -68,8 +69,8 @@ protected:
       return reinterpret_cast<void*>(P & ~Mask);
     }
 
-    ExplodedNodeImpl* getNode() const {
-      return reinterpret_cast<ExplodedNodeImpl*>(getPtr());
+    ExplodedNode *getNode() const {
+      return reinterpret_cast<ExplodedNode*>(getPtr());
     }
     
   public:
@@ -77,15 +78,15 @@ protected:
     
     ~NodeGroup();
     
-    ExplodedNodeImpl** begin() const;
+    ExplodedNode** begin() const;
     
-    ExplodedNodeImpl** end() const;
+    ExplodedNode** end() const;
     
     unsigned size() const;
     
     bool empty() const { return size() == 0; }
     
-    void addNode(ExplodedNodeImpl* N);
+    void addNode(ExplodedNode* N);
     
     void setFlag() {
       assert (P == 0);
@@ -102,30 +103,40 @@ protected:
   const ProgramPoint Location;
   
   /// State - The state associated with this node.
-  const void* State;
+  const GRState* State;
   
   /// Preds - The predecessors of this node.
   NodeGroup Preds;
   
   /// Succs - The successors of this node.
   NodeGroup Succs;
-  
-  /// Construct a ExplodedNodeImpl with the provided location and state.
-  explicit ExplodedNodeImpl(const ProgramPoint& loc, const void* state)
-  : Location(loc), State(state) {}
-  
-  /// addPredeccessor - Adds a predecessor to the current node, and 
-  ///  in tandem add this node as a successor of the other node.
-  void addPredecessor(ExplodedNodeImpl* V);
-  
+
 public:
-  
+
+  explicit ExplodedNode(const ProgramPoint& loc, const GRState* state) 
+    : Location(loc), State(state) {}
+
   /// getLocation - Returns the edge associated with the given node.
   ProgramPoint getLocation() const { return Location; }
-  
+
+  const GRState* getState() const {
+    return State;
+  }
+
   template <typename T>
   const T* getLocationAs() const { return llvm::dyn_cast<T>(&Location); }
-  
+
+  static void Profile(llvm::FoldingSetNodeID &ID, 
+                      const ProgramPoint& Loc, const GRState* state);
+
+  void Profile(llvm::FoldingSetNodeID& ID) const {
+    Profile(ID, getLocation(), getState());
+  }
+
+  /// addPredeccessor - Adds a predecessor to the current node, and 
+  ///  in tandem add this node as a successor of the other node.
+  void addPredecessor(ExplodedNode* V);
+
   unsigned succ_size() const { return Succs.size(); }
   unsigned pred_size() const { return Preds.size(); }
   bool succ_empty() const { return Succs.empty(); }
@@ -133,59 +144,7 @@ public:
   
   bool isSink() const { return Succs.getFlag(); }
   void markAsSink() { Succs.setFlag(); } 
-  
-  // For debugging.
-  
-public:
-  
-  class Auditor {
-  public:
-    virtual ~Auditor();
-    virtual void AddEdge(ExplodedNodeImpl* Src, ExplodedNodeImpl* Dst) = 0;
-  };
-  
-  static void SetAuditor(Auditor* A);
-};
 
-
-template <typename StateTy>
-struct GRTrait {
-  static inline void Profile(llvm::FoldingSetNodeID& ID, const StateTy* St) {
-    St->Profile(ID);
-  }
-};
-
-
-template <typename StateTy>
-class ExplodedNode : public ExplodedNodeImpl {
-public:
-  /// Construct a ExplodedNodeImpl with the given node ID, program edge,
-  ///  and state.
-  explicit ExplodedNode(const ProgramPoint& loc, const StateTy* St)
-    : ExplodedNodeImpl(loc, St) {}
-  
-  /// getState - Returns the state associated with the node.  
-  inline const StateTy* getState() const {
-    return static_cast<const StateTy*>(State);
-  }
-  
-  // Profiling (for FoldingSet).
-  
-  static inline void Profile(llvm::FoldingSetNodeID& ID,
-                             const ProgramPoint& Loc,
-                             const StateTy* state) {
-    ID.Add(Loc);
-    GRTrait<StateTy>::Profile(ID, state);
-  }
-  
-  inline void Profile(llvm::FoldingSetNodeID& ID) const {
-    Profile(ID, getLocation(), getState());
-  }
-  
-  void addPredecessor(ExplodedNode* V) {
-    ExplodedNodeImpl::addPredecessor(V);
-  }
-  
   ExplodedNode* getFirstPred() {
     return pred_empty() ? NULL : *(pred_begin());
   }
@@ -200,8 +159,8 @@ public:
   typedef ExplodedNode**       pred_iterator;
   typedef const ExplodedNode* const * const_pred_iterator;
 
-  pred_iterator pred_begin() { return (ExplodedNode**) Preds.begin(); }
-  pred_iterator pred_end() { return (ExplodedNode**) Preds.end(); }
+  pred_iterator pred_begin() { return Preds.begin(); }
+  pred_iterator pred_end() { return Preds.end(); }
 
   const_pred_iterator pred_begin() const {
     return const_cast<ExplodedNode*>(this)->pred_begin();
@@ -210,14 +169,34 @@ public:
     return const_cast<ExplodedNode*>(this)->pred_end();
   }
 
-  succ_iterator succ_begin() { return (ExplodedNode**) Succs.begin(); }
-  succ_iterator succ_end() { return (ExplodedNode**) Succs.end(); }
+  succ_iterator succ_begin() { return Succs.begin(); }
+  succ_iterator succ_end() { return Succs.end(); }
 
   const_succ_iterator succ_begin() const {
     return const_cast<ExplodedNode*>(this)->succ_begin();
   }
   const_succ_iterator succ_end() const {
     return const_cast<ExplodedNode*>(this)->succ_end();
+  }
+
+  // For debugging.
+  
+public:
+  
+  class Auditor {
+  public:
+    virtual ~Auditor();
+    virtual void AddEdge(ExplodedNode* Src, ExplodedNode* Dst) = 0;
+  };
+  
+  static void SetAuditor(Auditor* A);
+};
+
+
+template <typename StateTy>
+struct GRTrait {
+  static inline void Profile(llvm::FoldingSetNodeID& ID, const StateTy* St) {
+    St->Profile(ID);
   }
 };
 
@@ -233,8 +212,8 @@ protected:
   friend class GREndPathNodeBuilderImpl;
   
   // Type definitions.
-  typedef llvm::SmallVector<ExplodedNodeImpl*,2>    RootsTy;
-  typedef llvm::SmallVector<ExplodedNodeImpl*,10>   EndNodesTy;
+  typedef llvm::SmallVector<ExplodedNode*,2>    RootsTy;
+  typedef llvm::SmallVector<ExplodedNode*,10>   EndNodesTy;
     
   /// Roots - The roots of the simulation graph. Usually there will be only
   /// one, but clients are free to establish multiple subgraphs within a single
@@ -265,20 +244,20 @@ protected:
   /// getNodeImpl - Retrieve the node associated with a (Location,State)
   ///  pair, where 'State' is represented as an opaque void*.  This method
   ///  is intended to be used only by GRCoreEngineImpl.
-  virtual ExplodedNodeImpl* getNodeImpl(const ProgramPoint& L,
+  virtual ExplodedNode* getNodeImpl(const ProgramPoint& L,
                                         const void* State,
                                         bool* IsNew) = 0;
   
   virtual ExplodedGraphImpl* MakeEmptyGraph() const = 0;
 
   /// addRoot - Add an untyped node to the set of roots.
-  ExplodedNodeImpl* addRoot(ExplodedNodeImpl* V) {
+  ExplodedNode* addRoot(ExplodedNode* V) {
     Roots.push_back(V);
     return V;
   }
 
   /// addEndOfPath - Add an untyped node to the set of EOP nodes.
-  ExplodedNodeImpl* addEndOfPath(ExplodedNodeImpl* V) {
+  ExplodedNode* addEndOfPath(ExplodedNode* V) {
     EndNodes.push_back(V);
     return V;
   }
@@ -307,22 +286,21 @@ public:
     return llvm::dyn_cast<FunctionDecl>(&CodeDecl);
   }
   
-  typedef llvm::DenseMap<const ExplodedNodeImpl*, ExplodedNodeImpl*> NodeMap;
+  typedef llvm::DenseMap<const ExplodedNode*, ExplodedNode*> NodeMap;
 
-  ExplodedGraphImpl* Trim(const ExplodedNodeImpl* const * NBeg,
-                          const ExplodedNodeImpl* const * NEnd,
+  ExplodedGraphImpl* Trim(const ExplodedNode* const * NBeg,
+                          const ExplodedNode* const * NEnd,
                           InterExplodedGraphMapImpl *M,
-                          llvm::DenseMap<const void*, const void*> *InverseMap)
-                        const;
+                    llvm::DenseMap<const void*, const void*> *InverseMap) const;
 };
   
 class InterExplodedGraphMapImpl {
-  llvm::DenseMap<const ExplodedNodeImpl*, ExplodedNodeImpl*> M;
+  llvm::DenseMap<const ExplodedNode*, ExplodedNode*> M;
   friend class ExplodedGraphImpl;  
-  void add(const ExplodedNodeImpl* From, ExplodedNodeImpl* To);
+  void add(const ExplodedNode* From, ExplodedNode* To);
   
 protected:
-  ExplodedNodeImpl* getMappedImplNode(const ExplodedNodeImpl* N) const;
+  ExplodedNode* getMappedImplNode(const ExplodedNode* N) const;
   
   InterExplodedGraphMapImpl();
 public:
@@ -333,14 +311,13 @@ public:
 // Type-specialized ExplodedGraph classes.
 //===----------------------------------------------------------------------===//
   
-template <typename STATE>
 class InterExplodedGraphMap : public InterExplodedGraphMapImpl {
 public:
   InterExplodedGraphMap() {};
   ~InterExplodedGraphMap() {};
 
-  ExplodedNode<STATE>* getMappedNode(const ExplodedNode<STATE>* N) const {
-    return static_cast<ExplodedNode<STATE>*>(getMappedImplNode(N));
+  ExplodedNode* getMappedNode(const ExplodedNode* N) const {
+    return static_cast<ExplodedNode*>(getMappedImplNode(N));
   }
 };
   
@@ -348,21 +325,21 @@ template <typename STATE>
 class ExplodedGraph : public ExplodedGraphImpl {
 public:
   typedef STATE                       StateTy;
-  typedef ExplodedNode<StateTy>       NodeTy;  
+  typedef ExplodedNode      NodeTy;  
   typedef llvm::FoldingSet<NodeTy>    AllNodesTy;
   
 protected:  
+  virtual ExplodedNode* getNodeImpl(const ProgramPoint& L,
+                                    const void* State,
+                                    bool* IsNew) {
+    
+    return getNode(L, static_cast<const StateTy*>(State), IsNew);
+  }
+
   /// Nodes - The nodes in the graph.
   AllNodesTy Nodes;
   
 protected:
-  virtual ExplodedNodeImpl* getNodeImpl(const ProgramPoint& L,
-                                        const void* State,
-                                        bool* IsNew) {
-    
-    return getNode(L, static_cast<const StateTy*>(State), IsNew);
-  }
-  
   virtual ExplodedGraphImpl* MakeEmptyGraph() const {
     return new ExplodedGraph(cfg, CodeDecl, Ctx);
   }  
@@ -375,7 +352,7 @@ public:
   ///  where the 'Location' is a ProgramPoint in the CFG.  If no node for
   ///  this pair exists, it is created.  IsNew is set to true if
   ///  the node was freshly created.
-  NodeTy* getNode(const ProgramPoint& L, const StateTy* State,
+  NodeTy* getNode(const ProgramPoint& L, const GRState* State,
                   bool* IsNew = NULL) {
     
     // Profile 'State' to determine if we already have an existing node.
@@ -459,23 +436,22 @@ public:
     return const_cast<ExplodedGraph>(this)->eop_end();
   }
   
-  std::pair<ExplodedGraph*, InterExplodedGraphMap<STATE>*>
+  std::pair<ExplodedGraph*, InterExplodedGraphMap*>
   Trim(const NodeTy* const* NBeg, const NodeTy* const* NEnd,
        llvm::DenseMap<const void*, const void*> *InverseMap = 0) const {
     
     if (NBeg == NEnd)
       return std::make_pair((ExplodedGraph*) 0,
-                            (InterExplodedGraphMap<STATE>*) 0);
+                            (InterExplodedGraphMap*) 0);
     
     assert (NBeg < NEnd);
     
-    const ExplodedNodeImpl* const* NBegImpl =
-      (const ExplodedNodeImpl* const*) NBeg;
-    const ExplodedNodeImpl* const* NEndImpl =
-      (const ExplodedNodeImpl* const*) NEnd;
+    const ExplodedNode* const* NBegImpl =
+      (const ExplodedNode* const*) NBeg;
+    const ExplodedNode* const* NEndImpl =
+      (const ExplodedNode* const*) NEnd;
     
-    llvm::OwningPtr<InterExplodedGraphMap<STATE> > 
-      M(new InterExplodedGraphMap<STATE>());
+    llvm::OwningPtr<InterExplodedGraphMap> M(new InterExplodedGraphMap());
 
     ExplodedGraphImpl* G = ExplodedGraphImpl::Trim(NBegImpl, NEndImpl, M.get(),
                                                    InverseMap);
@@ -484,23 +460,20 @@ public:
   }
 };
 
-template <typename StateTy>
 class ExplodedNodeSet {
-  
-  typedef ExplodedNode<StateTy>        NodeTy;
-  typedef llvm::SmallPtrSet<NodeTy*,5> ImplTy;
+  typedef llvm::SmallPtrSet<ExplodedNode*,5> ImplTy;
   ImplTy Impl;
   
 public:
-  ExplodedNodeSet(NodeTy* N) {
-    assert (N && !static_cast<ExplodedNodeImpl*>(N)->isSink());
+  ExplodedNodeSet(ExplodedNode* N) {
+    assert (N && !static_cast<ExplodedNode*>(N)->isSink());
     Impl.insert(N);
   }
   
   ExplodedNodeSet() {}
   
-  inline void Add(NodeTy* N) {
-    if (N && !static_cast<ExplodedNodeImpl*>(N)->isSink()) Impl.insert(N);
+  inline void Add(ExplodedNode* N) {
+    if (N && !static_cast<ExplodedNode*>(N)->isSink()) Impl.insert(N);
   }
   
   ExplodedNodeSet& operator=(const ExplodedNodeSet &X) {
@@ -508,8 +481,8 @@ public:
     return *this;
   }
   
-  typedef typename ImplTy::iterator       iterator;
-  typedef typename ImplTy::const_iterator const_iterator;
+  typedef ImplTy::iterator       iterator;
+  typedef ImplTy::const_iterator const_iterator;
 
   inline unsigned size() const { return Impl.size();  }
   inline bool empty()    const { return Impl.empty(); }
@@ -528,10 +501,9 @@ public:
 // GraphTraits
 
 namespace llvm {
-  template<typename StateTy>
-  struct GraphTraits<clang::ExplodedNode<StateTy>*> {
-    typedef clang::ExplodedNode<StateTy>      NodeType;
-    typedef typename NodeType::succ_iterator  ChildIteratorType;
+  template<> struct GraphTraits<clang::ExplodedNode*> {
+    typedef clang::ExplodedNode NodeType;
+    typedef NodeType::succ_iterator  ChildIteratorType;
     typedef llvm::df_iterator<NodeType*>      nodes_iterator;
     
     static inline NodeType* getEntryNode(NodeType* N) {
@@ -555,10 +527,9 @@ namespace llvm {
     }
   };
   
-  template<typename StateTy>
-  struct GraphTraits<const clang::ExplodedNode<StateTy>*> {
-    typedef const clang::ExplodedNode<StateTy> NodeType;
-    typedef typename NodeType::succ_iterator   ChildIteratorType;
+  template<> struct GraphTraits<const clang::ExplodedNode*> {
+    typedef const clang::ExplodedNode NodeType;
+    typedef NodeType::const_succ_iterator   ChildIteratorType;
     typedef llvm::df_iterator<NodeType*>       nodes_iterator;
     
     static inline NodeType* getEntryNode(NodeType* N) {

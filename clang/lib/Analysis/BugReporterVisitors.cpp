@@ -24,7 +24,7 @@ using namespace clang;
 // Utility functions.
 //===----------------------------------------------------------------------===//
 
-const Stmt *clang::bugreporter::GetDerefExpr(const ExplodedNode<GRState> *N) {
+const Stmt *clang::bugreporter::GetDerefExpr(const ExplodedNode *N) {
   // Pattern match for a few useful cases (do something smarter later):
   //   a[0], p->f, *p
   const Stmt *S = N->getLocationAs<PostStmt>()->getStmt();
@@ -46,7 +46,7 @@ const Stmt *clang::bugreporter::GetDerefExpr(const ExplodedNode<GRState> *N) {
 }
 
 const Stmt*
-clang::bugreporter::GetReceiverExpr(const ExplodedNode<GRState> *N){
+clang::bugreporter::GetReceiverExpr(const ExplodedNode *N){
   const Stmt *S = N->getLocationAs<PostStmt>()->getStmt();
   if (const ObjCMessageExpr *ME = dyn_cast<ObjCMessageExpr>(S))
     return ME->getReceiver();
@@ -54,7 +54,7 @@ clang::bugreporter::GetReceiverExpr(const ExplodedNode<GRState> *N){
 }
 
 const Stmt*
-clang::bugreporter::GetDenomExpr(const ExplodedNode<GRState> *N) {
+clang::bugreporter::GetDenomExpr(const ExplodedNode *N) {
   const Stmt *S = N->getLocationAs<PostStmt>()->getStmt();
   if (const BinaryOperator *BE = dyn_cast<BinaryOperator>(S))
     return BE->getRHS();
@@ -62,7 +62,7 @@ clang::bugreporter::GetDenomExpr(const ExplodedNode<GRState> *N) {
 }
 
 const Stmt*
-clang::bugreporter::GetCalleeExpr(const ExplodedNode<GRState> *N) {
+clang::bugreporter::GetCalleeExpr(const ExplodedNode *N) {
   const Stmt *S = N->getLocationAs<PostStmt>()->getStmt();
   if (const CallExpr *CE = dyn_cast<CallExpr>(S))
     return CE->getCallee();
@@ -70,7 +70,7 @@ clang::bugreporter::GetCalleeExpr(const ExplodedNode<GRState> *N) {
 }
 
 const Stmt*
-clang::bugreporter::GetRetValExpr(const ExplodedNode<GRState> *N) {
+clang::bugreporter::GetRetValExpr(const ExplodedNode *N) {
   const Stmt *S = N->getLocationAs<PostStmt>()->getStmt();
   if (const ReturnStmt *RS = dyn_cast<ReturnStmt>(S))
     return RS->getRetValue();
@@ -86,20 +86,20 @@ class VISIBILITY_HIDDEN FindLastStoreBRVisitor : public BugReporterVisitor {
   const MemRegion *R;
   SVal V;
   bool satisfied;
-  const ExplodedNode<GRState> *StoreSite;
+  const ExplodedNode *StoreSite;
 public:
   FindLastStoreBRVisitor(SVal v, const MemRegion *r)
   : R(r), V(v), satisfied(false), StoreSite(0) {}
   
-  PathDiagnosticPiece* VisitNode(const ExplodedNode<GRState> *N,
-                                 const ExplodedNode<GRState> *PrevN,
+  PathDiagnosticPiece* VisitNode(const ExplodedNode *N,
+                                 const ExplodedNode *PrevN,
                                  BugReporterContext& BRC) {
     
     if (satisfied)
       return NULL;
     
     if (!StoreSite) {      
-      const ExplodedNode<GRState> *Node = N, *Last = NULL;
+      const ExplodedNode *Node = N, *Last = NULL;
       
       for ( ; Node ; Last = Node, Node = Node->getFirstPred()) {
         
@@ -234,8 +234,8 @@ public:
   TrackConstraintBRVisitor(SVal constraint, bool assumption)
   : Constraint(constraint), Assumption(assumption), isSatisfied(false) {}
   
-  PathDiagnosticPiece* VisitNode(const ExplodedNode<GRState> *N,
-                                 const ExplodedNode<GRState> *PrevN,
+  PathDiagnosticPiece* VisitNode(const ExplodedNode *N,
+                                 const ExplodedNode *PrevN,
                                  BugReporterContext& BRC) {
     if (isSatisfied)
       return NULL;
@@ -297,7 +297,7 @@ static void registerTrackConstraint(BugReporterContext& BRC, SVal Constraint,
 
 void clang::bugreporter::registerTrackNullOrUndefValue(BugReporterContext& BRC,
                                                        const Stmt *S,
-                                                       const ExplodedNode<GRState>* N) {
+                                                       const ExplodedNode* N) {
   
   if (!S)
     return;

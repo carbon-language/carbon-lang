@@ -43,7 +43,7 @@ public:
   typedef GRIndirectGotoNodeBuilder<StateTy>  IndirectGotoNodeBuilder;
   typedef GRSwitchNodeBuilder<StateTy>        SwitchNodeBuilder;
   typedef GREndPathNodeBuilder<StateTy>       EndPathNodeBuilder;
-  typedef ExplodedNodeSet<StateTy>            NodeSet;
+  typedef ExplodedNodeSet        NodeSet;
     
 protected:
   GRCoreEngine<GRExprEngine> CoreEngine;

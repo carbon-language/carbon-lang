@@ -155,7 +155,7 @@ bool GRCoreEngineImpl::ExecuteWorkList(unsigned Steps) {
     WList->setBlockCounter(WU.getBlockCounter());
 
     // Retrieve the node.
-    ExplodedNodeImpl* Node = WU.getNode();
+    ExplodedNode* Node = WU.getNode();
     
     // Dispatch on the location type.
     switch (Node->getLocation().getKind()) {
@@ -183,7 +183,7 @@ bool GRCoreEngineImpl::ExecuteWorkList(unsigned Steps) {
 }
 
 void GRCoreEngineImpl::HandleBlockEdge(const BlockEdge& L,
-                                       ExplodedNodeImpl* Pred) {
+                                       ExplodedNode* Pred) {
   
   CFGBlock* Blk = L.getDst();
   
@@ -208,7 +208,7 @@ void GRCoreEngineImpl::HandleBlockEdge(const BlockEdge& L,
 }
 
 void GRCoreEngineImpl::HandleBlockEntrance(const BlockEntrance& L,
-                                           ExplodedNodeImpl* Pred) {
+                                           ExplodedNode* Pred) {
   
   // Increment the block counter.
   GRBlockCounter Counter = WList->getBlockCounter();
@@ -228,7 +228,7 @@ GRCoreEngineImpl::~GRCoreEngineImpl() {
   delete WList;
 }
 
-void GRCoreEngineImpl::HandleBlockExit(CFGBlock * B, ExplodedNodeImpl* Pred) {
+void GRCoreEngineImpl::HandleBlockExit(CFGBlock * B, ExplodedNode* Pred) {
   
   if (Stmt* Term = B->getTerminator()) {
     switch (Term->getStmtClass()) {
@@ -317,7 +317,7 @@ void GRCoreEngineImpl::HandleBlockExit(CFGBlock * B, ExplodedNodeImpl* Pred) {
 }
 
 void GRCoreEngineImpl::HandleBranch(Stmt* Cond, Stmt* Term, CFGBlock * B,
-                                    ExplodedNodeImpl* Pred) {
+                                    ExplodedNode* Pred) {
   assert (B->succ_size() == 2);
 
   GRBranchNodeBuilderImpl Builder(B, *(B->succ_begin()), *(B->succ_begin()+1),
@@ -327,7 +327,7 @@ void GRCoreEngineImpl::HandleBranch(Stmt* Cond, Stmt* Term, CFGBlock * B,
 }
 
 void GRCoreEngineImpl::HandlePostStmt(const PostStmt& L, CFGBlock* B,
-                                  unsigned StmtIdx, ExplodedNodeImpl* Pred) {
+                                  unsigned StmtIdx, ExplodedNode* Pred) {
   
   assert (!B->empty());
 
@@ -342,10 +342,10 @@ void GRCoreEngineImpl::HandlePostStmt(const PostStmt& L, CFGBlock* B,
 /// GenerateNode - Utility method to generate nodes, hook up successors,
 ///  and add nodes to the worklist.
 void GRCoreEngineImpl::GenerateNode(const ProgramPoint& Loc, const void* State,
-                                    ExplodedNodeImpl* Pred) {
+                                    ExplodedNode* Pred) {
   
   bool IsNew;
-  ExplodedNodeImpl* Node = G->getNodeImpl(Loc, State, &IsNew);
+  ExplodedNode* Node = G->getNodeImpl(Loc, State, &IsNew);
   
   if (Pred) 
     Node->addPredecessor(Pred);  // Link 'Node' with its predecessor.
@@ -359,7 +359,7 @@ void GRCoreEngineImpl::GenerateNode(const ProgramPoint& Loc, const void* State,
 }
 
 GRStmtNodeBuilderImpl::GRStmtNodeBuilderImpl(CFGBlock* b, unsigned idx,
-                                     ExplodedNodeImpl* N, GRCoreEngineImpl* e)
+                                     ExplodedNode* N, GRCoreEngineImpl* e)
   : Eng(*e), B(*b), Idx(idx), Pred(N), LastNode(N) {
   Deferred.insert(N);
 }
@@ -370,7 +370,7 @@ GRStmtNodeBuilderImpl::~GRStmtNodeBuilderImpl() {
       GenerateAutoTransition(*I);
 }
 
-void GRStmtNodeBuilderImpl::GenerateAutoTransition(ExplodedNodeImpl* N) {
+void GRStmtNodeBuilderImpl::GenerateAutoTransition(ExplodedNode* N) {
   assert (!N->isSink());
   
   PostStmt Loc(getStmt());
@@ -383,7 +383,7 @@ void GRStmtNodeBuilderImpl::GenerateAutoTransition(ExplodedNodeImpl* N) {
   }
   
   bool IsNew;
-  ExplodedNodeImpl* Succ = Eng.G->getNodeImpl(Loc, N->State, &IsNew);
+  ExplodedNode* Succ = Eng.G->getNodeImpl(Loc, N->State, &IsNew);
   Succ->addPredecessor(N);
 
   if (IsNew)
@@ -425,9 +425,9 @@ static inline PostStmt GetPostLoc(const Stmt* S, ProgramPoint::Kind K,
   }
 }
 
-ExplodedNodeImpl*
+ExplodedNode*
 GRStmtNodeBuilderImpl::generateNodeImpl(const Stmt* S, const void* State,
-                                        ExplodedNodeImpl* Pred,
+                                        ExplodedNode* Pred,
                                         ProgramPoint::Kind K,
                                         const void *tag) {
   return K == ProgramPoint::PreStmtKind
@@ -435,12 +435,12 @@ GRStmtNodeBuilderImpl::generateNodeImpl(const Stmt* S, const void* State,
          : generateNodeImpl(GetPostLoc(S, K, tag), State, Pred); 
 }
 
-ExplodedNodeImpl*
+ExplodedNode*
 GRStmtNodeBuilderImpl::generateNodeImpl(const ProgramPoint &Loc,
                                         const void* State,
-                                        ExplodedNodeImpl* Pred) {
+                                        ExplodedNode* Pred) {
   bool IsNew;
-  ExplodedNodeImpl* N = Eng.G->getNodeImpl(Loc, State, &IsNew);
+  ExplodedNode* N = Eng.G->getNodeImpl(Loc, State, &IsNew);
   N->addPredecessor(Pred);
   Deferred.erase(Pred);
   
@@ -454,7 +454,7 @@ GRStmtNodeBuilderImpl::generateNodeImpl(const ProgramPoint &Loc,
   return NULL;  
 }
 
-ExplodedNodeImpl* GRBranchNodeBuilderImpl::generateNodeImpl(const void* State,
+ExplodedNode* GRBranchNodeBuilderImpl::generateNodeImpl(const void* State,
                                                             bool branch) {
   
   // If the branch has been marked infeasible we should not generate a node.
@@ -463,7 +463,7 @@ ExplodedNodeImpl* GRBranchNodeBuilderImpl::generateNodeImpl(const void* State,
   
   bool IsNew;
   
-  ExplodedNodeImpl* Succ =
+  ExplodedNode* Succ =
     Eng.G->getNodeImpl(BlockEdge(Src, branch ? DstT : DstF), State, &IsNew);
   
   Succ->addPredecessor(Pred);
@@ -490,13 +490,13 @@ GRBranchNodeBuilderImpl::~GRBranchNodeBuilderImpl() {
 }
 
 
-ExplodedNodeImpl*
+ExplodedNode*
 GRIndirectGotoNodeBuilderImpl::generateNodeImpl(const Iterator& I,
                                                 const void* St,
                                                 bool isSink) {
   bool IsNew;
   
-  ExplodedNodeImpl* Succ =
+  ExplodedNode* Succ =
     Eng.G->getNodeImpl(BlockEdge(Src, I.getBlock()), St, &IsNew);
               
   Succ->addPredecessor(Pred);
@@ -515,13 +515,13 @@ GRIndirectGotoNodeBuilderImpl::generateNodeImpl(const Iterator& I,
 }
 
 
-ExplodedNodeImpl*
+ExplodedNode*
 GRSwitchNodeBuilderImpl::generateCaseStmtNodeImpl(const Iterator& I,
                                                   const void* St) {
 
   bool IsNew;
   
-  ExplodedNodeImpl* Succ = Eng.G->getNodeImpl(BlockEdge(Src, I.getBlock()),
+  ExplodedNode* Succ = Eng.G->getNodeImpl(BlockEdge(Src, I.getBlock()),
                                                 St, &IsNew);  
   Succ->addPredecessor(Pred);
   
@@ -534,7 +534,7 @@ GRSwitchNodeBuilderImpl::generateCaseStmtNodeImpl(const Iterator& I,
 }
 
 
-ExplodedNodeImpl*
+ExplodedNode*
 GRSwitchNodeBuilderImpl::generateDefaultCaseNodeImpl(const void* St,
                                                      bool isSink) {
   
@@ -544,7 +544,7 @@ GRSwitchNodeBuilderImpl::generateDefaultCaseNodeImpl(const void* St,
   
   bool IsNew;
   
-  ExplodedNodeImpl* Succ = Eng.G->getNodeImpl(BlockEdge(Src, DefaultBlock),
+  ExplodedNode* Succ = Eng.G->getNodeImpl(BlockEdge(Src, DefaultBlock),
                                                 St, &IsNew);  
   Succ->addPredecessor(Pred);
   
@@ -565,14 +565,14 @@ GREndPathNodeBuilderImpl::~GREndPathNodeBuilderImpl() {
   if (!HasGeneratedNode) generateNodeImpl(Pred->State);
 }
 
-ExplodedNodeImpl*
+ExplodedNode*
 GREndPathNodeBuilderImpl::generateNodeImpl(const void* State,
                                            const void *tag,
-                                           ExplodedNodeImpl* P) {
+                                           ExplodedNode* P) {
   HasGeneratedNode = true;    
   bool IsNew;
   
-  ExplodedNodeImpl* Node =
+  ExplodedNode* Node =
     Eng.G->getNodeImpl(BlockEntrance(&B, tag), State, &IsNew);
   
   Node->addPredecessor(P ? P : Pred);

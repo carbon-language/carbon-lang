@@ -1298,11 +1298,11 @@ GRExprEngine::NodeTy* GRExprEngine::EvalLocation(Stmt* Ex, NodeTy* Pred,
 // http://developer.apple.com/documentation/Darwin/Reference/Manpages/man3
 // atomic.3.html
 //
-static bool EvalOSAtomicCompareAndSwap(ExplodedNodeSet<GRState>& Dst,
+static bool EvalOSAtomicCompareAndSwap(ExplodedNodeSet& Dst,
                                        GRExprEngine& Engine,
                                        GRStmtNodeBuilder<GRState>& Builder,
                                        CallExpr* CE, SVal L,                 
-                                       ExplodedNode<GRState>* Pred) {
+                                       ExplodedNode* Pred) {
 
   // Not enough arguments to match OSAtomicCompareAndSwap?
   if (CE->getNumArgs() != 3)
@@ -1342,14 +1342,14 @@ static bool EvalOSAtomicCompareAndSwap(ExplodedNodeSet<GRState>& Dst,
   
   // Load 'theValue'.
   const GRState *state = Pred->getState();
-  ExplodedNodeSet<GRState> Tmp;
+  ExplodedNodeSet Tmp;
   SVal location = state->getSVal(theValueExpr);
   Engine.EvalLoad(Tmp, theValueExpr, Pred, state, location, OSAtomicLoadTag);
 
-  for (ExplodedNodeSet<GRState>::iterator I = Tmp.begin(), E = Tmp.end();
+  for (ExplodedNodeSet::iterator I = Tmp.begin(), E = Tmp.end();
        I != E; ++I) {
   
-    ExplodedNode<GRState> *N = *I;
+    ExplodedNode *N = *I;
     const GRState *stateLoad = N->getState();
     SVal theValueVal = stateLoad->getSVal(theValueExpr);
     SVal oldValueVal = stateLoad->getSVal(oldValueExpr);
@@ -1368,7 +1368,7 @@ static bool EvalOSAtomicCompareAndSwap(ExplodedNodeSet<GRState>& Dst,
     // Were they equal?
     if (stateEqual) {
       // Perform the store.
-      ExplodedNodeSet<GRState> TmpStore;
+      ExplodedNodeSet TmpStore;
       SVal val = stateEqual->getSVal(newValueExpr);
       
       // Handle implicit value casts.
@@ -1383,9 +1383,9 @@ static bool EvalOSAtomicCompareAndSwap(ExplodedNodeSet<GRState>& Dst,
                        val, OSAtomicStoreTag);
       
       // Now bind the result of the comparison.
-      for (ExplodedNodeSet<GRState>::iterator I2 = TmpStore.begin(),
+      for (ExplodedNodeSet::iterator I2 = TmpStore.begin(),
            E2 = TmpStore.end(); I2 != E2; ++I2) {
-        ExplodedNode<GRState> *predNew = *I2;
+        ExplodedNode *predNew = *I2;
         const GRState *stateNew = predNew->getState();
         SVal Res = Engine.getValueManager().makeTruthVal(true, CE->getType());
         Engine.MakeNode(Dst, CE, predNew, stateNew->bindExpr(CE, Res));
@@ -1402,11 +1402,11 @@ static bool EvalOSAtomicCompareAndSwap(ExplodedNodeSet<GRState>& Dst,
   return true;
 }
 
-static bool EvalOSAtomic(ExplodedNodeSet<GRState>& Dst,
+static bool EvalOSAtomic(ExplodedNodeSet& Dst,
                          GRExprEngine& Engine,
                          GRStmtNodeBuilder<GRState>& Builder,
                          CallExpr* CE, SVal L,
-                         ExplodedNode<GRState>* Pred) {
+                         ExplodedNode* Pred) {
   const FunctionDecl* FD = L.getAsFunctionDecl();
   if (!FD)
     return false;

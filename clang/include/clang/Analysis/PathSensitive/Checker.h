@@ -30,20 +30,20 @@ namespace clang {
   class GRExprEngine;
 
 class CheckerContext {
-  ExplodedNodeSet<GRState> &Dst;
+  ExplodedNodeSet &Dst;
   GRStmtNodeBuilder<GRState> &B;
   GRExprEngine &Eng;
-  ExplodedNode<GRState> *Pred;
+  ExplodedNode *Pred;
   SaveAndRestore<bool> OldSink;
   SaveAndRestore<const void*> OldTag;
   SaveAndRestore<ProgramPoint::Kind> OldPointKind;
   SaveOr OldHasGen;
 
 public:
-  CheckerContext(ExplodedNodeSet<GRState> &dst,
+  CheckerContext(ExplodedNodeSet &dst,
                  GRStmtNodeBuilder<GRState> &builder,
                  GRExprEngine &eng,
-                 ExplodedNode<GRState> *pred,
+                 ExplodedNode *pred,
                  const void *tag, bool preVisit)
     : Dst(dst), B(builder), Eng(eng), Pred(pred), 
       OldSink(B.BuildSinks), OldTag(B.Tag),
@@ -62,17 +62,17 @@ public:
   ConstraintManager &getConstraintManager() {
       return Eng.getConstraintManager();
   }
-  ExplodedNodeSet<GRState> &getNodeSet() { return Dst; }
+  ExplodedNodeSet &getNodeSet() { return Dst; }
   GRStmtNodeBuilder<GRState> &getNodeBuilder() { return B; }
-  ExplodedNode<GRState> *&getPredecessor() { return Pred; }
+  ExplodedNode *&getPredecessor() { return Pred; }
   const GRState *getState() { return B.GetState(Pred); }
   
-  ExplodedNode<GRState> *generateNode(const Stmt* S,
+  ExplodedNode *generateNode(const Stmt* S,
                                       const GRState *state) {
     return B.generateNode(S, state, Pred);
   }
   
-  void addTransition(ExplodedNode<GRState> *node) {
+  void addTransition(ExplodedNode *node) {
     Dst.Add(node);
   }
   
@@ -85,11 +85,11 @@ class Checker {
 private:
   friend class GRExprEngine;
 
-  void GR_Visit(ExplodedNodeSet<GRState> &Dst,
+  void GR_Visit(ExplodedNodeSet &Dst,
                 GRStmtNodeBuilder<GRState> &Builder,
                 GRExprEngine &Eng,
                 const Stmt *stmt,
-                  ExplodedNode<GRState> *Pred, bool isPrevisit) {
+                  ExplodedNode *Pred, bool isPrevisit) {
     CheckerContext C(Dst, Builder, Eng, Pred, getTag(), isPrevisit);    
     assert(isPrevisit && "Only previsit supported for now.");
     _PreVisit(C, stmt);

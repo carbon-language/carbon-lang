@@ -28,12 +28,12 @@ using namespace clang::bugreporter;
 //===----------------------------------------------------------------------===//
 
 template <typename ITERATOR> inline
-ExplodedNode<GRState>* GetNode(ITERATOR I) {
+ExplodedNode* GetNode(ITERATOR I) {
   return *I;
 }
 
 template <> inline
-ExplodedNode<GRState>* GetNode(GRExprEngine::undef_arg_iterator I) {
+ExplodedNode* GetNode(GRExprEngine::undef_arg_iterator I) {
   return I->first;
 }
 
@@ -46,15 +46,15 @@ namespace {
 class VISIBILITY_HIDDEN BuiltinBugReport : public RangedBugReport {
 public:
   BuiltinBugReport(BugType& bt, const char* desc,
-                   ExplodedNode<GRState> *n)
+                   ExplodedNode *n)
   : RangedBugReport(bt, desc, n) {}
   
   BuiltinBugReport(BugType& bt, const char *shortDesc, const char *desc,
-                   ExplodedNode<GRState> *n)
+                   ExplodedNode *n)
   : RangedBugReport(bt, shortDesc, desc, n) {}  
   
   void registerInitialVisitors(BugReporterContext& BRC,
-                               const ExplodedNode<GRState>* N);
+                               const ExplodedNode* N);
 };  
   
 class VISIBILITY_HIDDEN BuiltinBug : public BugType {
@@ -73,7 +73,7 @@ public:
   void FlushReports(BugReporter& BR) { FlushReportsImpl(BR, Eng); }
   
   virtual void registerInitialVisitors(BugReporterContext& BRC,
-                                       const ExplodedNode<GRState>* N,
+                                       const ExplodedNode* N,
                                        BuiltinBugReport *R) {}
   
   template <typename ITER> void Emit(BugReporter& BR, ITER I, ITER E);
@@ -87,7 +87,7 @@ void BuiltinBug::Emit(BugReporter& BR, ITER I, ITER E) {
 }  
 
 void BuiltinBugReport::registerInitialVisitors(BugReporterContext& BRC,
-                                               const ExplodedNode<GRState>* N) {
+                                               const ExplodedNode* N) {
   static_cast<BuiltinBug&>(getBugType()).registerInitialVisitors(BRC, N, this);
 }  
   
@@ -101,7 +101,7 @@ public:
   }
   
   void registerInitialVisitors(BugReporterContext& BRC,
-                               const ExplodedNode<GRState>* N,
+                               const ExplodedNode* N,
                                BuiltinBugReport *R) {
     registerTrackNullOrUndefValue(BRC, GetDerefExpr(N), N);
   }
@@ -133,7 +133,7 @@ public:
   }
   
   void registerInitialVisitors(BugReporterContext& BRC,
-                               const ExplodedNode<GRState>* N,
+                               const ExplodedNode* N,
                                BuiltinBugReport *R) {
     registerTrackNullOrUndefValue(BRC, GetReceiverExpr(N), N);
   }
@@ -167,7 +167,7 @@ public:
     }
   }    
   void registerInitialVisitors(BugReporterContext& BRC,
-                               const ExplodedNode<GRState>* N,
+                               const ExplodedNode* N,
                                BuiltinBugReport *R) {
     registerTrackNullOrUndefValue(BRC, GetReceiverExpr(N), N);
   }
@@ -183,7 +183,7 @@ public:
   }
   
   void registerInitialVisitors(BugReporterContext& BRC,
-                               const ExplodedNode<GRState>* N,
+                               const ExplodedNode* N,
                                BuiltinBugReport *R) {
     registerTrackNullOrUndefValue(BRC, GetDerefExpr(N), N);
   }
@@ -200,7 +200,7 @@ public:
   }
   
   void registerInitialVisitors(BugReporterContext& BRC,
-                               const ExplodedNode<GRState>* N,
+                               const ExplodedNode* N,
                                BuiltinBugReport *R) {
     registerTrackNullOrUndefValue(BRC, GetDenomExpr(N), N);
   }
@@ -227,7 +227,7 @@ public:
   }
   
   void registerInitialVisitors(BugReporterContext& BRC,
-                               const ExplodedNode<GRState>* N,
+                               const ExplodedNode* N,
                                BuiltinBugReport *R) {
     registerTrackNullOrUndefValue(BRC, GetCalleeExpr(N), N);
   }
@@ -237,12 +237,12 @@ public:
 class VISIBILITY_HIDDEN ArgReport : public BuiltinBugReport {
   const Stmt *Arg;
 public:
-  ArgReport(BugType& bt, const char* desc, ExplodedNode<GRState> *n,
+  ArgReport(BugType& bt, const char* desc, ExplodedNode *n,
          const Stmt *arg)
   : BuiltinBugReport(bt, desc, n), Arg(arg) {}
   
   ArgReport(BugType& bt, const char *shortDesc, const char *desc,
-                   ExplodedNode<GRState> *n, const Stmt *arg)
+                   ExplodedNode *n, const Stmt *arg)
   : BuiltinBugReport(bt, shortDesc, desc, n), Arg(arg) {}  
   
   const Stmt *getArg() const { return Arg; }    
@@ -268,7 +268,7 @@ public:
   }
 
   void registerInitialVisitors(BugReporterContext& BRC,
-                               const ExplodedNode<GRState>* N,
+                               const ExplodedNode* N,
                                BuiltinBugReport *R) {
     registerTrackNullOrUndefValue(BRC, static_cast<ArgReport*>(R)->getArg(),
                                   N);
@@ -304,7 +304,7 @@ public:
       
       // Generate a report for this bug.
       BuiltinBugReport *report = new BuiltinBugReport(*this, desc.c_str(), *I);
-      ExplodedNode<GRState>* N = *I;
+      ExplodedNode* N = *I;
       const Stmt *S = cast<PostStmt>(N->getLocation()).getStmt();
       const Expr* E = cast<ObjCMessageExpr>(S)->getReceiver();
       assert (E && "Receiver cannot be NULL");
@@ -314,7 +314,7 @@ public:
   }
 
   void registerInitialVisitors(BugReporterContext& BRC,
-                               const ExplodedNode<GRState>* N,
+                               const ExplodedNode* N,
                                BuiltinBugReport *R) {
     registerTrackNullOrUndefValue(BRC, GetReceiverExpr(N), N);
   } 
@@ -329,7 +329,7 @@ public:
     for (GRExprEngine::ret_stackaddr_iterator I=Eng.ret_stackaddr_begin(),
          End = Eng.ret_stackaddr_end(); I!=End; ++I) {
 
-      ExplodedNode<GRState>* N = *I;
+      ExplodedNode* N = *I;
       const Stmt *S = cast<PostStmt>(N->getLocation()).getStmt();
       const Expr* E = cast<ReturnStmt>(S)->getRetValue();
       assert(E && "Return expression cannot be NULL");
@@ -387,7 +387,7 @@ public:
   }
   
   void registerInitialVisitors(BugReporterContext& BRC,
-                               const ExplodedNode<GRState>* N,
+                               const ExplodedNode* N,
                                BuiltinBugReport *R) {
     registerTrackNullOrUndefValue(BRC, GetRetValExpr(N), N);
   }    
@@ -443,7 +443,7 @@ public:
       // Note: any predecessor will do.  They should have identical state,
       // since all the BlockEdge did was act as an error sink since the value
       // had to already be undefined.
-      ExplodedNode<GRState> *N = *(*I)->pred_begin();
+      ExplodedNode *N = *(*I)->pred_begin();
       ProgramPoint P = N->getLocation();
       const GRState* St = (*I)->getState();
 
@@ -461,7 +461,7 @@ public:
   }
   
   void registerInitialVisitors(BugReporterContext& BRC,
-                               const ExplodedNode<GRState>* N,
+                               const ExplodedNode* N,
                                BuiltinBugReport *R) {
     registerTrackNullOrUndefValue(BRC, static_cast<ArgReport*>(R)->getArg(),
                                   N);
@@ -527,7 +527,7 @@ public:
   }
   
   void registerInitialVisitors(BugReporterContext& BRC,
-                               const ExplodedNode<GRState>* N,
+                               const ExplodedNode* N,
                                BuiltinBugReport *R) {
     registerTrackNullOrUndefValue(BRC, static_cast<ArgReport*>(R)->getArg(),
                                   N);
@@ -583,7 +583,7 @@ public:
       if (stateNull && !stateNotNull) {
         // Generate an error node.  Check for a null node in case
         // we cache out.
-        if (ExplodedNode<GRState> *errorNode = C.generateNode(CE, stateNull)) {
+        if (ExplodedNode *errorNode = C.generateNode(CE, stateNull)) {
                   
           // Lazily allocate the BugType object if it hasn't already been
           // created. Ownership is transferred to the BugReporter object once

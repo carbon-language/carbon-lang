@@ -39,7 +39,7 @@
 
 using namespace clang;
 
-static ExplodedNodeImpl::Auditor* CreateUbiViz();
+static ExplodedNode::Auditor* CreateUbiViz();
 
 //===----------------------------------------------------------------------===//
 // Basic type definitions.
@@ -308,10 +308,10 @@ static void ActionGRExprEngine(AnalysisManager& mgr, GRTransferFuncs* tf,
   }
 
   // Set the graph auditor.
-  llvm::OwningPtr<ExplodedNodeImpl::Auditor> Auditor;
+  llvm::OwningPtr<ExplodedNode::Auditor> Auditor;
   if (mgr.shouldVisualizeUbigraph()) {
     Auditor.reset(CreateUbiViz());
-    ExplodedNodeImpl::SetAuditor(Auditor.get());
+    ExplodedNode::SetAuditor(Auditor.get());
   }
   
   // Execute the worklist algorithm.
@@ -319,7 +319,7 @@ static void ActionGRExprEngine(AnalysisManager& mgr, GRTransferFuncs* tf,
   
   // Release the auditor (if any) so that it doesn't monitor the graph
   // created BugReporter.
-  ExplodedNodeImpl::SetAuditor(0);
+  ExplodedNode::SetAuditor(0);
 
   // Visualize the exploded graph.
   if (mgr.shouldVisualizeGraphviz())
@@ -443,7 +443,7 @@ ASTConsumer* clang::CreateAnalysisConsumer(Diagnostic &diags, Preprocessor* pp,
 
 namespace {
   
-class UbigraphViz : public ExplodedNodeImpl::Auditor {
+class UbigraphViz : public ExplodedNode::Auditor {
   llvm::OwningPtr<llvm::raw_ostream> Out;
   llvm::sys::Path Dir, Filename;
   unsigned Cntr;
@@ -457,12 +457,12 @@ public:
   
   ~UbigraphViz();
   
-  virtual void AddEdge(ExplodedNodeImpl* Src, ExplodedNodeImpl* Dst);  
+  virtual void AddEdge(ExplodedNode* Src, ExplodedNode* Dst);  
 };
   
 } // end anonymous namespace
 
-static ExplodedNodeImpl::Auditor* CreateUbiViz() {
+static ExplodedNode::Auditor* CreateUbiViz() {
   std::string ErrMsg;
   
   llvm::sys::Path Dir = llvm::sys::Path::GetTemporaryDirectory(&ErrMsg);
@@ -489,7 +489,7 @@ static ExplodedNodeImpl::Auditor* CreateUbiViz() {
   return new UbigraphViz(Stream.take(), Dir, Filename);
 }
 
-void UbigraphViz::AddEdge(ExplodedNodeImpl* Src, ExplodedNodeImpl* Dst) {
+void UbigraphViz::AddEdge(ExplodedNode* Src, ExplodedNode* Dst) {
   
   assert (Src != Dst && "Self-edges are not allowed.");
   

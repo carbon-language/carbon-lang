@@ -26,7 +26,7 @@ namespace clang {
 template <typename STATE>
 class GRAuditor {
 public:
-  typedef ExplodedNode<STATE>       NodeTy;
+  typedef ExplodedNode       NodeTy;
   typedef typename STATE::ManagerTy ManagerTy;
   
   virtual ~GRAuditor() {}
