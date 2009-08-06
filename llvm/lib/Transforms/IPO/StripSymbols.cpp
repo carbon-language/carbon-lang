@@ -207,21 +207,20 @@ bool StripDebugInfo(Module &M) {
   findUsedValues(M.getGlobalVariable("llvm.used"), llvmUsedValues);
   findUsedValues(M.getGlobalVariable("llvm.compiler.used"), llvmUsedValues);
 
-  SmallVector<GlobalVariable *, 2> CUs;
-  SmallVector<GlobalVariable *, 4> GVs;
-  SmallVector<GlobalVariable *, 4> SPs;
-  CollectDebugInfoAnchors(M, CUs, GVs, SPs);
+  DebugInfoFinder DbgFinder;
+  DbgFinder.processModule(M);
+
   // These anchors use LinkOnce linkage so that the optimizer does not
   // remove them accidently. Set InternalLinkage for all these debug
   // info anchors.
-  for (SmallVector<GlobalVariable *, 2>::iterator I = CUs.begin(),
-         E = CUs.end(); I != E; ++I)
+  for (DebugInfoFinder::iterator I = DbgFinder.compile_unit_begin(),
+         E = DbgFinder.compile_unit_end(); I != E; ++I)
     (*I)->setLinkage(GlobalValue::InternalLinkage);
-  for (SmallVector<GlobalVariable *, 4>::iterator I = GVs.begin(),
-         E = GVs.end(); I != E; ++I)
+  for (DebugInfoFinder::iterator I = DbgFinder.global_variable_begin(),
+         E = DbgFinder.global_variable_end(); I != E; ++I)
     (*I)->setLinkage(GlobalValue::InternalLinkage);
-  for (SmallVector<GlobalVariable *, 4>::iterator I = SPs.begin(),
-         E = SPs.end(); I != E; ++I)
+  for (DebugInfoFinder::iterator I = DbgFinder.subprogram_begin(),
+         E = DbgFinder.subprogram_end(); I != E; ++I)
     (*I)->setLinkage(GlobalValue::InternalLinkage);
 
 
