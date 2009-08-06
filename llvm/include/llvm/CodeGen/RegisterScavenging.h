@@ -90,19 +90,14 @@ public:
   /// passes over/within the same function.
   void initRegState();
 
-  /// forward / backward - Move the internal MBB iterator and update register
-  /// states.
+  /// forward - Move the internal MBB iterator and update register states.
   void forward();
-  void backward();
 
-  /// forward / backward - Move the internal MBB iterator and update register
-  /// states until it has processed the specific iterator.
+  /// forward - Move the internal MBB iterator and update register states until
+  /// it has processed the specific iterator.
   void forward(MachineBasicBlock::iterator I) {
     if (!Tracking && MBB->begin() != I) forward();
     while (MBBI != I) forward();
-  }
-  void backward(MachineBasicBlock::iterator I) {
-    while (MBBI != I) backward();
   }
 
   /// skipTo - Move the internal MBB iterator but do not update register states.
