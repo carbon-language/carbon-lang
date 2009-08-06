@@ -893,8 +893,24 @@ void BranchFolder::OptimizeBlock(MachineBasicBlock *MBB) {
       while (!MBB->pred_empty()) {
         MachineBasicBlock *Pred = *(MBB->pred_end()-1);
         Pred->ReplaceUsesOfBlockWith(MBB, FallThrough);
+        // If this resulted in a predecessor with true and false edges
+        // both going to the fallthrough block, clean up; 
+        // BranchFolding doesn't like this.
+        MachineBasicBlock::succ_iterator SI = Pred->succ_begin();
+        bool found = false;
+        while (SI != Pred->succ_end()) {
+          if (*SI == FallThrough) {
+            if (!found) {
+              found = true;
+              ++SI;
+            } else {
+              SI = Pred->removeSuccessor(SI);
+            }
+          } else {
+            ++SI;
+          }
+        }
       }
-      
       // If MBB was the target of a jump table, update jump tables to go to the
       // fallthrough instead.
       MBB->getParent()->getJumpTableInfo()->
