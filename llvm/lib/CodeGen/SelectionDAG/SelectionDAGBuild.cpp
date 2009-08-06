@@ -4468,9 +4468,6 @@ void SelectionDAGLowering::LowerCallTo(CallSite CS, SDValue Callee,
                     isTailCall,
                     !CS.getInstruction()->use_empty(),
                     Callee, Args, DAG, getCurDebugLoc());
-  assert((isTailCall || CS.getType() == Type::VoidTy ||
-          Result.first.getNode()) &&
-         "Non-null value expected with non-void non-tail call!");
   assert((isTailCall || Result.second.getNode()) &&
          "Non-null chain expected with non-tail call!");
   assert((Result.second.getNode() || !Result.first.getNode()) &&
