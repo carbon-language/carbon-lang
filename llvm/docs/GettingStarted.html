@@ -257,7 +257,8 @@ software you will need.</p>
 </tr>
 <tr>
   <td>MinGW/Win32</td>
-  <td>x86<sup><a href="#pf_1">1</a>,<a href="#pf_6">6</a>,<a href="#pf_8">8</a></sup></td>
+  <td>x86<sup><a href="#pf_1">1</a>,<a href="#pf_6">6</a>,
+     <a href="#pf_8">8</a>, <a href="#pf_10">10</a></sup></td>
   <td>GCC 3.4.X, binutils 2.15</td>
 </tr>
 </table>
@@ -325,6 +326,11 @@ up</a></li>
     levels greater than 0 (i.e., <i>"-O1"</i> and higher).
     Add <i>OPTIMIZE_OPTION="-O0"</i> to the build command line
     if compiling for LLVM Release or bootstrapping the LLVM toolchain.</li>
+<li><a name="pf_10">For MSYS/MinGW on Windows, be sure to install the MSYS
+    version of the perl package, and be sure it appears in your path
+    before any Windows-based versions such as Strawberry Perl and
+    ActivePerl, as these have Windows-specifics that will cause the
+    build to fail.</a></li>
 </ol>
 </div>
 
