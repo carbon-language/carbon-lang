@@ -343,16 +343,6 @@ public:
   SVal getSizeInElements(const GRState *state, const MemRegion* R);
 
   //===------------------------------------------------------------------===//
-  // Region "views".
-  //===------------------------------------------------------------------===//
-  
-  const GRState *AddRegionView(const GRState *state, const MemRegion* View,
-                           const MemRegion* Base);
-
-  const GRState *RemoveRegionView(const GRState *state, const MemRegion* View,
-                              const MemRegion* Base);
-
-  //===------------------------------------------------------------------===//
   // Utility methods.
   //===------------------------------------------------------------------===//
   
