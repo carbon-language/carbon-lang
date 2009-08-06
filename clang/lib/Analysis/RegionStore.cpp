@@ -493,27 +493,6 @@ const GRState *RegionStoreManager::InvalidateRegion(const GRState *state,
   const TypedRegion *TR = cast<TypedRegion>(R);
   QualType T = TR->getValueType(Ctx);
   
-  // FIXME: The code causes a crash when using RegionStore on the test case
-  // 'test_invalidate_cast_int' (misc-ps.m).  Consider removing it
-  // permanently.  Region casts are probably not too strict to handle
-  // the transient interpretation of memory.  Instead we can use the QualType
-  // passed to 'Retrieve' and friends to determine the most current
-  // interpretation of memory when it is actually used.
-#if 0
-  // If the region is cast to another type, use that type.  
-  if (const QualType *CastTy = getCastType(state, R)) {
-    assert(!(*CastTy)->isObjCObjectPointerType());
-    QualType NewT = (*CastTy)->getAs<PointerType>()->getPointeeType();    
-    
-    // The only exception is if the original region had a location type as its
-    // value type we always want to treat the region as binding to a location.
-    // This issue can arise when pointers are casted to integers and back.
-    
-    if (!(Loc::IsLocType(T) && !Loc::IsLocType(NewT)))
-      T = NewT;
-  }
-#endif
-
   if (const RecordType *RT = T->getAsStructureType()) {
     // FIXME: handle structs with default region value.
     const RecordDecl *RD = RT->getDecl()->getDefinition(Ctx);
@@ -983,15 +962,6 @@ RegionStoreManager::Retrieve(const GRState *state, Loc L, QualType T) {
     return SValuator::CastResult(state, UndefinedVal());
   }
 
-#if USE_REGION_CASTS
-  // If the region is already cast to another type, use that type to create the
-  // symbol value.
-  if (const QualType *p = state->get<RegionCasts>(R)) {
-    QualType T = *p;
-    RTy = T->getAs<PointerType>()->getPointeeType();
-  }
-#endif
-
   // All other values are symbolic.
   return SValuator::CastResult(state,
                                ValMgr.getRegionValueSymbolValOrUnknown(R, RTy));
@@ -1133,13 +1103,6 @@ SVal RegionStoreManager::RetrieveElement(const GRState* state,
 
   QualType Ty = R->getValueType(getContext());
 
-#if USE_REGION_CASTS
-  // If the region is already cast to another type, use that type to create the
-  // symbol value.
-  if (const QualType *p = state->get<RegionCasts>(R))
-    Ty = (*p)->getAs<PointerType>()->getPointeeType();
-#endif
-
   return ValMgr.getRegionValueSymbolValOrUnknown(R, Ty);
 }
 
@@ -1210,15 +1173,6 @@ SVal RegionStoreManager::RetrieveField(const GRState* state,
   if (R->hasStackStorage() && !R->hasParametersStorage())
     return UndefinedVal();
 
-#if USE_REGION_CASTS
-  // If the region is already cast to another type, use that type to create the
-  // symbol value.
-  if (const QualType *p = state->get<RegionCasts>(R)) {
-    QualType tmp = *p;
-    Ty = tmp->getAs<PointerType>()->getPointeeType();
-  }
-#endif
-
   // All other values are symbolic.
   return ValMgr.getRegionValueSymbolValOrUnknown(R, Ty);
 }
@@ -1272,19 +1226,6 @@ SVal RegionStoreManager::RetrieveLazySymbol(const GRState *state,
   
   QualType valTy = R->getValueType(getContext());
 
-#if USE_REGION_CASTS
-  // If the region is already cast to another type, use that type to create the
-  // symbol value.
-  if (const QualType *ty = state->get<RegionCasts>(R)) {
-    if (const PointerType *PT = (*ty)->getAs<PointerType>()) {
-      QualType castTy = PT->getPointeeType();
-      
-      if (!IsReinterpreted(valTy, castTy, getContext()))
-        valTy = castTy;
-    }
-  }
-#endif
-  
   // All other values are symbolic.
   return ValMgr.getRegionValueSymbolValOrUnknown(R, valTy);
 }
