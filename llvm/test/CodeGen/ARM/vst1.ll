@@ -80,14 +80,14 @@ define void @vst1Qi64(i64* %A, <2 x i64>* %B) nounwind {
 	ret void
 }
 
-declare void @llvm.arm.neon.vst1i.v8i8(i8*, <8 x i8>) nounwind readnone
-declare void @llvm.arm.neon.vst1i.v4i16(i16*, <4 x i16>) nounwind readnone
-declare void @llvm.arm.neon.vst1i.v2i32(i32*, <2 x i32>) nounwind readnone
-declare void @llvm.arm.neon.vst1f.v2f32(float*, <2 x float>) nounwind readnone
-declare void @llvm.arm.neon.vst1i.v1i64(i64*, <1 x i64>) nounwind readnone
+declare void @llvm.arm.neon.vst1i.v8i8(i8*, <8 x i8>) nounwind
+declare void @llvm.arm.neon.vst1i.v4i16(i8*, <4 x i16>) nounwind
+declare void @llvm.arm.neon.vst1i.v2i32(i8*, <2 x i32>) nounwind
+declare void @llvm.arm.neon.vst1f.v2f32(i8*, <2 x float>) nounwind
+declare void @llvm.arm.neon.vst1i.v1i64(i8*, <1 x i64>) nounwind
 
-declare void @llvm.arm.neon.vst1i.v16i8(i8*, <16 x i8>) nounwind readnone
-declare void @llvm.arm.neon.vst1i.v8i16(i16*, <8 x i16>) nounwind readnone
-declare void @llvm.arm.neon.vst1i.v4i32(i32*, <4 x i32>) nounwind readnone
-declare void @llvm.arm.neon.vst1f.v4f32(float*, <4 x float>) nounwind readnone
-declare void @llvm.arm.neon.vst1i.v2i64(i64*, <2 x i64>) nounwind readnone
+declare void @llvm.arm.neon.vst1i.v16i8(i8*, <16 x i8>) nounwind
+declare void @llvm.arm.neon.vst1i.v8i16(i8*, <8 x i16>) nounwind
+declare void @llvm.arm.neon.vst1i.v4i32(i8*, <4 x i32>) nounwind
+declare void @llvm.arm.neon.vst1f.v4f32(i8*, <4 x float>) nounwind
+declare void @llvm.arm.neon.vst1i.v2i64(i8*, <2 x i64>) nounwind

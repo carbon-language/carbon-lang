@@ -70,14 +70,14 @@ define <2 x i64> @vld1Qi64(i64* %A) nounwind {
 	ret <2 x i64> %tmp1
 }
 
-declare <8 x i8>  @llvm.arm.neon.vld1i.v8i8(i8*) nounwind readnone
-declare <4 x i16> @llvm.arm.neon.vld1i.v4i16(i16*) nounwind readnone
-declare <2 x i32> @llvm.arm.neon.vld1i.v2i32(i32*) nounwind readnone
-declare <2 x float> @llvm.arm.neon.vld1f.v2f32(float*) nounwind readnone
-declare <1 x i64> @llvm.arm.neon.vld1i.v1i64(i64*) nounwind readnone
+declare <8 x i8>  @llvm.arm.neon.vld1i.v8i8(i8*) nounwind readonly
+declare <4 x i16> @llvm.arm.neon.vld1i.v4i16(i8*) nounwind readonly
+declare <2 x i32> @llvm.arm.neon.vld1i.v2i32(i8*) nounwind readonly
+declare <2 x float> @llvm.arm.neon.vld1f.v2f32(i8*) nounwind readonly
+declare <1 x i64> @llvm.arm.neon.vld1i.v1i64(i8*) nounwind readonly
 
-declare <16 x i8> @llvm.arm.neon.vld1i.v16i8(i8*) nounwind readnone
-declare <8 x i16> @llvm.arm.neon.vld1i.v8i16(i16*) nounwind readnone
-declare <4 x i32> @llvm.arm.neon.vld1i.v4i32(i32*) nounwind readnone
-declare <4 x float> @llvm.arm.neon.vld1f.v4f32(float*) nounwind readnone
-declare <2 x i64> @llvm.arm.neon.vld1i.v2i64(i64*) nounwind readnone
+declare <16 x i8> @llvm.arm.neon.vld1i.v16i8(i8*) nounwind readonly
+declare <8 x i16> @llvm.arm.neon.vld1i.v8i16(i8*) nounwind readonly
+declare <4 x i32> @llvm.arm.neon.vld1i.v4i32(i8*) nounwind readonly
+declare <4 x float> @llvm.arm.neon.vld1f.v4f32(i8*) nounwind readonly
+declare <2 x i64> @llvm.arm.neon.vld1i.v2i64(i8*) nounwind readonly
