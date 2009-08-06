@@ -28,6 +28,8 @@ class GREndPathNodeBuilder;
 
 class GRSubEngine {
 public:
+  virtual ~GRSubEngine() {}
+
   virtual const GRState* getInitialState() = 0;
 
   virtual GRStateManager& getStateManager() = 0;
