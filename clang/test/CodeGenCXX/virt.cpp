@@ -1,6 +1,6 @@
-// RUN: clang-cc -triple x86_64-apple-darwin -frtti=0 -std=c++0x -S %s -o %t-64.s &&
+// RUN: clang-cc -triple x86_64-apple-darwin -frtti=0 -std=c++0x -O3 -S %s -o %t-64.s &&
 // RUN: FileCheck -check-prefix LP64 --input-file=%t-64.s %s &&
-// RUN: clang-cc -triple i386-apple-darwin -frtti=0 -std=c++0x -S %s -o %t-32.s &&
+// RUN: clang-cc -triple i386-apple-darwin -frtti=0 -std=c++0x -O3 -S %s -o %t-32.s &&
 // RUN: FileCheck -check-prefix LP32 -input-file=%t-32.s %s &&
 // RUN: true
 
@@ -23,6 +23,30 @@ struct D {
   virtual void boo();
 };
 void D::boo() { }
+
+struct D1 {
+  virtual void bar();
+  void *d1;
+};
+void D1::bar() { }
+
+class F : virtual public D1, virtual public D {
+public:
+  virtual void foo();
+  void *f;
+};
+void F::foo() { }
+
+int j;
+void test2() {
+  F f;
+  static int sz = (char *)(&f.f) - (char *)(&f);
+  j = sz;
+  // CHECK-LP32: movl $4, __ZZ5test2vE2sz
+  // CHECK-LP64: movl $8, __ZZ5test2vE2sz(%rip)
+}
+  
+static_assert(sizeof(F) == sizeof(void*)*4, "invalid vbase size");
 
 struct E {
   int e;
@@ -90,23 +114,3 @@ int main() {
 // CHECK-LP32: .space 4
 // CHECK-LP32: .long __ZN1C4bee1Ev
 // CHECK-LP32: .long __ZN1C4bee2Ev
-
-struct D1 {
-  virtual void bar();
-  void *d1;
-};
-void D1::bar() { }
-
-class F : virtual public D1, virtual public D {
-public:
-  virtual void foo();
-  void *f;
-};
-void F::foo() { }
-
-void test2() {
-  F f;
-  f.f = 0;
-}
-  
-static_assert(sizeof(F) == sizeof(void*)*4, "invalid vbase size");
