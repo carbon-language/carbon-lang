@@ -35,7 +35,8 @@ void test() {
   apply1<add_reference, void>::type t; // expected-note{{in instantiation of template class 'struct apply1<struct add_reference, void>' requested here}} \
   // FIXME: expected-error{{unexpected type name 'type': expected expression}}
 
-  apply1<bogus, int>::type t2; // expected-note{{in instantiation of template class 'struct apply1<struct bogus, int>' requested here}}
+  apply1<bogus, int>::type t2; // expected-note{{in instantiation of template class 'struct apply1<struct bogus, int>' requested here}} \
+  // FIXME: expected-error{{unexpected type name 'type': expected expression}}
 }
 
 

@@ -171,8 +171,10 @@ public:
   
   /// \brief Transform the given template name.
   /// 
-  /// FIXME: At the moment, subclasses must override this.
-  TemplateName TransformTemplateName(TemplateName Template);
+  /// By default, transforms the template name by transforming the declarations
+  /// and nested-name-specifiers that occur within the template name. 
+  /// Subclasses may override this function to provide alternate behavior.
+  TemplateName TransformTemplateName(TemplateName Name);
   
   /// \brief Transform the given template argument.
   ///
@@ -433,6 +435,36 @@ public:
                                                   SourceRange Range,
                                                   bool TemplateKW,
                                                   QualType T);
+
+  /// \brief Build a new template name given a nested name specifier, a flag
+  /// indicating whether the "template" keyword was provided, and the template
+  /// that the template name refers to.
+  ///
+  /// By default, builds the new template name directly. Subclasses may override
+  /// this routine to provide different behavior.
+  TemplateName RebuildTemplateName(NestedNameSpecifier *Qualifier,
+                                   bool TemplateKW,
+                                   TemplateDecl *Template);
+
+  /// \brief Build a new template name given a nested name specifier, a flag
+  /// indicating whether the "template" keyword was provided, and a set of
+  /// overloaded function templates.
+  ///
+  /// By default, builds the new template name directly. Subclasses may override
+  /// this routine to provide different behavior.
+  TemplateName RebuildTemplateName(NestedNameSpecifier *Qualifier,
+                                   bool TemplateKW,
+                                   OverloadedFunctionDecl *Ovl);
+  
+  /// \brief Build a new template name given a nested name specifier and the
+  /// name that is referred to as a template.
+  ///
+  /// By default, performs semantic analysis to determine whether the name can
+  /// be resolved to a specific template, then builds the appropriate kind of
+  /// template name. Subclasses may override this routine to provide different
+  /// behavior.
+  TemplateName RebuildTemplateName(NestedNameSpecifier *Qualifier,
+                                   const IdentifierInfo &II);
 };
   
 template<typename Derived>
@@ -477,6 +509,9 @@ TreeTransform<Derived>::TransformNestedNameSpecifier(NestedNameSpecifier *NNS,
   case NestedNameSpecifier::TypeSpecWithTemplate:
   case NestedNameSpecifier::TypeSpec: {
     QualType T = getDerived().TransformType(QualType(NNS->getAsType(), 0));
+    if (T.isNull())
+      return 0;
+    
     if (!getDerived().AlwaysRebuild() &&
         Prefix == NNS->getPrefix() &&
         T == QualType(NNS->getAsType(), 0))
@@ -490,6 +525,88 @@ TreeTransform<Derived>::TransformNestedNameSpecifier(NestedNameSpecifier *NNS,
   
   // Required to silence a GCC warning
   return 0;  
+}
+
+template<typename Derived>
+TemplateName 
+TreeTransform<Derived>::TransformTemplateName(TemplateName Name) {
+  if (QualifiedTemplateName *QTN = Name.getAsQualifiedTemplateName()) {
+    NestedNameSpecifier *NNS 
+      = getDerived().TransformNestedNameSpecifier(QTN->getQualifier(),
+                      /*FIXME:*/SourceRange(getDerived().getBaseLocation()));
+    if (!NNS)
+      return TemplateName();
+    
+    if (TemplateDecl *Template = QTN->getTemplateDecl()) {
+      TemplateDecl *TransTemplate 
+        = cast_or_null<TemplateDecl>(getDerived().TransformDecl(Template));
+      if (!TransTemplate)
+        return TemplateName();
+      
+      if (!getDerived().AlwaysRebuild() &&
+          NNS == QTN->getQualifier() &&
+          TransTemplate == Template)
+        return Name;
+      
+      return getDerived().RebuildTemplateName(NNS, QTN->hasTemplateKeyword(),
+                                              TransTemplate);
+    }
+      
+    OverloadedFunctionDecl *Ovl = QTN->getOverloadedFunctionDecl();
+    assert(Ovl && "Not a template name or an overload set?");
+    OverloadedFunctionDecl *TransOvl 
+      = cast_or_null<OverloadedFunctionDecl>(getDerived().TransformDecl(Ovl));
+    if (!TransOvl)
+      return TemplateName();
+    
+    if (!getDerived().AlwaysRebuild() &&
+        NNS == QTN->getQualifier() &&
+        TransOvl == Ovl)
+      return Name;
+    
+    return getDerived().RebuildTemplateName(NNS, QTN->hasTemplateKeyword(),
+                                            TransOvl);
+  }
+  
+  if (DependentTemplateName *DTN = Name.getAsDependentTemplateName()) {
+    NestedNameSpecifier *NNS 
+      = getDerived().TransformNestedNameSpecifier(DTN->getQualifier(),
+                        /*FIXME:*/SourceRange(getDerived().getBaseLocation()));
+    if (!NNS)
+      return TemplateName();
+    
+    if (!getDerived().AlwaysRebuild() &&
+        NNS == DTN->getQualifier())
+      return Name;
+    
+    return getDerived().RebuildTemplateName(NNS, *DTN->getName());
+  }
+  
+  if (TemplateDecl *Template = Name.getAsTemplateDecl()) {
+    TemplateDecl *TransTemplate 
+      = cast_or_null<TemplateDecl>(getDerived().TransformDecl(Template));
+    if (!TransTemplate)
+      return TemplateName();
+    
+    if (!getDerived().AlwaysRebuild() &&
+        TransTemplate == Template)
+      return Name;
+    
+    return TemplateName(TransTemplate);
+  }
+  
+  OverloadedFunctionDecl *Ovl = Name.getAsOverloadedFunctionDecl();
+  assert(Ovl && "Not a template name or an overload set?");
+  OverloadedFunctionDecl *TransOvl 
+    = cast_or_null<OverloadedFunctionDecl>(getDerived().TransformDecl(Ovl));
+  if (!TransOvl)
+    return TemplateName();
+  
+  if (!getDerived().AlwaysRebuild() &&
+      TransOvl == Ovl)
+    return Name;
+  
+  return TemplateName(TransOvl);
 }
 
 template<typename Derived>
@@ -1341,6 +1458,51 @@ TreeTransform<Derived>::RebuildNestedNameSpecifier(NestedNameSpecifier *Prefix,
   
   SemaRef.Diag(Range.getBegin(), diag::err_nested_name_spec_non_tag) << T;
   return 0;
+}
+  
+template<typename Derived>
+TemplateName 
+TreeTransform<Derived>::RebuildTemplateName(NestedNameSpecifier *Qualifier,
+                                            bool TemplateKW,
+                                            TemplateDecl *Template) {
+  return SemaRef.Context.getQualifiedTemplateName(Qualifier, TemplateKW, 
+                                                  Template);
+}
+
+template<typename Derived>
+TemplateName 
+TreeTransform<Derived>::RebuildTemplateName(NestedNameSpecifier *Qualifier,
+                                            bool TemplateKW,
+                                            OverloadedFunctionDecl *Ovl) {
+  return SemaRef.Context.getQualifiedTemplateName(Qualifier, TemplateKW, Ovl);
+}
+
+template<typename Derived>
+TemplateName 
+TreeTransform<Derived>::RebuildTemplateName(NestedNameSpecifier *Qualifier,
+                                            const IdentifierInfo &II) {
+  if (Qualifier->isDependent())
+    return SemaRef.Context.getDependentTemplateName(Qualifier, &II);
+  
+  // Somewhat redundant with ActOnDependentTemplateName.
+  CXXScopeSpec SS;
+  SS.setRange(SourceRange(getDerived().getBaseLocation()));
+  SS.setScopeRep(Qualifier);
+  Sema::TemplateTy Template;
+  TemplateNameKind TNK = SemaRef.isTemplateName(II, 0, Template, &SS);
+  if (TNK == TNK_Non_template) {
+    SemaRef.Diag(getDerived().getBaseLocation(), 
+                 diag::err_template_kw_refers_to_non_template)
+      << &II;
+    return TemplateName();
+  } else if (TNK == TNK_Function_template) {
+    SemaRef.Diag(getDerived().getBaseLocation(), 
+                 diag::err_template_kw_refers_to_non_template)
+      << &II;
+    return TemplateName();
+  }
+  
+  return Template.getAsVal<TemplateName>();  
 }
   
 } // end namespace clang

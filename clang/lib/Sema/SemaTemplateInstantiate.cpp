@@ -324,9 +324,6 @@ namespace {
     /// this declaration.
     Decl *TransformDecl(Decl *D);
     
-    /// \brief Transform the given template name by instantiating it.
-    TemplateName TransformTemplateName(TemplateName Template);
-    
     /// \brief Transforms a template type parameter type by performing 
     /// substitution of the corresponding template type argument.
     QualType TransformTemplateTypeParmType(const TemplateTypeParmType *T);
@@ -338,13 +335,20 @@ Sema::OwningExprResult TemplateInstantiator::TransformExpr(Expr *E) {
 }
 
 Decl *TemplateInstantiator::TransformDecl(Decl *D) {
+  if (TemplateTemplateParmDecl *TTP 
+        = dyn_cast_or_null<TemplateTemplateParmDecl>(D)) {
+    // FIXME: Depth reduction
+    assert(TTP->getDepth() == 0 && 
+           "Cannot reduce depth of a template template parameter");
+    assert(TemplateArgs[TTP->getPosition()].getAsDecl() &&
+           "Wrong kind of template template argument");
+    TemplateDecl *Template 
+      = dyn_cast<TemplateDecl>(TemplateArgs[TTP->getPosition()].getAsDecl());
+    assert(Template && "Expected a template");
+    return Template;
+  }
+  
   return SemaRef.InstantiateCurrentDeclRef(cast_or_null<NamedDecl>(D));
-}
-
-TemplateName 
-TemplateInstantiator::TransformTemplateName(TemplateName Template) {
-  return getSema().InstantiateTemplateName(Template, /*FIXME*/Loc, 
-                                           TemplateArgs);
 }
 
 QualType 
@@ -720,66 +724,9 @@ Sema::InstantiateNestedNameSpecifier(NestedNameSpecifier *NNS,
 TemplateName
 Sema::InstantiateTemplateName(TemplateName Name, SourceLocation Loc,
                               const TemplateArgumentList &TemplateArgs) {
-  if (TemplateTemplateParmDecl *TTP 
-        = dyn_cast_or_null<TemplateTemplateParmDecl>(
-                                                 Name.getAsTemplateDecl())) {
-    assert(TTP->getDepth() == 0 && 
-           "Cannot reduce depth of a template template parameter");
-    assert(TemplateArgs[TTP->getPosition()].getAsDecl() &&
-           "Wrong kind of template template argument");
-    ClassTemplateDecl *ClassTemplate 
-      = dyn_cast<ClassTemplateDecl>(
-                               TemplateArgs[TTP->getPosition()].getAsDecl());
-    assert(ClassTemplate && "Expected a class template");
-    if (QualifiedTemplateName *QTN = Name.getAsQualifiedTemplateName()) {
-      NestedNameSpecifier *NNS 
-        = InstantiateNestedNameSpecifier(QTN->getQualifier(),
-                                         /*FIXME=*/SourceRange(Loc),
-                                         TemplateArgs);
-      if (NNS)
-        return Context.getQualifiedTemplateName(NNS, 
-                                                QTN->hasTemplateKeyword(),
-                                                ClassTemplate);
-    }
-
-    return TemplateName(ClassTemplate);
-  } else if (DependentTemplateName *DTN = Name.getAsDependentTemplateName()) {
-    NestedNameSpecifier *NNS 
-      = InstantiateNestedNameSpecifier(DTN->getQualifier(),
-                                       /*FIXME=*/SourceRange(Loc),
-                                       TemplateArgs);
-    
-    if (!NNS) // FIXME: Not the best recovery strategy.
-      return Name;
-    
-    if (NNS->isDependent())
-      return Context.getDependentTemplateName(NNS, DTN->getName());
-
-    // Somewhat redundant with ActOnDependentTemplateName.
-    CXXScopeSpec SS;
-    SS.setRange(SourceRange(Loc));
-    SS.setScopeRep(NNS);
-    TemplateTy Template;
-    TemplateNameKind TNK = isTemplateName(*DTN->getName(), 0, Template, &SS);
-    if (TNK == TNK_Non_template) {
-      Diag(Loc, diag::err_template_kw_refers_to_non_template)
-        << DTN->getName();
-      return Name;
-    } else if (TNK == TNK_Function_template) {
-      Diag(Loc, diag::err_template_kw_refers_to_non_template)
-        << DTN->getName();
-      return Name;
-    }
-    
-    return Template.getAsVal<TemplateName>();
-  }
-
-  
-
-  // FIXME: Even if we're referring to a Decl that isn't a template template
-  // parameter, we may need to instantiate the outer contexts of that
-  // Decl. However, this won't be needed until we implement member templates.
-  return Name;
+  TemplateInstantiator Instantiator(*this, TemplateArgs, Loc,
+                                    DeclarationName());
+  return Instantiator.TransformTemplateName(Name);
 }
 
 TemplateArgument Sema::Instantiate(TemplateArgument Arg, 
