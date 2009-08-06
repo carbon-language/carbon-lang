@@ -342,9 +342,11 @@ static void MoveBelowTokenFactor(SelectionDAG *CurDAG, SDValue Load,
       Ops.push_back(Load.getOperand(0));
     else
       Ops.push_back(TF.getOperand(i));
-  CurDAG->UpdateNodeOperands(TF, &Ops[0], Ops.size());
-  CurDAG->UpdateNodeOperands(Load, TF, Load.getOperand(1), Load.getOperand(2));
-  CurDAG->UpdateNodeOperands(Store, Load.getValue(1), Store.getOperand(1),
+  SDValue NewTF = CurDAG->UpdateNodeOperands(TF, &Ops[0], Ops.size());
+  SDValue NewLoad = CurDAG->UpdateNodeOperands(Load, NewTF,
+                                               Load.getOperand(1),
+                                               Load.getOperand(2));
+  CurDAG->UpdateNodeOperands(Store, NewLoad.getValue(1), Store.getOperand(1),
                              Store.getOperand(2), Store.getOperand(3));
 }
 
