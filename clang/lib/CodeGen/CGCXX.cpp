@@ -258,16 +258,10 @@ CodeGenFunction::EmitCXXConstructExpr(llvm::Value *Dest,
 
   // Code gen optimization to eliminate copy constructor and return 
   // its first argument instead.
-  const CXXConstructorDecl *CDecl = E->getConstructor();
-  if (E->getNumArgs() == 1 &&
-      CDecl->isCopyConstructor(getContext())) {
+  if (E->isElidable()) {
     CXXConstructExpr::const_arg_iterator i = E->arg_begin();
-    const Expr *SubExpr = (*i);
-    // FIXME. Any other cases can be optimized away?
-    if (isa<CallExpr>(SubExpr) || isa<CXXTemporaryObjectExpr>(SubExpr)) {
-      EmitAggExpr(SubExpr, Dest, false);
-      return;
-    }
+    EmitAggExpr((*i), Dest, false);
+    return;
   }
   // Call the constructor.
   EmitCXXConstructorCall(E->getConstructor(), Ctor_Complete, Dest, 
