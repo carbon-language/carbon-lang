@@ -1230,6 +1230,7 @@ SVal RegionStoreManager::RetrieveStruct(const GRState *state,
   const RecordType* RT = T->getAsStructureType();
   RecordDecl* RD = RT->getDecl();
   assert(RD->isDefinition());
+  (void)RD;
 #if USE_EXPLICIT_COMPOUND
   llvm::ImmutableList<SVal> StructVal = getBasicVals().getEmptySValList();
 
