@@ -50,11 +50,11 @@ class ExplodedNode : public llvm::FoldingSetNode {
 protected:
   friend class ExplodedGraph;
   friend class GRCoreEngine;
-  friend class GRStmtNodeBuilderImpl;
-  friend class GRBranchNodeBuilderImpl;
-  friend class GRIndirectGotoNodeBuilderImpl;
-  friend class GRSwitchNodeBuilderImpl;
-  friend class GREndPathNodeBuilderImpl;  
+  friend class GRStmtNodeBuilder;
+  friend class GRBranchNodeBuilder;
+  friend class GRIndirectGotoNodeBuilder;
+  friend class GRSwitchNodeBuilder;
+  friend class GREndPathNodeBuilder;  
   
   class NodeGroup {
     enum { Size1 = 0x0, SizeOther = 0x1, AuxFlag = 0x2, Mask = 0x3 };

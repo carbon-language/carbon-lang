@@ -66,7 +66,7 @@ void clang::RegisterNSErrorChecks(BugReporter& BR, GRExprEngine &Eng) {
 
 void NSErrorCheck::FlushReports(BugReporter& BR) {
   // Get the analysis engine and the exploded analysis graph.
-  GRExprEngine::GraphTy& G = Eng.getGraph();
+  ExplodedGraph& G = Eng.getGraph();
   
   // Get the declaration of the method/function that was analyzed.
   Decl& CodeDecl = G.getCodeDecl();
@@ -89,8 +89,8 @@ void NSErrorCheck::FlushReports(BugReporter& BR) {
   
   if (ResultTy == Ctx.VoidTy) EmitRetTyWarning(BR, CodeDecl);
   
-  for (GRExprEngine::GraphTy::roots_iterator RI=G.roots_begin(),
-       RE=G.roots_end(); RI!=RE; ++RI) {
+  for (ExplodedGraph::roots_iterator RI=G.roots_begin(), RE=G.roots_end(); 
+       RI!=RE; ++RI) {
     // Scan the parameters for an implicit null dereference.
     for (llvm::SmallVectorImpl<VarDecl*>::iterator I=ErrorParams.begin(),
           E=ErrorParams.end(); I!=E; ++I)    

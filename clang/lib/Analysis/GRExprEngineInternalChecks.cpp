@@ -491,7 +491,7 @@ public:
 
       // Determine whether this was a 'zero-sized' VLA or a VLA with an
       // undefined size.
-      GRExprEngine::NodeTy* N = *I;
+      ExplodedNode* N = *I;
       PostStmt PS = cast<PostStmt>(N->getLocation());      
       const DeclStmt *DS = cast<DeclStmt>(PS.getStmt());
       VarDecl* VD = cast<VarDecl>(*DS->decl_begin());

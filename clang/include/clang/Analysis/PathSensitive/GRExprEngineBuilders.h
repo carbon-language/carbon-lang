@@ -20,10 +20,10 @@
 namespace clang {
 
 class GRStmtNodeBuilderRef {
-  GRExprEngine::NodeSet &Dst;
-  GRExprEngine::StmtNodeBuilder &B;
+  ExplodedNodeSet &Dst;
+  GRStmtNodeBuilder &B;
   GRExprEngine& Eng;
-  GRExprEngine::NodeTy* Pred;
+  ExplodedNode* Pred;
   const GRState* state;
   const Stmt* stmt;
   const unsigned OldSize;
@@ -38,10 +38,10 @@ private:
   GRStmtNodeBuilderRef(); // do not implement
   void operator=(const GRStmtNodeBuilderRef&); // do not implement
   
-  GRStmtNodeBuilderRef(GRExprEngine::NodeSet &dst,
-                       GRExprEngine::StmtNodeBuilder &builder,
+  GRStmtNodeBuilderRef(ExplodedNodeSet &dst,
+                       GRStmtNodeBuilder &builder,
                        GRExprEngine& eng,
-                       GRExprEngine::NodeTy* pred,
+                       ExplodedNode* pred,
                        const GRState *st,
                        const Stmt* s, bool auto_create_node)
   : Dst(dst), B(builder), Eng(eng), Pred(pred),
@@ -67,7 +67,7 @@ public:
     return Eng.getStateManager();
   }
   
-  GRExprEngine::NodeTy* MakeNode(const GRState* state) {
+  ExplodedNode* MakeNode(const GRState* state) {
     return B.MakeNode(Dst, const_cast<Stmt*>(stmt), Pred, state);    
   }    
 };

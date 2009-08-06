@@ -29,7 +29,7 @@ class PathDiagnosticClient;
 class ExplodedGraph;
   
   
-class GRSimpleAPICheck : public GRAuditor<GRState> {
+class GRSimpleAPICheck : public GRAuditor {
 public:
   GRSimpleAPICheck() {}
   virtual ~GRSimpleAPICheck() {}

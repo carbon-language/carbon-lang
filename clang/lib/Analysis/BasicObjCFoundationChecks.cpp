@@ -63,12 +63,12 @@ class VISIBILITY_HIDDEN BasicObjCFoundationChecks : public GRSimpleAPICheck {
   ASTContext &Ctx;
       
   bool isNSString(const ObjCInterfaceType *T, const char* suffix);
-  bool AuditNSString(NodeTy* N, const ObjCMessageExpr* ME);
+  bool AuditNSString(ExplodedNode* N, const ObjCMessageExpr* ME);
       
-  void Warn(NodeTy* N, const Expr* E, const std::string& s);  
-  void WarnNilArg(NodeTy* N, const Expr* E);
+  void Warn(ExplodedNode* N, const Expr* E, const std::string& s);  
+  void WarnNilArg(ExplodedNode* N, const Expr* E);
   
-  bool CheckNilArg(NodeTy* N, unsigned Arg);
+  bool CheckNilArg(ExplodedNode* N, unsigned Arg);
 
 public:
   BasicObjCFoundationChecks(ASTContext& ctx, BugReporter& br) 
@@ -77,7 +77,7 @@ public:
   bool Audit(ExplodedNode* N, GRStateManager&);
   
 private:  
-  void WarnNilArg(NodeTy* N, const ObjCMessageExpr* ME, unsigned Arg) {    
+  void WarnNilArg(ExplodedNode* N, const ObjCMessageExpr* ME, unsigned Arg) {    
     std::string sbuf;
     llvm::raw_string_ostream os(sbuf);
     os << "Argument to '" << GetReceiverNameType(ME) << "' method '"
@@ -139,7 +139,7 @@ static inline bool isNil(SVal X) {
 // Error reporting.
 //===----------------------------------------------------------------------===//
 
-bool BasicObjCFoundationChecks::CheckNilArg(NodeTy* N, unsigned Arg) {
+bool BasicObjCFoundationChecks::CheckNilArg(ExplodedNode* N, unsigned Arg) {
   const ObjCMessageExpr* ME =
     cast<ObjCMessageExpr>(cast<PostStmt>(N->getLocation()).getStmt());
   
@@ -162,7 +162,7 @@ bool BasicObjCFoundationChecks::isNSString(const ObjCInterfaceType *T,
   return !strcmp("String", suffix) || !strcmp("MutableString", suffix);
 }
 
-bool BasicObjCFoundationChecks::AuditNSString(NodeTy* N, 
+bool BasicObjCFoundationChecks::AuditNSString(ExplodedNode* N, 
                                               const ObjCMessageExpr* ME) {
   
   Selector S = ME->getSelector();

@@ -31,7 +31,7 @@ namespace clang {
 
 class CheckerContext {
   ExplodedNodeSet &Dst;
-  GRStmtNodeBuilder<GRState> &B;
+  GRStmtNodeBuilder &B;
   GRExprEngine &Eng;
   ExplodedNode *Pred;
   SaveAndRestore<bool> OldSink;
@@ -41,7 +41,7 @@ class CheckerContext {
 
 public:
   CheckerContext(ExplodedNodeSet &dst,
-                 GRStmtNodeBuilder<GRState> &builder,
+                 GRStmtNodeBuilder &builder,
                  GRExprEngine &eng,
                  ExplodedNode *pred,
                  const void *tag, bool preVisit)
@@ -63,7 +63,7 @@ public:
       return Eng.getConstraintManager();
   }
   ExplodedNodeSet &getNodeSet() { return Dst; }
-  GRStmtNodeBuilder<GRState> &getNodeBuilder() { return B; }
+  GRStmtNodeBuilder &getNodeBuilder() { return B; }
   ExplodedNode *&getPredecessor() { return Pred; }
   const GRState *getState() { return B.GetState(Pred); }
   
@@ -86,10 +86,10 @@ private:
   friend class GRExprEngine;
 
   void GR_Visit(ExplodedNodeSet &Dst,
-                GRStmtNodeBuilder<GRState> &Builder,
+                GRStmtNodeBuilder &Builder,
                 GRExprEngine &Eng,
                 const Stmt *stmt,
-                  ExplodedNode *Pred, bool isPrevisit) {
+                ExplodedNode *Pred, bool isPrevisit) {
     CheckerContext C(Dst, Builder, Eng, Pred, getTag(), isPrevisit);    
     assert(isPrevisit && "Only previsit supported for now.");
     _PreVisit(C, stmt);

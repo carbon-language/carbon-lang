@@ -167,19 +167,19 @@ ResolveToInterfaceMethodDecl(const ObjCMethodDecl *MD) {
 
 namespace {
 class VISIBILITY_HIDDEN GenericNodeBuilder {
-  GRStmtNodeBuilder<GRState> *SNB;
+  GRStmtNodeBuilder *SNB;
   Stmt *S;
   const void *tag;
-  GREndPathNodeBuilder<GRState> *ENB;
+  GREndPathNodeBuilder *ENB;
 public:
-  GenericNodeBuilder(GRStmtNodeBuilder<GRState> &snb, Stmt *s,
+  GenericNodeBuilder(GRStmtNodeBuilder &snb, Stmt *s,
                      const void *t)
   : SNB(&snb), S(s), tag(t), ENB(0) {}
-  GenericNodeBuilder(GREndPathNodeBuilder<GRState> &enb)
+
+  GenericNodeBuilder(GREndPathNodeBuilder &enb)
   : SNB(0), S(0), tag(0), ENB(&enb) {}
   
-  ExplodedNode *MakeNode(const GRState *state,
-                                  ExplodedNode *Pred) {
+  ExplodedNode *MakeNode(const GRState *state, ExplodedNode *Pred) {
     if (SNB)
       return SNB->generateNode(PostStmt(S, tag), state, Pred);
     
@@ -1835,8 +1835,8 @@ public:
   };
 
 private:
-  typedef llvm::DenseMap<const GRExprEngine::NodeTy*, const RetainSummary*>
-          SummaryLogTy;  
+  typedef llvm::DenseMap<const ExplodedNode*, const RetainSummary*>
+    SummaryLogTy;  
 
   RetainSummaryManager Summaries;  
   SummaryLogTy SummaryLog;
@@ -1854,7 +1854,7 @@ private:
                     RefVal::Kind& hasErr);
 
   void ProcessNonLeakError(ExplodedNodeSet& Dst,
-                           GRStmtNodeBuilder<GRState>& Builder,
+                           GRStmtNodeBuilder& Builder,
                            Expr* NodeExpr, Expr* ErrorExpr,
                            ExplodedNode* Pred,
                            const GRState* St,
@@ -1897,7 +1897,7 @@ public:
 
   void EvalSummary(ExplodedNodeSet& Dst,
                    GRExprEngine& Eng,
-                   GRStmtNodeBuilder<GRState>& Builder,
+                   GRStmtNodeBuilder& Builder,
                    Expr* Ex,
                    Expr* Receiver,
                    const RetainSummary& Summ,
@@ -1906,20 +1906,20 @@ public:
     
   virtual void EvalCall(ExplodedNodeSet& Dst,
                         GRExprEngine& Eng,
-                        GRStmtNodeBuilder<GRState>& Builder,
+                        GRStmtNodeBuilder& Builder,
                         CallExpr* CE, SVal L,
                         ExplodedNode* Pred);  
   
   
   virtual void EvalObjCMessageExpr(ExplodedNodeSet& Dst,
                                    GRExprEngine& Engine,
-                                   GRStmtNodeBuilder<GRState>& Builder,
+                                   GRStmtNodeBuilder& Builder,
                                    ObjCMessageExpr* ME,
                                    ExplodedNode* Pred);
   
   bool EvalObjCMessageExprAux(ExplodedNodeSet& Dst,
                               GRExprEngine& Engine,
-                              GRStmtNodeBuilder<GRState>& Builder,
+                              GRStmtNodeBuilder& Builder,
                               ObjCMessageExpr* ME,
                               ExplodedNode* Pred);
 
@@ -1929,11 +1929,11 @@ public:
   // End-of-path.
   
   virtual void EvalEndPath(GRExprEngine& Engine,
-                           GREndPathNodeBuilder<GRState>& Builder);
+                           GREndPathNodeBuilder& Builder);
   
   virtual void EvalDeadSymbols(ExplodedNodeSet& Dst,
                                GRExprEngine& Engine,
-                               GRStmtNodeBuilder<GRState>& Builder,
+                               GRStmtNodeBuilder& Builder,
                                ExplodedNode* Pred,
                                Stmt* S, const GRState* state,
                                SymbolReaper& SymReaper);
@@ -1946,7 +1946,7 @@ public:
   
   virtual void EvalReturn(ExplodedNodeSet& Dst,
                           GRExprEngine& Engine,
-                          GRStmtNodeBuilder<GRState>& Builder,
+                          GRStmtNodeBuilder& Builder,
                           ReturnStmt* S,
                           ExplodedNode* Pred);
 
@@ -2743,7 +2743,7 @@ static QualType GetReturnType(const Expr* RetE, ASTContext& Ctx) {
 
 void CFRefCount::EvalSummary(ExplodedNodeSet& Dst,
                              GRExprEngine& Eng,
-                             GRStmtNodeBuilder<GRState>& Builder,
+                             GRStmtNodeBuilder& Builder,
                              Expr* Ex,
                              Expr* Receiver,
                              const RetainSummary& Summ,
@@ -2953,7 +2953,7 @@ void CFRefCount::EvalSummary(ExplodedNodeSet& Dst,
   }
   
   // Generate a sink node if we are at the end of a path.
-  GRExprEngine::NodeTy *NewNode =
+  ExplodedNode *NewNode =
     Summ.isEndPath() ? Builder.MakeSinkNode(Dst, Ex, Pred, state)
                      : Builder.MakeNode(Dst, Ex, Pred, state);
   
@@ -2964,7 +2964,7 @@ void CFRefCount::EvalSummary(ExplodedNodeSet& Dst,
 
 void CFRefCount::EvalCall(ExplodedNodeSet& Dst,
                           GRExprEngine& Eng,
-                          GRStmtNodeBuilder<GRState>& Builder,
+                          GRStmtNodeBuilder& Builder,
                           CallExpr* CE, SVal L,
                           ExplodedNode* Pred) {
   const FunctionDecl* FD = L.getAsFunctionDecl();
@@ -2978,7 +2978,7 @@ void CFRefCount::EvalCall(ExplodedNodeSet& Dst,
 
 void CFRefCount::EvalObjCMessageExpr(ExplodedNodeSet& Dst,
                                      GRExprEngine& Eng,
-                                     GRStmtNodeBuilder<GRState>& Builder,
+                                     GRStmtNodeBuilder& Builder,
                                      ObjCMessageExpr* ME,
                                      ExplodedNode* Pred) {  
   RetainSummary* Summ = 0;
@@ -3098,7 +3098,7 @@ void CFRefCount::EvalBind(GRStmtNodeBuilderRef& B, SVal location, SVal val) {
 
 void CFRefCount::EvalReturn(ExplodedNodeSet& Dst,
                             GRExprEngine& Eng,
-                            GRStmtNodeBuilder<GRState>& Builder,
+                            GRStmtNodeBuilder& Builder,
                             ReturnStmt* S,
                             ExplodedNode* Pred) {
   
@@ -3515,7 +3515,7 @@ CFRefCount::ProcessLeaks(const GRState * state,
 }
 
 void CFRefCount::EvalEndPath(GRExprEngine& Eng,
-                             GREndPathNodeBuilder<GRState>& Builder) {
+                             GREndPathNodeBuilder& Builder) {
   
   const GRState *state = Builder.getState();
   GenericNodeBuilder Bd(Builder);
@@ -3543,7 +3543,7 @@ void CFRefCount::EvalEndPath(GRExprEngine& Eng,
 
 void CFRefCount::EvalDeadSymbols(ExplodedNodeSet& Dst,
                                  GRExprEngine& Eng,
-                                 GRStmtNodeBuilder<GRState>& Builder,
+                                 GRStmtNodeBuilder& Builder,
                                  ExplodedNode* Pred,
                                  Stmt* S,
                                  const GRState* state,
@@ -3597,13 +3597,13 @@ void CFRefCount::EvalDeadSymbols(ExplodedNodeSet& Dst,
 }
 
 void CFRefCount::ProcessNonLeakError(ExplodedNodeSet& Dst,
-                                     GRStmtNodeBuilder<GRState>& Builder,
+                                     GRStmtNodeBuilder& Builder,
                                      Expr* NodeExpr, Expr* ErrorExpr,
                                      ExplodedNode* Pred,
                                      const GRState* St,
                                      RefVal::Kind hasErr, SymbolRef Sym) {
   Builder.BuildSinks = true;
-  GRExprEngine::NodeTy* N  = Builder.MakeNode(Dst, NodeExpr, Pred, St);
+  ExplodedNode *N  = Builder.MakeNode(Dst, NodeExpr, Pred, St);
   
   if (!N)
     return;

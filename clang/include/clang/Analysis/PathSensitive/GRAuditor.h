@@ -18,19 +18,15 @@
 #ifndef LLVM_CLANG_ANALYSIS_GRAUDITOR
 #define LLVM_CLANG_ANALYSIS_GRAUDITOR
 
-#include "clang/AST/Expr.h"
-#include "clang/Analysis/PathSensitive/ExplodedGraph.h"
-
 namespace clang {
+
+class ExplodedNode;
+class GRStateManager;
   
-template <typename STATE>
 class GRAuditor {
 public:
-  typedef ExplodedNode       NodeTy;
-  typedef typename STATE::ManagerTy ManagerTy;
-  
   virtual ~GRAuditor() {}
-  virtual bool Audit(NodeTy* N, ManagerTy& M) = 0;
+  virtual bool Audit(ExplodedNode* N, GRStateManager& M) = 0;
 };
   
   

@@ -40,13 +40,13 @@ public:
   
   virtual void EvalCall(ExplodedNodeSet& Dst,
                         GRExprEngine& Engine,
-                        GRStmtNodeBuilder<GRState>& Builder,
+                        GRStmtNodeBuilder& Builder,
                         CallExpr* CE, SVal L,
                         ExplodedNode* Pred) {}
   
   virtual void EvalObjCMessageExpr(ExplodedNodeSet& Dst,
                                    GRExprEngine& Engine,
-                                   GRStmtNodeBuilder<GRState>& Builder,
+                                   GRStmtNodeBuilder& Builder,
                                    ObjCMessageExpr* ME,
                                    ExplodedNode* Pred) {}
   
@@ -57,12 +57,12 @@ public:
   // End-of-path and dead symbol notification.
   
   virtual void EvalEndPath(GRExprEngine& Engine,
-                           GREndPathNodeBuilder<GRState>& Builder) {}
+                           GREndPathNodeBuilder& Builder) {}
   
   
   virtual void EvalDeadSymbols(ExplodedNodeSet& Dst,
                                GRExprEngine& Engine,
-                               GRStmtNodeBuilder<GRState>& Builder,
+                               GRStmtNodeBuilder& Builder,
                                ExplodedNode* Pred,
                                Stmt* S, const GRState* state,
                                SymbolReaper& SymReaper) {}
@@ -70,7 +70,7 @@ public:
   // Return statements.  
   virtual void EvalReturn(ExplodedNodeSet& Dst,
                           GRExprEngine& Engine,
-                          GRStmtNodeBuilder<GRState>& Builder,
+                          GRStmtNodeBuilder& Builder,
                           ReturnStmt* S,
                           ExplodedNode* Pred) {}
 

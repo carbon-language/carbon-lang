@@ -119,13 +119,11 @@ GRWorkList* GRWorkList::MakeBFSBlockDFSContents() {
 //===----------------------------------------------------------------------===//
 // Core analysis engine.
 //===----------------------------------------------------------------------===//
-void GRCoreEngine::ProcessEndPath(GREndPathNodeBuilderImpl& BuilderImpl) {
-  GREndPathNodeBuilder<StateTy> Builder(BuilderImpl);
+void GRCoreEngine::ProcessEndPath(GREndPathNodeBuilder& Builder) {
   SubEngine.ProcessEndPath(Builder);
 }
 
-void GRCoreEngine::ProcessStmt(Stmt* S, GRStmtNodeBuilderImpl& BuilderImpl) {
-  GRStmtNodeBuilder<StateTy> Builder(BuilderImpl,SubEngine.getStateManager());
+void GRCoreEngine::ProcessStmt(Stmt* S, GRStmtNodeBuilder& Builder) {
   SubEngine.ProcessStmt(S, Builder);
 }
 
@@ -135,20 +133,18 @@ bool GRCoreEngine::ProcessBlockEntrance(CFGBlock* Blk, const GRState* State,
 }
 
 void GRCoreEngine::ProcessBranch(Stmt* Condition, Stmt* Terminator,
-                   GRBranchNodeBuilderImpl& BuilderImpl) {
-  GRBranchNodeBuilder<StateTy> Builder(BuilderImpl);
+                   GRBranchNodeBuilder& Builder) {
   SubEngine.ProcessBranch(Condition, Terminator, Builder);    
 }
 
-void GRCoreEngine::ProcessIndirectGoto(GRIndirectGotoNodeBuilderImpl& BuilderImpl) {
-  GRIndirectGotoNodeBuilder<GRState> Builder(BuilderImpl);
+void GRCoreEngine::ProcessIndirectGoto(GRIndirectGotoNodeBuilder& Builder) {
   SubEngine.ProcessIndirectGoto(Builder);
 }
 
-void GRCoreEngine::ProcessSwitch(GRSwitchNodeBuilderImpl& BuilderImpl) {
-  GRSwitchNodeBuilder<GRState> Builder(BuilderImpl);
+void GRCoreEngine::ProcessSwitch(GRSwitchNodeBuilder& Builder) {
   SubEngine.ProcessSwitch(Builder);
 }
+
 /// ExecuteWorkList - Run the worklist algorithm for a maximum number of steps.
 bool GRCoreEngine::ExecuteWorkList(unsigned Steps) {
   
@@ -224,7 +220,7 @@ void GRCoreEngine::HandleBlockEdge(const BlockEdge& L, ExplodedNode* Pred) {
             && "EXIT block cannot contain Stmts.");
 
     // Process the final state transition.
-    GREndPathNodeBuilderImpl Builder(Blk, Pred, this);
+    GREndPathNodeBuilder Builder(Blk, Pred, this);
     ProcessEndPath(Builder);
 
     // This path is done. Don't enqueue any more nodes.
@@ -238,7 +234,7 @@ void GRCoreEngine::HandleBlockEdge(const BlockEdge& L, ExplodedNode* Pred) {
 }
 
 void GRCoreEngine::HandleBlockEntrance(const BlockEntrance& L,
-                                           ExplodedNode* Pred) {
+                                       ExplodedNode* Pred) {
   
   // Increment the block counter.
   GRBlockCounter Counter = WList->getBlockCounter();
@@ -247,7 +243,8 @@ void GRCoreEngine::HandleBlockEntrance(const BlockEntrance& L,
   
   // Process the entrance of the block.  
   if (Stmt* S = L.getFirstStmt()) {
-    GRStmtNodeBuilderImpl Builder(L.getBlock(), 0, Pred, this);
+    GRStmtNodeBuilder Builder(L.getBlock(), 0, Pred, this, 
+                              SubEngine.getStateManager());
     ProcessStmt(S, Builder);
   }
   else 
@@ -298,7 +295,7 @@ void GRCoreEngine::HandleBlockExit(CFGBlock * B, ExplodedNode* Pred) {
         // Only 1 successor: the indirect goto dispatch block.
         assert (B->succ_size() == 1);
         
-        GRIndirectGotoNodeBuilderImpl
+        GRIndirectGotoNodeBuilder
            builder(Pred, B, cast<IndirectGotoStmt>(Term)->getTarget(),
                    *(B->succ_begin()), this);
         
@@ -322,9 +319,8 @@ void GRCoreEngine::HandleBlockExit(CFGBlock * B, ExplodedNode* Pred) {
       }
         
       case Stmt::SwitchStmtClass: {
-        GRSwitchNodeBuilderImpl builder(Pred, B,
-                                        cast<SwitchStmt>(Term)->getCond(),
-                                        this);
+        GRSwitchNodeBuilder builder(Pred, B, cast<SwitchStmt>(Term)->getCond(),
+                                    this);
         
         ProcessSwitch(builder);
         return;
@@ -346,8 +342,8 @@ void GRCoreEngine::HandleBranch(Stmt* Cond, Stmt* Term, CFGBlock * B,
                                 ExplodedNode* Pred) {
   assert (B->succ_size() == 2);
 
-  GRBranchNodeBuilderImpl Builder(B, *(B->succ_begin()), *(B->succ_begin()+1),
-                                  Pred, this);
+  GRBranchNodeBuilder Builder(B, *(B->succ_begin()), *(B->succ_begin()+1),
+                              Pred, this);
   
   ProcessBranch(Cond, Term, Builder);
 }
@@ -360,7 +356,8 @@ void GRCoreEngine::HandlePostStmt(const PostStmt& L, CFGBlock* B,
   if (StmtIdx == B->size())
     HandleBlockExit(B, Pred);
   else {
-    GRStmtNodeBuilderImpl Builder(B, StmtIdx, Pred, this);
+    GRStmtNodeBuilder Builder(B, StmtIdx, Pred, this, 
+                              SubEngine.getStateManager());
     ProcessStmt((*B)[StmtIdx], Builder);
   }
 }
@@ -384,19 +381,23 @@ void GRCoreEngine::GenerateNode(const ProgramPoint& Loc,
   if (IsNew) WList->Enqueue(Node);
 }
 
-GRStmtNodeBuilderImpl::GRStmtNodeBuilderImpl(CFGBlock* b, unsigned idx,
-                                             ExplodedNode* N, GRCoreEngine* e)
-  : Eng(*e), B(*b), Idx(idx), Pred(N), LastNode(N) {
+GRStmtNodeBuilder::GRStmtNodeBuilder(CFGBlock* b, unsigned idx,
+                                     ExplodedNode* N, GRCoreEngine* e,
+                                     GRStateManager &mgr)
+  : Eng(*e), B(*b), Idx(idx), Pred(N), LastNode(N), Mgr(mgr), Auditor(0), 
+    PurgingDeadSymbols(false), BuildSinks(false), HasGeneratedNode(false),
+    PointKind(ProgramPoint::PostStmtKind), Tag(0) {
   Deferred.insert(N);
+  CleanedState = getLastNode()->getState();
 }
 
-GRStmtNodeBuilderImpl::~GRStmtNodeBuilderImpl() {
+GRStmtNodeBuilder::~GRStmtNodeBuilder() {
   for (DeferredTy::iterator I=Deferred.begin(), E=Deferred.end(); I!=E; ++I)
     if (!(*I)->isSink())
       GenerateAutoTransition(*I);
 }
 
-void GRStmtNodeBuilderImpl::GenerateAutoTransition(ExplodedNode* N) {
+void GRStmtNodeBuilder::GenerateAutoTransition(ExplodedNode* N) {
   assert (!N->isSink());
   
   PostStmt Loc(getStmt());
@@ -452,17 +453,17 @@ static inline PostStmt GetPostLoc(const Stmt* S, ProgramPoint::Kind K,
 }
 
 ExplodedNode*
-GRStmtNodeBuilderImpl::generateNodeImpl(const Stmt* S, const GRState* State,
+GRStmtNodeBuilder::generateNodeInternal(const Stmt* S, const GRState* State,
                                         ExplodedNode* Pred,
                                         ProgramPoint::Kind K,
                                         const void *tag) {
   return K == ProgramPoint::PreStmtKind
-         ? generateNodeImpl(PreStmt(S, tag), State, Pred)
-         : generateNodeImpl(GetPostLoc(S, K, tag), State, Pred); 
+         ? generateNodeInternal(PreStmt(S, tag), State, Pred)
+         : generateNodeInternal(GetPostLoc(S, K, tag), State, Pred); 
 }
 
 ExplodedNode*
-GRStmtNodeBuilderImpl::generateNodeImpl(const ProgramPoint &Loc,
+GRStmtNodeBuilder::generateNodeInternal(const ProgramPoint &Loc,
                                         const GRState* State,
                                         ExplodedNode* Pred) {
   bool IsNew;
@@ -480,8 +481,8 @@ GRStmtNodeBuilderImpl::generateNodeImpl(const ProgramPoint &Loc,
   return NULL;  
 }
 
-ExplodedNode* GRBranchNodeBuilderImpl::generateNodeImpl(const GRState* State,
-                                                        bool branch) {
+ExplodedNode* GRBranchNodeBuilder::generateNode(const GRState* State,
+                                                bool branch) {
   
   // If the branch has been marked infeasible we should not generate a node.
   if (!isFeasible(branch))
@@ -507,9 +508,9 @@ ExplodedNode* GRBranchNodeBuilderImpl::generateNodeImpl(const GRState* State,
   return NULL;
 }
 
-GRBranchNodeBuilderImpl::~GRBranchNodeBuilderImpl() {
-  if (!GeneratedTrue) generateNodeImpl(Pred->State, true);
-  if (!GeneratedFalse) generateNodeImpl(Pred->State, false);
+GRBranchNodeBuilder::~GRBranchNodeBuilder() {
+  if (!GeneratedTrue) generateNode(Pred->State, true);
+  if (!GeneratedFalse) generateNode(Pred->State, false);
   
   for (DeferredTy::iterator I=Deferred.begin(), E=Deferred.end(); I!=E; ++I)
     if (!(*I)->isSink()) Eng.WList->Enqueue(*I);
@@ -517,13 +518,11 @@ GRBranchNodeBuilderImpl::~GRBranchNodeBuilderImpl() {
 
 
 ExplodedNode*
-GRIndirectGotoNodeBuilderImpl::generateNodeImpl(const Iterator& I,
-                                                const GRState* St,
-                                                bool isSink) {
+GRIndirectGotoNodeBuilder::generateNode(const iterator& I, const GRState* St,
+                                        bool isSink) {
   bool IsNew;
   
-  ExplodedNode* Succ =
-    Eng.G->getNode(BlockEdge(Src, I.getBlock()), St, &IsNew);
+  ExplodedNode* Succ = Eng.G->getNode(BlockEdge(Src, I.getBlock()), St, &IsNew);
               
   Succ->addPredecessor(Pred);
   
@@ -542,13 +541,11 @@ GRIndirectGotoNodeBuilderImpl::generateNodeImpl(const Iterator& I,
 
 
 ExplodedNode*
-GRSwitchNodeBuilderImpl::generateCaseStmtNodeImpl(const Iterator& I,
-                                                  const GRState* St) {
+GRSwitchNodeBuilder::generateCaseStmtNode(const iterator& I, const GRState* St){
 
   bool IsNew;
   
-  ExplodedNode* Succ = Eng.G->getNode(BlockEdge(Src, I.getBlock()),
-                                                St, &IsNew);  
+  ExplodedNode* Succ = Eng.G->getNode(BlockEdge(Src, I.getBlock()), St, &IsNew);
   Succ->addPredecessor(Pred);
   
   if (IsNew) {
@@ -561,8 +558,7 @@ GRSwitchNodeBuilderImpl::generateCaseStmtNodeImpl(const Iterator& I,
 
 
 ExplodedNode*
-GRSwitchNodeBuilderImpl::generateDefaultCaseNodeImpl(const GRState* St,
-                                                     bool isSink) {
+GRSwitchNodeBuilder::generateDefaultCaseNode(const GRState* St, bool isSink) {
   
   // Get the block for the default case.
   assert (Src->succ_rbegin() != Src->succ_rend());
@@ -570,8 +566,7 @@ GRSwitchNodeBuilderImpl::generateDefaultCaseNodeImpl(const GRState* St,
   
   bool IsNew;
   
-  ExplodedNode* Succ = Eng.G->getNode(BlockEdge(Src, DefaultBlock),
-                                                St, &IsNew);  
+  ExplodedNode* Succ = Eng.G->getNode(BlockEdge(Src, DefaultBlock), St, &IsNew);
   Succ->addPredecessor(Pred);
   
   if (IsNew) {
@@ -586,20 +581,18 @@ GRSwitchNodeBuilderImpl::generateDefaultCaseNodeImpl(const GRState* St,
   return NULL;
 }
 
-GREndPathNodeBuilderImpl::~GREndPathNodeBuilderImpl() {
+GREndPathNodeBuilder::~GREndPathNodeBuilder() {
   // Auto-generate an EOP node if one has not been generated.
-  if (!HasGeneratedNode) generateNodeImpl(Pred->State);
+  if (!HasGeneratedNode) generateNode(Pred->State);
 }
 
 ExplodedNode*
-GREndPathNodeBuilderImpl::generateNodeImpl(const GRState* State,
-                                           const void *tag,
-                                           ExplodedNode* P) {
+GREndPathNodeBuilder::generateNode(const GRState* State, const void *tag,
+                                   ExplodedNode* P) {
   HasGeneratedNode = true;    
   bool IsNew;
   
-  ExplodedNode* Node =
-    Eng.G->getNode(BlockEntrance(&B, tag), State, &IsNew);
+  ExplodedNode* Node = Eng.G->getNode(BlockEntrance(&B, tag), State, &IsNew);
   
   Node->addPredecessor(P ? P : Pred);
   
