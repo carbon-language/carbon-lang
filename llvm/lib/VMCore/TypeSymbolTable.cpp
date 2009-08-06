@@ -59,6 +59,17 @@ Type* TypeSymbolTable::lookup(const StringRef &Name) const {
   return result;
 }
 
+TypeSymbolTable::iterator TypeSymbolTable::find(const StringRef &Name) {
+  sys::SmartScopedReader<true> Reader(*TypeSymbolTableLock);  
+  return tmap.find(Name);
+}
+
+TypeSymbolTable::const_iterator
+TypeSymbolTable::find(const StringRef &Name) const {
+  sys::SmartScopedReader<true> Reader(*TypeSymbolTableLock);  
+  return tmap.find(Name);
+}
+
 // remove - Remove a type from the symbol table...
 Type* TypeSymbolTable::remove(iterator Entry) {
   TypeSymbolTableLock->writer_acquire();

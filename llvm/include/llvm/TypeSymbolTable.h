@@ -66,6 +66,16 @@ public:
   /// @brief Lookup a type by name.
   Type *lookup(const StringRef &name) const;
 
+  /// Lookup the type associated with name.
+  /// @returns end() if the name is not found, or an iterator at the entry for
+  /// Type.
+  iterator find(const StringRef &name);
+
+  /// Lookup the type associated with name.
+  /// @returns end() if the name is not found, or an iterator at the entry for
+  /// Type.
+  const_iterator find(const StringRef &name) const;
+
   /// @returns true iff the symbol table is empty.
   /// @brief Determine if the symbol table is empty
   inline bool empty() const { return tmap.empty(); }

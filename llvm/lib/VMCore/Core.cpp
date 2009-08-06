@@ -94,17 +94,15 @@ int LLVMAddTypeName(LLVMModuleRef M, const char *Name, LLVMTypeRef Ty) {
 }
 
 void LLVMDeleteTypeName(LLVMModuleRef M, const char *Name) {
-  std::string N(Name);
-  
   TypeSymbolTable &TST = unwrap(M)->getTypeSymbolTable();
-  for (TypeSymbolTable::iterator I = TST.begin(), E = TST.end(); I != E; ++I)
-    if (I->first == N)
-      TST.remove(I);
+
+  TypeSymbolTable::iterator I = TST.find(Name);
+  if (I != TST.end())
+    TST.remove(I);
 }
 
 LLVMTypeRef LLVMGetTypeByName(LLVMModuleRef M, const char *Name) {
-  std::string N(Name);
-  return wrap(unwrap(M)->getTypeByName(N));
+  return wrap(unwrap(M)->getTypeByName(Name));
 }
 
 void LLVMDumpModule(LLVMModuleRef M) {
