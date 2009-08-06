@@ -456,6 +456,15 @@ Linux::Linux(const HostInfo &Host, const llvm::Triple& Triple)
   getFilePaths().push_back(getHost().getDriver().Dir + "/../lib/clang/1.0/");
   getFilePaths().push_back("/lib/");
   getFilePaths().push_back("/usr/lib/");
+
+  // Depending on the Linux distribution, any combination of lib{,32,64} is
+  // possible. E.g. Debian uses lib and lib32 for mixed i386/x86-64 systems,
+  // openSUSE uses lib and lib64 for the same purpose.
+  getFilePaths().push_back("/lib32/");
+  getFilePaths().push_back("/usr/lib32/");
+  getFilePaths().push_back("/lib64/");
+  getFilePaths().push_back("/usr/lib64/");
+
   // FIXME: Figure out some way to get gcc's libdir
   // (e.g. /usr/lib/gcc/i486-linux-gnu/4.3/ for Ubuntu 32-bit); we need
   // crtbegin.o/crtend.o/etc., and want static versions of various
