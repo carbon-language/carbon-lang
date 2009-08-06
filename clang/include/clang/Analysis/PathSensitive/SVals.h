@@ -30,8 +30,11 @@ namespace llvm {
 namespace clang {
 
 class CompoundValData;
+class LazyCompoundValData;
+class GRState;
 class BasicValueFactory;
 class MemRegion;
+class TypedRegion;
 class MemRegionManager;
 class GRStateManager;
 class ValueManager;
@@ -211,7 +214,7 @@ public:
 namespace nonloc {
   
 enum Kind { ConcreteIntKind, SymbolValKind, SymExprValKind,
-            LocAsIntegerKind, CompoundValKind };
+            LocAsIntegerKind, CompoundValKind, LazyCompoundValKind };
 
 class SymbolVal : public NonLoc {
 public:
@@ -331,6 +334,24 @@ public:
 
   static bool classof(const NonLoc* V) {
     return V->getSubKind() == CompoundValKind;
+  }
+};
+  
+class LazyCompoundVal : public NonLoc {
+  friend class clang::ValueManager;
+
+  LazyCompoundVal(const LazyCompoundValData *D)
+    : NonLoc(LazyCompoundValKind, D) {}
+public:
+  const GRState *getState() const;
+  const TypedRegion *getRegion() const;
+  
+  static bool classof(const SVal *V) {
+    return V->getBaseKind() == NonLocKind && 
+           V->getSubKind() == LazyCompoundValKind;
+  }
+  static bool classof(const NonLoc *V) {
+    return V->getSubKind() == LazyCompoundValKind;
   }
 };
   

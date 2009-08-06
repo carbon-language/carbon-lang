@@ -25,6 +25,8 @@
 
 namespace clang {
   
+  class GRState;
+
 class CompoundValData : public llvm::FoldingSetNode {
   QualType T;
   llvm::ImmutableList<SVal> L;
@@ -43,6 +45,22 @@ public:
   void Profile(llvm::FoldingSetNodeID& ID) { Profile(ID, T, L); }
 };
 
+class LazyCompoundValData : public llvm::FoldingSetNode {
+  const GRState *state;
+  const TypedRegion *region;
+public:
+  LazyCompoundValData(const GRState *st, const TypedRegion *r)
+    : state(st), region(r) {}
+  
+  const GRState *getState() const { return state; }
+  const TypedRegion *getRegion() const { return region; }
+    
+  static void Profile(llvm::FoldingSetNodeID& ID, const GRState *state,
+                      const TypedRegion *region);
+  
+  void Profile(llvm::FoldingSetNodeID& ID) { Profile(ID, state, region); }
+};
+  
 class BasicValueFactory {
   typedef llvm::FoldingSet<llvm::FoldingSetNodeWrapper<llvm::APSInt> >
           APSIntSetTy;
@@ -56,6 +74,7 @@ class BasicValueFactory {
 
   llvm::ImmutableList<SVal>::Factory SValListFactory;
   llvm::FoldingSet<CompoundValData>  CompoundValDataSet;
+  llvm::FoldingSet<LazyCompoundValData> LazyCompoundValDataSet;
 
 public:
   BasicValueFactory(ASTContext& ctx, llvm::BumpPtrAllocator& Alloc) 
@@ -138,8 +157,11 @@ public:
     return getTruthValue(b, Ctx.IntTy);
   }
   
-  const CompoundValData* getCompoundValData(QualType T, 
+  const CompoundValData *getCompoundValData(QualType T, 
                                             llvm::ImmutableList<SVal> Vals);
+  
+  const LazyCompoundValData *getLazyCompoundValData(const GRState *state,
+                                                    const TypedRegion *region);
   
   llvm::ImmutableList<SVal> getEmptySValList() {
     return SValListFactory.GetEmptyList();

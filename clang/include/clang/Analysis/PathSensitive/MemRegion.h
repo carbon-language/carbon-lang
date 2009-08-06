@@ -638,15 +638,26 @@ public:
   
   /// getElementRegion - Retrieve the memory region associated with the
   ///  associated element type, index, and super region.
-  ElementRegion* getElementRegion(QualType elementType, SVal Idx,
+  ElementRegion *getElementRegion(QualType elementType, SVal Idx,
                                   const MemRegion* superRegion,ASTContext &Ctx);
+  
+  ElementRegion *getElementRegionWithSuper(const ElementRegion *ER,
+                                           const MemRegion *superRegion) {
+    return getElementRegion(ER->getElementType(), ER->getIndex(),
+                            superRegion, ER->getContext());
+  }
 
   /// getFieldRegion - Retrieve or create the memory region associated with
   ///  a specified FieldDecl.  'superRegion' corresponds to the containing
   ///  memory region (which typically represents the memory representing
   ///  a structure or class).
-  FieldRegion* getFieldRegion(const FieldDecl* fd,
+  FieldRegion *getFieldRegion(const FieldDecl* fd,
                               const MemRegion* superRegion);
+  
+  FieldRegion *getFieldRegionWithSuper(const FieldRegion *FR,
+                                       const MemRegion *superRegion) {
+    return getFieldRegion(FR->getDecl(), superRegion);
+  }
   
   /// getObjCObjectRegion - Retrieve or create the memory region associated with
   ///  the instance of a specified Objective-C class.

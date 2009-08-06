@@ -23,6 +23,13 @@ void CompoundValData::Profile(llvm::FoldingSetNodeID& ID, QualType T,
   ID.AddPointer(L.getInternalPointer());
 }
 
+void LazyCompoundValData::Profile(llvm::FoldingSetNodeID& ID,
+                                  const GRState *state,
+                                  const TypedRegion *region) {
+  ID.AddPointer(state);
+  ID.AddPointer(region);
+}
+
 typedef std::pair<SVal, uintptr_t> SValData;
 typedef std::pair<SVal, SVal> SValPair;
 
@@ -113,6 +120,25 @@ BasicValueFactory::getCompoundValData(QualType T,
     CompoundValDataSet.InsertNode(D, InsertPos);
   }
 
+  return D;
+}
+
+const LazyCompoundValData*
+BasicValueFactory::getLazyCompoundValData(const GRState *state,
+                                          const TypedRegion *region) {
+  llvm::FoldingSetNodeID ID;
+  LazyCompoundValData::Profile(ID, state, region);
+  void* InsertPos;
+  
+  LazyCompoundValData *D =
+    LazyCompoundValDataSet.FindNodeOrInsertPos(ID, InsertPos);
+  
+  if (!D) {
+    D = (LazyCompoundValData*) BPAlloc.Allocate<LazyCompoundValData>();
+    new (D) LazyCompoundValData(state, region);
+    LazyCompoundValDataSet.InsertNode(D, InsertPos);
+  }
+  
   return D;
 }
 

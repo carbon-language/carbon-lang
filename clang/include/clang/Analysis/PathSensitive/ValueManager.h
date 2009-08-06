@@ -113,6 +113,10 @@ public:
   NonLoc makeCompoundVal(QualType T, llvm::ImmutableList<SVal> Vals) {
     return nonloc::CompoundVal(BasicVals.getCompoundValData(T, Vals));
   }
+  
+  NonLoc makeLazyCompoundVal(const GRState *state, const TypedRegion *R) {
+    return nonloc::LazyCompoundVal(BasicVals.getLazyCompoundValData(state, R));
+  }
 
   NonLoc makeZeroArrayIndex() {
     return nonloc::ConcreteInt(BasicVals.getValue(0, ArrayIndexTy));

@@ -28,6 +28,7 @@
 using namespace clang;
 
 #define HEAP_UNDEFINED 0
+#define USE_EXPLICIT_COMPOUND 0
 
 // Actual Store type.
 typedef llvm::ImmutableMap<const MemRegion*, SVal> RegionBindingsTy;
@@ -130,6 +131,8 @@ public:
     I->second = F.Add(I->second, SubRegion);
     return false;
   }
+  
+  void process(llvm::SmallVectorImpl<const SubRegion*> &WL, const SubRegion *R);
     
   ~RegionStoreSubRegionMap() {}
   
@@ -246,9 +249,11 @@ public:
                                   const Expr *E, unsigned Count);
   
 private:
-  RegionBindingsTy RemoveSubRegionBindings(RegionBindingsTy B,
-                                           const MemRegion *R,
-                                           RegionStoreSubRegionMap &M);
+  void RemoveSubRegionBindings(RegionBindingsTy &B,
+                               RegionDefaultValue::MapTy &DVM,
+                               RegionDefaultValue::MapTy::Factory &DVMFactory,
+                               const MemRegion *R,
+                               RegionStoreSubRegionMap &M);
   
 public:  
   const GRState *Bind(const GRState *state, Loc LV, SVal V);
@@ -313,6 +318,13 @@ public:
   SVal RetrieveStruct(const GRState *St, const TypedRegion* R);
   
   SVal RetrieveArray(const GRState *St, const TypedRegion* R);
+  
+  std::pair<const GRState*, const MemRegion*>
+  GetLazyBinding(RegionBindingsTy B, const MemRegion *R);
+  
+  const GRState* CopyLazyBindings(nonloc::LazyCompoundVal V,
+                                  const GRState *state,
+                                  const TypedRegion *R);
 
   //===------------------------------------------------------------------===//
   // State pruning.
@@ -381,37 +393,38 @@ StoreManager *clang::CreateFieldsOnlyRegionStoreManager(GRStateManager &StMgr) {
   return new RegionStoreManager(StMgr, F);
 }
 
+void
+RegionStoreSubRegionMap::process(llvm::SmallVectorImpl<const SubRegion*> &WL,
+                                 const SubRegion *R) {  
+  const MemRegion *superR = R->getSuperRegion();
+  if (add(superR, R))
+    if (const SubRegion *sr = dyn_cast<SubRegion>(superR))
+      WL.push_back(sr);  
+}
+
 RegionStoreSubRegionMap*
 RegionStoreManager::getRegionStoreSubRegionMap(const GRState *state) {
   RegionBindingsTy B = GetRegionBindings(state->getStore());
   RegionStoreSubRegionMap *M = new RegionStoreSubRegionMap();
   
-  llvm::SmallPtrSet<const MemRegion*, 10> Marked;
   llvm::SmallVector<const SubRegion*, 10> WL;
 
   for (RegionBindingsTy::iterator I=B.begin(), E=B.end(); I!=E; ++I)
-    if (const SubRegion* R = dyn_cast<SubRegion>(I.getKey()))
-      WL.push_back(R);
-  
+    if (const SubRegion *R = dyn_cast<SubRegion>(I.getKey()))
+      M->process(WL, R);
+    
   RegionDefaultValue::MapTy DVM = state->get<RegionDefaultValue>();
   for (RegionDefaultValue::MapTy::iterator I = DVM.begin(), E = DVM.end();
-       I != E; ++I)    
-    if (const SubRegion* R = dyn_cast<SubRegion>(I.getKey()))
-      WL.push_back(R);
+       I != E; ++I) 
+    if (const SubRegion *R = dyn_cast<SubRegion>(I.getKey()))
+      M->process(WL, R);
 
   // We also need to record in the subregion map "intermediate" regions that  
   // don't have direct bindings but are super regions of those that do.
   while (!WL.empty()) {
     const SubRegion *R = WL.back();
     WL.pop_back();
-
-    if (Marked.count(R))
-      continue;
-
-    const MemRegion *superR = R->getSuperRegion();
-    if (M->add(superR, R))
-      if (const SubRegion *sr = dyn_cast<SubRegion>(superR))
-        WL.push_back(sr);
+    M->process(WL, R);
   }
 
   return M;
@@ -425,17 +438,20 @@ SubRegionMap *RegionStoreManager::getSubRegionMap(const GRState *state) {
 // Binding invalidation.
 //===----------------------------------------------------------------------===//
 
-RegionBindingsTy
-RegionStoreManager::RemoveSubRegionBindings(RegionBindingsTy B,
-                                            const MemRegion *R,
-                                            RegionStoreSubRegionMap &M) {
+void
+RegionStoreManager::RemoveSubRegionBindings(RegionBindingsTy &B,
+                                 RegionDefaultValue::MapTy &DVM,
+                                 RegionDefaultValue::MapTy::Factory &DVMFactory,
+                                 const MemRegion *R,
+                                 RegionStoreSubRegionMap &M) {
   
   RegionStoreSubRegionMap::iterator I, E;
 
   for (llvm::tie(I, E) = M.begin_end(R); I != E; ++I)
-    B = RemoveSubRegionBindings(B, *I, M);
+    RemoveSubRegionBindings(B, DVM, DVMFactory, *I, M);
     
-  return RBFactory.Remove(B, R);
+  B = RBFactory.Remove(B, R);
+  DVM = DVMFactory.Remove(DVM, R);
 }
 
 
@@ -448,15 +464,21 @@ const GRState *RegionStoreManager::InvalidateRegion(const GRState *state,
   // Strip away casts.
   R = R->getBaseRegion();
 
-  // Get the mapping of regions -> subregions.
-  llvm::OwningPtr<RegionStoreSubRegionMap>
-  SubRegions(getRegionStoreSubRegionMap(state));
-  
   // Remove the bindings to subregions.
-  RegionBindingsTy B = GetRegionBindings(state->getStore());
-  B = RemoveSubRegionBindings(B, R, *SubRegions.get());
-  state = state->makeWithStore(B.getRoot());
-  
+  { 
+    // Get the mapping of regions -> subregions.
+    llvm::OwningPtr<RegionStoreSubRegionMap>
+      SubRegions(getRegionStoreSubRegionMap(state));
+    
+    RegionBindingsTy B = GetRegionBindings(state->getStore());
+    RegionDefaultValue::MapTy DVM = state->get<RegionDefaultValue>();  
+    RegionDefaultValue::MapTy::Factory &DVMFactory =
+      state->get_context<RegionDefaultValue>();
+    
+    RemoveSubRegionBindings(B, DVM, DVMFactory, R, *SubRegions.get());    
+    state = state->makeWithStore(B.getRoot())->set<RegionDefaultValue>(DVM);
+  }
+
   if (!R->isBoundable())
     return state;
   
@@ -975,7 +997,32 @@ RegionStoreManager::Retrieve(const GRState *state, Loc L, QualType T) {
                                ValMgr.getRegionValueSymbolValOrUnknown(R, RTy));
 }
   
+std::pair<const GRState*, const MemRegion*>
+RegionStoreManager::GetLazyBinding(RegionBindingsTy B, const MemRegion *R) {
 
+  if (const nonloc::LazyCompoundVal *V =
+        dyn_cast_or_null<nonloc::LazyCompoundVal>(B.lookup(R)))
+    return std::make_pair(V->getState(), V->getRegion());
+  
+  if (const ElementRegion *ER = dyn_cast<ElementRegion>(R)) {
+    const std::pair<const GRState *, const MemRegion *> &X =
+      GetLazyBinding(B, ER->getSuperRegion());
+    
+    if (X.first)
+      return std::make_pair(X.first,
+                            MRMgr.getElementRegionWithSuper(ER, X.second));
+  } 
+  else if (const FieldRegion *FR = dyn_cast<FieldRegion>(R)) {
+    const std::pair<const GRState *, const MemRegion *> &X =
+      GetLazyBinding(B, FR->getSuperRegion());
+    
+    if (X.first)
+      return std::make_pair(X.first,
+                            MRMgr.getFieldRegionWithSuper(FR, X.second));
+  }
+
+  return std::make_pair((const GRState*) 0, (const MemRegion *) 0);
+}
 
 SVal RegionStoreManager::RetrieveElement(const GRState* state,
                                          const ElementRegion* R) {
@@ -1039,10 +1086,30 @@ SVal RegionStoreManager::RetrieveElement(const GRState* state,
     if (V->isUnknownOrUndef())
       return *V;
     
+    // Handle LazyCompoundVals below.
+    if (const nonloc::LazyCompoundVal *LVC =
+          dyn_cast<nonloc::LazyCompoundVal>(V)) {
+      return RetrieveElement(LVC->getState(),
+                             MRMgr.getElementRegionWithSuper(R,
+                                                             LVC->getRegion()));
+    }
+      
     // Other cases: give up.
     return UnknownVal();
   }
   
+  // Lazy binding?
+  const GRState *lazyBindingState = NULL;
+  const MemRegion *LazyBindingRegion = NULL;
+  llvm::tie(lazyBindingState, LazyBindingRegion) = GetLazyBinding(B, R);
+  
+  if (lazyBindingState) {
+    assert(LazyBindingRegion && "Lazy-binding region not set");
+    return RetrieveElement(lazyBindingState,
+                           cast<ElementRegion>(LazyBindingRegion));
+  }
+
+  // Default value cases.
 #if 0
   if (R->hasHeapStorage()) {
       // FIXME: If the region has heap storage and we know nothing special
@@ -1093,11 +1160,24 @@ SVal RegionStoreManager::RetrieveField(const GRState* state,
 
       if (D->isZeroConstant())
         return ValMgr.makeZeroVal(Ty);
+      
+      if (const nonloc::LazyCompoundVal *LCV =
+            dyn_cast<nonloc::LazyCompoundVal>(D)) {
+        const FieldRegion *FR =
+          MRMgr.getFieldRegionWithSuper(R, LCV->getRegion());
+        return RetrieveField(LCV->getState(), FR);
+      }
 
       if (D->isUnknown())
         return *D;
 
       assert(0 && "Unknown default value");
+    }
+    
+    if (const SVal *V = B.lookup(superR)) {
+      // Handle LazyCompoundVals below.
+      if (isa<nonloc::CompoundVal>(*V))
+        break;
     }
    
     // If our super region is a field or element itself, walk up the region
@@ -1108,7 +1188,18 @@ SVal RegionStoreManager::RetrieveField(const GRState* state,
     }
     
     break;
-  }    
+  }
+  
+  // Lazy binding?
+  const GRState *lazyBindingState = NULL;
+  const MemRegion *LazyBindingRegion = NULL;
+  llvm::tie(lazyBindingState, LazyBindingRegion) = GetLazyBinding(B, R);
+  
+  if (lazyBindingState) {
+    assert(LazyBindingRegion && "Lazy-binding region not set");
+    return RetrieveField(lazyBindingState,
+                        cast<FieldRegion>(LazyBindingRegion));
+  }
 
 #if HEAP_UNDEFINED
   // FIXME: Is this correct?  Should it be UnknownVal?
@@ -1206,7 +1297,7 @@ SVal RegionStoreManager::RetrieveStruct(const GRState *state,
   const RecordType* RT = T->getAsStructureType();
   RecordDecl* RD = RT->getDecl();
   assert(RD->isDefinition());
-
+#if USE_EXPLICIT_COMPOUND
   llvm::ImmutableList<SVal> StructVal = getBasicVals().getEmptySValList();
 
   // FIXME: We shouldn't use a std::vector.  If RecordDecl doesn't have a
@@ -1223,11 +1314,14 @@ SVal RegionStoreManager::RetrieveStruct(const GRState *state,
   }
 
   return ValMgr.makeCompoundVal(T, StructVal);
+#else
+  return ValMgr.makeLazyCompoundVal(state, R);
+#endif
 }
 
 SVal RegionStoreManager::RetrieveArray(const GRState *state,
                                        const TypedRegion * R) {
-
+#if USE_EXPLICIT_COMPOUND
   QualType T = R->getValueType(getContext());
   ConstantArrayType* CAT = cast<ConstantArrayType>(T.getTypePtr());
 
@@ -1243,6 +1337,10 @@ SVal RegionStoreManager::RetrieveArray(const GRState *state,
   }
 
   return ValMgr.makeCompoundVal(T, ArrayVal);
+#else
+  assert(isa<ConstantArrayType>(R->getValueType(getContext())));
+  return ValMgr.makeLazyCompoundVal(state, R);
+#endif
 }
 
 SValuator::CastResult RegionStoreManager::CastRetrievedVal(SVal V,
@@ -1311,8 +1409,7 @@ const GRState *RegionStoreManager::Bind(const GRState *state, Loc L, SVal V) {
   
   // Perform the binding.
   RegionBindingsTy B = GetRegionBindings(state->getStore());
-  B = RBFactory.Add(B, R, V);  
-  return state->makeWithStore(B.getRoot());
+  return state->makeWithStore(RBFactory.Add(B, R, V).getRoot());
 }
 
 const GRState *RegionStoreManager::BindDecl(const GRState *state, 
@@ -1375,6 +1472,11 @@ const GRState *RegionStoreManager::BindArray(const GRState *state,
     return state;
   }
 
+  // Handle lazy compound values.
+  if (nonloc::LazyCompoundVal *LCV = dyn_cast<nonloc::LazyCompoundVal>(&Init))
+    return CopyLazyBindings(*LCV, state, R);
+  
+  // Remaining case: explicit compound values.  
   nonloc::CompoundVal& CV = cast<nonloc::CompoundVal>(Init);
   nonloc::CompoundVal::iterator VI = CV.begin(), VE = CV.end();
   uint64_t i = 0;
@@ -1421,6 +1523,10 @@ RegionStoreManager::BindStruct(const GRState *state, const TypedRegion* R,
   if (!RD->isDefinition())
     return state;
 
+  // Handle lazy compound values.
+  if (const nonloc::LazyCompoundVal *LCV = dyn_cast<nonloc::LazyCompoundVal>(&V))
+    return CopyLazyBindings(*LCV, state, R);
+  
   // We may get non-CompoundVal accidentally due to imprecise cast logic.
   // Ignore them and kill the field values.
   if (V.isUnknown() || !isa<nonloc::CompoundVal>(V))
@@ -1477,7 +1583,29 @@ const GRState *RegionStoreManager::setDefaultValue(const GRState *state,
                                                const MemRegion* R, SVal V) {
   return state->set<RegionDefaultValue>(R, V);
 }
+  
+const GRState*
+RegionStoreManager::CopyLazyBindings(nonloc::LazyCompoundVal V,
+                                     const GRState *state,
+                                     const TypedRegion *R) {
 
+  // Nuke the old bindings stemming from R.
+  RegionBindingsTy B = GetRegionBindings(state->getStore());
+  RegionDefaultValue::MapTy DVM = state->get<RegionDefaultValue>();
+  RegionDefaultValue::MapTy::Factory &DVMFactory =
+    state->get_context<RegionDefaultValue>();
+
+  llvm::OwningPtr<RegionStoreSubRegionMap> 
+    SubRegions(getRegionStoreSubRegionMap(state));
+
+  // B and DVM are updated after the call to RemoveSubRegionBindings.    
+  RemoveSubRegionBindings(B, DVM, DVMFactory, R, *SubRegions.get());
+  
+  // Now copy the bindings.  This amounts to just binding 'V' to 'R'.  This
+  // results in a zero-copy algorithm.
+  return state->makeWithStore(RBFactory.Add(B, R, V).getRoot());
+}
+  
 //===----------------------------------------------------------------------===//
 // State pruning.
 //===----------------------------------------------------------------------===//
@@ -1665,6 +1793,9 @@ void RegionStoreManager::RemoveDeadBindings(GRState &state, Stmt* Loc,
     for (; SI != SE; ++SI)
       SymReaper.maybeDead(*SI);
   }
+  
+  // FIXME: Do a pass over nonloc::LazyCompoundVals and the symbols
+  // that they reference.
   
   // Write the store back.
   state.setStore(store);

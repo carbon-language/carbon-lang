@@ -158,6 +158,14 @@ void SVal::symbol_iterator::expand() {
   assert(false && "unhandled expansion case");
 }
 
+const GRState *nonloc::LazyCompoundVal::getState() const {
+  return static_cast<const LazyCompoundValData*>(Data)->getState();
+}
+
+const TypedRegion *nonloc::LazyCompoundVal::getRegion() const {
+  return static_cast<const LazyCompoundValData*>(Data)->getRegion();
+}
+
 //===----------------------------------------------------------------------===//
 // Other Iterators.
 //===----------------------------------------------------------------------===//
@@ -289,7 +297,13 @@ void NonLoc::dumpToStream(llvm::raw_ostream& os) const {
       }
       os << "}";
       break;
-    }      
+    }
+    case nonloc::LazyCompoundValKind: {
+      const nonloc::LazyCompoundVal &C = *cast<nonloc::LazyCompoundVal>(this);
+      os << "lazyCompoundVal{" << (void*) C.getState() << ',' << C.getRegion()
+         << '}';
+      break;
+    }            
     default:
       assert (false && "Pretty-printed not implemented for this NonLoc.");
       break;
