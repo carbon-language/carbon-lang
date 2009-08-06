@@ -1478,13 +1478,13 @@ def ATOMUMAX64: I<0, Pseudo, (outs GR64:$dst),(ins i64mem:$ptr, GR64:$val),
 // code model mode, should use 'movabs'.  FIXME: This is really a hack, the
 //  'movabs' predicate should handle this sort of thing.
 def : Pat<(i64 (X86Wrapper tconstpool  :$dst)),
-          (MOV64ri tconstpool  :$dst)>, Requires<[NotSmallCode]>;
+          (MOV64ri tconstpool  :$dst)>, Requires<[FarData]>;
 def : Pat<(i64 (X86Wrapper tjumptable  :$dst)),
-          (MOV64ri tjumptable  :$dst)>, Requires<[NotSmallCode]>;
+          (MOV64ri tjumptable  :$dst)>, Requires<[FarData]>;
 def : Pat<(i64 (X86Wrapper tglobaladdr :$dst)),
-          (MOV64ri tglobaladdr :$dst)>, Requires<[NotSmallCode]>;
+          (MOV64ri tglobaladdr :$dst)>, Requires<[FarData]>;
 def : Pat<(i64 (X86Wrapper texternalsym:$dst)),
-          (MOV64ri texternalsym:$dst)>, Requires<[NotSmallCode]>;
+          (MOV64ri texternalsym:$dst)>, Requires<[FarData]>;
 
 // In static codegen with small code model, we can get the address of a label
 // into a register with 'movl'.  FIXME: This is a hack, the 'imm' predicate of
@@ -1498,22 +1498,33 @@ def : Pat<(i64 (X86Wrapper tglobaladdr :$dst)),
 def : Pat<(i64 (X86Wrapper texternalsym:$dst)),
           (MOV64ri64i32 texternalsym:$dst)>, Requires<[SmallCode]>;
 
+// In kernel code model, we can get the address of a label
+// into a register with 'movq'.  FIXME: This is a hack, the 'imm' predicate of
+// the MOV64ri32 should accept these.
+def : Pat<(i64 (X86Wrapper tconstpool  :$dst)),
+          (MOV64ri32 tconstpool  :$dst)>, Requires<[KernelCode]>;
+def : Pat<(i64 (X86Wrapper tjumptable  :$dst)),
+          (MOV64ri32 tjumptable  :$dst)>, Requires<[KernelCode]>;
+def : Pat<(i64 (X86Wrapper tglobaladdr :$dst)),
+          (MOV64ri32 tglobaladdr :$dst)>, Requires<[KernelCode]>;
+def : Pat<(i64 (X86Wrapper texternalsym:$dst)),
+          (MOV64ri32 texternalsym:$dst)>, Requires<[KernelCode]>;
 
 // If we have small model and -static mode, it is safe to store global addresses
 // directly as immediates.  FIXME: This is really a hack, the 'imm' predicate
 // for MOV64mi32 should handle this sort of thing.
 def : Pat<(store (i64 (X86Wrapper tconstpool:$src)), addr:$dst),
           (MOV64mi32 addr:$dst, tconstpool:$src)>,
-          Requires<[SmallCode, IsStatic]>;
+          Requires<[NearData, IsStatic]>;
 def : Pat<(store (i64 (X86Wrapper tjumptable:$src)), addr:$dst),
           (MOV64mi32 addr:$dst, tjumptable:$src)>,
-          Requires<[SmallCode, IsStatic]>;
+          Requires<[NearData, IsStatic]>;
 def : Pat<(store (i64 (X86Wrapper tglobaladdr:$src)), addr:$dst),
           (MOV64mi32 addr:$dst, tglobaladdr:$src)>,
-          Requires<[SmallCode, IsStatic]>;
+          Requires<[NearData, IsStatic]>;
 def : Pat<(store (i64 (X86Wrapper texternalsym:$src)), addr:$dst),
           (MOV64mi32 addr:$dst, texternalsym:$src)>,
-          Requires<[SmallCode, IsStatic]>;
+          Requires<[NearData, IsStatic]>;
 
 // Calls
 // Direct PC relative function call for small code model. 32-bit displacement

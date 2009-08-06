@@ -253,10 +253,12 @@ def In32BitMode  : Predicate<"!Subtarget->is64Bit()">;
 def In64BitMode  : Predicate<"Subtarget->is64Bit()">;
 def IsWin64      : Predicate<"Subtarget->isTargetWin64()">;
 def NotWin64     : Predicate<"!Subtarget->isTargetWin64()">;
-def SmallCode    : Predicate<"TM.getCodeModel() == CodeModel::Small ||"
-                             "TM.getCodeModel() == CodeModel::Kernel">;
-def NotSmallCode : Predicate<"TM.getCodeModel() != CodeModel::Small &&"
+def SmallCode    : Predicate<"TM.getCodeModel() == CodeModel::Small">;
+def KernelCode   : Predicate<"TM.getCodeModel() == CodeModel::Kernel">;
+def FarData      : Predicate<"TM.getCodeModel() != CodeModel::Small &&"
                              "TM.getCodeModel() != CodeModel::Kernel">;
+def NearData     : Predicate<"TM.getCodeModel() == CodeModel::Small ||"
+                             "TM.getCodeModel() == CodeModel::Kernel">;
 def IsStatic     : Predicate<"TM.getRelocationModel() == Reloc::Static">;
 def OptForSpeed  : Predicate<"!OptForSize">;
 def FastBTMem    : Predicate<"!Subtarget->isBTMemSlow()">;
