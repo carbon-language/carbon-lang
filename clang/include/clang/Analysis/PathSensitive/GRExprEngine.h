@@ -16,6 +16,7 @@
 #ifndef LLVM_CLANG_ANALYSIS_GREXPRENGINE
 #define LLVM_CLANG_ANALYSIS_GREXPRENGINE
 
+#include "clang/Analysis/PathSensitive/GRSubEngine.h"
 #include "clang/Analysis/PathSensitive/GRCoreEngine.h"
 #include "clang/Analysis/PathSensitive/GRState.h"
 #include "clang/Analysis/PathSensitive/GRSimpleAPICheck.h"
@@ -31,7 +32,7 @@ namespace clang {
   class ObjCForCollectionStmt;
   class Checker;
 
-class GRExprEngine {  
+class GRExprEngine : public GRSubEngine {  
 public:
   typedef GRState                  StateTy;
   typedef ExplodedGraph            GraphTy;
@@ -46,7 +47,7 @@ public:
   typedef ExplodedNodeSet        NodeSet;
     
 protected:
-  GRCoreEngine<GRExprEngine> CoreEngine;
+  GRCoreEngine CoreEngine;
   
   /// G - the simulation graph.
   GraphTy& G;

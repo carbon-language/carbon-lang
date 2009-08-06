@@ -20,34 +20,52 @@
 #include "clang/Analysis/PathSensitive/GRWorkList.h"
 #include "clang/Analysis/PathSensitive/GRBlockCounter.h"
 #include "clang/Analysis/PathSensitive/GRAuditor.h"
+#include "clang/Analysis/PathSensitive/GRSubEngine.h"
 #include "llvm/ADT/OwningPtr.h"
 
 namespace clang {
-  
-class GRStmtNodeBuilderImpl;
-class GRBranchNodeBuilderImpl;
-class GRIndirectGotoNodeBuilderImpl;
-class GRSwitchNodeBuilderImpl;
-class GREndPathNodeBuilderImpl;
-class GRWorkList;
 
+class GRState;
+class GRStateManager;
+
+class GRStmtNodeBuilderImpl;
+template<typename STATE> class GRStmtNodeBuilder;
+class GRBranchNodeBuilderImpl;
+template<typename STATE> class GRBranchNodeBuilder;
+class GRIndirectGotoNodeBuilderImpl;
+template<typename STATE> class GRIndirectGotoNodeBuilder;
+class GRSwitchNodeBuilderImpl;
+template<typename STATE> class GRSwitchNodeBuilder;
+class GREndPathNodeBuilderImpl;
+template<typename STATE> class GREndPathNodeBuilder;
+
+class GRWorkList;
+class GRCoreEngine;
 //===----------------------------------------------------------------------===//
-/// GRCoreEngineImpl - Implements the core logic of the graph-reachability 
+/// GRCoreEngine - Implements the core logic of the graph-reachability 
 ///   analysis. It traverses the CFG and generates the ExplodedGraph.
 ///   Program "states" are treated as opaque void pointers.
-///   The template class GRCoreEngine (which subclasses GRCoreEngineImpl)
+///   The template class GRCoreEngine (which subclasses GRCoreEngine)
 ///   provides the matching component to the engine that knows the actual types
 ///   for states.  Note that this engine only dispatches to transfer functions
 ///   at the statement and block-level.  The analyses themselves must implement
 ///   any transfer function logic and the sub-expression level (if any).
-class GRCoreEngineImpl {
-protected:
+class GRCoreEngine {
+public:
+  typedef GRState                       StateTy;
+  typedef GRStateManager                StateManagerTy;
+  typedef ExplodedGraph                 GraphTy;
+  typedef GraphTy::NodeTy               NodeTy;
+
+private:
   friend class GRStmtNodeBuilderImpl;
   friend class GRBranchNodeBuilderImpl;
   friend class GRIndirectGotoNodeBuilderImpl;
   friend class GRSwitchNodeBuilderImpl;
   friend class GREndPathNodeBuilderImpl;
-    
+
+  GRSubEngine& SubEngine;
+
   /// G - The simulation graph.  Each node is a (location,state) pair.
   llvm::OwningPtr<ExplodedGraph> G;
       
@@ -64,12 +82,6 @@ protected:
   void GenerateNode(const ProgramPoint& Loc, const GRState* State,
                     ExplodedNode* Pred);
   
-  /// getInitialState - Gets the void* representing the initial 'state'
-  ///  of the analysis.  This is simply a wrapper (implemented
-  ///  in GRCoreEngine) that performs type erasure on the initial
-  ///  state returned by the checker object.
-  virtual const GRState* getInitialState() = 0;
-  
   void HandleBlockEdge(const BlockEdge& E, ExplodedNode* Pred);
   void HandleBlockEntrance(const BlockEntrance& E, ExplodedNode* Pred);
   void HandleBlockExit(CFGBlock* B, ExplodedNode* Pred);
@@ -78,41 +90,70 @@ protected:
   
   void HandleBranch(Stmt* Cond, Stmt* Term, CFGBlock* B,
                     ExplodedNode* Pred);  
-  
-  virtual void ProcessEndPath(GREndPathNodeBuilderImpl& Builder) = 0;  
-  
-  virtual bool ProcessBlockEntrance(CFGBlock* Blk, const void* State,
-                                    GRBlockCounter BC) = 0;
 
-  virtual void ProcessStmt(Stmt* S, GRStmtNodeBuilderImpl& Builder) = 0;
+  /// Get the initial state from the subengine.
+  const GRState* getInitialState() { 
+    return SubEngine.getInitialState();
+  }
 
-  virtual void ProcessBranch(Stmt* Condition, Stmt* Terminator,
-                             GRBranchNodeBuilderImpl& Builder) = 0;
-
-  virtual void ProcessIndirectGoto(GRIndirectGotoNodeBuilderImpl& Builder) = 0;
+  void ProcessEndPath(GREndPathNodeBuilderImpl& BuilderImpl);
   
-  virtual void ProcessSwitch(GRSwitchNodeBuilderImpl& Builder) = 0;
+  void ProcessStmt(Stmt* S, GRStmtNodeBuilderImpl& BuilderImpl);
+
+  
+  bool ProcessBlockEntrance(CFGBlock* Blk, const GRState* State,
+                            GRBlockCounter BC);
+
+  
+  void ProcessBranch(Stmt* Condition, Stmt* Terminator,
+                     GRBranchNodeBuilderImpl& BuilderImpl);
+
+
+  void ProcessIndirectGoto(GRIndirectGotoNodeBuilderImpl& BuilderImpl);
+
+  
+  void ProcessSwitch(GRSwitchNodeBuilderImpl& BuilderImpl);
 
 private:
-  GRCoreEngineImpl(const GRCoreEngineImpl&); // Do not implement.
-  GRCoreEngineImpl& operator=(const GRCoreEngineImpl&);
-  
-protected:  
-  GRCoreEngineImpl(ExplodedGraph* g, GRWorkList* wl)
-    : G(g), WList(wl), BCounterFactory(g->getAllocator()) {}
+  GRCoreEngine(const GRCoreEngine&); // Do not implement.
+  GRCoreEngine& operator=(const GRCoreEngine&);
   
 public:
+  /// Construct a GRCoreEngine object to analyze the provided CFG using
+  ///  a DFS exploration of the exploded graph.
+  GRCoreEngine(CFG& cfg, Decl& cd, ASTContext& ctx, GRSubEngine& subengine)
+    : SubEngine(subengine), G(new GraphTy(cfg, cd, ctx)), 
+      WList(GRWorkList::MakeBFS()),
+      BCounterFactory(G->getAllocator()) {}
+
+  /// Construct a GRCoreEngine object to analyze the provided CFG and to
+  ///  use the provided worklist object to execute the worklist algorithm.
+  ///  The GRCoreEngine object assumes ownership of 'wlist'.
+  GRCoreEngine(CFG& cfg, Decl& cd, ASTContext& ctx, GRWorkList* wlist,
+               GRSubEngine& subengine)
+    : SubEngine(subengine), G(new GraphTy(cfg, cd, ctx)), WList(wlist),
+      BCounterFactory(G->getAllocator()) {}
+
+  ~GRCoreEngine() {
+    delete WList;
+  }
+
+  /// getGraph - Returns the exploded graph.
+  GraphTy& getGraph() { return *G.get(); }
+  
+  /// takeGraph - Returns the exploded graph.  Ownership of the graph is
+  ///  transfered to the caller.
+  GraphTy* takeGraph() { return G.take(); }
+
   /// ExecuteWorkList - Run the worklist algorithm for a maximum number of
   ///  steps.  Returns true if there is still simulation state on the worklist.
   bool ExecuteWorkList(unsigned Steps);
-  
-  virtual ~GRCoreEngineImpl();
   
   CFG& getCFG() { return G->getCFG(); }
 };
   
 class GRStmtNodeBuilderImpl {
-  GRCoreEngineImpl& Eng;
+  GRCoreEngine& Eng;
   CFGBlock& B;
   const unsigned Idx;
   ExplodedNode* Pred;
@@ -125,7 +166,7 @@ class GRStmtNodeBuilderImpl {
   
 public:
   GRStmtNodeBuilderImpl(CFGBlock* b, unsigned idx,
-                    ExplodedNode* N, GRCoreEngineImpl* e);      
+                    ExplodedNode* N, GRCoreEngine* e);      
   
   ~GRStmtNodeBuilderImpl();
   
@@ -301,7 +342,7 @@ public:
 };
   
 class GRBranchNodeBuilderImpl {
-  GRCoreEngineImpl& Eng;
+  GRCoreEngine& Eng;
   CFGBlock* Src;
   CFGBlock* DstT;
   CFGBlock* DstF;
@@ -317,7 +358,7 @@ class GRBranchNodeBuilderImpl {
   
 public:
   GRBranchNodeBuilderImpl(CFGBlock* src, CFGBlock* dstT, CFGBlock* dstF,
-                          ExplodedNode* pred, GRCoreEngineImpl* e) 
+                          ExplodedNode* pred, GRCoreEngine* e) 
   : Eng(*e), Src(src), DstT(dstT), DstF(dstF), Pred(pred),
     GeneratedTrue(false), GeneratedFalse(false),
     InFeasibleTrue(!DstT), InFeasibleFalse(!DstF) {}
@@ -391,7 +432,7 @@ public:
 };
   
 class GRIndirectGotoNodeBuilderImpl {
-  GRCoreEngineImpl& Eng;
+  GRCoreEngine& Eng;
   CFGBlock* Src;
   CFGBlock& DispatchBlock;
   Expr* E;
@@ -399,7 +440,7 @@ class GRIndirectGotoNodeBuilderImpl {
 public:
   GRIndirectGotoNodeBuilderImpl(ExplodedNode* pred, CFGBlock* src,
                                 Expr* e, CFGBlock* dispatch,
-                                GRCoreEngineImpl* eng)
+                                GRCoreEngine* eng)
   : Eng(*eng), Src(src), DispatchBlock(*dispatch), E(e), Pred(pred) {}
   
 
@@ -460,13 +501,13 @@ public:
 };
   
 class GRSwitchNodeBuilderImpl {
-  GRCoreEngineImpl& Eng;
+  GRCoreEngine& Eng;
   CFGBlock* Src;
   Expr* Condition;
   ExplodedNode* Pred;  
 public:
   GRSwitchNodeBuilderImpl(ExplodedNode* pred, CFGBlock* src,
-                          Expr* condition, GRCoreEngineImpl* eng)
+                          Expr* condition, GRCoreEngine* eng)
   : Eng(*eng), Src(src), Condition(condition), Pred(pred) {}
   
   class Iterator {
@@ -534,14 +575,14 @@ public:
   
 
 class GREndPathNodeBuilderImpl {
-  GRCoreEngineImpl& Eng;
+  GRCoreEngine& Eng;
   CFGBlock& B;
   ExplodedNode* Pred;  
   bool HasGeneratedNode;
   
 public:
   GREndPathNodeBuilderImpl(CFGBlock* b, ExplodedNode* N,
-                           GRCoreEngineImpl* e)
+                           GRCoreEngine* e)
     : Eng(*e), B(*b), Pred(N), HasGeneratedNode(false) {}      
   
   ~GREndPathNodeBuilderImpl();
@@ -595,86 +636,6 @@ public:
   NodeTy *generateNode(const StateTy *St, NodeTy *Pred, const void *tag = 0) {
     return static_cast<NodeTy*>(NB.generateNodeImpl(St, tag, Pred));
   }                                
-};
-
-  
-template<typename SUBENGINE>
-class GRCoreEngine : public GRCoreEngineImpl {
-public:
-  typedef SUBENGINE                              SubEngineTy; 
-  typedef typename SubEngineTy::StateTy          StateTy;
-  typedef typename StateTy::ManagerTy            StateManagerTy;
-  typedef ExplodedGraph                          GraphTy;
-  typedef typename GraphTy::NodeTy               NodeTy;
-
-protected:
-  SubEngineTy& SubEngine;
-  
-  virtual const GRState* getInitialState() {
-    return SubEngine.getInitialState();
-  }
-  
-  virtual void ProcessEndPath(GREndPathNodeBuilderImpl& BuilderImpl) {
-    GREndPathNodeBuilder<StateTy> Builder(BuilderImpl);
-    SubEngine.ProcessEndPath(Builder);
-  }
-  
-  virtual void ProcessStmt(Stmt* S, GRStmtNodeBuilderImpl& BuilderImpl) {
-    GRStmtNodeBuilder<StateTy> Builder(BuilderImpl,SubEngine.getStateManager());
-    SubEngine.ProcessStmt(S, Builder);
-  }
-  
-  virtual bool ProcessBlockEntrance(CFGBlock* Blk, const void* State,
-                                    GRBlockCounter BC) {    
-    return SubEngine.ProcessBlockEntrance(Blk,
-                                          static_cast<const StateTy*>(State),
-                                          BC);
-  }
-
-  virtual void ProcessBranch(Stmt* Condition, Stmt* Terminator,
-                             GRBranchNodeBuilderImpl& BuilderImpl) {
-    GRBranchNodeBuilder<StateTy> Builder(BuilderImpl);
-    SubEngine.ProcessBranch(Condition, Terminator, Builder);    
-  }
-  
-  virtual void ProcessIndirectGoto(GRIndirectGotoNodeBuilderImpl& BuilderImpl) {
-    GRIndirectGotoNodeBuilder<StateTy> Builder(BuilderImpl);
-    SubEngine.ProcessIndirectGoto(Builder);
-  }
-  
-  virtual void ProcessSwitch(GRSwitchNodeBuilderImpl& BuilderImpl) {
-    GRSwitchNodeBuilder<StateTy> Builder(BuilderImpl);
-    SubEngine.ProcessSwitch(Builder);
-  }
-  
-public:  
-  /// Construct a GRCoreEngine object to analyze the provided CFG using
-  ///  a DFS exploration of the exploded graph.
-  GRCoreEngine(CFG& cfg, Decl& cd, ASTContext& ctx, SubEngineTy& subengine)
-    : GRCoreEngineImpl(new GraphTy(cfg, cd, ctx),
-                       GRWorkList::MakeBFS()),
-      SubEngine(subengine) {}
-  
-  /// Construct a GRCoreEngine object to analyze the provided CFG and to
-  ///  use the provided worklist object to execute the worklist algorithm.
-  ///  The GRCoreEngine object assumes ownership of 'wlist'.
-  GRCoreEngine(CFG& cfg, Decl& cd, ASTContext& ctx, GRWorkList* wlist,
-               SubEngineTy& subengine)
-    : GRCoreEngineImpl(new GraphTy(cfg, cd, ctx), wlist),
-      SubEngine(subengine) {}
-  
-  virtual ~GRCoreEngine() {}
-  
-  /// getGraph - Returns the exploded graph.
-  GraphTy& getGraph() {
-    return *static_cast<GraphTy*>(G.get());
-  }
-  
-  /// takeGraph - Returns the exploded graph.  Ownership of the graph is
-  ///  transfered to the caller.
-  GraphTy* takeGraph() { 
-    return static_cast<GraphTy*>(G.take());
-  }
 };
 
 } // end clang namespace

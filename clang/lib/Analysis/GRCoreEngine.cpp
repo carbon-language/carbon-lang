@@ -13,6 +13,7 @@
 //===----------------------------------------------------------------------===//
 
 #include "clang/Analysis/PathSensitive/GRCoreEngine.h"
+#include "clang/Analysis/PathSensitive/GRExprEngine.h"
 #include "clang/AST/Expr.h"
 #include "llvm/Support/Compiler.h"
 #include "llvm/Support/Casting.h"
@@ -118,9 +119,38 @@ GRWorkList* GRWorkList::MakeBFSBlockDFSContents() {
 //===----------------------------------------------------------------------===//
 // Core analysis engine.
 //===----------------------------------------------------------------------===//
+void GRCoreEngine::ProcessEndPath(GREndPathNodeBuilderImpl& BuilderImpl) {
+  GREndPathNodeBuilder<StateTy> Builder(BuilderImpl);
+  SubEngine.ProcessEndPath(Builder);
+}
 
+void GRCoreEngine::ProcessStmt(Stmt* S, GRStmtNodeBuilderImpl& BuilderImpl) {
+  GRStmtNodeBuilder<StateTy> Builder(BuilderImpl,SubEngine.getStateManager());
+  SubEngine.ProcessStmt(S, Builder);
+}
+
+bool GRCoreEngine::ProcessBlockEntrance(CFGBlock* Blk, const GRState* State,
+                                        GRBlockCounter BC) {    
+  return SubEngine.ProcessBlockEntrance(Blk, State, BC);
+}
+
+void GRCoreEngine::ProcessBranch(Stmt* Condition, Stmt* Terminator,
+                   GRBranchNodeBuilderImpl& BuilderImpl) {
+  GRBranchNodeBuilder<StateTy> Builder(BuilderImpl);
+  SubEngine.ProcessBranch(Condition, Terminator, Builder);    
+}
+
+void GRCoreEngine::ProcessIndirectGoto(GRIndirectGotoNodeBuilderImpl& BuilderImpl) {
+  GRIndirectGotoNodeBuilder<GRState> Builder(BuilderImpl);
+  SubEngine.ProcessIndirectGoto(Builder);
+}
+
+void GRCoreEngine::ProcessSwitch(GRSwitchNodeBuilderImpl& BuilderImpl) {
+  GRSwitchNodeBuilder<GRState> Builder(BuilderImpl);
+  SubEngine.ProcessSwitch(Builder);
+}
 /// ExecuteWorkList - Run the worklist algorithm for a maximum number of steps.
-bool GRCoreEngineImpl::ExecuteWorkList(unsigned Steps) {
+bool GRCoreEngine::ExecuteWorkList(unsigned Steps) {
   
   if (G->num_roots() == 0) { // Initialize the analysis by constructing
     // the root if none exists.
@@ -182,8 +212,8 @@ bool GRCoreEngineImpl::ExecuteWorkList(unsigned Steps) {
   return WList->hasWork();
 }
 
-void GRCoreEngineImpl::HandleBlockEdge(const BlockEdge& L,
-                                       ExplodedNode* Pred) {
+
+void GRCoreEngine::HandleBlockEdge(const BlockEdge& L, ExplodedNode* Pred) {
   
   CFGBlock* Blk = L.getDst();
   
@@ -207,7 +237,7 @@ void GRCoreEngineImpl::HandleBlockEdge(const BlockEdge& L,
     GenerateNode(BlockEntrance(Blk), Pred->State, Pred);
 }
 
-void GRCoreEngineImpl::HandleBlockEntrance(const BlockEntrance& L,
+void GRCoreEngine::HandleBlockEntrance(const BlockEntrance& L,
                                            ExplodedNode* Pred) {
   
   // Increment the block counter.
@@ -224,11 +254,7 @@ void GRCoreEngineImpl::HandleBlockEntrance(const BlockEntrance& L,
     HandleBlockExit(L.getBlock(), Pred);
 }
 
-GRCoreEngineImpl::~GRCoreEngineImpl() {
-  delete WList;
-}
-
-void GRCoreEngineImpl::HandleBlockExit(CFGBlock * B, ExplodedNode* Pred) {
+void GRCoreEngine::HandleBlockExit(CFGBlock * B, ExplodedNode* Pred) {
   
   if (Stmt* Term = B->getTerminator()) {
     switch (Term->getStmtClass()) {
@@ -316,8 +342,8 @@ void GRCoreEngineImpl::HandleBlockExit(CFGBlock * B, ExplodedNode* Pred) {
   GenerateNode(BlockEdge(B, *(B->succ_begin())), Pred->State, Pred);
 }
 
-void GRCoreEngineImpl::HandleBranch(Stmt* Cond, Stmt* Term, CFGBlock * B,
-                                    ExplodedNode* Pred) {
+void GRCoreEngine::HandleBranch(Stmt* Cond, Stmt* Term, CFGBlock * B,
+                                ExplodedNode* Pred) {
   assert (B->succ_size() == 2);
 
   GRBranchNodeBuilderImpl Builder(B, *(B->succ_begin()), *(B->succ_begin()+1),
@@ -326,7 +352,7 @@ void GRCoreEngineImpl::HandleBranch(Stmt* Cond, Stmt* Term, CFGBlock * B,
   ProcessBranch(Cond, Term, Builder);
 }
 
-void GRCoreEngineImpl::HandlePostStmt(const PostStmt& L, CFGBlock* B,
+void GRCoreEngine::HandlePostStmt(const PostStmt& L, CFGBlock* B,
                                   unsigned StmtIdx, ExplodedNode* Pred) {
   
   assert (!B->empty());
@@ -341,8 +367,8 @@ void GRCoreEngineImpl::HandlePostStmt(const PostStmt& L, CFGBlock* B,
 
 /// GenerateNode - Utility method to generate nodes, hook up successors,
 ///  and add nodes to the worklist.
-void GRCoreEngineImpl::GenerateNode(const ProgramPoint& Loc, 
-                                    const GRState* State, ExplodedNode* Pred) {
+void GRCoreEngine::GenerateNode(const ProgramPoint& Loc, 
+                                const GRState* State, ExplodedNode* Pred) {
   
   bool IsNew;
   ExplodedNode* Node = G->getNode(Loc, State, &IsNew);
@@ -359,7 +385,7 @@ void GRCoreEngineImpl::GenerateNode(const ProgramPoint& Loc,
 }
 
 GRStmtNodeBuilderImpl::GRStmtNodeBuilderImpl(CFGBlock* b, unsigned idx,
-                                     ExplodedNode* N, GRCoreEngineImpl* e)
+                                             ExplodedNode* N, GRCoreEngine* e)
   : Eng(*e), B(*b), Idx(idx), Pred(N), LastNode(N) {
   Deferred.insert(N);
 }

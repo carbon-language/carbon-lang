@@ -29,7 +29,7 @@
 namespace clang {
 
 class GRState;
-class GRCoreEngineImpl;
+class GRCoreEngine;
 class ExplodedNode;
 class CFG;
 class ASTContext;
@@ -49,7 +49,7 @@ class GREndPathNodebuilderImpl;
 class ExplodedNode : public llvm::FoldingSetNode {
 protected:
   friend class ExplodedGraph;
-  friend class GRCoreEngineImpl;
+  friend class GRCoreEngine;
   friend class GRStmtNodeBuilderImpl;
   friend class GRBranchNodeBuilderImpl;
   friend class GRIndirectGotoNodeBuilderImpl;
@@ -206,7 +206,7 @@ public:
 
 class ExplodedGraph {
 protected:
-  friend class GRCoreEngineImpl;
+  friend class GRCoreEngine;
   friend class GRStmtNodeBuilderImpl;
   friend class GRBranchNodeBuilderImpl;
   friend class GRIndirectGotoNodeBuilderImpl;
