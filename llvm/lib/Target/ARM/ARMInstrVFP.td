@@ -36,20 +36,20 @@ def arm_fmdrr  : SDNode<"ARMISD::FMDRR",  SDT_FMDRR>;
 
 let canFoldAsLoad = 1 in {
 def FLDD  : ADI5<0b1101, 0b01, (outs DPR:$dst), (ins addrmode5:$addr),
-                 "fldd", " $dst, $addr",
+                 IIC_fpLoad, "fldd", " $dst, $addr",
                  [(set DPR:$dst, (load addrmode5:$addr))]>;
 
 def FLDS  : ASI5<0b1101, 0b01, (outs SPR:$dst), (ins addrmode5:$addr),
-                 "flds", " $dst, $addr",
+                 IIC_fpLoad, "flds", " $dst, $addr",
                  [(set SPR:$dst, (load addrmode5:$addr))]>;
 } // canFoldAsLoad
 
 def FSTD  : ADI5<0b1101, 0b00, (outs), (ins DPR:$src, addrmode5:$addr),
-                 "fstd", " $src, $addr",
+                 IIC_fpStore, "fstd", " $src, $addr",
                  [(store DPR:$src, addrmode5:$addr)]>;
 
 def FSTS  : ASI5<0b1101, 0b00, (outs), (ins SPR:$src, addrmode5:$addr),
-                 "fsts", " $src, $addr",
+                 IIC_fpStore, "fsts", " $src, $addr",
                  [(store SPR:$src, addrmode5:$addr)]>;
 
 //===----------------------------------------------------------------------===//
@@ -58,14 +58,14 @@ def FSTS  : ASI5<0b1101, 0b00, (outs), (ins SPR:$src, addrmode5:$addr),
 
 let mayLoad = 1 in {
 def FLDMD : AXDI5<(outs), (ins addrmode5:$addr, pred:$p, reglist:$dst1,
-                           variable_ops),
+                           variable_ops), IIC_fpLoad,
                   "fldm${addr:submode}d${p} ${addr:base}, $dst1",
                   []> {
   let Inst{20} = 1;
 }
 
 def FLDMS : AXSI5<(outs), (ins addrmode5:$addr, pred:$p, reglist:$dst1,
-                           variable_ops),
+                           variable_ops), IIC_fpLoad, 
                   "fldm${addr:submode}s${p} ${addr:base}, $dst1",
                   []> {
   let Inst{20} = 1;
@@ -74,14 +74,14 @@ def FLDMS : AXSI5<(outs), (ins addrmode5:$addr, pred:$p, reglist:$dst1,
 
 let mayStore = 1 in {
 def FSTMD : AXDI5<(outs), (ins addrmode5:$addr, pred:$p, reglist:$src1,
-                           variable_ops),
+                           variable_ops), IIC_fpStore,
                  "fstm${addr:submode}d${p} ${addr:base}, $src1",
                  []> {
   let Inst{20} = 0;
 }
 
 def FSTMS : AXSI5<(outs), (ins addrmode5:$addr, pred:$p, reglist:$src1,
-                           variable_ops),
+                           variable_ops), IIC_fpStore,
                  "fstm${addr:submode}s${p} ${addr:base}, $src1",
                  []> {
   let Inst{20} = 0;
@@ -95,48 +95,48 @@ def FSTMS : AXSI5<(outs), (ins addrmode5:$addr, pred:$p, reglist:$src1,
 //
 
 def FADDD  : ADbI<0b11100011, (outs DPR:$dst), (ins DPR:$a, DPR:$b),
-                 "faddd", " $dst, $a, $b",
+                 IIC_fpALU, "faddd", " $dst, $a, $b",
                  [(set DPR:$dst, (fadd DPR:$a, DPR:$b))]>;
 
 def FADDS  : ASbIn<0b11100011, (outs SPR:$dst), (ins SPR:$a, SPR:$b),
-                  "fadds", " $dst, $a, $b",
+                  IIC_fpALU, "fadds", " $dst, $a, $b",
                   [(set SPR:$dst, (fadd SPR:$a, SPR:$b))]>;
 
 // These are encoded as unary instructions.
 let Defs = [FPSCR] in {
 def FCMPED : ADuI<0b11101011, 0b0100, 0b1100, (outs), (ins DPR:$a, DPR:$b),
-                 "fcmped", " $a, $b",
+                 IIC_fpALU, "fcmped", " $a, $b",
                  [(arm_cmpfp DPR:$a, DPR:$b)]>;
 
 def FCMPES : ASuI<0b11101011, 0b0100, 0b1100, (outs), (ins SPR:$a, SPR:$b),
-                 "fcmpes", " $a, $b",
+                 IIC_fpALU, "fcmpes", " $a, $b",
                  [(arm_cmpfp SPR:$a, SPR:$b)]>;
 }
 
 def FDIVD  : ADbI<0b11101000, (outs DPR:$dst), (ins DPR:$a, DPR:$b),
-                 "fdivd", " $dst, $a, $b",
+                 IIC_fpALU, "fdivd", " $dst, $a, $b",
                  [(set DPR:$dst, (fdiv DPR:$a, DPR:$b))]>;
 
 def FDIVS  : ASbI<0b11101000, (outs SPR:$dst), (ins SPR:$a, SPR:$b),
-                 "fdivs", " $dst, $a, $b",
+                 IIC_fpALU, "fdivs", " $dst, $a, $b",
                  [(set SPR:$dst, (fdiv SPR:$a, SPR:$b))]>;
 
 def FMULD  : ADbI<0b11100010, (outs DPR:$dst), (ins DPR:$a, DPR:$b),
-                 "fmuld", " $dst, $a, $b",
+                 IIC_fpALU, "fmuld", " $dst, $a, $b",
                  [(set DPR:$dst, (fmul DPR:$a, DPR:$b))]>;
 
 def FMULS  : ASbIn<0b11100010, (outs SPR:$dst), (ins SPR:$a, SPR:$b),
-                  "fmuls", " $dst, $a, $b",
+                  IIC_fpALU, "fmuls", " $dst, $a, $b",
                   [(set SPR:$dst, (fmul SPR:$a, SPR:$b))]>;
                  
 def FNMULD  : ADbI<0b11100010, (outs DPR:$dst), (ins DPR:$a, DPR:$b),
-                  "fnmuld", " $dst, $a, $b",
+                  IIC_fpALU, "fnmuld", " $dst, $a, $b",
                   [(set DPR:$dst, (fneg (fmul DPR:$a, DPR:$b)))]> {
   let Inst{6} = 1;
 }
 
 def FNMULS  : ASbI<0b11100010, (outs SPR:$dst), (ins SPR:$a, SPR:$b),
-                  "fnmuls", " $dst, $a, $b",
+                  IIC_fpALU, "fnmuls", " $dst, $a, $b",
                   [(set SPR:$dst, (fneg (fmul SPR:$a, SPR:$b)))]> {
   let Inst{6} = 1;
 }
@@ -149,13 +149,13 @@ def : Pat<(fmul (fneg SPR:$a), SPR:$b),
 
 
 def FSUBD  : ADbI<0b11100011, (outs DPR:$dst), (ins DPR:$a, DPR:$b),
-                 "fsubd", " $dst, $a, $b",
+                 IIC_fpALU, "fsubd", " $dst, $a, $b",
                  [(set DPR:$dst, (fsub DPR:$a, DPR:$b))]> {
   let Inst{6} = 1;
 }
 
 def FSUBS  : ASbIn<0b11100011, (outs SPR:$dst), (ins SPR:$a, SPR:$b),
-                  "fsubs", " $dst, $a, $b",
+                  IIC_fpALU, "fsubs", " $dst, $a, $b",
                   [(set SPR:$dst, (fsub SPR:$a, SPR:$b))]> {
   let Inst{6} = 1;
 }
@@ -165,30 +165,30 @@ def FSUBS  : ASbIn<0b11100011, (outs SPR:$dst), (ins SPR:$a, SPR:$b),
 //
 
 def FABSD  : ADuI<0b11101011, 0b0000, 0b1100, (outs DPR:$dst), (ins DPR:$a),
-                 "fabsd", " $dst, $a",
+                 IIC_fpALU, "fabsd", " $dst, $a",
                  [(set DPR:$dst, (fabs DPR:$a))]>;
 
 def FABSS  : ASuIn<0b11101011, 0b0000, 0b1100, (outs SPR:$dst), (ins SPR:$a),
-                  "fabss", " $dst, $a",
+                  IIC_fpALU, "fabss", " $dst, $a",
                   [(set SPR:$dst, (fabs SPR:$a))]>;
 
 let Defs = [FPSCR] in {
 def FCMPEZD : ADuI<0b11101011, 0b0101, 0b1100, (outs), (ins DPR:$a),
-                  "fcmpezd", " $a",
+                  IIC_fpALU, "fcmpezd", " $a",
                   [(arm_cmpfp0 DPR:$a)]>;
 
 def FCMPEZS : ASuI<0b11101011, 0b0101, 0b1100, (outs), (ins SPR:$a),
-                  "fcmpezs", " $a",
+                  IIC_fpALU, "fcmpezs", " $a",
                   [(arm_cmpfp0 SPR:$a)]>;
 }
 
 def FCVTDS : ASuI<0b11101011, 0b0111, 0b1100, (outs DPR:$dst), (ins SPR:$a),
-                 "fcvtds", " $dst, $a",
+                 IIC_fpALU, "fcvtds", " $dst, $a",
                  [(set DPR:$dst, (fextend SPR:$a))]>;
 
 // Special case encoding: bits 11-8 is 0b1011.
 def FCVTSD : VFPAI<(outs SPR:$dst), (ins DPR:$a), VFPUnaryFrm,
-                   "fcvtsd", " $dst, $a",
+                   IIC_fpALU, "fcvtsd", " $dst, $a",
                    [(set SPR:$dst, (fround DPR:$a))]> {
   let Inst{27-23} = 0b11101;
   let Inst{21-16} = 0b110111;
@@ -198,26 +198,26 @@ def FCVTSD : VFPAI<(outs SPR:$dst), (ins DPR:$a), VFPUnaryFrm,
 
 let neverHasSideEffects = 1 in {
 def FCPYD  : ADuI<0b11101011, 0b0000, 0b0100, (outs DPR:$dst), (ins DPR:$a),
-                 "fcpyd", " $dst, $a", []>;
+                 IIC_fpALU, "fcpyd", " $dst, $a", []>;
 
 def FCPYS  : ASuI<0b11101011, 0b0000, 0b0100, (outs SPR:$dst), (ins SPR:$a),
-                 "fcpys", " $dst, $a", []>;
+                 IIC_fpALU, "fcpys", " $dst, $a", []>;
 } // neverHasSideEffects
 
 def FNEGD  : ADuI<0b11101011, 0b0001, 0b0100, (outs DPR:$dst), (ins DPR:$a),
-                 "fnegd", " $dst, $a",
+                 IIC_fpALU, "fnegd", " $dst, $a",
                  [(set DPR:$dst, (fneg DPR:$a))]>;
 
 def FNEGS  : ASuIn<0b11101011, 0b0001, 0b0100, (outs SPR:$dst), (ins SPR:$a),
-                  "fnegs", " $dst, $a",
+                  IIC_fpALU, "fnegs", " $dst, $a",
                   [(set SPR:$dst, (fneg SPR:$a))]>;
 
 def FSQRTD  : ADuI<0b11101011, 0b0001, 0b1100, (outs DPR:$dst), (ins DPR:$a),
-                 "fsqrtd", " $dst, $a",
+                 IIC_fpALU, "fsqrtd", " $dst, $a",
                  [(set DPR:$dst, (fsqrt DPR:$a))]>;
 
 def FSQRTS  : ASuI<0b11101011, 0b0001, 0b1100, (outs SPR:$dst), (ins SPR:$a),
-                 "fsqrts", " $dst, $a",
+                 IIC_fpALU, "fsqrts", " $dst, $a",
                  [(set SPR:$dst, (fsqrt SPR:$a))]>;
 
 //===----------------------------------------------------------------------===//
@@ -225,16 +225,16 @@ def FSQRTS  : ASuI<0b11101011, 0b0001, 0b1100, (outs SPR:$dst), (ins SPR:$a),
 //
 
 def FMRS   : AVConv2I<0b11100001, 0b1010, (outs GPR:$dst), (ins SPR:$src),
-                 "fmrs", " $dst, $src",
+                 IIC_fpALU, "fmrs", " $dst, $src",
                  [(set GPR:$dst, (bitconvert SPR:$src))]>;
 
 def FMSR   : AVConv4I<0b11100000, 0b1010, (outs SPR:$dst), (ins GPR:$src),
-                 "fmsr", " $dst, $src",
+                 IIC_fpALU, "fmsr", " $dst, $src",
                  [(set SPR:$dst, (bitconvert GPR:$src))]>;
 
 def FMRRD  : AVConv3I<0b11000101, 0b1011,
                       (outs GPR:$dst1, GPR:$dst2), (ins DPR:$src),
-                 "fmrrd", " $dst1, $dst2, $src",
+                 IIC_fpALU, "fmrrd", " $dst1, $dst2, $src",
                  [/* FIXME: Can't write pattern for multiple result instr*/]>;
 
 // FMDHR: GPR -> SPR
@@ -242,7 +242,7 @@ def FMRRD  : AVConv3I<0b11000101, 0b1011,
 
 def FMDRR : AVConv5I<0b11000100, 0b1011,
                      (outs DPR:$dst), (ins GPR:$src1, GPR:$src2),
-                "fmdrr", " $dst, $src1, $src2",
+                IIC_fpALU, "fmdrr", " $dst, $src1, $src2",
                 [(set DPR:$dst, (arm_fmdrr GPR:$src1, GPR:$src2))]>;
 
 // FMRDH: SPR -> GPR
@@ -258,23 +258,23 @@ def FMDRR : AVConv5I<0b11000100, 0b1011,
 // Int to FP:
 
 def FSITOD : AVConv1I<0b11101011, 0b1000, 0b1011, (outs DPR:$dst), (ins SPR:$a),
-                 "fsitod", " $dst, $a",
+                 IIC_fpALU, "fsitod", " $dst, $a",
                  [(set DPR:$dst, (arm_sitof SPR:$a))]> {
   let Inst{7} = 1;
 }
 
 def FSITOS : AVConv1I<0b11101011, 0b1000, 0b1010, (outs SPR:$dst), (ins SPR:$a),
-                 "fsitos", " $dst, $a",
+                 IIC_fpALU, "fsitos", " $dst, $a",
                  [(set SPR:$dst, (arm_sitof SPR:$a))]> {
   let Inst{7} = 1;
 }
 
 def FUITOD : AVConv1I<0b11101011, 0b1000, 0b1011, (outs DPR:$dst), (ins SPR:$a),
-                 "fuitod", " $dst, $a",
+                 IIC_fpALU, "fuitod", " $dst, $a",
                  [(set DPR:$dst, (arm_uitof SPR:$a))]>;
 
 def FUITOS : AVConv1I<0b11101011, 0b1000, 0b1010, (outs SPR:$dst), (ins SPR:$a),
-                 "fuitos", " $dst, $a",
+                 IIC_fpALU, "fuitos", " $dst, $a",
                  [(set SPR:$dst, (arm_uitof SPR:$a))]>;
 
 // FP to Int:
@@ -282,28 +282,28 @@ def FUITOS : AVConv1I<0b11101011, 0b1000, 0b1010, (outs SPR:$dst), (ins SPR:$a),
 
 def FTOSIZD : AVConv1I<0b11101011, 0b1101, 0b1011,
                        (outs SPR:$dst), (ins DPR:$a),
-                 "ftosizd", " $dst, $a",
+                 IIC_fpALU, "ftosizd", " $dst, $a",
                  [(set SPR:$dst, (arm_ftosi DPR:$a))]> {
   let Inst{7} = 1; // Z bit
 }
 
 def FTOSIZS : AVConv1I<0b11101011, 0b1101, 0b1010,
                        (outs SPR:$dst), (ins SPR:$a),
-                 "ftosizs", " $dst, $a",
+                 IIC_fpALU, "ftosizs", " $dst, $a",
                  [(set SPR:$dst, (arm_ftosi SPR:$a))]> {
   let Inst{7} = 1; // Z bit
 }
 
 def FTOUIZD : AVConv1I<0b11101011, 0b1100, 0b1011,
                        (outs SPR:$dst), (ins DPR:$a),
-                 "ftouizd", " $dst, $a",
+                 IIC_fpALU, "ftouizd", " $dst, $a",
                  [(set SPR:$dst, (arm_ftoui DPR:$a))]> {
   let Inst{7} = 1; // Z bit
 }
 
 def FTOUIZS : AVConv1I<0b11101011, 0b1100, 0b1010,
                        (outs SPR:$dst), (ins SPR:$a),
-                 "ftouizs", " $dst, $a",
+                 IIC_fpALU, "ftouizs", " $dst, $a",
                  [(set SPR:$dst, (arm_ftoui SPR:$a))]> {
   let Inst{7} = 1; // Z bit
 }
@@ -313,34 +313,34 @@ def FTOUIZS : AVConv1I<0b11101011, 0b1100, 0b1010,
 //
 
 def FMACD : ADbI<0b11100000, (outs DPR:$dst), (ins DPR:$dstin, DPR:$a, DPR:$b),
-                "fmacd", " $dst, $a, $b",
+                IIC_fpALU, "fmacd", " $dst, $a, $b",
                 [(set DPR:$dst, (fadd (fmul DPR:$a, DPR:$b), DPR:$dstin))]>,
                 RegConstraint<"$dstin = $dst">;
 
 def FMACS : ASbIn<0b11100000, (outs SPR:$dst), (ins SPR:$dstin, SPR:$a, SPR:$b),
-                 "fmacs", " $dst, $a, $b",
+                 IIC_fpALU, "fmacs", " $dst, $a, $b",
                  [(set SPR:$dst, (fadd (fmul SPR:$a, SPR:$b), SPR:$dstin))]>,
                  RegConstraint<"$dstin = $dst">;
 
 def FMSCD : ADbI<0b11100001, (outs DPR:$dst), (ins DPR:$dstin, DPR:$a, DPR:$b),
-                "fmscd", " $dst, $a, $b",
+                IIC_fpALU, "fmscd", " $dst, $a, $b",
                 [(set DPR:$dst, (fsub (fmul DPR:$a, DPR:$b), DPR:$dstin))]>,
                 RegConstraint<"$dstin = $dst">;
 
 def FMSCS : ASbI<0b11100001, (outs SPR:$dst), (ins SPR:$dstin, SPR:$a, SPR:$b),
-                "fmscs", " $dst, $a, $b",
+                IIC_fpALU, "fmscs", " $dst, $a, $b",
                 [(set SPR:$dst, (fsub (fmul SPR:$a, SPR:$b), SPR:$dstin))]>,
                 RegConstraint<"$dstin = $dst">;
 
 def FNMACD : ADbI<0b11100000, (outs DPR:$dst), (ins DPR:$dstin, DPR:$a, DPR:$b),
-                 "fnmacd", " $dst, $a, $b",
+                 IIC_fpALU, "fnmacd", " $dst, $a, $b",
              [(set DPR:$dst, (fadd (fneg (fmul DPR:$a, DPR:$b)), DPR:$dstin))]>,
                 RegConstraint<"$dstin = $dst"> {
   let Inst{6} = 1;
 }
 
 def FNMACS : ASbIn<0b11100000, (outs SPR:$dst), (ins SPR:$dstin, SPR:$a, SPR:$b),
-                  "fnmacs", " $dst, $a, $b",
+                  IIC_fpALU, "fnmacs", " $dst, $a, $b",
              [(set SPR:$dst, (fadd (fneg (fmul SPR:$a, SPR:$b)), SPR:$dstin))]>,
                 RegConstraint<"$dstin = $dst"> {
   let Inst{6} = 1;
@@ -352,14 +352,14 @@ def : Pat<(fsub SPR:$dstin, (fmul SPR:$a, SPR:$b)),
           (FNMACS SPR:$dstin, SPR:$a, SPR:$b)>, Requires<[DontUseNEONForFP]>;
 
 def FNMSCD : ADbI<0b11100001, (outs DPR:$dst), (ins DPR:$dstin, DPR:$a, DPR:$b),
-                 "fnmscd", " $dst, $a, $b",
+                 IIC_fpALU, "fnmscd", " $dst, $a, $b",
              [(set DPR:$dst, (fsub (fneg (fmul DPR:$a, DPR:$b)), DPR:$dstin))]>,
                 RegConstraint<"$dstin = $dst"> {
   let Inst{6} = 1;
 }
 
 def FNMSCS : ASbI<0b11100001, (outs SPR:$dst), (ins SPR:$dstin, SPR:$a, SPR:$b),
-                "fnmscs", " $dst, $a, $b",
+                IIC_fpALU, "fnmscs", " $dst, $a, $b",
              [(set SPR:$dst, (fsub (fneg (fmul SPR:$a, SPR:$b)), SPR:$dstin))]>,
                 RegConstraint<"$dstin = $dst"> {
   let Inst{6} = 1;
@@ -371,25 +371,25 @@ def FNMSCS : ASbI<0b11100001, (outs SPR:$dst), (ins SPR:$dstin, SPR:$a, SPR:$b),
 
 def FCPYDcc  : ADuI<0b11101011, 0b0000, 0b0100,
                     (outs DPR:$dst), (ins DPR:$false, DPR:$true),
-                    "fcpyd", " $dst, $true",
+                    IIC_fpALU, "fcpyd", " $dst, $true",
                 [/*(set DPR:$dst, (ARMcmov DPR:$false, DPR:$true, imm:$cc))*/]>,
                     RegConstraint<"$false = $dst">;
 
 def FCPYScc  : ASuI<0b11101011, 0b0000, 0b0100,
                     (outs SPR:$dst), (ins SPR:$false, SPR:$true),
-                    "fcpys", " $dst, $true",
+                    IIC_fpALU, "fcpys", " $dst, $true",
                 [/*(set SPR:$dst, (ARMcmov SPR:$false, SPR:$true, imm:$cc))*/]>,
                     RegConstraint<"$false = $dst">;
 
 def FNEGDcc  : ADuI<0b11101011, 0b0001, 0b0100,
                     (outs DPR:$dst), (ins DPR:$false, DPR:$true),
-                    "fnegd", " $dst, $true",
+                    IIC_fpALU, "fnegd", " $dst, $true",
                 [/*(set DPR:$dst, (ARMcneg DPR:$false, DPR:$true, imm:$cc))*/]>,
                     RegConstraint<"$false = $dst">;
 
 def FNEGScc  : ASuI<0b11101011, 0b0001, 0b0100,
                     (outs SPR:$dst), (ins SPR:$false, SPR:$true),
-                    "fnegs", " $dst, $true",
+                    IIC_fpALU, "fnegs", " $dst, $true",
                 [/*(set SPR:$dst, (ARMcneg SPR:$false, SPR:$true, imm:$cc))*/]>,
                     RegConstraint<"$false = $dst">;
 
@@ -399,7 +399,7 @@ def FNEGScc  : ASuI<0b11101011, 0b0001, 0b0100,
 //
 
 let Defs = [CPSR], Uses = [FPSCR] in
-def FMSTAT : VFPAI<(outs), (ins), VFPMiscFrm, "fmstat", "", [(arm_fmstat)]> {
+def FMSTAT : VFPAI<(outs), (ins), VFPMiscFrm, IIC_fpALU, "fmstat", "", [(arm_fmstat)]> {
   let Inst{27-20} = 0b11101111;
   let Inst{19-16} = 0b0001;
   let Inst{15-12} = 0b1111;
