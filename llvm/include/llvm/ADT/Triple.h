@@ -94,7 +94,7 @@ public:
   /// @name Constructors
   /// @{
   
-  Triple() : Data(""), Arch(InvalidArch) {}
+  Triple() : Data(), Arch(InvalidArch) {}
   explicit Triple(const StringRef &Str) : Data(Str), Arch(InvalidArch) {}
   explicit Triple(const char *ArchStr, const char *VendorStr, const char *OSStr)
     : Data(ArchStr), Arch(InvalidArch) {
