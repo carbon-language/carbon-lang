@@ -27,6 +27,7 @@
 #include "llvm/Support/ErrorHandling.h"
 #include "llvm/Support/FormattedStream.h"
 #include "llvm/Support/Mangler.h"
+#include <cstring>
 using namespace llvm;
 
 #include "PIC16GenAsmWriter.inc"
@@ -181,21 +182,13 @@ void PIC16AsmPrinter::printCCOperand(const MachineInstr *MI, int opNum) {
 // This function is used to sort the decls list.
 // should return true if s1 should come before s2.
 static bool is_before(const char *s1, const char *s2) {
-  std::string str1 = s1;
-  std::string str2 = s2;
-  int i = str1.compare(str2);
-  // Return true if s1 is smaller or equal.
-  if (i <= 0) return true;
-  // false if s1 should come after s2.
-  return false;
+  return strcmp(s1, s2) <= 0;
 }
 
 // This is used by list::unique below. 
 // unique will filter out duplicates if it knows them.
 static bool is_duplicate(const char *s1, const char *s2) {
-  std::string str1 = s1;
-  std::string str2 = s2;
-  return str1 == str2;
+  return !strcmp(s1, s2);
 }
 
 /// printLibcallDecls - print the extern declarations for compiler 
