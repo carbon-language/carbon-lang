@@ -58,7 +58,7 @@ static const Value *getUnderlyingObjectFromInt(const Value *V) {
       // If we find an add of a constant or a multiplied value, it's
       // likely that the other operand will lead us to the base
       // object. We don't have to worry about the case where the
-      // object address is somehow being computed bt the multiply,
+      // object address is somehow being computed by the multiply,
       // because our callers only care when the result is an
       // identifibale object.
       if (U->getOpcode() != Instruction::Add ||
