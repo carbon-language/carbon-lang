@@ -1612,8 +1612,8 @@ const SCEV *ScalarEvolution::getMulExpr(SmallVectorImpl<const SCEV *> &Ops) {
   return S;
 }
 
-/// getUDivExpr - Get a canonical multiply expression, or something simpler if
-/// possible.
+/// getUDivExpr - Get a canonical unsigned division expression, or something
+/// simpler if possible.
 const SCEV *ScalarEvolution::getUDivExpr(const SCEV *LHS,
                                          const SCEV *RHS) {
   assert(getEffectiveSCEVType(LHS->getType()) ==
