@@ -149,8 +149,8 @@ let isCall = 1 in
               XMM0, XMM1, XMM2, XMM3, XMM4, XMM5, EFLAGS],
       Uses = [RSP] in {
     def WINCALL64pcrel32 : I<0xE8, RawFrm,
-                             (outs), (ins i64i32imm:$dst, variable_ops),
-                             "call\t${dst:call}", [(X86call imm:$dst)]>,
+                             (outs), (ins i64i32imm_pcrel:$dst, variable_ops),
+                             "call\t$dst", []>,
                            Requires<[IsWin64]>;
     def WINCALL64r       : I<0xFF, MRM2r, (outs), (ins GR64:$dst, variable_ops),
                              "call\t{*}$dst",
