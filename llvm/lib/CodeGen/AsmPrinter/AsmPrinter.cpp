@@ -788,13 +788,10 @@ void AsmPrinter::EmitAlignment(unsigned NumBits, const GlobalValue *GV,
 /// == 0 or MaxOperandLength == 0, return 0, meaning column alignment
 /// is disabled.
 unsigned AsmPrinter::getOperandColumn(int operand) const {
-  if (TAI->getFirstOperandColumn() > 0 && TAI->getMaxOperandLength() > 0) {
-    return TAI->getFirstOperandColumn()
-      + (TAI->getMaxOperandLength()+1)*(operand-1);
-  }
-  else {
-    return 0;
-  }
+  if (TAI->getFirstOperandColumn() > 0 && TAI->getMaxOperandLength() > 0)
+    return TAI->getFirstOperandColumn() + 
+      (TAI->getMaxOperandLength()+1)*(operand-1);
+  return 0;
 }
     
 /// PadToColumn - This gets called every time a tab is emitted.  If
