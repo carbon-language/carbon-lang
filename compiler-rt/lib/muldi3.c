@@ -1,19 +1,20 @@
-//===-- muldi3.c - Implement __muldi3 -------------------------------------===//
-//
-//                     The LLVM Compiler Infrastructure
-//
-// This file is distributed under the University of Illinois Open Source
-// License. See LICENSE.TXT for details.
-//
-//===----------------------------------------------------------------------===//
-//
-// This file implements __muldi3 for the compiler_rt library.
-//
-//===----------------------------------------------------------------------===//
+/* ===-- muldi3.c - Implement __muldi3 -------------------------------------===
+ *
+ *                     The LLVM Compiler Infrastructure
+ *
+ * This file is distributed under the University of Illinois Open Source
+ * License. See LICENSE.TXT for details.
+ *
+ * ===----------------------------------------------------------------------===
+ *
+ * This file implements __muldi3 for the compiler_rt library.
+ *
+ * ===----------------------------------------------------------------------===
+ */ 
 
 #include "int_lib.h"
 
-// Returns: a * b
+/* Returns: a * b */
 
 static
 di_int
@@ -37,7 +38,7 @@ __muldsi3(su_int a, su_int b)
     return r.all;
 }
 
-// Returns: a * b
+/* Returns: a * b */
 
 di_int
 __muldi3(di_int a, di_int b)

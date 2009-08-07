@@ -26,7 +26,7 @@
  *                 (no range checking performed)
  */
 
-// seee eeee emmm mmmm mmmm mmmm mmmm mmmm */
+/* seee eeee emmm mmmm mmmm mmmm mmmm mmmm */
 
 tu_int
 __fixunssfti(float a)

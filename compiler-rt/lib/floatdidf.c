@@ -1,29 +1,32 @@
-//===-- floatdidf.c - Implement __floatdidf -------------------------------===//
-//
-//                     The LLVM Compiler Infrastructure
-//
-// This file is distributed under the University of Illinois Open Source
-// License. See LICENSE.TXT for details.
-//
-//===----------------------------------------------------------------------===//
-//
-// This file implements __floatdidf for the compiler_rt library.
-//
-//===----------------------------------------------------------------------===//
+/*===-- floatdidf.c - Implement __floatdidf -------------------------------===
+ *
+ *                     The LLVM Compiler Infrastructure
+ *
+ * This file is distributed under the University of Illinois Open Source
+ * License. See LICENSE.TXT for details.
+ *
+ *===----------------------------------------------------------------------===
+ *
+ * This file implements __floatdidf for the compiler_rt library.
+ *
+ *===----------------------------------------------------------------------===
+ */
 
 #include "int_lib.h"
 #include <float.h>
 
-// Returns: convert a to a double, rounding toward even.
+/* Returns: convert a to a double, rounding toward even. */
 
-// Assumption: double is a IEEE 64 bit floating point type 
-//             di_int is a 64 bit integral type
+/* Assumption: double is a IEEE 64 bit floating point type 
+ *             di_int is a 64 bit integral type
+ */
 
-// seee eeee eeee mmmm mmmm mmmm mmmm mmmm | mmmm mmmm mmmm mmmm mmmm mmmm mmmm mmmm
+/* seee eeee eeee mmmm mmmm mmmm mmmm mmmm | mmmm mmmm mmmm mmmm mmmm mmmm mmmm mmmm */
 
 #ifndef __SOFT_FP__
-// Support for systems that have hardware floating-point; we'll set the inexact flag
-// as a side-effect of this computation.
+/* Support for systems that have hardware floating-point; we'll set the inexact flag
+ * as a side-effect of this computation.
+ */
 #include <stdint.h>
 
 double
@@ -42,8 +45,9 @@ __floatdidf(di_int a)
 }
 
 #else
-// Support for systems that don't have hardware floating-point; there are no flags to
-// set, and we don't want to code-gen to an unknown soft-float implementation.
+/* Support for systems that don't have hardware floating-point; there are no flags to
+ * set, and we don't want to code-gen to an unknown soft-float implementation.
+ */
 
 double
 __floatdidf(di_int a)
@@ -53,17 +57,18 @@ __floatdidf(di_int a)
     const unsigned N = sizeof(di_int) * CHAR_BIT;
     const di_int s = a >> (N-1);
     a = (a ^ s) - s;
-    int sd = N - __builtin_clzll(a);  // number of significant digits
-    int e = sd - 1;             // exponent
+    int sd = N - __builtin_clzll(a);  /* number of significant digits */
+    int e = sd - 1;             /* exponent */
     if (sd > DBL_MANT_DIG)
     {
-        //  start:  0000000000000000000001xxxxxxxxxxxxxxxxxxxxxxPQxxxxxxxxxxxxxxxxxx
-        //  finish: 000000000000000000000000000000000000001xxxxxxxxxxxxxxxxxxxxxxPQR
-        //                                                12345678901234567890123456
-        //  1 = msb 1 bit
-        //  P = bit DBL_MANT_DIG-1 bits to the right of 1
-        //  Q = bit DBL_MANT_DIG bits to the right of 1
-        //  R = "or" of all bits to the right of Q
+        /*  start:  0000000000000000000001xxxxxxxxxxxxxxxxxxxxxxPQxxxxxxxxxxxxxxxxxx
+         *  finish: 000000000000000000000000000000000000001xxxxxxxxxxxxxxxxxxxxxxPQR
+         *                                                12345678901234567890123456
+         *  1 = msb 1 bit
+         *  P = bit DBL_MANT_DIG-1 bits to the right of 1
+         * Q = bit DBL_MANT_DIG bits to the right of 1
+         *  R = "or" of all bits to the right of Q
+        */
         switch (sd)
         {
         case DBL_MANT_DIG + 1:
@@ -75,28 +80,28 @@ __floatdidf(di_int a)
             a = ((du_int)a >> (sd - (DBL_MANT_DIG+2))) |
                 ((a & ((du_int)(-1) >> ((N + DBL_MANT_DIG+2) - sd))) != 0);
         };
-        // finish:
-        a |= (a & 4) != 0;  // Or P into R
-        ++a;  // round - this step may add a significant bit
-        a >>= 2;  // dump Q and R
-        // a is now rounded to DBL_MANT_DIG or DBL_MANT_DIG+1 bits
+        /* finish: */
+        a |= (a & 4) != 0;  /* Or P into R */
+        ++a;  /* round - this step may add a significant bit */
+        a >>= 2;  /* dump Q and R */
+        /* a is now rounded to DBL_MANT_DIG or DBL_MANT_DIG+1 bits */
         if (a & ((du_int)1 << DBL_MANT_DIG))
         {
             a >>= 1;
             ++e;
         }
-        // a is now rounded to DBL_MANT_DIG bits
+        /* a is now rounded to DBL_MANT_DIG bits */
     }
     else
     {
         a <<= (DBL_MANT_DIG - sd);
-        // a is now rounded to DBL_MANT_DIG bits
+        /* a is now rounded to DBL_MANT_DIG bits */
     }
     double_bits fb;
-    fb.u.high = ((su_int)s & 0x80000000) |        // sign
-                ((e + 1023) << 20)      |        // exponent
-                ((su_int)(a >> 32) & 0x000FFFFF); // mantissa-high
-    fb.u.low = (su_int)a;                         // mantissa-low
+    fb.u.high = ((su_int)s & 0x80000000) |        /* sign */
+                ((e + 1023) << 20)      |        /* exponent */
+                ((su_int)(a >> 32) & 0x000FFFFF); /* mantissa-high */
+    fb.u.low = (su_int)a;                         /* mantissa-low */
     return fb.f;
 }
 #endif

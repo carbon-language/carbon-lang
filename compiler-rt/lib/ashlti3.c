@@ -1,23 +1,24 @@
-//===-- ashlti3.c - Implement __ashlti3 -----------------------------------===//
-//
-//                     The LLVM Compiler Infrastructure
-//
-// This file is distributed under the University of Illinois Open Source
-// License. See LICENSE.TXT for details.
-//
-//===----------------------------------------------------------------------===//
-//
-// This file implements __ashlti3 for the compiler_rt library.
-//
-//===----------------------------------------------------------------------===//
+/* ===-- ashlti3.c - Implement __ashlti3 -----------------------------------===
+ *
+ *                     The LLVM Compiler Infrastructure
+ *
+ * This file is distributed under the University of Illinois Open Source
+ * License. See LICENSE.TXT for details.
+ *
+ * ===----------------------------------------------------------------------===
+ *
+ * This file implements __ashlti3 for the compiler_rt library.
+ *
+ * ===----------------------------------------------------------------------===
+ */
 
 #if __x86_64
 
 #include "int_lib.h"
 
-// Returns: a << b
+/* Returns: a << b */
 
-// Precondition:  0 <= b < bits_in_tword
+/* Precondition:  0 <= b < bits_in_tword */
 
 ti_int
 __ashlti3(ti_int a, si_int b)
@@ -26,12 +27,12 @@ __ashlti3(ti_int a, si_int b)
     twords input;
     twords result;
     input.all = a;
-    if (b & bits_in_dword)  // bits_in_dword <= b < bits_in_tword
+    if (b & bits_in_dword)  /* bits_in_dword <= b < bits_in_tword */
     {
         result.low = 0;
         result.high = input.low << (b - bits_in_dword);
     }
-    else  // 0 <= b < bits_in_dword
+    else  /* 0 <= b < bits_in_dword */
     {
         if (b == 0)
             return a;
@@ -41,4 +42,4 @@ __ashlti3(ti_int a, si_int b)
     return result.all;
 }
 
-#endif
+#endif /* __x86_64 */

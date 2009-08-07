@@ -1,12 +1,12 @@
-//===-- apple_versioning.c - Adds versioning symbols for ld ---------------===//
-//
-//                     The LLVM Compiler Infrastructure
-//
-// This file is distributed under the University of Illinois Open Source
-// License. See LICENSE.TXT for details.
-//
-//===----------------------------------------------------------------------===//
-
+/* ===-- apple_versioning.c - Adds versioning symbols for ld ---------------===
+ *
+ *                     The LLVM Compiler Infrastructure
+ *
+ * This file is distributed under the University of Illinois Open Source
+ * License. See LICENSE.TXT for details.
+ *
+ * ===----------------------------------------------------------------------===
+ */
 
 
 
@@ -28,10 +28,9 @@
   #endif
 
 
-//
-// Symbols in libSystem.dylib in 10.6 and later, 
-//  but are in libgcc_s.dylib in earlier versions
-//
+/* Symbols in libSystem.dylib in 10.6 and later, 
+ *  but are in libgcc_s.dylib in earlier versions
+ */
 NOT_HERE_BEFORE_10_6(__absvdi2)
 NOT_HERE_BEFORE_10_6(__absvsi2)
 NOT_HERE_BEFORE_10_6(__absvti2)
@@ -142,5 +141,5 @@ NOT_HERE_BEFORE_10_6(__trampoline_setup)
 #endif
 
 
-#endif // __APPLE__
+#endif /* __APPLE__*/
 

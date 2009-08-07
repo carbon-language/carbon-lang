@@ -1,15 +1,15 @@
-//===-- divxc3.c - Implement __divxc3 -------------------------------------===//
-//
-//                     The LLVM Compiler Infrastructure
-//
-// This file is distributed under the University of Illinois Open Source
-// License. See LICENSE.TXT for details.
-//
-//===----------------------------------------------------------------------===//
-//
-// This file implements __divxc3 for the compiler_rt library.
-//
-//===----------------------------------------------------------------------===//
+/* ===-- divxc3.c - Implement __divxc3 -------------------------------------===
+ *
+ *                     The LLVM Compiler Infrastructure
+ *
+ * This file is distributed under the University of Illinois Open Source
+ * License. See LICENSE.TXT for details.
+ *
+ * ===----------------------------------------------------------------------===
+ *
+ * This file implements __divxc3 for the compiler_rt library.
+ *
+ */
 
 #if !_ARCH_PPC
 
@@ -17,7 +17,7 @@
 #include <math.h>
 #include <complex.h>
 
-// Returns: the quotient of (a + ib) / (c + id)
+/* Returns: the quotient of (a + ib) / (c + id) */
 
 long double _Complex
 __divxc3(long double __a, long double __b, long double __c, long double __d)

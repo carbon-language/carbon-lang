@@ -1,21 +1,22 @@
-//===-- ashldi3.c - Implement __ashldi3 -----------------------------------===//
-//
-//                     The LLVM Compiler Infrastructure
-//
-// This file is distributed under the University of Illinois Open Source
-// License. See LICENSE.TXT for details.
-//
-//===----------------------------------------------------------------------===//
-//
-// This file implements __ashldi3 for the compiler_rt library.
-//
-//===----------------------------------------------------------------------===//
+/* ====-- ashldi3.c - Implement __ashldi3 -----------------------------------===
+ *
+ *                     The LLVM Compiler Infrastructure
+ *
+ * This file is distributed under the University of Illinois Open Source
+ * License. See LICENSE.TXT for details.
+ *
+ * ===----------------------------------------------------------------------===
+ *
+ * This file implements __ashldi3 for the compiler_rt library.
+ *
+ * ===----------------------------------------------------------------------===
+ */
 
 #include "int_lib.h"
 
-// Returns: a << b
+/* Returns: a << b */
 
-// Precondition:  0 <= b < bits_in_dword
+/* Precondition:  0 <= b < bits_in_dword */
 
 di_int
 __ashldi3(di_int a, si_int b)
@@ -24,12 +25,12 @@ __ashldi3(di_int a, si_int b)
     dwords input;
     dwords result;
     input.all = a;
-    if (b & bits_in_word)  // bits_in_word <= b < bits_in_dword
+    if (b & bits_in_word)  /* bits_in_word <= b < bits_in_dword */
     {
         result.low = 0;
         result.high = input.low << (b - bits_in_word);
     }
-    else  // 0 <= b < bits_in_word
+    else  /* 0 <= b < bits_in_word */
     {
         if (b == 0)
             return a;

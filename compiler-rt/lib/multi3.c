@@ -1,21 +1,22 @@
-//===-- multi3.c - Implement __multi3 -------------------------------------===//
-//
-//                     The LLVM Compiler Infrastructure
-//
-// This file is distributed under the University of Illinois Open Source
-// License. See LICENSE.TXT for details.
-//
-//===----------------------------------------------------------------------===//
-//
-// This file implements __multi3 for the compiler_rt library.
-//
-//===----------------------------------------------------------------------===//
+/* ===-- multi3.c - Implement __multi3 -------------------------------------===
+ *
+ *                     The LLVM Compiler Infrastructure
+ *
+ * This file is distributed under the University of Illinois Open Source
+ * License. See LICENSE.TXT for details.
+ *
+ * ===----------------------------------------------------------------------===
+
+ * This file implements __multi3 for the compiler_rt library.
+ *
+ * ===----------------------------------------------------------------------===
+ */
 
 #if __x86_64
 
 #include "int_lib.h"
 
-// Returns: a * b
+/* Returns: a * b */
 
 static
 ti_int
@@ -39,7 +40,7 @@ __mulddi3(du_int a, du_int b)
     return r.all;
 }
 
-// Returns: a * b
+/* Returns: a * b */
 
 ti_int
 __multi3(ti_int a, ti_int b)

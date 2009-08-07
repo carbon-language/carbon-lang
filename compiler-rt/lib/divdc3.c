@@ -1,21 +1,22 @@
-//===-- divdc3.c - Implement __divdc3 -------------------------------------===//
-//
-//                     The LLVM Compiler Infrastructure
-//
-// This file is distributed under the University of Illinois Open Source
-// License. See LICENSE.TXT for details.
-//
-//===----------------------------------------------------------------------===//
-//
-// This file implements __divdc3 for the compiler_rt library.
-//
-//===----------------------------------------------------------------------===//
+/* ===-- divdc3.c - Implement __divdc3 -------------------------------------===
+ *
+ *                     The LLVM Compiler Infrastructure
+ *
+ * This file is distributed under the University of Illinois Open Source
+ * License. See LICENSE.TXT for details.
+ *
+ * ===----------------------------------------------------------------------===
+ *
+ * This file implements __divdc3 for the compiler_rt library.
+ *
+ * ===----------------------------------------------------------------------===
+ */
 
 #include "int_lib.h"
 #include <math.h>
 #include <complex.h>
 
-// Returns: the quotient of (a + ib) / (c + id)
+/* Returns: the quotient of (a + ib) / (c + id) */
 
 double _Complex
 __divdc3(double __a, double __b, double __c, double __d)

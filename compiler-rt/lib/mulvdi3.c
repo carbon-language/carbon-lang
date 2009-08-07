@@ -1,22 +1,23 @@
-//===-- mulvdi3.c - Implement __mulvdi3 -----------------------------------===//
-//
-//                     The LLVM Compiler Infrastructure
-//
-// This file is distributed under the University of Illinois Open Source
-// License. See LICENSE.TXT for details.
-//
-//===----------------------------------------------------------------------===//
-//
-// This file implements __mulvdi3 for the compiler_rt library.
-//
-//===----------------------------------------------------------------------===//
+/*===-- mulvdi3.c - Implement __mulvdi3 -----------------------------------===
+ *
+ *                     The LLVM Compiler Infrastructure
+ *
+ * This file is distributed under the University of Illinois Open Source
+ * License. See LICENSE.TXT for details.
+ *
+ * ===----------------------------------------------------------------------===
+ *
+ * This file implements __mulvdi3 for the compiler_rt library.
+ *
+ * ===----------------------------------------------------------------------===
+ */
 
 #include "int_lib.h"
 #include <stdlib.h>
 
-// Returns: a * b
+/* Returns: a * b */
 
-// Effects: aborts if a * b overflows
+/* Effects: aborts if a * b overflows */
 
 di_int
 __mulvdi3(di_int a, di_int b)

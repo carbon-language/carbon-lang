@@ -1,21 +1,22 @@
-//===-- muldc3.c - Implement __muldc3 -------------------------------------===//
-//
-//                     The LLVM Compiler Infrastructure
-//
-// This file is distributed under the University of Illinois Open Source
-// License. See LICENSE.TXT for details.
-//
-//===----------------------------------------------------------------------===//
-//
-// This file implements __muldc3 for the compiler_rt library.
-//
-//===----------------------------------------------------------------------===//
+/* ===-- muldc3.c - Implement __muldc3 -------------------------------------===
+ *
+ *                     The LLVM Compiler Infrastructure
+ *
+ * This file is distributed under the University of Illinois Open Source
+ * License. See LICENSE.TXT for details.
+ *
+ * ===----------------------------------------------------------------------===
+ *
+ * This file implements __muldc3 for the compiler_rt library.
+ *
+ * ===----------------------------------------------------------------------===
+ */
 
 #include "int_lib.h"
 #include <math.h>
 #include <complex.h>
 
-// Returns: the product of a + ib and c + id
+/* Returns: the product of a + ib and c + id */
 
 double _Complex
 __muldc3(double __a, double __b, double __c, double __d)

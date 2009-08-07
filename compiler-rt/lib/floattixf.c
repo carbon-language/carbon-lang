@@ -37,8 +37,8 @@ __floattixf(ti_int a)
     const unsigned N = sizeof(ti_int) * CHAR_BIT;
     const ti_int s = a >> (N-1);
     a = (a ^ s) - s;
-    int sd = N - __clzti2(a);  // number of significant digits
-    int e = sd - 1;             // exponent
+    int sd = N - __clzti2(a);  /* number of significant digits */
+    int e = sd - 1;             /* exponent */
     if (sd > LDBL_MANT_DIG)
     {
         /*  start:  0000000000000000000001xxxxxxxxxxxxxxxxxxxxxxPQxxxxxxxxxxxxxxxxxx
@@ -48,7 +48,7 @@ __floattixf(ti_int a)
          *  P = bit LDBL_MANT_DIG-1 bits to the right of 1
          *  Q = bit LDBL_MANT_DIG bits to the right of 1
          *  R = "or" of all bits to the right of Q
-	 */
+	      */
         switch (sd)
         {
         case LDBL_MANT_DIG + 1:

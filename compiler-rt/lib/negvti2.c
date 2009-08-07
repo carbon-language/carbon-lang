@@ -1,24 +1,25 @@
-//===-- negvti2.c - Implement __negvti2 -----------------------------------===//
-//
-//                     The LLVM Compiler Infrastructure
-//
-// This file is distributed under the University of Illinois Open Source
-// License. See LICENSE.TXT for details.
-//
-//===----------------------------------------------------------------------===//
-//
-// This file implements __negvti2 for the compiler_rt library.
-//
-//===----------------------------------------------------------------------===//
+/*===-- negvti2.c - Implement __negvti2 -----------------------------------===
+ *
+ *                     The LLVM Compiler Infrastructure
+ *
+ * This file is distributed under the University of Illinois Open Source
+ * License. See LICENSE.TXT for details.
+ *
+ *===----------------------------------------------------------------------===
+ *
+ *This file implements __negvti2 for the compiler_rt library.
+ *
+ *===----------------------------------------------------------------------===
+ */
 
 #if __x86_64
 
 #include "int_lib.h"
 #include <stdlib.h>
 
-// Returns: -a
+/* Returns: -a */
 
-// Effects: aborts if -a overflows
+/* Effects: aborts if -a overflows */
 
 ti_int
 __negvti2(ti_int a)
