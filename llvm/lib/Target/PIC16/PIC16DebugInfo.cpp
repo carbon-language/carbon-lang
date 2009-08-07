@@ -236,10 +236,11 @@ void PIC16DbgInfo::BeginFunction(const MachineFunction &MF) {
   
   // Retreive the first valid debug Loc and process it.
   const DebugLoc &DL = GetDebugLocForFunction(MF);
-  ChangeDebugLoc(MF, DL, true);
-
-  EmitFunctBeginDI(MF.getFunction());
-  
+  // Emit debug info only if valid debug info is available.
+  if (!DL.isUnknown()) {
+    ChangeDebugLoc(MF, DL, true);
+    EmitFunctBeginDI(MF.getFunction());
+  } 
   // Set current line to 0 so that.line directive is genearted after .bf.
   CurLine = 0;
 }
@@ -271,7 +272,10 @@ void PIC16DbgInfo::SwitchToLine(unsigned Line, bool IsInBeginFunction) {
 ///
 void PIC16DbgInfo::EndFunction(const MachineFunction &MF) {
   if (! EmitDebugDirectives) return;
-  EmitFunctEndDI(MF.getFunction(), CurLine);
+  const DebugLoc &DL = GetDebugLocForFunction(MF);
+  // Emit debug info only if valid debug info is available.
+  if (!DL.isUnknown())
+    EmitFunctEndDI(MF.getFunction(), CurLine);
 }
 
 /// EndModule - Emit .eof for end of module.
