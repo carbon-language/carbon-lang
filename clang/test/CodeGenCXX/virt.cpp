@@ -123,7 +123,7 @@ int main() {
 
 // CHECK-LP32:__ZTV1F:
 // CHECK-LP32: .space 4
-// CHECK-LP32 .long 8
+// CHECK-LP32: .long 8
 // CHECK-LP32: .space 4
 // CHECK-LP32: .space 4
 // CHECK-LP32: .long __ZTI1F
@@ -144,7 +144,7 @@ int main() {
 
 // CHECK-LP64: __ZTV1F:
 // CHECK-LP64: .space 8
-// CHECK-LP64 .quad 16
+// CHECK-LP64: .quad 16
 // CHECK-LP64: .space 8
 // CHECK-LP64: .space 8
 // CHECK-LP64: .quad __ZTI1F

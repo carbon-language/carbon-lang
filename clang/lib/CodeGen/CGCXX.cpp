@@ -616,6 +616,18 @@ llvm::Value *CodeGenFunction::GenerateVtable(const CXXRecordDecl *RD) {
   const CXXRecordDecl *PrimaryBase = Layout.getPrimaryBase();
   const bool PrimaryBaseWasVirtual = Layout.getPrimaryBaseWasVirtual();
 
+  // The virtual base offsets come first.
+  for (CXXRecordDecl::reverse_base_class_const_iterator i = RD->vbases_rbegin(),
+         e = RD->vbases_rend(); i != e; ++i) {
+    const CXXRecordDecl *Base = 
+      cast<CXXRecordDecl>(i->getType()->getAs<RecordType>()->getDecl());
+    int64_t BaseOffset = Layout.getBaseClassOffset(Base) / 8;
+    llvm::Constant *m;
+    m = llvm::ConstantInt::get(llvm::Type::Int64Ty, BaseOffset);
+    m = llvm::ConstantExpr::getIntToPtr(m, Ptr8Ty);
+    methods.push_back(m);
+  }
+  
   // The primary base comes first.
   GenerateVtableForBase(PrimaryBase, RD, rtti, methods, true,
                         PrimaryBaseWasVirtual);
