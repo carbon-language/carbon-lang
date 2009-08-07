@@ -2001,7 +2001,8 @@ Sema::PerformObjectArgumentInitialization(Expr *&From, CXXMethodDecl *Method) {
                                    From->getSourceRange()))
     return true;
 
-  ImpCastExprToType(From, DestType, CastExpr::CK_Unknown, /*isLvalue=*/true);
+  ImpCastExprToType(From, DestType, CastExpr::CK_DerivedToBase, 
+                    /*isLvalue=*/true);
   return false;
 }
 
