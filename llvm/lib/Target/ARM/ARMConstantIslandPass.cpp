@@ -271,15 +271,23 @@ bool ARMConstantIslands::runOnMachineFunction(MachineFunction &MF) {
   // Iteratively place constant pool entries and fix up branches until there
   // is no change.
   bool MadeChange = false;
+  unsigned NoCPIters = 0, NoBRIters = 0;
   while (true) {
-    bool Change = false;
+    bool CPChange = false;
     for (unsigned i = 0, e = CPUsers.size(); i != e; ++i)
-      Change |= HandleConstantPoolUser(MF, i);
+      CPChange |= HandleConstantPoolUser(MF, i);
+    if (CPChange && ++NoCPIters > 30)
+      llvm_unreachable("Constant Island pass failed to converge!");
     DEBUG(dumpBBs());
+
+    bool BRChange = false;
     for (unsigned i = 0, e = ImmBranches.size(); i != e; ++i)
-      Change |= FixUpImmediateBr(MF, ImmBranches[i]);
+      BRChange |= FixUpImmediateBr(MF, ImmBranches[i]);
+    if (BRChange && ++NoBRIters > 30)
+      llvm_unreachable("Branch Fix Up pass failed to converge!");
     DEBUG(dumpBBs());
-    if (!Change)
+
+    if (!CPChange && !BRChange)
       break;
     MadeChange = true;
   }
