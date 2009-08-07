@@ -1582,13 +1582,13 @@ void TimingInfo::createTheTimeInfo() {
 }
 
 /// If TimingInfo is enabled then start pass timer.
-void StartPassTimer(Pass *P) {
+void llvm::StartPassTimer(Pass *P) {
   if (TheTimeInfo) 
     TheTimeInfo->passStarted(P);
 }
 
 /// If TimingInfo is enabled then stop pass timer.
-void StopPassTimer(Pass *P) {
+void llvm::StopPassTimer(Pass *P) {
   if (TheTimeInfo) 
     TheTimeInfo->passEnded(P);
 }

@@ -549,6 +549,8 @@ static SPCC::CondCodes FPCondCCodeToFCC(ISD::CondCode CC) {
   }
 }
 
+namespace {
+
 class TargetLoweringObjectFileSparc : public TargetLoweringObjectFileELF {
 public:
   void getSectionFlagsAsString(SectionKind Kind,
@@ -571,6 +573,7 @@ public:
   }
 };
 
+}
 
 SparcTargetLowering::SparcTargetLowering(TargetMachine &TM)
   : TargetLowering(TM, new TargetLoweringObjectFileSparc()) {

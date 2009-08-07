@@ -760,6 +760,7 @@ void PromoteMem2Reg::RewriteSingleStoreAlloca(AllocaInst *AI,
   }
 }
 
+namespace {
 
 /// StoreIndexSearchPredicate - This is a helper predicate used to search by the
 /// first element of a pair.
@@ -769,6 +770,8 @@ struct StoreIndexSearchPredicate {
     return LHS.first < RHS.first;
   }
 };
+
+}
 
 /// PromoteSingleBlockAlloca - Many allocas are only used within a single basic
 /// block.  If this is the case, avoid traversing the CFG and inserting a lot of

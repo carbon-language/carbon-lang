@@ -817,11 +817,11 @@ bool llvm::CannotBeNegativeZero(const Value *V, unsigned Depth) {
 // indices from Idxs that should be left out when inserting into the resulting
 // struct. To is the result struct built so far, new insertvalue instructions
 // build on that.
-Value *BuildSubAggregate(Value *From, Value* To, const Type *IndexedType,
-                                 SmallVector<unsigned, 10> &Idxs,
-                                 unsigned IdxSkip,
-                                 LLVMContext &Context,
-                                 Instruction *InsertBefore) {
+static Value *BuildSubAggregate(Value *From, Value* To, const Type *IndexedType,
+                                SmallVector<unsigned, 10> &Idxs,
+                                unsigned IdxSkip,
+                                LLVMContext &Context,
+                                Instruction *InsertBefore) {
   const llvm::StructType *STy = llvm::dyn_cast<llvm::StructType>(IndexedType);
   if (STy) {
     // Save the original To argument so we can modify it
@@ -877,9 +877,9 @@ Value *BuildSubAggregate(Value *From, Value* To, const Type *IndexedType,
 // insertvalue instruction somewhere).
 //
 // All inserted insertvalue instructions are inserted before InsertBefore
-Value *BuildSubAggregate(Value *From, const unsigned *idx_begin,
-                         const unsigned *idx_end, LLVMContext &Context,
-                         Instruction *InsertBefore) {
+static Value *BuildSubAggregate(Value *From, const unsigned *idx_begin,
+                                const unsigned *idx_end, LLVMContext &Context,
+                                Instruction *InsertBefore) {
   assert(InsertBefore && "Must have someplace to insert!");
   const Type *IndexedType = ExtractValueInst::getIndexedType(From->getType(),
                                                              idx_begin,

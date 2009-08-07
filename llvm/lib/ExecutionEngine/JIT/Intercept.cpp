@@ -57,6 +57,7 @@ static void runAtExitHandlers() {
  * linking with libc_nonshared.a and -Wl,--export-dynamic doesn't make 'stat' 
  * available as an exported symbol, so we have to add it explicitly.
  */
+namespace {
 class StatSymbols {
 public:
   StatSymbols() {
@@ -73,6 +74,7 @@ public:
     sys::DynamicLibrary::AddSymbol("mknod", (void*)(intptr_t)mknod);
   }
 };
+}
 static StatSymbols initStatSymbols;
 #endif // __linux__
 

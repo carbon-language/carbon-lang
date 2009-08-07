@@ -48,13 +48,14 @@ RewriterOpt("rewriter",
                        clEnumValEnd),
             cl::init(local));
 
-cl::opt<bool>
+static cl::opt<bool>
 ScheduleSpills("schedule-spills",
                cl::desc("Schedule spill code"),
                cl::init(false));
 
 VirtRegRewriter::~VirtRegRewriter() {}
 
+namespace {
 
 /// This class is intended for use with the new spilling framework only. It
 /// rewrites vreg def/uses to use the assigned preg, but does not insert any
@@ -101,7 +102,11 @@ struct VISIBILITY_HIDDEN TrivialRewriter : public VirtRegRewriter {
 
 };
 
+}
+
 // ************************************************************************ //
+
+namespace {
 
 /// AvailableSpills - As the local rewriter is scanning and rewriting an MBB
 /// from top down, keep track of which spill slots or remat are available in
@@ -225,6 +230,8 @@ public:
                                 std::vector<MachineOperand*> &KillOps);
 };
 
+}
+
 // ************************************************************************ //
 
 // Given a location where a reload of a spilled register or a remat of
@@ -296,7 +303,9 @@ stop:;
 
   return NewInsertLoc;
 }
- 
+
+namespace {
+
 // ReusedOp - For each reused operand, we keep track of a bit of information,
 // in case we need to rollback upon processing a new operand.  See comments
 // below.
@@ -396,6 +405,7 @@ public:
   }
 };
 
+}
 
 // ****************** //
 // Utility Functions  //
@@ -961,6 +971,8 @@ namespace {
 // ***************************** //
 // Local Spiller Implementation  //
 // ***************************** //
+
+namespace {
 
 class VISIBILITY_HIDDEN LocalRewriter : public VirtRegRewriter {
   MachineRegisterInfo *RegInfo;
@@ -2319,6 +2331,8 @@ private:
   }
 
 };
+
+}
 
 llvm::VirtRegRewriter* llvm::createVirtRegRewriter() {
   switch (RewriterOpt) {

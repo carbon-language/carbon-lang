@@ -451,9 +451,9 @@ public:
   }
 };
 
-}
-
 extern void StartPassTimer(llvm::Pass *);
 extern void StopPassTimer(llvm::Pass *);
+
+}
 
 #endif

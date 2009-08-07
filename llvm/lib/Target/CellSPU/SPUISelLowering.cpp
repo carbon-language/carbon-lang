@@ -898,7 +898,7 @@ LowerSTORE(SDValue Op, SelectionDAG &DAG, const SPUSubtarget *ST) {
 }
 
 //! Generate the address of a constant pool entry.
-SDValue
+static SDValue
 LowerConstantPool(SDValue Op, SelectionDAG &DAG, const SPUSubtarget *ST) {
   MVT PtrVT = Op.getValueType();
   ConstantPoolSDNode *CP = cast<ConstantPoolSDNode>(Op);
@@ -1550,7 +1550,7 @@ SDValue SPU::get_v2i64_imm(SDNode *N, SelectionDAG &DAG) {
 }
 
 //! Lower a BUILD_VECTOR instruction creatively:
-SDValue
+static SDValue
 LowerBUILD_VECTOR(SDValue Op, SelectionDAG &DAG) {
   MVT VT = Op.getValueType();
   MVT EltVT = VT.getVectorElementType();

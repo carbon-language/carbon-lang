@@ -172,7 +172,7 @@ static void findUsedValues(GlobalVariable *LLVMUsed,
 }
 
 /// StripSymbolNames - Strip symbol names.
-bool StripSymbolNames(Module &M, bool PreserveDbgInfo) {
+static bool StripSymbolNames(Module &M, bool PreserveDbgInfo) {
 
   SmallPtrSet<const GlobalValue*, 8> llvmUsedValues;
   findUsedValues(M.getGlobalVariable("llvm.used"), llvmUsedValues);
@@ -201,7 +201,7 @@ bool StripSymbolNames(Module &M, bool PreserveDbgInfo) {
 // StripDebugInfo - Strip debug info in the module if it exists.  
 // To do this, we remove llvm.dbg.func.start, llvm.dbg.stoppoint, and 
 // llvm.dbg.region.end calls, and any globals they point to if now dead.
-bool StripDebugInfo(Module &M) {
+static bool StripDebugInfo(Module &M) {
 
   SmallPtrSet<const GlobalValue*, 8> llvmUsedValues;
   findUsedValues(M.getGlobalVariable("llvm.used"), llvmUsedValues);

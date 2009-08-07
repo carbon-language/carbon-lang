@@ -40,8 +40,8 @@ namespace {
   char Thumb2ITBlockPass::ID = 0;
 }
 
-ARMCC::CondCodes getPredicate(const MachineInstr *MI,
-                              const Thumb2InstrInfo *TII) {
+static ARMCC::CondCodes getPredicate(const MachineInstr *MI,
+                                     const Thumb2InstrInfo *TII) {
   unsigned Opc = MI->getOpcode();
   if (Opc == ARM::tBcc || Opc == ARM::t2Bcc)
     return ARMCC::AL;

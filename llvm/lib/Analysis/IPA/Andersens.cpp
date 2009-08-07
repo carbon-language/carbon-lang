@@ -1396,7 +1396,7 @@ bool Andersens::Node::intersectsIgnoring(Node *N, unsigned Ignoring) const {
   return Result;
 }
 
-void dumpToDOUT(SparseBitVector<> *bitmap) {
+static void dumpToDOUT(SparseBitVector<> *bitmap) {
 #ifndef NDEBUG
   raw_os_ostream OS(*DOUT);
   dump(*bitmap, OS);
