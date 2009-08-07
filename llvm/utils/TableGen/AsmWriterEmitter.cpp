@@ -169,15 +169,15 @@ AsmWriterInst::AsmWriterInst(const CodeGenInstruction &CGI, Record *AsmWriter) {
             // magic.
             if (FirstOperandColumn == -1 || OperandSpacing == -1) {
               AddLiteralString("\\t");
-              break;
+            } else {
+              // We recognize a tab as an operand delimeter.
+              unsigned DestColumn = FirstOperandColumn + 
+                                    CurColumn++ * OperandSpacing;
+              Operands.push_back(
+                AsmWriterOperand("O.PadToColumn(" +
+                                 utostr(DestColumn) + ",1);\n",
+                                 AsmWriterOperand::isLiteralStatementOperand));
             }
-              
-            // We recognize a tab as an operand delimeter.
-            unsigned DestColumn = FirstOperandColumn + 
-                                  CurColumn++ * OperandSpacing;
-            Operands.push_back(
-              AsmWriterOperand("O.PadToColumn(" + utostr(DestColumn) + ",1);\n",
-                               AsmWriterOperand::isLiteralStatementOperand));
             break;
           case '"':
             AddLiteralString("\\\"");
