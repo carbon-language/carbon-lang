@@ -268,7 +268,7 @@ const MachineInstrBuilder &AddDefaultCC(const MachineInstrBuilder &MIB) {
 
 static inline
 const MachineInstrBuilder &AddDefaultT1CC(const MachineInstrBuilder &MIB) {
-  return MIB.addReg(ARM::CPSR);
+  return MIB.addReg(ARM::CPSR, getDefRegState(true));
 }
 
 static inline
