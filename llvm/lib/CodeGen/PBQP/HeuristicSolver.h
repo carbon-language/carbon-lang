@@ -1,3 +1,18 @@
+//===-- HeuristicSolver.h - Heuristic PBQP Solver --------------*- C++ --*-===//
+//
+//                     The LLVM Compiler Infrastructure
+//
+// This file is distributed under the University of Illinois Open Source
+// License. See LICENSE.TXT for details.
+//
+//===----------------------------------------------------------------------===//
+//
+// Heuristic PBQP solver. This solver is able to perform optimal reductions for
+// nodes of degree 0, 1 or 2. For nodes of degree >2 a plugable heuristic is
+// used to to select a node for reduction. 
+//
+//===----------------------------------------------------------------------===//
+
 #ifndef LLVM_CODEGEN_PBQP_HEURISTICSOLVER_H
 #define LLVM_CODEGEN_PBQP_HEURISTICSOLVER_H
 
@@ -153,9 +168,7 @@ public:
   typedef std::vector<GraphNodeIterator> NodeStack;
   typedef typename NodeStack::iterator NodeStackIterator;
 
-  /*!
-   * \brief Constructor, which performs all the actual solver work.
-   */
+  /// \brief Constructor, which performs all the actual solver work.
   HeuristicSolverImpl(const SimpleGraph &orig) :
     solution(orig.getNumNodes(), true)
   {
@@ -166,22 +179,16 @@ public:
     computeSolutionCost(orig);
   }
 
-  /*!
-   * \brief Returns the graph for this solver.
-   */
+  /// \brief Returns the graph for this solver.
   SolverGraph& getGraph() { return g; }
 
-  /*!
-   * \brief Return the solution found by this solver.
-   */
+  /// \brief Return the solution found by this solver.
   const Solution& getSolution() const { return solution; }
 
 private:
 
-  /*!
-   * \brief Add the given node to the appropriate bucket for its link
-   * degree.
-   */
+  /// \brief Add the given node to the appropriate bucket for its link
+  /// degree.
   void addToBucket(const GraphNodeIterator &nodeItr) {
     NodeData &nodeData = g.getNodeData(nodeItr);
 
@@ -200,10 +207,8 @@ private:
     }
   }
 
-  /*!
-   * \brief Remove the given node from the appropriate bucket for its link
-   * degree.
-   */
+  /// \brief Remove the given node from the appropriate bucket for its link
+  /// degree.
   void removeFromBucket(const GraphNodeIterator &nodeItr) {
     NodeData &nodeData = g.getNodeData(nodeItr);
 
@@ -217,9 +222,7 @@ private:
 
 public:
 
-  /*!
-   * \brief Add a link.
-   */
+  /// \brief Add a link.
   void addLink(const GraphEdgeIterator &edgeItr) {
     g.getEdgeData(edgeItr).setup(edgeItr);
 
@@ -229,12 +232,10 @@ public:
     }
   }
 
-  /*!
-   * \brief Remove link, update info for node.
-   *
-   * Only updates information for the given node, since usually the other
-   * is about to be removed.
-   */
+  /// \brief Remove link, update info for node.
+  ///
+  /// Only updates information for the given node, since usually the other
+  /// is about to be removed.
   void removeLink(const GraphEdgeIterator &edgeItr,
                   const GraphNodeIterator &nodeItr) {
 
@@ -244,9 +245,7 @@ public:
     g.getEdgeData(edgeItr).unlink();
   }
 
-  /*!
-   * \brief Remove link, update info for both nodes. Useful for R2 only.
-   */
+  /// \brief Remove link, update info for both nodes. Useful for R2 only.
   void removeLinkR2(const GraphEdgeIterator &edgeItr) {
     GraphNodeIterator node1Itr = g.getEdgeNode1Itr(edgeItr);
 
@@ -256,9 +255,7 @@ public:
     removeLink(edgeItr, g.getEdgeNode2Itr(edgeItr));
   }
 
-  /*!
-   * \brief Removes all links connected to the given node.
-   */
+  /// \brief Removes all links connected to the given node.
   void unlinkNode(const GraphNodeIterator &nodeItr) {
     NodeData &nodeData = g.getNodeData(nodeItr);
 
@@ -284,17 +281,13 @@ public:
     }
   }
 
-  /*!
-   * \brief Push the given node onto the stack to be solved with
-   * backpropagation.
-   */
+  /// \brief Push the given node onto the stack to be solved with
+  /// backpropagation.
   void pushStack(const GraphNodeIterator &nodeItr) {
     stack.push_back(nodeItr);
   }
 
-  /*!
-   * \brief Set the solution of the given node.
-   */
+  /// \brief Set the solution of the given node.
   void setSolution(const GraphNodeIterator &nodeItr, unsigned solIndex) {
     solution.setSelection(g.getNodeID(nodeItr), solIndex);
 

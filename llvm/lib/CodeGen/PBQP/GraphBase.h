@@ -1,3 +1,17 @@
+//===-- GraphBase.h - Abstract Base PBQP Graph -----------------*- C++ --*-===//
+//
+//                     The LLVM Compiler Infrastructure
+//
+// This file is distributed under the University of Illinois Open Source
+// License. See LICENSE.TXT for details.
+//
+//===----------------------------------------------------------------------===//
+//
+// Base class for PBQP Graphs.
+//
+//===----------------------------------------------------------------------===//
+
+
 #ifndef LLVM_CODEGEN_PBQP_GRAPHBASE_H
 #define LLVM_CODEGEN_PBQP_GRAPHBASE_H
 

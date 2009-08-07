@@ -1,3 +1,18 @@
+//===-- ExhaustiveSolver.h - Brute Force PBQP Solver -----------*- C++ --*-===//
+//
+//                     The LLVM Compiler Infrastructure
+//
+// This file is distributed under the University of Illinois Open Source
+// License. See LICENSE.TXT for details.
+//
+//===----------------------------------------------------------------------===//
+//
+// Uses a trivial brute force algorithm to solve a PBQP problem.
+// PBQP is NP-HARD - This solver should only be used for debugging small
+// problems.
+//
+//===----------------------------------------------------------------------===//
+
 #ifndef LLVM_CODEGEN_PBQP_EXHAUSTIVESOLVER_H
 #define LLVM_CODEGEN_PBQP_EXHAUSTIVESOLVER_H
 
@@ -5,6 +20,8 @@
 
 namespace PBQP {
 
+/// A brute force PBQP solver. This solver takes exponential time. It should
+/// only be used for debugging purposes. 
 class ExhaustiveSolverImpl {
 private:
 

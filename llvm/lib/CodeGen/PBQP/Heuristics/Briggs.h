@@ -1,3 +1,20 @@
+//===-- Briggs.h --- Briggs Heuristic for PBQP -----------------*- C++ --*-===//
+//
+//                     The LLVM Compiler Infrastructure
+//
+// This file is distributed under the University of Illinois Open Source
+// License. See LICENSE.TXT for details.
+//
+//===----------------------------------------------------------------------===//
+//
+// This class implements the Briggs test for "allocability" of nodes in a
+// PBQP graph representing a register allocation problem. Nodes which can be
+// proven allocable (by a safe and relatively accurate test) are removed from
+// the PBQP graph first. If no provably allocable node is present in the graph
+// then the node with the minimal spill-cost to degree ratio is removed.
+//
+//===----------------------------------------------------------------------===//
+
 #ifndef LLVM_CODEGEN_PBQP_HEURISTICS_BRIGGS_H
 #define LLVM_CODEGEN_PBQP_HEURISTICS_BRIGGS_H
 
@@ -327,26 +344,7 @@ class Briggs {
   }
 
   void processRN() {
-
-   /* 
-    std::cerr << "processRN():\n"
-              << "  rNAllocable = [ ";
-    for (RNAllocableNodeListIterator nItr = rNAllocableBucket.begin(),
-                                     nEnd = rNAllocableBucket.end();
-         nItr != nEnd; ++nItr) {
-      std::cerr << g->getNodeID(*nItr) << " (" << g->getNodeData(*nItr).getLinkDegree() << ")    ";
-    }
-    std::cerr << "]\n"
-              << "  rNUnallocable = [ ";
-    for (RNUnallocableNodeListIterator nItr = rNUnallocableBucket.begin(),
-                                       nEnd = rNUnallocableBucket.end();
-         nItr != nEnd; ++nItr) {
-      float bCost = g->getNodeCosts(*nItr)[0] / g->getNodeData(*nItr).getLinkDegree();
-      std::cerr << g->getNodeID(*nItr) << " (" << bCost << ")   ";
-    }
-    std::cerr << "]\n";
-    */
-
+    
     if (!rNAllocableBucket.empty()) {
       GraphNodeIterator selectedNodeItr = *rNAllocableBucket.begin();
       //std::cerr << "RN safely pushing " << g->getNodeID(selectedNodeItr) << "\n";

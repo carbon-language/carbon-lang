@@ -1,3 +1,17 @@
+//===-- SimpleGraph.h - Simple PBQP Graph ----------------------*- C++ --*-===//
+//
+//                     The LLVM Compiler Infrastructure
+//
+// This file is distributed under the University of Illinois Open Source
+// License. See LICENSE.TXT for details.
+//
+//===----------------------------------------------------------------------===//
+//
+// Simple PBQP graph class representing a PBQP problem. Graphs of this type
+// can be passed to a PBQPSolver instance to solve the PBQP problem.
+//
+//===----------------------------------------------------------------------===//
+
 #ifndef LLVM_CODEGEN_PBQP_SIMPLEGRAPH_H
 #define LLVM_CODEGEN_PBQP_SIMPLEGRAPH_H
 
