@@ -30,7 +30,7 @@ void ASTRecordLayoutBuilder::LayoutVtable(const CXXRecordDecl *RD) {
   // FIXME: audit indirect virtual bases
   if (!RD->isPolymorphic() && !RD->getNumVBases()) {
     // There is no primary base in this case.
-    setPrimaryBase(0);
+    setPrimaryBase(0, false);
     return;
   }
 
@@ -103,7 +103,7 @@ void ASTRecordLayoutBuilder::SelectPrimaryBase(const CXXRecordDecl *RD) {
       const CXXRecordDecl *Base = 
         cast<CXXRecordDecl>(i->getType()->getAs<RecordType>()->getDecl());
       if (Base->isDynamicClass()) {
-        setPrimaryBase(Base);
+        setPrimaryBase(Base, false);
         return;
       }
     }
@@ -116,7 +116,7 @@ void ASTRecordLayoutBuilder::SelectPrimaryBase(const CXXRecordDecl *RD) {
   // is expensive.
   // FIXME: audit indirect virtual bases
   if (RD->getNumVBases() == 0) {
-    setPrimaryBase(0);
+    setPrimaryBase(0, false);
     return;
   }
 
@@ -143,15 +143,15 @@ void ASTRecordLayoutBuilder::SelectPrimaryBase(const CXXRecordDecl *RD) {
       if (FirstPrimary==0)
         FirstPrimary = Base;
       if (!IndirectPrimary.count(Base)) {
-        setPrimaryBase(Base);
+        setPrimaryBase(Base, true);
         return;
       }
     }
   }
 
-  // Otherwise if is the first nearly empty base, if one exists, otherwise
-  // there is no primary base class.
-  setPrimaryBase(FirstPrimary);
+  // Otherwise if is the first nearly empty virtual base, if one exists,
+  // otherwise there is no primary base class.
+  setPrimaryBase(FirstPrimary, true);
   return;
 }
 
@@ -404,6 +404,7 @@ ASTRecordLayoutBuilder::ComputeLayout(ASTContext &Ctx,
                              NonVirtualSize,
                              Builder.NonVirtualAlignment,
                              Builder.PrimaryBase,
+                             Builder.PrimaryBaseWasVirtual,
                              Builder.Bases.data(),
                              Builder.BaseOffsets.data(),
                              Builder.Bases.size());

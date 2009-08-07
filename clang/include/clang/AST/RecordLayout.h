@@ -56,6 +56,8 @@ class ASTRecordLayout {
     
     /// PrimaryBase - The primary base for our vtable.
     const CXXRecordDecl *PrimaryBase;
+    /// PrimaryBase - Wether or not the primary base was a virtual base.
+    bool PrimaryBaseWasVirtual;
 
     /// BaseOffsets - Contains a map from base classes to their offset.
     /// FIXME: Does it make sense to store offsets for virtual base classes
@@ -86,8 +88,9 @@ class ASTRecordLayout {
   ASTRecordLayout(uint64_t size, unsigned alignment, uint64_t datasize,
                   const uint64_t *fieldoffsets, unsigned fieldcount,
                   uint64_t nonvirtualsize, unsigned nonvirtualalign,
-                  const CXXRecordDecl *PB, const CXXRecordDecl **bases,
-                  const uint64_t *baseoffsets, unsigned basecount)
+                  const CXXRecordDecl *PB, bool PBVirtual,
+                  const CXXRecordDecl **bases, const uint64_t *baseoffsets,
+                  unsigned basecount)
   : Size(size), DataSize(datasize), FieldOffsets(0), Alignment(alignment),
   FieldCount(fieldcount), CXXInfo(new CXXRecordLayoutInfo) {
     if (FieldCount > 0)  {
@@ -97,6 +100,7 @@ class ASTRecordLayout {
     }
     
     CXXInfo->PrimaryBase = PB;
+    CXXInfo->PrimaryBaseWasVirtual = PBVirtual;
     CXXInfo->NonVirtualSize = nonvirtualsize;
     CXXInfo->NonVirtualAlign = nonvirtualalign;
     for (unsigned i = 0; i != basecount; ++i)
@@ -155,6 +159,12 @@ public:
     assert(CXXInfo && "Record layout does not have C++ specific info!");
     
     return CXXInfo->PrimaryBase;
+  }
+  /// getPrimaryBaseWasVirtual - Indicates if the primary base was virtual.
+  bool getPrimaryBaseWasVirtual() const {
+    assert(CXXInfo && "Record layout does not have C++ specific info!");
+    
+    return CXXInfo->PrimaryBaseWasVirtual;
   }
 
   /// getBaseClassOffset - Get the offset, in bits, for the given base class.

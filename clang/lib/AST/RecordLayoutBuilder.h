@@ -37,6 +37,7 @@ class ASTRecordLayoutBuilder {
   uint64_t NonVirtualSize;
   unsigned NonVirtualAlignment;
   const CXXRecordDecl *PrimaryBase;
+  bool PrimaryBaseWasVirtual;
 
   llvm::SmallVector<const CXXRecordDecl *, 4> Bases;
   llvm::SmallVector<uint64_t, 4> BaseOffsets;
@@ -54,7 +55,10 @@ class ASTRecordLayoutBuilder {
   void SelectPrimaryBase(const CXXRecordDecl *RD);
   void SelectPrimaryForBase(const CXXRecordDecl *RD,
                      llvm::SmallSet<const CXXRecordDecl*, 32> &IndirectPrimary);
-  void setPrimaryBase(const CXXRecordDecl *PB) { PrimaryBase = PB; }
+  void setPrimaryBase(const CXXRecordDecl *PB, bool Virtual) {
+    PrimaryBase = PB;
+    PrimaryBaseWasVirtual = Virtual;
+  }
   bool IsNearlyEmpty(const CXXRecordDecl *RD);
   void LayoutVtable(const CXXRecordDecl *RD);
   void LayoutNonVirtualBases(const CXXRecordDecl *RD);
