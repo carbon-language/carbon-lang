@@ -129,7 +129,7 @@ int main(int argc, char **argv) {
     errs() << "Tool execution error: " << TEE.what() << '\n';
   } catch (const std::string& msg) {
     errs() << argv[0] << ": " << msg << "\n";
-  } catch (const std::bad_alloc &e) {
+  } catch (const std::bad_alloc&) {
     errs() << "Oh no, a bugpoint process ran out of memory!\n"
               "To increase the allocation limits for bugpoint child\n"
               "processes, use the -mlimit option.\n";
