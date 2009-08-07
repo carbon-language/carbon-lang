@@ -37,26 +37,27 @@ class ModuleProvider;
 class MutexGuard;
 class TargetData;
 class Type;
+template<typename> class AssertingVH;
 
 class ExecutionEngineState {
 private:
   /// GlobalAddressMap - A mapping between LLVM global values and their
   /// actualized version...
-  std::map<const GlobalValue*, void *> GlobalAddressMap;
+  std::map<AssertingVH<const GlobalValue>, void *> GlobalAddressMap;
 
   /// GlobalAddressReverseMap - This is the reverse mapping of GlobalAddressMap,
   /// used to convert raw addresses into the LLVM global value that is emitted
   /// at the address.  This map is not computed unless getGlobalValueAtAddress
   /// is called at some point.
-  std::map<void *, const GlobalValue*> GlobalAddressReverseMap;
+  std::map<void *, AssertingVH<const GlobalValue> > GlobalAddressReverseMap;
 
 public:
-  std::map<const GlobalValue*, void *> &
+  std::map<AssertingVH<const GlobalValue>, void *> &
   getGlobalAddressMap(const MutexGuard &) {
     return GlobalAddressMap;
   }
 
-  std::map<void*, const GlobalValue*> & 
+  std::map<void*, AssertingVH<const GlobalValue> > &
   getGlobalAddressReverseMap(const MutexGuard &) {
     return GlobalAddressReverseMap;
   }

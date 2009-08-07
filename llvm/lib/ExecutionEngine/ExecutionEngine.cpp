@@ -13,17 +13,19 @@
 //===----------------------------------------------------------------------===//
 
 #define DEBUG_TYPE "jit"
+#include "llvm/ExecutionEngine/ExecutionEngine.h"
+
 #include "llvm/Constants.h"
 #include "llvm/DerivedTypes.h"
 #include "llvm/Module.h"
 #include "llvm/ModuleProvider.h"
 #include "llvm/ADT/Statistic.h"
 #include "llvm/Config/alloca.h"
-#include "llvm/ExecutionEngine/ExecutionEngine.h"
 #include "llvm/ExecutionEngine/GenericValue.h"
 #include "llvm/Support/Debug.h"
 #include "llvm/Support/ErrorHandling.h"
 #include "llvm/Support/MutexGuard.h"
+#include "llvm/Support/ValueHandle.h"
 #include "llvm/Support/raw_ostream.h"
 #include "llvm/System/DynamicLibrary.h"
 #include "llvm/System/Host.h"
@@ -128,7 +130,8 @@ void ExecutionEngine::addGlobalMapping(const GlobalValue *GV, void *Addr) {
   
   // If we are using the reverse mapping, add it too
   if (!state.getGlobalAddressReverseMap(locked).empty()) {
-    const GlobalValue *&V = state.getGlobalAddressReverseMap(locked)[Addr];
+    AssertingVH<const GlobalValue> &V =
+      state.getGlobalAddressReverseMap(locked)[Addr];
     assert((V == 0 || GV == 0) && "GlobalMapping already established!");
     V = GV;
   }
@@ -149,13 +152,13 @@ void ExecutionEngine::clearGlobalMappingsFromModule(Module *M) {
   MutexGuard locked(lock);
   
   for (Module::iterator FI = M->begin(), FE = M->end(); FI != FE; ++FI) {
-    state.getGlobalAddressMap(locked).erase(FI);
-    state.getGlobalAddressReverseMap(locked).erase(FI);
+    state.getGlobalAddressMap(locked).erase(&*FI);
+    state.getGlobalAddressReverseMap(locked).erase(&*FI);
   }
   for (Module::global_iterator GI = M->global_begin(), GE = M->global_end(); 
        GI != GE; ++GI) {
-    state.getGlobalAddressMap(locked).erase(GI);
-    state.getGlobalAddressReverseMap(locked).erase(GI);
+    state.getGlobalAddressMap(locked).erase(&*GI);
+    state.getGlobalAddressReverseMap(locked).erase(&*GI);
   }
 }
 
@@ -165,11 +168,12 @@ void ExecutionEngine::clearGlobalMappingsFromModule(Module *M) {
 void *ExecutionEngine::updateGlobalMapping(const GlobalValue *GV, void *Addr) {
   MutexGuard locked(lock);
 
-  std::map<const GlobalValue*, void *> &Map = state.getGlobalAddressMap(locked);
+  std::map<AssertingVH<const GlobalValue>, void *> &Map =
+    state.getGlobalAddressMap(locked);
 
   // Deleting from the mapping?
   if (Addr == 0) {
-    std::map<const GlobalValue*, void *>::iterator I = Map.find(GV);
+    std::map<AssertingVH<const GlobalValue>, void *>::iterator I = Map.find(GV);
     void *OldVal;
     if (I == Map.end())
       OldVal = 0;
@@ -192,7 +196,8 @@ void *ExecutionEngine::updateGlobalMapping(const GlobalValue *GV, void *Addr) {
   
   // If we are using the reverse mapping, add it too
   if (!state.getGlobalAddressReverseMap(locked).empty()) {
-    const GlobalValue *&V = state.getGlobalAddressReverseMap(locked)[Addr];
+    AssertingVH<const GlobalValue> &V =
+      state.getGlobalAddressReverseMap(locked)[Addr];
     assert((V == 0 || GV == 0) && "GlobalMapping already established!");
     V = GV;
   }
@@ -205,8 +210,8 @@ void *ExecutionEngine::updateGlobalMapping(const GlobalValue *GV, void *Addr) {
 void *ExecutionEngine::getPointerToGlobalIfAvailable(const GlobalValue *GV) {
   MutexGuard locked(lock);
   
-  std::map<const GlobalValue*, void*>::iterator I =
-  state.getGlobalAddressMap(locked).find(GV);
+  std::map<AssertingVH<const GlobalValue>, void*>::iterator I =
+    state.getGlobalAddressMap(locked).find(GV);
   return I != state.getGlobalAddressMap(locked).end() ? I->second : 0;
 }
 
@@ -218,14 +223,14 @@ const GlobalValue *ExecutionEngine::getGlobalValueAtAddress(void *Addr) {
 
   // If we haven't computed the reverse mapping yet, do so first.
   if (state.getGlobalAddressReverseMap(locked).empty()) {
-    for (std::map<const GlobalValue*, void *>::iterator
+    for (std::map<AssertingVH<const GlobalValue>, void *>::iterator
          I = state.getGlobalAddressMap(locked).begin(),
          E = state.getGlobalAddressMap(locked).end(); I != E; ++I)
       state.getGlobalAddressReverseMap(locked).insert(std::make_pair(I->second,
                                                                      I->first));
   }
 
-  std::map<void *, const GlobalValue*>::iterator I =
+  std::map<void *, AssertingVH<const GlobalValue> >::iterator I =
     state.getGlobalAddressReverseMap(locked).find(Addr);
   return I != state.getGlobalAddressReverseMap(locked).end() ? I->second : 0;
 }

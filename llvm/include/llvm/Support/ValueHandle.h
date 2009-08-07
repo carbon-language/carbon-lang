@@ -171,7 +171,7 @@ class AssertingVH
     return static_cast<ValueTy*>(ValueHandleBase::getValPtr());
   }
   void setValPtr(ValueTy *P) {
-    ValueHandleBase::operator=(P);
+    ValueHandleBase::operator=(GetAsValue(P));
   }
 #else
   ValueTy *ThePtr;
@@ -179,10 +179,15 @@ class AssertingVH
   void setValPtr(ValueTy *P) { ThePtr = P; }
 #endif
 
+  // Convert a ValueTy*, which may be const, to the type the base
+  // class expects.
+  static Value *GetAsValue(Value *V) { return V; }
+  static Value *GetAsValue(const Value *V) { return const_cast<Value*>(V); }
+
 public:
 #ifndef NDEBUG
   AssertingVH() : ValueHandleBase(Assert) {}
-  AssertingVH(ValueTy *P) : ValueHandleBase(Assert, P) {}
+  AssertingVH(ValueTy *P) : ValueHandleBase(Assert, GetAsValue(P)) {}
   AssertingVH(const AssertingVH &RHS) : ValueHandleBase(Assert, RHS) {}
 #else
   AssertingVH() : ThePtr(0) {}

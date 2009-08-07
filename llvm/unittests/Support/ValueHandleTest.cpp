@@ -120,6 +120,13 @@ TEST_F(ValueHandle, AssertingVH_BasicOperation) {
   EXPECT_FALSE((*AVH).mayWriteToMemory());
 }
 
+TEST_F(ValueHandle, AssertingVH_Const) {
+  const CastInst *ConstBitcast = BitcastV.get();
+  AssertingVH<const CastInst> AVH(ConstBitcast);
+  const CastInst *implicit_to_exact_type = AVH;
+  implicit_to_exact_type = implicit_to_exact_type;  // Avoid warning.
+}
+
 TEST_F(ValueHandle, AssertingVH_Comparisons) {
   AssertingVH<Value> BitcastAVH(BitcastV.get());
   AssertingVH<Value> ConstantAVH(ConstantV);
