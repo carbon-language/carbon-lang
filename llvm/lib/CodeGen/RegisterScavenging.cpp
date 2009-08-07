@@ -99,12 +99,11 @@ void RegScavenger::initRegState() {
   RegsAvailable ^= ReservedRegs;
 
   // Live-in registers are in use.
-  if (MBB) {
-    if (!MBB->livein_empty())
-      for (MachineBasicBlock::const_livein_iterator I = MBB->livein_begin(),
-             E = MBB->livein_end(); I != E; ++I)
-        setUsed(*I);
-  }
+  if (!MBB || MBB->livein_empty())
+    return;
+  for (MachineBasicBlock::const_livein_iterator I = MBB->livein_begin(),
+         E = MBB->livein_end(); I != E; ++I)
+    setUsed(*I);
 }
 
 void RegScavenger::enterBasicBlock(MachineBasicBlock *mbb) {
@@ -128,19 +127,12 @@ void RegScavenger::enterBasicBlock(MachineBasicBlock *mbb) {
     // Create callee-saved registers bitvector.
     CalleeSavedRegs.resize(NumPhysRegs);
     const unsigned *CSRegs = TRI->getCalleeSavedRegs();
-    if (CSRegs != NULL) {
-      // At this point we know which CSRs are used by the current function,
-      // so allow those that are _not_ already used to be available to RS.
-      MachineFrameInfo *FFI = MF.getFrameInfo();
-      const std::vector<CalleeSavedInfo> &CSI = FFI->getCalleeSavedInfo();
-
-      for (unsigned i = 0, e = CSI.size(); i != e; ++i) {
-        CalleeSavedRegs.set(CSI[i].getReg());
-      }
-    }
+    if (CSRegs != NULL)
+      for (unsigned i = 0; CSRegs[i]; ++i)
+        CalleeSavedRegs.set(CSRegs[i]);
   }
 
-  //  RS used within emit{Pro,Epi}logue()
+  // RS used within emit{Pro,Epi}logue()
   if (mbb != MBB) {
     MBB = mbb;
     initRegState();
@@ -217,11 +209,6 @@ void RegScavenger::forward() {
     ScavengeRestore = NULL;
   }
 
-#if 0
-  if (MI->getOpcode() == TargetInstrInfo::IMPLICIT_DEF)
-    return;
-#endif
-
   // Separate register operands into 3 classes: uses, defs, earlyclobbers.
   SmallVector<std::pair<const MachineOperand*,unsigned>, 4> UseMOs;
   SmallVector<std::pair<const MachineOperand*,unsigned>, 4> DefMOs;
@@ -234,8 +221,10 @@ void RegScavenger::forward() {
       UseMOs.push_back(std::make_pair(&MO,i));
     else if (MO.isEarlyClobber())
       EarlyClobberMOs.push_back(std::make_pair(&MO,i));
-    else if (MO.isDef())
+    else {
+      assert(MO.isDef());
       DefMOs.push_back(std::make_pair(&MO,i));
+    }
   }
 
   // Process uses first.
@@ -245,9 +234,7 @@ void RegScavenger::forward() {
     unsigned Idx = UseMOs[i].second;
     unsigned Reg = MO.getReg();
 
-    // Allow free CSRs to be processed as uses.
-    assert((isUsed(Reg) || !CalleeSavedRegs[Reg]) &&
-           "Using an undefined register!");
+    assert(isUsed(Reg) && "Using an undefined register!");
 
     // Two-address operands implicitly kill.
     if ((MO.isKill() || MI->isRegTiedToDefOperand(Idx)) && !isReserved(Reg)) {
@@ -440,7 +427,7 @@ unsigned RegScavenger::scavengeRegister(const TargetRegisterClass *RC,
     ? MachineBasicBlock::iterator(MaxUseMI) : MBB->getFirstTerminator();
   TII->loadRegFromStackSlot(*MBB, II, SReg, ScavengingFrameIndex, RC);
   ScavengeRestore = prior(II);
-  // Doing this here leads to infinite regress
+  // Doing this here leads to infinite regress.
   // ScavengedReg = SReg;
   ScavengedRC = RC;
 
