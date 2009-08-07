@@ -614,7 +614,7 @@ llvm::Value *CodeGenFunction::GenerateVtable(const CXXRecordDecl *RD) {
 
   const ASTRecordLayout &Layout = getContext().getASTRecordLayout(RD);
   const CXXRecordDecl *PrimaryBase = Layout.getPrimaryBase();
-  const bool PrimaryBaseWasVirtual = Layout.getPrimaryBase();
+  const bool PrimaryBaseWasVirtual = Layout.getPrimaryBaseWasVirtual();
 
   // The primary base comes first.
   GenerateVtableForBase(PrimaryBase, RD, rtti, methods, true,
