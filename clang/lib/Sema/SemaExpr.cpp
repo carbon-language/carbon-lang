@@ -2972,9 +2972,9 @@ Sema::ActOnInitList(SourceLocation LBraceLoc, MultiExprArg initlist,
 
 /// CheckCastTypes - Check type constraints for casting between types.
 bool Sema::CheckCastTypes(SourceRange TyR, QualType castType, Expr *&castExpr,
-                          bool FunctionalStyle) {
+                          CastExpr::CastKind& Kind, bool FunctionalStyle) {
   if (getLangOptions().CPlusPlus)
-    return CXXCheckCStyleCast(TyR, castType, castExpr, FunctionalStyle);
+    return CXXCheckCStyleCast(TyR, castType, castExpr, Kind, FunctionalStyle);
 
   UsualUnaryConversions(castExpr);
 
@@ -3087,17 +3087,20 @@ bool Sema::CheckExtVectorCast(SourceRange R, QualType DestTy, QualType SrcTy) {
 Action::OwningExprResult
 Sema::ActOnCastExpr(SourceLocation LParenLoc, TypeTy *Ty,
                     SourceLocation RParenLoc, ExprArg Op) {
+  CastExpr::CastKind Kind = CastExpr::CK_Unknown;
+  
   assert((Ty != 0) && (Op.get() != 0) &&
          "ActOnCastExpr(): missing type or expr");
 
   Expr *castExpr = Op.takeAs<Expr>();
   QualType castType = QualType::getFromOpaquePtr(Ty);
 
-  if (CheckCastTypes(SourceRange(LParenLoc, RParenLoc), castType, castExpr))
+  if (CheckCastTypes(SourceRange(LParenLoc, RParenLoc), castType, castExpr, 
+                     Kind))
     return ExprError();
   return Owned(new (Context) CStyleCastExpr(castType.getNonReferenceType(),
-                                            CastExpr::CK_Unknown, castExpr, 
-                                            castType, LParenLoc, RParenLoc));
+                                            Kind, castExpr, castType, 
+                                            LParenLoc, RParenLoc));
 }
 
 /// Note that lhs is not null here, even if this is the gnu "x ?: y" extension.

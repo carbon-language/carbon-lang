@@ -383,7 +383,8 @@ bool Sema::SemaBuiltinAtomicOverloaded(CallExpr *TheCall) {
     
     // GCC does an implicit conversion to the pointer or integer ValType.  This
     // can fail in some cases (1i -> int**), check for this error case now.
-    if (CheckCastTypes(Arg->getSourceRange(), ValType, Arg))
+    CastExpr::CastKind Kind = CastExpr::CK_Unknown;
+    if (CheckCastTypes(Arg->getSourceRange(), ValType, Arg, Kind))
       return true;
     
     // Okay, we have something that *can* be converted to the right type.  Check
@@ -392,8 +393,7 @@ bool Sema::SemaBuiltinAtomicOverloaded(CallExpr *TheCall) {
     // pass in 42.  The 42 gets converted to char.  This is even more strange
     // for things like 45.123 -> char, etc.
     // FIXME: Do this check.  
-    ImpCastExprToType(Arg, ValType, CastExpr::CK_Unknown,
-                      /*isLvalue=*/false);
+    ImpCastExprToType(Arg, ValType, Kind, /*isLvalue=*/false);
     TheCall->setArg(i+1, Arg);
   }
   

@@ -42,7 +42,8 @@ static void CheckReinterpretCast(Sema &Self, Expr *&SrcExpr, QualType DestType,
                                  const SourceRange &OpRange,
                                  const SourceRange &DestRange);
 static void CheckStaticCast(Sema &Self, Expr *&SrcExpr, QualType DestType,
-                            const SourceRange &OpRange);
+                            const SourceRange &OpRange,
+                            CastExpr::CastKind &Kind);
 static void CheckDynamicCast(Sema &Self, Expr *&SrcExpr, QualType DestType,
                              const SourceRange &OpRange,
                              const SourceRange &DestRange, 
@@ -87,7 +88,7 @@ static TryCastResult TryStaticImplicitCast(Sema &Self, Expr *SrcExpr,
 static TryCastResult TryStaticCast(Sema &Self, Expr *SrcExpr,
                                    QualType DestType, bool CStyle,
                                    const SourceRange &OpRange,
-                                   unsigned &msg);
+                                   CastExpr::CastKind &Kind, unsigned &msg);
 static TryCastResult TryConstCast(Sema &Self, Expr *SrcExpr, QualType DestType,
                                   bool CStyle, unsigned &msg);
 static TryCastResult TryReinterpretCast(Sema &Self, Expr *SrcExpr,
@@ -134,12 +135,13 @@ Sema::ActOnCXXNamedCast(SourceLocation OpLoc, tok::TokenKind Kind,
                                   DestType.getNonReferenceType(),
                                   Ex, DestType, OpLoc));
 
-  case tok::kw_static_cast:
+  case tok::kw_static_cast: {
+    CastExpr::CastKind Kind = CastExpr::CK_Unknown;
     if (!TypeDependent)
-      CheckStaticCast(*this, Ex, DestType, OpRange);
+      CheckStaticCast(*this, Ex, DestType, OpRange, Kind);
     return Owned(new (Context) CXXStaticCastExpr(DestType.getNonReferenceType(),
-                                                 CastExpr::CK_Unknown, Ex, 
-                                                 DestType, OpLoc));
+                                                 Kind, Ex, DestType, OpLoc));
+  }
   }
 
   return ExprError();
@@ -354,7 +356,7 @@ CheckReinterpretCast(Sema &Self, Expr *&SrcExpr, QualType DestType,
 /// implicit conversions explicit and getting rid of data loss warnings.
 void
 CheckStaticCast(Sema &Self, Expr *&SrcExpr, QualType DestType,
-                const SourceRange &OpRange)
+                const SourceRange &OpRange, CastExpr::CastKind &Kind)
 {
   // This test is outside everything else because it's the only case where
   // a non-lvalue-reference target type does not lead to decay.
@@ -367,7 +369,8 @@ CheckStaticCast(Sema &Self, Expr *&SrcExpr, QualType DestType,
     Self.DefaultFunctionArrayConversion(SrcExpr);
 
   unsigned msg = diag::err_bad_cxx_cast_generic;
-  if (TryStaticCast(Self, SrcExpr, DestType, /*CStyle*/false, OpRange, msg)
+  if (TryStaticCast(Self, SrcExpr, DestType, /*CStyle*/false, OpRange, 
+                    Kind, msg)
       != TC_Success && msg != 0)
     Self.Diag(OpRange.getBegin(), msg) << CT_Static
       << SrcExpr->getType() << DestType << OpRange;
@@ -379,7 +382,7 @@ CheckStaticCast(Sema &Self, Expr *&SrcExpr, QualType DestType,
 static TryCastResult TryStaticCast(Sema &Self, Expr *SrcExpr,
                                    QualType DestType, bool CStyle,
                                    const SourceRange &OpRange,
-                                   unsigned &msg)
+                                   CastExpr::CastKind &Kind, unsigned &msg)
 {
   // The order the tests is not entirely arbitrary. There is one conversion
   // that can be handled in two different ways. Given:
@@ -1003,9 +1006,8 @@ static TryCastResult TryReinterpretCast(Sema &Self, Expr *SrcExpr,
   return TC_Success;
 }
 
-
 bool Sema::CXXCheckCStyleCast(SourceRange R, QualType CastTy, Expr *&CastExpr,
-                              bool FunctionalStyle)
+                              CastExpr::CastKind &Kind, bool FunctionalStyle)
 {
   // This test is outside everything else because it's the only case where
   // a non-lvalue-reference target type does not lead to decay.
@@ -1035,7 +1037,7 @@ bool Sema::CXXCheckCStyleCast(SourceRange R, QualType CastTy, Expr *&CastExpr,
   TryCastResult tcr = TryConstCast(*this, CastExpr, CastTy, /*CStyle*/true,msg);
   if (tcr == TC_NotApplicable) {
     // ... or if that is not possible, a static_cast, ignoring const, ...
-    tcr = TryStaticCast(*this, CastExpr, CastTy, /*CStyle*/true, R, msg);
+    tcr = TryStaticCast(*this, CastExpr, CastTy, /*CStyle*/true, R, Kind, msg);
     if (tcr == TC_NotApplicable) {
       // ... and finally a reinterpret_cast, ignoring const.
       tcr = TryReinterpretCast(*this, CastExpr, CastTy, /*CStyle*/true, R, msg);
