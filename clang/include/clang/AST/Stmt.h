@@ -155,13 +155,21 @@ protected:
     if (Stmt::CollectingStats()) Stmt::addStmtClass(SC);
   }
 
+  /// \brief Virtual method that performs the actual destruction of
+  /// this statement.
+  ///
+  /// Subclasses should override this method (not Destroy()) to
+  /// provide class-specific destruction.
+  virtual void DoDestroy(ASTContext &Ctx);
+  
 public:
   Stmt(StmtClass SC) : sClass(SC) { 
     if (Stmt::CollectingStats()) Stmt::addStmtClass(SC);
   }
   virtual ~Stmt() {}
   
-  virtual void Destroy(ASTContext &Ctx);
+  /// \brief Destroy the current statement and its children.
+  void Destroy(ASTContext &Ctx) { DoDestroy(Ctx); }
 
   StmtClass getStmtClass() const { return sClass; }
   const char *getStmtClassName() const;
@@ -256,6 +264,7 @@ public:
 class DeclStmt : public Stmt {
   DeclGroupRef DG;
   SourceLocation StartLoc, EndLoc;
+  
 public:
   DeclStmt(DeclGroupRef dg, SourceLocation startLoc, 
            SourceLocation endLoc) : Stmt(DeclStmtClass), DG(dg),
@@ -263,8 +272,6 @@ public:
   
   /// \brief Build an empty declaration statement.
   explicit DeclStmt(EmptyShell Empty) : Stmt(DeclStmtClass, Empty) { }
-
-  virtual void Destroy(ASTContext& Ctx);
 
   /// isSingleDecl - This method returns true if this DeclStmt refers
   /// to a single Decl.

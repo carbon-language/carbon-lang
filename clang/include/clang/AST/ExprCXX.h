@@ -431,7 +431,8 @@ class CXXTemporary {
 public:
   static CXXTemporary *Create(ASTContext &C, 
                               const CXXDestructorDecl *Destructor);
-  void Destroy(ASTContext &C);
+  
+  void Destroy(ASTContext &Ctx);
   
   const CXXDestructorDecl *getDestructor() const { return Destructor; }
 };
@@ -448,10 +449,12 @@ class CXXBindTemporaryExpr : public Expr {
           subexpr->getType()), Temp(temp), SubExpr(subexpr) { }
   ~CXXBindTemporaryExpr() { } 
 
+protected:
+  virtual void DoDestroy(ASTContext &C);
+
 public:
   static CXXBindTemporaryExpr *Create(ASTContext &C, CXXTemporary *Temp, 
                                       Expr* SubExpr);
-  void Destroy(ASTContext &C);
   
   CXXTemporary *getTemporary() { return Temp; }
   const CXXTemporary *getTemporary() const { return Temp; }
@@ -489,12 +492,13 @@ protected:
                    Expr **args, unsigned numargs);
   ~CXXConstructExpr() { } 
 
+  virtual void DoDestroy(ASTContext &C);
+
 public:
   static CXXConstructExpr *Create(ASTContext &C, QualType T,
                                   CXXConstructorDecl *D, bool Elidable, 
                                   Expr **Args, unsigned NumArgs);
   
-  void Destroy(ASTContext &C);
   
   CXXConstructorDecl* getConstructor() const { return Constructor; }
 
@@ -652,8 +656,6 @@ public:
                   var->getType()->isDependentType(),
                   /*FIXME:integral constant?*/
                     var->getType()->isDependentType()) {}
-
-  virtual void Destroy(ASTContext& Ctx);
 
   SourceLocation getStartLoc() const { return getLocation(); }
   
@@ -1072,6 +1074,8 @@ class TemplateIdRefExpr : public Expr {
                     unsigned NumTemplateArgs,
                     SourceLocation RAngleLoc);
   
+  virtual void DoDestroy(ASTContext &Context);
+  
 public:
   static TemplateIdRefExpr *
   Create(ASTContext &Context, QualType T,
@@ -1079,8 +1083,6 @@ public:
          TemplateName Template, SourceLocation TemplateNameLoc,
          SourceLocation LAngleLoc, const TemplateArgument *TemplateArgs,
          unsigned NumTemplateArgs, SourceLocation RAngleLoc);
-  
-  void Destroy(ASTContext &Context);
   
   /// \brief Retrieve the nested name specifier used to qualify the name of
   /// this template-id, e.g., the "std::sort" in @c std::sort<int>, or NULL
@@ -1143,12 +1145,14 @@ class CXXExprWithTemporaries : public Expr {
   CXXExprWithTemporaries(Expr *SubExpr, CXXTemporary **Temps, 
                          unsigned NumTemps, bool ShouldDestroyTemps);
   ~CXXExprWithTemporaries();
-  
+
+protected:
+  virtual void DoDestroy(ASTContext &C);
+
 public:
   static CXXExprWithTemporaries *Create(ASTContext &C, Expr *SubExpr,
                                         CXXTemporary **Temps, unsigned NumTemps,
                                         bool ShouldDestroyTemporaries);
-  void Destroy(ASTContext &C);
   
   unsigned getNumTemporaries() const { return NumTemps; }
   CXXTemporary *getTemporary(unsigned i) {

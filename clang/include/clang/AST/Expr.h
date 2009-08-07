@@ -564,6 +564,10 @@ class StringLiteral : public Expr {
   SourceLocation TokLocs[1];
 
   StringLiteral(QualType Ty) : Expr(StringLiteralClass, Ty) {}
+  
+protected:
+  virtual void DoDestroy(ASTContext &C);
+
 public:
   /// This is the "fully general" constructor that allows representation of
   /// strings formed from multiple concatenated tokens.
@@ -582,7 +586,6 @@ public:
   static StringLiteral *CreateEmpty(ASTContext &C, unsigned NumStrs);
 
   StringLiteral* Clone(ASTContext &C) const;
-  void Destroy(ASTContext &C);
   
   const char *getStrData() const { return StrData; }
   unsigned getByteLength() const { return ByteLength; }
@@ -780,6 +783,10 @@ class SizeOfAlignOfExpr : public Expr {
     Stmt *Ex;
   } Argument;
   SourceLocation OpLoc, RParenLoc;
+
+protected:
+  virtual void DoDestroy(ASTContext& C);
+
 public:
   SizeOfAlignOfExpr(bool issizeof, QualType T, 
                     QualType resultType, SourceLocation op,
@@ -806,8 +813,6 @@ public:
   /// \brief Construct an empty sizeof/alignof expression.
   explicit SizeOfAlignOfExpr(EmptyShell Empty)
     : Expr(SizeOfAlignOfExprClass, Empty) { }
-
-  virtual void Destroy(ASTContext& C);
 
   bool isSizeOf() const { return isSizeof; }
   void setSizeof(bool S) { isSizeof = S; }
@@ -950,6 +955,8 @@ protected:
   // This version of the constructor is for derived classes.
   CallExpr(ASTContext& C, StmtClass SC, Expr *fn, Expr **args, unsigned numargs,
            QualType t, SourceLocation rparenloc);
+
+  virtual void DoDestroy(ASTContext& C);
   
 public:
   CallExpr(ASTContext& C, Expr *fn, Expr **args, unsigned numargs, QualType t, 
@@ -959,8 +966,6 @@ public:
   CallExpr(ASTContext &C, StmtClass SC, EmptyShell Empty);
 
   ~CallExpr() {}
-  
-  void Destroy(ASTContext& C);
   
   const Expr *getCallee() const { return cast<Expr>(SubExprs[FN]); }
   Expr *getCallee() { return cast<Expr>(SubExprs[FN]); }
@@ -2113,6 +2118,9 @@ private:
     : Expr(DesignatedInitExprClass, EmptyShell()),
       NumDesignators(0), Designators(0), NumSubExprs(NumSubExprs) { }
 
+protected:
+  virtual void DoDestroy(ASTContext &C);  
+
 public:
   /// A field designator, e.g., ".x".
   struct FieldDesignator {
@@ -2331,8 +2339,6 @@ public:
                         const Designator *Last);
 
   virtual SourceRange getSourceRange() const;
-
-  virtual void Destroy(ASTContext &C);
 
   static bool classof(const Stmt *T) {
     return T->getStmtClass() == DesignatedInitExprClass; 

@@ -17,14 +17,6 @@
 #include "clang/AST/ExprCXX.h"
 using namespace clang;
 
-void CXXConditionDeclExpr::Destroy(ASTContext& C) {
-  // FIXME: Cannot destroy the decl here, because it is linked into the
-  // DeclContext's chain.
-  //getVarDecl()->Destroy(C);
-  this->~CXXConditionDeclExpr();
-  C.Deallocate(this);
-}
-
 //===----------------------------------------------------------------------===//
 //  Child Iterators for iterating over subexpressions/substatements
 //===----------------------------------------------------------------------===//
@@ -196,11 +188,13 @@ TemplateIdRefExpr::Create(ASTContext &Context, QualType T,
                                      NumTemplateArgs, RAngleLoc);
 }
 
-void TemplateIdRefExpr::Destroy(ASTContext &Context) {
+void TemplateIdRefExpr::DoDestroy(ASTContext &Context) {
   const TemplateArgument *TemplateArgs = getTemplateArgs();
   for (unsigned I = 0; I != NumTemplateArgs; ++I)
     if (Expr *E = TemplateArgs[I].getAsExpr())
       E->Destroy(Context);
+  this->~TemplateIdRefExpr();
+  Context.Deallocate(this);
 }
 
 Stmt::child_iterator TemplateIdRefExpr::child_begin() {
@@ -348,9 +342,9 @@ CXXTemporary *CXXTemporary::Create(ASTContext &C,
   return new (C) CXXTemporary(Destructor);
 }
 
-void CXXTemporary::Destroy(ASTContext &C) {
+void CXXTemporary::Destroy(ASTContext &Ctx) {
   this->~CXXTemporary();
-  C.Deallocate(this);
+  Ctx.Deallocate(this);
 }
 
 CXXBindTemporaryExpr *CXXBindTemporaryExpr::Create(ASTContext &C, 
@@ -362,7 +356,7 @@ CXXBindTemporaryExpr *CXXBindTemporaryExpr::Create(ASTContext &C,
   return new (C) CXXBindTemporaryExpr(Temp, SubExpr);
 }
 
-void CXXBindTemporaryExpr::Destroy(ASTContext &C) {
+void CXXBindTemporaryExpr::DoDestroy(ASTContext &C) {
   Temp->Destroy(C);
   this->~CXXBindTemporaryExpr();
   C.Deallocate(this);
@@ -406,7 +400,7 @@ CXXConstructExpr::CXXConstructExpr(ASTContext &C, StmtClass SC, QualType T,
     }
 }
 
-void CXXConstructExpr::Destroy(ASTContext &C) {
+void CXXConstructExpr::DoDestroy(ASTContext &C) {
   DestroyChildren(C);
   if (Args)
     C.Deallocate(Args);
@@ -438,7 +432,7 @@ CXXExprWithTemporaries *CXXExprWithTemporaries::Create(ASTContext &C,
                                         ShouldDestroyTemps);
 }
 
-void CXXExprWithTemporaries::Destroy(ASTContext &C) {
+void CXXExprWithTemporaries::DoDestroy(ASTContext &C) {
   DestroyChildren(C);
   this->~CXXExprWithTemporaries();
   C.Deallocate(this);

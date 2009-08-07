@@ -51,16 +51,9 @@ void Stmt::DestroyChildren(ASTContext &C) {
     if (Stmt* Child = *I++) Child->Destroy(C);
 }
 
-void Stmt::Destroy(ASTContext &C) {
+void Stmt::DoDestroy(ASTContext &C) {
   DestroyChildren(C);
-  // FIXME: Eventually all Stmts should be allocated with the allocator
-  //  in ASTContext, just like with Decls.
   this->~Stmt();
-  C.Deallocate((void *)this);
-}
-
-void DeclStmt::Destroy(ASTContext &C) {
-  this->~DeclStmt();
   C.Deallocate((void *)this);
 }
 
@@ -569,10 +562,10 @@ QualType CXXCatchStmt::getCaughtType() {
   return QualType();
 }
 
-void CXXCatchStmt::Destroy(ASTContext& C) {
+void CXXCatchStmt::DoDestroy(ASTContext& C) {
   if (ExceptionDecl)
     ExceptionDecl->Destroy(C);
-  Stmt::Destroy(C);
+  Stmt::DoDestroy(C);
 }
 
 // CXXTryStmt

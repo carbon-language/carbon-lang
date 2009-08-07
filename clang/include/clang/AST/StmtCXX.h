@@ -29,12 +29,13 @@ class CXXCatchStmt : public Stmt {
   /// The handler block.
   Stmt *HandlerBlock;
 
+protected:
+  virtual void DoDestroy(ASTContext& Ctx);
+
 public:
   CXXCatchStmt(SourceLocation catchLoc, VarDecl *exDecl, Stmt *handlerBlock)
   : Stmt(CXXCatchStmtClass), CatchLoc(catchLoc), ExceptionDecl(exDecl),
     HandlerBlock(handlerBlock) {}
-
-  virtual void Destroy(ASTContext& Ctx);
 
   virtual SourceRange getSourceRange() const {
     return SourceRange(CatchLoc, HandlerBlock->getLocEnd());

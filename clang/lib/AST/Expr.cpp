@@ -111,10 +111,9 @@ StringLiteral* StringLiteral::Clone(ASTContext &C) const {
                 TokLocs, NumConcatenated);
 }
 
-void StringLiteral::Destroy(ASTContext &C) {
+void StringLiteral::DoDestroy(ASTContext &C) {
   C.Deallocate(const_cast<char*>(StrData));
-  this->~StringLiteral();
-  C.Deallocate(this);
+  Expr::DoDestroy(C);
 }
 
 void StringLiteral::setStrData(ASTContext &C, const char *Str, unsigned Len) {
@@ -218,7 +217,7 @@ CallExpr::CallExpr(ASTContext &C, StmtClass SC, EmptyShell Empty)
   SubExprs = new (C) Stmt*[1];
 }
 
-void CallExpr::Destroy(ASTContext& C) {
+void CallExpr::DoDestroy(ASTContext& C) {
   DestroyChildren(C);
   if (SubExprs) C.Deallocate(SubExprs);
   this->~CallExpr();
@@ -1657,7 +1656,7 @@ void ShuffleVectorExpr::setExprs(Expr ** Exprs, unsigned NumExprs) {
   memcpy(SubExprs, Exprs, sizeof(Expr *) * NumExprs);
 }
 
-void SizeOfAlignOfExpr::Destroy(ASTContext& C) {
+void SizeOfAlignOfExpr::DoDestroy(ASTContext& C) {
   // Override default behavior of traversing children. If this has a type
   // operand and the type is a variable-length array, the child iteration
   // will iterate over the size expression. However, this expression belongs
@@ -1668,7 +1667,7 @@ void SizeOfAlignOfExpr::Destroy(ASTContext& C) {
     C.Deallocate(this);
   }
   else
-    Expr::Destroy(C);
+    Expr::DoDestroy(C);
 }
 
 //===----------------------------------------------------------------------===//
@@ -1831,9 +1830,9 @@ void DesignatedInitExpr::ExpandDesignator(unsigned Idx,
   NumDesignators = NumDesignators - 1 + NumNewDesignators;
 }
 
-void DesignatedInitExpr::Destroy(ASTContext &C) {
+void DesignatedInitExpr::DoDestroy(ASTContext &C) {
   delete [] Designators;
-  Expr::Destroy(C);
+  Expr::DoDestroy(C);
 }
 
 ImplicitValueInitExpr *ImplicitValueInitExpr::Clone(ASTContext &C) const {
