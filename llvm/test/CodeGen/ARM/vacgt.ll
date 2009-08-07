@@ -1,7 +1,8 @@
-; RUN: llvm-as < %s | llc -march=arm -mattr=+neon > %t
-; RUN: grep {vacgt\\.f32} %t | count 2
+; RUN: llvm-as < %s | llc -march=arm -mattr=+neon | FileCheck %s
 
 define <2 x i32> @vacgtf32(<2 x float>* %A, <2 x float>* %B) nounwind {
+;CHECK: vacgtf32:
+;CHECK: vacgt.f32
 	%tmp1 = load <2 x float>* %A
 	%tmp2 = load <2 x float>* %B
 	%tmp3 = call <2 x i32> @llvm.arm.neon.vacgtd(<2 x float> %tmp1, <2 x float> %tmp2)
@@ -9,6 +10,8 @@ define <2 x i32> @vacgtf32(<2 x float>* %A, <2 x float>* %B) nounwind {
 }
 
 define <4 x i32> @vacgtQf32(<4 x float>* %A, <4 x float>* %B) nounwind {
+;CHECK: vacgtQf32:
+;CHECK: vacgt.f32
 	%tmp1 = load <4 x float>* %A
 	%tmp2 = load <4 x float>* %B
 	%tmp3 = call <4 x i32> @llvm.arm.neon.vacgtq(<4 x float> %tmp1, <4 x float> %tmp2)

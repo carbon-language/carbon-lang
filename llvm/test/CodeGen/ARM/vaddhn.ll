@@ -1,9 +1,8 @@
-; RUN: llvm-as < %s | llc -march=arm -mattr=+neon > %t
-; RUN: grep {vaddhn\\.i16} %t | count 1
-; RUN: grep {vaddhn\\.i32} %t | count 1
-; RUN: grep {vaddhn\\.i64} %t | count 1
+; RUN: llvm-as < %s | llc -march=arm -mattr=+neon | FileCheck %s
 
 define <8 x i8> @vaddhni16(<8 x i16>* %A, <8 x i16>* %B) nounwind {
+;CHECK: vaddhni16:
+;CHECK: vaddhn.i16
 	%tmp1 = load <8 x i16>* %A
 	%tmp2 = load <8 x i16>* %B
 	%tmp3 = call <8 x i8> @llvm.arm.neon.vaddhn.v8i8(<8 x i16> %tmp1, <8 x i16> %tmp2)
@@ -11,6 +10,8 @@ define <8 x i8> @vaddhni16(<8 x i16>* %A, <8 x i16>* %B) nounwind {
 }
 
 define <4 x i16> @vaddhni32(<4 x i32>* %A, <4 x i32>* %B) nounwind {
+;CHECK: vaddhni32:
+;CHECK: vaddhn.i32
 	%tmp1 = load <4 x i32>* %A
 	%tmp2 = load <4 x i32>* %B
 	%tmp3 = call <4 x i16> @llvm.arm.neon.vaddhn.v4i16(<4 x i32> %tmp1, <4 x i32> %tmp2)
@@ -18,6 +19,8 @@ define <4 x i16> @vaddhni32(<4 x i32>* %A, <4 x i32>* %B) nounwind {
 }
 
 define <2 x i32> @vaddhni64(<2 x i64>* %A, <2 x i64>* %B) nounwind {
+;CHECK: vaddhni64:
+;CHECK: vaddhn.i64
 	%tmp1 = load <2 x i64>* %A
 	%tmp2 = load <2 x i64>* %B
 	%tmp3 = call <2 x i32> @llvm.arm.neon.vaddhn.v2i32(<2 x i64> %tmp1, <2 x i64> %tmp2)
