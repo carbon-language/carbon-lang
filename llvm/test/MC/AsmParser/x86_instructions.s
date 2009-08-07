@@ -16,4 +16,3 @@
         movl %eax, 10(%ebp, %ebx, 4)
 // RUN: grep {MCInst(opcode=.*, operands=.reg:0, imm:4, reg:21, val:10, reg:0, reg:19.)} %t
         movl %eax, 10(, %ebx, 4)
-        

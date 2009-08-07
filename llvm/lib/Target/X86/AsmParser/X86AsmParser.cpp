@@ -26,10 +26,6 @@ class X86ATTAsmParser : public TargetAsmParser {
   MCAsmParser &Parser;
 
 private:
-  bool MatchInstruction(const StringRef &Name,
-                        SmallVectorImpl<X86Operand> &Operands,
-                        MCInst &Inst);
-
   MCAsmParser &getParser() const { return Parser; }
 
   MCAsmLexer &getLexer() const { return Parser.getLexer(); }
@@ -46,6 +42,9 @@ private:
   
   /// @name Auto-generated Match Functions
   /// {  
+
+  bool MatchInstruction(SmallVectorImpl<X86Operand> &Operands,
+                        MCInst &Inst);
 
   bool MatchRegisterName(const StringRef &Name, unsigned &RegNo);
 
@@ -67,12 +66,18 @@ namespace {
 /// instruction.
 struct X86Operand {
   enum {
+    Token,
     Register,
     Immediate,
     Memory
   } Kind;
 
   union {
+    struct {
+      const char *Data;
+      unsigned Length;
+    } Tok;
+
     struct {
       unsigned RegNo;
     } Reg;
@@ -89,6 +94,11 @@ struct X86Operand {
       unsigned Scale;
     } Mem;
   };
+
+  StringRef getToken() const {
+    assert(Kind == Token && "Invalid access!");
+    return StringRef(Tok.Data, Tok.Length);
+  }
 
   unsigned getReg() const {
     assert(Kind == Register && "Invalid access!");
@@ -121,18 +131,61 @@ struct X86Operand {
     return Mem.Scale;
   }
 
+  bool isToken(const StringRef &Str) const { 
+    return Kind == Token && Str == getToken(); 
+  }
+
+  bool isImm() const { return Kind == Immediate; }
+  
+  bool isMem() const { return Kind == Memory; }
+
+  bool isReg() const { return Kind == Register; }
+
+  void addRegOperands(MCInst &Inst, unsigned N) {
+    assert(N == 1 && "Invalid number of operands!");
+    Inst.addOperand(MCOperand::CreateReg(getReg()));
+  }
+
+  void addImmOperands(MCInst &Inst, unsigned N) {
+    assert(N == 1 && "Invalid number of operands!");
+    Inst.addOperand(MCOperand::CreateMCValue(getImm()));
+  }
+
+  void addMemOperands(MCInst &Inst, unsigned N) {
+    assert((N == 4 || N == 5) && "Invalid number of operands!");
+
+    Inst.addOperand(MCOperand::CreateReg(getMemBaseReg()));
+    Inst.addOperand(MCOperand::CreateImm(getMemScale()));
+    Inst.addOperand(MCOperand::CreateReg(getMemIndexReg()));
+    Inst.addOperand(MCOperand::CreateMCValue(getMemDisp()));
+
+    // FIXME: What a hack.
+    if (N == 5)
+      Inst.addOperand(MCOperand::CreateReg(getMemSegReg()));
+  }
+
+  static X86Operand CreateToken(StringRef Str) {
+    X86Operand Res;
+    Res.Kind = Token;
+    Res.Tok.Data = Str.data();
+    Res.Tok.Length = Str.size();
+    return Res;
+  }
+
   static X86Operand CreateReg(unsigned RegNo) {
     X86Operand Res;
     Res.Kind = Register;
     Res.Reg.RegNo = RegNo;
     return Res;
   }
+
   static X86Operand CreateImm(MCValue Val) {
     X86Operand Res;
     Res.Kind = Immediate;
     Res.Imm.Val = Val;
     return Res;
   }
+
   static X86Operand CreateMem(unsigned SegReg, MCValue Disp, unsigned BaseReg,
                               unsigned IndexReg, unsigned Scale) {
     // We should never just have a displacement, that would be an immediate.
@@ -326,7 +379,9 @@ bool X86ATTAsmParser::ParseMemOperand(X86Operand &Op) {
 }
 
 bool X86ATTAsmParser::ParseInstruction(const StringRef &Name, MCInst &Inst) {
-  SmallVector<X86Operand, 3> Operands;
+  SmallVector<X86Operand, 4> Operands;
+
+  Operands.push_back(X86Operand::CreateToken(Name));
 
   SMLoc Loc = getLexer().getTok().getLoc();
   if (getLexer().isNot(AsmToken::EndOfStatement)) {
@@ -345,7 +400,7 @@ bool X86ATTAsmParser::ParseInstruction(const StringRef &Name, MCInst &Inst) {
     }
   }
 
-  if (!MatchInstruction(Name, Operands, Inst))
+  if (!MatchInstruction(Operands, Inst))
     return false;
 
   // FIXME: We should give nicer diagnostics about the exact failure.
@@ -361,138 +416,5 @@ extern "C" void LLVMInitializeX86AsmParser() {
   RegisterAsmParser<X86ATTAsmParser> X(TheX86_32Target);
   RegisterAsmParser<X86ATTAsmParser> Y(TheX86_64Target);
 }
-
-// FIXME: These should come from tblgen?
-
-static bool 
-Match_X86_Op_REG(const X86Operand &Op, MCOperand *MCOps, unsigned NumOps) {
-  assert(NumOps == 1 && "Invalid number of ops!");
-
-  // FIXME: Match correct registers.
-  if (Op.Kind != X86Operand::Register)
-    return true;
-
-  MCOps[0] = MCOperand::CreateReg(Op.getReg());
-  return false;
-}
-
-static bool 
-Match_X86_Op_IMM(const X86Operand &Op, MCOperand *MCOps, unsigned NumOps) {
-  assert(NumOps == 1 && "Invalid number of ops!");
-
-  // FIXME: We need to check widths.
-  if (Op.Kind != X86Operand::Immediate)
-    return true;
-
-  MCOps[0] = MCOperand::CreateMCValue(Op.getImm());
-  return false;
-}
-
-static bool Match_X86_Op_LMEM(const X86Operand &Op,
-                             MCOperand *MCOps,
-                             unsigned NumMCOps) {
-  assert(NumMCOps == 4 && "Invalid number of ops!");
-
-  if (Op.Kind != X86Operand::Memory)
-    return true;
-
-  MCOps[0] = MCOperand::CreateReg(Op.getMemBaseReg());
-  MCOps[1] = MCOperand::CreateImm(Op.getMemScale());
-  MCOps[2] = MCOperand::CreateReg(Op.getMemIndexReg());
-  MCOps[3] = MCOperand::CreateMCValue(Op.getMemDisp());
-
-  return false;  
-}
-
-static bool Match_X86_Op_MEM(const X86Operand &Op,
-                             MCOperand *MCOps,
-                             unsigned NumMCOps) {
-  assert(NumMCOps == 5 && "Invalid number of ops!");
-
-  if (Match_X86_Op_LMEM(Op, MCOps, 4))
-    return true;
-
-  MCOps[4] = MCOperand::CreateReg(Op.getMemSegReg());
-
-  return false;  
-}
-
-#define REG(name) \
-  static bool Match_X86_Op_##name(const X86Operand &Op, \
-                                  MCOperand *MCOps,     \
-                                  unsigned NumMCOps) {  \
-    return Match_X86_Op_REG(Op, MCOps, NumMCOps);       \
-  }
-
-REG(GR64)
-REG(GR32)
-REG(GR16)
-REG(GR8)
-
-#define IMM(name) \
-  static bool Match_X86_Op_##name(const X86Operand &Op, \
-                                  MCOperand *MCOps,     \
-                                  unsigned NumMCOps) {  \
-    return Match_X86_Op_IMM(Op, MCOps, NumMCOps);       \
-  }
-
-IMM(brtarget)
-IMM(brtarget8)
-IMM(i16i8imm)
-IMM(i16imm)
-IMM(i32i8imm)
-IMM(i32imm)
-IMM(i32imm_pcrel)
-IMM(i64i32imm)
-IMM(i64i32imm_pcrel)
-IMM(i64i8imm)
-IMM(i64imm)
-IMM(i8imm)
-
-#define LMEM(name) \
-  static bool Match_X86_Op_##name(const X86Operand &Op, \
-                                  MCOperand *MCOps,     \
-                                  unsigned NumMCOps) {  \
-    return Match_X86_Op_LMEM(Op, MCOps, NumMCOps);       \
-  }
-
-LMEM(lea32mem)
-LMEM(lea64_32mem)
-LMEM(lea64mem)
-
-#define MEM(name) \
-  static bool Match_X86_Op_##name(const X86Operand &Op, \
-                                  MCOperand *MCOps,     \
-                                  unsigned NumMCOps) {  \
-    return Match_X86_Op_MEM(Op, MCOps, NumMCOps);       \
-  }
-
-MEM(f128mem)
-MEM(f32mem)
-MEM(f64mem)
-MEM(f80mem)
-MEM(i128mem)
-MEM(i16mem)
-MEM(i32mem)
-MEM(i64mem)
-MEM(i8mem)
-MEM(sdmem)
-MEM(ssmem)
-
-#define DUMMY(name) \
-  static bool Match_X86_Op_##name(const X86Operand &Op, \
-                                  MCOperand *MCOps,     \
-                                  unsigned NumMCOps) {  \
-    return true;                                        \
-  }
-
-DUMMY(FR32)
-DUMMY(FR64)
-DUMMY(GR32_NOREX)
-DUMMY(GR8_NOREX)
-DUMMY(RST)
-DUMMY(VR128)
-DUMMY(VR64)
-DUMMY(i8mem_NOREX)
 
 #include "X86GenAsmMatcher.inc"
