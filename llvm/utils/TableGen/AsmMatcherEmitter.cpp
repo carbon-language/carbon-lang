@@ -86,8 +86,8 @@
 using namespace llvm;
 
 namespace {
-  cl::opt<std::string>
-  MatchOneInstr("match-one-instr", cl::desc("Match only the named instruction"),
+static cl::opt<std::string>
+MatchOneInstr("match-one-instr", cl::desc("Match only the named instruction"),
               cl::init(""));
 }
 
@@ -271,18 +271,6 @@ static bool IsAssemblerInstruction(const StringRef &Name,
 }
 
 namespace {
-
-struct OperandListLess {
-  bool operator()(const
-                  std::pair<const CodeGenInstruction::OperandInfo*, unsigned> &
-                  A,
-                  const
-                  std::pair<const CodeGenInstruction::OperandInfo*, unsigned> &
-                  B) {
-    return A.first->MIOperandNo < B.first->MIOperandNo;
-  }
-                  
-};
 
 struct InstructionInfo {
   struct Operand {

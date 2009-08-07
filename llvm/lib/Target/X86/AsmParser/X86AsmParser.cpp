@@ -379,7 +379,7 @@ bool X86ATTAsmParser::ParseMemOperand(X86Operand &Op) {
 }
 
 bool X86ATTAsmParser::ParseInstruction(const StringRef &Name, MCInst &Inst) {
-  SmallVector<X86Operand, 4> Operands;
+  SmallVector<X86Operand, 8> Operands;
 
   Operands.push_back(X86Operand::CreateToken(Name));
 
