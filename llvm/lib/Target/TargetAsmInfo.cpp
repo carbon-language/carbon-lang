@@ -26,8 +26,6 @@ TargetAsmInfo::TargetAsmInfo() {
   SeparatorChar = ';';
   CommentColumn = 60;
   CommentString = "#";
-  FirstOperandColumn = 0;
-  MaxOperandLength = 0;
   GlobalPrefix = "";
   PrivateGlobalPrefix = ".";
   LinkerPrivateGlobalPrefix = "";
