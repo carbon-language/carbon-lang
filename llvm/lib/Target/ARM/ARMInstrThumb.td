@@ -253,6 +253,7 @@ let isBranch = 1, isTerminator = 1 in {
                    "b $target", [(br bb:$target)]>;
 
   // Far jump
+  let Defs = [LR] in
   def tBfar : TIx2<(outs), (ins brtarget:$target), IIC_Br, 
                     "bl $target\t@ far jump",[]>;
 

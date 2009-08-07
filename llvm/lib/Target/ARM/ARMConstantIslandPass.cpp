@@ -1221,7 +1221,8 @@ bool
 ARMConstantIslands::FixUpUnconditionalBr(MachineFunction &MF, ImmBranch &Br) {
   MachineInstr *MI = Br.MI;
   MachineBasicBlock *MBB = MI->getParent();
-  assert(isThumb && !isThumb2 && "Expected a Thumb1 function!");
+  if (!isThumb1)
+    llvm_unreachable("FixUpUnconditionalBr is Thumb1 only!");
 
   // Use BL to implement far jump.
   Br.MaxDisp = (1 << 21) * 2;
