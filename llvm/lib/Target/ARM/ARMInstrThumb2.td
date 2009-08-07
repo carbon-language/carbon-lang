@@ -75,7 +75,8 @@ def imm1_31 : PatLeaf<(i32 imm), [{
 }]>;
 
 /// imm0_4095 predicate - True if the 32-bit immediate is in the range [0.4095].
-def imm0_4095 : PatLeaf<(i32 imm), [{
+def imm0_4095 : Operand<i32>,
+                PatLeaf<(i32 imm), [{
   return (uint32_t)N->getZExtValue() < 4096;
 }]>;
 
@@ -239,7 +240,7 @@ multiclass T2I_bin_ii12rs<string opc, PatFrag opnode, bit Commutable = 0> {
                  opc, ".w $dst, $lhs, $rhs",
                  [(set GPR:$dst, (opnode GPR:$lhs, t2_so_imm:$rhs))]>;
    // 12-bit imm
-   def ri12 : T2sI<(outs GPR:$dst), (ins GPR:$lhs, i32imm:$rhs), IIC_iALU,
+   def ri12 : T2sI<(outs GPR:$dst), (ins GPR:$lhs, imm0_4095:$rhs), IIC_iALU,
                    !strconcat(opc, "w"), " $dst, $lhs, $rhs",
                    [(set GPR:$dst, (opnode GPR:$lhs, imm0_4095:$rhs))]>;
    // register
@@ -430,6 +431,39 @@ def t2LEApcrel : T2XI<(outs GPR:$dst), (ins i32imm:$label, pred:$p), IIC_iALU,
 def t2LEApcrelJT : T2XI<(outs GPR:$dst),
                         (ins i32imm:$label, i32imm:$id, pred:$p), IIC_iALU,
                         "adr$p.w $dst, #${label}_${id:no_hash}", []>;
+
+
+// ADD r, sp, {so_imm|i12}
+def t2ADDrSPi   : T2sI<(outs GPR:$dst), (ins GPR:$sp, t2_so_imm:$imm), IIC_iALU,
+                       "add", ".w $dst, $sp, $imm", []>;
+def t2ADDrSPi12 : T2I<(outs GPR:$dst), (ins GPR:$sp, imm0_4095:$imm), IIC_iALU,
+                       "addw", " $dst, $sp, $imm", []>;
+
+// ADD r, sp, so_reg
+def t2ADDrSPs   : T2sI<(outs GPR:$dst), (ins GPR:$sp, t2_so_reg:$rhs), IIC_iALU,
+                       "add", ".w $dst, $sp, $rhs", []>;
+
+// SUB r, sp, {so_imm|i12}
+def t2SUBrSPi   : T2sI<(outs GPR:$dst), (ins GPR:$sp, t2_so_imm:$imm), IIC_iALU,
+                       "sub", ".w $dst, $sp, $imm", []>;
+def t2SUBrSPi12 : T2I<(outs GPR:$dst), (ins GPR:$sp, imm0_4095:$imm), IIC_iALU,
+                       "subw", " $dst, $sp, $imm", []>;
+
+// SUB r, sp, so_reg
+def t2SUBrSPs   : T2sI<(outs GPR:$dst), (ins GPR:$sp, t2_so_reg:$rhs), IIC_iALU,
+                       "sub", " $dst, $sp, $rhs", []>;
+
+
+// Pseudo instruction that will expand into a t2SUBrSPi + a copy.
+let usesCustomDAGSchedInserter = 1 in { // Expanded by the scheduler.
+def t2SUBrSPi_   : PseudoInst<(outs GPR:$dst), (ins GPR:$sp, t2_so_imm:$imm),
+                   NoItinerary, "@ sub.w $dst, $sp, $imm", []>;
+def t2SUBrSPi12_ : PseudoInst<(outs GPR:$dst), (ins GPR:$sp, imm0_4095:$imm),
+                   NoItinerary, "@ subw $dst, $sp, $imm", []>;
+def t2SUBrSPs_   : PseudoInst<(outs GPR:$dst), (ins GPR:$sp, t2_so_reg:$rhs),
+                   NoItinerary, "@ sub $dst, $sp, $rhs", []>;
+} // usesCustomDAGSchedInserter
+
 
 //===----------------------------------------------------------------------===//
 //  Load / store Instructions.

@@ -122,6 +122,8 @@ private:
   SDNode *SelectARMIndexedLoad(SDValue Op);
   SDNode *SelectT2IndexedLoad(SDValue Op);
 
+  /// SelectDYN_ALLOC - Select dynamic alloc for Thumb.
+  SDNode *SelectDYN_ALLOC(SDValue Op);
 
   /// SelectInlineAsmMemoryOperand - Implement addressing mode selection for
   /// inline asm expressions.
@@ -868,6 +870,59 @@ SDNode *ARMDAGToDAGISel::SelectT2IndexedLoad(SDValue Op) {
   return NULL;
 }
 
+SDNode *ARMDAGToDAGISel::SelectDYN_ALLOC(SDValue Op) {
+  SDNode *N = Op.getNode();
+  DebugLoc dl = N->getDebugLoc();
+  MVT VT = Op.getValueType();
+  SDValue Chain = Op.getOperand(0);
+  SDValue Size = Op.getOperand(1);
+  SDValue Align = Op.getOperand(2);
+  SDValue SP = CurDAG->getRegister(ARM::SP, MVT::i32);
+  int32_t AlignVal = cast<ConstantSDNode>(Align)->getSExtValue();
+  if (AlignVal < 0)
+    // We need to align the stack. Use Thumb1 tAND which is the only thumb
+    // instruction that can read and write SP. This matches to a pseudo
+    // instruction that has a chain to ensure the result is written back to
+    // the stack pointer.
+    SP = SDValue(CurDAG->getTargetNode(ARM::tANDsp, dl, VT, SP, Align), 0);
+
+  bool isC = isa<ConstantSDNode>(Size);
+  uint32_t C = isC ? cast<ConstantSDNode>(Size)->getZExtValue() : ~0UL;
+  // Handle the most common case for both Thumb1 and Thumb2:
+  // tSUBspi - immediate is between 0 ... 508 inclusive.
+  if (C <= 508 && ((C & 3) == 0))
+    // FIXME: tSUBspi encode scale 4 implicitly.
+    return CurDAG->SelectNodeTo(N, ARM::tSUBspi_, VT, MVT::Other, SP,
+                                CurDAG->getTargetConstant(C/4, MVT::i32),
+                                Chain);
+
+  if (Subtarget->isThumb1Only()) {
+    // Use tADDrSPr since Thumb1 does not have a sub r, sp, r. ARMISelLowering
+    // should have negated the size operand already. FIXME: We can't insert
+    // new target independent node at this stage so we are forced to negate
+    // it earlier. Is there a better solution? 
+    return CurDAG->SelectNodeTo(N, ARM::tADDspr_, VT, MVT::Other, SP, Size,
+                                Chain);
+  } else if (Subtarget->isThumb2()) {
+    if (isC && Predicate_t2_so_imm(Size.getNode())) {
+      // t2SUBrSPi
+      SDValue Ops[] = { SP, CurDAG->getTargetConstant(C, MVT::i32), Chain };
+      return CurDAG->SelectNodeTo(N, ARM::t2SUBrSPi_, VT, MVT::Other, Ops, 3);
+    } else if (isC && Predicate_imm0_4095(Size.getNode())) {
+      // t2SUBrSPi12
+      SDValue Ops[] = { SP, CurDAG->getTargetConstant(C, MVT::i32), Chain };
+      return CurDAG->SelectNodeTo(N, ARM::t2SUBrSPi12_, VT, MVT::Other, Ops, 3);
+    } else {
+      // t2SUBrSPs
+      SDValue Ops[] = { SP, Size,
+                        getI32Imm(ARM_AM::getSORegOpc(ARM_AM::lsl,0)), Chain };
+      return CurDAG->SelectNodeTo(N, ARM::t2SUBrSPs_, VT, MVT::Other, Ops, 4);
+    }
+  }
+
+  // FIXME: Add ADD / SUB sp instructions for ARM.
+  return 0;
+}
 
 SDNode *ARMDAGToDAGISel::Select(SDValue Op) {
   SDNode *N = Op.getNode();
@@ -941,25 +996,8 @@ SDNode *ARMDAGToDAGISel::Select(SDValue Op) {
       return CurDAG->SelectNodeTo(N, Opc, MVT::i32, Ops, 5);
     }
   }
-  case ISD::ADD: {
-    if (!Subtarget->isThumb1Only())
-      break;
-    // Select add sp, c to tADDhirr.
-    SDValue N0 = Op.getOperand(0);
-    SDValue N1 = Op.getOperand(1);
-    RegisterSDNode *LHSR = dyn_cast<RegisterSDNode>(Op.getOperand(0));
-    RegisterSDNode *RHSR = dyn_cast<RegisterSDNode>(Op.getOperand(1));
-    if (LHSR && LHSR->getReg() == ARM::SP) {
-      std::swap(N0, N1);
-      std::swap(LHSR, RHSR);
-    }
-    if (RHSR && RHSR->getReg() == ARM::SP) {
-      SDValue Val = SDValue(CurDAG->getTargetNode(ARM::tMOVtgpr2gpr, dl,
-                                                  Op.getValueType(), N0, N0),0);
-      return CurDAG->SelectNodeTo(N, ARM::tADDhirr, Op.getValueType(), Val, N1);
-    }
-    break;
-  }
+  case ARMISD::DYN_ALLOC:
+    return SelectDYN_ALLOC(Op);
   case ISD::MUL:
     if (Subtarget->isThumb1Only())
       break;

@@ -307,7 +307,10 @@ ARMTargetLowering::ARMTargetLowering(TargetMachine &TM)
   setOperationAction(ISD::VAEND,              MVT::Other, Expand);
   setOperationAction(ISD::STACKSAVE,          MVT::Other, Expand);
   setOperationAction(ISD::STACKRESTORE,       MVT::Other, Expand);
-  setOperationAction(ISD::DYNAMIC_STACKALLOC, MVT::i32,   Expand);
+  if (Subtarget->isThumb())
+    setOperationAction(ISD::DYNAMIC_STACKALLOC, MVT::i32, Custom);
+  else
+    setOperationAction(ISD::DYNAMIC_STACKALLOC, MVT::i32, Expand);
   setOperationAction(ISD::MEMBARRIER,         MVT::Other, Expand);
 
   if (!Subtarget->hasV6Ops() && !Subtarget->isThumb2()) {
@@ -434,6 +437,8 @@ const char *ARMTargetLowering::getTargetNodeName(unsigned Opcode) const {
   case ARMISD::FMDRR:         return "ARMISD::FMDRR";
 
   case ARMISD::THREAD_POINTER:return "ARMISD::THREAD_POINTER";
+
+  case ARMISD::DYN_ALLOC:     return "ARMISD::DYN_ALLOC";
 
   case ARMISD::VCEQ:          return "ARMISD::VCEQ";
   case ARMISD::VCGE:          return "ARMISD::VCGE";
@@ -1396,6 +1401,53 @@ static SDValue LowerVASTART(SDValue Op, SelectionDAG &DAG,
   SDValue FR = DAG.getFrameIndex(VarArgsFrameIndex, PtrVT);
   const Value *SV = cast<SrcValueSDNode>(Op.getOperand(2))->getValue();
   return DAG.getStore(Op.getOperand(0), dl, FR, Op.getOperand(1), SV, 0);
+}
+
+SDValue
+ARMTargetLowering::LowerDYNAMIC_STACKALLOC(SDValue Op, SelectionDAG &DAG) {
+  SDNode *Node = Op.getNode();
+  DebugLoc dl = Node->getDebugLoc();
+  MVT VT = Node->getValueType(0);
+  SDValue Chain = Op.getOperand(0);
+  SDValue Size  = Op.getOperand(1);
+  SDValue Align = Op.getOperand(2);
+
+  // Chain the dynamic stack allocation so that it doesn't modify the stack
+  // pointer when other instructions are using the stack.
+  Chain = DAG.getCALLSEQ_START(Chain, DAG.getIntPtrConstant(0, true));
+
+  unsigned AlignVal = cast<ConstantSDNode>(Align)->getZExtValue();
+  unsigned StackAlign = getTargetMachine().getFrameInfo()->getStackAlignment();
+  if (AlignVal > StackAlign)
+    // Do this now since selection pass cannot introduce new target
+    // independent node.
+    Align = DAG.getConstant(-(uint64_t)AlignVal, VT);
+
+  // In Thumb1 mode, there isn't a "sub r, sp, r" instruction, we will end up
+  // using a "add r, sp, r" instead. Negate the size now so we don't have to
+  // do even more horrible hack later.
+  MachineFunction &MF = DAG.getMachineFunction();
+  ARMFunctionInfo *AFI = MF.getInfo<ARMFunctionInfo>();
+  if (AFI->isThumb1OnlyFunction()) {
+    bool Negate = true;
+    ConstantSDNode *C = dyn_cast<ConstantSDNode>(Size);
+    if (C) {
+      uint32_t Val = C->getZExtValue();
+      if (Val <= 508 && ((Val & 3) == 0))
+        Negate = false;
+    }
+    if (Negate)
+      Size = DAG.getNode(ISD::SUB, dl, VT, DAG.getConstant(0, VT), Size);
+  }
+
+  SDVTList VTList = DAG.getVTList(VT, MVT::Other);
+  SDValue Ops1[] = { Chain, Size, Align };
+  SDValue Res = DAG.getNode(ARMISD::DYN_ALLOC, dl, VTList, Ops1, 3);
+  Chain = Res.getValue(1);
+  Chain = DAG.getCALLSEQ_END(Chain, DAG.getIntPtrConstant(0, true),
+                             DAG.getIntPtrConstant(0, true), SDValue());
+  SDValue Ops2[] = { Res, Chain };
+  return DAG.getMergeValues(Ops2, 2, dl);
 }
 
 SDValue
@@ -2396,6 +2448,7 @@ SDValue ARMTargetLowering::LowerOperation(SDValue Op, SelectionDAG &DAG) {
   case ISD::SELECT_CC:     return LowerSELECT_CC(Op, DAG, Subtarget);
   case ISD::BR_CC:         return LowerBR_CC(Op, DAG, Subtarget);
   case ISD::BR_JT:         return LowerBR_JT(Op, DAG);
+  case ISD::DYNAMIC_STACKALLOC: return LowerDYNAMIC_STACKALLOC(Op, DAG);
   case ISD::VASTART:       return LowerVASTART(Op, DAG, VarArgsFrameIndex);
   case ISD::SINT_TO_FP:
   case ISD::UINT_TO_FP:    return LowerINT_TO_FP(Op, DAG);
@@ -2454,7 +2507,8 @@ ARMTargetLowering::EmitInstrWithCustomInserter(MachineInstr *MI,
   const TargetInstrInfo *TII = getTargetMachine().getInstrInfo();
   DebugLoc dl = MI->getDebugLoc();
   switch (MI->getOpcode()) {
-  default: assert(false && "Unexpected instr type to insert");
+  default:
+    llvm_unreachable("Unexpected instr type to insert");
   case ARM::tMOVCCr: {
     // To "insert" a SELECT_CC instruction, we actually have to insert the
     // diamond control-flow pattern.  The incoming instruction knows the
@@ -2507,6 +2561,78 @@ ARMTargetLowering::EmitInstrWithCustomInserter(MachineInstr *MI,
       .addReg(MI->getOperand(2).getReg()).addMBB(thisMBB);
 
     F->DeleteMachineInstr(MI);   // The pseudo instruction is gone now.
+    return BB;
+  }
+
+  case ARM::tANDsp:
+  case ARM::tADDspr_:
+  case ARM::tSUBspi_:
+  case ARM::t2SUBrSPi_:
+  case ARM::t2SUBrSPi12_:
+  case ARM::t2SUBrSPs_: {
+    MachineFunction *MF = BB->getParent();
+    unsigned DstReg = MI->getOperand(0).getReg();
+    unsigned SrcReg = MI->getOperand(1).getReg();
+    bool DstIsDead = MI->getOperand(0).isDead();
+    bool SrcIsKill = MI->getOperand(1).isKill();
+
+    if (SrcReg != ARM::SP) {
+      // Copy the source to SP from virtual register.
+      const TargetRegisterClass *RC = MF->getRegInfo().getRegClass(SrcReg);
+      unsigned CopyOpc = (RC == ARM::tGPRRegisterClass)
+        ? ARM::tMOVtgpr2gpr : ARM::tMOVgpr2gpr;
+      BuildMI(BB, dl, TII->get(CopyOpc), ARM::SP)
+        .addReg(SrcReg, getKillRegState(SrcIsKill));
+    }
+
+    unsigned OpOpc = 0;
+    bool NeedPred = false, NeedCC = false, NeedOp3 = false;
+    switch (MI->getOpcode()) {
+    default:
+      llvm_unreachable("Unexpected pseudo instruction!");
+    case ARM::tANDsp:
+      OpOpc = ARM::tAND;
+      NeedPred = true;
+      break;
+    case ARM::tADDspr_:
+      OpOpc = ARM::tADDspr;
+      break;
+    case ARM::tSUBspi_:
+      OpOpc = ARM::tSUBspi;
+      break;
+    case ARM::t2SUBrSPi_:
+      OpOpc = ARM::t2SUBrSPi;
+      NeedPred = true; NeedCC = true;
+      break;
+    case ARM::t2SUBrSPi12_:
+      OpOpc = ARM::t2SUBrSPi12;
+      NeedPred = true;
+      break;
+    case ARM::t2SUBrSPs_:
+      OpOpc = ARM::t2SUBrSPs;
+      NeedPred = true; NeedCC = true; NeedOp3 = true;
+      break;
+    }
+    MachineInstrBuilder MIB = BuildMI(BB, dl, TII->get(OpOpc), ARM::SP);
+    if (OpOpc == ARM::tAND)
+      AddDefaultT1CC(MIB);
+    MIB.addReg(ARM::SP);
+    MIB.addOperand(MI->getOperand(2));
+    if (NeedOp3)
+      MIB.addOperand(MI->getOperand(3));
+    if (NeedPred)
+      AddDefaultPred(MIB);
+    if (NeedCC)
+      AddDefaultCC(MIB);
+
+    // Copy the result from SP to virtual register.
+    const TargetRegisterClass *RC = MF->getRegInfo().getRegClass(DstReg);
+    unsigned CopyOpc = (RC == ARM::tGPRRegisterClass)
+      ? ARM::tMOVgpr2tgpr : ARM::tMOVgpr2gpr;
+    BuildMI(BB, dl, TII->get(CopyOpc))
+      .addReg(DstReg, getDefRegState(true) | getDeadRegState(DstIsDead))
+      .addReg(ARM::SP);
+    MF->DeleteMachineInstr(MI);   // The pseudo instruction is gone now.
     return BB;
   }
   }

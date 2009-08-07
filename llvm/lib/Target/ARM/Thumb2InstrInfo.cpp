@@ -65,11 +65,15 @@ Thumb2InstrInfo::copyRegToReg(MachineBasicBlock &MBB,
 
   if (DestRC == ARM::GPRRegisterClass &&
       SrcRC == ARM::GPRRegisterClass) {
-    AddDefaultCC(AddDefaultPred(BuildMI(MBB, I, DL, get(ARM::t2MOVr),
-                                        DestReg).addReg(SrcReg)));
+    // FIXME: Just use tMOVgpr2gpr since it's shorter?
+    if (SrcReg == ARM::SP || DestReg == ARM::SP)
+      BuildMI(MBB, I, DL, get(ARM::tMOVgpr2gpr), DestReg).addReg(SrcReg);
+    else
+      AddDefaultCC(AddDefaultPred(BuildMI(MBB, I, DL, get(ARM::t2MOVr),
+                                          DestReg).addReg(SrcReg)));
     return true;
   } else if (DestRC == ARM::GPRRegisterClass &&
-      SrcRC == ARM::tGPRRegisterClass) {
+             SrcRC == ARM::tGPRRegisterClass) {
     BuildMI(MBB, I, DL, get(ARM::tMOVtgpr2gpr), DestReg).addReg(SrcReg);
     return true;
   } else if (DestRC == ARM::tGPRRegisterClass &&
@@ -162,26 +166,62 @@ void llvm::emitT2RegPlusImmediate(MachineBasicBlock &MBB,
   }
 
   while (NumBytes) {
-    unsigned Opc = isSub ? ARM::t2SUBri : ARM::t2ADDri;
     unsigned ThisVal = NumBytes;
-    if (ARM_AM::getT2SOImmVal(NumBytes) != -1) {
-      NumBytes = 0;
-    } else if (ThisVal < 4096) {
-      Opc = isSub ? ARM::t2SUBri12 : ARM::t2ADDri12;
-      NumBytes = 0;
+    unsigned Opc = 0;
+    if (DestReg == ARM::SP && BaseReg != ARM::SP) {
+      // mov sp, rn. Note t2MOVr cannot be used.
+      BuildMI(MBB, MBBI, dl, TII.get(ARM::tMOVgpr2gpr),DestReg).addReg(BaseReg);
+      BaseReg = ARM::SP;
+      continue;
+    }
+
+    if (BaseReg == ARM::SP) {
+      // sub sp, sp, #imm7
+      if (DestReg == ARM::SP && (ThisVal < ((1 << 7)-1) * 4)) {
+        assert((ThisVal & 3) == 0 && "Stack update is not multiple of 4?");
+        Opc = isSub ? ARM::tSUBspi : ARM::tADDspi;
+        // FIXME: Fix Thumb1 immediate encoding.
+        BuildMI(MBB, MBBI, dl, TII.get(Opc), DestReg)
+          .addReg(BaseReg).addImm(ThisVal/4);
+        NumBytes = 0;
+        continue;
+      }
+
+      // sub rd, sp, so_imm
+      Opc = isSub ? ARM::t2SUBrSPi : ARM::t2ADDrSPi;
+      if (ARM_AM::getT2SOImmVal(NumBytes) != -1) {
+        NumBytes = 0;
+      } else {
+        // FIXME: Move this to ARMAddressingModes.h?
+        unsigned RotAmt = CountLeadingZeros_32(ThisVal);
+        ThisVal = ThisVal & ARM_AM::rotr32(0xff000000U, RotAmt);
+        NumBytes &= ~ThisVal;
+        assert(ARM_AM::getT2SOImmVal(ThisVal) != -1 &&
+               "Bit extraction didn't work?");
+      }
     } else {
-      // FIXME: Move this to ARMAddressingModes.h?
-      unsigned RotAmt = CountLeadingZeros_32(ThisVal);
-      ThisVal = ThisVal & ARM_AM::rotr32(0xff000000U, RotAmt);
-      NumBytes &= ~ThisVal;
-      assert(ARM_AM::getT2SOImmVal(ThisVal) != -1 &&
-             "Bit extraction didn't work?");
+      assert(DestReg != ARM::SP && BaseReg != ARM::SP);
+      Opc = isSub ? ARM::t2SUBri : ARM::t2ADDri;
+      if (ARM_AM::getT2SOImmVal(NumBytes) != -1) {
+        NumBytes = 0;
+      } else if (ThisVal < 4096) {
+        Opc = isSub ? ARM::t2SUBri12 : ARM::t2ADDri12;
+        NumBytes = 0;
+      } else {
+        // FIXME: Move this to ARMAddressingModes.h?
+        unsigned RotAmt = CountLeadingZeros_32(ThisVal);
+        ThisVal = ThisVal & ARM_AM::rotr32(0xff000000U, RotAmt);
+        NumBytes &= ~ThisVal;
+        assert(ARM_AM::getT2SOImmVal(ThisVal) != -1 &&
+               "Bit extraction didn't work?");
+      }
     }
 
     // Build the new ADD / SUB.
-    BuildMI(MBB, MBBI, dl, TII.get(Opc), DestReg)
-      .addReg(BaseReg, RegState::Kill).addImm(ThisVal)
-      .addImm((unsigned)Pred).addReg(PredReg).addReg(0);
+    AddDefaultCC(AddDefaultPred(BuildMI(MBB, MBBI, dl, TII.get(Opc), DestReg)
+                                .addReg(BaseReg, RegState::Kill)
+                                .addImm(ThisVal)));
+
     BaseReg = DestReg;
   }
 }
@@ -288,7 +328,6 @@ int llvm::rewriteT2FrameIndex(MachineInstr &MI, unsigned FrameRegIdx,
                               unsigned FrameReg, int Offset,
                               const ARMBaseInstrInfo &TII) {
   unsigned Opcode = MI.getOpcode();
-  unsigned NewOpc = Opcode;
   const TargetInstrDesc &Desc = MI.getDesc();
   unsigned AddrMode = (Desc.TSFlags & ARMII::AddrModeMask);
   bool isSub = false;
@@ -299,9 +338,12 @@ int llvm::rewriteT2FrameIndex(MachineInstr &MI, unsigned FrameRegIdx,
   
   if (Opcode == ARM::t2ADDri || Opcode == ARM::t2ADDri12) {
     Offset += MI.getOperand(FrameRegIdx+1).getImm();
+
+    bool isSP = FrameReg == ARM::SP;
     if (Offset == 0) {
       // Turn it into a move.
-      MI.setDesc(TII.get(ARM::t2MOVr));
+      unsigned NewOpc = isSP ? ARM::tMOVgpr2gpr : ARM::t2MOVr;
+      MI.setDesc(TII.get(NewOpc));
       MI.getOperand(FrameRegIdx).ChangeToRegister(FrameReg, false);
       MI.RemoveOperand(FrameRegIdx+1);
       return 0;
@@ -310,23 +352,23 @@ int llvm::rewriteT2FrameIndex(MachineInstr &MI, unsigned FrameRegIdx,
     if (Offset < 0) {
       Offset = -Offset;
       isSub = true;
-      MI.setDesc(TII.get(ARM::t2SUBri));
+      MI.setDesc(TII.get(isSP ? ARM::t2SUBrSPi : ARM::t2SUBri));
+    } else {
+      MI.setDesc(TII.get(isSP ? ARM::t2ADDrSPi : ARM::t2ADDri));
     }
 
     // Common case: small offset, fits into instruction.
     if (ARM_AM::getT2SOImmVal(Offset) != -1) {
-      NewOpc = isSub ? ARM::t2SUBri : ARM::t2ADDri;
-      if (NewOpc != Opcode)
-        MI.setDesc(TII.get(NewOpc));
       MI.getOperand(FrameRegIdx).ChangeToRegister(FrameReg, false);
       MI.getOperand(FrameRegIdx+1).ChangeToImmediate(Offset);
       return 0;
     }
     // Another common case: imm12.
     if (Offset < 4096) {
-      NewOpc = isSub ? ARM::t2SUBri12 : ARM::t2ADDri12;
-      if (NewOpc != Opcode)
-        MI.setDesc(TII.get(NewOpc));
+      unsigned NewOpc = isSP
+        ? (isSub ? ARM::t2SUBrSPi12 : ARM::t2ADDrSPi12)
+        : (isSub ? ARM::t2SUBri12   : ARM::t2ADDri12);
+      MI.setDesc(TII.get(NewOpc));
       MI.getOperand(FrameRegIdx).ChangeToRegister(FrameReg, false);
       MI.getOperand(FrameRegIdx+1).ChangeToImmediate(Offset);
       return 0;
@@ -346,7 +388,7 @@ int llvm::rewriteT2FrameIndex(MachineInstr &MI, unsigned FrameRegIdx,
   } else {
     // AddrModeT2_so cannot handle any offset. If there is no offset
     // register then we change to an immediate version.
-    NewOpc = Opcode;
+    unsigned NewOpc = Opcode;
     if (AddrMode == ARMII::AddrModeT2_so) {
       unsigned OffsetReg = MI.getOperand(FrameRegIdx+1).getReg();
       if (OffsetReg != 0) {

@@ -688,7 +688,7 @@ foldMemoryOperandImpl(MachineFunction &MF, MachineInstr *MI,
   unsigned OpNum = Ops[0];
   unsigned Opc = MI->getOpcode();
   MachineInstr *NewMI = NULL;
-  if (Opc == ARM::MOVr || Opc == ARM::t2MOVr) {
+  if (Opc == ARM::MOVr || Opc == ARM::t2MOVr) { // FIXME: tMOVgpr2gpr etc.?
     // If it is updating CPSR, then it cannot be folded.
     if (MI->getOperand(4).getReg() != ARM::CPSR || MI->getOperand(4).isDead()) {
       unsigned Pred = MI->getOperand(2).getImm();

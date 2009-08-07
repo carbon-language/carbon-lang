@@ -206,9 +206,13 @@ ARMLoadStoreOpt::MergeOps(MachineBasicBlock &MBB,
       if (NewBase == 0)
         return false;
     }
-    int BaseOpc = isThumb2 ? ARM::t2ADDri : ARM::ADDri;
+    int BaseOpc = !isThumb2
+      ? ARM::ADDri
+      : ((Base == ARM::SP) ? ARM::t2ADDrSPi : ARM::t2ADDri);
     if (Offset < 0) {
-      BaseOpc = isThumb2 ? ARM::t2SUBri : ARM::SUBri;
+      BaseOpc = !isThumb2
+        ? ARM::SUBri
+        : ((Base == ARM::SP) ? ARM::t2SUBrSPi : ARM::t2SUBri);
       Offset = - Offset;
     }
     int ImmedOffset = isThumb2
@@ -329,6 +333,9 @@ static inline bool isMatchingDecrement(MachineInstr *MI, unsigned Base,
   if (!MI)
     return false;
   if (MI->getOpcode() != ARM::t2SUBri &&
+      MI->getOpcode() != ARM::t2SUBrSPi &&
+      MI->getOpcode() != ARM::t2SUBrSPi12 &&
+      MI->getOpcode() != ARM::tSUBspi &&
       MI->getOpcode() != ARM::SUBri)
     return false;
 
@@ -336,9 +343,10 @@ static inline bool isMatchingDecrement(MachineInstr *MI, unsigned Base,
   if (Bytes <= 0 || (Limit && Bytes >= Limit))
     return false;
 
+  unsigned Scale = (MI->getOpcode() == ARM::tSUBspi) ? 4 : 1; // FIXME
   return (MI->getOperand(0).getReg() == Base &&
           MI->getOperand(1).getReg() == Base &&
-          MI->getOperand(2).getImm() == Bytes &&
+          (MI->getOperand(2).getImm()*Scale) == Bytes &&
           getInstrPredicate(MI, MyPredReg) == Pred &&
           MyPredReg == PredReg);
 }
@@ -350,6 +358,9 @@ static inline bool isMatchingIncrement(MachineInstr *MI, unsigned Base,
   if (!MI)
     return false;
   if (MI->getOpcode() != ARM::t2ADDri &&
+      MI->getOpcode() != ARM::t2ADDrSPi &&
+      MI->getOpcode() != ARM::t2ADDrSPi12 &&
+      MI->getOpcode() != ARM::tADDspi &&
       MI->getOpcode() != ARM::ADDri)
     return false;
 
@@ -357,9 +368,10 @@ static inline bool isMatchingIncrement(MachineInstr *MI, unsigned Base,
     // Make sure the offset fits in 8 bits.
     return false;
 
+  unsigned Scale = (MI->getOpcode() == ARM::tADDspi) ? 4 : 1; // FIXME
   return (MI->getOperand(0).getReg() == Base &&
           MI->getOperand(1).getReg() == Base &&
-          MI->getOperand(2).getImm() == Bytes &&
+          (MI->getOperand(2).getImm()*Scale) == Bytes &&
           getInstrPredicate(MI, MyPredReg) == Pred &&
           MyPredReg == PredReg);
 }

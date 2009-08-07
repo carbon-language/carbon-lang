@@ -138,18 +138,37 @@ def tADDrPCi : T1I<(outs tGPR:$dst), (ins i32imm:$rhs), IIC_iALU,
                   "add $dst, pc, $rhs * 4", []>;
 
 // ADD rd, sp, #imm8
-// FIXME: hard code sp?
 def tADDrSPi : T1I<(outs tGPR:$dst), (ins GPR:$sp, i32imm:$rhs), IIC_iALU,
                   "add $dst, $sp, $rhs * 4 @ addrspi", []>;
 
 // ADD sp, sp, #imm7
-// FIXME: hard code sp?
-def tADDspi : T1It<(outs GPR:$dst), (ins GPR:$lhs, i32imm:$rhs), IIC_iALU,
+def tADDspi : TIt<(outs GPR:$dst), (ins GPR:$lhs, i32imm:$rhs), IIC_iALU,
                   "add $dst, $rhs * 4", []>;
 
-// FIXME: Make use of the following?
+// SUB sp, sp, #imm7
+def tSUBspi : TIt<(outs GPR:$dst), (ins GPR:$lhs, i32imm:$rhs), IIC_iALU,
+                  "sub $dst, $rhs * 4", []>;
+
 // ADD rm, sp, rm
+def tADDrSPr : TI<(outs GPR:$dst), (ins GPR:$sp, GPR:$rhs), IIC_iALU,
+                  "add $dst, $sp, $rhs", []>;
+
 // ADD sp, rm
+def tADDspr : TIt<(outs GPR:$dst), (ins GPR:$lhs, GPR:$rhs), IIC_iALU,
+                  "add $dst, $rhs", []>;
+
+// Pseudo instruction that will expand into a tSUBspi + a copy.
+let usesCustomDAGSchedInserter = 1 in { // Expanded by the scheduler.
+def tSUBspi_ : PseudoInst<(outs GPR:$dst), (ins GPR:$lhs, i32imm:$rhs),
+               NoItinerary, "@ sub $dst, $rhs * 4", []>;
+
+def tADDspr_ : PseudoInst<(outs GPR:$dst), (ins GPR:$lhs, GPR:$rhs),
+               NoItinerary, "@ add $dst, $rhs", []>;
+
+let Defs = [CPSR] in
+def tANDsp : PseudoInst<(outs tGPR:$dst), (ins tGPR:$lhs, tGPR:$rhs),
+             NoItinerary, "@ and $dst, $rhs", []>;
+} // usesCustomDAGSchedInserter
 
 //===----------------------------------------------------------------------===//
 //  Control Flow Instructions.
@@ -548,9 +567,6 @@ def tSUBrr : T1sI<(outs tGPR:$dst), (ins tGPR:$lhs, tGPR:$rhs), IIC_iALU,
                   [(set tGPR:$dst, (sub tGPR:$lhs, tGPR:$rhs))]>;
 
 // TODO: A7-96: STMIA - store multiple.
-
-def tSUBspi : T1It<(outs GPR:$dst), (ins GPR:$lhs, i32imm:$rhs), IIC_iALU,
-                  "sub $dst, $rhs * 4", []>;
 
 // sign-extend byte
 def tSXTB  : T1pI<(outs tGPR:$dst), (ins tGPR:$src), IIC_iALU,

@@ -65,10 +65,12 @@ namespace llvm {
       FMRRD,        // double to two gprs.
       FMDRR,        // Two gprs to double.
 
-      EH_SJLJ_SETJMP,    // SjLj exception handling setjmp
-      EH_SJLJ_LONGJMP,   // SjLj exception handling longjmp
+      EH_SJLJ_SETJMP,    // SjLj exception handling setjmp.
+      EH_SJLJ_LONGJMP,   // SjLj exception handling longjmp.
 
       THREAD_POINTER,
+
+      DYN_ALLOC,    // Dynamic allocation on the stack.
 
       VCEQ,         // Vector compare equal.
       VCGE,         // Vector compare greater than or equal.
@@ -255,6 +257,7 @@ namespace llvm {
     SDValue LowerGLOBAL_OFFSET_TABLE(SDValue Op, SelectionDAG &DAG);
     SDValue LowerBR_JT(SDValue Op, SelectionDAG &DAG);
     SDValue LowerFRAMEADDR(SDValue Op, SelectionDAG &DAG);
+    SDValue LowerDYNAMIC_STACKALLOC(SDValue Op, SelectionDAG &DAG);
 
     SDValue EmitTargetCodeForMemcpy(SelectionDAG &DAG, DebugLoc dl,
                                       SDValue Chain,

@@ -1289,11 +1289,12 @@ emitEpilogue(MachineFunction &MF, MachineBasicBlock &MBB) const {
           AFI->getDPRCalleeSavedAreaOffset()||
           hasFP(MF)) {
         if (NumBytes) {
-          unsigned SUBriOpc = isARM ? ARM::SUBri : ARM::t2SUBri;
-          BuildMI(MBB, MBBI, dl, TII.get(SUBriOpc), ARM::SP)
-            .addReg(FramePtr)
-            .addImm(NumBytes)
-            .addImm((unsigned)ARMCC::AL).addReg(0).addReg(0);
+          if (isARM)
+            emitARMRegPlusImmediate(MBB, MBBI, dl, ARM::SP, FramePtr, -NumBytes,
+                                    ARMCC::AL, 0, TII);
+          else
+            emitT2RegPlusImmediate(MBB, MBBI, dl, ARM::SP, FramePtr, -NumBytes,
+                                    ARMCC::AL, 0, TII);
         } else {
           // Thumb2 or ARM.
           unsigned MOVrOpc = isARM ? ARM::MOVr : ARM::t2MOVr;
