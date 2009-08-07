@@ -107,7 +107,7 @@ AlphaTargetLowering::AlphaTargetLowering(TargetMachine &TM)
   setOperationAction(ISD::UMUL_LOHI, MVT::i64, Expand);
   setOperationAction(ISD::SMUL_LOHI, MVT::i64, Expand);
 
-  setOperationAction(ISD::SRL_PARTS, MVT::i64, Expand);
+  setOperationAction(ISD::SRL_PARTS, MVT::i64, Custom);
   setOperationAction(ISD::SRA_PARTS, MVT::i64, Expand);
   setOperationAction(ISD::SHL_PARTS, MVT::i64, Expand);
 
@@ -577,6 +577,35 @@ SDValue AlphaTargetLowering::LowerOperation(SDValue Op, SelectionDAG &DAG) {
                          Op.getOperand(1), Op.getOperand(2));
     }
   }
+
+  case ISD::SRL_PARTS: {
+    SDValue ShOpLo = Op.getOperand(0);
+    SDValue ShOpHi = Op.getOperand(1);
+    SDValue ShAmt  = Op.getOperand(2);
+    SDValue bm = DAG.getNode(ISD::SUB, dl, MVT::i64, 
+			     DAG.getConstant(64, MVT::i64), ShAmt);
+    SDValue BMCC = DAG.getSetCC(dl, MVT::i64, bm,
+                                DAG.getConstant(0, MVT::i64), ISD::SETLE);
+    // if 64 - shAmt <= 0
+    SDValue Hi_Neg = DAG.getConstant(0, MVT::i64);
+    SDValue ShAmt_Neg = DAG.getNode(ISD::SUB, dl, MVT::i64,
+				    DAG.getConstant(0, MVT::i64), bm);
+    SDValue Lo_Neg = DAG.getNode(ISD::SRL, dl, MVT::i64, ShOpHi, ShAmt_Neg);
+    // else
+    SDValue carries = DAG.getNode(ISD::SHL, dl, MVT::i64, ShOpHi, bm);
+    SDValue Hi_Pos =  DAG.getNode(ISD::SRL, dl, MVT::i64, ShOpHi, ShAmt);
+    SDValue Lo_Pos = DAG.getNode(ISD::SRL, dl, MVT::i64, ShOpLo, ShAmt);
+    Lo_Pos = DAG.getNode(ISD::OR, dl, MVT::i64, Lo_Pos, carries);
+    // Merge
+    SDValue Hi = DAG.getNode(ISD::SELECT, dl, MVT::i64, BMCC, Hi_Neg, Hi_Pos);
+    SDValue Lo = DAG.getNode(ISD::SELECT, dl, MVT::i64, BMCC, Lo_Neg, Lo_Pos);
+    SDValue Ops[2] = { Lo, Hi };
+    return DAG.getMergeValues(Ops, 2, dl);
+  }			
+    //  case ISD::SRA_PARTS:
+
+    //  case ISD::SHL_PARTS:
+
 
   case ISD::SINT_TO_FP: {
     assert(Op.getOperand(0).getValueType() == MVT::i64 &&
