@@ -888,12 +888,13 @@ static void PropagateDeadness(LiveInterval &li, MachineInstr *CopyMI,
   MachineInstr *DefMI =
     li_->getInstructionFromIndex(li_->getDefIndex(LRStart));
   if (DefMI && DefMI != CopyMI) {
-    int DeadIdx = DefMI->findRegisterDefOperandIdx(li.reg, false, tri_);
-    if (DeadIdx != -1) {
+    int DeadIdx = DefMI->findRegisterDefOperandIdx(li.reg, false);
+    if (DeadIdx != -1)
       DefMI->getOperand(DeadIdx).setIsDead();
-      // A dead def should have a single cycle interval.
-      ++LRStart;
-    }
+    else
+      DefMI->addOperand(MachineOperand::CreateReg(li.reg,
+                                                  true, true, false, true));
+    ++LRStart;
   }
 }
 
