@@ -1396,13 +1396,6 @@ bool Andersens::Node::intersectsIgnoring(Node *N, unsigned Ignoring) const {
   return Result;
 }
 
-static void dumpToDOUT(SparseBitVector<> *bitmap) {
-#ifndef NDEBUG
-  raw_os_ostream OS(*DOUT);
-  dump(*bitmap, OS);
-#endif
-}
-
 
 /// Clump together address taken variables so that the points-to sets use up
 /// less space and can be operated on faster.
