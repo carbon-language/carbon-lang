@@ -10,8 +10,9 @@
 // RUN: gdb -q -batch -n -x %t.in %t.exe | \
 // RUN:   grep {#7  0x.* in main.*(argc=\[12\],.*argv=.*)}
 
-// Only works on ppc, x86 and x86_64.  Should generalize?
-// XFAIL: alpha|arm
+// Only works on ppc (but not apple-darwin9), x86 and x86_64.  Should
+// generalize?
+// XFAIL: alpha|arm|powerpc-apple-darwin9
 
 #include <stdlib.h>
 
