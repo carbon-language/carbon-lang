@@ -664,6 +664,42 @@ llvm::Value *CodeGenFunction::GenerateVtable(const CXXRecordDecl *RD) {
   return vtable;
 }
 
+/// EmitClassMemberwiseCopy - This routine generates code to copy a class
+/// object from SrcValue to DestValue. Copying can be either a bitwise copy
+/// of via a copy constructor call.
+void CodeGenFunction::EmitClassMemberwiseCopy(
+                        llvm::Value *DestValue, llvm::Value *SrcValue,
+                        const CXXRecordDecl *ClassDecl, 
+                        const CXXRecordDecl *BaseClassDecl) {
+  // FIXME. Do bitwise copy of trivial copy constructors.
+  if (BaseClassDecl->hasTrivialCopyConstructor())
+    return;
+  unsigned TypeQuals;
+  if (CXXConstructorDecl *BaseCopyCtor = 
+      BaseClassDecl->getCopyConstructor(getContext(), TypeQuals)) {
+    llvm::Value *Callee = CGM.GetAddrOfCXXConstructor(BaseCopyCtor, 
+                                                      Ctor_Complete);
+    
+    llvm::Value *Dest = 
+      AddressCXXOfBaseClass(DestValue, ClassDecl, BaseClassDecl);
+    
+    CallArgList CallArgs;
+    // Push the this (Dest) ptr.
+    CallArgs.push_back(std::make_pair(RValue::get(Dest),
+                                      BaseCopyCtor->getThisType(getContext())));
+    
+    llvm::Value *Src = 
+      AddressCXXOfBaseClass(SrcValue, ClassDecl, BaseClassDecl);
+    // Push the Src ptr.
+    CallArgs.push_back(std::make_pair(RValue::get(Src),
+                                      BaseCopyCtor->getThisType(getContext())));
+    QualType ResultType = 
+    BaseCopyCtor->getType()->getAsFunctionType()->getResultType();
+    EmitCall(CGM.getTypes().getFunctionInfo(ResultType, CallArgs),
+             Callee, CallArgs, BaseCopyCtor);
+  }
+}
+  
 /// EmitCopyCtorBody - This routine implicitly defines body of a copy
 /// constructor, in accordance with section 12.8 (p7 and p8) of C++03
 /// The implicitly-defined copy constructor for class X performs a memberwise 
@@ -679,7 +715,8 @@ llvm::Value *CodeGenFunction::GenerateVtable(const CXXRecordDecl *RD) {
 /// Virtual base class subobjects shall be copied only once by the 
 /// implicitly-defined copy constructor 
 
-void CodeGenFunction::EmitCopyCtorBody(const CXXConstructorDecl *CD) {
+void CodeGenFunction::EmitCopyCtorBody(const CXXConstructorDecl *CD,
+                                       const FunctionArgList &Args) {
   const CXXRecordDecl *ClassDecl = cast<CXXRecordDecl>(CD->getDeclContext());
   assert(!ClassDecl->hasUserDeclaredCopyConstructor() &&
          "EmitCopyCtorBody - copy constructor has definition already");
@@ -689,23 +726,18 @@ void CodeGenFunction::EmitCopyCtorBody(const CXXConstructorDecl *CD) {
     // FIXME. copy constrution of virtual base NYI
     if (Base->isVirtual())
       continue;
-#if 0
-    unsigned TypeQuals;
+    
+    FunctionArgList::const_iterator i = Args.begin();
+    const VarDecl *ThisArg = i->first;
+    llvm::Value *ThisObj = GetAddrOfLocalVar(ThisArg);
+    llvm::Value *LoadOfThis = Builder.CreateLoad(ThisObj, "this");
+    const VarDecl *SrcArg = (i+1)->first;
+    llvm::Value *SrcObj = GetAddrOfLocalVar(SrcArg);
+    llvm::Value *LoadOfSrc = Builder.CreateLoad(SrcObj);
+    
     CXXRecordDecl *BaseClassDecl
       = cast<CXXRecordDecl>(Base->getType()->getAs<RecordType>()->getDecl());
-    if (CXXConstructorDecl *BaseCopyCtor = 
-          BaseClassDecl->getCopyConstructor(getContext(), TypeQuals)) {
-
-      llvm::Value *LoadOfThis = LoadCXXThis();
-      llvm::Value *V = AddressCXXOfBaseClass(LoadOfThis, ClassDecl, 
-                                             BaseClassDecl);
-      EmitCXXConstructorCall(BaseCopyCtor,
-                             Ctor_Complete, V,
-                             Member->const_arg_begin(), 
-                             Member->const_arg_end());
-
-    }
-#endif
+    EmitClassMemberwiseCopy(LoadOfThis, LoadOfSrc, ClassDecl, BaseClassDecl);
   }
   
 }  

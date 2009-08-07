@@ -247,7 +247,7 @@ void CodeGenFunction::GenerateCode(const FunctionDecl *FD,
         assert(!ClassDecl->hasUserDeclaredCopyConstructor() &&
                "bogus constructor is being synthesize");
         StartFunction(FD, FD->getResultType(), Fn, Args, SourceLocation());
-        EmitCopyCtorBody(CD);
+        EmitCopyCtorBody(CD, Args);
         FinishFunction();
       }
       else {
