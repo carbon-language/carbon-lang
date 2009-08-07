@@ -42,24 +42,36 @@ extern bool DebugFlag;
 //
 bool isCurrentDebugType(const char *Type);
 
+// DEBUG_WITH_TYPE macro - This macro should be used by passes to emit debug
+// information.  In the '-debug' option is specified on the commandline, and if
+// this is a debug build, then the code specified as the option to the macro
+// will be executed.  Otherwise it will not be.  Example:
+//
+// DEBUG_WITH_TYPE("bitset", errs() << "Bitset contains: " << Bitset << "\n");
+//
+// This will emit the debug information if -debug is present, and -debug-only is
+// not specified, or is specified as "bitset".
+
+#ifdef NDEBUG
+#define DEBUG_WITH_TYPE(TYPE, X) do { } while (0)
+#else
+#define DEBUG_WITH_TYPE(TYPE, X)                                        \
+  do { if (DebugFlag && isCurrentDebugType(TYPE)) { X; } } while (0)
+#endif
+
 // DEBUG macro - This macro should be used by passes to emit debug information.
 // In the '-debug' option is specified on the commandline, and if this is a
 // debug build, then the code specified as the option to the macro will be
 // executed.  Otherwise it will not be.  Example:
 //
-// DEBUG(cerr << "Bitset contains: " << Bitset << "\n");
+// DEBUG(errs() << "Bitset contains: " << Bitset << "\n");
 //
 
 #ifndef DEBUG_TYPE
 #define DEBUG_TYPE ""
 #endif
 
-#ifdef NDEBUG
-#define DEBUG(X)
-#else
-#define DEBUG(X) \
-  do { if (DebugFlag && isCurrentDebugType(DEBUG_TYPE)) { X; } } while (0)
-#endif
+#define DEBUG(X) DEBUG_WITH_TYPE(DEBUG_TYPE, X)
 
 /// getNullOutputStream - Return a null string that does not output
 /// anything.  This hides the static variable from other modules.

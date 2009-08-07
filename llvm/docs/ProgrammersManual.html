@@ -646,6 +646,21 @@ on when the name is specified. This allows, for example, all debug information
 for instruction scheduling to be enabled with <tt>-debug-type=InstrSched</tt>,
 even if the source lives in multiple files.</p>
 
+<p>The <tt>DEBUG_WITH_TYPE</tt> macro is also available for situations where you
+would like to set <tt>DEBUG_TYPE</tt>, but only for one specific <tt>DEBUG</tt>
+statement. It takes an additional first parameter, which is the type to use. For
+example, the preceeding example could be written as:</p>
+
+
+<div class="doc_code">
+<pre>
+DEBUG_WITH_TYPE("", errs() &lt;&lt; "No debug type\n");
+DEBUG_WITH_TYPE("foo", errs() &lt;&lt; "'foo' debug type\n");
+DEBUG_WITH_TYPE("bar", errs() &lt;&lt; "'bar' debug type\n"));
+DEBUG_WITH_TYPE("", errs() &lt;&lt; "No debug type (2)\n");
+</pre>
+</div>
+
 </div>
 
 <!-- ======================================================================= -->
