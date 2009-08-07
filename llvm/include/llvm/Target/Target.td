@@ -465,6 +465,17 @@ class AsmWriter {
   // will specify which alternative to use.  For example "{x|y|z}" with Variant
   // == 1, will expand to "y".
   int Variant = 0;
+  
+  
+  // FirstOperandColumn/OperandSpacing - If the assembler syntax uses a columnar
+  // layout, the asmwriter can actually generate output in this columns (in
+  // verbose-asm mode).  These two values indicate the width of the first column
+  // (the "opcode" area) and the width to reserve for subsequent operands.  When
+  // verbose asm mode is enabled, operands will be indented to respect this.
+  int FirstOperandColumn = -1;
+  
+  // OperandSpacing - Space between operand columns.
+  int OperandSpacing = -1;
 }
 def DefaultAsmWriter : AsmWriter;
 
