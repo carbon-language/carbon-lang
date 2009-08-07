@@ -1,5 +1,8 @@
 // RUN: llvm-mc -triple i386-unknown-unknown %s | FileCheck %s
 
+// FIXME: Disabled until the generated code stops crashing gcc 4.0.        
+// XFAIL: *
+
         .data
 // CHECK: a:
 a:

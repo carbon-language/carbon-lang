@@ -417,4 +417,23 @@ extern "C" void LLVMInitializeX86AsmParser() {
   RegisterAsmParser<X86ATTAsmParser> Y(TheX86_64Target);
 }
 
+// FIXME: Disabled for now, this is causing gcc-4.0 to run out of memory during
+// building.
+#if 0
+
 #include "X86GenAsmMatcher.inc"
+
+#else
+
+bool X86ATTAsmParser::MatchInstruction(SmallVectorImpl<X86Operand> &Operands,
+                                       MCInst &Inst) {
+  return false;
+}
+  
+bool X86ATTAsmParser::MatchRegisterName(const StringRef &Name,
+                                        unsigned &RegNo) {
+  return false;
+}
+
+#endif
+

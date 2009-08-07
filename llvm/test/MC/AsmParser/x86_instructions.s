@@ -1,5 +1,8 @@
 // FIXME: Switch back to FileCheck once we print actual instructions
 
+// FIXME: Disabled until the generated code stops crashing gcc 4.0.        
+// XFAIL: *
+        
 // RUN: llvm-mc -triple i386-unknown-unknown %s > %t
 
 // RUN: grep {MCInst(opcode=.*, operands=.reg:2, reg:0, reg:2.)} %t
