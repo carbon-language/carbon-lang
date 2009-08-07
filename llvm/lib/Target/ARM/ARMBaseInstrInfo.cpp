@@ -587,7 +587,7 @@ ARMBaseInstrInfo::isStoreToStackSlot(const MachineInstr *MI,
     }
     break;
   case ARM::FSTD:
-  case  ARM::FSTS:
+  case ARM::FSTS:
     if (MI->getOperand(1).isFI() &&
         MI->getOperand(2).isImm() &&
         MI->getOperand(2).getImm() == 0) {
@@ -610,8 +610,10 @@ ARMBaseInstrInfo::copyRegToReg(MachineBasicBlock &MBB,
   if (I != MBB.end()) DL = I->getDebugLoc();
 
   if (DestRC != SrcRC) {
-    if (((DestRC == ARM::DPRRegisterClass) && (SrcRC == ARM::DPR_VFP2RegisterClass)) ||
-        ((SrcRC == ARM::DPRRegisterClass) && (DestRC == ARM::DPR_VFP2RegisterClass))) {
+    if (((DestRC == ARM::DPRRegisterClass) &&
+         (SrcRC == ARM::DPR_VFP2RegisterClass)) ||
+        ((SrcRC == ARM::DPRRegisterClass) &&
+         (DestRC == ARM::DPR_VFP2RegisterClass))) {
       // Allow copy between DPR and DPR_VFP2.
     } else {
       return false;
@@ -648,7 +650,7 @@ storeRegToStackSlot(MachineBasicBlock &MBB, MachineBasicBlock::iterator I,
     AddDefaultPred(BuildMI(MBB, I, DL, get(ARM::STR))
                    .addReg(SrcReg, getKillRegState(isKill))
                    .addFrameIndex(FI).addReg(0).addImm(0));
-  } else if (RC == ARM::DPRRegisterClass) {
+  } else if (RC == ARM::DPRRegisterClass || RC == ARM::DPR_VFP2RegisterClass) {
     AddDefaultPred(BuildMI(MBB, I, DL, get(ARM::FSTD))
                    .addReg(SrcReg, getKillRegState(isKill))
                    .addFrameIndex(FI).addImm(0));
@@ -670,7 +672,7 @@ loadRegFromStackSlot(MachineBasicBlock &MBB, MachineBasicBlock::iterator I,
   if (RC == ARM::GPRRegisterClass) {
     AddDefaultPred(BuildMI(MBB, I, DL, get(ARM::LDR), DestReg)
                    .addFrameIndex(FI).addReg(0).addImm(0));
-  } else if (RC == ARM::DPRRegisterClass) {
+  } else if (RC == ARM::DPRRegisterClass || RC == ARM::DPR_VFP2RegisterClass) {
     AddDefaultPred(BuildMI(MBB, I, DL, get(ARM::FLDD), DestReg)
                    .addFrameIndex(FI).addImm(0));
   } else {

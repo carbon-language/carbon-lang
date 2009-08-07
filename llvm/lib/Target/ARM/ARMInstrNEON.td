@@ -334,13 +334,18 @@ class N2VQInt<bits<2> op24_23, bits<2> op21_20, bits<2> op19_18,
         [(set QPR:$dst, (ResTy (IntOp (OpTy QPR:$src))))]>;
 
 // Basic 2-register operations, scalar single-precision
-class N2VDInts<SDNode OpNode, NeonI Inst>
+class N2VDInts<bits<2> op24_23, bits<2> op21_20, bits<2> op19_18,
+              bits<2> op17_16, bits<5> op11_7, bit op4, string OpcodeStr,
+              ValueType ResTy, ValueType OpTy, Intrinsic IntOp>
+  : N2V<op24_23, op21_20, op19_18, op17_16, op11_7, 0, op4,
+        (outs DPR_VFP2:$dst), (ins DPR_VFP2:$src), NoItinerary,
+        !strconcat(OpcodeStr, "\t$dst, $src"), "", []>;
+
+class N2VDIntsPat<SDNode OpNode, NeonI Inst>
   : NEONFPPat<(f32 (OpNode SPR:$a)),
-              (EXTRACT_SUBREG (COPY_TO_REGCLASS 
-                  (Inst (INSERT_SUBREG (v2f32 (IMPLICIT_DEF)), 
-                                        SPR:$a, arm_ssubreg_0)),
-                               DPR_VFP2),
-               arm_ssubreg_0)>;
+       (EXTRACT_SUBREG
+           (Inst (INSERT_SUBREG (v2f32 (IMPLICIT_DEF)), SPR:$a, arm_ssubreg_0)),
+        arm_ssubreg_0)>;
 
 // Narrow 2-register intrinsics.
 class N2VNInt<bits<2> op24_23, bits<2> op21_20, bits<2> op19_18,
@@ -380,15 +385,20 @@ class N3VQ<bit op24, bit op23, bits<2> op21_20, bits<4> op11_8, bit op4,
 }
 
 // Basic 3-register operations, scalar single-precision
-class N3VDs<SDNode OpNode, NeonI Inst>
+class N3VDs<bit op24, bit op23, bits<2> op21_20, bits<4> op11_8, bit op4,
+           string OpcodeStr, ValueType ResTy, ValueType OpTy,
+           SDNode OpNode, bit Commutable>
+  : N3V<op24, op23, op21_20, op11_8, 0, op4,
+        (outs DPR_VFP2:$dst), (ins DPR_VFP2:$src1, DPR_VFP2:$src2), NoItinerary,
+        !strconcat(OpcodeStr, "\t$dst, $src1, $src2"), "", []> {
+  let isCommutable = Commutable;
+}
+class N3VDsPat<SDNode OpNode, NeonI Inst>
   : NEONFPPat<(f32 (OpNode SPR:$a, SPR:$b)),
-              (EXTRACT_SUBREG (COPY_TO_REGCLASS
-                  (Inst (INSERT_SUBREG (v2f32 (IMPLICIT_DEF)),
-                                        SPR:$a, arm_ssubreg_0),
-                        (INSERT_SUBREG (v2f32 (IMPLICIT_DEF)),
-                                        SPR:$b, arm_ssubreg_0)),
-                               DPR_VFP2),
-               arm_ssubreg_0)>;
+       (EXTRACT_SUBREG
+           (Inst (INSERT_SUBREG (v2f32 (IMPLICIT_DEF)), SPR:$a, arm_ssubreg_0),
+                 (INSERT_SUBREG (v2f32 (IMPLICIT_DEF)), SPR:$b, arm_ssubreg_0)),
+        arm_ssubreg_0)>;
 
 // Basic 3-register intrinsics, both double- and quad-register.
 class N3VDInt<bit op24, bit op23, bits<2> op21_20, bits<4> op11_8, bit op4,
@@ -427,18 +437,20 @@ class N3VQMulOp<bit op24, bit op23, bits<2> op21_20, bits<4> op11_8, bit op4,
                              (Ty (MulOp QPR:$src2, QPR:$src3)))))]>;
 
 // Multiply-Add/Sub operations, scalar single-precision
-class N3VDMulOps<SDNode MulNode, SDNode OpNode, NeonI Inst>
-  : NEONFPPat<(f32 (OpNode SPR:$acc, 
-                       (f32 (MulNode SPR:$a, SPR:$b)))),
-              (EXTRACT_SUBREG (COPY_TO_REGCLASS
-                  (Inst (INSERT_SUBREG (v2f32 (IMPLICIT_DEF)),
-                                        SPR:$acc, arm_ssubreg_0),
-                        (INSERT_SUBREG (v2f32 (IMPLICIT_DEF)),
-                                        SPR:$a, arm_ssubreg_0),
-                        (INSERT_SUBREG (v2f32 (IMPLICIT_DEF)),
-                                        SPR:$b, arm_ssubreg_0)),
-                               DPR_VFP2),
-               arm_ssubreg_0)>;
+class N3VDMulOps<bit op24, bit op23, bits<2> op21_20, bits<4> op11_8, bit op4,
+                 string OpcodeStr, ValueType Ty, SDNode MulOp, SDNode OpNode>
+  : N3V<op24, op23, op21_20, op11_8, 0, op4,
+        (outs DPR_VFP2:$dst),
+        (ins DPR_VFP2:$src1, DPR_VFP2:$src2, DPR_VFP2:$src3), NoItinerary,
+        !strconcat(OpcodeStr, "\t$dst, $src2, $src3"), "$src1 = $dst", []>;
+
+class N3VDMulOpsPat<SDNode MulNode, SDNode OpNode, NeonI Inst>
+  : NEONFPPat<(f32 (OpNode SPR:$acc, (f32 (MulNode SPR:$a, SPR:$b)))),
+      (EXTRACT_SUBREG
+          (Inst (INSERT_SUBREG (v2f32 (IMPLICIT_DEF)), SPR:$acc, arm_ssubreg_0),
+                (INSERT_SUBREG (v2f32 (IMPLICIT_DEF)), SPR:$a,   arm_ssubreg_0),
+                (INSERT_SUBREG (v2f32 (IMPLICIT_DEF)), SPR:$b,   arm_ssubreg_0)),
+       arm_ssubreg_0)>;
 
 // Neon 3-argument intrinsics, both double- and quad-register.
 // The destination register is also used as the first source operand register.
@@ -1011,9 +1023,6 @@ defm VADDHN   : N3VNInt_HSD<0,1,0b0100,0, "vaddhn.i", int_arm_neon_vaddhn, 1>;
 //   VRADDHN  : Vector Rounding Add and Narrow Returning High Half (D = Q + Q)
 defm VRADDHN  : N3VNInt_HSD<1,1,0b0100,0, "vraddhn.i", int_arm_neon_vraddhn, 1>;
 
-// Vector Add Operations used for single-precision FP
-def : N3VDs<fadd, VADDfd>;
-
 // Vector Multiply Operations.
 
 //   VMUL     : Vector Multiply (integer, polynomial and floating-point)
@@ -1036,9 +1045,6 @@ def  VMULLp   : N3VLInt<0, 1, 0b00, 0b1110, 0, "vmull.p8", v8i16, v8i8,
 //   VQDMULL  : Vector Saturating Doubling Multiply Long (Q = D * D)
 defm VQDMULL  : N3VLInt_HS<0,1,0b1101,0, "vqdmull.s", int_arm_neon_vqdmull, 1>;
 
-// Vector Multiply Operations used for single-precision FP
-def : N3VDs<fmul, VMULfd>;
-
 // Vector Multiply-Accumulate and Multiply-Subtract Operations.
 
 //   VMLA     : Vector Multiply Accumulate (integer and floating-point)
@@ -1059,10 +1065,6 @@ defm VMLSLs   : N3VLInt3_QHS<0,1,0b1010,0, "vmlsl.s", int_arm_neon_vmlsls>;
 defm VMLSLu   : N3VLInt3_QHS<1,1,0b1010,0, "vmlsl.u", int_arm_neon_vmlslu>;
 //   VQDMLSL  : Vector Saturating Doubling Multiply Subtract Long (Q -= D * D)
 defm VQDMLSL  : N3VLInt3_HS<0, 1, 0b1011, 0, "vqdmlsl.s", int_arm_neon_vqdmlsl>;
-
-// Vector Multiply-Accumulate/Subtract used for single-precision FP
-def : N3VDMulOps<fmul, fadd, VMLAfd>;
-def : N3VDMulOps<fmul, fsub, VMLSfd>;
 
 // Vector Subtract Operations.
 
@@ -1086,9 +1088,6 @@ defm VQSUBu   : N3VInt_QHSD<1, 0, 0b0010, 1, "vqsub.u", int_arm_neon_vqsubu, 0>;
 defm VSUBHN   : N3VNInt_HSD<0,1,0b0110,0, "vsubhn.i", int_arm_neon_vsubhn, 0>;
 //   VRSUBHN  : Vector Rounding Subtract and Narrow Returning High Half (D=Q-Q)
 defm VRSUBHN  : N3VNInt_HSD<1,1,0b0110,0, "vrsubhn.i", int_arm_neon_vrsubhn, 0>;
-
-// Vector Sub Operations used for single-precision FP
-def : N3VDs<fsub, VSUBfd>;
 
 // Vector Comparisons.
 
@@ -1453,7 +1452,6 @@ def  VABSfd   : N2VDInt<0b11, 0b11, 0b10, 0b01, 0b01110, 0, "vabs.f32",
                         v2f32, v2f32, int_arm_neon_vabsf>;
 def  VABSfq   : N2VQInt<0b11, 0b11, 0b10, 0b01, 0b01110, 0, "vabs.f32",
                         v4f32, v4f32, int_arm_neon_vabsf>;
-def : N2VDInts<fabs, VABSfd>;
 
 //   VQABS    : Vector Saturating Absolute Value
 defm VQABS    : N2VInt_QHS<0b11, 0b11, 0b00, 0b01110, 0, "vqabs.s",
@@ -1492,7 +1490,6 @@ def  VNEGf32q : N2V<0b11, 0b11, 0b10, 0b01, 0b01111, 1, 0,
                     (outs QPR:$dst), (ins QPR:$src), NoItinerary,
                     "vneg.f32\t$dst, $src", "",
                     [(set QPR:$dst, (v4f32 (fneg QPR:$src)))]>;
-def : N2VDInts<fneg, VNEGf32d>;
 
 def : Pat<(v8i8 (vneg_conv DPR:$src)), (VNEGs8d DPR:$src)>;
 def : Pat<(v4i16 (vneg_conv DPR:$src)), (VNEGs16d DPR:$src)>;
@@ -1905,6 +1902,51 @@ class VREV16Q<bits<2> op19_18, string OpcodeStr, ValueType Ty>
 
 def VREV16d8  : VREV16D<0b00, "vrev16.8", v8i8>;
 def VREV16q8  : VREV16Q<0b00, "vrev16.8", v16i8>;
+
+//===----------------------------------------------------------------------===//
+// NEON instructions for single-precision FP math
+//===----------------------------------------------------------------------===//
+
+// These need separate instructions because they must use DPR_VFP2 register
+// class which have SPR sub-registers.
+
+// Vector Add Operations used for single-precision FP
+let neverHasSideEffects = 1 in
+def VADDfd_sfp : N3VDs<0, 0, 0b00, 0b1101, 0, "vadd.f32", v2f32, v2f32, fadd,1>;
+def : N3VDsPat<fadd, VADDfd_sfp>;
+
+// Vector Multiply Operations used for single-precision FP
+let neverHasSideEffects = 1 in
+def VMULfd_sfp : N3VDs<1, 0, 0b00, 0b1101, 1, "vmul.f32", v2f32, v2f32, fmul,1>;
+def : N3VDsPat<fmul, VMULfd_sfp>;
+
+// Vector Multiply-Accumulate/Subtract used for single-precision FP
+let neverHasSideEffects = 1 in
+def VMLAfd_sfp : N3VDMulOps<0, 0, 0b00, 0b1101, 1, "vmla.f32", v2f32,fmul,fadd>;
+def : N3VDMulOpsPat<fmul, fadd, VMLAfd>;
+
+let neverHasSideEffects = 1 in
+def VMLSfd_sfp : N3VDMulOps<0, 0, 0b10, 0b1101, 1, "vmls.f32", v2f32,fmul,fsub>;
+def : N3VDMulOpsPat<fmul, fsub, VMLSfd>;
+
+// Vector Sub Operations used for single-precision FP
+let neverHasSideEffects = 1 in
+def VSUBfd_sfp : N3VDs<0, 0, 0b10, 0b1101, 0, "vsub.f32", v2f32, v2f32, fsub,0>;
+def : N3VDsPat<fsub, VSUBfd_sfp>;
+
+// Vector Absolute for single-precision FP
+let neverHasSideEffects = 1 in
+def  VABSfd_sfp : N2VDInts<0b11, 0b11, 0b10, 0b01, 0b01110, 0, "vabs.f32",
+                           v2f32, v2f32, int_arm_neon_vabsf>;
+def : N2VDIntsPat<fabs, VABSfd_sfp>;
+
+// Vector Negate for single-precision FP
+
+let neverHasSideEffects = 1 in
+def  VNEGf32d_sfp : N2V<0b11, 0b11, 0b10, 0b01, 0b01111, 0, 0,
+                    (outs DPR_VFP2:$dst), (ins DPR_VFP2:$src), NoItinerary,
+                    "vneg.f32\t$dst, $src", "", []>;
+def : N2VDIntsPat<fneg, VNEGf32d_sfp>;
 
 //===----------------------------------------------------------------------===//
 // Non-Instruction Patterns
