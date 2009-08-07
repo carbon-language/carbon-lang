@@ -30,14 +30,20 @@ static void Scan(IvarUsageMap& M, const Stmt* S) {
   if (!S)
     return;
   
-  if (const ObjCIvarRefExpr* Ex = dyn_cast<ObjCIvarRefExpr>(S)) {
-    const ObjCIvarDecl* D = Ex->getDecl();
+  if (const ObjCIvarRefExpr *Ex = dyn_cast<ObjCIvarRefExpr>(S)) {
+    const ObjCIvarDecl *D = Ex->getDecl();
     IvarUsageMap::iterator I = M.find(D);
     if (I != M.end())
       I->second = Used;
     return;
   }
   
+  // Blocks can reference an instance variable of a class.
+  if (const BlockExpr *BE = dyn_cast<BlockExpr>(S)) {
+    Scan(M, BE->getBody());
+    return;
+  }
+
   for (Stmt::const_child_iterator I=S->child_begin(),E=S->child_end(); I!=E;++I)
     Scan(M, *I);
 }
