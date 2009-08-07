@@ -1,7 +1,7 @@
 ; RUN: llvm-as < %s | llc -march=arm -mattr=+neon > %t
 ; RUN: grep vdup.8 %t | count 4
 ; RUN: grep vdup.16 %t | count 4
-; RUN: grep vdup.32 %t | count 8
+; RUN: grep vdup.32 %t | count 10
 
 define <8 x i8> @v_dup8(i8 %A) nounwind {
 	%tmp1 = insertelement <8 x i8> zeroinitializer, i8 %A, i32 0
@@ -131,4 +131,18 @@ define <4 x float> @v_shuffledupQfloat(float %A) nounwind {
 	%tmp1 = insertelement <4 x float> undef, float %A, i32 0
 	%tmp2 = shufflevector <4 x float> %tmp1, <4 x float> undef, <4 x i32> zeroinitializer
 	ret <4 x float> %tmp2
+}
+
+define <2 x float> @v_shuffledupfloat2(float* %A) nounwind {
+	%tmp0 = load float* %A
+        %tmp1 = insertelement <2 x float> undef, float %tmp0, i32 0
+        %tmp2 = shufflevector <2 x float> %tmp1, <2 x float> undef, <2 x i32> zeroinitializer
+        ret <2 x float> %tmp2
+}
+
+define <4 x float> @v_shuffledupQfloat2(float* %A) nounwind {
+        %tmp0 = load float* %A
+        %tmp1 = insertelement <4 x float> undef, float %tmp0, i32 0
+        %tmp2 = shufflevector <4 x float> %tmp1, <4 x float> undef, <4 x i32> zeroinitializer
+        ret <4 x float> %tmp2
 }

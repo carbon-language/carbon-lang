@@ -345,6 +345,11 @@ void ARMAsmPrinter::printOperand(const MachineInstr *MI, int OpNum,
         O << '{'
           << TRI->getAsmName(DRegLo) << ',' << TRI->getAsmName(DRegHi)
           << '}';
+      } else if (Modifier && strcmp(Modifier, "lane") == 0) {
+        unsigned RegNum = ARMRegisterInfo::getRegisterNumbering(Reg);
+        unsigned DReg = TRI->getMatchingSuperReg(Reg, RegNum & 1 ? 0 : 1,
+                                                 &ARM::DPRRegClass);
+        O << TRI->getAsmName(DReg) << '[' << (RegNum & 1) << ']';
       } else {
         O << TRI->getAsmName(Reg);
       }
