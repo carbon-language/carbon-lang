@@ -74,7 +74,7 @@ for.body:
 ; CHECK: 0,2: dep
 ; CHECK: 1,2: ind
   %i.next = add i64 %i, 1
-  %exitcond = icmp eq i64 %i.next, 256
+  %exitcond = icmp eq i64 %i.next, 10
   br i1 %exitcond, label %for.end, label %for.body
 
 for.end:
