@@ -86,8 +86,7 @@ public:
   }
   
   // Operators.
-  void VisitCStyleCastExpr(CStyleCastExpr *E);
-  void VisitImplicitCastExpr(ImplicitCastExpr *E);
+  void VisitCastExpr(CastExpr *E);
   void VisitCallExpr(const CallExpr *E);
   void VisitStmtExpr(const StmtExpr *E);
   void VisitBinaryOperator(const BinaryOperator *BO);
@@ -166,9 +165,9 @@ void AggExprEmitter::EmitFinalDestCopy(const Expr *E, LValue Src, bool Ignore) {
 //                            Visitor Methods
 //===----------------------------------------------------------------------===//
 
-void AggExprEmitter::VisitCStyleCastExpr(CStyleCastExpr *E) {
-  // GCC union extension
-  if (E->getSubExpr()->getType()->isScalarType()) {
+void AggExprEmitter::VisitCastExpr(CastExpr *E) {
+  if (E->getCastKind() == CastExpr::CK_ToUnion) {
+    // GCC union extension
     QualType PtrTy =
         CGF.getContext().getPointerType(E->getSubExpr()->getType());
     llvm::Value *CastPtr = Builder.CreateBitCast(DestPtr,
@@ -178,10 +177,10 @@ void AggExprEmitter::VisitCStyleCastExpr(CStyleCastExpr *E) {
     return;
   }
 
-  Visit(E->getSubExpr());
-}
-
-void AggExprEmitter::VisitImplicitCastExpr(ImplicitCastExpr *E) {
+  // FIXME: Remove the CK_Unknown check here.
+  assert((E->getCastKind() == CastExpr::CK_NoOp || 
+          E->getCastKind() == CastExpr::CK_Unknown) && 
+         "Only no-op casts allowed!");
   assert(CGF.getContext().hasSameUnqualifiedType(E->getSubExpr()->getType(),
                                                  E->getType()) &&
          "Implicit cast types must be compatible");

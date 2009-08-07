@@ -1178,7 +1178,10 @@ public:
     CK_DerivedToBase,
     
     /// CK_Dynamic - Dynamic cast.
-    CK_Dynamic
+    CK_Dynamic,
+    
+    /// CK_ToUnion - Cast to union (GCC extension).
+    CK_ToUnion
   };
   
 private:

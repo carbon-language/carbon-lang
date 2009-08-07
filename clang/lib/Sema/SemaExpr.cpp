@@ -2990,6 +2990,7 @@ bool Sema::CheckCastTypes(SourceRange TyR, QualType castType, Expr *&castExpr,
       // FIXME: Check that the cast destination type is complete.
       Diag(TyR.getBegin(), diag::ext_typecheck_cast_nonscalar)
         << castType << castExpr->getSourceRange();
+      Kind = CastExpr::CK_NoOp;
     } else if (castType->isUnionType()) {
       // GCC cast to union extension
       RecordDecl *RD = castType->getAs<RecordType>()->getDecl();
@@ -3006,6 +3007,7 @@ bool Sema::CheckCastTypes(SourceRange TyR, QualType castType, Expr *&castExpr,
       if (Field == FieldEnd)
         return Diag(TyR.getBegin(), diag::err_typecheck_cast_to_union_no_type)
           << castExpr->getType() << castExpr->getSourceRange();
+      Kind = CastExpr::CK_ToUnion;
     } else {
       // Reject any other conversions to non-scalar types.
       return Diag(TyR.getBegin(), diag::err_typecheck_cond_expect_scalar)
