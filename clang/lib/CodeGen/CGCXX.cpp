@@ -506,9 +506,7 @@ llvm::Constant *CodeGenFunction::GenerateRtti(const CXXRecordDecl *RD) {
   llvm::SmallString<256> OutName;
   llvm::raw_svector_ostream Out(OutName);
   QualType ClassTy;
-  // FIXME: What is the design on getTagDeclType when it requires casting
-  // away const?  mutable?
-  ClassTy = getContext().getTagDeclType(const_cast<CXXRecordDecl*>(RD));
+  ClassTy = getContext().getTagDeclType(RD);
   mangleCXXRtti(ClassTy, getContext(), Out);
   const char *Name = OutName.c_str();
   llvm::GlobalVariable::LinkageTypes linktype;
@@ -599,9 +597,7 @@ llvm::Value *CodeGenFunction::GenerateVtable(const CXXRecordDecl *RD) {
   llvm::SmallString<256> OutName;
   llvm::raw_svector_ostream Out(OutName);
   QualType ClassTy;
-  // FIXME: What is the design on getTagDeclType when it requires casting
-  // away const?  mutable?
-  ClassTy = getContext().getTagDeclType(const_cast<CXXRecordDecl*>(RD));
+  ClassTy = getContext().getTagDeclType(RD);
   mangleCXXVtable(ClassTy, getContext(), Out);
   const char *Name = OutName.c_str();
   llvm::GlobalVariable::LinkageTypes linktype;

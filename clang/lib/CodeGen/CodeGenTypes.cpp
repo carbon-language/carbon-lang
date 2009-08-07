@@ -121,8 +121,7 @@ static const TagType *VerifyFuncTypeComplete(const Type* T) {
 /// UpdateCompletedType - When we find the full definition for a TagDecl,
 /// replace the 'opaque' type we previously made for it if applicable.
 void CodeGenTypes::UpdateCompletedType(const TagDecl *TD) {
-  const Type *Key = 
-    Context.getTagDeclType(const_cast<TagDecl*>(TD)).getTypePtr();
+  const Type *Key = Context.getTagDeclType(TD).getTypePtr();
   llvm::DenseMap<const Type*, llvm::PATypeHolder>::iterator TDTI = 
     TagDeclTypes.find(Key);
   if (TDTI == TagDeclTypes.end()) return;
@@ -395,7 +394,7 @@ const llvm::Type *CodeGenTypes::ConvertTagDeclType(const TagDecl *TD) {
   // TagDecl's are not necessarily unique, instead use the (clang)
   // type connected to the decl.
   const Type *Key = 
-    Context.getTagDeclType(const_cast<TagDecl*>(TD)).getTypePtr();
+    Context.getTagDeclType(TD).getTypePtr();
   llvm::DenseMap<const Type*, llvm::PATypeHolder>::iterator TDTI = 
     TagDeclTypes.find(Key);
   
@@ -478,7 +477,7 @@ void CodeGenTypes::addBitFieldInfo(const FieldDecl *FD, unsigned FieldNo,
 const CGRecordLayout *
 CodeGenTypes::getCGRecordLayout(const TagDecl *TD) const {
   const Type *Key = 
-    Context.getTagDeclType(const_cast<TagDecl*>(TD)).getTypePtr();
+    Context.getTagDeclType(TD).getTypePtr();
   llvm::DenseMap<const Type*, CGRecordLayout *>::iterator I
     = CGRecordLayouts.find(Key);
   assert (I != CGRecordLayouts.end() 

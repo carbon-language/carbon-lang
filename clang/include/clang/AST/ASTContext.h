@@ -444,7 +444,7 @@ public:
   
   /// getTagDeclType - Return the unique reference to the type for the
   /// specified TagDecl (struct/union/class/enum) decl.
-  QualType getTagDeclType(TagDecl *Decl);
+  QualType getTagDeclType(const TagDecl *Decl);
   
   /// getSizeType - Return the unique type for "size_t" (C99 7.17), defined
   /// in <stddef.h>. The sizeof operator requires this (C99 6.5.3.4p4).

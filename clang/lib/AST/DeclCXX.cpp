@@ -379,9 +379,7 @@ QualType CXXMethodDecl::getThisType(ASTContext &C) const {
   if (ClassTemplateDecl *TD = getParent()->getDescribedClassTemplate())
     ClassTy = TD->getInjectedClassNameType(C);
   else
-    // FIXME: What is the design on getTagDeclType when it requires casting
-    // away const?  mutable?
-    ClassTy = C.getTagDeclType(const_cast<CXXRecordDecl*>(getParent()));
+    ClassTy = C.getTagDeclType(getParent());
   ClassTy = ClassTy.getWithAdditionalQualifiers(getTypeQualifiers());
   return C.getPointerType(ClassTy);
 }
@@ -466,10 +464,9 @@ CXXConstructorDecl::isCopyConstructor(ASTContext &Context,
     return false;
 
   // Is it a reference to our class type?
-  QualType PointeeType 
+  QualType PointeeType
     = Context.getCanonicalType(ParamRefType->getPointeeType());
-  QualType ClassTy 
-    = Context.getTagDeclType(const_cast<CXXRecordDecl*>(getParent()));
+  QualType ClassTy = Context.getTagDeclType(getParent());
   if (PointeeType.getUnqualifiedType() != ClassTy)
     return false;
 

@@ -2029,9 +2029,11 @@ QualType ASTContext::getDecltypeType(Expr *e) {
 
 /// getTagDeclType - Return the unique reference to the type for the
 /// specified TagDecl (struct/union/class/enum) decl.
-QualType ASTContext::getTagDeclType(TagDecl *Decl) {
+QualType ASTContext::getTagDeclType(const TagDecl *Decl) {
   assert (Decl);
-  return getTypeDeclType(Decl);
+  // FIXME: What is the design on getTagDeclType when it requires casting
+  // away const?  mutable?
+  return getTypeDeclType(const_cast<TagDecl*>(Decl));
 }
 
 /// getSizeType - Return the unique type for "size_t" (C99 7.17), the result 
