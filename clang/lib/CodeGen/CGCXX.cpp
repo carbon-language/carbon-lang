@@ -652,6 +652,53 @@ llvm::Value *CodeGenFunction::GenerateVtable(const CXXRecordDecl *RD) {
   return vtable;
 }
 
+/// EmitCopyCtorBody - This routine implicitly defines body of a copy
+/// constructor, in accordance with section 12.8 (p7 and p8) of C++03
+/// The implicitly-defined copy constructor for class X performs a memberwise 
+/// copy of its subobjects. The order of copying is the same as the order 
+/// of initialization of bases and members in a user-defined constructor
+/// Each subobject is copied in the manner appropriate to its type:
+///  if the subobject is of class type, the copy constructor for the class is 
+///  used;
+///  if the subobject is an array, each element is copied, in the manner 
+///  appropriate to the element type;
+///  if the subobject is of scalar type, the built-in assignment operator is 
+///  used.
+/// Virtual base class subobjects shall be copied only once by the 
+/// implicitly-defined copy constructor 
+
+void CodeGenFunction::EmitCopyCtorBody(const CXXConstructorDecl *CD) {
+  const CXXRecordDecl *ClassDecl = cast<CXXRecordDecl>(CD->getDeclContext());
+  assert(!ClassDecl->hasUserDeclaredCopyConstructor() &&
+         "EmitCopyCtorBody - copy constructor has definition already");
+ 
+  for (CXXRecordDecl::base_class_const_iterator Base = ClassDecl->bases_begin();
+       Base != ClassDecl->bases_end(); ++Base) {
+    // FIXME. copy constrution of virtual base NYI
+    if (Base->isVirtual())
+      continue;
+#if 0
+    unsigned TypeQuals;
+    CXXRecordDecl *BaseClassDecl
+      = cast<CXXRecordDecl>(Base->getType()->getAs<RecordType>()->getDecl());
+    if (CXXConstructorDecl *BaseCopyCtor = 
+          BaseClassDecl->getCopyConstructor(getContext(), TypeQuals)) {
+
+      llvm::Value *LoadOfThis = LoadCXXThis();
+      llvm::Value *V = AddressCXXOfBaseClass(LoadOfThis, ClassDecl, 
+                                             BaseClassDecl);
+      EmitCXXConstructorCall(BaseCopyCtor,
+                             Ctor_Complete, V,
+                             Member->const_arg_begin(), 
+                             Member->const_arg_end());
+
+    }
+#endif
+  }
+  
+}  
+
+
 /// EmitCtorPrologue - This routine generates necessary code to initialize
 /// base classes and non-static data members belonging to this constructor.
 void CodeGenFunction::EmitCtorPrologue(const CXXConstructorDecl *CD) {
