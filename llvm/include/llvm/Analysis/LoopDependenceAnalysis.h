@@ -20,6 +20,7 @@
 #ifndef LLVM_ANALYSIS_LOOP_DEPENDENCE_ANALYSIS_H
 #define LLVM_ANALYSIS_LOOP_DEPENDENCE_ANALYSIS_H
 
+#include "llvm/ADT/DenseSet.h"
 #include "llvm/ADT/FoldingSet.h"
 #include "llvm/ADT/SmallVector.h"
 #include "llvm/Analysis/LoopPass.h"
@@ -67,6 +68,10 @@ class LoopDependenceAnalysis : public LoopPass {
   /// created. The third argument is set to the pair found or created.
   bool findOrInsertDependencePair(Value*, Value*, DependencePair*&);
 
+  /// getLoops - Collect all loops of the loop-nest L a given SCEV is variant
+  /// in.
+  void getLoops(const SCEV*, DenseSet<const Loop*>*) const;
+
   /// isLoopInvariant - True if a given SCEV is invariant in all loops of the
   /// loop-nest starting at the innermost loop L.
   bool isLoopInvariant(const SCEV*) const;
@@ -78,7 +83,10 @@ class LoopDependenceAnalysis : public LoopPass {
 
   /// TODO: doc
   bool isZIVPair(const SCEV*, const SCEV*) const;
+  bool isSIVPair(const SCEV*, const SCEV*) const;
   DependenceResult analyseZIV(const SCEV*, const SCEV*, Subscript*) const;
+  DependenceResult analyseSIV(const SCEV*, const SCEV*, Subscript*) const;
+  DependenceResult analyseMIV(const SCEV*, const SCEV*, Subscript*) const;
   DependenceResult analyseSubscript(const SCEV*, const SCEV*, Subscript*) const;
   DependenceResult analysePair(DependencePair*) const;
 

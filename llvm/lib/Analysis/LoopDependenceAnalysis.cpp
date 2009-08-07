@@ -20,6 +20,7 @@
 //===----------------------------------------------------------------------===//
 
 #define DEBUG_TYPE "lda"
+#include "llvm/ADT/DenseSet.h"
 #include "llvm/ADT/Statistic.h"
 #include "llvm/Analysis/AliasAnalysis.h"
 #include "llvm/Analysis/LoopDependenceAnalysis.h"
@@ -124,11 +125,18 @@ bool LoopDependenceAnalysis::findOrInsertDependencePair(Value *A,
   return false;
 }
 
-bool LoopDependenceAnalysis::isLoopInvariant(const SCEV *S) const {
+void LoopDependenceAnalysis::getLoops(const SCEV *S,
+                                      DenseSet<const Loop*>* Loops) const {
+  // Refactor this into an SCEVVisitor, if efficiency becomes a concern.
   for (const Loop *L = this->L; L != 0; L = L->getParentLoop())
     if (!S->isLoopInvariant(L))
-      return false;
-  return true;
+      Loops->insert(L);
+}
+
+bool LoopDependenceAnalysis::isLoopInvariant(const SCEV *S) const {
+  DenseSet<const Loop*> loops;
+  getLoops(S, &loops);
+  return loops.empty();
 }
 
 bool LoopDependenceAnalysis::isAffine(const SCEV *S) const {
@@ -140,12 +148,33 @@ bool LoopDependenceAnalysis::isZIVPair(const SCEV *A, const SCEV *B) const {
   return isLoopInvariant(A) && isLoopInvariant(B);
 }
 
+bool LoopDependenceAnalysis::isSIVPair(const SCEV *A, const SCEV *B) const {
+  DenseSet<const Loop*> loops;
+  getLoops(A, &loops);
+  getLoops(B, &loops);
+  return loops.size() == 1;
+}
+
 LoopDependenceAnalysis::DependenceResult
 LoopDependenceAnalysis::analyseZIV(const SCEV *A,
                                    const SCEV *B,
                                    Subscript *S) const {
   assert(isZIVPair(A, B) && "Attempted to ZIV-test non-ZIV SCEVs!");
   return A == B ? Dependent : Independent;
+}
+
+LoopDependenceAnalysis::DependenceResult
+LoopDependenceAnalysis::analyseSIV(const SCEV *A,
+                                   const SCEV *B,
+                                   Subscript *S) const {
+  return Unknown; // TODO: Implement.
+}
+
+LoopDependenceAnalysis::DependenceResult
+LoopDependenceAnalysis::analyseMIV(const SCEV *A,
+                                   const SCEV *B,
+                                   Subscript *S) const {
+  return Unknown; // TODO: Implement.
 }
 
 LoopDependenceAnalysis::DependenceResult
@@ -167,10 +196,10 @@ LoopDependenceAnalysis::analyseSubscript(const SCEV *A,
   if (isZIVPair(A, B))
     return analyseZIV(A, B, S);
 
-  // TODO: Implement SIV/MIV testers.
+  if (isSIVPair(A, B))
+    return analyseSIV(A, B, S);
 
-  DEBUG(errs() << "  -> [?] cannot analyse subscript\n");
-  return Unknown;
+  return analyseMIV(A, B, S);
 }
 
 LoopDependenceAnalysis::DependenceResult
