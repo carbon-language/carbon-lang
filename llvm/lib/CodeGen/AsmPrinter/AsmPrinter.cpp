@@ -1687,27 +1687,25 @@ GCMetadataPrinter *AsmPrinter::GetOrCreateGCPrinter(GCStrategy *S) {
 }
 
 /// EmitComments - Pretty-print comments for instructions
-void AsmPrinter::EmitComments(const MachineInstr &MI) const
-{
-  if (VerboseAsm) {
-    if (!MI.getDebugLoc().isUnknown()) {
-      DebugLocTuple DLT = MF->getDebugLocTuple(MI.getDebugLoc());
+void AsmPrinter::EmitComments(const MachineInstr &MI) const {
+  if (!VerboseAsm ||
+      MI.getDebugLoc().isUnknown())
+    return;
+  
+  DebugLocTuple DLT = MF->getDebugLocTuple(MI.getDebugLoc());
 
-      // Print source line info
-      O.PadToColumn(TAI->getCommentColumn(), 1);
-      O << TAI->getCommentString() << " SrcLine ";
-      if (DLT.CompileUnit->hasInitializer()) {
-        Constant *Name = DLT.CompileUnit->getInitializer();
-        if (ConstantArray *NameString = dyn_cast<ConstantArray>(Name))
-          if (NameString->isString()) {
-            O << NameString->getAsString() << " ";
-          }
-      }
-      O << DLT.Line;
-      if (DLT.Col != 0) 
-        O << ":" << DLT.Col;
-    }
+  // Print source line info
+  O.PadToColumn(TAI->getCommentColumn(), 1);
+  O << TAI->getCommentString() << " SrcLine ";
+  if (DLT.CompileUnit->hasInitializer()) {
+    Constant *Name = DLT.CompileUnit->getInitializer();
+    if (ConstantArray *NameString = dyn_cast<ConstantArray>(Name))
+      if (NameString->isString())
+        O << NameString->getAsString() << " ";
   }
+  O << DLT.Line;
+  if (DLT.Col != 0) 
+    O << ":" << DLT.Col;
 }
 
 /// EmitComments - Pretty-print comments for instructions
