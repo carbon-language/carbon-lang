@@ -1771,14 +1771,14 @@ def VDUPLNfq  : VDUPLNQ<0b01, 0b00, "vdup.32", v4f32, v2f32>;
 
 def VDUPfdf   : N2V<0b11, 0b11, 0b01, 0b00, 0b11000, 0, 0,
                     (outs DPR:$dst), (ins SPR:$src),
-                    "vdup.32\t$dst, ${src:lane}", "",
+                    NoItinerary, "vdup.32\t$dst, ${src:lane}", "",
                     [(set DPR:$dst, (v2f32 (splat_lo
                                             (scalar_to_vector SPR:$src),
                                             undef)))]>;
 
 def VDUPfqf   : N2V<0b11, 0b11, 0b01, 0b00, 0b11000, 1, 0,
                     (outs QPR:$dst), (ins SPR:$src),
-                    "vdup.32\t$dst, ${src:lane}", "",
+                    NoItinerary, "vdup.32\t$dst, ${src:lane}", "",
                     [(set QPR:$dst, (v4f32 (splat_lo
                                             (scalar_to_vector SPR:$src),
                                             undef)))]>;
