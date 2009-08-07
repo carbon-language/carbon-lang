@@ -209,7 +209,8 @@ void Sema::DefaultFunctionArrayConversion(Expr *&E) {
     //
     if (getLangOptions().C99 || getLangOptions().CPlusPlus ||
         E->isLvalue(Context) == Expr::LV_Valid)
-      ImpCastExprToType(E, Context.getArrayDecayedType(Ty));
+      ImpCastExprToType(E, Context.getArrayDecayedType(Ty),
+                        CastExpr::CK_ArrayToPointerDecay);
   }
 }
 

@@ -1181,7 +1181,10 @@ public:
     CK_Dynamic,
     
     /// CK_ToUnion - Cast to union (GCC extension).
-    CK_ToUnion
+    CK_ToUnion,
+    
+    /// CK_ArrayToPointerDecay - Array to pointer decay.
+    CK_ArrayToPointerDecay
   };
   
 private:

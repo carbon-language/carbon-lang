@@ -595,6 +595,7 @@ Value *ScalarExprEmitter::VisitImplicitCastExpr(const ImplicitCastExpr *E) {
   // If this is due to array->pointer conversion, emit the array expression as
   // an l-value.
   if (Op->getType()->isArrayType()) {
+    assert(E->getCastKind() == CastExpr::CK_ArrayToPointerDecay);
     Value *V = EmitLValue(Op).getAddress();  // Bitfields can't be arrays.
 
     // Note that VLA pointers are always decayed, so we don't need to do
