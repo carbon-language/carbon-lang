@@ -23,11 +23,8 @@
 #include <iostream>
 using namespace llvm;
 
-namespace {
-  cl::opt<bool>
-  GenDebug("gen-debug", cl::desc("Generate debug code"),
-              cl::init(false));
-}
+static cl::opt<bool>
+GenDebug("gen-debug", cl::desc("Generate debug code"), cl::init(false));
 
 //===----------------------------------------------------------------------===//
 // DAGISelEmitter Helper methods
