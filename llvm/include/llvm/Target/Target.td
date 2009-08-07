@@ -428,8 +428,8 @@ def COPY_TO_REGCLASS : Instruction {
 // syntax on X86 for example).
 //
 class AsmParser {
-  // AsmWriterClassName - This specifies the suffix to use for the asmwriter
-  // class.  Generated AsmWriter classes are always prefixed with the target
+  // AsmParserClassName - This specifies the suffix to use for the asmparser
+  // class.  Generated AsmParser classes are always prefixed with the target
   // name.
   string AsmParserClassName  = "AsmParser";
  
