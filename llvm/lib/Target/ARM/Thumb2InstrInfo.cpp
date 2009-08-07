@@ -65,12 +65,7 @@ Thumb2InstrInfo::copyRegToReg(MachineBasicBlock &MBB,
 
   if (DestRC == ARM::GPRRegisterClass &&
       SrcRC == ARM::GPRRegisterClass) {
-    // FIXME: Just use tMOVgpr2gpr since it's shorter?
-    if (SrcReg == ARM::SP || DestReg == ARM::SP)
-      BuildMI(MBB, I, DL, get(ARM::tMOVgpr2gpr), DestReg).addReg(SrcReg);
-    else
-      AddDefaultCC(AddDefaultPred(BuildMI(MBB, I, DL, get(ARM::t2MOVr),
-                                          DestReg).addReg(SrcReg)));
+    BuildMI(MBB, I, DL, get(ARM::tMOVgpr2gpr), DestReg).addReg(SrcReg);
     return true;
   } else if (DestRC == ARM::GPRRegisterClass &&
              SrcRC == ARM::tGPRRegisterClass) {
