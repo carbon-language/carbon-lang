@@ -390,6 +390,16 @@ public:
   /// classes of a class.
   typedef const CXXBaseSpecifier* base_class_const_iterator;
 
+  /// reverse_base_class_iterator = Iterator that traverses the base classes
+  /// of a class in reverse order.
+  typedef std::reverse_iterator<base_class_iterator>
+    reverse_base_class_iterator;
+
+  /// reverse_base_class_iterator = Iterator that traverses the base classes
+  /// of a class in reverse order.
+ typedef std::reverse_iterator<base_class_const_iterator>
+   reverse_base_class_const_iterator;
+
   static CXXRecordDecl *Create(ASTContext &C, TagKind TK, DeclContext *DC,
                                SourceLocation L, IdentifierInfo *Id,
                                SourceLocation TKL = SourceLocation(),
@@ -423,6 +433,18 @@ public:
   base_class_const_iterator vbases_begin() const { return VBases; }
   base_class_iterator       vbases_end()         { return VBases + NumVBases; }
   base_class_const_iterator vbases_end()   const { return VBases + NumVBases; }
+  reverse_base_class_iterator vbases_rbegin() {
+    return reverse_base_class_iterator(vbases_end());
+  }
+  reverse_base_class_const_iterator vbases_rbegin() const {
+    return reverse_base_class_const_iterator(vbases_end());
+  }
+  reverse_base_class_iterator vbases_rend() {
+    return reverse_base_class_iterator(vbases_begin());
+  }
+  reverse_base_class_const_iterator vbases_rend() const {
+    return reverse_base_class_const_iterator(vbases_begin());
+ }
 
   /// Iterator access to method members.  The method iterator visits
   /// all method members of the class, including non-instance methods,
