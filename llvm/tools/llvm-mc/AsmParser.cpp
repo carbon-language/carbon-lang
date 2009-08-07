@@ -45,16 +45,60 @@ bool AsmParser::Run() {
   
   bool HadError = false;
   
+  AsmCond StartingCondState = TheCondState;
+
   // While we have input, parse each statement.
   while (Lexer.isNot(AsmToken::Eof)) {
+    // Handle conditional assembly here before calling ParseStatement()
+    if (Lexer.getKind() == AsmToken::Identifier) {
+      // If we have an identifier, handle it as the key symbol.
+      AsmToken ID = Lexer.getTok();
+      SMLoc IDLoc = ID.getLoc();
+      StringRef IDVal = ID.getString();
+
+      if (IDVal == ".if" ||
+          IDVal == ".elseif" ||
+          IDVal == ".else" ||
+          IDVal == ".endif") {
+        if (!ParseConditionalAssemblyDirectives(IDVal, IDLoc))
+          continue;
+	HadError = true;
+	EatToEndOfStatement();
+	continue;
+      }
+    }
+    if (TheCondState.Ignore) {
+      EatToEndOfStatement();
+      continue;
+    }
+
     if (!ParseStatement()) continue;
   
-    // If we had an error, remember it and recover by skipping to the next line.
+    // We had an error, remember it and recover by skipping to the next line.
     HadError = true;
     EatToEndOfStatement();
   }
+
+  if (TheCondState.TheCond != StartingCondState.TheCond ||
+      TheCondState.Ignore != StartingCondState.Ignore)
+    return TokError("unmatched .ifs or .elses");
   
   return HadError;
+}
+
+/// ParseConditionalAssemblyDirectives - parse the conditional assembly
+/// directives
+bool AsmParser::ParseConditionalAssemblyDirectives(StringRef Directive,
+                                                   SMLoc DirectiveLoc) {
+  if (Directive == ".if")
+    return ParseDirectiveIf(DirectiveLoc);
+  if (Directive == ".elseif")
+    return ParseDirectiveElseIf(DirectiveLoc);
+  if (Directive == ".else")
+    return ParseDirectiveElse(DirectiveLoc);
+  if (Directive == ".endif")
+    return ParseDirectiveEndIf(DirectiveLoc);
+  return true;
 }
 
 /// EatToEndOfStatement - Throw away the rest of the line for testing purposes.
@@ -1261,6 +1305,119 @@ bool AsmParser::ParseDirectiveDarwinDumpOrLoad(SMLoc IDLoc, bool IsDump) {
     Warning(IDLoc, "ignoring directive .dump for now");
   else
     Warning(IDLoc, "ignoring directive .load for now");
+
+  return false;
+}
+
+/// ParseDirectiveIf
+/// ::= .if expression
+bool AsmParser::ParseDirectiveIf(SMLoc DirectiveLoc) {
+  // Consume the identifier that was the .if directive
+  Lexer.Lex();
+
+  TheCondStack.push_back(TheCondState);
+  TheCondState.TheCond = AsmCond::IfCond;
+  if(TheCondState.Ignore) {
+    EatToEndOfStatement();
+  }
+  else {
+    int64_t ExprValue;
+    if (ParseAbsoluteExpression(ExprValue))
+      return true;
+
+    if (Lexer.isNot(AsmToken::EndOfStatement))
+      return TokError("unexpected token in '.if' directive");
+    
+    Lexer.Lex();
+
+    TheCondState.CondMet = ExprValue;
+    TheCondState.Ignore = !TheCondState.CondMet;
+  }
+
+  return false;
+}
+
+/// ParseDirectiveElseIf
+/// ::= .elseif expression
+bool AsmParser::ParseDirectiveElseIf(SMLoc DirectiveLoc) {
+  if (TheCondState.TheCond != AsmCond::IfCond &&
+      TheCondState.TheCond != AsmCond::ElseIfCond)
+      Error(DirectiveLoc, "Encountered a .elseif that doesn't follow a .if or "
+                          " an .elseif");
+  TheCondState.TheCond = AsmCond::ElseIfCond;
+
+  // Consume the identifier that was the .elseif directive
+  Lexer.Lex();
+
+  bool LastIgnoreState = false;
+  if (!TheCondStack.empty())
+      LastIgnoreState = TheCondStack.back().Ignore;
+  if (LastIgnoreState || TheCondState.CondMet) {
+    TheCondState.Ignore = true;
+    EatToEndOfStatement();
+  }
+  else {
+    int64_t ExprValue;
+    if (ParseAbsoluteExpression(ExprValue))
+      return true;
+
+    if (Lexer.isNot(AsmToken::EndOfStatement))
+      return TokError("unexpected token in '.elseif' directive");
+    
+    Lexer.Lex();
+    TheCondState.CondMet = ExprValue;
+    TheCondState.Ignore = !TheCondState.CondMet;
+  }
+
+  return false;
+}
+
+/// ParseDirectiveElse
+/// ::= .else
+bool AsmParser::ParseDirectiveElse(SMLoc DirectiveLoc) {
+  // Consume the identifier that was the .else directive
+  Lexer.Lex();
+
+  if (Lexer.isNot(AsmToken::EndOfStatement))
+    return TokError("unexpected token in '.else' directive");
+  
+  Lexer.Lex();
+
+  if (TheCondState.TheCond != AsmCond::IfCond &&
+      TheCondState.TheCond != AsmCond::ElseIfCond)
+      Error(DirectiveLoc, "Encountered a .else that doesn't follow a .if or an "
+                          ".elseif");
+  TheCondState.TheCond = AsmCond::ElseCond;
+  bool LastIgnoreState = false;
+  if (!TheCondStack.empty())
+    LastIgnoreState = TheCondStack.back().Ignore;
+  if (LastIgnoreState || TheCondState.CondMet)
+    TheCondState.Ignore = true;
+  else
+    TheCondState.Ignore = false;
+
+  return false;
+}
+
+/// ParseDirectiveEndIf
+/// ::= .endif
+bool AsmParser::ParseDirectiveEndIf(SMLoc DirectiveLoc) {
+  // Consume the identifier that was the .endif directive
+  Lexer.Lex();
+
+  if (Lexer.isNot(AsmToken::EndOfStatement))
+    return TokError("unexpected token in '.endif' directive");
+  
+  Lexer.Lex();
+
+  if ((TheCondState.TheCond == AsmCond::NoCond) ||
+      TheCondStack.empty())
+    Error(DirectiveLoc, "Encountered a .endif that doesn't follow a .if or "
+                        ".else");
+  if (!TheCondStack.empty()) {
+    TheCondState = TheCondStack.back();
+    TheCondStack.pop_back();
+  }
 
   return false;
 }

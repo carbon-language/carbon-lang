@@ -14,12 +14,15 @@
 #ifndef ASMPARSER_H
 #define ASMPARSER_H
 
+#include <vector>
 #include "AsmLexer.h"
+#include "AsmCond.h"
 #include "llvm/MC/MCAsmParser.h"
 #include "llvm/MC/MCStreamer.h"
 
 namespace llvm {
 class AsmExpr;
+class AsmCond;
 class MCContext;
 class MCInst;
 class MCStreamer;
@@ -33,7 +36,10 @@ private:
   MCContext &Ctx;
   MCStreamer &Out;
   TargetAsmParser *TargetParser;
-  
+
+  AsmCond TheCondState;
+  std::vector<AsmCond> TheCondStack;
+
 public:
   AsmParser(SourceMgr &_SM, MCContext &_Ctx, MCStreamer &_Out)
     : Lexer(_SM), Ctx(_Ctx), Out(_Out), TargetParser(0) {}
@@ -67,6 +73,8 @@ private:
 
   bool TokError(const char *Msg);
   
+  bool ParseConditionalAssemblyDirectives(StringRef Directive,
+                                          SMLoc DirectiveLoc);
   void EatToEndOfStatement();
   
   bool ParseAssignment(const StringRef &Name, bool IsDotSet);
@@ -118,6 +126,12 @@ private:
 
   bool ParseDirectiveAbort(); // ".abort"
   bool ParseDirectiveInclude(); // ".include"
+
+  bool ParseDirectiveIf(SMLoc DirectiveLoc); // ".if"
+  bool ParseDirectiveElseIf(SMLoc DirectiveLoc); // ".elseif"
+  bool ParseDirectiveElse(SMLoc DirectiveLoc); // ".else"
+  bool ParseDirectiveEndIf(SMLoc DirectiveLoc); // .endif
+
 };
 
 } // end namespace llvm
