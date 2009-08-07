@@ -538,19 +538,14 @@ static void ConstructConversionFunctions(CodeGenTarget &Target,
   }
 }
 
-void AsmMatcherEmitter::run(raw_ostream &OS) {
-  CodeGenTarget Target;
+/// EmitMatchRegisterName - Emit the function to match a string to the target
+/// specific register enum.
+static void EmitMatchRegisterName(CodeGenTarget &Target, Record *AsmParser,
+                                  raw_ostream &OS) {
   const std::vector<CodeGenRegister> &Registers = Target.getRegisters();
-  Record *AsmParser = Target.getAsmParser();
-  std::string ClassName = AsmParser->getValueAsString("AsmParserClassName");
 
-  std::string Namespace = Registers[0].TheDef->getValueAsString("Namespace");
-
-  EmitSourceFileHeader("Assembly Matcher Source Fragment", OS);
-
-  // Emit the function to match a register name to number.
-
-  OS << "bool " << Target.getName() << ClassName
+  OS << "bool " << Target.getName() 
+     << AsmParser->getValueAsString("AsmParserClassName")
      << "::MatchRegisterName(const StringRef &Name, unsigned &RegNo) {\n";
 
   // FIXME: TableGen should have a fast string matcher generator.
@@ -565,7 +560,19 @@ void AsmMatcherEmitter::run(raw_ostream &OS) {
   }
   OS << "  return true;\n";
   OS << "}\n\n";
+}
 
+void AsmMatcherEmitter::run(raw_ostream &OS) {
+  CodeGenTarget Target;
+  Record *AsmParser = Target.getAsmParser();
+  std::string ClassName = AsmParser->getValueAsString("AsmParserClassName");
+
+  EmitSourceFileHeader("Assembly Matcher Source Fragment", OS);
+
+  // Emit the function to match a register name to number.
+  EmitMatchRegisterName(Target, AsmParser, OS);
+
+  // Compute the information on the list of instructions to match.
   std::vector<InstructionInfo*> Infos;
   BuildInstructionInfos(Target, Infos);
 
