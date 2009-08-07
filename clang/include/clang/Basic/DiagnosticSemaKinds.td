@@ -1237,6 +1237,14 @@ def warn_floatingpoint_eq : Warning<
   "comparing floating point with == or != is unsafe">,
   InGroup<DiagGroup<"float-equal">>, DefaultIgnore;
 
+def warn_shift_negative : Warning<
+  "shift count is negative">;
+def warn_shift_gt_typewidth : Warning<
+  "shift count >= width of type">;
+def warn_op_no_effect : Warning<
+  "operation has no effect">,
+  InGroup<DiagGroup<"all">>, DefaultIgnore;
+
 def err_sizeof_nonfragile_interface : Error<
   "invalid application of '%select{alignof|sizeof}1' to interface %0 in "
   "non-fragile ABI">;
