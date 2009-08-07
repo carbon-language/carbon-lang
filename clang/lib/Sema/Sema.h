@@ -735,8 +735,11 @@ public:
     OR_Deleted              ///< Overload resoltuion refers to a deleted function.
   };
 
+  // Members have to be NamespaceDecl* or TranslationUnitDecl*.
+  // TODO: make this is a typesafe union.
+  typedef llvm::SmallPtrSet<DeclContext   *, 16> AssociatedNamespaceSet;
+
   typedef llvm::SmallPtrSet<AnyFunctionDecl, 16> FunctionSet;
-  typedef llvm::SmallPtrSet<NamespaceDecl *, 16> AssociatedNamespaceSet;
   typedef llvm::SmallPtrSet<CXXRecordDecl *, 16> AssociatedClassSet;
 
   void AddOverloadCandidate(FunctionDecl *Function, 
@@ -1214,8 +1217,7 @@ public:
 
   void FindAssociatedClassesAndNamespaces(Expr **Args, unsigned NumArgs,
                                    AssociatedNamespaceSet &AssociatedNamespaces,
-                                   AssociatedClassSet &AssociatedClasses,
-                                          bool &GlobalScope);
+                                   AssociatedClassSet &AssociatedClasses);
 
   bool DiagnoseAmbiguousLookup(LookupResult &Result, DeclarationName Name,
                                SourceLocation NameLoc, 

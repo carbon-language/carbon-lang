@@ -87,7 +87,8 @@ public:
     IDNS_Ordinary = 0x8,
     IDNS_ObjCProtocol = 0x10,
     IDNS_ObjCImplementation = 0x20,
-    IDNS_ObjCCategoryImpl = 0x40
+    IDNS_ObjCCategoryImpl = 0x40,
+    IDNS_Friend = 0x80
   };
   
   /// ObjCDeclQualifier - Qualifier used on types in method declarations
