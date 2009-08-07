@@ -108,6 +108,7 @@ namespace {
 
     void ProcessCopy(MachineInstr *MI, MachineBasicBlock *MBB,
                      SmallPtrSet<MachineInstr*, 8> &Processed);
+
   public:
     static char ID; // Pass identification, replacement for typeid
     TwoAddressInstructionPass() : MachineFunctionPass(&ID) {}
@@ -782,7 +783,7 @@ bool TwoAddressInstructionPass::runOnMachineFunction(MachineFunction &MF) {
 
         if (FirstTied) {
           ++NumTwoAddressInstrs;
-          DOUT << '\t'; DEBUG(mi->print(*cerr.stream(), &TM));
+          DOUT << '\t' << *mi;
         }
 
         FirstTied = false;
@@ -803,7 +804,7 @@ bool TwoAddressInstructionPass::runOnMachineFunction(MachineFunction &MF) {
           unsigned regASubIdx = mi->getOperand(ti).getSubReg();
 
           assert(TargetRegisterInfo::isVirtualRegister(regB) &&
-                 "cannot update physical register live information");
+                 "cannot make instruction into two-address form");
 
 #ifndef NDEBUG
           // First, verify that we don't have a use of a in the instruction (a =
@@ -976,7 +977,7 @@ bool TwoAddressInstructionPass::runOnMachineFunction(MachineFunction &MF) {
               LV->addVirtualRegisterDead(regB, prevMI);
           }
 
-          DOUT << "\t\tprepend:\t"; DEBUG(prevMI->print(*cerr.stream(), &TM));
+          DOUT << "\t\tprepend:\t" << *prevMI;
           
           // Replace all occurences of regB with regA.
           for (unsigned i = 0, e = mi->getNumOperands(); i != e; ++i) {
@@ -990,7 +991,7 @@ bool TwoAddressInstructionPass::runOnMachineFunction(MachineFunction &MF) {
         mi->getOperand(ti).setReg(mi->getOperand(si).getReg());
         MadeChange = true;
 
-        DOUT << "\t\trewrite to:\t"; DEBUG(mi->print(*cerr.stream(), &TM));
+        DOUT << "\t\trewrite to:\t" << *mi;
       }
 
       mi = nmi;
