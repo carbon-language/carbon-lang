@@ -107,23 +107,37 @@ namespace {
     }
 
     void dump() {
-      cerr << "X86ISelAddressMode " << this << "\n";
+      cerr << "X86ISelAddressMode " << this << '\n';
       cerr << "Base.Reg ";
-              if (Base.Reg.getNode() != 0) Base.Reg.getNode()->dump(); 
-              else cerr << "nul";
-      cerr << " Base.FrameIndex " << Base.FrameIndex << "\n";
-      cerr << " Scale" << Scale << "\n";
+      if (Base.Reg.getNode() != 0)
+        Base.Reg.getNode()->dump(); 
+      else
+        cerr << "nul";
+      cerr << " Base.FrameIndex " << Base.FrameIndex << '\n';
+      cerr << " Scale" << Scale << '\n';
       cerr << "IndexReg ";
-              if (IndexReg.getNode() != 0) IndexReg.getNode()->dump();
-              else cerr << "nul"; 
-      cerr << " Disp " << Disp << "\n";
-      cerr << "GV "; if (GV) GV->dump(); 
-                     else cerr << "nul";
-      cerr << " CP "; if (CP) CP->dump(); 
-                     else cerr << "nul";
-      cerr << "\n";
-      cerr << "ES "; if (ES) cerr << ES; else cerr << "nul";
-      cerr  << " JT" << JT << " Align" << Align << "\n";
+      if (IndexReg.getNode() != 0)
+        IndexReg.getNode()->dump();
+      else
+        cerr << "nul"; 
+      cerr << " Disp " << Disp << '\n';
+      cerr << "GV ";
+      if (GV)
+        GV->dump();
+      else
+        cerr << "nul";
+      cerr << " CP ";
+      if (CP)
+        CP->dump();
+      else
+        cerr << "nul";
+      cerr << '\n';
+      cerr << "ES ";
+      if (ES)
+        cerr << ES;
+      else
+        cerr << "nul";
+      cerr << " JT" << JT << " Align" << Align << '\n';
     }
   };
 }
@@ -806,7 +820,10 @@ bool X86DAGToDAGISel::MatchAddressRecursively(SDValue N, X86ISelAddressMode &AM,
                                               unsigned Depth) {
   bool is64Bit = Subtarget->is64Bit();
   DebugLoc dl = N.getDebugLoc();
-  DEBUG(errs() << "MatchAddress: "); DEBUG(AM.dump());
+  DEBUG({
+      errs() << "MatchAddress: ";
+      AM.dump();
+    });
   // Limit recursion.
   if (Depth > 5)
     return MatchAddressBase(N, AM);
@@ -1593,17 +1610,21 @@ SDNode *X86DAGToDAGISel::Select(SDValue N) {
   DebugLoc dl = Node->getDebugLoc();
   
 #ifndef NDEBUG
-  DEBUG(errs() << std::string(Indent, ' ') << "Selecting: ");
-  DEBUG(Node->dump(CurDAG));
-  DEBUG(errs() << "\n");
+  DEBUG({
+      errs() << std::string(Indent, ' ') << "Selecting: ";
+      Node->dump(CurDAG);
+      errs() << '\n';
+    });
   Indent += 2;
 #endif
 
   if (Node->isMachineOpcode()) {
 #ifndef NDEBUG
-    DEBUG(errs() << std::string(Indent-2, ' ') << "== ");
-    DEBUG(Node->dump(CurDAG));
-    DEBUG(errs() << "\n");
+    DEBUG({
+        errs() << std::string(Indent-2, ' ') << "== ";
+        Node->dump(CurDAG);
+        errs() << '\n';
+      });
     Indent -= 2;
 #endif
     return NULL;   // Already selected.
@@ -1642,7 +1663,7 @@ SDNode *X86DAGToDAGISel::Select(SDValue N) {
     SDValue N1 = Node->getOperand(1);
 
     bool isSigned = Opcode == ISD::SMUL_LOHI;
-    if (!isSigned)
+    if (!isSigned) {
       switch (NVT.getSimpleVT()) {
       default: llvm_unreachable("Unsupported VT!");
       case MVT::i8:  Opc = X86::MUL8r;  MOpc = X86::MUL8m;  break;
@@ -1650,7 +1671,7 @@ SDNode *X86DAGToDAGISel::Select(SDValue N) {
       case MVT::i32: Opc = X86::MUL32r; MOpc = X86::MUL32m; break;
       case MVT::i64: Opc = X86::MUL64r; MOpc = X86::MUL64m; break;
       }
-    else
+    } else {
       switch (NVT.getSimpleVT()) {
       default: llvm_unreachable("Unsupported VT!");
       case MVT::i8:  Opc = X86::IMUL8r;  MOpc = X86::IMUL8m;  break;
@@ -1658,6 +1679,7 @@ SDNode *X86DAGToDAGISel::Select(SDValue N) {
       case MVT::i32: Opc = X86::IMUL32r; MOpc = X86::IMUL32m; break;
       case MVT::i64: Opc = X86::IMUL64r; MOpc = X86::IMUL64m; break;
       }
+    }
 
     unsigned LoReg, HiReg;
     switch (NVT.getSimpleVT()) {
@@ -1670,7 +1692,7 @@ SDNode *X86DAGToDAGISel::Select(SDValue N) {
 
     SDValue Tmp0, Tmp1, Tmp2, Tmp3, Tmp4;
     bool foldedLoad = TryFoldLoad(N, N1, Tmp0, Tmp1, Tmp2, Tmp3, Tmp4);
-    // multiplty is commmutative
+    // Multiply is commmutative.
     if (!foldedLoad) {
       foldedLoad = TryFoldLoad(N, N0, Tmp0, Tmp1, Tmp2, Tmp3, Tmp4);
       if (foldedLoad)
@@ -1701,9 +1723,11 @@ SDNode *X86DAGToDAGISel::Select(SDValue N) {
       InFlag = Result.getValue(2);
       ReplaceUses(N.getValue(0), Result);
 #ifndef NDEBUG
-      DEBUG(errs() << std::string(Indent-2, ' ') << "=> ");
-      DEBUG(Result.getNode()->dump(CurDAG));
-      DEBUG(errs() << "\n");
+      DEBUG({
+          errs() << std::string(Indent-2, ' ') << "=> ";
+          Result.getNode()->dump(CurDAG);
+          errs() << '\n';
+        });
 #endif
     }
     // Copy the high half of the result, if it is needed.
@@ -1729,9 +1753,11 @@ SDNode *X86DAGToDAGISel::Select(SDValue N) {
       }
       ReplaceUses(N.getValue(1), Result);
 #ifndef NDEBUG
-      DEBUG(errs() << std::string(Indent-2, ' ') << "=> ");
-      DEBUG(Result.getNode()->dump(CurDAG));
-      DEBUG(errs() << "\n");
+      DEBUG({
+          errs() << std::string(Indent-2, ' ') << "=> ";
+          Result.getNode()->dump(CurDAG);
+          errs() << '\n';
+        });
 #endif
     }
 
@@ -1748,7 +1774,7 @@ SDNode *X86DAGToDAGISel::Select(SDValue N) {
     SDValue N1 = Node->getOperand(1);
 
     bool isSigned = Opcode == ISD::SDIVREM;
-    if (!isSigned)
+    if (!isSigned) {
       switch (NVT.getSimpleVT()) {
       default: llvm_unreachable("Unsupported VT!");
       case MVT::i8:  Opc = X86::DIV8r;  MOpc = X86::DIV8m;  break;
@@ -1756,7 +1782,7 @@ SDNode *X86DAGToDAGISel::Select(SDValue N) {
       case MVT::i32: Opc = X86::DIV32r; MOpc = X86::DIV32m; break;
       case MVT::i64: Opc = X86::DIV64r; MOpc = X86::DIV64m; break;
       }
-    else
+    } else {
       switch (NVT.getSimpleVT()) {
       default: llvm_unreachable("Unsupported VT!");
       case MVT::i8:  Opc = X86::IDIV8r;  MOpc = X86::IDIV8m;  break;
@@ -1764,6 +1790,7 @@ SDNode *X86DAGToDAGISel::Select(SDValue N) {
       case MVT::i32: Opc = X86::IDIV32r; MOpc = X86::IDIV32m; break;
       case MVT::i64: Opc = X86::IDIV64r; MOpc = X86::IDIV64m; break;
       }
+    }
 
     unsigned LoReg, HiReg;
     unsigned ClrOpcode, SExtOpcode;
@@ -1871,9 +1898,11 @@ SDNode *X86DAGToDAGISel::Select(SDValue N) {
       InFlag = Result.getValue(2);
       ReplaceUses(N.getValue(0), Result);
 #ifndef NDEBUG
-      DEBUG(errs() << std::string(Indent-2, ' ') << "=> ");
-      DEBUG(Result.getNode()->dump(CurDAG));
-      DEBUG(errs() << "\n");
+      DEBUG({
+          errs() << std::string(Indent-2, ' ') << "=> ";
+          Result.getNode()->dump(CurDAG);
+          errs() << '\n';
+        });
 #endif
     }
     // Copy the remainder (high) result, if it is needed.
@@ -1900,9 +1929,11 @@ SDNode *X86DAGToDAGISel::Select(SDValue N) {
       }
       ReplaceUses(N.getValue(1), Result);
 #ifndef NDEBUG
-      DEBUG(errs() << std::string(Indent-2, ' ') << "=> ");
-      DEBUG(Result.getNode()->dump(CurDAG));
-      DEBUG(errs() << "\n");
+      DEBUG({
+          errs() << std::string(Indent-2, ' ') << "=> ";
+          Result.getNode()->dump(CurDAG);
+          errs() << '\n';
+        });
 #endif
     }
 
@@ -1958,12 +1989,14 @@ SDNode *X86DAGToDAGISel::Select(SDValue N) {
   SDNode *ResNode = SelectCode(N);
 
 #ifndef NDEBUG
-  DEBUG(errs() << std::string(Indent-2, ' ') << "=> ");
-  if (ResNode == NULL || ResNode == N.getNode())
-    DEBUG(N.getNode()->dump(CurDAG));
-  else
-    DEBUG(ResNode->dump(CurDAG));
-  DEBUG(errs() << "\n");
+  DEBUG({
+      errs() << std::string(Indent-2, ' ') << "=> ";
+      if (ResNode == NULL || ResNode == N.getNode())
+        N.getNode()->dump(CurDAG);
+      else
+        ResNode->dump(CurDAG);
+      errs() << '\n';
+    });
   Indent -= 2;
 #endif
 
