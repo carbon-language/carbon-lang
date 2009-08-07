@@ -432,6 +432,7 @@ bool X86ATTAsmParser::MatchInstruction(SmallVectorImpl<X86Operand> &Operands,
   
 bool X86ATTAsmParser::MatchRegisterName(const StringRef &Name,
                                         unsigned &RegNo) {
+  RegNo = 1;
   return false;
 }
 
