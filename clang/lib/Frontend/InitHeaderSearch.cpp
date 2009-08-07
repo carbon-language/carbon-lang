@@ -162,6 +162,22 @@ void InitHeaderSearch::AddDefaultSystemIncludePaths(const LangOptions &Lang) {
         false);
     AddPath("/usr/include/c++/4.3.2/backward", System, true, false, false);
 
+    // openSUSE 11.1
+    AddPath("/usr/include/c++/4.3", System, true, false, false);
+    AddPath("/usr/include/c++/4.3/i586-suse-linux", System, true, false,
+        false);
+    AddPath("/usr/include/c++/4.3/x86_64-suse-linux", System, true, false,
+        false);
+    AddPath("/usr/include/c++/4.3/backward", System, true, false, false);
+
+    // openSUSE 11.2
+    AddPath("/usr/include/c++/4.4", System, true, false, false);
+    AddPath("/usr/include/c++/4.4/i586-suse-linux", System, true, false,
+        false);
+    AddPath("/usr/include/c++/4.4/x86_64-suse-linux", System, true, false,
+        false);
+    AddPath("/usr/include/c++/4.4/backward", System, true, false, false);
+
     // Arch Linux 2008-06-24
     AddPath("/usr/include/c++/4.3.1", System, true, false, false);
     AddPath("/usr/include/c++/4.3.1/i686-pc-linux-gnu", System, true, false,
