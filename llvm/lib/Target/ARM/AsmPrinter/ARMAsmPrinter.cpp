@@ -599,6 +599,10 @@ void ARMAsmPrinter::printAddrMode4Operand(const MachineInstr *MI, int Op,
       O << ARM_AM::getAMSubModeAltStr(Mode, isLDM);
     } else
       O << ARM_AM::getAMSubModeStr(Mode);
+  } else if (Modifier && strcmp(Modifier, "wide") == 0) {
+    ARM_AM::AMSubMode Mode = ARM_AM::getAM4SubMode(MO2.getImm());
+    if (Mode == ARM_AM::ia)
+      O << ".w";
   } else {
     printOperand(MI, Op);
     if (ARM_AM::getAM4WBFlag(MO2.getImm()))
