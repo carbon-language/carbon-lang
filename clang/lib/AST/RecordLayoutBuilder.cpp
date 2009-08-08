@@ -197,9 +197,11 @@ void ASTRecordLayoutBuilder::LayoutBaseNonVirtually(const CXXRecordDecl *RD) {
 
 void ASTRecordLayoutBuilder::Layout(const RecordDecl *D) {
   IsUnion = D->isUnion();
-  
-  if (const PackedAttr* PA = D->getAttr<PackedAttr>())
-    StructPacking = PA->getAlignment();
+
+  if (D->hasAttr<PackedAttr>())
+    StructPacking = 1;
+  if (const PragmaPackAttr *PPA = D->getAttr<PragmaPackAttr>())
+    StructPacking = PPA->getAlignment();
   
   if (const AlignedAttr *AA = D->getAttr<AlignedAttr>())
     UpdateAlignment(AA->getAlignment());
@@ -240,8 +242,8 @@ void ASTRecordLayoutBuilder::Layout(const ObjCInterfaceDecl *D,
     NextOffset = Size;
   }
   
-  if (const PackedAttr *PA = D->getAttr<PackedAttr>())
-    StructPacking = PA->getAlignment();
+  if (D->hasAttr<PackedAttr>())
+    StructPacking = 1;
   
   if (const AlignedAttr *AA = D->getAttr<AlignedAttr>())
     UpdateAlignment(AA->getAlignment());
@@ -273,8 +275,8 @@ void ASTRecordLayoutBuilder::LayoutField(const FieldDecl *D) {
   
   // FIXME: Should this override struct packing? Probably we want to
   // take the minimum?
-  if (const PackedAttr *PA = D->getAttr<PackedAttr>())
-    FieldPacking = PA->getAlignment();
+  if (D->hasAttr<PackedAttr>())
+    FieldPacking = 1;
   
   if (const Expr *BitWidthExpr = D->getBitWidth()) {
     // TODO: Need to check this algorithm on other targets!

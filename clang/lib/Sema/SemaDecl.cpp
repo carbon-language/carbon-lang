@@ -4200,7 +4200,7 @@ CreateNewDecl:
     // the #pragma tokens are effectively skipped over during the
     // parsing of the struct).
     if (unsigned Alignment = getPragmaPackAlignment())
-      New->addAttr(::new (Context) PackedAttr(Alignment * 8));
+      New->addAttr(::new (Context) PragmaPackAttr(Alignment * 8));
   }
 
   if (getLangOptions().CPlusPlus && SS.isEmpty() && Name && !Invalid) {

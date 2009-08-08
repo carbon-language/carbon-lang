@@ -507,7 +507,8 @@ Attr *PCHReader::ReadAttributes() {
     SIMPLE_ATTR(CFReturnsRetained);
     SIMPLE_ATTR(NSReturnsRetained);
     SIMPLE_ATTR(Overloadable);
-    UNSIGNED_ATTR(Packed);
+    SIMPLE_ATTR(Packed);
+    UNSIGNED_ATTR(PragmaPack);
     SIMPLE_ATTR(Pure);
     UNSIGNED_ATTR(Regparm);
     STRING_ATTR(Section);

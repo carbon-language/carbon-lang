@@ -31,9 +31,8 @@ void CGRecordLayoutBuilder::Layout(const RecordDecl *D) {
     LayoutUnion(D);
     return;
   }
-  
-  if (const PackedAttr* PA = D->getAttr<PackedAttr>())
-    Packed = PA->getAlignment();
+
+  Packed = D->hasAttr<PackedAttr>();
 
   if (LayoutFields(D))
     return;
@@ -96,15 +95,8 @@ void CGRecordLayoutBuilder::LayoutBitField(const FieldDecl *D,
 
 bool CGRecordLayoutBuilder::LayoutField(const FieldDecl *D,
                                         uint64_t FieldOffset) {
-  bool FieldPacked = Packed;
-  
-  // FIXME: Should this override struct packing? Probably we want to
-  // take the minimum?
-  if (const PackedAttr *PA = D->getAttr<PackedAttr>())
-    FieldPacked = PA->getAlignment();
-
   // If the field is packed, then we need a packed struct.
-  if (!Packed && FieldPacked)
+  if (!Packed && D->hasAttr<PackedAttr>())
     return false;
 
   if (D->isBitField()) {

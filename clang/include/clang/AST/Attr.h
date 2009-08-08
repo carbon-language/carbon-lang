@@ -70,6 +70,7 @@ public:
     NSReturnsRetained,   // Clang/Checker-specific.
     Overloadable, // Clang-specific
     Packed,
+    PragmaPack,
     Pure,
     Regparm,
     ReqdWorkGroupSize,   // OpenCL-specific
@@ -146,24 +147,26 @@ public:                                                                 \
   static bool classof(const ATTR##Attr *A) { return true; }             \
 }
 
-class PackedAttr : public Attr {
+DEF_SIMPLE_ATTR(Packed);
+
+class PragmaPackAttr : public Attr {
   unsigned Alignment;
 
 public:
-  PackedAttr(unsigned alignment) : Attr(Packed), Alignment(alignment) {}
+  PragmaPackAttr(unsigned alignment) : Attr(PragmaPack), Alignment(alignment) {}
 
   /// getAlignment - The specified alignment in bits.
   unsigned getAlignment() const { return Alignment; }
 
   virtual Attr* clone(ASTContext &C) const { 
-    return ::new (C) PackedAttr(Alignment); 
+    return ::new (C) PragmaPackAttr(Alignment); 
   }
 
   // Implement isa/cast/dyncast/etc.
   static bool classof(const Attr *A) {
-    return A->getKind() == Packed;
+    return A->getKind() == PragmaPack;
   }
-  static bool classof(const PackedAttr *A) { return true; }
+  static bool classof(const PragmaPackAttr *A) { return true; }
 };
   
 class AlignedAttr : public Attr {

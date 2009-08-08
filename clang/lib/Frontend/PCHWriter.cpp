@@ -1698,10 +1698,13 @@ void PCHWriter::WriteAttributeRecord(const Attr *Attr) {
     case Attr::Overloadable:
       break;
 
-    case Attr::Packed:
-      Record.push_back(cast<PackedAttr>(Attr)->getAlignment());
+    case Attr::PragmaPack:
+      Record.push_back(cast<PragmaPackAttr>(Attr)->getAlignment());
       break;
 
+    case Attr::Packed:
+      break;
+    
     case Attr::Pure:
       break;
 
