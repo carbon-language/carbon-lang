@@ -276,17 +276,23 @@ def  VST4d32  : VST4D<"vst4.32">;
 
 // Extract D sub-registers of Q registers.
 // (arm_dsubreg_0 is 5; arm_dsubreg_1 is 6)
-def SubReg_i8_reg  : SDNodeXForm<imm, [{
+def DSubReg_i8_reg  : SDNodeXForm<imm, [{
   return CurDAG->getTargetConstant(5 + N->getZExtValue() / 8, MVT::i32);
 }]>;
-def SubReg_i16_reg : SDNodeXForm<imm, [{
+def DSubReg_i16_reg : SDNodeXForm<imm, [{
   return CurDAG->getTargetConstant(5 + N->getZExtValue() / 4, MVT::i32);
 }]>;
-def SubReg_i32_reg : SDNodeXForm<imm, [{
+def DSubReg_i32_reg : SDNodeXForm<imm, [{
   return CurDAG->getTargetConstant(5 + N->getZExtValue() / 2, MVT::i32);
 }]>;
-def SubReg_f64_reg : SDNodeXForm<imm, [{
+def DSubReg_f64_reg : SDNodeXForm<imm, [{
   return CurDAG->getTargetConstant(5 + N->getZExtValue(), MVT::i32);
+}]>;
+
+// Extract S sub-registers of Q registers.
+// (arm_ssubreg_0 is 1; arm_ssubreg_1 is 2; etc.)
+def SSubReg_f32_reg : SDNodeXForm<imm, [{
+  return CurDAG->getTargetConstant(1 + N->getZExtValue(), MVT::i32);
 }]>;
 
 // Translate lane numbers from Q registers to D subregs.
@@ -1639,28 +1645,30 @@ def VGETLNi32 : NVGetLane<0b11100001, 0b1011, 0b00,
 // def VGETLNf32: see FMRDH and FMRDL in ARMInstrVFP.td
 def : Pat<(NEONvgetlanes (v16i8 QPR:$src), imm:$lane),
           (VGETLNs8 (v8i8 (EXTRACT_SUBREG QPR:$src,
-                           (SubReg_i8_reg imm:$lane))),
+                           (DSubReg_i8_reg imm:$lane))),
                      (SubReg_i8_lane imm:$lane))>;
 def : Pat<(NEONvgetlanes (v8i16 QPR:$src), imm:$lane),
           (VGETLNs16 (v4i16 (EXTRACT_SUBREG QPR:$src,
-                             (SubReg_i16_reg imm:$lane))),
+                             (DSubReg_i16_reg imm:$lane))),
                      (SubReg_i16_lane imm:$lane))>;
 def : Pat<(NEONvgetlaneu (v16i8 QPR:$src), imm:$lane),
           (VGETLNu8 (v8i8 (EXTRACT_SUBREG QPR:$src,
-                           (SubReg_i8_reg imm:$lane))),
+                           (DSubReg_i8_reg imm:$lane))),
                      (SubReg_i8_lane imm:$lane))>;
 def : Pat<(NEONvgetlaneu (v8i16 QPR:$src), imm:$lane),
           (VGETLNu16 (v4i16 (EXTRACT_SUBREG QPR:$src,
-                             (SubReg_i16_reg imm:$lane))),
+                             (DSubReg_i16_reg imm:$lane))),
                      (SubReg_i16_lane imm:$lane))>;
 def : Pat<(extractelt (v4i32 QPR:$src), imm:$lane),
           (VGETLNi32 (v2i32 (EXTRACT_SUBREG QPR:$src,
-                             (SubReg_i32_reg imm:$lane))),
+                             (DSubReg_i32_reg imm:$lane))),
                      (SubReg_i32_lane imm:$lane))>;
+def : Pat<(extractelt (v4f32 QPR:$src1), imm:$src2),
+          (EXTRACT_SUBREG QPR:$src1, (SSubReg_f32_reg imm:$src2))>;
 //def : Pat<(extractelt (v2i64 QPR:$src1), imm:$src2),
-//          (EXTRACT_SUBREG QPR:$src1, (SubReg_f64_reg imm:$src2))>;
+//          (EXTRACT_SUBREG QPR:$src1, (DSubReg_f64_reg imm:$src2))>;
 def : Pat<(extractelt (v2f64 QPR:$src1), imm:$src2),
-          (EXTRACT_SUBREG QPR:$src1, (SubReg_f64_reg imm:$src2))>;
+          (EXTRACT_SUBREG QPR:$src1, (DSubReg_f64_reg imm:$src2))>;
 
 
 //   VMOV     : Vector Set Lane (move ARM core register to scalar)
@@ -1685,26 +1693,29 @@ def VSETLNi32 : NVSetLane<0b11100000, 0b1011, 0b00, (outs DPR:$dst),
 def : Pat<(vector_insert (v16i8 QPR:$src1), GPR:$src2, imm:$lane),
           (v16i8 (INSERT_SUBREG QPR:$src1, 
                   (VSETLNi8 (v8i8 (EXTRACT_SUBREG QPR:$src1,
-                                   (SubReg_i8_reg imm:$lane))),
+                                   (DSubReg_i8_reg imm:$lane))),
                             GPR:$src2, (SubReg_i8_lane imm:$lane)),
-                  (SubReg_i8_reg imm:$lane)))>;
+                  (DSubReg_i8_reg imm:$lane)))>;
 def : Pat<(vector_insert (v8i16 QPR:$src1), GPR:$src2, imm:$lane),
           (v8i16 (INSERT_SUBREG QPR:$src1, 
                   (VSETLNi16 (v4i16 (EXTRACT_SUBREG QPR:$src1,
-                                     (SubReg_i16_reg imm:$lane))),
+                                     (DSubReg_i16_reg imm:$lane))),
                              GPR:$src2, (SubReg_i16_lane imm:$lane)),
-                  (SubReg_i16_reg imm:$lane)))>;
+                  (DSubReg_i16_reg imm:$lane)))>;
 def : Pat<(insertelt (v4i32 QPR:$src1), GPR:$src2, imm:$lane),
           (v4i32 (INSERT_SUBREG QPR:$src1, 
                   (VSETLNi32 (v2i32 (EXTRACT_SUBREG QPR:$src1,
-                                     (SubReg_i32_reg imm:$lane))),
+                                     (DSubReg_i32_reg imm:$lane))),
                              GPR:$src2, (SubReg_i32_lane imm:$lane)),
-                  (SubReg_i32_reg imm:$lane)))>;
+                  (DSubReg_i32_reg imm:$lane)))>;
+
+def : Pat<(v4f32 (insertelt QPR:$src1, SPR:$src2, imm:$src3)),
+          (INSERT_SUBREG QPR:$src1, SPR:$src2, (SSubReg_f32_reg imm:$src3))>;
 
 //def : Pat<(v2i64 (insertelt QPR:$src1, DPR:$src2, imm:$src3)),
-//          (INSERT_SUBREG QPR:$src1, DPR:$src2, (SubReg_f64_reg imm:$src3))>;
+//          (INSERT_SUBREG QPR:$src1, DPR:$src2, (DSubReg_f64_reg imm:$src3))>;
 def : Pat<(v2f64 (insertelt QPR:$src1, DPR:$src2, imm:$src3)),
-          (INSERT_SUBREG QPR:$src1, DPR:$src2, (SubReg_f64_reg imm:$src3))>;
+          (INSERT_SUBREG QPR:$src1, DPR:$src2, (DSubReg_f64_reg imm:$src3))>;
 
 //   VDUP     : Vector Duplicate (from ARM core register to all elements)
 
