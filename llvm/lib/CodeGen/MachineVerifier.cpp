@@ -78,7 +78,8 @@ namespace {
 
     BitVector regsReserved;
     RegSet regsLive;
-    RegVector regsDefined, regsImpDefined, regsDead, regsKilled;
+    RegVector regsDefined, regsDead, regsKilled;
+    RegSet regsLiveInButUnused;
 
     // Add Reg and any sub-registers to RV
     void addRegWithSubRegs(RegVector &RV, unsigned Reg) {
@@ -306,9 +307,9 @@ MachineVerifier::visitMachineBasicBlockBefore(const MachineBasicBlock *MBB)
     for (const unsigned *R = TRI->getSubRegisters(*I); *R; R++)
       regsLive.insert(*R);
   }
+  regsLiveInButUnused = regsLive;
   regsKilled.clear();
   regsDefined.clear();
-  regsImpDefined.clear();
 }
 
 void
@@ -352,7 +353,11 @@ MachineVerifier::visitMachineOperand(const MachineOperand *MO, unsigned MONum)
       return;
 
     // Check Live Variables.
-    if (MO->isUse()) {
+    if (MO->isUndef()) {
+      // An <undef> doesn't refer to any register, so just skip it.
+    } else if (MO->isUse()) {
+      regsLiveInButUnused.erase(Reg);
+
       if (MO->isKill()) {
         addRegWithSubRegs(regsKilled, Reg);
         // Tied operands on two-address instuctions MUST NOT have a <kill> flag.
@@ -366,8 +371,8 @@ MachineVerifier::visitMachineOperand(const MachineOperand *MO, unsigned MONum)
             MI->getOperand(defIdx).getReg() == Reg)
           addRegWithSubRegs(regsKilled, Reg);
       }
-      // Use of a dead register. A register use marked <undef> is OK.
-      if (!MO->isUndef() && !regsLive.count(Reg)) {
+      // Use of a dead register.
+      if (!regsLive.count(Reg)) {
         if (TargetRegisterInfo::isPhysicalRegister(Reg)) {
           // Reserved registers may be used even when 'dead'.
           if (!isReserved(Reg))
@@ -384,12 +389,13 @@ MachineVerifier::visitMachineOperand(const MachineOperand *MO, unsigned MONum)
         }
       }
     } else {
+      assert(MO->isDef());
       // Register defined.
       // TODO: verify that earlyclobber ops are not used.
-      addRegWithSubRegs(regsDefined, Reg);
-
       if (MO->isDead())
         addRegWithSubRegs(regsDead, Reg);
+      else
+        addRegWithSubRegs(regsDefined, Reg);
     }
 
     // Check register classes.
@@ -456,11 +462,16 @@ MachineVerifier::visitMachineInstrAfter(const MachineInstr *MI)
   set_subtract(regsLive, regsKilled);
   regsKilled.clear();
 
-  for (RegVector::const_iterator I = regsDefined.begin(),
-         E = regsDefined.end(); I != E; ++I) {
+  // Verify that both <def> and <def,dead> operands refer to dead registers.
+  RegVector defs(regsDefined);
+  defs.append(regsDead.begin(), regsDead.end());
+
+  for (RegVector::const_iterator I = defs.begin(), E = defs.end();
+       I != E; ++I) {
     if (regsLive.count(*I)) {
       if (TargetRegisterInfo::isPhysicalRegister(*I)) {
-        if (!allowPhysDoubleDefs && !isReserved(*I)) {
+        if (!allowPhysDoubleDefs && !isReserved(*I) &&
+            !regsLiveInButUnused.count(*I)) {
           report("Redefining a live physical register", MI);
           *OS << "Register " << TRI->getName(*I)
               << " was defined but already live.\n";
@@ -480,9 +491,8 @@ MachineVerifier::visitMachineInstrAfter(const MachineInstr *MI)
     }
   }
 
-  set_union(regsLive, regsDefined); regsDefined.clear();
-  set_union(regsLive, regsImpDefined); regsImpDefined.clear();
   set_subtract(regsLive, regsDead); regsDead.clear();
+  set_union(regsLive, regsDefined); regsDefined.clear();
 }
 
 void
