@@ -674,9 +674,8 @@ void CodeGenFunction::EmitClassMemberwiseCopy(
   // FIXME. Do bitwise copy of trivial copy constructors.
   if (BaseClassDecl->hasTrivialCopyConstructor())
     return;
-  unsigned TypeQuals;
   if (CXXConstructorDecl *BaseCopyCtor = 
-      BaseClassDecl->getCopyConstructor(getContext(), TypeQuals)) {
+      BaseClassDecl->getCopyConstructor(getContext(), 0)) {
     llvm::Value *Callee = CGM.GetAddrOfCXXConstructor(BaseCopyCtor, 
                                                       Ctor_Complete);
     

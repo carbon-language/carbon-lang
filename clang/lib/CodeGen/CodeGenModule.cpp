@@ -686,18 +686,16 @@ void CodeGenModule::DeferredCopyConstructorToEmit(GlobalDecl CopyCtorDecl) {
   // are defined. 12.8.p7
   for (CXXRecordDecl::base_class_const_iterator Base = ClassDecl->bases_begin();
        Base != ClassDecl->bases_end(); ++Base) {
-    unsigned TypeQuals;
     CXXRecordDecl *BaseClassDecl
       = cast<CXXRecordDecl>(Base->getType()->getAs<RecordType>()->getDecl());
     if (CXXConstructorDecl *BaseCopyCtor = 
-        BaseClassDecl->getCopyConstructor(Context, TypeQuals))
+        BaseClassDecl->getCopyConstructor(Context, 0))
       GetAddrOfCXXConstructor(BaseCopyCtor, Ctor_Complete);
   }
   
   for (CXXRecordDecl::field_iterator Field = ClassDecl->field_begin(),
        FieldEnd = ClassDecl->field_end();
        Field != FieldEnd; ++Field) {
-    unsigned TypeQuals;
     QualType FieldType = Context.getCanonicalType((*Field)->getType());
     if (const ArrayType *Array = Context.getAsArrayType(FieldType))
       FieldType = Array->getElementType();
@@ -705,7 +703,7 @@ void CodeGenModule::DeferredCopyConstructorToEmit(GlobalDecl CopyCtorDecl) {
       CXXRecordDecl *FieldClassDecl
       = cast<CXXRecordDecl>(FieldClassType->getDecl());
       if (CXXConstructorDecl *FieldCopyCtor = 
-          FieldClassDecl->getCopyConstructor(Context, TypeQuals))
+          FieldClassDecl->getCopyConstructor(Context, 0))
         GetAddrOfCXXConstructor(FieldCopyCtor, Ctor_Complete);
     }
   }
