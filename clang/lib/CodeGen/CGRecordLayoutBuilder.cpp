@@ -301,6 +301,9 @@ CGRecordLayoutBuilder::ComputeLayout(CodeGenTypes &Types,
   const llvm::Type *Ty = llvm::StructType::get(Types.getLLVMContext(),
                                                Builder.FieldTypes,
                                                Builder.Packed);
+  assert(Types.getContext().getASTRecordLayout(D).getSize() / 8 ==
+         Types.getTargetData().getTypeAllocSize(Ty) &&
+         "Type size mismatch!");
   
   // Add all the field numbers.
   for (unsigned i = 0, e = Builder.LLVMFields.size(); i != e; ++i) {
