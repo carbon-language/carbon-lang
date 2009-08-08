@@ -633,6 +633,7 @@ public:
   void EnterDeclaratorContext(Scope *S, DeclContext *DC);
   void ExitDeclaratorContext(Scope *S);
   
+  DeclContext *getFunctionLevelDeclContext();
   
   /// getCurFunctionDecl - If inside of a function body, this returns a pointer
   /// to the function decl for the function being parsed.  If we're currently
