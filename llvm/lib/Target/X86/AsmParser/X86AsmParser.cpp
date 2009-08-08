@@ -46,7 +46,9 @@ private:
   bool MatchInstruction(SmallVectorImpl<X86Operand> &Operands,
                         MCInst &Inst);
 
-  bool MatchRegisterName(const StringRef &Name, unsigned &RegNo);
+  /// MatchRegisterName - Match the given string to a register name, or 0 if
+  /// there is no match.
+  unsigned MatchRegisterName(const StringRef &Name);
 
   /// }
 
@@ -214,7 +216,9 @@ bool X86ATTAsmParser::ParseRegister(X86Operand &Op) {
   // validation later, so maybe there is no need for this here.
   unsigned RegNo;
   assert(Tok.getString().startswith("%") && "Invalid register name!");
-  if (MatchRegisterName(Tok.getString().substr(1), RegNo))
+
+  RegNo = MatchRegisterName(Tok.getString().substr(1));
+  if (RegNo == 0)
     return Error(Tok.getLoc(), "invalid register name");
 
   Op = X86Operand::CreateReg(RegNo);

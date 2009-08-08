@@ -690,27 +690,6 @@ static void EmitMatchClassEnumeration(CodeGenTarget &Target,
   OS << "}\n\n";
 }
 
-/// EmitMatchRegisterName - Emit the function to match a string to appropriate
-/// match class value.
-static void EmitMatchTokenString(CodeGenTarget &Target,
-                                 std::vector<ClassInfo*> &Infos,
-                                 raw_ostream &OS) {
-  // FIXME: TableGen should have a fast string matcher generator.
-  OS << "static MatchClassKind MatchTokenString(const StringRef &Name) {\n";
-  for (std::vector<ClassInfo*>::iterator it = Infos.begin(), 
-         ie = Infos.end(); it != ie; ++it) {
-    ClassInfo &CI = **it;
-
-    if (CI.Kind == ClassInfo::Token)
-      OS << "  if (Name == \"" << CI.ValueName << "\")\n"
-         << "    return " << CI.Name << ";\n\n";
-  }
-  OS << "  return InvalidMatchClass;\n";
-  OS << "}\n\n";
-}
-
-
-
 /// EmitClassifyOperand - Emit the function to classify an operand.
 static void EmitClassifyOperand(CodeGenTarget &Target,
                                 std::vector<ClassInfo*> &Infos,
@@ -860,32 +839,51 @@ static void EmitStringMatcher(const std::string &StrVariableName,
 }
 
 
+/// EmitMatchTokenString - Emit the function to match a token string to the
+/// appropriate match class value.
+static void EmitMatchTokenString(CodeGenTarget &Target,
+                                 std::vector<ClassInfo*> &Infos,
+                                 raw_ostream &OS) {
+  // Construct the match list.
+  std::vector<StringPair> Matches;
+  for (std::vector<ClassInfo*>::iterator it = Infos.begin(), 
+         ie = Infos.end(); it != ie; ++it) {
+    ClassInfo &CI = **it;
+
+    if (CI.Kind == ClassInfo::Token)
+      Matches.push_back(StringPair(CI.ValueName, "return " + CI.Name + ";"));
+  }
+
+  OS << "static MatchClassKind MatchTokenString(const StringRef &Name) {\n";
+
+  EmitStringMatcher("Name", Matches, OS);
+
+  OS << "  return InvalidMatchClass;\n";
+  OS << "}\n\n";
+}
 
 /// EmitMatchRegisterName - Emit the function to match a string to the target
 /// specific register enum.
 static void EmitMatchRegisterName(CodeGenTarget &Target, Record *AsmParser,
                                   raw_ostream &OS) {
-  const std::vector<CodeGenRegister> &Registers = Target.getRegisters();
-
-  OS << "bool " << Target.getName() 
-     << AsmParser->getValueAsString("AsmParserClassName")
-     << "::MatchRegisterName(const StringRef &Name, unsigned &RegNo) {\n";
-
+  // Construct the match list.
   std::vector<StringPair> Matches;
-  
-  // FIXME: TableGen should have a fast string matcher generator.
-  for (unsigned i = 0, e = Registers.size(); i != e; ++i) {
-    const CodeGenRegister &Reg = Registers[i];
+  for (unsigned i = 0, e = Target.getRegisters().size(); i != e; ++i) {
+    const CodeGenRegister &Reg = Target.getRegisters()[i];
     if (Reg.TheDef->getValueAsString("AsmName").empty())
       continue;
 
     Matches.push_back(StringPair(Reg.TheDef->getValueAsString("AsmName"),
-                                 "RegNo=" + utostr(i + 1) + "; return false;"));
+                                 "return " + utostr(i + 1) + ";"));
   }
   
+  OS << "unsigned " << Target.getName() 
+     << AsmParser->getValueAsString("AsmParserClassName")
+     << "::MatchRegisterName(const StringRef &Name) {\n";
+
   EmitStringMatcher("Name", Matches, OS);
   
-  OS << "  return true;\n";
+  OS << "  return 0;\n";
   OS << "}\n\n";
 }
 
