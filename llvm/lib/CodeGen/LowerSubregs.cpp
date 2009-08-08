@@ -270,14 +270,15 @@ bool LowerSubregsInstructionPass::LowerInsert(MachineInstr *MI) {
     MachineBasicBlock::iterator CopyMI = MI;
     --CopyMI;
 
+    // INSERT_SUBREG is a two-address instruction so it implicitly kills SrcReg.
+    if (!MI->getOperand(1).isUndef())
+      CopyMI->addOperand(MachineOperand::CreateReg(DstReg, false, true, true));
+
     // Transfer the kill/dead flags, if needed.
     if (MI->getOperand(0).isDead()) {
       TransferDeadFlag(MI, DstSubReg, TRI);
-      // Also add a SrcReg<imp-kill> of the super register.
-      CopyMI->addOperand(MachineOperand::CreateReg(DstReg, false, true, true));
-    } else if (MI->getOperand(1).isUndef()) {
-      // If SrcReg was marked <undef> we must make sure it is alive after this
-      // replacement.  Add a SrcReg<imp-def> operand.
+    } else {
+      // Make sure the full DstReg is live after this replacement.
       CopyMI->addOperand(MachineOperand::CreateReg(DstReg, true, true));
     }
 
@@ -293,7 +294,7 @@ bool LowerSubregsInstructionPass::LowerInsert(MachineInstr *MI) {
 
   DOUT << "\n";
   MBB->erase(MI);
-  return true;                    
+  return true;
 }
 
 /// runOnMachineFunction - Reduce subregister inserts and extracts to register

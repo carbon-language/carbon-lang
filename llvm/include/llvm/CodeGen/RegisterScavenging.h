@@ -112,9 +112,6 @@ public:
   bool isUsed(unsigned Reg) const   { return !RegsAvailable[Reg]; }
   bool isUnused(unsigned Reg) const { return RegsAvailable[Reg]; }
 
-  /// isSuperRegUsed - Test if a super register is currently being used.
-  bool isSuperRegUsed(unsigned Reg) const;
-
   /// getRegsUsed - return all registers currently in use in used.
   void getRegsUsed(BitVector &used, bool includeReserved);
 

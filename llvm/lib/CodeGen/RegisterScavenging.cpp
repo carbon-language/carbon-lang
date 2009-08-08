@@ -30,35 +30,6 @@
 #include "llvm/ADT/STLExtras.h"
 using namespace llvm;
 
-/// RedefinesSuperRegPart - Return true if the specified register is redefining
-/// part of a super-register.
-static bool RedefinesSuperRegPart(const MachineInstr *MI, unsigned SubReg,
-                                  const TargetRegisterInfo *TRI) {
-  bool SeenSuperUse = false;
-  bool SeenSuperDef = false;
-  for (unsigned i = 0, e = MI->getNumOperands(); i != e; ++i) {
-    const MachineOperand &MO = MI->getOperand(i);
-    if (!MO.isReg() || MO.isUndef())
-      continue;
-    if (TRI->isSuperRegister(SubReg, MO.getReg())) {
-      if (MO.isUse())
-        SeenSuperUse = true;
-      else if (MO.isImplicit())
-        SeenSuperDef = true;
-    }
-  }
-
-  return SeenSuperDef && SeenSuperUse;
-}
-
-bool RegScavenger::isSuperRegUsed(unsigned Reg) const {
-  for (const unsigned *SuperRegs = TRI->getSuperRegisters(Reg);
-       unsigned SuperReg = *SuperRegs; ++SuperRegs)
-    if (isUsed(SuperReg))
-      return true;
-  return false;
-}
-
 /// setUsed - Set the register and its sub-registers as being used.
 void RegScavenger::setUsed(unsigned Reg) {
   RegsAvailable.reset(Reg);
@@ -74,8 +45,7 @@ void RegScavenger::setUnused(unsigned Reg, const MachineInstr *MI) {
 
   for (const unsigned *SubRegs = TRI->getSubRegisters(Reg);
        unsigned SubReg = *SubRegs; ++SubRegs)
-    if (!RedefinesSuperRegPart(MI, Reg, TRI))
-      RegsAvailable.set(SubReg);
+    RegsAvailable.set(SubReg);
 }
 
 void RegScavenger::initRegState() {
@@ -257,7 +227,7 @@ void RegScavenger::forward() {
              "Using an early clobbered register!");
     } else {
       assert(MO.isDef());
-      assert((KillRegs.test(Reg) || isUnused(Reg) || isSuperRegUsed(Reg) ||
+      assert((KillRegs.test(Reg) || isUnused(Reg) ||
               isLiveInButUnusedBefore(Reg, MI, MBB, TRI, MRI)) &&
              "Re-defining a live register!");
     }
