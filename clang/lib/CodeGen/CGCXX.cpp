@@ -680,16 +680,16 @@ void CodeGenFunction::EmitClassMemberwiseCopy(
     llvm::Value *Callee = CGM.GetAddrOfCXXConstructor(BaseCopyCtor, 
                                                       Ctor_Complete);
     
-    llvm::Value *Dest = 
-      AddressCXXOfBaseClass(DestValue, ClassDecl, BaseClassDecl);
+    llvm::Value *Dest = ClassDecl ?
+      AddressCXXOfBaseClass(DestValue, ClassDecl, BaseClassDecl) : DestValue;
     
     CallArgList CallArgs;
     // Push the this (Dest) ptr.
     CallArgs.push_back(std::make_pair(RValue::get(Dest),
                                       BaseCopyCtor->getThisType(getContext())));
     
-    llvm::Value *Src = 
-      AddressCXXOfBaseClass(SrcValue, ClassDecl, BaseClassDecl);
+    llvm::Value *Src = ClassDecl ?
+      AddressCXXOfBaseClass(SrcValue, ClassDecl, BaseClassDecl) : SrcValue;
     // Push the Src ptr.
     CallArgs.push_back(std::make_pair(RValue::get(Src),
                                       BaseCopyCtor->getThisType(getContext())));
@@ -721,25 +721,45 @@ void CodeGenFunction::EmitCopyCtorBody(const CXXConstructorDecl *CD,
   assert(!ClassDecl->hasUserDeclaredCopyConstructor() &&
          "EmitCopyCtorBody - copy constructor has definition already");
  
+  FunctionArgList::const_iterator i = Args.begin();
+  const VarDecl *ThisArg = i->first;
+  llvm::Value *ThisObj = GetAddrOfLocalVar(ThisArg);
+  llvm::Value *LoadOfThis = Builder.CreateLoad(ThisObj, "this");
+  const VarDecl *SrcArg = (i+1)->first;
+  llvm::Value *SrcObj = GetAddrOfLocalVar(SrcArg);
+  llvm::Value *LoadOfSrc = Builder.CreateLoad(SrcObj);
+  
   for (CXXRecordDecl::base_class_const_iterator Base = ClassDecl->bases_begin();
        Base != ClassDecl->bases_end(); ++Base) {
     // FIXME. copy constrution of virtual base NYI
     if (Base->isVirtual())
       continue;
     
-    FunctionArgList::const_iterator i = Args.begin();
-    const VarDecl *ThisArg = i->first;
-    llvm::Value *ThisObj = GetAddrOfLocalVar(ThisArg);
-    llvm::Value *LoadOfThis = Builder.CreateLoad(ThisObj, "this");
-    const VarDecl *SrcArg = (i+1)->first;
-    llvm::Value *SrcObj = GetAddrOfLocalVar(SrcArg);
-    llvm::Value *LoadOfSrc = Builder.CreateLoad(SrcObj);
-    
     CXXRecordDecl *BaseClassDecl
       = cast<CXXRecordDecl>(Base->getType()->getAs<RecordType>()->getDecl());
     EmitClassMemberwiseCopy(LoadOfThis, LoadOfSrc, ClassDecl, BaseClassDecl);
   }
   
+  for (CXXRecordDecl::field_iterator Field = ClassDecl->field_begin(),
+       FieldEnd = ClassDecl->field_end();
+       Field != FieldEnd; ++Field) {
+    QualType FieldType = getContext().getCanonicalType((*Field)->getType());
+    
+    // FIXME. How about copying arrays!
+    assert(!getContext().getAsArrayType(FieldType) &&
+           "FIXME. Copying arrays NYI");
+    
+    if (const RecordType *FieldClassType = FieldType->getAs<RecordType>()) {
+      CXXRecordDecl *FieldClassDecl
+        = cast<CXXRecordDecl>(FieldClassType->getDecl());
+      LValue LHS = EmitLValueForField(LoadOfThis, *Field, false, 0);
+      LValue RHS = EmitLValueForField(LoadOfSrc, *Field, false, 0);
+      EmitClassMemberwiseCopy(LHS.getAddress(), RHS.getAddress(), 
+                              0 /*ClassDecl*/, FieldClassDecl);
+      continue;
+    }
+    // FIXME. Do a built-in assignment of scalar data members.
+  }
 }  
 
 
