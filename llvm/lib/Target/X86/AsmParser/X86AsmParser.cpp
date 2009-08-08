@@ -131,9 +131,7 @@ struct X86Operand {
     return Mem.Scale;
   }
 
-  bool isToken(const StringRef &Str) const { 
-    return Kind == Token && Str == getToken(); 
-  }
+  bool isToken() const {return Kind == Token; }
 
   bool isImm() const { return Kind == Immediate; }
   
@@ -417,24 +415,4 @@ extern "C" void LLVMInitializeX86AsmParser() {
   RegisterAsmParser<X86ATTAsmParser> Y(TheX86_64Target);
 }
 
-// FIXME: Disabled for now, this is causing gcc-4.0 to run out of memory during
-// building.
-#if 0
-
 #include "X86GenAsmMatcher.inc"
-
-#else
-
-bool X86ATTAsmParser::MatchInstruction(SmallVectorImpl<X86Operand> &Operands,
-                                       MCInst &Inst) {
-  return false;
-}
-  
-bool X86ATTAsmParser::MatchRegisterName(const StringRef &Name,
-                                        unsigned &RegNo) {
-  RegNo = 1;
-  return false;
-}
-
-#endif
-

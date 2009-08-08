@@ -273,30 +273,41 @@ static bool IsAssemblerInstruction(const StringRef &Name,
 
 namespace {
 
+/// ClassInfo - Helper class for storing the information about a particular
+/// class of operands which can be matched.
+struct ClassInfo {
+  enum {
+    Token, ///< The class for a particular token.
+    Register, ///< A register class.
+    User ///< A user defined class.
+  } Kind;
+
+  /// Name - The class name, suitable for use as an enum.
+  std::string Name;
+
+  /// ValueName - The name of the value this class represents; for a token this
+  /// is the literal token string, for an operand it is the TableGen class (or
+  /// empty if this is a derived class).
+  std::string ValueName;
+
+  /// PredicateMethod - The name of the operand method to test whether the
+  /// operand matches this class; this is not valid for Token kinds.
+  std::string PredicateMethod;
+
+  /// RenderMethod - The name of the operand method to add this operand to an
+  /// MCInst; this is not valid for Token kinds.
+  std::string RenderMethod;
+};
+
 /// InstructionInfo - Helper class for storing the necessary information for an
 /// instruction which is capable of being matched.
 struct InstructionInfo {
   struct Operand {
-    enum {
-      Token,
-      Class
-    } Kind;
+    /// The unique class instance this operand should match.
+    ClassInfo *Class;
 
-    struct ClassData {
-      /// Operand - The tablegen operand this class corresponds to.
-      const CodeGenInstruction::OperandInfo *Operand;
-
-      /// ClassName - The name of this operand's class.
-      std::string ClassName;
-
-      /// PredicateMethod - The name of the operand method to test whether the
-      /// operand matches this class.
-      std::string PredicateMethod;
-
-      /// RenderMethod - The name of the operand method to add this operand to
-      /// an MCInst.
-      std::string RenderMethod;
-    } AsClass;
+    /// The original operand this corresponds to, if any.
+    const CodeGenInstruction::OperandInfo *Operand;
   };
 
   /// InstrName - The target name for this instruction.
@@ -324,6 +335,35 @@ public:
   void dump();
 };
 
+class AsmMatcherInfo {
+public:
+  /// The classes which are needed for matching.
+  std::vector<ClassInfo*> Classes;
+  
+  /// The information on the instruction to match.
+  std::vector<InstructionInfo*> Instructions;
+
+private:
+  /// Map of token to class information which has already been constructed.
+  std::map<std::string, ClassInfo*> TokenClasses;
+
+  /// Map of operand name to class information which has already been
+  /// constructed.
+  std::map<std::string, ClassInfo*> OperandClasses;
+
+private:
+  /// getTokenClass - Lookup or create the class for the given token.
+  ClassInfo *getTokenClass(const StringRef &Token);
+
+  /// getOperandClass - Lookup or create the class for the given operand.
+  ClassInfo *getOperandClass(const StringRef &Token,
+                             const CodeGenInstruction::OperandInfo &OI);
+
+public:
+  /// BuildInfo - Construct the various tables used during matching.
+  void BuildInfo(CodeGenTarget &Target);
+};
+
 }
 
 void InstructionInfo::dump() {
@@ -339,25 +379,104 @@ void InstructionInfo::dump() {
   for (unsigned i = 0, e = Operands.size(); i != e; ++i) {
     Operand &Op = Operands[i];
     errs() << "  op[" << i << "] = ";
-    if (Op.Kind == Operand::Token) {
+    if (Op.Class->Kind == ClassInfo::Token) {
       errs() << '\"' << Tokens[i] << "\"\n";
       continue;
     }
 
-    assert(Op.Kind == Operand::Class && "Invalid kind!");
-    const CodeGenInstruction::OperandInfo &OI = *Op.AsClass.Operand;
+    const CodeGenInstruction::OperandInfo &OI = *Op.Operand;
     errs() << OI.Name << " " << OI.Rec->getName()
            << " (" << OI.MIOperandNo << ", " << OI.MINumOperands << ")\n";
   }
 }
 
-static void BuildInstructionInfos(CodeGenTarget &Target,
-                                  std::vector<InstructionInfo*> &Infos) {
-  const std::map<std::string, CodeGenInstruction> &Instructions =
-    Target.getInstructions();
+static std::string getEnumNameForToken(const StringRef &Str) {
+  std::string Res;
+  
+  for (StringRef::iterator it = Str.begin(), ie = Str.end(); it != ie; ++it) {
+    switch (*it) {
+    case '*': Res += "_STAR_"; break;
+    case '%': Res += "_PCT_"; break;
+    case ':': Res += "_COLON_"; break;
 
+    default:
+      if (isalnum(*it))  {
+        Res += *it;
+      } else {
+        Res += "_" + utostr((unsigned) *it) + "_";
+      }
+    }
+  }
+
+  return Res;
+}
+
+ClassInfo *AsmMatcherInfo::getTokenClass(const StringRef &Token) {
+  ClassInfo *&Entry = TokenClasses[Token];
+  
+  if (!Entry) {
+    Entry = new ClassInfo();
+    Entry->Kind = ClassInfo::Token;
+    Entry->Name = "MCK_" + getEnumNameForToken(Token);
+    Entry->ValueName = Token;
+    Entry->PredicateMethod = "<invalid>";
+    Entry->RenderMethod = "<invalid>";
+    Classes.push_back(Entry);
+  }
+
+  return Entry;
+}
+
+ClassInfo *
+AsmMatcherInfo::getOperandClass(const StringRef &Token,
+                                const CodeGenInstruction::OperandInfo &OI) {
+  std::string ClassName;
+  if (OI.Rec->isSubClassOf("RegisterClass")) {
+    ClassName = "Reg";
+  } else if (OI.Rec->isSubClassOf("Operand")) {
+    // FIXME: This should not be hard coded.
+    const RecordVal *RV = OI.Rec->getValue("Type");
+    
+    // FIXME: Yet another total hack.
+    if (RV->getValue()->getAsString() == "iPTR" ||
+        OI.Rec->getName() == "i8mem_NOREX" ||
+        OI.Rec->getName() == "lea32mem" ||
+        OI.Rec->getName() == "lea64mem" ||
+        OI.Rec->getName() == "i128mem" ||
+        OI.Rec->getName() == "sdmem" ||
+        OI.Rec->getName() == "ssmem" ||
+        OI.Rec->getName() == "lea64_32mem") {
+      ClassName = "Mem";
+    } else {
+      ClassName = "Imm";
+    }
+  }
+
+  ClassInfo *&Entry = OperandClasses[ClassName];
+  
+  if (!Entry) {
+    Entry = new ClassInfo();
+    // FIXME: Hack.
+    if (ClassName == "Reg") {
+      Entry->Kind = ClassInfo::Register;
+    } else {
+      Entry->Kind = ClassInfo::User;
+    }
+    Entry->Name = "MCK_" + ClassName;
+    Entry->ValueName = OI.Rec->getName();
+    Entry->PredicateMethod = "is" + ClassName;
+    Entry->RenderMethod = "add" + ClassName + "Operands";
+    Classes.push_back(Entry);
+  }
+  
+  return Entry;
+}
+
+void AsmMatcherInfo::BuildInfo(CodeGenTarget &Target) {
   for (std::map<std::string, CodeGenInstruction>::const_iterator 
-         it = Instructions.begin(), ie = Instructions.end(); it != ie; ++it) {
+         it = Target.getInstructions().begin(), 
+         ie = Target.getInstructions().end(); 
+       it != ie; ++it) {
     const CodeGenInstruction &CGI = it->second;
 
     if (!MatchOneInstr.empty() && it->first != MatchOneInstr)
@@ -381,15 +500,13 @@ static void BuildInstructionInfos(CodeGenTarget &Target,
       // Check for simple tokens.
       if (Token[0] != '$') {
         InstructionInfo::Operand Op;
-        Op.Kind = InstructionInfo::Operand::Token;
+        Op.Class = getTokenClass(Token);
+        Op.Operand = 0;
         II->Operands.push_back(Op);
         continue;
       }
 
       // Otherwise this is an operand reference.
-      InstructionInfo::Operand Op;
-      Op.Kind = InstructionInfo::Operand::Class;
-
       StringRef OperandName;
       if (Token[1] == '{')
         OperandName = Token.substr(2, Token.size() - 3);
@@ -406,38 +523,9 @@ static void BuildInstructionInfos(CodeGenTarget &Target,
       }
 
       const CodeGenInstruction::OperandInfo &OI = CGI.OperandList[Idx];      
-      Op.AsClass.Operand = &OI;
-
-      if (OI.Rec->isSubClassOf("RegisterClass")) {
-        Op.AsClass.ClassName = "Reg";
-        Op.AsClass.PredicateMethod = "isReg";
-        Op.AsClass.RenderMethod = "addRegOperands";
-      } else if (OI.Rec->isSubClassOf("Operand")) {
-        // FIXME: This should not be hard coded.
-        const RecordVal *RV = OI.Rec->getValue("Type");
-
-        // FIXME: Yet another total hack.
-        if (RV->getValue()->getAsString() == "iPTR" ||
-            OI.Rec->getName() == "i8mem_NOREX" ||
-            OI.Rec->getName() == "lea32mem" ||
-            OI.Rec->getName() == "lea64mem" ||
-            OI.Rec->getName() == "i128mem" ||
-            OI.Rec->getName() == "sdmem" ||
-            OI.Rec->getName() == "ssmem" ||
-            OI.Rec->getName() == "lea64_32mem") {
-          Op.AsClass.ClassName = "Mem";
-          Op.AsClass.PredicateMethod = "isMem";
-          Op.AsClass.RenderMethod = "addMemOperands";
-        } else {
-          Op.AsClass.ClassName = "Imm";
-          Op.AsClass.PredicateMethod = "isImm";
-          Op.AsClass.RenderMethod = "addImmOperands";
-        }
-      } else {
-        OI.Rec->dump();
-        assert(0 && "Unexpected instruction operand record!");
-      }
-
+      InstructionInfo::Operand Op;
+      Op.Class = getOperandClass(Token, OI);
+      Op.Operand = &OI;
       II->Operands.push_back(Op);
     }
 
@@ -445,7 +533,7 @@ static void BuildInstructionInfos(CodeGenTarget &Target,
     if (II->Operands.size() != II->Tokens.size())
       continue;
 
-    Infos.push_back(II.take());
+    Instructions.push_back(II.take());
   }
 }
 
@@ -486,9 +574,8 @@ static void ConstructConversionFunctions(CodeGenTarget &Target,
     SmallVector<std::pair<unsigned, unsigned>, 4> MIOperandList;
     for (unsigned i = 0, e = II.Operands.size(); i != e; ++i) {
       InstructionInfo::Operand &Op = II.Operands[i];
-      if (Op.Kind == InstructionInfo::Operand::Class)
-        MIOperandList.push_back(std::make_pair(Op.AsClass.Operand->MIOperandNo,
-                                               i));
+      if (Op.Operand)
+        MIOperandList.push_back(std::make_pair(Op.Operand->MIOperandNo, i));
     }
     std::sort(MIOperandList.begin(), MIOperandList.end());
 
@@ -505,7 +592,7 @@ static void ConstructConversionFunctions(CodeGenTarget &Target,
     unsigned CurIndex = 0;
     for (unsigned i = 0, e = MIOperandList.size(); i != e; ++i) {
       InstructionInfo::Operand &Op = II.Operands[MIOperandList[i].second];
-      assert(CurIndex <= Op.AsClass.Operand->MIOperandNo &&
+      assert(CurIndex <= Op.Operand->MIOperandNo &&
              "Duplicate match for instruction operand!");
       
       Signature += "_";
@@ -514,14 +601,14 @@ static void ConstructConversionFunctions(CodeGenTarget &Target,
       // .td file encodes "implicit" operands as explicit ones.
       //
       // FIXME: This should be removed from the MCInst structure.
-      for (; CurIndex != Op.AsClass.Operand->MIOperandNo; ++CurIndex)
+      for (; CurIndex != Op.Operand->MIOperandNo; ++CurIndex)
         Signature += "Imp";
 
-      Signature += Op.AsClass.ClassName;
-      Signature += utostr(Op.AsClass.Operand->MINumOperands);
+      Signature += Op.Class->Name;
+      Signature += utostr(Op.Operand->MINumOperands);
       Signature += "_" + utostr(MIOperandList[i].second);
 
-      CurIndex += Op.AsClass.Operand->MINumOperands;
+      CurIndex += Op.Operand->MINumOperands;
     }
 
     // Add any trailing implicit operands.
@@ -546,13 +633,13 @@ static void ConstructConversionFunctions(CodeGenTarget &Target,
       InstructionInfo::Operand &Op = II.Operands[MIOperandList[i].second];
 
       // Add the implicit operands.
-      for (; CurIndex != Op.AsClass.Operand->MIOperandNo; ++CurIndex)
+      for (; CurIndex != Op.Operand->MIOperandNo; ++CurIndex)
         CvtOS << "    Inst.addOperand(MCOperand::CreateReg(0));\n";
 
       CvtOS << "    Operands[" << MIOperandList[i].second 
-         << "]." << Op.AsClass.RenderMethod 
-         << "(Inst, " << Op.AsClass.Operand->MINumOperands << ");\n";
-      CurIndex += Op.AsClass.Operand->MINumOperands;
+         << "]." << Op.Class->RenderMethod 
+         << "(Inst, " << Op.Operand->MINumOperands << ");\n";
+      CurIndex += Op.Operand->MINumOperands;
     }
     
     // And add trailing implicit operands.
@@ -575,6 +662,77 @@ static void ConstructConversionFunctions(CodeGenTarget &Target,
   OS << "}\n\n";
 
   OS << CvtOS.str();
+}
+
+/// EmitMatchClassEnumeration - Emit the enumeration for match class kinds.
+static void EmitMatchClassEnumeration(CodeGenTarget &Target,
+                                      std::vector<ClassInfo*> &Infos,
+                                      raw_ostream &OS) {
+  OS << "namespace {\n\n";
+
+  OS << "/// MatchClassKind - The kinds of classes which participate in\n"
+     << "/// instruction matching.\n";
+  OS << "enum MatchClassKind {\n";
+  OS << "  InvalidMatchClass = 0,\n";
+  for (std::vector<ClassInfo*>::iterator it = Infos.begin(), 
+         ie = Infos.end(); it != ie; ++it) {
+    ClassInfo &CI = **it;
+    OS << "  " << CI.Name << ", // ";
+    if (CI.Kind == ClassInfo::Token) {
+      OS << "'" << CI.ValueName << "'\n";
+    } else if (CI.Kind == ClassInfo::Register) {
+      if (!CI.ValueName.empty())
+        OS << "register class '" << CI.ValueName << "'\n";
+      else
+        OS << "derived register class\n";
+    } else {
+      OS << "user defined class '" << CI.ValueName << "'\n";
+    }
+  }
+  OS << "  NumMatchClassKinds\n";
+  OS << "};\n\n";
+
+  OS << "}\n\n";
+}
+
+/// EmitMatchRegisterName - Emit the function to match a string to appropriate
+/// match class value.
+static void EmitMatchTokenString(CodeGenTarget &Target,
+                                 std::vector<ClassInfo*> &Infos,
+                                 raw_ostream &OS) {
+  // FIXME: TableGen should have a fast string matcher generator.
+  OS << "static MatchClassKind MatchTokenString(const StringRef &Name) {\n";
+  for (std::vector<ClassInfo*>::iterator it = Infos.begin(), 
+         ie = Infos.end(); it != ie; ++it) {
+    ClassInfo &CI = **it;
+
+    if (CI.Kind == ClassInfo::Token)
+      OS << "  if (Name == \"" << CI.ValueName << "\")\n"
+         << "    return " << CI.Name << ";\n\n";
+  }
+  OS << "  return InvalidMatchClass;\n";
+  OS << "}\n\n";
+}
+
+/// EmitClassifyOperand - Emit the function to classify an operand.
+static void EmitClassifyOperand(CodeGenTarget &Target,
+                                std::vector<ClassInfo*> &Infos,
+                                raw_ostream &OS) {
+  OS << "static MatchClassKind ClassifyOperand("
+     << Target.getName() << "Operand &Operand) {\n";
+  OS << "  if (Operand.isToken())\n";
+  OS << "    return MatchTokenString(Operand.getToken());\n\n";
+  for (std::vector<ClassInfo*>::iterator it = Infos.begin(), 
+         ie = Infos.end(); it != ie; ++it) {
+    ClassInfo &CI = **it;
+
+    if (CI.Kind != ClassInfo::Token) {
+      OS << "  if (Operand." << CI.PredicateMethod << "())\n";
+      OS << "    return " << CI.Name << ";\n\n";
+    }
+  }
+  OS << "  return InvalidMatchClass;\n";
+  OS << "}\n\n";
 }
 
 /// EmitMatchRegisterName - Emit the function to match a string to the target
@@ -611,13 +769,14 @@ void AsmMatcherEmitter::run(raw_ostream &OS) {
   // Emit the function to match a register name to number.
   EmitMatchRegisterName(Target, AsmParser, OS);
 
-  // Compute the information on the list of instructions to match.
-  std::vector<InstructionInfo*> Infos;
-  BuildInstructionInfos(Target, Infos);
+  // Compute the information on the instructions to match.
+  AsmMatcherInfo Info;
+  Info.BuildInfo(Target);
 
   DEBUG_WITH_TYPE("instruction_info", {
-      for (std::vector<InstructionInfo*>::iterator it = Infos.begin(),
-             ie = Infos.end(); it != ie; ++it)
+      for (std::vector<InstructionInfo*>::iterator 
+             it = Info.Instructions.begin(), ie = Info.Instructions.end(); 
+           it != ie; ++it)
         (*it)->dump();
     });
 
@@ -625,40 +784,97 @@ void AsmMatcherEmitter::run(raw_ostream &OS) {
   // we have an ambiguity which the .td file should be forced to resolve.
 
   // Generate the terminal actions to convert operands into an MCInst.
-  ConstructConversionFunctions(Target, Infos, OS);
+  ConstructConversionFunctions(Target, Info.Instructions, OS);
 
-  // Build a very stupid version of the match function which just checks each
-  // instruction in order.
+  // Emit the enumeration for classes which participate in matching.
+  EmitMatchClassEnumeration(Target, Info.Classes, OS);
 
+  // Emit the routine to match token strings to their match class.
+  EmitMatchTokenString(Target, Info.Classes, OS);
+
+  // Emit the routine to classify an operand.
+  EmitClassifyOperand(Target, Info.Classes, OS);
+
+  // Finally, build the match function.
+
+  size_t MaxNumOperands = 0;
+  for (std::vector<InstructionInfo*>::const_iterator it =
+         Info.Instructions.begin(), ie = Info.Instructions.end();
+       it != ie; ++it)
+    MaxNumOperands = std::max(MaxNumOperands, (*it)->Operands.size());
+  
   OS << "bool " << Target.getName() << ClassName
      << "::MatchInstruction(" 
      << "SmallVectorImpl<" << Target.getName() << "Operand> &Operands, "
      << "MCInst &Inst) {\n";
 
-  for (std::vector<InstructionInfo*>::const_iterator it = Infos.begin(),
-         ie = Infos.end(); it != ie; ++it) {
+  // Emit the static match table; unused classes get initalized to 0 which is
+  // guaranteed to be InvalidMatchClass.
+  //
+  // FIXME: We can reduce the size of this table very easily. First, we change
+  // it so that store the kinds in separate bit-fields for each index, which
+  // only needs to be the max width used for classes at that index (we also need
+  // to reject based on this during classification). If we then make sure to
+  // order the match kinds appropriately (putting mnemonics last), then we
+  // should only end up using a few bits for each class, especially the ones
+  // following the mnemonic.
+  OS << "  static struct MatchEntry {\n";
+  OS << "    unsigned Opcode;\n";
+  OS << "    ConversionKind ConvertFn;\n";
+  OS << "    MatchClassKind Classes[" << MaxNumOperands << "];\n";
+  OS << "  } MatchTable[" << Info.Instructions.size() << "] = {\n";
+
+  for (std::vector<InstructionInfo*>::const_iterator it =
+         Info.Instructions.begin(), ie = Info.Instructions.end();
+       it != ie; ++it) {
     InstructionInfo &II = **it;
 
-    // The parser is expected to arrange things so that each "token" matches
-    // exactly one target specific operand.
-    OS << "  if (Operands.size() == " << II.Operands.size();
+    OS << "    { " << Target.getName() << "::" << II.InstrName
+       << ", " << II.ConversionFnKind << ", { ";
     for (unsigned i = 0, e = II.Operands.size(); i != e; ++i) {
       InstructionInfo::Operand &Op = II.Operands[i];
       
-      OS << " &&\n";
-      OS << "      ";
-
-      if (Op.Kind == InstructionInfo::Operand::Token)
-        OS << "Operands[" << i << "].isToken(\"" << II.Tokens[i] << "\")";
-      else
-        OS << "Operands[" << i << "]." 
-           << Op.AsClass.PredicateMethod << "()";
+      if (i) OS << ", ";
+      OS << Op.Class->Name;
     }
-    OS << ")\n";
-    OS << "    return ConvertToMCInst(" << II.ConversionFnKind << ", Inst, "
-       << Target.getName() << "::" << II.InstrName
-       << ", Operands);\n\n";
+    OS << " } },\n";
   }
+
+  OS << "  };\n\n";
+
+  // Emit code to compute the class list for this operand vector.
+  OS << "  // Eliminate obvious mismatches.\n";
+  OS << "  if (Operands.size() > " << MaxNumOperands << ")\n";
+  OS << "    return true;\n\n";
+
+  OS << "  // Compute the class list for this operand vector.\n";
+  OS << "  MatchClassKind Classes[" << MaxNumOperands << "];\n";
+  OS << "  for (unsigned i = 0, e = Operands.size(); i != e; ++i) {\n";
+  OS << "    Classes[i] = ClassifyOperand(Operands[i]);\n\n";
+
+  OS << "    // Check for invalid operands before matching.\n";
+  OS << "    if (Classes[i] == InvalidMatchClass)\n";
+  OS << "      return true;\n";
+  OS << "  }\n\n";
+
+  OS << "  // Mark unused classes.\n";
+  OS << "  for (unsigned i = Operands.size(), e = " << MaxNumOperands << "; "
+     << "i != e; ++i)\n";
+  OS << "    Classes[i] = InvalidMatchClass;\n\n";
+
+  // Emit code to search the table.
+  OS << "  // Search the table.\n";
+  OS << "  for (MatchEntry *it = MatchTable, "
+     << "*ie = MatchTable + " << Info.Instructions.size()
+     << "; it != ie; ++it) {\n";
+  for (unsigned i = 0; i != MaxNumOperands; ++i) {
+    OS << "    if (Classes[" << i << "] != it->Classes[" << i << "])\n";
+    OS << "      continue;\n";
+  }
+  OS << "\n";
+  OS << "    return ConvertToMCInst(it->ConvertFn, Inst, "
+     << "it->Opcode, Operands);\n";
+  OS << "  }\n\n";
 
   OS << "  return true;\n";
   OS << "}\n\n";
