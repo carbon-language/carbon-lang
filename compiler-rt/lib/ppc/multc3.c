@@ -1,8 +1,13 @@
-// This file is distributed under the University of Illinois Open Source
-// License. See LICENSE.TXT for details.
+/* This file is distributed under the University of Illinois Open Source
+ * License. See LICENSE.TXT for details.
+ */
 
 #include "DD.h"
 #include <math.h>
+
+#if !defined(INFINITY) && defined(HUGE_VAL)
+#define INFINITY HUGE_VAL
+#endif /* INFINITY */
 
 #define makeFinite(x)	{ \
 							(x).hi = __builtin_copysign(isinf((x).hi) ? 1.0 : 0.0, (x).hi); \
