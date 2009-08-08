@@ -138,13 +138,11 @@ protected:
     NodeEntry &node1Entry = getNodeEntry(newEdgeEntry.getNode1Itr()),
               &node2Entry = getNodeEntry(newEdgeEntry.getNode2Itr());
 
-    unsigned n1Len = node1Entry.getCosts().getLength(),
-             n2Len = node2Entry.getCosts().getLength(),
-             mRows = newEdgeEntry.getCosts().getRows(),
-             mCols = newEdgeEntry.getCosts().getCols();
-
     // Sanity check on matrix dimensions.
-    assert((n1Len == mRows) && (n2Len == mCols) &&
+    assert((node1Entry.getCosts().getLength() == 
+            newEdgeEntry.getCosts().getRows()) && 
+           (node2Entry.getCosts().getLength() == 
+            newEdgeEntry.getCosts().getCols()) &&
         "Matrix dimensions do not match cost vector dimensions.");
 
     // Create links between nodes and edges.
