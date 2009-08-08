@@ -66,6 +66,11 @@ struct PairSecondSortReverse
   }
 };
 
+static double ignoreMissing(double w) {
+  if (w == ProfileInfo::MissingValue) return 0;
+  return w;
+}
+
 namespace {
   class ProfileAnnotator : public AssemblyAnnotationWriter {
     ProfileInfo &PI;
@@ -73,16 +78,24 @@ namespace {
     ProfileAnnotator(ProfileInfo& pi) : PI(pi) {}
 
     virtual void emitFunctionAnnot(const Function *F, raw_ostream &OS) {
-      OS << ";;; %" << F->getName() << " called " << PI.getExecutionCount(F)
-         << " times.\n;;;\n";
+      OS << ";;; %" << F->getName() << " called ";
+      double w = PI.getExecutionCount(F);
+      if (w == ProfileInfo::MissingValue)
+        OS << "(no value)";
+      else
+        OS << (unsigned)w;
+      OS << " times.\n;;;\n";
     }
     virtual void emitBasicBlockStartAnnot(const BasicBlock *BB,
                                           raw_ostream &OS) {
-      unsigned w = PI.getExecutionCount(BB);
-      if (w != 0)
-        OS << "\t;;; Basic block executed " << w << " times.\n";
+      double w = PI.getExecutionCount(BB);
+      if (w == ProfileInfo::MissingValue)
+        OS << "\t;;; (no value)\n";
       else
-        OS << "\t;;; Never executed!\n";
+        if (w != 0)
+          OS << "\t;;; Basic block executed " << w << " times.\n";
+        else
+          OS << "\t;;; Never executed!\n";
     }
 
     virtual void emitBasicBlockEndAnnot(const BasicBlock *BB, raw_ostream &OS) {
@@ -92,8 +105,8 @@ namespace {
       const TerminatorInst *TI = BB->getTerminator();
       for (unsigned s = 0, e = TI->getNumSuccessors(); s != e; ++s) {
         BasicBlock* Succ = TI->getSuccessor(s);
-        SuccCounts.push_back(std::make_pair(std::make_pair(BB,Succ),
-                                            PI.getEdgeWeight(BB,Succ)));
+        double w = ignoreMissing(PI.getEdgeWeight(std::make_pair(BB,Succ)));
+        SuccCounts.push_back(std::make_pair(std::make_pair(BB,Succ), w));
       }
       if (!SuccCounts.empty()) {
         OS << "\t;;; Out-edge counts:";
@@ -143,10 +156,12 @@ bool ProfileInfoPrinterPass::runOnModule(Module &M) {
   std::vector<std::pair<BasicBlock*, unsigned> > Counts;
   for (Module::iterator FI = M.begin(), FE = M.end(); FI != FE; ++FI) {
     if (FI->isDeclaration()) continue;
-    FunctionCounts.push_back(std::make_pair(FI,PI.getExecutionCount(FI)));
+    double w = ignoreMissing(PI.getExecutionCount(FI));
+    FunctionCounts.push_back(std::make_pair(FI,w));
     for (Function::iterator BB = FI->begin(), BBE = FI->end(); 
          BB != BBE; ++BB) {
-      Counts.push_back(std::make_pair(BB,PI.getExecutionCount(BB)));
+      double w = ignoreMissing(PI.getExecutionCount(BB));
+      Counts.push_back(std::make_pair(BB,w));
     }
   }
 

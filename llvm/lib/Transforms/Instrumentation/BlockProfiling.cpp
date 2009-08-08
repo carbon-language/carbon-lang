@@ -106,7 +106,8 @@ bool BlockProfiler::runOnModule(Module &M) {
 
   unsigned NumBlocks = 0;
   for (Module::iterator I = M.begin(), E = M.end(); I != E; ++I)
-    NumBlocks += I->size();
+    if (!I->isDeclaration())
+      NumBlocks += I->size();
 
   const Type *ATy = ArrayType::get(Type::Int32Ty, NumBlocks);
   GlobalVariable *Counters =
@@ -115,10 +116,12 @@ bool BlockProfiler::runOnModule(Module &M) {
 
   // Instrument all of the blocks...
   unsigned i = 0;
-  for (Module::iterator I = M.begin(), E = M.end(); I != E; ++I)
+  for (Module::iterator I = M.begin(), E = M.end(); I != E; ++I) {
+    if (I->isDeclaration()) continue;
     for (Function::iterator BB = I->begin(), E = I->end(); BB != E; ++BB)
       // Insert counter at the start of the block
       IncrementCounterInBlock(BB, i++, Counters);
+  }
 
   // Add the initialization call to main.
   InsertProfilingInitCall(Main, "llvm_start_block_profiling", Counters);

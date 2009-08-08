@@ -69,34 +69,63 @@ Pass *llvm::createProfileLoaderPass(const std::string &Filename) {
 
 bool LoaderPass::runOnModule(Module &M) {
   ProfileInfoLoader PIL("profile-loader", Filename, M);
-  EdgeCounts.clear();
 
+  EdgeInformation.clear();
   std::vector<unsigned> ECs = PIL.getRawEdgeCounts();
-  std::vector<unsigned> BCs = PIL.getRawBlockCounts();
-  std::vector<unsigned> FCs = PIL.getRawFunctionCounts();
-  // Instrument all of the edges...
-  unsigned ei = 0;
-  unsigned bi = 0;
-  unsigned fi = 0;
-  for (Module::iterator F = M.begin(), E = M.end(); F != E; ++F) {
-    if (F->isDeclaration()) continue;
-    if (fi<FCs.size()) FunctionCounts[F] = FCs[fi++];
-    for (Function::iterator BB = F->begin(), E = F->end(); BB != E; ++BB) {
-      if (bi<BCs.size()) BlockCounts[BB] = BCs[bi++];
-      // Okay, we have to add a counter of each outgoing edge.  If the
-      // outgoing edge is not critical don't split it, just insert the counter
-      // in the source or destination of the edge.
-      TerminatorInst *TI = BB->getTerminator();
-      for (unsigned s = 0, e = TI->getNumSuccessors(); s != e; ++s) {
-        if (ei < ECs.size())
-          EdgeCounts[std::make_pair(BB, TI->getSuccessor(s))]+= ECs[ei++];
+  if (ECs.size() > 0) {
+    unsigned ei = 0;
+    for (Module::iterator F = M.begin(), E = M.end(); F != E; ++F) {
+      if (F->isDeclaration()) continue;
+      if (ei < ECs.size())
+        EdgeInformation[F][ProfileInfo::getEdge(0,&F->getEntryBlock())] +=
+          ECs[ei++];
+      for (Function::iterator BB = F->begin(), E = F->end(); BB != E; ++BB) {
+        // Okay, we have to add a counter of each outgoing edge.  If the
+        // outgoing edge is not critical don't split it, just insert the counter
+        // in the source or destination of the edge.
+        TerminatorInst *TI = BB->getTerminator();
+        for (unsigned s = 0, e = TI->getNumSuccessors(); s != e; ++s) {
+          if (ei < ECs.size())
+            EdgeInformation[F][ProfileInfo::getEdge(BB, TI->getSuccessor(s))] +=
+              ECs[ei++];
+        }
       }
     }
+    if (ei != ECs.size()) {
+      cerr << "WARNING: profile information is inconsistent with "
+           << "the current program!\n";
+    }
   }
- 
-  if (ei != ECs.size()) {
-    cerr << "WARNING: profile information is inconsistent with "
-         << "the current program!\n";
+
+  BlockInformation.clear();
+  std::vector<unsigned> BCs = PIL.getRawBlockCounts();
+  if (BCs.size() > 0) {
+    unsigned bi = 0;
+    for (Module::iterator F = M.begin(), E = M.end(); F != E; ++F) {
+      if (F->isDeclaration()) continue;
+      for (Function::iterator BB = F->begin(), E = F->end(); BB != E; ++BB)
+        if (bi < BCs.size())
+          BlockInformation[F][BB] = BCs[bi++];
+    }
+    if (bi != BCs.size()) {
+      cerr << "WARNING: profile information is inconsistent with "
+           << "the current program!\n";
+    }
+  }
+
+  FunctionInformation.clear();
+  std::vector<unsigned> FCs = PIL.getRawFunctionCounts();
+  if (FCs.size() > 0) {
+    unsigned fi = 0;
+    for (Module::iterator F = M.begin(), E = M.end(); F != E; ++F) {
+      if (F->isDeclaration()) continue;
+      if (fi < FCs.size())
+        FunctionInformation[F] = FCs[fi++];
+    }
+    if (fi != FCs.size()) {
+      cerr << "WARNING: profile information is inconsistent with "
+           << "the current program!\n";
+    }
   }
 
   return false;

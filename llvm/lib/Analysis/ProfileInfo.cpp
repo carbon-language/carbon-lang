@@ -26,9 +26,14 @@ char ProfileInfo::ID = 0;
 
 ProfileInfo::~ProfileInfo() {}
 
-unsigned ProfileInfo::getExecutionCount(const BasicBlock *BB) const {
-  if (BlockCounts.find(BB) != BlockCounts.end()) 
-    return BlockCounts.find(BB)->second;
+double ProfileInfo::getExecutionCount(const BasicBlock *BB) {
+  std::map<const Function*, BlockCounts>::iterator J =
+    BlockInformation.find(BB->getParent());
+  if (J != BlockInformation.end()) {
+    BlockCounts::iterator I = J->second.find(BB);
+    if (I != J->second.end())
+      return I->second;
+  }
 
   pred_const_iterator PI = pred_begin(BB), PE = pred_end(BB);
 
@@ -36,53 +41,37 @@ unsigned ProfileInfo::getExecutionCount(const BasicBlock *BB) const {
   if (PI == PE) {
     // If this is the entry block, look for the Null -> Entry edge.
     if (BB == &BB->getParent()->getEntryBlock())
-      return getEdgeWeight(0, BB);
+      return getEdgeWeight(getEdge(0, BB));
     else
       return 0;   // Otherwise, this is a dead block.
   }
 
   // Otherwise, if there are predecessors, the execution count of this block is
-  // the sum of the edge frequencies from the incoming edges.  Note that if
-  // there are multiple edges from a predecessor to this block that we don't
-  // want to count its weight multiple times.  For this reason, we keep track of
-  // the predecessors we've seen and only count them if we haven't run into them
-  // yet.
-  //
-  // We don't want to create an std::set unless we are dealing with a block that
-  // has a LARGE number of in-edges.  Handle the common case of having only a
-  // few in-edges with special code.
-  //
-  const BasicBlock *FirstPred = *PI;
-  unsigned Count = getEdgeWeight(FirstPred, BB);
-  ++PI;
-  if (PI == PE) return Count;   // Quick exit for single predecessor blocks
-
-  const BasicBlock *SecondPred = *PI;
-  if (SecondPred != FirstPred) Count += getEdgeWeight(SecondPred, BB);
-  ++PI;
-  if (PI == PE) return Count;   // Quick exit for two predecessor blocks
-
-  const BasicBlock *ThirdPred = *PI;
-  if (ThirdPred != FirstPred && ThirdPred != SecondPred)
-    Count += getEdgeWeight(ThirdPred, BB);
-  ++PI;
-  if (PI == PE) return Count;   // Quick exit for three predecessor blocks
-
+  // the sum of the edge frequencies from the incoming edges.
   std::set<const BasicBlock*> ProcessedPreds;
-  ProcessedPreds.insert(FirstPred);
-  ProcessedPreds.insert(SecondPred);
-  ProcessedPreds.insert(ThirdPred);
+  double Count = 0;
   for (; PI != PE; ++PI)
-    if (ProcessedPreds.insert(*PI).second)
-      Count += getEdgeWeight(*PI, BB);
+    if (ProcessedPreds.insert(*PI).second) {
+      double w = getEdgeWeight(getEdge(*PI, BB));
+      if (w == MissingValue) {
+        Count = MissingValue; break;
+      }
+      Count += w;
+    }
+
+  BlockInformation[BB->getParent()][BB] = Count;
   return Count;
 }
 
-unsigned ProfileInfo::getExecutionCount(const Function *F) const {
-  if (FunctionCounts.find(F) != FunctionCounts.end())
-    return FunctionCounts.find(F)->second;
+double ProfileInfo::getExecutionCount(const Function *F) {
+  std::map<const Function*, double>::iterator J =
+    FunctionInformation.find(F);
+  if (J != FunctionInformation.end())
+    return J->second;
 
-  return getExecutionCount(&F->getEntryBlock());
+  double Count = getExecutionCount(&F->getEntryBlock());
+  FunctionInformation[F] = Count;
+  return Count;
 }
 
 

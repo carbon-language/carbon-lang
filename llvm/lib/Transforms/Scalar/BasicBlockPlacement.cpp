@@ -127,13 +127,13 @@ void BlockPlacement::PlaceBlocks(BasicBlock *BB) {
       /*empty*/;
     if (SI == E) return;  // No more successors to place.
 
-    unsigned MaxExecutionCount = PI->getExecutionCount(*SI);
+    double MaxExecutionCount = PI->getExecutionCount(*SI);
     BasicBlock *MaxSuccessor = *SI;
 
     // Scan for more frequently executed successors
     for (; SI != E; ++SI)
       if (!PlacedBlocks.count(*SI)) {
-        unsigned Count = PI->getExecutionCount(*SI);
+        double Count = PI->getExecutionCount(*SI);
         if (Count > MaxExecutionCount ||
             // Prefer to not disturb the code.
             (Count == MaxExecutionCount && *SI == &*InsertPos)) {
