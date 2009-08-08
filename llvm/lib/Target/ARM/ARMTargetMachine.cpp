@@ -26,6 +26,8 @@ static cl::opt<bool> DisableLdStOpti("disable-arm-loadstore-opti", cl::Hidden,
                               cl::desc("Disable load store optimization pass"));
 static cl::opt<bool> DisableIfConversion("disable-arm-if-conversion",cl::Hidden,
                               cl::desc("Disable if-conversion pass"));
+static cl::opt<bool> Thumb2Shrink("shrink-thumb2-instructions", cl::Hidden,
+                  cl::desc("Shrink 32-bit Thumb2 instructions to 16-bit ones"));
 
 extern "C" void LLVMInitializeARMTarget() { 
   // Register the target.
@@ -113,8 +115,11 @@ bool ARMBaseTargetMachine::addPreEmitPass(PassManagerBase &PM,
       !DisableIfConversion && !Subtarget.isThumb())
     PM.add(createIfConverterPass());
 
-  if (Subtarget.isThumb2())
+  if (Subtarget.isThumb2()) {
     PM.add(createThumb2ITBlockPass());
+    if (Thumb2Shrink)
+      PM.add(createThumb2SizeReductionPass());
+  }
 
   PM.add(createARMConstantIslandPass());
   return true;
