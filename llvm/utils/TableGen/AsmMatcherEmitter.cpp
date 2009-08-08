@@ -781,7 +781,7 @@ static bool EmitStringMatcherForChar(const std::string &StrVariableName,
       OS << Indent << "if (" << StrVariableName << ".substr(" << CharNo << ","
          << NumChars << ") != \"";
       OS << Matches[0]->first.substr(CharNo, NumChars) << "\")\n";
-      OS << Indent << "  break;";
+      OS << Indent << "  break;\n";
     }
     
     return EmitStringMatcherForChar(StrVariableName, Matches, 
