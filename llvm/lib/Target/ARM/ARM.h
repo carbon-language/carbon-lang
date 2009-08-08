@@ -105,6 +105,7 @@ FunctionPass *createARMLoadStoreOptimizationPass(bool PreAlloc = false);
 FunctionPass *createARMConstantIslandPass();
 FunctionPass *createNEONPreAllocPass();
 FunctionPass *createThumb2ITBlockPass();
+FunctionPass *createThumb2SizeReductionPass();
 
 extern Target TheARMTarget, TheThumbTarget;
 

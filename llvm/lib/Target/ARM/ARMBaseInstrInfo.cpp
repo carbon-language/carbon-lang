@@ -374,6 +374,7 @@ SubsumesPredicate(const SmallVectorImpl<MachineOperand> &Pred1,
 
 bool ARMBaseInstrInfo::DefinesPredicate(MachineInstr *MI,
                                     std::vector<MachineOperand> &Pred) const {
+  // FIXME: This confuses implicit_def with optional CPSR def.
   const TargetInstrDesc &TID = MI->getDesc();
   if (!TID.getImplicitDefs() && !TID.hasOptionalDef())
     return false;
@@ -803,6 +804,21 @@ ARMBaseInstrInfo::canFoldMemoryOperand(const MachineInstr *MI,
 
   return false;
 }
+
+/// getInstrPredicate - If instruction is predicated, returns its predicate
+/// condition, otherwise returns AL. It also returns the condition code
+/// register by reference.
+ARMCC::CondCodes llvm::getInstrPredicate(MachineInstr *MI, unsigned &PredReg) {
+  int PIdx = MI->findFirstPredOperandIdx();
+  if (PIdx == -1) {
+    PredReg = 0;
+    return ARMCC::AL;
+  }
+
+  PredReg = MI->getOperand(PIdx+1).getReg();
+  return (ARMCC::CondCodes)MI->getOperand(PIdx).getImm();
+}
+
 
 int llvm::getMatchingCondBranchOpcode(int Opc) {
   if (Opc == ARM::B)

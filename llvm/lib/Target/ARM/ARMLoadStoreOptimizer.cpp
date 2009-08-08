@@ -15,6 +15,7 @@
 #define DEBUG_TYPE "arm-ldst-opt"
 #include "ARM.h"
 #include "ARMAddressingModes.h"
+#include "ARMBaseInstrInfo.h"
 #include "ARMMachineFunctionInfo.h"
 #include "ARMRegisterInfo.h"
 #include "llvm/DerivedTypes.h"
@@ -312,20 +313,6 @@ ARMLoadStoreOpt::MergeLDR_STR(MachineBasicBlock &MBB, unsigned SIndex,
   return;
 }
 
-/// getInstrPredicate - If instruction is predicated, returns its predicate
-/// condition, otherwise returns AL. It also returns the condition code
-/// register by reference.
-static ARMCC::CondCodes getInstrPredicate(MachineInstr *MI, unsigned &PredReg) {
-  int PIdx = MI->findFirstPredOperandIdx();
-  if (PIdx == -1) {
-    PredReg = 0;
-    return ARMCC::AL;
-  }
-
-  PredReg = MI->getOperand(PIdx+1).getReg();
-  return (ARMCC::CondCodes)MI->getOperand(PIdx).getImm();
-}
-
 static inline bool isMatchingDecrement(MachineInstr *MI, unsigned Base,
                                        unsigned Bytes, unsigned Limit,
                                        ARMCC::CondCodes Pred, unsigned PredReg){
@@ -347,7 +334,7 @@ static inline bool isMatchingDecrement(MachineInstr *MI, unsigned Base,
   return (MI->getOperand(0).getReg() == Base &&
           MI->getOperand(1).getReg() == Base &&
           (MI->getOperand(2).getImm()*Scale) == Bytes &&
-          getInstrPredicate(MI, MyPredReg) == Pred &&
+          llvm::getInstrPredicate(MI, MyPredReg) == Pred &&
           MyPredReg == PredReg);
 }
 
@@ -372,7 +359,7 @@ static inline bool isMatchingIncrement(MachineInstr *MI, unsigned Base,
   return (MI->getOperand(0).getReg() == Base &&
           MI->getOperand(1).getReg() == Base &&
           (MI->getOperand(2).getImm()*Scale) == Bytes &&
-          getInstrPredicate(MI, MyPredReg) == Pred &&
+          llvm::getInstrPredicate(MI, MyPredReg) == Pred &&
           MyPredReg == PredReg);
 }
 
@@ -424,7 +411,7 @@ bool ARMLoadStoreOpt::MergeBaseUpdateLSMultiple(MachineBasicBlock &MBB,
   unsigned Base = MI->getOperand(0).getReg();
   unsigned Bytes = getLSMultipleTransferSize(MI);
   unsigned PredReg = 0;
-  ARMCC::CondCodes Pred = getInstrPredicate(MI, PredReg);
+  ARMCC::CondCodes Pred = llvm::getInstrPredicate(MI, PredReg);
   int Opcode = MI->getOpcode();
   bool isAM4 = Opcode == ARM::LDM || Opcode == ARM::t2LDM ||
     Opcode == ARM::STM || Opcode == ARM::t2STM;
@@ -582,7 +569,7 @@ bool ARMLoadStoreOpt::MergeBaseUpdateLoadStore(MachineBasicBlock &MBB,
     return false;
 
   unsigned PredReg = 0;
-  ARMCC::CondCodes Pred = getInstrPredicate(MI, PredReg);
+  ARMCC::CondCodes Pred = llvm::getInstrPredicate(MI, PredReg);
   bool DoMerge = false;
   ARM_AM::AddrOpc AddSub = ARM_AM::add;
   unsigned NewOpc = 0;
@@ -800,7 +787,7 @@ bool ARMLoadStoreOpt::FixInvalidRegPairOp(MachineBasicBlock &MBB,
     bool OffKill = OffOp.isKill();
     int OffImm = getMemoryOpOffset(MI);
     unsigned PredReg = 0;
-    ARMCC::CondCodes Pred = getInstrPredicate(MI, PredReg);
+    ARMCC::CondCodes Pred = llvm::getInstrPredicate(MI, PredReg);
 
     if (OddRegNum > EvenRegNum && OffReg == 0 && OffImm == 0) {
       // Ascending register numbers and no offset. It's safe to change it to a
@@ -889,7 +876,7 @@ bool ARMLoadStoreOpt::LoadStoreMultipleOpti(MachineBasicBlock &MBB) {
       unsigned Size = getLSMultipleTransferSize(MBBI);
       unsigned Base = MBBI->getOperand(1).getReg();
       unsigned PredReg = 0;
-      ARMCC::CondCodes Pred = getInstrPredicate(MBBI, PredReg);
+      ARMCC::CondCodes Pred = llvm::getInstrPredicate(MBBI, PredReg);
       int Offset = getMemoryOpOffset(MBBI);
       // Watch out for:
       // r4 := ldr [r5]
@@ -1217,7 +1204,7 @@ ARMPreAllocLoadStoreOpt::CanFormLdStDWord(MachineInstr *Op0, MachineInstr *Op1,
     return false;
   BaseReg = Op0->getOperand(1).getReg();
   OffReg = Op0->getOperand(2).getReg();
-  Pred = getInstrPredicate(Op0, PredReg);
+  Pred = llvm::getInstrPredicate(Op0, PredReg);
   dl = Op0->getDebugLoc();
   return true;
 }
@@ -1380,7 +1367,7 @@ ARMPreAllocLoadStoreOpt::RescheduleLoadStoreInstrs(MachineBasicBlock *MBB) {
       if (!isMemoryOp(MI))
         continue;
       unsigned PredReg = 0;
-      if (getInstrPredicate(MI, PredReg) != ARMCC::AL)
+      if (llvm::getInstrPredicate(MI, PredReg) != ARMCC::AL)
         continue;
 
       int Opcode = MI->getOpcode();

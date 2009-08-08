@@ -287,6 +287,11 @@ bool isJumpTableBranchOpcode(int Opc) {
     Opc == ARM::tBR_JTr || Opc == ARM::t2BR_JT;
 }
 
+/// getInstrPredicate - If instruction is predicated, returns its predicate
+/// condition, otherwise returns AL. It also returns the condition code
+/// register by reference.
+ARMCC::CondCodes getInstrPredicate(MachineInstr *MI, unsigned &PredReg);
+
 int getMatchingCondBranchOpcode(int Opc);
 
 /// emitARMRegPlusImmediate / emitT2RegPlusImmediate - Emits a series of
