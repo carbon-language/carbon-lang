@@ -359,7 +359,7 @@ void ARMAsmPrinter::printOperand(const MachineInstr *MI, int OpNum,
   }
   case MachineOperand::MO_Immediate: {
     if (!Modifier || strcmp(Modifier, "no_hash") != 0)
-      O << "#";
+      O << '#';
 
     O << MO.getImm();
     break;

@@ -1613,27 +1613,27 @@ def VMOVv2i64 : N1ModImm<1, 0b000, 0b1110, 0, 1, 1, 1, (outs QPR:$dst),
 
 def VGETLNs8  : NVGetLane<0b11100101, 0b1011, 0b00,
                           (outs GPR:$dst), (ins DPR:$src, i32imm:$lane),
-                          NoItinerary, "vmov", ".s8\t$dst, $src[$lane]",
+                          NoItinerary, "vmov", ".s8\t$dst, $src[${lane:no_hash}]",
                           [(set GPR:$dst, (NEONvgetlanes (v8i8 DPR:$src),
                                            imm:$lane))]>;
 def VGETLNs16 : NVGetLane<0b11100001, 0b1011, 0b01,
                           (outs GPR:$dst), (ins DPR:$src, i32imm:$lane),
-                          NoItinerary, "vmov", ".s16\t$dst, $src[$lane]",
+                          NoItinerary, "vmov", ".s16\t$dst, $src[${lane:no_hash}]",
                           [(set GPR:$dst, (NEONvgetlanes (v4i16 DPR:$src),
                                            imm:$lane))]>;
 def VGETLNu8  : NVGetLane<0b11101101, 0b1011, 0b00,
                           (outs GPR:$dst), (ins DPR:$src, i32imm:$lane),
-                          NoItinerary, "vmov", ".u8\t$dst, $src[$lane]",
+                          NoItinerary, "vmov", ".u8\t$dst, $src[${lane:no_hash}]",
                           [(set GPR:$dst, (NEONvgetlaneu (v8i8 DPR:$src),
                                            imm:$lane))]>;
 def VGETLNu16 : NVGetLane<0b11101001, 0b1011, 0b01,
                           (outs GPR:$dst), (ins DPR:$src, i32imm:$lane),
-                          NoItinerary, "vmov", ".u16\t$dst, $src[$lane]",
+                          NoItinerary, "vmov", ".u16\t$dst, $src[${lane:no_hash}]",
                           [(set GPR:$dst, (NEONvgetlaneu (v4i16 DPR:$src),
                                            imm:$lane))]>;
 def VGETLNi32 : NVGetLane<0b11100001, 0b1011, 0b00,
                           (outs GPR:$dst), (ins DPR:$src, i32imm:$lane),
-                          NoItinerary, "vmov", ".32\t$dst, $src[$lane]",
+                          NoItinerary, "vmov", ".32\t$dst, $src[${lane:no_hash}]",
                           [(set GPR:$dst, (extractelt (v2i32 DPR:$src),
                                            imm:$lane))]>;
 // def VGETLNf32: see FMRDH and FMRDL in ARMInstrVFP.td
@@ -1668,17 +1668,17 @@ def : Pat<(extractelt (v2f64 QPR:$src1), imm:$src2),
 let Constraints = "$src1 = $dst" in {
 def VSETLNi8  : NVSetLane<0b11100100, 0b1011, 0b00, (outs DPR:$dst),
                           (ins DPR:$src1, GPR:$src2, i32imm:$lane),
-                          NoItinerary, "vmov", ".8\t$dst[$lane], $src2",
+                          NoItinerary, "vmov", ".8\t$dst[${lane:no_hash}], $src2",
                           [(set DPR:$dst, (vector_insert (v8i8 DPR:$src1),
                                            GPR:$src2, imm:$lane))]>;
 def VSETLNi16 : NVSetLane<0b11100000, 0b1011, 0b01, (outs DPR:$dst),
                           (ins DPR:$src1, GPR:$src2, i32imm:$lane),
-                          NoItinerary, "vmov", ".16\t$dst[$lane], $src2",
+                          NoItinerary, "vmov", ".16\t$dst[${lane:no_hash}], $src2",
                           [(set DPR:$dst, (vector_insert (v4i16 DPR:$src1),
                                            GPR:$src2, imm:$lane))]>;
 def VSETLNi32 : NVSetLane<0b11100000, 0b1011, 0b00, (outs DPR:$dst),
                           (ins DPR:$src1, GPR:$src2, i32imm:$lane),
-                          NoItinerary, "vmov", ".32\t$dst[$lane], $src2",
+                          NoItinerary, "vmov", ".32\t$dst[${lane:no_hash}], $src2",
                           [(set DPR:$dst, (insertelt (v2i32 DPR:$src1),
                                            GPR:$src2, imm:$lane))]>;
 }
@@ -1759,7 +1759,7 @@ def splat_lane : PatFrag<(ops node:$lhs, node:$rhs),
 class VDUPLND<bits<2> op19_18, bits<2> op17_16, string OpcodeStr, ValueType Ty>
   : N2V<0b11, 0b11, op19_18, op17_16, 0b11000, 0, 0,
         (outs DPR:$dst), (ins DPR:$src, i32imm:$lane), NoItinerary,
-        !strconcat(OpcodeStr, "\t$dst, $src[$lane]"), "",
+        !strconcat(OpcodeStr, "\t$dst, $src[${lane:no_hash}]"), "",
         [(set DPR:$dst, (Ty (splat_lane:$lane DPR:$src, undef)))]>;
 
 // vector_shuffle requires that the source and destination types match, so
@@ -1768,7 +1768,7 @@ class VDUPLNQ<bits<2> op19_18, bits<2> op17_16, string OpcodeStr,
               ValueType ResTy, ValueType OpTy>
   : N2V<0b11, 0b11, op19_18, op17_16, 0b11000, 1, 0,
         (outs QPR:$dst), (ins DPR:$src, i32imm:$lane), NoItinerary,
-        !strconcat(OpcodeStr, "\t$dst, $src[$lane]"), "",
+        !strconcat(OpcodeStr, "\t$dst, $src[${lane:no_hash}]"), "",
         [(set QPR:$dst, (ResTy (NEONvduplaneq (OpTy DPR:$src), imm:$lane)))]>;
 
 def VDUPLN8d  : VDUPLND<0b00, 0b01, "vdup.8", v8i8>;
