@@ -699,7 +699,7 @@ void CodeGenFunction::EmitClassMemberwiseCopy(
   }
 }
   
-/// EmitCopyCtorBody - This routine implicitly defines body of a copy
+/// SynthesizeCXXCopyConstructor - This routine implicitly defines body of a copy
 /// constructor, in accordance with section 12.8 (p7 and p8) of C++03
 /// The implicitly-defined copy constructor for class X performs a memberwise 
 /// copy of its subobjects. The order of copying is the same as the order 
@@ -714,11 +714,14 @@ void CodeGenFunction::EmitClassMemberwiseCopy(
 /// Virtual base class subobjects shall be copied only once by the 
 /// implicitly-defined copy constructor 
 
-void CodeGenFunction::EmitCopyCtorBody(const CXXConstructorDecl *CD,
+void CodeGenFunction::SynthesizeCXXCopyConstructor(const CXXConstructorDecl *CD,
+                                       const FunctionDecl *FD,
+                                       llvm::Function *Fn,
                                        const FunctionArgList &Args) {
   const CXXRecordDecl *ClassDecl = cast<CXXRecordDecl>(CD->getDeclContext());
   assert(!ClassDecl->hasUserDeclaredCopyConstructor() &&
-         "EmitCopyCtorBody - copy constructor has definition already");
+         "SynthesizeCXXCopyConstructor - copy constructor has definition already");
+  StartFunction(FD, FD->getResultType(), Fn, Args, SourceLocation());
  
   FunctionArgList::const_iterator i = Args.begin();
   const VarDecl *ThisArg = i->first;
@@ -759,6 +762,7 @@ void CodeGenFunction::EmitCopyCtorBody(const CXXConstructorDecl *CD,
     }
     // FIXME. Do a built-in assignment of scalar data members.
   }
+  FinishFunction();
 }  
 
 

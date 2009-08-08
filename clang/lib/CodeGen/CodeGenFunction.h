@@ -369,8 +369,10 @@ public:
 
   void EmitCtorPrologue(const CXXConstructorDecl *CD);
   
-  void EmitCopyCtorBody(const CXXConstructorDecl *CD,
-                        const FunctionArgList &Args);
+  void SynthesizeCXXCopyConstructor(const CXXConstructorDecl *CD,
+                                    const FunctionDecl *FD,
+                                    llvm::Function *Fn,
+                                    const FunctionArgList &Args);
   
   /// EmitDtorEpilogue - Emit all code that comes at the end of class's
   /// destructor. This is to call destructors on members and base classes 
