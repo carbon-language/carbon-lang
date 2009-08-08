@@ -13,11 +13,20 @@
 #include "llvm/DerivedTypes.h"
 #include "llvm/Module.h"
 #include "llvm/MC/MCSection.h"
+#include "llvm/MC/MCContext.h"
 using namespace llvm;
 
 PIC16TargetObjectFile::PIC16TargetObjectFile()
   : ExternalVarDecls(0), ExternalVarDefs(0) {
 }
+
+const MCSection *PIC16TargetObjectFile::
+getOrCreateSection(const char *Name, bool isDirective, SectionKind Kind) const {
+  if (MCSection *S = getContext().GetSection(Name))
+    return S;
+  return MCSection::Create(Name, isDirective, Kind, getContext());
+}
+
 
 void PIC16TargetObjectFile::Initialize(MCContext &Ctx, const TargetMachine &tm){
   TargetLoweringObjectFile::Initialize(Ctx, tm);

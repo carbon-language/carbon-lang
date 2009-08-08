@@ -80,12 +80,11 @@ protected:
   const MCSection *DwarfRangesSection;
   const MCSection *DwarfMacroInfoSection;
   
-protected:
-  const MCSection *getOrCreateSection(const char *Name,
-                                      bool isDirective,
-                                      SectionKind K) const;
 public:
   
+  MCContext &getContext() const { return *Ctx; }
+  
+
   virtual ~TargetLoweringObjectFile();
   
   /// Initialize - this method must be called before any actual lowering is
@@ -206,6 +205,11 @@ protected:
   const MCSection *MergeableConst4Section;
   const MCSection *MergeableConst8Section;
   const MCSection *MergeableConst16Section;
+  
+protected:
+  const MCSection *getOrCreateSection(const char *Name,
+                                      bool isDirective,
+                                      SectionKind K) const;
 public:
   /// ELF Constructor - AtIsCommentChar is true if the CommentCharacter from TAI
   /// is "@".
@@ -213,9 +217,8 @@ public:
                               // FIXME: REMOVE AFTER UNIQUING IS FIXED.
                               bool hasCrazyBSS = false)
     : AtIsCommentChar(atIsCommentChar), HasCrazyBSS(hasCrazyBSS) {}
-    
-  virtual void Initialize(MCContext &Ctx, const TargetMachine &TM);
   
+  virtual void Initialize(MCContext &Ctx, const TargetMachine &TM);
   
   /// getSectionForConstant - Given a constant with the SectionKind, return a
   /// section that it should be placed in.
@@ -247,6 +250,10 @@ class TargetLoweringObjectFileMachO : public TargetLoweringObjectFile {
   const MCSection *FourByteConstantSection;
   const MCSection *EightByteConstantSection;
   const MCSection *SixteenByteConstantSection;
+protected:
+  const MCSection *getOrCreateSection(const char *Name,
+                                      bool isDirective,
+                                      SectionKind K) const;
 public:
   
   virtual void Initialize(MCContext &Ctx, const TargetMachine &TM);
@@ -276,6 +283,10 @@ public:
 
 
 class TargetLoweringObjectFileCOFF : public TargetLoweringObjectFile {
+protected:
+  const MCSection *getOrCreateSection(const char *Name,
+                                      bool isDirective,
+                                      SectionKind K) const;
 public:
   virtual void Initialize(MCContext &Ctx, const TargetMachine &TM);
   

@@ -274,18 +274,17 @@ TargetLoweringObjectFile::getSectionForConstant(SectionKind Kind) const {
 }
 
 
-const MCSection *TargetLoweringObjectFile::
-getOrCreateSection(const char *Name, bool isDirective, SectionKind Kind) const {
-  if (MCSection *S = Ctx->GetSection(Name))
-    return S;
-  return MCSection::Create(Name, isDirective, Kind, *Ctx);
-}
-
-
 
 //===----------------------------------------------------------------------===//
 //                                  ELF
 //===----------------------------------------------------------------------===//
+
+const MCSection *TargetLoweringObjectFileELF::
+getOrCreateSection(const char *Name, bool isDirective, SectionKind Kind) const {
+  if (MCSection *S = getContext().GetSection(Name))
+    return S;
+  return MCSection::Create(Name, isDirective, Kind, getContext());
+}
 
 void TargetLoweringObjectFileELF::Initialize(MCContext &Ctx,
                                              const TargetMachine &TM) {
@@ -576,6 +575,13 @@ getSectionForConstant(SectionKind Kind) const {
 //===----------------------------------------------------------------------===//
 
 const MCSection *TargetLoweringObjectFileMachO::
+getOrCreateSection(const char *Name, bool isDirective, SectionKind Kind) const {
+  if (MCSection *S = getContext().GetSection(Name))
+    return S;
+  return MCSection::Create(Name, isDirective, Kind, getContext());
+}
+
+const MCSection *TargetLoweringObjectFileMachO::
 getMachOSection(const char *Name, bool isDirective, SectionKind K) {
   // FOR NOW, Just forward.
   return getOrCreateSection(Name, isDirective, K);  
@@ -787,6 +793,13 @@ shouldEmitUsedDirectiveFor(const GlobalValue *GV, Mangler *Mang) const {
 //===----------------------------------------------------------------------===//
 //                                  COFF
 //===----------------------------------------------------------------------===//
+
+const MCSection *TargetLoweringObjectFileCOFF::
+getOrCreateSection(const char *Name, bool isDirective, SectionKind Kind) const {
+  if (MCSection *S = getContext().GetSection(Name))
+    return S;
+  return MCSection::Create(Name, isDirective, Kind, getContext());
+}
 
 const MCSection *TargetLoweringObjectFileCOFF::
 getCOFFSection(const char *Name, bool isDirective, SectionKind K) {
