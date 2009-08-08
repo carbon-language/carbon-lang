@@ -46,9 +46,8 @@ namespace llvm {
   class PIC16TargetObjectFile : public TargetLoweringObjectFile {
     const TargetMachine *TM;
     
-    const MCSection *getOrCreateSection(const char *Name,
-                                        bool isDirective,
-                                        SectionKind K) const;
+    const MCSection *getPIC16Section(const char *Name, bool isDirective,
+                                     SectionKind K) const;
   public:
     mutable std::vector<PIC16Section*> BSSSections;
     mutable std::vector<PIC16Section*> IDATASections;
