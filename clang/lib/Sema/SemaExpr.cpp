@@ -4136,16 +4136,7 @@ QualType Sema::CheckShiftOperands(Expr *&lex, Expr *&rex, SourceLocation Loc,
   llvm::APSInt Right;
   // Check right/shifter operand
   if (rex->isIntegerConstantExpr(Right, Context)) {
-    // Check left/shiftee operand
-    llvm::APSInt Left;
-    if (lex->isIntegerConstantExpr(Left, Context)) {
-      if (Left == 0 && Right != 0)
-        Diag(Loc, diag::warn_op_no_effect)
-          << lex->getSourceRange() << rex->getSourceRange();
-    }
-    if (isCompAssign && Right == 0)
-      Diag(Loc, diag::warn_op_no_effect) << rex->getSourceRange();
-    else if (Right.isNegative())
+    if (Right.isNegative())
       Diag(Loc, diag::warn_shift_negative) << rex->getSourceRange();
     else {
       llvm::APInt LeftBits(Right.getBitWidth(),

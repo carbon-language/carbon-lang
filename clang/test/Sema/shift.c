@@ -12,15 +12,15 @@ void test() {
   char c;
 
   c = 0 << 0;
-  c = 0 << 1; // expected-warning {{no effect}}
+  c = 0 << 1;
   c = 1 << 0;
   c = 1 << -0;
   c = 1 >> -0;
   c = 1 << -1; // expected-warning {{shift count is negative}}
   c = 1 >> -1; // expected-warning {{shift count is negative}}
   c = 1 << c;
-  c <<= 0; // expected-warning {{no effect}}
-  c >>= 0; // expected-warning {{no effect}}
+  c <<= 0;
+  c >>= 0;
   c <<= 1;
   c >>= 1;
   c <<= -1; // expected-warning {{shift count is negative}}
@@ -33,3 +33,8 @@ void test() {
   c >>= CHAR_BIT+1; // expected-warning {{shift count >= width of type}}
   (void)((long)c << CHAR_BIT);
 }
+
+#define a 0
+#define ashift 8
+enum { b = (a << ashift) };
+
