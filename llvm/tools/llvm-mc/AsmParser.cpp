@@ -706,7 +706,7 @@ bool AsmParser::ParseDirectiveDarwinSection() {
   // FIXME: Arch specific.
   MCSection *S = Ctx.GetSection(Section);
   if (S == 0)
-    S = MCSection::Create(Section, false, SectionKind(), Ctx);
+    S = MCSectionCOFF::Create(Section, false, SectionKind(), Ctx);
   
   Out.SwitchSection(S);
   return false;
@@ -727,7 +727,7 @@ bool AsmParser::ParseDirectiveSectionSwitch(const char *Section,
   // FIXME: Arch specific.
   MCSection *S = Ctx.GetSection(Section);
   if (S == 0)
-    S = MCSection::Create(Section, false, SectionKind(), Ctx);
+    S = MCSectionCOFF::Create(Section, false, SectionKind(), Ctx);
   
   Out.SwitchSection(S);
   return false;
@@ -1118,7 +1118,7 @@ bool AsmParser::ParseDirectiveDarwinZerofill() {
     // FIXME: Arch specific.
     MCSection *S = Ctx.GetSection(Section);
     if (S == 0)
-      S = MCSection::Create(Section, false, SectionKind(), Ctx);
+      S = MCSectionCOFF::Create(Section, false, SectionKind(), Ctx);
     
     // Create the zerofill section but no symbol
     Out.EmitZerofill(S);
@@ -1178,7 +1178,7 @@ bool AsmParser::ParseDirectiveDarwinZerofill() {
   // FIXME: Arch specific.
   MCSection *S = Ctx.GetSection(Section);
   if (S == 0)
-    S = MCSection::Create(Section, false, SectionKind(), Ctx);
+    S = MCSectionCOFF::Create(Section, false, SectionKind(), Ctx);
   
   // Create the zerofill Symbol with Size and Pow2Alignment
   Out.EmitZerofill(S, Sym, Size, Pow2Alignment);
