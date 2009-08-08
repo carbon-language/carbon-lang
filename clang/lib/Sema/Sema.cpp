@@ -310,7 +310,8 @@ void Sema::ActOnEndOfTranslationUnit() {
 //===----------------------------------------------------------------------===//
 
 DeclContext *Sema::getFunctionLevelDeclContext() {
-  DeclContext *DC = CurContext;
+  DeclContext *DC = PreDeclaratorDC ? PreDeclaratorDC : CurContext;
+  
   while (isa<BlockDecl>(DC))
     DC = DC->getParent();
   
