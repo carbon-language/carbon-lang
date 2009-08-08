@@ -561,9 +561,6 @@ static void ConstructConversionFunctions(CodeGenTarget &Target,
   // Start the enum, which we will generate inline.
 
   OS << "// Unified function for converting operants to MCInst instances.\n\n";
-
-  OS << "namespace {\n\n";
-  
   OS << "enum ConversionKind {\n";
   
   for (std::vector<InstructionInfo*>::const_iterator it = Infos.begin(),
@@ -659,8 +656,6 @@ static void ConstructConversionFunctions(CodeGenTarget &Target,
   OS << "  NumConversionVariants\n";
   OS << "};\n\n";
   
-  OS << "}\n\n";
-
   OS << CvtOS.str();
 }
 
@@ -818,7 +813,7 @@ void AsmMatcherEmitter::run(raw_ostream &OS) {
   // order the match kinds appropriately (putting mnemonics last), then we
   // should only end up using a few bits for each class, especially the ones
   // following the mnemonic.
-  OS << "  static struct MatchEntry {\n";
+  OS << "  static const struct MatchEntry {\n";
   OS << "    unsigned Opcode;\n";
   OS << "    ConversionKind ConvertFn;\n";
   OS << "    MatchClassKind Classes[" << MaxNumOperands << "];\n";
