@@ -111,6 +111,9 @@ BlackfinTargetLowering::BlackfinTargetLowering(TargetMachine &TM)
   setOperationAction(ISD::CTLZ, MVT::i32, Expand);
   setOperationAction(ISD::CTTZ, MVT::i32, Expand);
 
+  // READCYCLECOUNTER needs special type legalization.
+  setOperationAction(ISD::READCYCLECOUNTER, MVT::i64, Custom);
+
   // We don't have line number support yet.
   setOperationAction(ISD::DBG_STOPPOINT, MVT::Other, Expand);
   setOperationAction(ISD::DEBUG_LOC, MVT::Other, Expand);
@@ -460,6 +463,34 @@ SDValue BlackfinTargetLowering::LowerOperation(SDValue Op, SelectionDAG &DAG) {
   case ISD::RETURNADDR:         return SDValue();
   case ISD::ADDE:
   case ISD::SUBE:               return LowerADDE(Op, DAG);
+  }
+}
+
+void
+BlackfinTargetLowering::ReplaceNodeResults(SDNode *N,
+                                           SmallVectorImpl<SDValue> &Results,
+                                           SelectionDAG &DAG) {
+  DebugLoc dl = N->getDebugLoc();
+  switch (N->getOpcode()) {
+  default:
+    llvm_unreachable("Do not know how to custom type legalize this operation!");
+    return;
+  case ISD::READCYCLECOUNTER: {
+    // The low part of the cycle counter is in CYCLES, the high part in
+    // CYCLES2. Reading CYCLES will latch the value of CYCLES2, so we must read
+    // CYCLES2 last.
+    SDValue TheChain = N->getOperand(0);
+    SDValue lo = DAG.getCopyFromReg(TheChain, dl, BF::CYCLES, MVT::i32);
+    SDValue hi = DAG.getCopyFromReg(lo.getValue(1), dl, BF::CYCLES2, MVT::i32);
+    // Use a buildpair to merge the two 32-bit values into a 64-bit one.
+    Results.push_back(DAG.getNode(ISD::BUILD_PAIR, dl, MVT::i64, lo, hi));
+    // Outgoing chain. If we were to use the chain from lo instead, it would be
+    // possible to entirely eliminate the CYCLES2 read in (i32 (trunc
+    // readcyclecounter)). Unfortunately this could possibly delay the CYCLES2
+    // read beyond the next CYCLES read, leading to invalid results.
+    Results.push_back(hi.getValue(1));
+    return;
+  }
   }
 }
 

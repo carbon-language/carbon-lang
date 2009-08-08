@@ -74,6 +74,7 @@ BlackfinRegisterInfo::getReservedRegs(const MachineFunction &MF) const {
   Reserved.set(AV1S);
   Reserved.set(V);
   Reserved.set(VS);
+  Reserved.set(CYCLES).set(CYCLES2);
   Reserved.set(L0);
   Reserved.set(L1);
   Reserved.set(L2);

@@ -35,6 +35,9 @@ namespace llvm {
     BlackfinTargetLowering(TargetMachine &TM);
     virtual MVT getSetCCResultType(MVT VT) const;
     virtual SDValue LowerOperation(SDValue Op, SelectionDAG &DAG);
+    virtual void ReplaceNodeResults(SDNode *N,
+                                    SmallVectorImpl<SDValue> &Results,
+                                    SelectionDAG &DAG);
 
     int getVarArgsFrameOffset() const { return VarArgsFrameOffset; }
 
