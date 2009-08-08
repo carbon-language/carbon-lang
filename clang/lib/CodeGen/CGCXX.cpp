@@ -761,27 +761,27 @@ llvm::Value *CodeGenFunction::GenerateVtable(const CXXRecordDecl *RD) {
 /// object from SrcValue to DestValue. Copying can be either a bitwise copy
 /// of via a copy constructor call.
 void CodeGenFunction::EmitClassMemberwiseCopy(
-                        llvm::Value *DestValue, llvm::Value *SrcValue,
+                        llvm::Value *Dest, llvm::Value *Src,
                         const CXXRecordDecl *ClassDecl, 
-                        const CXXRecordDecl *BaseClassDecl) {
-  // FIXME. Do bitwise copy of trivial copy constructors.
-  if (BaseClassDecl->hasTrivialCopyConstructor())
+                        const CXXRecordDecl *BaseClassDecl, QualType Ty) {
+  if (ClassDecl) {
+    Dest = AddressCXXOfBaseClass(Dest, ClassDecl, BaseClassDecl);
+    Src = AddressCXXOfBaseClass(Src, ClassDecl, BaseClassDecl) ;
+  }
+  if (BaseClassDecl->hasTrivialCopyConstructor()) {
+    EmitAggregateCopy(Dest, Src, Ty);
     return;
+  }
+  
   if (CXXConstructorDecl *BaseCopyCtor = 
       BaseClassDecl->getCopyConstructor(getContext(), 0)) {
     llvm::Value *Callee = CGM.GetAddrOfCXXConstructor(BaseCopyCtor, 
                                                       Ctor_Complete);
-    
-    llvm::Value *Dest = ClassDecl ?
-      AddressCXXOfBaseClass(DestValue, ClassDecl, BaseClassDecl) : DestValue;
-    
     CallArgList CallArgs;
     // Push the this (Dest) ptr.
     CallArgs.push_back(std::make_pair(RValue::get(Dest),
                                       BaseCopyCtor->getThisType(getContext())));
     
-    llvm::Value *Src = ClassDecl ?
-      AddressCXXOfBaseClass(SrcValue, ClassDecl, BaseClassDecl) : SrcValue;
     // Push the Src ptr.
     CallArgs.push_back(std::make_pair(RValue::get(Src),
                                       BaseCopyCtor->getThisType(getContext())));
@@ -832,7 +832,8 @@ void CodeGenFunction::SynthesizeCXXCopyConstructor(const CXXConstructorDecl *CD,
     
     CXXRecordDecl *BaseClassDecl
       = cast<CXXRecordDecl>(Base->getType()->getAs<RecordType>()->getDecl());
-    EmitClassMemberwiseCopy(LoadOfThis, LoadOfSrc, ClassDecl, BaseClassDecl);
+    EmitClassMemberwiseCopy(LoadOfThis, LoadOfSrc, ClassDecl, BaseClassDecl,
+                            Base->getType());
   }
   
   for (CXXRecordDecl::field_iterator Field = ClassDecl->field_begin(),
@@ -849,8 +850,9 @@ void CodeGenFunction::SynthesizeCXXCopyConstructor(const CXXConstructorDecl *CD,
         = cast<CXXRecordDecl>(FieldClassType->getDecl());
       LValue LHS = EmitLValueForField(LoadOfThis, *Field, false, 0);
       LValue RHS = EmitLValueForField(LoadOfSrc, *Field, false, 0);
+      
       EmitClassMemberwiseCopy(LHS.getAddress(), RHS.getAddress(), 
-                              0 /*ClassDecl*/, FieldClassDecl);
+                              0 /*ClassDecl*/, FieldClassDecl, FieldType);
       continue;
     }
     // FIXME. Do a built-in assignment of scalar data members.

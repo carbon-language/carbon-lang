@@ -557,7 +557,8 @@ public:
   
   void EmitClassMemberwiseCopy(llvm::Value *DestValue, llvm::Value *SrcValue,
                                const CXXRecordDecl *ClassDecl, 
-                               const CXXRecordDecl *BaseClassDecl);
+                               const CXXRecordDecl *BaseClassDecl,
+                               QualType Ty);
   
   void EmitCXXConstructorCall(const CXXConstructorDecl *D, CXXCtorType Type, 
                               llvm::Value *This,
