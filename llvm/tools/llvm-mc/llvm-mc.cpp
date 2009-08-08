@@ -186,7 +186,7 @@ static int AssembleInput(const char *ProgName) {
   OwningPtr<MCStreamer> Str(createAsmStreamer(Ctx, outs()));
 
   // FIXME: Target hook & command line option for initial section.
-  Str.get()->SwitchSection(MCSectionCOFF::Create("__TEXT,__text,"
+  Str.get()->SwitchSection(MCSectionMachO::Create("__TEXT,__text,"
                                              "regular,pure_instructions",
                                              false,
                                             SectionKind::getText(),

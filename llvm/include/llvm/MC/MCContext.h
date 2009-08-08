@@ -41,8 +41,6 @@ namespace llvm {
     /// We use a bump pointer allocator to avoid the need to track all allocated
     /// objects.
     BumpPtrAllocator Allocator;
-
-    friend class MCSection;
   public:
     MCContext();
     ~MCContext();
@@ -50,6 +48,13 @@ namespace llvm {
     /// GetSection - Look up a section with the given @param Name, returning
     /// null if it doesn't exist.
     MCSection *GetSection(const StringRef &Name) const;
+    
+    
+    void SetSection(const StringRef &Name, MCSection *S) {
+      MCSection *&Entry = Sections[Name];
+      assert(Entry == 0 && "Multiple sections with the same name created");
+      Entry = S;
+    }
     
     /// CreateSymbol - Create a new symbol with the specified @param Name.
     ///

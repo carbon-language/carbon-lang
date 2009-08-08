@@ -29,8 +29,8 @@ foo:
 // CHECK: .long 11
         .long "a 0"
 
-// CHECK: .section "a 1,a 2"
-.section "a 1", "a 2"
+// XXCHCK: .section "a 1,a 2"
+//.section "a 1", "a 2"
 
 // CHECK: .globl "a 3"
         .globl "a 3"

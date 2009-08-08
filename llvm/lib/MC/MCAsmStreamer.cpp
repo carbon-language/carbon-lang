@@ -100,13 +100,6 @@ static inline bool NeedsQuoting(const StringRef &Str) {
   return false;
 }
 
-/// Allow printing sections directly to a raw_ostream with proper quoting.
-static inline raw_ostream &operator<<(raw_ostream &os, const MCSection *S) {
-  if (NeedsQuoting(S->getName()))
-    return os << '"' << S->getName() << '"';
-  return os << S->getName();
-}
-
 /// Allow printing symbols directly to a raw_ostream with proper quoting.
 static inline raw_ostream &operator<<(raw_ostream &os, const MCSymbol *S) {
   if (NeedsQuoting(S->getName()))
@@ -144,10 +137,8 @@ void MCAsmStreamer::SwitchSection(MCSection *Section) {
   if (Section != CurSection) {
     CurSection = Section;
 
-    // FIXME: Really we would like the segment, flags, etc. to be separate
-    // values instead of embedded in the name. Not all assemblers understand all
-    // this stuff though.
-    OS << ".section " << Section << "\n";
+    // FIXME: Needs TargetAsmInfo!
+    Section->PrintSwitchToSection(*(const TargetAsmInfo*)0, OS);
   }
 }
 
@@ -228,7 +219,12 @@ void MCAsmStreamer::EmitZerofill(MCSection *Section, MCSymbol *Symbol,
   // FIXME: Really we would like the segment and section names as well as the
   // section type to be separate values instead of embedded in the name. Not
   // all assemblers understand all this stuff though.
-  OS << ".zerofill " << Section;
+  OS << ".zerofill ";
+  
+  // This is a mach-o specific directive.
+  OS << '"' << ((MCSectionMachO*)Section)->getName() << '"';
+  
+  
   if (Symbol != NULL) {
     OS << ',' << Symbol << ',' << Size;
     if (Pow2Alignment != 0)

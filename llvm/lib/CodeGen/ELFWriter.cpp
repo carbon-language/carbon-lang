@@ -179,21 +179,21 @@ void ELFWriter::addExternalSymbol(const char *External) {
 // getCtorSection - Get the static constructor section
 ELFSection &ELFWriter::getCtorSection() {
   const MCSection *Ctor = TLOF.getStaticCtorSection();
-  return getSection(Ctor->getName(), ELFSection::SHT_PROGBITS, 
+  return getSection(((MCSectionELF*)Ctor)->getName(), ELFSection::SHT_PROGBITS, 
                     getElfSectionFlags(Ctor->getKind()));
 }
 
 // getDtorSection - Get the static destructor section
 ELFSection &ELFWriter::getDtorSection() {
   const MCSection *Dtor = TLOF.getStaticDtorSection();
-  return getSection(Dtor->getName(), ELFSection::SHT_PROGBITS, 
+  return getSection(((MCSectionELF*)Dtor)->getName(), ELFSection::SHT_PROGBITS, 
                     getElfSectionFlags(Dtor->getKind()));
 }
 
 // getTextSection - Get the text section for the specified function
 ELFSection &ELFWriter::getTextSection(Function *F) {
   const MCSection *Text = TLOF.SectionForGlobal(F, Mang, TM);
-  return getSection(Text->getName(), ELFSection::SHT_PROGBITS,
+  return getSection(((MCSectionELF*)Text)->getName(), ELFSection::SHT_PROGBITS,
                     getElfSectionFlags(Text->getKind()));
 }
 
@@ -201,7 +201,7 @@ ELFSection &ELFWriter::getTextSection(Function *F) {
 // emitting jump tables. TODO: add PIC support
 ELFSection &ELFWriter::getJumpTableSection() {
   const MCSection *JT = TLOF.getSectionForConstant(SectionKind::getReadOnly());
-  return getSection(JT->getName(), 
+  return getSection(((MCSectionELF*)JT)->getName(), 
                     ELFSection::SHT_PROGBITS,
                     getElfSectionFlags(JT->getKind()), 
                     TM.getTargetData()->getPointerABIAlignment());
@@ -226,7 +226,8 @@ ELFSection &ELFWriter::getConstantPoolSection(MachineConstantPoolEntry &CPE) {
     }
   }
 
-  return getSection(TLOF.getSectionForConstant(Kind)->getName(),
+  const MCSection *CPSect = TLOF.getSectionForConstant(Kind);
+  return getSection(((MCSectionELF*)CPSect)->getName(),
                     ELFSection::SHT_PROGBITS,
                     getElfSectionFlags(Kind),
                     CPE.getAlignment());
@@ -369,7 +370,8 @@ void ELFWriter::EmitGlobal(const GlobalValue *GV) {
 
     if (isELFCommonSym(GVar)) {
       GblSym->SectionIdx = ELFSection::SHN_COMMON;
-      getSection(S->getName(), ELFSection::SHT_NOBITS, SectionFlags, 1);
+      getSection(((MCSectionELF*)S)->getName(), 
+                 ELFSection::SHT_NOBITS, SectionFlags, 1);
 
       // A new linkonce section is created for each global in the
       // common section, the default alignment is 1 and the symbol
@@ -378,7 +380,8 @@ void ELFWriter::EmitGlobal(const GlobalValue *GV) {
 
     } else if (isELFBssSym(GVar, Kind)) {
       ELFSection &ES =
-        getSection(S->getName(), ELFSection::SHT_NOBITS, SectionFlags);
+        getSection(((MCSectionELF*)S)->getName(), ELFSection::SHT_NOBITS,
+                   SectionFlags);
       GblSym->SectionIdx = ES.SectionIdx;
 
       // Update the size with alignment and the next object can
@@ -393,7 +396,8 @@ void ELFWriter::EmitGlobal(const GlobalValue *GV) {
 
     } else { // The symbol must go to some kind of data section
       ELFSection &ES =
-        getSection(S->getName(), ELFSection::SHT_PROGBITS, SectionFlags);
+        getSection(((MCSectionELF*)S)->getName(), ELFSection::SHT_PROGBITS,
+                   SectionFlags);
       GblSym->SectionIdx = ES.SectionIdx;
 
       // GblSym->Value should contain the symbol offset inside the section,

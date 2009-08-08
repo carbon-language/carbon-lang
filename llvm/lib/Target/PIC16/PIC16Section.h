@@ -15,27 +15,23 @@
 #define LLVM_PIC16SECTION_H
 
 #include "llvm/MC/MCSection.h"
-#include "llvm/MC/MCContext.h"
-#include "llvm/Support/raw_ostream.h"
 
 namespace llvm {
 
   class MCSectionPIC16 : public MCSection {
-    MCSectionPIC16(const StringRef &Name, bool IsDirective, SectionKind K,
-                 MCContext &Ctx) : MCSection(Name, IsDirective, K, Ctx) {}
+    std::string Name;
+    
+    MCSectionPIC16(const StringRef &name, SectionKind K,
+                   MCContext &Ctx);
   public:
     
-    static MCSectionPIC16 *Create(const StringRef &Name, bool IsDirective, 
-                                  SectionKind K, MCContext &Ctx) {
-      return new (Ctx) MCSectionPIC16(Name, IsDirective, K, Ctx);
-    }
+    const std::string &getName() const { return Name; }
     
+    static MCSectionPIC16 *Create(const StringRef &Name, 
+                                  SectionKind K, MCContext &Ctx);
     
     virtual void PrintSwitchToSection(const TargetAsmInfo &TAI,
-                                      raw_ostream &OS) const {
-      OS << getName() << '\n';
-    }
-
+                                      raw_ostream &OS) const;
   };
 
 } // end namespace llvm

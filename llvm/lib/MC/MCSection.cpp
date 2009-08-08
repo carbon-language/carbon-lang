@@ -20,13 +20,6 @@ using namespace llvm;
 MCSection::~MCSection() {
 }
 
-MCSection::MCSection(const StringRef &N, bool isDirective, SectionKind K, 
-                     MCContext &Ctx)
-  : Name(N), IsDirective(isDirective), Kind(K) {
-  MCSection *&Entry = Ctx.Sections[Name];
-  assert(Entry == 0 && "Multiple sections with the same name created");
-  Entry = this;
-}
 
 //===----------------------------------------------------------------------===//
 // MCSectionELF
@@ -36,6 +29,13 @@ MCSectionELF *MCSectionELF::
 Create(const StringRef &Name, bool IsDirective, SectionKind K, MCContext &Ctx) {
   return new (Ctx) MCSectionELF(Name, IsDirective, K, Ctx);
 }
+
+MCSectionELF::MCSectionELF(const StringRef &name, bool isDirective,
+                           SectionKind K, MCContext &Ctx)
+  : MCSection(K), Name(name), IsDirective(isDirective) {
+  Ctx.SetSection(Name, this);
+}
+
 
 void MCSectionELF::PrintSwitchToSection(const TargetAsmInfo &TAI,
                                         raw_ostream &OS) const {
@@ -118,6 +118,12 @@ Create(const StringRef &Name, bool IsDirective, SectionKind K, MCContext &Ctx) {
   return new (Ctx) MCSectionMachO(Name, IsDirective, K, Ctx);
 }
 
+MCSectionMachO::MCSectionMachO(const StringRef &name, bool isDirective,
+                               SectionKind K, MCContext &Ctx)
+  : MCSection(K), Name(name), IsDirective(isDirective) {
+  Ctx.SetSection(Name, this);
+}
+
 void MCSectionMachO::PrintSwitchToSection(const TargetAsmInfo &TAI,
                                           raw_ostream &OS) const {
   if (!isDirective())
@@ -134,6 +140,13 @@ MCSectionCOFF *MCSectionCOFF::
 Create(const StringRef &Name, bool IsDirective, SectionKind K, MCContext &Ctx) {
   return new (Ctx) MCSectionCOFF(Name, IsDirective, K, Ctx);
 }
+
+MCSectionCOFF::MCSectionCOFF(const StringRef &name, bool isDirective,
+                             SectionKind K, MCContext &Ctx)
+  : MCSection(K), Name(name), IsDirective(isDirective) {
+  Ctx.SetSection(Name, this);
+}
+
 
 void MCSectionCOFF::PrintSwitchToSection(const TargetAsmInfo &TAI,
                                          raw_ostream &OS) const {

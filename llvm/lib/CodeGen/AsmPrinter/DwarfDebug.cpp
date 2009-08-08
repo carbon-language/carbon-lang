@@ -2133,13 +2133,12 @@ void DwarfDebug::EmitDebugLines() {
     // Isolate current sections line info.
     const std::vector<SrcLineInfo> &LineInfos = SectionSourceLines[j];
 
-    if (Asm->isVerbose()) {
+    /*if (Asm->isVerbose()) {
       const MCSection *S = SectionMap[j + 1];
       O << '\t' << TAI->getCommentString() << " Section"
         << S->getName() << '\n';
-    } else {
-      Asm->EOL();
-    }
+    }*/
+    Asm->EOL();
 
     // Dwarf assumes we start with first line of first source file.
     unsigned Source = 1;

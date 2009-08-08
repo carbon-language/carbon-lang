@@ -13,6 +13,7 @@
 //===----------------------------------------------------------------------===//
 
 #include "PIC16AsmPrinter.h"
+#include "PIC16Section.h"
 #include "PIC16TargetAsmInfo.h"
 #include "llvm/DerivedTypes.h"
 #include "llvm/Function.h"
@@ -21,7 +22,6 @@
 #include "llvm/CodeGen/MachineFrameInfo.h"
 #include "llvm/CodeGen/DwarfWriter.h"
 #include "llvm/CodeGen/MachineModuleInfo.h"
-#include "llvm/MC/MCSection.h"
 #include "llvm/Target/TargetRegistry.h"
 #include "llvm/Target/TargetLoweringObjectFile.h"
 #include "llvm/Support/ErrorHandling.h"
@@ -227,9 +227,11 @@ bool PIC16AsmPrinter::doInitialization(Module &M) {
   // Set the section names for all globals.
   for (Module::global_iterator I = M.global_begin(), E = M.global_end();
        I != E; ++I)
-    if (!I->isDeclaration() && !I->hasAvailableExternallyLinkage())
-      I->setSection(getObjFileLowering().
-                    SectionForGlobal(I, Mang,TM)->getName());
+    if (!I->isDeclaration() && !I->hasAvailableExternallyLinkage()) {
+      const MCSection *S = getObjFileLowering().SectionForGlobal(I, Mang, TM);
+      
+      I->setSection(((const MCSectionPIC16*)S)->getName());
+    }
 
   DbgInfo.BeginModule(M);
   EmitFunctionDecls(M);

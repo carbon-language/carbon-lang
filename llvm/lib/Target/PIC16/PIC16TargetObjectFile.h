@@ -17,6 +17,7 @@ namespace llvm {
   class GlobalVariable;
   class Module;
   class PIC16TargetMachine;
+  class MCSectionPIC16;
   
   enum { DataBankSize = 80 };
 
@@ -29,12 +30,12 @@ namespace llvm {
   /// FIXME: MOVE ALL THIS STUFF TO MCSectionPIC16.
   ///
   struct PIC16Section {
-    const MCSection *S_; // Connection to actual Section.
+    const MCSectionPIC16 *S_; // Connection to actual Section.
     unsigned Size;  // Total size of the objects contained.
     bool SectionPrinted;
     std::vector<const GlobalVariable*> Items;
     
-    PIC16Section(const MCSection *s) {
+    PIC16Section(const MCSectionPIC16 *s) {
       S_ = s;
       Size = 0;
       SectionPrinted = false;
@@ -46,8 +47,8 @@ namespace llvm {
   class PIC16TargetObjectFile : public TargetLoweringObjectFile {
     const TargetMachine *TM;
     
-    const MCSection *getPIC16Section(const char *Name, bool isDirective,
-                                     SectionKind K) const;
+    const MCSectionPIC16 *getPIC16Section(const char *Name,
+                                          SectionKind K) const;
   public:
     mutable std::vector<PIC16Section*> BSSSections;
     mutable std::vector<PIC16Section*> IDATASections;
