@@ -249,3 +249,52 @@ lowered return value, and it would free non-C frontends from a
 complication only required by a C-based ABI.
 
 //===---------------------------------------------------------------------===//
+
+We get a redundant zero extension for code like this:
+
+int mask[1000];
+int foo(unsigned x) {
+ if (x < 10)
+   x = x * 45;
+ else
+   x = x * 78;
+ return mask[x];
+}
+
+_foo:
+LBB1_0:	## entry
+	cmpl	$9, %edi
+	jbe	LBB1_3	## bb
+LBB1_1:	## bb1
+	imull	$78, %edi, %eax
+LBB1_2:	## bb2
+	movl	%eax, %eax                    <----
+	movq	_mask@GOTPCREL(%rip), %rcx
+	movl	(%rcx,%rax,4), %eax
+	ret
+LBB1_3:	## bb
+	imull	$45, %edi, %eax
+	jmp	LBB1_2	## bb2
+  
+Before regalloc, we have:
+
+        %reg1025<def> = IMUL32rri8 %reg1024, 45, %EFLAGS<imp-def>
+        JMP mbb<bb2,0x203afb0>
+    Successors according to CFG: 0x203afb0 (#3)
+
+bb1: 0x203af60, LLVM BB @0x1e02310, ID#2:
+    Predecessors according to CFG: 0x203aec0 (#0)
+        %reg1026<def> = IMUL32rri8 %reg1024, 78, %EFLAGS<imp-def>
+    Successors according to CFG: 0x203afb0 (#3)
+
+bb2: 0x203afb0, LLVM BB @0x1e02340, ID#3:
+    Predecessors according to CFG: 0x203af10 (#1) 0x203af60 (#2)
+        %reg1027<def> = PHI %reg1025, mbb<bb,0x203af10>,
+                            %reg1026, mbb<bb1,0x203af60>
+        %reg1029<def> = MOVZX64rr32 %reg1027
+
+so we'd have to know that IMUL32rri8 leaves the high word zero extended and to
+be able to recognize the zero extend.  This could also presumably be implemented
+if we have whole-function selectiondags.
+
+//===---------------------------------------------------------------------===//
