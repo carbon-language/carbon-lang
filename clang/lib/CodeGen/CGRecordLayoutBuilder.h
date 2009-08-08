@@ -36,6 +36,9 @@ class CGRecordLayoutBuilder {
   /// Packed - Whether the resulting LLVM struct will be packed or not.
   bool Packed;
 
+  /// Alignment - Contains the alignment of the RecordDecl.
+  unsigned Alignment;
+
   /// AlignmentAsLLVMStruct - Will contain the maximum alignment of all the
   /// LLVM types.
   unsigned AlignmentAsLLVMStruct;
@@ -69,7 +72,7 @@ class CGRecordLayoutBuilder {
   llvm::SmallVector<LLVMBitFieldInfo, 16> LLVMBitFields;
   
   CGRecordLayoutBuilder(CodeGenTypes &Types) 
-    : Types(Types), Packed(false), AlignmentAsLLVMStruct(1)
+    : Types(Types), Packed(false), Alignment(0), AlignmentAsLLVMStruct(1)
     , BitsAvailableInLastField(0), NextFieldOffsetInBytes(0) { }
 
   /// Layout - Will layout a RecordDecl.

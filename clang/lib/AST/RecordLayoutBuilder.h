@@ -30,7 +30,8 @@ class ASTRecordLayoutBuilder {
   unsigned Alignment;
   llvm::SmallVector<uint64_t, 16> FieldOffsets;
   
-  unsigned StructPacking;
+  bool Packed;
+  unsigned MaxFieldAlignment;
   uint64_t NextOffset;
   bool IsUnion;
   

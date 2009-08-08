@@ -27,13 +27,15 @@ using namespace clang;
 using namespace CodeGen;
 
 void CGRecordLayoutBuilder::Layout(const RecordDecl *D) {
+  Alignment = Types.getContext().getASTRecordLayout(D).getAlignment() / 8;
+
   if (D->isUnion()) {
     LayoutUnion(D);
     return;
   }
 
   Packed = D->hasAttr<PackedAttr>();
-
+  
   if (LayoutFields(D))
     return;
   
@@ -115,6 +117,21 @@ bool CGRecordLayoutBuilder::LayoutField(const FieldDecl *D,
   const llvm::Type *Ty = Types.ConvertTypeForMemRecursive(D->getType());
   unsigned TypeAlignment = getTypeAlignment(Ty);
 
+  // If the type alignment is larger then the struct alignment, we must use
+  // a packed struct.
+  if (TypeAlignment > Alignment) {
+    assert(!Packed && "Alignment is wrong even with packed struct!");
+    return false;
+  }
+  
+  if (const RecordType *RT = D->getType()->getAs<RecordType>()) {
+    const RecordDecl *RD = cast<RecordDecl>(RT->getDecl());
+    if (const PragmaPackAttr *PPA = RD->getAttr<PragmaPackAttr>()) {
+      if (PPA->getAlignment() != TypeAlignment * 8 && !Packed)
+        return false;
+    }
+  }
+
   // Round up the field offset to the alignment of the field type.
   uint64_t AlignedNextFieldOffsetInBytes = 
     llvm::RoundUpToAlignment(NextFieldOffsetInBytes, TypeAlignment);
@@ -193,6 +210,7 @@ void CGRecordLayoutBuilder::LayoutUnion(const RecordDecl *D) {
 
 bool CGRecordLayoutBuilder::LayoutFields(const RecordDecl *D) {
   assert(!D->isUnion() && "Can't call LayoutFields on a union!");
+  assert(Alignment && "Did not set alignment!");
   
   const ASTRecordLayout &Layout = Types.getContext().getASTRecordLayout(D);
   

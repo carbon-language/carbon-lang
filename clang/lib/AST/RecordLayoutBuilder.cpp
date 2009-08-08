@@ -22,8 +22,8 @@
 using namespace clang;
 
 ASTRecordLayoutBuilder::ASTRecordLayoutBuilder(ASTContext &Ctx) 
-  : Ctx(Ctx), Size(0), Alignment(8), StructPacking(0), NextOffset(0),
-  IsUnion(false), NonVirtualSize(0), NonVirtualAlignment(8) {}
+  : Ctx(Ctx), Size(0), Alignment(8), Packed(false), MaxFieldAlignment(0), 
+  NextOffset(0), IsUnion(false), NonVirtualSize(0), NonVirtualAlignment(8) {}
 
 /// LayoutVtable - Lay out the vtable and set PrimaryBase.
 void ASTRecordLayoutBuilder::LayoutVtable(const CXXRecordDecl *RD) {
@@ -198,10 +198,11 @@ void ASTRecordLayoutBuilder::LayoutBaseNonVirtually(const CXXRecordDecl *RD) {
 void ASTRecordLayoutBuilder::Layout(const RecordDecl *D) {
   IsUnion = D->isUnion();
 
-  if (D->hasAttr<PackedAttr>())
-    StructPacking = 1;
+  Packed = D->hasAttr<PackedAttr>();
+
+  // The #pragma pack attribute specifies the maximum field alignment.
   if (const PragmaPackAttr *PPA = D->getAttr<PragmaPackAttr>())
-    StructPacking = PPA->getAlignment();
+    MaxFieldAlignment = PPA->getAlignment();
   
   if (const AlignedAttr *AA = D->getAttr<AlignedAttr>())
     UpdateAlignment(AA->getAlignment());
@@ -242,8 +243,11 @@ void ASTRecordLayoutBuilder::Layout(const ObjCInterfaceDecl *D,
     NextOffset = Size;
   }
   
-  if (D->hasAttr<PackedAttr>())
-    StructPacking = 1;
+  Packed = D->hasAttr<PackedAttr>();
+  
+  // The #pragma pack attribute specifies the maximum field alignment.
+  if (const PragmaPackAttr *PPA = D->getAttr<PragmaPackAttr>())
+    MaxFieldAlignment = PPA->getAlignment();
   
   if (const AlignedAttr *AA = D->getAttr<AlignedAttr>())
     UpdateAlignment(AA->getAlignment());
@@ -268,15 +272,12 @@ void ASTRecordLayoutBuilder::LayoutFields(const RecordDecl *D) {
 }
 
 void ASTRecordLayoutBuilder::LayoutField(const FieldDecl *D) {
-  unsigned FieldPacking = StructPacking;
+  bool FieldPacked = Packed;
   uint64_t FieldOffset = IsUnion ? 0 : Size;
   uint64_t FieldSize;
   unsigned FieldAlign;
   
-  // FIXME: Should this override struct packing? Probably we want to
-  // take the minimum?
-  if (D->hasAttr<PackedAttr>())
-    FieldPacking = 1;
+  FieldPacked |= D->hasAttr<PackedAttr>();  
   
   if (const Expr *BitWidthExpr = D->getBitWidth()) {
     // TODO: Need to check this algorithm on other targets!
@@ -285,18 +286,17 @@ void ASTRecordLayoutBuilder::LayoutField(const FieldDecl *D) {
     
     std::pair<uint64_t, unsigned> FieldInfo = Ctx.getTypeInfo(D->getType());
     uint64_t TypeSize = FieldInfo.first;
-    
-    // Determine the alignment of this bitfield. The packing
-    // attributes define a maximum and the alignment attribute defines
-    // a minimum.
-    // FIXME: What is the right behavior when the specified alignment
-    // is smaller than the specified packing?
+
     FieldAlign = FieldInfo.second;
-    if (FieldPacking)
-      FieldAlign = std::min(FieldAlign, FieldPacking);
+    
+    if (FieldPacked)
+      FieldAlign = 1;
     if (const AlignedAttr *AA = D->getAttr<AlignedAttr>())
       FieldAlign = std::max(FieldAlign, AA->getAlignment());
-    
+    // The maximum field alignment overrides the aligned attribute.
+    if (MaxFieldAlignment)
+      FieldAlign = std::min(FieldAlign, MaxFieldAlignment);
+
     // Check if we need to add padding to give the field the correct
     // alignment.
     if (FieldSize == 0 || (FieldOffset & (FieldAlign-1)) + FieldSize > TypeSize)
@@ -324,17 +324,13 @@ void ASTRecordLayoutBuilder::LayoutField(const FieldDecl *D) {
       FieldAlign = FieldInfo.second;
     }
     
-    // Determine the alignment of this bitfield. The packing
-    // attributes define a maximum and the alignment attribute defines
-    // a minimum. Additionally, the packing alignment must be at least
-    // a byte for non-bitfields.
-    //
-    // FIXME: What is the right behavior when the specified alignment
-    // is smaller than the specified packing?
-    if (FieldPacking)
-      FieldAlign = std::min(FieldAlign, std::max(8U, FieldPacking));
+    if (FieldPacked)
+      FieldAlign = 8;
     if (const AlignedAttr *AA = D->getAttr<AlignedAttr>())
       FieldAlign = std::max(FieldAlign, AA->getAlignment());
+    // The maximum field alignment overrides the aligned attribute.
+    if (MaxFieldAlignment)
+      FieldAlign = std::min(FieldAlign, MaxFieldAlignment);
     
     // Round up the current record size to the field's alignment boundary.
     FieldOffset = (FieldOffset + (FieldAlign-1)) & ~(FieldAlign-1);
