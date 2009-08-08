@@ -175,9 +175,7 @@ bool AlphaAsmPrinter::runOnMachineFunction(MachineFunction &MF) {
          II != E; ++II) {
       // Print the assembly for the instruction.
       ++EmittedInsts;
-      if (!printInstruction(II)) {
-        llvm_unreachable("Unhandled instruction in asm writer!");
-      }
+      printInstruction(II);
     }
   }
 

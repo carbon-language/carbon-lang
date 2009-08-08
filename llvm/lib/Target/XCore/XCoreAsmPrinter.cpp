@@ -364,10 +364,7 @@ void XCoreAsmPrinter::printMachineInstruction(const MachineInstr *MI) {
     O << "\n";
     return;
   }
-  if (printInstruction(MI)) {
-    return;
-  }
-  llvm_unreachable("Unhandled instruction in asm writer!");
+  printInstruction(MI);
 }
 
 bool XCoreAsmPrinter::doInitialization(Module &M) {

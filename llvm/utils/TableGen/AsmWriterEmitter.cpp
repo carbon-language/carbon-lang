@@ -113,12 +113,14 @@ namespace llvm {
 
 
 std::string AsmWriterOperand::getCode() const {
-  if (OperandType == isLiteralTextOperand)
+  if (OperandType == isLiteralTextOperand) {
+    if (Str.size() == 1)
+      return "O << '" + Str + "'; ";
     return "O << \"" + Str + "\"; ";
-
-  if (OperandType == isLiteralStatementOperand) {
-    return Str;
   }
+
+  if (OperandType == isLiteralStatementOperand)
+    return Str;
 
   std::string Result = Str + "(MI";
   if (MIOpNo != ~0U)
@@ -448,9 +450,8 @@ FindUniqueOperandCommands(std::vector<std::string> &UniqueOperandCommands,
     Command = "    " + Inst->Operands[0].getCode() + "\n";
 
     // If this is the last operand, emit a return.
-    if (Inst->Operands.size() == 1) {
+    if (Inst->Operands.size() == 1)
       Command += "    return true;\n";
-    }
     
     // Check to see if we already have 'Command' in UniqueOperandCommands.
     // If not, add it.

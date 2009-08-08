@@ -571,10 +571,7 @@ void PPCAsmPrinter::printMachineInstruction(const MachineInstr *MI) {
     }
   }
 
-  if (printInstruction(MI))
-    return; // Printer was automatically generated
-
-  llvm_unreachable("Unhandled instruction in asm writer!");
+  printInstruction(MI);
 }
 
 /// runOnMachineFunction - This uses the printMachineInstruction()
