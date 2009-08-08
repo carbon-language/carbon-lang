@@ -1139,6 +1139,8 @@ Sema::BuildDeclarationNameExpr(SourceLocation Loc, NamedDecl *D,
           MarkDeclarationReferenced(Loc, D);
           if (PerformObjectMemberConversion(This, D))
             return ExprError();
+          if (DiagnoseUseOfDecl(D, Loc))
+            return ExprError();
           return Owned(new (Context) MemberExpr(This, true, D,
                                                 Loc, MemberType));
         }
