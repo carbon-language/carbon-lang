@@ -106,7 +106,7 @@ CodeGenModule::EmitCXXGlobalInitFunc() {
                            "__cxx_global_initialization", &TheModule);
  
   CodeGenFunction(*this).GenerateCXXGlobalInitFunc(Fn,
-                                                   CXXGlobalInits.data(),
+                                                   &CXXGlobalInits[0],
                                                    CXXGlobalInits.size());
   AddGlobalCtor(Fn);
 }
