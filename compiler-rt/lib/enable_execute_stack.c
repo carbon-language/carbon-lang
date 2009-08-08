@@ -36,7 +36,8 @@ void __enable_execute_stack(void* addr)
 	uintptr_t p = (uintptr_t)addr;
 	unsigned char* startPage = (unsigned char*)(p & pageAlignMask);
 	unsigned char* endPage = (unsigned char*)((p+48+pageSize) & pageAlignMask);
-	mprotect(startPage, endPage-startPage, PROT_READ | PROT_WRITE | PROT_EXEC);
+	size_t length = endPage - startPage;
+	(void) mprotect((void *)startPage, length, PROT_READ | PROT_WRITE | PROT_EXEC);
 }
 
 
