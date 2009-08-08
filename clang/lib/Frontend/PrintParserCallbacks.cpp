@@ -245,7 +245,8 @@ namespace {
 
     virtual void ActOnEnumBody(SourceLocation EnumLoc, SourceLocation LBraceLoc,
                                SourceLocation RBraceLoc, DeclPtrTy EnumDecl,
-                               DeclPtrTy *Elements, unsigned NumElements) {
+                               DeclPtrTy *Elements, unsigned NumElements,
+                               Scope *S, AttributeList *AttrList) {
       Out << __FUNCTION__ << "\n";
     }
 

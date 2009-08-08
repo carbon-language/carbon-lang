@@ -5059,14 +5059,20 @@ Sema::DeclPtrTy Sema::ActOnEnumConstant(Scope *S, DeclPtrTy theEnumDecl,
 
 void Sema::ActOnEnumBody(SourceLocation EnumLoc, SourceLocation LBraceLoc,
                          SourceLocation RBraceLoc, DeclPtrTy EnumDeclX,
-                         DeclPtrTy *Elements, unsigned NumElements) {
+                         DeclPtrTy *Elements, unsigned NumElements,
+                         Scope *S, AttributeList *Attr) {
   EnumDecl *Enum = cast<EnumDecl>(EnumDeclX.getAs<Decl>());
   QualType EnumType = Context.getTypeDeclType(Enum);
+
+  if (Attr)
+    ProcessDeclAttributeList(S, Enum, Attr);
   
   // TODO: If the result value doesn't fit in an int, it must be a long or long
   // long value.  ISO C does not support this, but GCC does as an extension,
   // emit a warning.
   unsigned IntWidth = Context.Target.getIntWidth();
+  unsigned CharWidth = Context.Target.getCharWidth();
+  unsigned ShortWidth = Context.Target.getShortWidth();
   
   // Verify that all the values are okay, compute the size of the values, and
   // reverse the list.
@@ -5108,14 +5114,25 @@ void Sema::ActOnEnumBody(SourceLocation EnumLoc, SourceLocation LBraceLoc,
   }
   
   // Figure out the type that should be used for this enum.
-  // FIXME: Support attribute(packed) on enums and -fshort-enums.
+  // FIXME: Support -fshort-enums.
   QualType BestType;
   unsigned BestWidth;
-  
+
+  bool Packed = Enum->getAttr<PackedAttr>() ? true : false;
+
   if (NumNegativeBits) {
     // If there is a negative value, figure out the smallest integer type (of 
     // int/long/longlong) that fits.
-    if (NumNegativeBits <= IntWidth && NumPositiveBits < IntWidth) {
+    // If it's packed, check also if it fits a char or a short.
+    if (Packed && NumNegativeBits <= CharWidth && NumPositiveBits < CharWidth) {
+        BestType = Context.SignedCharTy;
+        BestWidth = CharWidth;
+    } else if (Packed && NumNegativeBits <= ShortWidth && 
+               NumPositiveBits < ShortWidth) {
+        BestType = Context.ShortTy;
+        BestWidth = ShortWidth;
+    }
+    else if (NumNegativeBits <= IntWidth && NumPositiveBits < IntWidth) {
       BestType = Context.IntTy;
       BestWidth = IntWidth;
     } else {
@@ -5134,7 +5151,15 @@ void Sema::ActOnEnumBody(SourceLocation EnumLoc, SourceLocation LBraceLoc,
   } else {
     // If there is no negative value, figure out which of uint, ulong, ulonglong
     // fits.
-    if (NumPositiveBits <= IntWidth) {
+    // If it's packed, check also if it fits a char or a short.
+    if (Packed && NumPositiveBits <= CharWidth) {
+        BestType = Context.UnsignedCharTy;
+        BestWidth = CharWidth;
+    } else if (Packed && NumPositiveBits <= ShortWidth) {
+        BestType = Context.UnsignedShortTy;
+        BestWidth = ShortWidth;
+    }
+    else if (NumPositiveBits <= IntWidth) {
       BestType = Context.UnsignedIntTy;
       BestWidth = IntWidth;
     } else if (NumPositiveBits <=

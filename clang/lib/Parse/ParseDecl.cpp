@@ -1707,14 +1707,15 @@ void Parser::ParseEnumBody(SourceLocation StartLoc, DeclPtrTy EnumDecl) {
   // Eat the }.
   SourceLocation RBraceLoc = MatchRHSPunctuation(tok::r_brace, LBraceLoc);
 
-  Actions.ActOnEnumBody(StartLoc, LBraceLoc, RBraceLoc, EnumDecl,
-                        EnumConstantDecls.data(), EnumConstantDecls.size());
-  
-  Action::AttrTy *AttrList = 0;
+  AttributeList *Attr = 0;
   // If attributes exist after the identifier list, parse them.
   if (Tok.is(tok::kw___attribute))
-    AttrList = ParseAttributes(); // FIXME: where do they do?
+    Attr = ParseAttributes();
 
+  Actions.ActOnEnumBody(StartLoc, LBraceLoc, RBraceLoc, EnumDecl,
+                        EnumConstantDecls.data(), EnumConstantDecls.size(),
+                        CurScope, Attr);
+  
   EnumScope.Exit();
   Actions.ActOnTagFinishDefinition(CurScope, EnumDecl, RBraceLoc);
 }

@@ -619,7 +619,8 @@ public:
                                       SourceLocation EqualLoc, ExprTy *Val);
   virtual void ActOnEnumBody(SourceLocation EnumLoc, SourceLocation LBraceLoc,
                              SourceLocation RBraceLoc, DeclPtrTy EnumDecl,
-                             DeclPtrTy *Elements, unsigned NumElements);
+                             DeclPtrTy *Elements, unsigned NumElements,
+                             Scope *S, AttributeList *Attr);
 
   DeclContext *getContainingDC(DeclContext *DC);
 
