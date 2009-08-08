@@ -374,8 +374,6 @@ public:
   explicit PredefinedExpr(EmptyShell Empty) 
     : Expr(PredefinedExprClass, Empty) { }
 
-  PredefinedExpr* Clone(ASTContext &C) const;
-
   IdentType getIdentType() const { return Type; }
   void setIdentType(IdentType IT) { Type = IT; }
 
@@ -414,8 +412,6 @@ public:
   explicit IntegerLiteral(EmptyShell Empty) 
     : Expr(IntegerLiteralClass, Empty) { }
 
-  IntegerLiteral* Clone(ASTContext &C) const;
-  
   const llvm::APInt &getValue() const { return Value; }
   virtual SourceRange getSourceRange() const { return SourceRange(Loc); }
 
@@ -447,8 +443,6 @@ public:
 
   /// \brief Construct an empty character literal.
   CharacterLiteral(EmptyShell Empty) : Expr(CharacterLiteralClass, Empty) { }
-
-  CharacterLiteral* Clone(ASTContext &C) const;
 
   SourceLocation getLoc() const { return Loc; }
   bool isWide() const { return IsWide; }
@@ -483,8 +477,6 @@ public:
   /// \brief Construct an empty floating-point literal.
   explicit FloatingLiteral(EmptyShell Empty) 
     : Expr(FloatingLiteralClass, Empty), Value(0.0) { }
-
-  FloatingLiteral* Clone(ASTContext &C) const;
 
   const llvm::APFloat &getValue() const { return Value; }
   void setValue(const llvm::APFloat &Val) { Value = Val; }
@@ -535,8 +527,6 @@ public:
   const Expr *getSubExpr() const { return cast<Expr>(Val); }
   Expr *getSubExpr() { return cast<Expr>(Val); }
   void setSubExpr(Expr *E) { Val = E; }
-
-  ImaginaryLiteral* Clone(ASTContext &C) const;
 
   virtual SourceRange getSourceRange() const { return Val->getSourceRange(); }
   static bool classof(const Stmt *T) { 
@@ -594,8 +584,6 @@ public:
   /// \brief Construct an empty string literal.
   static StringLiteral *CreateEmpty(ASTContext &C, unsigned NumStrs);
 
-  StringLiteral* Clone(ASTContext &C) const;
-  
   const char *getStrData() const { return StrData; }
   unsigned getByteLength() const { return ByteLength; }
 
@@ -1869,8 +1857,6 @@ public:
   /// \brief Build an empty GNU __null expression.
   explicit GNUNullExpr(EmptyShell Empty) : Expr(GNUNullExprClass, Empty) { }
 
-  GNUNullExpr* Clone(ASTContext &C) const;
-
   /// getTokenLocation - The location of the __null token.
   SourceLocation getTokenLocation() const { return TokenLoc; }
   void setTokenLocation(SourceLocation L) { TokenLoc = L; }
@@ -2390,8 +2376,6 @@ public:
   virtual SourceRange getSourceRange() const {
     return SourceRange();
   }
-
-  ImplicitValueInitExpr *Clone(ASTContext &C) const;
 
   // Iterators
   virtual child_iterator child_begin();

@@ -34,8 +34,6 @@ public:
   explicit ObjCStringLiteral(EmptyShell Empty)
     : Expr(ObjCStringLiteralClass, Empty) {}
 
-  ObjCStringLiteral* Clone(ASTContext &C) const;
-
   StringLiteral *getString() { return cast<StringLiteral>(String); }
   const StringLiteral *getString() const { return cast<StringLiteral>(String); }
   void setString(StringLiteral *S) { String = S; }
@@ -106,8 +104,6 @@ public:
   explicit ObjCSelectorExpr(EmptyShell Empty)
    : Expr(ObjCSelectorExprClass, Empty) {}
 
-  ObjCSelectorExpr *Clone(ASTContext &C) const;
-  
   Selector getSelector() const { return SelName; }
   void setSelector(Selector S) { SelName = S; }
   
@@ -148,8 +144,6 @@ public:
   explicit ObjCProtocolExpr(EmptyShell Empty)
     : Expr(ObjCProtocolExprClass, Empty) {}
 
-  ObjCProtocolExpr *Clone(ASTContext &C) const;
-  
   ObjCProtocolDecl *getProtocol() const { return TheProtocol; }
   void setProtocol(ObjCProtocolDecl *P) { TheProtocol = P; }
     

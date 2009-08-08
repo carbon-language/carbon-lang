@@ -339,8 +339,6 @@ public:
   /// \brief Build an empty null statement.
   explicit NullStmt(EmptyShell Empty) : Stmt(NullStmtClass, Empty) { }
 
-  NullStmt* Clone(ASTContext &C) const;
-
   SourceLocation getSemiLoc() const { return SemiLoc; }
   void setSemiLoc(SourceLocation L) { SemiLoc = L; }
 
@@ -955,8 +953,6 @@ public:
     return SourceRange(ContinueLoc); 
   }
 
-  ContinueStmt* Clone(ASTContext &C) const;
-
   static bool classof(const Stmt *T) { 
     return T->getStmtClass() == ContinueStmtClass; 
   }
@@ -981,8 +977,6 @@ public:
   void setBreakLoc(SourceLocation L) { BreakLoc = L; }
 
   virtual SourceRange getSourceRange() const { return SourceRange(BreakLoc); }
-
-  BreakStmt* Clone(ASTContext &C) const;
 
   static bool classof(const Stmt *T) { 
     return T->getStmtClass() == BreakStmtClass; 

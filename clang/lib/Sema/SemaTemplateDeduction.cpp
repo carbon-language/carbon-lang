@@ -328,8 +328,7 @@ static QualType getUnqualifiedArrayType(ASTContext &Context, QualType T,
   if (Elt == DSAT->getElementType())
     return T;
   
-  // FIXME: Clone expression!
-  return Context.getDependentSizedArrayType(Elt, DSAT->getSizeExpr(),
+  return Context.getDependentSizedArrayType(Elt, DSAT->getSizeExpr()->Retain(),
                                             DSAT->getSizeModifier(), 0,
                                             SourceRange());
 }

@@ -92,18 +92,6 @@ bool Stmt::CollectingStats(bool enable) {
   return StatSwitch;
 }
 
-NullStmt* NullStmt::Clone(ASTContext &C) const {
-  return new (C) NullStmt(SemiLoc);
-}
-
-ContinueStmt* ContinueStmt::Clone(ASTContext &C) const {
-  return new (C) ContinueStmt(ContinueLoc);
-}
-
-BreakStmt* BreakStmt::Clone(ASTContext &C) const {
-  return new (C) BreakStmt(BreakLoc);
-}
-
 void SwitchStmt::DoDestroy(ASTContext &Ctx) {
   // Destroy the SwitchCase statements in this switch. In the normal
   // case, this loop will merely decrement the reference counts from 

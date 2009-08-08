@@ -221,8 +221,6 @@ public:
   CXXBoolLiteralExpr(bool val, QualType Ty, SourceLocation l) : 
     Expr(CXXBoolLiteralExprClass, Ty), Value(val), Loc(l) {}
 
-  CXXBoolLiteralExpr* Clone(ASTContext &C) const;
-
   bool getValue() const { return Value; }
 
   virtual SourceRange getSourceRange() const { return SourceRange(Loc); }
@@ -243,8 +241,6 @@ class CXXNullPtrLiteralExpr : public Expr {
 public:
   CXXNullPtrLiteralExpr(QualType Ty, SourceLocation l) :
     Expr(CXXNullPtrLiteralExprClass, Ty), Loc(l) {}
-
-  CXXNullPtrLiteralExpr* Clone(ASTContext &C) const;
 
   virtual SourceRange getSourceRange() const { return SourceRange(Loc); }
 
@@ -630,8 +626,6 @@ public:
     return SourceRange(TyBeginLoc, RParenLoc);
   }
     
-  CXXZeroInitValueExpr* Clone(ASTContext &C) const;
-
   static bool classof(const Stmt *T) { 
     return T->getStmtClass() == CXXZeroInitValueExprClass;
   }
@@ -881,8 +875,6 @@ public:
   SourceLocation getLocation() const { return Loc; }
 
   virtual SourceRange getSourceRange() const { return SourceRange(Loc); }
-
-  UnresolvedFunctionNameExpr* Clone(ASTContext &C) const;
 
   static bool classof(const Stmt *T) { 
     return T->getStmtClass() == UnresolvedFunctionNameExprClass;

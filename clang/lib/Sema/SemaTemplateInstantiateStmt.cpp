@@ -81,7 +81,7 @@ Sema::OwningStmtResult TemplateStmtInstantiator::VisitDeclStmt(DeclStmt *S) {
 }
 
 Sema::OwningStmtResult TemplateStmtInstantiator::VisitNullStmt(NullStmt *S) {
-  return SemaRef.Owned(S->Clone(SemaRef.Context));
+  return SemaRef.Owned(S->Retain());
 }
 
 Sema::OwningStmtResult TemplateStmtInstantiator::VisitLabelStmt(LabelStmt *S) {
@@ -112,12 +112,12 @@ TemplateStmtInstantiator::VisitIndirectGotoStmt(IndirectGotoStmt *S) {
 }
 
 Sema::OwningStmtResult TemplateStmtInstantiator::VisitBreakStmt(BreakStmt *S) {
-  return SemaRef.Owned(S->Clone(SemaRef.Context));
+  return SemaRef.Owned(S->Retain());
 }
 
 Sema::OwningStmtResult 
 TemplateStmtInstantiator::VisitContinueStmt(ContinueStmt *S) {
-  return SemaRef.Owned(S->Clone(SemaRef.Context));
+  return SemaRef.Owned(S->Retain());
 }
 
 Sema::OwningStmtResult

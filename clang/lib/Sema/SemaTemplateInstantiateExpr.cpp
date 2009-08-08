@@ -147,7 +147,7 @@ TemplateExprInstantiator::VisitDeclRefExpr(DeclRefExpr *E) {
     // arguments left unspecified.
     if (NTTP->getPosition() >= TemplateArgs.size() ||
         TemplateArgs[NTTP->getPosition()].isNull())
-      return SemaRef.Owned(E); // FIXME: Clone the expression!
+      return SemaRef.Owned(E->Retain());
     
     const TemplateArgument &Arg = TemplateArgs[NTTP->getPosition()]; 
     

@@ -28,36 +28,6 @@ using namespace clang;
 // Primary Expressions.
 //===----------------------------------------------------------------------===//
 
-PredefinedExpr* PredefinedExpr::Clone(ASTContext &C) const {
-  return new (C) PredefinedExpr(Loc, getType(), Type);
-}
-
-IntegerLiteral* IntegerLiteral::Clone(ASTContext &C) const {
-  return new (C) IntegerLiteral(Value, getType(), Loc);
-}
-
-CharacterLiteral* CharacterLiteral::Clone(ASTContext &C) const {
-  return new (C) CharacterLiteral(Value, IsWide, getType(), Loc);
-}
-
-FloatingLiteral* FloatingLiteral::Clone(ASTContext &C) const {
-  return new (C) FloatingLiteral(Value, IsExact, getType(), Loc);
-}
-
-ImaginaryLiteral* ImaginaryLiteral::Clone(ASTContext &C) const {
-  // FIXME: Use virtual Clone(), once it is available
-  Expr *ClonedVal = 0;
-  if (const IntegerLiteral *IntLit = dyn_cast<IntegerLiteral>(Val))
-    ClonedVal = IntLit->Clone(C);
-  else
-    ClonedVal = cast<FloatingLiteral>(Val)->Clone(C);
-  return new (C) ImaginaryLiteral(ClonedVal, getType());
-}
-
-GNUNullExpr* GNUNullExpr::Clone(ASTContext &C) const {
-  return new (C) GNUNullExpr(getType(), TokenLoc);
-}
-
 /// getValueAsApproximateDouble - This returns the value as an inaccurate
 /// double.  Note that this may cause loss of precision, but is useful for
 /// debugging dumps, etc.
@@ -104,11 +74,6 @@ StringLiteral *StringLiteral::CreateEmpty(ASTContext &C, unsigned NumStrs) {
   SL->ByteLength = 0;
   SL->NumConcatenated = NumStrs;
   return SL;
-}
-
-StringLiteral* StringLiteral::Clone(ASTContext &C) const {
-  return Create(C, StrData, ByteLength, IsWide, getType(),
-                TokLocs, NumConcatenated);
 }
 
 void StringLiteral::DoDestroy(ASTContext &C) {
@@ -1564,22 +1529,6 @@ ObjCMessageExpr::ObjCMessageExpr(Expr *receiver, Selector selInfo,
   RBracloc = RBrac;
 }
 
-ObjCStringLiteral* ObjCStringLiteral::Clone(ASTContext &C) const {
-  // Clone the string literal.
-  StringLiteral *NewString = 
-    String ? cast<StringLiteral>(String)->Clone(C) : 0;
-  
-  return new (C) ObjCStringLiteral(NewString, getType(), AtLoc);
-}
-
-ObjCSelectorExpr *ObjCSelectorExpr::Clone(ASTContext &C) const {
-  return new (C) ObjCSelectorExpr(getType(), SelName, AtLoc, RParenLoc);
-}
-
-ObjCProtocolExpr *ObjCProtocolExpr::Clone(ASTContext &C) const {
-  return new (C) ObjCProtocolExpr(getType(), TheProtocol, AtLoc, RParenLoc);
-}
-
 // constructor for class messages. 
 // FIXME: clsName should be typed to ObjCInterfaceType
 ObjCMessageExpr::ObjCMessageExpr(IdentifierInfo *clsName, Selector selInfo,
@@ -1833,10 +1782,6 @@ void DesignatedInitExpr::ExpandDesignator(unsigned Idx,
 void DesignatedInitExpr::DoDestroy(ASTContext &C) {
   delete [] Designators;
   Expr::DoDestroy(C);
-}
-
-ImplicitValueInitExpr *ImplicitValueInitExpr::Clone(ASTContext &C) const {
-  return new (C) ImplicitValueInitExpr(getType());
 }
 
 //===----------------------------------------------------------------------===//
