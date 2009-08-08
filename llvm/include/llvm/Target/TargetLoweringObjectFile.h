@@ -25,6 +25,7 @@ namespace llvm {
   class GlobalValue;
   class Mangler;
   class TargetMachine;
+  class TargetAsmInfo;
   
 class TargetLoweringObjectFile {
   MCContext *Ctx;
@@ -172,7 +173,8 @@ public:
   /// into a string that can be printed to the assembly file after the
   /// ".section foo" part of a section directive.
   virtual void getSectionFlagsAsString(SectionKind Kind,
-                                       SmallVectorImpl<char> &Str) const {
+                                       SmallVectorImpl<char> &Str,
+                                       const TargetAsmInfo &TAI) const {
   }
   
 protected:
@@ -229,7 +231,8 @@ public:
                            Mangler *Mang, const TargetMachine &TM) const;
   
   void getSectionFlagsAsString(SectionKind Kind,
-                               SmallVectorImpl<char> &Str) const;
+                               SmallVectorImpl<char> &Str,
+                               const TargetAsmInfo &TAI) const;
   
   virtual const MCSection *
   SelectSectionForGlobal(const GlobalValue *GV, SectionKind Kind,
@@ -286,7 +289,8 @@ public:
                            Mangler *Mang, const TargetMachine &TM) const;
   
   virtual void getSectionFlagsAsString(SectionKind Kind,
-                                       SmallVectorImpl<char> &Str) const;
+                                       SmallVectorImpl<char> &Str,
+                                       const TargetAsmInfo &TAI) const;
   
   virtual const MCSection *
   SelectSectionForGlobal(const GlobalValue *GV, SectionKind Kind,

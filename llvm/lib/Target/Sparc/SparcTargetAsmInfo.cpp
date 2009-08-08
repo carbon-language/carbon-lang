@@ -22,6 +22,8 @@ SparcELFTargetAsmInfo::SparcELFTargetAsmInfo() {
   ZeroDirective = "\t.skip\t";
   CommentString = "!";
   COMMDirectiveTakesAlignment = true;
+  
+  SunStyleELFSectionSwitchSyntax = true;
 }
 
 

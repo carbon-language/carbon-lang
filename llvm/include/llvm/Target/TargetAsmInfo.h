@@ -158,6 +158,11 @@ namespace llvm {
       return NULL;
     }
 
+    /// SunStyleELFSectionSwitchSyntax - This is true if this target uses "Sun
+    /// Style" syntax for section switching ("#alloc,#write" etc) instead of the
+    /// normal ELF syntax (,"a,w") in .section directives.
+    bool SunStyleELFSectionSwitchSyntax;   // Defaults to false.
+    
     //===--- Alignment Information ----------------------------------------===//
 
     /// AlignDirective - The directive used to emit round up to an alignment
@@ -326,6 +331,11 @@ namespace llvm {
       return AS == 0 ? Data64bitsDirective : getDataASDirective(64, AS);
     }
 
+    
+    bool usesSunStyleELFSectionSwitchSyntax() const {
+      return SunStyleELFSectionSwitchSyntax;
+    }
+    
 
     // Accessors.
     //

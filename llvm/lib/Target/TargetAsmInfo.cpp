@@ -49,6 +49,7 @@ TargetAsmInfo::TargetAsmInfo() {
   Data16bitsDirective = "\t.short\t";
   Data32bitsDirective = "\t.long\t";
   Data64bitsDirective = "\t.quad\t";
+  SunStyleELFSectionSwitchSyntax = false;
   AlignDirective = "\t.align\t";
   AlignmentIsInBytes = true;
   TextAlignFillValue = 0;

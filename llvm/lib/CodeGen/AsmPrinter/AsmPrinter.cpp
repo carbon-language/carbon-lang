@@ -99,7 +99,7 @@ void AsmPrinter::SwitchToSection(const MCSection *NS) {
   // some magic assembler directive.
   if (!NS->isDirective()) {
     SmallString<32> FlagsStr;
-    getObjFileLowering().getSectionFlagsAsString(NS->getKind(), FlagsStr);
+    getObjFileLowering().getSectionFlagsAsString(NS->getKind(), FlagsStr, *TAI);
 
     O << TAI->getSwitchToSectionDirective()
       << CurrentSection->getName() << FlagsStr.c_str() << '\n';

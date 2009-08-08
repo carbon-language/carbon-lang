@@ -18,8 +18,9 @@
 #include "llvm/GlobalVariable.h"
 #include "llvm/MC/MCContext.h"
 #include "llvm/MC/MCSection.h"
-#include "llvm/Target/TargetMachine.h"
+#include "llvm/Target/TargetAsmInfo.h"
 #include "llvm/Target/TargetData.h"
+#include "llvm/Target/TargetMachine.h"
 #include "llvm/Target/TargetOptions.h"
 #include "llvm/Support/Mangler.h"
 #include "llvm/ADT/StringExtras.h"
@@ -407,7 +408,25 @@ getExplicitSectionGlobal(const GlobalValue *GV, SectionKind Kind,
       
       
 void TargetLoweringObjectFileELF::
-getSectionFlagsAsString(SectionKind Kind, SmallVectorImpl<char> &Str) const {
+getSectionFlagsAsString(SectionKind Kind, SmallVectorImpl<char> &Str,
+                        const TargetAsmInfo &TAI) const {
+  // Handle the weird solaris syntax if desired.
+  if (TAI.usesSunStyleELFSectionSwitchSyntax() &&
+      !Kind.isMergeableConst() && !Kind.isMergeableCString()) {
+    // FIXME: Inefficient.
+    std::string Res;
+    if (!Kind.isMetadata())
+      Res += ",#alloc";
+    if (Kind.isText())
+      Res += ",#execinstr";
+    if (Kind.isWriteable())
+      Res += ",#write";
+    if (Kind.isThreadLocal())
+      Res += ",#tls";
+    Str.append(Res.begin(), Res.end());
+    return;    
+  }
+  
   Str.push_back(',');
   Str.push_back('"');
   
@@ -848,7 +867,8 @@ getExplicitSectionGlobal(const GlobalValue *GV, SectionKind Kind,
 
 
 void TargetLoweringObjectFileCOFF::
-getSectionFlagsAsString(SectionKind Kind, SmallVectorImpl<char> &Str) const {
+getSectionFlagsAsString(SectionKind Kind, SmallVectorImpl<char> &Str,
+                        const TargetAsmInfo &TAI) const {
   // FIXME: Inefficient.
   std::string Res = ",\"";
   if (Kind.isText())
