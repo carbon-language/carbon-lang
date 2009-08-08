@@ -307,7 +307,7 @@ struct InstructionInfo {
     ClassInfo *Class;
 
     /// The original operand this corresponds to, if any.
-    const CodeGenInstruction::OperandInfo *Operand;
+    const CodeGenInstruction::OperandInfo *OperandInfo;
   };
 
   /// InstrName - The target name for this instruction.
@@ -384,7 +384,7 @@ void InstructionInfo::dump() {
       continue;
     }
 
-    const CodeGenInstruction::OperandInfo &OI = *Op.Operand;
+    const CodeGenInstruction::OperandInfo &OI = *Op.OperandInfo;
     errs() << OI.Name << " " << OI.Rec->getName()
            << " (" << OI.MIOperandNo << ", " << OI.MINumOperands << ")\n";
   }
@@ -501,7 +501,7 @@ void AsmMatcherInfo::BuildInfo(CodeGenTarget &Target) {
       if (Token[0] != '$') {
         InstructionInfo::Operand Op;
         Op.Class = getTokenClass(Token);
-        Op.Operand = 0;
+        Op.OperandInfo = 0;
         II->Operands.push_back(Op);
         continue;
       }
@@ -525,7 +525,7 @@ void AsmMatcherInfo::BuildInfo(CodeGenTarget &Target) {
       const CodeGenInstruction::OperandInfo &OI = CGI.OperandList[Idx];      
       InstructionInfo::Operand Op;
       Op.Class = getOperandClass(Token, OI);
-      Op.Operand = &OI;
+      Op.OperandInfo = &OI;
       II->Operands.push_back(Op);
     }
 
@@ -574,8 +574,8 @@ static void ConstructConversionFunctions(CodeGenTarget &Target,
     SmallVector<std::pair<unsigned, unsigned>, 4> MIOperandList;
     for (unsigned i = 0, e = II.Operands.size(); i != e; ++i) {
       InstructionInfo::Operand &Op = II.Operands[i];
-      if (Op.Operand)
-        MIOperandList.push_back(std::make_pair(Op.Operand->MIOperandNo, i));
+      if (Op.OperandInfo)
+        MIOperandList.push_back(std::make_pair(Op.OperandInfo->MIOperandNo, i));
     }
     std::sort(MIOperandList.begin(), MIOperandList.end());
 
@@ -592,7 +592,7 @@ static void ConstructConversionFunctions(CodeGenTarget &Target,
     unsigned CurIndex = 0;
     for (unsigned i = 0, e = MIOperandList.size(); i != e; ++i) {
       InstructionInfo::Operand &Op = II.Operands[MIOperandList[i].second];
-      assert(CurIndex <= Op.Operand->MIOperandNo &&
+      assert(CurIndex <= Op.OperandInfo->MIOperandNo &&
              "Duplicate match for instruction operand!");
       
       Signature += "_";
@@ -601,14 +601,14 @@ static void ConstructConversionFunctions(CodeGenTarget &Target,
       // .td file encodes "implicit" operands as explicit ones.
       //
       // FIXME: This should be removed from the MCInst structure.
-      for (; CurIndex != Op.Operand->MIOperandNo; ++CurIndex)
+      for (; CurIndex != Op.OperandInfo->MIOperandNo; ++CurIndex)
         Signature += "Imp";
 
       Signature += Op.Class->Name;
-      Signature += utostr(Op.Operand->MINumOperands);
+      Signature += utostr(Op.OperandInfo->MINumOperands);
       Signature += "_" + utostr(MIOperandList[i].second);
 
-      CurIndex += Op.Operand->MINumOperands;
+      CurIndex += Op.OperandInfo->MINumOperands;
     }
 
     // Add any trailing implicit operands.
@@ -633,13 +633,13 @@ static void ConstructConversionFunctions(CodeGenTarget &Target,
       InstructionInfo::Operand &Op = II.Operands[MIOperandList[i].second];
 
       // Add the implicit operands.
-      for (; CurIndex != Op.Operand->MIOperandNo; ++CurIndex)
+      for (; CurIndex != Op.OperandInfo->MIOperandNo; ++CurIndex)
         CvtOS << "    Inst.addOperand(MCOperand::CreateReg(0));\n";
 
       CvtOS << "    Operands[" << MIOperandList[i].second 
          << "]." << Op.Class->RenderMethod 
-         << "(Inst, " << Op.Operand->MINumOperands << ");\n";
-      CurIndex += Op.Operand->MINumOperands;
+         << "(Inst, " << Op.OperandInfo->MINumOperands << ");\n";
+      CurIndex += Op.OperandInfo->MINumOperands;
     }
     
     // And add trailing implicit operands.
