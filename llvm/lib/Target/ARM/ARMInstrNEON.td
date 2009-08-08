@@ -1917,6 +1917,27 @@ class VREV16Q<bits<2> op19_18, string OpcodeStr, ValueType Ty>
 def VREV16d8  : VREV16D<0b00, "vrev16.8", v8i8>;
 def VREV16q8  : VREV16Q<0b00, "vrev16.8", v16i8>;
 
+//   VTRN     : Vector Transpose
+
+class VTRND<bits<2> op19_18, string OpcodeStr>
+  : N2V<0b11, 0b11, op19_18, 0b10, 0b00001, 0, 0, (outs DPR:$dst1, DPR:$dst2),
+        (ins DPR:$src1, DPR:$src2), NoItinerary, 
+        !strconcat(OpcodeStr, "\t$dst1, $dst2"),
+        "$src1 = $dst1, $src2 = $dst2", []>;
+class VTRNQ<bits<2> op19_18, string OpcodeStr>
+  : N2V<0b11, 0b11, op19_18, 0b10, 0b00001, 1, 0, (outs QPR:$dst1, QPR:$dst2),
+        (ins QPR:$src1, QPR:$src2), NoItinerary, 
+        !strconcat(OpcodeStr, "\t$dst1, $dst2"),
+        "$src1 = $dst1, $src2 = $dst2", []>;
+
+def  VTRNd8   : VTRND<0b00, "vtrn.8">;
+def  VTRNd16  : VTRND<0b01, "vtrn.16">;
+def  VTRNd32  : VTRND<0b10, "vtrn.32">;
+
+def  VTRNq8   : VTRNQ<0b00, "vtrn.8">;
+def  VTRNq16  : VTRNQ<0b01, "vtrn.16">;
+def  VTRNq32  : VTRNQ<0b10, "vtrn.32">;
+
 //===----------------------------------------------------------------------===//
 // NEON instructions for single-precision FP math
 //===----------------------------------------------------------------------===//

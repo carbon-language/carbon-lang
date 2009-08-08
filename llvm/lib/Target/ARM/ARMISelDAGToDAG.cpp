@@ -1448,6 +1448,33 @@ SDNode *ARMDAGToDAGISel::Select(SDValue Op) {
                             N->getOperand(4), N->getOperand(5) };
     return CurDAG->getTargetNode(Opc, dl, MVT::Other, Ops, 7);
   }
+
+  case ISD::INTRINSIC_WO_CHAIN: {
+    unsigned IntNo = cast<ConstantSDNode>(N->getOperand(0))->getZExtValue();
+    MVT VT = N->getValueType(0);
+    unsigned Opc = 0;
+
+    // Match intrinsics that return multiple values.
+    switch (IntNo) {
+    default: break;
+
+    case Intrinsic::arm_neon_vtrni:
+      switch (VT.getSimpleVT()) {
+      default: return NULL;
+      case MVT::v8i8:  Opc = ARM::VTRNd8; break;
+      case MVT::v4i16: Opc = ARM::VTRNd16; break;
+      case MVT::v2f32:
+      case MVT::v2i32: Opc = ARM::VTRNd32; break;
+      case MVT::v16i8: Opc = ARM::VTRNq8; break;
+      case MVT::v8i16: Opc = ARM::VTRNq16; break;
+      case MVT::v4f32:
+      case MVT::v4i32: Opc = ARM::VTRNq32; break;
+      }
+      return CurDAG->getTargetNode(Opc, dl, VT, VT, N->getOperand(1),
+                                   N->getOperand(2));
+    }
+    break;
+  }
   }
 
   return SelectCode(Op);
