@@ -280,7 +280,7 @@ TargetLoweringObjectFile::getSectionForConstant(SectionKind Kind) const {
 //===----------------------------------------------------------------------===//
 
 const MCSection *TargetLoweringObjectFileELF::
-getOrCreateSection(const char *Name, bool isDirective, SectionKind Kind) const {
+getELFSection(const char *Name, bool isDirective, SectionKind Kind) const {
   if (MCSection *S = getContext().GetSection(Name))
     return S;
   return MCSection::Create(Name, isDirective, Kind, getContext());
@@ -290,47 +290,47 @@ void TargetLoweringObjectFileELF::Initialize(MCContext &Ctx,
                                              const TargetMachine &TM) {
   TargetLoweringObjectFile::Initialize(Ctx, TM);
   if (!HasCrazyBSS)
-    BSSSection = getOrCreateSection("\t.bss", true, SectionKind::getBSS());
+    BSSSection = getELFSection("\t.bss", true, SectionKind::getBSS());
   else
     // PPC/Linux doesn't support the .bss directive, it needs .section .bss.
     // FIXME: Does .section .bss work everywhere??
     // FIXME2: this should just be handle by the section printer.  We should get
     // away from syntactic view of the sections and MCSection should just be a
     // semantic view.
-    BSSSection = getOrCreateSection("\t.bss", false, SectionKind::getBSS());
+    BSSSection = getELFSection("\t.bss", false, SectionKind::getBSS());
 
     
-  TextSection = getOrCreateSection("\t.text", true, SectionKind::getText());
-  DataSection = getOrCreateSection("\t.data", true, SectionKind::getDataRel());
+  TextSection = getELFSection("\t.text", true, SectionKind::getText());
+  DataSection = getELFSection("\t.data", true, SectionKind::getDataRel());
   ReadOnlySection =
-    getOrCreateSection("\t.rodata", false, SectionKind::getReadOnly());
+    getELFSection("\t.rodata", false, SectionKind::getReadOnly());
   TLSDataSection =
-    getOrCreateSection("\t.tdata", false, SectionKind::getThreadData());
+    getELFSection("\t.tdata", false, SectionKind::getThreadData());
   
-  TLSBSSSection = getOrCreateSection("\t.tbss", false, 
+  TLSBSSSection = getELFSection("\t.tbss", false, 
                                      SectionKind::getThreadBSS());
 
-  DataRelSection = getOrCreateSection("\t.data.rel", false,
+  DataRelSection = getELFSection("\t.data.rel", false,
                                       SectionKind::getDataRel());
-  DataRelLocalSection = getOrCreateSection("\t.data.rel.local", false,
+  DataRelLocalSection = getELFSection("\t.data.rel.local", false,
                                    SectionKind::getDataRelLocal());
-  DataRelROSection = getOrCreateSection("\t.data.rel.ro", false,
+  DataRelROSection = getELFSection("\t.data.rel.ro", false,
                                 SectionKind::getReadOnlyWithRel());
   DataRelROLocalSection =
-    getOrCreateSection("\t.data.rel.ro.local", false,
+    getELFSection("\t.data.rel.ro.local", false,
                        SectionKind::getReadOnlyWithRelLocal());
     
-  MergeableConst4Section = getOrCreateSection(".rodata.cst4", false,
+  MergeableConst4Section = getELFSection(".rodata.cst4", false,
                                 SectionKind::getMergeableConst4());
-  MergeableConst8Section = getOrCreateSection(".rodata.cst8", false,
+  MergeableConst8Section = getELFSection(".rodata.cst8", false,
                                 SectionKind::getMergeableConst8());
-  MergeableConst16Section = getOrCreateSection(".rodata.cst16", false,
+  MergeableConst16Section = getELFSection(".rodata.cst16", false,
                                SectionKind::getMergeableConst16());
 
   StaticCtorSection =
-    getOrCreateSection(".ctors", false, SectionKind::getDataRel());
+    getELFSection(".ctors", false, SectionKind::getDataRel());
   StaticDtorSection =
-    getOrCreateSection(".dtors", false, SectionKind::getDataRel());
+    getELFSection(".dtors", false, SectionKind::getDataRel());
   
   // Exception Handling Sections.
   
@@ -339,33 +339,33 @@ void TargetLoweringObjectFileELF::Initialize(MCContext &Ctx,
   // runtime hit for C++ apps.  Either the contents of the LSDA need to be
   // adjusted or this should be a data section.
   LSDASection =
-    getOrCreateSection(".gcc_except_table", false, SectionKind::getReadOnly());
+    getELFSection(".gcc_except_table", false, SectionKind::getReadOnly());
   EHFrameSection =
-    getOrCreateSection(".eh_frame", false, SectionKind::getDataRel());
+    getELFSection(".eh_frame", false, SectionKind::getDataRel());
   
   // Debug Info Sections.
   DwarfAbbrevSection = 
-    getOrCreateSection(".debug_abbrev", false, SectionKind::getMetadata());
+    getELFSection(".debug_abbrev", false, SectionKind::getMetadata());
   DwarfInfoSection = 
-    getOrCreateSection(".debug_info", false, SectionKind::getMetadata());
+    getELFSection(".debug_info", false, SectionKind::getMetadata());
   DwarfLineSection = 
-    getOrCreateSection(".debug_line", false, SectionKind::getMetadata());
+    getELFSection(".debug_line", false, SectionKind::getMetadata());
   DwarfFrameSection = 
-    getOrCreateSection(".debug_frame", false, SectionKind::getMetadata());
+    getELFSection(".debug_frame", false, SectionKind::getMetadata());
   DwarfPubNamesSection = 
-    getOrCreateSection(".debug_pubnames", false, SectionKind::getMetadata());
+    getELFSection(".debug_pubnames", false, SectionKind::getMetadata());
   DwarfPubTypesSection = 
-    getOrCreateSection(".debug_pubtypes", false, SectionKind::getMetadata());
+    getELFSection(".debug_pubtypes", false, SectionKind::getMetadata());
   DwarfStrSection = 
-    getOrCreateSection(".debug_str", false, SectionKind::getMetadata());
+    getELFSection(".debug_str", false, SectionKind::getMetadata());
   DwarfLocSection = 
-    getOrCreateSection(".debug_loc", false, SectionKind::getMetadata());
+    getELFSection(".debug_loc", false, SectionKind::getMetadata());
   DwarfARangesSection = 
-    getOrCreateSection(".debug_aranges", false, SectionKind::getMetadata());
+    getELFSection(".debug_aranges", false, SectionKind::getMetadata());
   DwarfRangesSection = 
-    getOrCreateSection(".debug_ranges", false, SectionKind::getMetadata());
+    getELFSection(".debug_ranges", false, SectionKind::getMetadata());
   DwarfMacroInfoSection = 
-    getOrCreateSection(".debug_macinfo", false, SectionKind::getMetadata());
+    getELFSection(".debug_macinfo", false, SectionKind::getMetadata());
 }
 
 
@@ -401,7 +401,7 @@ getExplicitSectionGlobal(const GlobalValue *GV, SectionKind Kind,
   // Infer section flags from the section name if we can.
   Kind = getELFKindForNamedSection(GV->getSection().c_str(), Kind);
   
-  return getOrCreateSection(GV->getSection().c_str(), false, Kind);
+  return getELFSection(GV->getSection().c_str(), false, Kind);
 }
       
       
@@ -497,7 +497,7 @@ SelectSectionForGlobal(const GlobalValue *GV, SectionKind Kind,
   if (GV->isWeakForLinker()) {
     const char *Prefix = getSectionPrefixForUniqueGlobal(Kind);
     std::string Name = Mang->makeNameProper(GV->getNameStr());
-    return getOrCreateSection((Prefix+Name).c_str(), false, Kind);
+    return getELFSection((Prefix+Name).c_str(), false, Kind);
   }
   
   if (Kind.isText()) return TextSection;
@@ -522,7 +522,7 @@ SelectSectionForGlobal(const GlobalValue *GV, SectionKind Kind,
     
     
     std::string Name = SizeSpec + utostr(Align);
-    return getOrCreateSection(Name.c_str(), false, Kind);
+    return getELFSection(Name.c_str(), false, Kind);
   }
   
   if (Kind.isMergeableConst()) {
@@ -574,17 +574,12 @@ getSectionForConstant(SectionKind Kind) const {
 //                                 MachO
 //===----------------------------------------------------------------------===//
 
+
 const MCSection *TargetLoweringObjectFileMachO::
-getOrCreateSection(const char *Name, bool isDirective, SectionKind Kind) const {
+getMachOSection(const char *Name, bool isDirective, SectionKind Kind) const {
   if (MCSection *S = getContext().GetSection(Name))
     return S;
   return MCSection::Create(Name, isDirective, Kind, getContext());
-}
-
-const MCSection *TargetLoweringObjectFileMachO::
-getMachOSection(const char *Name, bool isDirective, SectionKind K) {
-  // FOR NOW, Just forward.
-  return getOrCreateSection(Name, isDirective, K);  
 }
 
 
@@ -592,18 +587,16 @@ getMachOSection(const char *Name, bool isDirective, SectionKind K) {
 void TargetLoweringObjectFileMachO::Initialize(MCContext &Ctx,
                                                const TargetMachine &TM) {
   TargetLoweringObjectFile::Initialize(Ctx, TM);
-  TextSection = getOrCreateSection("\t.text", true,
-                                   SectionKind::getText());
-  DataSection = getOrCreateSection("\t.data", true, 
-                                   SectionKind::getDataRel());
+  TextSection = getMachOSection("\t.text", true, SectionKind::getText());
+  DataSection = getMachOSection("\t.data", true, SectionKind::getDataRel());
   
-  CStringSection = getOrCreateSection("\t.cstring", true,
-                                      SectionKind::getMergeable1ByteCString());
-  UStringSection = getOrCreateSection("__TEXT,__ustring", false,
-                                      SectionKind::getMergeable2ByteCString());
-  FourByteConstantSection = getOrCreateSection("\t.literal4\n", true,
-                                             SectionKind::getMergeableConst4());
-  EightByteConstantSection = getOrCreateSection("\t.literal8\n", true,
+  CStringSection = getMachOSection("\t.cstring", true,
+                                   SectionKind::getMergeable1ByteCString());
+  UStringSection = getMachOSection("__TEXT,__ustring", false,
+                                   SectionKind::getMergeable2ByteCString());
+  FourByteConstantSection = getMachOSection("\t.literal4\n", true,
+                                            SectionKind::getMergeableConst4());
+  EightByteConstantSection = getMachOSection("\t.literal8\n", true,
                                              SectionKind::getMergeableConst8());
   
   // ld_classic doesn't support .literal16 in 32-bit mode, and ld64 falls back
@@ -611,93 +604,90 @@ void TargetLoweringObjectFileMachO::Initialize(MCContext &Ctx,
   if (TM.getRelocationModel() != Reloc::Static &&
       TM.getTargetData()->getPointerSize() == 32)
     SixteenByteConstantSection = 
-      getOrCreateSection("\t.literal16\n", true, 
-                         SectionKind::getMergeableConst16());
+      getMachOSection("\t.literal16\n", true, 
+                      SectionKind::getMergeableConst16());
   else
     SixteenByteConstantSection = 0;
   
-  ReadOnlySection = getOrCreateSection("\t.const", true, 
-                                       SectionKind::getReadOnly());
+  ReadOnlySection = getMachOSection("\t.const", true,
+                                    SectionKind::getReadOnly());
   
   TextCoalSection =
-  getOrCreateSection("\t__TEXT,__textcoal_nt,coalesced,pure_instructions",
-                     false, SectionKind::getText());
-  ConstTextCoalSection = getOrCreateSection("\t__TEXT,__const_coal,coalesced",
-                                            false,
-                                           SectionKind::getText());
-  ConstDataCoalSection = getOrCreateSection("\t__DATA,__const_coal,coalesced",
-                                            false, 
-                                          SectionKind::getText());
-  ConstDataSection = getOrCreateSection("\t.const_data", true,
-                                SectionKind::getReadOnlyWithRel());
-  DataCoalSection = getOrCreateSection("\t__DATA,__datacoal_nt,coalesced",
-                                       false,
-                                       SectionKind::getDataRel());
+    getMachOSection("\t__TEXT,__textcoal_nt,coalesced,pure_instructions",
+                    false, SectionKind::getText());
+  ConstTextCoalSection = getMachOSection("\t__TEXT,__const_coal,coalesced",
+                                         false, SectionKind::getText());
+  ConstDataCoalSection = getMachOSection("\t__DATA,__const_coal,coalesced",
+                                         false, SectionKind::getText());
+  ConstDataSection = getMachOSection("\t.const_data", true,
+                                     SectionKind::getReadOnlyWithRel());
+  DataCoalSection = getMachOSection("\t__DATA,__datacoal_nt,coalesced",
+                                    false, SectionKind::getDataRel());
 
   if (TM.getRelocationModel() == Reloc::Static) {
     StaticCtorSection =
-      getOrCreateSection(".constructor", true, SectionKind::getDataRel());
+      getMachOSection(".constructor", true, SectionKind::getDataRel());
     StaticDtorSection =
-      getOrCreateSection(".destructor", true, SectionKind::getDataRel());
+      getMachOSection(".destructor", true, SectionKind::getDataRel());
   } else {
     StaticCtorSection =
-      getOrCreateSection(".mod_init_func", true, SectionKind::getDataRel());
+      getMachOSection(".mod_init_func", true, SectionKind::getDataRel());
     StaticDtorSection =
-      getOrCreateSection(".mod_term_func", true, SectionKind::getDataRel());
+      getMachOSection(".mod_term_func", true, SectionKind::getDataRel());
   }
   
   // Exception Handling.
-  LSDASection = getOrCreateSection("__DATA,__gcc_except_tab", false,
-                                   SectionKind::getDataRel());
+  LSDASection = getMachOSection("__DATA,__gcc_except_tab", false,
+                                SectionKind::getDataRel());
   EHFrameSection =
-    getOrCreateSection("__TEXT,__eh_frame,coalesced,no_toc+strip_static_syms"
-                       "+live_support", false, SectionKind::getReadOnly());
+    getMachOSection("__TEXT,__eh_frame,coalesced,no_toc+strip_static_syms"
+                    "+live_support", false, SectionKind::getReadOnly());
 
   // Debug Information.
   // FIXME: Don't use 'directive' syntax: need flags for debug/regular??
   // FIXME: Need __DWARF segment.
   DwarfAbbrevSection = 
-    getOrCreateSection(".section __DWARF,__debug_abbrev,regular,debug", true,
-                       SectionKind::getMetadata());
+    getMachOSection(".section __DWARF,__debug_abbrev,regular,debug", true,
+                    SectionKind::getMetadata());
   DwarfInfoSection =  
-    getOrCreateSection(".section __DWARF,__debug_info,regular,debug", true,
-                       SectionKind::getMetadata());
+    getMachOSection(".section __DWARF,__debug_info,regular,debug", true,
+                    SectionKind::getMetadata());
   DwarfLineSection =  
-    getOrCreateSection(".section __DWARF,__debug_line,regular,debug", true,
-                       SectionKind::getMetadata());
+    getMachOSection(".section __DWARF,__debug_line,regular,debug", true,
+                    SectionKind::getMetadata());
   DwarfFrameSection =  
-    getOrCreateSection(".section __DWARF,__debug_frame,regular,debug", true,
-                       SectionKind::getMetadata());
+    getMachOSection(".section __DWARF,__debug_frame,regular,debug", true,
+                    SectionKind::getMetadata());
   DwarfPubNamesSection =  
-    getOrCreateSection(".section __DWARF,__debug_pubnames,regular,debug", true,
-                       SectionKind::getMetadata());
+    getMachOSection(".section __DWARF,__debug_pubnames,regular,debug", true,
+                    SectionKind::getMetadata());
   DwarfPubTypesSection =  
-    getOrCreateSection(".section __DWARF,__debug_pubtypes,regular,debug", true,
-                       SectionKind::getMetadata());
+    getMachOSection(".section __DWARF,__debug_pubtypes,regular,debug", true,
+                    SectionKind::getMetadata());
   DwarfStrSection =  
-    getOrCreateSection(".section __DWARF,__debug_str,regular,debug", true,
-                       SectionKind::getMetadata());
+    getMachOSection(".section __DWARF,__debug_str,regular,debug", true,
+                    SectionKind::getMetadata());
   DwarfLocSection =  
-    getOrCreateSection(".section __DWARF,__debug_loc,regular,debug", true,
-                       SectionKind::getMetadata());
+    getMachOSection(".section __DWARF,__debug_loc,regular,debug", true,
+                    SectionKind::getMetadata());
   DwarfARangesSection =  
-    getOrCreateSection(".section __DWARF,__debug_aranges,regular,debug", true,
-                       SectionKind::getMetadata());
+    getMachOSection(".section __DWARF,__debug_aranges,regular,debug", true,
+                    SectionKind::getMetadata());
   DwarfRangesSection =  
-    getOrCreateSection(".section __DWARF,__debug_ranges,regular,debug", true,
-                       SectionKind::getMetadata());
+    getMachOSection(".section __DWARF,__debug_ranges,regular,debug", true,
+                    SectionKind::getMetadata());
   DwarfMacroInfoSection =  
-    getOrCreateSection(".section __DWARF,__debug_macinfo,regular,debug", true,
-                       SectionKind::getMetadata());
+    getMachOSection(".section __DWARF,__debug_macinfo,regular,debug", true,
+                    SectionKind::getMetadata());
   DwarfDebugInlineSection = 
-    getOrCreateSection(".section __DWARF,__debug_inlined,regular,debug", true,
-                       SectionKind::getMetadata());
+    getMachOSection(".section __DWARF,__debug_inlined,regular,debug", true,
+                    SectionKind::getMetadata());
 }
 
 const MCSection *TargetLoweringObjectFileMachO::
 getExplicitSectionGlobal(const GlobalValue *GV, SectionKind Kind, 
                          Mangler *Mang, const TargetMachine &TM) const {
-  return getOrCreateSection(GV->getSection().c_str(), false, Kind);
+  return getMachOSection(GV->getSection().c_str(), false, Kind);
 }
 
 const MCSection *TargetLoweringObjectFileMachO::
@@ -794,72 +784,66 @@ shouldEmitUsedDirectiveFor(const GlobalValue *GV, Mangler *Mang) const {
 //                                  COFF
 //===----------------------------------------------------------------------===//
 
+
 const MCSection *TargetLoweringObjectFileCOFF::
-getOrCreateSection(const char *Name, bool isDirective, SectionKind Kind) const {
+getCOFFSection(const char *Name, bool isDirective, SectionKind Kind) const {
   if (MCSection *S = getContext().GetSection(Name))
     return S;
   return MCSection::Create(Name, isDirective, Kind, getContext());
 }
 
-const MCSection *TargetLoweringObjectFileCOFF::
-getCOFFSection(const char *Name, bool isDirective, SectionKind K) {
-  return getOrCreateSection(Name, isDirective, K);
-}
-
 void TargetLoweringObjectFileCOFF::Initialize(MCContext &Ctx,
                                               const TargetMachine &TM) {
   TargetLoweringObjectFile::Initialize(Ctx, TM);
-  TextSection = getOrCreateSection("\t.text", true,
-                                   SectionKind::getText());
-  DataSection = getOrCreateSection("\t.data", true,
-                                   SectionKind::getDataRel());
+  TextSection = getCOFFSection("\t.text", true, SectionKind::getText());
+  DataSection = getCOFFSection("\t.data", true, SectionKind::getDataRel());
   StaticCtorSection =
-    getOrCreateSection(".ctors", false, SectionKind::getDataRel());
+    getCOFFSection(".ctors", false, SectionKind::getDataRel());
   StaticDtorSection =
-    getOrCreateSection(".dtors", false, SectionKind::getDataRel());
+    getCOFFSection(".dtors", false, SectionKind::getDataRel());
   
   
   // Debug info.
   // FIXME: Don't use 'directive' mode here.
   DwarfAbbrevSection =  
-    getOrCreateSection("\t.section\t.debug_abbrev,\"dr\"",
-                       true, SectionKind::getMetadata());
+    getCOFFSection("\t.section\t.debug_abbrev,\"dr\"",
+                   true, SectionKind::getMetadata());
   DwarfInfoSection =    
-    getOrCreateSection("\t.section\t.debug_info,\"dr\"",
-                       true, SectionKind::getMetadata());
+    getCOFFSection("\t.section\t.debug_info,\"dr\"",
+                   true, SectionKind::getMetadata());
   DwarfLineSection =    
-    getOrCreateSection("\t.section\t.debug_line,\"dr\"",
-                       true, SectionKind::getMetadata());
+    getCOFFSection("\t.section\t.debug_line,\"dr\"",
+                   true, SectionKind::getMetadata());
   DwarfFrameSection =   
-    getOrCreateSection("\t.section\t.debug_frame,\"dr\"",
-                       true, SectionKind::getMetadata());
+    getCOFFSection("\t.section\t.debug_frame,\"dr\"",
+                   true, SectionKind::getMetadata());
   DwarfPubNamesSection =
-    getOrCreateSection("\t.section\t.debug_pubnames,\"dr\"",
-                       true, SectionKind::getMetadata());
+    getCOFFSection("\t.section\t.debug_pubnames,\"dr\"",
+                   true, SectionKind::getMetadata());
   DwarfPubTypesSection =
-    getOrCreateSection("\t.section\t.debug_pubtypes,\"dr\"",
-                       true, SectionKind::getMetadata());
+    getCOFFSection("\t.section\t.debug_pubtypes,\"dr\"",
+                   true, SectionKind::getMetadata());
   DwarfStrSection =     
-    getOrCreateSection("\t.section\t.debug_str,\"dr\"",
-                       true, SectionKind::getMetadata());
+    getCOFFSection("\t.section\t.debug_str,\"dr\"",
+                   true, SectionKind::getMetadata());
   DwarfLocSection =     
-    getOrCreateSection("\t.section\t.debug_loc,\"dr\"",
-                       true, SectionKind::getMetadata());
+    getCOFFSection("\t.section\t.debug_loc,\"dr\"",
+                   true, SectionKind::getMetadata());
   DwarfARangesSection = 
-    getOrCreateSection("\t.section\t.debug_aranges,\"dr\"",
-                       true, SectionKind::getMetadata());
+    getCOFFSection("\t.section\t.debug_aranges,\"dr\"",
+                   true, SectionKind::getMetadata());
   DwarfRangesSection =  
-    getOrCreateSection("\t.section\t.debug_ranges,\"dr\"",
-                       true, SectionKind::getMetadata());
+    getCOFFSection("\t.section\t.debug_ranges,\"dr\"",
+                   true, SectionKind::getMetadata());
   DwarfMacroInfoSection = 
-    getOrCreateSection("\t.section\t.debug_macinfo,\"dr\"",
-                       true, SectionKind::getMetadata());
+    getCOFFSection("\t.section\t.debug_macinfo,\"dr\"",
+                   true, SectionKind::getMetadata());
 }
 
 const MCSection *TargetLoweringObjectFileCOFF::
 getExplicitSectionGlobal(const GlobalValue *GV, SectionKind Kind, 
                          Mangler *Mang, const TargetMachine &TM) const {
-  return getOrCreateSection(GV->getSection().c_str(), false, Kind);
+  return getCOFFSection(GV->getSection().c_str(), false, Kind);
 }
 
 
@@ -895,7 +879,7 @@ SelectSectionForGlobal(const GlobalValue *GV, SectionKind Kind,
   if (GV->isWeakForLinker()) {
     const char *Prefix = getCOFFSectionPrefixForUniqueGlobal(Kind);
     std::string Name = Mang->makeNameProper(GV->getNameStr());
-    return getOrCreateSection((Prefix+Name).c_str(), false, Kind);
+    return getCOFFSection((Prefix+Name).c_str(), false, Kind);
   }
   
   if (Kind.isText())

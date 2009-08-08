@@ -207,9 +207,8 @@ protected:
   const MCSection *MergeableConst16Section;
   
 protected:
-  const MCSection *getOrCreateSection(const char *Name,
-                                      bool isDirective,
-                                      SectionKind K) const;
+  const MCSection *getELFSection(const char *Name, bool isDirective,
+                                 SectionKind Kind) const;
 public:
   /// ELF Constructor - AtIsCommentChar is true if the CommentCharacter from TAI
   /// is "@".
@@ -250,10 +249,6 @@ class TargetLoweringObjectFileMachO : public TargetLoweringObjectFile {
   const MCSection *FourByteConstantSection;
   const MCSection *EightByteConstantSection;
   const MCSection *SixteenByteConstantSection;
-protected:
-  const MCSection *getOrCreateSection(const char *Name,
-                                      bool isDirective,
-                                      SectionKind K) const;
 public:
   
   virtual void Initialize(MCContext &Ctx, const TargetMachine &TM);
@@ -277,16 +272,12 @@ public:
   /// getMachOSection - Return the MCSection for the specified mach-o section.
   /// FIXME: Switch this to a semantic view eventually.
   const MCSection *getMachOSection(const char *Name, bool isDirective,
-                                   SectionKind K);
+                                   SectionKind K) const;
 };
 
 
 
 class TargetLoweringObjectFileCOFF : public TargetLoweringObjectFile {
-protected:
-  const MCSection *getOrCreateSection(const char *Name,
-                                      bool isDirective,
-                                      SectionKind K) const;
 public:
   virtual void Initialize(MCContext &Ctx, const TargetMachine &TM);
   
@@ -304,7 +295,7 @@ public:
   /// getCOFFSection - Return the MCSection for the specified COFF section.
   /// FIXME: Switch this to a semantic view eventually.
   const MCSection *getCOFFSection(const char *Name, bool isDirective,
-                                  SectionKind K);
+                                  SectionKind K) const;
 };
 
 } // end namespace llvm
