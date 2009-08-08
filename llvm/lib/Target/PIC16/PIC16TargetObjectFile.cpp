@@ -8,7 +8,6 @@
 //===----------------------------------------------------------------------===//
 
 #include "PIC16TargetObjectFile.h"
-#include "PIC16Section.h"
 #include "PIC16ISelLowering.h"
 #include "PIC16TargetMachine.h"
 #include "llvm/DerivedTypes.h"
@@ -25,7 +24,7 @@ const MCSection *PIC16TargetObjectFile::
 getPIC16Section(const char *Name, bool isDirective, SectionKind Kind) const {
   if (MCSection *S = getContext().GetSection(Name))
     return S;
-  return MCSectionPIC16::Create(Name, isDirective, Kind, getContext());
+  return MCSection::Create(Name, isDirective, Kind, getContext());
 }
 
 
