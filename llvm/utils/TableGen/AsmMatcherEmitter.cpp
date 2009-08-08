@@ -81,8 +81,9 @@
 #include "llvm/ADT/StringExtras.h"
 #include "llvm/Support/CommandLine.h"
 #include "llvm/Support/Debug.h"
-#include <set>
 #include <list>
+#include <map>
+#include <set>
 using namespace llvm;
 
 namespace {
@@ -272,6 +273,8 @@ static bool IsAssemblerInstruction(const StringRef &Name,
 
 namespace {
 
+/// InstructionInfo - Helper class for storing the necessary information for an
+/// instruction which is capable of being matched.
 struct InstructionInfo {
   struct Operand {
     enum {
@@ -312,14 +315,10 @@ struct InstructionInfo {
   /// Operands - The operands that this instruction matches.
   SmallVector<Operand, 4> Operands;
 
-  /// ConversionFn - The name of the conversion function to convert parsed
-  /// operands into an MCInst for this function.
-  std::string ConversionFn;
-
-  /// OrderedClassOperands - The indices of the class operands, ordered by their
-  /// MIOperandNo order (which is the order they should be passed to the
-  /// conversion function).
-  SmallVector<unsigned, 4> OrderedClassOperands;
+  /// ConversionFnKind - The enum value which is passed to the generated
+  /// ConvertToMCInst to convert parsed operands into an MCInst for this
+  /// function.
+  std::string ConversionFnKind;
 
 public:
   void dump();
@@ -419,7 +418,12 @@ static void BuildInstructionInfos(CodeGenTarget &Target,
 
         // FIXME: Yet another total hack.
         if (RV->getValue()->getAsString() == "iPTR" ||
+            OI.Rec->getName() == "i8mem_NOREX" ||
             OI.Rec->getName() == "lea32mem" ||
+            OI.Rec->getName() == "lea64mem" ||
+            OI.Rec->getName() == "i128mem" ||
+            OI.Rec->getName() == "sdmem" ||
+            OI.Rec->getName() == "ssmem" ||
             OI.Rec->getName() == "lea64_32mem") {
           Op.AsClass.ClassName = "Mem";
           Op.AsClass.PredicateMethod = "isMem";
@@ -448,9 +452,32 @@ static void BuildInstructionInfos(CodeGenTarget &Target,
 static void ConstructConversionFunctions(CodeGenTarget &Target,
                                          std::vector<InstructionInfo*> &Infos,
                                          raw_ostream &OS) {
+  // Write the convert function to a separate stream, so we can drop it after
+  // the enum.
+  std::string ConvertFnBody;
+  raw_string_ostream CvtOS(ConvertFnBody);
+
   // Function we have already generated.
   std::set<std::string> GeneratedFns;
 
+  // Start the unified conversion function.
+
+  CvtOS << "static bool ConvertToMCInst(ConversionKind Kind, MCInst &Inst, "
+        << "unsigned Opcode,\n"
+        << "                            SmallVectorImpl<"
+        << Target.getName() << "Operand> &Operands) {\n";
+  CvtOS << "  Inst.setOpcode(Opcode);\n";
+  CvtOS << "  switch (Kind) {\n";
+  CvtOS << "  default:\n";
+
+  // Start the enum, which we will generate inline.
+
+  OS << "// Unified function for converting operants to MCInst instances.\n\n";
+
+  OS << "namespace {\n\n";
+  
+  OS << "enum ConversionKind {\n";
+  
   for (std::vector<InstructionInfo*>::const_iterator it = Infos.begin(),
          ie = Infos.end(); it != ie; ++it) {
     InstructionInfo &II = **it;
@@ -480,10 +507,9 @@ static void ConstructConversionFunctions(CodeGenTarget &Target,
       InstructionInfo::Operand &Op = II.Operands[MIOperandList[i].second];
       assert(CurIndex <= Op.AsClass.Operand->MIOperandNo &&
              "Duplicate match for instruction operand!");
-
-      // Save the conversion index, for use by the matcher.
-      II.OrderedClassOperands.push_back(MIOperandList[i].second);
       
+      Signature += "_";
+
       // Skip operands which weren't matched by anything, this occurs when the
       // .td file encodes "implicit" operands as explicit ones.
       //
@@ -493,6 +519,8 @@ static void ConstructConversionFunctions(CodeGenTarget &Target,
 
       Signature += Op.AsClass.ClassName;
       Signature += utostr(Op.AsClass.Operand->MINumOperands);
+      Signature += "_" + utostr(MIOperandList[i].second);
+
       CurIndex += Op.AsClass.Operand->MINumOperands;
     }
 
@@ -500,42 +528,53 @@ static void ConstructConversionFunctions(CodeGenTarget &Target,
     for (; CurIndex != NumMIOperands; ++CurIndex)
       Signature += "Imp";
 
-    // Save the conversion function, for use by the matcher.
-    II.ConversionFn = Signature;
+    II.ConversionFnKind = Signature;
 
-    // Check if we have already generated this function.
+    // Check if we have already generated this signature.
     if (!GeneratedFns.insert(Signature).second)
       continue;
 
     // If not, emit it now.
-    //
-    // FIXME: There should be no need to pass the number of operands to fill;
-    // this should always be implicit in the class.
-    OS << "static bool " << Signature << "(MCInst &Inst, unsigned Opcode";
-    for (unsigned i = 0, e = MIOperandList.size(); i != e; ++i)
-      OS << ", " << Target.getName() << "Operand Op" << i;
-    OS << ") {\n";
-    OS << "  Inst.setOpcode(Opcode);\n";
+
+    // Add to the enum list.
+    OS << "  " << Signature << ",\n";
+
+    // And to the convert function.
+    CvtOS << "  case " << Signature << ":\n";
     CurIndex = 0;
     for (unsigned i = 0, e = MIOperandList.size(); i != e; ++i) {
       InstructionInfo::Operand &Op = II.Operands[MIOperandList[i].second];
 
       // Add the implicit operands.
       for (; CurIndex != Op.AsClass.Operand->MIOperandNo; ++CurIndex)
-        OS << "  Inst.addOperand(MCOperand::CreateReg(0));\n";
+        CvtOS << "    Inst.addOperand(MCOperand::CreateReg(0));\n";
 
-      OS << "  Op" << i << "." << Op.AsClass.RenderMethod 
+      CvtOS << "    Operands[" << MIOperandList[i].second 
+         << "]." << Op.AsClass.RenderMethod 
          << "(Inst, " << Op.AsClass.Operand->MINumOperands << ");\n";
       CurIndex += Op.AsClass.Operand->MINumOperands;
     }
     
     // And add trailing implicit operands.
     for (; CurIndex != NumMIOperands; ++CurIndex)
-      OS << "  Inst.addOperand(MCOperand::CreateReg(0));\n";
-
-    OS << "  return false;\n";
-    OS << "}\n\n";
+      CvtOS << "    Inst.addOperand(MCOperand::CreateReg(0));\n";
+    CvtOS << "    break;\n";
   }
+
+  // Finish the convert function.
+
+  CvtOS << "  }\n";
+  CvtOS << "  return false;\n";
+  CvtOS << "}\n\n";
+
+  // Finish the enum, and drop the convert function after it.
+
+  OS << "  NumConversionVariants\n";
+  OS << "};\n\n";
+  
+  OS << "}\n\n";
+
+  OS << CvtOS.str();
 }
 
 /// EmitMatchRegisterName - Emit the function to match a string to the target
@@ -576,22 +615,16 @@ void AsmMatcherEmitter::run(raw_ostream &OS) {
   std::vector<InstructionInfo*> Infos;
   BuildInstructionInfos(Target, Infos);
 
-#undef DEBUG_TYPE
-#define DEBUG_TYPE "instruction_info"
-  DEBUG({
+  DEBUG_WITH_TYPE("instruction_info", {
       for (std::vector<InstructionInfo*>::iterator it = Infos.begin(),
              ie = Infos.end(); it != ie; ++it)
         (*it)->dump();
     });
-#undef DEBUG_TYPE
-#define DEBUG_TYPE ""
 
   // FIXME: At this point we should be able to totally order Infos, if not then
   // we have an ambiguity which the .td file should be forced to resolve.
 
-  // Generate the terminal actions to convert operands into an MCInst. We still
-  // pass the operands in to these functions individually (as opposed to the
-  // array) so that we do not need to worry about the operand order.
+  // Generate the terminal actions to convert operands into an MCInst.
   ConstructConversionFunctions(Target, Infos, OS);
 
   // Build a very stupid version of the match function which just checks each
@@ -622,11 +655,9 @@ void AsmMatcherEmitter::run(raw_ostream &OS) {
            << Op.AsClass.PredicateMethod << "()";
     }
     OS << ")\n";
-    OS << "    return " << II.ConversionFn << "(Inst, " 
-       << Target.getName() << "::" << II.InstrName;
-    for (unsigned i = 0, e = II.OrderedClassOperands.size(); i != e; ++i)
-      OS << ", Operands[" << II.OrderedClassOperands[i] << "]";
-    OS << ");\n\n";
+    OS << "    return ConvertToMCInst(" << II.ConversionFnKind << ", Inst, "
+       << Target.getName() << "::" << II.InstrName
+       << ", Operands);\n\n";
   }
 
   OS << "  return true;\n";
