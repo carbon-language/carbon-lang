@@ -32,6 +32,7 @@ add_llvm_target(ARMCodeGen
   Thumb2ITBlockPass.cpp
   Thumb2InstrInfo.cpp
   Thumb2RegisterInfo.cpp
+  Thumb2SizeReduction.cpp
   )
 
 target_link_libraries (LLVMARMCodeGen LLVMSelectionDAG)
