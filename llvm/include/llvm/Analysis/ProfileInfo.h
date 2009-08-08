@@ -67,7 +67,7 @@ namespace llvm {
 
     // getEdge() - Creates an Edge from two BasicBlocks.
     static Edge getEdge(const BasicBlock* Src, const BasicBlock* Dest) {
-      return std::make_pair(Src,Dest);
+      return std::make_pair(Src, Dest);
     }
 
     //===------------------------------------------------------------------===//

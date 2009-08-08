@@ -77,7 +77,7 @@ bool LoaderPass::runOnModule(Module &M) {
     for (Module::iterator F = M.begin(), E = M.end(); F != E; ++F) {
       if (F->isDeclaration()) continue;
       if (ei < ECs.size())
-        EdgeInformation[F][ProfileInfo::getEdge(0,&F->getEntryBlock())] +=
+        EdgeInformation[F][ProfileInfo::getEdge(0, &F->getEntryBlock())] +=
           ECs[ei++];
       for (Function::iterator BB = F->begin(), E = F->end(); BB != E; ++BB) {
         // Okay, we have to add a counter of each outgoing edge.  If the

@@ -229,7 +229,7 @@ public:
            I != E; ++I)
         if (!std::binary_search(LoopBBs.begin(), LoopBBs.end(), *I))
           // Not in current loop? It must be an exit block.
-          ExitEdges.push_back(std::make_pair(*BI,*I));
+          ExitEdges.push_back(std::make_pair(*BI, *I));
   }
 
   /// getUniqueExitBlocks - Return all unique successor blocks of this loop. 

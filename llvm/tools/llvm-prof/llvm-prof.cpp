@@ -78,24 +78,22 @@ namespace {
     ProfileAnnotator(ProfileInfo& pi) : PI(pi) {}
 
     virtual void emitFunctionAnnot(const Function *F, raw_ostream &OS) {
-      OS << ";;; %" << F->getName() << " called ";
       double w = PI.getExecutionCount(F);
-      if (w == ProfileInfo::MissingValue)
-        OS << "(no value)";
-      else
-        OS << (unsigned)w;
-      OS << " times.\n;;;\n";
+      if (w != ProfileInfo::MissingValue) {
+        OS << ";;; %" << F->getName() << " called "<<(unsigned)w
+           <<" times.\n;;;\n";
+      }
     }
     virtual void emitBasicBlockStartAnnot(const BasicBlock *BB,
                                           raw_ostream &OS) {
       double w = PI.getExecutionCount(BB);
-      if (w == ProfileInfo::MissingValue)
-        OS << "\t;;; (no value)\n";
-      else
-        if (w != 0)
-          OS << "\t;;; Basic block executed " << w << " times.\n";
-        else
+      if (w != ProfileInfo::MissingValue) {
+        if (w != 0) {
+          OS << "\t;;; Basic block executed " << (unsigned)w << " times.\n";
+        } else {
           OS << "\t;;; Never executed!\n";
+        }
+      }
     }
 
     virtual void emitBasicBlockEndAnnot(const BasicBlock *BB, raw_ostream &OS) {
@@ -105,8 +103,9 @@ namespace {
       const TerminatorInst *TI = BB->getTerminator();
       for (unsigned s = 0, e = TI->getNumSuccessors(); s != e; ++s) {
         BasicBlock* Succ = TI->getSuccessor(s);
-        double w = ignoreMissing(PI.getEdgeWeight(std::make_pair(BB,Succ)));
-        SuccCounts.push_back(std::make_pair(std::make_pair(BB,Succ), w));
+        double w = ignoreMissing(PI.getEdgeWeight(std::make_pair(BB, Succ)));
+        if (w != 0)
+          SuccCounts.push_back(std::make_pair(std::make_pair(BB, Succ), w));
       }
       if (!SuccCounts.empty()) {
         OS << "\t;;; Out-edge counts:";
@@ -157,11 +156,11 @@ bool ProfileInfoPrinterPass::runOnModule(Module &M) {
   for (Module::iterator FI = M.begin(), FE = M.end(); FI != FE; ++FI) {
     if (FI->isDeclaration()) continue;
     double w = ignoreMissing(PI.getExecutionCount(FI));
-    FunctionCounts.push_back(std::make_pair(FI,w));
+    FunctionCounts.push_back(std::make_pair(FI, w));
     for (Function::iterator BB = FI->begin(), BBE = FI->end(); 
          BB != BBE; ++BB) {
       double w = ignoreMissing(PI.getExecutionCount(BB));
-      Counts.push_back(std::make_pair(BB,w));
+      Counts.push_back(std::make_pair(BB, w));
     }
   }
 
