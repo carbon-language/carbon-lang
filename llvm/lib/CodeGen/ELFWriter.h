@@ -21,6 +21,7 @@
 namespace llvm {
   class BinaryObject;
   class Constant;
+  class ConstantInt;
   class ConstantStruct;
   class ELFCodeEmitter;
   class ELFRelocation;
@@ -248,8 +249,9 @@ namespace llvm {
     void EmitGlobalConstant(const Constant *C, ELFSection &GblS);
     void EmitGlobalConstantStruct(const ConstantStruct *CVS,
                                   ELFSection &GblS);
-    void emitGlobalDataRelocation(const GlobalValue *GV, unsigned Size, 
-                                  ELFSection &GblS);
+    void EmitGlobalConstantLargeInt(const ConstantInt *CI, ELFSection &S);
+    void EmitGlobalDataRelocation(const GlobalValue *GV, unsigned Size, 
+                                  ELFSection &GblS, uint64_t Offset = 0);
     bool EmitSpecialLLVMGlobal(const GlobalVariable *GV);
     void EmitXXStructorList(Constant *List, ELFSection &Xtor);
     void EmitRelocations();

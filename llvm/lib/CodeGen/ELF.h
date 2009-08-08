@@ -136,11 +136,11 @@ namespace llvm {
       return Sym;
     }
 
-    // getFileSym - Returns a elf symbol to represent the module identifier
-    static ELFSym *getUndefGV(const GlobalValue *GV) {
+    // getUndefGV - Returns a STT_NOTYPE symbol
+    static ELFSym *getUndefGV(const GlobalValue *GV, unsigned Bind) {
       ELFSym *Sym = new ELFSym();
       Sym->Source.GV = GV;
-      Sym->setBind(STB_GLOBAL);
+      Sym->setBind(Bind);
       Sym->setType(STT_NOTYPE);
       Sym->setVisibility(STV_DEFAULT);
       Sym->SectionIdx = 0;  //ELFSection::SHN_UNDEF;

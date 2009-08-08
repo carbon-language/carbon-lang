@@ -68,6 +68,13 @@ public:
     return !Relocations.empty();
   }
 
+  /// emitZeros - This callback is invoked to emit a arbitrary number 
+  /// of zero bytes to the data stream.
+  inline void emitZeros(unsigned Size) {
+    for (unsigned i=0; i < Size; ++i)
+      emitByte(0);
+  }
+
   /// emitByte - This callback is invoked when a byte needs to be
   /// written to the data stream.
   inline void emitByte(uint8_t B) {
@@ -122,6 +129,19 @@ public:
       emitDWordLE(W);
     else
       emitDWordBE(W);
+  }
+
+  /// emitWord64 - This callback is invoked when a x86_fp80 needs to be
+  /// written to the data stream in correct endian format.
+  inline void emitWordFP80(const uint64_t *W, unsigned PadSize) {
+    if (IsLittleEndian) {
+      emitWord64(W[0]);
+      emitWord16(W[1]);  
+    } else {
+      emitWord16(W[1]);  
+      emitWord64(W[0]);
+    }
+    emitZeros(PadSize);
   }
 
   /// emitWordLE - This callback is invoked when a 32-bit word needs to be

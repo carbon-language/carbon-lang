@@ -265,7 +265,7 @@ unsigned ELFWriter::getGlobalELFBinding(const GlobalValue *GV) {
   if (GV->hasInternalLinkage())
     return ELFSym::STB_LOCAL;
 
-  if (GV->isWeakForLinker())
+  if (GV->isWeakForLinker() && !GV->hasCommonLinkage())
     return ELFSym::STB_WEAK;
 
   return ELFSym::STB_GLOBAL;
@@ -293,7 +293,7 @@ unsigned ELFWriter::getElfSectionFlags(SectionKind Kind, bool IsAlloc) {
     ElfSectionFlags |= ELFSection::SHF_EXECINSTR;
   if (Kind.isWriteable())
     ElfSectionFlags |= ELFSection::SHF_WRITE;
-  if (Kind.isMergeableConst())
+  if (Kind.isMergeableConst() || Kind.isMergeableCString())
     ElfSectionFlags |= ELFSection::SHF_MERGE;
   if (Kind.isThreadLocal())
     ElfSectionFlags |= ELFSection::SHF_TLS;
@@ -301,6 +301,12 @@ unsigned ELFWriter::getElfSectionFlags(SectionKind Kind, bool IsAlloc) {
     ElfSectionFlags |= ELFSection::SHF_STRINGS;
 
   return ElfSectionFlags;
+}
+
+// isUndefOrNull - The constant is either a null initialized value or an
+// undefined one.
+static bool isUndefOrNull(const Constant *CV) {
+  return (CV->isNullValue() || isa<UndefValue>(CV));
 }
 
 // isELFUndefSym - the symbol has no section and must be placed in
@@ -312,22 +318,18 @@ static bool isELFUndefSym(const GlobalValue *GV) {
 
 // isELFBssSym - for an undef or null value, the symbol must go to a bss
 // section if it's not weak for linker, otherwise it's a common sym.
-static bool isELFBssSym(const GlobalVariable *GV) {
+static bool isELFBssSym(const GlobalVariable *GV, SectionKind Kind) {
   const Constant *CV = GV->getInitializer();
-  return ((CV->isNullValue() || isa<UndefValue>(CV)) && !GV->isWeakForLinker());
+
+  return (!Kind.isMergeableCString() && 
+          isUndefOrNull(CV) && 
+          !GV->isWeakForLinker());
 }
 
 // isELFCommonSym - for an undef or null value, the symbol must go to a
 // common section if it's weak for linker, otherwise bss.
 static bool isELFCommonSym(const GlobalVariable *GV) {
-  const Constant *CV = GV->getInitializer();
-  return ((CV->isNullValue() || isa<UndefValue>(CV)) && GV->isWeakForLinker());
-}
-
-// isELFDataSym - if the symbol is an initialized but no null constant
-// it must go to some kind of data section
-static bool isELFDataSym(const Constant *CV) {
-  return (!(CV->isNullValue() || isa<UndefValue>(CV)));
+  return (isUndefOrNull(GV->getInitializer()) && GV->isWeakForLinker());
 }
 
 // EmitGlobal - Choose the right section for global and emit it
@@ -343,7 +345,7 @@ void ELFWriter::EmitGlobal(const GlobalValue *GV) {
 
   // All undef symbols have the same binding, type and visibily and
   // are classified regardless of their type.
-  ELFSym *GblSym = isELFUndefSym(GV) ? ELFSym::getUndefGV(GV)
+  ELFSym *GblSym = isELFUndefSym(GV) ? ELFSym::getUndefGV(GV, SymBind)
     : ELFSym::getGV(GV, SymBind, SymType, getGlobalELFVisibility(GV));
 
   if (!isELFUndefSym(GV)) {
@@ -356,7 +358,8 @@ void ELFWriter::EmitGlobal(const GlobalValue *GV) {
 
     // Get the ELF section where this global belongs from TLOF
     const MCSection *S = TLOF.SectionForGlobal(GV, Mang, TM);
-    unsigned SectionFlags = getElfSectionFlags(((MCSectionELF*)S)->getKind());
+    SectionKind Kind = ((MCSectionELF*)S)->getKind();
+    unsigned SectionFlags = getElfSectionFlags(Kind);
 
     // The symbol align should update the section alignment if needed
     const TargetData *TD = TM.getTargetData();
@@ -373,7 +376,7 @@ void ELFWriter::EmitGlobal(const GlobalValue *GV) {
       // value contains its alignment.
       GblSym->Value = Align;
 
-    } else if (isELFBssSym(GVar)) {
+    } else if (isELFBssSym(GVar, Kind)) {
       ELFSection &ES =
         getSection(S->getName(), ELFSection::SHT_NOBITS, SectionFlags);
       GblSym->SectionIdx = ES.SectionIdx;
@@ -388,7 +391,7 @@ void ELFWriter::EmitGlobal(const GlobalValue *GV) {
       GblSym->Value = ES.Size;
       ES.Size += Size;
 
-    } else if (isELFDataSym(GV)) {
+    } else { // The symbol must go to some kind of data section
       ELFSection &ES =
         getSection(S->getName(), ELFSection::SHT_PROGBITS, SectionFlags);
       GblSym->SectionIdx = ES.SectionIdx;
@@ -396,8 +399,8 @@ void ELFWriter::EmitGlobal(const GlobalValue *GV) {
       // GblSym->Value should contain the symbol offset inside the section,
       // and all symbols should start on their required alignment boundary
       ES.Align = std::max(ES.Align, Align);
-      GblSym->Value = (ES.size() + (Align-1)) & (-Align);
-      ES.emitAlignment(ES.Align);
+      ES.emitAlignment(Align);
+      GblSym->Value = ES.size();
 
       // Emit the global to the data section 'ES'
       EmitGlobalConstant(GVar->getInitializer(), ES);
@@ -441,8 +444,7 @@ void ELFWriter::EmitGlobalConstantStruct(const ConstantStruct *CVS,
     // Insert padding - this may include padding to increase the size of the
     // current field up to the ABI size (if the struct is not packed) as well
     // as padding to ensure that the next field starts at the right offset.
-    for (unsigned p=0; p < padSize; p++)
-      GblS.emitByte(0);
+    GblS.emitZeros(padSize);
   }
   assert(sizeSoFar == cvsLayout->getSizeInBytes() &&
          "Layout of constant struct may be incorrect!");
@@ -453,36 +455,37 @@ void ELFWriter::EmitGlobalConstant(const Constant *CV, ELFSection &GblS) {
   unsigned Size = TD->getTypeAllocSize(CV->getType());
 
   if (const ConstantArray *CVA = dyn_cast<ConstantArray>(CV)) {
-    if (CVA->isString()) {
-      std::string GblStr = CVA->getAsString();
-      GblStr.resize(GblStr.size()-1);
-      GblS.emitString(GblStr);
-    } else { // Not a string.  Print the values in successive locations
-      for (unsigned i = 0, e = CVA->getNumOperands(); i != e; ++i)
-        EmitGlobalConstant(CVA->getOperand(i), GblS);
-    }
+    for (unsigned i = 0, e = CVA->getNumOperands(); i != e; ++i)
+      EmitGlobalConstant(CVA->getOperand(i), GblS);
+    return;
+  } else if (isa<ConstantAggregateZero>(CV)) {
+    GblS.emitZeros(Size);
     return;
   } else if (const ConstantStruct *CVS = dyn_cast<ConstantStruct>(CV)) {
     EmitGlobalConstantStruct(CVS, GblS);
     return;
   } else if (const ConstantFP *CFP = dyn_cast<ConstantFP>(CV)) {
-    uint64_t Val = CFP->getValueAPF().bitcastToAPInt().getZExtValue();
+    APInt Val = CFP->getValueAPF().bitcastToAPInt();
     if (CFP->getType() == Type::DoubleTy)
-      GblS.emitWord64(Val);
+      GblS.emitWord64(Val.getZExtValue());
     else if (CFP->getType() == Type::FloatTy)
-      GblS.emitWord32(Val);
+      GblS.emitWord32(Val.getZExtValue());
     else if (CFP->getType() == Type::X86_FP80Ty) {
-      llvm_unreachable("X86_FP80Ty global emission not implemented");
+      unsigned PadSize = TD->getTypeAllocSize(Type::X86_FP80Ty)-
+                         TD->getTypeStoreSize(Type::X86_FP80Ty);
+      GblS.emitWordFP80(Val.getRawData(), PadSize);
     } else if (CFP->getType() == Type::PPC_FP128Ty)
       llvm_unreachable("PPC_FP128Ty global emission not implemented");
     return;
   } else if (const ConstantInt *CI = dyn_cast<ConstantInt>(CV)) {
-    if (Size == 4)
+    if (Size == 1)
+      GblS.emitByte(CI->getZExtValue());
+    else if (Size == 2) 
+      GblS.emitWord16(CI->getZExtValue());
+    else if (Size == 4)
       GblS.emitWord32(CI->getZExtValue());
-    else if (Size == 8)
-      GblS.emitWord64(CI->getZExtValue());
-    else
-      llvm_unreachable("LargeInt global emission not implemented");
+    else 
+      EmitGlobalConstantLargeInt(CI, GblS);
     return;
   } else if (const ConstantVector *CP = dyn_cast<ConstantVector>(CV)) {
     const VectorType *PTy = CP->getType();
@@ -490,9 +493,27 @@ void ELFWriter::EmitGlobalConstant(const Constant *CV, ELFSection &GblS) {
       EmitGlobalConstant(CP->getOperand(I), GblS);
     return;
   } else if (const ConstantExpr *CE = dyn_cast<ConstantExpr>(CV)) {
-    if (CE->getOpcode() == Instruction::BitCast) {
+    switch (CE->getOpcode()) {
+    case Instruction::BitCast: {
       EmitGlobalConstant(CE->getOperand(0), GblS);
       return;
+    }
+    case Instruction::GetElementPtr: {
+      const Constant *ptrVal = CE->getOperand(0);
+      SmallVector<Value*, 8> idxVec(CE->op_begin()+1, CE->op_end());
+      int64_t Offset = TD->getIndexedOffset(ptrVal->getType(), &idxVec[0],
+                                            idxVec.size());
+      EmitGlobalDataRelocation(cast<const GlobalValue>(ptrVal), 
+                               TD->getTypeAllocSize(ptrVal->getType()), 
+                               GblS, Offset);
+      return;
+    }
+    case Instruction::IntToPtr: {
+      Constant *Op = CE->getOperand(0);
+      Op = ConstantExpr::getIntegerCast(Op, TD->getIntPtrType(), false/*ZExt*/);
+      EmitGlobalConstant(Op, GblS);
+      return;
+    }
     }
     std::string msg(CE->getOpcodeName());
     raw_string_ostream ErrorMsg(msg);
@@ -500,18 +521,16 @@ void ELFWriter::EmitGlobalConstant(const Constant *CV, ELFSection &GblS) {
     llvm_report_error(ErrorMsg.str());
   } else if (CV->getType()->getTypeID() == Type::PointerTyID) {
     // Fill the data entry with zeros or emit a relocation entry
-    if (isa<ConstantPointerNull>(CV)) {
-      for (unsigned i=0; i < Size; ++i)
-        GblS.emitByte(0);
-    } else {
-      emitGlobalDataRelocation(cast<const GlobalValue>(CV), 
-                               TD->getPointerSize(), GblS);
-    }
+    if (isa<ConstantPointerNull>(CV))
+      GblS.emitZeros(Size);
+    else 
+      EmitGlobalDataRelocation(cast<const GlobalValue>(CV), 
+                               Size, GblS);
     return;
   } else if (const GlobalValue *GV = dyn_cast<GlobalValue>(CV)) {
     // This is a constant address for a global variable or function and
     // therefore must be referenced using a relocation entry.
-    emitGlobalDataRelocation(GV, Size, GblS);
+    EmitGlobalDataRelocation(GV, Size, GblS);
     return;
   }
 
@@ -521,20 +540,35 @@ void ELFWriter::EmitGlobalConstant(const Constant *CV, ELFSection &GblS) {
   llvm_report_error(ErrorMsg.str());
 }
 
-void ELFWriter::emitGlobalDataRelocation(const GlobalValue *GV, unsigned Size,
-                                         ELFSection &GblS) {
+void ELFWriter::EmitGlobalDataRelocation(const GlobalValue *GV, unsigned Size,
+                                         ELFSection &GblS, uint64_t Offset) {
   // Create the relocation entry for the global value
   MachineRelocation MR =
     MachineRelocation::getGV(GblS.getCurrentPCOffset(),
                              TEW->getAbsoluteLabelMachineRelTy(),
-                             const_cast<GlobalValue*>(GV));
+                             const_cast<GlobalValue*>(GV),
+                             Offset);
 
   // Fill the data entry with zeros
-  for (unsigned i=0; i < Size; ++i)
-    GblS.emitByte(0);
+  GblS.emitZeros(Size);
 
   // Add the relocation entry for the current data section
   GblS.addRelocation(MR);
+}
+
+void ELFWriter::EmitGlobalConstantLargeInt(const ConstantInt *CI, 
+                                           ELFSection &S) {
+  const TargetData *TD = TM.getTargetData();
+  unsigned BitWidth = CI->getBitWidth();
+  assert(isPowerOf2_32(BitWidth) &&
+         "Non-power-of-2-sized integers not handled!");
+
+  const uint64_t *RawData = CI->getValue().getRawData();
+  uint64_t Val = 0;
+  for (unsigned i = 0, e = BitWidth / 64; i != e; ++i) {
+    Val = (TD->isBigEndian()) ? RawData[e - i - 1] : RawData[i];
+    S.emitWord64(Val);
+  }
 }
 
 /// EmitSpecialLLVMGlobal - Check to see if the specified global is a
@@ -712,15 +746,15 @@ void ELFWriter::EmitRelocations() {
       // them needs a different approach to retrieve the symbol table index.
       if (MR.isGlobalValue()) {
         const GlobalValue *G = MR.getGlobalValue();
+        int64_t GlobalOffset = MR.getConstantVal();
         SymIdx = GblSymLookup[G];
         if (G->hasPrivateLinkage()) {
           // If the target uses a section offset in the relocation:
           // SymIdx + Addend = section sym for global + section offset
           unsigned SectionIdx = PrivateSyms[SymIdx]->SectionIdx;
-          Addend = PrivateSyms[SymIdx]->Value;
+          Addend = PrivateSyms[SymIdx]->Value + GlobalOffset;
           SymIdx = SectionList[SectionIdx]->getSymbolTableIndex();
         } else {
-          int64_t GlobalOffset = MR.getConstantVal();
           Addend = TEW->getDefaultAddendForRelTy(RelType, GlobalOffset);
         }
       } else if (MR.isExternalSymbol()) {
