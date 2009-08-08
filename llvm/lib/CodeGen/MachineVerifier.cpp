@@ -220,6 +220,14 @@ MachineVerifier::runOnMachineFunction(MachineFunction &MF)
     llvm_report_error(Msg.str());
   }
 
+  // Clean up.
+  regsLive.clear();
+  regsDefined.clear();
+  regsDead.clear();
+  regsKilled.clear();
+  regsLiveInButUnused.clear();
+  MBBInfoMap.clear();
+
   return false;                 // no changes
 }
 
