@@ -763,7 +763,7 @@ void Emitter<CodeEmitter>::emitInstruction(
         unsigned rt = Is64BitMode ? X86::reloc_pcrel_word
           : (IsPIC ? X86::reloc_picrel_word : X86::reloc_absolute_word);
         if (Opcode == X86::MOV64ri32)
-          rt = X86::reloc_absolute_word;  // FIXME: add X86II flag?
+          rt = X86::reloc_absolute_word_sext;  // FIXME: add X86II flag?
         if (MO1.isGlobal()) {
           bool NeedStub = isa<Function>(MO1.getGlobal());
           bool Indirect = gvNeedsNonLazyPtr(MO1, TM);
@@ -802,7 +802,7 @@ void Emitter<CodeEmitter>::emitInstruction(
         unsigned rt = Is64BitMode ? X86::reloc_pcrel_word
           : (IsPIC ? X86::reloc_picrel_word : X86::reloc_absolute_word);
         if (Opcode == X86::MOV64mi32)
-          rt = X86::reloc_absolute_word;  // FIXME: add X86II flag?
+          rt = X86::reloc_absolute_word_sext;  // FIXME: add X86II flag?
         if (MO.isGlobal()) {
           bool NeedStub = isa<Function>(MO.getGlobal());
           bool Indirect = gvNeedsNonLazyPtr(MO, TM);
