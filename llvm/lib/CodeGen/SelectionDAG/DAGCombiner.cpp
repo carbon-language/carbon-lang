@@ -1679,7 +1679,9 @@ SDValue DAGCombiner::SimplifyBinOpWithSameOpcodeHands(SDNode *N) {
        N0.getOpcode() == ISD::SIGN_EXTEND ||
        (N0.getOpcode() == ISD::TRUNCATE &&
         !TLI.isTruncateFree(N0.getOperand(0).getValueType(), VT))) &&
-      N0.getOperand(0).getValueType() == N1.getOperand(0).getValueType()) {
+      N0.getOperand(0).getValueType() == N1.getOperand(0).getValueType() &&
+      (!LegalOperations ||
+       TLI.isOperationLegal(N->getOpcode(), N0.getOperand(0).getValueType()))) {
     SDValue ORNode = DAG.getNode(N->getOpcode(), N0.getDebugLoc(),
                                  N0.getOperand(0).getValueType(),
                                  N0.getOperand(0), N1.getOperand(0));

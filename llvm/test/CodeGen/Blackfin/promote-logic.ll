@@ -1,7 +1,7 @@
 ; RUN: llvm-as < %s | llc -march=bfin > %t
-; XFAIL: *
 
-; DAG combiner can produce an illegal i16 OR operation after LegalizeOps.
+; DAGCombiner::SimplifyBinOpWithSameOpcodeHands can produce an illegal i16 OR
+; operation after LegalizeOps.
 
 define void @mng_display_bgr565() {
 entry:
