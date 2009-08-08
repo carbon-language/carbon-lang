@@ -321,6 +321,9 @@ namespace X86II {
 
     // T8, TA - Prefix after the 0x0F prefix.
     T8 = 13 << Op0Shift,  TA = 14 << Op0Shift,
+    
+    // TF - Prefix before and after 0x0F
+    TF = 15 << Op0Shift,
 
     //===------------------------------------------------------------------===//
     // REX_W - REX prefixes are instruction prefixes used in 64-bit mode.

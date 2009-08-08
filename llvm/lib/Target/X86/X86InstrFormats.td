@@ -79,6 +79,7 @@ class XD     { bits<4> Prefix = 11; }
 class XS     { bits<4> Prefix = 12; }
 class T8     { bits<4> Prefix = 13; }
 class TA     { bits<4> Prefix = 14; }
+class TF     { bits<4> Prefix = 15; }
 
 class X86Inst<bits<8> opcod, Format f, ImmType i, dag outs, dag ins,
               string AsmStr>
@@ -229,6 +230,11 @@ class SS428I<bits<8> o, Format F, dag outs, dag ins, string asm,
              list<dag> pattern>
       : I<o, F, outs, ins, asm, pattern>, T8, Requires<[HasSSE42]>;
 
+//   SS42FI - SSE 4.2 instructions with TF prefix.
+class SS42FI<bits<8> o, Format F, dag outs, dag ins, string asm,
+              list<dag> pattern>
+      : I<o, F, outs, ins, asm, pattern>, TF, Requires<[HasSSE42]>;
+      
 // X86-64 Instruction templates...
 //
 

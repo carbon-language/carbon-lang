@@ -2931,6 +2931,10 @@ static unsigned GetInstSizeWithDesc(const MachineInstr &MI,
   case X86II::TA:  // 0F 3A
     Need0FPrefix = true;
     break;
+  case X86II::TF: // F2 0F 38
+    ++FinalSize;
+    Need0FPrefix = true;
+    break;
   case X86II::REP: break; // already handled.
   case X86II::XS:   // F3 0F
     ++FinalSize;
@@ -2964,6 +2968,9 @@ static unsigned GetInstSizeWithDesc(const MachineInstr &MI,
     ++FinalSize;
     break;
   case X86II::TA:  // 0F 3A
+    ++FinalSize;
+    break;
+  case X86II::TF: // F2 0F 38
     ++FinalSize;
     break;
   }
