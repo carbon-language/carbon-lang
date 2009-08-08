@@ -162,6 +162,7 @@ namespace {
     void printJTBlockOperand(const MachineInstr *MI, int OpNum);
     void printJT2BlockOperand(const MachineInstr *MI, int OpNum);
     void printTBAddrMode(const MachineInstr *MI, int OpNum);
+    void printLaneOperand(const MachineInstr *MI, int OpNum);
 
     virtual bool PrintAsmOperand(const MachineInstr *MI, unsigned OpNum,
                                  unsigned AsmVariant, const char *ExtraCode);
@@ -358,10 +359,7 @@ void ARMAsmPrinter::printOperand(const MachineInstr *MI, int OpNum,
     break;
   }
   case MachineOperand::MO_Immediate: {
-    if (!Modifier || strcmp(Modifier, "no_hash") != 0)
-      O << '#';
-
-    O << MO.getImm();
+    O << '#' << MO.getImm();
     break;
   }
   case MachineOperand::MO_MachineBasicBlock:
@@ -1011,13 +1009,16 @@ void ARMAsmPrinter::printTBAddrMode(const MachineInstr *MI, int OpNum) {
   O << ']';
 }
 
+void ARMAsmPrinter::printLaneOperand(const MachineInstr *MI, int OpNum) {
+  O << MI->getOperand(OpNum).getImm();
+}
 
 bool ARMAsmPrinter::PrintAsmOperand(const MachineInstr *MI, unsigned OpNum,
                                     unsigned AsmVariant, const char *ExtraCode){
   // Does this asm operand have a single letter operand modifier?
   if (ExtraCode && ExtraCode[0]) {
     if (ExtraCode[1] != 0) return true; // Unknown modifier.
-    
+
     switch (ExtraCode[0]) {
     default: return true;  // Unknown modifier.
     case 'a': // Print as a memory address.
@@ -1027,7 +1028,7 @@ bool ARMAsmPrinter::PrintAsmOperand(const MachineInstr *MI, unsigned OpNum,
       }
       // Fallthrough
     case 'c': // Don't print "#" before an immediate operand.
-      printOperand(MI, OpNum, "no_hash");
+      printLaneOperand(MI, OpNum);
       return false;
     case 'P': // Print a VFP double precision register.
       printOperand(MI, OpNum);

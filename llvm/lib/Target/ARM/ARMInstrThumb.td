@@ -614,8 +614,8 @@ let usesCustomDAGSchedInserter = 1 in  // Expanded by the scheduler.
 def tLEApcrel : T1I<(outs tGPR:$dst), (ins i32imm:$label), IIC_iALU,
                     "adr $dst, #$label", []>;
 
-def tLEApcrelJT : T1I<(outs tGPR:$dst), (ins i32imm:$label, i32imm:$id), IIC_iALU,
-                      "adr $dst, #${label}_${id:no_hash}", []>;
+def tLEApcrelJT : T1I<(outs tGPR:$dst), (ins i32imm:$label, lane_cst:$id), IIC_iALU,
+                      "adr $dst, #${label}_${id}", []>;
 
 //===----------------------------------------------------------------------===//
 // TLS Instructions

@@ -327,6 +327,10 @@ def addrmodepc : Operand<i32>,
   let MIOperandInfo = (ops GPR, i32imm);
 }
 
+def lane_cst : Operand<i32> {
+  let PrintMethod = "printLaneOperand";
+}
+
 //===----------------------------------------------------------------------===//
 
 include "ARMInstrFormats.td"
@@ -577,10 +581,10 @@ def LEApcrel : AXI1<0x0, (outs GPR:$dst), (ins i32imm:$label, pred:$p),
                    []>;
 
 def LEApcrelJT : AXI1<0x0, (outs GPR:$dst),
-                           (ins i32imm:$label, i32imm:$id, pred:$p),
+                           (ins i32imm:$label, lane_cst:$id, pred:$p),
           Pseudo, IIC_iLoad,
    !strconcat(!strconcat(".set ${:private}PCRELV${:uid}, "
-                         "(${label}_${id:no_hash}-(",
+                         "(${label}_${id}-(",
                                   "${:private}PCRELL${:uid}+8))\n"),
                        !strconcat("${:private}PCRELL${:uid}:\n\t",
                                   "add$p $dst, pc, #${:private}PCRELV${:uid}")),
