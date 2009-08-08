@@ -20,6 +20,8 @@
 
 namespace llvm {
   class MCContext;
+  class TargetAsmInfo;
+  class raw_ostream;
   
   /// MCSection - Instances of this class represent a uniqued identifier for a
   /// section in the current translation unit.  The MCContext class uniques and
@@ -43,13 +45,13 @@ namespace llvm {
   public:
     virtual ~MCSection();
 
-    static MCSection *Create(const StringRef &Name, bool IsDirective, 
-                             SectionKind K, MCContext &Ctx);
-    
     const std::string &getName() const { return Name; }
     bool isDirective() const { return IsDirective; }
     
     SectionKind getKind() const { return Kind; }
+    
+    virtual void PrintSwitchToSection(const TargetAsmInfo &TAI,
+                                      raw_ostream &OS) const = 0;
   };
 
   
@@ -60,7 +62,9 @@ namespace llvm {
     
     static MCSectionELF *Create(const StringRef &Name, bool IsDirective, 
                                 SectionKind K, MCContext &Ctx);
-    
+
+    virtual void PrintSwitchToSection(const TargetAsmInfo &TAI,
+                                      raw_ostream &OS) const;
   };
 
   class MCSectionMachO : public MCSection {
@@ -70,6 +74,9 @@ namespace llvm {
     
     static MCSectionMachO *Create(const StringRef &Name, bool IsDirective, 
                                   SectionKind K, MCContext &Ctx);
+
+    virtual void PrintSwitchToSection(const TargetAsmInfo &TAI,
+                                      raw_ostream &OS) const;
   };
   
   class MCSectionCOFF : public MCSection {
@@ -79,6 +86,9 @@ namespace llvm {
     
     static MCSectionCOFF *Create(const StringRef &Name, bool IsDirective, 
                                    SectionKind K, MCContext &Ctx);
+    
+    virtual void PrintSwitchToSection(const TargetAsmInfo &TAI,
+                                      raw_ostream &OS) const;
   };
   
 } // end namespace llvm

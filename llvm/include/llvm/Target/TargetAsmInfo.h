@@ -182,11 +182,6 @@ namespace llvm {
 
     //===--- Section Switching Directives ---------------------------------===//
     
-    /// SwitchToSectionDirective - This is the directive used when we want to
-    /// emit a global to an arbitrary section.  The section name is emited after
-    /// this.
-    const char *SwitchToSectionDirective; // Defaults to "\t.section\t"
-    
     /// JumpTableDirective - if non-null, the directive to emit before a jump
     /// table.
     const char *JumpTableDirective;
@@ -431,9 +426,6 @@ namespace llvm {
     }
     unsigned getTextAlignFillValue() const {
       return TextAlignFillValue;
-    }
-    const char *getSwitchToSectionDirective() const {
-      return SwitchToSectionDirective;
     }
     const char *getGlobalDirective() const {
       return GlobalDirective;

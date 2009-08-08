@@ -33,7 +33,6 @@ PIC16TargetAsmInfo() {
   ZeroDirective = NULL;
   AsciiDirective = " dt ";
   AscizDirective = NULL;
-  SwitchToSectionDirective = "";
     
   RomData8bitsDirective = " dw ";
   RomData16bitsDirective = " rom_di ";

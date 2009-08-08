@@ -169,14 +169,6 @@ public:
     return 0;
   }
   
-  /// getSectionFlagsAsString - Turn the flags in the specified SectionKind
-  /// into a string that can be printed to the assembly file after the
-  /// ".section foo" part of a section directive.
-  virtual void getSectionFlagsAsString(SectionKind Kind,
-                                       SmallVectorImpl<char> &Str,
-                                       const TargetAsmInfo &TAI) const {
-  }
-  
 protected:
   virtual const MCSection *
   SelectSectionForGlobal(const GlobalValue *GV, SectionKind Kind,
@@ -187,7 +179,6 @@ protected:
   
 
 class TargetLoweringObjectFileELF : public TargetLoweringObjectFile {
-  bool AtIsCommentChar;  // True if @ is the comment character on this target.
   bool HasCrazyBSS;
 protected:
   /// TLSDataSection - Section directive for Thread Local data.
@@ -212,12 +203,9 @@ protected:
   const MCSection *getELFSection(const char *Name, bool isDirective,
                                  SectionKind Kind) const;
 public:
-  /// ELF Constructor - AtIsCommentChar is true if the CommentCharacter from TAI
-  /// is "@".
-  TargetLoweringObjectFileELF(bool atIsCommentChar = false,
-                              // FIXME: REMOVE AFTER UNIQUING IS FIXED.
+  TargetLoweringObjectFileELF(// FIXME: REMOVE AFTER UNIQUING IS FIXED.
                               bool hasCrazyBSS = false)
-    : AtIsCommentChar(atIsCommentChar), HasCrazyBSS(hasCrazyBSS) {}
+    : HasCrazyBSS(hasCrazyBSS) {}
   
   virtual void Initialize(MCContext &Ctx, const TargetMachine &TM);
   
@@ -229,10 +217,6 @@ public:
   virtual const MCSection *
   getExplicitSectionGlobal(const GlobalValue *GV, SectionKind Kind, 
                            Mangler *Mang, const TargetMachine &TM) const;
-  
-  void getSectionFlagsAsString(SectionKind Kind,
-                               SmallVectorImpl<char> &Str,
-                               const TargetAsmInfo &TAI) const;
   
   virtual const MCSection *
   SelectSectionForGlobal(const GlobalValue *GV, SectionKind Kind,
@@ -287,10 +271,6 @@ public:
   virtual const MCSection *
   getExplicitSectionGlobal(const GlobalValue *GV, SectionKind Kind, 
                            Mangler *Mang, const TargetMachine &TM) const;
-  
-  virtual void getSectionFlagsAsString(SectionKind Kind,
-                                       SmallVectorImpl<char> &Str,
-                                       const TargetAsmInfo &TAI) const;
   
   virtual const MCSection *
   SelectSectionForGlobal(const GlobalValue *GV, SectionKind Kind,

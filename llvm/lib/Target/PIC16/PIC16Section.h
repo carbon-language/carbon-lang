@@ -16,6 +16,7 @@
 
 #include "llvm/MC/MCSection.h"
 #include "llvm/MC/MCContext.h"
+#include "llvm/Support/raw_ostream.h"
 
 namespace llvm {
 
@@ -28,9 +29,14 @@ namespace llvm {
                                   SectionKind K, MCContext &Ctx) {
       return new (Ctx) MCSectionPIC16(Name, IsDirective, K, Ctx);
     }
+    
+    
+    virtual void PrintSwitchToSection(const TargetAsmInfo &TAI,
+                                      raw_ostream &OS) const {
+      OS << getName() << '\n';
+    }
+
   };
-  
-  
 
 } // end namespace llvm
 

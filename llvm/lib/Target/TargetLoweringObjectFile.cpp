@@ -404,91 +404,6 @@ getExplicitSectionGlobal(const GlobalValue *GV, SectionKind Kind,
   
   return getELFSection(GV->getSection().c_str(), false, Kind);
 }
-      
-      
-      
-void TargetLoweringObjectFileELF::
-getSectionFlagsAsString(SectionKind Kind, SmallVectorImpl<char> &Str,
-                        const TargetAsmInfo &TAI) const {
-  // Handle the weird solaris syntax if desired.
-  if (TAI.usesSunStyleELFSectionSwitchSyntax() &&
-      !Kind.isMergeableConst() && !Kind.isMergeableCString()) {
-    // FIXME: Inefficient.
-    std::string Res;
-    if (!Kind.isMetadata())
-      Res += ",#alloc";
-    if (Kind.isText())
-      Res += ",#execinstr";
-    if (Kind.isWriteable())
-      Res += ",#write";
-    if (Kind.isThreadLocal())
-      Res += ",#tls";
-    Str.append(Res.begin(), Res.end());
-    return;    
-  }
-  
-  Str.push_back(',');
-  Str.push_back('"');
-  
-  if (!Kind.isMetadata())
-    Str.push_back('a');
-  if (Kind.isText())
-    Str.push_back('x');
-  if (Kind.isWriteable())
-    Str.push_back('w');
-  if (Kind.isMergeable1ByteCString() ||
-      Kind.isMergeable2ByteCString() ||
-      Kind.isMergeable4ByteCString() ||
-      Kind.isMergeableConst4() ||
-      Kind.isMergeableConst8() ||
-      Kind.isMergeableConst16())
-    Str.push_back('M');
-  if (Kind.isMergeable1ByteCString() ||
-      Kind.isMergeable2ByteCString() ||
-      Kind.isMergeable4ByteCString())
-    Str.push_back('S');
-  if (Kind.isThreadLocal())
-    Str.push_back('T');
-  
-  Str.push_back('"');
-  Str.push_back(',');
-  
-  // If comment string is '@', e.g. as on ARM - use '%' instead
-  if (AtIsCommentChar)
-    Str.push_back('%');
-  else
-    Str.push_back('@');
-  
-  const char *KindStr;
-  if (Kind.isBSS() || Kind.isThreadBSS())
-    KindStr = "nobits";
-  else
-    KindStr = "progbits";
-  
-  Str.append(KindStr, KindStr+strlen(KindStr));
-  
-  if (Kind.isMergeable1ByteCString()) {
-    Str.push_back(',');
-    Str.push_back('1');
-  } else if (Kind.isMergeable2ByteCString()) {
-    Str.push_back(',');
-    Str.push_back('2');
-  } else if (Kind.isMergeable4ByteCString()) {
-    Str.push_back(',');
-    Str.push_back('4');
-  } else if (Kind.isMergeableConst4()) {
-    Str.push_back(',');
-    Str.push_back('4');
-  } else if (Kind.isMergeableConst8()) {
-    Str.push_back(',');
-    Str.push_back('8');
-  } else if (Kind.isMergeableConst16()) {
-    Str.push_back(',');
-    Str.push_back('1');
-    Str.push_back('6');
-  }
-}
-
 
 static const char *getSectionPrefixForUniqueGlobal(SectionKind Kind) {
   if (Kind.isText())                 return ".gnu.linkonce.t.";
@@ -863,21 +778,6 @@ const MCSection *TargetLoweringObjectFileCOFF::
 getExplicitSectionGlobal(const GlobalValue *GV, SectionKind Kind, 
                          Mangler *Mang, const TargetMachine &TM) const {
   return getCOFFSection(GV->getSection().c_str(), false, Kind);
-}
-
-
-void TargetLoweringObjectFileCOFF::
-getSectionFlagsAsString(SectionKind Kind, SmallVectorImpl<char> &Str,
-                        const TargetAsmInfo &TAI) const {
-  // FIXME: Inefficient.
-  std::string Res = ",\"";
-  if (Kind.isText())
-    Res += 'x';
-  if (Kind.isWriteable())
-    Res += 'w';
-  Res += "\"";
-  
-  Str.append(Res.begin(), Res.end());
 }
 
 static const char *getCOFFSectionPrefixForUniqueGlobal(SectionKind Kind) {

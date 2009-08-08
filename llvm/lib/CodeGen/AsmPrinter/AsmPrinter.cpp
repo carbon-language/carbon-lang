@@ -94,18 +94,7 @@ void AsmPrinter::SwitchToSection(const MCSection *NS) {
 
   if (NS == 0) return;
   
-  // If section is named we need to switch into it via special '.section'
-  // directive and also append funky flags. Otherwise - section name is just
-  // some magic assembler directive.
-  if (!NS->isDirective()) {
-    SmallString<32> FlagsStr;
-    getObjFileLowering().getSectionFlagsAsString(NS->getKind(), FlagsStr, *TAI);
-
-    O << TAI->getSwitchToSectionDirective()
-      << CurrentSection->getName() << FlagsStr.c_str() << '\n';
-  } else {
-    O << CurrentSection->getName() << '\n';
-  }
+  NS->PrintSwitchToSection(*TAI, O);
 }
 
 void AsmPrinter::getAnalysisUsage(AnalysisUsage &AU) const {
