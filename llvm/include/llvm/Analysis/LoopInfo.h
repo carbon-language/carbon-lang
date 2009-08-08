@@ -213,6 +213,25 @@ public:
     return 0;
   }
 
+  /// getExitEdges - Return all pairs of (_inside_block_,_outside_block_).
+  /// (Modelled after getExitingBlocks().)
+  typedef std::pair<const BlockT*,const BlockT*> Edge;
+  void getExitEdges(SmallVectorImpl<Edge> &ExitEdges) const {
+    // Sort the blocks vector so that we can use binary search to do quick
+    // lookups.
+    SmallVector<BlockT*, 128> LoopBBs(block_begin(), block_end());
+    std::sort(LoopBBs.begin(), LoopBBs.end());
+
+    typedef GraphTraits<BlockT*> BlockTraits;
+    for (block_iterator BI = block_begin(), BE = block_end(); BI != BE; ++BI)
+      for (typename BlockTraits::ChildIteratorType I =
+           BlockTraits::child_begin(*BI), E = BlockTraits::child_end(*BI);
+           I != E; ++I)
+        if (!std::binary_search(LoopBBs.begin(), LoopBBs.end(), *I))
+          // Not in current loop? It must be an exit block.
+          ExitEdges.push_back(std::make_pair(*BI,*I));
+  }
+
   /// getUniqueExitBlocks - Return all unique successor blocks of this loop. 
   /// These are the blocks _outside of the current loop_ which are branched to.
   /// This assumes that loop is in canonical form.

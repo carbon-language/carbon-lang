@@ -21,6 +21,7 @@ namespace llvm {
   class LoopPass;
   class ModulePass;
   class Pass;
+  class PassInfo;
   class LibCallInfo;
 
   //===--------------------------------------------------------------------===//
@@ -90,6 +91,14 @@ namespace llvm {
   // createNoProfileInfoPass - This pass implements the default "no profile".
   //
   ImmutablePass *createNoProfileInfoPass();
+
+  //===--------------------------------------------------------------------===//
+  //
+  // createProfileEstimatorPass - This pass estimates profiling information
+  // instead of loading it from a previous run.
+  //
+  FunctionPass *createProfileEstimatorPass();
+  extern const PassInfo *ProfileEstimatorPassID;
 
   //===--------------------------------------------------------------------===//
   //
