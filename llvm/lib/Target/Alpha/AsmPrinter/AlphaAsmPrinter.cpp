@@ -46,7 +46,7 @@ namespace {
     virtual const char *getPassName() const {
       return "Alpha Assembly Printer";
     }
-    bool printInstruction(const MachineInstr *MI);
+    void printInstruction(const MachineInstr *MI);
     void printOp(const MachineOperand &MO, bool IsCallOp = false);
     void printOperand(const MachineInstr *MI, int opNum);
     void printBaseOffsetPair(const MachineInstr *MI, int i, bool brackets=true);

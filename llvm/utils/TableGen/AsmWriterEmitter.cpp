@@ -451,7 +451,7 @@ FindUniqueOperandCommands(std::vector<std::string> &UniqueOperandCommands,
 
     // If this is the last operand, emit a return.
     if (Inst->Operands.size() == 1)
-      Command += "    return true;\n";
+      Command += "    return;\n";
     
     // Check to see if we already have 'Command' in UniqueOperandCommands.
     // If not, add it.
@@ -529,7 +529,7 @@ FindUniqueOperandCommands(std::vector<std::string> &UniqueOperandCommands,
           // Don't early-out too soon.  Other instructions in this
           // group may have more operands.
           FirstInst->Operands.size() == MaxSize) {
-        Command += "    return true;\n";
+        Command += "    return;\n";
       }
       
       UniqueOperandCommands[CommandIdx] += Command;
@@ -565,7 +565,7 @@ void AsmWriterEmitter::run(raw_ostream &O) {
   "/// from the instruction set description.  This method returns true if the\n"
   "/// machine instruction was sufficiently described to print it, otherwise\n"
   "/// it returns false.\n"
-    "bool " << Target.getName() << ClassName
+    "void " << Target.getName() << ClassName
             << "::printInstruction(const MachineInstr *MI) {\n";
 
   std::vector<AsmWriterInst> Instructions;
@@ -640,7 +640,7 @@ void AsmWriterEmitter::run(raw_ostream &O) {
     // For the first operand check, add a default value for instructions with
     // just opcode strings to use.
     if (isFirst) {
-      UniqueOperandCommands.push_back("    return true;\n");
+      UniqueOperandCommands.push_back("    return;\n");
       isFirst = false;
     }
 
@@ -733,16 +733,16 @@ void AsmWriterEmitter::run(raw_ostream &O) {
   O << "  if (MI->getOpcode() == TargetInstrInfo::INLINEASM) {\n"
     << "    O << \"\\t\";\n"
     << "    printInlineAsm(MI);\n"
-    << "    return true;\n"
+    << "    return;\n"
     << "  } else if (MI->isLabel()) {\n"
     << "    printLabel(MI);\n"
-    << "    return true;\n"
+    << "    return;\n"
     << "  } else if (MI->getOpcode() == TargetInstrInfo::DECLARE) {\n"
     << "    printDeclare(MI);\n"
-    << "    return true;\n"
+    << "    return;\n"
     << "  } else if (MI->getOpcode() == TargetInstrInfo::IMPLICIT_DEF) {\n"
     << "    printImplicitDef(MI);\n"
-    << "    return true;\n"
+    << "    return;\n"
     << "  }\n\n";
 
   O << "\n#endif\n";
@@ -751,7 +751,7 @@ void AsmWriterEmitter::run(raw_ostream &O) {
 
   O << "  // Emit the opcode for the instruction.\n"
     << "  unsigned Bits = OpInfo[MI->getOpcode()];\n"
-    << "  if (Bits == 0) return false;\n"
+    << "  assert(Bits != 0 && \"Cannot print this instruction.\");\n"
     << "  O << AsmStrs+(Bits & " << (1 << AsmStrBits)-1 << ");\n\n";
 
   // Output the table driven operand information.
@@ -815,9 +815,9 @@ void AsmWriterEmitter::run(raw_ostream &O) {
       EmitInstructions(Instructions, O);
 
     O << "  }\n";
-    O << "  return true;\n";
+    O << "  return;\n";
   }
 
-  O << "  return true;\n";
+  O << "  return;\n";
   O << "}\n";
 }

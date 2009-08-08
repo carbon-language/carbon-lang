@@ -61,11 +61,11 @@ class VISIBILITY_HIDDEN X86ATTAsmPrinter : public AsmPrinter {
   /// from the instruction set description.  This method returns true if the
   /// machine instruction was sufficiently described to print it, otherwise it
   /// returns false.
-  bool printInstruction(const MachineInstr *MI);
+  void printInstruction(const MachineInstr *MI);
   
   
   // New MCInst printing stuff.
-  bool printInstruction(const MCInst *MI);
+  void printInstruction(const MCInst *MI);
 
   void printSymbolOperand(const MachineOperand &MO);
   void printOperand(const MCInst *MI, unsigned OpNo,

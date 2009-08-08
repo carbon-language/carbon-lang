@@ -67,7 +67,7 @@ namespace {
     /// from the instruction set description.  This method returns true if the
     /// machine instruction was sufficiently described to print it, otherwise it
     /// returns false.
-    bool printInstruction(const MachineInstr *MI);
+    void printInstruction(const MachineInstr *MI);
 
     void printMachineInstruction(const MachineInstr *MI);
     void printOp(const MachineOperand &MO);
