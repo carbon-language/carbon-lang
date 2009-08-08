@@ -901,6 +901,12 @@ public:
   void EmitCXXGlobalDtorRegistration(const CXXDestructorDecl *Dtor,
                                      llvm::Constant *DeclPtr);
   
+  /// GenerateCXXGlobalInitFunc - Generates code for initializing global 
+  /// variables.
+  void GenerateCXXGlobalInitFunc(llvm::Function *Fn,
+                                 const VarDecl **Decls,
+                                 unsigned NumDecls);
+  
   void EmitCXXConstructExpr(llvm::Value *Dest, const CXXConstructExpr *E);
   
   RValue EmitCXXExprWithTemporaries(const CXXExprWithTemporaries *E,

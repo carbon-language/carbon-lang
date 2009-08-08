@@ -62,6 +62,9 @@ CodeGenModule::~CodeGenModule() {
 }
 
 void CodeGenModule::Release() {
+  // We need to call this first because it can add deferred declarations.
+  EmitCXXGlobalInitFunc();
+
   EmitDeferred();
   if (Runtime)
     if (llvm::Function *ObjCInitFunction = Runtime->ModuleInitFunction())
@@ -854,10 +857,16 @@ void CodeGenModule::EmitGlobalVarDefinition(const VarDecl *D) {
     Init = EmitNullConstant(D->getType());
   } else {
     Init = EmitConstantExpr(D->getInit(), D->getType());
+    
     if (!Init) {
-      ErrorUnsupported(D, "static initializer");
       QualType T = D->getInit()->getType();
-      Init = llvm::UndefValue::get(getTypes().ConvertType(T));
+      if (getLangOptions().CPlusPlus) {
+        CXXGlobalInits.push_back(D);
+        Init = EmitNullConstant(T);
+      } else {
+        ErrorUnsupported(D, "static initializer");
+        Init = llvm::UndefValue::get(getTypes().ConvertType(T));
+      }
     }
   }
 

@@ -509,7 +509,7 @@ void CodeGenFunction::EmitFunctionProlog(const CGFunctionInfo &FI,
   // initialize the return value.  TODO: it might be nice to have
   // a more general mechanism for this that didn't require synthesized
   // return statements.
-  if (const FunctionDecl* FD = dyn_cast<FunctionDecl>(CurFuncDecl)) {
+  if (const FunctionDecl* FD = dyn_cast_or_null<FunctionDecl>(CurFuncDecl)) {
     if (FD->hasImplicitReturnZero()) {
       QualType RetTy = FD->getResultType().getUnqualifiedType();
       const llvm::Type* LLVMTy = CGM.getTypes().ConvertType(RetTy);

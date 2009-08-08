@@ -173,6 +173,10 @@ class CodeGenModule : public BlockModule {
   llvm::StringMap<llvm::Constant*> CFConstantStringMap;
   llvm::StringMap<llvm::Constant*> ConstantStringMap;
 
+  /// CXXGlobalInits - Variables with global initializers that need to run
+  /// before main.
+  std::vector<const VarDecl*> CXXGlobalInits;
+  
   /// CFConstantStringClassRef - Cached reference to the class for constant
   /// strings. This value has type int * but is actually an Obj-C class pointer.
   llvm::Constant *CFConstantStringClassRef;
@@ -443,6 +447,9 @@ private:
   /// EmitCXXDestructor - Emit a single destructor with the given type from
   /// a C++ destructor Decl.
   void EmitCXXDestructor(const CXXDestructorDecl *D, CXXDtorType Type);
+  
+  /// EmitCXXGlobalInitFunc - Emit a function that initializes C++ globals.
+  void EmitCXXGlobalInitFunc();
   
   // FIXME: Hardcoding priority here is gross.
   void AddGlobalCtor(llvm::Function *Ctor, int Priority=65535);

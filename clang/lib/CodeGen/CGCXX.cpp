@@ -91,6 +91,41 @@ void CodeGenFunction::EmitCXXGlobalVarDeclInit(const VarDecl &D,
   }
 }
 
+void
+CodeGenModule::EmitCXXGlobalInitFunc() {
+  if (CXXGlobalInits.empty())
+    return;
+  
+  const llvm::FunctionType *FTy = llvm::FunctionType::get(llvm::Type::VoidTy,
+                                                          false);
+  
+  // Create our global initialization function.
+  // FIXME: Should this be tweakable by targets?
+  llvm::Function *Fn = 
+    llvm::Function::Create(FTy, llvm::GlobalValue::InternalLinkage,
+                           "__cxx_global_initialization", &TheModule);
+ 
+  CodeGenFunction(*this).GenerateCXXGlobalInitFunc(Fn,
+                                                   CXXGlobalInits.data(),
+                                                   CXXGlobalInits.size());
+  AddGlobalCtor(Fn);
+}
+
+void CodeGenFunction::GenerateCXXGlobalInitFunc(llvm::Function *Fn,
+                                                const VarDecl **Decls,
+                                                unsigned NumDecls) {
+  StartFunction(0, getContext().VoidTy, Fn, FunctionArgList(), 
+                SourceLocation());
+  
+  for (unsigned i = 0; i != NumDecls; ++i) {
+    const VarDecl *D = Decls[i];
+    
+    llvm::Constant *DeclPtr = CGM.GetAddrOfGlobalVar(D);
+    EmitCXXGlobalVarDeclInit(*D, DeclPtr);
+  }
+  FinishFunction();
+}
+
 void 
 CodeGenFunction::EmitStaticCXXBlockVarDeclInit(const VarDecl &D, 
                                                llvm::GlobalVariable *GV) {
