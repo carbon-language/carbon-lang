@@ -26,7 +26,7 @@ namespace llvm {
   /// again and printing only those that match the current section. 
   /// Keeping values inside the sections make printing a section much easier.
   ///
-  /// FIXME: Reimplement by inheriting from MCSection.
+  /// FIXME: MOVE ALL THIS STUFF TO MCSectionPIC16.
   ///
   struct PIC16Section {
     const MCSection *S_; // Connection to actual Section.
