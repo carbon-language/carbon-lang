@@ -72,12 +72,12 @@ namespace llvm {
                                   SectionKind K, MCContext &Ctx);
   };
   
-  class MCSectionPECOFF : public MCSection {
-    MCSectionPECOFF(const StringRef &Name, bool IsDirective, SectionKind K,
-                    MCContext &Ctx) : MCSection(Name, IsDirective, K, Ctx) {}
+  class MCSectionCOFF : public MCSection {
+    MCSectionCOFF(const StringRef &Name, bool IsDirective, SectionKind K,
+                  MCContext &Ctx) : MCSection(Name, IsDirective, K, Ctx) {}
   public:
     
-    static MCSectionPECOFF *Create(const StringRef &Name, bool IsDirective, 
+    static MCSectionCOFF *Create(const StringRef &Name, bool IsDirective, 
                                    SectionKind K, MCContext &Ctx);
   };
   

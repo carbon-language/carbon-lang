@@ -284,7 +284,7 @@ const MCSection *TargetLoweringObjectFileELF::
 getELFSection(const char *Name, bool isDirective, SectionKind Kind) const {
   if (MCSection *S = getContext().GetSection(Name))
     return S;
-  return MCSection::Create(Name, isDirective, Kind, getContext());
+  return MCSectionELF::Create(Name, isDirective, Kind, getContext());
 }
 
 void TargetLoweringObjectFileELF::Initialize(MCContext &Ctx,
@@ -598,7 +598,7 @@ const MCSection *TargetLoweringObjectFileMachO::
 getMachOSection(const char *Name, bool isDirective, SectionKind Kind) const {
   if (MCSection *S = getContext().GetSection(Name))
     return S;
-  return MCSection::Create(Name, isDirective, Kind, getContext());
+  return MCSectionMachO::Create(Name, isDirective, Kind, getContext());
 }
 
 
@@ -808,7 +808,7 @@ const MCSection *TargetLoweringObjectFileCOFF::
 getCOFFSection(const char *Name, bool isDirective, SectionKind Kind) const {
   if (MCSection *S = getContext().GetSection(Name))
     return S;
-  return MCSection::Create(Name, isDirective, Kind, getContext());
+  return MCSectionCOFF::Create(Name, isDirective, Kind, getContext());
 }
 
 void TargetLoweringObjectFileCOFF::Initialize(MCContext &Ctx,

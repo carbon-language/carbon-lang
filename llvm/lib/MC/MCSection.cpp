@@ -40,8 +40,8 @@ Create(const StringRef &Name, bool IsDirective, SectionKind K, MCContext &Ctx) {
 }
 
 
-MCSectionPECOFF *MCSectionPECOFF::
+MCSectionCOFF *MCSectionCOFF::
 Create(const StringRef &Name, bool IsDirective, SectionKind K, MCContext &Ctx) {
-  return new (Ctx) MCSectionPECOFF(Name, IsDirective, K, Ctx);
+  return new (Ctx) MCSectionCOFF(Name, IsDirective, K, Ctx);
 }
 
