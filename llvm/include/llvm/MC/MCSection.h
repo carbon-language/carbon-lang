@@ -53,7 +53,33 @@ namespace llvm {
   };
 
   
-  typedef MCSection MCSectionELF;
+  class MCSectionELF : public MCSection {
+    MCSectionELF(const StringRef &Name, bool IsDirective, SectionKind K,
+                 MCContext &Ctx) : MCSection(Name, IsDirective, K, Ctx) {}
+  public:
+    
+    static MCSectionELF *Create(const StringRef &Name, bool IsDirective, 
+                                SectionKind K, MCContext &Ctx);
+    
+  };
+
+  class MCSectionMachO : public MCSection {
+    MCSectionMachO(const StringRef &Name, bool IsDirective, SectionKind K,
+                   MCContext &Ctx) : MCSection(Name, IsDirective, K, Ctx) {}
+  public:
+    
+    static MCSectionMachO *Create(const StringRef &Name, bool IsDirective, 
+                                  SectionKind K, MCContext &Ctx);
+  };
+  
+  class MCSectionPECOFF : public MCSection {
+    MCSectionPECOFF(const StringRef &Name, bool IsDirective, SectionKind K,
+                    MCContext &Ctx) : MCSection(Name, IsDirective, K, Ctx) {}
+  public:
+    
+    static MCSectionPECOFF *Create(const StringRef &Name, bool IsDirective, 
+                                   SectionKind K, MCContext &Ctx);
+  };
   
 } // end namespace llvm
 

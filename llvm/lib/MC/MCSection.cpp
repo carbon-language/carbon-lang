@@ -22,8 +22,26 @@ MCSection::MCSection(const StringRef &N, bool isDirective, SectionKind K,
   Entry = this;
 }
 
-MCSection *MCSection::Create(const StringRef &Name, bool IsDirective, 
-                             SectionKind K, MCContext &Ctx) {
+MCSection *MCSection::
+Create(const StringRef &Name, bool IsDirective, SectionKind K, MCContext &Ctx) {
   return new (Ctx) MCSection(Name, IsDirective, K, Ctx);
+}
+
+
+MCSectionELF *MCSectionELF::
+Create(const StringRef &Name, bool IsDirective, SectionKind K, MCContext &Ctx) {
+  return new (Ctx) MCSectionELF(Name, IsDirective, K, Ctx);
+}
+
+
+MCSectionMachO *MCSectionMachO::
+Create(const StringRef &Name, bool IsDirective, SectionKind K, MCContext &Ctx) {
+  return new (Ctx) MCSectionMachO(Name, IsDirective, K, Ctx);
+}
+
+
+MCSectionPECOFF *MCSectionPECOFF::
+Create(const StringRef &Name, bool IsDirective, SectionKind K, MCContext &Ctx) {
+  return new (Ctx) MCSectionPECOFF(Name, IsDirective, K, Ctx);
 }
 
