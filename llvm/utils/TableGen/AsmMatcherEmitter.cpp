@@ -763,7 +763,6 @@ static bool EmitStringMatcherForChar(const std::string &StrVariableName,
 
   // If we have exactly one bucket to match, see how many characters are common
   // across the whole set and match all of them at once.
-  // length, just verify the rest of it with one if.
   if (MatchesByLetter.size() == 1) {
     unsigned FirstNonCommonLetter = FindFirstNonCommonLetter(Matches);
     unsigned NumChars = FirstNonCommonLetter-CharNo;
