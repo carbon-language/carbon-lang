@@ -734,7 +734,9 @@ FindFirstNonCommonLetter(const std::vector<const StringPair*> &Matches) {
 /// EmitStringMatcherForChar - Given a set of strings that are known to be the
 /// same length and whose characters leading up to CharNo are the same, emit
 /// code to verify that CharNo and later are the same.
-static void EmitStringMatcherForChar(const std::string &StrVariableName,
+///
+/// \return - True if control can leave the emitted code fragment.
+static bool EmitStringMatcherForChar(const std::string &StrVariableName,
                                   const std::vector<const StringPair*> &Matches,
                                      unsigned CharNo, unsigned IndentCount,
                                      raw_ostream &OS) {
@@ -749,7 +751,7 @@ static void EmitStringMatcherForChar(const std::string &StrVariableName,
     // FIXME: If Matches[0].first has embeded \n, this will be bad.
     OS << Indent << Matches[0]->second << "\t // \"" << Matches[0]->first
        << "\"\n";
-    return;
+    return false;
   }
   
   // Bucket the matches by the character we are comparing.
@@ -766,24 +768,24 @@ static void EmitStringMatcherForChar(const std::string &StrVariableName,
     unsigned FirstNonCommonLetter = FindFirstNonCommonLetter(Matches);
     unsigned NumChars = FirstNonCommonLetter-CharNo;
     
+    // Emit code to break out if the prefix doesn't match.
     if (NumChars == 1) {
-      // Do the comparison with if (Str[1] == 'f')
+      // Do the comparison with if (Str[1] != 'f')
       // FIXME: Need to escape general characters.
-      OS << Indent << "if (" << StrVariableName << "[" << CharNo << "] == '"
-         << Matches[0]->first[CharNo] << "') {\n";
+      OS << Indent << "if (" << StrVariableName << "[" << CharNo << "] != '"
+         << Matches[0]->first[CharNo] << "')\n";
+      OS << Indent << "  break;\n";
     } else {
-      // Do the comparison with if (Str.substr(1,3) == "foo").
-      OS << Indent << "if (" << StrVariableName << ".substr(" << CharNo << ","
-         << NumChars << ") == \"";
-    
+      // Do the comparison with if (Str.substr(1,3) != "foo").    
       // FIXME: Need to escape general strings.
-      OS << Matches[0]->first.substr(CharNo, NumChars) << "\") {\n";
+      OS << Indent << "if (" << StrVariableName << ".substr(" << CharNo << ","
+         << NumChars << ") != \"";
+      OS << Matches[0]->first.substr(CharNo, NumChars) << "\")\n";
+      OS << Indent << "  break;";
     }
     
-    EmitStringMatcherForChar(StrVariableName, Matches, FirstNonCommonLetter,
-                             IndentCount+1, OS);
-    OS << Indent << "}\n";
-    return;
+    return EmitStringMatcherForChar(StrVariableName, Matches, 
+                                    FirstNonCommonLetter, IndentCount, OS);
   }
   
   // Otherwise, we have multiple possible things, emit a switch on the
@@ -796,21 +798,23 @@ static void EmitStringMatcherForChar(const std::string &StrVariableName,
     // TODO: escape hard stuff (like \n) if we ever care about it.
     OS << Indent << "case '" << LI->first << "':\t // "
        << LI->second.size() << " strings to match.\n";
-    EmitStringMatcherForChar(StrVariableName, LI->second, CharNo+1,
-                             IndentCount+1, OS);
-    OS << Indent << "  break;\n";
+    if (EmitStringMatcherForChar(StrVariableName, LI->second, CharNo+1,
+                                 IndentCount+1, OS))
+      OS << Indent << "  break;\n";
   }
   
   OS << Indent << "}\n";
-  
+  return true;
 }
 
 
 /// EmitStringMatcher - Given a list of strings and code to execute when they
-/// match, output a simple switch tree to classify the input string.  If a
-/// match is found, the code in Vals[i].second is executed.  This code should do
-/// a return to avoid falling through.  If nothing matches, execution falls
-/// through.  StrVariableName is the name of teh variable to test.
+/// match, output a simple switch tree to classify the input string.
+/// 
+/// If a match is found, the code in Vals[i].second is executed; control must
+/// not exit this code fragment.  If nothing matches, execution falls through.
+///
+/// \param StrVariableName - The name of the variable to test.
 static void EmitStringMatcher(const std::string &StrVariableName,
                               const std::vector<StringPair> &Matches,
                               raw_ostream &OS) {
@@ -825,15 +829,13 @@ static void EmitStringMatcher(const std::string &StrVariableName,
   OS << "  switch (" << StrVariableName << ".size()) {\n";
   OS << "  default: break;\n";
   
-  
   for (std::map<unsigned, std::vector<const StringPair*> >::iterator LI =
        MatchesByLength.begin(), E = MatchesByLength.end(); LI != E; ++LI) {
     OS << "  case " << LI->first << ":\t // " << LI->second.size()
        << " strings to match.\n";
-    EmitStringMatcherForChar(StrVariableName, LI->second, 0, 0, OS);
-    OS << "    break;\n";
+    if (EmitStringMatcherForChar(StrVariableName, LI->second, 0, 0, OS))
+      OS << "    break;\n";
   }
-  
   
   OS << "  }\n";
 }
