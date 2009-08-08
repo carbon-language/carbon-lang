@@ -384,7 +384,7 @@ def tADDrr : T1sI<(outs tGPR:$dst), (ins tGPR:$lhs, tGPR:$rhs), IIC_iALU,
                    [(set tGPR:$dst, (add tGPR:$lhs, tGPR:$rhs))]>;
 
 let neverHasSideEffects = 1 in
-def tADDhirr : T1pIt<(outs tGPR:$dst), (ins GPR:$lhs, GPR:$rhs), IIC_iALU,
+def tADDhirr : T1pIt<(outs GPR:$dst), (ins GPR:$lhs, GPR:$rhs), IIC_iALU,
                      "add", " $dst, $rhs @ addhirr", []>;
 
 // And register
