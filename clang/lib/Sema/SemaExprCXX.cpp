@@ -927,7 +927,7 @@ Sema::PerformImplicitConversion(Expr *&From, QualType ToType,
 
   case ICK_Array_To_Pointer:
     FromType = Context.getArrayDecayedType(FromType);
-    ImpCastExprToType(From, FromType);
+    ImpCastExprToType(From, FromType, CastExpr::CK_ArrayToPointerDecay);
     break;
 
   case ICK_Function_To_Pointer:
