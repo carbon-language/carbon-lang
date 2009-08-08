@@ -2821,14 +2821,6 @@ public:
 
   NamedDecl *InstantiateCurrentDeclRef(NamedDecl *D);
     
-  // Simple function for cloning expressions.
-  template<typename T> 
-  OwningExprResult Clone(T *E) {
-    assert(!E->isValueDependent() && !E->isTypeDependent() &&
-           "expression is value or type dependent!");
-    return Owned(E->Clone(Context));
-  }
-  
   // Objective-C declarations.
   virtual DeclPtrTy ActOnStartClassInterface(SourceLocation AtInterfaceLoc,
                                              IdentifierInfo *ClassName,

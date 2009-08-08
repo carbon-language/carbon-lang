@@ -43,7 +43,7 @@ static StmtClassNameTable &getStmtInfoTableEntry(Stmt::StmtClass E) {
 }
 
 const char *Stmt::getStmtClassName() const {
-  return getStmtInfoTableEntry(sClass).Name;
+  return getStmtInfoTableEntry((StmtClass)sClass).Name;
 }
 
 void Stmt::DestroyChildren(ASTContext &C) {
@@ -102,6 +102,20 @@ ContinueStmt* ContinueStmt::Clone(ASTContext &C) const {
 
 BreakStmt* BreakStmt::Clone(ASTContext &C) const {
   return new (C) BreakStmt(BreakLoc);
+}
+
+void SwitchStmt::DoDestroy(ASTContext &Ctx) {
+  // Destroy the SwitchCase statements in this switch. In the normal
+  // case, this loop will merely decrement the reference counts from 
+  // the Retain() calls in addSwitchCase();
+  SwitchCase *SC = FirstCase;
+  while (SC) {
+    SwitchCase *Next = SC->getNextSwitchCase();
+    SC->Destroy(Ctx);
+    SC = Next;
+  }
+  
+  Stmt::DoDestroy(Ctx);
 }
 
 void CompoundStmt::setStmts(ASTContext &C, Stmt **Stmts, unsigned NumStmts) {

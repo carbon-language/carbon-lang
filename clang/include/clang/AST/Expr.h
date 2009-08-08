@@ -67,6 +67,15 @@ protected:
   explicit Expr(StmtClass SC, EmptyShell) : Stmt(SC) { }
 
 public:  
+  /// \brief Increases the reference count for this expression.
+  ///
+  /// Invoke the Retain() operation when this expression
+  /// is being shared by another owner.
+  Expr *Retain() {
+    Stmt::Retain();
+    return this;
+  }
+  
   QualType getType() const { return TR; }
   void setType(QualType t) { 
     // In C++, the type of an expression is always adjusted so that it

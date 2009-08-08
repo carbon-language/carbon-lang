@@ -222,7 +222,8 @@ Decl *TemplateDeclInstantiator::VisitStaticAssertDecl(StaticAssertDecl *D) {
   if (InstantiatedAssertExpr.isInvalid())
     return 0;
 
-  OwningExprResult Message = SemaRef.Clone(D->getMessage());
+  OwningExprResult Message(SemaRef, D->getMessage());
+  D->getMessage()->Retain();
   Decl *StaticAssert 
     = SemaRef.ActOnStaticAssertDeclaration(D->getLocation(), 
                                            move(InstantiatedAssertExpr),

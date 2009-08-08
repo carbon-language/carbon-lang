@@ -105,7 +105,11 @@ public:
 #include "clang/AST/StmtNodes.def"
 };
 private:
-  const StmtClass sClass;
+  /// \brief The statement class.
+  const unsigned sClass : 8;
+  
+  /// \brief The reference count for this statement.
+  unsigned RefCount : 24;
 
   // Make vanilla 'new' and 'delete' illegal for Stmts.
 protected:
@@ -151,7 +155,7 @@ protected:
   void DestroyChildren(ASTContext& Ctx);
   
   /// \brief Construct an empty statement.
-  explicit Stmt(StmtClass SC, EmptyShell) : sClass(SC) { 
+  explicit Stmt(StmtClass SC, EmptyShell) : sClass(SC), RefCount(1) { 
     if (Stmt::CollectingStats()) Stmt::addStmtClass(SC);
   }
 
@@ -163,15 +167,27 @@ protected:
   virtual void DoDestroy(ASTContext &Ctx);
   
 public:
-  Stmt(StmtClass SC) : sClass(SC) { 
+  Stmt(StmtClass SC) : sClass(SC), RefCount(1) { 
     if (Stmt::CollectingStats()) Stmt::addStmtClass(SC);
   }
   virtual ~Stmt() {}
   
   /// \brief Destroy the current statement and its children.
-  void Destroy(ASTContext &Ctx) { DoDestroy(Ctx); }
+  void Destroy(ASTContext &Ctx) { 
+    if (--RefCount == 0)
+      DoDestroy(Ctx); 
+  }
 
-  StmtClass getStmtClass() const { return sClass; }
+  /// \brief Increases the reference count for this statement.
+  ///
+  /// Invoke the Retain() operation when this statement or expression
+  /// is being shared by another owner.
+  Stmt *Retain() {
+    ++RefCount;
+    return this;
+  }
+  
+  StmtClass getStmtClass() const { return (StmtClass)sClass; }
   const char *getStmtClassName() const;
   
   /// SourceLocation tokens are not useful in isolation - they are low level
@@ -643,6 +659,10 @@ class SwitchStmt : public Stmt {
   // This points to a linked list of case and default statements.
   SwitchCase *FirstCase;
   SourceLocation SwitchLoc;
+  
+protected:
+  virtual void DoDestroy(ASTContext &Ctx);
+  
 public:
   SwitchStmt(Expr *cond) : Stmt(SwitchStmtClass), FirstCase(0) {
       SubExprs[COND] = reinterpret_cast<Stmt*>(cond);
@@ -661,6 +681,11 @@ public:
   Stmt *getBody() { return SubExprs[BODY]; }
   void setBody(Stmt *S) { SubExprs[BODY] = S; }
   SwitchCase *getSwitchCaseList() { return FirstCase; }
+  
+  /// \brief Set the case list for this switch statement.
+  ///
+  /// The caller is responsible for incrementing the retain counts on
+  /// all of the SwitchCase statements in this list.
   void setSwitchCaseList(SwitchCase *SC) { FirstCase = SC; }
 
   SourceLocation getSwitchLoc() const { return SwitchLoc; }
@@ -672,6 +697,7 @@ public:
   }  
   void addSwitchCase(SwitchCase *SC) {
     assert(!SC->getNextSwitchCase() && "case/default already added to a switch");
+    SC->Retain();
     SC->setNextSwitchCase(FirstCase);
     FirstCase = SC;
   }

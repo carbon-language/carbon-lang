@@ -57,53 +57,53 @@ Sema::OwningExprResult TemplateExprInstantiator::VisitExpr(Expr *E) {
 
 Sema::OwningExprResult
 TemplateExprInstantiator::VisitPredefinedExpr(PredefinedExpr *E) {
-  return SemaRef.Clone(E);
+  return SemaRef.Owned(E->Retain());
 }
 
 Sema::OwningExprResult
 TemplateExprInstantiator::VisitIntegerLiteral(IntegerLiteral *E) {
-  return SemaRef.Clone(E);
+  return SemaRef.Owned(E->Retain());
 }
 
 Sema::OwningExprResult
 TemplateExprInstantiator::VisitFloatingLiteral(FloatingLiteral *E) {
-  return SemaRef.Clone(E);
+  return SemaRef.Owned(E->Retain());
 }
 
 Sema::OwningExprResult
 TemplateExprInstantiator::VisitStringLiteral(StringLiteral *E) {
-  return SemaRef.Clone(E);
+  return SemaRef.Owned(E->Retain());
 }
 
 Sema::OwningExprResult
 TemplateExprInstantiator::VisitCharacterLiteral(CharacterLiteral *E) {
-  return SemaRef.Clone(E);
+  return SemaRef.Owned(E->Retain());
 }
 
 Sema::OwningExprResult 
 TemplateExprInstantiator::VisitImaginaryLiteral(ImaginaryLiteral *E) {
-  return SemaRef.Clone(E);
+  return SemaRef.Owned(E->Retain());
 }
 
 Sema::OwningExprResult
 TemplateExprInstantiator::VisitCXXBoolLiteralExpr(CXXBoolLiteralExpr *E) {
-  return SemaRef.Clone(E);
+  return SemaRef.Owned(E->Retain());
 }
 
 Sema::OwningExprResult
 TemplateExprInstantiator::VisitCXXNullPtrLiteralExpr(CXXNullPtrLiteralExpr *E) {
-  return SemaRef.Clone(E);
+  return SemaRef.Owned(E->Retain());
 }
 
 Sema::OwningExprResult
 TemplateExprInstantiator::VisitGNUNullExpr(GNUNullExpr *E) {
-  return SemaRef.Clone(E);
+  return SemaRef.Owned(E->Retain());
 }
 
 Sema::OwningExprResult 
 TemplateExprInstantiator::VisitUnresolvedFunctionNameExpr(
                                               UnresolvedFunctionNameExpr *E) {
-  return SemaRef.Clone(E);
+  return SemaRef.Owned(E->Retain());
 }
 
 Sema::OwningExprResult
@@ -706,7 +706,8 @@ TemplateExprInstantiator::VisitImplicitValueInitExpr(
                                                   ImplicitValueInitExpr *E) {
   assert(!E->isTypeDependent() && !E->isValueDependent() &&
          "ImplicitValueInitExprs are never dependent");
-  return SemaRef.Clone(E);
+  E->Retain();
+  return SemaRef.Owned(E);
 }
 
 Sema::OwningExprResult 
@@ -1110,7 +1111,7 @@ TemplateExprInstantiator::VisitCXXFunctionalCastExpr(
 
 Sema::OwningExprResult 
 TemplateExprInstantiator::VisitCXXZeroInitValueExpr(CXXZeroInitValueExpr *E) {
-  return SemaRef.Clone(E);
+  return SemaRef.Owned(E->Retain());
 }
 
 Sema::OwningExprResult 
@@ -1289,7 +1290,7 @@ TemplateExprInstantiator::VisitCXXUnresolvedMemberExpr(
 //----------------------------------------------------------------------------
 Sema::OwningExprResult 
 TemplateExprInstantiator::VisitObjCStringLiteral(ObjCStringLiteral *E) {
-  return SemaRef.Owned(E->Clone(SemaRef.Context));
+  return SemaRef.Owned(E->Retain());
 }
 
 Sema::OwningExprResult 
@@ -1314,12 +1315,12 @@ TemplateExprInstantiator::VisitObjCMessageExpr(ObjCMessageExpr *E) {
 
 Sema::OwningExprResult 
 TemplateExprInstantiator::VisitObjCSelectorExpr(ObjCSelectorExpr *E) { 
-  return SemaRef.Owned(E->Clone(SemaRef.Context));
+  return SemaRef.Owned(E->Retain());
 }
 
 Sema::OwningExprResult 
 TemplateExprInstantiator::VisitObjCProtocolExpr(ObjCProtocolExpr *E) { 
-  return SemaRef.Owned(E->Clone(SemaRef.Context));
+  return SemaRef.Owned(E->Retain());
 }
 
 Sema::OwningExprResult 
