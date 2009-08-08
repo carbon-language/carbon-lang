@@ -162,8 +162,14 @@ private:
   MachineInstr *findFirstUse(MachineBasicBlock *MBB,
                              MachineBasicBlock::iterator I, unsigned Reg,
                              unsigned &Dist);
+
+  /// Add Reg and all its sub-registers to BV.
+  void addRegWithSubRegs(BitVector &BV, unsigned Reg);
+
+  /// Add Reg and its aliases to BV.
+  void addRegWithAliases(BitVector &BV, unsigned Reg);
 };
- 
+
 } // End llvm namespace
 
 #endif

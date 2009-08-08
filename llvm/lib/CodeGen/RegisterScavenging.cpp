@@ -51,13 +51,6 @@ static bool RedefinesSuperRegPart(const MachineInstr *MI, unsigned SubReg,
   return SeenSuperDef && SeenSuperUse;
 }
 
-static bool RedefinesSuperRegPart(const MachineInstr *MI,
-                                  const MachineOperand &MO,
-                                  const TargetRegisterInfo *TRI) {
-  assert(MO.isReg() && MO.isDef() && "Not a register def!");
-  return RedefinesSuperRegPart(MI, MO.getReg(), TRI);
-}
-
 bool RegScavenger::isSuperRegUsed(unsigned Reg) const {
   for (const unsigned *SuperRegs = TRI->getSuperRegisters(Reg);
        unsigned SuperReg = *SuperRegs; ++SuperRegs)
@@ -190,6 +183,18 @@ static bool isLiveInButUnusedBefore(unsigned Reg, MachineInstr *MI,
 }
 #endif
 
+void RegScavenger::addRegWithSubRegs(BitVector &BV, unsigned Reg) {
+  BV.set(Reg);
+  for (const unsigned *R = TRI->getSubRegisters(Reg); *R; R++)
+    BV.set(*R);
+}
+
+void RegScavenger::addRegWithAliases(BitVector &BV, unsigned Reg) {
+  BV.set(Reg);
+  for (const unsigned *R = TRI->getAliasSet(Reg); *R; R++)
+    BV.set(*R);
+}
+
 void RegScavenger::forward() {
   // Move ptr forward.
   if (!Tracking) {
@@ -209,76 +214,59 @@ void RegScavenger::forward() {
     ScavengeRestore = NULL;
   }
 
-  // Separate register operands into 3 classes: uses, defs, earlyclobbers.
-  SmallVector<std::pair<const MachineOperand*,unsigned>, 4> UseMOs;
-  SmallVector<std::pair<const MachineOperand*,unsigned>, 4> DefMOs;
-  SmallVector<std::pair<const MachineOperand*,unsigned>, 4> EarlyClobberMOs;
+  // Find out which registers are early clobbered, killed, defined, and marked
+  // def-dead in this instruction.
+  BitVector EarlyClobberRegs(NumPhysRegs);
+  BitVector KillRegs(NumPhysRegs);
+  BitVector DefRegs(NumPhysRegs);
+  BitVector DeadRegs(NumPhysRegs);
   for (unsigned i = 0, e = MI->getNumOperands(); i != e; ++i) {
     const MachineOperand &MO = MI->getOperand(i);
-    if (!MO.isReg() || MO.getReg() == 0 || MO.isUndef())
+    if (!MO.isReg() || MO.isUndef())
       continue;
-    if (MO.isUse())
-      UseMOs.push_back(std::make_pair(&MO,i));
-    else if (MO.isEarlyClobber())
-      EarlyClobberMOs.push_back(std::make_pair(&MO,i));
-    else {
+    unsigned Reg = MO.getReg();
+    if (!Reg || isReserved(Reg))
+      continue;
+
+    if (MO.isUse()) {
+      // Two-address operands implicitly kill.
+      if (MO.isKill() || MI->isRegTiedToDefOperand(i))
+        addRegWithSubRegs(KillRegs, Reg);
+    } else {
       assert(MO.isDef());
-      DefMOs.push_back(std::make_pair(&MO,i));
+      if (MO.isDead())
+        addRegWithSubRegs(DeadRegs, Reg);
+      else
+        addRegWithSubRegs(DefRegs, Reg);
+      if (MO.isEarlyClobber())
+        addRegWithAliases(EarlyClobberRegs, Reg);
     }
   }
 
-  // Process uses first.
-  BitVector KillRegs(NumPhysRegs);
-  for (unsigned i = 0, e = UseMOs.size(); i != e; ++i) {
-    const MachineOperand MO = *UseMOs[i].first;
-    unsigned Idx = UseMOs[i].second;
+  // Verify uses and defs.
+  for (unsigned i = 0, e = MI->getNumOperands(); i != e; ++i) {
+    const MachineOperand &MO = MI->getOperand(i);
+    if (!MO.isReg() || MO.isUndef())
+      continue;
     unsigned Reg = MO.getReg();
-
-    assert(isUsed(Reg) && "Using an undefined register!");
-
-    // Two-address operands implicitly kill.
-    if ((MO.isKill() || MI->isRegTiedToDefOperand(Idx)) && !isReserved(Reg)) {
-      KillRegs.set(Reg);
-
-      // Mark sub-registers as used.
-      for (const unsigned *SubRegs = TRI->getSubRegisters(Reg);
-           unsigned SubReg = *SubRegs; ++SubRegs)
-        KillRegs.set(SubReg);
+    if (!Reg || isReserved(Reg))
+      continue;
+    if (MO.isUse()) {
+      assert(isUsed(Reg) && "Using an undefined register!");
+      assert(!EarlyClobberRegs.test(Reg) &&
+             "Using an early clobbered register!");
+    } else {
+      assert(MO.isDef());
+      assert((KillRegs.test(Reg) || isUnused(Reg) || isSuperRegUsed(Reg) ||
+              isLiveInButUnusedBefore(Reg, MI, MBB, TRI, MRI)) &&
+             "Re-defining a live register!");
     }
   }
 
-  // Change states of all registers after all the uses are processed to guard
-  // against multiple uses.
+  // Commit the changes.
   setUnused(KillRegs);
-
-  // Process early clobber defs then process defs. We can have a early clobber
-  // that is dead, it should not conflict with a def that happens one "slot"
-  // (see InstrSlots in LiveIntervalAnalysis.h) later.
-  unsigned NumECs = EarlyClobberMOs.size();
-  unsigned NumDefs = DefMOs.size();
-
-  for (unsigned i = 0, e = NumECs + NumDefs; i != e; ++i) {
-    const MachineOperand &MO = (i < NumECs)
-      ? *EarlyClobberMOs[i].first : *DefMOs[i-NumECs].first;
-    unsigned Reg = MO.getReg();
-    if (MO.isUndef())
-      continue;
-
-    // If it's dead upon def, then it is now free.
-    if (MO.isDead()) {
-      setUnused(Reg, MI);
-      continue;
-    }
-
-    // Skip if this is merely redefining part of a super-register.
-    if (RedefinesSuperRegPart(MI, MO, TRI))
-      continue;
-
-    assert((isReserved(Reg) || isUnused(Reg) || isSuperRegUsed(Reg) ||
-            isLiveInButUnusedBefore(Reg, MI, MBB, TRI, MRI)) &&
-           "Re-defining a live register!");
-    setUsed(Reg);
-  }
+  setUnused(DeadRegs);
+  setUsed(DefRegs);
 }
 
 void RegScavenger::getRegsUsed(BitVector &used, bool includeReserved) {
