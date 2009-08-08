@@ -11,8 +11,7 @@ extern void fc3 (const NSString *) __attribute__((format_arg(1, 2))); // expecte
 
 struct s1 { int i; } __attribute__((format_arg(1)));  // expected-warning {{'format_arg' attribute only applies to function types}}
 union u1 { int i; } __attribute__((format_arg(1)));  // expected-warning {{'format_arg' attribute only applies to function types}}
-// FIXME: We don't flag this yet.
-enum e1 { E1V0 } __attribute__((format_arg(1))); /* { dg-error "does not apply|only applies" "format_arg on enum" } */
+enum e1 { E1V0 } __attribute__((format_arg(1))); // expected-warning {{'format_arg' attribute only applies to function types}}
 
 extern NSString *ff3 (const NSString *) __attribute__((format_arg(3-2)));
 extern NSString *ff4 (const NSString *) __attribute__((format_arg(foo))); // expected-error {{attribute requires 1 argument(s)}}
