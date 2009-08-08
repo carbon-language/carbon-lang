@@ -364,6 +364,18 @@ class N2VLInt<bit op24, bit op23, bits<6> op21_16, bits<4> op11_8, bit op7,
         (ins DPR:$src), NoItinerary, !strconcat(OpcodeStr, "\t$dst, $src"), "",
         [(set QPR:$dst, (TyQ (IntOp (TyD DPR:$src))))]>;
 
+// 2-register shuffles (VTRN/VZIP/VUZP), both double- and quad-register.
+class N2VDShuffle<bits<2> op19_18, bits<5> op11_7, string OpcodeStr>
+  : N2V<0b11, 0b11, op19_18, 0b10, op11_7, 0, 0, (outs DPR:$dst1, DPR:$dst2),
+        (ins DPR:$src1, DPR:$src2), NoItinerary, 
+        !strconcat(OpcodeStr, "\t$dst1, $dst2"),
+        "$src1 = $dst1, $src2 = $dst2", []>;
+class N2VQShuffle<bits<2> op19_18, bits<5> op11_7, string OpcodeStr>
+  : N2V<0b11, 0b11, op19_18, 0b10, op11_7, 1, 0, (outs QPR:$dst1, QPR:$dst2),
+        (ins QPR:$src1, QPR:$src2), NoItinerary, 
+        !strconcat(OpcodeStr, "\t$dst1, $dst2"),
+        "$src1 = $dst1, $src2 = $dst2", []>;
+
 // Basic 3-register operations, both double- and quad-register.
 class N3VD<bit op24, bit op23, bits<2> op21_20, bits<4> op11_8, bit op4,
            string OpcodeStr, ValueType ResTy, ValueType OpTy,
@@ -1919,24 +1931,33 @@ def VREV16q8  : VREV16Q<0b00, "vrev16.8", v16i8>;
 
 //   VTRN     : Vector Transpose
 
-class VTRND<bits<2> op19_18, string OpcodeStr>
-  : N2V<0b11, 0b11, op19_18, 0b10, 0b00001, 0, 0, (outs DPR:$dst1, DPR:$dst2),
-        (ins DPR:$src1, DPR:$src2), NoItinerary, 
-        !strconcat(OpcodeStr, "\t$dst1, $dst2"),
-        "$src1 = $dst1, $src2 = $dst2", []>;
-class VTRNQ<bits<2> op19_18, string OpcodeStr>
-  : N2V<0b11, 0b11, op19_18, 0b10, 0b00001, 1, 0, (outs QPR:$dst1, QPR:$dst2),
-        (ins QPR:$src1, QPR:$src2), NoItinerary, 
-        !strconcat(OpcodeStr, "\t$dst1, $dst2"),
-        "$src1 = $dst1, $src2 = $dst2", []>;
+def  VTRNd8   : N2VDShuffle<0b00, 0b00001, "vtrn.8">;
+def  VTRNd16  : N2VDShuffle<0b01, 0b00001, "vtrn.16">;
+def  VTRNd32  : N2VDShuffle<0b10, 0b00001, "vtrn.32">;
 
-def  VTRNd8   : VTRND<0b00, "vtrn.8">;
-def  VTRNd16  : VTRND<0b01, "vtrn.16">;
-def  VTRNd32  : VTRND<0b10, "vtrn.32">;
+def  VTRNq8   : N2VQShuffle<0b00, 0b00001, "vtrn.8">;
+def  VTRNq16  : N2VQShuffle<0b01, 0b00001, "vtrn.16">;
+def  VTRNq32  : N2VQShuffle<0b10, 0b00001, "vtrn.32">;
 
-def  VTRNq8   : VTRNQ<0b00, "vtrn.8">;
-def  VTRNq16  : VTRNQ<0b01, "vtrn.16">;
-def  VTRNq32  : VTRNQ<0b10, "vtrn.32">;
+//   VUZP     : Vector Unzip (Deinterleave)
+
+def  VUZPd8   : N2VDShuffle<0b00, 0b00010, "vuzp.8">;
+def  VUZPd16  : N2VDShuffle<0b01, 0b00010, "vuzp.16">;
+def  VUZPd32  : N2VDShuffle<0b10, 0b00010, "vuzp.32">;
+
+def  VUZPq8   : N2VQShuffle<0b00, 0b00010, "vuzp.8">;
+def  VUZPq16  : N2VQShuffle<0b01, 0b00010, "vuzp.16">;
+def  VUZPq32  : N2VQShuffle<0b10, 0b00010, "vuzp.32">;
+
+//   VZIP     : Vector Zip (Interleave)
+
+def  VZIPd8   : N2VDShuffle<0b00, 0b00011, "vzip.8">;
+def  VZIPd16  : N2VDShuffle<0b01, 0b00011, "vzip.16">;
+def  VZIPd32  : N2VDShuffle<0b10, 0b00011, "vzip.32">;
+
+def  VZIPq8   : N2VQShuffle<0b00, 0b00011, "vzip.8">;
+def  VZIPq16  : N2VQShuffle<0b01, 0b00011, "vzip.16">;
+def  VZIPq32  : N2VQShuffle<0b10, 0b00011, "vzip.32">;
 
 //===----------------------------------------------------------------------===//
 // NEON instructions for single-precision FP math
