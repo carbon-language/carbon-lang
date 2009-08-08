@@ -702,7 +702,7 @@ def FCMOVNET : FPForm<0x17, 0x02B, "fcmovne $RCOND,$RTRUE,$RDEST", [], s_fcmov>;
 
 //misc FP selects
 //Select double
-     
+
 def : Pat<(select (seteq F8RC:$RA, F8RC:$RB), F8RC:$st, F8RC:$sf),
       (FCMOVNET F8RC:$sf, F8RC:$st, (CMPTEQ F8RC:$RA, F8RC:$RB))>;
 def : Pat<(select (setoeq F8RC:$RA, F8RC:$RB), F8RC:$st, F8RC:$sf),
@@ -791,12 +791,14 @@ def : Pat<(select (setule F8RC:$RA, F8RC:$RB), F4RC:$st, F4RC:$sf),
 
 
 let OutOperandList = (ops GPRC:$RC), InOperandList = (ops F4RC:$RA), Fb = 31 in 
-def FTOIS : FPForm<0x1C, 0x078, "ftois $RA,$RC",[], s_ftoi>; //Floating to integer move, S_floating
+def FTOIS : FPForm<0x1C, 0x078, "ftois $RA,$RC",
+        [(set GPRC:$RC, (bitconvert F4RC:$RA))], s_ftoi>; //Floating to integer move, S_floating
 let OutOperandList = (ops GPRC:$RC), InOperandList = (ops F8RC:$RA), Fb = 31 in 
 def FTOIT : FPForm<0x1C, 0x070, "ftoit $RA,$RC",
         [(set GPRC:$RC, (bitconvert F8RC:$RA))], s_ftoi>; //Floating to integer move
 let OutOperandList = (ops F4RC:$RC), InOperandList = (ops GPRC:$RA), Fb = 31 in 
-def ITOFS : FPForm<0x14, 0x004, "itofs $RA,$RC",[], s_itof>; //Integer to floating move, S_floating
+def ITOFS : FPForm<0x14, 0x004, "itofs $RA,$RC",
+    	[(set F4RC:$RC, (bitconvert GPRC:$RA))], s_itof>; //Integer to floating move, S_floating
 let OutOperandList = (ops F8RC:$RC), InOperandList = (ops GPRC:$RA), Fb = 31 in 
 def ITOFT : FPForm<0x14, 0x024, "itoft $RA,$RC",
         [(set F8RC:$RC, (bitconvert GPRC:$RA))], s_itof>; //Integer to floating move
@@ -818,6 +820,10 @@ let OutOperandList = (ops F4RC:$RC), InOperandList = (ops F8RC:$RB), Fa = 31 in
 def CVTTS : FPForm<0x16, 0x7AC, "cvtts/sui $RB,$RC",
                    [(set F4RC:$RC, (fround F8RC:$RB))], s_fadd>;
 
+def :  Pat<(select GPRC:$RC, F8RC:$st, F8RC:$sf),
+       (f64 (FCMOVEQT  F8RC:$st, F8RC:$sf, (ITOFT GPRC:$RC)))>; 
+def :  Pat<(select GPRC:$RC, F4RC:$st, F4RC:$sf),
+       (f32 (FCMOVEQS  F4RC:$st, F4RC:$sf, (ITOFT GPRC:$RC)))>; 
 
 /////////////////////////////////////////////////////////
 //Branching

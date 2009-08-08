@@ -385,25 +385,6 @@ SDNode *AlphaDAGToDAGISel::Select(SDValue Op) {
     }
     break;
 
-  case ISD::SELECT:
-    if (N->getValueType(0).isFloatingPoint() &&
-        (N->getOperand(0).getOpcode() != ISD::SETCC ||
-         !N->getOperand(0).getOperand(1).getValueType().isFloatingPoint())) {
-      //This should be the condition not covered by the Patterns
-      //FIXME: Don't have SelectCode die, but rather return something testable
-      // so that things like this can be caught in fall though code
-      //move int to fp
-      bool isDouble = N->getValueType(0) == MVT::f64;
-      SDValue cond = N->getOperand(0);
-      SDValue TV = N->getOperand(1);
-      SDValue FV = N->getOperand(2);
-      
-      SDNode* LD = CurDAG->getTargetNode(Alpha::ITOFT, dl, MVT::f64, cond);
-      return CurDAG->getTargetNode(isDouble?Alpha::FCMOVNET:Alpha::FCMOVNES,
-                                   dl, MVT::f64, FV, TV, SDValue(LD,0));
-    }
-    break;
-
   case ISD::AND: {
     ConstantSDNode* SC = NULL;
     ConstantSDNode* MC = NULL;
