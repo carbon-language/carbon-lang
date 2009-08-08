@@ -859,7 +859,7 @@ void AsmMatcherEmitter::run(raw_ostream &OS) {
 
   // Emit code to search the table.
   OS << "  // Search the table.\n";
-  OS << "  for (MatchEntry *it = MatchTable, "
+  OS << "  for (const MatchEntry *it = MatchTable, "
      << "*ie = MatchTable + " << Info.Instructions.size()
      << "; it != ie; ++it) {\n";
   for (unsigned i = 0; i != MaxNumOperands; ++i) {
