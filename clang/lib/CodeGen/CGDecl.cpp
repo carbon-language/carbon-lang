@@ -140,7 +140,7 @@ void CodeGenFunction::EmitStaticBlockVarDecl(const VarDecl &D) {
       if (!getContext().getLangOptions().CPlusPlus)
         CGM.ErrorUnsupported(D.getInit(), "constant l-value expression");
       else
-        GenerateStaticCXXBlockVarDeclInit(D, GV);
+        EmitStaticCXXBlockVarDeclInit(D, GV);
     } else {
       // The initializer may differ in type from the global. Rewrite
       // the global to match the initializer.  (We have to do this

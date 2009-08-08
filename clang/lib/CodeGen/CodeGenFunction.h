@@ -887,11 +887,20 @@ public:
                                                   llvm::GlobalValue::LinkageTypes
                                                   Linkage);
 
-  /// GenerateStaticCXXBlockVarDecl - Create the initializer for a C++
+  /// EmitStaticCXXBlockVarDeclInit - Create the initializer for a C++
   /// runtime initialized static block var decl.
-  void GenerateStaticCXXBlockVarDeclInit(const VarDecl &D,
-                                         llvm::GlobalVariable *GV);
+  void EmitStaticCXXBlockVarDeclInit(const VarDecl &D,
+                                     llvm::GlobalVariable *GV);
 
+  /// EmitCXXGlobalVarDeclInit - Create the initializer for a C++
+  /// variable with global storage.
+  void EmitCXXGlobalVarDeclInit(const VarDecl &D, llvm::Constant *DeclPtr);
+
+  /// EmitCXXGlobalDtorRegistration - Emits a call to register the global ptr
+  /// with the C++ runtime so that its destructor will be called at exit.
+  void EmitCXXGlobalDtorRegistration(const CXXDestructorDecl *Dtor,
+                                     llvm::Constant *DeclPtr);
+  
   void EmitCXXConstructExpr(llvm::Value *Dest, const CXXConstructExpr *E);
   
   RValue EmitCXXExprWithTemporaries(const CXXExprWithTemporaries *E,
