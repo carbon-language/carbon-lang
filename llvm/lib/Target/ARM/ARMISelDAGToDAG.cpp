@@ -78,6 +78,8 @@ public:
                        SDValue &Offset, SDValue &Opc);
   bool SelectAddrMode3Offset(SDValue Op, SDValue N,
                              SDValue &Offset, SDValue &Opc);
+  bool SelectAddrMode4(SDValue Op, SDValue N, SDValue &Addr,
+                       SDValue &Mode);
   bool SelectAddrMode5(SDValue Op, SDValue N, SDValue &Base,
                        SDValue &Offset);
   bool SelectAddrMode6(SDValue Op, SDValue N, SDValue &Addr, SDValue &Update,
@@ -383,6 +385,12 @@ bool ARMDAGToDAGISel::SelectAddrMode3Offset(SDValue Op, SDValue N,
   return true;
 }
 
+bool ARMDAGToDAGISel::SelectAddrMode4(SDValue Op, SDValue N,
+                                      SDValue &Addr, SDValue &Mode) {
+  Addr = N;
+  Mode = CurDAG->getTargetConstant(0, MVT::i32);
+  return true;
+}
 
 bool ARMDAGToDAGISel::SelectAddrMode5(SDValue Op, SDValue N,
                                       SDValue &Base, SDValue &Offset) {

@@ -298,7 +298,7 @@ def am3offset : Operand<i32>,
 // addrmode4 := reg, <mode|W>
 //
 def addrmode4 : Operand<i32>,
-                ComplexPattern<i32, 2, "", []> {
+                ComplexPattern<i32, 2, "SelectAddrMode4", []> {
   let PrintMethod = "printAddrMode4Operand";
   let MIOperandInfo = (ops GPR, i32imm);
 }

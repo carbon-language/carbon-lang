@@ -138,10 +138,10 @@ def VLDMS : NI<(outs),
 */
 
 // Use vldmia to load a Q register as a D register pair.
-def VLDRQ : NI<(outs QPR:$dst), (ins GPR:$addr),
+def VLDRQ : NI4<(outs QPR:$dst), (ins addrmode4:$addr),
                NoItinerary,
                "vldmia $addr, ${dst:dregpair}",
-               [(set QPR:$dst, (v2f64 (load GPR:$addr)))]> {
+               [(set QPR:$dst, (v2f64 (load addrmode4:$addr)))]> {
   let Inst{27-25} = 0b110;
   let Inst{24}    = 0; // P bit
   let Inst{23}    = 1; // U bit
@@ -150,17 +150,16 @@ def VLDRQ : NI<(outs QPR:$dst), (ins GPR:$addr),
 }
 
 // Use vstmia to store a Q register as a D register pair.
-def VSTRQ : NI<(outs), (ins QPR:$src, GPR:$addr),
+def VSTRQ : NI4<(outs), (ins QPR:$src, addrmode4:$addr),
                NoItinerary,
                "vstmia $addr, ${src:dregpair}",
-               [(store (v2f64 QPR:$src), GPR:$addr)]> {
+               [(store (v2f64 QPR:$src), addrmode4:$addr)]> {
   let Inst{27-25} = 0b110;
   let Inst{24}    = 0; // P bit
   let Inst{23}    = 1; // U bit
   let Inst{20}    = 0;
   let Inst{11-9}  = 0b101;
 }
-
 
 //   VLD1     : Vector Load (multiple single elements)
 class VLD1D<string OpcodeStr, ValueType Ty, Intrinsic IntOp>

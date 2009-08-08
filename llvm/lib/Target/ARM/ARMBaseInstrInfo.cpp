@@ -655,11 +655,15 @@ storeRegToStackSlot(MachineBasicBlock &MBB, MachineBasicBlock::iterator I,
     AddDefaultPred(BuildMI(MBB, I, DL, get(ARM::FSTD))
                    .addReg(SrcReg, getKillRegState(isKill))
                    .addFrameIndex(FI).addImm(0));
-  } else {
-    assert(RC == ARM::SPRRegisterClass && "Unknown regclass!");
+  } else if (RC == ARM::SPRRegisterClass) {
     AddDefaultPred(BuildMI(MBB, I, DL, get(ARM::FSTS))
                    .addReg(SrcReg, getKillRegState(isKill))
                    .addFrameIndex(FI).addImm(0));
+  } else {
+    assert(RC == ARM::QPRRegisterClass && "Unknown regclass!");
+    // FIXME: Neon instructions should support predicates
+    BuildMI(MBB, I, DL, get(ARM::VSTRQ)).addReg(SrcReg, getKillRegState(isKill))
+      .addFrameIndex(FI).addImm(0);
   }
 }
 
@@ -676,10 +680,13 @@ loadRegFromStackSlot(MachineBasicBlock &MBB, MachineBasicBlock::iterator I,
   } else if (RC == ARM::DPRRegisterClass || RC == ARM::DPR_VFP2RegisterClass) {
     AddDefaultPred(BuildMI(MBB, I, DL, get(ARM::FLDD), DestReg)
                    .addFrameIndex(FI).addImm(0));
-  } else {
-    assert(RC == ARM::SPRRegisterClass && "Unknown regclass!");
+  } else if (RC == ARM::SPRRegisterClass) {
     AddDefaultPred(BuildMI(MBB, I, DL, get(ARM::FLDS), DestReg)
                    .addFrameIndex(FI).addImm(0));
+  } else {
+    assert(RC == ARM::QPRRegisterClass && "Unknown regclass!");
+    // FIXME: Neon instructions should support predicates
+    BuildMI(MBB, I, DL, get(ARM::VLDRQ), DestReg).addFrameIndex(FI).addImm(0);
   }
 }
 
@@ -928,6 +935,8 @@ int llvm::rewriteARMFrameIndex(MachineInstr &MI, unsigned FrameRegIdx,
       NumBits = 8;
       break;
     }
+    case ARMII::AddrMode4:
+     break;
     case ARMII::AddrMode5: {
       ImmIdx = FrameRegIdx+1;
       InstrOffs = ARM_AM::getAM5Offset(MI.getOperand(ImmIdx).getImm());

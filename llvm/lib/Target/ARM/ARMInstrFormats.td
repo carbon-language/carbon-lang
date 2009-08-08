@@ -1199,6 +1199,10 @@ class NI<dag oops, dag iops, InstrItinClass itin, string asm, list<dag> pattern>
   : NeonI<oops, iops, AddrModeNone, IndexModeNone, itin, asm, "", pattern> {
 }
 
+class NI4<dag oops, dag iops, InstrItinClass itin, string asm, list<dag> pattern>
+  : NeonI<oops, iops, AddrMode4, IndexModeNone, itin, asm, "", pattern> {
+}
+
 class NLdSt<dag oops, dag iops, InstrItinClass itin,
             string asm, list<dag> pattern>
   : NeonI<oops, iops, AddrMode6, IndexModeNone, itin, asm, "", pattern> {
