@@ -805,16 +805,47 @@ void InitListChecker::CheckVectorType(InitListExpr *IList, QualType DeclType,
                                       unsigned &StructuredIndex) {
   if (Index < IList->getNumInits()) {
     const VectorType *VT = DeclType->getAsVectorType();
-    int maxElements = VT->getNumElements();
+    unsigned maxElements = VT->getNumElements();
+    unsigned numEltsInit = 0;
     QualType elementType = VT->getElementType();
     
-    for (int i = 0; i < maxElements; ++i) {
-      // Don't attempt to go past the end of the init list
-      if (Index >= IList->getNumInits())
-        break;
-      CheckSubElementType(IList, elementType, Index,
-                          StructuredList, StructuredIndex);
+    if (!SemaRef.getLangOptions().OpenCL) {
+      for (unsigned i = 0; i < maxElements; ++i, ++numEltsInit) {
+        // Don't attempt to go past the end of the init list
+        if (Index >= IList->getNumInits())
+          break;
+        CheckSubElementType(IList, elementType, Index,
+                            StructuredList, StructuredIndex);
+      }
+    } else {
+      // OpenCL initializers allows vectors to be constructed from vectors.
+      for (unsigned i = 0; i < maxElements; ++i) {
+        // Don't attempt to go past the end of the init list
+        if (Index >= IList->getNumInits())
+          break;
+        QualType IType = IList->getInit(Index)->getType();
+        if (!IType->isVectorType()) {
+          CheckSubElementType(IList, elementType, Index,
+                              StructuredList, StructuredIndex);
+          ++numEltsInit;
+        } else {
+          const VectorType *IVT = IType->getAsVectorType();
+          unsigned numIElts = IVT->getNumElements();
+          QualType VecType = SemaRef.Context.getExtVectorType(elementType,
+                                                              numIElts);
+          CheckSubElementType(IList, VecType, Index,
+                              StructuredList, StructuredIndex);
+          numEltsInit += numIElts;
+        }
+      }
     }
+    
+    // OpenCL & AltiVec require all elements to be initialized.
+    if (numEltsInit != maxElements)
+      if (SemaRef.getLangOptions().OpenCL || SemaRef.getLangOptions().AltiVec)
+        SemaRef.Diag(IList->getSourceRange().getBegin(),
+                     diag::err_vector_incorrect_num_initializers)
+          << (numEltsInit < maxElements) << maxElements << numEltsInit;
   }
 }
 

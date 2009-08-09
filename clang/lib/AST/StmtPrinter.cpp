@@ -850,6 +850,15 @@ void StmtPrinter::VisitInitListExpr(InitListExpr* Node) {
   OS << " }";
 }
 
+void StmtPrinter::VisitParenListExpr(ParenListExpr* Node) {
+  OS << "( ";
+  for (unsigned i = 0, e = Node->getNumExprs(); i != e; ++i) {
+    if (i) OS << ", ";
+    PrintExpr(Node->getExpr(i));
+  }
+  OS << " )";
+}
+
 void StmtPrinter::VisitDesignatedInitExpr(DesignatedInitExpr *Node) {
   for (DesignatedInitExpr::designators_iterator D = Node->designators_begin(),
                       DEnd = Node->designators_end();
