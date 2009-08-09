@@ -78,6 +78,7 @@
 #include "Record.h"
 #include "llvm/ADT/OwningPtr.h"
 #include "llvm/ADT/SmallVector.h"
+#include "llvm/ADT/STLExtras.h"
 #include "llvm/ADT/StringExtras.h"
 #include "llvm/Support/CommandLine.h"
 #include "llvm/Support/Debug.h"
@@ -88,8 +89,8 @@ using namespace llvm;
 
 namespace {
 static cl::opt<std::string>
-MatchOneInstr("match-one-instr", cl::desc("Match only the named instruction"),
-              cl::init(""));
+MatchPrefix("match-prefix", cl::init(""),
+            cl::desc("Only match instructions with the given prefix"));
 }
 
 /// FlattenVariants - Flatten an .td file assembly string by selecting the
@@ -276,11 +277,16 @@ namespace {
 /// ClassInfo - Helper class for storing the information about a particular
 /// class of operands which can be matched.
 struct ClassInfo {
-  enum {
+  enum ClassInfoKind {
     Token, ///< The class for a particular token.
     Register, ///< A register class.
-    User ///< A user defined class.
-  } Kind;
+    UserClass0 ///< The (first) user defined class, subsequent user defined
+               /// classes are UserClass0+1, and so on.
+  };
+
+  /// Kind - The class kind, which is either a predefined kind, or (UserClass0 +
+  /// N) for the Nth user defined class.
+  unsigned Kind;
 
   /// Name - The class name, suitable for use as an enum.
   std::string Name;
@@ -297,6 +303,29 @@ struct ClassInfo {
   /// RenderMethod - The name of the operand method to add this operand to an
   /// MCInst; this is not valid for Token kinds.
   std::string RenderMethod;
+
+  /// operator< - Compare two classes.
+  bool operator<(const ClassInfo &RHS) const {
+    // Incompatible kinds are comparable.
+    if (Kind != RHS.Kind)
+      return Kind < RHS.Kind;
+
+    switch (Kind) {
+    case Token:
+      // Tokens are always comparable.
+      //
+      // FIXME: Compare by enum value.
+      return ValueName < RHS.ValueName;
+
+    case Register:
+      // FIXME: Compare by subset relation.
+      return false;
+
+    default:
+      // FIXME: Allow user defined relation.
+      return false;
+    }
+  }
 };
 
 /// InstructionInfo - Helper class for storing the necessary information for an
@@ -330,6 +359,38 @@ struct InstructionInfo {
   /// ConvertToMCInst to convert parsed operands into an MCInst for this
   /// function.
   std::string ConversionFnKind;
+
+  /// operator< - Compare two instructions.
+  bool operator<(const InstructionInfo &RHS) const {
+    // Order first by the number of operands (which is unambiguous).
+    if (Operands.size() != RHS.Operands.size())
+      return Operands.size() < RHS.Operands.size();
+    
+    // Otherwise, order by lexicographic comparison of tokens and operand kinds
+    // (these can never be ambiguous).
+    for (unsigned i = 0, e = Operands.size(); i != e; ++i)
+      if (Operands[i].Class->Kind != RHS.Operands[i].Class->Kind ||
+          Operands[i].Class->Kind == ClassInfo::Token)
+        if (*Operands[i].Class < *RHS.Operands[i].Class)
+          return true;
+    
+    // Finally, order by the component wise comparison of operand classes. We
+    // don't want to rely on the lexigraphic ordering of elements, so we define
+    // only define the ordering when it is unambiguous. That is, when some pair
+    // compares less than and no pair compares greater than.
+
+    // Check that no pair compares greater than.
+    for (unsigned i = 0, e = Operands.size(); i != e; ++i)
+      if (*RHS.Operands[i].Class < *Operands[i].Class)
+        return false;
+
+    // Otherwise, return true if some pair compares less than.
+    for (unsigned i = 0, e = Operands.size(); i != e; ++i)
+      if (*Operands[i].Class < *RHS.Operands[i].Class)
+        return true;
+
+    return false;
+  }
 
 public:
   void dump();
@@ -460,7 +521,10 @@ AsmMatcherInfo::getOperandClass(const StringRef &Token,
     if (ClassName == "Reg") {
       Entry->Kind = ClassInfo::Register;
     } else {
-      Entry->Kind = ClassInfo::User;
+      if (ClassName == "Mem")
+        Entry->Kind = ClassInfo::UserClass0;
+      else
+        Entry->Kind = ClassInfo::UserClass0 + 1;        
     }
     Entry->Name = "MCK_" + ClassName;
     Entry->ValueName = OI.Rec->getName();
@@ -479,7 +543,7 @@ void AsmMatcherInfo::BuildInfo(CodeGenTarget &Target) {
        it != ie; ++it) {
     const CodeGenInstruction &CGI = it->second;
 
-    if (!MatchOneInstr.empty() && it->first != MatchOneInstr)
+    if (!StringRef(it->first).startswith(MatchPrefix))
       continue;
 
     OwningPtr<InstructionInfo> II(new InstructionInfo);
@@ -537,9 +601,9 @@ void AsmMatcherInfo::BuildInfo(CodeGenTarget &Target) {
   }
 }
 
-static void ConstructConversionFunctions(CodeGenTarget &Target,
-                                         std::vector<InstructionInfo*> &Infos,
-                                         raw_ostream &OS) {
+static void EmitConvertToMCInst(CodeGenTarget &Target,
+                                std::vector<InstructionInfo*> &Infos,
+                                raw_ostream &OS) {
   // Write the convert function to a separate stream, so we can drop it after
   // the enum.
   std::string ConvertFnBody;
@@ -902,6 +966,10 @@ void AsmMatcherEmitter::run(raw_ostream &OS) {
   AsmMatcherInfo Info;
   Info.BuildInfo(Target);
 
+  // Sort the instruction table using the partial order on classes.
+  std::sort(Info.Instructions.begin(), Info.Instructions.end(),
+            less_ptr<InstructionInfo>());
+  
   DEBUG_WITH_TYPE("instruction_info", {
       for (std::vector<InstructionInfo*>::iterator 
              it = Info.Instructions.begin(), ie = Info.Instructions.end(); 
@@ -909,11 +977,35 @@ void AsmMatcherEmitter::run(raw_ostream &OS) {
         (*it)->dump();
     });
 
-  // FIXME: At this point we should be able to totally order Infos, if not then
-  // we have an ambiguity which the .td file should be forced to resolve.
+  // Check for ambiguous instructions.
+  unsigned NumAmbiguous = 0;
+  for (std::vector<InstructionInfo*>::const_iterator it =
+         Info.Instructions.begin(), ie = Info.Instructions.end() - 1;
+       it != ie;) {
+    InstructionInfo &II = **it;
+    ++it;
 
-  // Generate the terminal actions to convert operands into an MCInst.
-  ConstructConversionFunctions(Target, Info.Instructions, OS);
+    InstructionInfo &Next = **it;
+    
+    if (!(II < Next)){
+      DEBUG_WITH_TYPE("ambiguous_instrs", {
+          errs() << "warning: ambiguous instruction match:\n";
+          II.dump();
+          errs() << "\nis incomparable with:\n";
+          Next.dump();
+          errs() << "\n\n";
+        });
+      ++NumAmbiguous;
+    }
+  }
+  if (NumAmbiguous)
+    DEBUG_WITH_TYPE("ambiguous_instrs", {
+        errs() << "warning: " << NumAmbiguous 
+               << " ambiguous instructions!\n";
+      });
+
+  // Generate the unified function to convert operands into an MCInst.
+  EmitConvertToMCInst(Target, Info.Instructions, OS);
 
   // Emit the enumeration for classes which participate in matching.
   EmitMatchClassEnumeration(Target, Info.Classes, OS);
