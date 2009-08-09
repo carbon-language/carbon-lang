@@ -117,7 +117,7 @@ namespace {
       uint64_t complow = 1 << (63 - at);
       uint64_t comphigh = 1 << (64 - at);
       //cerr << x << ":" << complow << ":" << comphigh << "\n";
-      if (abs(complow - x) <= abs(comphigh - x))
+      if (abs64(complow - x) <= abs64(comphigh - x))
         return complow;
       else
         return comphigh;
