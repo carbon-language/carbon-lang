@@ -225,6 +225,12 @@ static bool IsAssemblerInstruction(const StringRef &Name,
   if (Name == "PHI")
     return false;
 
+  // Ignore "Int_*" and "*_Int" instructions, which are internal aliases.
+  //
+  // FIXME: This is a total hack.
+  if (StringRef(Name).startswith("Int_") || StringRef(Name).endswith("_Int"))
+    return false;
+
   // Ignore instructions with no .s string.
   //
   // FIXME: What are these?
@@ -571,6 +577,7 @@ AsmMatcherInfo::getOperandClass(const StringRef &Token,
     Entry = new ClassInfo();
     if (ClassName == "Reg") {
       Entry->Kind = ClassInfo::Register;
+      Entry->SuperClassKind = SuperClass;
     } else {
       Entry->Kind = getUserClassKind(ClassName);
       Entry->SuperClassKind = SuperClass;
@@ -581,6 +588,10 @@ AsmMatcherInfo::getOperandClass(const StringRef &Token,
     Entry->PredicateMethod = "is" + ClassName;
     Entry->RenderMethod = "add" + ClassName + "Operands";
     Classes.push_back(Entry);
+  } else {
+    // Verify the super class matches.
+    assert(SuperClass == Entry->SuperClassKind &&
+           "Cannot redefine super class kind!");
   }
   
   return Entry;
