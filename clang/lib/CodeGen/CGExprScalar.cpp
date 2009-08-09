@@ -391,6 +391,14 @@ Value *ScalarExprEmitter::EmitConversionToBool(Value *Src, QualType SrcType) {
     return Builder.CreateFCmpUNE(Src, Zero, "tobool");
   }
   
+  if (SrcType->isMemberPointerType()) {
+    // FIXME: This is ABI specific.
+    
+    // Compare against -1.
+    llvm::Value *NegativeOne = llvm::Constant::getAllOnesValue(Src->getType());
+    return Builder.CreateICmpNE(Src, NegativeOne, "tobool");
+  }
+  
   assert((SrcType->isIntegerType() || isa<llvm::PointerType>(Src->getType())) &&
          "Unknown scalar type to convert");
   

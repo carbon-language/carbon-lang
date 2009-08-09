@@ -68,9 +68,9 @@ const llvm::Type *CodeGenFunction::ConvertType(QualType T) {
 bool CodeGenFunction::hasAggregateLLVMType(QualType T) {
   // FIXME: Use positive checks instead of negative ones to be more robust in
   // the face of extension.
-  return !T->hasPointerRepresentation() &&!T->isRealType() &&
+  return !T->hasPointerRepresentation() && !T->isRealType() &&
     !T->isVoidType() && !T->isVectorType() && !T->isFunctionType() && 
-    !T->isBlockPointerType();
+    !T->isBlockPointerType() && !T->isMemberPointerType();
 }
 
 void CodeGenFunction::EmitReturnBlock() {

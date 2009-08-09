@@ -773,7 +773,27 @@ llvm::Constant *CodeGenModule::EmitConstantExpr(const Expr *E,
 }
 
 llvm::Constant *CodeGenModule::EmitNullConstant(QualType T) {
-  // Always return an LLVM null constant for now; this will change when we
-  // get support for IRGen of member pointers.
+  if (const ConstantArrayType *CAT = Context.getAsConstantArrayType(T)) {
+    
+    QualType ElementTy = CAT->getElementType();
+
+    // FIXME: Handle arrays of structs that contain member pointers.
+    if (Context.getBaseElementType(ElementTy)->isMemberPointerType()) {
+      llvm::Constant *Element = EmitNullConstant(ElementTy);
+      uint64_t NumElements = CAT->getSize().getZExtValue();
+      std::vector<llvm::Constant *> Array(NumElements);
+      for (uint64_t i = 0; i != NumElements; ++i)
+        Array[i] = Element;
+      
+      const llvm::ArrayType *ATy = 
+        cast<llvm::ArrayType>(getTypes().ConvertTypeForMem(T));
+      return llvm::ConstantArray::get(ATy, Array);
+    }
+  }
+  
+  // FIXME: Handle structs that contain member pointers.
+  if (T->isMemberPointerType()) 
+    return llvm::Constant::getAllOnesValue(getTypes().ConvertTypeForMem(T));
+  
   return llvm::Constant::getNullValue(getTypes().ConvertTypeForMem(T));
 }
