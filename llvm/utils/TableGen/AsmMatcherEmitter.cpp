@@ -396,10 +396,15 @@ struct InstructionInfo {
     if (Operands.size() != RHS.Operands.size())
       return Operands.size() < RHS.Operands.size();
 
-    for (unsigned i = 0, e = Operands.size(); i != e; ++i)
+    // Compare lexicographically by operand. The matcher validates that other
+    // orderings wouldn't be ambiguous using \see CouldMatchAmiguouslyWith().
+    for (unsigned i = 0, e = Operands.size(); i != e; ++i) {
       if (*Operands[i].Class < *RHS.Operands[i].Class)
         return true;
-    
+      if (*RHS.Operands[i].Class < *Operands[i].Class)
+        return false;
+    }
+
     return false;
   }
 
