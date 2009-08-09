@@ -290,6 +290,11 @@ class Operand<ValueType ty> {
   // ParserMatchClass - The "match class" that operands of this type fit
   // in. Match classes are used to define the order in which instructions are
   // match, to ensure that which instructions gets matched is deterministic.
+  //
+  // The target specific parser must be able to classify an parsed operand 
+  // into a unique class, which does not partially overlap with any other 
+  // classes. It can match a subset of some other class, in which case 
+  // ParserMatchSuperClass should be set to the name of that class.
   string ParserMatchClass = "Imm";
 
   // ParserMatchSuperClass - The enclosing super class for this operand (if
