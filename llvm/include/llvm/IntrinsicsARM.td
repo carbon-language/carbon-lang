@@ -76,6 +76,28 @@ let TargetPrefix = "arm" in {  // All intrinsics start with "llvm.arm.".
     : Intrinsic<[llvm_anyfloat_ty], [llvm_anyint_ty, llvm_i32_ty], [IntrNoMem]>;
   class Neon_CvtFPToFx_Intrinsic
     : Intrinsic<[llvm_anyint_ty], [llvm_anyfloat_ty, llvm_i32_ty], [IntrNoMem]>;
+
+  // The table operands for VTBL and VTBX consist of 1 to 4 v8i8 vectors.
+  // Besides the table, VTBL has one other v8i8 argument and VTBX has two.
+  // Overall, the classes range from 2 to 6 v8i8 arguments.
+  class Neon_Tbl2Arg_Intrinsic
+    : Intrinsic<[llvm_v8i8_ty],
+                [llvm_v8i8_ty, llvm_v8i8_ty], [IntrNoMem]>;
+  class Neon_Tbl3Arg_Intrinsic
+    : Intrinsic<[llvm_v8i8_ty],
+                [llvm_v8i8_ty, llvm_v8i8_ty, llvm_v8i8_ty], [IntrNoMem]>;
+  class Neon_Tbl4Arg_Intrinsic
+    : Intrinsic<[llvm_v8i8_ty],
+                [llvm_v8i8_ty, llvm_v8i8_ty, llvm_v8i8_ty, llvm_v8i8_ty],
+                [IntrNoMem]>;
+  class Neon_Tbl5Arg_Intrinsic
+    : Intrinsic<[llvm_v8i8_ty],
+                [llvm_v8i8_ty, llvm_v8i8_ty, llvm_v8i8_ty, llvm_v8i8_ty,
+                 llvm_v8i8_ty], [IntrNoMem]>;
+  class Neon_Tbl6Arg_Intrinsic
+    : Intrinsic<[llvm_v8i8_ty],
+                [llvm_v8i8_ty, llvm_v8i8_ty, llvm_v8i8_ty, llvm_v8i8_ty,
+                 llvm_v8i8_ty, llvm_v8i8_ty], [IntrNoMem]>;
 }
 
 // Arithmetic ops
@@ -294,6 +316,18 @@ def int_arm_neon_vqmovnsu : Neon_1Arg_Narrow_Intrinsic;
 def int_arm_neon_vmovls : Neon_1Arg_Long_Intrinsic;
 def int_arm_neon_vmovlu : Neon_1Arg_Long_Intrinsic;
 
+// Vector Table Lookup.
+def int_arm_neon_vtbl1 : Neon_Tbl2Arg_Intrinsic;
+def int_arm_neon_vtbl2 : Neon_Tbl3Arg_Intrinsic;
+def int_arm_neon_vtbl3 : Neon_Tbl4Arg_Intrinsic;
+def int_arm_neon_vtbl4 : Neon_Tbl5Arg_Intrinsic;
+
+// Vector Table Extension.
+def int_arm_neon_vtbx1 : Neon_Tbl3Arg_Intrinsic;
+def int_arm_neon_vtbx2 : Neon_Tbl4Arg_Intrinsic;
+def int_arm_neon_vtbx3 : Neon_Tbl5Arg_Intrinsic;
+def int_arm_neon_vtbx4 : Neon_Tbl6Arg_Intrinsic;
+
 // Vector Transpose.
 def int_arm_neon_vtrni : Neon_2Result_Intrinsic;
 def int_arm_neon_vtrnf : Neon_2Result_Float_Intrinsic;
@@ -359,13 +393,4 @@ let TargetPrefix = "arm" in {
                                      [llvm_ptr_ty, llvm_anyfloat_ty,
                                       LLVMMatchType<0>, LLVMMatchType<0>,
                                       LLVMMatchType<0>], [IntrWriteArgMem]>;
-
-  // Vector Table Lookup
-  def int_arm_neon_vtbl : Intrinsic<[llvm_v8i8_ty],
-                                    [llvm_anyint_ty, llvm_v8i8_ty],
-                                    [IntrNoMem]>;
-  // Vector Table Extension
-  def int_arm_neon_vtbx : Intrinsic<[llvm_v8i8_ty],
-                                    [llvm_v8i8_ty, llvm_anyint_ty,
-                                     llvm_v8i8_ty], [IntrNoMem]>;
 }
