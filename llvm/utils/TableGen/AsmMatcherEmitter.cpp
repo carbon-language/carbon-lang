@@ -278,18 +278,22 @@ namespace {
 /// class of operands which can be matched.
 struct ClassInfo {
   enum ClassInfoKind {
-    Token, ///< The class for a particular token.
-    Register, ///< A register class.
-    UserClass0 ///< The (first) user defined class, subsequent user defined
-               /// classes are UserClass0+1, and so on.
+    Invalid = 0, ///< Invalid kind, for use as a sentinel value.
+    Token,       ///< The class for a particular token.
+    Register,    ///< A register class.
+    UserClass0   ///< The (first) user defined class, subsequent user defined
+                 /// classes are UserClass0+1, and so on.
   };
 
   /// Kind - The class kind, which is either a predefined kind, or (UserClass0 +
   /// N) for the Nth user defined class.
   unsigned Kind;
 
-  /// Name - The class name, suitable for use as an enum.
+  /// Name - The full class name, suitable for use in an enum.
   std::string Name;
+
+  /// ClassName - The unadorned generic name for this class (e.g., Token).
+  std::string ClassName;
 
   /// ValueName - The name of the value this class represents; for a token this
   /// is the literal token string, for an operand it is the TableGen class (or
@@ -311,6 +315,8 @@ struct ClassInfo {
       return Kind < RHS.Kind;
 
     switch (Kind) {
+    case Invalid:
+      assert(0 && "Invalid kind!");
     case Token:
       // Tokens are always comparable.
       //
@@ -412,9 +418,16 @@ private:
   /// constructed.
   std::map<std::string, ClassInfo*> OperandClasses;
 
+  /// Map of user class names to kind value.
+  std::map<std::string, unsigned> UserClasses;
+
 private:
   /// getTokenClass - Lookup or create the class for the given token.
   ClassInfo *getTokenClass(const StringRef &Token);
+
+  /// getUserClassKind - Lookup or create the kind value for the given class
+  /// name.
+  unsigned getUserClassKind(const StringRef &Name);
 
   /// getOperandClass - Lookup or create the class for the given operand.
   ClassInfo *getOperandClass(const StringRef &Token,
@@ -439,7 +452,7 @@ void InstructionInfo::dump() {
 
   for (unsigned i = 0, e = Operands.size(); i != e; ++i) {
     Operand &Op = Operands[i];
-    errs() << "  op[" << i << "] = ";
+    errs() << "  op[" << i << "] = " << Op.Class->ClassName << " - ";
     if (Op.Class->Kind == ClassInfo::Token) {
       errs() << '\"' << Tokens[i] << "\"\n";
       continue;
@@ -478,6 +491,7 @@ ClassInfo *AsmMatcherInfo::getTokenClass(const StringRef &Token) {
   if (!Entry) {
     Entry = new ClassInfo();
     Entry->Kind = ClassInfo::Token;
+    Entry->ClassName = "Token";
     Entry->Name = "MCK_" + getEnumNameForToken(Token);
     Entry->ValueName = Token;
     Entry->PredicateMethod = "<invalid>";
@@ -488,28 +502,28 @@ ClassInfo *AsmMatcherInfo::getTokenClass(const StringRef &Token) {
   return Entry;
 }
 
+unsigned AsmMatcherInfo::getUserClassKind(const StringRef &Name) {
+  unsigned &Entry = UserClasses[Name];
+  
+  if (!Entry)
+    Entry = ClassInfo::UserClass0 + UserClasses.size() - 1;
+
+  return Entry;
+}
+
 ClassInfo *
 AsmMatcherInfo::getOperandClass(const StringRef &Token,
                                 const CodeGenInstruction::OperandInfo &OI) {
   std::string ClassName;
   if (OI.Rec->isSubClassOf("RegisterClass")) {
     ClassName = "Reg";
-  } else if (OI.Rec->isSubClassOf("Operand")) {
-    // FIXME: This should not be hard coded.
-    const RecordVal *RV = OI.Rec->getValue("Type");
-    
-    // FIXME: Yet another total hack.
-    if (RV->getValue()->getAsString() == "iPTR" ||
-        OI.Rec->getName() == "i8mem_NOREX" ||
-        OI.Rec->getName() == "lea32mem" ||
-        OI.Rec->getName() == "lea64mem" ||
-        OI.Rec->getName() == "i128mem" ||
-        OI.Rec->getName() == "sdmem" ||
-        OI.Rec->getName() == "ssmem" ||
-        OI.Rec->getName() == "lea64_32mem") {
-      ClassName = "Mem";
-    } else {
-      ClassName = "Imm";
+  } else {
+    try {
+      ClassName = OI.Rec->getValueAsString("ParserMatchClass");
+      assert(ClassName != "Reg" && "'Reg' class name is reserved!");
+    } catch(...) {
+      PrintError(OI.Rec->getLoc(), "operand has no match class!");
+      ClassName = "Invalid";
     }
   }
 
@@ -521,11 +535,9 @@ AsmMatcherInfo::getOperandClass(const StringRef &Token,
     if (ClassName == "Reg") {
       Entry->Kind = ClassInfo::Register;
     } else {
-      if (ClassName == "Mem")
-        Entry->Kind = ClassInfo::UserClass0;
-      else
-        Entry->Kind = ClassInfo::UserClass0 + 1;        
+      Entry->Kind = getUserClassKind(ClassName);
     }
+    Entry->ClassName = ClassName;
     Entry->Name = "MCK_" + ClassName;
     Entry->ValueName = OI.Rec->getName();
     Entry->PredicateMethod = "is" + ClassName;
@@ -665,7 +677,7 @@ static void EmitConvertToMCInst(CodeGenTarget &Target,
       for (; CurIndex != Op.OperandInfo->MIOperandNo; ++CurIndex)
         Signature += "Imp";
 
-      Signature += Op.Class->Name;
+      Signature += Op.Class->ClassName;
       Signature += utostr(Op.OperandInfo->MINumOperands);
       Signature += "_" + utostr(MIOperandList[i].second);
 

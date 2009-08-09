@@ -286,6 +286,17 @@ class Operand<ValueType ty> {
   string PrintMethod = "printOperand";
   string AsmOperandLowerMethod = ?;
   dag MIOperandInfo = (ops);
+
+  // ParserMatchClass - The "match class" that operands of this type fit
+  // in. Match classes are used to define the order in which instructions are
+  // match, to ensure that which instructions gets matched is deterministic.
+  string ParserMatchClass = "Imm";
+
+  // ParserMatchSuperClass - The enclosing super class for this operand (if
+  // any). This operand *must* be a subset of the valid operands for the super
+  // class; i.e., the match predicate for this super class must return true
+  // for all instances of this class.
+  string ParserMatchSuperClass = ?;
 }
 
 def i1imm  : Operand<i1>;

@@ -173,6 +173,7 @@ def ptr_rc_nosp : PointerLikeRegClass<1>;
 class X86MemOperand<string printMethod> : Operand<iPTR> {
   let PrintMethod = printMethod;
   let MIOperandInfo = (ops ptr_rc, i8imm, ptr_rc_nosp, i32imm, i8imm);
+  let ParserMatchClass = "Mem";
 }
 
 def i8mem   : X86MemOperand<"printi8mem">;
@@ -192,11 +193,13 @@ def f256mem : X86MemOperand<"printf256mem">;
 def i8mem_NOREX : Operand<i64> {
   let PrintMethod = "printi8mem";
   let MIOperandInfo = (ops GR64_NOREX, i8imm, GR64_NOREX_NOSP, i32imm, i8imm);
+  let ParserMatchClass = "Mem";
 }
 
 def lea32mem : Operand<i32> {
   let PrintMethod = "printlea32mem";
   let MIOperandInfo = (ops GR32, i8imm, GR32_NOSP, i32imm);
+  let ParserMatchClass = "Mem";
 }
 
 def SSECC : Operand<i8> {
