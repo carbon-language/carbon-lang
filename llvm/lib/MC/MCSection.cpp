@@ -107,6 +107,8 @@ void MCSectionELF::PrintSwitchToSection(const TargetAsmInfo &TAI,
       OS << ",16";
     }
   }
+  
+  OS << '\n';
 }
 
 //===----------------------------------------------------------------------===//
