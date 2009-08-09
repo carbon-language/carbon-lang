@@ -1,5 +1,6 @@
 // RUN: llvm-mc -triple i386-unknown-unknown %s -o -
-
+// XFAIL: *
+        
 	.text
 	.align	4,0x90
 	.globl	_main
