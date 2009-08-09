@@ -212,9 +212,15 @@ def piclabel: Operand<i32> {
 
 // A couple of more descriptive operand definitions.
 // 16-bits but only 8 bits are significant.
-def i16i8imm  : Operand<i16>;
+def i16i8imm  : Operand<i16> {
+  let ParserMatchClass = "ImmSExt8";
+  let ParserMatchSuperClass = "Imm";
+}
 // 32-bits but only 8 bits are significant.
-def i32i8imm  : Operand<i32>;
+def i32i8imm  : Operand<i32> {
+  let ParserMatchClass = "ImmSExt8";
+  let ParserMatchSuperClass = "Imm";
+}
 
 // Branch targets have OtherVT type and print as pc-relative values.
 def brtarget : Operand<OtherVT> {

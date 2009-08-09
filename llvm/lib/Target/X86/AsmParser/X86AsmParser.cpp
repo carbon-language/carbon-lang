@@ -137,6 +137,19 @@ struct X86Operand {
 
   bool isImm() const { return Kind == Immediate; }
   
+  bool isImmSExt8() const { 
+    // Accept immediates which fit in 8 bits when sign extended, and
+    // non-absolute immediates.
+    if (!isImm())
+      return false;
+
+    if (!getImm().isAbsolute())
+      return true;
+
+    int64_t Value = getImm().getConstant();
+    return Value == (int64_t) (int8_t) Value;
+  }
+  
   bool isMem() const { return Kind == Memory; }
 
   bool isReg() const { return Kind == Register; }
@@ -147,6 +160,12 @@ struct X86Operand {
   }
 
   void addImmOperands(MCInst &Inst, unsigned N) {
+    assert(N == 1 && "Invalid number of operands!");
+    Inst.addOperand(MCOperand::CreateMCValue(getImm()));
+  }
+
+  void addImmSExt8Operands(MCInst &Inst, unsigned N) {
+    // FIXME: Support user customization of the render method.
     assert(N == 1 && "Invalid number of operands!");
     Inst.addOperand(MCOperand::CreateMCValue(getImm()));
   }

@@ -289,6 +289,12 @@ struct ClassInfo {
   /// N) for the Nth user defined class.
   unsigned Kind;
 
+  /// SuperClassKind - The super class kind for user classes.
+  unsigned SuperClassKind;
+
+  /// SuperClass - The super class, or 0.
+  ClassInfo *SuperClass;
+
   /// Name - The full class name, suitable for use in an enum.
   std::string Name;
 
@@ -308,27 +314,40 @@ struct ClassInfo {
   /// MCInst; this is not valid for Token kinds.
   std::string RenderMethod;
 
+  /// isUserClass() - Check if this is a user defined class.
+  bool isUserClass() const {
+    return Kind >= UserClass0;
+  }
+
+  /// getRootClass - Return the root class of this one.
+  const ClassInfo *getRootClass() const {
+    const ClassInfo *CI = this;
+    while (CI->SuperClass)
+      CI = CI->SuperClass;
+    return CI;
+  }
+
   /// operator< - Compare two classes.
   bool operator<(const ClassInfo &RHS) const {
-    // Incompatible kinds are comparable.
-    if (Kind != RHS.Kind)
+    // Incompatible kinds are comparable for classes in disjoint hierarchies.
+    if (Kind != RHS.Kind && getRootClass() != RHS.getRootClass())
       return Kind < RHS.Kind;
 
     switch (Kind) {
     case Invalid:
       assert(0 && "Invalid kind!");
     case Token:
-      // Tokens are always comparable.
+      // Tokens are comparable by value.
       //
       // FIXME: Compare by enum value.
       return ValueName < RHS.ValueName;
 
-    case Register:
-      // FIXME: Compare by subset relation.
-      return false;
-
     default:
-      // FIXME: Allow user defined relation.
+      // This class preceeds the RHS if the RHS is a super class.
+      for (ClassInfo *Parent = SuperClass; Parent; Parent = Parent->SuperClass)
+        if (Parent == &RHS)
+          return true;
+
       return false;
     }
   }
@@ -525,6 +544,7 @@ unsigned AsmMatcherInfo::getUserClassKind(const StringRef &Name) {
 ClassInfo *
 AsmMatcherInfo::getOperandClass(const StringRef &Token,
                                 const CodeGenInstruction::OperandInfo &OI) {
+  unsigned SuperClass = ClassInfo::Invalid;
   std::string ClassName;
   if (OI.Rec->isSubClassOf("RegisterClass")) {
     ClassName = "Reg";
@@ -536,17 +556,24 @@ AsmMatcherInfo::getOperandClass(const StringRef &Token,
       PrintError(OI.Rec->getLoc(), "operand has no match class!");
       ClassName = "Invalid";
     }
+
+    // Determine the super class.
+    try {
+      std::string SuperClassName =
+        OI.Rec->getValueAsString("ParserMatchSuperClass");
+      SuperClass = getUserClassKind(SuperClassName);
+    } catch(...) { }
   }
 
   ClassInfo *&Entry = OperandClasses[ClassName];
   
   if (!Entry) {
     Entry = new ClassInfo();
-    // FIXME: Hack.
     if (ClassName == "Reg") {
       Entry->Kind = ClassInfo::Register;
     } else {
       Entry->Kind = getUserClassKind(ClassName);
+      Entry->SuperClassKind = SuperClass;
     }
     Entry->ClassName = ClassName;
     Entry->Name = "MCK_" + ClassName;
@@ -622,6 +649,27 @@ void AsmMatcherInfo::BuildInfo(CodeGenTarget &Target) {
 
     Instructions.push_back(II.take());
   }
+
+  // Bind user super classes.
+  std::map<unsigned, ClassInfo*> UserClasses;
+  for (unsigned i = 0, e = Classes.size(); i != e; ++i) {
+    ClassInfo &CI = *Classes[i];
+    if (CI.isUserClass())
+      UserClasses[CI.Kind] = &CI;
+  }
+
+  for (unsigned i = 0, e = Classes.size(); i != e; ++i) {
+    ClassInfo &CI = *Classes[i];
+    if (CI.isUserClass() && CI.SuperClassKind != ClassInfo::Invalid) {
+      CI.SuperClass = UserClasses[CI.SuperClassKind];
+      assert(CI.SuperClass && "Missing super class definition!");
+    } else {
+      CI.SuperClass = 0;
+    }
+  }
+
+  // Reorder classes so that classes preceed super classes.
+  std::sort(Classes.begin(), Classes.end(), less_ptr<ClassInfo>());
 }
 
 static void EmitConvertToMCInst(CodeGenTarget &Target,
@@ -790,8 +838,22 @@ static void EmitClassifyOperand(CodeGenTarget &Target,
     ClassInfo &CI = **it;
 
     if (CI.Kind != ClassInfo::Token) {
-      OS << "  if (Operand." << CI.PredicateMethod << "())\n";
+      OS << "  // '" << CI.ClassName << "' class";
+      if (CI.SuperClass) {
+        OS << ", subclass of '" << CI.SuperClass->ClassName << "'";
+        assert(CI < *CI.SuperClass && "Invalid class relation!");
+      }
+      OS << "\n";
+
+      OS << "  if (Operand." << CI.PredicateMethod << "()) {\n";
+      
+      // Validate subclass relationships.
+      if (CI.SuperClass)
+        OS << "    assert(Operand." << CI.SuperClass->PredicateMethod
+           << "() && \"Invalid class relationship!\");\n";
+
       OS << "    return " << CI.Name << ";\n\n";
+      OS << "  }";
     }
   }
   OS << "  return InvalidMatchClass;\n";
