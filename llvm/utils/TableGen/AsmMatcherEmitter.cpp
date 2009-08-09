@@ -263,7 +263,7 @@ static bool IsAssemblerInstruction(const StringRef &Name,
       DEBUG({
           errs() << "warning: '" << Name << "': "
                  << "ignoring instruction; tied operand '" 
-                 << Tokens[i] << "', \n";
+                 << Tokens[i] << "'\n";
         });
       return false;
     }
@@ -368,34 +368,45 @@ struct InstructionInfo {
 
   /// operator< - Compare two instructions.
   bool operator<(const InstructionInfo &RHS) const {
-    // Order first by the number of operands (which is unambiguous).
     if (Operands.size() != RHS.Operands.size())
       return Operands.size() < RHS.Operands.size();
-    
-    // Otherwise, order by lexicographic comparison of tokens and operand kinds
-    // (these can never be ambiguous).
-    for (unsigned i = 0, e = Operands.size(); i != e; ++i)
-      if (Operands[i].Class->Kind != RHS.Operands[i].Class->Kind ||
-          Operands[i].Class->Kind == ClassInfo::Token)
-        if (*Operands[i].Class < *RHS.Operands[i].Class)
-          return true;
-    
-    // Finally, order by the component wise comparison of operand classes. We
-    // don't want to rely on the lexigraphic ordering of elements, so we define
-    // only define the ordering when it is unambiguous. That is, when some pair
-    // compares less than and no pair compares greater than.
 
-    // Check that no pair compares greater than.
-    for (unsigned i = 0, e = Operands.size(); i != e; ++i)
-      if (*RHS.Operands[i].Class < *Operands[i].Class)
-        return false;
-
-    // Otherwise, return true if some pair compares less than.
     for (unsigned i = 0, e = Operands.size(); i != e; ++i)
       if (*Operands[i].Class < *RHS.Operands[i].Class)
         return true;
-
+    
     return false;
+  }
+
+  /// CouldMatchAmiguouslyWith - Check whether this instruction could
+  /// ambiguously match the same set of operands as \arg RHS (without being a
+  /// strictly superior match).
+  bool CouldMatchAmiguouslyWith(const InstructionInfo &RHS) {
+    // The number of operands is unambiguous.
+    if (Operands.size() != RHS.Operands.size())
+      return false;
+
+    // Tokens and operand kinds are unambiguous (assuming a correct target
+    // specific parser).
+    for (unsigned i = 0, e = Operands.size(); i != e; ++i)
+      if (Operands[i].Class->Kind != RHS.Operands[i].Class->Kind ||
+          Operands[i].Class->Kind == ClassInfo::Token)
+        if (*Operands[i].Class < *RHS.Operands[i].Class ||
+            *RHS.Operands[i].Class < *Operands[i].Class)
+          return false;
+    
+    // Otherwise, this operand could commute if all operands are equivalent, or
+    // there is a pair of operands that compare less than and a pair that
+    // compare greater than.
+    bool HasLT = false, HasGT = false;
+    for (unsigned i = 0, e = Operands.size(); i != e; ++i) {
+      if (*Operands[i].Class < *RHS.Operands[i].Class)
+        HasLT = true;
+      if (*RHS.Operands[i].Class < *Operands[i].Class)
+        HasGT = true;
+    }
+
+    return !(HasLT ^ HasGT);
   }
 
 public:
@@ -991,23 +1002,21 @@ void AsmMatcherEmitter::run(raw_ostream &OS) {
 
   // Check for ambiguous instructions.
   unsigned NumAmbiguous = 0;
-  for (std::vector<InstructionInfo*>::const_iterator it =
-         Info.Instructions.begin(), ie = Info.Instructions.end() - 1;
-       it != ie;) {
-    InstructionInfo &II = **it;
-    ++it;
-
-    InstructionInfo &Next = **it;
+  for (unsigned i = 0, e = Info.Instructions.size(); i != e; ++i) {
+    for (unsigned j = i + 1; j != e; ++j) {
+      InstructionInfo &A = *Info.Instructions[i];
+      InstructionInfo &B = *Info.Instructions[j];
     
-    if (!(II < Next)){
-      DEBUG_WITH_TYPE("ambiguous_instrs", {
-          errs() << "warning: ambiguous instruction match:\n";
-          II.dump();
-          errs() << "\nis incomparable with:\n";
-          Next.dump();
-          errs() << "\n\n";
-        });
-      ++NumAmbiguous;
+      if (A.CouldMatchAmiguouslyWith(B)) {
+        DEBUG_WITH_TYPE("ambiguous_instrs", {
+            errs() << "warning: ambiguous instruction match:\n";
+            A.dump();
+            errs() << "\nis incomparable with:\n";
+            B.dump();
+            errs() << "\n\n";
+          });
+        ++NumAmbiguous;
+      }
     }
   }
   if (NumAmbiguous)
