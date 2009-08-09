@@ -385,6 +385,8 @@ void CodeGenModule::ConstructAttributeList(const CGFunctionInfo &FI,
       FuncAttrs |= llvm::Attribute::ReadNone;
     else if (TargetDecl->hasAttr<PureAttr>())
       FuncAttrs |= llvm::Attribute::ReadOnly;
+    if (TargetDecl->hasAttr<MallocAttr>())
+      RetAttrs |= llvm::Attribute::NoAlias;
   }
 
   if (CompileOpts.DisableRedZone)

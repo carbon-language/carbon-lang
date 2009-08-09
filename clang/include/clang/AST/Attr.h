@@ -59,6 +59,7 @@ public:
     FormatArg,
     GNUInline,
     IBOutletKind, // Clang-specific.  Use "Kind" suffix to not conflict with
+    Malloc,
     NoReturn,
     NoThrow,
     Nodebug,
@@ -288,6 +289,7 @@ public:
   static bool classof(const IBOutletAttr *A) { return true; }
 };
 
+DEF_SIMPLE_ATTR(Malloc);
 DEF_SIMPLE_ATTR(NoReturn);
 DEF_SIMPLE_ATTR(AnalyzerNoReturn);  
 DEF_SIMPLE_ATTR(Deprecated);

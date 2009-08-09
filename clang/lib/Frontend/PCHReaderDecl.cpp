@@ -480,6 +480,7 @@ Attr *PCHReader::ReadAttributes() {
       New = ::new (*Context) IBOutletAttr();
       break;
 
+    SIMPLE_ATTR(Malloc);
     SIMPLE_ATTR(NoReturn);
     SIMPLE_ATTR(NoThrow);
     SIMPLE_ATTR(Nodebug);

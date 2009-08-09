@@ -69,7 +69,7 @@ AttributeList::Kind AttributeList::getKind(const IdentifierInfo *Name) {
     break;
   case 6:
     if (!memcmp(Str, "packed", 6)) return AT_packed;
-    if (!memcmp(Str, "malloc", 6)) return IgnoredAttribute; // FIXME: noalias.
+    if (!memcmp(Str, "malloc", 6)) return AT_malloc;
     if (!memcmp(Str, "format", 6)) return AT_format;
     if (!memcmp(Str, "unused", 6)) return AT_unused;
     if (!memcmp(Str, "blocks", 6)) return AT_blocks;

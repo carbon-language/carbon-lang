@@ -424,6 +424,22 @@ static void HandleAlwaysInlineAttr(Decl *d, const AttributeList &Attr,
   d->addAttr(::new (S.Context) AlwaysInlineAttr());
 }
 
+static void HandleMallocAttr(Decl *d, const AttributeList &Attr, Sema &S) {
+  // check the attribute arguments.
+  if (Attr.getNumArgs() != 0) {
+    S.Diag(Attr.getLoc(), diag::err_attribute_wrong_number_arguments) << 0;
+    return;
+  }
+
+  if (!isFunctionOrMethod(d)) {
+    S.Diag(Attr.getLoc(), diag::warn_attribute_wrong_decl_type)
+      << Attr.getName() << 0 /*function*/;
+    return;
+  }
+
+  d->addAttr(::new (S.Context) MallocAttr());
+}
+
 static bool HandleCommonNoReturnAttr(Decl *d, const AttributeList &Attr,
                                      Sema &S) {
   // check the attribute arguments.
@@ -1759,6 +1775,7 @@ static void ProcessDeclAttribute(Scope *scope, Decl *D,
   case AttributeList::AT_format_arg:  HandleFormatArgAttr (D, Attr, S); break;
   case AttributeList::AT_gnu_inline:  HandleGNUInlineAttr(D, Attr, S); break;
   case AttributeList::AT_mode:        HandleModeAttr      (D, Attr, S); break;
+  case AttributeList::AT_malloc:      HandleMallocAttr    (D, Attr, S); break;
   case AttributeList::AT_nonnull:     HandleNonNullAttr   (D, Attr, S); break;
   case AttributeList::AT_noreturn:    HandleNoReturnAttr  (D, Attr, S); break;
   case AttributeList::AT_nothrow:     HandleNothrowAttr   (D, Attr, S); break;
