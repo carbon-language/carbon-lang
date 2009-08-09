@@ -35,21 +35,22 @@ namespace {
     uint8_t  Imm2Limit;    // Limit of immediate field when it's two-address
     unsigned LowRegs1 : 1; // Only possible if low-registers are used
     unsigned LowRegs2 : 1; // Only possible if low-registers are used (2addr)
-    unsigned PredCC   : 1; // 0 - If predicated, cc is on and vice versa.
+    unsigned PredCC1  : 1; // 0 - If predicated, cc is on and vice versa.
                            // 1 - No cc field.
+    unsigned PredCC2  : 1;
     unsigned Special  : 1; // Needs to be dealt with specially
   };
 
   static const ReduceEntry ReduceTable[] = {
     // Wide,        Narrow1,      Narrow2,      mm1, imm2, lo1, lo2, P/C, S
-    { ARM::t2ADCrr, ARM::tADC,    0,             0,   0,    1,   0,   0,   0 },
-    { ARM::t2ADDri, ARM::tADDi3,  ARM::tADDi8,   3,   8,    1,   1,   0,   0 },
-    { ARM::t2ADDrr, ARM::tADDrr,  ARM::tADDhirr, 0,   0,    1,   0,   1,   0 },
-    { ARM::t2ANDrr, ARM::tAND,    0,             0,   0,    1,   0,   0,   0 },
-    { ARM::t2ASRri, ARM::tASRri,  0,             5,   0,    1,   1,   0,   0 },
-    { ARM::t2ASRrr, ARM::tASRrr,  0,             0,   0,    1,   0,   0,   0 },
-    { ARM::t2BICrr, ARM::tBIC,    0,             0,   0,    1,   0,   0,   0 },
-    { ARM::t2CMNrr, ARM::tCMN,    0,             0,   0,    1,   0,   1,   0 }
+    { ARM::t2ADCrr, ARM::tADC,    0,             0,   0,    1,   0,  0,0, 0 },
+    { ARM::t2ADDri, ARM::tADDi3,  ARM::tADDi8,   3,   8,    1,   1,  0,0, 0 },
+    { ARM::t2ADDrr, ARM::tADDrr,  ARM::tADDhirr, 0,   0,    1,   0,  0,1, 0 },
+    { ARM::t2ANDrr, ARM::tAND,    0,             0,   0,    1,   0,  0,0, 0 },
+    { ARM::t2ASRri, ARM::tASRri,  0,             5,   0,    1,   1,  0,0, 0 },
+    { ARM::t2ASRrr, ARM::tASRrr,  0,             0,   0,    1,   0,  0,0, 0 },
+    { ARM::t2BICrr, ARM::tBIC,    0,             0,   0,    1,   0,  0,0, 0 },
+    { ARM::t2CMNrr, ARM::tCMN,    0,             0,   0,    1,   0,  1,0, 0 }
   };
 
   class VISIBILITY_HIDDEN Thumb2SizeReduce : public MachineFunctionPass {
@@ -94,6 +95,35 @@ Thumb2SizeReduce::Thumb2SizeReduce() : MachineFunctionPass(&ID) {
   }
 }
 
+static bool VerifyPredAndCC(MachineInstr &MI, const ReduceEntry &Entry,
+                            bool is2Addr, bool &HasCC) {
+  const TargetInstrDesc &TID = MI.getDesc();
+
+  // Most thumb1 instructions either can be predicated or set CPSR.
+  HasCC = false;
+  if (TID.hasOptionalDef()) {
+    unsigned NumOps = TID.getNumOperands();
+    HasCC = (MI.getOperand(NumOps-1).getReg() == ARM::CPSR);
+  }
+
+  unsigned PredReg = 0;
+  ARMCC::CondCodes Pred = getInstrPredicate(&MI, PredReg);
+  if ((is2Addr  && Entry.PredCC2 == 0) ||
+      (!is2Addr && Entry.PredCC1 == 0)) {
+    if (Pred == ARMCC::AL) {
+      // Not predicated, must set CPSR.
+      if (!HasCC) return false;
+    } else {
+      // Predicated, must not set CPSR.
+      if (HasCC) return false;
+    }
+  } else {
+    if (HasCC) return false;
+  }
+
+  return true;
+}
+
 bool
 Thumb2SizeReduce::ReduceTo2Addr(MachineBasicBlock &MBB, MachineInstr &MI,
                                 const ReduceEntry &Entry) {
@@ -115,37 +145,22 @@ Thumb2SizeReduce::ReduceTo2Addr(MachineBasicBlock &MBB, MachineInstr &MI,
       return false;
   }
 
-  // Most thumb1 instructions either can be predicated or set CPSR.
   bool HasCC = false;
-  if (TID.hasOptionalDef()) {
-    unsigned NumOps = TID.getNumOperands();
-    HasCC = (MI.getOperand(NumOps-1).getReg() == ARM::CPSR);
-  }
-
-  unsigned PredReg = 0;
-  ARMCC::CondCodes Pred = getInstrPredicate(&MI, PredReg);
-  if (Entry.PredCC == 0) {
-    if (Pred == ARMCC::AL) {
-      // Not predicated, must set CPSR.
-      if (!HasCC) return false;
-    } else {
-      // Predicated, must not set CPSR.
-      if (HasCC) return false;
-    }
-  } else {
-    if (HasCC) return false;
-  }
+  if (!VerifyPredAndCC(MI, Entry, true, HasCC))
+    return false;
 
   // Add the 16-bit instruction.
   DebugLoc dl = MI.getDebugLoc();
-  MachineInstrBuilder MIB =
-    BuildMI(MBB, MI, dl, TII->get(Entry.NarrowOpc2), Reg0).addReg(Reg0);
+  MachineInstrBuilder MIB = BuildMI(MBB, MI, dl, TII->get(Entry.NarrowOpc2));
+  MIB.addOperand(MI.getOperand(0));
   if (HasCC)
     AddDefaultT1CC(MIB);
-  MIB.addOperand(MI.getOperand(2)).addImm(Pred).addReg(PredReg);
-  // Transfer implicit operands.
-  for (unsigned i = TID.getNumOperands(), e = MI.getNumOperands(); i != e; ++i)
-    MIB.addOperand(MI.getOperand(i));
+
+  // Transfer the rest of operands.
+  unsigned NumOps = TID.getNumOperands();
+  for (unsigned i = 1, e = MI.getNumOperands(); i != e; ++i)
+    if (!(i < NumOps && TID.OpInfo[i].isOptionalDef()))
+      MIB.addOperand(MI.getOperand(i));
 
   DOUT << "Converted 32-bit: " << MI << "       to 16-bit: " << *MIB;
 
@@ -158,12 +173,58 @@ Thumb2SizeReduce::ReduceTo2Addr(MachineBasicBlock &MBB, MachineInstr &MI,
 bool
 Thumb2SizeReduce::ReduceToNarrow(MachineBasicBlock &MBB, MachineInstr &MI,
                                  const ReduceEntry &Entry) {
-  return false;
+  unsigned Limit = ~0U;
+  if (Entry.Imm1Limit)
+    Limit = (1 << Entry.Imm1Limit) - 1;
+
+  const TargetInstrDesc &TID = MI.getDesc();
+  for (unsigned i = 0, e = TID.getNumOperands(); i != e; ++i) {
+    if (TID.OpInfo[i].isPredicate())
+      continue;
+    const MachineOperand &MO = MI.getOperand(i);
+    if (MO.isReg()) {
+      unsigned Reg = MO.getReg();
+      if (!Reg || Reg == ARM::CPSR)
+        continue;
+      if (Entry.LowRegs1 && !isARMLowRegister(Reg))
+        return false;
+    } else if (MO.isImm()) {
+      if (MO.getImm() > Limit)
+        return false;
+    }
+  }
+
+  bool HasCC = false;
+  if (!VerifyPredAndCC(MI, Entry, false, HasCC))
+    return false;
+
+  // Add the 16-bit instruction.
+  DebugLoc dl = MI.getDebugLoc();
+  MachineInstrBuilder MIB = BuildMI(MBB, MI, dl, TII->get(Entry.NarrowOpc1));
+  MIB.addOperand(MI.getOperand(0));
+  if (HasCC)
+    AddDefaultT1CC(MIB);
+
+  // Transfer the rest of operands.
+  unsigned NumOps = TID.getNumOperands();
+  for (unsigned i = 1, e = MI.getNumOperands(); i != e; ++i)
+    if (!(i < NumOps && TID.OpInfo[i].isOptionalDef()))
+      MIB.addOperand(MI.getOperand(i));
+
+
+  DOUT << "Converted 32-bit: " << MI << "       to 16-bit: " << *MIB;
+
+  MBB.erase(MI);
+  ++Num2Addrs;
+  ++NumNarrows;
+  return true;
 }
 
 bool Thumb2SizeReduce::ReduceMBB(MachineBasicBlock &MBB) {
   bool Modified = false;
 
+  // FIXME: Track whether CPSR is live. If not, then it's possible to convert
+  // one that doesn't set CPSR to one that does.
   MachineBasicBlock::iterator MII = MBB.begin(), E = MBB.end();
   MachineBasicBlock::iterator NextMII = next(MII);
   for (; MII != E; MII = NextMII) {
