@@ -29,6 +29,13 @@ namespace llvm {
 //===----------------------------------------------------------------------===//
 
 template<class Ty>
+struct less_ptr : public std::binary_function<Ty, Ty, bool> {
+  bool operator()(const Ty* left, const Ty* right) const {
+    return *left < *right;
+  }
+};
+
+template<class Ty>
 struct greater_ptr : public std::binary_function<Ty, Ty, bool> {
   bool operator()(const Ty* left, const Ty* right) const {
     return *right < *left;
