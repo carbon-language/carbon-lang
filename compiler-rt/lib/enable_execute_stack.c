@@ -30,7 +30,7 @@ void __enable_execute_stack(void* addr)
 	const uintptr_t pageSize = 4096;
 #else
         /* FIXME: We should have a configure check for this. */
-        const uintptr_t pageSize = getpagesize();
+        const uintptr_t pageSize = sysconf(_SC_PAGESIZE);
 #endif
 	const uintptr_t pageAlignMask = ~(pageSize-1);
 	uintptr_t p = (uintptr_t)addr;
