@@ -5,6 +5,12 @@
 
 int no_vars __attribute((malloc)); // expected-warning {{only applies to function types}}
 
+void  returns_void  (void) __attribute((malloc)); // expected-warning {{functions returning pointer type}}
+int   returns_int   (void) __attribute((malloc)); // expected-warning {{functions returning pointer type}}
+int * returns_intptr(void) __attribute((malloc));
+typedef int * iptr;
+iptr  returns_iptr  (void) __attribute((malloc));
+
 __attribute((malloc))
 void * xalloc(unsigned n) { return malloc(n); }
 // RUN: grep 'define noalias .* @xalloc(' %t &&

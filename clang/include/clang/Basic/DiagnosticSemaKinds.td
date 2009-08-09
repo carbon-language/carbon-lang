@@ -605,6 +605,8 @@ def err_attr_wrong_decl : Error<
   "'%0' attribute invalid on this declaration, requires typedef or value">;
 def warn_attribute_nonnull_no_pointers : Warning<
   "'nonnull' attribute applied to function with no pointer arguments">;
+def warn_attribute_malloc_pointer_only : Warning<
+  "'malloc' attribute only applies to functions returning pointer type">;
 def warn_transparent_union_nonpointer : Warning<
   "'transparent_union' attribute support incomplete; only supported for "
   "pointer unions">;
