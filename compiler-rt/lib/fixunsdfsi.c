@@ -31,12 +31,12 @@ __fixunsdfsi(double a)
 {
     double_bits fb;
     fb.f = a;
-    int e = ((fb.u.high & 0x7FF00000) >> 20) - 1023;
-    if (e < 0 || (fb.u.high & 0x80000000))
+    int e = ((fb.u.s.high & 0x7FF00000) >> 20) - 1023;
+    if (e < 0 || (fb.u.s.high & 0x80000000))
         return 0;
     return (
                 0x80000000u                      |
-                ((fb.u.high & 0x000FFFFF) << 11) |
-                (fb.u.low >> 21)
+                ((fb.u.s.high & 0x000FFFFF) << 11) |
+                (fb.u.s.low >> 21)
            ) >> (31 - e);
 }

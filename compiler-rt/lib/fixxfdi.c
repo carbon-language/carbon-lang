@@ -32,13 +32,13 @@ __fixxfdi(long double a)
 {
     long_double_bits fb;
     fb.f = a;
-    int e = (fb.u.high.low & 0x00007FFF) - 16383;
+    int e = (fb.u.high.s.low & 0x00007FFF) - 16383;
     if (e < 0)
         return 0;
-    di_int s = -(si_int)((fb.u.high.low & 0x00008000) >> 15);
+    di_int s = -(si_int)((fb.u.high.s.low & 0x00008000) >> 15);
     di_int r = fb.u.low.all;
     r = (du_int)r >> (63 - e);
     return (r ^ s) - s;
 }
 
-#endif
+#endif /* !_ARCH_PPC */

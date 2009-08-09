@@ -25,12 +25,13 @@
             __attribute__((visibility("default"))) const char sym##_tmp4 = 0; \
         extern const char sym##_tmp5 __asm("$ld$hide$os10.5$_" #sym ); \
             __attribute__((visibility("default"))) const char sym##_tmp5 = 0; 
-  #endif
+  #endif /* __ppc__ */
 
 
 /* Symbols in libSystem.dylib in 10.6 and later, 
  *  but are in libgcc_s.dylib in earlier versions
  */
+
 NOT_HERE_BEFORE_10_6(__absvdi2)
 NOT_HERE_BEFORE_10_6(__absvsi2)
 NOT_HERE_BEFORE_10_6(__absvti2)
@@ -138,8 +139,7 @@ NOT_HERE_BEFORE_10_6(__gcc_qdiv)
 NOT_HERE_BEFORE_10_6(__gcc_qmul)
 NOT_HERE_BEFORE_10_6(__gcc_qsub)
 NOT_HERE_BEFORE_10_6(__trampoline_setup)
-#endif
+#endif /* __ppc__ */
 
 
 #endif /* __APPLE__*/
-

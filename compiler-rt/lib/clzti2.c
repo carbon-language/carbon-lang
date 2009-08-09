@@ -30,4 +30,4 @@ __clzti2(ti_int a)
            ((si_int)f & ((si_int)(sizeof(di_int) * CHAR_BIT)));
 }
 
-#endif
+#endif /* __x86_64 */

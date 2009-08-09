@@ -38,4 +38,4 @@ __subvti3(ti_int a, ti_int b)
     return s;
 }
 
-#endif
+#endif /* __x86_64 */

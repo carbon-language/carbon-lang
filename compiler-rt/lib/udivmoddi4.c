@@ -33,41 +33,41 @@ __udivmoddi4(du_int a, du_int b, du_int* rem)
     udwords r;
     unsigned sr;
     /* special cases, X is unknown, K != 0 */
-    if (n.high == 0)
+    if (n.s.high == 0)
     {
-        if (d.high == 0)
+        if (d.s.high == 0)
         {
             /* 0 X
              * ---
              * 0 X
              */
             if (rem)
-                *rem = n.low % d.low;
-            return n.low / d.low;
+                *rem = n.s.low % d.s.low;
+            return n.s.low / d.s.low;
         }
         /* 0 X
          * ---
          * K X
          */
         if (rem)
-            *rem = n.low;
+            *rem = n.s.low;
         return 0;
     }
-    /* n.high != 0 */
-    if (d.low == 0)
+    /* n.s.high != 0 */
+    if (d.s.low == 0)
     {
-        if (d.high == 0)
+        if (d.s.high == 0)
         {
             /* K X
              * ---
              * 0 0
              */ 
             if (rem)
-                *rem = n.high % d.low;
-            return n.high / d.low;
+                *rem = n.s.high % d.s.low;
+            return n.s.high / d.s.low;
         }
-        /* d.high != 0 */
-        if (n.low == 0)
+        /* d.s.high != 0 */
+        if (n.s.low == 0)
         {
             /* K 0
              * ---
@@ -75,31 +75,31 @@ __udivmoddi4(du_int a, du_int b, du_int* rem)
              */
             if (rem)
             {
-                r.high = n.high % d.high;
-                r.low = 0;
+                r.s.high = n.s.high % d.s.high;
+                r.s.low = 0;
                 *rem = r.all;
             }
-            return n.high / d.high;
+            return n.s.high / d.s.high;
         }
         /* K K
          * ---
          * K 0
          */
-        if ((d.high & (d.high - 1)) == 0)     /* if d is a power of 2 */
+        if ((d.s.high & (d.s.high - 1)) == 0)     /* if d is a power of 2 */
         {
             if (rem)
             {
-                r.low = n.low;
-                r.high = n.high & (d.high - 1);
+                r.s.low = n.s.low;
+                r.s.high = n.s.high & (d.s.high - 1);
                 *rem = r.all;
             }
-            return n.high >> __builtin_ctz(d.high);
+            return n.s.high >> __builtin_ctz(d.s.high);
         }
         /* K K
          * ---
          * K 0
          */
-        sr = __builtin_clz(d.high) - __builtin_clz(n.high);
+        sr = __builtin_clz(d.s.high) - __builtin_clz(n.s.high);
         /* 0 <= sr <= n_uword_bits - 2 or sr large */
         if (sr > n_uword_bits - 2)
         {
@@ -110,75 +110,75 @@ __udivmoddi4(du_int a, du_int b, du_int* rem)
         ++sr;
         /* 1 <= sr <= n_uword_bits - 1 */
         /* q.all = n.all << (n_udword_bits - sr); */
-        q.low = 0;
-        q.high = n.low << (n_uword_bits - sr);
+        q.s.low = 0;
+        q.s.high = n.s.low << (n_uword_bits - sr);
         /* r.all = n.all >> sr; */
-        r.high = n.high >> sr;
-        r.low = (n.high << (n_uword_bits - sr)) | (n.low >> sr);
+        r.s.high = n.s.high >> sr;
+        r.s.low = (n.s.high << (n_uword_bits - sr)) | (n.s.low >> sr);
     }
-    else  /* d.low != 0 */
+    else  /* d.s.low != 0 */
     {
-        if (d.high == 0)
+        if (d.s.high == 0)
         {
             /* K X
              * ---
              * 0 K
              */
-            if ((d.low & (d.low - 1)) == 0)     /* if d is a power of 2 */
+            if ((d.s.low & (d.s.low - 1)) == 0)     /* if d is a power of 2 */
             {
                 if (rem)
-                    *rem = n.low & (d.low - 1);
-                if (d.low == 1)
+                    *rem = n.s.low & (d.s.low - 1);
+                if (d.s.low == 1)
                     return n.all;
-                unsigned sr = __builtin_ctz(d.low);
-                q.high = n.high >> sr;
-                q.low = (n.high << (n_uword_bits - sr)) | (n.low >> sr);
+                unsigned sr = __builtin_ctz(d.s.low);
+                q.s.high = n.s.high >> sr;
+                q.s.low = (n.s.high << (n_uword_bits - sr)) | (n.s.low >> sr);
                 return q.all;
             }
             /* K X
              * ---
              *0 K
              */
-            sr = 1 + n_uword_bits + __builtin_clz(d.low) - __builtin_clz(n.high);
+            sr = 1 + n_uword_bits + __builtin_clz(d.s.low) - __builtin_clz(n.s.high);
             /* 2 <= sr <= n_udword_bits - 1
              * q.all = n.all << (n_udword_bits - sr);
              * r.all = n.all >> sr;
              * if (sr == n_uword_bits)
              * {
-             *     q.low = 0;
-             *     q.high = n.low;
-             *     r.high = 0;
-             *     r.low = n.high;
+             *     q.s.low = 0;
+             *     q.s.high = n.s.low;
+             *     r.s.high = 0;
+             *     r.s.low = n.s.high;
              * }
              * else if (sr < n_uword_bits)  // 2 <= sr <= n_uword_bits - 1
              * {
-             *     q.low = 0;
-             *     q.high = n.low << (n_uword_bits - sr);
-             *     r.high = n.high >> sr;
-             *     r.low = (n.high << (n_uword_bits - sr)) | (n.low >> sr);
+             *     q.s.low = 0;
+             *     q.s.high = n.s.low << (n_uword_bits - sr);
+             *     r.s.high = n.s.high >> sr;
+             *     r.s.low = (n.s.high << (n_uword_bits - sr)) | (n.s.low >> sr);
              * }
              * else              // n_uword_bits + 1 <= sr <= n_udword_bits - 1
              * {
-             *     q.low = n.low << (n_udword_bits - sr);
-             *     q.high = (n.high << (n_udword_bits - sr)) |
-             *              (n.low >> (sr - n_uword_bits));
-             *     r.high = 0;
-             *     r.low = n.high >> (sr - n_uword_bits);
+             *     q.s.low = n.s.low << (n_udword_bits - sr);
+             *     q.s.high = (n.s.high << (n_udword_bits - sr)) |
+             *              (n.s.low >> (sr - n_uword_bits));
+             *     r.s.high = 0;
+             *     r.s.low = n.s.high >> (sr - n_uword_bits);
              * }
              */
-            q.low =  (n.low << (n_udword_bits - sr)) &
+            q.s.low =  (n.s.low << (n_udword_bits - sr)) &
                      ((si_int)(n_uword_bits - sr) >> (n_uword_bits-1));
-            q.high = ((n.low << ( n_uword_bits - sr))                       &
+            q.s.high = ((n.s.low << ( n_uword_bits - sr))                       &
                      ((si_int)(sr - n_uword_bits - 1) >> (n_uword_bits-1))) |
-                     (((n.high << (n_udword_bits - sr))                     |
-                     (n.low >> (sr - n_uword_bits)))                        &
+                     (((n.s.high << (n_udword_bits - sr))                     |
+                     (n.s.low >> (sr - n_uword_bits)))                        &
                      ((si_int)(n_uword_bits - sr) >> (n_uword_bits-1)));
-            r.high = (n.high >> sr) &
+            r.s.high = (n.s.high >> sr) &
                      ((si_int)(sr - n_uword_bits) >> (n_uword_bits-1));
-            r.low =  ((n.high >> (sr - n_uword_bits))                       &
+            r.s.low =  ((n.s.high >> (sr - n_uword_bits))                       &
                      ((si_int)(n_uword_bits - sr - 1) >> (n_uword_bits-1))) |
-                     (((n.high << (n_uword_bits - sr))                      |
-                     (n.low >> sr))                                         &
+                     (((n.s.high << (n_uword_bits - sr))                      |
+                     (n.s.low >> sr))                                         &
                      ((si_int)(sr - n_uword_bits) >> (n_uword_bits-1)));
         }
         else
@@ -187,7 +187,7 @@ __udivmoddi4(du_int a, du_int b, du_int* rem)
              * ---
              * K K
              */
-            sr = __builtin_clz(d.high) - __builtin_clz(n.high);
+            sr = __builtin_clz(d.s.high) - __builtin_clz(n.s.high);
             /* 0 <= sr <= n_uword_bits - 1 or sr large */
             if (sr > n_uword_bits - 1)
             {
@@ -198,24 +198,24 @@ __udivmoddi4(du_int a, du_int b, du_int* rem)
             ++sr;
             /* 1 <= sr <= n_uword_bits */
             /*  q.all = n.all << (n_udword_bits - sr); */
-            q.low = 0;
-            q.high = n.low << (n_uword_bits - sr);
+            q.s.low = 0;
+            q.s.high = n.s.low << (n_uword_bits - sr);
             /* r.all = n.all >> sr;
              * if (sr < n_uword_bits)
              * {
-             *     r.high = n.high >> sr;
-             *     r.low = (n.high << (n_uword_bits - sr)) | (n.low >> sr);
+             *     r.s.high = n.s.high >> sr;
+             *     r.s.low = (n.s.high << (n_uword_bits - sr)) | (n.s.low >> sr);
              * }
              * else
              * {
-             *     r.high = 0;
-             *     r.low = n.high;
+             *     r.s.high = 0;
+             *     r.s.low = n.s.high;
              * }
              */
-            r.high = (n.high >> sr) &
+            r.s.high = (n.s.high >> sr) &
                      ((si_int)(sr - n_uword_bits) >> (n_uword_bits-1));
-            r.low = (n.high << (n_uword_bits - sr)) |
-                    ((n.low >> sr)                  &
+            r.s.low = (n.s.high << (n_uword_bits - sr)) |
+                    ((n.s.low >> sr)                  &
                     ((si_int)(sr - n_uword_bits) >> (n_uword_bits-1)));
         }
     }
@@ -229,10 +229,10 @@ __udivmoddi4(du_int a, du_int b, du_int* rem)
     for (; sr > 0; --sr)
     {
         /* r:q = ((r:q)  << 1) | carry */
-        r.high = (r.high << 1) | (r.low  >> (n_uword_bits - 1));
-        r.low  = (r.low  << 1) | (q.high >> (n_uword_bits - 1));
-        q.high = (q.high << 1) | (q.low  >> (n_uword_bits - 1));
-        q.low  = (q.low  << 1) | carry;
+        r.s.high = (r.s.high << 1) | (r.s.low  >> (n_uword_bits - 1));
+        r.s.low  = (r.s.low  << 1) | (q.s.high >> (n_uword_bits - 1));
+        q.s.high = (q.s.high << 1) | (q.s.low  >> (n_uword_bits - 1));
+        q.s.low  = (q.s.low  << 1) | carry;
         /* carry = 0;
          * if (r.all >= d.all)
          * {

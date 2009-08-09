@@ -34,4 +34,4 @@ __ffsti2(ti_int a)
     return __builtin_ctzll(x.low) + 1;
 }
 
-#endif
+#endif /* __x86_64 */

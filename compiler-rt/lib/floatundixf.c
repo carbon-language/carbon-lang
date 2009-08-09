@@ -34,7 +34,7 @@ __floatundixf(du_int a)
     int clz = __builtin_clzll(a);
     int e = (N - 1) - clz ;    /* exponent */
     long_double_bits fb;
-    fb.u.high.low = (e + 16383);               /* exponent */
+    fb.u.high.s.low = (e + 16383);              /* exponent */
     fb.u.low.all = a << clz;                   /* mantissa */
     return fb.f;
 }

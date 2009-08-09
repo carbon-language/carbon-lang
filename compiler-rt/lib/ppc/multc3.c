@@ -10,14 +10,14 @@
 #endif /* INFINITY */
 
 #define makeFinite(x)	{ \
-							(x).hi = __builtin_copysign(isinf((x).hi) ? 1.0 : 0.0, (x).hi); \
-							(x).lo = 0.0; \
+							(x).s.hi = __builtin_copysign(isinf((x).s.hi) ? 1.0 : 0.0, (x).s.hi); \
+							(x).s.lo = 0.0; \
 						}
 
 #define zeroNaN(x)		{ \
-							if (isnan((x).hi)) { \
-								(x).hi = __builtin_copysign(0.0, (x).hi); \
-								(x).lo = 0.0; \
+							if (isnan((x).s.hi)) { \
+								(x).s.hi = __builtin_copysign(0.0, (x).s.hi); \
+								(x).s.lo = 0.0; \
 							} \
 						}
 
@@ -36,7 +36,7 @@ __multc3(long double a, long double b, long double c, long double d)
 	DD real = { .ld = __gcc_qsub(ac,bd) };
 	DD imag = { .ld = __gcc_qadd(ad,bc) };
 	
-	if (isnan(real.hi) && isnan(imag.hi))
+	if (isnan(real.s.hi) && isnan(imag.s.hi))
 	{
 		int recalc = 0;
 		
@@ -45,7 +45,7 @@ __multc3(long double a, long double b, long double c, long double d)
 		DD cDD = { .ld = c };
 		DD dDD = { .ld = d };
 		
-		if (isinf(aDD.hi) || isinf(bDD.hi))
+		if (isinf(aDD.s.hi) || isinf(bDD.s.hi))
 		{
 			makeFinite(aDD);
 			makeFinite(bDD);
@@ -54,7 +54,7 @@ __multc3(long double a, long double b, long double c, long double d)
 			recalc = 1;
 		}
 		
-		if (isinf(cDD.hi) || isinf(dDD.hi))
+		if (isinf(cDD.s.hi) || isinf(dDD.s.hi))
 		{
 			makeFinite(cDD);
 			makeFinite(dDD);
@@ -70,7 +70,7 @@ __multc3(long double a, long double b, long double c, long double d)
 			DD adDD = { .ld = ad };
 			DD bcDD = { .ld = bc };
 			
-			if (isinf(acDD.hi) || isinf(bdDD.hi) || isinf(adDD.hi) || isinf(bcDD.hi))
+			if (isinf(acDD.s.hi) || isinf(bdDD.s.hi) || isinf(adDD.s.hi) || isinf(bcDD.s.hi))
 			{
 				zeroNaN(aDD);
 				zeroNaN(bDD);
@@ -82,10 +82,10 @@ __multc3(long double a, long double b, long double c, long double d)
 		
 		if (recalc)
 		{
-			real.hi = INFINITY * (aDD.hi*cDD.hi - bDD.hi*dDD.hi);
-			real.lo = 0.0;
-			imag.hi = INFINITY * (aDD.hi*dDD.hi + bDD.hi*cDD.hi);
-			imag.lo = 0.0;
+			real.s.hi = INFINITY * (aDD.s.hi*cDD.s.hi - bDD.s.hi*dDD.s.hi);
+			real.s.lo = 0.0;
+			imag.s.hi = INFINITY * (aDD.s.hi*dDD.s.hi + bDD.s.hi*cDD.s.hi);
+			imag.s.lo = 0.0;
 		}
 	}
 	

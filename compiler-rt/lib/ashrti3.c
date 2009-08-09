@@ -29,18 +29,18 @@ __ashrti3(ti_int a, si_int b)
     input.all = a;
     if (b & bits_in_dword)  /* bits_in_dword <= b < bits_in_tword */
     {
-        /* result.high = input.high < 0 ? -1 : 0 */
-        result.high = input.high >> (bits_in_dword - 1);
-        result.low = input.high >> (b - bits_in_dword);
+        /* result.s.high = input.s.high < 0 ? -1 : 0 */
+        result.s.high = input.s.high >> (bits_in_dword - 1);
+        result.s.low = input.s.high >> (b - bits_in_dword);
     }
     else  /* 0 <= b < bits_in_dword */
     {
         if (b == 0)
             return a;
-        result.high  = input.high >> b;
-        result.low = (input.high << (bits_in_dword - b)) | (input.low >> b);
+        result.s.high  = input.s.high >> b;
+        result.s.low = (input.s.high << (bits_in_dword - b)) | (input.s.low >> b);
     }
     return result.all;
 }
 
-#endif
+#endif /* __x86_64 */

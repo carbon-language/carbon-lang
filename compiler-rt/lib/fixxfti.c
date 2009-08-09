@@ -44,4 +44,4 @@ __fixxfti(long double a)
     return (r ^ s) - s;
 }
 
-#endif
+#endif /* __x86_64 */

@@ -37,10 +37,10 @@ __floatdixf(di_int a)
     int clz = __builtin_clzll(a);
     int e = (N - 1) - clz ;    /* exponent */
     long_double_bits fb;
-    fb.u.high.low = ((su_int)s & 0x00008000) |  /* sign */
-                    (e + 16383);                /* exponent */
+    fb.u.high.s.low = ((su_int)s & 0x00008000) |  /* sign */
+		      (e + 16383);                /* exponent */
     fb.u.low.all = a << clz;                    /* mantissa */
     return fb.f;
 }
 
-#endif
+#endif /* !_ARCH_PPC */

@@ -27,15 +27,15 @@ __ashldi3(di_int a, si_int b)
     input.all = a;
     if (b & bits_in_word)  /* bits_in_word <= b < bits_in_dword */
     {
-        result.low = 0;
-        result.high = input.low << (b - bits_in_word);
+        result.s.low = 0;
+        result.s.high = input.s.low << (b - bits_in_word);
     }
     else  /* 0 <= b < bits_in_word */
     {
         if (b == 0)
             return a;
-        result.low  = input.low << b;
-        result.high = (input.high << b) | (input.low >> (bits_in_word - b));
+        result.s.low  = input.s.low << b;
+        result.s.high = (input.s.high << b) | (input.s.low >> (bits_in_word - b));
     }
     return result.all;
 }

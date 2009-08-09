@@ -35,10 +35,10 @@ __fixunsxfsi(long double a)
 {
     long_double_bits fb;
     fb.f = a;
-    int e = (fb.u.high.low & 0x00007FFF) - 16383;
-    if (e < 0 || (fb.u.high.low & 0x00008000))
+    int e = (fb.u.high.s.low & 0x00007FFF) - 16383;
+    if (e < 0 || (fb.u.high.s.low & 0x00008000))
         return 0;
-    return fb.u.low.high >> (31 - e);
+    return fb.u.low.s.high >> (31 - e);
 }
 
-#endif
+#endif /* !_ARCH_PPC */

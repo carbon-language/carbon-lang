@@ -8,8 +8,8 @@ typedef union {
 	struct {
 		double hi;
 		double lo;
-	};
-} DD;
+	}s;
+}DD;
 
 typedef union { 
 	double d;
@@ -43,4 +43,4 @@ different_sign(double x, double y)
 	return result;
 }
 
-#endif // __DD_HEADER
+#endif /* __DD_HEADER */

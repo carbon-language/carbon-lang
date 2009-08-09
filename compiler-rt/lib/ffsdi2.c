@@ -23,11 +23,11 @@ __ffsdi2(di_int a)
 {
     dwords x;
     x.all = a;
-    if (x.low == 0)
+    if (x.s.low == 0)
     {
-        if (x.high == 0)
+        if (x.s.high == 0)
             return 0;
-        return __builtin_ctz(x.high) + (1 + sizeof(si_int) * CHAR_BIT);
+        return __builtin_ctz(x.s.high) + (1 + sizeof(si_int) * CHAR_BIT);
     }
-    return __builtin_ctz(x.low) + 1;
+    return __builtin_ctz(x.s.low) + 1;
 }

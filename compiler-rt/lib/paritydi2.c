@@ -23,5 +23,5 @@ __paritydi2(di_int a)
 {
     dwords x;
     x.all = a;
-    return __paritysi2(x.high ^ x.low);
+    return __paritysi2(x.s.high ^ x.s.low);
 }

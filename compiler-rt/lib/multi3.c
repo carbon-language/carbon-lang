@@ -25,18 +25,18 @@ __mulddi3(du_int a, du_int b)
     twords r;
     const int bits_in_dword_2 = (int)(sizeof(di_int) * CHAR_BIT) / 2;
     const du_int lower_mask = (du_int)~0 >> bits_in_dword_2;
-    r.low = (a & lower_mask) * (b & lower_mask);
-    du_int t = r.low >> bits_in_dword_2;
-    r.low &= lower_mask;
+    r.s.low = (a & lower_mask) * (b & lower_mask);
+    du_int t = r.s.low >> bits_in_dword_2;
+    r.s.low &= lower_mask;
     t += (a >> bits_in_dword_2) * (b & lower_mask);
-    r.low += (t & lower_mask) << bits_in_dword_2;
-    r.high = t >> bits_in_dword_2;
-    t = r.low >> bits_in_dword_2;
-    r.low &= lower_mask;
+    r.s.low += (t & lower_mask) << bits_in_dword_2;
+    r.s.high = t >> bits_in_dword_2;
+    t = r.s.low >> bits_in_dword_2;
+    r.s.low &= lower_mask;
     t += (b >> bits_in_dword_2) * (a & lower_mask);
-    r.low += (t & lower_mask) << bits_in_dword_2;
-    r.high += t >> bits_in_dword_2;
-    r.high += (a >> bits_in_dword_2) * (b >> bits_in_dword_2);
+    r.s.low += (t & lower_mask) << bits_in_dword_2;
+    r.s.high += t >> bits_in_dword_2;
+    r.s.high += (a >> bits_in_dword_2) * (b >> bits_in_dword_2);
     return r.all;
 }
 
@@ -51,8 +51,8 @@ __multi3(ti_int a, ti_int b)
     y.all = b;
     twords r;
     r.all = __mulddi3(x.low, y.low);
-    r.high += x.high * y.low + x.low * y.high;
+    r.s.high += x.high * y.low + x.low * y.high;
     return r.all;
 }
 
-#endif
+#endif /* __x86_64 */

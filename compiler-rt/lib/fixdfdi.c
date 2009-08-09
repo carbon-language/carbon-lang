@@ -28,13 +28,13 @@ __fixdfdi(double a)
 {
     double_bits fb;
     fb.f = a;
-    int e = ((fb.u.high & 0x7FF00000) >> 20) - 1023;
+    int e = ((fb.u.s.high & 0x7FF00000) >> 20) - 1023;
     if (e < 0)
         return 0;
-    di_int s = (si_int)(fb.u.high & 0x80000000) >> 31;
+    di_int s = (si_int)(fb.u.s.high & 0x80000000) >> 31;
     dwords r;
-    r.high = (fb.u.high & 0x000FFFFF) | 0x00100000;
-    r.low = fb.u.low;
+    r.s.high = (fb.u.s.high & 0x000FFFFF) | 0x00100000;
+    r.s.low = fb.u.s.low;
     if (e > 52)
         r.all <<= (e - 52);
     else

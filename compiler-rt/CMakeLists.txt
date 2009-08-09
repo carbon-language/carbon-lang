@@ -1,6 +1,6 @@
 # See docs/CMake.html for instructions about how to build Compiler-RT with CMake.
 
-PROJECT( CompilerRT )
+PROJECT( CompilerRT C )
 CMAKE_MINIMUM_REQUIRED( VERSION 2.6 )
 
 set(PACKAGE_NAME compiler-rt)
@@ -29,11 +29,19 @@ install(DIRECTORY include
   PATTERN "*.in" EXCLUDE
   )
 
+SET( Achitectures
+ i386 ppc x86_64
+ )
+
+SET( Configurations
+ Debug Release Profile
+ )
+
 # BlocksRuntime - some random cruft that got thrown in at the last minute, ignoring for now.
 # ADD_SUBDIRECTORY( BlocksRuntime )
 
 ADD_SUBDIRECTORY( lib )
 
 # Tests are being ignored for until the very basics are working.
-# INCLUDE( MacroAddCheckTest )
-# ADD_SUBDIRECTORY( test )
+#INCLUDE( MacroAddCheckTest )
+#ADD_SUBDIRECTORY( test )

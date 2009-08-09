@@ -10,8 +10,8 @@
 #endif /* INFINITY */
 
 #define makeFinite(x)	{ \
-							(x).hi = __builtin_copysign(isinf((x).hi) ? 1.0 : 0.0, (x).hi); \
-							(x).lo = 0.0; \
+							(x).s.hi = __builtin_copysign(isinf((x).s.hi) ? 1.0 : 0.0, (x).s.hi); \
+							(x).s.lo = 0.0; \
 						}
 
 long double __gcc_qadd(long double, long double);
@@ -26,16 +26,16 @@ __divtc3(long double a, long double b, long double c, long double d)
 	DD dDD = { .ld = d };
 	
 	int ilogbw = 0;
-	const double logbw = logb(__builtin_fmax( __builtin_fabs(cDD.hi), __builtin_fabs(dDD.hi) ));
+	const double logbw = logb(__builtin_fmax( __builtin_fabs(cDD.s.hi), __builtin_fabs(dDD.s.hi) ));
 	
 	if (isfinite(logbw))
 	{
 		ilogbw = (int)logbw;
 		
-		cDD.hi = scalbn(cDD.hi, -ilogbw);
-		cDD.lo = scalbn(cDD.lo, -ilogbw);
-		dDD.hi = scalbn(dDD.hi, -ilogbw);
-		dDD.lo = scalbn(dDD.lo, -ilogbw);
+		cDD.s.hi = scalbn(cDD.s.hi, -ilogbw);
+		cDD.s.lo = scalbn(cDD.s.lo, -ilogbw);
+		dDD.s.hi = scalbn(dDD.s.hi, -ilogbw);
+		dDD.s.lo = scalbn(dDD.s.lo, -ilogbw);
 	}
 	
 	const long double denom = __gcc_qadd(__gcc_qmul(cDD.ld, cDD.ld), __gcc_qmul(dDD.ld, dDD.ld));
@@ -45,43 +45,43 @@ __divtc3(long double a, long double b, long double c, long double d)
 	DD real = { .ld = __gcc_qdiv(realNumerator, denom) };
 	DD imag = { .ld = __gcc_qdiv(imagNumerator, denom) };
 	
-	real.hi = scalbn(real.hi, -ilogbw);
-	real.lo = scalbn(real.lo, -ilogbw);
-	imag.hi = scalbn(imag.hi, -ilogbw);
-	imag.lo = scalbn(imag.lo, -ilogbw);
+	real.s.hi = scalbn(real.s.hi, -ilogbw);
+	real.s.lo = scalbn(real.s.lo, -ilogbw);
+	imag.s.hi = scalbn(imag.s.hi, -ilogbw);
+	imag.s.lo = scalbn(imag.s.lo, -ilogbw);
 	
-	if (isnan(real.hi) && isnan(imag.hi))
+	if (isnan(real.s.hi) && isnan(imag.s.hi))
 	{
 		DD aDD = { .ld = a };
 		DD bDD = { .ld = b };
 		DD rDD = { .ld = denom };
 		
-		if ((rDD.hi == 0.0) && (!isnan(aDD.hi) || !isnan(bDD.hi)))
+		if ((rDD.s.hi == 0.0) && (!isnan(aDD.s.hi) || !isnan(bDD.s.hi)))
 		{
-			real.hi = __builtin_copysign(INFINITY,cDD.hi) * aDD.hi;
-			real.lo = 0.0;
-			imag.hi = __builtin_copysign(INFINITY,cDD.hi) * bDD.hi;
-			imag.lo = 0.0;
+			real.s.hi = __builtin_copysign(INFINITY,cDD.s.hi) * aDD.s.hi;
+			real.s.lo = 0.0;
+			imag.s.hi = __builtin_copysign(INFINITY,cDD.s.hi) * bDD.s.hi;
+			imag.s.lo = 0.0;
 		}
 		
-		else if ((isinf(aDD.hi) || isinf(bDD.hi)) && isfinite(cDD.hi) && isfinite(dDD.hi))
+		else if ((isinf(aDD.s.hi) || isinf(bDD.s.hi)) && isfinite(cDD.s.hi) && isfinite(dDD.s.hi))
 		{
 			makeFinite(aDD);
 			makeFinite(bDD);
-			real.hi = INFINITY * (aDD.hi*cDD.hi + bDD.hi*dDD.hi);
-			real.lo = 0.0;
-			imag.hi = INFINITY * (bDD.hi*cDD.hi - aDD.hi*dDD.hi);
-			imag.lo = 0.0;
+			real.s.hi = INFINITY * (aDD.s.hi*cDD.s.hi + bDD.s.hi*dDD.s.hi);
+			real.s.lo = 0.0;
+			imag.s.hi = INFINITY * (bDD.s.hi*cDD.s.hi - aDD.s.hi*dDD.s.hi);
+			imag.s.lo = 0.0;
 		}
 		
-		else if ((isinf(cDD.hi) || isinf(dDD.hi)) && isfinite(aDD.hi) && isfinite(bDD.hi))
+		else if ((isinf(cDD.s.hi) || isinf(dDD.s.hi)) && isfinite(aDD.s.hi) && isfinite(bDD.s.hi))
 		{
 			makeFinite(cDD);
 			makeFinite(dDD);
-			real.hi = __builtin_copysign(0.0,(aDD.hi*cDD.hi + bDD.hi*dDD.hi));
-			real.lo = 0.0;
-			imag.hi = __builtin_copysign(0.0,(bDD.hi*cDD.hi - aDD.hi*dDD.hi));
-			imag.lo = 0.0;
+			real.s.hi = __builtin_copysign(0.0,(aDD.s.hi*cDD.s.hi + bDD.s.hi*dDD.s.hi));
+			real.s.lo = 0.0;
+			imag.s.hi = __builtin_copysign(0.0,(bDD.s.hi*cDD.s.hi - aDD.s.hi*dDD.s.hi));
+			imag.s.lo = 0.0;
 		}
 	}
 	
