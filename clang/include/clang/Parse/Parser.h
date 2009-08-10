@@ -705,11 +705,9 @@ private:
                                               unsigned MinPrec);
   OwningExprResult ParseCastExpression(bool isUnaryExpression,
                                        bool isAddressOfOperand,
-                                       bool &NotCastExpr,
-                                       bool parseParenAsExprList);
+                                       bool &NotCastExpr);
   OwningExprResult ParseCastExpression(bool isUnaryExpression,
-                                       bool isAddressOfOperand = false,
-                                       bool parseParenAsExprList = false);
+                                       bool isAddressOfOperand = false);
   OwningExprResult ParsePostfixExpressionSuffix(OwningExprResult LHS);
   OwningExprResult ParseSizeofAlignofExpression();
   OwningExprResult ParseBuiltinPrimaryExpression();
@@ -735,7 +733,6 @@ private:
   };
   OwningExprResult ParseParenExpression(ParenParseOption &ExprType,
                                         bool stopIfCastExpr,
-                                        bool parseAsExprList,
                                         TypeTy *&CastTy,
                                         SourceLocation &RParenLoc);
   

@@ -1784,26 +1784,6 @@ void DesignatedInitExpr::DoDestroy(ASTContext &C) {
   Expr::DoDestroy(C);
 }
 
-ParenListExpr::ParenListExpr(ASTContext& C, SourceLocation lparenloc, 
-                             Expr **exprs, unsigned nexprs,
-                             SourceLocation rparenloc)
-: Expr(ParenListExprClass, QualType(),
-       hasAnyTypeDependentArguments(exprs, nexprs),
-       hasAnyValueDependentArguments(exprs, nexprs)), 
-  NumExprs(nexprs), LParenLoc(lparenloc), RParenLoc(rparenloc) {
-  
-  Exprs = new (C) Stmt*[nexprs];
-  for (unsigned i = 0; i != nexprs; ++i)
-    Exprs[i] = exprs[i];
-}
-
-void ParenListExpr::DoDestroy(ASTContext& C) {
-  DestroyChildren(C);
-  if (Exprs) C.Deallocate(Exprs);
-  this->~ParenListExpr();
-  C.Deallocate(this);
-}
-
 //===----------------------------------------------------------------------===//
 //  ExprIterator.
 //===----------------------------------------------------------------------===//
@@ -2006,14 +1986,6 @@ Stmt::child_iterator ImplicitValueInitExpr::child_begin() {
 
 Stmt::child_iterator ImplicitValueInitExpr::child_end() { 
   return child_iterator(); 
-}
-
-// ParenListExpr
-Stmt::child_iterator ParenListExpr::child_begin() {
-  return &Exprs[0];
-}
-Stmt::child_iterator ParenListExpr::child_end() {
-  return &Exprs[0]+NumExprs;
 }
 
 // ObjCStringLiteral

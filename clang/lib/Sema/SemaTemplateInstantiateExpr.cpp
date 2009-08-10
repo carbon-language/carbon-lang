@@ -639,20 +639,6 @@ TemplateExprInstantiator::VisitInitListExpr(InitListExpr *E) {
 }
 
 Sema::OwningExprResult 
-TemplateExprInstantiator::VisitParenListExpr(ParenListExpr *E) {
-  ASTOwningVector<&ActionBase::DeleteExpr, 4> Inits(SemaRef);
-  for (unsigned I = 0, N = E->getNumExprs(); I != N; ++I) {
-    OwningExprResult Init = Visit(E->getExpr(I));
-    if (Init.isInvalid())
-      return SemaRef.ExprError();
-    Inits.push_back(Init.takeAs<Expr>());
-  }
-
-  return SemaRef.ActOnParenListExpr(E->getLParenLoc(), E->getRParenLoc(),
-                                    move_arg(Inits));
-}
-
-Sema::OwningExprResult 
 TemplateExprInstantiator::VisitDesignatedInitExpr(DesignatedInitExpr *E) {
   Designation Desig;
 
@@ -900,7 +886,7 @@ TemplateExprInstantiator::VisitCStyleCastExpr(CStyleCastExpr *E) {
   if (SubExpr.isInvalid())
     return SemaRef.ExprError();
   
-  return SemaRef.ActOnCastExpr(/*Scope=*/0, E->getLParenLoc(), 
+  return SemaRef.ActOnCastExpr(E->getLParenLoc(), 
                                ExplicitTy.getAsOpaquePtr(),
                                E->getRParenLoc(),
                                move(SubExpr));

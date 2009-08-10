@@ -1154,7 +1154,7 @@ Parser::ParseCXXAmbiguousParenExpression(ParenParseOption &ExprType,
       // will be consumed.
       Result = ParseCastExpression(false/*isUnaryExpression*/,
                                    false/*isAddressofOperand*/,
-                                   NotCastExpr, false);
+                                   NotCastExpr);
     }
 
     // If we parsed a cast-expression, it's really a type-id, otherwise it's
@@ -1196,8 +1196,7 @@ Parser::ParseCXXAmbiguousParenExpression(ParenParseOption &ExprType,
 
     // Result is what ParseCastExpression returned earlier.
     if (!Result.isInvalid())
-      Result = Actions.ActOnCastExpr(CurScope, LParenLoc, CastTy, RParenLoc, 
-                                     move(Result));
+      Result = Actions.ActOnCastExpr(LParenLoc, CastTy, RParenLoc,move(Result));
     return move(Result);
   }
   

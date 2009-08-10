@@ -574,9 +574,8 @@ namespace {
       Out << __FUNCTION__ << "\n";
       return ExprEmpty();
     }
-    virtual OwningExprResult ActOnCastExpr(Scope *S, SourceLocation LParenLoc, 
-                                           TypeTy *Ty, SourceLocation RParenLoc,
-                                           ExprArg Op) {
+    virtual OwningExprResult ActOnCastExpr(SourceLocation LParenLoc, TypeTy *Ty,
+                                           SourceLocation RParenLoc,ExprArg Op){
       Out << __FUNCTION__ << "\n";
       return ExprEmpty();
     }

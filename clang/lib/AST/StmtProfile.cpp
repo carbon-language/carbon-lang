@@ -245,10 +245,6 @@ void StmtProfiler::VisitParenExpr(ParenExpr *S) {
   VisitExpr(S);
 }
 
-void StmtProfiler::VisitParenListExpr(ParenListExpr *S) {
-  VisitExpr(S);
-}
-
 void StmtProfiler::VisitUnaryOperator(UnaryOperator *S) {
   VisitExpr(S);
   ID.AddInteger(S->getOpcode());

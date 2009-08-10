@@ -1918,8 +1918,7 @@ Sema::ActOnArraySubscriptExpr(Scope *S, ExprArg Base, SourceLocation LLoc,
        << LHSExp->getSourceRange() << RHSExp->getSourceRange());
   }
   // C99 6.5.2.1p1
-  if (!(IndexExpr->getType()->isIntegerType() &&
-        IndexExpr->getType()->isScalarType()) && !IndexExpr->isTypeDependent())
+  if (!IndexExpr->getType()->isIntegerType() && !IndexExpr->isTypeDependent())
     return ExprError(Diag(LLoc, diag::err_typecheck_subscript_not_integer)
                      << IndexExpr->getSourceRange());
 
@@ -2115,11 +2114,6 @@ Sema::ActOnMemberReferenceExpr(Scope *S, ExprArg Base, SourceLocation OpLoc,
   Expr *BaseExpr = Base.takeAs<Expr>();
   assert(BaseExpr && "no record expression");
 
-  // If BaseExpr is a ParenListExpr then convert it into a standard
-  // paren expr since this is not an altivec initializer.
-  if (ParenListExpr *PE = dyn_cast<ParenListExpr>(BaseExpr))
-    BaseExpr = ConvertParenListExpr(S, PE).takeAs<Expr>();
-  
   // Perform default conversions.
   DefaultFunctionArrayConversion(BaseExpr);
 
@@ -2695,11 +2689,6 @@ Sema::ActOnCallExpr(Scope *S, ExprArg fn, SourceLocation LParenLoc,
   FunctionDecl *FDecl = NULL;
   NamedDecl *NDecl = NULL;
   DeclarationName UnqualifiedName;
-  
-  // If the function is a ParenListExpr, then convert it into a standard
-  // paren expr since this is not an altivec initializer.
-  if (ParenListExpr *PE = dyn_cast<ParenListExpr>(Fn))
-    Fn = ConvertParenListExpr(S, PE).takeAs<Expr>();
 
   if (getLangOptions().CPlusPlus) {
     // Determine whether this is a dependent call inside a C++ template,
@@ -3101,7 +3090,7 @@ bool Sema::CheckExtVectorCast(SourceRange R, QualType DestTy, QualType SrcTy) {
 }
 
 Action::OwningExprResult
-Sema::ActOnCastExpr(Scope *S, SourceLocation LParenLoc, TypeTy *Ty,
+Sema::ActOnCastExpr(SourceLocation LParenLoc, TypeTy *Ty,
                     SourceLocation RParenLoc, ExprArg Op) {
   CastExpr::CastKind Kind = CastExpr::CK_Unknown;
   
@@ -3110,10 +3099,6 @@ Sema::ActOnCastExpr(Scope *S, SourceLocation LParenLoc, TypeTy *Ty,
 
   Expr *castExpr = Op.takeAs<Expr>();
   QualType castType = QualType::getFromOpaquePtr(Ty);
-  
-  // If the Expr being casted is a ParenListExpr, handle it specially.
-  if (ParenListExpr *PE = dyn_cast<ParenListExpr>(castExpr))
-    return ActOnCastOfParenListExpr(S, LParenLoc, RParenLoc, PE, castType);
 
   if (CheckCastTypes(SourceRange(LParenLoc, RParenLoc), castType, castExpr, 
                      Kind))
@@ -3121,68 +3106,6 @@ Sema::ActOnCastExpr(Scope *S, SourceLocation LParenLoc, TypeTy *Ty,
   return Owned(new (Context) CStyleCastExpr(castType.getNonReferenceType(),
                                             Kind, castExpr, castType, 
                                             LParenLoc, RParenLoc));
-}
-
-/// This is not an AltiVec-style cast, so turn the ParenListExpr into a sequence
-/// of comma binary operators.
-Action::OwningExprResult
-Sema::ConvertParenListExpr(Scope *S, ParenListExpr *E) {
-  OwningExprResult Result(*this, E->getExpr(0));
-  
-  for (unsigned i = 1, e = E->getNumExprs(); i != e && !Result.isInvalid(); ++i)
-    Result = ActOnBinOp(S, E->getExprLoc(), tok::comma, move(Result),
-                        Owned(E->getExpr(i)));
-  return move(Result);
-}
-
-Action::OwningExprResult
-Sema::ActOnCastOfParenListExpr(Scope *S, SourceLocation LParenLoc,
-                               SourceLocation RParenLoc,
-                               ParenListExpr *E, QualType Ty) {
-  // If this is an altivec initializer, '(' type ')' '(' init, ..., init ')' 
-  // then handle it as such.
-  if (getLangOptions().AltiVec && Ty->isVectorType()) {
-    if (E->getNumExprs() == 0) {
-      Diag(E->getExprLoc(), diag::err_altivec_empty_initializer);
-      return ExprError();
-    }
-
-    llvm::SmallVector<Expr *, 8> initExprs;
-    for (unsigned i = 0, e = E->getNumExprs(); i != e; ++i)
-      initExprs.push_back(E->getExpr(i));
-
-    // FIXME: This means that pretty-printing the final AST will produce curly
-    // braces instead of the original commas.
-    InitListExpr *E = new (Context) InitListExpr(LParenLoc, &initExprs[0], 
-                                                 initExprs.size(), RParenLoc);
-    E->setType(Ty);
-    return ActOnCompoundLiteral(LParenLoc, Ty.getAsOpaquePtr(), RParenLoc, 
-                                Owned(E));
-  } else {
-    // This is not an AltiVec-style cast, so turn the ParenListExpr into a 
-    // sequence of BinOp comma operators.
-    OwningExprResult Result = ConvertParenListExpr(S, E);
-    Expr *castExpr = (Expr *)Result.get();
-    CastExpr::CastKind Kind = CastExpr::CK_Unknown;
-
-    if (CheckCastTypes(SourceRange(LParenLoc, RParenLoc), Ty, castExpr, Kind))
-      return ExprError();
-    
-    return Owned(new (Context) CStyleCastExpr(Ty.getNonReferenceType(),
-                                              CastExpr::CK_Unknown, 
-                                              Result.takeAs<Expr>(), Ty,
-                                              LParenLoc, RParenLoc));
-  }
-}
-
-Action::OwningExprResult Sema::ActOnParenListExpr(SourceLocation L,
-                                                  SourceLocation R,
-                                                  MultiExprArg Val) {
-  unsigned nexprs = Val.size();
-  Expr **exprs = reinterpret_cast<Expr**>(Val.release());
-  assert((exprs != 0) && "ActOnParenListExpr() missing expr list");
-  Expr *expr = new (Context) ParenListExpr(Context, L, exprs, nexprs, R);
-  return Owned(expr);
 }
 
 /// Note that lhs is not null here, even if this is the gnu "x ?: y" extension.
@@ -3209,8 +3132,6 @@ QualType Sema::CheckConditionalOperands(Expr *&Cond, Expr *&LHS, Expr *&RHS,
   }
 
   // Now check the two expressions.
-  if (LHSTy->isVectorType() || RHSTy->isVectorType())
-    return CheckVectorOperands(QuestionLoc, LHS, RHS);
 
   // If both operands have arithmetic type, do the usual arithmetic conversions
   // to find a common type: C99 6.5.15p3,5.
