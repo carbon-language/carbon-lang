@@ -497,7 +497,7 @@ subclasses, no optimization can be done for their execution.</p>
 the getAnalysis interface
 <tt>getAnalysis&lt;DominatorTree&gt;(llvm::Function *)</tt> to provide the
 function to retrieve analysis result for, if the function pass does not require
-any module passes. Note that this can only be done for functions for which the
+any module or immutable passes. Note that this can only be done for functions for which the
 analysis ran, e.g. in the case of dominators you should only ask for the
 DominatorTree for function definitions, not declarations.</p>
 
