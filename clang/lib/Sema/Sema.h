@@ -3016,7 +3016,8 @@ public:
   /// cast.  If there is already an implicit cast, merge into the existing one.
   /// If isLvalue, the result of the cast is an lvalue.
   void ImpCastExprToType(Expr *&Expr, QualType Type, 
-                         CastExpr::CastKind Kind = CastExpr::CK_Unknown,
+                         const CastExpr::CastInfo &Info = 
+                         CastExpr::CastInfo(CastExpr::CK_Unknown),
                          bool isLvalue = false);
 
   // UsualUnaryConversions - promotes integers (C99 6.3.1.1p2) and converts
