@@ -796,13 +796,14 @@ ARMBaseInstrInfo::foldMemoryOperandImpl(MachineFunction &MF,
 
 bool
 ARMBaseInstrInfo::canFoldMemoryOperand(const MachineInstr *MI,
-                                       const SmallVectorImpl<unsigned> &Ops) const {
+                                   const SmallVectorImpl<unsigned> &Ops) const {
   if (Ops.size() != 1) return false;
 
   unsigned Opc = MI->getOpcode();
   if (Opc == ARM::MOVr || Opc == ARM::t2MOVr) {
     // If it is updating CPSR, then it cannot be folded.
-    return MI->getOperand(4).getReg() != ARM::CPSR ||MI->getOperand(4).isDead();
+    return MI->getOperand(4).getReg() != ARM::CPSR ||
+      MI->getOperand(4).isDead();
   } else if (Opc == ARM::FCPYS || Opc == ARM::FCPYD) {
     return true;
   } else if (Opc == ARM::VMOVD || Opc == ARM::VMOVQ) {
