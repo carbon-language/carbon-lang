@@ -293,9 +293,6 @@ struct ClassInfo {
   /// N) for the Nth user defined class.
   unsigned Kind;
 
-  /// SuperClassKind - The super class kind for user classes.
-  unsigned SuperClassKind;
-
   /// SuperClass - The super class, or 0.
   ClassInfo *SuperClass;
 
@@ -525,6 +522,7 @@ ClassInfo *AsmMatcherInfo::getTokenClass(const StringRef &Token) {
   if (!Entry) {
     Entry = new ClassInfo();
     Entry->Kind = ClassInfo::Token;
+    Entry->SuperClass = 0;
     Entry->ClassName = "Token";
     Entry->Name = "MCK_" + getEnumNameForToken(Token);
     Entry->ValueName = Token;
@@ -562,7 +560,7 @@ void AsmMatcherInfo::BuildInfo(CodeGenTarget &Target) {
   // FIXME: This needs to dice up the RegisterClass instances.
   ClassInfo *RegClass = TheRegisterClass = new ClassInfo();
   RegClass->Kind = ClassInfo::Register;
-  RegClass->SuperClassKind = ClassInfo::Invalid;
+  RegClass->SuperClass = 0;
   RegClass->ClassName = "Reg";
   RegClass->Name = "MCK_Reg";
   RegClass->ValueName = "<register class>";
@@ -659,24 +657,6 @@ void AsmMatcherInfo::BuildInfo(CodeGenTarget &Target) {
       continue;
 
     Instructions.push_back(II.take());
-  }
-
-  // Bind user super classes.
-  std::map<unsigned, ClassInfo*> UserClasses;
-  for (unsigned i = 0, e = Classes.size(); i != e; ++i) {
-    ClassInfo &CI = *Classes[i];
-    if (CI.isUserClass())
-      UserClasses[CI.Kind] = &CI;
-  }
-
-  for (unsigned i = 0, e = Classes.size(); i != e; ++i) {
-    ClassInfo &CI = *Classes[i];
-    if (CI.isUserClass() && CI.SuperClassKind != ClassInfo::Invalid) {
-      CI.SuperClass = UserClasses[CI.SuperClassKind];
-      assert(CI.SuperClass && "Missing super class definition!");
-    } else {
-      CI.SuperClass = 0;
-    }
   }
 
   // Reorder classes so that classes preceed super classes.
@@ -863,8 +843,8 @@ static void EmitClassifyOperand(CodeGenTarget &Target,
         OS << "    assert(Operand." << CI.SuperClass->PredicateMethod
            << "() && \"Invalid class relationship!\");\n";
 
-      OS << "    return " << CI.Name << ";\n\n";
-      OS << "  }";
+      OS << "    return " << CI.Name << ";\n";
+      OS << "  }\n\n";
     }
   }
   OS << "  return InvalidMatchClass;\n";
