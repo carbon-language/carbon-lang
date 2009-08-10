@@ -91,6 +91,7 @@ EXPR(ExtVectorElementExpr  , Expr)
 EXPR(InitListExpr          , Expr)
 EXPR(DesignatedInitExpr    , Expr)
 EXPR(ImplicitValueInitExpr , Expr)
+EXPR(ParenListExpr         , Expr)
 EXPR(VAArgExpr             , Expr)
 
 // GNU Extensions.

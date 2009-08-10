@@ -825,6 +825,12 @@ public:
     return move(Val);  // Default impl returns operand.
   }
 
+  virtual OwningExprResult ActOnParenListExpr(SourceLocation L, 
+                                              SourceLocation R, 
+                                              MultiExprArg Val) {
+    return ExprEmpty();
+  }
+  
   // Postfix Expressions.
   virtual OwningExprResult ActOnPostfixUnaryOp(Scope *S, SourceLocation OpLoc,
                                                tok::TokenKind Kind,
@@ -901,11 +907,12 @@ public:
     return ExprEmpty();
   }
 
-  virtual OwningExprResult ActOnCastExpr(SourceLocation LParenLoc, TypeTy *Ty,
-                                         SourceLocation RParenLoc, ExprArg Op) {
+  virtual OwningExprResult ActOnCastExpr(Scope *S, SourceLocation LParenLoc,
+                                         TypeTy *Ty, SourceLocation RParenLoc, 
+                                         ExprArg Op) {
     return ExprEmpty();
   }
-
+    
   virtual OwningExprResult ActOnBinOp(Scope *S, SourceLocation TokLoc,
                                       tok::TokenKind Kind,
                                       ExprArg LHS, ExprArg RHS) {

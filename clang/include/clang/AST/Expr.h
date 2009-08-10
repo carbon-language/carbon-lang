@@ -2391,6 +2391,53 @@ public:
   virtual child_iterator child_end(); 
 };
 
+
+class ParenListExpr : public Expr {
+  Stmt **Exprs;
+  unsigned NumExprs;
+  SourceLocation LParenLoc, RParenLoc;
+
+protected: 
+  virtual void DoDestroy(ASTContext& C);
+  
+public:
+  ParenListExpr(ASTContext& C, SourceLocation lparenloc, Expr **exprs, 
+                unsigned numexprs, SourceLocation rparenloc);
+
+  ~ParenListExpr() {}
+
+  /// \brief Build an empty paren list.
+  //explicit ParenListExpr(EmptyShell Empty) : Expr(ParenListExprClass, Empty) { }
+  
+  unsigned getNumExprs() const { return NumExprs; }
+  
+  const Expr* getExpr(unsigned Init) const { 
+    assert(Init < getNumExprs() && "Initializer access out of range!");
+    return cast_or_null<Expr>(Exprs[Init]);
+  }
+  
+  Expr* getExpr(unsigned Init) { 
+    assert(Init < getNumExprs() && "Initializer access out of range!");
+    return cast_or_null<Expr>(Exprs[Init]);
+  }
+
+  SourceLocation getLParenLoc() const { return LParenLoc; }
+  SourceLocation getRParenLoc() const { return RParenLoc; }
+
+  virtual SourceRange getSourceRange() const {
+    return SourceRange(LParenLoc, RParenLoc);
+  } 
+  static bool classof(const Stmt *T) {
+    return T->getStmtClass() == ParenListExprClass; 
+  }
+  static bool classof(const ParenListExpr *) { return true; }
+  
+  // Iterators
+  virtual child_iterator child_begin();
+  virtual child_iterator child_end();
+};
+
+  
 //===----------------------------------------------------------------------===//
 // Clang Extensions
 //===----------------------------------------------------------------------===//

@@ -407,11 +407,13 @@ Parser::ParseRHSOfBinaryExpression(OwningExprResult LHS, unsigned MinPrec) {
 /// due to member pointers.
 ///
 Parser::OwningExprResult Parser::ParseCastExpression(bool isUnaryExpression,
-                                                     bool isAddressOfOperand) {
+                                                     bool isAddressOfOperand,
+                                                     bool parseParenAsExprList){
   bool NotCastExpr;
   OwningExprResult Res = ParseCastExpression(isUnaryExpression,
                                              isAddressOfOperand,
-                                             NotCastExpr);
+                                             NotCastExpr,
+                                             parseParenAsExprList);
   if (NotCastExpr)
     Diag(Tok, diag::err_expected_expression);
   return move(Res);
@@ -530,7 +532,8 @@ Parser::OwningExprResult Parser::ParseCastExpression(bool isUnaryExpression,
 ///
 Parser::OwningExprResult Parser::ParseCastExpression(bool isUnaryExpression,
                                                      bool isAddressOfOperand,
-                                                     bool &NotCastExpr) {
+                                                     bool &NotCastExpr,
+                                                     bool parseParenAsExprList){
   OwningExprResult Res(Actions);
   tok::TokenKind SavedKind = Tok.getKind();
   NotCastExpr = false;
@@ -555,7 +558,7 @@ Parser::OwningExprResult Parser::ParseCastExpression(bool isUnaryExpression,
     SourceLocation LParenLoc = Tok.getLocation();
     SourceLocation RParenLoc;
     Res = ParseParenExpression(ParenExprType, false/*stopIfCastExr*/,
-                               CastTy, RParenLoc);
+                               parseParenAsExprList, CastTy, RParenLoc);
     if (Res.isInvalid()) return move(Res);
     
     switch (ParenExprType) {
@@ -1021,7 +1024,7 @@ Parser::ParseExprAfterTypeofSizeofAlignof(const Token &OpTok,
     // operands.
     EnterExpressionEvaluationContext Unevaluated(Actions,
                                                  Action::Unevaluated);
-    Operand = ParseParenExpression(ExprType, true/*stopIfCastExpr*/,
+    Operand = ParseParenExpression(ExprType, true/*stopIfCastExpr*/, false,
                                    CastTy, RParenLoc);
     CastRange = SourceRange(LParenLoc, RParenLoc);
 
@@ -1278,7 +1281,8 @@ Parser::OwningExprResult Parser::ParseBuiltinPrimaryExpression() {
 ///
 Parser::OwningExprResult
 Parser::ParseParenExpression(ParenParseOption &ExprType, bool stopIfCastExpr,
-                             TypeTy *&CastTy, SourceLocation &RParenLoc) {
+                             bool parseAsExprList, TypeTy *&CastTy, 
+                             SourceLocation &RParenLoc) {
   assert(Tok.is(tok::l_paren) && "Not a paren expr!");
   GreaterThanIsOperatorScope G(GreaterThanIsOperator, true);
   SourceLocation OpenLoc = ConsumeParen();
@@ -1338,14 +1342,25 @@ Parser::ParseParenExpression(ParenParseOption &ExprType, bool stopIfCastExpr,
 
       // Parse the cast-expression that follows it next.
       // TODO: For cast expression with CastTy.
-      Result = ParseCastExpression(false);
+      Result = ParseCastExpression(false, false, true);
       if (!Result.isInvalid())
-        Result = Actions.ActOnCastExpr(OpenLoc, CastTy, RParenLoc,move(Result));
+        Result = Actions.ActOnCastExpr(CurScope, OpenLoc, CastTy, RParenLoc,
+                                       move(Result));
       return move(Result);
     }
 
     Diag(Tok, diag::err_expected_lbrace_in_compound_literal);
     return ExprError();
+  } else if (parseAsExprList) {
+    // Parse the expression-list.
+    ExprVector ArgExprs(Actions);
+    CommaLocsTy CommaLocs;
+
+    if (!ParseExpressionList(ArgExprs, CommaLocs)) {
+      ExprType = SimpleExpr;
+      Result = Actions.ActOnParenListExpr(OpenLoc, Tok.getLocation(), 
+                                          move_arg(ArgExprs));
+    }
   } else {
     Result = ParseExpression();
     ExprType = SimpleExpr;

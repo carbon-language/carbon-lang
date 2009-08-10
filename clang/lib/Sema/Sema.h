@@ -50,6 +50,7 @@ namespace clang {
   class Stmt;
   class Expr;
   class InitListExpr;
+  class ParenListExpr;
   class DesignatedInitExpr;
   class CallExpr;
   class DeclRefExpr;
@@ -1484,7 +1485,10 @@ public:
   virtual OwningExprResult ActOnCharacterConstant(const Token &);
   virtual OwningExprResult ActOnParenExpr(SourceLocation L, SourceLocation R,
                                           ExprArg Val);
-
+  virtual OwningExprResult ActOnParenListExpr(SourceLocation L,
+                                              SourceLocation R,
+                                              MultiExprArg Val);
+  
   /// ActOnStringLiteral - The specified tokens were lexed as pasted string
   /// fragments (e.g. "foo" "bar" L"baz").
   virtual OwningExprResult ActOnStringLiteral(const Token *Toks,
@@ -1545,8 +1549,14 @@ public:
                                          SourceLocation *CommaLocs,
                                          SourceLocation RParenLoc);
 
-  virtual OwningExprResult ActOnCastExpr(SourceLocation LParenLoc, TypeTy *Ty,
-                                         SourceLocation RParenLoc, ExprArg Op);
+  virtual OwningExprResult ActOnCastExpr(Scope *S, SourceLocation LParenLoc,
+                                         TypeTy *Ty, SourceLocation RParenLoc,
+                                         ExprArg Op);
+  
+  OwningExprResult MaybeConvertParenListExprToParenExpr(Scope *S, ExprArg ME);
+  OwningExprResult ActOnCastOfParenListExpr(Scope *S, SourceLocation LParenLoc,
+                                            SourceLocation RParenLoc, ExprArg E,
+                                            QualType Ty);
 
   virtual OwningExprResult ActOnCompoundLiteral(SourceLocation LParenLoc,
                                                 TypeTy *Ty,

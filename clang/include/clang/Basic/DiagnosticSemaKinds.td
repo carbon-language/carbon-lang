@@ -2019,6 +2019,9 @@ def err_shufflevector_argument_too_large : Error<
   "index for __builtin_shufflevector must be less than the total number "
   "of vector elements">;
 
+def err_vector_incorrect_num_initializers : Error<
+  "%select{too many|too few}0 elements in vector initialization (expected %1 elements, have %2)">;
+def err_altivec_empty_initializer : Error<"expected initializer">;
 
 def err_stack_const_level : Error<
   "level argument for a stack address builtin must be constant">;

@@ -1620,6 +1620,8 @@ QualType Sema::CheckRealImagOperand(Expr *&V, SourceLocation Loc, bool isReal) {
 Action::OwningExprResult
 Sema::ActOnPostfixUnaryOp(Scope *S, SourceLocation OpLoc,
                           tok::TokenKind Kind, ExprArg Input) {
+  // Since this might be a postfix expression, get rid of ParenListExprs.
+  Input = MaybeConvertParenListExprToParenExpr(S, move(Input));
   Expr *Arg = (Expr *)Input.get();
 
   UnaryOperator::Opcode Opc;
@@ -1738,9 +1740,12 @@ Sema::ActOnPostfixUnaryOp(Scope *S, SourceLocation OpLoc,
 Action::OwningExprResult
 Sema::ActOnArraySubscriptExpr(Scope *S, ExprArg Base, SourceLocation LLoc,
                               ExprArg Idx, SourceLocation RLoc) {
+  // Since this might be a postfix expression, get rid of ParenListExprs.
+  Base = MaybeConvertParenListExprToParenExpr(S, move(Base));
+
   Expr *LHSExp = static_cast<Expr*>(Base.get()),
        *RHSExp = static_cast<Expr*>(Idx.get());
-
+  
   if (getLangOptions().CPlusPlus &&
       (LHSExp->isTypeDependent() || RHSExp->isTypeDependent())) {
     Base.release();
@@ -1918,7 +1923,8 @@ Sema::ActOnArraySubscriptExpr(Scope *S, ExprArg Base, SourceLocation LLoc,
        << LHSExp->getSourceRange() << RHSExp->getSourceRange());
   }
   // C99 6.5.2.1p1
-  if (!IndexExpr->getType()->isIntegerType() && !IndexExpr->isTypeDependent())
+  if (!(IndexExpr->getType()->isIntegerType() &&
+        IndexExpr->getType()->isScalarType()) && !IndexExpr->isTypeDependent())
     return ExprError(Diag(LLoc, diag::err_typecheck_subscript_not_integer)
                      << IndexExpr->getSourceRange());
 
@@ -2111,9 +2117,12 @@ Sema::ActOnMemberReferenceExpr(Scope *S, ExprArg Base, SourceLocation OpLoc,
   if (SS && SS->isInvalid())
     return ExprError();
 
+  // Since this might be a postfix expression, get rid of ParenListExprs.
+  Base = MaybeConvertParenListExprToParenExpr(S, move(Base));
+
   Expr *BaseExpr = Base.takeAs<Expr>();
   assert(BaseExpr && "no record expression");
-
+  
   // Perform default conversions.
   DefaultFunctionArrayConversion(BaseExpr);
 
@@ -2683,13 +2692,17 @@ Sema::ActOnCallExpr(Scope *S, ExprArg fn, SourceLocation LParenLoc,
                     MultiExprArg args,
                     SourceLocation *CommaLocs, SourceLocation RParenLoc) {
   unsigned NumArgs = args.size();
+
+  // Since this might be a postfix expression, get rid of ParenListExprs.
+  fn = MaybeConvertParenListExprToParenExpr(S, move(fn));
+  
   Expr *Fn = fn.takeAs<Expr>();
   Expr **Args = reinterpret_cast<Expr**>(args.release());
   assert(Fn && "no function call expression");
   FunctionDecl *FDecl = NULL;
   NamedDecl *NDecl = NULL;
   DeclarationName UnqualifiedName;
-
+  
   if (getLangOptions().CPlusPlus) {
     // Determine whether this is a dependent call inside a C++ template,
     // in which case we won't do any semantic analysis now.
@@ -3090,22 +3103,90 @@ bool Sema::CheckExtVectorCast(SourceRange R, QualType DestTy, QualType SrcTy) {
 }
 
 Action::OwningExprResult
-Sema::ActOnCastExpr(SourceLocation LParenLoc, TypeTy *Ty,
+Sema::ActOnCastExpr(Scope *S, SourceLocation LParenLoc, TypeTy *Ty,
                     SourceLocation RParenLoc, ExprArg Op) {
   CastExpr::CastKind Kind = CastExpr::CK_Unknown;
   
   assert((Ty != 0) && (Op.get() != 0) &&
          "ActOnCastExpr(): missing type or expr");
 
-  Expr *castExpr = Op.takeAs<Expr>();
+  Expr *castExpr = (Expr *)Op.get();
   QualType castType = QualType::getFromOpaquePtr(Ty);
+  
+  // If the Expr being casted is a ParenListExpr, handle it specially.
+  if (isa<ParenListExpr>(castExpr))
+    return ActOnCastOfParenListExpr(S, LParenLoc, RParenLoc, move(Op),castType);
 
   if (CheckCastTypes(SourceRange(LParenLoc, RParenLoc), castType, castExpr, 
                      Kind))
     return ExprError();
+  
+  Op.release();
   return Owned(new (Context) CStyleCastExpr(castType.getNonReferenceType(),
                                             Kind, castExpr, castType, 
                                             LParenLoc, RParenLoc));
+}
+
+/// This is not an AltiVec-style cast, so turn the ParenListExpr into a sequence
+/// of comma binary operators.
+Action::OwningExprResult
+Sema::MaybeConvertParenListExprToParenExpr(Scope *S, ExprArg EA) {
+  Expr *expr = EA.takeAs<Expr>();
+  ParenListExpr *E = dyn_cast<ParenListExpr>(expr);
+  if (!E)
+    return Owned(expr);
+  
+  OwningExprResult Result(*this, E->getExpr(0));
+  
+  for (unsigned i = 1, e = E->getNumExprs(); i != e && !Result.isInvalid(); ++i)
+    Result = ActOnBinOp(S, E->getExprLoc(), tok::comma, move(Result),
+                        Owned(E->getExpr(i)));
+  
+  return ActOnParenExpr(E->getLParenLoc(), E->getRParenLoc(), move(Result));
+}
+
+Action::OwningExprResult
+Sema::ActOnCastOfParenListExpr(Scope *S, SourceLocation LParenLoc,
+                               SourceLocation RParenLoc, ExprArg Op,
+                               QualType Ty) {
+  ParenListExpr *PE = (ParenListExpr *)Op.get();
+  
+  // If this is an altivec initializer, '(' type ')' '(' init, ..., init ')' 
+  // then handle it as such.
+  if (getLangOptions().AltiVec && Ty->isVectorType()) {
+    if (PE->getNumExprs() == 0) {
+      Diag(PE->getExprLoc(), diag::err_altivec_empty_initializer);
+      return ExprError();
+    }
+
+    llvm::SmallVector<Expr *, 8> initExprs;
+    for (unsigned i = 0, e = PE->getNumExprs(); i != e; ++i)
+      initExprs.push_back(PE->getExpr(i));
+
+    // FIXME: This means that pretty-printing the final AST will produce curly
+    // braces instead of the original commas.
+    Op.release();
+    InitListExpr *E = new (Context) InitListExpr(LParenLoc, &initExprs[0], 
+                                                 initExprs.size(), RParenLoc);
+    E->setType(Ty);
+    return ActOnCompoundLiteral(LParenLoc, Ty.getAsOpaquePtr(), RParenLoc, 
+                                Owned(E));
+  } else {
+    // This is not an AltiVec-style cast, so turn the ParenListExpr into a 
+    // sequence of BinOp comma operators.
+    Op = MaybeConvertParenListExprToParenExpr(S, move(Op));
+    return ActOnCastExpr(S, LParenLoc, Ty.getAsOpaquePtr(), RParenLoc,move(Op));
+  }
+}
+
+Action::OwningExprResult Sema::ActOnParenListExpr(SourceLocation L,
+                                                  SourceLocation R,
+                                                  MultiExprArg Val) {
+  unsigned nexprs = Val.size();
+  Expr **exprs = reinterpret_cast<Expr**>(Val.release());
+  assert((exprs != 0) && "ActOnParenListExpr() missing expr list");
+  Expr *expr = new (Context) ParenListExpr(Context, L, exprs, nexprs, R);
+  return Owned(expr);
 }
 
 /// Note that lhs is not null here, even if this is the gnu "x ?: y" extension.
@@ -3132,6 +3213,8 @@ QualType Sema::CheckConditionalOperands(Expr *&Cond, Expr *&LHS, Expr *&RHS,
   }
 
   // Now check the two expressions.
+  if (LHSTy->isVectorType() || RHSTy->isVectorType())
+    return CheckVectorOperands(QuestionLoc, LHS, RHS);
 
   // If both operands have arithmetic type, do the usual arithmetic conversions
   // to find a common type: C99 6.5.15p3,5.

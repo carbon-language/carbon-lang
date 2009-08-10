@@ -387,6 +387,10 @@ OverflowChecking("ftrapv",
                  llvm::cl::init(false));
 
 static llvm::cl::opt<bool>
+AltiVec("faltivec", llvm::cl::desc("Enable AltiVec vector initializer syntax"),
+                    llvm::cl::init(false));
+
+static llvm::cl::opt<bool>
 ObjCSenderDispatch("fobjc-sender-dependent-dispatch",
 				 llvm::cl::desc("Enable sender-dependent dispatch for"
 					 "Objective-C messages"), llvm::cl::init(false));
@@ -501,6 +505,9 @@ static void InitializeLangOptions(LangOptions &Options, LangKind LK){
   
   if (ObjCEnableGCBitmapPrint)
     Options.ObjCGCBitmapPrint = 1;
+  
+  if (AltiVec)
+    Options.AltiVec = 1;
   
   Options.setVisibilityMode(SymbolVisibility);
   Options.OverflowChecking = OverflowChecking;

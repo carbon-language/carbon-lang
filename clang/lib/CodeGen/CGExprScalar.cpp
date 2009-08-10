@@ -475,7 +475,7 @@ Value *ScalarExprEmitter::EmitScalarConversion(Value *Src, QualType SrcType,
   }
   
   // A scalar can be splatted to an extended vector of the same element type
-  if (DstType->isExtVectorType() && !isa<VectorType>(SrcType)) {
+  if (DstType->isExtVectorType() && !SrcType->isVectorType()) {
     // Cast the scalar to element type
     QualType EltTy = DstType->getAsExtVectorType()->getElementType();
     llvm::Value *Elt = EmitScalarConversion(Src, SrcType, EltTy);

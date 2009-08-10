@@ -341,6 +341,9 @@ Sema::CXXScopeTy *Sema::ActOnCXXNestedNameSpecifier(Scope *S,
 Action::OwningExprResult
 Sema::ActOnCXXEnterMemberScope(Scope *S, CXXScopeSpec &SS, ExprArg Base,
                                tok::TokenKind OpKind) {
+  // Since this might be a postfix expression, get rid of ParenListExprs.
+  Base = MaybeConvertParenListExprToParenExpr(S, move(Base));
+
   Expr *BaseExpr = (Expr*)Base.get();
   assert(BaseExpr && "no record expansion");
 
