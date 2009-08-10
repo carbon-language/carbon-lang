@@ -699,6 +699,8 @@ void CodeGenModule::DeferredCopyConstructorToEmit(GlobalDecl CopyCtorDecl) {
   for (CXXRecordDecl::field_iterator Field = ClassDecl->field_begin(),
        FieldEnd = ClassDecl->field_end();
        Field != FieldEnd; ++Field) {
+    assert(!(*Field)->isAnonymousStructOrUnion() &&
+           "FIXME. Anonymous union NYI - DeferredCopyConstructorToEmit");
     QualType FieldType = Context.getCanonicalType((*Field)->getType());
     if (const ArrayType *Array = Context.getAsArrayType(FieldType))
       FieldType = Array->getElementType();

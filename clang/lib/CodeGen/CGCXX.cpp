@@ -855,7 +855,8 @@ void CodeGenFunction::SynthesizeCXXCopyConstructor(const CXXConstructorDecl *CD,
     // FIXME. How about copying arrays!
     assert(!getContext().getAsArrayType(FieldType) &&
            "FIXME. Copying arrays NYI");
-    
+    assert(!Field->isAnonymousStructOrUnion() &&
+           "FIXME. anonymous data member NYI in copy constructor synthesis");
     if (const RecordType *FieldClassType = FieldType->getAs<RecordType>()) {
       CXXRecordDecl *FieldClassDecl
         = cast<CXXRecordDecl>(FieldClassType->getDecl());
@@ -904,7 +905,12 @@ void CodeGenFunction::EmitCtorPrologue(const CXXConstructorDecl *CD) {
       QualType FieldType = getContext().getCanonicalType((Field)->getType());
       assert(!getContext().getAsArrayType(FieldType) 
              && "FIXME. Field arrays initialization unsupported");
-
+      DeclContext *Ctx = Field->getDeclContext();
+      RecordDecl *Record = cast<RecordDecl>(Ctx);
+      assert(!Record->isAnonymousStructOrUnion() &&
+             "FIXME. anonymous union initializer NYI in default constructor");
+      (void)Record;
+      
       LoadOfThis = LoadCXXThis();
       LValue LHS = EmitLValueForField(LoadOfThis, Field, false, 0);
       if (FieldType->getAs<RecordType>()) {
@@ -921,10 +927,7 @@ void CodeGenFunction::EmitCtorPrologue(const CXXConstructorDecl *CD) {
       assert(Member->getNumArgs() == 1 && "Initializer count must be 1 only");
       Expr *RhsExpr = *Member->arg_begin();
       llvm::Value *RHS = EmitScalarExpr(RhsExpr, true);
-      if (LHS.isBitfield())
-        EmitStoreThroughBitfieldLValue(RValue::get(RHS), LHS, FieldType, 0);
-      else
-        EmitStoreThroughLValue(RValue::get(RHS), LHS, FieldType);
+      EmitStoreThroughLValue(RValue::get(RHS), LHS, FieldType);
     }
   }
 

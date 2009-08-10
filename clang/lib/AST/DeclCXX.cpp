@@ -583,7 +583,7 @@ CXXConstructorDecl::setBaseOrMemberInitializers(
     if (Member->isBaseInitializer())
       AllBaseFields[Member->getBaseClass()->getAs<RecordType>()] = Member;
     else
-     AllBaseFields[Member->getMember()] = Member;
+      AllBaseFields[Member->getMember()] = Member;
   }
     
   // Push virtual bases before others.
@@ -635,7 +635,23 @@ CXXConstructorDecl::setBaseOrMemberInitializers(
   // non-static data members.
   for (CXXRecordDecl::field_iterator Field = ClassDecl->field_begin(),
        E = ClassDecl->field_end(); Field != E; ++Field) {
-    if (CXXBaseOrMemberInitializer *Value = AllBaseFields.lookup(*Field)) {
+    if ((*Field)->isAnonymousStructOrUnion()) {
+      if (const RecordType *FieldClassType = 
+            Field->getType()->getAs<RecordType>()) {
+        CXXRecordDecl *FieldClassDecl
+          = cast<CXXRecordDecl>(FieldClassType->getDecl());
+        for(RecordDecl::field_iterator FA = FieldClassDecl->field_begin(),
+            EA = FieldClassDecl->field_end(); FA != EA; FA++) {
+          if (CXXBaseOrMemberInitializer *Value = AllBaseFields.lookup(*FA)) {
+            AllToInit.push_back(Value);
+            break;
+          }
+        }
+      }
+      continue;
+    }
+    if (CXXBaseOrMemberInitializer *Value = 
+          AllBaseFields.lookup(*Field)) {
       AllToInit.push_back(Value);
       continue;
     }
