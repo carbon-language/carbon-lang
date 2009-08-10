@@ -83,7 +83,7 @@ MDNode *MDNode::get(LLVMContext &Context, Value*const* Vals, unsigned NumVals) {
   for (unsigned i = 0; i < NumVals; ++i)
     V.push_back(Vals[i]);
   
-  return pImpl->MDNodeSet.getOrCreate(Type::MetadataTy, V);
+  return pImpl->MDNodes.getOrCreate(Type::MetadataTy, V);
 }
 
 /// dropAllReferences - Remove all uses and clear node vector.

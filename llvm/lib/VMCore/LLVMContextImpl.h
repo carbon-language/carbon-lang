@@ -105,7 +105,7 @@ struct LLVMContextImpl {
   
   ValueMap<char, Type, ConstantAggregateZero> AggZeroConstants;
 
-  ValueMap<std::vector<Value*>, Type, MDNode> MDNodeSet;
+  ValueMap<std::vector<Value*>, Type, MDNode> MDNodes;
   
   typedef ValueMap<std::vector<Constant*>, ArrayType, 
     ConstantArray, true /*largekey*/> ArrayConstantsTy;
