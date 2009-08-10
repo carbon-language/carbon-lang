@@ -373,6 +373,10 @@ public:
                                     const FunctionDecl *FD,
                                     llvm::Function *Fn,
                                     const FunctionArgList &Args);
+  void SynthesizeDefaultConstructor(const CXXConstructorDecl *CD,
+                                    const FunctionDecl *FD,
+                                    llvm::Function *Fn,
+                                    const FunctionArgList &Args);
   
   /// EmitDtorEpilogue - Emit all code that comes at the end of class's
   /// destructor. This is to call destructors on members and base classes 

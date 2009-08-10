@@ -251,9 +251,7 @@ void CodeGenFunction::GenerateCode(const FunctionDecl *FD,
       else {
         assert(!ClassDecl->hasUserDeclaredConstructor() &&
                "bogus constructor is being synthesize");
-        StartFunction(FD, FD->getResultType(), Fn, Args, SourceLocation());
-        EmitCtorPrologue(CD);
-        FinishFunction();
+        SynthesizeDefaultConstructor(CD, FD, Fn, Args);
       }
     }
     

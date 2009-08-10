@@ -791,7 +791,18 @@ void CodeGenFunction::EmitClassMemberwiseCopy(
              Callee, CallArgs, BaseCopyCtor);
   }
 }
-  
+
+/// SynthesizeDefaultConstructor - synthesize a default constructor
+void 
+CodeGenFunction::SynthesizeDefaultConstructor(const CXXConstructorDecl *CD,
+                                              const FunctionDecl *FD,
+                                              llvm::Function *Fn,
+                                              const FunctionArgList &Args) {
+  StartFunction(FD, FD->getResultType(), Fn, Args, SourceLocation());
+  EmitCtorPrologue(CD);
+  FinishFunction();
+}
+
 /// SynthesizeCXXCopyConstructor - This routine implicitly defines body of a copy
 /// constructor, in accordance with section 12.8 (p7 and p8) of C++03
 /// The implicitly-defined copy constructor for class X performs a memberwise 
