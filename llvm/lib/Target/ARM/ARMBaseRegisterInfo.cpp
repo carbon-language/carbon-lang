@@ -1297,10 +1297,13 @@ emitEpilogue(MachineFunction &MF, MachineBasicBlock &MBB) const {
                                     ARMCC::AL, 0, TII);
         } else {
           // Thumb2 or ARM.
-          unsigned MOVrOpc = isARM ? ARM::MOVr : ARM::t2MOVr;
-          BuildMI(MBB, MBBI, dl, TII.get(MOVrOpc), ARM::SP)
-            .addReg(FramePtr)
-            .addImm((unsigned)ARMCC::AL).addReg(0).addReg(0);
+          if (isARM) 
+            BuildMI(MBB, MBBI, dl, TII.get(ARM::MOVr), ARM::SP)
+              .addReg(FramePtr)
+              .addImm((unsigned)ARMCC::AL).addReg(0).addReg(0);
+          else
+            BuildMI(MBB, MBBI, dl, TII.get(ARM::tMOVgpr2gpr), ARM::SP)
+              .addReg(FramePtr);
         }
       }
     } else if (NumBytes)
