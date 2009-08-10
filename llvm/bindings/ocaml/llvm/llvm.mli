@@ -470,7 +470,7 @@ external const_of_int64 : lltype -> Int64.t -> bool -> llvalue
                         = "llvm_const_of_int64"
 
 (** [const_float ty n] returns the floating point constant of type [ty] and
-    value [n]. See the method [llvm::ConstantInt::get]. *)
+    value [n]. See the method [llvm::ConstantFP::get]. *)
 external const_float : lltype -> float -> llvalue = "llvm_const_float"
 
 
