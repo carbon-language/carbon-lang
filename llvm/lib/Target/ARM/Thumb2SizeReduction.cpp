@@ -71,9 +71,9 @@ namespace {
     { ARM::t2MUL,   0,            ARM::tMUL,     0,   0,    0,   1,  0,0, 0 },
     { ARM::t2MVNr,  ARM::tMVN,    0,             0,   0,    1,   0,  0,0, 0 },
     { ARM::t2ORRrr, 0,            ARM::tORR,     0,   0,    0,   1,  0,0, 0 },
-    { ARM::t2REV,   ARM::tREV,    0,             0,   0,    1,   0,  0,0, 0 },
-    { ARM::t2REV16, ARM::tREV16,  0,             0,   0,    1,   0,  0,0, 0 },
-    { ARM::t2REVSH, ARM::tREVSH,  0,             0,   0,    1,   0,  0,0, 0 },
+    { ARM::t2REV,   ARM::tREV,    0,             0,   0,    1,   0,  1,0, 0 },
+    { ARM::t2REV16, ARM::tREV16,  0,             0,   0,    1,   0,  1,0, 0 },
+    { ARM::t2REVSH, ARM::tREVSH,  0,             0,   0,    1,   0,  1,0, 0 },
     { ARM::t2RORrr, 0,            ARM::tROR,     0,   0,    0,   1,  0,0, 0 },
     // FIXME: T2RSBri immediate must be zero. Also need entry for T2RSBS
     //{ ARM::t2RSBri, ARM::tRSB,    0,             0,   0,    1,   0,  0,0, 0 },
