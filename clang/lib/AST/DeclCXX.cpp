@@ -650,8 +650,7 @@ CXXConstructorDecl::setBaseOrMemberInitializers(
       }
       continue;
     }
-    if (CXXBaseOrMemberInitializer *Value = 
-          AllBaseFields.lookup(*Field)) {
+    if (CXXBaseOrMemberInitializer *Value = AllBaseFields.lookup(*Field)) {
       AllToInit.push_back(Value);
       continue;
     }
