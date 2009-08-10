@@ -61,6 +61,10 @@ namespace llvm {
     };
 
     unsigned char flags;
+    union {
+      MachineInstr *copy;
+      unsigned reg;
+    } cr;
 
   public:
     /// Holds information about individual kills.
@@ -83,26 +87,52 @@ namespace llvm {
     
     /// The index of the defining instruction (if isDefAccurate() returns true).
     unsigned def;
-    MachineInstr *copy;
+
     KillSet kills;
 
     VNInfo()
-      : flags(IS_UNUSED), id(~1U), def(0), copy(0) {}
+      : flags(IS_UNUSED), id(~1U), def(0) { cr.copy = 0; }
 
     /// VNInfo constructor.
     /// d is presumed to point to the actual defining instr. If it doesn't
     /// setIsDefAccurate(false) should be called after construction.
     VNInfo(unsigned i, unsigned d, MachineInstr *c)
-      : flags(IS_DEF_ACCURATE), id(i), def(d), copy(c) {}
+      : flags(IS_DEF_ACCURATE), id(i), def(d) { cr.copy = c; }
 
     /// VNInfo construtor, copies values from orig, except for the value number.
     VNInfo(unsigned i, const VNInfo &orig)
-      : flags(orig.flags), id(i), def(orig.def), copy(orig.copy),
-        kills(orig.kills) {}
+      : flags(orig.flags), cr(orig.cr), id(i), def(orig.def), kills(orig.kills)
+    { }
+
+    /// Copy from the parameter into this VNInfo.
+    void copyFrom(VNInfo &src) {
+      flags = src.flags;
+      cr = src.cr;
+      def = src.def;
+      kills = src.kills;
+    }
 
     /// Used for copying value number info.
     unsigned getFlags() const { return flags; }
     void setFlags(unsigned flags) { this->flags = flags; }
+
+    /// For a register interval, if this VN was definied by a copy instr
+    /// getCopy() returns a pointer to it, otherwise returns 0.
+    /// For a stack interval the behaviour of this method is undefined.
+    MachineInstr* getCopy() const { return cr.copy; }
+    /// For a register interval, set the copy member.
+    /// This method should not be called on stack intervals as it may lead to
+    /// undefined behavior.
+    void setCopy(MachineInstr *c) { cr.copy = c; }
+    
+    /// For a stack interval, returns the reg which this stack interval was
+    /// defined from.
+    /// For a register interval the behaviour of this method is undefined. 
+    unsigned getReg() const { return cr.reg; }
+    /// For a stack interval, set the defining register.
+    /// This method should not be called on register intervals as it may lead
+    /// to undefined behaviour.
+    void setReg(unsigned reg) { cr.reg = reg; }
 
     /// Returns true if one or more kills are PHI nodes.
     bool hasPHIKill() const { return flags & HAS_PHI_KILL; }
@@ -122,7 +152,7 @@ namespace llvm {
       else
         flags &= ~REDEF_BY_EC;
     }
-  
+   
     /// Returns true if this value is defined by a PHI instruction (or was,
     /// PHI instrucions may have been eliminated).
     bool isPHIDef() const { return flags & IS_PHI_DEF; }
@@ -316,15 +346,6 @@ namespace llvm {
     }
     inline const VNInfo *getValNumInfo(unsigned ValNo) const {
       return valnos[ValNo];
-    }
-    
-    /// copyValNumInfo - Copy the value number info for one value number to
-    /// another.
-    void copyValNumInfo(VNInfo *DstValNo, const VNInfo *SrcValNo) {
-      DstValNo->def = SrcValNo->def;
-      DstValNo->copy = SrcValNo->copy;
-      DstValNo->setFlags(SrcValNo->getFlags());
-      DstValNo->kills = SrcValNo->kills;
     }
 
     /// getNextValue - Create a new value number and return it.  MIIdx specifies

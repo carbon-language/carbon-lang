@@ -790,7 +790,7 @@ void StrongPHIElimination::ScheduleCopies(MachineBasicBlock* MBB,
                         true);
       
       LiveRange R = LI.addLiveRangeToEndOfBlock(I->first, I->second);
-      R.valno->copy = I->second;
+      R.valno->setCopy(I->second);
       R.valno->def =
                   LiveIntervals::getDefIndex(LI.getInstructionIndex(I->second));
     }
@@ -974,7 +974,7 @@ bool StrongPHIElimination::runOnMachineFunction(MachineFunction &Fn) {
 
           LiveRange R = LI.addLiveRangeToEndOfBlock(I->first,
                                             --SI->second->getFirstTerminator());
-          R.valno->copy = --SI->second->getFirstTerminator();
+          R.valno->setCopy(--SI->second->getFirstTerminator());
           R.valno->def = LiveIntervals::getDefIndex(instrIdx);
           
           DOUT << "Renaming failed: " << SI->first << " -> "

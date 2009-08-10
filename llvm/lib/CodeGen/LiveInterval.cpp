@@ -712,7 +712,7 @@ VNInfo* LiveInterval::MergeValueNumberInto(VNInfo *V1, VNInfo *V2) {
 
   // Make sure V2 is smaller than V1.
   if (V1->id < V2->id) {
-    copyValNumInfo(V1, V2);
+    V1->copyFrom(*V2);
     std::swap(V1, V2);
   }
 

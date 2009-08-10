@@ -740,14 +740,14 @@ void LiveIntervals::handleVirtualRegisterDef(MachineBasicBlock *mbb,
 
       // The new value number (#1) is defined by the instruction we claimed
       // defined value #0.
-      VNInfo *ValNo = interval.getNextValue(OldValNo->def, OldValNo->copy,
+      VNInfo *ValNo = interval.getNextValue(OldValNo->def, OldValNo->getCopy(),
                                             false, // update at *
                                             VNInfoAllocator);
       ValNo->setFlags(OldValNo->getFlags()); // * <- updating here
 
       // Value#0 is now defined by the 2-addr instruction.
       OldValNo->def  = RedefIndex;
-      OldValNo->copy = 0;
+      OldValNo->setCopy(0);
       if (MO.isEarlyClobber())
         OldValNo->setHasRedefByEC(true);
       
@@ -1129,21 +1129,21 @@ LiveInterval* LiveIntervals::dupInterval(LiveInterval *li) {
 /// getVNInfoSourceReg - Helper function that parses the specified VNInfo
 /// copy field and returns the source register that defines it.
 unsigned LiveIntervals::getVNInfoSourceReg(const VNInfo *VNI) const {
-  if (!VNI->copy)
+  if (!VNI->getCopy())
     return 0;
 
-  if (VNI->copy->getOpcode() == TargetInstrInfo::EXTRACT_SUBREG) {
+  if (VNI->getCopy()->getOpcode() == TargetInstrInfo::EXTRACT_SUBREG) {
     // If it's extracting out of a physical register, return the sub-register.
-    unsigned Reg = VNI->copy->getOperand(1).getReg();
+    unsigned Reg = VNI->getCopy()->getOperand(1).getReg();
     if (TargetRegisterInfo::isPhysicalRegister(Reg))
-      Reg = tri_->getSubReg(Reg, VNI->copy->getOperand(2).getImm());
+      Reg = tri_->getSubReg(Reg, VNI->getCopy()->getOperand(2).getImm());
     return Reg;
-  } else if (VNI->copy->getOpcode() == TargetInstrInfo::INSERT_SUBREG ||
-             VNI->copy->getOpcode() == TargetInstrInfo::SUBREG_TO_REG)
-    return VNI->copy->getOperand(2).getReg();
+  } else if (VNI->getCopy()->getOpcode() == TargetInstrInfo::INSERT_SUBREG ||
+             VNI->getCopy()->getOpcode() == TargetInstrInfo::SUBREG_TO_REG)
+    return VNI->getCopy()->getOperand(2).getReg();
 
   unsigned SrcReg, DstReg, SrcSubReg, DstSubReg;
-  if (tii_->isMoveInstr(*VNI->copy, SrcReg, DstReg, SrcSubReg, DstSubReg))
+  if (tii_->isMoveInstr(*VNI->getCopy(), SrcReg, DstReg, SrcSubReg, DstSubReg))
     return SrcReg;
   llvm_unreachable("Unrecognized copy instruction!");
   return 0;

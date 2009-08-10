@@ -447,7 +447,7 @@ PBQPRegAlloc::CoalesceMap PBQPRegAlloc::findCoalesces() {
                vniItr != vniEnd; ++vniItr) {
 
           // We want to make sure we skip the copy instruction itself.
-          if ((*vniItr)->copy == instr)
+          if ((*vniItr)->getCopy() == instr)
             continue;
 
           if (srcLI->liveAt((*vniItr)->def)) {
@@ -689,7 +689,7 @@ bool PBQPRegAlloc::mapPBQPToRegAlloc(const PBQP::Solution &solution) {
 
   // Clear the existing allocation.
   vrm->clearAllVirt();
-
+  
   // Iterate over the nodes mapping the PBQP solution to a register assignment.
   for (unsigned node = 0; node < node2LI.size(); ++node) {
     unsigned virtReg = node2LI[node]->reg,

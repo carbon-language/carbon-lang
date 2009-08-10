@@ -119,7 +119,7 @@ bool SimpleRegisterCoalescing::AdjustCopiesBackFrom(LiveInterval &IntA,
   // Get the location that B is defined at.  Two options: either this value has
   // an unknown definition point or it is defined at CopyIdx.  If unknown, we 
   // can't process it.
-  if (!BValNo->copy) return false;
+  if (!BValNo->getCopy()) return false;
   assert(BValNo->def == CopyIdx && "Copy doesn't define the value?");
   
   // AValNo is the value number in A that defines the copy, A3 in the example.
@@ -194,7 +194,7 @@ bool SimpleRegisterCoalescing::AdjustCopiesBackFrom(LiveInterval &IntA,
   // that defines this value #'. Update the the valnum with the new defining
   // instruction #.
   BValNo->def  = FillerStart;
-  BValNo->copy = NULL;
+  BValNo->setCopy(0);
   
   // Okay, we can merge them.  We need to insert a new liverange:
   // [ValLR.end, BLR.begin) of either value number, then we merge the
@@ -307,7 +307,7 @@ bool SimpleRegisterCoalescing::RemoveCopyByCommutingDef(LiveInterval &IntA,
   // Get the location that B is defined at.  Two options: either this value has
   // an unknown definition point or it is defined at CopyIdx.  If unknown, we 
   // can't process it.
-  if (!BValNo->copy) return false;
+  if (!BValNo->getCopy()) return false;
   assert(BValNo->def == CopyIdx && "Copy doesn't define the value?");
   
   // AValNo is the value number in A that defines the copy, A3 in the example.
@@ -463,7 +463,7 @@ bool SimpleRegisterCoalescing::RemoveCopyByCommutingDef(LiveInterval &IntA,
   // is updated. Kills are also updated.
   VNInfo *ValNo = BValNo;
   ValNo->def = AValNo->def;
-  ValNo->copy = NULL;
+  ValNo->setCopy(0);
   for (unsigned j = 0, ee = ValNo->kills.size(); j != ee; ++j) {
     unsigned Kill = ValNo->kills[j].killIdx;
     if (Kill != BLR->end)
@@ -637,15 +637,15 @@ bool SimpleRegisterCoalescing::ReMaterializeTrivialDef(LiveInterval &SrcInt,
 
   unsigned DefIdx = li_->getDefIndex(CopyIdx);
   const LiveRange *DLR= li_->getInterval(DstReg).getLiveRangeContaining(DefIdx);
-  DLR->valno->copy = NULL;
+  DLR->valno->setCopy(0);
   // Don't forget to update sub-register intervals.
   if (TargetRegisterInfo::isPhysicalRegister(DstReg)) {
     for (const unsigned* SR = tri_->getSubRegisters(DstReg); *SR; ++SR) {
       if (!li_->hasInterval(*SR))
         continue;
       DLR = li_->getInterval(*SR).getLiveRangeContaining(DefIdx);
-      if (DLR && DLR->valno->copy == CopyMI)
-        DLR->valno->copy = NULL;
+      if (DLR && DLR->valno->getCopy() == CopyMI)
+        DLR->valno->setCopy(0);
     }
   }
 
@@ -682,8 +682,8 @@ bool SimpleRegisterCoalescing::ReMaterializeTrivialDef(LiveInterval &SrcInt,
     if (MO.isDef() && li_->hasInterval(MO.getReg())) {
       unsigned Reg = MO.getReg();
       DLR = li_->getInterval(Reg).getLiveRangeContaining(DefIdx);
-      if (DLR && DLR->valno->copy == CopyMI)
-        DLR->valno->copy = NULL;
+      if (DLR && DLR->valno->getCopy() == CopyMI)
+        DLR->valno->setCopy(0);
     }
   }
 
@@ -791,7 +791,7 @@ SimpleRegisterCoalescing::UpdateRegDefsUses(unsigned SrcReg, unsigned DstReg,
       unsigned DefIdx = li_->getDefIndex(li_->getInstructionIndex(UseMI));
       if (const LiveRange *DLR = LI.getLiveRangeContaining(DefIdx)) {
         if (DLR->valno->def == DefIdx)
-          DLR->valno->copy = UseMI;
+          DLR->valno->setCopy(UseMI);
       }
     }
   }
@@ -1653,7 +1653,7 @@ bool SimpleRegisterCoalescing::JoinCopy(CopyRec &TheCopy, bool &Again) {
       for (LiveInterval::const_vni_iterator I = SavedLI->vni_begin(),
              E = SavedLI->vni_end(); I != E; ++I) {
         const VNInfo *ValNo = *I;
-        VNInfo *NewValNo = RealInt.getNextValue(ValNo->def, ValNo->copy,
+        VNInfo *NewValNo = RealInt.getNextValue(ValNo->def, ValNo->getCopy(),
                                                 false, // updated at *
                                                 li_->getVNInfoAllocator());
         NewValNo->setFlags(ValNo->getFlags()); // * updated here.
@@ -1833,7 +1833,7 @@ bool SimpleRegisterCoalescing::RangeIsDefinedByCopyFromReg(LiveInterval &li,
         DstReg == li.reg && SrcReg == Reg) {
       // Cache computed info.
       LR->valno->def  = LR->start;
-      LR->valno->copy = DefMI;
+      LR->valno->setCopy(DefMI);
       return true;
     }
   }
@@ -1986,7 +1986,7 @@ bool SimpleRegisterCoalescing::SimpleJoin(LiveInterval &LHS, LiveInterval &RHS){
   // value number is defined where the RHS value number was.
   const VNInfo *VNI = RHS.getValNumInfo(0);
   LHSValNo->def  = VNI->def;
-  LHSValNo->copy = VNI->copy;
+  LHSValNo->setCopy(VNI->getCopy());
   
   // Okay, the final step is to loop over the RHS live intervals, adding them to
   // the LHS.
@@ -2159,7 +2159,7 @@ SimpleRegisterCoalescing::JoinIntervals(LiveInterval &LHS, LiveInterval &RHS,
     for (LiveInterval::vni_iterator i = LHS.vni_begin(), e = LHS.vni_end();
          i != e; ++i) {
       VNInfo *VNI = *i;
-      if (VNI->isUnused() || VNI->copy == 0)  // Src not defined by a copy?
+      if (VNI->isUnused() || VNI->getCopy() == 0)  // Src not defined by a copy?
         continue;
       
       // DstReg is known to be a register in the LHS interval.  If the src is
@@ -2176,7 +2176,7 @@ SimpleRegisterCoalescing::JoinIntervals(LiveInterval &LHS, LiveInterval &RHS,
     for (LiveInterval::vni_iterator i = RHS.vni_begin(), e = RHS.vni_end();
          i != e; ++i) {
       VNInfo *VNI = *i;
-      if (VNI->isUnused() || VNI->copy == 0)  // Src not defined by a copy?
+      if (VNI->isUnused() || VNI->getCopy() == 0)  // Src not defined by a copy?
         continue;
       
       // DstReg is known to be a register in the RHS interval.  If the src is

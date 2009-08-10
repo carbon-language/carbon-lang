@@ -741,7 +741,7 @@ void PreAllocSplitting::ReconstructLiveInterval(LiveInterval* LI) {
     unsigned SrcReg, DstReg, SrcSubIdx, DstSubIdx;
     if (TII->isMoveInstr(*DI, SrcReg, DstReg, SrcSubIdx, DstSubIdx))
       if (DstReg == LI->reg)
-        NewVN->copy = &*DI;
+        NewVN->setCopy(&*DI);
     
     NewVNs[&*DI] = NewVN;
   }
