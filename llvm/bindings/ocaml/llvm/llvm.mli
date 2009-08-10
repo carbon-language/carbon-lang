@@ -325,8 +325,8 @@ external param_types : lltype -> lltype array = "llvm_param_types"
     array [tys]. See the method [llvm::StructType::get]. *)
 external struct_type : lltype array -> lltype = "llvm_struct_type"
 
-(** [struct_type tys] returns the packed structure type containing in the types
-    in the array [tys]. See the method [llvm::StructType::get]. *)
+(** [packed_struct_type tys] returns the packed structure type containing in the
+    types in the array [tys]. See the method [llvm::StructType::get]. *)
 external packed_struct_type : lltype array -> lltype = "llvm_packed_struct_type"
 
 (** [element_types sty] returns the constituent types of the struct type [sty].
