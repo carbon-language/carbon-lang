@@ -132,7 +132,7 @@ public:
 /// @name Member Variables
 /// @{
 private:
-  LLVMContext& Context;    ///< The LLVMContext from which types and
+  LLVMContext& Context;          ///< The LLVMContext from which types and
                                  ///< constants are allocated.
   GlobalListType GlobalList;     ///< The Global Variables in the module
   FunctionListType FunctionList; ///< The Functions in the module
