@@ -22,19 +22,25 @@ namespace llvm {
   class Twine;
 
   /// An error handler callback.
-  typedef void (*llvm_error_handler_t)(const std::string& reason);
+  typedef void (*llvm_error_handler_t)(void *user_data,
+                                       const std::string& reason);
 
-  /// Installs a new error handler: this function will be called whenever a
-  /// serious error is encountered by LLVM.
+  /// llvm_instal_error_handler - Installs a new error handler to be used
+  /// whenever a serious (non-recoverable) error is encountered by LLVM.
+  ///
   /// If you are using llvm_start_multithreaded, you should register the handler
   /// before doing that.
   ///
   /// If no error handler is installed the default is to print the error message
-  /// to stderr, and call exit(1).
-  /// If an error handler is installed then it is the handler's responsibility
-  /// to log the message, it will no longer be printed to stderr.
-  /// If the error handler returns, then exit(1) will be called.
-  void llvm_install_error_handler(llvm_error_handler_t handler);
+  /// to stderr, and call exit(1).  If an error handler is installed then it is
+  /// the handler's responsibility to log the message, it will no longer be
+  /// printed to stderr.  If the error handler returns, then exit(1) will be
+  /// called.
+  ///
+  /// \param user_data - An argument which will be passed to the install error
+  /// handler.
+  void llvm_install_error_handler(llvm_error_handler_t handler,
+                                  void *user_data = 0);
 
   /// Restores default error handling behaviour.
   /// This must not be called between llvm_start_multithreaded() and
