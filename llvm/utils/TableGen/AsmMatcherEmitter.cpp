@@ -876,6 +876,53 @@ static void EmitClassifyOperand(CodeGenTarget &Target,
   OS << "}\n\n";
 }
 
+/// EmitIsSubclass - Emit the subclass predicate function.
+static void EmitIsSubclass(CodeGenTarget &Target,
+                           std::vector<ClassInfo*> &Infos,
+                           raw_ostream &OS) {
+  OS << "/// IsSubclass - Compute whether \\arg A is a subclass of \\arg B.\n";
+  OS << "static bool IsSubclass(MatchClassKind A, MatchClassKind B) {\n";
+  OS << "  if (A == B)\n";
+  OS << "    return true;\n\n";
+
+  OS << "  switch (A) {\n";
+  OS << "  default:\n";
+  OS << "    return false;\n";
+  for (std::vector<ClassInfo*>::iterator it = Infos.begin(), 
+         ie = Infos.end(); it != ie; ++it) {
+    ClassInfo &A = **it;
+
+    if (A.Kind != ClassInfo::Token) {
+      std::vector<StringRef> SuperClasses;
+      for (std::vector<ClassInfo*>::iterator it = Infos.begin(), 
+             ie = Infos.end(); it != ie; ++it) {
+        ClassInfo &B = **it;
+
+        if (&A != &B && A.getRootClass() == B.getRootClass() && A < B)
+          SuperClasses.push_back(B.Name);
+      }
+
+      if (SuperClasses.empty())
+        continue;
+
+      OS << "\n  case " << A.Name << ":\n";
+
+      if (SuperClasses.size() == 1) {
+        OS << "    return B == " << SuperClasses.back() << ";\n\n";
+        continue;
+      }
+
+      OS << "      switch (B) {\n";
+      OS << "      default: return false;\n";
+      for (unsigned i = 0, e = SuperClasses.size(); i != e; ++i)
+        OS << "      case " << SuperClasses[i] << ": return true;\n";
+      OS << "      }\n\n";
+    }
+  }
+  OS << "  }\n";
+  OS << "}\n\n";
+}
+
 typedef std::pair<std::string, std::string> StringPair;
 
 /// FindFirstNonCommonLetter - Find the first character in the keys of the
@@ -1115,6 +1162,9 @@ void AsmMatcherEmitter::run(raw_ostream &OS) {
   // Emit the routine to classify an operand.
   EmitClassifyOperand(Target, Info.Classes, OS);
 
+  // Emit the subclass predicate routine.
+  EmitIsSubclass(Target, Info.Classes, OS);
+
   // Finally, build the match function.
 
   size_t MaxNumOperands = 0;
@@ -1188,7 +1238,8 @@ void AsmMatcherEmitter::run(raw_ostream &OS) {
      << "*ie = MatchTable + " << Info.Instructions.size()
      << "; it != ie; ++it) {\n";
   for (unsigned i = 0; i != MaxNumOperands; ++i) {
-    OS << "    if (Classes[" << i << "] != it->Classes[" << i << "])\n";
+    OS << "    if (!IsSubclass(Classes[" 
+       << i << "], it->Classes[" << i << "]))\n";
     OS << "      continue;\n";
   }
   OS << "\n";
