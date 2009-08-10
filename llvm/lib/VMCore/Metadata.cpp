@@ -76,11 +76,6 @@ MDNode::MDNode(Value*const* Vals, unsigned NumVals)
   }
 }
 
-void MDNode::Profile(FoldingSetNodeID &ID) const {
-  for (const_elem_iterator I = elem_begin(), E = elem_end(); I != E; ++I)
-    ID.AddPointer(*I);
-}
-
 MDNode *MDNode::get(LLVMContext &Context, Value*const* Vals, unsigned NumVals) {
   LLVMContextImpl *pImpl = Context.pImpl;
   std::vector<Value*> V;

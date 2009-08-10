@@ -19,7 +19,6 @@
 #include "llvm/User.h"
 #include "llvm/Type.h"
 #include "llvm/OperandTraits.h"
-#include "llvm/ADT/FoldingSet.h"
 #include "llvm/ADT/SmallVector.h"
 #include "llvm/ADT/ilist_node.h"
 #include "llvm/Support/ErrorHandling.h"
@@ -110,7 +109,7 @@ public:
 /// MDNode - a tuple of other values.
 /// These contain a list of the values that represent the metadata. 
 /// MDNode is always unnamed.
-class MDNode : public MetadataBase, public FoldingSetNode {
+class MDNode : public MetadataBase {
   MDNode(const MDNode &);                // DO NOT IMPLEMENT
   void *operator new(size_t, unsigned);  // DO NOT IMPLEMENT
   // getNumOperands - Make this only available for private uses.
@@ -169,10 +168,6 @@ public:
   virtual bool isNullValue() const {
     return false;
   }
-
-  /// Profile - calculate a unique identifier for this MDNode to collapse
-  /// duplicates
-  void Profile(FoldingSetNodeID &ID) const;
 
   virtual void replaceUsesOfWithOnConstant(Value *From, Value *To, Use *U) {
     llvm_unreachable("This should never be called because MDNodes have no ops");
@@ -286,10 +281,6 @@ public:
   virtual bool isNullValue() const {
     return false;
   }
-
-  /// Profile - calculate a unique identifier for this MDNode to collapse
-  /// duplicates
-  void Profile(FoldingSetNodeID &ID) const;
 
   virtual void replaceUsesOfWithOnConstant(Value *From, Value *To, Use *U) {
     llvm_unreachable(
