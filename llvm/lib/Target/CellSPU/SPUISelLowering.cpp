@@ -177,7 +177,7 @@ SPUTargetLowering::SPUTargetLowering(SPUTargetMachine &TM)
     setLoadExtAction(ISD::SEXTLOAD, VT, Custom);
 
     for (unsigned stype = sctype - 1; stype >= (unsigned) MVT::i8; --stype) {
-      MVT StoreVT = (MVT::SimpleValueType) stype;
+      MVT::SimpleValueType StoreVT = (MVT::SimpleValueType) stype;
       setTruncStoreAction(VT, StoreVT, Expand);
     }
   }
@@ -190,7 +190,7 @@ SPUTargetLowering::SPUTargetLowering(SPUTargetMachine &TM)
     setOperationAction(ISD::STORE,  VT, Custom);
 
     for (unsigned stype = sctype - 1; stype >= (unsigned) MVT::f32; --stype) {
-      MVT StoreVT = (MVT::SimpleValueType) stype;
+      MVT::SimpleValueType StoreVT = (MVT::SimpleValueType) stype;
       setTruncStoreAction(VT, StoreVT, Expand);
     }
   }

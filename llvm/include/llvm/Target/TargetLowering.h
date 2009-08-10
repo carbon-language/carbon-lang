@@ -955,82 +955,80 @@ protected:
   
   /// setLoadExtAction - Indicate that the specified load with extension does
   /// not work with the with specified type and indicate what to do about it.
-  void setLoadExtAction(unsigned ExtType, MVT VT,
+  void setLoadExtAction(unsigned ExtType, MVT::SimpleValueType VT,
                       LegalizeAction Action) {
-    assert((unsigned)VT.getSimpleVT() < sizeof(LoadExtActions[0])*4 &&
+    assert((unsigned)VT < sizeof(LoadExtActions[0])*4 &&
            ExtType < array_lengthof(LoadExtActions) &&
            "Table isn't big enough!");
-    LoadExtActions[ExtType] &= ~(uint64_t(3UL) << VT.getSimpleVT()*2);
-    LoadExtActions[ExtType] |= (uint64_t)Action << VT.getSimpleVT()*2;
+    LoadExtActions[ExtType] &= ~(uint64_t(3UL) << VT*2);
+    LoadExtActions[ExtType] |= (uint64_t)Action << VT*2;
   }
   
   /// setTruncStoreAction - Indicate that the specified truncating store does
   /// not work with the with specified type and indicate what to do about it.
-  void setTruncStoreAction(MVT ValVT, MVT MemVT,
+  void setTruncStoreAction(MVT::SimpleValueType ValVT,
+                           MVT::SimpleValueType MemVT,
                            LegalizeAction Action) {
-    assert((unsigned)ValVT.getSimpleVT() < array_lengthof(TruncStoreActions) &&
-           (unsigned)MemVT.getSimpleVT() < sizeof(TruncStoreActions[0])*4 &&
+    assert((unsigned)ValVT < array_lengthof(TruncStoreActions) &&
+           (unsigned)MemVT < sizeof(TruncStoreActions[0])*4 &&
            "Table isn't big enough!");
-    TruncStoreActions[ValVT.getSimpleVT()] &= ~(uint64_t(3UL) <<
-                                                MemVT.getSimpleVT()*2);
-    TruncStoreActions[ValVT.getSimpleVT()] |= (uint64_t)Action <<
-      MemVT.getSimpleVT()*2;
+    TruncStoreActions[ValVT] &= ~(uint64_t(3UL)  << MemVT*2);
+    TruncStoreActions[ValVT] |= (uint64_t)Action << MemVT*2;
   }
 
   /// setIndexedLoadAction - Indicate that the specified indexed load does or
   /// does not work with the with specified type and indicate what to do abort
   /// it. NOTE: All indexed mode loads are initialized to Expand in
   /// TargetLowering.cpp
-  void setIndexedLoadAction(unsigned IdxMode, MVT VT,
+  void setIndexedLoadAction(unsigned IdxMode, MVT::SimpleValueType VT,
                             LegalizeAction Action) {
-    assert((unsigned)VT.getSimpleVT() < MVT::LAST_VALUETYPE &&
+    assert((unsigned)VT < MVT::LAST_VALUETYPE &&
            IdxMode < array_lengthof(IndexedModeActions[0][0]) &&
            "Table isn't big enough!");
-    IndexedModeActions[(unsigned)VT.getSimpleVT()][0][IdxMode] = (uint8_t)Action;
+    IndexedModeActions[(unsigned)VT][0][IdxMode] = (uint8_t)Action;
   }
   
   /// setIndexedStoreAction - Indicate that the specified indexed store does or
   /// does not work with the with specified type and indicate what to do about
   /// it. NOTE: All indexed mode stores are initialized to Expand in
   /// TargetLowering.cpp
-  void setIndexedStoreAction(unsigned IdxMode, MVT VT,
+  void setIndexedStoreAction(unsigned IdxMode, MVT::SimpleValueType VT,
                              LegalizeAction Action) {
-    assert((unsigned)VT.getSimpleVT() < MVT::LAST_VALUETYPE &&
+    assert((unsigned)VT < MVT::LAST_VALUETYPE &&
            IdxMode < array_lengthof(IndexedModeActions[0][1] ) &&
            "Table isn't big enough!");
-    IndexedModeActions[(unsigned)VT.getSimpleVT()][1][IdxMode] = (uint8_t)Action;
+    IndexedModeActions[(unsigned)VT][1][IdxMode] = (uint8_t)Action;
   }
   
   /// setConvertAction - Indicate that the specified conversion does or does
   /// not work with the with specified type and indicate what to do about it.
-  void setConvertAction(MVT FromVT, MVT ToVT,
+  void setConvertAction(MVT::SimpleValueType FromVT, MVT::SimpleValueType ToVT,
                         LegalizeAction Action) {
-    assert((unsigned)FromVT.getSimpleVT() < array_lengthof(ConvertActions) &&
-           (unsigned)ToVT.getSimpleVT() < sizeof(ConvertActions[0])*4 &&
+    assert((unsigned)FromVT < array_lengthof(ConvertActions) &&
+           (unsigned)ToVT < sizeof(ConvertActions[0])*4 &&
            "Table isn't big enough!");
-    ConvertActions[FromVT.getSimpleVT()] &= ~(uint64_t(3UL) <<
-                                              ToVT.getSimpleVT()*2);
-    ConvertActions[FromVT.getSimpleVT()] |= (uint64_t)Action <<
-      ToVT.getSimpleVT()*2;
+    ConvertActions[FromVT] &= ~(uint64_t(3UL)  << ToVT*2);
+    ConvertActions[FromVT] |= (uint64_t)Action << ToVT*2;
   }
 
   /// setCondCodeAction - Indicate that the specified condition code is or isn't
   /// supported on the target and indicate what to do about it.
-  void setCondCodeAction(ISD::CondCode CC, MVT VT, LegalizeAction Action) {
-    assert((unsigned)VT.getSimpleVT() < sizeof(CondCodeActions[0])*4 &&
+  void setCondCodeAction(ISD::CondCode CC, MVT::SimpleValueType VT,
+                         LegalizeAction Action) {
+    assert((unsigned)VT < sizeof(CondCodeActions[0])*4 &&
            (unsigned)CC < array_lengthof(CondCodeActions) &&
            "Table isn't big enough!");
-    CondCodeActions[(unsigned)CC] &= ~(uint64_t(3UL) << VT.getSimpleVT()*2);
-    CondCodeActions[(unsigned)CC] |= (uint64_t)Action << VT.getSimpleVT()*2;
+    CondCodeActions[(unsigned)CC] &= ~(uint64_t(3UL)  << VT*2);
+    CondCodeActions[(unsigned)CC] |= (uint64_t)Action << VT*2;
   }
 
   /// AddPromotedToType - If Opc/OrigVT is specified as being promoted, the
   /// promotion code defaults to trying a larger integer/fp until it can find
   /// one that works.  If that default is insufficient, this method can be used
   /// by the target to override the default.
-  void AddPromotedToType(unsigned Opc, MVT OrigVT, MVT DestVT) {
-    PromoteToType[std::make_pair(Opc, OrigVT.getSimpleVT())] =
-      DestVT.getSimpleVT();
+  void AddPromotedToType(unsigned Opc, MVT::SimpleValueType OrigVT,
+                         MVT::SimpleValueType DestVT) {
+    PromoteToType[std::make_pair(Opc, OrigVT)] = DestVT;
   }
 
   /// addLegalFPImmediate - Indicate that this target can instruction select

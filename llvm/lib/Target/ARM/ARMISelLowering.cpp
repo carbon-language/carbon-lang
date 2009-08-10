@@ -62,10 +62,12 @@ void ARMTargetLowering::addTypeForNEON(MVT VT, MVT PromotedLdStVT,
                                        MVT PromotedBitwiseVT) {
   if (VT != PromotedLdStVT) {
     setOperationAction(ISD::LOAD, VT.getSimpleVT(), Promote);
-    AddPromotedToType (ISD::LOAD, VT, PromotedLdStVT);
+    AddPromotedToType (ISD::LOAD, VT.getSimpleVT(),
+                       PromotedLdStVT.getSimpleVT());
 
     setOperationAction(ISD::STORE, VT.getSimpleVT(), Promote);
-    AddPromotedToType (ISD::STORE, VT, PromotedLdStVT);
+    AddPromotedToType (ISD::STORE, VT.getSimpleVT(), 
+                       PromotedLdStVT.getSimpleVT());
   }
 
   MVT ElemTy = VT.getVectorElementType();
@@ -86,11 +88,14 @@ void ARMTargetLowering::addTypeForNEON(MVT VT, MVT PromotedLdStVT,
   // Promote all bit-wise operations.
   if (VT.isInteger() && VT != PromotedBitwiseVT) {
     setOperationAction(ISD::AND, VT.getSimpleVT(), Promote);
-    AddPromotedToType (ISD::AND, VT, PromotedBitwiseVT);
+    AddPromotedToType (ISD::AND, VT.getSimpleVT(),
+                       PromotedBitwiseVT.getSimpleVT());
     setOperationAction(ISD::OR,  VT.getSimpleVT(), Promote);
-    AddPromotedToType (ISD::OR,  VT, PromotedBitwiseVT);
+    AddPromotedToType (ISD::OR,  VT.getSimpleVT(), 
+                       PromotedBitwiseVT.getSimpleVT());
     setOperationAction(ISD::XOR, VT.getSimpleVT(), Promote);
-    AddPromotedToType (ISD::XOR, VT, PromotedBitwiseVT);
+    AddPromotedToType (ISD::XOR, VT.getSimpleVT(), 
+                       PromotedBitwiseVT.getSimpleVT());
   }
 }
 
