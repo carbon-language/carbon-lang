@@ -1348,9 +1348,9 @@ bool ARMAsmPrinter::doFinalization(Module &M) {
 
     if (!HiddenGVNonLazyPtrs.empty()) {
       SwitchToSection(getObjFileLowering().getDataSection());
+      EmitAlignment(2);
       for (StringMap<std::string>::iterator I = HiddenGVNonLazyPtrs.begin(),
              E = HiddenGVNonLazyPtrs.end(); I != E; ++I) {
-        EmitAlignment(2);
         O << I->second << ":\n";
         O << "\t.long " << I->getKeyData() << "\n";
       }
