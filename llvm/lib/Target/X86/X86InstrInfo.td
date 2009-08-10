@@ -172,7 +172,7 @@ def ptr_rc_nosp : PointerLikeRegClass<1>;
 //
 def X86MemAsmOperand : AsmOperandClass {
   let Name = "Mem";
-  let SuperClass = ImmAsmOperand;
+  let SuperClass = ?;
 }
 class X86MemOperand<string printMethod> : Operand<iPTR> {
   let PrintMethod = printMethod;
