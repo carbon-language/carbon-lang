@@ -1,10 +1,12 @@
-; RUN: llvm-as < %s | llc -march=arm -mattr=+vfp2 | grep -E {ftosizs\\W*s\[0-9\]+,\\W*s\[0-9\]+} | count 1
-; RUN: llvm-as < %s | llc -march=arm -mattr=+neon,+neonfp | grep -E {vcvt.s32.f32\\W*d\[0-9\]+,\\W*d\[0-9\]+} | count 1
-; RUN: llvm-as < %s | llc -march=arm -mattr=+neon,-neonfp | grep -E {ftosizs\\W*s\[0-9\]+,\\W*s\[0-9\]+} | count 1
-; RUN: llvm-as < %s | llc -march=arm -mcpu=cortex-a8 | grep -E {vcvt.s32.f32\\W*d\[0-9\]+,\\W*d\[0-9\]+} | count 1
-; RUN: llvm-as < %s | llc -march=arm -mcpu=cortex-a9 | grep -E {ftosizs\\W*s\[0-9\]+,\\W*s\[0-9\]+} | count 1
+; RUN: llvm-as < %s | llc -march=arm -mattr=+vfp2 | FileCheck %s -check-prefix=VFP2
+; RUN: llvm-as < %s | llc -march=arm -mattr=+neon,+neonfp | FileCheck %s -check-prefix=NEON
+; RUN: llvm-as < %s | llc -march=arm -mattr=+neon,-neonfp | FileCheck %s -check-prefix=VFP2
+; RUN: llvm-as < %s | llc -march=arm -mcpu=cortex-a8 | FileCheck %s -check-prefix=NEON
+; RUN: llvm-as < %s | llc -march=arm -mcpu=cortex-a9 | FileCheck %s -check-prefix=VFP2
 
 define i32 @test(float %a, float %b) {
+; VFP2: ftosizs s0, s0
+; NEON: vcvt.s32.f32 d0, d0
 entry:
         %0 = fadd float %a, %b
         %1 = fptosi float %0 to i32
