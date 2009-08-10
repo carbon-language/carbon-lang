@@ -283,7 +283,7 @@ PPCTargetLowering::PPCTargetLowering(PPCTargetMachine &TM)
     // will selectively turn on ones that can be effectively codegen'd.
     for (unsigned i = (unsigned)MVT::FIRST_VECTOR_VALUETYPE;
          i <= (unsigned)MVT::LAST_VECTOR_VALUETYPE; ++i) {
-      MVT VT = (MVT::SimpleValueType)i;
+      MVT::SimpleValueType VT = (MVT::SimpleValueType)i;
 
       // add/sub are legal for all supported vector VT's.
       setOperationAction(ISD::ADD , VT, Legal);

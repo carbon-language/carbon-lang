@@ -61,35 +61,35 @@ static bool RetCC_ARM_AAPCS_Custom_f64(unsigned &ValNo, MVT &ValVT, MVT &LocVT,
 void ARMTargetLowering::addTypeForNEON(MVT VT, MVT PromotedLdStVT,
                                        MVT PromotedBitwiseVT) {
   if (VT != PromotedLdStVT) {
-    setOperationAction(ISD::LOAD, VT, Promote);
+    setOperationAction(ISD::LOAD, VT.getSimpleVT(), Promote);
     AddPromotedToType (ISD::LOAD, VT, PromotedLdStVT);
 
-    setOperationAction(ISD::STORE, VT, Promote);
+    setOperationAction(ISD::STORE, VT.getSimpleVT(), Promote);
     AddPromotedToType (ISD::STORE, VT, PromotedLdStVT);
   }
 
   MVT ElemTy = VT.getVectorElementType();
   if (ElemTy != MVT::i64 && ElemTy != MVT::f64)
-    setOperationAction(ISD::VSETCC, VT, Custom);
+    setOperationAction(ISD::VSETCC, VT.getSimpleVT(), Custom);
   if (ElemTy == MVT::i8 || ElemTy == MVT::i16)
-    setOperationAction(ISD::EXTRACT_VECTOR_ELT, VT, Custom);
-  setOperationAction(ISD::BUILD_VECTOR, VT, Custom);
-  setOperationAction(ISD::VECTOR_SHUFFLE, VT, Custom);
-  setOperationAction(ISD::SCALAR_TO_VECTOR, VT, Custom);
-  setOperationAction(ISD::CONCAT_VECTORS, VT, Custom);
+    setOperationAction(ISD::EXTRACT_VECTOR_ELT, VT.getSimpleVT(), Custom);
+  setOperationAction(ISD::BUILD_VECTOR, VT.getSimpleVT(), Custom);
+  setOperationAction(ISD::VECTOR_SHUFFLE, VT.getSimpleVT(), Custom);
+  setOperationAction(ISD::SCALAR_TO_VECTOR, VT.getSimpleVT(), Custom);
+  setOperationAction(ISD::CONCAT_VECTORS, VT.getSimpleVT(), Custom);
   if (VT.isInteger()) {
-    setOperationAction(ISD::SHL, VT, Custom);
-    setOperationAction(ISD::SRA, VT, Custom);
-    setOperationAction(ISD::SRL, VT, Custom);
+    setOperationAction(ISD::SHL, VT.getSimpleVT(), Custom);
+    setOperationAction(ISD::SRA, VT.getSimpleVT(), Custom);
+    setOperationAction(ISD::SRL, VT.getSimpleVT(), Custom);
   }
 
   // Promote all bit-wise operations.
   if (VT.isInteger() && VT != PromotedBitwiseVT) {
-    setOperationAction(ISD::AND, VT, Promote);
+    setOperationAction(ISD::AND, VT.getSimpleVT(), Promote);
     AddPromotedToType (ISD::AND, VT, PromotedBitwiseVT);
-    setOperationAction(ISD::OR,  VT, Promote);
+    setOperationAction(ISD::OR,  VT.getSimpleVT(), Promote);
     AddPromotedToType (ISD::OR,  VT, PromotedBitwiseVT);
-    setOperationAction(ISD::XOR, VT, Promote);
+    setOperationAction(ISD::XOR, VT.getSimpleVT(), Promote);
     AddPromotedToType (ISD::XOR, VT, PromotedBitwiseVT);
   }
 }

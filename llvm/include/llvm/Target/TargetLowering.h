@@ -944,11 +944,9 @@ protected:
 
   /// setOperationAction - Indicate that the specified operation does not work
   /// with the specified type and indicate what to do about it.
-  void setOperationAction(unsigned Op, MVT VT,
+  void setOperationAction(unsigned Op, MVT::SimpleValueType VT,
                           LegalizeAction Action) {
-    assert((unsigned)VT.getSimpleVT() < sizeof(OpActions[0][0])*8 &&
-           Op < array_lengthof(OpActions[0]) && "Table isn't big enough!");
-    unsigned I = (unsigned) VT.getSimpleVT();
+    unsigned I = (unsigned)VT;
     unsigned J = I & 31;
     I = I >> 5;
     OpActions[I][Op] &= ~(uint64_t(3UL) << (J*2));

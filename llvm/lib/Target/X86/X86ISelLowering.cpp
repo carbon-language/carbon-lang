@@ -723,9 +723,9 @@ X86TargetLowering::X86TargetLowering(X86TargetMachine &TM)
       // Do not attempt to custom lower non-128-bit vectors
       if (!VT.is128BitVector())
         continue;
-      setOperationAction(ISD::BUILD_VECTOR,       VT, Custom);
-      setOperationAction(ISD::VECTOR_SHUFFLE,     VT, Custom);
-      setOperationAction(ISD::EXTRACT_VECTOR_ELT, VT, Custom);
+      setOperationAction(ISD::BUILD_VECTOR,       VT.getSimpleVT(), Custom);
+      setOperationAction(ISD::VECTOR_SHUFFLE,     VT.getSimpleVT(), Custom);
+      setOperationAction(ISD::EXTRACT_VECTOR_ELT, VT.getSimpleVT(), Custom);
     }
 
     setOperationAction(ISD::BUILD_VECTOR,       MVT::v2f64, Custom);
@@ -748,15 +748,15 @@ X86TargetLowering::X86TargetLowering(X86TargetMachine &TM)
       if (!VT.is128BitVector()) {
         continue;
       }
-      setOperationAction(ISD::AND,    VT, Promote);
+      setOperationAction(ISD::AND,    VT.getSimpleVT(), Promote);
       AddPromotedToType (ISD::AND,    VT, MVT::v2i64);
-      setOperationAction(ISD::OR,     VT, Promote);
+      setOperationAction(ISD::OR,     VT.getSimpleVT(), Promote);
       AddPromotedToType (ISD::OR,     VT, MVT::v2i64);
-      setOperationAction(ISD::XOR,    VT, Promote);
+      setOperationAction(ISD::XOR,    VT.getSimpleVT(), Promote);
       AddPromotedToType (ISD::XOR,    VT, MVT::v2i64);
-      setOperationAction(ISD::LOAD,   VT, Promote);
+      setOperationAction(ISD::LOAD,   VT.getSimpleVT(), Promote);
       AddPromotedToType (ISD::LOAD,   VT, MVT::v2i64);
-      setOperationAction(ISD::SELECT, VT, Promote);
+      setOperationAction(ISD::SELECT, VT.getSimpleVT(), Promote);
       AddPromotedToType (ISD::SELECT, VT, MVT::v2i64);
     }
 

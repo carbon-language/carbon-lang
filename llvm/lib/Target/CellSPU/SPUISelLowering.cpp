@@ -168,7 +168,7 @@ SPUTargetLowering::SPUTargetLowering(SPUTargetMachine &TM)
   // SPU's loads and stores have to be custom lowered:
   for (unsigned sctype = (unsigned) MVT::i8; sctype < (unsigned) MVT::i128;
        ++sctype) {
-    MVT VT = (MVT::SimpleValueType)sctype;
+    MVT::SimpleValueType VT = (MVT::SimpleValueType)sctype;
 
     setOperationAction(ISD::LOAD,   VT, Custom);
     setOperationAction(ISD::STORE,  VT, Custom);
@@ -184,7 +184,7 @@ SPUTargetLowering::SPUTargetLowering(SPUTargetMachine &TM)
 
   for (unsigned sctype = (unsigned) MVT::f32; sctype < (unsigned) MVT::f64;
        ++sctype) {
-    MVT VT = (MVT::SimpleValueType) sctype;
+    MVT::SimpleValueType VT = (MVT::SimpleValueType) sctype;
 
     setOperationAction(ISD::LOAD,   VT, Custom);
     setOperationAction(ISD::STORE,  VT, Custom);
@@ -391,7 +391,7 @@ SPUTargetLowering::SPUTargetLowering(SPUTargetMachine &TM)
   // appropriate instructions to materialize the address.
   for (unsigned sctype = (unsigned) MVT::i8; sctype < (unsigned) MVT::f128;
        ++sctype) {
-    MVT VT = (MVT::SimpleValueType)sctype;
+    MVT::SimpleValueType VT = (MVT::SimpleValueType)sctype;
 
     setOperationAction(ISD::GlobalAddress,  VT, Custom);
     setOperationAction(ISD::ConstantPool,   VT, Custom);
@@ -434,7 +434,7 @@ SPUTargetLowering::SPUTargetLowering(SPUTargetMachine &TM)
 
   for (unsigned i = (unsigned)MVT::FIRST_VECTOR_VALUETYPE;
        i <= (unsigned)MVT::LAST_VECTOR_VALUETYPE; ++i) {
-    MVT VT = (MVT::SimpleValueType)i;
+    MVT::SimpleValueType VT = (MVT::SimpleValueType)i;
 
     // add/sub are legal for all supported vector VT's.
     setOperationAction(ISD::ADD,     VT, Legal);
