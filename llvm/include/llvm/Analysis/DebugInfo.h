@@ -643,6 +643,9 @@ namespace llvm {
     // addSubprogram - Add subprgoram into SPs.
     bool addSubprogram(DISubprogram SP);
 
+    /// addType - Add type into Tys.
+    bool addType(DIType DT);
+
   public:
     typedef SmallVector<GlobalVariable *, 8>::iterator iterator;
     iterator compile_unit_begin()    { return CUs.begin(); }
@@ -651,15 +654,19 @@ namespace llvm {
     iterator subprogram_end()        { return SPs.end(); }
     iterator global_variable_begin() { return GVs.begin(); }
     iterator global_variable_end()   { return GVs.end(); }
+    iterator type_begin()            { return TYs.begin(); }
+    iterator type_end()              { return TYs.end(); }
 
     unsigned compile_unit_count()    { return CUs.size(); }
     unsigned global_variable_count() { return GVs.size(); }
     unsigned subprogram_count()      { return SPs.size(); }
+    unsigned type_count()            { return TYs.size(); }
 
   private:
     SmallVector<GlobalVariable *, 8> CUs;  // Compile Units
     SmallVector<GlobalVariable *, 8> SPs;  // Subprograms
-    SmallVector<GlobalVariable *, 8> GVs;  // Global Variables;
+    SmallVector<GlobalVariable *, 8> GVs;  // Global Variables
+    SmallVector<GlobalVariable *, 8> TYs;  // Types
     SmallPtrSet<GlobalVariable *, 64> NodesSeen;
     
   };

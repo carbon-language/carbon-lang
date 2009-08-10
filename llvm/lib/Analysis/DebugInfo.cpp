@@ -955,9 +955,7 @@ void DebugInfoFinder::processModule(Module &M) {
     
 /// processType - Process DIType.
 void DebugInfoFinder::processType(DIType DT) {
-  if (DT.isNull())
-    return;
-  if (!NodesSeen.insert(DT.getGV()))
+  if (!addType(DT))
     return;
 
   addCompileUnit(DT.getCompileUnit());
@@ -1026,6 +1024,18 @@ void DebugInfoFinder::processDeclare(DbgDeclareInst *DDI) {
 
   addCompileUnit(DV.getCompileUnit());
   processType(DV.getType());
+}
+
+/// addType - Add type into Tys.
+bool DebugInfoFinder::addType(DIType DT) {
+  if (DT.isNull())
+    return false;
+
+  if (!NodesSeen.insert(DT.getGV()))
+    return false;
+
+  TYs.push_back(DT.getGV());
+  return true;
 }
 
 /// addCompileUnit - Add compile unit into CUs.
