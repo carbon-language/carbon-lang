@@ -924,9 +924,14 @@ SDValue DAGCombiner::visitTokenFactor(SDNode *N) {
 /// MERGE_VALUES can always be eliminated.
 SDValue DAGCombiner::visitMERGE_VALUES(SDNode *N) {
   WorkListRemover DeadNodes(*this);
-  for (unsigned i = 0, e = N->getNumOperands(); i != e; ++i)
-    DAG.ReplaceAllUsesOfValueWith(SDValue(N, i), N->getOperand(i),
-                                  &DeadNodes);
+  // Replacing results may cause a different MERGE_VALUES to suddenly
+  // be CSE'd with N, and carry its uses with it. Iterate until no
+  // uses remain, to ensure that the node can be safely deleted.
+  do {
+    for (unsigned i = 0, e = N->getNumOperands(); i != e; ++i)
+      DAG.ReplaceAllUsesOfValueWith(SDValue(N, i), N->getOperand(i),
+                                    &DeadNodes);
+  } while (!N->use_empty());
   removeFromWorkList(N);
   DAG.DeleteNode(N);
   return SDValue(N, 0);   // Return N so it doesn't get rechecked!
