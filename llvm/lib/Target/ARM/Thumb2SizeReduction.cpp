@@ -343,7 +343,7 @@ bool Thumb2SizeReduce::ReduceMBB(MachineBasicBlock &MBB) {
   }
 
   MachineBasicBlock::iterator MII = MBB.begin(), E = MBB.end();
-  MachineBasicBlock::iterator NextMII = next(MII);
+  MachineBasicBlock::iterator NextMII;
   for (; MII != E; MII = NextMII) {
     NextMII = next(MII);
 
