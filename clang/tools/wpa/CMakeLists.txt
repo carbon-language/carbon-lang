@@ -11,6 +11,7 @@ set( LLVM_USED_LIBS
   )
 
 set( LLVM_LINK_COMPONENTS
+    mc
   )
 
 add_clang_executable(clang-wpa

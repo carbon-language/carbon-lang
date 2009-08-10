@@ -548,8 +548,10 @@ def err_implicit_pointer_address_space_cast : Error<
   "illegal implicit cast between two pointers with different address spaces">;
 def err_as_qualified_auto_decl : Error<
   "automatic variable qualified with an address space">;
-def err_attribute_annotate_no_string : Error<
-  "argument to annotate attribute was not a string literal">;
+def err_attribute_not_string : Error<
+  "argument to %0 attribute was not a string literal">;
+def err_attribute_section_invalid_for_target : Error<
+  "argument to 'section' attribute is not valid for this target: %0">;
 def err_attribute_aligned_not_power_of_two : Error<
   "requested alignment is not a power of 2">;
 def warn_redeclaration_without_attribute_prev_attribute_ignored : Warning<

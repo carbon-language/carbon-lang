@@ -21,14 +21,17 @@
 #include <vector>
 #include <string>
 
-namespace llvm { struct fltSemantics; }
+namespace llvm {
+struct fltSemantics;
+class StringRef;
+}
 
 namespace clang {
 
 class Diagnostic;
+class SourceLocation;
 class SourceManager;
 class LangOptions;
-  
 namespace Builtin { struct Info; }
   
 /// TargetInfo - This class exposes information about the current target.
@@ -323,6 +326,21 @@ public:
   /// no special section is used.
   virtual const char *getCFStringDataSection() const { 
     return "__TEXT,__cstring,cstring_literals";
+  }
+  
+  
+  /// isValidSectionSpecifier - This is an optional hook that targets can
+  /// implement to perform semantic checking on attribute((section("foo")))
+  /// specifiers.  In this case, "foo" is passed in to be checked.  If the
+  /// section specifier is invalid, the backend should return a non-empty string
+  /// that indicates the problem.
+  ///
+  /// This hook is a simple quality of implementation feature to catch errors
+  /// and give good diagnostics in cases when the assembler or code generator
+  /// would otherwise reject the section specifier.
+  ///
+  virtual std::string isValidSectionSpecifier(const llvm::StringRef &SR) const {
+    return "";
   }
 
   /// getDefaultLangOptions - Allow the target to specify default settings for

@@ -17,7 +17,7 @@
 #include "clang/AST/Expr.h"
 #include "clang/Basic/TargetInfo.h"
 #include "clang/Parse/DeclSpec.h"
-#include <llvm/ADT/StringExtras.h>
+#include "llvm/ADT/StringExtras.h"
 using namespace clang;
 
 //===----------------------------------------------------------------------===//
@@ -981,15 +981,25 @@ static void HandleSectionAttr(Decl *D, const AttributeList &Attr, Sema &S) {
 
   // Make sure that there is a string literal as the sections's single
   // argument.
-  StringLiteral *SE =
-    dyn_cast<StringLiteral>(static_cast<Expr *>(Attr.getArg(0)));
+  Expr *ArgExpr = static_cast<Expr *>(Attr.getArg(0));
+  StringLiteral *SE = dyn_cast<StringLiteral>(ArgExpr);
   if (!SE) {
-    // FIXME
-    S.Diag(Attr.getLoc(), diag::err_attribute_annotate_no_string);
+    S.Diag(ArgExpr->getLocStart(), diag::err_attribute_not_string) << "section";
     return;
   }
-  D->addAttr(::new (S.Context) SectionAttr(std::string(SE->getStrData(),
-                                                     SE->getByteLength())));
+  
+  std::string SectionStr(SE->getStrData(), SE->getByteLength());
+
+  // If the target wants to validate the section specifier, make it happen.
+  std::string Error = S.Context.Target.isValidSectionSpecifier(SectionStr);
+  if (Error.empty()) {
+    D->addAttr(::new (S.Context) SectionAttr(SectionStr));
+    return;
+  }
+  
+  S.Diag(SE->getLocStart(), diag::err_attribute_section_invalid_for_target)
+    << Error;
+  
 }
 
 static void HandleStdCallAttr(Decl *d, const AttributeList &Attr, Sema &S) {
@@ -1405,13 +1415,13 @@ static void HandleAnnotateAttr(Decl *d, const AttributeList &Attr, Sema &S) {
     S.Diag(Attr.getLoc(), diag::err_attribute_wrong_number_arguments) << 1;
     return;
   }
-  Expr *argExpr = static_cast<Expr *>(Attr.getArg(0));
-  StringLiteral *SE = dyn_cast<StringLiteral>(argExpr);
+  Expr *ArgExpr = static_cast<Expr *>(Attr.getArg(0));
+  StringLiteral *SE = dyn_cast<StringLiteral>(ArgExpr);
 
   // Make sure that there is a string literal as the annotation's single
   // argument.
   if (!SE) {
-    S.Diag(Attr.getLoc(), diag::err_attribute_annotate_no_string);
+    S.Diag(ArgExpr->getLocStart(), diag::err_attribute_not_string) <<"annotate";
     return;
   }
   d->addAttr(::new (S.Context) AnnotateAttr(std::string(SE->getStrData(),

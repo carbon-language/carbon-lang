@@ -19,6 +19,7 @@
 #include "llvm/ADT/STLExtras.h"
 #include "llvm/ADT/APFloat.h"
 #include "llvm/ADT/SmallString.h"
+#include "llvm/MC/MCSectionMachO.h"
 using namespace clang;
 
 //===----------------------------------------------------------------------===//
@@ -61,6 +62,7 @@ static void DefineStd(std::vector<char> &Buf, const char *MacroName,
 //===----------------------------------------------------------------------===//
 // Defines specific to certain operating systems.
 //===----------------------------------------------------------------------===//
+
 namespace {
 template<typename TgtInfo>
 class OSTargetInfo : public TgtInfo {
@@ -78,7 +80,7 @@ public:
 };
 }
 
-namespace {
+
 /// getDarwinNumber - Parse the 'darwin number' out of the specific targe
 /// triple.  For example, if we have darwin8.5 return 8,5,0.  If any entry is
 /// not defined, return 0's.  Return true if we have -darwin in the string or
@@ -216,6 +218,7 @@ static void GetDarwinLanguageOptions(LangOptions &Opts,
     Opts.ObjCNonFragileABI = 1;
 }
 
+namespace {
 template<typename Target>
 class DarwinTargetInfo : public OSTargetInfo<Target> {
 protected:
@@ -245,7 +248,16 @@ public:
   virtual const char *getUnicodeStringSection() const {
     return "__TEXT,__ustring";
   }
+  
+  virtual std::string isValidSectionSpecifier(const llvm::StringRef &SR) const {
+    // Let MCSectionMachO validate this.
+    llvm::StringRef Segment, Section;
+    unsigned TAA, StubSize;
+    return llvm::MCSectionMachO::ParseSectionSpecifier(SR, Segment, Section,
+                                                       TAA, StubSize);
+  }
 };
+
 
 // DragonFlyBSD Target
 template<typename Target>
