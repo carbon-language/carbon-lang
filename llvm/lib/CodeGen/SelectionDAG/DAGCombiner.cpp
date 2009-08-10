@@ -3721,7 +3721,18 @@ SDValue DAGCombiner::visitBIT_CONVERT(SDNode *N) {
   // If the input is a constant, let getNode fold it.
   if (isa<ConstantSDNode>(N0) || isa<ConstantFPSDNode>(N0)) {
     SDValue Res = DAG.getNode(ISD::BIT_CONVERT, N->getDebugLoc(), VT, N0);
-    if (Res.getNode() != N) return Res;
+    if (Res.getNode() != N) {
+      if (!LegalOperations ||
+          TLI.isOperationLegal(Res.getNode()->getOpcode(), VT))
+        return Res;
+
+      // Folding it resulted in an illegal node, and it's too late to
+      // do that. Clean up the old node and forego the transformation.
+      // Ideally this won't happen very often, because instcombine
+      // and the earlier dagcombine runs (where illegal nodes are
+      // permitted) should have folded most of them already.
+      DAG.DeleteNode(Res.getNode());
+    }
   }
 
   // (conv (conv x, t1), t2) -> (conv x, t2)
