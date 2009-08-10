@@ -87,11 +87,9 @@
 #include <set>
 using namespace llvm;
 
-namespace {
 static cl::opt<std::string>
 MatchPrefix("match-prefix", cl::init(""),
             cl::desc("Only match instructions with the given prefix"));
-}
 
 /// FlattenVariants - Flatten an .td file assembly string by selecting the
 /// variant at index \arg N.
@@ -455,20 +453,15 @@ private:
   /// Map of token to class information which has already been constructed.
   std::map<std::string, ClassInfo*> TokenClasses;
 
-  /// Map of operand name to class information which has already been
-  /// constructed.
-  std::map<std::string, ClassInfo*> OperandClasses;
+  /// The ClassInfo instance for registers.
+  ClassInfo *TheRegisterClass;
 
-  /// Map of user class names to kind value.
-  std::map<std::string, unsigned> UserClasses;
+  /// Map of AsmOperandClass records to their class information.
+  std::map<Record*, ClassInfo*> AsmOperandClasses;
 
 private:
   /// getTokenClass - Lookup or create the class for the given token.
   ClassInfo *getTokenClass(const StringRef &Token);
-
-  /// getUserClassKind - Lookup or create the kind value for the given class
-  /// name.
-  unsigned getUserClassKind(const StringRef &Name);
 
   /// getOperandClass - Lookup or create the class for the given operand.
   ClassInfo *getOperandClass(const StringRef &Token,
@@ -543,66 +536,68 @@ ClassInfo *AsmMatcherInfo::getTokenClass(const StringRef &Token) {
   return Entry;
 }
 
-unsigned AsmMatcherInfo::getUserClassKind(const StringRef &Name) {
-  unsigned &Entry = UserClasses[Name];
-  
-  if (!Entry)
-    Entry = ClassInfo::UserClass0 + UserClasses.size() - 1;
-
-  return Entry;
-}
-
 ClassInfo *
 AsmMatcherInfo::getOperandClass(const StringRef &Token,
                                 const CodeGenInstruction::OperandInfo &OI) {
-  unsigned SuperClass = ClassInfo::Invalid;
-  std::string ClassName;
-  if (OI.Rec->isSubClassOf("RegisterClass")) {
-    ClassName = "Reg";
-  } else {
-    try {
-      ClassName = OI.Rec->getValueAsString("ParserMatchClass");
-      assert(ClassName != "Reg" && "'Reg' class name is reserved!");
-    } catch(...) {
-      PrintError(OI.Rec->getLoc(), "operand has no match class!");
-      ClassName = "Invalid";
-    }
+  if (OI.Rec->isSubClassOf("RegisterClass"))
+    return TheRegisterClass;
 
-    // Determine the super class.
-    try {
-      std::string SuperClassName =
-        OI.Rec->getValueAsString("ParserMatchSuperClass");
-      SuperClass = getUserClassKind(SuperClassName);
-    } catch(...) { }
+  assert(OI.Rec->isSubClassOf("Operand") && "Unexpected operand!");
+  Record *MatchClass = OI.Rec->getValueAsDef("ParserMatchClass");
+  ClassInfo *CI = AsmOperandClasses[MatchClass];
+
+  if (!CI) {
+    PrintError(OI.Rec->getLoc(), "operand has no match class!");
+    throw std::string("ERROR: Missing match class!");
   }
 
-  ClassInfo *&Entry = OperandClasses[ClassName];
-  
-  if (!Entry) {
-    Entry = new ClassInfo();
-    if (ClassName == "Reg") {
-      Entry->Kind = ClassInfo::Register;
-      Entry->SuperClassKind = SuperClass;
-    } else {
-      Entry->Kind = getUserClassKind(ClassName);
-      Entry->SuperClassKind = SuperClass;
-    }
-    Entry->ClassName = ClassName;
-    Entry->Name = "MCK_" + ClassName;
-    Entry->ValueName = OI.Rec->getName();
-    Entry->PredicateMethod = "is" + ClassName;
-    Entry->RenderMethod = "add" + ClassName + "Operands";
-    Classes.push_back(Entry);
-  } else {
-    // Verify the super class matches.
-    assert(SuperClass == Entry->SuperClassKind &&
-           "Cannot redefine super class kind!");
-  }
-  
-  return Entry;
+  return CI;
 }
 
 void AsmMatcherInfo::BuildInfo(CodeGenTarget &Target) {
+  // Build the assembly match class information.
+
+  // Construct the "Reg" class.
+  //
+  // FIXME: This needs to dice up the RegisterClass instances.
+  ClassInfo *RegClass = TheRegisterClass = new ClassInfo();
+  RegClass->Kind = ClassInfo::Register;
+  RegClass->SuperClassKind = ClassInfo::Invalid;
+  RegClass->ClassName = "Reg";
+  RegClass->Name = "MCK_Reg";
+  RegClass->ValueName = "<register class>";
+  RegClass->PredicateMethod = "isReg";
+  RegClass->RenderMethod = "addRegOperands";
+  Classes.push_back(RegClass);
+
+  // Build info for the user defined assembly operand classes.
+  std::vector<Record*> AsmOperands;
+  AsmOperands = Records.getAllDerivedDefinitions("AsmOperandClass");
+  unsigned Index = 0;
+  for (std::vector<Record*>::iterator it = AsmOperands.begin(), 
+         ie = AsmOperands.end(); it != ie; ++it, ++Index) {
+    ClassInfo *CI = new ClassInfo();
+    CI->Kind = ClassInfo::UserClass0 + Index;
+
+    Init *Super = (*it)->getValueInit("SuperClass");
+    if (DefInit *DI = dynamic_cast<DefInit*>(Super)) {
+      CI->SuperClass = AsmOperandClasses[DI->getDef()];
+      if (!CI->SuperClass)
+        PrintError((*it)->getLoc(), "Invalid super class reference!");
+    } else {
+      assert(dynamic_cast<UnsetInit*>(Super) && "Unexpected SuperClass field!");
+      CI->SuperClass = 0;
+    }
+    CI->ClassName = (*it)->getValueAsString("Name");
+    CI->Name = "MCK_" + CI->ClassName;
+    CI->ValueName = (*it)->getName();
+    CI->PredicateMethod = "is" + CI->ClassName;
+    CI->RenderMethod = "add" + CI->ClassName + "Operands";
+    AsmOperandClasses[*it] = CI;
+    Classes.push_back(CI);
+  }
+
+  // Build the instruction information.
   for (std::map<std::string, CodeGenInstruction>::const_iterator 
          it = Target.getInstructions().begin(), 
          ie = Target.getInstructions().end(); 

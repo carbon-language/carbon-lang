@@ -33,14 +33,14 @@ def i64i8imm   : Operand<i64>;
 def lea64mem : Operand<i64> {
   let PrintMethod = "printlea64mem";
   let MIOperandInfo = (ops GR64, i8imm, GR64_NOSP, i32imm);
-  let ParserMatchClass = "Mem";
+  let ParserMatchClass = X86MemAsmOperand;
 }
 
 def lea64_32mem : Operand<i32> {
   let PrintMethod = "printlea64_32mem";
   let AsmOperandLowerMethod = "lower_lea64_32mem";
   let MIOperandInfo = (ops GR32, i8imm, GR32_NOSP, i32imm);
-  let ParserMatchClass = "Mem";
+  let ParserMatchClass = X86MemAsmOperand;
 }
 
 //===----------------------------------------------------------------------===//

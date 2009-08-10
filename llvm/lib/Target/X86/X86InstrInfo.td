@@ -170,10 +170,14 @@ def ptr_rc_nosp : PointerLikeRegClass<1>;
 
 // *mem - Operand definitions for the funky X86 addressing mode operands.
 //
+def X86MemAsmOperand : AsmOperandClass {
+  let Name = "Mem";
+  let SuperClass = ImmAsmOperand;
+}
 class X86MemOperand<string printMethod> : Operand<iPTR> {
   let PrintMethod = printMethod;
   let MIOperandInfo = (ops ptr_rc, i8imm, ptr_rc_nosp, i32imm, i8imm);
-  let ParserMatchClass = "Mem";
+  let ParserMatchClass = X86MemAsmOperand;
 }
 
 def i8mem   : X86MemOperand<"printi8mem">;
@@ -193,13 +197,13 @@ def f256mem : X86MemOperand<"printf256mem">;
 def i8mem_NOREX : Operand<i64> {
   let PrintMethod = "printi8mem";
   let MIOperandInfo = (ops GR64_NOREX, i8imm, GR64_NOREX_NOSP, i32imm, i8imm);
-  let ParserMatchClass = "Mem";
+  let ParserMatchClass = X86MemAsmOperand;
 }
 
 def lea32mem : Operand<i32> {
   let PrintMethod = "printlea32mem";
   let MIOperandInfo = (ops GR32, i8imm, GR32_NOSP, i32imm);
-  let ParserMatchClass = "Mem";
+  let ParserMatchClass = X86MemAsmOperand;
 }
 
 def SSECC : Operand<i8> {
@@ -210,16 +214,19 @@ def piclabel: Operand<i32> {
   let PrintMethod = "printPICLabel";
 }
 
+def ImmSExt8AsmOperand : AsmOperandClass {
+  let Name = "ImmSExt8";
+  let SuperClass = ImmAsmOperand;
+}
+
 // A couple of more descriptive operand definitions.
 // 16-bits but only 8 bits are significant.
 def i16i8imm  : Operand<i16> {
-  let ParserMatchClass = "ImmSExt8";
-  let ParserMatchSuperClass = "Imm";
+  let ParserMatchClass = ImmSExt8AsmOperand;
 }
 // 32-bits but only 8 bits are significant.
 def i32i8imm  : Operand<i32> {
-  let ParserMatchClass = "ImmSExt8";
-  let ParserMatchSuperClass = "Imm";
+  let ParserMatchClass = ImmSExt8AsmOperand;
 }
 
 // Branch targets have OtherVT type and print as pc-relative values.

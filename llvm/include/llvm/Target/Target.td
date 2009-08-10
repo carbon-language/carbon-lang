@@ -278,6 +278,32 @@ def ptr_rc : PointerLikeRegClass<0>;
 /// it to be resolved by inference in the context it is used.
 def unknown;
 
+/// AsmOperandClass - Representation for the kinds of operands which the target
+/// specific parser can create and the assembly matcher may need to distinguish.
+///
+/// Operand classes are used to define the order in which instructions are
+/// matched, to ensure that the instruction which gets matched for any
+/// particular list of operands is deterministic.
+///
+/// The target specific parser must be able to classify a parsed operand into a
+/// unique class which does not partially overlap with any other classes. It can
+/// match a subset of some other class, in which case the super class field
+/// should be defined.
+class AsmOperandClass {
+  /// The name to use for this class, this should be usable as an enum value,
+  /// and will be used to generated the names for the methods to test whether a
+  /// particular target specific operand matches this class, and the method to
+  /// convert an operand of this class into an MCInst operand.
+  string Name = ?;
+
+  /// The super class of this operand.
+  AsmOperandClass SuperClass = ?;
+}
+
+def ImmAsmOperand : AsmOperandClass {
+  let Name = "Imm";
+}
+   
 /// Operand Types - These provide the built-in operand types that may be used
 /// by a target.  Targets can optionally provide their own operand types as
 /// needed, though this should not be needed for RISC targets.
@@ -295,13 +321,7 @@ class Operand<ValueType ty> {
   // into a unique class, which does not partially overlap with any other 
   // classes. It can match a subset of some other class, in which case 
   // ParserMatchSuperClass should be set to the name of that class.
-  string ParserMatchClass = "Imm";
-
-  // ParserMatchSuperClass - The enclosing super class for this operand (if
-  // any). This operand *must* be a subset of the valid operands for the super
-  // class; i.e., the match predicate for this super class must return true
-  // for all instances of this class.
-  string ParserMatchSuperClass = ?;
+  AsmOperandClass ParserMatchClass = ImmAsmOperand;
 }
 
 def i1imm  : Operand<i1>;
