@@ -15,6 +15,7 @@
 #include "llvm/CodeGen/MachineInstr.h"
 #include "llvm/CodeGen/MachineInstrBuilder.h"
 #include "llvm/CodeGen/MachineFunctionPass.h"
+#include "llvm/Support/CommandLine.h"
 #include "llvm/Support/Compiler.h"
 #include "llvm/Support/Debug.h"
 #include "llvm/ADT/DenseMap.h"
@@ -23,6 +24,8 @@ using namespace llvm;
 
 STATISTIC(NumNarrows,  "Number of 32-bit instrs reduced to 16-bit ones");
 STATISTIC(Num2Addrs,   "Number of 32-bit instrs reduced to 2addr 16-bit ones");
+
+static cl::opt<int> ReduceLimit("t2-reduce-limit", cl::init(-1), cl::Hidden);
 
 namespace {
   /// ReduceTable - A static table with information on mapping from wide
@@ -47,31 +50,31 @@ namespace {
     // FIXME: t2ADDS variants.
     { ARM::t2ADDri, ARM::tADDi3,  ARM::tADDi8,   3,   8,    1,   1,  0,0, 0 },
     { ARM::t2ADDrr, ARM::tADDrr,  ARM::tADDhirr, 0,   0,    1,   0,  0,1, 0 },
-    { ARM::t2ANDrr, ARM::tAND,    0,             0,   0,    1,   0,  0,0, 0 },
+    { ARM::t2ANDrr, 0,            ARM::tAND,     0,   0,    0,   1,  0,0, 0 },
     { ARM::t2ASRri, ARM::tASRri,  0,             5,   0,    1,   0,  0,0, 0 },
-    { ARM::t2ASRrr, ARM::tASRrr,  0,             0,   0,    1,   0,  0,0, 0 },
-    { ARM::t2BICrr, ARM::tBIC,    0,             0,   0,    1,   0,  0,0, 0 },
+    { ARM::t2ASRrr, 0,            ARM::tASRrr,   0,   0,    0,   1,  0,0, 0 },
+    { ARM::t2BICrr, 0,            ARM::tBIC,     0,   0,    0,   1,  0,0, 0 },
     { ARM::t2CMNrr, ARM::tCMN,    0,             0,   0,    1,   0,  1,0, 0 },
     { ARM::t2CMPri, ARM::tCMPi8,  0,             8,   0,    1,   0,  1,0, 0 },
     { ARM::t2CMPrr, ARM::tCMPhir, 0,             0,   0,    0,   0,  1,0, 0 },
     { ARM::t2CMPzri,ARM::tCMPzi8, 0,             8,   0,    1,   0,  1,0, 0 },
     { ARM::t2CMPzrr,ARM::tCMPzhir,0,             0,   0,    0,   0,  1,0, 0 },
-    { ARM::t2EORrr, ARM::tEOR,    0,             0,   0,    1,   0,  0,0, 0 },
+    { ARM::t2EORrr, 0,            ARM::tEOR,     0,   0,    0,   1,  0,0, 0 },
     { ARM::t2LSLri, ARM::tLSLri,  0,             5,   0,    1,   0,  0,0, 0 },
-    { ARM::t2LSLrr, ARM::tLSLrr,  0,             0,   0,    1,   0,  0,0, 0 },
+    { ARM::t2LSLrr, 0,            ARM::tLSLrr,   0,   0,    0,   1,  0,0, 0 },
     { ARM::t2LSRri, ARM::tLSRri,  0,             5,   0,    1,   0,  0,0, 0 },
-    { ARM::t2LSRrr, ARM::tLSRrr,  0,             0,   0,    1,   0,  0,0, 0 },
+    { ARM::t2LSRrr, 0,            ARM::tLSRrr,   0,   0,    0,   1,  0,0, 0 },
     { ARM::t2MOVi,  ARM::tMOVi8,  0,             8,   0,    1,   0,  0,0, 0 },
     // FIXME: Do we need the 16-bit 'S' variant?
     // FIXME: t2MOVcc
     { ARM::t2MOVr,ARM::tMOVgpr2gpr,0,            0,   0,    0,   0,  1,0, 0 },
-    { ARM::t2MUL,   0,            ARM::tMUL,     0,   0,    1,   0,  0,0, 0 },
+    { ARM::t2MUL,   0,            ARM::tMUL,     0,   0,    0,   1,  0,0, 0 },
     { ARM::t2MVNr,  ARM::tMVN,    0,             0,   0,    1,   0,  0,0, 0 },
-    { ARM::t2ORRrr, ARM::tORR,    0,             0,   0,    1,   0,  0,0, 0 },
+    { ARM::t2ORRrr, 0,            ARM::tORR,     0,   0,    0,   1,  0,0, 0 },
     { ARM::t2REV,   ARM::tREV,    0,             0,   0,    1,   0,  0,0, 0 },
     { ARM::t2REV16, ARM::tREV16,  0,             0,   0,    1,   0,  0,0, 0 },
     { ARM::t2REVSH, ARM::tREVSH,  0,             0,   0,    1,   0,  0,0, 0 },
-    { ARM::t2RORrr, ARM::tROR,    0,             0,   0,    1,   0,  0,0, 0 },
+    { ARM::t2RORrr, 0,            ARM::tROR,     0,   0,    0,   1,  0,0, 0 },
     // FIXME: T2RSBri immediate must be zero. Also need entry for T2RSBS
     //{ ARM::t2RSBri, ARM::tRSB,    0,             0,   0,    1,   0,  0,0, 0 },
     { ARM::t2SUBri, ARM::tSUBi3,  ARM::tSUBi8,   3,   8,    1,   1,  0,0, 0 },
@@ -368,6 +371,9 @@ bool Thumb2SizeReduce::ReduceMBB(MachineBasicBlock &MBB) {
 
   ProcessNext:
     LiveCPSR = UpdateCPSRLiveness(*MI, LiveCPSR);
+
+    if (ReduceLimit != -1 && ((int)(NumNarrows + Num2Addrs) > ReduceLimit))
+      break;
   }
 
   return Modified;
