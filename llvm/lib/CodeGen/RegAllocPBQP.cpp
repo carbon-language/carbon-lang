@@ -690,51 +690,6 @@ bool PBQPRegAlloc::mapPBQPToRegAlloc(const PBQP::Solution &solution) {
   // Clear the existing allocation.
   vrm->clearAllVirt();
 
-  CoalesceMap coalesces;//(findCoalesces());
-
-  for (unsigned i = 0; i < node2LI.size(); ++i) {
-    if (solution.getSelection(i) == 0) {
-      continue;
-    }
-
-    unsigned iSel = solution.getSelection(i);
-    unsigned iAlloc = allowedSets[i][iSel - 1];
-
-    for (unsigned j = i + 1; j < node2LI.size(); ++j) {
-
-      if (solution.getSelection(j) == 0) {
-        continue;
-      }
-
-      unsigned jSel = solution.getSelection(j);
-      unsigned jAlloc = allowedSets[j][jSel - 1];
-       
-      if ((iAlloc != jAlloc) && !tri->areAliases(iAlloc, jAlloc)) {
-        continue;
-      }
-
-      if (node2LI[i]->overlaps(*node2LI[j])) {
-        if (coalesces.find(RegPair(node2LI[i]->reg, node2LI[j]->reg)) == coalesces.end()) {
-          DEBUG(errs() <<  "In round " << ++round << ":\n"
-               << "Bogusness in " << mf->getFunction()->getName() << "!\n"
-               << "Live interval " << i << " (reg" << node2LI[i]->reg << ") and\n"
-               << "Live interval " << j << " (reg" << node2LI[j]->reg << ")\n"
-               << "  were allocated registers " << iAlloc << " (index " << iSel << ") and "
-               << jAlloc << "(index " << jSel 
-               << ") respectively in a graph of " << solution.numNodes() << " nodes.\n"
-               << "li[i]->empty() = " << node2LI[i]->empty() << "\n"
-               << "li[j]->empty() = " << node2LI[j]->empty() << "\n"
-               << "li[i]->overlaps(li[j]) = " << node2LI[i]->overlaps(*node2LI[j]) << "\n"
-                << "coalesce = " << (coalesces.find(RegPair(node2LI[i]->reg, node2LI[j]->reg)) != coalesces.end()) << "\n");
-             
-          DEBUG(errs() << "solution.getCost() = " << solution.getCost() << "\n");
-          exit(1);
-        }
-      }
-    }
-  }
-
-
   // Iterate over the nodes mapping the PBQP solution to a register assignment.
   for (unsigned node = 0; node < node2LI.size(); ++node) {
     unsigned virtReg = node2LI[node]->reg,
