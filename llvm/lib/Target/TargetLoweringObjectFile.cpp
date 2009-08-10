@@ -17,7 +17,7 @@
 #include "llvm/DerivedTypes.h"
 #include "llvm/GlobalVariable.h"
 #include "llvm/MC/MCContext.h"
-#include "llvm/MC/MCSection.h"
+#include "llvm/MC/MCSectionMachO.h"
 #include "llvm/Target/TargetAsmInfo.h"
 #include "llvm/Target/TargetData.h"
 #include "llvm/Target/TargetMachine.h"

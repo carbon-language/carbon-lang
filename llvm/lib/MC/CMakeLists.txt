@@ -4,6 +4,7 @@ add_llvm_library(LLVMMC
   MCAsmStreamer.cpp
   MCContext.cpp
   MCSection.cpp
+  MCSectionMachO.cpp
   MCStreamer.cpp
   TargetAsmParser.cpp
   )
