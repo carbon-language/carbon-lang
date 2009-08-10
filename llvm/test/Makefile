@@ -106,7 +106,7 @@ endif
 
 ifneq ($(OCAMLC),)
 CC_FOR_OCAMLC := $(shell $(OCAMLC) -config | grep native_c_compiler | sed -e 's/native_c_compiler: //')
-CXX_FOR_OCAMLC := $(patsubst gcc,g++,$(CC_FOR_OCAMLC))
+CXX_FOR_OCAMLC := $(subst gcc,g++,$(CC_FOR_OCAMLC))
 endif
 
 FORCE:
