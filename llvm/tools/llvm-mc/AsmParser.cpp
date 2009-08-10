@@ -723,6 +723,10 @@ bool AsmParser::ParseDirectiveDarwinSection() {
   return false;
 }
 
+/// ParseDirectiveSectionSwitch - 
+///
+/// FIXME! Many of these directives implicitly cause a ".align" directive to get
+/// emitted, we don't do this yet which can lead to subtle miscompiles.
 bool AsmParser::ParseDirectiveSectionSwitch(const char *Segment,
                                             const char *Section,
                                             unsigned TAA, unsigned StubSize) {
