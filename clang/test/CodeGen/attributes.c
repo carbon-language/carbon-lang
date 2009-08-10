@@ -1,4 +1,4 @@
-// RUN: clang-cc -emit-llvm -o %t %s &&
+// RUN: clang-cc -emit-llvm -triple i386-linux-gnu -o %t %s &&
 // RUN: grep 't1.*noreturn' %t &&
 // RUN: grep 't2.*nounwind' %t &&
 // RUN: grep 'weak.*t3' %t &&
