@@ -423,7 +423,7 @@ let Defs = [CPSR] in {
 def tCMPi8 : T1pI<(outs), (ins tGPR:$lhs, i32imm:$rhs), IIC_iALU,
                   "cmp", " $lhs, $rhs",
                   [(ARMcmp tGPR:$lhs, imm0_255:$rhs)]>;
-def tCMPZi8 : T1pI<(outs), (ins tGPR:$lhs, i32imm:$rhs), IIC_iALU,
+def tCMPzi8 : T1pI<(outs), (ins tGPR:$lhs, i32imm:$rhs), IIC_iALU,
                   "cmp", " $lhs, $rhs",
                   [(ARMcmpZ tGPR:$lhs, imm0_255:$rhs)]>;
 
@@ -434,14 +434,13 @@ let Defs = [CPSR] in {
 def tCMPr : T1pI<(outs), (ins tGPR:$lhs, tGPR:$rhs), IIC_iALU,
                  "cmp", " $lhs, $rhs",
                  [(ARMcmp tGPR:$lhs, tGPR:$rhs)]>;
-def tCMPZr : T1pI<(outs), (ins tGPR:$lhs, tGPR:$rhs), IIC_iALU,
+def tCMPzr : T1pI<(outs), (ins tGPR:$lhs, tGPR:$rhs), IIC_iALU,
                   "cmp", " $lhs, $rhs",
                   [(ARMcmpZ tGPR:$lhs, tGPR:$rhs)]>;
 
-// TODO: Make use of the followings cmp hi regs
 def tCMPhir : T1pI<(outs), (ins GPR:$lhs, GPR:$rhs), IIC_iALU,
                    "cmp", " $lhs, $rhs", []>;
-def tCMPZhir : T1pI<(outs), (ins GPR:$lhs, GPR:$rhs), IIC_iALU,
+def tCMPzhir : T1pI<(outs), (ins GPR:$lhs, GPR:$rhs), IIC_iALU,
                     "cmp", " $lhs, $rhs", []>;
 }
 

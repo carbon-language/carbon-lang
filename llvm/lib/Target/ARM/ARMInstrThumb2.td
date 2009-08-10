@@ -307,11 +307,13 @@ multiclass T2I_adde_sube_irs<string opc, PatFrag opnode, bit Commutable = 0> {
 let Defs = [CPSR] in {
 multiclass T2I_rbin_s_is<string opc, PatFrag opnode> {
    // shifted imm
-   def ri : T2XI<(outs GPR:$dst), (ins GPR:$rhs, t2_so_imm:$lhs, cc_out:$s), IIC_iALU,
+   def ri : T2XI<(outs GPR:$dst), (ins GPR:$rhs, t2_so_imm:$lhs, cc_out:$s),
+                 IIC_iALU,
                  !strconcat(opc, "${s}.w $dst, $rhs, $lhs"),
                  [(set GPR:$dst, (opnode t2_so_imm:$lhs, GPR:$rhs))]>;
    // shifted register
-   def rs : T2XI<(outs GPR:$dst), (ins GPR:$rhs, t2_so_reg:$lhs, cc_out:$s), IIC_iALU,
+   def rs : T2XI<(outs GPR:$dst), (ins GPR:$rhs, t2_so_reg:$lhs, cc_out:$s),
+                 IIC_iALU,
                  !strconcat(opc, "${s} $dst, $rhs, $lhs"),
                  [(set GPR:$dst, (opnode t2_so_reg:$lhs, GPR:$rhs))]>;
 }
@@ -997,13 +999,13 @@ def : T2Pat<(or (and GPR:$src1, 0xFFFF0000),
 //  Comparison Instructions...
 //
 
-defm t2CMP   : T2I_cmp_is<"cmp",
-                          BinOpFrag<(ARMcmp node:$LHS, node:$RHS)>>;
+defm t2CMP  : T2I_cmp_is<"cmp",
+                         BinOpFrag<(ARMcmp node:$LHS, node:$RHS)>>;
 defm t2CMPz : T2I_cmp_is<"cmp",
                          BinOpFrag<(ARMcmpZ node:$LHS, node:$RHS)>>;
 
-defm t2CMN   : T2I_cmp_is<"cmn",
-                          BinOpFrag<(ARMcmp node:$LHS,(ineg node:$RHS))>>;
+defm t2CMN  : T2I_cmp_is<"cmn",
+                         BinOpFrag<(ARMcmp node:$LHS,(ineg node:$RHS))>>;
 defm t2CMNz : T2I_cmp_is<"cmn",
                          BinOpFrag<(ARMcmpZ node:$LHS,(ineg node:$RHS))>>;
 

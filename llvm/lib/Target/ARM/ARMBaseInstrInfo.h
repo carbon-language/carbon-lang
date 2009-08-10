@@ -267,8 +267,9 @@ const MachineInstrBuilder &AddDefaultCC(const MachineInstrBuilder &MIB) {
 }
 
 static inline
-const MachineInstrBuilder &AddDefaultT1CC(const MachineInstrBuilder &MIB) {
-  return MIB.addReg(ARM::CPSR, getDefRegState(true));
+const MachineInstrBuilder &AddDefaultT1CC(const MachineInstrBuilder &MIB,
+                                          bool isDead = false) {
+  return MIB.addReg(ARM::CPSR, getDefRegState(true) | getDeadRegState(isDead));
 }
 
 static inline
