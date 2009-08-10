@@ -92,8 +92,17 @@ void MDNode::dropAllReferences() {
   Node.clear();
 }
 
+static std::vector<Value*> getValType(MDNode *N) {
+  std::vector<Value*> Elements;
+  Elements.reserve(N->getNumElements());
+  for (unsigned i = 0, e = N->getNumElements(); i != e; ++i)
+    Elements.push_back(N->getElement(i));
+  return Elements;
+}
+
 MDNode::~MDNode() {
   dropAllReferences();
+  getType()->getContext().pImpl->MDNodes.remove(this);
 }
 //===----------------------------------------------------------------------===//
 //NamedMDNode implementation
