@@ -19,6 +19,8 @@
 //===----------------------------------------------------------------------===//
 
 #define DEBUG_TYPE "post-RA-sched"
+#include "ExactHazardRecognizer.h"
+#include "SimpleHazardRecognizer.h"
 #include "ScheduleDAGInstrs.h"
 #include "llvm/CodeGen/Passes.h"
 #include "llvm/CodeGen/LatencyPriorityQueue.h"
@@ -49,8 +51,8 @@ EnableAntiDepBreaking("break-anti-dependencies",
 
 static cl::opt<bool>
 EnablePostRAHazardAvoidance("avoid-hazards",
-                      cl::desc("Enable simple hazard-avoidance"),
-                      cl::init(true), cl::Hidden);
+                      cl::desc("Enable exact hazard avoidance"),
+                      cl::init(false), cl::Hidden);
 
 namespace {
   class VISIBILITY_HIDDEN PostRAScheduler : public MachineFunctionPass {
@@ -156,62 +158,6 @@ namespace {
     void ListScheduleTopDown();
     bool BreakAntiDependencies();
   };
-
-  /// SimpleHazardRecognizer - A *very* simple hazard recognizer. It uses
-  /// a coarse classification and attempts to avoid that instructions of
-  /// a given class aren't grouped too densely together.
-  class SimpleHazardRecognizer : public ScheduleHazardRecognizer {
-    /// Class - A simple classification for SUnits.
-    enum Class {
-      Other, Load, Store
-    };
-
-    /// Window - The Class values of the most recently issued
-    /// instructions.
-    Class Window[8];
-
-    /// getClass - Classify the given SUnit.
-    Class getClass(const SUnit *SU) {
-      const MachineInstr *MI = SU->getInstr();
-      const TargetInstrDesc &TID = MI->getDesc();
-      if (TID.mayLoad())
-        return Load;
-      if (TID.mayStore())
-        return Store;
-      return Other;
-    }
-
-    /// Step - Rotate the existing entries in Window and insert the
-    /// given class value in position as the most recent.
-    void Step(Class C) {
-      std::copy(Window+1, array_endof(Window), Window);
-      Window[array_lengthof(Window)-1] = C;
-    }
-
-  public:
-    SimpleHazardRecognizer() : Window() {}
-
-    virtual HazardType getHazardType(SUnit *SU) {
-      Class C = getClass(SU);
-      if (C == Other)
-        return NoHazard;
-      unsigned Score = 0;
-      for (unsigned i = 0; i != array_lengthof(Window); ++i)
-        if (Window[i] == C)
-          Score += i + 1;
-      if (Score > array_lengthof(Window) * 2)
-        return Hazard;
-      return NoHazard;
-    }
-
-    virtual void EmitInstruction(SUnit *SU) {
-      Step(getClass(SU));
-    }
-
-    virtual void AdvanceCycle() {
-      Step(Other);
-    }
-  };
 }
 
 /// isSchedulingBoundary - Test if the given instruction should be
@@ -241,9 +187,10 @@ bool PostRAScheduler::runOnMachineFunction(MachineFunction &Fn) {
 
   const MachineLoopInfo &MLI = getAnalysis<MachineLoopInfo>();
   const MachineDominatorTree &MDT = getAnalysis<MachineDominatorTree>();
+  const InstrItineraryData &InstrItins = Fn.getTarget().getInstrItineraryData();
   ScheduleHazardRecognizer *HR = EnablePostRAHazardAvoidance ?
-                                 new SimpleHazardRecognizer :
-                                 new ScheduleHazardRecognizer();
+    (ScheduleHazardRecognizer *)new ExactHazardRecognizer(InstrItins) :
+    (ScheduleHazardRecognizer *)new SimpleHazardRecognizer();
 
   SchedulePostRATDList Scheduler(Fn, MLI, MDT, HR);
 
@@ -288,6 +235,9 @@ bool PostRAScheduler::runOnMachineFunction(MachineFunction &Fn) {
 void SchedulePostRATDList::StartBlock(MachineBasicBlock *BB) {
   // Call the superclass.
   ScheduleDAGInstrs::StartBlock(BB);
+
+  // Reset the hazard recognizer.
+  HazardRec->Reset();
 
   // Clear out the register class data.
   std::fill(Classes, array_endof(Classes),
@@ -379,6 +329,9 @@ void SchedulePostRATDList::Schedule() {
       BuildSchedGraph();
     }
   }
+
+  DEBUG(for (unsigned su = 0, e = SUnits.size(); su != e; ++su)
+          SUnits[su].dumpAll(this));
 
   AvailableQueue.initNodes(SUnits);
 
@@ -872,13 +825,6 @@ void SchedulePostRATDList::ListScheduleTopDown() {
         MinDepth = PendingQueue[i]->getDepth();
     }
     
-    // If there are no instructions available, don't try to issue anything, and
-    // don't advance the hazard recognizer.
-    if (AvailableQueue.empty()) {
-      CurCycle = MinDepth != ~0u ? MinDepth : CurCycle + 1;
-      continue;
-    }
-
     SUnit *FoundSUnit = 0;
 
     bool HasNoopHazards = false;
@@ -909,10 +855,14 @@ void SchedulePostRATDList::ListScheduleTopDown() {
       ScheduleNodeTopDown(FoundSUnit, CurCycle);
       HazardRec->EmitInstruction(FoundSUnit);
 
-      // If this is a pseudo-op node, we don't want to increment the current
-      // cycle.
-      if (FoundSUnit->Latency)  // Don't increment CurCycle for pseudo-ops!
-        ++CurCycle;
+      // If we are using the target-specific hazards, then don't
+      // advance the cycle time just because we schedule a node. If
+      // the target allows it we can schedule multiple nodes in the
+      // same cycle.
+      if (!EnablePostRAHazardAvoidance) {
+        if (FoundSUnit->Latency)  // Don't increment CurCycle for pseudo-ops!
+          ++CurCycle;
+      }
     } else if (!HasNoopHazards) {
       // Otherwise, we have a pipeline stall, but no other problem, just advance
       // the current cycle and try again.

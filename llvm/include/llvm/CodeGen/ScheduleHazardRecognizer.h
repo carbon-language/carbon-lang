@@ -43,6 +43,11 @@ public:
     return NoHazard;
   }
 
+  /// Reset - This callback is invoked when a new block of
+  /// instructions is about to be schedule. The hazard state should be
+  /// set to an initialized state.
+  virtual void Reset() {}
+
   /// EmitInstruction - This callback is invoked when an instruction is
   /// emitted, to advance the hazard state.
   virtual void EmitInstruction(SUnit *) {}

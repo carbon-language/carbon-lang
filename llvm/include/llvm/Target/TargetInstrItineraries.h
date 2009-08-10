@@ -20,9 +20,9 @@ namespace llvm {
 
 //===----------------------------------------------------------------------===//
 /// Instruction stage - These values represent a step in the execution of an
-/// instruction.  The latency represents the number of discrete time slots used
-/// need to complete the stage.  Units represent the choice of functional units
-/// that can be used to complete the stage.  Eg. IntUnit1, IntUnit2.
+/// instruction.  The latency represents the number of discrete time slots
+/// needed to complete the stage.  Units represent the choice of functional 
+/// units that can be used to complete the stage.  Eg. IntUnit1, IntUnit2.
 ///
 struct InstrStage {
   unsigned Cycles;  ///< Length of stage in machine cycles
@@ -84,7 +84,9 @@ struct InstrItineraryData {
     if (isEmpty())
       return 1;
 
-    // Just sum the cycle count for each stage.
+    // Just sum the cycle count for each stage. The assumption is that all
+    // inputs are consumed at the start of the first stage and that all
+    // outputs are produced at the end of the last stage.
     unsigned Latency = 0;
     for (const InstrStage *IS = begin(ItinClassIndx), *E = end(ItinClassIndx);
          IS != E; ++IS)

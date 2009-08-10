@@ -174,16 +174,20 @@ void ScheduleDAGInstrs::BuildSchedGraph() {
       assert(TRI->isPhysicalRegister(Reg) && "Virtual register encountered!");
       std::vector<SUnit *> &UseList = Uses[Reg];
       std::vector<SUnit *> &DefList = Defs[Reg];
-      // Optionally add output and anti dependencies.
-      // TODO: Using a latency of 1 here assumes there's no cost for
-      //       reusing registers.
+      // Optionally add output and anti dependencies. For anti
+      // dependencies we use a latency of 0 because for a multi-issue
+      // target we want to allow the defining instruction to issue
+      // in the same cycle as the using instruction.
+      // TODO: Using a latency of 1 here for output dependencies assumes
+      //       there's no cost for reusing registers.
       SDep::Kind Kind = MO.isUse() ? SDep::Anti : SDep::Output;
+      unsigned AOLatency = (Kind == SDep::Anti) ? 0 : 1;
       for (unsigned i = 0, e = DefList.size(); i != e; ++i) {
         SUnit *DefSU = DefList[i];
         if (DefSU != SU &&
             (Kind != SDep::Output || !MO.isDead() ||
              !DefSU->getInstr()->registerDefIsDead(Reg)))
-          DefSU->addPred(SDep(SU, Kind, /*Latency=*/1, /*Reg=*/Reg));
+          DefSU->addPred(SDep(SU, Kind, AOLatency, /*Reg=*/Reg));
       }
       for (const unsigned *Alias = TRI->getAliasSet(Reg); *Alias; ++Alias) {
         std::vector<SUnit *> &DefList = Defs[*Alias];
@@ -192,7 +196,7 @@ void ScheduleDAGInstrs::BuildSchedGraph() {
           if (DefSU != SU &&
               (Kind != SDep::Output || !MO.isDead() ||
                !DefSU->getInstr()->registerDefIsDead(Reg)))
-            DefSU->addPred(SDep(SU, Kind, /*Latency=*/1, /*Reg=*/ *Alias));
+            DefSU->addPred(SDep(SU, Kind, AOLatency, /*Reg=*/ *Alias));
         }
       }
 
@@ -399,8 +403,7 @@ void ScheduleDAGInstrs::FinishBlock() {
 void ScheduleDAGInstrs::ComputeLatency(SUnit *SU) {
   const InstrItineraryData &InstrItins = TM.getInstrItineraryData();
 
-  // Compute the latency for the node.  We use the sum of the latencies for
-  // all nodes flagged together into this SUnit.
+  // Compute the latency for the node.
   SU->Latency =
     InstrItins.getLatency(SU->getInstr()->getDesc().getSchedClass());
 
