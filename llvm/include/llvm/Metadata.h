@@ -28,6 +28,8 @@
 namespace llvm {
 class Constant;
 struct LLVMContext;
+template<class ConstantClass, class TypeClass, class ValType>
+struct ConstantCreator;
 
 //===----------------------------------------------------------------------===//
 // MetadataBase  - A base class for MDNode, MDString and NamedMDNode.
@@ -115,6 +117,8 @@ class MDNode : public MetadataBase, public FoldingSetNode {
   unsigned getNumOperands() { return User::getNumOperands();  }
 
   SmallVector<WeakVH, 4> Node;
+  
+  friend struct ConstantCreator<MDNode, Type, std::vector<Value*> >;
 protected:
   explicit MDNode(Value*const* Vals, unsigned NumVals);
 public:

@@ -83,26 +83,12 @@ void MDNode::Profile(FoldingSetNodeID &ID) const {
 
 MDNode *MDNode::get(LLVMContext &Context, Value*const* Vals, unsigned NumVals) {
   LLVMContextImpl *pImpl = Context.pImpl;
-  FoldingSetNodeID ID;
-  for (unsigned i = 0; i != NumVals; ++i)
-    ID.AddPointer(Vals[i]);
-
-  pImpl->ConstantsLock.reader_acquire();
-  void *InsertPoint;
-  MDNode *N = pImpl->MDNodeSet.FindNodeOrInsertPos(ID, InsertPoint);
-  pImpl->ConstantsLock.reader_release();
+  std::vector<Value*> V;
+  V.reserve(NumVals);
+  for (unsigned i = 0; i < NumVals; ++i)
+    V.push_back(Vals[i]);
   
-  if (!N) {
-    sys::SmartScopedWriter<true> Writer(pImpl->ConstantsLock);
-    N = pImpl->MDNodeSet.FindNodeOrInsertPos(ID, InsertPoint);
-    if (!N) {
-      // InsertPoint will have been set by the FindNodeOrInsertPos call.
-      N = new MDNode(Vals, NumVals);
-      pImpl->MDNodeSet.InsertNode(N, InsertPoint);
-    }
-  }
-
-  return N;
+  return pImpl->MDNodeSet.getOrCreate(Type::MetadataTy, V);
 }
 
 /// dropAllReferences - Remove all uses and clear node vector.

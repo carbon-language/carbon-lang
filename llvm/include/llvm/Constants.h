@@ -38,7 +38,7 @@ class VectorType;
 template<class ConstantClass, class TypeClass, class ValType>
 struct ConstantCreator;
 template<class ConstantClass, class TypeClass>
-struct ConvertConstantType;
+struct ConvertType;
 
 //===----------------------------------------------------------------------===//
 /// This is the shared class of boolean and integer constants. This class 
@@ -552,7 +552,7 @@ public:
 class ConstantExpr : public Constant {
   friend struct ConstantCreator<ConstantExpr,Type,
                             std::pair<unsigned, std::vector<Constant*> > >;
-  friend struct ConvertConstantType<ConstantExpr, Type>;
+  friend struct ConvertType<ConstantExpr, Type>;
 
 protected:
   ConstantExpr(const Type *ty, unsigned Opcode, Use *Ops, unsigned NumOps)

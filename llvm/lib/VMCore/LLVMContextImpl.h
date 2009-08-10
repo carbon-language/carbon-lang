@@ -103,9 +103,9 @@ struct LLVMContextImpl {
   
   StringMap<MDString*> MDStringCache;
   
-  FoldingSet<MDNode> MDNodeSet;
-  
   ValueMap<char, Type, ConstantAggregateZero> AggZeroConstants;
+
+  ValueMap<std::vector<Value*>, Type, MDNode> MDNodeSet;
   
   typedef ValueMap<std::vector<Constant*>, ArrayType, 
     ConstantArray, true /*largekey*/> ArrayConstantsTy;
