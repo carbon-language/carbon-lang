@@ -76,6 +76,11 @@ namespace llvm {
 
     /// size - Get the string size.
     size_t size() const { return Length; }
+    
+    char back() const {
+      assert(!empty());
+      return Data[Length-1];
+    }
 
     /// equals - Check for string equality, this is more efficient than
     /// compare() in when the relative ordering of inequal strings isn't needed.
