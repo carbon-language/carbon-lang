@@ -29,6 +29,8 @@ namespace llvm {
   class ConstantVector;
   class GCMetadataPrinter;
   class GlobalVariable;
+  class MachineLoopInfo;
+  class MachineLoop;
   class MachineConstantPoolEntry;
   class MachineConstantPoolValue;
   class MachineModuleInfo;
@@ -64,6 +66,16 @@ namespace llvm {
     /// controlled and used by the SwitchToSection method.
     const MCSection *CurrentSection;
     
+    /// If ExuberantAsm is set, a pointer to the loop info for this
+    /// function.
+    ///
+    MachineLoopInfo *LI;
+
+    /// PrintChildLoopComment - Print comments about child loops
+    /// within the loop for this basic block, with nesting.
+    ///
+    void PrintChildLoopComment(const MachineLoop *loop) const;
+
   protected:
     /// MMI - If available, this is a pointer to the current MachineModuleInfo.
     MachineModuleInfo *MMI;
@@ -121,6 +133,11 @@ namespace llvm {
     /// VerboseAsm - Emit comments in assembly output if this is true.
     ///
     bool VerboseAsm;
+
+    /// ExuberantAsm - Emit many more comments in assembly output if
+    /// this is true.
+    ///
+    bool ExuberantAsm;
 
     /// Private state for PrintSpecial()
     // Assign a unique ID to this machine instruction.
@@ -325,6 +342,8 @@ namespace llvm {
     void EmitComments(const MachineInstr &MI) const;
     /// EmitComments - Pretty-print comments for instructions
     void EmitComments(const MCInst &MI) const;
+    /// EmitComments - Pretty-print comments for basic blocks
+    void EmitComments(const MachineBasicBlock &MBB) const;
 
   protected:
     /// EmitZeros - Emit a block of zeros.
