@@ -21,8 +21,8 @@
 #include "llvm/ADT/Statistic.h"
 using namespace llvm;
 
-STATISTIC(NumNarrows,  "Number of 32-bit instructions reduced to 16-bit ones");
-STATISTIC(Num2Addrs,   "Number of 32-bit instructions reduced to 2-address");
+STATISTIC(NumNarrows,  "Number of 32-bit instrs reduced to 16-bit ones");
+STATISTIC(Num2Addrs,   "Number of 32-bit instrs reduced to 2addr 16-bit ones");
 
 namespace {
   /// ReduceTable - A static table with information on mapping from wide
@@ -63,8 +63,9 @@ namespace {
     { ARM::t2LSRrr, ARM::tLSRrr,  0,             0,   0,    1,   0,  0,0, 0 },
     { ARM::t2MOVi,  ARM::tMOVi8,  0,             8,   0,    1,   0,  0,0, 0 },
     // FIXME: Do we need the 16-bit 'S' variant?
+    // FIXME: t2MOVcc
     { ARM::t2MOVr,ARM::tMOVgpr2gpr,0,            0,   0,    0,   0,  1,0, 0 },
-    { ARM::t2MUL,   ARM::tMUL,    0,             0,   0,    1,   0,  0,0, 0 },
+    { ARM::t2MUL,   0,            ARM::tMUL,     0,   0,    1,   0,  0,0, 0 },
     { ARM::t2MVNr,  ARM::tMVN,    0,             0,   0,    1,   0,  0,0, 0 },
     { ARM::t2ORRrr, ARM::tORR,    0,             0,   0,    1,   0,  0,0, 0 },
     { ARM::t2REV,   ARM::tREV,    0,             0,   0,    1,   0,  0,0, 0 },
@@ -126,10 +127,8 @@ Thumb2SizeReduce::Thumb2SizeReduce() : MachineFunctionPass(&ID) {
 }
 
 static bool VerifyPredAndCC(MachineInstr *MI, const ReduceEntry &Entry,
-                            bool is2Addr, bool LiveCPSR,
-                            bool &HasCC, bool &CCDead) {
-  unsigned PredReg = 0;
-  ARMCC::CondCodes Pred = getInstrPredicate(MI, PredReg);
+                            bool is2Addr, ARMCC::CondCodes Pred,
+                            bool LiveCPSR, bool &HasCC, bool &CCDead) {
   if ((is2Addr  && Entry.PredCC2 == 0) ||
       (!is2Addr && Entry.PredCC1 == 0)) {
     if (Pred == ARMCC::AL) {
@@ -181,6 +180,19 @@ Thumb2SizeReduce::ReduceTo2Addr(MachineBasicBlock &MBB, MachineInstr *MI,
       return false;
   }
 
+  // Check if it's possible / necessary to transfer the predicate.
+  const TargetInstrDesc &NewTID = TII->get(Entry.NarrowOpc2);
+  unsigned PredReg = 0;
+  ARMCC::CondCodes Pred = getInstrPredicate(MI, PredReg);
+  bool SkipPred = false;
+  if (Pred != ARMCC::AL) {
+    if (!NewTID.isPredicable())
+      // Can't transfer predicate, fail.
+      return false;
+  } else {
+    SkipPred = !NewTID.isPredicable();
+  }
+
   bool HasCC = false;
   bool CCDead = false;
   if (TID.hasOptionalDef()) {
@@ -189,7 +201,7 @@ Thumb2SizeReduce::ReduceTo2Addr(MachineBasicBlock &MBB, MachineInstr *MI,
     if (HasCC && MI->getOperand(NumOps-1).isDead())
       CCDead = true;
   }
-  if (!VerifyPredAndCC(MI, Entry, true, LiveCPSR, HasCC, CCDead))
+  if (!VerifyPredAndCC(MI, Entry, true, Pred, LiveCPSR, HasCC, CCDead))
     return false;
 
   // Add the 16-bit instruction.
@@ -201,15 +213,18 @@ Thumb2SizeReduce::ReduceTo2Addr(MachineBasicBlock &MBB, MachineInstr *MI,
 
   // Transfer the rest of operands.
   unsigned NumOps = TID.getNumOperands();
-  for (unsigned i = 1, e = MI->getNumOperands(); i != e; ++i)
-    if (!(i < NumOps && TID.OpInfo[i].isOptionalDef()))
-      MIB.addOperand(MI->getOperand(i));
+  for (unsigned i = 1, e = MI->getNumOperands(); i != e; ++i) {
+    if (i < NumOps && TID.OpInfo[i].isOptionalDef())
+      continue;
+    if (SkipPred && TID.OpInfo[i].isPredicate())
+      continue;
+    MIB.addOperand(MI->getOperand(i));
+  }
 
   DOUT << "Converted 32-bit: " << *MI << "       to 16-bit: " << *MIB;
 
   MBB.erase(MI);
   ++Num2Addrs;
-  ++NumNarrows;
   return true;
 }
 
@@ -238,6 +253,19 @@ Thumb2SizeReduce::ReduceToNarrow(MachineBasicBlock &MBB, MachineInstr *MI,
     }
   }
 
+  // Check if it's possible / necessary to transfer the predicate.
+  const TargetInstrDesc &NewTID = TII->get(Entry.NarrowOpc1);
+  unsigned PredReg = 0;
+  ARMCC::CondCodes Pred = getInstrPredicate(MI, PredReg);
+  bool SkipPred = false;
+  if (Pred != ARMCC::AL) {
+    if (!NewTID.isPredicable())
+      // Can't transfer predicate, fail.
+      return false;
+  } else {
+    SkipPred = !NewTID.isPredicable();
+  }
+
   bool HasCC = false;
   bool CCDead = false;
   if (TID.hasOptionalDef()) {
@@ -246,7 +274,7 @@ Thumb2SizeReduce::ReduceToNarrow(MachineBasicBlock &MBB, MachineInstr *MI,
     if (HasCC && MI->getOperand(NumOps-1).isDead())
       CCDead = true;
   }
-  if (!VerifyPredAndCC(MI, Entry, false, LiveCPSR, HasCC, CCDead))
+  if (!VerifyPredAndCC(MI, Entry, false, Pred, LiveCPSR, HasCC, CCDead))
     return false;
 
   // Add the 16-bit instruction.
@@ -258,15 +286,18 @@ Thumb2SizeReduce::ReduceToNarrow(MachineBasicBlock &MBB, MachineInstr *MI,
 
   // Transfer the rest of operands.
   unsigned NumOps = TID.getNumOperands();
-  for (unsigned i = 1, e = MI->getNumOperands(); i != e; ++i)
-    if (!(i < NumOps && TID.OpInfo[i].isOptionalDef()))
-      MIB.addOperand(MI->getOperand(i));
+  for (unsigned i = 1, e = MI->getNumOperands(); i != e; ++i) {
+    if (i < NumOps && TID.OpInfo[i].isOptionalDef())
+      continue;
+    if (SkipPred && TID.OpInfo[i].isPredicate())
+      continue;
+    MIB.addOperand(MI->getOperand(i));
+  }
 
 
   DOUT << "Converted 32-bit: " << *MI << "       to 16-bit: " << *MIB;
 
   MBB.erase(MI);
-  ++Num2Addrs;
   ++NumNarrows;
   return true;
 }
@@ -298,9 +329,16 @@ static bool UpdateCPSRLiveness(MachineInstr &MI, bool LiveCPSR) {
 bool Thumb2SizeReduce::ReduceMBB(MachineBasicBlock &MBB) {
   bool Modified = false;
 
-  // FIXME: Track whether CPSR is live. If not, then it's possible to convert
-  // one that doesn't set CPSR to one that does.
   bool LiveCPSR = false;
+  // Yes, CPSR could be livein.
+  for (MachineBasicBlock::const_livein_iterator I = MBB.livein_begin(),
+         E = MBB.livein_end(); I != E; ++I) {
+    if (*I == ARM::CPSR) {
+      LiveCPSR = true;
+      break;
+    }
+  }
+
   MachineBasicBlock::iterator MII = MBB.begin(), E = MBB.end();
   MachineBasicBlock::iterator NextMII = next(MII);
   for (; MII != E; MII = NextMII) {
