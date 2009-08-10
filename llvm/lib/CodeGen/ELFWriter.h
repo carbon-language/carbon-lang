@@ -43,6 +43,7 @@ namespace llvm {
   typedef std::vector<ELFSection*>::iterator ELFSectionIter;
   typedef SetVector<const GlobalValue*>::const_iterator PendingGblsIter;
   typedef SetVector<const char *>::const_iterator PendingExtsIter;
+  typedef std::pair<const Constant *, int64_t> CstExprResTy;
 
   /// ELFWriter - This class implements the common target-independent code for
   /// writing ELF files.  Targets should derive a class from this to
@@ -251,7 +252,7 @@ namespace llvm {
                                   ELFSection &GblS);
     void EmitGlobalConstantLargeInt(const ConstantInt *CI, ELFSection &S);
     void EmitGlobalDataRelocation(const GlobalValue *GV, unsigned Size, 
-                                  ELFSection &GblS, uint64_t Offset = 0);
+                                  ELFSection &GblS, int64_t Offset = 0);
     bool EmitSpecialLLVMGlobal(const GlobalVariable *GV);
     void EmitXXStructorList(Constant *List, ELFSection &Xtor);
     void EmitRelocations();
@@ -265,6 +266,7 @@ namespace llvm {
     void RelocateField(BinaryObject &BO, uint32_t Offset, int64_t Value,
                        unsigned Size);
     unsigned SortSymbols();
+    CstExprResTy ResolveConstantExpr(const Constant *CV);
   };
 }
 

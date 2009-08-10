@@ -497,32 +497,21 @@ void ELFWriter::EmitGlobalConstant(const Constant *CV, ELFSection &GblS) {
       EmitGlobalConstant(CP->getOperand(I), GblS);
     return;
   } else if (const ConstantExpr *CE = dyn_cast<ConstantExpr>(CV)) {
-    switch (CE->getOpcode()) {
-    case Instruction::BitCast: {
-      EmitGlobalConstant(CE->getOperand(0), GblS);
-      return;
-    }
-    case Instruction::GetElementPtr: {
-      const Constant *ptrVal = CE->getOperand(0);
-      SmallVector<Value*, 8> idxVec(CE->op_begin()+1, CE->op_end());
-      int64_t Offset = TD->getIndexedOffset(ptrVal->getType(), &idxVec[0],
-                                            idxVec.size());
-      EmitGlobalDataRelocation(cast<const GlobalValue>(ptrVal), 
-                               TD->getTypeAllocSize(ptrVal->getType()), 
-                               GblS, Offset);
-      return;
-    }
-    case Instruction::IntToPtr: {
-      Constant *Op = CE->getOperand(0);
-      Op = ConstantExpr::getIntegerCast(Op, TD->getIntPtrType(), false/*ZExt*/);
+    // Resolve a constant expression which returns a (Constant, Offset)
+    // pair. If 'Res.first' is a GlobalValue, emit a relocation with 
+    // the offset 'Res.second', otherwise emit a global constant like
+    // it is always done for not contant expression types.
+    CstExprResTy Res = ResolveConstantExpr(CE);
+    const Constant *Op = Res.first;
+
+    if (isa<GlobalValue>(Op))
+      EmitGlobalDataRelocation(cast<const GlobalValue>(Op), 
+                               TD->getTypeAllocSize(Op->getType()), 
+                               GblS, Res.second);
+    else
       EmitGlobalConstant(Op, GblS);
-      return;
-    }
-    }
-    std::string msg(CE->getOpcodeName());
-    raw_string_ostream ErrorMsg(msg);
-    ErrorMsg << ": Unsupported ConstantExpr type";
-    llvm_report_error(ErrorMsg.str());
+
+    return;
   } else if (CV->getType()->getTypeID() == Type::PointerTyID) {
     // Fill the data entry with zeros or emit a relocation entry
     if (isa<ConstantPointerNull>(CV))
@@ -544,8 +533,77 @@ void ELFWriter::EmitGlobalConstant(const Constant *CV, ELFSection &GblS) {
   llvm_report_error(ErrorMsg.str());
 }
 
+// ResolveConstantExpr - Resolve the constant expression until it stop
+// yielding other constant expressions.
+CstExprResTy ELFWriter::ResolveConstantExpr(const Constant *CV) {
+  const TargetData *TD = TM.getTargetData();
+  
+  // There ins't constant expression inside others anymore
+  if (!isa<ConstantExpr>(CV))
+    return std::make_pair(CV, 0);
+
+  const ConstantExpr *CE = dyn_cast<ConstantExpr>(CV);
+  switch (CE->getOpcode()) {
+  case Instruction::BitCast:
+    return ResolveConstantExpr(CE->getOperand(0));
+  
+  case Instruction::GetElementPtr: {
+    const Constant *ptrVal = CE->getOperand(0);
+    SmallVector<Value*, 8> idxVec(CE->op_begin()+1, CE->op_end());
+    int64_t Offset = TD->getIndexedOffset(ptrVal->getType(), &idxVec[0],
+                                          idxVec.size());
+    return std::make_pair(ptrVal, Offset);
+  }
+  case Instruction::IntToPtr: {
+    Constant *Op = CE->getOperand(0);
+    Op = ConstantExpr::getIntegerCast(Op, TD->getIntPtrType(), false/*ZExt*/);
+    return ResolveConstantExpr(Op);
+  }
+  case Instruction::PtrToInt: {
+    Constant *Op = CE->getOperand(0);
+    const Type *Ty = CE->getType();
+
+    // We can emit the pointer value into this slot if the slot is an
+    // integer slot greater or equal to the size of the pointer.
+    if (TD->getTypeAllocSize(Ty) == TD->getTypeAllocSize(Op->getType()))
+      return ResolveConstantExpr(Op);
+
+    llvm_unreachable("Integer size less then pointer size");
+  }
+  case Instruction::Add:
+  case Instruction::Sub: {
+    // Only handle cases where there's a constant expression with GlobalValue
+    // as first operand and ConstantInt as second, which are the cases we can
+    // solve direclty using a relocation entry. GlobalValue=Op0, CstInt=Op1
+    // 1)  Instruction::Add  => (global) + CstInt
+    // 2)  Instruction::Sub  => (global) + -CstInt
+    const Constant *Op0 = CE->getOperand(0); 
+    const Constant *Op1 = CE->getOperand(1); 
+    assert(isa<ConstantInt>(Op1) && "Op1 must be a ConstantInt");
+
+    CstExprResTy Res = ResolveConstantExpr(Op0);
+    assert(isa<GlobalValue>(Res.first) && "Op0 must be a GlobalValue");
+
+    const APInt &RHS = cast<ConstantInt>(Op1)->getValue();
+    switch (CE->getOpcode()) {
+    case Instruction::Add: 
+      return std::make_pair(Res.first, RHS.getSExtValue());
+    case Instruction::Sub:
+      return std::make_pair(Res.first, (-RHS).getSExtValue());
+    }
+  }
+  }
+
+  std::string msg(CE->getOpcodeName());
+  raw_string_ostream ErrorMsg(msg);
+  ErrorMsg << ": Unsupported ConstantExpr type";
+  llvm_report_error(ErrorMsg.str());
+
+  return std::make_pair(CV, 0); // silence warning
+}
+
 void ELFWriter::EmitGlobalDataRelocation(const GlobalValue *GV, unsigned Size,
-                                         ELFSection &GblS, uint64_t Offset) {
+                                         ELFSection &GblS, int64_t Offset) {
   // Create the relocation entry for the global value
   MachineRelocation MR =
     MachineRelocation::getGV(GblS.getCurrentPCOffset(),
@@ -868,7 +926,6 @@ void ELFWriter::EmitStringTable(const std::string &ModuleName) {
 
     std::string Name;
     if (Sym.isGlobalValue())
-      // Use the name mangler to uniquify the LLVM symbol.
       Name.append(Mang->getMangledName(Sym.getGlobalValue()));
     else if (Sym.isExternalSym())
       Name.append(Sym.getExternalSymbol());
