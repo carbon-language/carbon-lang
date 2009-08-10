@@ -1337,6 +1337,7 @@ bool ARMAsmPrinter::doFinalization(Module &M) {
     if (!GVNonLazyPtrs.empty()) {
       // Switch with ".non_lazy_symbol_pointer" directive.
       SwitchToSection(TLOFMacho.getNonLazySymbolPointerSection());
+      EmitAlignment(2);
       for (StringMap<std::string>::iterator I = GVNonLazyPtrs.begin(),
            E = GVNonLazyPtrs.end(); I != E; ++I) {
         O << I->second << ":\n";
