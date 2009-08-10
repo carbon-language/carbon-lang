@@ -424,6 +424,18 @@ public:
   base_class_const_iterator bases_begin() const { return Bases; }
   base_class_iterator       bases_end()         { return Bases + NumBases; }
   base_class_const_iterator bases_end()   const { return Bases + NumBases; }
+  reverse_base_class_iterator       bases_rbegin() {
+    return reverse_base_class_iterator(bases_end());
+  }
+  reverse_base_class_const_iterator bases_rbegin() const {
+    return reverse_base_class_const_iterator(bases_end());
+  }
+  reverse_base_class_iterator bases_rend() {
+    return reverse_base_class_iterator(bases_begin());
+  }
+  reverse_base_class_const_iterator bases_rend() const {
+    return reverse_base_class_const_iterator(bases_begin());
+  }
   
   /// getNumVBases - Retrieves the number of virtual base classes of this
   /// class.
