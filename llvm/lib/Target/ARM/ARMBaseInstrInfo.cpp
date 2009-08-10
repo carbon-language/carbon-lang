@@ -698,45 +698,65 @@ foldMemoryOperandImpl(MachineFunction &MF, MachineInstr *MI,
   unsigned OpNum = Ops[0];
   unsigned Opc = MI->getOpcode();
   MachineInstr *NewMI = NULL;
-  if (Opc == ARM::MOVr || Opc == ARM::t2MOVr) { // FIXME: tMOVgpr2gpr etc.?
+  if (Opc == ARM::MOVr || Opc == ARM::t2MOVr) {
     // If it is updating CPSR, then it cannot be folded.
-    if (MI->getOperand(4).getReg() != ARM::CPSR || MI->getOperand(4).isDead()) {
-      unsigned Pred = MI->getOperand(2).getImm();
-      unsigned PredReg = MI->getOperand(3).getReg();
-      if (OpNum == 0) { // move -> store
-        unsigned SrcReg = MI->getOperand(1).getReg();
-        bool isKill = MI->getOperand(1).isKill();
-        bool isUndef = MI->getOperand(1).isUndef();
-        if (Opc == ARM::MOVr)
-          NewMI = BuildMI(MF, MI->getDebugLoc(), get(ARM::STR))
-            .addReg(SrcReg, getKillRegState(isKill) | getUndefRegState(isUndef))
-            .addFrameIndex(FI).addReg(0).addImm(0).addImm(Pred).addReg(PredReg);
-        else // ARM::t2MOVr
-          NewMI = BuildMI(MF, MI->getDebugLoc(), get(ARM::t2STRi12))
-            .addReg(SrcReg, getKillRegState(isKill) | getUndefRegState(isUndef))
-            .addFrameIndex(FI).addImm(0).addImm(Pred).addReg(PredReg);
-      } else {          // move -> load
-        unsigned DstReg = MI->getOperand(0).getReg();
-        bool isDead = MI->getOperand(0).isDead();
-        bool isUndef = MI->getOperand(0).isUndef();
-        if (Opc == ARM::MOVr)
-          NewMI = BuildMI(MF, MI->getDebugLoc(), get(ARM::LDR))
-            .addReg(DstReg,
-                    RegState::Define |
-                    getDeadRegState(isDead) |
-                    getUndefRegState(isUndef))
-            .addFrameIndex(FI).addReg(0).addImm(0).addImm(Pred).addReg(PredReg);
-        else // ARM::t2MOVr
-          NewMI = BuildMI(MF, MI->getDebugLoc(), get(ARM::t2LDRi12))
-            .addReg(DstReg,
-                    RegState::Define |
-                    getDeadRegState(isDead) |
-                    getUndefRegState(isUndef))
-            .addFrameIndex(FI).addImm(0).addImm(Pred).addReg(PredReg);
-      }
+    if (MI->getOperand(4).getReg() == ARM::CPSR && !MI->getOperand(4).isDead())
+      return NULL;
+    unsigned Pred = MI->getOperand(2).getImm();
+    unsigned PredReg = MI->getOperand(3).getReg();
+    if (OpNum == 0) { // move -> store
+      unsigned SrcReg = MI->getOperand(1).getReg();
+      bool isKill = MI->getOperand(1).isKill();
+      bool isUndef = MI->getOperand(1).isUndef();
+      if (Opc == ARM::MOVr)
+        NewMI = BuildMI(MF, MI->getDebugLoc(), get(ARM::STR))
+          .addReg(SrcReg, getKillRegState(isKill) | getUndefRegState(isUndef))
+          .addFrameIndex(FI).addReg(0).addImm(0).addImm(Pred).addReg(PredReg);
+      else // ARM::t2MOVr
+        NewMI = BuildMI(MF, MI->getDebugLoc(), get(ARM::t2STRi12))
+          .addReg(SrcReg, getKillRegState(isKill) | getUndefRegState(isUndef))
+          .addFrameIndex(FI).addImm(0).addImm(Pred).addReg(PredReg);
+    } else {          // move -> load
+      unsigned DstReg = MI->getOperand(0).getReg();
+      bool isDead = MI->getOperand(0).isDead();
+      bool isUndef = MI->getOperand(0).isUndef();
+      if (Opc == ARM::MOVr)
+        NewMI = BuildMI(MF, MI->getDebugLoc(), get(ARM::LDR))
+          .addReg(DstReg,
+                  RegState::Define |
+                  getDeadRegState(isDead) |
+                  getUndefRegState(isUndef))
+          .addFrameIndex(FI).addReg(0).addImm(0).addImm(Pred).addReg(PredReg);
+      else // ARM::t2MOVr
+        NewMI = BuildMI(MF, MI->getDebugLoc(), get(ARM::t2LDRi12))
+          .addReg(DstReg,
+                  RegState::Define |
+                  getDeadRegState(isDead) |
+                  getUndefRegState(isUndef))
+          .addFrameIndex(FI).addImm(0).addImm(Pred).addReg(PredReg);
     }
-  }
-  else if (Opc == ARM::FCPYS) {
+  } else if (Opc == ARM::tMOVgpr2gpr ||
+             Opc == ARM::tMOVtgpr2gpr ||
+             Opc == ARM::tMOVgpr2tgpr) {
+    if (OpNum == 0) { // move -> store
+      unsigned SrcReg = MI->getOperand(1).getReg();
+      bool isKill = MI->getOperand(1).isKill();
+      bool isUndef = MI->getOperand(1).isUndef();
+      NewMI = BuildMI(MF, MI->getDebugLoc(), get(ARM::t2STRi12))
+        .addReg(SrcReg, getKillRegState(isKill) | getUndefRegState(isUndef))
+        .addFrameIndex(FI).addImm(0).addImm(ARMCC::AL).addReg(0);
+    } else {          // move -> load
+      unsigned DstReg = MI->getOperand(0).getReg();
+      bool isDead = MI->getOperand(0).isDead();
+      bool isUndef = MI->getOperand(0).isUndef();
+      NewMI = BuildMI(MF, MI->getDebugLoc(), get(ARM::t2LDRi12))
+        .addReg(DstReg,
+                RegState::Define |
+                getDeadRegState(isDead) |
+                getUndefRegState(isUndef))
+        .addFrameIndex(FI).addImm(0).addImm(ARMCC::AL).addReg(0);
+    }
+  } else if (Opc == ARM::FCPYS) {
     unsigned Pred = MI->getOperand(2).getImm();
     unsigned PredReg = MI->getOperand(3).getReg();
     if (OpNum == 0) { // move -> store
@@ -804,6 +824,10 @@ ARMBaseInstrInfo::canFoldMemoryOperand(const MachineInstr *MI,
     // If it is updating CPSR, then it cannot be folded.
     return MI->getOperand(4).getReg() != ARM::CPSR ||
       MI->getOperand(4).isDead();
+  } else if (Opc == ARM::tMOVgpr2gpr ||
+             Opc == ARM::tMOVtgpr2gpr ||
+             Opc == ARM::tMOVgpr2tgpr) {
+    return true;
   } else if (Opc == ARM::FCPYS || Opc == ARM::FCPYD) {
     return true;
   } else if (Opc == ARM::VMOVD || Opc == ARM::VMOVQ) {
