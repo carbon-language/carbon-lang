@@ -13,7 +13,9 @@
 
 /* #include "config.h"
  * FIXME: CMake - include when cmake system is ready.
+ * Remove #define HAVE_SYSCONF 1 line.
  */
+#define HAVE_SYSCONF 1
 
 #ifndef __APPLE__
 #include <unistd.h>
