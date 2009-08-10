@@ -784,7 +784,7 @@ void CodeGenFunction::EmitClassMemberwiseCopy(
     
     // Push the Src ptr.
     CallArgs.push_back(std::make_pair(RValue::get(Src),
-                                      BaseCopyCtor->getThisType(getContext())));
+                       BaseCopyCtor->getParamDecl(0)->getType()));
     QualType ResultType = 
     BaseCopyCtor->getType()->getAsFunctionType()->getResultType();
     EmitCall(CGM.getTypes().getFunctionInfo(ResultType, CallArgs),
