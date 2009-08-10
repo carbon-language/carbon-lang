@@ -10,9 +10,14 @@
 
 #include <stdint.h>
 #include <sys/mman.h>
+
+/* #include "config.h"
+ * FIXME: CMake - include when cmake system is ready.
+ */
+
 #ifndef __APPLE__
 #include <unistd.h>
-#endif
+#endif /* __APPLE__ */
 
 
 /*
@@ -25,13 +30,16 @@
 
 void __enable_execute_stack(void* addr)
 {
+
 #if __APPLE__
 	/* On Darwin, pagesize is always 4096 bytes */
 	const uintptr_t pageSize = 4096;
+#elif !defined(HAVE_SYSCONF)
+#error "HAVE_SYSCONF not defined! See enable_execute_stack.c"
 #else
-        /* FIXME: We should have a configure check for this. */
         const uintptr_t pageSize = sysconf(_SC_PAGESIZE);
-#endif
+#endif /* __APPLE__ */
+
 	const uintptr_t pageAlignMask = ~(pageSize-1);
 	uintptr_t p = (uintptr_t)addr;
 	unsigned char* startPage = (unsigned char*)(p & pageAlignMask);
