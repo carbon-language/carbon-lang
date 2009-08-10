@@ -28,7 +28,9 @@ def i64i32imm_pcrel : Operand<i64> {
 
 
 // 64-bits but only 8 bits are significant.
-def i64i8imm   : Operand<i64>;
+def i64i8imm   : Operand<i64> {
+  let ParserMatchClass = ImmSExt8AsmOperand;
+}
 
 def lea64mem : Operand<i64> {
   let PrintMethod = "printlea64mem";

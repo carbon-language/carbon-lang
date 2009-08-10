@@ -1,6 +1,6 @@
 // FIXME: Switch back to FileCheck once we print actual instructions
         
-// RUN: llvm-mc -triple i386-unknown-unknown %s > %t
+// RUN: llvm-mc -triple x86_64-unknown-unknown %s > %t
 
 // RUN: grep {MCInst(opcode=.*, operands=.reg:2, reg:0, reg:2.)} %t
         subb %al, %al
@@ -29,4 +29,10 @@
 // RUN: grep {MCInst(opcode=.*, operands=.reg:19, reg:0, val:256.)} %t
         subl $256, %eax
 
+// FIXME: Check that this matches XOR64ri8
+// RUN: grep {MCInst(opcode=.*, operands=.reg:19, reg:0, val:1.)} %t
+        xorq $1, %eax
         
+// FIXME: Check that this matches XOR64ri32
+// RUN: grep {MCInst(opcode=.*, operands=.reg:19, reg:0, val:256.)} %t
+        xorq $256, %eax
