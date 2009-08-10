@@ -340,7 +340,7 @@ struct ConstantCreator {
 };
 
 template<class ConstantClass, class TypeClass>
-struct ConvertType {
+struct ConvertConstant {
   static void convert(ConstantClass *OldC, const TypeClass *NewTy) {
     llvm_unreachable("This type cannot be converted!");
   }
@@ -391,7 +391,7 @@ struct ConstantCreator<ConstantExpr, Type, ExprMapKeyType> {
 };
 
 template<>
-struct ConvertType<ConstantExpr, Type> {
+struct ConvertConstant<ConstantExpr, Type> {
   static void convert(ConstantExpr *OldC, const Type *NewTy) {
     Constant *New;
     switch (OldC->getOpcode()) {
@@ -451,7 +451,7 @@ struct ConstantCreator<MDNode, Type, std::vector<Value*> > {
 };
 
 template<>
-struct ConvertType<ConstantVector, VectorType> {
+struct ConvertConstant<ConstantVector, VectorType> {
   static void convert(ConstantVector *OldC, const VectorType *NewTy) {
     // Make everyone now use a constant of the new type...
     std::vector<Constant*> C;
@@ -465,7 +465,7 @@ struct ConvertType<ConstantVector, VectorType> {
 };
 
 template<>
-struct ConvertType<ConstantAggregateZero, Type> {
+struct ConvertConstant<ConstantAggregateZero, Type> {
   static void convert(ConstantAggregateZero *OldC, const Type *NewTy) {
     // Make everyone now use a constant of the new type...
     Constant *New = ConstantAggregateZero::get(NewTy);
@@ -476,7 +476,7 @@ struct ConvertType<ConstantAggregateZero, Type> {
 };
 
 template<>
-struct ConvertType<ConstantArray, ArrayType> {
+struct ConvertConstant<ConstantArray, ArrayType> {
   static void convert(ConstantArray *OldC, const ArrayType *NewTy) {
     // Make everyone now use a constant of the new type...
     std::vector<Constant*> C;
@@ -490,7 +490,7 @@ struct ConvertType<ConstantArray, ArrayType> {
 };
 
 template<>
-struct ConvertType<ConstantStruct, StructType> {
+struct ConvertConstant<ConstantStruct, StructType> {
   static void convert(ConstantStruct *OldC, const StructType *NewTy) {
     // Make everyone now use a constant of the new type...
     std::vector<Constant*> C;
@@ -513,7 +513,7 @@ struct ConstantCreator<ConstantPointerNull, PointerType, ValType> {
 };
 
 template<>
-struct ConvertType<ConstantPointerNull, PointerType> {
+struct ConvertConstant<ConstantPointerNull, PointerType> {
   static void convert(ConstantPointerNull *OldC, const PointerType *NewTy) {
     // Make everyone now use a constant of the new type...
     Constant *New = ConstantPointerNull::get(NewTy);
@@ -532,7 +532,7 @@ struct ConstantCreator<UndefValue, Type, ValType> {
 };
 
 template<>
-struct ConvertType<UndefValue, Type> {
+struct ConvertConstant<UndefValue, Type> {
   static void convert(UndefValue *OldC, const Type *NewTy) {
     // Make everyone now use a constant of the new type.
     Constant *New = UndefValue::get(NewTy);
@@ -757,7 +757,7 @@ public:
     // leaving will remove() itself, causing the AbstractTypeMapEntry to be
     // eliminated eventually.
     do {
-      ConvertType<ConstantClass, TypeClass>::convert(
+      ConvertConstant<ConstantClass, TypeClass>::convert(
                               static_cast<ConstantClass *>(I->second->second),
                                               cast<TypeClass>(NewTy));
 
