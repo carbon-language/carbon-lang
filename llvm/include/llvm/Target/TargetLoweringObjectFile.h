@@ -257,9 +257,30 @@ public:
                                           Mangler *) const;
 
   /// getMachOSection - Return the MCSection for the specified mach-o section.
-  /// FIXME: Switch this to a semantic view eventually.
-  const MCSection *getMachOSection(const char *Name, bool isDirective,
-                                   SectionKind K) const;
+  /// This requires the operands to be valid.
+  const MCSection *getMachOSection(StringRef Segment, StringRef Section,
+                                   unsigned TypeAndAttributes,
+                                   SectionKind K) const {
+    return getMachOSection(Segment, Section, TypeAndAttributes, 0, K);
+  }
+  const MCSection *getMachOSection(StringRef Segment, StringRef Section,
+                                   unsigned TypeAndAttributes,
+                                   unsigned Reserved2, SectionKind K) const;
+
+  /// getTextCoalSection - Return the "__TEXT,__textcoal_nt" section we put weak
+  /// symbols into.
+  const MCSection *getTextCoalSection() const {
+    return TextCoalSection;
+  }
+  
+  /// getLazySymbolPointerSection - Return the section corresponding to
+  /// the .lazy_symbol_pointer directive.
+  const MCSection *getLazySymbolPointerSection() const;
+  
+  /// getNonLazySymbolPointerSection - Return the section corresponding to
+  /// the .non_lazy_symbol_pointer directive.
+  const MCSection *getNonLazySymbolPointerSection() const;
+  
 };
 
 

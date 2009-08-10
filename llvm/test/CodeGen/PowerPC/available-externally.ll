@@ -44,7 +44,7 @@ entry:
 ; PIC: mtctr r12
 ; PIC: bctr
 
-; PIC: .lazy_symbol_pointer
+; PIC: .section __DATA,__la_symbol_ptr,lazy_symbol_pointers
 ; PIC: L_exact_log2$lazy_ptr:
 ; PIC: .indirect_symbol _exact_log2
 ; PIC: .long dyld_stub_binding_helper
@@ -60,7 +60,7 @@ entry:
 ; DYNAMIC: mtctr r12
 ; DYNAMIC: bctr
 
-; DYNAMIC: .lazy_symbol_pointer
+; DYNAMIC: .section __DATA,__la_symbol_ptr,lazy_symbol_pointers
 ; DYNAMIC: L_exact_log2$lazy_ptr:
 ; DYNAMIC: .indirect_symbol _exact_log2
 ; DYNAMIC: .long dyld_stub_binding_helper

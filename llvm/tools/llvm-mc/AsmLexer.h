@@ -50,6 +50,9 @@ public:
   ~AsmLexer();
   
   SMLoc getLoc() const;
+  
+  StringRef LexUntilEndOfStatement();
+  
 
   /// EnterIncludeFile - Enter the specified file. This returns true on failure.
   bool EnterIncludeFile(const std::string &Filename);

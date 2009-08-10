@@ -1286,19 +1286,21 @@ bool ARMAsmPrinter::doFinalization(Module &M) {
     O << '\n';
     
     if (!FnStubs.empty()) {
-      const MCSection *StubSection;
-      if (TM.getRelocationModel() == Reloc::PIC_)
-        StubSection = TLOFMacho.getMachOSection(".section __TEXT,__picsymbolstu"
-                                                "b4,symbol_stubs,none,16", true,
-                                                SectionKind::getText());
-      else
-        StubSection = TLOFMacho.getMachOSection(".section __TEXT,__symbol_stub4"
-                                                ",symbol_stubs,none,12", true,
-                                                SectionKind::getText());
+      unsigned StubSize = 12;
+      const char *StubSectionName = "__symbol_stub4";
+      
+      if (TM.getRelocationModel() == Reloc::PIC_) {
+        StubSize = 16;
+        StubSectionName = "__picsymbolstub4";
+      }
+      
+      const MCSection *StubSection
+        = TLOFMacho.getMachOSection("__TEXT", StubSectionName,
+                                    MCSectionMachO::S_SYMBOL_STUBS,
+                                    StubSize, SectionKind::getText());
 
       const MCSection *LazySymbolPointerSection
-        = TLOFMacho.getMachOSection(".lazy_symbol_pointer", true,
-                                    SectionKind::getMetadata());
+        = TLOFMacho.getLazySymbolPointerSection();
     
       // Output stubs for dynamically-linked functions
       for (StringMap<FnStubInfo>::iterator I = FnStubs.begin(),
@@ -1333,9 +1335,8 @@ bool ARMAsmPrinter::doFinalization(Module &M) {
     
     // Output non-lazy-pointers for external and common global variables.
     if (!GVNonLazyPtrs.empty()) {
-      SwitchToSection(TLOFMacho.getMachOSection(".non_lazy_symbol_pointer",
-                                                true,
-                                                SectionKind::getMetadata()));
+      // Switch with ".non_lazy_symbol_pointer" directive.
+      SwitchToSection(TLOFMacho.getNonLazySymbolPointerSection());
       for (StringMap<std::string>::iterator I = GVNonLazyPtrs.begin(),
            E = GVNonLazyPtrs.end(); I != E; ++I) {
         O << I->second << ":\n";

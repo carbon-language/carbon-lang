@@ -510,118 +510,176 @@ getSectionForConstant(SectionKind Kind) const {
 
 
 const MCSection *TargetLoweringObjectFileMachO::
-getMachOSection(const char *Name, bool isDirective, SectionKind Kind) const {
-  if (MCSection *S = getContext().GetSection(Name))
-    return S;
-  return MCSectionMachO::Create(Name, isDirective, Kind, getContext());
+getMachOSection(StringRef Segment, StringRef Section,
+                unsigned TypeAndAttributes,
+                unsigned Reserved2, SectionKind Kind) const {
+  // FIXME: UNIQUE HERE.
+  //if (MCSection *S = getContext().GetSection(Name))
+  //  return S;
+  
+  return MCSectionMachO::Create(Segment, Section, TypeAndAttributes, Reserved2,
+                                Kind, getContext());
 }
-
 
 
 void TargetLoweringObjectFileMachO::Initialize(MCContext &Ctx,
                                                const TargetMachine &TM) {
   TargetLoweringObjectFile::Initialize(Ctx, TM);
-  TextSection = getMachOSection("\t.text", true, SectionKind::getText());
-  DataSection = getMachOSection("\t.data", true, SectionKind::getDataRel());
   
-  CStringSection = getMachOSection("\t.cstring", true,
-                                   SectionKind::getMergeable1ByteCString());
-  UStringSection = getMachOSection("__TEXT,__ustring", false,
-                                   SectionKind::getMergeable2ByteCString());
-  FourByteConstantSection = getMachOSection("\t.literal4\n", true,
-                                            SectionKind::getMergeableConst4());
-  EightByteConstantSection = getMachOSection("\t.literal8\n", true,
-                                             SectionKind::getMergeableConst8());
+  TextSection // .text
+    = getMachOSection("__TEXT", "__text",
+                      MCSectionMachO::S_ATTR_PURE_INSTRUCTIONS,
+                      SectionKind::getText());
+  DataSection // .data
+    = getMachOSection("__DATA", "__data", 0, SectionKind::getDataRel());
+  
+  CStringSection // .cstring
+    = getMachOSection("__TEXT", "__cstring", MCSectionMachO::S_CSTRING_LITERALS,
+                      SectionKind::getMergeable1ByteCString());
+  UStringSection
+    = getMachOSection("__TEXT","__ustring", 0,
+                      SectionKind::getMergeable2ByteCString());
+  FourByteConstantSection // .literal4
+    = getMachOSection("__TEXT", "__literal4", MCSectionMachO::S_4BYTE_LITERALS,
+                      SectionKind::getMergeableConst4());
+  EightByteConstantSection // .literal8
+    = getMachOSection("__TEXT", "__literal8", MCSectionMachO::S_8BYTE_LITERALS,
+                      SectionKind::getMergeableConst8());
   
   // ld_classic doesn't support .literal16 in 32-bit mode, and ld64 falls back
   // to using it in -static mode.
+  SixteenByteConstantSection = 0;
   if (TM.getRelocationModel() != Reloc::Static &&
       TM.getTargetData()->getPointerSize() == 32)
-    SixteenByteConstantSection = 
-      getMachOSection("\t.literal16\n", true, 
+    SixteenByteConstantSection =   // .literal16
+      getMachOSection("__TEXT", "__literal16",MCSectionMachO::S_16BYTE_LITERALS,
                       SectionKind::getMergeableConst16());
-  else
-    SixteenByteConstantSection = 0;
   
-  ReadOnlySection = getMachOSection("\t.const", true,
-                                    SectionKind::getReadOnly());
+  ReadOnlySection  // .const
+    = getMachOSection("__TEXT", "__const", 0, SectionKind::getReadOnly());
   
-  TextCoalSection =
-    getMachOSection("\t__TEXT,__textcoal_nt,coalesced,pure_instructions",
-                    false, SectionKind::getText());
-  ConstTextCoalSection = getMachOSection("\t__TEXT,__const_coal,coalesced",
-                                         false, SectionKind::getText());
-  ConstDataCoalSection = getMachOSection("\t__DATA,__const_coal,coalesced",
-                                         false, SectionKind::getText());
-  ConstDataSection = getMachOSection("\t.const_data", true,
-                                     SectionKind::getReadOnlyWithRel());
-  DataCoalSection = getMachOSection("\t__DATA,__datacoal_nt,coalesced",
-                                    false, SectionKind::getDataRel());
+  TextCoalSection
+    = getMachOSection("__TEXT", "__textcoal_nt",
+                      MCSectionMachO::S_COALESCED |
+                      MCSectionMachO::S_ATTR_PURE_INSTRUCTIONS,
+                      SectionKind::getText());
+  ConstTextCoalSection
+    = getMachOSection("__TEXT", "__const_coal", MCSectionMachO::S_COALESCED,
+                      SectionKind::getText());
+  ConstDataCoalSection
+    = getMachOSection("__DATA","__const_coal", MCSectionMachO::S_COALESCED,
+                      SectionKind::getText());
+  ConstDataSection  // .const_data
+    = getMachOSection("__DATA", "__const", 0,
+                      SectionKind::getReadOnlyWithRel());
+  DataCoalSection
+    = getMachOSection("__DATA","__datacoal_nt", MCSectionMachO::S_COALESCED,
+                      SectionKind::getDataRel());
 
   if (TM.getRelocationModel() == Reloc::Static) {
-    StaticCtorSection =
-      getMachOSection(".constructor", true, SectionKind::getDataRel());
-    StaticDtorSection =
-      getMachOSection(".destructor", true, SectionKind::getDataRel());
+    StaticCtorSection
+      = getMachOSection("__TEXT", "__constructor", 0,SectionKind::getDataRel());
+    StaticDtorSection
+      = getMachOSection("__TEXT", "__destructor", 0, SectionKind::getDataRel());
   } else {
-    StaticCtorSection =
-      getMachOSection(".mod_init_func", true, SectionKind::getDataRel());
-    StaticDtorSection =
-      getMachOSection(".mod_term_func", true, SectionKind::getDataRel());
+    StaticCtorSection
+      = getMachOSection("__DATA", "__mod_init_func",
+                        MCSectionMachO::S_MOD_INIT_FUNC_POINTERS,
+                        SectionKind::getDataRel());
+    StaticDtorSection
+      = getMachOSection("__DATA", "__mod_term_func", 
+                        MCSectionMachO::S_MOD_TERM_FUNC_POINTERS,
+                        SectionKind::getDataRel());
   }
   
   // Exception Handling.
-  LSDASection = getMachOSection("__DATA,__gcc_except_tab", false,
+  LSDASection = getMachOSection("__DATA", "__gcc_except_tab", 0,
                                 SectionKind::getDataRel());
   EHFrameSection =
-    getMachOSection("__TEXT,__eh_frame,coalesced,no_toc+strip_static_syms"
-                    "+live_support", false, SectionKind::getReadOnly());
+    getMachOSection("__TEXT", "__eh_frame",
+                    MCSectionMachO::S_COALESCED |
+                    MCSectionMachO::S_ATTR_NO_TOC |
+                    MCSectionMachO::S_ATTR_STRIP_STATIC_SYMS |
+                    MCSectionMachO::S_ATTR_LIVE_SUPPORT,
+                    SectionKind::getReadOnly());
 
   // Debug Information.
-  // FIXME: Don't use 'directive' syntax: need flags for debug/regular??
-  // FIXME: Need __DWARF segment.
   DwarfAbbrevSection = 
-    getMachOSection(".section __DWARF,__debug_abbrev,regular,debug", true,
+    getMachOSection("__DWARF", "__debug_abbrev", MCSectionMachO::S_ATTR_DEBUG,
                     SectionKind::getMetadata());
   DwarfInfoSection =  
-    getMachOSection(".section __DWARF,__debug_info,regular,debug", true,
+    getMachOSection("__DWARF", "__debug_info", MCSectionMachO::S_ATTR_DEBUG,
                     SectionKind::getMetadata());
   DwarfLineSection =  
-    getMachOSection(".section __DWARF,__debug_line,regular,debug", true,
+    getMachOSection("__DWARF", "__debug_line", MCSectionMachO::S_ATTR_DEBUG,
                     SectionKind::getMetadata());
   DwarfFrameSection =  
-    getMachOSection(".section __DWARF,__debug_frame,regular,debug", true,
+    getMachOSection("__DWARF", "__debug_frame", MCSectionMachO::S_ATTR_DEBUG,
                     SectionKind::getMetadata());
   DwarfPubNamesSection =  
-    getMachOSection(".section __DWARF,__debug_pubnames,regular,debug", true,
+    getMachOSection("__DWARF", "__debug_pubnames", MCSectionMachO::S_ATTR_DEBUG,
                     SectionKind::getMetadata());
   DwarfPubTypesSection =  
-    getMachOSection(".section __DWARF,__debug_pubtypes,regular,debug", true,
+    getMachOSection("__DWARF", "__debug_pubtypes", MCSectionMachO::S_ATTR_DEBUG,
                     SectionKind::getMetadata());
   DwarfStrSection =  
-    getMachOSection(".section __DWARF,__debug_str,regular,debug", true,
+    getMachOSection("__DWARF", "__debug_str", MCSectionMachO::S_ATTR_DEBUG,
                     SectionKind::getMetadata());
   DwarfLocSection =  
-    getMachOSection(".section __DWARF,__debug_loc,regular,debug", true,
+    getMachOSection("__DWARF", "__debug_loc", MCSectionMachO::S_ATTR_DEBUG,
                     SectionKind::getMetadata());
   DwarfARangesSection =  
-    getMachOSection(".section __DWARF,__debug_aranges,regular,debug", true,
+    getMachOSection("__DWARF", "__debug_aranges", MCSectionMachO::S_ATTR_DEBUG,
                     SectionKind::getMetadata());
   DwarfRangesSection =  
-    getMachOSection(".section __DWARF,__debug_ranges,regular,debug", true,
+    getMachOSection("__DWARF", "__debug_ranges", MCSectionMachO::S_ATTR_DEBUG,
                     SectionKind::getMetadata());
   DwarfMacroInfoSection =  
-    getMachOSection(".section __DWARF,__debug_macinfo,regular,debug", true,
+    getMachOSection("__DWARF", "__debug_macinfo", MCSectionMachO::S_ATTR_DEBUG,
                     SectionKind::getMetadata());
   DwarfDebugInlineSection = 
-    getMachOSection(".section __DWARF,__debug_inlined,regular,debug", true,
+    getMachOSection("__DWARF", "__debug_inlined", MCSectionMachO::S_ATTR_DEBUG,
                     SectionKind::getMetadata());
 }
+
+/// getLazySymbolPointerSection - Return the section corresponding to
+/// the .lazy_symbol_pointer directive.
+const MCSection *TargetLoweringObjectFileMachO::
+getLazySymbolPointerSection() const {
+  return getMachOSection("__DATA", "__la_symbol_ptr",
+                         MCSectionMachO::S_LAZY_SYMBOL_POINTERS,
+                         SectionKind::getMetadata());
+}
+
+/// getNonLazySymbolPointerSection - Return the section corresponding to
+/// the .non_lazy_symbol_pointer directive.
+const MCSection *TargetLoweringObjectFileMachO::
+getNonLazySymbolPointerSection() const {
+  return getMachOSection("__DATA", "__nl_symbol_ptr",
+                         MCSectionMachO::S_NON_LAZY_SYMBOL_POINTERS,
+                         SectionKind::getMetadata());
+}
+
 
 const MCSection *TargetLoweringObjectFileMachO::
 getExplicitSectionGlobal(const GlobalValue *GV, SectionKind Kind, 
                          Mangler *Mang, const TargetMachine &TM) const {
-  return getMachOSection(GV->getSection().c_str(), false, Kind);
+  // Parse the section specifier and create it if valid.
+  StringRef Segment, Section;
+  unsigned TAA, StubSize;
+  std::string ErrorCode =
+    MCSectionMachO::ParseSectionSpecifier(GV->getSection(), Segment, Section,
+                                          TAA, StubSize);
+  if (ErrorCode.empty())
+    return getMachOSection(Segment, Section, TAA, StubSize, Kind);
+  
+  
+  // If invalid, report the error with llvm_report_error.
+  llvm_report_error("Global variable '" + GV->getNameStr() +
+                    "' has an invalid section specifier '" + GV->getSection() +
+                    "': " + ErrorCode + ".");
+  // Fall back to dropping it into the data section.
+  return DataSection;
 }
 
 const MCSection *TargetLoweringObjectFileMachO::

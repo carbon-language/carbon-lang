@@ -242,6 +242,17 @@ AsmToken AsmLexer::LexQuote() {
   return AsmToken(AsmToken::String, StringRef(TokStart, CurPtr - TokStart));
 }
 
+StringRef AsmLexer::LexUntilEndOfStatement() {
+  TokStart = CurPtr;
+
+  while (*CurPtr != '#' &&  // Start of line comment.
+         *CurPtr != ';' &&  // End of statement marker.
+         *CurPtr != '\n' &&
+         *CurPtr != '\r' &&
+         (*CurPtr != 0 || CurPtr != CurBuf->getBufferEnd()))
+    ++CurPtr;
+  return StringRef(TokStart, CurPtr-TokStart);
+}
 
 AsmToken AsmLexer::LexToken() {
   TokStart = CurPtr;

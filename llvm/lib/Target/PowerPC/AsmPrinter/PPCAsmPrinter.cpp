@@ -846,22 +846,19 @@ bool PPCDarwinAsmPrinter::doInitialization(Module &M) {
 
   // Prime text sections so they are adjacent.  This reduces the likelihood a
   // large data or debug section causes a branch to exceed 16M limit.
-  
   TargetLoweringObjectFileMachO &TLOFMacho = 
     static_cast<TargetLoweringObjectFileMachO &>(getObjFileLowering());
-  SwitchToSection(TLOFMacho.getMachOSection("\t.section __TEXT,__textcoal_nt,"
-                                            "coalesced,pure_instructions", true,
-                                            SectionKind::getText()));
+  SwitchToSection(TLOFMacho.getTextCoalSection());
   if (TM.getRelocationModel() == Reloc::PIC_) {
-    SwitchToSection(TLOFMacho.getMachOSection("\t.section __TEXT,__picsymbolstu"
-                                              "b1,symbol_stubs,"
-                                              "pure_instructions,32", true,
-                                              SectionKind::getText()));
+    SwitchToSection(TLOFMacho.getMachOSection("__TEXT", "__picsymbolstub1",
+                                              MCSectionMachO::S_SYMBOL_STUBS |
+                                       MCSectionMachO::S_ATTR_PURE_INSTRUCTIONS,
+                                              32, SectionKind::getText()));
   } else if (TM.getRelocationModel() == Reloc::DynamicNoPIC) {
-    SwitchToSection(TLOFMacho.getMachOSection("\t.section __TEXT,__symbol_stub1"
-                                              ",symbol_stubs,"
-                                              "pure_instructions,16", true,
-                                              SectionKind::getText()));
+    SwitchToSection(TLOFMacho.getMachOSection("__TEXT","__symbol_stub1",
+                                              MCSectionMachO::S_SYMBOL_STUBS |
+                                       MCSectionMachO::S_ATTR_PURE_INSTRUCTIONS,
+                                              16, SectionKind::getText()));
   }
   SwitchToSection(getObjFileLowering().getTextSection());
 
@@ -985,17 +982,20 @@ bool PPCDarwinAsmPrinter::doFinalization(Module &M) {
   TargetLoweringObjectFileMachO &TLOFMacho = 
     static_cast<TargetLoweringObjectFileMachO &>(getObjFileLowering());
 
+  
+  const MCSection *LSPSection = 0;
+  if (!FnStubs.empty()) // .lazy_symbol_pointer
+    LSPSection = TLOFMacho.getLazySymbolPointerSection();
+    
+  
   // Output stubs for dynamically-linked functions
   if (TM.getRelocationModel() == Reloc::PIC_ && !FnStubs.empty()) {
     const MCSection *StubSection = 
-      TLOFMacho.getMachOSection("\t.section __TEXT,__picsymbolstub1,"
-                                "symbol_stubs,pure_instructions,32", true,
-                                SectionKind::getText());
-    const MCSection *LSPSection = 
-      TLOFMacho.getMachOSection(".lazy_symbol_pointer", true,
-                                SectionKind::getMetadata());
-    
-    for (StringMap<FnStubInfo>::iterator I = FnStubs.begin(), E = FnStubs.end();
+      TLOFMacho.getMachOSection("__TEXT", "__picsymbolstub1",
+                                MCSectionMachO::S_SYMBOL_STUBS |
+                                MCSectionMachO::S_ATTR_PURE_INSTRUCTIONS,
+                                32, SectionKind::getText());
+     for (StringMap<FnStubInfo>::iterator I = FnStubs.begin(), E = FnStubs.end();
          I != E; ++I) {
       SwitchToSection(StubSection);
       EmitAlignment(4);
@@ -1020,13 +1020,11 @@ bool PPCDarwinAsmPrinter::doFinalization(Module &M) {
       O << (isPPC64 ? "\t.quad" : "\t.long") << " dyld_stub_binding_helper\n";
     }
   } else if (!FnStubs.empty()) {
-    const MCSection *StubSection = 
-      TLOFMacho.getMachOSection("\t.section __TEXT,__symbol_stub1,symbol_stubs,"
-                                "pure_instructions,16", true,
-                                SectionKind::getText());
-    const MCSection *LSPSection = 
-      TLOFMacho.getMachOSection(".lazy_symbol_pointer", true,
-                                SectionKind::getMetadata());
+    const MCSection *StubSection =
+      TLOFMacho.getMachOSection("__TEXT","__symbol_stub1",
+                                MCSectionMachO::S_SYMBOL_STUBS |
+                                MCSectionMachO::S_ATTR_PURE_INSTRUCTIONS,
+                                16, SectionKind::getText());
     
     for (StringMap<FnStubInfo>::iterator I = FnStubs.begin(), E = FnStubs.end();
          I != E; ++I) {
@@ -1063,10 +1061,8 @@ bool PPCDarwinAsmPrinter::doFinalization(Module &M) {
 
   // Output macho stubs for external and common global variables.
   if (!GVStubs.empty()) {
-    const MCSection *TheSection = 
-      TLOFMacho.getMachOSection(".non_lazy_symbol_pointer", true,
-                                SectionKind::getMetadata());
-    SwitchToSection(TheSection);
+    // Switch with ".non_lazy_symbol_pointer" directive.
+    SwitchToSection(TLOFMacho.getNonLazySymbolPointerSection());
     for (StringMap<std::string>::iterator I = GVStubs.begin(),
          E = GVStubs.end(); I != E; ++I) {
       O << I->second << ":\n";

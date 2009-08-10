@@ -918,9 +918,11 @@ bool X86ATTAsmPrinter::doFinalization(Module &M) {
     // Output stubs for dynamically-linked functions
     if (!FnStubs.empty()) {
       const MCSection *TheSection = 
-      TLOFMacho.getMachOSection("\t.section __IMPORT,__jump_table,symbol_stubs,"
-                                "self_modifying_code+pure_instructions,5", true,
-                                SectionKind::getMetadata());
+        TLOFMacho.getMachOSection("__IMPORT", "__jump_table",
+                                  MCSectionMachO::S_SYMBOL_STUBS |
+                                  MCSectionMachO::S_ATTR_SELF_MODIFYING_CODE |
+                                  MCSectionMachO::S_ATTR_PURE_INSTRUCTIONS,
+                                  5, SectionKind::getMetadata());
       SwitchToSection(TheSection);
       for (StringMap<std::string>::iterator I = FnStubs.begin(),
            E = FnStubs.end(); I != E; ++I)
@@ -932,8 +934,8 @@ bool X86ATTAsmPrinter::doFinalization(Module &M) {
     // Output stubs for external and common global variables.
     if (!GVStubs.empty()) {
       const MCSection *TheSection = 
-        TLOFMacho.getMachOSection("\t.section __IMPORT,__pointers,"
-                                  "non_lazy_symbol_pointers", true,
+        TLOFMacho.getMachOSection("__IMPORT", "__pointers",
+                                  MCSectionMachO::S_NON_LAZY_SYMBOL_POINTERS,
                                   SectionKind::getMetadata());
       SwitchToSection(TheSection);
       for (StringMap<std::string>::iterator I = GVStubs.begin(),
