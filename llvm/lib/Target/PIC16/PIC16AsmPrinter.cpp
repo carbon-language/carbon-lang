@@ -35,7 +35,7 @@ using namespace llvm;
 PIC16AsmPrinter::PIC16AsmPrinter(formatted_raw_ostream &O, TargetMachine &TM,
                                  const TargetAsmInfo *T, bool V)
 : AsmPrinter(O, TM, T, V), DbgInfo(O, T) {
-  PTLI = static_cast<const PIC16TargetLowering*>(TM.getTargetLowering());
+  PTLI = static_cast<PIC16TargetLowering*>(TM.getTargetLowering());
   PTAI = static_cast<const PIC16TargetAsmInfo*>(T);
   PTOF = (PIC16TargetObjectFile*)&PTLI->getObjFileLowering();
 }
