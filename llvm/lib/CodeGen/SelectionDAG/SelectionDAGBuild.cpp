@@ -1911,7 +1911,8 @@ bool SelectionDAGLowering::handleBitTestsSwitchCase(CaseRec& CR,
                                                     CaseRecVector& WorkList,
                                                     Value* SV,
                                                     MachineBasicBlock* Default){
-  unsigned IntPtrBits = TLI.getPointerTy().getSizeInBits();
+  MVT PTy = TLI.getPointerTy();
+  unsigned IntPtrBits = PTy.getSizeInBits();
 
   Case& FrontCase = *CR.Range.first;
   Case& BackCase  = *(CR.Range.second-1);
@@ -2187,24 +2188,26 @@ void SelectionDAGLowering::visitShift(User &I, unsigned Opcode) {
   if (!isa<VectorType>(I.getType()) &&
       Op2.getValueType() != TLI.getShiftAmountTy()) {
     // If the operand is smaller than the shift count type, promote it.
-    if (TLI.getShiftAmountTy().bitsGT(Op2.getValueType()))
+    MVT PTy = TLI.getPointerTy();
+    MVT STy = TLI.getShiftAmountTy();
+    if (STy.bitsGT(Op2.getValueType()))
       Op2 = DAG.getNode(ISD::ANY_EXTEND, getCurDebugLoc(),
                         TLI.getShiftAmountTy(), Op2);
     // If the operand is larger than the shift count type but the shift
     // count type has enough bits to represent any shift value, truncate
     // it now. This is a common case and it exposes the truncate to
     // optimization early.
-    else if (TLI.getShiftAmountTy().getSizeInBits() >=
+    else if (STy.getSizeInBits() >=
              Log2_32_Ceil(Op2.getValueType().getSizeInBits()))
       Op2 = DAG.getNode(ISD::TRUNCATE, getCurDebugLoc(),
                         TLI.getShiftAmountTy(), Op2);
     // Otherwise we'll need to temporarily settle for some other
     // convenient type; type legalization will make adjustments as
     // needed.
-    else if (TLI.getPointerTy().bitsLT(Op2.getValueType()))
+    else if (PTy.bitsLT(Op2.getValueType()))
       Op2 = DAG.getNode(ISD::TRUNCATE, getCurDebugLoc(),
                         TLI.getPointerTy(), Op2);
-    else if (TLI.getPointerTy().bitsGT(Op2.getValueType()))
+    else if (PTy.bitsGT(Op2.getValueType()))
       Op2 = DAG.getNode(ISD::ANY_EXTEND, getCurDebugLoc(),
                         TLI.getPointerTy(), Op2);
   }
@@ -2672,7 +2675,8 @@ void SelectionDAGLowering::visitGetElementPtr(User &I) {
         uint64_t Offs =
             TD->getTypeAllocSize(Ty)*cast<ConstantInt>(CI)->getSExtValue();
         SDValue OffsVal;
-        unsigned PtrBits = TLI.getPointerTy().getSizeInBits();
+        MVT PTy = TLI.getPointerTy();
+        unsigned PtrBits = PTy.getSizeInBits();
         if (PtrBits < 64) {
           OffsVal = DAG.getNode(ISD::TRUNCATE, getCurDebugLoc(),
                                 TLI.getPointerTy(),

@@ -168,7 +168,7 @@ AlphaTargetLowering::AlphaTargetLowering(TargetMachine &TM)
   computeRegisterProperties();
 }
 
-MVT AlphaTargetLowering::getSetCCResultType(MVT VT) const {
+MVT::SimpleValueType AlphaTargetLowering::getSetCCResultType(MVT VT) const {
   return MVT::i64;
 }
 

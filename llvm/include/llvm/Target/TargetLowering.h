@@ -111,8 +111,8 @@ public:
 
   bool isBigEndian() const { return !IsLittleEndian; }
   bool isLittleEndian() const { return IsLittleEndian; }
-  MVT getPointerTy() const { return PointerTy; }
-  MVT getShiftAmountTy() const { return ShiftAmountTy; }
+  MVT::SimpleValueType getPointerTy() const { return PointerTy; }
+  MVT::SimpleValueType getShiftAmountTy() const { return ShiftAmountTy; }
 
   /// usesGlobalOffsetTable - Return true if this target uses a GOT for PIC
   /// codegen.
@@ -135,7 +135,8 @@ public:
   /// the condition operand of SELECT and BRCOND nodes.  In the case of
   /// BRCOND the argument passed is MVT::Other since there are no other
   /// operands to get a type hint from.
-  virtual MVT getSetCCResultType(MVT VT) const;
+  virtual
+  MVT::SimpleValueType getSetCCResultType(MVT VT) const;
 
   /// getBooleanContents - For targets without i1 registers, this gives the
   /// nature of the high-bits of boolean values held in types wider than i1.
@@ -152,7 +153,7 @@ public:
   /// getRegClassFor - Return the register class that should be used for the
   /// specified value type.  This may only be called on legal types.
   TargetRegisterClass *getRegClassFor(MVT VT) const {
-    assert((unsigned)VT.getSimpleVT() < array_lengthof(RegClassForVT));
+    assert(VT.isSimple() && "getRegClassFor called on illegal type!");
     TargetRegisterClass *RC = RegClassForVT[VT.getSimpleVT()];
     assert(RC && "This value type is not natively supported!");
     return RC;
@@ -868,7 +869,7 @@ protected:
 
   /// setShiftAmountType - Describe the type that should be used for shift
   /// amounts.  This type defaults to the pointer type.
-  void setShiftAmountType(MVT VT) { ShiftAmountTy = VT; }
+  void setShiftAmountType(MVT::SimpleValueType VT) { ShiftAmountTy = VT; }
 
   /// setBooleanContents - Specify how the target extends the result of a
   /// boolean value from i1 to a wider type.  See getBooleanContents.
@@ -1530,7 +1531,7 @@ private:
 
   /// PointerTy - The type to use for pointers, usually i32 or i64.
   ///
-  MVT PointerTy;
+  MVT::SimpleValueType PointerTy;
 
   /// IsLittleEndian - True if this is a little endian target.
   ///
@@ -1565,7 +1566,7 @@ private:
 
   /// ShiftAmountTy - The type to use for shift amounts, usually i8 or whatever
   /// PointerTy is.
-  MVT ShiftAmountTy;
+  MVT::SimpleValueType ShiftAmountTy;
 
   /// BooleanContents - Information about the contents of the high-bits in
   /// boolean values held in a type wider than i1.  See getBooleanContents.

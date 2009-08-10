@@ -165,7 +165,7 @@ MipsTargetLowering(MipsTargetMachine &TM)
   computeRegisterProperties();
 }
 
-MVT MipsTargetLowering::getSetCCResultType(MVT VT) const {
+MVT::SimpleValueType MipsTargetLowering::getSetCCResultType(MVT VT) const {
   return MVT::i32;
 }
 

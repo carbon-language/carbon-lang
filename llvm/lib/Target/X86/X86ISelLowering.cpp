@@ -959,7 +959,7 @@ X86TargetLowering::X86TargetLowering(X86TargetMachine &TM)
 }
 
 
-MVT X86TargetLowering::getSetCCResultType(MVT VT) const {
+MVT::SimpleValueType X86TargetLowering::getSetCCResultType(MVT VT) const {
   return MVT::i8;
 }
 

@@ -137,7 +137,7 @@ const char *BlackfinTargetLowering::getTargetNodeName(unsigned Opcode) const {
   }
 }
 
-MVT BlackfinTargetLowering::getSetCCResultType(MVT VT) const {
+MVT::SimpleValueType BlackfinTargetLowering::getSetCCResultType(MVT VT) const {
   // SETCC always sets the CC register. Technically that is an i1 register, but
   // that type is not legal, so we treat it as an i32 register.
   return MVT::i32;

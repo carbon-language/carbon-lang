@@ -539,9 +539,11 @@ unsigned SPUTargetLowering::getFunctionAlignment(const Function *) const {
 // Return the Cell SPU's SETCC result type
 //===----------------------------------------------------------------------===//
 
-MVT SPUTargetLowering::getSetCCResultType(MVT VT) const {
+MVT::SimpleValueType SPUTargetLowering::getSetCCResultType(MVT VT) const {
   // i16 and i32 are valid SETCC result types
-  return ((VT == MVT::i8 || VT == MVT::i16 || VT == MVT::i32) ? VT : MVT::i32);
+  return ((VT == MVT::i8 || VT == MVT::i16 || VT == MVT::i32) ?
+    VT.getSimpleVT() :
+    MVT::i32);
 }
 
 //===----------------------------------------------------------------------===//

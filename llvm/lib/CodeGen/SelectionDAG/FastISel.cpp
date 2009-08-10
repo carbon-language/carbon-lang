@@ -261,7 +261,7 @@ bool FastISel::SelectGetElementPtr(User *I) {
     return false;
 
   const Type *Ty = I->getOperand(0)->getType();
-  MVT::SimpleValueType VT = TLI.getPointerTy().getSimpleVT();
+  MVT::SimpleValueType VT = TLI.getPointerTy();
   for (GetElementPtrInst::op_iterator OI = I->op_begin()+1, E = I->op_end();
        OI != E; ++OI) {
     Value *Idx = *OI;

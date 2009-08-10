@@ -67,7 +67,7 @@ namespace llvm {
     explicit AlphaTargetLowering(TargetMachine &TM);
     
     /// getSetCCResultType - Get the SETCC result ValueType
-    virtual MVT getSetCCResultType(MVT VT) const;
+    virtual MVT::SimpleValueType getSetCCResultType(MVT VT) const;
 
     /// LowerOperation - Provide custom lowering hooks for some operations.
     ///

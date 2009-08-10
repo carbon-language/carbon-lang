@@ -365,7 +365,8 @@ static void PopulateResults(SDValue N, SmallVectorImpl<SDValue>&Results) {
     Results.push_back(N);
 }
 
-MVT PIC16TargetLowering::getSetCCResultType(MVT ValType) const {
+MVT::SimpleValueType
+PIC16TargetLowering::getSetCCResultType(MVT ValType) const {
   return MVT::i8;
 }
 

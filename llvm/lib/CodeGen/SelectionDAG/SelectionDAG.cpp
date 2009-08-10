@@ -963,7 +963,8 @@ SDValue SelectionDAG::getGlobalAddress(const GlobalValue *GV,
          "Cannot set target flags on target-independent globals");
   
   // Truncate (with sign-extension) the offset value to the pointer size.
-  unsigned BitWidth = TLI.getPointerTy().getSizeInBits();
+  MVT PTy = TLI.getPointerTy();
+  unsigned BitWidth = PTy.getSizeInBits();
   if (BitWidth < 64)
     Offset = (Offset << (64 - BitWidth) >> (64 - BitWidth));
 
