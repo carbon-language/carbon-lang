@@ -145,8 +145,7 @@ namespace llvm {
     short getStorageClass(DIGlobalVariable DIGV);
     void EmitFunctBeginDI(const Function *F);
     void EmitCompositeTypeDecls(Module &M);
-    void EmitCompositeTypeElements (DICompositeType CTy,
-                                    std::string UniqueSuffix);
+    void EmitCompositeTypeElements (DICompositeType CTy, unsigned Suffix);
     void EmitFunctEndDI(const Function *F, unsigned Line);
     void EmitAuxEntry(const std::string VarName, int Aux[], 
                       int num = PIC16Dbg::AuxSize, std::string TagName = "");

@@ -17,6 +17,7 @@
 #include "llvm/CodeGen/MachineFunction.h"
 #include "llvm/Support/DebugLoc.h"
 #include "llvm/Support/FormattedStream.h"
+#include "llvm/ADT/SmallString.h"
 
 using namespace llvm;
 
@@ -117,6 +118,8 @@ void PIC16DbgInfo::PopulateStructOrUnionTypeInfo (DIType Ty,
   CTy.getName(TagName);
   // UniqueSuffix is .number where number is obtained from
   // llvm.dbg.composite<number>.
+  // FIXME: This will break when composite type is not represented by
+  // llvm.dbg.composite* global variable. This is not supported.
   std::string UniqueSuffix = "." + Ty.getGV()->getNameStr().substr(18);
   TagName += UniqueSuffix;
   unsigned short size = CTy.getSizeInBits()/8;
@@ -290,7 +293,7 @@ void PIC16DbgInfo::EndModule(Module &M) {
 /// composite type.
 /// 
 void PIC16DbgInfo::EmitCompositeTypeElements (DICompositeType CTy,
-                                              std::string UniqueSuffix) { 
+                                              unsigned SuffixNo) {
   unsigned long Value = 0;
   DIArray Elements = CTy.getTypeArray();
   for (unsigned i = 0, N = Elements.getNumElements(); i < N; i++) {
@@ -305,18 +308,19 @@ void PIC16DbgInfo::EmitCompositeTypeElements (DICompositeType CTy,
     DITy.getName(ElementName);
     unsigned short ElementSize = DITy.getSizeInBits()/8;
     // Get mangleddd name for this structure/union  element.
-    std::string MangMemName = ElementName + UniqueSuffix;
+    SmallString<128> MangMemName(ElementName.begin(), ElementName.end());
+    MangMemName.append_uint_32(SuffixNo);
     PopulateDebugInfo(DITy, TypeNo, HasAux, ElementAux, TagName);
     short Class = 0;
     if( CTy.getTag() == dwarf::DW_TAG_union_type)
       Class = PIC16Dbg::C_MOU;
     else if  (CTy.getTag() == dwarf::DW_TAG_structure_type)
       Class = PIC16Dbg::C_MOS;
-    EmitSymbol(MangMemName, Class, TypeNo, Value);
+    EmitSymbol(MangMemName.c_str(), Class, TypeNo, Value);
     if (CTy.getTag() == dwarf::DW_TAG_structure_type)
       Value += ElementSize;
     if (HasAux)
-      EmitAuxEntry(MangMemName, ElementAux, PIC16Dbg::AuxSize, TagName);
+      EmitAuxEntry(MangMemName.c_str(), ElementAux, PIC16Dbg::AuxSize, TagName);
   }
 }
 
@@ -324,48 +328,48 @@ void PIC16DbgInfo::EmitCompositeTypeElements (DICompositeType CTy,
 /// and union declarations.
 ///
 void PIC16DbgInfo::EmitCompositeTypeDecls(Module &M) {
-  for(iplist<GlobalVariable>::iterator I = M.getGlobalList().begin(),
-      E = M.getGlobalList().end(); I != E; I++) {
-    // Structures and union declaration's debug info has llvm.dbg.composite
-    // in its name.
-    // FIXME: Checking and relying on llvm.dbg.composite name is not a good idea.
-    if(I->getNameStr().find("llvm.dbg.composite") != std::string::npos) {
-      GlobalVariable *GV = cast<GlobalVariable >(I);
-      DICompositeType CTy(GV);
-      if (CTy.getTag() == dwarf::DW_TAG_union_type ||
-          CTy.getTag() == dwarf::DW_TAG_structure_type ) {
-        std::string name;
-        CTy.getName(name);
-        std::string DIVar = I->getName();
-        // Get the number after llvm.dbg.composite and make UniqueSuffix from 
-        // it.
-        std::string UniqueSuffix = "." + DIVar.substr(18);
-        std::string MangledCTyName = name + UniqueSuffix;
-        unsigned short size = CTy.getSizeInBits()/8;
-        int Aux[PIC16Dbg::AuxSize] = {0};
-        // 7th and 8th byte represent size of structure/union.
-        Aux[6] = size & 0xff;
-        Aux[7] = size >> 8;
-        // Emit .def for structure/union tag.
-        if( CTy.getTag() == dwarf::DW_TAG_union_type)
-          EmitSymbol(MangledCTyName, PIC16Dbg::C_UNTAG);
-        else if  (CTy.getTag() == dwarf::DW_TAG_structure_type) 
-          EmitSymbol(MangledCTyName, PIC16Dbg::C_STRTAG);
-
-        // Emit auxiliary debug information for structure/union tag. 
-        EmitAuxEntry(MangledCTyName, Aux, PIC16Dbg::AuxSize);
-
-        // Emit members.
-        EmitCompositeTypeElements (CTy, UniqueSuffix);
-
-        // Emit mangled Symbol for end of structure/union.
-        std::string EOSSymbol = ".eos" + UniqueSuffix;
-        EmitSymbol(EOSSymbol, PIC16Dbg::C_EOS);
-        EmitAuxEntry(EOSSymbol, Aux, PIC16Dbg::AuxSize, MangledCTyName);
-      }
+  DebugInfoFinder DbgFinder;
+  DbgFinder.processModule(M);
+  unsigned SuffixNo = 0;
+  for (DebugInfoFinder::iterator I = DbgFinder.global_variable_begin(),
+         E = DbgFinder.global_variable_end(); I != E; ++I) {
+    DICompositeType CTy(*I);
+    if (CTy.isNull())
+      continue;
+    if (CTy.getTag() == dwarf::DW_TAG_union_type ||
+        CTy.getTag() == dwarf::DW_TAG_structure_type ) {
+      std::string Name;
+      CTy.getName(Name);
+      SmallString<128> MangledCTyName(Name.begin(), Name.end());
+      MangledCTyName.append_uint_32(++SuffixNo);
+      unsigned short size = CTy.getSizeInBits()/8;
+      int Aux[PIC16Dbg::AuxSize] = {0};
+      // 7th and 8th byte represent size of structure/union.
+      Aux[6] = size & 0xff;
+      Aux[7] = size >> 8;
+      // Emit .def for structure/union tag.
+      if( CTy.getTag() == dwarf::DW_TAG_union_type)
+        EmitSymbol(MangledCTyName.c_str(), PIC16Dbg::C_UNTAG);
+      else if  (CTy.getTag() == dwarf::DW_TAG_structure_type) 
+        EmitSymbol(MangledCTyName.c_str(), PIC16Dbg::C_STRTAG);
+      
+      // Emit auxiliary debug information for structure/union tag. 
+      EmitAuxEntry(MangledCTyName.c_str(), Aux, PIC16Dbg::AuxSize);
+      
+      // Emit members.
+      EmitCompositeTypeElements (CTy, SuffixNo);
+      
+      // Emit mangled Symbol for end of structure/union.
+      SmallString<128> EOSSymbol(Name.begin(), Name.end());
+      EOSSymbol += ".eos";
+      EOSSymbol.append_uint_32(SuffixNo);
+      EmitSymbol(EOSSymbol.c_str(), PIC16Dbg::C_EOS);
+      EmitAuxEntry(EOSSymbol.c_str(), Aux, PIC16Dbg::AuxSize, 
+                   MangledCTyName.c_str());
     }
   }
 }
+
 
 /// EmitFunctBeginDI - Emit .bf for function.
 ///
