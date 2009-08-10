@@ -1063,6 +1063,8 @@ bool PPCDarwinAsmPrinter::doFinalization(Module &M) {
   if (!GVStubs.empty()) {
     // Switch with ".non_lazy_symbol_pointer" directive.
     SwitchToSection(TLOFMacho.getNonLazySymbolPointerSection());
+    EmitAlignment(isPPC64 ? 3 : 2);
+    
     for (StringMap<std::string>::iterator I = GVStubs.begin(),
          E = GVStubs.end(); I != E; ++I) {
       O << I->second << ":\n";
