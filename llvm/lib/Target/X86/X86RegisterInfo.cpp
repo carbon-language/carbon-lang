@@ -1262,10 +1262,10 @@ unsigned X86RegisterInfo::getEHHandlerRegister() const {
 }
 
 namespace llvm {
-unsigned getX86SubSuperRegister(unsigned Reg, MVT VT, bool High) {
+unsigned getX86SubSuperRegister(unsigned Reg, EVT VT, bool High) {
   switch (VT.getSimpleVT()) {
   default: return Reg;
-  case MVT::i8:
+  case EVT::i8:
     if (High) {
       switch (Reg) {
       default: return 0;
@@ -1315,7 +1315,7 @@ unsigned getX86SubSuperRegister(unsigned Reg, MVT VT, bool High) {
         return X86::R15B;
       }
     }
-  case MVT::i16:
+  case EVT::i16:
     switch (Reg) {
     default: return Reg;
     case X86::AH: case X86::AL: case X86::AX: case X86::EAX: case X86::RAX:
@@ -1351,7 +1351,7 @@ unsigned getX86SubSuperRegister(unsigned Reg, MVT VT, bool High) {
     case X86::R15B: case X86::R15W: case X86::R15D: case X86::R15:
       return X86::R15W;
     }
-  case MVT::i32:
+  case EVT::i32:
     switch (Reg) {
     default: return Reg;
     case X86::AH: case X86::AL: case X86::AX: case X86::EAX: case X86::RAX:
@@ -1387,7 +1387,7 @@ unsigned getX86SubSuperRegister(unsigned Reg, MVT VT, bool High) {
     case X86::R15B: case X86::R15W: case X86::R15D: case X86::R15:
       return X86::R15D;
     }
-  case MVT::i64:
+  case EVT::i64:
     switch (Reg) {
     default: return Reg;
     case X86::AH: case X86::AL: case X86::AX: case X86::EAX: case X86::RAX:

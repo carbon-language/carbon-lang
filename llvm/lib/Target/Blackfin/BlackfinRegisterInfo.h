@@ -62,7 +62,7 @@ namespace llvm {
     }
 
     const TargetRegisterClass *getPhysicalRegisterRegClass(unsigned reg,
-                                                           MVT VT) const;
+                                                           EVT VT) const;
 
     bool hasFP(const MachineFunction &MF) const;
 

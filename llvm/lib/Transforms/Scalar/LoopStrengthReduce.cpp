@@ -2209,7 +2209,7 @@ void LoopStrengthReduce::OptimizeShadowIV(Loop *L) {
       if (TLI) {
         // If target does not support DestTy natively then do not apply
         // this transformation.
-        MVT DVT = TLI->getValueType(DestTy);
+        EVT DVT = TLI->getValueType(DestTy);
         if (!TLI->isTypeLegal(DVT)) continue;
       }
 

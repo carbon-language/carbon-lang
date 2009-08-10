@@ -69,8 +69,8 @@ EmitCopyFromReg(SDNode *Node, unsigned ResNo, bool IsClone, bool IsCloned,
           SDValue Op = User->getOperand(i);
           if (Op.getNode() != Node || Op.getResNo() != ResNo)
             continue;
-          MVT VT = Node->getValueType(Op.getResNo());
-          if (VT == MVT::Other || VT == MVT::Flag)
+          EVT VT = Node->getValueType(Op.getResNo());
+          if (VT == EVT::Other || VT == EVT::Flag)
             continue;
           Match = false;
           if (User->isMachineOpcode()) {
@@ -95,7 +95,7 @@ EmitCopyFromReg(SDNode *Node, unsigned ResNo, bool IsClone, bool IsCloned,
         break;
     }
 
-  MVT VT = Node->getValueType(ResNo);
+  EVT VT = Node->getValueType(ResNo);
   const TargetRegisterClass *SrcRC = 0, *DstRC = 0;
   SrcRC = TRI->getPhysicalRegisterRegClass(SrcReg, VT);
   
@@ -238,8 +238,8 @@ ScheduleDAGSDNodes::AddRegisterOperand(MachineInstr *MI, SDValue Op,
                                        unsigned IIOpNum,
                                        const TargetInstrDesc *II,
                                        DenseMap<SDValue, unsigned> &VRBaseMap) {
-  assert(Op.getValueType() != MVT::Other &&
-         Op.getValueType() != MVT::Flag &&
+  assert(Op.getValueType() != EVT::Other &&
+         Op.getValueType() != EVT::Flag &&
          "Chain and flag operands should occur at end of operand list!");
   // Get/emit the operand.
   unsigned VReg = getVR(Op, VRBaseMap);
@@ -322,8 +322,8 @@ void ScheduleDAGSDNodes::AddOperand(MachineInstr *MI, SDValue Op,
     MI->addOperand(MachineOperand::CreateES(ES->getSymbol(), 0,
                                             ES->getTargetFlags()));
   } else {
-    assert(Op.getValueType() != MVT::Other &&
-           Op.getValueType() != MVT::Flag &&
+    assert(Op.getValueType() != EVT::Other &&
+           Op.getValueType() != EVT::Flag &&
            "Chain and flag operands should occur at end of operand list!");
     AddRegisterOperand(MI, Op, IIOpNum, II, VRBaseMap);
   }
@@ -334,7 +334,7 @@ void ScheduleDAGSDNodes::AddOperand(MachineInstr *MI, SDValue Op,
 /// type matches the specified type.
 static const TargetRegisterClass*
 getSuperRegisterRegClass(const TargetRegisterClass *TRC,
-                         unsigned SubIdx, MVT VT) {
+                         unsigned SubIdx, EVT VT) {
   // Pick the register class of the superegister for this type
   for (TargetRegisterInfo::regclass_iterator I = TRC->superregclasses_begin(),
          E = TRC->superregclasses_end(); I != E; ++I)
@@ -599,7 +599,7 @@ void ScheduleDAGSDNodes::EmitNode(SDNode *Node, bool IsClone, bool IsCloned,
   }
   case ISD::INLINEASM: {
     unsigned NumOps = Node->getNumOperands();
-    if (Node->getOperand(NumOps-1).getValueType() == MVT::Flag)
+    if (Node->getOperand(NumOps-1).getValueType() == EVT::Flag)
       --NumOps;  // Ignore the flag operand.
       
     // Create the inline asm machine instruction.

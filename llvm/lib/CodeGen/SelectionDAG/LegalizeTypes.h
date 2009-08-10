@@ -74,7 +74,7 @@ private:
   TargetLowering::ValueTypeActionImpl ValueTypeActions;
 
   /// getTypeAction - Return how we should legalize values of this type.
-  LegalizeAction getTypeAction(MVT VT) const {
+  LegalizeAction getTypeAction(EVT VT) const {
     switch (ValueTypeActions.getTypeAction(VT)) {
     default:
       assert(false && "Unknown legalize action!");
@@ -109,7 +109,7 @@ private:
   }
 
   /// isTypeLegal - Return true if this type is legal on this target.
-  bool isTypeLegal(MVT VT) const {
+  bool isTypeLegal(EVT VT) const {
     return ValueTypeActions.getTypeAction(VT) == TargetLowering::Legal;
   }
 
@@ -159,7 +159,7 @@ public:
   explicit DAGTypeLegalizer(SelectionDAG &dag)
     : TLI(dag.getTargetLoweringInfo()), DAG(dag),
     ValueTypeActions(TLI.getValueTypeActions()) {
-    assert(MVT::LAST_VALUETYPE <= MVT::MAX_ALLOWED_VALUETYPE &&
+    assert(EVT::LAST_VALUETYPE <= EVT::MAX_ALLOWED_VALUETYPE &&
            "Too many value types for ValueTypeActions to hold!");
   }
 
@@ -185,19 +185,19 @@ private:
   // Common routines.
   SDValue BitConvertToInteger(SDValue Op);
   SDValue BitConvertVectorToIntegerVector(SDValue Op);
-  SDValue CreateStackStoreLoad(SDValue Op, MVT DestVT);
-  bool CustomLowerNode(SDNode *N, MVT VT, bool LegalizeResult);
-  SDValue GetVectorElementPointer(SDValue VecPtr, MVT EltVT, SDValue Index);
+  SDValue CreateStackStoreLoad(SDValue Op, EVT DestVT);
+  bool CustomLowerNode(SDNode *N, EVT VT, bool LegalizeResult);
+  SDValue GetVectorElementPointer(SDValue VecPtr, EVT EltVT, SDValue Index);
   SDValue JoinIntegers(SDValue Lo, SDValue Hi);
   SDValue LibCallify(RTLIB::Libcall LC, SDNode *N, bool isSigned);
-  SDValue MakeLibCall(RTLIB::Libcall LC, MVT RetVT,
+  SDValue MakeLibCall(RTLIB::Libcall LC, EVT RetVT,
                       const SDValue *Ops, unsigned NumOps, bool isSigned,
                       DebugLoc dl);
-  SDValue PromoteTargetBoolean(SDValue Bool, MVT VT);
+  SDValue PromoteTargetBoolean(SDValue Bool, EVT VT);
   void ReplaceValueWith(SDValue From, SDValue To);
   void ReplaceValueWithHelper(SDValue From, SDValue To);
   void SplitInteger(SDValue Op, SDValue &Lo, SDValue &Hi);
-  void SplitInteger(SDValue Op, MVT LoVT, MVT HiVT,
+  void SplitInteger(SDValue Op, EVT LoVT, EVT HiVT,
                     SDValue &Lo, SDValue &Hi);
 
   //===--------------------------------------------------------------------===//
@@ -224,7 +224,7 @@ private:
   /// SExtPromotedInteger - Get a promoted operand and sign extend it to the
   /// final size.
   SDValue SExtPromotedInteger(SDValue Op) {
-    MVT OldVT = Op.getValueType();
+    EVT OldVT = Op.getValueType();
     DebugLoc dl = Op.getDebugLoc();
     Op = GetPromotedInteger(Op);
     return DAG.getNode(ISD::SIGN_EXTEND_INREG, dl, Op.getValueType(), Op,
@@ -234,7 +234,7 @@ private:
   /// ZExtPromotedInteger - Get a promoted operand and zero extend it to the
   /// final size.
   SDValue ZExtPromotedInteger(SDValue Op) {
-    MVT OldVT = Op.getValueType();
+    EVT OldVT = Op.getValueType();
     DebugLoc dl = Op.getDebugLoc();
     Op = GetPromotedInteger(Op);
     return DAG.getZeroExtendInReg(Op, dl, OldVT);
@@ -641,7 +641,7 @@ private:
                               SDValue BasePtr, const Value *SV,
                               int SVOffset, unsigned Alignment,
                               bool isVolatile, unsigned LdWidth,
-                              MVT ResType, DebugLoc dl);
+                              EVT ResType, DebugLoc dl);
 
   /// Helper genWidenVectorStores - Helper function to generate a set of
   /// stores to store a widen vector into non widen memory
@@ -664,7 +664,7 @@ private:
 
   /// Modifies a vector input (widen or narrows) to a vector of NVT.  The
   /// input vector must have the same element type as NVT.
-  SDValue ModifyToType(SDValue InOp, MVT WidenVT);
+  SDValue ModifyToType(SDValue InOp, EVT WidenVT);
 
 
   //===--------------------------------------------------------------------===//
@@ -686,7 +686,7 @@ private:
 
   /// GetSplitDestVTs - Compute the VTs needed for the low/hi parts of a type
   /// which is split (or expanded) into two not necessarily identical pieces.
-  void GetSplitDestVTs(MVT InVT, MVT &LoVT, MVT &HiVT);
+  void GetSplitDestVTs(EVT InVT, EVT &LoVT, EVT &HiVT);
 
   /// GetPairElements - Use ISD::EXTRACT_ELEMENT nodes to extract the low and
   /// high parts of the given value.

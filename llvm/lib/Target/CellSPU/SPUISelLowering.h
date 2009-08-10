@@ -64,22 +64,22 @@ namespace llvm {
   //! Utility functions specific to CellSPU:
   namespace SPU {
     SDValue get_vec_u18imm(SDNode *N, SelectionDAG &DAG,
-                             MVT ValueType);
+                             EVT ValueType);
     SDValue get_vec_i16imm(SDNode *N, SelectionDAG &DAG,
-                             MVT ValueType);
+                             EVT ValueType);
     SDValue get_vec_i10imm(SDNode *N, SelectionDAG &DAG,
-                             MVT ValueType);
+                             EVT ValueType);
     SDValue get_vec_i8imm(SDNode *N, SelectionDAG &DAG,
-                            MVT ValueType);
+                            EVT ValueType);
     SDValue get_ILHUvec_imm(SDNode *N, SelectionDAG &DAG,
-                              MVT ValueType);
+                              EVT ValueType);
     SDValue get_v4i32_imm(SDNode *N, SelectionDAG &DAG);
     SDValue get_v2i64_imm(SDNode *N, SelectionDAG &DAG);
 
     SDValue LowerConstantPool(SDValue Op, SelectionDAG &DAG,
                               const SPUTargetMachine &TM);
-    //! Simplify a MVT::v2i64 constant splat to CellSPU-ready form
-    SDValue LowerV2I64Splat(MVT OpVT, SelectionDAG &DAG, uint64_t splat,
+    //! Simplify a EVT::v2i64 constant splat to CellSPU-ready form
+    SDValue LowerV2I64Splat(EVT OpVT, SelectionDAG &DAG, uint64_t splat,
                              DebugLoc dl);
   }
 
@@ -109,7 +109,7 @@ namespace llvm {
     virtual const char *getTargetNodeName(unsigned Opcode) const;
 
     /// getSetCCResultType - Return the ValueType for ISD::SETCC
-    virtual MVT::SimpleValueType getSetCCResultType(MVT VT) const;
+    virtual EVT::SimpleValueType getSetCCResultType(EVT VT) const;
 
     //! Custom lowering hooks
     virtual SDValue LowerOperation(SDValue Op, SelectionDAG &DAG);
@@ -134,7 +134,7 @@ namespace llvm {
 
     std::pair<unsigned, const TargetRegisterClass*>
       getRegForInlineAsmConstraint(const std::string &Constraint,
-                                   MVT VT) const;
+                                   EVT VT) const;
 
     void LowerAsmOperandForConstraint(SDValue Op, char ConstraintLetter,
                                       bool hasMemory,

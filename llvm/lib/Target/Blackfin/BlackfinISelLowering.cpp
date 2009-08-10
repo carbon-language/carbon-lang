@@ -40,92 +40,92 @@ using namespace llvm;
 
 BlackfinTargetLowering::BlackfinTargetLowering(TargetMachine &TM)
   : TargetLowering(TM, new TargetLoweringObjectFileELF()) {
-  setShiftAmountType(MVT::i16);
+  setShiftAmountType(EVT::i16);
   setBooleanContents(ZeroOrOneBooleanContent);
   setStackPointerRegisterToSaveRestore(BF::SP);
   setIntDivIsCheap(false);
 
   // Set up the legal register classes.
-  addRegisterClass(MVT::i32, BF::DRegisterClass);
-  addRegisterClass(MVT::i16, BF::D16RegisterClass);
+  addRegisterClass(EVT::i32, BF::DRegisterClass);
+  addRegisterClass(EVT::i16, BF::D16RegisterClass);
 
   computeRegisterProperties();
 
   // Blackfin doesn't have i1 loads or stores
-  setLoadExtAction(ISD::EXTLOAD,  MVT::i1, Promote);
-  setLoadExtAction(ISD::ZEXTLOAD, MVT::i1, Promote);
-  setLoadExtAction(ISD::SEXTLOAD, MVT::i1, Promote);
+  setLoadExtAction(ISD::EXTLOAD,  EVT::i1, Promote);
+  setLoadExtAction(ISD::ZEXTLOAD, EVT::i1, Promote);
+  setLoadExtAction(ISD::SEXTLOAD, EVT::i1, Promote);
 
-  setOperationAction(ISD::GlobalAddress, MVT::i32, Custom);
-  setOperationAction(ISD::JumpTable,     MVT::i32, Custom);
+  setOperationAction(ISD::GlobalAddress, EVT::i32, Custom);
+  setOperationAction(ISD::JumpTable,     EVT::i32, Custom);
 
-  setOperationAction(ISD::SELECT_CC, MVT::Other, Expand);
-  setOperationAction(ISD::BR_JT,     MVT::Other, Expand);
-  setOperationAction(ISD::BR_CC,     MVT::Other, Expand);
+  setOperationAction(ISD::SELECT_CC, EVT::Other, Expand);
+  setOperationAction(ISD::BR_JT,     EVT::Other, Expand);
+  setOperationAction(ISD::BR_CC,     EVT::Other, Expand);
 
   // i16 registers don't do much
-  setOperationAction(ISD::AND,   MVT::i16, Promote);
-  setOperationAction(ISD::OR,    MVT::i16, Promote);
-  setOperationAction(ISD::XOR,   MVT::i16, Promote);
-  setOperationAction(ISD::CTPOP, MVT::i16, Promote);
+  setOperationAction(ISD::AND,   EVT::i16, Promote);
+  setOperationAction(ISD::OR,    EVT::i16, Promote);
+  setOperationAction(ISD::XOR,   EVT::i16, Promote);
+  setOperationAction(ISD::CTPOP, EVT::i16, Promote);
   // The expansion of CTLZ/CTTZ uses AND/OR, so we might as well promote
   // immediately.
-  setOperationAction(ISD::CTLZ,  MVT::i16, Promote);
-  setOperationAction(ISD::CTTZ,  MVT::i16, Promote);
-  setOperationAction(ISD::SETCC, MVT::i16, Promote);
+  setOperationAction(ISD::CTLZ,  EVT::i16, Promote);
+  setOperationAction(ISD::CTTZ,  EVT::i16, Promote);
+  setOperationAction(ISD::SETCC, EVT::i16, Promote);
 
   // Blackfin has no division
-  setOperationAction(ISD::SDIV,    MVT::i16, Expand);
-  setOperationAction(ISD::SDIV,    MVT::i32, Expand);
-  setOperationAction(ISD::SDIVREM, MVT::i16, Expand);
-  setOperationAction(ISD::SDIVREM, MVT::i32, Expand);
-  setOperationAction(ISD::SREM,    MVT::i16, Expand);
-  setOperationAction(ISD::SREM,    MVT::i32, Expand);
-  setOperationAction(ISD::UDIV,    MVT::i16, Expand);
-  setOperationAction(ISD::UDIV,    MVT::i32, Expand);
-  setOperationAction(ISD::UDIVREM, MVT::i16, Expand);
-  setOperationAction(ISD::UDIVREM, MVT::i32, Expand);
-  setOperationAction(ISD::UREM,    MVT::i16, Expand);
-  setOperationAction(ISD::UREM,    MVT::i32, Expand);
+  setOperationAction(ISD::SDIV,    EVT::i16, Expand);
+  setOperationAction(ISD::SDIV,    EVT::i32, Expand);
+  setOperationAction(ISD::SDIVREM, EVT::i16, Expand);
+  setOperationAction(ISD::SDIVREM, EVT::i32, Expand);
+  setOperationAction(ISD::SREM,    EVT::i16, Expand);
+  setOperationAction(ISD::SREM,    EVT::i32, Expand);
+  setOperationAction(ISD::UDIV,    EVT::i16, Expand);
+  setOperationAction(ISD::UDIV,    EVT::i32, Expand);
+  setOperationAction(ISD::UDIVREM, EVT::i16, Expand);
+  setOperationAction(ISD::UDIVREM, EVT::i32, Expand);
+  setOperationAction(ISD::UREM,    EVT::i16, Expand);
+  setOperationAction(ISD::UREM,    EVT::i32, Expand);
 
-  setOperationAction(ISD::SMUL_LOHI, MVT::i32, Expand);
-  setOperationAction(ISD::UMUL_LOHI, MVT::i32, Expand);
-  setOperationAction(ISD::MULHU,     MVT::i32, Expand);
-  setOperationAction(ISD::MULHS,     MVT::i32, Expand);
+  setOperationAction(ISD::SMUL_LOHI, EVT::i32, Expand);
+  setOperationAction(ISD::UMUL_LOHI, EVT::i32, Expand);
+  setOperationAction(ISD::MULHU,     EVT::i32, Expand);
+  setOperationAction(ISD::MULHS,     EVT::i32, Expand);
 
   // No carry-in operations.
-  setOperationAction(ISD::ADDE, MVT::i32, Custom);
-  setOperationAction(ISD::SUBE, MVT::i32, Custom);
+  setOperationAction(ISD::ADDE, EVT::i32, Custom);
+  setOperationAction(ISD::SUBE, EVT::i32, Custom);
 
   // Blackfin has no intrinsics for these particular operations.
-  setOperationAction(ISD::MEMBARRIER, MVT::Other, Expand);
-  setOperationAction(ISD::BSWAP, MVT::i32, Expand);
+  setOperationAction(ISD::MEMBARRIER, EVT::Other, Expand);
+  setOperationAction(ISD::BSWAP, EVT::i32, Expand);
 
-  setOperationAction(ISD::SHL_PARTS, MVT::i32, Expand);
-  setOperationAction(ISD::SRA_PARTS, MVT::i32, Expand);
-  setOperationAction(ISD::SRL_PARTS, MVT::i32, Expand);
+  setOperationAction(ISD::SHL_PARTS, EVT::i32, Expand);
+  setOperationAction(ISD::SRA_PARTS, EVT::i32, Expand);
+  setOperationAction(ISD::SRL_PARTS, EVT::i32, Expand);
 
-  setOperationAction(ISD::SIGN_EXTEND_INREG, MVT::i1, Expand);
+  setOperationAction(ISD::SIGN_EXTEND_INREG, EVT::i1, Expand);
 
   // i32 has native CTPOP, but not CTLZ/CTTZ
-  setOperationAction(ISD::CTLZ, MVT::i32, Expand);
-  setOperationAction(ISD::CTTZ, MVT::i32, Expand);
+  setOperationAction(ISD::CTLZ, EVT::i32, Expand);
+  setOperationAction(ISD::CTTZ, EVT::i32, Expand);
 
   // READCYCLECOUNTER needs special type legalization.
-  setOperationAction(ISD::READCYCLECOUNTER, MVT::i64, Custom);
+  setOperationAction(ISD::READCYCLECOUNTER, EVT::i64, Custom);
 
   // We don't have line number support yet.
-  setOperationAction(ISD::DBG_STOPPOINT, MVT::Other, Expand);
-  setOperationAction(ISD::DEBUG_LOC, MVT::Other, Expand);
-  setOperationAction(ISD::DBG_LABEL, MVT::Other, Expand);
-  setOperationAction(ISD::EH_LABEL, MVT::Other, Expand);
-  setOperationAction(ISD::DECLARE, MVT::Other, Expand);
+  setOperationAction(ISD::DBG_STOPPOINT, EVT::Other, Expand);
+  setOperationAction(ISD::DEBUG_LOC, EVT::Other, Expand);
+  setOperationAction(ISD::DBG_LABEL, EVT::Other, Expand);
+  setOperationAction(ISD::EH_LABEL, EVT::Other, Expand);
+  setOperationAction(ISD::DECLARE, EVT::Other, Expand);
 
   // Use the default implementation.
-  setOperationAction(ISD::VACOPY, MVT::Other, Expand);
-  setOperationAction(ISD::VAEND, MVT::Other, Expand);
-  setOperationAction(ISD::STACKSAVE, MVT::Other, Expand);
-  setOperationAction(ISD::STACKRESTORE, MVT::Other, Expand);
+  setOperationAction(ISD::VACOPY, EVT::Other, Expand);
+  setOperationAction(ISD::VAEND, EVT::Other, Expand);
+  setOperationAction(ISD::STACKSAVE, EVT::Other, Expand);
+  setOperationAction(ISD::STACKRESTORE, EVT::Other, Expand);
 }
 
 const char *BlackfinTargetLowering::getTargetNodeName(unsigned Opcode) const {
@@ -137,10 +137,10 @@ const char *BlackfinTargetLowering::getTargetNodeName(unsigned Opcode) const {
   }
 }
 
-MVT::SimpleValueType BlackfinTargetLowering::getSetCCResultType(MVT VT) const {
+EVT::SimpleValueType BlackfinTargetLowering::getSetCCResultType(EVT VT) const {
   // SETCC always sets the CC register. Technically that is an i1 register, but
   // that type is not legal, so we treat it as an i32 register.
-  return MVT::i32;
+  return EVT::i32;
 }
 
 SDValue BlackfinTargetLowering::LowerGlobalAddress(SDValue Op,
@@ -148,16 +148,16 @@ SDValue BlackfinTargetLowering::LowerGlobalAddress(SDValue Op,
   DebugLoc DL = Op.getDebugLoc();
   GlobalValue *GV = cast<GlobalAddressSDNode>(Op)->getGlobal();
 
-  Op = DAG.getTargetGlobalAddress(GV, MVT::i32);
-  return DAG.getNode(BFISD::Wrapper, DL, MVT::i32, Op);
+  Op = DAG.getTargetGlobalAddress(GV, EVT::i32);
+  return DAG.getNode(BFISD::Wrapper, DL, EVT::i32, Op);
 }
 
 SDValue BlackfinTargetLowering::LowerJumpTable(SDValue Op, SelectionDAG &DAG) {
   DebugLoc DL = Op.getDebugLoc();
   int JTI = cast<JumpTableSDNode>(Op)->getIndex();
 
-  Op = DAG.getTargetJumpTable(JTI, MVT::i32);
-  return DAG.getNode(BFISD::Wrapper, DL, MVT::i32, Op);
+  Op = DAG.getTargetJumpTable(JTI, EVT::i32);
+  return DAG.getNode(BFISD::Wrapper, DL, EVT::i32, Op);
 }
 
 SDValue
@@ -181,7 +181,7 @@ BlackfinTargetLowering::LowerFormalArguments(SDValue Chain,
     CCValAssign &VA = ArgLocs[i];
 
     if (VA.isRegLoc()) {
-      MVT RegVT = VA.getLocVT();
+      EVT RegVT = VA.getLocVT();
       TargetRegisterClass *RC = VA.getLocReg() == BF::P0 ?
         BF::PRegisterClass : BF::DRegisterClass;
       assert(RC->contains(VA.getLocReg()) && "Unexpected regclass in CCState");
@@ -209,7 +209,7 @@ BlackfinTargetLowering::LowerFormalArguments(SDValue Chain,
       assert(VA.isMemLoc() && "CCValAssign must be RegLoc or MemLoc");
       unsigned ObjSize = VA.getLocVT().getStoreSizeInBits()/8;
       int FI = MFI->CreateFixedObject(ObjSize, VA.getLocMemOffset());
-      SDValue FIN = DAG.getFrameIndex(FI, MVT::i32);
+      SDValue FIN = DAG.getFrameIndex(FI, EVT::i32);
       InVals.push_back(DAG.getLoad(VA.getValVT(), dl, Chain, FIN, NULL, 0));
     }
   }
@@ -268,9 +268,9 @@ BlackfinTargetLowering::LowerReturn(SDValue Chain,
   }
 
   if (Flag.getNode()) {
-    return DAG.getNode(BFISD::RET_FLAG, dl, MVT::Other, Chain, Flag);
+    return DAG.getNode(BFISD::RET_FLAG, dl, EVT::Other, Chain, Flag);
   } else {
-    return DAG.getNode(BFISD::RET_FLAG, dl, MVT::Other, Chain);
+    return DAG.getNode(BFISD::RET_FLAG, dl, EVT::Other, Chain);
   }
 }
 
@@ -325,10 +325,10 @@ BlackfinTargetLowering::LowerCall(SDValue Chain, SDValue Callee,
       assert(VA.isMemLoc() && "CCValAssign must be RegLoc or MemLoc");
       int Offset = VA.getLocMemOffset();
       assert(Offset%4 == 0 && "Unaligned LocMemOffset");
-      assert(VA.getLocVT()==MVT::i32 && "Illegal CCValAssign type");
-      SDValue SPN = DAG.getCopyFromReg(Chain, dl, BF::SP, MVT::i32);
+      assert(VA.getLocVT()==EVT::i32 && "Illegal CCValAssign type");
+      SDValue SPN = DAG.getCopyFromReg(Chain, dl, BF::SP, EVT::i32);
       SDValue OffsetN = DAG.getIntPtrConstant(Offset);
-      OffsetN = DAG.getNode(ISD::ADD, dl, MVT::i32, SPN, OffsetN);
+      OffsetN = DAG.getNode(ISD::ADD, dl, EVT::i32, SPN, OffsetN);
       MemOpChains.push_back(DAG.getStore(Chain, dl, Arg, OffsetN,
                                          PseudoSourceValue::getStack(),
                                          Offset));
@@ -338,7 +338,7 @@ BlackfinTargetLowering::LowerCall(SDValue Chain, SDValue Callee,
   // Transform all store nodes into one single node because
   // all store nodes are independent of each other.
   if (!MemOpChains.empty())
-    Chain = DAG.getNode(ISD::TokenFactor, dl, MVT::Other,
+    Chain = DAG.getNode(ISD::TokenFactor, dl, EVT::Other,
                         &MemOpChains[0], MemOpChains.size());
 
   // Build a sequence of copy-to-reg nodes chained together with token
@@ -356,13 +356,13 @@ BlackfinTargetLowering::LowerCall(SDValue Chain, SDValue Callee,
   // turn it into a TargetGlobalAddress node so that legalize doesn't hack it.
   // Likewise ExternalSymbol -> TargetExternalSymbol.
   if (GlobalAddressSDNode *G = dyn_cast<GlobalAddressSDNode>(Callee))
-    Callee = DAG.getTargetGlobalAddress(G->getGlobal(), MVT::i32);
+    Callee = DAG.getTargetGlobalAddress(G->getGlobal(), EVT::i32);
   else if (ExternalSymbolSDNode *E = dyn_cast<ExternalSymbolSDNode>(Callee))
-    Callee = DAG.getTargetExternalSymbol(E->getSymbol(), MVT::i32);
+    Callee = DAG.getTargetExternalSymbol(E->getSymbol(), EVT::i32);
 
-  std::vector<MVT> NodeTys;
-  NodeTys.push_back(MVT::Other);   // Returns a chain
-  NodeTys.push_back(MVT::Flag);    // Returns a flag for retval copy to use.
+  std::vector<EVT> NodeTys;
+  NodeTys.push_back(EVT::Other);   // Returns a chain
+  NodeTys.push_back(EVT::Flag);    // Returns a flag for retval copy to use.
   SDValue Ops[] = { Chain, Callee, InFlag };
   Chain = DAG.getNode(BFISD::CALL, dl, NodeTys, Ops,
                       InFlag.getNode() ? 3 : 2);
@@ -423,25 +423,25 @@ SDValue BlackfinTargetLowering::LowerADDE(SDValue Op, SelectionDAG &DAG) {
   unsigned Opcode = Op.getOpcode()==ISD::ADDE ? BF::ADD : BF::SUB;
 
   // zext incoming carry flag in AC0 to 32 bits
-  SDNode* CarryIn = DAG.getTargetNode(BF::MOVE_cc_ac0, dl, MVT::i32,
+  SDNode* CarryIn = DAG.getTargetNode(BF::MOVE_cc_ac0, dl, EVT::i32,
                                       /* flag= */ Op.getOperand(2));
-  CarryIn = DAG.getTargetNode(BF::MOVECC_zext, dl, MVT::i32,
+  CarryIn = DAG.getTargetNode(BF::MOVECC_zext, dl, EVT::i32,
                               SDValue(CarryIn, 0));
 
   // Add operands, produce sum and carry flag
-  SDNode *Sum = DAG.getTargetNode(Opcode, dl, MVT::i32, MVT::Flag,
+  SDNode *Sum = DAG.getTargetNode(Opcode, dl, EVT::i32, EVT::Flag,
                                   Op.getOperand(0), Op.getOperand(1));
 
   // Store intermediate carry from Sum
-  SDNode* Carry1 = DAG.getTargetNode(BF::MOVE_cc_ac0, dl, MVT::i32,
+  SDNode* Carry1 = DAG.getTargetNode(BF::MOVE_cc_ac0, dl, EVT::i32,
                                      /* flag= */ SDValue(Sum, 1));
 
   // Add incoming carry, again producing an output flag
-  Sum = DAG.getTargetNode(Opcode, dl, MVT::i32, MVT::Flag,
+  Sum = DAG.getTargetNode(Opcode, dl, EVT::i32, EVT::Flag,
                           SDValue(Sum, 0), SDValue(CarryIn, 0));
 
   // Update AC0 with the intermediate carry, producing a flag.
-  SDNode *CarryOut = DAG.getTargetNode(BF::OR_ac0_cc, dl, MVT::Flag,
+  SDNode *CarryOut = DAG.getTargetNode(BF::OR_ac0_cc, dl, EVT::Flag,
                                        SDValue(Carry1, 0));
 
   // Compose (i32, flag) pair
@@ -480,10 +480,10 @@ BlackfinTargetLowering::ReplaceNodeResults(SDNode *N,
     // CYCLES2. Reading CYCLES will latch the value of CYCLES2, so we must read
     // CYCLES2 last.
     SDValue TheChain = N->getOperand(0);
-    SDValue lo = DAG.getCopyFromReg(TheChain, dl, BF::CYCLES, MVT::i32);
-    SDValue hi = DAG.getCopyFromReg(lo.getValue(1), dl, BF::CYCLES2, MVT::i32);
+    SDValue lo = DAG.getCopyFromReg(TheChain, dl, BF::CYCLES, EVT::i32);
+    SDValue hi = DAG.getCopyFromReg(lo.getValue(1), dl, BF::CYCLES2, EVT::i32);
     // Use a buildpair to merge the two 32-bit values into a 64-bit one.
-    Results.push_back(DAG.getNode(ISD::BUILD_PAIR, dl, MVT::i64, lo, hi));
+    Results.push_back(DAG.getNode(ISD::BUILD_PAIR, dl, EVT::i64, lo, hi));
     // Outgoing chain. If we were to use the chain from lo instead, it would be
     // possible to entirely eliminate the CYCLES2 read in (i32 (trunc
     // readcyclecounter)). Unfortunately this could possibly delay the CYCLES2
@@ -549,7 +549,7 @@ BlackfinTargetLowering::getConstraintType(const std::string &Constraint) const {
 /// getRegForInlineAsmConstraint - Return register no and class for a C_Register
 /// constraint.
 std::pair<unsigned, const TargetRegisterClass*> BlackfinTargetLowering::
-getRegForInlineAsmConstraint(const std::string &Constraint, MVT VT) const {
+getRegForInlineAsmConstraint(const std::string &Constraint, EVT VT) const {
   typedef std::pair<unsigned, const TargetRegisterClass*> Pair;
   using namespace BF;
 
@@ -559,7 +559,7 @@ getRegForInlineAsmConstraint(const std::string &Constraint, MVT VT) const {
   switch (Constraint[0]) {
     // Standard constraints
   case 'r':
-    return Pair(0U, VT == MVT::i16 ? D16RegisterClass : DPRegisterClass);
+    return Pair(0U, VT == EVT::i16 ? D16RegisterClass : DPRegisterClass);
 
     // Blackfin-specific constraints
   case 'a': return Pair(0U, PRegisterClass);
@@ -585,7 +585,7 @@ getRegForInlineAsmConstraint(const std::string &Constraint, MVT VT) const {
 }
 
 std::vector<unsigned> BlackfinTargetLowering::
-getRegClassForInlineAsmConstraint(const std::string &Constraint, MVT VT) const {
+getRegClassForInlineAsmConstraint(const std::string &Constraint, EVT VT) const {
   using namespace BF;
 
   if (Constraint.size() != 1)

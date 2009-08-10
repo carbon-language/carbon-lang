@@ -54,7 +54,7 @@ namespace {
     /// getI32Imm - Return a target constant with the specified value, of type
     /// i32.
     inline SDValue getI32Imm(unsigned Imm) {
-      return CurDAG->getTargetConstant(Imm, MVT::i32);
+      return CurDAG->getTargetConstant(Imm, EVT::i32);
     }
 
     // Complex Pattern Selectors.
@@ -87,8 +87,8 @@ bool XCoreDAGToDAGISel::SelectADDRspii(SDValue Op, SDValue Addr,
                                   SDValue &Base, SDValue &Offset) {
   FrameIndexSDNode *FIN = 0;
   if ((FIN = dyn_cast<FrameIndexSDNode>(Addr))) {
-    Base = CurDAG->getTargetFrameIndex(FIN->getIndex(), MVT::i32);
-    Offset = CurDAG->getTargetConstant(0, MVT::i32);
+    Base = CurDAG->getTargetFrameIndex(FIN->getIndex(), EVT::i32);
+    Offset = CurDAG->getTargetConstant(0, EVT::i32);
     return true;
   }
   if (Addr.getOpcode() == ISD::ADD) {
@@ -97,8 +97,8 @@ bool XCoreDAGToDAGISel::SelectADDRspii(SDValue Op, SDValue Addr,
       && (CN = dyn_cast<ConstantSDNode>(Addr.getOperand(1)))
       && (CN->getSExtValue() % 4 == 0 && CN->getSExtValue() >= 0)) {
       // Constant positive word offset from frame index
-      Base = CurDAG->getTargetFrameIndex(FIN->getIndex(), MVT::i32);
-      Offset = CurDAG->getTargetConstant(CN->getSExtValue(), MVT::i32);
+      Base = CurDAG->getTargetFrameIndex(FIN->getIndex(), EVT::i32);
+      Offset = CurDAG->getTargetConstant(CN->getSExtValue(), EVT::i32);
       return true;
     }
   }
@@ -109,7 +109,7 @@ bool XCoreDAGToDAGISel::SelectADDRdpii(SDValue Op, SDValue Addr,
                                   SDValue &Base, SDValue &Offset) {
   if (Addr.getOpcode() == XCoreISD::DPRelativeWrapper) {
     Base = Addr.getOperand(0);
-    Offset = CurDAG->getTargetConstant(0, MVT::i32);
+    Offset = CurDAG->getTargetConstant(0, EVT::i32);
     return true;
   }
   if (Addr.getOpcode() == ISD::ADD) {
@@ -119,7 +119,7 @@ bool XCoreDAGToDAGISel::SelectADDRdpii(SDValue Op, SDValue Addr,
       && (CN->getSExtValue() % 4 == 0)) {
       // Constant word offset from a object in the data region
       Base = Addr.getOperand(0).getOperand(0);
-      Offset = CurDAG->getTargetConstant(CN->getSExtValue(), MVT::i32);
+      Offset = CurDAG->getTargetConstant(CN->getSExtValue(), EVT::i32);
       return true;
     }
   }
@@ -130,7 +130,7 @@ bool XCoreDAGToDAGISel::SelectADDRcpii(SDValue Op, SDValue Addr,
                                   SDValue &Base, SDValue &Offset) {
   if (Addr.getOpcode() == XCoreISD::CPRelativeWrapper) {
     Base = Addr.getOperand(0);
-    Offset = CurDAG->getTargetConstant(0, MVT::i32);
+    Offset = CurDAG->getTargetConstant(0, EVT::i32);
     return true;
   }
   if (Addr.getOpcode() == ISD::ADD) {
@@ -140,7 +140,7 @@ bool XCoreDAGToDAGISel::SelectADDRcpii(SDValue Op, SDValue Addr,
       && (CN->getSExtValue() % 4 == 0)) {
       // Constant word offset from a object in the data region
       Base = Addr.getOperand(0).getOperand(0);
-      Offset = CurDAG->getTargetConstant(CN->getSExtValue(), MVT::i32);
+      Offset = CurDAG->getTargetConstant(CN->getSExtValue(), EVT::i32);
       return true;
     }
   }
@@ -162,22 +162,22 @@ InstructionSelect() {
 SDNode *XCoreDAGToDAGISel::Select(SDValue Op) {
   SDNode *N = Op.getNode();
   DebugLoc dl = N->getDebugLoc();
-  MVT NVT = N->getValueType(0);
-  if (NVT == MVT::i32) {
+  EVT NVT = N->getValueType(0);
+  if (NVT == EVT::i32) {
     switch (N->getOpcode()) {
       default: break;
       case ISD::Constant: {
         if (Predicate_immMskBitp(N)) {
           SDValue MskSize = Transform_msksize_xform(N);
-          return CurDAG->getTargetNode(XCore::MKMSK_rus, dl, MVT::i32, MskSize);
+          return CurDAG->getTargetNode(XCore::MKMSK_rus, dl, EVT::i32, MskSize);
         }
         else if (! Predicate_immU16(N)) {
           unsigned Val = cast<ConstantSDNode>(N)->getZExtValue();
           SDValue CPIdx =
             CurDAG->getTargetConstantPool(ConstantInt::get(Type::Int32Ty, Val),
                                           TLI.getPointerTy());
-          return CurDAG->getTargetNode(XCore::LDWCP_lru6, dl, MVT::i32, 
-                                       MVT::Other, CPIdx, 
+          return CurDAG->getTargetNode(XCore::LDWCP_lru6, dl, EVT::i32, 
+                                       EVT::Other, CPIdx, 
                                        CurDAG->getEntryNode());
         }
         break;
@@ -185,11 +185,11 @@ SDNode *XCoreDAGToDAGISel::Select(SDValue Op) {
       case ISD::SMUL_LOHI: {
         // FIXME fold addition into the macc instruction
         if (!Subtarget.isXS1A()) {
-          SDValue Zero(CurDAG->getTargetNode(XCore::LDC_ru6, dl, MVT::i32,
-                                  CurDAG->getTargetConstant(0, MVT::i32)), 0);
+          SDValue Zero(CurDAG->getTargetNode(XCore::LDC_ru6, dl, EVT::i32,
+                                  CurDAG->getTargetConstant(0, EVT::i32)), 0);
           SDValue Ops[] = { Zero, Zero, Op.getOperand(0), Op.getOperand(1) };
           SDNode *ResNode = CurDAG->getTargetNode(XCore::MACCS_l4r, dl,
-                                                  MVT::i32, MVT::i32, Ops, 4);
+                                                  EVT::i32, EVT::i32, Ops, 4);
           ReplaceUses(SDValue(N, 0), SDValue(ResNode, 1));
           ReplaceUses(SDValue(N, 1), SDValue(ResNode, 0));
           return NULL;
@@ -198,12 +198,12 @@ SDNode *XCoreDAGToDAGISel::Select(SDValue Op) {
       }
       case ISD::UMUL_LOHI: {
         // FIXME fold addition into the macc / lmul instruction
-        SDValue Zero(CurDAG->getTargetNode(XCore::LDC_ru6, dl, MVT::i32,
-                                  CurDAG->getTargetConstant(0, MVT::i32)), 0);
+        SDValue Zero(CurDAG->getTargetNode(XCore::LDC_ru6, dl, EVT::i32,
+                                  CurDAG->getTargetConstant(0, EVT::i32)), 0);
         SDValue Ops[] = { Op.getOperand(0), Op.getOperand(1),
                             Zero, Zero };
-        SDNode *ResNode = CurDAG->getTargetNode(XCore::LMUL_l6r, dl, MVT::i32,
-                                                MVT::i32, Ops, 4);
+        SDNode *ResNode = CurDAG->getTargetNode(XCore::LMUL_l6r, dl, EVT::i32,
+                                                EVT::i32, Ops, 4);
         ReplaceUses(SDValue(N, 0), SDValue(ResNode, 1));
         ReplaceUses(SDValue(N, 1), SDValue(ResNode, 0));
         return NULL;
@@ -212,7 +212,7 @@ SDNode *XCoreDAGToDAGISel::Select(SDValue Op) {
         if (!Subtarget.isXS1A()) {
           SDValue Ops[] = { Op.getOperand(0), Op.getOperand(1),
                               Op.getOperand(2) };
-          return CurDAG->getTargetNode(XCore::LADD_l5r, dl, MVT::i32, MVT::i32,
+          return CurDAG->getTargetNode(XCore::LADD_l5r, dl, EVT::i32, EVT::i32,
                                        Ops, 3);
         }
         break;
@@ -221,7 +221,7 @@ SDNode *XCoreDAGToDAGISel::Select(SDValue Op) {
         if (!Subtarget.isXS1A()) {
           SDValue Ops[] = { Op.getOperand(0), Op.getOperand(1),
                               Op.getOperand(2) };
-          return CurDAG->getTargetNode(XCore::LSUB_l5r, dl, MVT::i32, MVT::i32,
+          return CurDAG->getTargetNode(XCore::LSUB_l5r, dl, EVT::i32, EVT::i32,
                                        Ops, 3);
         }
         break;

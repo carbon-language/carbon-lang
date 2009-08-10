@@ -34,10 +34,10 @@ using namespace llvm;
 
 void DAGTypeLegalizer::ExpandRes_BIT_CONVERT(SDNode *N, SDValue &Lo,
                                              SDValue &Hi) {
-  MVT OutVT = N->getValueType(0);
-  MVT NOutVT = TLI.getTypeToTransformTo(OutVT);
+  EVT OutVT = N->getValueType(0);
+  EVT NOutVT = TLI.getTypeToTransformTo(OutVT);
   SDValue InOp = N->getOperand(0);
-  MVT InVT = InOp.getValueType();
+  EVT InVT = InOp.getValueType();
   DebugLoc dl = N->getDebugLoc();
 
   // Handle some special cases efficiently.
@@ -76,7 +76,7 @@ void DAGTypeLegalizer::ExpandRes_BIT_CONVERT(SDNode *N, SDValue &Lo,
     case WidenVector: {
       assert(!(InVT.getVectorNumElements() & 1) && "Unsupported BIT_CONVERT");
       InOp = GetWidenedVector(InOp);
-      MVT InNVT = MVT::getVectorVT(InVT.getVectorElementType(),
+      EVT InNVT = EVT::getVectorVT(InVT.getVectorElementType(),
                                    InVT.getVectorNumElements()/2);
       Lo = DAG.getNode(ISD::EXTRACT_SUBVECTOR, dl, InNVT, InOp,
                        DAG.getIntPtrConstant(0));
@@ -93,7 +93,7 @@ void DAGTypeLegalizer::ExpandRes_BIT_CONVERT(SDNode *N, SDValue &Lo,
   if (InVT.isVector() && OutVT.isInteger()) {
     // Handle cases like i64 = BIT_CONVERT v1i64 on x86, where the operand
     // is legal but the result is not.
-    MVT NVT = MVT::getVectorVT(NOutVT, 2);
+    EVT NVT = EVT::getVectorVT(NOutVT, 2);
 
     if (isTypeLegal(NVT)) {
       SDValue CastInOp = DAG.getNode(ISD::BIT_CONVERT, dl, NVT, InOp);
@@ -115,7 +115,7 @@ void DAGTypeLegalizer::ExpandRes_BIT_CONVERT(SDNode *N, SDValue &Lo,
   // Create the stack frame object.  Make sure it is aligned for both
   // the source and expanded destination types.
   unsigned Alignment =
-    TLI.getTargetData()->getPrefTypeAlignment(NOutVT.getTypeForMVT());
+    TLI.getTargetData()->getPrefTypeAlignment(NOutVT.getTypeForEVT());
   SDValue StackPtr = DAG.CreateStackTemporary(InVT, Alignment);
   int SPFI = cast<FrameIndexSDNode>(StackPtr.getNode())->getIndex();
   const Value *SV = PseudoSourceValue::getFixedStack(SPFI);
@@ -167,11 +167,11 @@ void DAGTypeLegalizer::ExpandRes_EXTRACT_VECTOR_ELT(SDNode *N, SDValue &Lo,
 
   // Convert to a vector of the expanded element type, for example
   // <3 x i64> -> <6 x i32>.
-  MVT OldVT = N->getValueType(0);
-  MVT NewVT = TLI.getTypeToTransformTo(OldVT);
+  EVT OldVT = N->getValueType(0);
+  EVT NewVT = TLI.getTypeToTransformTo(OldVT);
 
   SDValue NewVec = DAG.getNode(ISD::BIT_CONVERT, dl,
-                                 MVT::getVectorVT(NewVT, 2*OldElts),
+                                 EVT::getVectorVT(NewVT, 2*OldElts),
                                  OldVec);
 
   // Extract the elements at 2 * Idx and 2 * Idx + 1 from the new vector.
@@ -198,7 +198,7 @@ void DAGTypeLegalizer::ExpandRes_NormalLoad(SDNode *N, SDValue &Lo,
   DebugLoc dl = N->getDebugLoc();
 
   LoadSDNode *LD = cast<LoadSDNode>(N);
-  MVT NVT = TLI.getTypeToTransformTo(LD->getValueType(0));
+  EVT NVT = TLI.getTypeToTransformTo(LD->getValueType(0));
   SDValue Chain = LD->getChain();
   SDValue Ptr = LD->getBasePtr();
   int SVOffset = LD->getSrcValueOffset();
@@ -220,7 +220,7 @@ void DAGTypeLegalizer::ExpandRes_NormalLoad(SDNode *N, SDValue &Lo,
 
   // Build a factor node to remember that this load is independent of the
   // other one.
-  Chain = DAG.getNode(ISD::TokenFactor, dl, MVT::Other, Lo.getValue(1),
+  Chain = DAG.getNode(ISD::TokenFactor, dl, EVT::Other, Lo.getValue(1),
                       Hi.getValue(1));
 
   // Handle endianness of the load.
@@ -233,7 +233,7 @@ void DAGTypeLegalizer::ExpandRes_NormalLoad(SDNode *N, SDValue &Lo,
 }
 
 void DAGTypeLegalizer::ExpandRes_VAARG(SDNode *N, SDValue &Lo, SDValue &Hi) {
-  MVT NVT = TLI.getTypeToTransformTo(N->getValueType(0));
+  EVT NVT = TLI.getTypeToTransformTo(N->getValueType(0));
   SDValue Chain = N->getOperand(0);
   SDValue Ptr = N->getOperand(1);
   DebugLoc dl = N->getDebugLoc();
@@ -263,8 +263,8 @@ SDValue DAGTypeLegalizer::ExpandOp_BIT_CONVERT(SDNode *N) {
     // instead, but only if the new vector type is legal (otherwise there
     // is no point, and it might create expansion loops).  For example, on
     // x86 this turns v1i64 = BIT_CONVERT i64 into v1i64 = BIT_CONVERT v2i32.
-    MVT OVT = N->getOperand(0).getValueType();
-    MVT NVT = MVT::getVectorVT(TLI.getTypeToTransformTo(OVT), 2);
+    EVT OVT = N->getOperand(0).getValueType();
+    EVT NVT = EVT::getVectorVT(TLI.getTypeToTransformTo(OVT), 2);
 
     if (isTypeLegal(NVT)) {
       SDValue Parts[2];
@@ -284,10 +284,10 @@ SDValue DAGTypeLegalizer::ExpandOp_BIT_CONVERT(SDNode *N) {
 
 SDValue DAGTypeLegalizer::ExpandOp_BUILD_VECTOR(SDNode *N) {
   // The vector type is legal but the element type needs expansion.
-  MVT VecVT = N->getValueType(0);
+  EVT VecVT = N->getValueType(0);
   unsigned NumElts = VecVT.getVectorNumElements();
-  MVT OldVT = N->getOperand(0).getValueType();
-  MVT NewVT = TLI.getTypeToTransformTo(OldVT);
+  EVT OldVT = N->getOperand(0).getValueType();
+  EVT NewVT = TLI.getTypeToTransformTo(OldVT);
   DebugLoc dl = N->getDebugLoc();
 
   assert(OldVT == VecVT.getVectorElementType() &&
@@ -308,7 +308,7 @@ SDValue DAGTypeLegalizer::ExpandOp_BUILD_VECTOR(SDNode *N) {
   }
 
   SDValue NewVec = DAG.getNode(ISD::BUILD_VECTOR, dl,
-                                 MVT::getVectorVT(NewVT, NewElts.size()),
+                                 EVT::getVectorVT(NewVT, NewElts.size()),
                                  &NewElts[0], NewElts.size());
 
   // Convert the new vector to the old vector type.
@@ -323,20 +323,20 @@ SDValue DAGTypeLegalizer::ExpandOp_EXTRACT_ELEMENT(SDNode *N) {
 
 SDValue DAGTypeLegalizer::ExpandOp_INSERT_VECTOR_ELT(SDNode *N) {
   // The vector type is legal but the element type needs expansion.
-  MVT VecVT = N->getValueType(0);
+  EVT VecVT = N->getValueType(0);
   unsigned NumElts = VecVT.getVectorNumElements();
   DebugLoc dl = N->getDebugLoc();
 
   SDValue Val = N->getOperand(1);
-  MVT OldEVT = Val.getValueType();
-  MVT NewEVT = TLI.getTypeToTransformTo(OldEVT);
+  EVT OldEVT = Val.getValueType();
+  EVT NewEVT = TLI.getTypeToTransformTo(OldEVT);
 
   assert(OldEVT == VecVT.getVectorElementType() &&
          "Inserted element type doesn't match vector element type!");
 
   // Bitconvert to a vector of twice the length with elements of the expanded
   // type, insert the expanded vector elements, and then convert back.
-  MVT NewVecVT = MVT::getVectorVT(NewEVT, NumElts*2);
+  EVT NewVecVT = EVT::getVectorVT(NewEVT, NumElts*2);
   SDValue NewVec = DAG.getNode(ISD::BIT_CONVERT, dl,
                                NewVecVT, N->getOperand(0));
 
@@ -358,7 +358,7 @@ SDValue DAGTypeLegalizer::ExpandOp_INSERT_VECTOR_ELT(SDNode *N) {
 
 SDValue DAGTypeLegalizer::ExpandOp_SCALAR_TO_VECTOR(SDNode *N) {
   DebugLoc dl = N->getDebugLoc();
-  MVT VT = N->getValueType(0);
+  EVT VT = N->getValueType(0);
   assert(VT.getVectorElementType() == N->getOperand(0).getValueType() &&
          "SCALAR_TO_VECTOR operand type doesn't match vector element type!");
   unsigned NumElts = VT.getVectorNumElements();
@@ -376,7 +376,7 @@ SDValue DAGTypeLegalizer::ExpandOp_NormalStore(SDNode *N, unsigned OpNo) {
   DebugLoc dl = N->getDebugLoc();
 
   StoreSDNode *St = cast<StoreSDNode>(N);
-  MVT NVT = TLI.getTypeToTransformTo(St->getValue().getValueType());
+  EVT NVT = TLI.getTypeToTransformTo(St->getValue().getValueType());
   SDValue Chain = St->getChain();
   SDValue Ptr = St->getBasePtr();
   int SVOffset = St->getSrcValueOffset();
@@ -402,7 +402,7 @@ SDValue DAGTypeLegalizer::ExpandOp_NormalStore(SDNode *N, unsigned OpNo) {
                     SVOffset + IncrementSize,
                     isVolatile, MinAlign(Alignment, IncrementSize));
 
-  return DAG.getNode(ISD::TokenFactor, dl, MVT::Other, Lo, Hi);
+  return DAG.getNode(ISD::TokenFactor, dl, EVT::Other, Lo, Hi);
 }
 
 
@@ -462,7 +462,7 @@ void DAGTypeLegalizer::SplitRes_SELECT_CC(SDNode *N, SDValue &Lo,
 }
 
 void DAGTypeLegalizer::SplitRes_UNDEF(SDNode *N, SDValue &Lo, SDValue &Hi) {
-  MVT LoVT, HiVT;
+  EVT LoVT, HiVT;
   DebugLoc dl = N->getDebugLoc();
   GetSplitDestVTs(N->getValueType(0), LoVT, HiVT);
   Lo = DAG.getUNDEF(LoVT);

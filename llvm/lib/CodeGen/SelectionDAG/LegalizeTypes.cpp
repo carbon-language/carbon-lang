@@ -211,7 +211,7 @@ bool DAGTypeLegalizer::run() {
     // Scan the values produced by the node, checking to see if any result
     // types are illegal.
     for (unsigned i = 0, NumResults = N->getNumValues(); i < NumResults; ++i) {
-      MVT ResultVT = N->getValueType(i);
+      EVT ResultVT = N->getValueType(i);
       switch (getTypeAction(ResultVT)) {
       default:
         assert(false && "Unknown action!");
@@ -264,7 +264,7 @@ ScanOperands:
       if (IgnoreNodeResults(N->getOperand(i).getNode()))
         continue;
 
-      MVT OpVT = N->getOperand(i).getValueType();
+      EVT OpVT = N->getOperand(i).getValueType();
       switch (getTypeAction(OpVT)) {
       default:
         assert(false && "Unknown action!");
@@ -861,7 +861,7 @@ void DAGTypeLegalizer::SetWidenedVector(SDValue Op, SDValue Result) {
 SDValue DAGTypeLegalizer::BitConvertToInteger(SDValue Op) {
   unsigned BitWidth = Op.getValueType().getSizeInBits();
   return DAG.getNode(ISD::BIT_CONVERT, Op.getDebugLoc(),
-                     MVT::getIntegerVT(BitWidth), Op);
+                     EVT::getIntegerVT(BitWidth), Op);
 }
 
 /// BitConvertVectorToIntegerVector - Convert to a vector of integers of the
@@ -869,14 +869,14 @@ SDValue DAGTypeLegalizer::BitConvertToInteger(SDValue Op) {
 SDValue DAGTypeLegalizer::BitConvertVectorToIntegerVector(SDValue Op) {
   assert(Op.getValueType().isVector() && "Only applies to vectors!");
   unsigned EltWidth = Op.getValueType().getVectorElementType().getSizeInBits();
-  MVT EltNVT = MVT::getIntegerVT(EltWidth);
+  EVT EltNVT = EVT::getIntegerVT(EltWidth);
   unsigned NumElts = Op.getValueType().getVectorNumElements();
   return DAG.getNode(ISD::BIT_CONVERT, Op.getDebugLoc(),
-                     MVT::getVectorVT(EltNVT, NumElts), Op);
+                     EVT::getVectorVT(EltNVT, NumElts), Op);
 }
 
 SDValue DAGTypeLegalizer::CreateStackStoreLoad(SDValue Op,
-                                               MVT DestVT) {
+                                               EVT DestVT) {
   DebugLoc dl = Op.getDebugLoc();
   // Create the stack frame object.  Make sure it is aligned for both
   // the source and destination types.
@@ -895,7 +895,7 @@ SDValue DAGTypeLegalizer::CreateStackStoreLoad(SDValue Op,
 /// The last parameter being TRUE means we are dealing with a
 /// node with illegal result types. The second parameter denotes the type of
 /// illegal ResNo in that case.
-bool DAGTypeLegalizer::CustomLowerNode(SDNode *N, MVT VT, bool LegalizeResult) {
+bool DAGTypeLegalizer::CustomLowerNode(SDNode *N, EVT VT, bool LegalizeResult) {
   // See if the target wants to custom lower this node.
   if (TLI.getOperationAction(N->getOpcode(), VT) != TargetLowering::Custom)
     return false;
@@ -920,14 +920,14 @@ bool DAGTypeLegalizer::CustomLowerNode(SDNode *N, MVT VT, bool LegalizeResult) {
 
 /// GetSplitDestVTs - Compute the VTs needed for the low/hi parts of a type
 /// which is split into two not necessarily identical pieces.
-void DAGTypeLegalizer::GetSplitDestVTs(MVT InVT, MVT &LoVT, MVT &HiVT) {
+void DAGTypeLegalizer::GetSplitDestVTs(EVT InVT, EVT &LoVT, EVT &HiVT) {
   // Currently all types are split in half.
   if (!InVT.isVector()) {
     LoVT = HiVT = TLI.getTypeToTransformTo(InVT);
   } else {
     unsigned NumElements = InVT.getVectorNumElements();
     assert(!(NumElements & 1) && "Splitting vector, but not in half!");
-    LoVT = HiVT = MVT::getVectorVT(InVT.getVectorElementType(), NumElements/2);
+    LoVT = HiVT = EVT::getVectorVT(InVT.getVectorElementType(), NumElements/2);
   }
 }
 
@@ -936,14 +936,14 @@ void DAGTypeLegalizer::GetSplitDestVTs(MVT InVT, MVT &LoVT, MVT &HiVT) {
 void DAGTypeLegalizer::GetPairElements(SDValue Pair,
                                        SDValue &Lo, SDValue &Hi) {
   DebugLoc dl = Pair.getDebugLoc();
-  MVT NVT = TLI.getTypeToTransformTo(Pair.getValueType());
+  EVT NVT = TLI.getTypeToTransformTo(Pair.getValueType());
   Lo = DAG.getNode(ISD::EXTRACT_ELEMENT, dl, NVT, Pair,
                    DAG.getIntPtrConstant(0));
   Hi = DAG.getNode(ISD::EXTRACT_ELEMENT, dl, NVT, Pair,
                    DAG.getIntPtrConstant(1));
 }
 
-SDValue DAGTypeLegalizer::GetVectorElementPointer(SDValue VecPtr, MVT EltVT,
+SDValue DAGTypeLegalizer::GetVectorElementPointer(SDValue VecPtr, EVT EltVT,
                                                   SDValue Index) {
   DebugLoc dl = Index.getDebugLoc();
   // Make sure the index type is big enough to compute in.
@@ -965,9 +965,9 @@ SDValue DAGTypeLegalizer::JoinIntegers(SDValue Lo, SDValue Hi) {
   // Arbitrarily use dlHi for result DebugLoc
   DebugLoc dlHi = Hi.getDebugLoc();
   DebugLoc dlLo = Lo.getDebugLoc();
-  MVT LVT = Lo.getValueType();
-  MVT HVT = Hi.getValueType();
-  MVT NVT = MVT::getIntegerVT(LVT.getSizeInBits() + HVT.getSizeInBits());
+  EVT LVT = Lo.getValueType();
+  EVT HVT = Hi.getValueType();
+  EVT NVT = EVT::getIntegerVT(LVT.getSizeInBits() + HVT.getSizeInBits());
 
   Lo = DAG.getNode(ISD::ZERO_EXTEND, dlLo, NVT, Lo);
   Hi = DAG.getNode(ISD::ANY_EXTEND, dlHi, NVT, Hi);
@@ -999,7 +999,7 @@ SDValue DAGTypeLegalizer::LibCallify(RTLIB::Libcall LC, SDNode *N,
 
 /// MakeLibCall - Generate a libcall taking the given operands as arguments and
 /// returning a result of type RetVT.
-SDValue DAGTypeLegalizer::MakeLibCall(RTLIB::Libcall LC, MVT RetVT,
+SDValue DAGTypeLegalizer::MakeLibCall(RTLIB::Libcall LC, EVT RetVT,
                                       const SDValue *Ops, unsigned NumOps,
                                       bool isSigned, DebugLoc dl) {
   TargetLowering::ArgListTy Args;
@@ -1008,7 +1008,7 @@ SDValue DAGTypeLegalizer::MakeLibCall(RTLIB::Libcall LC, MVT RetVT,
   TargetLowering::ArgListEntry Entry;
   for (unsigned i = 0; i != NumOps; ++i) {
     Entry.Node = Ops[i];
-    Entry.Ty = Entry.Node.getValueType().getTypeForMVT();
+    Entry.Ty = Entry.Node.getValueType().getTypeForEVT();
     Entry.isSExt = isSigned;
     Entry.isZExt = !isSigned;
     Args.push_back(Entry);
@@ -1016,7 +1016,7 @@ SDValue DAGTypeLegalizer::MakeLibCall(RTLIB::Libcall LC, MVT RetVT,
   SDValue Callee = DAG.getExternalSymbol(TLI.getLibcallName(LC),
                                          TLI.getPointerTy());
 
-  const Type *RetTy = RetVT.getTypeForMVT();
+  const Type *RetTy = RetVT.getTypeForEVT();
   std::pair<SDValue,SDValue> CallInfo =
     TLI.LowerCallTo(DAG.getEntryNode(), RetTy, isSigned, !isSigned, false,
                     false, 0, CallingConv::C, false,
@@ -1028,7 +1028,7 @@ SDValue DAGTypeLegalizer::MakeLibCall(RTLIB::Libcall LC, MVT RetVT,
 /// PromoteTargetBoolean - Promote the given target boolean to a target boolean
 /// of the given type.  A target boolean is an integer value, not necessarily of
 /// type i1, the bits of which conform to getBooleanContents.
-SDValue DAGTypeLegalizer::PromoteTargetBoolean(SDValue Bool, MVT VT) {
+SDValue DAGTypeLegalizer::PromoteTargetBoolean(SDValue Bool, EVT VT) {
   DebugLoc dl = Bool.getDebugLoc();
   ISD::NodeType ExtendCode;
   switch (TLI.getBooleanContents()) {
@@ -1054,7 +1054,7 @@ SDValue DAGTypeLegalizer::PromoteTargetBoolean(SDValue Bool, MVT VT) {
 /// SplitInteger - Return the lower LoVT bits of Op in Lo and the upper HiVT
 /// bits in Hi.
 void DAGTypeLegalizer::SplitInteger(SDValue Op,
-                                    MVT LoVT, MVT HiVT,
+                                    EVT LoVT, EVT HiVT,
                                     SDValue &Lo, SDValue &Hi) {
   DebugLoc dl = Op.getDebugLoc();
   assert(LoVT.getSizeInBits() + HiVT.getSizeInBits() ==
@@ -1069,7 +1069,7 @@ void DAGTypeLegalizer::SplitInteger(SDValue Op,
 /// type half the size of Op's.
 void DAGTypeLegalizer::SplitInteger(SDValue Op,
                                     SDValue &Lo, SDValue &Hi) {
-  MVT HalfVT = MVT::getIntegerVT(Op.getValueType().getSizeInBits()/2);
+  EVT HalfVT = EVT::getIntegerVT(Op.getValueType().getSizeInBits()/2);
   SplitInteger(Op, HalfVT, HalfVT, Lo, Hi);
 }
 

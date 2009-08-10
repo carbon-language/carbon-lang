@@ -215,16 +215,16 @@ SUnit *ScheduleDAGFast::CopyAndMoveSuccessors(SUnit *SU) {
   SUnit *NewSU;
   bool TryUnfold = false;
   for (unsigned i = 0, e = N->getNumValues(); i != e; ++i) {
-    MVT VT = N->getValueType(i);
-    if (VT == MVT::Flag)
+    EVT VT = N->getValueType(i);
+    if (VT == EVT::Flag)
       return NULL;
-    else if (VT == MVT::Other)
+    else if (VT == EVT::Other)
       TryUnfold = true;
   }
   for (unsigned i = 0, e = N->getNumOperands(); i != e; ++i) {
     const SDValue &Op = N->getOperand(i);
-    MVT VT = Op.getNode()->getValueType(Op.getResNo());
-    if (VT == MVT::Flag)
+    EVT VT = Op.getNode()->getValueType(Op.getResNo());
+    if (VT == EVT::Flag)
       return NULL;
   }
 
@@ -420,7 +420,7 @@ void ScheduleDAGFast::InsertCopiesAndMoveSuccs(SUnit *SU, unsigned Reg,
 /// getPhysicalRegisterVT - Returns the ValueType of the physical register
 /// definition of the specified node.
 /// FIXME: Move to SelectionDAG?
-static MVT getPhysicalRegisterVT(SDNode *N, unsigned Reg,
+static EVT getPhysicalRegisterVT(SDNode *N, unsigned Reg,
                                  const TargetInstrInfo *TII) {
   const TargetInstrDesc &TID = TII->get(N->getMachineOpcode());
   assert(TID.ImplicitDefs && "Physical reg def must be in implicit def list!");
@@ -534,7 +534,7 @@ void ScheduleDAGFast::ListScheduleBottomUp() {
         assert(LRegs.size() == 1 && "Can't handle this yet!");
         unsigned Reg = LRegs[0];
         SUnit *LRDef = LiveRegDefs[Reg];
-        MVT VT = getPhysicalRegisterVT(LRDef->getNode(), Reg, TII);
+        EVT VT = getPhysicalRegisterVT(LRDef->getNode(), Reg, TII);
         const TargetRegisterClass *RC =
           TRI->getPhysicalRegisterRegClass(Reg, VT);
         const TargetRegisterClass *DestRC = TRI->getCrossCopyRegClass(RC);

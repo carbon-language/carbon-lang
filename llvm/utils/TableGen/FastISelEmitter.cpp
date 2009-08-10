@@ -53,7 +53,7 @@ struct OperandsSignature {
   ///
   bool initialize(TreePatternNode *InstPatNode,
                   const CodeGenTarget &Target,
-                  MVT::SimpleValueType VT) {
+                  EVT::SimpleValueType VT) {
     if (!InstPatNode->isLeaf() &&
         InstPatNode->getOperator()->getName() == "imm") {
       Operands.push_back("i");
@@ -203,8 +203,8 @@ struct OperandsSignature {
 
 class FastISelMap {
   typedef std::map<std::string, InstructionMemo> PredMap;
-  typedef std::map<MVT::SimpleValueType, PredMap> RetPredMap;
-  typedef std::map<MVT::SimpleValueType, RetPredMap> TypeRetPredMap;
+  typedef std::map<EVT::SimpleValueType, PredMap> RetPredMap;
+  typedef std::map<EVT::SimpleValueType, RetPredMap> TypeRetPredMap;
   typedef std::map<std::string, TypeRetPredMap> OpcodeTypeRetPredMap;
   typedef std::map<OperandsSignature, OpcodeTypeRetPredMap> OperandsOpcodeTypeRetPredMap;
 
@@ -297,8 +297,8 @@ void FastISelMap::CollectPatterns(CodeGenDAGPatterns &CGP) {
 
     Record *InstPatOp = InstPatNode->getOperator();
     std::string OpcodeName = getOpcodeName(InstPatOp, CGP);
-    MVT::SimpleValueType RetVT = InstPatNode->getTypeNum(0);
-    MVT::SimpleValueType VT = RetVT;
+    EVT::SimpleValueType RetVT = InstPatNode->getTypeNum(0);
+    EVT::SimpleValueType VT = RetVT;
     if (InstPatNode->getNumChildren())
       VT = InstPatNode->getChild(0)->getTypeNum(0);
 
@@ -385,12 +385,12 @@ void FastISelMap::PrintFunctionDefinitions(raw_ostream &OS) {
       // Emit one function for each opcode,type pair.
       for (TypeRetPredMap::const_iterator TI = TM.begin(), TE = TM.end();
            TI != TE; ++TI) {
-        MVT::SimpleValueType VT = TI->first;
+        EVT::SimpleValueType VT = TI->first;
         const RetPredMap &RM = TI->second;
         if (RM.size() != 1) {
           for (RetPredMap::const_iterator RI = RM.begin(), RE = RM.end();
                RI != RE; ++RI) {
-            MVT::SimpleValueType RetVT = RI->first;
+            EVT::SimpleValueType RetVT = RI->first;
             const PredMap &PM = RI->second;
             bool HasPred = false;
 
@@ -461,14 +461,14 @@ void FastISelMap::PrintFunctionDefinitions(raw_ostream &OS) {
              << getLegalCName(Opcode) << "_"
              << getLegalCName(getName(VT)) << "_";
           Operands.PrintManglingSuffix(OS);
-          OS << "(MVT::SimpleValueType RetVT";
+          OS << "(EVT::SimpleValueType RetVT";
           if (!Operands.empty())
             OS << ", ";
           Operands.PrintParameters(OS);
           OS << ") {\nswitch (RetVT) {\n";
           for (RetPredMap::const_iterator RI = RM.begin(), RE = RM.end();
                RI != RE; ++RI) {
-            MVT::SimpleValueType RetVT = RI->first;
+            EVT::SimpleValueType RetVT = RI->first;
             OS << "  case " << getName(RetVT) << ": return FastEmit_"
                << getLegalCName(Opcode) << "_" << getLegalCName(getName(VT))
                << "_" << getLegalCName(getName(RetVT)) << "_";
@@ -485,7 +485,7 @@ void FastISelMap::PrintFunctionDefinitions(raw_ostream &OS) {
              << getLegalCName(Opcode) << "_"
              << getLegalCName(getName(VT)) << "_";
           Operands.PrintManglingSuffix(OS);
-          OS << "(MVT::SimpleValueType RetVT";
+          OS << "(EVT::SimpleValueType RetVT";
           if (!Operands.empty())
             OS << ", ";
           Operands.PrintParameters(OS);
@@ -555,7 +555,7 @@ void FastISelMap::PrintFunctionDefinitions(raw_ostream &OS) {
       OS << "unsigned FastEmit_"
          << getLegalCName(Opcode) << "_";
       Operands.PrintManglingSuffix(OS);
-      OS << "(MVT::SimpleValueType VT, MVT::SimpleValueType RetVT";
+      OS << "(EVT::SimpleValueType VT, EVT::SimpleValueType RetVT";
       if (!Operands.empty())
         OS << ", ";
       Operands.PrintParameters(OS);
@@ -563,7 +563,7 @@ void FastISelMap::PrintFunctionDefinitions(raw_ostream &OS) {
       OS << "  switch (VT) {\n";
       for (TypeRetPredMap::const_iterator TI = TM.begin(), TE = TM.end();
            TI != TE; ++TI) {
-        MVT::SimpleValueType VT = TI->first;
+        EVT::SimpleValueType VT = TI->first;
         std::string TypeName = getName(VT);
         OS << "  case " << TypeName << ": return FastEmit_"
            << getLegalCName(Opcode) << "_" << getLegalCName(TypeName) << "_";
@@ -587,7 +587,7 @@ void FastISelMap::PrintFunctionDefinitions(raw_ostream &OS) {
     // on opcode and type.
     OS << "unsigned FastEmit_";
     Operands.PrintManglingSuffix(OS);
-    OS << "(MVT::SimpleValueType VT, MVT::SimpleValueType RetVT, ISD::NodeType Opcode";
+    OS << "(EVT::SimpleValueType VT, EVT::SimpleValueType RetVT, ISD::NodeType Opcode";
     if (!Operands.empty())
       OS << ", ";
     Operands.PrintParameters(OS);

@@ -129,13 +129,13 @@ class RegConstraint<string C> {
 // so_imm_neg_XFORM - Return a so_imm value packed into the format described for
 // so_imm_neg def below.
 def so_imm_neg_XFORM : SDNodeXForm<imm, [{
-  return CurDAG->getTargetConstant(-(int)N->getZExtValue(), MVT::i32);
+  return CurDAG->getTargetConstant(-(int)N->getZExtValue(), EVT::i32);
 }]>;
 
 // so_imm_not_XFORM - Return a so_imm value packed into the format described for
 // so_imm_not def below.
 def so_imm_not_XFORM : SDNodeXForm<imm, [{
-  return CurDAG->getTargetConstant(~(int)N->getZExtValue(), MVT::i32);
+  return CurDAG->getTargetConstant(~(int)N->getZExtValue(), EVT::i32);
 }]>;
 
 // rot_imm predicate - True if the 32-bit immediate is equal to 8, 16, or 24.
@@ -254,12 +254,12 @@ def so_imm2part : Operand<i32>,
 
 def so_imm2part_1 : SDNodeXForm<imm, [{
   unsigned V = ARM_AM::getSOImmTwoPartFirst((unsigned)N->getZExtValue());
-  return CurDAG->getTargetConstant(V, MVT::i32);
+  return CurDAG->getTargetConstant(V, EVT::i32);
 }]>;
 
 def so_imm2part_2 : SDNodeXForm<imm, [{
   unsigned V = ARM_AM::getSOImmTwoPartSecond((unsigned)N->getZExtValue());
-  return CurDAG->getTargetConstant(V, MVT::i32);
+  return CurDAG->getTargetConstant(V, EVT::i32);
 }]>;
 
 

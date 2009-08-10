@@ -230,7 +230,7 @@ namespace llvm {
     virtual const char *getTargetNodeName(unsigned Opcode) const;
 
     /// getSetCCResultType - Return the ISD::SETCC ValueType
-    virtual MVT::SimpleValueType getSetCCResultType(MVT VT) const;
+    virtual EVT::SimpleValueType getSetCCResultType(EVT VT) const;
 
     /// getPreIndexedAddressParts - returns true by value, base pointer and
     /// offset pointer and addressing mode by reference if the node's address
@@ -295,7 +295,7 @@ namespace llvm {
     ConstraintType getConstraintType(const std::string &Constraint) const;
     std::pair<unsigned, const TargetRegisterClass*> 
       getRegForInlineAsmConstraint(const std::string &Constraint,
-                                   MVT VT) const;
+                                   EVT VT) const;
 
     /// getByValTypeAlignment - Return the desired alignment for ByVal aggregate
     /// function arguments in the caller parameter area.  This is the actual
@@ -334,7 +334,7 @@ namespace llvm {
 
     virtual bool isOffsetFoldingLegal(const GlobalAddressSDNode *GA) const;
     
-    virtual MVT getOptimalMemOpType(uint64_t Size, unsigned Align,
+    virtual EVT getOptimalMemOpType(uint64_t Size, unsigned Align,
                                     bool isSrcConst, bool isSrcStr,
                                     SelectionDAG &DAG) const;
 

@@ -25,7 +25,7 @@ namespace llvm {
   class Type;
   struct LLVMContext;
 
-  struct MVT { // MVT = Machine Value Type
+  struct EVT { // EVT = Machine Value Type
   public:
     enum SimpleValueType {
       // If you change this numbering, you must change the values in
@@ -78,7 +78,7 @@ namespace llvm {
       LAST_VALUETYPE =  34,   // This always remains at the end of the list.
 
       // This is the current maximum for LAST_VALUETYPE.
-      // MVT::MAX_ALLOWED_VALUETYPE is used for asserts and to size bit vectors
+      // EVT::MAX_ALLOWED_VALUETYPE is used for asserts and to size bit vectors
       // This value must be a multiple of 32.
       MAX_ALLOWED_VALUETYPE = 64,
 
@@ -111,7 +111,7 @@ namespace llvm {
   private:
     /// This union holds low-level value types. Valid values include any of
     /// the values in the SimpleValueType enum, or any value returned from one
-    /// of the MVT methods.  Any value type equal to one of the SimpleValueType
+    /// of the EVT methods.  Any value type equal to one of the SimpleValueType
     /// enum values is a "simple" value type.  All others are "extended".
     ///
     /// Note that simple doesn't necessary mean legal for the target machine.
@@ -124,20 +124,20 @@ namespace llvm {
     };
 
   public:
-    MVT() {}
-    MVT(SimpleValueType S) : V(S) {}
+    EVT() {}
+    EVT(SimpleValueType S) : V(S) {}
 
-    bool operator==(const MVT VT) const {
+    bool operator==(const EVT VT) const {
       return getRawBits() == VT.getRawBits();
     }
-    bool operator!=(const MVT VT) const {
+    bool operator!=(const EVT VT) const {
       return getRawBits() != VT.getRawBits();
     }
 
-    /// getFloatingPointVT - Returns the MVT that represents a floating point
+    /// getFloatingPointVT - Returns the EVT that represents a floating point
     /// type with the given number of bits.  There are two floating point types
     /// with 128 bits - this returns f128 rather than ppcf128.
-    static MVT getFloatingPointVT(unsigned BitWidth) {
+    static EVT getFloatingPointVT(unsigned BitWidth) {
       switch (BitWidth) {
       default:
         assert(false && "Bad bit width!");
@@ -152,9 +152,9 @@ namespace llvm {
       }
     }
 
-    /// getIntegerVT - Returns the MVT that represents an integer with the given
+    /// getIntegerVT - Returns the EVT that represents an integer with the given
     /// number of bits.
-    static MVT getIntegerVT(unsigned BitWidth) {
+    static EVT getIntegerVT(unsigned BitWidth) {
       switch (BitWidth) {
       default:
         break;
@@ -174,9 +174,9 @@ namespace llvm {
       return getExtendedIntegerVT(BitWidth);
     }
 
-    /// getVectorVT - Returns the MVT that represents a vector NumElements in
+    /// getVectorVT - Returns the EVT that represents a vector NumElements in
     /// length, where each element is of type VT.
-    static MVT getVectorVT(MVT VT, unsigned NumElements) {
+    static EVT getVectorVT(EVT VT, unsigned NumElements) {
       switch (VT.V) {
       default:
         break;
@@ -218,7 +218,7 @@ namespace llvm {
 
     /// getIntVectorWithNumElements - Return any integer vector type that has
     /// the specified number of elements.
-    static MVT getIntVectorWithNumElements(unsigned NumElts) {
+    static EVT getIntVectorWithNumElements(unsigned NumElts) {
       switch (NumElts) {
       default: return getVectorVT(i8, NumElts);
       case  1: return v1i64;
@@ -229,13 +229,13 @@ namespace llvm {
       }
     }
 
-    /// isSimple - Test if the given MVT is simple (as opposed to being
+    /// isSimple - Test if the given EVT is simple (as opposed to being
     /// extended).
     bool isSimple() const {
       return V <= LastSimpleValueType;
     }
 
-    /// isExtended - Test if the given MVT is extended (as opposed to
+    /// isExtended - Test if the given EVT is extended (as opposed to
     /// being simple).
     bool isExtended() const {
       return !isSimple();
@@ -296,33 +296,33 @@ namespace llvm {
     }
 
     /// bitsEq - Return true if this has the same number of bits as VT.
-    bool bitsEq(MVT VT) const {
+    bool bitsEq(EVT VT) const {
       return getSizeInBits() == VT.getSizeInBits();
     }
 
     /// bitsGT - Return true if this has more bits than VT.
-    bool bitsGT(MVT VT) const {
+    bool bitsGT(EVT VT) const {
       return getSizeInBits() > VT.getSizeInBits();
     }
 
     /// bitsGE - Return true if this has no less bits than VT.
-    bool bitsGE(MVT VT) const {
+    bool bitsGE(EVT VT) const {
       return getSizeInBits() >= VT.getSizeInBits();
     }
 
     /// bitsLT - Return true if this has less bits than VT.
-    bool bitsLT(MVT VT) const {
+    bool bitsLT(EVT VT) const {
       return getSizeInBits() < VT.getSizeInBits();
     }
 
     /// bitsLE - Return true if this has no more bits than VT.
-    bool bitsLE(MVT VT) const {
+    bool bitsLE(EVT VT) const {
       return getSizeInBits() <= VT.getSizeInBits();
     }
 
 
     /// getSimpleVT - Return the SimpleValueType held in the specified
-    /// simple MVT.
+    /// simple EVT.
     SimpleValueType getSimpleVT() const {
       assert(isSimple() && "Expected a SimpleValueType!");
       return SimpleValueType(V);
@@ -330,7 +330,7 @@ namespace llvm {
 
     /// getVectorElementType - Given a vector type, return the type of
     /// each element.
-    MVT getVectorElementType() const {
+    EVT getVectorElementType() const {
       assert(isVector() && "Invalid vector type!");
       switch (V) {
       default:
@@ -439,10 +439,10 @@ namespace llvm {
       return (getSizeInBits() + 7)/8*8;
     }
 
-    /// getRoundIntegerType - Rounds the bit-width of the given integer MVT up
+    /// getRoundIntegerType - Rounds the bit-width of the given integer EVT up
     /// to the nearest power of two (and at least to eight), and returns the
-    /// integer MVT with that number of bits.
-    MVT getRoundIntegerType() const {
+    /// integer EVT with that number of bits.
+    EVT getRoundIntegerType() const {
       assert(isInteger() && !isVector() && "Invalid integer type!");
       unsigned BitWidth = getSizeInBits();
       if (BitWidth <= 8)
@@ -457,32 +457,32 @@ namespace llvm {
       return !(NElts & (NElts - 1));
     }
 
-    /// getPow2VectorType - Widens the length of the given vector MVT up to
+    /// getPow2VectorType - Widens the length of the given vector EVT up to
     /// the nearest power of 2 and returns that type.
-    MVT getPow2VectorType() const {
+    EVT getPow2VectorType() const {
       if (!isPow2VectorType()) {
         unsigned NElts = getVectorNumElements();
         unsigned Pow2NElts = 1 <<  Log2_32_Ceil(NElts);
-        return MVT::getVectorVT(getVectorElementType(), Pow2NElts);
+        return EVT::getVectorVT(getVectorElementType(), Pow2NElts);
       }
       else {
         return *this;
       }
     }
 
-    /// getMVTString - This function returns value type as a string,
+    /// getEVTString - This function returns value type as a string,
     /// e.g. "i32".
-    std::string getMVTString() const;
+    std::string getEVTString() const;
 
-    /// getTypeForMVT - This method returns an LLVM type corresponding to the
-    /// specified MVT.  For integer types, this returns an unsigned type.  Note
+    /// getTypeForEVT - This method returns an LLVM type corresponding to the
+    /// specified EVT.  For integer types, this returns an unsigned type.  Note
     /// that this will abort for types that cannot be represented.
-    const Type *getTypeForMVT() const;
+    const Type *getTypeForEVT() const;
 
-    /// getMVT - Return the value type corresponding to the specified type.
+    /// getEVT - Return the value type corresponding to the specified type.
     /// This returns all pointers as iPTR.  If HandleUnknown is true, unknown
     /// types are returned as Other, otherwise they are invalid.
-    static MVT getMVT(const Type *Ty, bool HandleUnknown = false);
+    static EVT getEVT(const Type *Ty, bool HandleUnknown = false);
 
     /// getRawBits - Represent the type as a bunch of bits.
     uintptr_t getRawBits() const { return V; }
@@ -490,7 +490,7 @@ namespace llvm {
     /// compareRawBits - A meaningless but well-behaved order, useful for
     /// constructing containers.
     struct compareRawBits {
-      bool operator()(MVT L, MVT R) const {
+      bool operator()(EVT L, EVT R) const {
         return L.getRawBits() < R.getRawBits();
       }
     };
@@ -499,15 +499,15 @@ namespace llvm {
     // Methods for handling the Extended-type case in functions above.
     // These are all out-of-line to prevent users of this header file
     // from having a dependency on Type.h.
-    static MVT getExtendedIntegerVT(unsigned BitWidth);
-    static MVT getExtendedVectorVT(MVT VT, unsigned NumElements);
+    static EVT getExtendedIntegerVT(unsigned BitWidth);
+    static EVT getExtendedVectorVT(EVT VT, unsigned NumElements);
     bool isExtendedFloatingPoint() const;
     bool isExtendedInteger() const;
     bool isExtendedVector() const;
     bool isExtended64BitVector() const;
     bool isExtended128BitVector() const;
     bool isExtended256BitVector() const;
-    MVT getExtendedVectorElementType() const;
+    EVT getExtendedVectorElementType() const;
     unsigned getExtendedVectorNumElements() const;
     unsigned getExtendedSizeInBits() const;
   };

@@ -19,10 +19,10 @@ def ARMtcall : SDNode<"ARMISD::tCALL", SDT_ARMcall,
                       [SDNPHasChain, SDNPOptInFlag, SDNPOutFlag]>;
 
 def imm_neg_XFORM : SDNodeXForm<imm, [{
-  return CurDAG->getTargetConstant(-(int)N->getZExtValue(), MVT::i32);
+  return CurDAG->getTargetConstant(-(int)N->getZExtValue(), EVT::i32);
 }]>;
 def imm_comp_XFORM : SDNodeXForm<imm, [{
-  return CurDAG->getTargetConstant(~((uint32_t)N->getZExtValue()), MVT::i32);
+  return CurDAG->getTargetConstant(~((uint32_t)N->getZExtValue()), EVT::i32);
 }]>;
 
 
@@ -58,12 +58,12 @@ def thumb_immshifted : PatLeaf<(imm), [{
 
 def thumb_immshifted_val : SDNodeXForm<imm, [{
   unsigned V = ARM_AM::getThumbImmNonShiftedVal((unsigned)N->getZExtValue());
-  return CurDAG->getTargetConstant(V, MVT::i32);
+  return CurDAG->getTargetConstant(V, EVT::i32);
 }]>;
 
 def thumb_immshifted_shamt : SDNodeXForm<imm, [{
   unsigned V = ARM_AM::getThumbImmValShift((unsigned)N->getZExtValue());
-  return CurDAG->getTargetConstant(V, MVT::i32);
+  return CurDAG->getTargetConstant(V, EVT::i32);
 }]>;
 
 // Define Thumb specific addressing modes.

@@ -44,14 +44,14 @@ SystemZTargetLowering::SystemZTargetLowering(SystemZTargetMachine &tm) :
   RegInfo = TM.getRegisterInfo();
 
   // Set up the register classes.
-  addRegisterClass(MVT::i32,  SystemZ::GR32RegisterClass);
-  addRegisterClass(MVT::i64,  SystemZ::GR64RegisterClass);
-  addRegisterClass(MVT::v2i32,SystemZ::GR64PRegisterClass);
-  addRegisterClass(MVT::v2i64,SystemZ::GR128RegisterClass);
+  addRegisterClass(EVT::i32,  SystemZ::GR32RegisterClass);
+  addRegisterClass(EVT::i64,  SystemZ::GR64RegisterClass);
+  addRegisterClass(EVT::v2i32,SystemZ::GR64PRegisterClass);
+  addRegisterClass(EVT::v2i64,SystemZ::GR128RegisterClass);
 
   if (!UseSoftFloat) {
-    addRegisterClass(MVT::f32, SystemZ::FP32RegisterClass);
-    addRegisterClass(MVT::f64, SystemZ::FP64RegisterClass);
+    addRegisterClass(EVT::f32, SystemZ::FP32RegisterClass);
+    addRegisterClass(EVT::f64, SystemZ::FP64RegisterClass);
 
     addLegalFPImmediate(APFloat(+0.0));  // lzer
     addLegalFPImmediate(APFloat(+0.0f)); // lzdr
@@ -63,92 +63,92 @@ SystemZTargetLowering::SystemZTargetLowering(SystemZTargetMachine &tm) :
   computeRegisterProperties();
 
   // Set shifts properties
-  setShiftAmountType(MVT::i64);
+  setShiftAmountType(EVT::i64);
 
   // Provide all sorts of operation actions
-  setLoadExtAction(ISD::SEXTLOAD, MVT::i1, Promote);
-  setLoadExtAction(ISD::ZEXTLOAD, MVT::i1, Promote);
-  setLoadExtAction(ISD::EXTLOAD,  MVT::i1, Promote);
+  setLoadExtAction(ISD::SEXTLOAD, EVT::i1, Promote);
+  setLoadExtAction(ISD::ZEXTLOAD, EVT::i1, Promote);
+  setLoadExtAction(ISD::EXTLOAD,  EVT::i1, Promote);
 
-  setLoadExtAction(ISD::SEXTLOAD, MVT::f32, Expand);
-  setLoadExtAction(ISD::ZEXTLOAD, MVT::f32, Expand);
-  setLoadExtAction(ISD::EXTLOAD,  MVT::f32, Expand);
+  setLoadExtAction(ISD::SEXTLOAD, EVT::f32, Expand);
+  setLoadExtAction(ISD::ZEXTLOAD, EVT::f32, Expand);
+  setLoadExtAction(ISD::EXTLOAD,  EVT::f32, Expand);
 
-  setLoadExtAction(ISD::SEXTLOAD, MVT::f64, Expand);
-  setLoadExtAction(ISD::ZEXTLOAD, MVT::f64, Expand);
-  setLoadExtAction(ISD::EXTLOAD,  MVT::f64, Expand);
+  setLoadExtAction(ISD::SEXTLOAD, EVT::f64, Expand);
+  setLoadExtAction(ISD::ZEXTLOAD, EVT::f64, Expand);
+  setLoadExtAction(ISD::EXTLOAD,  EVT::f64, Expand);
 
   setStackPointerRegisterToSaveRestore(SystemZ::R15D);
   setSchedulingPreference(SchedulingForLatency);
   setBooleanContents(ZeroOrOneBooleanContent);
 
-  setOperationAction(ISD::BR_JT,            MVT::Other, Expand);
-  setOperationAction(ISD::BRCOND,           MVT::Other, Expand);
-  setOperationAction(ISD::BR_CC,            MVT::i32, Custom);
-  setOperationAction(ISD::BR_CC,            MVT::i64, Custom);
-  setOperationAction(ISD::BR_CC,            MVT::f32, Custom);
-  setOperationAction(ISD::BR_CC,            MVT::f64, Custom);
-  setOperationAction(ISD::ConstantPool,     MVT::i32, Custom);
-  setOperationAction(ISD::ConstantPool,     MVT::i64, Custom);
-  setOperationAction(ISD::GlobalAddress,    MVT::i64, Custom);
-  setOperationAction(ISD::JumpTable,        MVT::i64, Custom);
-  setOperationAction(ISD::DYNAMIC_STACKALLOC, MVT::i64, Expand);
+  setOperationAction(ISD::BR_JT,            EVT::Other, Expand);
+  setOperationAction(ISD::BRCOND,           EVT::Other, Expand);
+  setOperationAction(ISD::BR_CC,            EVT::i32, Custom);
+  setOperationAction(ISD::BR_CC,            EVT::i64, Custom);
+  setOperationAction(ISD::BR_CC,            EVT::f32, Custom);
+  setOperationAction(ISD::BR_CC,            EVT::f64, Custom);
+  setOperationAction(ISD::ConstantPool,     EVT::i32, Custom);
+  setOperationAction(ISD::ConstantPool,     EVT::i64, Custom);
+  setOperationAction(ISD::GlobalAddress,    EVT::i64, Custom);
+  setOperationAction(ISD::JumpTable,        EVT::i64, Custom);
+  setOperationAction(ISD::DYNAMIC_STACKALLOC, EVT::i64, Expand);
 
-  setOperationAction(ISD::SDIV,             MVT::i32, Expand);
-  setOperationAction(ISD::UDIV,             MVT::i32, Expand);
-  setOperationAction(ISD::SDIV,             MVT::i64, Expand);
-  setOperationAction(ISD::UDIV,             MVT::i64, Expand);
-  setOperationAction(ISD::SREM,             MVT::i32, Expand);
-  setOperationAction(ISD::UREM,             MVT::i32, Expand);
-  setOperationAction(ISD::SREM,             MVT::i64, Expand);
-  setOperationAction(ISD::UREM,             MVT::i64, Expand);
+  setOperationAction(ISD::SDIV,             EVT::i32, Expand);
+  setOperationAction(ISD::UDIV,             EVT::i32, Expand);
+  setOperationAction(ISD::SDIV,             EVT::i64, Expand);
+  setOperationAction(ISD::UDIV,             EVT::i64, Expand);
+  setOperationAction(ISD::SREM,             EVT::i32, Expand);
+  setOperationAction(ISD::UREM,             EVT::i32, Expand);
+  setOperationAction(ISD::SREM,             EVT::i64, Expand);
+  setOperationAction(ISD::UREM,             EVT::i64, Expand);
 
-  setOperationAction(ISD::SIGN_EXTEND_INREG, MVT::i1, Expand);
+  setOperationAction(ISD::SIGN_EXTEND_INREG, EVT::i1, Expand);
 
-  setOperationAction(ISD::CTPOP,            MVT::i32, Expand);
-  setOperationAction(ISD::CTPOP,            MVT::i64, Expand);
-  setOperationAction(ISD::CTTZ,             MVT::i32, Expand);
-  setOperationAction(ISD::CTTZ,             MVT::i64, Expand);
-  setOperationAction(ISD::CTLZ,             MVT::i32, Promote);
-  setOperationAction(ISD::CTLZ,             MVT::i64, Legal);
+  setOperationAction(ISD::CTPOP,            EVT::i32, Expand);
+  setOperationAction(ISD::CTPOP,            EVT::i64, Expand);
+  setOperationAction(ISD::CTTZ,             EVT::i32, Expand);
+  setOperationAction(ISD::CTTZ,             EVT::i64, Expand);
+  setOperationAction(ISD::CTLZ,             EVT::i32, Promote);
+  setOperationAction(ISD::CTLZ,             EVT::i64, Legal);
 
   // FIXME: Can we lower these 2 efficiently?
-  setOperationAction(ISD::SETCC,            MVT::i32, Expand);
-  setOperationAction(ISD::SETCC,            MVT::i64, Expand);
-  setOperationAction(ISD::SETCC,            MVT::f32, Expand);
-  setOperationAction(ISD::SETCC,            MVT::f64, Expand);
-  setOperationAction(ISD::SELECT,           MVT::i32, Expand);
-  setOperationAction(ISD::SELECT,           MVT::i64, Expand);
-  setOperationAction(ISD::SELECT,           MVT::f32, Expand);
-  setOperationAction(ISD::SELECT,           MVT::f64, Expand);
-  setOperationAction(ISD::SELECT_CC,        MVT::i32, Custom);
-  setOperationAction(ISD::SELECT_CC,        MVT::i64, Custom);
-  setOperationAction(ISD::SELECT_CC,        MVT::f32, Custom);
-  setOperationAction(ISD::SELECT_CC,        MVT::f64, Custom);
+  setOperationAction(ISD::SETCC,            EVT::i32, Expand);
+  setOperationAction(ISD::SETCC,            EVT::i64, Expand);
+  setOperationAction(ISD::SETCC,            EVT::f32, Expand);
+  setOperationAction(ISD::SETCC,            EVT::f64, Expand);
+  setOperationAction(ISD::SELECT,           EVT::i32, Expand);
+  setOperationAction(ISD::SELECT,           EVT::i64, Expand);
+  setOperationAction(ISD::SELECT,           EVT::f32, Expand);
+  setOperationAction(ISD::SELECT,           EVT::f64, Expand);
+  setOperationAction(ISD::SELECT_CC,        EVT::i32, Custom);
+  setOperationAction(ISD::SELECT_CC,        EVT::i64, Custom);
+  setOperationAction(ISD::SELECT_CC,        EVT::f32, Custom);
+  setOperationAction(ISD::SELECT_CC,        EVT::f64, Custom);
 
   // Funny enough: we don't have 64-bit signed versions of these stuff, but have
   // unsigned.
-  setOperationAction(ISD::MULHS,            MVT::i64, Expand);
-  setOperationAction(ISD::SMUL_LOHI,        MVT::i64, Expand);
+  setOperationAction(ISD::MULHS,            EVT::i64, Expand);
+  setOperationAction(ISD::SMUL_LOHI,        EVT::i64, Expand);
 
   // Lower some FP stuff
-  setOperationAction(ISD::FSIN,             MVT::f32, Expand);
-  setOperationAction(ISD::FSIN,             MVT::f64, Expand);
-  setOperationAction(ISD::FCOS,             MVT::f32, Expand);
-  setOperationAction(ISD::FCOS,             MVT::f64, Expand);
-  setOperationAction(ISD::FREM,             MVT::f32, Expand);
-  setOperationAction(ISD::FREM,             MVT::f64, Expand);
+  setOperationAction(ISD::FSIN,             EVT::f32, Expand);
+  setOperationAction(ISD::FSIN,             EVT::f64, Expand);
+  setOperationAction(ISD::FCOS,             EVT::f32, Expand);
+  setOperationAction(ISD::FCOS,             EVT::f64, Expand);
+  setOperationAction(ISD::FREM,             EVT::f32, Expand);
+  setOperationAction(ISD::FREM,             EVT::f64, Expand);
 
   // We have only 64-bit bitconverts
-  setOperationAction(ISD::BIT_CONVERT,      MVT::f32, Expand);
-  setOperationAction(ISD::BIT_CONVERT,      MVT::i32, Expand);
+  setOperationAction(ISD::BIT_CONVERT,      EVT::f32, Expand);
+  setOperationAction(ISD::BIT_CONVERT,      EVT::i32, Expand);
 
-  setOperationAction(ISD::UINT_TO_FP,       MVT::i32, Expand);
-  setOperationAction(ISD::UINT_TO_FP,       MVT::i64, Expand);
-  setOperationAction(ISD::FP_TO_UINT,       MVT::i32, Expand);
-  setOperationAction(ISD::FP_TO_UINT,       MVT::i64, Expand);
+  setOperationAction(ISD::UINT_TO_FP,       EVT::i32, Expand);
+  setOperationAction(ISD::UINT_TO_FP,       EVT::i64, Expand);
+  setOperationAction(ISD::FP_TO_UINT,       EVT::i32, Expand);
+  setOperationAction(ISD::FP_TO_UINT,       EVT::i64, Expand);
 
-  setTruncStoreAction(MVT::f64, MVT::f32, Expand);
+  setTruncStoreAction(EVT::f64, EVT::f32, Expand);
 }
 
 SDValue SystemZTargetLowering::LowerOperation(SDValue Op, SelectionDAG &DAG) {
@@ -238,7 +238,7 @@ SystemZTargetLowering::LowerCCCArguments(SDValue Chain,
   for (unsigned i = 0, e = ArgLocs.size(); i != e; ++i) {
     SDValue ArgValue;
     CCValAssign &VA = ArgLocs[i];
-    MVT LocVT = VA.getLocVT();
+    EVT LocVT = VA.getLocVT();
     if (VA.isRegLoc()) {
       // Arguments passed in registers
       TargetRegisterClass *RC;
@@ -250,13 +250,13 @@ SystemZTargetLowering::LowerCCCArguments(SDValue Chain,
              << "\n";
 #endif
         llvm_unreachable(0);
-      case MVT::i64:
+      case EVT::i64:
         RC = SystemZ::GR64RegisterClass;
         break;
-      case MVT::f32:
+      case EVT::f32:
         RC = SystemZ::FP32RegisterClass;
         break;
-      case MVT::f64:
+      case EVT::f64:
         RC = SystemZ::FP64RegisterClass;
         break;
       }
@@ -382,7 +382,7 @@ SystemZTargetLowering::LowerCCCCallTo(SDValue Chain, SDValue Callee,
   // Transform all store nodes into one single node because all store nodes are
   // independent of each other.
   if (!MemOpChains.empty())
-    Chain = DAG.getNode(ISD::TokenFactor, dl, MVT::Other,
+    Chain = DAG.getNode(ISD::TokenFactor, dl, EVT::Other,
                         &MemOpChains[0], MemOpChains.size());
 
   // Build a sequence of copy-to-reg nodes chained together with token chain and
@@ -404,7 +404,7 @@ SystemZTargetLowering::LowerCCCCallTo(SDValue Chain, SDValue Callee,
     Callee = DAG.getTargetExternalSymbol(E->getSymbol(), getPointerTy());
 
   // Returns a chain & a flag for retval copy to use.
-  SDVTList NodeTys = DAG.getVTList(MVT::Other, MVT::Flag);
+  SDVTList NodeTys = DAG.getVTList(EVT::Other, EVT::Flag);
   SmallVector<SDValue, 8> Ops;
   Ops.push_back(Chain);
   Ops.push_back(Callee);
@@ -530,10 +530,10 @@ SystemZTargetLowering::LowerReturn(SDValue Chain,
   }
 
   if (Flag.getNode())
-    return DAG.getNode(SystemZISD::RET_FLAG, dl, MVT::Other, Chain, Flag);
+    return DAG.getNode(SystemZISD::RET_FLAG, dl, EVT::Other, Chain, Flag);
 
   // Return Void
-  return DAG.getNode(SystemZISD::RET_FLAG, dl, MVT::Other, Chain);
+  return DAG.getNode(SystemZISD::RET_FLAG, dl, EVT::Other, Chain);
 }
 
 SDValue SystemZTargetLowering::EmitCmp(SDValue LHS, SDValue RHS,
@@ -608,11 +608,11 @@ SDValue SystemZTargetLowering::EmitCmp(SDValue LHS, SDValue RHS,
     break;
   }
 
-  SystemZCC = DAG.getConstant(TCC, MVT::i32);
+  SystemZCC = DAG.getConstant(TCC, EVT::i32);
 
   DebugLoc dl = LHS.getDebugLoc();
   return DAG.getNode((isUnsigned ? SystemZISD::UCMP : SystemZISD::CMP),
-                     dl, MVT::Flag, LHS, RHS);
+                     dl, EVT::Flag, LHS, RHS);
 }
 
 
@@ -641,7 +641,7 @@ SDValue SystemZTargetLowering::LowerSELECT_CC(SDValue Op, SelectionDAG &DAG) {
   SDValue SystemZCC;
   SDValue Flag = EmitCmp(LHS, RHS, CC, SystemZCC, DAG);
 
-  SDVTList VTs = DAG.getVTList(Op.getValueType(), MVT::Flag);
+  SDVTList VTs = DAG.getVTList(Op.getValueType(), EVT::Flag);
   SmallVector<SDValue, 4> Ops;
   Ops.push_back(TrueV);
   Ops.push_back(FalseV);

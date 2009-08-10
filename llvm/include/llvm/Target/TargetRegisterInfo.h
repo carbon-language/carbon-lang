@@ -53,7 +53,7 @@ public:
   typedef const unsigned* iterator;
   typedef const unsigned* const_iterator;
 
-  typedef const MVT* vt_iterator;
+  typedef const EVT* vt_iterator;
   typedef const TargetRegisterClass* const * sc_iterator;
 private:
   unsigned ID;
@@ -70,7 +70,7 @@ private:
 public:
   TargetRegisterClass(unsigned id,
                       const char *name,
-                      const MVT *vts,
+                      const EVT *vts,
                       const TargetRegisterClass * const *subcs,
                       const TargetRegisterClass * const *supcs,
                       const TargetRegisterClass * const *subregcs,
@@ -117,8 +117,8 @@ public:
 
   /// hasType - return true if this TargetRegisterClass has the ValueType vt.
   ///
-  bool hasType(MVT vt) const {
-    for(int i = 0; VTs[i] != MVT::Other; ++i)
+  bool hasType(EVT vt) const {
+    for(int i = 0; VTs[i] != EVT::Other; ++i)
       if (VTs[i] == vt)
         return true;
     return false;
@@ -132,7 +132,7 @@ public:
 
   vt_iterator vt_end() const {
     vt_iterator I = VTs;
-    while (*I != MVT::Other) ++I;
+    while (*I != EVT::Other) ++I;
     return I;
   }
 
@@ -318,10 +318,10 @@ public:
   }
 
   /// getPhysicalRegisterRegClass - Returns the Register Class of a physical
-  /// register of the given type. If type is MVT::Other, then just return any
+  /// register of the given type. If type is EVT::Other, then just return any
   /// register class the register belongs to.
   virtual const TargetRegisterClass *
-    getPhysicalRegisterRegClass(unsigned Reg, MVT VT = MVT::Other) const;
+    getPhysicalRegisterRegClass(unsigned Reg, EVT VT = EVT::Other) const;
 
   /// getAllocatableSet - Returns a bitset indexed by register number
   /// indicating if a register is allocatable or not. If a register class is

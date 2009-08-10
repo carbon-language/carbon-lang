@@ -80,7 +80,7 @@ namespace llvm {
     virtual const char *getTargetNodeName(unsigned Opcode) const;
 
     /// getSetCCResultType - get the ISD::SETCC result ValueType
-    MVT::SimpleValueType getSetCCResultType(MVT VT) const;
+    EVT::SimpleValueType getSetCCResultType(EVT VT) const;
 
     /// getFunctionAlignment - Return the Log2 alignment of this function.
     virtual unsigned getFunctionAlignment(const Function *F) const;
@@ -137,11 +137,11 @@ namespace llvm {
 
     std::pair<unsigned, const TargetRegisterClass*> 
               getRegForInlineAsmConstraint(const std::string &Constraint,
-              MVT VT) const;
+              EVT VT) const;
 
     std::vector<unsigned>
     getRegClassForInlineAsmConstraint(const std::string &Constraint,
-              MVT VT) const;
+              EVT VT) const;
 
     virtual bool isOffsetFoldingLegal(const GlobalAddressSDNode *GA) const;
   };

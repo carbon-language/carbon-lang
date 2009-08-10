@@ -382,10 +382,10 @@ namespace llvm {
 
     /// getOptimalMemOpType - Returns the target specific optimal type for load
     /// and store operations as a result of memset, memcpy, and memmove
-    /// lowering. It returns MVT::iAny if SelectionDAG should be responsible for
+    /// lowering. It returns EVT::iAny if SelectionDAG should be responsible for
     /// determining it.
     virtual
-    MVT getOptimalMemOpType(uint64_t Size, unsigned Align,
+    EVT getOptimalMemOpType(uint64_t Size, unsigned Align,
                             bool isSrcConst, bool isSrcStr,
                             SelectionDAG &DAG) const;
 
@@ -411,7 +411,7 @@ namespace llvm {
     virtual const char *getTargetNodeName(unsigned Opcode) const;
 
     /// getSetCCResultType - Return the ISD::SETCC ValueType
-    virtual MVT::SimpleValueType getSetCCResultType(MVT VT) const;
+    virtual EVT::SimpleValueType getSetCCResultType(EVT VT) const;
 
     /// computeMaskedBitsForTargetNode - Determine which of the bits specified 
     /// in Mask are known to be either zero or one and return them in the 
@@ -434,9 +434,9 @@ namespace llvm {
      
     std::vector<unsigned> 
       getRegClassForInlineAsmConstraint(const std::string &Constraint,
-                                        MVT VT) const;
+                                        EVT VT) const;
 
-    virtual const char *LowerXConstraint(MVT ConstraintVT) const;
+    virtual const char *LowerXConstraint(EVT ConstraintVT) const;
 
     /// LowerAsmOperandForConstraint - Lower the specified operand into the Ops
     /// vector.  If it is invalid, don't add anything to Ops. If hasMemory is
@@ -454,7 +454,7 @@ namespace llvm {
     /// error, this returns a register number of 0.
     std::pair<unsigned, const TargetRegisterClass*> 
       getRegForInlineAsmConstraint(const std::string &Constraint,
-                                   MVT VT) const;
+                                   EVT VT) const;
     
     /// isLegalAddressingMode - Return true if the addressing mode represented
     /// by AM is legal for this target, for a load/store of the specified type.
@@ -464,7 +464,7 @@ namespace llvm {
     /// type Ty1 to type Ty2. e.g. On x86 it's free to truncate a i32 value in
     /// register EAX to i16 by referencing its sub-register AX.
     virtual bool isTruncateFree(const Type *Ty1, const Type *Ty2) const;
-    virtual bool isTruncateFree(MVT VT1, MVT VT2) const;
+    virtual bool isTruncateFree(EVT VT1, EVT VT2) const;
 
     /// isZExtFree - Return true if any actual instruction that defines a
     /// value of type Ty1 implicit zero-extends the value to Ty2 in the result
@@ -475,35 +475,35 @@ namespace llvm {
     /// all instructions that define 32-bit values implicit zero-extend the
     /// result out to 64 bits.
     virtual bool isZExtFree(const Type *Ty1, const Type *Ty2) const;
-    virtual bool isZExtFree(MVT VT1, MVT VT2) const;
+    virtual bool isZExtFree(EVT VT1, EVT VT2) const;
 
     /// isNarrowingProfitable - Return true if it's profitable to narrow
     /// operations of type VT1 to VT2. e.g. on x86, it's profitable to narrow
     /// from i32 to i8 but not from i32 to i16.
-    virtual bool isNarrowingProfitable(MVT VT1, MVT VT2) const;
+    virtual bool isNarrowingProfitable(EVT VT1, EVT VT2) const;
 
     /// isShuffleMaskLegal - Targets can use this to indicate that they only
     /// support *some* VECTOR_SHUFFLE operations, those with specific masks.
     /// By default, if a target supports the VECTOR_SHUFFLE node, all mask
     /// values are assumed to be legal.
     virtual bool isShuffleMaskLegal(const SmallVectorImpl<int> &Mask,
-                                    MVT VT) const;
+                                    EVT VT) const;
 
     /// isVectorClearMaskLegal - Similar to isShuffleMaskLegal. This is
     /// used by Targets can use this to indicate if there is a suitable
     /// VECTOR_SHUFFLE that can be used to replace a VAND with a constant
     /// pool entry.
     virtual bool isVectorClearMaskLegal(const SmallVectorImpl<int> &Mask,
-                                        MVT VT) const;
+                                        EVT VT) const;
 
     /// ShouldShrinkFPConstant - If true, then instruction selection should
     /// seek to shrink the FP constant of the specified type to a smaller type
     /// in order to save space and / or reduce runtime.
-    virtual bool ShouldShrinkFPConstant(MVT VT) const {
+    virtual bool ShouldShrinkFPConstant(EVT VT) const {
       // Don't shrink FP constpool if SSE2 is available since cvtss2sd is more
       // expensive than a straight movsd. On the other hand, it's important to
       // shrink long double fp constant since fldt is very slow.
-      return !X86ScalarSSEf64 || VT == MVT::f80;
+      return !X86ScalarSSEf64 || VT == EVT::f80;
     }
     
     /// IsEligibleForTailCallOptimization - Check whether the call is eligible
@@ -522,17 +522,17 @@ namespace llvm {
 
     /// isScalarFPTypeInSSEReg - Return true if the specified scalar FP type is
     /// computed in an SSE register, not on the X87 floating point stack.
-    bool isScalarFPTypeInSSEReg(MVT VT) const {
-      return (VT == MVT::f64 && X86ScalarSSEf64) || // f64 is when SSE2
-      (VT == MVT::f32 && X86ScalarSSEf32);   // f32 is when SSE1
+    bool isScalarFPTypeInSSEReg(EVT VT) const {
+      return (VT == EVT::f64 && X86ScalarSSEf64) || // f64 is when SSE2
+      (VT == EVT::f32 && X86ScalarSSEf32);   // f32 is when SSE1
     }
 
     /// getWidenVectorType: given a vector type, returns the type to widen
     /// to (e.g., v7i8 to v8i8). If the vector type is legal, it returns itself.
-    /// If there is no vector type that we want to widen to, returns MVT::Other
+    /// If there is no vector type that we want to widen to, returns EVT::Other
     /// When and were to widen is target dependent based on the cost of
     /// scalarizing vs using the wider vector type.
-    virtual MVT getWidenVectorType(MVT VT) const;
+    virtual EVT getWidenVectorType(EVT VT) const;
 
     /// createFastISel - This method returns a target specific FastISel object,
     /// or null if the target does not support "fast" ISel.
@@ -610,7 +610,7 @@ namespace llvm {
     SDValue LowerGlobalTLSAddress(SDValue Op, SelectionDAG &DAG);
     SDValue LowerExternalSymbol(SDValue Op, SelectionDAG &DAG);
     SDValue LowerShift(SDValue Op, SelectionDAG &DAG);
-    SDValue BuildFILD(SDValue Op, MVT SrcVT, SDValue Chain, SDValue StackSlot,
+    SDValue BuildFILD(SDValue Op, EVT SrcVT, SDValue Chain, SDValue StackSlot,
                       SelectionDAG &DAG);
     SDValue LowerSINT_TO_FP(SDValue Op, SelectionDAG &DAG);
     SDValue LowerUINT_TO_FP(SDValue Op, SelectionDAG &DAG);

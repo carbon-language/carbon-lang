@@ -2525,24 +2525,24 @@ X86InstrInfo::unfoldMemoryOperand(SelectionDAG &DAG, SDNode *N,
   SDNode *Load = 0;
   const MachineFunction &MF = DAG.getMachineFunction();
   if (FoldedLoad) {
-    MVT VT = *RC->vt_begin();
+    EVT VT = *RC->vt_begin();
     bool isAligned = (RI.getStackAlignment() >= 16) ||
       RI.needsStackRealignment(MF);
     Load = DAG.getTargetNode(getLoadRegOpcode(0, RC, isAligned, TM), dl,
-                             VT, MVT::Other, &AddrOps[0], AddrOps.size());
+                             VT, EVT::Other, &AddrOps[0], AddrOps.size());
     NewNodes.push_back(Load);
   }
 
   // Emit the data processing instruction.
-  std::vector<MVT> VTs;
+  std::vector<EVT> VTs;
   const TargetRegisterClass *DstRC = 0;
   if (TID.getNumDefs() > 0) {
     DstRC = TID.OpInfo[0].getRegClass(&RI);
     VTs.push_back(*DstRC->vt_begin());
   }
   for (unsigned i = 0, e = N->getNumValues(); i != e; ++i) {
-    MVT VT = N->getValueType(i);
-    if (VT != MVT::Other && i >= (unsigned)TID.getNumDefs())
+    EVT VT = N->getValueType(i);
+    if (VT != EVT::Other && i >= (unsigned)TID.getNumDefs())
       VTs.push_back(VT);
   }
   if (Load)
@@ -2561,7 +2561,7 @@ X86InstrInfo::unfoldMemoryOperand(SelectionDAG &DAG, SDNode *N,
       RI.needsStackRealignment(MF);
     SDNode *Store = DAG.getTargetNode(getStoreRegOpcode(0, DstRC,
                                                         isAligned, TM),
-                                      dl, MVT::Other,
+                                      dl, EVT::Other,
                                       &AddrOps[0], AddrOps.size());
     NewNodes.push_back(Store);
   }

@@ -67,7 +67,7 @@ void Thumb1RegisterInfo::emitLoadConstPool(MachineBasicBlock &MBB,
 }
 
 const TargetRegisterClass*
-Thumb1RegisterInfo::getPhysicalRegisterRegClass(unsigned Reg, MVT VT) const {
+Thumb1RegisterInfo::getPhysicalRegisterRegClass(unsigned Reg, EVT VT) const {
   if (isARMLowRegister(Reg))
     return ARM::tGPRRegisterClass;
   switch (Reg) {

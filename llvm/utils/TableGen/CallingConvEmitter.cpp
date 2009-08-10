@@ -26,9 +26,9 @@ void CallingConvEmitter::run(raw_ostream &O) {
   // other.
   for (unsigned i = 0, e = CCs.size(); i != e; ++i) {
     O << "static bool " << CCs[i]->getName()
-      << "(unsigned ValNo, MVT ValVT,\n"
+      << "(unsigned ValNo, EVT ValVT,\n"
       << std::string(CCs[i]->getName().size()+13, ' ')
-      << "MVT LocVT, CCValAssign::LocInfo LocInfo,\n"
+      << "EVT LocVT, CCValAssign::LocInfo LocInfo,\n"
       << std::string(CCs[i]->getName().size()+13, ' ')
       << "ISD::ArgFlagsTy ArgFlags, CCState &State);\n";
   }
@@ -44,9 +44,9 @@ void CallingConvEmitter::EmitCallingConv(Record *CC, raw_ostream &O) {
   Counter = 0;
 
   O << "\n\nstatic bool " << CC->getName()
-    << "(unsigned ValNo, MVT ValVT,\n"
+    << "(unsigned ValNo, EVT ValVT,\n"
     << std::string(CC->getName().size()+13, ' ')
-    << "MVT LocVT, CCValAssign::LocInfo LocInfo,\n"
+    << "EVT LocVT, CCValAssign::LocInfo LocInfo,\n"
     << std::string(CC->getName().size()+13, ' ')
     << "ISD::ArgFlagsTy ArgFlags, CCState &State) {\n";
   // Emit all of the actions, in order.
@@ -163,12 +163,12 @@ void CallingConvEmitter::EmitAction(Record *Action,
         O << Size << ", ";
       else
         O << "\n" << IndentStr << "  State.getTarget().getTargetData()"
-          "->getTypeAllocSize(LocVT.getTypeForMVT()), ";
+          "->getTypeAllocSize(LocVT.getTypeForEVT()), ";
       if (Align)
         O << Align;
       else
         O << "\n" << IndentStr << "  State.getTarget().getTargetData()"
-          "->getABITypeAlignment(LocVT.getTypeForMVT())";
+          "->getABITypeAlignment(LocVT.getTypeForEVT())";
       O << ");\n" << IndentStr
         << "State.addLoc(CCValAssign::getMem(ValNo, ValVT, Offset"
         << Counter << ", LocVT, LocInfo));\n";

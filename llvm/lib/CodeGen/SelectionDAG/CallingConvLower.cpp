@@ -33,8 +33,8 @@ CCState::CCState(unsigned CC, bool isVarArg, const TargetMachine &tm,
 // HandleByVal - Allocate a stack slot large enough to pass an argument by
 // value. The size and alignment information of the argument is encoded in its
 // parameter attribute.
-void CCState::HandleByVal(unsigned ValNo, MVT ValVT,
-                          MVT LocVT, CCValAssign::LocInfo LocInfo,
+void CCState::HandleByVal(unsigned ValNo, EVT ValVT,
+                          EVT LocVT, CCValAssign::LocInfo LocInfo,
                           int MinSize, int MinAlign,
                           ISD::ArgFlagsTy ArgFlags) {
   unsigned Align = ArgFlags.getByValAlign();
@@ -65,12 +65,12 @@ CCState::AnalyzeFormalArguments(const SmallVectorImpl<ISD::InputArg> &Ins,
   unsigned NumArgs = Ins.size();
 
   for (unsigned i = 0; i != NumArgs; ++i) {
-    MVT ArgVT = Ins[i].VT;
+    EVT ArgVT = Ins[i].VT;
     ISD::ArgFlagsTy ArgFlags = Ins[i].Flags;
     if (Fn(i, ArgVT, ArgVT, CCValAssign::Full, ArgFlags, *this)) {
 #ifndef NDEBUG
       cerr << "Formal argument #" << i << " has unhandled type "
-           << ArgVT.getMVTString();
+           << ArgVT.getEVTString();
 #endif
       llvm_unreachable(0);
     }
@@ -83,12 +83,12 @@ void CCState::AnalyzeReturn(const SmallVectorImpl<ISD::OutputArg> &Outs,
                             CCAssignFn Fn) {
   // Determine which register each value should be copied into.
   for (unsigned i = 0, e = Outs.size(); i != e; ++i) {
-    MVT VT = Outs[i].Val.getValueType();
+    EVT VT = Outs[i].Val.getValueType();
     ISD::ArgFlagsTy ArgFlags = Outs[i].Flags;
     if (Fn(i, VT, VT, CCValAssign::Full, ArgFlags, *this)) {
 #ifndef NDEBUG
       cerr << "Return operand #" << i << " has unhandled type "
-           << VT.getMVTString();
+           << VT.getEVTString();
 #endif
       llvm_unreachable(0);
     }
@@ -102,12 +102,12 @@ void CCState::AnalyzeCallOperands(const SmallVectorImpl<ISD::OutputArg> &Outs,
                                   CCAssignFn Fn) {
   unsigned NumOps = Outs.size();
   for (unsigned i = 0; i != NumOps; ++i) {
-    MVT ArgVT = Outs[i].Val.getValueType();
+    EVT ArgVT = Outs[i].Val.getValueType();
     ISD::ArgFlagsTy ArgFlags = Outs[i].Flags;
     if (Fn(i, ArgVT, ArgVT, CCValAssign::Full, ArgFlags, *this)) {
 #ifndef NDEBUG
       cerr << "Call operand #" << i << " has unhandled type "
-           << ArgVT.getMVTString();
+           << ArgVT.getEVTString();
 #endif
       llvm_unreachable(0);
     }
@@ -116,17 +116,17 @@ void CCState::AnalyzeCallOperands(const SmallVectorImpl<ISD::OutputArg> &Outs,
 
 /// AnalyzeCallOperands - Same as above except it takes vectors of types
 /// and argument flags.
-void CCState::AnalyzeCallOperands(SmallVectorImpl<MVT> &ArgVTs,
+void CCState::AnalyzeCallOperands(SmallVectorImpl<EVT> &ArgVTs,
                                   SmallVectorImpl<ISD::ArgFlagsTy> &Flags,
                                   CCAssignFn Fn) {
   unsigned NumOps = ArgVTs.size();
   for (unsigned i = 0; i != NumOps; ++i) {
-    MVT ArgVT = ArgVTs[i];
+    EVT ArgVT = ArgVTs[i];
     ISD::ArgFlagsTy ArgFlags = Flags[i];
     if (Fn(i, ArgVT, ArgVT, CCValAssign::Full, ArgFlags, *this)) {
 #ifndef NDEBUG
       cerr << "Call operand #" << i << " has unhandled type "
-           << ArgVT.getMVTString();
+           << ArgVT.getEVTString();
 #endif
       llvm_unreachable(0);
     }
@@ -138,12 +138,12 @@ void CCState::AnalyzeCallOperands(SmallVectorImpl<MVT> &ArgVTs,
 void CCState::AnalyzeCallResult(const SmallVectorImpl<ISD::InputArg> &Ins,
                                 CCAssignFn Fn) {
   for (unsigned i = 0, e = Ins.size(); i != e; ++i) {
-    MVT VT = Ins[i].VT;
+    EVT VT = Ins[i].VT;
     ISD::ArgFlagsTy Flags = Ins[i].Flags;
     if (Fn(i, VT, VT, CCValAssign::Full, Flags, *this)) {
 #ifndef NDEBUG
       cerr << "Call result #" << i << " has unhandled type "
-           << VT.getMVTString();
+           << VT.getEVTString();
 #endif
       llvm_unreachable(0);
     }
@@ -152,11 +152,11 @@ void CCState::AnalyzeCallResult(const SmallVectorImpl<ISD::InputArg> &Ins,
 
 /// AnalyzeCallResult - Same as above except it's specialized for calls which
 /// produce a single value.
-void CCState::AnalyzeCallResult(MVT VT, CCAssignFn Fn) {
+void CCState::AnalyzeCallResult(EVT VT, CCAssignFn Fn) {
   if (Fn(0, VT, VT, CCValAssign::Full, ISD::ArgFlagsTy(), *this)) {
 #ifndef NDEBUG
     cerr << "Call result has unhandled type "
-         << VT.getMVTString();
+         << VT.getEVTString();
 #endif
     llvm_unreachable(0);
   }

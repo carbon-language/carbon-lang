@@ -57,12 +57,12 @@ def simm13  : PatLeaf<(imm), [{
 
 def LO10 : SDNodeXForm<imm, [{
   return CurDAG->getTargetConstant((unsigned)N->getZExtValue() & 1023,
-                                   MVT::i32);
+                                   EVT::i32);
 }]>;
 
 def HI22 : SDNodeXForm<imm, [{
   // Transformation function: shift the immediate value down into the low bits.
-  return CurDAG->getTargetConstant((unsigned)N->getZExtValue() >> 10, MVT::i32);
+  return CurDAG->getTargetConstant((unsigned)N->getZExtValue() >> 10, EVT::i32);
 }]>;
 
 def SETHIimm : PatLeaf<(imm), [{

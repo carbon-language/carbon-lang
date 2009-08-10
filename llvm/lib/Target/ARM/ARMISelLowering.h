@@ -194,10 +194,10 @@ namespace llvm {
     ConstraintType getConstraintType(const std::string &Constraint) const;
     std::pair<unsigned, const TargetRegisterClass*>
       getRegForInlineAsmConstraint(const std::string &Constraint,
-                                   MVT VT) const;
+                                   EVT VT) const;
     std::vector<unsigned>
     getRegClassForInlineAsmConstraint(const std::string &Constraint,
-                                      MVT VT) const;
+                                      EVT VT) const;
 
     /// LowerAsmOperandForConstraint - Lower the specified operand into the Ops
     /// vector.  If it is invalid, don't add anything to Ops. If hasMemory is
@@ -225,9 +225,9 @@ namespace llvm {
     ///
     unsigned ARMPCLabelIndex;
 
-    void addTypeForNEON(MVT VT, MVT PromotedLdStVT, MVT PromotedBitwiseVT);
-    void addDRTypeForNEON(MVT VT);
-    void addQRTypeForNEON(MVT VT);
+    void addTypeForNEON(EVT VT, EVT PromotedLdStVT, EVT PromotedBitwiseVT);
+    void addDRTypeForNEON(EVT VT);
+    void addQRTypeForNEON(EVT VT);
 
     typedef SmallVector<std::pair<unsigned, SDValue>, 8> RegsToPassVector;
     void PassF64ArgInRegs(DebugLoc dl, SelectionDAG &DAG,

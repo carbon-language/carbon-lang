@@ -283,7 +283,7 @@ SelectionDAGISel::~SelectionDAGISel() {
   delete FuncInfo;
 }
 
-unsigned SelectionDAGISel::MakeReg(MVT VT) {
+unsigned SelectionDAGISel::MakeReg(EVT VT) {
   return RegInfo->createVirtualRegister(TLI.getRegClassFor(VT));
 }
 
@@ -421,7 +421,7 @@ void SelectionDAGISel::ComputeLiveOutVRegInfo() {
     
     // Otherwise, add all chain operands to the worklist.
     for (unsigned i = 0, e = N->getNumOperands(); i != e; ++i)
-      if (N->getOperand(i).getValueType() == MVT::Other)
+      if (N->getOperand(i).getValueType() == EVT::Other)
         Worklist.push_back(N->getOperand(i).getNode());
     
     // If this is a CopyToReg with a vreg dest, process it.
@@ -434,7 +434,7 @@ void SelectionDAGISel::ComputeLiveOutVRegInfo() {
     
     // Ignore non-scalar or non-integer values.
     SDValue Src = N->getOperand(2);
-    MVT SrcVT = Src.getValueType();
+    EVT SrcVT = Src.getValueType();
     if (!SrcVT.isInteger() || SrcVT.isVector())
       continue;
     
@@ -1098,7 +1098,7 @@ SelectInlineAsmMemoryOperands(std::vector<SDValue> &Ops) {
   Ops.push_back(InOps[1]);  // input asm string.
 
   unsigned i = 2, e = InOps.size();
-  if (InOps[e-1].getValueType() == MVT::Flag)
+  if (InOps[e-1].getValueType() == EVT::Flag)
     --e;  // Don't process a flag operand if it is here.
   
   while (i != e) {
@@ -1119,7 +1119,7 @@ SelectInlineAsmMemoryOperands(std::vector<SDValue> &Ops) {
       }
       
       // Add this to the output node.
-      MVT IntPtrTy = TLI.getPointerTy();
+      EVT IntPtrTy = TLI.getPointerTy();
       Ops.push_back(CurDAG->getTargetConstant(4/*MEM*/ | (SelOps.size()<< 3),
                                               IntPtrTy));
       Ops.insert(Ops.end(), SelOps.begin(), SelOps.end());
@@ -1132,7 +1132,7 @@ SelectInlineAsmMemoryOperands(std::vector<SDValue> &Ops) {
     Ops.push_back(InOps.back());
 }
 
-/// findFlagUse - Return use of MVT::Flag value produced by the specified
+/// findFlagUse - Return use of EVT::Flag value produced by the specified
 /// SDNode.
 ///
 static SDNode *findFlagUse(SDNode *N) {
@@ -1235,8 +1235,8 @@ bool SelectionDAGISel::IsLegalAndProfitableToFold(SDNode *N, SDNode *U,
   // Fold. But since Fold and FU are flagged together, this will create
   // a cycle in the scheduling graph.
 
-  MVT VT = Root->getValueType(Root->getNumValues()-1);
-  while (VT == MVT::Flag) {
+  EVT VT = Root->getValueType(Root->getNumValues()-1);
+  while (VT == EVT::Flag) {
     SDNode *FU = findFlagUse(Root);
     if (FU == NULL)
       break;

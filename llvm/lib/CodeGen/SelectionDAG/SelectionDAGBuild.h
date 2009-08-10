@@ -117,7 +117,7 @@ public:
   SmallSet<Instruction*, 8> CatchInfoFound;
 #endif
 
-  unsigned MakeReg(MVT VT);
+  unsigned MakeReg(EVT VT);
   
   /// isExportedInst - Return true if the specified value is an instruction
   /// exported from its block.

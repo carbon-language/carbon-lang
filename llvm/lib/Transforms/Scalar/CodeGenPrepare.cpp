@@ -409,8 +409,8 @@ static void SplitEdgeNicely(TerminatorInst *TI, unsigned SuccNum,
 ///
 static bool OptimizeNoopCopyExpression(CastInst *CI, const TargetLowering &TLI){
   // If this is a noop copy,
-  MVT SrcVT = TLI.getValueType(CI->getOperand(0)->getType());
-  MVT DstVT = TLI.getValueType(CI->getType());
+  EVT SrcVT = TLI.getValueType(CI->getOperand(0)->getType());
+  EVT DstVT = TLI.getValueType(CI->getType());
 
   // This is an fp<->int conversion?
   if (SrcVT.isInteger() != DstVT.isInteger())

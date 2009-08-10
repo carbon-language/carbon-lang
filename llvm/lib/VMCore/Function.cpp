@@ -327,10 +327,10 @@ std::string Intrinsic::getName(ID id, const Type **Tys, unsigned numTys) {
   for (unsigned i = 0; i < numTys; ++i) {
     if (const PointerType* PTyp = dyn_cast<PointerType>(Tys[i])) {
       Result += ".p" + llvm::utostr(PTyp->getAddressSpace()) + 
-                MVT::getMVT(PTyp->getElementType()).getMVTString();
+                EVT::getEVT(PTyp->getElementType()).getEVTString();
     }
     else if (Tys[i])
-      Result += "." + MVT::getMVT(Tys[i]).getMVTString();
+      Result += "." + EVT::getEVT(Tys[i]).getEVTString();
   }
   return Result;
 }

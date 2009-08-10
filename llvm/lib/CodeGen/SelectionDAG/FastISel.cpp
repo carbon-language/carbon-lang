@@ -57,7 +57,7 @@
 using namespace llvm;
 
 unsigned FastISel::getRegForValue(Value *V) {
-  MVT RealVT = TLI.getValueType(V->getType(), /*AllowUnknown=*/true);
+  EVT RealVT = TLI.getValueType(V->getType(), /*AllowUnknown=*/true);
   // Don't handle non-simple values in FastISel.
   if (!RealVT.isSimple())
     return 0;
@@ -65,10 +65,10 @@ unsigned FastISel::getRegForValue(Value *V) {
   // Ignore illegal types. We must do this before looking up the value
   // in ValueMap because Arguments are given virtual registers regardless
   // of whether FastISel can handle them.
-  MVT::SimpleValueType VT = RealVT.getSimpleVT();
+  EVT::SimpleValueType VT = RealVT.getSimpleVT();
   if (!TLI.isTypeLegal(VT)) {
-    // Promote MVT::i1 to a legal type though, because it's common and easy.
-    if (VT == MVT::i1)
+    // Promote EVT::i1 to a legal type though, because it's common and easy.
+    if (VT == EVT::i1)
       VT = TLI.getTypeToTransformTo(VT).getSimpleVT();
     else
       return 0;
@@ -98,7 +98,7 @@ unsigned FastISel::getRegForValue(Value *V) {
 
     if (!Reg) {
       const APFloat &Flt = CF->getValueAPF();
-      MVT IntVT = TLI.getPointerTy();
+      EVT IntVT = TLI.getPointerTy();
 
       uint64_t x[2];
       uint32_t IntBitWidth = IntVT.getSizeInBits();
@@ -174,8 +174,8 @@ unsigned FastISel::getRegForGEPIndex(Value *Idx) {
     return 0;
 
   // If the index is smaller or larger than intptr_t, truncate or extend it.
-  MVT PtrVT = TLI.getPointerTy();
-  MVT IdxVT = MVT::getMVT(Idx->getType(), /*HandleUnknown=*/false);
+  EVT PtrVT = TLI.getPointerTy();
+  EVT IdxVT = EVT::getEVT(Idx->getType(), /*HandleUnknown=*/false);
   if (IdxVT.bitsLT(PtrVT))
     IdxN = FastEmit_r(IdxVT.getSimpleVT(), PtrVT.getSimpleVT(),
                       ISD::SIGN_EXTEND, IdxN);
@@ -189,8 +189,8 @@ unsigned FastISel::getRegForGEPIndex(Value *Idx) {
 /// which has an opcode which directly corresponds to the given ISD opcode.
 ///
 bool FastISel::SelectBinaryOp(User *I, ISD::NodeType ISDOpcode) {
-  MVT VT = MVT::getMVT(I->getType(), /*HandleUnknown=*/true);
-  if (VT == MVT::Other || !VT.isSimple())
+  EVT VT = EVT::getEVT(I->getType(), /*HandleUnknown=*/true);
+  if (VT == EVT::Other || !VT.isSimple())
     // Unhandled type. Halt "fast" selection and bail.
     return false;
 
@@ -199,9 +199,9 @@ bool FastISel::SelectBinaryOp(User *I, ISD::NodeType ISDOpcode) {
   // under the assumption that i64 won't be used if the target doesn't
   // support it.
   if (!TLI.isTypeLegal(VT)) {
-    // MVT::i1 is special. Allow AND, OR, or XOR because they
+    // EVT::i1 is special. Allow AND, OR, or XOR because they
     // don't require additional zeroing, which makes them easy.
-    if (VT == MVT::i1 &&
+    if (VT == EVT::i1 &&
         (ISDOpcode == ISD::AND || ISDOpcode == ISD::OR ||
          ISDOpcode == ISD::XOR))
       VT = TLI.getTypeToTransformTo(VT);
@@ -261,7 +261,7 @@ bool FastISel::SelectGetElementPtr(User *I) {
     return false;
 
   const Type *Ty = I->getOperand(0)->getType();
-  MVT::SimpleValueType VT = TLI.getPointerTy();
+  EVT::SimpleValueType VT = TLI.getPointerTy();
   for (GetElementPtrInst::op_iterator OI = I->op_begin()+1, E = I->op_end();
        OI != E; ++OI) {
     Value *Idx = *OI;
@@ -432,7 +432,7 @@ bool FastISel::SelectCall(User *I) {
     return true;
   }
   case Intrinsic::eh_exception: {
-    MVT VT = TLI.getValueType(I->getType());
+    EVT VT = TLI.getValueType(I->getType());
     switch (TLI.getOperationAction(ISD::EXCEPTIONADDR, VT)) {
     default: break;
     case TargetLowering::Expand: {
@@ -452,12 +452,12 @@ bool FastISel::SelectCall(User *I) {
   }
   case Intrinsic::eh_selector_i32:
   case Intrinsic::eh_selector_i64: {
-    MVT VT = TLI.getValueType(I->getType());
+    EVT VT = TLI.getValueType(I->getType());
     switch (TLI.getOperationAction(ISD::EHSELECTION, VT)) {
     default: break;
     case TargetLowering::Expand: {
-      MVT VT = (IID == Intrinsic::eh_selector_i32 ?
-                           MVT::i32 : MVT::i64);
+      EVT VT = (IID == Intrinsic::eh_selector_i32 ?
+                           EVT::i32 : EVT::i64);
 
       if (MMI) {
         if (MBB->isLandingPad())
@@ -494,11 +494,11 @@ bool FastISel::SelectCall(User *I) {
 }
 
 bool FastISel::SelectCast(User *I, ISD::NodeType Opcode) {
-  MVT SrcVT = TLI.getValueType(I->getOperand(0)->getType());
-  MVT DstVT = TLI.getValueType(I->getType());
+  EVT SrcVT = TLI.getValueType(I->getOperand(0)->getType());
+  EVT DstVT = TLI.getValueType(I->getType());
     
-  if (SrcVT == MVT::Other || !SrcVT.isSimple() ||
-      DstVT == MVT::Other || !DstVT.isSimple())
+  if (SrcVT == EVT::Other || !SrcVT.isSimple() ||
+      DstVT == EVT::Other || !DstVT.isSimple())
     // Unhandled type. Halt "fast" selection and bail.
     return false;
     
@@ -506,7 +506,7 @@ bool FastISel::SelectCast(User *I, ISD::NodeType Opcode) {
   // it may be i1 if we're doing a truncate because that's
   // easy and somewhat common.
   if (!TLI.isTypeLegal(DstVT))
-    if (DstVT != MVT::i1 || Opcode != ISD::TRUNCATE)
+    if (DstVT != EVT::i1 || Opcode != ISD::TRUNCATE)
       // Unhandled type. Halt "fast" selection and bail.
       return false;
 
@@ -514,7 +514,7 @@ bool FastISel::SelectCast(User *I, ISD::NodeType Opcode) {
   // it may be i1 if we're doing zero-extension because that's
   // easy and somewhat common.
   if (!TLI.isTypeLegal(SrcVT))
-    if (SrcVT != MVT::i1 || Opcode != ISD::ZERO_EXTEND)
+    if (SrcVT != EVT::i1 || Opcode != ISD::ZERO_EXTEND)
       // Unhandled type. Halt "fast" selection and bail.
       return false;
 
@@ -524,14 +524,14 @@ bool FastISel::SelectCast(User *I, ISD::NodeType Opcode) {
     return false;
 
   // If the operand is i1, arrange for the high bits in the register to be zero.
-  if (SrcVT == MVT::i1) {
+  if (SrcVT == EVT::i1) {
    SrcVT = TLI.getTypeToTransformTo(SrcVT);
    InputReg = FastEmitZExtFromI1(SrcVT.getSimpleVT(), InputReg);
    if (!InputReg)
      return false;
   }
   // If the result is i1, truncate to the target's type for i1 first.
-  if (DstVT == MVT::i1)
+  if (DstVT == EVT::i1)
     DstVT = TLI.getTypeToTransformTo(DstVT);
 
   unsigned ResultReg = FastEmit_r(SrcVT.getSimpleVT(),
@@ -556,11 +556,11 @@ bool FastISel::SelectBitCast(User *I) {
   }
 
   // Bitcasts of other values become reg-reg copies or BIT_CONVERT operators.
-  MVT SrcVT = TLI.getValueType(I->getOperand(0)->getType());
-  MVT DstVT = TLI.getValueType(I->getType());
+  EVT SrcVT = TLI.getValueType(I->getOperand(0)->getType());
+  EVT DstVT = TLI.getValueType(I->getType());
   
-  if (SrcVT == MVT::Other || !SrcVT.isSimple() ||
-      DstVT == MVT::Other || !DstVT.isSimple() ||
+  if (SrcVT == EVT::Other || !SrcVT.isSimple() ||
+      DstVT == EVT::Other || !DstVT.isSimple() ||
       !TLI.isTypeLegal(SrcVT) || !TLI.isTypeLegal(DstVT))
     // Unhandled type. Halt "fast" selection and bail.
     return false;
@@ -710,8 +710,8 @@ FastISel::SelectOperator(User *I, unsigned Opcode) {
 
   case Instruction::IntToPtr: // Deliberate fall-through.
   case Instruction::PtrToInt: {
-    MVT SrcVT = TLI.getValueType(I->getOperand(0)->getType());
-    MVT DstVT = TLI.getValueType(I->getType());
+    EVT SrcVT = TLI.getValueType(I->getOperand(0)->getType());
+    EVT DstVT = TLI.getValueType(I->getType());
     if (DstVT.bitsGT(SrcVT))
       return SelectCast(I, ISD::ZERO_EXTEND);
     if (DstVT.bitsLT(SrcVT))
@@ -759,45 +759,45 @@ FastISel::FastISel(MachineFunction &mf,
 
 FastISel::~FastISel() {}
 
-unsigned FastISel::FastEmit_(MVT::SimpleValueType, MVT::SimpleValueType,
+unsigned FastISel::FastEmit_(EVT::SimpleValueType, EVT::SimpleValueType,
                              ISD::NodeType) {
   return 0;
 }
 
-unsigned FastISel::FastEmit_r(MVT::SimpleValueType, MVT::SimpleValueType,
+unsigned FastISel::FastEmit_r(EVT::SimpleValueType, EVT::SimpleValueType,
                               ISD::NodeType, unsigned /*Op0*/) {
   return 0;
 }
 
-unsigned FastISel::FastEmit_rr(MVT::SimpleValueType, MVT::SimpleValueType, 
+unsigned FastISel::FastEmit_rr(EVT::SimpleValueType, EVT::SimpleValueType, 
                                ISD::NodeType, unsigned /*Op0*/,
                                unsigned /*Op0*/) {
   return 0;
 }
 
-unsigned FastISel::FastEmit_i(MVT::SimpleValueType, MVT::SimpleValueType,
+unsigned FastISel::FastEmit_i(EVT::SimpleValueType, EVT::SimpleValueType,
                               ISD::NodeType, uint64_t /*Imm*/) {
   return 0;
 }
 
-unsigned FastISel::FastEmit_f(MVT::SimpleValueType, MVT::SimpleValueType,
+unsigned FastISel::FastEmit_f(EVT::SimpleValueType, EVT::SimpleValueType,
                               ISD::NodeType, ConstantFP * /*FPImm*/) {
   return 0;
 }
 
-unsigned FastISel::FastEmit_ri(MVT::SimpleValueType, MVT::SimpleValueType,
+unsigned FastISel::FastEmit_ri(EVT::SimpleValueType, EVT::SimpleValueType,
                                ISD::NodeType, unsigned /*Op0*/,
                                uint64_t /*Imm*/) {
   return 0;
 }
 
-unsigned FastISel::FastEmit_rf(MVT::SimpleValueType, MVT::SimpleValueType,
+unsigned FastISel::FastEmit_rf(EVT::SimpleValueType, EVT::SimpleValueType,
                                ISD::NodeType, unsigned /*Op0*/,
                                ConstantFP * /*FPImm*/) {
   return 0;
 }
 
-unsigned FastISel::FastEmit_rri(MVT::SimpleValueType, MVT::SimpleValueType,
+unsigned FastISel::FastEmit_rri(EVT::SimpleValueType, EVT::SimpleValueType,
                                 ISD::NodeType,
                                 unsigned /*Op0*/, unsigned /*Op1*/,
                                 uint64_t /*Imm*/) {
@@ -808,9 +808,9 @@ unsigned FastISel::FastEmit_rri(MVT::SimpleValueType, MVT::SimpleValueType,
 /// to emit an instruction with an immediate operand using FastEmit_ri.
 /// If that fails, it materializes the immediate into a register and try
 /// FastEmit_rr instead.
-unsigned FastISel::FastEmit_ri_(MVT::SimpleValueType VT, ISD::NodeType Opcode,
+unsigned FastISel::FastEmit_ri_(EVT::SimpleValueType VT, ISD::NodeType Opcode,
                                 unsigned Op0, uint64_t Imm,
-                                MVT::SimpleValueType ImmType) {
+                                EVT::SimpleValueType ImmType) {
   // First check if immediate type is legal. If not, we can't use the ri form.
   unsigned ResultReg = FastEmit_ri(VT, VT, Opcode, Op0, Imm);
   if (ResultReg != 0)
@@ -825,9 +825,9 @@ unsigned FastISel::FastEmit_ri_(MVT::SimpleValueType VT, ISD::NodeType Opcode,
 /// to emit an instruction with a floating-point immediate operand using
 /// FastEmit_rf. If that fails, it materializes the immediate into a register
 /// and try FastEmit_rr instead.
-unsigned FastISel::FastEmit_rf_(MVT::SimpleValueType VT, ISD::NodeType Opcode,
+unsigned FastISel::FastEmit_rf_(EVT::SimpleValueType VT, ISD::NodeType Opcode,
                                 unsigned Op0, ConstantFP *FPImm,
-                                MVT::SimpleValueType ImmType) {
+                                EVT::SimpleValueType ImmType) {
   // First check if immediate type is legal. If not, we can't use the rf form.
   unsigned ResultReg = FastEmit_rf(VT, VT, Opcode, Op0, FPImm);
   if (ResultReg != 0)
@@ -843,7 +843,7 @@ unsigned FastISel::FastEmit_rf_(MVT::SimpleValueType VT, ISD::NodeType Opcode,
     // be replaced by code that creates a load from a constant-pool entry,
     // which will require some target-specific work.
     const APFloat &Flt = FPImm->getValueAPF();
-    MVT IntVT = TLI.getPointerTy();
+    EVT IntVT = TLI.getPointerTy();
 
     uint64_t x[2];
     uint32_t IntBitWidth = IntVT.getSizeInBits();
@@ -988,7 +988,7 @@ unsigned FastISel::FastEmitInst_i(unsigned MachineInstOpcode,
   return ResultReg;
 }
 
-unsigned FastISel::FastEmitInst_extractsubreg(MVT::SimpleValueType RetVT,
+unsigned FastISel::FastEmitInst_extractsubreg(EVT::SimpleValueType RetVT,
                                               unsigned Op0, uint32_t Idx) {
   const TargetRegisterClass* RC = MRI.getRegClass(Op0);
   
@@ -1009,6 +1009,6 @@ unsigned FastISel::FastEmitInst_extractsubreg(MVT::SimpleValueType RetVT,
 
 /// FastEmitZExtFromI1 - Emit MachineInstrs to compute the value of Op
 /// with all but the least significant bit set to zero.
-unsigned FastISel::FastEmitZExtFromI1(MVT::SimpleValueType VT, unsigned Op) {
+unsigned FastISel::FastEmitZExtFromI1(EVT::SimpleValueType VT, unsigned Op) {
   return FastEmit_ri(VT, VT, ISD::AND, Op, 1);
 }

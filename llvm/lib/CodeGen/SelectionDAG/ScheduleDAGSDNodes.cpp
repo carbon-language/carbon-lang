@@ -111,7 +111,7 @@ void ScheduleDAGSDNodes::BuildSchedUnits() {
     // Scan up to find flagged preds.
     SDNode *N = NI;
     while (N->getNumOperands() &&
-           N->getOperand(N->getNumOperands()-1).getValueType() == MVT::Flag) {
+           N->getOperand(N->getNumOperands()-1).getValueType() == EVT::Flag) {
       N = N->getOperand(N->getNumOperands()-1).getNode();
       assert(N->getNodeId() == -1 && "Node already inserted!");
       N->setNodeId(NodeSUnit->NodeNum);
@@ -119,7 +119,7 @@ void ScheduleDAGSDNodes::BuildSchedUnits() {
     
     // Scan down to find any flagged succs.
     N = NI;
-    while (N->getValueType(N->getNumValues()-1) == MVT::Flag) {
+    while (N->getValueType(N->getNumValues()-1) == EVT::Flag) {
       SDValue FlagVal(N, N->getNumValues()-1);
       
       // There are either zero or one users of the Flag result.
@@ -189,9 +189,9 @@ void ScheduleDAGSDNodes::AddSchedEdges() {
         assert(OpSU && "Node has no SUnit!");
         if (OpSU == SU) continue;           // In the same group.
 
-        MVT OpVT = N->getOperand(i).getValueType();
-        assert(OpVT != MVT::Flag && "Flagged nodes should be in same sunit!");
-        bool isChain = OpVT == MVT::Other;
+        EVT OpVT = N->getOperand(i).getValueType();
+        assert(OpVT != EVT::Flag && "Flagged nodes should be in same sunit!");
+        bool isChain = OpVT == EVT::Other;
 
         unsigned PhysReg = 0;
         int Cost = 1;
@@ -244,9 +244,9 @@ void ScheduleDAGSDNodes::ComputeLatency(SUnit *SU) {
 /// not go into the resulting MachineInstr).
 unsigned ScheduleDAGSDNodes::CountResults(SDNode *Node) {
   unsigned N = Node->getNumValues();
-  while (N && Node->getValueType(N - 1) == MVT::Flag)
+  while (N && Node->getValueType(N - 1) == EVT::Flag)
     --N;
-  if (N && Node->getValueType(N - 1) == MVT::Other)
+  if (N && Node->getValueType(N - 1) == EVT::Other)
     --N;    // Skip over chain result.
   return N;
 }
@@ -266,9 +266,9 @@ unsigned ScheduleDAGSDNodes::CountOperands(SDNode *Node) {
 /// operand
 unsigned ScheduleDAGSDNodes::ComputeMemOperandsEnd(SDNode *Node) {
   unsigned N = Node->getNumOperands();
-  while (N && Node->getOperand(N - 1).getValueType() == MVT::Flag)
+  while (N && Node->getOperand(N - 1).getValueType() == EVT::Flag)
     --N;
-  if (N && Node->getOperand(N - 1).getValueType() == MVT::Other)
+  if (N && Node->getOperand(N - 1).getValueType() == EVT::Other)
     --N; // Ignore chain if it exists.
   return N;
 }

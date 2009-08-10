@@ -65,7 +65,7 @@ public:
 
   virtual bool runOnMachineFunction(MachineFunction &MF);
 
-  unsigned MakeReg(MVT VT);
+  unsigned MakeReg(EVT VT);
 
   virtual void EmitFunctionEntryCode(Function &Fn, MachineFunction &MF) {}
   virtual void InstructionSelect() = 0;

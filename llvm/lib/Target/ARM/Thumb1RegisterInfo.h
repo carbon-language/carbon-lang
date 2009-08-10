@@ -38,7 +38,7 @@ public:
 
   /// Code Generation virtual methods...
   const TargetRegisterClass *
-    getPhysicalRegisterRegClass(unsigned Reg, MVT VT = MVT::Other) const;
+    getPhysicalRegisterRegClass(unsigned Reg, EVT VT = EVT::Other) const;
 
   bool requiresRegisterScavenging(const MachineFunction &MF) const;
 

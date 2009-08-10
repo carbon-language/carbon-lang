@@ -44,7 +44,7 @@ namespace llvm {
     }
 
     static std::string getEdgeDestLabel(const void *Node, unsigned i) {
-      return ((const SDNode *) Node)->getValueType(i).getMVTString();
+      return ((const SDNode *) Node)->getValueType(i).getEVTString();
     }
 
     /// edgeTargetsEdgeSource - This method returns true if this outgoing edge
@@ -84,10 +84,10 @@ namespace llvm {
     template<typename EdgeIter>
     static std::string getEdgeAttributes(const void *Node, EdgeIter EI) {
       SDValue Op = EI.getNode()->getOperand(EI.getOperand());
-      MVT VT = Op.getValueType();
-      if (VT == MVT::Flag)
+      EVT VT = Op.getValueType();
+      if (VT == EVT::Flag)
         return "color=red,style=bold";
-      else if (VT == MVT::Other)
+      else if (VT == EVT::Other)
         return "color=blue,style=dashed";
       return "";
     }

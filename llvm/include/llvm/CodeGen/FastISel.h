@@ -137,24 +137,24 @@ protected:
   /// FastEmit_r - This method is called by target-independent code
   /// to request that an instruction with the given type and opcode
   /// be emitted.
-  virtual unsigned FastEmit_(MVT::SimpleValueType VT,
-                             MVT::SimpleValueType RetVT,
+  virtual unsigned FastEmit_(EVT::SimpleValueType VT,
+                             EVT::SimpleValueType RetVT,
                              ISD::NodeType Opcode);
 
   /// FastEmit_r - This method is called by target-independent code
   /// to request that an instruction with the given type, opcode, and
   /// register operand be emitted.
   ///
-  virtual unsigned FastEmit_r(MVT::SimpleValueType VT,
-                              MVT::SimpleValueType RetVT,
+  virtual unsigned FastEmit_r(EVT::SimpleValueType VT,
+                              EVT::SimpleValueType RetVT,
                               ISD::NodeType Opcode, unsigned Op0);
 
   /// FastEmit_rr - This method is called by target-independent code
   /// to request that an instruction with the given type, opcode, and
   /// register operands be emitted.
   ///
-  virtual unsigned FastEmit_rr(MVT::SimpleValueType VT,
-                               MVT::SimpleValueType RetVT,
+  virtual unsigned FastEmit_rr(EVT::SimpleValueType VT,
+                               EVT::SimpleValueType RetVT,
                                ISD::NodeType Opcode,
                                unsigned Op0, unsigned Op1);
 
@@ -162,8 +162,8 @@ protected:
   /// to request that an instruction with the given type, opcode, and
   /// register and immediate operands be emitted.
   ///
-  virtual unsigned FastEmit_ri(MVT::SimpleValueType VT,
-                               MVT::SimpleValueType RetVT,
+  virtual unsigned FastEmit_ri(EVT::SimpleValueType VT,
+                               EVT::SimpleValueType RetVT,
                                ISD::NodeType Opcode,
                                unsigned Op0, uint64_t Imm);
 
@@ -171,8 +171,8 @@ protected:
   /// to request that an instruction with the given type, opcode, and
   /// register and floating-point immediate operands be emitted.
   ///
-  virtual unsigned FastEmit_rf(MVT::SimpleValueType VT,
-                               MVT::SimpleValueType RetVT,
+  virtual unsigned FastEmit_rf(EVT::SimpleValueType VT,
+                               EVT::SimpleValueType RetVT,
                                ISD::NodeType Opcode,
                                unsigned Op0, ConstantFP *FPImm);
 
@@ -180,8 +180,8 @@ protected:
   /// to request that an instruction with the given type, opcode, and
   /// register and immediate operands be emitted.
   ///
-  virtual unsigned FastEmit_rri(MVT::SimpleValueType VT,
-                                MVT::SimpleValueType RetVT,
+  virtual unsigned FastEmit_rri(EVT::SimpleValueType VT,
+                                EVT::SimpleValueType RetVT,
                                 ISD::NodeType Opcode,
                                 unsigned Op0, unsigned Op1, uint64_t Imm);
 
@@ -189,33 +189,33 @@ protected:
   /// to emit an instruction with an immediate operand using FastEmit_ri.
   /// If that fails, it materializes the immediate into a register and try
   /// FastEmit_rr instead.
-  unsigned FastEmit_ri_(MVT::SimpleValueType VT,
+  unsigned FastEmit_ri_(EVT::SimpleValueType VT,
                         ISD::NodeType Opcode,
                         unsigned Op0, uint64_t Imm,
-                        MVT::SimpleValueType ImmType);
+                        EVT::SimpleValueType ImmType);
   
   /// FastEmit_rf_ - This method is a wrapper of FastEmit_rf. It first tries
   /// to emit an instruction with an immediate operand using FastEmit_rf.
   /// If that fails, it materializes the immediate into a register and try
   /// FastEmit_rr instead.
-  unsigned FastEmit_rf_(MVT::SimpleValueType VT,
+  unsigned FastEmit_rf_(EVT::SimpleValueType VT,
                         ISD::NodeType Opcode,
                         unsigned Op0, ConstantFP *FPImm,
-                        MVT::SimpleValueType ImmType);
+                        EVT::SimpleValueType ImmType);
   
   /// FastEmit_i - This method is called by target-independent code
   /// to request that an instruction with the given type, opcode, and
   /// immediate operand be emitted.
-  virtual unsigned FastEmit_i(MVT::SimpleValueType VT,
-                              MVT::SimpleValueType RetVT,
+  virtual unsigned FastEmit_i(EVT::SimpleValueType VT,
+                              EVT::SimpleValueType RetVT,
                               ISD::NodeType Opcode,
                               uint64_t Imm);
 
   /// FastEmit_f - This method is called by target-independent code
   /// to request that an instruction with the given type, opcode, and
   /// floating-point immediate operand be emitted.
-  virtual unsigned FastEmit_f(MVT::SimpleValueType VT,
-                              MVT::SimpleValueType RetVT,
+  virtual unsigned FastEmit_f(EVT::SimpleValueType VT,
+                              EVT::SimpleValueType RetVT,
                               ISD::NodeType Opcode,
                               ConstantFP *FPImm);
 
@@ -268,12 +268,12 @@ protected:
 
   /// FastEmitInst_extractsubreg - Emit a MachineInstr for an extract_subreg
   /// from a specified index of a superregister to a specified type.
-  unsigned FastEmitInst_extractsubreg(MVT::SimpleValueType RetVT,
+  unsigned FastEmitInst_extractsubreg(EVT::SimpleValueType RetVT,
                                       unsigned Op0, uint32_t Idx);
 
   /// FastEmitZExtFromI1 - Emit MachineInstrs to compute the value of Op
   /// with all but the least significant bit set to zero.
-  unsigned FastEmitZExtFromI1(MVT::SimpleValueType VT,
+  unsigned FastEmitZExtFromI1(EVT::SimpleValueType VT,
                               unsigned Op);
 
   /// FastEmitBranch - Emit an unconditional branch to the given block,

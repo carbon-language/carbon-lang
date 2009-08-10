@@ -33,7 +33,7 @@ namespace llvm {
     int VarArgsFrameOffset;   // Frame offset to start of varargs area.
   public:
     BlackfinTargetLowering(TargetMachine &TM);
-    virtual MVT::SimpleValueType getSetCCResultType(MVT VT) const;
+    virtual EVT::SimpleValueType getSetCCResultType(EVT VT) const;
     virtual SDValue LowerOperation(SDValue Op, SelectionDAG &DAG);
     virtual void ReplaceNodeResults(SDNode *N,
                                     SmallVectorImpl<SDValue> &Results,
@@ -43,10 +43,10 @@ namespace llvm {
 
     ConstraintType getConstraintType(const std::string &Constraint) const;
     std::pair<unsigned, const TargetRegisterClass*>
-    getRegForInlineAsmConstraint(const std::string &Constraint, MVT VT) const;
+    getRegForInlineAsmConstraint(const std::string &Constraint, EVT VT) const;
     std::vector<unsigned>
     getRegClassForInlineAsmConstraint(const std::string &Constraint,
-                                      MVT VT) const;
+                                      EVT VT) const;
     virtual bool isOffsetFoldingLegal(const GlobalAddressSDNode *GA) const;
     const char *getTargetNodeName(unsigned Opcode) const;
     unsigned getFunctionAlignment(const Function *F) const;

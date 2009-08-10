@@ -42,8 +42,8 @@ MSP430TargetLowering::MSP430TargetLowering(MSP430TargetMachine &tm) :
   Subtarget(*tm.getSubtargetImpl()), TM(tm) {
 
   // Set up the register classes.
-  addRegisterClass(MVT::i8,  MSP430::GR8RegisterClass);
-  addRegisterClass(MVT::i16, MSP430::GR16RegisterClass);
+  addRegisterClass(EVT::i8,  MSP430::GR8RegisterClass);
+  addRegisterClass(EVT::i16, MSP430::GR16RegisterClass);
 
   // Compute derived properties from the register classes
   computeRegisterProperties();
@@ -55,75 +55,75 @@ MSP430TargetLowering::MSP430TargetLowering(MSP430TargetMachine &tm) :
 
   // Even if we have only 1 bit shift here, we can perform
   // shifts of the whole bitwidth 1 bit per step.
-  setShiftAmountType(MVT::i8);
+  setShiftAmountType(EVT::i8);
 
   setStackPointerRegisterToSaveRestore(MSP430::SPW);
   setBooleanContents(ZeroOrOneBooleanContent);
   setSchedulingPreference(SchedulingForLatency);
 
-  setLoadExtAction(ISD::EXTLOAD,  MVT::i1, Promote);
-  setLoadExtAction(ISD::SEXTLOAD, MVT::i1, Promote);
-  setLoadExtAction(ISD::ZEXTLOAD, MVT::i1, Promote);
-  setLoadExtAction(ISD::SEXTLOAD, MVT::i8, Expand);
-  setLoadExtAction(ISD::SEXTLOAD, MVT::i16, Expand);
+  setLoadExtAction(ISD::EXTLOAD,  EVT::i1, Promote);
+  setLoadExtAction(ISD::SEXTLOAD, EVT::i1, Promote);
+  setLoadExtAction(ISD::ZEXTLOAD, EVT::i1, Promote);
+  setLoadExtAction(ISD::SEXTLOAD, EVT::i8, Expand);
+  setLoadExtAction(ISD::SEXTLOAD, EVT::i16, Expand);
 
   // We don't have any truncstores
-  setTruncStoreAction(MVT::i16, MVT::i8, Expand);
+  setTruncStoreAction(EVT::i16, EVT::i8, Expand);
 
-  setOperationAction(ISD::SRA,              MVT::i8,    Custom);
-  setOperationAction(ISD::SHL,              MVT::i8,    Custom);
-  setOperationAction(ISD::SRL,              MVT::i8,    Custom);
-  setOperationAction(ISD::SRA,              MVT::i16,   Custom);
-  setOperationAction(ISD::SHL,              MVT::i16,   Custom);
-  setOperationAction(ISD::SRL,              MVT::i16,   Custom);
-  setOperationAction(ISD::ROTL,             MVT::i8,    Expand);
-  setOperationAction(ISD::ROTR,             MVT::i8,    Expand);
-  setOperationAction(ISD::ROTL,             MVT::i16,   Expand);
-  setOperationAction(ISD::ROTR,             MVT::i16,   Expand);
-  setOperationAction(ISD::GlobalAddress,    MVT::i16,   Custom);
-  setOperationAction(ISD::ExternalSymbol,   MVT::i16,   Custom);
-  setOperationAction(ISD::BR_JT,            MVT::Other, Expand);
-  setOperationAction(ISD::BRIND,            MVT::Other, Expand);
-  setOperationAction(ISD::BR_CC,            MVT::i8,    Custom);
-  setOperationAction(ISD::BR_CC,            MVT::i16,   Custom);
-  setOperationAction(ISD::BRCOND,           MVT::Other, Expand);
-  setOperationAction(ISD::SETCC,            MVT::i8,    Expand);
-  setOperationAction(ISD::SETCC,            MVT::i16,   Expand);
-  setOperationAction(ISD::SELECT,           MVT::i8,    Expand);
-  setOperationAction(ISD::SELECT,           MVT::i16,   Expand);
-  setOperationAction(ISD::SELECT_CC,        MVT::i8,    Custom);
-  setOperationAction(ISD::SELECT_CC,        MVT::i16,   Custom);
-  setOperationAction(ISD::SIGN_EXTEND,      MVT::i16,   Custom);
+  setOperationAction(ISD::SRA,              EVT::i8,    Custom);
+  setOperationAction(ISD::SHL,              EVT::i8,    Custom);
+  setOperationAction(ISD::SRL,              EVT::i8,    Custom);
+  setOperationAction(ISD::SRA,              EVT::i16,   Custom);
+  setOperationAction(ISD::SHL,              EVT::i16,   Custom);
+  setOperationAction(ISD::SRL,              EVT::i16,   Custom);
+  setOperationAction(ISD::ROTL,             EVT::i8,    Expand);
+  setOperationAction(ISD::ROTR,             EVT::i8,    Expand);
+  setOperationAction(ISD::ROTL,             EVT::i16,   Expand);
+  setOperationAction(ISD::ROTR,             EVT::i16,   Expand);
+  setOperationAction(ISD::GlobalAddress,    EVT::i16,   Custom);
+  setOperationAction(ISD::ExternalSymbol,   EVT::i16,   Custom);
+  setOperationAction(ISD::BR_JT,            EVT::Other, Expand);
+  setOperationAction(ISD::BRIND,            EVT::Other, Expand);
+  setOperationAction(ISD::BR_CC,            EVT::i8,    Custom);
+  setOperationAction(ISD::BR_CC,            EVT::i16,   Custom);
+  setOperationAction(ISD::BRCOND,           EVT::Other, Expand);
+  setOperationAction(ISD::SETCC,            EVT::i8,    Expand);
+  setOperationAction(ISD::SETCC,            EVT::i16,   Expand);
+  setOperationAction(ISD::SELECT,           EVT::i8,    Expand);
+  setOperationAction(ISD::SELECT,           EVT::i16,   Expand);
+  setOperationAction(ISD::SELECT_CC,        EVT::i8,    Custom);
+  setOperationAction(ISD::SELECT_CC,        EVT::i16,   Custom);
+  setOperationAction(ISD::SIGN_EXTEND,      EVT::i16,   Custom);
 
-  setOperationAction(ISD::CTTZ,             MVT::i8,    Expand);
-  setOperationAction(ISD::CTTZ,             MVT::i16,   Expand);
-  setOperationAction(ISD::CTLZ,             MVT::i8,    Expand);
-  setOperationAction(ISD::CTLZ,             MVT::i16,   Expand);
-  setOperationAction(ISD::CTPOP,            MVT::i8,    Expand);
-  setOperationAction(ISD::CTPOP,            MVT::i16,   Expand);
+  setOperationAction(ISD::CTTZ,             EVT::i8,    Expand);
+  setOperationAction(ISD::CTTZ,             EVT::i16,   Expand);
+  setOperationAction(ISD::CTLZ,             EVT::i8,    Expand);
+  setOperationAction(ISD::CTLZ,             EVT::i16,   Expand);
+  setOperationAction(ISD::CTPOP,            EVT::i8,    Expand);
+  setOperationAction(ISD::CTPOP,            EVT::i16,   Expand);
 
-  setOperationAction(ISD::SHL_PARTS,        MVT::i8,    Expand);
-  setOperationAction(ISD::SHL_PARTS,        MVT::i16,   Expand);
-  setOperationAction(ISD::SRL_PARTS,        MVT::i8,    Expand);
-  setOperationAction(ISD::SRL_PARTS,        MVT::i16,   Expand);
-  setOperationAction(ISD::SRA_PARTS,        MVT::i8,    Expand);
-  setOperationAction(ISD::SRA_PARTS,        MVT::i16,   Expand);
+  setOperationAction(ISD::SHL_PARTS,        EVT::i8,    Expand);
+  setOperationAction(ISD::SHL_PARTS,        EVT::i16,   Expand);
+  setOperationAction(ISD::SRL_PARTS,        EVT::i8,    Expand);
+  setOperationAction(ISD::SRL_PARTS,        EVT::i16,   Expand);
+  setOperationAction(ISD::SRA_PARTS,        EVT::i8,    Expand);
+  setOperationAction(ISD::SRA_PARTS,        EVT::i16,   Expand);
 
-  setOperationAction(ISD::SIGN_EXTEND_INREG, MVT::i1,   Expand);
+  setOperationAction(ISD::SIGN_EXTEND_INREG, EVT::i1,   Expand);
 
   // FIXME: Implement efficiently multiplication by a constant
-  setOperationAction(ISD::MUL,              MVT::i16,   Expand);
-  setOperationAction(ISD::MULHS,            MVT::i16,   Expand);
-  setOperationAction(ISD::MULHU,            MVT::i16,   Expand);
-  setOperationAction(ISD::SMUL_LOHI,        MVT::i16,   Expand);
-  setOperationAction(ISD::UMUL_LOHI,        MVT::i16,   Expand);
+  setOperationAction(ISD::MUL,              EVT::i16,   Expand);
+  setOperationAction(ISD::MULHS,            EVT::i16,   Expand);
+  setOperationAction(ISD::MULHU,            EVT::i16,   Expand);
+  setOperationAction(ISD::SMUL_LOHI,        EVT::i16,   Expand);
+  setOperationAction(ISD::UMUL_LOHI,        EVT::i16,   Expand);
 
-  setOperationAction(ISD::UDIV,             MVT::i16,   Expand);
-  setOperationAction(ISD::UDIVREM,          MVT::i16,   Expand);
-  setOperationAction(ISD::UREM,             MVT::i16,   Expand);
-  setOperationAction(ISD::SDIV,             MVT::i16,   Expand);
-  setOperationAction(ISD::SDIVREM,          MVT::i16,   Expand);
-  setOperationAction(ISD::SREM,             MVT::i16,   Expand);
+  setOperationAction(ISD::UDIV,             EVT::i16,   Expand);
+  setOperationAction(ISD::UDIVREM,          EVT::i16,   Expand);
+  setOperationAction(ISD::UREM,             EVT::i16,   Expand);
+  setOperationAction(ISD::SDIV,             EVT::i16,   Expand);
+  setOperationAction(ISD::SDIVREM,          EVT::i16,   Expand);
+  setOperationAction(ISD::SREM,             EVT::i16,   Expand);
 }
 
 SDValue MSP430TargetLowering::LowerOperation(SDValue Op, SelectionDAG &DAG) {
@@ -220,7 +220,7 @@ MSP430TargetLowering::LowerCCCArguments(SDValue Chain,
     CCValAssign &VA = ArgLocs[i];
     if (VA.isRegLoc()) {
       // Arguments passed in registers
-      MVT RegVT = VA.getLocVT();
+      EVT RegVT = VA.getLocVT();
       switch (RegVT.getSimpleVT()) {
       default: 
         {
@@ -230,7 +230,7 @@ MSP430TargetLowering::LowerCCCArguments(SDValue Chain,
 #endif
           llvm_unreachable(0);
         }
-      case MVT::i16:
+      case EVT::i16:
         unsigned VReg =
           RegInfo.createVirtualRegister(MSP430::GR16RegisterClass);
         RegInfo.addLiveIn(VA.getLocReg(), VReg);
@@ -266,7 +266,7 @@ MSP430TargetLowering::LowerCCCArguments(SDValue Chain,
 
       // Create the SelectionDAG nodes corresponding to a load
       //from this parameter
-      SDValue FIN = DAG.getFrameIndex(FI, MVT::i16);
+      SDValue FIN = DAG.getFrameIndex(FI, EVT::i16);
       InVals.push_back(DAG.getLoad(VA.getLocVT(), dl, Chain, FIN,
                                    PseudoSourceValue::getFixedStack(FI), 0));
     }
@@ -315,10 +315,10 @@ MSP430TargetLowering::LowerReturn(SDValue Chain,
   }
 
   if (Flag.getNode())
-    return DAG.getNode(MSP430ISD::RET_FLAG, dl, MVT::Other, Chain, Flag);
+    return DAG.getNode(MSP430ISD::RET_FLAG, dl, EVT::Other, Chain, Flag);
 
   // Return Void
-  return DAG.getNode(MSP430ISD::RET_FLAG, dl, MVT::Other, Chain);
+  return DAG.getNode(MSP430ISD::RET_FLAG, dl, EVT::Other, Chain);
 }
 
 /// LowerCCCCallTo - functions arguments are copied from virtual regs to
@@ -395,7 +395,7 @@ MSP430TargetLowering::LowerCCCCallTo(SDValue Chain, SDValue Callee,
   // Transform all store nodes into one single node because all store nodes are
   // independent of each other.
   if (!MemOpChains.empty())
-    Chain = DAG.getNode(ISD::TokenFactor, dl, MVT::Other,
+    Chain = DAG.getNode(ISD::TokenFactor, dl, EVT::Other,
                         &MemOpChains[0], MemOpChains.size());
 
   // Build a sequence of copy-to-reg nodes chained together with token chain and
@@ -412,12 +412,12 @@ MSP430TargetLowering::LowerCCCCallTo(SDValue Chain, SDValue Callee,
   // turn it into a TargetGlobalAddress node so that legalize doesn't hack it.
   // Likewise ExternalSymbol -> TargetExternalSymbol.
   if (GlobalAddressSDNode *G = dyn_cast<GlobalAddressSDNode>(Callee))
-    Callee = DAG.getTargetGlobalAddress(G->getGlobal(), MVT::i16);
+    Callee = DAG.getTargetGlobalAddress(G->getGlobal(), EVT::i16);
   else if (ExternalSymbolSDNode *E = dyn_cast<ExternalSymbolSDNode>(Callee))
-    Callee = DAG.getTargetExternalSymbol(E->getSymbol(), MVT::i16);
+    Callee = DAG.getTargetExternalSymbol(E->getSymbol(), EVT::i16);
 
   // Returns a chain & a flag for retval copy to use.
-  SDVTList NodeTys = DAG.getVTList(MVT::Other, MVT::Flag);
+  SDVTList NodeTys = DAG.getVTList(EVT::Other, EVT::Flag);
   SmallVector<SDValue, 8> Ops;
   Ops.push_back(Chain);
   Ops.push_back(Callee);
@@ -479,7 +479,7 @@ SDValue MSP430TargetLowering::LowerShifts(SDValue Op,
                                           SelectionDAG &DAG) {
   unsigned Opc = Op.getOpcode();
   SDNode* N = Op.getNode();
-  MVT VT = Op.getValueType();
+  EVT VT = Op.getValueType();
   DebugLoc dl = N->getDebugLoc();
 
   // We currently only lower shifts of constant argument.
@@ -564,7 +564,7 @@ static SDValue EmitCMP(SDValue &LHS, SDValue &RHS, unsigned &TargetCC,
     break;
   }
 
-  return DAG.getNode(MSP430ISD::CMP, dl, MVT::Flag, LHS, RHS);
+  return DAG.getNode(MSP430ISD::CMP, dl, EVT::Flag, LHS, RHS);
 }
 
 
@@ -581,7 +581,7 @@ SDValue MSP430TargetLowering::LowerBR_CC(SDValue Op, SelectionDAG &DAG) {
 
   return DAG.getNode(MSP430ISD::BR_CC, dl, Op.getValueType(),
                      Chain,
-                     Dest, DAG.getConstant(TargetCC, MVT::i8),
+                     Dest, DAG.getConstant(TargetCC, EVT::i8),
                      Flag);
 }
 
@@ -596,11 +596,11 @@ SDValue MSP430TargetLowering::LowerSELECT_CC(SDValue Op, SelectionDAG &DAG) {
   unsigned TargetCC = MSP430::COND_INVALID;
   SDValue Flag = EmitCMP(LHS, RHS, TargetCC, CC, dl, DAG);
 
-  SDVTList VTs = DAG.getVTList(Op.getValueType(), MVT::Flag);
+  SDVTList VTs = DAG.getVTList(Op.getValueType(), EVT::Flag);
   SmallVector<SDValue, 4> Ops;
   Ops.push_back(TrueV);
   Ops.push_back(FalseV);
-  Ops.push_back(DAG.getConstant(TargetCC, MVT::i8));
+  Ops.push_back(DAG.getConstant(TargetCC, EVT::i8));
   Ops.push_back(Flag);
 
   return DAG.getNode(MSP430ISD::SELECT_CC, dl, VTs, &Ops[0], Ops.size());
@@ -609,10 +609,10 @@ SDValue MSP430TargetLowering::LowerSELECT_CC(SDValue Op, SelectionDAG &DAG) {
 SDValue MSP430TargetLowering::LowerSIGN_EXTEND(SDValue Op,
                                                SelectionDAG &DAG) {
   SDValue Val = Op.getOperand(0);
-  MVT VT      = Op.getValueType();
+  EVT VT      = Op.getValueType();
   DebugLoc dl = Op.getDebugLoc();
 
-  assert(VT == MVT::i16 && "Only support i16 for now!");
+  assert(VT == EVT::i16 && "Only support i16 for now!");
 
   return DAG.getNode(ISD::SIGN_EXTEND_INREG, dl, VT,
                      DAG.getNode(ISD::ANY_EXTEND, dl, VT, Val),

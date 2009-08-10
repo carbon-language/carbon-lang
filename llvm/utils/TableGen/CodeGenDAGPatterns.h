@@ -33,11 +33,11 @@ namespace llvm {
   class CodeGenDAGPatterns;
   class ComplexPattern;
 
-/// EMVT::DAGISelGenValueType - These are some extended forms of
-/// MVT::SimpleValueType that we use as lattice values during type inference.
-namespace EMVT {
+/// EEVT::DAGISelGenValueType - These are some extended forms of
+/// EVT::SimpleValueType that we use as lattice values during type inference.
+namespace EEVT {
   enum DAGISelGenValueType {
-    isFP  = MVT::LAST_VALUETYPE,
+    isFP  = EVT::LAST_VALUETYPE,
     isInt,
     isUnknown
   };
@@ -140,7 +140,7 @@ public:
 /// patterns), and as such should be ref counted.  We currently just leak all
 /// TreePatternNode objects!
 class TreePatternNode {
-  /// The inferred type for this node, or EMVT::isUnknown if it hasn't
+  /// The inferred type for this node, or EEVT::isUnknown if it hasn't
   /// been determined yet. This is a std::vector because during inference
   /// there may be multiple possible types.
   std::vector<unsigned char> Types;
@@ -169,10 +169,10 @@ class TreePatternNode {
 public:
   TreePatternNode(Record *Op, const std::vector<TreePatternNode*> &Ch) 
     : Types(), Operator(Op), Val(0), TransformFn(0),
-    Children(Ch) { Types.push_back(EMVT::isUnknown); }
+    Children(Ch) { Types.push_back(EEVT::isUnknown); }
   TreePatternNode(Init *val)    // leaf ctor
     : Types(), Operator(0), Val(val), TransformFn(0) {
-    Types.push_back(EMVT::isUnknown);
+    Types.push_back(EEVT::isUnknown);
   }
   ~TreePatternNode();
   
@@ -181,19 +181,19 @@ public:
   
   bool isLeaf() const { return Val != 0; }
   bool hasTypeSet() const {
-    return (Types[0] < MVT::LAST_VALUETYPE) || (Types[0] == MVT::iPTR) || 
-          (Types[0] == MVT::iPTRAny);
+    return (Types[0] < EVT::LAST_VALUETYPE) || (Types[0] == EVT::iPTR) || 
+          (Types[0] == EVT::iPTRAny);
   }
   bool isTypeCompletelyUnknown() const {
-    return Types[0] == EMVT::isUnknown;
+    return Types[0] == EEVT::isUnknown;
   }
   bool isTypeDynamicallyResolved() const {
-    return (Types[0] == MVT::iPTR) || (Types[0] == MVT::iPTRAny);
+    return (Types[0] == EVT::iPTR) || (Types[0] == EVT::iPTRAny);
   }
-  MVT::SimpleValueType getTypeNum(unsigned Num) const {
+  EVT::SimpleValueType getTypeNum(unsigned Num) const {
     assert(hasTypeSet() && "Doesn't have a type yet!");
     assert(Types.size() > Num && "Type num out of range!");
-    return (MVT::SimpleValueType)Types[Num];
+    return (EVT::SimpleValueType)Types[Num];
   }
   unsigned char getExtTypeNum(unsigned Num) const { 
     assert(Types.size() > Num && "Extended type num out of range!");
@@ -201,7 +201,7 @@ public:
   }
   const std::vector<unsigned char> &getExtTypes() const { return Types; }
   void setTypes(const std::vector<unsigned char> &T) { Types = T; }
-  void removeTypes() { Types = std::vector<unsigned char>(1, EMVT::isUnknown); }
+  void removeTypes() { Types = std::vector<unsigned char>(1, EEVT::isUnknown); }
   
   Init *getLeafValue() const { assert(isLeaf()); return Val; }
   Record *getOperator() const { assert(!isLeaf()); return Operator; }

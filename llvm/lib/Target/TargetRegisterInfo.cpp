@@ -40,10 +40,10 @@ TargetRegisterInfo::TargetRegisterInfo(const TargetRegisterDesc *D, unsigned NR,
 TargetRegisterInfo::~TargetRegisterInfo() {}
 
 /// getPhysicalRegisterRegClass - Returns the Register Class of a physical
-/// register of the given type. If type is MVT::Other, then just return any
+/// register of the given type. If type is EVT::Other, then just return any
 /// register class the register belongs to.
 const TargetRegisterClass *
-TargetRegisterInfo::getPhysicalRegisterRegClass(unsigned reg, MVT VT) const {
+TargetRegisterInfo::getPhysicalRegisterRegClass(unsigned reg, EVT VT) const {
   assert(isPhysicalRegister(reg) && "reg must be a physical register");
 
   // Pick the most super register class of the right type that contains
@@ -51,7 +51,7 @@ TargetRegisterInfo::getPhysicalRegisterRegClass(unsigned reg, MVT VT) const {
   const TargetRegisterClass* BestRC = 0;
   for (regclass_iterator I = regclass_begin(), E = regclass_end(); I != E; ++I){
     const TargetRegisterClass* RC = *I;
-    if ((VT == MVT::Other || RC->hasType(VT)) && RC->contains(reg) &&
+    if ((VT == EVT::Other || RC->hasType(VT)) && RC->contains(reg) &&
         (!BestRC || BestRC->hasSuperClass(RC)))
       BestRC = RC;
   }

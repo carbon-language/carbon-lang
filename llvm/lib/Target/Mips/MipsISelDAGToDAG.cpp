@@ -95,7 +95,7 @@ private:
   // getI32Imm - Return a target constant with the specified
   // value, of type i32.
   inline SDValue getI32Imm(unsigned Imm) {
-    return CurDAG->getTargetConstant(Imm, MVT::i32);
+    return CurDAG->getTargetConstant(Imm, EVT::i32);
   }
 
 
@@ -142,8 +142,8 @@ SelectAddr(SDValue Op, SDValue Addr, SDValue &Offset, SDValue &Base)
 {
   // if Address is FI, get the TargetFrameIndex.
   if (FrameIndexSDNode *FIN = dyn_cast<FrameIndexSDNode>(Addr)) {
-    Base   = CurDAG->getTargetFrameIndex(FIN->getIndex(), MVT::i32);
-    Offset = CurDAG->getTargetConstant(0, MVT::i32);
+    Base   = CurDAG->getTargetFrameIndex(FIN->getIndex(), EVT::i32);
+    Offset = CurDAG->getTargetConstant(0, EVT::i32);
     return true;
   }
     
@@ -151,7 +151,7 @@ SelectAddr(SDValue Op, SDValue Addr, SDValue &Offset, SDValue &Base)
   if (TM.getRelocationModel() == Reloc::PIC_) {
     if ((Addr.getOpcode() == ISD::TargetGlobalAddress) || 
         (Addr.getOpcode() == ISD::TargetJumpTable)){
-      Base   = CurDAG->getRegister(Mips::GP, MVT::i32);
+      Base   = CurDAG->getRegister(Mips::GP, EVT::i32);
       Offset = Addr;
       return true;
     }
@@ -169,19 +169,19 @@ SelectAddr(SDValue Op, SDValue Addr, SDValue &Offset, SDValue &Base)
         // If the first operand is a FI, get the TargetFI Node
         if (FrameIndexSDNode *FIN = dyn_cast<FrameIndexSDNode>
                                     (Addr.getOperand(0))) {
-          Base = CurDAG->getTargetFrameIndex(FIN->getIndex(), MVT::i32);
+          Base = CurDAG->getTargetFrameIndex(FIN->getIndex(), EVT::i32);
         } else {
           Base = Addr.getOperand(0);
         }
 
-        Offset = CurDAG->getTargetConstant(CN->getZExtValue(), MVT::i32);
+        Offset = CurDAG->getTargetConstant(CN->getZExtValue(), EVT::i32);
         return true;
       }
     }
   }
 
   Base   = Addr;
-  Offset = CurDAG->getTargetConstant(0, MVT::i32);
+  Offset = CurDAG->getTargetConstant(0, EVT::i32);
   return true;
 }
 
@@ -243,12 +243,12 @@ Select(SDValue N)
       SDValue LHS = Node->getOperand(0);
       SDValue RHS = Node->getOperand(1);
 
-      MVT VT = LHS.getValueType();
+      EVT VT = LHS.getValueType();
       SDNode *Carry = CurDAG->getTargetNode(Mips::SLTu, dl, VT, Ops, 2);
       SDNode *AddCarry = CurDAG->getTargetNode(Mips::ADDu, dl, VT, 
                                                SDValue(Carry,0), RHS);
 
-      return CurDAG->SelectNodeTo(N.getNode(), MOp, VT, MVT::Flag,
+      return CurDAG->SelectNodeTo(N.getNode(), MOp, VT, EVT::Flag,
                                   LHS, SDValue(AddCarry,0));
     }
 
@@ -266,13 +266,13 @@ Select(SDValue N)
       else
         Op = (Opcode == ISD::UDIVREM ? Mips::DIVu : Mips::DIV);
 
-      SDNode *Node = CurDAG->getTargetNode(Op, dl, MVT::Flag, Op1, Op2);
+      SDNode *Node = CurDAG->getTargetNode(Op, dl, EVT::Flag, Op1, Op2);
 
       SDValue InFlag = SDValue(Node, 0);
-      SDNode *Lo = CurDAG->getTargetNode(Mips::MFLO, dl, MVT::i32, 
-                                         MVT::Flag, InFlag);
+      SDNode *Lo = CurDAG->getTargetNode(Mips::MFLO, dl, EVT::i32, 
+                                         EVT::Flag, InFlag);
       InFlag = SDValue(Lo,1);
-      SDNode *Hi = CurDAG->getTargetNode(Mips::MFHI, dl, MVT::i32, InFlag);
+      SDNode *Hi = CurDAG->getTargetNode(Mips::MFHI, dl, EVT::i32, InFlag);
 
       if (!N.getValue(0).use_empty()) 
         ReplaceUses(N.getValue(0), SDValue(Lo,0));
@@ -292,14 +292,14 @@ Select(SDValue N)
 
       unsigned MulOp  = (Opcode == ISD::MULHU ? Mips::MULTu : Mips::MULT);
       SDNode *MulNode = CurDAG->getTargetNode(MulOp, dl, 
-                                              MVT::Flag, MulOp1, MulOp2);
+                                              EVT::Flag, MulOp1, MulOp2);
 
       SDValue InFlag = SDValue(MulNode, 0);
 
       if (MulOp == ISD::MUL)
-        return CurDAG->getTargetNode(Mips::MFLO, dl, MVT::i32, InFlag);
+        return CurDAG->getTargetNode(Mips::MFLO, dl, EVT::i32, InFlag);
       else
-        return CurDAG->getTargetNode(Mips::MFHI, dl, MVT::i32, InFlag);
+        return CurDAG->getTargetNode(Mips::MFHI, dl, EVT::i32, InFlag);
     }
 
     /// Div/Rem operations
@@ -318,10 +318,10 @@ Select(SDValue N)
         Op  = (Opcode == ISD::SREM ? Mips::DIV : Mips::DIVu);
         MOp = Mips::MFHI;
       }
-      SDNode *Node = CurDAG->getTargetNode(Op, dl, MVT::Flag, Op1, Op2);
+      SDNode *Node = CurDAG->getTargetNode(Op, dl, EVT::Flag, Op1, Op2);
 
       SDValue InFlag = SDValue(Node, 0);
-      return CurDAG->getTargetNode(MOp, dl, MVT::i32, InFlag);
+      return CurDAG->getTargetNode(MOp, dl, EVT::i32, InFlag);
     }
 
     // Get target GOT address.
@@ -337,19 +337,19 @@ Select(SDValue N)
         //bool isCodeLarge = (TM.getCodeModel() == CodeModel::Large);
         SDValue Chain  = Node->getOperand(0);
         SDValue Callee = Node->getOperand(1);
-        SDValue T9Reg = CurDAG->getRegister(Mips::T9, MVT::i32);
+        SDValue T9Reg = CurDAG->getRegister(Mips::T9, EVT::i32);
         SDValue InFlag(0, 0);
 
         if ( (isa<GlobalAddressSDNode>(Callee)) ||
              (isa<ExternalSymbolSDNode>(Callee)) )
         {
           /// Direct call for global addresses and external symbols
-          SDValue GPReg = CurDAG->getRegister(Mips::GP, MVT::i32);
+          SDValue GPReg = CurDAG->getRegister(Mips::GP, EVT::i32);
 
           // Use load to get GOT target
           SDValue Ops[] = { Callee, GPReg, Chain };
-          SDValue Load = SDValue(CurDAG->getTargetNode(Mips::LW, dl, MVT::i32, 
-                                     MVT::Other, Ops, 3), 0);
+          SDValue Load = SDValue(CurDAG->getTargetNode(Mips::LW, dl, EVT::i32, 
+                                     EVT::Other, Ops, 3), 0);
           Chain = Load.getValue(1);
 
           // Call target must be on T9
@@ -359,8 +359,8 @@ Select(SDValue N)
           Chain = CurDAG->getCopyToReg(Chain, dl, T9Reg, Callee, InFlag);
 
         // Emit Jump and Link Register
-        SDNode *ResNode = CurDAG->getTargetNode(Mips::JALR, dl, MVT::Other,
-                                  MVT::Flag, T9Reg, Chain);
+        SDNode *ResNode = CurDAG->getTargetNode(Mips::JALR, dl, EVT::Other,
+                                  EVT::Flag, T9Reg, Chain);
         Chain  = SDValue(ResNode, 0);
         InFlag = SDValue(ResNode, 1);
         ReplaceUses(SDValue(Node, 0), Chain);

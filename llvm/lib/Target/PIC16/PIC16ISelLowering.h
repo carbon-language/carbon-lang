@@ -82,7 +82,7 @@ namespace llvm {
     /// DAG node.
     virtual const char *getTargetNodeName(unsigned Opcode) const;
     /// getSetCCResultType - Return the ISD::SETCC ValueType
-    virtual MVT::SimpleValueType getSetCCResultType(MVT ValType) const;
+    virtual EVT::SimpleValueType getSetCCResultType(EVT ValType) const;
     SDValue LowerShift(SDValue Op, SelectionDAG &DAG);
     SDValue LowerMUL(SDValue Op, SelectionDAG &DAG);
     SDValue LowerADD(SDValue Op, SelectionDAG &DAG);
@@ -230,7 +230,7 @@ namespace llvm {
     const char *getPIC16LibcallName(PIC16ISD::PIC16Libcall Call);
 
     // Make PIC16 Libcall.
-    SDValue MakePIC16Libcall(PIC16ISD::PIC16Libcall Call, MVT RetVT, 
+    SDValue MakePIC16Libcall(PIC16ISD::PIC16Libcall Call, EVT RetVT, 
                              const SDValue *Ops, unsigned NumOps, bool isSigned,
                              SelectionDAG &DAG, DebugLoc dl);
 

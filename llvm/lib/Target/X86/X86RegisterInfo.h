@@ -163,8 +163,8 @@ public:
 
 // getX86SubSuperRegister - X86 utility function. It returns the sub or super
 // register of a specific X86 register.
-// e.g. getX86SubSuperRegister(X86::EAX, MVT::i16) return X86:AX
-unsigned getX86SubSuperRegister(unsigned, MVT, bool High=false);
+// e.g. getX86SubSuperRegister(X86::EAX, EVT::i16) return X86:AX
+unsigned getX86SubSuperRegister(unsigned, EVT, bool High=false);
 
 } // End llvm namespace
 

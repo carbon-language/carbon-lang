@@ -87,7 +87,7 @@ BlackfinRegisterInfo::getReservedRegs(const MachineFunction &MF) const {
 }
 
 const TargetRegisterClass*
-BlackfinRegisterInfo::getPhysicalRegisterRegClass(unsigned reg, MVT VT) const {
+BlackfinRegisterInfo::getPhysicalRegisterRegClass(unsigned reg, EVT VT) const {
   assert(isPhysicalRegister(reg) && "reg must be a physical register");
 
   // Pick the smallest register class of the right type that contains
@@ -96,7 +96,7 @@ BlackfinRegisterInfo::getPhysicalRegisterRegClass(unsigned reg, MVT VT) const {
   for (regclass_iterator I = regclass_begin(), E = regclass_end();
        I != E; ++I) {
     const TargetRegisterClass* RC = *I;
-    if ((VT == MVT::Other || RC->hasType(VT)) && RC->contains(reg) &&
+    if ((VT == EVT::Other || RC->hasType(VT)) && RC->contains(reg) &&
         (!BestRC || RC->getNumRegs() < BestRC->getNumRegs()))
       BestRC = RC;
   }

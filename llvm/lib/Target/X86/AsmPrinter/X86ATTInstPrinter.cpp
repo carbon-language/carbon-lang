@@ -75,9 +75,9 @@ void X86ATTAsmPrinter::printOperand(const MCInst *MI, unsigned OpNo,
     unsigned Reg = Op.getReg();
 #if 0
     if (Modifier && strncmp(Modifier, "subreg", strlen("subreg")) == 0) {
-      MVT VT = (strcmp(Modifier+6,"64") == 0) ?
-      MVT::i64 : ((strcmp(Modifier+6, "32") == 0) ? MVT::i32 :
-                  ((strcmp(Modifier+6,"16") == 0) ? MVT::i16 : MVT::i8));
+      EVT VT = (strcmp(Modifier+6,"64") == 0) ?
+      EVT::i64 : ((strcmp(Modifier+6, "32") == 0) ? EVT::i32 :
+                  ((strcmp(Modifier+6,"16") == 0) ? EVT::i16 : EVT::i8));
       Reg = getX86SubSuperRegister(Reg, VT);
     }
 #endif

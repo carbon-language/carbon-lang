@@ -37,20 +37,20 @@ namespace llvm {
     /// continues from there through the parameter list. This is useful for
     /// "matching" types.
     struct IntrinsicSignature {
-      /// RetVTs - The MVT::SimpleValueType for each return type. Note that this
+      /// RetVTs - The EVT::SimpleValueType for each return type. Note that this
       /// list is only populated when in the context of a target .td file. When
       /// building Intrinsics.td, this isn't available, because we don't know
       /// the target pointer size.
-      std::vector<MVT::SimpleValueType> RetVTs;
+      std::vector<EVT::SimpleValueType> RetVTs;
 
       /// RetTypeDefs - The records for each return type.
       std::vector<Record*> RetTypeDefs;
 
-      /// ParamVTs - The MVT::SimpleValueType for each parameter type. Note that
+      /// ParamVTs - The EVT::SimpleValueType for each parameter type. Note that
       /// this list is only populated when in the context of a target .td file.
       /// When building Intrinsics.td, this isn't available, because we don't
       /// know the target pointer size.
-      std::vector<MVT::SimpleValueType> ParamVTs;
+      std::vector<EVT::SimpleValueType> ParamVTs;
 
       /// ParamTypeDefs - The records for each parameter type.
       std::vector<Record*> ParamTypeDefs;

@@ -57,12 +57,12 @@ static const ComplexPattern *NodeGetComplexPattern(TreePatternNode *N,
 /// patterns before small ones.  This is used to determine the size of a
 /// pattern.
 static unsigned getPatternSize(TreePatternNode *P, CodeGenDAGPatterns &CGP) {
-  assert((EMVT::isExtIntegerInVTs(P->getExtTypes()) ||
-          EMVT::isExtFloatingPointInVTs(P->getExtTypes()) ||
-          P->getExtTypeNum(0) == MVT::isVoid ||
-          P->getExtTypeNum(0) == MVT::Flag ||
-          P->getExtTypeNum(0) == MVT::iPTR ||
-          P->getExtTypeNum(0) == MVT::iPTRAny) && 
+  assert((EEVT::isExtIntegerInVTs(P->getExtTypes()) ||
+          EEVT::isExtFloatingPointInVTs(P->getExtTypes()) ||
+          P->getExtTypeNum(0) == EVT::isVoid ||
+          P->getExtTypeNum(0) == EVT::Flag ||
+          P->getExtTypeNum(0) == EVT::iPTR ||
+          P->getExtTypeNum(0) == EVT::iPTRAny) && 
          "Not a valid pattern node to size!");
   unsigned Size = 3;  // The node itself.
   // If the root node is a ConstantSDNode, increases its size.
@@ -87,7 +87,7 @@ static unsigned getPatternSize(TreePatternNode *P, CodeGenDAGPatterns &CGP) {
   // Count children in the count if they are also nodes.
   for (unsigned i = 0, e = P->getNumChildren(); i != e; ++i) {
     TreePatternNode *Child = P->getChild(i);
-    if (!Child->isLeaf() && Child->getExtTypeNum(0) != MVT::Other)
+    if (!Child->isLeaf() && Child->getExtTypeNum(0) != EVT::Other)
       Size += getPatternSize(Child, CGP);
     else if (Child->isLeaf()) {
       if (dynamic_cast<IntInit*>(Child->getLeafValue())) 
@@ -174,10 +174,10 @@ struct PatternSortingPredicate {
 
 /// getRegisterValueType - Look up and return the ValueType of the specified
 /// register. If the register is a member of multiple register classes which
-/// have different associated types, return MVT::Other.
-static MVT::SimpleValueType getRegisterValueType(Record *R, const CodeGenTarget &T) {
+/// have different associated types, return EVT::Other.
+static EVT::SimpleValueType getRegisterValueType(Record *R, const CodeGenTarget &T) {
   bool FoundRC = false;
-  MVT::SimpleValueType VT = MVT::Other;
+  EVT::SimpleValueType VT = EVT::Other;
   const std::vector<CodeGenRegisterClass> &RCs = T.getRegisterClasses();
   std::vector<CodeGenRegisterClass>::const_iterator RC;
   std::vector<Record*>::const_iterator Element;
@@ -191,9 +191,9 @@ static MVT::SimpleValueType getRegisterValueType(Record *R, const CodeGenTarget 
       } else {
         // In multiple RC's
         if (VT != (*RC).getValueTypeNum(0)) {
-          // Types of the RC's do not agree. Return MVT::Other. The
+          // Types of the RC's do not agree. Return EVT::Other. The
           // target is responsible for handling this.
-          return MVT::Other;
+          return EVT::Other;
         }
       }
     }
@@ -740,7 +740,7 @@ public:
         } else if (LeafRec->isSubClassOf("ValueType")) {
           // Make sure this is the specified value type.
           emitCheck("cast<VTSDNode>(" + RootName +
-                    ")->getVT() == MVT::" + LeafRec->getName());
+                    ")->getVT() == EVT::" + LeafRec->getName());
         } else if (LeafRec->isSubClassOf("CondCode")) {
           // Make sure this is the specified cond code.
           emitCheck("cast<CondCodeSDNode>(" + RootName +
@@ -813,11 +813,11 @@ public:
           errs() << "Cannot handle " << getEnumName(N->getTypeNum(0))
                << " type as an immediate constant. Aborting\n";
           abort();
-        case MVT::i1:  CastType = "bool"; break;
-        case MVT::i8:  CastType = "unsigned char"; break;
-        case MVT::i16: CastType = "unsigned short"; break;
-        case MVT::i32: CastType = "unsigned"; break;
-        case MVT::i64: CastType = "uint64_t"; break;
+        case EVT::i1:  CastType = "bool"; break;
+        case EVT::i8:  CastType = "unsigned char"; break;
+        case EVT::i16: CastType = "unsigned short"; break;
+        case EVT::i32: CastType = "unsigned"; break;
+        case EVT::i64: CastType = "uint64_t"; break;
         }
         emitCode("SDValue " + TmpVar + 
                  " = CurDAG->getTargetConstant(((" + CastType +
@@ -921,7 +921,7 @@ public:
           emitCode("SDValue Tmp" + utostr(ResNo) +
                    " = CurDAG->getTargetConstant(" +
                    getQualifiedName(DI->getDef()) + "RegClassID, " +
-                   "MVT::i32);");
+                   "EVT::i32);");
           NodeOps.push_back("Tmp" + utostr(ResNo));
           return NodeOps;
         }
@@ -979,7 +979,7 @@ public:
 
       if (NodeHasOptInFlag) {
         emitCode("bool HasInFlag = "
-           "(N.getOperand(N.getNumOperands()-1).getValueType() == MVT::Flag);");
+           "(N.getOperand(N.getNumOperands()-1).getValueType() == EVT::Flag);");
       }
       if (IsVariadic)
         emitCode("SmallVector<SDValue, 8> Ops" + utostr(OpcNo) + ";");
@@ -987,8 +987,8 @@ public:
       // How many results is this pattern expected to produce?
       unsigned NumPatResults = 0;
       for (unsigned i = 0, e = Pattern->getExtTypes().size(); i != e; i++) {
-        MVT::SimpleValueType VT = Pattern->getTypeNum(i);
-        if (VT != MVT::isVoid && VT != MVT::Flag)
+        EVT::SimpleValueType VT = Pattern->getTypeNum(i);
+        if (VT != EVT::isVoid && VT != EVT::Flag)
           NumPatResults++;
       }
 
@@ -1007,7 +1007,7 @@ public:
         }
         emitCode("InChains.push_back(" + ChainName + ");");
         emitCode(ChainName + " = CurDAG->getNode(ISD::TokenFactor, "
-                 "N.getDebugLoc(), MVT::Other, "
+                 "N.getDebugLoc(), EVT::Other, "
                  "&InChains[0], InChains.size());");
         if (GenDebug) {
           emitCode("CurDAG->setSubgraphColor(" + ChainName +".getNode(), \"yellow\");");
@@ -1096,7 +1096,7 @@ public:
 
       // Output order: results, chain, flags
       // Result types.
-      if (NumResults > 0 && N->getTypeNum(0) != MVT::isVoid) {
+      if (NumResults > 0 && N->getTypeNum(0) != EVT::isVoid) {
         Code += ", VT" + utostr(VTNo);
         emitVT(getEnumName(N->getTypeNum(0)));
       }
@@ -1105,14 +1105,14 @@ public:
       for (unsigned i = 0; i < NumDstRegs; i++) {
         Record *RR = DstRegs[i];
         if (RR->isSubClassOf("Register")) {
-          MVT::SimpleValueType RVT = getRegisterValueType(RR, CGT);
+          EVT::SimpleValueType RVT = getRegisterValueType(RR, CGT);
           Code += ", " + getEnumName(RVT);
         }
       }
       if (NodeHasChain)
-        Code += ", MVT::Other";
+        Code += ", EVT::Other";
       if (NodeHasOutFlag)
-        Code += ", MVT::Flag";
+        Code += ", EVT::Flag";
 
       // Inputs.
       if (IsVariadic) {
@@ -1405,8 +1405,8 @@ private:
 
           Record *RR = DI->getDef();
           if (RR->isSubClassOf("Register")) {
-            MVT::SimpleValueType RVT = getRegisterValueType(RR, T);
-            if (RVT == MVT::Flag) {
+            EVT::SimpleValueType RVT = getRegisterValueType(RR, T);
+            if (RVT == EVT::Flag) {
               if (!InFlagDecled) {
                 emitCode("SDValue InFlag = " + RootName + utostr(OpNo) + ";");
                 InFlagDecled = true;
@@ -1707,7 +1707,7 @@ void DAGISelEmitter::EmitInstructionSelector(raw_ostream &OS) {
     assert(!PatternsOfOp.empty() && "No patterns but map has entry?");
 
     // Split them into groups by type.
-    std::map<MVT::SimpleValueType,
+    std::map<EVT::SimpleValueType,
              std::vector<const PatternToMatch*> > PatternsByType;
     for (unsigned i = 0, e = PatternsOfOp.size(); i != e; ++i) {
       const PatternToMatch *Pat = PatternsOfOp[i];
@@ -1715,11 +1715,11 @@ void DAGISelEmitter::EmitInstructionSelector(raw_ostream &OS) {
       PatternsByType[SrcPat->getTypeNum(0)].push_back(Pat);
     }
 
-    for (std::map<MVT::SimpleValueType,
+    for (std::map<EVT::SimpleValueType,
                   std::vector<const PatternToMatch*> >::iterator
            II = PatternsByType.begin(), EE = PatternsByType.end(); II != EE;
          ++II) {
-      MVT::SimpleValueType OpVT = II->first;
+      EVT::SimpleValueType OpVT = II->first;
       std::vector<const PatternToMatch*> &Patterns = II->second;
       typedef std::pair<unsigned, std::string> CodeLine;
       typedef std::vector<CodeLine> CodeList;
@@ -1776,7 +1776,7 @@ void DAGISelEmitter::EmitInstructionSelector(raw_ostream &OS) {
           CallerCode += ", " + TargetOpcodes[j];
         }
         for (unsigned j = 0, e = TargetVTs.size(); j != e; ++j) {
-          CalleeCode += ", MVT VT" + utostr(j);
+          CalleeCode += ", EVT VT" + utostr(j);
           CallerCode += ", " + TargetVTs[j];
         }
         for (std::set<std::string>::iterator
@@ -1839,16 +1839,16 @@ void DAGISelEmitter::EmitInstructionSelector(raw_ostream &OS) {
 
       // Print function.
       std::string OpVTStr;
-      if (OpVT == MVT::iPTR) {
+      if (OpVT == EVT::iPTR) {
         OpVTStr = "_iPTR";
-      } else if (OpVT == MVT::iPTRAny) {
+      } else if (OpVT == EVT::iPTRAny) {
         OpVTStr = "_iPTRAny";
-      } else if (OpVT == MVT::isVoid) {
+      } else if (OpVT == EVT::isVoid) {
         // Nodes with a void result actually have a first result type of either
         // Other (a chain) or Flag.  Since there is no one-to-one mapping from
         // void to this case, we handle it specially here.
       } else {
-        OpVTStr = "_" + getEnumName(OpVT).substr(5);  // Skip 'MVT::'
+        OpVTStr = "_" + getEnumName(OpVT).substr(5);  // Skip 'EVT::'
       }
       std::map<std::string, std::vector<std::string> >::iterator OpVTI =
         OpcodeVTMap.find(OpName);
@@ -1928,9 +1928,9 @@ void DAGISelEmitter::EmitInstructionSelector(raw_ostream &OS) {
      << "  std::vector<SDValue> Ops(N.getNode()->op_begin(), N.getNode()->op_end());\n"
      << "  SelectInlineAsmMemoryOperands(Ops);\n\n"
     
-     << "  std::vector<MVT> VTs;\n"
-     << "  VTs.push_back(MVT::Other);\n"
-     << "  VTs.push_back(MVT::Flag);\n"
+     << "  std::vector<EVT> VTs;\n"
+     << "  VTs.push_back(EVT::Other);\n"
+     << "  VTs.push_back(EVT::Flag);\n"
      << "  SDValue New = CurDAG->getNode(ISD::INLINEASM, N.getDebugLoc(), "
                  "VTs, &Ops[0], Ops.size());\n"
      << "  return New.getNode();\n"
@@ -1944,17 +1944,17 @@ void DAGISelEmitter::EmitInstructionSelector(raw_ostream &OS) {
   OS << "SDNode *Select_DBG_LABEL(const SDValue &N) {\n"
      << "  SDValue Chain = N.getOperand(0);\n"
      << "  unsigned C = cast<LabelSDNode>(N)->getLabelID();\n"
-     << "  SDValue Tmp = CurDAG->getTargetConstant(C, MVT::i32);\n"
+     << "  SDValue Tmp = CurDAG->getTargetConstant(C, EVT::i32);\n"
      << "  return CurDAG->SelectNodeTo(N.getNode(), TargetInstrInfo::DBG_LABEL,\n"
-     << "                              MVT::Other, Tmp, Chain);\n"
+     << "                              EVT::Other, Tmp, Chain);\n"
      << "}\n\n";
 
   OS << "SDNode *Select_EH_LABEL(const SDValue &N) {\n"
      << "  SDValue Chain = N.getOperand(0);\n"
      << "  unsigned C = cast<LabelSDNode>(N)->getLabelID();\n"
-     << "  SDValue Tmp = CurDAG->getTargetConstant(C, MVT::i32);\n"
+     << "  SDValue Tmp = CurDAG->getTargetConstant(C, EVT::i32);\n"
      << "  return CurDAG->SelectNodeTo(N.getNode(), TargetInstrInfo::EH_LABEL,\n"
-     << "                              MVT::Other, Tmp, Chain);\n"
+     << "                              EVT::Other, Tmp, Chain);\n"
      << "}\n\n";
 
   OS << "SDNode *Select_DECLARE(const SDValue &N) {\n"
@@ -1971,12 +1971,12 @@ void DAGISelEmitter::EmitInstructionSelector(raw_ostream &OS) {
      << "  SDValue Tmp2 = "
      << "CurDAG->getTargetGlobalAddress(GV, TLI.getPointerTy());\n"
      << "  return CurDAG->SelectNodeTo(N.getNode(), TargetInstrInfo::DECLARE,\n"
-     << "                              MVT::Other, Tmp1, Tmp2, Chain);\n"
+     << "                              EVT::Other, Tmp1, Tmp2, Chain);\n"
      << "}\n\n";
 
   OS << "// The main instruction selector code.\n"
      << "SDNode *SelectCode(SDValue N) {\n"
-     << "  MVT::SimpleValueType NVT = N.getNode()->getValueType(0).getSimpleVT();\n"
+     << "  EVT::SimpleValueType NVT = N.getNode()->getValueType(0).getSimpleVT();\n"
      << "  switch (N.getOpcode()) {\n"
      << "  default:\n"
      << "    assert(!N.isMachineOpcode() && \"Node already selected!\");\n"
@@ -2049,7 +2049,7 @@ void DAGISelEmitter::EmitInstructionSelector(raw_ostream &OS) {
         HasPtrPattern = true;
         continue;
       }
-      OS << "    case MVT::" << VTStr.substr(1) << ":\n"
+      OS << "    case EVT::" << VTStr.substr(1) << ":\n"
          << "      return Select_" << getLegalCName(OpName)
          << VTStr << "(N);\n";
     }
@@ -2091,7 +2091,7 @@ void DAGISelEmitter::EmitInstructionSelector(raw_ostream &OS) {
   OS << "void CannotYetSelectIntrinsic(SDValue N) DISABLE_INLINE {\n"
      << "  cerr << \"Cannot yet select: \";\n"
      << "  unsigned iid = cast<ConstantSDNode>(N.getOperand("
-     << "N.getOperand(0).getValueType() == MVT::Other))->getZExtValue();\n"
+     << "N.getOperand(0).getValueType() == EVT::Other))->getZExtValue();\n"
      << " llvm_report_error(\"Cannot yet select: intrinsic %\" +\n"
      << "Intrinsic::getName((Intrinsic::ID)iid));\n"
      << "}\n\n";

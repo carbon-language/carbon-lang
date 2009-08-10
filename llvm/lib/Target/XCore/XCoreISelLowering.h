@@ -129,7 +129,7 @@ namespace llvm {
     // Inline asm support
     std::vector<unsigned>
     getRegClassForInlineAsmConstraint(const std::string &Constraint,
-              MVT VT) const;
+              EVT VT) const;
   
     // Expand specifics
     SDValue ExpandADDSUB(SDNode *Op, SelectionDAG &DAG);
