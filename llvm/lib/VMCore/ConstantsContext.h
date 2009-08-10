@@ -446,7 +446,7 @@ struct ConstantCreator<ConstantAggregateZero, Type, ValType> {
 template<>
 struct ConstantCreator<MDNode, Type, std::vector<Value*> > {
   static MDNode *create(const Type* Ty, const std::vector<Value*> &V) {
-    return new MDNode(V.data(), V.size());
+    return new MDNode(&V[0], V.size());
   }
 };
 
