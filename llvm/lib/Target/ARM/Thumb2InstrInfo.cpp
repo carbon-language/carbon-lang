@@ -337,8 +337,7 @@ int llvm::rewriteT2FrameIndex(MachineInstr &MI, unsigned FrameRegIdx,
     bool isSP = FrameReg == ARM::SP;
     if (Offset == 0) {
       // Turn it into a move.
-      unsigned NewOpc = isSP ? ARM::tMOVgpr2gpr : ARM::t2MOVr;
-      MI.setDesc(TII.get(NewOpc));
+      MI.setDesc(TII.get(ARM::tMOVgpr2gpr));
       MI.getOperand(FrameRegIdx).ChangeToRegister(FrameReg, false);
       MI.RemoveOperand(FrameRegIdx+1);
       return 0;
