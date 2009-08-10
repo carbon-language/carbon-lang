@@ -1118,7 +1118,7 @@ class ASuI<bits<8> opcod1, bits<4> opcod2, bits<4> opcod3, dag oops, dag iops,
   let Inst{7-4}   = opcod3;
 }
 
-// Single precision, unary if no NEON
+// Single precision unary, if no NEON
 // Same as ASuI except not available if NEON is enabled
 class ASuIn<bits<8> opcod1, bits<4> opcod2, bits<4> opcod3, dag oops, dag iops,
             InstrItinClass itin,    string opc, string asm, list<dag> pattern>
@@ -1135,7 +1135,7 @@ class ASbI<bits<8> opcod, dag oops, dag iops, InstrItinClass itin,
   let Inst{11-8}  = 0b1010;
 }
 
-// Single precision, binary if no NEON
+// Single precision binary, if no NEON
 // Same as ASbI except not available if NEON is enabled
 class ASbIn<bits<8> opcod, dag oops, dag iops, InstrItinClass itin,
             string opc, string asm, list<dag> pattern>
@@ -1152,6 +1152,14 @@ class AVConv1I<bits<8> opcod1, bits<4> opcod2, bits<4> opcod3,
   let Inst{19-16} = opcod2;
   let Inst{11-8}  = opcod3;
   let Inst{6}     = 1;
+}
+
+// VFP conversion instructions, if no NEON
+class AVConv1In<bits<8> opcod1, bits<4> opcod2, bits<4> opcod3,
+                dag oops, dag iops, InstrItinClass itin,
+                string opc, string asm, list<dag> pattern>
+  : AVConv1I<opcod1, opcod2, opcod3, oops, iops, itin, opc, asm, pattern> {
+  list<Predicate> Predicates = [HasVFP2,DontUseNEONForFP];
 }
 
 class AVConvXI<bits<8> opcod1, bits<4> opcod2, dag oops, dag iops, Format f,

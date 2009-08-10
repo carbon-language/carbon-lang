@@ -263,7 +263,7 @@ def FSITOD : AVConv1I<0b11101011, 0b1000, 0b1011, (outs DPR:$dst), (ins SPR:$a),
   let Inst{7} = 1;
 }
 
-def FSITOS : AVConv1I<0b11101011, 0b1000, 0b1010, (outs SPR:$dst), (ins SPR:$a),
+def FSITOS : AVConv1In<0b11101011, 0b1000, 0b1010, (outs SPR:$dst),(ins SPR:$a),
                  IIC_fpALU, "fsitos", " $dst, $a",
                  [(set SPR:$dst, (arm_sitof SPR:$a))]> {
   let Inst{7} = 1;
@@ -273,7 +273,7 @@ def FUITOD : AVConv1I<0b11101011, 0b1000, 0b1011, (outs DPR:$dst), (ins SPR:$a),
                  IIC_fpALU, "fuitod", " $dst, $a",
                  [(set DPR:$dst, (arm_uitof SPR:$a))]>;
 
-def FUITOS : AVConv1I<0b11101011, 0b1000, 0b1010, (outs SPR:$dst), (ins SPR:$a),
+def FUITOS : AVConv1In<0b11101011, 0b1000, 0b1010, (outs SPR:$dst),(ins SPR:$a),
                  IIC_fpALU, "fuitos", " $dst, $a",
                  [(set SPR:$dst, (arm_uitof SPR:$a))]>;
 
@@ -287,8 +287,8 @@ def FTOSIZD : AVConv1I<0b11101011, 0b1101, 0b1011,
   let Inst{7} = 1; // Z bit
 }
 
-def FTOSIZS : AVConv1I<0b11101011, 0b1101, 0b1010,
-                       (outs SPR:$dst), (ins SPR:$a),
+def FTOSIZS : AVConv1In<0b11101011, 0b1101, 0b1010,
+                        (outs SPR:$dst), (ins SPR:$a),
                  IIC_fpALU, "ftosizs", " $dst, $a",
                  [(set SPR:$dst, (arm_ftosi SPR:$a))]> {
   let Inst{7} = 1; // Z bit
@@ -301,8 +301,8 @@ def FTOUIZD : AVConv1I<0b11101011, 0b1100, 0b1011,
   let Inst{7} = 1; // Z bit
 }
 
-def FTOUIZS : AVConv1I<0b11101011, 0b1100, 0b1010,
-                       (outs SPR:$dst), (ins SPR:$a),
+def FTOUIZS : AVConv1In<0b11101011, 0b1100, 0b1010,
+                        (outs SPR:$dst), (ins SPR:$a),
                  IIC_fpALU, "ftouizs", " $dst, $a",
                  [(set SPR:$dst, (arm_ftoui SPR:$a))]> {
   let Inst{7} = 1; // Z bit

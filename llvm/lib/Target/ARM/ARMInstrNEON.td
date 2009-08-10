@@ -324,6 +324,20 @@ class N2VQ<bits<2> op24_23, bits<2> op21_20, bits<2> op19_18,
         (ins QPR:$src), NoItinerary, !strconcat(OpcodeStr, "\t$dst, $src"), "",
         [(set QPR:$dst, (ResTy (OpNode (OpTy QPR:$src))))]>;
 
+// Basic 2-register operations, scalar single-precision.
+class N2VDs<bits<2> op24_23, bits<2> op21_20, bits<2> op19_18,
+            bits<2> op17_16, bits<5> op11_7, bit op4, string OpcodeStr,
+            ValueType ResTy, ValueType OpTy, SDNode OpNode>
+  : N2V<op24_23, op21_20, op19_18, op17_16, op11_7, 0, op4,
+        (outs DPR_VFP2:$dst), (ins DPR_VFP2:$src),
+        NoItinerary, !strconcat(OpcodeStr, "\t$dst, $src"), "", []>;
+
+class N2VDsPat<SDNode OpNode, ValueType ResTy, ValueType OpTy, NeonI Inst>
+  : NEONFPPat<(ResTy (OpNode SPR:$a)),
+       (EXTRACT_SUBREG
+           (Inst (INSERT_SUBREG (OpTy (IMPLICIT_DEF)), SPR:$a, arm_ssubreg_0)),
+        arm_ssubreg_0)>;
+
 // Basic 2-register intrinsics, both double- and quad-register.
 class N2VDInt<bits<2> op24_23, bits<2> op21_20, bits<2> op19_18,
               bits<2> op17_16, bits<5> op11_7, bit op4, string OpcodeStr,
@@ -338,7 +352,7 @@ class N2VQInt<bits<2> op24_23, bits<2> op21_20, bits<2> op19_18,
         (ins QPR:$src), NoItinerary, !strconcat(OpcodeStr, "\t$dst, $src"), "",
         [(set QPR:$dst, (ResTy (IntOp (OpTy QPR:$src))))]>;
 
-// Basic 2-register operations, scalar single-precision
+// Basic 2-register intrinsics, scalar single-precision
 class N2VDInts<bits<2> op24_23, bits<2> op21_20, bits<2> op19_18,
               bits<2> op17_16, bits<5> op11_7, bit op4, string OpcodeStr,
               ValueType ResTy, ValueType OpTy, Intrinsic IntOp>
@@ -1981,6 +1995,11 @@ let neverHasSideEffects = 1 in
 def VADDfd_sfp : N3VDs<0, 0, 0b00, 0b1101, 0, "vadd.f32", v2f32, v2f32, fadd,1>;
 def : N3VDsPat<fadd, VADDfd_sfp>;
 
+// Vector Sub Operations used for single-precision FP
+let neverHasSideEffects = 1 in
+def VSUBfd_sfp : N3VDs<0, 0, 0b10, 0b1101, 0, "vsub.f32", v2f32, v2f32, fsub,0>;
+def : N3VDsPat<fsub, VSUBfd_sfp>;
+
 // Vector Multiply Operations used for single-precision FP
 let neverHasSideEffects = 1 in
 def VMULfd_sfp : N3VDs<1, 0, 0b00, 0b1101, 1, "vmul.f32", v2f32, v2f32, fmul,1>;
@@ -1989,30 +2008,45 @@ def : N3VDsPat<fmul, VMULfd_sfp>;
 // Vector Multiply-Accumulate/Subtract used for single-precision FP
 let neverHasSideEffects = 1 in
 def VMLAfd_sfp : N3VDMulOps<0, 0, 0b00, 0b1101, 1, "vmla.f32", v2f32,fmul,fadd>;
-def : N3VDMulOpsPat<fmul, fadd, VMLAfd>;
+def : N3VDMulOpsPat<fmul, fadd, VMLAfd_sfp>;
 
 let neverHasSideEffects = 1 in
 def VMLSfd_sfp : N3VDMulOps<0, 0, 0b10, 0b1101, 1, "vmls.f32", v2f32,fmul,fsub>;
-def : N3VDMulOpsPat<fmul, fsub, VMLSfd>;
+def : N3VDMulOpsPat<fmul, fsub, VMLSfd_sfp>;
 
-// Vector Sub Operations used for single-precision FP
-let neverHasSideEffects = 1 in
-def VSUBfd_sfp : N3VDs<0, 0, 0b10, 0b1101, 0, "vsub.f32", v2f32, v2f32, fsub,0>;
-def : N3VDsPat<fsub, VSUBfd_sfp>;
-
-// Vector Absolute for single-precision FP
+// Vector Absolute used for single-precision FP
 let neverHasSideEffects = 1 in
 def  VABSfd_sfp : N2VDInts<0b11, 0b11, 0b10, 0b01, 0b01110, 0, "vabs.f32",
                            v2f32, v2f32, int_arm_neon_vabsf>;
 def : N2VDIntsPat<fabs, VABSfd_sfp>;
 
-// Vector Negate for single-precision FP
-
+// Vector Negate used for single-precision FP
 let neverHasSideEffects = 1 in
 def  VNEGf32d_sfp : N2V<0b11, 0b11, 0b10, 0b01, 0b01111, 0, 0,
-                    (outs DPR_VFP2:$dst), (ins DPR_VFP2:$src), NoItinerary,
-                    "vneg.f32\t$dst, $src", "", []>;
+                        (outs DPR_VFP2:$dst), (ins DPR_VFP2:$src), NoItinerary,
+                        "vneg.f32\t$dst, $src", "", []>;
 def : N2VDIntsPat<fneg, VNEGf32d_sfp>;
+
+// Vector Convert between single-precision FP and integer
+let neverHasSideEffects = 1 in
+def  VCVTf2sd_sfp : N2VDs<0b11, 0b11, 0b10, 0b11, 0b01110, 0, "vcvt.s32.f32",
+                          v2i32, v2f32, fp_to_sint>;
+def : N2VDsPat<arm_ftosi, f32, v2f32, VCVTf2sd_sfp>;
+
+let neverHasSideEffects = 1 in
+def  VCVTf2ud_sfp : N2VDs<0b11, 0b11, 0b10, 0b11, 0b01111, 0, "vcvt.u32.f32",
+                          v2i32, v2f32, fp_to_uint>;
+def : N2VDsPat<arm_ftoui, f32, v2f32, VCVTf2ud_sfp>;
+
+let neverHasSideEffects = 1 in
+def  VCVTs2fd_sfp : N2VD<0b11, 0b11, 0b10, 0b11, 0b01100, 0, "vcvt.f32.s32",
+                         v2f32, v2i32, sint_to_fp>;
+def : N2VDsPat<arm_sitof, f32, v2i32, VCVTs2fd_sfp>;
+
+let neverHasSideEffects = 1 in
+def  VCVTu2fd_sfp : N2VD<0b11, 0b11, 0b10, 0b11, 0b01101, 0, "vcvt.f32.u32",
+                         v2f32, v2i32, uint_to_fp>;
+def : N2VDsPat<arm_uitof, f32, v2i32, VCVTu2fd_sfp>;
 
 //===----------------------------------------------------------------------===//
 // Non-Instruction Patterns
