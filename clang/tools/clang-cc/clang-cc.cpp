@@ -58,6 +58,7 @@
 #include "llvm/ADT/STLExtras.h"
 #include "llvm/Config/config.h"
 #include "llvm/Support/CommandLine.h"
+#include "llvm/Support/ErrorHandling.h"
 #include "llvm/Support/ManagedStatic.h"
 #include "llvm/Support/MemoryBuffer.h"
 #include "llvm/Support/PluginLoader.h"
@@ -2130,6 +2131,15 @@ static void ProcessInputFile(Preprocessor &PP, PreprocessorFactory &PPF,
 static llvm::cl::list<std::string>
 InputFilenames(llvm::cl::Positional, llvm::cl::desc("<input files>"));
 
+static void LLVMErrorHandler(void *UserData, const std::string &Message) {
+  Diagnostic &Diags = *static_cast<Diagnostic*>(UserData);
+
+  Diags.Report(FullSourceLoc(), diag::err_fe_error_backend) << Message;
+
+  // We cannot recover from llvm errors.
+  exit(1);
+}
+
 int main(int argc, char **argv) {
   llvm::sys::PrintStackTraceOnErrorSignal();
   llvm::PrettyStackTraceProgram X(argc, argv);
@@ -2207,6 +2217,11 @@ int main(int argc, char **argv) {
   if (ProcessWarningOptions(Diags, OptWarnings, OptPedantic, OptPedanticErrors,
                             OptNoWarnings))
     return 1;
+
+  // Set an error handler, so that any LLVM backend diagnostics go through our
+  // error handler.
+  llvm::llvm_install_error_handler(LLVMErrorHandler,
+                                   static_cast<void*>(&Diags));
 
   // -I- is a deprecated GCC feature, scan for it and reject it.
   for (unsigned i = 0, e = I_dirs.size(); i != e; ++i) {
