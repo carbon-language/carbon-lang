@@ -3,7 +3,7 @@
 ; 171 = 0x000000ab
 define i32 @f1(i32 %a) {
 ; CHECK: f1:
-; CHECK: sub.w r0, r0, #171
+; CHECK: subs r0, #171
     %tmp = sub i32 %a, 171
     ret i32 %tmp
 }
@@ -43,7 +43,7 @@ define i32 @f5(i32 %a) {
 ; Don't change this to an add.
 define i32 @f6(i32 %a) {
 ; CHECK: f6:
-; CHECK: sub.w r0, r0, #1
+; CHECK: subs r0, #1
     %tmp = sub i32 %a, 1
     ret i32 %tmp
 }

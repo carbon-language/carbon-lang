@@ -1,6 +1,8 @@
-; RUN: llvm-as < %s | llc -march=thumb -mattr=+thumb2 | grep {ror\\.w\\W*r\[0-9\]*,\\W*r\[0-9\]*,\\W*r\[0-9\]*} | count 1
+; RUN: llvm-as < %s | llc -march=thumb -mattr=+thumb2 | FileCheck %s
 
 define i32 @f1(i32 %a, i32 %b) {
+; CHECK: f1:
+; CHECK: rors r0, r1
     %db = sub i32 32, %b
     %l8 = shl i32 %a, %b
     %r8 = lshr i32 %a, %db
