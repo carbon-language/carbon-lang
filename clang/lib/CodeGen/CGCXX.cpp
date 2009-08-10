@@ -855,7 +855,11 @@ void CodeGenFunction::SynthesizeCXXCopyConstructor(const CXXConstructorDecl *CD,
                               0 /*ClassDecl*/, FieldClassDecl, FieldType);
       continue;
     }
-    // FIXME. Do a built-in assignment of scalar data members.
+    // Do a built-in assignment of scalar data members.
+    LValue LHS = EmitLValueForField(LoadOfThis, *Field, false, 0);
+    LValue RHS = EmitLValueForField(LoadOfSrc, *Field, false, 0);
+    RValue RVRHS = EmitLoadOfLValue(RHS, FieldType);
+    EmitStoreThroughLValue(RVRHS, LHS, FieldType);
   }
   FinishFunction();
 }  

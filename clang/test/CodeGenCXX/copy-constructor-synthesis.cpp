@@ -26,12 +26,21 @@ struct P {
 
 
 struct X  : M, N, P { // ...
-	X(){}
+	X() : f1(1.0), d1(2.0), i1(3), name("HELLO"), bf1(0xff), bf2(0xabcd) {}
         P p0;
 	void pr() { printf("iM = %d iN = %d, m1.iM = %d\n", iM, iN, m1.iM); 
-                    printf("im = %d p0.iP = %d, p1.iP = %d\n", iP, p0.iP, p1.iP); }
+                    printf("im = %d p0.iP = %d, p1.iP = %d\n", iP, p0.iP, p1.iP); 
+                    printf("f1 = %f  d1 = %f  i1 = %d name(%s) \n", f1, d1, i1, name);
+		    printf("bf1 = %x  bf2 = %x\n", bf1, bf2);
+                   }
 	M m1;
         P p1;
+	float f1;
+	double d1;
+	int i1;
+	const char *name;
+	unsigned bf1 : 8;
+        unsigned bf2 : 16;
 };
 
 int main()
