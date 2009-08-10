@@ -290,14 +290,25 @@ def unknown;
 /// match a subset of some other class, in which case the super class field
 /// should be defined.
 class AsmOperandClass {
-  /// The name to use for this class, this should be usable as an enum value,
-  /// and will be used to generated the names for the methods to test whether a
-  /// particular target specific operand matches this class, and the method to
-  /// convert an operand of this class into an MCInst operand.
+  /// The name to use for this class, which should be usable as an enum value.
   string Name = ?;
 
   /// The super class of this operand.
   AsmOperandClass SuperClass = ?;
+
+  /// The name of the method on the target specific operand to call to test
+  /// whether the operand is an instance of this class. If not set, this will
+  /// default to "isFoo", where Foo is the AsmOperandClass name. The method
+  /// signature should be:
+  ///   bool isFoo() const;
+  string PredicateMethod = ?;
+
+  /// The name of the method on the target specific operand to call to add the
+  /// target specific operand to an MCInst. If not set, this will default to
+  /// "addFooOperands", where Foo is the AsmOperandClass name. The method
+  /// signature should be:
+  ///   void addFooOperands(MCInst &Inst, unsigned N) const;
+  string RenderMethod = ?;
 }
 
 def ImmAsmOperand : AsmOperandClass {

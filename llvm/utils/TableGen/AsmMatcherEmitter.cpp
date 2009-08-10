@@ -589,8 +589,27 @@ void AsmMatcherInfo::BuildInfo(CodeGenTarget &Target) {
     CI->ClassName = (*it)->getValueAsString("Name");
     CI->Name = "MCK_" + CI->ClassName;
     CI->ValueName = (*it)->getName();
-    CI->PredicateMethod = "is" + CI->ClassName;
-    CI->RenderMethod = "add" + CI->ClassName + "Operands";
+
+    // Get or construct the predicate method name.
+    Init *PMName = (*it)->getValueInit("PredicateMethod");
+    if (StringInit *SI = dynamic_cast<StringInit*>(PMName)) {
+      CI->PredicateMethod = SI->getValue();
+    } else {
+      assert(dynamic_cast<UnsetInit*>(PMName) && 
+             "Unexpected PredicateMethod field!");
+      CI->PredicateMethod = "is" + CI->ClassName;
+    }
+
+    // Get or construct the render method name.
+    Init *RMName = (*it)->getValueInit("RenderMethod");
+    if (StringInit *SI = dynamic_cast<StringInit*>(RMName)) {
+      CI->RenderMethod = SI->getValue();
+    } else {
+      assert(dynamic_cast<UnsetInit*>(RMName) &&
+             "Unexpected RenderMethod field!");
+      CI->RenderMethod = "add" + CI->ClassName + "Operands";
+    }
+
     AsmOperandClasses[*it] = CI;
     Classes.push_back(CI);
   }

@@ -154,23 +154,23 @@ struct X86Operand {
 
   bool isReg() const { return Kind == Register; }
 
-  void addRegOperands(MCInst &Inst, unsigned N) {
+  void addRegOperands(MCInst &Inst, unsigned N) const {
     assert(N == 1 && "Invalid number of operands!");
     Inst.addOperand(MCOperand::CreateReg(getReg()));
   }
 
-  void addImmOperands(MCInst &Inst, unsigned N) {
+  void addImmOperands(MCInst &Inst, unsigned N) const {
     assert(N == 1 && "Invalid number of operands!");
     Inst.addOperand(MCOperand::CreateMCValue(getImm()));
   }
 
-  void addImmSExt8Operands(MCInst &Inst, unsigned N) {
+  void addImmSExt8Operands(MCInst &Inst, unsigned N) const {
     // FIXME: Support user customization of the render method.
     assert(N == 1 && "Invalid number of operands!");
     Inst.addOperand(MCOperand::CreateMCValue(getImm()));
   }
 
-  void addMemOperands(MCInst &Inst, unsigned N) {
+  void addMemOperands(MCInst &Inst, unsigned N) const {
     assert((N == 4 || N == 5) && "Invalid number of operands!");
 
     Inst.addOperand(MCOperand::CreateReg(getMemBaseReg()));
