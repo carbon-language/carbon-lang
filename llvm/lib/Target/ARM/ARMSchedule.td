@@ -10,8 +10,9 @@
 //===----------------------------------------------------------------------===//
 // Functional units across ARM processors
 //
-def FU_Pipe0   : FuncUnit; // pipeline 0 issue
-def FU_Pipe1   : FuncUnit; // pipeline 1 issue
+def FU_Issue   : FuncUnit; // issue
+def FU_Pipe0   : FuncUnit; // pipeline 0
+def FU_Pipe1   : FuncUnit; // pipeline 1
 def FU_LdSt0   : FuncUnit; // pipeline 0 load/store
 def FU_LdSt1   : FuncUnit; // pipeline 1 load/store
 
@@ -19,9 +20,11 @@ def FU_LdSt1   : FuncUnit; // pipeline 1 load/store
 // Instruction Itinerary classes used for ARM
 //
 def IIC_iALU    : InstrItinClass;
+def IIC_iMPY    : InstrItinClass;
 def IIC_iLoad   : InstrItinClass;
 def IIC_iStore  : InstrItinClass;
 def IIC_fpALU   : InstrItinClass;
+def IIC_fpMPY   : InstrItinClass;
 def IIC_fpLoad  : InstrItinClass;
 def IIC_fpStore : InstrItinClass;
 def IIC_Br      : InstrItinClass;
@@ -31,12 +34,14 @@ def IIC_Br      : InstrItinClass;
 
 def GenericItineraries : ProcessorItineraries<[
   InstrItinData<IIC_iALU    , [InstrStage<1, [FU_Pipe0]>]>,
+  InstrItinData<IIC_iMPY    , [InstrStage<1, [FU_Pipe0]>]>,
   InstrItinData<IIC_iLoad   , [InstrStage<1, [FU_Pipe0]>, InstrStage<1, [FU_LdSt0]>]>,
-  InstrItinData<IIC_fpLoad  , [InstrStage<1, [FU_Pipe0]>, InstrStage<1, [FU_LdSt0]>]>,
   InstrItinData<IIC_iStore  , [InstrStage<1, [FU_Pipe0]>]>,
-  InstrItinData<IIC_fpStore , [InstrStage<1, [FU_Pipe0]>]>,
+  InstrItinData<IIC_Br      , [InstrStage<1, [FU_Pipe0]>]>,
   InstrItinData<IIC_fpALU   , [InstrStage<1, [FU_Pipe0]>]>,
-  InstrItinData<IIC_Br      , [InstrStage<1, [FU_Pipe0]>]>
+  InstrItinData<IIC_fpMPY   , [InstrStage<1, [FU_Pipe0]>]>,
+  InstrItinData<IIC_fpLoad  , [InstrStage<1, [FU_Pipe0]>, InstrStage<1, [FU_LdSt0]>]>,
+  InstrItinData<IIC_fpStore , [InstrStage<1, [FU_Pipe0]>]>
 ]>;
 
 

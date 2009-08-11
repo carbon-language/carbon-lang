@@ -39,7 +39,7 @@ ExactHazardRecognizer::ExactHazardRecognizer(const InstrItineraryData &LItinData
 
       unsigned ItinDepth = 0;
       for (; IS != E; ++IS)
-        ItinDepth += IS->Cycles;
+        ItinDepth += std::max(1U, IS->Cycles);
 
       ScoreboardDepth = std::max(ScoreboardDepth, ItinDepth);
     }
@@ -89,9 +89,13 @@ ExactHazardRecognizer::HazardType ExactHazardRecognizer::getHazardType(SUnit *SU
   unsigned idx = SU->getInstr()->getDesc().getSchedClass();
   for (const InstrStage *IS = ItinData.begin(idx), *E = ItinData.end(idx);
        IS != E; ++IS) {
+    // If the stages cycles are 0, then we must have the FU free in
+    // the current cycle, but we don't advance the cycle time .
+    unsigned StageCycles = std::max(1U, IS->Cycles);
+
     // We must find one of the stage's units free for every cycle the
     // stage is occupied.
-    for (unsigned int i = 0; i < IS->Cycles; ++i) {
+    for (unsigned int i = 0; i < StageCycles; ++i) {
       assert((cycle < ScoreboardDepth) && "Scoreboard depth exceeded!");
 
       unsigned index = getFutureIndex(cycle);
@@ -103,7 +107,8 @@ ExactHazardRecognizer::HazardType ExactHazardRecognizer::getHazardType(SUnit *SU
         return Hazard;
       }
 
-      ++cycle;
+      if (IS->Cycles > 0)
+        ++cycle;
     }
   }
 
@@ -118,9 +123,13 @@ void ExactHazardRecognizer::EmitInstruction(SUnit *SU) {
   unsigned idx = SU->getInstr()->getDesc().getSchedClass();
   for (const InstrStage *IS = ItinData.begin(idx), *E = ItinData.end(idx);
        IS != E; ++IS) {
+    // If the stages cycles are 0, then we must reserve the FU in the
+    // current cycle, but we don't advance the cycle time .
+    unsigned StageCycles = std::max(1U, IS->Cycles);
+
     // We must reserve one of the stage's units for every cycle the
     // stage is occupied.
-    for (unsigned int i = 0; i < IS->Cycles; ++i) {
+    for (unsigned int i = 0; i < StageCycles; ++i) {
       assert((cycle < ScoreboardDepth) && "Scoreboard depth exceeded!");
 
       unsigned index = getFutureIndex(cycle);
@@ -135,7 +144,9 @@ void ExactHazardRecognizer::EmitInstruction(SUnit *SU) {
 
       assert(freeUnit && "No function unit available!");
       Scoreboard[index] |= freeUnit;
-      ++cycle;
+      
+      if (IS->Cycles > 0)
+        ++cycle;
     }
   }
 

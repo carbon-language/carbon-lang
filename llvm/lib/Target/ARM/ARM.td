@@ -114,7 +114,7 @@ def : Processor<"arm1156t2f-s",     V6Itineraries,
 // V7 Processors.
 def : Processor<"cortex-a8",        CortexA8Itineraries,
                 [ArchV7A, FeatureThumb2, FeatureNEON, FeatureNEONFP]>;
-def : Processor<"cortex-a9",        V7Itineraries,
+def : Processor<"cortex-a9",        CortexA9Itineraries,
                 [ArchV7A, FeatureThumb2, FeatureNEON]>;
 
 //===----------------------------------------------------------------------===//
