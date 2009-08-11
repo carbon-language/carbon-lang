@@ -22,29 +22,19 @@
 
 namespace llvm {
 
-  extern const char *const x86_asm_table[];
-
-  template <class BaseTAI>
-  struct X86TargetAsmInfo : public BaseTAI {
-    explicit X86TargetAsmInfo(const TargetMachine &TM) {
-      BaseTAI::AsmTransCBE = x86_asm_table;
-      BaseTAI::AssemblerDialect =TM.getSubtarget<X86Subtarget>().getAsmFlavor();
-    }
-  };
-
-  EXTERN_TEMPLATE_INSTANTIATION(class X86TargetAsmInfo<TargetAsmInfo>);
-
-  struct X86DarwinTargetAsmInfo : public X86TargetAsmInfo<DarwinTargetAsmInfo> {
+  struct X86DarwinTargetAsmInfo : public DarwinTargetAsmInfo {
     explicit X86DarwinTargetAsmInfo(const X86TargetMachine &TM);
   };
 
-  struct X86ELFTargetAsmInfo : public X86TargetAsmInfo<TargetAsmInfo> {
+  struct X86ELFTargetAsmInfo : public TargetAsmInfo {
     explicit X86ELFTargetAsmInfo(const X86TargetMachine &TM);
   };
 
-  typedef X86TargetAsmInfo<COFFTargetAsmInfo> X86COFFTargetAsmInfo;
+  struct X86COFFTargetAsmInfo : public TargetAsmInfo {
+    explicit X86COFFTargetAsmInfo(const X86TargetMachine &TM);
+  };
 
-  struct X86WinTargetAsmInfo : public X86TargetAsmInfo<TargetAsmInfo> {
+  struct X86WinTargetAsmInfo : public TargetAsmInfo {
     explicit X86WinTargetAsmInfo(const X86TargetMachine &TM);
   };
 

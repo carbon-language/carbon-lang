@@ -26,7 +26,7 @@
 using namespace llvm;
 using namespace llvm::dwarf;
 
-const char *const llvm::x86_asm_table[] = {
+static const char *const x86_asm_table[] = {
   "{si}", "S",
   "{di}", "D",
   "{ax}", "a",
@@ -38,8 +38,10 @@ const char *const llvm::x86_asm_table[] = {
   "{cc}", "cc",
   0,0};
 
-X86DarwinTargetAsmInfo::X86DarwinTargetAsmInfo(const X86TargetMachine &TM):
-  X86TargetAsmInfo<DarwinTargetAsmInfo>(TM) {
+X86DarwinTargetAsmInfo::X86DarwinTargetAsmInfo(const X86TargetMachine &TM) {
+  AsmTransCBE = x86_asm_table;
+  AssemblerDialect = TM.getSubtarget<X86Subtarget>().getAsmFlavor();
+    
   const X86Subtarget *Subtarget = &TM.getSubtarget<X86Subtarget>();
   bool is64Bit = Subtarget->is64Bit();
 
@@ -83,8 +85,9 @@ X86DarwinTargetAsmInfo::X86DarwinTargetAsmInfo(const X86TargetMachine &TM):
   AbsoluteEHSectionOffsets = false;
 }
 
-X86ELFTargetAsmInfo::X86ELFTargetAsmInfo(const X86TargetMachine &TM) :
-  X86TargetAsmInfo<TargetAsmInfo>(TM) {
+X86ELFTargetAsmInfo::X86ELFTargetAsmInfo(const X86TargetMachine &TM) {
+  AsmTransCBE = x86_asm_table;
+  AssemblerDialect = TM.getSubtarget<X86Subtarget>().getAsmFlavor();
 
   PrivateGlobalPrefix = ".L";
   WeakRefDirective = "\t.weak\t";
@@ -107,9 +110,17 @@ X86ELFTargetAsmInfo::X86ELFTargetAsmInfo(const X86TargetMachine &TM) :
     NonexecutableStackDirective = "\t.section\t.note.GNU-stack,\"\",@progbits";
 }
 
+X86COFFTargetAsmInfo::X86COFFTargetAsmInfo(const X86TargetMachine &TM) {
+  AsmTransCBE = x86_asm_table;
+  AssemblerDialect = TM.getSubtarget<X86Subtarget>().getAsmFlavor();
 
-X86WinTargetAsmInfo::X86WinTargetAsmInfo(const X86TargetMachine &TM):
-  X86TargetAsmInfo<TargetAsmInfo>(TM) {
+}
+
+
+X86WinTargetAsmInfo::X86WinTargetAsmInfo(const X86TargetMachine &TM) {
+  AsmTransCBE = x86_asm_table;
+  AssemblerDialect = TM.getSubtarget<X86Subtarget>().getAsmFlavor();
+
   GlobalPrefix = "_";
   CommentString = ";";
 
@@ -131,6 +142,3 @@ X86WinTargetAsmInfo::X86WinTargetAsmInfo(const X86TargetMachine &TM):
 
   AlignmentIsInBytes = true;
 }
-
-// Instantiate default implementation.
-TEMPLATE_INSTANTIATION(class X86TargetAsmInfo<TargetAsmInfo>);
