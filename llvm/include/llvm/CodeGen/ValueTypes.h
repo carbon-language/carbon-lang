@@ -334,9 +334,9 @@ namespace llvm {
     const Type *LLVMTy;
 
   public:
-    EVT() : V((MVT::SimpleValueType)(MVT::LastSimpleValueType+1)) {}
-    EVT(MVT::SimpleValueType SVT) : V(SVT) { }
-    EVT(MVT S) : V(S) {}
+    EVT() : V((MVT::SimpleValueType)(MVT::LastSimpleValueType+1)), LLVMTy(0) {}
+    EVT(MVT::SimpleValueType SVT) : V(SVT), LLVMTy(0) { }
+    EVT(MVT S) : V(S), LLVMTy(0) {}
 
     bool operator==(const EVT VT) const {
       if (V.SimpleTy == VT.V.SimpleTy) {

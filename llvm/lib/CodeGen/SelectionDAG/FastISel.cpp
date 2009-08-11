@@ -174,14 +174,12 @@ unsigned FastISel::getRegForGEPIndex(Value *Idx) {
     return 0;
 
   // If the index is smaller or larger than intptr_t, truncate or extend it.
-  EVT PtrVT = TLI.getPointerTy();
+  MVT PtrVT = TLI.getPointerTy();
   EVT IdxVT = EVT::getEVT(Idx->getType(), /*HandleUnknown=*/false);
   if (IdxVT.bitsLT(PtrVT))
-    IdxN = FastEmit_r(IdxVT.getSimpleVT(), PtrVT.getSimpleVT(),
-                      ISD::SIGN_EXTEND, IdxN);
+    IdxN = FastEmit_r(IdxVT.getSimpleVT(), PtrVT, ISD::SIGN_EXTEND, IdxN);
   else if (IdxVT.bitsGT(PtrVT))
-    IdxN = FastEmit_r(IdxVT.getSimpleVT(), PtrVT.getSimpleVT(),
-                      ISD::TRUNCATE, IdxN);
+    IdxN = FastEmit_r(IdxVT.getSimpleVT(), PtrVT, ISD::TRUNCATE, IdxN);
   return IdxN;
 }
 

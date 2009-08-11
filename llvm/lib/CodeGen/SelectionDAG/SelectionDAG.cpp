@@ -1357,7 +1357,7 @@ SDValue SelectionDAG::getMemOperand(const MachineMemOperand &MO) {
 /// the target's desired shift amount type.
 SDValue SelectionDAG::getShiftAmountOperand(SDValue Op) {
   EVT OpTy = Op.getValueType();
-  EVT ShTy = TLI.getShiftAmountTy();
+  MVT ShTy = TLI.getShiftAmountTy();
   if (OpTy == ShTy || OpTy.isVector()) return Op;
 
   ISD::NodeType Opcode = OpTy.bitsGT(ShTy) ?  ISD::TRUNCATE : ISD::ZERO_EXTEND;
@@ -3042,7 +3042,7 @@ static SDValue getMemsetStringVal(EVT VT, DebugLoc dl, SelectionDAG &DAG,
     if (VT.isInteger())
       return DAG.getConstant(0, VT);
     unsigned NumElts = VT.getVectorNumElements();
-    EVT EltVT = (VT.getVectorElementType() == MVT::f32) ? MVT::i32 : MVT::i64;
+    MVT EltVT = (VT.getVectorElementType() == MVT::f32) ? MVT::i32 : MVT::i64;
     return DAG.getNode(ISD::BIT_CONVERT, dl, VT,
                        DAG.getConstant(0, EVT::getVectorVT(EltVT, NumElts)));
   }
@@ -3144,9 +3144,9 @@ bool MeetsMaxMemopRequirement(std::vector<EVT> &MemOps,
       }
     }
 
-    EVT LVT = MVT::i64;
+    MVT LVT = MVT::i64;
     while (!TLI.isTypeLegal(LVT))
-      LVT = (MVT::SimpleValueType)(LVT.getSimpleVT().SimpleTy - 1);
+      LVT = (MVT::SimpleValueType)(LVT.SimpleTy - 1);
     assert(LVT.isInteger());
 
     if (VT.bitsGT(LVT))

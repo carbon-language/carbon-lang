@@ -3889,11 +3889,11 @@ static SDValue getVZextMovL(EVT VT, EVT OpVT,
     if (!LD) {
       // movssrr and movsdrr do not clear top bits. Try to use movd, movq
       // instead.
-      EVT EVT = (OpVT == MVT::v2f64) ? MVT::i64 : MVT::i32;
-      if ((EVT != MVT::i64 || Subtarget->is64Bit()) &&
+      MVT ExtVT = (OpVT == MVT::v2f64) ? MVT::i64 : MVT::i32;
+      if ((ExtVT.SimpleTy != MVT::i64 || Subtarget->is64Bit()) &&
           SrcOp.getOpcode() == ISD::SCALAR_TO_VECTOR &&
           SrcOp.getOperand(0).getOpcode() == ISD::BIT_CONVERT &&
-          SrcOp.getOperand(0).getOperand(0).getValueType() == EVT) {
+          SrcOp.getOperand(0).getOperand(0).getValueType() == ExtVT) {
         // PR2108
         OpVT = (OpVT == MVT::v2f64) ? MVT::v2i64 : MVT::v4i32;
         return DAG.getNode(ISD::BIT_CONVERT, dl, VT,
