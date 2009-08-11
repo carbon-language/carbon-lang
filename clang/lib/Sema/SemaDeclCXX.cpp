@@ -3320,68 +3320,98 @@ Sema::DeclPtrTy Sema::ActOnFriendDecl(Scope *S,
   assert(DS.getStorageClassSpec() == DeclSpec::SCS_unspecified);
 
   // If there's no declarator, then this can only be a friend class
-  // declaration (or else it's just invalid).
+  // declaration (or else it's just syntactically invalid).
   if (!D) {
+    SourceLocation Loc = DS.getSourceRange().getBegin();
 
-    // C++ [class.friend]p2:
-    //   An elaborated-type-specifier shall be used in a friend declaration
-    //   for a class.*
-    //   * The class-key of the elaborated-type-specifier is required.
-    CXXRecordDecl *RD = 0;
+    QualType T;
+    DeclContext *DC;
 
-    switch (DS.getTypeSpecType()) {
-    case DeclSpec::TST_class:
-    case DeclSpec::TST_struct:
-    case DeclSpec::TST_union:
-      RD = dyn_cast_or_null<CXXRecordDecl>(static_cast<Decl*>(DS.getTypeRep()));
-      if (!RD) return DeclPtrTy();
-      break;
+    // In C++0x, we just accept any old type.
+    if (getLangOptions().CPlusPlus0x) {
+      bool invalid = false;
+      QualType T = ConvertDeclSpecToType(DS, Loc, invalid);
+      if (invalid)
+        return DeclPtrTy();
 
-    case DeclSpec::TST_typename:
-      if (const RecordType *RT = 
-          ((const Type*) DS.getTypeRep())->getAs<RecordType>())
-        RD = dyn_cast<CXXRecordDecl>(RT->getDecl());
-      // fallthrough
-    default:
-      if (RD) {
-        Diag(DS.getFriendSpecLoc(), diag::err_unelaborated_friend_type)
-          << (RD->isUnion())
-          << CodeModificationHint::CreateInsertion(DS.getTypeSpecTypeLoc(),
-                                      RD->isUnion() ? " union" : " class");
-        return DeclPtrTy::make(RD);
+      // The semantic context in which to create the decl.  If it's not
+      // a record decl (or we don't yet know if it is), create it in the
+      // current context.
+      DC = CurContext;
+      if (const RecordType *RT = T->getAs<RecordType>())
+        DC = RT->getDecl()->getDeclContext();
+
+    // The C++98 rules are somewhat more complex.
+    } else {
+      // C++ [class.friend]p2:
+      //   An elaborated-type-specifier shall be used in a friend declaration
+      //   for a class.*
+      //   * The class-key of the elaborated-type-specifier is required.
+      CXXRecordDecl *RD = 0;
+    
+      switch (DS.getTypeSpecType()) {
+      case DeclSpec::TST_class:
+      case DeclSpec::TST_struct:
+      case DeclSpec::TST_union:
+        RD = dyn_cast_or_null<CXXRecordDecl>((Decl*) DS.getTypeRep());
+        if (!RD) return DeclPtrTy();
+        break;
+        
+      case DeclSpec::TST_typename:
+        if (const RecordType *RT = 
+            ((const Type*) DS.getTypeRep())->getAs<RecordType>())
+          RD = dyn_cast<CXXRecordDecl>(RT->getDecl());
+        // fallthrough
+      default:
+        if (RD) {
+          Diag(DS.getFriendSpecLoc(), diag::err_unelaborated_friend_type)
+            << (RD->isUnion())
+            << CodeModificationHint::CreateInsertion(DS.getTypeSpecTypeLoc(),
+                                         RD->isUnion() ? " union" : " class");
+          return DeclPtrTy::make(RD);
+        }
+
+        Diag(DS.getFriendSpecLoc(), diag::err_unexpected_friend)
+          << DS.getSourceRange();
+        return DeclPtrTy();
       }
 
-      Diag(DS.getFriendSpecLoc(), diag::err_unexpected_friend)
-        << DS.getSourceRange();
-      return DeclPtrTy();
+      // The record declaration we get from friend declarations is not
+      // canonicalized; see ActOnTag.
+      assert(RD);
+
+      // C++ [class.friend]p2: A class shall not be defined inside
+      //   a friend declaration.
+      if (RD->isDefinition())
+        Diag(DS.getFriendSpecLoc(), diag::err_friend_decl_defines_class)
+          << RD->getSourceRange();
+
+      // C++98 [class.friend]p1: A friend of a class is a function
+      //   or class that is not a member of the class . . .
+      // But that's a silly restriction which nobody implements for
+      // inner classes, and C++0x removes it anyway, so we only report
+      // this (as a warning) if we're being pedantic.
+      // 
+      // Also, definitions currently get treated in a way that causes
+      // this error, so only report it if we didn't see a definition.
+      else if (RD->getDeclContext() == CurContext &&
+               !getLangOptions().CPlusPlus0x)
+        Diag(DS.getFriendSpecLoc(), diag::ext_friend_inner_class);
+      
+      T = QualType(RD->getTypeForDecl(), 0);
+      DC = RD->getDeclContext();
     }
 
-    // The record declaration we get from friend declarations is not
-    // canonicalized; see ActOnTag.
-    assert(RD);
+    FriendClassDecl *FCD = FriendClassDecl::Create(Context, DC, Loc, T,
+                                                   DS.getFriendSpecLoc());
+    FCD->setLexicalDeclContext(CurContext);
 
-    // C++ [class.friend]p2: A class shall not be defined inside
-    //   a friend declaration.
-    if (RD->isDefinition())
-      Diag(DS.getFriendSpecLoc(), diag::err_friend_decl_defines_class)
-        << RD->getSourceRange();
+    if (CurContext->isDependentContext())
+      CurContext->addHiddenDecl(FCD);
+    else
+      CurContext->addDecl(FCD);
 
-    // C++98 [class.friend]p1: A friend of a class is a function
-    //   or class that is not a member of the class . . .
-    // But that's a silly restriction which nobody implements for
-    // inner classes, and C++0x removes it anyway, so we only report
-    // this 
-    // But no-one implements it that way, and C++0x removes this
-    // restriction, so we only report it (as a warning) if we're being
-    // pedantic.  Ideally this would real -pedantic mode 
-    // 
-    // Also, definitions currently get treated in a way that causes
-    // this error, so only report it if we didn't see a definition.
-    else if (RD->getDeclContext() == CurContext &&
-             !getLangOptions().CPlusPlus0x)
-      Diag(DS.getFriendSpecLoc(), diag::ext_friend_inner_class);
-
-    return DeclPtrTy::make(RD);
+    return DeclPtrTy::make(FCD);
   }
 
   // We have a declarator.

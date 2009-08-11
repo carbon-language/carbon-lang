@@ -1273,6 +1273,42 @@ public:
   static bool classof(const FriendFunctionDecl *D) { return true; }
 };
   
+/// FriendClassDecl - Represents the declaration of a friend class.
+class FriendClassDecl : public Decl {
+  // The friended type.  In C++0x, this can be an arbitrary type,
+  // which we simply ignore if it's not a record type.
+  const QualType FriendType;
+
+  // Location of the 'friend' specifier.
+  const SourceLocation FriendLoc;
+
+  FriendClassDecl(DeclContext *DC, SourceLocation L,
+                  QualType T, SourceLocation FriendL)
+    : Decl(FriendClass, DC, L),
+      FriendType(T),
+      FriendLoc(FriendL)
+  {}
+
+public:
+  static FriendClassDecl *Create(ASTContext &C, DeclContext *DC,
+                                 SourceLocation L, QualType T,
+                                 SourceLocation FriendL);
+
+  QualType getFriendType() const {
+    return FriendType;
+  }
+
+  SourceLocation getFriendLoc() const {
+    return FriendLoc;
+  }
+
+  // Implement isa/cast/dyncast/etc.
+  static bool classof(const Decl *D) { 
+    return D->getKind() == FriendClass;
+  }
+  static bool classof(const FriendClassDecl *D) { return true; }
+};
+  
 /// LinkageSpecDecl - This represents a linkage specification.  For example:
 ///   extern "C" void foo();
 ///

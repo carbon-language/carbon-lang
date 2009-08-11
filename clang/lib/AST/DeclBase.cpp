@@ -199,6 +199,7 @@ unsigned Decl::getIdentifierNamespaceForKind(Kind DeclKind) {
     case ObjCCompatibleAlias:
       return IDNS_Ordinary;
 
+    case FriendClass:
     case FriendFunction:
       return IDNS_Friend;
       
