@@ -16,7 +16,6 @@
 
 #include "llvm/CodeGen/MachineConstantPool.h"
 #include <iosfwd>
-#include <stdlib.h>
 
 namespace llvm {
 
@@ -55,7 +54,7 @@ public:
   ARMConstantPoolValue(GlobalValue *GV, ARMCP::ARMCPKind Kind,
                        const char *Modifier);
   ARMConstantPoolValue();
-  ~ARMConstantPoolValue() {free((void*)S);}
+  ~ARMConstantPoolValue();
 
 
   GlobalValue *getGV() const { return GV; }

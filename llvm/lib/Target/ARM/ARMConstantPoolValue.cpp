@@ -17,6 +17,7 @@
 #include "llvm/Type.h"
 #include "llvm/Support/Streams.h"
 #include "llvm/Support/raw_ostream.h"
+#include <cstdlib>
 using namespace llvm;
 
 ARMConstantPoolValue::ARMConstantPoolValue(GlobalValue *gv, unsigned id,
@@ -63,6 +64,10 @@ int ARMConstantPoolValue::getExistingMachineCPValue(MachineConstantPool *CP,
   }
 
   return -1;
+}
+
+ARMConstantPoolValue::~ARMConstantPoolValue(void) {
+  free((void*)S);
 }
 
 void
