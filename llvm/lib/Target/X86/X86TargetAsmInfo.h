@@ -30,7 +30,7 @@ namespace llvm {
     explicit X86ELFTargetAsmInfo(const X86TargetMachine &TM);
   };
 
-  struct X86COFFTargetAsmInfo : public TargetAsmInfo {
+  struct X86COFFTargetAsmInfo : public COFFTargetAsmInfo {
     explicit X86COFFTargetAsmInfo(const X86TargetMachine &TM);
   };
 
