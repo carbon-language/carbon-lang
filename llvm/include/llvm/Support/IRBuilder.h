@@ -48,7 +48,9 @@ public:
   IRBuilder(LLVMContext &C, const T& F) :
     Context(C), Folder(F) { ClearInsertionPoint(); }
   
-  IRBuilder(LLVMContext &C) : Context(C), Folder(C) { ClearInsertionPoint(); }
+  explicit IRBuilder(LLVMContext &C) : Context(C), Folder(C) {
+    ClearInsertionPoint();
+  }
   
   explicit IRBuilder(BasicBlock *TheBB, const T& F)
       : Context(TheBB->getContext()), Folder(F) {
