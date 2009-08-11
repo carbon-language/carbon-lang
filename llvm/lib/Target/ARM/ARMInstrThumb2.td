@@ -1064,6 +1064,38 @@ let isCall = 1,
 }
 
 //===----------------------------------------------------------------------===//
+// SJLJ Exception handling intrinsics
+//   eh_sjlj_setjmp() is a three instruction sequence to store the return 
+//   address and save #0 in R0 for the non-longjmp case.
+//   Since by its nature we may be coming from some other function to get
+//   here, and we're using the stack frame for the containing function to
+//   save/restore registers, we can't keep anything live in regs across
+//   the eh_sjlj_setjmp(), else it will almost certainly have been tromped upon
+//   when we get here from a longjmp(). We force everthing out of registers
+//   except for our own input by listing the relevant registers in Defs. By
+//   doing so, we also cause the prologue/epilogue code to actively preserve
+//   all of the callee-saved resgisters, which is exactly what we want.
+let Defs = 
+  [ R0,  R1,  R3,  R4,  R5,  R6,  R7,  R8,  R9,  R10, R11, R12, LR,
+    D0,  D2,  D3,  D4,  D5,  D6,  D7,  D8,  D9,  D10, D11, D12, D13, D14, D15,
+    D16, D17, D18, D19, D20, D21, D22, D23, D24, D25, D26, D27, D28, D29, D30,
+    D31 ] in {
+  def t2Int_eh_sjlj_setjmp : Thumb2XI<(outs), (ins GPR:$src),
+                               AddrModeNone, SizeSpecial, NoItinerary,
+                               "str.w sp, [$src, #+8] @ eh_setjmp begin\n"
+                               "\tadr ip, 0f\n"
+                               "\torr ip, #1\n"
+                               "\tstr.w ip, [$src, #+4]\n"
+                               "\tmovs r0, #0\n"
+                               "\tb 1f\n"
+                               "0:\tmovs r0, #1 @ eh_setjmp end\n"
+                               "1:\n", "",
+                               [(set R0, (ARMeh_sjlj_setjmp GPR:$src))]>;
+}
+
+
+
+//===----------------------------------------------------------------------===//
 // Control-Flow Instructions
 //
 
