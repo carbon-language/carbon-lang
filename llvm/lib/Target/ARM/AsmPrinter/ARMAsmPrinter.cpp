@@ -849,14 +849,13 @@ void ARMAsmPrinter::printT2AddrModeSoRegOperand(const MachineInstr *MI,
 
   O << "[" << TRI->getAsmName(MO1.getReg());
 
-  if (MO2.getReg()) {
-    O << ", +" << TRI->getAsmName(MO2.getReg());
+  assert(MO2.getReg() && "Invalid so_reg load / store address!");
+  O << ", +" << TRI->getAsmName(MO2.getReg());
 
-    unsigned ShAmt = MO3.getImm();
-    if (ShAmt) {
-      assert(ShAmt <= 3 && "Not a valid Thumb2 addressing mode!");
-      O << ", lsl #" << ShAmt;
-    }
+  unsigned ShAmt = MO3.getImm();
+  if (ShAmt) {
+    assert(ShAmt <= 3 && "Not a valid Thumb2 addressing mode!");
+    O << ", lsl #" << ShAmt;
   }
   O << "]";
 }

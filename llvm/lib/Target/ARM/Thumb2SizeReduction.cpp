@@ -24,6 +24,7 @@ using namespace llvm;
 
 STATISTIC(NumNarrows,  "Number of 32-bit instrs reduced to 16-bit ones");
 STATISTIC(Num2Addrs,   "Number of 32-bit instrs reduced to 2addr 16-bit ones");
+STATISTIC(NumLdSts,    "Number of 32-bit load / store reduced to 16-bit ones");
 
 static cl::opt<int> ReduceLimit("t2-reduce-limit", cl::init(-1), cl::Hidden);
 
@@ -83,7 +84,24 @@ namespace {
     { ARM::t2SXTHr, ARM::tSXTH,   0,             0,   0,    1,   0,  1,0, 0 },
     { ARM::t2TSTrr, ARM::tTST,    0,             0,   0,    1,   0,  1,0, 0 },
     { ARM::t2UXTBr, ARM::tUXTB,   0,             0,   0,    1,   0,  1,0, 0 },
-    { ARM::t2UXTHr, ARM::tUXTH,   0,             0,   0,    1,   0,  1,0, 0 }
+    { ARM::t2UXTHr, ARM::tUXTH,   0,             0,   0,    1,   0,  1,0, 0 },
+
+    // FIXME: Clean this up after splitting each Thumb load / store opcode
+    // into multiple ones.
+    { ARM::t2LDRi12,ARM::tLDR,    0,             5,   0,    1,   0,  0,0, 1 },
+    { ARM::t2LDRs,  ARM::tLDR,    0,             0,   0,    1,   0,  0,0, 1 },
+    { ARM::t2LDRBi12,ARM::tLDRB,  0,             5,   0,    1,   0,  0,0, 1 },
+    { ARM::t2LDRBs, ARM::tLDRB,   0,             0,   0,    1,   0,  0,0, 1 },
+    { ARM::t2LDRHi12,ARM::tLDRH,  0,             5,   0,    1,   0,  0,0, 1 },
+    { ARM::t2LDRHs, ARM::tLDRH,   0,             0,   0,    1,   0,  0,0, 1 },
+    { ARM::t2LDRSBs,ARM::tLDR,    0,             0,   0,    1,   0,  0,0, 1 },
+    { ARM::t2LDRSHs,ARM::tLDRSH,  0,             0,   0,    1,   0,  0,0, 1 },
+    { ARM::t2STRi12,ARM::tSTR,    0,             5,   0,    1,   0,  0,0, 1 },
+    { ARM::t2STRs,  ARM::tSTR,    0,             0,   0,    1,   0,  0,0, 1 },
+    { ARM::t2STRBi12,ARM::tSTRB,  0,             5,   0,    1,   0,  0,0, 1 },
+    { ARM::t2STRBs, ARM::tSTRB,   0,             0,   0,    1,   0,  0,0, 1 },
+    { ARM::t2STRHi12,ARM::tSTRH,  0,             5,   0,    1,   0,  0,0, 1 },
+    { ARM::t2STRHs, ARM::tSTRH,   0,             0,   0,    1,   0,  0,0, 1 }
   };
 
   class VISIBILITY_HIDDEN Thumb2SizeReduce : public MachineFunctionPass {
@@ -102,6 +120,12 @@ namespace {
   private:
     /// ReduceOpcodeMap - Maps wide opcode to index of entry in ReduceTable.
     DenseMap<unsigned, unsigned> ReduceOpcodeMap;
+
+    bool ReduceLoadStore(MachineBasicBlock &MBB, MachineInstr *MI,
+                         const ReduceEntry &Entry);
+
+    bool ReduceSpecial(MachineBasicBlock &MBB, MachineInstr *MI,
+                       const ReduceEntry &Entry, bool LiveCPSR);
 
     /// ReduceTo2Addr - Reduce a 32-bit instruction to a 16-bit two-address
     /// instruction.
@@ -159,6 +183,114 @@ static bool VerifyPredAndCC(MachineInstr *MI, const ReduceEntry &Entry,
   }
 
   return true;
+}
+
+bool
+Thumb2SizeReduce::ReduceLoadStore(MachineBasicBlock &MBB, MachineInstr *MI,
+                                  const ReduceEntry &Entry) {
+  unsigned Scale = 1;
+  bool HasImmOffset = false;
+  bool HasShift = false;
+  switch (Entry.WideOpc) {
+  default:
+    llvm_unreachable("Unexpected Thumb2 load / store opcode!");
+  case ARM::t2LDRi12:
+  case ARM::t2STRi12:
+    Scale = 4;
+    HasImmOffset = true;
+    break;
+  case ARM::t2LDRBi12:
+  case ARM::t2STRBi12:
+    HasImmOffset = true;
+    break;
+  case ARM::t2LDRHi12:
+  case ARM::t2STRHi12:
+    Scale = 2;
+    HasImmOffset = true;
+    break;
+  case ARM::t2LDRs:
+  case ARM::t2LDRBs:
+  case ARM::t2LDRHs:
+  case ARM::t2LDRSBs:
+  case ARM::t2LDRSHs:
+  case ARM::t2STRs:
+  case ARM::t2STRBs:
+  case ARM::t2STRHs:
+    HasShift = true;
+    break;
+  }
+
+  unsigned OffsetReg = 0;
+  bool OffsetKill = false;
+  if (HasShift) {
+    OffsetReg  = MI->getOperand(2).getReg();
+    OffsetKill = MI->getOperand(2).isKill();
+    if (MI->getOperand(3).getImm())
+      // Thumb1 addressing mode doesn't support shift.
+      return false;
+  }
+
+  unsigned OffsetImm = 0;
+  if (HasImmOffset) {
+    OffsetImm = MI->getOperand(2).getImm();
+    unsigned MaxOffset = ((1 << Entry.Imm1Limit) - 1) * Scale;
+    if ((OffsetImm & (Scale-1)) || OffsetImm > MaxOffset)
+      // Make sure the immediate field fits.
+      return false;
+  }
+
+  // Add the 16-bit load / store instruction.
+  // FIXME: Thumb1 addressing mode encode both immediate and register offset.
+  DebugLoc dl = MI->getDebugLoc();
+  MachineInstrBuilder MIB = BuildMI(MBB, *MI, dl, TII->get(Entry.NarrowOpc1))
+    .addOperand(MI->getOperand(0))
+    .addOperand(MI->getOperand(1));
+  if (Entry.NarrowOpc1 != ARM::tLDRSB && Entry.NarrowOpc1 != ARM::tLDRSH) {
+    // tLDRSB and tLDRSH do not have an immediate offset field. On the other
+    // hand, it must have an offset register.
+    assert(OffsetReg && "Invalid so_reg load / store address!");
+    // FIXME: Remove this special case.
+    MIB.addImm(OffsetImm/Scale);
+  }
+  MIB.addReg(OffsetReg, getKillRegState(OffsetKill));
+
+  // Transfer the rest of operands.
+  unsigned OpNum = HasShift ? 4 : 3;
+  for (unsigned e = MI->getNumOperands(); OpNum != e; ++OpNum)
+    MIB.addOperand(MI->getOperand(OpNum));
+
+  DOUT << "Converted 32-bit: " << *MI << "       to 16-bit: " << *MIB;
+
+  MBB.erase(MI);
+  ++NumLdSts;
+  return true;
+}
+
+static bool VerifyLowRegs(MachineInstr *MI, const TargetInstrDesc &TID) {
+  for (unsigned i = 0, e = TID.getNumOperands(); i != e; ++i) {
+    const MachineOperand &MO = MI->getOperand(i);
+    if (!MO.isReg())
+      continue;
+    unsigned Reg = MO.getReg();
+    if (Reg == 0 || Reg == ARM::CPSR)
+      continue;
+    if (!isARMLowRegister(Reg))
+      return false;
+  }
+  return true;
+}
+
+bool
+Thumb2SizeReduce::ReduceSpecial(MachineBasicBlock &MBB, MachineInstr *MI,
+                                const ReduceEntry &Entry,
+                                bool LiveCPSR) {
+  const TargetInstrDesc &TID = MI->getDesc();
+  if (Entry.LowRegs1 && !VerifyLowRegs(MI, TID))
+    return false;
+
+  if (TID.mayLoad() || TID.mayStore())
+    return ReduceLoadStore(MBB, MI, Entry);
+  return false;
 }
 
 bool
@@ -353,8 +485,14 @@ bool Thumb2SizeReduce::ReduceMBB(MachineBasicBlock &MBB) {
     if (OPI != ReduceOpcodeMap.end()) {
       const ReduceEntry &Entry = ReduceTable[OPI->second];
       // Ignore "special" cases for now.
-      if (Entry.Special)
+      if (Entry.Special) {
+        if (ReduceSpecial(MBB, MI, Entry, LiveCPSR)) {
+          Modified = true;
+          MachineBasicBlock::iterator I = prior(NextMII);
+          MI = &*I;
+        }
         goto ProcessNext;
+      }
 
       // Try to transform to a 16-bit two-address instruction.
       if (Entry.NarrowOpc2 && ReduceTo2Addr(MBB, MI, Entry, LiveCPSR)) {

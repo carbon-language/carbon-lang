@@ -607,18 +607,29 @@ bool ARMDAGToDAGISel::SelectT2AddrModeImm12(SDValue Op, SDValue N,
                                             SDValue &Base, SDValue &OffImm) {
   // Match simple R + imm12 operands.
 
-  // Match frame index...
-  if ((N.getOpcode() != ISD::ADD) && (N.getOpcode() != ISD::SUB)) {
+  // Base only.
+  if (N.getOpcode() != ISD::ADD && N.getOpcode() != ISD::SUB) {
     if (N.getOpcode() == ISD::FrameIndex) {
+      // Match frame index...
       int FI = cast<FrameIndexSDNode>(N)->getIndex();
       Base = CurDAG->getTargetFrameIndex(FI, TLI.getPointerTy());
       OffImm  = CurDAG->getTargetConstant(0, EVT::i32);
       return true;
-    }
-    return false;
+    } else if (N.getOpcode() == ARMISD::Wrapper) {
+      Base = N.getOperand(0);
+      if (Base.getOpcode() == ISD::TargetConstantPool)
+        return false;  // We want to select t2LDRpci instead.
+    } else
+      Base = N;
+    OffImm  = CurDAG->getTargetConstant(0, EVT::i32);
+    return true;
   }
 
   if (ConstantSDNode *RHS = dyn_cast<ConstantSDNode>(N.getOperand(1))) {
+    if (SelectT2AddrModeImm8(Op, N, Base, OffImm))
+      // Let t2LDRi8 handle (R - imm8).
+      return false;
+
     int RHSC = (int)RHS->getZExtValue();
     if (N.getOpcode() == ISD::SUB)
       RHSC = -RHSC;
@@ -634,20 +645,23 @@ bool ARMDAGToDAGISel::SelectT2AddrModeImm12(SDValue Op, SDValue N,
     }
   }
 
-  return false;
+  // Base only.
+  Base = N;
+  OffImm  = CurDAG->getTargetConstant(0, EVT::i32);
+  return true;
 }
 
 bool ARMDAGToDAGISel::SelectT2AddrModeImm8(SDValue Op, SDValue N,
                                            SDValue &Base, SDValue &OffImm) {
   // Match simple R - imm8 operands.
-  if ((N.getOpcode() == ISD::ADD) || (N.getOpcode() == ISD::SUB)) {
+  if (N.getOpcode() == ISD::ADD || N.getOpcode() == ISD::SUB) {
     if (ConstantSDNode *RHS = dyn_cast<ConstantSDNode>(N.getOperand(1))) {
       int RHSC = (int)RHS->getSExtValue();
       if (N.getOpcode() == ISD::SUB)
         RHSC = -RHSC;
       
-      if ((RHSC >= -255) && (RHSC <= 0)) { // 8 bits (always negative)
-        Base   = N.getOperand(0);
+      if ((RHSC >= -255) && (RHSC < 0)) { // 8 bits (always negative)
+        Base = N.getOperand(0);
         if (Base.getOpcode() == ISD::FrameIndex) {
           int FI = cast<FrameIndexSDNode>(Base)->getIndex();
           Base = CurDAG->getTargetFrameIndex(FI, TLI.getPointerTy());
@@ -709,39 +723,18 @@ bool ARMDAGToDAGISel::SelectT2AddrModeImm8s4(SDValue Op, SDValue N,
 bool ARMDAGToDAGISel::SelectT2AddrModeSoReg(SDValue Op, SDValue N,
                                             SDValue &Base,
                                             SDValue &OffReg, SDValue &ShImm) {
-  // Base only.
-  if (N.getOpcode() != ISD::ADD && N.getOpcode() != ISD::SUB) {
-    Base = N;
-    if (N.getOpcode() == ISD::FrameIndex) {
-      return false;  // we want to select t2LDRri12 instead
-    } else if (N.getOpcode() == ARMISD::Wrapper) {
-      Base = N.getOperand(0);
-      if (Base.getOpcode() == ISD::TargetConstantPool)
-        return false;  // We want to select t2LDRpci instead.
-    }
-    OffReg = CurDAG->getRegister(0, EVT::i32);
-    ShImm  = CurDAG->getTargetConstant(0, EVT::i32);
-    return true;
-  }
+  // (R - imm8) should be handled by t2LDRi8. The rest are handled by t2LDRi12.
+  if (N.getOpcode() != ISD::ADD)
+    return false;
 
-  // Leave (R +/- imm) for other address modes... unless they can't
-  // handle them
-  if (dyn_cast<ConstantSDNode>(N.getOperand(1)) != NULL) {
-    SDValue OffImm; 
-    if (SelectT2AddrModeImm12(Op, N, Base, OffImm) ||
-        SelectT2AddrModeImm8 (Op, N, Base, OffImm))
+  // Leave (R + imm12) for t2LDRi12, (R - imm8) for t2LDRi8.
+  if (ConstantSDNode *RHS = dyn_cast<ConstantSDNode>(N.getOperand(1))) {
+    int RHSC = (int)RHS->getZExtValue();
+    if (RHSC >= 0 && RHSC < 0x1000) // 12 bits (unsigned)
+      return false;
+    else if (RHSC < 0 && RHSC >= -255) // 8 bits
       return false;
   }
-
-  // Thumb2 does not support (R - R) or (R - (R << [1,2,3])).
-  if (N.getOpcode() == ISD::SUB) {
-    Base = N;
-    OffReg = CurDAG->getRegister(0, EVT::i32);
-    ShImm  = CurDAG->getTargetConstant(0, EVT::i32);
-    return true;
-  }
-
-  assert(N.getOpcode() == ISD::ADD);
 
   // Look for (R + R) or (R + (R << [1,2,3])).
   unsigned ShAmt = 0;
