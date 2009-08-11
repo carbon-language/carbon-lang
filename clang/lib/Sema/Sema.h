@@ -2036,7 +2036,8 @@ public:
                                                  ExprArg AssertMessageExpr);
   
   virtual DeclPtrTy ActOnFriendDecl(Scope *S,
-                    llvm::PointerUnion<const DeclSpec*,Declarator*> D);
+                          llvm::PointerUnion<const DeclSpec*,Declarator*> D,
+                                    bool IsDefinition);
 
   QualType CheckConstructorDeclarator(Declarator &D, QualType R,
                                       FunctionDecl::StorageClass& SC);

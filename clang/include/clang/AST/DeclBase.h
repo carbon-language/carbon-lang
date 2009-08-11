@@ -827,6 +827,14 @@ public:
   /// semantic context via makeDeclVisibleInContext.
   void addDecl(Decl *D);
 
+  /// @brief Add the declaration D to this context without modifying
+  /// any lookup tables.
+  ///
+  /// This is useful for some operations in dependent contexts where
+  /// the semantic context might not be dependent;  this basically
+  /// only happens with friends.
+  void addHiddenDecl(Decl *D);
+
   /// lookup_iterator - An iterator that provides access to the results
   /// of looking up a name within this context.
   typedef NamedDecl **lookup_iterator;

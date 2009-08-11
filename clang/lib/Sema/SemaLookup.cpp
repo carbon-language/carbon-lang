@@ -1756,28 +1756,17 @@ void Sema::ArgumentDependentLookup(DeclarationName Name,
     //        associated classes are visible within their respective
     //        namespaces even if they are not visible during an ordinary
     //        lookup (11.4).
-    //
-    // We implement the second clause in the loop below.
     DeclContext::lookup_iterator I, E;
-    for (llvm::tie(I, E) = (*NS)->lookup(Name); I != E; ++I)
-      CollectFunctionDecl(Functions, *I);
-  }
-
-  // Look for friend function declarations in associated classes
-  // which name functions in associated namespaces.
-  for (AssociatedClassSet::iterator AC = AssociatedClasses.begin(),
-                                 ACEnd = AssociatedClasses.end();
-       AC != ACEnd; ++AC) {
-    DeclContext::lookup_iterator I, E;
-    for (llvm::tie(I, E) = (*AC)->lookup(Name); I != E; ++I) {
+    for (llvm::tie(I, E) = (*NS)->lookup(Name); I != E; ++I) {
       Decl *D = *I;
-      if (!D->isInIdentifierNamespace(Decl::IDNS_Friend))
-        continue;
-
-      DeclContext *DC = D->getDeclContext();
-      if (!AssociatedNamespaces.count(DC))
-        continue;
-
+      // Only count friend declarations which were declared in
+      // associated classes.
+      if (D->isInIdentifierNamespace(Decl::IDNS_Friend)) {
+        DeclContext *LexDC = D->getLexicalDeclContext();
+        if (!AssociatedClasses.count(cast<CXXRecordDecl>(LexDC)))
+          continue;
+      }
+      
       CollectFunctionDecl(Functions, D);
     }
   }

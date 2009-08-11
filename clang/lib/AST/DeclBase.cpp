@@ -198,6 +198,9 @@ unsigned Decl::getIdentifierNamespaceForKind(Kind DeclKind) {
     case ObjCProperty:
     case ObjCCompatibleAlias:
       return IDNS_Ordinary;
+
+    case FriendFunction:
+      return IDNS_Friend;
       
     case ObjCProtocol:
       return IDNS_ObjCProtocol;
@@ -583,7 +586,7 @@ bool DeclContext::decls_empty() const {
   return !FirstDecl;
 }
 
-void DeclContext::addDecl(Decl *D) {
+void DeclContext::addHiddenDecl(Decl *D) {
   assert(D->getLexicalDeclContext() == this &&
          "Decl inserted into wrong lexical context");
   assert(!D->getNextDeclInContext() && D != LastDecl && 
@@ -595,6 +598,10 @@ void DeclContext::addDecl(Decl *D) {
   } else {
     FirstDecl = LastDecl = D;
   }
+}
+
+void DeclContext::addDecl(Decl *D) {
+  addHiddenDecl(D);
 
   if (NamedDecl *ND = dyn_cast<NamedDecl>(D))
     ND->getDeclContext()->makeDeclVisibleInContext(ND);
@@ -608,9 +615,12 @@ void DeclContext::buildLookup(DeclContext *DCtx) {
     for (decl_iterator D = DCtx->decls_begin(), 
                     DEnd = DCtx->decls_end(); 
          D != DEnd; ++D) {
-      // Insert this declaration into the lookup structure
+      // Insert this declaration into the lookup structure, but only
+      // if it's semantically in its decl context.  During non-lazy
+      // lookup building, this is implicitly enforced by addDecl.
       if (NamedDecl *ND = dyn_cast<NamedDecl>(*D))
-        makeDeclVisibleInContextImpl(ND);
+        if (D->getDeclContext() == DCtx)
+          makeDeclVisibleInContextImpl(ND);
 
       // If this declaration is itself a transparent declaration context,
       // add its members (recursively).

@@ -29,7 +29,7 @@ Parser::ParseCXXInlineMethodDef(AccessSpecifier AS, Declarator &D) {
 
   DeclPtrTy FnD;
   if (D.getDeclSpec().isFriendSpecified())
-    FnD = Actions.ActOnFriendDecl(CurScope, &D);
+    FnD = Actions.ActOnFriendDecl(CurScope, &D, /*IsDefinition*/ true);
   else
     FnD = Actions.ActOnCXXMemberDeclarator(CurScope, AS, D, 0, 0);
 

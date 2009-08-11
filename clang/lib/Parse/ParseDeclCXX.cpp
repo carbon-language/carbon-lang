@@ -954,7 +954,7 @@ void Parser::ParseCXXClassMemberDeclaration(AccessSpecifier AS) {
     ConsumeToken();
 
     if (DS.isFriendSpecified())
-      Actions.ActOnFriendDecl(CurScope, &DS);
+      Actions.ActOnFriendDecl(CurScope, &DS, /*IsDefinition*/ false);
     else
       Actions.ParsedFreeStandingDeclSpec(CurScope, DS);
 
@@ -1060,7 +1060,8 @@ void Parser::ParseCXXClassMemberDeclaration(AccessSpecifier AS) {
     DeclPtrTy ThisDecl;
     if (DS.isFriendSpecified()) {
       // TODO: handle initializers, bitfields, 'delete'
-      ThisDecl = Actions.ActOnFriendDecl(CurScope, &DeclaratorInfo);
+      ThisDecl = Actions.ActOnFriendDecl(CurScope, &DeclaratorInfo,
+                                         /*IsDefinition*/ false);
     } else
       ThisDecl = Actions.ActOnCXXMemberDeclarator(CurScope, AS,
                                                   DeclaratorInfo,

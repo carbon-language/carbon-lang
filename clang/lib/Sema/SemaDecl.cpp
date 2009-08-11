@@ -2353,6 +2353,7 @@ Sema::ActOnFunctionDeclarator(Scope* S, Declarator& D, DeclContext* DC,
   if (D.getDeclSpec().isThreadSpecified())
     Diag(D.getDeclSpec().getThreadSpecLoc(), diag::err_invalid_thread);
 
+  bool isFriend = D.getDeclSpec().isFriendSpecified();
   bool isInline = D.getDeclSpec().isInlineSpecified();
   bool isVirtual = D.getDeclSpec().isVirtualSpecified();
   bool isExplicit = D.getDeclSpec().isExplicitSpecified();
@@ -2382,7 +2383,20 @@ Sema::ActOnFunctionDeclarator(Scope* S, Declarator& D, DeclContext* DC,
   
   bool isVirtualOkay = false;
   FunctionDecl *NewFD;
-  if (D.getKind() == Declarator::DK_Constructor) {
+  if (isFriend) {
+    // DC is the namespace in which the function is being declared.
+    assert(DC->isFileContext() || PrevDecl);
+
+    // C++ [class.friend]p5
+    //   A function can be defined in a friend declaration of a
+    //   class . . . . Such a function is implicitly inline.
+    isInline |= IsFunctionDefinition;
+
+    NewFD = FriendFunctionDecl::Create(Context, DC,
+                                       D.getIdentifierLoc(), Name, R,
+                                       isInline,
+                                       D.getDeclSpec().getFriendSpecLoc());
+  } else if (D.getKind() == Declarator::DK_Constructor) {
     // This is a C++ constructor declaration.
     assert(DC->isRecord() &&
            "Constructors can only be declared in a member context");
@@ -2643,7 +2657,7 @@ Sema::ActOnFunctionDeclarator(Scope* S, Declarator& D, DeclContext* DC,
   if (D.getCXXScopeSpec().isSet() && !NewFD->isInvalidDecl()) {
     // An out-of-line member function declaration must also be a
     // definition (C++ [dcl.meaning]p1).
-    if (!IsFunctionDefinition) {
+    if (!IsFunctionDefinition && !isFriend) {
       Diag(NewFD->getLocation(), diag::err_out_of_line_declaration)
         << D.getCXXScopeSpec().getRange();
       NewFD->setInvalidDecl();
@@ -4142,7 +4156,7 @@ Sema::DeclPtrTy Sema::ActOnTag(Scope *S, unsigned TagSpec, TagUseKind TUK,
     //   If a friend declaration in a non-local class first declares a
     //   class or function, the friend class or function is a member of
     //   the innermost enclosing namespace.
-    while (!SearchDC->isNamespace() && !SearchDC->isTranslationUnit())
+    while (!SearchDC->isFileContext())
       SearchDC = SearchDC->getParent();
 
     // The entity of a decl scope is a DeclContext; see PushDeclContext.

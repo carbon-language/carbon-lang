@@ -1213,6 +1213,36 @@ public:
   static bool classof(const CXXConversionDecl *D) { return true; }
 };
 
+/// FriendFunctionDecl - Represents the declaration (and possibly
+/// the definition) of a friend function.
+class FriendFunctionDecl : public FunctionDecl {
+  // Location of the 'friend' specifier.
+  const SourceLocation FriendLoc;
+
+  FriendFunctionDecl(DeclContext *DC, SourceLocation L,
+                     DeclarationName N, QualType T,
+                     bool isInline, SourceLocation FriendL)
+    : FunctionDecl(FriendFunction, DC, L, N, T, None, isInline),
+      FriendLoc(FriendL)
+  {}
+
+public:
+  static FriendFunctionDecl *Create(ASTContext &C, DeclContext *DC,
+                                    SourceLocation L, DeclarationName N,
+                                    QualType T, bool isInline,
+                                    SourceLocation FriendL);
+
+  SourceLocation getFriendLoc() const {
+    return FriendLoc;
+  }
+
+  // Implement isa/cast/dyncast/etc.
+  static bool classof(const Decl *D) { 
+    return D->getKind() == FriendFunction;
+  }
+  static bool classof(const FriendFunctionDecl *D) { return true; }
+};
+  
 /// LinkageSpecDecl - This represents a linkage specification.  For example:
 ///   extern "C" void foo();
 ///

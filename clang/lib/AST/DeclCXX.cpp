@@ -738,6 +738,15 @@ bool OverloadIterator::Equals(const OverloadIterator &Other) const {
   return !isa<OverloadedFunctionDecl>(D) || Iter == Other.Iter;
 }
 
+FriendFunctionDecl *FriendFunctionDecl::Create(ASTContext &C,DeclContext *DC,
+                                               SourceLocation L,
+                                               DeclarationName N, QualType T,
+                                               bool isInline,
+                                               SourceLocation FriendL) {
+  return new (C) FriendFunctionDecl(DC, L, N, T, isInline, FriendL);
+}
+                                               
+
 LinkageSpecDecl *LinkageSpecDecl::Create(ASTContext &C,
                                          DeclContext *DC, 
                                          SourceLocation L,

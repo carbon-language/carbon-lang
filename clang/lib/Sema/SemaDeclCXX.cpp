@@ -3305,7 +3305,8 @@ Sema::DeclPtrTy Sema::ActOnStaticAssertDeclaration(SourceLocation AssertLoc,
 }
 
 Sema::DeclPtrTy Sema::ActOnFriendDecl(Scope *S,
-                       llvm::PointerUnion<const DeclSpec*,Declarator*> DU) {
+                       llvm::PointerUnion<const DeclSpec*,Declarator*> DU,
+                                      bool IsDefinition) {
   Declarator *D = DU.dyn_cast<Declarator*>();
   const DeclSpec &DS = (D ? D->getDeclSpec() : *DU.get<const DeclSpec*>());
 
@@ -3483,10 +3484,18 @@ Sema::DeclPtrTy Sema::ActOnFriendDecl(Scope *S,
       Diag(DS.getFriendSpecLoc(), diag::err_friend_is_member);
   }
 
+  bool Redeclaration = (FD != 0);
+
+  // If we found a match, create a friend function declaration with
+  // that function as the previous declaration.
+  if (Redeclaration) {
+    // Create it in the semantic context of the original declaration.
+    DC = FD->getDeclContext();
+
   // If we didn't find something matching the type exactly, create
   // a declaration.  This declaration should only be findable via
   // argument-dependent lookup.
-  if (!FD) {
+  } else {
     assert(DC->isFileContext());
 
     // This implies that it has to be an operator or function.
@@ -3498,23 +3507,25 @@ Sema::DeclPtrTy Sema::ActOnFriendDecl(Scope *S,
          D->getKind() == Declarator::DK_Destructor ? 1 : 2);
       return DeclPtrTy();
     }
-
-    bool Redeclaration = false;
-    NamedDecl *ND = ActOnFunctionDeclarator(S, *D, DC, T,
-                                            /* PrevDecl = */ NULL,
-                                            MultiTemplateParamsArg(*this),
-                                            /* isFunctionDef */ false,
-                                            Redeclaration);
-
-    FD = cast_or_null<FunctionDecl>(ND);
-
-    // Note that we're creating a declaration but *not* pushing
-    // it onto the scope chains.
-
-    // TODO: make accessible via argument-dependent lookup.
   }
 
-  // TODO: actually register the function as a friend.
+  NamedDecl *ND = ActOnFunctionDeclarator(S, *D, DC, T,
+                                          /* PrevDecl = */ FD,
+                                          MultiTemplateParamsArg(*this),
+                                          IsDefinition,
+                                          Redeclaration);
+  FD = cast_or_null<FriendFunctionDecl>(ND);
+
+  // If this is a dependent context, just add the decl to the
+  // class's decl list and don't both with the lookup tables.  This
+  // doesn't affect lookup because any call that might find this
+  // function via ADL necessarily has to involve dependently-typed
+  // arguments and hence can't be resolved until
+  // template-instantiation anyway.
+  if (CurContext->isDependentContext())
+    CurContext->addHiddenDecl(FD);
+  else
+    CurContext->addDecl(FD);
 
   return DeclPtrTy::make(FD);
 }

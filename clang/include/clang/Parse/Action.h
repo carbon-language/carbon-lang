@@ -1143,7 +1143,8 @@ public:
   /// ActOnFriendDecl - This action is called when a friend declaration is
   /// encountered.
   virtual DeclPtrTy ActOnFriendDecl(Scope *S,
-                        llvm::PointerUnion<const DeclSpec*,Declarator*> D) {
+                        llvm::PointerUnion<const DeclSpec*,Declarator*> D,
+                                    bool IsDefinition) {
     return DeclPtrTy();
   }
 
