@@ -557,7 +557,7 @@ bool SchedulePostRATDList::BreakAntiDependencies() {
   // isn't A which is free.  This re-introduces anti-dependencies
   // at all but one of the original anti-dependencies that we were
   // trying to break.  To avoid this, keep track of the most recent
-  // register that each register was replaced with, avoid avoid
+  // register that each register was replaced with, avoid
   // using it to repair an anti-dependence on the same register.
   // This lets us produce this:
   //   A = ...
@@ -825,7 +825,19 @@ void SchedulePostRATDList::ListScheduleTopDown() {
       } else if (PendingQueue[i]->getDepth() < MinDepth)
         MinDepth = PendingQueue[i]->getDepth();
     }
-    
+
+#ifndef NDEBUG
+    {
+      errs() << "\n*** Examining Available\n";
+      LatencyPriorityQueue q = AvailableQueue;
+      while (!q.empty()) {
+        SUnit *su = q.pop();
+        errs() << "Height " << su->getHeight() << ": ";
+        su->dump(this);
+      }
+    }
+#endif
+
     SUnit *FoundSUnit = 0;
 
     bool HasNoopHazards = false;

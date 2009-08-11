@@ -285,6 +285,7 @@ void SUnit::dumpAll(const ScheduleDAG *G) const {
       errs() << I->getSUnit() << " - SU(" << I->getSUnit()->NodeNum << ")";
       if (I->isArtificial())
         errs() << " *";
+      errs() << ": Latency=" << I->getLatency();
       errs() << "\n";
     }
   }
@@ -303,6 +304,7 @@ void SUnit::dumpAll(const ScheduleDAG *G) const {
       errs() << I->getSUnit() << " - SU(" << I->getSUnit()->NodeNum << ")";
       if (I->isArtificial())
         errs() << " *";
+      errs() << ": Latency=" << I->getLatency();
       errs() << "\n";
     }
   }
