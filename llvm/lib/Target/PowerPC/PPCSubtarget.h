@@ -43,10 +43,6 @@ class GlobalValue;
 class TargetMachine;
   
 class PPCSubtarget : public TargetSubtarget {
-public:
-  enum AsmWriterFlavorTy {
-    OldMnemonic, NewMnemonic, Unset
-  };
 protected:
   /// stackAlignment - The minimum alignment known to hold of the stack frame on
   /// entry to the function and which must be maintained by every function.
@@ -57,9 +53,6 @@ protected:
   
   /// Which cpu directive was used.
   unsigned DarwinDirective;
-
-  /// AsmFlavor - Which PPC asm dialect to use.
-  AsmWriterFlavorTy AsmFlavor;
 
   /// Used by the ISel to turn in optimizations for POWER4-derived architectures
   bool IsGigaProcessor;
@@ -147,10 +140,6 @@ public:
 
   bool isDarwinABI() const { return isDarwin() || IsPPC64; }
   bool isSVR4ABI() const { return !isDarwin() && !IsPPC64; }
-
-  unsigned getAsmFlavor() const {
-    return AsmFlavor != Unset ? unsigned(AsmFlavor) : 0;
-  }
 };
 } // End llvm namespace
 

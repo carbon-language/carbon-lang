@@ -28,8 +28,8 @@ PPCDarwinTargetAsmInfo::PPCDarwinTargetAsmInfo(const PPCTargetMachine &TM) {
   bool isPPC64 = Subtarget->isPPC64();
   
   if (!isPPC64)
-    Data64bitsDirective = 0;      // we can't emit a 64-bit unit
-  AssemblerDialect = Subtarget->getAsmFlavor();
+    Data64bitsDirective = 0;      // We can't emit a 64-bit unit in PPC32 mode.
+  AssemblerDialect = 0;           // Old-Style mnemonics.
 }
 
 PPCLinuxTargetAsmInfo::PPCLinuxTargetAsmInfo(const PPCTargetMachine &TM) {
@@ -61,6 +61,6 @@ PPCLinuxTargetAsmInfo::PPCLinuxTargetAsmInfo(const PPCTargetMachine &TM) {
   Data64bitsDirective = isPPC64 ? "\t.quad\t" : 0;
   AlignmentIsInBytes = false;
   LCOMMDirective = "\t.lcomm\t";
-  AssemblerDialect = Subtarget->getAsmFlavor();
+  AssemblerDialect = 1;   // New-Style mnemonics.
 }
 

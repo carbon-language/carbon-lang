@@ -106,12 +106,8 @@ PPCSubtarget::PPCSubtarget(const std::string &TT, const std::string &FS,
   }
 
   // Set up darwin-specific properties.
-  if (isDarwin()) {
+  if (isDarwin())
     HasLazyResolverStubs = true;
-    AsmFlavor = NewMnemonic;
-  } else {
-    AsmFlavor = OldMnemonic;
-  }
 }
 
 /// SetJITMode - This is called to inform the subtarget info that we are
