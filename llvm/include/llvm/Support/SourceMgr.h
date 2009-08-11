@@ -65,10 +65,14 @@ class SourceMgr {
   // include files in.
   std::vector<std::string> IncludeDirectories;
   
+  /// LineNoCache - This is a cache for line number queries, its implementation
+  /// is really private to SourceMgr.cpp.
+  mutable void *LineNoCache;
+  
   SourceMgr(const SourceMgr&);    // DO NOT IMPLEMENT
   void operator=(const SourceMgr&); // DO NOT IMPLEMENT
 public:
-  SourceMgr() {}
+  SourceMgr() : LineNoCache(0) {}
   ~SourceMgr();
   
   void setIncludeDirs(const std::vector<std::string> &Dirs) {

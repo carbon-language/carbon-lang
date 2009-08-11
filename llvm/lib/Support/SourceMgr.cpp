@@ -18,7 +18,24 @@
 #include "llvm/Support/raw_ostream.h"
 using namespace llvm;
 
+namespace {
+  struct LineNoCacheTy {
+    int LastQueryBufferID;
+    const char *LastQuery;
+    unsigned LineNoOfQuery;
+  };
+}
+
+static LineNoCacheTy *getCache(void *Ptr) {
+  return (LineNoCacheTy*)Ptr;
+}
+
+
 SourceMgr::~SourceMgr() {
+  // Delete the line # cache if allocated.
+  if (LineNoCacheTy *Cache = getCache(LineNoCache))
+    delete Cache;
+    
   while (!Buffers.empty()) {
     delete Buffers.back().Buffer;
     Buffers.pop_back();
@@ -71,8 +88,31 @@ unsigned SourceMgr::FindLineNumber(SMLoc Loc, int BufferID) const {
   
   const char *Ptr = Buff->getBufferStart();
 
+  // If we have a line number cache, and if the query is to a later point in the
+  // same file, start searching from the last query location.  This optimizes
+  // for the case when multiple diagnostics come out of one file in order.
+  if (LineNoCacheTy *Cache = getCache(LineNoCache))
+    if (Cache->LastQueryBufferID == BufferID && 
+        Cache->LastQuery <= Loc.getPointer()) {
+      Ptr = Cache->LastQuery;
+      LineNo = Cache->LineNoOfQuery;
+    }
+
+  // Scan for the location being queried, keeping track of the number of lines
+  // we see.
   for (; SMLoc::getFromPointer(Ptr) != Loc; ++Ptr)
     if (*Ptr == '\n') ++LineNo;
+  
+  
+  // Allocate the line number cache if it doesn't exist.
+  if (LineNoCache == 0)
+    LineNoCache = new LineNoCacheTy();
+  
+  // Update the line # cache.
+  LineNoCacheTy &Cache = *getCache(LineNoCache);
+  Cache.LastQueryBufferID = BufferID;
+  Cache.LastQuery = Ptr;
+  Cache.LineNoOfQuery = LineNo;
   return LineNo;
 }
 
