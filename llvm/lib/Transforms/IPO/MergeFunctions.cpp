@@ -64,7 +64,7 @@ STATISTIC(NumFunctionsMerged, "Number of functions merged");
 namespace {
   struct VISIBILITY_HIDDEN MergeFunctions : public ModulePass {
     static char ID; // Pass identification, replacement for typeid
-    MergeFunctions() : ModulePass((intptr_t)&ID) {}
+    MergeFunctions() : ModulePass(&ID) {}
 
     bool runOnModule(Module &M);
   };

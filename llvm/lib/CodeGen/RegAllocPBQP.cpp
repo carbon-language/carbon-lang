@@ -71,7 +71,7 @@ namespace {
     static char ID;
     
     /// Construct a PBQP register allocator.
-    PBQPRegAlloc() : MachineFunctionPass((intptr_t)&ID) {}
+    PBQPRegAlloc() : MachineFunctionPass(&ID) {}
 
     /// Return the pass name.
     virtual const char* getPassName() const throw() {

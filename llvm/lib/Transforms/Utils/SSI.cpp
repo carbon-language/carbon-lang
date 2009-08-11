@@ -403,7 +403,7 @@ static RegisterPass<SSI> X("ssi", "Static Single Information Construction");
 namespace {
   struct VISIBILITY_HIDDEN SSIEverything : public FunctionPass {
     static char ID; // Pass identification, replacement for typeid
-    SSIEverything() : FunctionPass((intptr_t)&ID) {}
+    SSIEverything() : FunctionPass(&ID) {}
 
     bool runOnFunction(Function &F);
 
