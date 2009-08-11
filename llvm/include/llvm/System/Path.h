@@ -587,7 +587,8 @@ namespace sys {
     /// @name Data
     /// @{
     protected:
-      std::string path;   ///< Storage for the path name.
+      // Our win32 implementation relies on this string being mutable.
+      mutable std::string path;   ///< Storage for the path name.
 
 
     /// @}
