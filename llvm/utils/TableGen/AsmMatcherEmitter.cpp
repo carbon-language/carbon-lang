@@ -282,19 +282,29 @@ namespace {
 /// class of operands which can be matched.
 struct ClassInfo {
   enum ClassInfoKind {
-    Invalid = 0, ///< Invalid kind, for use as a sentinel value.
-    Token,       ///< The class for a particular token.
-    Register,    ///< A register class.
-    UserClass0   ///< The (first) user defined class, subsequent user defined
-                 /// classes are UserClass0+1, and so on.
+    /// Invalid kind, for use as a sentinel value.
+    Invalid = 0,
+
+    /// The class for a particular token.
+    Token,
+
+    /// The (first) register class, subsequent register classes are
+    /// RegisterClass0+1, and so on.
+    RegisterClass0,
+
+    /// The (first) user defined class, subsequent user defined classes are
+    /// UserClass0+1, and so on.
+    UserClass0 = 1<<16
   };
 
   /// Kind - The class kind, which is either a predefined kind, or (UserClass0 +
   /// N) for the Nth user defined class.
   unsigned Kind;
 
-  /// SuperClass - The super class, or 0.
-  ClassInfo *SuperClass;
+  /// SuperClasses - The super classes of this class. Note that for simplicities
+  /// sake user operands only record their immediate super class, while register
+  /// operands include all superclasses.
+  std::vector<ClassInfo*> SuperClasses;
 
   /// Name - The full class name, suitable for use in an enum.
   std::string Name;
@@ -308,30 +318,67 @@ struct ClassInfo {
   std::string ValueName;
 
   /// PredicateMethod - The name of the operand method to test whether the
-  /// operand matches this class; this is not valid for Token kinds.
+  /// operand matches this class; this is not valid for Token or register kinds.
   std::string PredicateMethod;
 
   /// RenderMethod - The name of the operand method to add this operand to an
-  /// MCInst; this is not valid for Token kinds.
+  /// MCInst; this is not valid for Token or register kinds.
   std::string RenderMethod;
+
+  /// isRegisterClass() - Check if this is a register class.
+  bool isRegisterClass() const {
+    return Kind >= RegisterClass0 && Kind < UserClass0;
+  }
 
   /// isUserClass() - Check if this is a user defined class.
   bool isUserClass() const {
     return Kind >= UserClass0;
   }
 
-  /// getRootClass - Return the root class of this one.
-  const ClassInfo *getRootClass() const {
-    const ClassInfo *CI = this;
-    while (CI->SuperClass)
-      CI = CI->SuperClass;
-    return CI;
+  /// isRelatedTo - Check whether this class is "related" to \arg RHS. Classes
+  /// are related if they are in the same class hierarchy.
+  bool isRelatedTo(const ClassInfo &RHS) const {
+    // Tokens are only related to tokens.
+    if (Kind == Token || RHS.Kind == Token)
+      return Kind == Token && RHS.Kind == Token;
+
+    // Registers are only related to registers.
+    if (isRegisterClass() || RHS.isRegisterClass())
+      return isRegisterClass() && RHS.isRegisterClass();
+
+    // Otherwise we have two users operands; they are related if they are in the
+    // same class hierarchy.
+    assert(isUserClass() && RHS.isUserClass() && "Unexpected class!");
+    const ClassInfo *Root = this;
+    while (!Root->SuperClasses.empty())
+      Root = Root->SuperClasses.front();
+
+    const ClassInfo *RHSRoot = this;
+    while (!RHSRoot->SuperClasses.empty())
+      RHSRoot = RHSRoot->SuperClasses.front();
+    
+    return Root == RHSRoot;
+  }
+
+  /// isSubsetOf - Test whether this class is a subset of \arg RHS; 
+  bool isSubsetOf(const ClassInfo &RHS) const {
+    // This is a subset of RHS if it is the same class...
+    if (this == &RHS)
+      return true;
+
+    // ... or if any of its super classes are a subset of RHS.
+    for (std::vector<ClassInfo*>::const_iterator it = SuperClasses.begin(),
+           ie = SuperClasses.end(); it != ie; ++it)
+      if ((*it)->isSubsetOf(RHS))
+        return true;
+
+    return false;
   }
 
   /// operator< - Compare two classes.
   bool operator<(const ClassInfo &RHS) const {
-    // Incompatible kinds are comparable for classes in disjoint hierarchies.
-    if (Kind != RHS.Kind && getRootClass() != RHS.getRootClass())
+    // Unrelated classes can be ordered by kind.
+    if (!isRelatedTo(RHS))
       return Kind < RHS.Kind;
 
     switch (Kind) {
@@ -344,12 +391,8 @@ struct ClassInfo {
       return ValueName < RHS.ValueName;
 
     default:
-      // This class preceeds the RHS if the RHS is a super class.
-      for (ClassInfo *Parent = SuperClass; Parent; Parent = Parent->SuperClass)
-        if (Parent == &RHS)
-          return true;
-
-      return false;
+      // This class preceeds the RHS if it is a proper subset of the RHS.
+      return this != &RHS && isSubsetOf(RHS);
     }
   }
 };
@@ -446,12 +489,15 @@ public:
   /// The information on the instruction to match.
   std::vector<InstructionInfo*> Instructions;
 
+  /// Map of Register records to their class information.
+  std::map<Record*, ClassInfo*> RegisterClasses;
+
 private:
   /// Map of token to class information which has already been constructed.
   std::map<std::string, ClassInfo*> TokenClasses;
 
-  /// The ClassInfo instance for registers.
-  ClassInfo *TheRegisterClass;
+  /// Map of RegisterClass records to their class information.
+  std::map<Record*, ClassInfo*> RegisterClassClasses;
 
   /// Map of AsmOperandClass records to their class information.
   std::map<Record*, ClassInfo*> AsmOperandClasses;
@@ -463,6 +509,14 @@ private:
   /// getOperandClass - Lookup or create the class for the given operand.
   ClassInfo *getOperandClass(const StringRef &Token,
                              const CodeGenInstruction::OperandInfo &OI);
+
+  /// BuildRegisterClasses - Build the ClassInfo* instances for register
+  /// classes.
+  void BuildRegisterClasses(CodeGenTarget &Target);
+
+  /// BuildOperandClasses - Build the ClassInfo* instances for user defined
+  /// operand classes.
+  void BuildOperandClasses(CodeGenTarget &Target);
 
 public:
   /// BuildInfo - Construct the various tables used during matching.
@@ -522,7 +576,6 @@ ClassInfo *AsmMatcherInfo::getTokenClass(const StringRef &Token) {
   if (!Entry) {
     Entry = new ClassInfo();
     Entry->Kind = ClassInfo::Token;
-    Entry->SuperClass = 0;
     Entry->ClassName = "Token";
     Entry->Name = "MCK_" + getEnumNameForToken(Token);
     Entry->ValueName = Token;
@@ -537,8 +590,16 @@ ClassInfo *AsmMatcherInfo::getTokenClass(const StringRef &Token) {
 ClassInfo *
 AsmMatcherInfo::getOperandClass(const StringRef &Token,
                                 const CodeGenInstruction::OperandInfo &OI) {
-  if (OI.Rec->isSubClassOf("RegisterClass"))
-    return TheRegisterClass;
+  if (OI.Rec->isSubClassOf("RegisterClass")) {
+    ClassInfo *CI = RegisterClassClasses[OI.Rec];
+
+    if (!CI) {
+      PrintError(OI.Rec->getLoc(), "register class has no class info!");
+      throw std::string("ERROR: Missing register class!");
+    }
+
+    return CI;
+  }
 
   assert(OI.Rec->isSubClassOf("Operand") && "Unexpected operand!");
   Record *MatchClass = OI.Rec->getValueAsDef("ParserMatchClass");
@@ -552,23 +613,105 @@ AsmMatcherInfo::getOperandClass(const StringRef &Token,
   return CI;
 }
 
-void AsmMatcherInfo::BuildInfo(CodeGenTarget &Target) {
-  // Build the assembly match class information.
+void AsmMatcherInfo::BuildRegisterClasses(CodeGenTarget &Target) {
+  std::vector<CodeGenRegisterClass> RegisterClasses;
+  std::vector<CodeGenRegister> Registers;
 
-  // Construct the "Reg" class.
-  //
-  // FIXME: This needs to dice up the RegisterClass instances.
-  ClassInfo *RegClass = TheRegisterClass = new ClassInfo();
-  RegClass->Kind = ClassInfo::Register;
-  RegClass->SuperClass = 0;
-  RegClass->ClassName = "Reg";
-  RegClass->Name = "MCK_Reg";
-  RegClass->ValueName = "<register class>";
-  RegClass->PredicateMethod = "isReg";
-  RegClass->RenderMethod = "addRegOperands";
-  Classes.push_back(RegClass);
+  RegisterClasses = Target.getRegisterClasses();
+  Registers = Target.getRegisters();
 
-  // Build info for the user defined assembly operand classes.
+  // The register sets used for matching.
+  std::set< std::set<Record*> > RegisterSets;
+
+  // Gather the defined sets.  
+  for (std::vector<CodeGenRegisterClass>::iterator it = RegisterClasses.begin(),
+         ie = RegisterClasses.end(); it != ie; ++it)
+    RegisterSets.insert(std::set<Record*>(it->Elements.begin(),
+                                          it->Elements.end()));
+  
+  // Introduce derived sets where necessary (when a register does not determine
+  // a unique register set class), and build the mapping of registers to the set
+  // they should classify to.
+  std::map<Record*, std::set<Record*> > RegisterMap;
+  for (std::vector<CodeGenRegister>::iterator it = Registers.begin(),
+         ie = Registers.end(); it != ie; ++it) {
+    CodeGenRegister &CGR = *it;
+    // Compute the intersection of all sets containing this register.
+    std::set<Record*> ContainingSet;
+    
+    for (std::set< std::set<Record*> >::iterator it = RegisterSets.begin(),
+           ie = RegisterSets.end(); it != ie; ++it) {
+      if (!it->count(CGR.TheDef))
+        continue;
+
+      if (ContainingSet.empty()) {
+        ContainingSet = *it;
+      } else {
+        std::set<Record*> Tmp;
+        std::swap(Tmp, ContainingSet);
+        std::insert_iterator< std::set<Record*> > II(ContainingSet,
+                                                     ContainingSet.begin());
+        std::set_intersection(Tmp.begin(), Tmp.end(), it->begin(), it->end(),
+                              II);
+      }
+    }
+
+    if (!ContainingSet.empty()) {
+      RegisterSets.insert(ContainingSet);
+      RegisterMap.insert(std::make_pair(CGR.TheDef, ContainingSet));
+    }
+  }
+
+  // Construct the register classes.
+  std::map<std::set<Record*>, ClassInfo*> RegisterSetClasses;
+  unsigned Index = 0;
+  for (std::set< std::set<Record*> >::iterator it = RegisterSets.begin(),
+         ie = RegisterSets.end(); it != ie; ++it, ++Index) {
+    ClassInfo *CI = new ClassInfo();
+    CI->Kind = ClassInfo::RegisterClass0 + Index;
+    CI->ClassName = "Reg" + utostr(Index);
+    CI->Name = "MCK_Reg" + utostr(Index);
+    CI->ValueName = "";
+    CI->PredicateMethod = ""; // unused
+    CI->RenderMethod = "addRegOperands";
+    Classes.push_back(CI);
+    RegisterSetClasses.insert(std::make_pair(*it, CI));
+  }
+
+  // Find the superclasses; we could compute only the subgroup lattice edges,
+  // but there isn't really a point.
+  for (std::set< std::set<Record*> >::iterator it = RegisterSets.begin(),
+         ie = RegisterSets.end(); it != ie; ++it) {
+    ClassInfo *CI = RegisterSetClasses[*it];
+    for (std::set< std::set<Record*> >::iterator it2 = RegisterSets.begin(),
+           ie2 = RegisterSets.end(); it2 != ie2; ++it2)
+      if (*it != *it2 && 
+          std::includes(it2->begin(), it2->end(), it->begin(), it->end()))
+        CI->SuperClasses.push_back(RegisterSetClasses[*it2]);
+  }
+
+  // Name the register classes which correspond to a user defined RegisterClass.
+  for (std::vector<CodeGenRegisterClass>::iterator it = RegisterClasses.begin(),
+         ie = RegisterClasses.end(); it != ie; ++it) {
+    ClassInfo *CI = RegisterSetClasses[std::set<Record*>(it->Elements.begin(),
+                                                         it->Elements.end())];
+    if (CI->ValueName.empty()) {
+      CI->ClassName = it->getName();
+      CI->Name = "MCK_" + it->getName();
+      CI->ValueName = it->getName();
+    } else
+      CI->ValueName = CI->ValueName + "," + it->getName();
+
+    RegisterClassClasses.insert(std::make_pair(it->TheDef, CI));
+  }
+
+  // Populate the map for individual registers.
+  for (std::map<Record*, std::set<Record*> >::iterator it = RegisterMap.begin(),
+         ie = RegisterMap.end(); it != ie; ++it)
+    this->RegisterClasses[it->first] = RegisterSetClasses[it->second];
+}
+
+void AsmMatcherInfo::BuildOperandClasses(CodeGenTarget &Target) {
   std::vector<Record*> AsmOperands;
   AsmOperands = Records.getAllDerivedDefinitions("AsmOperandClass");
   unsigned Index = 0;
@@ -579,12 +722,13 @@ void AsmMatcherInfo::BuildInfo(CodeGenTarget &Target) {
 
     Init *Super = (*it)->getValueInit("SuperClass");
     if (DefInit *DI = dynamic_cast<DefInit*>(Super)) {
-      CI->SuperClass = AsmOperandClasses[DI->getDef()];
-      if (!CI->SuperClass)
+      ClassInfo *SC = AsmOperandClasses[DI->getDef()];
+      if (!SC)
         PrintError((*it)->getLoc(), "Invalid super class reference!");
+      else
+        CI->SuperClasses.push_back(SC);
     } else {
       assert(dynamic_cast<UnsetInit*>(Super) && "Unexpected SuperClass field!");
-      CI->SuperClass = 0;
     }
     CI->ClassName = (*it)->getValueAsString("Name");
     CI->Name = "MCK_" + CI->ClassName;
@@ -613,6 +757,14 @@ void AsmMatcherInfo::BuildInfo(CodeGenTarget &Target) {
     AsmOperandClasses[*it] = CI;
     Classes.push_back(CI);
   }
+}
+
+void AsmMatcherInfo::BuildInfo(CodeGenTarget &Target) {
+  // Build info for the register classes.
+  BuildRegisterClasses(Target);
+
+  // Build info for the user defined assembly operand classes.
+  BuildOperandClasses(Target);
 
   // Build the instruction information.
   for (std::map<std::string, CodeGenInstruction>::const_iterator 
@@ -746,7 +898,15 @@ static void EmitConvertToMCInst(CodeGenTarget &Target,
       for (; CurIndex != Op.OperandInfo->MIOperandNo; ++CurIndex)
         Signature += "Imp";
 
-      Signature += Op.Class->ClassName;
+      // Registers are always converted the same, don't duplicate the conversion
+      // function based on them.
+      //
+      // FIXME: We could generalize this based on the render method, if it
+      // mattered.
+      if (Op.Class->isRegisterClass())
+        Signature += "Reg";
+      else
+        Signature += Op.Class->ClassName;
       Signature += utostr(Op.OperandInfo->MINumOperands);
       Signature += "_" + utostr(MIOperandList[i].second);
 
@@ -820,7 +980,7 @@ static void EmitMatchClassEnumeration(CodeGenTarget &Target,
     OS << "  " << CI.Name << ", // ";
     if (CI.Kind == ClassInfo::Token) {
       OS << "'" << CI.ValueName << "'\n";
-    } else if (CI.Kind == ClassInfo::Register) {
+    } else if (CI.isRegisterClass()) {
       if (!CI.ValueName.empty())
         OS << "register class '" << CI.ValueName << "'\n";
       else
@@ -837,34 +997,59 @@ static void EmitMatchClassEnumeration(CodeGenTarget &Target,
 
 /// EmitClassifyOperand - Emit the function to classify an operand.
 static void EmitClassifyOperand(CodeGenTarget &Target,
-                                std::vector<ClassInfo*> &Infos,
+                                AsmMatcherInfo &Info,
                                 raw_ostream &OS) {
   OS << "static MatchClassKind ClassifyOperand("
      << Target.getName() << "Operand &Operand) {\n";
+
+  // Classify tokens.
   OS << "  if (Operand.isToken())\n";
   OS << "    return MatchTokenString(Operand.getToken());\n\n";
-  for (std::vector<ClassInfo*>::iterator it = Infos.begin(), 
-         ie = Infos.end(); it != ie; ++it) {
+
+  // Classify registers.
+  //
+  // FIXME: Don't hardcode isReg, getReg.
+  OS << "  if (Operand.isReg()) {\n";
+  OS << "    switch (Operand.getReg()) {\n";
+  OS << "    default: return InvalidMatchClass;\n";
+  for (std::map<Record*, ClassInfo*>::iterator 
+         it = Info.RegisterClasses.begin(), ie = Info.RegisterClasses.end();
+       it != ie; ++it)
+    OS << "    case " << Target.getName() << "::" 
+       << it->first->getName() << ": return " << it->second->Name << ";\n";
+  OS << "    }\n";
+  OS << "  }\n\n";
+
+  // Classify user defined operands.
+  for (std::vector<ClassInfo*>::iterator it = Info.Classes.begin(), 
+         ie = Info.Classes.end(); it != ie; ++it) {
     ClassInfo &CI = **it;
 
-    if (CI.Kind != ClassInfo::Token) {
-      OS << "  // '" << CI.ClassName << "' class";
-      if (CI.SuperClass) {
-        OS << ", subclass of '" << CI.SuperClass->ClassName << "'";
-        assert(CI < *CI.SuperClass && "Invalid class relation!");
+    if (!CI.isUserClass())
+      continue;
+
+    OS << "  // '" << CI.ClassName << "' class";
+    if (!CI.SuperClasses.empty()) {
+      OS << ", subclass of ";
+      for (unsigned i = 0, e = CI.SuperClasses.size(); i != e; ++i) {
+        if (i) OS << ", ";
+        OS << "'" << CI.SuperClasses[i]->ClassName << "'";
+        assert(CI < *CI.SuperClasses[i] && "Invalid class relation!");
       }
-      OS << "\n";
-
-      OS << "  if (Operand." << CI.PredicateMethod << "()) {\n";
-      
-      // Validate subclass relationships.
-      if (CI.SuperClass)
-        OS << "    assert(Operand." << CI.SuperClass->PredicateMethod
-           << "() && \"Invalid class relationship!\");\n";
-
-      OS << "    return " << CI.Name << ";\n";
-      OS << "  }\n\n";
     }
+    OS << "\n";
+
+    OS << "  if (Operand." << CI.PredicateMethod << "()) {\n";
+      
+    // Validate subclass relationships.
+    if (!CI.SuperClasses.empty()) {
+      for (unsigned i = 0, e = CI.SuperClasses.size(); i != e; ++i)
+        OS << "    assert(Operand." << CI.SuperClasses[i]->PredicateMethod
+           << "() && \"Invalid class relationship!\");\n";
+    }
+
+    OS << "    return " << CI.Name << ";\n";
+    OS << "  }\n\n";
   }
   OS << "  return InvalidMatchClass;\n";
   OS << "}\n\n";
@@ -892,7 +1077,7 @@ static void EmitIsSubclass(CodeGenTarget &Target,
              ie = Infos.end(); it != ie; ++it) {
         ClassInfo &B = **it;
 
-        if (&A != &B && A.getRootClass() == B.getRootClass() && A < B)
+        if (&A != &B && A.isSubsetOf(B))
           SuperClasses.push_back(B.Name);
       }
 
@@ -902,15 +1087,15 @@ static void EmitIsSubclass(CodeGenTarget &Target,
       OS << "\n  case " << A.Name << ":\n";
 
       if (SuperClasses.size() == 1) {
-        OS << "    return B == " << SuperClasses.back() << ";\n\n";
+        OS << "    return B == " << SuperClasses.back() << ";\n";
         continue;
       }
 
-      OS << "      switch (B) {\n";
-      OS << "      default: return false;\n";
+      OS << "    switch (B) {\n";
+      OS << "    default: return false;\n";
       for (unsigned i = 0, e = SuperClasses.size(); i != e; ++i)
-        OS << "      case " << SuperClasses[i] << ": return true;\n";
-      OS << "      }\n\n";
+        OS << "    case " << SuperClasses[i] << ": return true;\n";
+      OS << "    }\n";
     }
   }
   OS << "  }\n";
@@ -1154,7 +1339,7 @@ void AsmMatcherEmitter::run(raw_ostream &OS) {
   EmitMatchTokenString(Target, Info.Classes, OS);
 
   // Emit the routine to classify an operand.
-  EmitClassifyOperand(Target, Info.Classes, OS);
+  EmitClassifyOperand(Target, Info, OS);
 
   // Emit the subclass predicate routine.
   EmitIsSubclass(Target, Info.Classes, OS);

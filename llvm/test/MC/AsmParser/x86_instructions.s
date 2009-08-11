@@ -30,9 +30,22 @@
         subl $256, %eax
 
 // FIXME: Check that this matches XOR64ri8
-// RUN: grep {MCInst(opcode=.*, operands=.reg:19, reg:0, val:1.)} %t
-        xorq $1, %eax
+// RUN: grep {MCInst(opcode=.*, operands=.reg:80, reg:0, val:1.)} %t
+        xorq $1, %rax
         
 // FIXME: Check that this matches XOR64ri32
-// RUN: grep {MCInst(opcode=.*, operands=.reg:19, reg:0, val:256.)} %t
-        xorq $256, %eax
+// RUN: grep {MCInst(opcode=.*, operands=.reg:80, reg:0, val:256.)} %t
+        xorq $256, %rax
+
+// FIXME: Check that this matches SUB8rr
+// RUN: grep {MCInst(opcode=.*, operands=.reg:5, reg:0, reg:2.)} %t
+        subb %al, %bl
+
+// FIXME: Check that this matches SUB16rr
+// RUN: grep {MCInst(opcode=.*, operands=.reg:8, reg:0, reg:3.)} %t
+        subw %ax, %bx
+        
+// FIXME: Check that this matches SUB32rr
+// RUN: grep {MCInst(opcode=.*, operands=.reg:21, reg:0, reg:19.)} %t
+        subl %eax, %ebx
+        
