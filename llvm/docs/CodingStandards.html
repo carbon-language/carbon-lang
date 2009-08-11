@@ -419,7 +419,8 @@ different symbols based on whether <tt>class</tt> or <tt>struct</tt> was used to
 declare the symbol.  This can lead to problems at link time.</p> 
 
 <p>So, the rule for LLVM is to always use the <tt>class</tt> keyword, unless
-<b>all</b> members are public, in which case <tt>struct</tt> is allowed.</p>
+<b>all</b> members are public and the type is a C++ "POD" type, in which case 
+<tt>struct</tt> is allowed.</p>
 
 </div>
 
