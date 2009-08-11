@@ -607,7 +607,10 @@ Constant* ConstantVector::get(Constant* const* Vals, unsigned NumVals) {
 
 Constant* ConstantExpr::getExactSDiv(Constant* C1, Constant* C2) {
   Constant *C = getSDiv(C1, C2);
-  cast<SDivOperator>(C)->setIsExact(true);
+  // Set exact attribute, assuming constant folding didn't eliminate the
+  // SDiv.
+  if (SDivOperator *SDiv = dyn_cast<SDivOperator>(C))
+    SDiv->setIsExact(true);
   return C;
 }
 
