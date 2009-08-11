@@ -25,6 +25,7 @@
 #include "llvm/Target/TargetRegisterInfo.h"
 #include "llvm/Target/TargetInstrInfo.h"
 #include "llvm/Target/TargetMachine.h"
+#include "llvm/ADT/DenseMap.h"
 #include "llvm/ADT/SmallPtrSet.h"
 #include "llvm/ADT/SmallVector.h"
 #include "llvm/ADT/STLExtras.h"
@@ -48,12 +49,19 @@ void RegScavenger::setUnused(unsigned Reg, const MachineInstr *MI) {
     RegsAvailable.set(SubReg);
 }
 
+bool RegScavenger::isAliasUsed(unsigned Reg) const {
+  if (isUsed(Reg))
+    return true;
+  for (const unsigned *R = TRI->getAliasSet(Reg); *R; ++R)
+    if (isUsed(*R))
+      return true;
+  return false;
+}
+
 void RegScavenger::initRegState() {
   ScavengedReg = 0;
   ScavengedRC = NULL;
   ScavengeRestore = NULL;
-  CurrDist = 0;
-  DistanceMap.clear();
 
   // All registers started out unused.
   RegsAvailable.set();
@@ -176,7 +184,6 @@ void RegScavenger::forward() {
   }
 
   MachineInstr *MI = MBBI;
-  DistanceMap.insert(std::make_pair(MI, CurrDist++));
 
   if (MI == ScavengeRestore) {
     ScavengedReg = 0;
@@ -286,12 +293,25 @@ unsigned RegScavenger::FindUnusedReg(const TargetRegisterClass *RegClass,
   return (Reg == -1) ? 0 : Reg;
 }
 
+/// DistanceMap - Keep track the distance of an MI from the current position.
+typedef DenseMap<MachineInstr*, unsigned> DistanceMap;
+
+/// Build a distance map for instructions from I to E.
+static void buildDistanceMap(DistanceMap &DM,
+                             MachineBasicBlock::iterator I,
+                             MachineBasicBlock::iterator E) {
+  DM.clear();
+  for (unsigned d = 0; I != E; ++I, ++d)
+    DM.insert(DistanceMap::value_type(I, d));
+}
+
 /// findFirstUse - Calculate the distance to the first use of the
-/// specified register.
-MachineInstr*
-RegScavenger::findFirstUse(MachineBasicBlock *MBB,
-                           MachineBasicBlock::iterator I, unsigned Reg,
-                           unsigned &Dist) {
+/// specified register in the range covered by DM.
+static MachineInstr *findFirstUse(const MachineBasicBlock *MBB,
+                                  const DistanceMap &DM,
+                                  unsigned Reg,
+                                  unsigned &Dist) {
+  const MachineRegisterInfo *MRI = &MBB->getParent()->getRegInfo();
   MachineInstr *UseMI = 0;
   Dist = ~0U;
   for (MachineRegisterInfo::reg_iterator RI = MRI->reg_begin(Reg),
@@ -299,19 +319,10 @@ RegScavenger::findFirstUse(MachineBasicBlock *MBB,
     MachineInstr *UDMI = &*RI;
     if (UDMI->getParent() != MBB)
       continue;
-    DenseMap<MachineInstr*, unsigned>::iterator DI = DistanceMap.find(UDMI);
-    if (DI == DistanceMap.end()) {
-      // If it's not in map, it's below current MI, let's initialize the
-      // map.
-      I = next(I);
-      unsigned Dist = CurrDist + 1;
-      while (I != MBB->end()) {
-        DistanceMap.insert(std::make_pair(I, Dist++));
-        I = next(I);
-      }
-    }
-    DI = DistanceMap.find(UDMI);
-    if (DI->second > CurrDist && DI->second < Dist) {
+    DistanceMap::const_iterator DI = DM.find(UDMI);
+    if (DI == DM.end())
+      continue;
+    if (DI->second < Dist) {
       Dist = DI->second;
       UseMI = UDMI;
     }
@@ -338,6 +349,10 @@ unsigned RegScavenger::scavengeRegister(const TargetRegisterClass *RC,
       Candidates.reset(MO.getReg());
   }
 
+  // Prepare to call findFirstUse() a number of times.
+  DistanceMap DM;
+  buildDistanceMap(DM, I, MBB->end());
+
   // Find the register whose use is furthest away.
   unsigned SReg = 0;
   unsigned MaxDist = 0;
@@ -345,15 +360,23 @@ unsigned RegScavenger::scavengeRegister(const TargetRegisterClass *RC,
   int Reg = Candidates.find_first();
   while (Reg != -1) {
     unsigned Dist;
-    MachineInstr *UseMI = findFirstUse(MBB, I, Reg, Dist);
+    MachineInstr *UseMI = findFirstUse(MBB, DM, Reg, Dist);
     for (const unsigned *AS = TRI->getAliasSet(Reg); *AS; ++AS) {
       unsigned AsDist;
-      MachineInstr *AsUseMI = findFirstUse(MBB, I, *AS, AsDist);
+      MachineInstr *AsUseMI = findFirstUse(MBB, DM, *AS, AsDist);
       if (AsDist < Dist) {
         Dist = AsDist;
         UseMI = AsUseMI;
       }
     }
+
+    // If we found an unused register that is defined by a later instruction,
+    // there is no reason to spill it. We have probably found a callee-saved
+    // register that has been saved in the prologue, but happens to be unused at
+    // this point.
+    if (!isAliasUsed(Reg) && UseMI != NULL)
+      return Reg;
+
     if (Dist >= MaxDist) {
       MaxDist = Dist;
       MaxUseMI = UseMI;

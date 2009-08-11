@@ -19,7 +19,6 @@
 
 #include "llvm/CodeGen/MachineBasicBlock.h"
 #include "llvm/ADT/BitVector.h"
-#include "llvm/ADT/DenseMap.h"
 
 namespace llvm {
 
@@ -69,14 +68,6 @@ class RegScavenger {
   /// available, unset means the register is currently being used.
   BitVector RegsAvailable;
 
-  /// CurrDist - Distance from MBB entry to the current instruction MBBI.
-  ///
-  unsigned CurrDist;
-
-  /// DistanceMap - Keep track the distance of a MI from the start of the
-  /// current basic block.
-  DenseMap<MachineInstr*, unsigned> DistanceMap;
-
 public:
   RegScavenger()
     : MBB(NULL), NumPhysRegs(0), Tracking(false),
@@ -111,6 +102,9 @@ public:
   ///
   bool isUsed(unsigned Reg) const   { return !RegsAvailable[Reg]; }
   bool isUnused(unsigned Reg) const { return RegsAvailable[Reg]; }
+
+  /// isAliasUsed - Is Reg or an alias currently in use?
+  bool isAliasUsed(unsigned Reg) const;
 
   /// getRegsUsed - return all registers currently in use in used.
   void getRegsUsed(BitVector &used, bool includeReserved);
@@ -155,10 +149,6 @@ private:
   /// restoreScavengedReg - Restore scavenged by loading it back from the
   /// emergency spill slot. Mark it used.
   void restoreScavengedReg();
-
-  MachineInstr *findFirstUse(MachineBasicBlock *MBB,
-                             MachineBasicBlock::iterator I, unsigned Reg,
-                             unsigned &Dist);
 
   /// Add Reg and all its sub-registers to BV.
   void addRegWithSubRegs(BitVector &BV, unsigned Reg);
