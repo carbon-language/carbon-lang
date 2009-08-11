@@ -61,7 +61,7 @@ int main(int argc, char** argv) {
   Args[1] = strcat(strcpy((char*)malloc(strlen(argv[0])+4), argv[0]), ".bc");
 
   /* The rest of the args are as before. */
-  memcpy(Args+2, argv+1, sizeof(char*)*argc);
+  memcpy((char **)Args+2, argv+1, sizeof(char*)*argc);
 
   /* Run the JIT. */
   execvp(Interp, (char **)Args);
