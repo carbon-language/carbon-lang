@@ -42,6 +42,9 @@ let TargetPrefix = "arm" in {  // All intrinsics start with "llvm.arm.".
   class Neon_2Arg_Float_Intrinsic
     : Intrinsic<[llvm_anyfloat_ty], [LLVMMatchType<0>, LLVMMatchType<0>],
                 [IntrNoMem]>;
+  class Neon_2Arg_Vector_Intrinsic
+    : Intrinsic<[llvm_anyvector_ty], [LLVMMatchType<0>, LLVMMatchType<0>],
+                [IntrNoMem]>;
   class Neon_2Arg_Narrow_Intrinsic
     : Intrinsic<[llvm_anyint_ty],
                 [LLVMExtendedElementVectorType<0>,
@@ -194,8 +197,7 @@ def int_arm_neon_vabals : Neon_3Arg_Long_Intrinsic;
 def int_arm_neon_vabalu : Neon_3Arg_Long_Intrinsic;
 
 // Vector Pairwise Add.
-def int_arm_neon_vpaddi : Neon_2Arg_Intrinsic;
-def int_arm_neon_vpaddf : Neon_2Arg_Float_Intrinsic;
+def int_arm_neon_vpadd : Neon_2Arg_Vector_Intrinsic;
 
 // Vector Pairwise Add Long.
 // Note: This is different than the other "long" NEON intrinsics because

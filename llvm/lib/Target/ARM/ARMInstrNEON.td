@@ -1261,13 +1261,13 @@ def  VMINfq   : N3VQInt<0, 0, 0b10, 0b1111, 0, "vmin.f32", v4f32, v4f32,
 
 //   VPADD    : Vector Pairwise Add
 def  VPADDi8  : N3VDInt<0, 0, 0b00, 0b1011, 1, "vpadd.i8", v8i8, v8i8,
-                        int_arm_neon_vpaddi, 0>;
+                        int_arm_neon_vpadd, 0>;
 def  VPADDi16 : N3VDInt<0, 0, 0b01, 0b1011, 1, "vpadd.i16", v4i16, v4i16,
-                        int_arm_neon_vpaddi, 0>;
+                        int_arm_neon_vpadd, 0>;
 def  VPADDi32 : N3VDInt<0, 0, 0b10, 0b1011, 1, "vpadd.i32", v2i32, v2i32,
-                        int_arm_neon_vpaddi, 0>;
+                        int_arm_neon_vpadd, 0>;
 def  VPADDf   : N3VDInt<1, 0, 0b00, 0b1101, 0, "vpadd.f32", v2f32, v2f32,
-                        int_arm_neon_vpaddf, 0>;
+                        int_arm_neon_vpadd, 0>;
 
 //   VPADDL   : Vector Pairwise Add Long
 defm VPADDLs  : N2VPLInt_QHS<0b11, 0b11, 0b00, 0b00100, 0, "vpaddl.s",
