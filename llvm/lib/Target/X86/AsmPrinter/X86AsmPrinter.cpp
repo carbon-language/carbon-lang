@@ -17,7 +17,7 @@
 #include "X86.h"
 #include "X86ATTAsmPrinter.h"
 #include "X86IntelAsmPrinter.h"
-#include "X86Subtarget.h"
+#include "llvm/Target/TargetAsmInfo.h"
 #include "llvm/Target/TargetRegistry.h"
 using namespace llvm;
 
@@ -28,9 +28,7 @@ using namespace llvm;
 static FunctionPass *createX86CodePrinterPass(formatted_raw_ostream &o,
                                               TargetMachine &tm,
                                               bool verbose) {
-  const X86Subtarget *Subtarget = &tm.getSubtarget<X86Subtarget>();
-
-  if (Subtarget->isFlavorIntel())
+  if (tm.getTargetAsmInfo()->getAssemblerDialect() == 1)
     return new X86IntelAsmPrinter(o, tm, tm.getTargetAsmInfo(), verbose);
   return new X86ATTAsmPrinter(o, tm, tm.getTargetAsmInfo(), verbose);
 }

@@ -16,7 +16,6 @@
 #include "X86InstrInfo.h"
 #include "X86GenSubtarget.inc"
 #include "llvm/GlobalValue.h"
-#include "llvm/Support/CommandLine.h"
 #include "llvm/Support/Debug.h"
 #include "llvm/Support/raw_ostream.h"
 #include "llvm/Target/TargetMachine.h"
@@ -26,14 +25,6 @@ using namespace llvm;
 #if defined(_MSC_VER)
 #include <intrin.h>
 #endif
-
-static cl::opt<X86Subtarget::AsmWriterFlavorTy>
-AsmWriterFlavor("x86-asm-syntax", cl::init(X86Subtarget::Unset),
-  cl::desc("Choose style of code to emit from X86 backend:"),
-  cl::values(
-    clEnumValN(X86Subtarget::ATT,   "att",   "Emit AT&T-style assembly"),
-    clEnumValN(X86Subtarget::Intel, "intel", "Emit Intel-style assembly"),
-    clEnumValEnd));
 
 /// ClassifyGlobalReference - Classify a global variable reference for the
 /// current subtarget according to how we should reference it in a non-pcrel
@@ -386,8 +377,7 @@ static const char *GetCurrentX86CPU() {
 
 X86Subtarget::X86Subtarget(const std::string &TT, const std::string &FS, 
                            bool is64Bit)
-  : AsmFlavor(AsmWriterFlavor)
-  , PICStyle(PICStyles::None)
+  : PICStyle(PICStyles::None)
   , X86SSELevel(NoMMXSSE)
   , X863DNowLevel(NoThreeDNow)
   , HasX86_64(false)
@@ -462,13 +452,6 @@ X86Subtarget::X86Subtarget(const std::string &TT, const std::string &FS,
       TargetType = isDarwin;
       DarwinVers = 9;
     }
-  }
-
-  // If the asm syntax hasn't been overridden on the command line, use whatever
-  // the target wants.
-  if (AsmFlavor == X86Subtarget::Unset) {
-    AsmFlavor = (TargetType == isWindows)
-      ? X86Subtarget::Intel : X86Subtarget::ATT;
   }
 
   // Stack alignment is 16 bytes on Darwin (both 32 and 64 bit) and for all 64

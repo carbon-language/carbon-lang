@@ -34,12 +34,6 @@ enum Style {
 }
 
 class X86Subtarget : public TargetSubtarget {
-public:
-  enum AsmWriterFlavorTy {
-    // Note: This numbering has to match the GCC assembler dialects for inline
-    // asm alternatives to work right.
-    ATT = 0, Intel = 1, Unset
-  };
 protected:
   enum X86SSEEnum {
     NoMMXSSE, MMX, SSE1, SSE2, SSE3, SSSE3, SSE41, SSE42
@@ -48,10 +42,6 @@ protected:
   enum X863DNowEnum {
     NoThreeDNow, ThreeDNow, ThreeDNowA
   };
-
-  /// AsmFlavor - Which x86 asm dialect to use.
-  ///
-  AsmWriterFlavorTy AsmFlavor;
 
   /// PICStyle - Which PIC style to use
   ///
@@ -151,13 +141,6 @@ public:
   bool hasFMA3() const { return HasFMA3; }
   bool hasFMA4() const { return HasFMA4; }
   bool isBTMemSlow() const { return IsBTMemSlow; }
-
-  unsigned getAsmFlavor() const {
-    return AsmFlavor != Unset ? unsigned(AsmFlavor) : 0;
-  }
-
-  bool isFlavorAtt() const { return AsmFlavor == ATT; }
-  bool isFlavorIntel() const { return AsmFlavor == Intel; }
 
   bool isTargetDarwin() const { return TargetType == isDarwin; }
   bool isTargetELF() const { return TargetType == isELF; }

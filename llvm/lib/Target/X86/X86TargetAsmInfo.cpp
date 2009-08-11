@@ -14,6 +14,7 @@
 #include "X86TargetAsmInfo.h"
 #include "X86TargetMachine.h"
 #include "X86Subtarget.h"
+#include "llvm/Support/CommandLine.h"
 #include "llvm/DerivedTypes.h"
 #include "llvm/InlineAsm.h"
 #include "llvm/Instructions.h"
@@ -22,9 +23,24 @@
 #include "llvm/ADT/StringExtras.h"
 #include "llvm/Support/Dwarf.h"
 #include "llvm/Support/ErrorHandling.h"
-
 using namespace llvm;
 using namespace llvm::dwarf;
+
+
+enum AsmWriterFlavorTy {
+  // Note: This numbering has to match the GCC assembler dialects for inline
+  // asm alternatives to work right.
+  ATT = 0, Intel = 1
+};
+
+
+static cl::opt<AsmWriterFlavorTy>
+AsmWriterFlavor("x86-asm-syntax", cl::init(ATT),
+  cl::desc("Choose style of code to emit from X86 backend:"),
+  cl::values(clEnumValN(ATT,   "att",   "Emit AT&T-style assembly"),
+             clEnumValN(Intel, "intel", "Emit Intel-style assembly"),
+             clEnumValEnd));
+
 
 static const char *const x86_asm_table[] = {
   "{si}", "S",
@@ -40,7 +56,7 @@ static const char *const x86_asm_table[] = {
 
 X86DarwinTargetAsmInfo::X86DarwinTargetAsmInfo(const X86TargetMachine &TM) {
   AsmTransCBE = x86_asm_table;
-  AssemblerDialect = TM.getSubtarget<X86Subtarget>().getAsmFlavor();
+  AssemblerDialect = AsmWriterFlavor;
     
   const X86Subtarget *Subtarget = &TM.getSubtarget<X86Subtarget>();
   bool is64Bit = Subtarget->is64Bit();
@@ -74,7 +90,7 @@ X86DarwinTargetAsmInfo::X86DarwinTargetAsmInfo(const X86TargetMachine &TM) {
 
 X86ELFTargetAsmInfo::X86ELFTargetAsmInfo(const X86TargetMachine &TM) {
   AsmTransCBE = x86_asm_table;
-  AssemblerDialect = TM.getSubtarget<X86Subtarget>().getAsmFlavor();
+  AssemblerDialect = AsmWriterFlavor;
 
   PrivateGlobalPrefix = ".L";
   WeakRefDirective = "\t.weak\t";
@@ -99,14 +115,13 @@ X86ELFTargetAsmInfo::X86ELFTargetAsmInfo(const X86TargetMachine &TM) {
 
 X86COFFTargetAsmInfo::X86COFFTargetAsmInfo(const X86TargetMachine &TM) {
   AsmTransCBE = x86_asm_table;
-  AssemblerDialect = TM.getSubtarget<X86Subtarget>().getAsmFlavor();
-
+  AssemblerDialect = AsmWriterFlavor;
 }
 
 
 X86WinTargetAsmInfo::X86WinTargetAsmInfo(const X86TargetMachine &TM) {
   AsmTransCBE = x86_asm_table;
-  AssemblerDialect = TM.getSubtarget<X86Subtarget>().getAsmFlavor();
+  AssemblerDialect = AsmWriterFlavor;
 
   GlobalPrefix = "_";
   CommentString = ";";
