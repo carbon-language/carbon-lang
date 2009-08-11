@@ -325,6 +325,10 @@ struct ClassInfo {
   /// MCInst; this is not valid for Token or register kinds.
   std::string RenderMethod;
 
+  /// For register classes, the records for all the registers in this class.
+  std::set<Record*> Registers;
+
+public:
   /// isRegisterClass() - Check if this is a register class.
   bool isRegisterClass() const {
     return Kind >= RegisterClass0 && Kind < UserClass0;
@@ -342,18 +346,32 @@ struct ClassInfo {
     if (Kind == Token || RHS.Kind == Token)
       return Kind == Token && RHS.Kind == Token;
 
-    // Registers are only related to registers.
-    if (isRegisterClass() || RHS.isRegisterClass())
-      return isRegisterClass() && RHS.isRegisterClass();
+    // Registers classes are only related to registers classes, and only if
+    // their intersection is non-empty.
+    if (isRegisterClass() || RHS.isRegisterClass()) {
+      if (!isRegisterClass() || !RHS.isRegisterClass())
+        return false;
+
+      std::set<Record*> Tmp;
+      std::insert_iterator< std::set<Record*> > II(Tmp, Tmp.begin());
+      std::set_intersection(Registers.begin(), Registers.end(), 
+                            RHS.Registers.begin(), RHS.Registers.end(),
+                            II);
+
+      return !Tmp.empty();
+    }
 
     // Otherwise we have two users operands; they are related if they are in the
     // same class hierarchy.
+    //
+    // FIXME: This is an oversimplification, they should only be related if they
+    // intersect, however we don't have that information.
     assert(isUserClass() && RHS.isUserClass() && "Unexpected class!");
     const ClassInfo *Root = this;
     while (!Root->SuperClasses.empty())
       Root = Root->SuperClasses.front();
 
-    const ClassInfo *RHSRoot = this;
+    const ClassInfo *RHSRoot = &RHS;
     while (!RHSRoot->SuperClasses.empty())
       RHSRoot = RHSRoot->SuperClasses.front();
     
@@ -674,6 +692,7 @@ void AsmMatcherInfo::BuildRegisterClasses(CodeGenTarget &Target) {
     CI->ValueName = "";
     CI->PredicateMethod = ""; // unused
     CI->RenderMethod = "addRegOperands";
+    CI->Registers = *it;
     Classes.push_back(CI);
     RegisterSetClasses.insert(std::make_pair(*it, CI));
   }
