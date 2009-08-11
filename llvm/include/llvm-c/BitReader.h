@@ -32,8 +32,8 @@ extern "C" {
 int LLVMParseBitcode(LLVMMemoryBufferRef MemBuf,
                      LLVMModuleRef *OutModule, char **OutMessage);
 
-int LLVMParseBitcodeInContext(LLVMMemoryBufferRef MemBuf,
-                              LLVMContextRef ContextRef,
+int LLVMParseBitcodeInContext(LLVMContextRef ContextRef,
+                              LLVMMemoryBufferRef MemBuf,
                               LLVMModuleRef *OutModule, char **OutMessage);
 
 /* Reads a module from the specified path, returning via the OutMP parameter
@@ -43,8 +43,8 @@ int LLVMGetBitcodeModuleProvider(LLVMMemoryBufferRef MemBuf,
                                  LLVMModuleProviderRef *OutMP,
                                  char **OutMessage);
 
-int LLVMGetBitcodeModuleProviderInContext(LLVMMemoryBufferRef MemBuf,
-                                          LLVMContextRef ContextRef,
+int LLVMGetBitcodeModuleProviderInContext(LLVMContextRef ContextRef,
+                                          LLVMMemoryBufferRef MemBuf,
                                           LLVMModuleProviderRef *OutMP,
                                           char **OutMessage);
 
