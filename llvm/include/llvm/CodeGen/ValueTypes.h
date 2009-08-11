@@ -26,7 +26,8 @@ namespace llvm {
   class LLVMContext;
   struct EVT;
 
-  struct MVT { // MVT = Machine Value Type
+  class MVT { // MVT = Machine Value Type
+  public:
     enum SimpleValueType {
       // If you change this numbering, you must change the values in
       // ValueTypes.td as well!
