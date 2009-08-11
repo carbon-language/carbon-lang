@@ -50,8 +50,6 @@ X86DarwinTargetAsmInfo::X86DarwinTargetAsmInfo(const X86TargetMachine &TM) {
 
   if (!is64Bit)
     Data64bitsDirective = 0;       // we can't emit a 64-bit unit
-  ZeroDirective = "\t.space\t";  // ".space N" emits N zeros.
-  ZeroFillDirective = "\t.zerofill\t";  // Uses .zerofill
 
   // Leopard and above support aligned common symbols.
   COMMDirectiveTakesAlignment = (Subtarget->getDarwinVers() >= 9);

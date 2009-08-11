@@ -31,7 +31,6 @@ PPCDarwinTargetAsmInfo::PPCDarwinTargetAsmInfo(const PPCTargetMachine &TM) {
   const PPCSubtarget *Subtarget = &TM.getSubtarget<PPCSubtarget>();
   bool isPPC64 = Subtarget->isPPC64();
   
-  ZeroDirective = "\t.space\t";
   SetDirective = "\t.set";
   Data64bitsDirective = isPPC64 ? "\t.quad\t" : 0;
   AlignmentIsInBytes = false;

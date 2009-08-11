@@ -50,8 +50,6 @@ ARMDarwinTargetAsmInfo::ARMDarwinTargetAsmInfo() {
   InlineAsmEnd = "@ InlineAsm End";
   
   
-  ZeroDirective = "\t.space\t";
-  ZeroFillDirective = "\t.zerofill\t";  // Uses .zerofill
   SetDirective = "\t.set\t";
   ProtectedDirective = NULL;
   HasDotTypeDotSizeDirective = false;

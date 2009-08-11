@@ -36,6 +36,8 @@ DarwinTargetAsmInfo::DarwinTargetAsmInfo() {
   WeakRefDirective = "\t.weak_reference ";
   HiddenDirective = "\t.private_extern ";
   LCOMMDirective = "\t.lcomm\t";
+  ZeroDirective = "\t.space\t";  // ".space N" emits N zeros.
+  ZeroFillDirective = "\t.zerofill\t";  // Uses .zerofill
 
   // _foo.eh symbols are currently always exported so that the linker knows
   // about them.  This is not necessary on 10.6 and later, but it
