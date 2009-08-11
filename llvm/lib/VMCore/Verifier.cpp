@@ -1597,6 +1597,12 @@ bool Verifier::PerformTypeCheck(Intrinsic::ID ID, Function *F, const Type *Ty,
       Suffix += "v" + utostr(NumElts);
 
     Suffix += EVT::getEVT(EltTy).getEVTString();
+  } else if (VT == EVT::vAny) {
+    if (!VTy) {
+      CheckFailed(IntrinsicParam(ArgNo, NumRets) + " is not a vector type.", F);
+      return false;
+    }
+    Suffix += ".v" + utostr(NumElts) + EVT::getEVT(EltTy).getEVTString();
   } else if (VT == EVT::iPTR) {
     if (!isa<PointerType>(Ty)) {
       CheckFailed(IntrinsicParam(ArgNo, NumRets) + " is not a "

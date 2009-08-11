@@ -56,6 +56,7 @@ std::string llvm::getEnumName(EVT::SimpleValueType T) {
   case EVT::i128:  return "EVT::i128";
   case EVT::iAny:  return "EVT::iAny";
   case EVT::fAny:  return "EVT::fAny";
+  case EVT::vAny:  return "EVT::vAny";
   case EVT::f32:   return "EVT::f32";
   case EVT::f64:   return "EVT::f64";
   case EVT::f80:   return "EVT::f80";
@@ -496,7 +497,7 @@ CodeGenIntrinsic::CodeGenIntrinsic(Record *R) {
     } else {
       VT = getValueType(TyEl->getValueAsDef("VT"));
     }
-    if (VT == EVT::iAny || VT == EVT::fAny || VT == EVT::iPTRAny) {
+    if (EVT(VT).isOverloaded()) {
       OverloadedVTs.push_back(VT);
       isOverloaded |= true;
     }
@@ -526,7 +527,7 @@ CodeGenIntrinsic::CodeGenIntrinsic(Record *R) {
               VT == EVT::iAny) && "Expected iAny type");
     } else
       VT = getValueType(TyEl->getValueAsDef("VT"));
-    if (VT == EVT::iAny || VT == EVT::fAny || VT == EVT::iPTRAny) {
+    if (EVT(VT).isOverloaded()) {
       OverloadedVTs.push_back(VT);
       isOverloaded |= true;
     }

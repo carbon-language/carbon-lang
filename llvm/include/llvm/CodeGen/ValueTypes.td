@@ -56,11 +56,14 @@ def v8f32  : ValueType<256, 31>;   //  8 x f32 vector value
 def v2f64  : ValueType<128, 32>;   //  2 x f64 vector value
 def v4f64  : ValueType<256, 33>;   //  4 x f64 vector value
 
-def MetadataVT: ValueType<0, 251>; // Metadata
+def MetadataVT: ValueType<0, 250>; // Metadata
 
 // Pseudo valuetype mapped to the current pointer size to any address space.
 // Should only be used in TableGen.
-def iPTRAny   : ValueType<0, 252>;
+def iPTRAny   : ValueType<0, 251>;
+
+// Pseudo valuetype to represent "vector of any size"
+def vAny   : ValueType<0  , 252>;
 
 // Pseudo valuetype to represent "float of any format"
 def fAny   : ValueType<0  , 253>;

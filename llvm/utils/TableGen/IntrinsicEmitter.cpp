@@ -203,7 +203,7 @@ static void EmitTypeGenerate(raw_ostream &OS, const Record *ArgType,
          << "(dyn_cast<VectorType>(Tys[" << Number << "]))";
     else
       OS << "Tys[" << Number << "]";
-  } else if (VT == EVT::iAny || VT == EVT::fAny) {
+  } else if (VT == EVT::iAny || VT == EVT::fAny || VT == EVT::vAny) {
     // NOTE: The ArgNo variable here is not the absolute argument number, it is
     // the index of the "arbitrary" type in the Tys array passed to the
     // Intrinsic::getDeclaration function. Consequently, we only want to
@@ -329,7 +329,7 @@ void IntrinsicEmitter::EmitVerifier(const std::vector<CodeGenIntrinsic> &Ints,
         EVT::SimpleValueType VT = getValueType(ArgType->getValueAsDef("VT"));
         OS << getEnumName(VT);
 
-        if (VT == EVT::iAny || VT == EVT::fAny || VT == EVT::iPTRAny)
+        if (EVT(VT).isOverloaded())
           OverloadedTypeIndices.push_back(j);
 
         if (VT == EVT::isVoid && j != 0 && j != je - 1)
@@ -357,7 +357,7 @@ void IntrinsicEmitter::EmitVerifier(const std::vector<CodeGenIntrinsic> &Ints,
         EVT::SimpleValueType VT = getValueType(ArgType->getValueAsDef("VT"));
         OS << getEnumName(VT);
 
-        if (VT == EVT::iAny || VT == EVT::fAny || VT == EVT::iPTRAny)
+        if (EVT(VT).isOverloaded())
           OverloadedTypeIndices.push_back(j + RetTys.size());
 
         if (VT == EVT::isVoid && j != 0 && j != je - 1)

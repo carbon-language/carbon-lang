@@ -63,7 +63,7 @@ namespace Intrinsic {
   /// declaration for an intrinsic, and return it.
   ///
   /// The Tys and numTys parameters are for intrinsics with overloaded types
-  /// (i.e., those using iAny or fAny). For a declaration for an overloaded
+  /// (e.g., those using iAny or fAny). For a declaration for an overloaded
   /// intrinsic, Tys should point to an array of numTys pointers to Type,
   /// and must provide exactly one type for each overloaded type in the
   /// intrinsic.

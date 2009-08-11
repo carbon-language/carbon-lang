@@ -87,8 +87,15 @@ bool isExtIntegerInVTs(const std::vector<unsigned char> &EVTs) {
 /// isExtFloatingPointInVTs - Return true if the specified extended value type
 /// vector contains isFP or a FP value type.
 bool isExtFloatingPointInVTs(const std::vector<unsigned char> &EVTs) {
-  assert(!EVTs.empty() && "Cannot check for integer in empty ExtVT list!");
+  assert(!EVTs.empty() && "Cannot check for FP in empty ExtVT list!");
   return EVTs[0] == isFP || !(FilterEVTs(EVTs, isFloatingPoint).empty());
+}
+
+/// isExtVectorInVTs - Return true if the specified extended value type
+/// vector contains a vector value type.
+bool isExtVectorInVTs(const std::vector<unsigned char> &EVTs) {
+  assert(!EVTs.empty() && "Cannot check for vector in empty ExtVT list!");
+  return !(FilterEVTs(EVTs, isVector).empty());
 }
 } // end namespace EEVT.
 } // end namespace llvm.
@@ -495,6 +502,14 @@ bool TreePatternNode::UpdateNodeType(const std::vector<unsigned char> &ExtVTs,
     setTypes(FVTs);
     return true;
   }
+  if (ExtVTs[0] == EVT::vAny && EEVT::isExtVectorInVTs(getExtTypes())) {
+    assert(hasTypeSet() && "should be handled above!");
+    std::vector<unsigned char> FVTs = FilterEVTs(getExtTypes(), isVector);
+    if (getExtTypes() == FVTs)
+      return false;
+    setTypes(FVTs);
+    return true;
+  }
       
   // If we know this is an int or fp type, and we are told it is a specific one,
   // take the advice.
@@ -504,7 +519,9 @@ bool TreePatternNode::UpdateNodeType(const std::vector<unsigned char> &ExtVTs,
   if (((getExtTypeNum(0) == EEVT::isInt || getExtTypeNum(0) == EVT::iAny) &&
        EEVT::isExtIntegerInVTs(ExtVTs)) ||
       ((getExtTypeNum(0) == EEVT::isFP || getExtTypeNum(0) == EVT::fAny) &&
-       EEVT::isExtFloatingPointInVTs(ExtVTs))) {
+       EEVT::isExtFloatingPointInVTs(ExtVTs)) ||
+      (getExtTypeNum(0) == EVT::vAny &&
+       EEVT::isExtVectorInVTs(ExtVTs))) {
     setTypes(ExtVTs);
     return true;
   }

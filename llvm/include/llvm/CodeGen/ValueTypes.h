@@ -83,26 +83,31 @@ namespace llvm {
       MAX_ALLOWED_VALUETYPE = 64,
 
       // Metadata - This is MDNode or MDString.
-      Metadata       = 251,
+      Metadata       = 250,
 
       // iPTRAny - An int value the size of the pointer of the current
       // target to any address space. This must only be used internal to
       // tblgen. Other than for overloading, we treat iPTRAny the same as iPTR.
-      iPTRAny        =  252,
+      iPTRAny        = 251,
+
+      // vAny - A vector with any length and element size. This is used
+      // for intrinsics that have overloadings based on vector types.
+      // This is only for tblgen's consumption!
+      vAny           = 252,
 
       // fAny - Any floating-point or vector floating-point value. This is used
       // for intrinsics that have overloadings based on floating-point types.
       // This is only for tblgen's consumption!
-      fAny           =  253,
+      fAny           = 253,
 
       // iAny - An integer or vector integer value of any bit width. This is
       // used for intrinsics that have overloadings based on integer bit widths.
       // This is only for tblgen's consumption!
-      iAny           =  254,
+      iAny           = 254,
 
       // iPTR - An int value the size of the pointer of the current
       // target.  This should only be used internal to tblgen!
-      iPTR           =  255,
+      iPTR           = 255,
 
       // LastSimpleValueType - The greatest valid SimpleValueType value.
       LastSimpleValueType = 255
@@ -284,6 +289,11 @@ namespace llvm {
               V==v4i64) : isExtended256BitVector();
     }
 
+    /// isOverloaded - Return true if this is an overloaded type for TableGen.
+    bool isOverloaded() const {
+      return (V==iAny || V==fAny || V==vAny || V==iPTRAny);
+    }
+
     /// isByteSized - Return true if the bit size is a multiple of 8.
     bool isByteSized() const {
       return (getSizeInBits() & 7) == 0;
@@ -396,6 +406,7 @@ namespace llvm {
       case iPTRAny:
       case iAny:
       case fAny:
+      case vAny:
         assert(0 && "Value type is overloaded.");
       default:
         return getExtendedSizeInBits();

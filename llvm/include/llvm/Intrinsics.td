@@ -94,6 +94,7 @@ class LLVMTruncatedElementVectorType<int num> : LLVMMatchType<num>;
 def llvm_void_ty       : LLVMType<isVoid>;
 def llvm_anyint_ty     : LLVMType<iAny>;
 def llvm_anyfloat_ty   : LLVMType<fAny>;
+def llvm_anyvector_ty  : LLVMType<vAny>;
 def llvm_i1_ty         : LLVMType<i1>;
 def llvm_i8_ty         : LLVMType<i8>;
 def llvm_i16_ty        : LLVMType<i16>;
