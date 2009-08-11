@@ -363,7 +363,7 @@ public:
       // Every index must be constant.
       InputIterator i;
       for (i = IdxBegin; i < IdxEnd; ++i) {
-        if (!dyn_cast<Constant>(*i))
+        if (!isa<Constant>(*i))
           break;
       }
       if (i == IdxEnd)

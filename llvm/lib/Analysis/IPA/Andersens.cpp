@@ -997,7 +997,7 @@ bool Andersens::AnalyzeUsesOfFunction(Value *V) {
   if (!isa<PointerType>(V->getType())) return true;
 
   for (Value::use_iterator UI = V->use_begin(), E = V->use_end(); UI != E; ++UI)
-    if (dyn_cast<LoadInst>(*UI)) {
+    if (isa<LoadInst>(*UI)) {
       return false;
     } else if (StoreInst *SI = dyn_cast<StoreInst>(*UI)) {
       if (V == SI->getOperand(1)) {
@@ -1028,7 +1028,7 @@ bool Andersens::AnalyzeUsesOfFunction(Value *V) {
     } else if (ICmpInst *ICI = dyn_cast<ICmpInst>(*UI)) {
       if (!isa<ConstantPointerNull>(ICI->getOperand(1)))
         return true;  // Allow comparison against null.
-    } else if (dyn_cast<FreeInst>(*UI)) {
+    } else if (isa<FreeInst>(*UI)) {
       return false;
     } else {
       return true;
