@@ -12,8 +12,6 @@
 //===----------------------------------------------------------------------===//
 
 #include "SystemZTargetAsmInfo.h"
-#include "SystemZTargetMachine.h"
-
 using namespace llvm;
 
 SystemZTargetAsmInfo::SystemZTargetAsmInfo() {
