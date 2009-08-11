@@ -28,7 +28,7 @@
 
 namespace llvm {
 
-class LLVMContext;
+struct LLVMContext;
 
 /// NoFolder - Create "constants" (actually, values) with no folding.
 class NoFolder {

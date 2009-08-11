@@ -21,7 +21,7 @@
 
 namespace llvm {
 
-class LLVMContext;
+struct LLVMContext;
 
 /// ConstantFolder - Create constants with minimum, target independent, folding.
 class ConstantFolder {
