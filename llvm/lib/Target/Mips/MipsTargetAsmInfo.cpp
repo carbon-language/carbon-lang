@@ -12,10 +12,9 @@
 //===----------------------------------------------------------------------===//
 
 #include "MipsTargetAsmInfo.h"
-#include "MipsTargetMachine.h"
 using namespace llvm;
 
-MipsTargetAsmInfo::MipsTargetAsmInfo(const MipsTargetMachine &TM) {
+MipsTargetAsmInfo::MipsTargetAsmInfo() {
   AlignmentIsInBytes          = false;
   COMMDirectiveTakesAlignment = true;
   Data16bitsDirective         = "\t.half\t";

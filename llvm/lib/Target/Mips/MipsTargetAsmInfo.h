@@ -17,11 +17,9 @@
 #include "llvm/Target/TargetAsmInfo.h"
 
 namespace llvm {
-  // Forward declaration.
-  class MipsTargetMachine;
-
-  struct MipsTargetAsmInfo : public TargetAsmInfo {
-    explicit MipsTargetAsmInfo(const MipsTargetMachine &TM);
+  class MipsTargetAsmInfo : public TargetAsmInfo {
+  public:
+    explicit MipsTargetAsmInfo();
   };
 
 } // namespace llvm

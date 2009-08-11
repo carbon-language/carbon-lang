@@ -24,10 +24,8 @@ extern "C" void LLVMInitializeMipsTarget() {
   RegisterTargetMachine<MipselTargetMachine> Y(TheMipselTarget);
 }
 
-const TargetAsmInfo *MipsTargetMachine::
-createTargetAsmInfo() const 
-{
-  return new MipsTargetAsmInfo(*this);
+const TargetAsmInfo *MipsTargetMachine::createTargetAsmInfo() const {
+  return new MipsTargetAsmInfo();
 }
 
 // DataLayout --> Big-endian, 32-bit pointer/ABI/alignment
