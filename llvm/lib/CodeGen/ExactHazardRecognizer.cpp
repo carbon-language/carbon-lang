@@ -17,6 +17,7 @@
 #include "llvm/CodeGen/ScheduleHazardRecognizer.h"
 #include "llvm/Support/Debug.h"
 #include "llvm/Support/ErrorHandling.h"
+#include "llvm/Support/raw_ostream.h"
 #include "llvm/Target/TargetInstrItineraries.h"
 
 namespace llvm {
@@ -47,8 +48,8 @@ ExactHazardRecognizer::ExactHazardRecognizer(const InstrItineraryData &LItinData
   Scoreboard = new unsigned[ScoreboardDepth];
   ScoreboardHead = 0;
 
-  DOUT << "Using exact hazard recognizer: ScoreboardDepth = " 
-       << ScoreboardDepth << '\n';
+  DEBUG(errs() << "Using exact hazard recognizer: ScoreboardDepth = " 
+        << ScoreboardDepth << '\n');
 }
 
 ExactHazardRecognizer::~ExactHazardRecognizer() {
@@ -65,7 +66,7 @@ unsigned ExactHazardRecognizer::getFutureIndex(unsigned offset) {
 }
 
 void ExactHazardRecognizer::dumpScoreboard() {
-  DOUT << "Scoreboard:\n";
+  DEBUG(errs() << "Scoreboard:\n");
   
   unsigned last = ScoreboardDepth - 1;
   while ((last > 0) && (Scoreboard[getFutureIndex(last)] == 0))
@@ -73,10 +74,10 @@ void ExactHazardRecognizer::dumpScoreboard() {
 
   for (unsigned i = 0; i <= last; i++) {
     unsigned FUs = Scoreboard[getFutureIndex(i)];
-    DOUT << "\t";
+    DEBUG(errs() << "\t");
     for (int j = 31; j >= 0; j--)
-      DOUT << ((FUs & (1 << j)) ? '1' : '0');
-    DOUT << '\n';
+      DEBUG(errs() << ((FUs & (1 << j)) ? '1' : '0'));
+    DEBUG(errs() << '\n');
   }
 }
 
@@ -96,8 +97,8 @@ ExactHazardRecognizer::HazardType ExactHazardRecognizer::getHazardType(SUnit *SU
       unsigned index = getFutureIndex(cycle);
       unsigned freeUnits = IS->Units & ~Scoreboard[index];
       if (!freeUnits) {
-        DOUT << "*** Hazard in cycle " << cycle << ", ";
-        DOUT << "SU(" << SU->NodeNum << "): ";
+        DEBUG(errs() << "*** Hazard in cycle " << cycle << ", ");
+        DEBUG(errs() << "SU(" << SU->NodeNum << "): ");
         DEBUG(SU->getInstr()->dump());
         return Hazard;
       }

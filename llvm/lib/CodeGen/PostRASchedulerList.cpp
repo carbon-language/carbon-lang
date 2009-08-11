@@ -37,6 +37,7 @@
 #include "llvm/Support/Compiler.h"
 #include "llvm/Support/Debug.h"
 #include "llvm/Support/ErrorHandling.h"
+#include "llvm/Support/raw_ostream.h"
 #include "llvm/ADT/Statistic.h"
 #include <map>
 using namespace llvm;
@@ -183,7 +184,7 @@ static bool isSchedulingBoundary(const MachineInstr *MI,
 }
 
 bool PostRAScheduler::runOnMachineFunction(MachineFunction &Fn) {
-  DOUT << "PostRAScheduler\n";
+  DEBUG(errs() << "PostRAScheduler\n");
 
   const MachineLoopInfo &MLI = getAnalysis<MachineLoopInfo>();
   const MachineDominatorTree &MDT = getAnalysis<MachineDominatorTree>();
@@ -310,7 +311,7 @@ void SchedulePostRATDList::StartBlock(MachineBasicBlock *BB) {
 /// Schedule - Schedule the instruction range using list scheduling.
 ///
 void SchedulePostRATDList::Schedule() {
-  DOUT << "********** List Scheduling **********\n";
+  DEBUG(errs() << "********** List Scheduling **********\n");
   
   // Build the scheduling graph.
   BuildSchedGraph();
@@ -525,8 +526,8 @@ bool SchedulePostRATDList::BreakAntiDependencies() {
       Max = SU;
   }
 
-  DOUT << "Critical path has total latency "
-       << (Max->getDepth() + Max->Latency) << "\n";
+  DEBUG(errs() << "Critical path has total latency "
+        << (Max->getDepth() + Max->Latency) << "\n");
 
   // Track progress along the critical path through the SUnit graph as we walk
   // the instructions.
@@ -691,10 +692,10 @@ bool SchedulePostRATDList::BreakAntiDependencies() {
         if (KillIndices[NewReg] == ~0u &&
             Classes[NewReg] != reinterpret_cast<TargetRegisterClass *>(-1) &&
             KillIndices[AntiDepReg] <= DefIndices[NewReg]) {
-          DOUT << "Breaking anti-dependence edge on "
-               << TRI->getName(AntiDepReg)
-               << " with " << RegRefs.count(AntiDepReg) << " references"
-               << " using " << TRI->getName(NewReg) << "!\n";
+          DEBUG(errs() << "Breaking anti-dependence edge on "
+                << TRI->getName(AntiDepReg)
+                << " with " << RegRefs.count(AntiDepReg) << " references"
+                << " using " << TRI->getName(NewReg) << "!\n");
 
           // Update the references to the old register to refer to the new
           // register.
@@ -777,7 +778,7 @@ void SchedulePostRATDList::ReleaseSuccessors(SUnit *SU) {
 /// count of its successors. If a successor pending count is zero, add it to
 /// the Available queue.
 void SchedulePostRATDList::ScheduleNodeTopDown(SUnit *SU, unsigned CurCycle) {
-  DOUT << "*** Scheduling [" << CurCycle << "]: ";
+  DEBUG(errs() << "*** Scheduling [" << CurCycle << "]: ");
   DEBUG(SU->dump(this));
   
   Sequence.push_back(SU);
@@ -866,7 +867,7 @@ void SchedulePostRATDList::ListScheduleTopDown() {
     } else if (!HasNoopHazards) {
       // Otherwise, we have a pipeline stall, but no other problem, just advance
       // the current cycle and try again.
-      DOUT << "*** Advancing cycle, no work to do\n";
+      DEBUG(errs() << "*** Advancing cycle, no work to do\n");
       HazardRec->AdvanceCycle();
       ++NumStalls;
       ++CurCycle;
@@ -874,7 +875,7 @@ void SchedulePostRATDList::ListScheduleTopDown() {
       // Otherwise, we have no instructions to issue and we have instructions
       // that will fault if we don't do this right.  This is the case for
       // processors without pipeline interlocks and other cases.
-      DOUT << "*** Emitting noop\n";
+      DEBUG(errs() << "*** Emitting noop\n");
       HazardRec->EmitNoop();
       Sequence.push_back(0);   // NULL here means noop
       ++NumNoops;
