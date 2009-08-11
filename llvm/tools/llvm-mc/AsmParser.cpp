@@ -517,7 +517,7 @@ bool AsmParser::ParseStatement() {
     // FIXME: Target hooks for size? Also for "word", "hword".
     if (IDVal == ".byte")
       return ParseDirectiveValue(1);
-    if (IDVal == ".short")
+    if (IDVal == ".short" || IDVal == ".word")
       return ParseDirectiveValue(2);
     if (IDVal == ".long")
       return ParseDirectiveValue(4);

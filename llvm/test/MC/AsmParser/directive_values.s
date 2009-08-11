@@ -19,3 +19,8 @@ TEST2:
 # CHECK: .quad 9
 TEST3:  
         .quad 9
+
+# CHECK: TEST4:
+# CHECK: .short 3
+TEST4:  
+        .word 3
