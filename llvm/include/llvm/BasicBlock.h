@@ -22,7 +22,7 @@
 namespace llvm {
 
 class TerminatorInst;
-struct LLVMContext;
+class LLVMContext;
 
 template<> struct ilist_traits<Instruction>
   : public SymbolTableListTraits<Instruction, BasicBlock> {

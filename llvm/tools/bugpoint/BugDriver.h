@@ -30,7 +30,7 @@ class Function;
 class BasicBlock;
 class AbstractInterpreter;
 class Instruction;
-struct LLVMContext;
+class LLVMContext;
 
 class DebugCrashes;
 

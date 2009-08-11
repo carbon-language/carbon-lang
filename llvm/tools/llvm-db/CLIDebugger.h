@@ -24,7 +24,7 @@ namespace llvm {
   struct SourceLanguage;
   class ProgramInfo;
   class RuntimeInfo;
-  struct LLVMContext;
+  class LLVMContext;
 
   /// CLIDebugger - This class implements the command line interface for the
   /// LLVM debugger.

@@ -29,7 +29,7 @@ namespace llvm {
 class ConstantInt;
 class ConstantRange;
 class APInt;
-struct LLVMContext;
+class LLVMContext;
 
 //===----------------------------------------------------------------------===//
 //                             AllocationInst Class

@@ -42,7 +42,7 @@ typedef StringMapEntry<Value*> ValueName;
 class raw_ostream;
 class AssemblyAnnotationWriter;
 class ValueHandleBase;
-struct LLVMContext;
+class LLVMContext;
 
 //===----------------------------------------------------------------------===//
 //                                 Value Class

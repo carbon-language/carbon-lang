@@ -8,7 +8,7 @@
 //===----------------------------------------------------------------------===//
 //
 //  This file implements LLVMContext, as a wrapper around the opaque
-// struct LLVMContextImpl.
+//  class LLVMContextImpl.
 //
 //===----------------------------------------------------------------------===//
 

@@ -20,7 +20,7 @@
 
 namespace llvm {
 
-struct LLVMContext;
+class LLVMContext;
 
 template<typename ValueSubClass, typename ItemParentClass>
   class SymbolTableListTraits;

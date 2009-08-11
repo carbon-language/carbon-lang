@@ -20,7 +20,7 @@
 namespace llvm {
   class Module;
   class InferiorProcess;
-  struct LLVMContext;
+  class LLVMContext;
 
   /// Debugger class - This class implements the LLVM source-level debugger.
   /// This allows clients to handle the user IO processing without having to

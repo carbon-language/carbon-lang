@@ -38,7 +38,7 @@ class CallGraph;
 class TargetData;
 class Loop;
 class LoopInfo;
-struct LLVMContext;
+class LLVMContext;
 
 /// CloneModule - Return an exact copy of the specified module
 ///

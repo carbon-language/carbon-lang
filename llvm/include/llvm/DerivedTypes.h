@@ -31,7 +31,7 @@ class PointerValType;
 class VectorValType;
 class IntegerValType;
 class APInt;
-struct LLVMContext;
+class LLVMContext;
 
 class DerivedType : public Type {
   friend class Type;

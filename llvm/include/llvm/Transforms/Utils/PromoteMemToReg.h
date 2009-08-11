@@ -23,7 +23,7 @@ class AllocaInst;
 class DominatorTree;
 class DominanceFrontier;
 class AliasSetTracker;
-struct LLVMContext;
+class LLVMContext;
 
 /// isAllocaPromotable - Return true if this alloca is legal for promotion.
 /// This is true if there are only loads and stores to the alloca...

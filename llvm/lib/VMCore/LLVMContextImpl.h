@@ -34,7 +34,7 @@ class ConstantInt;
 class ConstantFP;
 class MDString;
 class MDNode;
-struct LLVMContext;
+class LLVMContext;
 class Type;
 class Value;
 
@@ -90,7 +90,8 @@ struct DenseMapAPFloatKeyInfo {
   static bool isPod() { return false; }
 };
 
-struct LLVMContextImpl {
+class LLVMContextImpl {
+public:
   sys::SmartRWMutex<true> ConstantsLock;
   
   typedef DenseMap<DenseMapAPIntKeyInfo::KeyTy, ConstantInt*, 

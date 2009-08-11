@@ -17,14 +17,15 @@
 
 namespace llvm {
 
-struct LLVMContextImpl;
+class LLVMContextImpl;
 
 /// This is an important class for using LLVM in a threaded context.  It
 /// (opaquely) owns and manages the core "global" data of LLVM's core 
 /// infrastructure, including the type and constant uniquing tables.
 /// LLVMContext itself provides no locking guarantees, so you should be careful
 /// to have one context per thread.
-struct LLVMContext {
+class LLVMContext {
+public:
   LLVMContextImpl* pImpl;
   bool RemoveDeadMetadata();
   LLVMContext();

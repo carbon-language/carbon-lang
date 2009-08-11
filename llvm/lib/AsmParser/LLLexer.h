@@ -24,7 +24,7 @@ namespace llvm {
   class MemoryBuffer;
   class Type;
   class SMDiagnostic;
-  struct LLVMContext;
+  class LLVMContext;
 
   class LLLexer {
     const char *CurPtr;

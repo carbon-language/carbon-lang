@@ -41,7 +41,7 @@ namespace llvm {
   class Type;
   class ScalarEvolution;
   class TargetData;
-  struct LLVMContext;
+  class LLVMContext;
   class Loop;
   class LoopInfo;
   class Operator;

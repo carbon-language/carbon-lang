@@ -23,7 +23,7 @@ namespace llvm {
   class MemoryBuffer;
   class ModulePass;
   class BitstreamWriter;
-  struct LLVMContext;
+  class LLVMContext;
   class raw_ostream;
   
   /// getBitcodeModuleProvider - Read the header of the specified bitcode buffer

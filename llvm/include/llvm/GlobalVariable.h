@@ -28,7 +28,7 @@ namespace llvm {
 
 class Module;
 class Constant;
-struct LLVMContext;
+class LLVMContext;
 template<typename ValueSubClass, typename ItemParentClass>
   class SymbolTableListTraits;
 

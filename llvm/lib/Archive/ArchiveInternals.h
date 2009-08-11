@@ -31,7 +31,7 @@
 
 namespace llvm {
 
-  struct LLVMContext;
+  class LLVMContext;
 
   /// The ArchiveMemberHeader structure is used internally for bitcode
   /// archives.

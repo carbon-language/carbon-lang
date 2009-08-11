@@ -21,7 +21,7 @@ namespace llvm {
 class Module;
 class SMDiagnostic;
 class raw_ostream;
-struct LLVMContext;
+class LLVMContext;
 
 /// This function is the main interface to the LLVM Assembly Parser. It parses
 /// an ASCII file that (presumably) contains LLVM Assembly code. It returns a

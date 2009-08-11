@@ -22,7 +22,7 @@ namespace llvm {
   class TargetData;
   class Function;
   class Type;
-  struct LLVMContext;
+  class LLVMContext;
 
 /// ConstantFoldInstruction - Attempt to constant fold the specified
 /// instruction.  If successful, the constant result is returned, if not, null

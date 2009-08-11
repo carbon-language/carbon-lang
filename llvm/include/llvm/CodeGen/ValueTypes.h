@@ -23,7 +23,7 @@
 
 namespace llvm {
   class Type;
-  struct LLVMContext;
+  class LLVMContext;
 
   struct EVT { // EVT = Machine Value Type
   public:

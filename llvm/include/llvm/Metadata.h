@@ -26,7 +26,7 @@
 
 namespace llvm {
 class Constant;
-struct LLVMContext;
+class LLVMContext;
 template<class ConstantClass, class TypeClass, class ValType>
 struct ConstantCreator;
 
@@ -205,7 +205,7 @@ template<typename ValueSubClass, typename ItemParentClass>
 
 class NamedMDNode : public MetadataBase, public ilist_node<NamedMDNode> {
   friend class SymbolTableListTraits<NamedMDNode, Module>;
-  friend struct LLVMContextImpl;
+  friend class LLVMContextImpl;
 
   NamedMDNode(const NamedMDNode &);      // DO NOT IMPLEMENT
   void *operator new(size_t, unsigned);  // DO NOT IMPLEMENT

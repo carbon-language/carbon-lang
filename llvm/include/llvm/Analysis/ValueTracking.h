@@ -23,7 +23,7 @@ namespace llvm {
   class Instruction;
   class APInt;
   class TargetData;
-  struct LLVMContext;
+  class LLVMContext;
   
   /// ComputeMaskedBits - Determine which of the bits specified in Mask are
   /// known to be either zero or one and return them in the KnownZero/KnownOne

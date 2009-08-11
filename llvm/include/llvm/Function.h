@@ -26,7 +26,7 @@
 namespace llvm {
 
 class FunctionType;
-struct LLVMContext;
+class LLVMContext;
 
 // Traits for intrusive list of basic blocks...
 template<> struct ilist_traits<BasicBlock>

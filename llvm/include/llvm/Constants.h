@@ -231,7 +231,7 @@ class ConstantFP : public Constant {
   APFloat Val;
   void *operator new(size_t, unsigned);// DO NOT IMPLEMENT
   ConstantFP(const ConstantFP &);      // DO NOT IMPLEMENT
-  friend struct LLVMContextImpl;
+  friend class LLVMContextImpl;
 protected:
   ConstantFP(const Type *Ty, const APFloat& V);
 protected:

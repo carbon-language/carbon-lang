@@ -40,7 +40,7 @@ namespace llvm {
   class DebugLoc;
   struct DebugLocTracker;
   class Instruction;
-  struct LLVMContext;
+  class LLVMContext;
 
   class DIDescriptor {
   protected:    
