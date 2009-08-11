@@ -26,7 +26,6 @@ add_clang_library(clangSema
   SemaTemplateDeduction.cpp
   SemaTemplateInstantiate.cpp
   SemaTemplateInstantiateDecl.cpp
-  SemaTemplateInstantiateExpr.cpp
   SemaTemplateInstantiateStmt.cpp
   SemaType.cpp
   )

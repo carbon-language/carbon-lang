@@ -25,6 +25,10 @@
 #  define EXPR(Type, Base) STMT(Type, Base)
 #endif
 
+#ifndef ABSTRACT_EXPR
+#  define ABSTRACT_EXPR(Type, Base) EXPR(Type, Base)
+#endif
+
 // Normal Statements.
 STMT(NullStmt        , Stmt)
 FIRST_STMT(NullStmt)
@@ -64,7 +68,7 @@ STMT(CXXTryStmt  , Stmt)
 LAST_STMT(CXXTryStmt)
 
 // Expressions.
-EXPR(Expr                  , Stmt)
+ABSTRACT_EXPR(Expr                  , Stmt)
 FIRST_EXPR(Expr)
 EXPR(PredefinedExpr        , Expr)
 EXPR(DeclRefExpr           , Expr)
@@ -151,8 +155,9 @@ EXPR(BlockDeclRefExpr     , Expr)
 
 LAST_EXPR(BlockDeclRefExpr)
 
-#undef STMT
+#undef ABSTRACT_EXPR
 #undef EXPR
+#undef STMT
 #undef FIRST_STMT
 #undef LAST_STMT
 #undef FIRST_EXPR

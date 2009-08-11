@@ -316,22 +316,28 @@ namespace {
     /// \brief Returns the name of the entity being instantiated, if any.
     DeclarationName getBaseEntity() { return Entity; }
     
-    /// \brief Transforms an expression by instantiating it with the given
-    /// template arguments.
-    Sema::OwningExprResult TransformExpr(Expr *E);
-
     /// \brief Transform the given declaration by instantiating a reference to
     /// this declaration.
     Decl *TransformDecl(Decl *D);
     
+    Sema::OwningStmtResult TransformStmt(Stmt *S) {
+      return SemaRef.InstantiateStmt(S, TemplateArgs);
+    }
+
+    Sema::OwningStmtResult TransformCompoundStmt(CompoundStmt *S, 
+                                                 bool IsStmtExpr) {
+      return SemaRef.InstantiateCompoundStmt(S, TemplateArgs, IsStmtExpr);
+    }
+    
+    Sema::OwningExprResult TransformDeclRefExpr(DeclRefExpr *E);
+    
+    Sema::OwningExprResult 
+    TransformCXXConditionDeclExpr(CXXConditionDeclExpr *E);
+      
     /// \brief Transforms a template type parameter type by performing 
     /// substitution of the corresponding template type argument.
     QualType TransformTemplateTypeParmType(const TemplateTypeParmType *T);
   };
-}
-
-Sema::OwningExprResult TemplateInstantiator::TransformExpr(Expr *E) {
-  return getSema().InstantiateExpr(E, TemplateArgs);
 }
 
 Decl *TemplateInstantiator::TransformDecl(Decl *D) {
@@ -349,6 +355,93 @@ Decl *TemplateInstantiator::TransformDecl(Decl *D) {
   }
   
   return SemaRef.InstantiateCurrentDeclRef(cast_or_null<NamedDecl>(D));
+}
+
+Sema::OwningExprResult 
+TemplateInstantiator::TransformDeclRefExpr(DeclRefExpr *E) {
+  // FIXME: Clean this up a bit
+  NamedDecl *D = E->getDecl();
+  if (NonTypeTemplateParmDecl *NTTP = dyn_cast<NonTypeTemplateParmDecl>(D)) {
+    assert(NTTP->getDepth() == 0 && "No nested templates yet");
+    
+    // If the corresponding template argument is NULL or non-existent, it's 
+    // because we are performing instantiation from explicitly-specified 
+    // template arguments in a function template, but there were some
+    // arguments left unspecified.
+    if (NTTP->getPosition() >= TemplateArgs.size() ||
+        TemplateArgs[NTTP->getPosition()].isNull())
+      return SemaRef.Owned(E); // FIXME: Clone the expression!
+    
+    const TemplateArgument &Arg = TemplateArgs[NTTP->getPosition()]; 
+    
+    // The template argument itself might be an expression, in which
+    // case we just return that expression.
+    if (Arg.getKind() == TemplateArgument::Expression)
+      // FIXME: Clone the expression!
+      return SemaRef.Owned(Arg.getAsExpr());
+    
+    if (Arg.getKind() == TemplateArgument::Declaration) {
+      ValueDecl *VD = cast<ValueDecl>(Arg.getAsDecl());
+      
+      // FIXME: Can VD ever have a dependent type?
+      return SemaRef.BuildDeclRefExpr(VD, VD->getType(), E->getLocation(), 
+                                      false, false);
+    }
+    
+    assert(Arg.getKind() == TemplateArgument::Integral);
+    QualType T = Arg.getIntegralType();
+    if (T->isCharType() || T->isWideCharType())
+      return SemaRef.Owned(new (SemaRef.Context) CharacterLiteral(
+                                                                  Arg.getAsIntegral()->getZExtValue(),
+                                                                  T->isWideCharType(),
+                                                                  T, 
+                                                                  E->getSourceRange().getBegin()));
+    if (T->isBooleanType())
+      return SemaRef.Owned(new (SemaRef.Context) CXXBoolLiteralExpr(
+                                                                    Arg.getAsIntegral()->getBoolValue(),
+                                                                    T, 
+                                                                    E->getSourceRange().getBegin()));
+    
+    assert(Arg.getAsIntegral()->getBitWidth() == SemaRef.Context.getIntWidth(T));
+    return SemaRef.Owned(new (SemaRef.Context) IntegerLiteral(
+                                                              *Arg.getAsIntegral(),
+                                                              T, 
+                                                              E->getSourceRange().getBegin()));
+  }
+  
+  if (OverloadedFunctionDecl *Ovl = dyn_cast<OverloadedFunctionDecl>(D)) {
+    // FIXME: instantiate each decl in the overload set
+    return SemaRef.Owned(new (SemaRef.Context) DeclRefExpr(Ovl,
+                                                           SemaRef.Context.OverloadTy,
+                                                           E->getLocation(),
+                                                           false, false));
+  }
+  
+  NamedDecl *InstD = SemaRef.InstantiateCurrentDeclRef(D);
+  if (!InstD)
+    return SemaRef.ExprError();
+  
+  // FIXME: nested-name-specifier for QualifiedDeclRefExpr
+  return SemaRef.BuildDeclarationNameExpr(E->getLocation(), InstD, 
+                                          /*FIXME:*/false,
+                                          /*FIXME:*/0, 
+                                          /*FIXME:*/false);  
+}
+
+Sema::OwningExprResult 
+TemplateInstantiator::TransformCXXConditionDeclExpr(CXXConditionDeclExpr *E) {
+  VarDecl *Var 
+    = cast_or_null<VarDecl>(SemaRef.InstantiateDecl(E->getVarDecl(),
+                                                    SemaRef.CurContext,
+                                                    TemplateArgs));
+  if (!Var)
+    return SemaRef.ExprError();
+  
+  SemaRef.CurrentInstantiationScope->InstantiatedLocal(E->getVarDecl(), Var);
+  return SemaRef.Owned(new (SemaRef.Context) CXXConditionDeclExpr(
+                                                                  E->getStartLoc(), 
+                                                                  SourceLocation(),
+                                                                  Var));
 }
 
 QualType 
@@ -709,6 +802,17 @@ void Sema::InstantiateClassTemplateSpecializationMembers(
   //   below.
   InstantiateClassMembers(PointOfInstantiation, ClassTemplateSpec,
                           ClassTemplateSpec->getTemplateArgs());
+}
+
+Sema::OwningExprResult 
+Sema::InstantiateExpr(Expr *E, const TemplateArgumentList &TemplateArgs) {
+  if (!E)
+    return Owned(E);
+  
+  TemplateInstantiator Instantiator(*this, TemplateArgs,
+                                    SourceLocation(),
+                                    DeclarationName());
+  return Instantiator.TransformExpr(E);
 }
 
 /// \brief Instantiate a nested-name-specifier.
