@@ -1,4 +1,4 @@
-// RUN: clang-cc %s -verify -fsyntax-only
+// RUN: clang-cc %s -verify -Wunused -fsyntax-only
 #include <stdio.h>
 
 @interface Greeter
@@ -10,6 +10,21 @@
     fprintf(stdout, "Hello, World!\n");
 }
 @end
+
+
+
+
+@interface NSObject @end
+@interface NSString : NSObject 
+- (int)length;
+@end
+
+void test() {
+  // No unused warning: rdar://7126285
+  @"pointless example call for test purposes".length;
+}
+
+
 
 int main (void) {
     [Greeter hello];

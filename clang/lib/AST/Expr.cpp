@@ -540,6 +540,7 @@ bool Expr::isUnusedResultAWarning(SourceLocation &Loc, SourceRange &R1,
     return false;
   }
   case ObjCMessageExprClass:
+  case ObjCKVCRefExprClass:   // Dot syntax for message send.
     return false;
   case StmtExprClass: {
     // Statement exprs don't logically have side effects themselves, but are
