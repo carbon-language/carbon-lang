@@ -66,7 +66,7 @@ int ARMConstantPoolValue::getExistingMachineCPValue(MachineConstantPool *CP,
   return -1;
 }
 
-ARMConstantPoolValue::~ARMConstantPoolValue(void) {
+ARMConstantPoolValue::~ARMConstantPoolValue() {
   free((void*)S);
 }
 
