@@ -493,7 +493,8 @@ CodeGenIntrinsic::CodeGenIntrinsic(Record *R) {
       // overloaded, all the types can be specified directly.
       assert(((!TyEl->isSubClassOf("LLVMExtendedElementVectorType") &&
                !TyEl->isSubClassOf("LLVMTruncatedElementVectorType")) ||
-              VT == EVT::iAny) && "Expected iAny type");
+              VT == EVT::iAny || VT == EVT::vAny) &&
+             "Expected iAny or vAny type");
     } else {
       VT = getValueType(TyEl->getValueAsDef("VT"));
     }
@@ -524,7 +525,8 @@ CodeGenIntrinsic::CodeGenIntrinsic(Record *R) {
       // overloaded, all the types can be specified directly.
       assert(((!TyEl->isSubClassOf("LLVMExtendedElementVectorType") &&
                !TyEl->isSubClassOf("LLVMTruncatedElementVectorType")) ||
-              VT == EVT::iAny) && "Expected iAny type");
+              VT == EVT::iAny || VT == EVT::vAny) &&
+             "Expected iAny or vAny type");
     } else
       VT = getValueType(TyEl->getValueAsDef("VT"));
     if (EVT(VT).isOverloaded()) {
