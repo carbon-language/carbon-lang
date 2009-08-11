@@ -826,17 +826,13 @@ void SchedulePostRATDList::ListScheduleTopDown() {
         MinDepth = PendingQueue[i]->getDepth();
     }
 
-#ifndef NDEBUG
-    {
-      errs() << "\n*** Examining Available\n";
-      LatencyPriorityQueue q = AvailableQueue;
-      while (!q.empty()) {
-        SUnit *su = q.pop();
-        errs() << "Height " << su->getHeight() << ": ";
-        su->dump(this);
-      }
-    }
-#endif
+    DEBUG(errs() << "\n*** Examining Available\n";
+          LatencyPriorityQueue q = AvailableQueue;
+          while (!q.empty()) {
+            SUnit *su = q.pop();
+            errs() << "Height " << su->getHeight() << ": ";
+            su->dump(this);
+          });
 
     SUnit *FoundSUnit = 0;
 
