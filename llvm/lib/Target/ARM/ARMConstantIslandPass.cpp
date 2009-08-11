@@ -797,14 +797,14 @@ void ARMConstantIslands::AdjustBBOffsetsAfter(MachineBasicBlock *BB,
     if (!MBB->empty()) {
       // Constant pool entries require padding.
       if (MBB->begin()->getOpcode() == ARM::CONSTPOOL_ENTRY) {
-        unsigned oldOffset = BBOffsets[i] - delta;
-        if (oldOffset%4==0 && BBOffsets[i]%4!=0) {
+        unsigned OldOffset = BBOffsets[i] - delta;
+        if ((OldOffset%4) == 0 && (BBOffsets[i]%4) != 0) {
           // add new padding
           BBSizes[i] += 2;
           delta += 2;
-        } else if (oldOffset%4!=0 && BBOffsets[i]%4==0) {
+        } else if ((OldOffset%4) != 0 && (BBOffsets[i]%4) == 0) {
           // remove existing padding
-          BBSizes[i] -=2;
+          BBSizes[i] -= 2;
           delta -= 2;
         }
       }
@@ -812,13 +812,13 @@ void ARMConstantIslands::AdjustBBOffsetsAfter(MachineBasicBlock *BB,
       // following unconditional branches are removed by AnalyzeBranch.
       MachineInstr *ThumbJTMI = prior(MBB->end());
       if (ThumbJTMI->getOpcode() == ARM::tBR_JTr) {
-        unsigned newMIOffset = GetOffsetOf(ThumbJTMI);
-        unsigned oldMIOffset = newMIOffset - delta;
-        if (oldMIOffset%4 == 0 && newMIOffset%4 != 0) {
+        unsigned NewMIOffset = GetOffsetOf(ThumbJTMI);
+        unsigned OldMIOffset = NewMIOffset - delta;
+        if ((OldMIOffset%4) == 0 && (NewMIOffset%4) != 0) {
           // remove existing padding
           BBSizes[i] -= 2;
           delta -= 2;
-        } else if (oldMIOffset%4 != 0 && newMIOffset%4 == 0) {
+        } else if ((OldMIOffset%4) != 0 && (NewMIOffset%4) == 0) {
           // add new padding
           BBSizes[i] += 2;
           delta += 2;
