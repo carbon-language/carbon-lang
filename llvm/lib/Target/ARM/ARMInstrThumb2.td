@@ -597,8 +597,8 @@ defm t2STRH  : T2I_st<"strh", BinOpFrag<(truncstorei16 node:$LHS, node:$RHS)>>;
 
 // Store doubleword
 let mayLoad = 1 in
-def t2STRDi8 : T2Ii8s4<(outs), (ins GPR:$src, t2addrmode_imm8s4:$addr),  IIC_iStore,
-                        "strd", " $src, $addr", []>;
+def t2STRDi8 : T2Ii8s4<(outs), (ins GPR:$src, t2addrmode_imm8s4:$addr),
+               IIC_iStore, "strd", " $src, $addr", []>;
 
 // Indexed stores
 def t2STR_PRE  : T2Iidxldst<(outs GPR:$base_wb),
