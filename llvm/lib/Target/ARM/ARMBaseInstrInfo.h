@@ -243,7 +243,7 @@ public:
 
   virtual bool canFoldMemoryOperand(const MachineInstr *MI,
                                     const SmallVectorImpl<unsigned> &Ops) const;
-  
+
   virtual MachineInstr* foldMemoryOperandImpl(MachineFunction &MF,
                                               MachineInstr* MI,
                                               const SmallVectorImpl<unsigned> &Ops,
@@ -311,7 +311,7 @@ void emitT2RegPlusImmediate(MachineBasicBlock &MBB,
                             const ARMBaseInstrInfo &TII);
 
 
-/// rewriteARMFrameIndex / rewriteT2FrameIndex - 
+/// rewriteARMFrameIndex / rewriteT2FrameIndex -
 /// Rewrite MI to access 'Offset' bytes from the FP. Return the offset that
 /// could not be handled directly in MI.
 int rewriteARMFrameIndex(MachineInstr &MI, unsigned FrameRegIdx,

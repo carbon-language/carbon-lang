@@ -523,7 +523,7 @@ ARMBaseInstrInfo::isMoveInstr(const MachineInstr &MI,
   return false;
 }
 
-unsigned 
+unsigned
 ARMBaseInstrInfo::isLoadFromStackSlot(const MachineInstr *MI,
                                       int &FrameIndex) const {
   switch (MI->getOpcode()) {
@@ -805,7 +805,7 @@ foldMemoryOperandImpl(MachineFunction &MF, MachineInstr *MI,
   return NewMI;
 }
 
-MachineInstr* 
+MachineInstr*
 ARMBaseInstrInfo::foldMemoryOperandImpl(MachineFunction &MF,
                                         MachineInstr* MI,
                                         const SmallVectorImpl<unsigned> &Ops,
@@ -899,11 +899,11 @@ int llvm::rewriteARMFrameIndex(MachineInstr &MI, unsigned FrameRegIdx,
   const TargetInstrDesc &Desc = MI.getDesc();
   unsigned AddrMode = (Desc.TSFlags & ARMII::AddrModeMask);
   bool isSub = false;
-  
+
   // Memory operands in inline assembly always use AddrMode2.
   if (Opcode == ARM::INLINEASM)
     AddrMode = ARMII::AddrMode2;
-  
+
   if (Opcode == ARM::ADDri) {
     Offset += MI.getOperand(FrameRegIdx+1).getImm();
     if (Offset == 0) {
@@ -997,7 +997,7 @@ int llvm::rewriteARMFrameIndex(MachineInstr &MI, unsigned FrameRegIdx,
         ImmOp.ChangeToImmediate(ImmedOffset);
         return 0;
       }
-      
+
       // Otherwise, it didn't fit. Pull in what we can to simplify the immed.
       ImmedOffset = ImmedOffset & Mask;
       if (isSub)

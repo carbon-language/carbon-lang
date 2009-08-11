@@ -13,14 +13,14 @@
 #include "llvm/Target/TargetLoweringObjectFile.h"
 
 namespace llvm {
-  
+
   class ARMElfTargetObjectFile : public TargetLoweringObjectFileELF {
   public:
     ARMElfTargetObjectFile() : TargetLoweringObjectFileELF() {}
-    
+
     void Initialize(MCContext &Ctx, const TargetMachine &TM) {
       TargetLoweringObjectFileELF::Initialize(Ctx, TM);
-      
+
       // FIXME: Add new attribute/flag to MCSection for init_array/fini_array.
       // That will allow not treating these as "directives".
       if (TM.getSubtarget<ARMSubtarget>().isAAPCS_ABI()) {

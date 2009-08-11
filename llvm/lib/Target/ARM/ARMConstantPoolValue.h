@@ -73,7 +73,7 @@ public:
     return 2;
   }
 
-  
+
   virtual int getExistingMachineCPValue(MachineConstantPool *CP,
                                         unsigned Alignment);
 
@@ -91,7 +91,7 @@ inline std::ostream &operator<<(std::ostream &O,
   V.print(O);
   return O;
 }
-  
+
 inline raw_ostream &operator<<(raw_ostream &O, const ARMConstantPoolValue &V) {
   V.print(O);
   return O;

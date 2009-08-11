@@ -470,13 +470,13 @@ ARMBaseRegisterInfo::estimateRSStackSizeLimit(MachineFunction &MF) const {
          I != E; ++I) {
       for (unsigned i = 0, e = I->getNumOperands(); i != e; ++i) {
         if (!I->getOperand(i).isFI()) continue;
-        
+
         const TargetInstrDesc &Desc = TII.get(I->getOpcode());
         unsigned AddrMode = (Desc.TSFlags & ARMII::AddrModeMask);
         if (AddrMode == ARMII::AddrMode3 ||
             AddrMode == ARMII::AddrModeT2_i8)
           return (1 << 8) - 1;
-        
+
         if (AddrMode == ARMII::AddrMode5 ||
             AddrMode == ARMII::AddrModeT2_i8s4)
           Limit = std::min(Limit, ((1U << 8) - 1) * 4);
@@ -1235,7 +1235,7 @@ static bool isCalleeSavedRegister(unsigned Reg, const unsigned *CSRegs) {
 }
 
 static bool isCSRestore(MachineInstr *MI,
-                        const ARMBaseInstrInfo &TII, 
+                        const ARMBaseInstrInfo &TII,
                         const unsigned *CSRegs) {
   return ((MI->getOpcode() == (int)ARM::FLDD ||
            MI->getOpcode() == (int)ARM::LDR ||
@@ -1297,7 +1297,7 @@ emitEpilogue(MachineFunction &MF, MachineBasicBlock &MBB) const {
                                     ARMCC::AL, 0, TII);
         } else {
           // Thumb2 or ARM.
-          if (isARM) 
+          if (isARM)
             BuildMI(MBB, MBBI, dl, TII.get(ARM::MOVr), ARM::SP)
               .addReg(FramePtr)
               .addImm((unsigned)ARMCC::AL).addReg(0).addReg(0);

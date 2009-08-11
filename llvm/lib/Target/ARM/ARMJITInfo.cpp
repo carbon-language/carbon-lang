@@ -47,7 +47,7 @@ static TargetJITInfo::JITCompilerFn JITCompilerFunction;
 // CompilationCallback stub - We can't use a C function with inline assembly in
 // it, because we the prolog/epilog inserted by GCC won't work for us (we need
 // to preserve more context and manipulate the stack directly).  Instead,
-// write our own wrapper, which does things our way, so we have complete 
+// write our own wrapper, which does things our way, so we have complete
 // control over register saving and restoring.
 extern "C" {
 #if defined(__arm__)
@@ -79,11 +79,11 @@ extern "C" {
     // order for the registers.
     //      +--------+
     //   0  | LR     | Original return address
-    //      +--------+    
+    //      +--------+
     //   1  | LR     | Stub address (start of stub)
     // 2-5  | R3..R0 | Saved registers (we need to preserve all regs)
     // 6-20 | D0..D7 | Saved VFP registers
-    //      +--------+    
+    //      +--------+
     //
 #ifndef __SOFTFP__
     // Restore VFP caller-saved registers.
@@ -110,9 +110,9 @@ extern "C" {
 #endif
 }
 
-/// ARMCompilationCallbackC - This is the target-specific function invoked 
-/// by the function stub when we did not know the real target of a call.  
-/// This function must locate the start of the stub or call site and pass 
+/// ARMCompilationCallbackC - This is the target-specific function invoked
+/// by the function stub when we did not know the real target of a call.
+/// This function must locate the start of the stub or call site and pass
 /// it into the JIT compiler function.
 extern "C" void ARMCompilationCallbackC(intptr_t StubAddr) {
   // Get the address of the compiled code for this function.
@@ -161,7 +161,7 @@ void *ARMJITInfo::emitFunctionStub(const Function* F, void *Fn,
         // In PIC mode, the function stub is loading a lazy-ptr.
         LazyPtr= (intptr_t)emitGlobalValueIndirectSym((GlobalValue*)F, Fn, JCE);
         DEBUG(if (F)
-                errs() << "JIT: Indirect symbol emitted at [" << LazyPtr 
+                errs() << "JIT: Indirect symbol emitted at [" << LazyPtr
                        << "] for GV '" << F->getName() << "'\n";
               else
                 errs() << "JIT: Stub emitted at [" << LazyPtr
@@ -184,7 +184,7 @@ void *ARMJITInfo::emitFunctionStub(const Function* F, void *Fn,
     }
   } else {
     // The compilation callback will overwrite the first two words of this
-    // stub with indirect branch instructions targeting the compiled code. 
+    // stub with indirect branch instructions targeting the compiled code.
     // This stub sets the return address to restart the stub, so that
     // the new branch will be invoked when we come back.
     //

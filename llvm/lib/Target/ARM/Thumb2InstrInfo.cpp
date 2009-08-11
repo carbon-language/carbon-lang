@@ -330,7 +330,7 @@ int llvm::rewriteT2FrameIndex(MachineInstr &MI, unsigned FrameRegIdx,
   // Memory operands in inline assembly always use AddrModeT2_i12.
   if (Opcode == ARM::INLINEASM)
     AddrMode = ARMII::AddrModeT2_i12; // FIXME. mode for thumb2?
-  
+
   if (Opcode == ARM::t2ADDri || Opcode == ARM::t2ADDri12) {
     Offset += MI.getOperand(FrameRegIdx+1).getImm();
 
@@ -389,7 +389,7 @@ int llvm::rewriteT2FrameIndex(MachineInstr &MI, unsigned FrameRegIdx,
         MI.getOperand(FrameRegIdx).ChangeToRegister(FrameReg, false);
         return Offset;
       }
-      
+
       MI.RemoveOperand(FrameRegIdx+1);
       MI.getOperand(FrameRegIdx+1).ChangeToImmediate(0);
       NewOpc = immediateOffsetOpcode(Opcode);
@@ -444,13 +444,13 @@ int llvm::rewriteT2FrameIndex(MachineInstr &MI, unsigned FrameRegIdx,
         if (AddrMode == ARMII::AddrMode5)
           // FIXME: Not consistent.
           ImmedOffset |= 1 << NumBits;
-        else 
+        else
           ImmedOffset = -ImmedOffset;
       }
       ImmOp.ChangeToImmediate(ImmedOffset);
       return 0;
     }
-      
+
     // Otherwise, offset doesn't fit. Pull in what we can to simplify
     ImmedOffset = ImmedOffset & Mask;
     if (isSub) {

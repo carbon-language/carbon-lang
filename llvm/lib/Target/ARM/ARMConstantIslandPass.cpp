@@ -907,7 +907,7 @@ static inline unsigned getUnconditionalBrDisp(int Opc) {
   default:
     break;
   }
-  
+
   return ((1<<23)-1)*4;
 }
 

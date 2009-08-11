@@ -204,10 +204,10 @@ bool Emitter<CodeEmitter>::runOnMachineFunction(MachineFunction &MF) {
   JTI->Initialize(MF, IsPIC);
 
   do {
-    DEBUG(errs() << "JITTing function '" 
+    DEBUG(errs() << "JITTing function '"
           << MF.getFunction()->getName() << "'\n");
     MCE.startFunction(MF);
-    for (MachineFunction::iterator MBB = MF.begin(), E = MF.end(); 
+    for (MachineFunction::iterator MBB = MF.begin(), E = MF.end();
          MBB != E; ++MBB) {
       MCE.StartMachineBasicBlock(MBB);
       for (MachineBasicBlock::const_iterator I = MBB->begin(), E = MBB->end();
@@ -300,7 +300,7 @@ void Emitter<CodeEmitter>::emitConstPoolAddress(unsigned CPI,
 /// be emitted to the current location in the function, and allow it to be PC
 /// relative.
 template<class CodeEmitter>
-void Emitter<CodeEmitter>::emitJumpTableAddress(unsigned JTIndex, 
+void Emitter<CodeEmitter>::emitJumpTableAddress(unsigned JTIndex,
                                                 unsigned Reloc) {
   MCE.addRelocation(MachineRelocation::getJumpTable(MCE.getCurrentPCOffset(),
                                                     Reloc, JTIndex, 0, true));
@@ -408,7 +408,7 @@ void Emitter<CodeEmitter>::emitConstPoolInstruction(const MachineInstr &MI) {
   unsigned CPI = MI.getOperand(0).getImm();       // CP instruction index.
   unsigned CPIndex = MI.getOperand(1).getIndex(); // Actual cp entry index.
   const MachineConstantPoolEntry &MCPE = (*MCPEs)[CPIndex];
-  
+
   // Remember the CONSTPOOL_ENTRY address for later relocation.
   JTI->addConstantPoolEntryAddr(CPI, MCE.getCurrentPCValue());
 
@@ -428,7 +428,7 @@ void Emitter<CodeEmitter>::emitConstPoolInstruction(const MachineInstr &MI) {
         MCE.addRelocation(MachineRelocation::getIndirectSymbol(
                   MCE.getCurrentPCOffset(), ARM::reloc_arm_machine_cp_entry, GV,
                   (intptr_t)ACPV, false));
-      else 
+      else
         emitGlobalAddress(GV, ARM::reloc_arm_machine_cp_entry,
                           ACPV->isStub() || isa<Function>(GV), (intptr_t)ACPV);
      } else  {
@@ -515,7 +515,7 @@ void Emitter<CodeEmitter>::emitMOVi2piecesInstruction(const MachineInstr &MI) {
 template<class CodeEmitter>
 void Emitter<CodeEmitter>::emitLEApcrelJTInstruction(const MachineInstr &MI) {
   // It's basically add r, pc, (LJTI - $+8)
-  
+
   const TargetInstrDesc &TID = MI.getDesc();
 
   // Emit the 'add' instruction.
@@ -1117,7 +1117,7 @@ void Emitter<CodeEmitter>::emitMiscArithInstruction(const MachineInstr &MI) {
   unsigned ShiftAmt = MI.getOperand(OpIdx).getImm();
   assert(ShiftAmt < 32 && "shift_imm range is 0 to 31!");
   Binary |= ShiftAmt << ARMII::ShiftShift;
-  
+
   emitWordLE(Binary);
 }
 
@@ -1194,7 +1194,7 @@ void Emitter<CodeEmitter>::emitMiscBranchInstruction(const MachineInstr &MI) {
   if (TID.Opcode == ARM::BX_RET)
     // The return register is LR.
     Binary |= ARMRegisterInfo::getRegisterNumbering(ARM::LR);
-  else 
+  else
     // otherwise, set the return register
     Binary |= getMachineOpValue(MI, 0);
 
@@ -1279,7 +1279,7 @@ void Emitter<CodeEmitter>::emitVFPArithInstruction(const MachineInstr &MI) {
 
   // Encode Dm / Sm.
   Binary |= encodeVFPRm(MI, OpIdx);
-  
+
   emitWordLE(Binary);
 }
 

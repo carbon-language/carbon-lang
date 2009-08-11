@@ -162,7 +162,7 @@ static bool isi32Store(unsigned Opc) {
 
 /// MergeOps - Create and insert a LDM or STM with Base as base register and
 /// registers in Regs as the register operands that would be loaded / stored.
-/// It returns true if the transformation is done. 
+/// It returns true if the transformation is done.
 bool
 ARMLoadStoreOpt::MergeOps(MachineBasicBlock &MBB,
                           MachineBasicBlock::iterator MBBI,
@@ -968,7 +968,7 @@ bool ARMLoadStoreOpt::LoadStoreMultipleOpti(MachineBasicBlock &MBB) {
             if (MergeBaseUpdateLoadStore(MBB, MemOps[i].MBBI, TII,Advance,MBBI))
               ++NumMerges;
 
-        // RS may be pointing to an instruction that's deleted. 
+        // RS may be pointing to an instruction that's deleted.
         RS->skipTo(prior(MBBI));
       } else if (NumMemOps == 1) {
         // Try folding preceeding/trailing base inc/dec into the single

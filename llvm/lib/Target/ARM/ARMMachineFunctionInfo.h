@@ -1,10 +1,10 @@
 //====- ARMMachineFuctionInfo.h - ARM machine function info -----*- C++ -*-===//
-// 
+//
 //                     The LLVM Compiler Infrastructure
 //
 // This file is distributed under the University of Illinois Open Source
 // License. See LICENSE.TXT for details.
-// 
+//
 //===----------------------------------------------------------------------===//
 //
 // This file declares ARM-specific per-machine-function information.
@@ -140,7 +140,7 @@ public:
 
   unsigned getFramePtrSpillOffset() const { return FramePtrSpillOffset; }
   void setFramePtrSpillOffset(unsigned o) { FramePtrSpillOffset = o; }
-  
+
   unsigned getGPRCalleeSavedArea1Offset() const { return GPRCS1Offset; }
   unsigned getGPRCalleeSavedArea2Offset() const { return GPRCS2Offset; }
   unsigned getDPRCalleeSavedAreaOffset()  const { return DPRCSOffset; }

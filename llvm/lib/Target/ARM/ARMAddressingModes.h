@@ -20,7 +20,7 @@
 #include <cassert>
 
 namespace llvm {
-  
+
 /// ARM_AM - ARM Addressing Mode Stuff
 namespace ARM_AM {
   enum ShiftOpc {
@@ -31,11 +31,11 @@ namespace ARM_AM {
     ror,
     rrx
   };
-  
+
   enum AddrOpc {
     add = '+', sub = '-'
   };
-  
+
   static inline const char *getShiftOpcStr(ShiftOpc Op) {
     switch (Op) {
     default: llvm_unreachable("Unknown shift opc!");
@@ -46,7 +46,7 @@ namespace ARM_AM {
     case ARM_AM::rrx: return "rrx";
     }
   }
-  
+
   static inline ShiftOpc getShiftOpcForNode(SDValue N) {
     switch (N.getOpcode()) {
     default:          return ARM_AM::no_shift;
@@ -95,14 +95,14 @@ namespace ARM_AM {
     assert(Amt < 32 && "Invalid rotate amount");
     return (Val >> Amt) | (Val << ((32-Amt)&31));
   }
-  
+
   /// rotl32 - Rotate a 32-bit unsigned value left by a specified # bits.
   ///
   static inline unsigned rotl32(unsigned Val, unsigned Amt) {
     assert(Amt < 32 && "Invalid rotate amount");
     return (Val << Amt) | (Val >> ((32-Amt)&31));
   }
-  
+
   //===--------------------------------------------------------------------===//
   // Addressing Mode #1: shift_operand with registers
   //===--------------------------------------------------------------------===//
@@ -137,7 +137,7 @@ namespace ARM_AM {
   static inline unsigned getSOImmValRot(unsigned Imm) {
     return (Imm >> 8) * 2;
   }
-  
+
   /// getSOImmValRotate - Try to handle Imm with an immediate shifter operand,
   /// computing the rotate amount to use.  If this immediate value cannot be
   /// handled with a single shifter-op, determine a good rotate amount that will
@@ -146,14 +146,14 @@ namespace ARM_AM {
     // 8-bit (or less) immediates are trivially shifter_operands with a rotate
     // of zero.
     if ((Imm & ~255U) == 0) return 0;
-    
+
     // Use CTZ to compute the rotate amount.
     unsigned TZ = CountTrailingZeros_32(Imm);
-    
+
     // Rotate amount must be even.  Something like 0x200 must be rotated 8 bits,
     // not 9.
     unsigned RotAmt = TZ & ~1;
-    
+
     // If we can handle this spread, return it.
     if ((rotr32(Imm, RotAmt) & ~255U) == 0)
       return (32-RotAmt)&31;  // HW rotates right, not left.
@@ -166,16 +166,16 @@ namespace ARM_AM {
         // Restart the search for a high-order bit after the initial seconds of
         // ones.
         unsigned TZ2 = CountTrailingZeros_32(Imm & ~((1 << TrailingOnes)-1));
-      
+
         // Rotate amount must be even.
         unsigned RotAmt2 = TZ2 & ~1;
-        
+
         // If this fits, use it.
         if (RotAmt2 != 32 && (rotr32(Imm, RotAmt2) & ~255U) == 0)
           return (32-RotAmt2)&31;  // HW rotates right, not left.
       }
     }
-    
+
     // Otherwise, we have no way to cover this span of bits with a single
     // shifter_op immediate.  Return a chunk of bits that will be useful to
     // handle.
@@ -189,17 +189,17 @@ namespace ARM_AM {
     // 8-bit (or less) immediates are trivially shifter_operands with a rotate
     // of zero.
     if ((Arg & ~255U) == 0) return Arg;
-    
+
     unsigned RotAmt = getSOImmValRotate(Arg);
 
     // If this cannot be handled with a single shifter_op, bail out.
     if (rotr32(~255U, RotAmt) & Arg)
       return -1;
-      
+
     // Encode this correctly.
     return rotl32(Arg, RotAmt) | ((RotAmt>>1) << 8);
   }
-  
+
   /// isSOImmTwoPartVal - Return true if the specified value can be obtained by
   /// or'ing together two SOImmVal's.
   static inline bool isSOImmTwoPartVal(unsigned V) {
@@ -207,12 +207,12 @@ namespace ARM_AM {
     V = rotr32(~255U, getSOImmValRotate(V)) & V;
     if (V == 0)
       return false;
-    
+
     // If this can be handled with two shifter_op's, accept.
     V = rotr32(~255U, getSOImmValRotate(V)) & V;
     return V == 0;
   }
-  
+
   /// getSOImmTwoPartFirst - If V is a value that satisfies isSOImmTwoPartVal,
   /// return the first chunk of it.
   static inline unsigned getSOImmTwoPartFirst(unsigned V) {
@@ -222,14 +222,14 @@ namespace ARM_AM {
   /// getSOImmTwoPartSecond - If V is a value that satisfies isSOImmTwoPartVal,
   /// return the second chunk of it.
   static inline unsigned getSOImmTwoPartSecond(unsigned V) {
-    // Mask out the first hunk.  
+    // Mask out the first hunk.
     V = rotr32(~255U, getSOImmValRotate(V)) & V;
-    
+
     // Take what's left.
     assert(V == (rotr32(255U, getSOImmValRotate(V)) & V));
     return V;
   }
-  
+
   /// getThumbImmValShift - Try to handle Imm with a 8-bit immediate followed
   /// by a left shift. Returns the shift amount to use.
   static inline unsigned getThumbImmValShift(unsigned Imm) {
@@ -244,7 +244,7 @@ namespace ARM_AM {
   /// isThumbImmShiftedVal - Return true if the specified value can be obtained
   /// by left shifting a 8-bit immediate.
   static inline bool isThumbImmShiftedVal(unsigned V) {
-    // If this can be handled with 
+    // If this can be handled with
     V = (~255U << getThumbImmValShift(V)) & V;
     return V == 0;
   }
@@ -260,10 +260,10 @@ namespace ARM_AM {
     return CountTrailingZeros_32(Imm);
   }
 
-  /// isThumbImm16ShiftedVal - Return true if the specified value can be 
+  /// isThumbImm16ShiftedVal - Return true if the specified value can be
   /// obtained by left shifting a 16-bit immediate.
   static inline bool isThumbImm16ShiftedVal(unsigned V) {
-    // If this can be handled with 
+    // If this can be handled with
     V = (~65535U << getThumbImm16ValShift(V)) & V;
     return V == 0;
   }
@@ -287,9 +287,9 @@ namespace ARM_AM {
   static inline int getT2SOImmValSplatVal(unsigned V) {
     unsigned u, Vs, Imm;
     // control = 0
-    if ((V & 0xffffff00) == 0) 
+    if ((V & 0xffffff00) == 0)
       return V;
-    
+
     // If the value is zeroes in the first byte, just shift those off
     Vs = ((V & 0xff) == 0) ? V >> 8 : V;
     // Any passing value only has 8 bits of payload, splatted across the word
@@ -325,7 +325,7 @@ namespace ARM_AM {
   }
 
   /// getT2SOImmVal - Given a 32-bit immediate, if it is something that can fit
-  /// into a Thumb-2 shifter_operand immediate operand, return the 12-bit 
+  /// into a Thumb-2 shifter_operand immediate operand, return the 12-bit
   /// encoding for it.  If not, return -1.
   /// See ARM Reference Manual A6.3.2.
   static inline int getT2SOImmVal(unsigned Arg) {
@@ -333,7 +333,7 @@ namespace ARM_AM {
     int Splat = getT2SOImmValSplatVal(Arg);
     if (Splat != -1)
       return Splat;
-    
+
     // If 'Arg' can be handled with a single shifter_op return the value.
     int Rot = getT2SOImmValRotateVal(Arg);
     if (Rot != -1)
@@ -341,7 +341,7 @@ namespace ARM_AM {
 
     return -1;
   }
-  
+
 
   //===--------------------------------------------------------------------===//
   // Addressing Mode #2
@@ -359,7 +359,7 @@ namespace ARM_AM {
   // If this addressing mode is a frame index (before prolog/epilog insertion
   // and code rewriting), this operand will have the form:  FI#, reg0, <offs>
   // with no shift amount for the frame offset.
-  // 
+  //
   static inline unsigned getAM2Opc(AddrOpc Opc, unsigned Imm12, ShiftOpc SO) {
     assert(Imm12 < (1 << 12) && "Imm too large!");
     bool isSub = Opc == sub;
@@ -374,8 +374,8 @@ namespace ARM_AM {
   static inline ShiftOpc getAM2ShiftOpc(unsigned AM2Opc) {
     return (ShiftOpc)(AM2Opc >> 13);
   }
-  
-  
+
+
   //===--------------------------------------------------------------------===//
   // Addressing Mode #3
   //===--------------------------------------------------------------------===//
@@ -388,7 +388,7 @@ namespace ARM_AM {
   // The first operand is always a Reg.  The second operand is a reg if in
   // reg/reg form, otherwise it's reg#0.  The third field encodes the operation
   // in bit 8, the immediate in bits 0-7.
-  
+
   /// getAM3Opc - This function encodes the addrmode3 opc field.
   static inline unsigned getAM3Opc(AddrOpc Opc, unsigned char Offset) {
     bool isSub = Opc == sub;
@@ -400,7 +400,7 @@ namespace ARM_AM {
   static inline AddrOpc getAM3Op(unsigned AM3Opc) {
     return ((AM3Opc >> 8) & 1) ? sub : add;
   }
-  
+
   //===--------------------------------------------------------------------===//
   // Addressing Mode #4
   //===--------------------------------------------------------------------===//
@@ -448,7 +448,7 @@ namespace ARM_AM {
   //
   //    IA - Increment after
   //    DB - Decrement before
-  
+
   /// getAM5Opc - This function encodes the addrmode5 opc field.
   static inline unsigned getAM5Opc(AddrOpc Opc, unsigned char Offset) {
     bool isSub = Opc == sub;

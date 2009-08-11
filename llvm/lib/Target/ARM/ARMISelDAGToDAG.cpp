@@ -152,7 +152,7 @@ bool ARMDAGToDAGISel::SelectShifterOperandReg(SDValue Op,
   // Don't match base register only case. That is matched to a separate
   // lower complexity pattern with explicit register operand.
   if (ShOpcVal == ARM_AM::no_shift) return false;
-  
+
   BaseReg = N.getOperand(0);
   unsigned ShImmVal = 0;
   if (ConstantSDNode *RHS = dyn_cast<ConstantSDNode>(N.getOperand(1))) {
@@ -206,7 +206,7 @@ bool ARMDAGToDAGISel::SelectAddrMode2(SDValue Op, SDValue N,
                                     EVT::i32);
     return true;
   }
-  
+
   // Match simple R +/- imm12 operands.
   if (N.getOpcode() == ISD::ADD)
     if (ConstantSDNode *RHS = dyn_cast<ConstantSDNode>(N.getOperand(1))) {
@@ -231,15 +231,15 @@ bool ARMDAGToDAGISel::SelectAddrMode2(SDValue Op, SDValue N,
         return true;
       }
     }
-  
+
   // Otherwise this is R +/- [possibly shifted] R
   ARM_AM::AddrOpc AddSub = N.getOpcode() == ISD::ADD ? ARM_AM::add:ARM_AM::sub;
   ARM_AM::ShiftOpc ShOpcVal = ARM_AM::getShiftOpcForNode(N.getOperand(1));
   unsigned ShAmt = 0;
-  
+
   Base   = N.getOperand(0);
   Offset = N.getOperand(1);
-  
+
   if (ShOpcVal != ARM_AM::no_shift) {
     // Check to see if the RHS of the shift is a constant, if not, we can't fold
     // it.
@@ -251,7 +251,7 @@ bool ARMDAGToDAGISel::SelectAddrMode2(SDValue Op, SDValue N,
       ShOpcVal = ARM_AM::no_shift;
     }
   }
-  
+
   // Try matching (R shl C) + (R).
   if (N.getOpcode() == ISD::ADD && ShOpcVal == ARM_AM::no_shift) {
     ShOpcVal = ARM_AM::getShiftOpcForNode(N.getOperand(0));
@@ -268,7 +268,7 @@ bool ARMDAGToDAGISel::SelectAddrMode2(SDValue Op, SDValue N,
       }
     }
   }
-  
+
   Opc = CurDAG->getTargetConstant(ARM_AM::getAM2Opc(AddSub, ShAmt, ShOpcVal),
                                   EVT::i32);
   return true;
@@ -323,7 +323,7 @@ bool ARMDAGToDAGISel::SelectAddrMode3(SDValue Op, SDValue N,
     Opc = CurDAG->getTargetConstant(ARM_AM::getAM3Opc(ARM_AM::sub, 0),EVT::i32);
     return true;
   }
-  
+
   if (N.getOpcode() != ISD::ADD) {
     Base = N;
     if (N.getOpcode() == ISD::FrameIndex) {
@@ -334,7 +334,7 @@ bool ARMDAGToDAGISel::SelectAddrMode3(SDValue Op, SDValue N,
     Opc = CurDAG->getTargetConstant(ARM_AM::getAM3Opc(ARM_AM::add, 0),EVT::i32);
     return true;
   }
-  
+
   // If the RHS is +/- imm8, fold into addr mode.
   if (ConstantSDNode *RHS = dyn_cast<ConstantSDNode>(N.getOperand(1))) {
     int RHSC = (int)RHS->getZExtValue();
@@ -356,7 +356,7 @@ bool ARMDAGToDAGISel::SelectAddrMode3(SDValue Op, SDValue N,
       return true;
     }
   }
-  
+
   Base = N.getOperand(0);
   Offset = N.getOperand(1);
   Opc = CurDAG->getTargetConstant(ARM_AM::getAM3Opc(ARM_AM::add, 0), EVT::i32);
@@ -406,7 +406,7 @@ bool ARMDAGToDAGISel::SelectAddrMode5(SDValue Op, SDValue N,
                                        EVT::i32);
     return true;
   }
-  
+
   // If the RHS is +/- imm8, fold into addr mode.
   if (ConstantSDNode *RHS = dyn_cast<ConstantSDNode>(N.getOperand(1))) {
     int RHSC = (int)RHS->getZExtValue();
@@ -431,7 +431,7 @@ bool ARMDAGToDAGISel::SelectAddrMode5(SDValue Op, SDValue N,
       }
     }
   }
-  
+
   Base = N;
   Offset = CurDAG->getTargetConstant(ARM_AM::getAM5Opc(ARM_AM::add, 0),
                                      EVT::i32);
@@ -579,7 +579,7 @@ bool ARMDAGToDAGISel::SelectThumbAddrModeSP(SDValue Op, SDValue N,
       }
     }
   }
-  
+
   return false;
 }
 
@@ -659,7 +659,7 @@ bool ARMDAGToDAGISel::SelectT2AddrModeImm8(SDValue Op, SDValue N,
       int RHSC = (int)RHS->getSExtValue();
       if (N.getOpcode() == ISD::SUB)
         RHSC = -RHSC;
-      
+
       if ((RHSC >= -255) && (RHSC < 0)) { // 8 bits (always negative)
         Base = N.getOperand(0);
         if (Base.getOpcode() == ISD::FrameIndex) {
@@ -747,8 +747,8 @@ bool ARMDAGToDAGISel::SelectT2AddrModeSoReg(SDValue Op, SDValue N,
     ShOpcVal = ARM_AM::getShiftOpcForNode(Base);
     if (ShOpcVal == ARM_AM::lsl)
       std::swap(Base, OffReg);
-  }  
-  
+  }
+
   if (ShOpcVal == ARM_AM::lsl) {
     // Check to see if the RHS of the shift is a constant, if not, we can't fold
     // it.
@@ -763,7 +763,7 @@ bool ARMDAGToDAGISel::SelectT2AddrModeSoReg(SDValue Op, SDValue N,
       ShOpcVal = ARM_AM::no_shift;
     }
   }
-  
+
   ShImm = CurDAG->getTargetConstant(ShAmt, EVT::i32);
 
   return true;
@@ -901,7 +901,7 @@ SDNode *ARMDAGToDAGISel::SelectDYN_ALLOC(SDValue Op) {
     // Use tADDrSPr since Thumb1 does not have a sub r, sp, r. ARMISelLowering
     // should have negated the size operand already. FIXME: We can't insert
     // new target independent node at this stage so we are forced to negate
-    // it earlier. Is there a better solution? 
+    // it earlier. Is there a better solution?
     return CurDAG->SelectNodeTo(N, ARM::tADDspr_, VT, EVT::Other, SP, Size,
                                 Chain);
   } else if (Subtarget->isThumb2()) {
@@ -964,7 +964,7 @@ SDNode *ARMDAGToDAGISel::Select(SDValue Op) {
                                         Ops, 4);
       } else {
         SDValue Ops[] = {
-          CPIdx, 
+          CPIdx,
           CurDAG->getRegister(0, EVT::i32),
           CurDAG->getTargetConstant(0, EVT::i32),
           getAL(CurDAG),
@@ -977,7 +977,7 @@ SDNode *ARMDAGToDAGISel::Select(SDValue Op) {
       ReplaceUses(Op, SDValue(ResNode, 0));
       return NULL;
     }
-      
+
     // Other cases are autogenerated.
     break;
   }
@@ -1096,7 +1096,7 @@ SDNode *ARMDAGToDAGISel::Select(SDValue Op) {
     // Emits: (t2Bcc:void (bb:Other):$dst, (imm:i32):$cc)
     // Pattern complexity = 6  cost = 1  size = 0
 
-    unsigned Opc = Subtarget->isThumb() ? 
+    unsigned Opc = Subtarget->isThumb() ?
       ((Subtarget->hasThumb2()) ? ARM::t2Bcc : ARM::tBcc) : ARM::Bcc;
     SDValue Chain = Op.getOperand(0);
     SDValue N1 = Op.getOperand(1);
@@ -1111,7 +1111,7 @@ SDNode *ARMDAGToDAGISel::Select(SDValue Op) {
                                cast<ConstantSDNode>(N2)->getZExtValue()),
                                EVT::i32);
     SDValue Ops[] = { N1, Tmp2, N3, Chain, InFlag };
-    SDNode *ResNode = CurDAG->getTargetNode(Opc, dl, EVT::Other, 
+    SDNode *ResNode = CurDAG->getTargetNode(Opc, dl, EVT::Other,
                                             EVT::Flag, Ops, 5);
     Chain = SDValue(ResNode, 0);
     if (Op.getNode()->getNumValues() == 2) {
@@ -1233,7 +1233,7 @@ SDNode *ARMDAGToDAGISel::Select(SDValue Op) {
       break;
     case EVT::f64:
       Opc = ARM::FCPYDcc;
-      break; 
+      break;
     }
     return CurDAG->SelectNodeTo(Op.getNode(), Opc, VT, Ops, 5);
   }
@@ -1297,7 +1297,7 @@ SDNode *ARMDAGToDAGISel::Select(SDValue Op) {
       ReplaceUses(Op.getValue(0), Chain);
       return NULL;
     }
-    
+
     SDValue Tmp1 = CurDAG->getTargetFrameIndex(FINode->getIndex(),
                                                TLI.getPointerTy());
     SDValue Tmp2 = CurDAG->getTargetGlobalAddress(GV, TLI.getPointerTy());
@@ -1519,7 +1519,7 @@ SelectInlineAsmMemoryOperand(const SDValue &Op, char ConstraintCode,
   SDValue Base, Offset, Opc;
   if (!SelectAddrMode2(Op, Op, Base, Offset, Opc))
     return true;
-  
+
   OutOps.push_back(Base);
   OutOps.push_back(Offset);
   OutOps.push_back(Opc);

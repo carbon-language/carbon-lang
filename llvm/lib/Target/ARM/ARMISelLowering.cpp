@@ -66,7 +66,7 @@ void ARMTargetLowering::addTypeForNEON(EVT VT, EVT PromotedLdStVT,
                        PromotedLdStVT.getSimpleVT());
 
     setOperationAction(ISD::STORE, VT.getSimpleVT(), Promote);
-    AddPromotedToType (ISD::STORE, VT.getSimpleVT(), 
+    AddPromotedToType (ISD::STORE, VT.getSimpleVT(),
                        PromotedLdStVT.getSimpleVT());
   }
 
@@ -91,10 +91,10 @@ void ARMTargetLowering::addTypeForNEON(EVT VT, EVT PromotedLdStVT,
     AddPromotedToType (ISD::AND, VT.getSimpleVT(),
                        PromotedBitwiseVT.getSimpleVT());
     setOperationAction(ISD::OR,  VT.getSimpleVT(), Promote);
-    AddPromotedToType (ISD::OR,  VT.getSimpleVT(), 
+    AddPromotedToType (ISD::OR,  VT.getSimpleVT(),
                        PromotedBitwiseVT.getSimpleVT());
     setOperationAction(ISD::XOR, VT.getSimpleVT(), Promote);
-    AddPromotedToType (ISD::XOR, VT.getSimpleVT(), 
+    AddPromotedToType (ISD::XOR, VT.getSimpleVT(),
                        PromotedBitwiseVT.getSimpleVT());
   }
 }
@@ -3317,7 +3317,7 @@ ARMTargetLowering::getPreIndexedAddressParts(SDNode *N, SDValue &Base,
   if (Subtarget->isThumb() && Subtarget->hasThumb2())
     isLegal = getT2IndexedAddressParts(Ptr.getNode(), VT, isSEXTLoad, Base,
                                        Offset, isInc, DAG);
-  else 
+  else
     isLegal = getARMIndexedAddressParts(Ptr.getNode(), VT, isSEXTLoad, Base,
                                         Offset, isInc, DAG);
   if (!isLegal)
@@ -3354,7 +3354,7 @@ bool ARMTargetLowering::getPostIndexedAddressParts(SDNode *N, SDNode *Op,
   if (Subtarget->isThumb() && Subtarget->hasThumb2())
     isLegal = getT2IndexedAddressParts(Op, VT, isSEXTLoad, Base, Offset,
                                         isInc, DAG);
-  else 
+  else
     isLegal = getARMIndexedAddressParts(Op, VT, isSEXTLoad, Base, Offset,
                                         isInc, DAG);
   if (!isLegal)

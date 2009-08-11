@@ -65,7 +65,7 @@ protected:
 
   /// Selected instruction itineraries (one entry per itinerary class.)
   InstrItineraryData InstrItins;
-  
+
  public:
   enum {
     isELF, isDarwin
@@ -103,9 +103,9 @@ protected:
   bool hasVFP2() const { return ARMFPUType >= VFPv2; }
   bool hasVFP3() const { return ARMFPUType >= VFPv3; }
   bool hasNEON() const { return ARMFPUType >= NEON;  }
-  bool useNEONForSinglePrecisionFP() const { 
+  bool useNEONForSinglePrecisionFP() const {
     return hasNEON() && UseNEONForSinglePrecisionFP; }
-  
+
   bool isTargetDarwin() const { return TargetType == isDarwin; }
   bool isTargetELF() const { return TargetType == isELF; }
 
@@ -121,7 +121,7 @@ protected:
 
   const std::string & getCPUString() const { return CPUString; }
 
-  /// getInstrItins - Return the instruction itineraies based on subtarget 
+  /// getInstrItins - Return the instruction itineraies based on subtarget
   /// selection.
   const InstrItineraryData &getInstrItineraryData() const { return InstrItins; }
 

@@ -69,7 +69,7 @@ public:
                                       MachineInstr* MI,
                                       const SmallVectorImpl<unsigned> &Ops,
                                       int FrameIndex) const;
- 
+
   MachineInstr* foldMemoryOperandImpl(MachineFunction &MF,
                                       MachineInstr* MI,
                                       const SmallVectorImpl<unsigned> &Ops,
