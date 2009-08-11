@@ -87,6 +87,13 @@ TEST(StringRefTest, Utilities) {
   raw_string_ostream OS(Storage);
   OS << StringRef("hello");
   EXPECT_EQ("hello", OS.str());
+
+  EXPECT_TRUE(Str.find('l') == 2);
+  EXPECT_TRUE(Str.find('z') == StringRef::npos);
+  EXPECT_TRUE(Str.find("helloworld") == StringRef::npos);
+  EXPECT_TRUE(Str.find("hello") == 0);
+  EXPECT_TRUE(Str.find("ello") == 1);
+  EXPECT_TRUE(Str.find("zz") == StringRef::npos);
 }
 
 } // end anonymous namespace
