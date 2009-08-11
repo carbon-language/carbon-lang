@@ -1106,7 +1106,7 @@ let Defs =
 let isReturn = 1, isTerminator = 1, mayLoad = 1 in
   def t2LDM_RET : T2XI<(outs),
                     (ins addrmode4:$addr, pred:$p, reglist:$dst1, variable_ops),
-                    IIC_iLoad, "ldm${addr:submode}${p}${addr:wide} $addr, $dst1",
+                    IIC_Br, "ldm${addr:submode}${p}${addr:wide} $addr, $dst1",
                     []>;
 
 let isBranch = 1, isTerminator = 1, isBarrier = 1 in {

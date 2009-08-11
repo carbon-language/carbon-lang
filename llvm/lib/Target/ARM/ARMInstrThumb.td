@@ -181,9 +181,9 @@ let isReturn = 1, isTerminator = 1 in {
 }
 
 // FIXME: remove when we have a way to marking a MI with these properties.
-let isReturn = 1, isTerminator = 1 in
-def tPOP_RET : T1I<(outs reglist:$dst1, variable_ops), (ins), IIC_Br, 
-                   "pop $dst1", []>;
+let isReturn = 1, isTerminator = 1, mayLoad = 1 in
+def tPOP_RET : T1I<(outs), (ins pred:$p, reglist:$dst1, variable_ops), IIC_Br,
+                   "pop${p} $dst1", []>;
 
 let isCall = 1,
   Defs = [R0,  R1,  R2,  R3,  R12, LR,
@@ -347,16 +347,26 @@ def tSpill : T1pIs<(outs), (ins tGPR:$src, t_addrmode_sp:$addr), IIC_iStore,
 //  Load / store multiple Instructions.
 //
 
-// TODO: A7-44: LDMIA - load multiple
-// TODO: Allow these to be predicated
-
+// These requires base address to be written back or one of the loaded regs.
 let mayLoad = 1 in
-def tPOP : T1I<(outs reglist:$dst1, variable_ops), (ins), IIC_Br,
-               "pop $dst1", []>;
+def tLDM : T1I<(outs),
+               (ins addrmode4:$addr, pred:$p, reglist:$dst1, variable_ops),
+               IIC_iLoad,
+               "ldm${addr:submode}${p} $addr, $dst1", []>;
 
 let mayStore = 1 in
-def tPUSH : T1I<(outs), (ins reglist:$src1, variable_ops), IIC_Br,
-                "push $src1", []>;
+def tSTM : T1I<(outs),
+               (ins addrmode4:$addr, pred:$p, reglist:$src1, variable_ops),
+               IIC_iStore,
+               "stm${addr:submode}${p} $addr, $src1", []>;
+
+let mayLoad = 1, Uses = [SP], Defs = [SP] in
+def tPOP : T1I<(outs), (ins pred:$p, reglist:$dst1, variable_ops), IIC_Br,
+               "pop${p} $dst1", []>;
+
+let mayStore = 1, Uses = [SP], Defs = [SP] in
+def tPUSH : T1I<(outs), (ins pred:$p, reglist:$src1, variable_ops), IIC_Br,
+                "push${p} $src1", []>;
 
 //===----------------------------------------------------------------------===//
 //  Arithmetic Instructions.

@@ -149,6 +149,7 @@ spillCalleeSavedRegisters(MachineBasicBlock &MBB,
   if (MI != MBB.end()) DL = MI->getDebugLoc();
 
   MachineInstrBuilder MIB = BuildMI(MBB, MI, DL, get(ARM::tPUSH));
+  AddDefaultPred(MIB);
   for (unsigned i = CSI.size(); i != 0; --i) {
     unsigned Reg = CSI[i-1].getReg();
     // Add the callee-saved register as live-in. It's killed at the spill.
@@ -168,7 +169,11 @@ restoreCalleeSavedRegisters(MachineBasicBlock &MBB,
     return false;
 
   bool isVarArg = AFI->getVarArgsRegSaveSize() > 0;
-  MachineInstr *PopMI = MF.CreateMachineInstr(get(ARM::tPOP),MI->getDebugLoc());
+  DebugLoc DL = MI->getDebugLoc();
+  MachineInstrBuilder MIB = BuildMI(MF, DL, get(ARM::tPOP));
+  AddDefaultPred(MIB);
+
+  bool NumRegs = 0;
   for (unsigned i = CSI.size(); i != 0; --i) {
     unsigned Reg = CSI[i-1].getReg();
     if (Reg == ARM::LR) {
@@ -176,15 +181,16 @@ restoreCalleeSavedRegisters(MachineBasicBlock &MBB,
       if (isVarArg)
         continue;
       Reg = ARM::PC;
-      PopMI->setDesc(get(ARM::tPOP_RET));
+      (*MIB).setDesc(get(ARM::tPOP_RET));
       MI = MBB.erase(MI);
     }
-    PopMI->addOperand(MachineOperand::CreateReg(Reg, true));
+    MIB.addReg(Reg, getDefRegState(true));
+    ++NumRegs;
   }
 
   // It's illegal to emit pop instruction without operands.
-  if (PopMI->getNumOperands() > 0)
-    MBB.insert(MI, PopMI);
+  if (NumRegs)
+    MBB.insert(MI, &*MIB);
 
   return true;
 }

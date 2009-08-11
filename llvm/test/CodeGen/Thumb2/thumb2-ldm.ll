@@ -4,8 +4,8 @@
 
 define i32 @t1() {
 ; CHECK: t1:
-; CHECK: stmfd sp!, {r7, lr}
-; CHECK: ldmfd.w sp!, {r7, pc}
+; CHECK: push {r7, lr}
+; CHECK: pop {r7, pc}
         %tmp = load i32* getelementptr ([0 x i32]* @X, i32 0, i32 0)            ; <i32> [#uses=1]
         %tmp3 = load i32* getelementptr ([0 x i32]* @X, i32 0, i32 1)           ; <i32> [#uses=1]
         %tmp4 = tail call i32 @f1( i32 %tmp, i32 %tmp3 )                ; <i32> [#uses=1]
@@ -14,9 +14,9 @@ define i32 @t1() {
 
 define i32 @t2() {
 ; CHECK: t2:
-; CHECK: stmfd sp!, {r7, lr}
-; CHECK: ldmia.w
-; CHECK: ldmfd.w sp!, {r7, pc}
+; CHECK: push {r7, lr}
+; CHECK: ldmia
+; CHECK: pop {r7, pc}
         %tmp = load i32* getelementptr ([0 x i32]* @X, i32 0, i32 2)            ; <i32> [#uses=1]
         %tmp3 = load i32* getelementptr ([0 x i32]* @X, i32 0, i32 3)           ; <i32> [#uses=1]
         %tmp5 = load i32* getelementptr ([0 x i32]* @X, i32 0, i32 4)           ; <i32> [#uses=1]
@@ -26,8 +26,8 @@ define i32 @t2() {
 
 define i32 @t3() {
 ; CHECK: t3:
-; CHECK: stmfd sp!, {r7, lr}
-; CHECK: ldmfd.w sp!, {r7, pc}
+; CHECK: push {r7, lr}
+; CHECK: pop {r7, pc}
         %tmp = load i32* getelementptr ([0 x i32]* @X, i32 0, i32 1)            ; <i32> [#uses=1]
         %tmp3 = load i32* getelementptr ([0 x i32]* @X, i32 0, i32 2)           ; <i32> [#uses=1]
         %tmp5 = load i32* getelementptr ([0 x i32]* @X, i32 0, i32 3)           ; <i32> [#uses=1]

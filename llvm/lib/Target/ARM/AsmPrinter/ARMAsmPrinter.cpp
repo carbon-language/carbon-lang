@@ -885,8 +885,10 @@ void ARMAsmPrinter::printPCLabel(const MachineInstr *MI, int OpNum) {
 void ARMAsmPrinter::printRegisterList(const MachineInstr *MI, int OpNum) {
   O << "{";
   for (unsigned i = OpNum, e = MI->getNumOperands(); i != e; ++i) {
+    if (MI->getOperand(i).isImplicit())
+      continue;
+    if ((int)i != OpNum) O << ", ";
     printOperand(MI, i);
-    if (i != e-1) O << ", ";
   }
   O << "}";
 }

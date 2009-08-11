@@ -1333,7 +1333,8 @@ ARMConstantIslands::FixUpConditionalBr(MachineFunction &MF, ImmBranch &Br) {
 }
 
 /// UndoLRSpillRestore - Remove Thumb push / pop instructions that only spills
-/// LR / restores LR to pc.
+/// LR / restores LR to pc. FIXME: This is done here because it's only possible
+/// to do this if tBfar is not used.
 bool ARMConstantIslands::UndoLRSpillRestore() {
   bool MadeChange = false;
   for (unsigned i = 0, e = PushPopMIs.size(); i != e; ++i) {
