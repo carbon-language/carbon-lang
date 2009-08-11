@@ -12,6 +12,11 @@
 @end
 
 
+int test1(void) {
+  [Greeter hello];
+  return 0;
+}
+
 
 
 @interface NSObject @end
@@ -19,15 +24,21 @@
 - (int)length;
 @end
 
-void test() {
+void test2() {
   // No unused warning: rdar://7126285
   @"pointless example call for test purposes".length;
 }
 
 
 
-int main (void) {
-    [Greeter hello];
-    return 0;
-}
 
+
+@interface foo
+- (int)meth: (int)x: (int)y: (int)z ;
+@end
+
+@implementation foo
+- (int) meth: (int)x: 
+(int)y: // expected-warning{{unused}} 
+(int) __attribute__((unused))z { return x; }
+@end
