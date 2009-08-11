@@ -532,7 +532,8 @@ private:
 
   /// BuildRegisterClasses - Build the ClassInfo* instances for register
   /// classes.
-  void BuildRegisterClasses(CodeGenTarget &Target);
+  void BuildRegisterClasses(CodeGenTarget &Target, 
+                            std::set<std::string> &SingletonRegisterNames);
 
   /// BuildOperandClasses - Build the ClassInfo* instances for user defined
   /// operand classes.
@@ -565,6 +566,11 @@ void InstructionInfo::dump() {
       continue;
     }
 
+    if (!Op.OperandInfo) {
+      errs() << "(singleton register)\n";
+      continue;
+    }
+
     const CodeGenInstruction::OperandInfo &OI = *Op.OperandInfo;
     errs() << OI.Name << " " << OI.Rec->getName()
            << " (" << OI.MIOperandNo << ", " << OI.MINumOperands << ")\n";
@@ -590,6 +596,17 @@ static std::string getEnumNameForToken(const StringRef &Str) {
   }
 
   return Res;
+}
+
+/// getRegisterRecord - Get the register record for \arg name, or 0.
+static Record *getRegisterRecord(CodeGenTarget &Target, const StringRef &Name) {
+  for (unsigned i = 0, e = Target.getRegisters().size(); i != e; ++i) {
+    const CodeGenRegister &Reg = Target.getRegisters()[i];
+    if (Name == Reg.TheDef->getValueAsString("AsmName"))
+      return Reg.TheDef;
+  }
+
+  return 0;
 }
 
 ClassInfo *AsmMatcherInfo::getTokenClass(const StringRef &Token) {
@@ -635,7 +652,9 @@ AsmMatcherInfo::getOperandClass(const StringRef &Token,
   return CI;
 }
 
-void AsmMatcherInfo::BuildRegisterClasses(CodeGenTarget &Target) {
+void AsmMatcherInfo::BuildRegisterClasses(CodeGenTarget &Target,
+                                          std::set<std::string>
+                                            &SingletonRegisterNames) {
   std::vector<CodeGenRegisterClass> RegisterClasses;
   std::vector<CodeGenRegister> Registers;
 
@@ -650,7 +669,13 @@ void AsmMatcherInfo::BuildRegisterClasses(CodeGenTarget &Target) {
          ie = RegisterClasses.end(); it != ie; ++it)
     RegisterSets.insert(std::set<Record*>(it->Elements.begin(),
                                           it->Elements.end()));
-  
+
+  // Add any required singleton sets.
+  for (std::set<std::string>::iterator it = SingletonRegisterNames.begin(),
+         ie = SingletonRegisterNames.end(); it != ie; ++it)
+    if (Record *Rec = getRegisterRecord(Target, *it))
+      RegisterSets.insert(std::set<Record*>(&Rec, &Rec + 1));
+         
   // Introduce derived sets where necessary (when a register does not determine
   // a unique register set class), and build the mapping of registers to the set
   // they should classify to.
@@ -732,6 +757,22 @@ void AsmMatcherInfo::BuildRegisterClasses(CodeGenTarget &Target) {
   for (std::map<Record*, std::set<Record*> >::iterator it = RegisterMap.begin(),
          ie = RegisterMap.end(); it != ie; ++it)
     this->RegisterClasses[it->first] = RegisterSetClasses[it->second];
+
+  // Name the register classes which correspond to singleton registers.
+  for (std::set<std::string>::iterator it = SingletonRegisterNames.begin(),
+         ie = SingletonRegisterNames.end(); it != ie; ++it) {
+    if (Record *Rec = getRegisterRecord(Target, *it)) {
+      ClassInfo *CI = this->RegisterClasses[Rec];
+      assert(CI && "Missing singleton register class info!");
+
+      if (CI->ValueName.empty()) {
+        CI->ClassName = Rec->getName();
+        CI->Name = "MCK_" + Rec->getName();
+        CI->ValueName = Rec->getName();
+      } else
+        CI->ValueName = CI->ValueName + "," + Rec->getName();
+    }
+  }
 }
 
 void AsmMatcherInfo::BuildOperandClasses(CodeGenTarget &Target) {
@@ -790,13 +831,9 @@ AsmMatcherInfo::AsmMatcherInfo(Record *_AsmParser)
 }
 
 void AsmMatcherInfo::BuildInfo(CodeGenTarget &Target) {
-  // Build info for the register classes.
-  BuildRegisterClasses(Target);
-
-  // Build info for the user defined assembly operand classes.
-  BuildOperandClasses(Target);
-
-  // Build the instruction information.
+  // Parse the instructions; we need to do this first so that we can gather the
+  // singleton register classes.
+  std::set<std::string> SingletonRegisterNames;
   for (std::map<std::string, CodeGenInstruction>::const_iterator 
          it = Target.getInstructions().begin(), 
          ie = Target.getInstructions().end(); 
@@ -825,8 +862,52 @@ void AsmMatcherInfo::BuildInfo(CodeGenTarget &Target) {
     if (!IsAssemblerInstruction(it->first, CGI, II->Tokens))
       continue;
 
+    // Collect singleton registers, if used.
+    if (!RegisterPrefix.empty()) {
+      for (unsigned i = 0, e = II->Tokens.size(); i != e; ++i) {
+        if (II->Tokens[i].startswith(RegisterPrefix)) {
+          StringRef RegName = II->Tokens[i].substr(RegisterPrefix.size());
+          Record *Rec = getRegisterRecord(Target, RegName);
+          
+          if (!Rec) {
+            std::string Err = "unable to find register for '" + RegName.str() + 
+              "' (which matches register prefix)";
+            throw TGError(CGI.TheDef->getLoc(), Err);
+          }
+
+          SingletonRegisterNames.insert(RegName);
+        }
+      }
+    }
+    
+    Instructions.push_back(II.take());
+  }
+
+  // Build info for the register classes.
+  BuildRegisterClasses(Target, SingletonRegisterNames);
+
+  // Build info for the user defined assembly operand classes.
+  BuildOperandClasses(Target);
+
+  // Build the instruction information.
+  for (std::vector<InstructionInfo*>::iterator it = Instructions.begin(),
+         ie = Instructions.end(); it != ie; ++it) {
+    InstructionInfo *II = *it;
+
     for (unsigned i = 0, e = II->Tokens.size(); i != e; ++i) {
       StringRef Token = II->Tokens[i];
+
+      // Check for singleton registers.
+      if (!RegisterPrefix.empty() && Token.startswith(RegisterPrefix)) {
+        StringRef RegName = II->Tokens[i].substr(RegisterPrefix.size());
+        InstructionInfo::Operand Op;
+        Op.Class = RegisterClasses[getRegisterRecord(Target, RegName)];
+        Op.OperandInfo = 0;
+        assert(Op.Class && Op.Class->Registers.size() == 1 &&
+               "Unexpected class for singleton register");
+        II->Operands.push_back(Op);
+        continue;
+      }
 
       // Check for simple tokens.
       if (Token[0] != '$') {
@@ -847,24 +928,18 @@ void AsmMatcherInfo::BuildInfo(CodeGenTarget &Target) {
       // Map this token to an operand. FIXME: Move elsewhere.
       unsigned Idx;
       try {
-        Idx = CGI.getOperandNamed(OperandName);
+        Idx = II->Instr->getOperandNamed(OperandName);
       } catch(...) {
-        errs() << "error: unable to find operand: '" << OperandName << "'!\n";
-        break;
+        throw std::string("error: unable to find operand: '" + 
+                          OperandName.str() + "'");
       }
 
-      const CodeGenInstruction::OperandInfo &OI = CGI.OperandList[Idx];      
+      const CodeGenInstruction::OperandInfo &OI = II->Instr->OperandList[Idx];
       InstructionInfo::Operand Op;
       Op.Class = getOperandClass(Token, OI);
       Op.OperandInfo = &OI;
       II->Operands.push_back(Op);
     }
-
-    // If we broke out, ignore the instruction.
-    if (II->Operands.size() != II->Tokens.size())
-      continue;
-
-    Instructions.push_back(II.take());
   }
 
   // Reorder classes so that classes preceed super classes.
@@ -1321,11 +1396,6 @@ void AsmMatcherEmitter::run(raw_ostream &OS) {
   Record *AsmParser = Target.getAsmParser();
   std::string ClassName = AsmParser->getValueAsString("AsmParserClassName");
 
-  EmitSourceFileHeader("Assembly Matcher Source Fragment", OS);
-
-  // Emit the function to match a register name to number.
-  EmitMatchRegisterName(Target, AsmParser, OS);
-
   // Compute the information on the instructions to match.
   AsmMatcherInfo Info(AsmParser);
   Info.BuildInfo(Target);
@@ -1365,6 +1435,13 @@ void AsmMatcherEmitter::run(raw_ostream &OS) {
         errs() << "warning: " << NumAmbiguous 
                << " ambiguous instructions!\n";
       });
+
+  // Write the output.
+
+  EmitSourceFileHeader("Assembly Matcher Source Fragment", OS);
+
+  // Emit the function to match a register name to number.
+  EmitMatchRegisterName(Target, AsmParser, OS);
 
   // Generate the unified function to convert operands into an MCInst.
   EmitConvertToMCInst(Target, Info.Instructions, OS);
