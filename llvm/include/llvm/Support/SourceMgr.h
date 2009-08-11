@@ -145,17 +145,6 @@ public:
                const std::string &Msg, const std::string &LineStr)
     : Filename(FN), LineNo(Line), ColumnNo(Col), Message(Msg),
       LineContents(LineStr) {}
-  SMDiagnostic(const SMDiagnostic &RHS) {
-    operator=(RHS);
-  }
-
-  void operator=(const SMDiagnostic &E) {
-    Filename = E.Filename;
-    LineNo = E.LineNo;
-    ColumnNo = E.ColumnNo;
-    Message = E.Message;
-    LineContents = E.LineContents;
-  }
 
   void Print(const char *ProgName, raw_ostream &S);
 };

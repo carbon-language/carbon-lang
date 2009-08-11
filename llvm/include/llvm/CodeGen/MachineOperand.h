@@ -119,12 +119,6 @@ private:
     TargetFlags = 0;
   }
 public:
-  MachineOperand(const MachineOperand &M) {
-    *this = M;
-  }
-  
-  ~MachineOperand() {}
-  
   /// getType - Returns the MachineOperandType for this operand.
   ///
   MachineOperandType getType() const { return (MachineOperandType)OpKind; }
@@ -447,20 +441,6 @@ public:
     Op.setOffset(Offset);
     Op.setTargetFlags(TargetFlags);
     return Op;
-  }
-  const MachineOperand &operator=(const MachineOperand &MO) {
-    OpKind   = MO.OpKind;
-    IsDef    = MO.IsDef;
-    IsImp    = MO.IsImp;
-    IsKill   = MO.IsKill;
-    IsDead   = MO.IsDead;
-    IsUndef  = MO.IsUndef;
-    IsEarlyClobber = MO.IsEarlyClobber;
-    SubReg   = MO.SubReg;
-    ParentMI = MO.ParentMI;
-    Contents = MO.Contents;
-    TargetFlags = MO.TargetFlags;
-    return *this;
   }
 
   friend class MachineInstr;
