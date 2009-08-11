@@ -248,7 +248,7 @@ class LoadInst : public UnaryInstruction {
 public:
   LoadInst(Value *Ptr, const Twine &NameStr, Instruction *InsertBefore);
   LoadInst(Value *Ptr, const Twine &NameStr, BasicBlock *InsertAtEnd);
-  LoadInst(Value *Ptr, const Twine &NameStr = "", bool isVolatile = false,
+  LoadInst(Value *Ptr, const Twine &NameStr, bool isVolatile = false,
            Instruction *InsertBefore = 0);
   LoadInst(Value *Ptr, const Twine &NameStr, bool isVolatile,
            unsigned Align, Instruction *InsertBefore = 0);
@@ -256,6 +256,13 @@ public:
            BasicBlock *InsertAtEnd);
   LoadInst(Value *Ptr, const Twine &NameStr, bool isVolatile,
            unsigned Align, BasicBlock *InsertAtEnd);
+
+  LoadInst(Value *Ptr, const char *NameStr, Instruction *InsertBefore);
+  LoadInst(Value *Ptr, const char *NameStr, BasicBlock *InsertAtEnd);
+  explicit LoadInst(Value *Ptr, const char *NameStr = 0,
+                    bool isVolatile = false,  Instruction *InsertBefore = 0);
+  LoadInst(Value *Ptr, const char *NameStr, bool isVolatile,
+           BasicBlock *InsertAtEnd);
 
   /// isVolatile - Return true if this is a load from a volatile memory
   /// location.

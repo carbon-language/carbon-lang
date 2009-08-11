@@ -863,6 +863,46 @@ LoadInst::LoadInst(Value *Ptr, const Twine &Name, bool isVolatile,
   setName(Name);
 }
 
+
+
+LoadInst::LoadInst(Value *Ptr, const char *Name, Instruction *InsertBef)
+  : UnaryInstruction(cast<PointerType>(Ptr->getType())->getElementType(),
+                     Load, Ptr, InsertBef) {
+  setVolatile(false);
+  setAlignment(0);
+  AssertOK();
+  if (Name && Name[0]) setName(Name);
+}
+
+LoadInst::LoadInst(Value *Ptr, const char *Name, BasicBlock *InsertAE)
+  : UnaryInstruction(cast<PointerType>(Ptr->getType())->getElementType(),
+                     Load, Ptr, InsertAE) {
+  setVolatile(false);
+  setAlignment(0);
+  AssertOK();
+  if (Name && Name[0]) setName(Name);
+}
+
+LoadInst::LoadInst(Value *Ptr, const char *Name, bool isVolatile,
+                   Instruction *InsertBef)
+: UnaryInstruction(cast<PointerType>(Ptr->getType())->getElementType(),
+                   Load, Ptr, InsertBef) {
+  setVolatile(isVolatile);
+  setAlignment(0);
+  AssertOK();
+  if (Name && Name[0]) setName(Name);
+}
+
+LoadInst::LoadInst(Value *Ptr, const char *Name, bool isVolatile,
+                   BasicBlock *InsertAE)
+  : UnaryInstruction(cast<PointerType>(Ptr->getType())->getElementType(),
+                     Load, Ptr, InsertAE) {
+  setVolatile(isVolatile);
+  setAlignment(0);
+  AssertOK();
+  if (Name && Name[0]) setName(Name);
+}
+
 void LoadInst::setAlignment(unsigned Align) {
   assert((Align & (Align-1)) == 0 && "Alignment is not a power of 2!");
   SubclassData = (SubclassData & 1) | ((Log2_32(Align)+1)<<1);
