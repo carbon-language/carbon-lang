@@ -572,6 +572,7 @@ private:
 public:
   // NOTE: This function is not locked.  It is the caller's responsibility
   // to enforce proper synchronization.
+  typename MapTy::iterator map_begin() { return Map.begin(); }
   typename MapTy::iterator map_end() { return Map.end(); }
     
   /// InsertOrGetItem - Return an iterator for the specified element.

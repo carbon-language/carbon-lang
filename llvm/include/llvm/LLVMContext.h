@@ -30,7 +30,7 @@ struct LLVMContextImpl;
 /// to have one context per thread.
 struct LLVMContext {
   LLVMContextImpl* pImpl;
-  
+  bool RemoveDeadMetadata();
   LLVMContext();
   ~LLVMContext();
 };
