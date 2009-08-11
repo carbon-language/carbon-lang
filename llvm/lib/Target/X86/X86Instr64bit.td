@@ -274,16 +274,8 @@ def REP_STOSQ : RI<0xAB, RawFrm, (outs), (ins), "{rep;stosq|rep stosq}",
                    [(X86rep_stos i64)]>, REP;
 
 // Fast system-call instructions
-def SYSCALL  : I<0x05, RawFrm,
-                 (outs), (ins), "syscall", []>, TB;
-def SYSENTER  : I<0x34, RawFrm,
-                  (outs), (ins), "sysenter", []>, TB;
-def SYSEXIT : I<0x35, RawFrm,
-                (outs), (ins), "sysexit", []>, TB;
 def SYSEXIT64 : RI<0x35, RawFrm,
                    (outs), (ins), "sysexit", []>, TB;
-def SYSRET : I<0x07, RawFrm,
-               (outs), (ins), "sysret", []>, TB;
 
 //===----------------------------------------------------------------------===//
 //  Move Instructions...

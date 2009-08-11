@@ -770,6 +770,17 @@ let isBarrier = 1, hasCtrlDep = 1 in {
 def TRAP    : I<0x0B, RawFrm, (outs), (ins), "ud2", [(trap)]>, TB;
 }
 
+def SYSCALL  : I<0x05, RawFrm,
+                 (outs), (ins), "syscall", []>, TB;
+def SYSRET   : I<0x07, RawFrm,
+                 (outs), (ins), "sysret", []>, TB;
+def SYSENTER : I<0x34, RawFrm,
+                 (outs), (ins), "sysenter", []>, TB;
+def SYSEXIT  : I<0x35, RawFrm,
+                 (outs), (ins), "sysexit", []>, TB;
+
+
+
 //===----------------------------------------------------------------------===//
 //  Input/Output Instructions...
 //
