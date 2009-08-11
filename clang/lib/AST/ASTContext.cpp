@@ -3290,59 +3290,14 @@ static bool areCompatVectorTypes(const VectorType *LHS,
 
 /// ProtocolCompatibleWithProtocol - return 'true' if 'lProto' is in the
 /// inheritance hierarchy of 'rProto'.
-static bool ProtocolCompatibleWithProtocol(ObjCProtocolDecl *lProto,
-                                           ObjCProtocolDecl *rProto) {
+bool ASTContext::ProtocolCompatibleWithProtocol(ObjCProtocolDecl *lProto,
+                                                ObjCProtocolDecl *rProto) {
   if (lProto == rProto)
     return true;
   for (ObjCProtocolDecl::protocol_iterator PI = rProto->protocol_begin(),
        E = rProto->protocol_end(); PI != E; ++PI)
     if (ProtocolCompatibleWithProtocol(lProto, *PI))
       return true;
-  return false;
-}
-
-/// ClassImplementsProtocol - Checks that 'lProto' protocol
-/// has been implemented in IDecl class, its super class or categories (if
-/// lookupCategory is true). 
-static bool ClassImplementsProtocol(ObjCProtocolDecl *lProto,
-                                    ObjCInterfaceDecl *IDecl, 
-                                    bool lookupCategory,
-                                    bool RHSIsQualifiedID = false) {
-  
-  // 1st, look up the class.
-  const ObjCList<ObjCProtocolDecl> &Protocols =
-    IDecl->getReferencedProtocols();
-
-  for (ObjCList<ObjCProtocolDecl>::iterator PI = Protocols.begin(),
-       E = Protocols.end(); PI != E; ++PI) {
-    if (ProtocolCompatibleWithProtocol(lProto, *PI))
-      return true;
-    // This is dubious and is added to be compatible with gcc.  In gcc, it is
-    // also allowed assigning a protocol-qualified 'id' type to a LHS object
-    // when protocol in qualified LHS is in list of protocols in the rhs 'id'
-    // object. This IMO, should be a bug.
-    // FIXME: Treat this as an extension, and flag this as an error when GCC
-    // extensions are not enabled.
-    if (RHSIsQualifiedID && ProtocolCompatibleWithProtocol(*PI, lProto))
-      return true;
-  }
-  
-  // 2nd, look up the category.
-  if (lookupCategory)
-    for (ObjCCategoryDecl *CDecl = IDecl->getCategoryList(); CDecl;
-         CDecl = CDecl->getNextClassCategory()) {
-      for (ObjCCategoryDecl::protocol_iterator PI = CDecl->protocol_begin(),
-           E = CDecl->protocol_end(); PI != E; ++PI)
-        if (ProtocolCompatibleWithProtocol(lProto, *PI))
-          return true;
-    }
-  
-  // 3rd, look up the super class(s)
-  if (IDecl->getSuperClass())
-    return 
-      ClassImplementsProtocol(lProto, IDecl->getSuperClass(), lookupCategory,
-                              RHSIsQualifiedID);
-  
   return false;
 }
 
@@ -3381,7 +3336,7 @@ bool ASTContext::ObjCQualifiedIdTypesAreCompatible(QualType lhs, QualType rhs,
           // when comparing an id<P> on lhs with a static type on rhs,
           // see if static class implements all of id's protocols, directly or
           // through its super class and categories.
-          if (!ClassImplementsProtocol(*I, rhsID, true))
+          if (!rhsID->ClassImplementsProtocol(*I, true))
             return false;
         }
       }
@@ -3414,7 +3369,7 @@ bool ASTContext::ObjCQualifiedIdTypesAreCompatible(QualType lhs, QualType rhs,
           // when comparing an id<P> on lhs with a static type on rhs,
           // see if static class implements all of id's protocols, directly or
           // through its super class and categories.
-          if (ClassImplementsProtocol(*I, rhsID, true)) {
+          if (rhsID->ClassImplementsProtocol(*I, true)) {
             match = true;
             break;
           }
@@ -3440,7 +3395,7 @@ bool ASTContext::ObjCQualifiedIdTypesAreCompatible(QualType lhs, QualType rhs,
           // when comparing an id<P> on lhs with a static type on rhs,
           // see if static class implements all of id's protocols, directly or
           // through its super class and categories.
-          if (ClassImplementsProtocol(*I, lhsID, true)) {
+          if (lhsID->ClassImplementsProtocol(*I, true)) {
             match = true;
             break;
           }

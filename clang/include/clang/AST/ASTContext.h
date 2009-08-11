@@ -557,6 +557,9 @@ public:
                                       const Decl *Container,
                                       std::string &S);
   
+  bool ProtocolCompatibleWithProtocol(ObjCProtocolDecl *lProto,
+                                      ObjCProtocolDecl *rProto);
+  
   /// getObjCEncodingTypeSize returns size of type for objective-c encoding
   /// purpose.
   int getObjCEncodingTypeSize(QualType t);

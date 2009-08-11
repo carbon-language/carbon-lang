@@ -221,6 +221,10 @@ def warn_conflicting_ret_types : Warning<
 def warn_conflicting_param_types : Warning<
   "conflicting parameter types in implementation of %0: %1 vs %2">;
 
+def warn_implements_nscopying : Warning<
+"default assign attribute on property %0 which implements "
+"NSCopying protocol is not appropriate with -fobjc-gc[-only]">;
+
 def warn_multiple_method_decl : Warning<"multiple methods named %0 found">;
 def warn_accessor_property_type_mismatch : Warning<
   "type of property %0 does not match type of accessor %1">;

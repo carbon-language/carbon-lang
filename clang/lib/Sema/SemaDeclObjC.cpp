@@ -1924,7 +1924,23 @@ Sema::DeclPtrTy Sema::ActOnProperty(Scope *S, SourceLocation AtLoc,
         return DeclPtrTy();
       } 
     }
-
+  
+  // Issue a warning if property is 'assign' as default and its object, which is
+  // gc'able conforms to NSCopying protocol 
+  if (getLangOptions().getGCMode() != LangOptions::NonGC &&
+      isAssign && !(Attributes & ObjCDeclSpec::DQ_PR_assign))
+      if (T->isObjCObjectPointerType()) {
+        QualType InterfaceTy = T->getPointeeType();
+        ObjCInterfaceDecl *IDecl= 
+          InterfaceTy->getAsObjCInterfaceType()->getDecl();
+        if (IDecl)
+          if (ObjCProtocolDecl* PNSCopying = 
+                LookupProtocol(&Context.Idents.get("NSCopying")))
+            if (IDecl->ClassImplementsProtocol(PNSCopying, true))
+              Diag(AtLoc, diag::warn_implements_nscopying)  
+                << FD.D.getIdentifier();
+      }
+  
   DeclContext *DC = dyn_cast<DeclContext>(ClassDecl);
   assert(DC && "ClassDecl is not a DeclContext");
   ObjCPropertyDecl *PDecl = ObjCPropertyDecl::Create(Context, DC,

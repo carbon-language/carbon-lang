@@ -530,6 +530,13 @@ public:
   bool isImplicitInterfaceDecl() const { return InternalInterface; }
   void setImplicitInterfaceDecl(bool val) { InternalInterface = val; }
   
+  /// ClassImplementsProtocol - Checks that 'lProto' protocol
+  /// has been implemented in IDecl class, its super class or categories (if
+  /// lookupCategory is true).
+  bool ClassImplementsProtocol(ObjCProtocolDecl *lProto,
+                               bool lookupCategory,
+                               bool RHSIsQualifiedID = false);
+  
   // Low-level accessor
   Type *getTypeForDecl() const { return TypeForDecl; }
   void setTypeForDecl(Type *TD) const { TypeForDecl = TD; }

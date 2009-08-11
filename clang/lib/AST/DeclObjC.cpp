@@ -398,6 +398,51 @@ ObjCMethodDecl *ObjCInterfaceDecl::getCategoryClassMethod(Selector Sel) const {
   return 0;
 }
 
+/// ClassImplementsProtocol - Checks that 'lProto' protocol
+/// has been implemented in IDecl class, its super class or categories (if
+/// lookupCategory is true).
+bool ObjCInterfaceDecl::ClassImplementsProtocol(ObjCProtocolDecl *lProto,
+                                    bool lookupCategory,
+                                    bool RHSIsQualifiedID) {
+  ObjCInterfaceDecl *IDecl = this;
+  // 1st, look up the class.
+  const ObjCList<ObjCProtocolDecl> &Protocols =
+  IDecl->getReferencedProtocols();
+  
+  for (ObjCList<ObjCProtocolDecl>::iterator PI = Protocols.begin(),
+       E = Protocols.end(); PI != E; ++PI) {
+    if (getASTContext().ProtocolCompatibleWithProtocol(lProto, *PI))
+      return true;
+    // This is dubious and is added to be compatible with gcc.  In gcc, it is
+    // also allowed assigning a protocol-qualified 'id' type to a LHS object
+    // when protocol in qualified LHS is in list of protocols in the rhs 'id'
+    // object. This IMO, should be a bug.
+    // FIXME: Treat this as an extension, and flag this as an error when GCC
+    // extensions are not enabled.
+    if (RHSIsQualifiedID && 
+        getASTContext().ProtocolCompatibleWithProtocol(*PI, lProto))
+      return true;
+  }
+  
+  // 2nd, look up the category.
+  if (lookupCategory)
+    for (ObjCCategoryDecl *CDecl = IDecl->getCategoryList(); CDecl;
+         CDecl = CDecl->getNextClassCategory()) {
+      for (ObjCCategoryDecl::protocol_iterator PI = CDecl->protocol_begin(),
+           E = CDecl->protocol_end(); PI != E; ++PI)
+        if (getASTContext().ProtocolCompatibleWithProtocol(lProto, *PI))
+          return true;
+    }
+  
+  // 3rd, look up the super class(s)
+  if (IDecl->getSuperClass())
+    return
+  IDecl->getSuperClass()->ClassImplementsProtocol(lProto, lookupCategory,
+                                                  RHSIsQualifiedID);
+  
+  return false;
+}
+
 //===----------------------------------------------------------------------===//
 // ObjCIvarDecl
 //===----------------------------------------------------------------------===//
