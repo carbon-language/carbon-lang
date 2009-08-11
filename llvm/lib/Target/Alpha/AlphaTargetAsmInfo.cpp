@@ -17,6 +17,6 @@ using namespace llvm;
 AlphaTargetAsmInfo::AlphaTargetAsmInfo() {
   AlignmentIsInBytes = false;
   PrivateGlobalPrefix = "$";
-  JumpTableDirective = ".gprel32";
+  PICJumpTableDirective = ".gprel32";
   WeakRefDirective = "\t.weak\t";
 }

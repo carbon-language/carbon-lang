@@ -24,7 +24,5 @@ MipsTargetAsmInfo::MipsTargetAsmInfo(const MipsTargetMachine &TM) {
   PrivateGlobalPrefix         = "$";
   CommentString               = "#";
   ZeroDirective               = "\t.space\t";
-
-  if (TM.getRelocationModel() == Reloc::PIC_)
-    JumpTableDirective = "\t.gpword\t";
+  PICJumpTableDirective       = "\t.gpword\t";
 }

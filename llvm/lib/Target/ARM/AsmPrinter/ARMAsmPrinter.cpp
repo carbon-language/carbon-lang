@@ -923,9 +923,7 @@ void ARMAsmPrinter::printJTBlockOperand(const MachineInstr *MI, int OpNum) {
   O << TAI->getPrivateGlobalPrefix() << "JTI" << getFunctionNumber()
     << '_' << JTI << '_' << MO2.getImm() << ":\n";
 
-  const char *JTEntryDirective = TAI->getJumpTableDirective();
-  if (!JTEntryDirective)
-    JTEntryDirective = TAI->getData32bitsDirective();
+  const char *JTEntryDirective = TAI->getData32bitsDirective();
 
   const MachineFunction *MF = MI->getParent()->getParent();
   const MachineJumpTableInfo *MJTI = MF->getJumpTableInfo();
@@ -947,10 +945,8 @@ void ARMAsmPrinter::printJTBlockOperand(const MachineInstr *MI, int OpNum) {
         << "_set_" << MBB->getNumber();
     else if (TM.getRelocationModel() == Reloc::PIC_) {
       printBasicBlockLabel(MBB, false, false, false);
-      // If the arch uses custom Jump Table directives, don't calc relative to JT
-      if (!TAI->getJumpTableDirective()) 
-        O << '-' << TAI->getPrivateGlobalPrefix() << "JTI"
-          << getFunctionNumber() << '_' << JTI << '_' << MO2.getImm();
+      O << '-' << TAI->getPrivateGlobalPrefix() << "JTI"
+        << getFunctionNumber() << '_' << JTI << '_' << MO2.getImm();
     } else {
       printBasicBlockLabel(MBB, false, false, false);
     }
