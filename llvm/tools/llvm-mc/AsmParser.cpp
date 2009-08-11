@@ -688,14 +688,24 @@ bool AsmParser::ParseDirectiveSet() {
 /// FIXME: This should actually parse out the segment, section, attributes and
 /// sizeof_stub fields.
 bool AsmParser::ParseDirectiveDarwinSection() {
-  StringRef SectionName;
+  SMLoc Loc = Lexer.getLoc();
 
-  if (Lexer.isNot(AsmToken::Identifier))
-    return TokError("expected identifier after '.section' directive");
-  
+  StringRef SectionName;
+  if (ParseIdentifier(SectionName))
+    return Error(Loc, "expected identifier after '.section' directive");
+
+  // Verify there is a following comma.
+  if (!Lexer.is(AsmToken::Comma))
+    return TokError("unexpected token in '.section' directive");
+
   std::string SectionSpec = SectionName;
+  SectionSpec += ",";
+
+  // Add all the tokens until the end of the line, ParseSectionSpecifier will
+  // handle this.
   StringRef EOL = Lexer.LexUntilEndOfStatement();
   SectionSpec.append(EOL.begin(), EOL.end());
+
   Lexer.Lex();
   if (Lexer.isNot(AsmToken::EndOfStatement))
     return TokError("unexpected token in '.section' directive");
@@ -709,7 +719,7 @@ bool AsmParser::ParseDirectiveDarwinSection() {
                                           TAA, StubSize);
   
   if (!ErrorStr.empty())
-    return TokError(ErrorStr.c_str());
+    return Error(Loc, ErrorStr.c_str());
   
   // FIXME: CACHE THESE.
   
