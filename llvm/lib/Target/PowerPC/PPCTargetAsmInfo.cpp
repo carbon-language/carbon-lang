@@ -21,7 +21,7 @@ PPCDarwinTargetAsmInfo::PPCDarwinTargetAsmInfo(bool is64Bit) {
 
   if (!is64Bit)
     Data64bitsDirective = 0;      // We can't emit a 64-bit unit in PPC32 mode.
-  AssemblerDialect = 0;           // Old-Style mnemonics.
+  AssemblerDialect = 1;           // New-Style mnemonics.
 }
 
 PPCLinuxTargetAsmInfo::PPCLinuxTargetAsmInfo(bool is64Bit) {
@@ -50,6 +50,6 @@ PPCLinuxTargetAsmInfo::PPCLinuxTargetAsmInfo(bool is64Bit) {
   Data64bitsDirective = is64Bit ? "\t.quad\t" : 0;
   AlignmentIsInBytes = false;
   LCOMMDirective = "\t.lcomm\t";
-  AssemblerDialect = 1;   // New-Style mnemonics.
+  AssemblerDialect = 0;           // Old-Style mnemonics.
 }
 
