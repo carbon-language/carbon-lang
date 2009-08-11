@@ -229,10 +229,17 @@ bool LLVMTargetMachine::addCommonCodeGenPasses(PassManagerBase &PM,
 
   // Turn exception handling constructs into something the code generators can
   // handle.
-  if (!getTargetAsmInfo()->doesSupportExceptionHandling())
-    PM.add(createLowerInvokePass(getTargetLowering()));
-  else
+  switch (getTargetAsmInfo()->getExceptionHandlingType())
+  {
+  // SjLj piggy-backs on dwarf for this bit
+  case ExceptionHandling::SjLj:
+  case ExceptionHandling::Dwarf:
     PM.add(createDwarfEHPass(getTargetLowering(), OptLevel==CodeGenOpt::None));
+    break;
+  case ExceptionHandling::None:
+    PM.add(createLowerInvokePass(getTargetLowering()));
+    break;
+  }
 
   PM.add(createGCLoweringPass());
 

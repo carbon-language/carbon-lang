@@ -4087,7 +4087,11 @@ SelectionDAGLowering::visitIntrinsicCall(CallInst &I, unsigned Intrinsic) {
                              Offset));
     return 0;
   }
-
+  case Intrinsic::eh_sjlj_callsite: {
+    MachineFunction &MF = DAG.getMachineFunction();
+    MF.setCallSiteIndex(cast<ConstantSDNode>(getValue(I.getOperand(1)))->getZExtValue());
+    return 0;
+  }
   case Intrinsic::convertff:
   case Intrinsic::convertfsi:
   case Intrinsic::convertfui:
@@ -4451,9 +4455,14 @@ void SelectionDAGLowering::LowerCallTo(CallSite CS, SDValue Callee,
   }
 
   if (LandingPad && MMI) {
+    MachineFunction &MF = DAG.getMachineFunction();
     // Insert a label before the invoke call to mark the try range.  This can be
     // used to detect deletion of the invoke via the MachineModuleInfo.
     BeginLabel = MMI->NextLabelID();
+
+    // Map this landing pad to the current call site entry
+    MF.setLandingPadCallSiteIndex(LandingPad, MF.getCallSiteIndex());
+
     // Both PendingLoads and PendingExports must be flushed here;
     // this call might not return.
     (void)getRoot();

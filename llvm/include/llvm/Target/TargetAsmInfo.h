@@ -25,6 +25,8 @@ namespace llvm {
   
   /// TargetAsmInfo - This class is intended to be used as a base class for asm
   /// properties and features specific to the target.
+  namespace ExceptionHandling { enum ExceptionsType { None, Dwarf, SjLj }; }
+
   class TargetAsmInfo {
   protected:
     //===------------------------------------------------------------------===//
@@ -269,7 +271,8 @@ namespace llvm {
     /// SupportsExceptionHandling - True if target supports
     /// exception handling.
     ///
-    bool SupportsExceptionHandling; // Defaults to false.
+    // Defaults to None
+    ExceptionHandling::ExceptionsType ExceptionsType;
 
     /// RequiresFrameSection - true if the Dwarf2 output needs a frame section
     ///
@@ -482,7 +485,10 @@ namespace llvm {
       return SupportsDebugInformation;
     }
     bool doesSupportExceptionHandling() const {
-      return SupportsExceptionHandling;
+      return ExceptionsType != ExceptionHandling::None;
+    }
+    ExceptionHandling::ExceptionsType getExceptionHandlingType() const {
+      return ExceptionsType;
     }
     bool doesDwarfRequireFrameSection() const {
       return DwarfRequiresFrameSection;

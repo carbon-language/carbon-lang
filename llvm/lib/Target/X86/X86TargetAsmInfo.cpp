@@ -77,7 +77,7 @@ X86DarwinTargetAsmInfo::X86DarwinTargetAsmInfo(const X86TargetMachine &TM):
   DwarfUsesInlineInfoSection = true;
 
   // Exceptions handling
-  SupportsExceptionHandling = true;
+  ExceptionsType = ExceptionHandling::Dwarf;
   GlobalEHDirective = "\t.globl\t";
   SupportsWeakOmittedEHFrame = false;
   AbsoluteEHSectionOffsets = false;
@@ -99,7 +99,7 @@ X86ELFTargetAsmInfo::X86ELFTargetAsmInfo(const X86TargetMachine &TM) :
   SupportsDebugInformation = true;
 
   // Exceptions handling
-  SupportsExceptionHandling = true;
+  ExceptionsType = ExceptionHandling::Dwarf;
   AbsoluteEHSectionOffsets = false;
 
   // On Linux we must declare when we can use a non-executable stack.

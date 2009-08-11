@@ -1392,6 +1392,37 @@ ARMTargetLowering::LowerINTRINSIC_WO_CHAIN(SDValue Op, SelectionDAG &DAG) {
     EVT PtrVT = DAG.getTargetLoweringInfo().getPointerTy();
     return DAG.getNode(ARMISD::THREAD_POINTER, dl, PtrVT);
   }
+  case Intrinsic::eh_sjlj_lsda: {
+    // blah. horrible, horrible hack with the forced magic name.
+    // really need to clean this up. It belongs in the target-independent
+    // layer somehow that doesn't require the coupling with the asm
+    // printer.
+    MachineFunction &MF = DAG.getMachineFunction();
+    EVT PtrVT = getPointerTy();
+    DebugLoc dl = Op.getDebugLoc();
+    Reloc::Model RelocM = getTargetMachine().getRelocationModel();
+    SDValue CPAddr;
+    unsigned PCAdj = (RelocM != Reloc::PIC_)
+      ? 0 : (Subtarget->isThumb() ? 4 : 8);
+    ARMCP::ARMCPKind Kind = ARMCP::CPValue;
+    // Save off the LSDA name for the AsmPrinter to use when it's time
+    // to emit the table
+    std::string LSDAName = "L_lsda_";
+    LSDAName += MF.getFunction()->getName();
+    ARMConstantPoolValue *CPV =
+      new ARMConstantPoolValue(LSDAName.c_str(), ARMPCLabelIndex, Kind, PCAdj);
+    CPAddr = DAG.getTargetConstantPool(CPV, PtrVT, 4);
+    CPAddr = DAG.getNode(ARMISD::Wrapper, dl, EVT::i32, CPAddr);
+    SDValue Result =
+      DAG.getLoad(PtrVT, dl, DAG.getEntryNode(), CPAddr, NULL, 0);
+    SDValue Chain = Result.getValue(1);
+
+    if (RelocM == Reloc::PIC_) {
+      SDValue PICLabel = DAG.getConstant(ARMPCLabelIndex++, EVT::i32);
+      Result = DAG.getNode(ARMISD::PIC_ADD, dl, PtrVT, Result, PICLabel);
+    }
+    return Result;
+  }
   case Intrinsic::eh_sjlj_setjmp:
     return DAG.getNode(ARMISD::EH_SJLJ_SETJMP, dl, EVT::i32, Op.getOperand(1));
   }

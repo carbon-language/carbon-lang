@@ -34,7 +34,7 @@ ARMConstantPoolValue::ARMConstantPoolValue(const char *s, unsigned id,
                                            const char *Modif,
                                            bool AddCA)
   : MachineConstantPoolValue((const Type*)Type::Int32Ty),
-    GV(NULL), S(s), LabelId(id), Kind(k), PCAdjust(PCAdj),
+    GV(NULL), S(strdup(s)), LabelId(id), Kind(k), PCAdjust(PCAdj),
     Modifier(Modif), AddCurrentAddress(AddCA) {}
 
 ARMConstantPoolValue::ARMConstantPoolValue(GlobalValue *gv,

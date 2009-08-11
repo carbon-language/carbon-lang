@@ -1427,9 +1427,12 @@ let Defs =
   def Int_eh_sjlj_setjmp : XI<(outs), (ins GPR:$src),
                                AddrModeNone, SizeSpecial, IndexModeNone,
                                Pseudo, NoItinerary,
-                               "add r0, pc, #4\n\t"
-                               "str r0, [$src, #+4]\n\t"
-                               "mov r0, #0 @ eh_setjmp", "",
+                               "str sp, [$src, #+8] @ eh_setjmp begin\n\t"
+                               "add ip, pc, #8\n\t"
+                               "str ip, [$src, #+4]\n\t"
+                               "mov r0, #0\n\t"
+                               "add pc, pc, #0\n\t"
+                               "mov r0, #1 @ eh_setjmp end\n\t", "",
                                [(set R0, (ARMeh_sjlj_setjmp GPR:$src))]>;
 }
 

@@ -33,6 +33,8 @@
   	<li><a href="#llvm_eh_typeid_for"><tt>llvm.eh.typeid.for</tt></a></li>
   	<li><a href="#llvm_eh_sjlj_setjmp"><tt>llvm.eh.sjlj.setjmp</tt></a></li>
   	<li><a href="#llvm_eh_sjlj_longjmp"><tt>llvm.eh.sjlj.longjmp</tt></a></li>
+  	<li><a href="#llvm_eh_sjlj_lsda"><tt>llvm.eh.sjlj.lsda</tt></a></li>
+  	<li><a href="#llvm_eh_sjlj_callsite"><tt>llvm.eh.sjlj.callsite</tt></a></li>
   </ol></li>
   <li><a href="#asm">Asm Table Formats</a>
   <ol>
@@ -414,7 +416,7 @@ a reference to a type info.</p>
 
 <p>The SJLJ exception handling uses this intrinsic to force register saving
 for the current function and to store the address of the following instruction
-for use as a destination address by <a href="#llvm_eh_sjlj_setjmp">
+for use as a destination address by <a href="#llvm_eh_sjlj_longjmp">
 <tt>llvm.eh.sjlj.longjmp</tt></a>. The buffer format and the overall functioning
 of this intrinsic is compatible with the GCC <tt>__builtin_setjmp</tt> 
 implementation, allowing code built with the two compilers to interoperate.</p>
@@ -425,6 +427,41 @@ first word, and the target implementation of this intrinsic should place the
 destination address for a <a href="#llvm_eh_sjlj_longjmp"><tt>
 llvm.eh.sjlj.longjmp</tt></a> in the second word. The following three words
 are available for use in a target-specific manner.</p>
+
+</div>
+
+<!-- ======================================================================= -->
+<div class="doc_subsubsection">
+  <a name="llvm_eh_sjlj_lsda">llvm.eh.sjlj.lsda</a>
+</div>
+
+<div class="doc_text">
+<pre>
+  i8* %<a href="#llvm_eh_sjlj_lsda">llvm.eh.sjlj.lsda</a>( )
+</pre>
+
+<p>Used for SJLJ based exception handling, the <a href="#llvm_eh_sjlj_lsda">
+  <tt>llvm.eh.sjlj.lsda</tt></a> intrinsic returns the address of the Language
+Specific Data Area (LSDA) for the current function. The SJLJ front-end code
+stores this address in the exception handling function context for use by
+the runtime.</p>
+
+</div>
+
+<!-- ======================================================================= -->
+<div class="doc_subsubsection">
+  <a name="llvm_eh_sjlj_callsite">llvm.eh.sjlj.callsite</a>
+</div>
+
+<div class="doc_text">
+<pre>
+  void %<a href="#llvm_eh_sjlj_callsite">llvm.eh.sjlj.callsite</a>(i32)
+</pre>
+
+<p>The SJLJ front-end allocates call site indices for invoke instrucitons. 
+These values are passed to the back-end via the
+<a href="#llvm_eh_sjlj_callsite"><tt>llvm.eh.sjlj.callsite</tt></a>
+intrinsic, where they are used to build the LSDA call-site table.</p>
 
 </div>
 

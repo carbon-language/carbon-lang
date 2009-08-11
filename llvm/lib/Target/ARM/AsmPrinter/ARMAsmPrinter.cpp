@@ -208,6 +208,8 @@ namespace {
       } else {
         if (GV)
           Name = Mang->getMangledName(GV);
+        else if (!strncmp(ACPV->getSymbol(), "L_lsda_", 7))
+          Name = ACPV->getSymbol();
         else
           Name = Mang->makeNameProper(ACPV->getSymbol());
       }

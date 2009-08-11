@@ -33,7 +33,8 @@ namespace llvm {
   FloatABI::ABIType FloatABIType;
   bool NoImplicitFloat;
   bool NoZerosInBSS;
-  bool ExceptionHandling;
+  bool DwarfExceptionHandling;
+  bool SjLjExceptionHandling;
   bool UnwindTablesMandatory;
   Reloc::Model RelocationModel;
   CodeModel::Model CMModel;
@@ -104,9 +105,14 @@ DontPlaceZerosInBSS("nozero-initialized-in-bss",
   cl::location(NoZerosInBSS),
   cl::init(false));
 static cl::opt<bool, true>
-EnableExceptionHandling("enable-eh",
+EnableDwarfExceptionHandling("enable-eh",
   cl::desc("Emit DWARF exception handling (default if target supports)"),
-  cl::location(ExceptionHandling),
+  cl::location(DwarfExceptionHandling),
+  cl::init(false));
+static cl::opt<bool, true>
+EnableSjLjExceptionHandling("enable-sjlj-eh",
+  cl::desc("Emit SJLJ exception handling (default if target supports)"),
+  cl::location(SjLjExceptionHandling),
   cl::init(false));
 static cl::opt<bool, true>
 EnableUnwindTables("unwind-tables",

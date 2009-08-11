@@ -93,6 +93,9 @@ MachineFunction::MachineFunction(Function *F,
                      MachineConstantPool(TM.getTargetData());
   Alignment = TM.getTargetLowering()->getFunctionAlignment(F);
 
+  CallSiteIndex = 0;
+  MaxCallSiteIndex = 0;
+
   // Set up jump table.
   const TargetData &TD = *TM.getTargetData();
   bool IsPic = TM.getRelocationModel() == Reloc::PIC_;

@@ -364,6 +364,7 @@ ComputeActionsTable(const SmallVectorImpl<const LandingPadInfo*> &LandingPads,
 /// try-range address.
 void DwarfException::
 ComputeCallSiteTable(SmallVectorImpl<CallSiteEntry> &CallSites,
+                     std::map<unsigned,CallSiteEntry*> &CallSiteIndexMap,
                      const RangeMapType &PadMap,
                      const SmallVectorImpl<const LandingPadInfo *> &LandingPads,
                      const SmallVectorImpl<unsigned> &FirstActions) {
@@ -405,10 +406,12 @@ ComputeCallSiteTable(SmallVectorImpl<CallSiteEntry> &CallSites,
       assert(BeginLabel == LandingPad->BeginLabels[P.RangeIndex] &&
              "Inconsistent landing pad map!");
 
+      // For Dwarf exception handling (SjLj handling doesn't use this)
       // If some instruction between the previous try-range and this one may
       // throw, create a call-site entry with no landing pad for the region
       // between the try-ranges.
-      if (SawPotentiallyThrowing) {
+      if (SawPotentiallyThrowing &&
+          TAI->getExceptionHandlingType() == ExceptionHandling::Dwarf) {
         CallSiteEntry Site = {LastLabel, BeginLabel, 0, 0};
         CallSites.push_back(Site);
         PreviousIsInvoke = false;
@@ -435,6 +438,12 @@ ComputeCallSiteTable(SmallVectorImpl<CallSiteEntry> &CallSites,
 
         // Otherwise, create a new call-site.
         CallSites.push_back(Site);
+        // For SjLj handling, map the call site entry to its index
+        if (TAI->getExceptionHandlingType() == ExceptionHandling::SjLj) {
+          unsigned Index =
+            MF->getLandingPadCallSiteIndex(LandingPad->LandingPadBlock);
+          CallSiteIndexMap[Index] = &CallSites.back();
+        }
         PreviousIsInvoke = true;
       } else {
         // Create a gap.
@@ -446,7 +455,8 @@ ComputeCallSiteTable(SmallVectorImpl<CallSiteEntry> &CallSites,
   // If some instruction between the previous try-range and the end of the
   // function may throw, create a call-site entry with no landing pad for the
   // region following the try-range.
-  if (SawPotentiallyThrowing) {
+  if (SawPotentiallyThrowing &&
+      TAI->getExceptionHandlingType() == ExceptionHandling::Dwarf) {
     CallSiteEntry Site = {LastLabel, 0, 0, 0};
     CallSites.push_back(Site);
   }
@@ -496,7 +506,7 @@ void DwarfException::EmitExceptionTable() {
 
   // Invokes and nounwind calls have entries in PadMap (due to being bracketed
   // by try-range labels when lowered).  Ordinary calls do not, so appropriate
-  // try-ranges for them need be deduced.
+  // try-ranges for them need be deduced when using Dwarf exception handling.
   RangeMapType PadMap;
   for (unsigned i = 0, N = LandingPads.size(); i != N; ++i) {
     const LandingPadInfo *LandingPad = LandingPads[i];
@@ -510,7 +520,9 @@ void DwarfException::EmitExceptionTable() {
 
   // Compute the call-site table.
   SmallVector<CallSiteEntry, 64> CallSites;
-  ComputeCallSiteTable(CallSites, PadMap, LandingPads, FirstActions);
+  std::map<unsigned,CallSiteEntry*> CallSiteIndexMap;
+  ComputeCallSiteTable(CallSites, CallSiteIndexMap, PadMap,
+                       LandingPads, FirstActions);
 
   // Final tallies.
 
@@ -518,12 +530,19 @@ void DwarfException::EmitExceptionTable() {
   const unsigned SiteStartSize  = sizeof(int32_t); // DW_EH_PE_udata4
   const unsigned SiteLengthSize = sizeof(int32_t); // DW_EH_PE_udata4
   const unsigned LandingPadSize = sizeof(int32_t); // DW_EH_PE_udata4
-  unsigned SizeSites = CallSites.size() * (SiteStartSize +
-                                           SiteLengthSize +
-                                           LandingPadSize);
-  for (unsigned i = 0, e = CallSites.size(); i < e; ++i)
+  unsigned SizeSites;
+  if (TAI->getExceptionHandlingType() == ExceptionHandling::SjLj) {
+    SizeSites = (MF->getMaxCallSiteIndex() - CallSites.size()) *
+      TargetAsmInfo::getULEB128Size(0) * 2;
+  } else
+    SizeSites = CallSites.size() *
+      (SiteStartSize + SiteLengthSize + LandingPadSize);
+  for (unsigned i = 0, e = CallSites.size(); i < e; ++i) {
     SizeSites += TargetAsmInfo::getULEB128Size(CallSites[i].Action);
-
+    if (TAI->getExceptionHandlingType() == ExceptionHandling::SjLj)
+      SizeSites += TargetAsmInfo::getULEB128Size(i);
+      // FIXME: 'i' above should be the landing pad index
+  }
   // Type infos.
   const unsigned TypeInfoSize = TD->getPointerSize(); // DW_EH_PE_absptr
   unsigned SizeTypes = TypeInfos.size() * TypeInfoSize;
@@ -551,6 +570,11 @@ void DwarfException::EmitExceptionTable() {
   }
 
   EmitLabel("exception", SubprogramCount);
+  if (TAI->getExceptionHandlingType() == ExceptionHandling::SjLj) {
+    std::string SjLjName = "_lsda_";
+    SjLjName += MF->getFunction()->getName().str();
+    EmitLabel(SjLjName.c_str(), 0);
+  }
 
   // Emit the header.
   Asm->EmitInt8(dwarf::DW_EH_PE_omit);
@@ -600,54 +624,102 @@ void DwarfException::EmitExceptionTable() {
     Asm->EOL("TType base offset");
   }
 #else
-  Asm->EmitInt8(dwarf::DW_EH_PE_absptr);
-  Asm->EOL("TType format (DW_EH_PE_absptr)");
-  Asm->EmitULEB128Bytes(TypeOffset);
-  Asm->EOL("TType base offset");
+  // For SjLj exceptions, is there is no TypeInfo, then we just explicitly
+  // say that we're omitting that bit.
+  // FIXME: does this apply to Dwarf also? The above #if 0 implies yes?
+  if (TAI->getExceptionHandlingType() == ExceptionHandling::SjLj
+      && (TypeInfos.empty() || FilterIds.empty())) {
+    Asm->EmitInt8(dwarf::DW_EH_PE_omit);
+    Asm->EOL("TType format (DW_EH_PE_omit)");
+  } else {
+    Asm->EmitInt8(dwarf::DW_EH_PE_absptr);
+    Asm->EOL("TType format (DW_EH_PE_absptr)");
+    Asm->EmitULEB128Bytes(TypeOffset);
+    Asm->EOL("TType base offset");
+  }
 #endif
 
-  Asm->EmitInt8(dwarf::DW_EH_PE_udata4);
-  Asm->EOL("Call site format (DW_EH_PE_udata4)");
-  Asm->EmitULEB128Bytes(SizeSites);
-  Asm->EOL("Call-site table length");
+  // SjLj Exception handilng
+  if (TAI->getExceptionHandlingType() == ExceptionHandling::SjLj) {
+    Asm->EmitInt8(dwarf::DW_EH_PE_udata4);
+    Asm->EOL("Call site format (DW_EH_PE_udata4)");
+    Asm->EmitULEB128Bytes(SizeSites);
+    Asm->EOL("Call-site table length");
 
-  // Emit the landing pad site information.
-  for (SmallVectorImpl<CallSiteEntry>::const_iterator
-         I = CallSites.begin(), E = CallSites.end(); I != E; ++I) {
-    const CallSiteEntry &S = *I;
-    const char *BeginTag;
-    unsigned BeginNumber;
 
-    if (!S.BeginLabel) {
-      BeginTag = "eh_func_begin";
-      BeginNumber = SubprogramCount;
-    } else {
-      BeginTag = "label";
-      BeginNumber = S.BeginLabel;
+    assert(MF->getCallSiteCount() == CallSites.size());
+
+    // Emit the landing pad site information.
+    // SjLj handling assigned the call site indices in the front end, so
+    // we need to make sure the table here lines up with that. That's pretty
+    // horrible, and should be fixed ASAP to do that stuff in the back end
+    // instead.
+    std::map<unsigned, CallSiteEntry*>::const_iterator I, E;
+    I = CallSiteIndexMap.begin();
+    E = CallSiteIndexMap.end();
+    for (unsigned CurrIdx = 1; I != E; ++I) {
+      // paranoia.
+      assert(CurrIdx <= I->first);
+      // Fill in any gaps in the table
+      while (CurrIdx++ < I->first) {
+        Asm->EmitULEB128Bytes(0);
+        Asm->EOL("Filler landing pad");
+        Asm->EmitULEB128Bytes(0);
+        Asm->EOL("Filler action");
+      }
+      const CallSiteEntry &S = *(I->second);
+      Asm->EmitULEB128Bytes(I->first - 1);
+      Asm->EOL("Landing pad");
+      Asm->EmitULEB128Bytes(S.Action);
+      Asm->EOL("Action");
     }
+  } else {
+    // DWARF Exception handling
+    assert(TAI->getExceptionHandlingType() == ExceptionHandling::Dwarf);
 
-    EmitSectionOffset(BeginTag, "eh_func_begin", BeginNumber, SubprogramCount,
-                      true, true);
-    Asm->EOL("Region start");
+    Asm->EmitInt8(dwarf::DW_EH_PE_udata4);
+    Asm->EOL("Call site format (DW_EH_PE_udata4)");
+    Asm->EmitULEB128Bytes(SizeSites);
+    Asm->EOL("Call-site table length");
 
-    if (!S.EndLabel)
-      EmitDifference("eh_func_end", SubprogramCount, BeginTag, BeginNumber,
-                     true);
-    else
-      EmitDifference("label", S.EndLabel, BeginTag, BeginNumber, true);
+    // Emit the landing pad site information.
+    for (SmallVectorImpl<CallSiteEntry>::const_iterator
+         I = CallSites.begin(), E = CallSites.end(); I != E; ++I) {
+      const CallSiteEntry &S = *I;
+      const char *BeginTag;
+      unsigned BeginNumber;
 
-    Asm->EOL("Region length");
+      if (!S.BeginLabel) {
+        BeginTag = "eh_func_begin";
+        BeginNumber = SubprogramCount;
+      } else {
+        BeginTag = "label";
+        BeginNumber = S.BeginLabel;
+      }
 
-    if (!S.PadLabel)
-      Asm->EmitInt32(0);
-    else
-      EmitSectionOffset("label", "eh_func_begin", S.PadLabel, SubprogramCount,
+      EmitSectionOffset(BeginTag, "eh_func_begin", BeginNumber, SubprogramCount,
                         true, true);
+      Asm->EOL("Region start");
 
-    Asm->EOL("Landing pad");
+      if (!S.EndLabel)
+        EmitDifference("eh_func_end", SubprogramCount, BeginTag, BeginNumber,
+                       true);
+      else
+        EmitDifference("label", S.EndLabel, BeginTag, BeginNumber, true);
 
-    Asm->EmitULEB128Bytes(S.Action);
-    Asm->EOL("Action");
+      Asm->EOL("Region length");
+
+      if (!S.PadLabel)
+        Asm->EmitInt32(0);
+      else
+        EmitSectionOffset("label", "eh_func_begin", S.PadLabel, SubprogramCount,
+                          true, true);
+
+      Asm->EOL("Landing pad");
+
+      Asm->EmitULEB128Bytes(S.Action);
+      Asm->EOL("Action");
+    }
   }
 
   // Emit the actions.
@@ -690,6 +762,8 @@ void DwarfException::EmitExceptionTable() {
 /// EndModule - Emit all exception information that should come after the
 /// content.
 void DwarfException::EndModule() {
+  if (TAI->getExceptionHandlingType() != ExceptionHandling::Dwarf)
+    return;
   if (TimePassesIsEnabled)
     ExceptionTimer->startTimer();
 

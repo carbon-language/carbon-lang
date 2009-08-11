@@ -121,6 +121,10 @@ namespace ISD {
     // address of the exception block on entry to an landing pad block.
     EXCEPTIONADDR,
 
+    // RESULT, OUTCHAIN = LSDAADDR(INCHAIN) - This node represents the
+    // address of the Language Specific Data Area for the enclosing function.
+    LSDAADDR,
+
     // RESULT, OUTCHAIN = EHSELECTION(INCHAIN, EXCEPTION) - This node represents
     // the selection index of the exception thrown.
     EHSELECTION,

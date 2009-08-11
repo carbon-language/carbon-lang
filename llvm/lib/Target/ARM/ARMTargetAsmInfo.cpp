@@ -47,6 +47,12 @@ ARMDarwinTargetAsmInfo::ARMDarwinTargetAsmInfo() {
   ProtectedDirective = NULL;
   HasDotTypeDotSizeDirective = false;
   SupportsDebugInformation = true;
+
+  // Exceptions handling
+  ExceptionsType = ExceptionHandling::SjLj;
+  GlobalEHDirective = "\t.globl\t";
+  SupportsWeakOmittedEHFrame = false;
+  AbsoluteEHSectionOffsets = false;
 }
 
 ARMELFTargetAsmInfo::ARMELFTargetAsmInfo() {

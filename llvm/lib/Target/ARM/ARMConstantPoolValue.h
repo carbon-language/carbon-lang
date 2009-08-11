@@ -53,6 +53,8 @@ public:
                        bool AddCurrentAddress = false);
   ARMConstantPoolValue(GlobalValue *GV, ARMCP::ARMCPKind Kind,
                        const char *Modifier);
+  ARMConstantPoolValue();
+  ~ARMConstantPoolValue() {free((void*)S);}
 
 
   GlobalValue *getGV() const { return GV; }

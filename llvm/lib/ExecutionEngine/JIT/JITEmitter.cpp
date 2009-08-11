@@ -511,11 +511,11 @@ namespace {
         DOUT << "JIT is managing a GOT\n";
       }
 
-      if (ExceptionHandling) DE = new JITDwarfEmitter(jit);
+      if (DwarfExceptionHandling) DE = new JITDwarfEmitter(jit);
     }
     ~JITEmitter() { 
       delete MemMgr;
-      if (ExceptionHandling) delete DE;
+      if (DwarfExceptionHandling) delete DE;
     }
 
     /// classof - Methods for support type inquiry through isa, cast, and
@@ -603,7 +603,7 @@ namespace {
  
     virtual void setModuleInfo(MachineModuleInfo* Info) {
       MMI = Info;
-      if (ExceptionHandling) DE->setModuleInfo(Info);
+      if (DwarfExceptionHandling) DE->setModuleInfo(Info);
     }
 
     void setMemoryExecutable(void) {
@@ -1125,7 +1125,7 @@ bool JITEmitter::finishFunction(MachineFunction &F) {
     }
   }
 #endif
-  if (ExceptionHandling) {
+  if (DwarfExceptionHandling) {
     uintptr_t ActualSize = 0;
     SavedBufferBegin = BufferBegin;
     SavedBufferEnd = BufferEnd;

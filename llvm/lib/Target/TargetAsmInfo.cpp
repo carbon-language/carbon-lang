@@ -72,7 +72,7 @@ TargetAsmInfo::TargetAsmInfo() {
   HasLEB128 = false;
   HasDotLocAndDotFile = false;
   SupportsDebugInformation = false;
-  SupportsExceptionHandling = false;
+  ExceptionsType = ExceptionHandling::None;
   DwarfRequiresFrameSection = true;
   DwarfUsesInlineInfoSection = false;
   Is_EHSymbolPrivate = true;

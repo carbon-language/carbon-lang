@@ -37,6 +37,6 @@ SPULinuxTargetAsmInfo::SPULinuxTargetAsmInfo() {
 
   // Exception handling is not supported on CellSPU (think about it: you only
   // have 256K for code+data. Would you support exception handling?)
-  SupportsExceptionHandling = false;
+  ExceptionsType = ExceptionHandling::None;
 }
 

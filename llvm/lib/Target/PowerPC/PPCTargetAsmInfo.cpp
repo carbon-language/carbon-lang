@@ -24,8 +24,8 @@ PPCDarwinTargetAsmInfo::PPCDarwinTargetAsmInfo(const PPCTargetMachine &TM) :
   PCSymbol = ".";
   CommentString = ";";
   UsedDirective = "\t.no_dead_strip\t";
-  SupportsExceptionHandling = true;
-  
+  ExceptionsType = ExceptionHandling::Dwarf;
+
   GlobalEHDirective = "\t.globl\t";
   SupportsWeakOmittedEHFrame = false;
 }
@@ -49,7 +49,7 @@ PPCLinuxTargetAsmInfo::PPCLinuxTargetAsmInfo(const PPCTargetMachine &TM) :
 
   // Exceptions handling
   if (!TM.getSubtargetImpl()->isPPC64())
-    SupportsExceptionHandling = true;
+    ExceptionsType = ExceptionHandling::Dwarf;
   AbsoluteEHSectionOffsets = false;
 }
 
