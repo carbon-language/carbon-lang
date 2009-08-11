@@ -880,10 +880,16 @@ static void *GetKeyForTopLevelField(FieldDecl *Field) {
   return static_cast<void *>(Field);
 }
 
-static void *GetKeyForMember(CXXBaseOrMemberInitializer *Member) {
+static void *GetKeyForMember(CXXBaseOrMemberInitializer *Member, 
+                             bool MemberMaybeAnon=false) {
   // For fields injected into the class via declaration of an anonymous union,
   // use its anonymous union class declaration as the unique key.
   if (FieldDecl *Field = Member->getMember()) {
+    // After BuildBaseOrMemberInitializers call, Field is the anonymous union
+    // data member of the class. Data member used in the initializer list is 
+    // in AnonUnionMember field.
+    if (MemberMaybeAnon && Field->isAnonymousStructOrUnion())
+      Field = Member->getAnonUnionMember();
     if (Field->getDeclContext()->isRecord()) {
       RecordDecl *RD = cast<RecordDecl>(Field->getDeclContext());
       if (RD->isAnonymousStructOrUnion())
@@ -973,7 +979,7 @@ void Sema::ActOnMemInitializers(DeclPtrTy ConstructorDecl,
     for (unsigned i = 0; i < NumMemInits; i++) {
       CXXBaseOrMemberInitializer *Member = 
         static_cast<CXXBaseOrMemberInitializer*>(MemInits[i]);
-      void *MemberInCtorList = GetKeyForMember(Member);
+      void *MemberInCtorList = GetKeyForMember(Member, true);
 
       for (; curIndex < Last; curIndex++)
         if (MemberInCtorList == AllBaseOrMembers[curIndex])

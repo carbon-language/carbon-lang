@@ -643,6 +643,11 @@ CXXConstructorDecl::setBaseOrMemberInitializers(
         for(RecordDecl::field_iterator FA = FieldClassDecl->field_begin(),
             EA = FieldClassDecl->field_end(); FA != EA; FA++) {
           if (CXXBaseOrMemberInitializer *Value = AllBaseFields.lookup(*FA)) {
+            // 'Member' is the anonymous union field and 'AnonUnionMember' is
+            // set to the anonymous union data member used in the initializer
+            // list.
+            Value->setMember(*Field);
+            Value->setAnonUnionMember(*FA);
             AllToInit.push_back(Value);
             break;
           }

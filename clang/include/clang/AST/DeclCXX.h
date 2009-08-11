@@ -779,9 +779,28 @@ class CXXBaseOrMemberInitializer {
   Stmt **Args;
   unsigned NumArgs;
   
-  /// CtorToCall - For a base or member needing a constructor for their
-  /// initialization, this is the constructor to call.
-  CXXConstructorDecl *CtorToCall;
+  union {
+    /// CtorToCall - For a base or member needing a constructor for their
+    /// initialization, this is the constructor to call.
+    CXXConstructorDecl *CtorToCall;
+  
+    /// AnonUnionMember - When 'BaseOrMember' is class's anonymous union
+    /// data member, this field holds the FieldDecl for the member of the
+    /// anonymous union being initialized.
+    /// @code
+    /// struct X {
+    ///   X() : au_i1(123) {}
+    ///   union {
+    ///     int au_i1;
+    ///     float au_f1;
+    ///   };
+    /// };
+    /// @endcode
+    /// In above example, BaseOrMember holds the field decl. for anonymous union
+    /// and AnonUnionMember holds field decl for au_i1.
+    ///
+    FieldDecl *AnonUnionMember;
+  };
   
   /// IdLoc - Location of the id in ctor-initializer list.
   SourceLocation IdLoc;
@@ -854,6 +873,17 @@ public:
       return 0;
   }
 
+  void setMember(FieldDecl * anonUnionField) {
+    BaseOrMember = reinterpret_cast<uintptr_t>(anonUnionField);
+  }
+  
+  FieldDecl *getAnonUnionMember() const {
+    return AnonUnionMember;
+  }
+  void setAnonUnionMember(FieldDecl *anonMember) {
+    AnonUnionMember = anonMember;
+  }
+  
   const CXXConstructorDecl *getConstructor() const { return CtorToCall; }
   
   SourceLocation getSourceLocation() const { return IdLoc; }

@@ -874,8 +874,7 @@ void CodeGenFunction::SynthesizeCXXCopyConstructor(const CXXConstructorDecl *CD,
     // FIXME. How about copying arrays!
     assert(!getContext().getAsArrayType(FieldType) &&
            "FIXME. Copying arrays NYI");
-    assert(!Field->isAnonymousStructOrUnion() &&
-           "FIXME. anonymous data member NYI in copy constructor synthesis");
+    
     if (const RecordType *FieldClassType = FieldType->getAs<RecordType>()) {
       CXXRecordDecl *FieldClassDecl
         = cast<CXXRecordDecl>(FieldClassType->getDecl());
@@ -924,23 +923,25 @@ void CodeGenFunction::EmitCtorPrologue(const CXXConstructorDecl *CD) {
       QualType FieldType = getContext().getCanonicalType((Field)->getType());
       assert(!getContext().getAsArrayType(FieldType) 
              && "FIXME. Field arrays initialization unsupported");
-      DeclContext *Ctx = Field->getDeclContext();
-      RecordDecl *Record = cast<RecordDecl>(Ctx);
-      assert(!Record->isAnonymousStructOrUnion() &&
-             "FIXME. anonymous union initializer NYI in default constructor");
-      (void)Record;
       
       LoadOfThis = LoadCXXThis();
       LValue LHS = EmitLValueForField(LoadOfThis, Field, false, 0);
       if (FieldType->getAs<RecordType>()) {
-        
+        if (!Field->isAnonymousStructOrUnion()) {
           assert(Member->getConstructor() && 
                  "EmitCtorPrologue - no constructor to initialize member");
           EmitCXXConstructorCall(Member->getConstructor(),
                                  Ctor_Complete, LHS.getAddress(),
                                  Member->const_arg_begin(), 
                                  Member->const_arg_end());
-        continue;
+          continue;
+        }
+        else {
+          // Initializing an anonymous union data member.
+          FieldDecl *anonMember = Member->getAnonUnionMember();
+          LHS = EmitLValueForField(LHS.getAddress(), anonMember, false, 0);
+          FieldType = anonMember->getType();
+        }
       }
       
       assert(Member->getNumArgs() == 1 && "Initializer count must be 1 only");
