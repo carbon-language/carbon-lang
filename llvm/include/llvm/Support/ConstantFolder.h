@@ -18,16 +18,15 @@
 #define LLVM_SUPPORT_CONSTANTFOLDER_H
 
 #include "llvm/Constants.h"
-#include "llvm/LLVMContext.h"
 
 namespace llvm {
-  
+
+class LLVMContext;
+
 /// ConstantFolder - Create constants with minimum, target independent, folding.
 class ConstantFolder {
-  LLVMContext &Context;
-  
 public:
-  ConstantFolder(LLVMContext &C) : Context(C) { }
+  explicit ConstantFolder(LLVMContext &) {}
 
   //===--------------------------------------------------------------------===//
   // Binary Operators
