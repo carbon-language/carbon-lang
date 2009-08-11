@@ -587,7 +587,7 @@ namespace sys {
     /// @name Data
     /// @{
     protected:
-      mutable std::string path;   ///< Storage for the path name.
+      std::string path;   ///< Storage for the path name.
 
 
     /// @}
