@@ -1442,14 +1442,11 @@ Constant *ConstantExpr::getGetElementPtr(Constant *C, Value* const *Idxs,
 Constant *ConstantExpr::getInBoundsGetElementPtr(Constant *C,
                                                  Value* const *Idxs,
                                                  unsigned NumIdx) {
-  // Get the result type of the getelementptr!
-  const Type *Ty =
-    GetElementPtrInst::getIndexedType(C->getType(), Idxs, Idxs+NumIdx);
-  assert(Ty && "GEP indices invalid!");
-  unsigned As = cast<PointerType>(C->getType())->getAddressSpace();
-  Constant *Result = getGetElementPtrTy(PointerType::get(Ty, As), C,
-                                        Idxs, NumIdx);
-  cast<GEPOperator>(Result)->setIsInBounds(true);
+  Constant *Result = getGetElementPtr(C, Idxs, NumIdx);
+  // Set in bounds attribute, assuming constant folding didn't eliminate the
+  // GEP.
+  if (GEPOperator *GEP = dyn_cast<GEPOperator>(Result))
+    GEP->setIsInBounds(true);
   return Result;
 }
 
