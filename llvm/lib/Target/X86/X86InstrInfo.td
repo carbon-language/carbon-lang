@@ -3166,7 +3166,8 @@ let neverHasSideEffects = 1 in {
 
 // Alias instructions that map movr0 to xor.
 // FIXME: remove when we can teach regalloc that xor reg, reg is ok.
-let Defs = [EFLAGS], isReMaterializable = 1, isAsCheapAsAMove = 1 in {
+let Defs = [EFLAGS], isReMaterializable = 1, isAsCheapAsAMove = 1,
+    isCodeGenOnly = 1 in {
 def MOV8r0   : I<0x30, MRMInitReg, (outs GR8 :$dst), (ins),
                  "xor{b}\t$dst, $dst",
                  [(set GR8:$dst, 0)]>;

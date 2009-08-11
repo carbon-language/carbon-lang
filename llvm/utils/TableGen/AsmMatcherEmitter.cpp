@@ -210,18 +210,17 @@ static void TokenizeAsmString(const StringRef &AsmString,
 static bool IsAssemblerInstruction(const StringRef &Name,
                                    const CodeGenInstruction &CGI, 
                                    const SmallVectorImpl<StringRef> &Tokens) {
-  // Ignore psuedo ops.
+  // Ignore "codegen only" instructions.
+  if (CGI.TheDef->getValueAsBit("isCodeGenOnly"))
+    return false;
+
+  // Ignore pseudo ops.
   //
-  // FIXME: This is a hack.
+  // FIXME: This is a hack; can we convert these instructions to set the
+  // "codegen only" bit instead?
   if (const RecordVal *Form = CGI.TheDef->getValue("Form"))
     if (Form->getValue()->getAsString() == "Pseudo")
       return false;
-  
-  // Ignore "PHI" node.
-  //
-  // FIXME: This is also a hack.
-  if (Name == "PHI")
-    return false;
 
   // Ignore "Int_*" and "*_Int" instructions, which are internal aliases.
   //
@@ -245,11 +244,8 @@ static bool IsAssemblerInstruction(const StringRef &Name,
   //
   // FIXME: Is this true?
   //
-  // Also, we ignore instructions which reference the operand multiple times;
-  // this implies a constraint we would not currently honor. These are
-  // currently always fake instructions for simplifying codegen.
-  //
-  // FIXME: Encode this assumption in the .td, so we can error out here.
+  // Also, check for instructions which reference the operand multiple times;
+  // this implies a constraint we would not honor.
   std::set<std::string> OperandNames;
   for (unsigned i = 1, e = Tokens.size(); i < e; ++i) {
     if (Tokens[i][0] == '$' && 
@@ -258,18 +254,15 @@ static bool IsAssemblerInstruction(const StringRef &Name,
       DEBUG({
           errs() << "warning: '" << Name << "': "
                  << "ignoring instruction; operand with attribute '" 
-                 << Tokens[i] << "', \n";
+                 << Tokens[i] << "'\n";
         });
       return false;
     }
 
     if (Tokens[i][0] == '$' && !OperandNames.insert(Tokens[i]).second) {
-      DEBUG({
-          errs() << "warning: '" << Name << "': "
-                 << "ignoring instruction; tied operand '" 
-                 << Tokens[i] << "'\n";
-        });
-      return false;
+      std::string Err = "'" + Name.str() + "': " +
+        "invalid assembler instruction; tied operand '" + Tokens[i].str() + "'";
+      throw TGError(CGI.TheDef->getLoc(), Err);
     }
   }
 

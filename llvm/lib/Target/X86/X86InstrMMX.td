@@ -516,7 +516,7 @@ def MMX_MASKMOVQ64: MMXI64<0xF7, MRMSrcReg, (outs), (ins VR64:$src, VR64:$mask),
 //===----------------------------------------------------------------------===//
 
 // Alias instructions that map zero vector to pxor.
-let isReMaterializable = 1 in {
+let isReMaterializable = 1, isCodeGenOnly = 1 in {
   def MMX_V_SET0       : MMXI<0xEF, MRMInitReg, (outs VR64:$dst), (ins),
                               "pxor\t$dst, $dst",
                               [(set VR64:$dst, (v2i32 immAllZerosV))]>;

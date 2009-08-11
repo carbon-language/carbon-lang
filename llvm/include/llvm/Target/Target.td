@@ -221,6 +221,11 @@ class Instruction {
   bit mayHaveSideEffects = 0;
   bit neverHasSideEffects = 0;
 
+  // Is this instruction a "real" instruction (with a distinct machine
+  // encoding), or is it a pseudo instruction used for codegen modeling
+  // purposes.
+  bit isCodeGenOnly = 0;
+
   InstrItinClass Itinerary = NoItinerary;// Execution steps used for scheduling.
 
   string Constraints = "";  // OperandConstraint, e.g. $src = $dst.
@@ -386,7 +391,8 @@ class InstrInfo {
   bit isLittleEndianEncoding = 0;
 }
 
-// Standard Instructions.
+// Standard Pseudo Instructions.
+let isCodeGenOnly = 1 in {
 def PHI : Instruction {
   let OutOperandList = (ops);
   let InOperandList = (ops variable_ops);
@@ -465,6 +471,7 @@ def COPY_TO_REGCLASS : Instruction {
   let Namespace = "TargetInstrInfo";
   let neverHasSideEffects = 1;
   let isAsCheapAsAMove = 1;
+}
 }
 
 //===----------------------------------------------------------------------===//
