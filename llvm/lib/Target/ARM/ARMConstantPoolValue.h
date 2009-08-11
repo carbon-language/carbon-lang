@@ -16,6 +16,7 @@
 
 #include "llvm/CodeGen/MachineConstantPool.h"
 #include <iosfwd>
+#include <stdlib.h>
 
 namespace llvm {
 
