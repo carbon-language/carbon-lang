@@ -35,7 +35,7 @@ namespace llvm {
   class GlobalValue;
   class TargetData;
   class FunctionType;
-  struct LLVMContext;
+  class LLVMContext;
 }
 
 namespace clang {

@@ -17,7 +17,7 @@
 namespace llvm {
   class Type;
   class Value;
-  struct LLVMContext;
+  class LLVMContext;
 }
 
 namespace clang {

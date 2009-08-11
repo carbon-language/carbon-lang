@@ -39,7 +39,7 @@ namespace llvm {
   class TargetData;
   class FunctionType;
   class Value;
-  struct LLVMContext;
+  class LLVMContext;
 }
 
 namespace clang {

@@ -28,7 +28,7 @@ namespace llvm {
   class PATypeHolder;
   class TargetData;
   class Type;
-  struct LLVMContext;
+  class LLVMContext;
 }
 
 namespace clang {

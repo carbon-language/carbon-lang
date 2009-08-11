@@ -31,7 +31,7 @@
 
 namespace llvm {
   class BasicBlock;
-  struct LLVMContext;
+  class LLVMContext;
   class Module;
   class SwitchInst;
   class Value;

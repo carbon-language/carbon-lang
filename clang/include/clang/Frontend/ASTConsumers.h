@@ -20,7 +20,7 @@
 
 namespace llvm {
   class Module;
-  struct LLVMContext;
+  class LLVMContext;
   namespace sys { class Path; }
 }
 namespace clang {
