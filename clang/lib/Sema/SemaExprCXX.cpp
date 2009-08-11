@@ -747,7 +747,8 @@ Sema::ActOnCXXConditionDeclarationExpr(Scope *S, SourceLocation StartLoc,
   assert(D.getDeclSpec().getStorageClassSpec() != DeclSpec::SCS_typedef &&
          "Parser allowed 'typedef' as storage class of condition decl.");
 
-  QualType Ty = GetTypeForDeclarator(D, S);
+  TagDecl *OwnedTag = 0;
+  QualType Ty = GetTypeForDeclarator(D, S, /*Skip=*/0, &OwnedTag);
   
   if (Ty->isFunctionType()) { // The declarator shall not specify a function...
     // We exit without creating a CXXConditionDeclExpr because a FunctionDecl
@@ -757,18 +758,9 @@ Sema::ActOnCXXConditionDeclarationExpr(Scope *S, SourceLocation StartLoc,
   } else if (Ty->isArrayType()) { // ...or an array.
     Diag(StartLoc, diag::err_invalid_use_of_array_type)
       << SourceRange(StartLoc, EqualLoc);
-  } else if (const RecordType *RT = Ty->getAs<RecordType>()) {
-    RecordDecl *RD = RT->getDecl();
-    // The type-specifier-seq shall not declare a new class...
-    if (RD->isDefinition() &&
-        (RD->getIdentifier() == 0 || S->isDeclScope(DeclPtrTy::make(RD))))
-      Diag(RD->getLocation(), diag::err_type_defined_in_condition);
-  } else if (const EnumType *ET = Ty->getAsEnumType()) {
-    EnumDecl *ED = ET->getDecl();
-    // ...or enumeration.
-    if (ED->isDefinition() &&
-        (ED->getIdentifier() == 0 || S->isDeclScope(DeclPtrTy::make(ED))))
-      Diag(ED->getLocation(), diag::err_type_defined_in_condition);
+  } else if (OwnedTag && OwnedTag->isDefinition()) {
+    // The type-specifier-seq shall not declare a new class or enumeration.
+    Diag(OwnedTag->getLocation(), diag::err_type_defined_in_condition);
   }
 
   DeclPtrTy Dcl = ActOnDeclarator(S, D);
