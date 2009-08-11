@@ -42,21 +42,16 @@ static const char *const arm_asm_table[] = {
 
 ARMDarwinTargetAsmInfo::ARMDarwinTargetAsmInfo() {
   AsmTransCBE = arm_asm_table;
-  AlignmentIsInBytes = false;
   Data64bitsDirective = 0;
   CommentString = "@";
   COMMDirectiveTakesAlignment = false;
   InlineAsmStart = "@ InlineAsm Start";
   InlineAsmEnd = "@ InlineAsm End";
   
-  
-  HasDotTypeDotSizeDirective = false;
   SupportsDebugInformation = true;
 
   // Exceptions handling
   ExceptionsType = ExceptionHandling::SjLj;
-  GlobalEHDirective = "\t.globl\t";
-  SupportsWeakOmittedEHFrame = false;
   AbsoluteEHSectionOffsets = false;
 }
 

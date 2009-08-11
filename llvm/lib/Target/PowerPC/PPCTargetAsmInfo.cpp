@@ -22,19 +22,13 @@ using namespace llvm::dwarf;
 PPCDarwinTargetAsmInfo::PPCDarwinTargetAsmInfo(const PPCTargetMachine &TM) {
   PCSymbol = ".";
   CommentString = ";";
-  UsedDirective = "\t.no_dead_strip\t";
   ExceptionsType = ExceptionHandling::Dwarf;
 
-  GlobalEHDirective = "\t.globl\t";
-  SupportsWeakOmittedEHFrame = false;
-  
   const PPCSubtarget *Subtarget = &TM.getSubtarget<PPCSubtarget>();
   bool isPPC64 = Subtarget->isPPC64();
   
   if (!isPPC64)
     Data64bitsDirective = 0;      // we can't emit a 64-bit unit
-  AlignmentIsInBytes = false;
-  LCOMMDirective = "\t.lcomm\t";
   InlineAsmStart = "# InlineAsm Start";
   InlineAsmEnd = "# InlineAsm End";
   AssemblerDialect = Subtarget->getAsmFlavor();

@@ -26,6 +26,8 @@ DarwinTargetAsmInfo::DarwinTargetAsmInfo() {
   AllowQuotesInName = true;
   HasSingleParameterDotFile = false;
 
+  AlignmentIsInBytes = false;
+
   // In non-PIC modes, emit a special label before jump tables so that the
   // linker can perform more accurate dead code stripping.  We do not check the
   // relocation model here since it can be overridden later.
@@ -40,11 +42,16 @@ DarwinTargetAsmInfo::DarwinTargetAsmInfo() {
   ZeroFillDirective = "\t.zerofill\t";  // Uses .zerofill
   SetDirective = "\t.set";
   ProtectedDirective = "\t.globl\t";
+  HasDotTypeDotSizeDirective = false;
+  UsedDirective = "\t.no_dead_strip\t";
 
   // _foo.eh symbols are currently always exported so that the linker knows
   // about them.  This is not necessary on 10.6 and later, but it
   // doesn't hurt anything.
   // FIXME: I need to get this from Triple.
   Is_EHSymbolPrivate = false;
+  GlobalEHDirective = "\t.globl\t";
+  SupportsWeakOmittedEHFrame = false;
+
 }
 

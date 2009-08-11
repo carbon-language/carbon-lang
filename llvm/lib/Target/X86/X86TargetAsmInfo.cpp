@@ -45,7 +45,6 @@ X86DarwinTargetAsmInfo::X86DarwinTargetAsmInfo(const X86TargetMachine &TM) {
   const X86Subtarget *Subtarget = &TM.getSubtarget<X86Subtarget>();
   bool is64Bit = Subtarget->is64Bit();
 
-  AlignmentIsInBytes = false;
   TextAlignFillValue = 0x90;
 
   if (!is64Bit)
@@ -53,7 +52,6 @@ X86DarwinTargetAsmInfo::X86DarwinTargetAsmInfo(const X86TargetMachine &TM) {
 
   // Leopard and above support aligned common symbols.
   COMMDirectiveTakesAlignment = (Subtarget->getDarwinVers() >= 9);
-  HasDotTypeDotSizeDirective = false;
 
   if (is64Bit) {
     PersonalityPrefix = "";
@@ -67,16 +65,12 @@ X86DarwinTargetAsmInfo::X86DarwinTargetAsmInfo(const X86TargetMachine &TM) {
   InlineAsmEnd = "## InlineAsm End";
   CommentString = "##";
   PCSymbol = ".";
-  UsedDirective = "\t.no_dead_strip\t";
-  ProtectedDirective = "\t.globl\t";
 
   SupportsDebugInformation = true;
   DwarfUsesInlineInfoSection = true;
 
   // Exceptions handling
   ExceptionsType = ExceptionHandling::Dwarf;
-  GlobalEHDirective = "\t.globl\t";
-  SupportsWeakOmittedEHFrame = false;
   AbsoluteEHSectionOffsets = false;
 }
 
