@@ -104,6 +104,7 @@ MDNode::~MDNode() {
   dropAllReferences();
   getType()->getContext().pImpl->MDNodes.remove(this);
 }
+
 //===----------------------------------------------------------------------===//
 //NamedMDNode implementation
 //
@@ -121,6 +122,14 @@ NamedMDNode::NamedMDNode(const Twine &N, MetadataBase*const* MDs,
   }
   if (ParentModule)
     ParentModule->getNamedMDList().push_back(this);
+}
+
+NamedMDNode *NamedMDNode::Create(const NamedMDNode *NMD, Module *M) {
+  assert (NMD && "Invalid source NamedMDNode!");
+  SmallVector<MetadataBase *, 4> Elems;
+  for (unsigned i = 0, e = NMD->getNumElements(); i != e; ++i)
+    Elems.push_back(NMD->getElement(i));
+  return new NamedMDNode(NMD->getName().data(), Elems.data(), Elems.size(), M);
 }
 
 /// eraseFromParent - Drop all references and remove the node from parent

@@ -538,6 +538,22 @@ static bool GetLinkageResult(GlobalValue *Dest, const GlobalValue *Src,
   return false;
 }
 
+// Insert all of the named mdnoes in Src into the Dest module.
+static void LinkNamedMDNodes(Module *Dest, Module *Src) {
+  for (Module::const_named_metadata_iterator I = Src->named_metadata_begin(),
+         E = Src->named_metadata_end(); I != E; ++I) {
+    const NamedMDNode *SrcNMD = I;
+    NamedMDNode *DestNMD = Dest->getNamedMetadata(SrcNMD->getName());
+    if (!DestNMD)
+      NamedMDNode::Create(SrcNMD, Dest);
+    else {
+      // Add Src elements into Dest node.
+      for (unsigned i = 0, e = SrcNMD->getNumElements(); i != e; ++i) 
+        DestNMD->addElement(SrcNMD->getElement(i));
+    }
+  }
+}
+
 // LinkGlobals - Loop through the global variables in the src module and merge
 // them into the dest module.
 static bool LinkGlobals(Module *Dest, const Module *Src,
@@ -1306,6 +1322,9 @@ Linker::LinkModules(Module *Dest, Module *Src, std::string *ErrorMsg) {
     if (I->hasAppendingLinkage())
       AppendingVars.insert(std::make_pair(I->getName(), I));
   }
+
+  // Insert all of the named mdnoes in Src into the Dest module.
+  LinkNamedMDNodes(Dest, Src);
 
   // Insert all of the globals in src into the Dest module... without linking
   // initializers (which could refer to functions not yet mapped over).

@@ -229,6 +229,8 @@ public:
     return new NamedMDNode(N, MDs, NumMDs, M);
   }
 
+  static NamedMDNode *Create(const NamedMDNode *NMD, Module *M = 0);
+
   /// eraseFromParent - Drop all references and remove the node from parent
   /// module.
   void eraseFromParent();
