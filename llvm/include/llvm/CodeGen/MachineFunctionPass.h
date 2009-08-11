@@ -40,6 +40,10 @@ protected:
 
   /// getAnalysisUsage - Subclasses that override getAnalysisUsage
   /// must call this.
+  ///
+  /// For MachineFunctionPasses, calling AU.preservesCFG() indicates that
+  /// the pass does not modify the MachineBasicBlock CFG.
+  ///
   virtual void getAnalysisUsage(AnalysisUsage &AU) const;
 
 private:
