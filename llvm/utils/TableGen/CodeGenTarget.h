@@ -49,12 +49,12 @@ enum SDNP {
 // ComplexPattern attributes.
 enum CPAttr { CPAttrParentAsRoot };
 
-/// getValueType - Return the EVT::SimpleValueType that the specified TableGen
+/// getValueType - Return the MVT::SimpleValueType that the specified TableGen
 /// record corresponds to.
-EVT::SimpleValueType getValueType(Record *Rec);
+MVT::SimpleValueType getValueType(Record *Rec);
 
-std::string getName(EVT::SimpleValueType T);
-std::string getEnumName(EVT::SimpleValueType T);
+std::string getName(MVT::SimpleValueType T);
+std::string getEnumName(MVT::SimpleValueType T);
 
 /// getQualifiedName - Return the name of the specified record, with a
 /// namespace qualifier if the record contains one.
@@ -68,7 +68,7 @@ class CodeGenTarget {
   mutable std::map<std::string, CodeGenInstruction> Instructions;
   mutable std::vector<CodeGenRegister> Registers;
   mutable std::vector<CodeGenRegisterClass> RegisterClasses;
-  mutable std::vector<EVT::SimpleValueType> LegalValueTypes;
+  mutable std::vector<MVT::SimpleValueType> LegalValueTypes;
   void ReadRegisters() const;
   void ReadRegisterClasses() const;
   void ReadInstructions() const;
@@ -172,15 +172,15 @@ public:
   /// specified physical register.
   std::vector<unsigned char> getRegisterVTs(Record *R) const;
   
-  const std::vector<EVT::SimpleValueType> &getLegalValueTypes() const {
+  const std::vector<MVT::SimpleValueType> &getLegalValueTypes() const {
     if (LegalValueTypes.empty()) ReadLegalValueTypes();
     return LegalValueTypes;
   }
   
   /// isLegalValueType - Return true if the specified value type is natively
   /// supported by the target (i.e. there are registers that directly hold it).
-  bool isLegalValueType(EVT::SimpleValueType VT) const {
-    const std::vector<EVT::SimpleValueType> &LegalVTs = getLegalValueTypes();
+  bool isLegalValueType(MVT::SimpleValueType VT) const {
+    const std::vector<MVT::SimpleValueType> &LegalVTs = getLegalValueTypes();
     for (unsigned i = 0, e = LegalVTs.size(); i != e; ++i)
       if (LegalVTs[i] == VT) return true;
     return false;    
@@ -222,7 +222,7 @@ public:
 /// ComplexPattern - ComplexPattern info, corresponding to the ComplexPattern
 /// tablegen class in TargetSelectionDAG.td
 class ComplexPattern {
-  EVT::SimpleValueType Ty;
+  MVT::SimpleValueType Ty;
   unsigned NumOperands;
   std::string SelectFunc;
   std::vector<Record*> RootNodes;
@@ -232,7 +232,7 @@ public:
   ComplexPattern() : NumOperands(0) {};
   ComplexPattern(Record *R);
 
-  EVT::SimpleValueType getValueType() const { return Ty; }
+  MVT::SimpleValueType getValueType() const { return Ty; }
   unsigned getNumOperands() const { return NumOperands; }
   const std::string &getSelectFunc() const { return SelectFunc; }
   const std::vector<Record*> &getRootNodes() const {

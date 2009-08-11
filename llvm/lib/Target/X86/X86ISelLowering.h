@@ -411,7 +411,7 @@ namespace llvm {
     virtual const char *getTargetNodeName(unsigned Opcode) const;
 
     /// getSetCCResultType - Return the ISD::SETCC ValueType
-    virtual EVT::SimpleValueType getSetCCResultType(EVT VT) const;
+    virtual MVT::SimpleValueType getSetCCResultType(EVT VT) const;
 
     /// computeMaskedBitsForTargetNode - Determine which of the bits specified 
     /// in Mask are known to be either zero or one and return them in the 
@@ -503,7 +503,7 @@ namespace llvm {
       // Don't shrink FP constpool if SSE2 is available since cvtss2sd is more
       // expensive than a straight movsd. On the other hand, it's important to
       // shrink long double fp constant since fldt is very slow.
-      return !X86ScalarSSEf64 || VT == EVT::f80;
+      return !X86ScalarSSEf64 || VT == MVT::f80;
     }
     
     /// IsEligibleForTailCallOptimization - Check whether the call is eligible
@@ -523,8 +523,8 @@ namespace llvm {
     /// isScalarFPTypeInSSEReg - Return true if the specified scalar FP type is
     /// computed in an SSE register, not on the X87 floating point stack.
     bool isScalarFPTypeInSSEReg(EVT VT) const {
-      return (VT == EVT::f64 && X86ScalarSSEf64) || // f64 is when SSE2
-      (VT == EVT::f32 && X86ScalarSSEf32);   // f32 is when SSE1
+      return (VT == MVT::f64 && X86ScalarSSEf64) || // f64 is when SSE2
+      (VT == MVT::f32 && X86ScalarSSEf32);   // f32 is when SSE1
     }
 
     /// getWidenVectorType: given a vector type, returns the type to widen

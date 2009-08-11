@@ -118,7 +118,7 @@ public:
   /// hasType - return true if this TargetRegisterClass has the ValueType vt.
   ///
   bool hasType(EVT vt) const {
-    for(int i = 0; VTs[i] != EVT::Other; ++i)
+    for(int i = 0; VTs[i].getSimpleVT().SimpleTy != MVT::Other; ++i)
       if (VTs[i] == vt)
         return true;
     return false;
@@ -132,7 +132,7 @@ public:
 
   vt_iterator vt_end() const {
     vt_iterator I = VTs;
-    while (*I != EVT::Other) ++I;
+    while (I->getSimpleVT().SimpleTy != MVT::Other) ++I;
     return I;
   }
 
@@ -321,7 +321,7 @@ public:
   /// register of the given type. If type is EVT::Other, then just return any
   /// register class the register belongs to.
   virtual const TargetRegisterClass *
-    getPhysicalRegisterRegClass(unsigned Reg, EVT VT = EVT::Other) const;
+    getPhysicalRegisterRegClass(unsigned Reg, EVT VT = MVT::Other) const;
 
   /// getAllocatableSet - Returns a bitset indexed by register number
   /// indicating if a register is allocatable or not. If a register class is

@@ -96,7 +96,7 @@ def HI16 : SDNodeXForm<imm, [{
 // Node immediate fits as 16-bit sign extended on target immediate.
 // e.g. addi, andi
 def immSExt16  : PatLeaf<(imm), [{
-  if (N->getValueType(0) == EVT::i32)
+  if (N->getValueType(0) == MVT::i32)
     return (int32_t)N->getZExtValue() == (short)N->getZExtValue();
   else
     return (int64_t)N->getZExtValue() == (short)N->getZExtValue();
@@ -107,7 +107,7 @@ def immSExt16  : PatLeaf<(imm), [{
 // immediate are caught.
 // e.g. addiu, sltiu
 def immZExt16  : PatLeaf<(imm), [{
-  if (N->getValueType(0) == EVT::i32)
+  if (N->getValueType(0) == MVT::i32)
     return (uint32_t)N->getZExtValue() == (unsigned short)N->getZExtValue();
   else
     return (uint64_t)N->getZExtValue() == (unsigned short)N->getZExtValue();

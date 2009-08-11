@@ -34,10 +34,10 @@ namespace llvm {
   class ComplexPattern;
 
 /// EEVT::DAGISelGenValueType - These are some extended forms of
-/// EVT::SimpleValueType that we use as lattice values during type inference.
+/// MVT::SimpleValueType that we use as lattice values during type inference.
 namespace EEVT {
   enum DAGISelGenValueType {
-    isFP  = EVT::LAST_VALUETYPE,
+    isFP  = MVT::LAST_VALUETYPE,
     isInt,
     isUnknown
   };
@@ -181,19 +181,19 @@ public:
   
   bool isLeaf() const { return Val != 0; }
   bool hasTypeSet() const {
-    return (Types[0] < EVT::LAST_VALUETYPE) || (Types[0] == EVT::iPTR) || 
-          (Types[0] == EVT::iPTRAny);
+    return (Types[0] < MVT::LAST_VALUETYPE) || (Types[0] == MVT::iPTR) || 
+          (Types[0] == MVT::iPTRAny);
   }
   bool isTypeCompletelyUnknown() const {
     return Types[0] == EEVT::isUnknown;
   }
   bool isTypeDynamicallyResolved() const {
-    return (Types[0] == EVT::iPTR) || (Types[0] == EVT::iPTRAny);
+    return (Types[0] == MVT::iPTR) || (Types[0] == MVT::iPTRAny);
   }
-  EVT::SimpleValueType getTypeNum(unsigned Num) const {
+  MVT::SimpleValueType getTypeNum(unsigned Num) const {
     assert(hasTypeSet() && "Doesn't have a type yet!");
     assert(Types.size() > Num && "Type num out of range!");
-    return (EVT::SimpleValueType)Types[Num];
+    return (MVT::SimpleValueType)Types[Num];
   }
   unsigned char getExtTypeNum(unsigned Num) const { 
     assert(Types.size() > Num && "Extended type num out of range!");

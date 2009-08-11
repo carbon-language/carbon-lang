@@ -220,7 +220,7 @@ void DAGTypeLegalizer::ExpandRes_NormalLoad(SDNode *N, SDValue &Lo,
 
   // Build a factor node to remember that this load is independent of the
   // other one.
-  Chain = DAG.getNode(ISD::TokenFactor, dl, EVT::Other, Lo.getValue(1),
+  Chain = DAG.getNode(ISD::TokenFactor, dl, MVT::Other, Lo.getValue(1),
                       Hi.getValue(1));
 
   // Handle endianness of the load.
@@ -402,7 +402,7 @@ SDValue DAGTypeLegalizer::ExpandOp_NormalStore(SDNode *N, unsigned OpNo) {
                     SVOffset + IncrementSize,
                     isVolatile, MinAlign(Alignment, IncrementSize));
 
-  return DAG.getNode(ISD::TokenFactor, dl, EVT::Other, Lo, Hi);
+  return DAG.getNode(ISD::TokenFactor, dl, MVT::Other, Lo, Hi);
 }
 
 

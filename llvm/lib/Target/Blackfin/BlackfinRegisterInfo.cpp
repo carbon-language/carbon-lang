@@ -96,7 +96,7 @@ BlackfinRegisterInfo::getPhysicalRegisterRegClass(unsigned reg, EVT VT) const {
   for (regclass_iterator I = regclass_begin(), E = regclass_end();
        I != E; ++I) {
     const TargetRegisterClass* RC = *I;
-    if ((VT == EVT::Other || RC->hasType(VT)) && RC->contains(reg) &&
+    if ((VT == MVT::Other || RC->hasType(VT)) && RC->contains(reg) &&
         (!BestRC || RC->getNumRegs() < BestRC->getNumRegs()))
       BestRC = RC;
   }

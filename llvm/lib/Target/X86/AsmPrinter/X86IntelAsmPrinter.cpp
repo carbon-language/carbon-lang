@@ -210,8 +210,8 @@ void X86IntelAsmPrinter::printOp(const MachineOperand &MO,
       unsigned Reg = MO.getReg();
       if (Modifier && strncmp(Modifier, "subreg", strlen("subreg")) == 0) {
         EVT VT = (strcmp(Modifier,"subreg64") == 0) ?
-          EVT::i64 : ((strcmp(Modifier, "subreg32") == 0) ? EVT::i32 :
-                      ((strcmp(Modifier,"subreg16") == 0) ? EVT::i16 :EVT::i8));
+          MVT::i64 : ((strcmp(Modifier, "subreg32") == 0) ? MVT::i32 :
+                      ((strcmp(Modifier,"subreg16") == 0) ? MVT::i16 :MVT::i8));
         Reg = getX86SubSuperRegister(Reg, VT);
       }
       O << TRI->getName(Reg);
@@ -376,16 +376,16 @@ bool X86IntelAsmPrinter::printAsmMRegister(const MachineOperand &MO,
   switch (Mode) {
   default: return true;  // Unknown mode.
   case 'b': // Print QImode register
-    Reg = getX86SubSuperRegister(Reg, EVT::i8);
+    Reg = getX86SubSuperRegister(Reg, MVT::i8);
     break;
   case 'h': // Print QImode high register
-    Reg = getX86SubSuperRegister(Reg, EVT::i8, true);
+    Reg = getX86SubSuperRegister(Reg, MVT::i8, true);
     break;
   case 'w': // Print HImode register
-    Reg = getX86SubSuperRegister(Reg, EVT::i16);
+    Reg = getX86SubSuperRegister(Reg, MVT::i16);
     break;
   case 'k': // Print SImode register
-    Reg = getX86SubSuperRegister(Reg, EVT::i32);
+    Reg = getX86SubSuperRegister(Reg, MVT::i32);
     break;
   }
 

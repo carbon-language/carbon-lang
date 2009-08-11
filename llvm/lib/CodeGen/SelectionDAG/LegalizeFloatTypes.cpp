@@ -31,10 +31,10 @@ static RTLIB::Libcall GetFPLibCall(EVT VT,
                                    RTLIB::Libcall Call_F80,
                                    RTLIB::Libcall Call_PPCF128) {
   return
-    VT == EVT::f32 ? Call_F32 :
-    VT == EVT::f64 ? Call_F64 :
-    VT == EVT::f80 ? Call_F80 :
-    VT == EVT::ppcf128 ? Call_PPCF128 :
+    VT == MVT::f32 ? Call_F32 :
+    VT == MVT::f64 ? Call_F64 :
+    VT == MVT::f80 ? Call_F80 :
+    VT == MVT::ppcf128 ? Call_PPCF128 :
     RTLIB::UNKNOWN_LIBCALL;
 }
 
@@ -353,7 +353,7 @@ SDValue DAGTypeLegalizer::SoftenFloatRes_FPOW(SDNode *N) {
 }
 
 SDValue DAGTypeLegalizer::SoftenFloatRes_FPOWI(SDNode *N) {
-  assert(N->getOperand(1).getValueType() == EVT::i32 &&
+  assert(N->getOperand(1).getValueType() == MVT::i32 &&
          "Unsupported power type!");
   EVT NVT = TLI.getTypeToTransformTo(N->getValueType(0));
   SDValue Ops[2] = { GetSoftenedFloat(N->getOperand(0)), N->getOperand(1) };
@@ -510,9 +510,9 @@ SDValue DAGTypeLegalizer::SoftenFloatRes_XINT_TO_FP(SDNode *N) {
   // a larger type, eg: i8 -> fp.  Even if it is legal, no libcall may exactly
   // match.  Look for an appropriate libcall.
   RTLIB::Libcall LC = RTLIB::UNKNOWN_LIBCALL;
-  for (unsigned t = EVT::FIRST_INTEGER_VALUETYPE;
-       t <= EVT::LAST_INTEGER_VALUETYPE && LC == RTLIB::UNKNOWN_LIBCALL; ++t) {
-    NVT = (EVT::SimpleValueType)t;
+  for (unsigned t = MVT::FIRST_INTEGER_VALUETYPE;
+       t <= MVT::LAST_INTEGER_VALUETYPE && LC == RTLIB::UNKNOWN_LIBCALL; ++t) {
+    NVT = (MVT::SimpleValueType)t;
     // The source needs to big enough to hold the operand.
     if (NVT.bitsGE(SVT))
       LC = Signed ? RTLIB::getSINTTOFP(NVT, RVT):RTLIB::getUINTTOFP (NVT, RVT);
@@ -576,68 +576,68 @@ void DAGTypeLegalizer::SoftenSetCCOperands(SDValue &NewLHS, SDValue &NewRHS,
   SDValue RHSInt = GetSoftenedFloat(NewRHS);
   EVT VT = NewLHS.getValueType();
 
-  assert((VT == EVT::f32 || VT == EVT::f64) && "Unsupported setcc type!");
+  assert((VT == MVT::f32 || VT == MVT::f64) && "Unsupported setcc type!");
 
   // Expand into one or more soft-fp libcall(s).
   RTLIB::Libcall LC1 = RTLIB::UNKNOWN_LIBCALL, LC2 = RTLIB::UNKNOWN_LIBCALL;
   switch (CCCode) {
   case ISD::SETEQ:
   case ISD::SETOEQ:
-    LC1 = (VT == EVT::f32) ? RTLIB::OEQ_F32 : RTLIB::OEQ_F64;
+    LC1 = (VT == MVT::f32) ? RTLIB::OEQ_F32 : RTLIB::OEQ_F64;
     break;
   case ISD::SETNE:
   case ISD::SETUNE:
-    LC1 = (VT == EVT::f32) ? RTLIB::UNE_F32 : RTLIB::UNE_F64;
+    LC1 = (VT == MVT::f32) ? RTLIB::UNE_F32 : RTLIB::UNE_F64;
     break;
   case ISD::SETGE:
   case ISD::SETOGE:
-    LC1 = (VT == EVT::f32) ? RTLIB::OGE_F32 : RTLIB::OGE_F64;
+    LC1 = (VT == MVT::f32) ? RTLIB::OGE_F32 : RTLIB::OGE_F64;
     break;
   case ISD::SETLT:
   case ISD::SETOLT:
-    LC1 = (VT == EVT::f32) ? RTLIB::OLT_F32 : RTLIB::OLT_F64;
+    LC1 = (VT == MVT::f32) ? RTLIB::OLT_F32 : RTLIB::OLT_F64;
     break;
   case ISD::SETLE:
   case ISD::SETOLE:
-    LC1 = (VT == EVT::f32) ? RTLIB::OLE_F32 : RTLIB::OLE_F64;
+    LC1 = (VT == MVT::f32) ? RTLIB::OLE_F32 : RTLIB::OLE_F64;
     break;
   case ISD::SETGT:
   case ISD::SETOGT:
-    LC1 = (VT == EVT::f32) ? RTLIB::OGT_F32 : RTLIB::OGT_F64;
+    LC1 = (VT == MVT::f32) ? RTLIB::OGT_F32 : RTLIB::OGT_F64;
     break;
   case ISD::SETUO:
-    LC1 = (VT == EVT::f32) ? RTLIB::UO_F32 : RTLIB::UO_F64;
+    LC1 = (VT == MVT::f32) ? RTLIB::UO_F32 : RTLIB::UO_F64;
     break;
   case ISD::SETO:
-    LC1 = (VT == EVT::f32) ? RTLIB::O_F32 : RTLIB::O_F64;
+    LC1 = (VT == MVT::f32) ? RTLIB::O_F32 : RTLIB::O_F64;
     break;
   default:
-    LC1 = (VT == EVT::f32) ? RTLIB::UO_F32 : RTLIB::UO_F64;
+    LC1 = (VT == MVT::f32) ? RTLIB::UO_F32 : RTLIB::UO_F64;
     switch (CCCode) {
     case ISD::SETONE:
       // SETONE = SETOLT | SETOGT
-      LC1 = (VT == EVT::f32) ? RTLIB::OLT_F32 : RTLIB::OLT_F64;
+      LC1 = (VT == MVT::f32) ? RTLIB::OLT_F32 : RTLIB::OLT_F64;
       // Fallthrough
     case ISD::SETUGT:
-      LC2 = (VT == EVT::f32) ? RTLIB::OGT_F32 : RTLIB::OGT_F64;
+      LC2 = (VT == MVT::f32) ? RTLIB::OGT_F32 : RTLIB::OGT_F64;
       break;
     case ISD::SETUGE:
-      LC2 = (VT == EVT::f32) ? RTLIB::OGE_F32 : RTLIB::OGE_F64;
+      LC2 = (VT == MVT::f32) ? RTLIB::OGE_F32 : RTLIB::OGE_F64;
       break;
     case ISD::SETULT:
-      LC2 = (VT == EVT::f32) ? RTLIB::OLT_F32 : RTLIB::OLT_F64;
+      LC2 = (VT == MVT::f32) ? RTLIB::OLT_F32 : RTLIB::OLT_F64;
       break;
     case ISD::SETULE:
-      LC2 = (VT == EVT::f32) ? RTLIB::OLE_F32 : RTLIB::OLE_F64;
+      LC2 = (VT == MVT::f32) ? RTLIB::OLE_F32 : RTLIB::OLE_F64;
       break;
     case ISD::SETUEQ:
-      LC2 = (VT == EVT::f32) ? RTLIB::OEQ_F32 : RTLIB::OEQ_F64;
+      LC2 = (VT == MVT::f32) ? RTLIB::OEQ_F32 : RTLIB::OEQ_F64;
       break;
     default: assert(false && "Do not know how to soften this setcc!");
     }
   }
 
-  EVT RetVT = EVT::i32; // FIXME: is this the correct return type?
+  EVT RetVT = MVT::i32; // FIXME: is this the correct return type?
   SDValue Ops[2] = { LHSInt, RHSInt };
   NewLHS = MakeLibCall(LC1, RetVT, Ops, 2, false/*sign irrelevant*/, dl);
   NewRHS = DAG.getConstant(0, RetVT);
@@ -841,7 +841,7 @@ void DAGTypeLegalizer::ExpandFloatRes_ConstantFP(SDNode *N, SDValue &Lo,
 
 void DAGTypeLegalizer::ExpandFloatRes_FABS(SDNode *N, SDValue &Lo,
                                            SDValue &Hi) {
-  assert(N->getValueType(0) == EVT::ppcf128 &&
+  assert(N->getValueType(0) == MVT::ppcf128 &&
          "Logic only correct for ppcf128!");
   DebugLoc dl = N->getDebugLoc();
   SDValue Tmp;
@@ -1088,7 +1088,7 @@ void DAGTypeLegalizer::ExpandFloatRes_LOAD(SDNode *N, SDValue &Lo,
 
 void DAGTypeLegalizer::ExpandFloatRes_XINT_TO_FP(SDNode *N, SDValue &Lo,
                                                  SDValue &Hi) {
-  assert(N->getValueType(0) == EVT::ppcf128 && "Unsupported XINT_TO_FP!");
+  assert(N->getValueType(0) == MVT::ppcf128 && "Unsupported XINT_TO_FP!");
   EVT VT = N->getValueType(0);
   EVT NVT = TLI.getTypeToTransformTo(VT);
   SDValue Src = N->getOperand(0);
@@ -1099,20 +1099,20 @@ void DAGTypeLegalizer::ExpandFloatRes_XINT_TO_FP(SDNode *N, SDValue &Lo,
   // First do an SINT_TO_FP, whether the original was signed or unsigned.
   // When promoting partial word types to i32 we must honor the signedness,
   // though.
-  if (SrcVT.bitsLE(EVT::i32)) {
+  if (SrcVT.bitsLE(MVT::i32)) {
     // The integer can be represented exactly in an f64.
     Src = DAG.getNode(isSigned ? ISD::SIGN_EXTEND : ISD::ZERO_EXTEND, dl,
-                      EVT::i32, Src);
+                      MVT::i32, Src);
     Lo = DAG.getConstantFP(APFloat(APInt(NVT.getSizeInBits(), 0)), NVT);
     Hi = DAG.getNode(ISD::SINT_TO_FP, dl, NVT, Src);
   } else {
     RTLIB::Libcall LC = RTLIB::UNKNOWN_LIBCALL;
-    if (SrcVT.bitsLE(EVT::i64)) {
+    if (SrcVT.bitsLE(MVT::i64)) {
       Src = DAG.getNode(isSigned ? ISD::SIGN_EXTEND : ISD::ZERO_EXTEND, dl,
-                        EVT::i64, Src);
+                        MVT::i64, Src);
       LC = RTLIB::SINTTOFP_I64_PPCF128;
-    } else if (SrcVT.bitsLE(EVT::i128)) {
-      Src = DAG.getNode(ISD::SIGN_EXTEND, dl, EVT::i128, Src);
+    } else if (SrcVT.bitsLE(MVT::i128)) {
+      Src = DAG.getNode(ISD::SIGN_EXTEND, dl, MVT::i128, Src);
       LC = RTLIB::SINTTOFP_I128_PPCF128;
     }
     assert(LC != RTLIB::UNKNOWN_LIBCALL && "Unsupported XINT_TO_FP!");
@@ -1134,23 +1134,23 @@ void DAGTypeLegalizer::ExpandFloatRes_XINT_TO_FP(SDNode *N, SDValue &Lo,
   static const uint64_t TwoE128[] = { 0x47f0000000000000LL, 0 };
   const uint64_t *Parts = 0;
 
-  switch (SrcVT.getSimpleVT()) {
+  switch (SrcVT.getSimpleVT().SimpleTy) {
   default:
     assert(false && "Unsupported UINT_TO_FP!");
-  case EVT::i32:
+  case MVT::i32:
     Parts = TwoE32;
     break;
-  case EVT::i64:
+  case MVT::i64:
     Parts = TwoE64;
     break;
-  case EVT::i128:
+  case MVT::i128:
     Parts = TwoE128;
     break;
   }
 
   Lo = DAG.getNode(ISD::FADD, dl, VT, Hi,
                    DAG.getConstantFP(APFloat(APInt(128, 2, Parts)),
-                                     EVT::ppcf128));
+                                     MVT::ppcf128));
   Lo = DAG.getNode(ISD::SELECT_CC, dl, VT, Src, DAG.getConstant(0, SrcVT),
                    Lo, Hi, DAG.getCondCode(ISD::SETLT));
   GetPairElements(Lo, Lo, Hi);
@@ -1223,7 +1223,7 @@ void DAGTypeLegalizer::FloatExpandSetCCOperands(SDValue &NewLHS,
   GetExpandedFloat(NewRHS, RHSLo, RHSHi);
 
   EVT VT = NewLHS.getValueType();
-  assert(VT == EVT::ppcf128 && "Unsupported setcc type!");
+  assert(VT == MVT::ppcf128 && "Unsupported setcc type!");
 
   // FIXME:  This generated code sucks.  We want to generate
   //         FCMPU crN, hi1, hi2
@@ -1264,7 +1264,7 @@ SDValue DAGTypeLegalizer::ExpandFloatOp_BR_CC(SDNode *N) {
 }
 
 SDValue DAGTypeLegalizer::ExpandFloatOp_FP_ROUND(SDNode *N) {
-  assert(N->getOperand(0).getValueType() == EVT::ppcf128 &&
+  assert(N->getOperand(0).getValueType() == MVT::ppcf128 &&
          "Logic only correct for ppcf128!");
   SDValue Lo, Hi;
   GetExpandedFloat(N->getOperand(0), Lo, Hi);
@@ -1279,14 +1279,14 @@ SDValue DAGTypeLegalizer::ExpandFloatOp_FP_TO_SINT(SDNode *N) {
 
   // Expand ppcf128 to i32 by hand for the benefit of llvm-gcc bootstrap on
   // PPC (the libcall is not available).  FIXME: Do this in a less hacky way.
-  if (RVT == EVT::i32) {
-    assert(N->getOperand(0).getValueType() == EVT::ppcf128 &&
+  if (RVT == MVT::i32) {
+    assert(N->getOperand(0).getValueType() == MVT::ppcf128 &&
            "Logic only correct for ppcf128!");
-    SDValue Res = DAG.getNode(ISD::FP_ROUND_INREG, dl, EVT::ppcf128,
-                              N->getOperand(0), DAG.getValueType(EVT::f64));
-    Res = DAG.getNode(ISD::FP_ROUND, dl, EVT::f64, Res,
+    SDValue Res = DAG.getNode(ISD::FP_ROUND_INREG, dl, MVT::ppcf128,
+                              N->getOperand(0), DAG.getValueType(MVT::f64));
+    Res = DAG.getNode(ISD::FP_ROUND, dl, MVT::f64, Res,
                       DAG.getIntPtrConstant(1));
-    return DAG.getNode(ISD::FP_TO_SINT, dl, EVT::i32, Res);
+    return DAG.getNode(ISD::FP_TO_SINT, dl, MVT::i32, Res);
   }
 
   RTLIB::Libcall LC = RTLIB::getFPTOSINT(N->getOperand(0).getValueType(), RVT);
@@ -1300,24 +1300,24 @@ SDValue DAGTypeLegalizer::ExpandFloatOp_FP_TO_UINT(SDNode *N) {
 
   // Expand ppcf128 to i32 by hand for the benefit of llvm-gcc bootstrap on
   // PPC (the libcall is not available).  FIXME: Do this in a less hacky way.
-  if (RVT == EVT::i32) {
-    assert(N->getOperand(0).getValueType() == EVT::ppcf128 &&
+  if (RVT == MVT::i32) {
+    assert(N->getOperand(0).getValueType() == MVT::ppcf128 &&
            "Logic only correct for ppcf128!");
     const uint64_t TwoE31[] = {0x41e0000000000000LL, 0};
     APFloat APF = APFloat(APInt(128, 2, TwoE31));
-    SDValue Tmp = DAG.getConstantFP(APF, EVT::ppcf128);
+    SDValue Tmp = DAG.getConstantFP(APF, MVT::ppcf128);
     //  X>=2^31 ? (int)(X-2^31)+0x80000000 : (int)X
     // FIXME: generated code sucks.
-    return DAG.getNode(ISD::SELECT_CC, dl, EVT::i32, N->getOperand(0), Tmp,
-                       DAG.getNode(ISD::ADD, dl, EVT::i32,
-                                   DAG.getNode(ISD::FP_TO_SINT, dl, EVT::i32,
+    return DAG.getNode(ISD::SELECT_CC, dl, MVT::i32, N->getOperand(0), Tmp,
+                       DAG.getNode(ISD::ADD, dl, MVT::i32,
+                                   DAG.getNode(ISD::FP_TO_SINT, dl, MVT::i32,
                                                DAG.getNode(ISD::FSUB, dl,
-                                                           EVT::ppcf128,
+                                                           MVT::ppcf128,
                                                            N->getOperand(0),
                                                            Tmp)),
-                                   DAG.getConstant(0x80000000, EVT::i32)),
+                                   DAG.getConstant(0x80000000, MVT::i32)),
                        DAG.getNode(ISD::FP_TO_SINT, dl,
-                                   EVT::i32, N->getOperand(0)),
+                                   MVT::i32, N->getOperand(0)),
                        DAG.getCondCode(ISD::SETGE));
   }
 

@@ -426,8 +426,8 @@ void X86ATTAsmPrinter::printOperand(const MachineInstr *MI, unsigned OpNo,
     unsigned Reg = MO.getReg();
     if (Modifier && strncmp(Modifier, "subreg", strlen("subreg")) == 0) {
       EVT VT = (strcmp(Modifier+6,"64") == 0) ?
-        EVT::i64 : ((strcmp(Modifier+6, "32") == 0) ? EVT::i32 :
-                    ((strcmp(Modifier+6,"16") == 0) ? EVT::i16 : EVT::i8));
+        MVT::i64 : ((strcmp(Modifier+6, "32") == 0) ? MVT::i32 :
+                    ((strcmp(Modifier+6,"16") == 0) ? MVT::i16 : MVT::i8));
       Reg = getX86SubSuperRegister(Reg, VT);
     }
     O << TRI->getAsmName(Reg);
@@ -573,19 +573,19 @@ bool X86ATTAsmPrinter::printAsmMRegister(const MachineOperand &MO, char Mode) {
   switch (Mode) {
   default: return true;  // Unknown mode.
   case 'b': // Print QImode register
-    Reg = getX86SubSuperRegister(Reg, EVT::i8);
+    Reg = getX86SubSuperRegister(Reg, MVT::i8);
     break;
   case 'h': // Print QImode high register
-    Reg = getX86SubSuperRegister(Reg, EVT::i8, true);
+    Reg = getX86SubSuperRegister(Reg, MVT::i8, true);
     break;
   case 'w': // Print HImode register
-    Reg = getX86SubSuperRegister(Reg, EVT::i16);
+    Reg = getX86SubSuperRegister(Reg, MVT::i16);
     break;
   case 'k': // Print SImode register
-    Reg = getX86SubSuperRegister(Reg, EVT::i32);
+    Reg = getX86SubSuperRegister(Reg, MVT::i32);
     break;
   case 'q': // Print DImode register
-    Reg = getX86SubSuperRegister(Reg, EVT::i64);
+    Reg = getX86SubSuperRegister(Reg, MVT::i64);
     break;
   }
 
@@ -685,7 +685,7 @@ static void lower_lea64_32mem(MCInst *MI, unsigned OpNo) {
     unsigned Reg = MI->getOperand(i).getReg();
     if (Reg == 0) continue;
     
-    MI->getOperand(i).setReg(getX86SubSuperRegister(Reg, EVT::i64));
+    MI->getOperand(i).setReg(getX86SubSuperRegister(Reg, MVT::i64));
   }
 }
 

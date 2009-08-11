@@ -191,7 +191,7 @@ def ME : SDNodeXForm<imm, [{
 def maskimm32 : PatLeaf<(imm), [{
   // maskImm predicate - True if immediate is a run of ones.
   unsigned mb, me;
-  if (N->getValueType(0) == EVT::i32)
+  if (N->getValueType(0) == MVT::i32)
     return isRunOfOnes((unsigned)N->getZExtValue(), mb, me);
   else
     return false;
@@ -200,7 +200,7 @@ def maskimm32 : PatLeaf<(imm), [{
 def immSExt16  : PatLeaf<(imm), [{
   // immSExt16 predicate - True if the immediate fits in a 16-bit sign extended
   // field.  Used by instructions like 'addi'.
-  if (N->getValueType(0) == EVT::i32)
+  if (N->getValueType(0) == MVT::i32)
     return (int32_t)N->getZExtValue() == (short)N->getZExtValue();
   else
     return (int64_t)N->getZExtValue() == (short)N->getZExtValue();
@@ -227,7 +227,7 @@ def imm16ShiftedSExt : PatLeaf<(imm), [{
   // immediate are set.  Used by instructions like 'addis'.  Identical to 
   // imm16ShiftedZExt in 32-bit mode.
   if (N->getZExtValue() & 0xFFFF) return false;
-  if (N->getValueType(0) == EVT::i32)
+  if (N->getValueType(0) == MVT::i32)
     return true;
   // For 64-bit, make sure it is sext right.
   return N->getZExtValue() == (uint64_t)(int)N->getZExtValue();

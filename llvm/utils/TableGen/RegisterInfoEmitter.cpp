@@ -226,7 +226,7 @@ void RegisterInfoEmitter::run(raw_ostream &OS) {
        << "[] = {\n    ";
     for (unsigned i = 0, e = RC.VTs.size(); i != e; ++i)
       OS << getEnumName(RC.VTs[i]) << ", ";
-    OS << "EVT::Other\n  };\n\n";
+    OS << "MVT::Other\n  };\n\n";
   }
   OS << "}  // end anonymous namespace\n\n";
   

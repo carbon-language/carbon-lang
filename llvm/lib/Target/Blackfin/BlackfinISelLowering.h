@@ -33,7 +33,7 @@ namespace llvm {
     int VarArgsFrameOffset;   // Frame offset to start of varargs area.
   public:
     BlackfinTargetLowering(TargetMachine &TM);
-    virtual EVT::SimpleValueType getSetCCResultType(EVT VT) const;
+    virtual MVT::SimpleValueType getSetCCResultType(EVT VT) const;
     virtual SDValue LowerOperation(SDValue Op, SelectionDAG &DAG);
     virtual void ReplaceNodeResults(SDNode *N,
                                     SmallVectorImpl<SDValue> &Results,

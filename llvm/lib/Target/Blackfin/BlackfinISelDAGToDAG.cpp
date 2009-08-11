@@ -94,9 +94,9 @@ SDNode *BlackfinDAGToDAGISel::Select(SDValue Op) {
     // Selects to ADDpp FI, 0 which in turn will become ADDimm7 SP, imm or ADDpp
     // SP, Px
     int FI = cast<FrameIndexSDNode>(N)->getIndex();
-    SDValue TFI = CurDAG->getTargetFrameIndex(FI, EVT::i32);
-    return CurDAG->SelectNodeTo(N, BF::ADDpp, EVT::i32, TFI,
-                                CurDAG->getTargetConstant(0, EVT::i32));
+    SDValue TFI = CurDAG->getTargetFrameIndex(FI, MVT::i32);
+    return CurDAG->SelectNodeTo(N, BF::ADDpp, MVT::i32, TFI,
+                                CurDAG->getTargetConstant(0, MVT::i32));
   }
   }
 
@@ -109,8 +109,8 @@ bool BlackfinDAGToDAGISel::SelectADDRspii(SDValue Op,
                                           SDValue &Offset) {
   FrameIndexSDNode *FIN = 0;
   if ((FIN = dyn_cast<FrameIndexSDNode>(Addr))) {
-    Base = CurDAG->getTargetFrameIndex(FIN->getIndex(), EVT::i32);
-    Offset = CurDAG->getTargetConstant(0, EVT::i32);
+    Base = CurDAG->getTargetFrameIndex(FIN->getIndex(), MVT::i32);
+    Offset = CurDAG->getTargetConstant(0, MVT::i32);
     return true;
   }
   if (Addr.getOpcode() == ISD::ADD) {
@@ -119,8 +119,8 @@ bool BlackfinDAGToDAGISel::SelectADDRspii(SDValue Op,
         (CN = dyn_cast<ConstantSDNode>(Addr.getOperand(1))) &&
         (CN->getSExtValue() % 4 == 0 && CN->getSExtValue() >= 0)) {
       // Constant positive word offset from frame index
-      Base = CurDAG->getTargetFrameIndex(FIN->getIndex(), EVT::i32);
-      Offset = CurDAG->getTargetConstant(CN->getSExtValue(), EVT::i32);
+      Base = CurDAG->getTargetFrameIndex(FIN->getIndex(), MVT::i32);
+      Offset = CurDAG->getTargetConstant(CN->getSExtValue(), MVT::i32);
       return true;
     }
   }
@@ -179,9 +179,9 @@ void BlackfinDAGToDAGISel::FixRegisterClasses(SelectionDAG &DAG) {
         SDNode *Copy =
           DAG.getTargetNode(TargetInstrInfo::COPY_TO_REGCLASS,
                             NI->getDebugLoc(),
-                            EVT::i32,
+                            MVT::i32,
                             UI.getUse().get(),
-                            DAG.getTargetConstant(BF::DRegClassID, EVT::i32));
+                            DAG.getTargetConstant(BF::DRegClassID, MVT::i32));
         UpdateNodeOperand(DAG, *UI, UI.getOperandNo(), SDValue(Copy, 0));
       }
     }

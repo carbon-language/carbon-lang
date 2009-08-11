@@ -46,114 +46,114 @@ AlphaTargetLowering::AlphaTargetLowering(TargetMachine &TM)
   : TargetLowering(TM, new TargetLoweringObjectFileELF()) {
   // Set up the TargetLowering object.
   //I am having problems with shr n i8 1
-  setShiftAmountType(EVT::i64);
+  setShiftAmountType(MVT::i64);
   setBooleanContents(ZeroOrOneBooleanContent);
   
   setUsesGlobalOffsetTable(true);
   
-  addRegisterClass(EVT::i64, Alpha::GPRCRegisterClass);
-  addRegisterClass(EVT::f64, Alpha::F8RCRegisterClass);
-  addRegisterClass(EVT::f32, Alpha::F4RCRegisterClass);
+  addRegisterClass(MVT::i64, Alpha::GPRCRegisterClass);
+  addRegisterClass(MVT::f64, Alpha::F8RCRegisterClass);
+  addRegisterClass(MVT::f32, Alpha::F4RCRegisterClass);
 
   // We want to custom lower some of our intrinsics.
-  setOperationAction(ISD::INTRINSIC_WO_CHAIN, EVT::Other, Custom);
+  setOperationAction(ISD::INTRINSIC_WO_CHAIN, MVT::Other, Custom);
 
-  setLoadExtAction(ISD::EXTLOAD, EVT::i1,  Promote);
-  setLoadExtAction(ISD::EXTLOAD, EVT::f32, Expand);
+  setLoadExtAction(ISD::EXTLOAD, MVT::i1,  Promote);
+  setLoadExtAction(ISD::EXTLOAD, MVT::f32, Expand);
   
-  setLoadExtAction(ISD::ZEXTLOAD, EVT::i1,  Promote);
-  setLoadExtAction(ISD::ZEXTLOAD, EVT::i32, Expand);
+  setLoadExtAction(ISD::ZEXTLOAD, MVT::i1,  Promote);
+  setLoadExtAction(ISD::ZEXTLOAD, MVT::i32, Expand);
   
-  setLoadExtAction(ISD::SEXTLOAD, EVT::i1,  Promote);
-  setLoadExtAction(ISD::SEXTLOAD, EVT::i8,  Expand);
-  setLoadExtAction(ISD::SEXTLOAD, EVT::i16, Expand);
+  setLoadExtAction(ISD::SEXTLOAD, MVT::i1,  Promote);
+  setLoadExtAction(ISD::SEXTLOAD, MVT::i8,  Expand);
+  setLoadExtAction(ISD::SEXTLOAD, MVT::i16, Expand);
 
-  setTruncStoreAction(EVT::f64, EVT::f32, Expand);
+  setTruncStoreAction(MVT::f64, MVT::f32, Expand);
 
-  //  setOperationAction(ISD::BRIND,        EVT::Other,   Expand);
-  setOperationAction(ISD::BR_JT,        EVT::Other, Expand);
-  setOperationAction(ISD::BR_CC,        EVT::Other, Expand);
-  setOperationAction(ISD::SELECT_CC,    EVT::Other, Expand);  
+  //  setOperationAction(ISD::BRIND,        MVT::Other,   Expand);
+  setOperationAction(ISD::BR_JT,        MVT::Other, Expand);
+  setOperationAction(ISD::BR_CC,        MVT::Other, Expand);
+  setOperationAction(ISD::SELECT_CC,    MVT::Other, Expand);  
 
-  setOperationAction(ISD::SIGN_EXTEND_INREG, EVT::i1, Expand);
+  setOperationAction(ISD::SIGN_EXTEND_INREG, MVT::i1, Expand);
 
-  setOperationAction(ISD::FREM, EVT::f32, Expand);
-  setOperationAction(ISD::FREM, EVT::f64, Expand);
+  setOperationAction(ISD::FREM, MVT::f32, Expand);
+  setOperationAction(ISD::FREM, MVT::f64, Expand);
   
-  setOperationAction(ISD::UINT_TO_FP, EVT::i64, Expand);
-  setOperationAction(ISD::SINT_TO_FP, EVT::i64, Custom);
-  setOperationAction(ISD::FP_TO_UINT, EVT::i64, Expand);
-  setOperationAction(ISD::FP_TO_SINT, EVT::i64, Custom);
+  setOperationAction(ISD::UINT_TO_FP, MVT::i64, Expand);
+  setOperationAction(ISD::SINT_TO_FP, MVT::i64, Custom);
+  setOperationAction(ISD::FP_TO_UINT, MVT::i64, Expand);
+  setOperationAction(ISD::FP_TO_SINT, MVT::i64, Custom);
 
   if (!TM.getSubtarget<AlphaSubtarget>().hasCT()) {
-    setOperationAction(ISD::CTPOP    , EVT::i64  , Expand);
-    setOperationAction(ISD::CTTZ     , EVT::i64  , Expand);
-    setOperationAction(ISD::CTLZ     , EVT::i64  , Expand);
+    setOperationAction(ISD::CTPOP    , MVT::i64  , Expand);
+    setOperationAction(ISD::CTTZ     , MVT::i64  , Expand);
+    setOperationAction(ISD::CTLZ     , MVT::i64  , Expand);
   }
-  setOperationAction(ISD::BSWAP    , EVT::i64, Expand);
-  setOperationAction(ISD::ROTL     , EVT::i64, Expand);
-  setOperationAction(ISD::ROTR     , EVT::i64, Expand);
+  setOperationAction(ISD::BSWAP    , MVT::i64, Expand);
+  setOperationAction(ISD::ROTL     , MVT::i64, Expand);
+  setOperationAction(ISD::ROTR     , MVT::i64, Expand);
   
-  setOperationAction(ISD::SREM     , EVT::i64, Custom);
-  setOperationAction(ISD::UREM     , EVT::i64, Custom);
-  setOperationAction(ISD::SDIV     , EVT::i64, Custom);
-  setOperationAction(ISD::UDIV     , EVT::i64, Custom);
+  setOperationAction(ISD::SREM     , MVT::i64, Custom);
+  setOperationAction(ISD::UREM     , MVT::i64, Custom);
+  setOperationAction(ISD::SDIV     , MVT::i64, Custom);
+  setOperationAction(ISD::UDIV     , MVT::i64, Custom);
 
-  setOperationAction(ISD::ADDC     , EVT::i64, Expand);
-  setOperationAction(ISD::ADDE     , EVT::i64, Expand);
-  setOperationAction(ISD::SUBC     , EVT::i64, Expand);
-  setOperationAction(ISD::SUBE     , EVT::i64, Expand);
+  setOperationAction(ISD::ADDC     , MVT::i64, Expand);
+  setOperationAction(ISD::ADDE     , MVT::i64, Expand);
+  setOperationAction(ISD::SUBC     , MVT::i64, Expand);
+  setOperationAction(ISD::SUBE     , MVT::i64, Expand);
 
-  setOperationAction(ISD::UMUL_LOHI, EVT::i64, Expand);
-  setOperationAction(ISD::SMUL_LOHI, EVT::i64, Expand);
+  setOperationAction(ISD::UMUL_LOHI, MVT::i64, Expand);
+  setOperationAction(ISD::SMUL_LOHI, MVT::i64, Expand);
 
-  setOperationAction(ISD::SRL_PARTS, EVT::i64, Custom);
-  setOperationAction(ISD::SRA_PARTS, EVT::i64, Expand);
-  setOperationAction(ISD::SHL_PARTS, EVT::i64, Expand);
+  setOperationAction(ISD::SRL_PARTS, MVT::i64, Custom);
+  setOperationAction(ISD::SRA_PARTS, MVT::i64, Expand);
+  setOperationAction(ISD::SHL_PARTS, MVT::i64, Expand);
 
   // We don't support sin/cos/sqrt/pow
-  setOperationAction(ISD::FSIN , EVT::f64, Expand);
-  setOperationAction(ISD::FCOS , EVT::f64, Expand);
-  setOperationAction(ISD::FSIN , EVT::f32, Expand);
-  setOperationAction(ISD::FCOS , EVT::f32, Expand);
+  setOperationAction(ISD::FSIN , MVT::f64, Expand);
+  setOperationAction(ISD::FCOS , MVT::f64, Expand);
+  setOperationAction(ISD::FSIN , MVT::f32, Expand);
+  setOperationAction(ISD::FCOS , MVT::f32, Expand);
 
-  setOperationAction(ISD::FSQRT, EVT::f64, Expand);
-  setOperationAction(ISD::FSQRT, EVT::f32, Expand);
+  setOperationAction(ISD::FSQRT, MVT::f64, Expand);
+  setOperationAction(ISD::FSQRT, MVT::f32, Expand);
 
-  setOperationAction(ISD::FPOW , EVT::f32, Expand);
-  setOperationAction(ISD::FPOW , EVT::f64, Expand);
+  setOperationAction(ISD::FPOW , MVT::f32, Expand);
+  setOperationAction(ISD::FPOW , MVT::f64, Expand);
 
-  setOperationAction(ISD::SETCC, EVT::f32, Promote);
+  setOperationAction(ISD::SETCC, MVT::f32, Promote);
 
-  setOperationAction(ISD::BIT_CONVERT, EVT::f32, Promote);
+  setOperationAction(ISD::BIT_CONVERT, MVT::f32, Promote);
 
   // We don't have line number support yet.
-  setOperationAction(ISD::DBG_STOPPOINT, EVT::Other, Expand);
-  setOperationAction(ISD::DEBUG_LOC, EVT::Other, Expand);
-  setOperationAction(ISD::DBG_LABEL, EVT::Other, Expand);
-  setOperationAction(ISD::EH_LABEL, EVT::Other, Expand);
+  setOperationAction(ISD::DBG_STOPPOINT, MVT::Other, Expand);
+  setOperationAction(ISD::DEBUG_LOC, MVT::Other, Expand);
+  setOperationAction(ISD::DBG_LABEL, MVT::Other, Expand);
+  setOperationAction(ISD::EH_LABEL, MVT::Other, Expand);
 
   // Not implemented yet.
-  setOperationAction(ISD::STACKSAVE, EVT::Other, Expand); 
-  setOperationAction(ISD::STACKRESTORE, EVT::Other, Expand);
-  setOperationAction(ISD::DYNAMIC_STACKALLOC, EVT::i64, Expand);
+  setOperationAction(ISD::STACKSAVE, MVT::Other, Expand); 
+  setOperationAction(ISD::STACKRESTORE, MVT::Other, Expand);
+  setOperationAction(ISD::DYNAMIC_STACKALLOC, MVT::i64, Expand);
 
   // We want to legalize GlobalAddress and ConstantPool and
   // ExternalSymbols nodes into the appropriate instructions to
   // materialize the address.
-  setOperationAction(ISD::GlobalAddress,  EVT::i64, Custom);
-  setOperationAction(ISD::ConstantPool,   EVT::i64, Custom);
-  setOperationAction(ISD::ExternalSymbol, EVT::i64, Custom);
-  setOperationAction(ISD::GlobalTLSAddress, EVT::i64, Custom);
+  setOperationAction(ISD::GlobalAddress,  MVT::i64, Custom);
+  setOperationAction(ISD::ConstantPool,   MVT::i64, Custom);
+  setOperationAction(ISD::ExternalSymbol, MVT::i64, Custom);
+  setOperationAction(ISD::GlobalTLSAddress, MVT::i64, Custom);
 
-  setOperationAction(ISD::VASTART, EVT::Other, Custom);
-  setOperationAction(ISD::VAEND,   EVT::Other, Expand);
-  setOperationAction(ISD::VACOPY,  EVT::Other, Custom);
-  setOperationAction(ISD::VAARG,   EVT::Other, Custom);
-  setOperationAction(ISD::VAARG,   EVT::i32,   Custom);
+  setOperationAction(ISD::VASTART, MVT::Other, Custom);
+  setOperationAction(ISD::VAEND,   MVT::Other, Expand);
+  setOperationAction(ISD::VACOPY,  MVT::Other, Custom);
+  setOperationAction(ISD::VAARG,   MVT::Other, Custom);
+  setOperationAction(ISD::VAARG,   MVT::i32,   Custom);
 
-  setOperationAction(ISD::JumpTable, EVT::i64, Custom);
-  setOperationAction(ISD::JumpTable, EVT::i32, Custom);
+  setOperationAction(ISD::JumpTable, MVT::i64, Custom);
+  setOperationAction(ISD::JumpTable, MVT::i32, Custom);
 
   setStackPointerRegisterToSaveRestore(Alpha::R30);
 
@@ -168,8 +168,8 @@ AlphaTargetLowering::AlphaTargetLowering(TargetMachine &TM)
   computeRegisterProperties();
 }
 
-EVT::SimpleValueType AlphaTargetLowering::getSetCCResultType(EVT VT) const {
-  return EVT::i64;
+MVT::SimpleValueType AlphaTargetLowering::getSetCCResultType(EVT VT) const {
+  return MVT::i64;
 }
 
 const char *AlphaTargetLowering::getTargetNodeName(unsigned Opcode) const {
@@ -203,9 +203,9 @@ static SDValue LowerJumpTable(SDValue Op, SelectionDAG &DAG) {
   // FIXME there isn't really any debug info here
   DebugLoc dl = Op.getDebugLoc();
   
-  SDValue Hi = DAG.getNode(AlphaISD::GPRelHi,  dl, EVT::i64, JTI,
-                             DAG.getGLOBAL_OFFSET_TABLE(EVT::i64));
-  SDValue Lo = DAG.getNode(AlphaISD::GPRelLo, dl, EVT::i64, JTI, Hi);
+  SDValue Hi = DAG.getNode(AlphaISD::GPRelHi,  dl, MVT::i64, JTI,
+                             DAG.getGLOBAL_OFFSET_TABLE(MVT::i64));
+  SDValue Lo = DAG.getNode(AlphaISD::GPRelLo, dl, MVT::i64, JTI, Hi);
   return Lo;
 }
 
@@ -285,7 +285,7 @@ AlphaTargetLowering::LowerCall(SDValue Chain, SDValue Callee,
       assert(VA.isMemLoc());
 
       if (StackPtr.getNode() == 0)
-        StackPtr = DAG.getCopyFromReg(Chain, dl, Alpha::R30, EVT::i64);
+        StackPtr = DAG.getCopyFromReg(Chain, dl, Alpha::R30, MVT::i64);
 
       SDValue PtrOff = DAG.getNode(ISD::ADD, dl, getPointerTy(),
                                    StackPtr,
@@ -299,7 +299,7 @@ AlphaTargetLowering::LowerCall(SDValue Chain, SDValue Callee,
   // Transform all store nodes into one single node because all store nodes are
   // independent of each other.
   if (!MemOpChains.empty())
-    Chain = DAG.getNode(ISD::TokenFactor, dl, EVT::Other,
+    Chain = DAG.getNode(ISD::TokenFactor, dl, MVT::Other,
                         &MemOpChains[0], MemOpChains.size());
 
   // Build a sequence of copy-to-reg nodes chained together with token chain and
@@ -313,7 +313,7 @@ AlphaTargetLowering::LowerCall(SDValue Chain, SDValue Callee,
   }
 
   // Returns a chain & a flag for retval copy to use.
-  SDVTList NodeTys = DAG.getVTList(EVT::Other, EVT::Flag);
+  SDVTList NodeTys = DAG.getVTList(MVT::Other, MVT::Flag);
   SmallVector<SDValue, 8> Ops;
   Ops.push_back(Chain);
   Ops.push_back(Callee);
@@ -410,23 +410,23 @@ AlphaTargetLowering::LowerFormalArguments(SDValue Chain,
     SDValue ArgVal;
 
     if (ArgNo  < 6) {
-      switch (ObjectVT.getSimpleVT()) {
+      switch (ObjectVT.getSimpleVT().SimpleTy) {
       default:
         assert(false && "Invalid value type!");
-      case EVT::f64:
+      case MVT::f64:
         args_float[ArgNo] = AddLiveIn(MF, args_float[ArgNo], 
                                       &Alpha::F8RCRegClass);
         ArgVal = DAG.getCopyFromReg(Chain, dl, args_float[ArgNo], ObjectVT);
         break;
-      case EVT::f32:
+      case MVT::f32:
         args_float[ArgNo] = AddLiveIn(MF, args_float[ArgNo], 
                                       &Alpha::F4RCRegClass);
         ArgVal = DAG.getCopyFromReg(Chain, dl, args_float[ArgNo], ObjectVT);
         break;
-      case EVT::i64:
+      case MVT::i64:
         args_int[ArgNo] = AddLiveIn(MF, args_int[ArgNo], 
                                     &Alpha::GPRCRegClass);
-        ArgVal = DAG.getCopyFromReg(Chain, dl, args_int[ArgNo], EVT::i64);
+        ArgVal = DAG.getCopyFromReg(Chain, dl, args_int[ArgNo], MVT::i64);
         break;
       }
     } else { //more args
@@ -435,7 +435,7 @@ AlphaTargetLowering::LowerFormalArguments(SDValue Chain,
 
       // Create the SelectionDAG nodes corresponding to a load
       //from this parameter
-      SDValue FIN = DAG.getFrameIndex(FI, EVT::i64);
+      SDValue FIN = DAG.getFrameIndex(FI, MVT::i64);
       ArgVal = DAG.getLoad(ObjectVT, dl, Chain, FIN, NULL, 0);
     }
     InVals.push_back(ArgVal);
@@ -448,22 +448,22 @@ AlphaTargetLowering::LowerFormalArguments(SDValue Chain,
     for (int i = 0; i < 6; ++i) {
       if (TargetRegisterInfo::isPhysicalRegister(args_int[i]))
         args_int[i] = AddLiveIn(MF, args_int[i], &Alpha::GPRCRegClass);
-      SDValue argt = DAG.getCopyFromReg(Chain, dl, args_int[i], EVT::i64);
+      SDValue argt = DAG.getCopyFromReg(Chain, dl, args_int[i], MVT::i64);
       int FI = MFI->CreateFixedObject(8, -8 * (6 - i));
       if (i == 0) VarArgsBase = FI;
-      SDValue SDFI = DAG.getFrameIndex(FI, EVT::i64);
+      SDValue SDFI = DAG.getFrameIndex(FI, MVT::i64);
       LS.push_back(DAG.getStore(Chain, dl, argt, SDFI, NULL, 0));
 
       if (TargetRegisterInfo::isPhysicalRegister(args_float[i]))
         args_float[i] = AddLiveIn(MF, args_float[i], &Alpha::F8RCRegClass);
-      argt = DAG.getCopyFromReg(Chain, dl, args_float[i], EVT::f64);
+      argt = DAG.getCopyFromReg(Chain, dl, args_float[i], MVT::f64);
       FI = MFI->CreateFixedObject(8, - 8 * (12 - i));
-      SDFI = DAG.getFrameIndex(FI, EVT::i64);
+      SDFI = DAG.getFrameIndex(FI, MVT::i64);
       LS.push_back(DAG.getStore(Chain, dl, argt, SDFI, NULL, 0));
     }
 
     //Set up a token factor with all the stack traffic
-    Chain = DAG.getNode(ISD::TokenFactor, dl, EVT::Other, &LS[0], LS.size());
+    Chain = DAG.getNode(ISD::TokenFactor, dl, MVT::Other, &LS[0], LS.size());
   }
 
   return Chain;
@@ -478,7 +478,7 @@ AlphaTargetLowering::LowerReturn(SDValue Chain,
   SDValue Copy = DAG.getCopyToReg(Chain, dl, Alpha::R26,
                                   DAG.getNode(AlphaISD::GlobalRetAddr,
                                               DebugLoc::getUnknownLoc(),
-                                              EVT::i64),
+                                              MVT::i64),
                                   SDValue());
   switch (Outs.size()) {
   default:
@@ -528,7 +528,7 @@ AlphaTargetLowering::LowerReturn(SDValue Chain,
   }
   }
   return DAG.getNode(AlphaISD::RET_FLAG, dl, 
-                     EVT::Other, Copy, Copy.getValue(1));
+                     MVT::Other, Copy, Copy.getValue(1));
 }
 
 void AlphaTargetLowering::LowerVAARG(SDNode *N, SDValue &Chain,
@@ -538,26 +538,26 @@ void AlphaTargetLowering::LowerVAARG(SDNode *N, SDValue &Chain,
   const Value *VAListS = cast<SrcValueSDNode>(N->getOperand(2))->getValue();
   DebugLoc dl = N->getDebugLoc();
 
-  SDValue Base = DAG.getLoad(EVT::i64, dl, Chain, VAListP, VAListS, 0);
-  SDValue Tmp = DAG.getNode(ISD::ADD, dl, EVT::i64, VAListP,
-                              DAG.getConstant(8, EVT::i64));
-  SDValue Offset = DAG.getExtLoad(ISD::SEXTLOAD, dl, EVT::i64, Base.getValue(1),
-                                    Tmp, NULL, 0, EVT::i32);
-  DataPtr = DAG.getNode(ISD::ADD, dl, EVT::i64, Base, Offset);
+  SDValue Base = DAG.getLoad(MVT::i64, dl, Chain, VAListP, VAListS, 0);
+  SDValue Tmp = DAG.getNode(ISD::ADD, dl, MVT::i64, VAListP,
+                              DAG.getConstant(8, MVT::i64));
+  SDValue Offset = DAG.getExtLoad(ISD::SEXTLOAD, dl, MVT::i64, Base.getValue(1),
+                                    Tmp, NULL, 0, MVT::i32);
+  DataPtr = DAG.getNode(ISD::ADD, dl, MVT::i64, Base, Offset);
   if (N->getValueType(0).isFloatingPoint())
   {
     //if fp && Offset < 6*8, then subtract 6*8 from DataPtr
-    SDValue FPDataPtr = DAG.getNode(ISD::SUB, dl, EVT::i64, DataPtr,
-                                      DAG.getConstant(8*6, EVT::i64));
-    SDValue CC = DAG.getSetCC(dl, EVT::i64, Offset,
-                                DAG.getConstant(8*6, EVT::i64), ISD::SETLT);
-    DataPtr = DAG.getNode(ISD::SELECT, dl, EVT::i64, CC, FPDataPtr, DataPtr);
+    SDValue FPDataPtr = DAG.getNode(ISD::SUB, dl, MVT::i64, DataPtr,
+                                      DAG.getConstant(8*6, MVT::i64));
+    SDValue CC = DAG.getSetCC(dl, MVT::i64, Offset,
+                                DAG.getConstant(8*6, MVT::i64), ISD::SETLT);
+    DataPtr = DAG.getNode(ISD::SELECT, dl, MVT::i64, CC, FPDataPtr, DataPtr);
   }
 
-  SDValue NewOffset = DAG.getNode(ISD::ADD, dl, EVT::i64, Offset,
-                                    DAG.getConstant(8, EVT::i64));
+  SDValue NewOffset = DAG.getNode(ISD::ADD, dl, MVT::i64, Offset,
+                                    DAG.getConstant(8, MVT::i64));
   Chain = DAG.getTruncStore(Offset.getValue(1), dl, NewOffset, Tmp, NULL, 0,
-                            EVT::i32);
+                            MVT::i32);
 }
 
 /// LowerOperation - Provide custom lowering hooks for some operations.
@@ -573,7 +573,7 @@ SDValue AlphaTargetLowering::LowerOperation(SDValue Op, SelectionDAG &DAG) {
     switch (IntNo) {
     default: break;    // Don't custom lower most intrinsics.
     case Intrinsic::alpha_umulh:
-      return DAG.getNode(ISD::MULHU, dl, EVT::i64, 
+      return DAG.getNode(ISD::MULHU, dl, MVT::i64, 
                          Op.getOperand(1), Op.getOperand(2));
     }
   }
@@ -582,23 +582,23 @@ SDValue AlphaTargetLowering::LowerOperation(SDValue Op, SelectionDAG &DAG) {
     SDValue ShOpLo = Op.getOperand(0);
     SDValue ShOpHi = Op.getOperand(1);
     SDValue ShAmt  = Op.getOperand(2);
-    SDValue bm = DAG.getNode(ISD::SUB, dl, EVT::i64, 
-			     DAG.getConstant(64, EVT::i64), ShAmt);
-    SDValue BMCC = DAG.getSetCC(dl, EVT::i64, bm,
-                                DAG.getConstant(0, EVT::i64), ISD::SETLE);
+    SDValue bm = DAG.getNode(ISD::SUB, dl, MVT::i64, 
+			     DAG.getConstant(64, MVT::i64), ShAmt);
+    SDValue BMCC = DAG.getSetCC(dl, MVT::i64, bm,
+                                DAG.getConstant(0, MVT::i64), ISD::SETLE);
     // if 64 - shAmt <= 0
-    SDValue Hi_Neg = DAG.getConstant(0, EVT::i64);
-    SDValue ShAmt_Neg = DAG.getNode(ISD::SUB, dl, EVT::i64,
-				    DAG.getConstant(0, EVT::i64), bm);
-    SDValue Lo_Neg = DAG.getNode(ISD::SRL, dl, EVT::i64, ShOpHi, ShAmt_Neg);
+    SDValue Hi_Neg = DAG.getConstant(0, MVT::i64);
+    SDValue ShAmt_Neg = DAG.getNode(ISD::SUB, dl, MVT::i64,
+				    DAG.getConstant(0, MVT::i64), bm);
+    SDValue Lo_Neg = DAG.getNode(ISD::SRL, dl, MVT::i64, ShOpHi, ShAmt_Neg);
     // else
-    SDValue carries = DAG.getNode(ISD::SHL, dl, EVT::i64, ShOpHi, bm);
-    SDValue Hi_Pos =  DAG.getNode(ISD::SRL, dl, EVT::i64, ShOpHi, ShAmt);
-    SDValue Lo_Pos = DAG.getNode(ISD::SRL, dl, EVT::i64, ShOpLo, ShAmt);
-    Lo_Pos = DAG.getNode(ISD::OR, dl, EVT::i64, Lo_Pos, carries);
+    SDValue carries = DAG.getNode(ISD::SHL, dl, MVT::i64, ShOpHi, bm);
+    SDValue Hi_Pos =  DAG.getNode(ISD::SRL, dl, MVT::i64, ShOpHi, ShAmt);
+    SDValue Lo_Pos = DAG.getNode(ISD::SRL, dl, MVT::i64, ShOpLo, ShAmt);
+    Lo_Pos = DAG.getNode(ISD::OR, dl, MVT::i64, Lo_Pos, carries);
     // Merge
-    SDValue Hi = DAG.getNode(ISD::SELECT, dl, EVT::i64, BMCC, Hi_Neg, Hi_Pos);
-    SDValue Lo = DAG.getNode(ISD::SELECT, dl, EVT::i64, BMCC, Lo_Neg, Lo_Pos);
+    SDValue Hi = DAG.getNode(ISD::SELECT, dl, MVT::i64, BMCC, Hi_Neg, Hi_Pos);
+    SDValue Lo = DAG.getNode(ISD::SELECT, dl, MVT::i64, BMCC, Lo_Neg, Lo_Pos);
     SDValue Ops[2] = { Lo, Hi };
     return DAG.getMergeValues(Ops, 2, dl);
   }			
@@ -608,35 +608,35 @@ SDValue AlphaTargetLowering::LowerOperation(SDValue Op, SelectionDAG &DAG) {
 
 
   case ISD::SINT_TO_FP: {
-    assert(Op.getOperand(0).getValueType() == EVT::i64 &&
+    assert(Op.getOperand(0).getValueType() == MVT::i64 &&
            "Unhandled SINT_TO_FP type in custom expander!");
     SDValue LD;
-    bool isDouble = Op.getValueType() == EVT::f64;
-    LD = DAG.getNode(ISD::BIT_CONVERT, dl, EVT::f64, Op.getOperand(0));
+    bool isDouble = Op.getValueType() == MVT::f64;
+    LD = DAG.getNode(ISD::BIT_CONVERT, dl, MVT::f64, Op.getOperand(0));
     SDValue FP = DAG.getNode(isDouble?AlphaISD::CVTQT_:AlphaISD::CVTQS_, dl,
-                               isDouble?EVT::f64:EVT::f32, LD);
+                               isDouble?MVT::f64:MVT::f32, LD);
     return FP;
   }
   case ISD::FP_TO_SINT: {
-    bool isDouble = Op.getOperand(0).getValueType() == EVT::f64;
+    bool isDouble = Op.getOperand(0).getValueType() == MVT::f64;
     SDValue src = Op.getOperand(0);
 
     if (!isDouble) //Promote
-      src = DAG.getNode(ISD::FP_EXTEND, dl, EVT::f64, src);
+      src = DAG.getNode(ISD::FP_EXTEND, dl, MVT::f64, src);
     
-    src = DAG.getNode(AlphaISD::CVTTQ_, dl, EVT::f64, src);
+    src = DAG.getNode(AlphaISD::CVTTQ_, dl, MVT::f64, src);
 
-    return DAG.getNode(ISD::BIT_CONVERT, dl, EVT::i64, src);
+    return DAG.getNode(ISD::BIT_CONVERT, dl, MVT::i64, src);
   }
   case ISD::ConstantPool: {
     ConstantPoolSDNode *CP = cast<ConstantPoolSDNode>(Op);
     Constant *C = CP->getConstVal();
-    SDValue CPI = DAG.getTargetConstantPool(C, EVT::i64, CP->getAlignment());
+    SDValue CPI = DAG.getTargetConstantPool(C, MVT::i64, CP->getAlignment());
     // FIXME there isn't really any debug info here
     
-    SDValue Hi = DAG.getNode(AlphaISD::GPRelHi,  dl, EVT::i64, CPI,
-                               DAG.getGLOBAL_OFFSET_TABLE(EVT::i64));
-    SDValue Lo = DAG.getNode(AlphaISD::GPRelLo, dl, EVT::i64, CPI, Hi);
+    SDValue Hi = DAG.getNode(AlphaISD::GPRelHi,  dl, MVT::i64, CPI,
+                               DAG.getGLOBAL_OFFSET_TABLE(MVT::i64));
+    SDValue Lo = DAG.getNode(AlphaISD::GPRelLo, dl, MVT::i64, CPI, Hi);
     return Lo;
   }
   case ISD::GlobalTLSAddress:
@@ -644,24 +644,24 @@ SDValue AlphaTargetLowering::LowerOperation(SDValue Op, SelectionDAG &DAG) {
   case ISD::GlobalAddress: {
     GlobalAddressSDNode *GSDN = cast<GlobalAddressSDNode>(Op);
     GlobalValue *GV = GSDN->getGlobal();
-    SDValue GA = DAG.getTargetGlobalAddress(GV, EVT::i64, GSDN->getOffset());
+    SDValue GA = DAG.getTargetGlobalAddress(GV, MVT::i64, GSDN->getOffset());
     // FIXME there isn't really any debug info here
 
     //    if (!GV->hasWeakLinkage() && !GV->isDeclaration() && !GV->hasLinkOnceLinkage()) {
     if (GV->hasLocalLinkage()) {
-      SDValue Hi = DAG.getNode(AlphaISD::GPRelHi,  dl, EVT::i64, GA,
-                                DAG.getGLOBAL_OFFSET_TABLE(EVT::i64));
-      SDValue Lo = DAG.getNode(AlphaISD::GPRelLo, dl, EVT::i64, GA, Hi);
+      SDValue Hi = DAG.getNode(AlphaISD::GPRelHi,  dl, MVT::i64, GA,
+                                DAG.getGLOBAL_OFFSET_TABLE(MVT::i64));
+      SDValue Lo = DAG.getNode(AlphaISD::GPRelLo, dl, MVT::i64, GA, Hi);
       return Lo;
     } else
-      return DAG.getNode(AlphaISD::RelLit, dl, EVT::i64, GA, 
-                         DAG.getGLOBAL_OFFSET_TABLE(EVT::i64));
+      return DAG.getNode(AlphaISD::RelLit, dl, MVT::i64, GA, 
+                         DAG.getGLOBAL_OFFSET_TABLE(MVT::i64));
   }
   case ISD::ExternalSymbol: {
-    return DAG.getNode(AlphaISD::RelLit, dl, EVT::i64, 
+    return DAG.getNode(AlphaISD::RelLit, dl, MVT::i64, 
                        DAG.getTargetExternalSymbol(cast<ExternalSymbolSDNode>(Op)
-                                                   ->getSymbol(), EVT::i64),
-                       DAG.getGLOBAL_OFFSET_TABLE(EVT::i64));
+                                                   ->getSymbol(), MVT::i64),
+                       DAG.getGLOBAL_OFFSET_TABLE(MVT::i64));
   }
 
   case ISD::UREM:
@@ -692,8 +692,8 @@ SDValue AlphaTargetLowering::LowerOperation(SDValue Op, SelectionDAG &DAG) {
       }
       SDValue Tmp1 = Op.getOperand(0),
         Tmp2 = Op.getOperand(1),
-        Addr = DAG.getExternalSymbol(opstr, EVT::i64);
-      return DAG.getNode(AlphaISD::DivCall, dl, EVT::i64, Addr, Tmp1, Tmp2);
+        Addr = DAG.getExternalSymbol(opstr, MVT::i64);
+      return DAG.getNode(AlphaISD::DivCall, dl, MVT::i64, Addr, Tmp1, Tmp2);
     }
     break;
 
@@ -702,9 +702,9 @@ SDValue AlphaTargetLowering::LowerOperation(SDValue Op, SelectionDAG &DAG) {
     LowerVAARG(Op.getNode(), Chain, DataPtr, DAG);
 
     SDValue Result;
-    if (Op.getValueType() == EVT::i32)
-      Result = DAG.getExtLoad(ISD::SEXTLOAD, dl, EVT::i64, Chain, DataPtr,
-                              NULL, 0, EVT::i32);
+    if (Op.getValueType() == MVT::i32)
+      Result = DAG.getExtLoad(ISD::SEXTLOAD, dl, MVT::i64, Chain, DataPtr,
+                              NULL, 0, MVT::i32);
     else
       Result = DAG.getLoad(Op.getValueType(), dl, Chain, DataPtr, NULL, 0);
     return Result;
@@ -718,13 +718,13 @@ SDValue AlphaTargetLowering::LowerOperation(SDValue Op, SelectionDAG &DAG) {
     
     SDValue Val = DAG.getLoad(getPointerTy(), dl, Chain, SrcP, SrcS, 0);
     SDValue Result = DAG.getStore(Val.getValue(1), dl, Val, DestP, DestS, 0);
-    SDValue NP = DAG.getNode(ISD::ADD, dl, EVT::i64, SrcP, 
-                               DAG.getConstant(8, EVT::i64));
-    Val = DAG.getExtLoad(ISD::SEXTLOAD, dl, EVT::i64, Result, 
-                         NP, NULL,0, EVT::i32);
-    SDValue NPD = DAG.getNode(ISD::ADD, dl, EVT::i64, DestP,
-                                DAG.getConstant(8, EVT::i64));
-    return DAG.getTruncStore(Val.getValue(1), dl, Val, NPD, NULL, 0, EVT::i32);
+    SDValue NP = DAG.getNode(ISD::ADD, dl, MVT::i64, SrcP, 
+                               DAG.getConstant(8, MVT::i64));
+    Val = DAG.getExtLoad(ISD::SEXTLOAD, dl, MVT::i64, Result, 
+                         NP, NULL,0, MVT::i32);
+    SDValue NPD = DAG.getNode(ISD::ADD, dl, MVT::i64, DestP,
+                                DAG.getConstant(8, MVT::i64));
+    return DAG.getTruncStore(Val.getValue(1), dl, Val, NPD, NULL, 0, MVT::i32);
   }
   case ISD::VASTART: {
     SDValue Chain = Op.getOperand(0);
@@ -732,16 +732,16 @@ SDValue AlphaTargetLowering::LowerOperation(SDValue Op, SelectionDAG &DAG) {
     const Value *VAListS = cast<SrcValueSDNode>(Op.getOperand(2))->getValue();
     
     // vastart stores the address of the VarArgsBase and VarArgsOffset
-    SDValue FR  = DAG.getFrameIndex(VarArgsBase, EVT::i64);
+    SDValue FR  = DAG.getFrameIndex(VarArgsBase, MVT::i64);
     SDValue S1  = DAG.getStore(Chain, dl, FR, VAListP, VAListS, 0);
-    SDValue SA2 = DAG.getNode(ISD::ADD, dl, EVT::i64, VAListP,
-                                DAG.getConstant(8, EVT::i64));
-    return DAG.getTruncStore(S1, dl, DAG.getConstant(VarArgsOffset, EVT::i64),
-                             SA2, NULL, 0, EVT::i32);
+    SDValue SA2 = DAG.getNode(ISD::ADD, dl, MVT::i64, VAListP,
+                                DAG.getConstant(8, MVT::i64));
+    return DAG.getTruncStore(S1, dl, DAG.getConstant(VarArgsOffset, MVT::i64),
+                             SA2, NULL, 0, MVT::i32);
   }
   case ISD::RETURNADDR:        
     return DAG.getNode(AlphaISD::GlobalRetAddr, DebugLoc::getUnknownLoc(),
-                       EVT::i64);
+                       MVT::i64);
       //FIXME: implement
   case ISD::FRAMEADDR:          break;
   }
@@ -753,7 +753,7 @@ void AlphaTargetLowering::ReplaceNodeResults(SDNode *N,
                                              SmallVectorImpl<SDValue>&Results,
                                              SelectionDAG &DAG) {
   DebugLoc dl = N->getDebugLoc();
-  assert(N->getValueType(0) == EVT::i32 &&
+  assert(N->getValueType(0) == MVT::i32 &&
          N->getOpcode() == ISD::VAARG &&
          "Unknown node to custom promote!");
 

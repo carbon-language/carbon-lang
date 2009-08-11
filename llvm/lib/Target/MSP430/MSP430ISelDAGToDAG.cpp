@@ -78,8 +78,8 @@ bool MSP430DAGToDAGISel::SelectAddr(SDValue Op, SDValue Addr,
                                     SDValue &Base, SDValue &Disp) {
   // Try to match frame address first.
   if (FrameIndexSDNode *FIN = dyn_cast<FrameIndexSDNode>(Addr)) {
-    Base = CurDAG->getTargetFrameIndex(FIN->getIndex(), EVT::i16);
-    Disp = CurDAG->getTargetConstant(0, EVT::i16);
+    Base = CurDAG->getTargetFrameIndex(FIN->getIndex(), MVT::i16);
+    Disp = CurDAG->getTargetConstant(0, MVT::i16);
     return true;
   }
 
@@ -92,11 +92,11 @@ bool MSP430DAGToDAGISel::SelectAddr(SDValue Op, SDValue Addr,
       if (((CVal << 48) >> 48) == CVal) {
         SDValue N0 = Addr.getOperand(0);
         if (FrameIndexSDNode *FIN = dyn_cast<FrameIndexSDNode>(N0))
-          Base = CurDAG->getTargetFrameIndex(FIN->getIndex(), EVT::i16);
+          Base = CurDAG->getTargetFrameIndex(FIN->getIndex(), MVT::i16);
         else
           Base = N0;
 
-        Disp = CurDAG->getTargetConstant(CVal, EVT::i16);
+        Disp = CurDAG->getTargetConstant(CVal, MVT::i16);
         return true;
       }
     }
@@ -105,18 +105,18 @@ bool MSP430DAGToDAGISel::SelectAddr(SDValue Op, SDValue Addr,
     SDValue N0 = Addr.getOperand(0);
     if (GlobalAddressSDNode *G = dyn_cast<GlobalAddressSDNode>(N0)) {
       Base = CurDAG->getTargetGlobalAddress(G->getGlobal(),
-                                            EVT::i16, G->getOffset());
-      Disp = CurDAG->getTargetConstant(0, EVT::i16);
+                                            MVT::i16, G->getOffset());
+      Disp = CurDAG->getTargetConstant(0, MVT::i16);
       return true;
     } else if (ExternalSymbolSDNode *E = dyn_cast<ExternalSymbolSDNode>(N0)) {
-      Base = CurDAG->getTargetExternalSymbol(E->getSymbol(), EVT::i16);
-      Disp = CurDAG->getTargetConstant(0, EVT::i16);
+      Base = CurDAG->getTargetExternalSymbol(E->getSymbol(), MVT::i16);
+      Disp = CurDAG->getTargetConstant(0, MVT::i16);
     }
     break;
   };
 
   Base = Addr;
-  Disp = CurDAG->getTargetConstant(0, EVT::i16);
+  Disp = CurDAG->getTargetConstant(0, MVT::i16);
 
   return true;
 }
@@ -168,14 +168,14 @@ SDNode *MSP430DAGToDAGISel::Select(SDValue Op) {
   switch (Node->getOpcode()) {
   default: break;
   case ISD::FrameIndex: {
-    assert(Op.getValueType() == EVT::i16);
+    assert(Op.getValueType() == MVT::i16);
     int FI = cast<FrameIndexSDNode>(Node)->getIndex();
-    SDValue TFI = CurDAG->getTargetFrameIndex(FI, EVT::i16);
+    SDValue TFI = CurDAG->getTargetFrameIndex(FI, MVT::i16);
     if (Node->hasOneUse())
-      return CurDAG->SelectNodeTo(Node, MSP430::ADD16ri, EVT::i16,
-                                  TFI, CurDAG->getTargetConstant(0, EVT::i16));
-    return CurDAG->getTargetNode(MSP430::ADD16ri, dl, EVT::i16,
-                                 TFI, CurDAG->getTargetConstant(0, EVT::i16));
+      return CurDAG->SelectNodeTo(Node, MSP430::ADD16ri, MVT::i16,
+                                  TFI, CurDAG->getTargetConstant(0, MVT::i16));
+    return CurDAG->getTargetNode(MSP430::ADD16ri, dl, MVT::i16,
+                                 TFI, CurDAG->getTargetConstant(0, MVT::i16));
   }
   }
 

@@ -30,63 +30,63 @@ static cl::opt<unsigned>
 AsmWriterNum("asmwriternum", cl::init(0),
              cl::desc("Make -gen-asm-writer emit assembly writer #N"));
 
-/// getValueType - Return the EVT::SimpleValueType that the specified TableGen
+/// getValueType - Return the MVT::SimpleValueType that the specified TableGen
 /// record corresponds to.
-EVT::SimpleValueType llvm::getValueType(Record *Rec) {
-  return (EVT::SimpleValueType)Rec->getValueAsInt("Value");
+MVT::SimpleValueType llvm::getValueType(Record *Rec) {
+  return (MVT::SimpleValueType)Rec->getValueAsInt("Value");
 }
 
-std::string llvm::getName(EVT::SimpleValueType T) {
+std::string llvm::getName(MVT::SimpleValueType T) {
   switch (T) {
-  case EVT::Other:   return "UNKNOWN";
-  case EVT::iPTR:    return "TLI.getPointerTy()";
-  case EVT::iPTRAny: return "TLI.getPointerTy()";
+  case MVT::Other:   return "UNKNOWN";
+  case MVT::iPTR:    return "TLI.getPointerTy()";
+  case MVT::iPTRAny: return "TLI.getPointerTy()";
   default: return getEnumName(T);
   }
 }
 
-std::string llvm::getEnumName(EVT::SimpleValueType T) {
+std::string llvm::getEnumName(MVT::SimpleValueType T) {
   switch (T) {
-  case EVT::Other: return "EVT::Other";
-  case EVT::i1:    return "EVT::i1";
-  case EVT::i8:    return "EVT::i8";
-  case EVT::i16:   return "EVT::i16";
-  case EVT::i32:   return "EVT::i32";
-  case EVT::i64:   return "EVT::i64";
-  case EVT::i128:  return "EVT::i128";
-  case EVT::iAny:  return "EVT::iAny";
-  case EVT::fAny:  return "EVT::fAny";
-  case EVT::vAny:  return "EVT::vAny";
-  case EVT::f32:   return "EVT::f32";
-  case EVT::f64:   return "EVT::f64";
-  case EVT::f80:   return "EVT::f80";
-  case EVT::f128:  return "EVT::f128";
-  case EVT::ppcf128:  return "EVT::ppcf128";
-  case EVT::Flag:  return "EVT::Flag";
-  case EVT::isVoid:return "EVT::isVoid";
-  case EVT::v2i8:  return "EVT::v2i8";
-  case EVT::v4i8:  return "EVT::v4i8";
-  case EVT::v8i8:  return "EVT::v8i8";
-  case EVT::v16i8: return "EVT::v16i8";
-  case EVT::v32i8: return "EVT::v32i8";
-  case EVT::v2i16: return "EVT::v2i16";
-  case EVT::v4i16: return "EVT::v4i16";
-  case EVT::v8i16: return "EVT::v8i16";
-  case EVT::v16i16: return "EVT::v16i16";
-  case EVT::v2i32: return "EVT::v2i32";
-  case EVT::v4i32: return "EVT::v4i32";
-  case EVT::v8i32: return "EVT::v8i32";
-  case EVT::v1i64: return "EVT::v1i64";
-  case EVT::v2i64: return "EVT::v2i64";
-  case EVT::v4i64: return "EVT::v4i64";
-  case EVT::v2f32: return "EVT::v2f32";
-  case EVT::v4f32: return "EVT::v4f32";
-  case EVT::v8f32: return "EVT::v8f32";
-  case EVT::v2f64: return "EVT::v2f64";
-  case EVT::v4f64: return "EVT::v4f64";
-  case EVT::Metadata: return "EVT::Metadata";
-  case EVT::iPTR:  return "EVT::iPTR";
-  case EVT::iPTRAny:  return "EVT::iPTRAny";
+  case MVT::Other: return "MVT::Other";
+  case MVT::i1:    return "MVT::i1";
+  case MVT::i8:    return "MVT::i8";
+  case MVT::i16:   return "MVT::i16";
+  case MVT::i32:   return "MVT::i32";
+  case MVT::i64:   return "MVT::i64";
+  case MVT::i128:  return "MVT::i128";
+  case MVT::iAny:  return "MVT::iAny";
+  case MVT::fAny:  return "MVT::fAny";
+  case MVT::vAny:  return "MVT::vAny";
+  case MVT::f32:   return "MVT::f32";
+  case MVT::f64:   return "MVT::f64";
+  case MVT::f80:   return "MVT::f80";
+  case MVT::f128:  return "MVT::f128";
+  case MVT::ppcf128:  return "MVT::ppcf128";
+  case MVT::Flag:  return "MVT::Flag";
+  case MVT::isVoid:return "MVT::isVoid";
+  case MVT::v2i8:  return "MVT::v2i8";
+  case MVT::v4i8:  return "MVT::v4i8";
+  case MVT::v8i8:  return "MVT::v8i8";
+  case MVT::v16i8: return "MVT::v16i8";
+  case MVT::v32i8: return "MVT::v32i8";
+  case MVT::v2i16: return "MVT::v2i16";
+  case MVT::v4i16: return "MVT::v4i16";
+  case MVT::v8i16: return "MVT::v8i16";
+  case MVT::v16i16: return "MVT::v16i16";
+  case MVT::v2i32: return "MVT::v2i32";
+  case MVT::v4i32: return "MVT::v4i32";
+  case MVT::v8i32: return "MVT::v8i32";
+  case MVT::v1i64: return "MVT::v1i64";
+  case MVT::v2i64: return "MVT::v2i64";
+  case MVT::v4i64: return "MVT::v4i64";
+  case MVT::v2f32: return "MVT::v2f32";
+  case MVT::v4f32: return "MVT::v4f32";
+  case MVT::v8f32: return "MVT::v8f32";
+  case MVT::v2f64: return "MVT::v2f64";
+  case MVT::v4f64: return "MVT::v4f64";
+  case MVT::Metadata: return "MVT::Metadata";
+  case MVT::iPTR:  return "MVT::iPTR";
+  case MVT::iPTRAny:  return "MVT::iPTRAny";
   default: assert(0 && "ILLEGAL VALUE TYPE!"); return "";
   }
 }
@@ -191,7 +191,7 @@ std::vector<unsigned char> CodeGenTarget::getRegisterVTs(Record *R) const {
     const CodeGenRegisterClass &RC = RegisterClasses[i];
     for (unsigned ei = 0, ee = RC.Elements.size(); ei != ee; ++ei) {
       if (R == RC.Elements[ei]) {
-        const std::vector<EVT::SimpleValueType> &InVTs = RC.getValueTypes();
+        const std::vector<MVT::SimpleValueType> &InVTs = RC.getValueTypes();
         for (unsigned i = 0, e = InVTs.size(); i != e; ++i)
           Result.push_back(InVTs[i]);
       }
@@ -477,12 +477,12 @@ CodeGenIntrinsic::CodeGenIntrinsic(Record *R) {
   }
   
   // Parse the list of return types.
-  std::vector<EVT::SimpleValueType> OverloadedVTs;
+  std::vector<MVT::SimpleValueType> OverloadedVTs;
   ListInit *TypeList = R->getValueAsListInit("RetTypes");
   for (unsigned i = 0, e = TypeList->getSize(); i != e; ++i) {
     Record *TyEl = TypeList->getElementAsRecord(i);
     assert(TyEl->isSubClassOf("LLVMType") && "Expected a type!");
-    EVT::SimpleValueType VT;
+    MVT::SimpleValueType VT;
     if (TyEl->isSubClassOf("LLVMMatchType")) {
       unsigned MatchTy = TyEl->getValueAsInt("Number");
       assert(MatchTy < OverloadedVTs.size() &&
@@ -493,7 +493,7 @@ CodeGenIntrinsic::CodeGenIntrinsic(Record *R) {
       // overloaded, all the types can be specified directly.
       assert(((!TyEl->isSubClassOf("LLVMExtendedElementVectorType") &&
                !TyEl->isSubClassOf("LLVMTruncatedElementVectorType")) ||
-              VT == EVT::iAny || VT == EVT::vAny) &&
+              VT == MVT::iAny || VT == MVT::vAny) &&
              "Expected iAny or vAny type");
     } else {
       VT = getValueType(TyEl->getValueAsDef("VT"));
@@ -514,7 +514,7 @@ CodeGenIntrinsic::CodeGenIntrinsic(Record *R) {
   for (unsigned i = 0, e = TypeList->getSize(); i != e; ++i) {
     Record *TyEl = TypeList->getElementAsRecord(i);
     assert(TyEl->isSubClassOf("LLVMType") && "Expected a type!");
-    EVT::SimpleValueType VT;
+    MVT::SimpleValueType VT;
     if (TyEl->isSubClassOf("LLVMMatchType")) {
       unsigned MatchTy = TyEl->getValueAsInt("Number");
       assert(MatchTy < OverloadedVTs.size() &&
@@ -525,7 +525,7 @@ CodeGenIntrinsic::CodeGenIntrinsic(Record *R) {
       // overloaded, all the types can be specified directly.
       assert(((!TyEl->isSubClassOf("LLVMExtendedElementVectorType") &&
                !TyEl->isSubClassOf("LLVMTruncatedElementVectorType")) ||
-              VT == EVT::iAny || VT == EVT::vAny) &&
+              VT == MVT::iAny || VT == MVT::vAny) &&
              "Expected iAny or vAny type");
     } else
       VT = getValueType(TyEl->getValueAsDef("VT"));

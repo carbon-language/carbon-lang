@@ -213,7 +213,7 @@ SDValue DAGTypeLegalizer::ScalarizeVecRes_SETCC(SDNode *N) {
   DebugLoc DL = N->getDebugLoc();
 
   // Turn it into a scalar SETCC.
-  return DAG.getNode(ISD::SETCC, DL, EVT::i1, LHS, RHS, N->getOperand(2));
+  return DAG.getNode(ISD::SETCC, DL, MVT::i1, LHS, RHS, N->getOperand(2));
 }
 
 SDValue DAGTypeLegalizer::ScalarizeVecRes_UNDEF(SDNode *N) {
@@ -247,16 +247,16 @@ SDValue DAGTypeLegalizer::ScalarizeVecRes_VSETCC(SDNode *N) {
     if (TLI.getBooleanContents() !=
         TargetLowering::ZeroOrNegativeOneBooleanContent)
       Res = DAG.getNode(ISD::SIGN_EXTEND_INREG, DL, SVT, Res,
-                        DAG.getValueType(EVT::i1));
+                        DAG.getValueType(MVT::i1));
     // Truncate to the final type.
     return DAG.getNode(ISD::TRUNCATE, DL, NVT, Res);
   }
 
   // The SETCC result type is smaller than the vector element type.
-  // If the SetCC result is not sign-extended, chop it down to EVT::i1.
+  // If the SetCC result is not sign-extended, chop it down to MVT::i1.
   if (TLI.getBooleanContents() !=
         TargetLowering::ZeroOrNegativeOneBooleanContent)
-    Res = DAG.getNode(ISD::TRUNCATE, DL, EVT::i1, Res);
+    Res = DAG.getNode(ISD::TRUNCATE, DL, MVT::i1, Res);
   // Sign extend to the final type.
   return DAG.getNode(ISD::SIGN_EXTEND, DL, NVT, Res);
 }
@@ -725,7 +725,7 @@ void DAGTypeLegalizer::SplitVecRes_LOAD(LoadSDNode *LD, SDValue &Lo,
 
   // Build a factor node to remember that this load is independent of the
   // other one.
-  Ch = DAG.getNode(ISD::TokenFactor, dl, EVT::Other, Lo.getValue(1),
+  Ch = DAG.getNode(ISD::TokenFactor, dl, MVT::Other, Lo.getValue(1),
                    Hi.getValue(1));
 
   // Legalized the chain result - switch anything that used the old chain to
@@ -1097,7 +1097,7 @@ SDValue DAGTypeLegalizer::SplitVecOp_STORE(StoreSDNode *N, unsigned OpNo) {
     Hi = DAG.getStore(Ch, dl, Hi, Ptr, N->getSrcValue(), SVOffset+IncrementSize,
                       isVol, MinAlign(Alignment, IncrementSize));
 
-  return DAG.getNode(ISD::TokenFactor, dl, EVT::Other, Lo, Hi);
+  return DAG.getNode(ISD::TokenFactor, dl, MVT::Other, Lo, Hi);
 }
 
 
@@ -1660,7 +1660,7 @@ SDValue DAGTypeLegalizer::WidenVecRes_LOAD(SDNode *N) {
  if (LdChain.size() == 1)
    NewChain = LdChain[0];
  else
-   NewChain = DAG.getNode(ISD::TokenFactor, dl, EVT::Other, &LdChain[0],
+   NewChain = DAG.getNode(ISD::TokenFactor, dl, MVT::Other, &LdChain[0],
                           LdChain.size());
 
   // Modified the chain - switch anything that used the old chain to use
@@ -1941,7 +1941,7 @@ SDValue DAGTypeLegalizer::WidenVecOp_STORE(SDNode *N) {
     return StChain[0];
   else
     return DAG.getNode(ISD::TokenFactor, dl,
-                       EVT::Other,&StChain[0],StChain.size());
+                       MVT::Other,&StChain[0],StChain.size());
 }
 
 //===----------------------------------------------------------------------===//

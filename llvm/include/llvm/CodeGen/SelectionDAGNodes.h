@@ -1245,7 +1245,7 @@ public:
   /// to which the flag operand points. Otherwise return NULL.
   SDNode *getFlaggedNode() const {
     if (getNumOperands() != 0 &&
-        getOperand(getNumOperands()-1).getValueType() == EVT::Flag)
+      getOperand(getNumOperands()-1).getValueType().getSimpleVT() == MVT::Flag)
       return getOperand(getNumOperands()-1).getNode();
     return 0;
   }
@@ -1278,7 +1278,7 @@ public:
     return ValueList[ResNo];
   }
 
-  /// getValueSizeInBits - Returns EVT::getSizeInBits(getValueType(ResNo)).
+  /// getValueSizeInBits - Returns MVT::getSizeInBits(getValueType(ResNo)).
   ///
   unsigned getValueSizeInBits(unsigned ResNo) const {
     return getValueType(ResNo).getSizeInBits();
@@ -1505,7 +1505,7 @@ public:
   explicit HandleSDNode(SDValue X)
 #endif
     : SDNode(ISD::HANDLENODE, DebugLoc::getUnknownLoc(),
-             getSDVTList(EVT::Other)) {
+             getSDVTList(MVT::Other)) {
     InitOperands(&Op, X);
   }
   ~HandleSDNode();
@@ -1914,7 +1914,7 @@ class BasicBlockSDNode : public SDNode {
   /// harder.  Let's see if we need it first.
   explicit BasicBlockSDNode(MachineBasicBlock *mbb)
     : SDNode(ISD::BasicBlock, DebugLoc::getUnknownLoc(),
-             getSDVTList(EVT::Other)), MBB(mbb) {
+             getSDVTList(MVT::Other)), MBB(mbb) {
   }
 public:
 
@@ -1965,7 +1965,7 @@ class SrcValueSDNode : public SDNode {
   /// Create a SrcValue for a general value.
   explicit SrcValueSDNode(const Value *v)
     : SDNode(ISD::SRCVALUE, DebugLoc::getUnknownLoc(),
-             getSDVTList(EVT::Other)), V(v) {}
+             getSDVTList(MVT::Other)), V(v) {}
 
 public:
   /// getValue - return the contained Value.
@@ -1987,7 +1987,7 @@ class MemOperandSDNode : public SDNode {
   /// Create a MachineMemOperand node
   explicit MemOperandSDNode(const MachineMemOperand &mo)
     : SDNode(ISD::MEMOPERAND, DebugLoc::getUnknownLoc(),
-             getSDVTList(EVT::Other)), MO(mo) {}
+             getSDVTList(MVT::Other)), MO(mo) {}
 
 public:
   /// MO - The contained MachineMemOperand.
@@ -2026,7 +2026,7 @@ class DbgStopPointSDNode : public SDNode {
   DbgStopPointSDNode(SDValue ch, unsigned l, unsigned c,
                      Value *cu)
     : SDNode(ISD::DBG_STOPPOINT, DebugLoc::getUnknownLoc(),
-      getSDVTList(EVT::Other)), Line(l), Column(c), CU(cu) {
+      getSDVTList(MVT::Other)), Line(l), Column(c), CU(cu) {
     InitOperands(&Chain, ch);
   }
 public:
@@ -2045,7 +2045,7 @@ class LabelSDNode : public SDNode {
   unsigned LabelID;
   friend class SelectionDAG;
 LabelSDNode(unsigned NodeTy, DebugLoc dl, SDValue ch, unsigned id)
-    : SDNode(NodeTy, dl, getSDVTList(EVT::Other)), LabelID(id) {
+    : SDNode(NodeTy, dl, getSDVTList(MVT::Other)), LabelID(id) {
     InitOperands(&Chain, ch);
   }
 public:
@@ -2085,7 +2085,7 @@ class CondCodeSDNode : public SDNode {
   friend class SelectionDAG;
   explicit CondCodeSDNode(ISD::CondCode Cond)
     : SDNode(ISD::CONDCODE, DebugLoc::getUnknownLoc(),
-             getSDVTList(EVT::Other)), Condition(Cond) {
+             getSDVTList(MVT::Other)), Condition(Cond) {
   }
 public:
 
@@ -2210,7 +2210,7 @@ namespace ISD {
     EVT VT;
     bool Used;
 
-    InputArg() : VT(EVT::Other), Used(false) {}
+    InputArg() : VT(MVT::Other), Used(false) {}
     InputArg(ISD::ArgFlagsTy flags, EVT vt, bool used)
       : Flags(flags), VT(vt), Used(used) {
       assert(VT.isSimple() &&
@@ -2243,7 +2243,7 @@ class VTSDNode : public SDNode {
   friend class SelectionDAG;
   explicit VTSDNode(EVT VT)
     : SDNode(ISD::VALUETYPE, DebugLoc::getUnknownLoc(),
-             getSDVTList(EVT::Other)), ValueType(VT) {
+             getSDVTList(MVT::Other)), ValueType(VT) {
   }
 public:
 

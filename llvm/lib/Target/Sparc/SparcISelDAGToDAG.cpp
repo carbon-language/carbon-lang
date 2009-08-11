@@ -79,8 +79,8 @@ void SparcDAGToDAGISel::InstructionSelect() {
 bool SparcDAGToDAGISel::SelectADDRri(SDValue Op, SDValue Addr,
                                      SDValue &Base, SDValue &Offset) {
   if (FrameIndexSDNode *FIN = dyn_cast<FrameIndexSDNode>(Addr)) {
-    Base = CurDAG->getTargetFrameIndex(FIN->getIndex(), EVT::i32);
-    Offset = CurDAG->getTargetConstant(0, EVT::i32);
+    Base = CurDAG->getTargetFrameIndex(FIN->getIndex(), MVT::i32);
+    Offset = CurDAG->getTargetConstant(0, MVT::i32);
     return true;
   }
   if (Addr.getOpcode() == ISD::TargetExternalSymbol ||
@@ -93,11 +93,11 @@ bool SparcDAGToDAGISel::SelectADDRri(SDValue Op, SDValue Addr,
         if (FrameIndexSDNode *FIN =
                 dyn_cast<FrameIndexSDNode>(Addr.getOperand(0))) {
           // Constant offset from frame ref.
-          Base = CurDAG->getTargetFrameIndex(FIN->getIndex(), EVT::i32);
+          Base = CurDAG->getTargetFrameIndex(FIN->getIndex(), MVT::i32);
         } else {
           Base = Addr.getOperand(0);
         }
-        Offset = CurDAG->getTargetConstant(CN->getZExtValue(), EVT::i32);
+        Offset = CurDAG->getTargetConstant(CN->getZExtValue(), MVT::i32);
         return true;
       }
     }
@@ -113,7 +113,7 @@ bool SparcDAGToDAGISel::SelectADDRri(SDValue Op, SDValue Addr,
     }
   }
   Base = Addr;
-  Offset = CurDAG->getTargetConstant(0, EVT::i32);
+  Offset = CurDAG->getTargetConstant(0, MVT::i32);
   return true;
 }
 
@@ -137,7 +137,7 @@ bool SparcDAGToDAGISel::SelectADDRrr(SDValue Op, SDValue Addr,
   }
 
   R1 = Addr;
-  R2 = CurDAG->getRegister(SP::G0, EVT::i32);
+  R2 = CurDAG->getRegister(SP::G0, MVT::i32);
   return true;
 }
 
@@ -158,17 +158,17 @@ SDNode *SparcDAGToDAGISel::Select(SDValue Op) {
     // Set the Y register to the high-part.
     SDValue TopPart;
     if (N->getOpcode() == ISD::SDIV) {
-      TopPart = SDValue(CurDAG->getTargetNode(SP::SRAri, dl, EVT::i32, DivLHS,
-                                   CurDAG->getTargetConstant(31, EVT::i32)), 0);
+      TopPart = SDValue(CurDAG->getTargetNode(SP::SRAri, dl, MVT::i32, DivLHS,
+                                   CurDAG->getTargetConstant(31, MVT::i32)), 0);
     } else {
-      TopPart = CurDAG->getRegister(SP::G0, EVT::i32);
+      TopPart = CurDAG->getRegister(SP::G0, MVT::i32);
     }
-    TopPart = SDValue(CurDAG->getTargetNode(SP::WRYrr, dl, EVT::Flag, TopPart,
-                                     CurDAG->getRegister(SP::G0, EVT::i32)), 0);
+    TopPart = SDValue(CurDAG->getTargetNode(SP::WRYrr, dl, MVT::Flag, TopPart,
+                                     CurDAG->getRegister(SP::G0, MVT::i32)), 0);
 
     // FIXME: Handle div by immediate.
     unsigned Opcode = N->getOpcode() == ISD::SDIV ? SP::SDIVrr : SP::UDIVrr;
-    return CurDAG->SelectNodeTo(N, Opcode, EVT::i32, DivLHS, DivRHS,
+    return CurDAG->SelectNodeTo(N, Opcode, MVT::i32, DivLHS, DivRHS,
                                 TopPart);
   }
   case ISD::MULHU:
@@ -177,10 +177,10 @@ SDNode *SparcDAGToDAGISel::Select(SDValue Op) {
     SDValue MulLHS = N->getOperand(0);
     SDValue MulRHS = N->getOperand(1);
     unsigned Opcode = N->getOpcode() == ISD::MULHU ? SP::UMULrr : SP::SMULrr;
-    SDNode *Mul = CurDAG->getTargetNode(Opcode, dl, EVT::i32, EVT::Flag,
+    SDNode *Mul = CurDAG->getTargetNode(Opcode, dl, MVT::i32, MVT::Flag,
                                         MulLHS, MulRHS);
     // The high part is in the Y register.
-    return CurDAG->SelectNodeTo(N, SP::RDY, EVT::i32, SDValue(Mul, 1));
+    return CurDAG->SelectNodeTo(N, SP::RDY, MVT::i32, SDValue(Mul, 1));
     return NULL;
   }
   }

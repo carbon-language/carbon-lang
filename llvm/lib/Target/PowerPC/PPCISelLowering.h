@@ -230,7 +230,7 @@ namespace llvm {
     virtual const char *getTargetNodeName(unsigned Opcode) const;
 
     /// getSetCCResultType - Return the ISD::SETCC ValueType
-    virtual EVT::SimpleValueType getSetCCResultType(EVT VT) const;
+    virtual MVT::SimpleValueType getSetCCResultType(EVT VT) const;
 
     /// getPreIndexedAddressParts - returns true by value, base pointer and
     /// offset pointer and addressing mode by reference if the node's address

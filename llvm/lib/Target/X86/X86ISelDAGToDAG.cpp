@@ -233,40 +233,40 @@ namespace {
       // These are 32-bit even in 64-bit mode since RIP relative offset
       // is 32-bit.
       if (AM.GV)
-        Disp = CurDAG->getTargetGlobalAddress(AM.GV, EVT::i32, AM.Disp,
+        Disp = CurDAG->getTargetGlobalAddress(AM.GV, MVT::i32, AM.Disp,
                                               AM.SymbolFlags);
       else if (AM.CP)
-        Disp = CurDAG->getTargetConstantPool(AM.CP, EVT::i32,
+        Disp = CurDAG->getTargetConstantPool(AM.CP, MVT::i32,
                                              AM.Align, AM.Disp, AM.SymbolFlags);
       else if (AM.ES)
-        Disp = CurDAG->getTargetExternalSymbol(AM.ES, EVT::i32, AM.SymbolFlags);
+        Disp = CurDAG->getTargetExternalSymbol(AM.ES, MVT::i32, AM.SymbolFlags);
       else if (AM.JT != -1)
-        Disp = CurDAG->getTargetJumpTable(AM.JT, EVT::i32, AM.SymbolFlags);
+        Disp = CurDAG->getTargetJumpTable(AM.JT, MVT::i32, AM.SymbolFlags);
       else
-        Disp = CurDAG->getTargetConstant(AM.Disp, EVT::i32);
+        Disp = CurDAG->getTargetConstant(AM.Disp, MVT::i32);
 
       if (AM.Segment.getNode())
         Segment = AM.Segment;
       else
-        Segment = CurDAG->getRegister(0, EVT::i32);
+        Segment = CurDAG->getRegister(0, MVT::i32);
     }
 
     /// getI8Imm - Return a target constant with the specified value, of type
     /// i8.
     inline SDValue getI8Imm(unsigned Imm) {
-      return CurDAG->getTargetConstant(Imm, EVT::i8);
+      return CurDAG->getTargetConstant(Imm, MVT::i8);
     }
 
     /// getI16Imm - Return a target constant with the specified value, of type
     /// i16.
     inline SDValue getI16Imm(unsigned Imm) {
-      return CurDAG->getTargetConstant(Imm, EVT::i16);
+      return CurDAG->getTargetConstant(Imm, MVT::i16);
     }
 
     /// getI32Imm - Return a target constant with the specified value, of type
     /// i32.
     inline SDValue getI32Imm(unsigned Imm) {
-      return CurDAG->getTargetConstant(Imm, EVT::i32);
+      return CurDAG->getTargetConstant(Imm, MVT::i32);
     }
 
     /// getGlobalBaseReg - Return an SDNode that returns the value of
@@ -408,7 +408,7 @@ static void MoveBelowCallSeqStart(SelectionDAG *CurDAG, SDValue Load,
         Ops.push_back(Chain.getOperand(i));
     SDValue NewChain =
       CurDAG->getNode(ISD::TokenFactor, Load.getDebugLoc(),
-                      EVT::Other, &Ops[0], Ops.size());
+                      MVT::Other, &Ops[0], Ops.size());
     Ops.clear();
     Ops.push_back(NewChain);
   }
@@ -764,7 +764,7 @@ bool X86DAGToDAGISel::MatchWrapper(SDValue N, X86ISelAddressMode &AM) {
     }
 
     if (N.getOpcode() == X86ISD::WrapperRIP)
-      AM.setBaseReg(CurDAG->getRegister(X86::RIP, EVT::i64));
+      AM.setBaseReg(CurDAG->getRegister(X86::RIP, MVT::i64));
     return false;
   }
 
@@ -1001,7 +1001,7 @@ bool X86DAGToDAGISel::MatchAddressRecursively(SDValue N, X86ISelAddressMode &AM,
         RHS.getNode()->getOpcode() == ISD::TRUNCATE ||
         RHS.getNode()->getOpcode() == ISD::ANY_EXTEND ||
         (RHS.getNode()->getOpcode() == ISD::ZERO_EXTEND &&
-         RHS.getNode()->getOperand(0).getValueType() == EVT::i32))
+         RHS.getNode()->getOperand(0).getValueType() == MVT::i32))
       ++Cost;
     // If the base is a register with multiple uses, this
     // transformation may save a mov.
@@ -1111,13 +1111,13 @@ bool X86DAGToDAGISel::MatchAddressRecursively(SDValue N, X86ISelAddressMode &AM,
       unsigned ScaleLog = 8 - C1->getZExtValue();
       if (ScaleLog > 0 && ScaleLog < 4 &&
           C2->getZExtValue() == (UINT64_C(0xff) << ScaleLog)) {
-        SDValue Eight = CurDAG->getConstant(8, EVT::i8);
+        SDValue Eight = CurDAG->getConstant(8, MVT::i8);
         SDValue Mask = CurDAG->getConstant(0xff, N.getValueType());
         SDValue Srl = CurDAG->getNode(ISD::SRL, dl, N.getValueType(),
                                       X, Eight);
         SDValue And = CurDAG->getNode(ISD::AND, dl, N.getValueType(),
                                       Srl, Mask);
-        SDValue ShlCount = CurDAG->getConstant(ScaleLog, EVT::i8);
+        SDValue ShlCount = CurDAG->getConstant(ScaleLog, MVT::i8);
         SDValue Shl = CurDAG->getNode(ISD::SHL, dl, N.getValueType(),
                                       And, ShlCount);
 
@@ -1333,7 +1333,7 @@ bool X86DAGToDAGISel::SelectLEAAddr(SDValue Op, SDValue N,
   // Set AM.Segment to prevent MatchAddress from using one. LEA doesn't support
   // segments.
   SDValue Copy = AM.Segment;
-  SDValue T = CurDAG->getRegister(0, EVT::i32);
+  SDValue T = CurDAG->getRegister(0, MVT::i32);
   AM.Segment = T;
   if (MatchAddress(N, AM))
     return false;
@@ -1400,11 +1400,11 @@ bool X86DAGToDAGISel::SelectTLSADDRAddr(SDValue Op, SDValue N, SDValue &Base,
   AM.Base.Reg = CurDAG->getRegister(0, N.getValueType());
   AM.SymbolFlags = GA->getTargetFlags();
 
-  if (N.getValueType() == EVT::i32) {
+  if (N.getValueType() == MVT::i32) {
     AM.Scale = 1;
-    AM.IndexReg = CurDAG->getRegister(X86::EBX, EVT::i32);
+    AM.IndexReg = CurDAG->getRegister(X86::EBX, MVT::i32);
   } else {
-    AM.IndexReg = CurDAG->getRegister(0, EVT::i64);
+    AM.IndexReg = CurDAG->getRegister(0, MVT::i64);
   }
   
   SDValue Segment;
@@ -1435,7 +1435,7 @@ SDNode *X86DAGToDAGISel::getGlobalBaseReg() {
 
 static SDNode *FindCallStartFromCall(SDNode *Node) {
   if (Node->getOpcode() == ISD::CALLSEQ_START) return Node;
-    assert(Node->getOperand(0).getValueType() == EVT::Other &&
+    assert(Node->getOperand(0).getValueType() == MVT::Other &&
          "Node doesn't have a token chain argument!");
   return FindCallStartFromCall(Node->getOperand(0).getNode());
 }
@@ -1451,7 +1451,7 @@ SDNode *X86DAGToDAGISel::SelectAtomic64(SDNode *Node, unsigned Opc) {
   SDValue LSI = Node->getOperand(4);    // MemOperand
   const SDValue Ops[] = { Tmp0, Tmp1, Tmp2, Tmp3, Tmp4, In2L, In2H, LSI, Chain};
   return CurDAG->getTargetNode(Opc, Node->getDebugLoc(),
-                               EVT::i32, EVT::i32, EVT::Other, Ops,
+                               MVT::i32, MVT::i32, MVT::Other, Ops,
                                array_lengthof(Ops));
 }
 
@@ -1495,9 +1495,9 @@ SDNode *X86DAGToDAGISel::SelectAtomicLoadAdd(SDNode *Node, EVT NVT) {
   }
 
   unsigned Opc = 0;
-  switch (NVT.getSimpleVT()) {
+  switch (NVT.getSimpleVT().SimpleTy) {
   default: return 0;
-  case EVT::i8:
+  case MVT::i8:
     if (isInc)
       Opc = X86::LOCK_INC8m;
     else if (isDec)
@@ -1514,7 +1514,7 @@ SDNode *X86DAGToDAGISel::SelectAtomicLoadAdd(SDNode *Node, EVT NVT) {
         Opc = X86::LOCK_ADD8mr;
     }
     break;
-  case EVT::i16:
+  case MVT::i16:
     if (isInc)
       Opc = X86::LOCK_INC16m;
     else if (isDec)
@@ -1537,7 +1537,7 @@ SDNode *X86DAGToDAGISel::SelectAtomicLoadAdd(SDNode *Node, EVT NVT) {
         Opc = X86::LOCK_ADD16mr;
     }
     break;
-  case EVT::i32:
+  case MVT::i32:
     if (isInc)
       Opc = X86::LOCK_INC32m;
     else if (isDec)
@@ -1560,7 +1560,7 @@ SDNode *X86DAGToDAGISel::SelectAtomicLoadAdd(SDNode *Node, EVT NVT) {
         Opc = X86::LOCK_ADD32mr;
     }
     break;
-  case EVT::i64:
+  case MVT::i64:
     if (isInc)
       Opc = X86::LOCK_INC64m;
     else if (isDec)
@@ -1591,12 +1591,12 @@ SDNode *X86DAGToDAGISel::SelectAtomicLoadAdd(SDNode *Node, EVT NVT) {
   SDValue MemOp = CurDAG->getMemOperand(cast<MemSDNode>(Node)->getMemOperand());
   if (isInc || isDec) {
     SDValue Ops[] = { Tmp0, Tmp1, Tmp2, Tmp3, Tmp4, MemOp, Chain };
-    SDValue Ret = SDValue(CurDAG->getTargetNode(Opc, dl, EVT::Other, Ops, 7), 0);
+    SDValue Ret = SDValue(CurDAG->getTargetNode(Opc, dl, MVT::Other, Ops, 7), 0);
     SDValue RetVals[] = { Undef, Ret };
     return CurDAG->getMergeValues(RetVals, 2, dl).getNode();
   } else {
     SDValue Ops[] = { Tmp0, Tmp1, Tmp2, Tmp3, Tmp4, Val, MemOp, Chain };
-    SDValue Ret = SDValue(CurDAG->getTargetNode(Opc, dl, EVT::Other, Ops, 8), 0);
+    SDValue Ret = SDValue(CurDAG->getTargetNode(Opc, dl, MVT::Other, Ops, 8), 0);
     SDValue RetVals[] = { Undef, Ret };
     return CurDAG->getMergeValues(RetVals, 2, dl).getNode();
   }
@@ -1664,30 +1664,30 @@ SDNode *X86DAGToDAGISel::Select(SDValue N) {
 
     bool isSigned = Opcode == ISD::SMUL_LOHI;
     if (!isSigned) {
-      switch (NVT.getSimpleVT()) {
+      switch (NVT.getSimpleVT().SimpleTy) {
       default: llvm_unreachable("Unsupported VT!");
-      case EVT::i8:  Opc = X86::MUL8r;  MOpc = X86::MUL8m;  break;
-      case EVT::i16: Opc = X86::MUL16r; MOpc = X86::MUL16m; break;
-      case EVT::i32: Opc = X86::MUL32r; MOpc = X86::MUL32m; break;
-      case EVT::i64: Opc = X86::MUL64r; MOpc = X86::MUL64m; break;
+      case MVT::i8:  Opc = X86::MUL8r;  MOpc = X86::MUL8m;  break;
+      case MVT::i16: Opc = X86::MUL16r; MOpc = X86::MUL16m; break;
+      case MVT::i32: Opc = X86::MUL32r; MOpc = X86::MUL32m; break;
+      case MVT::i64: Opc = X86::MUL64r; MOpc = X86::MUL64m; break;
       }
     } else {
-      switch (NVT.getSimpleVT()) {
+      switch (NVT.getSimpleVT().SimpleTy) {
       default: llvm_unreachable("Unsupported VT!");
-      case EVT::i8:  Opc = X86::IMUL8r;  MOpc = X86::IMUL8m;  break;
-      case EVT::i16: Opc = X86::IMUL16r; MOpc = X86::IMUL16m; break;
-      case EVT::i32: Opc = X86::IMUL32r; MOpc = X86::IMUL32m; break;
-      case EVT::i64: Opc = X86::IMUL64r; MOpc = X86::IMUL64m; break;
+      case MVT::i8:  Opc = X86::IMUL8r;  MOpc = X86::IMUL8m;  break;
+      case MVT::i16: Opc = X86::IMUL16r; MOpc = X86::IMUL16m; break;
+      case MVT::i32: Opc = X86::IMUL32r; MOpc = X86::IMUL32m; break;
+      case MVT::i64: Opc = X86::IMUL64r; MOpc = X86::IMUL64m; break;
       }
     }
 
     unsigned LoReg, HiReg;
-    switch (NVT.getSimpleVT()) {
+    switch (NVT.getSimpleVT().SimpleTy) {
     default: llvm_unreachable("Unsupported VT!");
-    case EVT::i8:  LoReg = X86::AL;  HiReg = X86::AH;  break;
-    case EVT::i16: LoReg = X86::AX;  HiReg = X86::DX;  break;
-    case EVT::i32: LoReg = X86::EAX; HiReg = X86::EDX; break;
-    case EVT::i64: LoReg = X86::RAX; HiReg = X86::RDX; break;
+    case MVT::i8:  LoReg = X86::AL;  HiReg = X86::AH;  break;
+    case MVT::i16: LoReg = X86::AX;  HiReg = X86::DX;  break;
+    case MVT::i32: LoReg = X86::EAX; HiReg = X86::EDX; break;
+    case MVT::i64: LoReg = X86::RAX; HiReg = X86::RDX; break;
     }
 
     SDValue Tmp0, Tmp1, Tmp2, Tmp3, Tmp4;
@@ -1706,14 +1706,14 @@ SDNode *X86DAGToDAGISel::Select(SDValue N) {
       SDValue Ops[] = { Tmp0, Tmp1, Tmp2, Tmp3, Tmp4, N1.getOperand(0),
                         InFlag };
       SDNode *CNode =
-        CurDAG->getTargetNode(MOpc, dl, EVT::Other, EVT::Flag, Ops,
+        CurDAG->getTargetNode(MOpc, dl, MVT::Other, MVT::Flag, Ops,
                               array_lengthof(Ops));
       InFlag = SDValue(CNode, 1);
       // Update the chain.
       ReplaceUses(N1.getValue(1), SDValue(CNode, 0));
     } else {
       InFlag =
-        SDValue(CurDAG->getTargetNode(Opc, dl, EVT::Flag, N1, InFlag), 0);
+        SDValue(CurDAG->getTargetNode(Opc, dl, MVT::Flag, N1, InFlag), 0);
     }
 
     // Copy the low half of the result, if it is needed.
@@ -1737,15 +1737,15 @@ SDNode *X86DAGToDAGISel::Select(SDValue N) {
         // Prevent use of AH in a REX instruction by referencing AX instead.
         // Shift it down 8 bits.
         Result = CurDAG->getCopyFromReg(CurDAG->getEntryNode(), dl,
-                                        X86::AX, EVT::i16, InFlag);
+                                        X86::AX, MVT::i16, InFlag);
         InFlag = Result.getValue(2);
-        Result = SDValue(CurDAG->getTargetNode(X86::SHR16ri, dl, EVT::i16,
+        Result = SDValue(CurDAG->getTargetNode(X86::SHR16ri, dl, MVT::i16,
                                                Result,
-                                   CurDAG->getTargetConstant(8, EVT::i8)), 0);
+                                   CurDAG->getTargetConstant(8, MVT::i8)), 0);
         // Then truncate it down to i8.
-        SDValue SRIdx = CurDAG->getTargetConstant(X86::SUBREG_8BIT, EVT::i32);
+        SDValue SRIdx = CurDAG->getTargetConstant(X86::SUBREG_8BIT, MVT::i32);
         Result = SDValue(CurDAG->getTargetNode(X86::EXTRACT_SUBREG, dl,
-                                                 EVT::i8, Result, SRIdx), 0);
+                                                 MVT::i8, Result, SRIdx), 0);
       } else {
         Result = CurDAG->getCopyFromReg(CurDAG->getEntryNode(), dl,
                                         HiReg, NVT, InFlag);
@@ -1775,43 +1775,43 @@ SDNode *X86DAGToDAGISel::Select(SDValue N) {
 
     bool isSigned = Opcode == ISD::SDIVREM;
     if (!isSigned) {
-      switch (NVT.getSimpleVT()) {
+      switch (NVT.getSimpleVT().SimpleTy) {
       default: llvm_unreachable("Unsupported VT!");
-      case EVT::i8:  Opc = X86::DIV8r;  MOpc = X86::DIV8m;  break;
-      case EVT::i16: Opc = X86::DIV16r; MOpc = X86::DIV16m; break;
-      case EVT::i32: Opc = X86::DIV32r; MOpc = X86::DIV32m; break;
-      case EVT::i64: Opc = X86::DIV64r; MOpc = X86::DIV64m; break;
+      case MVT::i8:  Opc = X86::DIV8r;  MOpc = X86::DIV8m;  break;
+      case MVT::i16: Opc = X86::DIV16r; MOpc = X86::DIV16m; break;
+      case MVT::i32: Opc = X86::DIV32r; MOpc = X86::DIV32m; break;
+      case MVT::i64: Opc = X86::DIV64r; MOpc = X86::DIV64m; break;
       }
     } else {
-      switch (NVT.getSimpleVT()) {
+      switch (NVT.getSimpleVT().SimpleTy) {
       default: llvm_unreachable("Unsupported VT!");
-      case EVT::i8:  Opc = X86::IDIV8r;  MOpc = X86::IDIV8m;  break;
-      case EVT::i16: Opc = X86::IDIV16r; MOpc = X86::IDIV16m; break;
-      case EVT::i32: Opc = X86::IDIV32r; MOpc = X86::IDIV32m; break;
-      case EVT::i64: Opc = X86::IDIV64r; MOpc = X86::IDIV64m; break;
+      case MVT::i8:  Opc = X86::IDIV8r;  MOpc = X86::IDIV8m;  break;
+      case MVT::i16: Opc = X86::IDIV16r; MOpc = X86::IDIV16m; break;
+      case MVT::i32: Opc = X86::IDIV32r; MOpc = X86::IDIV32m; break;
+      case MVT::i64: Opc = X86::IDIV64r; MOpc = X86::IDIV64m; break;
       }
     }
 
     unsigned LoReg, HiReg;
     unsigned ClrOpcode, SExtOpcode;
-    switch (NVT.getSimpleVT()) {
+    switch (NVT.getSimpleVT().SimpleTy) {
     default: llvm_unreachable("Unsupported VT!");
-    case EVT::i8:
+    case MVT::i8:
       LoReg = X86::AL;  HiReg = X86::AH;
       ClrOpcode  = 0;
       SExtOpcode = X86::CBW;
       break;
-    case EVT::i16:
+    case MVT::i16:
       LoReg = X86::AX;  HiReg = X86::DX;
       ClrOpcode  = X86::MOV16r0;
       SExtOpcode = X86::CWD;
       break;
-    case EVT::i32:
+    case MVT::i32:
       LoReg = X86::EAX; HiReg = X86::EDX;
       ClrOpcode  = X86::MOV32r0;
       SExtOpcode = X86::CDQ;
       break;
-    case EVT::i64:
+    case MVT::i64:
       LoReg = X86::RAX; HiReg = X86::RDX;
       ClrOpcode  = ~0U; // NOT USED.
       SExtOpcode = X86::CQO;
@@ -1823,21 +1823,21 @@ SDNode *X86DAGToDAGISel::Select(SDValue N) {
     bool signBitIsZero = CurDAG->SignBitIsZero(N0);
 
     SDValue InFlag;
-    if (NVT == EVT::i8 && (!isSigned || signBitIsZero)) {
+    if (NVT == MVT::i8 && (!isSigned || signBitIsZero)) {
       // Special case for div8, just use a move with zero extension to AX to
       // clear the upper 8 bits (AH).
       SDValue Tmp0, Tmp1, Tmp2, Tmp3, Tmp4, Move, Chain;
       if (TryFoldLoad(N, N0, Tmp0, Tmp1, Tmp2, Tmp3, Tmp4)) {
         SDValue Ops[] = { Tmp0, Tmp1, Tmp2, Tmp3, Tmp4, N0.getOperand(0) };
         Move =
-          SDValue(CurDAG->getTargetNode(X86::MOVZX16rm8, dl, EVT::i16,
-                                        EVT::Other, Ops,
+          SDValue(CurDAG->getTargetNode(X86::MOVZX16rm8, dl, MVT::i16,
+                                        MVT::Other, Ops,
                                         array_lengthof(Ops)), 0);
         Chain = Move.getValue(1);
         ReplaceUses(N0.getValue(1), Chain);
       } else {
         Move =
-          SDValue(CurDAG->getTargetNode(X86::MOVZX16rr8, dl, EVT::i16, N0),0);
+          SDValue(CurDAG->getTargetNode(X86::MOVZX16rr8, dl, MVT::i16, N0),0);
         Chain = CurDAG->getEntryNode();
       }
       Chain  = CurDAG->getCopyToReg(Chain, dl, X86::AX, Move, SDValue());
@@ -1849,24 +1849,24 @@ SDNode *X86DAGToDAGISel::Select(SDValue N) {
       if (isSigned && !signBitIsZero) {
         // Sign extend the low part into the high part.
         InFlag =
-          SDValue(CurDAG->getTargetNode(SExtOpcode, dl, EVT::Flag, InFlag),0);
+          SDValue(CurDAG->getTargetNode(SExtOpcode, dl, MVT::Flag, InFlag),0);
       } else {
         // Zero out the high part, effectively zero extending the input.
         SDValue ClrNode;
 
-        if (NVT.getSimpleVT() == EVT::i64) {
-          ClrNode = SDValue(CurDAG->getTargetNode(X86::MOV32r0, dl, EVT::i32),
+        if (NVT.getSimpleVT() == MVT::i64) {
+          ClrNode = SDValue(CurDAG->getTargetNode(X86::MOV32r0, dl, MVT::i32),
                             0);
           // We just did a 32-bit clear, insert it into a 64-bit register to
           // clear the whole 64-bit reg.
           SDValue Undef =
             SDValue(CurDAG->getTargetNode(TargetInstrInfo::IMPLICIT_DEF,
-                                          dl, EVT::i64), 0);
+                                          dl, MVT::i64), 0);
           SDValue SubRegNo =
-            CurDAG->getTargetConstant(X86::SUBREG_32BIT, EVT::i32);
+            CurDAG->getTargetConstant(X86::SUBREG_32BIT, MVT::i32);
           ClrNode =
             SDValue(CurDAG->getTargetNode(TargetInstrInfo::INSERT_SUBREG, dl,
-                                          EVT::i64, Undef, ClrNode, SubRegNo),
+                                          MVT::i64, Undef, ClrNode, SubRegNo),
                     0);
         } else {
           ClrNode = SDValue(CurDAG->getTargetNode(ClrOpcode, dl, NVT), 0);
@@ -1881,14 +1881,14 @@ SDNode *X86DAGToDAGISel::Select(SDValue N) {
       SDValue Ops[] = { Tmp0, Tmp1, Tmp2, Tmp3, Tmp4, N1.getOperand(0),
                         InFlag };
       SDNode *CNode =
-        CurDAG->getTargetNode(MOpc, dl, EVT::Other, EVT::Flag, Ops,
+        CurDAG->getTargetNode(MOpc, dl, MVT::Other, MVT::Flag, Ops,
                               array_lengthof(Ops));
       InFlag = SDValue(CNode, 1);
       // Update the chain.
       ReplaceUses(N1.getValue(1), SDValue(CNode, 0));
     } else {
       InFlag =
-        SDValue(CurDAG->getTargetNode(Opc, dl, EVT::Flag, N1, InFlag), 0);
+        SDValue(CurDAG->getTargetNode(Opc, dl, MVT::Flag, N1, InFlag), 0);
     }
 
     // Copy the division (low) result, if it is needed.
@@ -1912,16 +1912,16 @@ SDNode *X86DAGToDAGISel::Select(SDValue N) {
         // Prevent use of AH in a REX instruction by referencing AX instead.
         // Shift it down 8 bits.
         Result = CurDAG->getCopyFromReg(CurDAG->getEntryNode(), dl,
-                                        X86::AX, EVT::i16, InFlag);
+                                        X86::AX, MVT::i16, InFlag);
         InFlag = Result.getValue(2);
-        Result = SDValue(CurDAG->getTargetNode(X86::SHR16ri, dl, EVT::i16,
+        Result = SDValue(CurDAG->getTargetNode(X86::SHR16ri, dl, MVT::i16,
                                       Result,
-                                      CurDAG->getTargetConstant(8, EVT::i8)),
+                                      CurDAG->getTargetConstant(8, MVT::i8)),
                          0);
         // Then truncate it down to i8.
-        SDValue SRIdx = CurDAG->getTargetConstant(X86::SUBREG_8BIT, EVT::i32);
+        SDValue SRIdx = CurDAG->getTargetConstant(X86::SUBREG_8BIT, MVT::i32);
         Result = SDValue(CurDAG->getTargetNode(X86::EXTRACT_SUBREG, dl,
-                                                 EVT::i8, Result, SRIdx), 0);
+                                                 MVT::i8, Result, SRIdx), 0);
       } else {
         Result = CurDAG->getCopyFromReg(CurDAG->getEntryNode(), dl,
                                         HiReg, NVT, InFlag);
@@ -1981,7 +1981,7 @@ SDNode *X86DAGToDAGISel::Select(SDValue N) {
                                                   TLI.getPointerTy());
     SDValue Ops[] = { Tmp1, Tmp2, Chain };
     return CurDAG->getTargetNode(TargetInstrInfo::DECLARE, dl,
-                                 EVT::Other, Ops,
+                                 MVT::Other, Ops,
                                  array_lengthof(Ops));
   }
   }

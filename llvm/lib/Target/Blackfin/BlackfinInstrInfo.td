@@ -42,21 +42,21 @@ def BfinWrapper: SDNode<"BFISD::Wrapper", SDTIntUnaryOp>;
 
 def trailingZeros_xform : SDNodeXForm<imm, [{
   return CurDAG->getTargetConstant(N->getAPIntValue().countTrailingZeros(),
-                                   EVT::i32);
+                                   MVT::i32);
 }]>;
 
 def trailingOnes_xform : SDNodeXForm<imm, [{
   return CurDAG->getTargetConstant(N->getAPIntValue().countTrailingOnes(),
-                                   EVT::i32);
+                                   MVT::i32);
 }]>;
 
 def LO16 : SDNodeXForm<imm, [{
-  return CurDAG->getTargetConstant((unsigned short)N->getZExtValue(), EVT::i16);
+  return CurDAG->getTargetConstant((unsigned short)N->getZExtValue(), MVT::i16);
 }]>;
 
 def HI16 : SDNodeXForm<imm, [{
   // Transformation function: shift the immediate value down into the low bits.
-  return CurDAG->getTargetConstant((unsigned)N->getZExtValue() >> 16, EVT::i16);
+  return CurDAG->getTargetConstant((unsigned)N->getZExtValue() >> 16, MVT::i16);
 }]>;
 
 //===----------------------------------------------------------------------===//

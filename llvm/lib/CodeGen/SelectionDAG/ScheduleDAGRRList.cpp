@@ -353,15 +353,15 @@ SUnit *ScheduleDAGRRList::CopyAndMoveSuccessors(SUnit *SU) {
   bool TryUnfold = false;
   for (unsigned i = 0, e = N->getNumValues(); i != e; ++i) {
     EVT VT = N->getValueType(i);
-    if (VT == EVT::Flag)
+    if (VT == MVT::Flag)
       return NULL;
-    else if (VT == EVT::Other)
+    else if (VT == MVT::Other)
       TryUnfold = true;
   }
   for (unsigned i = 0, e = N->getNumOperands(); i != e; ++i) {
     const SDValue &Op = N->getOperand(i);
     EVT VT = Op.getNode()->getValueType(Op.getResNo());
-    if (VT == EVT::Flag)
+    if (VT == MVT::Flag)
       return NULL;
   }
 
@@ -630,7 +630,7 @@ bool ScheduleDAGRRList::DelayForLiveRegsBottomUp(SUnit *SU,
     if (Node->getOpcode() == ISD::INLINEASM) {
       // Inline asm can clobber physical defs.
       unsigned NumOps = Node->getNumOperands();
-      if (Node->getOperand(NumOps-1).getValueType() == EVT::Flag)
+      if (Node->getOperand(NumOps-1).getValueType() == MVT::Flag)
         --NumOps;  // Ignore the flag operand.
 
       for (unsigned i = 2; i != NumOps;) {
@@ -1217,7 +1217,7 @@ static bool canClobberPhysRegDefs(const SUnit *SuccSU, const SUnit *SU,
       return false;
     for (unsigned i = NumDefs, e = N->getNumValues(); i != e; ++i) {
       EVT VT = N->getValueType(i);
-      if (VT == EVT::Flag || VT == EVT::Other)
+      if (VT == MVT::Flag || VT == MVT::Other)
         continue;
       if (!N->hasAnyUseOfValue(i))
         continue;

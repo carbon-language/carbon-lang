@@ -24,9 +24,9 @@
 namespace llvm {
   class Type;
   class LLVMContext;
+  struct EVT;
 
-  struct EVT { // EVT = Machine Value Type
-  public:
+  struct MVT { // MVT = Machine Value Type
     enum SimpleValueType {
       // If you change this numbering, you must change the values in
       // ValueTypes.td as well!
@@ -113,131 +113,288 @@ namespace llvm {
       LastSimpleValueType = 255
     };
 
+    SimpleValueType SimpleTy;
+
+    MVT() : SimpleTy((SimpleValueType)(LastSimpleValueType+1)) {}
+    MVT(SimpleValueType SVT) : SimpleTy(SVT) { }
+    
+    bool operator>(const MVT& S)  const { return SimpleTy >  S.SimpleTy; }
+    bool operator<(const MVT& S)  const { return SimpleTy <  S.SimpleTy; }
+    bool operator==(const MVT& S) const { return SimpleTy == S.SimpleTy; }
+    bool operator>=(const MVT& S) const { return SimpleTy >= S.SimpleTy; }
+    bool operator<=(const MVT& S) const { return SimpleTy <= S.SimpleTy; }
+    
+    /// isFloatingPoint - Return true if this is a FP, or a vector FP type.
+    bool isFloatingPoint() const {
+      return ((SimpleTy >= MVT::f32 && SimpleTy <= MVT::ppcf128) ||
+        (SimpleTy >= MVT::v2f32 && SimpleTy <= MVT::v4f64));
+    }
+
+    /// isInteger - Return true if this is an integer, or a vector integer type.
+    bool isInteger() const {
+      return ((SimpleTy >= MVT::FIRST_INTEGER_VALUETYPE &&
+               SimpleTy <= MVT::LAST_INTEGER_VALUETYPE) ||
+               (SimpleTy >= MVT::v2i8 && SimpleTy <= MVT::v4i64));
+    }
+
+    /// isVector - Return true if this is a vector value type.
+    bool isVector() const {
+      return (SimpleTy >= MVT::FIRST_VECTOR_VALUETYPE &&
+              SimpleTy <= MVT::LAST_VECTOR_VALUETYPE);
+    }
+    
+    MVT getVectorElementType() const {
+      switch (SimpleTy) {
+      default:
+        return (MVT::SimpleValueType)(MVT::LastSimpleValueType+1);
+      case v2i8 :
+      case v4i8 :
+      case v8i8 :
+      case v16i8:
+      case v32i8: return i8;
+      case v2i16:
+      case v4i16:
+      case v8i16:
+      case v16i16: return i16;
+      case v2i32:
+      case v4i32:
+      case v8i32: return i32;
+      case v1i64:
+      case v2i64:
+      case v4i64: return i64;
+      case v2f32:
+      case v4f32:
+      case v8f32: return f32;
+      case v2f64:
+      case v4f64: return f64;
+      }
+    }
+    
+    unsigned getVectorNumElements() const {
+      switch (SimpleTy) {
+      default:
+        return ~0U;
+      case v32i8: return 32;
+      case v16i8:
+      case v16i16: return 16;
+      case v8i8 :
+      case v8i16:
+      case v8i32:
+      case v8f32: return 8;
+      case v4i8:
+      case v4i16:
+      case v4i32:
+      case v4i64:
+      case v4f32:
+      case v4f64: return 4;
+      case v2i8:
+      case v2i16:
+      case v2i32:
+      case v2i64:
+      case v2f32:
+      case v2f64: return 2;
+      case v1i64: return 1;
+      }
+    }
+    
+    unsigned getSizeInBits() const {
+      switch (SimpleTy) {
+      case iPTR:
+        assert(0 && "Value type size is target-dependent. Ask TLI.");
+      case iPTRAny:
+      case iAny:
+      case fAny:
+        assert(0 && "Value type is overloaded.");
+      default:
+        assert(0 && "getSizeInBits called on extended MVT.");
+      case i1  :  return 1;
+      case i8  :  return 8;
+      case i16 :
+      case v2i8:  return 16;
+      case f32 :
+      case i32 :
+      case v4i8:
+      case v2i16: return 32;
+      case f64 :
+      case i64 :
+      case v8i8:
+      case v4i16:
+      case v2i32:
+      case v1i64:
+      case v2f32: return 64;
+      case f80 :  return 80;
+      case f128:
+      case ppcf128:
+      case i128:
+      case v16i8:
+      case v8i16:
+      case v4i32:
+      case v2i64:
+      case v4f32:
+      case v2f64: return 128;
+      case v32i8:
+      case v16i16:
+      case v8i32:
+      case v4i64:
+      case v8f32:
+      case v4f64: return 256;
+      }
+    }
+    
+    static MVT getFloatingPointVT(unsigned BitWidth) {
+      switch (BitWidth) {
+      default:
+        assert(false && "Bad bit width!");
+      case 32:
+        return MVT::f32;
+      case 64:
+        return MVT::f64;
+      case 80:
+        return MVT::f80;
+      case 128:
+        return MVT::f128;
+      }
+    }
+    
+    static MVT getIntegerVT(unsigned BitWidth) {
+      switch (BitWidth) {
+      default:
+        return (MVT::SimpleValueType)(MVT::LastSimpleValueType+1);
+      case 1:
+        return MVT::i1;
+      case 8:
+        return MVT::i8;
+      case 16:
+        return MVT::i16;
+      case 32:
+        return MVT::i32;
+      case 64:
+        return MVT::i64;
+      case 128:
+        return MVT::i128;
+      }
+    }
+    
+    static MVT getVectorVT(MVT VT, unsigned NumElements) {
+      switch (VT.SimpleTy) {
+      default:
+        break;
+      case MVT::i8:
+        if (NumElements == 2)  return MVT::v2i8;
+        if (NumElements == 4)  return MVT::v4i8;
+        if (NumElements == 8)  return MVT::v8i8;
+        if (NumElements == 16) return MVT::v16i8;
+        if (NumElements == 32) return MVT::v32i8;
+        break;
+      case MVT::i16:
+        if (NumElements == 2)  return MVT::v2i16;
+        if (NumElements == 4)  return MVT::v4i16;
+        if (NumElements == 8)  return MVT::v8i16;
+        if (NumElements == 16) return MVT::v16i16;
+        break;
+      case MVT::i32:
+        if (NumElements == 2)  return MVT::v2i32;
+        if (NumElements == 4)  return MVT::v4i32;
+        if (NumElements == 8)  return MVT::v8i32;
+        break;
+      case MVT::i64:
+        if (NumElements == 1)  return MVT::v1i64;
+        if (NumElements == 2)  return MVT::v2i64;
+        if (NumElements == 4)  return MVT::v4i64;
+        break;
+      case MVT::f32:
+        if (NumElements == 2)  return MVT::v2f32;
+        if (NumElements == 4)  return MVT::v4f32;
+        if (NumElements == 8)  return MVT::v8f32;
+        break;
+      case MVT::f64:
+        if (NumElements == 2)  return MVT::v2f64;
+        if (NumElements == 4)  return MVT::v4f64;
+        break;
+      }
+      return (MVT::SimpleValueType)(MVT::LastSimpleValueType+1);
+    }
+    
+    static MVT getIntVectorWithNumElements(unsigned NumElts) {
+      switch (NumElts) {
+      default: return (MVT::SimpleValueType)(MVT::LastSimpleValueType+1);
+      case  1: return MVT::v1i64;
+      case  2: return MVT::v2i32;
+      case  4: return MVT::v4i16;
+      case  8: return MVT::v8i8;
+      case 16: return MVT::v16i8;
+      }
+    }
+  };
+
+  struct EVT { // EVT = Extended Value Type
   private:
-    /// This union holds low-level value types. Valid values include any of
-    /// the values in the SimpleValueType enum, or any value returned from one
-    /// of the EVT methods.  Any value type equal to one of the SimpleValueType
-    /// enum values is a "simple" value type.  All others are "extended".
-    ///
-    /// Note that simple doesn't necessary mean legal for the target machine.
-    /// All legal value types must be simple, but often there are some simple
-    /// value types that are not legal.
-    ///
-    union {
-      uintptr_t V;
-      const Type *LLVMTy;
-    };
+    MVT V;
+    const Type *LLVMTy;
 
   public:
-    EVT() {}
-    EVT(SimpleValueType S) : V(S) {}
+    EVT() : V((MVT::SimpleValueType)(MVT::LastSimpleValueType+1)) {}
+    EVT(MVT::SimpleValueType SVT) : V(SVT) { }
+    EVT(MVT S) : V(S) {}
 
     bool operator==(const EVT VT) const {
-      return getRawBits() == VT.getRawBits();
+      if (V.SimpleTy == VT.V.SimpleTy) {
+        if (V.SimpleTy == MVT::LastSimpleValueType+1)
+          return LLVMTy == VT.LLVMTy;
+        return true;
+      }
+      return false;
     }
     bool operator!=(const EVT VT) const {
-      return getRawBits() != VT.getRawBits();
+      if (V.SimpleTy == VT.V.SimpleTy) {
+        if (V.SimpleTy == MVT::LastSimpleValueType+1)
+          return LLVMTy != VT.LLVMTy;
+        return false;
+      }
+      return true;
     }
 
     /// getFloatingPointVT - Returns the EVT that represents a floating point
     /// type with the given number of bits.  There are two floating point types
     /// with 128 bits - this returns f128 rather than ppcf128.
     static EVT getFloatingPointVT(unsigned BitWidth) {
-      switch (BitWidth) {
-      default:
-        assert(false && "Bad bit width!");
-      case 32:
-        return f32;
-      case 64:
-        return f64;
-      case 80:
-        return f80;
-      case 128:
-        return f128;
-      }
+      return MVT::getFloatingPointVT(BitWidth);
     }
 
     /// getIntegerVT - Returns the EVT that represents an integer with the given
     /// number of bits.
     static EVT getIntegerVT(unsigned BitWidth) {
-      switch (BitWidth) {
-      default:
-        break;
-      case 1:
-        return i1;
-      case 8:
-        return i8;
-      case 16:
-        return i16;
-      case 32:
-        return i32;
-      case 64:
-        return i64;
-      case 128:
-        return i128;
-      }
-      return getExtendedIntegerVT(BitWidth);
+      MVT M = MVT::getIntegerVT(BitWidth);
+      if (M.SimpleTy == MVT::LastSimpleValueType+1)
+        return getExtendedIntegerVT(BitWidth);
+      else
+        return M;
     }
 
     /// getVectorVT - Returns the EVT that represents a vector NumElements in
     /// length, where each element is of type VT.
     static EVT getVectorVT(EVT VT, unsigned NumElements) {
-      switch (VT.V) {
-      default:
-        break;
-      case i8:
-        if (NumElements == 2)  return v2i8;
-        if (NumElements == 4)  return v4i8;
-        if (NumElements == 8)  return v8i8;
-        if (NumElements == 16) return v16i8;
-        if (NumElements == 32) return v32i8;
-        break;
-      case i16:
-        if (NumElements == 2)  return v2i16;
-        if (NumElements == 4)  return v4i16;
-        if (NumElements == 8)  return v8i16;
-        if (NumElements == 16) return v16i16;
-        break;
-      case i32:
-        if (NumElements == 2)  return v2i32;
-        if (NumElements == 4)  return v4i32;
-        if (NumElements == 8)  return v8i32;
-        break;
-      case i64:
-        if (NumElements == 1)  return v1i64;
-        if (NumElements == 2)  return v2i64;
-        if (NumElements == 4)  return v4i64;
-        break;
-      case f32:
-        if (NumElements == 2)  return v2f32;
-        if (NumElements == 4)  return v4f32;
-        if (NumElements == 8)  return v8f32;
-        break;
-      case f64:
-        if (NumElements == 2)  return v2f64;
-        if (NumElements == 4)  return v4f64;
-        break;
-      }
-      return getExtendedVectorVT(VT, NumElements);
+      MVT M = MVT::getVectorVT(VT.V, NumElements);
+      if (M.SimpleTy == MVT::LastSimpleValueType+1)
+        return getExtendedVectorVT(VT, NumElements);
+      else
+        return M;
     }
 
     /// getIntVectorWithNumElements - Return any integer vector type that has
     /// the specified number of elements.
     static EVT getIntVectorWithNumElements(unsigned NumElts) {
-      switch (NumElts) {
-      default: return getVectorVT(i8, NumElts);
-      case  1: return v1i64;
-      case  2: return v2i32;
-      case  4: return v4i16;
-      case  8: return v8i8;
-      case 16: return v16i8;
-      }
+      MVT M = MVT::getIntVectorWithNumElements(NumElts);
+      if (M.SimpleTy == MVT::LastSimpleValueType+1)
+        return getVectorVT(EVT(MVT::i8), NumElts);
+      else
+        return M;
     }
 
     /// isSimple - Test if the given EVT is simple (as opposed to being
     /// extended).
     bool isSimple() const {
-      return V <= LastSimpleValueType;
+      return V.SimpleTy <= MVT::LastSimpleValueType;
     }
 
     /// isExtended - Test if the given EVT is extended (as opposed to
@@ -249,49 +406,53 @@ namespace llvm {
     /// isFloatingPoint - Return true if this is a FP, or a vector FP type.
     bool isFloatingPoint() const {
       return isSimple() ?
-             ((V >= f32 && V <= ppcf128) ||
-              (V >= v2f32 && V <= v4f64)) : isExtendedFloatingPoint();
+             ((V >= MVT::f32 && V <= MVT::ppcf128) ||
+              (V >= MVT::v2f32 && V <= MVT::v4f64)) : isExtendedFloatingPoint();
     }
 
     /// isInteger - Return true if this is an integer, or a vector integer type.
     bool isInteger() const {
       return isSimple() ?
-             ((V >= FIRST_INTEGER_VALUETYPE && V <= LAST_INTEGER_VALUETYPE) ||
-              (V >= v2i8 && V <= v4i64)) : isExtendedInteger();
+             ((V >= MVT::FIRST_INTEGER_VALUETYPE &&
+               V <= MVT::LAST_INTEGER_VALUETYPE) ||
+              (V >= MVT::v2i8 && V <= MVT::v4i64)) : isExtendedInteger();
     }
 
     /// isVector - Return true if this is a vector value type.
     bool isVector() const {
       return isSimple() ?
-             (V >= FIRST_VECTOR_VALUETYPE && V <= LAST_VECTOR_VALUETYPE) :
+             (V >= MVT::FIRST_VECTOR_VALUETYPE && V <= 
+                   MVT::LAST_VECTOR_VALUETYPE) :
              isExtendedVector();
     }
 
     /// is64BitVector - Return true if this is a 64-bit vector type.
     bool is64BitVector() const {
       return isSimple() ?
-             (V==v8i8 || V==v4i16 || V==v2i32 || V==v1i64 || V==v2f32) :
+             (V==MVT::v8i8 || V==MVT::v4i16 || V==MVT::v2i32 ||
+              V==MVT::v1i64 || V==MVT::v2f32) :
              isExtended64BitVector();
     }
 
     /// is128BitVector - Return true if this is a 128-bit vector type.
     bool is128BitVector() const {
       return isSimple() ?
-             (V==v16i8 || V==v8i16 || V==v4i32 ||
-              V==v2i64 || V==v4f32 || V==v2f64) :
+             (V==MVT::v16i8 || V==MVT::v8i16 || V==MVT::v4i32 ||
+              V==MVT::v2i64 || V==MVT::v4f32 || V==MVT::v2f64) :
              isExtended128BitVector();
     }
 
     /// is256BitVector - Return true if this is a 256-bit vector type.
     inline bool is256BitVector() const {
       return isSimple() ?
-             (V==v8f32 || V==v4f64 || V==v32i8 || V==v16i16 || V==v8i32 ||
-              V==v4i64) : isExtended256BitVector();
+             (V==MVT::v8f32 || V==MVT::v4f64 || V==MVT::v32i8 ||
+              V==MVT::v16i16 || V==MVT::v8i32 || V==MVT::v4i64) : 
+            isExtended256BitVector();
     }
 
     /// isOverloaded - Return true if this is an overloaded type for TableGen.
     bool isOverloaded() const {
-      return (V==iAny || V==fAny || V==vAny || V==iPTRAny);
+      return (V==MVT::iAny || V==MVT::fAny || V==MVT::vAny || V==MVT::iPTRAny);
     }
 
     /// isByteSized - Return true if the bit size is a multiple of 8.
@@ -333,115 +494,37 @@ namespace llvm {
 
     /// getSimpleVT - Return the SimpleValueType held in the specified
     /// simple EVT.
-    SimpleValueType getSimpleVT() const {
+    MVT getSimpleVT() const {
       assert(isSimple() && "Expected a SimpleValueType!");
-      return SimpleValueType(V);
+      return V;
     }
 
     /// getVectorElementType - Given a vector type, return the type of
     /// each element.
     EVT getVectorElementType() const {
       assert(isVector() && "Invalid vector type!");
-      switch (V) {
-      default:
+      if (isSimple())
+        return V.getVectorElementType();
+      else
         return getExtendedVectorElementType();
-      case v2i8 :
-      case v4i8 :
-      case v8i8 :
-      case v16i8:
-      case v32i8: return i8;
-      case v2i16:
-      case v4i16:
-      case v8i16:
-      case v16i16: return i16;
-      case v2i32:
-      case v4i32:
-      case v8i32: return i32;
-      case v1i64:
-      case v2i64:
-      case v4i64: return i64;
-      case v2f32:
-      case v4f32:
-      case v8f32: return f32;
-      case v2f64:
-      case v4f64: return f64;
-      }
     }
 
     /// getVectorNumElements - Given a vector type, return the number of
     /// elements it contains.
     unsigned getVectorNumElements() const {
       assert(isVector() && "Invalid vector type!");
-      switch (V) {
-      default:
+      if (isSimple())
+        return V.getVectorNumElements();
+      else
         return getExtendedVectorNumElements();
-      case v32i8: return 32;
-      case v16i8:
-      case v16i16: return 16;
-      case v8i8 :
-      case v8i16:
-      case v8i32:
-      case v8f32: return 8;
-      case v4i8:
-      case v4i16:
-      case v4i32:
-      case v4i64:
-      case v4f32:
-      case v4f64: return 4;
-      case v2i8:
-      case v2i16:
-      case v2i32:
-      case v2i64:
-      case v2f32:
-      case v2f64: return 2;
-      case v1i64: return 1;
-      }
     }
 
     /// getSizeInBits - Return the size of the specified value type in bits.
     unsigned getSizeInBits() const {
-      switch (V) {
-      case iPTR:
-        assert(0 && "Value type size is target-dependent. Ask TLI.");
-      case iPTRAny:
-      case iAny:
-      case fAny:
-      case vAny:
-        assert(0 && "Value type is overloaded.");
-      default:
+      if (isSimple())
+        return V.getSizeInBits();
+      else
         return getExtendedSizeInBits();
-      case i1  :  return 1;
-      case i8  :  return 8;
-      case i16 :
-      case v2i8:  return 16;
-      case f32 :
-      case i32 :
-      case v4i8:
-      case v2i16: return 32;
-      case f64 :
-      case i64 :
-      case v8i8:
-      case v4i16:
-      case v2i32:
-      case v1i64:
-      case v2f32: return 64;
-      case f80 :  return 80;
-      case f128:
-      case ppcf128:
-      case i128:
-      case v16i8:
-      case v8i16:
-      case v4i32:
-      case v2i64:
-      case v4f32:
-      case v2f64: return 128;
-      case v32i8:
-      case v16i16:
-      case v8i32:
-      case v4i64:
-      case v8f32:
-      case v4f64: return 256;
-      }
     }
 
     /// getStoreSizeInBits - Return the number of bits overwritten by a store
@@ -457,7 +540,7 @@ namespace llvm {
       assert(isInteger() && !isVector() && "Invalid integer type!");
       unsigned BitWidth = getSizeInBits();
       if (BitWidth <= 8)
-        return i8;
+        return EVT(MVT::i8);
       else
         return getIntegerVT(1 << Log2_32_Ceil(BitWidth));
     }
@@ -495,14 +578,21 @@ namespace llvm {
     /// types are returned as Other, otherwise they are invalid.
     static EVT getEVT(const Type *Ty, bool HandleUnknown = false);
 
-    /// getRawBits - Represent the type as a bunch of bits.
-    uintptr_t getRawBits() const { return V; }
+    intptr_t getRawBits() {
+      if (V.SimpleTy <= MVT::LastSimpleValueType)
+        return V.SimpleTy;
+      else
+        return (intptr_t)(LLVMTy);
+    }
 
     /// compareRawBits - A meaningless but well-behaved order, useful for
     /// constructing containers.
     struct compareRawBits {
       bool operator()(EVT L, EVT R) const {
-        return L.getRawBits() < R.getRawBits();
+        if (L.V.SimpleTy == R.V.SimpleTy)
+          return L.LLVMTy < R.LLVMTy;
+        else
+          return L.V.SimpleTy < R.V.SimpleTy;
       }
     };
 

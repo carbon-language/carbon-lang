@@ -1559,7 +1559,7 @@ bool Verifier::PerformTypeCheck(Intrinsic::ID ID, Function *F, const Type *Ty,
         return false;
       }
     }
-  } else if (VT == EVT::iAny) {
+  } else if (VT == MVT::iAny) {
     if (!EltTy->isInteger()) {
       CheckFailed(IntrinsicParam(ArgNo, NumRets) + " is not "
                   "an integer type.", F);
@@ -1584,7 +1584,7 @@ bool Verifier::PerformTypeCheck(Intrinsic::ID ID, Function *F, const Type *Ty,
       }
       break;
     }
-  } else if (VT == EVT::fAny) {
+  } else if (VT == MVT::fAny) {
     if (!EltTy->isFloatingPoint()) {
       CheckFailed(IntrinsicParam(ArgNo, NumRets) + " is not "
                   "a floating-point type.", F);
@@ -1597,19 +1597,19 @@ bool Verifier::PerformTypeCheck(Intrinsic::ID ID, Function *F, const Type *Ty,
       Suffix += "v" + utostr(NumElts);
 
     Suffix += EVT::getEVT(EltTy).getEVTString();
-  } else if (VT == EVT::vAny) {
+  } else if (VT == MVT::vAny) {
     if (!VTy) {
       CheckFailed(IntrinsicParam(ArgNo, NumRets) + " is not a vector type.", F);
       return false;
     }
     Suffix += ".v" + utostr(NumElts) + EVT::getEVT(EltTy).getEVTString();
-  } else if (VT == EVT::iPTR) {
+  } else if (VT == MVT::iPTR) {
     if (!isa<PointerType>(Ty)) {
       CheckFailed(IntrinsicParam(ArgNo, NumRets) + " is not a "
                   "pointer and a pointer is required.", F);
       return false;
     }
-  } else if (VT == EVT::iPTRAny) {
+  } else if (VT == MVT::iPTRAny) {
     // Outside of TableGen, we don't distinguish iPTRAny (to any address space)
     // and iPTR. In the verifier, we can not distinguish which case we have so
     // allow either case to be legal.
@@ -1621,8 +1621,8 @@ bool Verifier::PerformTypeCheck(Intrinsic::ID ID, Function *F, const Type *Ty,
                   "pointer and a pointer is required.", F);
       return false;
     }
-  } else if (EVT((EVT::SimpleValueType)VT).isVector()) {
-    EVT VVT = EVT((EVT::SimpleValueType)VT);
+  } else if (EVT((MVT::SimpleValueType)VT).isVector()) {
+    EVT VVT = EVT((MVT::SimpleValueType)VT);
 
     // If this is a vector argument, verify the number and type of elements.
     if (VVT.getVectorElementType() != EVT::getEVT(EltTy)) {
@@ -1635,7 +1635,7 @@ bool Verifier::PerformTypeCheck(Intrinsic::ID ID, Function *F, const Type *Ty,
                   "vector elements!", F);
       return false;
     }
-  } else if (EVT((EVT::SimpleValueType)VT).getTypeForEVT() != EltTy) {
+  } else if (EVT((MVT::SimpleValueType)VT).getTypeForEVT() != EltTy) {
     CheckFailed(IntrinsicParam(ArgNo, NumRets) + " is wrong!", F);
     return false;
   } else if (EltTy != Ty) {
@@ -1677,7 +1677,7 @@ void Verifier::VerifyIntrinsicPrototype(Intrinsic::ID ID, Function *F,
   }
 
   for (unsigned ArgNo = 0; ArgNo < RetNum; ++ArgNo) {
-    int VT = va_arg(VA, int); // An EVT::SimpleValueType when non-negative.
+    int VT = va_arg(VA, int); // An MVT::SimpleValueType when non-negative.
 
     if (ST) Ty = ST->getElementType(ArgNo);
 
@@ -1687,9 +1687,9 @@ void Verifier::VerifyIntrinsicPrototype(Intrinsic::ID ID, Function *F,
 
   // Verify the parameter types.
   for (unsigned ArgNo = 0; ArgNo < ParamNum; ++ArgNo) {
-    int VT = va_arg(VA, int); // An EVT::SimpleValueType when non-negative.
+    int VT = va_arg(VA, int); // An MVT::SimpleValueType when non-negative.
 
-    if (VT == EVT::isVoid && ArgNo > 0) {
+    if (VT == MVT::isVoid && ArgNo > 0) {
       if (!FTy->isVarArg())
         CheckFailed("Intrinsic prototype has no '...'!", F);
       break;

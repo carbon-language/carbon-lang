@@ -51,7 +51,7 @@ TargetRegisterInfo::getPhysicalRegisterRegClass(unsigned reg, EVT VT) const {
   const TargetRegisterClass* BestRC = 0;
   for (regclass_iterator I = regclass_begin(), E = regclass_end(); I != E; ++I){
     const TargetRegisterClass* RC = *I;
-    if ((VT == EVT::Other || RC->hasType(VT)) && RC->contains(reg) &&
+    if ((VT == MVT::Other || RC->hasType(VT)) && RC->contains(reg) &&
         (!BestRC || BestRC->hasSuperClass(RC)))
       BestRC = RC;
   }

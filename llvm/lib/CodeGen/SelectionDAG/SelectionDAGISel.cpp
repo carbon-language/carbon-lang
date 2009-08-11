@@ -421,7 +421,7 @@ void SelectionDAGISel::ComputeLiveOutVRegInfo() {
     
     // Otherwise, add all chain operands to the worklist.
     for (unsigned i = 0, e = N->getNumOperands(); i != e; ++i)
-      if (N->getOperand(i).getValueType() == EVT::Other)
+      if (N->getOperand(i).getValueType() == MVT::Other)
         Worklist.push_back(N->getOperand(i).getNode());
     
     // If this is a CopyToReg with a vreg dest, process it.
@@ -1098,7 +1098,7 @@ SelectInlineAsmMemoryOperands(std::vector<SDValue> &Ops) {
   Ops.push_back(InOps[1]);  // input asm string.
 
   unsigned i = 2, e = InOps.size();
-  if (InOps[e-1].getValueType() == EVT::Flag)
+  if (InOps[e-1].getValueType() == MVT::Flag)
     --e;  // Don't process a flag operand if it is here.
   
   while (i != e) {
@@ -1236,7 +1236,7 @@ bool SelectionDAGISel::IsLegalAndProfitableToFold(SDNode *N, SDNode *U,
   // a cycle in the scheduling graph.
 
   EVT VT = Root->getValueType(Root->getNumValues()-1);
-  while (VT == EVT::Flag) {
+  while (VT == MVT::Flag) {
     SDNode *FU = findFlagUse(Root);
     if (FU == NULL)
       break;

@@ -36,7 +36,7 @@ namespace llvm {
     Record *TheDef;
     std::string Namespace;
     std::vector<Record*> Elements;
-    std::vector<EVT::SimpleValueType> VTs;
+    std::vector<MVT::SimpleValueType> VTs;
     unsigned SpillSize;
     unsigned SpillAlignment;
     int CopyCost;
@@ -44,10 +44,10 @@ namespace llvm {
     std::string MethodProtos, MethodBodies;
 
     const std::string &getName() const;
-    const std::vector<EVT::SimpleValueType> &getValueTypes() const {return VTs;}
+    const std::vector<MVT::SimpleValueType> &getValueTypes() const {return VTs;}
     unsigned getNumValueTypes() const { return VTs.size(); }
     
-    EVT::SimpleValueType getValueTypeNum(unsigned VTNum) const {
+    MVT::SimpleValueType getValueTypeNum(unsigned VTNum) const {
       if (VTNum < VTs.size())
         return VTs[VTNum];
       assert(0 && "VTNum greater than number of ValueTypes in RegClass!");

@@ -111,8 +111,8 @@ public:
 
   bool isBigEndian() const { return !IsLittleEndian; }
   bool isLittleEndian() const { return IsLittleEndian; }
-  EVT::SimpleValueType getPointerTy() const { return PointerTy; }
-  EVT::SimpleValueType getShiftAmountTy() const { return ShiftAmountTy; }
+  MVT getPointerTy() const { return PointerTy; }
+  MVT getShiftAmountTy() const { return ShiftAmountTy; }
 
   /// usesGlobalOffsetTable - Return true if this target uses a GOT for PIC
   /// codegen.
@@ -133,10 +133,10 @@ public:
   /// getSetCCResultType - Return the ValueType of the result of SETCC
   /// operations.  Also used to obtain the target's preferred type for
   /// the condition operand of SELECT and BRCOND nodes.  In the case of
-  /// BRCOND the argument passed is EVT::Other since there are no other
+  /// BRCOND the argument passed is MVT::Other since there are no other
   /// operands to get a type hint from.
   virtual
-  EVT::SimpleValueType getSetCCResultType(EVT VT) const;
+  MVT::SimpleValueType getSetCCResultType(EVT VT) const;
 
   /// getBooleanContents - For targets without i1 registers, this gives the
   /// nature of the high-bits of boolean values held in types wider than i1.
@@ -154,7 +154,7 @@ public:
   /// specified value type.  This may only be called on legal types.
   TargetRegisterClass *getRegClassFor(EVT VT) const {
     assert(VT.isSimple() && "getRegClassFor called on illegal type!");
-    TargetRegisterClass *RC = RegClassForVT[VT.getSimpleVT()];
+    TargetRegisterClass *RC = RegClassForVT[VT.getSimpleVT().SimpleTy];
     assert(RC && "This value type is not natively supported!");
     return RC;
   }
@@ -164,16 +164,16 @@ public:
   /// holds it without promotions or expansions.
   bool isTypeLegal(EVT VT) const {
     assert(!VT.isSimple() ||
-           (unsigned)VT.getSimpleVT() < array_lengthof(RegClassForVT));
-    return VT.isSimple() && RegClassForVT[VT.getSimpleVT()] != 0;
+           (unsigned)VT.getSimpleVT().SimpleTy < array_lengthof(RegClassForVT));
+    return VT.isSimple() && RegClassForVT[VT.getSimpleVT().SimpleTy] != 0;
   }
 
   class ValueTypeActionImpl {
     /// ValueTypeActions - This is a bitvector that contains two bits for each
     /// value type, where the two bits correspond to the LegalizeAction enum.
     /// This can be queried with "getTypeAction(VT)".
-    /// dimension by (EVT::MAX_ALLOWED_VALUETYPE/32) * 2
-    uint32_t ValueTypeActions[(EVT::MAX_ALLOWED_VALUETYPE/32)*2];
+    /// dimension by (MVT::MAX_ALLOWED_VALUETYPE/32) * 2
+    uint32_t ValueTypeActions[(MVT::MAX_ALLOWED_VALUETYPE/32)*2];
   public:
     ValueTypeActionImpl() {
       ValueTypeActions[0] = ValueTypeActions[1] = 0;
@@ -197,12 +197,12 @@ public:
         assert(0 && "Unsupported extended type!");
         return Legal;
       }
-      unsigned I = VT.getSimpleVT();
+      unsigned I = VT.getSimpleVT().SimpleTy;
       assert(I<4*array_lengthof(ValueTypeActions)*sizeof(ValueTypeActions[0]));
       return (LegalizeAction)((ValueTypeActions[I>>4] >> ((2*I) & 31)) & 3);
     }
     void setTypeAction(EVT VT, LegalizeAction Action) {
-      unsigned I = VT.getSimpleVT();
+      unsigned I = VT.getSimpleVT().SimpleTy;
       assert(I<4*array_lengthof(ValueTypeActions)*sizeof(ValueTypeActions[0]));
       ValueTypeActions[I>>4] |= Action << ((I*2) & 31);
     }
@@ -228,8 +228,9 @@ public:
   /// returns the integer type to transform to.
   EVT getTypeToTransformTo(EVT VT) const {
     if (VT.isSimple()) {
-      assert((unsigned)VT.getSimpleVT() < array_lengthof(TransformToType));
-      EVT NVT = TransformToType[VT.getSimpleVT()];
+      assert((unsigned)VT.getSimpleVT().SimpleTy < 
+             array_lengthof(TransformToType));
+      EVT NVT = TransformToType[VT.getSimpleVT().SimpleTy];
       assert(getTypeAction(NVT) != Promote &&
              "Promote may not follow Expand or Promote");
       return NVT;
@@ -255,7 +256,7 @@ public:
         return getTypeAction(NVT) == Promote ? getTypeToTransformTo(NVT) : NVT;
     }
     assert(0 && "Unsupported extended type!");
-    return EVT(EVT::Other); // Not reached
+    return MVT(MVT::Other); // Not reached
   }
 
   /// getTypeToExpandTo - For types supported by the target, this is an
@@ -315,7 +316,7 @@ public:
 
   /// getWidenVectorType: given a vector type, returns the type to widen to
   /// (e.g., v7i8 to v8i8). If the vector type is legal, it returns itself.
-  /// If there is no vector type that we want to widen to, returns EVT::Other
+  /// If there is no vector type that we want to widen to, returns MVT::Other
   /// When and were to widen is target dependent based on the cost of
   /// scalarizing vs using the wider vector type.
   virtual EVT getWidenVectorType(EVT VT) const;
@@ -353,9 +354,9 @@ public:
   LegalizeAction getOperationAction(unsigned Op, EVT VT) const {
     if (VT.isExtended()) return Expand;
     assert(Op < array_lengthof(OpActions[0]) &&
-           (unsigned)VT.getSimpleVT() < sizeof(OpActions[0][0])*8 &&
+           (unsigned)VT.getSimpleVT().SimpleTy < sizeof(OpActions[0][0])*8 &&
            "Table isn't big enough!");
-    unsigned I = (unsigned) VT.getSimpleVT();
+    unsigned I = (unsigned) VT.getSimpleVT().SimpleTy;
     unsigned J = I & 31;
     I = I >> 5;
     return (LegalizeAction)((OpActions[I][Op] >> (J*2) ) & 3);
@@ -365,7 +366,7 @@ public:
   /// legal on this target or can be made legal with custom lowering. This
   /// is used to help guide high-level lowering decisions.
   bool isOperationLegalOrCustom(unsigned Op, EVT VT) const {
-    return (VT == EVT::Other || isTypeLegal(VT)) &&
+    return (VT == MVT::Other || isTypeLegal(VT)) &&
       (getOperationAction(Op, VT) == Legal ||
        getOperationAction(Op, VT) == Custom);
   }
@@ -373,7 +374,7 @@ public:
   /// isOperationLegal - Return true if the specified operation is legal on this
   /// target.
   bool isOperationLegal(unsigned Op, EVT VT) const {
-    return (VT == EVT::Other || isTypeLegal(VT)) &&
+    return (VT == MVT::Other || isTypeLegal(VT)) &&
            getOperationAction(Op, VT) == Legal;
   }
 
@@ -383,9 +384,10 @@ public:
   /// for it.
   LegalizeAction getLoadExtAction(unsigned LType, EVT VT) const {
     assert(LType < array_lengthof(LoadExtActions) &&
-           (unsigned)VT.getSimpleVT() < sizeof(LoadExtActions[0])*4 &&
+           (unsigned)VT.getSimpleVT().SimpleTy < sizeof(LoadExtActions[0])*4 &&
            "Table isn't big enough!");
-    return (LegalizeAction)((LoadExtActions[LType] >> (2*VT.getSimpleVT())) & 3);
+    return (LegalizeAction)((LoadExtActions[LType] >> 
+              (2*VT.getSimpleVT().SimpleTy)) & 3);
   }
 
   /// isLoadExtLegal - Return true if the specified load with extension is legal
@@ -402,11 +404,13 @@ public:
   /// expander for it.
   LegalizeAction getTruncStoreAction(EVT ValVT,
                                      EVT MemVT) const {
-    assert((unsigned)ValVT.getSimpleVT() < array_lengthof(TruncStoreActions) &&
-           (unsigned)MemVT.getSimpleVT() < sizeof(TruncStoreActions[0])*4 &&
+    assert((unsigned)ValVT.getSimpleVT().SimpleTy <
+             array_lengthof(TruncStoreActions) &&
+           (unsigned)MemVT.getSimpleVT().SimpleTy <
+             sizeof(TruncStoreActions[0])*4 &&
            "Table isn't big enough!");
-    return (LegalizeAction)((TruncStoreActions[ValVT.getSimpleVT()] >>
-                             (2*MemVT.getSimpleVT())) & 3);
+    return (LegalizeAction)((TruncStoreActions[ValVT.getSimpleVT().SimpleTy] >>
+                             (2*MemVT.getSimpleVT().SimpleTy)) & 3);
   }
 
   /// isTruncStoreLegal - Return true if the specified store with truncation is
@@ -424,9 +428,10 @@ public:
   LegalizeAction
   getIndexedLoadAction(unsigned IdxMode, EVT VT) const {
     assert( IdxMode < array_lengthof(IndexedModeActions[0][0]) &&
-           ((unsigned)VT.getSimpleVT()) < EVT::LAST_VALUETYPE &&
+           ((unsigned)VT.getSimpleVT().SimpleTy) < MVT::LAST_VALUETYPE &&
            "Table isn't big enough!");
-    return (LegalizeAction)((IndexedModeActions[(unsigned)VT.getSimpleVT()][0][IdxMode]));
+    return (LegalizeAction)((IndexedModeActions[
+                             (unsigned)VT.getSimpleVT().SimpleTy][0][IdxMode]));
   }
 
   /// isIndexedLoadLegal - Return true if the specified indexed load is legal
@@ -444,9 +449,10 @@ public:
   LegalizeAction
   getIndexedStoreAction(unsigned IdxMode, EVT VT) const {
     assert(IdxMode < array_lengthof(IndexedModeActions[0][1]) &&
-           (unsigned)VT.getSimpleVT() < EVT::LAST_VALUETYPE &&
+           (unsigned)VT.getSimpleVT().SimpleTy < MVT::LAST_VALUETYPE &&
            "Table isn't big enough!");
-    return (LegalizeAction)((IndexedModeActions[(unsigned)VT.getSimpleVT()][1][IdxMode]));
+    return (LegalizeAction)((IndexedModeActions[
+              (unsigned)VT.getSimpleVT().SimpleTy][1][IdxMode]));
   }  
 
   /// isIndexedStoreLegal - Return true if the specified indexed load is legal
@@ -463,11 +469,13 @@ public:
   /// for it.
   LegalizeAction
   getConvertAction(EVT FromVT, EVT ToVT) const {
-    assert((unsigned)FromVT.getSimpleVT() < array_lengthof(ConvertActions) &&
-           (unsigned)ToVT.getSimpleVT() < sizeof(ConvertActions[0])*4 &&
+    assert((unsigned)FromVT.getSimpleVT().SimpleTy <
+              array_lengthof(ConvertActions) &&
+           (unsigned)ToVT.getSimpleVT().SimpleTy <
+              sizeof(ConvertActions[0])*4 &&
            "Table isn't big enough!");
-    return (LegalizeAction)((ConvertActions[FromVT.getSimpleVT()] >>
-                             (2*ToVT.getSimpleVT())) & 3);
+    return (LegalizeAction)((ConvertActions[FromVT.getSimpleVT().SimpleTy] >>
+                             (2*ToVT.getSimpleVT().SimpleTy)) & 3);
   }
 
   /// isConvertLegal - Return true if the specified conversion is legal
@@ -484,10 +492,10 @@ public:
   LegalizeAction
   getCondCodeAction(ISD::CondCode CC, EVT VT) const {
     assert((unsigned)CC < array_lengthof(CondCodeActions) &&
-           (unsigned)VT.getSimpleVT() < sizeof(CondCodeActions[0])*4 &&
+           (unsigned)VT.getSimpleVT().SimpleTy < sizeof(CondCodeActions[0])*4 &&
            "Table isn't big enough!");
     LegalizeAction Action = (LegalizeAction)
-      ((CondCodeActions[CC] >> (2*VT.getSimpleVT())) & 3);
+      ((CondCodeActions[CC] >> (2*VT.getSimpleVT().SimpleTy)) & 3);
     assert(Action != Promote && "Can't promote condition code!");
     return Action;
   }
@@ -507,9 +515,9 @@ public:
            "This operation isn't promoted!");
 
     // See if this has an explicit type specified.
-    std::map<std::pair<unsigned, EVT::SimpleValueType>,
-             EVT::SimpleValueType>::const_iterator PTTI =
-      PromoteToType.find(std::make_pair(Op, VT.getSimpleVT()));
+    std::map<std::pair<unsigned, MVT::SimpleValueType>,
+             MVT::SimpleValueType>::const_iterator PTTI =
+      PromoteToType.find(std::make_pair(Op, VT.getSimpleVT().SimpleTy));
     if (PTTI != PromoteToType.end()) return PTTI->second;
 
     assert((VT.isInteger() || VT.isFloatingPoint()) &&
@@ -517,8 +525,8 @@ public:
     
     EVT NVT = VT;
     do {
-      NVT = (EVT::SimpleValueType)(NVT.getSimpleVT()+1);
-      assert(NVT.isInteger() == VT.isInteger() && NVT != EVT::isVoid &&
+      NVT = (MVT::SimpleValueType)(NVT.getSimpleVT().SimpleTy+1);
+      assert(NVT.isInteger() == VT.isInteger() && NVT != MVT::isVoid &&
              "Didn't find type to promote to!");
     } while (!isTypeLegal(NVT) ||
               getOperationAction(Op, NVT) == Promote);
@@ -527,11 +535,11 @@ public:
 
   /// getValueType - Return the EVT corresponding to this LLVM type.
   /// This is fixed by the LLVM operations except for the pointer size.  If
-  /// AllowUnknown is true, this will return EVT::Other for types with no EVT
+  /// AllowUnknown is true, this will return MVT::Other for types with no EVT
   /// counterpart (e.g. structs), otherwise it will assert.
   EVT getValueType(const Type *Ty, bool AllowUnknown = false) const {
     EVT VT = EVT::getEVT(Ty, AllowUnknown);
-    return VT == EVT::iPTR ? PointerTy : VT;
+    return VT == MVT:: iPTR ? PointerTy : VT;
   }
 
   /// getByValTypeAlignment - Return the desired alignment for ByVal aggregate
@@ -543,8 +551,9 @@ public:
   /// eventually require.
   EVT getRegisterType(EVT VT) const {
     if (VT.isSimple()) {
-      assert((unsigned)VT.getSimpleVT() < array_lengthof(RegisterTypeForVT));
-      return RegisterTypeForVT[VT.getSimpleVT()];
+      assert((unsigned)VT.getSimpleVT().SimpleTy <
+                array_lengthof(RegisterTypeForVT));
+      return RegisterTypeForVT[VT.getSimpleVT().SimpleTy];
     }
     if (VT.isVector()) {
       EVT VT1, RegisterVT;
@@ -556,7 +565,7 @@ public:
       return getRegisterType(getTypeToTransformTo(VT));
     }
     assert(0 && "Unsupported extended type!");
-    return EVT(EVT::Other); // Not reached
+    return EVT(MVT::Other); // Not reached
   }
 
   /// getNumRegisters - Return the number of registers that this ValueType will
@@ -567,8 +576,9 @@ public:
   /// type.  For an i140 on a 32 bit machine this means 5 registers.
   unsigned getNumRegisters(EVT VT) const {
     if (VT.isSimple()) {
-      assert((unsigned)VT.getSimpleVT() < array_lengthof(NumRegistersForVT));
-      return NumRegistersForVT[VT.getSimpleVT()];
+      assert((unsigned)VT.getSimpleVT().SimpleTy <
+                array_lengthof(NumRegistersForVT));
+      return NumRegistersForVT[VT.getSimpleVT().SimpleTy];
     }
     if (VT.isVector()) {
       EVT VT1, VT2;
@@ -638,7 +648,7 @@ public:
   virtual EVT getOptimalMemOpType(uint64_t Size, unsigned Align,
                                   bool isSrcConst, bool isSrcStr,
                                   SelectionDAG &DAG) const {
-    return EVT::iAny;
+    return MVT::iAny;
   }
   
   /// usesUnderscoreSetJmp - Determine if we should use _setjmp or setjmp
@@ -869,7 +879,7 @@ protected:
 
   /// setShiftAmountType - Describe the type that should be used for shift
   /// amounts.  This type defaults to the pointer type.
-  void setShiftAmountType(EVT::SimpleValueType VT) { ShiftAmountTy = VT; }
+  void setShiftAmountType(MVT VT) { ShiftAmountTy = VT; }
 
   /// setBooleanContents - Specify how the target extends the result of a
   /// boolean value from i1 to a wider type.  See getBooleanContents.
@@ -933,9 +943,9 @@ protected:
   /// regclass for the specified value type.  This indicates the selector can
   /// handle values of that class natively.
   void addRegisterClass(EVT VT, TargetRegisterClass *RC) {
-    assert((unsigned)VT.getSimpleVT() < array_lengthof(RegClassForVT));
+    assert((unsigned)VT.getSimpleVT().SimpleTy < array_lengthof(RegClassForVT));
     AvailableRegClasses.push_back(std::make_pair(VT, RC));
-    RegClassForVT[VT.getSimpleVT()] = RC;
+    RegClassForVT[VT.getSimpleVT().SimpleTy] = RC;
   }
 
   /// computeRegisterProperties - Once all of the register classes are added,
@@ -944,9 +954,9 @@ protected:
 
   /// setOperationAction - Indicate that the specified operation does not work
   /// with the specified type and indicate what to do about it.
-  void setOperationAction(unsigned Op, EVT::SimpleValueType VT,
+  void setOperationAction(unsigned Op, MVT VT,
                           LegalizeAction Action) {
-    unsigned I = (unsigned)VT;
+    unsigned I = (unsigned)VT.SimpleTy;
     unsigned J = I & 31;
     I = I >> 5;
     OpActions[I][Op] &= ~(uint64_t(3UL) << (J*2));
@@ -955,80 +965,78 @@ protected:
   
   /// setLoadExtAction - Indicate that the specified load with extension does
   /// not work with the with specified type and indicate what to do about it.
-  void setLoadExtAction(unsigned ExtType, EVT::SimpleValueType VT,
+  void setLoadExtAction(unsigned ExtType, MVT VT,
                       LegalizeAction Action) {
-    assert((unsigned)VT < sizeof(LoadExtActions[0])*4 &&
+    assert((unsigned)VT.SimpleTy < sizeof(LoadExtActions[0])*4 &&
            ExtType < array_lengthof(LoadExtActions) &&
            "Table isn't big enough!");
-    LoadExtActions[ExtType] &= ~(uint64_t(3UL) << VT*2);
-    LoadExtActions[ExtType] |= (uint64_t)Action << VT*2;
+    LoadExtActions[ExtType] &= ~(uint64_t(3UL) << VT.SimpleTy*2);
+    LoadExtActions[ExtType] |= (uint64_t)Action << VT.SimpleTy*2;
   }
   
   /// setTruncStoreAction - Indicate that the specified truncating store does
   /// not work with the with specified type and indicate what to do about it.
-  void setTruncStoreAction(EVT::SimpleValueType ValVT,
-                           EVT::SimpleValueType MemVT,
+  void setTruncStoreAction(MVT ValVT, MVT MemVT,
                            LegalizeAction Action) {
-    assert((unsigned)ValVT < array_lengthof(TruncStoreActions) &&
-           (unsigned)MemVT < sizeof(TruncStoreActions[0])*4 &&
+    assert((unsigned)ValVT.SimpleTy < array_lengthof(TruncStoreActions) &&
+           (unsigned)MemVT.SimpleTy < sizeof(TruncStoreActions[0])*4 &&
            "Table isn't big enough!");
-    TruncStoreActions[ValVT] &= ~(uint64_t(3UL)  << MemVT*2);
-    TruncStoreActions[ValVT] |= (uint64_t)Action << MemVT*2;
+    TruncStoreActions[ValVT.SimpleTy] &= ~(uint64_t(3UL)  << MemVT.SimpleTy*2);
+    TruncStoreActions[ValVT.SimpleTy] |= (uint64_t)Action << MemVT.SimpleTy*2;
   }
 
   /// setIndexedLoadAction - Indicate that the specified indexed load does or
   /// does not work with the with specified type and indicate what to do abort
   /// it. NOTE: All indexed mode loads are initialized to Expand in
   /// TargetLowering.cpp
-  void setIndexedLoadAction(unsigned IdxMode, EVT::SimpleValueType VT,
+  void setIndexedLoadAction(unsigned IdxMode, MVT VT,
                             LegalizeAction Action) {
-    assert((unsigned)VT < EVT::LAST_VALUETYPE &&
+    assert((unsigned)VT.SimpleTy < MVT::LAST_VALUETYPE &&
            IdxMode < array_lengthof(IndexedModeActions[0][0]) &&
            "Table isn't big enough!");
-    IndexedModeActions[(unsigned)VT][0][IdxMode] = (uint8_t)Action;
+    IndexedModeActions[(unsigned)VT.SimpleTy][0][IdxMode] = (uint8_t)Action;
   }
   
   /// setIndexedStoreAction - Indicate that the specified indexed store does or
   /// does not work with the with specified type and indicate what to do about
   /// it. NOTE: All indexed mode stores are initialized to Expand in
   /// TargetLowering.cpp
-  void setIndexedStoreAction(unsigned IdxMode, EVT::SimpleValueType VT,
+  void setIndexedStoreAction(unsigned IdxMode, MVT VT,
                              LegalizeAction Action) {
-    assert((unsigned)VT < EVT::LAST_VALUETYPE &&
+    assert((unsigned)VT.SimpleTy < MVT::LAST_VALUETYPE &&
            IdxMode < array_lengthof(IndexedModeActions[0][1] ) &&
            "Table isn't big enough!");
-    IndexedModeActions[(unsigned)VT][1][IdxMode] = (uint8_t)Action;
+    IndexedModeActions[(unsigned)VT.SimpleTy][1][IdxMode] = (uint8_t)Action;
   }
   
   /// setConvertAction - Indicate that the specified conversion does or does
   /// not work with the with specified type and indicate what to do about it.
-  void setConvertAction(EVT::SimpleValueType FromVT, EVT::SimpleValueType ToVT,
+  void setConvertAction(MVT FromVT, MVT ToVT,
                         LegalizeAction Action) {
-    assert((unsigned)FromVT < array_lengthof(ConvertActions) &&
-           (unsigned)ToVT < sizeof(ConvertActions[0])*4 &&
+    assert((unsigned)FromVT.SimpleTy < array_lengthof(ConvertActions) &&
+           (unsigned)ToVT.SimpleTy < sizeof(ConvertActions[0])*4 &&
            "Table isn't big enough!");
-    ConvertActions[FromVT] &= ~(uint64_t(3UL)  << ToVT*2);
-    ConvertActions[FromVT] |= (uint64_t)Action << ToVT*2;
+    ConvertActions[FromVT.SimpleTy] &= ~(uint64_t(3UL)  << ToVT.SimpleTy*2);
+    ConvertActions[FromVT.SimpleTy] |= (uint64_t)Action << ToVT.SimpleTy*2;
   }
 
   /// setCondCodeAction - Indicate that the specified condition code is or isn't
   /// supported on the target and indicate what to do about it.
-  void setCondCodeAction(ISD::CondCode CC, EVT::SimpleValueType VT,
+  void setCondCodeAction(ISD::CondCode CC, MVT VT,
                          LegalizeAction Action) {
-    assert((unsigned)VT < sizeof(CondCodeActions[0])*4 &&
+    assert((unsigned)VT.SimpleTy < sizeof(CondCodeActions[0])*4 &&
            (unsigned)CC < array_lengthof(CondCodeActions) &&
            "Table isn't big enough!");
-    CondCodeActions[(unsigned)CC] &= ~(uint64_t(3UL)  << VT*2);
-    CondCodeActions[(unsigned)CC] |= (uint64_t)Action << VT*2;
+    CondCodeActions[(unsigned)CC] &= ~(uint64_t(3UL)  << VT.SimpleTy*2);
+    CondCodeActions[(unsigned)CC] |= (uint64_t)Action << VT.SimpleTy*2;
   }
 
   /// AddPromotedToType - If Opc/OrigVT is specified as being promoted, the
   /// promotion code defaults to trying a larger integer/fp until it can find
   /// one that works.  If that default is insufficient, this method can be used
   /// by the target to override the default.
-  void AddPromotedToType(unsigned Opc, EVT::SimpleValueType OrigVT,
-                         EVT::SimpleValueType DestVT) {
-    PromoteToType[std::make_pair(Opc, OrigVT)] = DestVT;
+  void AddPromotedToType(unsigned Opc, MVT OrigVT, MVT DestVT) {
+    PromoteToType[std::make_pair(Opc, OrigVT.SimpleTy)] = DestVT.SimpleTy;
   }
 
   /// addLegalFPImmediate - Indicate that this target can instruction select
@@ -1355,7 +1363,7 @@ public:
     AsmOperandInfo(const InlineAsm::ConstraintInfo &info)
       : InlineAsm::ConstraintInfo(info), 
         ConstraintType(TargetLowering::C_Unknown),
-        CallOperandVal(0), ConstraintVT(EVT::Other) {
+        CallOperandVal(0), ConstraintVT(MVT::Other) {
     }
   };
 
@@ -1527,7 +1535,7 @@ private:
 
   /// PointerTy - The type to use for pointers, usually i32 or i64.
   ///
-  EVT::SimpleValueType PointerTy;
+  MVT PointerTy;
 
   /// IsLittleEndian - True if this is a little endian target.
   ///
@@ -1562,7 +1570,7 @@ private:
 
   /// ShiftAmountTy - The type to use for shift amounts, usually i8 or whatever
   /// PointerTy is.
-  EVT::SimpleValueType ShiftAmountTy;
+  MVT ShiftAmountTy;
 
   /// BooleanContents - Information about the contents of the high-bits in
   /// boolean values held in a type wider than i1.  See getBooleanContents.
@@ -1608,16 +1616,16 @@ private:
 
   /// RegClassForVT - This indicates the default register class to use for
   /// each ValueType the target supports natively.
-  TargetRegisterClass *RegClassForVT[EVT::LAST_VALUETYPE];
-  unsigned char NumRegistersForVT[EVT::LAST_VALUETYPE];
-  EVT RegisterTypeForVT[EVT::LAST_VALUETYPE];
+  TargetRegisterClass *RegClassForVT[MVT::LAST_VALUETYPE];
+  unsigned char NumRegistersForVT[MVT::LAST_VALUETYPE];
+  EVT RegisterTypeForVT[MVT::LAST_VALUETYPE];
 
   /// TransformToType - For any value types we are promoting or expanding, this
   /// contains the value type that we are changing to.  For Expanded types, this
   /// contains one step of the expand (e.g. i64 -> i32), even if there are
   /// multiple steps required (e.g. i64 -> i16).  For types natively supported
   /// by the system, this holds the same type (e.g. i32 -> i32).
-  EVT TransformToType[EVT::LAST_VALUETYPE];
+  EVT TransformToType[MVT::LAST_VALUETYPE];
 
   /// OpActions - For each operation and each value type, keep a LegalizeAction
   /// that indicates how instruction selection should deal with the operation.
@@ -1625,8 +1633,8 @@ private:
   /// operations that are not should be described.  Note that operations on
   /// non-legal value types are not described here.
   /// This array is accessed using VT.getSimpleVT(), so it is subject to
-  /// the EVT::MAX_ALLOWED_VALUETYPE * 2 bits.
-  uint64_t OpActions[EVT::MAX_ALLOWED_VALUETYPE/(sizeof(uint64_t)*4)][ISD::BUILTIN_OP_END];
+  /// the MVT::MAX_ALLOWED_VALUETYPE * 2 bits.
+  uint64_t OpActions[MVT::MAX_ALLOWED_VALUETYPE/(sizeof(uint64_t)*4)][ISD::BUILTIN_OP_END];
   
   /// LoadExtActions - For each load of load extension type and each value type,
   /// keep a LegalizeAction that indicates how instruction selection should deal
@@ -1635,7 +1643,7 @@ private:
   
   /// TruncStoreActions - For each truncating store, keep a LegalizeAction that
   /// indicates how instruction selection should deal with the store.
-  uint64_t TruncStoreActions[EVT::LAST_VALUETYPE];
+  uint64_t TruncStoreActions[MVT::LAST_VALUETYPE];
 
   /// IndexedModeActions - For each indexed mode and each value type,
   /// keep a pair of LegalizeAction that indicates how instruction
@@ -1643,14 +1651,14 @@ private:
   /// dimension is now the value_type for the reference.  The second
   /// dimension is the load [0] vs. store[1].  The third dimension
   /// represents the various modes for load store.
-  uint8_t IndexedModeActions[EVT::LAST_VALUETYPE][2][ISD::LAST_INDEXED_MODE];
+  uint8_t IndexedModeActions[MVT::LAST_VALUETYPE][2][ISD::LAST_INDEXED_MODE];
   
   /// ConvertActions - For each conversion from source type to destination type,
   /// keep a LegalizeAction that indicates how instruction selection should
   /// deal with the conversion.
   /// Currently, this is used only for floating->floating conversions
   /// (FP_EXTEND and FP_ROUND).
-  uint64_t ConvertActions[EVT::LAST_VALUETYPE];
+  uint64_t ConvertActions[MVT::LAST_VALUETYPE];
 
   /// CondCodeActions - For each condition code (ISD::CondCode) keep a
   /// LegalizeAction that indicates how instruction selection should
@@ -1675,7 +1683,7 @@ private:
   ///
   /// Targets add entries to this map with AddPromotedToType(..), clients access
   /// this with getTypeToPromoteTo(..).
-  std::map<std::pair<unsigned, EVT::SimpleValueType>, EVT::SimpleValueType>
+  std::map<std::pair<unsigned, MVT::SimpleValueType>, MVT::SimpleValueType>
     PromoteToType;
 
   /// LibcallRoutineNames - Stores the name each libcall.

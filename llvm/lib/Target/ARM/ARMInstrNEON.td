@@ -277,33 +277,33 @@ def  VST4d32  : VST4D<"vst4.32">;
 // Extract D sub-registers of Q registers.
 // (arm_dsubreg_0 is 5; arm_dsubreg_1 is 6)
 def DSubReg_i8_reg  : SDNodeXForm<imm, [{
-  return CurDAG->getTargetConstant(5 + N->getZExtValue() / 8, EVT::i32);
+  return CurDAG->getTargetConstant(5 + N->getZExtValue() / 8, MVT::i32);
 }]>;
 def DSubReg_i16_reg : SDNodeXForm<imm, [{
-  return CurDAG->getTargetConstant(5 + N->getZExtValue() / 4, EVT::i32);
+  return CurDAG->getTargetConstant(5 + N->getZExtValue() / 4, MVT::i32);
 }]>;
 def DSubReg_i32_reg : SDNodeXForm<imm, [{
-  return CurDAG->getTargetConstant(5 + N->getZExtValue() / 2, EVT::i32);
+  return CurDAG->getTargetConstant(5 + N->getZExtValue() / 2, MVT::i32);
 }]>;
 def DSubReg_f64_reg : SDNodeXForm<imm, [{
-  return CurDAG->getTargetConstant(5 + N->getZExtValue(), EVT::i32);
+  return CurDAG->getTargetConstant(5 + N->getZExtValue(), MVT::i32);
 }]>;
 
 // Extract S sub-registers of Q registers.
 // (arm_ssubreg_0 is 1; arm_ssubreg_1 is 2; etc.)
 def SSubReg_f32_reg : SDNodeXForm<imm, [{
-  return CurDAG->getTargetConstant(1 + N->getZExtValue(), EVT::i32);
+  return CurDAG->getTargetConstant(1 + N->getZExtValue(), MVT::i32);
 }]>;
 
 // Translate lane numbers from Q registers to D subregs.
 def SubReg_i8_lane  : SDNodeXForm<imm, [{
-  return CurDAG->getTargetConstant(N->getZExtValue() & 7, EVT::i32);
+  return CurDAG->getTargetConstant(N->getZExtValue() & 7, MVT::i32);
 }]>;
 def SubReg_i16_lane : SDNodeXForm<imm, [{
-  return CurDAG->getTargetConstant(N->getZExtValue() & 3, EVT::i32);
+  return CurDAG->getTargetConstant(N->getZExtValue() & 3, MVT::i32);
 }]>;
 def SubReg_i32_lane : SDNodeXForm<imm, [{
-  return CurDAG->getTargetConstant(N->getZExtValue() & 1, EVT::i32);
+  return CurDAG->getTargetConstant(N->getZExtValue() & 1, MVT::i32);
 }]>;
 
 //===----------------------------------------------------------------------===//
@@ -1772,7 +1772,7 @@ def  VDUPfq   : NVDup<0b11101010, 0b1011, 0b00, (outs QPR:$dst), (ins GPR:$src),
 
 def SHUFFLE_get_splat_lane : SDNodeXForm<vector_shuffle, [{
   ShuffleVectorSDNode *SVOp = cast<ShuffleVectorSDNode>(N);
-  return CurDAG->getTargetConstant(SVOp->getSplatIndex(), EVT::i32);
+  return CurDAG->getTargetConstant(SVOp->getSplatIndex(), MVT::i32);
 }]>;
 
 def splat_lane : PatFrag<(ops node:$lhs, node:$rhs),

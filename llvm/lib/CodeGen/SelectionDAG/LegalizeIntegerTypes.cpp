@@ -718,7 +718,7 @@ SDValue DAGTypeLegalizer::PromoteIntOp_BRCOND(SDNode *N, unsigned OpNo) {
   assert(OpNo == 1 && "only know how to promote condition");
 
   // Promote all the way up to the canonical SetCC type.
-  EVT SVT = TLI.getSetCCResultType(EVT::Other);
+  EVT SVT = TLI.getSetCCResultType(MVT::Other);
   SDValue Cond = PromoteTargetBoolean(N->getOperand(1), SVT);
 
   // The chain (Op#0) and basic block destination (Op#2) are always legal types.
@@ -802,7 +802,7 @@ SDValue DAGTypeLegalizer::PromoteIntOp_MEMBARRIER(SDNode *N) {
   NewOps[0] = N->getOperand(0);
   for (unsigned i = 1; i < array_lengthof(NewOps); ++i) {
     SDValue Flag = GetPromotedInteger(N->getOperand(i));
-    NewOps[i] = DAG.getZeroExtendInReg(Flag, dl, EVT::i1);
+    NewOps[i] = DAG.getZeroExtendInReg(Flag, dl, MVT::i1);
   }
   return DAG.UpdateNodeOperands(SDValue (N, 0), NewOps,
                                 array_lengthof(NewOps));
@@ -1009,7 +1009,7 @@ void DAGTypeLegalizer::ExpandShiftByConstant(SDNode *N, unsigned Amt,
                TLI.isOperationLegalOrCustom(ISD::ADDC,
                                             TLI.getTypeToExpandTo(NVT))) {
       // Emit this X << 1 as X+X.
-      SDVTList VTList = DAG.getVTList(NVT, EVT::Flag);
+      SDVTList VTList = DAG.getVTList(NVT, MVT::Flag);
       SDValue LoOps[2] = { InL, InL };
       Lo = DAG.getNode(ISD::ADDC, dl, VTList, LoOps, 2);
       SDValue HiOps[3] = { InH, InH, Lo.getValue(1) };
@@ -1237,7 +1237,7 @@ void DAGTypeLegalizer::ExpandIntRes_ADDSUB(SDNode *N,
   // Do not generate ADDC/ADDE or SUBC/SUBE if the target does not support
   // them.  TODO: Teach operation legalization how to expand unsupported
   // ADDC/ADDE/SUBC/SUBE.  The problem is that these operations generate
-  // a carry of type EVT::Flag, but there doesn't seem to be any way to
+  // a carry of type MVT::Flag, but there doesn't seem to be any way to
   // generate a value of this type in the expanded code sequence.
   bool hasCarry =
     TLI.isOperationLegalOrCustom(N->getOpcode() == ISD::ADD ?
@@ -1245,7 +1245,7 @@ void DAGTypeLegalizer::ExpandIntRes_ADDSUB(SDNode *N,
                                  TLI.getTypeToExpandTo(NVT));
 
   if (hasCarry) {
-    SDVTList VTList = DAG.getVTList(NVT, EVT::Flag);
+    SDVTList VTList = DAG.getVTList(NVT, MVT::Flag);
     if (N->getOpcode() == ISD::ADD) {
       Lo = DAG.getNode(ISD::ADDC, dl, VTList, LoOps, 2);
       HiOps[2] = Lo.getValue(1);
@@ -1290,7 +1290,7 @@ void DAGTypeLegalizer::ExpandIntRes_ADDSUBC(SDNode *N,
   DebugLoc dl = N->getDebugLoc();
   GetExpandedInteger(N->getOperand(0), LHSL, LHSH);
   GetExpandedInteger(N->getOperand(1), RHSL, RHSH);
-  SDVTList VTList = DAG.getVTList(LHSL.getValueType(), EVT::Flag);
+  SDVTList VTList = DAG.getVTList(LHSL.getValueType(), MVT::Flag);
   SDValue LoOps[2] = { LHSL, RHSL };
   SDValue HiOps[3] = { LHSH, RHSH };
 
@@ -1316,7 +1316,7 @@ void DAGTypeLegalizer::ExpandIntRes_ADDSUBE(SDNode *N,
   DebugLoc dl = N->getDebugLoc();
   GetExpandedInteger(N->getOperand(0), LHSL, LHSH);
   GetExpandedInteger(N->getOperand(1), RHSL, RHSH);
-  SDVTList VTList = DAG.getVTList(LHSL.getValueType(), EVT::Flag);
+  SDVTList VTList = DAG.getVTList(LHSL.getValueType(), MVT::Flag);
   SDValue LoOps[3] = { LHSL, RHSL, N->getOperand(2) };
   SDValue HiOps[3] = { LHSH, RHSH };
 
@@ -1539,7 +1539,7 @@ void DAGTypeLegalizer::ExpandIntRes_LOAD(LoadSDNode *N,
 
     // Build a factor node to remember that this load is independent of the
     // other one.
-    Ch = DAG.getNode(ISD::TokenFactor, dl, EVT::Other, Lo.getValue(1),
+    Ch = DAG.getNode(ISD::TokenFactor, dl, MVT::Other, Lo.getValue(1),
                      Hi.getValue(1));
   } else {
     // Big-endian - high bits are at low addresses.  Favor aligned loads at
@@ -1565,7 +1565,7 @@ void DAGTypeLegalizer::ExpandIntRes_LOAD(LoadSDNode *N,
 
     // Build a factor node to remember that this load is independent of the
     // other one.
-    Ch = DAG.getNode(ISD::TokenFactor, dl, EVT::Other, Lo.getValue(1),
+    Ch = DAG.getNode(ISD::TokenFactor, dl, MVT::Other, Lo.getValue(1),
                      Hi.getValue(1));
 
     if (ExcessBits < NVT.getSizeInBits()) {
@@ -1673,13 +1673,13 @@ void DAGTypeLegalizer::ExpandIntRes_MUL(SDNode *N,
 
   // If nothing else, we can make a libcall.
   RTLIB::Libcall LC = RTLIB::UNKNOWN_LIBCALL;
-  if (VT == EVT::i16)
+  if (VT == MVT::i16)
     LC = RTLIB::MUL_I16;
-  else if (VT == EVT::i32)
+  else if (VT == MVT::i32)
     LC = RTLIB::MUL_I32;
-  else if (VT == EVT::i64)
+  else if (VT == MVT::i64)
     LC = RTLIB::MUL_I64;
-  else if (VT == EVT::i128)
+  else if (VT == MVT::i128)
     LC = RTLIB::MUL_I128;
   assert(LC != RTLIB::UNKNOWN_LIBCALL && "Unsupported MUL!");
 
@@ -1693,13 +1693,13 @@ void DAGTypeLegalizer::ExpandIntRes_SDIV(SDNode *N,
   DebugLoc dl = N->getDebugLoc();
 
   RTLIB::Libcall LC = RTLIB::UNKNOWN_LIBCALL;
-  if (VT == EVT::i16)
+  if (VT == MVT::i16)
     LC = RTLIB::SDIV_I16;
-  else if (VT == EVT::i32)
+  else if (VT == MVT::i32)
     LC = RTLIB::SDIV_I32;
-  else if (VT == EVT::i64)
+  else if (VT == MVT::i64)
     LC = RTLIB::SDIV_I64;
-  else if (VT == EVT::i128)
+  else if (VT == MVT::i128)
     LC = RTLIB::SDIV_I128;
   assert(LC != RTLIB::UNKNOWN_LIBCALL && "Unsupported SDIV!");
 
@@ -1755,34 +1755,34 @@ void DAGTypeLegalizer::ExpandIntRes_Shift(SDNode *N,
   bool isSigned;
   if (N->getOpcode() == ISD::SHL) {
     isSigned = false; /*sign irrelevant*/
-    if (VT == EVT::i16)
+    if (VT == MVT::i16)
       LC = RTLIB::SHL_I16;
-    else if (VT == EVT::i32)
+    else if (VT == MVT::i32)
       LC = RTLIB::SHL_I32;
-    else if (VT == EVT::i64)
+    else if (VT == MVT::i64)
       LC = RTLIB::SHL_I64;
-    else if (VT == EVT::i128)
+    else if (VT == MVT::i128)
       LC = RTLIB::SHL_I128;
   } else if (N->getOpcode() == ISD::SRL) {
     isSigned = false;
-    if (VT == EVT::i16)
+    if (VT == MVT::i16)
       LC = RTLIB::SRL_I16;
-    else if (VT == EVT::i32)
+    else if (VT == MVT::i32)
       LC = RTLIB::SRL_I32;
-    else if (VT == EVT::i64)
+    else if (VT == MVT::i64)
       LC = RTLIB::SRL_I64;
-    else if (VT == EVT::i128)
+    else if (VT == MVT::i128)
       LC = RTLIB::SRL_I128;
   } else {
     assert(N->getOpcode() == ISD::SRA && "Unknown shift!");
     isSigned = true;
-    if (VT == EVT::i16)
+    if (VT == MVT::i16)
       LC = RTLIB::SRA_I16;
-    else if (VT == EVT::i32)
+    else if (VT == MVT::i32)
       LC = RTLIB::SRA_I32;
-    else if (VT == EVT::i64)
+    else if (VT == MVT::i64)
       LC = RTLIB::SRA_I64;
-    else if (VT == EVT::i128)
+    else if (VT == MVT::i128)
       LC = RTLIB::SRA_I128;
   }
 
@@ -1857,13 +1857,13 @@ void DAGTypeLegalizer::ExpandIntRes_SREM(SDNode *N,
   DebugLoc dl = N->getDebugLoc();
 
   RTLIB::Libcall LC = RTLIB::UNKNOWN_LIBCALL;
-  if (VT == EVT::i16)
+  if (VT == MVT::i16)
     LC = RTLIB::SREM_I16;
-  else if (VT == EVT::i32)
+  else if (VT == MVT::i32)
     LC = RTLIB::SREM_I32;
-  else if (VT == EVT::i64)
+  else if (VT == MVT::i64)
     LC = RTLIB::SREM_I64;
-  else if (VT == EVT::i128)
+  else if (VT == MVT::i128)
     LC = RTLIB::SREM_I128;
   assert(LC != RTLIB::UNKNOWN_LIBCALL && "Unsupported SREM!");
 
@@ -1888,13 +1888,13 @@ void DAGTypeLegalizer::ExpandIntRes_UDIV(SDNode *N,
   DebugLoc dl = N->getDebugLoc();
 
   RTLIB::Libcall LC = RTLIB::UNKNOWN_LIBCALL;
-  if (VT == EVT::i16)
+  if (VT == MVT::i16)
     LC = RTLIB::UDIV_I16;
-  else if (VT == EVT::i32)
+  else if (VT == MVT::i32)
     LC = RTLIB::UDIV_I32;
-  else if (VT == EVT::i64)
+  else if (VT == MVT::i64)
     LC = RTLIB::UDIV_I64;
-  else if (VT == EVT::i128)
+  else if (VT == MVT::i128)
     LC = RTLIB::UDIV_I128;
   assert(LC != RTLIB::UNKNOWN_LIBCALL && "Unsupported UDIV!");
 
@@ -1908,13 +1908,13 @@ void DAGTypeLegalizer::ExpandIntRes_UREM(SDNode *N,
   DebugLoc dl = N->getDebugLoc();
 
   RTLIB::Libcall LC = RTLIB::UNKNOWN_LIBCALL;
-  if (VT == EVT::i16)
+  if (VT == MVT::i16)
     LC = RTLIB::UREM_I16;
-  else if (VT == EVT::i32)
+  else if (VT == MVT::i32)
     LC = RTLIB::UREM_I32;
-  else if (VT == EVT::i64)
+  else if (VT == MVT::i64)
     LC = RTLIB::UREM_I64;
-  else if (VT == EVT::i128)
+  else if (VT == MVT::i128)
     LC = RTLIB::UREM_I128;
   assert(LC != RTLIB::UNKNOWN_LIBCALL && "Unsupported UREM!");
 
@@ -2222,7 +2222,7 @@ SDValue DAGTypeLegalizer::ExpandIntOp_STORE(StoreSDNode *N, unsigned OpNo) {
     Hi = DAG.getTruncStore(Ch, dl, Hi, Ptr, N->getSrcValue(),
                            SVOffset+IncrementSize, NEVT,
                            isVolatile, MinAlign(Alignment, IncrementSize));
-    return DAG.getNode(ISD::TokenFactor, dl, EVT::Other, Lo, Hi);
+    return DAG.getNode(ISD::TokenFactor, dl, MVT::Other, Lo, Hi);
   } else {
     // Big-endian - high bits are at low addresses.  Favor aligned stores at
     // the cost of some bit-fiddling.
@@ -2257,7 +2257,7 @@ SDValue DAGTypeLegalizer::ExpandIntOp_STORE(StoreSDNode *N, unsigned OpNo) {
                            SVOffset+IncrementSize,
                            EVT::getIntegerVT(ExcessBits),
                            isVolatile, MinAlign(Alignment, IncrementSize));
-    return DAG.getNode(ISD::TokenFactor, dl, EVT::Other, Lo, Hi);
+    return DAG.getNode(ISD::TokenFactor, dl, MVT::Other, Lo, Hi);
   }
 }
 
@@ -2288,11 +2288,11 @@ SDValue DAGTypeLegalizer::ExpandIntOp_UINT_TO_FP(SDNode *N) {
     const uint64_t F32TwoE128 = 0x7F800000ULL;
 
     APInt FF(32, 0);
-    if (SrcVT == EVT::i32)
+    if (SrcVT == MVT::i32)
       FF = APInt(32, F32TwoE32);
-    else if (SrcVT == EVT::i64)
+    else if (SrcVT == MVT::i64)
       FF = APInt(32, F32TwoE64);
-    else if (SrcVT == EVT::i128)
+    else if (SrcVT == MVT::i128)
       FF = APInt(32, F32TwoE128);
     else
       assert(false && "Unsupported UINT_TO_FP!");
@@ -2323,7 +2323,7 @@ SDValue DAGTypeLegalizer::ExpandIntOp_UINT_TO_FP(SDNode *N) {
     // Load the value out, extending it from f32 to the destination float type.
     // FIXME: Avoid the extend by constructing the right constant pool?
     SDValue Fudge = DAG.getExtLoad(ISD::EXTLOAD, dl, DstVT, DAG.getEntryNode(),
-                                   FudgePtr, NULL, 0, EVT::f32,
+                                   FudgePtr, NULL, 0, MVT::f32,
                                    false, Alignment);
     return DAG.getNode(ISD::FADD, dl, DstVT, SignedConv, Fudge);
   }

@@ -35,7 +35,7 @@ static bool IsChainCompatible(SDNode *Chain, SDNode *Op) {
     return false;
   if (Chain->getNumOperands() > 0) {
     SDValue C0 = Chain->getOperand(0);
-    if (C0.getValueType() == EVT::Other)
+    if (C0.getValueType() == MVT::Other)
       return C0.getNode() != Op && IsChainCompatible(C0.getNode(), Op);
   }
   return true;

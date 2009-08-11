@@ -85,9 +85,9 @@ namespace llvm {
     static std::string getEdgeAttributes(const void *Node, EdgeIter EI) {
       SDValue Op = EI.getNode()->getOperand(EI.getOperand());
       EVT VT = Op.getValueType();
-      if (VT == EVT::Flag)
+      if (VT == MVT::Flag)
         return "color=red,style=bold";
-      else if (VT == EVT::Other)
+      else if (VT == MVT::Other)
         return "color=blue,style=dashed";
       return "";
     }

@@ -306,7 +306,7 @@ SDValue VectorLegalizer::UnrollVectorOp(SDValue Op) {
         Operands[j] = DAG.getNode(ISD::EXTRACT_VECTOR_ELT, dl,
                                   OperandEltVT,
                                   Operand,
-                                  DAG.getConstant(i, EVT::i32));
+                                  DAG.getConstant(i, MVT::i32));
       } else {
         // A scalar operand; just use it as is.
         Operands[j] = Operand;

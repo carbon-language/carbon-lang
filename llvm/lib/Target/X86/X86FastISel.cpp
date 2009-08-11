@@ -134,8 +134,8 @@ private:
   /// isScalarFPTypeInSSEReg - Return true if the specified scalar FP type is
   /// computed in an SSE register, not on the X87 floating point stack.
   bool isScalarFPTypeInSSEReg(EVT VT) const {
-    return (VT == EVT::f64 && X86ScalarSSEf64) || // f64 is when SSE2
-      (VT == EVT::f32 && X86ScalarSSEf32);   // f32 is when SSE1
+    return (VT == MVT::f64 && X86ScalarSSEf64) || // f64 is when SSE2
+      (VT == MVT::f32 && X86ScalarSSEf32);   // f32 is when SSE1
   }
 
   bool isTypeLegal(const Type *Ty, EVT &VT, bool AllowI1 = false);
@@ -145,24 +145,24 @@ private:
 
 bool X86FastISel::isTypeLegal(const Type *Ty, EVT &VT, bool AllowI1) {
   VT = TLI.getValueType(Ty, /*HandleUnknown=*/true);
-  if (VT == EVT::Other || !VT.isSimple())
+  if (VT == MVT::Other || !VT.isSimple())
     // Unhandled type. Halt "fast" selection and bail.
     return false;
   
   // For now, require SSE/SSE2 for performing floating-point operations,
   // since x87 requires additional work.
-  if (VT == EVT::f64 && !X86ScalarSSEf64)
+  if (VT == MVT::f64 && !X86ScalarSSEf64)
      return false;
-  if (VT == EVT::f32 && !X86ScalarSSEf32)
+  if (VT == MVT::f32 && !X86ScalarSSEf32)
      return false;
   // Similarly, no f80 support yet.
-  if (VT == EVT::f80)
+  if (VT == MVT::f80)
     return false;
   // We only handle legal types. For example, on x86-32 the instruction
   // selector contains all of the 64-bit instructions from x86-64,
   // under the assumption that i64 won't be used if the target doesn't
   // support it.
-  return (AllowI1 && VT == EVT::i1) || TLI.isTypeLegal(VT);
+  return (AllowI1 && VT == MVT::i1) || TLI.isTypeLegal(VT);
 }
 
 #include "X86GenCallingConv.inc"
@@ -193,26 +193,26 @@ bool X86FastISel::X86FastEmitLoad(EVT VT, const X86AddressMode &AM,
   // Get opcode and regclass of the output for the given load instruction.
   unsigned Opc = 0;
   const TargetRegisterClass *RC = NULL;
-  switch (VT.getSimpleVT()) {
+  switch (VT.getSimpleVT().SimpleTy) {
   default: return false;
-  case EVT::i8:
+  case MVT::i8:
     Opc = X86::MOV8rm;
     RC  = X86::GR8RegisterClass;
     break;
-  case EVT::i16:
+  case MVT::i16:
     Opc = X86::MOV16rm;
     RC  = X86::GR16RegisterClass;
     break;
-  case EVT::i32:
+  case MVT::i32:
     Opc = X86::MOV32rm;
     RC  = X86::GR32RegisterClass;
     break;
-  case EVT::i64:
+  case MVT::i64:
     // Must be in x86-64 mode.
     Opc = X86::MOV64rm;
     RC  = X86::GR64RegisterClass;
     break;
-  case EVT::f32:
+  case MVT::f32:
     if (Subtarget->hasSSE1()) {
       Opc = X86::MOVSSrm;
       RC  = X86::FR32RegisterClass;
@@ -221,7 +221,7 @@ bool X86FastISel::X86FastEmitLoad(EVT VT, const X86AddressMode &AM,
       RC  = X86::RFP32RegisterClass;
     }
     break;
-  case EVT::f64:
+  case MVT::f64:
     if (Subtarget->hasSSE2()) {
       Opc = X86::MOVSDrm;
       RC  = X86::FR64RegisterClass;
@@ -230,7 +230,7 @@ bool X86FastISel::X86FastEmitLoad(EVT VT, const X86AddressMode &AM,
       RC  = X86::RFP64RegisterClass;
     }
     break;
-  case EVT::f80:
+  case MVT::f80:
     // No f80 support yet.
     return false;
   }
@@ -249,17 +249,17 @@ X86FastISel::X86FastEmitStore(EVT VT, unsigned Val,
                               const X86AddressMode &AM) {
   // Get opcode and regclass of the output for the given store instruction.
   unsigned Opc = 0;
-  switch (VT.getSimpleVT()) {
-  case EVT::f80: // No f80 support yet.
+  switch (VT.getSimpleVT().SimpleTy) {
+  case MVT::f80: // No f80 support yet.
   default: return false;
-  case EVT::i8:  Opc = X86::MOV8mr;  break;
-  case EVT::i16: Opc = X86::MOV16mr; break;
-  case EVT::i32: Opc = X86::MOV32mr; break;
-  case EVT::i64: Opc = X86::MOV64mr; break; // Must be in x86-64 mode.
-  case EVT::f32:
+  case MVT::i8:  Opc = X86::MOV8mr;  break;
+  case MVT::i16: Opc = X86::MOV16mr; break;
+  case MVT::i32: Opc = X86::MOV32mr; break;
+  case MVT::i64: Opc = X86::MOV64mr; break; // Must be in x86-64 mode.
+  case MVT::f32:
     Opc = Subtarget->hasSSE1() ? X86::MOVSSmr : X86::ST_Fp32m;
     break;
-  case EVT::f64:
+  case MVT::f64:
     Opc = Subtarget->hasSSE2() ? X86::MOVSDmr : X86::ST_Fp64m;
     break;
   }
@@ -277,12 +277,12 @@ bool X86FastISel::X86FastEmitStore(EVT VT, Value *Val,
   // If this is a store of a simple constant, fold the constant into the store.
   if (ConstantInt *CI = dyn_cast<ConstantInt>(Val)) {
     unsigned Opc = 0;
-    switch (VT.getSimpleVT()) {
+    switch (VT.getSimpleVT().SimpleTy) {
     default: break;
-    case EVT::i8:  Opc = X86::MOV8mi;  break;
-    case EVT::i16: Opc = X86::MOV16mi; break;
-    case EVT::i32: Opc = X86::MOV32mi; break;
-    case EVT::i64:
+    case MVT::i8:  Opc = X86::MOV8mi;  break;
+    case MVT::i16: Opc = X86::MOV16mi; break;
+    case MVT::i32: Opc = X86::MOV32mi; break;
+    case MVT::i64:
       // Must be a 32-bit sign extended value.
       if ((int)CI->getSExtValue() == CI->getSExtValue())
         Opc = X86::MOV64mi32;
@@ -478,7 +478,7 @@ bool X86FastISel::X86SelectAddress(Value *V, X86AddressMode &AM) {
       StubAM.GV = GV;
       StubAM.GVOpFlags = GVFlags;
 
-      if (TLI.getPointerTy() == EVT::i64) {
+      if (TLI.getPointerTy() == MVT::i64) {
         Opc = X86::MOV64rm;
         RC  = X86::GR64RegisterClass;
         
@@ -636,14 +636,14 @@ bool X86FastISel::X86SelectLoad(Instruction *I)  {
 }
 
 static unsigned X86ChooseCmpOpcode(EVT VT) {
-  switch (VT.getSimpleVT()) {
+  switch (VT.getSimpleVT().SimpleTy) {
   default:       return 0;
-  case EVT::i8:  return X86::CMP8rr;
-  case EVT::i16: return X86::CMP16rr;
-  case EVT::i32: return X86::CMP32rr;
-  case EVT::i64: return X86::CMP64rr;
-  case EVT::f32: return X86::UCOMISSrr;
-  case EVT::f64: return X86::UCOMISDrr;
+  case MVT::i8:  return X86::CMP8rr;
+  case MVT::i16: return X86::CMP16rr;
+  case MVT::i32: return X86::CMP32rr;
+  case MVT::i64: return X86::CMP64rr;
+  case MVT::f32: return X86::UCOMISSrr;
+  case MVT::f64: return X86::UCOMISDrr;
   }
 }
 
@@ -651,13 +651,13 @@ static unsigned X86ChooseCmpOpcode(EVT VT) {
 /// of the comparison, return an opcode that works for the compare (e.g.
 /// CMP32ri) otherwise return 0.
 static unsigned X86ChooseCmpImmediateOpcode(EVT VT, ConstantInt *RHSC) {
-  switch (VT.getSimpleVT()) {
+  switch (VT.getSimpleVT().SimpleTy) {
   // Otherwise, we can't fold the immediate into this comparison.
   default: return 0;
-  case EVT::i8: return X86::CMP8ri;
-  case EVT::i16: return X86::CMP16ri;
-  case EVT::i32: return X86::CMP32ri;
-  case EVT::i64:
+  case MVT::i8: return X86::CMP8ri;
+  case MVT::i16: return X86::CMP16ri;
+  case MVT::i32: return X86::CMP32ri;
+  case MVT::i64:
     // 64-bit comparisons are only valid if the immediate fits in a 32-bit sext
     // field.
     if ((int)RHSC->getSExtValue() == RHSC->getSExtValue())
@@ -778,7 +778,7 @@ bool X86FastISel::X86SelectZExt(Instruction *I) {
     unsigned ResultReg = getRegForValue(I->getOperand(0));
     if (ResultReg == 0) return false;
     // Set the high bits to zero.
-    ResultReg = FastEmitZExtFromI1(EVT::i8, ResultReg);
+    ResultReg = FastEmitZExtFromI1(MVT::i8, ResultReg);
     if (ResultReg == 0) return false;
     UpdateValueMap(I, ResultReg);
     return true;
@@ -976,7 +976,7 @@ bool X86FastISel::X86SelectShift(Instruction *I) {
   }
 
   EVT VT = TLI.getValueType(I->getType(), /*HandleUnknown=*/true);
-  if (VT == EVT::Other || !isTypeLegal(I->getType(), VT))
+  if (VT == MVT::Other || !isTypeLegal(I->getType(), VT))
     return false;
 
   unsigned Op0Reg = getRegForValue(I->getOperand(0));
@@ -1010,18 +1010,18 @@ bool X86FastISel::X86SelectShift(Instruction *I) {
 
 bool X86FastISel::X86SelectSelect(Instruction *I) {
   EVT VT = TLI.getValueType(I->getType(), /*HandleUnknown=*/true);
-  if (VT == EVT::Other || !isTypeLegal(I->getType(), VT))
+  if (VT == MVT::Other || !isTypeLegal(I->getType(), VT))
     return false;
   
   unsigned Opc = 0;
   const TargetRegisterClass *RC = NULL;
-  if (VT.getSimpleVT() == EVT::i16) {
+  if (VT.getSimpleVT() == MVT::i16) {
     Opc = X86::CMOVE16rr;
     RC = &X86::GR16RegClass;
-  } else if (VT.getSimpleVT() == EVT::i32) {
+  } else if (VT.getSimpleVT() == MVT::i32) {
     Opc = X86::CMOVE32rr;
     RC = &X86::GR32RegClass;
-  } else if (VT.getSimpleVT() == EVT::i64) {
+  } else if (VT.getSimpleVT() == MVT::i64) {
     Opc = X86::CMOVE64rr;
     RC = &X86::GR64RegClass;
   } else {
@@ -1085,10 +1085,10 @@ bool X86FastISel::X86SelectTrunc(Instruction *I) {
   EVT DstVT = TLI.getValueType(I->getType());
   
   // This code only handles truncation to byte right now.
-  if (DstVT != EVT::i8 && DstVT != EVT::i1)
+  if (DstVT != MVT::i8 && DstVT != MVT::i1)
     // All other cases should be handled by the tblgen generated code.
     return false;
-  if (SrcVT != EVT::i16 && SrcVT != EVT::i32)
+  if (SrcVT != MVT::i16 && SrcVT != MVT::i32)
     // All other cases should be handled by the tblgen generated code.
     return false;
 
@@ -1098,14 +1098,14 @@ bool X86FastISel::X86SelectTrunc(Instruction *I) {
     return false;
 
   // First issue a copy to GR16_ABCD or GR32_ABCD.
-  unsigned CopyOpc = (SrcVT == EVT::i16) ? X86::MOV16rr : X86::MOV32rr;
-  const TargetRegisterClass *CopyRC = (SrcVT == EVT::i16)
+  unsigned CopyOpc = (SrcVT == MVT::i16) ? X86::MOV16rr : X86::MOV32rr;
+  const TargetRegisterClass *CopyRC = (SrcVT == MVT::i16)
     ? X86::GR16_ABCDRegisterClass : X86::GR32_ABCDRegisterClass;
   unsigned CopyReg = createResultReg(CopyRC);
   BuildMI(MBB, DL, TII.get(CopyOpc), CopyReg).addReg(InputReg);
 
   // Then issue an extract_subreg.
-  unsigned ResultReg = FastEmitInst_extractsubreg(EVT::i8,
+  unsigned ResultReg = FastEmitInst_extractsubreg(MVT::i8,
                                                   CopyReg, X86::SUBREG_8BIT);
   if (!ResultReg)
     return false;
@@ -1164,9 +1164,9 @@ bool X86FastISel::X86VisitIntrinsicCall(IntrinsicInst &I) {
       return false;
 
     unsigned OpC = 0;
-    if (VT == EVT::i32)
+    if (VT == MVT::i32)
       OpC = X86::ADD32rr;
-    else if (VT == EVT::i64)
+    else if (VT == MVT::i64)
       OpC = X86::ADD64rr;
     else
       return false;
@@ -1185,7 +1185,7 @@ bool X86FastISel::X86VisitIntrinsicCall(IntrinsicInst &I) {
     if (DestReg1 != ResultReg)
       ResultReg = DestReg1+1;
     else
-      ResultReg = createResultReg(TLI.getRegClassFor(EVT::i8));
+      ResultReg = createResultReg(TLI.getRegClassFor(MVT::i8));
     
     unsigned Opc = X86::SETBr;
     if (I.getIntrinsicID() == Intrinsic::sadd_with_overflow)
@@ -1231,7 +1231,7 @@ bool X86FastISel::X86SelectCall(Instruction *I) {
   const Type *RetTy = CS.getType();
   EVT RetVT;
   if (RetTy == Type::VoidTy)
-    RetVT = EVT::isVoid;
+    RetVT = MVT::isVoid;
   else if (!isTypeLegal(RetTy, RetVT, true))
     return false;
 
@@ -1251,8 +1251,8 @@ bool X86FastISel::X86SelectCall(Instruction *I) {
 
   // Allow calls which produce i1 results.
   bool AndToI1 = false;
-  if (RetVT == EVT::i1) {
-    RetVT = EVT::i8;
+  if (RetVT == MVT::i1) {
+    RetVT = MVT::i8;
     AndToI1 = true;
   }
 
@@ -1445,7 +1445,7 @@ bool X86FastISel::X86SelectCall(Instruction *I) {
   BuildMI(MBB, DL, TII.get(AdjStackUp)).addImm(NumBytes).addImm(0);
 
   // Now handle call return value (if any).
-  if (RetVT.getSimpleVT() != EVT::isVoid) {
+  if (RetVT.getSimpleVT().SimpleTy != MVT::isVoid) {
     SmallVector<CCValAssign, 16> RVLocs;
     CCState CCInfo(CC, false, TM, RVLocs, I->getParent()->getContext());
     CCInfo.AnalyzeCallResult(RetVT, RetCC_X86);
@@ -1462,7 +1462,7 @@ bool X86FastISel::X86SelectCall(Instruction *I) {
     if ((RVLocs[0].getLocReg() == X86::ST0 ||
          RVLocs[0].getLocReg() == X86::ST1) &&
         isScalarFPTypeInSSEReg(RVLocs[0].getValVT())) {
-      CopyVT = EVT::f80;
+      CopyVT = MVT::f80;
       SrcRC = X86::RSTRegisterClass;
       DstRC = X86::RFP80RegisterClass;
     }
@@ -1477,13 +1477,13 @@ bool X86FastISel::X86SelectCall(Instruction *I) {
       // register. This is accomplished by storing the F80 value in memory and
       // then loading it back. Ewww...
       EVT ResVT = RVLocs[0].getValVT();
-      unsigned Opc = ResVT == EVT::f32 ? X86::ST_Fp80m32 : X86::ST_Fp80m64;
+      unsigned Opc = ResVT == MVT::f32 ? X86::ST_Fp80m32 : X86::ST_Fp80m64;
       unsigned MemSize = ResVT.getSizeInBits()/8;
       int FI = MFI.CreateStackObject(MemSize, MemSize);
       addFrameReference(BuildMI(MBB, DL, TII.get(Opc)), FI).addReg(ResultReg);
-      DstRC = ResVT == EVT::f32
+      DstRC = ResVT == MVT::f32
         ? X86::FR32RegisterClass : X86::FR64RegisterClass;
-      Opc = ResVT == EVT::f32 ? X86::MOVSSrm : X86::MOVSDrm;
+      Opc = ResVT == MVT::f32 ? X86::MOVSSrm : X86::MOVSDrm;
       ResultReg = createResultReg(DstRC);
       addFrameReference(BuildMI(MBB, DL, TII.get(Opc), ResultReg), FI);
     }
@@ -1560,26 +1560,26 @@ unsigned X86FastISel::TargetMaterializeConstant(Constant *C) {
   // Get opcode and regclass of the output for the given load instruction.
   unsigned Opc = 0;
   const TargetRegisterClass *RC = NULL;
-  switch (VT.getSimpleVT()) {
+  switch (VT.getSimpleVT().SimpleTy) {
   default: return false;
-  case EVT::i8:
+  case MVT::i8:
     Opc = X86::MOV8rm;
     RC  = X86::GR8RegisterClass;
     break;
-  case EVT::i16:
+  case MVT::i16:
     Opc = X86::MOV16rm;
     RC  = X86::GR16RegisterClass;
     break;
-  case EVT::i32:
+  case MVT::i32:
     Opc = X86::MOV32rm;
     RC  = X86::GR32RegisterClass;
     break;
-  case EVT::i64:
+  case MVT::i64:
     // Must be in x86-64 mode.
     Opc = X86::MOV64rm;
     RC  = X86::GR64RegisterClass;
     break;
-  case EVT::f32:
+  case MVT::f32:
     if (Subtarget->hasSSE1()) {
       Opc = X86::MOVSSrm;
       RC  = X86::FR32RegisterClass;
@@ -1588,7 +1588,7 @@ unsigned X86FastISel::TargetMaterializeConstant(Constant *C) {
       RC  = X86::RFP32RegisterClass;
     }
     break;
-  case EVT::f64:
+  case MVT::f64:
     if (Subtarget->hasSSE2()) {
       Opc = X86::MOVSDrm;
       RC  = X86::FR64RegisterClass;
@@ -1597,7 +1597,7 @@ unsigned X86FastISel::TargetMaterializeConstant(Constant *C) {
       RC  = X86::RFP64RegisterClass;
     }
     break;
-  case EVT::f80:
+  case MVT::f80:
     // No f80 support yet.
     return false;
   }
@@ -1606,7 +1606,7 @@ unsigned X86FastISel::TargetMaterializeConstant(Constant *C) {
   if (isa<GlobalValue>(C)) {
     X86AddressMode AM;
     if (X86SelectAddress(C, AM)) {
-      if (TLI.getPointerTy() == EVT::i32)
+      if (TLI.getPointerTy() == MVT::i32)
         Opc = X86::LEA32r;
       else
         Opc = X86::LEA64r;

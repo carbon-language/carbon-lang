@@ -193,7 +193,7 @@ public:
   /// setRoot - Set the current root tag of the SelectionDAG.
   ///
   const SDValue &setRoot(SDValue N) {
-    assert((!N.getNode() || N.getValueType() == EVT::Other) &&
+    assert((!N.getNode() || N.getValueType() == MVT::Other) &&
            "DAG root value is not a chain!");
     return Root = N;
   }
@@ -327,7 +327,7 @@ public:
                    unsigned LabelID);
 
   SDValue getCopyToReg(SDValue Chain, DebugLoc dl, unsigned Reg, SDValue N) {
-    return getNode(ISD::CopyToReg, dl, EVT::Other, Chain,
+    return getNode(ISD::CopyToReg, dl, MVT::Other, Chain,
                    getRegister(Reg, N.getValueType()), N);
   }
 
@@ -336,7 +336,7 @@ public:
   // null) and that there should be a flag result.
   SDValue getCopyToReg(SDValue Chain, DebugLoc dl, unsigned Reg, SDValue N,
                        SDValue Flag) {
-    SDVTList VTs = getVTList(EVT::Other, EVT::Flag);
+    SDVTList VTs = getVTList(MVT::Other, MVT::Flag);
     SDValue Ops[] = { Chain, getRegister(Reg, N.getValueType()), N, Flag };
     return getNode(ISD::CopyToReg, dl, VTs, Ops, Flag.getNode() ? 4 : 3);
   }
@@ -344,13 +344,13 @@ public:
   // Similar to last getCopyToReg() except parameter Reg is a SDValue
   SDValue getCopyToReg(SDValue Chain, DebugLoc dl, SDValue Reg, SDValue N,
                          SDValue Flag) {
-    SDVTList VTs = getVTList(EVT::Other, EVT::Flag);
+    SDVTList VTs = getVTList(MVT::Other, MVT::Flag);
     SDValue Ops[] = { Chain, Reg, N, Flag };
     return getNode(ISD::CopyToReg, dl, VTs, Ops, Flag.getNode() ? 4 : 3);
   }
 
   SDValue getCopyFromReg(SDValue Chain, DebugLoc dl, unsigned Reg, EVT VT) {
-    SDVTList VTs = getVTList(VT, EVT::Other);
+    SDVTList VTs = getVTList(VT, MVT::Other);
     SDValue Ops[] = { Chain, getRegister(Reg, VT) };
     return getNode(ISD::CopyFromReg, dl, VTs, Ops, 2);
   }
@@ -360,7 +360,7 @@ public:
   // null) and that there should be a flag result.
   SDValue getCopyFromReg(SDValue Chain, DebugLoc dl, unsigned Reg, EVT VT,
                            SDValue Flag) {
-    SDVTList VTs = getVTList(VT, EVT::Other, EVT::Flag);
+    SDVTList VTs = getVTList(VT, MVT::Other, MVT::Flag);
     SDValue Ops[] = { Chain, getRegister(Reg, VT), Flag };
     return getNode(ISD::CopyFromReg, dl, VTs, Ops, Flag.getNode() ? 3 : 2);
   }
@@ -391,7 +391,7 @@ public:
   /// a flag result (to ensure it's not CSE'd).  CALLSEQ_START does not have a
   /// useful DebugLoc.
   SDValue getCALLSEQ_START(SDValue Chain, SDValue Op) {
-    SDVTList VTs = getVTList(EVT::Other, EVT::Flag);
+    SDVTList VTs = getVTList(MVT::Other, MVT::Flag);
     SDValue Ops[] = { Chain,  Op };
     return getNode(ISD::CALLSEQ_START, DebugLoc::getUnknownLoc(),
                    VTs, Ops, 2);
@@ -402,7 +402,7 @@ public:
   /// a useful DebugLoc.
   SDValue getCALLSEQ_END(SDValue Chain, SDValue Op1, SDValue Op2,
                            SDValue InFlag) {
-    SDVTList NodeTys = getVTList(EVT::Other, EVT::Flag);
+    SDVTList NodeTys = getVTList(MVT::Other, MVT::Flag);
     SmallVector<SDValue, 4> Ops;
     Ops.push_back(Chain);
     Ops.push_back(Op1);

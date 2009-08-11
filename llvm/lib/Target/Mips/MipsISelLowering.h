@@ -80,7 +80,7 @@ namespace llvm {
     virtual const char *getTargetNodeName(unsigned Opcode) const;
 
     /// getSetCCResultType - get the ISD::SETCC result ValueType
-    EVT::SimpleValueType getSetCCResultType(EVT VT) const;
+    MVT::SimpleValueType getSetCCResultType(EVT VT) const;
 
     /// getFunctionAlignment - Return the Log2 alignment of this function.
     virtual unsigned getFunctionAlignment(const Function *F) const;

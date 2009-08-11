@@ -159,7 +159,7 @@ public:
   explicit DAGTypeLegalizer(SelectionDAG &dag)
     : TLI(dag.getTargetLoweringInfo()), DAG(dag),
     ValueTypeActions(TLI.getValueTypeActions()) {
-    assert(EVT::LAST_VALUETYPE <= EVT::MAX_ALLOWED_VALUETYPE &&
+    assert(MVT::LAST_VALUETYPE <= MVT::MAX_ALLOWED_VALUETYPE &&
            "Too many value types for ValueTypeActions to hold!");
   }
 

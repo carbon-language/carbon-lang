@@ -512,48 +512,48 @@ def zextload  : PatFrag<(ops node:$ptr), (unindexedload node:$ptr), [{
 }]>;
 
 def extloadi1  : PatFrag<(ops node:$ptr), (extload node:$ptr), [{
-  return cast<LoadSDNode>(N)->getMemoryVT() == EVT::i1;
+  return cast<LoadSDNode>(N)->getMemoryVT() == MVT::i1;
 }]>;
 def extloadi8  : PatFrag<(ops node:$ptr), (extload node:$ptr), [{
-  return cast<LoadSDNode>(N)->getMemoryVT() == EVT::i8;
+  return cast<LoadSDNode>(N)->getMemoryVT() == MVT::i8;
 }]>;
 def extloadi16 : PatFrag<(ops node:$ptr), (extload node:$ptr), [{
-  return cast<LoadSDNode>(N)->getMemoryVT() == EVT::i16;
+  return cast<LoadSDNode>(N)->getMemoryVT() == MVT::i16;
 }]>;
 def extloadi32 : PatFrag<(ops node:$ptr), (extload node:$ptr), [{
-  return cast<LoadSDNode>(N)->getMemoryVT() == EVT::i32;
+  return cast<LoadSDNode>(N)->getMemoryVT() == MVT::i32;
 }]>;
 def extloadf32 : PatFrag<(ops node:$ptr), (extload node:$ptr), [{
-  return cast<LoadSDNode>(N)->getMemoryVT() == EVT::f32;
+  return cast<LoadSDNode>(N)->getMemoryVT() == MVT::f32;
 }]>;
 def extloadf64 : PatFrag<(ops node:$ptr), (extload node:$ptr), [{
-  return cast<LoadSDNode>(N)->getMemoryVT() == EVT::f64;
+  return cast<LoadSDNode>(N)->getMemoryVT() == MVT::f64;
 }]>;
 
 def sextloadi1  : PatFrag<(ops node:$ptr), (sextload node:$ptr), [{
-  return cast<LoadSDNode>(N)->getMemoryVT() == EVT::i1;
+  return cast<LoadSDNode>(N)->getMemoryVT() == MVT::i1;
 }]>;
 def sextloadi8  : PatFrag<(ops node:$ptr), (sextload node:$ptr), [{
-  return cast<LoadSDNode>(N)->getMemoryVT() == EVT::i8;
+  return cast<LoadSDNode>(N)->getMemoryVT() == MVT::i8;
 }]>;
 def sextloadi16 : PatFrag<(ops node:$ptr), (sextload node:$ptr), [{
-  return cast<LoadSDNode>(N)->getMemoryVT() == EVT::i16;
+  return cast<LoadSDNode>(N)->getMemoryVT() == MVT::i16;
 }]>;
 def sextloadi32 : PatFrag<(ops node:$ptr), (sextload node:$ptr), [{
-  return cast<LoadSDNode>(N)->getMemoryVT() == EVT::i32;
+  return cast<LoadSDNode>(N)->getMemoryVT() == MVT::i32;
 }]>;
 
 def zextloadi1  : PatFrag<(ops node:$ptr), (zextload node:$ptr), [{
-  return cast<LoadSDNode>(N)->getMemoryVT() == EVT::i1;
+  return cast<LoadSDNode>(N)->getMemoryVT() == MVT::i1;
 }]>;
 def zextloadi8  : PatFrag<(ops node:$ptr), (zextload node:$ptr), [{
-  return cast<LoadSDNode>(N)->getMemoryVT() == EVT::i8;
+  return cast<LoadSDNode>(N)->getMemoryVT() == MVT::i8;
 }]>;
 def zextloadi16 : PatFrag<(ops node:$ptr), (zextload node:$ptr), [{
-  return cast<LoadSDNode>(N)->getMemoryVT() == EVT::i16;
+  return cast<LoadSDNode>(N)->getMemoryVT() == MVT::i16;
 }]>;
 def zextloadi32 : PatFrag<(ops node:$ptr), (zextload node:$ptr), [{
-  return cast<LoadSDNode>(N)->getMemoryVT() == EVT::i32;
+  return cast<LoadSDNode>(N)->getMemoryVT() == MVT::i32;
 }]>;
 
 // store fragments.
@@ -573,23 +573,23 @@ def truncstore : PatFrag<(ops node:$val, node:$ptr),
 }]>;
 def truncstorei8 : PatFrag<(ops node:$val, node:$ptr),
                            (truncstore node:$val, node:$ptr), [{
-  return cast<StoreSDNode>(N)->getMemoryVT() == EVT::i8;
+  return cast<StoreSDNode>(N)->getMemoryVT() == MVT::i8;
 }]>;
 def truncstorei16 : PatFrag<(ops node:$val, node:$ptr),
                             (truncstore node:$val, node:$ptr), [{
-  return cast<StoreSDNode>(N)->getMemoryVT() == EVT::i16;
+  return cast<StoreSDNode>(N)->getMemoryVT() == MVT::i16;
 }]>;
 def truncstorei32 : PatFrag<(ops node:$val, node:$ptr),
                             (truncstore node:$val, node:$ptr), [{
-  return cast<StoreSDNode>(N)->getMemoryVT() == EVT::i32;
+  return cast<StoreSDNode>(N)->getMemoryVT() == MVT::i32;
 }]>;
 def truncstoref32 : PatFrag<(ops node:$val, node:$ptr),
                             (truncstore node:$val, node:$ptr), [{
-  return cast<StoreSDNode>(N)->getMemoryVT() == EVT::f32;
+  return cast<StoreSDNode>(N)->getMemoryVT() == MVT::f32;
 }]>;
 def truncstoref64 : PatFrag<(ops node:$val, node:$ptr),
                             (truncstore node:$val, node:$ptr), [{
-  return cast<StoreSDNode>(N)->getMemoryVT() == EVT::f64;
+  return cast<StoreSDNode>(N)->getMemoryVT() == MVT::f64;
 }]>;
 
 // indexed store fragments.
@@ -615,23 +615,23 @@ def pre_truncst : PatFrag<(ops node:$val, node:$base, node:$offset),
 }]>;
 def pre_truncsti1 : PatFrag<(ops node:$val, node:$base, node:$offset),
                             (pre_truncst node:$val, node:$base, node:$offset), [{
-  return cast<StoreSDNode>(N)->getMemoryVT() == EVT::i1;
+  return cast<StoreSDNode>(N)->getMemoryVT() == MVT::i1;
 }]>;
 def pre_truncsti8 : PatFrag<(ops node:$val, node:$base, node:$offset),
                             (pre_truncst node:$val, node:$base, node:$offset), [{
-  return cast<StoreSDNode>(N)->getMemoryVT() == EVT::i8;
+  return cast<StoreSDNode>(N)->getMemoryVT() == MVT::i8;
 }]>;
 def pre_truncsti16 : PatFrag<(ops node:$val, node:$base, node:$offset),
                              (pre_truncst node:$val, node:$base, node:$offset), [{
-  return cast<StoreSDNode>(N)->getMemoryVT() == EVT::i16;
+  return cast<StoreSDNode>(N)->getMemoryVT() == MVT::i16;
 }]>;
 def pre_truncsti32 : PatFrag<(ops node:$val, node:$base, node:$offset),
                              (pre_truncst node:$val, node:$base, node:$offset), [{
-  return cast<StoreSDNode>(N)->getMemoryVT() == EVT::i32;
+  return cast<StoreSDNode>(N)->getMemoryVT() == MVT::i32;
 }]>;
 def pre_truncstf32 : PatFrag<(ops node:$val, node:$base, node:$offset),
                              (pre_truncst node:$val, node:$base, node:$offset), [{
-  return cast<StoreSDNode>(N)->getMemoryVT() == EVT::f32;
+  return cast<StoreSDNode>(N)->getMemoryVT() == MVT::f32;
 }]>;
 
 def post_store : PatFrag<(ops node:$val, node:$ptr, node:$offset),
@@ -647,23 +647,23 @@ def post_truncst : PatFrag<(ops node:$val, node:$base, node:$offset),
 }]>;
 def post_truncsti1 : PatFrag<(ops node:$val, node:$base, node:$offset),
                              (post_truncst node:$val, node:$base, node:$offset), [{
-  return cast<StoreSDNode>(N)->getMemoryVT() == EVT::i1;
+  return cast<StoreSDNode>(N)->getMemoryVT() == MVT::i1;
 }]>;
 def post_truncsti8 : PatFrag<(ops node:$val, node:$base, node:$offset),
                              (post_truncst node:$val, node:$base, node:$offset), [{
-  return cast<StoreSDNode>(N)->getMemoryVT() == EVT::i8;
+  return cast<StoreSDNode>(N)->getMemoryVT() == MVT::i8;
 }]>;
 def post_truncsti16 : PatFrag<(ops node:$val, node:$base, node:$offset),
                               (post_truncst node:$val, node:$base, node:$offset), [{
-  return cast<StoreSDNode>(N)->getMemoryVT() == EVT::i16;
+  return cast<StoreSDNode>(N)->getMemoryVT() == MVT::i16;
 }]>;
 def post_truncsti32 : PatFrag<(ops node:$val, node:$base, node:$offset),
                               (post_truncst node:$val, node:$base, node:$offset), [{
-  return cast<StoreSDNode>(N)->getMemoryVT() == EVT::i32;
+  return cast<StoreSDNode>(N)->getMemoryVT() == MVT::i32;
 }]>;
 def post_truncstf32 : PatFrag<(ops node:$val, node:$base, node:$offset),
                               (post_truncst node:$val, node:$base, node:$offset), [{
-  return cast<StoreSDNode>(N)->getMemoryVT() == EVT::f32;
+  return cast<StoreSDNode>(N)->getMemoryVT() == MVT::f32;
 }]>;
 
 // setcc convenience fragments.
@@ -711,40 +711,40 @@ def setne  : PatFrag<(ops node:$lhs, node:$rhs),
 def atomic_cmp_swap_8 :
   PatFrag<(ops node:$ptr, node:$cmp, node:$swap),
           (atomic_cmp_swap node:$ptr, node:$cmp, node:$swap), [{
-  return cast<AtomicSDNode>(N)->getMemoryVT() == EVT::i8;
+  return cast<AtomicSDNode>(N)->getMemoryVT() == MVT::i8;
 }]>;
 def atomic_cmp_swap_16 :
   PatFrag<(ops node:$ptr, node:$cmp, node:$swap),
           (atomic_cmp_swap node:$ptr, node:$cmp, node:$swap), [{
-  return cast<AtomicSDNode>(N)->getMemoryVT() == EVT::i16;
+  return cast<AtomicSDNode>(N)->getMemoryVT() == MVT::i16;
 }]>;
 def atomic_cmp_swap_32 :
   PatFrag<(ops node:$ptr, node:$cmp, node:$swap),
           (atomic_cmp_swap node:$ptr, node:$cmp, node:$swap), [{
-  return cast<AtomicSDNode>(N)->getMemoryVT() == EVT::i32;
+  return cast<AtomicSDNode>(N)->getMemoryVT() == MVT::i32;
 }]>;
 def atomic_cmp_swap_64 :
   PatFrag<(ops node:$ptr, node:$cmp, node:$swap),
           (atomic_cmp_swap node:$ptr, node:$cmp, node:$swap), [{
-  return cast<AtomicSDNode>(N)->getMemoryVT() == EVT::i64;
+  return cast<AtomicSDNode>(N)->getMemoryVT() == MVT::i64;
 }]>;
 
 multiclass binary_atomic_op<SDNode atomic_op> {
   def _8 : PatFrag<(ops node:$ptr, node:$val),
                    (atomic_op node:$ptr, node:$val), [{
-    return cast<AtomicSDNode>(N)->getMemoryVT() == EVT::i8;
+    return cast<AtomicSDNode>(N)->getMemoryVT() == MVT::i8;
   }]>;
   def _16 : PatFrag<(ops node:$ptr, node:$val),
                    (atomic_op node:$ptr, node:$val), [{
-    return cast<AtomicSDNode>(N)->getMemoryVT() == EVT::i16;
+    return cast<AtomicSDNode>(N)->getMemoryVT() == MVT::i16;
   }]>;
   def _32 : PatFrag<(ops node:$ptr, node:$val),
                    (atomic_op node:$ptr, node:$val), [{
-    return cast<AtomicSDNode>(N)->getMemoryVT() == EVT::i32;
+    return cast<AtomicSDNode>(N)->getMemoryVT() == MVT::i32;
   }]>;
   def _64 : PatFrag<(ops node:$ptr, node:$val),
                    (atomic_op node:$ptr, node:$val), [{
-    return cast<AtomicSDNode>(N)->getMemoryVT() == EVT::i64;
+    return cast<AtomicSDNode>(N)->getMemoryVT() == MVT::i64;
   }]>;
 }
 

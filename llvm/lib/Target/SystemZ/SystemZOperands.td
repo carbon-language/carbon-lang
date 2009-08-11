@@ -134,10 +134,10 @@ def i64hh16c : PatLeaf<(i64 imm), [{
 def immSExt16 : PatLeaf<(imm), [{
   // immSExt16 predicate - true if the immediate fits in a 16-bit sign extended
   // field.
-  if (N->getValueType(0) == EVT::i64) {
+  if (N->getValueType(0) == MVT::i64) {
     uint64_t val = N->getZExtValue();
     return ((int64_t)val == (int16_t)val);
-  } else if (N->getValueType(0) == EVT::i32) {
+  } else if (N->getValueType(0) == MVT::i32) {
     uint32_t val = N->getZExtValue();
     return ((int32_t)val == (int16_t)val);
   }

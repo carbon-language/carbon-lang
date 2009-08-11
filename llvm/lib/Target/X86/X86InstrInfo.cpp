@@ -2525,7 +2525,7 @@ X86InstrInfo::unfoldMemoryOperand(SelectionDAG &DAG, SDNode *N,
     bool isAligned = (RI.getStackAlignment() >= 16) ||
       RI.needsStackRealignment(MF);
     Load = DAG.getTargetNode(getLoadRegOpcode(0, RC, isAligned, TM), dl,
-                             VT, EVT::Other, &AddrOps[0], AddrOps.size());
+                             VT, MVT::Other, &AddrOps[0], AddrOps.size());
     NewNodes.push_back(Load);
   }
 
@@ -2538,7 +2538,7 @@ X86InstrInfo::unfoldMemoryOperand(SelectionDAG &DAG, SDNode *N,
   }
   for (unsigned i = 0, e = N->getNumValues(); i != e; ++i) {
     EVT VT = N->getValueType(i);
-    if (VT != EVT::Other && i >= (unsigned)TID.getNumDefs())
+    if (VT != MVT::Other && i >= (unsigned)TID.getNumDefs())
       VTs.push_back(VT);
   }
   if (Load)
@@ -2557,7 +2557,7 @@ X86InstrInfo::unfoldMemoryOperand(SelectionDAG &DAG, SDNode *N,
       RI.needsStackRealignment(MF);
     SDNode *Store = DAG.getTargetNode(getStoreRegOpcode(0, DstRC,
                                                         isAligned, TM),
-                                      dl, EVT::Other,
+                                      dl, MVT::Other,
                                       &AddrOps[0], AddrOps.size());
     NewNodes.push_back(Store);
   }

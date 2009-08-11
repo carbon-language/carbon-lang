@@ -216,15 +216,15 @@ SUnit *ScheduleDAGFast::CopyAndMoveSuccessors(SUnit *SU) {
   bool TryUnfold = false;
   for (unsigned i = 0, e = N->getNumValues(); i != e; ++i) {
     EVT VT = N->getValueType(i);
-    if (VT == EVT::Flag)
+    if (VT == MVT::Flag)
       return NULL;
-    else if (VT == EVT::Other)
+    else if (VT == MVT::Other)
       TryUnfold = true;
   }
   for (unsigned i = 0, e = N->getNumOperands(); i != e; ++i) {
     const SDValue &Op = N->getOperand(i);
     EVT VT = Op.getNode()->getValueType(Op.getResNo());
-    if (VT == EVT::Flag)
+    if (VT == MVT::Flag)
       return NULL;
   }
 
