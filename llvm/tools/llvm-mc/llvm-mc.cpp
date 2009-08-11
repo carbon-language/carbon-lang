@@ -36,6 +36,9 @@ static cl::opt<std::string>
 OutputFilename("o", cl::desc("Output filename"),
                cl::value_desc("filename"));
 
+static cl::opt<bool>
+Force("f", cl::desc("Overwrite output files"));
+
 static cl::list<std::string>
 IncludeDirs("I", cl::desc("Directory of include files"),
             cl::value_desc("directory"), cl::Prefix);
@@ -161,6 +164,28 @@ static TargetAsmParser *GetTargetAsmParser(const char *ProgName,
   return 0;
 }
 
+static raw_ostream *GetOutputStream() {
+  if (OutputFilename == "" || OutputFilename == "-")
+    return &outs();
+
+  // Make sure that the Out file gets unlinked from the disk if we get a
+  // SIGINT
+  sys::RemoveFileOnSignal(sys::Path(OutputFilename));
+
+  std::string Err;
+  raw_fd_ostream *Out = new raw_fd_ostream(OutputFilename.c_str(),
+                                           /*Binary=*/false, Force, Err);
+  if (!Err.empty()) {
+    errs() << Err << '\n';
+    if (!Force)
+      errs() << "Use -f command line argument to force output\n";
+    delete Out;
+    return 0;
+  }
+  
+  return Out;
+}
+
 static int AssembleInput(const char *ProgName) {
   std::string Error;
   MemoryBuffer *Buffer = MemoryBuffer::getFileOrSTDIN(InputFilename, &Error);
@@ -183,7 +208,10 @@ static int AssembleInput(const char *ProgName) {
   SrcMgr.setIncludeDirs(IncludeDirs);
   
   MCContext Ctx;
-  OwningPtr<MCStreamer> Str(createAsmStreamer(Ctx, outs()));
+  raw_ostream *Out = GetOutputStream();
+  if (!Out)
+    return 1;
+  OwningPtr<MCStreamer> Str(createAsmStreamer(Ctx, *Out));
 
   // FIXME: Target hook & command line option for initial section.
   Str.get()->SwitchSection(MCSectionMachO::Create("__TEXT","__text",
@@ -196,7 +224,12 @@ static int AssembleInput(const char *ProgName) {
   if (!TAP)
     return 1;
   Parser.setTargetParser(*TAP.get());
-  return Parser.Run();
+
+  int Res = Parser.Run();
+  if (Out != &outs())
+    delete Out;
+
+  return Res;
 }  
 
 
