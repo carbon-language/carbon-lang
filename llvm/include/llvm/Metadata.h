@@ -132,7 +132,7 @@ public:
   /// dropAllReferences - Remove all uses and clear node vector.
   void dropAllReferences();
 
-  /// ~MDNode - Destroy NamedMDNode.
+  /// ~MDNode - Destroy MDNode.
   ~MDNode();
   
   /// getElement - Return specified element.
