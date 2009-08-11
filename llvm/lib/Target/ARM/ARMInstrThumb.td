@@ -149,9 +149,9 @@ def tADDspi : TIt<(outs GPR:$dst), (ins GPR:$lhs, i32imm:$rhs), IIC_iALU,
 def tSUBspi : TIt<(outs GPR:$dst), (ins GPR:$lhs, i32imm:$rhs), IIC_iALU,
                   "sub $dst, $rhs * 4", []>;
 
-// ADD rm, sp, rm
-def tADDrSPr : TI<(outs GPR:$dst), (ins GPR:$sp, GPR:$rhs), IIC_iALU,
-                  "add $dst, $sp, $rhs", []>;
+// ADD rm, sp
+def tADDrSP : TIt<(outs GPR:$dst), (ins GPR:$lhs, GPR:$rhs), IIC_iALU,
+                  "add $dst, $rhs", []>;
 
 // ADD sp, rm
 def tADDspr : TIt<(outs GPR:$dst), (ins GPR:$lhs, GPR:$rhs), IIC_iALU,

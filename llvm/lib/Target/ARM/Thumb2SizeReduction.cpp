@@ -57,6 +57,8 @@ namespace {
     // FIXME: t2ADDS variants.
     { ARM::t2ADDri, ARM::tADDi3,  ARM::tADDi8,   3,   8,    1,   1,  0,0, 0 },
     { ARM::t2ADDrr, ARM::tADDrr,  ARM::tADDhirr, 0,   0,    1,   0,  0,1, 0 },
+    // Note: immediate scale is 4.
+    { ARM::t2ADDrSPi,ARM::tADDrSPi,0,            8,   0,    1,   0,  1,0, 0 },
     { ARM::t2ANDrr, 0,            ARM::tAND,     0,   0,    0,   1,  0,0, 0 },
     { ARM::t2ASRri, ARM::tASRri,  0,             5,   0,    1,   0,  0,0, 0 },
     { ARM::t2ASRrr, 0,            ARM::tASRrr,   0,   0,    0,   1,  0,0, 0 },
@@ -199,7 +201,7 @@ static bool VerifyLowRegs(MachineInstr *MI) {
   unsigned Opc = MI->getOpcode();
   bool isPCOk = (Opc == ARM::t2LDM_RET) || (Opc == ARM::t2LDM);
   bool isLROk = (Opc == ARM::t2STM);
-  bool isSPOk = isPCOk || isLROk;
+  bool isSPOk = isPCOk || isLROk || (Opc == ARM::t2ADDrSPi);
   for (unsigned i = 0, e = MI->getNumOperands(); i != e; ++i) {
     const MachineOperand &MO = MI->getOperand(i);
     if (!MO.isReg() || MO.isImplicit())
@@ -423,8 +425,9 @@ Thumb2SizeReduce::ReduceToNarrow(MachineBasicBlock &MBB, MachineInstr *MI,
     return false;
 
   unsigned Limit = ~0U;
+  unsigned Scale = (Entry.WideOpc == ARM::t2ADDrSPi) ? 4 : 1;
   if (Entry.Imm1Limit)
-    Limit = (1 << Entry.Imm1Limit) - 1;
+    Limit = ((1 << Entry.Imm1Limit) - 1) * Scale;
 
   const TargetInstrDesc &TID = MI->getDesc();
   for (unsigned i = 0, e = TID.getNumOperands(); i != e; ++i) {
@@ -435,10 +438,13 @@ Thumb2SizeReduce::ReduceToNarrow(MachineBasicBlock &MBB, MachineInstr *MI,
       unsigned Reg = MO.getReg();
       if (!Reg || Reg == ARM::CPSR)
         continue;
+      if (Entry.WideOpc == ARM::t2ADDrSPi && Reg == ARM::SP)
+        continue;
       if (Entry.LowRegs1 && !isARMLowRegister(Reg))
         return false;
-    } else if (MO.isImm()) {
-      if (MO.getImm() > Limit)
+    } else if (MO.isImm() &&
+               !TID.OpInfo[i].isPredicate()) {
+      if (MO.getImm() > Limit || (MO.getImm() & (Scale-1)) != 0)
         return false;
     }
   }
@@ -479,9 +485,14 @@ Thumb2SizeReduce::ReduceToNarrow(MachineBasicBlock &MBB, MachineInstr *MI,
   for (unsigned i = 1, e = MI->getNumOperands(); i != e; ++i) {
     if (i < NumOps && TID.OpInfo[i].isOptionalDef())
       continue;
-    if (SkipPred && TID.OpInfo[i].isPredicate())
-      continue;
-    MIB.addOperand(MI->getOperand(i));
+    bool isPred = (i < NumOps && TID.OpInfo[i].isPredicate());
+    if (SkipPred && isPred)
+        continue;
+    const MachineOperand &MO = MI->getOperand(i);
+    if (Scale > 1 && !isPred && MO.isImm())
+      MIB.addImm(MO.getImm() / Scale);
+    else
+      MIB.addOperand(MO);
   }
 
 

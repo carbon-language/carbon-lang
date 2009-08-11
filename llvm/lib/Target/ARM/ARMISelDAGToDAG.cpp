@@ -898,7 +898,7 @@ SDNode *ARMDAGToDAGISel::SelectDYN_ALLOC(SDValue Op) {
                                 Chain);
 
   if (Subtarget->isThumb1Only()) {
-    // Use tADDrSPr since Thumb1 does not have a sub r, sp, r. ARMISelLowering
+    // Use tADDspr since Thumb1 does not have a sub r, sp, r. ARMISelLowering
     // should have negated the size operand already. FIXME: We can't insert
     // new target independent node at this stage so we are forced to negate
     // it earlier. Is there a better solution?

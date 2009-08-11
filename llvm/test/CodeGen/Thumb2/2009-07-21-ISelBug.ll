@@ -1,10 +1,12 @@
-; RUN: llvm-as < %s | llc -mtriple=thumbv7-apple-darwin9 -mattr=+vfp2,+thumb2
+; RUN: llvm-as < %s | llc -mtriple=thumbv7-apple-darwin9 -mattr=+vfp2,+thumb2 | FileCheck %s
 ; rdar://7076238
 
 @"\01LC" = external constant [36 x i8], align 1		; <[36 x i8]*> [#uses=1]
 
-define arm_apcscc i32 @getUnknown(i32, ...) nounwind {
+define arm_apcscc i32 @t(i32, ...) nounwind {
 entry:
+; CHECK: t:
+; CHECK: add r7, sp, #3 * 4
 	%1 = load i8** undef, align 4		; <i8*> [#uses=3]
 	%2 = getelementptr i8* %1, i32 4		; <i8*> [#uses=1]
 	%3 = getelementptr i8* %1, i32 8		; <i8*> [#uses=1]
