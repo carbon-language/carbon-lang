@@ -2358,6 +2358,14 @@ let isTwoAddress = 0 in {
                   [(store (add (load addr:$dst), i32immSExt8:$src2),
                                addr:$dst),
                    (implicit EFLAGS)]>;
+
+  // addition to rAX
+  def ADD8i8 : Ii8<0x04, RawFrm, (outs), (ins i8imm:$src),
+                   "add\t{$src, %al|%al, $src}", []>;
+  def ADD16i16 : Ii16<0x05, RawFrm, (outs), (ins i16imm:$src),
+                      "add\t{$src, %ax|%ax, $src}", []>, OpSize;
+  def ADD32i32 : Ii32<0x05, RawFrm, (outs), (ins i32imm:$src),
+                      "add\t{$src, %eax|%eax, $src}", []>;
 }
 
 let Uses = [EFLAGS] in {
