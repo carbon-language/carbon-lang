@@ -25,7 +25,7 @@ const TargetAsmInfo *XCoreTargetMachine::createTargetAsmInfo() const {
 ///
 XCoreTargetMachine::XCoreTargetMachine(const Target &T, const std::string &TT,
                                        const std::string &FS)
-  : LLVMTargetMachine(T),
+  : LLVMTargetMachine(T, TT),
     Subtarget(TT, FS),
     DataLayout("e-p:32:32:32-a0:0:32-f32:32:32-f64:32:32-i1:8:32-i8:8:32-"
                "i16:16:32-i32:32:32-i64:32:32"),

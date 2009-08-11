@@ -23,7 +23,7 @@ using namespace llvm;
 // PIC16TargetMachine - Traditional PIC16 Machine.
 PIC16TargetMachine::PIC16TargetMachine(const Target &T, const std::string &TT,
                                        const std::string &FS, bool Cooper)
-: LLVMTargetMachine(T),
+: LLVMTargetMachine(T, TT),
   Subtarget(TT, FS, Cooper),
   DataLayout("e-p:16:8:8-i8:8:8-i16:8:8-i32:8:8"), 
   InstrInfo(*this), TLInfo(*this),

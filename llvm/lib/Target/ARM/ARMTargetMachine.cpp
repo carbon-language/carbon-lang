@@ -39,7 +39,7 @@ ARMBaseTargetMachine::ARMBaseTargetMachine(const Target &T,
                                            const std::string &TT,
                                            const std::string &FS,
                                            bool isThumb)
-  : LLVMTargetMachine(T),
+  : LLVMTargetMachine(T, TT),
     Subtarget(TT, FS, isThumb),
     FrameInfo(Subtarget),
     JITInfo(),

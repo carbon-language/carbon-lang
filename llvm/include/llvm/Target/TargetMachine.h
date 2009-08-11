@@ -16,6 +16,7 @@
 
 #include "llvm/Target/TargetInstrItineraries.h"
 #include <cassert>
+#include <string>
 
 namespace llvm {
 
@@ -290,7 +291,8 @@ public:
 ///
 class LLVMTargetMachine : public TargetMachine {
 protected: // Can only create subclasses.
-  LLVMTargetMachine(const Target &T) : TargetMachine(T) { }
+  LLVMTargetMachine(const Target &T, const std::string &TargetTriple)
+    : TargetMachine(T) { }
 
   /// addCommonCodeGenPasses - Add standard LLVM codegen passes used for
   /// both emitting to assembly files or machine code output.

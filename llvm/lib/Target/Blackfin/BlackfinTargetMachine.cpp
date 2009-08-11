@@ -29,7 +29,7 @@ const TargetAsmInfo* BlackfinTargetMachine::createTargetAsmInfo() const {
 BlackfinTargetMachine::BlackfinTargetMachine(const Target &T,
                                              const std::string &TT,
                                              const std::string &FS)
-  : LLVMTargetMachine(T),
+  : LLVMTargetMachine(T, TT),
     DataLayout("e-p:32:32-i64:32-f64:32"),
     Subtarget(TT, FS),
     TLInfo(*this),

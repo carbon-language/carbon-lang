@@ -58,7 +58,7 @@ X86_64TargetMachine::X86_64TargetMachine(const Target &T, const std::string &TT,
 ///
 X86TargetMachine::X86TargetMachine(const Target &T, const std::string &TT, 
                                    const std::string &FS, bool is64Bit)
-  : LLVMTargetMachine(T), 
+  : LLVMTargetMachine(T, TT), 
     Subtarget(TT, FS, is64Bit),
     DataLayout(Subtarget.getDataLayout()),
     FrameInfo(TargetFrameInfo::StackGrowsDown,

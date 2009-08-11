@@ -39,7 +39,7 @@ const TargetAsmInfo *SPUTargetMachine::createTargetAsmInfo() const {
 
 SPUTargetMachine::SPUTargetMachine(const Target &T, const std::string &TT,
                                    const std::string &FS)
-  : LLVMTargetMachine(T),
+  : LLVMTargetMachine(T, TT),
     Subtarget(TT, FS),
     DataLayout(Subtarget.getTargetDataString()),
     InstrInfo(*this),

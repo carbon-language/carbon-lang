@@ -31,7 +31,7 @@ const TargetAsmInfo *AlphaTargetMachine::createTargetAsmInfo() const {
 
 AlphaTargetMachine::AlphaTargetMachine(const Target &T, const std::string &TT,
                                        const std::string &FS)
-  : LLVMTargetMachine(T),
+  : LLVMTargetMachine(T, TT),
     DataLayout("e-f128:128:128"),
     FrameInfo(TargetFrameInfo::StackGrowsDown, 16, 0),
     JITInfo(*this),

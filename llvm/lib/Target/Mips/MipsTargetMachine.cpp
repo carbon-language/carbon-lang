@@ -38,14 +38,13 @@ const TargetAsmInfo *MipsTargetMachine::createTargetAsmInfo() const {
 MipsTargetMachine::
 MipsTargetMachine(const Target &T, const std::string &TT, const std::string &FS,
                   bool isLittle=false):
-  LLVMTargetMachine(T),
+  LLVMTargetMachine(T, TT),
   Subtarget(TT, FS, isLittle), 
   DataLayout(isLittle ? std::string("e-p:32:32:32-i8:8:32-i16:16:32") :
                         std::string("E-p:32:32:32-i8:8:32-i16:16:32")), 
   InstrInfo(*this), 
   FrameInfo(TargetFrameInfo::StackGrowsUp, 8, 0),
-  TLInfo(*this) 
-{
+  TLInfo(*this) {
   // Abicall enables PIC by default
   if (getRelocationModel() == Reloc::Default) {
     if (Subtarget.isABI_O32())

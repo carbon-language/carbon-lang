@@ -22,7 +22,7 @@ using namespace llvm;
 MSP430TargetMachine::MSP430TargetMachine(const Target &T,
                                          const std::string &TT,
                                          const std::string &FS) :
-  LLVMTargetMachine(T),
+  LLVMTargetMachine(T, TT),
   Subtarget(TT, FS),
   // FIXME: Check TargetData string.
   DataLayout("e-p:16:8:8-i8:8:8-i16:8:8-i32:8:8"),
