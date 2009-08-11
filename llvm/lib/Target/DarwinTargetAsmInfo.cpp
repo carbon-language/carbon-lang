@@ -38,6 +38,8 @@ DarwinTargetAsmInfo::DarwinTargetAsmInfo() {
   LCOMMDirective = "\t.lcomm\t";
   ZeroDirective = "\t.space\t";  // ".space N" emits N zeros.
   ZeroFillDirective = "\t.zerofill\t";  // Uses .zerofill
+  SetDirective = "\t.set";
+  ProtectedDirective = "\t.globl\t";
 
   // _foo.eh symbols are currently always exported so that the linker knows
   // about them.  This is not necessary on 10.6 and later, but it

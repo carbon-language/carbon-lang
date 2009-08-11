@@ -50,8 +50,6 @@ ARMDarwinTargetAsmInfo::ARMDarwinTargetAsmInfo() {
   InlineAsmEnd = "@ InlineAsm End";
   
   
-  SetDirective = "\t.set\t";
-  ProtectedDirective = NULL;
   HasDotTypeDotSizeDirective = false;
   SupportsDebugInformation = true;
 

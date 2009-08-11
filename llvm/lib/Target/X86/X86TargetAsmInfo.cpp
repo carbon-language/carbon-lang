@@ -66,7 +66,6 @@ X86DarwinTargetAsmInfo::X86DarwinTargetAsmInfo(const X86TargetMachine &TM) {
   InlineAsmStart = "## InlineAsm Start";
   InlineAsmEnd = "## InlineAsm End";
   CommentString = "##";
-  SetDirective = "\t.set";
   PCSymbol = ".";
   UsedDirective = "\t.no_dead_strip\t";
   ProtectedDirective = "\t.globl\t";
