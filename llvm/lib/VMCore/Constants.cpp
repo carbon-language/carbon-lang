@@ -605,6 +605,15 @@ Constant* ConstantVector::get(Constant* const* Vals, unsigned NumVals) {
   return get(std::vector<Constant*>(Vals, Vals+NumVals));
 }
 
+Constant* ConstantExpr::getNSWAdd(Constant* C1, Constant* C2) {
+  Constant *C = getAdd(C1, C2);
+  // Set nsw attribute, assuming constant folding didn't eliminate the
+  // Add.
+  if (AddOperator *Add = dyn_cast<AddOperator>(C))
+    Add->setHasNoSignedOverflow(true);
+  return C;
+}
+
 Constant* ConstantExpr::getExactSDiv(Constant* C1, Constant* C2) {
   Constant *C = getSDiv(C1, C2);
   // Set exact attribute, assuming constant folding didn't eliminate the

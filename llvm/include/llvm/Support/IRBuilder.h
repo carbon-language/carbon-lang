@@ -199,6 +199,12 @@ public:
         return Folder.CreateAdd(LC, RC);
     return Insert(BinaryOperator::CreateAdd(LHS, RHS), Name);
   }
+  Value *CreateNSWAdd(Value *LHS, Value *RHS, const char *Name = "") {
+    if (Constant *LC = dyn_cast<Constant>(LHS))
+      if (Constant *RC = dyn_cast<Constant>(RHS))
+        return Folder.CreateNSWAdd(LC, RC);
+    return Insert(BinaryOperator::CreateNSWAdd(LHS, RHS), Name);
+  }
   Value *CreateFAdd(Value *LHS, Value *RHS, const char *Name = "") {
     if (Constant *LC = dyn_cast<Constant>(LHS))
       if (Constant *RC = dyn_cast<Constant>(RHS))

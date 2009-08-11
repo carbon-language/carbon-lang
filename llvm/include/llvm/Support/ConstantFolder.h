@@ -35,6 +35,9 @@ public:
   Constant *CreateAdd(Constant *LHS, Constant *RHS) const {
     return ConstantExpr::getAdd(LHS, RHS);
   }
+  Constant *CreateNSWAdd(Constant *LHS, Constant *RHS) const {
+    return ConstantExpr::getNSWAdd(LHS, RHS);
+  }
   Constant *CreateFAdd(Constant *LHS, Constant *RHS) const {
     return ConstantExpr::getFAdd(LHS, RHS);
   }

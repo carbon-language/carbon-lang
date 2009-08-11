@@ -42,6 +42,9 @@ public:
   Value *CreateAdd(Constant *LHS, Constant *RHS) const {
     return BinaryOperator::CreateAdd(LHS, RHS);
   }
+  Value *CreateNSWAdd(Constant *LHS, Constant *RHS) const {
+    return BinaryOperator::CreateNSWAdd(LHS, RHS);
+  }
   Value *CreateFAdd(Constant *LHS, Constant *RHS) const {
     return BinaryOperator::CreateFAdd(LHS, RHS);
   }
