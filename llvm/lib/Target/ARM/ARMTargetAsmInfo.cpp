@@ -14,7 +14,7 @@
 #include "ARMTargetAsmInfo.h"
 using namespace llvm;
 
-const char *const llvm::arm_asm_table[] = {
+static const char *const arm_asm_table[] = {
   "{r0}", "r0",
   "{r1}", "r1",
   "{r2}", "r2",
@@ -41,6 +41,15 @@ const char *const llvm::arm_asm_table[] = {
 };
 
 ARMDarwinTargetAsmInfo::ARMDarwinTargetAsmInfo() {
+  AsmTransCBE = arm_asm_table;
+  AlignmentIsInBytes = false;
+  Data64bitsDirective = 0;
+  CommentString = "@";
+  COMMDirectiveTakesAlignment = false;
+  InlineAsmStart = "@ InlineAsm Start";
+  InlineAsmEnd = "@ InlineAsm End";
+  
+  
   ZeroDirective = "\t.space\t";
   ZeroFillDirective = "\t.zerofill\t";  // Uses .zerofill
   SetDirective = "\t.set\t";
@@ -56,6 +65,13 @@ ARMDarwinTargetAsmInfo::ARMDarwinTargetAsmInfo() {
 }
 
 ARMELFTargetAsmInfo::ARMELFTargetAsmInfo() {
+  AlignmentIsInBytes = false;
+  Data64bitsDirective = 0;
+  CommentString = "@";
+  COMMDirectiveTakesAlignment = false;
+  InlineAsmStart = "@ InlineAsm Start";
+  InlineAsmEnd = "@ InlineAsm End";
+  
   NeedsSet = false;
   HasLEB128 = true;
   AbsoluteDebugSectionOffsets = true;
@@ -68,7 +84,3 @@ ARMELFTargetAsmInfo::ARMELFTargetAsmInfo() {
 
   SupportsDebugInformation = true;
 }
-
-// Instantiate default implementation.
-TEMPLATE_INSTANTIATION(class ARMTargetAsmInfo<DarwinTargetAsmInfo>);
-TEMPLATE_INSTANTIATION(class ARMTargetAsmInfo<TargetAsmInfo>);
