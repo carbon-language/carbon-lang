@@ -66,7 +66,7 @@ unsigned ExactHazardRecognizer::getFutureIndex(unsigned offset) {
 }
 
 void ExactHazardRecognizer::dumpScoreboard() {
-  DEBUG(errs() << "Scoreboard:\n");
+  errs() << "Scoreboard:\n";
   
   unsigned last = ScoreboardDepth - 1;
   while ((last > 0) && (Scoreboard[getFutureIndex(last)] == 0))
@@ -74,10 +74,10 @@ void ExactHazardRecognizer::dumpScoreboard() {
 
   for (unsigned i = 0; i <= last; i++) {
     unsigned FUs = Scoreboard[getFutureIndex(i)];
-    DEBUG(errs() << "\t");
+    errs() << "\t";
     for (int j = 31; j >= 0; j--)
-      DEBUG(errs() << ((FUs & (1 << j)) ? '1' : '0'));
-    DEBUG(errs() << '\n');
+      errs() << ((FUs & (1 << j)) ? '1' : '0');
+    errs() << '\n';
   }
 }
 
