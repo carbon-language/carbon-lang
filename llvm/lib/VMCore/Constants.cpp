@@ -1363,6 +1363,7 @@ Constant* ConstantExpr::getSizeOf(const Type* Ty) {
 
 Constant* ConstantExpr::getAlignOf(const Type* Ty) {
   // alignof is implemented as: (i64) gep ({i8,Ty}*)null, 0, 1
+  // Note that a non-inbounds gep is used, as null isn't within any object.
   const Type *AligningTy = StructType::get(Ty->getContext(),
                                            Type::Int8Ty, Ty, NULL);
   Constant *NullPtr = Constant::getNullValue(AligningTy->getPointerTo());
@@ -1438,11 +1439,30 @@ Constant *ConstantExpr::getGetElementPtr(Constant *C, Value* const *Idxs,
   return getGetElementPtrTy(PointerType::get(Ty, As), C, Idxs, NumIdx);
 }
 
+Constant *ConstantExpr::getInBoundsGetElementPtr(Constant *C,
+                                                 Value* const *Idxs,
+                                                 unsigned NumIdx) {
+  // Get the result type of the getelementptr!
+  const Type *Ty =
+    GetElementPtrInst::getIndexedType(C->getType(), Idxs, Idxs+NumIdx);
+  assert(Ty && "GEP indices invalid!");
+  unsigned As = cast<PointerType>(C->getType())->getAddressSpace();
+  Constant *Result = getGetElementPtrTy(PointerType::get(Ty, As), C,
+                                        Idxs, NumIdx);
+  cast<GEPOperator>(Result)->setIsInBounds(true);
+  return Result;
+}
+
 Constant *ConstantExpr::getGetElementPtr(Constant *C, Constant* const *Idxs,
                                          unsigned NumIdx) {
   return getGetElementPtr(C, (Value* const *)Idxs, NumIdx);
 }
 
+Constant *ConstantExpr::getInBoundsGetElementPtr(Constant *C,
+                                                 Constant* const *Idxs,
+                                                 unsigned NumIdx) {
+  return getInBoundsGetElementPtr(C, (Value* const *)Idxs, NumIdx);
+}
 
 Constant *
 ConstantExpr::getICmp(unsigned short pred, Constant* LHS, Constant* RHS) {

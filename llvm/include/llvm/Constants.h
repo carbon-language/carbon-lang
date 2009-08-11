@@ -723,7 +723,16 @@ public:
                                     Constant* const *IdxList, unsigned NumIdx);
   static Constant *getGetElementPtr(Constant *C,
                                     Value* const *IdxList, unsigned NumIdx);
-  
+
+  /// Create an "inbounds" getelementptr. See the documentation for the
+  /// "inbounds" flag in LangRef.html for details.
+  static Constant *getInBoundsGetElementPtr(Constant *C,
+                                            Constant* const *IdxList,
+                                            unsigned NumIdx);
+  static Constant *getInBoundsGetElementPtr(Constant *C,
+                                            Value* const *IdxList,
+                                            unsigned NumIdx);
+
   static Constant *getExtractElement(Constant *Vec, Constant *Idx);
   static Constant *getInsertElement(Constant *Vec, Constant *Elt,Constant *Idx);
   static Constant *getShuffleVector(Constant *V1, Constant *V2, Constant *Mask);

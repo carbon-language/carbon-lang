@@ -362,20 +362,42 @@ public:
     if (Constant *PC = dyn_cast<Constant>(Ptr)) {
       // Every index must be constant.
       InputIterator i;
-      for (i = IdxBegin; i < IdxEnd; ++i) {
+      for (i = IdxBegin; i < IdxEnd; ++i)
         if (!isa<Constant>(*i))
           break;
-      }
       if (i == IdxEnd)
         return Folder.CreateGetElementPtr(PC, &IdxBegin[0], IdxEnd - IdxBegin);
     }
     return Insert(GetElementPtrInst::Create(Ptr, IdxBegin, IdxEnd), Name);
+  }
+  template<typename InputIterator>
+  Value *CreateInBoundsGEP(Value *Ptr, InputIterator IdxBegin, InputIterator IdxEnd,
+                           const char *Name = "") {
+    if (Constant *PC = dyn_cast<Constant>(Ptr)) {
+      // Every index must be constant.
+      InputIterator i;
+      for (i = IdxBegin; i < IdxEnd; ++i)
+        if (!isa<Constant>(*i))
+          break;
+      if (i == IdxEnd)
+        return Folder.CreateInBoundsGetElementPtr(PC,
+                                                  &IdxBegin[0],
+                                                  IdxEnd - IdxBegin);
+    }
+    return Insert(GetElementPtrInst::CreateInBounds(Ptr, IdxBegin, IdxEnd),
+                  Name);
   }
   Value *CreateGEP(Value *Ptr, Value *Idx, const char *Name = "") {
     if (Constant *PC = dyn_cast<Constant>(Ptr))
       if (Constant *IC = dyn_cast<Constant>(Idx))
         return Folder.CreateGetElementPtr(PC, &IC, 1);
     return Insert(GetElementPtrInst::Create(Ptr, Idx), Name);
+  }
+  Value *CreateInBoundsGEP(Value *Ptr, Value *Idx, const char *Name = "") {
+    if (Constant *PC = dyn_cast<Constant>(Ptr))
+      if (Constant *IC = dyn_cast<Constant>(Idx))
+        return Folder.CreateInBoundsGetElementPtr(PC, &IC, 1);
+    return Insert(GetElementPtrInst::CreateInBounds(Ptr, Idx), Name);
   }
   Value *CreateConstGEP1_32(Value *Ptr, unsigned Idx0, const char *Name = "") {
     Value *Idx = ConstantInt::get(Type::Int32Ty, Idx0);
@@ -384,6 +406,15 @@ public:
       return Folder.CreateGetElementPtr(PC, &Idx, 1);
 
     return Insert(GetElementPtrInst::Create(Ptr, &Idx, &Idx+1), Name);    
+  }
+  Value *CreateConstInBoundsGEP1_32(Value *Ptr, unsigned Idx0,
+                                    const char *Name = "") {
+    Value *Idx = ConstantInt::get(Type::Int32Ty, Idx0);
+
+    if (Constant *PC = dyn_cast<Constant>(Ptr))
+      return Folder.CreateInBoundsGetElementPtr(PC, &Idx, 1);
+
+    return Insert(GetElementPtrInst::CreateInBounds(Ptr, &Idx, &Idx+1), Name);
   }
   Value *CreateConstGEP2_32(Value *Ptr, unsigned Idx0, unsigned Idx1, 
                     const char *Name = "") {
@@ -397,6 +428,18 @@ public:
 
     return Insert(GetElementPtrInst::Create(Ptr, Idxs, Idxs+2), Name);    
   }
+  Value *CreateConstInBoundsGEP2_32(Value *Ptr, unsigned Idx0, unsigned Idx1,
+                                    const char *Name = "") {
+    Value *Idxs[] = {
+      ConstantInt::get(Type::Int32Ty, Idx0),
+      ConstantInt::get(Type::Int32Ty, Idx1)
+    };
+
+    if (Constant *PC = dyn_cast<Constant>(Ptr))
+      return Folder.CreateInBoundsGetElementPtr(PC, Idxs, 2);
+
+    return Insert(GetElementPtrInst::CreateInBounds(Ptr, Idxs, Idxs+2), Name);
+  }
   Value *CreateConstGEP1_64(Value *Ptr, uint64_t Idx0, const char *Name = "") {
     Value *Idx = ConstantInt::get(Type::Int64Ty, Idx0);
 
@@ -405,7 +448,16 @@ public:
 
     return Insert(GetElementPtrInst::Create(Ptr, &Idx, &Idx+1), Name);    
   }
-  Value *CreateConstGEP2_64(Value *Ptr, uint64_t Idx0, uint64_t Idx1, 
+  Value *CreateConstInBoundsGEP1_64(Value *Ptr, uint64_t Idx0,
+                                    const char *Name = "") {
+    Value *Idx = ConstantInt::get(Type::Int64Ty, Idx0);
+
+    if (Constant *PC = dyn_cast<Constant>(Ptr))
+      return Folder.CreateInBoundsGetElementPtr(PC, &Idx, 1);
+
+    return Insert(GetElementPtrInst::CreateInBounds(Ptr, &Idx, &Idx+1), Name);
+  }
+  Value *CreateConstGEP2_64(Value *Ptr, uint64_t Idx0, uint64_t Idx1,
                     const char *Name = "") {
     Value *Idxs[] = {
       ConstantInt::get(Type::Int64Ty, Idx0),
@@ -417,8 +469,20 @@ public:
 
     return Insert(GetElementPtrInst::Create(Ptr, Idxs, Idxs+2), Name);    
   }
+  Value *CreateConstInBoundsGEP2_64(Value *Ptr, uint64_t Idx0, uint64_t Idx1,
+                                    const char *Name = "") {
+    Value *Idxs[] = {
+      ConstantInt::get(Type::Int64Ty, Idx0),
+      ConstantInt::get(Type::Int64Ty, Idx1)
+    };
+
+    if (Constant *PC = dyn_cast<Constant>(Ptr))
+      return Folder.CreateInBoundsGetElementPtr(PC, Idxs, 2);
+
+    return Insert(GetElementPtrInst::CreateInBounds(Ptr, Idxs, Idxs+2), Name);
+  }
   Value *CreateStructGEP(Value *Ptr, unsigned Idx, const char *Name = "") {
-    return CreateConstGEP2_32(Ptr, 0, Idx, Name);
+    return CreateConstInBoundsGEP2_32(Ptr, 0, Idx, Name);
   }
   Value *CreateGlobalString(const char *Str = "", const char *Name = "") {
     Constant *StrConstant = ConstantArray::get(Str, true);
@@ -438,7 +502,7 @@ public:
     Value *gv = CreateGlobalString(Str, Name);
     Value *zero = ConstantInt::get(Type::Int32Ty, 0);
     Value *Args[] = { zero, zero };
-    return CreateGEP(gv, Args, Args+2, Name);
+    return CreateInBoundsGEP(gv, Args, Args+2, Name);
   }
   //===--------------------------------------------------------------------===//
   // Instruction creation methods: Cast/Conversion Operators

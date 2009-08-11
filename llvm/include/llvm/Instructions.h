@@ -493,6 +493,44 @@ public:
     return new(2) GetElementPtrInst(Ptr, Idx, NameStr, InsertAtEnd);
   }
 
+  /// Create an "inbounds" getelementptr. See the documentation for the
+  /// "inbounds" flag in LangRef.html for details.
+  template<typename InputIterator>
+  static GetElementPtrInst *CreateInBounds(Value *Ptr, InputIterator IdxBegin,
+                                           InputIterator IdxEnd,
+                                           const Twine &NameStr = "",
+                                           Instruction *InsertBefore = 0) {
+    GetElementPtrInst *GEP = Create(Ptr, IdxBegin, IdxEnd,
+                                    NameStr, InsertBefore);
+    cast<GEPOperator>(GEP)->setIsInBounds(true);
+    return GEP;
+  }
+  template<typename InputIterator>
+  static GetElementPtrInst *CreateInBounds(Value *Ptr,
+                                           InputIterator IdxBegin,
+                                           InputIterator IdxEnd,
+                                           const Twine &NameStr,
+                                           BasicBlock *InsertAtEnd) {
+    GetElementPtrInst *GEP = Create(Ptr, IdxBegin, IdxEnd,
+                                    NameStr, InsertAtEnd);
+    cast<GEPOperator>(GEP)->setIsInBounds(true);
+    return GEP;
+  }
+  static GetElementPtrInst *CreateInBounds(Value *Ptr, Value *Idx,
+                                           const Twine &NameStr = "",
+                                           Instruction *InsertBefore = 0) {
+    GetElementPtrInst *GEP = Create(Ptr, Idx, NameStr, InsertBefore);
+    cast<GEPOperator>(GEP)->setIsInBounds(true);
+    return GEP;
+  }
+  static GetElementPtrInst *CreateInBounds(Value *Ptr, Value *Idx,
+                                           const Twine &NameStr,
+                                           BasicBlock *InsertAtEnd) {
+    GetElementPtrInst *GEP = Create(Ptr, Idx, NameStr, InsertAtEnd);
+    cast<GEPOperator>(GEP)->setIsInBounds(true);
+    return GEP;
+  }
+
   virtual GetElementPtrInst *clone(LLVMContext &Context) const;
 
   /// Transparently provide more efficient getOperand methods.

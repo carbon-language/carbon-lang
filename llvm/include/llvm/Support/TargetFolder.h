@@ -138,6 +138,15 @@ public:
     return Fold(ConstantExpr::getGetElementPtr(C, IdxList, NumIdx));
   }
 
+  Constant *CreateInBoundsGetElementPtr(Constant *C, Constant* const *IdxList,
+                                        unsigned NumIdx) const {
+    return Fold(ConstantExpr::getInBoundsGetElementPtr(C, IdxList, NumIdx));
+  }
+  Constant *CreateInBoundsGetElementPtr(Constant *C, Value* const *IdxList,
+                                        unsigned NumIdx) const {
+    return Fold(ConstantExpr::getInBoundsGetElementPtr(C, IdxList, NumIdx));
+  }
+
   //===--------------------------------------------------------------------===//
   // Cast/Conversion Operators
   //===--------------------------------------------------------------------===//

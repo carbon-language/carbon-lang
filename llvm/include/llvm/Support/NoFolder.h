@@ -126,6 +126,15 @@ public:
     return GetElementPtrInst::Create(C, IdxList, IdxList+NumIdx);
   }
 
+  Constant *CreateInBoundsGetElementPtr(Constant *C, Constant* const *IdxList,
+                                        unsigned NumIdx) const {
+    return ConstantExpr::getInBoundsGetElementPtr(C, IdxList, NumIdx);
+  }
+  Value *CreateInBoundsGetElementPtr(Constant *C, Value* const *IdxList,
+                                     unsigned NumIdx) const {
+    return GetElementPtrInst::CreateInBounds(C, IdxList, IdxList+NumIdx);
+  }
+
   //===--------------------------------------------------------------------===//
   // Cast/Conversion Operators
   //===--------------------------------------------------------------------===//
