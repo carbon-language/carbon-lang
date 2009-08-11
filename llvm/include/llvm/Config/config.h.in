@@ -461,6 +461,9 @@
 /* Installation directory for binary executables */
 #undef LLVM_BINDIR
 
+/* Define to 1 for ilist sentinel compaction */
+#undef LLVM_COMPACT_SENTINELS
+
 /* Time at which LLVM was configured */
 #undef LLVM_CONFIGTIME
 

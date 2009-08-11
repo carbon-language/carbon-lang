@@ -832,6 +832,7 @@ CVSBUILD
 ENABLE_OPTIMIZED
 ENABLE_PROFILING
 DISABLE_ASSERTIONS
+LLVM_COMPACT_SENTINELS
 ENABLE_EXPENSIVE_CHECKS
 EXPENSIVE_CHECKS
 DEBUG_RUNTIME
@@ -2406,6 +2407,7 @@ else
   xcore-*)                llvm_cv_target_arch="XCore" ;;
   msp430-*)               llvm_cv_target_arch="MSP430" ;;
   s390x-*)                llvm_cv_target_arch="SystemZ" ;;
+  bfin-*)                 llvm_cv_target_arch="Blackfin" ;;
   *)                      llvm_cv_target_arch="Unknown" ;;
 esac
 fi
@@ -4785,6 +4787,21 @@ else
 
 fi
 
+if test ${ENABLE_OPTIMIZED},${DISABLE_ASSERTIONS} = "ENABLE_OPTIMIZED=1,DISABLE_ASSERTIONS=1" ; then
+  LLVM_COMPACT_SENTINELS=1
+
+else
+  LLVM_COMPACT_SENTINELS=0
+
+fi
+
+
+cat >>confdefs.h <<_ACEOF
+#define LLVM_COMPACT_SENTINELS $LLVM_COMPACT_SENTINELS
+_ACEOF
+
+
+
 # Check whether --enable-expensive-checks was given.
 if test "${enable_expensive_checks+set}" = set; then
   enableval=$enable_expensive_checks;
@@ -4832,29 +4849,31 @@ then
 
 else
   case "$llvm_cv_target_arch" in
-    x86)     TARGET_HAS_JIT=1
+    x86)         TARGET_HAS_JIT=1
  ;;
-    Sparc)   TARGET_HAS_JIT=0
+    Sparc)       TARGET_HAS_JIT=0
  ;;
-    PowerPC) TARGET_HAS_JIT=1
+    PowerPC)     TARGET_HAS_JIT=1
  ;;
-    x86_64)  TARGET_HAS_JIT=1
+    x86_64)      TARGET_HAS_JIT=1
  ;;
-    Alpha)   TARGET_HAS_JIT=1
+    Alpha)       TARGET_HAS_JIT=1
  ;;
-    ARM)     TARGET_HAS_JIT=0
+    ARM)         TARGET_HAS_JIT=0
  ;;
-    Mips)    TARGET_HAS_JIT=0
+    Mips)        TARGET_HAS_JIT=0
  ;;
-    PIC16)   TARGET_HAS_JIT=0
+    PIC16)       TARGET_HAS_JIT=0
  ;;
-    XCore)   TARGET_HAS_JIT=0
+    XCore)       TARGET_HAS_JIT=0
  ;;
-    MSP430)  TARGET_HAS_JIT=0
+    MSP430)      TARGET_HAS_JIT=0
  ;;
-    SystemZ) TARGET_HAS_JIT=0
+    SystemZ)     TARGET_HAS_JIT=0
  ;;
-    *)       TARGET_HAS_JIT=0
+    Blackfin)    TARGET_HAS_JIT=0
+ ;;
+    *)           TARGET_HAS_JIT=0
  ;;
   esac
 fi
@@ -4938,18 +4957,19 @@ case "$enableval" in
   all) TARGETS_TO_BUILD="X86 Sparc PowerPC Alpha ARM Mips CellSPU PIC16 XCore MSP430 SystemZ Blackfin CBackend MSIL CppBackend" ;;
   host-only)
     case "$llvm_cv_target_arch" in
-      x86)     TARGETS_TO_BUILD="X86" ;;
-      x86_64)  TARGETS_TO_BUILD="X86" ;;
-      Sparc)   TARGETS_TO_BUILD="Sparc" ;;
-      PowerPC) TARGETS_TO_BUILD="PowerPC" ;;
-      Alpha)   TARGETS_TO_BUILD="Alpha" ;;
-      ARM)     TARGETS_TO_BUILD="ARM" ;;
-      Mips)    TARGETS_TO_BUILD="Mips" ;;
+      x86)         TARGETS_TO_BUILD="X86" ;;
+      x86_64)      TARGETS_TO_BUILD="X86" ;;
+      Sparc)       TARGETS_TO_BUILD="Sparc" ;;
+      PowerPC)     TARGETS_TO_BUILD="PowerPC" ;;
+      Alpha)       TARGETS_TO_BUILD="Alpha" ;;
+      ARM)         TARGETS_TO_BUILD="ARM" ;;
+      Mips)        TARGETS_TO_BUILD="Mips" ;;
       CellSPU|SPU) TARGETS_TO_BUILD="CellSPU" ;;
-      PIC16)   TARGETS_TO_BUILD="PIC16" ;;
-      XCore)   TARGETS_TO_BUILD="XCore" ;;
-      MSP430)  TARGETS_TO_BUILD="MSP430" ;;
-      SystemZ) TARGETS_TO_BUILD="SystemZ" ;;
+      PIC16)       TARGETS_TO_BUILD="PIC16" ;;
+      XCore)       TARGETS_TO_BUILD="XCore" ;;
+      MSP430)      TARGETS_TO_BUILD="MSP430" ;;
+      SystemZ)     TARGETS_TO_BUILD="SystemZ" ;;
+      Blackfin)    TARGETS_TO_BUILD="Blackfin" ;;
       *)       { { echo "$as_me:$LINENO: error: Can not set target to build" >&5
 echo "$as_me: error: Can not set target to build" >&2;}
    { (exit 1); exit 1; }; } ;;
@@ -4957,21 +4977,22 @@ echo "$as_me: error: Can not set target to build" >&2;}
     ;;
   *)for a_target in `echo $enableval|sed -e 's/,/ /g' ` ; do
       case "$a_target" in
-        x86)     TARGETS_TO_BUILD="X86 $TARGETS_TO_BUILD" ;;
-        x86_64)  TARGETS_TO_BUILD="X86 $TARGETS_TO_BUILD" ;;
-        sparc)   TARGETS_TO_BUILD="Sparc $TARGETS_TO_BUILD" ;;
-        powerpc) TARGETS_TO_BUILD="PowerPC $TARGETS_TO_BUILD" ;;
-        alpha)   TARGETS_TO_BUILD="Alpha $TARGETS_TO_BUILD" ;;
-        arm)     TARGETS_TO_BUILD="ARM $TARGETS_TO_BUILD" ;;
-        mips)    TARGETS_TO_BUILD="Mips $TARGETS_TO_BUILD" ;;
-        spu)     TARGETS_TO_BUILD="CellSPU $TARGETS_TO_BUILD" ;;
-        pic16)   TARGETS_TO_BUILD="PIC16 $TARGETS_TO_BUILD" ;;
-        xcore)   TARGETS_TO_BUILD="XCore $TARGETS_TO_BUILD" ;;
-        msp430)  TARGETS_TO_BUILD="MSP430 $TARGETS_TO_BUILD" ;;
-        systemz) TARGETS_TO_BUILD="SystemZ $TARGETS_TO_BUILD" ;;
-        cbe)     TARGETS_TO_BUILD="CBackend $TARGETS_TO_BUILD" ;;
-        msil)    TARGETS_TO_BUILD="MSIL $TARGETS_TO_BUILD" ;;
-        cpp)     TARGETS_TO_BUILD="CppBackend $TARGETS_TO_BUILD" ;;
+        x86)      TARGETS_TO_BUILD="X86 $TARGETS_TO_BUILD" ;;
+        x86_64)   TARGETS_TO_BUILD="X86 $TARGETS_TO_BUILD" ;;
+        sparc)    TARGETS_TO_BUILD="Sparc $TARGETS_TO_BUILD" ;;
+        powerpc)  TARGETS_TO_BUILD="PowerPC $TARGETS_TO_BUILD" ;;
+        alpha)    TARGETS_TO_BUILD="Alpha $TARGETS_TO_BUILD" ;;
+        arm)      TARGETS_TO_BUILD="ARM $TARGETS_TO_BUILD" ;;
+        mips)     TARGETS_TO_BUILD="Mips $TARGETS_TO_BUILD" ;;
+        spu)      TARGETS_TO_BUILD="CellSPU $TARGETS_TO_BUILD" ;;
+        pic16)    TARGETS_TO_BUILD="PIC16 $TARGETS_TO_BUILD" ;;
+        xcore)    TARGETS_TO_BUILD="XCore $TARGETS_TO_BUILD" ;;
+        msp430)   TARGETS_TO_BUILD="MSP430 $TARGETS_TO_BUILD" ;;
+        systemz)  TARGETS_TO_BUILD="SystemZ $TARGETS_TO_BUILD" ;;
+        blackfin) TARGETS_TO_BUILD="Blackfin $TARGETS_TO_BUILD" ;;
+        cbe)      TARGETS_TO_BUILD="CBackend $TARGETS_TO_BUILD" ;;
+        msil)     TARGETS_TO_BUILD="MSIL $TARGETS_TO_BUILD" ;;
+        cpp)      TARGETS_TO_BUILD="CppBackend $TARGETS_TO_BUILD" ;;
         *) { { echo "$as_me:$LINENO: error: Unrecognized target $a_target" >&5
 echo "$as_me: error: Unrecognized target $a_target" >&2;}
    { (exit 1); exit 1; }; } ;;
@@ -10908,7 +10929,7 @@ else
   lt_dlunknown=0; lt_dlno_uscore=1; lt_dlneed_uscore=2
   lt_status=$lt_dlunknown
   cat > conftest.$ac_ext <<EOF
-#line 10916 "configure"
+#line 10932 "configure"
 #include "confdefs.h"
 
 #if HAVE_DLFCN_H
@@ -13052,7 +13073,7 @@ ia64-*-hpux*)
   ;;
 *-*-irix6*)
   # Find out which ABI we are using.
-  echo '#line 13060 "configure"' > conftest.$ac_ext
+  echo '#line 13076 "configure"' > conftest.$ac_ext
   if { (eval echo "$as_me:$LINENO: \"$ac_compile\"") >&5
   (eval $ac_compile) 2>&5
   ac_status=$?
@@ -14770,11 +14791,11 @@ else
    -e 's:.*FLAGS}\{0,1\} :&$lt_compiler_flag :; t' \
    -e 's: [^ ]*conftest\.: $lt_compiler_flag&:; t' \
    -e 's:$: $lt_compiler_flag:'`
-   (eval echo "\"\$as_me:14778: $lt_compile\"" >&5)
+   (eval echo "\"\$as_me:14794: $lt_compile\"" >&5)
    (eval "$lt_compile" 2>conftest.err)
    ac_status=$?
    cat conftest.err >&5
-   echo "$as_me:14782: \$? = $ac_status" >&5
+   echo "$as_me:14798: \$? = $ac_status" >&5
    if (exit $ac_status) && test -s "$ac_outfile"; then
      # The compiler can only warn and ignore the option if not recognized
      # So say no if there are warnings other than the usual output.
@@ -15038,11 +15059,11 @@ else
    -e 's:.*FLAGS}\{0,1\} :&$lt_compiler_flag :; t' \
    -e 's: [^ ]*conftest\.: $lt_compiler_flag&:; t' \
    -e 's:$: $lt_compiler_flag:'`
-   (eval echo "\"\$as_me:15046: $lt_compile\"" >&5)
+   (eval echo "\"\$as_me:15062: $lt_compile\"" >&5)
    (eval "$lt_compile" 2>conftest.err)
    ac_status=$?
    cat conftest.err >&5
-   echo "$as_me:15050: \$? = $ac_status" >&5
+   echo "$as_me:15066: \$? = $ac_status" >&5
    if (exit $ac_status) && test -s "$ac_outfile"; then
      # The compiler can only warn and ignore the option if not recognized
      # So say no if there are warnings other than the usual output.
@@ -15142,11 +15163,11 @@ else
    -e 's:.*FLAGS}\{0,1\} :&$lt_compiler_flag :; t' \
    -e 's: [^ ]*conftest\.: $lt_compiler_flag&:; t' \
    -e 's:$: $lt_compiler_flag:'`
-   (eval echo "\"\$as_me:15150: $lt_compile\"" >&5)
+   (eval echo "\"\$as_me:15166: $lt_compile\"" >&5)
    (eval "$lt_compile" 2>out/conftest.err)
    ac_status=$?
    cat out/conftest.err >&5
-   echo "$as_me:15154: \$? = $ac_status" >&5
+   echo "$as_me:15170: \$? = $ac_status" >&5
    if (exit $ac_status) && test -s out/conftest2.$ac_objext
    then
      # The compiler can only warn and ignore the option if not recognized
@@ -17594,7 +17615,7 @@ else
   lt_dlunknown=0; lt_dlno_uscore=1; lt_dlneed_uscore=2
   lt_status=$lt_dlunknown
   cat > conftest.$ac_ext <<EOF
-#line 17602 "configure"
+#line 17618 "configure"
 #include "confdefs.h"
 
 #if HAVE_DLFCN_H
@@ -17694,7 +17715,7 @@ else
   lt_dlunknown=0; lt_dlno_uscore=1; lt_dlneed_uscore=2
   lt_status=$lt_dlunknown
   cat > conftest.$ac_ext <<EOF
-#line 17702 "configure"
+#line 17718 "configure"
 #include "confdefs.h"
 
 #if HAVE_DLFCN_H
@@ -20062,11 +20083,11 @@ else
    -e 's:.*FLAGS}\{0,1\} :&$lt_compiler_flag :; t' \
    -e 's: [^ ]*conftest\.: $lt_compiler_flag&:; t' \
    -e 's:$: $lt_compiler_flag:'`
-   (eval echo "\"\$as_me:20070: $lt_compile\"" >&5)
+   (eval echo "\"\$as_me:20086: $lt_compile\"" >&5)
    (eval "$lt_compile" 2>conftest.err)
    ac_status=$?
    cat conftest.err >&5
-   echo "$as_me:20074: \$? = $ac_status" >&5
+   echo "$as_me:20090: \$? = $ac_status" >&5
    if (exit $ac_status) && test -s "$ac_outfile"; then
      # The compiler can only warn and ignore the option if not recognized
      # So say no if there are warnings other than the usual output.
@@ -20166,11 +20187,11 @@ else
    -e 's:.*FLAGS}\{0,1\} :&$lt_compiler_flag :; t' \
    -e 's: [^ ]*conftest\.: $lt_compiler_flag&:; t' \
    -e 's:$: $lt_compiler_flag:'`
-   (eval echo "\"\$as_me:20174: $lt_compile\"" >&5)
+   (eval echo "\"\$as_me:20190: $lt_compile\"" >&5)
    (eval "$lt_compile" 2>out/conftest.err)
    ac_status=$?
    cat out/conftest.err >&5
-   echo "$as_me:20178: \$? = $ac_status" >&5
+   echo "$as_me:20194: \$? = $ac_status" >&5
    if (exit $ac_status) && test -s out/conftest2.$ac_objext
    then
      # The compiler can only warn and ignore the option if not recognized
@@ -21736,11 +21757,11 @@ else
    -e 's:.*FLAGS}\{0,1\} :&$lt_compiler_flag :; t' \
    -e 's: [^ ]*conftest\.: $lt_compiler_flag&:; t' \
    -e 's:$: $lt_compiler_flag:'`
-   (eval echo "\"\$as_me:21744: $lt_compile\"" >&5)
+   (eval echo "\"\$as_me:21760: $lt_compile\"" >&5)
    (eval "$lt_compile" 2>conftest.err)
    ac_status=$?
    cat conftest.err >&5
-   echo "$as_me:21748: \$? = $ac_status" >&5
+   echo "$as_me:21764: \$? = $ac_status" >&5
    if (exit $ac_status) && test -s "$ac_outfile"; then
      # The compiler can only warn and ignore the option if not recognized
      # So say no if there are warnings other than the usual output.
@@ -21840,11 +21861,11 @@ else
    -e 's:.*FLAGS}\{0,1\} :&$lt_compiler_flag :; t' \
    -e 's: [^ ]*conftest\.: $lt_compiler_flag&:; t' \
    -e 's:$: $lt_compiler_flag:'`
-   (eval echo "\"\$as_me:21848: $lt_compile\"" >&5)
+   (eval echo "\"\$as_me:21864: $lt_compile\"" >&5)
    (eval "$lt_compile" 2>out/conftest.err)
    ac_status=$?
    cat out/conftest.err >&5
-   echo "$as_me:21852: \$? = $ac_status" >&5
+   echo "$as_me:21868: \$? = $ac_status" >&5
    if (exit $ac_status) && test -s out/conftest2.$ac_objext
    then
      # The compiler can only warn and ignore the option if not recognized
@@ -24075,11 +24096,11 @@ else
    -e 's:.*FLAGS}\{0,1\} :&$lt_compiler_flag :; t' \
    -e 's: [^ ]*conftest\.: $lt_compiler_flag&:; t' \
    -e 's:$: $lt_compiler_flag:'`
-   (eval echo "\"\$as_me:24083: $lt_compile\"" >&5)
+   (eval echo "\"\$as_me:24099: $lt_compile\"" >&5)
    (eval "$lt_compile" 2>conftest.err)
    ac_status=$?
    cat conftest.err >&5
-   echo "$as_me:24087: \$? = $ac_status" >&5
+   echo "$as_me:24103: \$? = $ac_status" >&5
    if (exit $ac_status) && test -s "$ac_outfile"; then
      # The compiler can only warn and ignore the option if not recognized
      # So say no if there are warnings other than the usual output.
@@ -24343,11 +24364,11 @@ else
    -e 's:.*FLAGS}\{0,1\} :&$lt_compiler_flag :; t' \
    -e 's: [^ ]*conftest\.: $lt_compiler_flag&:; t' \
    -e 's:$: $lt_compiler_flag:'`
-   (eval echo "\"\$as_me:24351: $lt_compile\"" >&5)
+   (eval echo "\"\$as_me:24367: $lt_compile\"" >&5)
    (eval "$lt_compile" 2>conftest.err)
    ac_status=$?
    cat conftest.err >&5
-   echo "$as_me:24355: \$? = $ac_status" >&5
+   echo "$as_me:24371: \$? = $ac_status" >&5
    if (exit $ac_status) && test -s "$ac_outfile"; then
      # The compiler can only warn and ignore the option if not recognized
      # So say no if there are warnings other than the usual output.
@@ -24447,11 +24468,11 @@ else
    -e 's:.*FLAGS}\{0,1\} :&$lt_compiler_flag :; t' \
    -e 's: [^ ]*conftest\.: $lt_compiler_flag&:; t' \
    -e 's:$: $lt_compiler_flag:'`
-   (eval echo "\"\$as_me:24455: $lt_compile\"" >&5)
+   (eval echo "\"\$as_me:24471: $lt_compile\"" >&5)
    (eval "$lt_compile" 2>out/conftest.err)
    ac_status=$?
    cat out/conftest.err >&5
-   echo "$as_me:24459: \$? = $ac_status" >&5
+   echo "$as_me:24475: \$? = $ac_status" >&5
    if (exit $ac_status) && test -s out/conftest2.$ac_objext
    then
      # The compiler can only warn and ignore the option if not recognized
@@ -36022,6 +36043,7 @@ CVSBUILD!$CVSBUILD$ac_delim
 ENABLE_OPTIMIZED!$ENABLE_OPTIMIZED$ac_delim
 ENABLE_PROFILING!$ENABLE_PROFILING$ac_delim
 DISABLE_ASSERTIONS!$DISABLE_ASSERTIONS$ac_delim
+LLVM_COMPACT_SENTINELS!$LLVM_COMPACT_SENTINELS$ac_delim
 ENABLE_EXPENSIVE_CHECKS!$ENABLE_EXPENSIVE_CHECKS$ac_delim
 EXPENSIVE_CHECKS!$EXPENSIVE_CHECKS$ac_delim
 DEBUG_RUNTIME!$DEBUG_RUNTIME$ac_delim
@@ -36042,7 +36064,6 @@ ENABLE_LLVMC_DYNAMIC_PLUGINS!$ENABLE_LLVMC_DYNAMIC_PLUGINS$ac_delim
 CXX!$CXX$ac_delim
 CXXFLAGS!$CXXFLAGS$ac_delim
 ac_ct_CXX!$ac_ct_CXX$ac_delim
-NM!$NM$ac_delim
 _ACEOF
 
   if test `sed -n "s/.*$ac_delim\$/X/p" conf$$subs.sed | grep -c X` = 97; then
@@ -36084,6 +36105,7 @@ _ACEOF
 ac_delim='%!_!# '
 for ac_last_try in false false false false false :; do
   cat >conf$$subs.sed <<_ACEOF
+NM!$NM$ac_delim
 ifGNUmake!$ifGNUmake$ac_delim
 LN_S!$LN_S$ac_delim
 CMP!$CMP$ac_delim
@@ -36175,7 +36197,7 @@ LIBOBJS!$LIBOBJS$ac_delim
 LTLIBOBJS!$LTLIBOBJS$ac_delim
 _ACEOF
 
-  if test `sed -n "s/.*$ac_delim\$/X/p" conf$$subs.sed | grep -c X` = 89; then
+  if test `sed -n "s/.*$ac_delim\$/X/p" conf$$subs.sed | grep -c X` = 90; then
     break
   elif $ac_last_try; then
     { { echo "$as_me:$LINENO: error: could not make $CONFIG_STATUS" >&5
