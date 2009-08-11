@@ -518,6 +518,10 @@ let neverHasSideEffects = 1 in {
                 "nopl\t$zero", []>, TB;
 }
 
+// Trap
+def INT3 : I<0xcc, RawFrm, (outs), (ins), "int 3", []>;
+def INT : I<0xcd, RawFrm, (outs), (ins i8imm:$trap), "int\t$trap", []>;
+
 // PIC base
 let neverHasSideEffects = 1, isNotDuplicable = 1, Uses = [ESP] in
   def MOVPC32r : Ii32<0xE8, Pseudo, (outs GR32:$reg), (ins piclabel:$label),
