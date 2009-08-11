@@ -395,6 +395,14 @@ static Value *RemapOperand(const Value *In,
       assert(!isa<GlobalValue>(CPV) && "Unmapped global?");
       llvm_unreachable("Unknown type of derived type constant value!");
     }
+  } else if (const MDNode *N = dyn_cast<MDNode>(In)) {
+    std::vector<Value*> Elems;
+    for (unsigned i = 0, e = N->getNumElements(); i !=e; ++i)
+      Elems.push_back(RemapOperand(N->getElement(i), ValueMap, Context));
+    if (!Elems.empty())
+      Result = MDNode::get(Context, &Elems[0], Elems.size());
+  } else if (const MDString *MDS = dyn_cast<MDString>(In)) {
+    Result = MDString::get(Context, MDS->getString());
   } else if (isa<InlineAsm>(In)) {
     Result = const_cast<Value*>(In);
   }
