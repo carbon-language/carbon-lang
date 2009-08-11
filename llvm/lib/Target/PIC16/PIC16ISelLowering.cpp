@@ -404,6 +404,7 @@ PIC16TargetLowering::MakePIC16Libcall(PIC16ISD::PIC16Libcall Call,
     Entry.isZExt = !isSigned;
     Args.push_back(Entry);
   }
+
   SDValue Callee = DAG.getExternalSymbol(getPIC16LibcallName(Call), EVT::i16);
 
    const Type *RetTy = RetVT.getTypeForEVT();
@@ -1086,6 +1087,7 @@ SDValue PIC16TargetLowering::
 LowerIndirectCallArguments(SDValue Chain, SDValue InFlag,
                            SDValue DataAddr_Lo, SDValue DataAddr_Hi,
                            const SmallVectorImpl<ISD::OutputArg> &Outs,
+                           const SmallVectorImpl<ISD::InputArg> &Ins,
                            DebugLoc dl, SelectionDAG &DAG) {
   unsigned NumOps = Outs.size();
 
@@ -1098,7 +1100,7 @@ LowerIndirectCallArguments(SDValue Chain, SDValue InFlag,
   SDValue Arg, StoreRet;
 
   // For PIC16 ABI the arguments come after the return value. 
-  unsigned RetVals = Outs.size();
+  unsigned RetVals = Ins.size();
   for (unsigned i = 0, ArgOffset = RetVals; i < NumOps; i++) {
     // Get the arguments
     Arg = Outs[i].Val;
@@ -1430,7 +1432,7 @@ PIC16TargetLowering::LowerCall(SDValue Chain, SDValue Callee,
       OperFlag = getOutFlag(CallArgs);
     } else {
       CallArgs = LowerIndirectCallArguments(Chain, OperFlag, DataAddr_Lo,
-                                            DataAddr_Hi, Outs, dl, DAG);
+                                            DataAddr_Hi, Outs, Ins, dl, DAG);
       Chain = getChain(CallArgs);
       OperFlag = getOutFlag(CallArgs);
     }

@@ -111,6 +111,7 @@ namespace llvm {
     LowerIndirectCallArguments(SDValue Chain, SDValue InFlag,
                                SDValue DataAddr_Lo, SDValue DataAddr_Hi, 
                                const SmallVectorImpl<ISD::OutputArg> &Outs,
+                               const SmallVectorImpl<ISD::InputArg> &Ins,
                                DebugLoc dl, SelectionDAG &DAG);
 
     SDValue LowerBR_CC(SDValue Op, SelectionDAG &DAG);
