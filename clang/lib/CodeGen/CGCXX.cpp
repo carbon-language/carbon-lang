@@ -635,15 +635,24 @@ void CodeGenFunction::GenerateVtableForBase(const CXXRecordDecl *RD,
   if (RD && !RD->isDynamicClass())
     return;
 
-  if (RD && ForVirtualBase)
-    for (meth_iter mi = RD->method_begin(), me = RD->method_end(); mi != me;
-         ++mi) {
-      if (mi->isVirtual()) {
-        // FIXME: vcall: offset for virtual base for this function
-        m = llvm::Constant::getNullValue(Ptr8Ty);
-        methods.push_back(m);
-      }
-    }
+  const ASTRecordLayout &Layout = getContext().getASTRecordLayout(Class);
+
+  // The virtual base offsets come first...
+  for (CXXRecordDecl::reverse_base_class_const_iterator i
+         = Class->bases_rbegin(),
+         e = Class->bases_rend(); i != e; ++i) {
+    if (!i->isVirtual())
+      continue;
+    const CXXRecordDecl *Base = 
+      cast<CXXRecordDecl>(i->getType()->getAs<RecordType>()->getDecl());
+    int64_t BaseOffset = Layout.getBaseClassOffset(Base) / 8;
+    llvm::Constant *m;
+    m = llvm::ConstantInt::get(llvm::Type::Int64Ty, BaseOffset);
+    m = llvm::ConstantExpr::getIntToPtr(m, Ptr8Ty);
+    methods.push_back(m);
+  }
+  
+  // then comes the the vcall offsets for all our functions...
   if (isPrimary && ForVirtualBase)
     for (meth_iter mi = Class->method_begin(),
            me = Class->method_end(); mi != me; ++mi) {
@@ -653,17 +662,39 @@ void CodeGenFunction::GenerateVtableForBase(const CXXRecordDecl *RD,
         methods.push_back(m);
       }
     }
-
-  if (RD) {
-    const ASTRecordLayout &Layout = getContext().getASTRecordLayout(Class);
-    int64_t BaseOffset = -(Layout.getBaseClassOffset(RD) / 8);
-    m = llvm::ConstantInt::get(llvm::Type::Int64Ty, BaseOffset);
-    m = llvm::ConstantExpr::getIntToPtr(m, Ptr8Ty);
+  bool TopPrimary = true;
+  // Primary tables are composed from the chain of primaries.
+  if (isPrimary) {
+    const CXXRecordDecl *PrimaryBase = Layout.getPrimaryBase(); 
+    const bool PrimaryBaseWasVirtual = Layout.getPrimaryBaseWasVirtual();
+    if (PrimaryBase) {
+      TopPrimary = false;
+      GenerateVtableForBase(0, PrimaryBase, rtti, methods, true,
+                            PrimaryBaseWasVirtual);
+    }
   }
-  methods.push_back(m);
-  methods.push_back(rtti);
+  // then come the vcall offsets for all our virtual bases.
+  if (!isPrimary && RD && ForVirtualBase)
+    for (meth_iter mi = RD->method_begin(), me = RD->method_end(); mi != me;
+         ++mi) {
+      if (mi->isVirtual()) {
+        // FIXME: vcall: offset for virtual base for this function
+        m = llvm::Constant::getNullValue(Ptr8Ty);
+        methods.push_back(m);
+      }
+    }
 
-  if (RD)
+  if (TopPrimary) {
+    if (RD) {
+      int64_t BaseOffset = -(Layout.getBaseClassOffset(RD) / 8);
+      m = llvm::ConstantInt::get(llvm::Type::Int64Ty, BaseOffset);
+      m = llvm::ConstantExpr::getIntToPtr(m, Ptr8Ty);
+    }
+    methods.push_back(m);
+    methods.push_back(rtti);
+  }
+
+  if (!isPrimary && RD)
     for (meth_iter mi = RD->method_begin(), me = RD->method_end(); mi != me;
          ++mi) {
       if (mi->isVirtual()) {
@@ -709,18 +740,6 @@ llvm::Value *CodeGenFunction::GenerateVtable(const CXXRecordDecl *RD) {
   const CXXRecordDecl *PrimaryBase = Layout.getPrimaryBase();
   const bool PrimaryBaseWasVirtual = Layout.getPrimaryBaseWasVirtual();
 
-  // The virtual base offsets come first.
-  for (CXXRecordDecl::reverse_base_class_const_iterator i = RD->vbases_rbegin(),
-         e = RD->vbases_rend(); i != e; ++i) {
-    const CXXRecordDecl *Base = 
-      cast<CXXRecordDecl>(i->getType()->getAs<RecordType>()->getDecl());
-    int64_t BaseOffset = Layout.getBaseClassOffset(Base) / 8;
-    llvm::Constant *m;
-    m = llvm::ConstantInt::get(llvm::Type::Int64Ty, BaseOffset);
-    m = llvm::ConstantExpr::getIntToPtr(m, Ptr8Ty);
-    methods.push_back(m);
-  }
-  
   // The primary base comes first.
   GenerateVtableForBase(PrimaryBase, RD, rtti, methods, true,
                         PrimaryBaseWasVirtual);

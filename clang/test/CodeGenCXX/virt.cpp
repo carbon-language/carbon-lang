@@ -1,7 +1,13 @@
-// RUN: clang-cc -triple x86_64-apple-darwin -std=c++0x -O3 -S %s -o %t-64.s &&
+// RUN: clang-cc -triple x86_64-apple-darwin -std=c++0x -O0 -S %s -o %t-64.s &&
 // RUN: FileCheck -check-prefix LP64 --input-file=%t-64.s %s &&
-// RUN: clang-cc -triple i386-apple-darwin -std=c++0x -O3 -S %s -o %t-32.s &&
+// RUN: clang-cc -triple i386-apple-darwin -std=c++0x -O0 -S %s -o %t-32.s &&
 // RUN: FileCheck -check-prefix LP32 -input-file=%t-32.s %s &&
+
+// RUN: clang-cc -triple x86_64-apple-darwin -std=c++0x -O3 -S %s -o %t-O3-64.s &&
+// RUN: FileCheck -check-prefix LPOPT64 --input-file=%t-O3-64.s %s &&
+// RUN: clang-cc -triple i386-apple-darwin -std=c++0x -O3 -S %s -o %t-O3-32.s &&
+// RUN: FileCheck -check-prefix LPOPT32 -input-file=%t-O3-32.s %s &&
+
 // RUN: true
 
 struct B {
@@ -48,8 +54,8 @@ void test2() {
   j = sz;
   // FIXME: These should result in a frontend constant a la fold, no run time
   // initializer
-  // CHECK-LP32: movl $4, __ZZ5test2vE2sz
-  // CHECK-LP64: movl $8, __ZZ5test2vE2sz(%rip)
+  // CHECK-LPOPT32: movl $4, __ZZ5test2vE2sz
+  // CHECK-LPOPT64: movl $8, __ZZ5test2vE2sz(%rip)
 }
 
 static_assert(sizeof(F) == sizeof(void*)*4, "invalid vbase size");
@@ -84,6 +90,46 @@ int main() {
 // CHECK-LP64: main:
 // CHECK-LP64: movl $1, 12(%rax)
 // CHECK-LP64: movl $2, 8(%rax)
+
+
+struct test3_B3 { virtual void funcB3(); };
+struct test3_B2 : virtual test3_B3 { virtual void funcB2(); };
+struct test3_B1 : virtual test3_B2 { virtual void funcB1(); };
+
+struct test3_D  : virtual test3_B1 {
+  virtual void funcD() { }
+};
+
+// CHECK-LP32:__ZTV7test3_D:
+// CHECK-LP32: .space 4
+// CHECK-LP32: .space 4
+// CHECK-LP32: .space 4
+// CHECK-LP32: .space 4
+// CHECK-LP32: .space 4
+// CHECK-LP32: .space 4
+// CHECK-LP32: .space 4
+// CHECK-LP32: .long __ZTI7test3_D
+// CHECK-LP32: .long __ZN8test3_B36funcB3Ev
+// CHECK-LP32: .long __ZN8test3_B26funcB2Ev
+// CHECK-LP32: .long __ZN8test3_B16funcB1Ev
+// CHECK-LP32: .long __ZN7test3_D5funcDEv
+
+// CHECK-LP64:__ZTV7test3_D:
+// CHECK-LP64: .space 8
+// CHECK-LP64: .space 8
+// CHECK-LP64: .space 8
+// CHECK-LP64: .space 8
+// CHECK-LP64: .space 8
+// CHECK-LP64: .space 8
+// CHECK-LP64: .space 8
+// CHECK-LP64: .quad __ZTI7test3_D
+// CHECK-LP64: .quad __ZN8test3_B36funcB3Ev
+// CHECK-LP64: .quad __ZN8test3_B26funcB2Ev
+// CHECK-LP64: .quad __ZN8test3_B16funcB1Ev
+// CHECK-LP64: .quad __ZN7test3_D5funcDEv
+
+
+
 
 // CHECK-LP64: __ZTV1B:
 // CHECK-LP64: .space 8
@@ -162,3 +208,7 @@ int main() {
 // CHECK-LP64: .quad __ZN2D14bar3Ev
 // CHECK-LP64: .quad __ZN2D14bar4Ev
 // CHECK-LP64: .quad __ZN2D14bar5Ev
+
+
+test3_D d;
+
