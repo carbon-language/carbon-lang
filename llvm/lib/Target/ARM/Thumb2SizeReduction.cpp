@@ -94,7 +94,7 @@ namespace {
     { ARM::t2LDRBs, ARM::tLDRB,   0,             0,   0,    1,   0,  0,0, 1 },
     { ARM::t2LDRHi12,ARM::tLDRH,  0,             5,   0,    1,   0,  0,0, 1 },
     { ARM::t2LDRHs, ARM::tLDRH,   0,             0,   0,    1,   0,  0,0, 1 },
-    { ARM::t2LDRSBs,ARM::tLDR,    0,             0,   0,    1,   0,  0,0, 1 },
+    { ARM::t2LDRSBs,ARM::tLDRSB,  0,             0,   0,    1,   0,  0,0, 1 },
     { ARM::t2LDRSHs,ARM::tLDRSH,  0,             0,   0,    1,   0,  0,0, 1 },
     { ARM::t2STRi12,ARM::tSTR,    0,             5,   0,    1,   0,  0,0, 1 },
     { ARM::t2STRs,  ARM::tSTR,    0,             0,   0,    1,   0,  0,0, 1 },
@@ -248,10 +248,12 @@ Thumb2SizeReduce::ReduceLoadStore(MachineBasicBlock &MBB, MachineInstr *MI,
   if (Entry.NarrowOpc1 != ARM::tLDRSB && Entry.NarrowOpc1 != ARM::tLDRSH) {
     // tLDRSB and tLDRSH do not have an immediate offset field. On the other
     // hand, it must have an offset register.
-    assert(OffsetReg && "Invalid so_reg load / store address!");
     // FIXME: Remove this special case.
     MIB.addImm(OffsetImm/Scale);
   }
+
+  assert((!HasShift || OffsetReg) && "Invalid so_reg load / store address!");
+
   MIB.addReg(OffsetReg, getKillRegState(OffsetKill));
 
   // Transfer the rest of operands.

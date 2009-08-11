@@ -850,7 +850,7 @@ void ARMAsmPrinter::printT2AddrModeSoRegOperand(const MachineInstr *MI,
   O << "[" << TRI->getAsmName(MO1.getReg());
 
   assert(MO2.getReg() && "Invalid so_reg load / store address!");
-  O << ", +" << TRI->getAsmName(MO2.getReg());
+  O << ", " << TRI->getAsmName(MO2.getReg());
 
   unsigned ShAmt = MO3.getImm();
   if (ShAmt) {

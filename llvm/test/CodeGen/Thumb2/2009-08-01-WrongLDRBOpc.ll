@@ -8,7 +8,7 @@
 
 define arm_apcscc void @main(i32 %argc, i8** %argv) noreturn nounwind {
 ; CHECK: main:
-; CHECK: ldrb.w
+; CHECK: ldrb
 entry:
 	%nb.i.i.i = alloca [25 x i8], align 1		; <[25 x i8]*> [#uses=0]
 	%line.i.i.i = alloca [200 x i8], align 1		; <[200 x i8]*> [#uses=1]
