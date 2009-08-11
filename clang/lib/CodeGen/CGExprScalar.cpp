@@ -1184,19 +1184,12 @@ Value *ScalarExprEmitter::EmitSub(const BinOpInfo &Ops) {
     // Optimize out the shift for element size of 1.
     if (ElementSize == 1)
       return BytesBetween;
-    
-    // HACK: LLVM doesn't have an divide instruction that 'knows' there is no
-    // remainder.  As such, we handle common power-of-two cases here to generate
-    // better code. See PR2247.
-    if (llvm::isPowerOf2_64(ElementSize)) {
-      Value *ShAmt =
-        llvm::ConstantInt::get(ResultType, llvm::Log2_64(ElementSize));
-      return Builder.CreateAShr(BytesBetween, ShAmt, "sub.ptr.shr");
-    }
-    
-    // Otherwise, do a full sdiv.
+
+    // Otherwise, do a full sdiv. This uses the "exact" form of sdiv, since
+    // pointer difference in C is only defined in the case where both
+    // operands are pointing to elements of an array.
     Value *BytesPerElt = llvm::ConstantInt::get(ResultType, ElementSize);
-    return Builder.CreateSDiv(BytesBetween, BytesPerElt, "sub.ptr.div");
+    return Builder.CreateExactSDiv(BytesBetween, BytesPerElt, "sub.ptr.div");
   }
 }
 
