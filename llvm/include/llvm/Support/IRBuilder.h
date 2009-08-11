@@ -241,6 +241,12 @@ public:
         return Folder.CreateSDiv(LC, RC);
     return Insert(BinaryOperator::CreateSDiv(LHS, RHS), Name);
   }
+  Value *CreateExactSDiv(Value *LHS, Value *RHS, const char *Name = "") {
+    if (Constant *LC = dyn_cast<Constant>(LHS))
+      if (Constant *RC = dyn_cast<Constant>(RHS))
+        return Folder.CreateExactSDiv(LC, RC);
+    return Insert(BinaryOperator::CreateExactSDiv(LHS, RHS), Name);
+  }
   Value *CreateFDiv(Value *LHS, Value *RHS, const char *Name = "") {
     if (Constant *LC = dyn_cast<Constant>(LHS))
       if (Constant *RC = dyn_cast<Constant>(RHS))
@@ -719,7 +725,9 @@ public:
 
   /// CreatePtrDiff - Return the i64 difference between two pointer values,
   /// dividing out the size of the pointed-to objects.  This is intended to
-  /// implement C-style pointer subtraction.
+  /// implement C-style pointer subtraction. As such, the pointers must be
+  /// appropriately aligned for their element types and pointing into the
+  /// same object.
   Value *CreatePtrDiff(Value *LHS, Value *RHS, const char *Name = "") {
     assert(LHS->getType() == RHS->getType() &&
            "Pointer subtraction operand types must match!");
@@ -727,9 +735,9 @@ public:
     Value *LHS_int = CreatePtrToInt(LHS, Type::Int64Ty);
     Value *RHS_int = CreatePtrToInt(RHS, Type::Int64Ty);
     Value *Difference = CreateSub(LHS_int, RHS_int);
-    return CreateSDiv(Difference,
-                      ConstantExpr::getSizeOf(ArgType->getElementType()),
-                      Name);
+    return CreateExactSDiv(Difference,
+                           ConstantExpr::getSizeOf(ArgType->getElementType()),
+                           Name);
   }
 };
 

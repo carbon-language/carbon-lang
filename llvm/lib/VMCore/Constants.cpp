@@ -605,6 +605,12 @@ Constant* ConstantVector::get(Constant* const* Vals, unsigned NumVals) {
   return get(std::vector<Constant*>(Vals, Vals+NumVals));
 }
 
+Constant* ConstantExpr::getExactSDiv(Constant* C1, Constant* C2) {
+  Constant *C = getSDiv(C1, C2);
+  cast<SDivOperator>(C)->setIsExact(true);
+  return C;
+}
+
 // Utility function for determining if a ConstantExpr is a CastOp or not. This
 // can't be inline because we don't want to #include Instruction.h into
 // Constant.h

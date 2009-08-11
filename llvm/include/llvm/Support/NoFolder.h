@@ -63,6 +63,9 @@ public:
   Value *CreateSDiv(Constant *LHS, Constant *RHS) const {
     return BinaryOperator::CreateSDiv(LHS, RHS);
   }
+  Value *CreateExactSDiv(Constant *LHS, Constant *RHS) const {
+    return BinaryOperator::CreateExactSDiv(LHS, RHS);
+  }
   Value *CreateFDiv(Constant *LHS, Constant *RHS) const {
     return BinaryOperator::CreateFDiv(LHS, RHS);
   }

@@ -56,6 +56,9 @@ public:
   Constant *CreateSDiv(Constant *LHS, Constant *RHS) const {
     return ConstantExpr::getSDiv(LHS, RHS);
   }
+  Constant *CreateExactSDiv(Constant *LHS, Constant *RHS) const {
+    return ConstantExpr::getExactSDiv(LHS, RHS);
+  }
   Constant *CreateFDiv(Constant *LHS, Constant *RHS) const {
     return ConstantExpr::getFDiv(LHS, RHS);
   }

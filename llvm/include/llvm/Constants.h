@@ -636,6 +636,8 @@ public:
   static Constant *getIntToPtr(Constant *C, const Type *Ty);
   static Constant *getBitCast (Constant *C, const Type *Ty);
 
+  static Constant* getExactSDiv(Constant* C1, Constant* C2);
+
   /// Transparently provide more efficient getOperand methods.
   DECLARE_TRANSPARENT_OPERAND_ACCESSORS(Constant);
 

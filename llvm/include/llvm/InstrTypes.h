@@ -18,6 +18,7 @@
 
 #include "llvm/Instruction.h"
 #include "llvm/OperandTraits.h"
+#include "llvm/Operator.h"
 #include "llvm/DerivedTypes.h"
 
 namespace llvm {
@@ -194,6 +195,27 @@ public:
   }
 #include "llvm/Instruction.def"
 
+
+  /// CreateExactSDiv - Create an SDiv operator with the exact flag set.
+  ///
+  static BinaryOperator *CreateExactSDiv(Value *V1, Value *V2,
+                                         const Twine &Name = "") {
+    BinaryOperator *BO = CreateSDiv(V1, V2, Name);
+    cast<SDivOperator>(BO)->setIsExact(true);
+    return BO;
+  }
+  static BinaryOperator *CreateExactSDiv(Value *V1, Value *V2,
+                                         const Twine &Name, BasicBlock *BB) {
+    BinaryOperator *BO = CreateSDiv(V1, V2, Name, BB);
+    cast<SDivOperator>(BO)->setIsExact(true);
+    return BO;
+  }
+  static BinaryOperator *CreateExactSDiv(Value *V1, Value *V2,
+                                         const Twine &Name, Instruction *I) {
+    BinaryOperator *BO = CreateSDiv(V1, V2, Name, I);
+    cast<SDivOperator>(BO)->setIsExact(true);
+    return BO;
+  }
 
   /// Helper functions to construct and inspect unary operations (NEG and NOT)
   /// via binary operators SUB and XOR:
