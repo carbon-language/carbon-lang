@@ -15,8 +15,8 @@ __attribute((malloc))
 void * xalloc(unsigned n) { return malloc(n); }
 // RUN: grep 'define noalias .* @xalloc(' %t &&
 
-#define __malloc_like __attribute((__malloc__))
-void * xalloc2(unsigned) __malloc_like;
+#define malloc_like __attribute((__malloc__))
+void * xalloc2(unsigned) malloc_like;
 void * xalloc2(unsigned n) { return malloc(n); }
 // RUN: grep 'define noalias .* @xalloc2(' %t
 
