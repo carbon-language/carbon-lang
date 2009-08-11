@@ -15,10 +15,6 @@
 #ifndef LLVM_LLVMCONTEXT_H
 #define LLVM_LLVMCONTEXT_H
 
-#include "llvm/Support/DataTypes.h"
-#include <vector>
-#include <string>
-
 namespace llvm {
 
 struct LLVMContextImpl;

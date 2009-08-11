@@ -15,6 +15,7 @@
 #include "llvm/Target/TargetLoweringObjectFile.h"
 #include "llvm/Constants.h"
 #include "llvm/DerivedTypes.h"
+#include "llvm/Function.h"
 #include "llvm/GlobalVariable.h"
 #include "llvm/MC/MCContext.h"
 #include "llvm/MC/MCSectionMachO.h"

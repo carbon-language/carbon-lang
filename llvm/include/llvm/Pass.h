@@ -29,7 +29,6 @@
 #ifndef LLVM_PASS_H
 #define LLVM_PASS_H
 
-#include "llvm/Module.h"
 #include "llvm/Support/DataTypes.h"
 #include "llvm/Support/Streams.h"
 #include <cassert>

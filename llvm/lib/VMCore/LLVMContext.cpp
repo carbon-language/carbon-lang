@@ -14,12 +14,9 @@
 
 #include "llvm/LLVMContext.h"
 #include "llvm/Constants.h"
-#include "llvm/DerivedTypes.h"
 #include "llvm/Instruction.h"
-#include "llvm/Metadata.h"
 #include "llvm/Support/ManagedStatic.h"
 #include "LLVMContextImpl.h"
-#include <cstdarg>
 #include <set>
 
 using namespace llvm;

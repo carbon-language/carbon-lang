@@ -13,6 +13,7 @@
 #include "llvm/CodeGen/SelectionDAG.h"
 #include "llvm/Constants.h"
 #include "llvm/Analysis/ValueTracking.h"
+#include "llvm/Function.h"
 #include "llvm/GlobalAlias.h"
 #include "llvm/GlobalVariable.h"
 #include "llvm/Intrinsics.h"
