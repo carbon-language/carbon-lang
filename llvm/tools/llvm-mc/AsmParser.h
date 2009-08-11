@@ -132,6 +132,9 @@ private:
   bool ParseDirectiveElse(SMLoc DirectiveLoc); // ".else"
   bool ParseDirectiveEndIf(SMLoc DirectiveLoc); // .endif
 
+  bool ParseDirectiveFile(SMLoc DirectiveLoc); // ".file"
+  bool ParseDirectiveLine(SMLoc DirectiveLoc); // ".line"
+  bool ParseDirectiveLoc(SMLoc DirectiveLoc); // ".loc"
 };
 
 } // end namespace llvm

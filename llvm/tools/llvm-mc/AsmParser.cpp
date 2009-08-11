@@ -551,6 +551,7 @@ bool AsmParser::ParseStatement() {
       return ParseDirectiveSpace();
 
     // Symbol attribute directives
+
     if (IDVal == ".globl" || IDVal == ".global")
       return ParseDirectiveSymbolAttribute(MCStreamer::Global);
     if (IDVal == ".hidden")
@@ -597,6 +598,15 @@ bool AsmParser::ParseStatement() {
       return ParseDirectiveDarwinDumpOrLoad(IDLoc, /*IsDump=*/true);
     if (IDVal == ".load")
       return ParseDirectiveDarwinDumpOrLoad(IDLoc, /*IsLoad=*/false);
+
+    // Debugging directives
+
+    if (IDVal == ".file")
+      return ParseDirectiveFile(IDLoc);
+    if (IDVal == ".line")
+      return ParseDirectiveLine(IDLoc);
+    if (IDVal == ".loc")
+      return ParseDirectiveLoc(IDLoc);
 
     Warning(IDLoc, "ignoring directive for now");
     EatToEndOfStatement();
@@ -1439,3 +1449,90 @@ bool AsmParser::ParseDirectiveEndIf(SMLoc DirectiveLoc) {
 
   return false;
 }
+
+/// ParseDirectiveFile
+/// ::= .file [number] string
+bool AsmParser::ParseDirectiveFile(SMLoc DirectiveLoc) {
+  // FIXME: I'm not sure what this is.
+  int64_t FileNumber = -1;
+  if (Lexer.is(AsmToken::Integer)) {
+    FileNumber = Lexer.getTok().getIntVal();
+    Lexer.Lex();
+    
+    if (FileNumber < 1)
+      return TokError("file number less than one");
+  }
+
+  if (Lexer.isNot(AsmToken::String))
+    return TokError("unexpected token in '.file' directive");
+  
+  StringRef FileName = Lexer.getTok().getString();
+  Lexer.Lex();
+
+  if (Lexer.isNot(AsmToken::EndOfStatement))
+    return TokError("unexpected token in '.file' directive");
+
+  // FIXME: Do something with the .file.
+
+  return false;
+}
+
+/// ParseDirectiveLine
+/// ::= .line [number]
+bool AsmParser::ParseDirectiveLine(SMLoc DirectiveLoc) {
+  if (Lexer.isNot(AsmToken::EndOfStatement)) {
+    if (Lexer.isNot(AsmToken::Integer))
+      return TokError("unexpected token in '.line' directive");
+
+    int64_t LineNumber = Lexer.getTok().getIntVal();
+    (void) LineNumber;
+    Lexer.Lex();
+
+    // FIXME: Do something with the .line.
+  }
+
+  if (Lexer.isNot(AsmToken::EndOfStatement))
+    return TokError("unexpected token in '.file' directive");
+
+  return false;
+}
+
+
+/// ParseDirectiveLoc
+/// ::= .loc number [number [number]]
+bool AsmParser::ParseDirectiveLoc(SMLoc DirectiveLoc) {
+  if (Lexer.isNot(AsmToken::Integer))
+    return TokError("unexpected token in '.loc' directive");
+
+  // FIXME: What are these fields?
+  int64_t FileNumber = Lexer.getTok().getIntVal();
+  (void) FileNumber;
+  // FIXME: Validate file.
+
+  Lexer.Lex();
+  if (Lexer.isNot(AsmToken::EndOfStatement)) {
+    if (Lexer.isNot(AsmToken::Integer))
+      return TokError("unexpected token in '.loc' directive");
+
+    int64_t Param2 = Lexer.getTok().getIntVal();
+    (void) Param2;
+    Lexer.Lex();
+
+    if (Lexer.isNot(AsmToken::EndOfStatement)) {
+      if (Lexer.isNot(AsmToken::Integer))
+        return TokError("unexpected token in '.loc' directive");
+
+      int64_t Param3 = Lexer.getTok().getIntVal();
+      (void) Param3;
+      Lexer.Lex();
+
+      // FIXME: Do something with the .loc.
+    }
+  }
+
+  if (Lexer.isNot(AsmToken::EndOfStatement))
+    return TokError("unexpected token in '.file' directive");
+
+  return false;
+}
+
