@@ -26,6 +26,7 @@ static cl::opt<bool> DisableLdStOpti("disable-arm-loadstore-opti", cl::Hidden,
                               cl::desc("Disable load store optimization pass"));
 static cl::opt<bool> DisableIfConversion("disable-arm-if-conversion",cl::Hidden,
                               cl::desc("Disable if-conversion pass"));
+
 extern "C" void LLVMInitializeARMTarget() { 
   // Register the target.
   RegisterTargetMachine<ARMTargetMachine> X(TheARMTarget);
