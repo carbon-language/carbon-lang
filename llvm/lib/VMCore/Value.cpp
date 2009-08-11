@@ -553,7 +553,7 @@ void User::replaceUsesOfWith(Value *From, Value *To) {
   if (From == To) return;   // Duh what?
 
   assert((!isa<Constant>(this) || isa<GlobalValue>(this)) &&
-         "Cannot call User::replaceUsesofWith on a constant!");
+         "Cannot call User::replaceUsesOfWith on a constant!");
 
   for (unsigned i = 0, E = getNumOperands(); i != E; ++i)
     if (getOperand(i) == From) {  // Is This operand is pointing to oldval?
