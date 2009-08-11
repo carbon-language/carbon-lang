@@ -3064,6 +3064,15 @@ Instruction *InstCombiner::visitSDiv(BinaryOperator &I) {
     // sdiv X, -1 == -X
     if (RHS->isAllOnesValue())
       return BinaryOperator::CreateNeg(*Context, Op0);
+
+    // sdiv X, C  --> ashr X, log2(C)
+    if (cast<SDivOperator>(&I)->isExact() &&
+        RHS->getValue().isNonNegative() &&
+        RHS->getValue().isPowerOf2()) {
+      Value *ShAmt = llvm::ConstantInt::get(RHS->getType(),
+                                            RHS->getValue().exactLogBase2());
+      return BinaryOperator::CreateAShr(Op0, ShAmt, I.getName());
+    }
   }
 
   // If the sign bits of both operands are zero (i.e. we can prove they are
