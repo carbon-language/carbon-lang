@@ -74,7 +74,7 @@ namespace {
     PBQPRegAlloc() : MachineFunctionPass(&ID) {}
 
     /// Return the pass name.
-    virtual const char* getPassName() const throw() {
+    virtual const char* getPassName() const {
       return "PBQP Register Allocator";
     }
 

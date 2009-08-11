@@ -52,7 +52,7 @@ class Vector {
     }
 
     /// \brief Return the length of the vector
-    unsigned getLength() const throw () {
+    unsigned getLength() const {
       return length;
     }
 
@@ -143,10 +143,10 @@ class Matrix {
     }
 
     /// \brief Return the number of rows in this matrix.
-    unsigned getRows() const throw () { return rows; }
+    unsigned getRows() const { return rows; }
 
     /// \brief Return the number of cols in this matrix.
-    unsigned getCols() const throw () { return cols; }
+    unsigned getCols() const { return cols; }
 
     /// \brief Matrix element access.
     PBQPNum* operator[](unsigned r) {
