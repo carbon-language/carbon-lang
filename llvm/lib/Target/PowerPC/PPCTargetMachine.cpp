@@ -28,8 +28,8 @@ extern "C" void LLVMInitializePowerPCTarget() {
 
 const TargetAsmInfo *PPCTargetMachine::createTargetAsmInfo() const {
   if (Subtarget.isDarwin())
-    return new PPCDarwinTargetAsmInfo(*this);
-  return new PPCLinuxTargetAsmInfo(*this);
+    return new PPCDarwinTargetAsmInfo(Subtarget.isPPC64());
+  return new PPCLinuxTargetAsmInfo(Subtarget.isPPC64());
 }
 
 PPCTargetMachine::PPCTargetMachine(const Target &T, const std::string &TT,
