@@ -173,17 +173,17 @@ class VLD1Q<string OpcodeStr, ValueType Ty, Intrinsic IntOp>
           !strconcat(OpcodeStr, "\t${dst:dregpair}, $addr"),
           [(set QPR:$dst, (Ty (IntOp addrmode6:$addr)))]>;
 
-def  VLD1d8   : VLD1D<"vld1.8",  v8i8,  int_arm_neon_vld1i>;
-def  VLD1d16  : VLD1D<"vld1.16", v4i16, int_arm_neon_vld1i>;
-def  VLD1d32  : VLD1D<"vld1.32", v2i32, int_arm_neon_vld1i>;
-def  VLD1df   : VLD1D<"vld1.32", v2f32, int_arm_neon_vld1f>;
-def  VLD1d64  : VLD1D<"vld1.64", v1i64, int_arm_neon_vld1i>;
+def  VLD1d8   : VLD1D<"vld1.8",  v8i8,  int_arm_neon_vld1>;
+def  VLD1d16  : VLD1D<"vld1.16", v4i16, int_arm_neon_vld1>;
+def  VLD1d32  : VLD1D<"vld1.32", v2i32, int_arm_neon_vld1>;
+def  VLD1df   : VLD1D<"vld1.32", v2f32, int_arm_neon_vld1>;
+def  VLD1d64  : VLD1D<"vld1.64", v1i64, int_arm_neon_vld1>;
 
-def  VLD1q8   : VLD1Q<"vld1.8",  v16i8, int_arm_neon_vld1i>;
-def  VLD1q16  : VLD1Q<"vld1.16", v8i16, int_arm_neon_vld1i>;
-def  VLD1q32  : VLD1Q<"vld1.32", v4i32, int_arm_neon_vld1i>;
-def  VLD1qf   : VLD1Q<"vld1.32", v4f32, int_arm_neon_vld1f>;
-def  VLD1q64  : VLD1Q<"vld1.64", v2i64, int_arm_neon_vld1i>;
+def  VLD1q8   : VLD1Q<"vld1.8",  v16i8, int_arm_neon_vld1>;
+def  VLD1q16  : VLD1Q<"vld1.16", v8i16, int_arm_neon_vld1>;
+def  VLD1q32  : VLD1Q<"vld1.32", v4i32, int_arm_neon_vld1>;
+def  VLD1qf   : VLD1Q<"vld1.32", v4f32, int_arm_neon_vld1>;
+def  VLD1q64  : VLD1Q<"vld1.64", v2i64, int_arm_neon_vld1>;
 
 //   VLD2     : Vector Load (multiple 2-element structures)
 class VLD2D<string OpcodeStr>
@@ -228,17 +228,17 @@ class VST1Q<string OpcodeStr, ValueType Ty, Intrinsic IntOp>
           !strconcat(OpcodeStr, "\t${src:dregpair}, $addr"),
           [(IntOp addrmode6:$addr, (Ty QPR:$src))]>;
 
-def  VST1d8   : VST1D<"vst1.8",  v8i8,  int_arm_neon_vst1i>;
-def  VST1d16  : VST1D<"vst1.16", v4i16, int_arm_neon_vst1i>;
-def  VST1d32  : VST1D<"vst1.32", v2i32, int_arm_neon_vst1i>;
-def  VST1df   : VST1D<"vst1.32", v2f32, int_arm_neon_vst1f>;
-def  VST1d64  : VST1D<"vst1.64", v1i64, int_arm_neon_vst1i>;
+def  VST1d8   : VST1D<"vst1.8",  v8i8,  int_arm_neon_vst1>;
+def  VST1d16  : VST1D<"vst1.16", v4i16, int_arm_neon_vst1>;
+def  VST1d32  : VST1D<"vst1.32", v2i32, int_arm_neon_vst1>;
+def  VST1df   : VST1D<"vst1.32", v2f32, int_arm_neon_vst1>;
+def  VST1d64  : VST1D<"vst1.64", v1i64, int_arm_neon_vst1>;
 
-def  VST1q8   : VST1Q<"vst1.8",  v16i8, int_arm_neon_vst1i>;
-def  VST1q16  : VST1Q<"vst1.16", v8i16, int_arm_neon_vst1i>;
-def  VST1q32  : VST1Q<"vst1.32", v4i32, int_arm_neon_vst1i>;
-def  VST1qf   : VST1Q<"vst1.32", v4f32, int_arm_neon_vst1f>;
-def  VST1q64  : VST1Q<"vst1.64", v2i64, int_arm_neon_vst1i>;
+def  VST1q8   : VST1Q<"vst1.8",  v16i8, int_arm_neon_vst1>;
+def  VST1q16  : VST1Q<"vst1.16", v8i16, int_arm_neon_vst1>;
+def  VST1q32  : VST1Q<"vst1.32", v4i32, int_arm_neon_vst1>;
+def  VST1qf   : VST1Q<"vst1.32", v4f32, int_arm_neon_vst1>;
+def  VST1q64  : VST1Q<"vst1.64", v2i64, int_arm_neon_vst1>;
 
 //   VST2     : Vector Store (multiple 2-element structures)
 class VST2D<string OpcodeStr>
@@ -1223,9 +1223,9 @@ def  VBSLq    : N3V<1, 0, 0b01, 0b0001, 1, 1, (outs QPR:$dst),
 defm VABDs    : N3VInt_QHS<0, 0, 0b0111, 0, "vabd.s", int_arm_neon_vabds, 0>;
 defm VABDu    : N3VInt_QHS<1, 0, 0b0111, 0, "vabd.u", int_arm_neon_vabdu, 0>;
 def  VABDfd   : N3VDInt<1, 0, 0b10, 0b1101, 0, "vabd.f32", v2f32, v2f32,
-                        int_arm_neon_vabdf, 0>;
+                        int_arm_neon_vabds, 0>;
 def  VABDfq   : N3VQInt<1, 0, 0b10, 0b1101, 0, "vabd.f32", v4f32, v4f32,
-                        int_arm_neon_vabdf, 0>;
+                        int_arm_neon_vabds, 0>;
 
 //   VABDL    : Vector Absolute Difference Long (Q = | D - D |)
 defm VABDLs   : N3VLInt_QHS<0,1,0b0111,0, "vabdl.s", int_arm_neon_vabdls, 0>;
@@ -1245,17 +1245,17 @@ defm VABALu   : N3VLInt3_QHS<1,1,0b0101,0, "vabal.u", int_arm_neon_vabalu>;
 defm VMAXs    : N3VInt_QHS<0, 0, 0b0110, 0, "vmax.s", int_arm_neon_vmaxs, 1>;
 defm VMAXu    : N3VInt_QHS<1, 0, 0b0110, 0, "vmax.u", int_arm_neon_vmaxu, 1>;
 def  VMAXfd   : N3VDInt<0, 0, 0b00, 0b1111, 0, "vmax.f32", v2f32, v2f32,
-                        int_arm_neon_vmaxf, 1>;
+                        int_arm_neon_vmaxs, 1>;
 def  VMAXfq   : N3VQInt<0, 0, 0b00, 0b1111, 0, "vmax.f32", v4f32, v4f32,
-                        int_arm_neon_vmaxf, 1>;
+                        int_arm_neon_vmaxs, 1>;
 
 //   VMIN     : Vector Minimum
 defm VMINs    : N3VInt_QHS<0, 0, 0b0110, 1, "vmin.s", int_arm_neon_vmins, 1>;
 defm VMINu    : N3VInt_QHS<1, 0, 0b0110, 1, "vmin.u", int_arm_neon_vminu, 1>;
 def  VMINfd   : N3VDInt<0, 0, 0b10, 0b1111, 0, "vmin.f32", v2f32, v2f32,
-                        int_arm_neon_vminf, 1>;
+                        int_arm_neon_vmins, 1>;
 def  VMINfq   : N3VQInt<0, 0, 0b10, 0b1111, 0, "vmin.f32", v4f32, v4f32,
-                        int_arm_neon_vminf, 1>;
+                        int_arm_neon_vmins, 1>;
 
 // Vector Pairwise Operations.
 
@@ -1295,7 +1295,7 @@ def  VPMAXu16 : N3VDInt<1, 0, 0b01, 0b1010, 0, "vpmax.u16", v4i16, v4i16,
 def  VPMAXu32 : N3VDInt<1, 0, 0b10, 0b1010, 0, "vpmax.u32", v2i32, v2i32,
                         int_arm_neon_vpmaxu, 0>;
 def  VPMAXf   : N3VDInt<1, 0, 0b00, 0b1111, 0, "vpmax.f32", v2f32, v2f32,
-                        int_arm_neon_vpmaxf, 0>;
+                        int_arm_neon_vpmaxs, 0>;
 
 //   VPMIN    : Vector Pairwise Minimum
 def  VPMINs8  : N3VDInt<0, 0, 0b00, 0b1010, 1, "vpmin.s8", v8i8, v8i8,
@@ -1311,7 +1311,7 @@ def  VPMINu16 : N3VDInt<1, 0, 0b01, 0b1010, 1, "vpmin.u16", v4i16, v4i16,
 def  VPMINu32 : N3VDInt<1, 0, 0b10, 0b1010, 1, "vpmin.u32", v2i32, v2i32,
                         int_arm_neon_vpminu, 0>;
 def  VPMINf   : N3VDInt<1, 0, 0b10, 0b1111, 0, "vpmin.f32", v2f32, v2f32,
-                        int_arm_neon_vpminf, 0>;
+                        int_arm_neon_vpmins, 0>;
 
 // Vector Reciprocal and Reciprocal Square Root Estimate and Step.
 
@@ -1321,9 +1321,9 @@ def  VRECPEd  : N2VDInt<0b11, 0b11, 0b10, 0b11, 0b01000, 0, "vrecpe.u32",
 def  VRECPEq  : N2VQInt<0b11, 0b11, 0b10, 0b11, 0b01000, 0, "vrecpe.u32",
                         v4i32, v4i32, int_arm_neon_vrecpe>;
 def  VRECPEfd : N2VDInt<0b11, 0b11, 0b10, 0b11, 0b01010, 0, "vrecpe.f32",
-                        v2f32, v2f32, int_arm_neon_vrecpef>;
+                        v2f32, v2f32, int_arm_neon_vrecpe>;
 def  VRECPEfq : N2VQInt<0b11, 0b11, 0b10, 0b11, 0b01010, 0, "vrecpe.f32",
-                        v4f32, v4f32, int_arm_neon_vrecpef>;
+                        v4f32, v4f32, int_arm_neon_vrecpe>;
 
 //   VRECPS   : Vector Reciprocal Step
 def  VRECPSfd : N3VDInt<0, 0, 0b00, 0b1111, 1, "vrecps.f32", v2f32, v2f32,
@@ -1337,9 +1337,9 @@ def  VRSQRTEd  : N2VDInt<0b11, 0b11, 0b10, 0b11, 0b01001, 0, "vrsqrte.u32",
 def  VRSQRTEq  : N2VQInt<0b11, 0b11, 0b10, 0b11, 0b01001, 0, "vrsqrte.u32",
                         v4i32, v4i32, int_arm_neon_vrsqrte>;
 def  VRSQRTEfd : N2VDInt<0b11, 0b11, 0b10, 0b11, 0b01011, 0, "vrsqrte.f32",
-                        v2f32, v2f32, int_arm_neon_vrsqrtef>;
+                        v2f32, v2f32, int_arm_neon_vrsqrte>;
 def  VRSQRTEfq : N2VQInt<0b11, 0b11, 0b10, 0b11, 0b01011, 0, "vrsqrte.f32",
-                        v4f32, v4f32, int_arm_neon_vrsqrtef>;
+                        v4f32, v4f32, int_arm_neon_vrsqrte>;
 
 //   VRSQRTS  : Vector Reciprocal Square Root Step
 def VRSQRTSfd : N3VDInt<0, 0, 0b10, 0b1111, 1, "vrsqrts.f32", v2f32, v2f32,
@@ -1480,9 +1480,9 @@ defm VSRI     : N2VShIns_QHSD<1, 1, 0b0100, 1, "vsri.", NEONvsri>;
 defm VABS     : N2VInt_QHS<0b11, 0b11, 0b01, 0b00110, 0, "vabs.s",
                            int_arm_neon_vabs>;
 def  VABSfd   : N2VDInt<0b11, 0b11, 0b10, 0b01, 0b01110, 0, "vabs.f32",
-                        v2f32, v2f32, int_arm_neon_vabsf>;
+                        v2f32, v2f32, int_arm_neon_vabs>;
 def  VABSfq   : N2VQInt<0b11, 0b11, 0b10, 0b01, 0b01110, 0, "vabs.f32",
-                        v4f32, v4f32, int_arm_neon_vabsf>;
+                        v4f32, v4f32, int_arm_neon_vabs>;
 
 //   VQABS    : Vector Saturating Absolute Value
 defm VQABS    : N2VInt_QHS<0b11, 0b11, 0b00, 0b01110, 0, "vqabs.s",
@@ -2017,7 +2017,7 @@ def : N3VDMulOpsPat<fmul, fsub, VMLSfd_sfp>;
 // Vector Absolute used for single-precision FP
 let neverHasSideEffects = 1 in
 def  VABSfd_sfp : N2VDInts<0b11, 0b11, 0b10, 0b01, 0b01110, 0, "vabs.f32",
-                           v2f32, v2f32, int_arm_neon_vabsf>;
+                           v2f32, v2f32, int_arm_neon_vabs>;
 def : N2VDIntsPat<fabs, VABSfd_sfp>;
 
 // Vector Negate used for single-precision FP

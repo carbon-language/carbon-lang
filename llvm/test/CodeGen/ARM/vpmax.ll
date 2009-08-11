@@ -52,7 +52,7 @@ define <2 x i32> @vpmaxu32(<2 x i32>* %A, <2 x i32>* %B) nounwind {
 define <2 x float> @vpmaxf32(<2 x float>* %A, <2 x float>* %B) nounwind {
 	%tmp1 = load <2 x float>* %A
 	%tmp2 = load <2 x float>* %B
-	%tmp3 = call <2 x float> @llvm.arm.neon.vpmaxf.v2f32(<2 x float> %tmp1, <2 x float> %tmp2)
+	%tmp3 = call <2 x float> @llvm.arm.neon.vpmaxs.v2f32(<2 x float> %tmp1, <2 x float> %tmp2)
 	ret <2 x float> %tmp3
 }
 
@@ -64,4 +64,4 @@ declare <8 x i8>  @llvm.arm.neon.vpmaxu.v8i8(<8 x i8>, <8 x i8>) nounwind readno
 declare <4 x i16> @llvm.arm.neon.vpmaxu.v4i16(<4 x i16>, <4 x i16>) nounwind readnone
 declare <2 x i32> @llvm.arm.neon.vpmaxu.v2i32(<2 x i32>, <2 x i32>) nounwind readnone
 
-declare <2 x float> @llvm.arm.neon.vpmaxf.v2f32(<2 x float>, <2 x float>) nounwind readnone
+declare <2 x float> @llvm.arm.neon.vpmaxs.v2f32(<2 x float>, <2 x float>) nounwind readnone

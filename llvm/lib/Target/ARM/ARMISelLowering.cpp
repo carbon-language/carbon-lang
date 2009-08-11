@@ -1360,23 +1360,17 @@ SDValue
 ARMTargetLowering::LowerINTRINSIC_W_CHAIN(SDValue Op, SelectionDAG &DAG) {
   unsigned IntNo = cast<ConstantSDNode>(Op.getOperand(1))->getZExtValue();
   switch (IntNo) {
-  case Intrinsic::arm_neon_vld2i:
-  case Intrinsic::arm_neon_vld2f:
+  case Intrinsic::arm_neon_vld2:
     return LowerNeonVLDIntrinsic(Op, DAG, ARMISD::VLD2D);
-  case Intrinsic::arm_neon_vld3i:
-  case Intrinsic::arm_neon_vld3f:
+  case Intrinsic::arm_neon_vld3:
     return LowerNeonVLDIntrinsic(Op, DAG, ARMISD::VLD3D);
-  case Intrinsic::arm_neon_vld4i:
-  case Intrinsic::arm_neon_vld4f:
+  case Intrinsic::arm_neon_vld4:
     return LowerNeonVLDIntrinsic(Op, DAG, ARMISD::VLD4D);
-  case Intrinsic::arm_neon_vst2i:
-  case Intrinsic::arm_neon_vst2f:
+  case Intrinsic::arm_neon_vst2:
     return LowerNeonVSTIntrinsic(Op, DAG, ARMISD::VST2D, 2);
-  case Intrinsic::arm_neon_vst3i:
-  case Intrinsic::arm_neon_vst3f:
+  case Intrinsic::arm_neon_vst3:
     return LowerNeonVSTIntrinsic(Op, DAG, ARMISD::VST3D, 3);
-  case Intrinsic::arm_neon_vst4i:
-  case Intrinsic::arm_neon_vst4f:
+  case Intrinsic::arm_neon_vst4:
     return LowerNeonVSTIntrinsic(Op, DAG, ARMISD::VST4D, 4);
   default: return SDValue();    // Don't custom lower most intrinsics.
   }

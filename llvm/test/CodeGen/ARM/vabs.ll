@@ -28,7 +28,7 @@ define <2 x float> @vabsf32(<2 x float>* %A) nounwind {
 ;CHECK: vabsf32:
 ;CHECK: vabs.f32
 	%tmp1 = load <2 x float>* %A
-	%tmp2 = call <2 x float> @llvm.arm.neon.vabsf.v2f32(<2 x float> %tmp1)
+	%tmp2 = call <2 x float> @llvm.arm.neon.vabs.v2f32(<2 x float> %tmp1)
 	ret <2 x float> %tmp2
 }
 
@@ -60,17 +60,17 @@ define <4 x float> @vabsQf32(<4 x float>* %A) nounwind {
 ;CHECK: vabsQf32:
 ;CHECK: vabs.f32
 	%tmp1 = load <4 x float>* %A
-	%tmp2 = call <4 x float> @llvm.arm.neon.vabsf.v4f32(<4 x float> %tmp1)
+	%tmp2 = call <4 x float> @llvm.arm.neon.vabs.v4f32(<4 x float> %tmp1)
 	ret <4 x float> %tmp2
 }
 
 declare <8 x i8>  @llvm.arm.neon.vabs.v8i8(<8 x i8>) nounwind readnone
 declare <4 x i16> @llvm.arm.neon.vabs.v4i16(<4 x i16>) nounwind readnone
 declare <2 x i32> @llvm.arm.neon.vabs.v2i32(<2 x i32>) nounwind readnone
-declare <2 x float> @llvm.arm.neon.vabsf.v2f32(<2 x float>) nounwind readnone
+declare <2 x float> @llvm.arm.neon.vabs.v2f32(<2 x float>) nounwind readnone
 
 declare <16 x i8> @llvm.arm.neon.vabs.v16i8(<16 x i8>) nounwind readnone
 declare <8 x i16> @llvm.arm.neon.vabs.v8i16(<8 x i16>) nounwind readnone
 declare <4 x i32> @llvm.arm.neon.vabs.v4i32(<4 x i32>) nounwind readnone
-declare <4 x float> @llvm.arm.neon.vabsf.v4f32(<4 x float>) nounwind readnone
+declare <4 x float> @llvm.arm.neon.vabs.v4f32(<4 x float>) nounwind readnone
 

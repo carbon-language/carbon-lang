@@ -1466,8 +1466,7 @@ SDNode *ARMDAGToDAGISel::Select(SDValue Op) {
     switch (IntNo) {
     default: break;
 
-    case Intrinsic::arm_neon_vtrni:
-    case Intrinsic::arm_neon_vtrnf:
+    case Intrinsic::arm_neon_vtrn:
       switch (VT.getSimpleVT()) {
       default: return NULL;
       case EVT::v8i8:  Opc = ARM::VTRNd8; break;
@@ -1482,8 +1481,7 @@ SDNode *ARMDAGToDAGISel::Select(SDValue Op) {
       return CurDAG->getTargetNode(Opc, dl, VT, VT, N->getOperand(1),
                                    N->getOperand(2));
 
-    case Intrinsic::arm_neon_vuzpi:
-    case Intrinsic::arm_neon_vuzpf:
+    case Intrinsic::arm_neon_vuzp:
       switch (VT.getSimpleVT()) {
       default: return NULL;
       case EVT::v8i8:  Opc = ARM::VUZPd8; break;
@@ -1498,8 +1496,7 @@ SDNode *ARMDAGToDAGISel::Select(SDValue Op) {
       return CurDAG->getTargetNode(Opc, dl, VT, VT, N->getOperand(1),
                                    N->getOperand(2));
 
-    case Intrinsic::arm_neon_vzipi:
-    case Intrinsic::arm_neon_vzipf:
+    case Intrinsic::arm_neon_vzip:
       switch (VT.getSimpleVT()) {
       default: return NULL;
       case EVT::v8i8:  Opc = ARM::VZIPd8; break;
