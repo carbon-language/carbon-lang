@@ -13,26 +13,14 @@
 
 #include "X86TargetAsmInfo.h"
 #include "X86TargetMachine.h"
-#include "X86Subtarget.h"
 #include "llvm/Support/CommandLine.h"
-#include "llvm/DerivedTypes.h"
-#include "llvm/InlineAsm.h"
-#include "llvm/Instructions.h"
-#include "llvm/Intrinsics.h"
-#include "llvm/Module.h"
-#include "llvm/ADT/StringExtras.h"
-#include "llvm/Support/Dwarf.h"
-#include "llvm/Support/ErrorHandling.h"
 using namespace llvm;
-using namespace llvm::dwarf;
-
 
 enum AsmWriterFlavorTy {
   // Note: This numbering has to match the GCC assembler dialects for inline
   // asm alternatives to work right.
   ATT = 0, Intel = 1
 };
-
 
 static cl::opt<AsmWriterFlavorTy>
 AsmWriterFlavor("x86-asm-syntax", cl::init(ATT),
