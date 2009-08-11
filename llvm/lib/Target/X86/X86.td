@@ -182,6 +182,12 @@ include "X86CallingConv.td"
 def ATTAsmParser : AsmParser {
   string AsmParserClassName  = "ATTAsmParser";
   int Variant = 0;
+
+  // Discard comments in assembly strings.
+  string CommentDelimiter = "#";
+
+  // Recognize hard coded registers.
+  string RegisterPrefix = "%";
 }
 
 // The X86 target supports two different syntaxes for emitting machine code.

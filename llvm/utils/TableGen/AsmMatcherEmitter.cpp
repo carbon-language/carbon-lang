@@ -501,6 +501,15 @@ public:
 
 class AsmMatcherInfo {
 public:
+  /// The tablegen AsmParser record.
+  Record *AsmParser;
+
+  /// The AsmParser "CommentDelimiter" value.
+  std::string CommentDelimiter;
+
+  /// The AsmParser "RegisterPrefix" value.
+  std::string RegisterPrefix;
+
   /// The classes which are needed for matching.
   std::vector<ClassInfo*> Classes;
   
@@ -537,6 +546,8 @@ private:
   void BuildOperandClasses(CodeGenTarget &Target);
 
 public:
+  AsmMatcherInfo(Record *_AsmParser);
+
   /// BuildInfo - Construct the various tables used during matching.
   void BuildInfo(CodeGenTarget &Target);
 };
@@ -778,6 +789,13 @@ void AsmMatcherInfo::BuildOperandClasses(CodeGenTarget &Target) {
   }
 }
 
+AsmMatcherInfo::AsmMatcherInfo(Record *_AsmParser) 
+  : AsmParser(_AsmParser),
+    CommentDelimiter(AsmParser->getValueAsString("CommentDelimiter")),
+    RegisterPrefix(AsmParser->getValueAsString("RegisterPrefix"))
+{
+}
+
 void AsmMatcherInfo::BuildInfo(CodeGenTarget &Target) {
   // Build info for the register classes.
   BuildRegisterClasses(Target);
@@ -800,6 +818,13 @@ void AsmMatcherInfo::BuildInfo(CodeGenTarget &Target) {
     II->InstrName = it->first;
     II->Instr = &it->second;
     II->AsmString = FlattenVariants(CGI.AsmString, 0);
+
+    // Remove comments from the asm string.
+    if (!CommentDelimiter.empty()) {
+      size_t Idx = StringRef(II->AsmString).find(CommentDelimiter);
+      if (Idx != StringRef::npos)
+        II->AsmString = II->AsmString.substr(0, Idx);
+    }
 
     TokenizeAsmString(II->AsmString, II->Tokens);
 
@@ -1309,7 +1334,7 @@ void AsmMatcherEmitter::run(raw_ostream &OS) {
   EmitMatchRegisterName(Target, AsmParser, OS);
 
   // Compute the information on the instructions to match.
-  AsmMatcherInfo Info;
+  AsmMatcherInfo Info(AsmParser);
   Info.BuildInfo(Target);
 
   // Sort the instruction table using the partial order on classes.

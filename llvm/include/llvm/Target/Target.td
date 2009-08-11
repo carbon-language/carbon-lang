@@ -484,6 +484,17 @@ class AsmParser {
   // used to support targets that need to parser multiple formats for the 
   // assembly language.
   int Variant = 0;
+
+  // CommentDelimiter - If given, the delimiter string used to recognize
+  // comments which are hard coded in the .td assembler strings for individual
+  // instructions.
+  string CommentDelimiter = "";
+
+  // RegisterPrefix - If given, the token prefix which indicates a register
+  // token. This is used by the matcher to automatically recognize hard coded
+  // register tokens as constrained registers, instead of tokens, for the
+  // purposes of matching.
+  string RegisterPrefix = "";
 }
 def DefaultAsmParser : AsmParser;
 
