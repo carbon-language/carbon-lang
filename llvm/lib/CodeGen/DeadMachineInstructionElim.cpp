@@ -36,7 +36,7 @@ namespace {
     DeadMachineInstructionElim() : MachineFunctionPass(&ID) {}
 
   private:
-    bool isDead(MachineInstr *MI) const;
+    bool isDead(const MachineInstr *MI) const;
   };
 }
 char DeadMachineInstructionElim::ID = 0;
@@ -49,7 +49,7 @@ FunctionPass *llvm::createDeadMachineInstructionElimPass() {
   return new DeadMachineInstructionElim();
 }
 
-bool DeadMachineInstructionElim::isDead(MachineInstr *MI) const {
+bool DeadMachineInstructionElim::isDead(const MachineInstr *MI) const {
   // Don't delete instructions with side effects.
   bool SawStore = false;
   if (!MI->isSafeToMove(TII, SawStore))
