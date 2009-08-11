@@ -49,3 +49,6 @@
 // RUN: grep {MCInst(opcode=.*, operands=.reg:21, reg:0, reg:19.)} %t
         subl %eax, %ebx
         
+// FIXME: Check that this matches the correct instruction.
+// RUN: grep {MCInst(opcode=.*, operands=.reg:80.)} %t
+        call *%rax

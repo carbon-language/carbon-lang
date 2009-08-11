@@ -263,17 +263,6 @@ bool X86ATTAsmParser::ParseOperand(X86Operand &Op) {
     Op = X86Operand::CreateImm(Val);
     return false;
   }
-  case AsmToken::Star:
-    getLexer().Lex(); // Eat the star.
-    
-    if (getLexer().is(AsmToken::Register)) {
-      if (ParseRegister(Op))
-        return true;
-    } else if (ParseMemOperand(Op))
-      return true;
-
-    // FIXME: Note the '*' in the operand for use by the matcher.
-    return false;
   }
 }
 
@@ -406,6 +395,13 @@ bool X86ATTAsmParser::ParseInstruction(const StringRef &Name, MCInst &Inst) {
 
   SMLoc Loc = getLexer().getTok().getLoc();
   if (getLexer().isNot(AsmToken::EndOfStatement)) {
+
+    // Parse '*' modifier.
+    if (getLexer().is(AsmToken::Star)) {
+      getLexer().Lex(); // Eat the star.
+      Operands.push_back(X86Operand::CreateToken("*"));
+    }
+
     // Read the first operand.
     Operands.push_back(X86Operand());
     if (ParseOperand(Operands.back()))
