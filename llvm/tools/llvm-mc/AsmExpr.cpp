@@ -81,7 +81,7 @@ bool AsmExpr::EvaluateAsRelocatable(MCContext &Ctx, MCValue &Res) const {
       break;
     case AsmUnaryExpr::Minus:
       /// -(a - b + const) ==> (b - a - const)
-      if (Value.getSymA() && !Value.getSymA())
+      if (Value.getSymA() && !Value.getSymB())
         return false;
       Res = MCValue::get(Value.getSymB(), Value.getSymA(), 
                          -Value.getConstant()); 
