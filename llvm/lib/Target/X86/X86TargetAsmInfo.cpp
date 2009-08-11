@@ -61,8 +61,6 @@ X86DarwinTargetAsmInfo::X86DarwinTargetAsmInfo(const X86TargetMachine &TM) {
     PersonalitySuffix = "$non_lazy_ptr";
   }
 
-  InlineAsmStart = "## InlineAsm Start";
-  InlineAsmEnd = "## InlineAsm End";
   CommentString = "##";
   PCSymbol = ".";
 
@@ -112,9 +110,6 @@ X86WinTargetAsmInfo::X86WinTargetAsmInfo(const X86TargetMachine &TM) {
 
   GlobalPrefix = "_";
   CommentString = ";";
-
-  InlineAsmStart = "; InlineAsm Start";
-  InlineAsmEnd   = "; InlineAsm End";
 
   PrivateGlobalPrefix = "$";
   AlignDirective = "\tALIGN\t";

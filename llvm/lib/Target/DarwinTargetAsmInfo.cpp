@@ -27,6 +27,8 @@ DarwinTargetAsmInfo::DarwinTargetAsmInfo() {
   HasSingleParameterDotFile = false;
 
   AlignmentIsInBytes = false;
+  InlineAsmStart = " InlineAsm Start";
+  InlineAsmEnd = " InlineAsm End";
 
   // In non-PIC modes, emit a special label before jump tables so that the
   // linker can perform more accurate dead code stripping.  We do not check the

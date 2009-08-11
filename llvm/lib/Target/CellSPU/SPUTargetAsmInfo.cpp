@@ -20,8 +20,6 @@ SPULinuxTargetAsmInfo::SPULinuxTargetAsmInfo() {
   Data64bitsDirective = "\t.quad\t";
   AlignmentIsInBytes = false;
   LCOMMDirective = "\t.lcomm\t";
-  InlineAsmStart = "# InlineAsm Start";
-  InlineAsmEnd = "# InlineAsm End";
       
   PCSymbol = ".";
   CommentString = "#";

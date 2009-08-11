@@ -18,6 +18,4 @@ using namespace llvm;
 BlackfinTargetAsmInfo::BlackfinTargetAsmInfo() {
   GlobalPrefix = "_";
   CommentString = "//";
-  InlineAsmStart = "// APP";
-  InlineAsmEnd = "// NO_APP";
 }

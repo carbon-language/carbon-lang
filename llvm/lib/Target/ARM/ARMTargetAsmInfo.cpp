@@ -45,9 +45,6 @@ ARMDarwinTargetAsmInfo::ARMDarwinTargetAsmInfo() {
   Data64bitsDirective = 0;
   CommentString = "@";
   COMMDirectiveTakesAlignment = false;
-  InlineAsmStart = "@ InlineAsm Start";
-  InlineAsmEnd = "@ InlineAsm End";
-  
   SupportsDebugInformation = true;
 
   // Exceptions handling
@@ -60,8 +57,6 @@ ARMELFTargetAsmInfo::ARMELFTargetAsmInfo() {
   Data64bitsDirective = 0;
   CommentString = "@";
   COMMDirectiveTakesAlignment = false;
-  InlineAsmStart = "@ InlineAsm Start";
-  InlineAsmEnd = "@ InlineAsm End";
   
   NeedsSet = false;
   HasLEB128 = true;

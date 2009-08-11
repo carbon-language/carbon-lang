@@ -1336,11 +1336,12 @@ void AsmPrinter::printInlineAsm(const MachineInstr *MI) const {
   // If this asmstr is empty, just print the #APP/#NOAPP markers.
   // These are useful to see where empty asm's wound up.
   if (AsmStr[0] == 0) {
-    O << TAI->getInlineAsmStart() << "\n\t" << TAI->getInlineAsmEnd() << '\n';
+    O << TAI->getCommentString() << TAI->getInlineAsmStart() << "\n\t";
+    O << TAI->getCommentString() << TAI->getInlineAsmEnd() << '\n';
     return;
   }
   
-  O << TAI->getInlineAsmStart() << "\n\t";
+  O << TAI->getCommentString() << TAI->getInlineAsmStart() << "\n\t";
 
   // The variant of the current asmprinter.
   int AsmPrinterVariant = TAI->getAssemblerDialect();
@@ -1511,7 +1512,7 @@ void AsmPrinter::printInlineAsm(const MachineInstr *MI) const {
     }
     }
   }
-  O << "\n\t" << TAI->getInlineAsmEnd() << '\n';
+  O << "\n\t" << TAI->getCommentString() << TAI->getInlineAsmEnd() << '\n';
 }
 
 /// printImplicitDef - This method prints the specified machine instruction

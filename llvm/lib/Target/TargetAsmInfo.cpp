@@ -37,8 +37,8 @@ TargetAsmInfo::TargetAsmInfo() {
   PersonalityPrefix = "";
   PersonalitySuffix = "";
   NeedsIndirectEncoding = false;
-  InlineAsmStart = "#APP";
-  InlineAsmEnd = "#NO_APP";
+  InlineAsmStart = "APP";
+  InlineAsmEnd = "NO_APP";
   AssemblerDialect = 0;
   AllowQuotesInName = false;
   ZeroDirective = "\t.zero\t";
