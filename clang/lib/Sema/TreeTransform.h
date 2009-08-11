@@ -1221,11 +1221,12 @@ public:
   ///
   /// By default, performs semantic analysis to build the new expression.
   /// Subclasses may override this routine to provide different behavior.
-  OwningExprResult RebuildCXXUnresolvedMemberExpr(ExprArg Base,
+  OwningExprResult RebuildCXXUnresolvedMemberExpr(ExprArg BaseE,
                                                   bool IsArrow,
                                                   SourceLocation OperatorLoc,
                                                   DeclarationName Name,
                                                   SourceLocation MemberLoc) {
+    OwningExprResult Base = move(BaseE);
     tok::TokenKind OpKind = IsArrow? tok::arrow : tok::period;
     CXXScopeSpec SS;
     Base = SemaRef.ActOnCXXEnterMemberScope(0, SS, move(Base), OpKind);
