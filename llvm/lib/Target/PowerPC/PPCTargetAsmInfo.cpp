@@ -12,27 +12,19 @@
 //===----------------------------------------------------------------------===//
 
 #include "PPCTargetAsmInfo.h"
-#include "PPCTargetMachine.h"
-#include "llvm/Function.h"
-#include "llvm/Support/Dwarf.h"
-
 using namespace llvm;
-using namespace llvm::dwarf;
 
-PPCDarwinTargetAsmInfo::PPCDarwinTargetAsmInfo(const PPCTargetMachine &TM) {
+PPCDarwinTargetAsmInfo::PPCDarwinTargetAsmInfo(bool is64Bit) {
   PCSymbol = ".";
   CommentString = ";";
   ExceptionsType = ExceptionHandling::Dwarf;
 
-  const PPCSubtarget *Subtarget = &TM.getSubtarget<PPCSubtarget>();
-  bool isPPC64 = Subtarget->isPPC64();
-  
-  if (!isPPC64)
+  if (!is64Bit)
     Data64bitsDirective = 0;      // We can't emit a 64-bit unit in PPC32 mode.
   AssemblerDialect = 0;           // Old-Style mnemonics.
 }
 
-PPCLinuxTargetAsmInfo::PPCLinuxTargetAsmInfo(const PPCTargetMachine &TM) {
+PPCLinuxTargetAsmInfo::PPCLinuxTargetAsmInfo(bool is64Bit) {
   CommentString = "#";
   GlobalPrefix = "";
   PrivateGlobalPrefix = ".L";
@@ -48,17 +40,14 @@ PPCLinuxTargetAsmInfo::PPCLinuxTargetAsmInfo(const PPCTargetMachine &TM) {
   // Set up DWARF directives
   HasLEB128 = true;  // Target asm supports leb128 directives (little-endian)
 
-  const PPCSubtarget *Subtarget = &TM.getSubtarget<PPCSubtarget>();
-  bool isPPC64 = Subtarget->isPPC64();
-
   // Exceptions handling
-  if (!isPPC64)
+  if (!is64Bit)
     ExceptionsType = ExceptionHandling::Dwarf;
   AbsoluteEHSectionOffsets = false;
     
   ZeroDirective = "\t.space\t";
   SetDirective = "\t.set";
-  Data64bitsDirective = isPPC64 ? "\t.quad\t" : 0;
+  Data64bitsDirective = is64Bit ? "\t.quad\t" : 0;
   AlignmentIsInBytes = false;
   LCOMMDirective = "\t.lcomm\t";
   AssemblerDialect = 1;   // New-Style mnemonics.
