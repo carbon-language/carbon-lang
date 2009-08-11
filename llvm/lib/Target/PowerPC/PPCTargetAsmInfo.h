@@ -21,32 +21,11 @@
 
 namespace llvm {
 
-  template <class BaseTAI>
-  struct PPCTargetAsmInfo : public BaseTAI {
-    explicit PPCTargetAsmInfo(const PPCTargetMachine &TM) {
-      const PPCSubtarget *Subtarget = &TM.getSubtarget<PPCSubtarget>();
-      bool isPPC64 = Subtarget->isPPC64();
-
-      BaseTAI::ZeroDirective = "\t.space\t";
-      BaseTAI::SetDirective = "\t.set";
-      BaseTAI::Data64bitsDirective = isPPC64 ? "\t.quad\t" : 0;
-      BaseTAI::AlignmentIsInBytes = false;
-      BaseTAI::LCOMMDirective = "\t.lcomm\t";
-      BaseTAI::InlineAsmStart = "# InlineAsm Start";
-      BaseTAI::InlineAsmEnd = "# InlineAsm End";
-      BaseTAI::AssemblerDialect = Subtarget->getAsmFlavor();
-    }
-  };
-
-  typedef PPCTargetAsmInfo<TargetAsmInfo> PPCGenericTargetAsmInfo;
-
-  EXTERN_TEMPLATE_INSTANTIATION(class PPCTargetAsmInfo<TargetAsmInfo>);
-
-  struct PPCDarwinTargetAsmInfo : public PPCTargetAsmInfo<DarwinTargetAsmInfo> {
+  struct PPCDarwinTargetAsmInfo : public DarwinTargetAsmInfo {
     explicit PPCDarwinTargetAsmInfo(const PPCTargetMachine &TM);
   };
 
-  struct PPCLinuxTargetAsmInfo : public PPCTargetAsmInfo<TargetAsmInfo> {
+  struct PPCLinuxTargetAsmInfo : public TargetAsmInfo {
     explicit PPCLinuxTargetAsmInfo(const PPCTargetMachine &TM);
   };
 

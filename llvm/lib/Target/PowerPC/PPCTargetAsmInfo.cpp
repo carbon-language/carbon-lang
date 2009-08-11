@@ -19,8 +19,7 @@
 using namespace llvm;
 using namespace llvm::dwarf;
 
-PPCDarwinTargetAsmInfo::PPCDarwinTargetAsmInfo(const PPCTargetMachine &TM) :
-  PPCTargetAsmInfo<DarwinTargetAsmInfo>(TM) {
+PPCDarwinTargetAsmInfo::PPCDarwinTargetAsmInfo(const PPCTargetMachine &TM) {
   PCSymbol = ".";
   CommentString = ";";
   UsedDirective = "\t.no_dead_strip\t";
@@ -28,10 +27,21 @@ PPCDarwinTargetAsmInfo::PPCDarwinTargetAsmInfo(const PPCTargetMachine &TM) :
 
   GlobalEHDirective = "\t.globl\t";
   SupportsWeakOmittedEHFrame = false;
+  
+  const PPCSubtarget *Subtarget = &TM.getSubtarget<PPCSubtarget>();
+  bool isPPC64 = Subtarget->isPPC64();
+  
+  ZeroDirective = "\t.space\t";
+  SetDirective = "\t.set";
+  Data64bitsDirective = isPPC64 ? "\t.quad\t" : 0;
+  AlignmentIsInBytes = false;
+  LCOMMDirective = "\t.lcomm\t";
+  InlineAsmStart = "# InlineAsm Start";
+  InlineAsmEnd = "# InlineAsm End";
+  AssemblerDialect = Subtarget->getAsmFlavor();
 }
 
-PPCLinuxTargetAsmInfo::PPCLinuxTargetAsmInfo(const PPCTargetMachine &TM) :
-  PPCTargetAsmInfo<TargetAsmInfo>(TM) {
+PPCLinuxTargetAsmInfo::PPCLinuxTargetAsmInfo(const PPCTargetMachine &TM) {
   CommentString = "#";
   GlobalPrefix = "";
   PrivateGlobalPrefix = ".L";
@@ -47,12 +57,21 @@ PPCLinuxTargetAsmInfo::PPCLinuxTargetAsmInfo(const PPCTargetMachine &TM) :
   // Set up DWARF directives
   HasLEB128 = true;  // Target asm supports leb128 directives (little-endian)
 
+  const PPCSubtarget *Subtarget = &TM.getSubtarget<PPCSubtarget>();
+  bool isPPC64 = Subtarget->isPPC64();
+
   // Exceptions handling
-  if (!TM.getSubtargetImpl()->isPPC64())
+  if (!isPPC64)
     ExceptionsType = ExceptionHandling::Dwarf;
   AbsoluteEHSectionOffsets = false;
+    
+  ZeroDirective = "\t.space\t";
+  SetDirective = "\t.set";
+  Data64bitsDirective = isPPC64 ? "\t.quad\t" : 0;
+  AlignmentIsInBytes = false;
+  LCOMMDirective = "\t.lcomm\t";
+  InlineAsmStart = "# InlineAsm Start";
+  InlineAsmEnd = "# InlineAsm End";
+  AssemblerDialect = Subtarget->getAsmFlavor();
 }
 
-
-// Instantiate default implementation.
-TEMPLATE_INSTANTIATION(class PPCTargetAsmInfo<TargetAsmInfo>);

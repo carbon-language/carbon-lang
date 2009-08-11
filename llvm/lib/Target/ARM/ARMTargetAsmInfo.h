@@ -32,7 +32,6 @@ namespace llvm {
       BaseTAI::COMMDirectiveTakesAlignment = false;
       BaseTAI::InlineAsmStart = "@ InlineAsm Start";
       BaseTAI::InlineAsmEnd = "@ InlineAsm End";
-      BaseTAI::LCOMMDirective = "\t.lcomm\t";
     }
   };
 

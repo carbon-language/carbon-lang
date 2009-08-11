@@ -62,6 +62,8 @@ ARMELFTargetAsmInfo::ARMELFTargetAsmInfo() {
   PrivateGlobalPrefix = ".L";
   WeakRefDirective = "\t.weak\t";
   SetDirective = "\t.set\t";
+  LCOMMDirective = "\t.lcomm\t";
+
   DwarfRequiresFrameSection = false;
 
   SupportsDebugInformation = true;
