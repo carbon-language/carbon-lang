@@ -20,6 +20,8 @@
 
 namespace llvm {
 
+class GetElementPtrInst;
+
 /// Operator - This is a utility class that provides an abstraction for the
 /// common functionality between Instructions and ConstantExprs.
 ///
@@ -242,7 +244,7 @@ public:
     return I->getOpcode() == Instruction::GetElementPtr;
   }
   static inline bool classof(const Value *V) {
-    return isa<GetElementPtrInst>(V) ||
+    return (isa<Instruction>(V) && classof(cast<Instruction>(V))) ||
            (isa<ConstantExpr>(V) && classof(cast<ConstantExpr>(V)));
   }
 };
