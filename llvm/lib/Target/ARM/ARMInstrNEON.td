@@ -2039,13 +2039,13 @@ def  VCVTf2ud_sfp : N2VDs<0b11, 0b11, 0b10, 0b11, 0b01111, 0, "vcvt.u32.f32",
 def : N2VDsPat<arm_ftoui, f32, v2f32, VCVTf2ud_sfp>;
 
 let neverHasSideEffects = 1 in
-def  VCVTs2fd_sfp : N2VD<0b11, 0b11, 0b10, 0b11, 0b01100, 0, "vcvt.f32.s32",
-                         v2f32, v2i32, sint_to_fp>;
+def  VCVTs2fd_sfp : N2VDs<0b11, 0b11, 0b10, 0b11, 0b01100, 0, "vcvt.f32.s32",
+                          v2f32, v2i32, sint_to_fp>;
 def : N2VDsPat<arm_sitof, f32, v2i32, VCVTs2fd_sfp>;
 
 let neverHasSideEffects = 1 in
-def  VCVTu2fd_sfp : N2VD<0b11, 0b11, 0b10, 0b11, 0b01101, 0, "vcvt.f32.u32",
-                         v2f32, v2i32, uint_to_fp>;
+def  VCVTu2fd_sfp : N2VDs<0b11, 0b11, 0b10, 0b11, 0b01101, 0, "vcvt.f32.u32",
+                          v2f32, v2i32, uint_to_fp>;
 def : N2VDsPat<arm_uitof, f32, v2i32, VCVTu2fd_sfp>;
 
 //===----------------------------------------------------------------------===//
