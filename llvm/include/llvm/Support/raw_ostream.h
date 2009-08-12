@@ -106,6 +106,10 @@ public:
     Unbuffered = false;
   }
 
+  size_t GetBufferSize() const {
+    return OutBufEnd - OutBufStart;
+  }
+
   /// SetUnbuffered - Set the streams buffering status. When
   /// unbuffered the stream will flush after every write. This routine
   /// will also flush the buffer immediately when the stream is being
