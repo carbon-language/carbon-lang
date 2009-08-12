@@ -20,11 +20,8 @@ using namespace llvm;
 extern "C" void LLVMInitializeSparcTarget() {
   // Register the target.
   RegisterTargetMachine<SparcTargetMachine> X(TheSparcTarget);
-}
+  RegisterAsmInfo<SparcELFTargetAsmInfo> Y(TheSparcTarget);
 
-const TargetAsmInfo *SparcTargetMachine::createTargetAsmInfo() const {
-  // FIXME: Handle Solaris subtarget someday :)
-  return new SparcELFTargetAsmInfo();
 }
 
 /// SparcTargetMachine ctor - Create an ILP32 architecture model

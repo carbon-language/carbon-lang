@@ -34,9 +34,6 @@ class AlphaTargetMachine : public LLVMTargetMachine {
   AlphaSubtarget Subtarget;
   AlphaTargetLowering TLInfo;
 
-protected:
-  virtual const TargetAsmInfo *createTargetAsmInfo() const;
-
 public:
   AlphaTargetMachine(const Target &T, const std::string &TT,
                      const std::string &FS);

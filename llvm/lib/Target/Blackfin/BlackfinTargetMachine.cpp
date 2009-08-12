@@ -20,10 +20,8 @@ using namespace llvm;
 
 extern "C" void LLVMInitializeBlackfinTarget() {
   RegisterTargetMachine<BlackfinTargetMachine> X(TheBlackfinTarget);
-}
+  RegisterAsmInfo<BlackfinTargetAsmInfo> Y(TheBlackfinTarget);
 
-const TargetAsmInfo* BlackfinTargetMachine::createTargetAsmInfo() const {
-  return new BlackfinTargetAsmInfo();
 }
 
 BlackfinTargetMachine::BlackfinTargetMachine(const Target &T,

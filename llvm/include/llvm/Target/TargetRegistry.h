@@ -43,20 +43,22 @@ namespace llvm {
   /// will be zero initialized), and pass that instance to the TargetRegistry as
   /// part of their initialization.
   class Target {
-  private:
+  public:
+    friend struct TargetRegistry;
+
     typedef unsigned (*TripleMatchQualityFnTy)(const std::string &TT);
 
-    typedef TargetMachine *(*TargetMachineCtorTy)(const Target &,
-                                                  const std::string &,
-                                                  const std::string &);
+    typedef const TargetAsmInfo *(*AsmInfoCtorFnTy)(const Target &T,
+                                                    const StringRef &TT);
+    typedef TargetMachine *(*TargetMachineCtorTy)(const Target &T,
+                                                  const std::string &TT,
+                                                  const std::string &Features);
     typedef FunctionPass *(*AsmPrinterCtorTy)(formatted_raw_ostream &,
                                               TargetMachine &,
                                               bool);
     typedef TargetAsmParser *(*AsmParserCtorTy)(const Target &,
                                                 MCAsmParser &);
-
-    friend struct TargetRegistry;
-
+  private:
     /// Next - The next registered target in the linked list, maintained by the
     /// TargetRegistry.
     Target *Next;
@@ -74,6 +76,8 @@ namespace llvm {
     /// HasJIT - Whether this target supports the JIT.
     bool HasJIT;
 
+    AsmInfoCtorFnTy AsmInfoCtorFn;
+    
     /// TargetMachineCtorFn - Construction function for this target's
     /// TargetMachine, if registered.
     TargetMachineCtorTy TargetMachineCtorFn;
@@ -107,11 +111,23 @@ namespace llvm {
     /// hasAsmParser - Check if this target supports .s parsing.
     bool hasAsmParser() const { return AsmParserCtorFn != 0; }
 
-    /// createTargetMachine - Create a target specific machine implementation
-    /// for the module \arg M and \arg Triple.
+    
+    /// createAsmInfo - Create a TargetAsmInfo implementation for the specified
+    /// target triple.
     ///
-    /// \arg M - This argument is used for some machines to access the target
-    /// data.
+    /// \arg Triple - This argument is used to determine the target machine
+    /// feature set; it should always be provided. Generally this should be
+    /// either the target triple from the module, or the target triple of the
+    /// host if that does not exist.
+    const TargetAsmInfo *createAsmInfo(const StringRef &Triple) const {
+      if (!AsmInfoCtorFn)
+        return 0;
+      return AsmInfoCtorFn(*this, Triple);
+    }
+    
+    /// createTargetMachine - Create a target specific machine implementation
+    /// for the specified \arg Triple.
+    ///
     /// \arg Triple - This argument is used to determine the target machine
     /// feature set; it should always be provided. Generally this should be
     /// either the target triple from the module, or the target triple of the
@@ -228,7 +244,22 @@ namespace llvm {
                                const char *ShortDesc,
                                Target::TripleMatchQualityFnTy TQualityFn,
                                bool HasJIT = false);
-                               
+
+    /// RegisterAsmInfo - Register a TargetAsmInfo implementation for the
+    /// given target.
+    /// 
+    /// Clients are responsible for ensuring that registration doesn't occur
+    /// while another thread is attempting to access the registry. Typically
+    /// this is done by initializing all targets at program startup.
+    /// 
+    /// @param T - The target being registered.
+    /// @param Fn - A function to construct a TargetAsmInfo for the target.
+    static void RegisterAsmInfo(Target &T, Target::AsmInfoCtorFnTy Fn) {
+      // Ignore duplicate registration.
+      if (!T.AsmInfoCtorFn)
+        T.AsmInfoCtorFn = Fn;
+    }
+    
     /// RegisterTargetMachine - Register a TargetMachine implementation for the
     /// given target.
     /// 
@@ -304,6 +335,41 @@ namespace llvm {
       return 0;
     }
   };
+
+  /// RegisterAsmInfo - Helper template for registering a target assembly info
+  /// implementation.  This invokes the static "Create" method on the class to
+  /// actually do the construction.  Usage:
+  ///
+  /// extern "C" void LLVMInitializeFooTarget() {
+  ///   extern Target TheFooTarget;
+  ///   RegisterAsmInfo<FooTargetAsmInfo> X(TheFooTarget);
+  /// }
+  template<class TargetAsmInfoImpl>
+  struct RegisterAsmInfo {
+    RegisterAsmInfo(Target &T) {
+      TargetRegistry::RegisterAsmInfo(T, &Allocator);
+    }
+  private:
+    static const TargetAsmInfo *Allocator(const Target &T, const StringRef &TT){
+      return new TargetAsmInfoImpl(T, TT);
+    }
+    
+  };
+
+  /// RegisterAsmInfoFn - Helper template for registering a target assembly info
+  /// implementation.  This invokes the specified function to do the
+  /// construction.  Usage:
+  ///
+  /// extern "C" void LLVMInitializeFooTarget() {
+  ///   extern Target TheFooTarget;
+  ///   RegisterAsmInfoFn X(TheFooTarget, TheFunction);
+  /// }
+  struct RegisterAsmInfoFn {
+    RegisterAsmInfoFn(Target &T, Target::AsmInfoCtorFnTy Fn) {
+      TargetRegistry::RegisterAsmInfo(T, Fn);
+    }
+  };
+
 
   /// RegisterTargetMachine - Helper template for registering a target machine
   /// implementation, for use in the target machine initialization

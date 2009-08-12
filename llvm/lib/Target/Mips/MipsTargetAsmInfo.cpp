@@ -14,7 +14,7 @@
 #include "MipsTargetAsmInfo.h"
 using namespace llvm;
 
-MipsTargetAsmInfo::MipsTargetAsmInfo() {
+MipsTargetAsmInfo::MipsTargetAsmInfo(const Target &T, const StringRef &TT) {
   AlignmentIsInBytes          = false;
   COMMDirectiveTakesAlignment = true;
   Data16bitsDirective         = "\t.half\t";

@@ -29,9 +29,6 @@ MSP430TargetMachine::MSP430TargetMachine(const Target &T,
   InstrInfo(*this), TLInfo(*this),
   FrameInfo(TargetFrameInfo::StackGrowsDown, 2, -2) { }
 
-const TargetAsmInfo *MSP430TargetMachine::createTargetAsmInfo() const {
-  return new MSP430TargetAsmInfo();
-}
 
 bool MSP430TargetMachine::addInstSelector(PassManagerBase &PM,
                                           CodeGenOpt::Level OptLevel) {

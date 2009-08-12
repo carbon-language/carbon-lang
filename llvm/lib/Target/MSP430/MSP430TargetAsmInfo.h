@@ -17,8 +17,10 @@
 #include "llvm/Target/TargetAsmInfo.h"
 
 namespace llvm {
+  class Target;
+  class StringRef;
   struct MSP430TargetAsmInfo : public TargetAsmInfo {
-    explicit MSP430TargetAsmInfo();
+    explicit MSP430TargetAsmInfo(const Target &T, const StringRef &TT);
   };
 
 } // namespace llvm

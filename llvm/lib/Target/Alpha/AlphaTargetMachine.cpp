@@ -17,16 +17,12 @@
 #include "llvm/PassManager.h"
 #include "llvm/Support/FormattedStream.h"
 #include "llvm/Target/TargetRegistry.h"
-
 using namespace llvm;
 
 extern "C" void LLVMInitializeAlphaTarget() { 
   // Register the target.
   RegisterTargetMachine<AlphaTargetMachine> X(TheAlphaTarget);
-}
-
-const TargetAsmInfo *AlphaTargetMachine::createTargetAsmInfo() const {
-  return new AlphaTargetAsmInfo();
+  RegisterAsmInfo<AlphaTargetAsmInfo> Y(TheAlphaTarget);
 }
 
 AlphaTargetMachine::AlphaTargetMachine(const Target &T, const std::string &TT,

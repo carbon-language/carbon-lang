@@ -36,10 +36,6 @@ CooperTargetMachine::CooperTargetMachine(const Target &T, const std::string &TT,
   : PIC16TargetMachine(T, TT, FS, true) {}
 
 
-const TargetAsmInfo *PIC16TargetMachine::createTargetAsmInfo() const {
-  return new PIC16TargetAsmInfo();
-}
-
 bool PIC16TargetMachine::addInstSelector(PassManagerBase &PM,
                                          CodeGenOpt::Level OptLevel) {
   // Install an instruction selector.

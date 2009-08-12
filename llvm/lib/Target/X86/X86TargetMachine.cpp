@@ -22,26 +22,33 @@
 #include "llvm/Target/TargetRegistry.h"
 using namespace llvm;
 
+static const TargetAsmInfo *createTargetAsmInfo(const Target &T,
+                                                const StringRef &TT) {
+  Triple TheTriple(TT);
+  switch (TheTriple.getOS()) {
+  case Triple::Darwin:
+    return new X86DarwinTargetAsmInfo(TheTriple);
+  case Triple::MinGW32:
+  case Triple::MinGW64:
+  case Triple::Cygwin:
+    return new X86COFFTargetAsmInfo(TheTriple);
+  case Triple::Win32:
+    return new X86WinTargetAsmInfo(TheTriple);
+  default:
+    return new X86ELFTargetAsmInfo(TheTriple);
+  }
+}
+
 extern "C" void LLVMInitializeX86Target() { 
   // Register the target.
   RegisterTargetMachine<X86_32TargetMachine> X(TheX86_32Target);
   RegisterTargetMachine<X86_64TargetMachine> Y(TheX86_64Target);
+
+  // Register the target asm info.
+  RegisterAsmInfoFn A(TheX86_32Target, createTargetAsmInfo);
+  RegisterAsmInfoFn B(TheX86_64Target, createTargetAsmInfo);
 }
 
-const TargetAsmInfo *X86TargetMachine::createTargetAsmInfo() const {
-  switch (Subtarget.TargetType) {
-  default: llvm_unreachable("unknown subtarget type");
-  case X86Subtarget::isDarwin:
-    return new X86DarwinTargetAsmInfo(*this);
-  case X86Subtarget::isELF:
-    return new X86ELFTargetAsmInfo(*this);
-  case X86Subtarget::isMingw:
-  case X86Subtarget::isCygwin:
-    return new X86COFFTargetAsmInfo(*this);
-  case X86Subtarget::isWindows:
-    return new X86WinTargetAsmInfo(*this);
-  }
-}
 
 X86_32TargetMachine::X86_32TargetMachine(const Target &T, const std::string &TT,
                                          const std::string &FS)

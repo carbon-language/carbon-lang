@@ -37,9 +37,6 @@ class PIC16TargetMachine : public LLVMTargetMachine {
   // any PIC16 specific FrameInfo class.
   TargetFrameInfo       FrameInfo;
 
-protected:
-  virtual const TargetAsmInfo *createTargetAsmInfo() const;
-
 public:
   PIC16TargetMachine(const Target &T, const std::string &TT,
                      const std::string &FS, bool Cooper = false);

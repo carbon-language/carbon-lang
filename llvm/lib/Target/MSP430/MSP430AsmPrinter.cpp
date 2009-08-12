@@ -15,6 +15,7 @@
 #define DEBUG_TYPE "asm-printer"
 #include "MSP430.h"
 #include "MSP430InstrInfo.h"
+#include "MSP430TargetAsmInfo.h"
 #include "MSP430TargetMachine.h"
 #include "llvm/Constants.h"
 #include "llvm/DerivedTypes.h"
@@ -25,7 +26,6 @@
 #include "llvm/CodeGen/MachineFunctionPass.h"
 #include "llvm/CodeGen/MachineConstantPool.h"
 #include "llvm/CodeGen/MachineInstr.h"
-#include "llvm/Target/TargetAsmInfo.h"
 #include "llvm/Target/TargetData.h"
 #include "llvm/Target/TargetLoweringObjectFile.h"
 #include "llvm/Target/TargetRegistry.h"
@@ -246,4 +246,5 @@ extern "C" void LLVMInitializeMSP430Target() {
   // Register the target.
   RegisterTargetMachine<MSP430TargetMachine> X(TheMSP430Target);
   RegisterAsmPrinter<MSP430AsmPrinter> Y(TheMSP430Target);
+  RegisterAsmInfo<MSP430TargetAsmInfo> Z(TheMSP430Target);
 }

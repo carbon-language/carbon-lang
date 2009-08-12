@@ -13,6 +13,7 @@
 
 #include "X86TargetAsmInfo.h"
 #include "X86TargetMachine.h"
+#include "llvm/ADT/Triple.h"
 #include "llvm/Support/CommandLine.h"
 using namespace llvm;
 
@@ -42,12 +43,11 @@ static const char *const x86_asm_table[] = {
   "{cc}", "cc",
   0,0};
 
-X86DarwinTargetAsmInfo::X86DarwinTargetAsmInfo(const X86TargetMachine &TM) {
+X86DarwinTargetAsmInfo::X86DarwinTargetAsmInfo(const Triple &Triple) {
   AsmTransCBE = x86_asm_table;
   AssemblerDialect = AsmWriterFlavor;
     
-  const X86Subtarget *Subtarget = &TM.getSubtarget<X86Subtarget>();
-  bool is64Bit = Subtarget->is64Bit();
+  bool is64Bit = Triple.getArch() == Triple::x86_64;
 
   TextAlignFillValue = 0x90;
 
@@ -55,7 +55,7 @@ X86DarwinTargetAsmInfo::X86DarwinTargetAsmInfo(const X86TargetMachine &TM) {
     Data64bitsDirective = 0;       // we can't emit a 64-bit unit
 
   // Leopard and above support aligned common symbols.
-  COMMDirectiveTakesAlignment = (Subtarget->getDarwinVers() >= 9);
+  COMMDirectiveTakesAlignment = Triple.getDarwinMajorNumber() >= 9;
 
   if (is64Bit) {
     PersonalityPrefix = "";
@@ -76,7 +76,7 @@ X86DarwinTargetAsmInfo::X86DarwinTargetAsmInfo(const X86TargetMachine &TM) {
   AbsoluteEHSectionOffsets = false;
 }
 
-X86ELFTargetAsmInfo::X86ELFTargetAsmInfo(const X86TargetMachine &TM) {
+X86ELFTargetAsmInfo::X86ELFTargetAsmInfo(const Triple &Triple) {
   AsmTransCBE = x86_asm_table;
   AssemblerDialect = AsmWriterFlavor;
 
@@ -97,17 +97,17 @@ X86ELFTargetAsmInfo::X86ELFTargetAsmInfo(const X86TargetMachine &TM) {
   AbsoluteEHSectionOffsets = false;
 
   // On Linux we must declare when we can use a non-executable stack.
-  if (TM.getSubtarget<X86Subtarget>().isLinux())
+  if (Triple.getOS() == Triple::Linux)
     NonexecutableStackDirective = "\t.section\t.note.GNU-stack,\"\",@progbits";
 }
 
-X86COFFTargetAsmInfo::X86COFFTargetAsmInfo(const X86TargetMachine &TM) {
+X86COFFTargetAsmInfo::X86COFFTargetAsmInfo(const Triple &Triple) {
   AsmTransCBE = x86_asm_table;
   AssemblerDialect = AsmWriterFlavor;
 }
 
 
-X86WinTargetAsmInfo::X86WinTargetAsmInfo(const X86TargetMachine &TM) {
+X86WinTargetAsmInfo::X86WinTargetAsmInfo(const Triple &Triple) {
   AsmTransCBE = x86_asm_table;
   AssemblerDialect = AsmWriterFlavor;
 

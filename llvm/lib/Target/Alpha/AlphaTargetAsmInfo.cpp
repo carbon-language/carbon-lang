@@ -14,7 +14,7 @@
 #include "AlphaTargetAsmInfo.h"
 using namespace llvm;
 
-AlphaTargetAsmInfo::AlphaTargetAsmInfo() {
+AlphaTargetAsmInfo::AlphaTargetAsmInfo(const Target &T, const StringRef &TT) {
   AlignmentIsInBytes = false;
   PrivateGlobalPrefix = "$";
   PICJumpTableDirective = ".gprel32";

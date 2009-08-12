@@ -55,6 +55,15 @@ static cl::opt<cl::boolOrDefault>
 EnableFastISelOption("fast-isel", cl::Hidden,
   cl::desc("Enable the experimental \"fast\" instruction selector"));
 
+
+LLVMTargetMachine::LLVMTargetMachine(const Target &T,
+                                     const std::string &TargetTriple)
+  : TargetMachine(T) {
+  AsmInfo = T.createAsmInfo(TargetTriple);
+}
+
+
+
 FileModel::Model
 LLVMTargetMachine::addPassesToEmitFile(PassManagerBase &PM,
                                        formatted_raw_ostream &Out,

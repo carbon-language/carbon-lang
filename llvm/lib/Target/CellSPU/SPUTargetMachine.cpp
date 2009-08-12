@@ -25,16 +25,13 @@ using namespace llvm;
 extern "C" void LLVMInitializeCellSPUTarget() { 
   // Register the target.
   RegisterTargetMachine<SPUTargetMachine> X(TheCellSPUTarget);
+  RegisterAsmInfo<SPULinuxTargetAsmInfo> Y(TheCellSPUTarget);
 }
 
 const std::pair<unsigned, int> *
 SPUFrameInfo::getCalleeSaveSpillSlots(unsigned &NumEntries) const {
   NumEntries = 1;
   return &LR[0];
-}
-
-const TargetAsmInfo *SPUTargetMachine::createTargetAsmInfo() const {
-  return new SPULinuxTargetAsmInfo();
 }
 
 SPUTargetMachine::SPUTargetMachine(const Target &T, const std::string &TT,

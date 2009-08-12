@@ -29,10 +29,6 @@ namespace llvm {
     BlackfinTargetLowering TLInfo;
     BlackfinInstrInfo InstrInfo;
     TargetFrameInfo FrameInfo;
-
-  protected:
-    virtual const TargetAsmInfo *createTargetAsmInfo() const;
-
   public:
     BlackfinTargetMachine(const Target &T, const std::string &TT,
                           const std::string &FS);

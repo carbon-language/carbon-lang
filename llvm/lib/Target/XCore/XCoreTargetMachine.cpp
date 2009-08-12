@@ -17,10 +17,6 @@
 #include "llvm/PassManager.h"
 using namespace llvm;
 
-const TargetAsmInfo *XCoreTargetMachine::createTargetAsmInfo() const {
-  return new XCoreTargetAsmInfo();
-}
-
 /// XCoreTargetMachine ctor - Create an ILP32 architecture model
 ///
 XCoreTargetMachine::XCoreTargetMachine(const Target &T, const std::string &TT,

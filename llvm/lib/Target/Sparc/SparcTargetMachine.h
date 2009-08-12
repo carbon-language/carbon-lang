@@ -29,10 +29,6 @@ class SparcTargetMachine : public LLVMTargetMachine {
   SparcTargetLowering TLInfo;
   SparcInstrInfo InstrInfo;
   TargetFrameInfo FrameInfo;
-  
-protected:
-  virtual const TargetAsmInfo *createTargetAsmInfo() const;
-  
 public:
   SparcTargetMachine(const Target &T, const std::string &TT,
                      const std::string &FS);

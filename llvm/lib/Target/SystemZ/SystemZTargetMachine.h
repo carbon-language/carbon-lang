@@ -36,10 +36,6 @@ class SystemZTargetMachine : public LLVMTargetMachine {
   // SystemZ does not have any call stack frame, therefore not having
   // any SystemZ specific FrameInfo class.
   TargetFrameInfo       FrameInfo;
-
-protected:
-  virtual const TargetAsmInfo *createTargetAsmInfo() const;
-
 public:
   SystemZTargetMachine(const Target &T, const std::string &TT,
                        const std::string &FS);

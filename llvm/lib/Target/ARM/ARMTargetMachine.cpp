@@ -27,10 +27,26 @@ static cl::opt<bool> DisableLdStOpti("disable-arm-loadstore-opti", cl::Hidden,
 static cl::opt<bool> DisableIfConversion("disable-arm-if-conversion",cl::Hidden,
                               cl::desc("Disable if-conversion pass"));
 
+static const TargetAsmInfo *createTargetAsmInfo(const Target &T,
+                                                const StringRef &TT) {
+  Triple TheTriple(TT);
+  switch (TheTriple.getOS()) {
+  case Triple::Darwin:
+    return new ARMDarwinTargetAsmInfo();
+  default:
+    return new ARMELFTargetAsmInfo();
+  }
+}
+
+
 extern "C" void LLVMInitializeARMTarget() {
   // Register the target.
   RegisterTargetMachine<ARMTargetMachine> X(TheARMTarget);
   RegisterTargetMachine<ThumbTargetMachine> Y(TheThumbTarget);
+  
+  // Register the target asm info.
+  RegisterAsmInfoFn A(TheARMTarget, createTargetAsmInfo);
+  RegisterAsmInfoFn B(TheThumbTarget, createTargetAsmInfo);
 }
 
 /// TargetMachine ctor - Create an ARM architecture model.
@@ -72,16 +88,6 @@ ThumbTargetMachine::ThumbTargetMachine(const Target &T, const std::string &TT,
     InstrInfo = new Thumb1InstrInfo(Subtarget);
 }
 
-
-const TargetAsmInfo *ARMBaseTargetMachine::createTargetAsmInfo() const {
-  switch (Subtarget.TargetType) {
-  default: llvm_unreachable("Unknown ARM subtarget kind");
-  case ARMSubtarget::isDarwin:
-    return new ARMDarwinTargetAsmInfo();
-  case ARMSubtarget::isELF:
-    return new ARMELFTargetAsmInfo();
-  }
-}
 
 
 // Pass Pipeline Configuration

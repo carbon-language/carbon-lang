@@ -17,9 +17,11 @@
 #include "llvm/Target/TargetAsmInfo.h"
 
 namespace llvm {
+  class Target;
+  class StringRef;
 
   struct AlphaTargetAsmInfo : public TargetAsmInfo {
-    explicit AlphaTargetAsmInfo();
+    explicit AlphaTargetAsmInfo(const Target &T, const StringRef &TT);
   };
 
 } // namespace llvm

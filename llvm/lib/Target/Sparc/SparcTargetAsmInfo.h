@@ -17,9 +17,10 @@
 #include "llvm/Target/TargetAsmInfo.h"
 
 namespace llvm {
-
+  class Target;
+  class StringRef;
   struct SparcELFTargetAsmInfo : public TargetAsmInfo {
-    explicit SparcELFTargetAsmInfo();
+    explicit SparcELFTargetAsmInfo(const Target &T, const StringRef &TT);
   };
 
 } // namespace llvm

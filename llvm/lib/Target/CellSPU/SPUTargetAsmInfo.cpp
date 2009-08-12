@@ -14,7 +14,7 @@
 #include "SPUTargetAsmInfo.h"
 using namespace llvm;
 
-SPULinuxTargetAsmInfo::SPULinuxTargetAsmInfo() {
+SPULinuxTargetAsmInfo::SPULinuxTargetAsmInfo(const Target &T, const StringRef &TT) {
   ZeroDirective = "\t.space\t";
   SetDirective = "\t.set";
   Data64bitsDirective = "\t.quad\t";

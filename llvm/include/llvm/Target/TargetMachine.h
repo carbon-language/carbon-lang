@@ -102,12 +102,8 @@ protected: // Can only create subclasses.
   
   /// AsmInfo - Contains target specific asm information.
   ///
-  mutable const TargetAsmInfo *AsmInfo;
+  const TargetAsmInfo *AsmInfo;
   
-  /// createTargetAsmInfo - Create a new instance of target specific asm
-  /// information.
-  virtual const TargetAsmInfo *createTargetAsmInfo() const { return 0; }
-
 public:
   virtual ~TargetMachine();
 
@@ -126,10 +122,7 @@ public:
   
   /// getTargetAsmInfo - Return target specific asm information.
   ///
-  const TargetAsmInfo *getTargetAsmInfo() const {
-    if (!AsmInfo) AsmInfo = createTargetAsmInfo();
-    return AsmInfo;
-  }
+  const TargetAsmInfo *getTargetAsmInfo() const { return AsmInfo; }
   
   /// getSubtarget - This method returns a pointer to the specified type of
   /// TargetSubtarget.  In debug builds, it verifies that the object being
@@ -291,9 +284,8 @@ public:
 ///
 class LLVMTargetMachine : public TargetMachine {
 protected: // Can only create subclasses.
-  LLVMTargetMachine(const Target &T, const std::string &TargetTriple)
-    : TargetMachine(T) { }
-
+  LLVMTargetMachine(const Target &T, const std::string &TargetTriple);
+  
   /// addCommonCodeGenPasses - Add standard LLVM codegen passes used for
   /// both emitting to assembly files or machine code output.
   ///

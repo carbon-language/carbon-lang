@@ -17,9 +17,12 @@
 #include "llvm/Target/TargetAsmInfo.h"
 
 namespace llvm {
+  class Target;
+  class StringRef;
+  
   class MipsTargetAsmInfo : public TargetAsmInfo {
   public:
-    explicit MipsTargetAsmInfo();
+    explicit MipsTargetAsmInfo(const Target &T, const StringRef &TT);
   };
 
 } // namespace llvm

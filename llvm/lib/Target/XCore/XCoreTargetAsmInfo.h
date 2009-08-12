@@ -17,9 +17,11 @@
 #include "llvm/Target/TargetAsmInfo.h"
 
 namespace llvm {
+  class Target;
+  class StringRef;
   class XCoreTargetAsmInfo : public TargetAsmInfo {
   public:
-    explicit XCoreTargetAsmInfo();
+    explicit XCoreTargetAsmInfo(const Target &T, const StringRef &TT);
   };
 
 } // namespace llvm

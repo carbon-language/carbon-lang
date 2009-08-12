@@ -480,4 +480,7 @@ extern "C" void LLVMInitializePIC16Target() {
   RegisterTargetMachine<CooperTargetMachine> B(TheCooperTarget);
   RegisterAsmPrinter<PIC16AsmPrinter> C(ThePIC16Target);
   RegisterAsmPrinter<PIC16AsmPrinter> D(TheCooperTarget);
+
+  RegisterAsmInfo<PIC16TargetAsmInfo> E(ThePIC16Target);
+  RegisterAsmInfo<PIC16TargetAsmInfo> F(TheCooperTarget);
 }

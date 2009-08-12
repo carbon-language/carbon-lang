@@ -16,6 +16,7 @@
 #include "XCore.h"
 #include "XCoreInstrInfo.h"
 #include "XCoreSubtarget.h"
+#include "XCoreTargetAsmInfo.h"
 #include "XCoreTargetMachine.h"
 #include "llvm/Constants.h"
 #include "llvm/DerivedTypes.h"
@@ -26,7 +27,6 @@
 #include "llvm/CodeGen/MachineFunctionPass.h"
 #include "llvm/CodeGen/MachineConstantPool.h"
 #include "llvm/CodeGen/MachineInstr.h"
-#include "llvm/Target/TargetAsmInfo.h"
 #include "llvm/Target/TargetData.h"
 #include "llvm/Target/TargetLoweringObjectFile.h"
 #include "llvm/Target/TargetRegistry.h"
@@ -380,4 +380,5 @@ bool XCoreAsmPrinter::doInitialization(Module &M) {
 extern "C" void LLVMInitializeXCoreTarget() { 
   RegisterTargetMachine<XCoreTargetMachine> X(TheXCoreTarget);
   RegisterAsmPrinter<XCoreAsmPrinter> Y(TheXCoreTarget);
+  RegisterAsmInfo<XCoreTargetAsmInfo> Z(TheXCoreTarget);
 }

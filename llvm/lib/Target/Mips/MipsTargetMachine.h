@@ -30,10 +30,6 @@ namespace llvm {
     MipsInstrInfo       InstrInfo;
     TargetFrameInfo     FrameInfo;
     MipsTargetLowering  TLInfo;
-  
-  protected:
-    virtual const TargetAsmInfo *createTargetAsmInfo() const;
-    
   public:
     MipsTargetMachine(const Target &T, const std::string &TT,
                       const std::string &FS, bool isLittle);

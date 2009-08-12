@@ -6,9 +6,6 @@
 // License. See LICENSE.TXT for details.
 //
 //===----------------------------------------------------------------------===//
-//
-//
-//===----------------------------------------------------------------------===//
 
 #include "SystemZTargetAsmInfo.h"
 #include "SystemZTargetMachine.h"
@@ -20,10 +17,7 @@ using namespace llvm;
 extern "C" void LLVMInitializeSystemZTarget() {
   // Register the target.
   RegisterTargetMachine<SystemZTargetMachine> X(TheSystemZTarget);
-}
-
-const TargetAsmInfo *SystemZTargetMachine::createTargetAsmInfo() const {
-  return new SystemZTargetAsmInfo();
+  RegisterAsmInfo<SystemZTargetAsmInfo> Y(TheSystemZTarget);
 }
 
 /// SystemZTargetMachine ctor - Create an ILP64 architecture model

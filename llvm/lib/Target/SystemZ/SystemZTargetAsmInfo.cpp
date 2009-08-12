@@ -14,7 +14,8 @@
 #include "SystemZTargetAsmInfo.h"
 using namespace llvm;
 
-SystemZTargetAsmInfo::SystemZTargetAsmInfo() {
+SystemZTargetAsmInfo::SystemZTargetAsmInfo(const Target &T,
+                                           const StringRef &TT) {
   AlignmentIsInBytes = true;
 
   PrivateGlobalPrefix = ".L";

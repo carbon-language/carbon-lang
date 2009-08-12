@@ -29,10 +29,6 @@ class XCoreTargetMachine : public LLVMTargetMachine {
   XCoreInstrInfo InstrInfo;
   XCoreFrameInfo FrameInfo;
   XCoreTargetLowering TLInfo;
-
-protected:
-  virtual const TargetAsmInfo *createTargetAsmInfo() const;
-
 public:
   XCoreTargetMachine(const Target &T, const std::string &TT,
                      const std::string &FS);

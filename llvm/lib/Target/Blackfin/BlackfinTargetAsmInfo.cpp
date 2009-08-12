@@ -15,7 +15,8 @@
 
 using namespace llvm;
 
-BlackfinTargetAsmInfo::BlackfinTargetAsmInfo() {
+BlackfinTargetAsmInfo::BlackfinTargetAsmInfo(const Target &T,
+                                             const StringRef &TT) {
   GlobalPrefix = "_";
   CommentString = "//";
 }

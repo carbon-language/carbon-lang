@@ -39,9 +39,6 @@ class PPCTargetMachine : public LLVMTargetMachine {
   InstrItineraryData  InstrItins;
   PPCMachOWriterInfo  MachOWriterInfo;
 
-protected:
-  virtual const TargetAsmInfo *createTargetAsmInfo() const;
-
 public:
   PPCTargetMachine(const Target &T, const std::string &TT,
                    const std::string &FS, bool is64Bit);

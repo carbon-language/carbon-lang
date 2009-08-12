@@ -37,9 +37,6 @@ class MSP430TargetMachine : public LLVMTargetMachine {
   // any MSP430 specific FrameInfo class.
   TargetFrameInfo       FrameInfo;
 
-protected:
-  virtual const TargetAsmInfo *createTargetAsmInfo() const;
-
 public:
   MSP430TargetMachine(const Target &T, const std::string &TT,
                       const std::string &FS);

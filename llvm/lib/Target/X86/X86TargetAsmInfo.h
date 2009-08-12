@@ -14,27 +14,27 @@
 #ifndef X86TARGETASMINFO_H
 #define X86TARGETASMINFO_H
 
-#include "X86TargetMachine.h"
 #include "llvm/Target/TargetAsmInfo.h"
 #include "llvm/Target/COFFTargetAsmInfo.h"
 #include "llvm/Target/DarwinTargetAsmInfo.h"
 
 namespace llvm {
+  class Triple;
 
   struct X86DarwinTargetAsmInfo : public DarwinTargetAsmInfo {
-    explicit X86DarwinTargetAsmInfo(const X86TargetMachine &TM);
+    explicit X86DarwinTargetAsmInfo(const Triple &Triple);
   };
 
   struct X86ELFTargetAsmInfo : public TargetAsmInfo {
-    explicit X86ELFTargetAsmInfo(const X86TargetMachine &TM);
+    explicit X86ELFTargetAsmInfo(const Triple &Triple);
   };
 
   struct X86COFFTargetAsmInfo : public COFFTargetAsmInfo {
-    explicit X86COFFTargetAsmInfo(const X86TargetMachine &TM);
+    explicit X86COFFTargetAsmInfo(const Triple &Triple);
   };
 
   struct X86WinTargetAsmInfo : public TargetAsmInfo {
-    explicit X86WinTargetAsmInfo(const X86TargetMachine &TM);
+    explicit X86WinTargetAsmInfo(const Triple &Triple);
   };
 
 } // namespace llvm

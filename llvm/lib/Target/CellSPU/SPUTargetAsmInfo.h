@@ -17,9 +17,11 @@
 #include "llvm/Target/TargetAsmInfo.h"
 
 namespace llvm {
-
+  class Target;
+  class StringRef;
+  
   struct SPULinuxTargetAsmInfo : public TargetAsmInfo {
-    explicit SPULinuxTargetAsmInfo();
+    explicit SPULinuxTargetAsmInfo(const Target &T, const StringRef &TT);
   };
 } // namespace llvm
 

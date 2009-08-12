@@ -35,10 +35,6 @@ class SPUTargetMachine : public LLVMTargetMachine {
   SPUFrameInfo        FrameInfo;
   SPUTargetLowering   TLInfo;
   InstrItineraryData  InstrItins;
-
-protected:
-  virtual const TargetAsmInfo *createTargetAsmInfo() const;
-
 public:
   SPUTargetMachine(const Target &T, const std::string &TT,
                    const std::string &FS);

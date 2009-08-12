@@ -47,8 +47,6 @@ public:
     return InstrItins;
   }
 
-  virtual const TargetAsmInfo *createTargetAsmInfo() const;
-
   // Pass Pipeline Configuration
   virtual bool addInstSelector(PassManagerBase &PM, CodeGenOpt::Level OptLevel);
   virtual bool addPreRegAlloc(PassManagerBase &PM, CodeGenOpt::Level OptLevel);

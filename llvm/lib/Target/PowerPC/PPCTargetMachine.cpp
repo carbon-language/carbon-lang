@@ -20,17 +20,25 @@
 #include "llvm/Support/FormattedStream.h"
 using namespace llvm;
 
+static const TargetAsmInfo *createTargetAsmInfo(const Target &T,
+                                                const StringRef &TT) {
+  Triple TheTriple(TT);
+  bool isPPC64 = TheTriple.getArch() == Triple::ppc64;
+  if (TheTriple.getOS() == Triple::Darwin)
+    return new PPCDarwinTargetAsmInfo(isPPC64);
+  return new PPCLinuxTargetAsmInfo(isPPC64);
+  
+}
+
 extern "C" void LLVMInitializePowerPCTarget() {
   // Register the targets
   RegisterTargetMachine<PPC32TargetMachine> A(ThePPC32Target);  
   RegisterTargetMachine<PPC64TargetMachine> B(ThePPC64Target);
+  
+  RegisterAsmInfoFn C(ThePPC32Target, createTargetAsmInfo);
+  RegisterAsmInfoFn D(ThePPC64Target, createTargetAsmInfo);
 }
 
-const TargetAsmInfo *PPCTargetMachine::createTargetAsmInfo() const {
-  if (Subtarget.isDarwin())
-    return new PPCDarwinTargetAsmInfo(Subtarget.isPPC64());
-  return new PPCLinuxTargetAsmInfo(Subtarget.isPPC64());
-}
 
 PPCTargetMachine::PPCTargetMachine(const Target &T, const std::string &TT,
                                    const std::string &FS, bool is64Bit)
