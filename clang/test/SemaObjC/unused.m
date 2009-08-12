@@ -25,8 +25,7 @@ int test1(void) {
 @end
 
 void test2() {
-  // No unused warning: rdar://7126285
-  @"pointless example call for test purposes".length;
+  @"pointless example call for test purposes".length; // expected-warning {{expression result unused}}
 }
 
 
