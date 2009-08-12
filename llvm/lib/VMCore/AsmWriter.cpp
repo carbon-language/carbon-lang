@@ -34,7 +34,7 @@
 #include "llvm/Support/CFG.h"
 #include "llvm/Support/ErrorHandling.h"
 #include "llvm/Support/MathExtras.h"
-#include "llvm/Support/raw_ostream.h"
+#include "llvm/Support/FormattedStream.h"
 #include <algorithm>
 #include <cctype>
 #include <map>
@@ -66,7 +66,8 @@ static const Module *getModuleFromVal(const Value *V) {
 
 // PrintEscapedString - Print each character of the specified string, escaping
 // it if it is not printable or if it is an escape char.
-static void PrintEscapedString(const StringRef &Name, raw_ostream &Out) {
+static void PrintEscapedString(const StringRef &Name,
+                               formatted_raw_ostream &Out) {
   for (unsigned i = 0, e = Name.size(); i != e; ++i) {
     unsigned char C = Name[i];
     if (isprint(C) && C != '\\' && C != '"')
@@ -86,7 +87,7 @@ enum PrefixType {
 /// PrintLLVMName - Turn the specified name into an 'LLVM name', which is either
 /// prefixed with % (if the string only contains simple characters) or is
 /// surrounded with ""'s (if it has special chars in it).  Print it out.
-static void PrintLLVMName(raw_ostream &OS, const StringRef &Name,
+static void PrintLLVMName(formatted_raw_ostream &OS, const StringRef &Name,
                           PrefixType Prefix) {
   assert(Name.data() && "Cannot get empty name!");
   switch (Prefix) {
@@ -125,7 +126,7 @@ static void PrintLLVMName(raw_ostream &OS, const StringRef &Name,
 /// PrintLLVMName - Turn the specified name into an 'LLVM name', which is either
 /// prefixed with % (if the string only contains simple characters) or is
 /// surrounded with ""'s (if it has special chars in it).  Print it out.
-static void PrintLLVMName(raw_ostream &OS, const Value *V) {
+static void PrintLLVMName(formatted_raw_ostream &OS, const Value *V) {
   PrintLLVMName(OS, V->getName(), 
                 isa<GlobalValue>(V) ? GlobalPrefix : LocalPrefix);
 }
@@ -425,9 +426,11 @@ static void AddModuleTypesToPrinter(TypePrinting &TP,
     
     // Get the name as a string and insert it into TypeNames.
     std::string NameStr;
-    raw_string_ostream NameOS(NameStr);
+    raw_string_ostream NameROS(NameStr);
+    formatted_raw_ostream NameOS(NameROS);
     PrintLLVMName(NameOS, TI->first, LocalPrefix);
-    TP.addTypeName(Ty, NameOS.str());
+    NameOS.flush();
+    TP.addTypeName(Ty, NameStr);
   }
   
   // Walk the entire module to find references to unnamed structure and opaque
@@ -814,7 +817,7 @@ void SlotTracker::CreateMetadataSlot(const MDNode *N) {
 // AsmWriter Implementation
 //===----------------------------------------------------------------------===//
 
-static void WriteAsOperandInternal(raw_ostream &Out, const Value *V,
+static void WriteAsOperandInternal(formatted_raw_ostream &Out, const Value *V,
                                    TypePrinting &TypePrinter,
                                    SlotTracker *Machine);
 
@@ -853,7 +856,7 @@ static const char *getPredicateText(unsigned predicate) {
   return pred;
 }
 
-static void WriteMDNodes(raw_ostream &Out, TypePrinting &TypePrinter,
+static void WriteMDNodes(formatted_raw_ostream &Out, TypePrinting &TypePrinter,
                          SlotTracker &Machine) {
   SmallVector<const MDNode *, 16> Nodes;
   Nodes.resize(Machine.mdnSize());
@@ -886,7 +889,7 @@ static void WriteMDNodes(raw_ostream &Out, TypePrinting &TypePrinter,
   }
 }
 
-static void WriteOptimizationInfo(raw_ostream &Out, const User *U) {
+static void WriteOptimizationInfo(formatted_raw_ostream &Out, const User *U) {
   if (const OverflowingBinaryOperator *OBO =
         dyn_cast<OverflowingBinaryOperator>(U)) {
     if (OBO->hasNoUnsignedOverflow())
@@ -902,7 +905,7 @@ static void WriteOptimizationInfo(raw_ostream &Out, const User *U) {
   }
 }
 
-static void WriteConstantInt(raw_ostream &Out, const Constant *CV,
+static void WriteConstantInt(formatted_raw_ostream &Out, const Constant *CV,
                              TypePrinting &TypePrinter, SlotTracker *Machine) {
   if (const ConstantInt *CI = dyn_cast<ConstantInt>(CV)) {
     if (CI->getType() == Type::Int1Ty) {
@@ -1143,7 +1146,7 @@ static void WriteConstantInt(raw_ostream &Out, const Constant *CV,
 /// ostream.  This can be useful when you just want to print int %reg126, not
 /// the whole instruction that generated it.
 ///
-static void WriteAsOperandInternal(raw_ostream &Out, const Value *V,
+static void WriteAsOperandInternal(formatted_raw_ostream &Out, const Value *V,
                                    TypePrinting &TypePrinter,
                                    SlotTracker *Machine) {
   if (V->hasName()) {
@@ -1233,14 +1236,15 @@ void llvm::WriteAsOperand(raw_ostream &Out, const Value *V, bool PrintType,
     Out << ' ';
   }
 
-  WriteAsOperandInternal(Out, V, TypePrinter, 0);
+  formatted_raw_ostream FOut(Out);
+  WriteAsOperandInternal(FOut, V, TypePrinter, 0);
 }
 
 
 namespace {
 
 class AssemblyWriter {
-  raw_ostream &Out;
+  formatted_raw_ostream &Out;
   SlotTracker &Machine;
   const Module *TheModule;
   TypePrinting TypePrinter;
@@ -1251,7 +1255,8 @@ class AssemblyWriter {
   std::map<const MDNode *, unsigned> MDNodes;
   unsigned MetadataIDNo;
 public:
-  inline AssemblyWriter(raw_ostream &o, SlotTracker &Mac, const Module *M,
+  inline AssemblyWriter(formatted_raw_ostream &o, SlotTracker &Mac,
+                        const Module *M,
                         AssemblyAnnotationWriter *AAW)
     : Out(o), Machine(Mac), TheModule(M), AnnotationWriter(AAW), MetadataIDNo(0) {
     AddModuleTypesToPrinter(TypePrinter, NumberedTypes, M);
@@ -1403,7 +1408,8 @@ void AssemblyWriter::printModule(const Module *M) {
   WriteMDNodes(Out, TypePrinter, Machine);
 }
 
-static void PrintLinkage(GlobalValue::LinkageTypes LT, raw_ostream &Out) {
+static void PrintLinkage(GlobalValue::LinkageTypes LT,
+                         formatted_raw_ostream &Out) {
   switch (LT) {
   case GlobalValue::ExternalLinkage: break;
   case GlobalValue::PrivateLinkage:       Out << "private ";        break;
@@ -1428,7 +1434,7 @@ static void PrintLinkage(GlobalValue::LinkageTypes LT, raw_ostream &Out) {
 
 
 static void PrintVisibility(GlobalValue::VisibilityTypes Vis,
-                            raw_ostream &Out) {
+                            formatted_raw_ostream &Out) {
   switch (Vis) {
   default: llvm_unreachable("Invalid visibility style!");
   case GlobalValue::DefaultVisibility: break;
@@ -1519,7 +1525,8 @@ void AssemblyWriter::printTypeSymbolTable(const TypeSymbolTable &ST) {
     // Make sure we print out at least one level of the type structure, so
     // that we do not get %2 = type %2
     TypePrinter.printAtLeastOneLevel(NumberedTypes[i], Out);
-    Out << "\t\t; type %" << i << '\n';
+    Out.PadToColumn(50);
+    Out << "; type %" << i << '\n';
   }
   
   // Print the named types.
@@ -1668,11 +1675,13 @@ void AssemblyWriter::printBasicBlock(const BasicBlock *BB) {
       Out << "<badref>";
   }
 
-  if (BB->getParent() == 0)
-    Out << "\t\t; Error: Block without parent!";
-  else if (BB != &BB->getParent()->getEntryBlock()) {  // Not the entry block?
+  if (BB->getParent() == 0) {
+    Out.PadToColumn(50);
+    Out << "; Error: Block without parent!";
+  } else if (BB != &BB->getParent()->getEntryBlock()) {  // Not the entry block?
     // Output predecessors for the block...
-    Out << "\t\t;";
+    Out.PadToColumn(50);
+    Out << ";";
     pred_const_iterator PI = pred_begin(BB), PE = pred_end(BB);
     
     if (PI == PE) {
@@ -1706,7 +1715,8 @@ void AssemblyWriter::printBasicBlock(const BasicBlock *BB) {
 ///
 void AssemblyWriter::printInfoComment(const Value &V) {
   if (V.getType() != Type::VoidTy) {
-    Out << "\t\t; <";
+    Out.PadToColumn(50);
+    Out << "; <";
     TypePrinter.print(V.getType(), Out);
     Out << '>';
 
@@ -1991,8 +2001,9 @@ void Module::print(std::ostream &o, AssemblyAnnotationWriter *AAW) const {
   raw_os_ostream OS(o);
   print(OS, AAW);
 }
-void Module::print(raw_ostream &OS, AssemblyAnnotationWriter *AAW) const {
+void Module::print(raw_ostream &ROS, AssemblyAnnotationWriter *AAW) const {
   SlotTracker SlotTable(this);
+  formatted_raw_ostream OS(ROS);
   AssemblyWriter W(OS, SlotTable, this, AAW);
   W.write(this);
 }
@@ -2010,7 +2021,8 @@ void Type::print(raw_ostream &OS) const {
   TypePrinting().print(this, OS);
 }
 
-void Value::print(raw_ostream &OS, AssemblyAnnotationWriter *AAW) const {
+void Value::print(raw_ostream &ROS, AssemblyAnnotationWriter *AAW) const {
+  formatted_raw_ostream OS(ROS);
   if (this == 0) {
     OS << "printing a <null> value\n";
     return;

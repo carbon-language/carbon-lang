@@ -1,6 +1,6 @@
 ; RUN: llvm-as < %s | opt -indvars | llvm-dis > %t
 ; RUN: grep select %t | count 2
-; RUN: grep {icmp ne i32.\* %w	} %t
+; RUN: grep {icmp ne i32.\* %w } %t
 
 ; Indvars should be able to insert a canonical induction variable
 ; for the bb6 loop without using a maximum calculation (icmp, select)
