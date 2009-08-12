@@ -1069,9 +1069,9 @@ let Defs =
   def t2Int_eh_sjlj_setjmp : Thumb2XI<(outs), (ins GPR:$src),
                                AddrModeNone, SizeSpecial, NoItinerary,
                                "str.w sp, [$src, #+8] @ eh_setjmp begin\n"
-                               "\tadr ip, 0f\n"
-                               "\torr ip, #1\n"
-                               "\tstr.w ip, [$src, #+4]\n"
+                               "\tadr r12, 0f\n"
+                               "\torr r12, #1\n"
+                               "\tstr.w r12, [$src, #+4]\n"
                                "\tmovs r0, #0\n"
                                "\tb 1f\n"
                                "0:\tmovs r0, #1 @ eh_setjmp end\n"

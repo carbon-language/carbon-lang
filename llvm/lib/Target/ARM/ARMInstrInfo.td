@@ -1428,8 +1428,8 @@ let Defs =
                                AddrModeNone, SizeSpecial, IndexModeNone,
                                Pseudo, NoItinerary,
                                "str sp, [$src, #+8] @ eh_setjmp begin\n\t"
-                               "add ip, pc, #8\n\t"
-                               "str ip, [$src, #+4]\n\t"
+                               "add r12, pc, #8\n\t"
+                               "str r12, [$src, #+4]\n\t"
                                "mov r0, #0\n\t"
                                "add pc, pc, #0\n\t"
                                "mov r0, #1 @ eh_setjmp end\n\t", "",
