@@ -12,7 +12,7 @@
 # It is necessary to remove the `lib' prefix and the `.a'.
 
 # This 'sed' script should do the trick:
-# sed -e s'#\.a##g' -e 's#libLLVM#LLVM#g' -e 's#: ##' -e 's#\(.*\)#set(MSVC_LIB_DEPS_\1)#' ~/llvm/tools/llvm-config/LibDeps.txt
+# sed -e s'#\.a##g' -e 's#libLLVM#LLVM#g' -e 's#: # #' -e 's#\(.*\)#set(MSVC_LIB_DEPS_\1)#' ~/llvm/tools/llvm-config/LibDeps.txt
 #
 
 # TODO: do this transformations on cmake.
