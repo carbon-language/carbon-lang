@@ -897,10 +897,10 @@ double APInt::roundToDouble(bool isSigned) const {
   // Handle the simple case where the value is contained in one uint64_t.
   if (isSingleWord() || getActiveBits() <= APINT_BITS_PER_WORD) {
     if (isSigned) {
-      int64_t sext = (int64_t(VAL) << (64-BitWidth)) >> (64-BitWidth);
+      int64_t sext = (int64_t(getWord(0)) << (64-BitWidth)) >> (64-BitWidth);
       return double(sext);
     } else
-      return double(VAL);
+      return double(getWord(0));
   }
 
   // Determine if the value is negative.
