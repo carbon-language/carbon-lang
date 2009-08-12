@@ -614,17 +614,17 @@ def tUXTH  : T1pI<(outs tGPR:$dst), (ins tGPR:$src), IIC_iALU,
 // FIXME: Add actual movcc in IT blocks for Thumb2.
 let usesCustomDAGSchedInserter = 1 in  // Expanded by the scheduler.
   def tMOVCCr :
-  PseudoInst<(outs tGPR:$dst), (ins tGPR:$false, tGPR:$true, pred:$cc), IIC_iALU,
-              "@ tMOVCCr $cc",
-              [/*(set tGPR:$dst, (ARMcmov tGPR:$false, tGPR:$true, imm:$cc))*/]>;
+  PseudoInst<(outs tGPR:$dst), (ins tGPR:$false, tGPR:$true, pred:$cc),
+              NoItinerary, "@ tMOVCCr $cc",
+             [/*(set tGPR:$dst, (ARMcmov tGPR:$false, tGPR:$true, imm:$cc))*/]>;
 
 // tLEApcrel - Load a pc-relative address into a register without offending the
 // assembler.
 def tLEApcrel : T1I<(outs tGPR:$dst), (ins i32imm:$label), IIC_iALU,
                     "adr $dst, #$label", []>;
 
-def tLEApcrelJT : T1I<(outs tGPR:$dst), (ins i32imm:$label, lane_cst:$id), IIC_iALU,
-                      "adr $dst, #${label}_${id}", []>;
+def tLEApcrelJT : T1I<(outs tGPR:$dst), (ins i32imm:$label, lane_cst:$id),
+                      IIC_iALU, "adr $dst, #${label}_${id}", []>;
 
 //===----------------------------------------------------------------------===//
 // TLS Instructions
