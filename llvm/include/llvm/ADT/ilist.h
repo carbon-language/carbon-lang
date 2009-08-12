@@ -323,13 +323,13 @@ class iplist : public Traits {
   /// CreateLazySentinel - This method verifies whether the sentinel for the
   /// list has been created and lazily makes it if not.
   void CreateLazySentinel() const {
-    this->Traits::ensureHead(Head);
+    this->ensureHead(Head);
   }
 
   static bool op_less(NodeTy &L, NodeTy &R) { return L < R; }
   static bool op_equal(NodeTy &L, NodeTy &R) { return L == R; }
 
-  // No fundamental reason why iplist can't by copyable, but the default
+  // No fundamental reason why iplist can't be copyable, but the default
   // copy/copy-assign won't do.
   iplist(const iplist &);         // do not implement
   void operator=(const iplist &); // do not implement
@@ -347,7 +347,7 @@ public:
   typedef std::reverse_iterator<const_iterator>  const_reverse_iterator;
   typedef std::reverse_iterator<iterator>  reverse_iterator;
 
-  iplist() : Head(this->Traits::provideInitialHead()) {}
+  iplist() : Head(this->provideInitialHead()) {}
   ~iplist() {
     if (!Head) return;
     clear();
