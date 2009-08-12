@@ -741,7 +741,12 @@ Value *ScalarExprEmitter::VisitPrePostIncDec(const UnaryOperator *E,
     NextVal = llvm::ConstantInt::getTrue(VMContext);
   } else if (isa<llvm::IntegerType>(InVal->getType())) {
     NextVal = llvm::ConstantInt::get(InVal->getType(), AmountVal);
-    NextVal = Builder.CreateAdd(InVal, NextVal, isInc ? "inc" : "dec");
+
+    // Signed integer overflow is undefined behavior.
+    if (ValTy->isSignedIntegerType())
+      NextVal = Builder.CreateNSWAdd(InVal, NextVal, isInc ? "inc" : "dec");
+    else
+      NextVal = Builder.CreateAdd(InVal, NextVal, isInc ? "inc" : "dec");
   } else {
     // Add the inc/dec to the real part.
     if (InVal->getType() == llvm::Type::FloatTy)
@@ -1033,7 +1038,11 @@ Value *ScalarExprEmitter::EmitAdd(const BinOpInfo &Ops) {
     
     if (Ops.LHS->getType()->isFPOrFPVector())
       return Builder.CreateFAdd(Ops.LHS, Ops.RHS, "add");
-      
+
+    // Signed integer overflow is undefined behavior.
+    if (Ops.Ty->isSignedIntegerType())
+      return Builder.CreateNSWAdd(Ops.LHS, Ops.RHS, "add");
+
     return Builder.CreateAdd(Ops.LHS, Ops.RHS, "add");
   }
 
