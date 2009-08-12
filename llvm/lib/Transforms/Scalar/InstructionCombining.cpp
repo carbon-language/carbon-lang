@@ -7811,7 +7811,7 @@ Instruction *InstCombiner::PromoteCastOfAllocation(BitCastInst &CI,
         ++UI; // If this instruction uses AI more than once, don't break UI.
       
       ++NumDeadInst;
-      DOUT << "IC: DCE: " << *User;
+      DOUT << "IC: DCE: " << *User << '\n';
       EraseInstFromFunction(*User);
     }
   }
@@ -12890,14 +12890,14 @@ static void AddReachableCodeToWorklist(BasicBlock *BB,
       // DCE instruction if trivially dead.
       if (isInstructionTriviallyDead(Inst)) {
         ++NumDeadInst;
-        DOUT << "IC: DCE: " << *Inst;
+        DOUT << "IC: DCE: " << *Inst << '\n';
         Inst->eraseFromParent();
         continue;
       }
       
       // ConstantProp instruction if trivially constant.
       if (Constant *C = ConstantFoldInstruction(Inst, BB->getContext(), TD)) {
-        DOUT << "IC: ConstFold to: " << *C << " from: " << *Inst;
+        DOUT << "IC: ConstFold to: " << *C << " from: " << *Inst << '\n';
         Inst->replaceAllUsesWith(C);
         ++NumConstProp;
         Inst->eraseFromParent();
@@ -12977,7 +12977,7 @@ bool InstCombiner::DoOneIteration(Function &F, unsigned Iteration) {
         while (Term != BB->begin()) {   // Remove instrs bottom-up
           BasicBlock::iterator I = Term; --I;
 
-          DOUT << "IC: DCE: " << *I;
+          DOUT << "IC: DCE: " << *I << '\n';
           // A debug intrinsic shouldn't force another iteration if we weren't
           // going to do one without it.
           if (!isa<DbgInfoIntrinsic>(I)) {
@@ -13002,7 +13002,7 @@ bool InstCombiner::DoOneIteration(Function &F, unsigned Iteration) {
         AddUsesToWorkList(*I);
       ++NumDeadInst;
 
-      DOUT << "IC: DCE: " << *I;
+      DOUT << "IC: DCE: " << *I << '\n';
 
       I->eraseFromParent();
       RemoveFromWorkList(I);
@@ -13012,7 +13012,7 @@ bool InstCombiner::DoOneIteration(Function &F, unsigned Iteration) {
 
     // Instruction isn't dead, see if we can constant propagate it.
     if (Constant *C = ConstantFoldInstruction(I, F.getContext(), TD)) {
-      DOUT << "IC: ConstFold to: " << *C << " from: " << *I;
+      DOUT << "IC: ConstFold to: " << *C << " from: " << *I << '\n';
 
       // Add operands to the worklist.
       AddUsesToWorkList(*I);
@@ -13069,8 +13069,8 @@ bool InstCombiner::DoOneIteration(Function &F, unsigned Iteration) {
       ++NumCombined;
       // Should we replace the old instruction with a new one?
       if (Result != I) {
-        DOUT << "IC: Old = " << *I
-             << "    New = " << *Result;
+        DOUT << "IC: Old = " << *I << '\n'
+             << "    New = " << *Result << '\n';
 
         // Everything uses the new instruction now.
         I->replaceAllUsesWith(Result);
@@ -13104,8 +13104,8 @@ bool InstCombiner::DoOneIteration(Function &F, unsigned Iteration) {
         InstParent->getInstList().erase(I);
       } else {
 #ifndef NDEBUG
-        DOUT << "IC: Mod = " << OrigI
-             << "    New = " << *I;
+        DOUT << "IC: Mod = " << OrigI << '\n'
+             << "    New = " << *I << '\n';
 #endif
 
         // If the instruction was modified, it's possible that it is now dead.
