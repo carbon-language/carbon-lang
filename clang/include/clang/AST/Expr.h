@@ -1727,13 +1727,13 @@ class ShuffleVectorExpr : public Expr {
   unsigned NumExprs;
 
 public:
-  ShuffleVectorExpr(Expr **args, unsigned nexpr,
+  ShuffleVectorExpr(ASTContext &C, Expr **args, unsigned nexpr,
                     QualType Type, SourceLocation BLoc, 
                     SourceLocation RP) : 
     Expr(ShuffleVectorExprClass, Type), BuiltinLoc(BLoc),
     RParenLoc(RP), NumExprs(nexpr) {
-      // FIXME: Allocate in ASTContext!
-    SubExprs = new Stmt*[nexpr];
+      
+    SubExprs = new (C) Stmt*[nexpr];
     for (unsigned i = 0; i < nexpr; i++)
       SubExprs[i] = args[i];
   }

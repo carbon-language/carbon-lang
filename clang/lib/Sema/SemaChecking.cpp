@@ -626,8 +626,8 @@ Action::OwningExprResult Sema::SemaBuiltinShuffleVector(CallExpr *TheCall) {
     TheCall->setArg(i, 0);
   }
 
-  return Owned(new (Context) ShuffleVectorExpr(exprs.begin(), exprs.size(),
-                                               exprs[0]->getType(),
+  return Owned(new (Context) ShuffleVectorExpr(Context, exprs.begin(),
+                                            exprs.size(), exprs[0]->getType(),
                                             TheCall->getCallee()->getLocStart(),
                                             TheCall->getRParenLoc()));
 }
