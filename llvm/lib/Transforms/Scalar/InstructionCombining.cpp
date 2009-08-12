@@ -3077,6 +3077,14 @@ Instruction *InstCombiner::visitSDiv(BinaryOperator &I) {
                                             RHS->getValue().exactLogBase2());
       return BinaryOperator::CreateAShr(Op0, ShAmt, I.getName());
     }
+
+    // -X/C  -->  X/-C  provided the negation doesn't overflow.
+    if (SubOperator *Sub = dyn_cast<SubOperator>(Op0))
+      if (isa<Constant>(Sub->getOperand(0)) &&
+          cast<Constant>(Sub->getOperand(0))->isNullValue() &&
+          Sub->hasNoSignedOverflow())
+        return BinaryOperator::CreateSDiv(Sub->getOperand(1),
+                                          ConstantExpr::getNeg(RHS));
   }
 
   // If the sign bits of both operands are zero (i.e. we can prove they are
