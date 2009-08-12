@@ -158,6 +158,9 @@ namespace {
     void ScheduleNodeTopDown(SUnit *SU, unsigned CurCycle);
     void ListScheduleTopDown();
     bool BreakAntiDependencies();
+    unsigned findSuitableFreeRegister(unsigned AntiDepReg,
+                                      unsigned LastNewReg,
+                                      const TargetRegisterClass *);
   };
 }
 
@@ -510,6 +513,36 @@ void SchedulePostRATDList::ScanInstruction(MachineInstr *MI,
   }
 }
 
+unsigned
+SchedulePostRATDList::findSuitableFreeRegister(unsigned AntiDepReg,
+                                               unsigned LastNewReg,
+                                               const TargetRegisterClass *RC) {
+  for (TargetRegisterClass::iterator R = RC->allocation_order_begin(MF),
+       RE = RC->allocation_order_end(MF); R != RE; ++R) {
+    unsigned NewReg = *R;
+    // Don't replace a register with itself.
+    if (NewReg == AntiDepReg) continue;
+    // Don't replace a register with one that was recently used to repair
+    // an anti-dependence with this AntiDepReg, because that would
+    // re-introduce that anti-dependence.
+    if (NewReg == LastNewReg) continue;
+    // If NewReg is dead and NewReg's most recent def is not before
+    // AntiDepReg's kill, it's safe to replace AntiDepReg with NewReg.
+    assert(((KillIndices[AntiDepReg] == ~0u) != (DefIndices[AntiDepReg] == ~0u)) &&
+           "Kill and Def maps aren't consistent for AntiDepReg!");
+    assert(((KillIndices[NewReg] == ~0u) != (DefIndices[NewReg] == ~0u)) &&
+           "Kill and Def maps aren't consistent for NewReg!");
+    if (KillIndices[NewReg] == ~0u &&
+        Classes[NewReg] != reinterpret_cast<TargetRegisterClass *>(-1) &&
+        KillIndices[AntiDepReg] <= DefIndices[NewReg])
+      continue;
+    return NewReg;
+  }
+
+  // No registers are free and available!
+  return 0;
+}
+
 /// BreakAntiDependencies - Identifiy anti-dependencies along the critical path
 /// of the ScheduleDAG and break them by renaming registers.
 ///
@@ -674,60 +707,43 @@ bool SchedulePostRATDList::BreakAntiDependencies() {
     // TODO: Instead of picking the first free register, consider which might
     // be the best.
     if (AntiDepReg != 0) {
-      for (TargetRegisterClass::iterator R = RC->allocation_order_begin(MF),
-           RE = RC->allocation_order_end(MF); R != RE; ++R) {
-        unsigned NewReg = *R;
-        // Don't replace a register with itself.
-        if (NewReg == AntiDepReg) continue;
-        // Don't replace a register with one that was recently used to repair
-        // an anti-dependence with this AntiDepReg, because that would
-        // re-introduce that anti-dependence.
-        if (NewReg == LastNewReg[AntiDepReg]) continue;
-        // If NewReg is dead and NewReg's most recent def is not before
-        // AntiDepReg's kill, it's safe to replace AntiDepReg with NewReg.
-        assert(((KillIndices[AntiDepReg] == ~0u) != (DefIndices[AntiDepReg] == ~0u)) &&
-               "Kill and Def maps aren't consistent for AntiDepReg!");
-        assert(((KillIndices[NewReg] == ~0u) != (DefIndices[NewReg] == ~0u)) &&
-               "Kill and Def maps aren't consistent for NewReg!");
-        if (KillIndices[NewReg] == ~0u &&
-            Classes[NewReg] != reinterpret_cast<TargetRegisterClass *>(-1) &&
-            KillIndices[AntiDepReg] <= DefIndices[NewReg]) {
-          DEBUG(errs() << "Breaking anti-dependence edge on "
-                << TRI->getName(AntiDepReg)
-                << " with " << RegRefs.count(AntiDepReg) << " references"
-                << " using " << TRI->getName(NewReg) << "!\n");
+      if (unsigned NewReg = findSuitableFreeRegister(AntiDepReg,
+                                                     LastNewReg[AntiDepReg],
+                                                     RC)) {
+        DEBUG(errs() << "Breaking anti-dependence edge on "
+              << TRI->getName(AntiDepReg)
+              << " with " << RegRefs.count(AntiDepReg) << " references"
+              << " using " << TRI->getName(NewReg) << "!\n");
 
-          // Update the references to the old register to refer to the new
-          // register.
-          std::pair<std::multimap<unsigned, MachineOperand *>::iterator,
-                    std::multimap<unsigned, MachineOperand *>::iterator>
-             Range = RegRefs.equal_range(AntiDepReg);
-          for (std::multimap<unsigned, MachineOperand *>::iterator
-               Q = Range.first, QE = Range.second; Q != QE; ++Q)
-            Q->second->setReg(NewReg);
+        // Update the references to the old register to refer to the new
+        // register.
+        std::pair<std::multimap<unsigned, MachineOperand *>::iterator,
+                  std::multimap<unsigned, MachineOperand *>::iterator>
+           Range = RegRefs.equal_range(AntiDepReg);
+        for (std::multimap<unsigned, MachineOperand *>::iterator
+             Q = Range.first, QE = Range.second; Q != QE; ++Q)
+          Q->second->setReg(NewReg);
 
-          // We just went back in time and modified history; the
-          // liveness information for the anti-depenence reg is now
-          // inconsistent. Set the state as if it were dead.
-          Classes[NewReg] = Classes[AntiDepReg];
-          DefIndices[NewReg] = DefIndices[AntiDepReg];
-          KillIndices[NewReg] = KillIndices[AntiDepReg];
-          assert(((KillIndices[NewReg] == ~0u) !=
-                  (DefIndices[NewReg] == ~0u)) &&
-               "Kill and Def maps aren't consistent for NewReg!");
+        // We just went back in time and modified history; the
+        // liveness information for the anti-depenence reg is now
+        // inconsistent. Set the state as if it were dead.
+        Classes[NewReg] = Classes[AntiDepReg];
+        DefIndices[NewReg] = DefIndices[AntiDepReg];
+        KillIndices[NewReg] = KillIndices[AntiDepReg];
+        assert(((KillIndices[NewReg] == ~0u) !=
+                (DefIndices[NewReg] == ~0u)) &&
+             "Kill and Def maps aren't consistent for NewReg!");
 
-          Classes[AntiDepReg] = 0;
-          DefIndices[AntiDepReg] = KillIndices[AntiDepReg];
-          KillIndices[AntiDepReg] = ~0u;
-          assert(((KillIndices[AntiDepReg] == ~0u) !=
-                  (DefIndices[AntiDepReg] == ~0u)) &&
-               "Kill and Def maps aren't consistent for AntiDepReg!");
+        Classes[AntiDepReg] = 0;
+        DefIndices[AntiDepReg] = KillIndices[AntiDepReg];
+        KillIndices[AntiDepReg] = ~0u;
+        assert(((KillIndices[AntiDepReg] == ~0u) !=
+                (DefIndices[AntiDepReg] == ~0u)) &&
+             "Kill and Def maps aren't consistent for AntiDepReg!");
 
-          RegRefs.erase(AntiDepReg);
-          Changed = true;
-          LastNewReg[AntiDepReg] = NewReg;
-          break;
-        }
+        RegRefs.erase(AntiDepReg);
+        Changed = true;
+        LastNewReg[AntiDepReg] = NewReg;
       }
     }
 
