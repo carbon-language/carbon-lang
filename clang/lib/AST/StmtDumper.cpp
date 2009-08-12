@@ -137,6 +137,10 @@ namespace  {
     void VisitCXXBoolLiteralExpr(CXXBoolLiteralExpr *Node);
     void VisitCXXThisExpr(CXXThisExpr *Node);
     void VisitCXXFunctionalCastExpr(CXXFunctionalCastExpr *Node);
+    void VisitCXXConstructExpr(CXXConstructExpr *Node);
+    void VisitCXXBindTemporaryExpr(CXXBindTemporaryExpr *Node);
+    void VisitCXXExprWithTemporaries(CXXExprWithTemporaries *Node);
+    void DumpCXXTemporary(CXXTemporary *Temporary);
     
     // ObjC
     void VisitObjCEncodeExpr(ObjCEncodeExpr *Node);
@@ -449,6 +453,33 @@ void StmtDumper::VisitCXXFunctionalCastExpr(CXXFunctionalCastExpr *Node) {
   DumpExpr(Node);
   fprintf(F, " functional cast to %s", 
           Node->getTypeAsWritten().getAsString().c_str());
+}
+
+void StmtDumper::VisitCXXConstructExpr(CXXConstructExpr *Node) {
+  DumpExpr(Node);
+  if (Node->isElidable())
+    fprintf(F, "elidable");
+}
+
+void StmtDumper::VisitCXXBindTemporaryExpr(CXXBindTemporaryExpr *Node) {
+  DumpExpr(Node);
+  fprintf(F, " ");
+  DumpCXXTemporary(Node->getTemporary());
+}
+
+void StmtDumper::VisitCXXExprWithTemporaries(CXXExprWithTemporaries *Node) {
+  DumpExpr(Node);
+  ++IndentLevel;
+  for (unsigned i = 0, e = Node->getNumTemporaries(); i != e; ++i) {
+    fprintf(F, "\n");
+    Indent();
+    DumpCXXTemporary(Node->getTemporary(i));
+  }
+  --IndentLevel;
+}
+
+void StmtDumper::DumpCXXTemporary(CXXTemporary *Temporary) {
+  fprintf(F, "(CXXTemporary %p)", (void *)Temporary);
 }
 
 //===----------------------------------------------------------------------===//
