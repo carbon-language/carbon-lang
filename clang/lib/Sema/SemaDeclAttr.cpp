@@ -437,7 +437,7 @@ static void HandleMallocAttr(Decl *d, const AttributeList &Attr, Sema &S) {
     return;
   }
 
-  if (FunctionDecl *FD = dyn_cast<FunctionDecl>(d)) {
+  if (FunctionDecl *FD = cast<FunctionDecl>(d)) {
     if (!FD->getResultType()->isPointerType()) {
       S.Diag(Attr.getLoc(), diag::warn_attribute_malloc_pointer_only);
       return;
