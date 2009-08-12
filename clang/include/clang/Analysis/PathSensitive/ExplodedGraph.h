@@ -29,16 +29,8 @@
 namespace clang {
 
 class GRState;
-class GRCoreEngine;
-class ExplodedNode;
 class CFG;
 class ASTContext;
-
-class GRStmtNodeBuilderImpl;
-class GRBranchNodeBuilderImpl;
-class GRIndirectGotoNodeBuilderImpl;
-class GRSwitchNodeBuilderImpl;
-class GREndPathNodebuilderImpl;  
 
 //===----------------------------------------------------------------------===//
 // ExplodedGraph "implementation" classes.  These classes are not typed to
@@ -207,12 +199,7 @@ public:
 class ExplodedGraph {
 protected:
   friend class GRCoreEngine;
-  friend class GRStmtNodeBuilderImpl;
-  friend class GRBranchNodeBuilderImpl;
-  friend class GRIndirectGotoNodeBuilderImpl;
-  friend class GRSwitchNodeBuilderImpl;
-  friend class GREndPathNodeBuilderImpl;
-  
+
   // Type definitions.
   typedef llvm::SmallVector<ExplodedNode*,2>    RootsTy;
   typedef llvm::SmallVector<ExplodedNode*,10>   EndNodesTy;
