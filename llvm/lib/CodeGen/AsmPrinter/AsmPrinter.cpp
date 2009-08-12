@@ -1639,8 +1639,8 @@ void AsmPrinter::printBasicBlockLabel(const MachineBasicBlock *MBB,
     if (const BasicBlock *BB = MBB->getBasicBlock())
       if (BB->hasName()) {
         O.PadToColumn(TAI->getCommentColumn(), 1);
-        O << TAI->getCommentString() << ' '
-          << MBB->getBasicBlock()->getName();
+        O << TAI->getCommentString() << ' ';
+        WriteAsOperand(O, BB, /*PrintType=*/false);
       }
 
     if (printColon)
