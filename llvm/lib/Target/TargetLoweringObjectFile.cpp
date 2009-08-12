@@ -24,6 +24,7 @@
 #include "llvm/Target/TargetMachine.h"
 #include "llvm/Target/TargetOptions.h"
 #include "llvm/Support/Mangler.h"
+#include "llvm/ADT/SmallString.h"
 #include "llvm/ADT/StringExtras.h"
 using namespace llvm;
 
@@ -128,7 +129,6 @@ SectionKind TargetLoweringObjectFile::getKindForGlobal(const GlobalValue *GV,
   const GlobalVariable *GVar = dyn_cast<GlobalVariable>(GV);
   if (GVar == 0)
     return SectionKind::getText();
-
   
   // Handle thread-local data first.
   if (GVar->isThreadLocal()) {
@@ -509,17 +509,40 @@ getSectionForConstant(SectionKind Kind) const {
 //                                 MachO
 //===----------------------------------------------------------------------===//
 
+typedef StringMap<const MCSectionMachO*> MachOUniqueMapTy;
 
-const MCSection *TargetLoweringObjectFileMachO::
+TargetLoweringObjectFileMachO::~TargetLoweringObjectFileMachO() {
+  // If we have the MachO uniquing map, free it.
+  delete (MachOUniqueMapTy*)UniquingMap;
+}
+
+
+const MCSectionMachO *TargetLoweringObjectFileMachO::
 getMachOSection(const StringRef &Segment, const StringRef &Section,
                 unsigned TypeAndAttributes,
                 unsigned Reserved2, SectionKind Kind) const {
-  // FIXME: UNIQUE HERE.
-  //if (MCSection *S = getContext().GetSection(Name))
-  //  return S;
+  // We unique sections by their segment/section pair.  The returned section
+  // may not have the same flags as the requested section, if so this should be
+  // diagnosed by the client as an error.
   
-  return MCSectionMachO::Create(Segment, Section, TypeAndAttributes, Reserved2,
-                                Kind, getContext());
+  // Create the map if it doesn't already exist.
+  if (UniquingMap == 0)
+    UniquingMap = new MachOUniqueMapTy();
+  MachOUniqueMapTy &Map = *(MachOUniqueMapTy*)UniquingMap;
+  
+  // Form the name to look up.
+  SmallString<64> Name;
+  Name.append(Segment.begin(), Segment.end());
+  Name.push_back(',');
+  Name.append(Section.begin(), Section.end());
+  
+  // Do the lookup, if we have a hit, return it.
+  const MCSectionMachO *&Entry = Map[StringRef(Name.data(), Name.size())];
+  if (Entry) return Entry;
+
+  // Otherwise, return a new section.
+  return Entry = MCSectionMachO::Create(Segment, Section, TypeAndAttributes,
+                                        Reserved2, Kind, getContext());
 }
 
 

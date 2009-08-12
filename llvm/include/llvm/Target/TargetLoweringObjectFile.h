@@ -20,6 +20,7 @@
 namespace llvm {
   class Mangler;
   class MCSection;
+  class MCSectionMachO;
   class MCContext;
   class GlobalValue;
   class StringRef;
@@ -28,6 +29,9 @@ namespace llvm {
   
 class TargetLoweringObjectFile {
   MCContext *Ctx;
+  
+  TargetLoweringObjectFile(const TargetLoweringObjectFile&); // DO NOT IMPLEMENT
+  void operator=(const TargetLoweringObjectFile&);           // DO NOT IMPLEMENT
 protected:
   
   TargetLoweringObjectFile();
@@ -225,6 +229,8 @@ public:
   
   
 class TargetLoweringObjectFileMachO : public TargetLoweringObjectFile {
+  mutable void *UniquingMap;
+  
   const MCSection *CStringSection;
   const MCSection *UStringSection;
   const MCSection *TextCoalSection;
@@ -236,6 +242,8 @@ class TargetLoweringObjectFileMachO : public TargetLoweringObjectFile {
   const MCSection *EightByteConstantSection;
   const MCSection *SixteenByteConstantSection;
 public:
+  TargetLoweringObjectFileMachO() : UniquingMap(0) {}
+  ~TargetLoweringObjectFileMachO();
   
   virtual void Initialize(MCContext &Ctx, const TargetMachine &TM);
 
@@ -257,16 +265,17 @@ public:
 
   /// getMachOSection - Return the MCSection for the specified mach-o section.
   /// This requires the operands to be valid.
-  const MCSection *getMachOSection(const StringRef &Segment,
-                                   const StringRef &Section,
-                                   unsigned TypeAndAttributes,
-                                   SectionKind K) const {
+  const MCSectionMachO *getMachOSection(const StringRef &Segment,
+                                        const StringRef &Section,
+                                        unsigned TypeAndAttributes,
+                                        SectionKind K) const {
     return getMachOSection(Segment, Section, TypeAndAttributes, 0, K);
   }
-  const MCSection *getMachOSection(const StringRef &Segment,
-                                   const StringRef &Section,
-                                   unsigned TypeAndAttributes,
-                                   unsigned Reserved2, SectionKind K) const;
+  const MCSectionMachO *getMachOSection(const StringRef &Segment,
+                                        const StringRef &Section,
+                                        unsigned TypeAndAttributes,
+                                        unsigned Reserved2,
+                                        SectionKind K) const;
 
   /// getTextCoalSection - Return the "__TEXT,__textcoal_nt" section we put weak
   /// symbols into.
