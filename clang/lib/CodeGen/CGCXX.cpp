@@ -699,7 +699,10 @@ void CodeGenFunction::GenerateVtableForBase(const CXXRecordDecl *RD,
     methods.push_back(rtti);
   }
 
-  if (!isPrimary && RD)
+  if (!isPrimary) {
+    if (!RD)
+      return;
+
     for (meth_iter mi = RD->method_begin(), me = RD->method_end(); mi != me;
          ++mi) {
       if (mi->isVirtual()) {
@@ -708,8 +711,8 @@ void CodeGenFunction::GenerateVtableForBase(const CXXRecordDecl *RD,
         methods.push_back(m);
       }
     }
-  if (!isPrimary)
     return;
+  }
 
   // And add the virtuals for the class to the primary vtable.
   for (meth_iter mi = Class->method_begin(), me = Class->method_end(); mi != me;
