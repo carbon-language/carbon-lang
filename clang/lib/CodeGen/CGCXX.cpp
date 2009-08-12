@@ -621,6 +621,22 @@ llvm::Constant *CodeGenFunction::GenerateRtti(const CXXRecordDecl *RD) {
   return Rtti;
 }
 
+void CodeGenFunction::GenerateMethods(std::vector<llvm::Constant *> &methods,
+                                      const CXXRecordDecl *RD,
+                                      llvm::Type *Ptr8Ty) {
+  typedef CXXRecordDecl::method_iterator meth_iter;
+  llvm::Constant *m;
+
+  for (meth_iter mi = RD->method_begin(), me = RD->method_end(); mi != me;
+       ++mi) {
+    if (mi->isVirtual()) {
+      m = CGM.GetAddrOfFunction(GlobalDecl(*mi));
+      m = llvm::ConstantExpr::getBitCast(m, Ptr8Ty);
+      methods.push_back(m);
+    }
+  }
+}
+
 void CodeGenFunction::GenerateVtableForBase(const CXXRecordDecl *RD,
                                             const CXXRecordDecl *Class,
                                             llvm::Constant *rtti,
@@ -700,29 +716,13 @@ void CodeGenFunction::GenerateVtableForBase(const CXXRecordDecl *RD,
   }
 
   if (!isPrimary) {
-    if (!RD)
-      return;
-
-    for (meth_iter mi = RD->method_begin(), me = RD->method_end(); mi != me;
-         ++mi) {
-      if (mi->isVirtual()) {
-        m = CGM.GetAddrOfFunction(GlobalDecl(*mi));
-        m = llvm::ConstantExpr::getBitCast(m, Ptr8Ty);
-        methods.push_back(m);
-      }
-    }
+    if (RD)
+      GenerateMethods(methods, RD, Ptr8Ty);
     return;
   }
 
   // And add the virtuals for the class to the primary vtable.
-  for (meth_iter mi = Class->method_begin(), me = Class->method_end(); mi != me;
-       ++mi) {
-    if (mi->isVirtual()) {
-      m = CGM.GetAddrOfFunction(GlobalDecl(*mi));
-      m = llvm::ConstantExpr::getBitCast(m, Ptr8Ty);
-      methods.push_back(m);
-    }
-  }
+  GenerateMethods(methods, Class, Ptr8Ty);
 }
 
 llvm::Value *CodeGenFunction::GenerateVtable(const CXXRecordDecl *RD) {
