@@ -484,6 +484,9 @@ const char *ARMTargetLowering::getTargetNodeName(unsigned Opcode) const {
   case ARMISD::VST2D:         return "ARMISD::VST2D";
   case ARMISD::VST3D:         return "ARMISD::VST3D";
   case ARMISD::VST4D:         return "ARMISD::VST4D";
+  case ARMISD::VREV64:        return "ARMISD::VREV64";
+  case ARMISD::VREV32:        return "ARMISD::VREV32";
+  case ARMISD::VREV16:        return "ARMISD::VREV16";
   }
 }
 
@@ -2336,7 +2339,7 @@ SDValue ARM::getVMOVImm(SDNode *N, unsigned ByteSize, SelectionDAG &DAG) {
 /// isVREVMask - Check if a vector shuffle corresponds to a VREV
 /// instruction with the specified blocksize.  (The order of the elements
 /// within each block of the vector is reversed.)
-bool ARM::isVREVMask(ShuffleVectorSDNode *N, unsigned BlockSize) {
+static bool isVREVMask(ShuffleVectorSDNode *N, unsigned BlockSize) {
   assert((BlockSize==16 || BlockSize==32 || BlockSize==64) &&
          "Only possible block sizes for VREV are: 16, 32, 64");
 
@@ -2432,6 +2435,18 @@ static SDValue LowerBUILD_VECTOR(SDValue Op, SelectionDAG &DAG) {
 }
 
 static SDValue LowerVECTOR_SHUFFLE(SDValue Op, SelectionDAG &DAG) {
+  ShuffleVectorSDNode *SVN = dyn_cast<ShuffleVectorSDNode>(Op.getNode());
+  assert(SVN != 0 && "Expected a ShuffleVectorSDNode in LowerVECTOR_SHUFFLE");
+  DebugLoc dl = Op.getDebugLoc();
+  EVT VT = Op.getValueType();
+
+  if (isVREVMask(SVN, 64))
+    return DAG.getNode(ARMISD::VREV64, dl, VT, SVN->getOperand(0));
+  if (isVREVMask(SVN, 32))
+    return DAG.getNode(ARMISD::VREV32, dl, VT, SVN->getOperand(0));
+  if (isVREVMask(SVN, 16))
+    return DAG.getNode(ARMISD::VREV16, dl, VT, SVN->getOperand(0));
+
   return Op;
 }
 

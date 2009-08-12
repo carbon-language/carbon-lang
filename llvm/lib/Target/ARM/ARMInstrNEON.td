@@ -95,6 +95,11 @@ def NEONvst3d     : SDNode<"ARMISD::VST3D", SDTARMVST3,
 def NEONvst4d     : SDNode<"ARMISD::VST4D", SDTARMVST4,
                            [SDNPHasChain, SDNPMayStore]>;
 
+def SDTARMVSHUF   : SDTypeProfile<1, 1, [SDTCisVec<0>, SDTCisSameAs<0, 1>]>;
+def NEONvrev64    : SDNode<"ARMISD::VREV64", SDTARMVSHUF>;
+def NEONvrev32    : SDNode<"ARMISD::VREV32", SDTARMVSHUF>;
+def NEONvrev16    : SDNode<"ARMISD::VREV16", SDTARMVSHUF>;
+
 //===----------------------------------------------------------------------===//
 // NEON operand definitions
 //===----------------------------------------------------------------------===//
@@ -1881,25 +1886,7 @@ def VCVTxs2fq : N2VCvtQ<0, 1, 0b000000, 0b1110, 0, 1, "vcvt.f32.s32",
 def VCVTxu2fq : N2VCvtQ<1, 1, 0b000000, 0b1110, 0, 1, "vcvt.f32.u32",
                         v4f32, v4i32, int_arm_neon_vcvtfxu2fp>;
 
-//   VREV     : Vector Reverse
-
-def vrev64_shuffle : PatFrag<(ops node:$in),
-                             (vector_shuffle node:$in, undef), [{
-  ShuffleVectorSDNode *SVOp = cast<ShuffleVectorSDNode>(N);
-  return ARM::isVREVMask(SVOp, 64);
-}]>;
-
-def vrev32_shuffle : PatFrag<(ops node:$in),
-                             (vector_shuffle node:$in, undef), [{
-  ShuffleVectorSDNode *SVOp = cast<ShuffleVectorSDNode>(N);
-  return ARM::isVREVMask(SVOp, 32);
-}]>;
-
-def vrev16_shuffle : PatFrag<(ops node:$in),
-                             (vector_shuffle node:$in, undef), [{
-  ShuffleVectorSDNode *SVOp = cast<ShuffleVectorSDNode>(N);
-  return ARM::isVREVMask(SVOp, 16);
-}]>;
+// Vector Reverse.
 
 //   VREV64   : Vector Reverse elements within 64-bit doublewords
 
@@ -1907,12 +1894,12 @@ class VREV64D<bits<2> op19_18, string OpcodeStr, ValueType Ty>
   : N2V<0b11, 0b11, op19_18, 0b00, 0b00000, 0, 0, (outs DPR:$dst),
         (ins DPR:$src), NoItinerary, 
         !strconcat(OpcodeStr, "\t$dst, $src"), "",
-        [(set DPR:$dst, (Ty (vrev64_shuffle (Ty DPR:$src))))]>;
+        [(set DPR:$dst, (Ty (NEONvrev64 (Ty DPR:$src))))]>;
 class VREV64Q<bits<2> op19_18, string OpcodeStr, ValueType Ty>
   : N2V<0b11, 0b11, op19_18, 0b00, 0b00000, 1, 0, (outs QPR:$dst),
         (ins QPR:$src), NoItinerary, 
         !strconcat(OpcodeStr, "\t$dst, $src"), "",
-        [(set QPR:$dst, (Ty (vrev64_shuffle (Ty QPR:$src))))]>;
+        [(set QPR:$dst, (Ty (NEONvrev64 (Ty QPR:$src))))]>;
 
 def VREV64d8  : VREV64D<0b00, "vrev64.8", v8i8>;
 def VREV64d16 : VREV64D<0b01, "vrev64.16", v4i16>;
@@ -1930,12 +1917,12 @@ class VREV32D<bits<2> op19_18, string OpcodeStr, ValueType Ty>
   : N2V<0b11, 0b11, op19_18, 0b00, 0b00001, 0, 0, (outs DPR:$dst),
         (ins DPR:$src), NoItinerary, 
         !strconcat(OpcodeStr, "\t$dst, $src"), "",
-        [(set DPR:$dst, (Ty (vrev32_shuffle (Ty DPR:$src))))]>;
+        [(set DPR:$dst, (Ty (NEONvrev32 (Ty DPR:$src))))]>;
 class VREV32Q<bits<2> op19_18, string OpcodeStr, ValueType Ty>
   : N2V<0b11, 0b11, op19_18, 0b00, 0b00001, 1, 0, (outs QPR:$dst),
         (ins QPR:$src), NoItinerary, 
         !strconcat(OpcodeStr, "\t$dst, $src"), "",
-        [(set QPR:$dst, (Ty (vrev32_shuffle (Ty QPR:$src))))]>;
+        [(set QPR:$dst, (Ty (NEONvrev32 (Ty QPR:$src))))]>;
 
 def VREV32d8  : VREV32D<0b00, "vrev32.8", v8i8>;
 def VREV32d16 : VREV32D<0b01, "vrev32.16", v4i16>;
@@ -1949,12 +1936,12 @@ class VREV16D<bits<2> op19_18, string OpcodeStr, ValueType Ty>
   : N2V<0b11, 0b11, op19_18, 0b00, 0b00010, 0, 0, (outs DPR:$dst),
         (ins DPR:$src), NoItinerary, 
         !strconcat(OpcodeStr, "\t$dst, $src"), "",
-        [(set DPR:$dst, (Ty (vrev16_shuffle (Ty DPR:$src))))]>;
+        [(set DPR:$dst, (Ty (NEONvrev16 (Ty DPR:$src))))]>;
 class VREV16Q<bits<2> op19_18, string OpcodeStr, ValueType Ty>
   : N2V<0b11, 0b11, op19_18, 0b00, 0b00010, 1, 0, (outs QPR:$dst),
         (ins QPR:$src), NoItinerary, 
         !strconcat(OpcodeStr, "\t$dst, $src"), "",
-        [(set QPR:$dst, (Ty (vrev16_shuffle (Ty QPR:$src))))]>;
+        [(set QPR:$dst, (Ty (NEONvrev16 (Ty QPR:$src))))]>;
 
 def VREV16d8  : VREV16D<0b00, "vrev16.8", v8i8>;
 def VREV16q8  : VREV16Q<0b00, "vrev16.8", v16i8>;

@@ -124,7 +124,12 @@ namespace llvm {
       VLD4D,
       VST2D,
       VST3D,
-      VST4D
+      VST4D,
+
+      // Vector shuffles:
+      VREV64,       // reverse elements within 64-bit doublewords
+      VREV32,       // reverse elements within 32-bit words
+      VREV16        // reverse elements within 16-bit halfwords
     };
   }
 
@@ -135,11 +140,6 @@ namespace llvm {
     /// return the constant being splatted.  The ByteSize field indicates the
     /// number of bytes of each element [1248].
     SDValue getVMOVImm(SDNode *N, unsigned ByteSize, SelectionDAG &DAG);
-
-    /// isVREVMask - Check if a vector shuffle corresponds to a VREV
-    /// instruction with the specified blocksize.  (The order of the elements
-    /// within each block of the vector is reversed.)
-    bool isVREVMask(ShuffleVectorSDNode *N, unsigned blocksize);
   }
 
   //===--------------------------------------------------------------------===//
