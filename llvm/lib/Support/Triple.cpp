@@ -99,7 +99,7 @@ Triple::ArchType Triple::getArchTypeForLLVMName(const StringRef &Name) {
     return thumb;
   if (Name == "x86")
     return x86;
-  if (Name == "x86_64")
+  if (Name == "x86-64")
     return x86_64;
   if (Name == "xcore")
     return xcore;
