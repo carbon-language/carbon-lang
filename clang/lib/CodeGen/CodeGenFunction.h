@@ -374,6 +374,12 @@ public:
                                     const FunctionDecl *FD,
                                     llvm::Function *Fn,
                                     const FunctionArgList &Args);
+  
+  void SynthesizeCXXCopyAssignment(const CXXMethodDecl *CD,
+                                   const FunctionDecl *FD,
+                                   llvm::Function *Fn,
+                                   const FunctionArgList &Args);
+  
   void SynthesizeDefaultConstructor(const CXXConstructorDecl *CD,
                                     const FunctionDecl *FD,
                                     llvm::Function *Fn,

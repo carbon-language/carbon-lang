@@ -653,6 +653,11 @@ llvm::Constant *CodeGenModule::GetOrCreateLLVMFunction(const char *MangledName,
       else if (!ClassDecl->hasUserDeclaredConstructor())
         DeferredDeclsToEmit.push_back(D);
     }
+    else 
+      if (const CXXMethodDecl *MD = dyn_cast<CXXMethodDecl>(FD))
+        if (MD->isCopyAssignment()) {
+          DeferredDeclsToEmit.push_back(D);
+        }
   }
   
   // This function doesn't have a complete type (for example, the return

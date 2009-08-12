@@ -902,6 +902,32 @@ void CodeGenFunction::SynthesizeCXXCopyConstructor(const CXXConstructorDecl *CD,
   FinishFunction();
 }  
 
+/// SynthesizeCXXCopyAssignment - Implicitly define copy assignment operator.
+/// Before the implicitly-declared copy assignment operator for a class is 
+/// implicitly defined, all implicitly- declared copy assignment operators for 
+/// its direct base classes and its nonstatic data members shall have been 
+/// implicitly defined. [12.8-p12]
+/// The implicitly-defined copy assignment operator for class X performs 
+/// memberwise assignment of its subob- jects. The direct base classes of X are 
+/// assigned first, in the order of their declaration in 
+/// the base-specifier-list, and then the immediate nonstatic data members of X 
+/// are assigned, in the order in which they were declared in the class 
+/// definition.Each subobject is assigned in the manner appropriate to its type:
+/// — if the subobject is of class type, the copy assignment operator for the 
+///   class is used (as if by explicit qual- ification; that is, ignoring any 
+///   possible virtual overriding functions in more derived classes);
+/// — if the subobject is an array, each element is assigned, in the manner 
+///   appropriate to the element type;
+/// — if the subobject is of scalar type, the built-in assignment operator is 
+///   used.
+void CodeGenFunction::SynthesizeCXXCopyAssignment(const CXXMethodDecl *CD,
+                                                  const FunctionDecl *FD,
+                                                  llvm::Function *Fn,
+                                                  const FunctionArgList &Args) {
+  StartFunction(FD, FD->getResultType(), Fn, Args, SourceLocation());
+  
+  FinishFunction();
+}  
 
 /// EmitCtorPrologue - This routine generates necessary code to initialize
 /// base classes and non-static data members belonging to this constructor.

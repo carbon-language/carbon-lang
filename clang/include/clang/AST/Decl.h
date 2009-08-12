@@ -682,6 +682,7 @@ private:
   bool HasWrittenPrototype : 1;
   bool IsDeleted : 1;
   bool IsTrivial : 1; // sunk from CXXMethodDecl
+  bool IsCopyAssignment : 1;  // sunk from CXXMethodDecl
   bool HasImplicitReturnZero : 1;
 
   // Move to DeclGroup when it is implemented.
@@ -723,6 +724,7 @@ protected:
       SClass(S), IsInline(isInline), C99InlineDefinition(false), 
       IsVirtualAsWritten(false), IsPure(false), HasInheritedPrototype(false), 
       HasWrittenPrototype(true), IsDeleted(false), IsTrivial(false),
+      IsCopyAssignment(false),
       HasImplicitReturnZero(false),
       TypeSpecStartLoc(TSSL), EndRangeLoc(L), TemplateOrSpecialization() {}
 
@@ -799,6 +801,9 @@ public:
   /// the class has been fully built by Sema.
   bool isTrivial() const { return IsTrivial; }
   void setTrivial(bool IT) { IsTrivial = IT; }
+                       
+  bool isCopyAssignment() const { return IsCopyAssignment; }
+  void setCopyAssignment(bool CA) { IsCopyAssignment = CA; }
 
   /// Whether falling off this function implicitly returns null/zero.
   /// If a more specific implicit return value is required, front-ends
