@@ -48,7 +48,7 @@ namespace {
     unsigned PredCC1  : 2; // 0 - If predicated, cc is on and vice versa.
                            // 1 - No cc field.
                            // 2 - Always set CPSR.
-    unsigned PredCC2  : 1;
+    unsigned PredCC2  : 2;
     unsigned Special  : 1; // Needs to be dealt with specially
   };
 
