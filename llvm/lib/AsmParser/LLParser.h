@@ -143,6 +143,7 @@ namespace llvm {
     bool ParseDefine();
 
     bool ParseGlobalType(bool &IsConstant);
+    bool ParseUnnamedGlobal();
     bool ParseNamedGlobal();
     bool ParseGlobal(const std::string &Name, LocTy Loc, unsigned Linkage,
                      bool HasLinkage, unsigned Visibility);

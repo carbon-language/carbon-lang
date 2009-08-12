@@ -117,8 +117,10 @@ bool LLParser::ParseTopLevelEntities() {
     case lltok::kw_target:  if (ParseTargetDefinition()) return true; break;
     case lltok::kw_deplibs: if (ParseDepLibs()) return true; break;
     case lltok::kw_type:    if (ParseUnnamedType()) return true; break;
+    case lltok::LocalVarID: if (ParseUnnamedType()) return true; break;
     case lltok::StringConstant: // FIXME: REMOVE IN LLVM 3.0
     case lltok::LocalVar:   if (ParseNamedType()) return true; break;
+    case lltok::GlobalID:   if (ParseUnnamedGlobal()) return true; break;
     case lltok::GlobalVar:  if (ParseNamedGlobal()) return true; break;
     case lltok::Metadata:   if (ParseStandaloneMetadata()) return true; break;
     case lltok::NamedMD:    if (ParseNamedMetadata()) return true; break;
@@ -236,9 +238,23 @@ bool LLParser::ParseDepLibs() {
   return ParseToken(lltok::rsquare, "expected ']' at end of list");
 }
 
-/// toplevelentity
+/// ParseUnnamedType:
 ///   ::= 'type' type
+///   ::= LocalVarID '=' 'type' type
 bool LLParser::ParseUnnamedType() {
+  unsigned TypeID = NumberedTypes.size();
+
+  // Handle the LocalVarID form.
+  if (Lex.getKind() == lltok::LocalVarID) {
+    if (Lex.getUIntVal() != TypeID)
+      return Error(Lex.getLoc(), "type expected to be numbered '%" +
+                   utostr(TypeID) + "'");
+    Lex.Lex(); // eat LocalVarID;
+
+    if (ParseToken(lltok::equal, "expected '=' after name"))
+      return true;
+  }
+
   assert(Lex.getKind() == lltok::kw_type);
   LocTy TypeLoc = Lex.getLoc();
   Lex.Lex(); // eat kw_type
@@ -246,8 +262,6 @@ bool LLParser::ParseUnnamedType() {
   PATypeHolder Ty(Type::VoidTy);
   if (ParseType(Ty)) return true;
  
-  unsigned TypeID = NumberedTypes.size();
-  
   // See if this type was previously referenced.
   std::map<unsigned, std::pair<PATypeHolder, LocTy> >::iterator
     FI = ForwardRefTypeIDs.find(TypeID);
@@ -346,6 +360,38 @@ bool LLParser::ParseGlobalType(bool &IsConstant) {
   }
   Lex.Lex();
   return false;
+}
+
+/// ParseUnnamedGlobal:
+///   OptionalVisibility ALIAS ...
+///   OptionalLinkage OptionalVisibility ...   -> global variable
+///   GlobalID '=' OptionalVisibility ALIAS ...
+///   GlobalID '=' OptionalLinkage OptionalVisibility ...   -> global variable
+bool LLParser::ParseUnnamedGlobal() {
+  unsigned VarID = NumberedVals.size();
+  std::string Name;
+  LocTy NameLoc = Lex.getLoc();
+
+  // Handle the GlobalID form.
+  if (Lex.getKind() == lltok::GlobalID) {
+    if (Lex.getUIntVal() != VarID)
+      return Error(Lex.getLoc(), "variable expected to be numbered '%" +
+                   utostr(VarID) + "'");
+    Lex.Lex(); // eat GlobalID;
+
+    if (ParseToken(lltok::equal, "expected '=' after name"))
+      return true;
+  }
+
+  bool HasLinkage;
+  unsigned Linkage, Visibility;
+  if (ParseOptionalLinkage(Linkage, HasLinkage) ||
+      ParseOptionalVisibility(Visibility))
+    return true;
+  
+  if (HasLinkage || Lex.getKind() != lltok::kw_alias)
+    return ParseGlobal(Name, NameLoc, Linkage, HasLinkage, Visibility);
+  return ParseAlias(Name, NameLoc, Visibility);
 }
 
 /// ParseNamedGlobal:

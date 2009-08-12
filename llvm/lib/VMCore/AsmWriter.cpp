@@ -1442,10 +1442,8 @@ static void PrintVisibility(GlobalValue::VisibilityTypes Vis,
 }
 
 void AssemblyWriter::printGlobal(const GlobalVariable *GV) {
-  if (GV->hasName()) {
-    PrintLLVMName(Out, GV);
-    Out << " = ";
-  }
+  WriteAsOperandInternal(Out, GV, TypePrinter, &Machine);
+  Out << " = ";
 
   if (!GV->hasInitializer() && GV->hasExternalLinkage())
     Out << "external ";
@@ -1518,7 +1516,7 @@ void AssemblyWriter::printAlias(const GlobalAlias *GA) {
 void AssemblyWriter::printTypeSymbolTable(const TypeSymbolTable &ST) {
   // Emit all numbered types.
   for (unsigned i = 0, e = NumberedTypes.size(); i != e; ++i) {
-    Out << "\ttype ";
+    Out << '%' << i << " = type ";
     
     // Make sure we print out at least one level of the type structure, so
     // that we do not get %2 = type %2
@@ -1530,7 +1528,6 @@ void AssemblyWriter::printTypeSymbolTable(const TypeSymbolTable &ST) {
   // Print the named types.
   for (TypeSymbolTable::const_iterator TI = ST.begin(), TE = ST.end();
        TI != TE; ++TI) {
-    Out << '\t';
     PrintLLVMName(Out, TI->first, LocalPrefix);
     Out << " = type ";
 
@@ -1737,6 +1734,7 @@ void AssemblyWriter::printInfoComment(const Value &V) {
 void AssemblyWriter::printInstruction(const Instruction &I) {
   if (AnnotationWriter) AnnotationWriter->emitInstructionAnnot(&I, Out);
 
+  // Print out indentation for an instruction.
   Out << '\t';
 
   // Print out name if it exists...
