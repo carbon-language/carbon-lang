@@ -3,7 +3,11 @@
 
 function( get_target_triple var )
   if( MSVC )
-    set( ${var} "i686-pc-win32" PARENT_SCOPE )
+    if( CMAKE_CL_64 )
+      set( ${var} "x86_64-pc-win32" PARENT_SCOPE )
+    else()
+      set( ${var} "i686-pc-win32" PARENT_SCOPE )
+    endif()
   else( MSVC )
     set(config_guess ${LLVM_MAIN_SRC_DIR}/autoconf/config.guess)
     execute_process(COMMAND sh ${config_guess}
