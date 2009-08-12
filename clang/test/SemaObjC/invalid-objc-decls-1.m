@@ -32,3 +32,11 @@ Super foo( // expected-error{{interface interface type 'Super' cannot be returne
 	Super p1; // expected-error{{interface type cannot be statically allocated}}
 	return p1;
 }
+
+@interface NSMutableSet @end
+
+@interface DVTDummyAnnotationProvider  
+  @property(readonly) NSMutableSet annotations;	// expected-error{{interface type cannot be statically allocated}}
+
+@end
+

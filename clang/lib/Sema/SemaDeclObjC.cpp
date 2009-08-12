@@ -1940,6 +1940,8 @@ Sema::DeclPtrTy Sema::ActOnProperty(Scope *S, SourceLocation AtLoc,
               Diag(AtLoc, diag::warn_implements_nscopying)  
                 << FD.D.getIdentifier();
       }
+  if (T->isObjCInterfaceType())
+    Diag(FD.D.getIdentifierLoc(), diag::err_statically_allocated_object);
   
   DeclContext *DC = dyn_cast<DeclContext>(ClassDecl);
   assert(DC && "ClassDecl is not a DeclContext");
