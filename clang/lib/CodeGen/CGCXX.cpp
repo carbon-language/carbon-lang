@@ -626,7 +626,8 @@ void CodeGenFunction::GenerateVtableForBase(const CXXRecordDecl *RD,
                                             llvm::Constant *rtti,
                                          std::vector<llvm::Constant *> &methods,
                                             bool isPrimary,
-                                            bool ForVirtualBase) {
+                                            bool ForVirtualBase,
+                   llvm::SmallSet<const CXXRecordDecl *, 32> &IndirectPrimary) {
   typedef CXXRecordDecl::method_iterator meth_iter;
   llvm::Type *Ptr8Ty;
   Ptr8Ty = llvm::PointerType::get(llvm::Type::Int8Ty, 0);
@@ -668,9 +669,11 @@ void CodeGenFunction::GenerateVtableForBase(const CXXRecordDecl *RD,
     const CXXRecordDecl *PrimaryBase = Layout.getPrimaryBase(); 
     const bool PrimaryBaseWasVirtual = Layout.getPrimaryBaseWasVirtual();
     if (PrimaryBase) {
+      if (PrimaryBaseWasVirtual)
+        IndirectPrimary.insert(PrimaryBase);
       TopPrimary = false;
       GenerateVtableForBase(0, PrimaryBase, rtti, methods, true,
-                            PrimaryBaseWasVirtual);
+                            PrimaryBaseWasVirtual, IndirectPrimary);
     }
   }
   // then come the vcall offsets for all our virtual bases.
@@ -739,10 +742,11 @@ llvm::Value *CodeGenFunction::GenerateVtable(const CXXRecordDecl *RD) {
   const ASTRecordLayout &Layout = getContext().getASTRecordLayout(RD);
   const CXXRecordDecl *PrimaryBase = Layout.getPrimaryBase();
   const bool PrimaryBaseWasVirtual = Layout.getPrimaryBaseWasVirtual();
+  llvm::SmallSet<const CXXRecordDecl *, 32> IndirectPrimary;
 
   // The primary base comes first.
   GenerateVtableForBase(PrimaryBase, RD, rtti, methods, true,
-                        PrimaryBaseWasVirtual);
+                        PrimaryBaseWasVirtual, IndirectPrimary);
   for (CXXRecordDecl::base_class_const_iterator i = RD->bases_begin(),
          e = RD->bases_end(); i != e; ++i) {
     if (i->isVirtual())
@@ -750,7 +754,8 @@ llvm::Value *CodeGenFunction::GenerateVtable(const CXXRecordDecl *RD) {
     const CXXRecordDecl *Base = 
       cast<CXXRecordDecl>(i->getType()->getAs<RecordType>()->getDecl());
     if (PrimaryBase != Base) {
-      GenerateVtableForBase(Base, RD, rtti, methods);
+      GenerateVtableForBase(Base, RD, rtti, methods, false, false,
+                            IndirectPrimary);
     }
   }
 
@@ -760,8 +765,9 @@ llvm::Value *CodeGenFunction::GenerateVtable(const CXXRecordDecl *RD) {
          e = RD->vbases_end(); i != e; ++i) {
     const CXXRecordDecl *Base = 
       cast<CXXRecordDecl>(i->getType()->getAs<RecordType>()->getDecl());
-    if (Base != PrimaryBase)
-      GenerateVtableForBase(Base, RD, rtti, methods, false, true);
+    if (!IndirectPrimary.count(Base))
+      GenerateVtableForBase(Base, RD, rtti, methods, false, true,
+                            IndirectPrimary);
   }
 
   llvm::Constant *C;

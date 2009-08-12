@@ -363,8 +363,9 @@ public:
                              const CXXRecordDecl *Class,
                              llvm::Constant *rtti,
                              std::vector<llvm::Constant *> &methods,
-                             bool isPrimary = false,
-                             bool ForVirtualBase = false);
+                             bool isPrimary,
+                             bool ForVirtualBase,
+                    llvm::SmallSet<const CXXRecordDecl *, 32> &IndirectPrimary);
   llvm::Value *GenerateVtable(const CXXRecordDecl *RD);
 
   void EmitCtorPrologue(const CXXConstructorDecl *CD);
