@@ -63,24 +63,24 @@ def HI16 : SDNodeXForm<imm, [{
 // Immediates
 //===----------------------------------------------------------------------===//
 
-def imm3  : PatLeaf<(imm), [{return isImm<3>(N->getSExtValue());}]>;
-def uimm3 : PatLeaf<(imm), [{return isUimm<3>(N->getZExtValue());}]>;
-def uimm4 : PatLeaf<(imm), [{return isUimm<4>(N->getZExtValue());}]>;
-def uimm5 : PatLeaf<(imm), [{return isUimm<5>(N->getZExtValue());}]>;
+def imm3  : PatLeaf<(imm), [{return isInt<3>(N->getSExtValue());}]>;
+def uimm3 : PatLeaf<(imm), [{return isUint<3>(N->getZExtValue());}]>;
+def uimm4 : PatLeaf<(imm), [{return isUint<4>(N->getZExtValue());}]>;
+def uimm5 : PatLeaf<(imm), [{return isUint<5>(N->getZExtValue());}]>;
 
 def uimm5m2 : PatLeaf<(imm), [{
     uint64_t value = N->getZExtValue();
-    return value % 2 == 0 && isUimm<5>(value);
+    return value % 2 == 0 && isUint<5>(value);
 }]>;
 
 def uimm6m4 : PatLeaf<(imm), [{
     uint64_t value = N->getZExtValue();
-    return value % 4 == 0 && isUimm<6>(value);
+    return value % 4 == 0 && isUint<6>(value);
 }]>;
 
-def imm7   : PatLeaf<(imm), [{return isImm<7>(N->getSExtValue());}]>;
-def imm16  : PatLeaf<(imm), [{return isImm<16>(N->getSExtValue());}]>;
-def uimm16 : PatLeaf<(imm), [{return isUimm<16>(N->getZExtValue());}]>;
+def imm7   : PatLeaf<(imm), [{return isInt<7>(N->getSExtValue());}]>;
+def imm16  : PatLeaf<(imm), [{return isInt<16>(N->getSExtValue());}]>;
+def uimm16 : PatLeaf<(imm), [{return isUint<16>(N->getZExtValue());}]>;
 
 def ximm16 : PatLeaf<(imm), [{
     int64_t value = N->getSExtValue();
@@ -89,12 +89,12 @@ def ximm16 : PatLeaf<(imm), [{
 
 def imm17m2 : PatLeaf<(imm), [{
     int64_t value = N->getSExtValue();
-    return value % 2 == 0 && isImm<17>(value);
+    return value % 2 == 0 && isInt<17>(value);
 }]>;
 
 def imm18m4 : PatLeaf<(imm), [{
     int64_t value = N->getSExtValue();
-    return value % 4 == 0 && isImm<18>(value);
+    return value % 4 == 0 && isInt<18>(value);
 }]>;
 
 // 32-bit bitmask transformed to a bit number

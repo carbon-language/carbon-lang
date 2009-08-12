@@ -24,16 +24,6 @@ namespace llvm {
   class TargetInstrInfo;
   class Type;
 
-  template<unsigned N>
-  static inline bool isImm(int x) {
-    return x >= -(1<<(N-1)) && x < (1<<(N-1));
-  }
-
-  template<unsigned N>
-  static inline bool isUimm(unsigned x) {
-    return x < (1<<N);
-  }
-
   // Subregister indices, keep in sync with BlackfinRegisterInfo.td
   enum BfinSubregIdx {
     bfin_subreg_lo16 = 1,

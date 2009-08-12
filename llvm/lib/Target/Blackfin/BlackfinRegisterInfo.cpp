@@ -128,7 +128,7 @@ void BlackfinRegisterInfo::adjustRegister(MachineBasicBlock &MBB,
                                           int delta) const {
   if (!delta)
     return;
-  if (isImm<7>(delta)) {
+  if (isInt<7>(delta)) {
     BuildMI(MBB, I, DL, TII.get(BF::ADDpp_imm7), Reg)
       .addReg(Reg)              // No kill on two-addr operand
       .addImm(delta);
@@ -159,17 +159,17 @@ void BlackfinRegisterInfo::loadConstant(MachineBasicBlock &MBB,
                                         DebugLoc DL,
                                         unsigned Reg,
                                         int value) const {
-  if (isImm<7>(value)) {
+  if (isInt<7>(value)) {
     BuildMI(MBB, I, DL, TII.get(BF::LOADimm7), Reg).addImm(value);
     return;
   }
 
-  if (isUimm<16>(value)) {
+  if (isUint<16>(value)) {
     BuildMI(MBB, I, DL, TII.get(BF::LOADuimm16), Reg).addImm(value);
     return;
   }
 
-  if (isImm<16>(value)) {
+  if (isInt<16>(value)) {
     BuildMI(MBB, I, DL, TII.get(BF::LOADimm16), Reg).addImm(value);
     return;
   }
@@ -254,20 +254,20 @@ void BlackfinRegisterInfo::eliminateFrameIndex(MachineBasicBlock::iterator II,
     assert(FIPos==1 && "Bad frame index operand");
     MI.getOperand(FIPos).ChangeToRegister(BaseReg, false);
     MI.getOperand(FIPos+1).setImm(Offset);
-    if (isUimm<6>(Offset)) {
+    if (isUint<6>(Offset)) {
       MI.setDesc(TII.get(isStore
                          ? BF::STORE32p_uimm6m4
                          : BF::LOAD32p_uimm6m4));
       return;
     }
-    if (BaseReg == BF::FP && isUimm<7>(-Offset)) {
+    if (BaseReg == BF::FP && isUint<7>(-Offset)) {
       MI.setDesc(TII.get(isStore
                          ? BF::STORE32fp_nimm7m4
                          : BF::LOAD32fp_nimm7m4));
       MI.getOperand(FIPos+1).setImm(-Offset);
       return;
     }
-    if (isImm<18>(Offset)) {
+    if (isInt<18>(Offset)) {
       MI.setDesc(TII.get(isStore
                          ? BF::STORE32p_imm18m4
                          : BF::LOAD32p_imm18m4));

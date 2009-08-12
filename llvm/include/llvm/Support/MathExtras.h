@@ -52,6 +52,16 @@ inline bool isUInt32(int64_t Value) {
   return static_cast<uint32_t>(Value) == Value;
 }
 
+template<unsigned N>
+inline bool isInt(int64_t x) {
+  return -(INT64_C(1)<<(N-1)) <= x && x < (INT64_C(1)<<(N-1));
+}
+
+template<unsigned N>
+inline bool isUint(uint64_t x) {
+  return x < (UINT64_C(1)<<N);
+}
+
 /// isMask_32 - This function returns true if the argument is a sequence of ones
 /// starting at the least significant bit with the remainder zero (32 bit
 /// version).   Ex. isMask_32(0x0000FFFFU) == true.
