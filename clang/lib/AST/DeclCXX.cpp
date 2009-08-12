@@ -168,7 +168,8 @@ CXXConstructorDecl *CXXRecordDecl::getCopyConstructor(ASTContext &Context,
   return 0;
 }
 
-bool CXXRecordDecl::hasConstCopyAssignment(ASTContext &Context) const {
+bool CXXRecordDecl::hasConstCopyAssignment(ASTContext &Context,
+                                           const CXXMethodDecl *& MD) const {
   QualType ClassType = Context.getCanonicalType(Context.getTypeDeclType(
     const_cast<CXXRecordDecl*>(this)));
   DeclarationName OpName =Context.DeclarationNames.getCXXOperatorName(OO_Equal);
@@ -200,7 +201,7 @@ bool CXXRecordDecl::hasConstCopyAssignment(ASTContext &Context) const {
     }
     if (Context.getCanonicalType(ArgType).getUnqualifiedType() != ClassType)
       continue;
-
+    MD = Method;
     // We have a single argument of type cv X or cv X&, i.e. we've found the
     // copy assignment operator. Return whether it accepts const arguments.
     return AcceptsConst;

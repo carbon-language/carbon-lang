@@ -493,7 +493,9 @@ public:
 
   /// hasConstCopyAssignment - Determines whether this class has a
   /// copy assignment operator that accepts a const-qualified argument.
-  bool hasConstCopyAssignment(ASTContext &Context) const;
+  /// It returns its decl in MD if found.
+  bool hasConstCopyAssignment(ASTContext &Context, 
+                              const CXXMethodDecl *&MD) const;
 
   /// addedConstructor - Notify the class that another constructor has
   /// been added. This routine helps maintain information about the

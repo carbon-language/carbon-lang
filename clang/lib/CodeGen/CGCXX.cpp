@@ -822,6 +822,46 @@ void CodeGenFunction::EmitClassMemberwiseCopy(
   }
 }
 
+/// EmitClassCopyAssignment - This routine generates code to copy assign a class
+/// object from SrcValue to DestValue. Assignment can be either a bitwise 
+/// assignment of via an assignment operator call.
+void CodeGenFunction::EmitClassCopyAssignment(
+                                        llvm::Value *Dest, llvm::Value *Src,
+                                        const CXXRecordDecl *ClassDecl, 
+                                        const CXXRecordDecl *BaseClassDecl, 
+                                        QualType Ty) {
+  if (ClassDecl) {
+    Dest = AddressCXXOfBaseClass(Dest, ClassDecl, BaseClassDecl);
+    Src = AddressCXXOfBaseClass(Src, ClassDecl, BaseClassDecl) ;
+  }
+  if (BaseClassDecl->hasTrivialCopyAssignment()) {
+    EmitAggregateCopy(Dest, Src, Ty);
+    return;
+  }
+  
+  const CXXMethodDecl *MD = 0;
+  if (BaseClassDecl->hasConstCopyAssignment(getContext(), MD)) {
+    const FunctionProtoType *FPT = MD->getType()->getAsFunctionProtoType();
+    const llvm::Type *Ty = 
+      CGM.getTypes().GetFunctionType(CGM.getTypes().getFunctionInfo(MD), 
+                                     FPT->isVariadic());
+    llvm::Constant *Callee = CGM.GetAddrOfFunction(GlobalDecl(MD), Ty);
+    
+    CallArgList CallArgs;
+    // Push the this (Dest) ptr.
+    CallArgs.push_back(std::make_pair(RValue::get(Dest),
+                                      MD->getThisType(getContext())));
+    
+    // Push the Src ptr.
+    CallArgs.push_back(std::make_pair(RValue::get(Src),
+                                      MD->getParamDecl(0)->getType()));
+    QualType ResultType = 
+      MD->getType()->getAsFunctionType()->getResultType();
+    EmitCall(CGM.getTypes().getFunctionInfo(ResultType, CallArgs),
+             Callee, CallArgs, MD);
+  }
+}
+
 /// SynthesizeDefaultConstructor - synthesize a default constructor
 void 
 CodeGenFunction::SynthesizeDefaultConstructor(const CXXConstructorDecl *CD,
@@ -916,18 +956,70 @@ void CodeGenFunction::SynthesizeCXXCopyConstructor(const CXXConstructorDecl *CD,
 /// the base-specifier-list, and then the immediate nonstatic data members of X 
 /// are assigned, in the order in which they were declared in the class 
 /// definition.Each subobject is assigned in the manner appropriate to its type:
-/// — if the subobject is of class type, the copy assignment operator for the 
-///   class is used (as if by explicit qual- ification; that is, ignoring any 
+///   if the subobject is of class type, the copy assignment operator for the 
+///   class is used (as if by explicit qualification; that is, ignoring any 
 ///   possible virtual overriding functions in more derived classes);
-/// — if the subobject is an array, each element is assigned, in the manner 
+///
+///   if the subobject is an array, each element is assigned, in the manner 
 ///   appropriate to the element type;
-/// — if the subobject is of scalar type, the built-in assignment operator is 
+///
+///   if the subobject is of scalar type, the built-in assignment operator is 
 ///   used.
 void CodeGenFunction::SynthesizeCXXCopyAssignment(const CXXMethodDecl *CD,
                                                   const FunctionDecl *FD,
                                                   llvm::Function *Fn,
                                                   const FunctionArgList &Args) {
+
+  const CXXRecordDecl *ClassDecl = cast<CXXRecordDecl>(CD->getDeclContext());
+  assert(!ClassDecl->hasUserDeclaredCopyAssignment() &&
+         "SynthesizeCXXCopyAssignment - copy assignment has user declaration");
   StartFunction(FD, FD->getResultType(), Fn, Args, SourceLocation());
+  
+  FunctionArgList::const_iterator i = Args.begin();
+  const VarDecl *ThisArg = i->first;
+  llvm::Value *ThisObj = GetAddrOfLocalVar(ThisArg);
+  llvm::Value *LoadOfThis = Builder.CreateLoad(ThisObj, "this");
+  const VarDecl *SrcArg = (i+1)->first;
+  llvm::Value *SrcObj = GetAddrOfLocalVar(SrcArg);
+  llvm::Value *LoadOfSrc = Builder.CreateLoad(SrcObj);
+  
+  for (CXXRecordDecl::base_class_const_iterator Base = ClassDecl->bases_begin();
+       Base != ClassDecl->bases_end(); ++Base) {
+    // FIXME. copy assignment of virtual base NYI
+    if (Base->isVirtual())
+      continue;
+    
+    CXXRecordDecl *BaseClassDecl
+      = cast<CXXRecordDecl>(Base->getType()->getAs<RecordType>()->getDecl());
+    EmitClassCopyAssignment(LoadOfThis, LoadOfSrc, ClassDecl, BaseClassDecl,
+                            Base->getType());
+  }
+  
+  for (CXXRecordDecl::field_iterator Field = ClassDecl->field_begin(),
+       FieldEnd = ClassDecl->field_end();
+       Field != FieldEnd; ++Field) {
+    QualType FieldType = getContext().getCanonicalType((*Field)->getType());
+    
+    // FIXME. How about copy assignment of  arrays!
+    assert(!getContext().getAsArrayType(FieldType) &&
+           "FIXME. Copy assignment of arrays NYI");
+    
+    if (const RecordType *FieldClassType = FieldType->getAs<RecordType>()) {
+      CXXRecordDecl *FieldClassDecl
+      = cast<CXXRecordDecl>(FieldClassType->getDecl());
+      LValue LHS = EmitLValueForField(LoadOfThis, *Field, false, 0);
+      LValue RHS = EmitLValueForField(LoadOfSrc, *Field, false, 0);
+      
+      EmitClassCopyAssignment(LHS.getAddress(), RHS.getAddress(), 
+                              0 /*ClassDecl*/, FieldClassDecl, FieldType);
+      continue;
+    }
+    // Do a built-in assignment of scalar data members.
+    LValue LHS = EmitLValueForField(LoadOfThis, *Field, false, 0);
+    LValue RHS = EmitLValueForField(LoadOfSrc, *Field, false, 0);
+    RValue RVRHS = EmitLoadOfLValue(RHS, FieldType);
+    EmitStoreThroughLValue(RVRHS, LHS, FieldType);
+  }  
   
   FinishFunction();
 }  

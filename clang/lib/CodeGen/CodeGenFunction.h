@@ -575,6 +575,11 @@ public:
                                const CXXRecordDecl *BaseClassDecl,
                                QualType Ty);
   
+  void EmitClassCopyAssignment(llvm::Value *DestValue, llvm::Value *SrcValue,
+                               const CXXRecordDecl *ClassDecl, 
+                               const CXXRecordDecl *BaseClassDecl,
+                               QualType Ty);
+  
   void EmitCXXConstructorCall(const CXXConstructorDecl *D, CXXCtorType Type, 
                               llvm::Value *This,
                               CallExpr::const_arg_iterator ArgBeg,

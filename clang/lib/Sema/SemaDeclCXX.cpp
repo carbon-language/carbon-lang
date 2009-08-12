@@ -1398,7 +1398,9 @@ void Sema::AddImplicitlyDeclaredMembersToClass(CXXRecordDecl *ClassDecl) {
          HasConstCopyAssignment && Base != ClassDecl->bases_end(); ++Base) {
       const CXXRecordDecl *BaseClassDecl
         = cast<CXXRecordDecl>(Base->getType()->getAs<RecordType>()->getDecl());
-      HasConstCopyAssignment = BaseClassDecl->hasConstCopyAssignment(Context);
+      const CXXMethodDecl *MD = 0;
+      HasConstCopyAssignment = BaseClassDecl->hasConstCopyAssignment(Context, 
+                                                                     MD);
     }
 
     //       -- for all the nonstatic data members of X that are of a class
@@ -1414,8 +1416,9 @@ void Sema::AddImplicitlyDeclaredMembersToClass(CXXRecordDecl *ClassDecl) {
       if (const RecordType *FieldClassType = FieldType->getAs<RecordType>()) {
         const CXXRecordDecl *FieldClassDecl
           = cast<CXXRecordDecl>(FieldClassType->getDecl());
+        const CXXMethodDecl *MD = 0;
         HasConstCopyAssignment
-          = FieldClassDecl->hasConstCopyAssignment(Context);
+          = FieldClassDecl->hasConstCopyAssignment(Context, MD);
       }
     }
 
