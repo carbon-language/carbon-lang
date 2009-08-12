@@ -152,7 +152,7 @@ bool PrintDbgInfo::runOnFunction(Function &F) {
           Printed = true;
         }
 
-        Out << *i;
+        Out << *i << '\n';
         printVariableDeclaration(i);
 
         if (const User *U = dyn_cast<User>(i)) {
