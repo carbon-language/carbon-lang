@@ -108,7 +108,7 @@ public:
     void *MemBase = malloc(Size + Alignment - 1 + sizeof(void*));
 
     // Make the slab.
-    MemSlab *Slab = (MemSlab*)(((uintptr_t)MemBase + Alignment - 1) &
+    MemSlab *Slab = (MemSlab*)(((uintptr_t)MemBase+sizeof(void*)+Alignment-1) &
                                ~(uintptr_t)(Alignment - 1));
     Slab->Size = Size;
     Slab->NextPtr = 0;
