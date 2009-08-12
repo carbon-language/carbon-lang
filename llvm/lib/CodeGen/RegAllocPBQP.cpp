@@ -82,6 +82,7 @@ namespace {
     virtual void getAnalysisUsage(AnalysisUsage &au) const {
       au.addRequired<LiveIntervals>();
       //au.addRequiredID(SplitCriticalEdgesID);
+      au.addRequired<RegisterCoalescer>();
       au.addRequired<LiveStacks>();
       au.addPreserved<LiveStacks>();
       au.addRequired<MachineLoopInfo>();
