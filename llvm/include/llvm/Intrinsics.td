@@ -309,6 +309,8 @@ let Properties = [IntrNoMem] in {
   def int_eh_sjlj_setjmp  : Intrinsic<[llvm_i32_ty],  [llvm_ptr_ty]>;
   def int_eh_sjlj_longjmp : Intrinsic<[llvm_void_ty], [llvm_ptr_ty]>;
   def int_eh_sjlj_lsda    : Intrinsic<[llvm_ptr_ty]>;
+}
+let Properties = [IntrWriteMem] in {
   def int_eh_sjlj_callsite: Intrinsic<[llvm_void_ty], [llvm_i32_ty]>;
 }
 
