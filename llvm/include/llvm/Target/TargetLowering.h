@@ -186,14 +186,14 @@ public:
       ValueTypeActions[3] = RHS.ValueTypeActions[3];
     }
     
-    LegalizeAction getTypeAction(EVT VT) const {
+    LegalizeAction getTypeAction(LLVMContext &Context, EVT VT) const {
       if (VT.isExtended()) {
         if (VT.isVector()) {
           return VT.isPow2VectorType() ? Expand : Promote;
         }
         if (VT.isInteger())
           // First promote to a power-of-two size, then expand if necessary.
-          return VT == VT.getRoundIntegerType() ? Expand : Promote;
+          return VT == VT.getRoundIntegerType(Context) ? Expand : Promote;
         assert(0 && "Unsupported extended type!");
         return Legal;
       }
@@ -216,8 +216,8 @@ public:
   /// it is already legal (return 'Legal') or we need to promote it to a larger
   /// type (return 'Promote'), or we need to expand it into multiple registers
   /// of smaller integer type (return 'Expand').  'Custom' is not an option.
-  LegalizeAction getTypeAction(EVT VT) const {
-    return ValueTypeActions.getTypeAction(VT);
+  LegalizeAction getTypeAction(LLVMContext &Context, EVT VT) const {
+    return ValueTypeActions.getTypeAction(Context, VT);
   }
 
   /// getTypeToTransformTo - For types supported by the target, this is an
@@ -226,34 +226,37 @@ public:
   /// than the largest integer register, this contains one step in the expansion
   /// to get to the smaller register. For illegal floating point types, this
   /// returns the integer type to transform to.
-  EVT getTypeToTransformTo(EVT VT) const {
+  EVT getTypeToTransformTo(LLVMContext &Context, EVT VT) const {
     if (VT.isSimple()) {
       assert((unsigned)VT.getSimpleVT().SimpleTy < 
              array_lengthof(TransformToType));
       EVT NVT = TransformToType[VT.getSimpleVT().SimpleTy];
-      assert(getTypeAction(NVT) != Promote &&
+      assert(getTypeAction(Context, NVT) != Promote &&
              "Promote may not follow Expand or Promote");
       return NVT;
     }
 
     if (VT.isVector()) {
-      EVT NVT = VT.getPow2VectorType();
+      EVT NVT = VT.getPow2VectorType(Context);
       if (NVT == VT) {
         // Vector length is a power of 2 - split to half the size.
         unsigned NumElts = VT.getVectorNumElements();
         EVT EltVT = VT.getVectorElementType();
-        return (NumElts == 1) ? EltVT : EVT::getVectorVT(EltVT, NumElts / 2);
+        return (NumElts == 1) ?
+          EltVT : EVT::getVectorVT(Context, EltVT, NumElts / 2);
       }
       // Promote to a power of two size, avoiding multi-step promotion.
-      return getTypeAction(NVT) == Promote ? getTypeToTransformTo(NVT) : NVT;
+      return getTypeAction(Context, NVT) == Promote ?
+        getTypeToTransformTo(Context, NVT) : NVT;
     } else if (VT.isInteger()) {
-      EVT NVT = VT.getRoundIntegerType();
+      EVT NVT = VT.getRoundIntegerType(Context);
       if (NVT == VT)
         // Size is a power of two - expand to half the size.
-        return EVT::getIntegerVT(VT.getSizeInBits() / 2);
+        return EVT::getIntegerVT(Context, VT.getSizeInBits() / 2);
       else
         // Promote to a power of two size, avoiding multi-step promotion.
-        return getTypeAction(NVT) == Promote ? getTypeToTransformTo(NVT) : NVT;
+        return getTypeAction(Context, NVT) == Promote ? 
+          getTypeToTransformTo(Context, NVT) : NVT;
     }
     assert(0 && "Unsupported extended type!");
     return MVT(MVT::Other); // Not reached
@@ -263,14 +266,14 @@ public:
   /// identity function.  For types that must be expanded (i.e. integer types
   /// that are larger than the largest integer register or illegal floating
   /// point types), this returns the largest legal type it will be expanded to.
-  EVT getTypeToExpandTo(EVT VT) const {
+  EVT getTypeToExpandTo(LLVMContext &Context, EVT VT) const {
     assert(!VT.isVector());
     while (true) {
-      switch (getTypeAction(VT)) {
+      switch (getTypeAction(Context, VT)) {
       case Legal:
         return VT;
       case Expand:
-        VT = getTypeToTransformTo(VT);
+        VT = getTypeToTransformTo(Context, VT);
         break;
       default:
         assert(false && "Type is not legal nor is it to be expanded!");
@@ -289,7 +292,7 @@ public:
   /// register.  It also returns the VT and quantity of the intermediate values
   /// before they are promoted/expanded.
   ///
-  unsigned getVectorTypeBreakdown(EVT VT,
+  unsigned getVectorTypeBreakdown(LLVMContext &Context, EVT VT,
                                   EVT &IntermediateVT,
                                   unsigned &NumIntermediates,
                                   EVT &RegisterVT) const;
@@ -549,7 +552,14 @@ public:
   
   /// getRegisterType - Return the type of registers that this ValueType will
   /// eventually require.
-  EVT getRegisterType(EVT VT) const {
+  EVT getRegisterType(MVT VT) const {
+    assert((unsigned)VT.SimpleTy < array_lengthof(RegisterTypeForVT));
+    return RegisterTypeForVT[VT.SimpleTy];
+  }
+  
+  /// getRegisterType - Return the type of registers that this ValueType will
+  /// eventually require.
+  EVT getRegisterType(LLVMContext &Context, EVT VT) const {
     if (VT.isSimple()) {
       assert((unsigned)VT.getSimpleVT().SimpleTy <
                 array_lengthof(RegisterTypeForVT));
@@ -558,11 +568,12 @@ public:
     if (VT.isVector()) {
       EVT VT1, RegisterVT;
       unsigned NumIntermediates;
-      (void)getVectorTypeBreakdown(VT, VT1, NumIntermediates, RegisterVT);
+      (void)getVectorTypeBreakdown(Context, VT, VT1,
+                                   NumIntermediates, RegisterVT);
       return RegisterVT;
     }
     if (VT.isInteger()) {
-      return getRegisterType(getTypeToTransformTo(VT));
+      return getRegisterType(Context, getTypeToTransformTo(Context, VT));
     }
     assert(0 && "Unsupported extended type!");
     return EVT(MVT::Other); // Not reached
@@ -574,7 +585,7 @@ public:
   /// into pieces.  For types like i140, which are first promoted then expanded,
   /// it is the number of registers needed to hold all the bits of the original
   /// type.  For an i140 on a 32 bit machine this means 5 registers.
-  unsigned getNumRegisters(EVT VT) const {
+  unsigned getNumRegisters(LLVMContext &Context, EVT VT) const {
     if (VT.isSimple()) {
       assert((unsigned)VT.getSimpleVT().SimpleTy <
                 array_lengthof(NumRegistersForVT));
@@ -583,11 +594,11 @@ public:
     if (VT.isVector()) {
       EVT VT1, VT2;
       unsigned NumIntermediates;
-      return getVectorTypeBreakdown(VT, VT1, NumIntermediates, VT2);
+      return getVectorTypeBreakdown(Context, VT, VT1, NumIntermediates, VT2);
     }
     if (VT.isInteger()) {
       unsigned BitWidth = VT.getSizeInBits();
-      unsigned RegWidth = getRegisterType(VT).getSizeInBits();
+      unsigned RegWidth = getRegisterType(Context, VT).getSizeInBits();
       return (BitWidth + RegWidth - 1) / RegWidth;
     }
     assert(0 && "Unsupported extended type!");

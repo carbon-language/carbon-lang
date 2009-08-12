@@ -101,7 +101,7 @@ namespace {
     TargetLowering::ArgListEntry Entry;
     for (unsigned i = 0, e = Op.getNumOperands(); i != e; ++i) {
       EVT ArgVT = Op.getOperand(i).getValueType();
-      const Type *ArgTy = ArgVT.getTypeForEVT();
+      const Type *ArgTy = ArgVT.getTypeForEVT(*DAG.getContext());
       Entry.Node = Op.getOperand(i);
       Entry.Ty = ArgTy;
       Entry.isSExt = isSigned;
@@ -112,7 +112,8 @@ namespace {
                                            TLI.getPointerTy());
 
     // Splice the libcall in wherever FindInputOutputChains tells us to.
-    const Type *RetTy = Op.getNode()->getValueType(0).getTypeForEVT();
+    const Type *RetTy =
+                Op.getNode()->getValueType(0).getTypeForEVT(*DAG.getContext());
     std::pair<SDValue, SDValue> CallInfo =
             TLI.LowerCallTo(InChain, RetTy, isSigned, !isSigned, false, false,
                             0, CallingConv::C, false,
@@ -683,7 +684,8 @@ LowerLOAD(SDValue Op, SelectionDAG &DAG, const SPUSubtarget *ST) {
 
     // Convert the loaded v16i8 vector to the appropriate vector type
     // specified by the operand:
-    EVT vecVT = EVT::getVectorVT(InVT, (128 / InVT.getSizeInBits()));
+    EVT vecVT = EVT::getVectorVT(*DAG.getContext(), 
+                                 InVT, (128 / InVT.getSizeInBits()));
     result = DAG.getNode(SPUISD::VEC2PREFSLOT, dl, InVT,
                          DAG.getNode(ISD::BIT_CONVERT, dl, vecVT, result));
 
@@ -749,8 +751,10 @@ LowerSTORE(SDValue Op, SelectionDAG &DAG, const SPUSubtarget *ST) {
   switch (SN->getAddressingMode()) {
   case ISD::UNINDEXED: {
     // The vector type we really want to load from the 16-byte chunk.
-    EVT vecVT = EVT::getVectorVT(VT, (128 / VT.getSizeInBits())),
-        stVecVT = EVT::getVectorVT(StVT, (128 / StVT.getSizeInBits()));
+    EVT vecVT = EVT::getVectorVT(*DAG.getContext(),
+                                 VT, (128 / VT.getSizeInBits())),
+        stVecVT = EVT::getVectorVT(*DAG.getContext(),
+                                   StVT, (128 / StVT.getSizeInBits()));
 
     SDValue alignLoadVec;
     SDValue basePtr = SN->getBasePtr();
@@ -2252,7 +2256,8 @@ LowerByteImmed(SDValue Op, SelectionDAG &DAG) {
 */
 static SDValue LowerCTPOP(SDValue Op, SelectionDAG &DAG) {
   EVT VT = Op.getValueType();
-  EVT vecVT = EVT::getVectorVT(VT, (128 / VT.getSizeInBits()));
+  EVT vecVT = EVT::getVectorVT(*DAG.getContext(), 
+                               VT, (128 / VT.getSizeInBits()));
   DebugLoc dl = Op.getDebugLoc();
 
   switch (VT.getSimpleVT().SimpleTy) {
@@ -2575,7 +2580,8 @@ static SDValue LowerTRUNCATE(SDValue Op, SelectionDAG &DAG)
   // Type to truncate to
   EVT VT = Op.getValueType();
   MVT simpleVT = VT.getSimpleVT();
-  EVT VecVT = EVT::getVectorVT(VT, (128 / VT.getSizeInBits()));
+  EVT VecVT = EVT::getVectorVT(*DAG.getContext(), 
+                               VT, (128 / VT.getSizeInBits()));
   DebugLoc dl = Op.getDebugLoc();
 
   // Type to truncate from

@@ -532,6 +532,51 @@ TargetLowering::~TargetLowering() {
   delete &TLOF;
 }
 
+static unsigned getVectorTypeBreakdownMVT(MVT VT, MVT &IntermediateVT,
+                                       unsigned &NumIntermediates,
+                                       EVT &RegisterVT,
+                                       TargetLowering* TLI) {
+  // Figure out the right, legal destination reg to copy into.
+  unsigned NumElts = VT.getVectorNumElements();
+  MVT EltTy = VT.getVectorElementType();
+  
+  unsigned NumVectorRegs = 1;
+  
+  // FIXME: We don't support non-power-of-2-sized vectors for now.  Ideally we 
+  // could break down into LHS/RHS like LegalizeDAG does.
+  if (!isPowerOf2_32(NumElts)) {
+    NumVectorRegs = NumElts;
+    NumElts = 1;
+  }
+  
+  // Divide the input until we get to a supported size.  This will always
+  // end with a scalar if the target doesn't support vectors.
+  while (NumElts > 1 && !TLI->isTypeLegal(MVT::getVectorVT(EltTy, NumElts))) {
+    NumElts >>= 1;
+    NumVectorRegs <<= 1;
+  }
+
+  NumIntermediates = NumVectorRegs;
+  
+  MVT NewVT = MVT::getVectorVT(EltTy, NumElts);
+  if (!TLI->isTypeLegal(NewVT))
+    NewVT = EltTy;
+  IntermediateVT = NewVT;
+
+  EVT DestVT = TLI->getRegisterType(NewVT);
+  RegisterVT = DestVT;
+  if (EVT(DestVT).bitsLT(NewVT)) {
+    // Value is expanded, e.g. i64 -> i16.
+    return NumVectorRegs*(NewVT.getSizeInBits()/DestVT.getSizeInBits());
+  } else {
+    // Otherwise, promotion or legal types use the same number of registers as
+    // the vector decimated to the appropriate level.
+    return NumVectorRegs;
+  }
+  
+  return 1;
+}
+
 /// computeRegisterProperties - Once all of the register classes are added,
 /// this allows us to compute derived properties we expose.
 void TargetLowering::computeRegisterProperties() {
@@ -614,14 +659,14 @@ void TargetLowering::computeRegisterProperties() {
   // Loop over all of the vector value types to see which need transformations.
   for (unsigned i = MVT::FIRST_VECTOR_VALUETYPE;
        i <= (unsigned)MVT::LAST_VECTOR_VALUETYPE; ++i) {
-    EVT VT = (MVT::SimpleValueType)i;
+    MVT VT = (MVT::SimpleValueType)i;
     if (!isTypeLegal(VT)) {
-      EVT IntermediateVT, RegisterVT;
+      MVT IntermediateVT;
+      EVT RegisterVT;
       unsigned NumIntermediates;
       NumRegistersForVT[i] =
-        getVectorTypeBreakdown(VT,
-                               IntermediateVT, NumIntermediates,
-                               RegisterVT);
+        getVectorTypeBreakdownMVT(VT, IntermediateVT, NumIntermediates,
+                                  RegisterVT, this);
       RegisterTypeForVT[i] = RegisterVT;
       
       // Determine if there is a legal wider type.
@@ -662,7 +707,6 @@ MVT::SimpleValueType TargetLowering::getSetCCResultType(EVT VT) const {
   return getValueType(TD->getIntPtrType()).getSimpleVT().SimpleTy;
 }
 
-
 /// getVectorTypeBreakdown - Vector types are broken down into some number of
 /// legal first class types.  For example, MVT::v8f32 maps to 2 MVT::v4f32
 /// with Altivec or SSE1, or 8 promoted MVT::f64 values with the X86 FP stack.
@@ -672,10 +716,10 @@ MVT::SimpleValueType TargetLowering::getSetCCResultType(EVT VT) const {
 /// register.  It also returns the VT and quantity of the intermediate values
 /// before they are promoted/expanded.
 ///
-unsigned TargetLowering::getVectorTypeBreakdown(EVT VT,
+unsigned TargetLowering::getVectorTypeBreakdown(LLVMContext &Context, EVT VT,
                                                 EVT &IntermediateVT,
                                                 unsigned &NumIntermediates,
-                                      EVT &RegisterVT) const {
+                                                EVT &RegisterVT) const {
   // Figure out the right, legal destination reg to copy into.
   unsigned NumElts = VT.getVectorNumElements();
   EVT EltTy = VT.getVectorElementType();
@@ -691,19 +735,20 @@ unsigned TargetLowering::getVectorTypeBreakdown(EVT VT,
   
   // Divide the input until we get to a supported size.  This will always
   // end with a scalar if the target doesn't support vectors.
-  while (NumElts > 1 && !isTypeLegal(EVT::getVectorVT(EltTy, NumElts))) {
+  while (NumElts > 1 && !isTypeLegal(
+                                   EVT::getVectorVT(Context, EltTy, NumElts))) {
     NumElts >>= 1;
     NumVectorRegs <<= 1;
   }
 
   NumIntermediates = NumVectorRegs;
   
-  EVT NewVT = EVT::getVectorVT(EltTy, NumElts);
+  EVT NewVT = EVT::getVectorVT(Context, EltTy, NumElts);
   if (!isTypeLegal(NewVT))
     NewVT = EltTy;
   IntermediateVT = NewVT;
 
-  EVT DestVT = getRegisterType(NewVT);
+  EVT DestVT = getRegisterType(Context, NewVT);
   RegisterVT = DestVT;
   if (DestVT.bitsLT(NewVT)) {
     // Value is expanded, e.g. i64 -> i16.
@@ -830,7 +875,7 @@ TargetLowering::TargetLoweringOpt::ShrinkDemandedOp(SDValue Op,
   if (!isPowerOf2_32(SmallVTBits))
     SmallVTBits = NextPowerOf2(SmallVTBits);
   for (; SmallVTBits < BitWidth; SmallVTBits = NextPowerOf2(SmallVTBits)) {
-    EVT SmallVT = EVT::getIntegerVT(SmallVTBits);
+    EVT SmallVT = EVT::getIntegerVT(*DAG.getContext(), SmallVTBits);
     if (TLI.isTruncateFree(Op.getValueType(), SmallVT) &&
         TLI.isZExtFree(SmallVT, Op.getValueType())) {
       // We found a type with free casts.
@@ -1516,6 +1561,7 @@ TargetLowering::SimplifySetCC(EVT VT, SDValue N0, SDValue N1,
                               ISD::CondCode Cond, bool foldBooleans,
                               DAGCombinerInfo &DCI, DebugLoc dl) const {
   SelectionDAG &DAG = DCI.DAG;
+  LLVMContext &Context = *DAG.getContext();
 
   // These setcc operations always fold.
   switch (Cond) {
@@ -1598,7 +1644,7 @@ TargetLowering::SimplifySetCC(EVT VT, SDValue N0, SDValue N1,
         }
       }
       if (bestWidth) {
-        EVT newVT = EVT::getIntegerVT(bestWidth);
+        EVT newVT = EVT::getIntegerVT(Context, bestWidth);
         if (newVT.isRound()) {
           EVT PtrType = Lod->getOperand(1).getValueType();
           SDValue Ptr = Lod->getBasePtr();

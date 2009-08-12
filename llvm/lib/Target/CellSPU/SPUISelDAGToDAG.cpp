@@ -726,8 +726,10 @@ SPUDAGToDAGISel::Select(SDValue Op) {
              && OpVT == MVT::i64) {
     SDValue Op0 = Op.getOperand(0);
     EVT Op0VT = Op0.getValueType();
-    EVT Op0VecVT = EVT::getVectorVT(Op0VT, (128 / Op0VT.getSizeInBits()));
-    EVT OpVecVT = EVT::getVectorVT(OpVT, (128 / OpVT.getSizeInBits()));
+    EVT Op0VecVT = EVT::getVectorVT(*CurDAG->getContext(),
+                                    Op0VT, (128 / Op0VT.getSizeInBits()));
+    EVT OpVecVT = EVT::getVectorVT(*CurDAG->getContext(), 
+                                   OpVT, (128 / OpVT.getSizeInBits()));
     SDValue shufMask;
 
     switch (Op0VT.getSimpleVT().SimpleTy) {
@@ -969,7 +971,8 @@ SPUDAGToDAGISel::Select(SDValue Op) {
 SDNode *
 SPUDAGToDAGISel::SelectSHLi64(SDValue &Op, EVT OpVT) {
   SDValue Op0 = Op.getOperand(0);
-  EVT VecVT = EVT::getVectorVT(OpVT, (128 / OpVT.getSizeInBits()));
+  EVT VecVT = EVT::getVectorVT(*CurDAG->getContext(), 
+                               OpVT, (128 / OpVT.getSizeInBits()));
   SDValue ShiftAmt = Op.getOperand(1);
   EVT ShiftAmtVT = ShiftAmt.getValueType();
   SDNode *VecOp0, *SelMask, *ZeroFill, *Shift = 0;
@@ -1034,7 +1037,8 @@ SPUDAGToDAGISel::SelectSHLi64(SDValue &Op, EVT OpVT) {
 SDNode *
 SPUDAGToDAGISel::SelectSRLi64(SDValue &Op, EVT OpVT) {
   SDValue Op0 = Op.getOperand(0);
-  EVT VecVT = EVT::getVectorVT(OpVT, (128 / OpVT.getSizeInBits()));
+  EVT VecVT = EVT::getVectorVT(*CurDAG->getContext(),
+                               OpVT, (128 / OpVT.getSizeInBits()));
   SDValue ShiftAmt = Op.getOperand(1);
   EVT ShiftAmtVT = ShiftAmt.getValueType();
   SDNode *VecOp0, *Shift = 0;
@@ -1100,7 +1104,8 @@ SPUDAGToDAGISel::SelectSRLi64(SDValue &Op, EVT OpVT) {
 SDNode *
 SPUDAGToDAGISel::SelectSRAi64(SDValue &Op, EVT OpVT) {
   // Promote Op0 to vector
-  EVT VecVT = EVT::getVectorVT(OpVT, (128 / OpVT.getSizeInBits()));
+  EVT VecVT = EVT::getVectorVT(*CurDAG->getContext(), 
+                               OpVT, (128 / OpVT.getSizeInBits()));
   SDValue ShiftAmt = Op.getOperand(1);
   EVT ShiftAmtVT = ShiftAmt.getValueType();
   DebugLoc dl = Op.getDebugLoc();
@@ -1174,7 +1179,7 @@ SDNode *SPUDAGToDAGISel::SelectI64Constant(SDValue& Op, EVT OpVT,
 
 SDNode *SPUDAGToDAGISel::SelectI64Constant(uint64_t Value64, EVT OpVT,
                                            DebugLoc dl) {
-  EVT OpVecVT = EVT::getVectorVT(OpVT, 2);
+  EVT OpVecVT = EVT::getVectorVT(*CurDAG->getContext(), OpVT, 2);
   SDValue i64vec =
           SPU::LowerV2I64Splat(OpVecVT, *CurDAG, Value64, dl);
 

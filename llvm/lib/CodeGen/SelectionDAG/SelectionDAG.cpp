@@ -790,7 +790,7 @@ void SelectionDAG::VerifyNode(SDNode *N) {
 unsigned SelectionDAG::getEVTAlignment(EVT VT) const {
   const Type *Ty = VT == MVT::iPTR ?
                    PointerType::get(Type::Int8Ty, 0) :
-                   VT.getTypeForEVT();
+                   VT.getTypeForEVT(*getContext());
 
   return TLI.getTargetData()->getABITypeAlignment(Ty);
 }
@@ -1369,7 +1369,7 @@ SDValue SelectionDAG::getShiftAmountOperand(SDValue Op) {
 SDValue SelectionDAG::CreateStackTemporary(EVT VT, unsigned minAlign) {
   MachineFrameInfo *FrameInfo = getMachineFunction().getFrameInfo();
   unsigned ByteSize = VT.getStoreSizeInBits()/8;
-  const Type *Ty = VT.getTypeForEVT();
+  const Type *Ty = VT.getTypeForEVT(*getContext());
   unsigned StackAlign =
   std::max((unsigned)TLI.getTargetData()->getPrefTypeAlignment(Ty), minAlign);
 
@@ -1382,8 +1382,8 @@ SDValue SelectionDAG::CreateStackTemporary(EVT VT, unsigned minAlign) {
 SDValue SelectionDAG::CreateStackTemporary(EVT VT1, EVT VT2) {
   unsigned Bytes = std::max(VT1.getStoreSizeInBits(),
                             VT2.getStoreSizeInBits())/8;
-  const Type *Ty1 = VT1.getTypeForEVT();
-  const Type *Ty2 = VT2.getTypeForEVT();
+  const Type *Ty1 = VT1.getTypeForEVT(*getContext());
+  const Type *Ty2 = VT2.getTypeForEVT(*getContext());
   const TargetData *TD = TLI.getTargetData();
   unsigned Align = std::max(TD->getPrefTypeAlignment(Ty1),
                             TD->getPrefTypeAlignment(Ty2));
@@ -3044,7 +3044,8 @@ static SDValue getMemsetStringVal(EVT VT, DebugLoc dl, SelectionDAG &DAG,
     unsigned NumElts = VT.getVectorNumElements();
     MVT EltVT = (VT.getVectorElementType() == MVT::f32) ? MVT::i32 : MVT::i64;
     return DAG.getNode(ISD::BIT_CONVERT, dl, VT,
-                       DAG.getConstant(0, EVT::getVectorVT(EltVT, NumElts)));
+                       DAG.getConstant(0,
+                       EVT::getVectorVT(*DAG.getContext(), EltVT, NumElts)));
   }
 
   assert(!VT.isVector() && "Can't handle vector type here!");
@@ -3108,7 +3109,8 @@ bool MeetsMaxMemopRequirement(std::vector<EVT> &MemOps,
   EVT VT = TLI.getOptimalMemOpType(Size, Align, isSrcConst, isSrcStr, DAG);
   if (VT != MVT::iAny) {
     unsigned NewAlign = (unsigned)
-      TLI.getTargetData()->getABITypeAlignment(VT.getTypeForEVT());
+      TLI.getTargetData()->getABITypeAlignment(
+        VT.getTypeForEVT(*DAG.getContext()));
     // If source is a string constant, this will require an unaligned load.
     if (NewAlign > Align && (isSrcConst || AllowUnalign)) {
       if (Dst.getOpcode() != ISD::FrameIndex) {
@@ -3227,7 +3229,7 @@ static SDValue getMemcpyLoadsAndStores(SelectionDAG &DAG, DebugLoc dl,
       // thing to do is generate a LoadExt/StoreTrunc pair.  These simplify
       // to Load/Store if NVT==VT.
       // FIXME does the case above also need this?
-      EVT NVT = TLI.getTypeToTransformTo(VT);
+      EVT NVT = TLI.getTypeToTransformTo(*DAG.getContext(), VT);
       assert(NVT.bitsGE(VT));
       Value = DAG.getExtLoad(ISD::EXTLOAD, dl, NVT, Chain,
                              getMemBasePlusOffset(Src, SrcOff, DAG),

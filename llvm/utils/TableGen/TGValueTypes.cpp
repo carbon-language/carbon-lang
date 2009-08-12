@@ -64,25 +64,6 @@ static std::map<unsigned, const Type *>
 static std::map<std::pair<uintptr_t, uintptr_t>, const Type *>
   ExtendedVectorTypeMap;
 
-EVT EVT::getExtendedIntegerVT(unsigned BitWidth) {
-  const Type *&ET = ExtendedIntegerTypeMap[BitWidth];
-  if (!ET) ET = new ExtendedIntegerType(BitWidth);
-  EVT VT;
-  VT.LLVMTy = ET;
-  assert(VT.isExtended() && "Type is not extended!");
-  return VT;
-}
-
-EVT EVT::getExtendedVectorVT(EVT VT, unsigned NumElements) {
-  const Type *&ET = ExtendedVectorTypeMap[std::make_pair(VT.getRawBits(),
-                                                         NumElements)];
-  if (!ET) ET = new ExtendedVectorType(VT, NumElements);
-  EVT ResultVT;
-  ResultVT.LLVMTy = ET;
-  assert(ResultVT.isExtended() && "Type is not extended!");
-  return ResultVT;
-}
-
 bool EVT::isExtendedFloatingPoint() const {
   assert(isExtended() && "Type is not extended!");
   // Extended floating-point types are not supported yet.

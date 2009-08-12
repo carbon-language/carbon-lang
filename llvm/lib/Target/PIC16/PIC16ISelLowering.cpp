@@ -399,7 +399,7 @@ PIC16TargetLowering::MakePIC16Libcall(PIC16ISD::PIC16Libcall Call,
   TargetLowering::ArgListEntry Entry;
   for (unsigned i = 0; i != NumOps; ++i) {
     Entry.Node = Ops[i];
-    Entry.Ty = Entry.Node.getValueType().getTypeForEVT();
+    Entry.Ty = Entry.Node.getValueType().getTypeForEVT(*DAG.getContext());
     Entry.isSExt = isSigned;
     Entry.isZExt = !isSigned;
     Args.push_back(Entry);
@@ -407,7 +407,7 @@ PIC16TargetLowering::MakePIC16Libcall(PIC16ISD::PIC16Libcall Call,
 
   SDValue Callee = DAG.getExternalSymbol(getPIC16LibcallName(Call), MVT::i16);
 
-   const Type *RetTy = RetVT.getTypeForEVT();
+   const Type *RetTy = RetVT.getTypeForEVT(*DAG.getContext());
    std::pair<SDValue,SDValue> CallInfo = 
      LowerCallTo(DAG.getEntryNode(), RetTy, isSigned, !isSigned, false,
                  false, 0, CallingConv::C, false,
@@ -691,7 +691,7 @@ void PIC16TargetLowering::GetExpandedParts(SDValue Op, SelectionDAG &DAG,
                                            SDValue &Lo, SDValue &Hi) {  
   SDNode *N = Op.getNode();
   DebugLoc dl = N->getDebugLoc();
-  EVT NewVT = getTypeToTransformTo(N->getValueType(0));
+  EVT NewVT = getTypeToTransformTo(*DAG.getContext(), N->getValueType(0));
 
   // Extract the lo component.
   Lo = DAG.getNode(ISD::EXTRACT_ELEMENT, dl, NewVT, Op,

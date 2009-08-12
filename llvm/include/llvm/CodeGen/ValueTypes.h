@@ -144,6 +144,25 @@ namespace llvm {
               SimpleTy <= MVT::LAST_VECTOR_VALUETYPE);
     }
     
+    /// isPow2VectorType - Retuns true if the given vector is a power of 2.
+    bool isPow2VectorType() const {
+      unsigned NElts = getVectorNumElements();
+      return !(NElts & (NElts - 1));
+    }
+
+    /// getPow2VectorType - Widens the length of the given vector EVT up to
+    /// the nearest power of 2 and returns that type.
+    MVT getPow2VectorType() const {
+      if (!isPow2VectorType()) {
+        unsigned NElts = getVectorNumElements();
+        unsigned Pow2NElts = 1 <<  Log2_32_Ceil(NElts);
+        return MVT::getVectorVT(getVectorElementType(), Pow2NElts);
+      }
+      else {
+        return *this;
+      }
+    }
+    
     MVT getVectorElementType() const {
       switch (SimpleTy) {
       default:
@@ -364,30 +383,30 @@ namespace llvm {
 
     /// getIntegerVT - Returns the EVT that represents an integer with the given
     /// number of bits.
-    static EVT getIntegerVT(unsigned BitWidth) {
+    static EVT getIntegerVT(LLVMContext &Context, unsigned BitWidth) {
       MVT M = MVT::getIntegerVT(BitWidth);
       if (M.SimpleTy == MVT::LastSimpleValueType+1)
-        return getExtendedIntegerVT(BitWidth);
+        return getExtendedIntegerVT(Context, BitWidth);
       else
         return M;
     }
 
     /// getVectorVT - Returns the EVT that represents a vector NumElements in
     /// length, where each element is of type VT.
-    static EVT getVectorVT(EVT VT, unsigned NumElements) {
+    static EVT getVectorVT(LLVMContext &Context, EVT VT, unsigned NumElements) {
       MVT M = MVT::getVectorVT(VT.V, NumElements);
       if (M.SimpleTy == MVT::LastSimpleValueType+1)
-        return getExtendedVectorVT(VT, NumElements);
+        return getExtendedVectorVT(Context, VT, NumElements);
       else
         return M;
     }
 
     /// getIntVectorWithNumElements - Return any integer vector type that has
     /// the specified number of elements.
-    static EVT getIntVectorWithNumElements(unsigned NumElts) {
+    static EVT getIntVectorWithNumElements(LLVMContext &C, unsigned NumElts) {
       MVT M = MVT::getIntVectorWithNumElements(NumElts);
       if (M.SimpleTy == MVT::LastSimpleValueType+1)
-        return getVectorVT(EVT(MVT::i8), NumElts);
+        return getVectorVT(C, MVT::i8, NumElts);
       else
         return M;
     }
@@ -537,13 +556,13 @@ namespace llvm {
     /// getRoundIntegerType - Rounds the bit-width of the given integer EVT up
     /// to the nearest power of two (and at least to eight), and returns the
     /// integer EVT with that number of bits.
-    EVT getRoundIntegerType() const {
+    EVT getRoundIntegerType(LLVMContext &Context) const {
       assert(isInteger() && !isVector() && "Invalid integer type!");
       unsigned BitWidth = getSizeInBits();
       if (BitWidth <= 8)
         return EVT(MVT::i8);
       else
-        return getIntegerVT(1 << Log2_32_Ceil(BitWidth));
+        return getIntegerVT(Context, 1 << Log2_32_Ceil(BitWidth));
     }
 
     /// isPow2VectorType - Retuns true if the given vector is a power of 2.
@@ -554,11 +573,11 @@ namespace llvm {
 
     /// getPow2VectorType - Widens the length of the given vector EVT up to
     /// the nearest power of 2 and returns that type.
-    EVT getPow2VectorType() const {
+    EVT getPow2VectorType(LLVMContext &Context) const {
       if (!isPow2VectorType()) {
         unsigned NElts = getVectorNumElements();
         unsigned Pow2NElts = 1 <<  Log2_32_Ceil(NElts);
-        return EVT::getVectorVT(getVectorElementType(), Pow2NElts);
+        return EVT::getVectorVT(Context, getVectorElementType(), Pow2NElts);
       }
       else {
         return *this;
@@ -572,7 +591,7 @@ namespace llvm {
     /// getTypeForEVT - This method returns an LLVM type corresponding to the
     /// specified EVT.  For integer types, this returns an unsigned type.  Note
     /// that this will abort for types that cannot be represented.
-    const Type *getTypeForEVT() const;
+    const Type *getTypeForEVT(LLVMContext &Context) const;
 
     /// getEVT - Return the value type corresponding to the specified type.
     /// This returns all pointers as iPTR.  If HandleUnknown is true, unknown
@@ -601,8 +620,9 @@ namespace llvm {
     // Methods for handling the Extended-type case in functions above.
     // These are all out-of-line to prevent users of this header file
     // from having a dependency on Type.h.
-    static EVT getExtendedIntegerVT(unsigned BitWidth);
-    static EVT getExtendedVectorVT(EVT VT, unsigned NumElements);
+    static EVT getExtendedIntegerVT(LLVMContext &C, unsigned BitWidth);
+    static EVT getExtendedVectorVT(LLVMContext &C, EVT VT,
+                                   unsigned NumElements);
     bool isExtendedFloatingPoint() const;
     bool isExtendedInteger() const;
     bool isExtendedVector() const;

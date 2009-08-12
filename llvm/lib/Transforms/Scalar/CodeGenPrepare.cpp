@@ -423,10 +423,10 @@ static bool OptimizeNoopCopyExpression(CastInst *CI, const TargetLowering &TLI){
   // If these values will be promoted, find out what they will be promoted
   // to.  This helps us consider truncates on PPC as noop copies when they
   // are.
-  if (TLI.getTypeAction(SrcVT) == TargetLowering::Promote)
-    SrcVT = TLI.getTypeToTransformTo(SrcVT);
-  if (TLI.getTypeAction(DstVT) == TargetLowering::Promote)
-    DstVT = TLI.getTypeToTransformTo(DstVT);
+  if (TLI.getTypeAction(CI->getContext(), SrcVT) == TargetLowering::Promote)
+    SrcVT = TLI.getTypeToTransformTo(CI->getContext(), SrcVT);
+  if (TLI.getTypeAction(CI->getContext(), DstVT) == TargetLowering::Promote)
+    DstVT = TLI.getTypeToTransformTo(CI->getContext(), DstVT);
 
   // If, after promotion, these are the same types, this is a noop copy.
   if (SrcVT != DstVT)

@@ -1881,7 +1881,7 @@ SDValue DAGCombiner::visitAND(SDNode *N) {
       EVT ExtVT = MVT::Other;
       uint32_t ActiveBits = N1C->getAPIntValue().getActiveBits();
       if (ActiveBits > 0 && APIntOps::isMask(ActiveBits, N1C->getAPIntValue()))
-        ExtVT = EVT::getIntegerVT(ActiveBits);
+        ExtVT = EVT::getIntegerVT(*DAG.getContext(), ActiveBits);
 
       EVT LoadedVT = LN0->getMemoryVT();
 
@@ -2539,7 +2539,7 @@ SDValue DAGCombiner::visitSRA(SDNode *N) {
   // sext_inreg.
   if (N1C && N0.getOpcode() == ISD::SHL && N1 == N0.getOperand(1)) {
     unsigned LowBits = VT.getSizeInBits() - (unsigned)N1C->getZExtValue();
-    EVT EVT = EVT::getIntegerVT(LowBits);
+    EVT EVT = EVT::getIntegerVT(*DAG.getContext(), LowBits);
     if ((!LegalOperations || TLI.isOperationLegal(ISD::SIGN_EXTEND_INREG, EVT)))
       return DAG.getNode(ISD::SIGN_EXTEND_INREG, N->getDebugLoc(), VT,
                          N0.getOperand(0), DAG.getValueType(EVT));
@@ -2567,7 +2567,7 @@ SDValue DAGCombiner::visitSRA(SDNode *N) {
       // Determine what the truncate's result bitsize and type would be.
       unsigned VTValSize = VT.getSizeInBits();
       EVT TruncVT =
-        EVT::getIntegerVT(VTValSize - N1C->getZExtValue());
+        EVT::getIntegerVT(*DAG.getContext(), VTValSize - N1C->getZExtValue());
       // Determine the residual right-shift amount.
       signed ShiftAmt = N1C->getZExtValue() - N01C->getZExtValue();
 
@@ -3684,7 +3684,7 @@ SDValue DAGCombiner::CombineConsecutiveLoads(SDNode *N, EVT VT) {
       TLI.isConsecutiveLoad(LD2, LD1, LD1VT.getSizeInBits()/8, 1, MFI)) {
     unsigned Align = LD1->getAlignment();
     unsigned NewAlign = TLI.getTargetData()->
-      getABITypeAlignment(VT.getTypeForEVT());
+      getABITypeAlignment(VT.getTypeForEVT(*DAG.getContext()));
 
     if (NewAlign <= Align &&
         (!LegalOperations || TLI.isOperationLegal(ISD::LOAD, VT)))
@@ -3753,7 +3753,7 @@ SDValue DAGCombiner::visitBIT_CONVERT(SDNode *N) {
       (!LegalOperations || TLI.isOperationLegal(ISD::LOAD, VT))) {
     LoadSDNode *LN0 = cast<LoadSDNode>(N0);
     unsigned Align = TLI.getTargetData()->
-      getABITypeAlignment(VT.getTypeForEVT());
+      getABITypeAlignment(VT.getTypeForEVT(*DAG.getContext()));
     unsigned OrigAlign = LN0->getAlignment();
 
     if (Align <= OrigAlign) {
@@ -3796,7 +3796,7 @@ SDValue DAGCombiner::visitBIT_CONVERT(SDNode *N) {
       isa<ConstantFPSDNode>(N0.getOperand(0)) &&
       VT.isInteger() && !VT.isVector()) {
     unsigned OrigXWidth = N0.getOperand(1).getValueType().getSizeInBits();
-    EVT IntXVT = EVT::getIntegerVT(OrigXWidth);
+    EVT IntXVT = EVT::getIntegerVT(*DAG.getContext(), OrigXWidth);
     if (TLI.isTypeLegal(IntXVT) || !LegalTypes) {
       SDValue X = DAG.getNode(ISD::BIT_CONVERT, N0.getDebugLoc(),
                               IntXVT, N0.getOperand(1));
@@ -3875,7 +3875,7 @@ ConstantFoldBIT_CONVERTofBUILD_VECTOR(SDNode *BV, EVT DstEltVT) {
                                 DstEltVT, Op));
       AddToWorkList(Ops.back().getNode());
     }
-    EVT VT = EVT::getVectorVT(DstEltVT,
+    EVT VT = EVT::getVectorVT(*DAG.getContext(), DstEltVT,
                               BV->getValueType(0).getVectorNumElements());
     return DAG.getNode(ISD::BUILD_VECTOR, BV->getDebugLoc(), VT,
                        &Ops[0], Ops.size());
@@ -3888,7 +3888,7 @@ ConstantFoldBIT_CONVERTofBUILD_VECTOR(SDNode *BV, EVT DstEltVT) {
     // Convert the input float vector to a int vector where the elements are the
     // same sizes.
     assert((SrcEltVT == MVT::f32 || SrcEltVT == MVT::f64) && "Unknown FP VT!");
-    EVT IntVT = EVT::getIntegerVT(SrcEltVT.getSizeInBits());
+    EVT IntVT = EVT::getIntegerVT(*DAG.getContext(), SrcEltVT.getSizeInBits());
     BV = ConstantFoldBIT_CONVERTofBUILD_VECTOR(BV, IntVT).getNode();
     SrcEltVT = IntVT;
   }
@@ -3897,7 +3897,7 @@ ConstantFoldBIT_CONVERTofBUILD_VECTOR(SDNode *BV, EVT DstEltVT) {
   // convert to integer first, then to FP of the right size.
   if (DstEltVT.isFloatingPoint()) {
     assert((DstEltVT == MVT::f32 || DstEltVT == MVT::f64) && "Unknown FP VT!");
-    EVT TmpVT = EVT::getIntegerVT(DstEltVT.getSizeInBits());
+    EVT TmpVT = EVT::getIntegerVT(*DAG.getContext(), DstEltVT.getSizeInBits());
     SDNode *Tmp = ConstantFoldBIT_CONVERTofBUILD_VECTOR(BV, TmpVT).getNode();
 
     // Next, convert to FP elements of the same size.
@@ -3933,7 +3933,7 @@ ConstantFoldBIT_CONVERTofBUILD_VECTOR(SDNode *BV, EVT DstEltVT) {
         Ops.push_back(DAG.getConstant(NewBits, DstEltVT));
     }
 
-    EVT VT = EVT::getVectorVT(DstEltVT, Ops.size());
+    EVT VT = EVT::getVectorVT(*DAG.getContext(), DstEltVT, Ops.size());
     return DAG.getNode(ISD::BUILD_VECTOR, BV->getDebugLoc(), VT,
                        &Ops[0], Ops.size());
   }
@@ -3942,7 +3942,8 @@ ConstantFoldBIT_CONVERTofBUILD_VECTOR(SDNode *BV, EVT DstEltVT) {
   // turns into multiple outputs.
   bool isS2V = ISD::isScalarToVector(BV);
   unsigned NumOutputsPerInput = SrcBitSize/DstBitSize;
-  EVT VT = EVT::getVectorVT(DstEltVT, NumOutputsPerInput*BV->getNumOperands());
+  EVT VT = EVT::getVectorVT(*DAG.getContext(), DstEltVT,
+                            NumOutputsPerInput*BV->getNumOperands());
   SmallVector<SDValue, 8> Ops;
 
   for (unsigned i = 0, e = BV->getNumOperands(); i != e; ++i) {
@@ -4997,12 +4998,12 @@ SDValue DAGCombiner::ReduceLoadOpStoreWidth(SDNode *N) {
     unsigned ShAmt = Imm.countTrailingZeros();
     unsigned MSB = BitWidth - Imm.countLeadingZeros() - 1;
     unsigned NewBW = NextPowerOf2(MSB - ShAmt);
-    EVT NewVT = EVT::getIntegerVT(NewBW);
+    EVT NewVT = EVT::getIntegerVT(*DAG.getContext(), NewBW);
     while (NewBW < BitWidth &&
            !(TLI.isOperationLegalOrCustom(Opc, NewVT) &&
              TLI.isNarrowingProfitable(VT, NewVT))) {
       NewBW = NextPowerOf2(NewBW);
-      NewVT = EVT::getIntegerVT(NewBW);
+      NewVT = EVT::getIntegerVT(*DAG.getContext(), NewBW);
     }
     if (NewBW >= BitWidth)
       return SDValue();
@@ -5024,7 +5025,7 @@ SDValue DAGCombiner::ReduceLoadOpStoreWidth(SDNode *N) {
 
       unsigned NewAlign = MinAlign(LD->getAlignment(), PtrOff);
       if (NewAlign <
-          TLI.getTargetData()->getABITypeAlignment(NewVT.getTypeForEVT()))
+          TLI.getTargetData()->getABITypeAlignment(NewVT.getTypeForEVT(*DAG.getContext())))
         return SDValue();
 
       SDValue NewPtr = DAG.getNode(ISD::ADD, LD->getDebugLoc(),
@@ -5079,7 +5080,7 @@ SDValue DAGCombiner::visitSTORE(SDNode *N) {
     unsigned OrigAlign = ST->getAlignment();
     EVT SVT = Value.getOperand(0).getValueType();
     unsigned Align = TLI.getTargetData()->
-      getABITypeAlignment(SVT.getTypeForEVT());
+      getABITypeAlignment(SVT.getTypeForEVT(*DAG.getContext()));
     if (Align <= OrigAlign &&
         ((!LegalOperations && !ST->isVolatile()) ||
          TLI.isOperationLegalOrCustom(ISD::STORE, SVT)))
@@ -5359,7 +5360,7 @@ SDValue DAGCombiner::visitEXTRACT_VECTOR_ELT(SDNode *N) {
       // Check the resultant load doesn't need a higher alignment than the
       // original load.
       unsigned NewAlign =
-        TLI.getTargetData()->getABITypeAlignment(LVT.getTypeForEVT());
+        TLI.getTargetData()->getABITypeAlignment(LVT.getTypeForEVT(*DAG.getContext()));
 
       if (NewAlign > Align || !TLI.isOperationLegalOrCustom(ISD::LOAD, LVT))
         return SDValue();

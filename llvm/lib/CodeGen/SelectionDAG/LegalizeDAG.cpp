@@ -101,7 +101,8 @@ public:
   /// it is already legal or we need to expand it into multiple registers of
   /// smaller integer type, or we need to promote it to a larger type.
   LegalizeAction getTypeAction(EVT VT) const {
-    return (LegalizeAction)ValueTypeActions.getTypeAction(VT);
+    return
+        (LegalizeAction)ValueTypeActions.getTypeAction(*DAG.getContext(), VT);
   }
 
   /// isTypeLegal - Return true if this type is legal on this target.
@@ -361,7 +362,7 @@ static SDValue ExpandConstantFP(ConstantFPSDNode *CFP, bool UseCP,
         // smaller type.
         TLI.isLoadExtLegal(ISD::EXTLOAD, SVT) &&
         TLI.ShouldShrinkFPConstant(OrigVT)) {
-      const Type *SType = SVT.getTypeForEVT();
+      const Type *SType = SVT.getTypeForEVT(*DAG.getContext());
       LLVMC = cast<ConstantFP>(ConstantExpr::getFPTrunc(LLVMC, SType));
       VT = SVT;
       Extend = true;
@@ -392,7 +393,7 @@ SDValue ExpandUnalignedStore(StoreSDNode *ST, SelectionDAG &DAG,
   DebugLoc dl = ST->getDebugLoc();
   if (ST->getMemoryVT().isFloatingPoint() ||
       ST->getMemoryVT().isVector()) {
-    EVT intVT = EVT::getIntegerVT(VT.getSizeInBits());
+    EVT intVT = EVT::getIntegerVT(*DAG.getContext(), VT.getSizeInBits());
     if (TLI.isTypeLegal(intVT)) {
       // Expand to a bitconvert of the value to the integer type of the
       // same size, then a (misaligned) int store.
@@ -405,7 +406,7 @@ SDValue ExpandUnalignedStore(StoreSDNode *ST, SelectionDAG &DAG,
       // to the final destination using (unaligned) integer loads and stores.
       EVT StoredVT = ST->getMemoryVT();
       EVT RegVT =
-        TLI.getRegisterType(EVT::getIntegerVT(StoredVT.getSizeInBits()));
+        TLI.getRegisterType(*DAG.getContext(), EVT::getIntegerVT(*DAG.getContext(), StoredVT.getSizeInBits()));
       unsigned StoredBytes = StoredVT.getSizeInBits() / 8;
       unsigned RegBytes = RegVT.getSizeInBits() / 8;
       unsigned NumRegs = (StoredBytes + RegBytes - 1) / RegBytes;
@@ -439,7 +440,7 @@ SDValue ExpandUnalignedStore(StoreSDNode *ST, SelectionDAG &DAG,
       // The last store may be partial.  Do a truncating store.  On big-endian
       // machines this requires an extending load from the stack slot to ensure
       // that the bits are in the right place.
-      EVT MemVT = EVT::getIntegerVT(8 * (StoredBytes - Offset));
+      EVT MemVT = EVT::getIntegerVT(*DAG.getContext(), 8 * (StoredBytes - Offset));
 
       // Load from the stack slot.
       SDValue Load = DAG.getExtLoad(ISD::EXTLOAD, dl, RegVT, Store, StackPtr,
@@ -494,7 +495,7 @@ SDValue ExpandUnalignedLoad(LoadSDNode *LD, SelectionDAG &DAG,
   EVT LoadedVT = LD->getMemoryVT();
   DebugLoc dl = LD->getDebugLoc();
   if (VT.isFloatingPoint() || VT.isVector()) {
-    EVT intVT = EVT::getIntegerVT(LoadedVT.getSizeInBits());
+    EVT intVT = EVT::getIntegerVT(*DAG.getContext(), LoadedVT.getSizeInBits());
     if (TLI.isTypeLegal(intVT)) {
       // Expand to a (misaligned) integer load of the same size,
       // then bitconvert to floating point or vector.
@@ -510,7 +511,7 @@ SDValue ExpandUnalignedLoad(LoadSDNode *LD, SelectionDAG &DAG,
     } else {
       // Copy the value to a (aligned) stack slot using (unaligned) integer
       // loads and stores, then do a (aligned) load from the stack slot.
-      EVT RegVT = TLI.getRegisterType(intVT);
+      EVT RegVT = TLI.getRegisterType(*DAG.getContext(), intVT);
       unsigned LoadedBytes = LoadedVT.getSizeInBits() / 8;
       unsigned RegBytes = RegVT.getSizeInBits() / 8;
       unsigned NumRegs = (LoadedBytes + RegBytes - 1) / RegBytes;
@@ -540,7 +541,7 @@ SDValue ExpandUnalignedLoad(LoadSDNode *LD, SelectionDAG &DAG,
       }
 
       // The last copy may be partial.  Do an extending load.
-      EVT MemVT = EVT::getIntegerVT(8 * (LoadedBytes - Offset));
+      EVT MemVT = EVT::getIntegerVT(*DAG.getContext(), 8 * (LoadedBytes - Offset));
       SDValue Load = DAG.getExtLoad(ISD::EXTLOAD, dl, RegVT, Chain, Ptr,
                                     LD->getSrcValue(), SVOffset + Offset,
                                     MemVT, LD->isVolatile(),
@@ -571,7 +572,7 @@ SDValue ExpandUnalignedLoad(LoadSDNode *LD, SelectionDAG &DAG,
   // integer MVT.
   unsigned NumBits = LoadedVT.getSizeInBits();
   EVT NewLoadedVT;
-  NewLoadedVT = EVT::getIntegerVT(NumBits/2);
+  NewLoadedVT = EVT::getIntegerVT(*DAG.getContext(), NumBits/2);
   NumBits >>= 1;
 
   unsigned Alignment = LD->getAlignment();
@@ -1070,7 +1071,7 @@ SDValue SelectionDAGLegalize::LegalizeOp(SDValue Op) {
         // expand it.
         if (!TLI.allowsUnalignedMemoryAccesses()) {
           unsigned ABIAlignment = TLI.getTargetData()->
-            getABITypeAlignment(LD->getMemoryVT().getTypeForEVT());
+            getABITypeAlignment(LD->getMemoryVT().getTypeForEVT(*DAG.getContext()));
           if (LD->getAlignment() < ABIAlignment){
             Result = ExpandUnalignedLoad(cast<LoadSDNode>(Result.getNode()), 
                                          DAG, TLI);
@@ -1127,7 +1128,7 @@ SDValue SelectionDAGLegalize::LegalizeOp(SDValue Op) {
         // Promote to a byte-sized load if not loading an integral number of
         // bytes.  For example, promote EXTLOAD:i20 -> EXTLOAD:i24.
         unsigned NewWidth = SrcVT.getStoreSizeInBits();
-        EVT NVT = EVT::getIntegerVT(NewWidth);
+        EVT NVT = EVT::getIntegerVT(*DAG.getContext(), NewWidth);
         SDValue Ch;
 
         // The extra bits are guaranteed to be zero, since we stored them that
@@ -1165,8 +1166,8 @@ SDValue SelectionDAGLegalize::LegalizeOp(SDValue Op) {
         assert(ExtraWidth < RoundWidth);
         assert(!(RoundWidth % 8) && !(ExtraWidth % 8) &&
                "Load size not an integral number of bytes!");
-        EVT RoundVT = EVT::getIntegerVT(RoundWidth);
-        EVT ExtraVT = EVT::getIntegerVT(ExtraWidth);
+        EVT RoundVT = EVT::getIntegerVT(*DAG.getContext(), RoundWidth);
+        EVT ExtraVT = EVT::getIntegerVT(*DAG.getContext(), ExtraWidth);
         SDValue Lo, Hi, Ch;
         unsigned IncrementSize;
 
@@ -1253,7 +1254,7 @@ SDValue SelectionDAGLegalize::LegalizeOp(SDValue Op) {
             // expand it.
             if (!TLI.allowsUnalignedMemoryAccesses()) {
               unsigned ABIAlignment = TLI.getTargetData()->
-                getABITypeAlignment(LD->getMemoryVT().getTypeForEVT());
+                getABITypeAlignment(LD->getMemoryVT().getTypeForEVT(*DAG.getContext()));
               if (LD->getAlignment() < ABIAlignment){
                 Result = ExpandUnalignedLoad(cast<LoadSDNode>(Result.getNode()), 
                                              DAG, TLI);
@@ -1331,7 +1332,7 @@ SDValue SelectionDAGLegalize::LegalizeOp(SDValue Op) {
           // expand it.
           if (!TLI.allowsUnalignedMemoryAccesses()) {
             unsigned ABIAlignment = TLI.getTargetData()->
-              getABITypeAlignment(ST->getMemoryVT().getTypeForEVT());
+              getABITypeAlignment(ST->getMemoryVT().getTypeForEVT(*DAG.getContext()));
             if (ST->getAlignment() < ABIAlignment)
               Result = ExpandUnalignedStore(cast<StoreSDNode>(Result.getNode()), DAG,
                                             TLI);
@@ -1362,7 +1363,7 @@ SDValue SelectionDAGLegalize::LegalizeOp(SDValue Op) {
         // Promote to a byte-sized store with upper bits zero if not
         // storing an integral number of bytes.  For example, promote
         // TRUNCSTORE:i1 X -> TRUNCSTORE:i8 (and X, 1)
-        EVT NVT = EVT::getIntegerVT(StVT.getStoreSizeInBits());
+        EVT NVT = EVT::getIntegerVT(*DAG.getContext(), StVT.getStoreSizeInBits());
         Tmp3 = DAG.getZeroExtendInReg(Tmp3, dl, StVT);
         Result = DAG.getTruncStore(Tmp1, dl, Tmp3, Tmp2, ST->getSrcValue(),
                                    SVOffset, NVT, isVolatile, Alignment);
@@ -1376,8 +1377,8 @@ SDValue SelectionDAGLegalize::LegalizeOp(SDValue Op) {
         assert(ExtraWidth < RoundWidth);
         assert(!(RoundWidth % 8) && !(ExtraWidth % 8) &&
                "Store size not an integral number of bytes!");
-        EVT RoundVT = EVT::getIntegerVT(RoundWidth);
-        EVT ExtraVT = EVT::getIntegerVT(ExtraWidth);
+        EVT RoundVT = EVT::getIntegerVT(*DAG.getContext(), RoundWidth);
+        EVT ExtraVT = EVT::getIntegerVT(*DAG.getContext(), ExtraWidth);
         SDValue Lo, Hi;
         unsigned IncrementSize;
 
@@ -1430,7 +1431,7 @@ SDValue SelectionDAGLegalize::LegalizeOp(SDValue Op) {
           // expand it.
           if (!TLI.allowsUnalignedMemoryAccesses()) {
             unsigned ABIAlignment = TLI.getTargetData()->
-              getABITypeAlignment(ST->getMemoryVT().getTypeForEVT());
+              getABITypeAlignment(ST->getMemoryVT().getTypeForEVT(*DAG.getContext()));
             if (ST->getAlignment() < ABIAlignment)
               Result = ExpandUnalignedStore(cast<StoreSDNode>(Result.getNode()), DAG,
                                             TLI);
@@ -1696,7 +1697,7 @@ SDValue SelectionDAGLegalize::EmitStackConvert(SDValue SrcOp,
   // Create the stack frame object.
   unsigned SrcAlign =
     TLI.getTargetData()->getPrefTypeAlignment(SrcOp.getValueType().
-                                              getTypeForEVT());
+                                              getTypeForEVT(*DAG.getContext()));
   SDValue FIPtr = DAG.CreateStackTemporary(SlotVT, SrcAlign);
 
   FrameIndexSDNode *StackPtrFI = cast<FrameIndexSDNode>(FIPtr);
@@ -1707,7 +1708,7 @@ SDValue SelectionDAGLegalize::EmitStackConvert(SDValue SrcOp,
   unsigned SlotSize = SlotVT.getSizeInBits();
   unsigned DestSize = DestVT.getSizeInBits();
   unsigned DestAlign =
-    TLI.getTargetData()->getPrefTypeAlignment(DestVT.getTypeForEVT());
+    TLI.getTargetData()->getPrefTypeAlignment(DestVT.getTypeForEVT(*DAG.getContext()));
 
   // Emit a store to the stack slot.  Use a truncstore if the input value is
   // later than DestVT.
@@ -1801,7 +1802,7 @@ SDValue SelectionDAGLegalize::ExpandBUILD_VECTOR(SDNode *Node) {
         CV.push_back(const_cast<ConstantInt *>(V->getConstantIntValue()));
       } else {
         assert(Node->getOperand(i).getOpcode() == ISD::UNDEF);
-        const Type *OpNTy = OpVT.getTypeForEVT();
+        const Type *OpNTy = OpVT.getTypeForEVT(*DAG.getContext());
         CV.push_back(UndefValue::get(OpNTy));
       }
     }
@@ -1855,7 +1856,7 @@ SDValue SelectionDAGLegalize::ExpandLibCall(RTLIB::Libcall LC, SDNode *Node,
   TargetLowering::ArgListEntry Entry;
   for (unsigned i = 0, e = Node->getNumOperands(); i != e; ++i) {
     EVT ArgVT = Node->getOperand(i).getValueType();
-    const Type *ArgTy = ArgVT.getTypeForEVT();
+    const Type *ArgTy = ArgVT.getTypeForEVT(*DAG.getContext());
     Entry.Node = Node->getOperand(i); Entry.Ty = ArgTy;
     Entry.isSExt = isSigned;
     Entry.isZExt = !isSigned;
@@ -1865,7 +1866,7 @@ SDValue SelectionDAGLegalize::ExpandLibCall(RTLIB::Libcall LC, SDNode *Node,
                                          TLI.getPointerTy());
 
   // Splice the libcall in wherever FindInputOutputChains tells us to.
-  const Type *RetTy = Node->getValueType(0).getTypeForEVT();
+  const Type *RetTy = Node->getValueType(0).getTypeForEVT(*DAG.getContext());
   std::pair<SDValue, SDValue> CallInfo =
     TLI.LowerCallTo(InChain, RetTy, isSigned, !isSigned, false, false,
                     0, CallingConv::C, false,
@@ -2357,7 +2358,7 @@ void SelectionDAGLegalize::ExpandNode(SDNode *Node,
     // Increment the pointer, VAList, to the next vaarg
     Tmp3 = DAG.getNode(ISD::ADD, dl, TLI.getPointerTy(), VAList,
                        DAG.getConstant(TLI.getTargetData()->
-                                       getTypeAllocSize(VT.getTypeForEVT()),
+                                       getTypeAllocSize(VT.getTypeForEVT(*DAG.getContext())),
                                        TLI.getPointerTy()));
     // Store the incremented VAList to the legalized pointer
     Tmp3 = DAG.getStore(VAList.getValue(1), dl, Tmp3, Tmp2, V, 0);
@@ -2757,8 +2758,8 @@ void SelectionDAGLegalize::ExpandNode(SDNode *Node,
       BottomHalf = DAG.getNode(Ops[isSigned][1], dl, DAG.getVTList(VT, VT), LHS,
                                RHS);
       TopHalf = BottomHalf.getValue(1);
-    } else if (TLI.isTypeLegal(EVT::getIntegerVT(VT.getSizeInBits() * 2))) {
-      EVT WideVT = EVT::getIntegerVT(VT.getSizeInBits() * 2);
+    } else if (TLI.isTypeLegal(EVT::getIntegerVT(*DAG.getContext(), VT.getSizeInBits() * 2))) {
+      EVT WideVT = EVT::getIntegerVT(*DAG.getContext(), VT.getSizeInBits() * 2);
       LHS = DAG.getNode(Ops[isSigned][2], dl, WideVT, LHS);
       RHS = DAG.getNode(Ops[isSigned][2], dl, WideVT, RHS);
       Tmp1 = DAG.getNode(ISD::MUL, dl, WideVT, LHS, RHS);
@@ -2823,7 +2824,7 @@ void SelectionDAGLegalize::ExpandNode(SDNode *Node,
                         Index, DAG.getConstant(EntrySize, PTy));
     SDValue Addr = DAG.getNode(ISD::ADD, dl, PTy, Index, Table);
 
-    EVT MemVT = EVT::getIntegerVT(EntrySize * 8);
+    EVT MemVT = EVT::getIntegerVT(*DAG.getContext(), EntrySize * 8);
     SDValue LD = DAG.getExtLoad(ISD::SEXTLOAD, dl, PTy, Chain, Addr,
                                 PseudoSourceValue::getJumpTable(), 0, MemVT);
     Addr = LD;

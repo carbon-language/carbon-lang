@@ -1635,7 +1635,8 @@ bool Verifier::PerformTypeCheck(Intrinsic::ID ID, Function *F, const Type *Ty,
                   "vector elements!", F);
       return false;
     }
-  } else if (EVT((MVT::SimpleValueType)VT).getTypeForEVT() != EltTy) {
+  } else if (EVT((MVT::SimpleValueType)VT).getTypeForEVT(Ty->getContext()) != 
+             EltTy) {
     CheckFailed(IntrinsicParam(ArgNo, NumRets) + " is wrong!", F);
     return false;
   } else if (EltTy != Ty) {

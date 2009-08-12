@@ -19,16 +19,17 @@
 #include "llvm/Support/ErrorHandling.h"
 using namespace llvm;
 
-EVT EVT::getExtendedIntegerVT(unsigned BitWidth) {
+EVT EVT::getExtendedIntegerVT(LLVMContext &Context, unsigned BitWidth) {
   EVT VT;
   VT.LLVMTy = IntegerType::get(BitWidth);
   assert(VT.isExtended() && "Type is not extended!");
   return VT;
 }
 
-EVT EVT::getExtendedVectorVT(EVT VT, unsigned NumElements) {
+EVT EVT::getExtendedVectorVT(LLVMContext &Context, EVT VT,
+                             unsigned NumElements) {
   EVT ResultVT;
-  ResultVT.LLVMTy = VectorType::get(VT.getTypeForEVT(), NumElements);
+  ResultVT.LLVMTy = VectorType::get(VT.getTypeForEVT(Context), NumElements);
   assert(ResultVT.isExtended() && "Type is not extended!");
   return ResultVT;
 }
@@ -131,7 +132,7 @@ std::string EVT::getEVTString() const {
 /// getTypeForEVT - This method returns an LLVM type corresponding to the
 /// specified EVT.  For integer types, this returns an unsigned type.  Note
 /// that this will abort for types that cannot be represented.
-const Type *EVT::getTypeForEVT() const {
+const Type *EVT::getTypeForEVT(LLVMContext &Context) const {
   switch (V.SimpleTy) {
   default:
     assert(isExtended() && "Type is not extended!");
@@ -179,11 +180,11 @@ EVT EVT::getEVT(const Type *Ty, bool HandleUnknown){
   default:
     if (HandleUnknown) return MVT(MVT::Other);
     llvm_unreachable("Unknown type!");
-    return MVT(MVT::isVoid);
+    return MVT::isVoid;
   case Type::VoidTyID:
-    return MVT(MVT::isVoid);
+    return MVT::isVoid;
   case Type::IntegerTyID:
-    return getIntegerVT(cast<IntegerType>(Ty)->getBitWidth());
+    return getIntegerVT(Ty->getContext(), cast<IntegerType>(Ty)->getBitWidth());
   case Type::FloatTyID:     return MVT(MVT::f32);
   case Type::DoubleTyID:    return MVT(MVT::f64);
   case Type::X86_FP80TyID:  return MVT(MVT::f80);
@@ -192,7 +193,7 @@ EVT EVT::getEVT(const Type *Ty, bool HandleUnknown){
   case Type::PointerTyID:   return MVT(MVT::iPTR);
   case Type::VectorTyID: {
     const VectorType *VTy = cast<VectorType>(Ty);
-    return getVectorVT(getEVT(VTy->getElementType(), false),
+    return getVectorVT(Ty->getContext(), getEVT(VTy->getElementType(), false),
                        VTy->getNumElements());
   }
   }

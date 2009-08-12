@@ -69,7 +69,7 @@ unsigned FastISel::getRegForValue(Value *V) {
   if (!TLI.isTypeLegal(VT)) {
     // Promote MVT::i1 to a legal type though, because it's common and easy.
     if (VT == MVT::i1)
-      VT = TLI.getTypeToTransformTo(VT).getSimpleVT();
+      VT = TLI.getTypeToTransformTo(V->getContext(), VT).getSimpleVT();
     else
       return 0;
   }
@@ -202,7 +202,7 @@ bool FastISel::SelectBinaryOp(User *I, ISD::NodeType ISDOpcode) {
     if (VT == MVT::i1 &&
         (ISDOpcode == ISD::AND || ISDOpcode == ISD::OR ||
          ISDOpcode == ISD::XOR))
-      VT = TLI.getTypeToTransformTo(VT);
+      VT = TLI.getTypeToTransformTo(I->getContext(), VT);
     else
       return false;
   }
@@ -523,14 +523,14 @@ bool FastISel::SelectCast(User *I, ISD::NodeType Opcode) {
 
   // If the operand is i1, arrange for the high bits in the register to be zero.
   if (SrcVT == MVT::i1) {
-   SrcVT = TLI.getTypeToTransformTo(SrcVT);
+   SrcVT = TLI.getTypeToTransformTo(I->getContext(), SrcVT);
    InputReg = FastEmitZExtFromI1(SrcVT.getSimpleVT(), InputReg);
    if (!InputReg)
      return false;
   }
   // If the result is i1, truncate to the target's type for i1 first.
   if (DstVT == MVT::i1)
-    DstVT = TLI.getTypeToTransformTo(DstVT);
+    DstVT = TLI.getTypeToTransformTo(I->getContext(), DstVT);
 
   unsigned ResultReg = FastEmit_r(SrcVT.getSimpleVT(),
                                   DstVT.getSimpleVT(),
