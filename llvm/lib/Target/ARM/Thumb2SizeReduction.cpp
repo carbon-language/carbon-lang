@@ -45,29 +45,31 @@ namespace {
     uint8_t  Imm2Limit;    // Limit of immediate field when it's two-address
     unsigned LowRegs1 : 1; // Only possible if low-registers are used
     unsigned LowRegs2 : 1; // Only possible if low-registers are used (2addr)
-    unsigned PredCC1  : 1; // 0 - If predicated, cc is on and vice versa.
+    unsigned PredCC1  : 2; // 0 - If predicated, cc is on and vice versa.
                            // 1 - No cc field.
+                           // 2 - Always set CPSR.
     unsigned PredCC2  : 1;
     unsigned Special  : 1; // Needs to be dealt with specially
   };
 
   static const ReduceEntry ReduceTable[] = {
     // Wide,        Narrow1,      Narrow2,     imm1,imm2,  lo1, lo2, P/C, S
-    { ARM::t2ADCrr, ARM::tADC,    0,             0,   0,    1,   0,  0,0, 0 },
-    // FIXME: t2ADDS variants.
+    { ARM::t2ADCrr, 0,            ARM::tADC,     0,   0,    0,   1,  0,0, 0 },
     { ARM::t2ADDri, ARM::tADDi3,  ARM::tADDi8,   3,   8,    1,   1,  0,0, 0 },
     { ARM::t2ADDrr, ARM::tADDrr,  ARM::tADDhirr, 0,   0,    1,   0,  0,1, 0 },
     // Note: immediate scale is 4.
     { ARM::t2ADDrSPi,ARM::tADDrSPi,0,            8,   0,    1,   0,  1,0, 0 },
+    { ARM::t2ADDSri,ARM::tADDi3,  ARM::tADDi8,   3,   8,    1,   1,  2,2, 1 },
+    { ARM::t2ADDSrr,ARM::tADDrr,  0,             0,   0,    1,   0,  2,0, 1 },
     { ARM::t2ANDrr, 0,            ARM::tAND,     0,   0,    0,   1,  0,0, 0 },
     { ARM::t2ASRri, ARM::tASRri,  0,             5,   0,    1,   0,  0,0, 0 },
     { ARM::t2ASRrr, 0,            ARM::tASRrr,   0,   0,    0,   1,  0,0, 0 },
     { ARM::t2BICrr, 0,            ARM::tBIC,     0,   0,    0,   1,  0,0, 0 },
-    { ARM::t2CMNrr, ARM::tCMN,    0,             0,   0,    1,   0,  1,0, 0 },
-    { ARM::t2CMPri, ARM::tCMPi8,  0,             8,   0,    1,   0,  1,0, 0 },
-    { ARM::t2CMPrr, ARM::tCMPhir, 0,             0,   0,    0,   0,  1,0, 0 },
-    { ARM::t2CMPzri,ARM::tCMPzi8, 0,             8,   0,    1,   0,  1,0, 0 },
-    { ARM::t2CMPzrr,ARM::tCMPzhir,0,             0,   0,    0,   0,  1,0, 0 },
+    { ARM::t2CMNrr, ARM::tCMN,    0,             0,   0,    1,   0,  2,0, 0 },
+    { ARM::t2CMPri, ARM::tCMPi8,  0,             8,   0,    1,   0,  2,0, 0 },
+    { ARM::t2CMPrr, ARM::tCMPhir, 0,             0,   0,    0,   0,  2,0, 0 },
+    { ARM::t2CMPzri,ARM::tCMPzi8, 0,             8,   0,    1,   0,  2,0, 0 },
+    { ARM::t2CMPzrr,ARM::tCMPzhir,0,             0,   0,    0,   0,  2,0, 0 },
     { ARM::t2EORrr, 0,            ARM::tEOR,     0,   0,    0,   1,  0,0, 0 },
     { ARM::t2LSLri, ARM::tLSLri,  0,             5,   0,    1,   0,  0,0, 0 },
     { ARM::t2LSLrr, 0,            ARM::tLSLrr,   0,   0,    0,   1,  0,0, 0 },
@@ -84,13 +86,16 @@ namespace {
     { ARM::t2REV16, ARM::tREV16,  0,             0,   0,    1,   0,  1,0, 0 },
     { ARM::t2REVSH, ARM::tREVSH,  0,             0,   0,    1,   0,  1,0, 0 },
     { ARM::t2RORrr, 0,            ARM::tROR,     0,   0,    0,   1,  0,0, 0 },
-    // FIXME: T2RSBri immediate must be zero. Also need entry for T2RSBS
-    //{ ARM::t2RSBri, ARM::tRSB,    0,             0,   0,    1,   0,  0,0, 0 },
+    { ARM::t2RSBri, ARM::tRSB,    0,             0,   0,    1,   0,  0,0, 1 },
+    { ARM::t2RSBSri,ARM::tRSB,    0,             0,   0,    1,   0,  2,0, 1 },
+    { ARM::t2SBCrr, 0,            ARM::tSBC,     0,   0,    0,   1,  0,0, 0 },
     { ARM::t2SUBri, ARM::tSUBi3,  ARM::tSUBi8,   3,   8,    1,   1,  0,0, 0 },
     { ARM::t2SUBrr, ARM::tSUBrr,  0,             0,   0,    1,   0,  0,0, 0 },
+    { ARM::t2SUBSri,ARM::tSUBi3,  ARM::tSUBi8,   3,   8,    1,   1,  2,2, 0 },
+    { ARM::t2SUBSrr,ARM::tSUBrr,  0,             0,   0,    1,   0,  2,0, 0 },
     { ARM::t2SXTBr, ARM::tSXTB,   0,             0,   0,    1,   0,  1,0, 0 },
     { ARM::t2SXTHr, ARM::tSXTH,   0,             0,   0,    1,   0,  1,0, 0 },
-    { ARM::t2TSTrr, ARM::tTST,    0,             0,   0,    1,   0,  1,0, 0 },
+    { ARM::t2TSTrr, ARM::tTST,    0,             0,   0,    1,   0,  2,0, 0 },
     { ARM::t2UXTBr, ARM::tUXTB,   0,             0,   0,    1,   0,  1,0, 0 },
     { ARM::t2UXTHr, ARM::tUXTH,   0,             0,   0,    1,   0,  1,0, 0 },
 
@@ -133,6 +138,10 @@ namespace {
     /// ReduceOpcodeMap - Maps wide opcode to index of entry in ReduceTable.
     DenseMap<unsigned, unsigned> ReduceOpcodeMap;
 
+    bool VerifyPredAndCC(MachineInstr *MI, const ReduceEntry &Entry,
+                         bool is2Addr, ARMCC::CondCodes Pred,
+                         bool LiveCPSR, bool &HasCC, bool &CCDead);
+
     bool ReduceLoadStore(MachineBasicBlock &MBB, MachineInstr *MI,
                          const ReduceEntry &Entry);
 
@@ -165,9 +174,17 @@ Thumb2SizeReduce::Thumb2SizeReduce() : MachineFunctionPass(&ID) {
   }
 }
 
-static bool VerifyPredAndCC(MachineInstr *MI, const ReduceEntry &Entry,
-                            bool is2Addr, ARMCC::CondCodes Pred,
-                            bool LiveCPSR, bool &HasCC, bool &CCDead) {
+static bool HasImplicitCPSRDef(const TargetInstrDesc &TID) {
+  for (const unsigned *Regs = TID.ImplicitDefs; *Regs; ++Regs)
+    if (*Regs == ARM::CPSR)
+      return true;
+  return false;
+}
+
+bool
+Thumb2SizeReduce::VerifyPredAndCC(MachineInstr *MI, const ReduceEntry &Entry,
+                                  bool is2Addr, ARMCC::CondCodes Pred,
+                                  bool LiveCPSR, bool &HasCC, bool &CCDead) {
   if ((is2Addr  && Entry.PredCC2 == 0) ||
       (!is2Addr && Entry.PredCC1 == 0)) {
     if (Pred == ARMCC::AL) {
@@ -188,6 +205,16 @@ static bool VerifyPredAndCC(MachineInstr *MI, const ReduceEntry &Entry,
       if (HasCC)
         return false;
     }
+  } else if ((is2Addr  && Entry.PredCC2 == 2) ||
+             (!is2Addr && Entry.PredCC1 == 2)) {
+    /// Old opcode has an optional def of CPSR.
+    if (HasCC)
+      return true;
+    // If both old opcode does not implicit CPSR def, then it's not ok since
+    // these new opcodes CPSR def is not meant to be thrown away. e.g. CMP.
+    if (!HasImplicitCPSRDef(MI->getDesc()))
+      return false;
+    HasCC = true;
   } else {
     // 16-bit instruction does not set CPSR.
     if (HasCC)
@@ -340,6 +367,33 @@ Thumb2SizeReduce::ReduceSpecial(MachineBasicBlock &MBB, MachineInstr *MI,
   const TargetInstrDesc &TID = MI->getDesc();
   if (TID.mayLoad() || TID.mayStore())
     return ReduceLoadStore(MBB, MI, Entry);
+
+  unsigned Opc = MI->getOpcode();
+  switch (Opc) {
+  default: break;
+  case ARM::t2ADDSri: 
+  case ARM::t2ADDSrr: {
+    unsigned PredReg = 0;
+    if (getInstrPredicate(MI, PredReg) == ARMCC::AL) {
+      switch (Opc) {
+      default: break;
+      case ARM::t2ADDSri: {
+        if (ReduceTo2Addr(MBB, MI, Entry, LiveCPSR))
+          return true;
+        // fallthrough
+      }
+      case ARM::t2ADDSrr:
+        return ReduceToNarrow(MBB, MI, Entry, LiveCPSR);
+      }
+    }
+    break;
+  }
+  case ARM::t2RSBri:
+  case ARM::t2RSBSri:
+    if (MI->getOperand(2).getImm() == 0)
+      return ReduceToNarrow(MBB, MI, Entry, LiveCPSR);
+    break;
+  }
   return false;
 }
 
@@ -395,9 +449,9 @@ Thumb2SizeReduce::ReduceTo2Addr(MachineBasicBlock &MBB, MachineInstr *MI,
 
   // Add the 16-bit instruction.
   DebugLoc dl = MI->getDebugLoc();
-  MachineInstrBuilder MIB = BuildMI(MBB, *MI, dl, TII->get(Entry.NarrowOpc2));
+  MachineInstrBuilder MIB = BuildMI(MBB, *MI, dl, NewTID);
   MIB.addOperand(MI->getOperand(0));
-  if (HasCC)
+  if (HasCC && NewTID.hasOptionalDef())
     AddDefaultT1CC(MIB, CCDead);
 
   // Transfer the rest of operands.
@@ -475,9 +529,9 @@ Thumb2SizeReduce::ReduceToNarrow(MachineBasicBlock &MBB, MachineInstr *MI,
 
   // Add the 16-bit instruction.
   DebugLoc dl = MI->getDebugLoc();
-  MachineInstrBuilder MIB = BuildMI(MBB, *MI, dl, TII->get(Entry.NarrowOpc1));
+  MachineInstrBuilder MIB = BuildMI(MBB, *MI, dl, NewTID);
   MIB.addOperand(MI->getOperand(0));
-  if (HasCC)
+  if (HasCC && NewTID.hasOptionalDef())
     AddDefaultT1CC(MIB, CCDead);
 
   // Transfer the rest of operands.
@@ -485,16 +539,26 @@ Thumb2SizeReduce::ReduceToNarrow(MachineBasicBlock &MBB, MachineInstr *MI,
   for (unsigned i = 1, e = MI->getNumOperands(); i != e; ++i) {
     if (i < NumOps && TID.OpInfo[i].isOptionalDef())
       continue;
+    if ((TID.getOpcode() == ARM::t2RSBSri ||
+         TID.getOpcode() == ARM::t2RSBri) && i == 2)
+      // Skip the zero immediate operand, it's now implicit.
+      continue;
     bool isPred = (i < NumOps && TID.OpInfo[i].isPredicate());
     if (SkipPred && isPred)
         continue;
     const MachineOperand &MO = MI->getOperand(i);
     if (Scale > 1 && !isPred && MO.isImm())
       MIB.addImm(MO.getImm() / Scale);
-    else
+    else {
+      if (MO.isReg() && MO.isImplicit() && MO.getReg() == ARM::CPSR)
+        // Skip implicit def of CPSR. Either it's modeled as an optional
+        // def now or it's already an implicit def on the new instruction.
+        continue;
       MIB.addOperand(MO);
+    }
   }
-
+  if (!TID.isPredicable() && NewTID.isPredicable())
+    AddDefaultPred(MIB);
 
   DOUT << "Converted 32-bit: " << *MI << "       to 16-bit: " << *MIB;
 
@@ -503,20 +567,28 @@ Thumb2SizeReduce::ReduceToNarrow(MachineBasicBlock &MBB, MachineInstr *MI,
   return true;
 }
 
-static bool UpdateCPSRLiveness(MachineInstr &MI, bool LiveCPSR) {
+static bool UpdateCPSRDef(MachineInstr &MI, bool LiveCPSR) {
   bool HasDef = false;
   for (unsigned i = 0, e = MI.getNumOperands(); i != e; ++i) {
     const MachineOperand &MO = MI.getOperand(i);
-    if (!MO.isReg() || MO.isUndef())
+    if (!MO.isReg() || MO.isUndef() || MO.isUse())
       continue;
     if (MO.getReg() != ARM::CPSR)
       continue;
-    if (MO.isDef()) {
-      if (!MO.isDead())
-        HasDef = true;
-      continue;
-    }
+    if (!MO.isDead())
+      HasDef = true;
+  }
 
+  return HasDef || LiveCPSR;
+}
+
+static bool UpdateCPSRUse(MachineInstr &MI, bool LiveCPSR) {
+  for (unsigned i = 0, e = MI.getNumOperands(); i != e; ++i) {
+    const MachineOperand &MO = MI.getOperand(i);
+    if (!MO.isReg() || MO.isUndef() || MO.isDef())
+      continue;
+    if (MO.getReg() != ARM::CPSR)
+      continue;
     assert(LiveCPSR && "CPSR liveness tracking is wrong!");
     if (MO.isKill()) {
       LiveCPSR = false;
@@ -524,7 +596,7 @@ static bool UpdateCPSRLiveness(MachineInstr &MI, bool LiveCPSR) {
     }
   }
 
-  return HasDef || LiveCPSR;
+  return LiveCPSR;
 }
 
 bool Thumb2SizeReduce::ReduceMBB(MachineBasicBlock &MBB) {
@@ -546,6 +618,8 @@ bool Thumb2SizeReduce::ReduceMBB(MachineBasicBlock &MBB) {
     NextMII = next(MII);
 
     MachineInstr *MI = &*MII;
+    LiveCPSR = UpdateCPSRUse(*MI, LiveCPSR);
+
     unsigned Opcode = MI->getOpcode();
     DenseMap<unsigned, unsigned>::iterator OPI = ReduceOpcodeMap.find(Opcode);
     if (OPI != ReduceOpcodeMap.end()) {
@@ -574,7 +648,7 @@ bool Thumb2SizeReduce::ReduceMBB(MachineBasicBlock &MBB) {
     }
 
   ProcessNext:
-    LiveCPSR = UpdateCPSRLiveness(*MI, LiveCPSR);
+    LiveCPSR = UpdateCPSRDef(*MI, LiveCPSR);
   }
 
   return Modified;
