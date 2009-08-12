@@ -915,9 +915,9 @@ let test_builder () =
     let bb08 = append_block "Bb08" fn in
     let b = builder_at_end bb08 in
     
-    (* RUN: grep {Inst20.*malloc.*i8	} < %t.ll
+    (* RUN: grep {Inst20.*malloc.*i8 } < %t.ll
      * RUN: grep {Inst21.*malloc.*i8.*P1} < %t.ll
-     * RUN: grep {Inst22.*alloca.*i32	} < %t.ll
+     * RUN: grep {Inst22.*alloca.*i32 } < %t.ll
      * RUN: grep {Inst23.*alloca.*i32.*P2} < %t.ll
      * RUN: grep {free.*Inst20} < %t.ll
      * RUN: grep {Inst25.*load.*Inst21} < %t.ll
