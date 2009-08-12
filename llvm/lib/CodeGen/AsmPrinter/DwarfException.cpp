@@ -531,6 +531,11 @@ void DwarfException::EmitExceptionTable() {
   const unsigned SiteLengthSize = sizeof(int32_t); // DW_EH_PE_udata4
   const unsigned LandingPadSize = sizeof(int32_t); // DW_EH_PE_udata4
   unsigned SizeSites;
+
+  bool HaveTTData = (TAI->getExceptionHandlingType() == ExceptionHandling::SjLj)
+    ? (!TypeInfos.empty() || !FilterIds.empty()) : true;
+
+
   if (TAI->getExceptionHandlingType() == ExceptionHandling::SjLj) {
     SizeSites = (MF->getMaxCallSiteIndex() - CallSites.size()) *
       TargetAsmInfo::getULEB128Size(0) * 2;
@@ -553,7 +558,8 @@ void DwarfException::EmitExceptionTable() {
 
   unsigned TotalSize = sizeof(int8_t) + // LPStart format
                        sizeof(int8_t) + // TType format
-           TargetAsmInfo::getULEB128Size(TypeOffset) + // TType base offset
+       (HaveTTData ?
+          TargetAsmInfo::getULEB128Size(TypeOffset) : 0) + // TType base offset
                        TypeOffset;
 
   unsigned SizeAlign = (4 - TotalSize) & 3;
@@ -624,11 +630,10 @@ void DwarfException::EmitExceptionTable() {
     Asm->EOL("TType base offset");
   }
 #else
-  // For SjLj exceptions, is there is no TypeInfo, then we just explicitly
+  // For SjLj exceptions, if there is no TypeInfo, then we just explicitly
   // say that we're omitting that bit.
   // FIXME: does this apply to Dwarf also? The above #if 0 implies yes?
-  if (TAI->getExceptionHandlingType() == ExceptionHandling::SjLj
-      && (TypeInfos.empty() || FilterIds.empty())) {
+  if (!HaveTTData) {
     Asm->EmitInt8(dwarf::DW_EH_PE_omit);
     Asm->EOL("TType format (DW_EH_PE_omit)");
   } else {
