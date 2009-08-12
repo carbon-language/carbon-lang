@@ -94,6 +94,12 @@ else()
   endif()
 endif()
 
+if( uppercase_CMAKE_BUILD_TYPE STREQUAL "RELEASE" AND NOT LLVM_ENABLE_ASSERTIONS )
+  set( LLVM_COMPACT_SENTINELS 1 )
+else( uppercase_CMAKE_BUILD_TYPE STREQUAL "RELEASE" AND NOT LLVM_ENABLE_ASSERTIONS )
+  set( LLVM_COMPACT_SENTINELS 0 )
+endif( uppercase_CMAKE_BUILD_TYPE STREQUAL "RELEASE" AND NOT LLVM_ENABLE_ASSERTIONS )
+
 if( LLVM_TARGETS_TO_BUILD STREQUAL "all" )
   set( LLVM_TARGETS_TO_BUILD ${LLVM_ALL_TARGETS} )
 endif()
@@ -102,7 +108,7 @@ set(LLVM_ENUM_TARGETS "")
 foreach(c ${LLVM_TARGETS_TO_BUILD})
   list(FIND LLVM_ALL_TARGETS ${c} idx)
   if( idx LESS 0 )
-    message(FATAL_ERROR "The target `${c}' does not exists.
+    message(FATAL_ERROR "The target `${c}' does not exist.
     It should be one of\n${LLVM_ALL_TARGETS}")
   else()
     set(LLVM_ENUM_TARGETS "${LLVM_ENUM_TARGETS}LLVM_TARGET(${c})\n")
