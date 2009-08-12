@@ -158,6 +158,21 @@ public:
   /// if the environment component is present).
   StringRef getOSAndEnvironmentName() const;
 
+  
+  /// getDarwinNumber - Parse the 'darwin number' out of the specific target
+  /// triple.  For example, if we have darwin8.5 return 8,5,0.  If any entry is
+  /// not defined, return 0's.  This requires that the triple have an OSType of
+  /// darwin before it is called.
+  void getDarwinNumber(unsigned &Maj, unsigned &Min, unsigned &Revision) const;
+  
+  /// getDarwinMajorNumber - Return just the major version number, this is
+  /// specialized because it is a common query.
+  unsigned getDarwinMajorNumber() const {
+    unsigned Maj, Min, Rev;
+    getDarwinNumber(Maj, Min, Rev);
+    return Maj;
+  }
+  
   /// @}
   /// @name Mutators
   /// @{

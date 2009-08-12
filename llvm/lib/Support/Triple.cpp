@@ -209,6 +209,71 @@ StringRef Triple::getOSAndEnvironmentName() const {
   return Tmp.split('-').second;                      // Strip second component
 }
 
+static unsigned EatNumber(StringRef &Str) {
+  assert(!Str.empty() && Str[0] >= '0' && Str[0] <= '9' && "Not a number");
+  unsigned Result = Str[0]-'0';
+  
+  // Eat the digit.
+  Str = Str.substr(1);
+  
+  // Handle "darwin11".
+  if (Result == 1 && !Str.empty() && Str[0] >= '0' && Str[0] <= '9') {
+    Result = Result*10 + (Str[0] - '0');
+    // Eat the digit.
+    Str = Str.substr(1);
+  }
+  
+  return Result;
+}
+
+/// getDarwinNumber - Parse the 'darwin number' out of the specific target
+/// triple.  For example, if we have darwin8.5 return 8,5,0.  If any entry is
+/// not defined, return 0's.  This requires that the triple have an OSType of
+/// darwin before it is called.
+void Triple::getDarwinNumber(unsigned &Maj, unsigned &Min,
+                             unsigned &Revision) const {
+  assert(getOS() == Darwin && "Not a darwin target triple!");
+  StringRef OSName = getOSName();
+  assert(OSName.startswith("darwin") && "Unknown darwin target triple!");
+  
+  // Strip off "darwin".
+  OSName = OSName.substr(6);
+  
+  Maj = Min = Revision = 0;
+
+  if (OSName.empty() || OSName[0] < '0' || OSName[0] > '9')
+    return;
+
+  // The major version is the first digit.
+  Maj = EatNumber(OSName);
+  if (OSName.empty()) return;
+  
+  // Handle minor version: 10.4.9 -> darwin8.9.
+  if (OSName[0] != '.')
+    return;
+  
+  // Eat the '.'.
+  OSName = OSName.substr(1);
+
+  if (OSName.empty() || OSName[0] < '0' || OSName[0] > '9')
+    return;
+  
+  Min = EatNumber(OSName);
+  if (OSName.empty()) return;
+
+  // Handle revision darwin8.9.1
+  if (OSName[0] != '.')
+    return;
+  
+  // Eat the '.'.
+  OSName = OSName.substr(1);
+  
+  if (OSName.empty() || OSName[0] < '0' || OSName[0] > '9')
+    return;
+
+  Revision = EatNumber(OSName);
+}
+
 void Triple::setTriple(const Twine &Str) {
   Data = Str.str();
   Arch = InvalidArch;
