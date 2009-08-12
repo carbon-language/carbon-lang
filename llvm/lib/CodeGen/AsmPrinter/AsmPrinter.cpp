@@ -1311,7 +1311,8 @@ void AsmPrinter::EmitGlobalConstant(const Constant *CV, unsigned AddrSpace) {
     if (const ConstantInt *CI = dyn_cast<ConstantInt>(CV)) {
       SmallString<40> S;
       CI->getValue().toStringUnsigned(S, 16);
-      O << "\t\t\t" << TAI->getCommentString() << " 0x" << S.c_str();
+      O.PadToColumn(TAI->getCommentColumn(), 1);
+      O << TAI->getCommentString() << " 0x" << S.c_str();
     }
   }
   O << '\n';
@@ -1635,11 +1636,12 @@ void AsmPrinter::printBasicBlockLabel(const MachineBasicBlock *MBB,
   if (printColon)
     O << ':';
   if (printComment) {
-    O.PadToColumn(TAI->getCommentColumn(), 1);
-
-    if (MBB->getBasicBlock())
-      O << '\t' << TAI->getCommentString() << ' '
-        << MBB->getBasicBlock()->getNameStr();
+    if (const BasicBlock *BB = MBB->getBasicBlock())
+      if (BB->hasName()) {
+        O.PadToColumn(TAI->getCommentColumn(), 1);
+        O << TAI->getCommentString() << ' '
+          << MBB->getBasicBlock()->getName();
+      }
 
     if (printColon)
       EmitComments(*MBB);
