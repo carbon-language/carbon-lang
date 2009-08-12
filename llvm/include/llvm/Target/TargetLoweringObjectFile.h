@@ -15,15 +15,14 @@
 #ifndef LLVM_TARGET_TARGETLOWERINGOBJECTFILE_H
 #define LLVM_TARGET_TARGETLOWERINGOBJECTFILE_H
 
-#include "llvm/ADT/SmallVector.h"
-#include "llvm/ADT/StringMap.h"
 #include "llvm/MC/SectionKind.h"
 
 namespace llvm {
+  class Mangler;
   class MCSection;
   class MCContext;
   class GlobalValue;
-  class Mangler;
+  class StringRef;
   class TargetMachine;
   class TargetAsmInfo;
   
@@ -258,12 +257,14 @@ public:
 
   /// getMachOSection - Return the MCSection for the specified mach-o section.
   /// This requires the operands to be valid.
-  const MCSection *getMachOSection(StringRef Segment, StringRef Section,
+  const MCSection *getMachOSection(const StringRef &Segment,
+                                   const StringRef &Section,
                                    unsigned TypeAndAttributes,
                                    SectionKind K) const {
     return getMachOSection(Segment, Section, TypeAndAttributes, 0, K);
   }
-  const MCSection *getMachOSection(StringRef Segment, StringRef Section,
+  const MCSection *getMachOSection(const StringRef &Segment,
+                                   const StringRef &Section,
                                    unsigned TypeAndAttributes,
                                    unsigned Reserved2, SectionKind K) const;
 

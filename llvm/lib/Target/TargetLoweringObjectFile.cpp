@@ -511,7 +511,7 @@ getSectionForConstant(SectionKind Kind) const {
 
 
 const MCSection *TargetLoweringObjectFileMachO::
-getMachOSection(StringRef Segment, StringRef Section,
+getMachOSection(const StringRef &Segment, const StringRef &Section,
                 unsigned TypeAndAttributes,
                 unsigned Reserved2, SectionKind Kind) const {
   // FIXME: UNIQUE HERE.
