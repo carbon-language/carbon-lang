@@ -359,6 +359,8 @@ public:
   void FinishFunction(SourceLocation EndLoc=SourceLocation());
 
   llvm::Constant *GenerateRtti(const CXXRecordDecl *RD);
+  void GenerateVcalls(std::vector<llvm::Constant *> &methods,
+                      const CXXRecordDecl *RD, llvm::Type *Ptr8Ty);
   void GenerateMethods(std::vector<llvm::Constant *> &methods,
                        const CXXRecordDecl *RD, llvm::Type *Ptr8Ty);
   void GenerateVtableForBase(const CXXRecordDecl *RD,

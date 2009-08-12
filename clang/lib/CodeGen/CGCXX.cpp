@@ -621,6 +621,21 @@ llvm::Constant *CodeGenFunction::GenerateRtti(const CXXRecordDecl *RD) {
   return Rtti;
 }
 
+void CodeGenFunction::GenerateVcalls(std::vector<llvm::Constant *> &methods,
+                                     const CXXRecordDecl *RD,
+                                     llvm::Type *Ptr8Ty) {
+  typedef CXXRecordDecl::method_iterator meth_iter;
+  llvm::Constant *m;
+    for (meth_iter mi = RD->method_begin(),
+           me = RD->method_end(); mi != me; ++mi) {
+      if (mi->isVirtual()) {
+        // FIXME: vcall: offset for virtual base for this function
+        m = llvm::Constant::getNullValue(Ptr8Ty);
+        methods.push_back(m);
+      }
+    }
+}
+
 void CodeGenFunction::GenerateMethods(std::vector<llvm::Constant *> &methods,
                                       const CXXRecordDecl *RD,
                                       llvm::Type *Ptr8Ty) {
@@ -673,14 +688,8 @@ void CodeGenFunction::GenerateVtableForBase(const CXXRecordDecl *RD,
   
   // then comes the the vcall offsets for all our functions...
   if (isPrimary && ForVirtualBase)
-    for (meth_iter mi = Class->method_begin(),
-           me = Class->method_end(); mi != me; ++mi) {
-      if (mi->isVirtual()) {
-        // FIXME: vcall: offset for virtual base for this function
-        m = llvm::Constant::getNullValue(Ptr8Ty);
-        methods.push_back(m);
-      }
-    }
+    GenerateVcalls(methods, Class, Ptr8Ty);
+
   bool TopPrimary = true;
   // Primary tables are composed from the chain of primaries.
   if (isPrimary) {
@@ -696,14 +705,7 @@ void CodeGenFunction::GenerateVtableForBase(const CXXRecordDecl *RD,
   }
   // then come the vcall offsets for all our virtual bases.
   if (!isPrimary && RD && ForVirtualBase)
-    for (meth_iter mi = RD->method_begin(), me = RD->method_end(); mi != me;
-         ++mi) {
-      if (mi->isVirtual()) {
-        // FIXME: vcall: offset for virtual base for this function
-        m = llvm::Constant::getNullValue(Ptr8Ty);
-        methods.push_back(m);
-      }
-    }
+    GenerateVcalls(methods, RD, Ptr8Ty);
 
   if (TopPrimary) {
     if (RD) {
