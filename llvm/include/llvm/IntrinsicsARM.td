@@ -300,12 +300,16 @@ def int_arm_neon_vmovls : Neon_1Arg_Long_Intrinsic;
 def int_arm_neon_vmovlu : Neon_1Arg_Long_Intrinsic;
 
 // Vector Table Lookup.
+// The first 1-4 arguments are the table.
 def int_arm_neon_vtbl1 : Neon_Tbl2Arg_Intrinsic;
 def int_arm_neon_vtbl2 : Neon_Tbl3Arg_Intrinsic;
 def int_arm_neon_vtbl3 : Neon_Tbl4Arg_Intrinsic;
 def int_arm_neon_vtbl4 : Neon_Tbl5Arg_Intrinsic;
 
 // Vector Table Extension.
+// Some elements of the destination vector may not be updated, so the original
+// value of that vector is passed as the first argument.  The next 1-4
+// arguments after that are the table.
 def int_arm_neon_vtbx1 : Neon_Tbl3Arg_Intrinsic;
 def int_arm_neon_vtbx2 : Neon_Tbl4Arg_Intrinsic;
 def int_arm_neon_vtbx3 : Neon_Tbl5Arg_Intrinsic;
