@@ -395,6 +395,27 @@ it run faster:</p>
 
 </div>
 
+<!--=========================================================================-->
+<div class="doc_subsection">
+<a name="ARM">ARM Target Improvements</a>
+</div>
+
+<div class="doc_text">
+<p>New features of the ARM target include:
+</p>
+
+<ul>
+
+<li>Preliminary support for processors, such as the Cortex-A8 and Cortex-A9,
+that implement version 7 of the ARM architecture.  The ARM backend now
+supports both the Thumb2 and Advanced SIMD (Neon) instruction sets.
+These features are still somewhat experimental and subject to change.
+The Neon intrinsics, in particular, may change in future releases of LLVM.
+</li>
+</ul>
+
+</div>
+
 
 <!--=========================================================================-->
 <div class="doc_subsection">
@@ -638,6 +659,9 @@ compilation, and lacks support for debug information.</li>
 <div class="doc_text">
 
 <ul>
+<li>Support for the Advanced SIMD (Neon) instruction set is still incomplete
+and not well tested.  Some features may not work at all, and the code quality
+may be poor in some cases.</li>
 <li>Thumb mode works only on ARMv6 or higher processors. On sub-ARMv6
 processors, thumb programs can crash or produce wrong
 results (<a href="http://llvm.org/PR1388">PR1388</a>).</li>
