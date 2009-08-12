@@ -666,7 +666,8 @@ unsigned PCHStmtReader::VisitGNUNullExpr(GNUNullExpr *E) {
 unsigned PCHStmtReader::VisitShuffleVectorExpr(ShuffleVectorExpr *E) {
   VisitExpr(E);
   unsigned NumExprs = Record[Idx++];
-  E->setExprs((Expr **)&StmtStack[StmtStack.size() - NumExprs], NumExprs);
+  E->setExprs(*Reader.getContext(), 
+              (Expr **)&StmtStack[StmtStack.size() - NumExprs], NumExprs);
   E->setBuiltinLoc(SourceLocation::getFromRawEncoding(Record[Idx++]));
   E->setRParenLoc(SourceLocation::getFromRawEncoding(Record[Idx++]));
   return NumExprs;

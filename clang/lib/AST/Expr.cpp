@@ -1596,13 +1596,20 @@ bool ChooseExpr::isConditionTrue(ASTContext &C) const {
   return getCond()->EvaluateAsInt(C) != 0;
 }
 
-void ShuffleVectorExpr::setExprs(Expr ** Exprs, unsigned NumExprs) {
-  if (NumExprs)
-    delete [] SubExprs;
-  
-  SubExprs = new Stmt* [NumExprs];
+void ShuffleVectorExpr::setExprs(ASTContext &C, Expr ** Exprs,
+                                 unsigned NumExprs) {
+  if (SubExprs) C.Deallocate(SubExprs);
+
+  SubExprs = new (C) Stmt* [NumExprs];
   this->NumExprs = NumExprs;
   memcpy(SubExprs, Exprs, sizeof(Expr *) * NumExprs);
+}  
+
+void ShuffleVectorExpr::DoDestroy(ASTContext& C) {
+  DestroyChildren(C);
+  if (SubExprs) C.Deallocate(SubExprs);
+  this->~ShuffleVectorExpr();
+  C.Deallocate(this);
 }
 
 void SizeOfAlignOfExpr::DoDestroy(ASTContext& C) {

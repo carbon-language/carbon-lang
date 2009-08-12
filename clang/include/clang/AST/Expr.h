@@ -1726,6 +1726,9 @@ class ShuffleVectorExpr : public Expr {
   Stmt **SubExprs;
   unsigned NumExprs;
 
+protected:
+  virtual void DoDestroy(ASTContext &C);  
+
 public:
   ShuffleVectorExpr(ASTContext &C, Expr **args, unsigned nexpr,
                     QualType Type, SourceLocation BLoc, 
@@ -1756,9 +1759,7 @@ public:
   }
   static bool classof(const ShuffleVectorExpr *) { return true; }
   
-  ~ShuffleVectorExpr() {
-    delete [] SubExprs;
-  }
+  ~ShuffleVectorExpr() {}
   
   /// getNumSubExprs - Return the size of the SubExprs array.  This includes the
   /// constant expression, the actual arguments passed in, and the function
@@ -1774,8 +1775,8 @@ public:
     assert((Index < NumExprs) && "Arg access out of range!");
     return cast<Expr>(SubExprs[Index]);
   }
-
-  void setExprs(Expr ** Exprs, unsigned NumExprs);
+  
+  void setExprs(ASTContext &C, Expr ** Exprs, unsigned NumExprs);
 
   unsigned getShuffleMaskIdx(ASTContext &Ctx, unsigned N) {
     assert((N < NumExprs - 2) && "Shuffle idx out of range!");
