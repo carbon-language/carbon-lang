@@ -1,4 +1,5 @@
 ; ModuleID = '<stdin>'
+
 @b = constant i33 0                               ; <i33*> [#uses=0]
 @c = constant i33 -2                              ; <i33*> [#uses=0]
 @d = constant i33 0                               ; <i33*> [#uses=0]

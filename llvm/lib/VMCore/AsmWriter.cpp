@@ -521,7 +521,8 @@ public:
   /// MDNode map iterators.
   ValueMap::iterator mdnBegin() { return mdnMap.begin(); }
   ValueMap::iterator mdnEnd() { return mdnMap.end(); }
-  unsigned mdnSize() { return mdnMap.size(); }
+  unsigned mdnSize() const { return mdnMap.size(); }
+  bool mdnEmpty() const { return mdnMap.empty(); }
 
   /// This function does the actual initialization.
   inline void initialize();
@@ -1343,6 +1344,7 @@ void AssemblyWriter::printModule(const Module *M) {
     std::string Asm = M->getModuleInlineAsm();
     size_t CurPos = 0;
     size_t NewLine = Asm.find_first_of('\n', CurPos);
+    Out << '\n';
     while (NewLine != std::string::npos) {
       // We found a newline, print the portion of the asm string from the
       // last newline up to this newline.
@@ -1362,6 +1364,7 @@ void AssemblyWriter::printModule(const Module *M) {
   Module::lib_iterator LI = M->lib_begin();
   Module::lib_iterator LE = M->lib_end();
   if (LI != LE) {
+    Out << '\n';
     Out << "deplibs = [ ";
     while (LI != LE) {
       Out << '"' << *LI << '"';
@@ -1369,12 +1372,15 @@ void AssemblyWriter::printModule(const Module *M) {
       if (LI != LE)
         Out << ", ";
     }
-    Out << " ]\n";
+    Out << " ]";
   }
 
   // Loop over the symbol table, emitting all id'd types.
+  if (!M->getTypeSymbolTable().empty() || !NumberedTypes.empty()) Out << '\n';
   printTypeSymbolTable(M->getTypeSymbolTable());
 
+  // Output all globals.
+  if (!M->global_empty()) Out << '\n';
   for (Module::const_global_iterator I = M->global_begin(), E = M->global_end();
        I != E; ++I)
     printGlobal(I);
@@ -1390,6 +1396,7 @@ void AssemblyWriter::printModule(const Module *M) {
     printFunction(I);
 
   // Output named metadata.
+  if (!M->named_metadata_empty()) Out << '\n';
   for (Module::const_named_metadata_iterator I = M->named_metadata_begin(),
          E = M->named_metadata_end(); I != E; ++I) {
     const NamedMDNode *NMD = I;
@@ -1403,6 +1410,7 @@ void AssemblyWriter::printModule(const Module *M) {
   }
 
   // Output metadata.
+  if (!Machine.mdnEmpty()) Out << '\n';
   WriteMDNodes(Out, TypePrinter, Machine);
 }
 
@@ -1521,8 +1529,7 @@ void AssemblyWriter::printTypeSymbolTable(const TypeSymbolTable &ST) {
     // Make sure we print out at least one level of the type structure, so
     // that we do not get %2 = type %2
     TypePrinter.printAtLeastOneLevel(NumberedTypes[i], Out);
-    Out.PadToColumn(50);
-    Out << "; type %" << i << '\n';
+    Out << '\n';
   }
   
   // Print the named types.
@@ -1713,20 +1720,7 @@ void AssemblyWriter::printInfoComment(const Value &V) {
     Out.PadToColumn(50);
     Out << "; <";
     TypePrinter.print(V.getType(), Out);
-    Out << '>';
-
-    if (!V.hasName() && !isa<Instruction>(V)) {
-      int SlotNum;
-      if (const GlobalValue *GV = dyn_cast<GlobalValue>(&V))
-        SlotNum = Machine.getGlobalSlot(GV);
-      else
-        SlotNum = Machine.getLocalSlot(&V);
-      if (SlotNum == -1)
-        Out << ":<badref>";
-      else
-        Out << ':' << SlotNum; // Print out the def slot taken.
-    }
-    Out << " [#uses=" << V.getNumUses() << ']';  // Output # uses
+    Out << "> [#uses=" << V.getNumUses() << ']';  // Output # uses
   }
 }
 
