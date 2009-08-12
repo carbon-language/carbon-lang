@@ -153,10 +153,6 @@ else(WIN32)
   endif(UNIX)
 endif(WIN32)
 
-if( EXISTS ${LLVM_TOOLS_BINARY_DIR}/llvm-config )
-  set(HAVE_LLVM_CONFIG 1)
-endif( EXISTS ${LLVM_TOOLS_BINARY_DIR}/llvm-config )
-
 include(config-ix)
 
 option(LLVM_ENABLE_PIC "Build Position-Independent Code" OFF)

@@ -2,9 +2,7 @@
 # large and three small executables. This is done to minimize memory load
 # in parallel builds.  Please retain this ordering.
 
-# FIXME: We don't yet have the ability to build llvm-config with CMake
-# based on explicit dependencies.
-if (FALSE)
+if( NOT MSVC )
  add_subdirectory(llvm-config)
 endif()
 
