@@ -54,6 +54,9 @@ class ASTRecordLayoutBuilder {
   void LayoutField(const FieldDecl *D);
 
   void SelectPrimaryBase(const CXXRecordDecl *RD);
+  void SelectPrimaryVBase(const CXXRecordDecl *RD,
+                          const CXXRecordDecl *&FirstPrimary,
+                     llvm::SmallSet<const CXXRecordDecl*, 32> &IndirectPrimary);
   void SelectPrimaryForBase(const CXXRecordDecl *RD,
                      llvm::SmallSet<const CXXRecordDecl*, 32> &IndirectPrimary);
   void setPrimaryBase(const CXXRecordDecl *PB, bool Virtual) {

@@ -93,6 +93,30 @@ void ASTRecordLayoutBuilder::SelectPrimaryForBase(const CXXRecordDecl *RD,
   }
 }
 
+void ASTRecordLayoutBuilder::SelectPrimaryVBase(const CXXRecordDecl *RD,
+                                             const CXXRecordDecl *&FirstPrimary,
+                    llvm::SmallSet<const CXXRecordDecl*, 32> &IndirectPrimary) {
+  for (CXXRecordDecl::base_class_const_iterator i = RD->bases_begin(),
+         e = RD->bases_end(); i != e; ++i) {
+    const CXXRecordDecl *Base = 
+      cast<CXXRecordDecl>(i->getType()->getAs<RecordType>()->getDecl());
+    if (!i->isVirtual()) {
+      SelectPrimaryVBase(Base, FirstPrimary, IndirectPrimary);
+      if (PrimaryBase)
+        return;
+      continue;
+    }
+    if (IsNearlyEmpty(Base)) {
+      if (FirstPrimary==0)
+        FirstPrimary = Base;
+      if (!IndirectPrimary.count(Base)) {
+        setPrimaryBase(Base, true);
+        return;
+      }
+    }
+  }
+}
+
 /// SelectPrimaryBase - Selects the primary base for the given class and
 /// record that with setPrimaryBase.
 void ASTRecordLayoutBuilder::SelectPrimaryBase(const CXXRecordDecl *RD) {
@@ -110,6 +134,8 @@ void ASTRecordLayoutBuilder::SelectPrimaryBase(const CXXRecordDecl *RD) {
     }
   }
 
+  setPrimaryBase(0, false);
+
   // Otherwise, it is the first nearly empty virtual base that is not an
   // indirect primary virtual base class, if one exists.
 
@@ -117,7 +143,6 @@ void ASTRecordLayoutBuilder::SelectPrimaryBase(const CXXRecordDecl *RD) {
   // is expensive.
   // FIXME: audit indirect virtual bases
   if (RD->getNumVBases() == 0) {
-    setPrimaryBase(0, false);
     return;
   }
 
@@ -133,20 +158,7 @@ void ASTRecordLayoutBuilder::SelectPrimaryBase(const CXXRecordDecl *RD) {
   }
 
   // Then we can search for the first nearly empty virtual base itself.
-  // FIXME: audit indirect virtual bases and order (backwards?)
-  for (CXXRecordDecl::base_class_const_iterator i = RD->vbases_begin(),
-       e = RD->vbases_end(); i != e; ++i) {
-    const CXXRecordDecl *Base = 
-      cast<CXXRecordDecl>(i->getType()->getAs<RecordType>()->getDecl());
-    if (IsNearlyEmpty(Base)) {
-      if (FirstPrimary==0)
-        FirstPrimary = Base;
-      if (!IndirectPrimary.count(Base)) {
-        setPrimaryBase(Base, true);
-        return;
-      }
-    }
-  }
+  SelectPrimaryVBase(RD, FirstPrimary, IndirectPrimary);
 
   // Otherwise if is the first nearly empty virtual base, if one exists,
   // otherwise there is no primary base class.
