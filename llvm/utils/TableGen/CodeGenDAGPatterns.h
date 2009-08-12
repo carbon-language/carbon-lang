@@ -39,16 +39,21 @@ namespace EEVT {
   enum DAGISelGenValueType {
     isFP  = MVT::LAST_VALUETYPE,
     isInt,
+    isVec,
     isUnknown
   };
 
-  /// isExtIntegerVT - Return true if the specified extended value type vector
-  /// contains isInt or an integer value type.
+  /// isExtIntegerInVTs - Return true if the specified extended value type
+  /// vector contains isInt or an integer value type.
   bool isExtIntegerInVTs(const std::vector<unsigned char> &EVTs);
 
-  /// isExtFloatingPointVT - Return true if the specified extended value type 
-  /// vector contains isFP or a FP value type.
+  /// isExtFloatingPointInVTs - Return true if the specified extended value
+  /// type vector contains isFP or a FP value type.
   bool isExtFloatingPointInVTs(const std::vector<unsigned char> &EVTs);
+
+  /// isExtVectorinVTs - Return true if the specified extended value type 
+  /// vector contains isVec or a vector value type.
+  bool isExtVectorInVTs(const std::vector<unsigned char> &EVTs);
 }
 
 /// Set type used to track multiply used variables in patterns
@@ -61,7 +66,7 @@ struct SDTypeConstraint {
   
   unsigned OperandNo;   // The operand # this constraint applies to.
   enum { 
-    SDTCisVT, SDTCisPtrTy, SDTCisInt, SDTCisFP, SDTCisSameAs, 
+    SDTCisVT, SDTCisPtrTy, SDTCisInt, SDTCisFP, SDTCisVec, SDTCisSameAs, 
     SDTCisVTSmallerThanOp, SDTCisOpSmallerThanOp, SDTCisEltOfVec
   } ConstraintType;
   

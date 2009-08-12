@@ -95,7 +95,7 @@ bool isExtFloatingPointInVTs(const std::vector<unsigned char> &EVTs) {
 /// vector contains a vector value type.
 bool isExtVectorInVTs(const std::vector<unsigned char> &EVTs) {
   assert(!EVTs.empty() && "Cannot check for vector in empty ExtVT list!");
-  return !(FilterEVTs(EVTs, isVector).empty());
+  return EVTs[0] == isVec || !(FilterEVTs(EVTs, isVector).empty());
 }
 } // end namespace EEVT.
 } // end namespace llvm.
@@ -190,6 +190,8 @@ SDTypeConstraint::SDTypeConstraint(Record *R) {
     ConstraintType = SDTCisInt;
   } else if (R->isSubClassOf("SDTCisFP")) {
     ConstraintType = SDTCisFP;
+  } else if (R->isSubClassOf("SDTCisVec")) {
+    ConstraintType = SDTCisVec;
   } else if (R->isSubClassOf("SDTCisSameAs")) {
     ConstraintType = SDTCisSameAs;
     x.SDTCisSameAs_Info.OtherOperandNum = R->getValueAsInt("OtherOperandNum");
@@ -282,6 +284,16 @@ bool SDTypeConstraint::ApplyTypeConstraint(TreePatternNode *N,
     if (FPVTs.size() == 1)
       return NodeToApply->UpdateNodeType(FPVTs[0], TP);
     return NodeToApply->UpdateNodeType(EEVT::isFP, TP);
+  }
+  case SDTCisVec: {
+    // If there is only one vector type supported, this must be it.
+    std::vector<MVT::SimpleValueType> VecVTs =
+      FilterVTs(CGT.getLegalValueTypes(), isVector);
+        
+    // If we found exactly one supported vector type, apply it.
+    if (VecVTs.size() == 1)
+      return NodeToApply->UpdateNodeType(VecVTs[0], TP);
+    return NodeToApply->UpdateNodeType(EEVT::isVec, TP);
   }
   case SDTCisSameAs: {
     TreePatternNode *OtherNode =
@@ -502,7 +514,8 @@ bool TreePatternNode::UpdateNodeType(const std::vector<unsigned char> &ExtVTs,
     setTypes(FVTs);
     return true;
   }
-  if (ExtVTs[0] == MVT::vAny && EEVT::isExtVectorInVTs(getExtTypes())) {
+  if ((ExtVTs[0] == EEVT::isVec || ExtVTs[0] == MVT::vAny) &&
+      EEVT::isExtVectorInVTs(getExtTypes())) {
     assert(hasTypeSet() && "should be handled above!");
     std::vector<unsigned char> FVTs = FilterEVTs(getExtTypes(), isVector);
     if (getExtTypes() == FVTs)
@@ -511,16 +524,16 @@ bool TreePatternNode::UpdateNodeType(const std::vector<unsigned char> &ExtVTs,
     return true;
   }
       
-  // If we know this is an int or fp type, and we are told it is a specific one,
-  // take the advice.
+  // If we know this is an int, FP, or vector type, and we are told it is a
+  // specific one, take the advice.
   //
   // Similarly, we should probably set the type here to the intersection of
-  // {isInt|isFP} and ExtVTs
+  // {isInt|isFP|isVec} and ExtVTs
   if (((getExtTypeNum(0) == EEVT::isInt || getExtTypeNum(0) == MVT::iAny) &&
        EEVT::isExtIntegerInVTs(ExtVTs)) ||
       ((getExtTypeNum(0) == EEVT::isFP || getExtTypeNum(0) == MVT::fAny) &&
        EEVT::isExtFloatingPointInVTs(ExtVTs)) ||
-      (getExtTypeNum(0) == MVT::vAny &&
+      ((getExtTypeNum(0) == EEVT::isVec || getExtTypeNum(0) == MVT::vAny) &&
        EEVT::isExtVectorInVTs(ExtVTs))) {
     setTypes(ExtVTs);
     return true;
@@ -556,6 +569,7 @@ void TreePatternNode::print(raw_ostream &OS) const {
   case MVT::Other: OS << ":Other"; break;
   case EEVT::isInt: OS << ":isInt"; break;
   case EEVT::isFP : OS << ":isFP"; break;
+  case EEVT::isVec: OS << ":isVec"; break;
   case EEVT::isUnknown: ; /*OS << ":?";*/ break;
   case MVT::iPTR:  OS << ":iPTR"; break;
   case MVT::iPTRAny:  OS << ":iPTRAny"; break;
