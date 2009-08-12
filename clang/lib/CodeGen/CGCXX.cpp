@@ -626,14 +626,15 @@ void CodeGenFunction::GenerateVcalls(std::vector<llvm::Constant *> &methods,
                                      llvm::Type *Ptr8Ty) {
   typedef CXXRecordDecl::method_iterator meth_iter;
   llvm::Constant *m;
-    for (meth_iter mi = RD->method_begin(),
-           me = RD->method_end(); mi != me; ++mi) {
-      if (mi->isVirtual()) {
-        // FIXME: vcall: offset for virtual base for this function
-        m = llvm::Constant::getNullValue(Ptr8Ty);
-        methods.push_back(m);
-      }
+
+  for (meth_iter mi = RD->method_begin(),
+         me = RD->method_end(); mi != me; ++mi) {
+    if (mi->isVirtual()) {
+      // FIXME: vcall: offset for virtual base for this function
+      m = llvm::Constant::getNullValue(Ptr8Ty);
+      methods.push_back(m);
     }
+  }
 }
 
 void CodeGenFunction::GenerateMethods(std::vector<llvm::Constant *> &methods,
@@ -659,7 +660,6 @@ void CodeGenFunction::GenerateVtableForBase(const CXXRecordDecl *RD,
                                             bool isPrimary,
                                             bool ForVirtualBase,
                    llvm::SmallSet<const CXXRecordDecl *, 32> &IndirectPrimary) {
-  typedef CXXRecordDecl::method_iterator meth_iter;
   llvm::Type *Ptr8Ty;
   Ptr8Ty = llvm::PointerType::get(llvm::Type::Int8Ty, 0);
   llvm::Constant *m = llvm::Constant::getNullValue(Ptr8Ty);
