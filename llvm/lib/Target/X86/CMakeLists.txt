@@ -13,7 +13,7 @@ tablegen(X86GenFastISel.inc -gen-fast-isel)
 tablegen(X86GenCallingConv.inc -gen-callingconv)
 tablegen(X86GenSubtarget.inc -gen-subtarget)
 
-add_llvm_target(X86CodeGen
+set(sources
   X86CodeEmitter.cpp
   X86ELFWriterInfo.cpp
   X86FloatingPoint.cpp
@@ -28,5 +28,12 @@ add_llvm_target(X86CodeGen
   X86TargetMachine.cpp
   X86FastISel.cpp
   )
+
+if( CL_64 )
+  enable_language(ASM_MASM)
+  set(sources ${sources} X86CompilationCallback_Win64.asm)
+endif()
+
+add_llvm_target(X86CodeGen ${sources})
 
 target_link_libraries (LLVMX86CodeGen LLVMSelectionDAG)
