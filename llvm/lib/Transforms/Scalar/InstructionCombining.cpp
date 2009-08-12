@@ -2701,6 +2701,15 @@ Instruction *InstCombiner::visitMul(BinaryOperator &I) {
          BO->getOpcode() == Instruction::SDiv)) {
       Value *Op0BO = BO->getOperand(0), *Op1BO = BO->getOperand(1);
 
+      // If the division is exact, X % Y is zero.
+      if (SDivOperator *SDiv = dyn_cast<SDivOperator>(BO))
+        if (SDiv->isExact()) {
+          if (Op1BO == Op1)
+            return ReplaceInstUsesWith(I, Op0BO);
+          else
+            return BinaryOperator::CreateNeg(Op0BO);
+        }
+
       Instruction *Rem;
       if (BO->getOpcode() == Instruction::UDiv)
         Rem = BinaryOperator::CreateURem(Op0BO, Op1BO);
@@ -3060,7 +3069,7 @@ Instruction *InstCombiner::visitSDiv(BinaryOperator &I) {
     if (RHS->isAllOnesValue())
       return BinaryOperator::CreateNeg(Op0);
 
-    // sdiv X, C  --> ashr X, log2(C)
+    // sdiv X, C  -->  ashr X, log2(C)
     if (cast<SDivOperator>(&I)->isExact() &&
         RHS->getValue().isNonNegative() &&
         RHS->getValue().isPowerOf2()) {
