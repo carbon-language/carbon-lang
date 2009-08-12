@@ -128,6 +128,41 @@ struct test3_D  : virtual test3_B1 {
 // CHECK-LP64: .quad __ZN8test3_B16funcB1Ev
 // CHECK-LP64: .quad __ZN7test3_D5funcDEv
 
+struct test4_D : virtual B, virtual C {
+};
+
+// CHECK-LP32:__ZTV7test4_D:
+// CHECK-LP32: .space 4
+// CHECK-LP32: .long 4
+// CHECK-LP32: .space 4
+// CHECK-LP32: .space 4
+// CHECK-LP32: .space 4
+// CHECK-LP32: .long __ZTI7test4_D
+// CHECK-LP32: .long __ZN1C4bee1Ev
+// CHECK-LP32: .long __ZN1C4bee2Ev
+// CHECK-LP32: .space 4
+// CHECK-LP32: .space 4
+// CHECK-LP32: .long 4294967292
+// CHECK-LP32: .long __ZTI7test4_D 
+// CHECK-LP32: .long __ZN1B4bar1Ev
+// CHECK-LP32: .long __ZN1B4bar2Ev
+
+// CHECK-LP64:__ZTV7test4_D:
+// CHECK-LP64: .space 8
+// CHECK-LP64: .quad 8
+// CHECK-LP64: .space 8
+// CHECK-LP64: .space 8
+// CHECK-LP64: .space 8
+// CHECK-LP64: .quad __ZTI7test4_D
+// CHECK-LP64: .quad __ZN1C4bee1Ev
+// CHECK-LP64: .quad __ZN1C4bee2Ev
+// CHECK-LP64: .space 8
+// CHECK-LP64: .space 8
+// CHECK-LP64: .quad 18446744073709551608
+// CHECK-LP64: .quad __ZTI7test4_D
+// CHECK-LP64: .quad __ZN1B4bar1Ev
+// CHECK-LP64: .quad __ZN1B4bar2Ev
+
 
 
 
@@ -210,5 +245,5 @@ struct test3_D  : virtual test3_B1 {
 // CHECK-LP64: .quad __ZN2D14bar5Ev
 
 
-test3_D d;
-
+test4_D d4;
+test3_D d3;

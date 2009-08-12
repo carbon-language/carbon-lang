@@ -638,19 +638,21 @@ void CodeGenFunction::GenerateVtableForBase(const CXXRecordDecl *RD,
 
   const ASTRecordLayout &Layout = getContext().getASTRecordLayout(Class);
 
-  // The virtual base offsets come first...
-  for (CXXRecordDecl::reverse_base_class_const_iterator i
-         = Class->bases_rbegin(),
-         e = Class->bases_rend(); i != e; ++i) {
-    if (!i->isVirtual())
-      continue;
-    const CXXRecordDecl *Base = 
-      cast<CXXRecordDecl>(i->getType()->getAs<RecordType>()->getDecl());
-    int64_t BaseOffset = Layout.getBaseClassOffset(Base) / 8;
-    llvm::Constant *m;
-    m = llvm::ConstantInt::get(llvm::Type::Int64Ty, BaseOffset);
-    m = llvm::ConstantExpr::getIntToPtr(m, Ptr8Ty);
-    methods.push_back(m);
+  if (isPrimary) {
+    // The virtual base offsets come first...
+    for (CXXRecordDecl::reverse_base_class_const_iterator i
+           = Class->bases_rbegin(),
+           e = Class->bases_rend(); i != e; ++i) {
+      if (!i->isVirtual())
+        continue;
+      const CXXRecordDecl *Base = 
+        cast<CXXRecordDecl>(i->getType()->getAs<RecordType>()->getDecl());
+      int64_t BaseOffset = Layout.getBaseClassOffset(Base) / 8;
+      llvm::Constant *m;
+      m = llvm::ConstantInt::get(llvm::Type::Int64Ty, BaseOffset);
+      m = llvm::ConstantExpr::getIntToPtr(m, Ptr8Ty);
+      methods.push_back(m);
+    }
   }
   
   // then comes the the vcall offsets for all our functions...
