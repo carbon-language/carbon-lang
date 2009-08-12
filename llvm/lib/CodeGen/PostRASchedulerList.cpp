@@ -823,6 +823,10 @@ void SchedulePostRATDList::ListScheduleTopDown() {
     }
   }
 
+  // In any cycle where we can't schedule any instructions, we must
+  // stall or emit a noop, depending on the target.
+  bool CycleInstCnt = 0;
+
   // While Available queue is not empty, grab the node with the highest
   // priority. If it is not ready put it back.  Schedule the node.
   std::vector<SUnit*> NotReady;
@@ -879,6 +883,7 @@ void SchedulePostRATDList::ListScheduleTopDown() {
     if (FoundSUnit) {
       ScheduleNodeTopDown(FoundSUnit, CurCycle);
       HazardRec->EmitInstruction(FoundSUnit);
+      CycleInstCnt++;
 
       // If we are using the target-specific hazards, then don't
       // advance the cycle time just because we schedule a node. If
@@ -888,22 +893,28 @@ void SchedulePostRATDList::ListScheduleTopDown() {
         if (FoundSUnit->Latency)  // Don't increment CurCycle for pseudo-ops!
           ++CurCycle;
       }
-    } else if (!HasNoopHazards) {
-      // Otherwise, we have a pipeline stall, but no other problem, just advance
-      // the current cycle and try again.
-      DEBUG(errs() << "*** Advancing cycle, no work to do\n");
-      HazardRec->AdvanceCycle();
-      ++NumStalls;
-      ++CurCycle;
     } else {
-      // Otherwise, we have no instructions to issue and we have instructions
-      // that will fault if we don't do this right.  This is the case for
-      // processors without pipeline interlocks and other cases.
-      DEBUG(errs() << "*** Emitting noop\n");
-      HazardRec->EmitNoop();
-      Sequence.push_back(0);   // NULL here means noop
-      ++NumNoops;
+      if (CycleInstCnt > 0) {
+        DEBUG(errs() << "*** Finished cycle " << CurCycle << '\n');
+        HazardRec->AdvanceCycle();
+      } else if (!HasNoopHazards) {
+        // Otherwise, we have a pipeline stall, but no other problem,
+        // just advance the current cycle and try again.
+        DEBUG(errs() << "*** Stall in cycle " << CurCycle << '\n');
+        HazardRec->AdvanceCycle();
+        ++NumStalls;
+      } else {
+        // Otherwise, we have no instructions to issue and we have instructions
+        // that will fault if we don't do this right.  This is the case for
+        // processors without pipeline interlocks and other cases.
+        DEBUG(errs() << "*** Emitting noop in cycle " << CurCycle << '\n');
+        HazardRec->EmitNoop();
+        Sequence.push_back(0);   // NULL here means noop
+        ++NumNoops;
+      }
+
       ++CurCycle;
+      CycleInstCnt = 0;
     }
   }
 
