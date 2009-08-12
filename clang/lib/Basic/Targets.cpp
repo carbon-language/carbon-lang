@@ -16,9 +16,10 @@
 #include "clang/Basic/TargetBuiltins.h"
 #include "clang/Basic/TargetInfo.h"
 #include "clang/Basic/LangOptions.h"
-#include "llvm/ADT/STLExtras.h"
 #include "llvm/ADT/APFloat.h"
 #include "llvm/ADT/SmallString.h"
+#include "llvm/ADT/STLExtras.h"
+#include "llvm/ADT/Triple.h"
 #include "llvm/MC/MCSectionMachO.h"
 using namespace clang;
 
@@ -78,66 +79,8 @@ public:
   }
 
 };
-}
+} // end anonymous namespace
 
-
-/// getDarwinNumber - Parse the 'darwin number' out of the specific targe
-/// triple.  For example, if we have darwin8.5 return 8,5,0.  If any entry is
-/// not defined, return 0's.  Return true if we have -darwin in the string or
-/// false otherwise.
-static bool getDarwinNumber(const char *Triple, unsigned &Maj, unsigned &Min, unsigned &Revision) {
-  Maj = Min = Revision = 0;
-  const char *Darwin = strstr(Triple, "-darwin");
-  if (Darwin == 0) return false;
-
-  Darwin += strlen("-darwin");
-  if (Darwin[0] < '0' || Darwin[0] > '9')
-    return true;
-
-  Maj = Darwin[0]-'0';
-  ++Darwin;
-
-  // Handle "darwin11".
-  if (Maj == 1 && Darwin[0] >= '0' && Darwin[0] <= '9') {
-    Maj = Maj*10 + (Darwin[0] - '0');
-    ++Darwin;
-  }
-
-  // Handle minor version: 10.4.9 -> darwin8.9 -> "1049"
-  if (Darwin[0] != '.')
-    return true;
-
-  ++Darwin;
-  if (Darwin[0] < '0' || Darwin[0] > '9')
-    return true;
-
-  Min = Darwin[0]-'0';
-  ++Darwin;
-
-  // Handle 10.4.11 -> darwin8.11
-  if (Min == 1 && Darwin[0] >= '0' && Darwin[0] <= '9') {
-    Min = Min*10 + (Darwin[0] - '0');
-    ++Darwin;
-  }
-
-  // Handle revision darwin8.9.1
-  if (Darwin[0] != '.')
-    return true;
-
-  ++Darwin;
-  if (Darwin[0] < '0' || Darwin[0] > '9')
-    return true;
-
-  Revision = Darwin[0]-'0';
-  ++Darwin;
-
-  if (Revision == 1 && Darwin[0] >= '0' && Darwin[0] <= '9') {
-    Revision = Revision*10 + (Darwin[0] - '0');
-    ++Darwin;
-  }
-
-  return true;
-}
 
 static void getDarwinDefines(std::vector<char> &Defs, const LangOptions &Opts) {
   Define(Defs, "__APPLE_CC__", "5621");
@@ -160,61 +103,72 @@ static void getDarwinDefines(std::vector<char> &Defs, const LangOptions &Opts) {
     Define(Defs, "__DYNAMIC__");
 }
 
-static void getDarwinOSXDefines(std::vector<char> &Defs, const char *Triple) {
+static void getDarwinOSXDefines(std::vector<char> &Defs, const char *TripleStr){
+  llvm::Triple TheTriple(TripleStr);
+  if (TheTriple.getOS() != llvm::Triple::Darwin)
+    return;
+  
   // Figure out which "darwin number" the target triple is.  "darwin9" -> 10.5.
   unsigned Maj, Min, Rev;
-  if (getDarwinNumber(Triple, Maj, Min, Rev)) {
-    char MacOSXStr[] = "1000";
-    if (Maj >= 4 && Maj <= 13) { // 10.0-10.9
-      // darwin7 -> 1030, darwin8 -> 1040, darwin9 -> 1050, etc.
-      MacOSXStr[2] = '0' + Maj-4;
-    }
-
-    // Handle minor version: 10.4.9 -> darwin8.9 -> "1049"
-    // Cap 10.4.11 -> darwin8.11 -> "1049"
-    MacOSXStr[3] = std::min(Min, 9U)+'0';
-    Define(Defs, "__ENVIRONMENT_MAC_OS_X_VERSION_MIN_REQUIRED__", MacOSXStr);
+  TheTriple.getDarwinNumber(Maj, Min, Rev);
+  
+  char MacOSXStr[] = "1000";
+  if (Maj >= 4 && Maj <= 13) { // 10.0-10.9
+    // darwin7 -> 1030, darwin8 -> 1040, darwin9 -> 1050, etc.
+    MacOSXStr[2] = '0' + Maj-4;
   }
+
+  // Handle minor version: 10.4.9 -> darwin8.9 -> "1049"
+  // Cap 10.4.11 -> darwin8.11 -> "1049"
+  MacOSXStr[3] = std::min(Min, 9U)+'0';
+  Define(Defs, "__ENVIRONMENT_MAC_OS_X_VERSION_MIN_REQUIRED__", MacOSXStr);
 }
 
 static void getDarwinIPhoneOSDefines(std::vector<char> &Defs,
-                                     const char *Triple) {
+                                     const char *TripleStr) {
+  llvm::Triple TheTriple(TripleStr);
+  if (TheTriple.getOS() != llvm::Triple::Darwin)
+    return;
+  
   // Figure out which "darwin number" the target triple is.  "darwin9" -> 10.5.
   unsigned Maj, Min, Rev;
-  if (getDarwinNumber(Triple, Maj, Min, Rev)) {
-    // When targetting iPhone OS, interpret the minor version and
-    // revision as the iPhone OS version
-    char iPhoneOSStr[] = "10000";
-    if (Min >= 2 && Min <= 9) { // iPhone OS 2.0-9.0
-      // darwin9.2.0 -> 20000, darwin9.3.0 -> 30000, etc.
-      iPhoneOSStr[0] = '0' + Min;
-    }
-
-    // Handle minor version: 2.2 -> darwin9.2.2 -> 20200
-    iPhoneOSStr[2] = std::min(Rev, 9U)+'0';
-    Define(Defs, "__ENVIRONMENT_IPHONE_OS_VERSION_MIN_REQUIRED__",
-           iPhoneOSStr);
+  TheTriple.getDarwinNumber(Maj, Min, Rev);
+  
+  // When targetting iPhone OS, interpret the minor version and
+  // revision as the iPhone OS version
+  char iPhoneOSStr[] = "10000";
+  if (Min >= 2 && Min <= 9) { // iPhone OS 2.0-9.0
+    // darwin9.2.0 -> 20000, darwin9.3.0 -> 30000, etc.
+    iPhoneOSStr[0] = '0' + Min;
   }
+
+  // Handle minor version: 2.2 -> darwin9.2.2 -> 20200
+  iPhoneOSStr[2] = std::min(Rev, 9U)+'0';
+  Define(Defs, "__ENVIRONMENT_IPHONE_OS_VERSION_MIN_REQUIRED__",
+         iPhoneOSStr);
 }
 
 /// GetDarwinLanguageOptions - Set the default language options for darwin.
 static void GetDarwinLanguageOptions(LangOptions &Opts,
-                                     const char *Triple) {
+                                     const char *TripleStr) {
   Opts.NeXTRuntime = true;
-
-  unsigned Maj, Min, Rev;
-  if (!getDarwinNumber(Triple, Maj, Min, Rev))
+  
+  llvm::Triple TheTriple(TripleStr);
+  if (TheTriple.getOS() != llvm::Triple::Darwin)
     return;
 
+  unsigned MajorVersion = TheTriple.getDarwinMajorNumber();
+
   // Blocks and stack protectors default to on for 10.6 (darwin10) and beyond.
-  if (Maj > 9) {
+  if (MajorVersion > 9) {
     Opts.Blocks = 1;
     Opts.setStackProtectorMode(LangOptions::SSPOn);
   }
 
   // Non-fragile ABI (in 64-bit mode) default to on for 10.5 (darwin9) and
   // beyond.
-  if (Maj >= 9 && Opts.ObjC1 && !strncmp(Triple, "x86_64", 6))
+  if (MajorVersion >= 9 && Opts.ObjC1 &&
+      TheTriple.getArch() == llvm::Triple::x86_64)
     Opts.ObjCNonFragileABI = 1;
 }
 
