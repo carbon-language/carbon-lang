@@ -885,7 +885,7 @@ APInt llvm::APIntOps::RoundDoubleToAPInt(double Double, unsigned width) {
   return isNeg ? -Tmp : Tmp;
 }
 
-/// RoundToDouble - This function convert this APInt to a double.
+/// RoundToDouble - This function converts this APInt to a double.
 /// The layout for double is as following (IEEE Standard 754):
 ///  --------------------------------------
 /// |  Sign    Exponent    Fraction    Bias |
@@ -895,6 +895,7 @@ APInt llvm::APIntOps::RoundDoubleToAPInt(double Double, unsigned width) {
 double APInt::roundToDouble(bool isSigned) const {
 
   // Handle the simple case where the value is contained in one uint64_t.
+  // It is wrong to optimize getWord(0) to VAL; there might be more than one word.
   if (isSingleWord() || getActiveBits() <= APINT_BITS_PER_WORD) {
     if (isSigned) {
       int64_t sext = (int64_t(getWord(0)) << (64-BitWidth)) >> (64-BitWidth);
