@@ -1,4 +1,3 @@
-include(FindPerl)
 include(LLVMLibDeps)
 
 function(get_system_libs return_var)

@@ -1,5 +1,6 @@
 include(TestBigEndian)
 
+include(FindPerl)
 if( NOT PERL_FOUND )
   message(FATAL_ERROR "Perl required but not found!")
 endif( NOT PERL_FOUND )
