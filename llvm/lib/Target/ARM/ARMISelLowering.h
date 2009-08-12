@@ -129,7 +129,8 @@ namespace llvm {
       // Vector shuffles:
       VREV64,       // reverse elements within 64-bit doublewords
       VREV32,       // reverse elements within 32-bit words
-      VREV16        // reverse elements within 16-bit halfwords
+      VREV16,       // reverse elements within 16-bit halfwords
+      VSPLAT0       // duplicate element 0 into all elements
     };
   }
 

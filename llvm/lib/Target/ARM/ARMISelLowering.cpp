@@ -487,6 +487,7 @@ const char *ARMTargetLowering::getTargetNodeName(unsigned Opcode) const {
   case ARMISD::VREV64:        return "ARMISD::VREV64";
   case ARMISD::VREV32:        return "ARMISD::VREV32";
   case ARMISD::VREV16:        return "ARMISD::VREV16";
+  case ARMISD::VSPLAT0:       return "ARMISD::VSPLAT0";
   }
 }
 
@@ -2440,6 +2441,8 @@ static SDValue LowerVECTOR_SHUFFLE(SDValue Op, SelectionDAG &DAG) {
   DebugLoc dl = Op.getDebugLoc();
   EVT VT = Op.getValueType();
 
+  if (SVN->isSplat() && SVN->getSplatIndex() == 0)
+    return DAG.getNode(ARMISD::VSPLAT0, dl, VT, SVN->getOperand(0));
   if (isVREVMask(SVN, 64))
     return DAG.getNode(ARMISD::VREV64, dl, VT, SVN->getOperand(0));
   if (isVREVMask(SVN, 32))
