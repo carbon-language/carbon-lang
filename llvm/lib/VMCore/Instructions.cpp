@@ -1572,8 +1572,7 @@ BinaryOperator *BinaryOperator::Create(BinaryOps Op, Value *S1, Value *S2,
   return Res;
 }
 
-BinaryOperator *BinaryOperator::CreateNeg(LLVMContext &Context,
-                                          Value *Op, const Twine &Name,
+BinaryOperator *BinaryOperator::CreateNeg(Value *Op, const Twine &Name,
                                           Instruction *InsertBefore) {
   Value *zero = ConstantFP::getZeroValueForNegation(Op->getType());
   return new BinaryOperator(Instruction::Sub,
@@ -1581,8 +1580,7 @@ BinaryOperator *BinaryOperator::CreateNeg(LLVMContext &Context,
                             Op->getType(), Name, InsertBefore);
 }
 
-BinaryOperator *BinaryOperator::CreateNeg(LLVMContext &Context, 
-                                          Value *Op, const Twine &Name,
+BinaryOperator *BinaryOperator::CreateNeg(Value *Op, const Twine &Name,
                                           BasicBlock *InsertAtEnd) {
   Value *zero = ConstantFP::getZeroValueForNegation(Op->getType());
   return new BinaryOperator(Instruction::Sub,
@@ -1590,8 +1588,7 @@ BinaryOperator *BinaryOperator::CreateNeg(LLVMContext &Context,
                             Op->getType(), Name, InsertAtEnd);
 }
 
-BinaryOperator *BinaryOperator::CreateFNeg(LLVMContext &Context,
-                                           Value *Op, const Twine &Name,
+BinaryOperator *BinaryOperator::CreateFNeg(Value *Op, const Twine &Name,
                                            Instruction *InsertBefore) {
   Value *zero = ConstantFP::getZeroValueForNegation(Op->getType());
   return new BinaryOperator(Instruction::FSub,
@@ -1599,8 +1596,7 @@ BinaryOperator *BinaryOperator::CreateFNeg(LLVMContext &Context,
                             Op->getType(), Name, InsertBefore);
 }
 
-BinaryOperator *BinaryOperator::CreateFNeg(LLVMContext &Context,
-                                           Value *Op, const Twine &Name,
+BinaryOperator *BinaryOperator::CreateFNeg(Value *Op, const Twine &Name,
                                            BasicBlock *InsertAtEnd) {
   Value *zero = ConstantFP::getZeroValueForNegation(Op->getType());
   return new BinaryOperator(Instruction::FSub,
@@ -1608,8 +1604,7 @@ BinaryOperator *BinaryOperator::CreateFNeg(LLVMContext &Context,
                             Op->getType(), Name, InsertAtEnd);
 }
 
-BinaryOperator *BinaryOperator::CreateNot(LLVMContext &Context,
-                                          Value *Op, const Twine &Name,
+BinaryOperator *BinaryOperator::CreateNot(Value *Op, const Twine &Name,
                                           Instruction *InsertBefore) {
   Constant *C;
   if (const VectorType *PTy = dyn_cast<VectorType>(Op->getType())) {
@@ -1624,8 +1619,7 @@ BinaryOperator *BinaryOperator::CreateNot(LLVMContext &Context,
                             Op->getType(), Name, InsertBefore);
 }
 
-BinaryOperator *BinaryOperator::CreateNot(LLVMContext &Context,
-                                          Value *Op, const Twine &Name,
+BinaryOperator *BinaryOperator::CreateNot(Value *Op, const Twine &Name,
                                           BasicBlock *InsertAtEnd) {
   Constant *AllOnes;
   if (const VectorType *PTy = dyn_cast<VectorType>(Op->getType())) {

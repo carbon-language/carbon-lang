@@ -1558,8 +1558,7 @@ bool llvm::FoldBranchToCommonDest(BranchInst *BI) {
     // If we need to invert the condition in the pred block to match, do so now.
     if (InvertPredCond) {
       Value *NewCond =
-        BinaryOperator::CreateNot(BI->getParent()->getContext(), 
-                                  PBI->getCondition(), 
+        BinaryOperator::CreateNot(PBI->getCondition(),
                                   PBI->getCondition()->getName()+".not", PBI);
       PBI->setCondition(NewCond);
       BasicBlock *OldTrue = PBI->getSuccessor(0);
@@ -1598,8 +1597,7 @@ bool llvm::FoldBranchToCommonDest(BranchInst *BI) {
 static bool SimplifyCondBranchToCondBranch(BranchInst *PBI, BranchInst *BI) {
   assert(PBI->isConditional() && BI->isConditional());
   BasicBlock *BB = BI->getParent();
-  LLVMContext &Context = BB->getContext();
-  
+
   // If this block ends with a branch instruction, and if there is a
   // predecessor that ends on a branch of the same condition, make 
   // this conditional branch redundant.
@@ -1715,12 +1713,12 @@ static bool SimplifyCondBranchToCondBranch(BranchInst *PBI, BranchInst *BI) {
   // Make sure we get to CommonDest on True&True directions.
   Value *PBICond = PBI->getCondition();
   if (PBIOp)
-    PBICond = BinaryOperator::CreateNot(Context, PBICond,
+    PBICond = BinaryOperator::CreateNot(PBICond,
                                         PBICond->getName()+".not",
                                         PBI);
   Value *BICond = BI->getCondition();
   if (BIOp)
-    BICond = BinaryOperator::CreateNot(Context, BICond,
+    BICond = BinaryOperator::CreateNot(BICond,
                                        BICond->getName()+".not",
                                        PBI);
   // Merge the conditions.

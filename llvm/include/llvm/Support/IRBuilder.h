@@ -325,17 +325,17 @@ public:
   Value *CreateNeg(Value *V, const char *Name = "") {
     if (Constant *VC = dyn_cast<Constant>(V))
       return Folder.CreateNeg(VC);
-    return Insert(BinaryOperator::CreateNeg(Context, V), Name);
+    return Insert(BinaryOperator::CreateNeg(V), Name);
   }
   Value *CreateFNeg(Value *V, const char *Name = "") {
     if (Constant *VC = dyn_cast<Constant>(V))
       return Folder.CreateFNeg(VC);
-    return Insert(BinaryOperator::CreateFNeg(Context, V), Name);
+    return Insert(BinaryOperator::CreateFNeg(V), Name);
   }
   Value *CreateNot(Value *V, const char *Name = "") {
     if (Constant *VC = dyn_cast<Constant>(V))
       return Folder.CreateNot(VC);
-    return Insert(BinaryOperator::CreateNot(Context, V), Name);
+    return Insert(BinaryOperator::CreateNot(V), Name);
   }
 
   //===--------------------------------------------------------------------===//

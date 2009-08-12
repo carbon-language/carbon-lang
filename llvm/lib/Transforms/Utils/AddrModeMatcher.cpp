@@ -97,8 +97,7 @@ bool AddressingModeMatcher::MatchScaledValue(Value *ScaleReg, int64_t Scale,
   // X*Scale + C*Scale to addr mode.
   ConstantInt *CI = 0; Value *AddLHS = 0;
   if (isa<Instruction>(ScaleReg) &&  // not a constant expr.
-      match(ScaleReg, m_Add(m_Value(AddLHS), m_ConstantInt(CI)),
-            MemoryInst->getContext())) {
+      match(ScaleReg, m_Add(m_Value(AddLHS), m_ConstantInt(CI)))) {
     TestAddrMode.ScaledReg = AddLHS;
     TestAddrMode.BaseOffs += CI->getSExtValue()*TestAddrMode.Scale;
       

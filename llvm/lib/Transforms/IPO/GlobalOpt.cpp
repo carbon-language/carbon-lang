@@ -891,7 +891,7 @@ static GlobalVariable *OptimizeGlobalAddressOfMalloc(GlobalVariable *GV,
           case ICmpInst::ICMP_ULE:
           case ICmpInst::ICMP_SLE:
           case ICmpInst::ICMP_EQ:
-            LV = BinaryOperator::CreateNot(Context, LV, "notinit", CI);
+            LV = BinaryOperator::CreateNot(LV, "notinit", CI);
             break;
           case ICmpInst::ICMP_NE:
           case ICmpInst::ICMP_UGE:

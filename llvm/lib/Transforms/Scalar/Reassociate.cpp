@@ -403,7 +403,7 @@ static Value *NegateValue(LLVMContext &Context, Value *V, Instruction *BI) {
   // Insert a 'neg' instruction that subtracts the value from zero to get the
   // negation.
   //
-  return BinaryOperator::CreateNeg(Context, V, V->getName() + ".neg", BI);
+  return BinaryOperator::CreateNeg(V, V->getName() + ".neg", BI);
 }
 
 /// ShouldBreakUpSubtract - Return true if we should break up this subtract of

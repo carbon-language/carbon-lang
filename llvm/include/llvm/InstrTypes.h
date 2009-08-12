@@ -244,23 +244,17 @@ public:
   /// CreateNeg, CreateNot - Create the NEG and NOT
   ///     instructions out of SUB and XOR instructions.
   ///
-  static BinaryOperator *CreateNeg(LLVMContext &Context,
-                                   Value *Op, const Twine &Name = "",
+  static BinaryOperator *CreateNeg(Value *Op, const Twine &Name = "",
                                    Instruction *InsertBefore = 0);
-  static BinaryOperator *CreateNeg(LLVMContext &Context,
-                                   Value *Op, const Twine &Name,
+  static BinaryOperator *CreateNeg(Value *Op, const Twine &Name,
                                    BasicBlock *InsertAtEnd);
-  static BinaryOperator *CreateFNeg(LLVMContext &Context, 
-                                    Value *Op, const Twine &Name = "",
+  static BinaryOperator *CreateFNeg(Value *Op, const Twine &Name = "",
                                     Instruction *InsertBefore = 0);
-  static BinaryOperator *CreateFNeg(LLVMContext &Context,
-                                    Value *Op, const Twine &Name,
+  static BinaryOperator *CreateFNeg(Value *Op, const Twine &Name,
                                     BasicBlock *InsertAtEnd);
-  static BinaryOperator *CreateNot(LLVMContext &Context,
-                                   Value *Op, const Twine &Name = "",
+  static BinaryOperator *CreateNot(Value *Op, const Twine &Name = "",
                                    Instruction *InsertBefore = 0);
-  static BinaryOperator *CreateNot(LLVMContext &Context,
-                                   Value *Op, const Twine &Name,
+  static BinaryOperator *CreateNot(Value *Op, const Twine &Name,
                                    BasicBlock *InsertAtEnd);
 
   /// isNeg, isFNeg, isNot - Check if the given Value is a
