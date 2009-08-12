@@ -1378,8 +1378,6 @@ bool ARMConstantIslands::OptimizeThumb2JumpTables(MachineFunction &MF) {
       if (ByteOk && (DstOffset - JTOffset) > ((1<<8)-1)*2)
         ByteOk = false;
       unsigned TBHLimit = ((1<<16)-1)*2;
-      if (STI->isTargetDarwin())
-        TBHLimit >>= 1;  // FIXME: Work around an assembler bug.
       if (HalfWordOk && (DstOffset - JTOffset) > TBHLimit)
         HalfWordOk = false;
       if (!ByteOk && !HalfWordOk)
