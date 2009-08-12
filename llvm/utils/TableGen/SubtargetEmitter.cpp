@@ -215,7 +215,7 @@ void SubtargetEmitter::FormItineraryString(Record *ItinData,
     // Next stage
     const Record *Stage = StageList[i];
   
-    // Form string as ,{ cycles, u1 | u2 | ... | un }
+    // Form string as ,{ cycles, u1 | u2 | ... | un, timeinc }
     int Cycles = Stage->getValueAsInt("Cycles");
     ItinString += "  { " + itostr(Cycles) + ", ";
     
@@ -229,6 +229,9 @@ void SubtargetEmitter::FormItineraryString(Record *ItinData,
       if (++j < M) ItinString += " | ";
     }
     
+    int TimeInc = Stage->getValueAsInt("TimeInc");
+    ItinString += ", " + itostr(TimeInc);
+
     // Close off stage
     ItinString += " }";
     if (++i < N) ItinString += ", ";
@@ -252,7 +255,7 @@ void SubtargetEmitter::EmitStageData(raw_ostream &OS,
 
   // Begin stages table
   OS << "static const llvm::InstrStage Stages[] = {\n"
-        "  { 0, 0 }, // No itinerary\n";
+        "  { 0, 0, 0 }, // No itinerary\n";
         
   unsigned StageCount = 1;
   unsigned ItinEnum = 1;
@@ -289,7 +292,7 @@ void SubtargetEmitter::EmitStageData(raw_ostream &OS,
       
       // If new itinerary
       if (Find == 0) {
-        // Emit as { cycles, u1 | u2 | ... | un }, // index
+        // Emit as { cycles, u1 | u2 | ... | un, timeinc }, // index
         OS << ItinString << ", // " << ItinEnum << "\n";
         // Record Itin class number.
         ItinMap[ItinString] = Find = StageCount;
@@ -313,7 +316,7 @@ void SubtargetEmitter::EmitStageData(raw_ostream &OS,
   }
   
   // Closing stage
-  OS << "  { 0, 0 } // End itinerary\n";
+  OS << "  { 0, 0, 0 } // End itinerary\n";
   // End stages table
   OS << "};\n";
   

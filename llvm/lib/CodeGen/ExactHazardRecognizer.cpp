@@ -34,12 +34,12 @@ ExactHazardRecognizer::ExactHazardRecognizer(const InstrItineraryData &LItinData
       // If the begin stage of an itinerary has 0 cycles and units,
       // then we have reached the end of the itineraries.
       const InstrStage *IS = ItinData.begin(idx), *E = ItinData.end(idx);
-      if ((IS->Cycles == 0) && (IS->Units == 0))
+      if ((IS->getCycles() == 0) && (IS->getUnits() == 0))
         break;
 
       unsigned ItinDepth = 0;
       for (; IS != E; ++IS)
-        ItinDepth += std::max(1U, IS->Cycles);
+        ItinDepth += IS->getCycles();
 
       ScoreboardDepth = std::max(ScoreboardDepth, ItinDepth);
     }
@@ -89,27 +89,25 @@ ExactHazardRecognizer::HazardType ExactHazardRecognizer::getHazardType(SUnit *SU
   unsigned idx = SU->getInstr()->getDesc().getSchedClass();
   for (const InstrStage *IS = ItinData.begin(idx), *E = ItinData.end(idx);
        IS != E; ++IS) {
-    // If the stages cycles are 0, then we must have the FU free in
-    // the current cycle, but we don't advance the cycle time .
-    unsigned StageCycles = std::max(1U, IS->Cycles);
-
     // We must find one of the stage's units free for every cycle the
-    // stage is occupied.
-    for (unsigned int i = 0; i < StageCycles; ++i) {
-      assert((cycle < ScoreboardDepth) && "Scoreboard depth exceeded!");
+    // stage is occupied. FIXME it would be more accurate to find the
+    // same unit free in all the cycles.
+    for (unsigned int i = 0; i < IS->getCycles(); ++i) {
+      assert(((cycle + i) < ScoreboardDepth) && 
+             "Scoreboard depth exceeded!");
 
-      unsigned index = getFutureIndex(cycle);
-      unsigned freeUnits = IS->Units & ~Scoreboard[index];
+      unsigned index = getFutureIndex(cycle + i);
+      unsigned freeUnits = IS->getUnits() & ~Scoreboard[index];
       if (!freeUnits) {
-        DEBUG(errs() << "*** Hazard in cycle " << cycle << ", ");
+        DEBUG(errs() << "*** Hazard in cycle " << (cycle + i) << ", ");
         DEBUG(errs() << "SU(" << SU->NodeNum << "): ");
         DEBUG(SU->getInstr()->dump());
         return Hazard;
       }
-
-      if (IS->Cycles > 0)
-        ++cycle;
     }
+
+    // Advance the cycle to the next stage.
+    cycle += IS->getNextCycles();
   }
 
   return NoHazard;
@@ -123,17 +121,15 @@ void ExactHazardRecognizer::EmitInstruction(SUnit *SU) {
   unsigned idx = SU->getInstr()->getDesc().getSchedClass();
   for (const InstrStage *IS = ItinData.begin(idx), *E = ItinData.end(idx);
        IS != E; ++IS) {
-    // If the stages cycles are 0, then we must reserve the FU in the
-    // current cycle, but we don't advance the cycle time .
-    unsigned StageCycles = std::max(1U, IS->Cycles);
-
     // We must reserve one of the stage's units for every cycle the
-    // stage is occupied.
-    for (unsigned int i = 0; i < StageCycles; ++i) {
-      assert((cycle < ScoreboardDepth) && "Scoreboard depth exceeded!");
+    // stage is occupied. FIXME it would be more accurate to reserve
+    // the same unit free in all the cycles.
+    for (unsigned int i = 0; i < IS->getCycles(); ++i) {
+      assert(((cycle + i) < ScoreboardDepth) &&
+             "Scoreboard depth exceeded!");
 
-      unsigned index = getFutureIndex(cycle);
-      unsigned freeUnits = IS->Units & ~Scoreboard[index];
+      unsigned index = getFutureIndex(cycle + i);
+      unsigned freeUnits = IS->getUnits() & ~Scoreboard[index];
       
       // reduce to a single unit
       unsigned freeUnit = 0;
@@ -144,10 +140,10 @@ void ExactHazardRecognizer::EmitInstruction(SUnit *SU) {
 
       assert(freeUnit && "No function unit available!");
       Scoreboard[index] |= freeUnit;
-      
-      if (IS->Cycles > 0)
-        ++cycle;
     }
+
+    // Advance the cycle to the next stage.
+    cycle += IS->getNextCycles();
   }
 
   DEBUG(dumpScoreboard());

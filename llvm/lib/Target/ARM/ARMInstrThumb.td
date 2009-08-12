@@ -508,7 +508,7 @@ def tMOVgpr2gpr  : T1I<(outs GPR:$dst), (ins GPR:$src), IIC_iALU,
 
 // multiply register
 let isCommutable = 1 in
-def tMUL : T1sIt<(outs tGPR:$dst), (ins tGPR:$lhs, tGPR:$rhs), IIC_iALU,
+def tMUL : T1sIt<(outs tGPR:$dst), (ins tGPR:$lhs, tGPR:$rhs), IIC_iMPY,
                  "mul", " $dst, $rhs",
                  [(set tGPR:$dst, (mul tGPR:$lhs, tGPR:$rhs))]>;
 

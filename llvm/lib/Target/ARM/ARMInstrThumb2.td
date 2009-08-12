@@ -808,80 +808,80 @@ def : T2Pat<(t2_so_imm_not:$src),
 //  Multiply Instructions.
 //
 let isCommutable = 1 in
-def t2MUL: T2I<(outs GPR:$dst), (ins GPR:$a, GPR:$b), IIC_iALU,
+def t2MUL: T2I<(outs GPR:$dst), (ins GPR:$a, GPR:$b), IIC_iMPY,
                 "mul", " $dst, $a, $b",
                 [(set GPR:$dst, (mul GPR:$a, GPR:$b))]>;
 
-def t2MLA: T2I<(outs GPR:$dst), (ins GPR:$a, GPR:$b, GPR:$c), IIC_iALU,
+def t2MLA: T2I<(outs GPR:$dst), (ins GPR:$a, GPR:$b, GPR:$c), IIC_iMPY,
 		"mla", " $dst, $a, $b, $c",
 		[(set GPR:$dst, (add (mul GPR:$a, GPR:$b), GPR:$c))]>;
 
-def t2MLS: T2I<(outs GPR:$dst), (ins GPR:$a, GPR:$b, GPR:$c), IIC_iALU,
+def t2MLS: T2I<(outs GPR:$dst), (ins GPR:$a, GPR:$b, GPR:$c), IIC_iMPY,
 		"mls", " $dst, $a, $b, $c",
                 [(set GPR:$dst, (sub GPR:$c, (mul GPR:$a, GPR:$b)))]>;
 
 // Extra precision multiplies with low / high results
 let neverHasSideEffects = 1 in {
 let isCommutable = 1 in {
-def t2SMULL : T2I<(outs GPR:$ldst, GPR:$hdst), (ins GPR:$a, GPR:$b), IIC_iALU,
+def t2SMULL : T2I<(outs GPR:$ldst, GPR:$hdst), (ins GPR:$a, GPR:$b), IIC_iMPY,
                    "smull", " $ldst, $hdst, $a, $b", []>;
 
-def t2UMULL : T2I<(outs GPR:$ldst, GPR:$hdst), (ins GPR:$a, GPR:$b), IIC_iALU,
+def t2UMULL : T2I<(outs GPR:$ldst, GPR:$hdst), (ins GPR:$a, GPR:$b), IIC_iMPY,
                    "umull", " $ldst, $hdst, $a, $b", []>;
 }
 
 // Multiply + accumulate
-def t2SMLAL : T2I<(outs GPR:$ldst, GPR:$hdst), (ins GPR:$a, GPR:$b), IIC_iALU,
+def t2SMLAL : T2I<(outs GPR:$ldst, GPR:$hdst), (ins GPR:$a, GPR:$b), IIC_iMPY,
                   "smlal", " $ldst, $hdst, $a, $b", []>;
 
-def t2UMLAL : T2I<(outs GPR:$ldst, GPR:$hdst), (ins GPR:$a, GPR:$b), IIC_iALU,
+def t2UMLAL : T2I<(outs GPR:$ldst, GPR:$hdst), (ins GPR:$a, GPR:$b), IIC_iMPY,
                   "umlal", " $ldst, $hdst, $a, $b", []>;
 
-def t2UMAAL : T2I<(outs GPR:$ldst, GPR:$hdst), (ins GPR:$a, GPR:$b), IIC_iALU,
+def t2UMAAL : T2I<(outs GPR:$ldst, GPR:$hdst), (ins GPR:$a, GPR:$b), IIC_iMPY,
                   "umaal", " $ldst, $hdst, $a, $b", []>;
 } // neverHasSideEffects
 
 // Most significant word multiply
-def t2SMMUL : T2I<(outs GPR:$dst), (ins GPR:$a, GPR:$b), IIC_iALU,
+def t2SMMUL : T2I<(outs GPR:$dst), (ins GPR:$a, GPR:$b), IIC_iMPY,
                   "smmul", " $dst, $a, $b",
                   [(set GPR:$dst, (mulhs GPR:$a, GPR:$b))]>;
 
-def t2SMMLA : T2I<(outs GPR:$dst), (ins GPR:$a, GPR:$b, GPR:$c), IIC_iALU,
+def t2SMMLA : T2I<(outs GPR:$dst), (ins GPR:$a, GPR:$b, GPR:$c), IIC_iMPY,
                   "smmla", " $dst, $a, $b, $c",
                   [(set GPR:$dst, (add (mulhs GPR:$a, GPR:$b), GPR:$c))]>;
 
 
-def t2SMMLS : T2I <(outs GPR:$dst), (ins GPR:$a, GPR:$b, GPR:$c), IIC_iALU,
+def t2SMMLS : T2I <(outs GPR:$dst), (ins GPR:$a, GPR:$b, GPR:$c), IIC_iMPY,
                    "smmls", " $dst, $a, $b, $c",
                    [(set GPR:$dst, (sub GPR:$c, (mulhs GPR:$a, GPR:$b)))]>;
 
 multiclass T2I_smul<string opc, PatFrag opnode> {
-  def BB : T2I<(outs GPR:$dst), (ins GPR:$a, GPR:$b), IIC_iALU,
+  def BB : T2I<(outs GPR:$dst), (ins GPR:$a, GPR:$b), IIC_iMPY,
               !strconcat(opc, "bb"), " $dst, $a, $b",
               [(set GPR:$dst, (opnode (sext_inreg GPR:$a, i16),
                                       (sext_inreg GPR:$b, i16)))]>;
 
-  def BT : T2I<(outs GPR:$dst), (ins GPR:$a, GPR:$b), IIC_iALU,
+  def BT : T2I<(outs GPR:$dst), (ins GPR:$a, GPR:$b), IIC_iMPY,
               !strconcat(opc, "bt"), " $dst, $a, $b",
               [(set GPR:$dst, (opnode (sext_inreg GPR:$a, i16),
                                       (sra GPR:$b, (i32 16))))]>;
 
-  def TB : T2I<(outs GPR:$dst), (ins GPR:$a, GPR:$b), IIC_iALU,
+  def TB : T2I<(outs GPR:$dst), (ins GPR:$a, GPR:$b), IIC_iMPY,
               !strconcat(opc, "tb"), " $dst, $a, $b",
               [(set GPR:$dst, (opnode (sra GPR:$a, (i32 16)),
                                       (sext_inreg GPR:$b, i16)))]>;
 
-  def TT : T2I<(outs GPR:$dst), (ins GPR:$a, GPR:$b), IIC_iALU,
+  def TT : T2I<(outs GPR:$dst), (ins GPR:$a, GPR:$b), IIC_iMPY,
               !strconcat(opc, "tt"), " $dst, $a, $b",
               [(set GPR:$dst, (opnode (sra GPR:$a, (i32 16)),
                                       (sra GPR:$b, (i32 16))))]>;
 
-  def WB : T2I<(outs GPR:$dst), (ins GPR:$a, GPR:$b), IIC_iALU,
+  def WB : T2I<(outs GPR:$dst), (ins GPR:$a, GPR:$b), IIC_iMPY,
               !strconcat(opc, "wb"), " $dst, $a, $b",
               [(set GPR:$dst, (sra (opnode GPR:$a,
                                     (sext_inreg GPR:$b, i16)), (i32 16)))]>;
 
-  def WT : T2I<(outs GPR:$dst), (ins GPR:$a, GPR:$b), IIC_iALU,
+  def WT : T2I<(outs GPR:$dst), (ins GPR:$a, GPR:$b), IIC_iMPY,
               !strconcat(opc, "wt"), " $dst, $a, $b",
               [(set GPR:$dst, (sra (opnode GPR:$a,
                                     (sra GPR:$b, (i32 16))), (i32 16)))]>;
@@ -889,33 +889,33 @@ multiclass T2I_smul<string opc, PatFrag opnode> {
 
 
 multiclass T2I_smla<string opc, PatFrag opnode> {
-  def BB : T2I<(outs GPR:$dst), (ins GPR:$a, GPR:$b, GPR:$acc), IIC_iALU,
+  def BB : T2I<(outs GPR:$dst), (ins GPR:$a, GPR:$b, GPR:$acc), IIC_iMPY,
               !strconcat(opc, "bb"), " $dst, $a, $b, $acc",
               [(set GPR:$dst, (add GPR:$acc,
                                (opnode (sext_inreg GPR:$a, i16),
                                        (sext_inreg GPR:$b, i16))))]>;
 
-  def BT : T2I<(outs GPR:$dst), (ins GPR:$a, GPR:$b, GPR:$acc), IIC_iALU,
+  def BT : T2I<(outs GPR:$dst), (ins GPR:$a, GPR:$b, GPR:$acc), IIC_iMPY,
              !strconcat(opc, "bt"), " $dst, $a, $b, $acc",
              [(set GPR:$dst, (add GPR:$acc, (opnode (sext_inreg GPR:$a, i16),
                                                     (sra GPR:$b, (i32 16)))))]>;
 
-  def TB : T2I<(outs GPR:$dst), (ins GPR:$a, GPR:$b, GPR:$acc), IIC_iALU,
+  def TB : T2I<(outs GPR:$dst), (ins GPR:$a, GPR:$b, GPR:$acc), IIC_iMPY,
               !strconcat(opc, "tb"), " $dst, $a, $b, $acc",
               [(set GPR:$dst, (add GPR:$acc, (opnode (sra GPR:$a, (i32 16)),
                                                  (sext_inreg GPR:$b, i16))))]>;
 
-  def TT : T2I<(outs GPR:$dst), (ins GPR:$a, GPR:$b, GPR:$acc), IIC_iALU,
+  def TT : T2I<(outs GPR:$dst), (ins GPR:$a, GPR:$b, GPR:$acc), IIC_iMPY,
               !strconcat(opc, "tt"), " $dst, $a, $b, $acc",
              [(set GPR:$dst, (add GPR:$acc, (opnode (sra GPR:$a, (i32 16)),
                                                     (sra GPR:$b, (i32 16)))))]>;
 
-  def WB : T2I<(outs GPR:$dst), (ins GPR:$a, GPR:$b, GPR:$acc), IIC_iALU,
+  def WB : T2I<(outs GPR:$dst), (ins GPR:$a, GPR:$b, GPR:$acc), IIC_iMPY,
               !strconcat(opc, "wb"), " $dst, $a, $b, $acc",
               [(set GPR:$dst, (add GPR:$acc, (sra (opnode GPR:$a,
                                        (sext_inreg GPR:$b, i16)), (i32 16))))]>;
 
-  def WT : T2I<(outs GPR:$dst), (ins GPR:$a, GPR:$b, GPR:$acc), IIC_iALU,
+  def WT : T2I<(outs GPR:$dst), (ins GPR:$a, GPR:$b, GPR:$acc), IIC_iMPY,
               !strconcat(opc, "wt"), " $dst, $a, $b, $acc",
               [(set GPR:$dst, (add GPR:$acc, (sra (opnode GPR:$a,
                                          (sra GPR:$b, (i32 16))), (i32 16))))]>;

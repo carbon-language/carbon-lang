@@ -8,7 +8,7 @@
 //===----------------------------------------------------------------------===//
 //
 // This file describes the structures used for instruction itineraries and
-// states.  This is used by schedulers to determine instruction states and
+// stages.  This is used by schedulers to determine instruction stages and
 // latencies.
 //
 //===----------------------------------------------------------------------===//
@@ -16,17 +16,57 @@
 #ifndef LLVM_TARGET_TARGETINSTRITINERARIES_H
 #define LLVM_TARGET_TARGETINSTRITINERARIES_H
 
+#include <algorithm>
+
 namespace llvm {
 
 //===----------------------------------------------------------------------===//
-/// Instruction stage - These values represent a step in the execution of an
-/// instruction.  The latency represents the number of discrete time slots
-/// needed to complete the stage.  Units represent the choice of functional 
-/// units that can be used to complete the stage.  Eg. IntUnit1, IntUnit2.
+/// Instruction stage - These values represent a non-pipelined step in
+/// the execution of an instruction.  Cycles represents the number of
+/// discrete time slots needed to complete the stage.  Units represent
+/// the choice of functional units that can be used to complete the
+/// stage.  Eg. IntUnit1, IntUnit2. NextCycles indicates how many
+/// cycles should elapse from the start of this stage to the start of
+/// the next stage in the itinerary. A value of -1 indicates that the
+/// next stage should start immediately after the current one.
+/// For example:
+///
+///   { 1, x, -1 }
+///      indicates that the stage occupies FU x for 1 cycle and that
+///      the next stage starts immediately after this one.
+///
+///   { 2, x|y, 1 }
+///      indicates that the stage occupies either FU x or FU y for 2
+///      consecuative cycles and that the next stage starts one cycle
+///      after this stage starts. That is, the stage requirements
+///      overlap in time.
+///
+///   { 1, x, 0 }
+///      indicates that the stage occupies FU x for 1 cycle and that
+///      the next stage starts in this same cycle. This can be used to
+///      indicate that the instruction requires multiple stages at the
+///      same time.
 ///
 struct InstrStage {
-  unsigned Cycles;  ///< Length of stage in machine cycles
-  unsigned Units;   ///< Choice of functional units
+  unsigned Cycles_;  ///< Length of stage in machine cycles
+  unsigned Units_;   ///< Choice of functional units
+  int NextCycles_;   ///< Number of machine cycles to next stage 
+
+  /// getCycles - returns the number of cycles the stage is occupied
+  unsigned getCycles() const {
+    return Cycles_;
+  }
+
+  /// getUnits - returns the choice of FUs
+  unsigned getUnits() const {
+    return Units_;
+  }
+
+  /// getNextCycles - returns the number of cycles from the start of
+  /// this stage to the start of the next stage in the itinerary
+  unsigned getNextCycles() const {
+    return (NextCycles_ >= 0) ? (unsigned)NextCycles_ : Cycles_;
+  }
 };
 
 
@@ -84,13 +124,17 @@ struct InstrItineraryData {
     if (isEmpty())
       return 1;
 
-    // Just sum the cycle count for each stage. The assumption is that all
-    // inputs are consumed at the start of the first stage and that all
-    // outputs are produced at the end of the last stage.
-    unsigned Latency = 0;
+    // Caclulate the maximum completion time for any stage. The
+    // assumption is that all inputs are consumed at the start of the
+    // first stage and that all outputs are produced at the end of the
+    // latest completing last stage.
+    unsigned Latency = 0, StartCycle = 0;
     for (const InstrStage *IS = begin(ItinClassIndx), *E = end(ItinClassIndx);
-         IS != E; ++IS)
-      Latency += IS->Cycles;
+         IS != E; ++IS) {
+      Latency = std::max(Latency, StartCycle + IS->getCycles());
+      StartCycle += IS->getNextCycles();
+    }
+
     return Latency;
   }
 };
