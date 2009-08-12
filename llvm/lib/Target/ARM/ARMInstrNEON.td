@@ -113,8 +113,8 @@ def addrmode_neonldstm : Operand<i32>,
 // NEON load / store instructions
 //===----------------------------------------------------------------------===//
 
-/* TODO: Take advantage of vldm.
 let mayLoad = 1 in {
+/* TODO: Take advantage of vldm.
 def VLDMD : NI<(outs),
                (ins addrmode_neonldstm:$addr, reglist:$dst1, variable_ops),
                NoItinerary,
@@ -134,7 +134,6 @@ def VLDMS : NI<(outs),
   let Inst{20}    = 1;
   let Inst{11-9}  = 0b101;
 }
-}
 */
 
 // Use vldmia to load a Q register as a D register pair.
@@ -146,18 +145,6 @@ def VLDRQ : NI4<(outs QPR:$dst), (ins addrmode4:$addr),
   let Inst{24}    = 0; // P bit
   let Inst{23}    = 1; // U bit
   let Inst{20}    = 1;
-  let Inst{11-9}  = 0b101;
-}
-
-// Use vstmia to store a Q register as a D register pair.
-def VSTRQ : NI4<(outs), (ins QPR:$src, addrmode4:$addr),
-               NoItinerary,
-               "vstmia $addr, ${src:dregpair}",
-               [(store (v2f64 QPR:$src), addrmode4:$addr)]> {
-  let Inst{27-25} = 0b110;
-  let Inst{24}    = 0; // P bit
-  let Inst{23}    = 1; // U bit
-  let Inst{20}    = 0;
   let Inst{11-9}  = 0b101;
 }
 
@@ -215,6 +202,20 @@ class VLD4D<string OpcodeStr>
 def  VLD4d8   : VLD4D<"vld4.8">;
 def  VLD4d16  : VLD4D<"vld4.16">;
 def  VLD4d32  : VLD4D<"vld4.32">;
+}
+
+let mayStore = 1 in {
+// Use vstmia to store a Q register as a D register pair.
+def VSTRQ : NI4<(outs), (ins QPR:$src, addrmode4:$addr),
+               NoItinerary,
+               "vstmia $addr, ${src:dregpair}",
+               [(store (v2f64 QPR:$src), addrmode4:$addr)]> {
+  let Inst{27-25} = 0b110;
+  let Inst{24}    = 0; // P bit
+  let Inst{23}    = 1; // U bit
+  let Inst{20}    = 0;
+  let Inst{11-9}  = 0b101;
+}
 
 //   VST1     : Vector Store (multiple single elements)
 class VST1D<string OpcodeStr, ValueType Ty, Intrinsic IntOp>
@@ -268,6 +269,7 @@ class VST4D<string OpcodeStr>
 def  VST4d8   : VST4D<"vst4.8">;
 def  VST4d16  : VST4D<"vst4.16">;
 def  VST4d32  : VST4D<"vst4.32">;
+}
 
 
 //===----------------------------------------------------------------------===//

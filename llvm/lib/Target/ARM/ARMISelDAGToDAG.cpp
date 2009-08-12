@@ -1357,8 +1357,9 @@ SDNode *ARMDAGToDAGISel::Select(SDValue Op) {
     case MVT::v2f32:
     case MVT::v2i32: Opc = ARM::VLD2d32; break;
     }
-    const SDValue Ops[] = { MemAddr, MemUpdate, MemOpc };
-    return CurDAG->getTargetNode(Opc, dl, VT, VT, MVT::Other, Ops, 3);
+    SDValue Chain = N->getOperand(0);
+    const SDValue Ops[] = { MemAddr, MemUpdate, MemOpc, Chain };
+    return CurDAG->getTargetNode(Opc, dl, VT, VT, MVT::Other, Ops, 4);
   }
 
   case ARMISD::VLD3D: {
@@ -1374,8 +1375,9 @@ SDNode *ARMDAGToDAGISel::Select(SDValue Op) {
     case MVT::v2f32:
     case MVT::v2i32: Opc = ARM::VLD3d32; break;
     }
-    const SDValue Ops[] = { MemAddr, MemUpdate, MemOpc };
-    return CurDAG->getTargetNode(Opc, dl, VT, VT, VT, MVT::Other, Ops, 3);
+    SDValue Chain = N->getOperand(0);
+    const SDValue Ops[] = { MemAddr, MemUpdate, MemOpc, Chain };
+    return CurDAG->getTargetNode(Opc, dl, VT, VT, VT, MVT::Other, Ops, 4);
   }
 
   case ARMISD::VLD4D: {
@@ -1391,10 +1393,11 @@ SDNode *ARMDAGToDAGISel::Select(SDValue Op) {
     case MVT::v2f32:
     case MVT::v2i32: Opc = ARM::VLD4d32; break;
     }
-    const SDValue Ops[] = { MemAddr, MemUpdate, MemOpc };
+    SDValue Chain = N->getOperand(0);
+    const SDValue Ops[] = { MemAddr, MemUpdate, MemOpc, Chain };
     std::vector<EVT> ResTys(4, VT);
     ResTys.push_back(MVT::Other);
-    return CurDAG->getTargetNode(Opc, dl, ResTys, Ops, 3);
+    return CurDAG->getTargetNode(Opc, dl, ResTys, Ops, 4);
   }
 
   case ARMISD::VST2D: {
@@ -1409,9 +1412,10 @@ SDNode *ARMDAGToDAGISel::Select(SDValue Op) {
     case MVT::v2f32:
     case MVT::v2i32: Opc = ARM::VST2d32; break;
     }
+    SDValue Chain = N->getOperand(0);
     const SDValue Ops[] = { MemAddr, MemUpdate, MemOpc,
-                            N->getOperand(2), N->getOperand(3) };
-    return CurDAG->getTargetNode(Opc, dl, MVT::Other, Ops, 5);
+                            N->getOperand(2), N->getOperand(3), Chain };
+    return CurDAG->getTargetNode(Opc, dl, MVT::Other, Ops, 6);
   }
 
   case ARMISD::VST3D: {
@@ -1426,10 +1430,11 @@ SDNode *ARMDAGToDAGISel::Select(SDValue Op) {
     case MVT::v2f32:
     case MVT::v2i32: Opc = ARM::VST3d32; break;
     }
+    SDValue Chain = N->getOperand(0);
     const SDValue Ops[] = { MemAddr, MemUpdate, MemOpc,
                             N->getOperand(2), N->getOperand(3),
-                            N->getOperand(4) };
-    return CurDAG->getTargetNode(Opc, dl, MVT::Other, Ops, 6);
+                            N->getOperand(4), Chain };
+    return CurDAG->getTargetNode(Opc, dl, MVT::Other, Ops, 7);
   }
 
   case ARMISD::VST4D: {
@@ -1444,10 +1449,11 @@ SDNode *ARMDAGToDAGISel::Select(SDValue Op) {
     case MVT::v2f32:
     case MVT::v2i32: Opc = ARM::VST4d32; break;
     }
+    SDValue Chain = N->getOperand(0);
     const SDValue Ops[] = { MemAddr, MemUpdate, MemOpc,
                             N->getOperand(2), N->getOperand(3),
-                            N->getOperand(4), N->getOperand(5) };
-    return CurDAG->getTargetNode(Opc, dl, MVT::Other, Ops, 7);
+                            N->getOperand(4), N->getOperand(5), Chain };
+    return CurDAG->getTargetNode(Opc, dl, MVT::Other, Ops, 8);
   }
 
   case ISD::INTRINSIC_WO_CHAIN: {
