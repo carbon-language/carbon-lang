@@ -735,9 +735,7 @@ llvm::Value *CodeGenFunction::GenerateVtable(const CXXRecordDecl *RD) {
   llvm::GlobalVariable::LinkageTypes linktype;
   linktype = llvm::GlobalValue::WeakAnyLinkage;
   std::vector<llvm::Constant *> methods;
-  typedef CXXRecordDecl::method_iterator meth_iter;
-  llvm::Type *Ptr8Ty;
-  Ptr8Ty = llvm::PointerType::get(llvm::Type::Int8Ty, 0);
+  llvm::Type *Ptr8Ty = llvm::PointerType::get(llvm::Type::Int8Ty, 0);
   int64_t Offset = 0;
   llvm::Constant *rtti = GenerateRtti(RD);
 
