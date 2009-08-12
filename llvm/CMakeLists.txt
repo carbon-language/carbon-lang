@@ -309,6 +309,7 @@ install(DIRECTORY include
   PATTERN ".svn" EXCLUDE
   PATTERN "*.cmake" EXCLUDE
   PATTERN "*.in" EXCLUDE
+  PATTERN "*.tmp" EXCLUDE
   )
 
 install(DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/include
