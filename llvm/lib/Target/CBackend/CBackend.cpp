@@ -3233,13 +3233,8 @@ std::string CWriter::InterpretASMConstraint(InlineAsm::ConstraintInfo& c) {
       Triple = llvm::sys::getHostTriple();
 
     std::string E;
-    const Target *Match = TargetRegistry::lookupTarget(Triple, E);
-    if (Match) {
-      // Per platform Target Machines don't exist, so create it;
-      // this must be done only once.
-      const TargetMachine* TM = Match->createTargetMachine(Triple, "");
-      TAsm = TM->getTargetAsmInfo();
-    }
+    if (const Target *Match = TargetRegistry::lookupTarget(Triple, E))
+      TAsm = Match->createAsmInfo(Triple);
   }
   if (TAsm)
     table = TAsm->getAsmCBE();
