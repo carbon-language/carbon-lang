@@ -27,8 +27,7 @@ ASTRecordLayoutBuilder::ASTRecordLayoutBuilder(ASTContext &Ctx)
 
 /// LayoutVtable - Lay out the vtable and set PrimaryBase.
 void ASTRecordLayoutBuilder::LayoutVtable(const CXXRecordDecl *RD) {
-  // FIXME: audit indirect virtual bases
-  if (!RD->isPolymorphic() && !RD->getNumVBases()) {
+  if (!RD->isDynamicClass()) {
     // There is no primary base in this case.
     setPrimaryBase(0, false);
     return;
@@ -141,7 +140,6 @@ void ASTRecordLayoutBuilder::SelectPrimaryBase(const CXXRecordDecl *RD) {
 
   // If we have no virtual bases at this point, bail out as the searching below
   // is expensive.
-  // FIXME: audit indirect virtual bases
   if (RD->getNumVBases() == 0) {
     return;
   }
