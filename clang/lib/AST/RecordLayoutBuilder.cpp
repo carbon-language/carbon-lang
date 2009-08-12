@@ -85,7 +85,6 @@ void ASTRecordLayoutBuilder::SelectPrimaryForBase(const CXXRecordDecl *RD,
       cast<CXXRecordDecl>(i->getType()->getAs<RecordType>()->getDecl());
     // Only bases with virtual bases participate in computing the
     // indirect primary virtual base classes.
-    // FIXME: audit indirect virtual bases
     if (Base->getNumVBases() == 0)
       continue;
     SelectPrimaryForBase(Base, IndirectPrimary);
