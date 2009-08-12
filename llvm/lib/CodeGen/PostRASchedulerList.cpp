@@ -532,9 +532,9 @@ SchedulePostRATDList::findSuitableFreeRegister(unsigned AntiDepReg,
            "Kill and Def maps aren't consistent for AntiDepReg!");
     assert(((KillIndices[NewReg] == ~0u) != (DefIndices[NewReg] == ~0u)) &&
            "Kill and Def maps aren't consistent for NewReg!");
-    if (KillIndices[NewReg] == ~0u &&
-        Classes[NewReg] != reinterpret_cast<TargetRegisterClass *>(-1) &&
-        KillIndices[AntiDepReg] <= DefIndices[NewReg])
+    if (KillIndices[NewReg] != ~0u ||
+        Classes[NewReg] == reinterpret_cast<TargetRegisterClass *>(-1) ||
+        KillIndices[AntiDepReg] > DefIndices[NewReg])
       continue;
     return NewReg;
   }
