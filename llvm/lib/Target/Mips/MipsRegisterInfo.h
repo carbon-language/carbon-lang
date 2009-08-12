@@ -34,7 +34,7 @@ struct MipsRegisterInfo : public MipsGenRegisterInfo {
   static unsigned getRegisterNumbering(unsigned RegEnum);
 
   /// Get PIC indirect call register
-  static unsigned getPICCallReg(void); 
+  static unsigned getPICCallReg();
 
   /// Adjust the Mips stack frame.
   void adjustMipsStackFrame(MachineFunction &MF) const;

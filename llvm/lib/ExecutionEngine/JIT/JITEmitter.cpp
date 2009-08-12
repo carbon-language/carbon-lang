@@ -606,11 +606,11 @@ namespace {
       if (DwarfExceptionHandling) DE->setModuleInfo(Info);
     }
 
-    void setMemoryExecutable(void) {
+    void setMemoryExecutable() {
       MemMgr->setMemoryExecutable();
     }
     
-    JITMemoryManager *getMemMgr(void) const { return MemMgr; }
+    JITMemoryManager *getMemMgr() const { return MemMgr; }
 
   private:
     void *getPointerToGlobal(GlobalValue *GV, void *Reference, bool NoNeedStub);

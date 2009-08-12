@@ -12,7 +12,7 @@ namespace llvmc {
 // Returns the platform specific directory separator via #ifdefs.
 // FIXME: This currently work on linux and windows only. It does not 
 // work on other unices. 
-static std::string GetDirSeparator(void) {
+static std::string GetDirSeparator() {
 #ifdef __linux__
   return "/";
 #else
@@ -22,7 +22,7 @@ static std::string GetDirSeparator(void) {
 
 namespace hooks {
 // Get the dir where c16 executables reside.
-std::string GetBinDir (void) {
+std::string GetBinDir() {
   // Construct a Path object from the program name.  
   void *P = (void*) (intptr_t) GetBinDir;
   sys::Path ProgramFullPath 
@@ -36,7 +36,7 @@ std::string GetBinDir (void) {
 }
 
 // Get the Top-level Installation dir for c16.
-std::string GetInstallDir (void) {
+std::string GetInstallDir() {
   sys::Path BinDirPath = sys::Path(GetBinDir());
 
   // Go one more level up to get the install dir.
@@ -46,22 +46,22 @@ std::string GetInstallDir (void) {
 }
 
 // Get the dir where the c16 header files reside.
-std::string GetStdHeadersDir (void) {
+std::string GetStdHeadersDir() {
   return GetInstallDir() + "include";
 }
 
 // Get the dir where the assembler header files reside.
-std::string GetStdAsmHeadersDir (void) {
+std::string GetStdAsmHeadersDir() {
   return GetInstallDir() + "inc";
 }
 
 // Get the dir where the linker scripts reside.
-std::string GetStdLinkerScriptsDir (void) {
+std::string GetStdLinkerScriptsDir() {
   return GetInstallDir() + "lkr";
 }
 
 // Get the dir where startup code, intrinsics and lib reside.
-std::string GetStdLibsDir (void) {
+std::string GetStdLibsDir() {
   return GetInstallDir() + "lib";
 }
 }

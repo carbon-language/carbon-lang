@@ -22,7 +22,7 @@ namespace llvm {
 class XCoreInstrInfo : public TargetInstrInfoImpl {
   const XCoreRegisterInfo RI;
 public:
-  XCoreInstrInfo(void);
+  XCoreInstrInfo();
 
   /// getRegisterInfo - TargetInstrInfo is a superset of MRegister info.  As
   /// such, whenever a client has an instance of instruction info, it should

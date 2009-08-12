@@ -26,7 +26,7 @@
 
 using namespace llvm;
 
-bool llvm::sys::hasDisassembler(void) 
+bool llvm::sys::hasDisassembler()
 {
 #if defined (__i386__) || defined (__amd64__) || defined (__x86_64__)
   // We have option to enable udis86 library.

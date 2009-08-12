@@ -41,11 +41,11 @@ public:
   
   /// setMemoryWritable - When code generation is in progress,
   /// the code pages may need permissions changed.
-  virtual void setMemoryWritable(void) = 0;
+  virtual void setMemoryWritable() = 0;
 
   /// setMemoryExecutable - When code generation is done and we're ready to
   /// start execution, the code pages may need permissions changed.
-  virtual void setMemoryExecutable(void) = 0;
+  virtual void setMemoryExecutable() = 0;
 
   /// setPoisonMemory - Setting this flag to true makes the memory manager
   /// garbage values over freed memory.  This is useful for testing and

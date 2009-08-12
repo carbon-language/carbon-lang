@@ -974,7 +974,7 @@ Init *TGParser::ParseOperation(Record *CurRec) {
 ///
 /// OperatorType ::= '<' Type '>'
 ///
-RecTy *TGParser::ParseOperatorType(void) {
+RecTy *TGParser::ParseOperatorType() {
   RecTy *Type = 0;
 
   if (Lex.getCode() != tgtok::less) {

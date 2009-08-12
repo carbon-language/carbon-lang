@@ -56,7 +56,7 @@ namespace llvm {
     void EmitRemainingAutos ();
     void EmitRomData (Module &M);
     void EmitFunctionFrame(MachineFunction &MF);
-    void printLibcallDecls(void);
+    void printLibcallDecls();
   protected:
     bool doInitialization(Module &M);
     bool doFinalization(Module &M);

@@ -35,7 +35,7 @@ void llvm_install_error_handler(llvm_error_handler_t handler,
   ErrorHandlerUserData = user_data;
 }
 
-void llvm_remove_error_handler(void) {
+void llvm_remove_error_handler() {
   ErrorHandler = 0;
 }
 

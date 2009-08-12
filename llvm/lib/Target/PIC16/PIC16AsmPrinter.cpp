@@ -194,7 +194,7 @@ static bool is_duplicate(const char *s1, const char *s2) {
 /// printLibcallDecls - print the extern declarations for compiler 
 /// intrinsics.
 ///
-void PIC16AsmPrinter::printLibcallDecls(void) {
+void PIC16AsmPrinter::printLibcallDecls() {
   // If no libcalls used, return.
   if (LibcallDecls.empty()) return;
 

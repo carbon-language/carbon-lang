@@ -250,8 +250,8 @@ protected:
   void error_detected() { Error = true; }
 
   typedef char * iterator;
-  iterator begin(void) { return OutBufStart; }
-  iterator end(void) { return OutBufCur; }
+  iterator begin() { return OutBufStart; }
+  iterator end() { return OutBufCur; }
 
   //===--------------------------------------------------------------------===//
   // Private Interface

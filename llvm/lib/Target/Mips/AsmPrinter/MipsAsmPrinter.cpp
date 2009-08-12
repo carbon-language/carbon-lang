@@ -74,7 +74,7 @@ namespace {
     void printSavedRegsBitmask(MachineFunction &MF);
     void printHex32(unsigned int Value);
 
-    const char *emitCurrentABIString(void);
+    const char *emitCurrentABIString();
     void emitFunctionStart(MachineFunction &MF);
     void emitFunctionEnd(MachineFunction &MF);
     void emitFrameDirective(MachineFunction &MF);

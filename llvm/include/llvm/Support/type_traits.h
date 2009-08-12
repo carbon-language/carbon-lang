@@ -35,7 +35,7 @@ namespace dont_use
     // important to make the is_class<T>::value idiom zero cost. it
     // evaluates to a constant 1 or 0 depending on whether the
     // parameter T is a class or not (respectively).
-    template<typename T> char is_class_helper(void(T::*)(void));
+    template<typename T> char is_class_helper(void(T::*)());
     template<typename T> double is_class_helper(...);
 }
 

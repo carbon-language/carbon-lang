@@ -55,7 +55,7 @@ static ManagedStatic<std::map<const Function *, ExFunc> > ExportedFunctions;
 static std::map<std::string, ExFunc> FuncNames;
 
 #ifdef USE_LIBFFI
-typedef void (*RawFunc)(void);
+typedef void (*RawFunc)();
 static ManagedStatic<std::map<const Function *, RawFunc> > RawFunctions;
 #endif
 

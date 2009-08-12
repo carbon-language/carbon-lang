@@ -85,7 +85,7 @@ static void jit_exit(int Status) {
 }
 
 // jit_atexit - Used to intercept the "atexit" library call.
-static int jit_atexit(void (*Fn)(void)) {
+static int jit_atexit(void (*Fn)()) {
   AtExitHandlers.push_back(Fn);    // Take note of atexit handler...
   return 0;  // Always successful
 }

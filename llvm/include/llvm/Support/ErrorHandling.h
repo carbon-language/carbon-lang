@@ -45,7 +45,7 @@ namespace llvm {
   /// Restores default error handling behaviour.
   /// This must not be called between llvm_start_multithreaded() and
   /// llvm_stop_multithreaded().
-  void llvm_remove_error_handler(void);
+  void llvm_remove_error_handler();
 
   /// Reports a serious error, calling any installed error handler.
   /// If no error handler is installed the default is to print the message to

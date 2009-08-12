@@ -521,14 +521,14 @@ namespace {
 
     /// setMemoryWritable - When code generation is in progress,
     /// the code pages may need permissions changed.
-    void setMemoryWritable(void)
+    void setMemoryWritable()
     {
       for (unsigned i = 0, e = CodeSlabs.size(); i != e; ++i)
         sys::Memory::setWritable(CodeSlabs[i]);
     }
     /// setMemoryExecutable - When code generation is done and we're ready to
     /// start execution, the code pages may need permissions changed.
-    void setMemoryExecutable(void)
+    void setMemoryExecutable()
     {
       for (unsigned i = 0, e = CodeSlabs.size(); i != e; ++i)
         sys::Memory::setExecutable(CodeSlabs[i]);

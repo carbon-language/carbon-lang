@@ -51,7 +51,7 @@ static TargetJITInfo::JITCompilerFn JITCompilerFunction;
 // control over register saving and restoring.
 extern "C" {
 #if defined(__arm__)
-  void ARMCompilationCallback(void);
+  void ARMCompilationCallback();
   asm(
     ".text\n"
     ".align 2\n"

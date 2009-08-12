@@ -86,7 +86,7 @@ getRegisterNumbering(unsigned RegEnum)
   return 0; // Not reached
 }
 
-unsigned MipsRegisterInfo::getPICCallReg(void) { return Mips::T9; }
+unsigned MipsRegisterInfo::getPICCallReg() { return Mips::T9; }
 
 //===----------------------------------------------------------------------===//
 // Callee Saved Registers methods 

@@ -37,7 +37,7 @@ namespace XCore {
 
 using namespace llvm;
 
-XCoreInstrInfo::XCoreInstrInfo(void)
+XCoreInstrInfo::XCoreInstrInfo()
   : TargetInstrInfoImpl(XCoreInsts, array_lengthof(XCoreInsts)),
     RI(*this) {
 }
