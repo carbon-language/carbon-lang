@@ -70,6 +70,7 @@ public:
     FreeBSD,
     Linux,
     MinGW32,
+    MinGW64,
     NetBSD,
     OpenBSD,
     Win32

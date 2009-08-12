@@ -63,6 +63,7 @@ const char *Triple::getOSTypeName(OSType Kind) {
   case FreeBSD: return "freebsd";
   case Linux: return "linux";
   case MinGW32: return "mingw32";
+  case MinGW64: return "mingw64";
   case NetBSD: return "netbsd";
   case OpenBSD: return "openbsd";
   case Win32: return "win32";
@@ -171,6 +172,8 @@ void Triple::Parse() const {
     OS = Linux;
   else if (OSName.startswith("mingw32"))
     OS = MinGW32;
+  else if (OSName.startswith("mingw64"))
+    OS = MinGW64;
   else if (OSName.startswith("netbsd"))
     OS = NetBSD;
   else if (OSName.startswith("openbsd"))
