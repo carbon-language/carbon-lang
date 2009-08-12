@@ -67,7 +67,7 @@ static const Module *getModuleFromVal(const Value *V) {
 // PrintEscapedString - Print each character of the specified string, escaping
 // it if it is not printable or if it is an escape char.
 static void PrintEscapedString(const StringRef &Name,
-                               formatted_raw_ostream &Out) {
+                               raw_ostream &Out) {
   for (unsigned i = 0, e = Name.size(); i != e; ++i) {
     unsigned char C = Name[i];
     if (isprint(C) && C != '\\' && C != '"')
@@ -87,7 +87,7 @@ enum PrefixType {
 /// PrintLLVMName - Turn the specified name into an 'LLVM name', which is either
 /// prefixed with % (if the string only contains simple characters) or is
 /// surrounded with ""'s (if it has special chars in it).  Print it out.
-static void PrintLLVMName(formatted_raw_ostream &OS, const StringRef &Name,
+static void PrintLLVMName(raw_ostream &OS, const StringRef &Name,
                           PrefixType Prefix) {
   assert(Name.data() && "Cannot get empty name!");
   switch (Prefix) {
@@ -126,7 +126,7 @@ static void PrintLLVMName(formatted_raw_ostream &OS, const StringRef &Name,
 /// PrintLLVMName - Turn the specified name into an 'LLVM name', which is either
 /// prefixed with % (if the string only contains simple characters) or is
 /// surrounded with ""'s (if it has special chars in it).  Print it out.
-static void PrintLLVMName(formatted_raw_ostream &OS, const Value *V) {
+static void PrintLLVMName(raw_ostream &OS, const Value *V) {
   PrintLLVMName(OS, V->getName(), 
                 isa<GlobalValue>(V) ? GlobalPrefix : LocalPrefix);
 }
@@ -817,7 +817,7 @@ void SlotTracker::CreateMetadataSlot(const MDNode *N) {
 // AsmWriter Implementation
 //===----------------------------------------------------------------------===//
 
-static void WriteAsOperandInternal(formatted_raw_ostream &Out, const Value *V,
+static void WriteAsOperandInternal(raw_ostream &Out, const Value *V,
                                    TypePrinting &TypePrinter,
                                    SlotTracker *Machine);
 
@@ -889,7 +889,7 @@ static void WriteMDNodes(formatted_raw_ostream &Out, TypePrinting &TypePrinter,
   }
 }
 
-static void WriteOptimizationInfo(formatted_raw_ostream &Out, const User *U) {
+static void WriteOptimizationInfo(raw_ostream &Out, const User *U) {
   if (const OverflowingBinaryOperator *OBO =
         dyn_cast<OverflowingBinaryOperator>(U)) {
     if (OBO->hasNoUnsignedOverflow())
@@ -905,7 +905,7 @@ static void WriteOptimizationInfo(formatted_raw_ostream &Out, const User *U) {
   }
 }
 
-static void WriteConstantInt(formatted_raw_ostream &Out, const Constant *CV,
+static void WriteConstantInt(raw_ostream &Out, const Constant *CV,
                              TypePrinting &TypePrinter, SlotTracker *Machine) {
   if (const ConstantInt *CI = dyn_cast<ConstantInt>(CV)) {
     if (CI->getType() == Type::Int1Ty) {
@@ -1146,7 +1146,7 @@ static void WriteConstantInt(formatted_raw_ostream &Out, const Constant *CV,
 /// ostream.  This can be useful when you just want to print int %reg126, not
 /// the whole instruction that generated it.
 ///
-static void WriteAsOperandInternal(formatted_raw_ostream &Out, const Value *V,
+static void WriteAsOperandInternal(raw_ostream &Out, const Value *V,
                                    TypePrinting &TypePrinter,
                                    SlotTracker *Machine) {
   if (V->hasName()) {
@@ -1224,8 +1224,8 @@ void llvm::WriteAsOperand(std::ostream &Out, const Value *V, bool PrintType,
   WriteAsOperand(OS, V, PrintType, Context);
 }
 
-void llvm::WriteAsOperand(raw_ostream &Out, const Value *V, bool PrintType,
-                          const Module *Context) {
+void llvm::WriteAsOperand(raw_ostream &Out, const Value *V,
+                          bool PrintType, const Module *Context) {
   if (Context == 0) Context = getModuleFromVal(V);
 
   TypePrinting TypePrinter;
@@ -1236,10 +1236,8 @@ void llvm::WriteAsOperand(raw_ostream &Out, const Value *V, bool PrintType,
     Out << ' ';
   }
 
-  formatted_raw_ostream FOut(Out);
-  WriteAsOperandInternal(FOut, V, TypePrinter, 0);
+  WriteAsOperandInternal(Out, V, TypePrinter, 0);
 }
-
 
 namespace {
 
@@ -2003,9 +2001,14 @@ void Module::print(std::ostream &o, AssemblyAnnotationWriter *AAW) const {
 }
 void Module::print(raw_ostream &ROS, AssemblyAnnotationWriter *AAW) const {
   SlotTracker SlotTable(this);
+  size_t OldBufferSize = ROS.GetBufferSize();
   formatted_raw_ostream OS(ROS);
   AssemblyWriter W(OS, SlotTable, this, AAW);
   W.write(this);
+  // formatted_raw_ostream forces the underlying raw_ostream to be
+  // unbuffered. Reset it to its original buffer size.
+  if (OldBufferSize != 0)
+    ROS.SetBufferSize(OldBufferSize);
 }
 
 void Type::print(std::ostream &o) const {
@@ -2022,11 +2025,12 @@ void Type::print(raw_ostream &OS) const {
 }
 
 void Value::print(raw_ostream &ROS, AssemblyAnnotationWriter *AAW) const {
-  formatted_raw_ostream OS(ROS);
   if (this == 0) {
-    OS << "printing a <null> value\n";
+    ROS << "printing a <null> value\n";
     return;
   }
+  size_t OldBufferSize = ROS.GetBufferSize();
+  formatted_raw_ostream OS(ROS);
   if (const Instruction *I = dyn_cast<Instruction>(this)) {
     const Function *F = I->getParent() ? I->getParent()->getParent() : 0;
     SlotTracker SlotTable(F);
@@ -2081,6 +2085,10 @@ void Value::print(raw_ostream &ROS, AssemblyAnnotationWriter *AAW) const {
   } else {
     llvm_unreachable("Unknown value to print out!");
   }
+  // formatted_raw_ostream forces the underlying raw_ostream to be
+  // unbuffered. Reset it to its original buffer size.
+  if (OldBufferSize != 0)
+    ROS.SetBufferSize(OldBufferSize);
 }
 
 void Value::print(std::ostream &O, AssemblyAnnotationWriter *AAW) const {
