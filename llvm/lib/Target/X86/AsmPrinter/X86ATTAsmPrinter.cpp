@@ -816,7 +816,8 @@ void X86ATTAsmPrinter::PrintGlobalVariable(const GlobalVariable* GVar) {
           EmitAlignment(Align, GVar);
           O << name << ":";
           if (VerboseAsm) {
-            O << "\t\t\t\t" << TAI->getCommentString() << ' ';
+            O.PadToColumn(TAI->getCommentColumn(), 1);
+            O << TAI->getCommentString() << ' ';
             PrintUnmangledNameSafely(GVar, O);
           }
           O << '\n';
@@ -837,7 +838,8 @@ void X86ATTAsmPrinter::PrintGlobalVariable(const GlobalVariable* GVar) {
           O << ',' << (TAI->getAlignmentIsInBytes() ? (1 << Align) : Align);
       }
       if (VerboseAsm) {
-        O << "\t\t" << TAI->getCommentString() << ' ';
+        O.PadToColumn(TAI->getCommentColumn(), 1);
+        O << TAI->getCommentString() << ' ';
         PrintUnmangledNameSafely(GVar, O);
       }
       O << '\n';
@@ -880,7 +882,8 @@ void X86ATTAsmPrinter::PrintGlobalVariable(const GlobalVariable* GVar) {
   EmitAlignment(Align, GVar);
   O << name << ":";
   if (VerboseAsm){
-    O << "\t\t\t\t" << TAI->getCommentString() << ' ';
+    O.PadToColumn(TAI->getCommentColumn(), 1);
+    O << TAI->getCommentString() << ' ';
     PrintUnmangledNameSafely(GVar, O);
   }
   O << '\n';

@@ -524,7 +524,8 @@ void X86IntelAsmPrinter::PrintGlobalVariable(const GlobalVariable *GV) {
   
   O << name << ":";
   if (VerboseAsm)
-    O << "\t\t\t\t" << TAI->getCommentString()
+    O.PadToColumn(TAI->getCommentColumn(), 1);
+    O << TAI->getCommentString()
     << " " << GV->getName();
   O << '\n';
   
