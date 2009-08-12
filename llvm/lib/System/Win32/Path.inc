@@ -156,7 +156,8 @@ Path::isAbsolute(const char *NameStart, unsigned NameLen) {
   case 2:
     return NameStart[0] == '/';
   default:
-    return NameStart[0] == '/' || (NameStart[1] == ':' && NameStart[2] == '/');
+    return (NameStart[0] == '/' || (NameStart[1] == ':' && NameStart[2] == '/')) ||
+           (NameStart[0] == '\\' || (NameStart[1] == ':' && NameStart[2] == '\\'));
   }
 }
 
