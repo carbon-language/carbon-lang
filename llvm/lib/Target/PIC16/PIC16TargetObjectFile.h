@@ -12,6 +12,7 @@
 
 #include "llvm/Target/TargetLoweringObjectFile.h"
 #include <vector>
+#include <string>
 
 namespace llvm {
   class GlobalVariable;
