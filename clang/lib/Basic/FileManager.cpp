@@ -221,6 +221,9 @@ const FileEntry *FileManager::getFile(const char *NameStart,
   const char *SlashPos = NameEnd-1;
   while (SlashPos >= NameStart && !IS_DIR_SEPARATOR_CHAR(SlashPos[0]))
     --SlashPos;
+  // Ignore duplicate //'s.
+  while (SlashPos > NameStart && IS_DIR_SEPARATOR_CHAR(SlashPos[-1]))
+    --SlashPos;
   
   const DirectoryEntry *DirInfo;
   if (SlashPos < NameStart) {
