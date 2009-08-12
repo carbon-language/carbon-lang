@@ -103,26 +103,28 @@ static Constant *FoldBitCast(LLVMContext &Context,
     if (const PointerType *DPTy = dyn_cast<PointerType>(DestTy))
       if (PTy->getAddressSpace() == DPTy->getAddressSpace()) {
         SmallVector<Value*, 8> IdxList;
-        IdxList.push_back(Constant::getNullValue(Type::Int32Ty));
+        Value *Zero = Constant::getNullValue(Type::Int32Ty);
+        IdxList.push_back(Zero);
         const Type *ElTy = PTy->getElementType();
         while (ElTy != DPTy->getElementType()) {
           if (const StructType *STy = dyn_cast<StructType>(ElTy)) {
             if (STy->getNumElements() == 0) break;
             ElTy = STy->getElementType(0);
-            IdxList.push_back(Constant::getNullValue(Type::Int32Ty));
+            IdxList.push_back(Zero);
           } else if (const SequentialType *STy = 
                      dyn_cast<SequentialType>(ElTy)) {
             if (isa<PointerType>(ElTy)) break;  // Can't index into pointers!
             ElTy = STy->getElementType();
-            IdxList.push_back(IdxList[0]);
+            IdxList.push_back(Zero);
           } else {
             break;
           }
         }
         
         if (ElTy == DPTy->getElementType())
-          return ConstantExpr::getGetElementPtr(V, &IdxList[0],
-                                                      IdxList.size());
+          // This GEP is inbounds because all indices are zero.
+          return ConstantExpr::getInBoundsGetElementPtr(V, &IdxList[0],
+                                                        IdxList.size());
       }
   
   // Handle casts from one vector constant to another.  We know that the src 
