@@ -1,4 +1,4 @@
-//==- GRCoreEngine.h - Path-Sensitive Dataflow Engine ------------------*- C++ -*-//
+//==- GRCoreEngine.h - Path-Sensitive Dataflow Engine --------------*- C++ -*-//
 //             
 //                     The LLVM Compiler Infrastructure
 //
@@ -24,16 +24,6 @@
 #include "llvm/ADT/OwningPtr.h"
 
 namespace clang {
-
-class GRState;
-class GRStateManager;
-class GRStmtNodeBuilder;
-class GRBranchNodeBuilder;
-class GRIndirectGotoNodeBuilder;
-class GRSwitchNodeBuilder;
-class GREndPathNodeBuilder;
-class GRWorkList;
-class GRCoreEngine;
 
 //===----------------------------------------------------------------------===//
 /// GRCoreEngine - Implements the core logic of the graph-reachability 
