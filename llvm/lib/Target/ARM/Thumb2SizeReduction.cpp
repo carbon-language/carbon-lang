@@ -77,8 +77,9 @@ namespace {
     { ARM::t2LSRrr, 0,            ARM::tLSRrr,   0,   0,    0,   1,  0,0, 0 },
     { ARM::t2MOVi,  ARM::tMOVi8,  0,             8,   0,    1,   0,  0,0, 0 },
     // FIXME: Do we need the 16-bit 'S' variant?
-    // FIXME: t2MOVcc
     { ARM::t2MOVr,ARM::tMOVgpr2gpr,0,            0,   0,    0,   0,  1,0, 0 },
+    { ARM::t2MOVCCr,0,            ARM::tMOVCCr,  0,   0,    0,   0,  0,1, 0 },
+    { ARM::t2MOVCCi,0,            ARM::tMOVCCi,  0,   8,    0,   0,  0,1, 0 },
     { ARM::t2MUL,   0,            ARM::tMUL,     0,   0,    0,   1,  0,0, 0 },
     { ARM::t2MVNr,  ARM::tMVN,    0,             0,   0,    1,   0,  0,0, 0 },
     { ARM::t2ORRrr, 0,            ARM::tORR,     0,   0,    0,   1,  0,0, 0 },

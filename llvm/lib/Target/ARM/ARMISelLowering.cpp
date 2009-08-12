@@ -2539,7 +2539,7 @@ ARMTargetLowering::EmitInstrWithCustomInserter(MachineInstr *MI,
   switch (MI->getOpcode()) {
   default:
     llvm_unreachable("Unexpected instr type to insert");
-  case ARM::tMOVCCr: {
+  case ARM::tMOVCCr_pseudo: {
     // To "insert" a SELECT_CC instruction, we actually have to insert the
     // diamond control-flow pattern.  The incoming instruction knows the
     // destination vreg to set, the condition code register to branch on, the

@@ -611,12 +611,19 @@ def tUXTH  : T1pI<(outs tGPR:$dst), (ins tGPR:$src), IIC_iALU,
 
 // Conditional move tMOVCCr - Used to implement the Thumb SELECT_CC DAG operation.
 // Expanded by the scheduler into a branch sequence.
-// FIXME: Add actual movcc in IT blocks for Thumb2.
 let usesCustomDAGSchedInserter = 1 in  // Expanded by the scheduler.
-  def tMOVCCr :
+  def tMOVCCr_pseudo :
   PseudoInst<(outs tGPR:$dst), (ins tGPR:$false, tGPR:$true, pred:$cc),
               NoItinerary, "@ tMOVCCr $cc",
              [/*(set tGPR:$dst, (ARMcmov tGPR:$false, tGPR:$true, imm:$cc))*/]>;
+
+
+// 16-bit movcc in IT blocks for Thumb2.
+def tMOVCCr : T1pIt<(outs GPR:$dst), (ins GPR:$lhs, GPR:$rhs), IIC_iALU,
+                    "mov", " $dst, $rhs", []>;
+
+def tMOVCCi : T1pIt<(outs GPR:$dst), (ins GPR:$lhs, i32imm:$rhs), IIC_iALU,
+                    "mov", " $dst, $rhs", []>;
 
 // tLEApcrel - Load a pc-relative address into a register without offending the
 // assembler.

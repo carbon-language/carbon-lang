@@ -1225,7 +1225,7 @@ SDNode *ARMDAGToDAGISel::Select(SDValue Op) {
       break;
     case MVT::i32:
       Opc = Subtarget->isThumb()
-        ? (Subtarget->hasThumb2() ? ARM::t2MOVCCr : ARM::tMOVCCr)
+        ? (Subtarget->hasThumb2() ? ARM::t2MOVCCr : ARM::tMOVCCr_pseudo)
         : ARM::MOVCCr;
       break;
     case MVT::f32:
