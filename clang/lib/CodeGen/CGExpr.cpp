@@ -889,7 +889,7 @@ LValue CodeGenFunction::EmitArraySubscriptExpr(const ArraySubscriptExpr *E) {
     Idx = Builder.CreateUDiv(Idx,
                              llvm::ConstantInt::get(Idx->getType(), 
                                                     BaseTypeSize));
-    Address = Builder.CreateGEP(Base, Idx, "arrayidx");
+    Address = Builder.CreateInBoundsGEP(Base, Idx, "arrayidx");
   } else if (const ObjCInterfaceType *OIT = 
              dyn_cast<ObjCInterfaceType>(E->getType())) {
     llvm::Value *InterfaceSize = 
@@ -899,11 +899,11 @@ LValue CodeGenFunction::EmitArraySubscriptExpr(const ArraySubscriptExpr *E) {
     Idx = Builder.CreateMul(Idx, InterfaceSize);
 
     llvm::Type *i8PTy = llvm::PointerType::getUnqual(llvm::Type::Int8Ty);
-    Address = Builder.CreateGEP(Builder.CreateBitCast(Base, i8PTy), 
+    Address = Builder.CreateGEP(Builder.CreateBitCast(Base, i8PTy),
                                 Idx, "arrayidx");
     Address = Builder.CreateBitCast(Address, Base->getType());
   } else {
-    Address = Builder.CreateGEP(Base, Idx, "arrayidx");
+    Address = Builder.CreateInBoundsGEP(Base, Idx, "arrayidx");
   }
   
   QualType T = E->getBase()->getType()->getPointeeType();

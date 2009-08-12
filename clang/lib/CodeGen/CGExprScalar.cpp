@@ -724,7 +724,7 @@ Value *ScalarExprEmitter::VisitPrePostIncDec(const UnaryOperator *E,
         LV = LValue::MakeAddr(lhs, ValTy.getCVRQualifiers(), 
                               CGF.getContext().getObjCGCAttrKind(ValTy));
       } else
-        NextVal = Builder.CreateGEP(InVal, Inc, "ptrincdec");
+        NextVal = Builder.CreateInBoundsGEP(InVal, Inc, "ptrincdec");
     } else {
       const llvm::Type *i8Ty =
         llvm::PointerType::getUnqual(llvm::Type::Int8Ty);
@@ -1094,7 +1094,7 @@ Value *ScalarExprEmitter::EmitAdd(const BinOpInfo &Ops) {
     return Builder.CreateBitCast(Res, Ptr->getType());
   } 
   
-  return Builder.CreateGEP(Ptr, Idx, "add.ptr");
+  return Builder.CreateInBoundsGEP(Ptr, Idx, "add.ptr");
 }
 
 Value *ScalarExprEmitter::EmitSub(const BinOpInfo &Ops) {
@@ -1160,7 +1160,7 @@ Value *ScalarExprEmitter::EmitSub(const BinOpInfo &Ops) {
       return Builder.CreateBitCast(Res, Ops.LHS->getType());
     } 
       
-    return Builder.CreateGEP(Ops.LHS, Idx, "sub.ptr");
+    return Builder.CreateInBoundsGEP(Ops.LHS, Idx, "sub.ptr");
   } else {
     // pointer - pointer
     Value *LHS = Ops.LHS;
