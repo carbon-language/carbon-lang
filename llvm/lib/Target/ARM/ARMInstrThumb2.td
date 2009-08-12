@@ -786,21 +786,7 @@ def t2BFC : T2I<(outs GPR:$dst), (ins GPR:$src, bf_inv_mask_imm:$imm), IIC_iALU,
 
 // FIXME: A8.6.18  BFI - Bitfield insert (Encoding T1)
 
-/*
 defm t2ORN  : T2I_bin_irs<"orn", BinOpFrag<(or  node:$LHS, (not node:$RHS))>>;
-*/
-// FIXME: Disable this pattern on Darwin to workaround an assembler bug.
-def t2ORNri : T2sI<(outs GPR:$dst), (ins GPR:$lhs, t2_so_imm:$rhs), IIC_iALU,
-                   "orn", " $dst, $lhs, $rhs",
-                   [(set GPR:$dst, (or GPR:$lhs, (not t2_so_imm:$rhs)))]>,
-                   Requires<[IsThumb2, IsNotDarwin]>;
-
-def t2ORNrr : T2sI<(outs GPR:$dst), (ins GPR:$lhs, GPR:$rhs), IIC_iALU,
-                   "orn", " $dst, $lhs, $rhs",
-                   [(set GPR:$dst, (or GPR:$lhs, (not GPR:$rhs)))]>;
-def t2ORNrs : T2sI<(outs GPR:$dst), (ins GPR:$lhs, t2_so_reg:$rhs), IIC_iALU,
-                   "orn", " $dst, $lhs, $rhs",
-                   [(set GPR:$dst, (or GPR:$lhs, (not t2_so_reg:$rhs)))]>;
 
 // Prefer over of t2EORri ra, rb, -1 because mvn has 16-bit version
 let AddedComplexity = 1 in
@@ -813,7 +799,7 @@ def : T2Pat<(and     GPR:$src, t2_so_imm_not:$imm),
 // FIXME: Disable this pattern on Darwin to workaround an assembler bug.
 def : T2Pat<(or      GPR:$src, t2_so_imm_not:$imm),
             (t2ORNri GPR:$src, t2_so_imm_not:$imm)>,
-            Requires<[IsThumb2, IsNotDarwin]>;
+            Requires<[IsThumb2]>;
 
 def : T2Pat<(t2_so_imm_not:$src),
             (t2MVNi t2_so_imm_not:$src)>;
