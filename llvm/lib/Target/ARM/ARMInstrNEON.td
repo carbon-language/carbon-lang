@@ -1989,6 +1989,59 @@ def  VZIPq8   : N2VQShuffle<0b00, 0b00011, "vzip.8">;
 def  VZIPq16  : N2VQShuffle<0b01, 0b00011, "vzip.16">;
 def  VZIPq32  : N2VQShuffle<0b10, 0b00011, "vzip.32">;
 
+// Vector Table Lookup and Table Extension.
+
+//   VTBL     : Vector Table Lookup
+def  VTBL1
+  : N3V<1,1,0b11,0b1000,0,0, (outs DPR:$dst),
+        (ins DPR:$tbl1, DPR:$src), NoItinerary,
+        "vtbl.8\t$dst, \\{$tbl1\\}, $src", "",
+        [(set DPR:$dst, (v8i8 (int_arm_neon_vtbl1 DPR:$tbl1, DPR:$src)))]>;
+def  VTBL2
+  : N3V<1,1,0b11,0b1001,0,0, (outs DPR:$dst),
+        (ins DPR:$tbl1, DPR:$tbl2, DPR:$src), NoItinerary,
+        "vtbl.8\t$dst, \\{$tbl1,$tbl2\\}, $src", "",
+        [(set DPR:$dst, (v8i8 (int_arm_neon_vtbl2
+                               DPR:$tbl1, DPR:$tbl2, DPR:$src)))]>;
+def  VTBL3
+  : N3V<1,1,0b11,0b1010,0,0, (outs DPR:$dst),
+        (ins DPR:$tbl1, DPR:$tbl2, DPR:$tbl3, DPR:$src), NoItinerary,
+        "vtbl.8\t$dst, \\{$tbl1,$tbl2,$tbl3\\}, $src", "",
+        [(set DPR:$dst, (v8i8 (int_arm_neon_vtbl3
+                               DPR:$tbl1, DPR:$tbl2, DPR:$tbl3, DPR:$src)))]>;
+def  VTBL4
+  : N3V<1,1,0b11,0b1011,0,0, (outs DPR:$dst),
+        (ins DPR:$tbl1, DPR:$tbl2, DPR:$tbl3, DPR:$tbl4, DPR:$src), NoItinerary,
+        "vtbl.8\t$dst, \\{$tbl1,$tbl2,$tbl3,$tbl4\\}, $src", "",
+        [(set DPR:$dst, (v8i8 (int_arm_neon_vtbl4 DPR:$tbl1, DPR:$tbl2,
+                               DPR:$tbl3, DPR:$tbl4, DPR:$src)))]>;
+
+//   VTBX     : Vector Table Extension
+def  VTBX1
+  : N3V<1,1,0b11,0b1000,1,0, (outs DPR:$dst),
+        (ins DPR:$orig, DPR:$tbl1, DPR:$src), NoItinerary,
+        "vtbx.8\t$dst, \\{$tbl1\\}, $src", "$orig = $dst",
+        [(set DPR:$dst, (v8i8 (int_arm_neon_vtbx1
+                               DPR:$orig, DPR:$tbl1, DPR:$src)))]>;
+def  VTBX2
+  : N3V<1,1,0b11,0b1001,1,0, (outs DPR:$dst),
+        (ins DPR:$orig, DPR:$tbl1, DPR:$tbl2, DPR:$src), NoItinerary,
+        "vtbx.8\t$dst, \\{$tbl1,$tbl2\\}, $src", "$orig = $dst",
+        [(set DPR:$dst, (v8i8 (int_arm_neon_vtbx2
+                               DPR:$orig, DPR:$tbl1, DPR:$tbl2, DPR:$src)))]>;
+def  VTBX3
+  : N3V<1,1,0b11,0b1010,1,0, (outs DPR:$dst),
+        (ins DPR:$orig, DPR:$tbl1, DPR:$tbl2, DPR:$tbl3, DPR:$src), NoItinerary,
+        "vtbx.8\t$dst, \\{$tbl1,$tbl2,$tbl3\\}, $src", "$orig = $dst",
+        [(set DPR:$dst, (v8i8 (int_arm_neon_vtbx3 DPR:$orig, DPR:$tbl1,
+                               DPR:$tbl2, DPR:$tbl3, DPR:$src)))]>;
+def  VTBX4
+  : N3V<1,1,0b11,0b1011,1,0, (outs DPR:$dst), (ins DPR:$orig, DPR:$tbl1,
+        DPR:$tbl2, DPR:$tbl3, DPR:$tbl4, DPR:$src), NoItinerary,
+        "vtbx.8\t$dst, \\{$tbl1,$tbl2,$tbl3,$tbl4\\}, $src", "$orig = $dst",
+        [(set DPR:$dst, (v8i8 (int_arm_neon_vtbx4 DPR:$orig, DPR:$tbl1,
+                               DPR:$tbl2, DPR:$tbl3, DPR:$tbl4, DPR:$src)))]>;
+
 //===----------------------------------------------------------------------===//
 // NEON instructions for single-precision FP math
 //===----------------------------------------------------------------------===//
