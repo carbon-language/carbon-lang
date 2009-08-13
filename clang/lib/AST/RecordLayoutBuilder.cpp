@@ -167,13 +167,14 @@ void ASTRecordLayoutBuilder::LayoutVirtualBase(const CXXRecordDecl *RD) {
   LayoutBaseNonVirtually(RD);
 }
 
-void ASTRecordLayoutBuilder::LayoutVirtualBases(const CXXRecordDecl *RD) {
-  // FIXME: audit indirect virtual bases
+void ASTRecordLayoutBuilder::LayoutVirtualBases(const CXXRecordDecl *RD,
+                    llvm::SmallSet<const CXXRecordDecl*, 32> &IndirectPrimary) {
+  // FIXME: Though complete, this is the wrong order
   for (CXXRecordDecl::base_class_const_iterator i = RD->vbases_begin(),
          e = RD->vbases_end(); i != e; ++i) {
     const CXXRecordDecl *Base = 
       cast<CXXRecordDecl>(i->getType()->getAs<RecordType>()->getDecl());
-    if (!PrimaryBaseWasVirtual || Base != PrimaryBase)
+    if (!IndirectPrimary.count(Base))
       LayoutVirtualBase(Base);
   }
 }
@@ -215,13 +216,20 @@ void ASTRecordLayoutBuilder::Layout(const RecordDecl *D) {
   if (const AlignedAttr *AA = D->getAttr<AlignedAttr>())
     UpdateAlignment(AA->getAlignment());
 
+  // FIXME: Calculate this completely.
+  llvm::SmallSet<const CXXRecordDecl*, 32> IndirectPrimary;
+
   // If this is a C++ class, lay out the nonvirtual bases.
   const CXXRecordDecl *RD = dyn_cast<CXXRecordDecl>(D);
   if (RD) {
     LayoutVtable(RD);
     // PrimaryBase goes first.
-    if (PrimaryBase)
+    if (PrimaryBase) {
+      // FIXME: We need all the primaries.
+      if (PrimaryBaseWasVirtual)
+        IndirectPrimary.insert(PrimaryBase);
       LayoutBaseNonVirtually(PrimaryBase);
+    }
     LayoutNonVirtualBases(RD);
   }
 
@@ -231,7 +239,7 @@ void ASTRecordLayoutBuilder::Layout(const RecordDecl *D) {
   NonVirtualAlignment = Alignment;
 
   if (RD)
-    LayoutVirtualBases(RD);
+    LayoutVirtualBases(RD, IndirectPrimary);
 
   // Finally, round the size of the total struct up to the alignment of the
   // struct itself.

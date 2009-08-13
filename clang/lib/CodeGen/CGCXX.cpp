@@ -765,7 +765,7 @@ llvm::Value *CodeGenFunction::GenerateVtable(const CXXRecordDecl *RD) {
   }
 
   // FIXME: finish layout for virtual bases
-  // FIXME: audit indirect virtual bases
+  // FIXME: Though complete, this is the wrong order
   for (CXXRecordDecl::base_class_const_iterator i = RD->vbases_begin(),
          e = RD->vbases_end(); i != e; ++i) {
     const CXXRecordDecl *Base = 
