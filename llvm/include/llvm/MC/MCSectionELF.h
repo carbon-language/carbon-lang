@@ -55,6 +55,9 @@ public:
 
   /// ShouldPrintSectionType - Only prints the section type if supported
   bool ShouldPrintSectionType(unsigned Ty) const;
+
+  /// IsCommon - True if this section contains only common symbols
+  bool IsCommon() const;
   
   /// These are the section type and flags fields.  An ELF section can have
   /// only one Type, but can have more than one of the flags specified.

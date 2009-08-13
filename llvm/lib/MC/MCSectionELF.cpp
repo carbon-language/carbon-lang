@@ -121,3 +121,13 @@ void MCSectionELF::PrintSwitchToSection(const TargetAsmInfo &TAI,
   OS << '\n';
 }
 
+// IsCommon - True if this section contains only common symbols
+bool MCSectionELF::IsCommon() const {
+  
+  if (strncmp(SectionName.c_str(), ".gnu.linkonce.", 14) == 0)
+    return true;
+
+  return false;
+}
+
+
