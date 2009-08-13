@@ -7,7 +7,7 @@
 # 
 ##===----------------------------------------------------------------------===##
 LEVEL = ../../..
-LIBRARYNAME = LLVMPIC16
+LIBRARYNAME = LLVMPIC16CodeGen
 TARGET = PIC16
 
 # Make sure that tblgen is run, first thing.
@@ -17,7 +17,7 @@ BUILT_SOURCES = PIC16GenRegisterInfo.h.inc PIC16GenRegisterNames.inc \
 		PIC16GenDAGISel.inc PIC16GenCallingConv.inc \
 		PIC16GenSubtarget.inc
 
-DIRS = TargetInfo
+DIRS = AsmPrinter TargetInfo
 
 include $(LEVEL)/Makefile.common
 
