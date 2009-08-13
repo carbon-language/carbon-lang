@@ -217,7 +217,7 @@ namespace llvm {
     /// the current host.  If no close target can be found, this returns null
     /// and sets the Error string to a reason.
     ///
-    /// Mainted for compatibility through 2.6.
+    /// Maintained for compatibility through 2.6.
     static const Target *getClosestTargetForJIT(std::string &Error);
 
     /// @}

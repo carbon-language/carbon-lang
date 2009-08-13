@@ -155,6 +155,7 @@ void MCAsmStreamer::EmitLabel(MCSymbol *Symbol) {
 
 void MCAsmStreamer::EmitAssemblerFlag(AssemblerFlag Flag) {
   switch (Flag) {
+  default: assert(0 && "Invalid flag!");
   case SubsectionsViaSymbols: OS << ".subsections_via_symbols"; break;
   }
   OS << '\n';
@@ -215,17 +216,13 @@ void MCAsmStreamer::EmitCommonSymbol(MCSymbol *Symbol, unsigned Size,
 
 void MCAsmStreamer::EmitZerofill(MCSection *Section, MCSymbol *Symbol,
                                  unsigned Size, unsigned Pow2Alignment) {
-  // Note: a .zerofill directive does not switch sections
-  // FIXME: Really we would like the segment and section names as well as the
-  // section type to be separate values instead of embedded in the name. Not
-  // all assemblers understand all this stuff though.
+  // Note: a .zerofill directive does not switch sections.
   OS << ".zerofill ";
   
   // This is a mach-o specific directive.
   const MCSectionMachO *MOSection = ((const MCSectionMachO*)Section);
   OS << '"' << MOSection->getSegmentName() << ","
      << MOSection->getSectionName() << '"';
-  
   
   if (Symbol != NULL) {
     OS << ',' << Symbol << ',' << Size;

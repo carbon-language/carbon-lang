@@ -221,6 +221,10 @@ namespace llvm {
     virtual void Finish() = 0;
   };
 
+  /// createNullStreamer - Create a dummy machine code streamer, which does
+  /// nothing. This is useful for timing the assembler front end.
+  MCStreamer *createNullStreamer(MCContext &Ctx);
+
   /// createAsmStreamer - Create a machine code streamer which will print out
   /// assembly for the native target, suitable for compiling with a native
   /// assembler.
