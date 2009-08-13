@@ -2439,6 +2439,10 @@ static SDValue LowerVECTOR_SHUFFLE(SDValue Op, SelectionDAG &DAG) {
   DebugLoc dl = Op.getDebugLoc();
   EVT VT = Op.getValueType();
 
+  // Convert shuffles that are directly supported on NEON to target-specific
+  // DAG nodes, instead of keeping them as shuffles and matching them again
+  // during code selection.  This is more efficient and avoids the possibility
+  // of inconsistencies between legalization and selection.
   if (SVN->isSplat() && SVN->getSplatIndex() == 0)
     return DAG.getNode(ARMISD::VSPLAT0, dl, VT, SVN->getOperand(0));
   if (isVREVMask(SVN, 64))
