@@ -600,6 +600,16 @@ void TargetLoweringObjectFileMachO::Initialize(MCContext &Ctx,
     = getMachOSection("__DATA","__datacoal_nt", MCSectionMachO::S_COALESCED,
                       SectionKind::getDataRel());
 
+  
+  LazySymbolPointerSection
+    = getMachOSection("__DATA", "__la_symbol_ptr",
+                      MCSectionMachO::S_LAZY_SYMBOL_POINTERS,
+                      SectionKind::getMetadata());
+  NonLazySymbolPointerSection
+    = getMachOSection("__DATA", "__nl_symbol_ptr",
+                      MCSectionMachO::S_NON_LAZY_SYMBOL_POINTERS,
+                      SectionKind::getMetadata());
+  
   if (TM.getRelocationModel() == Reloc::Static) {
     StaticCtorSection
       = getMachOSection("__TEXT", "__constructor", 0,SectionKind::getDataRel());
@@ -666,25 +676,6 @@ void TargetLoweringObjectFileMachO::Initialize(MCContext &Ctx,
                     SectionKind::getMetadata());
 }
 
-/// getLazySymbolPointerSection - Return the section corresponding to
-/// the .lazy_symbol_pointer directive.
-const MCSection *TargetLoweringObjectFileMachO::
-getLazySymbolPointerSection() const {
-  return getMachOSection("__DATA", "__la_symbol_ptr",
-                         MCSectionMachO::S_LAZY_SYMBOL_POINTERS,
-                         SectionKind::getMetadata());
-}
-
-/// getNonLazySymbolPointerSection - Return the section corresponding to
-/// the .non_lazy_symbol_pointer directive.
-const MCSection *TargetLoweringObjectFileMachO::
-getNonLazySymbolPointerSection() const {
-  return getMachOSection("__DATA", "__nl_symbol_ptr",
-                         MCSectionMachO::S_NON_LAZY_SYMBOL_POINTERS,
-                         SectionKind::getMetadata());
-}
-
-
 const MCSection *TargetLoweringObjectFileMachO::
 getExplicitSectionGlobal(const GlobalValue *GV, SectionKind Kind, 
                          Mangler *Mang, const TargetMachine &TM) const {
@@ -694,16 +685,32 @@ getExplicitSectionGlobal(const GlobalValue *GV, SectionKind Kind,
   std::string ErrorCode =
     MCSectionMachO::ParseSectionSpecifier(GV->getSection(), Segment, Section,
                                           TAA, StubSize);
-  if (ErrorCode.empty())
-    return getMachOSection(Segment, Section, TAA, StubSize, Kind);
+  if (!ErrorCode.empty()) {
+    // If invalid, report the error with llvm_report_error.
+    llvm_report_error("Global variable '" + GV->getNameStr() +
+                      "' has an invalid section specifier '" + GV->getSection()+
+                      "': " + ErrorCode + ".");
+    // Fall back to dropping it into the data section.
+    return DataSection;
+  }
+  
+  // Get the section.
+  const MCSectionMachO *S =
+    getMachOSection(Segment, Section, TAA, StubSize, Kind);
+  
+  // Okay, now that we got the section, verify that the TAA & StubSize agree.
+  // If the user declared multiple globals with different section flags, we need
+  // to reject it here.
+  if (S->getTypeAndAttributes() != TAA || S->getStubSize() != StubSize) {
+    // If invalid, report the error with llvm_report_error.
+    llvm_report_error("Global variable '" + GV->getNameStr() +
+                      "' section type or attributes does not match previous"
+                      " section specifier");
+  }
   
   
-  // If invalid, report the error with llvm_report_error.
-  llvm_report_error("Global variable '" + GV->getNameStr() +
-                    "' has an invalid section specifier '" + GV->getSection() +
-                    "': " + ErrorCode + ".");
-  // Fall back to dropping it into the data section.
-  return DataSection;
+  
+  return S;
 }
 
 const MCSection *TargetLoweringObjectFileMachO::

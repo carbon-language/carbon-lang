@@ -241,6 +241,9 @@ class TargetLoweringObjectFileMachO : public TargetLoweringObjectFile {
   const MCSection *FourByteConstantSection;
   const MCSection *EightByteConstantSection;
   const MCSection *SixteenByteConstantSection;
+  
+  const MCSection *LazySymbolPointerSection;
+  const MCSection *NonLazySymbolPointerSection;
 public:
   TargetLoweringObjectFileMachO() : UniquingMap(0) {}
   ~TargetLoweringObjectFileMachO();
@@ -285,12 +288,15 @@ public:
   
   /// getLazySymbolPointerSection - Return the section corresponding to
   /// the .lazy_symbol_pointer directive.
-  const MCSection *getLazySymbolPointerSection() const;
+  const MCSection *getLazySymbolPointerSection() const {
+    return LazySymbolPointerSection;
+  }
   
   /// getNonLazySymbolPointerSection - Return the section corresponding to
   /// the .non_lazy_symbol_pointer directive.
-  const MCSection *getNonLazySymbolPointerSection() const;
-  
+  const MCSection *getNonLazySymbolPointerSection() const {
+    return NonLazySymbolPointerSection;
+  }
 };
 
 
