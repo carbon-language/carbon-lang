@@ -247,14 +247,14 @@ const llvm::Type *CodeGenTypes::ConvertNewType(QualType T) {
   case Type::RValueReference: {
     const ReferenceType &RTy = cast<ReferenceType>(Ty);
     QualType ETy = RTy.getPointeeType();
-    llvm::OpaqueType *PointeeType = llvm::OpaqueType::get();
+    llvm::OpaqueType *PointeeType = llvm::OpaqueType::get(getLLVMContext());
     PointersToResolve.push_back(std::make_pair(ETy, PointeeType));
     return llvm::PointerType::get(PointeeType, ETy.getAddressSpace());
   }
   case Type::Pointer: {
     const PointerType &PTy = cast<PointerType>(Ty);
     QualType ETy = PTy.getPointeeType();
-    llvm::OpaqueType *PointeeType = llvm::OpaqueType::get();
+    llvm::OpaqueType *PointeeType = llvm::OpaqueType::get(getLLVMContext());
     PointersToResolve.push_back(std::make_pair(ETy, PointeeType));
     return llvm::PointerType::get(PointeeType, ETy.getAddressSpace());
   }
@@ -293,7 +293,7 @@ const llvm::Type *CodeGenTypes::ConvertNewType(QualType T) {
       // we have an opaque type corresponding to the tag type.
       ConvertTagDeclType(TT->getDecl());
       // Create an opaque type for this function type, save it, and return it.
-      llvm::Type *ResultType = llvm::OpaqueType::get();
+      llvm::Type *ResultType = llvm::OpaqueType::get(getLLVMContext());
       FunctionTypes.insert(std::make_pair(&Ty, ResultType));
       return ResultType;
     }
@@ -316,7 +316,7 @@ const llvm::Type *CodeGenTypes::ConvertNewType(QualType T) {
     // these.
     const llvm::Type *&T = InterfaceTypes[cast<ObjCInterfaceType>(&Ty)];
     if (!T)
-        T = llvm::OpaqueType::get();
+        T = llvm::OpaqueType::get(getLLVMContext());
     return T;
   }
       
@@ -352,7 +352,7 @@ const llvm::Type *CodeGenTypes::ConvertNewType(QualType T) {
 
   case Type::BlockPointer: {
     const QualType FTy = cast<BlockPointerType>(Ty).getPointeeType();
-    llvm::OpaqueType *PointeeType = llvm::OpaqueType::get();
+    llvm::OpaqueType *PointeeType = llvm::OpaqueType::get(getLLVMContext());
     PointersToResolve.push_back(std::make_pair(FTy, PointeeType));
     return llvm::PointerType::get(PointeeType, FTy.getAddressSpace());
   }
@@ -377,7 +377,7 @@ const llvm::Type *CodeGenTypes::ConvertNewType(QualType T) {
   }
   
   // FIXME: implement.
-  return llvm::OpaqueType::get();
+  return llvm::OpaqueType::get(getLLVMContext());
 }
 
 /// ConvertTagDeclType - Lay out a tagged decl type like struct or union or
@@ -410,7 +410,7 @@ const llvm::Type *CodeGenTypes::ConvertTagDeclType(const TagDecl *TD) {
   // If this is still a forward definition, just define an opaque type to use
   // for this tagged decl.
   if (!TD->isDefinition()) {
-    llvm::Type *ResultType = llvm::OpaqueType::get();  
+    llvm::Type *ResultType = llvm::OpaqueType::get(getLLVMContext());
     TagDeclTypes.insert(std::make_pair(Key, ResultType));
     return ResultType;
   }
@@ -428,7 +428,7 @@ const llvm::Type *CodeGenTypes::ConvertTagDeclType(const TagDecl *TD) {
 
   // Create new OpaqueType now for later use in case this is a recursive
   // type.  This will later be refined to the actual type.
-  llvm::PATypeHolder ResultHolder = llvm::OpaqueType::get();
+  llvm::PATypeHolder ResultHolder = llvm::OpaqueType::get(getLLVMContext());
   TagDeclTypes.insert(std::make_pair(Key, ResultHolder));
   
   const llvm::Type *ResultType;

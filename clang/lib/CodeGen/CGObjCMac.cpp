@@ -3600,7 +3600,7 @@ ObjCCommonTypesHelper::ObjCCommonTypesHelper(CodeGen::CodeGenModule &cgm)
   CGM.getModule().addTypeName("struct._objc_method", MethodTy);
 
   // struct _objc_cache *
-  CacheTy = llvm::OpaqueType::get();
+  CacheTy = llvm::OpaqueType::get(VMContext);
   CGM.getModule().addTypeName("struct._objc_cache", CacheTy);
   CachePtrTy = llvm::PointerType::getUnqual(CacheTy);
 }
@@ -3656,8 +3656,8 @@ ObjCTypesHelper::ObjCTypesHelper(CodeGen::CodeGenModule &cgm)
 
   // Handle recursive construction of Protocol and ProtocolList types
 
-  llvm::PATypeHolder ProtocolTyHolder = llvm::OpaqueType::get();
-  llvm::PATypeHolder ProtocolListTyHolder = llvm::OpaqueType::get();
+  llvm::PATypeHolder ProtocolTyHolder = llvm::OpaqueType::get(VMContext);
+  llvm::PATypeHolder ProtocolListTyHolder = llvm::OpaqueType::get(VMContext);
 
   const llvm::Type *T =
     llvm::StructType::get(VMContext, 
@@ -3706,12 +3706,12 @@ ObjCTypesHelper::ObjCTypesHelper(CodeGen::CodeGenModule &cgm)
   CGM.getModule().addTypeName("struct._objc_ivar", IvarTy);
 
   // struct _objc_ivar_list *
-  IvarListTy = llvm::OpaqueType::get();
+  IvarListTy = llvm::OpaqueType::get(VMContext);
   CGM.getModule().addTypeName("struct._objc_ivar_list", IvarListTy);
   IvarListPtrTy = llvm::PointerType::getUnqual(IvarListTy);
 
   // struct _objc_method_list *
-  MethodListTy = llvm::OpaqueType::get();
+  MethodListTy = llvm::OpaqueType::get(VMContext);
   CGM.getModule().addTypeName("struct._objc_method_list", MethodListTy);
   MethodListPtrTy = llvm::PointerType::getUnqual(MethodListTy);
 
@@ -3724,7 +3724,7 @@ ObjCTypesHelper::ObjCTypesHelper(CodeGen::CodeGenModule &cgm)
   CGM.getModule().addTypeName("struct._objc_class_extension", ClassExtensionTy);
   ClassExtensionPtrTy = llvm::PointerType::getUnqual(ClassExtensionTy);
 
-  llvm::PATypeHolder ClassTyHolder = llvm::OpaqueType::get();
+  llvm::PATypeHolder ClassTyHolder = llvm::OpaqueType::get(VMContext);
 
   // struct _objc_class {
   //   Class isa;
@@ -3859,7 +3859,7 @@ ObjCNonFragileABITypesHelper::ObjCNonFragileABITypesHelper(CodeGen::CodeGenModul
   // }
 
   // Holder for struct _protocol_list_t *
-  llvm::PATypeHolder ProtocolListTyHolder = llvm::OpaqueType::get();
+  llvm::PATypeHolder ProtocolListTyHolder = llvm::OpaqueType::get(VMContext);
 
   ProtocolnfABITy = llvm::StructType::get(VMContext, ObjectPtrTy,
                                           Int8PtrTy,
@@ -3969,7 +3969,7 @@ ObjCNonFragileABITypesHelper::ObjCNonFragileABITypesHelper(CodeGen::CodeGenModul
   //   struct class_ro_t *ro;
   // }
 
-  llvm::PATypeHolder ClassTyHolder = llvm::OpaqueType::get();
+  llvm::PATypeHolder ClassTyHolder = llvm::OpaqueType::get(VMContext);
   ClassnfABITy =
     llvm::StructType::get(VMContext,
                           llvm::PointerType::getUnqual(ClassTyHolder),

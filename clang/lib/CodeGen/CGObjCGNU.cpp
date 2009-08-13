@@ -529,7 +529,7 @@ llvm::Constant *CGObjCGNU::GenerateMethodList(const std::string &ClassName,
 
   // Structure containing list pointer, array and array count
   llvm::SmallVector<const llvm::Type*, 16> ObjCMethodListFields;
-  llvm::PATypeHolder OpaqueNextTy = llvm::OpaqueType::get();
+  llvm::PATypeHolder OpaqueNextTy = llvm::OpaqueType::get(VMContext);
   llvm::Type *NextPtrTy = llvm::PointerType::getUnqual(OpaqueNextTy);
   llvm::StructType *ObjCMethodListTy = llvm::StructType::get(VMContext,
       NextPtrTy, 
