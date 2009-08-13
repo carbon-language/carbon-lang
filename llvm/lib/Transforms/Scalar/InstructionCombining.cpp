@@ -12465,12 +12465,14 @@ Instruction *InstCombiner::visitExtractElementInst(ExtractElementInst &EI) {
         unsigned AS = 
           cast<PointerType>(I->getOperand(0)->getType())->getAddressSpace();
         Value *Ptr = InsertBitCastBefore(I->getOperand(0),
-                                  PointerType::get(EI.getType(), AS),EI);
+                                  PointerType::get(EI.getType(), AS),*I);
         GetElementPtrInst *GEP =
           GetElementPtrInst::Create(Ptr, EI.getOperand(1), I->getName()+".gep");
         cast<GEPOperator>(GEP)->setIsInBounds(true);
-        InsertNewInstBefore(GEP, EI);
-        return new LoadInst(GEP);
+        InsertNewInstBefore(GEP, *I);
+        LoadInst* Load = new LoadInst(GEP, "tmp");
+        InsertNewInstBefore(Load, *I);
+        return ReplaceInstUsesWith(EI, Load);
       }
     }
     if (InsertElementInst *IE = dyn_cast<InsertElementInst>(I)) {
