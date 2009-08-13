@@ -1340,8 +1340,8 @@ bool ARMConstantIslands::UndoLRSpillRestore() {
   for (unsigned i = 0, e = PushPopMIs.size(); i != e; ++i) {
     MachineInstr *MI = PushPopMIs[i];
     if (MI->getOpcode() == ARM::tPOP_RET &&
-        MI->getOperand(0).getReg() == ARM::PC &&
-        MI->getNumExplicitOperands() == 1) {
+        MI->getOperand(2).getReg() == ARM::PC &&
+        MI->getNumExplicitOperands() == 3) {
       BuildMI(MI->getParent(), MI->getDebugLoc(), TII->get(ARM::tBX_RET));
       MI->eraseFromParent();
       MadeChange = true;
