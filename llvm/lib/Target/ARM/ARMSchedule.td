@@ -20,7 +20,9 @@ def FU_LdSt1   : FuncUnit; // pipeline 1 load/store
 // Instruction Itinerary classes used for ARM
 //
 def IIC_iALU    : InstrItinClass;
-def IIC_iMPY    : InstrItinClass;
+def IIC_iMPYh   : InstrItinClass;
+def IIC_iMPYw   : InstrItinClass;
+def IIC_iMPYl   : InstrItinClass;
 def IIC_iLoad   : InstrItinClass;
 def IIC_iStore  : InstrItinClass;
 def IIC_fpALU   : InstrItinClass;
@@ -34,7 +36,9 @@ def IIC_Br      : InstrItinClass;
 
 def GenericItineraries : ProcessorItineraries<[
   InstrItinData<IIC_iALU    , [InstrStage<1, [FU_Pipe0]>]>,
-  InstrItinData<IIC_iMPY    , [InstrStage<1, [FU_Pipe0]>]>,
+  InstrItinData<IIC_iMPYh   , [InstrStage<1, [FU_Pipe0]>]>,
+  InstrItinData<IIC_iMPYw   , [InstrStage<1, [FU_Pipe0]>]>,
+  InstrItinData<IIC_iMPYl   , [InstrStage<1, [FU_Pipe0]>]>,
   InstrItinData<IIC_iLoad   , [InstrStage<1, [FU_Pipe0]>, InstrStage<1, [FU_LdSt0]>]>,
   InstrItinData<IIC_iStore  , [InstrStage<1, [FU_Pipe0]>]>,
   InstrItinData<IIC_Br      , [InstrStage<1, [FU_Pipe0]>]>,

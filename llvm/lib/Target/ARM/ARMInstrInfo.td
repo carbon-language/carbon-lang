@@ -1084,16 +1084,16 @@ def : ARMPat<(and   GPR:$src, so_imm_not:$imm),
 //
 
 let isCommutable = 1 in
-def MUL   : AsMul1I<0b0000000, (outs GPR:$dst), (ins GPR:$a, GPR:$b), IIC_iMPY,
+def MUL   : AsMul1I<0b0000000, (outs GPR:$dst), (ins GPR:$a, GPR:$b), IIC_iMPYw,
                     "mul", " $dst, $a, $b",
                    [(set GPR:$dst, (mul GPR:$a, GPR:$b))]>;
 
 def MLA   : AsMul1I<0b0000001, (outs GPR:$dst), (ins GPR:$a, GPR:$b, GPR:$c),
-                    IIC_iMPY, "mla", " $dst, $a, $b, $c",
+                    IIC_iMPYw, "mla", " $dst, $a, $b, $c",
                    [(set GPR:$dst, (add (mul GPR:$a, GPR:$b), GPR:$c))]>;
 
 def MLS   : AMul1I<0b0000011, (outs GPR:$dst), (ins GPR:$a, GPR:$b, GPR:$c),
-                   IIC_iMPY, "mls", " $dst, $a, $b, $c",
+                   IIC_iMPYw, "mls", " $dst, $a, $b, $c",
                    [(set GPR:$dst, (sub GPR:$c, (mul GPR:$a, GPR:$b)))]>,
                    Requires<[IsARM, HasV6T2]>;
 
@@ -1101,32 +1101,32 @@ def MLS   : AMul1I<0b0000011, (outs GPR:$dst), (ins GPR:$a, GPR:$b, GPR:$c),
 let neverHasSideEffects = 1 in {
 let isCommutable = 1 in {
 def SMULL : AsMul1I<0b0000110, (outs GPR:$ldst, GPR:$hdst),
-                               (ins GPR:$a, GPR:$b), IIC_iMPY,
+                               (ins GPR:$a, GPR:$b), IIC_iMPYl,
                     "smull", " $ldst, $hdst, $a, $b", []>;
 
 def UMULL : AsMul1I<0b0000100, (outs GPR:$ldst, GPR:$hdst),
-                               (ins GPR:$a, GPR:$b), IIC_iMPY,
+                               (ins GPR:$a, GPR:$b), IIC_iMPYl,
                     "umull", " $ldst, $hdst, $a, $b", []>;
 }
 
 // Multiply + accumulate
 def SMLAL : AsMul1I<0b0000111, (outs GPR:$ldst, GPR:$hdst),
-                               (ins GPR:$a, GPR:$b), IIC_iMPY,
+                               (ins GPR:$a, GPR:$b), IIC_iMPYl,
                     "smlal", " $ldst, $hdst, $a, $b", []>;
 
 def UMLAL : AsMul1I<0b0000101, (outs GPR:$ldst, GPR:$hdst),
-                               (ins GPR:$a, GPR:$b), IIC_iMPY,
+                               (ins GPR:$a, GPR:$b), IIC_iMPYl,
                     "umlal", " $ldst, $hdst, $a, $b", []>;
 
 def UMAAL : AMul1I <0b0000010, (outs GPR:$ldst, GPR:$hdst),
-                               (ins GPR:$a, GPR:$b), IIC_iMPY,
+                               (ins GPR:$a, GPR:$b), IIC_iMPYl,
                     "umaal", " $ldst, $hdst, $a, $b", []>,
                     Requires<[IsARM, HasV6]>;
 } // neverHasSideEffects
 
 // Most significant word multiply
 def SMMUL : AMul2I <0b0111010, (outs GPR:$dst), (ins GPR:$a, GPR:$b),
-               IIC_iMPY, "smmul", " $dst, $a, $b",
+               IIC_iMPYw, "smmul", " $dst, $a, $b",
                [(set GPR:$dst, (mulhs GPR:$a, GPR:$b))]>,
             Requires<[IsARM, HasV6]> {
   let Inst{7-4}   = 0b0001;
@@ -1134,7 +1134,7 @@ def SMMUL : AMul2I <0b0111010, (outs GPR:$dst), (ins GPR:$a, GPR:$b),
 }
 
 def SMMLA : AMul2I <0b0111010, (outs GPR:$dst), (ins GPR:$a, GPR:$b, GPR:$c),
-               IIC_iMPY, "smmla", " $dst, $a, $b, $c",
+               IIC_iMPYw, "smmla", " $dst, $a, $b, $c",
                [(set GPR:$dst, (add (mulhs GPR:$a, GPR:$b), GPR:$c))]>,
             Requires<[IsARM, HasV6]> {
   let Inst{7-4}   = 0b0001;
@@ -1142,7 +1142,7 @@ def SMMLA : AMul2I <0b0111010, (outs GPR:$dst), (ins GPR:$a, GPR:$b, GPR:$c),
 
 
 def SMMLS : AMul2I <0b0111010, (outs GPR:$dst), (ins GPR:$a, GPR:$b, GPR:$c),
-               IIC_iMPY, "smmls", " $dst, $a, $b, $c",
+               IIC_iMPYw, "smmls", " $dst, $a, $b, $c",
                [(set GPR:$dst, (sub GPR:$c, (mulhs GPR:$a, GPR:$b)))]>,
             Requires<[IsARM, HasV6]> {
   let Inst{7-4}   = 0b1101;
@@ -1150,7 +1150,7 @@ def SMMLS : AMul2I <0b0111010, (outs GPR:$dst), (ins GPR:$a, GPR:$b, GPR:$c),
 
 multiclass AI_smul<string opc, PatFrag opnode> {
   def BB : AMulxyI<0b0001011, (outs GPR:$dst), (ins GPR:$a, GPR:$b),
-              IIC_iMPY, !strconcat(opc, "bb"), " $dst, $a, $b",
+              IIC_iMPYw, !strconcat(opc, "bb"), " $dst, $a, $b",
               [(set GPR:$dst, (opnode (sext_inreg GPR:$a, i16),
                                       (sext_inreg GPR:$b, i16)))]>,
            Requires<[IsARM, HasV5TE]> {
@@ -1159,7 +1159,7 @@ multiclass AI_smul<string opc, PatFrag opnode> {
            }
 
   def BT : AMulxyI<0b0001011, (outs GPR:$dst), (ins GPR:$a, GPR:$b),
-              IIC_iMPY, !strconcat(opc, "bt"), " $dst, $a, $b",
+              IIC_iMPYw, !strconcat(opc, "bt"), " $dst, $a, $b",
               [(set GPR:$dst, (opnode (sext_inreg GPR:$a, i16),
                                       (sra GPR:$b, (i32 16))))]>,
            Requires<[IsARM, HasV5TE]> {
@@ -1168,7 +1168,7 @@ multiclass AI_smul<string opc, PatFrag opnode> {
            }
 
   def TB : AMulxyI<0b0001011, (outs GPR:$dst), (ins GPR:$a, GPR:$b),
-              IIC_iMPY, !strconcat(opc, "tb"), " $dst, $a, $b",
+              IIC_iMPYw, !strconcat(opc, "tb"), " $dst, $a, $b",
               [(set GPR:$dst, (opnode (sra GPR:$a, (i32 16)),
                                       (sext_inreg GPR:$b, i16)))]>,
            Requires<[IsARM, HasV5TE]> {
@@ -1177,7 +1177,7 @@ multiclass AI_smul<string opc, PatFrag opnode> {
            }
 
   def TT : AMulxyI<0b0001011, (outs GPR:$dst), (ins GPR:$a, GPR:$b),
-              IIC_iMPY, !strconcat(opc, "tt"), " $dst, $a, $b",
+              IIC_iMPYw, !strconcat(opc, "tt"), " $dst, $a, $b",
               [(set GPR:$dst, (opnode (sra GPR:$a, (i32 16)),
                                       (sra GPR:$b, (i32 16))))]>,
             Requires<[IsARM, HasV5TE]> {
@@ -1186,7 +1186,7 @@ multiclass AI_smul<string opc, PatFrag opnode> {
            }
 
   def WB : AMulxyI<0b0001001, (outs GPR:$dst), (ins GPR:$a, GPR:$b),
-              IIC_iMPY, !strconcat(opc, "wb"), " $dst, $a, $b",
+              IIC_iMPYh, !strconcat(opc, "wb"), " $dst, $a, $b",
               [(set GPR:$dst, (sra (opnode GPR:$a,
                                     (sext_inreg GPR:$b, i16)), (i32 16)))]>,
            Requires<[IsARM, HasV5TE]> {
@@ -1195,7 +1195,7 @@ multiclass AI_smul<string opc, PatFrag opnode> {
            }
 
   def WT : AMulxyI<0b0001001, (outs GPR:$dst), (ins GPR:$a, GPR:$b),
-              IIC_iMPY, !strconcat(opc, "wt"), " $dst, $a, $b",
+              IIC_iMPYh, !strconcat(opc, "wt"), " $dst, $a, $b",
               [(set GPR:$dst, (sra (opnode GPR:$a,
                                     (sra GPR:$b, (i32 16))), (i32 16)))]>,
             Requires<[IsARM, HasV5TE]> {
@@ -1207,7 +1207,7 @@ multiclass AI_smul<string opc, PatFrag opnode> {
 
 multiclass AI_smla<string opc, PatFrag opnode> {
   def BB : AMulxyI<0b0001000, (outs GPR:$dst), (ins GPR:$a, GPR:$b, GPR:$acc),
-              IIC_iMPY, !strconcat(opc, "bb"), " $dst, $a, $b, $acc",
+              IIC_iMPYw, !strconcat(opc, "bb"), " $dst, $a, $b, $acc",
               [(set GPR:$dst, (add GPR:$acc,
                                (opnode (sext_inreg GPR:$a, i16),
                                        (sext_inreg GPR:$b, i16))))]>,
@@ -1217,7 +1217,7 @@ multiclass AI_smla<string opc, PatFrag opnode> {
            }
 
   def BT : AMulxyI<0b0001000, (outs GPR:$dst), (ins GPR:$a, GPR:$b, GPR:$acc),
-              IIC_iMPY, !strconcat(opc, "bt"), " $dst, $a, $b, $acc",
+              IIC_iMPYw, !strconcat(opc, "bt"), " $dst, $a, $b, $acc",
               [(set GPR:$dst, (add GPR:$acc, (opnode (sext_inreg GPR:$a, i16),
                                                      (sra GPR:$b, (i32 16)))))]>,
            Requires<[IsARM, HasV5TE]> {
@@ -1226,7 +1226,7 @@ multiclass AI_smla<string opc, PatFrag opnode> {
            }
 
   def TB : AMulxyI<0b0001000, (outs GPR:$dst), (ins GPR:$a, GPR:$b, GPR:$acc),
-              IIC_iMPY, !strconcat(opc, "tb"), " $dst, $a, $b, $acc",
+              IIC_iMPYw, !strconcat(opc, "tb"), " $dst, $a, $b, $acc",
               [(set GPR:$dst, (add GPR:$acc, (opnode (sra GPR:$a, (i32 16)),
                                                  (sext_inreg GPR:$b, i16))))]>,
            Requires<[IsARM, HasV5TE]> {
@@ -1235,7 +1235,7 @@ multiclass AI_smla<string opc, PatFrag opnode> {
            }
 
   def TT : AMulxyI<0b0001000, (outs GPR:$dst), (ins GPR:$a, GPR:$b, GPR:$acc),
-              IIC_iMPY, !strconcat(opc, "tt"), " $dst, $a, $b, $acc",
+              IIC_iMPYw, !strconcat(opc, "tt"), " $dst, $a, $b, $acc",
               [(set GPR:$dst, (add GPR:$acc, (opnode (sra GPR:$a, (i32 16)),
                                                      (sra GPR:$b, (i32 16)))))]>,
             Requires<[IsARM, HasV5TE]> {
@@ -1244,7 +1244,7 @@ multiclass AI_smla<string opc, PatFrag opnode> {
            }
 
   def WB : AMulxyI<0b0001001, (outs GPR:$dst), (ins GPR:$a, GPR:$b, GPR:$acc),
-              IIC_iMPY, !strconcat(opc, "wb"), " $dst, $a, $b, $acc",
+              IIC_iMPYw, !strconcat(opc, "wb"), " $dst, $a, $b, $acc",
               [(set GPR:$dst, (add GPR:$acc, (sra (opnode GPR:$a,
                                        (sext_inreg GPR:$b, i16)), (i32 16))))]>,
            Requires<[IsARM, HasV5TE]> {
@@ -1253,7 +1253,7 @@ multiclass AI_smla<string opc, PatFrag opnode> {
            }
 
   def WT : AMulxyI<0b0001001, (outs GPR:$dst), (ins GPR:$a, GPR:$b, GPR:$acc),
-              IIC_iMPY, !strconcat(opc, "wt"), " $dst, $a, $b, $acc",
+              IIC_iMPYw, !strconcat(opc, "wt"), " $dst, $a, $b, $acc",
               [(set GPR:$dst, (add GPR:$acc, (sra (opnode GPR:$a,
                                          (sra GPR:$b, (i32 16))), (i32 16))))]>,
             Requires<[IsARM, HasV5TE]> {

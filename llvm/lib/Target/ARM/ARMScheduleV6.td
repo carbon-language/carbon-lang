@@ -15,7 +15,9 @@
 // Single issue pipeline so every itinerary starts with FU_pipe0
 def V6Itineraries : ProcessorItineraries<[
   InstrItinData<IIC_iALU    , [InstrStage<1, [FU_Pipe0]>]>,
-  InstrItinData<IIC_iMPY    , [InstrStage<1, [FU_Pipe0]>]>,
+  InstrItinData<IIC_iMPYh   , [InstrStage<1, [FU_Pipe0]>]>,
+  InstrItinData<IIC_iMPYw   , [InstrStage<1, [FU_Pipe0]>]>,
+  InstrItinData<IIC_iMPYl   , [InstrStage<1, [FU_Pipe0]>]>,
   InstrItinData<IIC_iLoad   , [InstrStage<1, [FU_Pipe0]>, InstrStage<1, [FU_LdSt0]>]>,
   InstrItinData<IIC_iStore  , [InstrStage<1, [FU_Pipe0]>]>,
   InstrItinData<IIC_Br      , [InstrStage<1, [FU_Pipe0]>]>,

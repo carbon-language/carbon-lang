@@ -15,10 +15,12 @@
 def CortexA8Itineraries : ProcessorItineraries<[
   // two fully-pipelined integer ALU pipelines
   InstrItinData<IIC_iALU    , [InstrStage<1, [FU_Pipe0, FU_Pipe1]>]>,
-  // one fully-pipelined integer Multiply pipeline
-  // function units are reserved by the scheduler in reverse alpha order,
-  // so use FU_Pipe0 for the Multiple pipeline
-  InstrItinData<IIC_iMPY    , [InstrStage<1, [FU_Pipe0]>]>,
+  // integer Multiply pipeline
+  InstrItinData<IIC_iMPYh   , [InstrStage<1, [FU_Pipe0]>]>,
+  InstrItinData<IIC_iMPYw   , [InstrStage<1, [FU_Pipe1], 0>, 
+                               InstrStage<2, [FU_Pipe0]>]>,
+  InstrItinData<IIC_iMPYl   , [InstrStage<2, [FU_Pipe1], 0>, 
+                               InstrStage<3, [FU_Pipe0]>]>,
   // loads have an extra cycle of latency, but are fully pipelined
   // use FU_Issue to enforce the 1 load/store per cycle limit
   InstrItinData<IIC_iLoad   , [InstrStage<1, [FU_Issue], 0>, 
@@ -50,7 +52,9 @@ def CortexA8Itineraries : ProcessorItineraries<[
 // FIXME
 def CortexA9Itineraries : ProcessorItineraries<[
   InstrItinData<IIC_iALU    , [InstrStage<1, [FU_Pipe0]>]>,
-  InstrItinData<IIC_iMPY    , [InstrStage<1, [FU_Pipe0]>]>,
+  InstrItinData<IIC_iMPYh   , [InstrStage<1, [FU_Pipe0]>]>,
+  InstrItinData<IIC_iMPYw   , [InstrStage<1, [FU_Pipe0]>]>,
+  InstrItinData<IIC_iMPYl   , [InstrStage<1, [FU_Pipe0]>]>,
   InstrItinData<IIC_iLoad   , [InstrStage<1, [FU_Pipe0]>, InstrStage<1, [FU_LdSt0]>]>,
   InstrItinData<IIC_iStore  , [InstrStage<1, [FU_Pipe0]>]>,
   InstrItinData<IIC_Br      , [InstrStage<1, [FU_Pipe0]>]>,
