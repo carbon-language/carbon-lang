@@ -32,7 +32,7 @@ static const TargetAsmInfo *createTargetAsmInfo(const Target &T,
   Triple TheTriple(TT);
   switch (TheTriple.getOS()) {
   case Triple::Darwin:
-    return new ARMDarwinTargetAsmInfo(TheTriple);
+    return new ARMDarwinTargetAsmInfo();
   default:
     return new ARMELFTargetAsmInfo();
   }

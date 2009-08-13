@@ -19,6 +19,8 @@
 #include "llvm/Target/DarwinTargetAsmInfo.h"
 
 namespace llvm {
+  class Triple;
+
   struct X86DarwinTargetAsmInfo : public DarwinTargetAsmInfo {
     explicit X86DarwinTargetAsmInfo(const Triple &Triple);
   };
