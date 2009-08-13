@@ -128,8 +128,11 @@ reconfigure:
 	  $(ConfigStatusScript) --recheck $(ConfigureScriptFLAGS) && \
 	  $(ConfigStatusScript)
 
+# FIXME: The PIC16/AsmPrinter line here is a hack to force a reconfigure to pick
+# up AsmPrinter changes. Remove it after a reasonable delay from 2009-08-13.
+
 .PRECIOUS: $(ConfigStatusScript)
-$(ConfigStatusScript): $(ConfigureScript)
+$(ConfigStatusScript): $(ConfigureScript) $(LLVM_SRC_ROOT)/lib/Target/PIC16/AsmPrinter/Makefile
 	$(Echo) Reconfiguring with $<
 	$(Verb) cd $(PROJ_OBJ_ROOT) && \
 	  if test -w $(PROJ_OBJ_ROOT)/config.cache ; then \
