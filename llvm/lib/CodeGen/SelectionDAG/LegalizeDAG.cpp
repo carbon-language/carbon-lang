@@ -1997,7 +1997,8 @@ SDValue SelectionDAGLegalize::ExpandLegalINT_TO_FP(bool isSigned,
   case MVT::i64: FF = 0x5F800000ULL; break;  // 2^64 (as a float)
   }
   if (TLI.isLittleEndian()) FF <<= 32;
-  Constant *FudgeFactor = ConstantInt::get(Type::Int64Ty, FF);
+  Constant *FudgeFactor = ConstantInt::get(
+                                       Type::getInt64Ty(*DAG.getContext()), FF);
 
   SDValue CPIdx = DAG.getConstantPool(FudgeFactor, TLI.getPointerTy());
   unsigned Alignment = cast<ConstantPoolSDNode>(CPIdx)->getAlignment();
@@ -2275,7 +2276,7 @@ void SelectionDAGLegalize::ExpandNode(SDNode *Node,
     // If this operation is not supported, lower it to 'abort()' call
     TargetLowering::ArgListTy Args;
     std::pair<SDValue, SDValue> CallResult =
-      TLI.LowerCallTo(Node->getOperand(0), Type::VoidTy,
+      TLI.LowerCallTo(Node->getOperand(0), Type::getVoidTy(*DAG.getContext()),
                       false, false, false, false, 0, CallingConv::C, false,
                       /*isReturnValueUsed=*/true,
                       DAG.getExternalSymbol("abort", TLI.getPointerTy()),

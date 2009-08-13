@@ -618,7 +618,8 @@ static AllocaInst *CreateEntryBlockAlloca(Function *TheFunction,
                                           const std::string &VarName) {
   IRBuilder<> TmpB(&TheFunction->getEntryBlock(),
                  TheFunction->getEntryBlock().begin());
-  return TmpB.CreateAlloca(Type::DoubleTy, 0, VarName.c_str());
+  return TmpB.CreateAlloca(Type::getDoubleTy(getGlobalContext()), 0,
+                           VarName.c_str());
 }
 
 
@@ -678,7 +679,8 @@ Value *BinaryExprAST::Codegen() {
   case '<':
     L = Builder.CreateFCmpULT(L, R, "cmptmp");
     // Convert bool 0/1 to double 0.0 or 1.0
-    return Builder.CreateUIToFP(L, Type::DoubleTy, "booltmp");
+    return Builder.CreateUIToFP(L, Type::getDoubleTy(getGlobalContext()),
+                                "booltmp");
   default: break;
   }
   
@@ -723,9 +725,9 @@ Value *IfExprAST::Codegen() {
   
   // Create blocks for the then and else cases.  Insert the 'then' block at the
   // end of the function.
-  BasicBlock *ThenBB = BasicBlock::Create("then", TheFunction);
-  BasicBlock *ElseBB = BasicBlock::Create("else");
-  BasicBlock *MergeBB = BasicBlock::Create("ifcont");
+  BasicBlock *ThenBB = BasicBlock::Create(getGlobalContext(), "then", TheFunction);
+  BasicBlock *ElseBB = BasicBlock::Create(getGlobalContext(), "else");
+  BasicBlock *MergeBB = BasicBlock::Create(getGlobalContext(), "ifcont");
   
   Builder.CreateCondBr(CondV, ThenBB, ElseBB);
   
@@ -753,7 +755,8 @@ Value *IfExprAST::Codegen() {
   // Emit merge block.
   TheFunction->getBasicBlockList().push_back(MergeBB);
   Builder.SetInsertPoint(MergeBB);
-  PHINode *PN = Builder.CreatePHI(Type::DoubleTy, "iftmp");
+  PHINode *PN = Builder.CreatePHI(Type::getDoubleTy(getGlobalContext()),
+                                  "iftmp");
   
   PN->addIncoming(ThenV, ThenBB);
   PN->addIncoming(ElseV, ElseBB);
@@ -795,7 +798,7 @@ Value *ForExprAST::Codegen() {
   
   // Make the new basic block for the loop header, inserting after current
   // block.
-  BasicBlock *LoopBB = BasicBlock::Create("loop", TheFunction);
+  BasicBlock *LoopBB = BasicBlock::Create(getGlobalContext(), "loop", TheFunction);
   
   // Insert an explicit fall through from the current block to the LoopBB.
   Builder.CreateBr(LoopBB);
@@ -840,7 +843,7 @@ Value *ForExprAST::Codegen() {
                                   "loopcond");
   
   // Create the "after loop" block and insert it.
-  BasicBlock *AfterBB = BasicBlock::Create("afterloop", TheFunction);
+  BasicBlock *AfterBB = BasicBlock::Create(getGlobalContext(), "afterloop", TheFunction);
   
   // Insert the conditional branch into the end of LoopEndBB.
   Builder.CreateCondBr(EndCond, LoopBB, AfterBB);
@@ -856,7 +859,7 @@ Value *ForExprAST::Codegen() {
 
   
   // for expr always returns 0.0.
-  return Constant::getNullValue(Type::DoubleTy);
+  return Constant::getNullValue(Type::getDoubleTy(getGlobalContext()));
 }
 
 Value *VarExprAST::Codegen() {
@@ -908,8 +911,10 @@ Value *VarExprAST::Codegen() {
 
 Function *PrototypeAST::Codegen() {
   // Make the function type:  double(double,double) etc.
-  std::vector<const Type*> Doubles(Args.size(), Type::DoubleTy);
-  FunctionType *FT = FunctionType::get(Type::DoubleTy, Doubles, false);
+  std::vector<const Type*> Doubles(Args.size(), 
+                                   Type::getDoubleTy(getGlobalContext()));
+  FunctionType *FT = FunctionType::get(Type::getDoubleTy(getGlobalContext()),
+                                       Doubles, false);
   
   Function *F = Function::Create(FT, Function::ExternalLinkage, Name, TheModule);
   
@@ -971,7 +976,7 @@ Function *FunctionAST::Codegen() {
     BinopPrecedence[Proto->getOperatorName()] = Proto->getBinaryPrecedence();
   
   // Create a new basic block to start insertion into.
-  BasicBlock *BB = BasicBlock::Create("entry", TheFunction);
+  BasicBlock *BB = BasicBlock::Create(getGlobalContext(), "entry", TheFunction);
   Builder.SetInsertPoint(BB);
   
   // Add all arguments to the symbol table and create their allocas.

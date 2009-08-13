@@ -58,9 +58,10 @@ JIT("jit", cl::desc("Run program Just-In-Time"));
 void addMainFunction(Module *mod) {
   //define i32 @main(i32 %argc, i8 **%argv)
   Function *main_func = cast<Function>(mod->
-    getOrInsertFunction("main", IntegerType::Int32Ty, IntegerType::Int32Ty,
+    getOrInsertFunction("main", IntegerType::getInt32Ty(mod->getContext()),
+                        IntegerType::getInt32Ty(mod->getContext()),
                         PointerType::getUnqual(PointerType::getUnqual(
-                          IntegerType::Int8Ty)), NULL));
+                          IntegerType::getInt8Ty(mod->getContext()))), NULL));
   {
     Function::arg_iterator args = main_func->arg_begin();
     Value *arg_0 = args++;
@@ -70,7 +71,7 @@ void addMainFunction(Module *mod) {
   }
 
   //main.0:
-  BasicBlock *bb = BasicBlock::Create("main.0", main_func);
+  BasicBlock *bb = BasicBlock::Create(mod->getContext(), "main.0", main_func);
 
   //call void @brainf()
   {
@@ -80,7 +81,8 @@ void addMainFunction(Module *mod) {
   }
 
   //ret i32 0
-  ReturnInst::Create(ConstantInt::get(getGlobalContext(), APInt(32, 0)), bb);
+  ReturnInst::Create(mod->getContext(),
+                     ConstantInt::get(mod->getContext(), APInt(32, 0)), bb);
 }
 
 int main(int argc, char **argv) {

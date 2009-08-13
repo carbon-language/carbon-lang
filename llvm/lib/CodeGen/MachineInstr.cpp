@@ -243,7 +243,7 @@ void MachineOperand::print(raw_ostream &OS, const TargetMachine *TM) const {
     OS << getImm();
     break;
   case MachineOperand::MO_FPImmediate:
-    if (getFPImm()->getType() == Type::FloatTy)
+    if (getFPImm()->getType() == Type::getFloatTy(getFPImm()->getContext()))
       OS << getFPImm()->getValueAPF().convertToFloat();
     else
       OS << getFPImm()->getValueAPF().convertToDouble();

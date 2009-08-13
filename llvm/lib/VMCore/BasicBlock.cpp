@@ -38,9 +38,9 @@ LLVMContext &BasicBlock::getContext() const {
 template class SymbolTableListTraits<Instruction, BasicBlock>;
 
 
-BasicBlock::BasicBlock(const Twine &Name, Function *NewParent,
+BasicBlock::BasicBlock(LLVMContext &C, const Twine &Name, Function *NewParent,
                        BasicBlock *InsertBefore)
-  : Value(Type::LabelTy, Value::BasicBlockVal), Parent(0) {
+  : Value(Type::getLabelTy(C), Value::BasicBlockVal), Parent(0) {
 
   // Make sure that we get added to a function
   LeakDetector::addGarbageObject(this);
@@ -246,7 +246,8 @@ BasicBlock *BasicBlock::splitBasicBlock(iterator I, const Twine &BBName) {
 
   BasicBlock *InsertBefore = next(Function::iterator(this))
                                .getNodePtrUnchecked();
-  BasicBlock *New = BasicBlock::Create(BBName, getParent(), InsertBefore);
+  BasicBlock *New = BasicBlock::Create(getContext(), BBName,
+                                       getParent(), InsertBefore);
 
   // Move all of the specified instructions from the original basic block into
   // the new basic block.

@@ -87,12 +87,13 @@ Pass *llvm::createLowerAllocationsPass(bool LowerMallocArgToInteger) {
 // This function is always successful.
 //
 bool LowerAllocations::doInitialization(Module &M) {
-  const Type *BPTy = PointerType::getUnqual(Type::Int8Ty);
+  const Type *BPTy = PointerType::getUnqual(Type::getInt8Ty(M.getContext()));
   // Prototype malloc as "char* malloc(...)", because we don't know in
   // doInitialization whether size_t is int or long.
   FunctionType *FT = FunctionType::get(BPTy, true);
   MallocFunc = M.getOrInsertFunction("malloc", FT);
-  FreeFunc = M.getOrInsertFunction("free"  , Type::VoidTy, BPTy, (Type *)0);
+  FreeFunc = M.getOrInsertFunction("free"  , Type::getVoidTy(M.getContext()),
+                                   BPTy, (Type *)0);
   return true;
 }
 
@@ -106,7 +107,7 @@ bool LowerAllocations::runOnBasicBlock(BasicBlock &BB) {
   BasicBlock::InstListType &BBIL = BB.getInstList();
 
   const TargetData &TD = getAnalysis<TargetData>();
-  const Type *IntPtrTy = TD.getIntPtrType();
+  const Type *IntPtrTy = TD.getIntPtrType(BB.getContext());
 
   // Loop over all of the instructions, looking for malloc or free instructions
   for (BasicBlock::iterator I = BB.begin(), E = BB.end(); I != E; ++I) {
@@ -116,7 +117,7 @@ bool LowerAllocations::runOnBasicBlock(BasicBlock &BB) {
       // malloc(type) becomes i8 *malloc(size)
       Value *MallocArg;
       if (LowerMallocArgToInteger)
-        MallocArg = ConstantInt::get(Type::Int64Ty,
+        MallocArg = ConstantInt::get(Type::getInt64Ty(BB.getContext()),
                                      TD.getTypeAllocSize(AllocTy));
       else
         MallocArg = ConstantExpr::getSizeOf(AllocTy);
@@ -151,7 +152,7 @@ bool LowerAllocations::runOnBasicBlock(BasicBlock &BB) {
 
       // Create a cast instruction to convert to the right type...
       Value *MCast;
-      if (MCall->getType() != Type::VoidTy)
+      if (MCall->getType() != Type::getVoidTy(BB.getContext()))
         MCast = new BitCastInst(MCall, MI->getType(), "", I);
       else
         MCast = Constant::getNullValue(MI->getType());
@@ -164,7 +165,7 @@ bool LowerAllocations::runOnBasicBlock(BasicBlock &BB) {
     } else if (FreeInst *FI = dyn_cast<FreeInst>(I)) {
       Value *PtrCast = 
         new BitCastInst(FI->getOperand(0),
-                        PointerType::getUnqual(Type::Int8Ty), "", I);
+               PointerType::getUnqual(Type::getInt8Ty(BB.getContext())), "", I);
 
       // Insert a call to the free function...
       CallInst::Create(FreeFunc, PtrCast, "", I)->setTailCall();

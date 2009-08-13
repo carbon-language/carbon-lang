@@ -73,7 +73,7 @@ Module *BugDriver::deleteInstructionFromProgram(const Instruction *I,
   // If this instruction produces a value, replace any users with null values
   if (isa<StructType>(TheInst->getType()))
     TheInst->replaceAllUsesWith(UndefValue::get(TheInst->getType()));
-  else if (TheInst->getType() != Type::VoidTy)
+  else if (TheInst->getType() != Type::getVoidTy(I->getContext()))
     TheInst->replaceAllUsesWith(Constant::getNullValue(TheInst->getType()));
 
   // Remove the instruction from the program.
@@ -184,7 +184,8 @@ static Constant *GetTorInit(std::vector<std::pair<Function*, int> > &TorList) {
   std::vector<Constant*> ArrayElts;
   for (unsigned i = 0, e = TorList.size(); i != e; ++i) {
     std::vector<Constant*> Elts;
-    Elts.push_back(ConstantInt::get(Type::Int32Ty, TorList[i].second));
+    Elts.push_back(ConstantInt::get(
+          Type::getInt32Ty(TorList[i].first->getContext()), TorList[i].second));
     Elts.push_back(TorList[i].first);
     ArrayElts.push_back(ConstantStruct::get(
                                         TorList[i].first->getContext(), Elts));

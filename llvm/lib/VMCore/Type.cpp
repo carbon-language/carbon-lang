@@ -103,26 +103,26 @@ void Type::destroy() const {
   delete this; 
 }
 
-const Type *Type::getPrimitiveType(TypeID IDNumber) {
+const Type *Type::getPrimitiveType(LLVMContext &C, TypeID IDNumber) {
   switch (IDNumber) {
-  case VoidTyID      : return VoidTy;
-  case FloatTyID     : return FloatTy;
-  case DoubleTyID    : return DoubleTy;
-  case X86_FP80TyID  : return X86_FP80Ty;
-  case FP128TyID     : return FP128Ty;
-  case PPC_FP128TyID : return PPC_FP128Ty;
-  case LabelTyID     : return LabelTy;
-  case MetadataTyID  : return MetadataTy;
+  case VoidTyID      : return getVoidTy(C);
+  case FloatTyID     : return getFloatTy(C);
+  case DoubleTyID    : return getDoubleTy(C);
+  case X86_FP80TyID  : return getX86_FP80Ty(C);
+  case FP128TyID     : return getFP128Ty(C);
+  case PPC_FP128TyID : return getPPC_FP128Ty(C);
+  case LabelTyID     : return getLabelTy(C);
+  case MetadataTyID  : return getMetadataTy(C);
   default:
     return 0;
   }
 }
 
-const Type *Type::getVAArgsPromotedType() const {
+const Type *Type::getVAArgsPromotedType(LLVMContext &C) const {
   if (ID == IntegerTyID && getSubclassData() < 32)
-    return Type::Int32Ty;
+    return Type::getInt32Ty(C);
   else if (ID == FloatTyID)
-    return Type::DoubleTy;
+    return Type::getDoubleTy(C);
   else
     return this;
 }
@@ -288,7 +288,7 @@ std::string Type::getDescription() const {
 
 bool StructType::indexValid(const Value *V) const {
   // Structure indexes require 32-bit integer constants.
-  if (V->getType() == Type::Int32Ty)
+  if (V->getType() == Type::getInt32Ty(V->getContext()))
     if (const ConstantInt *CU = dyn_cast<ConstantInt>(V))
       return indexValid(CU->getZExtValue());
   return false;
@@ -315,25 +315,76 @@ const Type *StructType::getTypeAtIndex(unsigned Idx) const {
 //                          Primitive 'Type' data
 //===----------------------------------------------------------------------===//
 
-const Type *Type::VoidTy       = new Type(Type::VoidTyID);
-const Type *Type::FloatTy      = new Type(Type::FloatTyID);
-const Type *Type::DoubleTy     = new Type(Type::DoubleTyID);
-const Type *Type::X86_FP80Ty   = new Type(Type::X86_FP80TyID);
-const Type *Type::FP128Ty      = new Type(Type::FP128TyID);
-const Type *Type::PPC_FP128Ty  = new Type(Type::PPC_FP128TyID);
-const Type *Type::LabelTy      = new Type(Type::LabelTyID);
-const Type *Type::MetadataTy   = new Type(Type::MetadataTyID);
-
 namespace {
   struct BuiltinIntegerType : public IntegerType {
     explicit BuiltinIntegerType(unsigned W) : IntegerType(W) {}
   };
 }
-const IntegerType *Type::Int1Ty  = new BuiltinIntegerType(1);
-const IntegerType *Type::Int8Ty  = new BuiltinIntegerType(8);
-const IntegerType *Type::Int16Ty = new BuiltinIntegerType(16);
-const IntegerType *Type::Int32Ty = new BuiltinIntegerType(32);
-const IntegerType *Type::Int64Ty = new BuiltinIntegerType(64);
+
+const Type *Type::getVoidTy(LLVMContext &C) {
+  static const Type *VoidTy       = new Type(Type::VoidTyID);
+  return VoidTy;
+}
+
+const Type *Type::getLabelTy(LLVMContext &C) {
+  static const Type *LabelTy      = new Type(Type::LabelTyID);
+  return LabelTy;
+}
+
+const Type *Type::getFloatTy(LLVMContext &C) {
+  static const Type *FloatTy      = new Type(Type::FloatTyID);
+  return FloatTy;
+}
+
+const Type *Type::getDoubleTy(LLVMContext &C) {
+  static const Type *DoubleTy      = new Type(Type::DoubleTyID);
+  return DoubleTy;
+}
+
+const Type *Type::getMetadataTy(LLVMContext &C) {
+  static const Type *MetadataTy   = new Type(Type::MetadataTyID);
+  return MetadataTy;
+}
+
+const Type *Type::getX86_FP80Ty(LLVMContext &C) {
+  static const Type *X86_FP80Ty   = new Type(Type::X86_FP80TyID);
+  return X86_FP80Ty;
+}
+
+const Type *Type::getFP128Ty(LLVMContext &C) {
+  static const Type *FP128Ty      = new Type(Type::FP128TyID);
+  return FP128Ty;
+}
+
+const Type *Type::getPPC_FP128Ty(LLVMContext &C) {
+  static const Type *PPC_FP128Ty  = new Type(Type::PPC_FP128TyID);
+  return PPC_FP128Ty;
+}
+
+const IntegerType *Type::getInt1Ty(LLVMContext &C) {
+  static const IntegerType *Int1Ty  = new BuiltinIntegerType(1);
+  return Int1Ty;
+}
+
+const IntegerType *Type::getInt8Ty(LLVMContext &C) {
+  static const IntegerType *Int8Ty  = new BuiltinIntegerType(8);
+  return Int8Ty;
+}
+
+const IntegerType *Type::getInt16Ty(LLVMContext &C) {
+  static const IntegerType *Int16Ty = new BuiltinIntegerType(16);
+  return Int16Ty;
+}
+
+const IntegerType *Type::getInt32Ty(LLVMContext &C) {
+  static const IntegerType *Int32Ty = new BuiltinIntegerType(32);
+  return Int32Ty;
+}
+
+const IntegerType *Type::getInt64Ty(LLVMContext &C) {
+  static const IntegerType *Int64Ty = new BuiltinIntegerType(64);
+  return Int64Ty;
+}
 
 //===----------------------------------------------------------------------===//
 //                          Derived Type Constructors
@@ -344,10 +395,11 @@ const IntegerType *Type::Int64Ty = new BuiltinIntegerType(64);
 bool FunctionType::isValidReturnType(const Type *RetTy) {
   if (RetTy->isFirstClassType()) {
     if (const PointerType *PTy = dyn_cast<PointerType>(RetTy))
-      return PTy->getElementType() != Type::MetadataTy;
+      return PTy->getElementType() != Type::getMetadataTy(RetTy->getContext());
     return true;
   }
-  if (RetTy == Type::VoidTy || RetTy == Type::MetadataTy ||
+  if (RetTy == Type::getVoidTy(RetTy->getContext()) ||
+      RetTy == Type::getMetadataTy(RetTy->getContext()) ||
       isa<OpaqueType>(RetTy))
     return true;
   
@@ -368,7 +420,8 @@ bool FunctionType::isValidReturnType(const Type *RetTy) {
 bool FunctionType::isValidArgumentType(const Type *ArgTy) {
   if ((!ArgTy->isFirstClassType() && !isa<OpaqueType>(ArgTy)) ||
       (isa<PointerType>(ArgTy) &&
-       cast<PointerType>(ArgTy)->getElementType() == Type::MetadataTy))
+       cast<PointerType>(ArgTy)->getElementType() == 
+            Type::getMetadataTy(ArgTy->getContext())))
     return false;
 
   return true;
@@ -488,7 +541,7 @@ void DerivedType::dropAllTypeUses() {
     // pick so long as it doesn't point back to this type.  We choose something
     // concrete to avoid overhead for adding to AbstracTypeUser lists and stuff.
     for (unsigned i = 1, e = NumContainedTys; i != e; ++i)
-      ContainedTys[i] = Type::Int32Ty;
+      ContainedTys[i] = Type::getInt32Ty(getContext());
   }
 }
 
@@ -705,17 +758,17 @@ static bool TypeHasCycleThroughItself(const Type *Ty) {
 
 static ManagedStatic<TypeMap<IntegerValType, IntegerType> > IntegerTypes;
 
-const IntegerType *IntegerType::get(unsigned NumBits) {
+const IntegerType *IntegerType::get(LLVMContext &C, unsigned NumBits) {
   assert(NumBits >= MIN_INT_BITS && "bitwidth too small");
   assert(NumBits <= MAX_INT_BITS && "bitwidth too large");
 
   // Check for the built-in integer types
   switch (NumBits) {
-    case  1: return cast<IntegerType>(Type::Int1Ty);
-    case  8: return cast<IntegerType>(Type::Int8Ty);
-    case 16: return cast<IntegerType>(Type::Int16Ty);
-    case 32: return cast<IntegerType>(Type::Int32Ty);
-    case 64: return cast<IntegerType>(Type::Int64Ty);
+    case  1: return cast<IntegerType>(Type::getInt1Ty(C));
+    case  8: return cast<IntegerType>(Type::getInt8Ty(C));
+    case 16: return cast<IntegerType>(Type::getInt16Ty(C));
+    case 32: return cast<IntegerType>(Type::getInt32Ty(C));
+    case 64: return cast<IntegerType>(Type::getInt64Ty(C));
     default: 
       break;
   }
@@ -806,12 +859,13 @@ ArrayType *ArrayType::get(const Type *ElementType, uint64_t NumElements) {
 }
 
 bool ArrayType::isValidElementType(const Type *ElemTy) {
-  if (ElemTy == Type::VoidTy || ElemTy == Type::LabelTy ||
-      ElemTy == Type::MetadataTy)
+  if (ElemTy == Type::getVoidTy(ElemTy->getContext()) ||
+      ElemTy == Type::getLabelTy(ElemTy->getContext()) ||
+      ElemTy == Type::getMetadataTy(ElemTy->getContext()))
     return false;
 
   if (const PointerType *PTy = dyn_cast<PointerType>(ElemTy))
-    if (PTy->getElementType() == Type::MetadataTy)
+    if (PTy->getElementType() == Type::getMetadataTy(ElemTy->getContext()))
       return false;
 
   return true;
@@ -885,12 +939,13 @@ StructType *StructType::get(LLVMContext &Context, const Type *type, ...) {
 }
 
 bool StructType::isValidElementType(const Type *ElemTy) {
-  if (ElemTy == Type::VoidTy || ElemTy == Type::LabelTy ||
-      ElemTy == Type::MetadataTy)
+  if (ElemTy == Type::getVoidTy(ElemTy->getContext()) ||
+      ElemTy == Type::getLabelTy(ElemTy->getContext()) ||
+      ElemTy == Type::getMetadataTy(ElemTy->getContext()))
     return false;
 
   if (const PointerType *PTy = dyn_cast<PointerType>(ElemTy))
-    if (PTy->getElementType() == Type::MetadataTy)
+    if (PTy->getElementType() == Type::getMetadataTy(ElemTy->getContext()))
       return false;
 
   return true;
@@ -903,7 +958,7 @@ bool StructType::isValidElementType(const Type *ElemTy) {
 
 PointerType *PointerType::get(const Type *ValueType, unsigned AddressSpace) {
   assert(ValueType && "Can't get a pointer to <null> type!");
-  assert(ValueType != Type::VoidTy &&
+  assert(ValueType != Type::getVoidTy(ValueType->getContext()) &&
          "Pointer to void is not valid, use i8* instead!");
   assert(isValidElementType(ValueType) && "Invalid type for pointer element!");
   PointerValType PVT(ValueType, AddressSpace);
@@ -930,11 +985,12 @@ PointerType *Type::getPointerTo(unsigned addrs) const {
 }
 
 bool PointerType::isValidElementType(const Type *ElemTy) {
-  if (ElemTy == Type::VoidTy || ElemTy == Type::LabelTy)
+  if (ElemTy == Type::getVoidTy(ElemTy->getContext()) ||
+      ElemTy == Type::getLabelTy(ElemTy->getContext()))
     return false;
 
   if (const PointerType *PTy = dyn_cast<PointerType>(ElemTy))
-    if (PTy->getElementType() == Type::MetadataTy)
+    if (PTy->getElementType() == Type::getMetadataTy(ElemTy->getContext()))
       return false;
 
   return true;

@@ -838,7 +838,8 @@ static bool FoldValueComparisonIntoPredecessors(TerminatorInst *TI) {
           if (InfLoopBlock == 0) {
             // Insert it at the end of the function, because it's either code,
             // or it won't matter if it's hot. :)
-            InfLoopBlock = BasicBlock::Create("infloop", BB->getParent());
+            InfLoopBlock = BasicBlock::Create(BB->getContext(),
+                                              "infloop", BB->getParent());
             BranchInst::Create(InfLoopBlock, InfLoopBlock);
           }
           NewSI->setSuccessor(i, InfLoopBlock);
@@ -930,7 +931,7 @@ HoistTerminator:
   // Okay, it is safe to hoist the terminator.
   Instruction *NT = I1->clone(BB1->getContext());
   BIParent->getInstList().insert(BI, NT);
-  if (NT->getType() != Type::VoidTy) {
+  if (NT->getType() != Type::getVoidTy(BB1->getContext())) {
     I1->replaceAllUsesWith(NT);
     I2->replaceAllUsesWith(NT);
     NT->takeName(I1);
@@ -1189,7 +1190,7 @@ static bool FoldCondBranchOnPHI(BranchInst *BI) {
   for (unsigned i = 0, e = PN->getNumIncomingValues(); i != e; ++i) {
     ConstantInt *CB;
     if ((CB = dyn_cast<ConstantInt>(PN->getIncomingValue(i))) &&
-        CB->getType() == Type::Int1Ty) {
+        CB->getType() == Type::getInt1Ty(BB->getContext())) {
       // Okay, we now know that all edges from PredBB should be revectored to
       // branch to RealDest.
       BasicBlock *PredBB = PN->getIncomingBlock(i);
@@ -1201,7 +1202,8 @@ static bool FoldCondBranchOnPHI(BranchInst *BI) {
       // difficult cases.  Instead of being smart about this, just insert a new
       // block that jumps to the destination block, effectively splitting
       // the edge we are about to create.
-      BasicBlock *EdgeBB = BasicBlock::Create(RealDest->getName()+".critedge",
+      BasicBlock *EdgeBB = BasicBlock::Create(BB->getContext(),
+                                              RealDest->getName()+".critedge",
                                               RealDest->getParent(), RealDest);
       BranchInst::Create(RealDest, EdgeBB);
       PHINode *PN;
@@ -1419,7 +1421,7 @@ static bool SimplifyCondBranchToTwoReturns(BranchInst *BI) {
   if (FalseRet->getNumOperands() == 0) {
     TrueSucc->removePredecessor(BI->getParent());
     FalseSucc->removePredecessor(BI->getParent());
-    ReturnInst::Create(0, BI);
+    ReturnInst::Create(BI->getContext(), 0, BI);
     EraseTerminatorInstAndDCECond(BI);
     return true;
   }
@@ -1468,8 +1470,8 @@ static bool SimplifyCondBranchToTwoReturns(BranchInst *BI) {
   }
 
   Value *RI = !TrueValue ?
-              ReturnInst::Create(BI) :
-              ReturnInst::Create(TrueValue, BI);
+              ReturnInst::Create(BI->getContext(), BI) :
+              ReturnInst::Create(BI->getContext(), TrueValue, BI);
       
   DOUT << "\nCHANGING BRANCH TO TWO RETURNS INTO SELECT:"
        << "\n  " << *BI << "NewRet = " << *RI
@@ -1608,7 +1610,8 @@ static bool SimplifyCondBranchToCondBranch(BranchInst *PBI, BranchInst *BI) {
     if (BB->getSinglePredecessor()) {
       // Turn this into a branch on constant.
       bool CondIsTrue = PBI->getSuccessor(0) == BB;
-      BI->setCondition(ConstantInt::get(Type::Int1Ty, CondIsTrue));
+      BI->setCondition(ConstantInt::get(Type::getInt1Ty(BB->getContext()), 
+                                        CondIsTrue));
       return true;  // Nuke the branch on constant.
     }
     
@@ -1616,7 +1619,7 @@ static bool SimplifyCondBranchToCondBranch(BranchInst *PBI, BranchInst *BI) {
     // in the constant and simplify the block result.  Subsequent passes of
     // simplifycfg will thread the block.
     if (BlockIsSimpleEnoughToThreadThrough(BB)) {
-      PHINode *NewPN = PHINode::Create(Type::Int1Ty,
+      PHINode *NewPN = PHINode::Create(Type::getInt1Ty(BB->getContext()),
                                        BI->getCondition()->getName() + ".pr",
                                        BB->begin());
       // Okay, we're going to insert the PHI node.  Since PBI is not the only
@@ -1628,7 +1631,7 @@ static bool SimplifyCondBranchToCondBranch(BranchInst *PBI, BranchInst *BI) {
             PBI->getCondition() == BI->getCondition() &&
             PBI->getSuccessor(0) != PBI->getSuccessor(1)) {
           bool CondIsTrue = PBI->getSuccessor(0) == BB;
-          NewPN->addIncoming(ConstantInt::get(Type::Int1Ty, 
+          NewPN->addIncoming(ConstantInt::get(Type::getInt1Ty(BB->getContext()), 
                                               CondIsTrue), *PI);
         } else {
           NewPN->addIncoming(BI->getCondition(), *PI);
@@ -1700,7 +1703,8 @@ static bool SimplifyCondBranchToCondBranch(BranchInst *PBI, BranchInst *BI) {
   if (OtherDest == BB) {
     // Insert it at the end of the function, because it's either code,
     // or it won't matter if it's hot. :)
-    BasicBlock *InfLoopBlock = BasicBlock::Create("infloop", BB->getParent());
+    BasicBlock *InfLoopBlock = BasicBlock::Create(BB->getContext(),
+                                                  "infloop", BB->getParent());
     BranchInst::Create(InfLoopBlock, InfLoopBlock);
     OtherDest = InfLoopBlock;
   }  
@@ -1885,7 +1889,7 @@ bool llvm::SimplifyCFG(BasicBlock *BB) {
       if (BranchInst *BI = dyn_cast<BranchInst>(Pred->getTerminator())) {
         if (BI->isUnconditional()) {
           Pred->getInstList().pop_back();  // nuke uncond branch
-          new UnwindInst(Pred);            // Use unwind.
+          new UnwindInst(Pred->getContext(), Pred);            // Use unwind.
           Changed = true;
         }
       } else if (InvokeInst *II = dyn_cast<InvokeInst>(Pred->getTerminator()))
@@ -2034,7 +2038,7 @@ bool llvm::SimplifyCFG(BasicBlock *BB) {
         if (BranchInst *BI = dyn_cast<BranchInst>(TI)) {
           if (BI->isUnconditional()) {
             if (BI->getSuccessor(0) == BB) {
-              new UnreachableInst(TI);
+              new UnreachableInst(TI->getContext(), TI);
               TI->eraseFromParent();
               Changed = true;
             }

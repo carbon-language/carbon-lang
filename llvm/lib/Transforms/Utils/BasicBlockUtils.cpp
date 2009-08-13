@@ -251,11 +251,11 @@ void llvm::RemoveSuccessor(TerminatorInst *TI, unsigned SuccNum) {
       Value *RetVal = 0;
 
       // Create a value to return... if the function doesn't return null...
-      if (BB->getParent()->getReturnType() != Type::VoidTy)
+      if (BB->getParent()->getReturnType() != Type::getVoidTy(TI->getContext()))
         RetVal = Constant::getNullValue(BB->getParent()->getReturnType());
 
       // Create the return...
-      NewTI = ReturnInst::Create(RetVal);
+      NewTI = ReturnInst::Create(TI->getContext(), RetVal);
     }
     break;
 
@@ -360,8 +360,8 @@ BasicBlock *llvm::SplitBlockPredecessors(BasicBlock *BB,
                                          unsigned NumPreds, const char *Suffix,
                                          Pass *P) {
   // Create new basic block, insert right before the original block.
-  BasicBlock *NewBB =
-    BasicBlock::Create(BB->getName()+Suffix, BB->getParent(), BB);
+  BasicBlock *NewBB = BasicBlock::Create(BB->getContext(), BB->getName()+Suffix,
+                                         BB->getParent(), BB);
   
   // The new block unconditionally branches to the old block.
   BranchInst *BI = BranchInst::Create(BB, NewBB);

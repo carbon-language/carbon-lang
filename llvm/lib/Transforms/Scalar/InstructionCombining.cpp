@@ -435,7 +435,7 @@ static bool isOnlyUse(Value *V) {
 static const Type *getPromotedType(const Type *Ty) {
   if (const IntegerType* ITy = dyn_cast<IntegerType>(Ty)) {
     if (ITy->getBitWidth() < 32)
-      return Type::Int32Ty;
+      return Type::getInt32Ty(Ty->getContext());
   }
   return Ty;
 }
@@ -473,12 +473,14 @@ isEliminableCastPair(
 
   unsigned Res = CastInst::isEliminableCastPair(firstOp, secondOp, SrcTy, MidTy,
                                                 DstTy,
-                                                TD ? TD->getIntPtrType() : 0);
+                                  TD ? TD->getIntPtrType(CI->getContext()) : 0);
   
   // We don't want to form an inttoptr or ptrtoint that converts to an integer
   // type that differs from the pointer size.
-  if ((Res == Instruction::IntToPtr && SrcTy != TD->getIntPtrType()) ||
-      (Res == Instruction::PtrToInt && DstTy != TD->getIntPtrType()))
+  if ((Res == Instruction::IntToPtr &&
+          SrcTy != TD->getIntPtrType(CI->getContext())) ||
+      (Res == Instruction::PtrToInt &&
+          DstTy != TD->getIntPtrType(CI->getContext())))
     Res = 0;
   
   return Instruction::CastOps(Res);
@@ -1587,9 +1589,9 @@ Value *InstCombiner::SimplifyDemandedVectorElts(Value *V, APInt DemandedElts,
       std::vector<Constant*> Elts;
       for (unsigned i = 0; i < VWidth; ++i) {
         if (UndefElts[i])
-          Elts.push_back(UndefValue::get(Type::Int32Ty));
+          Elts.push_back(UndefValue::get(Type::getInt32Ty(*Context)));
         else
-          Elts.push_back(ConstantInt::get(Type::Int32Ty,
+          Elts.push_back(ConstantInt::get(Type::getInt32Ty(*Context),
                                           Shuffle->getMaskValue(i)));
       }
       I->setOperand(2, ConstantVector::get(Elts));
@@ -1720,9 +1722,9 @@ Value *InstCombiner::SimplifyDemandedVectorElts(Value *V, APInt DemandedElts,
           Value *RHS = II->getOperand(2);
           // Extract the element as scalars.
           LHS = InsertNewInstBefore(ExtractElementInst::Create(LHS, 
-            ConstantInt::get(Type::Int32Ty, 0U, false), "tmp"), *II);
+            ConstantInt::get(Type::getInt32Ty(*Context), 0U, false), "tmp"), *II);
           RHS = InsertNewInstBefore(ExtractElementInst::Create(RHS,
-            ConstantInt::get(Type::Int32Ty, 0U, false), "tmp"), *II);
+            ConstantInt::get(Type::getInt32Ty(*Context), 0U, false), "tmp"), *II);
           
           switch (II->getIntrinsicID()) {
           default: llvm_unreachable("Case stmts out of sync!");
@@ -1741,7 +1743,7 @@ Value *InstCombiner::SimplifyDemandedVectorElts(Value *V, APInt DemandedElts,
           Instruction *New =
             InsertElementInst::Create(
               UndefValue::get(II->getType()), TmpV,
-              ConstantInt::get(Type::Int32Ty, 0U, false), II->getName());
+              ConstantInt::get(Type::getInt32Ty(*Context), 0U, false), II->getName());
           InsertNewInstBefore(New, *II);
           AddSoonDeadInstToWorklist(*II, 0);
           return New;
@@ -1912,7 +1914,7 @@ static Instruction *FoldOpIntoSelect(Instruction &Op, SelectInst *SI,
 
   if (isa<Constant>(TV) || isa<Constant>(FV)) {
     // Bool selects with constant operands can be folded to logical ops.
-    if (SI->getType() == Type::Int1Ty) return 0;
+    if (SI->getType() == Type::getInt1Ty(*IC->getContext())) return 0;
 
     Value *SelectTrueVal = FoldOperationIntoSelectOperand(Op, TV, IC);
     Value *SelectFalseVal = FoldOperationIntoSelectOperand(Op, FV, IC);
@@ -2066,7 +2068,7 @@ Instruction *InstCombiner::visitAdd(BinaryOperator &I) {
 
       // zext(bool) + C -> bool ? C + 1 : C
       if (ZExtInst *ZI = dyn_cast<ZExtInst>(LHS))
-        if (ZI->getSrcTy() == Type::Int1Ty)
+        if (ZI->getSrcTy() == Type::getInt1Ty(*Context))
           return SelectInst::Create(ZI->getOperand(0), AddOne(CI), CI);
     }
 
@@ -2109,9 +2111,9 @@ Instruction *InstCombiner::visitAdd(BinaryOperator &I) {
       const Type *MiddleType = 0;
       switch (Size) {
         default: break;
-        case 32: MiddleType = Type::Int32Ty; break;
-        case 16: MiddleType = Type::Int16Ty; break;
-        case  8: MiddleType = Type::Int8Ty; break;
+        case 32: MiddleType = Type::getInt32Ty(*Context); break;
+        case 16: MiddleType = Type::getInt16Ty(*Context); break;
+        case  8: MiddleType = Type::getInt8Ty(*Context); break;
       }
       if (MiddleType) {
         Instruction *NewTrunc = new TruncInst(XorLHS, MiddleType, "sext");
@@ -2121,7 +2123,7 @@ Instruction *InstCombiner::visitAdd(BinaryOperator &I) {
     }
   }
 
-  if (I.getType() == Type::Int1Ty)
+  if (I.getType() == Type::getInt1Ty(*Context))
     return BinaryOperator::CreateXor(LHS, RHS);
 
   // X + X --> X << 1
@@ -2466,11 +2468,11 @@ Instruction *InstCombiner::visitSub(BinaryOperator &I) {
 
     // C - zext(bool) -> bool ? C - 1 : C
     if (ZExtInst *ZI = dyn_cast<ZExtInst>(Op1))
-      if (ZI->getSrcTy() == Type::Int1Ty)
+      if (ZI->getSrcTy() == Type::getInt1Ty(*Context))
         return SelectInst::Create(ZI->getOperand(0), SubOne(C), C);
   }
 
-  if (I.getType() == Type::Int1Ty)
+  if (I.getType() == Type::getInt1Ty(*Context))
     return BinaryOperator::CreateXor(Op0, Op1);
 
   if (BinaryOperator *Op1I = dyn_cast<BinaryOperator>(Op1)) {
@@ -2726,7 +2728,7 @@ Instruction *InstCombiner::visitMul(BinaryOperator &I) {
     }
   }
 
-  if (I.getType() == Type::Int1Ty)
+  if (I.getType() == Type::getInt1Ty(*Context))
     return BinaryOperator::CreateAnd(Op0, I.getOperand(1));
 
   // If one of the operands of the multiply is a cast from a boolean value, then
@@ -2735,11 +2737,11 @@ Instruction *InstCombiner::visitMul(BinaryOperator &I) {
   // formed.
   CastInst *BoolCast = 0;
   if (ZExtInst *CI = dyn_cast<ZExtInst>(Op0))
-    if (CI->getOperand(0)->getType() == Type::Int1Ty)
+    if (CI->getOperand(0)->getType() == Type::getInt1Ty(*Context))
       BoolCast = CI;
   if (!BoolCast)
     if (ZExtInst *CI = dyn_cast<ZExtInst>(I.getOperand(1)))
-      if (CI->getOperand(0)->getType() == Type::Int1Ty)
+      if (CI->getOperand(0)->getType() == Type::getInt1Ty(*Context))
         BoolCast = CI;
   if (BoolCast) {
     if (ICmpInst *SCI = dyn_cast<ICmpInst>(BoolCast->getOperand(0))) {
@@ -2974,7 +2976,7 @@ Instruction *InstCombiner::commonIDivTransforms(BinaryOperator &I) {
       return ReplaceInstUsesWith(I, Constant::getNullValue(I.getType()));
 
   // It can't be division by zero, hence it must be division by one.
-  if (I.getType() == Type::Int1Ty)
+  if (I.getType() == Type::getInt1Ty(*Context))
     return ReplaceInstUsesWith(I, Op0);
 
   if (ConstantVector *Op1V = dyn_cast<ConstantVector>(Op1)) {
@@ -5335,7 +5337,7 @@ static bool AddWithOverflow(Constant *&Result, Constant *In1,
 
   if (const VectorType *VTy = dyn_cast<VectorType>(In1->getType())) {
     for (unsigned i = 0, e = VTy->getNumElements(); i != e; ++i) {
-      Constant *Idx = ConstantInt::get(Type::Int32Ty, i);
+      Constant *Idx = ConstantInt::get(Type::getInt32Ty(*Context), i);
       if (HasAddOverflow(ExtractElement(Result, Idx, Context),
                          ExtractElement(In1, Idx, Context),
                          ExtractElement(In2, Idx, Context),
@@ -5371,7 +5373,7 @@ static bool SubWithOverflow(Constant *&Result, Constant *In1,
 
   if (const VectorType *VTy = dyn_cast<VectorType>(In1->getType())) {
     for (unsigned i = 0, e = VTy->getNumElements(); i != e; ++i) {
-      Constant *Idx = ConstantInt::get(Type::Int32Ty, i);
+      Constant *Idx = ConstantInt::get(Type::getInt32Ty(*Context), i);
       if (HasSubOverflow(ExtractElement(Result, Idx, Context),
                          ExtractElement(In1, Idx, Context),
                          ExtractElement(In2, Idx, Context),
@@ -5392,7 +5394,7 @@ static bool SubWithOverflow(Constant *&Result, Constant *In1,
 static Value *EmitGEPOffset(User *GEP, Instruction &I, InstCombiner &IC) {
   TargetData &TD = *IC.getTargetData();
   gep_type_iterator GTI = gep_type_begin(GEP);
-  const Type *IntPtrTy = TD.getIntPtrType();
+  const Type *IntPtrTy = TD.getIntPtrType(I.getContext());
   LLVMContext *Context = IC.getContext();
   Value *Result = Constant::getNullValue(IntPtrTy);
 
@@ -5542,7 +5544,8 @@ static Value *EvaluateGEPOffsetExpression(User *GEP, Instruction &I,
     // we don't need to bother extending: the extension won't affect where the
     // computation crosses zero.
     if (VariableIdx->getType()->getPrimitiveSizeInBits() > IntPtrWidth)
-      VariableIdx = new TruncInst(VariableIdx, TD.getIntPtrType(),
+      VariableIdx = new TruncInst(VariableIdx, 
+                                  TD.getIntPtrType(VariableIdx->getContext()),
                                   VariableIdx->getName(), &I);
     return VariableIdx;
   }
@@ -5563,7 +5566,7 @@ static Value *EvaluateGEPOffsetExpression(User *GEP, Instruction &I,
     return 0;
 
   // Okay, we can do this evaluation.  Start by converting the index to intptr.
-  const Type *IntPtrTy = TD.getIntPtrType();
+  const Type *IntPtrTy = TD.getIntPtrType(VariableIdx->getContext());
   if (VariableIdx->getType() != IntPtrTy)
     VariableIdx = CastInst::CreateIntegerCast(VariableIdx, IntPtrTy,
                                               true /*SExt*/, 
@@ -5661,7 +5664,7 @@ Instruction *InstCombiner::FoldGEPICmp(GEPOperator *GEPLHS, Value *RHS,
 
       if (NumDifferences == 0)   // SAME GEP?
         return ReplaceInstUsesWith(I, // No comparison is needed here.
-                                   ConstantInt::get(Type::Int1Ty,
+                                   ConstantInt::get(Type::getInt1Ty(*Context),
                                              ICmpInst::isTrueWhenEqual(Cond)));
 
       else if (NumDifferences == 1) {
@@ -5923,7 +5926,7 @@ Instruction *InstCombiner::visitFCmpInst(FCmpInst &I) {
   }
     
   if (isa<UndefValue>(Op1))                  // fcmp pred X, undef -> undef
-    return ReplaceInstUsesWith(I, UndefValue::get(Type::Int1Ty));
+    return ReplaceInstUsesWith(I, UndefValue::get(Type::getInt1Ty(*Context)));
 
   // Handle fcmp with constant RHS
   if (Constant *RHSC = dyn_cast<Constant>(Op1)) {
@@ -5993,11 +5996,11 @@ Instruction *InstCombiner::visitICmpInst(ICmpInst &I) {
 
   // icmp X, X
   if (Op0 == Op1)
-    return ReplaceInstUsesWith(I, ConstantInt::get(Type::Int1Ty, 
+    return ReplaceInstUsesWith(I, ConstantInt::get(Type::getInt1Ty(*Context), 
                                                    I.isTrueWhenEqual()));
 
   if (isa<UndefValue>(Op1))                  // X icmp undef -> undef
-    return ReplaceInstUsesWith(I, UndefValue::get(Type::Int1Ty));
+    return ReplaceInstUsesWith(I, UndefValue::get(Type::getInt1Ty(*Context)));
   
   // icmp <global/alloca*/null>, <global/alloca*/null> - Global/Stack value
   // addresses never equal each other!  We already know that Op0 != Op1.
@@ -6005,11 +6008,11 @@ Instruction *InstCombiner::visitICmpInst(ICmpInst &I) {
        isa<ConstantPointerNull>(Op0)) &&
       (isa<GlobalValue>(Op1) || isa<AllocaInst>(Op1) ||
        isa<ConstantPointerNull>(Op1)))
-    return ReplaceInstUsesWith(I, ConstantInt::get(Type::Int1Ty, 
+    return ReplaceInstUsesWith(I, ConstantInt::get(Type::getInt1Ty(*Context), 
                                                    !I.isTrueWhenEqual()));
 
   // icmp's with boolean values can always be turned into bitwise operations
-  if (Ty == Type::Int1Ty) {
+  if (Ty == Type::getInt1Ty(*Context)) {
     switch (I.getPredicate()) {
     default: llvm_unreachable("Invalid icmp instruction!");
     case ICmpInst::ICMP_EQ: {               // icmp eq i1 A, B -> ~(A^B)
@@ -6348,7 +6351,7 @@ Instruction *InstCombiner::visitICmpInst(ICmpInst &I) {
         // can assume it is successful and remove the malloc.
         if (LHSI->hasOneUse() && isa<ConstantPointerNull>(RHSC)) {
           AddToWorkList(LHSI);
-          return ReplaceInstUsesWith(I, ConstantInt::get(Type::Int1Ty,
+          return ReplaceInstUsesWith(I, ConstantInt::get(Type::getInt1Ty(*Context),
                                                          !I.isTrueWhenEqual()));
         }
         break;
@@ -6933,7 +6936,7 @@ Instruction *InstCombiner::visitICmpInstWithInstAndIntCst(ICmpInst &ICI,
                                                                  ShAmt);
       if (Comp != RHS) {// Comparing against a bit that we know is zero.
         bool IsICMP_NE = ICI.getPredicate() == ICmpInst::ICMP_NE;
-        Constant *Cst = ConstantInt::get(Type::Int1Ty, IsICMP_NE);
+        Constant *Cst = ConstantInt::get(Type::getInt1Ty(*Context), IsICMP_NE);
         return ReplaceInstUsesWith(ICI, Cst);
       }
       
@@ -6997,7 +7000,7 @@ Instruction *InstCombiner::visitICmpInstWithInstAndIntCst(ICmpInst &ICI,
     
     if (Comp != RHSV) { // Comparing against a bit that we know is zero.
       bool IsICMP_NE = ICI.getPredicate() == ICmpInst::ICMP_NE;
-      Constant *Cst = ConstantInt::get(Type::Int1Ty, IsICMP_NE);
+      Constant *Cst = ConstantInt::get(Type::getInt1Ty(*Context), IsICMP_NE);
       return ReplaceInstUsesWith(ICI, Cst);
     }
     
@@ -7139,7 +7142,7 @@ Instruction *InstCombiner::visitICmpInstWithInstAndIntCst(ICmpInst &ICI,
           Constant *NotCI = ConstantExpr::getNot(RHS);
           if (!ConstantExpr::getAnd(BOC, NotCI)->isNullValue())
             return ReplaceInstUsesWith(ICI,
-                                       ConstantInt::get(Type::Int1Ty, 
+                                       ConstantInt::get(Type::getInt1Ty(*Context), 
                                        isICMP_NE));
         }
         break;
@@ -7150,7 +7153,7 @@ Instruction *InstCombiner::visitICmpInstWithInstAndIntCst(ICmpInst &ICI,
           // comparison can never succeed!
           if ((RHSV & ~BOC->getValue()) != 0)
             return ReplaceInstUsesWith(ICI,
-                                       ConstantInt::get(Type::Int1Ty,
+                                       ConstantInt::get(Type::getInt1Ty(*Context),
                                        isICMP_NE));
           
           // If we have ((X & C) == C), turn it into ((X & C) != 0).
@@ -7692,7 +7695,7 @@ Instruction *InstCombiner::FoldShiftByConstant(Value *Op0, ConstantInt *Op1,
       case 32 :
       case 64 :
       case 128:
-        SExtType = IntegerType::get(Ty->getBitWidth() - ShiftAmt1);
+        SExtType = IntegerType::get(*Context, Ty->getBitWidth() - ShiftAmt1);
         break;
       default: break;
       }
@@ -7774,11 +7777,11 @@ Instruction *InstCombiner::FoldShiftByConstant(Value *Op0, ConstantInt *Op1,
 ///
 static Value *DecomposeSimpleLinearExpr(Value *Val, unsigned &Scale,
                                         int &Offset, LLVMContext *Context) {
-  assert(Val->getType() == Type::Int32Ty && "Unexpected allocation size type!");
+  assert(Val->getType() == Type::getInt32Ty(*Context) && "Unexpected allocation size type!");
   if (ConstantInt *CI = dyn_cast<ConstantInt>(Val)) {
     Offset = CI->getZExtValue();
     Scale  = 0;
-    return ConstantInt::get(Type::Int32Ty, 0);
+    return ConstantInt::get(Type::getInt32Ty(*Context), 0);
   } else if (BinaryOperator *I = dyn_cast<BinaryOperator>(Val)) {
     if (ConstantInt *RHS = dyn_cast<ConstantInt>(I->getOperand(1))) {
       if (I->getOpcode() == Instruction::Shl) {
@@ -7875,7 +7878,7 @@ Instruction *InstCombiner::PromoteCastOfAllocation(BitCastInst &CI,
     Amt = NumElements;
   } else {
     // If the allocation size is constant, form a constant mul expression
-    Amt = ConstantInt::get(Type::Int32Ty, Scale);
+    Amt = ConstantInt::get(Type::getInt32Ty(*Context), Scale);
     if (isa<ConstantInt>(NumElements))
       Amt = ConstantExpr::getMul(cast<ConstantInt>(NumElements),
                                  cast<ConstantInt>(Amt));
@@ -7887,7 +7890,7 @@ Instruction *InstCombiner::PromoteCastOfAllocation(BitCastInst &CI,
   }
   
   if (int Offset = (AllocElTySize*ArrayOffset)/CastElTySize) {
-    Value *Off = ConstantInt::get(Type::Int32Ty, Offset, true);
+    Value *Off = ConstantInt::get(Type::getInt32Ty(*Context), Offset, true);
     Instruction *Tmp = BinaryOperator::CreateAdd(Amt, Off, "tmp");
     Amt = InsertNewInstBefore(Tmp, AI);
   }
@@ -8173,7 +8176,7 @@ static const Type *FindElementAtOffset(const Type *Ty, int64_t Offset,
   // Start with the index over the outer type.  Note that the type size
   // might be zero (even if the offset isn't zero) if the indexed type
   // is something like [0 x {int, int}]
-  const Type *IntPtrTy = TD->getIntPtrType();
+  const Type *IntPtrTy = TD->getIntPtrType(*Context);
   int64_t FirstIdx = 0;
   if (int64_t TySize = TD->getTypeAllocSize(Ty)) {
     FirstIdx = Offset/TySize;
@@ -8202,7 +8205,7 @@ static const Type *FindElementAtOffset(const Type *Ty, int64_t Offset,
              "Offset must stay within the indexed type");
       
       unsigned Elt = SL->getElementContainingOffset(Offset);
-      NewIndices.push_back(ConstantInt::get(Type::Int32Ty, Elt));
+      NewIndices.push_back(ConstantInt::get(Type::getInt32Ty(*Context), Elt));
       
       Offset -= SL->getElementOffset(Elt);
       Ty = STy->getElementType(Elt);
@@ -8579,7 +8582,7 @@ Instruction *InstCombiner::transformZExtICmp(ICmpInst *ICI, Instruction &CI,
         if (Op1CV != 0 && (Op1CV != KnownZeroMask)) {
           // (X&4) == 2 --> false
           // (X&4) != 2 --> true
-          Constant *Res = ConstantInt::get(Type::Int1Ty, isNE);
+          Constant *Res = ConstantInt::get(Type::getInt1Ty(*Context), isNE);
           Res = ConstantExpr::getZExt(Res, CI.getType());
           return ReplaceInstUsesWith(CI, Res);
         }
@@ -8708,7 +8711,7 @@ Instruction *InstCombiner::visitSExt(SExtInst &CI) {
   Value *Src = CI.getOperand(0);
   
   // Canonicalize sign-extend from i1 to a select.
-  if (Src->getType() == Type::Int1Ty)
+  if (Src->getType() == Type::getInt1Ty(*Context))
     return SelectInst::Create(Src,
                               Constant::getAllOnesValue(CI.getType()),
                               Constant::getNullValue(CI.getType()));
@@ -8796,12 +8799,12 @@ static Value *LookThroughFPExtensions(Value *V, LLVMContext *Context) {
   // that can accurately represent it.  This allows us to turn
   // (float)((double)X+2.0) into x+2.0f.
   if (ConstantFP *CFP = dyn_cast<ConstantFP>(V)) {
-    if (CFP->getType() == Type::PPC_FP128Ty)
+    if (CFP->getType() == Type::getPPC_FP128Ty(*Context))
       return V;  // No constant folding of this.
     // See if the value can be truncated to float and then reextended.
     if (Value *V = FitsInFPType(CFP, APFloat::IEEEsingle, Context))
       return V;
-    if (CFP->getType() == Type::DoubleTy)
+    if (CFP->getType() == Type::getDoubleTy(*Context))
       return V;  // Won't shrink.
     if (Value *V = FitsInFPType(CFP, APFloat::IEEEdouble, Context))
       return V;
@@ -8912,7 +8915,7 @@ Instruction *InstCombiner::visitPtrToInt(PtrToIntInst &CI) {
   if (TD &&
       CI.getType()->getScalarSizeInBits() < TD->getPointerSizeInBits()) {
     Value *P = InsertNewInstBefore(new PtrToIntInst(CI.getOperand(0),
-                                                    TD->getIntPtrType(),
+                                             TD->getIntPtrType(CI.getContext()),
                                                     "tmp"), CI);
     return new TruncInst(P, CI.getType());
   }
@@ -8930,7 +8933,7 @@ Instruction *InstCombiner::visitIntToPtr(IntToPtrInst &CI) {
       CI.getOperand(0)->getType()->getScalarSizeInBits() >
       TD->getPointerSizeInBits()) {
     Value *P = InsertNewInstBefore(new TruncInst(CI.getOperand(0),
-                                                 TD->getIntPtrType(),
+                                             TD->getIntPtrType(CI.getContext()),
                                                  "tmp"), CI);
     return new IntToPtrInst(P, CI.getType());
   }
@@ -8981,7 +8984,7 @@ Instruction *InstCombiner::visitBitCast(BitCastInst &CI) {
     // If the source and destination are pointers, and this cast is equivalent
     // to a getelementptr X, 0, 0, 0...  turn it into the appropriate gep.
     // This can enhance SROA and other transforms that want type-safe pointers.
-    Constant *ZeroUInt = Constant::getNullValue(Type::Int32Ty);
+    Constant *ZeroUInt = Constant::getNullValue(Type::getInt32Ty(*Context));
     unsigned NumZeros = 0;
     while (SrcElTy != DstElTy && 
            isa<CompositeType>(SrcElTy) && !isa<PointerType>(SrcElTy) &&
@@ -9007,7 +9010,7 @@ Instruction *InstCombiner::visitBitCast(BitCastInst &CI) {
         Value *Elem = InsertCastBefore(Instruction::BitCast, Src,
                                        DestVTy->getElementType(), CI);
         return InsertElementInst::Create(UndefValue::get(DestTy), Elem,
-                                         Constant::getNullValue(Type::Int32Ty));
+                                         Constant::getNullValue(Type::getInt32Ty(*Context)));
       }
       // FIXME: Canonicalize bitcast(insertelement) -> insertelement(bitcast)
     }
@@ -9017,7 +9020,7 @@ Instruction *InstCombiner::visitBitCast(BitCastInst &CI) {
     if (SrcVTy->getNumElements() == 1) {
       if (!isa<VectorType>(DestTy)) {
         Instruction *Elem =
-          ExtractElementInst::Create(Src, Constant::getNullValue(Type::Int32Ty));
+          ExtractElementInst::Create(Src, Constant::getNullValue(Type::getInt32Ty(*Context)));
         InsertNewInstBefore(Elem, CI);
         return CastInst::Create(Instruction::BitCast, Elem, DestTy);
       }
@@ -9401,7 +9404,7 @@ Instruction *InstCombiner::visitSelectInst(SelectInst &SI) {
       return ReplaceInstUsesWith(SI, FalseVal);
   }
 
-  if (SI.getType() == Type::Int1Ty) {
+  if (SI.getType() == Type::getInt1Ty(*Context)) {
     if (ConstantInt *C = dyn_cast<ConstantInt>(TrueVal)) {
       if (C->getZExtValue()) {
         // Change: A = select B, true, C --> A = or B, C
@@ -9708,7 +9711,7 @@ Instruction *InstCombiner::SimplifyMemTransfer(MemIntrinsic *MI) {
   
   // Use an integer load+store unless we can find something better.
   Type *NewPtrTy =
-                PointerType::getUnqual(IntegerType::get(Size<<3));
+                PointerType::getUnqual(IntegerType::get(*Context, Size<<3));
   
   // Memcpy forces the use of i8* for the source and destination.  That means
   // that if you're using memcpy to move one double around, you'll get a cast
@@ -9769,7 +9772,7 @@ Instruction *InstCombiner::SimplifyMemSet(MemSetInst *MI) {
   // Extract the length and alignment and fill if they are constant.
   ConstantInt *LenC = dyn_cast<ConstantInt>(MI->getLength());
   ConstantInt *FillC = dyn_cast<ConstantInt>(MI->getValue());
-  if (!LenC || !FillC || FillC->getType() != Type::Int8Ty)
+  if (!LenC || !FillC || FillC->getType() != Type::getInt8Ty(*Context))
     return 0;
   uint64_t Len = LenC->getZExtValue();
   Alignment = MI->getAlignment();
@@ -9779,7 +9782,7 @@ Instruction *InstCombiner::SimplifyMemSet(MemSetInst *MI) {
   
   // memset(s,c,n) -> store s, c (for n=1,2,4,8)
   if (Len <= 8 && isPowerOf2_32((uint32_t)Len)) {
-    const Type *ITy = IntegerType::get(Len*8);  // n=1 -> i8.
+    const Type *ITy = IntegerType::get(*Context, Len*8);  // n=1 -> i8.
     
     Value *Dest = MI->getDest();
     Dest = InsertBitCastBefore(Dest, PointerType::getUnqual(ITy), *MI);
@@ -9962,14 +9965,14 @@ Instruction *InstCombiner::visitCallInst(CallInst &CI) {
           if (ExtractedElts[Idx] == 0) {
             Instruction *Elt = 
               ExtractElementInst::Create(Idx < 16 ? Op0 : Op1, 
-                  ConstantInt::get(Type::Int32Ty, Idx&15, false), "tmp");
+                  ConstantInt::get(Type::getInt32Ty(*Context), Idx&15, false), "tmp");
             InsertNewInstBefore(Elt, CI);
             ExtractedElts[Idx] = Elt;
           }
         
           // Insert this value into the result vector.
           Result = InsertElementInst::Create(Result, ExtractedElts[Idx],
-                               ConstantInt::get(Type::Int32Ty, i, false), 
+                               ConstantInt::get(Type::getInt32Ty(*Context), i, false), 
                                "tmp");
           InsertNewInstBefore(cast<Instruction>(Result), CI);
         }
@@ -10073,7 +10076,7 @@ Instruction *InstCombiner::visitCallSite(CallSite CS) {
       // If the call and callee calling conventions don't match, this call must
       // be unreachable, as the call is undefined.
       new StoreInst(ConstantInt::getTrue(*Context),
-                UndefValue::get(PointerType::getUnqual(Type::Int1Ty)), 
+                UndefValue::get(PointerType::getUnqual(Type::getInt1Ty(*Context))), 
                                   OldCall);
       if (!OldCall->use_empty())
         OldCall->replaceAllUsesWith(UndefValue::get(OldCall->getType()));
@@ -10087,7 +10090,7 @@ Instruction *InstCombiner::visitCallSite(CallSite CS) {
     // undef so that we know that this code is not reachable, despite the fact
     // that we can't modify the CFG here.
     new StoreInst(ConstantInt::getTrue(*Context),
-               UndefValue::get(PointerType::getUnqual(Type::Int1Ty)),
+               UndefValue::get(PointerType::getUnqual(Type::getInt1Ty(*Context))),
                   CS.getInstruction());
 
     if (!CS.getInstruction()->use_empty())
@@ -10162,14 +10165,14 @@ bool InstCombiner::transformConstExprCastCall(CallSite CS) {
         // Conversion is ok if changing from one pointer type to another or from
         // a pointer to an integer of the same size.
         !((isa<PointerType>(OldRetTy) || !TD ||
-           OldRetTy == TD->getIntPtrType()) &&
+           OldRetTy == TD->getIntPtrType(Caller->getContext())) &&
           (isa<PointerType>(NewRetTy) || !TD ||
-           NewRetTy == TD->getIntPtrType())))
+           NewRetTy == TD->getIntPtrType(Caller->getContext()))))
       return false;   // Cannot transform this return value.
 
     if (!Caller->use_empty() &&
         // void -> non-void is handled specially
-        NewRetTy != Type::VoidTy && !CastInst::isCastable(NewRetTy, OldRetTy))
+        NewRetTy != Type::getVoidTy(*Context) && !CastInst::isCastable(NewRetTy, OldRetTy))
       return false;   // Cannot transform this return value.
 
     if (!CallerPAL.isEmpty() && !Caller->use_empty()) {
@@ -10210,8 +10213,10 @@ bool InstCombiner::transformConstExprCastCall(CallSite CS) {
     // Converting from one pointer type to another or between a pointer and an
     // integer of the same size is safe even if we do not have a body.
     bool isConvertible = ActTy == ParamTy ||
-      (TD && ((isa<PointerType>(ParamTy) || ParamTy == TD->getIntPtrType()) &&
-              (isa<PointerType>(ActTy) || ActTy == TD->getIntPtrType())));
+      (TD && ((isa<PointerType>(ParamTy) ||
+      ParamTy == TD->getIntPtrType(Caller->getContext())) &&
+              (isa<PointerType>(ActTy) ||
+              ActTy == TD->getIntPtrType(Caller->getContext()))));
     if (Callee->isDeclaration() && !isConvertible) return false;
   }
 
@@ -10302,7 +10307,7 @@ bool InstCombiner::transformConstExprCastCall(CallSite CS) {
   if (Attributes FnAttrs =  CallerPAL.getFnAttributes())
     attrVec.push_back(AttributeWithIndex::get(~0, FnAttrs));
 
-  if (NewRetTy == Type::VoidTy)
+  if (NewRetTy == Type::getVoidTy(*Context))
     Caller->setName("");   // Void type should not have a name.
 
   const AttrListPtr &NewCallerPAL = AttrListPtr::get(attrVec.begin(),
@@ -10328,7 +10333,7 @@ bool InstCombiner::transformConstExprCastCall(CallSite CS) {
   // Insert a cast of the return type as necessary.
   Value *NV = NC;
   if (OldRetTy != NV->getType() && !Caller->use_empty()) {
-    if (NV->getType() != Type::VoidTy) {
+    if (NV->getType() != Type::getVoidTy(*Context)) {
       Instruction::CastOps opcode = CastInst::getCastOpcode(NC, false, 
                                                             OldRetTy, false);
       NV = NC = CastInst::Create(opcode, NC, OldRetTy, "tmp");
@@ -10348,7 +10353,7 @@ bool InstCombiner::transformConstExprCastCall(CallSite CS) {
     }
   }
 
-  if (Caller->getType() != Type::VoidTy && !Caller->use_empty())
+  if (Caller->getType() != Type::getVoidTy(*Context) && !Caller->use_empty())
     Caller->replaceAllUsesWith(NV);
   Caller->eraseFromParent();
   RemoveFromWorkList(Caller);
@@ -10494,7 +10499,7 @@ Instruction *InstCombiner::transformCallThroughTrampoline(CallSite CS) {
           setCallingConv(cast<CallInst>(Caller)->getCallingConv());
         cast<CallInst>(NewCaller)->setAttributes(NewPAL);
       }
-      if (Caller->getType() != Type::VoidTy && !Caller->use_empty())
+      if (Caller->getType() != Type::getVoidTy(*Context) && !Caller->use_empty())
         Caller->replaceAllUsesWith(NewCaller);
       Caller->eraseFromParent();
       RemoveFromWorkList(Caller);
@@ -11044,10 +11049,11 @@ Instruction *InstCombiner::visitGetElementPtrInst(GetElementPtrInst &GEP) {
       Value *Op = *i;
       if (TD->getTypeSizeInBits(Op->getType()) > TD->getPointerSizeInBits()) {
         if (Constant *C = dyn_cast<Constant>(Op)) {
-          *i = ConstantExpr::getTrunc(C, TD->getIntPtrType());
+          *i = ConstantExpr::getTrunc(C, TD->getIntPtrType(GEP.getContext()));
           MadeChange = true;
         } else {
-          Op = InsertCastBefore(Instruction::Trunc, Op, TD->getIntPtrType(),
+          Op = InsertCastBefore(Instruction::Trunc, Op, 
+                                TD->getIntPtrType(GEP.getContext()),
                                 GEP);
           *i = Op;
           MadeChange = true;
@@ -11055,11 +11061,11 @@ Instruction *InstCombiner::visitGetElementPtrInst(GetElementPtrInst &GEP) {
       } else if (TD->getTypeSizeInBits(Op->getType()) 
                   < TD->getPointerSizeInBits()) {
         if (Constant *C = dyn_cast<Constant>(Op)) {
-          *i = ConstantExpr::getSExt(C, TD->getIntPtrType());
+          *i = ConstantExpr::getSExt(C, TD->getIntPtrType(GEP.getContext()));
           MadeChange = true;
         } else {
-          Op = InsertCastBefore(Instruction::SExt, Op, TD->getIntPtrType(),
-                                GEP);
+          Op = InsertCastBefore(Instruction::SExt, Op, 
+                                TD->getIntPtrType(GEP.getContext()), GEP);
           *i = Op;
           MadeChange = true;
         }
@@ -11127,7 +11133,7 @@ Instruction *InstCombiner::visitGetElementPtrInst(GetElementPtrInst &GEP) {
               // Convert SO1 to GO1's type.
               SO1 = InsertCastToIntPtrTy(SO1, GO1->getType(), &GEP, this);
             } else {
-              const Type *PT = TD->getIntPtrType();
+              const Type *PT = TD->getIntPtrType(GEP.getContext());
               SO1 = InsertCastToIntPtrTy(SO1, PT, &GEP, this);
               GO1 = InsertCastToIntPtrTy(GO1, PT, &GEP, this);
             }
@@ -11238,7 +11244,7 @@ Instruction *InstCombiner::visitGetElementPtrInst(GetElementPtrInst &GEP) {
           TD->getTypeAllocSize(cast<ArrayType>(SrcElTy)->getElementType()) ==
           TD->getTypeAllocSize(ResElTy)) {
         Value *Idx[2];
-        Idx[0] = Constant::getNullValue(Type::Int32Ty);
+        Idx[0] = Constant::getNullValue(Type::getInt32Ty(*Context));
         Idx[1] = GEP.getOperand(1);
         GetElementPtrInst *NewGEP =
           GetElementPtrInst::Create(X, Idx, Idx + 2, GEP.getName());
@@ -11254,7 +11260,7 @@ Instruction *InstCombiner::visitGetElementPtrInst(GetElementPtrInst &GEP) {
       //   (where tmp = 8*tmp2) into:
       // getelementptr [100 x double]* %arr, i32 0, i32 %tmp2; bitcast
       
-      if (TD && isa<ArrayType>(SrcElTy) && ResElTy == Type::Int8Ty) {
+      if (TD && isa<ArrayType>(SrcElTy) && ResElTy == Type::getInt8Ty(*Context)) {
         uint64_t ArrayEltSize =
             TD->getTypeAllocSize(cast<ArrayType>(SrcElTy)->getElementType());
         
@@ -11302,7 +11308,7 @@ Instruction *InstCombiner::visitGetElementPtrInst(GetElementPtrInst &GEP) {
 
           // Insert the new GEP instruction.
           Value *Idx[2];
-          Idx[0] = Constant::getNullValue(Type::Int32Ty);
+          Idx[0] = Constant::getNullValue(Type::getInt32Ty(*Context));
           Idx[1] = NewIdx;
           Instruction *NewGEP =
             GetElementPtrInst::Create(X, Idx, Idx + 2, GEP.getName());
@@ -11399,7 +11405,7 @@ Instruction *InstCombiner::visitAllocationInst(AllocationInst &AI) {
       // Now that I is pointing to the first non-allocation-inst in the block,
       // insert our getelementptr instruction...
       //
-      Value *NullIdx = Constant::getNullValue(Type::Int32Ty);
+      Value *NullIdx = Constant::getNullValue(Type::getInt32Ty(*Context));
       Value *Idx[2];
       Idx[0] = NullIdx;
       Idx[1] = NullIdx;
@@ -11437,7 +11443,7 @@ Instruction *InstCombiner::visitFreeInst(FreeInst &FI) {
   if (isa<UndefValue>(Op)) {
     // Insert a new store to null because we cannot modify the CFG here.
     new StoreInst(ConstantInt::getTrue(*Context),
-           UndefValue::get(PointerType::getUnqual(Type::Int1Ty)), &FI);
+           UndefValue::get(PointerType::getUnqual(Type::getInt1Ty(*Context))), &FI);
     return EraseInstFromFunction(FI);
   }
   
@@ -11532,7 +11538,7 @@ static Instruction *InstCombineLoadCast(InstCombiner &IC, LoadInst &LI,
         if (Constant *CSrc = dyn_cast<Constant>(CastOp))
           if (ASrcTy->getNumElements() != 0) {
             Value *Idxs[2];
-            Idxs[0] = Idxs[1] = Constant::getNullValue(Type::Int32Ty);
+            Idxs[0] = Idxs[1] = Constant::getNullValue(Type::getInt32Ty(*Context));
             CastOp = ConstantExpr::getGetElementPtr(CSrc, Idxs, 2);
             SrcTy = cast<PointerType>(CastOp->getType());
             SrcPTy = SrcTy->getElementType();
@@ -11726,7 +11732,7 @@ static Instruction *InstCombineStoreToCast(InstCombiner &IC, StoreInst &SI) {
   // constants.
   if (isa<ArrayType>(SrcPTy) || isa<StructType>(SrcPTy)) {
     // Index through pointer.
-    Constant *Zero = Constant::getNullValue(Type::Int32Ty);
+    Constant *Zero = Constant::getNullValue(Type::getInt32Ty(*IC.getContext()));
     NewGEPIndices.push_back(Zero);
     
     while (1) {
@@ -12505,7 +12511,7 @@ Instruction *InstCombiner::visitExtractElementInst(ExtractElementInst &EI) {
           return ReplaceInstUsesWith(EI, UndefValue::get(EI.getType()));
         }
         return ExtractElementInst::Create(Src,
-                         ConstantInt::get(Type::Int32Ty, SrcIdx, false));
+                         ConstantInt::get(Type::getInt32Ty(*Context), SrcIdx, false));
       }
     }
     // FIXME: Canonicalize extractelement(bitcast) -> bitcast(extractelement)
@@ -12524,15 +12530,15 @@ static bool CollectSingleShuffleElements(Value *V, Value *LHS, Value *RHS,
   unsigned NumElts = cast<VectorType>(V->getType())->getNumElements();
 
   if (isa<UndefValue>(V)) {
-    Mask.assign(NumElts, UndefValue::get(Type::Int32Ty));
+    Mask.assign(NumElts, UndefValue::get(Type::getInt32Ty(*Context)));
     return true;
   } else if (V == LHS) {
     for (unsigned i = 0; i != NumElts; ++i)
-      Mask.push_back(ConstantInt::get(Type::Int32Ty, i));
+      Mask.push_back(ConstantInt::get(Type::getInt32Ty(*Context), i));
     return true;
   } else if (V == RHS) {
     for (unsigned i = 0; i != NumElts; ++i)
-      Mask.push_back(ConstantInt::get(Type::Int32Ty, i+NumElts));
+      Mask.push_back(ConstantInt::get(Type::getInt32Ty(*Context), i+NumElts));
     return true;
   } else if (InsertElementInst *IEI = dyn_cast<InsertElementInst>(V)) {
     // If this is an insert of an extract from some other vector, include it.
@@ -12549,7 +12555,7 @@ static bool CollectSingleShuffleElements(Value *V, Value *LHS, Value *RHS,
       // transitively ok.
       if (CollectSingleShuffleElements(VecOp, LHS, RHS, Mask, Context)) {
         // If so, update the mask to reflect the inserted undef.
-        Mask[InsertedIdx] = UndefValue::get(Type::Int32Ty);
+        Mask[InsertedIdx] = UndefValue::get(Type::getInt32Ty(*Context));
         return true;
       }      
     } else if (ExtractElementInst *EI = dyn_cast<ExtractElementInst>(ScalarOp)){
@@ -12566,11 +12572,11 @@ static bool CollectSingleShuffleElements(Value *V, Value *LHS, Value *RHS,
             // If so, update the mask to reflect the inserted value.
             if (EI->getOperand(0) == LHS) {
               Mask[InsertedIdx % NumElts] = 
-                 ConstantInt::get(Type::Int32Ty, ExtractedIdx);
+                 ConstantInt::get(Type::getInt32Ty(*Context), ExtractedIdx);
             } else {
               assert(EI->getOperand(0) == RHS);
               Mask[InsertedIdx % NumElts] = 
-                ConstantInt::get(Type::Int32Ty, ExtractedIdx+NumElts);
+                ConstantInt::get(Type::getInt32Ty(*Context), ExtractedIdx+NumElts);
               
             }
             return true;
@@ -12595,10 +12601,10 @@ static Value *CollectShuffleElements(Value *V, std::vector<Constant*> &Mask,
   unsigned NumElts = cast<VectorType>(V->getType())->getNumElements();
 
   if (isa<UndefValue>(V)) {
-    Mask.assign(NumElts, UndefValue::get(Type::Int32Ty));
+    Mask.assign(NumElts, UndefValue::get(Type::getInt32Ty(*Context)));
     return V;
   } else if (isa<ConstantAggregateZero>(V)) {
-    Mask.assign(NumElts, ConstantInt::get(Type::Int32Ty, 0));
+    Mask.assign(NumElts, ConstantInt::get(Type::getInt32Ty(*Context), 0));
     return V;
   } else if (InsertElementInst *IEI = dyn_cast<InsertElementInst>(V)) {
     // If this is an insert of an extract from some other vector, include it.
@@ -12619,7 +12625,7 @@ static Value *CollectShuffleElements(Value *V, std::vector<Constant*> &Mask,
           RHS = EI->getOperand(0);
           Value *V = CollectShuffleElements(VecOp, Mask, RHS, Context);
           Mask[InsertedIdx % NumElts] = 
-            ConstantInt::get(Type::Int32Ty, NumElts+ExtractedIdx);
+            ConstantInt::get(Type::getInt32Ty(*Context), NumElts+ExtractedIdx);
           return V;
         }
         
@@ -12629,7 +12635,7 @@ static Value *CollectShuffleElements(Value *V, std::vector<Constant*> &Mask,
           // Everything but the extracted element is replaced with the RHS.
           for (unsigned i = 0; i != NumElts; ++i) {
             if (i != InsertedIdx)
-              Mask[i] = ConstantInt::get(Type::Int32Ty, NumElts+i);
+              Mask[i] = ConstantInt::get(Type::getInt32Ty(*Context), NumElts+i);
           }
           return V;
         }
@@ -12647,7 +12653,7 @@ static Value *CollectShuffleElements(Value *V, std::vector<Constant*> &Mask,
   
   // Otherwise, can't do anything fancy.  Return an identity vector.
   for (unsigned i = 0; i != NumElts; ++i)
-    Mask.push_back(ConstantInt::get(Type::Int32Ty, i));
+    Mask.push_back(ConstantInt::get(Type::getInt32Ty(*Context), i));
   return V;
 }
 
@@ -12691,14 +12697,14 @@ Instruction *InstCombiner::visitInsertElementInst(InsertElementInst &IE) {
         // Build a new shuffle mask.
         std::vector<Constant*> Mask;
         if (isa<UndefValue>(VecOp))
-          Mask.assign(NumVectorElts, UndefValue::get(Type::Int32Ty));
+          Mask.assign(NumVectorElts, UndefValue::get(Type::getInt32Ty(*Context)));
         else {
           assert(isa<ConstantAggregateZero>(VecOp) && "Unknown thing");
-          Mask.assign(NumVectorElts, ConstantInt::get(Type::Int32Ty,
+          Mask.assign(NumVectorElts, ConstantInt::get(Type::getInt32Ty(*Context),
                                                        NumVectorElts));
         } 
         Mask[InsertedIdx] = 
-                           ConstantInt::get(Type::Int32Ty, ExtractedIdx);
+                           ConstantInt::get(Type::getInt32Ty(*Context), ExtractedIdx);
         return new ShuffleVectorInst(EI->getOperand(0), VecOp,
                                      ConstantVector::get(Mask));
       }
@@ -12763,15 +12769,15 @@ Instruction *InstCombiner::visitShuffleVectorInst(ShuffleVectorInst &SVI) {
     std::vector<Constant*> Elts;
     for (unsigned i = 0, e = Mask.size(); i != e; ++i) {
       if (Mask[i] >= 2*e)
-        Elts.push_back(UndefValue::get(Type::Int32Ty));
+        Elts.push_back(UndefValue::get(Type::getInt32Ty(*Context)));
       else {
         if ((Mask[i] >= e && isa<UndefValue>(RHS)) ||
             (Mask[i] <  e && isa<UndefValue>(LHS))) {
           Mask[i] = 2*e;     // Turn into undef.
-          Elts.push_back(UndefValue::get(Type::Int32Ty));
+          Elts.push_back(UndefValue::get(Type::getInt32Ty(*Context)));
         } else {
           Mask[i] = Mask[i] % e;  // Force to LHS.
-          Elts.push_back(ConstantInt::get(Type::Int32Ty, Mask[i]));
+          Elts.push_back(ConstantInt::get(Type::getInt32Ty(*Context), Mask[i]));
         }
       }
     }
@@ -12827,9 +12833,9 @@ Instruction *InstCombiner::visitShuffleVectorInst(ShuffleVectorInst &SVI) {
         std::vector<Constant*> Elts;
         for (unsigned i = 0, e = NewMask.size(); i != e; ++i) {
           if (NewMask[i] >= LHSInNElts*2) {
-            Elts.push_back(UndefValue::get(Type::Int32Ty));
+            Elts.push_back(UndefValue::get(Type::getInt32Ty(*Context)));
           } else {
-            Elts.push_back(ConstantInt::get(Type::Int32Ty, NewMask[i]));
+            Elts.push_back(ConstantInt::get(Type::getInt32Ty(*Context), NewMask[i]));
           }
         }
         return new ShuffleVectorInst(LHSSVI->getOperand(0),

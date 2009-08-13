@@ -233,7 +233,8 @@ ConstantInt* ConstantInt::getTrue(LLVMContext &Context) {
   if (pImpl->TheTrueVal)
     return pImpl->TheTrueVal;
   else
-    return (pImpl->TheTrueVal = ConstantInt::get(IntegerType::get(1), 1));
+    return (pImpl->TheTrueVal =
+              ConstantInt::get(IntegerType::get(Context, 1), 1));
 }
 
 ConstantInt* ConstantInt::getFalse(LLVMContext &Context) {
@@ -242,7 +243,8 @@ ConstantInt* ConstantInt::getFalse(LLVMContext &Context) {
   if (pImpl->TheFalseVal)
     return pImpl->TheFalseVal;
   else
-    return (pImpl->TheFalseVal = ConstantInt::get(IntegerType::get(1), 0));
+    return (pImpl->TheFalseVal =
+              ConstantInt::get(IntegerType::get(Context, 1), 0));
 }
 
 
@@ -253,7 +255,7 @@ ConstantInt* ConstantInt::getFalse(LLVMContext &Context) {
 // invariant which generates an assertion.
 ConstantInt *ConstantInt::get(LLVMContext &Context, const APInt& V) {
   // Get the corresponding integer type for the bit width of the value.
-  const IntegerType *ITy = IntegerType::get(V.getBitWidth());
+  const IntegerType *ITy = IntegerType::get(Context, V.getBitWidth());
   // get an existing value or the insertion position
   DenseMapAPIntKeyInfo::KeyTy Key(V, ITy);
   
@@ -317,16 +319,16 @@ Constant* ConstantInt::get(const Type* Ty, const APInt& V) {
 //===----------------------------------------------------------------------===//
 
 static const fltSemantics *TypeToFloatSemantics(const Type *Ty) {
-  if (Ty == Type::FloatTy)
+  if (Ty == Type::getFloatTy(Ty->getContext()))
     return &APFloat::IEEEsingle;
-  if (Ty == Type::DoubleTy)
+  if (Ty == Type::getDoubleTy(Ty->getContext()))
     return &APFloat::IEEEdouble;
-  if (Ty == Type::X86_FP80Ty)
+  if (Ty == Type::getX86_FP80Ty(Ty->getContext()))
     return &APFloat::x87DoubleExtended;
-  else if (Ty == Type::FP128Ty)
+  else if (Ty == Type::getFP128Ty(Ty->getContext()))
     return &APFloat::IEEEquad;
   
-  assert(Ty == Type::PPC_FP128Ty && "Unknown FP format");
+  assert(Ty == Type::getPPC_FP128Ty(Ty->getContext()) && "Unknown FP format");
   return &APFloat::PPCDoubleDouble;
 }
 
@@ -389,17 +391,17 @@ ConstantFP* ConstantFP::get(LLVMContext &Context, const APFloat& V) {
     if (!NewSlot) {
       const Type *Ty;
       if (&V.getSemantics() == &APFloat::IEEEsingle)
-        Ty = Type::FloatTy;
+        Ty = Type::getFloatTy(Context);
       else if (&V.getSemantics() == &APFloat::IEEEdouble)
-        Ty = Type::DoubleTy;
+        Ty = Type::getDoubleTy(Context);
       else if (&V.getSemantics() == &APFloat::x87DoubleExtended)
-        Ty = Type::X86_FP80Ty;
+        Ty = Type::getX86_FP80Ty(Context);
       else if (&V.getSemantics() == &APFloat::IEEEquad)
-        Ty = Type::FP128Ty;
+        Ty = Type::getFP128Ty(Context);
       else {
         assert(&V.getSemantics() == &APFloat::PPCDoubleDouble && 
                "Unknown FP format");
-        Ty = Type::PPC_FP128Ty;
+        Ty = Type::getPPC_FP128Ty(Context);
       }
       NewSlot = new ConstantFP(Ty, V);
     }
@@ -481,17 +483,18 @@ Constant* ConstantArray::get(const ArrayType* T, Constant* const* Vals,
 /// Otherwise, the length parameter specifies how much of the string to use 
 /// and it won't be null terminated.
 ///
-Constant* ConstantArray::get(const StringRef &Str, bool AddNull) {
+Constant* ConstantArray::get(LLVMContext &Context, const StringRef &Str,
+                             bool AddNull) {
   std::vector<Constant*> ElementVals;
   for (unsigned i = 0; i < Str.size(); ++i)
-    ElementVals.push_back(ConstantInt::get(Type::Int8Ty, Str[i]));
+    ElementVals.push_back(ConstantInt::get(Type::getInt8Ty(Context), Str[i]));
 
   // Add a null terminator to the string...
   if (AddNull) {
-    ElementVals.push_back(ConstantInt::get(Type::Int8Ty, 0));
+    ElementVals.push_back(ConstantInt::get(Type::getInt8Ty(Context), 0));
   }
 
-  ArrayType *ATy = ArrayType::get(Type::Int8Ty, ElementVals.size());
+  ArrayType *ATy = ArrayType::get(Type::getInt8Ty(Context), ElementVals.size());
   return get(ATy, ElementVals);
 }
 
@@ -769,7 +772,7 @@ getWithOperands(Constant* const *Ops, unsigned NumOps) const {
 
 bool ConstantInt::isValueValidForType(const Type *Ty, uint64_t Val) {
   unsigned NumBits = cast<IntegerType>(Ty)->getBitWidth(); // assert okay
-  if (Ty == Type::Int1Ty)
+  if (Ty == Type::getInt1Ty(Ty->getContext()))
     return Val == 0 || Val == 1;
   if (NumBits >= 64)
     return true; // always true, has to fit in largest type
@@ -779,7 +782,7 @@ bool ConstantInt::isValueValidForType(const Type *Ty, uint64_t Val) {
 
 bool ConstantInt::isValueValidForType(const Type *Ty, int64_t Val) {
   unsigned NumBits = cast<IntegerType>(Ty)->getBitWidth(); // assert okay
-  if (Ty == Type::Int1Ty)
+  if (Ty == Type::getInt1Ty(Ty->getContext()))
     return Val == 0 || Val == 1 || Val == -1;
   if (NumBits >= 64)
     return true; // always true, has to fit in largest type
@@ -859,7 +862,7 @@ void ConstantArray::destroyConstant() {
 /// if the elements of the array are all ConstantInt's.
 bool ConstantArray::isString() const {
   // Check the element type for i8...
-  if (getType()->getElementType() != Type::Int8Ty)
+  if (getType()->getElementType() != Type::getInt8Ty(getContext()))
     return false;
   // Check the elements to make sure they are all integers, not constant
   // expressions.
@@ -874,7 +877,7 @@ bool ConstantArray::isString() const {
 /// null bytes except its terminator.
 bool ConstantArray::isCString() const {
   // Check the element type for i8...
-  if (getType()->getElementType() != Type::Int8Ty)
+  if (getType()->getElementType() != Type::getInt8Ty(getContext()))
     return false;
 
   // Last element must be a null.
@@ -1262,7 +1265,7 @@ Constant *ConstantExpr::getTy(const Type *ReqTy, unsigned Opcode,
   assert(C1->getType() == C2->getType() &&
          "Operand types in binary constant expression should match");
 
-  if (ReqTy == C1->getType() || ReqTy == Type::Int1Ty)
+  if (ReqTy == C1->getType() || ReqTy == Type::getInt1Ty(ReqTy->getContext()))
     if (Constant *FC = ConstantFoldBinaryInstruction(ReqTy->getContext(),
                                                      Opcode, C1, C2))
       return FC;          // Fold a few common cases...
@@ -1367,23 +1370,25 @@ Constant *ConstantExpr::get(unsigned Opcode, Constant *C1, Constant *C2) {
 Constant* ConstantExpr::getSizeOf(const Type* Ty) {
   // sizeof is implemented as: (i64) gep (Ty*)null, 1
   // Note that a non-inbounds gep is used, as null isn't within any object.
-  Constant *GEPIdx = ConstantInt::get(Type::Int32Ty, 1);
+  Constant *GEPIdx = ConstantInt::get(Type::getInt32Ty(Ty->getContext()), 1);
   Constant *GEP = getGetElementPtr(
                  Constant::getNullValue(PointerType::getUnqual(Ty)), &GEPIdx, 1);
-  return getCast(Instruction::PtrToInt, GEP, Type::Int64Ty);
+  return getCast(Instruction::PtrToInt, GEP, 
+                 Type::getInt64Ty(Ty->getContext()));
 }
 
 Constant* ConstantExpr::getAlignOf(const Type* Ty) {
   // alignof is implemented as: (i64) gep ({i8,Ty}*)null, 0, 1
   // Note that a non-inbounds gep is used, as null isn't within any object.
   const Type *AligningTy = StructType::get(Ty->getContext(),
-                                           Type::Int8Ty, Ty, NULL);
+                                   Type::getInt8Ty(Ty->getContext()), Ty, NULL);
   Constant *NullPtr = Constant::getNullValue(AligningTy->getPointerTo());
-  Constant *Zero = ConstantInt::get(Type::Int32Ty, 0);
-  Constant *One = ConstantInt::get(Type::Int32Ty, 1);
+  Constant *Zero = ConstantInt::get(Type::getInt32Ty(Ty->getContext()), 0);
+  Constant *One = ConstantInt::get(Type::getInt32Ty(Ty->getContext()), 1);
   Constant *Indices[2] = { Zero, One };
   Constant *GEP = getGetElementPtr(NullPtr, Indices, 2);
-  return getCast(Instruction::PtrToInt, GEP, Type::Int32Ty);
+  return getCast(Instruction::PtrToInt, GEP,
+                 Type::getInt32Ty(Ty->getContext()));
 }
 
 
@@ -1493,7 +1498,8 @@ ConstantExpr::getICmp(unsigned short pred, Constant* LHS, Constant* RHS) {
   LLVMContextImpl *pImpl = LHS->getType()->getContext().pImpl;
 
   // Implicitly locked.
-  return pImpl->ExprConstants.getOrCreate(Type::Int1Ty, Key);
+  return
+      pImpl->ExprConstants.getOrCreate(Type::getInt1Ty(LHS->getContext()), Key);
 }
 
 Constant *
@@ -1515,7 +1521,8 @@ ConstantExpr::getFCmp(unsigned short pred, Constant* LHS, Constant* RHS) {
   LLVMContextImpl *pImpl = LHS->getType()->getContext().pImpl;
   
   // Implicitly locked.
-  return pImpl->ExprConstants.getOrCreate(Type::Int1Ty, Key);
+  return
+      pImpl->ExprConstants.getOrCreate(Type::getInt1Ty(LHS->getContext()), Key);
 }
 
 Constant *ConstantExpr::getExtractElementTy(const Type *ReqTy, Constant *Val,
@@ -1537,7 +1544,7 @@ Constant *ConstantExpr::getExtractElementTy(const Type *ReqTy, Constant *Val,
 Constant *ConstantExpr::getExtractElement(Constant *Val, Constant *Idx) {
   assert(isa<VectorType>(Val->getType()) &&
          "Tried to create extractelement operation on non-vector type!");
-  assert(Idx->getType() == Type::Int32Ty &&
+  assert(Idx->getType() == Type::getInt32Ty(Val->getContext()) &&
          "Extractelement index must be i32 type!");
   return getExtractElementTy(cast<VectorType>(Val->getType())->getElementType(),
                              Val, Idx);
@@ -1566,7 +1573,7 @@ Constant *ConstantExpr::getInsertElement(Constant *Val, Constant *Elt,
          "Tried to create insertelement operation on non-vector type!");
   assert(Elt->getType() == cast<VectorType>(Val->getType())->getElementType()
          && "Insertelement types must match!");
-  assert(Idx->getType() == Type::Int32Ty &&
+  assert(Idx->getType() == Type::getInt32Ty(Val->getContext()) &&
          "Insertelement index must be i32 type!");
   return getInsertElementTy(Val->getType(), Val, Elt, Idx);
 }

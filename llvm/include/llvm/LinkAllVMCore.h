@@ -46,7 +46,7 @@ namespace {
       if (std::getenv("bar") != (char*) -1)
         return;
       llvm::Module* M = new llvm::Module("", llvm::getGlobalContext());
-      (void)new llvm::UnreachableInst();
+      (void)new llvm::UnreachableInst(llvm::getGlobalContext());
       (void)    llvm::createVerifierPass(); 
       (void) new llvm::Mangler(*M,"");
     }

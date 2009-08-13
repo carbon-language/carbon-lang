@@ -40,7 +40,8 @@ protected:
 };
 
 TEST_F(ExecutionEngineTest, ForwardGlobalMapping) {
-  GlobalVariable *G1 = NewExtGlobal(Type::Int32Ty, "Global1");
+  GlobalVariable *G1 =
+      NewExtGlobal(Type::getInt32Ty(getGlobalContext()), "Global1");
   int32_t Mem1 = 3;
   Engine->addGlobalMapping(G1, &Mem1);
   EXPECT_EQ(&Mem1, Engine->getPointerToGlobalIfAvailable(G1));
@@ -52,7 +53,8 @@ TEST_F(ExecutionEngineTest, ForwardGlobalMapping) {
   Engine->updateGlobalMapping(G1, &Mem2);
   EXPECT_EQ(&Mem2, Engine->getPointerToGlobalIfAvailable(G1));
 
-  GlobalVariable *G2 = NewExtGlobal(Type::Int32Ty, "Global1");
+  GlobalVariable *G2 =
+      NewExtGlobal(Type::getInt32Ty(getGlobalContext()), "Global1");
   EXPECT_EQ(NULL, Engine->getPointerToGlobalIfAvailable(G2))
     << "The NULL return shouldn't depend on having called"
     << " updateGlobalMapping(..., NULL)";
@@ -64,7 +66,8 @@ TEST_F(ExecutionEngineTest, ForwardGlobalMapping) {
 }
 
 TEST_F(ExecutionEngineTest, ReverseGlobalMapping) {
-  GlobalVariable *G1 = NewExtGlobal(Type::Int32Ty, "Global1");
+  GlobalVariable *G1 =
+      NewExtGlobal(Type::getInt32Ty(getGlobalContext()), "Global1");
 
   int32_t Mem1 = 3;
   Engine->addGlobalMapping(G1, &Mem1);
@@ -74,7 +77,8 @@ TEST_F(ExecutionEngineTest, ReverseGlobalMapping) {
   EXPECT_EQ(NULL, Engine->getGlobalValueAtAddress(&Mem1));
   EXPECT_EQ(G1, Engine->getGlobalValueAtAddress(&Mem2));
 
-  GlobalVariable *G2 = NewExtGlobal(Type::Int32Ty, "Global2");
+  GlobalVariable *G2 =
+      NewExtGlobal(Type::getInt32Ty(getGlobalContext()), "Global2");
   Engine->updateGlobalMapping(G2, &Mem1);
   EXPECT_EQ(G2, Engine->getGlobalValueAtAddress(&Mem1));
   EXPECT_EQ(G1, Engine->getGlobalValueAtAddress(&Mem2));

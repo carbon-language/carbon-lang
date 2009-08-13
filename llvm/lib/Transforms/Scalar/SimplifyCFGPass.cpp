@@ -65,7 +65,7 @@ static void ChangeToUnreachable(Instruction *I, LLVMContext &Context) {
   for (succ_iterator SI = succ_begin(BB), SE = succ_end(BB); SI != SE; ++SI)
     (*SI)->removePredecessor(BB);
   
-  new UnreachableInst(I);
+  new UnreachableInst(I->getContext(), I);
   
   // All instructions after this are dead.
   BasicBlock::iterator BBI = I, BBE = BB->end();

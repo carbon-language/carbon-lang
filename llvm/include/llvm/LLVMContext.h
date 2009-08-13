@@ -25,6 +25,9 @@ class LLVMContextImpl;
 /// LLVMContext itself provides no locking guarantees, so you should be careful
 /// to have one context per thread.
 class LLVMContext {
+  // DO NOT IMPLEMENT
+  LLVMContext(LLVMContext&);
+  void operator=(LLVMContext&);
 public:
   LLVMContextImpl* pImpl;
   bool RemoveDeadMetadata();

@@ -221,7 +221,7 @@ namespace {
   void CppWriter::printCFP(const ConstantFP *CFP) {
     bool ignored;
     APFloat APF = APFloat(CFP->getValueAPF());  // copy
-    if (CFP->getType() == Type::FloatTy)
+    if (CFP->getType() == Type::getFloatTy(CFP->getContext()))
       APF.convert(APFloat::IEEEdouble, APFloat::rmNearestTiesToEven, &ignored);
     Out << "ConstantFP::get(";
     Out << "APFloat(";
@@ -232,7 +232,7 @@ namespace {
          !strncmp(Buffer, "-0x", 3) ||
          !strncmp(Buffer, "+0x", 3)) &&
         APF.bitwiseIsEqual(APFloat(atof(Buffer)))) {
-      if (CFP->getType() == Type::DoubleTy)
+      if (CFP->getType() == Type::getDoubleTy(CFP->getContext()))
         Out << "BitsToDouble(" << Buffer << ")";
       else
         Out << "BitsToFloat((float)" << Buffer << ")";
@@ -250,11 +250,11 @@ namespace {
            ((StrVal[0] == '-' || StrVal[0] == '+') &&
             (StrVal[1] >= '0' && StrVal[1] <= '9'))) &&
           (CFP->isExactlyValue(atof(StrVal.c_str())))) {
-        if (CFP->getType() == Type::DoubleTy)
+        if (CFP->getType() == Type::getDoubleTy(CFP->getContext()))
           Out <<  StrVal;
         else
           Out << StrVal << "f";
-      } else if (CFP->getType() == Type::DoubleTy)
+      } else if (CFP->getType() == Type::getDoubleTy(CFP->getContext()))
         Out << "BitsToDouble(0x"
             << utohexstr(CFP->getValueAPF().bitcastToAPInt().getZExtValue())
             << "ULL) /* " << StrVal << " */";
@@ -764,7 +764,9 @@ namespace {
       printCFP(CFP);
       Out << ";";
     } else if (const ConstantArray *CA = dyn_cast<ConstantArray>(CV)) {
-      if (CA->isString() && CA->getType()->getElementType() == Type::Int8Ty) {
+      if (CA->isString() &&
+          CA->getType()->getElementType() ==
+              Type::getInt8Ty(CA->getContext())) {
         Out << "Constant* " << constName << " = ConstantArray::get(\"";
         std::string tmp = CA->getAsString();
         bool nullTerminate = false;

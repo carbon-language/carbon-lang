@@ -598,7 +598,8 @@ static const SCEV *BinomialCoefficient(const SCEV *It, unsigned K,
   MultiplyFactor = MultiplyFactor.trunc(W);
 
   // Calculate the product, at width T+W
-  const IntegerType *CalculationTy = IntegerType::get(CalculationBits);
+  const IntegerType *CalculationTy = IntegerType::get(SE.getContext(),
+                                                      CalculationBits);
   const SCEV *Dividend = SE.getTruncateOrZeroExtend(It, CalculationTy);
   for (unsigned i = 1; i != K; ++i) {
     const SCEV *S = SE.getMinusSCEV(It, SE.getIntegerSCEV(i, It->getType()));
@@ -760,7 +761,7 @@ const SCEV *ScalarEvolution::getZeroExtendExpr(const SCEV *Op,
         const SCEV *RecastedMaxBECount =
           getTruncateOrZeroExtend(CastedMaxBECount, MaxBECount->getType());
         if (MaxBECount == RecastedMaxBECount) {
-          const Type *WideTy = IntegerType::get(BitWidth * 2);
+          const Type *WideTy = IntegerType::get(getContext(), BitWidth * 2);
           // Check whether Start+Step*MaxBECount has no unsigned overflow.
           const SCEV *ZMul =
             getMulExpr(CastedMaxBECount,
@@ -899,7 +900,7 @@ const SCEV *ScalarEvolution::getSignExtendExpr(const SCEV *Op,
         const SCEV *RecastedMaxBECount =
           getTruncateOrZeroExtend(CastedMaxBECount, MaxBECount->getType());
         if (MaxBECount == RecastedMaxBECount) {
-          const Type *WideTy = IntegerType::get(BitWidth * 2);
+          const Type *WideTy = IntegerType::get(getContext(), BitWidth * 2);
           // Check whether Start+Step*MaxBECount has no signed overflow.
           const SCEV *SMul =
             getMulExpr(CastedMaxBECount,
@@ -1637,7 +1638,7 @@ const SCEV *ScalarEvolution::getUDivExpr(const SCEV *LHS,
     if (!RHSC->getValue()->getValue().isPowerOf2())
       ++MaxShiftAmt;
     const IntegerType *ExtTy =
-      IntegerType::get(getTypeSizeInBits(Ty) + MaxShiftAmt);
+      IntegerType::get(getContext(), getTypeSizeInBits(Ty) + MaxShiftAmt);
     // {X,+,N}/C --> {X/C,+,N/C} if safe and N/C can be folded.
     if (const SCEVAddRecExpr *AR = dyn_cast<SCEVAddRecExpr>(LHS))
       if (const SCEVConstant *Step =
@@ -2064,7 +2065,7 @@ const Type *ScalarEvolution::getEffectiveSCEVType(const Type *Ty) const {
     return Ty;
 
   assert(isa<PointerType>(Ty) && "Unexpected non-pointer non-integer type!");
-  return TD->getIntPtrType();
+  return TD->getIntPtrType(getContext());
 }
 
 const SCEV *ScalarEvolution::getCouldNotCompute() {
@@ -2432,7 +2433,7 @@ const SCEV *ScalarEvolution::createNodeForPHI(PHINode *PN) {
 ///
 const SCEV *ScalarEvolution::createNodeForGEP(Operator *GEP) {
 
-  const Type *IntPtrTy = TD->getIntPtrType();
+  const Type *IntPtrTy = TD->getIntPtrType(getContext());
   Value *Base = GEP->getOperand(0);
   // Don't attempt to analyze GEPs over unsized objects.
   if (!cast<PointerType>(Base->getType())->getElementType()->isSized())
@@ -2826,7 +2827,7 @@ const SCEV *ScalarEvolution::createSCEV(Value *V) {
       if (LZ != 0 && !((~A & ~KnownZero) & EffectiveMask))
         return
           getZeroExtendExpr(getTruncateExpr(getSCEV(U->getOperand(0)),
-                                            IntegerType::get(BitWidth - LZ)),
+                                IntegerType::get(getContext(), BitWidth - LZ)),
                             U->getType());
     }
     break;
@@ -2925,7 +2926,7 @@ const SCEV *ScalarEvolution::createSCEV(Value *V) {
             return getIntegerSCEV(0, U->getType()); // value is undefined
           return
             getSignExtendExpr(getTruncateExpr(getSCEV(L->getOperand(0)),
-                                                      IntegerType::get(Amt)),
+                                           IntegerType::get(getContext(), Amt)),
                                  U->getType());
         }
     break;
@@ -3748,7 +3749,7 @@ ScalarEvolution::ComputeBackedgeTakenCountExhaustively(const Loop *L,
 
     if (CondVal->getValue() == uint64_t(ExitWhen)) {
       ++NumBruteForceTripCountsComputed;
-      return getConstant(Type::Int32Ty, IterationNum);
+      return getConstant(Type::getInt32Ty(getContext()), IterationNum);
     }
 
     // Compute the value of the PHI node for the next iteration.
@@ -4670,7 +4671,8 @@ const SCEV *ScalarEvolution::getBECount(const SCEV *Start,
 
   // Check Add for unsigned overflow.
   // TODO: More sophisticated things could be done here.
-  const Type *WideTy = IntegerType::get(getTypeSizeInBits(Ty) + 1);
+  const Type *WideTy = IntegerType::get(getContext(),
+                                        getTypeSizeInBits(Ty) + 1);
   const SCEV *EDiff = getZeroExtendExpr(Diff, WideTy);
   const SCEV *ERoundUp = getZeroExtendExpr(RoundUp, WideTy);
   const SCEV *OperandExtendedAdd = getAddExpr(EDiff, ERoundUp);

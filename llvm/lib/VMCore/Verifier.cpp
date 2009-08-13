@@ -558,11 +558,12 @@ void Verifier::visitFunction(Function &F) {
           "# formal arguments must match # of arguments for function type!",
           &F, FT);
   Assert1(F.getReturnType()->isFirstClassType() ||
-          F.getReturnType() == Type::VoidTy || 
+          F.getReturnType() == Type::getVoidTy(F.getContext()) || 
           isa<StructType>(F.getReturnType()),
           "Functions cannot return aggregate values!", &F);
 
-  Assert1(!F.hasStructRetAttr() || F.getReturnType() == Type::VoidTy,
+  Assert1(!F.hasStructRetAttr() ||
+          F.getReturnType() == Type::getVoidTy(F.getContext()),
           "Invalid struct return type!", &F);
 
   const AttrListPtr &Attrs = F.getAttributes();
@@ -590,7 +591,7 @@ void Verifier::visitFunction(Function &F) {
   bool isLLVMdotName = F.getName().size() >= 5 &&
                        F.getName().substr(0, 5) == "llvm.";
   if (!isLLVMdotName)
-    Assert1(F.getReturnType() != Type::MetadataTy,
+    Assert1(F.getReturnType() != Type::getMetadataTy(F.getContext()),
             "Function may not return metadata unless it's an intrinsic", &F);
 
   // Check that the argument values match the function type for this function...
@@ -603,7 +604,7 @@ void Verifier::visitFunction(Function &F) {
     Assert1(I->getType()->isFirstClassType(),
             "Function arguments must have first-class types!", I);
     if (!isLLVMdotName)
-      Assert2(I->getType() != Type::MetadataTy,
+      Assert2(I->getType() != Type::getMetadataTy(F.getContext()),
               "Function takes metadata but isn't an intrinsic", I, &F);
   }
 
@@ -688,7 +689,7 @@ void Verifier::visitTerminatorInst(TerminatorInst &I) {
 void Verifier::visitReturnInst(ReturnInst &RI) {
   Function *F = RI.getParent()->getParent();
   unsigned N = RI.getNumOperands();
-  if (F->getReturnType() == Type::VoidTy) 
+  if (F->getReturnType() == Type::getVoidTy(RI.getContext())) 
     Assert2(N == 0,
             "Found return instr that returns non-void in Function of void "
             "return type!", &RI, F->getReturnType());
@@ -1048,12 +1049,12 @@ void Verifier::VerifyCallSite(CallSite CS) {
   // Verify that there's no metadata unless it's a direct call to an intrinsic.
   if (!CS.getCalledFunction() || CS.getCalledFunction()->getName().size() < 5 ||
       CS.getCalledFunction()->getName().substr(0, 5) != "llvm.") {
-    Assert1(FTy->getReturnType() != Type::MetadataTy,
+    Assert1(FTy->getReturnType() != Type::getMetadataTy(I->getContext()),
             "Only intrinsics may return metadata", I);
     for (FunctionType::param_iterator PI = FTy->param_begin(),
            PE = FTy->param_end(); PI != PE; ++PI)
-      Assert1(PI->get() != Type::MetadataTy, "Function has metadata parameter "
-              "but isn't an intrinsic", I);
+      Assert1(PI->get() != Type::getMetadataTy(I->getContext()),
+              "Function has metadata parameter but isn't an intrinsic", I);
   }
 
   visitInstruction(*I);
@@ -1218,7 +1219,8 @@ void Verifier::visitLoadInst(LoadInst &LI) {
     cast<PointerType>(LI.getOperand(0)->getType())->getElementType();
   Assert2(ElTy == LI.getType(),
           "Load result type does not match pointer operand type!", &LI, ElTy);
-  Assert1(ElTy != Type::MetadataTy, "Can't load metadata!", &LI);
+  Assert1(ElTy != Type::getMetadataTy(LI.getContext()),
+          "Can't load metadata!", &LI);
   visitInstruction(LI);
 }
 
@@ -1227,7 +1229,8 @@ void Verifier::visitStoreInst(StoreInst &SI) {
     cast<PointerType>(SI.getOperand(1)->getType())->getElementType();
   Assert2(ElTy == SI.getOperand(0)->getType(),
           "Stored value type does not match pointer operand type!", &SI, ElTy);
-  Assert1(ElTy != Type::MetadataTy, "Can't store metadata!", &SI);
+  Assert1(ElTy != Type::getMetadataTy(SI.getContext()),
+          "Can't store metadata!", &SI);
   visitInstruction(SI);
 }
 
@@ -1278,24 +1281,25 @@ void Verifier::visitInstruction(Instruction &I) {
   
 
   // Check that void typed values don't have names
-  Assert1(I.getType() != Type::VoidTy || !I.hasName(),
+  Assert1(I.getType() != Type::getVoidTy(I.getContext()) || !I.hasName(),
           "Instruction has a name, but provides a void value!", &I);
 
   // Check that the return value of the instruction is either void or a legal
   // value type.
-  Assert1(I.getType() == Type::VoidTy || I.getType()->isFirstClassType()
+  Assert1(I.getType() == Type::getVoidTy(I.getContext()) || 
+          I.getType()->isFirstClassType()
           || ((isa<CallInst>(I) || isa<InvokeInst>(I)) 
               && isa<StructType>(I.getType())),
           "Instruction returns a non-scalar type!", &I);
 
   // Check that the instruction doesn't produce metadata or metadata*. Calls
   // all already checked against the callee type.
-  Assert1(I.getType() != Type::MetadataTy ||
+  Assert1(I.getType() != Type::getMetadataTy(I.getContext()) ||
           isa<CallInst>(I) || isa<InvokeInst>(I),
           "Invalid use of metadata!", &I);
 
   if (const PointerType *PTy = dyn_cast<PointerType>(I.getType()))
-    Assert1(PTy->getElementType() != Type::MetadataTy,
+    Assert1(PTy->getElementType() != Type::getMetadataTy(I.getContext()),
             "Instructions may not produce pointer to metadata.", &I);
 
 
@@ -1322,7 +1326,7 @@ void Verifier::visitInstruction(Instruction &I) {
 
     if (const PointerType *PTy =
             dyn_cast<PointerType>(I.getOperand(i)->getType()))
-      Assert1(PTy->getElementType() != Type::MetadataTy,
+      Assert1(PTy->getElementType() != Type::getMetadataTy(I.getContext()),
               "Invalid use of metadata pointer.", &I);
     
     if (Function *F = dyn_cast<Function>(I.getOperand(i))) {

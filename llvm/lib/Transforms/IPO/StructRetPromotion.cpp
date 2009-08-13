@@ -94,7 +94,8 @@ bool SRETPromotion::PromoteReturn(CallGraphNode *CGN) {
   DEBUG(errs() << "SretPromotion: Looking at sret function " 
         << F->getName() << "\n");
 
-  assert (F->getReturnType() == Type::VoidTy && "Invalid function return type");
+  assert (F->getReturnType() == Type::getVoidTy(F->getContext()) &&
+          "Invalid function return type");
   Function::arg_iterator AI = F->arg_begin();
   const llvm::PointerType *FArgType = dyn_cast<PointerType>(AI->getType());
   assert (FArgType && "Invalid sret parameter type");
@@ -124,7 +125,7 @@ bool SRETPromotion::PromoteReturn(CallGraphNode *CGN) {
       ++BI;
       if (isa<ReturnInst>(I)) {
         Value *NV = new LoadInst(TheAlloca, "mrv.ld", I);
-        ReturnInst *NR = ReturnInst::Create(NV, I);
+        ReturnInst *NR = ReturnInst::Create(F->getContext(), NV, I);
         I->replaceAllUsesWith(NR);
         I->eraseFromParent();
       }
@@ -347,7 +348,7 @@ bool SRETPromotion::nestedStructType(const StructType *STy) {
   unsigned Num = STy->getNumElements();
   for (unsigned i = 0; i < Num; i++) {
     const Type *Ty = STy->getElementType(i);
-    if (!Ty->isSingleValueType() && Ty != Type::VoidTy)
+    if (!Ty->isSingleValueType() && Ty != Type::getVoidTy(STy->getContext()))
       return true;
   }
   return false;

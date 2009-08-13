@@ -124,7 +124,7 @@ void CondProp::SimplifyBlock(BasicBlock *BB) {
       // Succ is now dead, but we cannot delete it without potentially
       // invalidating iterators elsewhere.  Just insert an unreachable
       // instruction in it and delete this block later on.
-      new UnreachableInst(Succ);
+      new UnreachableInst(BB->getContext(), Succ);
       DeadBlocks.push_back(Succ);
       MadeChange = true;
     }

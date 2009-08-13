@@ -440,15 +440,16 @@ void ELFWriter::EmitGlobalConstant(const Constant *CV, ELFSection &GblS) {
     return;
   } else if (const ConstantFP *CFP = dyn_cast<ConstantFP>(CV)) {
     APInt Val = CFP->getValueAPF().bitcastToAPInt();
-    if (CFP->getType() == Type::DoubleTy)
+    if (CFP->getType() == Type::getDoubleTy(CV->getContext()))
       GblS.emitWord64(Val.getZExtValue());
-    else if (CFP->getType() == Type::FloatTy)
+    else if (CFP->getType() == Type::getFloatTy(CV->getContext()))
       GblS.emitWord32(Val.getZExtValue());
-    else if (CFP->getType() == Type::X86_FP80Ty) {
-      unsigned PadSize = TD->getTypeAllocSize(Type::X86_FP80Ty)-
-                         TD->getTypeStoreSize(Type::X86_FP80Ty);
+    else if (CFP->getType() == Type::getX86_FP80Ty(CV->getContext())) {
+      unsigned PadSize = 
+             TD->getTypeAllocSize(Type::getX86_FP80Ty(CV->getContext()))-
+             TD->getTypeStoreSize(Type::getX86_FP80Ty(CV->getContext()));
       GblS.emitWordFP80(Val.getRawData(), PadSize);
-    } else if (CFP->getType() == Type::PPC_FP128Ty)
+    } else if (CFP->getType() == Type::getPPC_FP128Ty(CV->getContext()))
       llvm_unreachable("PPC_FP128Ty global emission not implemented");
     return;
   } else if (const ConstantInt *CI = dyn_cast<ConstantInt>(CV)) {
@@ -526,7 +527,8 @@ CstExprResTy ELFWriter::ResolveConstantExpr(const Constant *CV) {
   }
   case Instruction::IntToPtr: {
     Constant *Op = CE->getOperand(0);
-    Op = ConstantExpr::getIntegerCast(Op, TD->getIntPtrType(), false/*ZExt*/);
+    Op = ConstantExpr::getIntegerCast(Op, TD->getIntPtrType(CV->getContext()),
+                                      false/*ZExt*/);
     return ResolveConstantExpr(Op);
   }
   case Instruction::PtrToInt: {

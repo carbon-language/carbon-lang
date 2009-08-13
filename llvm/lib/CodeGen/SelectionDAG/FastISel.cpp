@@ -92,7 +92,8 @@ unsigned FastISel::getRegForValue(Value *V) {
   } else if (isa<ConstantPointerNull>(V)) {
     // Translate this as an integer zero so that it can be
     // local-CSE'd with actual integer zeros.
-    Reg = getRegForValue(Constant::getNullValue(TD.getIntPtrType()));
+    Reg =
+      getRegForValue(Constant::getNullValue(TD.getIntPtrType(V->getContext())));
   } else if (ConstantFP *CF = dyn_cast<ConstantFP>(V)) {
     Reg = FastEmit_f(VT, VT, ISD::ConstantFP, CF);
 

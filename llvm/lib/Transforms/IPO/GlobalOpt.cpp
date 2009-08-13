@@ -488,7 +488,7 @@ static GlobalVariable *SRAGlobal(GlobalVariable *GV, const TargetData &TD,
     const StructLayout &Layout = *TD.getStructLayout(STy);
     for (unsigned i = 0, e = STy->getNumElements(); i != e; ++i) {
       Constant *In = getAggregateConstantElement(Init,
-                                    ConstantInt::get(Type::Int32Ty, i),
+                                ConstantInt::get(Type::getInt32Ty(Context), i),
                                     Context);
       assert(In && "Couldn't get element of initializer?");
       GlobalVariable *NGV = new GlobalVariable(Context,
@@ -523,7 +523,7 @@ static GlobalVariable *SRAGlobal(GlobalVariable *GV, const TargetData &TD,
     unsigned EltAlign = TD.getABITypeAlignment(STy->getElementType());
     for (unsigned i = 0, e = NumElements; i != e; ++i) {
       Constant *In = getAggregateConstantElement(Init,
-                                    ConstantInt::get(Type::Int32Ty, i),
+                                ConstantInt::get(Type::getInt32Ty(Context), i),
                                     Context);
       assert(In && "Couldn't get element of initializer?");
 
@@ -550,7 +550,7 @@ static GlobalVariable *SRAGlobal(GlobalVariable *GV, const TargetData &TD,
 
   DOUT << "PERFORMING GLOBAL SRA ON: " << *GV;
 
-  Constant *NullInt = Constant::getNullValue(Type::Int32Ty);
+  Constant *NullInt = Constant::getNullValue(Type::getInt32Ty(Context));
 
   // Loop over all of the uses of the global, replacing the constantexpr geps,
   // with smaller constantexpr geps or direct references.
@@ -828,10 +828,10 @@ static GlobalVariable *OptimizeGlobalAddressOfMalloc(GlobalVariable *GV,
     Type *NewTy = ArrayType::get(MI->getAllocatedType(),
                                  NElements->getZExtValue());
     MallocInst *NewMI =
-      new MallocInst(NewTy, Constant::getNullValue(Type::Int32Ty),
+      new MallocInst(NewTy, Constant::getNullValue(Type::getInt32Ty(Context)),
                      MI->getAlignment(), MI->getName(), MI);
     Value* Indices[2];
-    Indices[0] = Indices[1] = Constant::getNullValue(Type::Int32Ty);
+    Indices[0] = Indices[1] = Constant::getNullValue(Type::getInt32Ty(Context));
     Value *NewGEP = GetElementPtrInst::Create(NewMI, Indices, Indices + 2,
                                               NewMI->getName()+".el0", MI);
     MI->replaceAllUsesWith(NewGEP);
@@ -863,7 +863,7 @@ static GlobalVariable *OptimizeGlobalAddressOfMalloc(GlobalVariable *GV,
   // If there is a comparison against null, we will insert a global bool to
   // keep track of whether the global was initialized yet or not.
   GlobalVariable *InitBool =
-    new GlobalVariable(Context, Type::Int1Ty, false,
+    new GlobalVariable(Context, Type::getInt1Ty(Context), false,
                        GlobalValue::InternalLinkage,
                        ConstantInt::getFalse(Context), GV->getName()+".init",
                        GV->isThreadLocal());
@@ -1326,7 +1326,7 @@ static GlobalVariable *PerformHeapAllocSRoA(GlobalVariable *GV, MallocInst *MI,
   
   // Create the block to check the first condition.  Put all these blocks at the
   // end of the function as they are unlikely to be executed.
-  BasicBlock *NullPtrBlock = BasicBlock::Create("malloc_ret_null",
+  BasicBlock *NullPtrBlock = BasicBlock::Create(Context, "malloc_ret_null",
                                                 OrigBB->getParent());
   
   // Remove the uncond branch from OrigBB to ContBB, turning it into a cond
@@ -1341,8 +1341,10 @@ static GlobalVariable *PerformHeapAllocSRoA(GlobalVariable *GV, MallocInst *MI,
     Value *Cmp = new ICmpInst(*NullPtrBlock, ICmpInst::ICMP_NE, GVVal, 
                               Constant::getNullValue(GVVal->getType()),
                               "tmp");
-    BasicBlock *FreeBlock = BasicBlock::Create("free_it", OrigBB->getParent());
-    BasicBlock *NextBlock = BasicBlock::Create("next", OrigBB->getParent());
+    BasicBlock *FreeBlock = BasicBlock::Create(Context, "free_it", 
+                                               OrigBB->getParent());
+    BasicBlock *NextBlock = BasicBlock::Create(Context, "next", 
+                                               OrigBB->getParent());
     BranchInst::Create(FreeBlock, NextBlock, Cmp, NullPtrBlock);
 
     // Fill in FreeBlock.
@@ -1508,7 +1510,8 @@ static bool TryToOptimizeStoreOfMallocToGlobal(GlobalVariable *GV,
       if (const ArrayType *AT = dyn_cast<ArrayType>(MI->getAllocatedType())) {
         MallocInst *NewMI = 
           new MallocInst(AllocSTy, 
-                  ConstantInt::get(Type::Int32Ty, AT->getNumElements()),
+                  ConstantInt::get(Type::getInt32Ty(Context),
+                  AT->getNumElements()),
                          "", MI);
         NewMI->takeName(MI);
         Value *Cast = new BitCastInst(NewMI, MI->getType(), "tmp", MI);
@@ -1569,7 +1572,7 @@ static bool TryToShrinkGlobalToBoolean(GlobalVariable *GV, Constant *OtherVal,
   // between them is very expensive and unlikely to lead to later
   // simplification.  In these cases, we typically end up with "cond ? v1 : v2"
   // where v1 and v2 both require constant pool loads, a big loss.
-  if (GVElType == Type::Int1Ty || GVElType->isFloatingPoint() ||
+  if (GVElType == Type::getInt1Ty(Context) || GVElType->isFloatingPoint() ||
       isa<PointerType>(GVElType) || isa<VectorType>(GVElType))
     return false;
   
@@ -1582,14 +1585,16 @@ static bool TryToShrinkGlobalToBoolean(GlobalVariable *GV, Constant *OtherVal,
   DOUT << "   *** SHRINKING TO BOOL: " << *GV;
   
   // Create the new global, initializing it to false.
-  GlobalVariable *NewGV = new GlobalVariable(Context, Type::Int1Ty, false,
+  GlobalVariable *NewGV = new GlobalVariable(Context,
+                                             Type::getInt1Ty(Context), false,
          GlobalValue::InternalLinkage, ConstantInt::getFalse(Context),
                                              GV->getName()+".b",
                                              GV->isThreadLocal());
   GV->getParent()->getGlobalList().insert(GV, NewGV);
 
   Constant *InitVal = GV->getInitializer();
-  assert(InitVal->getType() != Type::Int1Ty && "No reason to shrink to bool!");
+  assert(InitVal->getType() != Type::getInt1Ty(Context) &&
+         "No reason to shrink to bool!");
 
   // If initialized to zero and storing one into the global, we can use a cast
   // instead of a select to synthesize the desired value.
@@ -1605,7 +1610,7 @@ static bool TryToShrinkGlobalToBoolean(GlobalVariable *GV, Constant *OtherVal,
       // Only do this if we weren't storing a loaded value.
       Value *StoreVal;
       if (StoringOther || SI->getOperand(0) == InitVal)
-        StoreVal = ConstantInt::get(Type::Int1Ty, StoringOther);
+        StoreVal = ConstantInt::get(Type::getInt1Ty(Context), StoringOther);
       else {
         // Otherwise, we are storing a previously loaded copy.  To do this,
         // change the copy from copying the original value to just copying the
@@ -1893,12 +1898,12 @@ GlobalVariable *GlobalOpt::FindGlobalCtors(Module &M) {
       if (!ATy) return 0;
       const StructType *STy = dyn_cast<StructType>(ATy->getElementType());
       if (!STy || STy->getNumElements() != 2 ||
-          STy->getElementType(0) != Type::Int32Ty) return 0;
+          STy->getElementType(0) != Type::getInt32Ty(M.getContext())) return 0;
       const PointerType *PFTy = dyn_cast<PointerType>(STy->getElementType(1));
       if (!PFTy) return 0;
       const FunctionType *FTy = dyn_cast<FunctionType>(PFTy->getElementType());
-      if (!FTy || FTy->getReturnType() != Type::VoidTy || FTy->isVarArg() ||
-          FTy->getNumParams() != 0)
+      if (!FTy || FTy->getReturnType() != Type::getVoidTy(M.getContext()) ||
+          FTy->isVarArg() || FTy->getNumParams() != 0)
         return 0;
       
       // Verify that the initializer is simple enough for us to handle.
@@ -1947,7 +1952,7 @@ static GlobalVariable *InstallGlobalCtors(GlobalVariable *GCL,
                                           LLVMContext &Context) {
   // If we made a change, reassemble the initializer list.
   std::vector<Constant*> CSVals;
-  CSVals.push_back(ConstantInt::get(Type::Int32Ty, 65535));
+  CSVals.push_back(ConstantInt::get(Type::getInt32Ty(Context), 65535));
   CSVals.push_back(0);
   
   // Create the new init list.
@@ -1956,10 +1961,10 @@ static GlobalVariable *InstallGlobalCtors(GlobalVariable *GCL,
     if (Ctors[i]) {
       CSVals[1] = Ctors[i];
     } else {
-      const Type *FTy = FunctionType::get(Type::VoidTy, false);
+      const Type *FTy = FunctionType::get(Type::getVoidTy(Context), false);
       const PointerType *PFTy = PointerType::getUnqual(FTy);
       CSVals[1] = Constant::getNullValue(PFTy);
-      CSVals[0] = ConstantInt::get(Type::Int32Ty, 2147483647);
+      CSVals[0] = ConstantInt::get(Type::getInt32Ty(Context), 2147483647);
     }
     CAList.push_back(ConstantStruct::get(Context, CSVals));
   }

@@ -297,12 +297,13 @@ bool ReduceCrashingBlocks::TestBlocks(std::vector<const BasicBlock*> &BBs) {
         
         if (isa<StructType>(BBTerm->getType()))
            BBTerm->replaceAllUsesWith(UndefValue::get(BBTerm->getType()));
-        else if (BB->getTerminator()->getType() != Type::VoidTy)
+        else if (BB->getTerminator()->getType() != 
+                    Type::getVoidTy(BB->getContext()))
           BBTerm->replaceAllUsesWith(Constant::getNullValue(BBTerm->getType()));
 
         // Replace the old terminator instruction.
         BB->getInstList().pop_back();
-        new UnreachableInst(BB);
+        new UnreachableInst(BB->getContext(), BB);
       }
 
   // The CFG Simplifier pass may delete one of the basic blocks we are
@@ -332,7 +333,7 @@ bool ReduceCrashingBlocks::TestBlocks(std::vector<const BasicBlock*> &BBs) {
     for (unsigned i = 0, e = BlockInfo.size(); i != e; ++i) {
       ValueSymbolTable &ST = BlockInfo[i].first->getValueSymbolTable();
       Value* V = ST.lookup(BlockInfo[i].second);
-      if (V && V->getType() == Type::LabelTy)
+      if (V && V->getType() == Type::getLabelTy(V->getContext()))
         BBs.push_back(cast<BasicBlock>(V));
     }
     return true;
@@ -390,7 +391,7 @@ bool ReduceCrashingInstructions::TestInsts(std::vector<const Instruction*>
       for (BasicBlock::iterator I = FI->begin(), E = FI->end(); I != E;) {
         Instruction *Inst = I++;
         if (!Instructions.count(Inst) && !isa<TerminatorInst>(Inst)) {
-          if (Inst->getType() != Type::VoidTy)
+          if (Inst->getType() != Type::getVoidTy(Inst->getContext()))
             Inst->replaceAllUsesWith(UndefValue::get(Inst->getType()));
           Inst->eraseFromParent();
         }

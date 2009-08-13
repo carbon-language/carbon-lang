@@ -2299,7 +2299,8 @@ MachineInstr* X86InstrInfo::foldMemoryOperandImpl(MachineFunction &MF,
 
     // Create a v4i32 constant-pool entry.
     MachineConstantPool &MCP = *MF.getConstantPool();
-    const VectorType *Ty = VectorType::get(Type::Int32Ty, 4);
+    const VectorType *Ty =
+          VectorType::get(Type::getInt32Ty(MF.getFunction()->getContext()), 4);
     Constant *C = LoadMI->getOpcode() == X86::V_SET0 ?
                     Constant::getNullValue(Ty) :
                     Constant::getAllOnesValue(Ty);

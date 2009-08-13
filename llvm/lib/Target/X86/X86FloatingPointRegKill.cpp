@@ -118,9 +118,10 @@ bool FPRegKiller::runOnMachineFunction(MachineFunction &MF) {
            !ContainsFPCode && SI != E; ++SI) {
         for (BasicBlock::const_iterator II = SI->begin();
              (PN = dyn_cast<PHINode>(II)); ++II) {
-          if (PN->getType()==Type::X86_FP80Ty ||
+          if (PN->getType()==Type::getX86_FP80Ty(LLVMBB->getContext()) ||
               (!Subtarget.hasSSE1() && PN->getType()->isFloatingPoint()) ||
-              (!Subtarget.hasSSE2() && PN->getType()==Type::DoubleTy)) {
+              (!Subtarget.hasSSE2() &&
+                PN->getType()==Type::getDoubleTy(LLVMBB->getContext()))) {
             ContainsFPCode = true;
             break;
           }

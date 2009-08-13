@@ -31,14 +31,15 @@ using namespace llvm;
 //
 
 GlobalVariable *ilist_traits<GlobalVariable>::createSentinel() {
-  GlobalVariable *Ret = new GlobalVariable(getGlobalContext(), Type::Int32Ty,
+  GlobalVariable *Ret = new GlobalVariable(getGlobalContext(), 
+                                           Type::getInt32Ty(getGlobalContext()),
                                            false, GlobalValue::ExternalLinkage);
   // This should not be garbage monitored.
   LeakDetector::removeGarbageObject(Ret);
   return Ret;
 }
 GlobalAlias *ilist_traits<GlobalAlias>::createSentinel() {
-  GlobalAlias *Ret = new GlobalAlias(Type::Int32Ty,
+  GlobalAlias *Ret = new GlobalAlias(Type::getInt32Ty(getGlobalContext()),
                                      GlobalValue::ExternalLinkage);
   // This should not be garbage monitored.
   LeakDetector::removeGarbageObject(Ret);
@@ -303,7 +304,7 @@ NamedMDNode *Module::getOrInsertNamedMetadata(const StringRef &Name) {
   NamedMDNode *NMD =
     dyn_cast_or_null<NamedMDNode>(getValueSymbolTable().lookup(Name));
   if (!NMD)
-    NMD = NamedMDNode::Create(Name, NULL, 0, this);
+    NMD = NamedMDNode::Create(getContext(), Name, NULL, 0, this);
   return NMD;
 }
 

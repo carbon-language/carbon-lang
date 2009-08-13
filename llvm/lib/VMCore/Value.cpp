@@ -47,11 +47,13 @@ Value::Value(const Type *ty, unsigned scid)
     SubclassData(0), VTy(checkType(ty)),
     UseList(0), Name(0) {
   if (isa<CallInst>(this) || isa<InvokeInst>(this))
-    assert((VTy->isFirstClassType() || VTy == Type::VoidTy ||
+    assert((VTy->isFirstClassType() ||
+            VTy == Type::getVoidTy(ty->getContext()) ||
             isa<OpaqueType>(ty) || VTy->getTypeID() == Type::StructTyID) &&
            "invalid CallInst  type!");
   else if (!isa<Constant>(this) && !isa<BasicBlock>(this))
-    assert((VTy->isFirstClassType() || VTy == Type::VoidTy ||
+    assert((VTy->isFirstClassType() ||
+            VTy == Type::getVoidTy(ty->getContext()) ||
            isa<OpaqueType>(ty)) &&
            "Cannot create non-first-class values except for constants!");
 }
@@ -178,7 +180,8 @@ void Value::setName(const Twine &NewName) {
   if (getName() == StringRef(NameStr, NameLen))
     return;
 
-  assert(getType() != Type::VoidTy && "Cannot assign a name to void values!");
+  assert(getType() != Type::getVoidTy(getContext()) &&
+         "Cannot assign a name to void values!");
   
   // Get the symbol table to update for this object.
   ValueSymbolTable *ST;

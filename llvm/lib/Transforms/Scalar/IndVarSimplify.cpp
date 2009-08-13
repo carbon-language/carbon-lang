@@ -634,7 +634,8 @@ void IndVarSimplify::HandleFloatingPointIV(Loop *L, PHINode *PH) {
   // Check incoming value.
   ConstantFP *InitValue = dyn_cast<ConstantFP>(PH->getIncomingValue(IncomingEdge));
   if (!InitValue) return;
-  uint64_t newInitValue = Type::Int32Ty->getPrimitiveSizeInBits();
+  uint64_t newInitValue =
+              Type::getInt32Ty(PH->getContext())->getPrimitiveSizeInBits();
   if (!convertToInt(InitValue->getValueAPF(), &newInitValue))
     return;
 
@@ -650,7 +651,8 @@ void IndVarSimplify::HandleFloatingPointIV(Loop *L, PHINode *PH) {
     IncrVIndex = 0;
   IncrValue = dyn_cast<ConstantFP>(Incr->getOperand(IncrVIndex));
   if (!IncrValue) return;
-  uint64_t newIncrValue = Type::Int32Ty->getPrimitiveSizeInBits();
+  uint64_t newIncrValue =
+              Type::getInt32Ty(PH->getContext())->getPrimitiveSizeInBits();
   if (!convertToInt(IncrValue->getValueAPF(), &newIncrValue))
     return;
 
@@ -681,7 +683,7 @@ void IndVarSimplify::HandleFloatingPointIV(Loop *L, PHINode *PH) {
     EVIndex = 0;
   EV = dyn_cast<ConstantFP>(EC->getOperand(EVIndex));
   if (!EV) return;
-  uint64_t intEV = Type::Int32Ty->getPrimitiveSizeInBits();
+  uint64_t intEV = Type::getInt32Ty(PH->getContext())->getPrimitiveSizeInBits();
   if (!convertToInt(EV->getValueAPF(), &intEV))
     return;
 
@@ -714,20 +716,22 @@ void IndVarSimplify::HandleFloatingPointIV(Loop *L, PHINode *PH) {
   if (NewPred == CmpInst::BAD_ICMP_PREDICATE) return;
 
   // Insert new integer induction variable.
-  PHINode *NewPHI = PHINode::Create(Type::Int32Ty,
+  PHINode *NewPHI = PHINode::Create(Type::getInt32Ty(PH->getContext()),
                                     PH->getName()+".int", PH);
-  NewPHI->addIncoming(ConstantInt::get(Type::Int32Ty, newInitValue),
+  NewPHI->addIncoming(ConstantInt::get(Type::getInt32Ty(PH->getContext()),
+                                       newInitValue),
                       PH->getIncomingBlock(IncomingEdge));
 
   Value *NewAdd = BinaryOperator::CreateAdd(NewPHI,
-                                          ConstantInt::get(Type::Int32Ty,
+                           ConstantInt::get(Type::getInt32Ty(PH->getContext()),
                                                              newIncrValue),
                                             Incr->getName()+".int", Incr);
   NewPHI->addIncoming(NewAdd, PH->getIncomingBlock(BackEdge));
 
   // The back edge is edge 1 of newPHI, whatever it may have been in the
   // original PHI.
-  ConstantInt *NewEV = ConstantInt::get(Type::Int32Ty, intEV);
+  ConstantInt *NewEV = ConstantInt::get(Type::getInt32Ty(PH->getContext()),
+                                        intEV);
   Value *LHS = (EVIndex == 1 ? NewPHI->getIncomingValue(1) : NewEV);
   Value *RHS = (EVIndex == 1 ? NewEV : NewPHI->getIncomingValue(1));
   ICmpInst *NewEC = new ICmpInst(EC->getParent()->getTerminator(),

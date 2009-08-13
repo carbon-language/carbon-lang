@@ -479,7 +479,7 @@ static LinkageCategory categorize(const Function *F) {
 static void ThunkGToF(Function *F, Function *G) {
   Function *NewG = Function::Create(G->getFunctionType(), G->getLinkage(), "",
                                     G->getParent());
-  BasicBlock *BB = BasicBlock::Create("", NewG);
+  BasicBlock *BB = BasicBlock::Create(F->getContext(), "", NewG);
 
   std::vector<Value *> Args;
   unsigned i = 0;
@@ -498,13 +498,13 @@ static void ThunkGToF(Function *F, Function *G) {
   CallInst *CI = CallInst::Create(F, Args.begin(), Args.end(), "", BB);
   CI->setTailCall();
   CI->setCallingConv(F->getCallingConv());
-  if (NewG->getReturnType() == Type::VoidTy) {
-    ReturnInst::Create(BB);
+  if (NewG->getReturnType() == Type::getVoidTy(F->getContext())) {
+    ReturnInst::Create(F->getContext(), BB);
   } else if (CI->getType() != NewG->getReturnType()) {
     Value *BCI = new BitCastInst(CI, NewG->getReturnType(), "", BB);
-    ReturnInst::Create(BCI, BB);
+    ReturnInst::Create(F->getContext(), BCI, BB);
   } else {
-    ReturnInst::Create(CI, BB);
+    ReturnInst::Create(F->getContext(), CI, BB);
   }
 
   NewG->copyAttributesFrom(G);

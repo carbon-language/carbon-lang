@@ -298,7 +298,8 @@ Value *SCEVExpander::expandAddToGEP(const SCEV *const *op_begin,
             uint64_t FullOffset = C->getValue()->getZExtValue();
             if (FullOffset < SL.getSizeInBytes()) {
               unsigned ElIdx = SL.getElementContainingOffset(FullOffset);
-              GepIndices.push_back(ConstantInt::get(Type::Int32Ty, ElIdx));
+              GepIndices.push_back(
+                  ConstantInt::get(Type::getInt32Ty(Ty->getContext()), ElIdx));
               ElTy = STy->getTypeAtIndex(ElIdx);
               Ops[0] =
                 SE.getConstant(Ty, FullOffset - SL.getElementOffset(ElIdx));
@@ -321,7 +322,7 @@ Value *SCEVExpander::expandAddToGEP(const SCEV *const *op_begin,
   // better than ptrtoint+arithmetic+inttoptr at least.
   if (!AnyNonZeroIndices) {
     V = InsertNoopCastOfTo(V,
-                           Type::Int8Ty->getPointerTo(PTy->getAddressSpace()));
+       Type::getInt8Ty(Ty->getContext())->getPointerTo(PTy->getAddressSpace()));
     Value *Idx = expandCodeFor(SE.getAddExpr(Ops), Ty);
 
     // Fold a GEP with constant operands.

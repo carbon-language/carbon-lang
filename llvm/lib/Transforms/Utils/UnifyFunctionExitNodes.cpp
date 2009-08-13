@@ -66,8 +66,8 @@ bool UnifyFunctionExitNodes::runOnFunction(Function &F) {
   } else if (UnwindingBlocks.size() == 1) {
     UnwindBlock = UnwindingBlocks.front();
   } else {
-    UnwindBlock = BasicBlock::Create("UnifiedUnwindBlock", &F);
-    new UnwindInst(UnwindBlock);
+    UnwindBlock = BasicBlock::Create(F.getContext(), "UnifiedUnwindBlock", &F);
+    new UnwindInst(F.getContext(), UnwindBlock);
 
     for (std::vector<BasicBlock*>::iterator I = UnwindingBlocks.begin(),
            E = UnwindingBlocks.end(); I != E; ++I) {
@@ -83,8 +83,9 @@ bool UnifyFunctionExitNodes::runOnFunction(Function &F) {
   } else if (UnreachableBlocks.size() == 1) {
     UnreachableBlock = UnreachableBlocks.front();
   } else {
-    UnreachableBlock = BasicBlock::Create("UnifiedUnreachableBlock", &F);
-    new UnreachableInst(UnreachableBlock);
+    UnreachableBlock = BasicBlock::Create(F.getContext(), 
+                                          "UnifiedUnreachableBlock", &F);
+    new UnreachableInst(F.getContext(), UnreachableBlock);
 
     for (std::vector<BasicBlock*>::iterator I = UnreachableBlocks.begin(),
            E = UnreachableBlocks.end(); I != E; ++I) {
@@ -107,16 +108,17 @@ bool UnifyFunctionExitNodes::runOnFunction(Function &F) {
   // nodes (if the function returns values), and convert all of the return
   // instructions into unconditional branches.
   //
-  BasicBlock *NewRetBlock = BasicBlock::Create("UnifiedReturnBlock", &F);
+  BasicBlock *NewRetBlock = BasicBlock::Create(F.getContext(),
+                                               "UnifiedReturnBlock", &F);
 
   PHINode *PN = 0;
-  if (F.getReturnType() == Type::VoidTy) {
-    ReturnInst::Create(NULL, NewRetBlock);
+  if (F.getReturnType() == Type::getVoidTy(F.getContext())) {
+    ReturnInst::Create(F.getContext(), NULL, NewRetBlock);
   } else {
     // If the function doesn't return void... add a PHI node to the block...
     PN = PHINode::Create(F.getReturnType(), "UnifiedRetVal");
     NewRetBlock->getInstList().push_back(PN);
-    ReturnInst::Create(PN, NewRetBlock);
+    ReturnInst::Create(F.getContext(), PN, NewRetBlock);
   }
 
   // Loop over all of the blocks, replacing the return instruction with an

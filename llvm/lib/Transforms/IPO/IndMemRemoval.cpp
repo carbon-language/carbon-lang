@@ -55,8 +55,8 @@ bool IndMemRemPass::runOnModule(Module &M) {
       Function* FN = Function::Create(F->getFunctionType(),
                                       GlobalValue::LinkOnceAnyLinkage,
                                       "free_llvm_bounce", &M);
-      BasicBlock* bb = BasicBlock::Create("entry",FN);
-      Instruction* R = ReturnInst::Create(bb);
+      BasicBlock* bb = BasicBlock::Create(M.getContext(), "entry",FN);
+      Instruction* R = ReturnInst::Create(M.getContext(), bb);
       new FreeInst(FN->arg_begin(), R);
       ++NumBounce;
       NumBounceSites += F->getNumUses();
@@ -70,11 +70,12 @@ bool IndMemRemPass::runOnModule(Module &M) {
                                       GlobalValue::LinkOnceAnyLinkage,
                                       "malloc_llvm_bounce", &M);
       FN->setDoesNotAlias(0);
-      BasicBlock* bb = BasicBlock::Create("entry",FN);
+      BasicBlock* bb = BasicBlock::Create(M.getContext(), "entry",FN);
       Instruction* c = CastInst::CreateIntegerCast(
-          FN->arg_begin(), Type::Int32Ty, false, "c", bb);
-      Instruction* a = new MallocInst(Type::Int8Ty, c, "m", bb);
-      ReturnInst::Create(a, bb);
+          FN->arg_begin(), Type::getInt32Ty(M.getContext()), false, "c", bb);
+      Instruction* a = new MallocInst(Type::getInt8Ty(M.getContext()),
+                                      c, "m", bb);
+      ReturnInst::Create(M.getContext(), a, bb);
       ++NumBounce;
       NumBounceSites += F->getNumUses();
       F->replaceAllUsesWith(FN);

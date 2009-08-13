@@ -2025,18 +2025,21 @@ private:
   //
   // NOTE: If the Value* passed is of type void then the constructor behaves as
   // if it was passed NULL.
-  explicit ReturnInst(Value *retVal = 0, Instruction *InsertBefore = 0);
-  ReturnInst(Value *retVal, BasicBlock *InsertAtEnd);
-  explicit ReturnInst(BasicBlock *InsertAtEnd);
+  explicit ReturnInst(LLVMContext &C, Value *retVal = 0,
+                      Instruction *InsertBefore = 0);
+  ReturnInst(LLVMContext &C, Value *retVal, BasicBlock *InsertAtEnd);
+  explicit ReturnInst(LLVMContext &C, BasicBlock *InsertAtEnd);
 public:
-  static ReturnInst* Create(Value *retVal = 0, Instruction *InsertBefore = 0) {
-    return new(!!retVal) ReturnInst(retVal, InsertBefore);
+  static ReturnInst* Create(LLVMContext &C, Value *retVal = 0,
+                            Instruction *InsertBefore = 0) {
+    return new(!!retVal) ReturnInst(C, retVal, InsertBefore);
   }
-  static ReturnInst* Create(Value *retVal, BasicBlock *InsertAtEnd) {
-    return new(!!retVal) ReturnInst(retVal, InsertAtEnd);
+  static ReturnInst* Create(LLVMContext &C, Value *retVal,
+                            BasicBlock *InsertAtEnd) {
+    return new(!!retVal) ReturnInst(C, retVal, InsertAtEnd);
   }
-  static ReturnInst* Create(BasicBlock *InsertAtEnd) {
-    return new(0) ReturnInst(InsertAtEnd);
+  static ReturnInst* Create(LLVMContext &C, BasicBlock *InsertAtEnd) {
+    return new(0) ReturnInst(C, InsertAtEnd);
   }
   virtual ~ReturnInst();
 
@@ -2591,8 +2594,8 @@ public:
   void *operator new(size_t s) {
     return User::operator new(s, 0);
   }
-  explicit UnwindInst(Instruction *InsertBefore = 0);
-  explicit UnwindInst(BasicBlock *InsertAtEnd);
+  explicit UnwindInst(LLVMContext &C, Instruction *InsertBefore = 0);
+  explicit UnwindInst(LLVMContext &C, BasicBlock *InsertAtEnd);
 
   virtual UnwindInst *clone(LLVMContext &Context) const;
 
@@ -2628,8 +2631,8 @@ public:
   void *operator new(size_t s) {
     return User::operator new(s, 0);
   }
-  explicit UnreachableInst(Instruction *InsertBefore = 0);
-  explicit UnreachableInst(BasicBlock *InsertAtEnd);
+  explicit UnreachableInst(LLVMContext &C, Instruction *InsertBefore = 0);
+  explicit UnreachableInst(LLVMContext &C, BasicBlock *InsertAtEnd);
 
   virtual UnreachableInst *clone(LLVMContext &Context) const;
 

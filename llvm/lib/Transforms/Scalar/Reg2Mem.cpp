@@ -69,7 +69,8 @@ namespace {
 
         CastInst *AllocaInsertionPoint =
           CastInst::Create(Instruction::BitCast,
-                      Constant::getNullValue(Type::Int32Ty), Type::Int32Ty,
+                      Constant::getNullValue(Type::getInt32Ty(F.getContext())),
+                                             Type::getInt32Ty(F.getContext()),
                            "reg2mem alloca point", I);
 
         // Find the escaped instructions. But don't create stack slots for

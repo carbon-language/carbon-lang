@@ -80,8 +80,8 @@ Function *buildFunction(Module *M) {
       TypeBuilder<int32_t(int32_t), false>::get(getGlobalContext()),
       GlobalValue::ExternalLinkage, "id", M);
   Value *Arg = Result->arg_begin();
-  BasicBlock *BB = BasicBlock::Create("entry", Result);
-  ReturnInst::Create(Arg, BB);
+  BasicBlock *BB = BasicBlock::Create(M->getContext(), "entry", Result);
+  ReturnInst::Create(M->getContext(), Arg, BB);
   return Result;
 }
 

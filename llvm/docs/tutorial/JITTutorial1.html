@@ -153,7 +153,7 @@ function will interoperate properly with C code, which is a good thing.</p>
 
 <div class="doc_code">
 <pre>
-  BasicBlock* block = BasicBlock::Create("entry", mul_add);
+  BasicBlock* block = BasicBlock::Create(getGlobalContext(), "entry", mul_add);
   IRBuilder&lt;&gt; builder(block);
 </pre>
 </div>

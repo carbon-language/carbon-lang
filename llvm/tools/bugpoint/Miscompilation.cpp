@@ -682,12 +682,12 @@ static void CleanupAndPrepareModules(BugDriver &BD, Module *&Test,
       }
 
       // Call the old main function and return its result
-      BasicBlock *BB = BasicBlock::Create("entry", newMain);
+      BasicBlock *BB = BasicBlock::Create(Safe->getContext(), "entry", newMain);
       CallInst *call = CallInst::Create(oldMainProto, args.begin(), args.end(),
                                         "", BB);
 
       // If the type of old function wasn't void, return value of call
-      ReturnInst::Create(call, BB);
+      ReturnInst::Create(Safe->getContext(), call, BB);
     }
 
   // The second nasty issue we must deal with in the JIT is that the Safe
@@ -699,8 +699,9 @@ static void CleanupAndPrepareModules(BugDriver &BD, Module *&Test,
   // Prototype: void *getPointerToNamedFunction(const char* Name)
   Constant *resolverFunc =
     Safe->getOrInsertFunction("getPointerToNamedFunction",
-                        PointerType::getUnqual(Type::Int8Ty),
-                        PointerType::getUnqual(Type::Int8Ty), (Type *)0);
+                    PointerType::getUnqual(Type::getInt8Ty(Safe->getContext())),
+                    PointerType::getUnqual(Type::getInt8Ty(Safe->getContext())),
+                       (Type *)0);
 
   // Use the function we just added to get addresses of functions we need.
   for (Module::iterator F = Safe->begin(), E = Safe->end(); F != E; ++F) {
@@ -711,7 +712,7 @@ static void CleanupAndPrepareModules(BugDriver &BD, Module *&Test,
       // Don't forward functions which are external in the test module too.
       if (TestFn && !TestFn->isDeclaration()) {
         // 1. Add a string constant with its name to the global file
-        Constant *InitArray = ConstantArray::get(F->getName());
+        Constant *InitArray = ConstantArray::get(F->getContext(), F->getName());
         GlobalVariable *funcName =
           new GlobalVariable(*Safe, InitArray->getType(), true /*isConstant*/,
                              GlobalValue::InternalLinkage, InitArray,
@@ -721,7 +722,8 @@ static void CleanupAndPrepareModules(BugDriver &BD, Module *&Test,
         // sbyte* so it matches the signature of the resolver function.
 
         // GetElementPtr *funcName, ulong 0, ulong 0
-        std::vector<Constant*> GEPargs(2, Constant::getNullValue(Type::Int32Ty));
+        std::vector<Constant*> GEPargs(2,
+                     Constant::getNullValue(Type::getInt32Ty(F->getContext())));
         Value *GEP =
                 ConstantExpr::getGetElementPtr(funcName, &GEPargs[0], 2);
         std::vector<Value*> ResolverArgs;
@@ -743,9 +745,12 @@ static void CleanupAndPrepareModules(BugDriver &BD, Module *&Test,
                                                    GlobalValue::InternalLinkage,
                                                    F->getName() + "_wrapper",
                                                    F->getParent());
-          BasicBlock *EntryBB  = BasicBlock::Create("entry", FuncWrapper);
-          BasicBlock *DoCallBB = BasicBlock::Create("usecache", FuncWrapper);
-          BasicBlock *LookupBB = BasicBlock::Create("lookupfp", FuncWrapper);
+          BasicBlock *EntryBB  = BasicBlock::Create(F->getContext(),
+                                                    "entry", FuncWrapper);
+          BasicBlock *DoCallBB = BasicBlock::Create(F->getContext(),
+                                                    "usecache", FuncWrapper);
+          BasicBlock *LookupBB = BasicBlock::Create(F->getContext(),
+                                                    "lookupfp", FuncWrapper);
 
           // Check to see if we already looked up the value.
           Value *CachedVal = new LoadInst(Cache, "fpcache", EntryBB);
@@ -782,13 +787,13 @@ static void CleanupAndPrepareModules(BugDriver &BD, Module *&Test,
             Args.push_back(i);
 
           // Pass on the arguments to the real function, return its result
-          if (F->getReturnType() == Type::VoidTy) {
+          if (F->getReturnType() == Type::getVoidTy(F->getContext())) {
             CallInst::Create(FuncPtr, Args.begin(), Args.end(), "", DoCallBB);
-            ReturnInst::Create(DoCallBB);
+            ReturnInst::Create(F->getContext(), DoCallBB);
           } else {
             CallInst *Call = CallInst::Create(FuncPtr, Args.begin(), Args.end(),
                                               "retval", DoCallBB);
-            ReturnInst::Create(Call, DoCallBB);
+            ReturnInst::Create(F->getContext(),Call, DoCallBB);
           }
 
           // Use the wrapper function instead of the old function

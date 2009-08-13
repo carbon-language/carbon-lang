@@ -469,8 +469,8 @@ namespace {
     /// valueNumber - finds the value number for V under the Subtree. If
     /// there is no value number, returns zero.
     unsigned valueNumber(Value *V, DomTreeDFS::Node *Subtree) {
-      if (!(isa<Constant>(V) || isa<Argument>(V) || isa<Instruction>(V))
-          || V->getType() == Type::VoidTy) return 0;
+      if (!(isa<Constant>(V) || isa<Argument>(V) || isa<Instruction>(V)) || 
+          V->getType() == Type::getVoidTy(V->getContext())) return 0;
 
       VNMapType::iterator E = VNMap.end();
       VNPair pair(V, 0, Subtree);
@@ -496,7 +496,8 @@ namespace {
     unsigned newVN(Value *V) {
       assert((isa<Constant>(V) || isa<Argument>(V) || isa<Instruction>(V)) &&
              "Bad Value for value numbering.");
-      assert(V->getType() != Type::VoidTy && "Won't value number a void value");
+      assert(V->getType() != Type::getVoidTy(V->getContext()) &&
+             "Won't value number a void value");
 
       Values.push_back(V);
 
@@ -1310,7 +1311,7 @@ namespace {
         TerminatorInst *TI = BB->getTerminator();
         TI->replaceAllUsesWith(UndefValue::get(TI->getType()));
         TI->eraseFromParent();
-        new UnreachableInst(BB);
+        new UnreachableInst(TI->getContext(), BB);
         ++NumBlocks;
         modified = true;
       }

@@ -148,7 +148,8 @@ bool StackProtector::InsertStackProtectors() {
       //     StackGuard = load __stack_chk_guard
       //     call void @llvm.stackprotect.create(StackGuard, StackGuardSlot)
       // 
-      PointerType *PtrTy = PointerType::getUnqual(Type::Int8Ty);
+      PointerType *PtrTy = PointerType::getUnqual(
+          Type::getInt8Ty(RI->getContext()));
       StackGuardVar = M->getOrInsertGlobal("__stack_chk_guard", PtrTy);
 
       BasicBlock &Entry = F->getEntryBlock();
@@ -215,10 +216,12 @@ bool StackProtector::InsertStackProtectors() {
 /// CreateFailBB - Create a basic block to jump to when the stack protector
 /// check fails.
 BasicBlock *StackProtector::CreateFailBB() {
-  BasicBlock *FailBB = BasicBlock::Create("CallStackCheckFailBlk", F);
+  BasicBlock *FailBB = BasicBlock::Create(F->getContext(),
+                                          "CallStackCheckFailBlk", F);
   Constant *StackChkFail =
-    M->getOrInsertFunction("__stack_chk_fail", Type::VoidTy, NULL);
+    M->getOrInsertFunction("__stack_chk_fail",
+                           Type::getVoidTy(F->getContext()), NULL);
   CallInst::Create(StackChkFail, "", FailBB);
-  new UnreachableInst(FailBB);
+  new UnreachableInst(F->getContext(), FailBB);
   return FailBB;
 }

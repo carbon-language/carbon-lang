@@ -88,7 +88,7 @@ foldConstantCastPair(
 
   // Let CastInst::isEliminableCastPair do the heavy lifting.
   return CastInst::isEliminableCastPair(firstOp, secondOp, SrcTy, MidTy, DstTy,
-                                        Type::Int64Ty);
+                                        Type::getInt64Ty(DstTy->getContext()));
 }
 
 static Constant *FoldBitCast(LLVMContext &Context, 
@@ -103,7 +103,7 @@ static Constant *FoldBitCast(LLVMContext &Context,
     if (const PointerType *DPTy = dyn_cast<PointerType>(DestTy))
       if (PTy->getAddressSpace() == DPTy->getAddressSpace()) {
         SmallVector<Value*, 8> IdxList;
-        Value *Zero = Constant::getNullValue(Type::Int32Ty);
+        Value *Zero = Constant::getNullValue(Type::getInt32Ty(Context));
         IdxList.push_back(Zero);
         const Type *ElTy = PTy->getElementType();
         while (ElTy != DPTy->getElementType()) {
@@ -164,7 +164,7 @@ static Constant *FoldBitCast(LLVMContext &Context,
 
     if (DestTy->isFloatingPoint())
       return ConstantFP::get(Context, APFloat(CI->getValue(),
-                                     DestTy != Type::PPC_FP128Ty));
+                                     DestTy != Type::getPPC_FP128Ty(Context)));
 
     // Otherwise, can't fold this (vector?)
     return 0;
@@ -192,7 +192,7 @@ Constant *llvm::ConstantFoldCastInstruction(LLVMContext &Context,
     return UndefValue::get(DestTy);
   }
   // No compile-time operations on this type yet.
-  if (V->getType() == Type::PPC_FP128Ty || DestTy == Type::PPC_FP128Ty)
+  if (V->getType() == Type::getPPC_FP128Ty(Context) || DestTy == Type::getPPC_FP128Ty(Context))
     return 0;
 
   // If the cast operand is a constant expression, there's a few things we can
@@ -241,10 +241,10 @@ Constant *llvm::ConstantFoldCastInstruction(LLVMContext &Context,
     if (const ConstantFP *FPC = dyn_cast<ConstantFP>(V)) {
       bool ignored;
       APFloat Val = FPC->getValueAPF();
-      Val.convert(DestTy == Type::FloatTy ? APFloat::IEEEsingle :
-                  DestTy == Type::DoubleTy ? APFloat::IEEEdouble :
-                  DestTy == Type::X86_FP80Ty ? APFloat::x87DoubleExtended :
-                  DestTy == Type::FP128Ty ? APFloat::IEEEquad :
+      Val.convert(DestTy == Type::getFloatTy(Context) ? APFloat::IEEEsingle :
+                  DestTy == Type::getDoubleTy(Context) ? APFloat::IEEEdouble :
+                  DestTy == Type::getX86_FP80Ty(Context) ? APFloat::x87DoubleExtended :
+                  DestTy == Type::getFP128Ty(Context) ? APFloat::IEEEquad :
                   APFloat::Bogus,
                   APFloat::rmNearestTiesToEven, &ignored);
       return ConstantFP::get(Context, Val);
@@ -582,7 +582,7 @@ Constant *llvm::ConstantFoldBinaryInstruction(LLVMContext &Context,
                                               const Constant *C1,
                                               const Constant *C2) {
   // No compile-time operations on this type yet.
-  if (C1->getType() == Type::PPC_FP128Ty)
+  if (C1->getType() == Type::getPPC_FP128Ty(Context))
     return 0;
 
   // Handle UndefValue up front
@@ -1045,11 +1045,11 @@ static int IdxCompare(LLVMContext &Context, Constant *C1, Constant *C2,
 
   // Ok, we have two differing integer indices.  Sign extend them to be the same
   // type.  Long is always big enough, so we use it.
-  if (C1->getType() != Type::Int64Ty)
-    C1 = ConstantExpr::getSExt(C1, Type::Int64Ty);
+  if (C1->getType() != Type::getInt64Ty(Context))
+    C1 = ConstantExpr::getSExt(C1, Type::getInt64Ty(Context));
 
-  if (C2->getType() != Type::Int64Ty)
-    C2 = ConstantExpr::getSExt(C2, Type::Int64Ty);
+  if (C2->getType() != Type::getInt64Ty(Context))
+    C2 = ConstantExpr::getSExt(C2, Type::getInt64Ty(Context));
 
   if (C1 == C2) return 0;  // They are equal
 
@@ -1085,7 +1085,7 @@ static FCmpInst::Predicate evaluateFCmpRelation(LLVMContext &Context,
          "Cannot compare values of different types!");
 
   // No compile-time operations on this type yet.
-  if (V1->getType() == Type::PPC_FP128Ty)
+  if (V1->getType() == Type::getPPC_FP128Ty(Context))
     return FCmpInst::BAD_FCMP_PREDICATE;
 
   // Handle degenerate case quickly
@@ -1375,9 +1375,9 @@ Constant *llvm::ConstantFoldCompareInstruction(LLVMContext &Context,
                                                const Constant *C2) {
   const Type *ResultTy;
   if (const VectorType *VT = dyn_cast<VectorType>(C1->getType()))
-    ResultTy = VectorType::get(Type::Int1Ty, VT->getNumElements());
+    ResultTy = VectorType::get(Type::getInt1Ty(Context), VT->getNumElements());
   else
-    ResultTy = Type::Int1Ty;
+    ResultTy = Type::getInt1Ty(Context);
 
   // Fold FCMP_FALSE/FCMP_TRUE unconditionally.
   if (pred == FCmpInst::FCMP_FALSE)
@@ -1391,7 +1391,7 @@ Constant *llvm::ConstantFoldCompareInstruction(LLVMContext &Context,
     return UndefValue::get(ResultTy);
 
   // No compile-time operations on this type yet.
-  if (C1->getType() == Type::PPC_FP128Ty)
+  if (C1->getType() == Type::getPPC_FP128Ty(Context))
     return 0;
 
   // icmp eq/ne(null,GV) -> false/true
@@ -1422,25 +1422,25 @@ Constant *llvm::ConstantFoldCompareInstruction(LLVMContext &Context,
     switch (pred) {
     default: llvm_unreachable("Invalid ICmp Predicate"); return 0;
     case ICmpInst::ICMP_EQ:
-      return ConstantInt::get(Type::Int1Ty, V1 == V2);
+      return ConstantInt::get(Type::getInt1Ty(Context), V1 == V2);
     case ICmpInst::ICMP_NE: 
-      return ConstantInt::get(Type::Int1Ty, V1 != V2);
+      return ConstantInt::get(Type::getInt1Ty(Context), V1 != V2);
     case ICmpInst::ICMP_SLT:
-      return ConstantInt::get(Type::Int1Ty, V1.slt(V2));
+      return ConstantInt::get(Type::getInt1Ty(Context), V1.slt(V2));
     case ICmpInst::ICMP_SGT:
-      return ConstantInt::get(Type::Int1Ty, V1.sgt(V2));
+      return ConstantInt::get(Type::getInt1Ty(Context), V1.sgt(V2));
     case ICmpInst::ICMP_SLE:
-      return ConstantInt::get(Type::Int1Ty, V1.sle(V2));
+      return ConstantInt::get(Type::getInt1Ty(Context), V1.sle(V2));
     case ICmpInst::ICMP_SGE:
-      return ConstantInt::get(Type::Int1Ty, V1.sge(V2));
+      return ConstantInt::get(Type::getInt1Ty(Context), V1.sge(V2));
     case ICmpInst::ICMP_ULT:
-      return ConstantInt::get(Type::Int1Ty, V1.ult(V2));
+      return ConstantInt::get(Type::getInt1Ty(Context), V1.ult(V2));
     case ICmpInst::ICMP_UGT:
-      return ConstantInt::get(Type::Int1Ty, V1.ugt(V2));
+      return ConstantInt::get(Type::getInt1Ty(Context), V1.ugt(V2));
     case ICmpInst::ICMP_ULE:
-      return ConstantInt::get(Type::Int1Ty, V1.ule(V2));
+      return ConstantInt::get(Type::getInt1Ty(Context), V1.ule(V2));
     case ICmpInst::ICMP_UGE:
-      return ConstantInt::get(Type::Int1Ty, V1.uge(V2));
+      return ConstantInt::get(Type::getInt1Ty(Context), V1.uge(V2));
     }
   } else if (isa<ConstantFP>(C1) && isa<ConstantFP>(C2)) {
     APFloat C1V = cast<ConstantFP>(C1)->getValueAPF();
@@ -1451,38 +1451,38 @@ Constant *llvm::ConstantFoldCompareInstruction(LLVMContext &Context,
     case FCmpInst::FCMP_FALSE: return ConstantInt::getFalse(Context);
     case FCmpInst::FCMP_TRUE:  return ConstantInt::getTrue(Context);
     case FCmpInst::FCMP_UNO:
-      return ConstantInt::get(Type::Int1Ty, R==APFloat::cmpUnordered);
+      return ConstantInt::get(Type::getInt1Ty(Context), R==APFloat::cmpUnordered);
     case FCmpInst::FCMP_ORD:
-      return ConstantInt::get(Type::Int1Ty, R!=APFloat::cmpUnordered);
+      return ConstantInt::get(Type::getInt1Ty(Context), R!=APFloat::cmpUnordered);
     case FCmpInst::FCMP_UEQ:
-      return ConstantInt::get(Type::Int1Ty, R==APFloat::cmpUnordered ||
+      return ConstantInt::get(Type::getInt1Ty(Context), R==APFloat::cmpUnordered ||
                                             R==APFloat::cmpEqual);
     case FCmpInst::FCMP_OEQ:   
-      return ConstantInt::get(Type::Int1Ty, R==APFloat::cmpEqual);
+      return ConstantInt::get(Type::getInt1Ty(Context), R==APFloat::cmpEqual);
     case FCmpInst::FCMP_UNE:
-      return ConstantInt::get(Type::Int1Ty, R!=APFloat::cmpEqual);
+      return ConstantInt::get(Type::getInt1Ty(Context), R!=APFloat::cmpEqual);
     case FCmpInst::FCMP_ONE:   
-      return ConstantInt::get(Type::Int1Ty, R==APFloat::cmpLessThan ||
+      return ConstantInt::get(Type::getInt1Ty(Context), R==APFloat::cmpLessThan ||
                                             R==APFloat::cmpGreaterThan);
     case FCmpInst::FCMP_ULT: 
-      return ConstantInt::get(Type::Int1Ty, R==APFloat::cmpUnordered ||
+      return ConstantInt::get(Type::getInt1Ty(Context), R==APFloat::cmpUnordered ||
                                             R==APFloat::cmpLessThan);
     case FCmpInst::FCMP_OLT:   
-      return ConstantInt::get(Type::Int1Ty, R==APFloat::cmpLessThan);
+      return ConstantInt::get(Type::getInt1Ty(Context), R==APFloat::cmpLessThan);
     case FCmpInst::FCMP_UGT:
-      return ConstantInt::get(Type::Int1Ty, R==APFloat::cmpUnordered ||
+      return ConstantInt::get(Type::getInt1Ty(Context), R==APFloat::cmpUnordered ||
                                             R==APFloat::cmpGreaterThan);
     case FCmpInst::FCMP_OGT:
-      return ConstantInt::get(Type::Int1Ty, R==APFloat::cmpGreaterThan);
+      return ConstantInt::get(Type::getInt1Ty(Context), R==APFloat::cmpGreaterThan);
     case FCmpInst::FCMP_ULE:
-      return ConstantInt::get(Type::Int1Ty, R!=APFloat::cmpGreaterThan);
+      return ConstantInt::get(Type::getInt1Ty(Context), R!=APFloat::cmpGreaterThan);
     case FCmpInst::FCMP_OLE: 
-      return ConstantInt::get(Type::Int1Ty, R==APFloat::cmpLessThan ||
+      return ConstantInt::get(Type::getInt1Ty(Context), R==APFloat::cmpLessThan ||
                                             R==APFloat::cmpEqual);
     case FCmpInst::FCMP_UGE:
-      return ConstantInt::get(Type::Int1Ty, R!=APFloat::cmpLessThan);
+      return ConstantInt::get(Type::getInt1Ty(Context), R!=APFloat::cmpLessThan);
     case FCmpInst::FCMP_OGE: 
-      return ConstantInt::get(Type::Int1Ty, R==APFloat::cmpGreaterThan ||
+      return ConstantInt::get(Type::getInt1Ty(Context), R==APFloat::cmpGreaterThan ||
                                             R==APFloat::cmpEqual);
     }
   } else if (isa<VectorType>(C1->getType())) {
@@ -1557,7 +1557,7 @@ Constant *llvm::ConstantFoldCompareInstruction(LLVMContext &Context,
     
     // If we evaluated the result, return it now.
     if (Result != -1)
-      return ConstantInt::get(Type::Int1Ty, Result);
+      return ConstantInt::get(Type::getInt1Ty(Context), Result);
 
   } else {
     // Evaluate the relation between the two constants, per the predicate.
@@ -1634,7 +1634,7 @@ Constant *llvm::ConstantFoldCompareInstruction(LLVMContext &Context,
     
     // If we evaluated the result, return it now.
     if (Result != -1)
-      return ConstantInt::get(Type::Int1Ty, Result);
+      return ConstantInt::get(Type::getInt1Ty(Context), Result);
     
     if (!isa<ConstantExpr>(C1) && isa<ConstantExpr>(C2)) {
       // If C2 is a constant expr and C1 isn't, flip them around and fold the
@@ -1726,9 +1726,9 @@ Constant *llvm::ConstantFoldGetElementPtr(LLVMContext &Context,
           const Type *IdxTy = Combined->getType();
           if (IdxTy != Idx0->getType()) {
             Constant *C1 =
-              ConstantExpr::getSExtOrBitCast(Idx0, Type::Int64Ty);
+              ConstantExpr::getSExtOrBitCast(Idx0, Type::getInt64Ty(Context));
             Constant *C2 = ConstantExpr::getSExtOrBitCast(Combined, 
-                                                          Type::Int64Ty);
+                                                          Type::getInt64Ty(Context));
             Combined = ConstantExpr::get(Instruction::Add, C1, C2);
           } else {
             Combined =
@@ -1765,7 +1765,7 @@ Constant *llvm::ConstantFoldGetElementPtr(LLVMContext &Context,
     // This happens with pointers to member functions in C++.
     if (CE->getOpcode() == Instruction::IntToPtr && NumIdx == 1 &&
         isa<ConstantInt>(CE->getOperand(0)) && isa<ConstantInt>(Idxs[0]) &&
-        cast<PointerType>(CE->getType())->getElementType() == Type::Int8Ty) {
+        cast<PointerType>(CE->getType())->getElementType() == Type::getInt8Ty(Context)) {
       Constant *Base = CE->getOperand(0);
       Constant *Offset = Idxs[0];
       

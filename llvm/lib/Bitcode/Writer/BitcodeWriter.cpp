@@ -482,7 +482,7 @@ static void WriteMDNode(const MDNode *N,
       Record.push_back(VE.getTypeID(N->getElement(i)->getType()));
       Record.push_back(VE.getValueID(N->getElement(i)));
     } else {
-      Record.push_back(VE.getTypeID(Type::VoidTy));
+      Record.push_back(VE.getTypeID(Type::getVoidTy(N->getContext())));
       Record.push_back(0);
     }
   }
@@ -663,16 +663,18 @@ static void WriteConstants(unsigned FirstVal, unsigned LastVal,
     } else if (const ConstantFP *CFP = dyn_cast<ConstantFP>(C)) {
       Code = bitc::CST_CODE_FLOAT;
       const Type *Ty = CFP->getType();
-      if (Ty == Type::FloatTy || Ty == Type::DoubleTy) {
+      if (Ty == Type::getFloatTy(Ty->getContext()) ||
+          Ty == Type::getDoubleTy(Ty->getContext())) {
         Record.push_back(CFP->getValueAPF().bitcastToAPInt().getZExtValue());
-      } else if (Ty == Type::X86_FP80Ty) {
+      } else if (Ty == Type::getX86_FP80Ty(Ty->getContext())) {
         // api needed to prevent premature destruction
         // bits are not in the same order as a normal i80 APInt, compensate.
         APInt api = CFP->getValueAPF().bitcastToAPInt();
         const uint64_t *p = api.getRawData();
         Record.push_back((p[1] << 48) | (p[0] >> 16));
         Record.push_back(p[0] & 0xffffLL);
-      } else if (Ty == Type::FP128Ty || Ty == Type::PPC_FP128Ty) {
+      } else if (Ty == Type::getFP128Ty(Ty->getContext()) ||
+                 Ty == Type::getPPC_FP128Ty(Ty->getContext())) {
         APInt api = CFP->getValueAPF().bitcastToAPInt();
         const uint64_t *p = api.getRawData();
         Record.push_back(p[0]);
@@ -1139,7 +1141,7 @@ static void WriteFunction(const Function &F, ValueEnumerator &VE,
     for (BasicBlock::const_iterator I = BB->begin(), E = BB->end();
          I != E; ++I) {
       WriteInstruction(*I, InstID, VE, Stream, Vals);
-      if (I->getType() != Type::VoidTy)
+      if (I->getType() != Type::getVoidTy(F.getContext()))
         ++InstID;
     }
   

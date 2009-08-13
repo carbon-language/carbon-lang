@@ -143,24 +143,24 @@ EmitIntrinsicToOverloadTable(const std::vector<CodeGenIntrinsic> &Ints,
 static void EmitTypeForValueType(raw_ostream &OS, MVT::SimpleValueType VT) {
   if (EVT(VT).isInteger()) {
     unsigned BitWidth = EVT(VT).getSizeInBits();
-    OS << "IntegerType::get(" << BitWidth << ")";
+    OS << "IntegerType::get(Context, " << BitWidth << ")";
   } else if (VT == MVT::Other) {
     // MVT::OtherVT is used to mean the empty struct type here.
     OS << "StructType::get(Context)";
   } else if (VT == MVT::f32) {
-    OS << "Type::FloatTy";
+    OS << "Type::getFloatTy(Context)";
   } else if (VT == MVT::f64) {
-    OS << "Type::DoubleTy";
+    OS << "Type::getDoubleTy(Context)";
   } else if (VT == MVT::f80) {
-    OS << "Type::X86_FP80Ty";
+    OS << "Type::getX86_FP80Ty(Context)";
   } else if (VT == MVT::f128) {
-    OS << "Type::FP128Ty";
+    OS << "Type::getFP128Ty(Context)";
   } else if (VT == MVT::ppcf128) {
-    OS << "Type::PPC_FP128Ty";
+    OS << "Type::getPPC_FP128Ty(Context)";
   } else if (VT == MVT::isVoid) {
-    OS << "Type::VoidTy";
+    OS << "Type::getVoidTy(Context)";
   } else if (VT == MVT::Metadata) {
-    OS << "Type::MetadataTy";
+    OS << "Type::getMetadataTy(Context)";
   } else {
     assert(false && "Unsupported ValueType!");
   }
@@ -229,7 +229,7 @@ static void EmitTypeGenerate(raw_ostream &OS, const Record *ArgType,
     ++ArgNo;
   } else if (VT == MVT::isVoid) {
     if (ArgNo == 0)
-      OS << "Type::VoidTy";
+      OS << "Type::getVoidTy(Context)";
     else
       // MVT::isVoid is used to mean varargs here.
       OS << "...";

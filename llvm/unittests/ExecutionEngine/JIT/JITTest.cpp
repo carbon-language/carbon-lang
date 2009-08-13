@@ -34,7 +34,7 @@ Function *makeReturnGlobal(std::string Name, GlobalVariable *G, Module *M) {
   const FunctionType *FTy = FunctionType::get(G->getType()->getElementType(),
                                               params, false);
   Function *F = Function::Create(FTy, GlobalValue::ExternalLinkage, Name, M);
-  BasicBlock *Entry = BasicBlock::Create("entry", F);
+  BasicBlock *Entry = BasicBlock::Create(M->getContext(), "entry", F);
   IRBuilder<> builder(Entry);
   Value *Load = builder.CreateLoad(G);
   const Type *GTy = G->getType()->getElementType();
@@ -69,7 +69,7 @@ TEST(JIT, GlobalInFunction) {
   ASSERT_EQ(Error, "");
 
   // Create a global variable.
-  const Type *GTy = Type::Int32Ty;
+  const Type *GTy = Type::getInt32Ty(context);
   GlobalVariable *G = new GlobalVariable(
       *M,
       GTy,

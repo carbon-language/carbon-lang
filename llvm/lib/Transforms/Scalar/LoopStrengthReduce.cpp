@@ -903,7 +903,8 @@ bool LoopStrengthReduce::ValidScale(bool HasBaseReg, int64_t Scale,
 
   for (unsigned i = 0, e = UsersToProcess.size(); i!=e; ++i) {
     // If this is a load or other access, pass the type of the access in.
-    const Type *AccessTy = Type::VoidTy;
+    const Type *AccessTy =
+        Type::getVoidTy(UsersToProcess[i].Inst->getContext());
     if (isAddressUse(UsersToProcess[i].Inst,
                      UsersToProcess[i].OperandValToReplace))
       AccessTy = getAccessType(UsersToProcess[i].Inst);
@@ -935,7 +936,8 @@ bool LoopStrengthReduce::ValidOffset(bool HasBaseReg,
 
   for (unsigned i=0, e = UsersToProcess.size(); i!=e; ++i) {
     // If this is a load or other access, pass the type of the access in.
-    const Type *AccessTy = Type::VoidTy;
+    const Type *AccessTy =
+        Type::getVoidTy(UsersToProcess[i].Inst->getContext());
     if (isAddressUse(UsersToProcess[i].Inst,
                      UsersToProcess[i].OperandValToReplace))
       AccessTy = getAccessType(UsersToProcess[i].Inst);
@@ -1534,7 +1536,9 @@ void LoopStrengthReduce::StrengthReduceStridedIVUsers(const SCEV *const &Stride,
   if (TLI && HaveCommonExprs && AllUsesAreAddresses) {
     const SCEV *NewCommon = CommonExprs;
     const SCEV *Imm = SE->getIntegerSCEV(0, ReplacedTy);
-    MoveImmediateValues(TLI, Type::VoidTy, NewCommon, Imm, true, L, SE);
+    MoveImmediateValues(TLI, Type::getVoidTy(
+                        L->getLoopPreheader()->getContext()),
+                        NewCommon, Imm, true, L, SE);
     if (!Imm->isZero()) {
       bool DoSink = true;
 
@@ -1549,7 +1553,8 @@ void LoopStrengthReduce::StrengthReduceStridedIVUsers(const SCEV *const &Stride,
       if (GV || Offset)
         // Pass VoidTy as the AccessTy to be conservative, because
         // there could be multiple access types among all the uses.
-        DoSink = IsImmFoldedIntoAddrMode(GV, Offset, Type::VoidTy,
+        DoSink = IsImmFoldedIntoAddrMode(GV, Offset,
+                          Type::getVoidTy(L->getLoopPreheader()->getContext()),
                                          UsersToProcess, TLI);
 
       if (DoSink) {
@@ -1580,8 +1585,10 @@ void LoopStrengthReduce::StrengthReduceStridedIVUsers(const SCEV *const &Stride,
   Value *CommonBaseV = Constant::getNullValue(ReplacedTy);
 
   const SCEV *RewriteFactor = SE->getIntegerSCEV(0, ReplacedTy);
-  IVExpr   ReuseIV(SE->getIntegerSCEV(0, Type::Int32Ty),
-                   SE->getIntegerSCEV(0, Type::Int32Ty),
+  IVExpr   ReuseIV(SE->getIntegerSCEV(0,
+                                    Type::getInt32Ty(Preheader->getContext())),
+                   SE->getIntegerSCEV(0, 
+                                    Type::getInt32Ty(Preheader->getContext())),
                    0);
 
   /// Choose a strength-reduction strategy and prepare for it by creating
@@ -1943,7 +1950,7 @@ ICmpInst *LoopStrengthReduce::ChangeCompareStride(Loop *L, ICmpInst *Cond,
 
       NewCmpTy = NewCmpLHS->getType();
       NewTyBits = SE->getTypeSizeInBits(NewCmpTy);
-      const Type *NewCmpIntTy = IntegerType::get(NewTyBits);
+      const Type *NewCmpIntTy = IntegerType::get(Cond->getContext(), NewTyBits);
       if (RequiresTypeConversion(NewCmpTy, CmpTy)) {
         // Check if it is possible to rewrite it using
         // an iv / stride of a smaller integer type.

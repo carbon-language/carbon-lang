@@ -36,15 +36,17 @@ static Function* createAdd1(Module *M) {
   // function will have a return type of "int" and take an argument of "int".
   // The '0' terminates the list of argument types.
   Function *Add1F =
-    cast<Function>(M->getOrInsertFunction("add1", Type::Int32Ty, Type::Int32Ty,
+    cast<Function>(M->getOrInsertFunction("add1",
+                                          Type::getInt32Ty(M->getContext()),
+                                          Type::getInt32Ty(M->getContext()),
                                           (Type *)0));
 
   // Add a basic block to the function. As before, it automatically inserts
   // because of the last argument.
-  BasicBlock *BB = BasicBlock::Create("EntryBlock", Add1F);
+  BasicBlock *BB = BasicBlock::Create(M->getContext(), "EntryBlock", Add1F);
 
   // Get pointers to the constant `1'.
-  Value *One = ConstantInt::get(Type::Int32Ty, 1);
+  Value *One = ConstantInt::get(Type::getInt32Ty(M->getContext()), 1);
 
   // Get pointers to the integer argument of the add1 function...
   assert(Add1F->arg_begin() != Add1F->arg_end()); // Make sure there's an arg
@@ -55,7 +57,7 @@ static Function* createAdd1(Module *M) {
   Instruction *Add = BinaryOperator::CreateAdd(One, ArgX, "addresult", BB);
 
   // Create the return instruction and add it to the basic block
-  ReturnInst::Create(Add, BB);
+  ReturnInst::Create(M->getContext(), Add, BB);
 
   // Now, function add1 is ready.
   return Add1F;
@@ -65,31 +67,33 @@ static Function *CreateFibFunction(Module *M) {
   // Create the fib function and insert it into module M.  This function is said
   // to return an int and take an int parameter.
   Function *FibF = 
-    cast<Function>(M->getOrInsertFunction("fib", Type::Int32Ty, Type::Int32Ty,
+    cast<Function>(M->getOrInsertFunction("fib",
+                                          Type::getInt32Ty(M->getContext()),
+                                          Type::getInt32Ty(M->getContext()),
                                           (Type *)0));
 
   // Add a basic block to the function.
-  BasicBlock *BB = BasicBlock::Create("EntryBlock", FibF);
+  BasicBlock *BB = BasicBlock::Create(M->getContext(), "EntryBlock", FibF);
 
   // Get pointers to the constants.
-  Value *One = ConstantInt::get(Type::Int32Ty, 1);
-  Value *Two = ConstantInt::get(Type::Int32Ty, 2);
+  Value *One = ConstantInt::get(Type::getInt32Ty(M->getContext()), 1);
+  Value *Two = ConstantInt::get(Type::getInt32Ty(M->getContext()), 2);
 
   // Get pointer to the integer argument of the add1 function...
   Argument *ArgX = FibF->arg_begin();   // Get the arg.
   ArgX->setName("AnArg");            // Give it a nice symbolic name for fun.
 
   // Create the true_block.
-  BasicBlock *RetBB = BasicBlock::Create("return", FibF);
+  BasicBlock *RetBB = BasicBlock::Create(M->getContext(), "return", FibF);
   // Create an exit block.
-  BasicBlock* RecurseBB = BasicBlock::Create("recurse", FibF);
+  BasicBlock* RecurseBB = BasicBlock::Create(M->getContext(), "recurse", FibF);
 
   // Create the "if (arg < 2) goto exitbb"
   Value *CondInst = new ICmpInst(*BB, ICmpInst::ICMP_SLE, ArgX, Two, "cond");
   BranchInst::Create(RetBB, RecurseBB, CondInst, BB);
 
   // Create: ret int 1
-  ReturnInst::Create(One, RetBB);
+  ReturnInst::Create(M->getContext(), One, RetBB);
 
   // create fib(x-1)
   Value *Sub = BinaryOperator::CreateSub(ArgX, One, "arg", RecurseBB);
@@ -104,7 +108,7 @@ static Function *CreateFibFunction(Module *M) {
     BinaryOperator::CreateAdd(CallFibX1, CallFibX2, "addresult", RecurseBB);
 
   // Create the return instruction and add it to the basic block
-  ReturnInst::Create(Sum, RecurseBB);
+  ReturnInst::Create(M->getContext(), Sum, RecurseBB);
 
   return FibF;
 }

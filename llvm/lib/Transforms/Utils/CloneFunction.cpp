@@ -35,7 +35,7 @@ BasicBlock *llvm::CloneBasicBlock(const BasicBlock *BB,
                                   DenseMap<const Value*, Value*> &ValueMap,
                                   const char *NameSuffix, Function *F,
                                   ClonedCodeInfo *CodeInfo) {
-  BasicBlock *NewBB = BasicBlock::Create("", F);
+  BasicBlock *NewBB = BasicBlock::Create(BB->getContext(), "", F);
   if (BB->hasName()) NewBB->setName(BB->getName()+NameSuffix);
 
   bool hasCalls = false, hasDynamicAllocas = false, hasStaticAllocas = false;
@@ -219,7 +219,7 @@ void PruningFunctionCloner::CloneBlock(const BasicBlock *BB,
   
   // Nope, clone it now.
   BasicBlock *NewBB;
-  BBEntry = NewBB = BasicBlock::Create();
+  BBEntry = NewBB = BasicBlock::Create(BB->getContext());
   if (BB->hasName()) NewBB->setName(BB->getName()+NameSuffix);
 
   bool hasCalls = false, hasDynamicAllocas = false, hasStaticAllocas = false;

@@ -685,7 +685,8 @@ void SlotTracker::processFunction() {
       CreateFunctionSlot(BB);
     for (BasicBlock::const_iterator I = BB->begin(), E = BB->end(); I != E; 
          ++I) {
-      if (I->getType() != Type::VoidTy && !I->hasName())
+      if (I->getType() != Type::getVoidTy(TheFunction->getContext()) &&
+          !I->hasName())
         CreateFunctionSlot(I);
       for (unsigned i = 0, e = I->getNumOperands(); i != e; ++i) 
         if (MDNode *N = dyn_cast<MDNode>(I->getOperand(i))) 
@@ -767,7 +768,8 @@ int SlotTracker::getLocalSlot(const Value *V) {
 /// CreateModuleSlot - Insert the specified GlobalValue* into the slot table.
 void SlotTracker::CreateModuleSlot(const GlobalValue *V) {
   assert(V && "Can't insert a null Value into SlotTracker!");
-  assert(V->getType() != Type::VoidTy && "Doesn't need a slot!");
+  assert(V->getType() != Type::getVoidTy(V->getContext()) && 
+         "Doesn't need a slot!");
   assert(!V->hasName() && "Doesn't need a slot!");
   
   unsigned DestSlot = mNext++;
@@ -783,8 +785,8 @@ void SlotTracker::CreateModuleSlot(const GlobalValue *V) {
 
 /// CreateSlot - Create a new slot for the specified value if it has no name.
 void SlotTracker::CreateFunctionSlot(const Value *V) {
-  assert(V->getType() != Type::VoidTy && !V->hasName() &&
-         "Doesn't need a slot!");
+  assert(V->getType() != Type::getVoidTy(TheFunction->getContext()) && 
+         !V->hasName() && "Doesn't need a slot!");
   
   unsigned DestSlot = fNext++;
   fMap[V] = DestSlot;
@@ -909,7 +911,7 @@ static void WriteOptimizationInfo(raw_ostream &Out, const User *U) {
 static void WriteConstantInt(raw_ostream &Out, const Constant *CV,
                              TypePrinting &TypePrinter, SlotTracker *Machine) {
   if (const ConstantInt *CI = dyn_cast<ConstantInt>(CV)) {
-    if (CI->getType() == Type::Int1Ty) {
+    if (CI->getType() == Type::getInt1Ty(CV->getContext())) {
       Out << (CI->getZExtValue() ? "true" : "false");
       return;
     }
@@ -1725,7 +1727,7 @@ void AssemblyWriter::printBasicBlock(const BasicBlock *BB) {
 /// which slot it occupies.
 ///
 void AssemblyWriter::printInfoComment(const Value &V) {
-  if (V.getType() != Type::VoidTy) {
+  if (V.getType() != Type::getVoidTy(V.getContext())) {
     Out.PadToColumn(50);
     Out << "; <";
     TypePrinter.print(V.getType(), Out);
@@ -1744,7 +1746,7 @@ void AssemblyWriter::printInstruction(const Instruction &I) {
   if (I.hasName()) {
     PrintLLVMName(Out, &I);
     Out << " = ";
-  } else if (I.getType() != Type::VoidTy) {
+  } else if (I.getType() != Type::getVoidTy(I.getContext())) {
     // Print out the def slot taken.
     int SlotNum = Machine.getLocalSlot(&I);
     if (SlotNum == -1)

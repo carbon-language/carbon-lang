@@ -502,10 +502,10 @@ static bool IndexOperandsEqual(Value *V1, Value *V2, LLVMContext &Context) {
   if (Constant *C1 = dyn_cast<Constant>(V1))
     if (Constant *C2 = dyn_cast<Constant>(V2)) {
       // Sign extend the constants to long types, if necessary
-      if (C1->getType() != Type::Int64Ty)
-        C1 = ConstantExpr::getSExt(C1, Type::Int64Ty);
-      if (C2->getType() != Type::Int64Ty) 
-        C2 = ConstantExpr::getSExt(C2, Type::Int64Ty);
+      if (C1->getType() != Type::getInt64Ty(Context))
+        C1 = ConstantExpr::getSExt(C1, Type::getInt64Ty(Context));
+      if (C2->getType() != Type::getInt64Ty(Context)) 
+        C2 = ConstantExpr::getSExt(C2, Type::getInt64Ty(Context));
       return C1 == C2;
     }
   return false;
@@ -600,10 +600,10 @@ BasicAliasAnalysis::CheckGEPInstructions(
         if (Constant *G2OC = dyn_cast<ConstantInt>(const_cast<Value*>(G2Oper))){
           if (G1OC->getType() != G2OC->getType()) {
             // Sign extend both operands to long.
-            if (G1OC->getType() != Type::Int64Ty)
-              G1OC = ConstantExpr::getSExt(G1OC, Type::Int64Ty);
-            if (G2OC->getType() != Type::Int64Ty) 
-              G2OC = ConstantExpr::getSExt(G2OC, Type::Int64Ty);
+            if (G1OC->getType() != Type::getInt64Ty(Context))
+              G1OC = ConstantExpr::getSExt(G1OC, Type::getInt64Ty(Context));
+            if (G2OC->getType() != Type::getInt64Ty(Context)) 
+              G2OC = ConstantExpr::getSExt(G2OC, Type::getInt64Ty(Context));
             GEP1Ops[FirstConstantOper] = G1OC;
             GEP2Ops[FirstConstantOper] = G2OC;
           }
@@ -738,7 +738,8 @@ BasicAliasAnalysis::CheckGEPInstructions(
   const Type *ZeroIdxTy = GEPPointerTy;
   for (unsigned i = 0; i != FirstConstantOper; ++i) {
     if (!isa<StructType>(ZeroIdxTy))
-      GEP1Ops[i] = GEP2Ops[i] = Constant::getNullValue(Type::Int32Ty);
+      GEP1Ops[i] = GEP2Ops[i] = 
+                              Constant::getNullValue(Type::getInt32Ty(Context));
 
     if (const CompositeType *CT = dyn_cast<CompositeType>(ZeroIdxTy))
       ZeroIdxTy = CT->getTypeAtIndex(GEP1Ops[i]);
@@ -780,10 +781,12 @@ BasicAliasAnalysis::CheckGEPInstructions(
           //
           if (const ArrayType *AT = dyn_cast<ArrayType>(BasePtr1Ty))
             GEP1Ops[i] =
-                  ConstantInt::get(Type::Int64Ty,AT->getNumElements()-1);
+                  ConstantInt::get(Type::getInt64Ty(Context), 
+                                   AT->getNumElements()-1);
           else if (const VectorType *VT = dyn_cast<VectorType>(BasePtr1Ty))
             GEP1Ops[i] = 
-                  ConstantInt::get(Type::Int64Ty,VT->getNumElements()-1);
+                  ConstantInt::get(Type::getInt64Ty(Context),
+                                   VT->getNumElements()-1);
         }
       }
 

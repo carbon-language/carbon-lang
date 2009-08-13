@@ -438,7 +438,7 @@ LowerLOAD(SDValue Op, SelectionDAG &DAG)
   }
   
   // Lower to a call to __misaligned_load(BasePtr).
-  const Type *IntPtrTy = getTargetData()->getIntPtrType();
+  const Type *IntPtrTy = getTargetData()->getIntPtrType(*DAG.getContext());
   TargetLowering::ArgListTy Args;
   TargetLowering::ArgListEntry Entry;
   
@@ -496,7 +496,7 @@ LowerSTORE(SDValue Op, SelectionDAG &DAG)
   }
   
   // Lower to a call to __misaligned_store(BasePtr, Value).
-  const Type *IntPtrTy = getTargetData()->getIntPtrType();
+  const Type *IntPtrTy = getTargetData()->getIntPtrType(*DAG.getContext());
   TargetLowering::ArgListTy Args;
   TargetLowering::ArgListEntry Entry;
   
@@ -508,7 +508,7 @@ LowerSTORE(SDValue Op, SelectionDAG &DAG)
   Args.push_back(Entry);
   
   std::pair<SDValue, SDValue> CallResult =
-        LowerCallTo(Chain, Type::VoidTy, false, false,
+        LowerCallTo(Chain, Type::getVoidTy(*DAG.getContext()), false, false,
                     false, false, 0, CallingConv::C, false,
                     /*isReturnValueUsed=*/true,
                     DAG.getExternalSymbol("__misaligned_store", getPointerTy()),

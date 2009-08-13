@@ -38,15 +38,15 @@ STATISTIC(NumMemSetInfer, "Number of memsets inferred");
 /// byte store (e.g. i16 0x1234), return null.
 static Value *isBytewiseValue(Value *V, LLVMContext& Context) {
   // All byte-wide stores are splatable, even of arbitrary variables.
-  if (V->getType() == Type::Int8Ty) return V;
+  if (V->getType() == Type::getInt8Ty(Context)) return V;
   
   // Constant float and double values can be handled as integer values if the
   // corresponding integer value is "byteable".  An important case is 0.0. 
   if (ConstantFP *CFP = dyn_cast<ConstantFP>(V)) {
-    if (CFP->getType() == Type::FloatTy)
-      V = ConstantExpr::getBitCast(CFP, Type::Int32Ty);
-    if (CFP->getType() == Type::DoubleTy)
-      V = ConstantExpr::getBitCast(CFP, Type::Int64Ty);
+    if (CFP->getType() == Type::getFloatTy(Context))
+      V = ConstantExpr::getBitCast(CFP, Type::getInt32Ty(Context));
+    if (CFP->getType() == Type::getDoubleTy(Context))
+      V = ConstantExpr::getBitCast(CFP, Type::getInt64Ty(Context));
     // Don't handle long double formats, which have strange constraints.
   }
   
@@ -431,7 +431,7 @@ bool MemCpyOpt::processStore(StoreInst *SI, BasicBlock::iterator& BBI) {
     BasicBlock::iterator InsertPt = BI;
   
     if (MemSetF == 0) {
-      const Type *Tys[] = {Type::Int64Ty};
+      const Type *Tys[] = {Type::getInt64Ty(SI->getContext())};
       MemSetF = Intrinsic::getDeclaration(M, Intrinsic::memset,
                                           Tys, 1);
    }
@@ -440,7 +440,8 @@ bool MemCpyOpt::processStore(StoreInst *SI, BasicBlock::iterator& BBI) {
     StartPtr = Range.StartPtr;
   
     // Cast the start ptr to be i8* as memset requires.
-    const Type *i8Ptr = PointerType::getUnqual(Type::Int8Ty);
+    const Type *i8Ptr =
+          PointerType::getUnqual(Type::getInt8Ty(SI->getContext()));
     if (StartPtr->getType() != i8Ptr)
       StartPtr = new BitCastInst(StartPtr, i8Ptr, StartPtr->getName(),
                                  InsertPt);
@@ -448,9 +449,10 @@ bool MemCpyOpt::processStore(StoreInst *SI, BasicBlock::iterator& BBI) {
     Value *Ops[] = {
       StartPtr, ByteVal,   // Start, value
       // size
-      ConstantInt::get(Type::Int64Ty, Range.End-Range.Start),
+      ConstantInt::get(Type::getInt64Ty(SI->getContext()),
+                       Range.End-Range.Start),
       // align
-      ConstantInt::get(Type::Int32Ty, Range.Alignment)
+      ConstantInt::get(Type::getInt32Ty(SI->getContext()), Range.Alignment)
     };
     Value *C = CallInst::Create(MemSetF, Ops, Ops+4, "", InsertPt);
     DEBUG(cerr << "Replace stores:\n";

@@ -541,8 +541,8 @@ unsigned char TargetData::getPreferredTypeAlignmentShift(const Type *Ty) const {
 
 /// getIntPtrType - Return an unsigned integer type that is the same size or
 /// greater to the host pointer size.
-const IntegerType *TargetData::getIntPtrType() const {
-  return IntegerType::get(getPointerSizeInBits());
+const IntegerType *TargetData::getIntPtrType(LLVMContext &C) const {
+  return IntegerType::get(C, getPointerSizeInBits());
 }
 
 
@@ -556,7 +556,8 @@ uint64_t TargetData::getIndexedOffset(const Type *ptrTy, Value* const* Indices,
     TI = gep_type_begin(ptrTy, Indices, Indices+NumIndices);
   for (unsigned CurIDX = 0; CurIDX != NumIndices; ++CurIDX, ++TI) {
     if (const StructType *STy = dyn_cast<StructType>(*TI)) {
-      assert(Indices[CurIDX]->getType() == Type::Int32Ty &&
+      assert(Indices[CurIDX]->getType() ==
+             Type::getInt32Ty(ptrTy->getContext()) &&
              "Illegal struct idx");
       unsigned FieldNo = cast<ConstantInt>(Indices[CurIDX])->getZExtValue();
 

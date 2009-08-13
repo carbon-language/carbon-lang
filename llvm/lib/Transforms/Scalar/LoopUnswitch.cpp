@@ -511,7 +511,8 @@ void LoopUnswitch::EmitPreheaderBranchOnCondition(Value *LIC, Constant *Val,
   // Insert a conditional branch on LIC to the two preheaders.  The original
   // code is the true version and the new code is the false version.
   Value *BranchVal = LIC;
-  if (!isa<ConstantInt>(Val) || Val->getType() != Type::Int1Ty)
+  if (!isa<ConstantInt>(Val) ||
+      Val->getType() != Type::getInt1Ty(LIC->getContext()))
     BranchVal = new ICmpInst(InsertPt, ICmpInst::ICMP_EQ, LIC, Val, "tmp");
   else if (Val != ConstantInt::getTrue(Val->getContext()))
     // We want to enter the new loop when the condition is true.
@@ -793,7 +794,7 @@ void LoopUnswitch::RemoveBlockIfDead(BasicBlock *BB,
           // dominates the latch).
           LPM->deleteSimpleAnalysisValue(Pred->getTerminator(), L);
           Pred->getTerminator()->eraseFromParent();
-          new UnreachableInst(Pred);
+          new UnreachableInst(BB->getContext(), Pred);
           
           // The loop is now broken, remove it from LI.
           RemoveLoopFromHierarchy(L);
@@ -907,12 +908,13 @@ void LoopUnswitch::RewriteLoopBodyWithConditionConstant(Loop *L, Value *LIC,
 
   // If we know that LIC == Val, or that LIC == NotVal, just replace uses of LIC
   // in the loop with the appropriate one directly.
-  if (IsEqual || (isa<ConstantInt>(Val) && Val->getType() == Type::Int1Ty)) {
+  if (IsEqual || (isa<ConstantInt>(Val) &&
+      Val->getType() == Type::getInt1Ty(Val->getContext()))) {
     Value *Replacement;
     if (IsEqual)
       Replacement = Val;
     else
-      Replacement = ConstantInt::get(Type::Int1Ty, 
+      Replacement = ConstantInt::get(Type::getInt1Ty(Val->getContext()), 
                                      !cast<ConstantInt>(Val)->getZExtValue());
     
     for (unsigned i = 0, e = Users.size(); i != e; ++i)
@@ -1024,10 +1026,11 @@ void LoopUnswitch::SimplifyCode(std::vector<Instruction*> &Worklist, Loop *L) {
       break;
     case Instruction::And:
       if (isa<ConstantInt>(I->getOperand(0)) && 
-          I->getOperand(0)->getType() == Type::Int1Ty)   // constant -> RHS
+          // constant -> RHS
+          I->getOperand(0)->getType() == Type::getInt1Ty(I->getContext()))   
         cast<BinaryOperator>(I)->swapOperands();
       if (ConstantInt *CB = dyn_cast<ConstantInt>(I->getOperand(1))) 
-        if (CB->getType() == Type::Int1Ty) {
+        if (CB->getType() == Type::getInt1Ty(I->getContext())) {
           if (CB->isOne())      // X & 1 -> X
             ReplaceUsesOfWith(I, I->getOperand(0), Worklist, L, LPM);
           else                  // X & 0 -> 0
@@ -1037,10 +1040,11 @@ void LoopUnswitch::SimplifyCode(std::vector<Instruction*> &Worklist, Loop *L) {
       break;
     case Instruction::Or:
       if (isa<ConstantInt>(I->getOperand(0)) &&
-          I->getOperand(0)->getType() == Type::Int1Ty)   // constant -> RHS
+          // constant -> RHS
+          I->getOperand(0)->getType() == Type::getInt1Ty(I->getContext()))
         cast<BinaryOperator>(I)->swapOperands();
       if (ConstantInt *CB = dyn_cast<ConstantInt>(I->getOperand(1)))
-        if (CB->getType() == Type::Int1Ty) {
+        if (CB->getType() == Type::getInt1Ty(I->getContext())) {
           if (CB->isOne())   // X | 1 -> 1
             ReplaceUsesOfWith(I, I->getOperand(1), Worklist, L, LPM);
           else                  // X | 0 -> X

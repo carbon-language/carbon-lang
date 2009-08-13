@@ -151,7 +151,7 @@ static Constant *SymbolicallyEvaluateGEP(Constant* const* Ops, unsigned NumOps,
   
   uint64_t Offset = TD->getIndexedOffset(Ptr->getType(),
                                          (Value**)Ops+1, NumOps-1);
-  Constant *C = ConstantInt::get(TD->getIntPtrType(), Offset+BasePtr);
+  Constant *C = ConstantInt::get(TD->getIntPtrType(Context), Offset+BasePtr);
   return ConstantExpr::getIntToPtr(C, ResultTy);
 }
 
@@ -185,7 +185,7 @@ static Constant *FoldBitCast(Constant *C, const Type *DestTy,
         // Fold to an vector of integers with same size as our FP type.
         unsigned FPWidth = DstEltTy->getPrimitiveSizeInBits();
         const Type *DestIVTy = VectorType::get(
-                                   IntegerType::get(FPWidth), NumDstElt);
+                                 IntegerType::get(Context, FPWidth), NumDstElt);
         // Recursively handle this integer conversion, if possible.
         C = FoldBitCast(C, DestIVTy, TD, Context);
         if (!C) return 0;
@@ -199,7 +199,7 @@ static Constant *FoldBitCast(Constant *C, const Type *DestTy,
       if (SrcEltTy->isFloatingPoint()) {
         unsigned FPWidth = SrcEltTy->getPrimitiveSizeInBits();
         const Type *SrcIVTy = VectorType::get(
-                                   IntegerType::get(FPWidth), NumSrcElt);
+                                 IntegerType::get(Context, FPWidth), NumSrcElt);
         // Ask VMCore to do the conversion now that #elts line up.
         C = ConstantExpr::getBitCast(C, SrcIVTy);
         CV = dyn_cast<ConstantVector>(C);
@@ -480,7 +480,7 @@ Constant *llvm::ConstantFoldCompareInstOperands(unsigned Predicate,
   // around to know if bit truncation is happening.
   if (ConstantExpr *CE0 = dyn_cast<ConstantExpr>(Ops[0])) {
     if (TD && Ops[1]->isNullValue()) {
-      const Type *IntPtrTy = TD->getIntPtrType();
+      const Type *IntPtrTy = TD->getIntPtrType(Context);
       if (CE0->getOpcode() == Instruction::IntToPtr) {
         // Convert the integer value to the right size to ensure we get the
         // proper extension or truncation.
@@ -505,7 +505,7 @@ Constant *llvm::ConstantFoldCompareInstOperands(unsigned Predicate,
     
     if (ConstantExpr *CE1 = dyn_cast<ConstantExpr>(Ops[1])) {
       if (TD && CE0->getOpcode() == CE1->getOpcode()) {
-        const Type *IntPtrTy = TD->getIntPtrType();
+        const Type *IntPtrTy = TD->getIntPtrType(Context);
 
         if (CE0->getOpcode() == Instruction::IntToPtr) {
           // Convert the integer value to the right size to ensure we get the
@@ -654,9 +654,9 @@ static Constant *ConstantFoldFP(double (*NativeFP)(double), double V,
     return 0;
   }
   
-  if (Ty == Type::FloatTy)
+  if (Ty == Type::getFloatTy(Context))
     return ConstantFP::get(Context, APFloat((float)V));
-  if (Ty == Type::DoubleTy)
+  if (Ty == Type::getDoubleTy(Context))
     return ConstantFP::get(Context, APFloat(V));
   llvm_unreachable("Can only constant fold float/double");
   return 0; // dummy return to suppress warning
@@ -673,9 +673,9 @@ static Constant *ConstantFoldBinaryFP(double (*NativeFP)(double, double),
     return 0;
   }
   
-  if (Ty == Type::FloatTy)
+  if (Ty == Type::getFloatTy(Context))
     return ConstantFP::get(Context, APFloat((float)V));
-  if (Ty == Type::DoubleTy)
+  if (Ty == Type::getDoubleTy(Context))
     return ConstantFP::get(Context, APFloat(V));
   llvm_unreachable("Can only constant fold float/double");
   return 0; // dummy return to suppress warning
@@ -694,13 +694,15 @@ llvm::ConstantFoldCall(Function *F,
   const Type *Ty = F->getReturnType();
   if (NumOperands == 1) {
     if (ConstantFP *Op = dyn_cast<ConstantFP>(Operands[0])) {
-      if (Ty!=Type::FloatTy && Ty!=Type::DoubleTy)
+      if (Ty!=Type::getFloatTy(F->getContext()) &&
+          Ty!=Type::getDoubleTy(Context))
         return 0;
       /// Currently APFloat versions of these functions do not exist, so we use
       /// the host native double versions.  Float versions are not called
       /// directly but for all these it is true (float)(f((double)arg)) ==
       /// f(arg).  Long double not supported yet.
-      double V = Ty==Type::FloatTy ? (double)Op->getValueAPF().convertToFloat():
+      double V = Ty==Type::getFloatTy(F->getContext()) ?
+                                     (double)Op->getValueAPF().convertToFloat():
                                      Op->getValueAPF().convertToDouble();
       switch (Name[0]) {
       case 'a':
@@ -777,13 +779,14 @@ llvm::ConstantFoldCall(Function *F,
     }
   } else if (NumOperands == 2) {
     if (ConstantFP *Op1 = dyn_cast<ConstantFP>(Operands[0])) {
-      if (Ty!=Type::FloatTy && Ty!=Type::DoubleTy)
+      if (Ty!=Type::getFloatTy(F->getContext()) && 
+          Ty!=Type::getDoubleTy(Context))
         return 0;
-      double Op1V = Ty==Type::FloatTy ? 
+      double Op1V = Ty==Type::getFloatTy(F->getContext()) ? 
                       (double)Op1->getValueAPF().convertToFloat():
                       Op1->getValueAPF().convertToDouble();
       if (ConstantFP *Op2 = dyn_cast<ConstantFP>(Operands[1])) {
-        double Op2V = Ty==Type::FloatTy ? 
+        double Op2V = Ty==Type::getFloatTy(F->getContext()) ? 
                       (double)Op2->getValueAPF().convertToFloat():
                       Op2->getValueAPF().convertToDouble();
 

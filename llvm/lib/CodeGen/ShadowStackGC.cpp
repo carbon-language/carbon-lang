@@ -138,8 +138,9 @@ namespace {
           return 0;
 
         // Create a cleanup block.
-        BasicBlock *CleanupBB = BasicBlock::Create(CleanupBBName, &F);
-        UnwindInst *UI = new UnwindInst(CleanupBB);
+        BasicBlock *CleanupBB = BasicBlock::Create(F.getContext(),
+                                                   CleanupBBName, &F);
+        UnwindInst *UI = new UnwindInst(F.getContext(), CleanupBB);
 
         // Transform the 'call' instructions into 'invoke's branching to the
         // cleanup block. Go in reverse order to make prettier BB names.
@@ -188,7 +189,7 @@ ShadowStackGC::ShadowStackGC() : Head(0), StackEntryTy(0) {
 
 Constant *ShadowStackGC::GetFrameMap(Function &F) {
   // doInitialization creates the abstract type of this value.
-  Type *VoidPtr = PointerType::getUnqual(Type::Int8Ty);
+  Type *VoidPtr = PointerType::getUnqual(Type::getInt8Ty(F.getContext()));
 
   // Truncate the ShadowStackDescriptor if some metadata is null.
   unsigned NumMeta = 0;
@@ -201,8 +202,8 @@ Constant *ShadowStackGC::GetFrameMap(Function &F) {
   }
 
   Constant *BaseElts[] = {
-    ConstantInt::get(Type::Int32Ty, Roots.size(), false),
-    ConstantInt::get(Type::Int32Ty, NumMeta, false),
+    ConstantInt::get(Type::getInt32Ty(F.getContext()), Roots.size(), false),
+    ConstantInt::get(Type::getInt32Ty(F.getContext()), NumMeta, false),
   };
 
   Constant *DescriptorElts[] = {
@@ -234,8 +235,10 @@ Constant *ShadowStackGC::GetFrameMap(Function &F) {
                                     GlobalVariable::InternalLinkage,
                                     FrameMap, "__gc_" + F.getName());
 
-  Constant *GEPIndices[2] = { ConstantInt::get(Type::Int32Ty, 0),
-                              ConstantInt::get(Type::Int32Ty, 0) };
+  Constant *GEPIndices[2] = {
+                          ConstantInt::get(Type::getInt32Ty(F.getContext()), 0),
+                          ConstantInt::get(Type::getInt32Ty(F.getContext()), 0)
+                          };
   return ConstantExpr::getGetElementPtr(GV, GEPIndices, 2);
 }
 
@@ -263,8 +266,10 @@ bool ShadowStackGC::initializeCustomLowering(Module &M) {
   //   void *Meta[];     // May be absent for roots without metadata.
   // };
   std::vector<const Type*> EltTys;
-  EltTys.push_back(Type::Int32Ty); // 32 bits is ok up to a 32GB stack frame. :)
-  EltTys.push_back(Type::Int32Ty); // Specifies length of variable length array.
+  // 32 bits is ok up to a 32GB stack frame. :)
+  EltTys.push_back(Type::getInt32Ty(M.getContext()));
+  // Specifies length of variable length array. 
+  EltTys.push_back(Type::getInt32Ty(M.getContext()));
   StructType *FrameMapTy = StructType::get(M.getContext(), EltTys);
   M.addTypeName("gc_map", FrameMapTy);
   PointerType *FrameMapPtrTy = PointerType::getUnqual(FrameMapTy);
@@ -340,9 +345,9 @@ void ShadowStackGC::CollectRoots(Function &F) {
 GetElementPtrInst *
 ShadowStackGC::CreateGEP(LLVMContext &Context, IRBuilder<> &B, Value *BasePtr,
                          int Idx, int Idx2, const char *Name) {
-  Value *Indices[] = { ConstantInt::get(Type::Int32Ty, 0),
-                       ConstantInt::get(Type::Int32Ty, Idx),
-                       ConstantInt::get(Type::Int32Ty, Idx2) };
+  Value *Indices[] = { ConstantInt::get(Type::getInt32Ty(Context), 0),
+                       ConstantInt::get(Type::getInt32Ty(Context), Idx),
+                       ConstantInt::get(Type::getInt32Ty(Context), Idx2) };
   Value* Val = B.CreateGEP(BasePtr, Indices, Indices + 3, Name);
 
   assert(isa<GetElementPtrInst>(Val) && "Unexpected folded constant");
@@ -353,8 +358,8 @@ ShadowStackGC::CreateGEP(LLVMContext &Context, IRBuilder<> &B, Value *BasePtr,
 GetElementPtrInst *
 ShadowStackGC::CreateGEP(LLVMContext &Context, IRBuilder<> &B, Value *BasePtr,
                          int Idx, const char *Name) {
-  Value *Indices[] = { ConstantInt::get(Type::Int32Ty, 0),
-                       ConstantInt::get(Type::Int32Ty, Idx) };
+  Value *Indices[] = { ConstantInt::get(Type::getInt32Ty(Context), 0),
+                       ConstantInt::get(Type::getInt32Ty(Context), Idx) };
   Value *Val = B.CreateGEP(BasePtr, Indices, Indices + 2, Name);
 
   assert(isa<GetElementPtrInst>(Val) && "Unexpected folded constant");

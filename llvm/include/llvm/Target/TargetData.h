@@ -34,6 +34,7 @@ class IntegerType;
 class StructType;
 class StructLayout;
 class GlobalVariable;
+class LLVMContext;
 
 /// Enum used to categorize the alignment types stored by TargetAlignElem
 enum AlignTypeEnum {
@@ -229,7 +230,7 @@ public:
   /// getIntPtrType - Return an unsigned integer type that is the same size or
   /// greater to the host pointer size.
   ///
-  const IntegerType *getIntPtrType() const;
+  const IntegerType *getIntPtrType(LLVMContext &C) const;
 
   /// getIndexedOffset - return the offset from the beginning of the type for
   /// the specified indices.  This is used to implement getelementptr.

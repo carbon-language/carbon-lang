@@ -5831,7 +5831,7 @@ X86TargetLowering::EmitTargetCodeForMemset(SelectionDAG &DAG, DebugLoc dl,
     if (const char *bzeroEntry =  V &&
         V->isNullValue() ? Subtarget->getBZeroEntry() : 0) {
       EVT IntPtr = getPointerTy();
-      const Type *IntPtrTy = TD->getIntPtrType();
+      const Type *IntPtrTy = TD->getIntPtrType(*DAG.getContext());
       TargetLowering::ArgListTy Args;
       TargetLowering::ArgListEntry Entry;
       Entry.Node = Dst;
@@ -5840,7 +5840,8 @@ X86TargetLowering::EmitTargetCodeForMemset(SelectionDAG &DAG, DebugLoc dl,
       Entry.Node = Size;
       Args.push_back(Entry);
       std::pair<SDValue,SDValue> CallResult =
-        LowerCallTo(Chain, Type::VoidTy, false, false, false, false,
+        LowerCallTo(Chain, Type::getVoidTy(*DAG.getContext()),
+                    false, false, false, false,
                     0, CallingConv::C, false, /*isReturnValueUsed=*/false,
                     DAG.getExternalSymbol(bzeroEntry, IntPtr), Args, DAG, dl);
       return CallResult.second;
@@ -7159,7 +7160,8 @@ bool X86TargetLowering::isTruncateFree(EVT VT1, EVT VT2) const {
 
 bool X86TargetLowering::isZExtFree(const Type *Ty1, const Type *Ty2) const {
   // x86-64 implicitly zero-extends 32-bit results in 64-bit registers.
-  return Ty1 == Type::Int32Ty && Ty2 == Type::Int64Ty && Subtarget->is64Bit();
+  return Ty1 == Type::getInt32Ty(Ty1->getContext()) &&
+         Ty2 == Type::getInt64Ty(Ty1->getContext()) && Subtarget->is64Bit();
 }
 
 bool X86TargetLowering::isZExtFree(EVT VT1, EVT VT2) const {
@@ -8768,7 +8770,7 @@ bool X86TargetLowering::ExpandInlineAsm(CallInst *CI) const {
       return LowerToBSwap(CI);
     }
     // rorw $$8, ${0:w}  -->  llvm.bswap.i16
-    if (CI->getType() == Type::Int16Ty &&
+    if (CI->getType() == Type::getInt16Ty(CI->getContext()) &&
         AsmPieces.size() == 3 &&
         AsmPieces[0] == "rorw" &&
         AsmPieces[1] == "$$8," &&
@@ -8778,7 +8780,8 @@ bool X86TargetLowering::ExpandInlineAsm(CallInst *CI) const {
     }
     break;
   case 3:
-    if (CI->getType() == Type::Int64Ty && Constraints.size() >= 2 &&
+    if (CI->getType() == Type::getInt64Ty(CI->getContext()) && 
+        Constraints.size() >= 2 &&
         Constraints[0].Codes.size() == 1 && Constraints[0].Codes[0] == "A" &&
         Constraints[1].Codes.size() == 1 && Constraints[1].Codes[0] == "0") {
       // bswap %eax / bswap %edx / xchgl %eax, %edx  -> llvm.bswap.i64
@@ -8896,7 +8899,8 @@ void X86TargetLowering::LowerAsmOperandForConstraint(SDValue Op,
     // 32-bit signed value
     if (ConstantSDNode *C = dyn_cast<ConstantSDNode>(Op)) {
       const ConstantInt *CI = C->getConstantIntValue();
-      if (CI->isValueValidForType(Type::Int32Ty, C->getSExtValue())) {
+      if (CI->isValueValidForType(Type::getInt32Ty(*DAG.getContext()),
+                                  C->getSExtValue())) {
         // Widen to 64 bits here to get it sign extended.
         Result = DAG.getTargetConstant(C->getSExtValue(), MVT::i64);
         break;
@@ -8910,7 +8914,8 @@ void X86TargetLowering::LowerAsmOperandForConstraint(SDValue Op,
     // 32-bit unsigned value
     if (ConstantSDNode *C = dyn_cast<ConstantSDNode>(Op)) {
       const ConstantInt *CI = C->getConstantIntValue();
-      if (CI->isValueValidForType(Type::Int32Ty, C->getZExtValue())) {
+      if (CI->isValueValidForType(Type::getInt32Ty(*DAG.getContext()),
+                                  C->getZExtValue())) {
         Result = DAG.getTargetConstant(C->getZExtValue(), Op.getValueType());
         break;
       }

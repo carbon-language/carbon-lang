@@ -198,7 +198,7 @@ void ValueEnumerator::EnumerateMetadata(const MetadataBase *MD) {
       if (*I)
         EnumerateValue(*I);
       else
-        EnumerateType(Type::VoidTy);
+        EnumerateType(Type::getVoidTy(MD->getContext()));
     }
     return;
   } else if (const NamedMDNode *N = dyn_cast<NamedMDNode>(MD)) {
@@ -218,7 +218,8 @@ void ValueEnumerator::EnumerateMetadata(const MetadataBase *MD) {
 }
 
 void ValueEnumerator::EnumerateValue(const Value *V) {
-  assert(V->getType() != Type::VoidTy && "Can't insert void values!");
+  assert(V->getType() != Type::getVoidTy(V->getContext()) &&
+         "Can't insert void values!");
   if (const MetadataBase *MB = dyn_cast<MetadataBase>(V))
     return EnumerateMetadata(MB);
 
@@ -358,7 +359,7 @@ void ValueEnumerator::incorporateFunction(const Function &F) {
   // Add all of the instructions.
   for (Function::const_iterator BB = F.begin(), E = F.end(); BB != E; ++BB) {
     for (BasicBlock::const_iterator I = BB->begin(), E = BB->end(); I!=E; ++I) {
-      if (I->getType() != Type::VoidTy)
+      if (I->getType() != Type::getVoidTy(F.getContext()))
         EnumerateValue(I);
     }
   }

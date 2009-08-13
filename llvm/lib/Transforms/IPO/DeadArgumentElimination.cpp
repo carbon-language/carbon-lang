@@ -281,7 +281,7 @@ bool DAE::DeleteDeadVarargs(Function &Fn) {
 /// for void functions and 1 for functions not returning a struct. It returns
 /// the number of struct elements for functions returning a struct.
 static unsigned NumRetVals(const Function *F) {
-  if (F->getReturnType() == Type::VoidTy)
+  if (F->getReturnType() == Type::getVoidTy(F->getContext()))
     return 0;
   else if (const StructType *STy = dyn_cast<StructType>(F->getReturnType()))
     return STy->getNumElements();
@@ -604,8 +604,8 @@ bool DAE::RemoveDeadStuffFromFunction(Function *F) {
   // -1 means unused, other numbers are the new index
   SmallVector<int, 5> NewRetIdxs(RetCount, -1);
   std::vector<const Type*> RetTypes;
-  if (RetTy == Type::VoidTy) {
-    NRetTy = Type::VoidTy;
+  if (RetTy == Type::getVoidTy(F->getContext())) {
+    NRetTy = Type::getVoidTy(F->getContext());
   } else {
     const StructType *STy = dyn_cast<StructType>(RetTy);
     if (STy)
@@ -645,7 +645,7 @@ bool DAE::RemoveDeadStuffFromFunction(Function *F) {
       NRetTy = RetTypes.front();
     else if (RetTypes.size() == 0)
       // No return types? Make it void, but only if we didn't use to return {}.
-      NRetTy = Type::VoidTy;
+      NRetTy = Type::getVoidTy(F->getContext());
   }
 
   assert(NRetTy && "No new return type found?");
@@ -654,7 +654,7 @@ bool DAE::RemoveDeadStuffFromFunction(Function *F) {
   // values. Otherwise, ensure that we don't have any conflicting attributes
   // here. Currently, this should not be possible, but special handling might be
   // required when new return value attributes are added.
-  if (NRetTy == Type::VoidTy)
+  if (NRetTy == Type::getVoidTy(F->getContext()))
     RAttrs &= ~Attribute::typeIncompatible(NRetTy);
   else
     assert((RAttrs & Attribute::typeIncompatible(NRetTy)) == 0 
@@ -702,7 +702,7 @@ bool DAE::RemoveDeadStuffFromFunction(Function *F) {
   bool ExtraArgHack = false;
   if (Params.empty() && FTy->isVarArg() && FTy->getNumParams() != 0) {
     ExtraArgHack = true;
-    Params.push_back(Type::Int32Ty);
+    Params.push_back(Type::getInt32Ty(F->getContext()));
   }
 
   // Create the new function type based on the recomputed parameters.
@@ -756,7 +756,7 @@ bool DAE::RemoveDeadStuffFromFunction(Function *F) {
       }
 
     if (ExtraArgHack)
-      Args.push_back(UndefValue::get(Type::Int32Ty));
+      Args.push_back(UndefValue::get(Type::getInt32Ty(F->getContext())));
 
     // Push any varargs arguments on the list. Don't forget their attributes.
     for (CallSite::arg_iterator E = CS.arg_end(); I != E; ++I, ++i) {
@@ -792,7 +792,7 @@ bool DAE::RemoveDeadStuffFromFunction(Function *F) {
         // Return type not changed? Just replace users then.
         Call->replaceAllUsesWith(New);
         New->takeName(Call);
-      } else if (New->getType() == Type::VoidTy) {
+      } else if (New->getType() == Type::getVoidTy(F->getContext())) {
         // Our return value has uses, but they will get removed later on.
         // Replace by null for now.
         Call->replaceAllUsesWith(Constant::getNullValue(Call->getType()));
@@ -868,7 +868,7 @@ bool DAE::RemoveDeadStuffFromFunction(Function *F) {
       if (ReturnInst *RI = dyn_cast<ReturnInst>(BB->getTerminator())) {
         Value *RetVal;
 
-        if (NFTy->getReturnType() == Type::VoidTy) {
+        if (NFTy->getReturnType() == Type::getVoidTy(F->getContext())) {
           RetVal = 0;
         } else {
           assert (isa<StructType>(RetTy));
@@ -899,7 +899,7 @@ bool DAE::RemoveDeadStuffFromFunction(Function *F) {
         }
         // Replace the return instruction with one returning the new return
         // value (possibly 0 if we became void).
-        ReturnInst::Create(RetVal, RI);
+        ReturnInst::Create(F->getContext(), RetVal, RI);
         BB->getInstList().erase(RI);
       }
 

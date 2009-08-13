@@ -789,7 +789,7 @@ void SelectionDAG::VerifyNode(SDNode *N) {
 ///
 unsigned SelectionDAG::getEVTAlignment(EVT VT) const {
   const Type *Ty = VT == MVT::iPTR ?
-                   PointerType::get(Type::Int8Ty, 0) :
+                   PointerType::get(Type::getInt8Ty(*getContext()), 0) :
                    VT.getTypeForEVT(*getContext());
 
   return TLI.getTargetData()->getABITypeAlignment(Ty);
@@ -3383,13 +3383,13 @@ SDValue SelectionDAG::getMemcpy(SDValue Chain, DebugLoc dl, SDValue Dst,
   // Emit a library call.
   TargetLowering::ArgListTy Args;
   TargetLowering::ArgListEntry Entry;
-  Entry.Ty = TLI.getTargetData()->getIntPtrType();
+  Entry.Ty = TLI.getTargetData()->getIntPtrType(*getContext());
   Entry.Node = Dst; Args.push_back(Entry);
   Entry.Node = Src; Args.push_back(Entry);
   Entry.Node = Size; Args.push_back(Entry);
   // FIXME: pass in DebugLoc
   std::pair<SDValue,SDValue> CallResult =
-    TLI.LowerCallTo(Chain, Type::VoidTy,
+    TLI.LowerCallTo(Chain, Type::getVoidTy(*getContext()),
                     false, false, false, false, 0, CallingConv::C, false,
                     /*isReturnValueUsed=*/false,
                     getExternalSymbol(TLI.getLibcallName(RTLIB::MEMCPY), 
@@ -3431,13 +3431,13 @@ SDValue SelectionDAG::getMemmove(SDValue Chain, DebugLoc dl, SDValue Dst,
   // Emit a library call.
   TargetLowering::ArgListTy Args;
   TargetLowering::ArgListEntry Entry;
-  Entry.Ty = TLI.getTargetData()->getIntPtrType();
+  Entry.Ty = TLI.getTargetData()->getIntPtrType(*getContext());
   Entry.Node = Dst; Args.push_back(Entry);
   Entry.Node = Src; Args.push_back(Entry);
   Entry.Node = Size; Args.push_back(Entry);
   // FIXME:  pass in DebugLoc
   std::pair<SDValue,SDValue> CallResult =
-    TLI.LowerCallTo(Chain, Type::VoidTy,
+    TLI.LowerCallTo(Chain, Type::getVoidTy(*getContext()),
                     false, false, false, false, 0, CallingConv::C, false,
                     /*isReturnValueUsed=*/false,
                     getExternalSymbol(TLI.getLibcallName(RTLIB::MEMMOVE), 
@@ -3475,7 +3475,7 @@ SDValue SelectionDAG::getMemset(SDValue Chain, DebugLoc dl, SDValue Dst,
     return Result;
 
   // Emit a library call.
-  const Type *IntPtrTy = TLI.getTargetData()->getIntPtrType();
+  const Type *IntPtrTy = TLI.getTargetData()->getIntPtrType(*getContext());
   TargetLowering::ArgListTy Args;
   TargetLowering::ArgListEntry Entry;
   Entry.Node = Dst; Entry.Ty = IntPtrTy;
@@ -3485,13 +3485,17 @@ SDValue SelectionDAG::getMemset(SDValue Chain, DebugLoc dl, SDValue Dst,
     Src = getNode(ISD::TRUNCATE, dl, MVT::i32, Src);
   else
     Src = getNode(ISD::ZERO_EXTEND, dl, MVT::i32, Src);
-  Entry.Node = Src; Entry.Ty = Type::Int32Ty; Entry.isSExt = true;
+  Entry.Node = Src;
+  Entry.Ty = Type::getInt32Ty(*getContext());
+  Entry.isSExt = true;
   Args.push_back(Entry);
-  Entry.Node = Size; Entry.Ty = IntPtrTy; Entry.isSExt = false;
+  Entry.Node = Size;
+  Entry.Ty = IntPtrTy;
+  Entry.isSExt = false;
   Args.push_back(Entry);
   // FIXME: pass in DebugLoc
   std::pair<SDValue,SDValue> CallResult =
-    TLI.LowerCallTo(Chain, Type::VoidTy,
+    TLI.LowerCallTo(Chain, Type::getVoidTy(*getContext()),
                     false, false, false, false, 0, CallingConv::C, false,
                     /*isReturnValueUsed=*/false,
                     getExternalSymbol(TLI.getLibcallName(RTLIB::MEMSET), 

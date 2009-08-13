@@ -435,7 +435,8 @@ void LoopRotate::preserveCanonicalLoopForm(LPPassManager &LPM) {
   // Right now original pre-header has two successors, new header and
   // exit block. Insert new block between original pre-header and
   // new header such that loop's new pre-header has only one successor.
-  BasicBlock *NewPreHeader = BasicBlock::Create("bb.nph",
+  BasicBlock *NewPreHeader = BasicBlock::Create(OrigHeader->getContext(),
+                                                "bb.nph",
                                                 OrigHeader->getParent(), 
                                                 NewHeader);
   LoopInfo &LI = LPM.getAnalysis<LoopInfo>();

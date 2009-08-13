@@ -102,7 +102,7 @@ public:
   /// that instance will be returned. Otherwise a new one will be created. Only
   /// one instance with a given NumBits value is ever created.
   /// @brief Get or create an IntegerType instance.
-  static const IntegerType* get(unsigned NumBits);
+  static const IntegerType* get(LLVMContext &C, unsigned NumBits);
 
   /// @brief Get the number of bits in this IntegerType
   unsigned getBitWidth() const { return getSubclassData(); }
@@ -399,7 +399,7 @@ public:
   ///
   static VectorType *getInteger(const VectorType *VTy) {
     unsigned EltBits = VTy->getElementType()->getPrimitiveSizeInBits();
-    const Type *EltTy = IntegerType::get(EltBits);
+    const Type *EltTy = IntegerType::get(VTy->getContext(), EltBits);
     return VectorType::get(EltTy, VTy->getNumElements());
   }
 
@@ -409,7 +409,7 @@ public:
   ///
   static VectorType *getExtendedElementVectorType(const VectorType *VTy) {
     unsigned EltBits = VTy->getElementType()->getPrimitiveSizeInBits();
-    const Type *EltTy = IntegerType::get(EltBits * 2);
+    const Type *EltTy = IntegerType::get(VTy->getContext(), EltBits * 2);
     return VectorType::get(EltTy, VTy->getNumElements());
   }
 
@@ -421,7 +421,7 @@ public:
     unsigned EltBits = VTy->getElementType()->getPrimitiveSizeInBits();
     assert((EltBits & 1) == 0 &&
            "Cannot truncate vector element with odd bit-width");
-    const Type *EltTy = IntegerType::get(EltBits / 2);
+    const Type *EltTy = IntegerType::get(VTy->getContext(), EltBits / 2);
     return VectorType::get(EltTy, VTy->getNumElements());
   }
 

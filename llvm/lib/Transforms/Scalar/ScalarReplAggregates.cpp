@@ -306,7 +306,7 @@ bool SROA::performScalarRepl(Function &F) {
         DOUT << "CONVERT TO SCALAR INTEGER: " << *AI << "\n";
         
         // Create and insert the integer alloca.
-        const Type *NewTy = IntegerType::get(AllocaSize*8);
+        const Type *NewTy = IntegerType::get(AI->getContext(), AllocaSize*8);
         NewAI = new AllocaInst(NewTy, 0, "", AI->getParent()->begin());
         ConvertUsesToScalar(AI, NewAI, 0);
       }
@@ -417,7 +417,8 @@ void SROA::DoScalarReplacement(AllocationInst *AI,
       // expanded itself once the worklist is rerun.
       //
       SmallVector<Value*, 8> NewArgs;
-      NewArgs.push_back(Constant::getNullValue(Type::Int32Ty));
+      NewArgs.push_back(Constant::getNullValue(
+                                           Type::getInt32Ty(AI->getContext())));
       NewArgs.append(GEPI->op_begin()+3, GEPI->op_end());
       RepValue = GetElementPtrInst::Create(AllocaToUse, NewArgs.begin(),
                                            NewArgs.end(), "", GEPI);
@@ -764,7 +765,7 @@ void SROA::RewriteMemIntrinUserOfAlloca(MemIntrinsic *MI, Instruction *BCInst,
   const Type *BytePtrTy = MI->getRawDest()->getType();
   bool SROADest = MI->getRawDest() == BCInst;
   
-  Constant *Zero = Constant::getNullValue(Type::Int32Ty);
+  Constant *Zero = Constant::getNullValue(Type::getInt32Ty(MI->getContext()));
 
   for (unsigned i = 0, e = NewElts.size(); i != e; ++i) {
     // If this is a memcpy/memmove, emit a GEP of the other element address.
@@ -772,7 +773,8 @@ void SROA::RewriteMemIntrinUserOfAlloca(MemIntrinsic *MI, Instruction *BCInst,
     unsigned OtherEltAlign = MemAlignment;
     
     if (OtherPtr) {
-      Value *Idx[2] = { Zero, ConstantInt::get(Type::Int32Ty, i) };
+      Value *Idx[2] = { Zero,
+                      ConstantInt::get(Type::getInt32Ty(MI->getContext()), i) };
       OtherElt = GetElementPtrInst::Create(OtherPtr, Idx, Idx + 2,
                                            OtherPtr->getNameStr()+"."+Twine(i),
                                            MI);
@@ -873,7 +875,8 @@ void SROA::RewriteMemIntrinUserOfAlloca(MemIntrinsic *MI, Instruction *BCInst,
         SROADest ? EltPtr : OtherElt,  // Dest ptr
         SROADest ? OtherElt : EltPtr,  // Src ptr
         ConstantInt::get(MI->getOperand(3)->getType(), EltSize), // Size
-        ConstantInt::get(Type::Int32Ty, OtherEltAlign)  // Align
+        // Align
+        ConstantInt::get(Type::getInt32Ty(MI->getContext()), OtherEltAlign)
       };
       CallInst::Create(TheFn, Ops, Ops + 4, "", MI);
     } else {
@@ -910,7 +913,8 @@ void SROA::RewriteStoreUserOfWholeAlloca(StoreInst *SI,
   // Handle tail padding by extending the operand
   if (TD->getTypeSizeInBits(SrcVal->getType()) != AllocaSizeBits)
     SrcVal = new ZExtInst(SrcVal,
-                          IntegerType::get(AllocaSizeBits), "", SI);
+                          IntegerType::get(SI->getContext(), AllocaSizeBits), 
+                          "", SI);
 
   DOUT << "PROMOTING STORE TO WHOLE ALLOCA: " << *AI << *SI;
 
@@ -942,7 +946,8 @@ void SROA::RewriteStoreUserOfWholeAlloca(StoreInst *SI,
       
       if (FieldSizeBits != AllocaSizeBits)
         EltVal = new TruncInst(EltVal,
-                               IntegerType::get(FieldSizeBits), "", SI);
+                             IntegerType::get(SI->getContext(), FieldSizeBits),
+                              "", SI);
       Value *DestField = NewElts[i];
       if (EltVal->getType() == FieldTy) {
         // Storing to an integer field of this size, just do it.
@@ -985,7 +990,8 @@ void SROA::RewriteStoreUserOfWholeAlloca(StoreInst *SI,
       // Truncate down to an integer of the right size.
       if (ElementSizeBits != AllocaSizeBits)
         EltVal = new TruncInst(EltVal, 
-                               IntegerType::get(ElementSizeBits),"",SI);
+                               IntegerType::get(SI->getContext(), 
+                                                ElementSizeBits),"",SI);
       Value *DestField = NewElts[i];
       if (EltVal->getType() == ArrayEltTy) {
         // Storing to an integer field of this size, just do it.
@@ -1040,7 +1046,7 @@ void SROA::RewriteLoadUserOfWholeAlloca(LoadInst *LI, AllocationInst *AI,
   }    
   
   Value *ResultVal = 
-    Constant::getNullValue(IntegerType::get(AllocaSizeBits));
+    Constant::getNullValue(IntegerType::get(LI->getContext(), AllocaSizeBits));
   
   for (unsigned i = 0, e = NewElts.size(); i != e; ++i) {
     // Load the value from the alloca.  If the NewElt is an aggregate, cast
@@ -1053,7 +1059,8 @@ void SROA::RewriteLoadUserOfWholeAlloca(LoadInst *LI, AllocationInst *AI,
     // Ignore zero sized fields like {}, they obviously contain no data.
     if (FieldSizeBits == 0) continue;
     
-    const IntegerType *FieldIntTy = IntegerType::get(FieldSizeBits);
+    const IntegerType *FieldIntTy = IntegerType::get(LI->getContext(), 
+                                                     FieldSizeBits);
     if (!isa<IntegerType>(FieldTy) && !FieldTy->isFloatingPoint() &&
         !isa<VectorType>(FieldTy))
       SrcField = new BitCastInst(SrcField,
@@ -1186,7 +1193,8 @@ void SROA::CleanupGEP(GetElementPtrInst *GEPI) {
     return;
 
   if (NumElements == 1) {
-    GEPI->setOperand(2, Constant::getNullValue(Type::Int32Ty));
+    GEPI->setOperand(2, 
+                  Constant::getNullValue(Type::getInt32Ty(GEPI->getContext())));
     return;
   } 
     
@@ -1198,12 +1206,12 @@ void SROA::CleanupGEP(GetElementPtrInst *GEPI) {
                               "isone");
   // Insert the new GEP instructions, which are properly indexed.
   SmallVector<Value*, 8> Indices(GEPI->op_begin()+1, GEPI->op_end());
-  Indices[1] = Constant::getNullValue(Type::Int32Ty);
+  Indices[1] = Constant::getNullValue(Type::getInt32Ty(GEPI->getContext()));
   Value *ZeroIdx = GetElementPtrInst::Create(GEPI->getOperand(0),
                                              Indices.begin(),
                                              Indices.end(),
                                              GEPI->getName()+".0", GEPI);
-  Indices[1] = ConstantInt::get(Type::Int32Ty, 1);
+  Indices[1] = ConstantInt::get(Type::getInt32Ty(GEPI->getContext()), 1);
   Value *OneIdx = GetElementPtrInst::Create(GEPI->getOperand(0),
                                             Indices.begin(),
                                             Indices.end(),
@@ -1263,7 +1271,7 @@ static void MergeInType(const Type *In, uint64_t Offset, const Type *&VecTy,
                         unsigned AllocaSize, const TargetData &TD,
                         LLVMContext &Context) {
   // If this could be contributing to a vector, analyze it.
-  if (VecTy != Type::VoidTy) { // either null or a vector type.
+  if (VecTy != Type::getVoidTy(Context)) { // either null or a vector type.
 
     // If the In type is a vector that is the same size as the alloca, see if it
     // matches the existing VecTy.
@@ -1276,7 +1284,8 @@ static void MergeInType(const Type *In, uint64_t Offset, const Type *&VecTy,
           VecTy = VInTy;
         return;
       }
-    } else if (In == Type::FloatTy || In == Type::DoubleTy ||
+    } else if (In == Type::getFloatTy(Context) ||
+               In == Type::getDoubleTy(Context) ||
                (isa<IntegerType>(In) && In->getPrimitiveSizeInBits() >= 8 &&
                 isPowerOf2_32(In->getPrimitiveSizeInBits()))) {
       // If we're accessing something that could be an element of a vector, see
@@ -1297,7 +1306,7 @@ static void MergeInType(const Type *In, uint64_t Offset, const Type *&VecTy,
   
   // Otherwise, we have a case that we can't handle with an optimized vector
   // form.  We can still turn this into a large integer.
-  VecTy = Type::VoidTy;
+  VecTy = Type::getVoidTy(Context);
 }
 
 /// CanConvertToScalar - V is a pointer.  If we can convert the pointee and all
@@ -1548,9 +1557,8 @@ Value *SROA::ConvertScalar_ExtractValue(Value *FromVal, const Type *ToType,
       assert(EltSize*Elt == Offset && "Invalid modulus in validity checking");
     }
     // Return the element extracted out of it.
-    Value *V = Builder.CreateExtractElement(FromVal,
-                                    ConstantInt::get(Type::Int32Ty,Elt),
-                                            "tmp");
+    Value *V = Builder.CreateExtractElement(FromVal, ConstantInt::get(
+                    Type::getInt32Ty(FromVal->getContext()), Elt), "tmp");
     if (V->getType() != ToType)
       V = Builder.CreateBitCast(V, ToType, "tmp");
     return V;
@@ -1613,10 +1621,12 @@ Value *SROA::ConvertScalar_ExtractValue(Value *FromVal, const Type *ToType,
   unsigned LIBitWidth = TD->getTypeSizeInBits(ToType);
   if (LIBitWidth < NTy->getBitWidth())
     FromVal =
-      Builder.CreateTrunc(FromVal, IntegerType::get(LIBitWidth), "tmp");
+      Builder.CreateTrunc(FromVal, IntegerType::get(FromVal->getContext(), 
+                                                    LIBitWidth), "tmp");
   else if (LIBitWidth > NTy->getBitWidth())
     FromVal =
-       Builder.CreateZExt(FromVal, IntegerType::get(LIBitWidth), "tmp");
+       Builder.CreateZExt(FromVal, IntegerType::get(FromVal->getContext(), 
+                                                    LIBitWidth), "tmp");
 
   // If the result is an integer, this is a trunc or bitcast.
   if (isa<IntegerType>(ToType)) {
@@ -1668,7 +1678,7 @@ Value *SROA::ConvertScalar_InsertValue(Value *SV, Value *Old,
       SV = Builder.CreateBitCast(SV, VTy->getElementType(), "tmp");
     
     SV = Builder.CreateInsertElement(Old, SV, 
-                                   ConstantInt::get(Type::Int32Ty, Elt),
+                     ConstantInt::get(Type::getInt32Ty(SV->getContext()), Elt),
                                      "tmp");
     return SV;
   }
@@ -1701,9 +1711,10 @@ Value *SROA::ConvertScalar_InsertValue(Value *SV, Value *Old,
   unsigned SrcStoreWidth = TD->getTypeStoreSizeInBits(SV->getType());
   unsigned DestStoreWidth = TD->getTypeStoreSizeInBits(AllocaType);
   if (SV->getType()->isFloatingPoint() || isa<VectorType>(SV->getType()))
-    SV = Builder.CreateBitCast(SV, IntegerType::get(SrcWidth), "tmp");
+    SV = Builder.CreateBitCast(SV,
+                            IntegerType::get(SV->getContext(),SrcWidth), "tmp");
   else if (isa<PointerType>(SV->getType()))
-    SV = Builder.CreatePtrToInt(SV, TD->getIntPtrType(), "tmp");
+    SV = Builder.CreatePtrToInt(SV, TD->getIntPtrType(SV->getContext()), "tmp");
 
   // Zero extend or truncate the value if needed.
   if (SV->getType() != AllocaType) {

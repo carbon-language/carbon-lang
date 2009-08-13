@@ -259,7 +259,7 @@ bool LLParser::ParseUnnamedType() {
   LocTy TypeLoc = Lex.getLoc();
   Lex.Lex(); // eat kw_type
 
-  PATypeHolder Ty(Type::VoidTy);
+  PATypeHolder Ty(Type::getVoidTy(Context));
   if (ParseType(Ty)) return true;
  
   // See if this type was previously referenced.
@@ -286,7 +286,7 @@ bool LLParser::ParseNamedType() {
   LocTy NameLoc = Lex.getLoc();
   Lex.Lex();  // eat LocalVar.
   
-  PATypeHolder Ty(Type::VoidTy);
+  PATypeHolder Ty(Type::getVoidTy(Context));
   
   if (ParseToken(lltok::equal, "expected '=' after name") ||
       ParseToken(lltok::kw_type, "expected 'type' after name") ||
@@ -486,7 +486,7 @@ bool LLParser::ParseNamedMetadata() {
   if (ParseToken(lltok::rbrace, "expected end of metadata node"))
     return true;
 
-  NamedMDNode::Create(Name, Elts.data(), Elts.size(), M);
+  NamedMDNode::Create(Context, Name, Elts.data(), Elts.size(), M);
   return false;
 }
 
@@ -504,7 +504,7 @@ bool LLParser::ParseStandaloneMetadata() {
     return true;
 
   LocTy TyLoc;
-  PATypeHolder Ty(Type::VoidTy);
+  PATypeHolder Ty(Type::getVoidTy(Context));
   if (ParseType(Ty, TyLoc))
     return true;
   
@@ -628,7 +628,7 @@ bool LLParser::ParseGlobal(const std::string &Name, LocTy NameLoc,
   bool ThreadLocal, IsConstant;
   LocTy TyLoc;
     
-  PATypeHolder Ty(Type::VoidTy);
+  PATypeHolder Ty(Type::getVoidTy(Context));
   if (ParseOptionalToken(lltok::kw_thread_local, ThreadLocal) ||
       ParseOptionalAddrSpace(AddrSpace) ||
       ParseGlobalType(IsConstant) ||
@@ -645,7 +645,7 @@ bool LLParser::ParseGlobal(const std::string &Name, LocTy NameLoc,
       return true;
   }
 
-  if (isa<FunctionType>(Ty) || Ty == Type::LabelTy)
+  if (isa<FunctionType>(Ty) || Ty == Type::getLabelTy(Context))
     return Error(TyLoc, "invalid type for global variable");
   
   GlobalVariable *GV = 0;
@@ -1065,7 +1065,7 @@ bool LLParser::ParseType(PATypeHolder &Result, bool AllowVoid) {
   if (!UpRefs.empty())
     return Error(UpRefs.back().Loc, "invalid unresolved type up reference");
   
-  if (!AllowVoid && Result.get() == Type::VoidTy)
+  if (!AllowVoid && Result.get() == Type::getVoidTy(Context))
     return Error(TypeLoc, "void type only allowed for function results");
   
   return false;
@@ -1227,9 +1227,9 @@ bool LLParser::ParseTypeRec(PATypeHolder &Result) {
 
     // TypeRec ::= TypeRec '*'
     case lltok::star:
-      if (Result.get() == Type::LabelTy)
+      if (Result.get() == Type::getLabelTy(Context))
         return TokError("basic block pointers are invalid");
-      if (Result.get() == Type::VoidTy)
+      if (Result.get() == Type::getVoidTy(Context))
         return TokError("pointers to void are invalid; use i8* instead");
       if (!PointerType::isValidElementType(Result.get()))
         return TokError("pointer to this type is invalid");
@@ -1239,9 +1239,9 @@ bool LLParser::ParseTypeRec(PATypeHolder &Result) {
 
     // TypeRec ::= TypeRec 'addrspace' '(' uint32 ')' '*'
     case lltok::kw_addrspace: {
-      if (Result.get() == Type::LabelTy)
+      if (Result.get() == Type::getLabelTy(Context))
         return TokError("basic block pointers are invalid");
-      if (Result.get() == Type::VoidTy)
+      if (Result.get() == Type::getVoidTy(Context))
         return TokError("pointers to void are invalid; use i8* instead");
       if (!PointerType::isValidElementType(Result.get()))
         return TokError("pointer to this type is invalid");
@@ -1281,7 +1281,7 @@ bool LLParser::ParseParameterList(SmallVectorImpl<ParamInfo> &ArgList,
     
     // Parse the argument.
     LocTy ArgLoc;
-    PATypeHolder ArgTy(Type::VoidTy);
+    PATypeHolder ArgTy(Type::getVoidTy(Context));
     unsigned ArgAttrs1, ArgAttrs2;
     Value *V;
     if (ParseType(ArgTy, ArgLoc) ||
@@ -1322,7 +1322,7 @@ bool LLParser::ParseArgumentList(std::vector<ArgInfo> &ArgList,
     Lex.Lex();
   } else {
     LocTy TypeLoc = Lex.getLoc();
-    PATypeHolder ArgTy(Type::VoidTy);
+    PATypeHolder ArgTy(Type::getVoidTy(Context));
     unsigned Attrs;
     std::string Name;
     
@@ -1332,7 +1332,7 @@ bool LLParser::ParseArgumentList(std::vector<ArgInfo> &ArgList,
     if ((inType ? ParseTypeRec(ArgTy) : ParseType(ArgTy)) ||
         ParseOptionalAttrs(Attrs, 0)) return true;
     
-    if (ArgTy == Type::VoidTy)
+    if (ArgTy == Type::getVoidTy(Context))
       return Error(TypeLoc, "argument can not have void type");
     
     if (Lex.getKind() == lltok::LocalVar ||
@@ -1358,7 +1358,7 @@ bool LLParser::ParseArgumentList(std::vector<ArgInfo> &ArgList,
       if ((inType ? ParseTypeRec(ArgTy) : ParseType(ArgTy)) ||
           ParseOptionalAttrs(Attrs, 0)) return true;
 
-      if (ArgTy == Type::VoidTy)
+      if (ArgTy == Type::getVoidTy(Context))
         return Error(TypeLoc, "argument can not have void type");
 
       if (Lex.getKind() == lltok::LocalVar ||
@@ -1436,7 +1436,7 @@ bool LLParser::ParseStructType(PATypeHolder &Result, bool Packed) {
   if (ParseTypeRec(Result)) return true;
   ParamsList.push_back(Result);
   
-  if (Result == Type::VoidTy)
+  if (Result == Type::getVoidTy(Context))
     return Error(EltTyLoc, "struct element can not have void type");
   if (!StructType::isValidElementType(Result))
     return Error(EltTyLoc, "invalid element type for struct");
@@ -1445,7 +1445,7 @@ bool LLParser::ParseStructType(PATypeHolder &Result, bool Packed) {
     EltTyLoc = Lex.getLoc();
     if (ParseTypeRec(Result)) return true;
     
-    if (Result == Type::VoidTy)
+    if (Result == Type::getVoidTy(Context))
       return Error(EltTyLoc, "struct element can not have void type");
     if (!StructType::isValidElementType(Result))
       return Error(EltTyLoc, "invalid element type for struct");
@@ -1481,10 +1481,10 @@ bool LLParser::ParseArrayVectorType(PATypeHolder &Result, bool isVector) {
       return true;
 
   LocTy TypeLoc = Lex.getLoc();
-  PATypeHolder EltTy(Type::VoidTy);
+  PATypeHolder EltTy(Type::getVoidTy(Context));
   if (ParseTypeRec(EltTy)) return true;
   
-  if (EltTy == Type::VoidTy)
+  if (EltTy == Type::getVoidTy(Context))
     return Error(TypeLoc, "array and vector element type cannot be void");
 
   if (ParseToken(isVector ? lltok::greater : lltok::rsquare,
@@ -1575,7 +1575,7 @@ Value *LLParser::PerFunctionState::GetVal(const std::string &Name,
   // If we have the value in the symbol table or fwd-ref table, return it.
   if (Val) {
     if (Val->getType() == Ty) return Val;
-    if (Ty == Type::LabelTy)
+    if (Ty == Type::getLabelTy(F.getContext()))
       P.Error(Loc, "'%" + Name + "' is not a basic block");
     else
       P.Error(Loc, "'%" + Name + "' defined with type '" +
@@ -1584,15 +1584,16 @@ Value *LLParser::PerFunctionState::GetVal(const std::string &Name,
   }
   
   // Don't make placeholders with invalid type.
-  if (!Ty->isFirstClassType() && !isa<OpaqueType>(Ty) && Ty != Type::LabelTy) {
+  if (!Ty->isFirstClassType() && !isa<OpaqueType>(Ty) &&
+      Ty != Type::getLabelTy(F.getContext())) {
     P.Error(Loc, "invalid use of a non-first-class type");
     return 0;
   }
   
   // Otherwise, create a new forward reference for this value and remember it.
   Value *FwdVal;
-  if (Ty == Type::LabelTy) 
-    FwdVal = BasicBlock::Create(Name, &F);
+  if (Ty == Type::getLabelTy(F.getContext())) 
+    FwdVal = BasicBlock::Create(F.getContext(), Name, &F);
   else
     FwdVal = new Argument(Ty, Name);
   
@@ -1617,7 +1618,7 @@ Value *LLParser::PerFunctionState::GetVal(unsigned ID, const Type *Ty,
   // If we have the value in the symbol table or fwd-ref table, return it.
   if (Val) {
     if (Val->getType() == Ty) return Val;
-    if (Ty == Type::LabelTy)
+    if (Ty == Type::getLabelTy(F.getContext()))
       P.Error(Loc, "'%" + utostr(ID) + "' is not a basic block");
     else
       P.Error(Loc, "'%" + utostr(ID) + "' defined with type '" +
@@ -1625,15 +1626,16 @@ Value *LLParser::PerFunctionState::GetVal(unsigned ID, const Type *Ty,
     return 0;
   }
   
-  if (!Ty->isFirstClassType() && !isa<OpaqueType>(Ty) && Ty != Type::LabelTy) {
+  if (!Ty->isFirstClassType() && !isa<OpaqueType>(Ty) &&
+      Ty != Type::getLabelTy(F.getContext())) {
     P.Error(Loc, "invalid use of a non-first-class type");
     return 0;
   }
   
   // Otherwise, create a new forward reference for this value and remember it.
   Value *FwdVal;
-  if (Ty == Type::LabelTy) 
-    FwdVal = BasicBlock::Create("", &F);
+  if (Ty == Type::getLabelTy(F.getContext())) 
+    FwdVal = BasicBlock::Create(F.getContext(), "", &F);
   else
     FwdVal = new Argument(Ty);
   
@@ -1647,7 +1649,7 @@ bool LLParser::PerFunctionState::SetInstName(int NameID,
                                              const std::string &NameStr,
                                              LocTy NameLoc, Instruction *Inst) {
   // If this instruction has void type, it cannot have a name or ID specified.
-  if (Inst->getType() == Type::VoidTy) {
+  if (Inst->getType() == Type::getVoidTy(F.getContext())) {
     if (NameID != -1 || !NameStr.empty())
       return P.Error(NameLoc, "instructions returning void cannot have a name");
     return false;
@@ -1702,11 +1704,13 @@ bool LLParser::PerFunctionState::SetInstName(int NameID,
 /// forward reference record if needed.
 BasicBlock *LLParser::PerFunctionState::GetBB(const std::string &Name,
                                               LocTy Loc) {
-  return cast_or_null<BasicBlock>(GetVal(Name, Type::LabelTy, Loc));
+  return cast_or_null<BasicBlock>(GetVal(Name,
+                                        Type::getLabelTy(F.getContext()), Loc));
 }
 
 BasicBlock *LLParser::PerFunctionState::GetBB(unsigned ID, LocTy Loc) {
-  return cast_or_null<BasicBlock>(GetVal(ID, Type::LabelTy, Loc));
+  return cast_or_null<BasicBlock>(GetVal(ID,
+                                        Type::getLabelTy(F.getContext()), Loc));
 }
 
 /// DefineBB - Define the specified basic block, which is either named or
@@ -1899,7 +1903,7 @@ bool LLParser::ParseValID(ValID &ID) {
   }
   case lltok::kw_c:  // c "foo"
     Lex.Lex();
-    ID.ConstantVal = ConstantArray::get(Lex.getStrVal(), false);
+    ID.ConstantVal = ConstantArray::get(Context, Lex.getStrVal(), false);
     if (ParseToken(lltok::StringConstant, "expected string")) return true;
     ID.Kind = ValID::t_Constant;
     return false;
@@ -1932,7 +1936,7 @@ bool LLParser::ParseValID(ValID &ID) {
   case lltok::kw_inttoptr:
   case lltok::kw_ptrtoint: { 
     unsigned Opc = Lex.getUIntVal();
-    PATypeHolder DestTy(Type::VoidTy);
+    PATypeHolder DestTy(Type::getVoidTy(Context));
     Constant *SrcVal;
     Lex.Lex();
     if (ParseToken(lltok::lparen, "expected '(' after constantexpr cast") ||
@@ -2225,7 +2229,7 @@ bool LLParser::ConvertGlobalValIDToValue(const Type *Ty, ValID &ID,
     // The lexer has no type info, so builds all float and double FP constants
     // as double.  Fix this here.  Long double does not need this.
     if (&ID.APFloatVal.getSemantics() == &APFloat::IEEEdouble &&
-        Ty == Type::FloatTy) {
+        Ty == Type::getFloatTy(Context)) {
       bool Ignored;
       ID.APFloatVal.convert(APFloat::IEEEsingle, APFloat::rmNearestTiesToEven,
                             &Ignored);
@@ -2244,7 +2248,7 @@ bool LLParser::ConvertGlobalValIDToValue(const Type *Ty, ValID &ID,
     return false;
   case ValID::t_Undef:
     // FIXME: LabelTy should not be a first-class type.
-    if ((!Ty->isFirstClassType() || Ty == Type::LabelTy) &&
+    if ((!Ty->isFirstClassType() || Ty == Type::getLabelTy(Context)) &&
         !isa<OpaqueType>(Ty))
       return Error(ID.Loc, "invalid type for undef constant");
     V = UndefValue::get(Ty);
@@ -2256,7 +2260,7 @@ bool LLParser::ConvertGlobalValIDToValue(const Type *Ty, ValID &ID,
     return false;
   case ValID::t_Zero:
     // FIXME: LabelTy should not be a first-class type.
-    if (!Ty->isFirstClassType() || Ty == Type::LabelTy)
+    if (!Ty->isFirstClassType() || Ty == Type::getLabelTy(Context))
       return Error(ID.Loc, "invalid type for null constant");
     V = Constant::getNullValue(Ty);
     return false;
@@ -2269,7 +2273,7 @@ bool LLParser::ConvertGlobalValIDToValue(const Type *Ty, ValID &ID,
 }
   
 bool LLParser::ParseGlobalTypeAndValue(Constant *&V) {
-  PATypeHolder Type(Type::VoidTy);
+  PATypeHolder Type(Type::getVoidTy(Context));
   return ParseType(Type) ||
          ParseGlobalValue(Type, V);
 }    
@@ -2336,7 +2340,7 @@ bool LLParser::ParseValue(const Type *Ty, Value *&V, PerFunctionState &PFS) {
 }
 
 bool LLParser::ParseTypeAndValue(Value *&V, PerFunctionState &PFS) {
-  PATypeHolder T(Type::VoidTy);
+  PATypeHolder T(Type::getVoidTy(Context));
   return ParseType(T) ||
          ParseValue(T, V, PFS);
 }
@@ -2351,7 +2355,7 @@ bool LLParser::ParseFunctionHeader(Function *&Fn, bool isDefine) {
   unsigned Linkage;
   
   unsigned Visibility, CC, RetAttrs;
-  PATypeHolder RetType(Type::VoidTy);
+  PATypeHolder RetType(Type::getVoidTy(Context));
   LocTy RetTypeLoc = Lex.getLoc();
   if (ParseOptionalLinkage(Linkage) ||
       ParseOptionalVisibility(Visibility) ||
@@ -2460,7 +2464,7 @@ bool LLParser::ParseFunctionHeader(Function *&Fn, bool isDefine) {
   AttrListPtr PAL = AttrListPtr::get(Attrs.begin(), Attrs.end());
   
   if (PAL.paramHasAttr(1, Attribute::StructRet) &&
-      RetType != Type::VoidTy)
+      RetType != Type::getVoidTy(Context))
     return Error(RetTypeLoc, "functions with 'sret' argument must return void"); 
   
   const FunctionType *FT =
@@ -2631,8 +2635,8 @@ bool LLParser::ParseInstruction(Instruction *&Inst, BasicBlock *BB,
   switch (Token) {
   default:                    return Error(Loc, "expected instruction opcode");
   // Terminator Instructions.
-  case lltok::kw_unwind:      Inst = new UnwindInst(); return false;
-  case lltok::kw_unreachable: Inst = new UnreachableInst(); return false;
+  case lltok::kw_unwind:      Inst = new UnwindInst(Context); return false;
+  case lltok::kw_unreachable: Inst = new UnreachableInst(Context); return false;
   case lltok::kw_ret:         return ParseRet(Inst, BB, PFS);
   case lltok::kw_br:          return ParseBr(Inst, PFS);
   case lltok::kw_switch:      return ParseSwitch(Inst, PFS);
@@ -2788,11 +2792,11 @@ bool LLParser::ParseCmpPredicate(unsigned &P, unsigned Opc) {
 ///   ::= 'ret' TypeAndValue (',' TypeAndValue)+  [[obsolete: LLVM 3.0]]
 bool LLParser::ParseRet(Instruction *&Inst, BasicBlock *BB,
                         PerFunctionState &PFS) {
-  PATypeHolder Ty(Type::VoidTy);
+  PATypeHolder Ty(Type::getVoidTy(Context));
   if (ParseType(Ty, true /*void allowed*/)) return true;
   
-  if (Ty == Type::VoidTy) {
-    Inst = ReturnInst::Create();
+  if (Ty == Type::getVoidTy(Context)) {
+    Inst = ReturnInst::Create(Context);
     return false;
   }
   
@@ -2818,7 +2822,7 @@ bool LLParser::ParseRet(Instruction *&Inst, BasicBlock *BB,
       RV = I;
     }
   }
-  Inst = ReturnInst::Create(RV);
+  Inst = ReturnInst::Create(Context, RV);
   return false;
 }
 
@@ -2836,7 +2840,7 @@ bool LLParser::ParseBr(Instruction *&Inst, PerFunctionState &PFS) {
     return false;
   }
   
-  if (Op0->getType() != Type::Int1Ty)
+  if (Op0->getType() != Type::getInt1Ty(Context))
     return Error(Loc, "branch condition must have 'i1' type");
     
   if (ParseToken(lltok::comma, "expected ',' after branch condition") ||
@@ -2911,7 +2915,7 @@ bool LLParser::ParseSwitch(Instruction *&Inst, PerFunctionState &PFS) {
 bool LLParser::ParseInvoke(Instruction *&Inst, PerFunctionState &PFS) {
   LocTy CallLoc = Lex.getLoc();
   unsigned CC, RetAttrs, FnAttrs;
-  PATypeHolder RetType(Type::VoidTy);
+  PATypeHolder RetType(Type::getVoidTy(Context));
   LocTy RetTypeLoc;
   ValID CalleeID;
   SmallVector<ParamInfo, 16> ArgList;
@@ -3104,7 +3108,7 @@ bool LLParser::ParseCompare(Instruction *&Inst, PerFunctionState &PFS,
 bool LLParser::ParseCast(Instruction *&Inst, PerFunctionState &PFS,
                          unsigned Opc) {
   LocTy Loc;  Value *Op;
-  PATypeHolder DestTy(Type::VoidTy);
+  PATypeHolder DestTy(Type::getVoidTy(Context));
   if (ParseTypeAndValue(Op, Loc, PFS) ||
       ParseToken(lltok::kw_to, "expected 'to' after cast value") ||
       ParseType(DestTy))
@@ -3143,7 +3147,7 @@ bool LLParser::ParseSelect(Instruction *&Inst, PerFunctionState &PFS) {
 ///   ::= 'va_arg' TypeAndValue ',' Type
 bool LLParser::ParseVA_Arg(Instruction *&Inst, PerFunctionState &PFS) {
   Value *Op;
-  PATypeHolder EltTy(Type::VoidTy);
+  PATypeHolder EltTy(Type::getVoidTy(Context));
   LocTy TypeLoc;
   if (ParseTypeAndValue(Op, PFS) ||
       ParseToken(lltok::comma, "expected ',' after vaarg operand") ||
@@ -3215,7 +3219,7 @@ bool LLParser::ParseShuffleVector(Instruction *&Inst, PerFunctionState &PFS) {
 /// ParsePHI
 ///   ::= 'phi' Type '[' Value ',' Value ']' (',' '[' Value ',' Valueß ']')*
 bool LLParser::ParsePHI(Instruction *&Inst, PerFunctionState &PFS) {
-  PATypeHolder Ty(Type::VoidTy);
+  PATypeHolder Ty(Type::getVoidTy(Context));
   Value *Op0, *Op1;
   LocTy TypeLoc = Lex.getLoc();
   
@@ -3223,7 +3227,7 @@ bool LLParser::ParsePHI(Instruction *&Inst, PerFunctionState &PFS) {
       ParseToken(lltok::lsquare, "expected '[' in phi value list") ||
       ParseValue(Ty, Op0, PFS) ||
       ParseToken(lltok::comma, "expected ',' after insertelement value") ||
-      ParseValue(Type::LabelTy, Op1, PFS) ||
+      ParseValue(Type::getLabelTy(Context), Op1, PFS) ||
       ParseToken(lltok::rsquare, "expected ']' in phi value list"))
     return true;
  
@@ -3237,7 +3241,7 @@ bool LLParser::ParsePHI(Instruction *&Inst, PerFunctionState &PFS) {
     if (ParseToken(lltok::lsquare, "expected '[' in phi value list") ||
         ParseValue(Ty, Op0, PFS) ||
         ParseToken(lltok::comma, "expected ',' after insertelement value") ||
-        ParseValue(Type::LabelTy, Op1, PFS) ||
+        ParseValue(Type::getLabelTy(Context), Op1, PFS) ||
         ParseToken(lltok::rsquare, "expected ']' in phi value list"))
       return true;
   }
@@ -3259,7 +3263,7 @@ bool LLParser::ParsePHI(Instruction *&Inst, PerFunctionState &PFS) {
 bool LLParser::ParseCall(Instruction *&Inst, PerFunctionState &PFS,
                          bool isTail) {
   unsigned CC, RetAttrs, FnAttrs;
-  PATypeHolder RetType(Type::VoidTy);
+  PATypeHolder RetType(Type::getVoidTy(Context));
   LocTy RetTypeLoc;
   ValID CalleeID;
   SmallVector<ParamInfo, 16> ArgList;
@@ -3358,7 +3362,7 @@ bool LLParser::ParseCall(Instruction *&Inst, PerFunctionState &PFS,
 ///   ::= 'alloca' Type (',' TypeAndValue)? (',' OptionalAlignment)?
 bool LLParser::ParseAlloc(Instruction *&Inst, PerFunctionState &PFS,
                           unsigned Opc) {
-  PATypeHolder Ty(Type::VoidTy);
+  PATypeHolder Ty(Type::getVoidTy(Context));
   Value *Size = 0;
   LocTy SizeLoc;
   unsigned Alignment = 0;
@@ -3373,7 +3377,7 @@ bool LLParser::ParseAlloc(Instruction *&Inst, PerFunctionState &PFS,
     }
   }
 
-  if (Size && Size->getType() != Type::Int32Ty)
+  if (Size && Size->getType() != Type::getInt32Ty(Context))
     return Error(SizeLoc, "element count must be i32");
 
   if (Opc == Instruction::Malloc)
@@ -3540,7 +3544,7 @@ bool LLParser::ParseMDNodeVector(SmallVectorImpl<Value*> &Elts) {
       Lex.Lex();
       V = 0;
     } else {
-      PATypeHolder Ty(Type::VoidTy);
+      PATypeHolder Ty(Type::getVoidTy(Context));
       if (ParseType(Ty)) return true;
       if (Lex.getKind() == lltok::Metadata) {
         Lex.Lex();

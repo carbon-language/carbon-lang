@@ -161,7 +161,7 @@ bool LoopSimplify::runOnFunction(Function &F) {
       TI->getSuccessor(i)->removePredecessor(BB);
    
     // Add a new unreachable instruction before the old terminator.
-    new UnreachableInst(TI);
+    new UnreachableInst(TI->getContext(), TI);
     
     // Delete the dead terminator.
     if (AA) AA->deleteValue(TI);
@@ -586,7 +586,8 @@ void LoopSimplify::InsertUniqueBackedgeBlock(Loop *L, BasicBlock *Preheader) {
     if (*I != Preheader) BackedgeBlocks.push_back(*I);
 
   // Create and insert the new backedge block...
-  BasicBlock *BEBlock = BasicBlock::Create(Header->getName()+".backedge", F);
+  BasicBlock *BEBlock = BasicBlock::Create(Header->getContext(),
+                                           Header->getName()+".backedge", F);
   BranchInst *BETerminator = BranchInst::Create(Header, BEBlock);
 
   // Move the new backedge block to right after the last backedge block.

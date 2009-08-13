@@ -599,7 +599,8 @@ bool CodeGenPrepare::OptimizeMemoryInst(Instruction *MemoryInst, Value *Addr,
   } else {
     DEBUG(errs() << "CGP: SINKING nonlocal addrmode: " << AddrMode << " for "
                  << *MemoryInst);
-    const Type *IntPtrTy = TLI->getTargetData()->getIntPtrType();
+    const Type *IntPtrTy =
+          TLI->getTargetData()->getIntPtrType(AccessTy->getContext());
 
     Value *Result = 0;
     // Start with the scale value.

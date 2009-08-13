@@ -47,7 +47,7 @@ void PointerTracking::getAnalysisUsage(AnalysisUsage &AU) const {
 }
 
 bool PointerTracking::doInitialization(Module &M) {
-  const Type *PTy = PointerType::getUnqual(Type::Int8Ty);
+  const Type *PTy = PointerType::getUnqual(Type::getInt8Ty(M.getContext()));
 
   // Find calloc(i64, i64) or calloc(i32, i32).
   callocFunc = M.getFunction("calloc");
@@ -55,10 +55,10 @@ bool PointerTracking::doInitialization(Module &M) {
     const FunctionType *Ty = callocFunc->getFunctionType();
 
     std::vector<const Type*> args, args2;
-    args.push_back(Type::Int64Ty);
-    args.push_back(Type::Int64Ty);
-    args2.push_back(Type::Int32Ty);
-    args2.push_back(Type::Int32Ty);
+    args.push_back(Type::getInt64Ty(M.getContext()));
+    args.push_back(Type::getInt64Ty(M.getContext()));
+    args2.push_back(Type::getInt32Ty(M.getContext()));
+    args2.push_back(Type::getInt32Ty(M.getContext()));
     const FunctionType *Calloc1Type =
       FunctionType::get(PTy, args, false);
     const FunctionType *Calloc2Type =
@@ -73,9 +73,9 @@ bool PointerTracking::doInitialization(Module &M) {
     const FunctionType *Ty = reallocFunc->getFunctionType();
     std::vector<const Type*> args, args2;
     args.push_back(PTy);
-    args.push_back(Type::Int64Ty);
+    args.push_back(Type::getInt64Ty(M.getContext()));
     args2.push_back(PTy);
-    args2.push_back(Type::Int32Ty);
+    args2.push_back(Type::getInt32Ty(M.getContext()));
 
     const FunctionType *Realloc1Type =
       FunctionType::get(PTy, args, false);
@@ -104,11 +104,12 @@ const SCEV *PointerTracking::computeAllocationCount(Value *P,
       Constant *C = GV->getInitializer();
       if (const ArrayType *ATy = dyn_cast<ArrayType>(C->getType())) {
         Ty = ATy->getElementType();
-        return SE->getConstant(Type::Int32Ty, ATy->getNumElements());
+        return SE->getConstant(Type::getInt32Ty(Ty->getContext()),
+                               ATy->getNumElements());
       }
     }
     Ty = GV->getType();
-    return SE->getConstant(Type::Int32Ty, 1);
+    return SE->getConstant(Type::getInt32Ty(Ty->getContext()), 1);
     //TODO: implement more tracking for globals
   }
 
@@ -117,13 +118,13 @@ const SCEV *PointerTracking::computeAllocationCount(Value *P,
     Function *F = dyn_cast<Function>(CS.getCalledValue()->stripPointerCasts());
     const Loop *L = LI->getLoopFor(CI->getParent());
     if (F == callocFunc) {
-      Ty = Type::Int8Ty;
+      Ty = Type::getInt8Ty(Ty->getContext());
       // calloc allocates arg0*arg1 bytes.
       return SE->getSCEVAtScope(SE->getMulExpr(SE->getSCEV(CS.getArgument(0)),
                                                SE->getSCEV(CS.getArgument(1))),
                                 L);
     } else if (F == reallocFunc) {
-      Ty = Type::Int8Ty;
+      Ty = Type::getInt8Ty(Ty->getContext());
       // realloc allocates arg1 bytes.
       return SE->getSCEVAtScope(CS.getArgument(1), L);
     }
@@ -163,7 +164,7 @@ const SCEV *PointerTracking::getAllocationElementCount(Value *V) const {
 }
 
 const SCEV *PointerTracking::getAllocationSizeInBytes(Value *V) const {
-  return computeAllocationCountForType(V, Type::Int8Ty);
+  return computeAllocationCountForType(V, Type::getInt8Ty(V->getContext()));
 }
 
 // Helper for isLoopGuardedBy that checks the swapped and inverted predicate too

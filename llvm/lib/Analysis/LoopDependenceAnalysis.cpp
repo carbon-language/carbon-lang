@@ -93,7 +93,7 @@ static AliasAnalysis::AliasResult UnderlyingObjectsAlias(AliasAnalysis *AA,
 }
 
 static inline const SCEV *GetZeroSCEV(ScalarEvolution *SE) {
-  return SE->getConstant(Type::Int32Ty, 0L);
+  return SE->getConstant(Type::getInt32Ty(SE->getContext()), 0L);
 }
 
 //===----------------------------------------------------------------------===//

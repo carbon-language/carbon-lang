@@ -702,7 +702,8 @@ void LoopIndexSplit::removeBlocks(BasicBlock *DeadBB, Loop *LP,
          E = df_end(DN); DI != E; ++DI) {
     BasicBlock *BB = DI->getBlock();
     WorkList.push_back(BB);
-    BB->replaceAllUsesWith(UndefValue::get(Type::LabelTy));
+    BB->replaceAllUsesWith(UndefValue::get(
+                                       Type::getLabelTy(DeadBB->getContext())));
   }
 
   while (!WorkList.empty()) {

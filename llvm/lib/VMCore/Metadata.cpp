@@ -55,7 +55,7 @@ MDString *MDString::get(LLVMContext &Context, const StringRef &Str) {
   StringMapEntry<MDString *> &Entry = 
     pImpl->MDStringCache.GetOrCreateValue(Str);
   MDString *&S = Entry.getValue();
-  if (!S) S = new MDString(Entry.getKeyData(),
+  if (!S) S = new MDString(Context, Entry.getKeyData(),
                            Entry.getKeyLength());
 
   return S;
@@ -64,8 +64,8 @@ MDString *MDString::get(LLVMContext &Context, const StringRef &Str) {
 //===----------------------------------------------------------------------===//
 //MDNode implementation
 //
-MDNode::MDNode(Value*const* Vals, unsigned NumVals)
-  : MetadataBase(Type::MetadataTy, Value::MDNodeVal) {
+MDNode::MDNode(LLVMContext &C, Value*const* Vals, unsigned NumVals)
+  : MetadataBase(Type::getMetadataTy(C), Value::MDNodeVal) {
   NumOperands = 0;
   resizeOperands(NumVals);
   for (unsigned i = 0; i != NumVals; ++i) {
@@ -83,7 +83,7 @@ MDNode *MDNode::get(LLVMContext &Context, Value*const* Vals, unsigned NumVals) {
   for (unsigned i = 0; i < NumVals; ++i)
     V.push_back(Vals[i]);
   
-  return pImpl->MDNodes.getOrCreate(Type::MetadataTy, V);
+  return pImpl->MDNodes.getOrCreate(Type::getMetadataTy(Context), V);
 }
 
 /// dropAllReferences - Remove all uses and clear node vector.
@@ -108,9 +108,10 @@ MDNode::~MDNode() {
 //===----------------------------------------------------------------------===//
 //NamedMDNode implementation
 //
-NamedMDNode::NamedMDNode(const Twine &N, MetadataBase*const* MDs, 
+NamedMDNode::NamedMDNode(LLVMContext &C, const Twine &N,
+                         MetadataBase*const* MDs, 
                          unsigned NumMDs, Module *ParentModule)
-  : MetadataBase(Type::MetadataTy, Value::NamedMDNodeVal), Parent(0) {
+  : MetadataBase(Type::getMetadataTy(C), Value::NamedMDNodeVal), Parent(0) {
   setName(N);
   NumOperands = 0;
   resizeOperands(NumMDs);
@@ -129,7 +130,8 @@ NamedMDNode *NamedMDNode::Create(const NamedMDNode *NMD, Module *M) {
   SmallVector<MetadataBase *, 4> Elems;
   for (unsigned i = 0, e = NMD->getNumElements(); i != e; ++i)
     Elems.push_back(NMD->getElement(i));
-  return new NamedMDNode(NMD->getName().data(), Elems.data(), Elems.size(), M);
+  return new NamedMDNode(NMD->getContext(), NMD->getName().data(),
+                         Elems.data(), Elems.size(), M);
 }
 
 /// eraseFromParent - Drop all references and remove the node from parent

@@ -1269,7 +1269,8 @@ SDValue PPCTargetLowering::LowerTRAMPOLINE(SDValue Op, SelectionDAG &DAG) {
   EVT PtrVT = DAG.getTargetLoweringInfo().getPointerTy();
   bool isPPC64 = (PtrVT == MVT::i64);
   const Type *IntPtrTy =
-    DAG.getTargetLoweringInfo().getTargetData()->getIntPtrType();
+    DAG.getTargetLoweringInfo().getTargetData()->getIntPtrType(
+                                                             *DAG.getContext());
 
   TargetLowering::ArgListTy Args;
   TargetLowering::ArgListEntry Entry;

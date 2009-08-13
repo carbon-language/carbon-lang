@@ -272,7 +272,7 @@ bool X86FastISel::X86FastEmitStore(EVT VT, Value *Val,
                                    const X86AddressMode &AM) {
   // Handle 'null' like i32/i64 0.
   if (isa<ConstantPointerNull>(Val))
-    Val = Constant::getNullValue(TD.getIntPtrType());
+    Val = Constant::getNullValue(TD.getIntPtrType(Val->getContext()));
   
   // If this is a store of a simple constant, fold the constant into the store.
   if (ConstantInt *CI = dyn_cast<ConstantInt>(Val)) {
@@ -672,7 +672,7 @@ bool X86FastISel::X86FastEmitCompare(Value *Op0, Value *Op1, EVT VT) {
   
   // Handle 'null' like i32/i64 0.
   if (isa<ConstantPointerNull>(Op1))
-    Op1 = Constant::getNullValue(TD.getIntPtrType());
+    Op1 = Constant::getNullValue(TD.getIntPtrType(Op0->getContext()));
   
   // We have two options: compare with register or immediate.  If the RHS of
   // the compare is an immediate that we can fold into this compare, use
@@ -773,8 +773,8 @@ bool X86FastISel::X86SelectCmp(Instruction *I) {
 
 bool X86FastISel::X86SelectZExt(Instruction *I) {
   // Handle zero-extension from i1 to i8, which is common.
-  if (I->getType() == Type::Int8Ty &&
-      I->getOperand(0)->getType() == Type::Int1Ty) {
+  if (I->getType() == Type::getInt8Ty(I->getContext()) &&
+      I->getOperand(0)->getType() == Type::getInt1Ty(I->getContext())) {
     unsigned ResultReg = getRegForValue(I->getOperand(0));
     if (ResultReg == 0) return false;
     // Set the high bits to zero.
@@ -935,7 +935,7 @@ bool X86FastISel::X86SelectBranch(Instruction *I) {
 bool X86FastISel::X86SelectShift(Instruction *I) {
   unsigned CReg = 0, OpReg = 0, OpImm = 0;
   const TargetRegisterClass *RC = NULL;
-  if (I->getType() == Type::Int8Ty) {
+  if (I->getType() == Type::getInt8Ty(I->getContext())) {
     CReg = X86::CL;
     RC = &X86::GR8RegClass;
     switch (I->getOpcode()) {
@@ -944,7 +944,7 @@ bool X86FastISel::X86SelectShift(Instruction *I) {
     case Instruction::Shl:  OpReg = X86::SHL8rCL; OpImm = X86::SHL8ri; break;
     default: return false;
     }
-  } else if (I->getType() == Type::Int16Ty) {
+  } else if (I->getType() == Type::getInt16Ty(I->getContext())) {
     CReg = X86::CX;
     RC = &X86::GR16RegClass;
     switch (I->getOpcode()) {
@@ -953,7 +953,7 @@ bool X86FastISel::X86SelectShift(Instruction *I) {
     case Instruction::Shl:  OpReg = X86::SHL16rCL; OpImm = X86::SHL16ri; break;
     default: return false;
     }
-  } else if (I->getType() == Type::Int32Ty) {
+  } else if (I->getType() == Type::getInt32Ty(I->getContext())) {
     CReg = X86::ECX;
     RC = &X86::GR32RegClass;
     switch (I->getOpcode()) {
@@ -962,7 +962,7 @@ bool X86FastISel::X86SelectShift(Instruction *I) {
     case Instruction::Shl:  OpReg = X86::SHL32rCL; OpImm = X86::SHL32ri; break;
     default: return false;
     }
-  } else if (I->getType() == Type::Int64Ty) {
+  } else if (I->getType() == Type::getInt64Ty(I->getContext())) {
     CReg = X86::RCX;
     RC = &X86::GR64RegClass;
     switch (I->getOpcode()) {
@@ -1044,9 +1044,10 @@ bool X86FastISel::X86SelectSelect(Instruction *I) {
 
 bool X86FastISel::X86SelectFPExt(Instruction *I) {
   // fpext from float to double.
-  if (Subtarget->hasSSE2() && I->getType() == Type::DoubleTy) {
+  if (Subtarget->hasSSE2() &&
+      I->getType() == Type::getDoubleTy(I->getContext())) {
     Value *V = I->getOperand(0);
-    if (V->getType() == Type::FloatTy) {
+    if (V->getType() == Type::getFloatTy(I->getContext())) {
       unsigned OpReg = getRegForValue(V);
       if (OpReg == 0) return false;
       unsigned ResultReg = createResultReg(X86::FR64RegisterClass);
@@ -1061,9 +1062,9 @@ bool X86FastISel::X86SelectFPExt(Instruction *I) {
 
 bool X86FastISel::X86SelectFPTrunc(Instruction *I) {
   if (Subtarget->hasSSE2()) {
-    if (I->getType() == Type::FloatTy) {
+    if (I->getType() == Type::getFloatTy(I->getContext())) {
       Value *V = I->getOperand(0);
-      if (V->getType() == Type::DoubleTy) {
+      if (V->getType() == Type::getDoubleTy(I->getContext())) {
         unsigned OpReg = getRegForValue(V);
         if (OpReg == 0) return false;
         unsigned ResultReg = createResultReg(X86::FR32RegisterClass);
@@ -1230,7 +1231,7 @@ bool X86FastISel::X86SelectCall(Instruction *I) {
   // Handle *simple* calls for now.
   const Type *RetTy = CS.getType();
   EVT RetVT;
-  if (RetTy == Type::VoidTy)
+  if (RetTy == Type::getVoidTy(I->getContext()))
     RetVT = MVT::isVoid;
   else if (!isTypeLegal(RetTy, RetVT, true))
     return false;

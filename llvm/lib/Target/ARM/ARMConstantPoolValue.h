@@ -20,6 +20,7 @@
 namespace llvm {
 
 class GlobalValue;
+class LLVMContext;
 
 namespace ARMCP {
   enum ARMCPKind {
@@ -47,7 +48,7 @@ public:
                        ARMCP::ARMCPKind Kind = ARMCP::CPValue,
                        unsigned char PCAdj = 0, const char *Modifier = NULL,
                        bool AddCurrentAddress = false);
-  ARMConstantPoolValue(const char *s, unsigned id,
+  ARMConstantPoolValue(LLVMContext &C, const char *s, unsigned id,
                        ARMCP::ARMCPKind Kind = ARMCP::CPValue,
                        unsigned char PCAdj = 0, const char *Modifier = NULL,
                        bool AddCurrentAddress = false);

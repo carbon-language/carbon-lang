@@ -496,8 +496,7 @@ TargetLowering::TargetLowering(TargetMachine &tm,TargetLoweringObjectFile *tlof)
     
   IsLittleEndian = TD->isLittleEndian();
   UsesGlobalOffsetTable = false;
-  ShiftAmountTy = PointerTy =
-      getValueType(TD->getIntPtrType()).getSimpleVT().SimpleTy;
+  ShiftAmountTy = PointerTy = MVT::getIntegerVT(8*TD->getPointerSize());
   memset(RegClassForVT, 0,MVT::LAST_VALUETYPE*sizeof(TargetRegisterClass*));
   memset(TargetDAGCombineArray, 0, array_lengthof(TargetDAGCombineArray));
   maxStoresPerMemset = maxStoresPerMemcpy = maxStoresPerMemmove = 8;
@@ -704,7 +703,7 @@ const char *TargetLowering::getTargetNodeName(unsigned Opcode) const {
 
 
 MVT::SimpleValueType TargetLowering::getSetCCResultType(EVT VT) const {
-  return getValueType(TD->getIntPtrType()).getSimpleVT().SimpleTy;
+  return PointerTy.SimpleTy;
 }
 
 /// getVectorTypeBreakdown - Vector types are broken down into some number of

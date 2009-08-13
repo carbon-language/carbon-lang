@@ -871,7 +871,8 @@ void AsmPrinter::EmitConstantValueOnly(const Constant *CV) {
       // Handle casts to pointers by changing them into casts to the appropriate
       // integer type.  This promotes constant folding and simplifies this code.
       Constant *Op = CE->getOperand(0);
-      Op = ConstantExpr::getIntegerCast(Op, TD->getIntPtrType(), false/*ZExt*/);
+      Op = ConstantExpr::getIntegerCast(Op, TD->getIntPtrType(CV->getContext()),
+                                        false/*ZExt*/);
       return EmitConstantValueOnly(Op);
     }
       
@@ -1016,8 +1017,9 @@ void AsmPrinter::EmitGlobalConstantFP(const ConstantFP *CFP,
                                       unsigned AddrSpace) {
   // FP Constants are printed as integer constants to avoid losing
   // precision...
+  LLVMContext &Context = CFP->getContext();
   const TargetData *TD = TM.getTargetData();
-  if (CFP->getType() == Type::DoubleTy) {
+  if (CFP->getType() == Type::getDoubleTy(Context)) {
     double Val = CFP->getValueAPF().convertToDouble();  // for comment only
     uint64_t i = CFP->getValueAPF().bitcastToAPInt().getZExtValue();
     if (TAI->getData64bitsDirective(AddrSpace)) {
@@ -1059,7 +1061,7 @@ void AsmPrinter::EmitGlobalConstantFP(const ConstantFP *CFP,
       O << '\n';
     }
     return;
-  } else if (CFP->getType() == Type::FloatTy) {
+  } else if (CFP->getType() == Type::getFloatTy(Context)) {
     float Val = CFP->getValueAPF().convertToFloat();  // for comment only
     O << TAI->getData32bitsDirective(AddrSpace)
       << CFP->getValueAPF().bitcastToAPInt().getZExtValue();
@@ -1069,7 +1071,7 @@ void AsmPrinter::EmitGlobalConstantFP(const ConstantFP *CFP,
     }
     O << '\n';
     return;
-  } else if (CFP->getType() == Type::X86_FP80Ty) {
+  } else if (CFP->getType() == Type::getX86_FP80Ty(Context)) {
     // all long double variants are printed as hex
     // api needed to prevent premature destruction
     APInt api = CFP->getValueAPF().bitcastToAPInt();
@@ -1151,10 +1153,10 @@ void AsmPrinter::EmitGlobalConstantFP(const ConstantFP *CFP,
       }
       O << '\n';
     }
-    EmitZeros(TD->getTypeAllocSize(Type::X86_FP80Ty) -
-              TD->getTypeStoreSize(Type::X86_FP80Ty), AddrSpace);
+    EmitZeros(TD->getTypeAllocSize(Type::getX86_FP80Ty(Context)) -
+              TD->getTypeStoreSize(Type::getX86_FP80Ty(Context)), AddrSpace);
     return;
-  } else if (CFP->getType() == Type::PPC_FP128Ty) {
+  } else if (CFP->getType() == Type::getPPC_FP128Ty(Context)) {
     // all long double variants are printed as hex
     // api needed to prevent premature destruction
     APInt api = CFP->getValueAPF().bitcastToAPInt();

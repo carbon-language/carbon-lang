@@ -41,7 +41,7 @@ unsigned LLVMPointerSize(LLVMTargetDataRef TD) {
 }
 
 LLVMTypeRef LLVMIntPtrType(LLVMTargetDataRef TD) {
-  return wrap(unwrap(TD)->getIntPtrType());
+  return wrap(unwrap(TD)->getIntPtrType(getGlobalContext()));
 }
 
 unsigned long long LLVMSizeOfTypeInBits(LLVMTargetDataRef TD, LLVMTypeRef Ty) {

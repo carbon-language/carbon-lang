@@ -238,13 +238,13 @@ const GlobalValue *ExecutionEngine::getGlobalValueAtAddress(void *Addr) {
 // CreateArgv - Turn a vector of strings into a nice argv style array of
 // pointers to null terminated strings.
 //
-static void *CreateArgv(ExecutionEngine *EE,
+static void *CreateArgv(LLVMContext &C, ExecutionEngine *EE,
                         const std::vector<std::string> &InputArgv) {
   unsigned PtrSize = EE->getTargetData()->getPointerSize();
   char *Result = new char[(InputArgv.size()+1)*PtrSize];
 
   DOUT << "JIT: ARGV = " << (void*)Result << "\n";
-  const Type *SBytePtr = PointerType::getUnqual(Type::Int8Ty);
+  const Type *SBytePtr = PointerType::getUnqual(Type::getInt8Ty(C));
 
   for (unsigned i = 0; i != InputArgv.size(); ++i) {
     unsigned Size = InputArgv[i].size()+1;
@@ -340,7 +340,8 @@ int ExecutionEngine::runFunctionAsMain(Function *Fn,
   unsigned NumArgs = Fn->getFunctionType()->getNumParams();
   const FunctionType *FTy = Fn->getFunctionType();
   const Type* PPInt8Ty = 
-    PointerType::getUnqual(PointerType::getUnqual(Type::Int8Ty));
+    PointerType::getUnqual(PointerType::getUnqual(
+          Type::getInt8Ty(Fn->getContext())));
   switch (NumArgs) {
   case 3:
    if (FTy->getParamType(2) != PPInt8Ty) {
@@ -353,13 +354,13 @@ int ExecutionEngine::runFunctionAsMain(Function *Fn,
    }
    // FALLS THROUGH
   case 1:
-   if (FTy->getParamType(0) != Type::Int32Ty) {
+   if (FTy->getParamType(0) != Type::getInt32Ty(Fn->getContext())) {
      llvm_report_error("Invalid type for first argument of main() supplied");
    }
    // FALLS THROUGH
   case 0:
    if (!isa<IntegerType>(FTy->getReturnType()) &&
-       FTy->getReturnType() != Type::VoidTy) {
+       FTy->getReturnType() != Type::getVoidTy(FTy->getContext())) {
      llvm_report_error("Invalid return type of main() supplied");
    }
    break;
@@ -370,14 +371,16 @@ int ExecutionEngine::runFunctionAsMain(Function *Fn,
   if (NumArgs) {
     GVArgs.push_back(GVArgc); // Arg #0 = argc.
     if (NumArgs > 1) {
-      GVArgs.push_back(PTOGV(CreateArgv(this, argv))); // Arg #1 = argv.
+      // Arg #1 = argv.
+      GVArgs.push_back(PTOGV(CreateArgv(Fn->getContext(), this, argv))); 
       assert(!isTargetNullPtr(this, GVTOP(GVArgs[1])) &&
              "argv[0] was null after CreateArgv");
       if (NumArgs > 2) {
         std::vector<std::string> EnvVars;
         for (unsigned i = 0; envp[i]; ++i)
           EnvVars.push_back(envp[i]);
-        GVArgs.push_back(PTOGV(CreateArgv(this, EnvVars))); // Arg #2 = envp.
+        // Arg #2 = envp.
+        GVArgs.push_back(PTOGV(CreateArgv(Fn->getContext(), this, EnvVars)));
       }
     }
   }
@@ -525,11 +528,11 @@ GenericValue ExecutionEngine::getConstantValue(const Constant *C) {
     }
     case Instruction::UIToFP: {
       GenericValue GV = getConstantValue(Op0);
-      if (CE->getType() == Type::FloatTy)
+      if (CE->getType() == Type::getFloatTy(CE->getContext()))
         GV.FloatVal = float(GV.IntVal.roundToDouble());
-      else if (CE->getType() == Type::DoubleTy)
+      else if (CE->getType() == Type::getDoubleTy(CE->getContext()))
         GV.DoubleVal = GV.IntVal.roundToDouble();
-      else if (CE->getType() == Type::X86_FP80Ty) {
+      else if (CE->getType() == Type::getX86_FP80Ty(Op0->getContext())) {
         const uint64_t zero[] = {0, 0};
         APFloat apf = APFloat(APInt(80, 2, zero));
         (void)apf.convertFromAPInt(GV.IntVal, 
@@ -541,11 +544,11 @@ GenericValue ExecutionEngine::getConstantValue(const Constant *C) {
     }
     case Instruction::SIToFP: {
       GenericValue GV = getConstantValue(Op0);
-      if (CE->getType() == Type::FloatTy)
+      if (CE->getType() == Type::getFloatTy(CE->getContext()))
         GV.FloatVal = float(GV.IntVal.signedRoundToDouble());
-      else if (CE->getType() == Type::DoubleTy)
+      else if (CE->getType() == Type::getDoubleTy(CE->getContext()))
         GV.DoubleVal = GV.IntVal.signedRoundToDouble();
-      else if (CE->getType() == Type::X86_FP80Ty) {
+      else if (CE->getType() == Type::getX86_FP80Ty(CE->getContext())) {
         const uint64_t zero[] = { 0, 0};
         APFloat apf = APFloat(APInt(80, 2, zero));
         (void)apf.convertFromAPInt(GV.IntVal, 
@@ -559,11 +562,11 @@ GenericValue ExecutionEngine::getConstantValue(const Constant *C) {
     case Instruction::FPToSI: {
       GenericValue GV = getConstantValue(Op0);
       uint32_t BitWidth = cast<IntegerType>(CE->getType())->getBitWidth();
-      if (Op0->getType() == Type::FloatTy)
+      if (Op0->getType() == Type::getFloatTy(Op0->getContext()))
         GV.IntVal = APIntOps::RoundFloatToAPInt(GV.FloatVal, BitWidth);
-      else if (Op0->getType() == Type::DoubleTy)
+      else if (Op0->getType() == Type::getDoubleTy(Op0->getContext()))
         GV.IntVal = APIntOps::RoundDoubleToAPInt(GV.DoubleVal, BitWidth);
-      else if (Op0->getType() == Type::X86_FP80Ty) {
+      else if (Op0->getType() == Type::getX86_FP80Ty(Op0->getContext())) {
         APFloat apf = APFloat(GV.IntVal);
         uint64_t v;
         bool ignored;
@@ -596,17 +599,19 @@ GenericValue ExecutionEngine::getConstantValue(const Constant *C) {
         default: llvm_unreachable("Invalid bitcast operand");
         case Type::IntegerTyID:
           assert(DestTy->isFloatingPoint() && "invalid bitcast");
-          if (DestTy == Type::FloatTy)
+          if (DestTy == Type::getFloatTy(Op0->getContext()))
             GV.FloatVal = GV.IntVal.bitsToFloat();
-          else if (DestTy == Type::DoubleTy)
+          else if (DestTy == Type::getDoubleTy(DestTy->getContext()))
             GV.DoubleVal = GV.IntVal.bitsToDouble();
           break;
         case Type::FloatTyID: 
-          assert(DestTy == Type::Int32Ty && "Invalid bitcast");
+          assert(DestTy == Type::getInt32Ty(DestTy->getContext()) &&
+                 "Invalid bitcast");
           GV.IntVal.floatToBits(GV.FloatVal);
           break;
         case Type::DoubleTyID:
-          assert(DestTy == Type::Int64Ty && "Invalid bitcast");
+          assert(DestTy == Type::getInt64Ty(DestTy->getContext()) &&
+                 "Invalid bitcast");
           GV.IntVal.doubleToBits(GV.DoubleVal);
           break;
         case Type::PointerTyID:

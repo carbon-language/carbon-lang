@@ -142,7 +142,8 @@ bool DwarfEHPrepare::NormalizeLandingPads() {
     // edges to a new basic block which falls through into this one.
 
     // Create the new basic block.
-    BasicBlock *NewBB = BasicBlock::Create(LPad->getName() + "_unwind_edge");
+    BasicBlock *NewBB = BasicBlock::Create(F->getContext(),
+                                           LPad->getName() + "_unwind_edge");
 
     // Insert it into the function right before the original landing pad.
     LPad->getParent()->getBasicBlockList().insert(LPad, NewBB);
@@ -230,8 +231,10 @@ bool DwarfEHPrepare::LowerUnwinds() {
 
     // Find the rewind function if we didn't already.
     if (!RewindFunction) {
-      std::vector<const Type*> Params(1, PointerType::getUnqual(Type::Int8Ty));
-      FunctionType *FTy = FunctionType::get(Type::VoidTy, Params, false);
+      std::vector<const Type*> Params(1,
+                     PointerType::getUnqual(Type::getInt8Ty(TI->getContext())));
+      FunctionType *FTy = FunctionType::get(Type::getVoidTy(TI->getContext()),
+                                            Params, false);
       const char *RewindName = TLI->getLibcallName(RTLIB::UNWIND_RESUME);
       RewindFunction = F->getParent()->getOrInsertFunction(RewindName, FTy);
     }
@@ -239,7 +242,7 @@ bool DwarfEHPrepare::LowerUnwinds() {
     // Create the call...
     CallInst::Create(RewindFunction, CreateReadOfExceptionValue(I), "", TI);
     // ...followed by an UnreachableInst.
-    new UnreachableInst(TI);
+    new UnreachableInst(TI->getContext(), TI);
 
     // Nuke the unwind instruction.
     TI->eraseFromParent();
@@ -354,8 +357,8 @@ Instruction *DwarfEHPrepare::CreateValueLoad(BasicBlock *BB) {
 
   // Create the temporary if we didn't already.
   if (!ExceptionValueVar) {
-    ExceptionValueVar = new AllocaInst(PointerType::getUnqual(Type::Int8Ty),
-                                       "eh.value", F->begin()->begin());
+    ExceptionValueVar = new AllocaInst(PointerType::getUnqual(
+           Type::getInt8Ty(BB->getContext())), "eh.value", F->begin()->begin());
     ++NumStackTempsIntroduced;
   }
 

@@ -100,7 +100,8 @@ MachineFunction::MachineFunction(Function *F,
   const TargetData &TD = *TM.getTargetData();
   bool IsPic = TM.getRelocationModel() == Reloc::PIC_;
   unsigned EntrySize = IsPic ? 4 : TD.getPointerSize();
-  unsigned TyAlignment = IsPic ? TD.getABITypeAlignment(Type::Int32Ty)
+  unsigned TyAlignment = IsPic ?
+                       TD.getABITypeAlignment(Type::getInt32Ty(F->getContext()))
                                : TD.getPointerABIAlignment();
   JumpTableInfo = new (Allocator.Allocate<MachineJumpTableInfo>())
                       MachineJumpTableInfo(EntrySize, TyAlignment);

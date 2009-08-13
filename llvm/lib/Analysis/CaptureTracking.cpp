@@ -54,7 +54,7 @@ bool llvm::PointerMayBeCaptured(const Value *V, bool ReturnCaptures) {
       // its return value and doesn't unwind (a readonly function can leak bits
       // by throwing an exception or not depending on the input value).
       if (CS.onlyReadsMemory() && CS.doesNotThrow() &&
-          I->getType() == Type::VoidTy)
+          I->getType() == Type::getVoidTy(V->getContext()))
         break;
 
       // Not captured if only passed via 'nocapture' arguments.  Note that

@@ -44,12 +44,6 @@ protected:
 
   void resizeOperands(unsigned NumOps);
 public:
-  /// getType() specialization - Type is always MetadataTy.
-  ///
-  inline const Type *getType() const {
-    return Type::MetadataTy;
-  }
-
   /// isNullValue - Return true if this is the value that would be returned by
   /// getNullValue.  This always returns false because getNullValue will never
   /// produce metadata.
@@ -76,8 +70,8 @@ class MDString : public MetadataBase {
 
   StringRef Str;
 protected:
-  explicit MDString(const char *begin, unsigned l)
-    : MetadataBase(Type::MetadataTy, Value::MDStringVal), Str(begin, l) {}
+  explicit MDString(LLVMContext &C, const char *begin, unsigned l)
+    : MetadataBase(Type::getMetadataTy(C), Value::MDStringVal), Str(begin, l) {}
 
 public:
   // Do not allocate any space for operands.
@@ -119,7 +113,7 @@ class MDNode : public MetadataBase {
   
   friend struct ConstantCreator<MDNode, Type, std::vector<Value*> >;
 protected:
-  explicit MDNode(Value*const* Vals, unsigned NumVals);
+  explicit MDNode(LLVMContext &C, Value*const* Vals, unsigned NumVals);
 public:
   // Do not allocate any space for operands.
   void *operator new(size_t s) {
@@ -155,12 +149,6 @@ public:
   const_elem_iterator elem_end() const   { return Node.end();   }
   elem_iterator elem_begin()             { return Node.begin(); }
   elem_iterator elem_end()               { return Node.end();   }
-
-  /// getType() specialization - Type is always MetadataTy.
-  ///
-  inline const Type *getType() const {
-    return Type::MetadataTy;
-  }
 
   /// isNullValue - Return true if this is the value that would be returned by
   /// getNullValue.  This always returns false because getNullValue will never
@@ -217,16 +205,17 @@ class NamedMDNode : public MetadataBase, public ilist_node<NamedMDNode> {
   typedef SmallVectorImpl<WeakMetadataVH>::iterator elem_iterator;
 
 protected:
-  explicit NamedMDNode(const Twine &N, MetadataBase*const* Vals, 
+  explicit NamedMDNode(LLVMContext &C, const Twine &N, MetadataBase*const* Vals, 
                        unsigned NumVals, Module *M = 0);
 public:
   // Do not allocate any space for operands.
   void *operator new(size_t s) {
     return User::operator new(s, 0);
   }
-  static NamedMDNode *Create(const Twine &N, MetadataBase*const*MDs, 
+  static NamedMDNode *Create(LLVMContext &C, const Twine &N, 
+                             MetadataBase*const*MDs, 
                              unsigned NumMDs, Module *M = 0) {
-    return new NamedMDNode(N, MDs, NumMDs, M);
+    return new NamedMDNode(C, N, MDs, NumMDs, M);
   }
 
   static NamedMDNode *Create(const NamedMDNode *NMD, Module *M = 0);
@@ -270,12 +259,6 @@ public:
   const_elem_iterator elem_end() const   { return Node.end();   }
   elem_iterator elem_begin()             { return Node.begin(); }
   elem_iterator elem_end()               { return Node.end();   }
-
-  /// getType() specialization - Type is always MetadataTy.
-  ///
-  inline const Type *getType() const {
-    return Type::MetadataTy;
-  }
 
   /// isNullValue - Return true if this is the value that would be returned by
   /// getNullValue.  This always returns false because getNullValue will never

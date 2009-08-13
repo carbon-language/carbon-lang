@@ -236,7 +236,7 @@ namespace {
 
       // Must be an expression, must be used exactly once.  If it is dead, we
       // emit it inline where it would go.
-      if (I.getType() == Type::VoidTy || !I.hasOneUse() ||
+      if (I.getType() == Type::getVoidTy(I.getContext()) || !I.hasOneUse() ||
           isa<TerminatorInst>(I) || isa<CallInst>(I) || isa<PHINode>(I) ||
           isa<LoadInst>(I) || isa<VAArgInst>(I) || isa<InsertElementInst>(I) ||
           isa<InsertValueInst>(I))
@@ -772,7 +772,8 @@ void CWriter::printConstantArray(ConstantArray *CPA, bool Static) {
   // ubytes or an array of sbytes with positive values.
   //
   const Type *ETy = CPA->getType()->getElementType();
-  bool isString = (ETy == Type::Int8Ty || ETy == Type::Int8Ty);
+  bool isString = (ETy == Type::getInt8Ty(CPA->getContext()) ||
+                   ETy == Type::getInt8Ty(CPA->getContext()));
 
   // Make sure the last character is a null char, as automatically added by C
   if (isString && (CPA->getNumOperands() == 0 ||
@@ -858,10 +859,11 @@ void CWriter::printConstantVector(ConstantVector *CP, bool Static) {
 static bool isFPCSafeToPrint(const ConstantFP *CFP) {
   bool ignored;
   // Do long doubles in hex for now.
-  if (CFP->getType() != Type::FloatTy && CFP->getType() != Type::DoubleTy)
+  if (CFP->getType() != Type::getFloatTy(CFP->getContext()) &&
+      CFP->getType() != Type::getDoubleTy(CFP->getContext()))
     return false;
   APFloat APF = APFloat(CFP->getValueAPF());  // copy
-  if (CFP->getType() == Type::FloatTy)
+  if (CFP->getType() == Type::getFloatTy(CFP->getContext()))
     APF.convert(APFloat::IEEEdouble, APFloat::rmNearestTiesToEven, &ignored);
 #if HAVE_PRINTF_A && ENABLE_CBE_PRINTF_A
   char Buffer[100];
@@ -973,12 +975,12 @@ void CWriter::printConstant(Constant *CPV, bool Static) {
       Out << "(";
       printCast(CE->getOpcode(), CE->getOperand(0)->getType(), CE->getType());
       if (CE->getOpcode() == Instruction::SExt &&
-          CE->getOperand(0)->getType() == Type::Int1Ty) {
+          CE->getOperand(0)->getType() == Type::getInt1Ty(CPV->getContext())) {
         // Make sure we really sext from bool here by subtracting from 0
         Out << "0-";
       }
       printConstant(CE->getOperand(0), Static);
-      if (CE->getType() == Type::Int1Ty &&
+      if (CE->getType() == Type::getInt1Ty(CPV->getContext()) &&
           (CE->getOpcode() == Instruction::Trunc ||
            CE->getOpcode() == Instruction::FPToUI ||
            CE->getOpcode() == Instruction::FPToSI ||
@@ -1127,9 +1129,9 @@ void CWriter::printConstant(Constant *CPV, bool Static) {
 
   if (ConstantInt *CI = dyn_cast<ConstantInt>(CPV)) {
     const Type* Ty = CI->getType();
-    if (Ty == Type::Int1Ty)
+    if (Ty == Type::getInt1Ty(CPV->getContext()))
       Out << (CI->getZExtValue() ? '1' : '0');
-    else if (Ty == Type::Int32Ty)
+    else if (Ty == Type::getInt32Ty(CPV->getContext()))
       Out << CI->getZExtValue() << 'u';
     else if (Ty->getPrimitiveSizeInBits() > 32)
       Out << CI->getZExtValue() << "ull";
@@ -1156,15 +1158,17 @@ void CWriter::printConstant(Constant *CPV, bool Static) {
     if (I != FPConstantMap.end()) {
       // Because of FP precision problems we must load from a stack allocated
       // value that holds the value in hex.
-      Out << "(*(" << (FPC->getType() == Type::FloatTy ? "float" : 
-                       FPC->getType() == Type::DoubleTy ? "double" :
+      Out << "(*(" << (FPC->getType() == Type::getFloatTy(CPV->getContext()) ?
+                       "float" : 
+                       FPC->getType() == Type::getDoubleTy(CPV->getContext()) ? 
+                       "double" :
                        "long double")
           << "*)&FPConstant" << I->second << ')';
     } else {
       double V;
-      if (FPC->getType() == Type::FloatTy)
+      if (FPC->getType() == Type::getFloatTy(CPV->getContext()))
         V = FPC->getValueAPF().convertToFloat();
-      else if (FPC->getType() == Type::DoubleTy)
+      else if (FPC->getType() == Type::getDoubleTy(CPV->getContext()))
         V = FPC->getValueAPF().convertToDouble();
       else {
         // Long double.  Convert the number to double, discarding precision.
@@ -1194,7 +1198,7 @@ void CWriter::printConstant(Constant *CPV, bool Static) {
         std::string Num(&Buffer[0], &Buffer[6]);
         unsigned long Val = strtoul(Num.c_str(), 0, 16);
 
-        if (FPC->getType() == Type::FloatTy)
+        if (FPC->getType() == Type::getFloatTy(FPC->getContext()))
           Out << "LLVM_NAN" << (Val == QuietNaN ? "" : "S") << "F(\""
               << Buffer << "\") /*nan*/ ";
         else
@@ -1203,7 +1207,8 @@ void CWriter::printConstant(Constant *CPV, bool Static) {
       } else if (IsInf(V)) {
         // The value is Inf
         if (V < 0) Out << '-';
-        Out << "LLVM_INF" << (FPC->getType() == Type::FloatTy ? "F" : "")
+        Out << "LLVM_INF" <<
+            (FPC->getType() == Type::getFloatTy(FPC->getContext()) ? "F" : "")
             << " /*inf*/ ";
       } else {
         std::string Num;
@@ -1366,7 +1371,7 @@ bool CWriter::printConstExprCast(const ConstantExpr* CE, bool Static) {
   }
   if (NeedsExplicitCast) {
     Out << "((";
-    if (Ty->isInteger() && Ty != Type::Int1Ty)
+    if (Ty->isInteger() && Ty != Type::getInt1Ty(Ty->getContext()))
       printSimpleType(Out, Ty, TypeIsSigned);
     else
       printType(Out, Ty); // not integer, sign doesn't matter
@@ -1464,8 +1469,11 @@ void CWriter::writeInstComputationInline(Instruction &I) {
   // We can't currently support integer types other than 1, 8, 16, 32, 64.
   // Validate this.
   const Type *Ty = I.getType();
-  if (Ty->isInteger() && (Ty!=Type::Int1Ty && Ty!=Type::Int8Ty &&
-        Ty!=Type::Int16Ty && Ty!=Type::Int32Ty && Ty!=Type::Int64Ty)) {
+  if (Ty->isInteger() && (Ty!=Type::getInt1Ty(I.getContext()) &&
+        Ty!=Type::getInt8Ty(I.getContext()) && 
+        Ty!=Type::getInt16Ty(I.getContext()) &&
+        Ty!=Type::getInt32Ty(I.getContext()) &&
+        Ty!=Type::getInt64Ty(I.getContext()))) {
       llvm_report_error("The C backend does not currently support integer "
                         "types of widths other than 1, 8, 16, 32, 64.\n"
                         "This is being tracked as PR 4158.");
@@ -1475,7 +1483,8 @@ void CWriter::writeInstComputationInline(Instruction &I) {
   // a 1 bit value.  This is important because we want "add i1 x, y" to return
   // "0" when x and y are true, not "2" for example.
   bool NeedBoolTrunc = false;
-  if (I.getType() == Type::Int1Ty && !isa<ICmpInst>(I) && !isa<FCmpInst>(I))
+  if (I.getType() == Type::getInt1Ty(I.getContext()) &&
+      !isa<ICmpInst>(I) && !isa<FCmpInst>(I))
     NeedBoolTrunc = true;
   
   if (NeedBoolTrunc)
@@ -1624,7 +1633,7 @@ void CWriter::writeOperandWithCast(Value* Operand, const ICmpInst &Cmp) {
   // If the operand was a pointer, convert to a large integer type.
   const Type* OpTy = Operand->getType();
   if (isa<PointerType>(OpTy))
-    OpTy = TD->getIntPtrType();
+    OpTy = TD->getIntPtrType(Operand->getContext());
   
   Out << "((";
   printSimpleType(Out, OpTy, castIsSigned);
@@ -2143,20 +2152,20 @@ void CWriter::printFloatingPointConstants(const Constant *C) {
 
   FPConstantMap[FPC] = FPCounter;  // Number the FP constants
   
-  if (FPC->getType() == Type::DoubleTy) {
+  if (FPC->getType() == Type::getDoubleTy(FPC->getContext())) {
     double Val = FPC->getValueAPF().convertToDouble();
     uint64_t i = FPC->getValueAPF().bitcastToAPInt().getZExtValue();
     Out << "static const ConstantDoubleTy FPConstant" << FPCounter++
     << " = 0x" << utohexstr(i)
     << "ULL;    /* " << Val << " */\n";
-  } else if (FPC->getType() == Type::FloatTy) {
+  } else if (FPC->getType() == Type::getFloatTy(FPC->getContext())) {
     float Val = FPC->getValueAPF().convertToFloat();
     uint32_t i = (uint32_t)FPC->getValueAPF().bitcastToAPInt().
     getZExtValue();
     Out << "static const ConstantFloatTy FPConstant" << FPCounter++
     << " = 0x" << utohexstr(i)
     << "U;    /* " << Val << " */\n";
-  } else if (FPC->getType() == Type::X86_FP80Ty) {
+  } else if (FPC->getType() == Type::getX86_FP80Ty(FPC->getContext())) {
     // api needed to prevent premature destruction
     APInt api = FPC->getValueAPF().bitcastToAPInt();
     const uint64_t *p = api.getRawData();
@@ -2164,7 +2173,7 @@ void CWriter::printFloatingPointConstants(const Constant *C) {
     << " = { 0x" << utohexstr(p[0]) 
     << "ULL, 0x" << utohexstr((uint16_t)p[1]) << ",{0,0,0}"
     << "}; /* Long double constant */\n";
-  } else if (FPC->getType() == Type::PPC_FP128Ty) {
+  } else if (FPC->getType() == Type::getPPC_FP128Ty(FPC->getContext())) {
     APInt api = FPC->getValueAPF().bitcastToAPInt();
     const uint64_t *p = api.getRawData();
     Out << "static const ConstantFP128Ty FPConstant" << FPCounter++
@@ -2409,7 +2418,8 @@ void CWriter::printFunction(Function &F) {
       printType(Out, AI->getAllocatedType(), false, GetValueName(AI));
       Out << ";    /* Address-exposed local */\n";
       PrintedVar = true;
-    } else if (I->getType() != Type::VoidTy && !isInlinableInst(*I)) {
+    } else if (I->getType() != Type::getVoidTy(F.getContext()) && 
+               !isInlinableInst(*I)) {
       Out << "  ";
       printType(Out, I->getType(), false, GetValueName(&*I));
       Out << ";\n";
@@ -2486,7 +2496,8 @@ void CWriter::printBasicBlock(BasicBlock *BB) {
   for (BasicBlock::iterator II = BB->begin(), E = --BB->end(); II != E;
        ++II) {
     if (!isInlinableInst(*II) && !isDirectAlloca(II)) {
-      if (II->getType() != Type::VoidTy && !isInlineAsm(*II))
+      if (II->getType() != Type::getVoidTy(BB->getContext()) &&
+          !isInlineAsm(*II))
         outputLValue(II);
       else
         Out << "  ";
@@ -2661,8 +2672,9 @@ void CWriter::visitBinaryOperator(Instruction &I) {
 
   // We must cast the results of binary operations which might be promoted.
   bool needsCast = false;
-  if ((I.getType() == Type::Int8Ty) || (I.getType() == Type::Int16Ty) 
-      || (I.getType() == Type::FloatTy)) {
+  if ((I.getType() == Type::getInt8Ty(I.getContext())) ||
+      (I.getType() == Type::getInt16Ty(I.getContext())) 
+      || (I.getType() == Type::getFloatTy(I.getContext()))) {
     needsCast = true;
     Out << "((";
     printType(Out, I.getType(), false);
@@ -2681,9 +2693,9 @@ void CWriter::visitBinaryOperator(Instruction &I) {
     Out << ")";
   } else if (I.getOpcode() == Instruction::FRem) {
     // Output a call to fmod/fmodf instead of emitting a%b
-    if (I.getType() == Type::FloatTy)
+    if (I.getType() == Type::getFloatTy(I.getContext()))
       Out << "fmodf(";
-    else if (I.getType() == Type::DoubleTy)
+    else if (I.getType() == Type::getDoubleTy(I.getContext()))
       Out << "fmod(";
     else  // all 3 flavors of long double
       Out << "fmodl(";
@@ -2850,12 +2862,13 @@ void CWriter::visitCastInst(CastInst &I) {
   printCast(I.getOpcode(), SrcTy, DstTy);
 
   // Make a sext from i1 work by subtracting the i1 from 0 (an int).
-  if (SrcTy == Type::Int1Ty && I.getOpcode() == Instruction::SExt)
+  if (SrcTy == Type::getInt1Ty(I.getContext()) &&
+      I.getOpcode() == Instruction::SExt)
     Out << "0-";
   
   writeOperand(I.getOperand(0));
     
-  if (DstTy == Type::Int1Ty && 
+  if (DstTy == Type::getInt1Ty(I.getContext()) && 
       (I.getOpcode() == Instruction::Trunc ||
        I.getOpcode() == Instruction::FPToUI ||
        I.getOpcode() == Instruction::FPToSI ||
@@ -3280,7 +3293,7 @@ void CWriter::visitInlineAsm(CallInst &CI) {
   std::vector<InlineAsm::ConstraintInfo> Constraints = as->ParseConstraints();
   
   std::vector<std::pair<Value*, int> > ResultVals;
-  if (CI.getType() == Type::VoidTy)
+  if (CI.getType() == Type::getVoidTy(CI.getContext()))
     ;
   else if (const StructType *ST = dyn_cast<StructType>(CI.getType())) {
     for (unsigned i = 0, e = ST->getNumElements(); i != e; ++i)

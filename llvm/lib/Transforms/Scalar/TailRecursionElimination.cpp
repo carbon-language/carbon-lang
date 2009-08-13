@@ -394,7 +394,7 @@ bool TailCallElim::ProcessReturningBlock(ReturnInst *Ret, BasicBlock *&OldEntry,
   // create the new entry block, allowing us to branch back to the old entry.
   if (OldEntry == 0) {
     OldEntry = &F->getEntryBlock();
-    BasicBlock *NewEntry = BasicBlock::Create("", F, OldEntry);
+    BasicBlock *NewEntry = BasicBlock::Create(F->getContext(), "", F, OldEntry);
     NewEntry->takeName(OldEntry);
     OldEntry->setName("tailrecurse");
     BranchInst::Create(OldEntry, NewEntry);

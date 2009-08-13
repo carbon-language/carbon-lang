@@ -126,7 +126,7 @@ const char *SelectInst::areInvalidOperands(Value *Op0, Value *Op1, Value *Op2) {
   
   if (const VectorType *VT = dyn_cast<VectorType>(Op0->getType())) {
     // Vector select.
-    if (VT->getElementType() != Type::Int1Ty)
+    if (VT->getElementType() != Type::getInt1Ty(Op0->getContext()))
       return "vector select condition element type must be i1";
     const VectorType *ET = dyn_cast<VectorType>(Op1->getType());
     if (ET == 0)
@@ -134,7 +134,7 @@ const char *SelectInst::areInvalidOperands(Value *Op0, Value *Op1, Value *Op2) {
     if (ET->getNumElements() != VT->getNumElements())
       return "vector select requires selected vectors to have "
                    "the same vector length as select condition";
-  } else if (Op0->getType() != Type::Int1Ty) {
+  } else if (Op0->getType() != Type::getInt1Ty(Op0->getContext())) {
     return "select condition must be i1 or <n x i1>";
   }
   return 0;
@@ -502,7 +502,7 @@ void InvokeInst::removeAttribute(unsigned i, Attributes attr) {
 //===----------------------------------------------------------------------===//
 
 ReturnInst::ReturnInst(const ReturnInst &RI)
-  : TerminatorInst(Type::VoidTy, Instruction::Ret,
+  : TerminatorInst(Type::getVoidTy(RI.getContext()), Instruction::Ret,
                    OperandTraits<ReturnInst>::op_end(this) -
                      RI.getNumOperands(),
                    RI.getNumOperands()) {
@@ -510,22 +510,22 @@ ReturnInst::ReturnInst(const ReturnInst &RI)
     Op<0>() = RI.Op<0>();
 }
 
-ReturnInst::ReturnInst(Value *retVal, Instruction *InsertBefore)
-  : TerminatorInst(Type::VoidTy, Instruction::Ret,
+ReturnInst::ReturnInst(LLVMContext &C, Value *retVal, Instruction *InsertBefore)
+  : TerminatorInst(Type::getVoidTy(C), Instruction::Ret,
                    OperandTraits<ReturnInst>::op_end(this) - !!retVal, !!retVal,
                    InsertBefore) {
   if (retVal)
     Op<0>() = retVal;
 }
-ReturnInst::ReturnInst(Value *retVal, BasicBlock *InsertAtEnd)
-  : TerminatorInst(Type::VoidTy, Instruction::Ret,
+ReturnInst::ReturnInst(LLVMContext &C, Value *retVal, BasicBlock *InsertAtEnd)
+  : TerminatorInst(Type::getVoidTy(C), Instruction::Ret,
                    OperandTraits<ReturnInst>::op_end(this) - !!retVal, !!retVal,
                    InsertAtEnd) {
   if (retVal)
     Op<0>() = retVal;
 }
-ReturnInst::ReturnInst(BasicBlock *InsertAtEnd)
-  : TerminatorInst(Type::VoidTy, Instruction::Ret,
+ReturnInst::ReturnInst(LLVMContext &Context, BasicBlock *InsertAtEnd)
+  : TerminatorInst(Type::getVoidTy(Context), Instruction::Ret,
                    OperandTraits<ReturnInst>::op_end(this), 0, InsertAtEnd) {
 }
 
@@ -551,11 +551,13 @@ ReturnInst::~ReturnInst() {
 //                        UnwindInst Implementation
 //===----------------------------------------------------------------------===//
 
-UnwindInst::UnwindInst(Instruction *InsertBefore)
-  : TerminatorInst(Type::VoidTy, Instruction::Unwind, 0, 0, InsertBefore) {
+UnwindInst::UnwindInst(LLVMContext &Context, Instruction *InsertBefore)
+  : TerminatorInst(Type::getVoidTy(Context), Instruction::Unwind,
+                   0, 0, InsertBefore) {
 }
-UnwindInst::UnwindInst(BasicBlock *InsertAtEnd)
-  : TerminatorInst(Type::VoidTy, Instruction::Unwind, 0, 0, InsertAtEnd) {
+UnwindInst::UnwindInst(LLVMContext &Context, BasicBlock *InsertAtEnd)
+  : TerminatorInst(Type::getVoidTy(Context), Instruction::Unwind,
+                   0, 0, InsertAtEnd) {
 }
 
 
@@ -576,11 +578,14 @@ BasicBlock *UnwindInst::getSuccessorV(unsigned idx) const {
 //                      UnreachableInst Implementation
 //===----------------------------------------------------------------------===//
 
-UnreachableInst::UnreachableInst(Instruction *InsertBefore)
-  : TerminatorInst(Type::VoidTy, Instruction::Unreachable, 0, 0, InsertBefore) {
+UnreachableInst::UnreachableInst(LLVMContext &Context, 
+                                 Instruction *InsertBefore)
+  : TerminatorInst(Type::getVoidTy(Context), Instruction::Unreachable,
+                   0, 0, InsertBefore) {
 }
-UnreachableInst::UnreachableInst(BasicBlock *InsertAtEnd)
-  : TerminatorInst(Type::VoidTy, Instruction::Unreachable, 0, 0, InsertAtEnd) {
+UnreachableInst::UnreachableInst(LLVMContext &Context, BasicBlock *InsertAtEnd)
+  : TerminatorInst(Type::getVoidTy(Context), Instruction::Unreachable,
+                   0, 0, InsertAtEnd) {
 }
 
 unsigned UnreachableInst::getNumSuccessorsV() const {
@@ -602,12 +607,12 @@ BasicBlock *UnreachableInst::getSuccessorV(unsigned idx) const {
 
 void BranchInst::AssertOK() {
   if (isConditional())
-    assert(getCondition()->getType() == Type::Int1Ty &&
+    assert(getCondition()->getType() == Type::getInt1Ty(getContext()) &&
            "May only branch on boolean predicates!");
 }
 
 BranchInst::BranchInst(BasicBlock *IfTrue, Instruction *InsertBefore)
-  : TerminatorInst(Type::VoidTy, Instruction::Br,
+  : TerminatorInst(Type::getVoidTy(IfTrue->getContext()), Instruction::Br,
                    OperandTraits<BranchInst>::op_end(this) - 1,
                    1, InsertBefore) {
   assert(IfTrue != 0 && "Branch destination may not be null!");
@@ -615,7 +620,7 @@ BranchInst::BranchInst(BasicBlock *IfTrue, Instruction *InsertBefore)
 }
 BranchInst::BranchInst(BasicBlock *IfTrue, BasicBlock *IfFalse, Value *Cond,
                        Instruction *InsertBefore)
-  : TerminatorInst(Type::VoidTy, Instruction::Br,
+  : TerminatorInst(Type::getVoidTy(IfTrue->getContext()), Instruction::Br,
                    OperandTraits<BranchInst>::op_end(this) - 3,
                    3, InsertBefore) {
   Op<-1>() = IfTrue;
@@ -627,7 +632,7 @@ BranchInst::BranchInst(BasicBlock *IfTrue, BasicBlock *IfFalse, Value *Cond,
 }
 
 BranchInst::BranchInst(BasicBlock *IfTrue, BasicBlock *InsertAtEnd)
-  : TerminatorInst(Type::VoidTy, Instruction::Br,
+  : TerminatorInst(Type::getVoidTy(IfTrue->getContext()), Instruction::Br,
                    OperandTraits<BranchInst>::op_end(this) - 1,
                    1, InsertAtEnd) {
   assert(IfTrue != 0 && "Branch destination may not be null!");
@@ -636,7 +641,7 @@ BranchInst::BranchInst(BasicBlock *IfTrue, BasicBlock *InsertAtEnd)
 
 BranchInst::BranchInst(BasicBlock *IfTrue, BasicBlock *IfFalse, Value *Cond,
            BasicBlock *InsertAtEnd)
-  : TerminatorInst(Type::VoidTy, Instruction::Br,
+  : TerminatorInst(Type::getVoidTy(IfTrue->getContext()), Instruction::Br,
                    OperandTraits<BranchInst>::op_end(this) - 3,
                    3, InsertAtEnd) {
   Op<-1>() = IfTrue;
@@ -649,7 +654,7 @@ BranchInst::BranchInst(BasicBlock *IfTrue, BasicBlock *IfFalse, Value *Cond,
 
 
 BranchInst::BranchInst(const BranchInst &BI) :
-  TerminatorInst(Type::VoidTy, Instruction::Br,
+  TerminatorInst(Type::getVoidTy(BI.getContext()), Instruction::Br,
                  OperandTraits<BranchInst>::op_end(this) - BI.getNumOperands(),
                  BI.getNumOperands()) {
   Op<-1>() = BI.Op<-1>();
@@ -702,11 +707,11 @@ void BranchInst::setSuccessorV(unsigned idx, BasicBlock *B) {
 
 static Value *getAISize(LLVMContext &Context, Value *Amt) {
   if (!Amt)
-    Amt = ConstantInt::get(Type::Int32Ty, 1);
+    Amt = ConstantInt::get(Type::getInt32Ty(Context), 1);
   else {
     assert(!isa<BasicBlock>(Amt) &&
            "Passed basic block into allocation size parameter! Use other ctor");
-    assert(Amt->getType() == Type::Int32Ty &&
+    assert(Amt->getType() == Type::getInt32Ty(Context) &&
            "Malloc/Allocation array size is not a 32-bit integer!");
   }
   return Amt;
@@ -718,7 +723,7 @@ AllocationInst::AllocationInst(const Type *Ty, Value *ArraySize, unsigned iTy,
   : UnaryInstruction(PointerType::getUnqual(Ty), iTy,
                      getAISize(Ty->getContext(), ArraySize), InsertBefore) {
   setAlignment(Align);
-  assert(Ty != Type::VoidTy && "Cannot allocate void!");
+  assert(Ty != Type::getVoidTy(Ty->getContext()) && "Cannot allocate void!");
   setName(Name);
 }
 
@@ -728,7 +733,7 @@ AllocationInst::AllocationInst(const Type *Ty, Value *ArraySize, unsigned iTy,
   : UnaryInstruction(PointerType::getUnqual(Ty), iTy,
                      getAISize(Ty->getContext(), ArraySize), InsertAtEnd) {
   setAlignment(Align);
-  assert(Ty != Type::VoidTy && "Cannot allocate void!");
+  assert(Ty != Type::getVoidTy(Ty->getContext()) && "Cannot allocate void!");
   setName(Name);
 }
 
@@ -786,12 +791,14 @@ void FreeInst::AssertOK() {
 }
 
 FreeInst::FreeInst(Value *Ptr, Instruction *InsertBefore)
-  : UnaryInstruction(Type::VoidTy, Free, Ptr, InsertBefore) {
+  : UnaryInstruction(Type::getVoidTy(Ptr->getContext()),
+                     Free, Ptr, InsertBefore) {
   AssertOK();
 }
 
 FreeInst::FreeInst(Value *Ptr, BasicBlock *InsertAtEnd)
-  : UnaryInstruction(Type::VoidTy, Free, Ptr, InsertAtEnd) {
+  : UnaryInstruction(Type::getVoidTy(Ptr->getContext()),
+                     Free, Ptr, InsertAtEnd) {
   AssertOK();
 }
 
@@ -923,7 +930,7 @@ void StoreInst::AssertOK() {
 
 
 StoreInst::StoreInst(Value *val, Value *addr, Instruction *InsertBefore)
-  : Instruction(Type::VoidTy, Store,
+  : Instruction(Type::getVoidTy(val->getContext()), Store,
                 OperandTraits<StoreInst>::op_begin(this),
                 OperandTraits<StoreInst>::operands(this),
                 InsertBefore) {
@@ -935,7 +942,7 @@ StoreInst::StoreInst(Value *val, Value *addr, Instruction *InsertBefore)
 }
 
 StoreInst::StoreInst(Value *val, Value *addr, BasicBlock *InsertAtEnd)
-  : Instruction(Type::VoidTy, Store,
+  : Instruction(Type::getVoidTy(val->getContext()), Store,
                 OperandTraits<StoreInst>::op_begin(this),
                 OperandTraits<StoreInst>::operands(this),
                 InsertAtEnd) {
@@ -948,7 +955,7 @@ StoreInst::StoreInst(Value *val, Value *addr, BasicBlock *InsertAtEnd)
 
 StoreInst::StoreInst(Value *val, Value *addr, bool isVolatile,
                      Instruction *InsertBefore)
-  : Instruction(Type::VoidTy, Store,
+  : Instruction(Type::getVoidTy(val->getContext()), Store,
                 OperandTraits<StoreInst>::op_begin(this),
                 OperandTraits<StoreInst>::operands(this),
                 InsertBefore) {
@@ -961,7 +968,7 @@ StoreInst::StoreInst(Value *val, Value *addr, bool isVolatile,
 
 StoreInst::StoreInst(Value *val, Value *addr, bool isVolatile,
                      unsigned Align, Instruction *InsertBefore)
-  : Instruction(Type::VoidTy, Store,
+  : Instruction(Type::getVoidTy(val->getContext()), Store,
                 OperandTraits<StoreInst>::op_begin(this),
                 OperandTraits<StoreInst>::operands(this),
                 InsertBefore) {
@@ -974,7 +981,7 @@ StoreInst::StoreInst(Value *val, Value *addr, bool isVolatile,
 
 StoreInst::StoreInst(Value *val, Value *addr, bool isVolatile,
                      unsigned Align, BasicBlock *InsertAtEnd)
-  : Instruction(Type::VoidTy, Store,
+  : Instruction(Type::getVoidTy(val->getContext()), Store,
                 OperandTraits<StoreInst>::op_begin(this),
                 OperandTraits<StoreInst>::operands(this),
                 InsertAtEnd) {
@@ -987,7 +994,7 @@ StoreInst::StoreInst(Value *val, Value *addr, bool isVolatile,
 
 StoreInst::StoreInst(Value *val, Value *addr, bool isVolatile,
                      BasicBlock *InsertAtEnd)
-  : Instruction(Type::VoidTy, Store,
+  : Instruction(Type::getVoidTy(val->getContext()), Store,
                 OperandTraits<StoreInst>::op_begin(this),
                 OperandTraits<StoreInst>::operands(this),
                 InsertAtEnd) {
@@ -1193,7 +1200,8 @@ ExtractElementInst::ExtractElementInst(Value *Val, Value *Index,
 
 
 bool ExtractElementInst::isValidOperands(const Value *Val, const Value *Index) {
-  if (!isa<VectorType>(Val->getType()) || Index->getType() != Type::Int32Ty)
+  if (!isa<VectorType>(Val->getType()) ||
+      Index->getType() != Type::getInt32Ty(Val->getContext()))
     return false;
   return true;
 }
@@ -1247,7 +1255,7 @@ bool InsertElementInst::isValidOperands(const Value *Vec, const Value *Elt,
   if (Elt->getType() != cast<VectorType>(Vec->getType())->getElementType())
     return false;// Second operand of insertelement must be vector element type.
     
-  if (Index->getType() != Type::Int32Ty)
+  if (Index->getType() != Type::getInt32Ty(Vec->getContext()))
     return false;  // Third operand of insertelement must be i32.
   return true;
 }
@@ -1306,7 +1314,7 @@ bool ShuffleVectorInst::isValidOperands(const Value *V1, const Value *V2,
   
   const VectorType *MaskTy = dyn_cast<VectorType>(Mask->getType());
   if (!isa<Constant>(Mask) || MaskTy == 0 ||
-      MaskTy->getElementType() != Type::Int32Ty)
+      MaskTy->getElementType() != Type::getInt32Ty(V1->getContext()))
     return false;
   return true;
 }
@@ -2758,7 +2766,8 @@ void SwitchInst::init(Value *Value, BasicBlock *Default, unsigned NumCases) {
 /// constructor can also autoinsert before another instruction.
 SwitchInst::SwitchInst(Value *Value, BasicBlock *Default, unsigned NumCases,
                        Instruction *InsertBefore)
-  : TerminatorInst(Type::VoidTy, Instruction::Switch, 0, 0, InsertBefore) {
+  : TerminatorInst(Type::getVoidTy(Value->getContext()), Instruction::Switch,
+                   0, 0, InsertBefore) {
   init(Value, Default, NumCases);
 }
 
@@ -2768,12 +2777,13 @@ SwitchInst::SwitchInst(Value *Value, BasicBlock *Default, unsigned NumCases,
 /// constructor also autoinserts at the end of the specified BasicBlock.
 SwitchInst::SwitchInst(Value *Value, BasicBlock *Default, unsigned NumCases,
                        BasicBlock *InsertAtEnd)
-  : TerminatorInst(Type::VoidTy, Instruction::Switch, 0, 0, InsertAtEnd) {
+  : TerminatorInst(Type::getVoidTy(Value->getContext()), Instruction::Switch,
+                   0, 0, InsertAtEnd) {
   init(Value, Default, NumCases);
 }
 
 SwitchInst::SwitchInst(const SwitchInst &SI)
-  : TerminatorInst(Type::VoidTy, Instruction::Switch,
+  : TerminatorInst(Type::getVoidTy(SI.getContext()), Instruction::Switch,
                    allocHungoffUses(SI.getNumOperands()), SI.getNumOperands()) {
   Use *OL = OperandList, *InOL = SI.OperandList;
   for (unsigned i = 0, E = SI.getNumOperands(); i != E; i+=2) {
@@ -3006,10 +3016,10 @@ InvokeInst *InvokeInst::clone(LLVMContext&) const {
   return new(getNumOperands()) InvokeInst(*this);
 }
 
-UnwindInst *UnwindInst::clone(LLVMContext&) const {
-  return new UnwindInst();
+UnwindInst *UnwindInst::clone(LLVMContext &C) const {
+  return new UnwindInst(C);
 }
 
-UnreachableInst *UnreachableInst::clone(LLVMContext&) const {
-  return new UnreachableInst();
+UnreachableInst *UnreachableInst::clone(LLVMContext &C) const {
+  return new UnreachableInst(C);
 }

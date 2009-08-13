@@ -29,19 +29,20 @@ ARMConstantPoolValue::ARMConstantPoolValue(GlobalValue *gv, unsigned id,
     GV(gv), S(NULL), LabelId(id), Kind(k), PCAdjust(PCAdj),
     Modifier(Modif), AddCurrentAddress(AddCA) {}
 
-ARMConstantPoolValue::ARMConstantPoolValue(const char *s, unsigned id,
+ARMConstantPoolValue::ARMConstantPoolValue(LLVMContext &C,
+                                           const char *s, unsigned id,
                                            ARMCP::ARMCPKind k,
                                            unsigned char PCAdj,
                                            const char *Modif,
                                            bool AddCA)
-  : MachineConstantPoolValue((const Type*)Type::Int32Ty),
+  : MachineConstantPoolValue((const Type*)Type::getInt32Ty(C)),
     GV(NULL), S(strdup(s)), LabelId(id), Kind(k), PCAdjust(PCAdj),
     Modifier(Modif), AddCurrentAddress(AddCA) {}
 
 ARMConstantPoolValue::ARMConstantPoolValue(GlobalValue *gv,
                                            ARMCP::ARMCPKind k,
                                            const char *Modif)
-  : MachineConstantPoolValue((const Type*)Type::Int32Ty),
+  : MachineConstantPoolValue((const Type*)Type::getInt32Ty(gv->getContext())),
     GV(gv), S(NULL), LabelId(0), Kind(k), PCAdjust(0),
     Modifier(Modif) {}
 

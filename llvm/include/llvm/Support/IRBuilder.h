@@ -129,14 +129,14 @@ public:
 
   /// CreateRetVoid - Create a 'ret void' instruction.
   ReturnInst *CreateRetVoid() {
-    return Insert(ReturnInst::Create());
+    return Insert(ReturnInst::Create(getGlobalContext()));
   }
 
   /// @verbatim
   /// CreateRet - Create a 'ret <val>' instruction.
   /// @endverbatim
   ReturnInst *CreateRet(Value *V) {
-    return Insert(ReturnInst::Create(V));
+    return Insert(ReturnInst::Create(getGlobalContext(), V));
   }
 
   /// CreateAggregateRet - Create a sequence of N insertvalue instructions,
@@ -151,7 +151,7 @@ public:
     Value *V = UndefValue::get(RetType);
     for (unsigned i = 0; i != N; ++i)
       V = CreateInsertValue(V, retVals[i], i, "mrv");
-    return Insert(ReturnInst::Create(V));
+    return Insert(ReturnInst::Create(getGlobalContext(), V));
   }
 
   /// CreateBr - Create an unconditional 'br label X' instruction.
@@ -182,11 +182,11 @@ public:
   }
 
   UnwindInst *CreateUnwind() {
-    return Insert(new UnwindInst());
+    return Insert(new UnwindInst(Context));
   }
 
   UnreachableInst *CreateUnreachable() {
-    return Insert(new UnreachableInst());
+    return Insert(new UnreachableInst(Context));
   }
 
   //===--------------------------------------------------------------------===//
@@ -406,7 +406,7 @@ public:
     return Insert(GetElementPtrInst::CreateInBounds(Ptr, Idx), Name);
   }
   Value *CreateConstGEP1_32(Value *Ptr, unsigned Idx0, const char *Name = "") {
-    Value *Idx = ConstantInt::get(Type::Int32Ty, Idx0);
+    Value *Idx = ConstantInt::get(Type::getInt32Ty(Context), Idx0);
 
     if (Constant *PC = dyn_cast<Constant>(Ptr))
       return Folder.CreateGetElementPtr(PC, &Idx, 1);
@@ -415,7 +415,7 @@ public:
   }
   Value *CreateConstInBoundsGEP1_32(Value *Ptr, unsigned Idx0,
                                     const char *Name = "") {
-    Value *Idx = ConstantInt::get(Type::Int32Ty, Idx0);
+    Value *Idx = ConstantInt::get(Type::getInt32Ty(Context), Idx0);
 
     if (Constant *PC = dyn_cast<Constant>(Ptr))
       return Folder.CreateInBoundsGetElementPtr(PC, &Idx, 1);
@@ -425,8 +425,8 @@ public:
   Value *CreateConstGEP2_32(Value *Ptr, unsigned Idx0, unsigned Idx1, 
                     const char *Name = "") {
     Value *Idxs[] = {
-      ConstantInt::get(Type::Int32Ty, Idx0),
-      ConstantInt::get(Type::Int32Ty, Idx1)
+      ConstantInt::get(Type::getInt32Ty(Context), Idx0),
+      ConstantInt::get(Type::getInt32Ty(Context), Idx1)
     };
 
     if (Constant *PC = dyn_cast<Constant>(Ptr))
@@ -437,8 +437,8 @@ public:
   Value *CreateConstInBoundsGEP2_32(Value *Ptr, unsigned Idx0, unsigned Idx1,
                                     const char *Name = "") {
     Value *Idxs[] = {
-      ConstantInt::get(Type::Int32Ty, Idx0),
-      ConstantInt::get(Type::Int32Ty, Idx1)
+      ConstantInt::get(Type::getInt32Ty(Context), Idx0),
+      ConstantInt::get(Type::getInt32Ty(Context), Idx1)
     };
 
     if (Constant *PC = dyn_cast<Constant>(Ptr))
@@ -447,7 +447,7 @@ public:
     return Insert(GetElementPtrInst::CreateInBounds(Ptr, Idxs, Idxs+2), Name);
   }
   Value *CreateConstGEP1_64(Value *Ptr, uint64_t Idx0, const char *Name = "") {
-    Value *Idx = ConstantInt::get(Type::Int64Ty, Idx0);
+    Value *Idx = ConstantInt::get(Type::getInt64Ty(Context), Idx0);
 
     if (Constant *PC = dyn_cast<Constant>(Ptr))
       return Folder.CreateGetElementPtr(PC, &Idx, 1);
@@ -456,7 +456,7 @@ public:
   }
   Value *CreateConstInBoundsGEP1_64(Value *Ptr, uint64_t Idx0,
                                     const char *Name = "") {
-    Value *Idx = ConstantInt::get(Type::Int64Ty, Idx0);
+    Value *Idx = ConstantInt::get(Type::getInt64Ty(Context), Idx0);
 
     if (Constant *PC = dyn_cast<Constant>(Ptr))
       return Folder.CreateInBoundsGetElementPtr(PC, &Idx, 1);
@@ -466,8 +466,8 @@ public:
   Value *CreateConstGEP2_64(Value *Ptr, uint64_t Idx0, uint64_t Idx1,
                     const char *Name = "") {
     Value *Idxs[] = {
-      ConstantInt::get(Type::Int64Ty, Idx0),
-      ConstantInt::get(Type::Int64Ty, Idx1)
+      ConstantInt::get(Type::getInt64Ty(Context), Idx0),
+      ConstantInt::get(Type::getInt64Ty(Context), Idx1)
     };
 
     if (Constant *PC = dyn_cast<Constant>(Ptr))
@@ -478,8 +478,8 @@ public:
   Value *CreateConstInBoundsGEP2_64(Value *Ptr, uint64_t Idx0, uint64_t Idx1,
                                     const char *Name = "") {
     Value *Idxs[] = {
-      ConstantInt::get(Type::Int64Ty, Idx0),
-      ConstantInt::get(Type::Int64Ty, Idx1)
+      ConstantInt::get(Type::getInt64Ty(Context), Idx0),
+      ConstantInt::get(Type::getInt64Ty(Context), Idx1)
     };
 
     if (Constant *PC = dyn_cast<Constant>(Ptr))
@@ -491,7 +491,7 @@ public:
     return CreateConstInBoundsGEP2_32(Ptr, 0, Idx, Name);
   }
   Value *CreateGlobalString(const char *Str = "", const char *Name = "") {
-    Constant *StrConstant = ConstantArray::get(Str, true);
+    Constant *StrConstant = ConstantArray::get(Context, Str, true);
     Module &M = *BB->getParent()->getParent();
     GlobalVariable *gv = new GlobalVariable(M,
                                             StrConstant->getType(),
@@ -506,7 +506,7 @@ public:
   }
   Value *CreateGlobalStringPtr(const char *Str = "", const char *Name = "") {
     Value *gv = CreateGlobalString(Str, Name);
-    Value *zero = ConstantInt::get(Type::Int32Ty, 0);
+    Value *zero = ConstantInt::get(Type::getInt32Ty(Context), 0);
     Value *Args[] = { zero, zero };
     return CreateInBoundsGEP(gv, Args, Args+2, Name);
   }
@@ -802,8 +802,8 @@ public:
     assert(LHS->getType() == RHS->getType() &&
            "Pointer subtraction operand types must match!");
     const PointerType *ArgType = cast<PointerType>(LHS->getType());
-    Value *LHS_int = CreatePtrToInt(LHS, Type::Int64Ty);
-    Value *RHS_int = CreatePtrToInt(RHS, Type::Int64Ty);
+    Value *LHS_int = CreatePtrToInt(LHS, Type::getInt64Ty(Context));
+    Value *RHS_int = CreatePtrToInt(RHS, Type::getInt64Ty(Context));
     Value *Difference = CreateSub(LHS_int, RHS_int);
     return CreateExactSDiv(Difference,
                            ConstantExpr::getSizeOf(ArgType->getElementType()),

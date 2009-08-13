@@ -382,10 +382,11 @@ GenericValue JIT::runFunction(Function *F,
 
   // Handle some common cases first.  These cases correspond to common `main'
   // prototypes.
-  if (RetTy == Type::Int32Ty || RetTy == Type::VoidTy) {
+  if (RetTy == Type::getInt32Ty(F->getContext()) ||
+      RetTy == Type::getVoidTy(F->getContext())) {
     switch (ArgValues.size()) {
     case 3:
-      if (FTy->getParamType(0) == Type::Int32Ty &&
+      if (FTy->getParamType(0) == Type::getInt32Ty(F->getContext()) &&
           isa<PointerType>(FTy->getParamType(1)) &&
           isa<PointerType>(FTy->getParamType(2))) {
         int (*PF)(int, char **, const char **) =
@@ -400,7 +401,7 @@ GenericValue JIT::runFunction(Function *F,
       }
       break;
     case 2:
-      if (FTy->getParamType(0) == Type::Int32Ty &&
+      if (FTy->getParamType(0) == Type::getInt32Ty(F->getContext()) &&
           isa<PointerType>(FTy->getParamType(1))) {
         int (*PF)(int, char **) = (int(*)(int, char **))(intptr_t)FPtr;
 
@@ -413,7 +414,7 @@ GenericValue JIT::runFunction(Function *F,
       break;
     case 1:
       if (FTy->getNumParams() == 1 &&
-          FTy->getParamType(0) == Type::Int32Ty) {
+          FTy->getParamType(0) == Type::getInt32Ty(F->getContext())) {
         GenericValue rv;
         int (*PF)(int) = (int(*)(int))(intptr_t)FPtr;
         rv.IntVal = APInt(32, PF(ArgValues[0].IntVal.getZExtValue()));
@@ -474,7 +475,7 @@ GenericValue JIT::runFunction(Function *F,
                                     F->getParent());
 
   // Insert a basic block.
-  BasicBlock *StubBB = BasicBlock::Create("", Stub);
+  BasicBlock *StubBB = BasicBlock::Create(F->getContext(), "", Stub);
 
   // Convert all of the GenericValue arguments over to constants.  Note that we
   // currently don't support varargs.
@@ -502,9 +503,11 @@ GenericValue JIT::runFunction(Function *F,
     case Type::PointerTyID:
       void *ArgPtr = GVTOP(AV);
       if (sizeof(void*) == 4)
-        C = ConstantInt::get(Type::Int32Ty, (int)(intptr_t)ArgPtr);
+        C = ConstantInt::get(Type::getInt32Ty(F->getContext()), 
+                             (int)(intptr_t)ArgPtr);
       else
-        C = ConstantInt::get(Type::Int64Ty, (intptr_t)ArgPtr);
+        C = ConstantInt::get(Type::getInt64Ty(F->getContext()),
+                             (intptr_t)ArgPtr);
       // Cast the integer to pointer
       C = ConstantExpr::getIntToPtr(C, ArgTy);
       break;
@@ -516,10 +519,11 @@ GenericValue JIT::runFunction(Function *F,
                                        "", StubBB);
   TheCall->setCallingConv(F->getCallingConv());
   TheCall->setTailCall();
-  if (TheCall->getType() != Type::VoidTy)
-    ReturnInst::Create(TheCall, StubBB);    // Return result of the call.
+  if (TheCall->getType() != Type::getVoidTy(F->getContext()))
+    // Return result of the call.
+    ReturnInst::Create(F->getContext(), TheCall, StubBB);
   else
-    ReturnInst::Create(StubBB);             // Just return void.
+    ReturnInst::Create(F->getContext(), StubBB);           // Just return void.
 
   // Finally, return the value returned by our nullary stub function.
   return runFunction(Stub, std::vector<GenericValue>());

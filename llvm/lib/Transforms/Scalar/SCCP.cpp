@@ -1184,7 +1184,7 @@ void SCCPSolver::visitCallSite(CallSite CS) {
   if (F == 0 || !F->hasLocalLinkage()) {
 CallOverdefined:
     // Void return and not tracking callee, just bail.
-    if (I->getType() == Type::VoidTy) return;
+    if (I->getType() == Type::getVoidTy(I->getContext())) return;
     
     // Otherwise, if we have a single return value case, and if the function is
     // a declaration, maybe we can constant fold it.
@@ -1350,7 +1350,7 @@ bool SCCPSolver::ResolvedUndefsIn(Function &F) {
     
     for (BasicBlock::iterator I = BB->begin(), E = BB->end(); I != E; ++I) {
       // Look for instructions which produce undef values.
-      if (I->getType() == Type::VoidTy) continue;
+      if (I->getType() == Type::getVoidTy(F.getContext())) continue;
       
       LatticeVal &LV = getValueState(I);
       if (!LV.isUndefined()) continue;
@@ -1589,7 +1589,7 @@ bool SCCP::runOnFunction(Function &F) {
       //
       for (BasicBlock::iterator BI = BB->begin(), E = BB->end(); BI != E; ) {
         Instruction *Inst = BI++;
-        if (Inst->getType() == Type::VoidTy ||
+        if (Inst->getType() == Type::getVoidTy(F.getContext()) ||
             isa<TerminatorInst>(Inst))
           continue;
         
@@ -1760,12 +1760,12 @@ bool IPSCCP::runOnModule(Module &M) {
         if (&*BB != &F->front())
           BlocksToErase.push_back(BB);
         else
-          new UnreachableInst(BB);
+          new UnreachableInst(M.getContext(), BB);
 
       } else {
         for (BasicBlock::iterator BI = BB->begin(), E = BB->end(); BI != E; ) {
           Instruction *Inst = BI++;
-          if (Inst->getType() == Type::VoidTy)
+          if (Inst->getType() == Type::getVoidTy(M.getContext()))
             continue;
           
           LatticeVal &IV = Values[Inst];
@@ -1842,7 +1842,7 @@ bool IPSCCP::runOnModule(Module &M) {
   for (DenseMap<Function*, LatticeVal>::const_iterator I = RV.begin(),
          E = RV.end(); I != E; ++I)
     if (!I->second.isOverdefined() &&
-        I->first->getReturnType() != Type::VoidTy) {
+        I->first->getReturnType() != Type::getVoidTy(M.getContext())) {
       Function *F = I->first;
       for (Function::iterator BB = F->begin(), E = F->end(); BB != E; ++BB)
         if (ReturnInst *RI = dyn_cast<ReturnInst>(BB->getTerminator()))

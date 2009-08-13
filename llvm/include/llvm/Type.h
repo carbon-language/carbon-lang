@@ -306,7 +306,7 @@ public:
   /// getVAArgsPromotedType - Return the type an argument of this type
   /// will be promoted to if passed through a variable argument
   /// function.
-  const Type *getVAArgsPromotedType() const; 
+  const Type *getVAArgsPromotedType(LLVMContext &C) const; 
 
   /// getScalarType - If this is a vector type, return the element type,
   /// otherwise return this.
@@ -338,14 +338,24 @@ public:
   //
 
   /// getPrimitiveType - Return a type based on an identifier.
-  static const Type *getPrimitiveType(TypeID IDNumber);
+  static const Type *getPrimitiveType(LLVMContext &C, TypeID IDNumber);
 
   //===--------------------------------------------------------------------===//
   // These are the builtin types that are always available...
   //
-  static const Type *VoidTy, *LabelTy, *FloatTy, *DoubleTy, *MetadataTy;
-  static const Type *X86_FP80Ty, *FP128Ty, *PPC_FP128Ty;
-  static const IntegerType *Int1Ty, *Int8Ty, *Int16Ty, *Int32Ty, *Int64Ty;
+  static const Type *getVoidTy(LLVMContext &C);
+  static const Type *getLabelTy(LLVMContext &C);
+  static const Type *getFloatTy(LLVMContext &C);
+  static const Type *getDoubleTy(LLVMContext &C);
+  static const Type *getMetadataTy(LLVMContext &C);
+  static const Type *getX86_FP80Ty(LLVMContext &C);
+  static const Type *getFP128Ty(LLVMContext &C);
+  static const Type *getPPC_FP128Ty(LLVMContext &C);
+  static const IntegerType *getInt1Ty(LLVMContext &C);
+  static const IntegerType *getInt8Ty(LLVMContext &C);
+  static const IntegerType *getInt16Ty(LLVMContext &C);
+  static const IntegerType *getInt32Ty(LLVMContext &C);
+  static const IntegerType *getInt64Ty(LLVMContext &C);
 
   /// Methods for support type inquiry through isa, cast, and dyn_cast:
   static inline bool classof(const Type *) { return true; }

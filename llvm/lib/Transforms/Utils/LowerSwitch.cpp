@@ -155,7 +155,7 @@ BasicBlock* LowerSwitch::switchConvert(CaseItr Begin, CaseItr End,
   // Create a new node that checks if the value is < pivot. Go to the
   // left branch if it is and right branch if not.
   Function* F = OrigBlock->getParent();
-  BasicBlock* NewNode = BasicBlock::Create("NodeBlock");
+  BasicBlock* NewNode = BasicBlock::Create(Val->getContext(), "NodeBlock");
   Function::iterator FI = OrigBlock;
   F->getBasicBlockList().insert(++FI, NewNode);
 
@@ -177,7 +177,7 @@ BasicBlock* LowerSwitch::newLeafBlock(CaseRange& Leaf, Value* Val,
                                       BasicBlock* Default)
 {
   Function* F = OrigBlock->getParent();
-  BasicBlock* NewLeaf = BasicBlock::Create("LeafBlock");
+  BasicBlock* NewLeaf = BasicBlock::Create(Val->getContext(), "LeafBlock");
   Function::iterator FI = OrigBlock;
   F->getBasicBlockList().insert(++FI, NewLeaf);
 
@@ -289,7 +289,7 @@ void LowerSwitch::processSwitchInst(SwitchInst *SI) {
 
   // Create a new, empty default block so that the new hierarchy of
   // if-then statements go to this and the PHI nodes are happy.
-  BasicBlock* NewDefault = BasicBlock::Create("NewDefault");
+  BasicBlock* NewDefault = BasicBlock::Create(SI->getContext(), "NewDefault");
   F->getBasicBlockList().insert(Default, NewDefault);
 
   BranchInst::Create(Default, NewDefault);

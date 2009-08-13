@@ -105,8 +105,8 @@ TEST(MDNodeTest, Simple) {
 }
 
 TEST(MDNodeTest, Delete) {
-  Constant *C = ConstantInt::get(Type::Int32Ty, 1);
-  Instruction *I = new BitCastInst(C, Type::Int32Ty);
+  Constant *C = ConstantInt::get(Type::getInt32Ty(getGlobalContext()), 1);
+  Instruction *I = new BitCastInst(C, Type::getInt32Ty(getGlobalContext()));
 
   Value *const V = I;
   MDNode *n = MDNode::get(Context, &V, 1);
@@ -122,8 +122,8 @@ TEST(MDNodeTest, Delete) {
 }
 
 TEST(NamedMDNodeTest, Search) {
-  Constant *C = ConstantInt::get(Type::Int32Ty, 1);
-  Constant *C2 = ConstantInt::get(Type::Int32Ty, 2);
+  Constant *C = ConstantInt::get(Type::getInt32Ty(getGlobalContext()), 1);
+  Constant *C2 = ConstantInt::get(Type::getInt32Ty(getGlobalContext()), 2);
 
   Value *const V = C;
   Value *const V2 = C2;
@@ -134,7 +134,7 @@ TEST(NamedMDNodeTest, Search) {
 
   Module *M = new Module("MyModule", getGlobalContext());
   const char *Name = "llvm.NMD1";
-  NamedMDNode *NMD = NamedMDNode::Create(Name, &Nodes[0], 2, M);
+  NamedMDNode *NMD = NamedMDNode::Create(getGlobalContext(), Name, &Nodes[0], 2, M);
   std::ostringstream oss;
   NMD->print(oss);
   EXPECT_STREQ("!llvm.NMD1 = !{!0, !1}\n!0 = metadata !{i32 1}\n"

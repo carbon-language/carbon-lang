@@ -820,7 +820,8 @@ void MSILWriter::printIntrinsicCall(const IntrinsicInst* Inst) {
     // Save as pointer type "void*"
     printValueLoad(Inst->getOperand(1));
     printSimpleInstruction("ldloca",Name.c_str());
-    printIndirectSave(PointerType::getUnqual(IntegerType::get(8)));
+    printIndirectSave(PointerType::getUnqual(
+          IntegerType::get(Inst->getContext(), 8)));
     break;
   case Intrinsic::vaend:
     // Close argument list handle.
@@ -1041,7 +1042,8 @@ void MSILWriter::printVAArgInstruction(const VAArgInst* Inst) {
     "instance typedref [mscorlib]System.ArgIterator::GetNextArg()");
   printSimpleInstruction("refanyval","void*");
   std::string Name = 
-    "ldind."+getTypePostfix(PointerType::getUnqual(IntegerType::get(8)),false);
+    "ldind."+getTypePostfix(PointerType::getUnqual(
+            IntegerType::get(Inst->getContext(), 8)),false);
   printSimpleInstruction(Name.c_str());
 }
 
@@ -1237,7 +1239,7 @@ void MSILWriter::printBasicBlock(const BasicBlock* BB) {
     // Print instruction
     printInstruction(Inst);
     // Save result
-    if (Inst->getType()!=Type::VoidTy) {
+    if (Inst->getType()!=Type::getVoidTy(BB->getContext())) {
       // Do not save value after invoke, it done in "try" block
       if (Inst->getOpcode()==Instruction::Invoke) continue;
       printValueSave(Inst);
@@ -1266,7 +1268,7 @@ void MSILWriter::printLocalVariables(const Function& F) {
       Ty = PointerType::getUnqual(AI->getAllocatedType());
       Name = getValueName(AI);
       Out << "\t.locals (" << getTypeName(Ty) << Name << ")\n";
-    } else if (I->getType()!=Type::VoidTy) {
+    } else if (I->getType()!=Type::getVoidTy(F.getContext())) {
       // Operation result.
       Ty = I->getType();
       Name = getValueName(&*I);

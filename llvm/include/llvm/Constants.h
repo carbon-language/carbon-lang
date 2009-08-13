@@ -346,7 +346,8 @@ public:
   /// of the array by one (you've been warned).  However, in some situations 
   /// this is not desired so if AddNull==false then the string is copied without
   /// null termination.
-  static Constant* get(const StringRef &Initializer, bool AddNull = true);
+  static Constant* get(LLVMContext &Context, const StringRef &Initializer,
+                       bool AddNull = true);
   
   /// Transparently provide more efficient getOperand methods.
   DECLARE_TRANSPARENT_OPERAND_ACCESSORS(Constant);

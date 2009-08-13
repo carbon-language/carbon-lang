@@ -304,7 +304,8 @@ bool llvm::InlineFunction(CallSite CS, CallGraph *CG, const TargetData *TD) {
       if (CalledFunc->paramHasAttr(ArgNo+1, Attribute::ByVal) &&
           !CalledFunc->onlyReadsMemory()) {
         const Type *AggTy = cast<PointerType>(I->getType())->getElementType();
-        const Type *VoidPtrTy = PointerType::getUnqual(Type::Int8Ty);
+        const Type *VoidPtrTy = 
+            PointerType::getUnqual(Type::getInt8Ty(Context));
 
         // Create the alloca.  If we have TargetData, use nice alignment.
         unsigned Align = 1;
@@ -313,7 +314,7 @@ bool llvm::InlineFunction(CallSite CS, CallGraph *CG, const TargetData *TD) {
                                           I->getName(), 
                                           &*Caller->begin()->begin());
         // Emit a memcpy.
-        const Type *Tys[] = { Type::Int64Ty };
+        const Type *Tys[] = { Type::getInt64Ty(Context) };
         Function *MemCpyFn = Intrinsic::getDeclaration(Caller->getParent(),
                                                        Intrinsic::memcpy, 
                                                        Tys, 1);
@@ -324,14 +325,15 @@ bool llvm::InlineFunction(CallSite CS, CallGraph *CG, const TargetData *TD) {
         if (TD == 0)
           Size = ConstantExpr::getSizeOf(AggTy);
         else
-          Size = ConstantInt::get(Type::Int64Ty,
+          Size = ConstantInt::get(Type::getInt64Ty(Context),
                                          TD->getTypeStoreSize(AggTy));
 
         // Always generate a memcpy of alignment 1 here because we don't know
         // the alignment of the src pointer.  Other optimizations can infer
         // better alignment.
         Value *CallArgs[] = {
-          DestCast, SrcCast, Size, ConstantInt::get(Type::Int32Ty, 1)
+          DestCast, SrcCast, Size,
+          ConstantInt::get(Type::getInt32Ty(Context), 1)
         };
         CallInst *TheMemCpy =
           CallInst::Create(MemCpyFn, CallArgs, CallArgs+4, "", TheCall);
@@ -490,7 +492,7 @@ bool llvm::InlineFunction(CallSite CS, CallGraph *CG, const TargetData *TD) {
          BB != E; ++BB) {
       TerminatorInst *Term = BB->getTerminator();
       if (isa<UnwindInst>(Term)) {
-        new UnreachableInst(Term);
+        new UnreachableInst(Context, Term);
         BB->getInstList().erase(Term);
       }
     }

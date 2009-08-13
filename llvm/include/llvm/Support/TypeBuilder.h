@@ -161,7 +161,7 @@ template<> class TypeBuilder<T, false> { \
 public: \
   static const IntegerType *get(LLVMContext &Context) { \
     static const IntegerType *const result = \
-      IntegerType::get(sizeof(T) * CHAR_BIT); \
+      IntegerType::get(Context, sizeof(T) * CHAR_BIT); \
     return result; \
   } \
 }; \
@@ -190,53 +190,53 @@ DEFINE_INTEGRAL_TYPEBUILDER(unsigned long long);
 template<uint32_t num_bits, bool cross>
 class TypeBuilder<types::i<num_bits>, cross> {
 public:
-  static const IntegerType *get(LLVMContext &Context) {
-    static const IntegerType *const result = IntegerType::get(num_bits);
+  static const IntegerType *get(LLVMContext &C) {
+    static const IntegerType *const result = IntegerType::get(C, num_bits);
     return result;
   }
 };
 
 template<> class TypeBuilder<float, false> {
 public:
-  static const Type *get(LLVMContext&) {
-    return Type::FloatTy;
+  static const Type *get(LLVMContext& C) {
+    return Type::getFloatTy(C);
   }
 };
 template<> class TypeBuilder<float, true> {};
 
 template<> class TypeBuilder<double, false> {
 public:
-  static const Type *get(LLVMContext&) {
-    return Type::DoubleTy;
+  static const Type *get(LLVMContext& C) {
+    return Type::getDoubleTy(C);
   }
 };
 template<> class TypeBuilder<double, true> {};
 
 template<bool cross> class TypeBuilder<types::ieee_float, cross> {
 public:
-  static const Type *get(LLVMContext&) { return Type::FloatTy; }
+  static const Type *get(LLVMContext& C) { return Type::getFloatTy(C); }
 };
 template<bool cross> class TypeBuilder<types::ieee_double, cross> {
 public:
-  static const Type *get(LLVMContext&) { return Type::DoubleTy; }
+  static const Type *get(LLVMContext& C) { return Type::getDoubleTy(C); }
 };
 template<bool cross> class TypeBuilder<types::x86_fp80, cross> {
 public:
-  static const Type *get(LLVMContext&) { return Type::X86_FP80Ty; }
+  static const Type *get(LLVMContext& C) { return Type::getX86_FP80Ty(C); }
 };
 template<bool cross> class TypeBuilder<types::fp128, cross> {
 public:
-  static const Type *get(LLVMContext&) { return Type::FP128Ty; }
+  static const Type *get(LLVMContext& C) { return Type::getFP128Ty(C); }
 };
 template<bool cross> class TypeBuilder<types::ppc_fp128, cross> {
 public:
-  static const Type *get(LLVMContext&) { return Type::PPC_FP128Ty; }
+  static const Type *get(LLVMContext& C) { return Type::getPPC_FP128Ty(C); }
 };
 
 template<bool cross> class TypeBuilder<void, cross> {
 public:
-  static const Type *get(LLVMContext&) {
-    return Type::VoidTy;
+  static const Type *get(LLVMContext &C) {
+    return Type::getVoidTy(C);
   }
 };
 

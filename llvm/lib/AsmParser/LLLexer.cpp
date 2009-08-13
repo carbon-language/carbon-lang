@@ -471,7 +471,7 @@ lltok::Kind LLLexer::LexIdentifier() {
       Error("bitwidth for integer type out of range!");
       return lltok::Error;
     }
-    TyVal = IntegerType::get(NumBits);
+    TyVal = IntegerType::get(Context, NumBits);
     return lltok::Type;
   }
 
@@ -579,14 +579,14 @@ lltok::Kind LLLexer::LexIdentifier() {
 #define TYPEKEYWORD(STR, LLVMTY) \
   if (Len == strlen(STR) && !memcmp(StartChar, STR, strlen(STR))) { \
     TyVal = LLVMTY; return lltok::Type; }
-  TYPEKEYWORD("void",      Type::VoidTy);
-  TYPEKEYWORD("float",     Type::FloatTy);
-  TYPEKEYWORD("double",    Type::DoubleTy);
-  TYPEKEYWORD("x86_fp80",  Type::X86_FP80Ty);
-  TYPEKEYWORD("fp128",     Type::FP128Ty);
-  TYPEKEYWORD("ppc_fp128", Type::PPC_FP128Ty);
-  TYPEKEYWORD("label",     Type::LabelTy);
-  TYPEKEYWORD("metadata",  Type::MetadataTy);
+  TYPEKEYWORD("void",      Type::getVoidTy(Context));
+  TYPEKEYWORD("float",     Type::getFloatTy(Context));
+  TYPEKEYWORD("double",    Type::getDoubleTy(Context));
+  TYPEKEYWORD("x86_fp80",  Type::getX86_FP80Ty(Context));
+  TYPEKEYWORD("fp128",     Type::getFP128Ty(Context));
+  TYPEKEYWORD("ppc_fp128", Type::getPPC_FP128Ty(Context));
+  TYPEKEYWORD("label",     Type::getLabelTy(Context));
+  TYPEKEYWORD("metadata",  Type::getMetadataTy(Context));
 #undef TYPEKEYWORD
 
   // Handle special forms for autoupgrading.  Drop these in LLVM 3.0.  This is

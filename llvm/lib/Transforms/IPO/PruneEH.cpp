@@ -215,7 +215,7 @@ bool PruneEH::SimplifyFunction(Function *F) {
 
           // Remove the uncond branch and add an unreachable.
           BB->getInstList().pop_back();
-          new UnreachableInst(BB);
+          new UnreachableInst(BB->getContext(), BB);
 
           DeleteBasicBlock(New);  // Delete the new BB.
           MadeChange = true;

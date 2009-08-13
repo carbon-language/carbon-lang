@@ -418,7 +418,8 @@ GenericValue lle_X_printf(const FunctionType *FT,
   return GV;
 }
 
-static void ByteswapSCANFResults(const char *Fmt, void *Arg0, void *Arg1,
+static void ByteswapSCANFResults(LLVMContext &C,
+                                 const char *Fmt, void *Arg0, void *Arg1,
                                  void *Arg2, void *Arg3, void *Arg4, void *Arg5,
                                  void *Arg6, void *Arg7, void *Arg8) {
   void *Args[] = { Arg0, Arg1, Arg2, Arg3, Arg4, Arg5, Arg6, Arg7, Arg8, 0 };
@@ -458,26 +459,26 @@ static void ByteswapSCANFResults(const char *Fmt, void *Arg0, void *Arg1,
         case 'i': case 'o': case 'u': case 'x': case 'X': case 'n': case 'p':
         case 'd':
           if (Long || LongLong) {
-            Size = 8; Ty = Type::Int64Ty;
+            Size = 8; Ty = Type::getInt64Ty(C);
           } else if (Half) {
-            Size = 4; Ty = Type::Int16Ty;
+            Size = 4; Ty = Type::getInt16Ty(C);
           } else {
-            Size = 4; Ty = Type::Int32Ty;
+            Size = 4; Ty = Type::getInt32Ty(C);
           }
           break;
 
         case 'e': case 'g': case 'E':
         case 'f':
           if (Long || LongLong) {
-            Size = 8; Ty = Type::DoubleTy;
+            Size = 8; Ty = Type::getDoubleTy(C);
           } else {
-            Size = 4; Ty = Type::FloatTy;
+            Size = 4; Ty = Type::getFloatTy(C);
           }
           break;
 
         case 's': case 'c': case '[':  // No byteswap needed
           Size = 1;
-          Ty = Type::Int8Ty;
+          Ty = Type::getInt8Ty(C);
           break;
 
         default: break;
@@ -506,7 +507,8 @@ GenericValue lle_X_sscanf(const FunctionType *FT,
   GenericValue GV;
   GV.IntVal = APInt(32, sscanf(Args[0], Args[1], Args[2], Args[3], Args[4],
                         Args[5], Args[6], Args[7], Args[8], Args[9]));
-  ByteswapSCANFResults(Args[1], Args[2], Args[3], Args[4],
+  ByteswapSCANFResults(FT->getContext(),
+                       Args[1], Args[2], Args[3], Args[4],
                        Args[5], Args[6], Args[7], Args[8], Args[9], 0);
   return GV;
 }
@@ -523,7 +525,8 @@ GenericValue lle_X_scanf(const FunctionType *FT,
   GenericValue GV;
   GV.IntVal = APInt(32, scanf( Args[0], Args[1], Args[2], Args[3], Args[4],
                         Args[5], Args[6], Args[7], Args[8], Args[9]));
-  ByteswapSCANFResults(Args[0], Args[1], Args[2], Args[3], Args[4],
+  ByteswapSCANFResults(FT->getContext(),
+                       Args[0], Args[1], Args[2], Args[3], Args[4],
                        Args[5], Args[6], Args[7], Args[8], Args[9]);
   return GV;
 }

@@ -152,7 +152,7 @@ bool IPCP::PropagateConstantsIntoArguments(Function &F) {
 // callers will be updated to use the value they pass in directly instead of
 // using the return value.
 bool IPCP::PropagateConstantReturn(Function &F) {
-  if (F.getReturnType() == Type::VoidTy)
+  if (F.getReturnType() == Type::getVoidTy(F.getContext()))
     return false; // No return value.
 
   // If this function could be overridden later in the link stage, we can't

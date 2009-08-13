@@ -421,7 +421,7 @@ bool SSIEverything::runOnFunction(Function &F) {
 
   for (Function::iterator B = F.begin(), BE = F.end(); B != BE; ++B)
     for (BasicBlock::iterator I = B->begin(), E = B->end(); I != E; ++I)
-      if (I->getType() != Type::VoidTy)
+      if (I->getType() != Type::getVoidTy(F.getContext()))
         Insts.push_back(I);
 
   ssi.createSSI(Insts);

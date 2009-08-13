@@ -19,6 +19,7 @@
 #include "ARMMachineFunctionInfo.h"
 #include "ARMRegisterInfo.h"
 #include "llvm/DerivedTypes.h"
+#include "llvm/Function.h"
 #include "llvm/CodeGen/MachineBasicBlock.h"
 #include "llvm/CodeGen/MachineFunctionPass.h"
 #include "llvm/CodeGen/MachineInstr.h"
@@ -1183,7 +1184,9 @@ ARMPreAllocLoadStoreOpt::CanFormLdStDWord(MachineInstr *Op0, MachineInstr *Op1,
 
   unsigned Align = Op0->memoperands_begin()->getAlignment();
   unsigned ReqAlign = STI->hasV6Ops()
-    ? TD->getPrefTypeAlignment(Type::Int64Ty) : 8; // Pre-v6 need 8-byte align
+    ? TD->getPrefTypeAlignment(
+  Type::getInt64Ty(Op0->getParent()->getParent()->getFunction()->getContext())) 
+  : 8; // Pre-v6 need 8-byte align
   if (Align < ReqAlign)
     return false;
 

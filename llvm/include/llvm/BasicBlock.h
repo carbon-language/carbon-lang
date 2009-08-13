@@ -83,8 +83,8 @@ private:
   /// is automatically inserted at either the end of the function (if
   /// InsertBefore is null), or before the specified basic block.
   ///
-  explicit BasicBlock(const Twine &Name = "", Function *Parent = 0,
-                      BasicBlock *InsertBefore = 0);
+  explicit BasicBlock(LLVMContext &C, const Twine &Name = "",
+                      Function *Parent = 0, BasicBlock *InsertBefore = 0);
 public:
   /// getContext - Get the context in which this basic block lives,
   /// or null if it is not currently attached to a function.
@@ -97,9 +97,9 @@ public:
   /// Create - Creates a new BasicBlock. If the Parent parameter is specified,
   /// the basic block is automatically inserted at either the end of the
   /// function (if InsertBefore is 0), or before the specified basic block.
-  static BasicBlock *Create(const Twine &Name = "", Function *Parent = 0,
-                            BasicBlock *InsertBefore = 0) {
-    return new BasicBlock(Name, Parent, InsertBefore);
+  static BasicBlock *Create(LLVMContext &Context, const Twine &Name = "", 
+                            Function *Parent = 0,BasicBlock *InsertBefore = 0) {
+    return new BasicBlock(Context, Name, Parent, InsertBefore);
   }
   ~BasicBlock();
 

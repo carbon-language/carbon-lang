@@ -54,31 +54,31 @@ void BrainF::header(LLVMContext& C) {
   //Function prototypes
 
   //declare void @llvm.memset.i32(i8 *, i8, i32, i32)
-  const Type *Tys[] = { Type::Int32Ty };
+  const Type *Tys[] = { Type::getInt32Ty(C) };
   Function *memset_func = Intrinsic::getDeclaration(module, Intrinsic::memset,
                                                     Tys, 1);
 
   //declare i32 @getchar()
   getchar_func = cast<Function>(module->
-    getOrInsertFunction("getchar", IntegerType::Int32Ty, NULL));
+    getOrInsertFunction("getchar", IntegerType::getInt32Ty(C), NULL));
 
   //declare i32 @putchar(i32)
   putchar_func = cast<Function>(module->
-    getOrInsertFunction("putchar", IntegerType::Int32Ty,
-                        IntegerType::Int32Ty, NULL));
+    getOrInsertFunction("putchar", IntegerType::getInt32Ty(C),
+                        IntegerType::getInt32Ty(C), NULL));
 
 
   //Function header
 
   //define void @brainf()
   brainf_func = cast<Function>(module->
-    getOrInsertFunction("brainf", Type::VoidTy, NULL));
+    getOrInsertFunction("brainf", Type::getVoidTy(C), NULL));
 
-  builder = new IRBuilder<>(BasicBlock::Create(label, brainf_func));
+  builder = new IRBuilder<>(BasicBlock::Create(C, label, brainf_func));
 
   //%arr = malloc i8, i32 %d
   ConstantInt *val_mem = ConstantInt::get(C, APInt(32, memtotal));
-  ptr_arr = builder->CreateMalloc(IntegerType::Int8Ty, val_mem, "arr");
+  ptr_arr = builder->CreateMalloc(IntegerType::getInt8Ty(C), val_mem, "arr");
 
   //call void @llvm.memset.i32(i8 *%arr, i8 0, i32 %d, i32 1)
   {
@@ -110,13 +110,13 @@ void BrainF::header(LLVMContext& C) {
   //Function footer
 
   //brainf.end:
-  endbb = BasicBlock::Create(label, brainf_func);
+  endbb = BasicBlock::Create(C, label, brainf_func);
 
   //free i8 *%arr
   new FreeInst(ptr_arr, endbb);
 
   //ret void
-  ReturnInst::Create(endbb);
+  ReturnInst::Create(C, endbb);
 
 
 
@@ -125,7 +125,7 @@ void BrainF::header(LLVMContext& C) {
   {
     //@aberrormsg = internal constant [%d x i8] c"\00"
     Constant *msg_0 =
-      ConstantArray::get("Error: The head has left the tape.", true);
+      ConstantArray::get(C, "Error: The head has left the tape.", true);
 
     GlobalVariable *aberrormsg = new GlobalVariable(
       *module,
@@ -137,15 +137,15 @@ void BrainF::header(LLVMContext& C) {
 
     //declare i32 @puts(i8 *)
     Function *puts_func = cast<Function>(module->
-      getOrInsertFunction("puts", IntegerType::Int32Ty,
-                          PointerType::getUnqual(IntegerType::Int8Ty), NULL));
+      getOrInsertFunction("puts", IntegerType::getInt32Ty(C),
+                      PointerType::getUnqual(IntegerType::getInt8Ty(C)), NULL));
 
     //brainf.aberror:
-    aberrorbb = BasicBlock::Create(label, brainf_func);
+    aberrorbb = BasicBlock::Create(C, label, brainf_func);
 
     //call i32 @puts(i8 *getelementptr([%d x i8] *@aberrormsg, i32 0, i32 0))
     {
-      Constant *zero_32 = Constant::getNullValue(IntegerType::Int32Ty);
+      Constant *zero_32 = Constant::getNullValue(IntegerType::getInt32Ty(C));
 
       Constant *gep_params[] = {
         zero_32,
@@ -198,7 +198,7 @@ void BrainF::readloop(PHINode *phi, BasicBlock *oldbb, BasicBlock *testbb,
 
           //%tape.%d = trunc i32 %tape.%d to i8
           Value *tape_1 = builder->
-            CreateTrunc(tape_0, IntegerType::Int8Ty, tapereg);
+            CreateTrunc(tape_0, IntegerType::getInt8Ty(C), tapereg);
 
           //store i8 %tape.%d, i8 *%head.%d
           builder->CreateStore(tape_1, curhead);
@@ -212,7 +212,7 @@ void BrainF::readloop(PHINode *phi, BasicBlock *oldbb, BasicBlock *testbb,
 
           //%tape.%d = sext i8 %tape.%d to i32
           Value *tape_1 = builder->
-            CreateSExt(tape_0, IntegerType::Int32Ty, tapereg);
+            CreateSExt(tape_0, IntegerType::getInt32Ty(C), tapereg);
 
           //call i32 @putchar(i32 %tape.%d)
           Value *putchar_params[] = {
@@ -248,7 +248,7 @@ void BrainF::readloop(PHINode *phi, BasicBlock *oldbb, BasicBlock *testbb,
               CreateOr(test_0, test_1, testreg);
 
             //br i1 %test.%d, label %main.%d, label %main.%d
-            BasicBlock *nextbb = BasicBlock::Create(label, brainf_func);
+            BasicBlock *nextbb = BasicBlock::Create(C, label, brainf_func);
             builder->CreateCondBr(test_2, aberrorbb, nextbb);
 
             //main.%d:
@@ -274,17 +274,17 @@ void BrainF::readloop(PHINode *phi, BasicBlock *oldbb, BasicBlock *testbb,
       case SYM_LOOP:
         {
           //br label %main.%d
-          BasicBlock *testbb = BasicBlock::Create(label, brainf_func);
+          BasicBlock *testbb = BasicBlock::Create(C, label, brainf_func);
           builder->CreateBr(testbb);
 
           //main.%d:
           BasicBlock *bb_0 = builder->GetInsertBlock();
-          BasicBlock *bb_1 = BasicBlock::Create(label, brainf_func);
+          BasicBlock *bb_1 = BasicBlock::Create(C, label, brainf_func);
           builder->SetInsertPoint(bb_1);
 
           // Make part of PHI instruction now, wait until end of loop to finish
           PHINode *phi_0 =
-            PHINode::Create(PointerType::getUnqual(IntegerType::Int8Ty),
+            PHINode::Create(PointerType::getUnqual(IntegerType::getInt8Ty(C)),
                             headreg, testbb);
           phi_0->reserveOperandSpace(2);
           phi_0->addIncoming(curhead, bb_0);
@@ -432,7 +432,7 @@ void BrainF::readloop(PHINode *phi, BasicBlock *oldbb, BasicBlock *testbb,
                                     ConstantInt::get(C, APInt(8, 0)), testreg);
 
       //br i1 %test.%d, label %main.%d, label %main.%d
-      BasicBlock *bb_0 = BasicBlock::Create(label, brainf_func);
+      BasicBlock *bb_0 = BasicBlock::Create(C, label, brainf_func);
       BranchInst::Create(bb_0, oldbb, test_0, testbb);
 
       //main.%d:
@@ -440,7 +440,7 @@ void BrainF::readloop(PHINode *phi, BasicBlock *oldbb, BasicBlock *testbb,
 
       //%head.%d = phi i8 *[%head.%d, %main.%d]
       PHINode *phi_1 = builder->
-        CreatePHI(PointerType::getUnqual(IntegerType::Int8Ty), headreg);
+        CreatePHI(PointerType::getUnqual(IntegerType::getInt8Ty(C)), headreg);
       phi_1->reserveOperandSpace(1);
       phi_1->addIncoming(head_0, testbb);
       curhead = phi_1;

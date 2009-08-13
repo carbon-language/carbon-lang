@@ -137,7 +137,7 @@ static void ComputeValueVTs(const TargetLowering &TLI, const Type *Ty,
     return;
   }
   // Interpret void as zero return values.
-  if (Ty == Type::VoidTy)
+  if (Ty == Type::getVoidTy(Ty->getContext()))
     return;
   // Base case: we can get an EVT for this LLVM IR type.
   ValueVTs.push_back(TLI.getValueType(Ty));
@@ -2934,7 +2934,7 @@ void SelectionDAGLowering::visitTargetIntrinsic(CallInst &I,
   else if (!HasChain)
     Result = DAG.getNode(ISD::INTRINSIC_WO_CHAIN, getCurDebugLoc(),
                          VTs, &Ops[0], Ops.size());
-  else if (I.getType() != Type::VoidTy)
+  else if (I.getType() != Type::getVoidTy(*DAG.getContext()))
     Result = DAG.getNode(ISD::INTRINSIC_W_CHAIN, getCurDebugLoc(),
                          VTs, &Ops[0], Ops.size());
   else
@@ -2948,7 +2948,7 @@ void SelectionDAGLowering::visitTargetIntrinsic(CallInst &I,
     else
       DAG.setRoot(Chain);
   }
-  if (I.getType() != Type::VoidTy) {
+  if (I.getType() != Type::getVoidTy(*DAG.getContext())) {
     if (const VectorType *PTy = dyn_cast<VectorType>(I.getType())) {
       EVT VT = TLI.getValueType(PTy);
       Result = DAG.getNode(ISD::BIT_CONVERT, getCurDebugLoc(), VT, Result);
@@ -4836,7 +4836,8 @@ public:
   /// getCallOperandValEVT - Return the EVT of the Value* that this operand
   /// corresponds to.  If there is no Value* for this operand, it returns
   /// MVT::Other.
-  EVT getCallOperandValEVT(const TargetLowering &TLI,
+  EVT getCallOperandValEVT(LLVMContext &Context, 
+                           const TargetLowering &TLI,
                            const TargetData *TD) const {
     if (CallOperandVal == 0) return MVT::Other;
 
@@ -4862,7 +4863,7 @@ public:
       case 32:
       case 64:
       case 128:
-        OpTy = IntegerType::get(BitSize);
+        OpTy = IntegerType::get(Context, BitSize);
         break;
       }
     }
@@ -5131,7 +5132,8 @@ void SelectionDAGLowering::visitInlineAsm(CallSite CS) {
 
       // The return value of the call is this value.  As such, there is no
       // corresponding argument.
-      assert(CS.getType() != Type::VoidTy && "Bad inline asm!");
+      assert(CS.getType() != Type::getVoidTy(*DAG.getContext()) &&
+             "Bad inline asm!");
       if (const StructType *STy = dyn_cast<StructType>(CS.getType())) {
         OpVT = TLI.getValueType(STy->getElementType(ResNo));
       } else {
@@ -5160,7 +5162,7 @@ void SelectionDAGLowering::visitInlineAsm(CallSite CS) {
         OpInfo.CallOperand = getValue(OpInfo.CallOperandVal);
       }
 
-      OpVT = OpInfo.getCallOperandValEVT(TLI, TD);
+      OpVT = OpInfo.getCallOperandValEVT(*DAG.getContext(), TLI, TD);
     }
 
     OpInfo.ConstraintVT = OpVT;
@@ -5298,7 +5300,8 @@ void SelectionDAGLowering::visitInlineAsm(CallSite CS) {
                                                       OpInfo.CallOperandVal));
       } else {
         // This is the result value of the call.
-        assert(CS.getType() != Type::VoidTy && "Bad inline asm!");
+        assert(CS.getType() != Type::getVoidTy(*DAG.getContext()) &&
+               "Bad inline asm!");
         // Concatenate this output onto the outputs list.
         RetValRegs.append(OpInfo.AssignedRegs);
       }
@@ -5536,7 +5539,7 @@ void SelectionDAGLowering::visitMalloc(MallocInst &I) {
   TargetLowering::ArgListTy Args;
   TargetLowering::ArgListEntry Entry;
   Entry.Node = Src;
-  Entry.Ty = TLI.getTargetData()->getIntPtrType();
+  Entry.Ty = TLI.getTargetData()->getIntPtrType(*DAG.getContext());
   Args.push_back(Entry);
 
   bool isTailCall = PerformTailCallOpt &&
@@ -5557,13 +5560,14 @@ void SelectionDAGLowering::visitFree(FreeInst &I) {
   TargetLowering::ArgListTy Args;
   TargetLowering::ArgListEntry Entry;
   Entry.Node = getValue(I.getOperand(0));
-  Entry.Ty = TLI.getTargetData()->getIntPtrType();
+  Entry.Ty = TLI.getTargetData()->getIntPtrType(*DAG.getContext());
   Args.push_back(Entry);
   EVT IntPtr = TLI.getPointerTy();
   bool isTailCall = PerformTailCallOpt &&
                     isInTailCallPosition(&I, Attribute::None, TLI);
   std::pair<SDValue,SDValue> Result =
-    TLI.LowerCallTo(getRoot(), Type::VoidTy, false, false, false, false,
+    TLI.LowerCallTo(getRoot(), Type::getVoidTy(*DAG.getContext()),
+                    false, false, false, false,
                     0, CallingConv::C, isTailCall,
                     /*isReturnValueUsed=*/true,
                     DAG.getExternalSymbol("free", IntPtr), Args, DAG,
@@ -5822,7 +5826,7 @@ LowerArguments(BasicBlock *LLVMBB) {
     for (unsigned Value = 0, NumValues = ValueVTs.size();
          Value != NumValues; ++Value) {
       EVT VT = ValueVTs[Value];
-      const Type *ArgTy = VT.getTypeForEVT(*CurDAG->getContext());
+      const Type *ArgTy = VT.getTypeForEVT(*DAG.getContext());
       ISD::ArgFlagsTy Flags;
       unsigned OriginalAlignment =
         TD->getABITypeAlignment(ArgTy);
