@@ -24,7 +24,7 @@
 #include <cassert>
 
 namespace llvm {
-  class FunctionPass;
+  class AsmPrinter;
   class MCAsmParser;
   class Module;
   class TargetAsmInfo;
@@ -51,10 +51,10 @@ namespace llvm {
     typedef TargetMachine *(*TargetMachineCtorTy)(const Target &T,
                                                   const std::string &TT,
                                                   const std::string &Features);
-    typedef FunctionPass *(*AsmPrinterCtorTy)(formatted_raw_ostream &OS,
-                                              TargetMachine &TM,
-                                              const TargetAsmInfo *TAI,
-                                              bool VerboseAsm);
+    typedef AsmPrinter *(*AsmPrinterCtorTy)(formatted_raw_ostream &OS,
+                                            TargetMachine &TM,
+                                            const TargetAsmInfo *TAI,
+                                            bool VerboseAsm);
     typedef TargetAsmParser *(*AsmParserCtorTy)(const Target &T,
                                                 MCAsmParser &P);
   private:
@@ -139,10 +139,8 @@ namespace llvm {
     }
 
     /// createAsmPrinter - Create a target specific assembly printer pass.
-    FunctionPass *createAsmPrinter(formatted_raw_ostream &OS,
-                                   TargetMachine &TM,
-                                   const TargetAsmInfo *TAI,
-                                   bool Verbose) const {
+    AsmPrinter *createAsmPrinter(formatted_raw_ostream &OS, TargetMachine &TM,
+                                 const TargetAsmInfo *TAI, bool Verbose) const {
       if (!AsmPrinterCtorFn)
         return 0;
       return AsmPrinterCtorFn(OS, TM, TAI, Verbose);
@@ -407,10 +405,8 @@ namespace llvm {
     }
 
   private:
-    static FunctionPass *Allocator(formatted_raw_ostream &OS,
-                                   TargetMachine &TM,
-                                   const TargetAsmInfo *TAI,
-                                   bool Verbose) {
+    static AsmPrinter *Allocator(formatted_raw_ostream &OS, TargetMachine &TM,
+                                 const TargetAsmInfo *TAI, bool Verbose) {
       return new AsmPrinterImpl(OS, TM, TAI, Verbose);
     }
   };

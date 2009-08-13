@@ -15,6 +15,7 @@
 #include "llvm/PassManager.h"
 #include "llvm/Pass.h"
 #include "llvm/Assembly/PrintModulePass.h"
+#include "llvm/CodeGen/AsmPrinter.h"
 #include "llvm/CodeGen/Passes.h"
 #include "llvm/CodeGen/GCStrategy.h"
 #include "llvm/CodeGen/MachineFunctionAnalysis.h"

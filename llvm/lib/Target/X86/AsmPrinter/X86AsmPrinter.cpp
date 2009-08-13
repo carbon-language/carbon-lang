@@ -25,10 +25,10 @@ using namespace llvm;
 /// for a MachineFunction to the given output stream, using the given target
 /// machine description.
 ///
-static FunctionPass *createX86CodePrinterPass(formatted_raw_ostream &o,
-                                              TargetMachine &tm,
-                                              const TargetAsmInfo *tai,
-                                              bool verbose) {
+static AsmPrinter *createX86CodePrinterPass(formatted_raw_ostream &o,
+                                            TargetMachine &tm,
+                                            const TargetAsmInfo *tai,
+                                            bool verbose) {
   if (tm.getTargetAsmInfo()->getAssemblerDialect() == 1)
     return new X86IntelAsmPrinter(o, tm, tai, verbose);
   return new X86ATTAsmPrinter(o, tm, tai, verbose);
