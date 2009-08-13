@@ -116,9 +116,19 @@ void ASTRecordLayoutBuilder::SelectPrimaryVBase(const CXXRecordDecl *RD,
 }
 
 /// SelectPrimaryBase - Selects the primary base for the given class and
-/// record that with setPrimaryBase.
+/// record that with setPrimaryBase.  We also calculate the IndirectPrimaries.
 void ASTRecordLayoutBuilder::SelectPrimaryBase(const CXXRecordDecl *RD,
                     llvm::SmallSet<const CXXRecordDecl*, 32> &IndirectPrimary) {
+  // We compute all the primary virtual bases for all of our direct and
+  // indirect bases, and record all their primary virtual base classes.
+  const CXXRecordDecl *FirstPrimary = 0;
+  for (CXXRecordDecl::base_class_const_iterator i = RD->bases_begin(),
+       e = RD->bases_end(); i != e; ++i) {
+    const CXXRecordDecl *Base = 
+      cast<CXXRecordDecl>(i->getType()->getAs<RecordType>()->getDecl());
+    SelectPrimaryForBase(Base, IndirectPrimary);
+  }
+
   // The primary base is the first non-virtual indirect or direct base class,
   // if one exists.
   for (CXXRecordDecl::base_class_const_iterator i = RD->bases_begin(),
@@ -140,19 +150,8 @@ void ASTRecordLayoutBuilder::SelectPrimaryBase(const CXXRecordDecl *RD,
 
   // If we have no virtual bases at this point, bail out as the searching below
   // is expensive.
-  if (RD->getNumVBases() == 0) {
+  if (RD->getNumVBases() == 0)
     return;
-  }
-
-  // First, we compute all the primary virtual bases for all of our direct and
-  // indirect bases, and record all their primary virtual base classes.
-  const CXXRecordDecl *FirstPrimary = 0;
-  for (CXXRecordDecl::base_class_const_iterator i = RD->bases_begin(),
-       e = RD->bases_end(); i != e; ++i) {
-    const CXXRecordDecl *Base = 
-      cast<CXXRecordDecl>(i->getType()->getAs<RecordType>()->getDecl());
-    SelectPrimaryForBase(Base, IndirectPrimary);
-  }
 
   // Then we can search for the first nearly empty virtual base itself.
   SelectPrimaryVBase(RD, FirstPrimary, IndirectPrimary);
@@ -169,8 +168,6 @@ void ASTRecordLayoutBuilder::LayoutVirtualBase(const CXXRecordDecl *RD) {
 
 void ASTRecordLayoutBuilder::LayoutVirtualBases(const CXXRecordDecl *RD,
                     llvm::SmallSet<const CXXRecordDecl*, 32> &IndirectPrimary) {
-  // FIXME: Calculate IndirectPrimary when !PrimaryBaseWasVirtual
-  // assert(PrimaryBaseWasVirtual && "FIXME: calculate IndirectPrimary");
   for (CXXRecordDecl::base_class_const_iterator i = RD->bases_begin(),
          e = RD->bases_end(); i != e; ++i) {
     const CXXRecordDecl *Base = 
@@ -230,7 +227,6 @@ void ASTRecordLayoutBuilder::Layout(const RecordDecl *D) {
     LayoutVtable(RD, IndirectPrimary);
     // PrimaryBase goes first.
     if (PrimaryBase) {
-      // FIXME: We need all the primaries.
       if (PrimaryBaseWasVirtual)
         IndirectPrimary.insert(PrimaryBase);
       LayoutBaseNonVirtually(PrimaryBase);
