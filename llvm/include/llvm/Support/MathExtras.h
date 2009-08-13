@@ -54,12 +54,12 @@ inline bool isUInt32(int64_t Value) {
 
 template<unsigned N>
 inline bool isInt(int64_t x) {
-  return -(INT64_C(1)<<(N-1)) <= x && x < (INT64_C(1)<<(N-1));
+  return N >= 64 || (-(INT64_C(1)<<(N-1)) <= x && x < (INT64_C(1)<<(N-1)));
 }
 
 template<unsigned N>
 inline bool isUint(uint64_t x) {
-  return x < (UINT64_C(1)<<N);
+  return N >= 64 || x < (UINT64_C(1)<<N);
 }
 
 /// isMask_32 - This function returns true if the argument is a sequence of ones
