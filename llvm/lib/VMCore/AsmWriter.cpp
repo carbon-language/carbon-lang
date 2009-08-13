@@ -1233,7 +1233,8 @@ void llvm::WriteAsOperand(raw_ostream &Out, const Value *V,
 
   // Fast path: Don't construct and populate a TypePrinting object if we
   // won't be needing any types printed.
-  if (!PrintType && !isa<Constant>(V)) {
+  if (!PrintType &&
+      (!isa<Constant>(V) || V->hasName() || isa<GlobalValue>(V))) {
     WriteAsOperandInternal(Out, V, 0, 0);
     return;
   }
