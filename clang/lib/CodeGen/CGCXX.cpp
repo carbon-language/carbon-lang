@@ -617,10 +617,10 @@ llvm::Constant *CodeGenFunction::GenerateRtti(const CXXRecordDecl *RD) {
   llvm::GlobalVariable::LinkageTypes linktype;
   linktype = llvm::GlobalValue::WeakAnyLinkage;
   std::vector<llvm::Constant *> info;
-  // assert (0 && "FIXME: implement rtti descriptor");
+  // assert(0 && "FIXME: implement rtti descriptor");
   // FIXME: descriptor
   info.push_back(llvm::Constant::getNullValue(Ptr8Ty));
-  // assert (0 && "FIXME: implement rtti ts");
+  // assert(0 && "FIXME: implement rtti ts");
   // FIXME: TS
   info.push_back(llvm::Constant::getNullValue(Ptr8Ty));
 
@@ -663,6 +663,25 @@ void CodeGenFunction::GenerateMethods(std::vector<llvm::Constant *> &methods,
       m = llvm::ConstantExpr::getBitCast(m, Ptr8Ty);
       methods.push_back(m);
     }
+  }
+}
+
+void CodeGenFunction::GenerateVtableForVBases(const CXXRecordDecl *RD,
+                                              llvm::Constant *rtti,
+                                         std::vector<llvm::Constant *> &methods,
+                   llvm::SmallSet<const CXXRecordDecl *, 32> &IndirectPrimary) {
+  for (CXXRecordDecl::base_class_const_iterator i = RD->bases_begin(),
+         e = RD->bases_end(); i != e; ++i) {
+    const CXXRecordDecl *Base = 
+      cast<CXXRecordDecl>(i->getType()->getAs<RecordType>()->getDecl());
+    if (i->isVirtual() && !IndirectPrimary.count(Base)) {
+      // Mark it so we don't output it twice.
+      IndirectPrimary.insert(Base);
+      GenerateVtableForBase(Base, RD, rtti, methods, false, true,
+                            IndirectPrimary);
+    }
+    if (Base->getNumVBases())
+      GenerateVtableForVBases(Base, rtti, methods, IndirectPrimary);
   }
 }
 
@@ -776,15 +795,8 @@ llvm::Value *CodeGenFunction::GenerateVtable(const CXXRecordDecl *RD) {
                             IndirectPrimary);
   }
 
-  // FIXME: Though complete, this is the wrong order
-  for (CXXRecordDecl::base_class_const_iterator i = RD->vbases_begin(),
-         e = RD->vbases_end(); i != e; ++i) {
-    const CXXRecordDecl *Base = 
-      cast<CXXRecordDecl>(i->getType()->getAs<RecordType>()->getDecl());
-    if (!IndirectPrimary.count(Base))
-      GenerateVtableForBase(Base, RD, rtti, methods, false, true,
-                            IndirectPrimary);
-  }
+  // Then come the vtables for all the virtual bases.
+  GenerateVtableForVBases(RD, rtti, methods, IndirectPrimary);
 
   llvm::Constant *C;
   llvm::ArrayType *type = llvm::ArrayType::get(Ptr8Ty, methods.size());

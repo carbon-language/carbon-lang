@@ -53,7 +53,8 @@ class ASTRecordLayoutBuilder {
   void LayoutFields(const RecordDecl *D);
   void LayoutField(const FieldDecl *D);
 
-  void SelectPrimaryBase(const CXXRecordDecl *RD);
+  void SelectPrimaryBase(const CXXRecordDecl *RD,
+                     llvm::SmallSet<const CXXRecordDecl*, 32> &IndirectPrimary);
   void SelectPrimaryVBase(const CXXRecordDecl *RD,
                           const CXXRecordDecl *&FirstPrimary,
                      llvm::SmallSet<const CXXRecordDecl*, 32> &IndirectPrimary);
@@ -64,7 +65,8 @@ class ASTRecordLayoutBuilder {
     PrimaryBaseWasVirtual = Virtual;
   }
   bool IsNearlyEmpty(const CXXRecordDecl *RD);
-  void LayoutVtable(const CXXRecordDecl *RD);
+  void LayoutVtable(const CXXRecordDecl *RD,
+                     llvm::SmallSet<const CXXRecordDecl*, 32> &IndirectPrimary);
   void LayoutNonVirtualBases(const CXXRecordDecl *RD);
   void LayoutBaseNonVirtually(const CXXRecordDecl *RD);
   void LayoutVirtualBase(const CXXRecordDecl *RD);

@@ -363,6 +363,10 @@ public:
                       const CXXRecordDecl *RD, llvm::Type *Ptr8Ty);
   void GenerateMethods(std::vector<llvm::Constant *> &methods,
                        const CXXRecordDecl *RD, llvm::Type *Ptr8Ty);
+void GenerateVtableForVBases(const CXXRecordDecl *RD,
+                             llvm::Constant *rtti,
+                             std::vector<llvm::Constant *> &methods,
+                    llvm::SmallSet<const CXXRecordDecl *, 32> &IndirectPrimary);
   void GenerateVtableForBase(const CXXRecordDecl *RD,
                              const CXXRecordDecl *Class,
                              llvm::Constant *rtti,
