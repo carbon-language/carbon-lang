@@ -708,8 +708,6 @@ getExplicitSectionGlobal(const GlobalValue *GV, SectionKind Kind,
                       " section specifier");
   }
   
-  
-  
   return S;
 }
 

@@ -20,7 +20,9 @@ namespace llvm {
   class MCSymbol;
   class StringRef;
 
-  /// MCContext - Context object for machine code objects.
+  /// MCContext - Context object for machine code objects.  This class owns all
+  /// of the sections that it creates.
+  ///
   class MCContext {
     MCContext(const MCContext&); // DO NOT IMPLEMENT
     MCContext &operator=(const MCContext&); // DO NOT IMPLEMENT
@@ -48,7 +50,6 @@ namespace llvm {
     /// GetSection - Look up a section with the given @param Name, returning
     /// null if it doesn't exist.
     MCSection *GetSection(const StringRef &Name) const;
-    
     
     void SetSection(const StringRef &Name, MCSection *S) {
       MCSection *&Entry = Sections[Name];

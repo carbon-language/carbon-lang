@@ -18,6 +18,8 @@ MCContext::MCContext() {
 }
 
 MCContext::~MCContext() {
+  // NOTE: The sections are all allocated out of a bump pointer allocator,
+  // we don't need to free them here.
 }
 
 MCSection *MCContext::GetSection(const StringRef &Name) const {
