@@ -261,6 +261,10 @@ private:
   /// non-empty. This outputs the currently buffered data and resets
   /// the buffer to empty.
   void flush_nonempty();
+
+  /// copy_to_buffer - Copy data into the buffer. Size must not be
+  /// greater than the number of unused bytes in the buffer.
+  void copy_to_buffer(const char *Ptr, size_t Size);
 };
 
 //===----------------------------------------------------------------------===//

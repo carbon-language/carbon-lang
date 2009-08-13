@@ -164,17 +164,32 @@ raw_ostream &raw_ostream::write(unsigned char C) {
 raw_ostream &raw_ostream::write(const char *Ptr, size_t Size) {
   // Group exceptional cases into a single branch.
   if (BUILTIN_EXPECT(OutBufCur+Size > OutBufEnd, false)) {
-    if (Unbuffered) {
-      write_impl(Ptr, Size);
-      return *this;
-    }
-    
-    if (!OutBufStart)
+    if (BUILTIN_EXPECT(!OutBufStart, false)) {
+      if (Unbuffered) {
+        write_impl(Ptr, Size);
+        return *this;
+      }
+      // Set up a buffer and start over.
       SetBufferSize();
-    else
+      return write(Ptr, Size);
+    }
+    // Write out the data in buffer-sized blocks until the remainder
+    // fits within the buffer.
+    do {
+      size_t NumBytes = OutBufEnd - OutBufCur;
+      copy_to_buffer(Ptr, NumBytes);
       flush_nonempty();
+      Ptr += NumBytes;
+      Size -= NumBytes;
+    } while (OutBufCur+Size > OutBufEnd);
   }
-  
+
+  copy_to_buffer(Ptr, Size);
+
+  return *this;
+}
+
+void raw_ostream::copy_to_buffer(const char *Ptr, size_t Size) {
   // Handle short strings specially, memcpy isn't very good at very short
   // strings.
   switch (Size) {
@@ -184,21 +199,11 @@ raw_ostream &raw_ostream::write(const char *Ptr, size_t Size) {
   case 1: OutBufCur[0] = Ptr[0]; // FALL THROUGH
   case 0: break;
   default:
-    // Normally the string to emit is shorter than the buffer.
-    if (Size <= unsigned(OutBufEnd-OutBufCur)) {
-      memcpy(OutBufCur, Ptr, Size);
-      break;
-    } 
-
-    // Otherwise we are emitting a string larger than our buffer. We
-    // know we already flushed, so just write it out directly.
-    write_impl(Ptr, Size);
-    Size = 0;
+    memcpy(OutBufCur, Ptr, Size);
     break;
   }
-  OutBufCur += Size;
 
-  return *this;
+  OutBufCur += Size;
 }
 
 // Formatted output.
