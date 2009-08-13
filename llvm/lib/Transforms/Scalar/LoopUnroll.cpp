@@ -126,12 +126,12 @@ bool LoopUnroll::runOnLoop(Loop *L, LPPassManager &LPM) {
   // Find trip count
   unsigned TripCount = L->getSmallConstantTripCount();
   unsigned Count = UnrollCount;
- 
+
   // Automatically select an unroll count.
   if (Count == 0) {
     // Conservative heuristic: if we know the trip count, see if we can
     // completely unroll (subject to the threshold, checked below); otherwise
-    // try to find greatest modulo of the trip count which is still under 
+    // try to find greatest modulo of the trip count which is still under
     // threshold value.
     if (TripCount != 0) {
       Count = TripCount;
@@ -150,10 +150,10 @@ bool LoopUnroll::runOnLoop(Loop *L, LPPassManager &LPM) {
            << " because size: " << Size << ">" << UnrollThreshold << "\n";
       if (UnrollAllowPartial) {
         // Reduce unroll count to be modulo of TripCount for partial unrolling
-        Count = UnrollThreshold / LoopSize;        
+        Count = UnrollThreshold / LoopSize;
         while (Count != 0 && TripCount%Count != 0) {
           Count--;
-        }        
+        }
         if (Count < 2) {
           DOUT << "  could not unroll partially\n";
           return false;
