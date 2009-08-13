@@ -16,27 +16,24 @@
 #include "PIC16TargetMachine.h"
 #include "llvm/PassManager.h"
 #include "llvm/CodeGen/Passes.h"
-#include "llvm/Target/TargetRegistry.h"
+#include "llvm/Target/TargetAsmInfo.h"
 
 using namespace llvm;
 
-extern "C" void LLVMInitializePIC16Target() {
-  // Register the target. Curretnly the codegen works for
-  // enhanced pic16 mid-range.
-  RegisterTargetMachine<PIC16TargetMachine> X(ThePIC16Target);
-  RegisterAsmInfo<PIC16TargetAsmInfo> A(ThePIC16Target);
-}
-
-
-// PIC16TargetMachine - Enhanced PIC16 mid-range Machine. May also represent
-// a Traditional Machine if 'Trad' is true.
+// PIC16TargetMachine - Traditional PIC16 Machine.
 PIC16TargetMachine::PIC16TargetMachine(const Target &T, const std::string &TT,
-                                       const std::string &FS, bool Trad)
+                                       const std::string &FS, bool Cooper)
 : LLVMTargetMachine(T, TT),
-  Subtarget(TT, FS, Trad),
+  Subtarget(TT, FS, Cooper),
   DataLayout("e-p:16:8:8-i8:8:8-i16:8:8-i32:8:8"), 
   InstrInfo(*this), TLInfo(*this),
   FrameInfo(TargetFrameInfo::StackGrowsUp, 8, 0) { }
+
+// CooperTargetMachine - Uses the same PIC16TargetMachine, but makes IsCooper
+// as true.
+CooperTargetMachine::CooperTargetMachine(const Target &T, const std::string &TT, 
+                                         const std::string &FS)
+  : PIC16TargetMachine(T, TT, FS, true) {}
 
 
 bool PIC16TargetMachine::addInstSelector(PassManagerBase &PM,

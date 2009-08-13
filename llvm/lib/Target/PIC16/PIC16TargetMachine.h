@@ -59,6 +59,13 @@ public:
   virtual bool addPreEmitPass(PassManagerBase &PM, CodeGenOpt::Level OptLevel);
 }; // PIC16TargetMachine.
 
+/// CooperTargetMachine
+class CooperTargetMachine : public PIC16TargetMachine {
+public:
+  CooperTargetMachine(const Target &T, const std::string &TT,
+                      const std::string &FS);
+}; // CooperTargetMachine.
+
 } // end namespace llvm
 
 #endif
