@@ -20,6 +20,8 @@
 #include "llvm/Support/Compiler.h"
 #include "llvm/Support/ErrorHandling.h"
 #include <ostream>
+#include <sys/stat.h>
+#include <sys/types.h>
 
 #if defined(HAVE_UNISTD_H)
 # include <unistd.h>
@@ -62,6 +64,16 @@ raw_ostream::~raw_ostream() {
 
 // An out of line virtual method to provide a home for the class vtable.
 void raw_ostream::handle() {}
+
+size_t raw_ostream::preferred_buffer_size() {
+  // BUFSIZ is intended to be a reasonable default.
+  return BUFSIZ;
+}
+
+void raw_ostream::SetBuffered() {
+  // Ask the subclass to determine an appropriate buffer size.
+  SetBufferSize(preferred_buffer_size());
+}
 
 void raw_ostream::SetBufferSize(size_t Size) {
   assert(Size >= 64 &&
@@ -172,7 +184,7 @@ raw_ostream &raw_ostream::write(unsigned char C) {
     }
     
     if (!OutBufStart)
-      SetBufferSize();
+      SetBuffered();
     else
       flush_nonempty();
   }
@@ -190,7 +202,7 @@ raw_ostream &raw_ostream::write(const char *Ptr, size_t Size) {
         return *this;
       }
       // Set up a buffer and start over.
-      SetBufferSize();
+      SetBuffered();
       return write(Ptr, Size);
     }
     // Write out the data in buffer-sized blocks until the remainder
@@ -351,6 +363,17 @@ uint64_t raw_fd_ostream::seek(uint64_t off) {
   if (pos != off)
     error_detected();
   return pos;  
+}
+
+size_t raw_fd_ostream::preferred_buffer_size() {
+#if !defined(_MSC_VER) // Windows reportedly doesn't have st_blksize.
+  assert(FD >= 0 && "File not yet open!");
+  struct stat statbuf;
+  if (fstat(FD, &statbuf) == 0)
+    return statbuf.st_blksize;
+  error_detected();
+#endif
+  return raw_ostream::preferred_buffer_size();
 }
 
 raw_ostream &raw_fd_ostream::changeColor(enum Colors colors, bool bold,

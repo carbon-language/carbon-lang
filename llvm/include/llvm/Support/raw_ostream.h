@@ -96,16 +96,26 @@ public:
   // Configuration Interface
   //===--------------------------------------------------------------------===//
 
-  /// SetBufferSize - Set the internal buffer size to the specified amount
-  /// instead of the default.
-  void SetBufferSize(size_t Size=4096);
+  /// SetBuffered - Set the stream to be buffered, with an automatically
+  /// determined buffer size.
+  void SetBuffered();
 
-  size_t GetBufferSize() const {
+  /// SetBufferrSize - Set the stream to be buffered, using the
+  /// specified buffer size.
+  void SetBufferSize(size_t Size);
+
+  size_t GetBufferSize() {
+    // If we're supposed to be buffered but haven't actually gotten around
+    // to allocating the buffer yet, return the value that would be used.
+    if (!Unbuffered && !OutBufStart)
+      return preferred_buffer_size();
+
+    // Otherwise just return the size of the allocated buffer.
     return OutBufEnd - OutBufStart;
   }
 
-  /// SetUnbuffered - Set the streams buffering status. When
-  /// unbuffered the stream will flush after every write. This routine
+  /// SetUnbuffered - Set the stream to be unbuffered. When
+  /// unbuffered, the stream will flush after every write. This routine
   /// will also flush the buffer immediately when the stream is being
   /// set to unbuffered.
   void SetUnbuffered();
@@ -233,6 +243,10 @@ private:
   virtual uint64_t current_pos() = 0;
 
 protected:
+  /// preferred_buffer_size - Return an efficient buffer size for the
+  /// underlying output mechanism.
+  virtual size_t preferred_buffer_size();
+
   /// error_detected - Set the flag indicating that an output error has
   /// been encountered.
   void error_detected() { Error = true; }
@@ -272,6 +286,9 @@ class raw_fd_ostream : public raw_ostream {
   /// current_pos - Return the current position within the stream, not
   /// counting the bytes currently in the buffer.
   virtual uint64_t current_pos() { return pos; }
+
+  /// preferred_buffer_size - Determine an efficient buffer size.
+  virtual size_t preferred_buffer_size();
 
 public:
   /// raw_fd_ostream - Open the specified file for writing. If an
