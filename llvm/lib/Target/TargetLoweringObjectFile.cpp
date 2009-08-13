@@ -19,7 +19,7 @@
 #include "llvm/GlobalVariable.h"
 #include "llvm/MC/MCContext.h"
 #include "llvm/MC/MCSectionMachO.h"
-#include "llvm/Target/TargetAsmInfo.h"
+#include "llvm/MC/MCSectionELF.h"
 #include "llvm/Target/TargetData.h"
 #include "llvm/Target/TargetMachine.h"
 #include "llvm/Target/TargetOptions.h"
@@ -288,64 +288,98 @@ TargetLoweringObjectFileELF::~TargetLoweringObjectFileELF() {
 }
 
 const MCSection *TargetLoweringObjectFileELF::
-getELFSection(const char *Name, bool isDirective, SectionKind Kind) const {
-  // Create the map if it doesn't already exist.
+getELFSection(StringRef Section, unsigned Type, unsigned Flags,
+              SectionKind Kind, bool IsExplicit) const {
   if (UniquingMap == 0)
     UniquingMap = new ELFUniqueMapTy();
   ELFUniqueMapTy &Map = *(ELFUniqueMapTy*)UniquingMap;
   
   // Do the lookup, if we have a hit, return it.
-  const MCSectionELF *&Entry = Map[Name];
+  const MCSectionELF *&Entry = Map[Section];
   if (Entry) return Entry;
   
-  return Entry = MCSectionELF::Create(Name, isDirective, Kind, getContext());
+  return Entry = MCSectionELF::Create(Section, Type, Flags, Kind, HasCrazyBSS, 
+                                      IsExplicit, getContext());
 }
 
 void TargetLoweringObjectFileELF::Initialize(MCContext &Ctx,
                                              const TargetMachine &TM) {
   TargetLoweringObjectFile::Initialize(Ctx, TM);
-  if (!HasCrazyBSS)
-    BSSSection = getELFSection("\t.bss", true, SectionKind::getBSS());
-  else
-    // PPC/Linux doesn't support the .bss directive, it needs .section .bss.
-    // FIXME: Does .section .bss work everywhere??
-    // FIXME2: this should just be handle by the section printer.  We should get
-    // away from syntactic view of the sections and MCSection should just be a
-    // semantic view.
-    BSSSection = getELFSection("\t.bss", false, SectionKind::getBSS());
 
+  BSSSection = 
+    getELFSection(".bss", MCSectionELF::SHT_NOBITS,
+                  MCSectionELF::SHF_WRITE | MCSectionELF::SHF_ALLOC,
+                  SectionKind::getBSS());
     
-  TextSection = getELFSection("\t.text", true, SectionKind::getText());
-  DataSection = getELFSection("\t.data", true, SectionKind::getDataRel());
-  ReadOnlySection =
-    getELFSection("\t.rodata", false, SectionKind::getReadOnly());
-  TLSDataSection =
-    getELFSection("\t.tdata", false, SectionKind::getThreadData());
+  TextSection = 
+    getELFSection(".text", MCSectionELF::SHT_PROGBITS,
+                  MCSectionELF::SHF_EXECINSTR | MCSectionELF::SHF_ALLOC,
+                  SectionKind::getText());
+
+  DataSection = 
+    getELFSection(".data", MCSectionELF::SHT_PROGBITS,
+                  MCSectionELF::SHF_WRITE | MCSectionELF::SHF_ALLOC,
+                  SectionKind::getDataRel());
+
+  ReadOnlySection = 
+    getELFSection(".rodata", MCSectionELF::SHT_PROGBITS, 
+                  MCSectionELF::SHF_ALLOC, 
+                  SectionKind::getReadOnly());
+
+  TLSDataSection = 
+    getELFSection(".tdata", MCSectionELF::SHT_PROGBITS,
+                  MCSectionELF::SHF_ALLOC | MCSectionELF::SHF_TLS | 
+                  MCSectionELF::SHF_WRITE, SectionKind::getThreadData());
   
-  TLSBSSSection = getELFSection("\t.tbss", false, 
-                                     SectionKind::getThreadBSS());
+  TLSBSSSection = 
+    getELFSection(".tbss", MCSectionELF::SHT_NOBITS,
+                  MCSectionELF::SHF_ALLOC | MCSectionELF::SHF_TLS |
+                  MCSectionELF::SHF_WRITE, SectionKind::getThreadBSS());
 
-  DataRelSection = getELFSection("\t.data.rel", false,
-                                      SectionKind::getDataRel());
-  DataRelLocalSection = getELFSection("\t.data.rel.local", false,
-                                   SectionKind::getDataRelLocal());
-  DataRelROSection = getELFSection("\t.data.rel.ro", false,
-                                SectionKind::getReadOnlyWithRel());
-  DataRelROLocalSection =
-    getELFSection("\t.data.rel.ro.local", false,
-                       SectionKind::getReadOnlyWithRelLocal());
+  DataRelSection = 
+    getELFSection(".data.rel", MCSectionELF::SHT_PROGBITS,
+                  MCSectionELF::SHF_ALLOC | MCSectionELF::SHF_WRITE,
+                  SectionKind::getDataRel());
+
+  DataRelLocalSection = 
+    getELFSection(".data.rel.local", MCSectionELF::SHT_PROGBITS,
+                  MCSectionELF::SHF_ALLOC | MCSectionELF::SHF_WRITE,
+                  SectionKind::getDataRelLocal());
+
+  DataRelROSection = 
+    getELFSection(".data.rel.ro", MCSectionELF::SHT_PROGBITS,
+                  MCSectionELF::SHF_ALLOC | MCSectionELF::SHF_WRITE,
+                  SectionKind::getReadOnlyWithRel());
+
+  DataRelROLocalSection = 
+    getELFSection(".data.rel.ro.local", MCSectionELF::SHT_PROGBITS,
+                  MCSectionELF::SHF_ALLOC | MCSectionELF::SHF_WRITE,
+                  SectionKind::getReadOnlyWithRelLocal());
     
-  MergeableConst4Section = getELFSection(".rodata.cst4", false,
-                                SectionKind::getMergeableConst4());
-  MergeableConst8Section = getELFSection(".rodata.cst8", false,
-                                SectionKind::getMergeableConst8());
-  MergeableConst16Section = getELFSection(".rodata.cst16", false,
-                               SectionKind::getMergeableConst16());
+  MergeableConst4Section = 
+    getELFSection(".rodata.cst4", MCSectionELF::SHT_PROGBITS,
+                  MCSectionELF::SHF_ALLOC | MCSectionELF::SHF_MERGE,
+                  SectionKind::getMergeableConst4());
+
+  MergeableConst8Section = 
+    getELFSection(".rodata.cst8", MCSectionELF::SHT_PROGBITS,
+                  MCSectionELF::SHF_ALLOC | MCSectionELF::SHF_MERGE,
+                  SectionKind::getMergeableConst8());
+
+  MergeableConst16Section = 
+    getELFSection(".rodata.cst16", MCSectionELF::SHT_PROGBITS,
+                  MCSectionELF::SHF_ALLOC | MCSectionELF::SHF_MERGE,
+                  SectionKind::getMergeableConst16());
 
   StaticCtorSection =
-    getELFSection(".ctors", false, SectionKind::getDataRel());
+    getELFSection(".ctors", MCSectionELF::SHT_PROGBITS, 
+                  MCSectionELF::SHF_ALLOC | MCSectionELF::SHF_WRITE,
+                  SectionKind::getDataRel());
+
   StaticDtorSection =
-    getELFSection(".dtors", false, SectionKind::getDataRel());
+    getELFSection(".dtors", MCSectionELF::SHT_PROGBITS,
+                  MCSectionELF::SHF_ALLOC | MCSectionELF::SHF_WRITE,
+                  SectionKind::getDataRel());
   
   // Exception Handling Sections.
   
@@ -354,33 +388,46 @@ void TargetLoweringObjectFileELF::Initialize(MCContext &Ctx,
   // runtime hit for C++ apps.  Either the contents of the LSDA need to be
   // adjusted or this should be a data section.
   LSDASection =
-    getELFSection(".gcc_except_table", false, SectionKind::getReadOnly());
+    getELFSection(".gcc_except_table", MCSectionELF::SHT_PROGBITS,
+                  MCSectionELF::SHF_ALLOC, SectionKind::getReadOnly());
   EHFrameSection =
-    getELFSection(".eh_frame", false, SectionKind::getDataRel());
+    getELFSection(".eh_frame", MCSectionELF::SHT_PROGBITS, 
+                  MCSectionELF::SHF_ALLOC, SectionKind::getDataRel());
   
   // Debug Info Sections.
   DwarfAbbrevSection = 
-    getELFSection(".debug_abbrev", false, SectionKind::getMetadata());
+    getELFSection(".debug_abbrev", MCSectionELF::SHT_PROGBITS, 0, 
+                  SectionKind::getMetadata());
   DwarfInfoSection = 
-    getELFSection(".debug_info", false, SectionKind::getMetadata());
+    getELFSection(".debug_info", MCSectionELF::SHT_PROGBITS, 0, 
+                  SectionKind::getMetadata());
   DwarfLineSection = 
-    getELFSection(".debug_line", false, SectionKind::getMetadata());
+    getELFSection(".debug_line", MCSectionELF::SHT_PROGBITS, 0, 
+                  SectionKind::getMetadata());
   DwarfFrameSection = 
-    getELFSection(".debug_frame", false, SectionKind::getMetadata());
+    getELFSection(".debug_frame", MCSectionELF::SHT_PROGBITS, 0, 
+                  SectionKind::getMetadata());
   DwarfPubNamesSection = 
-    getELFSection(".debug_pubnames", false, SectionKind::getMetadata());
+    getELFSection(".debug_pubnames", MCSectionELF::SHT_PROGBITS, 0, 
+                  SectionKind::getMetadata());
   DwarfPubTypesSection = 
-    getELFSection(".debug_pubtypes", false, SectionKind::getMetadata());
+    getELFSection(".debug_pubtypes", MCSectionELF::SHT_PROGBITS, 0, 
+                  SectionKind::getMetadata());
   DwarfStrSection = 
-    getELFSection(".debug_str", false, SectionKind::getMetadata());
+    getELFSection(".debug_str", MCSectionELF::SHT_PROGBITS, 0,
+                  SectionKind::getMetadata());
   DwarfLocSection = 
-    getELFSection(".debug_loc", false, SectionKind::getMetadata());
+    getELFSection(".debug_loc", MCSectionELF::SHT_PROGBITS, 0, 
+                  SectionKind::getMetadata());
   DwarfARangesSection = 
-    getELFSection(".debug_aranges", false, SectionKind::getMetadata());
+    getELFSection(".debug_aranges", MCSectionELF::SHT_PROGBITS, 0, 
+                  SectionKind::getMetadata());
   DwarfRangesSection = 
-    getELFSection(".debug_ranges", false, SectionKind::getMetadata());
+    getELFSection(".debug_ranges", MCSectionELF::SHT_PROGBITS, 0, 
+                  SectionKind::getMetadata());
   DwarfMacroInfoSection = 
-    getELFSection(".debug_macinfo", false, SectionKind::getMetadata());
+    getELFSection(".debug_macinfo", MCSectionELF::SHT_PROGBITS, 0, 
+                  SectionKind::getMetadata());
 }
 
 
@@ -410,13 +457,62 @@ getELFKindForNamedSection(const char *Name, SectionKind K) {
   return K;
 }
 
+
+static unsigned
+getELFSectionType(const char *Name, SectionKind K) {
+
+  if (strncmp(Name, ".init_array", 11) == 0)
+    return MCSectionELF::SHT_INIT_ARRAY;
+
+  if (strncmp(Name, ".fini_array", 11) == 0)
+    return MCSectionELF::SHT_FINI_ARRAY;
+
+  if (strncmp(Name, ".preinit_array", 14) == 0)
+    return MCSectionELF::SHT_PREINIT_ARRAY;
+
+  if (K.isBSS() || K.isThreadBSS())
+    return MCSectionELF::SHT_NOBITS;
+
+  return MCSectionELF::SHT_PROGBITS;
+}
+
+
+static unsigned
+getELFSectionFlags(SectionKind K) {
+  unsigned Flags = 0;
+
+  if (!K.isMetadata())
+    Flags |= MCSectionELF::SHF_ALLOC;
+  
+  if (K.isWriteable())
+    Flags |= MCSectionELF::SHF_WRITE;
+  
+  if (K.isThreadLocal())
+    Flags |= MCSectionELF::SHF_TLS;
+  
+  // K.isMergeableConst() is left out to honour PR4650
+  if (K.isMergeableCString() || K.isMergeableConst4() ||
+      K.isMergeableConst8() || K.isMergeableConst16())
+    Flags |= MCSectionELF::SHF_MERGE;
+
+  if (K.isMergeableCString())
+    Flags |= MCSectionELF::SHF_STRINGS;
+
+  return Flags;
+}
+
+
 const MCSection *TargetLoweringObjectFileELF::
 getExplicitSectionGlobal(const GlobalValue *GV, SectionKind Kind, 
                          Mangler *Mang, const TargetMachine &TM) const {
+  const char *SectionName = GV->getSection().c_str();
+
   // Infer section flags from the section name if we can.
-  Kind = getELFKindForNamedSection(GV->getSection().c_str(), Kind);
+  Kind = getELFKindForNamedSection(SectionName, Kind);
   
-  return getELFSection(GV->getSection().c_str(), false, Kind);
+  return getELFSection(SectionName, 
+                       getELFSectionType(SectionName, Kind), 
+                       getELFSectionFlags(Kind), Kind, true);
 }
 
 static const char *getSectionPrefixForUniqueGlobal(SectionKind Kind) {
@@ -445,7 +541,11 @@ SelectSectionForGlobal(const GlobalValue *GV, SectionKind Kind,
   if (GV->isWeakForLinker()) {
     const char *Prefix = getSectionPrefixForUniqueGlobal(Kind);
     std::string Name = Mang->makeNameProper(GV->getNameStr());
-    return getELFSection((Prefix+Name).c_str(), false, Kind);
+
+    return getELFSection((Prefix+Name).c_str(), 
+                         getELFSectionType((Prefix+Name).c_str(), Kind), 
+                         getELFSectionFlags(Kind), 
+                         Kind);
   }
   
   if (Kind.isText()) return TextSection;
@@ -470,7 +570,11 @@ SelectSectionForGlobal(const GlobalValue *GV, SectionKind Kind,
     
     
     std::string Name = SizeSpec + utostr(Align);
-    return getELFSection(Name.c_str(), false, Kind);
+    return getELFSection(Name.c_str(), MCSectionELF::SHT_PROGBITS, 
+                         MCSectionELF::SHF_ALLOC | 
+                         MCSectionELF::SHF_MERGE | 
+                         MCSectionELF::SHF_STRINGS, 
+                         Kind);
   }
   
   if (Kind.isMergeableConst()) {

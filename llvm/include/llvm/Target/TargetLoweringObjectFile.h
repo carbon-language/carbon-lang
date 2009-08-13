@@ -204,8 +204,9 @@ protected:
   const MCSection *MergeableConst16Section;
   
 protected:
-  const MCSection *getELFSection(const char *Name, bool isDirective,
-                                 SectionKind Kind) const;
+  const MCSection *getELFSection(StringRef Section, unsigned Type, 
+                                 unsigned Flags, SectionKind Kind,
+                                 bool IsExplicit = false) const;
 public:
   TargetLoweringObjectFileELF(// FIXME: REMOVE AFTER UNIQUING IS FIXED.
                               bool hasCrazyBSS = false)

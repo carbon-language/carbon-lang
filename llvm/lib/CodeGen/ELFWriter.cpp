@@ -43,7 +43,7 @@
 #include "llvm/CodeGen/MachineCodeEmitter.h"
 #include "llvm/CodeGen/MachineConstantPool.h"
 #include "llvm/MC/MCContext.h"
-#include "llvm/MC/MCSection.h"
+#include "llvm/MC/MCSectionELF.h"
 #include "llvm/Target/TargetAsmInfo.h"
 #include "llvm/Target/TargetData.h"
 #include "llvm/Target/TargetELFWriterInfo.h"
@@ -178,30 +178,32 @@ void ELFWriter::addExternalSymbol(const char *External) {
 
 // getCtorSection - Get the static constructor section
 ELFSection &ELFWriter::getCtorSection() {
-  const MCSection *Ctor = TLOF.getStaticCtorSection();
-  return getSection(((MCSectionELF*)Ctor)->getName(), ELFSection::SHT_PROGBITS, 
+  const MCSectionELF *Ctor = (const MCSectionELF *)TLOF.getStaticCtorSection();
+  return getSection(Ctor->getSectionName(), ELFSection::SHT_PROGBITS, 
                     getElfSectionFlags(Ctor->getKind()));
 }
 
 // getDtorSection - Get the static destructor section
 ELFSection &ELFWriter::getDtorSection() {
-  const MCSection *Dtor = TLOF.getStaticDtorSection();
-  return getSection(((MCSectionELF*)Dtor)->getName(), ELFSection::SHT_PROGBITS, 
+  const MCSectionELF *Dtor = (const MCSectionELF *)TLOF.getStaticDtorSection();
+  return getSection(Dtor->getSectionName(), ELFSection::SHT_PROGBITS, 
                     getElfSectionFlags(Dtor->getKind()));
 }
 
 // getTextSection - Get the text section for the specified function
 ELFSection &ELFWriter::getTextSection(Function *F) {
-  const MCSection *Text = TLOF.SectionForGlobal(F, Mang, TM);
-  return getSection(((MCSectionELF*)Text)->getName(), ELFSection::SHT_PROGBITS,
+  const MCSectionELF *Text = 
+    (const MCSectionELF *)TLOF.SectionForGlobal(F, Mang, TM);
+  return getSection(Text->getSectionName(), ELFSection::SHT_PROGBITS,
                     getElfSectionFlags(Text->getKind()));
 }
 
 // getJumpTableSection - Get a read only section for constants when 
 // emitting jump tables. TODO: add PIC support
 ELFSection &ELFWriter::getJumpTableSection() {
-  const MCSection *JT = TLOF.getSectionForConstant(SectionKind::getReadOnly());
-  return getSection(((MCSectionELF*)JT)->getName(), 
+  const MCSectionELF *JT = 
+    (const MCSectionELF *)TLOF.getSectionForConstant(SectionKind::getReadOnly());
+  return getSection(JT->getSectionName(), 
                     ELFSection::SHT_PROGBITS,
                     getElfSectionFlags(JT->getKind()), 
                     TM.getTargetData()->getPointerABIAlignment());
@@ -226,8 +228,9 @@ ELFSection &ELFWriter::getConstantPoolSection(MachineConstantPoolEntry &CPE) {
     }
   }
 
-  const MCSection *CPSect = TLOF.getSectionForConstant(Kind);
-  return getSection(((MCSectionELF*)CPSect)->getName(),
+  const MCSectionELF *CPSect = 
+    (const MCSectionELF *)TLOF.getSectionForConstant(Kind);
+  return getSection(CPSect->getSectionName(),
                     ELFSection::SHT_PROGBITS,
                     getElfSectionFlags(Kind),
                     CPE.getAlignment());
@@ -358,8 +361,9 @@ void ELFWriter::EmitGlobal(const GlobalValue *GV) {
       return;
 
     // Get the ELF section where this global belongs from TLOF
-    const MCSection *S = TLOF.SectionForGlobal(GV, Mang, TM);
-    SectionKind Kind = ((MCSectionELF*)S)->getKind();
+    const MCSectionELF *S = 
+      (const MCSectionELF *)TLOF.SectionForGlobal(GV, Mang, TM);
+    SectionKind Kind = S->getKind();
     unsigned SectionFlags = getElfSectionFlags(Kind);
 
     // The symbol align should update the section alignment if needed
@@ -370,7 +374,7 @@ void ELFWriter::EmitGlobal(const GlobalValue *GV) {
 
     if (isELFCommonSym(GVar)) {
       GblSym->SectionIdx = ELFSection::SHN_COMMON;
-      getSection(((MCSectionELF*)S)->getName(), 
+      getSection(S->getSectionName(), 
                  ELFSection::SHT_NOBITS, SectionFlags, 1);
 
       // A new linkonce section is created for each global in the
@@ -380,7 +384,7 @@ void ELFWriter::EmitGlobal(const GlobalValue *GV) {
 
     } else if (isELFBssSym(GVar, Kind)) {
       ELFSection &ES =
-        getSection(((MCSectionELF*)S)->getName(), ELFSection::SHT_NOBITS,
+        getSection(S->getSectionName(), ELFSection::SHT_NOBITS,
                    SectionFlags);
       GblSym->SectionIdx = ES.SectionIdx;
 
@@ -396,7 +400,7 @@ void ELFWriter::EmitGlobal(const GlobalValue *GV) {
 
     } else { // The symbol must go to some kind of data section
       ELFSection &ES =
-        getSection(((MCSectionELF*)S)->getName(), ELFSection::SHT_PROGBITS,
+        getSection(S->getSectionName(), ELFSection::SHT_PROGBITS,
                    SectionFlags);
       GblSym->SectionIdx = ES.SectionIdx;
 

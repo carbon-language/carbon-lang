@@ -11,6 +11,7 @@
 #define LLVM_TARGET_ARM_TARGETOBJECTFILE_H
 
 #include "llvm/Target/TargetLoweringObjectFile.h"
+#include "llvm/MC/MCSectionELF.h"
 
 namespace llvm {
 
@@ -21,14 +22,14 @@ namespace llvm {
     void Initialize(MCContext &Ctx, const TargetMachine &TM) {
       TargetLoweringObjectFileELF::Initialize(Ctx, TM);
 
-      // FIXME: Add new attribute/flag to MCSection for init_array/fini_array.
-      // That will allow not treating these as "directives".
       if (TM.getSubtarget<ARMSubtarget>().isAAPCS_ABI()) {
         StaticCtorSection =
-          getELFSection("\t.section .init_array,\"aw\",%init_array", true,
+          getELFSection(".init_array", MCSectionELF::SHT_INIT_ARRAY, 
+                        MCSectionELF::SHF_WRITE | MCSectionELF::SHF_ALLOC,
                         SectionKind::getDataRel());
         StaticDtorSection =
-          getELFSection("\t.section .fini_array,\"aw\",%fini_array", true,
+          getELFSection(".fini_array", MCSectionELF::SHT_FINI_ARRAY,
+                        MCSectionELF::SHF_WRITE | MCSectionELF::SHF_ALLOC,
                         SectionKind::getDataRel());
       }
     }
