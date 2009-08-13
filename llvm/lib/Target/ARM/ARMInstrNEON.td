@@ -99,7 +99,6 @@ def SDTARMVSHUF   : SDTypeProfile<1, 1, [SDTCisVec<0>, SDTCisSameAs<0, 1>]>;
 def NEONvrev64    : SDNode<"ARMISD::VREV64", SDTARMVSHUF>;
 def NEONvrev32    : SDNode<"ARMISD::VREV32", SDTARMVSHUF>;
 def NEONvrev16    : SDNode<"ARMISD::VREV16", SDTARMVSHUF>;
-def NEONvsplat0   : SDNode<"ARMISD::VSPLAT0", SDTARMVSHUF>;
 
 //===----------------------------------------------------------------------===//
 // NEON operand definitions
@@ -1745,14 +1744,20 @@ def : Pat<(v2f64 (insertelt QPR:$src1, DPR:$src2, imm:$src3)),
 
 //   VDUP     : Vector Duplicate (from ARM core register to all elements)
 
+def splat_lo : PatFrag<(ops node:$lhs, node:$rhs),
+                       (vector_shuffle node:$lhs, node:$rhs), [{
+  ShuffleVectorSDNode *SVOp = cast<ShuffleVectorSDNode>(N);
+  return SVOp->isSplat() && SVOp->getSplatIndex() == 0;
+}]>;
+
 class VDUPD<bits<8> opcod1, bits<2> opcod3, string asmSize, ValueType Ty>
   : NVDup<opcod1, 0b1011, opcod3, (outs DPR:$dst), (ins GPR:$src),
           NoItinerary, "vdup", !strconcat(asmSize, "\t$dst, $src"),
-          [(set DPR:$dst, (Ty (NEONvsplat0 (scalar_to_vector GPR:$src))))]>;
+          [(set DPR:$dst, (Ty (splat_lo (scalar_to_vector GPR:$src), undef)))]>;
 class VDUPQ<bits<8> opcod1, bits<2> opcod3, string asmSize, ValueType Ty>
   : NVDup<opcod1, 0b1011, opcod3, (outs QPR:$dst), (ins GPR:$src),
           NoItinerary, "vdup", !strconcat(asmSize, "\t$dst, $src"),
-          [(set QPR:$dst, (Ty (NEONvsplat0 (scalar_to_vector GPR:$src))))]>;
+          [(set QPR:$dst, (Ty (splat_lo (scalar_to_vector GPR:$src), undef)))]>;
 
 def  VDUP8d   : VDUPD<0b11101100, 0b00, ".8", v8i8>;
 def  VDUP16d  : VDUPD<0b11101000, 0b01, ".16", v4i16>;
@@ -1763,14 +1768,16 @@ def  VDUP32q  : VDUPQ<0b11101010, 0b00, ".32", v4i32>;
 
 def  VDUPfd   : NVDup<0b11101000, 0b1011, 0b00, (outs DPR:$dst), (ins GPR:$src),
                       NoItinerary, "vdup", ".32\t$dst, $src",
-                      [(set DPR:$dst,
-                        (v2f32 (NEONvsplat0 (scalar_to_vector
-                                             (f32 (bitconvert GPR:$src))))))]>;
+                      [(set DPR:$dst, (v2f32 (splat_lo
+                                              (scalar_to_vector
+                                               (f32 (bitconvert GPR:$src))),
+                                              undef)))]>;
 def  VDUPfq   : NVDup<0b11101010, 0b1011, 0b00, (outs QPR:$dst), (ins GPR:$src),
                       NoItinerary, "vdup", ".32\t$dst, $src",
-                      [(set QPR:$dst,
-                        (v4f32 (NEONvsplat0 (scalar_to_vector
-                                             (f32 (bitconvert GPR:$src))))))]>;
+                      [(set QPR:$dst, (v4f32 (splat_lo
+                                              (scalar_to_vector
+                                               (f32 (bitconvert GPR:$src))),
+                                              undef)))]>;
 
 //   VDUP     : Vector Duplicate Lane (from scalar to all elements)
 
@@ -1812,14 +1819,16 @@ def VDUPLNfq  : VDUPLNQ<0b01, 0b00, "vdup.32", v4f32, v2f32>;
 def VDUPfdf   : N2V<0b11, 0b11, 0b01, 0b00, 0b11000, 0, 0,
                     (outs DPR:$dst), (ins SPR:$src),
                     NoItinerary, "vdup.32\t$dst, ${src:lane}", "",
-                    [(set DPR:$dst, (v2f32 (NEONvsplat0
-                                            (scalar_to_vector SPR:$src))))]>;
+                    [(set DPR:$dst, (v2f32 (splat_lo
+                                            (scalar_to_vector SPR:$src),
+                                            undef)))]>;
 
 def VDUPfqf   : N2V<0b11, 0b11, 0b01, 0b00, 0b11000, 1, 0,
                     (outs QPR:$dst), (ins SPR:$src),
                     NoItinerary, "vdup.32\t$dst, ${src:lane}", "",
-                    [(set QPR:$dst, (v4f32 (NEONvsplat0
-                                            (scalar_to_vector SPR:$src))))]>;
+                    [(set QPR:$dst, (v4f32 (splat_lo
+                                            (scalar_to_vector SPR:$src),
+                                            undef)))]>;
 
 //   VMOVN    : Vector Narrowing Move
 defm VMOVN    : N2VNInt_HSD<0b11,0b11,0b10,0b00100,0,0, "vmovn.i",

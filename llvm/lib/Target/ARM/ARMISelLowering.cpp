@@ -487,7 +487,6 @@ const char *ARMTargetLowering::getTargetNodeName(unsigned Opcode) const {
   case ARMISD::VREV64:        return "ARMISD::VREV64";
   case ARMISD::VREV32:        return "ARMISD::VREV32";
   case ARMISD::VREV16:        return "ARMISD::VREV16";
-  case ARMISD::VSPLAT0:       return "ARMISD::VSPLAT0";
   }
 }
 
@@ -2443,8 +2442,6 @@ static SDValue LowerVECTOR_SHUFFLE(SDValue Op, SelectionDAG &DAG) {
   // DAG nodes, instead of keeping them as shuffles and matching them again
   // during code selection.  This is more efficient and avoids the possibility
   // of inconsistencies between legalization and selection.
-  if (SVN->isSplat() && SVN->getSplatIndex() == 0)
-    return DAG.getNode(ARMISD::VSPLAT0, dl, VT, SVN->getOperand(0));
   if (isVREVMask(SVN, 64))
     return DAG.getNode(ARMISD::VREV64, dl, VT, SVN->getOperand(0));
   if (isVREVMask(SVN, 32))
