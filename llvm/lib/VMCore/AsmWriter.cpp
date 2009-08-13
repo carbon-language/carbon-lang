@@ -819,7 +819,7 @@ void SlotTracker::CreateMetadataSlot(const MDNode *N) {
 //===----------------------------------------------------------------------===//
 
 static void WriteAsOperandInternal(raw_ostream &Out, const Value *V,
-                                   TypePrinting &TypePrinter,
+                                   TypePrinting *TypePrinter,
                                    SlotTracker *Machine);
 
 
@@ -881,7 +881,7 @@ static void WriteMDNodes(formatted_raw_ostream &Out, TypePrinting &TypePrinter,
       else {
         TypePrinter.print((*NI)->getType(), Out);
         Out << ' ';
-        WriteAsOperandInternal(Out, *NI, TypePrinter, &Machine);
+        WriteAsOperandInternal(Out, *NI, &TypePrinter, &Machine);
       }
       if (++NI != NE)
         Out << ", ";
@@ -1035,12 +1035,12 @@ static void WriteConstantInt(raw_ostream &Out, const Constant *CV,
         TypePrinter.print(ETy, Out);
         Out << ' ';
         WriteAsOperandInternal(Out, CA->getOperand(0),
-                               TypePrinter, Machine);
+                               &TypePrinter, Machine);
         for (unsigned i = 1, e = CA->getNumOperands(); i != e; ++i) {
           Out << ", ";
           TypePrinter.print(ETy, Out);
           Out << ' ';
-          WriteAsOperandInternal(Out, CA->getOperand(i), TypePrinter, Machine);
+          WriteAsOperandInternal(Out, CA->getOperand(i), &TypePrinter, Machine);
         }
       }
       Out << ']';
@@ -1058,14 +1058,14 @@ static void WriteConstantInt(raw_ostream &Out, const Constant *CV,
       TypePrinter.print(CS->getOperand(0)->getType(), Out);
       Out << ' ';
 
-      WriteAsOperandInternal(Out, CS->getOperand(0), TypePrinter, Machine);
+      WriteAsOperandInternal(Out, CS->getOperand(0), &TypePrinter, Machine);
 
       for (unsigned i = 1; i < N; i++) {
         Out << ", ";
         TypePrinter.print(CS->getOperand(i)->getType(), Out);
         Out << ' ';
 
-        WriteAsOperandInternal(Out, CS->getOperand(i), TypePrinter, Machine);
+        WriteAsOperandInternal(Out, CS->getOperand(i), &TypePrinter, Machine);
       }
       Out << ' ';
     }
@@ -1083,12 +1083,12 @@ static void WriteConstantInt(raw_ostream &Out, const Constant *CV,
     Out << '<';
     TypePrinter.print(ETy, Out);
     Out << ' ';
-    WriteAsOperandInternal(Out, CP->getOperand(0), TypePrinter, Machine);
+    WriteAsOperandInternal(Out, CP->getOperand(0), &TypePrinter, Machine);
     for (unsigned i = 1, e = CP->getNumOperands(); i != e; ++i) {
       Out << ", ";
       TypePrinter.print(ETy, Out);
       Out << ' ';
-      WriteAsOperandInternal(Out, CP->getOperand(i), TypePrinter, Machine);
+      WriteAsOperandInternal(Out, CP->getOperand(i), &TypePrinter, Machine);
     }
     Out << '>';
     return;
@@ -1119,7 +1119,7 @@ static void WriteConstantInt(raw_ostream &Out, const Constant *CV,
     for (User::const_op_iterator OI=CE->op_begin(); OI != CE->op_end(); ++OI) {
       TypePrinter.print((*OI)->getType(), Out);
       Out << ' ';
-      WriteAsOperandInternal(Out, *OI, TypePrinter, Machine);
+      WriteAsOperandInternal(Out, *OI, &TypePrinter, Machine);
       if (OI+1 != CE->op_end())
         Out << ", ";
     }
@@ -1148,7 +1148,7 @@ static void WriteConstantInt(raw_ostream &Out, const Constant *CV,
 /// the whole instruction that generated it.
 ///
 static void WriteAsOperandInternal(raw_ostream &Out, const Value *V,
-                                   TypePrinting &TypePrinter,
+                                   TypePrinting *TypePrinter,
                                    SlotTracker *Machine) {
   if (V->hasName()) {
     PrintLLVMName(Out, V);
@@ -1157,7 +1157,8 @@ static void WriteAsOperandInternal(raw_ostream &Out, const Value *V,
   
   const Constant *CV = dyn_cast<Constant>(V);
   if (CV && !isa<GlobalValue>(CV)) {
-    WriteConstantInt(Out, CV, TypePrinter, Machine);
+    assert(TypePrinter && "Constants require TypePrinting!");
+    WriteConstantInt(Out, CV, *TypePrinter, Machine);
     return;
   }
   
@@ -1203,10 +1204,10 @@ static void WriteAsOperandInternal(raw_ostream &Out, const Value *V,
       } else {
         Slot = Machine->getLocalSlot(V);
       }
+      delete Machine;
     } else {
       Slot = -1;
     }
-    delete Machine;
   }
   
   if (Slot != -1)
@@ -1227,6 +1228,14 @@ void llvm::WriteAsOperand(std::ostream &Out, const Value *V, bool PrintType,
 
 void llvm::WriteAsOperand(raw_ostream &Out, const Value *V,
                           bool PrintType, const Module *Context) {
+
+  // Fast path: Don't construct and populate a TypePrinting object if we
+  // won't be needing any types printed.
+  if (!PrintType && !isa<Constant>(V)) {
+    WriteAsOperandInternal(Out, V, 0, 0);
+    return;
+  }
+
   if (Context == 0) Context = getModuleFromVal(V);
 
   TypePrinting TypePrinter;
@@ -1237,7 +1246,7 @@ void llvm::WriteAsOperand(raw_ostream &Out, const Value *V,
     Out << ' ';
   }
 
-  WriteAsOperandInternal(Out, V, TypePrinter, 0);
+  WriteAsOperandInternal(Out, V, &TypePrinter, 0);
 }
 
 namespace {
@@ -1307,7 +1316,7 @@ void AssemblyWriter::writeOperand(const Value *Operand, bool PrintType) {
       TypePrinter.print(Operand->getType(), Out);
       Out << ' ';
     }
-    WriteAsOperandInternal(Out, Operand, TypePrinter, &Machine);
+    WriteAsOperandInternal(Out, Operand, &TypePrinter, &Machine);
   }
 }
 
@@ -1323,7 +1332,7 @@ void AssemblyWriter::writeParamOperand(const Value *Operand,
       Out << ' ' << Attribute::getAsString(Attrs);
     Out << ' ';
     // Print the operand
-    WriteAsOperandInternal(Out, Operand, TypePrinter, &Machine);
+    WriteAsOperandInternal(Out, Operand, &TypePrinter, &Machine);
   }
 }
 
@@ -1450,7 +1459,7 @@ static void PrintVisibility(GlobalValue::VisibilityTypes Vis,
 }
 
 void AssemblyWriter::printGlobal(const GlobalVariable *GV) {
-  WriteAsOperandInternal(Out, GV, TypePrinter, &Machine);
+  WriteAsOperandInternal(Out, GV, &TypePrinter, &Machine);
   Out << " = ";
 
   if (!GV->hasInitializer() && GV->hasExternalLinkage())
@@ -1503,7 +1512,7 @@ void AssemblyWriter::printAlias(const GlobalAlias *GA) {
     TypePrinter.print(F->getFunctionType(), Out);
     Out << "* ";
 
-    WriteAsOperandInternal(Out, F, TypePrinter, &Machine);
+    WriteAsOperandInternal(Out, F, &TypePrinter, &Machine);
   } else if (const GlobalAlias *GA = dyn_cast<GlobalAlias>(Aliasee)) {
     TypePrinter.print(GA->getType(), Out);
     Out << ' ';
@@ -1581,7 +1590,7 @@ void AssemblyWriter::printFunction(const Function *F) {
     Out <<  Attribute::getAsString(Attrs.getRetAttributes()) << ' ';
   TypePrinter.print(F->getReturnType(), Out);
   Out << ' ';
-  WriteAsOperandInternal(Out, F, TypePrinter, &Machine);
+  WriteAsOperandInternal(Out, F, &TypePrinter, &Machine);
   Out << '(';
   Machine.incorporateFunction(F);
 
