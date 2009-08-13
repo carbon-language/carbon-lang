@@ -75,9 +75,9 @@
 ; LINUX:   .type	G6,@object
 ; LINUX:   .section	.gnu.linkonce.r.G6,"a",@progbits
 ; LINUX:   .weak	G6
-; LINUX: G6:				# G6
-; LINUX:   .size	G6, 1
+; LINUX: G6:
 ; LINUX:   .ascii	"\001"
+; LINUX:   .size	G6, 1
 
 ; DARWIN:  .section __TEXT,__const_coal,coalesced
 ; DARWIN:  .globl _G6

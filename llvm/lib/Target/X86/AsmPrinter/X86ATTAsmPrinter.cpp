@@ -26,6 +26,7 @@
 #include "llvm/Type.h"
 #include "llvm/ADT/Statistic.h"
 #include "llvm/ADT/StringExtras.h"
+#include "llvm/Assembly/Writer.h"
 #include "llvm/MC/MCContext.h"
 #include "llvm/MC/MCInst.h"
 #include "llvm/MC/MCSectionMachO.h"
@@ -57,16 +58,6 @@ void X86ATTAsmPrinter::PrintPICBaseSymbol() const {
     O << ".Lllvm$" << getFunctionNumber() << ".$piclabel";
   else
     llvm_unreachable("Don't know how to print PIC label!");
-}
-
-/// PrintUnmangledNameSafely - Print out the printable characters in the name.
-/// Don't print things like \\n or \\0.
-static void PrintUnmangledNameSafely(const Value *V, 
-                                     formatted_raw_ostream &OS) {
-  for (StringRef::iterator it = V->getName().begin(), 
-         ie = V->getName().end(); it != ie; ++it)
-    if (isprint(*it))
-      OS << *it;
 }
 
 static X86MachineFunctionInfo calculateFunctionInfo(const Function *F,
@@ -208,7 +199,14 @@ void X86ATTAsmPrinter::emitFunctionHeader(const MachineFunction &MF) {
       << ";\t.endef\n";
   }
 
-  O << CurrentFnName << ":\n";
+  O << CurrentFnName << ':';
+  if (VerboseAsm) {
+    O.PadToColumn(TAI->getCommentColumn(), 1);
+    O << TAI->getCommentString() << ' ';
+    WriteAsOperand(O, F, /*PrintType=*/false, F->getParent());
+  }
+  O << '\n';
+
   // Add some workaround for linkonce linkage on Cygwin\MinGW
   if (Subtarget->isTargetCygMing() &&
       (F->hasLinkOnceLinkage() || F->hasWeakLinkage()))
@@ -403,7 +401,7 @@ void X86ATTAsmPrinter::print_pcrel_imm(const MachineInstr *MI, unsigned OpNo) {
     O << MO.getImm();
     return;
   case MachineOperand::MO_MachineBasicBlock:
-    printBasicBlockLabel(MO.getMBB(), false, false, VerboseAsm);
+    printBasicBlockLabel(MO.getMBB(), false, false, false);
     return;
   case MachineOperand::MO_GlobalAddress:
   case MachineOperand::MO_ExternalSymbol:
@@ -818,7 +816,7 @@ void X86ATTAsmPrinter::PrintGlobalVariable(const GlobalVariable* GVar) {
           if (VerboseAsm) {
             O.PadToColumn(TAI->getCommentColumn(), 1);
             O << TAI->getCommentString() << ' ';
-            PrintUnmangledNameSafely(GVar, O);
+            WriteAsOperand(O, GVar, /*PrintType=*/false, GVar->getParent());
           }
           O << '\n';
           EmitGlobalConstant(C);
@@ -840,7 +838,7 @@ void X86ATTAsmPrinter::PrintGlobalVariable(const GlobalVariable* GVar) {
       if (VerboseAsm) {
         O.PadToColumn(TAI->getCommentColumn(), 1);
         O << TAI->getCommentString() << ' ';
-        PrintUnmangledNameSafely(GVar, O);
+        WriteAsOperand(O, GVar, /*PrintType=*/false, GVar->getParent());
       }
       O << '\n';
       return;
@@ -884,13 +882,14 @@ void X86ATTAsmPrinter::PrintGlobalVariable(const GlobalVariable* GVar) {
   if (VerboseAsm){
     O.PadToColumn(TAI->getCommentColumn(), 1);
     O << TAI->getCommentString() << ' ';
-    PrintUnmangledNameSafely(GVar, O);
+    WriteAsOperand(O, GVar, /*PrintType=*/false, GVar->getParent());
   }
   O << '\n';
-  if (TAI->hasDotTypeDotSizeDirective())
-    O << "\t.size\t" << name << ", " << Size << '\n';
 
   EmitGlobalConstant(C);
+
+  if (TAI->hasDotTypeDotSizeDirective())
+    O << "\t.size\t" << name << ", " << Size << '\n';
 }
 
 bool X86ATTAsmPrinter::doFinalization(Module &M) {

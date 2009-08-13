@@ -487,16 +487,6 @@ bool LinuxAsmPrinter::doInitialization(Module &M) {
   return Result;
 }
 
-/// PrintUnmangledNameSafely - Print out the printable characters in the name.
-/// Don't print things like \\n or \\0.
-static void PrintUnmangledNameSafely(const Value *V, 
-                                     formatted_raw_ostream &OS) {
-  for (StringRef::iterator it = V->getName().begin(), 
-         ie = V->getName().end(); it != ie; ++it)
-    if (isprint(*it))
-      OS << *it;
-}
-
 /*!
   Emit a global variable according to its section, alignment, etc.
 
@@ -541,7 +531,7 @@ void LinuxAsmPrinter::PrintGlobalVariable(const GlobalVariable *GVar) {
         O << ".comm " << name << ',' << Size;
       }
       O << "\t\t" << TAI->getCommentString() << " '";
-      PrintUnmangledNameSafely(GVar, O);
+      WriteAsOperand(O, GVar, /*PrintType=*/false, GVar->getParent());
       O << "'\n";
       return;
   }
@@ -575,7 +565,7 @@ void LinuxAsmPrinter::PrintGlobalVariable(const GlobalVariable *GVar) {
 
   EmitAlignment(Align, GVar);
   O << name << ":\t\t\t\t" << TAI->getCommentString() << " '";
-  PrintUnmangledNameSafely(GVar, O);
+  WriteAsOperand(O, GVar, /*PrintType=*/false, GVar->getParent());
   O << "'\n";
 
   EmitGlobalConstant(C);

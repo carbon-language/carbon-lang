@@ -273,7 +273,7 @@ void X86IntelAsmPrinter::print_pcrel_imm(const MachineInstr *MI, unsigned OpNo){
     O << MO.getImm();
     return;
   case MachineOperand::MO_MachineBasicBlock:
-    printBasicBlockLabel(MO.getMBB());
+    printBasicBlockLabel(MO.getMBB(), false, false, false);
     return;
     
   case MachineOperand::MO_GlobalAddress: {
