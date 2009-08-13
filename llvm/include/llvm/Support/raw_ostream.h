@@ -32,6 +32,10 @@ namespace llvm {
 /// a chunk at a time.
 class raw_ostream {
 private:
+  // Do not implement. raw_ostream is noncopyable.
+  void operator=(const raw_ostream &);
+  raw_ostream(const raw_ostream &);
+
   /// The buffer is handled in such a way that the buffer is
   /// uninitialized, unbuffered, or out of space when OutBufCur >=
   /// OutBufEnd. Thus a single comparison suffices to determine if we
