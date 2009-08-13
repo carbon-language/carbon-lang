@@ -67,6 +67,7 @@ public:
 /// despite that operator having the potential for overflow.
 ///
 class OverflowingBinaryOperator : public Operator {
+  ~OverflowingBinaryOperator(); // do not implement
 public:
   /// hasNoUnsignedOverflow - Test whether this operation is known to never
   /// undergo unsigned overflow.
@@ -106,6 +107,7 @@ public:
 /// AddOperator - Utility class for integer addition operators.
 ///
 class AddOperator : public OverflowingBinaryOperator {
+  ~AddOperator(); // do not implement
 public:
   static inline bool classof(const AddOperator *) { return true; }
   static inline bool classof(const Instruction *I) {
@@ -123,6 +125,7 @@ public:
 /// SubOperator - Utility class for integer subtraction operators.
 ///
 class SubOperator : public OverflowingBinaryOperator {
+  ~SubOperator(); // do not implement
 public:
   static inline bool classof(const SubOperator *) { return true; }
   static inline bool classof(const Instruction *I) {
@@ -140,6 +143,7 @@ public:
 /// MulOperator - Utility class for integer multiplication operators.
 ///
 class MulOperator : public OverflowingBinaryOperator {
+  ~MulOperator(); // do not implement
 public:
   static inline bool classof(const MulOperator *) { return true; }
   static inline bool classof(const Instruction *I) {
@@ -157,6 +161,7 @@ public:
 /// SDivOperator - An Operator with opcode Instruction::SDiv.
 ///
 class SDivOperator : public Operator {
+  ~SDivOperator(); // do not implement
 public:
   /// isExact - Test whether this division is known to be exact, with
   /// zero remainder.
@@ -182,6 +187,7 @@ public:
 };
 
 class GEPOperator : public Operator {
+  ~GEPOperator(); // do not implement
 public:
   /// isInBounds - Test whether this is an inbounds GEP, as defined
   /// by LangRef.html.
