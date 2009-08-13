@@ -69,12 +69,18 @@ void RegScavenger::initRegState() {
   // Reserved registers are always used.
   RegsAvailable ^= ReservedRegs;
 
-  // Live-in registers are in use.
-  if (!MBB || MBB->livein_empty())
+  if (!MBB)
     return;
+
+  // Live-in registers are in use.
   for (MachineBasicBlock::const_livein_iterator I = MBB->livein_begin(),
          E = MBB->livein_end(); I != E; ++I)
     setUsed(*I);
+
+  // Pristine CSRs are also unavailable.
+  BitVector PR = MBB->getParent()->getFrameInfo()->getPristineRegs(MBB);
+  for (int I = PR.find_first(); I>0; I = PR.find_next(I))
+    setUsed(I);
 }
 
 void RegScavenger::enterBasicBlock(MachineBasicBlock *mbb) {
@@ -370,11 +376,10 @@ unsigned RegScavenger::scavengeRegister(const TargetRegisterClass *RC,
       }
     }
 
-    // If we found an unused register that is defined by a later instruction,
-    // there is no reason to spill it. We have probably found a callee-saved
-    // register that has been saved in the prologue, but happens to be unused at
-    // this point.
-    if (!isAliasUsed(Reg) && UseMI != NULL)
+    // If we found an unused register there is no reason to spill it. We have
+    // probably found a callee-saved register that has been saved in the
+    // prologue, but happens to be unused at this point.
+    if (!isAliasUsed(Reg))
       return Reg;
 
     if (Dist >= MaxDist) {
@@ -390,13 +395,6 @@ unsigned RegScavenger::scavengeRegister(const TargetRegisterClass *RC,
 
   // Avoid infinite regress
   ScavengedReg = SReg;
-
-  // Make sure SReg is marked as used. It could be considered available
-  // if it is one of the callee saved registers, but hasn't been spilled.
-  if (!isUsed(SReg)) {
-    MBB->addLiveIn(SReg);
-    setUsed(SReg);
-  }
 
   // Spill the scavenged register before I.
   TII->storeRegToStackSlot(*MBB, I, SReg, true, ScavengingFrameIndex, RC);
