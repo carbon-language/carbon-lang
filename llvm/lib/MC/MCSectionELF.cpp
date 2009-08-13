@@ -27,9 +27,9 @@ bool MCSectionELF::ShouldOmitSectionDirective(const char *Name,
                                         const TargetAsmInfo &TAI) const {
   
   // FIXME: Does .section .bss/.data/.text work everywhere??
-  if (strncmp(Name, ".text", 5) == 0 || 
-      strncmp(Name, ".data", 5) == 0 ||
-      (strncmp(Name, ".bss", 4) == 0 && 
+  if (strcmp(Name, ".text") == 0 ||
+      strcmp(Name, ".data") == 0 ||
+      (strcmp(Name, ".bss") == 0 &&
        !TAI.usesELFSectionDirectiveForBSS())) 
     return true;
 
