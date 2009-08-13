@@ -14,13 +14,7 @@
 #include "MipsSubtarget.h"
 #include "Mips.h"
 #include "MipsGenSubtarget.inc"
-#include "llvm/Support/CommandLine.h"
 using namespace llvm;
-
-static cl::opt<unsigned>
-SSThreshold("mips-ssection-threshold", cl::Hidden,
-            cl::desc("Small data and bss section threshold size (default=8)"),
-            cl::init(8));
 
 MipsSubtarget::MipsSubtarget(const std::string &TT, const std::string &FS,
                              bool little) : 
@@ -34,9 +28,6 @@ MipsSubtarget::MipsSubtarget(const std::string &TT, const std::string &FS,
 
   // Parse features string.
   ParseSubtargetFeatures(FS, CPU);
-
-  // Small section size threshold
-  SSectionThreshold = SSThreshold;
 
   // Is the target system Linux ?
   if (TT.find("linux") == std::string::npos)

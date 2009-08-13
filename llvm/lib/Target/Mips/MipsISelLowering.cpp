@@ -13,10 +13,10 @@
 //===----------------------------------------------------------------------===//
 
 #define DEBUG_TYPE "mips-lower"
-
 #include "MipsISelLowering.h"
 #include "MipsMachineFunction.h"
 #include "MipsTargetMachine.h"
+#include "MipsTargetObjectFile.h"
 #include "MipsSubtarget.h"
 #include "llvm/DerivedTypes.h"
 #include "llvm/Function.h"
@@ -30,7 +30,6 @@
 #include "llvm/CodeGen/MachineRegisterInfo.h"
 #include "llvm/CodeGen/SelectionDAGISel.h"
 #include "llvm/CodeGen/ValueTypes.h"
-#include "llvm/Target/TargetLoweringObjectFile.h"
 #include "llvm/Support/Debug.h"
 #include "llvm/Support/ErrorHandling.h"
 using namespace llvm;
@@ -54,7 +53,7 @@ const char *MipsTargetLowering::getTargetNodeName(unsigned Opcode) const {
 
 MipsTargetLowering::
 MipsTargetLowering(MipsTargetMachine &TM)
-  : TargetLowering(TM, new TargetLoweringObjectFileELF()) {
+  : TargetLowering(TM, new MipsTargetObjectFile()) {
   Subtarget = &TM.getSubtarget<MipsSubtarget>();
 
   // Mips does not have i1 type, so use i32 for
@@ -208,37 +207,6 @@ AddLiveIn(MachineFunction &MF, unsigned PReg, TargetRegisterClass *RC)
   unsigned VReg = MF.getRegInfo().createVirtualRegister(RC);
   MF.getRegInfo().addLiveIn(PReg, VReg);
   return VReg;
-}
-
-// A address must be loaded from a small section if its size is less than the 
-// small section size threshold. Data in this section must be addressed using 
-// gp_rel operator.
-bool MipsTargetLowering::IsInSmallSection(unsigned Size) {
-  return (Size > 0 && (Size <= Subtarget->getSSectionThreshold()));
-}
-
-// Discover if this global address can be placed into small data/bss section. 
-bool MipsTargetLowering::IsGlobalInSmallSection(GlobalValue *GV)
-{
-  const TargetData *TD = getTargetData();
-  const GlobalVariable *GVA = dyn_cast<GlobalVariable>(GV);
-
-  if (!GVA)
-    return false;
-  
-  const Type *Ty = GV->getType()->getElementType();
-  unsigned Size = TD->getTypeAllocSize(Ty);
-
-  // if this is a internal constant string, there is a special
-  // section for it, but not in small data/bss.
-  if (GVA->hasInitializer() && GV->hasLocalLinkage()) {
-    Constant *C = GVA->getInitializer();
-    const ConstantArray *CVA = dyn_cast<ConstantArray>(C);
-    if (CVA && CVA->isCString()) 
-      return false;
-  }
-
-  return IsInSmallSection(Size);
 }
 
 // Get fp branch code (not opcode) from condition code.
@@ -525,8 +493,10 @@ SDValue MipsTargetLowering::LowerGlobalAddress(SDValue Op, SelectionDAG &DAG) {
   if (getTargetMachine().getRelocationModel() != Reloc::PIC_) {
     SDVTList VTs = DAG.getVTList(MVT::i32);
     
+    MipsTargetObjectFile &TLOF = (MipsTargetObjectFile&)getObjFileLowering();
+    
     // %gp_rel relocation
-    if (!isa<Function>(GV) && IsGlobalInSmallSection(GV)) { 
+    if (TLOF.IsGlobalInSmallSection(GV, getTargetMachine())) { 
       SDValue GPRelNode = DAG.getNode(MipsISD::GPRel, dl, VTs, &GA, 1);
       SDValue GOT = DAG.getGLOBAL_OFFSET_TABLE(MVT::i32);
       return DAG.getNode(ISD::ADD, dl, MVT::i32, GOT, GPRelNode); 
