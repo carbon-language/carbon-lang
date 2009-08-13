@@ -27,6 +27,7 @@ namespace llvm {
   class Deserializer;
   class FoldingSetNodeID;
   class raw_ostream;
+  class StringRef;
 
   template<typename T>
   class SmallVectorImpl;
@@ -152,8 +153,7 @@ class APInt {
 
   /// This is used by the constructors that take string arguments.
   /// @brief Convert a char array into an APInt
-  void fromString(unsigned numBits, const char *strStart, unsigned slen,
-                  uint8_t radix);
+  void fromString(unsigned numBits, const StringRef &str, uint8_t radix);
 
   /// This is used by the toString method to divide by the radix. It simply
   /// provides a more convenient form of divide for internal use since KnuthDiv
@@ -229,17 +229,17 @@ public:
   /// @brief Construct an APInt of numBits width, initialized as bigVal[].
   APInt(unsigned numBits, unsigned numWords, const uint64_t bigVal[]);
 
-  /// This constructor interprets the slen characters starting at StrStart as
-  /// a string in the given radix. The interpretation stops when the first
-  /// character that is not suitable for the radix is encountered. Acceptable
-  /// radix values are 2, 8, 10 and 16. It is an error for the value implied by
-  /// the string to require more bits than numBits.
+  /// This constructor interprets the string \arg str in the given radix. The
+  /// interpretation stops when the first character that is not suitable for the
+  /// radix is encountered, or the end of the string. Acceptable radix values
+  /// are 2, 8, 10 and 16. It is an error for the value implied by the string to
+  /// require more bits than numBits.
+  ///
   /// @param numBits the bit width of the constructed APInt
-  /// @param strStart the start of the string to be interpreted
-  /// @param slen the maximum number of characters to interpret
-  /// @param radix the radix to use for the conversion
+  /// @param str the string to be interpreted
+  /// @param radix the radix to use for the conversion 
   /// @brief Construct an APInt from a string representation.
-  APInt(unsigned numBits, const char strStart[], unsigned slen, uint8_t radix);
+  APInt(unsigned numBits, const StringRef &str, uint8_t radix);
 
   /// Simply makes *this a copy of that.
   /// @brief Copy Constructor.
@@ -1063,9 +1063,9 @@ public:
   }
 
   /// This method determines how many bits are required to hold the APInt
-  /// equivalent of the string given by \p str of length \p slen.
+  /// equivalent of the string given by \arg str.
   /// @brief Get bits required for string value.
-  static unsigned getBitsNeeded(const char* str, unsigned slen, uint8_t radix);
+  static unsigned getBitsNeeded(const StringRef& str, uint8_t radix);
 
   /// countLeadingZeros - This function is an APInt version of the
   /// countLeadingZeros_{32,64} functions in MathExtras.h. It counts the number

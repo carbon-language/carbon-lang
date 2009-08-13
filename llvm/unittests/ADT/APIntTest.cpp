@@ -164,12 +164,12 @@ TEST(APIntTest, i1) {
 }
 
 TEST(APIntTest, fromString) {
-  EXPECT_EQ(APInt(1, 0), APInt(1, "0", 1, 10));
-  EXPECT_EQ(APInt(1, 1), APInt(1, "1", 1, 10));
-  EXPECT_EQ(APInt(1, 1), APInt(1, "-1", 2, 10));
-  EXPECT_EQ(APInt(1, 1), APInt(1, "1", 1, 2));
-  EXPECT_EQ(APInt(1, 1), APInt(1, "1", 1, 8));
-  EXPECT_EQ(APInt(1, 1), APInt(1, "1", 1, 16));
+  EXPECT_EQ(APInt(1, 0), APInt(1, "0", 10));
+  EXPECT_EQ(APInt(1, 1), APInt(1, "1", 10));
+  EXPECT_EQ(APInt(1, 1), APInt(1, "-1", 10));
+  EXPECT_EQ(APInt(1, 1), APInt(1, "1", 2));
+  EXPECT_EQ(APInt(1, 1), APInt(1, "1", 8));
+  EXPECT_EQ(APInt(1, 1), APInt(1, "1", 16));
 }
 
 }

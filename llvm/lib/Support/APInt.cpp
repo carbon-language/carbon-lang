@@ -14,6 +14,7 @@
 
 #define DEBUG_TYPE "apint"
 #include "llvm/ADT/APInt.h"
+#include "llvm/ADT/StringRef.h"
 #include "llvm/ADT/FoldingSet.h"
 #include "llvm/ADT/SmallString.h"
 #include "llvm/Support/Debug.h"
@@ -75,11 +76,10 @@ APInt::APInt(unsigned numBits, unsigned numWords, const uint64_t bigVal[])
   clearUnusedBits();
 }
 
-APInt::APInt(unsigned numbits, const char StrStart[], unsigned slen,
-             uint8_t radix) 
+APInt::APInt(unsigned numbits, const StringRef& Str, uint8_t radix) 
   : BitWidth(numbits), VAL(0) {
   assert(BitWidth && "bitwidth too small");
-  fromString(numbits, StrStart, slen, radix);
+  fromString(numbits, Str, radix);
 }
 
 APInt& APInt::AssignSlowCase(const APInt& RHS) {
@@ -587,15 +587,16 @@ APInt& APInt::flip(unsigned bitPosition) {
   return *this;
 }
 
-unsigned APInt::getBitsNeeded(const char* str, unsigned slen, uint8_t radix) {
-  assert(str != 0 && "Invalid value string");
-  assert(slen > 0 && "Invalid string length");
+unsigned APInt::getBitsNeeded(const StringRef& str, uint8_t radix) {
+  assert(!str.empty() && "Invalid string length");
+
+  size_t slen = str.size();
 
   // Each computation below needs to know if its negative
-  unsigned isNegative = str[0] == '-';
+  unsigned isNegative = str.front() == '-';
   if (isNegative) {
     slen--;
-    str++;
+    assert(slen && "string is only a minus!");
   }
   // For radixes of power-of-two values, the bits required is accurately and
   // easily computed
@@ -618,7 +619,7 @@ unsigned APInt::getBitsNeeded(const char* str, unsigned slen, uint8_t radix) {
   unsigned sufficient = slen*64/18;
 
   // Convert to the actual binary value.
-  APInt tmp(sufficient, str, slen, radix);
+  APInt tmp(sufficient, str.substr(isNegative), radix);
 
   // Compute how many bits are required.
   return isNegative + tmp.logBase2() + 1;
@@ -2001,15 +2002,19 @@ void APInt::udivrem(const APInt &LHS, const APInt &RHS,
   divide(LHS, lhsWords, RHS, rhsWords, &Quotient, &Remainder);
 }
 
-void APInt::fromString(unsigned numbits, const char *str, unsigned slen,
-                       uint8_t radix) {
+void APInt::fromString(unsigned numbits, const StringRef& str, uint8_t radix) {
   // Check our assumptions here
   assert((radix == 10 || radix == 8 || radix == 16 || radix == 2) &&
          "Radix should be 2, 8, 10, or 16!");
-  assert(str && "String is null?");
-  bool isNeg = str[0] == '-';
-  if (isNeg)
-    str++, slen--;
+  assert(!str.empty() && "Invalid string length");
+  StringRef::iterator p = str.begin();
+  size_t slen = str.size();
+  bool isNeg = *p == '-';
+  if (isNeg) {
+    p++;
+    slen--;
+    assert(slen && "string is only a minus!");
+  }
   assert((slen <= numbits || radix != 2) && "Insufficient bit width");
   assert(((slen-1)*3 <= numbits || radix != 8) && "Insufficient bit width");
   assert(((slen-1)*4 <= numbits || radix != 16) && "Insufficient bit width");
@@ -2028,10 +2033,10 @@ void APInt::fromString(unsigned numbits, const char *str, unsigned slen,
   APInt apradix(getBitWidth(), radix);
 
   // Enter digit traversal loop
-  for (unsigned i = 0; i < slen; i++) {
+  for (StringRef::iterator e = str.end(); p != e; ++p) {
     // Get a digit
     unsigned digit = 0;
-    char cdigit = str[i];
+    char cdigit = *p;
     if (radix == 16) {
       if (!isxdigit(cdigit))
         llvm_unreachable("Invalid hex digit in string");

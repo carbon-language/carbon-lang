@@ -659,7 +659,7 @@ lltok::Kind LLLexer::LexIdentifier() {
       TokStart[1] == '0' && TokStart[2] == 'x' && isxdigit(TokStart[3])) {
     int len = CurPtr-TokStart-3;
     uint32_t bits = len * 4;
-    APInt Tmp(bits, TokStart+3, len, 16);
+    APInt Tmp(bits, StringRef(TokStart+3, len), 16);
     uint32_t activeBits = Tmp.getActiveBits();
     if (activeBits > 0 && activeBits < bits)
       Tmp.trunc(activeBits);
@@ -785,7 +785,7 @@ lltok::Kind LLLexer::LexDigitOrNegative() {
       return Lex0x();
     unsigned Len = CurPtr-TokStart;
     uint32_t numBits = ((Len * 64) / 19) + 2;
-    APInt Tmp(numBits, TokStart, Len, 10);
+    APInt Tmp(numBits, StringRef(TokStart, Len), 10);
     if (TokStart[0] == '-') {
       uint32_t minBits = Tmp.getMinSignedBits();
       if (minBits > 0 && minBits < numBits)
