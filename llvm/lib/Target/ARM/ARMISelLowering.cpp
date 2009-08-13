@@ -2363,7 +2363,7 @@ static bool isVREVMask(ShuffleVectorSDNode *N, unsigned BlockSize) {
 
 static SDValue BuildSplat(SDValue Val, EVT VT, SelectionDAG &DAG, DebugLoc dl) {
   // Canonicalize all-zeros and all-ones vectors.
-  ConstantSDNode *ConstVal = dyn_cast<ConstantSDNode>(Val.getNode());
+  ConstantSDNode *ConstVal = cast<ConstantSDNode>(Val.getNode());
   if (ConstVal->isNullValue())
     return getZeroVector(VT, DAG, dl);
   if (ConstVal->isAllOnesValue())
@@ -2400,8 +2400,7 @@ static SDValue BuildSplat(SDValue Val, EVT VT, SelectionDAG &DAG, DebugLoc dl) {
 // If this is a case we can't handle, return null and let the default
 // expansion code take care of it.
 static SDValue LowerBUILD_VECTOR(SDValue Op, SelectionDAG &DAG) {
-  BuildVectorSDNode *BVN = dyn_cast<BuildVectorSDNode>(Op.getNode());
-  assert(BVN != 0 && "Expected a BuildVectorSDNode in LowerBUILD_VECTOR");
+  BuildVectorSDNode *BVN = cast<BuildVectorSDNode>(Op.getNode());
   DebugLoc dl = Op.getDebugLoc();
   EVT VT = Op.getValueType();
 
@@ -2436,8 +2435,7 @@ static SDValue LowerBUILD_VECTOR(SDValue Op, SelectionDAG &DAG) {
 }
 
 static SDValue LowerVECTOR_SHUFFLE(SDValue Op, SelectionDAG &DAG) {
-  ShuffleVectorSDNode *SVN = dyn_cast<ShuffleVectorSDNode>(Op.getNode());
-  assert(SVN != 0 && "Expected a ShuffleVectorSDNode in LowerVECTOR_SHUFFLE");
+  ShuffleVectorSDNode *SVN = cast<ShuffleVectorSDNode>(Op.getNode());
   DebugLoc dl = Op.getDebugLoc();
   EVT VT = Op.getValueType();
 
