@@ -12,19 +12,21 @@
 //===----------------------------------------------------------------------===//
 
 #include "PPCTargetAsmInfo.h"
+#include "llvm/ADT/Triple.h"
 using namespace llvm;
 
-PPCDarwinTargetAsmInfo::PPCDarwinTargetAsmInfo(bool is64Bit) {
+PPCDarwinTargetAsmInfo::PPCDarwinTargetAsmInfo(const Triple &TheTriple) 
+  : DarwinTargetAsmInfo(TheTriple) {
   PCSymbol = ".";
   CommentString = ";";
   ExceptionsType = ExceptionHandling::Dwarf;
 
-  if (!is64Bit)
+  if (TheTriple.getArch() != Triple::ppc64)
     Data64bitsDirective = 0;      // We can't emit a 64-bit unit in PPC32 mode.
   AssemblerDialect = 1;           // New-Style mnemonics.
 }
 
-PPCLinuxTargetAsmInfo::PPCLinuxTargetAsmInfo(bool is64Bit) {
+PPCLinuxTargetAsmInfo::PPCLinuxTargetAsmInfo(const Triple &TheTriple) {
   CommentString = "#";
   GlobalPrefix = "";
   PrivateGlobalPrefix = ".L";
@@ -41,13 +43,15 @@ PPCLinuxTargetAsmInfo::PPCLinuxTargetAsmInfo(bool is64Bit) {
   HasLEB128 = true;  // Target asm supports leb128 directives (little-endian)
 
   // Exceptions handling
-  if (!is64Bit)
+  if (TheTriple.getArch() != Triple::ppc64) {
     ExceptionsType = ExceptionHandling::Dwarf;
+    Data64bitsDirective = 0;
+  }
   AbsoluteEHSectionOffsets = false;
     
   ZeroDirective = "\t.space\t";
   SetDirective = "\t.set";
-  Data64bitsDirective = is64Bit ? "\t.quad\t" : 0;
+  
   AlignmentIsInBytes = false;
   LCOMMDirective = "\t.lcomm\t";
   AssemblerDialect = 0;           // Old-Style mnemonics.

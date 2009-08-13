@@ -43,7 +43,8 @@ static const char *const x86_asm_table[] = {
   "{cc}", "cc",
   0,0};
 
-X86DarwinTargetAsmInfo::X86DarwinTargetAsmInfo(const Triple &Triple) {
+X86DarwinTargetAsmInfo::X86DarwinTargetAsmInfo(const Triple &Triple)
+  : DarwinTargetAsmInfo(Triple) {
   AsmTransCBE = x86_asm_table;
   AssemblerDialect = AsmWriterFlavor;
     
@@ -53,9 +54,6 @@ X86DarwinTargetAsmInfo::X86DarwinTargetAsmInfo(const Triple &Triple) {
 
   if (!is64Bit)
     Data64bitsDirective = 0;       // we can't emit a 64-bit unit
-
-  // Leopard and above support aligned common symbols.
-  COMMDirectiveTakesAlignment = Triple.getDarwinMajorNumber() >= 9;
 
   if (is64Bit) {
     PersonalityPrefix = "";

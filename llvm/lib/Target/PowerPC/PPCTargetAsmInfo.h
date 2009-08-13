@@ -14,17 +14,16 @@
 #ifndef PPCTARGETASMINFO_H
 #define PPCTARGETASMINFO_H
 
-#include "llvm/Target/TargetAsmInfo.h"
 #include "llvm/Target/DarwinTargetAsmInfo.h"
 
 namespace llvm {
 
   struct PPCDarwinTargetAsmInfo : public DarwinTargetAsmInfo {
-    explicit PPCDarwinTargetAsmInfo(bool is64Bit);
+    explicit PPCDarwinTargetAsmInfo(const Triple &TheTriple);
   };
 
   struct PPCLinuxTargetAsmInfo : public TargetAsmInfo {
-    explicit PPCLinuxTargetAsmInfo(bool is64Bit);
+    explicit PPCLinuxTargetAsmInfo(const Triple &TheTriple);
   };
 
 } // namespace llvm

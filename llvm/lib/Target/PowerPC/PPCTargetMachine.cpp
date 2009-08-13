@@ -23,10 +23,9 @@ using namespace llvm;
 static const TargetAsmInfo *createTargetAsmInfo(const Target &T,
                                                 const StringRef &TT) {
   Triple TheTriple(TT);
-  bool isPPC64 = TheTriple.getArch() == Triple::ppc64;
   if (TheTriple.getOS() == Triple::Darwin)
-    return new PPCDarwinTargetAsmInfo(isPPC64);
-  return new PPCLinuxTargetAsmInfo(isPPC64);
+    return new PPCDarwinTargetAsmInfo(TheTriple);
+  return new PPCLinuxTargetAsmInfo(TheTriple);
   
 }
 

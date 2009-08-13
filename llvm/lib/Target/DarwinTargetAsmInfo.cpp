@@ -13,9 +13,10 @@
 //===----------------------------------------------------------------------===//
 
 #include "llvm/Target/DarwinTargetAsmInfo.h"
+#include "llvm/ADT/Triple.h"
 using namespace llvm;
 
-DarwinTargetAsmInfo::DarwinTargetAsmInfo() {
+DarwinTargetAsmInfo::DarwinTargetAsmInfo(const Triple &Triple) {
   // Common settings for all Darwin targets.
   // Syntax:
   GlobalPrefix = "_";
@@ -47,13 +48,16 @@ DarwinTargetAsmInfo::DarwinTargetAsmInfo() {
   HasDotTypeDotSizeDirective = false;
   UsedDirective = "\t.no_dead_strip\t";
 
-  // _foo.eh symbols are currently always exported so that the linker knows
-  // about them.  This is not necessary on 10.6 and later, but it
-  // doesn't hurt anything.
-  // FIXME: I need to get this from Triple.
-  Is_EHSymbolPrivate = false;
+  // On Leoaprd (10.5 aka darwin9) and earlier, _foo.eh symbols must be exported
+  // so that the linker knows about them.  This is not necessary on 10.6 and
+  // later, but it doesn't hurt anything.
+  if (Triple.getDarwinMajorNumber() >= 10)
+    Is_EHSymbolPrivate = false;
+  
+  // Leopard (10.5 aka darwin9) and later support aligned common symbols.
+  COMMDirectiveTakesAlignment = Triple.getDarwinMajorNumber() >= 9;
+  
   GlobalEHDirective = "\t.globl\t";
   SupportsWeakOmittedEHFrame = false;
-
 }
 

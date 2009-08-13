@@ -20,11 +20,12 @@
 namespace llvm {
   class GlobalValue;
   class GlobalVariable;
+  class Triple;
   class Type;
   class Mangler;
 
   struct DarwinTargetAsmInfo : public TargetAsmInfo {
-    explicit DarwinTargetAsmInfo();
+    explicit DarwinTargetAsmInfo(const Triple &Triple);
   };
 }
 

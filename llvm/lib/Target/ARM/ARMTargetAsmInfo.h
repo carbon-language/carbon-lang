@@ -19,7 +19,7 @@
 namespace llvm {
 
   struct ARMDarwinTargetAsmInfo : public DarwinTargetAsmInfo {
-    explicit ARMDarwinTargetAsmInfo();
+    explicit ARMDarwinTargetAsmInfo(const Triple &Triple);
   };
 
   struct ARMELFTargetAsmInfo : public TargetAsmInfo {

@@ -40,7 +40,8 @@ static const char *const arm_asm_table[] = {
   0,0
 };
 
-ARMDarwinTargetAsmInfo::ARMDarwinTargetAsmInfo() {
+ARMDarwinTargetAsmInfo::ARMDarwinTargetAsmInfo(const Triple &Triple)
+  : DarwinTargetAsmInfo(Triple) {
   AsmTransCBE = arm_asm_table;
   Data64bitsDirective = 0;
   CommentString = "@";
