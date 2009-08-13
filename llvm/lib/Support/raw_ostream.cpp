@@ -315,6 +315,10 @@ raw_fd_ostream::raw_fd_ostream(const char *Filename, bool Binary, bool Force,
     if (Binary)
       sys::Program::ChangeStdoutToBinary();
     ShouldClose = false;
+    // Mimic stdout by defaulting to unbuffered if the output device
+    // is a terminal.
+    if (sys::Process::StandardOutIsDisplayed())
+      SetUnbuffered();
     return;
   }
   
@@ -411,7 +415,13 @@ raw_ostream &raw_fd_ostream::resetColor() {
 //  raw_stdout/err_ostream
 //===----------------------------------------------------------------------===//
 
-raw_stdout_ostream::raw_stdout_ostream():raw_fd_ostream(STDOUT_FILENO, false) {}
+// Set buffer settings to model stdout and stderr behavior.
+// raw_ostream doesn't support line buffering, so set standard output to be
+// unbuffered when the output device is a terminal. Set standard error to
+// be unbuffered.
+raw_stdout_ostream::raw_stdout_ostream()
+  : raw_fd_ostream(STDOUT_FILENO, false,
+                   sys::Process::StandardOutIsDisplayed()) {}
 raw_stderr_ostream::raw_stderr_ostream():raw_fd_ostream(STDERR_FILENO, false, 
                                                         true) {}
 
