@@ -29,6 +29,7 @@
 #include "llvm/Function.h"
 #include "llvm/CodeGen/LiveVariables.h"
 #include "llvm/CodeGen/MachineFunctionPass.h"
+#include "llvm/CodeGen/MachineFrameInfo.h"
 #include "llvm/CodeGen/MachineRegisterInfo.h"
 #include "llvm/CodeGen/Passes.h"
 #include "llvm/Target/TargetMachine.h"
@@ -316,6 +317,16 @@ MachineVerifier::visitMachineBasicBlockBefore(const MachineBasicBlock *MBB)
       regsLive.insert(*R);
   }
   regsLiveInButUnused = regsLive;
+
+  const MachineFrameInfo *MFI = MF->getFrameInfo();
+  assert(MFI && "Function has no frame info");
+  BitVector PR = MFI->getPristineRegs(MBB);
+  for (int I = PR.find_first(); I>0; I = PR.find_next(I)) {
+    regsLive.insert(I);
+    for (const unsigned *R = TRI->getSubRegisters(I); *R; R++)
+      regsLive.insert(*R);
+  }
+
   regsKilled.clear();
   regsDefined.clear();
 }
