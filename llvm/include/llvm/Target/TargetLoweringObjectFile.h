@@ -101,6 +101,7 @@ public:
   
   const MCSection *getTextSection() const { return TextSection; }
   const MCSection *getDataSection() const { return DataSection; }
+  const MCSection *getBSSSection() const { return BSSSection; }
   const MCSection *getStaticCtorSection() const { return StaticCtorSection; }
   const MCSection *getStaticDtorSection() const { return StaticDtorSection; }
   const MCSection *getLSDASection() const { return LSDASection; }
