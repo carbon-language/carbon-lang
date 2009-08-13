@@ -1432,7 +1432,7 @@ let Defs =
                                "str r12, [$src, #+4]\n\t"
                                "mov r0, #0\n\t"
                                "add pc, pc, #0\n\t"
-                               "mov r0, #1 @ eh_setjmp end\n\t", "",
+                               "mov r0, #1 @ eh_setjmp end", "",
                                [(set R0, (ARMeh_sjlj_setjmp GPR:$src))]>;
 }
 

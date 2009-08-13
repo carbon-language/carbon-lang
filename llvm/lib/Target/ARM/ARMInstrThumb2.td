@@ -1075,7 +1075,7 @@ let Defs =
                                "\tmovs r0, #0\n"
                                "\tb 1f\n"
                                "0:\tmovs r0, #1 @ eh_setjmp end\n"
-                               "1:\n", "",
+                               "1:", "",
                                [(set R0, (ARMeh_sjlj_setjmp GPR:$src))]>;
 }
 
