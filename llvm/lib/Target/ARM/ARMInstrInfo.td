@@ -1409,7 +1409,7 @@ let isCall = 1,
 
 //===----------------------------------------------------------------------===//
 // SJLJ Exception handling intrinsics
-//   eh_sjlj_setjmp() is a three instruction sequence to store the return 
+//   eh_sjlj_setjmp() is an instruction sequence to store the return
 //   address and save #0 in R0 for the non-longjmp case.
 //   Since by its nature we may be coming from some other function to get
 //   here, and we're using the stack frame for the containing function to
