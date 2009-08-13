@@ -73,7 +73,7 @@ bool ELFCodeEmitter::finishFunction(MachineFunction &MF) {
                                 EW.getGlobalELFVisibility(F));
   FnSym->SectionIdx = ES->SectionIdx;
   FnSym->Size = ES->getCurrentPCOffset()-FnStartOff;
-  EW.addGlobalSymbol(F, true);
+  EW.AddPendingGlobalSymbol(F, true);
 
   // Offset from start of Section
   FnSym->Value = FnStartOff;
@@ -102,9 +102,9 @@ bool ELFCodeEmitter::finishFunction(MachineFunction &MF) {
     MachineRelocation &MR = Relocations[i];
     intptr_t Addr;
     if (MR.isGlobalValue()) {
-      EW.addGlobalSymbol(MR.getGlobalValue());
+      EW.AddPendingGlobalSymbol(MR.getGlobalValue());
     } else if (MR.isExternalSymbol()) {
-      EW.addExternalSymbol(MR.getExternalSymbol());
+      EW.AddPendingExternalSymbol(MR.getExternalSymbol());
     } else if (MR.isBasicBlock()) {
       Addr = getMachineBasicBlockAddress(MR.getBasicBlock());
       MR.setConstantVal(ES->SectionIdx);

@@ -146,35 +146,14 @@ namespace llvm {
     /// present in the SymbolList.
     std::vector<ELFSym*> PrivateSyms;
 
-    // Remove tab from section name prefix. This is necessary becase TAI
-    // sometimes return a section name prefixed with elf unused chars. This is
-    // a little bit dirty. FIXME: find a better approach, maybe add more
-    // methods to TAI to get the clean name?
-    void fixNameForSection(std::string &Name) {
-      size_t Pos = Name.find("\t");
-      if (Pos != std::string::npos)
-        Name.erase(Pos, 1);
-
-      Pos = Name.find(".section ");
-      if (Pos != std::string::npos)
-        Name.erase(Pos, 9);
-
-      Pos = Name.find("\n");
-      if (Pos != std::string::npos)
-        Name.erase(Pos, 1);
-    }
-
     /// getSection - Return the section with the specified name, creating a new
     /// section if one does not already exist.
     ELFSection &getSection(const std::string &Name, unsigned Type,
                            unsigned Flags = 0, unsigned Align = 0) {
-      std::string SName(Name);
-      fixNameForSection(SName);
-
-      ELFSection *&SN = SectionLookup[SName];
+      ELFSection *&SN = SectionLookup[Name];
       if (SN) return *SN;
 
-      SectionList.push_back(new ELFSection(SName, isLittleEndian, is64Bit));
+      SectionList.push_back(new ELFSection(Name, isLittleEndian, is64Bit));
       SN = SectionList.back();
       SN->SectionIdx = NumSections++;
       SN->Type = Type;
@@ -200,20 +179,12 @@ namespace llvm {
       return getSection(".shstrtab", ELFSection::SHT_STRTAB, 0, 1);
     }
 
-    ELFSection &getDataSection() {
-      return getSection(".data", ELFSection::SHT_PROGBITS,
-                        ELFSection::SHF_WRITE | ELFSection::SHF_ALLOC, 4);
-    }
-
-    ELFSection &getBSSSection() {
-      return getSection(".bss", ELFSection::SHT_NOBITS,
-                        ELFSection::SHF_WRITE | ELFSection::SHF_ALLOC, 4);
-    }
-
     ELFSection &getNullSection() {
       return getSection("", ELFSection::SHT_NULL, 0);
     }
 
+    ELFSection &getDataSection();
+    ELFSection &getBSSSection();
     ELFSection &getCtorSection();
     ELFSection &getDtorSection();
     ELFSection &getJumpTableSection();
@@ -225,17 +196,21 @@ namespace llvm {
     unsigned getGlobalELFBinding(const GlobalValue *GV);
     unsigned getGlobalELFType(const GlobalValue *GV);
     unsigned getGlobalELFVisibility(const GlobalValue *GV);
-    unsigned getElfSectionFlags(SectionKind Kind, bool IsAlloc = true);
 
-    // addGlobalSymbol - Add a global to be processed and to 
-    // the global symbol lookup, use a zero index because the table 
+    // AddPendingGlobalSymbol - Add a global to be processed and to
+    // the global symbol lookup, use a zero index because the table
     // index will be determined later.
-    void addGlobalSymbol(const GlobalValue *GV, bool AddToLookup = false);
+    void AddPendingGlobalSymbol(const GlobalValue *GV, 
+                                bool AddToLookup = false);
     
-    // addExternalSymbol - Add the external to be processed and to the
-    // external symbol lookup, use a zero index because the symbol
-    // table index will be determined later
-    void addExternalSymbol(const char *External);
+    // AddPendingExternalSymbol - Add the external to be processed
+    // and to the external symbol lookup, use a zero index because
+    // the symbol table index will be determined later.
+    void AddPendingExternalSymbol(const char *External);
+
+    // AddToSymbolList - Update the symbol lookup and If the symbol is 
+    // private add it to PrivateSyms list, otherwise to SymbolList. 
+    void AddToSymbolList(ELFSym *GblSym);
 
     // As we complete the ELF file, we need to update fields in the ELF header
     // (e.g. the location of the section table).  These members keep track of

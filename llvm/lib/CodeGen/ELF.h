@@ -74,19 +74,19 @@ namespace llvm {
     };
     unsigned SourceType;
 
-    bool isGlobalValue() { return SourceType == isGV; }
-    bool isExternalSym() { return SourceType == isExtSym; }
+    bool isGlobalValue() const { return SourceType == isGV; }
+    bool isExternalSym() const { return SourceType == isExtSym; }
 
     // getGlobalValue - If this is a global value which originated the
     // elf symbol, return a reference to it.
-    const GlobalValue *getGlobalValue() {
+    const GlobalValue *getGlobalValue() const {
       assert(SourceType == isGV && "This is not a global value");
       return Source.GV;
     };
 
     // getExternalSym - If this is an external symbol which originated the
     // elf symbol, return a reference to it.
-    const char *getExternalSymbol() {
+    const char *getExternalSymbol() const {
       assert(SourceType == isExtSym && "This is not an external symbol");
       return Source.Ext;
     };

@@ -159,43 +159,52 @@ bool ELFWriter::doInitialization(Module &M) {
   return false;
 }
 
-// addGlobalSymbol - Add a global to be processed and to the global symbol 
-// lookup, use a zero index because the table index will be determined later.
-void ELFWriter::addGlobalSymbol(const GlobalValue *GV, 
-                                bool AddToLookup /* = false */) {
+// AddPendingGlobalSymbol - Add a global to be processed and to
+// the global symbol lookup, use a zero index because the table
+// index will be determined later.
+void ELFWriter::AddPendingGlobalSymbol(const GlobalValue *GV, 
+                                       bool AddToLookup /* = false */) {
   PendingGlobals.insert(GV);
   if (AddToLookup) 
     GblSymLookup[GV] = 0;
 }
 
-// addExternalSymbol - Add the external to be processed and to the
-// external symbol lookup, use a zero index because the symbol
-// table index will be determined later
-void ELFWriter::addExternalSymbol(const char *External) {
+// AddPendingExternalSymbol - Add the external to be processed
+// and to the external symbol lookup, use a zero index because
+// the symbol table index will be determined later.
+void ELFWriter::AddPendingExternalSymbol(const char *External) {
   PendingExternals.insert(External);
   ExtSymLookup[External] = 0;
+}
+
+ELFSection &ELFWriter::getDataSection() {
+  const MCSectionELF *Data = (const MCSectionELF *)TLOF.getDataSection();
+  return getSection(Data->getSectionName(), Data->getType(), 
+                    Data->getFlags(), 4);
+}
+
+ELFSection &ELFWriter::getBSSSection() {
+  const MCSectionELF *BSS = (const MCSectionELF *)TLOF.getBSSSection();
+  return getSection(BSS->getSectionName(), BSS->getType(), BSS->getFlags(), 4);
 }
 
 // getCtorSection - Get the static constructor section
 ELFSection &ELFWriter::getCtorSection() {
   const MCSectionELF *Ctor = (const MCSectionELF *)TLOF.getStaticCtorSection();
-  return getSection(Ctor->getSectionName(), ELFSection::SHT_PROGBITS, 
-                    getElfSectionFlags(Ctor->getKind()));
+  return getSection(Ctor->getSectionName(), Ctor->getType(), Ctor->getFlags()); 
 }
 
 // getDtorSection - Get the static destructor section
 ELFSection &ELFWriter::getDtorSection() {
   const MCSectionELF *Dtor = (const MCSectionELF *)TLOF.getStaticDtorSection();
-  return getSection(Dtor->getSectionName(), ELFSection::SHT_PROGBITS, 
-                    getElfSectionFlags(Dtor->getKind()));
+  return getSection(Dtor->getSectionName(), Dtor->getType(), Dtor->getFlags());
 }
 
 // getTextSection - Get the text section for the specified function
 ELFSection &ELFWriter::getTextSection(Function *F) {
   const MCSectionELF *Text = 
     (const MCSectionELF *)TLOF.SectionForGlobal(F, Mang, TM);
-  return getSection(Text->getSectionName(), ELFSection::SHT_PROGBITS,
-                    getElfSectionFlags(Text->getKind()));
+  return getSection(Text->getSectionName(), Text->getType(), Text->getFlags());
 }
 
 // getJumpTableSection - Get a read only section for constants when 
@@ -203,9 +212,7 @@ ELFSection &ELFWriter::getTextSection(Function *F) {
 ELFSection &ELFWriter::getJumpTableSection() {
   const MCSectionELF *JT = 
     (const MCSectionELF *)TLOF.getSectionForConstant(SectionKind::getReadOnly());
-  return getSection(JT->getSectionName(), 
-                    ELFSection::SHT_PROGBITS,
-                    getElfSectionFlags(JT->getKind()), 
+  return getSection(JT->getSectionName(), JT->getType(), JT->getFlags(),
                     TM.getTargetData()->getPointerABIAlignment());
 }
 
@@ -230,23 +237,22 @@ ELFSection &ELFWriter::getConstantPoolSection(MachineConstantPoolEntry &CPE) {
 
   const MCSectionELF *CPSect = 
     (const MCSectionELF *)TLOF.getSectionForConstant(Kind);
-  return getSection(CPSect->getSectionName(),
-                    ELFSection::SHT_PROGBITS,
-                    getElfSectionFlags(Kind),
-                    CPE.getAlignment());
+  return getSection(CPSect->getSectionName(), CPSect->getType(), 
+                    CPSect->getFlags(), CPE.getAlignment());
 }
 
 // getRelocSection - Return the relocation section of section 'S'. 'RelA' 
 // is true if the relocation section contains entries with addends.
 ELFSection &ELFWriter::getRelocSection(ELFSection &S) {
-  unsigned SectionHeaderTy = TEW->hasRelocationAddend() ?
-                              ELFSection::SHT_RELA : ELFSection::SHT_REL;
-  std::string RelSName(".rel");
-  if (TEW->hasRelocationAddend())
-    RelSName.append("a");
-  RelSName.append(S.getName());
+  unsigned SectionType = TEW->hasRelocationAddend() ?
+                ELFSection::SHT_RELA : ELFSection::SHT_REL;
 
-  return getSection(RelSName, SectionHeaderTy, 0, TEW->getPrefELFAlignment());
+  std::string SectionName(".rel");
+  if (TEW->hasRelocationAddend())
+    SectionName.append("a");
+  SectionName.append(S.getName());
+
+  return getSection(SectionName, SectionType, 0, TEW->getPrefELFAlignment());
 }
 
 // getGlobalELFVisibility - Returns the ELF specific visibility type
@@ -286,54 +292,32 @@ unsigned ELFWriter::getGlobalELFType(const GlobalValue *GV) {
   return ELFSym::STT_OBJECT;
 }
 
-// getElfSectionFlags - Get the ELF Section Header flags based
-// on the flags defined in SectionKind.h.
-unsigned ELFWriter::getElfSectionFlags(SectionKind Kind, bool IsAlloc) {
-  unsigned ElfSectionFlags = 0;
-  
-  if (IsAlloc)
-    ElfSectionFlags |= ELFSection::SHF_ALLOC;
-  if (Kind.isText())
-    ElfSectionFlags |= ELFSection::SHF_EXECINSTR;
-  if (Kind.isWriteable())
-    ElfSectionFlags |= ELFSection::SHF_WRITE;
-  if (Kind.isMergeableConst() || Kind.isMergeableCString())
-    ElfSectionFlags |= ELFSection::SHF_MERGE;
-  if (Kind.isThreadLocal())
-    ElfSectionFlags |= ELFSection::SHF_TLS;
-  if (Kind.isMergeableCString())
-    ElfSectionFlags |= ELFSection::SHF_STRINGS;
-
-  return ElfSectionFlags;
-}
-
-// isUndefOrNull - The constant is either a null initialized value or an
-// undefined one.
-static bool isUndefOrNull(const Constant *CV) {
-  return (CV->isNullValue() || isa<UndefValue>(CV));
-}
-
-// isELFUndefSym - the symbol has no section and must be placed in
-// the symbol table with a reference to the null section.
-static bool isELFUndefSym(const GlobalValue *GV) {
-  // Functions which make up until this point references are an undef symbol
+// IsELFUndefSym - True if the global value must be marked as a symbol
+// which points to a SHN_UNDEF section. This means that the symbol has
+// no definition on the module.
+static bool IsELFUndefSym(const GlobalValue *GV) {
   return GV->isDeclaration() || (isa<Function>(GV));
 }
 
-// isELFBssSym - for an undef or null value, the symbol must go to a bss
-// section if it's not weak for linker, otherwise it's a common sym.
-static bool isELFBssSym(const GlobalVariable *GV, SectionKind Kind) {
-  const Constant *CV = GV->getInitializer();
+// AddToSymbolList - Update the symbol lookup and If the symbol is 
+// private add it to PrivateSyms list, otherwise to SymbolList. 
+void ELFWriter::AddToSymbolList(ELFSym *GblSym) {
+  assert(GblSym->isGlobalValue() && "Symbol must be a global value");
 
-  return (!Kind.isMergeableCString() && 
-          isUndefOrNull(CV) && 
-          !GV->isWeakForLinker());
-}
-
-// isELFCommonSym - for an undef or null value, the symbol must go to a
-// common section if it's weak for linker, otherwise bss.
-static bool isELFCommonSym(const GlobalVariable *GV) {
-  return (isUndefOrNull(GV->getInitializer()) && GV->isWeakForLinker());
+  const GlobalValue *GV = GblSym->getGlobalValue(); 
+  if (GV->hasPrivateLinkage()) {
+    // For a private symbols, keep track of the index inside 
+    // the private list since it will never go to the symbol 
+    // table and won't be patched up later.
+    PrivateSyms.push_back(GblSym);
+    GblSymLookup[GV] = PrivateSyms.size()-1;
+  } else {
+    // Non private symbol are left with zero indices until 
+    // they are patched up during the symbol table emition 
+    // (where the indicies are created).
+    SymbolList.push_back(GblSym);
+    GblSymLookup[GV] = 0;
+  }
 }
 
 // EmitGlobal - Choose the right section for global and emit it
@@ -346,13 +330,12 @@ void ELFWriter::EmitGlobal(const GlobalValue *GV) {
   // Handle ELF Bind, Visibility and Type for the current symbol
   unsigned SymBind = getGlobalELFBinding(GV);
   unsigned SymType = getGlobalELFType(GV);
+  bool IsUndefSym = IsELFUndefSym(GV);
 
-  // All undef symbols have the same binding, type and visibily and
-  // are classified regardless of their type.
-  ELFSym *GblSym = isELFUndefSym(GV) ? ELFSym::getUndefGV(GV, SymBind)
+  ELFSym *GblSym = IsUndefSym ? ELFSym::getUndefGV(GV, SymBind)
     : ELFSym::getGV(GV, SymBind, SymType, getGlobalELFVisibility(GV));
 
-  if (!isELFUndefSym(GV)) {
+  if (!IsUndefSym) {
     assert(isa<GlobalVariable>(GV) && "GV not a global variable!");
     const GlobalVariable *GVar = dyn_cast<GlobalVariable>(GV);
 
@@ -363,8 +346,9 @@ void ELFWriter::EmitGlobal(const GlobalValue *GV) {
     // Get the ELF section where this global belongs from TLOF
     const MCSectionELF *S = 
       (const MCSectionELF *)TLOF.SectionForGlobal(GV, Mang, TM);
+    ELFSection &ES = 
+      getSection(S->getSectionName(), S->getType(), S->getFlags());
     SectionKind Kind = S->getKind();
-    unsigned SectionFlags = getElfSectionFlags(Kind);
 
     // The symbol align should update the section alignment if needed
     const TargetData *TD = TM.getTargetData();
@@ -372,20 +356,16 @@ void ELFWriter::EmitGlobal(const GlobalValue *GV) {
     unsigned Size = TD->getTypeAllocSize(GVar->getInitializer()->getType());
     GblSym->Size = Size;
 
-    if (isELFCommonSym(GVar)) {
+    if (S->IsCommon()) { // Symbol must go to a common section
       GblSym->SectionIdx = ELFSection::SHN_COMMON;
-      getSection(S->getSectionName(), 
-                 ELFSection::SHT_NOBITS, SectionFlags, 1);
 
       // A new linkonce section is created for each global in the
       // common section, the default alignment is 1 and the symbol
       // value contains its alignment.
+      ES.Align = 1;
       GblSym->Value = Align;
 
-    } else if (isELFBssSym(GVar, Kind)) {
-      ELFSection &ES =
-        getSection(S->getSectionName(), ELFSection::SHT_NOBITS,
-                   SectionFlags);
+    } else if (Kind.isBSS() || Kind.isThreadBSS()) { // Symbol goes to BSS.
       GblSym->SectionIdx = ES.SectionIdx;
 
       // Update the size with alignment and the next object can
@@ -399,9 +379,6 @@ void ELFWriter::EmitGlobal(const GlobalValue *GV) {
       ES.Size += Size;
 
     } else { // The symbol must go to some kind of data section
-      ELFSection &ES =
-        getSection(S->getSectionName(), ELFSection::SHT_PROGBITS,
-                   SectionFlags);
       GblSym->SectionIdx = ES.SectionIdx;
 
       // GblSym->Value should contain the symbol offset inside the section,
@@ -415,18 +392,7 @@ void ELFWriter::EmitGlobal(const GlobalValue *GV) {
     }
   }
 
-  if (GV->hasPrivateLinkage()) {
-    // For a private symbols, keep track of the index inside the
-    // private list since it will never go to the symbol table and
-    // won't be patched up later.
-    PrivateSyms.push_back(GblSym);
-    GblSymLookup[GV] = PrivateSyms.size()-1;
-  } else {
-    // Non private symbol are left with zero indices until they are patched
-    // up during the symbol table emition (where the indicies are created).
-    SymbolList.push_back(GblSym);
-    GblSymLookup[GV] = 0;
-  }
+  AddToSymbolList(GblSym);
 }
 
 void ELFWriter::EmitGlobalConstantStruct(const ConstantStruct *CVS,
