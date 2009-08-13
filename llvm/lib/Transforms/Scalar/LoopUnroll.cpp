@@ -133,11 +133,9 @@ bool LoopUnroll::runOnLoop(Loop *L, LPPassManager &LPM) {
     // completely unroll (subject to the threshold, checked below); otherwise
     // try to find greatest modulo of the trip count which is still under
     // threshold value.
-    if (TripCount != 0) {
-      Count = TripCount;
-    } else {
+    if (TripCount == 0)
       return false;
-    }
+    Count = TripCount;
   }
 
   // Enforce the threshold.
@@ -148,24 +146,21 @@ bool LoopUnroll::runOnLoop(Loop *L, LPPassManager &LPM) {
     if (TripCount != 1 && Size > UnrollThreshold) {
       DEBUG(errs() << "  Too large to fully unroll with count: " << Count
             << " because size: " << Size << ">" << UnrollThreshold << "\n");
-      if (UnrollAllowPartial) {
-        // Reduce unroll count to be modulo of TripCount for partial unrolling
-        Count = UnrollThreshold / LoopSize;
-        while (Count != 0 && TripCount%Count != 0) {
-          Count--;
-        }
-        if (Count < 2) {
-          DEBUG(errs() << "  could not unroll partially\n");
-          return false;
-        } else {
-          DEBUG(errs() << "  partially unrolling with count: "
-                << Count << "\n");
-        }
-      } else {
+      if (!UnrollAllowPartial) {
         DEBUG(errs() << "  will not try to unroll partially because "
               << "-unroll-allow-partial not given\n");
         return false;
       }
+      // Reduce unroll count to be modulo of TripCount for partial unrolling
+      Count = UnrollThreshold / LoopSize;
+      while (Count != 0 && TripCount%Count != 0) {
+        Count--;
+      }
+      if (Count < 2) {
+        DEBUG(errs() << "  could not unroll partially\n");
+        return false;
+      }
+      DEBUG(errs() << "  partially unrolling with count: " << Count << "\n");
     }
   }
 
