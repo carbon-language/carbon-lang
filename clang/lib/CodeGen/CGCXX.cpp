@@ -840,26 +840,29 @@ void CodeGenFunction::EmitClassCopyAssignment(
   }
   
   const CXXMethodDecl *MD = 0;
-  if (BaseClassDecl->hasConstCopyAssignment(getContext(), MD)) {
-    const FunctionProtoType *FPT = MD->getType()->getAsFunctionProtoType();
-    const llvm::Type *Ty = 
-      CGM.getTypes().GetFunctionType(CGM.getTypes().getFunctionInfo(MD), 
-                                     FPT->isVariadic());
-    llvm::Constant *Callee = CGM.GetAddrOfFunction(GlobalDecl(MD), Ty);
+  bool ConstCopyAssignOp = BaseClassDecl->hasConstCopyAssignment(getContext(), 
+                                                                 MD);
+  assert(ConstCopyAssignOp && "EmitClassCopyAssignment - missing copy assign");
+  (void)ConstCopyAssignOp;
+
+  const FunctionProtoType *FPT = MD->getType()->getAsFunctionProtoType();
+  const llvm::Type *LTy = 
+    CGM.getTypes().GetFunctionType(CGM.getTypes().getFunctionInfo(MD), 
+                                   FPT->isVariadic());
+  llvm::Constant *Callee = CGM.GetAddrOfFunction(GlobalDecl(MD), LTy);
     
-    CallArgList CallArgs;
-    // Push the this (Dest) ptr.
-    CallArgs.push_back(std::make_pair(RValue::get(Dest),
-                                      MD->getThisType(getContext())));
+  CallArgList CallArgs;
+  // Push the this (Dest) ptr.
+  CallArgs.push_back(std::make_pair(RValue::get(Dest),
+                                    MD->getThisType(getContext())));
     
-    // Push the Src ptr.
-    CallArgs.push_back(std::make_pair(RValue::get(Src),
-                                      MD->getParamDecl(0)->getType()));
-    QualType ResultType = 
-      MD->getType()->getAsFunctionType()->getResultType();
-    EmitCall(CGM.getTypes().getFunctionInfo(ResultType, CallArgs),
-             Callee, CallArgs, MD);
-  }
+  // Push the Src ptr.
+  CallArgs.push_back(std::make_pair(RValue::get(Src),
+                                    MD->getParamDecl(0)->getType()));
+  QualType ResultType = 
+    MD->getType()->getAsFunctionType()->getResultType();
+  EmitCall(CGM.getTypes().getFunctionInfo(ResultType, CallArgs),
+           Callee, CallArgs, MD);
 }
 
 /// SynthesizeDefaultConstructor - synthesize a default constructor
