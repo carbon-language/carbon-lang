@@ -380,6 +380,37 @@ int MachineFrameInfo::CreateFixedObject(uint64_t Size, int64_t SPOffset,
 }
 
 
+BitVector
+MachineFrameInfo::getPristineRegs(const MachineBasicBlock *MBB) const {
+  assert(MBB && "MBB must be valid");
+  const MachineFunction *MF = MBB->getParent();
+  assert(MF && "MBB must be part of a MachineFunction");
+  const TargetMachine &TM = MF->getTarget();
+  const TargetRegisterInfo *TRI = TM.getRegisterInfo();
+  BitVector BV(TRI->getNumRegs());
+
+  // Before CSI is calculated, no registers are considered pristine. They can be
+  // freely used and PEI will make sure they are saved.
+  if (!isCalleeSavedInfoValid())
+    return BV;
+
+  for (const unsigned *CSR = TRI->getCalleeSavedRegs(MF); CSR && *CSR; ++CSR)
+    BV.set(*CSR);
+
+  // The entry MBB always has all CSRs pristine.
+  if (MBB == &MF->front())
+    return BV;
+
+  // On other MBBs the saved CSRs are not pristine.
+  const std::vector<CalleeSavedInfo> &CSI = getCalleeSavedInfo();
+  for (std::vector<CalleeSavedInfo>::const_iterator I = CSI.begin(),
+         E = CSI.end(); I != E; ++I)
+    BV.reset(I->getReg());
+
+  return BV;
+}
+
+
 void MachineFrameInfo::print(const MachineFunction &MF, std::ostream &OS) const{
   const TargetFrameInfo *FI = MF.getTarget().getFrameInfo();
   int ValOffset = (FI ? FI->getOffsetOfLocalArea() : 0);
@@ -419,7 +450,6 @@ void MachineFrameInfo::print(const MachineFunction &MF, std::ostream &OS) const{
 void MachineFrameInfo::dump(const MachineFunction &MF) const {
   print(MF, *cerr.stream());
 }
-
 
 //===----------------------------------------------------------------------===//
 //  MachineJumpTableInfo implementation

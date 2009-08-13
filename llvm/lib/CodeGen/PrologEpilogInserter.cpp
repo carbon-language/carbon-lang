@@ -214,6 +214,8 @@ void PEI::calculateCalleeSavedRegisters(MachineFunction &Fn) {
     }
   }
 
+  FFI->setCalleeSavedInfoValid(true);
+
   if (CSI.empty())
     return;   // Early exit if no callee saved registers are modified!
 

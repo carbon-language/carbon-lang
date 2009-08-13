@@ -14,6 +14,7 @@
 #ifndef LLVM_CODEGEN_MACHINEFRAMEINFO_H
 #define LLVM_CODEGEN_MACHINEFRAMEINFO_H
 
+#include "llvm/ADT/BitVector.h"
 #include "llvm/Support/DataTypes.h"
 #include <cassert>
 #include <iosfwd>
@@ -25,6 +26,7 @@ class TargetRegisterClass;
 class Type;
 class MachineModuleInfo;
 class MachineFunction;
+class MachineBasicBlock;
 class TargetFrameInfo;
 
 /// The CalleeSavedInfo class tracks the information need to locate where a
@@ -166,7 +168,10 @@ class MachineFrameInfo {
   /// epilog code inserter, this data used for debug info and exception
   /// handling.
   std::vector<CalleeSavedInfo> CSInfo;
-  
+
+  /// CSIValid - Has CSInfo been set yet?
+  bool CSIValid;
+
   /// MMI - This field is set (via setMachineModuleInfo) by a module info
   /// consumer (ex. DwarfWriter) to indicate that frame layout information
   /// should be acquired.  Typically, it's the responsibility of the target's
@@ -185,6 +190,7 @@ public:
     HasCalls = false;
     StackProtectorIdx = -1;
     MaxCallFrameSize = 0;
+    CSIValid = false;
     MMI = 0;
   }
 
@@ -388,6 +394,22 @@ public:
   void  setCalleeSavedInfo(const std::vector<CalleeSavedInfo> &CSI) {
     CSInfo = CSI;
   }
+
+  /// isCalleeSavedInfoValid - Has the callee saved info been calculated yet?
+  bool isCalleeSavedInfoValid() const { return CSIValid; }
+
+  void setCalleeSavedInfoValid(bool v) { CSIValid = v; }
+
+  /// getPristineRegs - Return a set of physical registers that are pristine on
+  /// entry to the MBB.
+  ///
+  /// Pristine registers hold a value that is useless to the current function,
+  /// but that must be preserved - they are callee saved registers that have not
+  /// been saved yet.
+  ///
+  /// Before the PrologueEpilogueInserter has placed the CSR spill code, this
+  /// method always returns an empty set.
+  BitVector getPristineRegs(const MachineBasicBlock *MBB) const;
 
   /// getMachineModuleInfo - Used by a prologue/epilogue
   /// emitter (TargetRegisterInfo) to provide frame layout information. 
