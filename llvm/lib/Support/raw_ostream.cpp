@@ -63,6 +63,26 @@ raw_ostream::~raw_ostream() {
 // An out of line virtual method to provide a home for the class vtable.
 void raw_ostream::handle() {}
 
+void raw_ostream::SetBufferSize(size_t Size) {
+  assert(Size >= 64 &&
+         "Buffer size must be somewhat large for invariants to hold");
+  flush();
+
+  delete [] OutBufStart;
+  OutBufStart = new char[Size];
+  OutBufEnd = OutBufStart+Size;
+  OutBufCur = OutBufStart;
+  Unbuffered = false;
+}
+
+void raw_ostream::SetUnbuffered() {
+  flush();
+
+  delete [] OutBufStart;
+  OutBufStart = OutBufEnd = OutBufCur = 0;
+  Unbuffered = true;
+}
+
 raw_ostream &raw_ostream::operator<<(unsigned long N) {
   // Zero is a special case.
   if (N == 0)

@@ -94,17 +94,7 @@ public:
 
   /// SetBufferSize - Set the internal buffer size to the specified amount
   /// instead of the default.
-  void SetBufferSize(size_t Size=4096) {
-    assert(Size >= 64 &&
-           "Buffer size must be somewhat large for invariants to hold");
-    flush();
-
-    delete [] OutBufStart;
-    OutBufStart = new char[Size];
-    OutBufEnd = OutBufStart+Size;
-    OutBufCur = OutBufStart;
-    Unbuffered = false;
-  }
+  void SetBufferSize(size_t Size=4096);
 
   size_t GetBufferSize() const {
     return OutBufEnd - OutBufStart;
@@ -114,13 +104,7 @@ public:
   /// unbuffered the stream will flush after every write. This routine
   /// will also flush the buffer immediately when the stream is being
   /// set to unbuffered.
-  void SetUnbuffered() {
-    flush();
-    
-    delete [] OutBufStart;
-    OutBufStart = OutBufEnd = OutBufCur = 0;
-    Unbuffered = true;
-  }
+  void SetUnbuffered();
 
   size_t GetNumBytesInBuffer() const {
     return OutBufCur - OutBufStart;
