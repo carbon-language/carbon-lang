@@ -106,7 +106,8 @@ bool LLVMTargetMachine::addAssemblyEmitter(PassManagerBase &PM,
                                            CodeGenOpt::Level OptLevel,
                                            bool Verbose,
                                            formatted_raw_ostream &Out) {
-  FunctionPass *Printer = getTarget().createAsmPrinter(Out, *this, Verbose);
+  FunctionPass *Printer =
+    getTarget().createAsmPrinter(Out, *this, getTargetAsmInfo(), Verbose);
   if (!Printer)
     return true;
 

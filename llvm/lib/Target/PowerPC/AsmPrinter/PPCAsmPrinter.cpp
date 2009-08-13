@@ -1090,18 +1090,18 @@ bool PPCDarwinAsmPrinter::doFinalization(Module &M) {
 /// Darwin assembler can deal with.
 ///
 static FunctionPass *createPPCAsmPrinterPass(formatted_raw_ostream &o,
-                                            TargetMachine &tm,
-                                            bool verbose) {
+                                             TargetMachine &tm,
+                                             const TargetAsmInfo *tai,
+                                             bool verbose) {
   const PPCSubtarget *Subtarget = &tm.getSubtarget<PPCSubtarget>();
 
   if (Subtarget->isDarwin())
-    return new PPCDarwinAsmPrinter(o, tm, tm.getTargetAsmInfo(), verbose);
-  return new PPCLinuxAsmPrinter(o, tm, tm.getTargetAsmInfo(), verbose);
+    return new PPCDarwinAsmPrinter(o, tm, tai, verbose);
+  return new PPCLinuxAsmPrinter(o, tm, tai, verbose);
 }
 
 // Force static initialization.
 extern "C" void LLVMInitializePowerPCAsmPrinter() { 
   TargetRegistry::RegisterAsmPrinter(ThePPC32Target, createPPCAsmPrinterPass);
-
   TargetRegistry::RegisterAsmPrinter(ThePPC64Target, createPPCAsmPrinterPass);
 }

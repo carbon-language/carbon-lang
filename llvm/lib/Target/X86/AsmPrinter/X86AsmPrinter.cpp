@@ -27,10 +27,11 @@ using namespace llvm;
 ///
 static FunctionPass *createX86CodePrinterPass(formatted_raw_ostream &o,
                                               TargetMachine &tm,
+                                              const TargetAsmInfo *tai,
                                               bool verbose) {
   if (tm.getTargetAsmInfo()->getAssemblerDialect() == 1)
-    return new X86IntelAsmPrinter(o, tm, tm.getTargetAsmInfo(), verbose);
-  return new X86ATTAsmPrinter(o, tm, tm.getTargetAsmInfo(), verbose);
+    return new X86IntelAsmPrinter(o, tm, tai, verbose);
+  return new X86ATTAsmPrinter(o, tm, tai, verbose);
 }
 
 // Force static initialization.

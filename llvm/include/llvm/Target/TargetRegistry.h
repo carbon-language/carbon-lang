@@ -20,9 +20,6 @@
 #define LLVM_TARGET_TARGETREGISTRY_H
 
 #include "llvm/ADT/Triple.h"
-// FIXME: We shouldn't need this header, but we need it until there is a
-// different interface to get the TargetAsmInfo.
-#include "llvm/Target/TargetMachine.h"
 #include <string>
 #include <cassert>
 
@@ -30,6 +27,7 @@ namespace llvm {
   class FunctionPass;
   class MCAsmParser;
   class Module;
+  class TargetAsmInfo;
   class TargetAsmParser;
   class TargetMachine;
   class formatted_raw_ostream;
@@ -53,11 +51,12 @@ namespace llvm {
     typedef TargetMachine *(*TargetMachineCtorTy)(const Target &T,
                                                   const std::string &TT,
                                                   const std::string &Features);
-    typedef FunctionPass *(*AsmPrinterCtorTy)(formatted_raw_ostream &,
-                                              TargetMachine &,
-                                              bool);
-    typedef TargetAsmParser *(*AsmParserCtorTy)(const Target &,
-                                                MCAsmParser &);
+    typedef FunctionPass *(*AsmPrinterCtorTy)(formatted_raw_ostream &OS,
+                                              TargetMachine &TM,
+                                              const TargetAsmInfo *TAI,
+                                              bool VerboseAsm);
+    typedef TargetAsmParser *(*AsmParserCtorTy)(const Target &T,
+                                                MCAsmParser &P);
   private:
     /// Next - The next registered target in the linked list, maintained by the
     /// TargetRegistry.
@@ -141,11 +140,12 @@ namespace llvm {
 
     /// createAsmPrinter - Create a target specific assembly printer pass.
     FunctionPass *createAsmPrinter(formatted_raw_ostream &OS,
-                                   TargetMachine &M,
+                                   TargetMachine &TM,
+                                   const TargetAsmInfo *TAI,
                                    bool Verbose) const {
       if (!AsmPrinterCtorFn)
         return 0;
-      return AsmPrinterCtorFn(OS, M, Verbose);
+      return AsmPrinterCtorFn(OS, TM, TAI, Verbose);
     }
 
     /// createAsmParser - Create a target specific assembly parser.
@@ -409,8 +409,9 @@ namespace llvm {
   private:
     static FunctionPass *Allocator(formatted_raw_ostream &OS,
                                    TargetMachine &TM,
+                                   const TargetAsmInfo *TAI,
                                    bool Verbose) {
-      return new AsmPrinterImpl(OS, TM, TM.getTargetAsmInfo(), Verbose);
+      return new AsmPrinterImpl(OS, TM, TAI, Verbose);
     }
   };
 
