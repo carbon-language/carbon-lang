@@ -109,6 +109,7 @@ private:
 
   /// Context - This refers to the LLVMContext in which this type was uniqued.
   LLVMContext &Context;
+  friend class LLVMContextImpl;
 
   const Type *getForwardedTypeInternal() const;
 
@@ -117,8 +118,9 @@ private:
   void destroy() const; // const is a lie, this does "delete this"!
 
 protected:
-  explicit Type(TypeID id) : ID(id), Abstract(false), SubclassData(0),
-                             RefCount(0), Context(getGlobalContext()),
+  explicit Type(LLVMContext &C, TypeID id) :
+                             ID(id), Abstract(false), SubclassData(0),
+                             RefCount(0), Context(C),
                              ForwardType(0), NumContainedTys(0),
                              ContainedTys(0) {}
   virtual ~Type() {

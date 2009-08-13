@@ -27,7 +27,7 @@ LLVMContext& llvm::getGlobalContext() {
   return *GlobalContext;
 }
 
-LLVMContext::LLVMContext() : pImpl(new LLVMContextImpl()) { }
+LLVMContext::LLVMContext() : pImpl(new LLVMContextImpl(*this)) { }
 LLVMContext::~LLVMContext() { delete pImpl; }
 
 GetElementPtrConstantExpr::GetElementPtrConstantExpr

@@ -1150,7 +1150,7 @@ bool LLParser::ParseTypeRec(PATypeHolder &Result) {
     break;
   case lltok::kw_opaque:
     // TypeRec ::= 'opaque'
-    Result = OpaqueType::get();
+    Result = OpaqueType::get(Context);
     Lex.Lex();
     break;
   case lltok::lbrace:
@@ -1180,7 +1180,7 @@ bool LLParser::ParseTypeRec(PATypeHolder &Result) {
     if (const Type *T = M->getTypeByName(Lex.getStrVal())) {
       Result = T;
     } else {
-      Result = OpaqueType::get();
+      Result = OpaqueType::get(Context);
       ForwardRefTypes.insert(std::make_pair(Lex.getStrVal(),
                                             std::make_pair(Result,
                                                            Lex.getLoc())));
@@ -1199,7 +1199,7 @@ bool LLParser::ParseTypeRec(PATypeHolder &Result) {
       if (I != ForwardRefTypeIDs.end())
         Result = I->second.first;
       else {
-        Result = OpaqueType::get();
+        Result = OpaqueType::get(Context);
         ForwardRefTypeIDs.insert(std::make_pair(Lex.getUIntVal(),
                                                 std::make_pair(Result,
                                                                Lex.getLoc())));
@@ -1212,7 +1212,7 @@ bool LLParser::ParseTypeRec(PATypeHolder &Result) {
     Lex.Lex();
     unsigned Val;
     if (ParseUInt32(Val)) return true;
-    OpaqueType *OT = OpaqueType::get(); //Use temporary placeholder.
+    OpaqueType *OT = OpaqueType::get(Context); //Use temporary placeholder.
     UpRefs.push_back(UpRefRecord(Lex.getLoc(), Val, OT));
     Result = OT;
     break;

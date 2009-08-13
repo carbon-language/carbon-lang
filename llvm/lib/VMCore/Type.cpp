@@ -315,75 +315,56 @@ const Type *StructType::getTypeAtIndex(unsigned Idx) const {
 //                          Primitive 'Type' data
 //===----------------------------------------------------------------------===//
 
-namespace {
-  struct BuiltinIntegerType : public IntegerType {
-    explicit BuiltinIntegerType(unsigned W) : IntegerType(W) {}
-  };
-}
-
 const Type *Type::getVoidTy(LLVMContext &C) {
-  static const Type *VoidTy       = new Type(Type::VoidTyID);
-  return VoidTy;
+  return C.pImpl->VoidTy;
 }
 
 const Type *Type::getLabelTy(LLVMContext &C) {
-  static const Type *LabelTy      = new Type(Type::LabelTyID);
-  return LabelTy;
+  return C.pImpl->LabelTy;
 }
 
 const Type *Type::getFloatTy(LLVMContext &C) {
-  static const Type *FloatTy      = new Type(Type::FloatTyID);
-  return FloatTy;
+  return C.pImpl->FloatTy;
 }
 
 const Type *Type::getDoubleTy(LLVMContext &C) {
-  static const Type *DoubleTy      = new Type(Type::DoubleTyID);
-  return DoubleTy;
+  return C.pImpl->DoubleTy;
 }
 
 const Type *Type::getMetadataTy(LLVMContext &C) {
-  static const Type *MetadataTy   = new Type(Type::MetadataTyID);
-  return MetadataTy;
+  return C.pImpl->MetadataTy;
 }
 
 const Type *Type::getX86_FP80Ty(LLVMContext &C) {
-  static const Type *X86_FP80Ty   = new Type(Type::X86_FP80TyID);
-  return X86_FP80Ty;
+  return C.pImpl->X86_FP80Ty;
 }
 
 const Type *Type::getFP128Ty(LLVMContext &C) {
-  static const Type *FP128Ty      = new Type(Type::FP128TyID);
-  return FP128Ty;
+  return C.pImpl->FP128Ty;
 }
 
 const Type *Type::getPPC_FP128Ty(LLVMContext &C) {
-  static const Type *PPC_FP128Ty  = new Type(Type::PPC_FP128TyID);
-  return PPC_FP128Ty;
+  return C.pImpl->PPC_FP128Ty;
 }
 
 const IntegerType *Type::getInt1Ty(LLVMContext &C) {
-  static const IntegerType *Int1Ty  = new BuiltinIntegerType(1);
-  return Int1Ty;
+  return C.pImpl->Int1Ty;
 }
 
 const IntegerType *Type::getInt8Ty(LLVMContext &C) {
-  static const IntegerType *Int8Ty  = new BuiltinIntegerType(8);
-  return Int8Ty;
+  return C.pImpl->Int8Ty;
 }
 
 const IntegerType *Type::getInt16Ty(LLVMContext &C) {
-  static const IntegerType *Int16Ty = new BuiltinIntegerType(16);
-  return Int16Ty;
+  return C.pImpl->Int16Ty;
 }
 
 const IntegerType *Type::getInt32Ty(LLVMContext &C) {
-  static const IntegerType *Int32Ty = new BuiltinIntegerType(32);
-  return Int32Ty;
+  return C.pImpl->Int32Ty;
 }
 
 const IntegerType *Type::getInt64Ty(LLVMContext &C) {
-  static const IntegerType *Int64Ty = new BuiltinIntegerType(64);
-  return Int64Ty;
+  return C.pImpl->Int64Ty;
 }
 
 //===----------------------------------------------------------------------===//
@@ -430,7 +411,7 @@ bool FunctionType::isValidArgumentType(const Type *ArgTy) {
 FunctionType::FunctionType(const Type *Result,
                            const std::vector<const Type*> &Params,
                            bool IsVarArgs)
-  : DerivedType(FunctionTyID), isVarArgs(IsVarArgs) {
+  : DerivedType(Result->getContext(), FunctionTyID), isVarArgs(IsVarArgs) {
   ContainedTys = reinterpret_cast<PATypeHandle*>(this+1);
   NumContainedTys = Params.size() + 1; // + 1 for result type
   assert(isValidReturnType(Result) && "invalid return type for function");
@@ -450,8 +431,9 @@ FunctionType::FunctionType(const Type *Result,
   setAbstract(isAbstract);
 }
 
-StructType::StructType(const std::vector<const Type*> &Types, bool isPacked)
-  : CompositeType(StructTyID) {
+StructType::StructType(LLVMContext &C, 
+                       const std::vector<const Type*> &Types, bool isPacked)
+  : CompositeType(C, StructTyID) {
   ContainedTys = reinterpret_cast<PATypeHandle*>(this + 1);
   NumContainedTys = Types.size();
   setSubclassData(isPacked);
@@ -494,7 +476,7 @@ PointerType::PointerType(const Type *E, unsigned AddrSpace)
   setAbstract(E->isAbstract());
 }
 
-OpaqueType::OpaqueType() : DerivedType(OpaqueTyID) {
+OpaqueType::OpaqueType(LLVMContext &C) : DerivedType(C, OpaqueTyID) {
   setAbstract(true);
 #ifdef DEBUG_MERGE_TYPES
   DOUT << "Derived new type: " << *this << "\n";
@@ -521,7 +503,7 @@ void DerivedType::dropAllTypeUses() {
         llvm_acquire_global_lock();
         tmp = AlwaysOpaqueTy;
         if (!tmp) {
-          tmp = OpaqueType::get();
+          tmp = OpaqueType::get(getContext());
           PATypeHolder* tmp2 = new PATypeHolder(AlwaysOpaqueTy);
           sys::MemoryFence();
           AlwaysOpaqueTy = tmp;
@@ -531,7 +513,7 @@ void DerivedType::dropAllTypeUses() {
         llvm_release_global_lock();
       }
     } else {
-      AlwaysOpaqueTy = OpaqueType::get();
+      AlwaysOpaqueTy = OpaqueType::get(getContext());
       Holder = new PATypeHolder(AlwaysOpaqueTy);
     } 
         
@@ -755,9 +737,6 @@ static bool TypeHasCycleThroughItself(const Type *Ty) {
 //===----------------------------------------------------------------------===//
 // Function Type Factory and Value Class...
 //
-
-static ManagedStatic<TypeMap<IntegerValType, IntegerType> > IntegerTypes;
-
 const IntegerType *IntegerType::get(LLVMContext &C, unsigned NumBits) {
   assert(NumBits >= MIN_INT_BITS && "bitwidth too small");
   assert(NumBits <= MAX_INT_BITS && "bitwidth too large");
@@ -772,6 +751,8 @@ const IntegerType *IntegerType::get(LLVMContext &C, unsigned NumBits) {
     default: 
       break;
   }
+
+  LLVMContextImpl *pImpl = C.pImpl;
   
   IntegerValType IVT(NumBits);
   IntegerType *ITy = 0;
@@ -779,12 +760,12 @@ const IntegerType *IntegerType::get(LLVMContext &C, unsigned NumBits) {
   // First, see if the type is already in the table, for which
   // a reader lock suffices.
   sys::SmartScopedLock<true> L(*TypeMapLock);
-  ITy = IntegerTypes->get(IVT);
+  ITy = pImpl->IntegerTypes.get(IVT);
     
   if (!ITy) {
     // Value not found.  Derive a new type!
-    ITy = new IntegerType(NumBits);
-    IntegerTypes->add(IVT, ITy);
+    ITy = new IntegerType(C, NumBits);
+    pImpl->IntegerTypes.add(IVT, ITy);
   }
 #ifdef DEBUG_MERGE_TYPES
   DOUT << "Derived new type: " << *ITy << "\n";
@@ -918,7 +899,7 @@ StructType *StructType::get(LLVMContext &Context,
     // Value not found.  Derive a new type!
     ST = (StructType*) operator new(sizeof(StructType) +
                                     sizeof(PATypeHandle) * ETypes.size());
-    new (ST) StructType(ETypes, isPacked);
+    new (ST) StructType(Context, ETypes, isPacked);
     pImpl->StructTypes.add(STV, ST);
   }
 #ifdef DEBUG_MERGE_TYPES

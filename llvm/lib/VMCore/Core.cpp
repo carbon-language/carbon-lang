@@ -293,7 +293,7 @@ LLVMTypeRef LLVMLabelType(void) {
 }
 
 LLVMTypeRef LLVMOpaqueType(void) {
-  return wrap(OpaqueType::get());
+  return wrap(OpaqueType::get(getGlobalContext()));
 }
 
 /*--.. Operations on type handles ..........................................--*/

@@ -358,7 +358,7 @@ const Type *BitcodeReader::getTypeByID(unsigned ID, bool isTypeTable) {
   // The type table allows forward references.  Push as many Opaque types as
   // needed to get up to ID.
   while (TypeList.size() <= ID)
-    TypeList.push_back(OpaqueType::get());
+    TypeList.push_back(OpaqueType::get(Context));
   return TypeList.back().get();
 }
 
@@ -597,7 +597,7 @@ bool BitcodeReader::ParseTypeTable() {
     
     if (NumRecords == TypeList.size()) {
       // If this is a new type slot, just append it.
-      TypeList.push_back(ResultTy ? ResultTy : OpaqueType::get());
+      TypeList.push_back(ResultTy ? ResultTy : OpaqueType::get(Context));
       ++NumRecords;
     } else if (ResultTy == 0) {
       // Otherwise, this was forward referenced, so an opaque type was created,

@@ -279,7 +279,7 @@ bool ShadowStackGC::initializeCustomLowering(Module &M) {
   //   FrameMap *Map;          // Pointer to constant FrameMap.
   //   void *Roots[];          // Stack roots (in-place array, so we pretend).
   // };
-  OpaqueType *RecursiveTy = OpaqueType::get();
+  OpaqueType *RecursiveTy = OpaqueType::get(M.getContext());
 
   EltTys.clear();
   EltTys.push_back(PointerType::getUnqual(RecursiveTy));

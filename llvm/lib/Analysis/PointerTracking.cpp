@@ -104,12 +104,12 @@ const SCEV *PointerTracking::computeAllocationCount(Value *P,
       Constant *C = GV->getInitializer();
       if (const ArrayType *ATy = dyn_cast<ArrayType>(C->getType())) {
         Ty = ATy->getElementType();
-        return SE->getConstant(Type::getInt32Ty(Ty->getContext()),
+        return SE->getConstant(Type::getInt32Ty(P->getContext()),
                                ATy->getNumElements());
       }
     }
     Ty = GV->getType();
-    return SE->getConstant(Type::getInt32Ty(Ty->getContext()), 1);
+    return SE->getConstant(Type::getInt32Ty(P->getContext()), 1);
     //TODO: implement more tracking for globals
   }
 
@@ -118,13 +118,13 @@ const SCEV *PointerTracking::computeAllocationCount(Value *P,
     Function *F = dyn_cast<Function>(CS.getCalledValue()->stripPointerCasts());
     const Loop *L = LI->getLoopFor(CI->getParent());
     if (F == callocFunc) {
-      Ty = Type::getInt8Ty(Ty->getContext());
+      Ty = Type::getInt8Ty(P->getContext());
       // calloc allocates arg0*arg1 bytes.
       return SE->getSCEVAtScope(SE->getMulExpr(SE->getSCEV(CS.getArgument(0)),
                                                SE->getSCEV(CS.getArgument(1))),
                                 L);
     } else if (F == reallocFunc) {
-      Ty = Type::getInt8Ty(Ty->getContext());
+      Ty = Type::getInt8Ty(P->getContext());
       // realloc allocates arg1 bytes.
       return SE->getSCEVAtScope(CS.getArgument(1), L);
     }

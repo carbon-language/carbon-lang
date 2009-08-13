@@ -127,7 +127,7 @@ bool LowerInvoke::doInitialization(Module &M) {
     { // The type is recursive, so use a type holder.
       std::vector<const Type*> Elements;
       Elements.push_back(JmpBufTy);
-      OpaqueType *OT = OpaqueType::get();
+      OpaqueType *OT = OpaqueType::get(M.getContext());
       Elements.push_back(PointerType::getUnqual(OT));
       PATypeHolder JBLType(StructType::get(M.getContext(), Elements));
       OT->refineAbstractTypeTo(JBLType.get());  // Complete the cycle.

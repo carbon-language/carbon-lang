@@ -37,7 +37,7 @@ class DerivedType : public Type {
   friend class Type;
 
 protected:
-  explicit DerivedType(TypeID id) : Type(id) {}
+  explicit DerivedType(LLVMContext &C, TypeID id) : Type(C, id) {}
 
   /// notifyUsesThatTypeBecameConcrete - Notify AbstractTypeUsers of this type
   /// that the current type has transitioned from being abstract to being
@@ -83,8 +83,11 @@ public:
 /// Int64Ty.
 /// @brief Integer representation type
 class IntegerType : public DerivedType {
+  friend class LLVMContextImpl;
+  
 protected:
-  explicit IntegerType(unsigned NumBits) : DerivedType(IntegerTyID) {
+  explicit IntegerType(LLVMContext &C, unsigned NumBits) : 
+      DerivedType(C, IntegerTyID) {
     setSubclassData(NumBits);
   }
   friend class TypeMap<IntegerValType, IntegerType>;
@@ -208,7 +211,8 @@ public:
 /// and VectorType
 class CompositeType : public DerivedType {
 protected:
-  inline explicit CompositeType(TypeID id) : DerivedType(id) { }
+  inline explicit CompositeType(LLVMContext &C, TypeID id) :
+    DerivedType(C, id) { }
 public:
 
   /// getTypeAtIndex - Given an index value into the type, return the type of
@@ -236,7 +240,8 @@ class StructType : public CompositeType {
   friend class TypeMap<StructValType, StructType>;
   StructType(const StructType &);                   // Do not implement
   const StructType &operator=(const StructType &);  // Do not implement
-  StructType(const std::vector<const Type*> &Types, bool isPacked);
+  StructType(LLVMContext &C,
+             const std::vector<const Type*> &Types, bool isPacked);
 public:
   /// StructType::get - This static method is the primary way to create a
   /// StructType.
@@ -313,7 +318,7 @@ class SequentialType : public CompositeType {
   SequentialType* this_() { return this; }
 protected:
   SequentialType(TypeID TID, const Type *ElType)
-    : CompositeType(TID), ContainedType(ElType, this_()) {
+    : CompositeType(ElType->getContext(), TID), ContainedType(ElType, this_()) {
     ContainedTys = &ContainedType;
     NumContainedTys = 1;
   }
@@ -493,12 +498,12 @@ public:
 class OpaqueType : public DerivedType {
   OpaqueType(const OpaqueType &);                   // DO NOT IMPLEMENT
   const OpaqueType &operator=(const OpaqueType &);  // DO NOT IMPLEMENT
-  OpaqueType();
+  OpaqueType(LLVMContext &C);
 public:
   /// OpaqueType::get - Static factory method for the OpaqueType class...
   ///
-  static OpaqueType *get() {
-    return new OpaqueType();           // All opaque types are distinct
+  static OpaqueType *get(LLVMContext &C) {
+    return new OpaqueType(C);           // All opaque types are distinct
   }
 
   // Implement support for type inquiry through isa, cast, and dyn_cast:
