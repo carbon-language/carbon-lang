@@ -627,6 +627,7 @@ void CodeGenFunction::GenerateVcalls(std::vector<llvm::Constant *> &methods,
   typedef CXXRecordDecl::method_iterator meth_iter;
   llvm::Constant *m;
 
+  // FIXME: audit order
   for (meth_iter mi = RD->method_begin(),
          me = RD->method_end(); mi != me; ++mi) {
     if (mi->isVirtual()) {
@@ -758,13 +759,11 @@ llvm::Value *CodeGenFunction::GenerateVtable(const CXXRecordDecl *RD) {
       continue;
     const CXXRecordDecl *Base = 
       cast<CXXRecordDecl>(i->getType()->getAs<RecordType>()->getDecl());
-    if (PrimaryBase != Base) {
+    if (Base != PrimaryBase)
       GenerateVtableForBase(Base, RD, rtti, methods, false, false,
                             IndirectPrimary);
-    }
   }
 
-  // FIXME: finish layout for virtual bases
   // FIXME: Though complete, this is the wrong order
   for (CXXRecordDecl::base_class_const_iterator i = RD->vbases_begin(),
          e = RD->vbases_end(); i != e; ++i) {
