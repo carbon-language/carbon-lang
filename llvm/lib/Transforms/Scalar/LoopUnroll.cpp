@@ -97,10 +97,7 @@ static unsigned ApproximateLoopSize(const Loop *L) {
         // is higher than other instructions. Here 3 and 10 are magic
         // numbers that help one isolated test case from PR2067 without
         // negatively impacting measured benchmarks.
-        if (isa<IntrinsicInst>(I))
-          Size = Size + 3;
-        else
-          Size = Size + 10;
+        Size += isa<IntrinsicInst>(I) ? 3 : 10;
       } else {
         ++Size;
       }
