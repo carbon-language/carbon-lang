@@ -21,8 +21,10 @@ namespace llvm {
   class MCSectionPIC16 : public MCSection {
     std::string Name;
     
-    MCSectionPIC16(const StringRef &name, SectionKind K,
-                   MCContext &Ctx);
+    MCSectionPIC16(const StringRef &name, SectionKind K)
+      : MCSection(K), Name(name) {
+    }
+    
   public:
     
     const std::string &getName() const { return Name; }

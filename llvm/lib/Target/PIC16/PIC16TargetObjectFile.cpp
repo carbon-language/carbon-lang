@@ -18,14 +18,10 @@
 #include "llvm/Support/raw_ostream.h"
 using namespace llvm;
 
-MCSectionPIC16::MCSectionPIC16(const StringRef &name, SectionKind K,
-                               MCContext &Ctx) : MCSection(K), Name(name) {
-  Ctx.SetSection(Name, this);
-}
 
 MCSectionPIC16 *MCSectionPIC16::Create(const StringRef &Name, 
                                        SectionKind K, MCContext &Ctx) {
-  return new (Ctx) MCSectionPIC16(Name, K, Ctx);
+  return new (Ctx) MCSectionPIC16(Name, K);
 }
 
 
@@ -43,9 +39,11 @@ PIC16TargetObjectFile::PIC16TargetObjectFile()
 
 const MCSectionPIC16 *PIC16TargetObjectFile::
 getPIC16Section(const char *Name, SectionKind Kind) const {
-  if (MCSection *S = getContext().GetSection(Name))
-    return (MCSectionPIC16*)S;
-  return MCSectionPIC16::Create(Name, Kind, getContext());
+  MCSectionPIC16 *&Entry = SectionsByName[Name];
+  if (Entry)
+    return Entry;
+
+  return Entry = MCSectionPIC16::Create(Name, Kind, getContext());
 }
 
 

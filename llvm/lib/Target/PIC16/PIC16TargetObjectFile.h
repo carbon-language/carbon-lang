@@ -11,6 +11,7 @@
 #define LLVM_TARGET_PIC16_TARGETOBJECTFILE_H
 
 #include "llvm/Target/TargetLoweringObjectFile.h"
+#include "llvm/ADT/StringMap.h"
 #include <vector>
 #include <string>
 
@@ -46,6 +47,9 @@ namespace llvm {
   };
   
   class PIC16TargetObjectFile : public TargetLoweringObjectFile {
+    /// SectionsByName - Bindings of names to allocated sections.
+    mutable StringMap<MCSectionPIC16*> SectionsByName;
+
     const TargetMachine *TM;
     
     const MCSectionPIC16 *getPIC16Section(const char *Name,
