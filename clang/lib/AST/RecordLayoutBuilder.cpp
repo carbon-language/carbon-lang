@@ -173,7 +173,7 @@ void ASTRecordLayoutBuilder::LayoutVirtualBases(const CXXRecordDecl *RD) {
          e = RD->vbases_end(); i != e; ++i) {
     const CXXRecordDecl *Base = 
       cast<CXXRecordDecl>(i->getType()->getAs<RecordType>()->getDecl());
-    if (Base != PrimaryBase)
+    if (!PrimaryBaseWasVirtual || Base != PrimaryBase)
       LayoutVirtualBase(Base);
   }
 }
