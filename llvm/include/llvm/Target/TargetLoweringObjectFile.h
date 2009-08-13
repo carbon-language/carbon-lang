@@ -183,6 +183,7 @@ protected:
 
 class TargetLoweringObjectFileELF : public TargetLoweringObjectFile {
   bool HasCrazyBSS;
+  mutable void *UniquingMap;
 protected:
   /// TLSDataSection - Section directive for Thread Local data.
   ///
@@ -208,7 +209,10 @@ protected:
 public:
   TargetLoweringObjectFileELF(// FIXME: REMOVE AFTER UNIQUING IS FIXED.
                               bool hasCrazyBSS = false)
-    : HasCrazyBSS(hasCrazyBSS) {}
+    : HasCrazyBSS(hasCrazyBSS), UniquingMap(0) {}
+  
+  ~TargetLoweringObjectFileELF();
+  
   
   virtual void Initialize(MCContext &Ctx, const TargetMachine &TM);
   
@@ -302,7 +306,11 @@ public:
 
 
 class TargetLoweringObjectFileCOFF : public TargetLoweringObjectFile {
+  mutable void *UniquingMap;
 public:
+  TargetLoweringObjectFileCOFF() : UniquingMap(0) {}
+  ~TargetLoweringObjectFileCOFF();
+  
   virtual void Initialize(MCContext &Ctx, const TargetMachine &TM);
   
   virtual const MCSection *

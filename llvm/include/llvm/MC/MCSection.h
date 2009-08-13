@@ -52,8 +52,9 @@ namespace llvm {
     /// of a syntactic one.
     bool IsDirective;
     
-    MCSectionELF(const StringRef &Name, bool IsDirective, SectionKind K,
-                 MCContext &Ctx);
+    MCSectionELF(const StringRef &name, bool isDirective, SectionKind K)
+      : MCSection(K), Name(name), IsDirective(isDirective) {
+    }
   public:
     
     static MCSectionELF *Create(const StringRef &Name, bool IsDirective, 
@@ -77,8 +78,9 @@ namespace llvm {
     /// of a syntactic one.
     bool IsDirective;
     
-    MCSectionCOFF(const StringRef &Name, bool IsDirective, SectionKind K,
-                  MCContext &Ctx);
+    MCSectionCOFF(const StringRef &name, bool isDirective, SectionKind K)
+      : MCSection(K), Name(name), IsDirective(isDirective) {
+    }
   public:
     
     static MCSectionCOFF *Create(const StringRef &Name, bool IsDirective, 

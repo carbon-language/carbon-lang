@@ -22,11 +22,6 @@ MCContext::~MCContext() {
   // we don't need to free them here.
 }
 
-MCSection *MCContext::GetSection(const StringRef &Name) const {
-  StringMap<MCSection*>::const_iterator I = Sections.find(Name);
-  return I != Sections.end() ? I->second : 0;
-}
-
 MCSymbol *MCContext::CreateSymbol(const StringRef &Name) {
   assert(Name[0] != '\0' && "Normal symbols cannot be unnamed!");
 

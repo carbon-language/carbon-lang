@@ -46,16 +46,6 @@ namespace llvm {
   public:
     MCContext();
     ~MCContext();
-
-    /// GetSection - Look up a section with the given @param Name, returning
-    /// null if it doesn't exist.
-    MCSection *GetSection(const StringRef &Name) const;
-    
-    void SetSection(const StringRef &Name, MCSection *S) {
-      MCSection *&Entry = Sections[Name];
-      assert(Entry == 0 && "Multiple sections with the same name created");
-      Entry = S;
-    }
     
     /// CreateSymbol - Create a new symbol with the specified @param Name.
     ///

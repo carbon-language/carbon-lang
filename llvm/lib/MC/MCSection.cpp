@@ -27,15 +27,8 @@ MCSection::~MCSection() {
 
 MCSectionELF *MCSectionELF::
 Create(const StringRef &Name, bool IsDirective, SectionKind K, MCContext &Ctx) {
-  return new (Ctx) MCSectionELF(Name, IsDirective, K, Ctx);
+  return new (Ctx) MCSectionELF(Name, IsDirective, K);
 }
-
-MCSectionELF::MCSectionELF(const StringRef &name, bool isDirective,
-                           SectionKind K, MCContext &Ctx)
-  : MCSection(K), Name(name), IsDirective(isDirective) {
-  Ctx.SetSection(Name, this);
-}
-
 
 void MCSectionELF::PrintSwitchToSection(const TargetAsmInfo &TAI,
                                         raw_ostream &OS) const {
@@ -118,15 +111,8 @@ void MCSectionELF::PrintSwitchToSection(const TargetAsmInfo &TAI,
 
 MCSectionCOFF *MCSectionCOFF::
 Create(const StringRef &Name, bool IsDirective, SectionKind K, MCContext &Ctx) {
-  return new (Ctx) MCSectionCOFF(Name, IsDirective, K, Ctx);
+  return new (Ctx) MCSectionCOFF(Name, IsDirective, K);
 }
-
-MCSectionCOFF::MCSectionCOFF(const StringRef &name, bool isDirective,
-                             SectionKind K, MCContext &Ctx)
-  : MCSection(K), Name(name), IsDirective(isDirective) {
-  Ctx.SetSection(Name, this);
-}
-
 
 void MCSectionCOFF::PrintSwitchToSection(const TargetAsmInfo &TAI,
                                          raw_ostream &OS) const {

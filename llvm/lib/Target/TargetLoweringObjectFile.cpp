@@ -280,12 +280,25 @@ TargetLoweringObjectFile::getSectionForConstant(SectionKind Kind) const {
 //===----------------------------------------------------------------------===//
 //                                  ELF
 //===----------------------------------------------------------------------===//
+typedef StringMap<const MCSectionELF*> ELFUniqueMapTy;
+
+TargetLoweringObjectFileELF::~TargetLoweringObjectFileELF() {
+  // If we have the section uniquing map, free it.
+  delete (ELFUniqueMapTy*)UniquingMap;
+}
 
 const MCSection *TargetLoweringObjectFileELF::
 getELFSection(const char *Name, bool isDirective, SectionKind Kind) const {
-  if (MCSection *S = getContext().GetSection(Name))
-    return S;
-  return MCSectionELF::Create(Name, isDirective, Kind, getContext());
+  // Create the map if it doesn't already exist.
+  if (UniquingMap == 0)
+    UniquingMap = new ELFUniqueMapTy();
+  ELFUniqueMapTy &Map = *(ELFUniqueMapTy*)UniquingMap;
+  
+  // Do the lookup, if we have a hit, return it.
+  const MCSectionELF *&Entry = Map[Name];
+  if (Entry) return Entry;
+  
+  return Entry = MCSectionELF::Create(Name, isDirective, Kind, getContext());
 }
 
 void TargetLoweringObjectFileELF::Initialize(MCContext &Ctx,
@@ -805,12 +818,25 @@ shouldEmitUsedDirectiveFor(const GlobalValue *GV, Mangler *Mang) const {
 //                                  COFF
 //===----------------------------------------------------------------------===//
 
+typedef StringMap<const MCSectionCOFF*> COFFUniqueMapTy;
+
+TargetLoweringObjectFileCOFF::~TargetLoweringObjectFileCOFF() {
+  delete (COFFUniqueMapTy*)UniquingMap;
+}
+
 
 const MCSection *TargetLoweringObjectFileCOFF::
 getCOFFSection(const char *Name, bool isDirective, SectionKind Kind) const {
-  if (MCSection *S = getContext().GetSection(Name))
-    return S;
-  return MCSectionCOFF::Create(Name, isDirective, Kind, getContext());
+  // Create the map if it doesn't already exist.
+  if (UniquingMap == 0)
+    UniquingMap = new MachOUniqueMapTy();
+  COFFUniqueMapTy &Map = *(COFFUniqueMapTy*)UniquingMap;
+  
+  // Do the lookup, if we have a hit, return it.
+  const MCSectionCOFF *&Entry = Map[Name];
+  if (Entry) return Entry;
+  
+  return Entry = MCSectionCOFF::Create(Name, isDirective, Kind, getContext());
 }
 
 void TargetLoweringObjectFileCOFF::Initialize(MCContext &Ctx,
