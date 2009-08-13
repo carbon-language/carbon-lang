@@ -298,8 +298,8 @@ getELFSection(StringRef Section, unsigned Type, unsigned Flags,
   const MCSectionELF *&Entry = Map[Section];
   if (Entry) return Entry;
   
-  return Entry = MCSectionELF::Create(Section, Type, Flags, Kind, HasCrazyBSS, 
-                                      IsExplicit, getContext());
+  return Entry = MCSectionELF::Create(Section, Type, Flags, Kind, IsExplicit,
+                                      getContext());
 }
 
 void TargetLoweringObjectFileELF::Initialize(MCContext &Ctx,

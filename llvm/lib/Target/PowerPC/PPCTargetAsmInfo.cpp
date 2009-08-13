@@ -30,6 +30,9 @@ PPCLinuxTargetAsmInfo::PPCLinuxTargetAsmInfo(bool is64Bit) {
   PrivateGlobalPrefix = ".L";
   UsedDirective = "\t# .no_dead_strip\t";
   WeakRefDirective = "\t.weak\t";
+  
+  // Uses '.section' before '.bss' directive
+  UsesELFSectionDirectiveForBSS = true;  
 
   // Debug Information
   AbsoluteDebugSectionOffsets = true;

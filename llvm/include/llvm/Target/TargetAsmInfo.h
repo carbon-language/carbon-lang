@@ -164,6 +164,11 @@ namespace llvm {
     /// Style" syntax for section switching ("#alloc,#write" etc) instead of the
     /// normal ELF syntax (,"a,w") in .section directives.
     bool SunStyleELFSectionSwitchSyntax;   // Defaults to false.
+
+    /// UsesELFSectionDirectiveForBSS - This is true if this target uses ELF
+    /// '.section' directive before the '.bss' one. It's used for PPC/Linux 
+    /// which doesn't support the '.bss' directive only.
+    bool UsesELFSectionDirectiveForBSS;  // Defaults to false.
     
     //===--- Alignment Information ----------------------------------------===//
 
@@ -336,6 +341,9 @@ namespace llvm {
       return SunStyleELFSectionSwitchSyntax;
     }
     
+    bool usesELFSectionDirectiveForBSS() const {
+      return UsesELFSectionDirectiveForBSS;
+    }
 
     // Accessors.
     //

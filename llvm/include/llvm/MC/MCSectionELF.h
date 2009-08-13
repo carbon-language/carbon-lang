@@ -30,28 +30,24 @@ class MCSectionELF : public MCSection {
   /// below.
   unsigned Flags;
 
-  /// HasCrazyBSS - PPC/Linux doesn't support the .bss directive, it 
-  /// needs .section .bss. TODO: replace this with a TAI method.
-  bool HasCrazyBSS;
-
   /// IsExplicit - Indicates that this section comes from globals with an
   /// explicit section specfied.
   bool IsExplicit;
   
   MCSectionELF(const StringRef &Section, unsigned T, unsigned F, 
-               SectionKind K, bool hasCrazyBSS, bool isExplicit)
+               SectionKind K, bool isExplicit)
     : MCSection(K), SectionName(Section.str()), Type(T), Flags(F), 
-      HasCrazyBSS(hasCrazyBSS), IsExplicit(isExplicit) {}
+      IsExplicit(isExplicit) {}
 public:
   
   static MCSectionELF *Create(const StringRef &Section, unsigned Type, 
-                              unsigned Flags, SectionKind K, 
-                              bool hasCrazyBSS, bool isExplicit, 
+                              unsigned Flags, SectionKind K, bool isExplicit,
                               MCContext &Ctx);
 
   /// ShouldOmitSectionDirective - Decides whether a '.section' directive
   /// should be printed before the section name
-  bool ShouldOmitSectionDirective(const char *Name) const;
+  bool ShouldOmitSectionDirective(const char *Name, 
+                                  const TargetAsmInfo &TAI) const;
 
   /// ShouldPrintSectionType - Only prints the section type if supported
   bool ShouldPrintSectionType(unsigned Ty) const;

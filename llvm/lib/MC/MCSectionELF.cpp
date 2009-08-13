@@ -16,20 +16,21 @@ using namespace llvm;
 
 MCSectionELF *MCSectionELF::
 Create(const StringRef &Section, unsigned Type, unsigned Flags,
-       SectionKind K, bool hasCrazyBSS, bool isExplicit, MCContext &Ctx) {
+       SectionKind K, bool isExplicit, MCContext &Ctx) {
   return new 
-    (Ctx) MCSectionELF(Section, Type, Flags, K, hasCrazyBSS, isExplicit);
+    (Ctx) MCSectionELF(Section, Type, Flags, K, isExplicit);
 }
 
 // ShouldOmitSectionDirective - Decides whether a '.section' directive
 // should be printed before the section name
-bool MCSectionELF::ShouldOmitSectionDirective(const char *Name) const {
+bool MCSectionELF::ShouldOmitSectionDirective(const char *Name,
+                                        const TargetAsmInfo &TAI) const {
   
-  // PPC/Linux doesn't support the .bss directive, it needs .section .bss.
   // FIXME: Does .section .bss/.data/.text work everywhere??
-  if ((!HasCrazyBSS && strncmp(Name, ".bss", 4) == 0) || 
-      strncmp(Name, ".text", 5) == 0 || 
-      strncmp(Name, ".data", 5) == 0)
+  if (strncmp(Name, ".text", 5) == 0 || 
+      strncmp(Name, ".data", 5) == 0 ||
+      (strncmp(Name, ".bss", 4) == 0 && 
+       !TAI.usesELFSectionDirectiveForBSS())) 
     return true;
 
   return false;
@@ -46,8 +47,8 @@ bool MCSectionELF::ShouldPrintSectionType(unsigned Ty) const {
 
 void MCSectionELF::PrintSwitchToSection(const TargetAsmInfo &TAI,
                                         raw_ostream &OS) const {
-  
-  if (ShouldOmitSectionDirective(SectionName.c_str())) {
+   
+  if (ShouldOmitSectionDirective(SectionName.c_str(), TAI)) {
     OS << '\t' << getSectionName() << '\n';
     return;
   }
