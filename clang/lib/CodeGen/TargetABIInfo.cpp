@@ -307,15 +307,14 @@ ABIArgInfo X86_32ABIInfo::classifyReturnType(QualType RetTy,
       // registers and we need to make sure to pick a type the LLVM
       // backend will like.
       if (Size == 128)
-        return
-          ABIArgInfo::getCoerce(llvm::VectorType::get(llvm::Type::Int64Ty,
-                                                           2));
+        return ABIArgInfo::getCoerce(llvm::VectorType::get(
+                  llvm::Type::getInt64Ty(VMContext), 2));
 
       // Always return in register if it fits in a general purpose
       // register, or if it is 64 bits and has a single element.
       if ((Size == 8 || Size == 16 || Size == 32) ||
           (Size == 64 && VT->getNumElements() == 1))
-        return ABIArgInfo::getCoerce(llvm::IntegerType::get(Size));
+        return ABIArgInfo::getCoerce(llvm::IntegerType::get(VMContext, Size));
 
       return ABIArgInfo::getIndirect(0);
     }
@@ -340,21 +339,21 @@ ABIArgInfo X86_32ABIInfo::classifyReturnType(QualType RetTy,
           // element type.
           uint64_t Size = Context.getTypeSize(RetTy);
           return ABIArgInfo::getCoerce(
-            llvm::IntegerType::get((unsigned) Size));
+            llvm::IntegerType::get(VMContext, (unsigned) Size));
         } else if (BT->getKind() == BuiltinType::Float) {
           assert(Context.getTypeSize(RetTy) == Context.getTypeSize(SeltTy) &&
                  "Unexpect single element structure size!");
-          return ABIArgInfo::getCoerce(llvm::Type::FloatTy);
+          return ABIArgInfo::getCoerce(llvm::Type::getFloatTy(VMContext));
         } else if (BT->getKind() == BuiltinType::Double) {
           assert(Context.getTypeSize(RetTy) == Context.getTypeSize(SeltTy) &&
                  "Unexpect single element structure size!");
-          return ABIArgInfo::getCoerce(llvm::Type::DoubleTy);
+          return ABIArgInfo::getCoerce(llvm::Type::getDoubleTy(VMContext));
         }
       } else if (SeltTy->isPointerType()) {
         // FIXME: It would be really nice if this could come out as the proper
         // pointer type.
         llvm::Type *PtrTy =
-          llvm::PointerType::getUnqual(llvm::Type::Int8Ty);
+          llvm::PointerType::getUnqual(llvm::Type::getInt8Ty(VMContext));
         return ABIArgInfo::getCoerce(PtrTy);
       } else if (SeltTy->isVectorType()) {
         // 64- and 128-bit vectors are never returned in a
@@ -371,7 +370,7 @@ ABIArgInfo X86_32ABIInfo::classifyReturnType(QualType RetTy,
     // in a register.
     if (X86_32ABIInfo::shouldReturnTypeInRegister(RetTy, Context)) {
       uint64_t Size = Context.getTypeSize(RetTy);
-      return ABIArgInfo::getCoerce(llvm::IntegerType::get(Size));
+      return ABIArgInfo::getCoerce(llvm::IntegerType::get(VMContext, Size));
     }
 
     return ABIArgInfo::getIndirect(0);
@@ -424,7 +423,7 @@ ABIArgInfo X86_32ABIInfo::classifyArgumentType(QualType Ty,
 
 llvm::Value *X86_32ABIInfo::EmitVAArg(llvm::Value *VAListAddr, QualType Ty,
                                       CodeGenFunction &CGF) const {
-  const llvm::Type *BP = llvm::PointerType::getUnqual(llvm::Type::Int8Ty);
+  const llvm::Type *BP = llvm::PointerType::getUnqual(llvm::Type::getInt8Ty(CGF.getLLVMContext()));
   const llvm::Type *BPP = llvm::PointerType::getUnqual(BP);
 
   CGBuilderTy &Builder = CGF.Builder;
@@ -438,8 +437,8 @@ llvm::Value *X86_32ABIInfo::EmitVAArg(llvm::Value *VAListAddr, QualType Ty,
   uint64_t Offset =
     llvm::RoundUpToAlignment(CGF.getContext().getTypeSize(Ty) / 8, 4);
   llvm::Value *NextAddr =
-    Builder.CreateGEP(Addr,
-                      llvm::ConstantInt::get(llvm::Type::Int32Ty, Offset),
+    Builder.CreateGEP(Addr, llvm::ConstantInt::get(
+                          llvm::Type::getInt32Ty(CGF.getLLVMContext()), Offset),
                       "ap.next");
   Builder.CreateStore(NextAddr, VAListAddrAsBPP);
 
@@ -796,13 +795,13 @@ void X86_64ABIInfo::classify(QualType Ty,
 ABIArgInfo X86_64ABIInfo::getCoerceResult(QualType Ty,
                                           const llvm::Type *CoerceTo,
                                           ASTContext &Context) const {
-  if (CoerceTo == llvm::Type::Int64Ty) {
+  if (CoerceTo == llvm::Type::getInt64Ty(CoerceTo->getContext())) {
     // Integer and pointer types will end up in a general purpose
     // register.
     if (Ty->isIntegralType() || Ty->isPointerType())
       return (Ty->isPromotableIntegerType() ?
               ABIArgInfo::getExtend() : ABIArgInfo::getDirect());
-  } else if (CoerceTo == llvm::Type::DoubleTy) {
+  } else if (CoerceTo == llvm::Type::getDoubleTy(CoerceTo->getContext())) {
     // FIXME: It would probably be better to make CGFunctionInfo only map using
     // canonical types than to canonize here.
     QualType CTy = Context.getCanonicalType(Ty);
@@ -858,25 +857,25 @@ ABIArgInfo X86_64ABIInfo::classifyReturnType(QualType RetTy,
     // AMD64-ABI 3.2.3p4: Rule 3. If the class is INTEGER, the next
     // available register of the sequence %rax, %rdx is used.
   case Integer:
-    ResType = llvm::Type::Int64Ty; break;
+    ResType = llvm::Type::getInt64Ty(VMContext); break;
 
     // AMD64-ABI 3.2.3p4: Rule 4. If the class is SSE, the next
     // available SSE register of the sequence %xmm0, %xmm1 is used.
   case SSE:
-    ResType = llvm::Type::DoubleTy; break;
+    ResType = llvm::Type::getDoubleTy(VMContext); break;
 
     // AMD64-ABI 3.2.3p4: Rule 6. If the class is X87, the value is
     // returned on the X87 stack in %st0 as 80-bit x87 number.
   case X87:
-    ResType = llvm::Type::X86_FP80Ty; break;
+    ResType = llvm::Type::getX86_FP80Ty(VMContext); break;
 
     // AMD64-ABI 3.2.3p4: Rule 8. If the class is COMPLEX_X87, the real
     // part of the value is returned in %st0 and the imaginary part in
     // %st1.
   case ComplexX87:
     assert(Hi == ComplexX87 && "Unexpected ComplexX87 classification.");
-    ResType = llvm::StructType::get(VMContext, llvm::Type::X86_FP80Ty,
-                                    llvm::Type::X86_FP80Ty,
+    ResType = llvm::StructType::get(VMContext, llvm::Type::getX86_FP80Ty(VMContext),
+                                    llvm::Type::getX86_FP80Ty(VMContext),
                                     NULL);
     break;
   }
@@ -893,11 +892,11 @@ ABIArgInfo X86_64ABIInfo::classifyReturnType(QualType RetTy,
 
   case Integer:
     ResType = llvm::StructType::get(VMContext, ResType,
-                                    llvm::Type::Int64Ty, NULL);
+                                    llvm::Type::getInt64Ty(VMContext), NULL);
     break;
   case SSE:
     ResType = llvm::StructType::get(VMContext, ResType,
-                                    llvm::Type::DoubleTy, NULL);
+                                    llvm::Type::getDoubleTy(VMContext), NULL);
     break;
 
     // AMD64-ABI 3.2.3p4: Rule 5. If the class is SSEUP, the eightbyte
@@ -906,7 +905,7 @@ ABIArgInfo X86_64ABIInfo::classifyReturnType(QualType RetTy,
     // SSEUP should always be preceeded by SSE, just widen.
   case SSEUp:
     assert(Lo == SSE && "Unexpected SSEUp classification.");
-    ResType = llvm::VectorType::get(llvm::Type::DoubleTy, 2);
+    ResType = llvm::VectorType::get(llvm::Type::getDoubleTy(VMContext), 2);
     break;
 
     // AMD64-ABI 3.2.3p4: Rule 7. If the class is X87UP, the value is
@@ -918,7 +917,7 @@ ABIArgInfo X86_64ABIInfo::classifyReturnType(QualType RetTy,
     // extra bits in an SSE reg.
     if (Lo != X87)
       ResType = llvm::StructType::get(VMContext, ResType,
-                                      llvm::Type::DoubleTy, NULL);
+                                      llvm::Type::getDoubleTy(VMContext), NULL);
     break;
   }
 
@@ -964,7 +963,7 @@ ABIArgInfo X86_64ABIInfo::classifyArgumentType(QualType Ty, ASTContext &Context,
     // and %r9 is used.
   case Integer:
     ++neededInt;
-    ResType = llvm::Type::Int64Ty;
+    ResType = llvm::Type::getInt64Ty(VMContext);
     break;
 
     // AMD64-ABI 3.2.3p3: Rule 3. If the class is SSE, the next
@@ -972,7 +971,7 @@ ABIArgInfo X86_64ABIInfo::classifyArgumentType(QualType Ty, ASTContext &Context,
     // order from %xmm0 to %xmm7.
   case SSE:
     ++neededSSE;
-    ResType = llvm::Type::DoubleTy;
+    ResType = llvm::Type::getDoubleTy(VMContext);
     break;
   }
 
@@ -989,7 +988,7 @@ ABIArgInfo X86_64ABIInfo::classifyArgumentType(QualType Ty, ASTContext &Context,
   case NoClass: break;
   case Integer:
     ResType = llvm::StructType::get(VMContext, ResType,
-                                    llvm::Type::Int64Ty, NULL);
+                                    llvm::Type::getInt64Ty(VMContext), NULL);
     ++neededInt;
     break;
 
@@ -998,7 +997,7 @@ ABIArgInfo X86_64ABIInfo::classifyArgumentType(QualType Ty, ASTContext &Context,
   case X87Up:
   case SSE:
     ResType = llvm::StructType::get(VMContext, ResType,
-                                    llvm::Type::DoubleTy, NULL);
+                                    llvm::Type::getDoubleTy(VMContext), NULL);
     ++neededSSE;
     break;
 
@@ -1007,7 +1006,7 @@ ABIArgInfo X86_64ABIInfo::classifyArgumentType(QualType Ty, ASTContext &Context,
     // register.
   case SSEUp:
     assert(Lo == SSE && "Unexpected SSEUp classification.");
-    ResType = llvm::VectorType::get(llvm::Type::DoubleTy, 2);
+    ResType = llvm::VectorType::get(llvm::Type::getDoubleTy(VMContext), 2);
     break;
   }
 
@@ -1065,11 +1064,13 @@ static llvm::Value *EmitVAArgFromMemory(llvm::Value *VAListAddr,
     // shouldn't ever matter in practice.
 
     // overflow_arg_area = (overflow_arg_area + 15) & ~15;
-    llvm::Value *Offset = llvm::ConstantInt::get(llvm::Type::Int32Ty, 15);
+    llvm::Value *Offset =
+      llvm::ConstantInt::get(llvm::Type::getInt32Ty(CGF.getLLVMContext()), 15);
     overflow_arg_area = CGF.Builder.CreateGEP(overflow_arg_area, Offset);
     llvm::Value *AsInt = CGF.Builder.CreatePtrToInt(overflow_arg_area,
-                                                    llvm::Type::Int64Ty);
-    llvm::Value *Mask = llvm::ConstantInt::get(llvm::Type::Int64Ty, ~15LL);
+                                 llvm::Type::getInt64Ty(CGF.getLLVMContext()));
+    llvm::Value *Mask = llvm::ConstantInt::get(
+        llvm::Type::getInt64Ty(CGF.getLLVMContext()), ~15LL);
     overflow_arg_area =
       CGF.Builder.CreateIntToPtr(CGF.Builder.CreateAnd(AsInt, Mask),
                                  overflow_arg_area->getType(),
@@ -1088,7 +1089,8 @@ static llvm::Value *EmitVAArgFromMemory(llvm::Value *VAListAddr,
   // an 8 byte boundary.
 
   uint64_t SizeInBytes = (CGF.getContext().getTypeSize(Ty) + 7) / 8;
-  llvm::Value *Offset = llvm::ConstantInt::get(llvm::Type::Int32Ty,
+  llvm::Value *Offset =
+      llvm::ConstantInt::get(llvm::Type::getInt32Ty(CGF.getLLVMContext()),
                                                (SizeInBytes + 7)  & ~7);
   overflow_arg_area = CGF.Builder.CreateGEP(overflow_arg_area, Offset,
                                             "overflow_arg_area.next");
@@ -1137,7 +1139,7 @@ llvm::Value *X86_64ABIInfo::EmitVAArg(llvm::Value *VAListAddr, QualType Ty,
     gp_offset = CGF.Builder.CreateLoad(gp_offset_p, "gp_offset");
     InRegs =
       CGF.Builder.CreateICmpULE(gp_offset,
-                                llvm::ConstantInt::get(llvm::Type::Int32Ty,
+                                llvm::ConstantInt::get(llvm::Type::getInt32Ty(VMContext),
                                                        48 - neededInt * 8),
                                 "fits_in_gp");
   }
@@ -1147,7 +1149,7 @@ llvm::Value *X86_64ABIInfo::EmitVAArg(llvm::Value *VAListAddr, QualType Ty,
     fp_offset = CGF.Builder.CreateLoad(fp_offset_p, "fp_offset");
     llvm::Value *FitsInFP =
       CGF.Builder.CreateICmpULE(fp_offset,
-                                llvm::ConstantInt::get(llvm::Type::Int32Ty,
+                                llvm::ConstantInt::get(llvm::Type::getInt32Ty(VMContext),
                                                        176 - neededSSE * 16),
                                 "fits_in_fp");
     InRegs = InRegs ? CGF.Builder.CreateAnd(InRegs, FitsInFP) : FitsInFP;
@@ -1216,12 +1218,12 @@ llvm::Value *X86_64ABIInfo::EmitVAArg(llvm::Value *VAListAddr, QualType Ty,
       llvm::Value *RegAddrLo = CGF.Builder.CreateGEP(RegAddr, fp_offset);
       llvm::Value *RegAddrHi =
         CGF.Builder.CreateGEP(RegAddrLo,
-                            llvm::ConstantInt::get(llvm::Type::Int32Ty, 16));
+                            llvm::ConstantInt::get(llvm::Type::getInt32Ty(VMContext), 16));
       const llvm::Type *DblPtrTy =
-        llvm::PointerType::getUnqual(llvm::Type::DoubleTy);
+        llvm::PointerType::getUnqual(llvm::Type::getDoubleTy(VMContext));
       const llvm::StructType *ST = llvm::StructType::get(VMContext,
-                                                         llvm::Type::DoubleTy,
-                                                         llvm::Type::DoubleTy,
+                                                         llvm::Type::getDoubleTy(VMContext),
+                                                         llvm::Type::getDoubleTy(VMContext),
                                                          NULL);
       llvm::Value *V, *Tmp = CGF.CreateTempAlloca(ST);
       V = CGF.Builder.CreateLoad(CGF.Builder.CreateBitCast(RegAddrLo,
@@ -1239,13 +1241,13 @@ llvm::Value *X86_64ABIInfo::EmitVAArg(llvm::Value *VAListAddr, QualType Ty,
   // l->gp_offset = l->gp_offset + num_gp * 8
   // l->fp_offset = l->fp_offset + num_fp * 16.
   if (neededInt) {
-    llvm::Value *Offset = llvm::ConstantInt::get(llvm::Type::Int32Ty,
+    llvm::Value *Offset = llvm::ConstantInt::get(llvm::Type::getInt32Ty(VMContext),
                                                  neededInt * 8);
     CGF.Builder.CreateStore(CGF.Builder.CreateAdd(gp_offset, Offset),
                             gp_offset_p);
   }
   if (neededSSE) {
-    llvm::Value *Offset = llvm::ConstantInt::get(llvm::Type::Int32Ty,
+    llvm::Value *Offset = llvm::ConstantInt::get(llvm::Type::getInt32Ty(VMContext),
                                                  neededSSE * 16);
     CGF.Builder.CreateStore(CGF.Builder.CreateAdd(fp_offset, Offset),
                             fp_offset_p);
@@ -1353,10 +1355,10 @@ ABIArgInfo ARMABIInfo::classifyArgumentType(QualType Ty,
   const llvm::Type* ElemTy;
   unsigned SizeRegs;
   if (Context.getTypeAlign(Ty) > 32) {
-    ElemTy = llvm::Type::Int64Ty;
+    ElemTy = llvm::Type::getInt64Ty(VMContext);
     SizeRegs = (Context.getTypeSize(Ty) + 63) / 64;
   } else {
-    ElemTy = llvm::Type::Int32Ty;
+    ElemTy = llvm::Type::getInt32Ty(VMContext);
     SizeRegs = (Context.getTypeSize(Ty) + 31) / 32;
   }
   std::vector<const llvm::Type*> LLVMFields;
@@ -1375,7 +1377,7 @@ ABIArgInfo ARMABIInfo::classifyReturnType(QualType RetTy,
     // are returned indirectly.
     uint64_t Size = Context.getTypeSize(RetTy);
     if (Size <= 32)
-      return ABIArgInfo::getCoerce(llvm::Type::Int32Ty);
+      return ABIArgInfo::getCoerce(llvm::Type::getInt32Ty(VMContext));
     return ABIArgInfo::getIndirect(0);
   } else {
     return (RetTy->isPromotableIntegerType() ?
@@ -1386,7 +1388,8 @@ ABIArgInfo ARMABIInfo::classifyReturnType(QualType RetTy,
 llvm::Value *ARMABIInfo::EmitVAArg(llvm::Value *VAListAddr, QualType Ty,
                                       CodeGenFunction &CGF) const {
   // FIXME: Need to handle alignment
-  const llvm::Type *BP = llvm::PointerType::getUnqual(llvm::Type::Int8Ty);
+  const llvm::Type *BP = 
+      llvm::PointerType::getUnqual(llvm::Type::getInt8Ty(CGF.getLLVMContext()));
   const llvm::Type *BPP = llvm::PointerType::getUnqual(BP);
 
   CGBuilderTy &Builder = CGF.Builder;
@@ -1400,8 +1403,8 @@ llvm::Value *ARMABIInfo::EmitVAArg(llvm::Value *VAListAddr, QualType Ty,
   uint64_t Offset =
     llvm::RoundUpToAlignment(CGF.getContext().getTypeSize(Ty) / 8, 4);
   llvm::Value *NextAddr =
-    Builder.CreateGEP(Addr,
-                      llvm::ConstantInt::get(llvm::Type::Int32Ty, Offset),
+    Builder.CreateGEP(Addr, llvm::ConstantInt::get(
+                          llvm::Type::getInt32Ty(CGF.getLLVMContext()), Offset),
                       "ap.next");
   Builder.CreateStore(NextAddr, VAListAddrAsBPP);
 

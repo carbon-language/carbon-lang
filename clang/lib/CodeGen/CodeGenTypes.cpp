@@ -82,8 +82,9 @@ const llvm::Type *CodeGenTypes::ConvertTypeRecursive(QualType T) {
 
 const llvm::Type *CodeGenTypes::ConvertTypeForMemRecursive(QualType T) {
   const llvm::Type *ResultType = ConvertTypeRecursive(T);
-  if (ResultType == llvm::Type::Int1Ty)
-    return llvm::IntegerType::get((unsigned)Context.getTypeSize(T));
+  if (ResultType == llvm::Type::getInt1Ty(getLLVMContext()))
+    return llvm::IntegerType::get(getLLVMContext(),
+                                  (unsigned)Context.getTypeSize(T));
   return ResultType;
 }
 
@@ -95,11 +96,12 @@ const llvm::Type *CodeGenTypes::ConvertTypeForMem(QualType T) {
   const llvm::Type *R = ConvertType(T);
   
   // If this is a non-bool type, don't map it.
-  if (R != llvm::Type::Int1Ty)
+  if (R != llvm::Type::getInt1Ty(getLLVMContext()))
     return R;
     
   // Otherwise, return an integer of the target-specified size.
-  return llvm::IntegerType::get((unsigned)Context.getTypeSize(T));
+  return llvm::IntegerType::get(getLLVMContext(),
+                                (unsigned)Context.getTypeSize(T));
   
 }
 
@@ -161,17 +163,18 @@ void CodeGenTypes::UpdateCompletedType(const TagDecl *TD) {
   }
 }
 
-static const llvm::Type* getTypeForFormat(const llvm::fltSemantics &format) {
+static const llvm::Type* getTypeForFormat(llvm::LLVMContext &VMContext, 
+                                          const llvm::fltSemantics &format) {
   if (&format == &llvm::APFloat::IEEEsingle)
-    return llvm::Type::FloatTy;
+    return llvm::Type::getFloatTy(VMContext);
   if (&format == &llvm::APFloat::IEEEdouble)
-    return llvm::Type::DoubleTy;
+    return llvm::Type::getDoubleTy(VMContext);
   if (&format == &llvm::APFloat::IEEEquad)
-    return llvm::Type::FP128Ty;
+    return llvm::Type::getFP128Ty(VMContext);
   if (&format == &llvm::APFloat::PPCDoubleDouble)
-    return llvm::Type::PPC_FP128Ty;
+    return llvm::Type::getPPC_FP128Ty(VMContext);
   if (&format == &llvm::APFloat::x87DoubleExtended)
-    return llvm::Type::X86_FP80Ty;
+    return llvm::Type::getX86_FP80Ty(VMContext);
   assert(0 && "Unknown float format!");
   return 0;
 }
@@ -196,11 +199,11 @@ const llvm::Type *CodeGenTypes::ConvertNewType(QualType T) {
     case BuiltinType::ObjCClass:
       // LLVM void type can only be used as the result of a function call.  Just
       // map to the same as char.
-      return llvm::IntegerType::get(8);
+      return llvm::IntegerType::get(getLLVMContext(), 8);
 
     case BuiltinType::Bool:
       // Note that we always return bool as i1 for use as a scalar type.
-      return llvm::Type::Int1Ty;
+      return llvm::Type::getInt1Ty(getLLVMContext());
       
     case BuiltinType::Char_S:
     case BuiltinType::Char_U:
@@ -217,22 +220,24 @@ const llvm::Type *CodeGenTypes::ConvertNewType(QualType T) {
     case BuiltinType::WChar:
     case BuiltinType::Char16:
     case BuiltinType::Char32:
-      return llvm::IntegerType::get(
+      return llvm::IntegerType::get(getLLVMContext(),
         static_cast<unsigned>(Context.getTypeSize(T)));
       
     case BuiltinType::Float:
     case BuiltinType::Double:
     case BuiltinType::LongDouble:
-      return getTypeForFormat(Context.getFloatTypeSemantics(T));
+      return getTypeForFormat(getLLVMContext(),   
+                              Context.getFloatTypeSemantics(T));
           
     case BuiltinType::UInt128:
     case BuiltinType::Int128:
-      return llvm::IntegerType::get(128);
+      return llvm::IntegerType::get(getLLVMContext(), 128);
     }
     break;
   }
   case Type::FixedWidthInt:
-    return llvm::IntegerType::get(cast<FixedWidthIntType>(T)->getWidth());
+    return llvm::IntegerType::get(getLLVMContext(), 
+                                  cast<FixedWidthIntType>(T)->getWidth());
   case Type::Complex: {
     const llvm::Type *EltTy = 
       ConvertTypeRecursive(cast<ComplexType>(Ty).getElementType());

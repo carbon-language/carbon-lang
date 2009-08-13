@@ -321,14 +321,14 @@ CodeGenTypes::GetFunctionType(const CGFunctionInfo &FI, bool IsVariadic) {
 
   case ABIArgInfo::Indirect: {
     assert(!RetAI.getIndirectAlign() && "Align unused on indirect return.");
-    ResultType = llvm::Type::VoidTy;
+    ResultType = llvm::Type::getVoidTy(getLLVMContext());
     const llvm::Type *STy = ConvertType(RetTy);
     ArgTys.push_back(llvm::PointerType::get(STy, RetTy.getAddressSpace()));
     break;
   }
 
   case ABIArgInfo::Ignore:
-    ResultType = llvm::Type::VoidTy;
+    ResultType = llvm::Type::getVoidTy(getLLVMContext());
     break;
 
   case ABIArgInfo::Coerce:
@@ -839,7 +839,8 @@ RValue CodeGenFunction::EmitCall(const CGFunctionInfo &CallInfo,
   }    
 
   llvm::Instruction *CI = CS.getInstruction();
-  if (Builder.isNamePreserving() && CI->getType() != llvm::Type::VoidTy)
+  if (Builder.isNamePreserving() &&
+      CI->getType() != llvm::Type::getVoidTy(VMContext))
     CI->setName("call");
 
   switch (RetAI.getKind()) {

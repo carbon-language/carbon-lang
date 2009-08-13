@@ -112,7 +112,8 @@ public:
       GenericBlockLiteralType(0), GenericExtendedBlockLiteralType(0),
       BlockObjectAssign(0), BlockObjectDispose(0) {
     Block.GlobalUniqueCount = 0;
-    PtrToInt8Ty = llvm::PointerType::getUnqual(llvm::Type::Int8Ty);
+    PtrToInt8Ty = llvm::PointerType::getUnqual(
+                llvm::Type::getInt8Ty(M.getContext()));
   }
 };
 

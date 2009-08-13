@@ -31,14 +31,14 @@ CodeGenFunction::EmitCXXGlobalDtorRegistration(const CXXDestructorDecl *Dtor,
   // FIXME: This is ABI dependent and we use the Itanium ABI.
   
   const llvm::Type *Int8PtrTy = 
-    llvm::PointerType::getUnqual(llvm::Type::Int8Ty);
+    llvm::PointerType::getUnqual(llvm::Type::getInt8Ty(VMContext));
   
   std::vector<const llvm::Type *> Params;
   Params.push_back(Int8PtrTy);
   
   // Get the destructor function type
   const llvm::Type *DtorFnTy = 
-    llvm::FunctionType::get(llvm::Type::VoidTy, Params, false);
+    llvm::FunctionType::get(llvm::Type::getVoidTy(VMContext), Params, false);
   DtorFnTy = llvm::PointerType::getUnqual(DtorFnTy);
   
   Params.clear();
@@ -96,7 +96,7 @@ CodeGenModule::EmitCXXGlobalInitFunc() {
   if (CXXGlobalInits.empty())
     return;
   
-  const llvm::FunctionType *FTy = llvm::FunctionType::get(llvm::Type::VoidTy,
+  const llvm::FunctionType *FTy = llvm::FunctionType::get(llvm::Type::getVoidTy(VMContext),
                                                           false);
   
   // Create our global initialization function.
@@ -140,18 +140,18 @@ CodeGenFunction::EmitStaticCXXBlockVarDeclInit(const VarDecl &D,
   
   // Create the guard variable.
   llvm::GlobalValue *GuardV = 
-    new llvm::GlobalVariable(CGM.getModule(), llvm::Type::Int64Ty, false,
+    new llvm::GlobalVariable(CGM.getModule(), llvm::Type::getInt64Ty(VMContext), false,
                              GV->getLinkage(),
-                             llvm::Constant::getNullValue(llvm::Type::Int64Ty),
+                             llvm::Constant::getNullValue(llvm::Type::getInt64Ty(VMContext)),
                              GuardVName.c_str());
   
   // Load the first byte of the guard variable.
-  const llvm::Type *PtrTy = llvm::PointerType::get(llvm::Type::Int8Ty, 0);
+  const llvm::Type *PtrTy = llvm::PointerType::get(llvm::Type::getInt8Ty(VMContext), 0);
   llvm::Value *V = Builder.CreateLoad(Builder.CreateBitCast(GuardV, PtrTy), 
                                       "tmp");
   
   // Compare it against 0.
-  llvm::Value *nullValue = llvm::Constant::getNullValue(llvm::Type::Int8Ty);
+  llvm::Value *nullValue = llvm::Constant::getNullValue(llvm::Type::getInt8Ty(VMContext));
   llvm::Value *ICmp = Builder.CreateICmpEQ(V, nullValue , "tobool");
   
   llvm::BasicBlock *InitBlock = createBasicBlock("init");
@@ -164,7 +164,7 @@ CodeGenFunction::EmitStaticCXXBlockVarDeclInit(const VarDecl &D,
 
   EmitCXXGlobalVarDeclInit(D, GV);
 
-  Builder.CreateStore(llvm::ConstantInt::get(llvm::Type::Int8Ty, 1),
+  Builder.CreateStore(llvm::ConstantInt::get(llvm::Type::getInt8Ty(VMContext), 1),
                       Builder.CreateBitCast(GuardV, PtrTy));
                       
   EmitBlock(EndBlock);
@@ -301,7 +301,7 @@ llvm::Value *CodeGenFunction::AddressCXXOfBaseClass(llvm::Value *BaseValue,
   if (ClassDecl == BaseClassDecl)
     return BaseValue;
   
-  llvm::Type *I8Ptr = llvm::PointerType::getUnqual(llvm::Type::Int8Ty);
+  llvm::Type *I8Ptr = llvm::PointerType::getUnqual(llvm::Type::getInt8Ty(VMContext));
   llvm::SmallVector<const CXXRecordDecl *, 16> NestedBasePaths;
   GetNestedPaths(NestedBasePaths, ClassDecl, BaseClassDecl);
   assert(NestedBasePaths.size() > 0 && 
@@ -602,7 +602,7 @@ const char *CodeGenModule::getMangledCXXDtorName(const CXXDestructorDecl *D,
 
 llvm::Constant *CodeGenFunction::GenerateRtti(const CXXRecordDecl *RD) {
   llvm::Type *Ptr8Ty;
-  Ptr8Ty = llvm::PointerType::get(llvm::Type::Int8Ty, 0);
+  Ptr8Ty = llvm::PointerType::get(llvm::Type::getInt8Ty(VMContext), 0);
   llvm::Constant *Rtti = llvm::Constant::getNullValue(Ptr8Ty);
 
   if (!getContext().getLangOptions().Rtti)
@@ -674,7 +674,7 @@ void CodeGenFunction::GenerateVtableForBase(const CXXRecordDecl *RD,
                                             bool ForVirtualBase,
                    llvm::SmallSet<const CXXRecordDecl *, 32> &IndirectPrimary) {
   llvm::Type *Ptr8Ty;
-  Ptr8Ty = llvm::PointerType::get(llvm::Type::Int8Ty, 0);
+  Ptr8Ty = llvm::PointerType::get(llvm::Type::getInt8Ty(VMContext), 0);
   llvm::Constant *m = llvm::Constant::getNullValue(Ptr8Ty);
 
   if (RD && !RD->isDynamicClass())
@@ -693,7 +693,7 @@ void CodeGenFunction::GenerateVtableForBase(const CXXRecordDecl *RD,
         cast<CXXRecordDecl>(i->getType()->getAs<RecordType>()->getDecl());
       int64_t BaseOffset = Layout.getBaseClassOffset(Base) / 8;
       llvm::Constant *m;
-      m = llvm::ConstantInt::get(llvm::Type::Int64Ty, BaseOffset);
+      m = llvm::ConstantInt::get(llvm::Type::getInt64Ty(VMContext), BaseOffset);
       m = llvm::ConstantExpr::getIntToPtr(m, Ptr8Ty);
       methods.push_back(m);
     }
@@ -723,7 +723,7 @@ void CodeGenFunction::GenerateVtableForBase(const CXXRecordDecl *RD,
   if (TopPrimary) {
     if (RD) {
       int64_t BaseOffset = -(Layout.getBaseClassOffset(RD) / 8);
-      m = llvm::ConstantInt::get(llvm::Type::Int64Ty, BaseOffset);
+      m = llvm::ConstantInt::get(llvm::Type::getInt64Ty(VMContext), BaseOffset);
       m = llvm::ConstantExpr::getIntToPtr(m, Ptr8Ty);
     }
     methods.push_back(m);
@@ -750,7 +750,7 @@ llvm::Value *CodeGenFunction::GenerateVtable(const CXXRecordDecl *RD) {
   llvm::GlobalVariable::LinkageTypes linktype;
   linktype = llvm::GlobalValue::WeakAnyLinkage;
   std::vector<llvm::Constant *> methods;
-  llvm::Type *Ptr8Ty = llvm::PointerType::get(llvm::Type::Int8Ty, 0);
+  llvm::Type *Ptr8Ty = llvm::PointerType::get(llvm::Type::getInt8Ty(VMContext), 0);
   int64_t Offset = 0;
   llvm::Constant *rtti = GenerateRtti(RD);
 
@@ -793,7 +793,7 @@ llvm::Value *CodeGenFunction::GenerateVtable(const CXXRecordDecl *RD) {
                                                  linktype, C, Name);
   vtable = Builder.CreateBitCast(vtable, Ptr8Ty);
   vtable = Builder.CreateGEP(vtable,
-                             llvm::ConstantInt::get(llvm::Type::Int64Ty,
+                             llvm::ConstantInt::get(llvm::Type::getInt64Ty(VMContext),
                                                     Offset/8));
   return vtable;
 }
@@ -1100,7 +1100,7 @@ void CodeGenFunction::EmitCtorPrologue(const CXXConstructorDecl *CD) {
       LoadOfThis = LoadCXXThis();
     llvm::Value *VtableField;
     llvm::Type *Ptr8Ty, *PtrPtr8Ty;
-    Ptr8Ty = llvm::PointerType::get(llvm::Type::Int8Ty, 0);
+    Ptr8Ty = llvm::PointerType::get(llvm::Type::getInt8Ty(VMContext), 0);
     PtrPtr8Ty = llvm::PointerType::get(Ptr8Ty, 0);
     VtableField = Builder.CreateBitCast(LoadOfThis, PtrPtr8Ty);
     llvm::Value *vtable = GenerateVtable(ClassDecl);

@@ -424,9 +424,9 @@ public:
                                      llvm::Function *Parent=0,
                                      llvm::BasicBlock *InsertBefore=0) {
 #ifdef NDEBUG
-    return llvm::BasicBlock::Create("", Parent, InsertBefore);
+    return llvm::BasicBlock::Create(VMContext, "", Parent, InsertBefore);
 #else
-    return llvm::BasicBlock::Create(Name, Parent, InsertBefore);
+    return llvm::BasicBlock::Create(VMContext, Name, Parent, InsertBefore);
 #endif
   }
 

@@ -156,8 +156,8 @@ void CodeGenFunction::StartFunction(const Decl *D, QualType RetTy,
   // Create a marker to make it easy to insert allocas into the entryblock
   // later.  Don't create this with the builder, because we don't want it
   // folded.
-  llvm::Value *Undef = llvm::UndefValue::get(llvm::Type::Int32Ty);
-  AllocaInsertPt = new llvm::BitCastInst(Undef, llvm::Type::Int32Ty, "",
+  llvm::Value *Undef = llvm::UndefValue::get(llvm::Type::getInt32Ty(VMContext));
+  AllocaInsertPt = new llvm::BitCastInst(Undef, llvm::Type::getInt32Ty(VMContext), "",
                                          EntryBB);
   if (Builder.isNamePreserving())
     AllocaInsertPt->setName("allocapt");
@@ -424,7 +424,7 @@ unsigned CodeGenFunction::GetIDForAddrOfLabel(const LabelStmt *L) {
 }
 
 void CodeGenFunction::EmitMemSetToZero(llvm::Value *DestPtr, QualType Ty) {
-  const llvm::Type *BP = llvm::PointerType::getUnqual(llvm::Type::Int8Ty);
+  const llvm::Type *BP = llvm::PointerType::getUnqual(llvm::Type::getInt8Ty(VMContext));
   if (DestPtr->getType() != BP)
     DestPtr = Builder.CreateBitCast(DestPtr, BP, "tmp");
 
@@ -436,13 +436,14 @@ void CodeGenFunction::EmitMemSetToZero(llvm::Value *DestPtr, QualType Ty) {
     return;
   
   // FIXME: Handle variable sized types.
-  const llvm::Type *IntPtr = llvm::IntegerType::get(LLVMPointerWidth);
+  const llvm::Type *IntPtr = llvm::IntegerType::get(VMContext, 
+                                                    LLVMPointerWidth);
 
   Builder.CreateCall4(CGM.getMemSetFn(), DestPtr,
-                      llvm::Constant::getNullValue(llvm::Type::Int8Ty),
+                 llvm::Constant::getNullValue(llvm::Type::getInt8Ty(VMContext)),
                       // TypeInfo.first describes size in bits.
                       llvm::ConstantInt::get(IntPtr, TypeInfo.first/8),
-                      llvm::ConstantInt::get(llvm::Type::Int32Ty, 
+                      llvm::ConstantInt::get(llvm::Type::getInt32Ty(VMContext), 
                                              TypeInfo.second/8));
 }
 
@@ -468,7 +469,7 @@ void CodeGenFunction::EmitIndirectSwitches() {
     I->setSuccessor(0, Default);
     for (std::map<const LabelStmt*,unsigned>::iterator LI = LabelIDs.begin(), 
            LE = LabelIDs.end(); LI != LE; ++LI) {
-      I->addCase(llvm::ConstantInt::get(llvm::Type::Int32Ty,
+      I->addCase(llvm::ConstantInt::get(llvm::Type::getInt32Ty(VMContext),
                                         LI->second), 
                  getBasicBlockForLabel(LI->first));
     }
@@ -590,7 +591,7 @@ CodeGenFunction::CleanupBlockInfo CodeGenFunction::PopCleanupBlock()
     
     Builder.SetInsertPoint(SwitchBlock);
 
-    llvm::Value *DestCodePtr = CreateTempAlloca(llvm::Type::Int32Ty, 
+    llvm::Value *DestCodePtr = CreateTempAlloca(llvm::Type::getInt32Ty(VMContext), 
                                                 "cleanup.dst");
     llvm::Value *DestCode = Builder.CreateLoad(DestCodePtr, "tmp");
     
@@ -604,7 +605,7 @@ CodeGenFunction::CleanupBlockInfo CodeGenFunction::PopCleanupBlock()
       
       // If we had a current basic block, we also need to emit an instruction
       // to initialize the cleanup destination.
-      Builder.CreateStore(llvm::Constant::getNullValue(llvm::Type::Int32Ty),
+      Builder.CreateStore(llvm::Constant::getNullValue(llvm::Type::getInt32Ty(VMContext)),
                           DestCodePtr);
     } else
       Builder.ClearInsertionPoint();
@@ -621,13 +622,13 @@ CodeGenFunction::CleanupBlockInfo CodeGenFunction::PopCleanupBlock()
         
         // Check if we already have a destination for this block.
         if (Dest == SI->getDefaultDest())
-          ID = llvm::ConstantInt::get(llvm::Type::Int32Ty, 0);
+          ID = llvm::ConstantInt::get(llvm::Type::getInt32Ty(VMContext), 0);
         else {
           ID = SI->findCaseDest(Dest);
           if (!ID) {
             // No code found, get a new unique one by using the number of
             // switch successors.
-            ID = llvm::ConstantInt::get(llvm::Type::Int32Ty, 
+            ID = llvm::ConstantInt::get(llvm::Type::getInt32Ty(VMContext), 
                                         SI->getNumSuccessors());
             SI->addCase(ID, Dest);
           }
@@ -644,7 +645,7 @@ CodeGenFunction::CleanupBlockInfo CodeGenFunction::PopCleanupBlock()
         llvm::BasicBlock *CleanupPad = createBasicBlock("cleanup.pad", CurFn);
 
         // Create a unique case ID.
-        llvm::ConstantInt *ID = llvm::ConstantInt::get(llvm::Type::Int32Ty, 
+        llvm::ConstantInt *ID = llvm::ConstantInt::get(llvm::Type::getInt32Ty(VMContext), 
                                                        SI->getNumSuccessors());
 
         // Store the jump destination before the branch instruction.

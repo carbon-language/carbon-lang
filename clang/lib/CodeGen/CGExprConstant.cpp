@@ -81,7 +81,7 @@ class VISIBILITY_HIDDEN ConstStructBuilder {
           uint64_t NumBytes = 
             AlignedElementOffsetInBytes - ElementOffsetInBytes;
           
-          const llvm::Type *Ty = llvm::Type::Int8Ty;
+          const llvm::Type *Ty = llvm::Type::getInt8Ty(CGF->getLLVMContext());
           if (NumBytes > 1) 
             Ty = llvm::ArrayType::get(Ty, NumBytes);
           
@@ -249,7 +249,7 @@ class VISIBILITY_HIDDEN ConstStructBuilder {
     if (!NumBytes)
       return;
 
-    const llvm::Type *Ty = llvm::Type::Int8Ty;
+    const llvm::Type *Ty = llvm::Type::getInt8Ty(CGM.getLLVMContext());
     if (NumBytes > 1) 
       Ty = llvm::ArrayType::get(Ty, NumBytes);
 
@@ -399,7 +399,7 @@ public:
       
       assert(CurSize <= TotalSize && "Union size mismatch!");
       if (unsigned NumPadBytes = TotalSize - CurSize) {
-        const llvm::Type *Ty = llvm::Type::Int8Ty;
+        const llvm::Type *Ty = llvm::Type::getInt8Ty(VMContext);
         if (NumPadBytes > 1)
           Ty = llvm::ArrayType::get(Ty, NumPadBytes);
         
@@ -545,7 +545,8 @@ public:
     // This must be a string initializing an array in a static initializer.
     // Don't emit it as the address of the string, emit the string data itself
     // as an inline array.
-    return llvm::ConstantArray::get(CGM.GetStringForStringLiteral(E), false);
+    return llvm::ConstantArray::get(VMContext,
+                                    CGM.GetStringForStringLiteral(E), false);
   }
 
   llvm::Constant *VisitObjCEncodeExpr(ObjCEncodeExpr *E) {
@@ -559,7 +560,7 @@ public:
     // Resize the string to the right size, adding zeros at the end, or
     // truncating as needed.
     Str.resize(CAT->getSize().getZExtValue(), '\0');
-    return llvm::ConstantArray::get(Str, false);
+    return llvm::ConstantArray::get(VMContext, Str, false);
   }
     
   llvm::Constant *VisitUnaryExtension(const UnaryOperator *E) {
@@ -626,8 +627,10 @@ public:
     }
     case Expr::AddrLabelExprClass: {
       assert(CGF && "Invalid address of label expression outside function.");
-      unsigned id = CGF->GetIDForAddrOfLabel(cast<AddrLabelExpr>(E)->getLabel());
-      llvm::Constant *C = llvm::ConstantInt::get(llvm::Type::Int32Ty, id);
+      unsigned id =
+          CGF->GetIDForAddrOfLabel(cast<AddrLabelExpr>(E)->getLabel());
+      llvm::Constant *C =
+            llvm::ConstantInt::get(llvm::Type::getInt32Ty(VMContext), id);
       return llvm::ConstantExpr::getIntToPtr(C, ConvertType(E->getType()));
     }
     case Expr::CallExprClass: {
@@ -679,7 +682,7 @@ llvm::Constant *CodeGenModule::EmitConstantExpr(const Expr *E,
     case APValue::LValue: {
       const llvm::Type *DestTy = getTypes().ConvertTypeForMem(DestType);
       llvm::Constant *Offset = 
-        llvm::ConstantInt::get(llvm::Type::Int64Ty, 
+        llvm::ConstantInt::get(llvm::Type::getInt64Ty(VMContext), 
                                Result.Val.getLValueOffset());
       
       llvm::Constant *C;
@@ -689,7 +692,7 @@ llvm::Constant *CodeGenModule::EmitConstantExpr(const Expr *E,
         // Apply offset if necessary.
         if (!Offset->isNullValue()) {
           const llvm::Type *Type = 
-            llvm::PointerType::getUnqual(llvm::Type::Int8Ty);
+            llvm::PointerType::getUnqual(llvm::Type::getInt8Ty(VMContext));
           llvm::Constant *Casted = llvm::ConstantExpr::getBitCast(C, Type);
           Casted = llvm::ConstantExpr::getGetElementPtr(Casted, &Offset, 1);
           C = llvm::ConstantExpr::getBitCast(Casted, C->getType());
@@ -720,7 +723,7 @@ llvm::Constant *CodeGenModule::EmitConstantExpr(const Expr *E,
       llvm::Constant *C = llvm::ConstantInt::get(VMContext, 
                                                  Result.Val.getInt());
       
-      if (C->getType() == llvm::Type::Int1Ty) {
+      if (C->getType() == llvm::Type::getInt1Ty(VMContext)) {
         const llvm::Type *BoolTy = getTypes().ConvertTypeForMem(E->getType());
         C = llvm::ConstantExpr::getZExt(C, BoolTy);
       }
@@ -765,7 +768,7 @@ llvm::Constant *CodeGenModule::EmitConstantExpr(const Expr *E,
   }
 
   llvm::Constant* C = ConstExprEmitter(*this, CGF).Visit(const_cast<Expr*>(E));
-  if (C && C->getType() == llvm::Type::Int1Ty) {
+  if (C && C->getType() == llvm::Type::getInt1Ty(VMContext)) {
     const llvm::Type *BoolTy = getTypes().ConvertTypeForMem(E->getType());
     C = llvm::ConstantExpr::getZExt(C, BoolTy);
   }

@@ -282,7 +282,7 @@ void CGRecordLayoutBuilder::AppendBytes(uint64_t NumBytes) {
   if (NumBytes == 0)
     return;
   
-  const llvm::Type *Ty = llvm::Type::Int8Ty;
+  const llvm::Type *Ty = llvm::Type::getInt8Ty(Types.getLLVMContext());
   if (NumBytes > 1)
     Ty = llvm::ArrayType::get(Ty, NumBytes);
   

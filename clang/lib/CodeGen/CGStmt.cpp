@@ -282,7 +282,7 @@ void CodeGenFunction::EmitIndirectGotoStmt(const IndirectGotoStmt &S) {
   // EmitIndirectSwitches(). We need a default dest, so we use the
   // current BB, but this is overwritten.
   llvm::Value *V = Builder.CreatePtrToInt(EmitScalarExpr(S.getTarget()),
-                                          llvm::Type::Int32Ty, 
+                                          llvm::Type::getInt32Ty(VMContext), 
                                           "addr");
   llvm::SwitchInst *I = Builder.CreateSwitch(V, Builder.GetInsertBlock());
   IndirectSwitches.push_back(I);
@@ -780,7 +780,7 @@ llvm::Value* CodeGenFunction::EmitAsmInput(const AsmStmt &S,
 
       uint64_t Size = CGM.getTargetData().getTypeSizeInBits(Ty);
       if (Size <= 64 && llvm::isPowerOf2_64(Size)) {
-        Ty = llvm::IntegerType::get(Size);
+        Ty = llvm::IntegerType::get(VMContext, Size);
         Ty = llvm::PointerType::getUnqual(Ty);
         
         Arg = Builder.CreateLoad(Builder.CreateBitCast(Dest.getAddress(), Ty));
@@ -896,7 +896,7 @@ void CodeGenFunction::EmitAsmStmt(const AsmStmt &S) {
         uint64_t InputSize = getContext().getTypeSize(InputTy);
         if (getContext().getTypeSize(OutputTy) < InputSize) {
           // Form the asm to return the value as a larger integer type.
-          ResultRegTypes.back() = llvm::IntegerType::get((unsigned)InputSize);
+          ResultRegTypes.back() = llvm::IntegerType::get(VMContext, (unsigned)InputSize);
         }
       }
     } else {
@@ -954,9 +954,9 @@ void CodeGenFunction::EmitAsmStmt(const AsmStmt &S) {
         // Use ptrtoint as appropriate so that we can do our extension.
         if (isa<llvm::PointerType>(Arg->getType()))
           Arg = Builder.CreatePtrToInt(Arg,
-                                      llvm::IntegerType::get(LLVMPointerWidth));
+                                      llvm::IntegerType::get(VMContext, LLVMPointerWidth));
         unsigned OutputSize = (unsigned)getContext().getTypeSize(OutputTy);
-        Arg = Builder.CreateZExt(Arg, llvm::IntegerType::get(OutputSize));
+        Arg = Builder.CreateZExt(Arg, llvm::IntegerType::get(VMContext, OutputSize));
       }
     }
     
@@ -998,7 +998,7 @@ void CodeGenFunction::EmitAsmStmt(const AsmStmt &S) {
 
   const llvm::Type *ResultType;
   if (ResultRegTypes.empty())
-    ResultType = llvm::Type::VoidTy;
+    ResultType = llvm::Type::getVoidTy(VMContext);
   else if (ResultRegTypes.size() == 1)
     ResultType = ResultRegTypes[0];
   else
@@ -1035,7 +1035,7 @@ void CodeGenFunction::EmitAsmStmt(const AsmStmt &S) {
       // Truncate the integer result to the right size, note that
       // ResultTruncRegTypes can be a pointer.
       uint64_t ResSize = CGM.getTargetData().getTypeSizeInBits(TruncTy);
-      Tmp = Builder.CreateTrunc(Tmp, llvm::IntegerType::get((unsigned)ResSize));
+      Tmp = Builder.CreateTrunc(Tmp, llvm::IntegerType::get(VMContext, (unsigned)ResSize));
       
       if (Tmp->getType() != TruncTy) {
         assert(isa<llvm::PointerType>(TruncTy));

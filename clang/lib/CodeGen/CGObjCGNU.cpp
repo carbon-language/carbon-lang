@@ -214,10 +214,10 @@ CGObjCGNU::CGObjCGNU(CodeGen::CodeGenModule &cgm)
   Zeros[0] = llvm::ConstantInt::get(LongTy, 0);
   Zeros[1] = Zeros[0];
   NULLPtr = llvm::ConstantPointerNull::get(
-    llvm::PointerType::getUnqual(llvm::Type::Int8Ty));
+    llvm::PointerType::getUnqual(llvm::Type::getInt8Ty(VMContext)));
   // C string type.  Used in lots of places.
   PtrToInt8Ty = 
-    llvm::PointerType::getUnqual(llvm::Type::Int8Ty);
+    llvm::PointerType::getUnqual(llvm::Type::getInt8Ty(VMContext));
   // Get the selector Type.
   SelectorTy = cast<llvm::PointerType>(
     CGM.getTypes().ConvertType(CGM.getContext().getObjCSelType()));
@@ -291,7 +291,7 @@ llvm::Value *CGObjCGNU::GetSelector(CGBuilderTy &Builder, const ObjCMethodDecl
 
 llvm::Constant *CGObjCGNU::MakeConstantString(const std::string &Str,
                                               const std::string &Name) {
-  llvm::Constant * ConstStr = llvm::ConstantArray::get(Str);
+  llvm::Constant * ConstStr = llvm::ConstantArray::get(VMContext, Str);
   ConstStr = new llvm::GlobalVariable(TheModule, ConstStr->getType(), true, 
                                       llvm::GlobalValue::InternalLinkage,
                                       ConstStr, Name);
@@ -544,7 +544,7 @@ llvm::Constant *CGObjCGNU::GenerateMethodList(const std::string &ClassName,
   Methods.clear();
   Methods.push_back(llvm::ConstantPointerNull::get(
         llvm::PointerType::getUnqual(ObjCMethodListTy)));
-  Methods.push_back(llvm::ConstantInt::get(llvm::Type::Int32Ty,
+  Methods.push_back(llvm::ConstantInt::get(llvm::Type::getInt32Ty(VMContext),
         MethodTypes.size()));
   Methods.push_back(MethodArray);
   
@@ -733,7 +733,7 @@ llvm::Constant *CGObjCGNU::GenerateEmptyProtocol(
   // The isa pointer must be set to a magic number so the runtime knows it's
   // the correct layout.
   Elements.push_back(llvm::ConstantExpr::getIntToPtr(
-        llvm::ConstantInt::get(llvm::Type::Int32Ty, ProtocolVersion), IdTy));
+        llvm::ConstantInt::get(llvm::Type::getInt32Ty(VMContext), ProtocolVersion), IdTy));
   Elements.push_back(MakeConstantString(ProtocolName, ".objc_protocol_name"));
   Elements.push_back(ProtocolList);
   Elements.push_back(InstanceMethodList);
@@ -788,7 +788,7 @@ void CGObjCGNU::GenerateProtocol(const ObjCProtocolDecl *PD) {
   // The isa pointer must be set to a magic number so the runtime knows it's
   // the correct layout.
   Elements.push_back(llvm::ConstantExpr::getIntToPtr(
-        llvm::ConstantInt::get(llvm::Type::Int32Ty, ProtocolVersion), IdTy));
+        llvm::ConstantInt::get(llvm::Type::getInt32Ty(VMContext), ProtocolVersion), IdTy));
   Elements.push_back(MakeConstantString(ProtocolName, ".objc_protocol_name"));
   Elements.push_back(ProtocolList);
   Elements.push_back(InstanceMethodList);
@@ -914,7 +914,7 @@ void CGObjCGNU::GenerateClass(const ObjCImplementationDecl *OID) {
         Offset = ComputeIvarBaseOffset(CGM, ClassDecl, *iter);
       }
       IvarOffsets.push_back(
-          llvm::ConstantInt::get(llvm::Type::Int32Ty, Offset));
+          llvm::ConstantInt::get(llvm::Type::getInt32Ty(VMContext), Offset));
   }
 
   // Collect information about instance methods
@@ -1064,8 +1064,8 @@ llvm::Function *CGObjCGNU::ModuleInitFunction() {
       Classes.size() + Categories.size()  + 2);
   llvm::StructType *SymTabTy = llvm::StructType::get(VMContext, 
                                                      LongTy, SelStructPtrTy,
-                                                     llvm::Type::Int16Ty,
-                                                     llvm::Type::Int16Ty,
+                                                     llvm::Type::getInt16Ty(VMContext),
+                                                     llvm::Type::getInt16Ty(VMContext),
                                                      ClassListTy, NULL);
 
   Elements.clear();
@@ -1107,7 +1107,7 @@ llvm::Function *CGObjCGNU::ModuleInitFunction() {
      iter=TypedSelectors.begin(), iterEnd =TypedSelectors.end();
      iter != iterEnd; ++iter) {
     llvm::Constant *Idxs[] = {Zeros[0],
-      llvm::ConstantInt::get(llvm::Type::Int32Ty, index++), Zeros[0]};
+      llvm::ConstantInt::get(llvm::Type::getInt32Ty(VMContext), index++), Zeros[0]};
     llvm::Constant *SelPtr = new llvm::GlobalVariable(TheModule, SelStructPtrTy,
         true, llvm::GlobalValue::InternalLinkage,
         llvm::ConstantExpr::getGetElementPtr(SelectorList, Idxs, 2),
@@ -1124,7 +1124,7 @@ llvm::Function *CGObjCGNU::ModuleInitFunction() {
       iter=UntypedSelectors.begin(), iterEnd = UntypedSelectors.end();
       iter != iterEnd; iter++) {
     llvm::Constant *Idxs[] = {Zeros[0],
-      llvm::ConstantInt::get(llvm::Type::Int32Ty, index++), Zeros[0]};
+      llvm::ConstantInt::get(llvm::Type::getInt32Ty(VMContext), index++), Zeros[0]};
     llvm::Constant *SelPtr = new llvm::GlobalVariable
       (TheModule, SelStructPtrTy, 
        true, llvm::GlobalValue::InternalLinkage,
@@ -1139,10 +1139,10 @@ llvm::Function *CGObjCGNU::ModuleInitFunction() {
     (*iter).second->setAliasee(SelPtr);
   }
   // Number of classes defined.
-  Elements.push_back(llvm::ConstantInt::get(llvm::Type::Int16Ty, 
+  Elements.push_back(llvm::ConstantInt::get(llvm::Type::getInt16Ty(VMContext), 
         Classes.size()));
   // Number of categories defined
-  Elements.push_back(llvm::ConstantInt::get(llvm::Type::Int16Ty, 
+  Elements.push_back(llvm::ConstantInt::get(llvm::Type::getInt16Ty(VMContext), 
         Categories.size()));
   // Create an array of classes, then categories, then static object instances
   Classes.insert(Classes.end(), Categories.begin(), Categories.end());
@@ -1178,17 +1178,18 @@ llvm::Function *CGObjCGNU::ModuleInitFunction() {
   // Create the load function calling the runtime entry point with the module
   // structure
   llvm::Function * LoadFunction = llvm::Function::Create(
-      llvm::FunctionType::get(llvm::Type::VoidTy, false),
+      llvm::FunctionType::get(llvm::Type::getVoidTy(VMContext), false),
       llvm::GlobalValue::InternalLinkage, ".objc_load_function",
       &TheModule);
-  llvm::BasicBlock *EntryBB = llvm::BasicBlock::Create("entry", LoadFunction);
+  llvm::BasicBlock *EntryBB =
+      llvm::BasicBlock::Create(VMContext, "entry", LoadFunction);
   CGBuilderTy Builder(VMContext);
   Builder.SetInsertPoint(EntryBB);
 
   std::vector<const llvm::Type*> Params(1,
       llvm::PointerType::getUnqual(ModuleTy));
   llvm::Value *Register = CGM.CreateRuntimeFunction(llvm::FunctionType::get(
-        llvm::Type::VoidTy, Params, true), "__objc_exec_class");
+        llvm::Type::getVoidTy(VMContext), Params, true), "__objc_exec_class");
   Builder.CreateCall(Register, Module);
   Builder.CreateRetVoid();
 
@@ -1246,7 +1247,7 @@ llvm::Function *CGObjCGNU::GetPropertySetFunction() {
 	Params.push_back(BoolTy);
 	// void objc_setProperty (id, SEL, ptrdiff_t, id, bool, bool)
 	const llvm::FunctionType *FTy =
-		llvm::FunctionType::get(llvm::Type::VoidTy, Params, false);
+		llvm::FunctionType::get(llvm::Type::getVoidTy(VMContext), Params, false);
 	return cast<llvm::Function>(CGM.CreateRuntimeFunction(FTy,
 				"objc_setProperty"));
 }
@@ -1266,14 +1267,14 @@ void CGObjCGNU::EmitTryOrSynchronizedStmt(CodeGen::CodeGenFunction &CGF,
                                           const Stmt &S) {
   // Pointer to the personality function
   llvm::Constant *Personality =
-    CGM.CreateRuntimeFunction(llvm::FunctionType::get(llvm::Type::Int32Ty,
+    CGM.CreateRuntimeFunction(llvm::FunctionType::get(llvm::Type::getInt32Ty(VMContext),
           true),
         "__gnu_objc_personality_v0");
   Personality = llvm::ConstantExpr::getBitCast(Personality, PtrTy);
   std::vector<const llvm::Type*> Params;
   Params.push_back(PtrTy);
   llvm::Value *RethrowFn =
-    CGM.CreateRuntimeFunction(llvm::FunctionType::get(llvm::Type::VoidTy,
+    CGM.CreateRuntimeFunction(llvm::FunctionType::get(llvm::Type::getVoidTy(VMContext),
           Params, false), "_Unwind_Resume_or_Rethrow");
 
   bool isTry = isa<ObjCAtTryStmt>(S);
@@ -1289,7 +1290,7 @@ void CGObjCGNU::EmitTryOrSynchronizedStmt(CodeGen::CodeGenFunction &CGF,
   if (!isTry) {
     std::vector<const llvm::Type*> Args(1, IdTy);
     llvm::FunctionType *FTy =
-      llvm::FunctionType::get(llvm::Type::VoidTy, Args, false);
+      llvm::FunctionType::get(llvm::Type::getVoidTy(VMContext), Args, false);
     llvm::Value *SyncEnter = CGM.CreateRuntimeFunction(FTy, "objc_sync_enter");
     llvm::Value *SyncArg = 
       CGF.EmitScalarExpr(cast<ObjCAtSynchronizedStmt>(S).getSynchExpr());
@@ -1377,7 +1378,7 @@ void CGObjCGNU::EmitTryOrSynchronizedStmt(CodeGen::CodeGenFunction &CGF,
 
   // We use a cleanup unless there was already a catch all.
   if (!HasCatchAll) {
-    ESelArgs.push_back(llvm::ConstantInt::get(llvm::Type::Int32Ty, 0));
+    ESelArgs.push_back(llvm::ConstantInt::get(llvm::Type::getInt32Ty(VMContext), 0));
     Handlers.push_back(std::make_pair((const ParmVarDecl*) 0, (const Stmt*) 0));
   }
 
@@ -1442,7 +1443,7 @@ void CGObjCGNU::EmitTryOrSynchronizedStmt(CodeGen::CodeGenFunction &CGF,
   ESelArgs.clear();
   ESelArgs.push_back(Exc);
   ESelArgs.push_back(Personality);
-  ESelArgs.push_back(llvm::ConstantInt::get(llvm::Type::Int32Ty, 0));
+  ESelArgs.push_back(llvm::ConstantInt::get(llvm::Type::getInt32Ty(VMContext), 0));
   CGF.Builder.CreateCall(llvm_eh_selector, ESelArgs.begin(), ESelArgs.end(),
       "selector");
   CGF.Builder.CreateCall(llvm_eh_typeid_for,
@@ -1466,7 +1467,7 @@ void CGObjCGNU::EmitTryOrSynchronizedStmt(CodeGen::CodeGenFunction &CGF,
     // @synchronized.
     std::vector<const llvm::Type*> Args(1, IdTy);
     llvm::FunctionType *FTy =
-      llvm::FunctionType::get(llvm::Type::VoidTy, Args, false);
+      llvm::FunctionType::get(llvm::Type::getVoidTy(VMContext), Args, false);
     llvm::Value *SyncExit = CGM.CreateRuntimeFunction(FTy, "objc_sync_exit");
     llvm::Value *SyncArg = 
       CGF.EmitScalarExpr(cast<ObjCAtSynchronizedStmt>(S).getSynchExpr());
@@ -1496,7 +1497,7 @@ void CGObjCGNU::EmitThrowStmt(CodeGen::CodeGenFunction &CGF,
 
   std::vector<const llvm::Type*> Args(1, IdTy);
   llvm::FunctionType *FTy =
-    llvm::FunctionType::get(llvm::Type::VoidTy, Args, false);
+    llvm::FunctionType::get(llvm::Type::getVoidTy(VMContext), Args, false);
   llvm::Value *ThrowFn = 
     CGM.CreateRuntimeFunction(FTy, "objc_exception_throw");
   

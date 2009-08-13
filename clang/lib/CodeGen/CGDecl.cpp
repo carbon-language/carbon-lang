@@ -224,11 +224,11 @@ const llvm::Type *CodeGenFunction::BuildByRefType(QualType Ty,
   bool needsCopyDispose = BlockRequiresCopying(Ty);
   std::vector<const llvm::Type *> Types(needsCopyDispose*2+5);
   const llvm::PointerType *PtrToInt8Ty
-    = llvm::PointerType::getUnqual(llvm::Type::Int8Ty);
+    = llvm::PointerType::getUnqual(llvm::Type::getInt8Ty(VMContext));
   Types[0] = PtrToInt8Ty;
   Types[1] = PtrToInt8Ty;
-  Types[2] = llvm::Type::Int32Ty;
-  Types[3] = llvm::Type::Int32Ty;
+  Types[2] = llvm::Type::getInt32Ty(VMContext);
+  Types[3] = llvm::Type::getInt32Ty(VMContext);
   if (needsCopyDispose) {
     Types[4] = PtrToInt8Ty;
     Types[5] = PtrToInt8Ty;
@@ -282,7 +282,7 @@ void CodeGenFunction::EmitLocalBlockVarDecl(const VarDecl &D) {
     if (!DidCallStackSave) {
       // Save the stack.
       const llvm::Type *LTy =
-        llvm::PointerType::getUnqual(llvm::Type::Int8Ty);
+        llvm::PointerType::getUnqual(llvm::Type::getInt8Ty(VMContext));
       llvm::Value *Stack = CreateTempAlloca(LTy, "saved_stack");
       
       llvm::Value *F = CGM.getIntrinsic(llvm::Intrinsic::stacksave);
@@ -310,10 +310,12 @@ void CodeGenFunction::EmitLocalBlockVarDecl(const VarDecl &D) {
     llvm::Value *VLASize = EmitVLASize(Ty);
 
     // Downcast the VLA size expression
-    VLASize = Builder.CreateIntCast(VLASize, llvm::Type::Int32Ty, false, "tmp");
+    VLASize = Builder.CreateIntCast(VLASize, llvm::Type::getInt32Ty(VMContext),
+                                    false, "tmp");
     
     // Allocate memory for the array.
-    llvm::Value *VLA = Builder.CreateAlloca(llvm::Type::Int8Ty, VLASize, "vla");
+    llvm::Value *VLA = Builder.CreateAlloca(llvm::Type::getInt8Ty(VMContext),
+                                            VLASize, "vla");
     DeclPtr = Builder.CreateBitCast(VLA, LElemPtrTy, "tmp");
   }
 
@@ -374,7 +376,7 @@ void CodeGenFunction::EmitLocalBlockVarDecl(const VarDecl &D) {
   
   if (isByRef) {
     const llvm::PointerType *PtrToInt8Ty
-      = llvm::PointerType::getUnqual(llvm::Type::Int8Ty);
+      = llvm::PointerType::getUnqual(llvm::Type::getInt8Ty(VMContext));
 
     EnsureInsertPoint();
     llvm::Value *isa_field = Builder.CreateStructGEP(DeclPtr, 0);
@@ -402,19 +404,19 @@ void CodeGenFunction::EmitLocalBlockVarDecl(const VarDecl &D) {
     int isa = 0;
     if (flag&BLOCK_FIELD_IS_WEAK)
       isa = 1;
-    V = llvm::ConstantInt::get(llvm::Type::Int32Ty, isa);
+    V = llvm::ConstantInt::get(llvm::Type::getInt32Ty(VMContext), isa);
     V = Builder.CreateIntToPtr(V, PtrToInt8Ty, "isa");
     Builder.CreateStore(V, isa_field);
 
     V = Builder.CreateBitCast(DeclPtr, PtrToInt8Ty, "forwarding");
     Builder.CreateStore(V, forwarding_field);
 
-    V = llvm::ConstantInt::get(llvm::Type::Int32Ty, flags);
+    V = llvm::ConstantInt::get(llvm::Type::getInt32Ty(VMContext), flags);
     Builder.CreateStore(V, flags_field);
 
     const llvm::Type *V1;
     V1 = cast<llvm::PointerType>(DeclPtr->getType())->getElementType();
-    V = llvm::ConstantInt::get(llvm::Type::Int32Ty,
+    V = llvm::ConstantInt::get(llvm::Type::getInt32Ty(VMContext),
                                (CGM.getTargetData().getTypeStoreSizeInBits(V1)
                                 / 8));
     Builder.CreateStore(V, size_field);
