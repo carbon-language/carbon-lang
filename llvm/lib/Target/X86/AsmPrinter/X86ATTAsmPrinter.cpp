@@ -174,12 +174,12 @@ void X86ATTAsmPrinter::emitFunctionHeader(const MachineFunction &MF) {
   default: llvm_unreachable("Unknown linkage type!");
   case Function::InternalLinkage:  // Symbols default to internal.
   case Function::PrivateLinkage:
-  case Function::LinkerPrivateLinkage:
     break;
   case Function::DLLExportLinkage:
   case Function::ExternalLinkage:
     O << "\t.globl\t" << CurrentFnName << '\n';
     break;
+  case Function::LinkerPrivateLinkage:
   case Function::LinkOnceAnyLinkage:
   case Function::LinkOnceODRLinkage:
   case Function::WeakAnyLinkage:
@@ -853,6 +853,7 @@ void X86ATTAsmPrinter::PrintGlobalVariable(const GlobalVariable* GVar) {
   case GlobalValue::LinkOnceODRLinkage:
   case GlobalValue::WeakAnyLinkage:
   case GlobalValue::WeakODRLinkage:
+  case GlobalValue::LinkerPrivateLinkage:
     if (Subtarget->isTargetDarwin()) {
       O << "\t.globl " << name << '\n'
         << TAI->getWeakDefDirective() << name << '\n';
@@ -872,7 +873,6 @@ void X86ATTAsmPrinter::PrintGlobalVariable(const GlobalVariable* GVar) {
     O << "\t.globl " << name << '\n';
     // FALL THROUGH
   case GlobalValue::PrivateLinkage:
-  case GlobalValue::LinkerPrivateLinkage:
   case GlobalValue::InternalLinkage:
      break;
   default:
