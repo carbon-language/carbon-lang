@@ -76,14 +76,21 @@ namespace llvm {
 
     /// size - Get the string size.
     size_t size() const { return Length; }
+
+    /// front - Get the first character in the string.
+    char front() const {
+      assert(!empty());
+      return Data[0];
+    }
     
+    /// back - Get the last character in the string.
     char back() const {
       assert(!empty());
       return Data[Length-1];
     }
 
     /// equals - Check for string equality, this is more efficient than
-    /// compare() in when the relative ordering of inequal strings isn't needed.
+    /// compare() when the relative ordering of inequal strings isn't needed.
     bool equals(const StringRef &RHS) const {
       return (Length == RHS.Length && 
               memcmp(Data, RHS.Data, RHS.Length) == 0);
