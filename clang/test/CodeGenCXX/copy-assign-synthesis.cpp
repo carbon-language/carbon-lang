@@ -4,21 +4,30 @@
 extern "C" int printf(...);
 
 struct B {
-  B() : B1(3.14), B2(3.15) {} 
+  B() : B1(3.14), B2(3.15), auB2(3.16)  {} 
   float B1;
   float B2;
   void pr() {
-    printf("B1 = %f B2 = %f\n", B1, B2);
+    printf("B1 = %f B2 = %f auB1 = %f\n", B1, B2, auB1);
   }
+
+  union {
+    float auB1;
+    float auB2;
+  };
 };
 
 struct M {
-  M() : M1(10), M2(11) {} 
+  M() : M1(10), M2(11) , auM1(12) {} 
   int M1;
   int M2;
   void pr() {
-    printf("M1 = %d M2 = %d\n", M1, M2);
+    printf("M1 = %d M2 = %d auM1 = %d auM2 = %d\n", M1, M2, auM1, auM2);
   }
+  union {
+    int auM1;
+    int auM2;
+  };
 };
 
 struct N  : B {
