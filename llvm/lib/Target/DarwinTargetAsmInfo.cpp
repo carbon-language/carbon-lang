@@ -48,10 +48,10 @@ DarwinTargetAsmInfo::DarwinTargetAsmInfo(const Triple &Triple) {
   HasDotTypeDotSizeDirective = false;
   UsedDirective = "\t.no_dead_strip\t";
 
-  // On Leoaprd (10.5 aka darwin9) and earlier, _foo.eh symbols must be exported
+  // On Leopard (10.5 aka darwin9) and earlier, _foo.eh symbols must be exported
   // so that the linker knows about them.  This is not necessary on 10.6 and
   // later, but it doesn't hurt anything.
-  if (Triple.getDarwinMajorNumber() >= 10)
+  if (Triple.getDarwinMajorNumber() < 10)
     Is_EHSymbolPrivate = false;
   
   // Leopard (10.5 aka darwin9) and later support aligned common symbols.
