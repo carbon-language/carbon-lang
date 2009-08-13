@@ -16,6 +16,8 @@
 
 namespace llvm {
 
+class SDep;
+
 //===----------------------------------------------------------------------===//
 ///
 /// TargetSubtarget - Generic base class for all target subtargets.  All
@@ -35,6 +37,10 @@ public:
   /// indicating the number of scheduling cycles of backscheduling that
   /// should be attempted.
   virtual unsigned getSpecialAddressLatency() const { return 0; }
+
+  // adjustSchedDependency - Perform target specific adjustments to
+  // the latency of a schedule dependency.
+  virtual void adjustSchedDependency(SDep&) const { };
 };
 
 } // End llvm namespace

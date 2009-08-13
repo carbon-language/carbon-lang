@@ -18,6 +18,7 @@
 #include "llvm/Target/TargetMachine.h"
 #include "llvm/Target/TargetInstrInfo.h"
 #include "llvm/Target/TargetRegisterInfo.h"
+#include "llvm/Target/TargetSubtarget.h"
 #include "llvm/Support/Debug.h"
 #include "llvm/Support/raw_ostream.h"
 using namespace llvm;
@@ -152,6 +153,8 @@ void ScheduleDAGSDNodes::BuildSchedUnits() {
 }
 
 void ScheduleDAGSDNodes::AddSchedEdges() {
+  const TargetSubtarget &ST = TM.getSubtarget<TargetSubtarget>();
+
   // Pass 2: add the preds, succs, etc.
   for (unsigned su = 0, e = SUnits.size(); su != e; ++su) {
     SUnit *SU = &SUnits[su];
@@ -206,8 +209,13 @@ void ScheduleDAGSDNodes::AddSchedEdges() {
         // dependency. This may change in the future though.
         if (Cost >= 0)
           PhysReg = 0;
-        SU->addPred(SDep(OpSU, isChain ? SDep::Order : SDep::Data,
-                         OpSU->Latency, PhysReg));
+
+        const SDep& dep = SDep(OpSU, isChain ? SDep::Order : SDep::Data,
+                               OpSU->Latency, PhysReg);
+        if (!isChain)
+          ST.adjustSchedDependency((SDep &)dep);
+
+        SU->addPred(dep);
       }
     }
   }

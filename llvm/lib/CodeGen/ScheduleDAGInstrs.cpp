@@ -145,8 +145,8 @@ void ScheduleDAGInstrs::BuildSchedGraph() {
   bool UnitLatencies = ForceUnitLatencies();
 
   // Ask the target if address-backscheduling is desirable, and if so how much.
-  unsigned SpecialAddressLatency =
-    TM.getSubtarget<TargetSubtarget>().getSpecialAddressLatency();
+  const TargetSubtarget &ST = TM.getSubtarget<TargetSubtarget>();
+  unsigned SpecialAddressLatency = ST.getSpecialAddressLatency();
 
   // Walk the list of instructions, from bottom moving up.
   for (MachineBasicBlock::iterator MII = InsertPos, MIE = Begin;
@@ -220,15 +220,20 @@ void ScheduleDAGInstrs::BuildSchedGraph() {
                   UseTID.OpInfo[RegUseIndex].isLookupPtrRegClass())
                 LDataLatency += SpecialAddressLatency;
             }
-            UseSU->addPred(SDep(SU, SDep::Data, LDataLatency, Reg));
+            const SDep& dep = SDep(SU, SDep::Data, LDataLatency, Reg);
+            ST.adjustSchedDependency((SDep &)dep);
+            UseSU->addPred(dep);
           }
         }
         for (const unsigned *Alias = TRI->getAliasSet(Reg); *Alias; ++Alias) {
           std::vector<SUnit *> &UseList = Uses[*Alias];
           for (unsigned i = 0, e = UseList.size(); i != e; ++i) {
             SUnit *UseSU = UseList[i];
-            if (UseSU != SU)
-              UseSU->addPred(SDep(SU, SDep::Data, DataLatency, *Alias));
+            if (UseSU != SU) {
+              const SDep& dep = SDep(SU, SDep::Data, DataLatency, *Alias);
+              ST.adjustSchedDependency((SDep &)dep);
+              UseSU->addPred(dep);
+            }
           }
         }
 

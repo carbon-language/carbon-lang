@@ -145,6 +145,11 @@ namespace llvm {
       return Latency;
     }
 
+    /// setLatency - Set the latency for this edge.
+    void setLatency(unsigned Lat) {
+      Latency = Lat;
+    }
+
     //// getSUnit - Return the SUnit to which this edge points.
     SUnit *getSUnit() const {
       return Dep.getPointer();
