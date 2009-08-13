@@ -7,7 +7,7 @@
 // RUN: grep 'define x86_fp80 @f5()' %t &&
 // RUN: grep 'define void @f6(i8 signext %a0, i16 signext %a1, i32 %a2, i64 %a3, i8\* %a4)' %t &&
 // RUN: grep 'define void @f7(i32 %a0)' %t &&
-// RUN: grep 'type { i64, double }.*type .0' %t &&
+// RUN: grep '.0 = type { i64, double }' %t &&
 // RUN: grep 'define .0 @f8_1()' %t &&
 // RUN: grep 'define void @f8_2(.0)' %t &&
 
