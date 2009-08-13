@@ -2005,14 +2005,9 @@ void Module::print(std::ostream &o, AssemblyAnnotationWriter *AAW) const {
 }
 void Module::print(raw_ostream &ROS, AssemblyAnnotationWriter *AAW) const {
   SlotTracker SlotTable(this);
-  size_t OldBufferSize = ROS.GetBufferSize();
   formatted_raw_ostream OS(ROS);
   AssemblyWriter W(OS, SlotTable, this, AAW);
   W.write(this);
-  // formatted_raw_ostream forces the underlying raw_ostream to be
-  // unbuffered. Reset it to its original buffer size.
-  if (OldBufferSize != 0)
-    ROS.SetBufferSize(OldBufferSize);
 }
 
 void Type::print(std::ostream &o) const {
@@ -2033,7 +2028,6 @@ void Value::print(raw_ostream &ROS, AssemblyAnnotationWriter *AAW) const {
     ROS << "printing a <null> value\n";
     return;
   }
-  size_t OldBufferSize = ROS.GetBufferSize();
   formatted_raw_ostream OS(ROS);
   if (const Instruction *I = dyn_cast<Instruction>(this)) {
     const Function *F = I->getParent() ? I->getParent()->getParent() : 0;
@@ -2089,10 +2083,6 @@ void Value::print(raw_ostream &ROS, AssemblyAnnotationWriter *AAW) const {
   } else {
     llvm_unreachable("Unknown value to print out!");
   }
-  // formatted_raw_ostream forces the underlying raw_ostream to be
-  // unbuffered. Reset it to its original buffer size.
-  if (OldBufferSize != 0)
-    ROS.SetBufferSize(OldBufferSize);
 }
 
 void Value::print(std::ostream &O, AssemblyAnnotationWriter *AAW) const {

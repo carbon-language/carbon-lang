@@ -101,13 +101,11 @@ namespace llvm
 
     ~formatted_raw_ostream() {
       flush();
-      if (DeleteStream)
-        delete TheStream;
+      releaseStream();
     }
-    
+
     void setStream(raw_ostream &Stream, bool Delete = false) {
-      if (DeleteStream)
-        delete TheStream;
+      releaseStream();
 
       TheStream = &Stream;
       DeleteStream = Delete;
@@ -118,6 +116,8 @@ namespace llvm
       // had been using, and tell TheStream not to do its own buffering.
       if (size_t BufferSize = TheStream->GetBufferSize())
         SetBufferSize(BufferSize);
+      else
+        SetUnbuffered();
       TheStream->SetUnbuffered();
 
       Scanned = begin();
@@ -130,6 +130,20 @@ namespace llvm
     /// recent I/O, even if the current column + minpad > newcol.
     ///
     void PadToColumn(unsigned NewCol, unsigned MinPad = 0);
+
+  private:
+    void releaseStream() {
+      // Delete the stream if needed. Otherwise, transfer the buffer
+      // settings from this raw_ostream back to the underlying stream.
+      if (!TheStream)
+        return;
+      if (DeleteStream)
+        delete TheStream;
+      else if (size_t BufferSize = GetBufferSize())
+        TheStream->SetBufferSize(BufferSize);
+      else
+        TheStream->SetUnbuffered();
+    }
   };
 
 /// fouts() - This returns a reference to a formatted_raw_ostream for
