@@ -58,10 +58,10 @@ namespace {
 // PairSecondSort - A sorting predicate to sort by the second element of a pair.
 template<class T>
 struct PairSecondSortReverse
-  : public std::binary_function<std::pair<T, unsigned>,
-                                std::pair<T, unsigned>, bool> {
-  bool operator()(const std::pair<T, unsigned> &LHS,
-                  const std::pair<T, unsigned> &RHS) const {
+  : public std::binary_function<std::pair<T, double>,
+                                std::pair<T, double>, bool> {
+  bool operator()(const std::pair<T, double> &LHS,
+                  const std::pair<T, double> &RHS) const {
     return LHS.second > RHS.second;
   }
 };
@@ -98,7 +98,7 @@ namespace {
 
     virtual void emitBasicBlockEndAnnot(const BasicBlock *BB, raw_ostream &OS) {
       // Figure out how many times each successor executed.
-      std::vector<std::pair<ProfileInfo::Edge, unsigned> > SuccCounts;
+      std::vector<std::pair<ProfileInfo::Edge, double> > SuccCounts;
 
       const TerminatorInst *TI = BB->getTerminator();
       for (unsigned s = 0, e = TI->getNumSuccessors(); s != e; ++s) {
@@ -151,8 +151,8 @@ bool ProfileInfoPrinterPass::runOnModule(Module &M) {
   // the command line, for now, just keep things simple.
 
   // Emit the most frequent function table...
-  std::vector<std::pair<Function*, unsigned> > FunctionCounts;
-  std::vector<std::pair<BasicBlock*, unsigned> > Counts;
+  std::vector<std::pair<Function*, double> > FunctionCounts;
+  std::vector<std::pair<BasicBlock*, double> > Counts;
   for (Module::iterator FI = M.begin(), FE = M.end(); FI != FE; ++FI) {
     if (FI->isDeclaration()) continue;
     double w = ignoreMissing(PI.getExecutionCount(FI));
@@ -168,7 +168,7 @@ bool ProfileInfoPrinterPass::runOnModule(Module &M) {
   sort(FunctionCounts.begin(), FunctionCounts.end(),
             PairSecondSortReverse<Function*>());
 
-  uint64_t TotalExecutions = 0;
+  double TotalExecutions = 0;
   for (unsigned i = 0, e = FunctionCounts.size(); i != e; ++i)
     TotalExecutions += FunctionCounts[i].second;
 
