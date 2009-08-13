@@ -2442,6 +2442,8 @@ static SDValue LowerVECTOR_SHUFFLE(SDValue Op, SelectionDAG &DAG) {
   // DAG nodes, instead of keeping them as shuffles and matching them again
   // during code selection.  This is more efficient and avoids the possibility
   // of inconsistencies between legalization and selection.
+  // FIXME: floating-point vectors should be canonicalized to integer vectors
+  // of the same time so that they get CSEd properly.
   if (isVREVMask(SVN, 64))
     return DAG.getNode(ARMISD::VREV64, dl, VT, SVN->getOperand(0));
   if (isVREVMask(SVN, 32))
