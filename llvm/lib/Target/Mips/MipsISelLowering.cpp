@@ -210,6 +210,37 @@ AddLiveIn(MachineFunction &MF, unsigned PReg, TargetRegisterClass *RC)
   return VReg;
 }
 
+// A address must be loaded from a small section if its size is less than the 
+// small section size threshold. Data in this section must be addressed using 
+// gp_rel operator.
+bool MipsTargetLowering::IsInSmallSection(unsigned Size) {
+  return (Size > 0 && (Size <= Subtarget->getSSectionThreshold()));
+}
+
+// Discover if this global address can be placed into small data/bss section. 
+bool MipsTargetLowering::IsGlobalInSmallSection(GlobalValue *GV)
+{
+  const TargetData *TD = getTargetData();
+  const GlobalVariable *GVA = dyn_cast<GlobalVariable>(GV);
+
+  if (!GVA)
+    return false;
+  
+  const Type *Ty = GV->getType()->getElementType();
+  unsigned Size = TD->getTypeAllocSize(Ty);
+
+  // if this is a internal constant string, there is a special
+  // section for it, but not in small data/bss.
+  if (GVA->hasInitializer() && GV->hasLocalLinkage()) {
+    Constant *C = GVA->getInitializer();
+    const ConstantArray *CVA = dyn_cast<ConstantArray>(C);
+    if (CVA && CVA->isCString()) 
+      return false;
+  }
+
+  return IsInSmallSection(Size);
+}
+
 // Get fp branch code (not opcode) from condition code.
 static Mips::FPBranchCode GetFPBranchCodeFromCond(Mips::CondCode CC) {
   if (CC >= Mips::FCOND_F && CC <= Mips::FCOND_NGT)
@@ -485,17 +516,23 @@ LowerSELECT(SDValue Op, SelectionDAG &DAG)
                      Cond, True, False, CCNode);
 }
 
-SDValue MipsTargetLowering::
-LowerGlobalAddress(SDValue Op, SelectionDAG &DAG) 
-{
+SDValue MipsTargetLowering::LowerGlobalAddress(SDValue Op, SelectionDAG &DAG) {
   // FIXME there isn't actually debug info here
   DebugLoc dl = Op.getDebugLoc();
   GlobalValue *GV = cast<GlobalAddressSDNode>(Op)->getGlobal();
   SDValue GA = DAG.getTargetGlobalAddress(GV, MVT::i32);
 
   if (getTargetMachine().getRelocationModel() != Reloc::PIC_) {
+    SDVTList VTs = DAG.getVTList(MVT::i32);
+    
+    // %gp_rel relocation
+    if (!isa<Function>(GV) && IsGlobalInSmallSection(GV)) { 
+      SDValue GPRelNode = DAG.getNode(MipsISD::GPRel, dl, VTs, &GA, 1);
+      SDValue GOT = DAG.getGLOBAL_OFFSET_TABLE(MVT::i32);
+      return DAG.getNode(ISD::ADD, dl, MVT::i32, GOT, GPRelNode); 
+    }
     // %hi/%lo relocation
-    SDValue HiPart = DAG.getNode(MipsISD::Hi, dl, MVT::i32, GA);
+    SDValue HiPart = DAG.getNode(MipsISD::Hi, dl, VTs, &GA, 1);
     SDValue Lo = DAG.getNode(MipsISD::Lo, dl, MVT::i32, GA);
     return DAG.getNode(ISD::ADD, dl, MVT::i32, HiPart, Lo);
 

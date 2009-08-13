@@ -60,6 +60,10 @@ protected:
   // isLinux - Target system is Linux. Is false we consider ELFOS for now.
   bool IsLinux;
 
+  // Put global and static items less than or equal to SSectionThreshold 
+  // bytes into the small data or bss section. The default is 8.
+  unsigned SSectionThreshold;
+
   /// Features related to the presence of specific instructions.
   
   // HasSEInReg - SEB and SEH (signext in register) instructions.
@@ -109,6 +113,7 @@ public:
   bool isNotSingleFloat() const { return !IsSingleFloat; };
   bool hasVFPU() const { return HasVFPU; };
   bool isLinux() const { return IsLinux; };
+  unsigned getSSectionThreshold() const { return SSectionThreshold; }
 
   /// Features related to the presence of specific instructions.
   bool hasSEInReg()   const { return HasSEInReg; };

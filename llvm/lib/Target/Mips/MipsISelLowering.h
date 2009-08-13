@@ -66,8 +66,8 @@ namespace llvm {
   //===--------------------------------------------------------------------===//
   // TargetLowering Implementation
   //===--------------------------------------------------------------------===//
-  class MipsTargetLowering : public TargetLowering 
-  {
+  
+  class MipsTargetLowering : public TargetLowering  {
   public:
 
     explicit MipsTargetLowering(MipsTargetMachine &TM);
@@ -87,6 +87,9 @@ namespace llvm {
   private:
     // Subtarget Info
     const MipsSubtarget *Subtarget;
+
+    bool IsGlobalInSmallSection(GlobalValue *GV); 
+    bool IsInSmallSection(unsigned Size); 
 
     // Lower Operand helpers
     SDValue LowerCallResult(SDValue Chain, SDValue InFlag,
