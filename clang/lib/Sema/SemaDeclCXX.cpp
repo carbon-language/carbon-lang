@@ -3128,6 +3128,7 @@ bool Sema::CheckOverloadedOperatorDeclaration(FunctionDecl *FnDecl) {
     assert(isa<CXXMethodDecl>(FnDecl) &&
       "Overloaded = not member, but not filtered.");
     CXXMethodDecl *Method = cast<CXXMethodDecl>(FnDecl);
+    Method->setCopyAssignment(true);
     Method->getParent()->addedAssignmentOperator(Context, Method);
   }
 

@@ -653,11 +653,9 @@ llvm::Constant *CodeGenModule::GetOrCreateLLVMFunction(const char *MangledName,
       else if (!ClassDecl->hasUserDeclaredConstructor())
         DeferredDeclsToEmit.push_back(D);
     }
-    else 
-      if (const CXXMethodDecl *MD = dyn_cast<CXXMethodDecl>(FD))
-        if (MD->isCopyAssignment()) {
-          DeferredDeclsToEmit.push_back(D);
-        }
+    else if (const CXXMethodDecl *MD = dyn_cast<CXXMethodDecl>(FD))
+           if (MD->isCopyAssignment())
+             DeferredCopyAssignmentToEmit(D);
   }
   
   // This function doesn't have a complete type (for example, the return
@@ -718,7 +716,46 @@ void CodeGenModule::DeferredCopyConstructorToEmit(GlobalDecl CopyCtorDecl) {
     }
   }
   DeferredDeclsToEmit.push_back(CopyCtorDecl);
+}
+
+/// Defer definition of copy assignments which need be implicitly defined.
+void CodeGenModule::DeferredCopyAssignmentToEmit(GlobalDecl CopyAssignDecl) {
+  const CXXMethodDecl *CD = cast<CXXMethodDecl>(CopyAssignDecl.getDecl());
+  const CXXRecordDecl *ClassDecl = cast<CXXRecordDecl>(CD->getDeclContext());
   
+  if (ClassDecl->hasTrivialCopyAssignment() ||
+      ClassDecl->hasUserDeclaredCopyAssignment())
+    return;
+  
+  // First make sure all direct base classes and virtual bases and non-static
+  // data mebers which need to have their copy assignments implicitly defined
+  // are defined. 12.8.p12
+  for (CXXRecordDecl::base_class_const_iterator Base = ClassDecl->bases_begin();
+       Base != ClassDecl->bases_end(); ++Base) {
+    CXXRecordDecl *BaseClassDecl
+      = cast<CXXRecordDecl>(Base->getType()->getAs<RecordType>()->getDecl());
+    const CXXMethodDecl *MD = 0;
+    if (BaseClassDecl->hasConstCopyAssignment(getContext(), MD))
+      GetAddrOfFunction(GlobalDecl(MD), 0);
+  }
+  
+  for (CXXRecordDecl::field_iterator Field = ClassDecl->field_begin(),
+       FieldEnd = ClassDecl->field_end();
+       Field != FieldEnd; ++Field) {
+    QualType FieldType = Context.getCanonicalType((*Field)->getType());
+    if (const ArrayType *Array = Context.getAsArrayType(FieldType))
+      FieldType = Array->getElementType();
+    if (const RecordType *FieldClassType = FieldType->getAs<RecordType>()) {
+      if ((*Field)->isAnonymousStructOrUnion())
+        continue;
+      CXXRecordDecl *FieldClassDecl
+        = cast<CXXRecordDecl>(FieldClassType->getDecl());
+      const CXXMethodDecl *MD = 0;
+      if (FieldClassDecl->hasConstCopyAssignment(getContext(), MD))
+          GetAddrOfFunction(GlobalDecl(MD), 0);
+    }
+  }
+  DeferredDeclsToEmit.push_back(CopyAssignDecl);  
 }
 
 /// GetAddrOfFunction - Return the address of the given function.  If Ty is

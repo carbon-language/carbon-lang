@@ -228,6 +228,18 @@ CodeGenFunction::EmitCXXOperatorMemberCallExpr(const CXXOperatorCallExpr *E,
   assert(MD->isInstance() && 
          "Trying to emit a member call expr on a static method!");
   
+  if (MD->isCopyAssignment()) {
+    const CXXRecordDecl *ClassDecl = cast<CXXRecordDecl>(MD->getDeclContext());
+    if (ClassDecl->hasTrivialCopyAssignment()) {
+      assert(!ClassDecl->hasUserDeclaredCopyAssignment() &&
+             "EmitCXXOperatorMemberCallExpr - user declared copy assignment");
+      llvm::Value *This = EmitLValue(E->getArg(0)).getAddress();
+      llvm::Value *Src = EmitLValue(E->getArg(1)).getAddress();
+      QualType Ty = E->getType();
+      EmitAggregateCopy(This, Src, Ty);
+      return RValue::get(This);
+    }
+  }
   
   const FunctionProtoType *FPT = MD->getType()->getAsFunctionProtoType();
   const llvm::Type *Ty = 
