@@ -222,7 +222,7 @@ raw_ostream &raw_ostream::write(const char *Ptr, size_t Size) {
 }
 
 void raw_ostream::copy_to_buffer(const char *Ptr, size_t Size) {
-  assert(Size <= OutBufEnd - OutBufCur && "Buffer overrun!");
+  assert(Size <= size_t(OutBufEnd - OutBufCur) && "Buffer overrun!");
 
   // Handle short strings specially, memcpy isn't very good at very short
   // strings.
