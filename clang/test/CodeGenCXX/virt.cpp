@@ -101,6 +101,14 @@ struct test6_D : test6_B2, virtual test6_B1 {
 // CEHCK-LP32: .zerofill __DATA, __common, _d6, 2012, 4
 // CHECK-LP64: .zerofill __DATA, __common, _d6, 2024, 4
 
+struct test7_B2 { virtual void funcB2(); };
+struct test7_B1 : virtual test7_B2 { virtual void funcB1(); };
+
+struct test7_D : test7_B2, virtual test7_B1 {
+};
+
+// CEHCK-LP32: .zerofill __DATA, __common, _d7, 8, 3
+// CHECK-LP64: .zerofill __DATA, __common, _d7, 16, 3
 
 
 struct test3_B3 { virtual void funcB3(); };
@@ -381,7 +389,9 @@ struct test5_D  : virtual test5_B1, virtual test5_B21, virtual test5_B31 {
 // CHECK-LP64: .quad __ZN2D14bar5Ev
 
 
-test6_D d6;
 test5_D d5;
 test4_D d4;
 test3_D d3;
+
+test6_D d6;
+test7_D d7;
