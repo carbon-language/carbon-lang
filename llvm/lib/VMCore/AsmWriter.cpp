@@ -1729,7 +1729,7 @@ void AssemblyWriter::printInstruction(const Instruction &I) {
   if (AnnotationWriter) AnnotationWriter->emitInstructionAnnot(&I, Out);
 
   // Print out indentation for an instruction.
-  Out << '\t';
+  Out << "  ";
 
   // Print out name if it exists...
   if (I.hasName()) {
@@ -1785,12 +1785,12 @@ void AssemblyWriter::printInstruction(const Instruction &I) {
     Out << " [";
 
     for (unsigned op = 2, Eop = I.getNumOperands(); op < Eop; op += 2) {
-      Out << "\n\t\t";
+      Out << "\n    ";
       writeOperand(I.getOperand(op  ), true);
       Out << ", ";
       writeOperand(I.getOperand(op+1), true);
     }
-    Out << "\n\t]";
+    Out << "\n  ]";
   } else if (isa<PHINode>(I)) {
     Out << ' ';
     TypePrinter.print(I.getType(), Out);
@@ -1907,7 +1907,7 @@ void AssemblyWriter::printInstruction(const Instruction &I) {
     if (PAL.getFnAttributes() != Attribute::None)
       Out << ' ' << Attribute::getAsString(PAL.getFnAttributes());
 
-    Out << "\n\t\t\tto ";
+    Out << "\n          to ";
     writeOperand(II->getNormalDest(), true);
     Out << " unwind ";
     writeOperand(II->getUnwindDest(), true);
