@@ -1,10 +1,10 @@
 //===- IntrinsicsX86.td - Defines X86 intrinsics -----------*- tablegen -*-===//
-// 
+//
 //                     The LLVM Compiler Infrastructure
 //
 // This file is distributed under the University of Illinois Open Source
 // License. See LICENSE.TXT for details.
-// 
+//
 //===----------------------------------------------------------------------===//
 //
 // This file defines all of the X86-specific intrinsics.
@@ -129,7 +129,7 @@ let TargetPrefix = "x86" in {  // All intrinsics start with "llvm.x86.".
   def int_x86_sse_cvttps2pi: GCCBuiltin<"__builtin_ia32_cvttps2pi">,
               Intrinsic<[llvm_v2i32_ty], [llvm_v4f32_ty], [IntrNoMem]>;
   def int_x86_sse_cvtpi2ps : GCCBuiltin<"__builtin_ia32_cvtpi2ps">,
-              Intrinsic<[llvm_v4f32_ty], [llvm_v4f32_ty, 
+              Intrinsic<[llvm_v4f32_ty], [llvm_v4f32_ty,
                          llvm_v2i32_ty], [IntrNoMem]>;
 }
 
