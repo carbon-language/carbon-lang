@@ -7,12 +7,14 @@ int no_vars __attribute((malloc)); // expected-warning {{only applies to functio
 
 void  returns_void  (void) __attribute((malloc)); // expected-warning {{functions returning pointer type}}
 int   returns_int   (void) __attribute((malloc)); // expected-warning {{functions returning pointer type}}
-int * returns_intptr(void) __attribute((malloc));
+int * returns_intptr(void) __attribute((malloc)); // no-warning
 typedef int * iptr;
-iptr  returns_iptr  (void) __attribute((malloc));
+iptr  returns_iptr  (void) __attribute((malloc)); // no-warning
+
+__attribute((malloc)) void *(*f)(); // no-warning
 
 __attribute((malloc))
-void * xalloc(unsigned n) { return malloc(n); }
+void * xalloc(unsigned n) { return malloc(n); } // no-warning
 // RUN: grep 'define noalias .* @xalloc(' %t &&
 
 #define malloc_like __attribute((__malloc__))
