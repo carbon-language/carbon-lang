@@ -124,6 +124,42 @@ public:
   }
 
   //===--------------------------------------------------------------------===//
+  // Type creation methods
+  //===--------------------------------------------------------------------===//
+
+  const Type *getInt1Ty() {
+    return Type::getInt1Ty(Context);
+  }
+  
+  const Type *getInt8Ty() {
+    return Type::getInt8Ty(Context);
+  }
+  
+  const Type *getInt16Ty() {
+    return Type::getInt16Ty(Context);
+  }
+  
+  const Type *getInt32Ty() {
+    return Type::getInt32Ty(Context);
+  }
+  
+  const Type *getInt64Ty() {
+    return Type::getInt64Ty(Context);
+  }
+
+  const Type *getFloatTy() {
+    return Type::getFloatTy(Context);
+  }
+  
+  const Type *getDoubleTy() {
+    return Type::getDoubleTy(Context);
+  }
+  
+  const Type *getVoidTy() {
+    return Type::getVoidTy(Context);
+  }
+
+  //===--------------------------------------------------------------------===//
   // Instruction creation methods: Terminators
   //===--------------------------------------------------------------------===//
 
