@@ -739,7 +739,9 @@ void CodeGenModule::DeferredCopyAssignmentToEmit(GlobalDecl CopyAssignDecl) {
     CXXRecordDecl *BaseClassDecl
       = cast<CXXRecordDecl>(Base->getType()->getAs<RecordType>()->getDecl());
     const CXXMethodDecl *MD = 0;
-    if (BaseClassDecl->hasConstCopyAssignment(getContext(), MD))
+    if (!BaseClassDecl->hasTrivialCopyAssignment() &&
+        !BaseClassDecl->hasUserDeclaredCopyAssignment() &&
+        BaseClassDecl->hasConstCopyAssignment(getContext(), MD))
       GetAddrOfFunction(GlobalDecl(MD), 0);
   }
   
@@ -755,7 +757,9 @@ void CodeGenModule::DeferredCopyAssignmentToEmit(GlobalDecl CopyAssignDecl) {
       CXXRecordDecl *FieldClassDecl
         = cast<CXXRecordDecl>(FieldClassType->getDecl());
       const CXXMethodDecl *MD = 0;
-      if (FieldClassDecl->hasConstCopyAssignment(getContext(), MD))
+      if (!FieldClassDecl->hasTrivialCopyAssignment() &&
+          !FieldClassDecl->hasUserDeclaredCopyAssignment() &&
+          FieldClassDecl->hasConstCopyAssignment(getContext(), MD))
           GetAddrOfFunction(GlobalDecl(MD), 0);
     }
   }

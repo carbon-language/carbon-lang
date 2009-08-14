@@ -1045,7 +1045,10 @@ void CodeGenFunction::SynthesizeCXXCopyAssignment(const CXXMethodDecl *CD,
     LValue RHS = EmitLValueForField(LoadOfSrc, *Field, false, 0);
     RValue RVRHS = EmitLoadOfLValue(RHS, FieldType);
     EmitStoreThroughLValue(RVRHS, LHS, FieldType);
-  }  
+  }
+  
+  // return *this;
+  Builder.CreateStore(LoadOfThis, ReturnValue);
   
   FinishFunction();
 }  
