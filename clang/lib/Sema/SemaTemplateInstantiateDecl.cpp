@@ -44,6 +44,7 @@ namespace {
     Decl *VisitStaticAssertDecl(StaticAssertDecl *D);
     Decl *VisitEnumDecl(EnumDecl *D);
     Decl *VisitEnumConstantDecl(EnumConstantDecl *D);
+    Decl *VisitFriendClassDecl(FriendClassDecl *D);
     Decl *VisitFunctionDecl(FunctionDecl *D);
     Decl *VisitCXXRecordDecl(CXXRecordDecl *D);
     Decl *VisitCXXMethodDecl(CXXMethodDecl *D);
@@ -57,6 +58,10 @@ namespace {
     Decl *VisitDecl(Decl *) { 
       assert(false && "Template instantiation of unknown declaration kind!");
       return 0;
+    }
+
+    const LangOptions &getLangOptions() {
+      return SemaRef.getLangOptions();
     }
 
     // Helper functions for instantiating methods.
@@ -211,6 +216,25 @@ Decl *TemplateDeclInstantiator::VisitFieldDecl(FieldDecl *D) {
   return Field;
 }
 
+Decl *TemplateDeclInstantiator::VisitFriendClassDecl(FriendClassDecl *D) {
+  QualType T = D->getFriendType();
+  if (T->isDependentType())  {
+    T = SemaRef.InstantiateType(T, TemplateArgs, D->getLocation(),
+                                DeclarationName());
+    assert(T.isNull() || getLangOptions().CPlusPlus0x || T->isRecordType());
+  }
+
+  // FIXME: the target context might be dependent.
+  DeclContext *DC = D->getDeclContext();
+  assert(DC->isFileContext());
+
+  FriendClassDecl *NewD =
+    FriendClassDecl::Create(SemaRef.Context, DC, D->getLocation(), T,
+                            D->getFriendLoc());
+  Owner->addDecl(NewD);
+  return NewD;
+}
+
 Decl *TemplateDeclInstantiator::VisitStaticAssertDecl(StaticAssertDecl *D) {
   Expr *AssertExpr = D->getAssertExpr();
       
@@ -342,15 +366,30 @@ Decl *TemplateDeclInstantiator::VisitFunctionDecl(FunctionDecl *D) {
   QualType T = InstantiateFunctionType(D, Params);
   if (T.isNull())
     return 0;
-  
+
   // Build the instantiated method declaration.
-  FunctionDecl *Function
-    = FunctionDecl::Create(SemaRef.Context, Owner, D->getLocation(), 
+  FunctionDecl *Function;
+  if (FriendFunctionDecl* FFD = dyn_cast<FriendFunctionDecl>(D)) {
+    // The new decl's semantic context.  FIXME:  this might need
+    // to be instantiated.
+    DeclContext *DC = D->getDeclContext();
+
+    // This assert is bogus and exists only to catch cases we don't
+    // handle yet.
+    assert(!DC->isDependentContext());
+
+    Function =
+      FriendFunctionDecl::Create(SemaRef.Context, DC, D->getLocation(),
+                                 D->getDeclName(), T, D->isInline(),
+                                 FFD->getFriendLoc());
+    Function->setLexicalDeclContext(Owner);
+  } else {
+    Function =
+      FunctionDecl::Create(SemaRef.Context, Owner, D->getLocation(), 
                            D->getDeclName(), T, D->getStorageClass(),
                            D->isInline(), D->hasWrittenPrototype(),
                            D->getTypeSpecStartLoc());
-  
-  // FIXME: friend functions
+  }
   
   // Attach the parameters
   for (unsigned P = 0; P < Params.size(); ++P)
@@ -372,7 +411,18 @@ Decl *TemplateDeclInstantiator::VisitFunctionDecl(FunctionDecl *D) {
                                                 FunctionTemplate,
                                                 &TemplateArgs,
                                                 InsertPos);
-   }
+  }
+
+  // If this was a friend function decl, it's a member which
+  // needs to be added.
+  if (isa<FriendFunctionDecl>(Function)) {
+    // If the new context is still dependent, this declaration
+    // needs to remain hidden.
+    if (Owner->isDependentContext())
+      Owner->addHiddenDecl(Function);
+    else
+      Owner->addDecl(Function);
+  }
 
   return Function;
 }
