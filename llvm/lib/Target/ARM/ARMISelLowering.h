@@ -115,7 +115,8 @@ namespace llvm {
       VGETLANEu,    // zero-extend vector extract element
       VGETLANEs,    // sign-extend vector extract element
 
-      // Vector duplicate lane:
+      // Vector duplicate:
+      VDUP,
       VDUPLANE,
 
       // Vector load/store with (de)interleaving

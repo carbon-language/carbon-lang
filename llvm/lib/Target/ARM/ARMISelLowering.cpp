@@ -477,6 +477,7 @@ const char *ARMTargetLowering::getTargetNodeName(unsigned Opcode) const {
   case ARMISD::VQRSHRNsu:     return "ARMISD::VQRSHRNsu";
   case ARMISD::VGETLANEu:     return "ARMISD::VGETLANEu";
   case ARMISD::VGETLANEs:     return "ARMISD::VGETLANEs";
+  case ARMISD::VDUP:          return "ARMISD::VDUP";
   case ARMISD::VDUPLANE:      return "ARMISD::VDUPLANE";
   case ARMISD::VLD2D:         return "ARMISD::VLD2D";
   case ARMISD::VLD3D:         return "ARMISD::VLD3D";
@@ -2449,9 +2450,12 @@ static SDValue LowerVECTOR_SHUFFLE(SDValue Op, SelectionDAG &DAG) {
   // of the same time so that they get CSEd properly.
   if (SVN->isSplat()) {
     int Lane = SVN->getSplatIndex();
-    if (Lane != 0)
-      return DAG.getNode(ARMISD::VDUPLANE, dl, VT, SVN->getOperand(0),
-			 DAG.getConstant(Lane, MVT::i32));
+    SDValue Op0 = SVN->getOperand(0);
+    if (Lane == 0 && Op0.getOpcode() == ISD::SCALAR_TO_VECTOR) {
+      return DAG.getNode(ARMISD::VDUP, dl, VT, Op0.getOperand(0));
+    }
+    return DAG.getNode(ARMISD::VDUPLANE, dl, VT, SVN->getOperand(0),
+		       DAG.getConstant(Lane, MVT::i32));
   }
   if (isVREVMask(SVN, 64))
     return DAG.getNode(ARMISD::VREV64, dl, VT, SVN->getOperand(0));
