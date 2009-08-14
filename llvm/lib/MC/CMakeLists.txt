@@ -7,5 +7,7 @@ add_llvm_library(LLVMMC
   MCSectionELF.cpp
   MCSectionMachO.cpp
   MCStreamer.cpp
+  MCSymbol.cpp
+  MCValue.cpp
   TargetAsmParser.cpp
   )
