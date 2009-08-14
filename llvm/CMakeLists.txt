@@ -266,6 +266,7 @@ set(LLVM_ENUM_ASM_PRINTERS "")
 set(LLVM_ENUM_ASM_PARSERS "")
 foreach(t ${LLVM_TARGETS_TO_BUILD})
   message(STATUS "Targeting ${t}")
+  set(CURRENT_LLVM_TARGET ${t})
   add_subdirectory(lib/Target/${t})
   add_subdirectory(lib/Target/${t}/TargetInfo)
   if( EXISTS ${LLVM_MAIN_SRC_DIR}/lib/Target/${t}/AsmPrinter/CMakeLists.txt )
@@ -278,6 +279,7 @@ foreach(t ${LLVM_TARGETS_TO_BUILD})
     set(LLVM_ENUM_ASM_PARSERS 
       "${LLVM_ENUM_ASM_PARSERS}LLVM_ASM_PARSER(${t})\n")
   endif( EXISTS ${LLVM_MAIN_SRC_DIR}/lib/Target/${t}/AsmParser/CMakeLists.txt )
+  set(CURRENT_LLVM_TARGET)
 endforeach(t)
 
 # Produce llvm/Config/AsmPrinters.def
