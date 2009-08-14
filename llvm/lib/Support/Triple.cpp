@@ -46,7 +46,7 @@ const char *Triple::getVendorTypeName(VendorType Kind) {
   case UnknownVendor: return "unknown";
 
   case Apple: return "apple";
-  case PC: return "PC";
+  case PC: return "pc";
   }
 
   return "<invalid>";
