@@ -20,6 +20,7 @@
 
 namespace llvm {
 class MCSymbol;
+class raw_ostream;
 
 /// MCValue - This represents an "assembler immediate".  In its most general
 /// form, this can hold "SymbolA - SymbolB + imm64".  Not all targets supports
@@ -51,6 +52,12 @@ public:
   MCSection *getAssociatedSection() const {
     return SymA ? SymA->getSection() : 0;
   }
+
+  /// print - Print the value to the stream \arg OS.
+  void print(raw_ostream &OS) const;
+  
+  /// dump - Print the value to stderr.
+  void dump() const;
 
   static MCValue get(MCSymbol *SymA, MCSymbol *SymB = 0, int64_t Val = 0) {
     MCValue R;
