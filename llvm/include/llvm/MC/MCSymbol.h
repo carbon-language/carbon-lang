@@ -20,6 +20,7 @@
 namespace llvm {
   class MCSection;
   class MCContext;
+  class raw_ostream;
 
   /// MCSymbol - Instances of this class represent a symbol name in the MC file,
   /// and MCSymbols are created and unique'd by the MCContext class.
@@ -61,6 +62,12 @@ namespace llvm {
     void setExternal(bool Value) { IsExternal = Value; }
 
     const std::string &getName() const { return Name; }
+
+    /// print - Print the value to the stream \arg OS.
+    void print(raw_ostream &OS) const;
+
+    /// dump - Print the value to stderr.
+    void dump() const;
   };
 
 } // end namespace llvm

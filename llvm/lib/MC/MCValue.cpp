@@ -18,9 +18,13 @@ void MCValue::print(raw_ostream &OS) const {
     return;
   }
 
-  OS << getSymA();
-  if (getSymB())
-    OS << " - " << getSymB();
+  getSymA()->print(OS);
+
+  if (getSymB()) {
+    OS << " - "; 
+    getSymB()->print(OS);
+  }
+
   if (getConstant())
     OS << " + " << getConstant();
 }
