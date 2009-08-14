@@ -693,7 +693,8 @@ Sema::ActOnObjCForCollectionStmt(SourceLocation ForLoc,
 
       FirstType = static_cast<Expr*>(First)->getType();        
     }
-    if (!FirstType->isObjCObjectPointerType())
+    if (!FirstType->isObjCObjectPointerType() && 
+        !FirstType->isBlockPointerType())
         Diag(ForLoc, diag::err_selector_element_type)
           << FirstType << First->getSourceRange();
   }

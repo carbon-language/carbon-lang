@@ -44,3 +44,14 @@ void foo8() {
   P = ^itf() {};          // expected-error {{Objective-C interface type 'itf' cannot be returned by value}}
   P = ^itf{};             // expected-error {{Objective-C interface type 'itf' cannot be returned by value}}
 }
+
+
+int foo9() {
+  typedef void (^DVTOperationGroupScheduler)();
+  id _suboperationSchedulers;
+
+  for (DVTOperationGroupScheduler scheduler in _suboperationSchedulers) {
+            ;
+        }
+
+}
