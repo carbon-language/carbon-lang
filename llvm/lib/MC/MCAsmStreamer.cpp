@@ -9,6 +9,7 @@
 
 #include "llvm/MC/MCStreamer.h"
 
+#include "llvm/CodeGen/AsmPrinter.h"
 #include "llvm/MC/MCContext.h"
 #include "llvm/MC/MCInst.h"
 #include "llvm/MC/MCSectionMachO.h"
@@ -23,12 +24,14 @@ namespace {
 
   class MCAsmStreamer : public MCStreamer {
     raw_ostream &OS;
+    
+    AsmPrinter *Printer;
 
     MCSection *CurSection;
 
   public:
-    MCAsmStreamer(MCContext &Context, raw_ostream &_OS)
-      : MCStreamer(Context), OS(_OS), CurSection(0) {}
+    MCAsmStreamer(MCContext &Context, raw_ostream &_OS, AsmPrinter *_AsmPrinter)
+      : MCStreamer(Context), OS(_OS), Printer(_AsmPrinter), CurSection(0) {}
     ~MCAsmStreamer() {}
 
     /// @name MCStreamer Interface
@@ -75,50 +78,16 @@ namespace {
 
 }
 
-/// NeedsQuoting - Return true if the string \arg Str needs quoting, i.e., it
-/// does not match [a-zA-Z_.][a-zA-Z0-9_.]*.
-//
-// FIXME: This could be more permissive, do we care?
-static inline bool NeedsQuoting(const StringRef &Str) {
-  if (Str.empty())
-    return true;
-
-  // Check that first character is in [a-zA-Z_.].
-  if (!((Str[0] >= 'a' && Str[0] <= 'z') ||
-        (Str[0] >= 'A' && Str[0] <= 'Z') ||
-        (Str[0] == '_' || Str[0] == '.')))
-    return true;
-
-  // Check subsequent characters are in [a-zA-Z0-9_.].
-  for (unsigned i = 1, e = Str.size(); i != e; ++i)
-    if (!((Str[i] >= 'a' && Str[i] <= 'z') ||
-          (Str[i] >= 'A' && Str[i] <= 'Z') ||
-          (Str[i] >= '0' && Str[i] <= '9') ||
-          (Str[i] == '_' || Str[i] == '.')))
-      return true;
-
-  return false;
-}
-
 /// Allow printing symbols directly to a raw_ostream with proper quoting.
 static inline raw_ostream &operator<<(raw_ostream &os, const MCSymbol *S) {
-  if (NeedsQuoting(S->getName()))
-    return os << '"' << S->getName() << '"';
-  return os << S->getName();
+  S->print(os);
+
+  return os;
 }
 
 /// Allow printing values directly to a raw_ostream.
 static inline raw_ostream &operator<<(raw_ostream &os, const MCValue &Value) {
-  if (Value.getSymA()) {
-    os << Value.getSymA();
-    if (Value.getSymB())
-      os << " - " << Value.getSymB();
-    if (Value.getConstant())
-      os << " + " << Value.getConstant();
-  } else {
-    assert(!Value.getSymB() && "Invalid machine code value!");
-    os << Value.getConstant();
-  }
+  Value.print(os);
 
   return os;
 }
@@ -300,7 +269,15 @@ static raw_ostream &operator<<(raw_ostream &OS, const MCOperand &Op) {
 
 void MCAsmStreamer::EmitInstruction(const MCInst &Inst) {
   assert(CurSection && "Cannot emit contents before setting section!");
-  // FIXME: Implement proper printing.
+
+  // If we have an AsmPrinter, use that to print.
+  if (Printer) {
+    Printer->printMCInst(&Inst);
+    return;
+  }
+
+  // Otherwise fall back to a structural printing for now. Eventually we should
+  // always have access to the target specific printer.
   OS << "MCInst("
      << "opcode=" << Inst.getOpcode() << ", "
      << "operands=[";
@@ -316,6 +293,7 @@ void MCAsmStreamer::Finish() {
   OS.flush();
 }
     
-MCStreamer *llvm::createAsmStreamer(MCContext &Context, raw_ostream &OS) {
-  return new MCAsmStreamer(Context, OS);
+MCStreamer *llvm::createAsmStreamer(MCContext &Context, raw_ostream &OS,
+                                    AsmPrinter *AP) {
+  return new MCAsmStreamer(Context, OS, AP);
 }

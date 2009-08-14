@@ -13,14 +13,14 @@ a:
 
         .text
 foo:    
-// CHECK: val:"a$b"
+// CHECK: addl $24, "a$b"(%eax)
         addl $24, "a$b"(%eax)    
-// CHECK: val:"a$b" + 10
+// CHECK: addl $24, "a$b" + 10(%eax)
         addl $24, ("a$b" + 10)(%eax)
         
 // CHECK: "b$c" = 10
 "b$c" = 10
-// CHECK: val:10
+// CHECK: addl $10, %eax
         addl "b$c", %eax
         
         

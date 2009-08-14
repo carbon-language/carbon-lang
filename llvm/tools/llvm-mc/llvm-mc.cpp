@@ -16,7 +16,9 @@
 #include "llvm/MC/MCSectionMachO.h"
 #include "llvm/MC/MCStreamer.h"
 #include "llvm/ADT/OwningPtr.h"
+#include "llvm/CodeGen/AsmPrinter.h"
 #include "llvm/Support/CommandLine.h"
+#include "llvm/Support/FormattedStream.h"
 #include "llvm/Support/ManagedStatic.h"
 #include "llvm/Support/MemoryBuffer.h"
 #include "llvm/Support/PrettyStackTrace.h"
@@ -145,28 +147,21 @@ static int AsLexInput(const char *ProgName) {
   return Error;
 }
 
-static TargetAsmParser *GetTargetAsmParser(const char *ProgName,
-                                           MCAsmParser &Parser) {
+static const Target *GetTarget(const char *ProgName) {
   // Get the target specific parser.
   std::string Error;
   const Target *TheTarget = TargetRegistry::lookupTarget(TripleName, Error);
-  if (TheTarget == 0) {
-    errs() << ProgName << ": error: unable to get target for '" << TripleName
-           << "', see --version and --triple.\n";
-    return 0;
-  }
+  if (TheTarget)
+    return TheTarget;
 
-  if (TargetAsmParser *TAP = TheTarget->createAsmParser(Parser))
-    return TAP;
-    
-  errs() << ProgName 
-         << ": error: this target does not support assembly parsing.\n";
+  errs() << ProgName << ": error: unable to get target for '" << TripleName
+         << "', see --version and --triple.\n";
   return 0;
 }
 
-static raw_ostream *GetOutputStream() {
+static formatted_raw_ostream *GetOutputStream() {
   if (OutputFilename == "" || OutputFilename == "-")
-    return &outs();
+    return &fouts();
 
   // Make sure that the Out file gets unlinked from the disk if we get a
   // SIGINT
@@ -183,10 +178,14 @@ static raw_ostream *GetOutputStream() {
     return 0;
   }
   
-  return Out;
+  return new formatted_raw_ostream(*Out, formatted_raw_ostream::DELETE_STREAM);
 }
 
 static int AssembleInput(const char *ProgName) {
+  const Target *TheTarget = GetTarget(ProgName);
+  if (!TheTarget)
+    return 1;
+
   std::string Error;
   MemoryBuffer *Buffer = MemoryBuffer::getFileOrSTDIN(InputFilename, &Error);
   if (Buffer == 0) {
@@ -208,10 +207,25 @@ static int AssembleInput(const char *ProgName) {
   SrcMgr.setIncludeDirs(IncludeDirs);
   
   MCContext Ctx;
-  raw_ostream *Out = GetOutputStream();
+  formatted_raw_ostream *Out = GetOutputStream();
   if (!Out)
     return 1;
-  OwningPtr<MCStreamer> Str(createAsmStreamer(Ctx, *Out));
+
+  // See if we can get an asm printer.
+  OwningPtr<AsmPrinter> AP(0);
+
+  // FIXME: We shouldn't need to do this (and link in codegen).
+  OwningPtr<TargetMachine> TM(TheTarget->createTargetMachine(TripleName, ""));
+  const TargetAsmInfo *TAI = 0;
+
+  if (TM) {
+    TAI = TheTarget->createAsmInfo(TripleName);
+    assert(TAI && "Unable to create target asm info!");
+
+    AP.reset(TheTarget->createAsmPrinter(*Out, *TM, TAI, true));
+  }
+
+  OwningPtr<MCStreamer> Str(createAsmStreamer(Ctx, *Out, AP.get()));
 
   // FIXME: Target hook & command line option for initial section.
   Str.get()->SwitchSection(MCSectionMachO::Create("__TEXT","__text",
@@ -220,13 +234,17 @@ static int AssembleInput(const char *ProgName) {
                                                   Ctx));
 
   AsmParser Parser(SrcMgr, Ctx, *Str.get());
-  OwningPtr<TargetAsmParser> TAP(GetTargetAsmParser(ProgName, Parser));
-  if (!TAP)
+  OwningPtr<TargetAsmParser> TAP(TheTarget->createAsmParser(Parser));
+  if (!TAP) {
+    errs() << ProgName 
+           << ": error: this target does not support assembly parsing.\n";
     return 1;
+  }
+
   Parser.setTargetParser(*TAP.get());
 
   int Res = Parser.Run();
-  if (Out != &outs())
+  if (Out != &fouts())
     delete Out;
 
   return Res;
@@ -239,8 +257,11 @@ int main(int argc, char **argv) {
   PrettyStackTraceProgram X(argc, argv);
   llvm_shutdown_obj Y;  // Call llvm_shutdown() on exit.
 
-  // Initialize targets and assembly parsers.
+  // Initialize targets and assembly printers/parsers.
   llvm::InitializeAllTargetInfos();
+  // FIXME: We shouldn't need to initialize the Target(Machine)s.
+  llvm::InitializeAllTargets();
+  llvm::InitializeAllAsmPrinters();
   llvm::InitializeAllAsmParsers();
   
   cl::ParseCommandLineOptions(argc, argv, "llvm machine code playground\n");

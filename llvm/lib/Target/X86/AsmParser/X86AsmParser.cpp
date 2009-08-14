@@ -422,10 +422,8 @@ bool X86ATTAsmParser::ParseInstruction(const StringRef &Name, MCInst &Inst) {
 
   // FIXME: We should give nicer diagnostics about the exact failure.
 
-  // FIXME: For now we just treat unrecognized instructions as "warnings".
-  Warning(Loc, "unrecognized instruction");
-
-  return false;
+  Error(Loc, "unrecognized instruction");
+  return true;
 }
 
 // Force static initialization.
