@@ -242,9 +242,7 @@ void MSP430AsmPrinter::printCCOperand(const MachineInstr *MI, int OpNum) {
   }
 }
 
-extern "C" void LLVMInitializeMSP430Target() { 
-  // Register the target.
-  RegisterTargetMachine<MSP430TargetMachine> X(TheMSP430Target);
-  RegisterAsmPrinter<MSP430AsmPrinter> Y(TheMSP430Target);
-  RegisterAsmInfo<MSP430TargetAsmInfo> Z(TheMSP430Target);
+// Force static initialization.
+extern "C" void LLVMInitializeMSP430AsmPrinter() {
+  RegisterAsmPrinter<MSP430AsmPrinter> X(TheMSP430Target);
 }
