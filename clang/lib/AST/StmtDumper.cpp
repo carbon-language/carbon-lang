@@ -458,7 +458,7 @@ void StmtDumper::VisitCXXFunctionalCastExpr(CXXFunctionalCastExpr *Node) {
 void StmtDumper::VisitCXXConstructExpr(CXXConstructExpr *Node) {
   DumpExpr(Node);
   if (Node->isElidable())
-    fprintf(F, "elidable");
+    fprintf(F, " elidable");
 }
 
 void StmtDumper::VisitCXXBindTemporaryExpr(CXXBindTemporaryExpr *Node) {
