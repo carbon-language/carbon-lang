@@ -2394,7 +2394,7 @@ Expr *Sema::BuildCXXConstructExpr(ASTContext &C,
       for (unsigned I = 0, N = E->getNumTemporaries(); I != N; ++I)
         ExprTemporaries.push_back(E->getTemporary(I));
     }
-    Expr *Arg = new (C) CXXDefaultArgExpr(FDecl->getParamDecl(j));
+    Expr *Arg = CXXDefaultArgExpr::Create(C, FDecl->getParamDecl(j));
     Temp->setArg(j, Arg);
   }
   return Temp;

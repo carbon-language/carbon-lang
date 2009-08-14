@@ -382,14 +382,20 @@ public:
 /// supply arguments for all of the parameters.
 class CXXDefaultArgExpr : public Expr {
   ParmVarDecl *Param;
+    
+protected:
+  CXXDefaultArgExpr(StmtClass SC, ParmVarDecl *param) 
+    : Expr(SC, param->hasUnparsedDefaultArg() ? 
+           param->getType().getNonReferenceType()
+           : param->getDefaultArg()->getType()),
+    Param(param) { }
+    
 public:
   // Param is the parameter whose default argument is used by this
   // expression.
-  explicit CXXDefaultArgExpr(ParmVarDecl *param) 
-    : Expr(CXXDefaultArgExprClass, 
-           param->hasUnparsedDefaultArg()? param->getType().getNonReferenceType()
-                                         : param->getDefaultArg()->getType()),
-      Param(param) { }
+  static CXXDefaultArgExpr *Create(ASTContext &C, ParmVarDecl *Param) {
+    return new (C) CXXDefaultArgExpr(CXXDefaultArgExprClass, Param);
+  }
 
   // Retrieve the parameter that the argument was created from.
   const ParmVarDecl *getParam() const { return Param; }

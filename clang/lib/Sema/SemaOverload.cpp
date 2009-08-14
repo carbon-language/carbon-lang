@@ -4531,7 +4531,7 @@ Sema::BuildCallToObjectOfClassType(Scope *S, Expr *Object,
       QualType ProtoArgType = Proto->getArgType(i);
       IsError |= PerformCopyInitialization(Arg, ProtoArgType, "passing");
     } else {
-      Arg = new (Context) CXXDefaultArgExpr(Method->getParamDecl(i));
+      Arg = CXXDefaultArgExpr::Create(Context, Method->getParamDecl(i));
     }
 
     TheCall->setArg(i + 1, Arg);

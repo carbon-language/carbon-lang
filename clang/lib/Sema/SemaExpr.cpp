@@ -2657,7 +2657,7 @@ Sema::ConvertArgumentsForCall(CallExpr *Call, Expr *Fn,
       }
   
       // We already type-checked the argument, so we know it works.
-      Arg = new (Context) CXXDefaultArgExpr(FDecl->getParamDecl(i));
+      Arg = CXXDefaultArgExpr::Create(Context, FDecl->getParamDecl(i));
     }
     
     QualType ArgType = Arg->getType();

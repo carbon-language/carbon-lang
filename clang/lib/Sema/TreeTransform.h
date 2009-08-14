@@ -1021,7 +1021,7 @@ public:
   /// require any semantic analysis. Subclasses may override this routine to
   /// provide different behavior.
   OwningExprResult RebuildCXXDefaultArgExpr(ParmVarDecl *Param) {
-    return getSema().Owned(new (getSema().Context) CXXDefaultArgExpr(Param));
+    return getSema().Owned(CXXDefaultArgExpr::Create(getSema().Context, Param));
   }
 
   /// \brief Build a new C++ zero-initialization expression.
