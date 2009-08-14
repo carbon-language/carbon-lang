@@ -29,7 +29,7 @@ set(sources
   X86FastISel.cpp
   )
 
-if( CL_64 )
+if( CMAKE_CL_64 )
   enable_language(ASM_MASM)
   set(sources ${sources} X86CompilationCallback_Win64.asm)
 endif()
