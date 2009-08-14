@@ -1,26 +1,3 @@
-# This data is used to establish executable/library
-# dependencies.  Comes from the llvm-config script, which is built and
-# installed on the bin directory for MinGW or Linux. At the end of the
-# script, you'll see lines like this:
-
-# LLVMARMAsmPrinter.o: LLVMARMCodeGen.o libLLVMAsmPrinter.a libLLVMCodeGen.a libLLVMCore.a libLLVMSupport.a libLLVMTarget.a
-
-# This is translated to:
-
-# set(MSVC_LIB_DEPS_LLVMARMAsmPrinter LLVMARMCodeGen LLVMAsmPrinter LLVMCodeGen LLVMCore LLVMSupport LLVMTarget)
-
-# It is necessary to remove the `lib' prefix and the `.a'.
-
-# This 'sed' script should do the trick:
-# sed -e s'#\.a##g' -e 's#libLLVM#LLVM#g' -e 's#: # #' -e 's#\(.*\)#set(MSVC_LIB_DEPS_\1)#' ~/llvm/tools/llvm-config/LibDeps.txt
-#
-
-# TODO: do this transformations on cmake.
-
-# It is very important that the LLVM built for extracting this data
-# must contain all targets, not just X86.
-
-
 set(MSVC_LIB_DEPS_LLVMARMAsmPrinter LLVMARMCodeGen LLVMARMInfo LLVMAsmPrinter LLVMCodeGen LLVMCore LLVMSupport LLVMSystem LLVMTarget)
 set(MSVC_LIB_DEPS_LLVMARMCodeGen LLVMARMInfo LLVMCodeGen LLVMCore LLVMSelectionDAG LLVMSupport LLVMSystem LLVMTarget)
 set(MSVC_LIB_DEPS_LLVMARMInfo LLVMSupport)
@@ -79,7 +56,7 @@ set(MSVC_LIB_DEPS_LLVMSystemZInfo LLVMSupport)
 set(MSVC_LIB_DEPS_LLVMTarget LLVMCore LLVMMC LLVMSupport LLVMSystem)
 set(MSVC_LIB_DEPS_LLVMTransformUtils LLVMAnalysis LLVMCore LLVMSupport LLVMSystem LLVMTarget LLVMipa)
 set(MSVC_LIB_DEPS_LLVMX86AsmParser LLVMMC LLVMX86Info)
-set(MSVC_LIB_DEPS_LLVMX86AsmPrinter LLVMAsmPrinter LLVMCodeGen LLVMCore LLVMSupport LLVMSystem LLVMTarget LLVMX86CodeGen LLVMX86Info)
+set(MSVC_LIB_DEPS_LLVMX86AsmPrinter LLVMAsmPrinter LLVMCodeGen LLVMCore LLVMMC LLVMSupport LLVMSystem LLVMTarget LLVMX86CodeGen LLVMX86Info)
 set(MSVC_LIB_DEPS_LLVMX86CodeGen LLVMCodeGen LLVMCore LLVMSelectionDAG LLVMSupport LLVMSystem LLVMTarget LLVMX86Info)
 set(MSVC_LIB_DEPS_LLVMX86Info LLVMSupport)
 set(MSVC_LIB_DEPS_LLVMXCore LLVMAsmPrinter LLVMCodeGen LLVMCore LLVMSelectionDAG LLVMSupport LLVMSystem LLVMTarget LLVMXCoreInfo)
