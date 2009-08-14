@@ -247,6 +247,14 @@ static void InitLibcallNames(const char **Names) {
   Names[RTLIB::UNWIND_RESUME] = "_Unwind_Resume";
 }
 
+/// InitLibcallCallingConvs - Set default libcall CallingConvs.
+///
+static void InitLibcallCallingConvs(CallingConv::ID *CCs) {
+  for (int i = 0; i < RTLIB::UNKNOWN_LIBCALL; ++i) {
+    CCs[i] = CallingConv::C;
+  }
+}
+
 /// getFPEXT - Return the FPEXT_*_* value for the given types, or
 /// UNKNOWN_LIBCALL if there is none.
 RTLIB::Libcall RTLIB::getFPEXT(EVT OpVT, EVT RetVT) {
@@ -520,6 +528,7 @@ TargetLowering::TargetLowering(TargetMachine &tm,TargetLoweringObjectFile *tlof)
 
   InitLibcallNames(LibcallRoutineNames);
   InitCmpLibcallCCs(CmpLibcallCCs);
+  InitLibcallCallingConvs(LibcallCallingConvs);
 
   // Tell Legalize whether the assembler supports DEBUG_LOC.
   const TargetAsmInfo *TASM = TM.getTargetAsmInfo();

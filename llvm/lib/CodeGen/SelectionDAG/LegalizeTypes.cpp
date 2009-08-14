@@ -1019,7 +1019,7 @@ SDValue DAGTypeLegalizer::MakeLibCall(RTLIB::Libcall LC, EVT RetVT,
   const Type *RetTy = RetVT.getTypeForEVT(*DAG.getContext());
   std::pair<SDValue,SDValue> CallInfo =
     TLI.LowerCallTo(DAG.getEntryNode(), RetTy, isSigned, !isSigned, false,
-                    false, 0, CallingConv::C, false,
+                    false, 0, TLI.getLibcallCallingConv(LC), false,
                     /*isReturnValueUsed=*/true,
                     Callee, Args, DAG, dl);
   return CallInfo.first;

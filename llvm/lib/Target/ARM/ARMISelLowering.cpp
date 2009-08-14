@@ -201,6 +201,15 @@ ARMTargetLowering::ARMTargetLowering(TargetMachine &TM)
   setLibcallName(RTLIB::SRL_I128, 0);
   setLibcallName(RTLIB::SRA_I128, 0);
 
+  // Libcalls should use the AAPCS base standard ABI, even if hard float
+  // is in effect, as per the ARM RTABI specification, section 4.1.2.
+  if (Subtarget->isAAPCS_ABI()) {
+    for (int i = 0; i < RTLIB::UNKNOWN_LIBCALL; ++i) {
+      setLibcallCallingConv(static_cast<RTLIB::Libcall>(i),
+                            CallingConv::ARM_AAPCS);
+    }
+  }
+
   if (Subtarget->isThumb1Only())
     addRegisterClass(MVT::i32, ARM::tGPRRegisterClass);
   else

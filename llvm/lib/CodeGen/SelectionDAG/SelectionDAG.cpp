@@ -3390,7 +3390,8 @@ SDValue SelectionDAG::getMemcpy(SDValue Chain, DebugLoc dl, SDValue Dst,
   // FIXME: pass in DebugLoc
   std::pair<SDValue,SDValue> CallResult =
     TLI.LowerCallTo(Chain, Type::getVoidTy(*getContext()),
-                    false, false, false, false, 0, CallingConv::C, false,
+                    false, false, false, false, 0,
+                    TLI.getLibcallCallingConv(RTLIB::MEMCPY), false,
                     /*isReturnValueUsed=*/false,
                     getExternalSymbol(TLI.getLibcallName(RTLIB::MEMCPY), 
                                       TLI.getPointerTy()),
@@ -3438,7 +3439,8 @@ SDValue SelectionDAG::getMemmove(SDValue Chain, DebugLoc dl, SDValue Dst,
   // FIXME:  pass in DebugLoc
   std::pair<SDValue,SDValue> CallResult =
     TLI.LowerCallTo(Chain, Type::getVoidTy(*getContext()),
-                    false, false, false, false, 0, CallingConv::C, false,
+                    false, false, false, false, 0,
+                    TLI.getLibcallCallingConv(RTLIB::MEMMOVE), false,
                     /*isReturnValueUsed=*/false,
                     getExternalSymbol(TLI.getLibcallName(RTLIB::MEMMOVE), 
                                       TLI.getPointerTy()),
@@ -3496,7 +3498,8 @@ SDValue SelectionDAG::getMemset(SDValue Chain, DebugLoc dl, SDValue Dst,
   // FIXME: pass in DebugLoc
   std::pair<SDValue,SDValue> CallResult =
     TLI.LowerCallTo(Chain, Type::getVoidTy(*getContext()),
-                    false, false, false, false, 0, CallingConv::C, false,
+                    false, false, false, false, 0,
+                    TLI.getLibcallCallingConv(RTLIB::MEMSET), false,
                     /*isReturnValueUsed=*/false,
                     getExternalSymbol(TLI.getLibcallName(RTLIB::MEMSET), 
                                       TLI.getPointerTy()),

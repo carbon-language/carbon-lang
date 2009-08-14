@@ -22,6 +22,7 @@
 #ifndef LLVM_TARGET_TARGETLOWERING_H
 #define LLVM_TARGET_TARGETLOWERING_H
 
+#include "llvm/CallingConv.h"
 #include "llvm/InlineAsm.h"
 #include "llvm/CodeGen/SelectionDAGNodes.h"
 #include "llvm/CodeGen/RuntimeLibcalls.h"
@@ -1539,6 +1540,18 @@ public:
     return CmpLibcallCCs[Call];
   }
 
+  /// setLibcallCallingConv - Set the CallingConv that should be used for the
+  /// specified libcall.
+  void setLibcallCallingConv(RTLIB::Libcall Call, CallingConv::ID CC) {
+    LibcallCallingConvs[Call] = CC;
+  }
+  
+  /// getLibcallCallingConv - Get the CallingConv that should be used for the
+  /// specified libcall.
+  CallingConv::ID getLibcallCallingConv(RTLIB::Libcall Call) const {
+    return LibcallCallingConvs[Call];
+  }
+
 private:
   TargetMachine &TM;
   const TargetData *TD;
@@ -1704,6 +1717,10 @@ private:
   /// CmpLibcallCCs - The ISD::CondCode that should be used to test the result
   /// of each of the comparison libcall against zero.
   ISD::CondCode CmpLibcallCCs[RTLIB::UNKNOWN_LIBCALL];
+
+  /// LibcallCallingConvs - Stores the CallingConv that should be used for each
+  /// libcall.
+  CallingConv::ID LibcallCallingConvs[RTLIB::UNKNOWN_LIBCALL];
 
 protected:
   /// When lowering \@llvm.memset this field specifies the maximum number of

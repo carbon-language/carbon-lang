@@ -116,7 +116,7 @@ namespace {
                 Op.getNode()->getValueType(0).getTypeForEVT(*DAG.getContext());
     std::pair<SDValue, SDValue> CallInfo =
             TLI.LowerCallTo(InChain, RetTy, isSigned, !isSigned, false, false,
-                            0, CallingConv::C, false,
+                            0, TLI.getLibcallCallingConv(LC), false,
                             /*isReturnValueUsed=*/true,
                             Callee, Args, DAG,
                             Op.getDebugLoc());
