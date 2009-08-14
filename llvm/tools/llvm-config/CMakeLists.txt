@@ -113,6 +113,12 @@ add_custom_target(llvm-config.target ALL
 
 add_dependencies(llvm-config.target ${llvm_lib_targets})
 
+# Make sure that llvm-config builds before the llvm tools, so we have
+# LibDeps.txt and can use it for updating the hard-coded library
+# dependencies on cmake/modules/LLVMLibDeps.cmake when the tools'
+# build fail due to outdated dependencies:
+set(LLVM_COMMON_DEPENDS ${LLVM_COMMON_DEPENDS} llvm-config.target)
+
 install(FILES ${LLVM_CONFIG}
   PERMISSIONS OWNER_READ OWNER_WRITE OWNER_EXECUTE GROUP_READ GROUP_EXECUTE
   WORLD_READ WORLD_EXECUTE
