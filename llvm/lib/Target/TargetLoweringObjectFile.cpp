@@ -461,13 +461,13 @@ getELFKindForNamedSection(const char *Name, SectionKind K) {
 static unsigned
 getELFSectionType(const char *Name, SectionKind K) {
 
-  if (strncmp(Name, ".init_array", 11) == 0)
+  if (strcmp(Name, ".init_array") == 0)
     return MCSectionELF::SHT_INIT_ARRAY;
 
-  if (strncmp(Name, ".fini_array", 11) == 0)
+  if (strcmp(Name, ".fini_array") == 0)
     return MCSectionELF::SHT_FINI_ARRAY;
 
-  if (strncmp(Name, ".preinit_array", 14) == 0)
+  if (strcmp(Name, ".preinit_array") == 0)
     return MCSectionELF::SHT_PREINIT_ARRAY;
 
   if (K.isBSS() || K.isThreadBSS())
