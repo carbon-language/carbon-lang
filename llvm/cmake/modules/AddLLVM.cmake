@@ -30,6 +30,9 @@ macro(add_llvm_executable name)
   if( llvm_system_libs )
     target_link_libraries(${name} ${llvm_system_libs})
   endif()
+  if( LLVM_COMMON_DEPENDS )
+    add_dependencies( ${name} ${LLVM_COMMON_DEPENDS} )
+  endif( LLVM_COMMON_DEPENDS )
 endmacro(add_llvm_executable name)
 
 
