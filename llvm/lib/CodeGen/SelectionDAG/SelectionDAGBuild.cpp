@@ -3991,8 +3991,7 @@ SelectionDAGLowering::visitIntrinsicCall(CallInst &I, unsigned Intrinsic) {
   case Intrinsic::eh_selector_i32:
   case Intrinsic::eh_selector_i64: {
     MachineModuleInfo *MMI = DAG.getMachineModuleInfo();
-    EVT VT = (Intrinsic == Intrinsic::eh_selector_i32 ?
-                         MVT::i32 : MVT::i64);
+    EVT VT = (Intrinsic == Intrinsic::eh_selector_i32 ? MVT::i32 : MVT::i64);
 
     if (MMI) {
       if (CurMBB->isLandingPad())
