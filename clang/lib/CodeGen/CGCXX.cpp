@@ -338,6 +338,19 @@ CodeGenFunction::EmitCXXConstructorCall(const CXXConstructorDecl *D,
                                         llvm::Value *This,
                                         CallExpr::const_arg_iterator ArgBeg,
                                         CallExpr::const_arg_iterator ArgEnd) {
+  if (D->isCopyConstructor(getContext())) {
+    const CXXRecordDecl *ClassDecl = cast<CXXRecordDecl>(D->getDeclContext());
+    if (ClassDecl->hasTrivialCopyConstructor()) {
+      assert(!ClassDecl->hasUserDeclaredCopyConstructor() &&
+             "EmitCXXConstructorCall - user declared copy constructor");
+      const Expr *E = (*ArgBeg);
+      QualType Ty = E->getType();
+      llvm::Value *Src = EmitLValue(E).getAddress();
+      EmitAggregateCopy(This, Src, Ty);
+      return;
+    }
+  }
+  
   llvm::Value *Callee = CGM.GetAddrOfCXXConstructor(D, Type);
 
   EmitCXXMemberCall(D, Callee, This, ArgBeg, ArgEnd);
