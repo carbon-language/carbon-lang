@@ -165,14 +165,14 @@ public:
 
   /// CreateRetVoid - Create a 'ret void' instruction.
   ReturnInst *CreateRetVoid() {
-    return Insert(ReturnInst::Create(getGlobalContext()));
+    return Insert(ReturnInst::Create(Context));
   }
 
   /// @verbatim
   /// CreateRet - Create a 'ret <val>' instruction.
   /// @endverbatim
   ReturnInst *CreateRet(Value *V) {
-    return Insert(ReturnInst::Create(getGlobalContext(), V));
+    return Insert(ReturnInst::Create(Context, V));
   }
 
   /// CreateAggregateRet - Create a sequence of N insertvalue instructions,
@@ -187,7 +187,7 @@ public:
     Value *V = UndefValue::get(RetType);
     for (unsigned i = 0; i != N; ++i)
       V = CreateInsertValue(V, retVals[i], i, "mrv");
-    return Insert(ReturnInst::Create(getGlobalContext(), V));
+    return Insert(ReturnInst::Create(Context, V));
   }
 
   /// CreateBr - Create an unconditional 'br label X' instruction.
