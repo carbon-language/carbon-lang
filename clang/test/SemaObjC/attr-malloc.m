@@ -10,3 +10,6 @@ id bar(void) __attribute((malloc)); // no-warning
 typedef void (^bptr)(void);
 bptr baz(void) __attribute((malloc)); // no-warning
 
+__attribute((malloc)) id (*f)(); // no-warning
+__attribute((malloc)) bptr (*g)(); // no-warning
+

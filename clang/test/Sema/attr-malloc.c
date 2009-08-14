@@ -12,6 +12,7 @@ typedef int * iptr;
 iptr  returns_iptr  (void) __attribute((malloc)); // no-warning
 
 __attribute((malloc)) void *(*f)(); // no-warning
+__attribute((malloc)) int (*g)(); // expected-warning{{'malloc' attribute only applies to functions returning pointer type}}
 
 __attribute((malloc))
 void * xalloc(unsigned n) { return malloc(n); } // no-warning
