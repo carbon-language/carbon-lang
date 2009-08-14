@@ -229,7 +229,7 @@ struct test5_D  : virtual test5_B1, virtual test5_B21, virtual test5_B31 {
 // CHECK-LP32 .space 4
 // CHECK-LP32 .space 4
 // CHECK-LP32: .space 4
-// CHECK-LP32 .long -4
+// CHECK-LP32: .long 4294967292
 // CHECK-LP32: .long __ZTI7test5_D
 // CHECK-LP32: .long __ZN9test5_B237funcB23Ev
 // CHECK-LP32 .long __ZN9test5_B227funcB22Ev
@@ -281,7 +281,7 @@ struct test5_D  : virtual test5_B1, virtual test5_B21, virtual test5_B31 {
 // CHECK-LP64 .space 8
 // CHECK-LP64 .space 8
 // CHECK-LP64: .space 8
-// CHECK-LP64 .quad 18446744073709551608
+// CHECK-LP64:.quad 18446744073709551608
 // CHECK-LP64: .quad __ZTI7test5_D
 // CHECK-LP64: .quad __ZN9test5_B237funcB23Ev
 // CHECK-LP64 .quad __ZN9test5_B227funcB22Ev
