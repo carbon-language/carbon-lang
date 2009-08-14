@@ -250,7 +250,7 @@ let isBranch = 1, isTerminator = 1 in {
   let isBarrier = 1 in {
     let isPredicable = 1 in
     def tB   : T1I<(outs), (ins brtarget:$target), IIC_Br,
-                   "b $target", [(br bb:$target)]>;
+                   "b.n $target", [(br bb:$target)]>;
 
   // Far jump
   let Defs = [LR] in
@@ -268,7 +268,7 @@ let isBranch = 1, isTerminator = 1 in {
 // a two-value operand where a dag node expects two operands. :(
 let isBranch = 1, isTerminator = 1 in
   def tBcc : T1I<(outs), (ins brtarget:$target, pred:$cc), IIC_Br,
-                 "b$cc $target",
+                 "b$cc.n $target",
                  [/*(ARMbrcond bb:$target, imm:$cc)*/]>;
 
 //===----------------------------------------------------------------------===//
@@ -310,9 +310,10 @@ def tRestore : T1pIs<(outs tGPR:$dst), (ins t_addrmode_sp:$addr), IIC_iLoad,
                     "ldr", " $dst, $addr", []>;
 
 // Load tconstpool
+// FIXME: Added .n suffix to workaround a Darwin assembler bug.
 let canFoldAsLoad = 1 in
 def tLDRpci : T1pIs<(outs tGPR:$dst), (ins i32imm:$addr), IIC_iLoad,
-                  "ldr", " $dst, $addr",
+                  "ldr", ".n $dst, $addr",
                   [(set tGPR:$dst, (load (ARMWrapper tconstpool:$addr)))]>;
 
 // Special LDR for loads from non-pc-relative constpools.
@@ -628,7 +629,7 @@ def tMOVCCi : T1pIt<(outs GPR:$dst), (ins GPR:$lhs, i32imm:$rhs), IIC_iALU,
 // tLEApcrel - Load a pc-relative address into a register without offending the
 // assembler.
 def tLEApcrel : T1I<(outs tGPR:$dst), (ins i32imm:$label, pred:$p), IIC_iALU,
-                    "adr$p.n $dst, #$label", []>;
+                    "adr$p $dst, #$label", []>;
 
 def tLEApcrelJT : T1I<(outs tGPR:$dst),
                       (ins i32imm:$label, lane_cst:$id, pred:$p),

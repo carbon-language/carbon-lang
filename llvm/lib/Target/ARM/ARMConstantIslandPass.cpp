@@ -38,6 +38,7 @@ STATISTIC(NumCBrFixed,   "Number of cond branches fixed");
 STATISTIC(NumUBrFixed,   "Number of uncond branches fixed");
 STATISTIC(NumTBs,        "Number of table branches generated");
 STATISTIC(NumT2CPShrunk, "Number of Thumb2 constantpool instructions shrunk");
+STATISTIC(NumT2BrShrunk, "Number of Thumb2 immediate branches shrunk");
 
 namespace {
   /// ARMConstantIslands - Due to limited PC-relative displacements, ARM
@@ -479,8 +480,6 @@ void ARMConstantIslands::InitialFunctionScan(MachineFunction &MF,
           bool NegOk = false;
           bool IsSoImm = false;
 
-          // FIXME: Temporary workaround until I can figure out what's going on.
-          unsigned Slack = T2JumpTables.empty() ? 0 : 4;
           switch (Opc) {
           default:
             llvm_unreachable("Unknown addressing mode for CP reference!");
@@ -530,7 +529,7 @@ void ARMConstantIslands::InitialFunctionScan(MachineFunction &MF,
           // Remember that this is a user of a CP entry.
           unsigned CPI = I->getOperand(op).getIndex();
           MachineInstr *CPEMI = CPEMIs[CPI];
-          unsigned MaxOffs = ((1 << Bits)-1) * Scale - Slack;
+          unsigned MaxOffs = ((1 << Bits)-1) * Scale;
           CPUsers.push_back(CPUser(I, CPEMI, MaxOffs, NegOk, IsSoImm));
 
           // Increment corresponding CPEntry reference count.
@@ -714,11 +713,23 @@ bool ARMConstantIslands::OffsetIsInRange(unsigned UserOffset,
   // purposes of the displacement computation; compensate for that here.
   // Effectively, the valid range of displacements is 2 bytes smaller for such
   // references.
-  if (isThumb && UserOffset%4 !=0)
+  unsigned TotalAdj = 0;
+  if (isThumb && UserOffset%4 !=0) {
     UserOffset -= 2;
+    TotalAdj = 2;
+  }
   // CPEs will be rounded up to a multiple of 4.
-  if (isThumb && TrialOffset%4 != 0)
+  if (isThumb && TrialOffset%4 != 0) {
     TrialOffset += 2;
+    TotalAdj += 2;
+  }
+
+  // In Thumb2 mode, later branch adjustments can shift instructions up and
+  // cause alignment change. In the worst case scenario this can cause the
+  // user's effective address to be subtracted by 2 and the CPE's address to
+  // be plus 2.
+  if (isThumb2 && TotalAdj != 4)
+    MaxDisp -= (4 - TotalAdj);
 
   if (UserOffset <= TrialOffset) {
     // User before the Trial.
@@ -1398,13 +1409,49 @@ bool ARMConstantIslands::OptimizeThumb2Instructions(MachineFunction &MF) {
     }
   }
 
-  MadeChange |= OptimizeThumb2JumpTables(MF);
   MadeChange |= OptimizeThumb2Branches(MF);
+  MadeChange |= OptimizeThumb2JumpTables(MF);
   return MadeChange;
 }
 
 bool ARMConstantIslands::OptimizeThumb2Branches(MachineFunction &MF) {
-  return false;
+  bool MadeChange = false;
+
+  for (unsigned i = 0, e = ImmBranches.size(); i != e; ++i) {
+    ImmBranch &Br = ImmBranches[i];
+    unsigned Opcode = Br.MI->getOpcode();
+    unsigned NewOpc = 0;
+    unsigned Scale = 1;
+    unsigned Bits = 0;
+    switch (Opcode) {
+    default: break;
+    case ARM::t2B:
+      NewOpc = ARM::tB;
+      Bits = 11;
+      Scale = 2;
+      break;
+    case ARM::t2Bcc:
+      NewOpc = ARM::tBcc;
+      Bits = 8;
+      Scale = 2;      
+      break;
+    }
+    if (!NewOpc)
+      continue;
+
+    unsigned MaxOffs = ((1 << (Bits-1))-1) * Scale;
+    MachineBasicBlock *DestBB = Br.MI->getOperand(0).getMBB();
+    if (BBIsInRange(Br.MI, DestBB, MaxOffs)) {
+      Br.MI->setDesc(TII->get(NewOpc));
+      MachineBasicBlock *MBB = Br.MI->getParent();
+      BBSizes[MBB->getNumber()] -= 2;
+      AdjustBBOffsetsAfter(MBB, -2);
+      ++NumT2BrShrunk;
+      MadeChange = true;
+    }
+  }
+
+  return MadeChange;
 }
 
 
