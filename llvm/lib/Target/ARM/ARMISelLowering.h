@@ -169,6 +169,7 @@ namespace llvm {
     /// isLegalAddressingMode - Return true if the addressing mode represented
     /// by AM is legal for this target, for a load/store of the specified type.
     virtual bool isLegalAddressingMode(const AddrMode &AM, const Type *Ty)const;
+    bool isLegalT2ScaledAddressingMode(const AddrMode &AM, EVT VT) const;
 
     /// getPreIndexedAddressParts - returns true by value, base pointer and
     /// offset pointer and addressing mode by reference if the node's address
