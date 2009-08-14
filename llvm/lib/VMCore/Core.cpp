@@ -151,26 +151,48 @@ LLVMTypeKind LLVMGetTypeKind(LLVMTypeRef Ty) {
   }
 }
 
+LLVMContextRef LLVMGetTypeContext(LLVMTypeRef Ty) {
+  return wrap(&unwrap(Ty)->getContext());
+}
+
 /*--.. Operations on integer types .........................................--*/
 
-LLVMTypeRef LLVMInt1Type(void)  {
-  return (LLVMTypeRef) Type::getInt1Ty(getGlobalContext());
+LLVMTypeRef LLVMInt1TypeInContext(LLVMContextRef C)  {
+  return (LLVMTypeRef) Type::getInt1Ty(*unwrap(C));
 }
-LLVMTypeRef LLVMInt8Type(void)  {
-  return (LLVMTypeRef) Type::getInt8Ty(getGlobalContext());
+LLVMTypeRef LLVMInt8TypeInContext(LLVMContextRef C)  {
+  return (LLVMTypeRef) Type::getInt8Ty(*unwrap(C));
 }
-LLVMTypeRef LLVMInt16Type(void) {
-  return (LLVMTypeRef) Type::getInt16Ty(getGlobalContext());
+LLVMTypeRef LLVMInt16TypeInContext(LLVMContextRef C) {
+  return (LLVMTypeRef) Type::getInt16Ty(*unwrap(C));
 }
-LLVMTypeRef LLVMInt32Type(void) {
-  return (LLVMTypeRef) Type::getInt32Ty(getGlobalContext());
+LLVMTypeRef LLVMInt32TypeInContext(LLVMContextRef C) {
+  return (LLVMTypeRef) Type::getInt32Ty(*unwrap(C));
 }
-LLVMTypeRef LLVMInt64Type(void) {
-  return (LLVMTypeRef) Type::getInt64Ty(getGlobalContext());
+LLVMTypeRef LLVMInt64TypeInContext(LLVMContextRef C) {
+  return (LLVMTypeRef) Type::getInt64Ty(*unwrap(C));
+}
+LLVMTypeRef LLVMIntTypeInContext(LLVMContextRef C, unsigned NumBits) {
+  return wrap(IntegerType::get(*unwrap(C), NumBits));
 }
 
+LLVMTypeRef LLVMInt1Type(void)  {
+  return LLVMInt1TypeInContext(LLVMGetGlobalContext());
+}
+LLVMTypeRef LLVMInt8Type(void)  {
+  return LLVMInt8TypeInContext(LLVMGetGlobalContext());
+}
+LLVMTypeRef LLVMInt16Type(void) {
+  return LLVMInt16TypeInContext(LLVMGetGlobalContext());
+}
+LLVMTypeRef LLVMInt32Type(void) {
+  return LLVMInt32TypeInContext(LLVMGetGlobalContext());
+}
+LLVMTypeRef LLVMInt64Type(void) {
+  return LLVMInt64TypeInContext(LLVMGetGlobalContext());
+}
 LLVMTypeRef LLVMIntType(unsigned NumBits) {
-  return wrap(IntegerType::get(getGlobalContext(), NumBits));
+  return LLVMIntTypeInContext(LLVMGetGlobalContext(), NumBits);
 }
 
 unsigned LLVMGetIntTypeWidth(LLVMTypeRef IntegerTy) {
@@ -179,20 +201,36 @@ unsigned LLVMGetIntTypeWidth(LLVMTypeRef IntegerTy) {
 
 /*--.. Operations on real types ............................................--*/
 
+LLVMTypeRef LLVMFloatTypeInContext(LLVMContextRef C) {
+  return (LLVMTypeRef) Type::getFloatTy(*unwrap(C));
+}
+LLVMTypeRef LLVMDoubleTypeInContext(LLVMContextRef C) {
+  return (LLVMTypeRef) Type::getDoubleTy(*unwrap(C));
+}
+LLVMTypeRef LLVMX86FP80TypeInContext(LLVMContextRef C) {
+  return (LLVMTypeRef) Type::getX86_FP80Ty(*unwrap(C));
+}
+LLVMTypeRef LLVMFP128TypeInContext(LLVMContextRef C) {
+  return (LLVMTypeRef) Type::getFP128Ty(*unwrap(C));
+}
+LLVMTypeRef LLVMPPCFP128TypeInContext(LLVMContextRef C) {
+  return (LLVMTypeRef) Type::getPPC_FP128Ty(*unwrap(C));
+}
+
 LLVMTypeRef LLVMFloatType(void) {
-  return (LLVMTypeRef) Type::getFloatTy(getGlobalContext());
+  return LLVMFloatTypeInContext(LLVMGetGlobalContext());
 }
 LLVMTypeRef LLVMDoubleType(void) {
-  return (LLVMTypeRef) Type::getDoubleTy(getGlobalContext());
+  return LLVMDoubleTypeInContext(LLVMGetGlobalContext());
 }
 LLVMTypeRef LLVMX86FP80Type(void) {
-  return (LLVMTypeRef) Type::getX86_FP80Ty(getGlobalContext());
+  return LLVMX86FP80TypeInContext(LLVMGetGlobalContext());
 }
 LLVMTypeRef LLVMFP128Type(void) {
-  return (LLVMTypeRef) Type::getFP128Ty(getGlobalContext());
+  return LLVMFP128TypeInContext(LLVMGetGlobalContext());
 }
 LLVMTypeRef LLVMPPCFP128Type(void) {
-  return (LLVMTypeRef) Type::getPPC_FP128Ty(getGlobalContext());
+  return LLVMPPCFP128TypeInContext(LLVMGetGlobalContext());
 }
 
 /*--.. Operations on function types ........................................--*/
@@ -228,15 +266,22 @@ void LLVMGetParamTypes(LLVMTypeRef FunctionTy, LLVMTypeRef *Dest) {
 
 /*--.. Operations on struct types ..........................................--*/
 
-LLVMTypeRef LLVMStructType(LLVMTypeRef *ElementTypes,
+LLVMTypeRef LLVMStructTypeInContext(LLVMContextRef C, LLVMTypeRef *ElementTypes,
                            unsigned ElementCount, int Packed) {
   std::vector<const Type*> Tys;
   for (LLVMTypeRef *I = ElementTypes,
                    *E = ElementTypes + ElementCount; I != E; ++I)
     Tys.push_back(unwrap(*I));
   
-  return wrap(StructType::get(getGlobalContext(), Tys, Packed != 0));
+  return wrap(StructType::get(*unwrap(C), Tys, Packed != 0));
 }
+
+LLVMTypeRef LLVMStructType(LLVMTypeRef *ElementTypes,
+                           unsigned ElementCount, int Packed) {
+  return LLVMStructTypeInContext(LLVMGetGlobalContext(), ElementTypes,
+                                 ElementCount, Packed);
+}
+
 
 unsigned LLVMCountStructElementTypes(LLVMTypeRef StructTy) {
   return unwrap<StructType>(StructTy)->getNumElements();
@@ -285,15 +330,24 @@ unsigned LLVMGetVectorSize(LLVMTypeRef VectorTy) {
 
 /*--.. Operations on other types ...........................................--*/
 
-LLVMTypeRef LLVMVoidType(void)  {
-  return (LLVMTypeRef) Type::getVoidTy(getGlobalContext());
+LLVMTypeRef LLVMVoidTypeInContext(LLVMContextRef C)  {
+  return wrap(Type::getVoidTy(*unwrap(C)));
 }
-LLVMTypeRef LLVMLabelType(void) {
-  return (LLVMTypeRef) Type::getLabelTy(getGlobalContext());
+LLVMTypeRef LLVMLabelTypeInContext(LLVMContextRef C) {
+  return wrap(Type::getLabelTy(*unwrap(C)));
+}
+LLVMTypeRef LLVMOpaqueTypeInContext(LLVMContextRef C) {
+  return wrap(OpaqueType::get(*unwrap(C)));
 }
 
+LLVMTypeRef LLVMVoidType(void)  {
+  return LLVMVoidTypeInContext(LLVMGetGlobalContext());
+}
+LLVMTypeRef LLVMLabelType(void) {
+  return LLVMLabelTypeInContext(LLVMGetGlobalContext());
+}
 LLVMTypeRef LLVMOpaqueType(void) {
-  return wrap(OpaqueType::get(getGlobalContext()));
+  return LLVMOpaqueTypeInContext(LLVMGetGlobalContext());
 }
 
 /*--.. Operations on type handles ..........................................--*/
@@ -388,15 +442,15 @@ LLVMValueRef LLVMConstInt(LLVMTypeRef IntTy, unsigned long long N,
 
 static const fltSemantics &SemanticsForType(Type *Ty) {
   assert(Ty->isFloatingPoint() && "Type is not floating point!");
-  if (Ty == Type::getFloatTy(getGlobalContext()))
+  if (Ty == Type::getFloatTy(Ty->getContext()))
     return APFloat::IEEEsingle;
-  if (Ty == Type::getDoubleTy(getGlobalContext()))
+  if (Ty == Type::getDoubleTy(Ty->getContext()))
     return APFloat::IEEEdouble;
-  if (Ty == Type::getX86_FP80Ty(getGlobalContext()))
+  if (Ty == Type::getX86_FP80Ty(Ty->getContext()))
     return APFloat::x87DoubleExtended;
-  if (Ty == Type::getFP128Ty(getGlobalContext()))
+  if (Ty == Type::getFP128Ty(Ty->getContext()))
     return APFloat::IEEEquad;
-  if (Ty == Type::getPPC_FP128Ty(getGlobalContext()))
+  if (Ty == Type::getPPC_FP128Ty(Ty->getContext()))
     return APFloat::PPCDoubleDouble;
   return APFloat::Bogus;
 }
@@ -416,26 +470,36 @@ LLVMValueRef LLVMConstRealOfString(LLVMTypeRef RealTy, const char *Text) {
 
 /*--.. Operations on composite constants ...................................--*/
 
-LLVMValueRef LLVMConstString(const char *Str, unsigned Length,
-                             int DontNullTerminate) {
+LLVMValueRef LLVMConstStringInContext(LLVMContextRef C, const char *Str,
+                                      unsigned Length, int DontNullTerminate) {
   /* Inverted the sense of AddNull because ', 0)' is a
      better mnemonic for null termination than ', 1)'. */
-  return wrap(ConstantArray::get(getGlobalContext(), std::string(Str, Length),
+  return wrap(ConstantArray::get(*unwrap(C), std::string(Str, Length),
                                  DontNullTerminate == 0));
 }
+LLVMValueRef LLVMConstStructInContext(LLVMContextRef C, 
+                                      LLVMValueRef *ConstantVals,
+                                      unsigned Count, int Packed) {
+  return wrap(ConstantStruct::get(*unwrap(C),
+                                  unwrap<Constant>(ConstantVals, Count),
+                                  Count, Packed != 0));
+}
 
+LLVMValueRef LLVMConstString(const char *Str, unsigned Length,
+                             int DontNullTerminate) {
+  return LLVMConstStringInContext(LLVMGetGlobalContext(), Str, Length,
+                                  DontNullTerminate);
+}
 LLVMValueRef LLVMConstArray(LLVMTypeRef ElementTy,
                             LLVMValueRef *ConstantVals, unsigned Length) {
   return wrap(ConstantArray::get(ArrayType::get(unwrap(ElementTy), Length),
                                  unwrap<Constant>(ConstantVals, Length),
                                  Length));
 }
-
 LLVMValueRef LLVMConstStruct(LLVMValueRef *ConstantVals, unsigned Count,
                              int Packed) {
-  return wrap(ConstantStruct::get(getGlobalContext(),
-                                  unwrap<Constant>(ConstantVals, Count),
-                                  Count, Packed != 0));
+  return LLVMConstStructInContext(LLVMGetGlobalContext(), ConstantVals, Count,
+                                  Packed);
 }
 
 LLVMValueRef LLVMConstVector(LLVMValueRef *ScalarConstantVals, unsigned Size) {
@@ -1136,17 +1200,26 @@ LLVMBasicBlockRef LLVMGetPreviousBasicBlock(LLVMBasicBlockRef BB) {
   return wrap(--I);
 }
 
-LLVMBasicBlockRef LLVMAppendBasicBlock(LLVMValueRef FnRef, const char *Name) {
-  return wrap(BasicBlock::Create(getGlobalContext(), Name,
-                                 unwrap<Function>(FnRef)));
+LLVMBasicBlockRef LLVMAppendBasicBlockInContext(LLVMContextRef C,
+                                                LLVMValueRef FnRef,
+                                                const char *Name) {
+  return wrap(BasicBlock::Create(*unwrap(C), Name, unwrap<Function>(FnRef)));
 }
 
-LLVMBasicBlockRef LLVMInsertBasicBlock(LLVMBasicBlockRef InsertBeforeBBRef,
+LLVMBasicBlockRef LLVMAppendBasicBlock(LLVMValueRef FnRef, const char *Name) {
+  return LLVMAppendBasicBlockInContext(LLVMGetGlobalContext(), FnRef, Name);
+}
+
+LLVMBasicBlockRef LLVMInsertBasicBlockInContext(LLVMContextRef C,
+                                                LLVMBasicBlockRef BBRef,
+                                                const char *Name) {
+  BasicBlock *BB = unwrap(BBRef);
+  return wrap(BasicBlock::Create(*unwrap(C), Name, BB->getParent(), BB));
+}
+
+LLVMBasicBlockRef LLVMInsertBasicBlock(LLVMBasicBlockRef BBRef,
                                        const char *Name) {
-  BasicBlock *InsertBeforeBB = unwrap(InsertBeforeBBRef);
-  return wrap(BasicBlock::Create(getGlobalContext(), Name, 
-                                 InsertBeforeBB->getParent(),
-                                 InsertBeforeBB));
+  return LLVMInsertBasicBlockInContext(LLVMGetGlobalContext(), BBRef, Name);
 }
 
 void LLVMDeleteBasicBlock(LLVMBasicBlockRef BBRef) {
@@ -1268,8 +1341,12 @@ LLVMBasicBlockRef LLVMGetIncomingBlock(LLVMValueRef PhiNode, unsigned Index) {
 
 /*===-- Instruction builders ----------------------------------------------===*/
 
+LLVMBuilderRef LLVMCreateBuilderInContext(LLVMContextRef C) {
+  return wrap(new IRBuilder<>(*unwrap(C)));
+}
+
 LLVMBuilderRef LLVMCreateBuilder(void) {
-  return wrap(new IRBuilder<>(getGlobalContext()));
+  return LLVMCreateBuilderInContext(LLVMGetGlobalContext());
 }
 
 void LLVMPositionBuilder(LLVMBuilderRef Builder, LLVMBasicBlockRef Block,

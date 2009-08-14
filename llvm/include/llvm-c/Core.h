@@ -49,7 +49,7 @@ extern "C" {
 /**
  * The top-level container for all LLVM global data.  See the LLVMContext class.
  */
-typedef struct LLVMCtxt *LLVMContextRef;
+typedef struct LLVMOpaqueContext *LLVMContextRef;
 
 /**
  * The top-level container for all other LLVM Intermediate Representation (IR)
@@ -255,7 +255,17 @@ void LLVMDumpModule(LLVMModuleRef M);
 /** See llvm::LLVMTypeKind::getTypeID. */
 LLVMTypeKind LLVMGetTypeKind(LLVMTypeRef Ty);
 
+/** See llvm::LLVMType::getContext. */
+LLVMContextRef LLVMGetTypeContext(LLVMTypeRef Ty);
+
 /* Operations on integer types */
+LLVMTypeRef LLVMInt1TypeInContext(LLVMContextRef C);
+LLVMTypeRef LLVMInt8TypeInContext(LLVMContextRef C);
+LLVMTypeRef LLVMInt16TypeInContext(LLVMContextRef C);
+LLVMTypeRef LLVMInt32TypeInContext(LLVMContextRef C);
+LLVMTypeRef LLVMInt64TypeInContext(LLVMContextRef C);
+LLVMTypeRef LLVMIntTypeInContext(LLVMContextRef C, unsigned NumBits);
+
 LLVMTypeRef LLVMInt1Type(void);
 LLVMTypeRef LLVMInt8Type(void);
 LLVMTypeRef LLVMInt16Type(void);
@@ -265,6 +275,12 @@ LLVMTypeRef LLVMIntType(unsigned NumBits);
 unsigned LLVMGetIntTypeWidth(LLVMTypeRef IntegerTy);
 
 /* Operations on real types */
+LLVMTypeRef LLVMFloatTypeInContext(LLVMContextRef C);
+LLVMTypeRef LLVMDoubleTypeInContext(LLVMContextRef C);
+LLVMTypeRef LLVMX86FP80TypeInContext(LLVMContextRef C);
+LLVMTypeRef LLVMFP128TypeInContext(LLVMContextRef C);
+LLVMTypeRef LLVMPPCFP128TypeInContext(LLVMContextRef C);
+
 LLVMTypeRef LLVMFloatType(void);
 LLVMTypeRef LLVMDoubleType(void);
 LLVMTypeRef LLVMX86FP80Type(void);
@@ -281,6 +297,8 @@ unsigned LLVMCountParamTypes(LLVMTypeRef FunctionTy);
 void LLVMGetParamTypes(LLVMTypeRef FunctionTy, LLVMTypeRef *Dest);
 
 /* Operations on struct types */
+LLVMTypeRef LLVMStructTypeInContext(LLVMContextRef C, LLVMTypeRef *ElementTypes,
+                                    unsigned ElementCount, int Packed);
 LLVMTypeRef LLVMStructType(LLVMTypeRef *ElementTypes, unsigned ElementCount,
                            int Packed);
 unsigned LLVMCountStructElementTypes(LLVMTypeRef StructTy);
@@ -298,6 +316,10 @@ unsigned LLVMGetPointerAddressSpace(LLVMTypeRef PointerTy);
 unsigned LLVMGetVectorSize(LLVMTypeRef VectorTy);
 
 /* Operations on other types */
+LLVMTypeRef LLVMVoidTypeInContext(LLVMContextRef C);
+LLVMTypeRef LLVMLabelTypeInContext(LLVMContextRef C);
+LLVMTypeRef LLVMOpaqueTypeInContext(LLVMContextRef C);
+
 LLVMTypeRef LLVMVoidType(void);
 LLVMTypeRef LLVMLabelType(void);
 LLVMTypeRef LLVMOpaqueType(void);
@@ -417,12 +439,18 @@ LLVMValueRef LLVMConstReal(LLVMTypeRef RealTy, double N);
 LLVMValueRef LLVMConstRealOfString(LLVMTypeRef RealTy, const char *Text);
 
 /* Operations on composite constants */
+LLVMValueRef LLVMConstStringInContext(LLVMContextRef C, const char *Str,
+                                      unsigned Length, int DontNullTerminate);
+LLVMValueRef LLVMConstStructInContext(LLVMContextRef C, 
+                                      LLVMValueRef *ConstantVals,
+                                      unsigned Count, int Packed);
+
 LLVMValueRef LLVMConstString(const char *Str, unsigned Length,
                              int DontNullTerminate);
 LLVMValueRef LLVMConstArray(LLVMTypeRef ElementTy,
                             LLVMValueRef *ConstantVals, unsigned Length);
 LLVMValueRef LLVMConstStruct(LLVMValueRef *ConstantVals, unsigned Count,
-                             int packed);
+                             int Packed);
 LLVMValueRef LLVMConstVector(LLVMValueRef *ScalarConstantVals, unsigned Size);
 
 /* Constant expressions */
@@ -555,6 +583,14 @@ LLVMBasicBlockRef LLVMGetLastBasicBlock(LLVMValueRef Fn);
 LLVMBasicBlockRef LLVMGetNextBasicBlock(LLVMBasicBlockRef BB);
 LLVMBasicBlockRef LLVMGetPreviousBasicBlock(LLVMBasicBlockRef BB);
 LLVMBasicBlockRef LLVMGetEntryBasicBlock(LLVMValueRef Fn);
+
+LLVMBasicBlockRef LLVMAppendBasicBlockInContext(LLVMContextRef C,
+                                                LLVMValueRef Fn,
+                                                const char *Name);
+LLVMBasicBlockRef LLVMInsertBasicBlockInContext(LLVMContextRef C,
+                                                LLVMBasicBlockRef BB,
+                                                const char *Name);
+
 LLVMBasicBlockRef LLVMAppendBasicBlock(LLVMValueRef Fn, const char *Name);
 LLVMBasicBlockRef LLVMInsertBasicBlock(LLVMBasicBlockRef InsertBeforeBB,
                                        const char *Name);
@@ -593,6 +629,7 @@ LLVMBasicBlockRef LLVMGetIncomingBlock(LLVMValueRef PhiNode, unsigned Index);
  * exclusive means of building instructions using the C interface.
  */
 
+LLVMBuilderRef LLVMCreateBuilderInContext(LLVMContextRef C);
 LLVMBuilderRef LLVMCreateBuilder(void);
 void LLVMPositionBuilder(LLVMBuilderRef Builder, LLVMBasicBlockRef Block,
                          LLVMValueRef Instr);
@@ -844,6 +881,16 @@ namespace llvm {
   #undef DEFINE_STDCXX_CONVERSION_FUNCTIONS
   #undef DEFINE_ISA_CONVERSION_FUNCTIONS
   #undef DEFINE_SIMPLE_CONVERSION_FUNCTIONS
+
+  /* Specialized opaque context conversions.
+   */
+  inline LLVMContext **unwrap(LLVMContextRef* Tys) {
+    return reinterpret_cast<LLVMContext**>(Tys);
+  }
+  
+  inline LLVMContextRef *wrap(const LLVMContext **Tys) {
+    return reinterpret_cast<LLVMContextRef*>(const_cast<LLVMContext**>(Tys));
+  }
   
   /* Specialized opaque type conversions.
    */
