@@ -205,9 +205,8 @@ inline typename cast_retty<X, Y>::ret_type cast(const Y &Val) {
 // accepted.
 //
 template <class X, class Y>
-inline typename cast_retty<X, Y>::ret_type cast_or_null(const Y &Val) {
-  typedef typename cast_retty<X, Y>::ret_type ret_type;
-  if (!Val) return ret_type();
+inline typename cast_retty<X, Y*>::ret_type cast_or_null(Y *Val) {
+  if (Val == 0) return 0;
   assert(isa<X>(Val) && "cast_or_null<Ty>() argument of incompatible type!");
   return cast<X>(Val);
 }
@@ -223,8 +222,7 @@ inline typename cast_retty<X, Y>::ret_type cast_or_null(const Y &Val) {
 
 template <class X, class Y>
 inline typename cast_retty<X, Y>::ret_type dyn_cast(const Y &Val) {
-  typedef typename cast_retty<X, Y>::ret_type ret_type;
-  return isa<X>(Val) ? cast<X, Y>(Val) : (ret_type)ret_type();
+  return isa<X>(Val) ? cast<X, Y>(Val) : 0;
 }
 
 // dyn_cast_or_null<X> - Functionally identical to dyn_cast, except that a null
@@ -232,8 +230,7 @@ inline typename cast_retty<X, Y>::ret_type dyn_cast(const Y &Val) {
 //
 template <class X, class Y>
 inline typename cast_retty<X, Y>::ret_type dyn_cast_or_null(const Y &Val) {
-  typedef typename cast_retty<X, Y>::ret_type ret_type;
-  return (Val && isa<X>(Val)) ? cast<X, Y>(Val) : (ret_type)ret_type();
+  return (Val && isa<X>(Val)) ? cast<X, Y>(Val) : 0;
 }
 
 
