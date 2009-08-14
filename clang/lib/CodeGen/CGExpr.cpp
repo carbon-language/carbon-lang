@@ -887,7 +887,7 @@ LValue CodeGenFunction::EmitArraySubscriptExpr(const ArraySubscriptExpr *E) {
   llvm::Value *Address = 0;
   if (const VariableArrayType *VAT = 
         getContext().getAsVariableArrayType(E->getType())) {
-    llvm::Value *VLASize = VLASizeMap[VAT];
+    llvm::Value *VLASize = GetVLASize(VAT);
     
     Idx = Builder.CreateMul(Idx, VLASize);
     
