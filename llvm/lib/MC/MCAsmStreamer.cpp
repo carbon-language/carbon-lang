@@ -136,11 +136,18 @@ void MCAsmStreamer::EmitAssignment(MCSymbol *Symbol, const MCValue &Value,
 
   if (MakeAbsolute) {
     OS << ".set " << Symbol << ", " << Value << '\n';
+
+    // HACK: If the value isn't already absolute, set the symbol value to
+    // itself, we want to use the .set absolute value, not the actual
+    // expression.
+    if (!Value.isAbsolute())
+      getContext().SetSymbolValue(Symbol, MCValue::get(Symbol));
+    else
+      getContext().SetSymbolValue(Symbol, Value);
   } else {
     OS << Symbol << " = " << Value << '\n';
+    getContext().SetSymbolValue(Symbol, Value);
   }
-
-  getContext().SetSymbolValue(Symbol, Value);
 }
 
 void MCAsmStreamer::EmitSymbolAttribute(MCSymbol *Symbol, 

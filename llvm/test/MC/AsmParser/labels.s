@@ -23,9 +23,9 @@ foo:
 // CHECK: addl $10, %eax
         addl "b$c", %eax
         
-        
 // CHECK: set "a 0", 11
-.set "a 0", 11
+        .set "a 0", 11
+        
 // CHECK: .long 11
         .long "a 0"
 
@@ -49,3 +49,9 @@ foo:
 
 // CHECK: .lsym "a 8",1
         .lsym "a 8", 1
+
+// CHECK: set "a 9", a - b
+        .set "a 9", a - b
+        
+// CHECK: .long "a 9"
+        .long "a 9"
