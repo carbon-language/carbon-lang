@@ -60,10 +60,12 @@ class ASTRecordLayout {
     bool PrimaryBaseWasVirtual;
 
     /// BaseOffsets - Contains a map from base classes to their offset.
-    /// FIXME: Does it make sense to store offsets for virtual base classes
-    /// here?
     /// FIXME: This should really use a SmallPtrMap, once we have one in LLVM :)
     llvm::DenseMap<const CXXRecordDecl *, uint64_t> BaseOffsets;
+
+    /// VBaseOffsets - Contains a map from vbase classes to their offset.
+    /// FIXME: This should really use a SmallPtrMap, once we have one in LLVM :)
+    llvm::DenseMap<const CXXRecordDecl *, uint64_t> VBaseOffsets;
   };
   
   /// CXXInfo - If the record layout is for a C++ record, this will have 
@@ -90,7 +92,8 @@ class ASTRecordLayout {
                   uint64_t nonvirtualsize, unsigned nonvirtualalign,
                   const CXXRecordDecl *PB, bool PBVirtual,
                   const CXXRecordDecl **bases, const uint64_t *baseoffsets,
-                  unsigned basecount)
+                  unsigned basecount, const CXXRecordDecl **vbases,
+                  const uint64_t *vbaseoffsets,unsigned vbasecount)
   : Size(size), DataSize(datasize), FieldOffsets(0), Alignment(alignment),
   FieldCount(fieldcount), CXXInfo(new CXXRecordLayoutInfo) {
     if (FieldCount > 0)  {
@@ -105,6 +108,8 @@ class ASTRecordLayout {
     CXXInfo->NonVirtualAlign = nonvirtualalign;
     for (unsigned i = 0; i != basecount; ++i)
       CXXInfo->BaseOffsets[bases[i]] = baseoffsets[i];
+    for (unsigned i = 0; i != vbasecount; ++i)
+      CXXInfo->VBaseOffsets[vbases[i]] = vbaseoffsets[i];
   }
   
   ~ASTRecordLayout() {
@@ -173,6 +178,14 @@ public:
     assert(CXXInfo->BaseOffsets.count(Base) && "Did not find base!");
     
     return CXXInfo->BaseOffsets[Base];
+  }
+
+  /// getVBaseClassOffset - Get the offset, in bits, for the given base class.
+  uint64_t getVBaseClassOffset(const CXXRecordDecl *VBase) const {
+    assert(CXXInfo && "Record layout does not have C++ specific info!");
+    assert(CXXInfo->VBaseOffsets.count(VBase) && "Did not find base!");
+    
+    return CXXInfo->VBaseOffsets[VBase];
   }
 };
 

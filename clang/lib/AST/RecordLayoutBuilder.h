@@ -42,6 +42,9 @@ class ASTRecordLayoutBuilder {
 
   llvm::SmallVector<const CXXRecordDecl *, 4> Bases;
   llvm::SmallVector<uint64_t, 4> BaseOffsets;
+
+  llvm::SmallVector<const CXXRecordDecl *, 4> VBases;
+  llvm::SmallVector<uint64_t, 4> VBaseOffsets;
   
   ASTRecordLayoutBuilder(ASTContext &Ctx);
   
@@ -68,7 +71,7 @@ class ASTRecordLayoutBuilder {
   void LayoutVtable(const CXXRecordDecl *RD,
                      llvm::SmallSet<const CXXRecordDecl*, 32> &IndirectPrimary);
   void LayoutNonVirtualBases(const CXXRecordDecl *RD);
-  void LayoutBaseNonVirtually(const CXXRecordDecl *RD);
+  void LayoutBaseNonVirtually(const CXXRecordDecl *RD, bool IsVBase);
   void LayoutVirtualBase(const CXXRecordDecl *RD);
   void LayoutVirtualBases(const CXXRecordDecl *RD,
                      llvm::SmallSet<const CXXRecordDecl*, 32> &IndirectPrimary);

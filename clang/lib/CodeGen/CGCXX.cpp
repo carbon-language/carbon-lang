@@ -703,6 +703,7 @@ void CodeGenFunction::GenerateVtableForBase(const CXXRecordDecl *RD,
 
   if (isPrimary) {
     // The virtual base offsets come first...
+    // FIXME: audit
     for (CXXRecordDecl::reverse_base_class_const_iterator i
            = Class->bases_rbegin(),
            e = Class->bases_rend(); i != e; ++i) {
@@ -710,7 +711,7 @@ void CodeGenFunction::GenerateVtableForBase(const CXXRecordDecl *RD,
         continue;
       const CXXRecordDecl *Base = 
         cast<CXXRecordDecl>(i->getType()->getAs<RecordType>()->getDecl());
-      int64_t BaseOffset = Layout.getBaseClassOffset(Base) / 8;
+      int64_t BaseOffset = Layout.getVBaseClassOffset(Base) / 8;
       llvm::Constant *m;
       m = llvm::ConstantInt::get(llvm::Type::getInt64Ty(VMContext), BaseOffset);
       m = llvm::ConstantExpr::getIntToPtr(m, Ptr8Ty);
@@ -741,7 +742,11 @@ void CodeGenFunction::GenerateVtableForBase(const CXXRecordDecl *RD,
 
   if (TopPrimary) {
     if (RD) {
-      int64_t BaseOffset = -(Layout.getBaseClassOffset(RD) / 8);
+      int64_t BaseOffset;
+      if (ForVirtualBase)
+        BaseOffset = -(Layout.getVBaseClassOffset(RD) / 8);
+      else
+        BaseOffset = -(Layout.getBaseClassOffset(RD) / 8);
       m = llvm::ConstantInt::get(llvm::Type::getInt64Ty(VMContext), BaseOffset);
       m = llvm::ConstantExpr::getIntToPtr(m, Ptr8Ty);
     }
@@ -784,13 +789,15 @@ llvm::Value *CodeGenFunction::GenerateVtable(const CXXRecordDecl *RD) {
   // The primary base comes first.
   GenerateVtableForBase(PrimaryBase, RD, rtti, methods, true,
                         PrimaryBaseWasVirtual, IndirectPrimary);
+
+  // Then come the non-virtual bases.
   for (CXXRecordDecl::base_class_const_iterator i = RD->bases_begin(),
          e = RD->bases_end(); i != e; ++i) {
     if (i->isVirtual())
       continue;
     const CXXRecordDecl *Base = 
       cast<CXXRecordDecl>(i->getType()->getAs<RecordType>()->getDecl());
-    if (Base != PrimaryBase)
+    if (Base != PrimaryBase || PrimaryBaseWasVirtual)
       GenerateVtableForBase(Base, RD, rtti, methods, false, false,
                             IndirectPrimary);
   }

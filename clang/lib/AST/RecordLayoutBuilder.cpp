@@ -51,8 +51,8 @@ ASTRecordLayoutBuilder::LayoutNonVirtualBases(const CXXRecordDecl *RD) {
       const CXXRecordDecl *Base = 
         cast<CXXRecordDecl>(i->getType()->getAs<RecordType>()->getDecl());
       // Skip the PrimaryBase here, as it is laid down first.
-      if (Base != PrimaryBase)
-        LayoutBaseNonVirtually(Base);
+      if (Base != PrimaryBase || PrimaryBaseWasVirtual)
+        LayoutBaseNonVirtually(Base, false);
     }
   }
 }
@@ -77,9 +77,10 @@ void ASTRecordLayoutBuilder::SelectPrimaryForBase(const CXXRecordDecl *RD,
   const ASTRecordLayout &Layout = Ctx.getASTRecordLayout(RD);
   const CXXRecordDecl *PrimaryBase = Layout.getPrimaryBase();
   const bool PrimaryBaseWasVirtual = Layout.getPrimaryBaseWasVirtual();
-  if (PrimaryBaseWasVirtual) {
+
+  if (PrimaryBaseWasVirtual)
     IndirectPrimary.insert(PrimaryBase);
-  }
+
   for (CXXRecordDecl::base_class_const_iterator i = RD->bases_begin(),
        e = RD->bases_end(); i != e; ++i) {
     const CXXRecordDecl *Base = 
@@ -163,7 +164,7 @@ void ASTRecordLayoutBuilder::SelectPrimaryBase(const CXXRecordDecl *RD,
 }
 
 void ASTRecordLayoutBuilder::LayoutVirtualBase(const CXXRecordDecl *RD) {
-  LayoutBaseNonVirtually(RD);
+  LayoutBaseNonVirtually(RD, true);
 }
 
 void ASTRecordLayoutBuilder::LayoutVirtualBases(const CXXRecordDecl *RD,
@@ -182,7 +183,8 @@ void ASTRecordLayoutBuilder::LayoutVirtualBases(const CXXRecordDecl *RD,
   }
 }
 
-void ASTRecordLayoutBuilder::LayoutBaseNonVirtually(const CXXRecordDecl *RD) {
+void ASTRecordLayoutBuilder::LayoutBaseNonVirtually(const CXXRecordDecl *RD,
+  bool IsVirtualBase) {
   const ASTRecordLayout &BaseInfo = Ctx.getASTRecordLayout(RD);
     assert(BaseInfo.getDataSize() > 0 && 
            "FIXME: Handle empty classes.");
@@ -193,9 +195,14 @@ void ASTRecordLayoutBuilder::LayoutBaseNonVirtually(const CXXRecordDecl *RD) {
   // Round up the current record size to the base's alignment boundary.
   Size = (Size + (BaseAlign-1)) & ~(BaseAlign-1);
 
-  // Add base class offsets.
-  Bases.push_back(RD);
-  BaseOffsets.push_back(Size);
+    // Add base class offsets.
+  if (IsVirtualBase) {
+    VBases.push_back(RD);
+    VBaseOffsets.push_back(Size);
+  } else {
+    Bases.push_back(RD);
+    BaseOffsets.push_back(Size);
+  }
 
   // Reserve space for this base.
   Size += BaseSize;
@@ -229,7 +236,7 @@ void ASTRecordLayoutBuilder::Layout(const RecordDecl *D) {
     if (PrimaryBase) {
       if (PrimaryBaseWasVirtual)
         IndirectPrimary.insert(PrimaryBase);
-      LayoutBaseNonVirtually(PrimaryBase);
+      LayoutBaseNonVirtually(PrimaryBase, PrimaryBaseWasVirtual);
     }
     LayoutNonVirtualBases(RD);
   }
@@ -406,6 +413,8 @@ ASTRecordLayoutBuilder::ComputeLayout(ASTContext &Ctx,
   
   assert(Builder.Bases.size() == Builder.BaseOffsets.size() && 
          "Base offsets vector must be same size as bases vector!");
+  assert(Builder.VBases.size() == Builder.VBaseOffsets.size() && 
+         "Base offsets vector must be same size as bases vector!");
 
   // FIXME: This should be done in FinalizeLayout.
   uint64_t DataSize = 
@@ -422,7 +431,10 @@ ASTRecordLayoutBuilder::ComputeLayout(ASTContext &Ctx,
                              Builder.PrimaryBaseWasVirtual,
                              Builder.Bases.data(),
                              Builder.BaseOffsets.data(),
-                             Builder.Bases.size());
+                             Builder.Bases.size(),
+                             Builder.VBases.data(),
+                             Builder.VBaseOffsets.data(),
+                             Builder.VBases.size());
 }
 
 const ASTRecordLayout *
