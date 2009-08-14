@@ -356,7 +356,7 @@ void ELFWriter::EmitGlobal(const GlobalValue *GV) {
     unsigned Size = TD->getTypeAllocSize(GVar->getInitializer()->getType());
     GblSym->Size = Size;
 
-    if (S->IsCommon()) { // Symbol must go to a common section
+    if (S->HasCommonSymbols()) { // Symbol must go to a common section
       GblSym->SectionIdx = ELFSection::SHN_COMMON;
 
       // A new linkonce section is created for each global in the

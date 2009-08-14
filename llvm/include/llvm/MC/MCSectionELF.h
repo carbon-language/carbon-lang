@@ -52,8 +52,10 @@ public:
   /// ShouldPrintSectionType - Only prints the section type if supported
   bool ShouldPrintSectionType(unsigned Ty) const;
 
-  /// IsCommon - True if this section contains only common symbols
-  bool IsCommon() const;
+  /// HasCommonSymbols - True if this section holds common symbols, this is
+  /// indicated on the ELF object file by a symbol with SHN_COMMON section 
+  /// header index.
+  bool HasCommonSymbols() const;
   
   /// These are the section type and flags fields.  An ELF section can have
   /// only one Type, but can have more than one of the flags specified.

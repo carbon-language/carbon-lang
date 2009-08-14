@@ -122,8 +122,10 @@ void MCSectionELF::PrintSwitchToSection(const TargetAsmInfo &TAI,
   OS << '\n';
 }
 
-// IsCommon - True if this section contains only common symbols
-bool MCSectionELF::IsCommon() const {
+// HasCommonSymbols - True if this section holds common symbols, this is
+// indicated on the ELF object file by a symbol with SHN_COMMON section 
+// header index.
+bool MCSectionELF::HasCommonSymbols() const {
   
   if (strncmp(SectionName.c_str(), ".gnu.linkonce.", 14) == 0)
     return true;
