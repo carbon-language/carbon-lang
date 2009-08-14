@@ -10,8 +10,7 @@ tablegen(MSP430GenDAGISel.inc -gen-dag-isel)
 tablegen(MSP430GenCallingConv.inc -gen-callingconv)
 tablegen(MSP430GenSubtarget.inc -gen-subtarget)
 
-add_llvm_target(MSP430
-  MSP430AsmPrinter.cpp
+add_llvm_target(MSP430CodeGen
   MSP430ISelDAGToDAG.cpp
   MSP430RegisterInfo.cpp
   MSP430TargetAsmInfo.cpp
@@ -21,4 +20,4 @@ add_llvm_target(MSP430
   MSP430TargetMachine.cpp
   )
 
-target_link_libraries (LLVMMSP430 LLVMSelectionDAG)
+target_link_libraries (LLVMMSP430CodeGen LLVMSelectionDAG)
