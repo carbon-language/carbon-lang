@@ -10,5 +10,6 @@
 
 @interface INTF
   @property NSDictionary* undoAction;  // expected-warning {{no 'assign', 'retain', or 'copy' attribute is specified - 'assign' is assumed}} // expected-warning {{default assign attribute on property 'undoAction' which implements NSCopying protocol is not appropriate with}}
+  @property id okAction;  // expected-warning {{no 'assign', 'retain', or 'copy' attribute is specified - 'assign' is assumed}}
 @end
 

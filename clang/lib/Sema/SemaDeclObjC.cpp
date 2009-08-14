@@ -1931,14 +1931,16 @@ Sema::DeclPtrTy Sema::ActOnProperty(Scope *S, SourceLocation AtLoc,
       isAssign && !(Attributes & ObjCDeclSpec::DQ_PR_assign))
       if (T->isObjCObjectPointerType()) {
         QualType InterfaceTy = T->getPointeeType();
-        ObjCInterfaceDecl *IDecl= 
-          InterfaceTy->getAsObjCInterfaceType()->getDecl();
+        if (const ObjCInterfaceType *OIT = 
+              InterfaceTy->getAsObjCInterfaceType()) {
+        ObjCInterfaceDecl *IDecl = OIT->getDecl();
         if (IDecl)
           if (ObjCProtocolDecl* PNSCopying = 
                 LookupProtocol(&Context.Idents.get("NSCopying")))
             if (IDecl->ClassImplementsProtocol(PNSCopying, true))
               Diag(AtLoc, diag::warn_implements_nscopying)  
                 << FD.D.getIdentifier();
+        }
       }
   if (T->isObjCInterfaceType())
     Diag(FD.D.getIdentifierLoc(), diag::err_statically_allocated_object);
