@@ -12,7 +12,10 @@
 // RUN: clang-cc %s -Werror=#warnings 2>&1 | grep "error:" &&
 
 // -Wno-error= overrides -Werror.  rdar://3158301
-// RUN: clang-cc %s -Werror -Wno-error=#warnings 2>&1 | grep "warning:"
+// RUN: clang-cc %s -Werror -Wno-error=#warnings 2>&1 | grep "warning:" &&
+
+// -Wno-error overrides -Werror.  PR4715
+// RUN: clang-cc %s -Werror -Wno-error 2>&1 | grep "warning:"
 
 #warning foo
 

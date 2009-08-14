@@ -90,7 +90,7 @@ bool clang::ProcessWarningOptions(Diagnostic &Diags,
       }
       
       if (Specifier == 0) {
-        Diags.setWarningsAsErrors(true);
+        Diags.setWarningsAsErrors(isPositive);
         continue;
       }
       
