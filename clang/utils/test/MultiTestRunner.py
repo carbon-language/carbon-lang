@@ -106,6 +106,8 @@ class TestingProgressDisplay:
             print tr.output
             print "*" * 20
 
+        sys.stdout.flush()
+
 class TestResult:
     def __init__(self, path, code, output, elapsed):
         self.path = path
