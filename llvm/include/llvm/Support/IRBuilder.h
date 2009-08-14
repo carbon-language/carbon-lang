@@ -127,34 +127,42 @@ public:
   // Type creation methods
   //===--------------------------------------------------------------------===//
 
+  /// getInt1Ty - Fetch the type representing a single bit
   const Type *getInt1Ty() {
     return Type::getInt1Ty(Context);
   }
   
+  /// getInt8Ty - Fetch the type representing an 8-bit integer.
   const Type *getInt8Ty() {
     return Type::getInt8Ty(Context);
   }
   
+  /// getInt16Ty - Fetch the type representing a 16-bit integer.
   const Type *getInt16Ty() {
     return Type::getInt16Ty(Context);
   }
   
+  /// getInt32Ty - Fetch the type resepresenting a 32-bit integer.
   const Type *getInt32Ty() {
     return Type::getInt32Ty(Context);
   }
   
+  /// getInt64Ty - Fetch the type representing a 64-bit integer.
   const Type *getInt64Ty() {
     return Type::getInt64Ty(Context);
   }
 
+  /// getFloatTy - Fetch the type representing a 32-bit floating point value.
   const Type *getFloatTy() {
     return Type::getFloatTy(Context);
   }
   
+  /// getDoubleTy - Fetch the type representing a 64-bit floating point value.
   const Type *getDoubleTy() {
     return Type::getDoubleTy(Context);
   }
   
+  /// getVoidTy - Fetch the type representing void.
   const Type *getVoidTy() {
     return Type::getVoidTy(Context);
   }
