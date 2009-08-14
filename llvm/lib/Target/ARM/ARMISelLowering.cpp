@@ -2464,7 +2464,7 @@ static SDValue LowerVECTOR_SHUFFLE(SDValue Op, SelectionDAG &DAG) {
   if (isVREVMask(SVN, 16))
     return DAG.getNode(ARMISD::VREV16, dl, VT, SVN->getOperand(0));
 
-  return Op;
+  return SDValue();
 }
 
 static SDValue LowerSCALAR_TO_VECTOR(SDValue Op, SelectionDAG &DAG) {
