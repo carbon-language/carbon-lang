@@ -5,6 +5,11 @@
   </div>
 
   <div class="submenu">
+   <label>Events</label>
+   <a href="http://llvm.org/devmtg/2009-10">October 2, 2009 - LLVM/Clang Developers' Meeting</a>
+  </div>
+
+  <div class="submenu">
     <label>Quick Links</label>
     <a href="/index.html">About the Analyzer</a>
     <a href="/filing_bugs.html">Filing Bugs</a>    
