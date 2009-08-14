@@ -262,22 +262,22 @@ add_subdirectory(lib/MC)
 
 add_subdirectory(utils/FileCheck)
 
- set(LLVM_ENUM_ASM_PRINTERS "")
- set(LLVM_ENUM_ASM_PARSERS "")
- foreach(t ${LLVM_TARGETS_TO_BUILD})
+set(LLVM_ENUM_ASM_PRINTERS "")
+set(LLVM_ENUM_ASM_PARSERS "")
+foreach(t ${LLVM_TARGETS_TO_BUILD})
   message(STATUS "Targeting ${t}")
   add_subdirectory(lib/Target/${t})
   add_subdirectory(lib/Target/${t}/TargetInfo)
   if( EXISTS ${LLVM_MAIN_SRC_DIR}/lib/Target/${t}/AsmPrinter/CMakeLists.txt )
-   add_subdirectory(lib/Target/${t}/AsmPrinter)
+    add_subdirectory(lib/Target/${t}/AsmPrinter)
     set(LLVM_ENUM_ASM_PRINTERS 
-        "${LLVM_ENUM_ASM_PRINTERS}LLVM_ASM_PRINTER(${t})\n")
- endif( EXISTS ${LLVM_MAIN_SRC_DIR}/lib/Target/${t}/AsmPrinter/CMakeLists.txt )
+      "${LLVM_ENUM_ASM_PRINTERS}LLVM_ASM_PRINTER(${t})\n")
+  endif( EXISTS ${LLVM_MAIN_SRC_DIR}/lib/Target/${t}/AsmPrinter/CMakeLists.txt )
   if( EXISTS ${LLVM_MAIN_SRC_DIR}/lib/Target/${t}/AsmParser/CMakeLists.txt )
-   add_subdirectory(lib/Target/${t}/AsmParser)
+    add_subdirectory(lib/Target/${t}/AsmParser)
     set(LLVM_ENUM_ASM_PARSERS 
-        "${LLVM_ENUM_ASM_PARSERS}LLVM_ASM_PARSER(${t})\n")
- endif( EXISTS ${LLVM_MAIN_SRC_DIR}/lib/Target/${t}/AsmParser/CMakeLists.txt )
+      "${LLVM_ENUM_ASM_PARSERS}LLVM_ASM_PARSER(${t})\n")
+  endif( EXISTS ${LLVM_MAIN_SRC_DIR}/lib/Target/${t}/AsmParser/CMakeLists.txt )
 endforeach(t)
 
 # Produce llvm/Config/AsmPrinters.def
