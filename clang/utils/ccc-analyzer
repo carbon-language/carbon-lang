@@ -539,11 +539,20 @@ foreach (my $i = 0; $i < scalar(@ARGV); ++$i) {
     open(IN, $ARGV[$i+1]);
     while (<IN>) { s/\015?\012//; push @Files,$_; }
     close(IN);
-    ++$i; next;
+    ++$i;
+    next;
   }
   
+  # Handle -Wno-.  We don't care about extra warnings, but
+  # we should suppress ones that we don't want to see.
+  if ($Arg =~ /^-Wno-/) {
+    push @CompileOpts, $Arg;
+    next;
+  }
+
   if (!($Arg =~ /^-/)) {
-    push @Files,$Arg; next;
+    push @Files, $Arg;
+    next;
   }
 }
 
