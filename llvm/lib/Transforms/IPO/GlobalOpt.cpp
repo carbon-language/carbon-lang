@@ -58,7 +58,6 @@ STATISTIC(NumAliasesRemoved, "Number of global aliases eliminated");
 namespace {
   struct VISIBILITY_HIDDEN GlobalOpt : public ModulePass {
     virtual void getAnalysisUsage(AnalysisUsage &AU) const {
-      AU.addRequired<TargetData>();
     }
     static char ID; // Pass identification, replacement for typeid
     GlobalOpt() : ModulePass(&ID) {}
@@ -1446,7 +1445,7 @@ static GlobalVariable *PerformHeapAllocSRoA(GlobalVariable *GV, MallocInst *MI,
 static bool TryToOptimizeStoreOfMallocToGlobal(GlobalVariable *GV,
                                                MallocInst *MI,
                                                Module::global_iterator &GVI,
-                                               TargetData &TD,
+                                               TargetData *TD,
                                                LLVMContext &Context) {
   // If this is a malloc of an abstract type, don't touch it.
   if (!MI->getAllocatedType()->isSized())
@@ -1481,8 +1480,9 @@ static bool TryToOptimizeStoreOfMallocToGlobal(GlobalVariable *GV,
     // Restrict this transformation to only working on small allocations
     // (2048 bytes currently), as we don't want to introduce a 16M global or
     // something.
-    if (NElements->getZExtValue()*
-        TD.getTypeAllocSize(MI->getAllocatedType()) < 2048) {
+    if (TD &&
+        NElements->getZExtValue()*
+        TD->getTypeAllocSize(MI->getAllocatedType()) < 2048) {
       GVI = OptimizeGlobalAddressOfMalloc(GV, MI, Context);
       return true;
     }
@@ -1532,7 +1532,7 @@ static bool TryToOptimizeStoreOfMallocToGlobal(GlobalVariable *GV,
 // that only one value (besides its initializer) is ever stored to the global.
 static bool OptimizeOnceStoredGlobal(GlobalVariable *GV, Value *StoredOnceVal,
                                      Module::global_iterator &GVI,
-                                     TargetData &TD, LLVMContext &Context) {
+                                     TargetData *TD, LLVMContext &Context) {
   // Ignore no-op GEPs and bitcasts.
   StoredOnceVal = StoredOnceVal->stripPointerCasts();
 
@@ -1754,12 +1754,12 @@ bool GlobalOpt::ProcessInternalGlobal(GlobalVariable *GV,
       ++NumMarked;
       return true;
     } else if (!GV->getInitializer()->getType()->isSingleValueType()) {
-      if (GlobalVariable *FirstNewGV = SRAGlobal(GV, 
-                                                 getAnalysis<TargetData>(),
-                                                 GV->getContext())) {
-        GVI = FirstNewGV;  // Don't skip the newly produced globals!
-        return true;
-      }
+      if (TargetData *TD = getAnalysisIfAvailable<TargetData>())
+        if (GlobalVariable *FirstNewGV = SRAGlobal(GV, *TD,
+                                                   GV->getContext())) {
+          GVI = FirstNewGV;  // Don't skip the newly produced globals!
+          return true;
+        }
     } else if (GS.StoredType == GlobalStatus::isStoredOnce) {
       // If the initial value for the global was an undef value, and if only
       // one other value was stored into it, we can just change the
@@ -1789,7 +1789,8 @@ bool GlobalOpt::ProcessInternalGlobal(GlobalVariable *GV,
       // Try to optimize globals based on the knowledge that only one value
       // (besides its initializer) is ever stored to the global.
       if (OptimizeOnceStoredGlobal(GV, GS.StoredOnceValue, GVI,
-                                   getAnalysis<TargetData>(), GV->getContext()))
+                                   getAnalysisIfAvailable<TargetData>(),
+                                   GV->getContext()))
         return true;
 
       // Otherwise, if the global was not a boolean, we can shrink it to be a

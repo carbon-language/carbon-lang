@@ -61,7 +61,6 @@ namespace {
   struct VISIBILITY_HIDDEN ArgPromotion : public CallGraphSCCPass {
     virtual void getAnalysisUsage(AnalysisUsage &AU) const {
       AU.addRequired<AliasAnalysis>();
-      AU.addRequired<TargetData>();
       CallGraphSCCPass::getAnalysisUsage(AU);
     }
 
@@ -433,7 +432,8 @@ bool ArgPromotion::isSafeToPromoteArgument(Argument *Arg, bool isByVal) const {
   SmallPtrSet<BasicBlock*, 16> TranspBlocks;
 
   AliasAnalysis &AA = getAnalysis<AliasAnalysis>();
-  TargetData &TD = getAnalysis<TargetData>();
+  TargetData *TD = getAnalysisIfAvailable<TargetData>();
+  if (!TD) return false; // Without TargetData, assume the worst.
 
   for (unsigned i = 0, e = Loads.size(); i != e; ++i) {
     // Check to see if the load is invalidated from the start of the block to
@@ -443,7 +443,7 @@ bool ArgPromotion::isSafeToPromoteArgument(Argument *Arg, bool isByVal) const {
 
     const PointerType *LoadTy =
       cast<PointerType>(Load->getPointerOperand()->getType());
-    unsigned LoadSize = (unsigned)TD.getTypeStoreSize(LoadTy->getElementType());
+    unsigned LoadSize =(unsigned)TD->getTypeStoreSize(LoadTy->getElementType());
 
     if (AA.canInstructionRangeModify(BB->front(), *Load, Arg, LoadSize))
       return false;  // Pointer is invalidated!
