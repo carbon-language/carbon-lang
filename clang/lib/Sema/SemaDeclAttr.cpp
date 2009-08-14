@@ -24,13 +24,14 @@ using namespace clang;
 //  Helper functions
 //===----------------------------------------------------------------------===//
 
-static const FunctionType *getFunctionType(Decl *d, bool blocksToo = true) {
+static const FunctionType *getFunctionType(const Decl *d,
+                                           bool blocksToo = true) {
   QualType Ty;
-  if (ValueDecl *decl = dyn_cast<ValueDecl>(d))
+  if (const ValueDecl *decl = dyn_cast<ValueDecl>(d))
     Ty = decl->getType();
-  else if (FieldDecl *decl = dyn_cast<FieldDecl>(d))
+  else if (const FieldDecl *decl = dyn_cast<FieldDecl>(d))
     Ty = decl->getType();
-  else if (TypedefDecl* decl = dyn_cast<TypedefDecl>(d))
+  else if (const TypedefDecl* decl = dyn_cast<TypedefDecl>(d))
     Ty = decl->getUnderlyingType();
   else
     return 0;
@@ -47,16 +48,22 @@ static const FunctionType *getFunctionType(Decl *d, bool blocksToo = true) {
 // to provide the following bits of information.
 
 /// isFunctionOrMethod - Return true if the given decl has function
+/// type (function or function-typed variable).
+static bool isFunction(const Decl *d) {
+  return getFunctionType(d, false) != NULL;
+}
+
+/// isFunctionOrMethod - Return true if the given decl has function
 /// type (function or function-typed variable) or an Objective-C
 /// method.
-static bool isFunctionOrMethod(Decl *d) {
-  return getFunctionType(d, false) || isa<ObjCMethodDecl>(d);
+static bool isFunctionOrMethod(const Decl *d) {
+  return isFunction(d)|| isa<ObjCMethodDecl>(d);
 }
 
 /// isFunctionOrMethodOrBlock - Return true if the given decl has function
 /// type (function or function-typed variable) or an Objective-C
 /// method or a block.
-static bool isFunctionOrMethodOrBlock(Decl *d) {
+static bool isFunctionOrMethodOrBlock(const Decl *d) {
   if (isFunctionOrMethod(d))
     return true;
   // check for block is more involved.
@@ -70,7 +77,7 @@ static bool isFunctionOrMethodOrBlock(Decl *d) {
 /// hasFunctionProto - Return true if the given decl has a argument
 /// information. This decl should have already passed
 /// isFunctionOrMethod or isFunctionOrMethodOrBlock.
-static bool hasFunctionProto(Decl *d) {
+static bool hasFunctionProto(const Decl *d) {
   if (const FunctionType *FnTy = getFunctionType(d))
     return isa<FunctionProtoType>(FnTy);
   else {
@@ -82,7 +89,7 @@ static bool hasFunctionProto(Decl *d) {
 /// getFunctionOrMethodNumArgs - Return number of function or method
 /// arguments. It is an error to call this on a K&R function (use
 /// hasFunctionProto first).
-static unsigned getFunctionOrMethodNumArgs(Decl *d) {
+static unsigned getFunctionOrMethodNumArgs(const Decl *d) {
   if (const FunctionType *FnTy = getFunctionType(d))
     return cast<FunctionProtoType>(FnTy)->getNumArgs();
   if (const BlockDecl *BD = dyn_cast<BlockDecl>(d))
@@ -90,7 +97,7 @@ static unsigned getFunctionOrMethodNumArgs(Decl *d) {
   return cast<ObjCMethodDecl>(d)->param_size();
 }
 
-static QualType getFunctionOrMethodArgType(Decl *d, unsigned Idx) {
+static QualType getFunctionOrMethodArgType(const Decl *d, unsigned Idx) {
   if (const FunctionType *FnTy = getFunctionType(d))
     return cast<FunctionProtoType>(FnTy)->getArgType(Idx);
   if (const BlockDecl *BD = dyn_cast<BlockDecl>(d))
@@ -99,13 +106,13 @@ static QualType getFunctionOrMethodArgType(Decl *d, unsigned Idx) {
   return cast<ObjCMethodDecl>(d)->param_begin()[Idx]->getType();
 }
 
-static QualType getFunctionOrMethodResultType(Decl *d) {
+static QualType getFunctionOrMethodResultType(const Decl *d) {
   if (const FunctionType *FnTy = getFunctionType(d))
     return cast<FunctionProtoType>(FnTy)->getResultType();
   return cast<ObjCMethodDecl>(d)->getResultType();
 }
 
-static bool isFunctionOrMethodVariadic(Decl *d) {
+static bool isFunctionOrMethodVariadic(const Decl *d) {
   if (const FunctionType *FnTy = getFunctionType(d)) {
     const FunctionProtoType *proto = cast<FunctionProtoType>(FnTy);
     return proto->isVariadic();
@@ -431,17 +438,18 @@ static void HandleMallocAttr(Decl *d, const AttributeList &Attr, Sema &S) {
     return;
   }
 
-  if (!isFunctionOrMethod(d)) {
+  if (!isFunction(d)) {
     S.Diag(Attr.getLoc(), diag::warn_attribute_wrong_decl_type)
       << Attr.getName() << 0 /*function*/;
     return;
   }
 
-  if (FunctionDecl *FD = dyn_cast<FunctionDecl>(d)) {
-    if (!FD->getResultType()->isPointerType()) {
-      S.Diag(Attr.getLoc(), diag::warn_attribute_malloc_pointer_only);
-      return;
-    }
+  const FunctionDecl *FD = cast<FunctionDecl>(d);
+  QualType RetTy = FD->getResultType();
+  
+  if (!(RetTy->isAnyPointerType() || RetTy->isBlockPointerType())) {
+    S.Diag(Attr.getLoc(), diag::warn_attribute_malloc_pointer_only);
+    return;
   }
 
   d->addAttr(::new (S.Context) MallocAttr());
