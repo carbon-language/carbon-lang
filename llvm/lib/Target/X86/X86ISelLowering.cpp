@@ -1328,17 +1328,25 @@ X86TargetLowering::LowerMemArgument(SDValue Chain,
   ISD::ArgFlagsTy Flags = Ins[i].Flags;
   bool AlwaysUseMutable = (CallConv==CallingConv::Fast) && PerformTailCallOpt;
   bool isImmutable = !AlwaysUseMutable && !Flags.isByVal();
+  EVT ValVT;
+
+  // If value is passed by pointer we have address passed instead of the value
+  // itself.
+  if (VA.getLocInfo() == CCValAssign::Indirect)
+    ValVT = VA.getLocVT();
+  else
+    ValVT = VA.getValVT();
 
   // FIXME: For now, all byval parameter objects are marked mutable. This can be
   // changed with more analysis.
   // In case of tail call optimization mark all arguments mutable. Since they
   // could be overwritten by lowering of arguments in case of a tail call.
-  int FI = MFI->CreateFixedObject(VA.getValVT().getSizeInBits()/8,
+  int FI = MFI->CreateFixedObject(ValVT.getSizeInBits()/8,
                                   VA.getLocMemOffset(), isImmutable);
   SDValue FIN = DAG.getFrameIndex(FI, getPointerTy());
   if (Flags.isByVal())
     return FIN;
-  return DAG.getLoad(VA.getValVT(), dl, Chain, FIN,
+  return DAG.getLoad(ValVT, dl, Chain, FIN,
                      PseudoSourceValue::getFixedStack(FI), 0);
 }
 
