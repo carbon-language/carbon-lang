@@ -36,9 +36,6 @@
 
 using namespace llvm;
 
-static const unsigned arm_dsubreg_0 = 5;
-static const unsigned arm_dsubreg_1 = 6;
-
 //===--------------------------------------------------------------------===//
 /// ARMDAGToDAGISel - ARM specific code to select ARM machine
 /// instructions for SelectionDAG operations.
@@ -1305,44 +1302,6 @@ SDNode *ARMDAGToDAGISel::Select(SDValue Op) {
     SDValue Ops[] = { Tmp1, Tmp2, Chain };
     return CurDAG->getTargetNode(TargetInstrInfo::DECLARE, dl,
                                  MVT::Other, Ops, 3);
-  }
-
-  case ISD::VECTOR_SHUFFLE: {
-    EVT VT = Op.getValueType();
-
-    // Match 128-bit splat to VDUPLANEQ.  (This could be done with a Pat in
-    // ARMInstrNEON.td but it is awkward because the shuffle mask needs to be
-    // transformed first into a lane number and then to both a subregister
-    // index and an adjusted lane number.)  If the source operand is a
-    // SCALAR_TO_VECTOR, leave it so it will be matched later as a VDUP.
-    ShuffleVectorSDNode *SVOp = cast<ShuffleVectorSDNode>(N);
-    if (VT.is128BitVector() && SVOp->isSplat() &&
-        Op.getOperand(0).getOpcode() != ISD::SCALAR_TO_VECTOR &&
-        Op.getOperand(1).getOpcode() == ISD::UNDEF) {
-      unsigned LaneVal = SVOp->getSplatIndex();
-
-      EVT HalfVT;
-      unsigned Opc = 0;
-      switch (VT.getVectorElementType().getSimpleVT().SimpleTy) {
-      default: llvm_unreachable("unhandled VDUP splat type");
-      case MVT::i8:  Opc = ARM::VDUPLN8q;  HalfVT = MVT::v8i8; break;
-      case MVT::i16: Opc = ARM::VDUPLN16q; HalfVT = MVT::v4i16; break;
-      case MVT::i32: Opc = ARM::VDUPLN32q; HalfVT = MVT::v2i32; break;
-      case MVT::f32: Opc = ARM::VDUPLNfq;  HalfVT = MVT::v2f32; break;
-      }
-
-      // The source operand needs to be changed to a subreg of the original
-      // 128-bit operand, and the lane number needs to be adjusted accordingly.
-      unsigned NumElts = VT.getVectorNumElements() / 2;
-      unsigned SRVal = (LaneVal < NumElts ? arm_dsubreg_0 : arm_dsubreg_1);
-      SDValue SR = CurDAG->getTargetConstant(SRVal, MVT::i32);
-      SDValue NewLane = CurDAG->getTargetConstant(LaneVal % NumElts, MVT::i32);
-      SDNode *SubReg = CurDAG->getTargetNode(TargetInstrInfo::EXTRACT_SUBREG,
-                                             dl, HalfVT, N->getOperand(0), SR);
-      return CurDAG->SelectNodeTo(N, Opc, VT, SDValue(SubReg, 0), NewLane);
-    }
-
-    break;
   }
 
   case ARMISD::VLD2D: {

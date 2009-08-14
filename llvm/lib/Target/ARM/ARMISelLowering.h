@@ -115,8 +115,8 @@ namespace llvm {
       VGETLANEu,    // zero-extend vector extract element
       VGETLANEs,    // sign-extend vector extract element
 
-      // Vector duplicate lane (128-bit result only; 64-bit is a shuffle)
-      VDUPLANEQ,    // splat a lane from a 64-bit vector to a 128-bit vector
+      // Vector duplicate lane:
+      VDUPLANE,
 
       // Vector load/store with (de)interleaving
       VLD2D,
