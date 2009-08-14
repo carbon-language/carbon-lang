@@ -240,7 +240,7 @@
 
           <p>Once the arguments are parsed, the tree of subprocess
             jobs needed for the desired compilation sequence are
-            constructed. This involves determing the input files and
+            constructed. This involves determining the input files and
             their types, what work is to be done on them (preprocess,
             compile, assemble, link, etc.), and constructing a list of
             Action instances for each task. The result is a list of
@@ -312,7 +312,7 @@
             to run. Conceptually, the driver performs a top down
             matching to assign Action(s) to Tools. The ToolChain is
             responsible for selecting the tool to perform a particular
-            action; once seleected the driver interacts with the tool
+            action; once selected the driver interacts with the tool
             to see if it can match additional actions (for example, by
             having an integrated preprocessor).
 
@@ -397,7 +397,7 @@
 
       <p>The driver constructs a Compilation object for each set of
         command line arguments. The Driver itself is intended to be
-        invariant during construct of a Compilation; an IDE should be
+        invariant during construction of a Compilation; an IDE should be
         able to construct a single long lived driver instance to use
         for an entire build, for example.</p>
 
@@ -409,7 +409,7 @@
 
       <h4 id="int_unified_parsing">Unified Parsing &amp; Pipelining</h4>
 
-      <p>Parsing and pipeling both occur without reference to a
+      <p>Parsing and pipelining both occur without reference to a
         Compilation instance. This is by design; the driver expects that
         both of these phases are platform neutral, with a few very well
         defined exceptions such as whether the platform uses a driver
@@ -425,11 +425,11 @@
         stop seeing some arguments the user provided, and see new ones
         instead).</p>
 
-      <p>For example, on Darwin <tt>-gfull</tt> gets translated into
-        two separate arguments, <tt>-g</tt>
-        and <tt>-fno-eliminate-unused-debug-symbols</tt>. Trying to
-        write Tool logic to do something with <tt>-gfull</tt> will not
-        work, because at Tools run after the arguments have been
+      <p>For example, on Darwin <tt>-gfull</tt> gets translated into two
+        separate arguments, <tt>-g</tt>
+        and <tt>-fno-eliminate-unused-debug-symbols</tt>. Trying to write Tool
+        logic to do something with <tt>-gfull</tt> will not work, because Tool
+        argument translation is done after the arguments have been
         translated.</p>
 
       <p>A long term goal is to remove this tool chain specific
