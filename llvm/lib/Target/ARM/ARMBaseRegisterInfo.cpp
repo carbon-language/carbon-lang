@@ -440,6 +440,13 @@ bool ARMBaseRegisterInfo::hasFP(const MachineFunction &MF) const {
           MFI->isFrameAddressTaken());
 }
 
+bool ARMBaseRegisterInfo::hasStackFrame(const MachineFunction &MF) const {
+  const MachineFrameInfo *MFI = MF.getFrameInfo();
+  if (NoFramePointerElim && MFI->hasCalls())
+    return true;
+  return MFI->hasVarSizedObjects() || MFI->isFrameAddressTaken();
+}
+
 /// estimateStackSize - Estimate and return the size of the frame.
 static unsigned estimateStackSize(MachineFunction &MF, MachineFrameInfo *MFI) {
   const MachineFrameInfo *FFI = MF.getFrameInfo();
@@ -589,7 +596,7 @@ ARMBaseRegisterInfo::processFunctionBeforeCalleeSavedScan(MachineFunction &MF,
   }
 
   bool ExtraCSSpill = false;
-  if (!CanEliminateFrame || hasFP(MF)) {
+  if (!CanEliminateFrame || hasStackFrame(MF)) {
     AFI->setHasStackFrame(true);
 
     // If LR is not spilled, but at least one of R4, R5, R6, and R7 is spilled.
