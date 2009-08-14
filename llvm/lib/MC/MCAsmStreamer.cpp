@@ -210,7 +210,7 @@ void MCAsmStreamer::EmitZerofill(MCSection *Section, MCSymbol *Symbol,
 void MCAsmStreamer::EmitBytes(const StringRef &Data) {
   assert(CurSection && "Cannot emit contents before setting section!");
   for (unsigned i = 0, e = Data.size(); i != e; ++i)
-    OS << ".byte " << (unsigned) Data[i] << '\n';
+    OS << ".byte " << (unsigned) (unsigned char) Data[i] << '\n';
 }
 
 void MCAsmStreamer::EmitValue(const MCValue &Value, unsigned Size) {

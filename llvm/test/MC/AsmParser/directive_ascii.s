@@ -31,9 +31,10 @@ TEST3:
 # CHECK: .byte 1
 # CHECK: .byte 0
 # CHECK: .byte 49
+# CHECK: .byte 128
 # CHECK: .byte 0
 TEST4:  
-        .ascii "\1\01\07\08\001\0001\b\0"
+        .ascii "\1\01\07\08\001\0001\200\0"
         
 # CHECK: TEST5:
 # CHECK: .byte 8
