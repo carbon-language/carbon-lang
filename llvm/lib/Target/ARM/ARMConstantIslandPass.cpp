@@ -32,11 +32,12 @@
 #include "llvm/ADT/Statistic.h"
 using namespace llvm;
 
-STATISTIC(NumCPEs,     "Number of constpool entries");
-STATISTIC(NumSplit,    "Number of uncond branches inserted");
-STATISTIC(NumCBrFixed, "Number of cond branches fixed");
-STATISTIC(NumUBrFixed, "Number of uncond branches fixed");
-STATISTIC(NumTBs,      "Number of table branches generated");
+STATISTIC(NumCPEs,       "Number of constpool entries");
+STATISTIC(NumSplit,      "Number of uncond branches inserted");
+STATISTIC(NumCBrFixed,   "Number of cond branches fixed");
+STATISTIC(NumUBrFixed,   "Number of uncond branches fixed");
+STATISTIC(NumTBs,        "Number of table branches generated");
+STATISTIC(NumT2CPShrunk, "Number of Thumb2 constantpool instructions shrunk");
 
 namespace {
   /// ARMConstantIslands - Due to limited PC-relative displacements, ARM
@@ -179,6 +180,8 @@ namespace {
     bool FixUpConditionalBr(MachineFunction &MF, ImmBranch &Br);
     bool FixUpUnconditionalBr(MachineFunction &MF, ImmBranch &Br);
     bool UndoLRSpillRestore();
+    bool OptimizeThumb2Instructions(MachineFunction &MF);
+    bool OptimizeThumb2Branches(MachineFunction &MF);
     bool OptimizeThumb2JumpTables(MachineFunction &MF);
 
     unsigned GetOffsetOf(MachineInstr *MI) const;
@@ -292,8 +295,9 @@ bool ARMConstantIslands::runOnMachineFunction(MachineFunction &MF) {
     MadeChange = true;
   }
 
-  // Let's see if we can use tbb / tbh to do jump tables.
-  MadeChange |= OptimizeThumb2JumpTables(MF);
+  // Shrink 32-bit Thumb2 branch, load, and store instructions.
+  if (isThumb2)
+    MadeChange |= OptimizeThumb2Instructions(MF);
 
   // After a while, this might be made debug-only, but it is not expensive.
   verify(MF);
@@ -1077,7 +1081,7 @@ bool ARMConstantIslands::HandleConstantPoolUser(MachineFunction &MF,
   unsigned Size = CPEMI->getOperand(2).getImm();
   MachineBasicBlock *NewMBB;
   // Compute this only once, it's expensive.  The 4 or 8 is the value the
-  // hardware keeps in the PC (2 insns ahead of the reference).
+  // hardware keeps in the PC.
   unsigned UserOffset = GetOffsetOf(UserMI) + (isThumb ? 4 : 8);
 
   // See if the current entry is within range, or there is a clone of it
@@ -1350,6 +1354,62 @@ bool ARMConstantIslands::UndoLRSpillRestore() {
   return MadeChange;
 }
 
+bool ARMConstantIslands::OptimizeThumb2Instructions(MachineFunction &MF) {
+  bool MadeChange = false;
+
+  // Shrink ADR and LDR from constantpool.
+  for (unsigned i = 0, e = CPUsers.size(); i != e; ++i) {
+    CPUser &U = CPUsers[i];
+    unsigned Opcode = U.MI->getOpcode();
+    unsigned NewOpc = 0;
+    unsigned Scale = 1;
+    unsigned Bits = 0;
+    switch (Opcode) {
+    default: break;
+    case ARM::t2LEApcrel:
+      if (isARMLowRegister(U.MI->getOperand(0).getReg())) {
+        NewOpc = ARM::tLEApcrel;
+        Bits = 8;
+        Scale = 4;
+      }
+      break;
+    case ARM::t2LDRpci:
+      if (isARMLowRegister(U.MI->getOperand(0).getReg())) {
+        NewOpc = ARM::tLDRpci;
+        Bits = 8;
+        Scale = 4;
+      }
+      break;
+    }
+
+    if (!NewOpc)
+      continue;
+
+    unsigned UserOffset = GetOffsetOf(U.MI) + 4;
+    unsigned MaxOffs = ((1 << Bits) - 1) * Scale;
+    // FIXME: Check if offset is multiple of scale if scale is not 4.
+    if (CPEIsInRange(U.MI, UserOffset, U.CPEMI, MaxOffs, false, true)) {
+      U.MI->setDesc(TII->get(NewOpc));
+      MachineBasicBlock *MBB = U.MI->getParent();
+      BBSizes[MBB->getNumber()] -= 2;
+      AdjustBBOffsetsAfter(MBB, -2);
+      ++NumT2CPShrunk;
+      MadeChange = true;
+    }
+  }
+
+  MadeChange |= OptimizeThumb2JumpTables(MF);
+  MadeChange |= OptimizeThumb2Branches(MF);
+  return MadeChange;
+}
+
+bool ARMConstantIslands::OptimizeThumb2Branches(MachineFunction &MF) {
+  return false;
+}
+
+
+/// OptimizeThumb2JumpTables - Use tbb / tbh instructions to generate smaller
+/// jumptables when it's possible.
 bool ARMConstantIslands::OptimizeThumb2JumpTables(MachineFunction &MF) {
   bool MadeChange = false;
 
@@ -1417,10 +1477,11 @@ bool ARMConstantIslands::OptimizeThumb2JumpTables(MachineFunction &MF) {
       if (!OptOk)
         continue;
 
-      // The previous instruction should be a t2LEApcrelJT, we want to delete
-      // it as well.
+      // The previous instruction should be a tLEApcrel or t2LEApcrelJT, we want
+      // to delete it as well.
       MachineInstr *LeaMI = --PrevI;
-      if (LeaMI->getOpcode() != ARM::t2LEApcrelJT ||
+      if ((LeaMI->getOpcode() != ARM::tLEApcrelJT &&
+           LeaMI->getOpcode() != ARM::t2LEApcrelJT) ||
           LeaMI->getOperand(0).getReg() != BaseReg)
         OptOk = false;
 

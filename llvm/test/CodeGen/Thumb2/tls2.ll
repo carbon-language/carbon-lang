@@ -1,7 +1,7 @@
 ; RUN: llvm-as < %s | llc -mtriple=thumbv7-linux-gnueabi | \
 ; RUN:     grep {i(gottpoff)}
 ; RUN: llvm-as < %s | llc -mtriple=thumbv7-linux-gnueabi | \
-; RUN:     grep {ldr.w r., \[pc, r.\]}
+; RUN:     grep {ldr r., \[pc, r.\]}
 ; RUN: llvm-as < %s | llc -mtriple=thumbv7-linux-gnueabi \
 ; RUN:     -relocation-model=pic | grep {__tls_get_addr}
 

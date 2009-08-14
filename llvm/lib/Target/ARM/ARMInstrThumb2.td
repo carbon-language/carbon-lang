@@ -434,7 +434,6 @@ def t2LEApcrelJT : T2XI<(outs GPR:$dst),
                         (ins i32imm:$label, lane_cst:$id, pred:$p), IIC_iALU,
                         "adr$p.w $dst, #${label}_${id}", []>;
 
-
 // ADD r, sp, {so_imm|i12}
 def t2ADDrSPi   : T2sI<(outs GPR:$dst), (ins GPR:$sp, t2_so_imm:$imm), IIC_iALU,
                        "add", ".w $dst, $sp, $imm", []>;

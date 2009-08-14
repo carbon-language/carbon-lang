@@ -627,11 +627,12 @@ def tMOVCCi : T1pIt<(outs GPR:$dst), (ins GPR:$lhs, i32imm:$rhs), IIC_iALU,
 
 // tLEApcrel - Load a pc-relative address into a register without offending the
 // assembler.
-def tLEApcrel : T1I<(outs tGPR:$dst), (ins i32imm:$label), IIC_iALU,
-                    "adr $dst, #$label", []>;
+def tLEApcrel : T1I<(outs tGPR:$dst), (ins i32imm:$label, pred:$p), IIC_iALU,
+                    "adr$p.n $dst, #$label", []>;
 
-def tLEApcrelJT : T1I<(outs tGPR:$dst), (ins i32imm:$label, lane_cst:$id),
-                      IIC_iALU, "adr $dst, #${label}_${id}", []>;
+def tLEApcrelJT : T1I<(outs tGPR:$dst),
+                      (ins i32imm:$label, lane_cst:$id, pred:$p),
+                      IIC_iALU, "adr$p $dst, #${label}_${id}", []>;
 
 //===----------------------------------------------------------------------===//
 // TLS Instructions
