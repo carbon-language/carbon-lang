@@ -722,8 +722,9 @@ llvm::DIType CGDebugInfo::CreateType(const ArrayType *Ty,
   QualType EltTy(Ty, 0);
   while ((Ty = dyn_cast<ArrayType>(EltTy))) {
     uint64_t Upper = 0;
-    if (const ConstantArrayType *CAT = dyn_cast<ConstantArrayType>(Ty))
-      Upper = CAT->getSize().getZExtValue() - 1;
+    if (const ConstantArrayType *CAT = dyn_cast<ConstantArrayType>(Ty)) 
+      if (CAT->getSize().getZExtValue())
+	Upper = CAT->getSize().getZExtValue() - 1;
     // FIXME: Verify this is right for VLAs.
     Subscripts.push_back(DebugFactory.GetOrCreateSubrange(0, Upper));
     EltTy = Ty->getElementType();
