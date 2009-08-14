@@ -135,6 +135,10 @@ private:
   bool ParseDirectiveFile(SMLoc DirectiveLoc); // ".file"
   bool ParseDirectiveLine(SMLoc DirectiveLoc); // ".line"
   bool ParseDirectiveLoc(SMLoc DirectiveLoc); // ".loc"
+
+  /// ParseEscapedString - Parse the current token as a string which may include
+  /// escaped characters and return the string contents.
+  bool ParseEscapedString(std::string &Data);
 };
 
 } // end namespace llvm

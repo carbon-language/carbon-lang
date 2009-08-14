@@ -765,6 +765,64 @@ bool AsmParser::ParseDirectiveSectionSwitch(const char *Segment,
   return false;
 }
 
+bool AsmParser::ParseEscapedString(std::string &Data) {
+  assert(Lexer.is(AsmToken::String) && "Unexpected current token!");
+
+  Data = "";
+  StringRef Str = Lexer.getTok().getStringContents();
+  for (unsigned i = 0, e = Str.size(); i != e; ++i) {
+    if (Str[i] != '\\') {
+      Data += Str[i];
+      continue;
+    }
+
+    // Recognize escaped characters. Note that this escape semantics currently
+    // loosely follows Darwin 'as'. Notably, it doesn't support hex escapes.
+    ++i;
+    if (i == e)
+      return TokError("unexpected backslash at end of string");
+
+    // Recognize octal sequences.
+    if ((unsigned) (Str[i] - '0') <= 7) {
+      // Consume up to three octal characters.
+      unsigned Value = Str[i] - '0';
+
+      if (i + 1 != e && ((unsigned) (Str[i + 1] - '0')) <= 7) {
+        ++i;
+        Value = Value * 8 + (Str[i] - '0');
+
+        if (i + 1 != e && ((unsigned) (Str[i + 1] - '0')) <= 7) {
+          ++i;
+          Value = Value * 8 + (Str[i] - '0');
+        }
+      }
+
+      if (Value > 255)
+        return TokError("invalid octal escape sequence (out of range)");
+
+      Data += (unsigned char) Value;
+      continue;
+    }
+
+    // Otherwise recognize individual escapes.
+    switch (Str[i]) {
+    default:
+      // Just reject invalid escape sequences for now.
+      return TokError("invalid escape sequence (unrecognized character)");
+
+    case 'b': Data += '\b'; break;
+    case 'f': Data += '\f'; break;
+    case 'n': Data += '\n'; break;
+    case 'r': Data += '\r'; break;
+    case 't': Data += '\t'; break;
+    case '"': Data += '"'; break;
+    case '\\': Data += '\\'; break;
+    }
+  }
+
+  return false;
+}
+
 /// ParseDirectiveAscii:
 ///   ::= ( .ascii | .asciz ) [ "string" ( , "string" )* ]
 bool AsmParser::ParseDirectiveAscii(bool ZeroTerminated) {
@@ -773,11 +831,11 @@ bool AsmParser::ParseDirectiveAscii(bool ZeroTerminated) {
       if (Lexer.isNot(AsmToken::String))
         return TokError("expected string in '.ascii' or '.asciz' directive");
       
-      // FIXME: This shouldn't use a const char* + strlen, the string could have
-      // embedded nulls.
-      // FIXME: Should have accessor for getting string contents.
-      StringRef Str = Lexer.getTok().getString();
-      Out.EmitBytes(Str.substr(1, Str.size() - 2));
+      std::string Data;
+      if (ParseEscapedString(Data))
+        return true;
+      
+      Out.EmitBytes(Data);
       if (ZeroTerminated)
         Out.EmitBytes(StringRef("\0", 1));
       
