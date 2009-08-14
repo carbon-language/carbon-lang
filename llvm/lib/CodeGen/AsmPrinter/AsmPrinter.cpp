@@ -1738,6 +1738,10 @@ void AsmPrinter::printOffset(int64_t Offset) const {
     O << Offset;
 }
 
+void AsmPrinter::printMCInst(const MCInst *MI) {
+  llvm_unreachable("MCInst printing unavailable on this target!");
+}
+
 GCMetadataPrinter *AsmPrinter::GetOrCreateGCPrinter(GCStrategy *S) {
   if (!S->usesMetadata())
     return 0;

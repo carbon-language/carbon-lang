@@ -67,6 +67,8 @@ class VISIBILITY_HIDDEN X86ATTAsmPrinter : public AsmPrinter {
   // New MCInst printing stuff.
   void printInstruction(const MCInst *MI);
 
+  virtual void printMCInst(const MCInst *MI) { printInstruction(MI); }
+
   void printSymbolOperand(const MachineOperand &MO);
   void printOperand(const MCInst *MI, unsigned OpNo,
                     const char *Modifier = 0);
