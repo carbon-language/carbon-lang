@@ -34,10 +34,6 @@ SMLoc AsmLexer::getLoc() const {
   return SMLoc::getFromPointer(TokStart);
 }
 
-SMLoc AsmToken::getLoc() const {
-  return SMLoc::getFromPointer(Str.data());
-}
-
 void AsmLexer::PrintMessage(SMLoc Loc, const std::string &Msg, 
                             const char *Type) const {
   SrcMgr.PrintMessage(Loc, Msg, Type);
