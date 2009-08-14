@@ -353,7 +353,7 @@ namespace {
       case Type::VoidTyID:   return "Type::VoidTy";
       case Type::IntegerTyID: {
         unsigned BitWidth = cast<IntegerType>(Ty)->getBitWidth();
-        return "IntegerType::get(" + utostr(BitWidth) + ")";
+        return "IntegerType::get(getGlobalContext(), " + utostr(BitWidth) + ")";
       }
       case Type::X86_FP80TyID: return "Type::X86_FP80Ty";
       case Type::FloatTyID:    return "Type::FloatTy";
@@ -750,9 +750,10 @@ namespace {
 
     if (const ConstantInt *CI = dyn_cast<ConstantInt>(CV)) {
       std::string constValue = CI->getValue().toString(10, true);
-      Out << "ConstantInt* " << constName << " = ConstantInt::get(APInt("
-          << cast<IntegerType>(CI->getType())->getBitWidth() << ",  \""
-          <<  constValue << "\", " << constValue.length() << ", 10));";
+      Out << "ConstantInt* " << constName
+          << " = ConstantInt::get(getGlobalContext(), APInt("
+          << cast<IntegerType>(CI->getType())->getBitWidth()
+          << ",  StringRef(\"" <<  constValue << "\"), 10));";
     } else if (isa<ConstantAggregateZero>(CV)) {
       Out << "ConstantAggregateZero* " << constName
           << " = ConstantAggregateZero::get(" << typeName << ");";
@@ -767,7 +768,8 @@ namespace {
       if (CA->isString() &&
           CA->getType()->getElementType() ==
               Type::getInt8Ty(CA->getContext())) {
-        Out << "Constant* " << constName << " = ConstantArray::get(\"";
+        Out << "Constant* " << constName <<
+               " = ConstantArray::get(getGlobalContext(), \"";
         std::string tmp = CA->getAsString();
         bool nullTerminate = false;
         if (tmp[tmp.length()-1] == 0) {
@@ -994,13 +996,13 @@ namespace {
   void CppWriter::printVariableHead(const GlobalVariable *GV) {
     nl(Out) << "GlobalVariable* " << getCppName(GV);
     if (is_inline) {
-      Out << " = mod->getGlobalVariable(";
+      Out << " = mod->getGlobalVariable(getGlobalContext(), ";
       printEscapedString(GV->getName());
       Out << ", " << getCppName(GV->getType()->getElementType()) << ",true)";
       nl(Out) << "if (!" << getCppName(GV) << ") {";
       in(); nl(Out) << getCppName(GV);
     }
-    Out << " = new GlobalVariable(/*Module=*/*mod";
+    Out << " = new GlobalVariable(/*Module=*/*mod, ";
     nl(Out) << "/*Type=*/";
     printCppName(GV->getType()->getElementType());
     Out << ",";
@@ -1093,7 +1095,7 @@ namespace {
 
     case Instruction::Ret: {
       const ReturnInst* ret =  cast<ReturnInst>(I);
-      Out << "ReturnInst::Create("
+      Out << "ReturnInst::Create(getGlobalContext(), "
           << (ret->getReturnValue() ? opNames[0] + ", " : "") << bbname << ");";
       break;
     }
@@ -1678,7 +1680,8 @@ namespace {
     for (Function::const_iterator BI = F->begin(), BE = F->end();
          BI != BE; ++BI) {
       std::string bbname(getCppName(BI));
-      Out << "BasicBlock* " << bbname << " = BasicBlock::Create(\"";
+      Out << "BasicBlock* " << bbname <<
+             " = BasicBlock::Create(getGlobalContext(), \"";
       if (BI->hasName())
         printEscapedString(BI->getName());
       Out << "\"," << getCppName(BI->getParent()) << ",0);";
@@ -1797,6 +1800,7 @@ namespace {
 
   void CppWriter::printProgram(const std::string& fname,
                                const std::string& mName) {
+    Out << "#include <llvm/LLVMContext.h>\n";
     Out << "#include <llvm/Module.h>\n";
     Out << "#include <llvm/DerivedTypes.h>\n";
     Out << "#include <llvm/Constants.h>\n";
@@ -1833,7 +1837,7 @@ namespace {
     nl(Out,1) << "// Module Construction";
     nl(Out) << "Module* mod = new Module(\"";
     printEscapedString(mName);
-    Out << "\");";
+    Out << "\", getGlobalContext());";
     if (!TheModule->getTargetTriple().empty()) {
       nl(Out) << "mod->setDataLayout(\"" << TheModule->getDataLayout() << "\");";
     }
