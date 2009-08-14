@@ -438,13 +438,14 @@ static void HandleMallocAttr(Decl *d, const AttributeList &Attr, Sema &S) {
     return;
   }
 
-  if (!isFunction(d)) {
+  const FunctionDecl *FD = dyn_cast<FunctionDecl>(d);
+
+  if (!FD) {
     S.Diag(Attr.getLoc(), diag::warn_attribute_wrong_decl_type)
       << Attr.getName() << 0 /*function*/;
     return;
   }
 
-  const FunctionDecl *FD = cast<FunctionDecl>(d);
   QualType RetTy = FD->getResultType();
   
   if (!(RetTy->isAnyPointerType() || RetTy->isBlockPointerType())) {
