@@ -60,6 +60,8 @@ namespace llvm {
       /// though these are usually folded into other nodes.
       Hi, Lo,
       
+      TOC_ENTRY,
+
       /// OPRC, CHAIN = DYNALLOC(CHAIN, NEGSIZE, FRAME_INDEX)
       /// This instruction is lowered in PPCRegisterInfo::eliminateFrameIndex to
       /// compute an allocation on the stack.
@@ -84,6 +86,9 @@ namespace llvm {
       /// CALL - A direct function call.
       CALL_Darwin, CALL_SVR4,
       
+      /// NOP - Special NOP which follows 64-bit SVR4 calls.
+      NOP,
+
       /// CHAIN,FLAG = MTCTR(VAL, CHAIN[, INFLAG]) - Directly corresponds to a
       /// MTCTR instruction.
       MTCTR,

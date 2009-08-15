@@ -212,8 +212,9 @@ PPCTargetLowering::PPCTargetLowering(PPCTargetMachine &TM)
   // VASTART needs to be custom lowered to use the VarArgsFrameIndex
   setOperationAction(ISD::VASTART           , MVT::Other, Custom);
 
-  // VAARG is custom lowered with the SVR4 ABI
-  if (TM.getSubtarget<PPCSubtarget>().isSVR4ABI())
+  // VAARG is custom lowered with the 32-bit SVR4 ABI.
+  if (    TM.getSubtarget<PPCSubtarget>().isSVR4ABI()
+      && !TM.getSubtarget<PPCSubtarget>().isPPC64())
     setOperationAction(ISD::VAARG, MVT::Other, Custom);
   else
     setOperationAction(ISD::VAARG, MVT::Other, Expand);
@@ -419,6 +420,7 @@ const char *PPCTargetLowering::getTargetNodeName(unsigned Opcode) const {
   case PPCISD::VPERM:           return "PPCISD::VPERM";
   case PPCISD::Hi:              return "PPCISD::Hi";
   case PPCISD::Lo:              return "PPCISD::Lo";
+  case PPCISD::TOC_ENTRY:       return "PPCISD::TOC_ENTRY";
   case PPCISD::DYNALLOC:        return "PPCISD::DYNALLOC";
   case PPCISD::GlobalBaseReg:   return "PPCISD::GlobalBaseReg";
   case PPCISD::SRL:             return "PPCISD::SRL";
@@ -428,6 +430,7 @@ const char *PPCTargetLowering::getTargetNodeName(unsigned Opcode) const {
   case PPCISD::STD_32:          return "PPCISD::STD_32";
   case PPCISD::CALL_SVR4:       return "PPCISD::CALL_SVR4";
   case PPCISD::CALL_Darwin:     return "PPCISD::CALL_Darwin";
+  case PPCISD::NOP:             return "PPCISD::NOP";
   case PPCISD::MTCTR:           return "PPCISD::MTCTR";
   case PPCISD::BCTRL_Darwin:    return "PPCISD::BCTRL_Darwin";
   case PPCISD::BCTRL_SVR4:      return "PPCISD::BCTRL_SVR4";
@@ -1176,6 +1179,13 @@ SDValue PPCTargetLowering::LowerGlobalAddress(SDValue Op,
 
   const TargetMachine &TM = DAG.getTarget();
 
+  // 64-bit SVR4 ABI code is always position-independent.
+  // The actual address of the GlobalValue is stored in the TOC.
+  if (PPCSubTarget.isSVR4ABI() && PPCSubTarget.isPPC64()) {
+    return DAG.getNode(PPCISD::TOC_ENTRY, dl, MVT::i64, GA,
+                       DAG.getRegister(PPC::X2, MVT::i64));
+  }
+
   SDValue Hi = DAG.getNode(PPCISD::Hi, dl, PtrVT, GA, Zero);
   SDValue Lo = DAG.getNode(PPCISD::Lo, dl, PtrVT, GA, Zero);
 
@@ -1308,7 +1318,7 @@ SDValue PPCTargetLowering::LowerVASTART(SDValue Op, SelectionDAG &DAG,
                                         const PPCSubtarget &Subtarget) {
   DebugLoc dl = Op.getDebugLoc();
 
-  if (Subtarget.isDarwinABI()) {
+  if (Subtarget.isDarwinABI() || Subtarget.isPPC64()) {
     // vastart just stores the address of the VarArgsFrameIndex slot into the
     // memory location argument.
     EVT PtrVT = DAG.getTargetLoweringInfo().getPointerTy();
@@ -1317,7 +1327,7 @@ SDValue PPCTargetLowering::LowerVASTART(SDValue Op, SelectionDAG &DAG,
     return DAG.getStore(Op.getOperand(0), dl, FR, Op.getOperand(1), SV, 0);
   }
 
-  // For the SVR4 ABI we follow the layout of the va_list struct.
+  // For the 32-bit SVR4 ABI we follow the layout of the va_list struct.
   // We suppose the given va_list is already allocated.
   //
   // typedef struct {
@@ -1450,21 +1460,13 @@ static bool CC_PPC_SVR4_Custom_AlignFPArgRegs(unsigned &ValNo, EVT &ValVT,
 }
 
 /// GetFPR - Get the set of FP registers that should be allocated for arguments,
-/// depending on which subtarget is selected.
-static const unsigned *GetFPR(const PPCSubtarget &Subtarget) {
-  if (Subtarget.isDarwinABI()) {
-    static const unsigned FPR[] = {
-      PPC::F1, PPC::F2, PPC::F3, PPC::F4, PPC::F5, PPC::F6, PPC::F7,
-      PPC::F8, PPC::F9, PPC::F10, PPC::F11, PPC::F12, PPC::F13
-    };
-    return FPR;
-  }
-
-
+/// on Darwin.
+static const unsigned *GetFPR() {
   static const unsigned FPR[] = {
     PPC::F1, PPC::F2, PPC::F3, PPC::F4, PPC::F5, PPC::F6, PPC::F7,
-    PPC::F8
+    PPC::F8, PPC::F9, PPC::F10, PPC::F11, PPC::F12, PPC::F13
   };
+
   return FPR;
 }
 
@@ -1487,7 +1489,7 @@ PPCTargetLowering::LowerFormalArguments(SDValue Chain,
                                           &Ins,
                                         DebugLoc dl, SelectionDAG &DAG,
                                         SmallVectorImpl<SDValue> &InVals) {
-  if (PPCSubTarget.isSVR4ABI()) {
+  if (PPCSubTarget.isSVR4ABI() && !PPCSubTarget.isPPC64()) {
     return LowerFormalArguments_SVR4(Chain, CallConv, isVarArg, Ins,
                                      dl, DAG, InVals);
   } else {
@@ -1505,7 +1507,7 @@ PPCTargetLowering::LowerFormalArguments_SVR4(
                                       DebugLoc dl, SelectionDAG &DAG,
                                       SmallVectorImpl<SDValue> &InVals) {
 
-  // SVR4 ABI Stack Frame Layout:
+  // 32-bit SVR4 ABI Stack Frame Layout:
   //              +-----------------------------------+
   //        +-->  |            Back chain             |
   //        |     +-----------------------------------+
@@ -1687,8 +1689,8 @@ PPCTargetLowering::LowerFormalArguments_SVR4(
       FIN = DAG.getNode(ISD::ADD, dl, PtrOff.getValueType(), FIN, PtrOff);
     }
 
-    // FIXME SVR4: We only need to save FP argument registers if CR bit 6 is
-    // set.
+    // FIXME 32-bit SVR4: We only need to save FP argument registers if CR bit 6
+    // is set.
     
     // The double arguments are stored to the VarArgsFrameIndex
     // on the stack.
@@ -1731,7 +1733,6 @@ PPCTargetLowering::LowerFormalArguments_Darwin(
                                         &Ins,
                                       DebugLoc dl, SelectionDAG &DAG,
                                       SmallVectorImpl<SDValue> &InVals) {
-
   // TODO: add description of PPC stack frame format, or at least some docs.
   //
   MachineFunction &MF = DAG.getMachineFunction();
@@ -1756,7 +1757,7 @@ PPCTargetLowering::LowerFormalArguments_Darwin(
     PPC::X7, PPC::X8, PPC::X9, PPC::X10,
   };
 
-  static const unsigned *FPR = GetFPR(PPCSubTarget);
+  static const unsigned *FPR = GetFPR();
 
   static const unsigned VR[] = {
     PPC::V2, PPC::V3, PPC::V4, PPC::V5, PPC::V6, PPC::V7, PPC::V8,
@@ -1986,7 +1987,7 @@ PPCTargetLowering::LowerFormalArguments_Darwin(
               GPR_idx++;
           }
           ArgOffset += 16;
-          GPR_idx = std::min(GPR_idx+4, Num_GPR_Regs);
+          GPR_idx = std::min(GPR_idx+4, Num_GPR_Regs); // FIXME correct for ppc64?
         }
         ++VR_idx;
       } else {
@@ -2262,8 +2263,8 @@ static SDValue EmitTailCallStoreFPAndRetAddr(SelectionDAG &DAG,
     Chain = DAG.getStore(Chain, dl, OldRetAddr, NewRetAddrFrIdx,
                          PseudoSourceValue::getFixedStack(NewRetAddr), 0);
 
-    // When using the SVR4 ABI there is no need to move the FP stack slot
-    // as the FP is never overwritten.
+    // When using the 32/64-bit SVR4 ABI there is no need to move the FP stack
+    // slot as the FP is never overwritten.
     if (isDarwinABI) {
       int NewFPLoc =
         SPDiff + PPCFrameInfo::getFramePointerSaveOffset(isPPC64, isDarwinABI);
@@ -2311,8 +2312,8 @@ SDValue PPCTargetLowering::EmitTailCallLoadFPAndRetAddr(SelectionDAG & DAG,
     LROpOut = DAG.getLoad(VT, dl, Chain, LROpOut, NULL, 0);
     Chain = SDValue(LROpOut.getNode(), 1);
     
-    // When using the SVR4 ABI there is no need to load the FP stack slot
-    // as the FP is never overwritten.
+    // When using the 32/64-bit SVR4 ABI there is no need to load the FP stack
+    // slot as the FP is never overwritten.
     if (isDarwinABI) {
       FPOpOut = getFramePointerFrameIndex(DAG);
       FPOpOut = DAG.getLoad(VT, dl, Chain, FPOpOut, NULL, 0);
@@ -2487,7 +2488,6 @@ PPCTargetLowering::FinishCall(unsigned CallConv, DebugLoc dl, bool isTailCall,
                               int SPDiff, unsigned NumBytes,
                               const SmallVectorImpl<ISD::InputArg> &Ins,
                               SmallVectorImpl<SDValue> &InVals) {
-
   std::vector<EVT> NodeTys;
   SmallVector<SDValue, 8> Ops;
   unsigned CallOpc = PrepareCall(DAG, Callee, InFlag, Chain, dl, SPDiff,
@@ -2529,6 +2529,19 @@ PPCTargetLowering::FinishCall(unsigned CallConv, DebugLoc dl, bool isTailCall,
   Chain = DAG.getNode(CallOpc, dl, NodeTys, &Ops[0], Ops.size());
   InFlag = Chain.getValue(1);
 
+  // Add a NOP immediately after the branch instruction when using the 64-bit
+  // SVR4 ABI. At link time, if caller and callee are in a different module and
+  // thus have a different TOC, the call will be replaced with a call to a stub
+  // function which saves the current TOC, loads the TOC of the callee and
+  // branches to the callee. The NOP will be replaced with a load instruction
+  // which restores the TOC of the caller from the TOC save slot of the current
+  // stack frame. If caller and callee belong to the same module (and have the
+  // same TOC), the NOP will remain unchanged.
+  if (!isTailCall && PPCSubTarget.isSVR4ABI()&& PPCSubTarget.isPPC64()) {
+    // Insert NOP.
+    InFlag = DAG.getNode(PPCISD::NOP, dl, MVT::Flag, InFlag);
+  }
+
   Chain = DAG.getCALLSEQ_END(Chain, DAG.getIntPtrConstant(NumBytes, true),
                              DAG.getIntPtrConstant(BytesCalleePops, true),
                              InFlag);
@@ -2547,7 +2560,7 @@ PPCTargetLowering::LowerCall(SDValue Chain, SDValue Callee,
                              const SmallVectorImpl<ISD::InputArg> &Ins,
                              DebugLoc dl, SelectionDAG &DAG,
                              SmallVectorImpl<SDValue> &InVals) {
-  if (PPCSubTarget.isSVR4ABI()) {
+  if (PPCSubTarget.isSVR4ABI() && !PPCSubTarget.isPPC64()) {
     return LowerCall_SVR4(Chain, Callee, CallConv, isVarArg,
                           isTailCall, Outs, Ins,
                           dl, DAG, InVals);
@@ -2567,7 +2580,7 @@ PPCTargetLowering::LowerCall_SVR4(SDValue Chain, SDValue Callee,
                                   DebugLoc dl, SelectionDAG &DAG,
                                   SmallVectorImpl<SDValue> &InVals) {
   // See PPCTargetLowering::LowerFormalArguments_SVR4() for a description
-  // of the SVR4 ABI stack frame layout.
+  // of the 32-bit SVR4 ABI stack frame layout.
 
   assert((!isTailCall ||
           (CallConv == CallingConv::Fast && PerformTailCallOpt)) &&
@@ -2846,7 +2859,7 @@ PPCTargetLowering::LowerCall_Darwin(SDValue Chain, SDValue Callee,
     PPC::X3, PPC::X4, PPC::X5, PPC::X6,
     PPC::X7, PPC::X8, PPC::X9, PPC::X10,
   };
-  static const unsigned *FPR = GetFPR(PPCSubTarget);
+  static const unsigned *FPR = GetFPR();
 
   static const unsigned VR[] = {
     PPC::V2, PPC::V3, PPC::V4, PPC::V5, PPC::V6, PPC::V7, PPC::V8,

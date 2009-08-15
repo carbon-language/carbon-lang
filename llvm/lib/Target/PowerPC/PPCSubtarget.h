@@ -138,8 +138,9 @@ public:
   /// getDarwinVers - Return the darwin version number, 8 = tiger, 9 = leopard.
   unsigned getDarwinVers() const { return DarwinVers; }
 
-  bool isDarwinABI() const { return isDarwin() || IsPPC64; }
-  bool isSVR4ABI() const { return !isDarwin() && !IsPPC64; }
+  bool isDarwinABI() const { return isDarwin(); }
+  bool isSVR4ABI() const { return !isDarwin(); }
+
 };
 } // End llvm namespace
 

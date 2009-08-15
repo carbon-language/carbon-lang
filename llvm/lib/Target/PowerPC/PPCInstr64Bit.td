@@ -123,6 +123,8 @@ def : Pat<(PPCcall_SVR4 (i64 tglobaladdr:$dst)),
           (BL8_ELF tglobaladdr:$dst)>;
 def : Pat<(PPCcall_SVR4 (i64 texternalsym:$dst)),
           (BL8_ELF texternalsym:$dst)>;
+def : Pat<(PPCnop),
+          (NOP)>;
 
 // Atomic operations
 let usesCustomDAGSchedInserter = 1 in {
@@ -543,6 +545,10 @@ let canFoldAsLoad = 1, PPC970_Unit = 2 in {
 def LD   : DSForm_1<58, 0, (outs G8RC:$rD), (ins memrix:$src),
                     "ld $rD, $src", LdStLD,
                     [(set G8RC:$rD, (load ixaddr:$src))]>, isPPC64;
+def LDtoc: DSForm_1<58, 0, (outs G8RC:$rD), (ins tocentry:$disp, G8RC:$reg),
+                    "ld $rD, $disp($reg)", LdStLD,
+                    [(set G8RC:$rD,
+                     (PPCtoc_entry tglobaladdr:$disp, G8RC:$reg))]>, isPPC64;
 def LDX  : XForm_1<31,  21, (outs G8RC:$rD), (ins memrr:$src),
                    "ldx $rD, $src", LdStLD,
                    [(set G8RC:$rD, (load xaddr:$src))]>, isPPC64;

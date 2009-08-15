@@ -81,13 +81,14 @@ namespace {
     };
     
     StringMap<FnStubInfo> FnStubs;
-    StringMap<std::string> GVStubs, HiddenGVStubs;
+    StringMap<std::string> GVStubs, HiddenGVStubs, TOC;
     const PPCSubtarget &Subtarget;
+    uint64_t LabelID;
   public:
     explicit PPCAsmPrinter(formatted_raw_ostream &O, TargetMachine &TM,
                            const TargetAsmInfo *T, bool V)
       : AsmPrinter(O, TM, T, V),
-        Subtarget(TM.getSubtarget<PPCSubtarget>()) {}
+        Subtarget(TM.getSubtarget<PPCSubtarget>()), LabelID(0) {}
 
     virtual const char *getPassName() const {
       return "PowerPC Assembly Printer";
@@ -310,6 +311,28 @@ namespace {
       printOperand(MI, OpNo+1);
     }
 
+    void printTOCEntryLabel(const MachineInstr *MI, unsigned OpNo) {
+      const MachineOperand &MO = MI->getOperand(OpNo);
+
+      assert(MO.getType() == MachineOperand::MO_GlobalAddress);
+
+      GlobalValue *GV = MO.getGlobal();
+
+      std::string Name = Mang->getMangledName(GV);
+
+      // Map symbol -> label of TOC entry.
+      if (TOC.count(Name) == 0) {
+        std::string Label;
+        Label += TAI->getPrivateGlobalPrefix();
+        Label += "C";
+        Label += utostr(LabelID++);
+
+        TOC[Name] = Label;
+      }
+
+      O << TOC[Name] << "@toc";
+    }
+
     void printPredicateOperand(const MachineInstr *MI, unsigned OpNo,
                                const char *Modifier);
 
@@ -330,6 +353,7 @@ namespace {
     }
 
     bool runOnMachineFunction(MachineFunction &F);
+    bool doFinalization(Module &M);
 
     void getAnalysisUsage(AnalysisUsage &AU) const {
       AU.setPreservesAll();
@@ -612,7 +636,19 @@ bool PPCLinuxAsmPrinter::runOnMachineFunction(MachineFunction &MF) {
   printVisibility(CurrentFnName, F->getVisibility());
 
   EmitAlignment(MF.getAlignment(), F);
-  O << CurrentFnName << ":\n";
+
+  if (Subtarget.isPPC64()) {
+    // Emit an official procedure descriptor.
+    // FIXME 64-bit SVR4: Use MCSection here?
+    O << "\t.section\t\".opd\",\"aw\"\n";
+    O << "\t.align 3\n";
+    O << CurrentFnName << ":\n";
+    O << "\t.quad .L." << CurrentFnName << ",.TOC.@tocbase\n";
+    O << "\t.previous\n";
+    O << ".L." << CurrentFnName << ":\n";
+  } else {
+    O << CurrentFnName << ":\n";
+  }
 
   // Emit pre-function debug information.
   DW->BeginFunction(&MF);
@@ -731,6 +767,24 @@ void PPCLinuxAsmPrinter::PrintGlobalVariable(const GlobalVariable *GVar) {
   O << '\n';
 }
 
+bool PPCLinuxAsmPrinter::doFinalization(Module &M) {
+  const TargetData *TD = TM.getTargetData();
+
+  bool isPPC64 = TD->getPointerSizeInBits() == 64;
+
+  if (isPPC64 && !TOC.empty()) {
+    // FIXME 64-bit SVR4: Use MCSection here?
+    O << "\t.section\t\".toc\",\"aw\"\n";
+
+    for (StringMap<std::string>::iterator I = TOC.begin(), E = TOC.end();
+         I != E; ++I) {
+      O << I->second << ":\n";
+      O << "\t.tc " << I->getKeyData() << "[TC]," << I->getKeyData() << '\n';
+    }
+  }
+
+  return AsmPrinter::doFinalization(M);
+}
 
 /// runOnMachineFunction - This uses the printMachineInstruction()
 /// method to print assembly for each instruction.

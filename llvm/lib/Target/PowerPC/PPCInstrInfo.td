@@ -53,6 +53,8 @@ def SDT_PPCTC_ret : SDTypeProfile<0, 2, [
   SDTCisPtrTy<0>, SDTCisVT<1, i32>
 ]>;
 
+def SDT_PPCnop : SDTypeProfile<0, 0, []>;
+
 //===----------------------------------------------------------------------===//
 // PowerPC specific DAG Nodes.
 //
@@ -85,6 +87,7 @@ def PPCfsel   : SDNode<"PPCISD::FSEL",
 
 def PPChi       : SDNode<"PPCISD::Hi", SDTIntBinOp, []>;
 def PPClo       : SDNode<"PPCISD::Lo", SDTIntBinOp, []>;
+def PPCtoc_entry: SDNode<"PPCISD::TOC_ENTRY", SDTIntBinOp, [SDNPMayLoad]>;
 def PPCvmaddfp  : SDNode<"PPCISD::VMADDFP", SDTFPTernaryOp, []>;
 def PPCvnmsubfp : SDNode<"PPCISD::VNMSUBFP", SDTFPTernaryOp, []>;
 
@@ -111,6 +114,7 @@ def PPCcall_Darwin : SDNode<"PPCISD::CALL_Darwin", SDT_PPCCall,
                             [SDNPHasChain, SDNPOptInFlag, SDNPOutFlag]>;
 def PPCcall_SVR4  : SDNode<"PPCISD::CALL_SVR4", SDT_PPCCall,
                            [SDNPHasChain, SDNPOptInFlag, SDNPOutFlag]>;
+def PPCnop : SDNode<"PPCISD::NOP", SDT_PPCnop, [SDNPInFlag, SDNPOutFlag]>;
 def PPCmtctr      : SDNode<"PPCISD::MTCTR", SDT_PPCCall,
                            [SDNPHasChain, SDNPOptInFlag, SDNPOutFlag]>;
 def PPCbctrl_Darwin  : SDNode<"PPCISD::BCTRL_Darwin", SDTNone,
@@ -305,6 +309,10 @@ def memrr : Operand<iPTR> {
 def memrix : Operand<iPTR> {   // memri where the imm is shifted 2 bits.
   let PrintMethod = "printMemRegImmShifted";
   let MIOperandInfo = (ops i32imm:$imm, ptr_rc:$reg);
+}
+def tocentry : Operand<iPTR> {
+  let PrintMethod = "printTOCEntryLabel";
+  let MIOperandInfo = (ops i32imm:$imm);
 }
 
 // PowerPC Predicate operand.  20 = (0<<5)|20 = always, CR0 is a dummy reg
