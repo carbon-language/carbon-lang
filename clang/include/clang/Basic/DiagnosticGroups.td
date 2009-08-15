@@ -38,6 +38,7 @@ def FormatExtraArgs : DiagGroup<"format-extra-args">;
 def FormatZeroLength : DiagGroup<"format-zero-length">;
 
 def FourByteMultiChar : DiagGroup<"four-char-constants">;
+def : DiagGroup<"import">;
 def : DiagGroup<"init-self">;
 def : DiagGroup<"inline">;
 def : DiagGroup<"int-to-pointer-cast">;
