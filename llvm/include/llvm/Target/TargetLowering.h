@@ -637,13 +637,13 @@ public:
   unsigned getMaxStoresPerMemmove() const { return maxStoresPerMemmove; }
 
   /// This function returns true if the target allows unaligned memory accesses.
-  /// of the specified type. This is used, for example, in situations where an
-  /// array copy/move/set is  converted to a sequence of store operations. It's
-  /// use helps to ensure that such replacements don't generate code that causes
-  /// an alignment error  (trap) on the target machine. 
+  /// This is used, for example, in situations where an array copy/move/set is 
+  /// converted to a sequence of store operations. It's use helps to ensure that
+  /// such replacements don't generate code that causes an alignment error 
+  /// (trap) on the target machine. 
   /// @brief Determine if the target supports unaligned memory accesses.
-  virtual bool allowsUnalignedMemoryAccesses(EVT VT) const {
-    return false;
+  bool allowsUnalignedMemoryAccesses() const {
+    return allowUnalignedMemoryAccesses;
   }
 
   /// This function returns true if the target would benefit from code placement
@@ -1756,6 +1756,12 @@ protected:
   /// applies to copying a constant array of constant size.
   /// @brief Specify maximum bytes of store instructions per memmove call.
   unsigned maxStoresPerMemmove;
+
+  /// This field specifies whether the target machine permits unaligned memory
+  /// accesses.  This is used, for example, to determine the size of store 
+  /// operations when copying small arrays and other similar tasks.
+  /// @brief Indicate whether the target permits unaligned memory accesses.
+  bool allowUnalignedMemoryAccesses;
 
   /// This field specifies whether the target can benefit from code placement
   /// optimization.
