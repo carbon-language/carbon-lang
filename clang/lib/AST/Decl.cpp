@@ -414,8 +414,9 @@ void FunctionDecl::setBody(Stmt *B) {
     EndRangeLoc = B->getLocEnd();
 }
 
-bool FunctionDecl::isMain() const {
-  return getDeclContext()->getLookupContext()->isTranslationUnit() &&
+bool FunctionDecl::isMain(ASTContext &Context) const {
+  return !Context.getLangOptions().Freestanding &&
+    getDeclContext()->getLookupContext()->isTranslationUnit() &&
     getIdentifier() && getIdentifier()->isStr("main");
 }
 

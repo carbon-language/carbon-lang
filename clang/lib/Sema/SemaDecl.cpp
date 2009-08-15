@@ -2766,7 +2766,7 @@ void Sema::CheckFunctionDeclaration(FunctionDecl *NewFD, NamedDecl *&PrevDecl,
     return NewFD->setInvalidDecl();
   }
 
-  if (NewFD->isMain()) CheckMain(NewFD);
+  if (NewFD->isMain(Context)) CheckMain(NewFD);
 
   // Semantic checking for this function declaration (in isolation).
   if (getLangOptions().CPlusPlus) {
@@ -3542,7 +3542,7 @@ Sema::DeclPtrTy Sema::ActOnStartOfFunctionDef(Scope *FnBodyScope, DeclPtrTy D) {
   //   definition itself provides a prototype. The aim is to detect
   //   global functions that fail to be declared in header files.
   if (!FD->isInvalidDecl() && FD->isGlobal() && !isa<CXXMethodDecl>(FD) &&
-      !FD->isMain()) {
+      !FD->isMain(Context)) {
     bool MissingPrototype = true;
     for (const FunctionDecl *Prev = FD->getPreviousDeclaration();
          Prev; Prev = Prev->getPreviousDeclaration()) {
@@ -3608,7 +3608,7 @@ Sema::DeclPtrTy Sema::ActOnFinishFunctionBody(DeclPtrTy D, StmtArg BodyArg,
   Stmt *Body = BodyArg.takeAs<Stmt>();
   if (FunctionDecl *FD = dyn_cast_or_null<FunctionDecl>(dcl)) {
     FD->setBody(Body);
-    if (FD->isMain())
+    if (FD->isMain(Context))
       // C and C++ allow for main to automagically return 0.
       // Implements C++ [basic.start.main]p5 and C99 5.1.2.2.3.
       FD->setHasImplicitReturnZero(true);

@@ -91,7 +91,7 @@ bool CXXNameMangler::mangleFunctionDecl(const FunctionDecl *FD) {
   // name mangling (always).
   if (!FD->hasAttr<OverloadableAttr>()) {
     // C functions are not mangled, and "main" is never mangled.
-    if (!Context.getLangOptions().CPlusPlus || FD->isMain())
+    if (!Context.getLangOptions().CPlusPlus || FD->isMain(Context))
       return false;
     
     // No mangling in an "implicit extern C" header. 

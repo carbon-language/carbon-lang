@@ -850,7 +850,7 @@ public:
 
   /// \brief Determines whether this is a function "main", which is
   /// the entry point into an executable program.
-  bool isMain() const;
+  bool isMain(ASTContext &Context) const;
 
   /// \brief Determines whether this function is a function with
   /// external, C linkage.
