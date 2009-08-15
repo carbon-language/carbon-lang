@@ -89,7 +89,7 @@ public:
 
   bool hasFP(const MachineFunction &MF) const;
 
-  bool hasStackFrame(const MachineFunction &MF) const;
+  bool cannotEliminateFrame(const MachineFunction &MF) const;
 
   void processFunctionBeforeCalleeSavedScan(MachineFunction &MF,
                                             RegScavenger *RS = NULL) const;

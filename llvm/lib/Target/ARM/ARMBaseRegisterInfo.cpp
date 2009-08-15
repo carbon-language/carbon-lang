@@ -440,7 +440,7 @@ bool ARMBaseRegisterInfo::hasFP(const MachineFunction &MF) const {
           MFI->isFrameAddressTaken());
 }
 
-bool ARMBaseRegisterInfo::hasStackFrame(const MachineFunction &MF) const {
+bool ARMBaseRegisterInfo::cannotEliminateFrame(const MachineFunction &MF) const {
   const MachineFrameInfo *MFI = MF.getFrameInfo();
   if (NoFramePointerElim && MFI->hasCalls())
     return true;
@@ -596,7 +596,7 @@ ARMBaseRegisterInfo::processFunctionBeforeCalleeSavedScan(MachineFunction &MF,
   }
 
   bool ExtraCSSpill = false;
-  if (!CanEliminateFrame || hasStackFrame(MF)) {
+  if (!CanEliminateFrame || cannotEliminateFrame(MF)) {
     AFI->setHasStackFrame(true);
 
     // If LR is not spilled, but at least one of R4, R5, R6, and R7 is spilled.
@@ -1022,6 +1022,7 @@ ARMBaseRegisterInfo::eliminateFrameIndex(MachineBasicBlock::iterator II,
   MachineInstr &MI = *II;
   MachineBasicBlock &MBB = *MI.getParent();
   MachineFunction &MF = *MBB.getParent();
+  const MachineFrameInfo *MFI = MF.getFrameInfo();
   ARMFunctionInfo *AFI = MF.getInfo<ARMFunctionInfo>();
   assert(!AFI->isThumb1OnlyFunction() &&
          "This eliminateFrameIndex does not suppor Thumb1!");
@@ -1033,8 +1034,7 @@ ARMBaseRegisterInfo::eliminateFrameIndex(MachineBasicBlock::iterator II,
 
   unsigned FrameReg = ARM::SP;
   int FrameIndex = MI.getOperand(i).getIndex();
-  int Offset = MF.getFrameInfo()->getObjectOffset(FrameIndex) +
-               MF.getFrameInfo()->getStackSize() + SPAdj;
+  int Offset = MFI->getObjectOffset(FrameIndex) + MFI->getStackSize() + SPAdj;
 
   if (AFI->isGPRCalleeSavedArea1Frame(FrameIndex))
     Offset -= AFI->getGPRCalleeSavedArea1Offset();
@@ -1042,10 +1042,10 @@ ARMBaseRegisterInfo::eliminateFrameIndex(MachineBasicBlock::iterator II,
     Offset -= AFI->getGPRCalleeSavedArea2Offset();
   else if (AFI->isDPRCalleeSavedAreaFrame(FrameIndex))
     Offset -= AFI->getDPRCalleeSavedAreaOffset();
-  else if (hasFP(MF)) {
-    assert(SPAdj == 0 && "Unexpected");
-    // There is alloca()'s in this function, must reference off the frame
-    // pointer instead.
+  else if (hasFP(MF) && AFI->hasStackFrame()) {
+    assert(SPAdj == 0 && "Unexpected stack offset!");
+    // Use frame pointer to reference fixed objects unless this is a
+    // frameless function,
     FrameReg = getFrameRegister(MF);
     Offset -= AFI->getFramePtrSpillOffset();
   }
@@ -1288,14 +1288,15 @@ emitEpilogue(MachineFunction &MF, MachineBasicBlock &MBB) const {
 
     // Darwin ABI requires FP to point to the stack slot that contains the
     // previous FP.
-    if ((STI.isTargetDarwin() && NumBytes) || hasFP(MF)) {
+    bool HasFP = hasFP(MF);
+    if ((STI.isTargetDarwin() && NumBytes) || HasFP) {
       NumBytes = AFI->getFramePtrSpillOffset() - NumBytes;
       // Reset SP based on frame pointer only if the stack frame extends beyond
       // frame pointer stack slot or target is ELF and the function has FP.
-      if (AFI->getGPRCalleeSavedArea2Size() ||
+      if (HasFP ||
+          AFI->getGPRCalleeSavedArea2Size() ||
           AFI->getDPRCalleeSavedAreaSize()  ||
-          AFI->getDPRCalleeSavedAreaOffset()||
-          hasFP(MF)) {
+          AFI->getDPRCalleeSavedAreaOffset()) {
         if (NumBytes) {
           if (isARM)
             emitARMRegPlusImmediate(MBB, MBBI, dl, ARM::SP, FramePtr, -NumBytes,
