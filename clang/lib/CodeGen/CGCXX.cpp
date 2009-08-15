@@ -1129,6 +1129,29 @@ void CodeGenFunction::EmitCtorPrologue(const CXXConstructorDecl *CD) {
     }
   }
 
+  if (!CD->isTrivial() && CD->getNumBaseOrMemberInitializers() == 0)
+    // Nontrivial default constructor with no initializer list. It may still
+    // contain non-static data members which require construction.
+    for (CXXRecordDecl::field_iterator Field = ClassDecl->field_begin(),
+         FieldEnd = ClassDecl->field_end();
+         Field != FieldEnd; ++Field) {
+      QualType FieldType = getContext().getCanonicalType((*Field)->getType());
+      if (!FieldType->getAs<RecordType>() || Field->isAnonymousStructOrUnion())
+        continue;
+      const RecordType *ClassRec = FieldType->getAs<RecordType>();
+      if (CXXRecordDecl *MemberClassDecl = 
+            dyn_cast<CXXRecordDecl>(ClassRec->getDecl())) {
+        if (MemberClassDecl->hasTrivialConstructor())
+          continue;
+        if (CXXConstructorDecl *MamberCX = 
+              MemberClassDecl->getDefaultConstructor(getContext())) {
+          LoadOfThis = LoadCXXThis();
+          LValue LHS = EmitLValueForField(LoadOfThis, *Field, false, 0);
+          EmitCXXConstructorCall(MamberCX, Ctor_Complete, LHS.getAddress(), 0, 0);
+        }
+      }
+    }
+
   // Initialize the vtable pointer
   if (ClassDecl->isDynamicClass()) {
     if (!LoadOfThis)
