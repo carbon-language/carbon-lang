@@ -12,7 +12,6 @@ tablegen(XCoreGenSubtarget.inc -gen-subtarget)
 
 add_llvm_target(XCore
   MCSectionXCore.cpp
-  XCoreAsmPrinter.cpp
   XCoreFrameInfo.cpp
   XCoreInstrInfo.cpp
   XCoreISelDAGToDAG.cpp

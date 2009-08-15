@@ -15,6 +15,7 @@
 #include "XCore.h"
 #include "llvm/Module.h"
 #include "llvm/PassManager.h"
+#include "llvm/Target/TargetRegistry.h"
 using namespace llvm;
 
 /// XCoreTargetMachine ctor - Create an ILP32 architecture model
@@ -34,4 +35,10 @@ bool XCoreTargetMachine::addInstSelector(PassManagerBase &PM,
                                          CodeGenOpt::Level OptLevel) {
   PM.add(createXCoreISelDag(*this));
   return false;
+}
+
+// Force static initialization.
+extern "C" void LLVMInitializeXCoreTarget() {
+  RegisterTargetMachine<XCoreTargetMachine> X(TheXCoreTarget);
+  RegisterAsmInfo<XCoreTargetAsmInfo> Y(TheXCoreTarget);
 }

@@ -374,11 +374,7 @@ bool XCoreAsmPrinter::doInitialization(Module &M) {
   return Result;
 }
 
-
-
 // Force static initialization.
-extern "C" void LLVMInitializeXCoreTarget() { 
-  RegisterTargetMachine<XCoreTargetMachine> X(TheXCoreTarget);
-  RegisterAsmPrinter<XCoreAsmPrinter> Y(TheXCoreTarget);
-  RegisterAsmInfo<XCoreTargetAsmInfo> Z(TheXCoreTarget);
+extern "C" void LLVMInitializeXCoreAsmPrinter() { 
+  RegisterAsmPrinter<XCoreAsmPrinter> X(TheXCoreTarget);
 }
