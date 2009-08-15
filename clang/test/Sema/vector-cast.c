@@ -20,7 +20,7 @@ void f()
 type 't1' and scalar type 'char *'}}
   v1 = (t1)(long long)10;
   v1 = (t1)(short)10; // -expected-error {{invalid conversion between vector \
-type 't1' and integer type 'int' of different size}}
+type 't1' and integer type 'short' of different size}}
   
   long long r1 = (long long)v1;
   short r2 = (short)v1; // -expected-error {{invalid conversion between vector \

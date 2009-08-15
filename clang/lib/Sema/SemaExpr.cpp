@@ -2992,7 +2992,7 @@ bool Sema::CheckCastTypes(SourceRange TyR, QualType castType, Expr *&castExpr,
   if (getLangOptions().CPlusPlus)
     return CXXCheckCStyleCast(TyR, castType, castExpr, Kind, FunctionalStyle);
 
-  UsualUnaryConversions(castExpr);
+  DefaultFunctionArrayConversion(castExpr);
 
   // C99 6.5.4p2: the cast type needs to be void or scalar and the expression
   // type needs to be scalar.
