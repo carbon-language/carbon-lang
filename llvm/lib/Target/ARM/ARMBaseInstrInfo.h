@@ -273,6 +273,11 @@ const MachineInstrBuilder &AddDefaultT1CC(const MachineInstrBuilder &MIB,
 }
 
 static inline
+const MachineInstrBuilder &AddNoT1CC(const MachineInstrBuilder &MIB) {
+  return MIB.addReg(0);
+}
+
+static inline
 bool isUncondBranchOpcode(int Opc) {
   return Opc == ARM::B || Opc == ARM::tB || Opc == ARM::t2B;
 }

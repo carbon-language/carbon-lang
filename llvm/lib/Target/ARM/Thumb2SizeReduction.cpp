@@ -129,7 +129,7 @@ namespace {
     static char ID;
     Thumb2SizeReduce();
 
-    const TargetInstrInfo *TII;
+    const Thumb2InstrInfo *TII;
 
     virtual bool runOnMachineFunction(MachineFunction &MF);
 
@@ -454,8 +454,12 @@ Thumb2SizeReduce::ReduceTo2Addr(MachineBasicBlock &MBB, MachineInstr *MI,
   DebugLoc dl = MI->getDebugLoc();
   MachineInstrBuilder MIB = BuildMI(MBB, *MI, dl, NewTID);
   MIB.addOperand(MI->getOperand(0));
-  if (HasCC && NewTID.hasOptionalDef())
-    AddDefaultT1CC(MIB, CCDead);
+  if (NewTID.hasOptionalDef()) {
+    if (HasCC)
+      AddDefaultT1CC(MIB, CCDead);
+    else
+      AddNoT1CC(MIB);
+  }
 
   // Transfer the rest of operands.
   unsigned NumOps = TID.getNumOperands();
@@ -534,8 +538,12 @@ Thumb2SizeReduce::ReduceToNarrow(MachineBasicBlock &MBB, MachineInstr *MI,
   DebugLoc dl = MI->getDebugLoc();
   MachineInstrBuilder MIB = BuildMI(MBB, *MI, dl, NewTID);
   MIB.addOperand(MI->getOperand(0));
-  if (HasCC && NewTID.hasOptionalDef())
-    AddDefaultT1CC(MIB, CCDead);
+  if (NewTID.hasOptionalDef()) {
+    if (HasCC)
+      AddDefaultT1CC(MIB, CCDead);
+    else
+      AddNoT1CC(MIB);
+  }
 
   // Transfer the rest of operands.
   unsigned NumOps = TID.getNumOperands();
@@ -659,7 +667,7 @@ bool Thumb2SizeReduce::ReduceMBB(MachineBasicBlock &MBB) {
 
 bool Thumb2SizeReduce::runOnMachineFunction(MachineFunction &MF) {
   const TargetMachine &TM = MF.getTarget();
-  TII = TM.getInstrInfo();
+  TII = static_cast<const Thumb2InstrInfo*>(TM.getInstrInfo());
 
   bool Modified = false;
   for (MachineFunction::iterator I = MF.begin(), E = MF.end(); I != E; ++I)

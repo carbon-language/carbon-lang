@@ -391,26 +391,19 @@ ARMTargetLowering::ARMTargetLowering(TargetMachine &TM)
 
   setStackPointerRegisterToSaveRestore(ARM::SP);
   setSchedulingPreference(SchedulingForRegPressure);
-  setIfCvtBlockSizeLimit(Subtarget->isThumb() ? 0 : 10);
-  setIfCvtDupBlockSizeLimit(Subtarget->isThumb() ? 0 : 2);
 
-  if (!Subtarget->isThumb()) {
-    // Use branch latency information to determine if-conversion limits.
-    // FIXME: If-converter should use instruction latency of the branch being
-    // eliminated to compute the threshold. For ARMv6, the branch "latency"
-    // varies depending on whether it's dynamically or statically predicted
-    // and on whether the destination is in the prefetch buffer.
-    const TargetInstrInfo *TII = getTargetMachine().getInstrInfo();
-    const InstrItineraryData &InstrItins = Subtarget->getInstrItineraryData();
-    unsigned Latency= InstrItins.getLatency(TII->get(ARM::Bcc).getSchedClass());
-    if (Latency > 1) {
-      setIfCvtBlockSizeLimit(Latency-1);
-      if (Latency > 2)
-        setIfCvtDupBlockSizeLimit(Latency-2);
-    } else {
-      setIfCvtBlockSizeLimit(10);
-      setIfCvtDupBlockSizeLimit(2);
-    }
+  // FIXME: If-converter should use instruction latency to determine
+  // profitability rather than relying on fixed limits.
+  if (Subtarget->getCPUString() == "generic") {
+    // Generic (and overly aggressive) if-conversion limits.
+    setIfCvtBlockSizeLimit(10);
+    setIfCvtDupBlockSizeLimit(2);
+  } else if (Subtarget->hasV6Ops()) {
+    setIfCvtBlockSizeLimit(2);
+    setIfCvtDupBlockSizeLimit(1);
+  } else {
+    setIfCvtBlockSizeLimit(3);
+    setIfCvtDupBlockSizeLimit(2);
   }
 
   maxStoresPerMemcpy = 1;   //// temporary - rewrite interface to use type

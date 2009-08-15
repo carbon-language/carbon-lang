@@ -66,23 +66,19 @@ bool Thumb2ITBlockPass::InsertITBlocks(MachineBasicBlock &MBB) {
       .addImm(CC);
     ++MBBI;
 
-    // Finalize IT mask. If the following instruction is not predicated or it's
-    // predicated on a condition that's not the same or the opposite of CC, then
-    // the mask is 0x8.
+    // Finalize IT mask.
     ARMCC::CondCodes OCC = ARMCC::getOppositeCondition(CC);
-    unsigned Mask = 0x8;
-    while (MBBI != E || (Mask & 1)) {
+    unsigned Mask = 0, Pos = 3;
+    while (MBBI != E && Pos) {
       ARMCC::CondCodes NCC = getPredicate(&*MBBI, TII);
-      if (NCC == CC) {
-        Mask >>= 1;
-        Mask |= 0x8;
-      } else if (NCC == OCC) {
-        Mask >>= 1;
-      } else {
+      if (NCC == OCC) {
+        Mask |= (1 << Pos);
+      } else if (NCC != CC)
         break;
-      }
+      --Pos;
       ++MBBI;
     }
+    Mask |= (1 << Pos);
     MIB.addImm(Mask);
     Modified = true;
     ++NumITs;
