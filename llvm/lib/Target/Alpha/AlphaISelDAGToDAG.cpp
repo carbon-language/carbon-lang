@@ -211,7 +211,6 @@ private:
 /// GOT address into a register.
 ///
 SDNode *AlphaDAGToDAGISel::getGlobalBaseReg() {
-  MachineFunction *MF = BB->getParent();
   unsigned GlobalBaseReg = getInstrInfo()->getGlobalBaseReg(MF);
   return CurDAG->getRegister(GlobalBaseReg, TLI.getPointerTy()).getNode();
 }
@@ -219,7 +218,6 @@ SDNode *AlphaDAGToDAGISel::getGlobalBaseReg() {
 /// getGlobalRetAddr - Grab the return address.
 ///
 SDNode *AlphaDAGToDAGISel::getGlobalRetAddr() {
-  MachineFunction *MF = BB->getParent();
   unsigned GlobalRetAddr = getInstrInfo()->getGlobalRetAddr(MF);
   return CurDAG->getRegister(GlobalRetAddr, TLI.getPointerTy()).getNode();
 }

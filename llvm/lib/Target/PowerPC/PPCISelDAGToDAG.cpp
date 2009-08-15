@@ -282,7 +282,7 @@ SDNode *PPCDAGToDAGISel::getGlobalBaseReg() {
   if (!GlobalBaseReg) {
     const TargetInstrInfo &TII = *TM.getInstrInfo();
     // Insert the set of GlobalBaseReg into the first MBB of the function
-    MachineBasicBlock &FirstMBB = BB->getParent()->front();
+    MachineBasicBlock &FirstMBB = MF->front();
     MachineBasicBlock::iterator MBBI = FirstMBB.begin();
     DebugLoc dl = DebugLoc::getUnknownLoc();
 
