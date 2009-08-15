@@ -21,7 +21,7 @@ for matching multiple different inputs in one file in a specific order.
 The I<match-filename> file specifies the file that contains the patterns to
 match.  The file to verify is always read from standard input.
 
-The input and output of B<tblgen> is beyond the scope of this short
+The input and output of B<FileCheck> is beyond the scope of this short
 introduction. Please see the I<TestingGuide> page in the LLVM documentation.
 
 =head1 OPTIONS
