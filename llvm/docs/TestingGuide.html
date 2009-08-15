@@ -568,10 +568,12 @@ example, something like this works as you'd expect:</p>
 
 <div class="doc_code">
 <pre>
-define void @t2(&lt;2 x double&gt;* %r, &lt;2 x double&gt;* %A, double %B) nounwind  {
+define void @t2(&lt;2 x double&gt;* %r, &lt;2 x double&gt;* %A, double %B) {
 	%tmp3 = load &lt;2 x double&gt;* %A, align 16
 	%tmp7 = insertelement &lt;2 x double&gt; undef, double %B, i32 0
-	%tmp9 = shufflevector &lt;2 x double&gt; %tmp3, &lt;2 x double&gt; %tmp7, &lt;2 x i32&gt; &lt; i32 0, i32 2 &gt;
+	%tmp9 = shufflevector &lt;2 x double&gt; %tmp3,
+                              &lt;2 x double&gt; %tmp7,
+                              &lt;2 x i32&gt; &lt; i32 0, i32 2 &gt;
 	store &lt;2 x double&gt; %tmp9, &lt;2 x double&gt;* %r, align 16
 	ret void
         
