@@ -1,5 +1,4 @@
 ; RUN: llvm-as < %s | llc -march=xcore -mcpu=xs1b-generic | FileCheck %s
-; XFAIL: *
 
 define i32 *@addr_G() {
 entry:

@@ -9,7 +9,7 @@
 
 #include "XCoreTargetObjectFile.h"
 #include "XCoreSubtarget.h"
-#include "llvm/MC/MCSectionELF.h"
+#include "MCSectionXCore.h"
 #include "llvm/Target/TargetMachine.h"
 using namespace llvm;
 
@@ -17,12 +17,22 @@ using namespace llvm;
 void XCoreTargetObjectFile::Initialize(MCContext &Ctx, const TargetMachine &TM){
   TargetLoweringObjectFileELF::Initialize(Ctx, TM);
 
-  DataSection = getELFSection(".dp.data", MCSectionELF::SHT_PROGBITS, 
-                              MCSectionELF::SHF_ALLOC | MCSectionELF::SHF_WRITE,
-                              SectionKind::getDataRel());
-  BSSSection = getELFSection(".dp.bss", MCSectionELF::SHT_NOBITS,
-                              MCSectionELF::SHF_ALLOC | MCSectionELF::SHF_WRITE,
-                              SectionKind::getBSS());
+  DataSection =
+    MCSectionXCore::Create(".dp.data", MCSectionELF::SHT_PROGBITS, 
+                           MCSectionELF::SHF_ALLOC | MCSectionELF::SHF_WRITE |
+                           MCSectionXCore::SHF_DP_SECTION,
+                           SectionKind::getDataRel(), false, getContext());
+  BSSSection =
+    MCSectionXCore::Create(".dp.bss", MCSectionELF::SHT_NOBITS,
+                           MCSectionELF::SHF_ALLOC | MCSectionELF::SHF_WRITE |
+                           MCSectionXCore::SHF_DP_SECTION,
+                           SectionKind::getBSS(), false, getContext());
+  
+  // For now, disable lowering of mergable sections, just drop everything into
+  // ReadOnly.
+  MergeableConst4Section = 0;
+  MergeableConst8Section = 0;
+  MergeableConst16Section = 0;
   
   // TLS globals are lowered in the backend to arrays indexed by the current
   // thread id. After lowering they require no special handling by the linker
@@ -31,13 +41,15 @@ void XCoreTargetObjectFile::Initialize(MCContext &Ctx, const TargetMachine &TM){
   TLSBSSSection = BSSSection;
   
   if (TM.getSubtarget<XCoreSubtarget>().isXS1A())
-    // FIXME: Why is this writable ("datarel")???
-    ReadOnlySection = 
-      getELFSection(".dp.rodata", MCSectionELF::SHT_PROGBITS,
-                    MCSectionELF::SHF_ALLOC | MCSectionELF::SHF_WRITE,
-                    SectionKind::getDataRel());
+    ReadOnlySection =   // FIXME: Why is this a writable section for XS1A?
+      MCSectionXCore::Create(".dp.rodata", MCSectionELF::SHT_PROGBITS,
+                             MCSectionELF::SHF_ALLOC | MCSectionELF::SHF_WRITE |
+                             MCSectionXCore::SHF_DP_SECTION,
+                             SectionKind::getDataRel(), false, getContext());
   else
     ReadOnlySection = 
-      getELFSection(".cp.rodata", MCSectionELF::SHT_PROGBITS, 
-                    MCSectionELF::SHF_ALLOC, SectionKind::getReadOnly());
+      MCSectionXCore::Create(".cp.rodata", MCSectionELF::SHT_PROGBITS,
+                             MCSectionELF::SHF_ALLOC |
+                             MCSectionXCore::SHF_CP_SECTION,
+                             SectionKind::getReadOnly(), false, getContext());
 }
