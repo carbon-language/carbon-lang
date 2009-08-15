@@ -1,4 +1,4 @@
-##===- lib/Target/ARM/Makefile -----------------------------*- Makefile -*-===##
+##===- lib/Target/XCore/AsmPrinter/Makefile ----------------*- Makefile -*-===##
 #
 #                     The LLVM Compiler Infrastructure
 #
@@ -6,6 +6,7 @@
 # License. See LICENSE.TXT for details.
 #
 ##===----------------------------------------------------------------------===##
+
 LEVEL = ../../../..
 LIBRARYNAME = LLVMXCoreAsmPrinter
 
