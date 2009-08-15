@@ -1069,7 +1069,7 @@ SDValue SelectionDAGLegalize::LegalizeOp(SDValue Op) {
       case TargetLowering::Legal:
         // If this is an unaligned load and the target doesn't support it,
         // expand it.
-        if (!TLI.allowsUnalignedMemoryAccesses()) {
+        if (!TLI.allowsUnalignedMemoryAccesses(LD->getMemoryVT())) {
           const Type *Ty = LD->getMemoryVT().getTypeForEVT(*DAG.getContext());
           unsigned ABIAlignment = TLI.getTargetData()->getABITypeAlignment(Ty);
           if (LD->getAlignment() < ABIAlignment){
@@ -1252,7 +1252,7 @@ SDValue SelectionDAGLegalize::LegalizeOp(SDValue Op) {
           } else {
             // If this is an unaligned load and the target doesn't support it,
             // expand it.
-            if (!TLI.allowsUnalignedMemoryAccesses()) {
+            if (!TLI.allowsUnalignedMemoryAccesses(LD->getMemoryVT())) {
               const Type *Ty = LD->getMemoryVT().getTypeForEVT(*DAG.getContext());
               unsigned ABIAlignment = TLI.getTargetData()->getABITypeAlignment(Ty);
               if (LD->getAlignment() < ABIAlignment){
@@ -1330,7 +1330,7 @@ SDValue SelectionDAGLegalize::LegalizeOp(SDValue Op) {
         case TargetLowering::Legal:
           // If this is an unaligned store and the target doesn't support it,
           // expand it.
-          if (!TLI.allowsUnalignedMemoryAccesses()) {
+          if (!TLI.allowsUnalignedMemoryAccesses(ST->getMemoryVT())) {
             const Type *Ty = ST->getMemoryVT().getTypeForEVT(*DAG.getContext());
             unsigned ABIAlignment = TLI.getTargetData()->getABITypeAlignment(Ty);
             if (ST->getAlignment() < ABIAlignment)
@@ -1429,7 +1429,7 @@ SDValue SelectionDAGLegalize::LegalizeOp(SDValue Op) {
         case TargetLowering::Legal:
           // If this is an unaligned store and the target doesn't support it,
           // expand it.
-          if (!TLI.allowsUnalignedMemoryAccesses()) {
+          if (!TLI.allowsUnalignedMemoryAccesses(ST->getMemoryVT())) {
             const Type *Ty = ST->getMemoryVT().getTypeForEVT(*DAG.getContext());
             unsigned ABIAlignment = TLI.getTargetData()->getABITypeAlignment(Ty);
             if (ST->getAlignment() < ABIAlignment)

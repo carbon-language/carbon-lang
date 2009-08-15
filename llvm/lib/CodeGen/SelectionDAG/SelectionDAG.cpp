@@ -3105,8 +3105,8 @@ bool MeetsMaxMemopRequirement(std::vector<EVT> &MemOps,
                               const TargetLowering &TLI) {
   isSrcStr = isMemSrcFromString(Src, Str);
   bool isSrcConst = isa<ConstantSDNode>(Src);
-  bool AllowUnalign = TLI.allowsUnalignedMemoryAccesses();
   EVT VT = TLI.getOptimalMemOpType(Size, Align, isSrcConst, isSrcStr, DAG);
+  bool AllowUnalign = TLI.allowsUnalignedMemoryAccesses(VT);
   if (VT != MVT::iAny) {
     unsigned NewAlign = (unsigned)
       TLI.getTargetData()->getABITypeAlignment(
