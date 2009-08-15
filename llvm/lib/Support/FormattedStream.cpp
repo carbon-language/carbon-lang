@@ -12,7 +12,6 @@
 //===----------------------------------------------------------------------===//
 
 #include "llvm/Support/FormattedStream.h"
-#include <algorithm>
 
 using namespace llvm;
 
