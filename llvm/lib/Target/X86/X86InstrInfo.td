@@ -56,6 +56,10 @@ def SDT_X86CallSeqEnd   : SDCallSeqEnd<[SDTCisVT<0, i32>,
 
 def SDT_X86Call   : SDTypeProfile<0, -1, [SDTCisVT<0, iPTR>]>;
 
+def SDT_X86VASTART_SAVE_XMM_REGS : SDTypeProfile<0, -1, [SDTCisVT<0, i8>,
+                                                         SDTCisVT<1, iPTR>,
+                                                         SDTCisVT<2, iPTR>]>;
+
 def SDTX86RepStr  : SDTypeProfile<0, 1, [SDTCisVT<0, OtherVT>]>;
 
 def SDTX86RdTsc   : SDTypeProfile<0, 0, []>;
@@ -113,6 +117,11 @@ def X86AtomSwap64 : SDNode<"X86ISD::ATOMSWAP64_DAG", SDTX86atomicBinary,
                          SDNPMayLoad, SDNPMemOperand]>;
 def X86retflag : SDNode<"X86ISD::RET_FLAG", SDTX86Ret,
                         [SDNPHasChain, SDNPOptInFlag]>;
+
+def X86vastart_save_xmm_regs :
+                 SDNode<"X86ISD::VASTART_SAVE_XMM_REGS",
+                        SDT_X86VASTART_SAVE_XMM_REGS,
+                        [SDNPHasChain]>;
 
 def X86callseq_start :
                  SDNode<"ISD::CALLSEQ_START", SDT_X86CallSeqStart,
@@ -510,6 +519,18 @@ def ADJCALLSTACKUP32   : I<0, Pseudo, (outs), (ins i32imm:$amt1, i32imm:$amt2),
                            [(X86callseq_end timm:$amt1, timm:$amt2)]>,
                           Requires<[In32BitMode]>;
 }
+
+// x86-64 va_start lowering magic.
+let usesCustomDAGSchedInserter = 1 in
+def VASTART_SAVE_XMM_REGS : I<0, Pseudo,
+                              (outs),
+                              (ins GR8:$al,
+                                   i64imm:$regsavefi, i64imm:$offset,
+                                   variable_ops),
+                              "#VASTART_SAVE_XMM_REGS $al, $regsavefi, $offset",
+                              [(X86vastart_save_xmm_regs GR8:$al,
+                                                         imm:$regsavefi,
+                                                         imm:$offset)]>;
 
 // Nop
 let neverHasSideEffects = 1 in {

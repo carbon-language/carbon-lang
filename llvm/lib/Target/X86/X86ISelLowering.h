@@ -243,7 +243,12 @@ namespace llvm {
       MUL_IMM,
       
       // PTEST - Vector bitwise comparisons
-      PTEST
+      PTEST,
+
+      // VASTART_SAVE_XMM_REGS - Save xmm argument registers to the stack,
+      // according to %al. An operator is needed so that this can be expanded
+      // with control flow.
+      VASTART_SAVE_XMM_REGS
     };
   }
 
@@ -714,6 +719,11 @@ namespace llvm {
     MachineBasicBlock *EmitAtomicMinMaxWithCustomInserter(MachineInstr *BInstr,
                                                           MachineBasicBlock *BB,
                                                         unsigned cmovOpc) const;
+
+    /// Utility function to emit the xmm reg save portion of va_start.
+    MachineBasicBlock *EmitVAStartSaveXMMRegsWithCustomInserter(
+                                                   MachineInstr *BInstr,
+                                                   MachineBasicBlock *BB) const;
 
     /// Emit nodes that will be selected as "test Op0,Op0", or something
     /// equivalent, for use with the given x86 condition code.

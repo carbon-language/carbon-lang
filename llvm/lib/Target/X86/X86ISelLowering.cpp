@@ -1527,37 +1527,44 @@ X86TargetLowering::LowerFormalArguments(SDValue Chain,
       // Store the integer parameter registers.
       SmallVector<SDValue, 8> MemOps;
       SDValue RSFIN = DAG.getFrameIndex(RegSaveFrameIndex, getPointerTy());
-      SDValue FIN = DAG.getNode(ISD::ADD, dl, getPointerTy(), RSFIN,
-                                  DAG.getIntPtrConstant(VarArgsGPOffset));
+      unsigned Offset = VarArgsGPOffset;
       for (; NumIntRegs != TotalNumIntRegs; ++NumIntRegs) {
+        SDValue FIN = DAG.getNode(ISD::ADD, dl, getPointerTy(), RSFIN,
+                                  DAG.getIntPtrConstant(Offset));
         unsigned VReg = MF.addLiveIn(GPR64ArgRegs[NumIntRegs],
                                      X86::GR64RegisterClass);
         SDValue Val = DAG.getCopyFromReg(Chain, dl, VReg, MVT::i64);
         SDValue Store =
           DAG.getStore(Val.getValue(1), dl, Val, FIN,
-                       PseudoSourceValue::getFixedStack(RegSaveFrameIndex), 0);
+                       PseudoSourceValue::getFixedStack(RegSaveFrameIndex),
+                       Offset);
         MemOps.push_back(Store);
-        FIN = DAG.getNode(ISD::ADD, dl, getPointerTy(), FIN,
-                          DAG.getIntPtrConstant(8));
+        Offset += 8;
       }
 
+      if (!MemOps.empty())
+          Chain = DAG.getNode(ISD::TokenFactor, dl, MVT::Other,
+                             &MemOps[0], MemOps.size());
+
       // Now store the XMM (fp + vector) parameter registers.
-      FIN = DAG.getNode(ISD::ADD, dl, getPointerTy(), RSFIN,
-                        DAG.getIntPtrConstant(VarArgsFPOffset));
+      SmallVector<SDValue, 11> SaveXMMOps;
+      SaveXMMOps.push_back(Chain);
+
+      unsigned AL = MF.addLiveIn(X86::AL, X86::GR8RegisterClass);
+      SDValue ALVal = DAG.getCopyFromReg(DAG.getEntryNode(), dl, AL, MVT::i8);
+      SaveXMMOps.push_back(ALVal);
+
+      SaveXMMOps.push_back(DAG.getIntPtrConstant(RegSaveFrameIndex));
+      SaveXMMOps.push_back(DAG.getIntPtrConstant(VarArgsFPOffset));
+
       for (; NumXMMRegs != TotalNumXMMRegs; ++NumXMMRegs) {
         unsigned VReg = MF.addLiveIn(XMMArgRegs[NumXMMRegs],
                                      X86::VR128RegisterClass);
         SDValue Val = DAG.getCopyFromReg(Chain, dl, VReg, MVT::v4f32);
-        SDValue Store =
-          DAG.getStore(Val.getValue(1), dl, Val, FIN,
-                       PseudoSourceValue::getFixedStack(RegSaveFrameIndex), 0);
-        MemOps.push_back(Store);
-        FIN = DAG.getNode(ISD::ADD, dl, getPointerTy(), FIN,
-                          DAG.getIntPtrConstant(16));
+        SaveXMMOps.push_back(Val);
       }
-      if (!MemOps.empty())
-          Chain = DAG.getNode(ISD::TokenFactor, dl, MVT::Other,
-                             &MemOps[0], MemOps.size());
+      Chain = DAG.getNode(X86ISD::VASTART_SAVE_XMM_REGS, dl, MVT::Other,
+                          &SaveXMMOps[0], SaveXMMOps.size());
     }
   }
 
@@ -7090,6 +7097,7 @@ const char *X86TargetLowering::getTargetNodeName(unsigned Opcode) const {
   case X86ISD::DEC:                return "X86ISD::DEC";
   case X86ISD::MUL_IMM:            return "X86ISD::MUL_IMM";
   case X86ISD::PTEST:              return "X86ISD::PTEST";
+  case X86ISD::VASTART_SAVE_XMM_REGS: return "X86ISD::VASTART_SAVE_XMM_REGS";
   }
 }
 
@@ -7513,7 +7521,7 @@ X86TargetLowering::EmitAtomicMinMaxWithCustomInserter(MachineInstr *mInstr,
   F->insert(MBBIter, newMBB);
   F->insert(MBBIter, nextMBB);
 
-  // Move all successors to thisMBB to nextMBB
+  // Move all successors of thisMBB to nextMBB
   nextMBB->transferSuccessors(thisMBB);
 
   // Update thisMBB to fall through to newMBB
@@ -7585,6 +7593,73 @@ X86TargetLowering::EmitAtomicMinMaxWithCustomInserter(MachineInstr *mInstr,
   return nextMBB;
 }
 
+MachineBasicBlock *
+X86TargetLowering::EmitVAStartSaveXMMRegsWithCustomInserter(
+                                                 MachineInstr *MI,
+                                                 MachineBasicBlock *MBB) const {
+  // Emit code to save XMM registers to the stack. The ABI says that the
+  // number of registers to save is given in %al, so it's theoretically
+  // possible to do an indirect jump trick to avoid saving all of them,
+  // however this code takes a simpler approach and just executes all
+  // of the stores if %al is non-zero. It's less code, and it's probably
+  // easier on the hardware branch predictor, and stores aren't all that
+  // expensive anyway.
+
+  // Create the new basic blocks. One block contains all the XMM stores,
+  // and one block is the final destination regardless of whether any
+  // stores were performed.
+  const BasicBlock *LLVM_BB = MBB->getBasicBlock();
+  MachineFunction *F = MBB->getParent();
+  MachineFunction::iterator MBBIter = MBB;
+  ++MBBIter;
+  MachineBasicBlock *XMMSaveMBB = F->CreateMachineBasicBlock(LLVM_BB);
+  MachineBasicBlock *EndMBB = F->CreateMachineBasicBlock(LLVM_BB);
+  F->insert(MBBIter, XMMSaveMBB);
+  F->insert(MBBIter, EndMBB);
+
+  // Set up the CFG.
+  // Move any original successors of MBB to the end block.
+  EndMBB->transferSuccessors(MBB);
+  // The original block will now fall through to the XMM save block.
+  MBB->addSuccessor(XMMSaveMBB);
+  // The XMMSaveMBB will fall through to the end block.
+  XMMSaveMBB->addSuccessor(EndMBB);
+
+  // Now add the instructions.
+  const TargetInstrInfo *TII = getTargetMachine().getInstrInfo();
+  DebugLoc DL = MI->getDebugLoc();
+
+  unsigned CountReg = MI->getOperand(0).getReg();
+  int64_t RegSaveFrameIndex = MI->getOperand(1).getImm();
+  int64_t VarArgsFPOffset = MI->getOperand(2).getImm();
+
+  if (!Subtarget->isTargetWin64()) {
+    // If %al is 0, branch around the XMM save block.
+    BuildMI(MBB, DL, TII->get(X86::TEST8rr)).addReg(CountReg).addReg(CountReg);
+    BuildMI(MBB, DL, TII->get(X86::JE)).addMBB(EndMBB);
+    MBB->addSuccessor(EndMBB);
+  }
+
+  // In the XMM save block, save all the XMM argument registers.
+  for (int i = 3, e = MI->getNumOperands(); i != e; ++i) {
+    int64_t Offset = (i - 3) * 16 + VarArgsFPOffset;
+    BuildMI(XMMSaveMBB, DL, TII->get(X86::MOVAPSmr))
+      .addFrameIndex(RegSaveFrameIndex)
+      .addImm(/*Scale=*/1)
+      .addReg(/*IndexReg=*/0)
+      .addImm(/*Disp=*/Offset)
+      .addReg(/*Segment=*/0)
+      .addReg(MI->getOperand(i).getReg())
+      .addMemOperand(MachineMemOperand(
+                       PseudoSourceValue::getFixedStack(RegSaveFrameIndex),
+                       MachineMemOperand::MOStore, Offset,
+                       /*Size=*/16, /*Align=*/16));
+  }
+
+  F->DeleteMachineInstr(MI);   // The pseudo instruction is gone now.
+
+  return EndMBB;
+}
 
 MachineBasicBlock *
 X86TargetLowering::EmitInstrWithCustomInserter(MachineInstr *MI,
@@ -7888,6 +7963,8 @@ X86TargetLowering::EmitInstrWithCustomInserter(MachineInstr *MI,
                                                X86::MOV32rr, X86::MOV32rr,
                                                X86::MOV32ri, X86::MOV32ri,
                                                false);
+  case X86::VASTART_SAVE_XMM_REGS:
+    return EmitVAStartSaveXMMRegsWithCustomInserter(MI, BB);
   }
 }
 
