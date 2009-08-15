@@ -95,23 +95,27 @@ static bool ReadCheckFile(SourceMgr &SM,
   }
   SM.AddNewSourceBuffer(F, SMLoc());
 
-  // Find all instances of CheckPrefix followed by : in the file.  The
-  // MemoryBuffer is guaranteed to be nul terminated, but may have nul's
-  // embedded into it.  We don't support check strings with embedded nuls.
-  std::string Prefix = CheckPrefix + ":";
+  // Find all instances of CheckPrefix followed by : in the file.
   const char *CurPtr = F->getBufferStart(), *BufferEnd = F->getBufferEnd();
 
   while (1) {
     // See if Prefix occurs in the memory buffer.
-    const char *Ptr = FindFixedStringInBuffer(Prefix, CurPtr, *F);
+    const char *Ptr = FindFixedStringInBuffer(CheckPrefix, CurPtr, *F);
     
     // If we didn't find a match, we're done.
     if (Ptr == BufferEnd)
       break;
     
+    // Verify that the : is present after the prefix.
+    if (Ptr[CheckPrefix.size()] != ':') {
+      CurPtr = Ptr+1;
+      continue;
+    }
+    
     // Okay, we found the prefix, yay.  Remember the rest of the line, but
     // ignore leading and trailing whitespace.
-    Ptr += Prefix.size();
+    Ptr += CheckPrefix.size()+1;
+    
     while (*Ptr == ' ' || *Ptr == '\t')
       ++Ptr;
     
@@ -127,7 +131,7 @@ static bool ReadCheckFile(SourceMgr &SM,
     // Check that there is something on the line.
     if (Ptr >= CurPtr) {
       SM.PrintMessage(SMLoc::getFromPointer(CurPtr),
-                      "found empty check string with prefix '"+Prefix+"'",
+                      "found empty check string with prefix '"+CheckPrefix+":'",
                       "error");
       return true;
     }
@@ -138,7 +142,8 @@ static bool ReadCheckFile(SourceMgr &SM,
   }
   
   if (CheckStrings.empty()) {
-    errs() << "error: no check strings found with prefix '" << Prefix << "'\n";
+    errs() << "error: no check strings found with prefix '" << CheckPrefix
+           << ":'\n";
     return true;
   }
   
