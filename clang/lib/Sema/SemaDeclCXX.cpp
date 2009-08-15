@@ -2379,12 +2379,11 @@ void Sema::DefineImplicitCopyConstructor(SourceLocation CurrentLocation,
 
 /// BuildCXXConstructExpr - Creates a complete call to a constructor,
 /// including handling of its default argument expressions.
-Expr *Sema::BuildCXXConstructExpr(ASTContext &C,
-                                  QualType DeclInitType, 
+Expr *Sema::BuildCXXConstructExpr(QualType DeclInitType, 
                                   CXXConstructorDecl *Constructor,
                                   bool Elidable,
                                   Expr **Exprs, unsigned NumExprs) {
-  CXXConstructExpr *Temp = CXXConstructExpr::Create(C, DeclInitType, 
+  CXXConstructExpr *Temp = CXXConstructExpr::Create(Context, DeclInitType, 
                                                     Constructor, 
                                                     Elidable, Exprs, NumExprs);
   // default arguments must be added to constructor call expression.
@@ -2403,7 +2402,7 @@ Expr *Sema::BuildCXXConstructExpr(ASTContext &C,
       for (unsigned I = 0, N = E->getNumTemporaries(); I != N; ++I)
         ExprTemporaries.push_back(E->getTemporary(I));
     }
-    Expr *Arg = CXXDefaultArgExpr::Create(C, FDecl->getParamDecl(j));
+    Expr *Arg = CXXDefaultArgExpr::Create(Context, FDecl->getParamDecl(j));
     Temp->setArg(j, Arg);
   }
   return Temp;
@@ -2413,8 +2412,7 @@ void Sema::InitializeVarWithConstructor(VarDecl *VD,
                                         CXXConstructorDecl *Constructor,
                                         QualType DeclInitType, 
                                         Expr **Exprs, unsigned NumExprs) {
-  Expr *Temp = BuildCXXConstructExpr(Context,
-                                     DeclInitType, Constructor, 
+  Expr *Temp = BuildCXXConstructExpr(DeclInitType, Constructor, 
                                      false, Exprs, NumExprs);  
   MarkDeclarationReferenced(VD->getLocation(), Constructor);
   Temp = MaybeCreateCXXExprWithTemporaries(Temp, /*DestroyTemps=*/true);

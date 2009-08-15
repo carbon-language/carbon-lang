@@ -905,8 +905,8 @@ Sema::PerformImplicitConversion(Expr *&From, QualType ToType,
     // FIXME: Keep track of whether the copy constructor is elidable or not.
     bool Elidable = (isa<CallExpr>(From) || 
                      isa<CXXTemporaryObjectExpr>(From));
-    From = BuildCXXConstructExpr(Context, ToType, 
-                                 SCS.CopyConstructor, Elidable, &From, 1);
+    From = BuildCXXConstructExpr(ToType, SCS.CopyConstructor, 
+                                 Elidable, &From, 1);
     return false;
   }
 
@@ -1558,6 +1558,9 @@ QualType Sema::FindCompositePointerType(Expr *&E1, Expr *&E2) {
 }
 
 Sema::OwningExprResult Sema::MaybeBindToTemporary(Expr *E) {
+  if (!Context.getLangOptions().CPlusPlus)
+    return Owned(E);
+  
   const RecordType *RT = E->getType()->getAs<RecordType>();
   if (!RT)
     return Owned(E);
