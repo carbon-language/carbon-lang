@@ -39,7 +39,7 @@ STATISTIC(NumPhiInserted, "Number of phi functions inserted");
 void SSI::getAnalysisUsage(AnalysisUsage &AU) const {
   AU.addRequired<DominanceFrontier>();
   AU.addRequired<DominatorTree>();
-  AU.setPreservesAll();
+  AU.setPreservesCFG();
 }
 
 bool SSI::runOnFunction(Function &F) {
@@ -121,7 +121,7 @@ void SSI::insertPhiFunctions(SmallVectorImpl<Instruction *> &value) {
     // Test if there were any sigmas for this variable
     if (needConstruction[i]) {
 
-      SmallPtrSet<BasicBlock *, 1> BB_visited;
+      SmallPtrSet<BasicBlock *, 16> BB_visited;
 
       // Insert phi functions if there is any sigma function
       while (!defsites[i].empty()) {
@@ -130,6 +130,10 @@ void SSI::insertPhiFunctions(SmallVectorImpl<Instruction *> &value) {
 
         defsites[i].pop_back();
         DominanceFrontier::iterator DF_BB = DF->find(BB);
+
+        // The BB is unreachable. Skip it.
+        if (DF_BB == DF->end())
+          continue; 
 
         // Iterates through all the dominance frontier of BB
         for (std::set<BasicBlock *>::iterator DF_BB_begin =
