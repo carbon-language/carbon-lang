@@ -477,7 +477,7 @@ void CodeGenFunction::EmitIndirectSwitches() {
 }
 
 llvm::Value *CodeGenFunction::GetVLASize(const VariableArrayType *VAT) {
-  llvm::Value *&SizeEntry = VLASizeMap[VAT];
+  llvm::Value *&SizeEntry = VLASizeMap[VAT->getSizeExpr()];
   
   assert(SizeEntry && "Did not emit size for type");
   return SizeEntry;
@@ -490,7 +490,7 @@ llvm::Value *CodeGenFunction::EmitVLASize(QualType Ty) {
   EnsureInsertPoint();
   
   if (const VariableArrayType *VAT = getContext().getAsVariableArrayType(Ty)) {
-    llvm::Value *&SizeEntry = VLASizeMap[VAT];
+    llvm::Value *&SizeEntry = VLASizeMap[VAT->getSizeExpr()];
     
     if (!SizeEntry) {
       const llvm::Type *SizeTy = ConvertType(getContext().getSizeType());

@@ -224,9 +224,12 @@ private:
   llvm::BasicBlock *InvokeDest;
 
   // VLASizeMap - This keeps track of the associated size for each VLA type.
+  // We track this by the size expression rather than the type itself because
+  // in certain situations, like a const qualifier applied to an VLA typedef,
+  // multiple VLA types can share the same size expression.
   // FIXME: Maybe this could be a stack of maps that is pushed/popped as we
   // enter/leave scopes.
-  llvm::DenseMap<const VariableArrayType*, llvm::Value*> VLASizeMap;
+  llvm::DenseMap<const Expr*, llvm::Value*> VLASizeMap;
 
   /// DidCallStackSave - Whether llvm.stacksave has been called. Used to avoid
   /// calling llvm.stacksave for multiple VLAs in the same scope.

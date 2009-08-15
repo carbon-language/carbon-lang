@@ -2105,14 +2105,16 @@ CanQualType ASTContext::getCanonicalType(QualType T) {
   if (DependentSizedArrayType *DSAT = dyn_cast<DependentSizedArrayType>(AT))
     return CanQualType::CreateUnsafe(
              getDependentSizedArrayType(NewEltTy,
-                                        DSAT->getSizeExpr(),
+                                        DSAT->getSizeExpr() ?
+                                          DSAT->getSizeExpr()->Retain() : 0,
                                         DSAT->getSizeModifier(),
                                         DSAT->getIndexTypeQualifier(),
                                         DSAT->getBracketsRange()));
 
   VariableArrayType *VAT = cast<VariableArrayType>(AT);
   return CanQualType::CreateUnsafe(getVariableArrayType(NewEltTy,
-                                                        VAT->getSizeExpr(),
+                                                        VAT->getSizeExpr() ?
+                                              VAT->getSizeExpr()->Retain() : 0,
                                                         VAT->getSizeModifier(),
                                                   VAT->getIndexTypeQualifier(),
                                                      VAT->getBracketsRange()));
@@ -2304,14 +2306,16 @@ const ArrayType *ASTContext::getAsArrayType(QualType T) {
         = dyn_cast<DependentSizedArrayType>(ATy))
     return cast<ArrayType>(
                      getDependentSizedArrayType(NewEltTy, 
-                                                DSAT->getSizeExpr(),
+                                                DSAT->getSizeExpr() ?
+                                              DSAT->getSizeExpr()->Retain() : 0,
                                                 DSAT->getSizeModifier(),
                                                 DSAT->getIndexTypeQualifier(),
                                                 DSAT->getBracketsRange()));
   
   const VariableArrayType *VAT = cast<VariableArrayType>(ATy);
   return cast<ArrayType>(getVariableArrayType(NewEltTy,
-                                              VAT->getSizeExpr(),
+                                              VAT->getSizeExpr() ?
+                                               VAT->getSizeExpr()->Retain() : 0,
                                               VAT->getSizeModifier(),
                                               VAT->getIndexTypeQualifier(),
                                               VAT->getBracketsRange()));
