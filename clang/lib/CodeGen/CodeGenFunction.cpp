@@ -493,19 +493,16 @@ llvm::Value *CodeGenFunction::EmitVLASize(QualType Ty) {
     llvm::Value *&SizeEntry = VLASizeMap[VAT];
     
     if (!SizeEntry) {
-      // Get the element size;
-      llvm::Value *ElemSize;
-    
-      QualType ElemTy = VAT->getElementType();
-
       const llvm::Type *SizeTy = ConvertType(getContext().getSizeType());
                                              
+      // Get the element size;
+      QualType ElemTy = VAT->getElementType();
+      llvm::Value *ElemSize;
       if (ElemTy->isVariableArrayType())
         ElemSize = EmitVLASize(ElemTy);
-      else {
+      else
         ElemSize = llvm::ConstantInt::get(SizeTy,
                                           getContext().getTypeSize(ElemTy) / 8);
-      }
     
       llvm::Value *NumElements = EmitScalarExpr(VAT->getSizeExpr());
       NumElements = Builder.CreateIntCast(NumElements, SizeTy, false, "tmp");
@@ -514,14 +511,16 @@ llvm::Value *CodeGenFunction::EmitVLASize(QualType Ty) {
     }
     
     return SizeEntry;
-  } else if (const ArrayType *AT = dyn_cast<ArrayType>(Ty)) {
-    EmitVLASize(AT->getElementType());
-  } else if (const PointerType *PT = Ty->getAs<PointerType>())
-    EmitVLASize(PT->getPointeeType());
-  else {
-    assert(0 && "unknown VM type!");
   }
   
+  if (const ArrayType *AT = dyn_cast<ArrayType>(Ty)) {
+    EmitVLASize(AT->getElementType());
+    return 0;
+  } 
+  
+  const PointerType *PT = Ty->getAs<PointerType>();
+  assert(PT && "unknown VM type!");
+  EmitVLASize(PT->getPointeeType());
   return 0;
 }
 
