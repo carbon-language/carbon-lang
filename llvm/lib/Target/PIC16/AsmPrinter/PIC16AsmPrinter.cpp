@@ -13,7 +13,7 @@
 //===----------------------------------------------------------------------===//
 
 #include "PIC16AsmPrinter.h"
-#include "PIC16Section.h"
+#include "MCSectionPIC16.h"
 #include "PIC16TargetAsmInfo.h"
 #include "llvm/DerivedTypes.h"
 #include "llvm/Function.h"

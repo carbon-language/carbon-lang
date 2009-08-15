@@ -8,7 +8,7 @@
 //===----------------------------------------------------------------------===//
 
 #include "PIC16TargetObjectFile.h"
-#include "PIC16Section.h"
+#include "MCSectionPIC16.h"
 #include "PIC16ISelLowering.h"
 #include "PIC16TargetMachine.h"
 #include "llvm/DerivedTypes.h"
