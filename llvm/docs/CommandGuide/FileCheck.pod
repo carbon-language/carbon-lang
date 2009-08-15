@@ -1,0 +1,65 @@
+
+=pod
+
+=head1 NAME
+
+FileCheck - Flexible pattern matching file verifier
+
+=head1 SYNOPSIS
+
+B<FileCheck> I<match-filename> [I<--check-prefix=XXX>] [I<--strict-whitespace>]
+
+=head1 DESCRIPTION
+
+B<FileCheck> reads two files (one from standard input, and one specified on the
+command line) and uses one to verify the other.  This behavior is particularly
+useful for the testsuite, which wants to verify that the output of some tool
+(e.g. llc) contains the expected information (for example, a movsd from esp or
+whatever is interesting).  This is similar to using grep, but it is optimized
+for matching multiple different inputs in one file in a specific order.
+
+The I<match-filename> file specifies the file that contains the patterns to
+match.  The file to verify is always read from standard input.
+
+The input and output of B<tblgen> is beyond the scope of this short
+introduction. Please see the I<TestingGuide> page in the LLVM documentation.
+
+=head1 OPTIONS
+
+=over
+
+=item B<--help>
+
+Print a summary of command line options.
+
+=item B<--check-prefix> I<prefix>
+
+FileCheck searches the contents of I<match-filename> for patterns to match.  By
+default, these patterns are prefixed with "CHECK:".  If you'd like to use a
+different prefix (e.g. because the same input file is checking multiple
+different tool or options), the B<--check-prefix> argument allows you to specify
+a specific prefix to match.
+
+=item B<--strict-whitespace>
+
+By default, FileCheck canonicalizes input horizontal whitespace (spaces and
+tabs) which causes it to ignore these differences (a space will match a tab).
+The --strict-whitespace argument disables this behavior.
+
+=item B<-version>
+
+Show the version number of this program.
+
+=back
+
+=head1 EXIT STATUS
+
+If B<FileCheck> verifies that the file matches the expected contents, it exits
+with 0.  Otherwise, if not, or if an error occurs, it will exit with a non-zero
+value.
+
+=head1 AUTHORS
+
+Maintained by The LLVM Team (L<http://llvm.org>).
+
+=cut
