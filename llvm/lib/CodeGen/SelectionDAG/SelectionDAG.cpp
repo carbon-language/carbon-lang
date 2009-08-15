@@ -3108,9 +3108,8 @@ bool MeetsMaxMemopRequirement(std::vector<EVT> &MemOps,
   EVT VT = TLI.getOptimalMemOpType(Size, Align, isSrcConst, isSrcStr, DAG);
   bool AllowUnalign = TLI.allowsUnalignedMemoryAccesses(VT);
   if (VT != MVT::iAny) {
-    unsigned NewAlign = (unsigned)
-      TLI.getTargetData()->getABITypeAlignment(
-        VT.getTypeForEVT(*DAG.getContext()));
+    const Type *Ty = VT.getTypeForEVT(*DAG.getContext());
+    unsigned NewAlign = (unsigned) TLI.getTargetData()->getABITypeAlignment(Ty);
     // If source is a string constant, this will require an unaligned load.
     if (NewAlign > Align && (isSrcConst || AllowUnalign)) {
       if (Dst.getOpcode() != ISD::FrameIndex) {
@@ -3135,7 +3134,7 @@ bool MeetsMaxMemopRequirement(std::vector<EVT> &MemOps,
   }
 
   if (VT == MVT::iAny) {
-    if (AllowUnalign) {
+    if (TLI.allowsUnalignedMemoryAccesses(MVT::i64)) {
       VT = MVT::i64;
     } else {
       switch (Align & 7) {
