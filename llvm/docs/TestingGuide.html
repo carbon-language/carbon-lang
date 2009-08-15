@@ -29,6 +29,7 @@
   <li><a href="#dgstructure">DejaGNU structure</a>
     <ul>
       <li><a href="#dgcustom">Writing new DejaGNU tests</a></li>
+      <li><a href="#FileCheck">The FileCheck utility</a></li>
       <li><a href="#dgvars">Variables and substitutions</a></li>
       <li><a href="#dgfeatures">Other features</a></li>
    </ul>
@@ -444,6 +445,26 @@ that subdirectory.</p>
 that <tt>GREP_OPTIONS</tt> is not set in your environment. Otherwise,
 you may get invalid results (both false positives and false
 negatives).</p>
+
+</div>
+
+<!-- _______________________________________________________________________ -->
+<div class="doc_subsection"><a name="FileCheck">The FileCheck utility</a></div>
+<!-- _______________________________________________________________________ -->
+
+<div class="doc_text">
+
+<p>A powerful feature of the RUN: lines is that it allows any arbitrary commands
+   to be executed as part of the test harness.  While standard (portable) unix
+   tools like 'grep' work fine on run lines, as you see above, there are a lot
+   of caveats due to interaction with Tcl syntax, and we want to make that the
+   run lines are portable to a wide range of systems.  Another major problem is
+   that grep is not very good at checking to verify that the output of a tools
+   contains a series of different output in a specific order.  The FileCheck
+   tool was designed to help with these problems.</p>
+
+
+<!-- http://llvm.org/cmds/FileCheck.html -->
 
 </div>
 
