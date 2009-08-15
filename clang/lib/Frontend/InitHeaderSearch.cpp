@@ -202,6 +202,9 @@ void InitHeaderSearch::AddDefaultSystemIncludePaths(const LangOptions &Lang) {
     AddPath("/usr/lib/gcc/i686-pc-linux-gnu/4.1.2/include/g++-v4/backward",
             System, true, false, false);
 
+    // Ubuntu 8.10
+    AddPath("/usr/include/c++/4.3/i486-linux-gnu", System, true, false, false);
+
     // Gentoo amd64 stable
     AddPath("/usr/lib/gcc/x86_64-pc-linux-gnu/4.1.2/include/g++-v4", System,
             true, false, false);
