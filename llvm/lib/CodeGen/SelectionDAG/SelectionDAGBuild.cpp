@@ -1239,7 +1239,7 @@ void SelectionDAGLowering::visitBr(BranchInst &I) {
   // Figure out which block is immediately after the current one.
   MachineBasicBlock *NextBlock = 0;
   MachineFunction::iterator BBI = CurMBB;
-  if (++BBI != CurMBB->getParent()->end())
+  if (++BBI != FuncInfo.MF->end())
     NextBlock = BBI;
 
   if (I.isUnconditional()) {
@@ -1300,7 +1300,7 @@ void SelectionDAGLowering::visitBr(BranchInst &I) {
       // Okay, we decided not to do this, remove any inserted MBB's and clear
       // SwitchCases.
       for (unsigned i = 1, e = SwitchCases.size(); i != e; ++i)
-        CurMBB->getParent()->erase(SwitchCases[i].ThisBB);
+        FuncInfo.MF->erase(SwitchCases[i].ThisBB);
 
       SwitchCases.clear();
     }
@@ -1362,7 +1362,7 @@ void SelectionDAGLowering::visitSwitchCase(CaseBlock &CB) {
   // This is used to avoid emitting unnecessary branches to the next block.
   MachineBasicBlock *NextBlock = 0;
   MachineFunction::iterator BBI = CurMBB;
-  if (++BBI != CurMBB->getParent()->end())
+  if (++BBI != FuncInfo.MF->end())
     NextBlock = BBI;
 
   // If the lhs block is the next block, invert the condition so that we can
@@ -1447,7 +1447,7 @@ void SelectionDAGLowering::visitJumpTableHeader(JumpTable &JT,
   // This is used to avoid emitting unnecessary branches to the next block.
   MachineBasicBlock *NextBlock = 0;
   MachineFunction::iterator BBI = CurMBB;
-  if (++BBI != CurMBB->getParent()->end())
+  if (++BBI != FuncInfo.MF->end())
     NextBlock = BBI;
 
   SDValue BrCond = DAG.getNode(ISD::BRCOND, getCurDebugLoc(),
@@ -1492,7 +1492,7 @@ void SelectionDAGLowering::visitBitTestHeader(BitTestBlock &B) {
   // This is used to avoid emitting unnecessary branches to the next block.
   MachineBasicBlock *NextBlock = 0;
   MachineFunction::iterator BBI = CurMBB;
-  if (++BBI != CurMBB->getParent()->end())
+  if (++BBI != FuncInfo.MF->end())
     NextBlock = BBI;
 
   MachineBasicBlock* MBB = B.Cases[0].ThisBB;
@@ -1543,7 +1543,7 @@ void SelectionDAGLowering::visitBitTestCase(MachineBasicBlock* NextMBB,
   // This is used to avoid emitting unnecessary branches to the next block.
   MachineBasicBlock *NextBlock = 0;
   MachineFunction::iterator BBI = CurMBB;
-  if (++BBI != CurMBB->getParent()->end())
+  if (++BBI != FuncInfo.MF->end())
     NextBlock = BBI;
 
   if (NextMBB == NextBlock)
@@ -1596,13 +1596,13 @@ bool SelectionDAGLowering::handleSmallSwitchRange(CaseRec& CR,
 
   // Get the MachineFunction which holds the current MBB.  This is used when
   // inserting any additional MBBs necessary to represent the switch.
-  MachineFunction *CurMF = CurMBB->getParent();
+  MachineFunction *CurMF = FuncInfo.MF;
 
   // Figure out which block is immediately after the current one.
   MachineBasicBlock *NextBlock = 0;
   MachineFunction::iterator BBI = CR.CaseBB;
 
-  if (++BBI != CurMBB->getParent()->end())
+  if (++BBI != FuncInfo.MF->end())
     NextBlock = BBI;
 
   // TODO: If any two of the cases has the same destination, and if one value
@@ -1710,13 +1710,13 @@ bool SelectionDAGLowering::handleJTSwitchCase(CaseRec& CR,
 
   // Get the MachineFunction which holds the current MBB.  This is used when
   // inserting any additional MBBs necessary to represent the switch.
-  MachineFunction *CurMF = CurMBB->getParent();
+  MachineFunction *CurMF = FuncInfo.MF;
 
   // Figure out which block is immediately after the current one.
   MachineBasicBlock *NextBlock = 0;
   MachineFunction::iterator BBI = CR.CaseBB;
 
-  if (++BBI != CurMBB->getParent()->end())
+  if (++BBI != FuncInfo.MF->end())
     NextBlock = BBI;
 
   const BasicBlock *LLVMBB = CR.CaseBB->getBasicBlock();
@@ -1783,13 +1783,13 @@ bool SelectionDAGLowering::handleBTSplitSwitchCase(CaseRec& CR,
                                                    MachineBasicBlock* Default) {
   // Get the MachineFunction which holds the current MBB.  This is used when
   // inserting any additional MBBs necessary to represent the switch.
-  MachineFunction *CurMF = CurMBB->getParent();
+  MachineFunction *CurMF = FuncInfo.MF;
 
   // Figure out which block is immediately after the current one.
   MachineBasicBlock *NextBlock = 0;
   MachineFunction::iterator BBI = CR.CaseBB;
 
-  if (++BBI != CurMBB->getParent()->end())
+  if (++BBI != FuncInfo.MF->end())
     NextBlock = BBI;
 
   Case& FrontCase = *CR.Range.first;
@@ -1918,7 +1918,7 @@ bool SelectionDAGLowering::handleBitTestsSwitchCase(CaseRec& CR,
 
   // Get the MachineFunction which holds the current MBB.  This is used when
   // inserting any additional MBBs necessary to represent the switch.
-  MachineFunction *CurMF = CurMBB->getParent();
+  MachineFunction *CurMF = FuncInfo.MF;
 
   // If target does not have legal shift left, do not emit bit tests at all.
   if (!TLI.isOperationLegal(ISD::SHL, TLI.getPointerTy()))
@@ -2082,7 +2082,6 @@ size_t SelectionDAGLowering::Clusterify(CaseVector& Cases,
 void SelectionDAGLowering::visitSwitch(SwitchInst &SI) {
   // Figure out which block is immediately after the current one.
   MachineBasicBlock *NextBlock = 0;
-  MachineFunction::iterator BBI = CurMBB;
 
   MachineBasicBlock *Default = FuncInfo.MBBMap[SI.getDefaultDest()];
 
@@ -2777,7 +2776,7 @@ void SelectionDAGLowering::visitAlloca(AllocaInst &I) {
 
   // Inform the Frame Information that we have just allocated a variable-sized
   // object.
-  CurMBB->getParent()->getFrameInfo()->CreateVariableSizedObject();
+  FuncInfo.MF->getFrameInfo()->CreateVariableSizedObject();
 }
 
 void SelectionDAGLowering::visitLoad(LoadInst &I) {
@@ -4898,7 +4897,7 @@ void SelectionDAGLowering::
 GetRegistersForValue(SDISelAsmOperandInfo &OpInfo,
                      std::set<unsigned> &OutputRegs,
                      std::set<unsigned> &InputRegs) {
-  LLVMContext &Context = CurMBB->getParent()->getFunction()->getContext();
+  LLVMContext &Context = FuncInfo.Fn->getContext();
 
   // Compute whether this value requires an input register, an output register,
   // or both.
