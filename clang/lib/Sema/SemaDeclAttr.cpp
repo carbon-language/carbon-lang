@@ -438,22 +438,15 @@ static void HandleMallocAttr(Decl *d, const AttributeList &Attr, Sema &S) {
     return;
   }
   
-  const FunctionType *FT = getFunctionType(d, false);
-  
-  if (!FT) {
-    S.Diag(Attr.getLoc(), diag::warn_attribute_wrong_decl_type)
-      << Attr.getName() << 0 /*function*/;
-    return;
+  if (const FunctionDecl *FD = dyn_cast<FunctionDecl>(d)) {
+    QualType RetTy = FD->getResultType();  
+    if (RetTy->isAnyPointerType() || RetTy->isBlockPointerType()) {
+      d->addAttr(::new (S.Context) MallocAttr());
+      return;
+    }
   }
 
-  QualType RetTy = FT->getResultType();
-  
-  if (!(RetTy->isAnyPointerType() || RetTy->isBlockPointerType())) {
-    S.Diag(Attr.getLoc(), diag::warn_attribute_malloc_pointer_only);
-    return;
-  }
-
-  d->addAttr(::new (S.Context) MallocAttr());
+  S.Diag(Attr.getLoc(), diag::warn_attribute_malloc_pointer_only);
 }
 
 static bool HandleCommonNoReturnAttr(Decl *d, const AttributeList &Attr,
