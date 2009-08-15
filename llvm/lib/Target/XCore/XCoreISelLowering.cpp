@@ -367,9 +367,10 @@ SDValue XCoreTargetLowering::
 LowerLOAD(SDValue Op, SelectionDAG &DAG)
 {
   LoadSDNode *LD = cast<LoadSDNode>(Op);
-  assert(LD->getExtensionType() == ISD::NON_EXTLOAD && "Unexpected extension type");
+  assert(LD->getExtensionType() == ISD::NON_EXTLOAD &&
+         "Unexpected extension type");
   assert(LD->getMemoryVT() == MVT::i32 && "Unexpected load EVT");
-  if (allowsUnalignedMemoryAccesses()) {
+  if (allowsUnalignedMemoryAccesses(LD->getMemoryVT())) {
     return SDValue();
   }
   unsigned ABIAlignment = getTargetData()->
@@ -465,7 +466,7 @@ LowerSTORE(SDValue Op, SelectionDAG &DAG)
   StoreSDNode *ST = cast<StoreSDNode>(Op);
   assert(!ST->isTruncatingStore() && "Unexpected store type");
   assert(ST->getMemoryVT() == MVT::i32 && "Unexpected store EVT");
-  if (allowsUnalignedMemoryAccesses()) {
+  if (allowsUnalignedMemoryAccesses(ST->getMemoryVT())) {
     return SDValue();
   }
   unsigned ABIAlignment = getTargetData()->
@@ -1048,7 +1049,8 @@ SDValue XCoreTargetLowering::PerformDAGCombine(SDNode *N,
   case ISD::STORE: {
     // Replace unaligned store of unaligned load with memmove.
     StoreSDNode *ST  = cast<StoreSDNode>(N);
-    if (!DCI.isBeforeLegalize() || allowsUnalignedMemoryAccesses() ||
+    if (!DCI.isBeforeLegalize() ||
+        allowsUnalignedMemoryAccesses(ST->getMemoryVT()) ||
         ST->isVolatile() || ST->isIndexed()) {
       break;
     }

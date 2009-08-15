@@ -166,6 +166,11 @@ namespace llvm {
     virtual MachineBasicBlock *EmitInstrWithCustomInserter(MachineInstr *MI,
                                                   MachineBasicBlock *MBB) const;
 
+    /// allowsUnalignedMemoryAccesses - Returns true if the target allows
+    /// unaligned memory accesses. of the specified type.
+    /// FIXME: Add getOptimalMemOpType to implement memcpy with NEON?
+    virtual bool allowsUnalignedMemoryAccesses(EVT VT) const;
+
     /// isLegalAddressingMode - Return true if the addressing mode represented
     /// by AM is legal for this target, for a load/store of the specified type.
     virtual bool isLegalAddressingMode(const AddrMode &AM, const Type *Ty)const;
@@ -193,6 +198,8 @@ namespace llvm {
                                                 APInt &KnownOne,
                                                 const SelectionDAG &DAG,
                                                 unsigned Depth) const;
+
+
     ConstraintType getConstraintType(const std::string &Constraint) const;
     std::pair<unsigned, const TargetRegisterClass*>
       getRegForInlineAsmConstraint(const std::string &Constraint,
