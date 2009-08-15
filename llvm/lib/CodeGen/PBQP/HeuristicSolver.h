@@ -18,9 +18,8 @@
 
 #include "Solver.h"
 #include "AnnotatedGraph.h"
-
+#include "llvm/Support/raw_ostream.h"
 #include <limits>
-#include <iostream>
 
 namespace PBQP {
 
@@ -470,26 +469,24 @@ private:
   }
 
   void printNode(const GraphNodeIterator &nodeItr) {
-
-    std::cerr << "Node " << g.getNodeID(nodeItr) << " (" << &*nodeItr << "):\n"
-              << "  costs = " << g.getNodeCosts(nodeItr) << "\n"
-              << "  link degree = " << g.getNodeData(nodeItr).getLinkDegree() << "\n"
-              << "  links = [ ";
+    llvm::errs() << "Node " << g.getNodeID(nodeItr) << " (" << &*nodeItr << "):\n"
+                 << "  costs = " << g.getNodeCosts(nodeItr) << "\n"
+                 << "  link degree = " << g.getNodeData(nodeItr).getLinkDegree() << "\n"
+                 << "  links = [ ";
 
     for (typename HSIT::NodeData::AdjLinkIterator 
          aeItr = g.getNodeData(nodeItr).adjLinksBegin(),
          aeEnd = g.getNodeData(nodeItr).adjLinksEnd();
          aeItr != aeEnd; ++aeItr) {
-      std::cerr << "(" << g.getNodeID(g.getEdgeNode1Itr(*aeItr))
-                << ", " << g.getNodeID(g.getEdgeNode2Itr(*aeItr))
-                << ") ";
+      llvm::errs() << "(" << g.getNodeID(g.getEdgeNode1Itr(*aeItr))
+                   << ", " << g.getNodeID(g.getEdgeNode2Itr(*aeItr))
+                   << ") ";
     }
-    std::cout << "]\n";
+    llvm::errs() << "]\n";
   }
 
   void dumpState() {
-
-    std::cerr << "\n";
+    llvm::errs() << "\n";
 
     for (GraphNodeIterator nodeItr = g.nodesBegin(), nodeEnd = g.nodesEnd();
          nodeItr != nodeEnd; ++nodeItr) {
@@ -501,22 +498,22 @@ private:
     for (unsigned b = 0; b < 3; ++b) {
       NodeList &bucket = *buckets[b];
 
-      std::cerr << "Bucket " << b << ": [ ";
+      llvm::errs() << "Bucket " << b << ": [ ";
 
       for (NodeListIterator nItr = bucket.begin(), nEnd = bucket.end();
            nItr != nEnd; ++nItr) {
-        std::cerr << g.getNodeID(*nItr) << " ";
+        llvm::errs() << g.getNodeID(*nItr) << " ";
       }
 
-      std::cerr << "]\n";
+      llvm::errs() << "]\n";
     }
 
-    std::cerr << "Stack: [ ";
+    llvm::errs() << "Stack: [ ";
     for (NodeStackIterator nsItr = stack.begin(), nsEnd = stack.end();
          nsItr != nsEnd; ++nsItr) {
-      std::cerr << g.getNodeID(*nsItr) << " ";
+      llvm::errs() << g.getNodeID(*nsItr) << " ";
     }
-    std::cerr << "]\n";
+    llvm::errs() << "]\n";
   }
 
   void reduce() {
@@ -549,7 +546,7 @@ private:
 
     solution.incR1Reductions();
 
-    //std::cerr << "Applying R1 to " << g.getNodeID(xNodeItr) << "\n";
+    //llvm::errs() << "Applying R1 to " << g.getNodeID(xNodeItr) << "\n";
 
     assert((g.getNodeData(xNodeItr).getLinkDegree() == 1) &&
            "Node in R1 bucket has degree != 1");
