@@ -516,7 +516,8 @@ namespace {
     if (TI != TypeStack.end()) {
       TypeMap::const_iterator I = UnresolvedTypes.find(Ty);
       if (I == UnresolvedTypes.end()) {
-        Out << "PATypeHolder " << typeName << "_fwd = OpaqueType::get();";
+        Out << "PATypeHolder " << typeName;
+        Out << "_fwd = OpaqueType::get(getGlobalContext());";
         nl(Out);
         UnresolvedTypes[Ty] = typeName;
       }
@@ -616,7 +617,8 @@ namespace {
       break;
     }
     case Type::OpaqueTyID: {
-      Out << "OpaqueType* " << typeName << " = OpaqueType::get();";
+      Out << "OpaqueType* " << typeName;
+      Out << " = OpaqueType::get(getGlobalContext());";
       nl(Out);
       break;
     }
