@@ -76,7 +76,7 @@ void DominanceFrontier::splitBlock(BasicBlock *NewBB) {
          && "NewBB should have a single successor!");
   BasicBlock *NewBBSucc = NewBB->getTerminator()->getSuccessor(0);
 
-  std::vector<BasicBlock*> PredBlocks;
+  SmallVector<BasicBlock*, 8> PredBlocks;
   for (pred_iterator PI = pred_begin(NewBB), PE = pred_end(NewBB);
        PI != PE; ++PI)
       PredBlocks.push_back(*PI);  
@@ -153,7 +153,7 @@ void DominanceFrontier::splitBlock(BasicBlock *NewBB) {
     // Verify whether this block dominates a block in predblocks.  If not, do
     // not update it.
     bool BlockDominatesAny = false;
-    for (std::vector<BasicBlock*>::const_iterator BI = PredBlocks.begin(), 
+    for (SmallVectorImpl<BasicBlock*>::const_iterator BI = PredBlocks.begin(), 
            BE = PredBlocks.end(); BI != BE; ++BI) {
       if (DT.dominates(FI, *BI)) {
         BlockDominatesAny = true;
