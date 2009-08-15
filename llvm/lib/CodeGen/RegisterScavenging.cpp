@@ -236,7 +236,7 @@ void RegScavenger::forward() {
       continue;
     if (MO.isUse()) {
       assert(isUsed(Reg) && "Using an undefined register!");
-      assert(!EarlyClobberRegs.test(Reg) &&
+      assert((!EarlyClobberRegs.test(Reg) || MI->isRegTiedToDefOperand(i)) &&
              "Using an early clobbered register!");
     } else {
       assert(MO.isDef());
