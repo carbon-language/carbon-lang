@@ -1,5 +1,5 @@
 ; Tests for SSE2 and below, without SSE3+.
-; RUN: llvm-as < %s | llc -march=x86 -mcpu=pentium4 | FileCheck %s
+; RUN: llvm-as < %s | llc -mtriple=i386-apple-darwin10 -mcpu=pentium4 | FileCheck %s
 
 define void @t1(<2 x double>* %r, <2 x double>* %A, double %B) nounwind  {
 	%tmp3 = load <2 x double>* %A, align 16
