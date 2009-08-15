@@ -1,4 +1,4 @@
-//===- PIC16Section.h - PIC16-specific section representation ---*- C++ -*-===//
+//===- MCSectionPIC16.h - PIC16-specific section representation -*- C++ -*-===//
 //
 //                     The LLVM Compiler Infrastructure
 //
@@ -7,7 +7,7 @@
 //
 //===----------------------------------------------------------------------===//
 //
-// This file declares the MCSection class.
+// This file declares the MCSectionPIC16 class.
 //
 //===----------------------------------------------------------------------===//
 
