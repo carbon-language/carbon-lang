@@ -362,10 +362,10 @@
 </div>
 
 <div class="doc_text">
+
 <pre>
-i8* %<a href="#llvm_eh_exception">llvm.eh.exception</a>( )
+  i8* %<a href="#llvm_eh_exception">llvm.eh.exception</a>( )
 </pre>
-</div>
 
 <p>This intrinsic returns a pointer to the exception structure.</p>
 
@@ -377,11 +377,11 @@ i8* %<a href="#llvm_eh_exception">llvm.eh.exception</a>( )
 </div>
 
 <div class="doc_text">
+
 <pre>
-i32 %<a href="#llvm_eh_selector">llvm.eh.selector.i32</a>(i8*, i8*, i8*, ...)
-i64 %<a href="#llvm_eh_selector">llvm.eh.selector.i64</a>(i8*, i8*, i8*, ...)
+  i32 %<a href="#llvm_eh_selector">llvm.eh.selector.i32</a>(i8*, i8*, i8*, ...)
+  i64 %<a href="#llvm_eh_selector">llvm.eh.selector.i64</a>(i8*, i8*, i8*, ...)
 </pre>
-</div>
 
 <p>This intrinsic is used to compare the exception with the given type infos,
    filters and cleanups.</p>
@@ -429,10 +429,10 @@ i64 %<a href="#llvm_eh_typeid_for">llvm.eh.typeid.for.i64</a>(i8*)
 </div>
 
 <div class="doc_text">
+
 <pre>
-i32 %<a href="#llvm_eh_sjlj_setjmp">llvm.eh.sjlj.setjmp</a>(i8*)
+  i32 %<a href="#llvm_eh_sjlj_setjmp">llvm.eh.sjlj.setjmp</a>(i8*)
 </pre>
-</div>
 
 <p>The SJLJ exception handling uses this intrinsic to force register saving for
    the current function and to store the address of the following instruction
@@ -458,10 +458,10 @@ i32 %<a href="#llvm_eh_sjlj_setjmp">llvm.eh.sjlj.setjmp</a>(i8*)
 </div>
 
 <div class="doc_text">
+
 <pre>
-i8* %<a href="#llvm_eh_sjlj_lsda">llvm.eh.sjlj.lsda</a>( )
+  i8* %<a href="#llvm_eh_sjlj_lsda">llvm.eh.sjlj.lsda</a>( )
 </pre>
-</div>
 
 <p>Used for SJLJ based exception handling, the <a href="#llvm_eh_sjlj_lsda">
    <tt>llvm.eh.sjlj.lsda</tt></a> intrinsic returns the address of the Language
@@ -477,10 +477,10 @@ i8* %<a href="#llvm_eh_sjlj_lsda">llvm.eh.sjlj.lsda</a>( )
 </div>
 
 <div class="doc_text">
+
 <pre>
-void %<a href="#llvm_eh_sjlj_callsite">llvm.eh.sjlj.callsite</a>(i32)
+  void %<a href="#llvm_eh_sjlj_callsite">llvm.eh.sjlj.callsite</a>(i32)
 </pre>
-</div>
 
 <p>The SJLJ front-end allocates call site indices for invoke instrucitons.
    These values are passed to the back-end via the
