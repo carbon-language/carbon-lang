@@ -350,20 +350,21 @@ namespace {
     // First, handle the primitive types .. easy
     if (Ty->isPrimitiveType() || Ty->isInteger()) {
       switch (Ty->getTypeID()) {
-      case Type::VoidTyID:   return "Type::VoidTy";
+      case Type::VoidTyID:   return "Type::getVoidTy(getGlobalContext())";
       case Type::IntegerTyID: {
         unsigned BitWidth = cast<IntegerType>(Ty)->getBitWidth();
         return "IntegerType::get(getGlobalContext(), " + utostr(BitWidth) + ")";
       }
-      case Type::X86_FP80TyID: return "Type::X86_FP80Ty";
-      case Type::FloatTyID:    return "Type::FloatTy";
-      case Type::DoubleTyID:   return "Type::DoubleTy";
-      case Type::LabelTyID:    return "Type::LabelTy";
+      case Type::X86_FP80TyID: return "Type::getX86_FP80Ty(getGlobalContext())";
+      case Type::FloatTyID:    return "Type::getFloatTy(getGlobalContext())";
+      case Type::DoubleTyID:   return "Type::getDoubleTy(getGlobalContext())";
+      case Type::LabelTyID:    return "Type::getLabelTy(getGlobalContext())";
       default:
         error("Invalid primitive type");
         break;
       }
-      return "Type::VoidTy"; // shouldn't be returned, but make it sensible
+      // shouldn't be returned, but make it sensible
+      return "Type::getVoidTy(getGlobalContext())";
     }
 
     // Now, see if we've seen the type before and return that
