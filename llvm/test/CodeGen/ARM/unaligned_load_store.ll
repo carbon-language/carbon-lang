@@ -1,16 +1,31 @@
-; RUN: llvm-as < %s | \
-; RUN:   llc -march=arm -o %t -f
-; RUN: grep ldrb %t | count 4
-; RUN: grep strb %t | count 4
+; RUN: llvm-as < %s | llc -march=arm | FileCheck %s -check-prefix=GENERIC
+; RUN: llvm-as < %s | llc -mtriple=armv6-apple-darwin | FileCheck %s -check-prefix=DARWIN_V6
+; RUN: llvm-as < %s | llc -march=arm -mattr=+v7a | FileCheck %s -check-prefix=V7
 
+; rdar://7113725
 
-	%struct.p = type <{ i8, i32 }>
-@t = global %struct.p <{ i8 1, i32 10 }>		; <%struct.p*> [#uses=1]
-@u = weak global %struct.p zeroinitializer		; <%struct.p*> [#uses=1]
-
-define i32 @main() {
+define arm_apcscc void @t(i8* nocapture %a, i8* nocapture %b) nounwind {
 entry:
-	%tmp3 = load i32* getelementptr (%struct.p* @t, i32 0, i32 1), align 1		; <i32> [#uses=2]
-	store i32 %tmp3, i32* getelementptr (%struct.p* @u, i32 0, i32 1), align 1
-	ret i32 %tmp3
+; GENERIC: t:
+; GENERIC: ldrb r2
+; GENERIC: ldrb r3
+; GENERIC: ldrb r12
+; GENERIC: ldrb r1
+; GENERIC: strb r1
+; GENERIC: strb r12
+; GENERIC: strb r3
+; GENERIC: strb r2
+
+; DARWIN_V6: t:
+; DARWIN_V6: ldr r1
+; DARWIN_V6: str r1
+
+; V7: t:
+; V7: ldr r1
+; V7: str r1
+  %__src1.i = bitcast i8* %b to i32*              ; <i32*> [#uses=1]
+  %__dest2.i = bitcast i8* %a to i32*             ; <i32*> [#uses=1]
+  %tmp.i = load i32* %__src1.i, align 1           ; <i32> [#uses=1]
+  store i32 %tmp.i, i32* %__dest2.i, align 1
+  ret void
 }

@@ -3121,6 +3121,27 @@ SDValue ARMTargetLowering::PerformDAGCombine(SDNode *N,
   return SDValue();
 }
 
+bool ARMTargetLowering::allowsUnalignedMemoryAccesses(EVT VT) const {
+  if (!Subtarget->hasV6Ops())
+    // Pre-v6 does not support unaligned mem access.
+    return false;
+  else if (!Subtarget->hasV6Ops()) {
+    // v6 may or may not support unaligned mem access.
+    if (!Subtarget->isTargetDarwin())
+      return false;
+  }
+
+  switch (VT.getSimpleVT().SimpleTy) {
+  default:
+    return false;
+  case MVT::i8:
+  case MVT::i16:
+  case MVT::i32:
+    return true;
+  // FIXME: VLD1 etc with standard alignment is legal.
+  }
+}
+
 static bool isLegalT1AddressImmediate(int64_t V, EVT VT) {
   if (V < 0)
     return false;

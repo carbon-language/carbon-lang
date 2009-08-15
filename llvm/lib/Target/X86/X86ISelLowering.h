@@ -389,10 +389,15 @@ namespace llvm {
     /// and store operations as a result of memset, memcpy, and memmove
     /// lowering. It returns EVT::iAny if SelectionDAG should be responsible for
     /// determining it.
-    virtual
-    EVT getOptimalMemOpType(uint64_t Size, unsigned Align,
-                            bool isSrcConst, bool isSrcStr,
-                            SelectionDAG &DAG) const;
+    virtual EVT getOptimalMemOpType(uint64_t Size, unsigned Align,
+                                    bool isSrcConst, bool isSrcStr,
+                                    SelectionDAG &DAG) const;
+
+    /// allowsUnalignedMemoryAccesses - Returns true if the target allows
+    /// unaligned memory accesses. of the specified type.
+    virtual bool allowsUnalignedMemoryAccesses(EVT VT) const {
+      return true;
+    }
 
     /// LowerOperation - Provide custom lowering hooks for some operations.
     ///
