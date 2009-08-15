@@ -290,6 +290,12 @@ class CXXRecordDecl : public RecordDecl {
   /// PlainOldData - True when this class is a POD-type.
   bool PlainOldData : 1;
 
+  /// Empty - true when this class is empty for traits purposes, i.e. has no
+  /// data members other than 0-width bit-fields, has no virtual function/base,
+  /// and doesn't inherit from a non-empty class. Doesn't take union-ness into
+  /// account.
+  bool Empty : 1;
+
   /// Polymorphic - True when this class is polymorphic, i.e. has at least one
   /// virtual member or derives from a polymorphic class.
   bool Polymorphic : 1;
@@ -297,7 +303,7 @@ class CXXRecordDecl : public RecordDecl {
   /// Abstract - True when this class is abstract, i.e. has at least one
   /// pure virtual function, (that can come from a base class).
   bool Abstract : 1;
-  
+
   /// HasTrivialConstructor - True when this class has a trivial constructor.
   ///
   /// C++ [class.ctor]p5.  A constructor is trivial if it is an
@@ -569,6 +575,15 @@ public:
 
   /// setPOD - Set whether this class is a POD-type (C++ [class]p4).
   void setPOD(bool POD) { PlainOldData = POD; }
+
+  /// isEmpty - Whether this class is empty (C++0x [meta.unary.prop]), which
+  /// means it has a virtual function, virtual base, data member (other than
+  /// 0-width bit-field) or inherits from a non-empty class. Does NOT include
+  /// a check for union-ness.
+  bool isEmpty() const { return Empty; }
+
+  /// Set whether this class is empty (C++0x [meta.unary.prop])
+  void setEmpty(bool Emp) { Empty = Emp; }
 
   /// isPolymorphic - Whether this class is polymorphic (C++ [class.virtual]),
   /// which means that the class contains or inherits a virtual function.

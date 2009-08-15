@@ -7,14 +7,23 @@ struct NonPOD { NonPOD(int); };
 // PODs
 enum Enum { EV };
 struct POD { Enum e; int i; float f; NonPOD* p; };
+struct Empty {};
+typedef Empty EmptyAr[10];
 typedef int Int;
 typedef Int IntAr[10];
 class Statics { static int priv; static NonPOD np; };
+union EmptyUnion {};
+union Union { int i; float f; };
+struct HasFunc { void f (); };
+struct HasOp { void operator *(); };
+struct HasConv { operator int(); };
+struct HasAssign { void operator =(int); };
 
 // Not PODs
 struct Derives : POD {};
+struct DerivesEmpty : Empty {};
 struct HasCons { HasCons(int); };
-struct HasAssign { HasAssign operator =(const HasAssign&); };
+struct HasCopyAssign { HasCopyAssign operator =(const HasCopyAssign&); };
 struct HasDest { ~HasDest(); };
 class  HasPriv { int priv; };
 class  HasProt { protected: int prot; };
@@ -23,6 +32,7 @@ struct HasNonPOD { NonPOD np; };
 struct HasVirt { virtual void Virt() {}; };
 typedef Derives NonPODAr[10];
 typedef HasVirt VirtAr[10];
+union NonPODUnion { int i; Derives n; };
 
 void is_pod()
 {
@@ -32,10 +42,17 @@ void is_pod()
   int t04[T(__is_pod(Int))];
   int t05[T(__is_pod(IntAr))];
   int t06[T(__is_pod(Statics))];
+  int t07[T(__is_pod(Empty))];
+  int t08[T(__is_pod(EmptyUnion))];
+  int t09[T(__is_pod(Union))];
+  int t10[T(__is_pod(HasFunc))];
+  int t11[T(__is_pod(HasOp))];
+  int t12[T(__is_pod(HasConv))];
+  int t13[T(__is_pod(HasAssign))];
 
   int t21[F(__is_pod(Derives))];
   int t22[F(__is_pod(HasCons))];
-  int t23[F(__is_pod(HasAssign))];
+  int t23[F(__is_pod(HasCopyAssign))];
   int t24[F(__is_pod(HasDest))];
   int t25[F(__is_pod(HasPriv))];
   int t26[F(__is_pod(HasProt))];
@@ -43,9 +60,40 @@ void is_pod()
   int t28[F(__is_pod(HasNonPOD))];
   int t29[F(__is_pod(HasVirt))];
   int t30[F(__is_pod(NonPODAr))];
+  int t31[F(__is_pod(DerivesEmpty))];
+ // int t32[F(__is_pod(NonPODUnion))];
 }
 
-union Union { int i; float f; };
+typedef Empty EmptyAr[10];
+struct Bit0 { int : 0; };
+struct Bit0Cons { int : 0; Bit0Cons(); };
+struct BitOnly { int x : 3; };
+//struct DerivesVirt : virtual POD {};
+
+void is_empty()
+{
+  int t01[T(__is_empty(Empty))];
+  int t02[T(__is_empty(DerivesEmpty))];
+  int t03[T(__is_empty(HasCons))];
+  int t04[T(__is_empty(HasCopyAssign))];
+  int t05[T(__is_empty(HasDest))];
+  int t06[T(__is_empty(HasFunc))];
+  int t07[T(__is_empty(HasOp))];
+  int t08[T(__is_empty(HasConv))];
+  int t09[T(__is_empty(HasAssign))];
+  int t10[T(__is_empty(Bit0))];
+  int t11[T(__is_empty(Bit0Cons))];
+
+  int t21[F(__is_empty(Int))];
+  int t22[F(__is_empty(POD))];
+  int t23[F(__is_empty(EmptyUnion))];
+  int t24[F(__is_empty(EmptyAr))];
+  int t25[F(__is_empty(HasRef))];
+  int t26[F(__is_empty(HasVirt))];
+  int t27[F(__is_empty(BitOnly))];
+//  int t27[F(__is_empty(DerivesVirt))];
+}
+
 typedef Derives ClassType;
 
 void is_class()
@@ -93,7 +141,7 @@ void is_enum()
   int t17[F(__is_enum(ClassType))];
 }
 
-struct Polymorph { virtual void f(); };
+typedef HasVirt Polymorph;
 struct InheritPolymorph : Polymorph {};
 
 void is_polymorphic()
@@ -134,7 +182,7 @@ void has_trivial_default_constructor() {
   int t12[F(__has_trivial_constructor(HasRef))];
   int t13[F(__has_trivial_constructor(HasCopy))];
   int t14[F(__has_trivial_constructor(IntRef))];
-  int t15[T(__has_trivial_constructor(HasAssign))];
+  int t15[T(__has_trivial_constructor(HasCopyAssign))];
   int t16[T(__has_trivial_constructor(const Int))];
   int t17[T(__has_trivial_constructor(NonPODAr))];
   int t18[F(__has_trivial_constructor(VirtAr))];
@@ -155,7 +203,7 @@ void has_trivial_copy_constructor() {
   int t12[T(__has_trivial_copy(HasRef))];
   int t13[F(__has_trivial_copy(HasCopy))];
   int t14[T(__has_trivial_copy(IntRef))];
-  int t15[T(__has_trivial_copy(HasAssign))];
+  int t15[T(__has_trivial_copy(HasCopyAssign))];
   int t16[T(__has_trivial_copy(const Int))];
   int t17[F(__has_trivial_copy(NonPODAr))];
   int t18[F(__has_trivial_copy(VirtAr))];
@@ -176,7 +224,7 @@ void has_trivial_copy_assignment() {
   int t12[T(__has_trivial_assign(HasRef))];
   int t13[T(__has_trivial_assign(HasCopy))];
   int t14[F(__has_trivial_assign(IntRef))];
-  int t15[F(__has_trivial_assign(HasAssign))];
+  int t15[F(__has_trivial_assign(HasCopyAssign))];
   int t16[F(__has_trivial_assign(const Int))];
   int t17[F(__has_trivial_assign(NonPODAr))];
   int t18[F(__has_trivial_assign(VirtAr))];
@@ -197,7 +245,7 @@ void has_trivial_destructor() {
   int t12[T(__has_trivial_destructor(HasRef))];
   int t13[T(__has_trivial_destructor(HasCopy))];
   int t14[T(__has_trivial_destructor(IntRef))];
-  int t15[T(__has_trivial_destructor(HasAssign))];
+  int t15[T(__has_trivial_destructor(HasCopyAssign))];
   int t16[T(__has_trivial_destructor(const Int))];
   int t17[T(__has_trivial_destructor(NonPODAr))];
   int t18[T(__has_trivial_destructor(VirtAr))];

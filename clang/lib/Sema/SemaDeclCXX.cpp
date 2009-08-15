@@ -383,12 +383,16 @@ Sema::CheckBaseSpecifier(CXXRecordDecl *Class,
                           SpecifierRange))
     return 0;
 
-  // If the base class is polymorphic, the new one is, too.
+  // If the base class is polymorphic or isn't empty, the new one is/isn't, too.
   RecordDecl *BaseDecl = BaseType->getAs<RecordType>()->getDecl();
   assert(BaseDecl && "Record type has no declaration");
   BaseDecl = BaseDecl->getDefinition(Context);
   assert(BaseDecl && "Base type is not incomplete, but has no definition");
-  if (cast<CXXRecordDecl>(BaseDecl)->isPolymorphic())
+  CXXRecordDecl * CXXBaseDecl = cast<CXXRecordDecl>(BaseDecl);
+  assert(CXXBaseDecl && "Base type is not a C++ type");
+  if (!CXXBaseDecl->isEmpty())
+    Class->setEmpty(false);
+  if (CXXBaseDecl->isPolymorphic())
     Class->setPolymorphic(true);
 
   // C++ [dcl.init.aggr]p1:
@@ -409,6 +413,11 @@ Sema::CheckBaseSpecifier(CXXRecordDecl *Class,
     //   A copy assignment operator is trivial if its class has no virtual
     //   base classes.
     Class->setHasTrivialCopyAssignment(false);
+
+    // C++0x [meta.unary.prop] is_empty:
+    //    T is a class type, but not a union type, with ... no virtual base
+    //    classes
+    Class->setEmpty(false);
   } else {
     // C++ [class.ctor]p5:
     //   A constructor is trivial if all the direct base classes of its 

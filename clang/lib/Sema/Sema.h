@@ -3324,8 +3324,10 @@ public:
   /// VerifyBitField - verifies that a bit field expression is an ICE and has
   /// the correct width, and that the field type is valid. 
   /// Returns false on success.
+  /// Can optionally return whether the bit-field is of width 0
   bool VerifyBitField(SourceLocation FieldLoc, IdentifierInfo *FieldName, 
-                      QualType FieldTy, const Expr *BitWidth);
+                      QualType FieldTy, const Expr *BitWidth, 
+                      bool *ZeroWidth = 0);
 
   //===--------------------------------------------------------------------===//
   // Extra semantic analysis beyond the C type system

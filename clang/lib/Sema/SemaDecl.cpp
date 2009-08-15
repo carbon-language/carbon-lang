@@ -2536,6 +2536,7 @@ Sema::ActOnFunctionDeclarator(Scope* S, Declarator& D, DeclContext* DC,
       CXXRecordDecl *CurClass = cast<CXXRecordDecl>(DC);
       CurClass->setAggregate(false);
       CurClass->setPOD(false);
+      CurClass->setEmpty(false);
       CurClass->setPolymorphic(true);
       CurClass->setHasTrivialConstructor(false);
       CurClass->setHasTrivialCopyConstructor(false);
@@ -4331,8 +4332,12 @@ void Sema::ActOnTagFinishDefinition(Scope *S, DeclPtrTy TagD,
 
 // Note that FieldName may be null for anonymous bitfields.
 bool Sema::VerifyBitField(SourceLocation FieldLoc, IdentifierInfo *FieldName, 
-                          QualType FieldTy, const Expr *BitWidth) {
-  
+                          QualType FieldTy, const Expr *BitWidth,
+                          bool *ZeroWidth) {
+  // Default to true; that shouldn't confuse checks for emptiness
+  if (ZeroWidth)
+    *ZeroWidth = true;
+
   // C99 6.7.2.1p4 - verify the field type.
   // C++ 9.6p3: A bit-field shall have integral or enumeration type.
   if (!FieldTy->isDependentType() && !FieldTy->isIntegralType()) {
@@ -4354,6 +4359,9 @@ bool Sema::VerifyBitField(SourceLocation FieldLoc, IdentifierInfo *FieldName,
   llvm::APSInt Value;
   if (VerifyIntegerConstantExpression(BitWidth, &Value))
     return true;
+
+  if (Value != 0 && ZeroWidth)
+    *ZeroWidth = false;
 
   // Zero-width bitfield is ok for anonymous field.
   if (Value == 0 && FieldName)
@@ -4490,11 +4498,13 @@ FieldDecl *Sema::CheckFieldDecl(DeclarationName Name, QualType T,
                              AbstractFieldType))
     InvalidDecl = true;
   
+  bool ZeroWidth = false;
   // If this is declared as a bit-field, check the bit-field.
-  if (BitWidth && VerifyBitField(Loc, II, T, BitWidth)) {
+  if (BitWidth && VerifyBitField(Loc, II, T, BitWidth, &ZeroWidth)) {
     InvalidDecl = true;
     DeleteExpr(BitWidth);
     BitWidth = 0;
+    ZeroWidth = false;
   }
   
   FieldDecl *NewFD = FieldDecl::Create(Context, Record, Loc, II, T, BitWidth,
@@ -4511,17 +4521,24 @@ FieldDecl *Sema::CheckFieldDecl(DeclarationName Name, QualType T,
   if (getLangOptions().CPlusPlus) {
     QualType EltTy = Context.getBaseElementType(T);
 
+    CXXRecordDecl* CXXRecord = cast<CXXRecordDecl>(Record);
+
+    if (!T->isPODType())
+      CXXRecord->setPOD(false);
+    if (!ZeroWidth)
+      CXXRecord->setEmpty(false);
+
     if (const RecordType *RT = EltTy->getAs<RecordType>()) {
       CXXRecordDecl* RDecl = cast<CXXRecordDecl>(RT->getDecl());
 
       if (!RDecl->hasTrivialConstructor())
-        cast<CXXRecordDecl>(Record)->setHasTrivialConstructor(false);
+        CXXRecord->setHasTrivialConstructor(false);
       if (!RDecl->hasTrivialCopyConstructor())
-        cast<CXXRecordDecl>(Record)->setHasTrivialCopyConstructor(false);
+        CXXRecord->setHasTrivialCopyConstructor(false);
       if (!RDecl->hasTrivialCopyAssignment())
-        cast<CXXRecordDecl>(Record)->setHasTrivialCopyAssignment(false);
+        CXXRecord->setHasTrivialCopyAssignment(false);
       if (!RDecl->hasTrivialDestructor())
-        cast<CXXRecordDecl>(Record)->setHasTrivialDestructor(false);
+        CXXRecord->setHasTrivialDestructor(false);
 
       // C++ 9.5p1: An object of a class with a non-trivial
       // constructor, a non-trivial copy constructor, a non-trivial
@@ -4556,9 +4573,6 @@ FieldDecl *Sema::CheckFieldDecl(DeclarationName Name, QualType T,
       }
     }
   }
-
-  if (getLangOptions().CPlusPlus && !T->isPODType())
-    cast<CXXRecordDecl>(Record)->setPOD(false);
 
   // FIXME: We need to pass in the attributes given an AST
   // representation, not a parser representation.

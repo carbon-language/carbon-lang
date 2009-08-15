@@ -223,6 +223,12 @@ bool UnaryTypeTraitExpr::EvaluateTrait(ASTContext& C) const {
     if (const RecordType *RT = QueriedType->getAs<RecordType>())
       return cast<CXXRecordDecl>(RT->getDecl())->isAbstract();
     return false;
+  case UTT_IsEmpty:
+    if (const RecordType *Record = QueriedType->getAs<RecordType>()) {
+      return !Record->getDecl()->isUnion()
+          && cast<CXXRecordDecl>(Record->getDecl())->isEmpty();
+    }
+    return false;
   case UTT_HasTrivialConstructor:
     // http://gcc.gnu.org/onlinedocs/gcc/Type-Traits.html:
     //   If __is_pod (type) is true then the trait is true, else if type is

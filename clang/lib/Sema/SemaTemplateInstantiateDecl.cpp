@@ -749,6 +749,7 @@ TemplateDeclInstantiator::InitMethodInstantiation(CXXMethodDecl *New,
     New->setVirtualAsWritten(true);
     Record->setAggregate(false);
     Record->setPOD(false);
+    Record->setEmpty(false);
     Record->setPolymorphic(true);
   }
   if (Tmpl->isPure()) {
