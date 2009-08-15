@@ -1,7 +1,5 @@
-/* RUN: not clang-cc %s -std=c89 -pedantic-errors
+/* RUN: clang-cc %s -std=c89 -pedantic-errors -verify
  */
 
-/* We can't put expected-warning lines on #if lines. */
-
-#if 1LL				/* expected-warning {{long long}} */
+#if 1LL				/* expected-error {{long long}} */
 #endif
