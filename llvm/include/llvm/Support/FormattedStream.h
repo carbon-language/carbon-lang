@@ -60,11 +60,7 @@ namespace llvm
     ///
     iterator Scanned;
 
-    virtual void write_impl(const char *Ptr, size_t Size) {
-      ComputeColumn();
-      TheStream->write(Ptr, Size);
-      Scanned = begin();
-    }
+    virtual void write_impl(const char *Ptr, size_t Size);
 
     /// current_pos - Return the current position within the stream,
     /// not counting the bytes currently in the buffer.

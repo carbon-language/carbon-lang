@@ -62,6 +62,12 @@ void formatted_raw_ostream::PadToColumn(unsigned NewCol, unsigned MinPad) {
   write(Spaces, num);
 }
 
+void formatted_raw_ostream::write_impl(const char *Ptr, size_t Size) {
+  ComputeColumn();
+  TheStream->write(Ptr, Size);
+  Scanned = begin();
+}
+
 /// fouts() - This returns a reference to a formatted_raw_ostream for
 /// standard output.  Use it like: fouts() << "foo" << "bar";
 formatted_raw_ostream &llvm::fouts() {
