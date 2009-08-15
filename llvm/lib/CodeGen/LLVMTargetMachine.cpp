@@ -291,7 +291,7 @@ bool LLVMTargetMachine::addCommonCodeGenPasses(PassManagerBase &PM,
 
   // Run pre-ra passes.
   if (addPreRegAlloc(PM, OptLevel))
-    printAndVerify(PM);
+    printAndVerify(PM, /* allowDoubleDefs= */ true);
 
   // Perform register allocation.
   PM.add(createRegisterAllocator());
