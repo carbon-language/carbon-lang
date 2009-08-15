@@ -3,8 +3,12 @@
 <html>
 <head>
   <title>Exception Handling in LLVM</title>
+  <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+  <meta name="description" 
+        content="Exception Handling in LLVM.">
   <link rel="stylesheet" href="llvm.css" type="text/css">
 </head>
+
 <body>
 
 <div class="doc_title">Exception Handling in LLVM</div>
@@ -58,11 +62,11 @@
 <div class="doc_text">
 
 <p>This document is the central repository for all information pertaining to
-exception handling in LLVM.  It describes the format that LLVM exception
-handling information takes, which is useful for those interested in creating
-front-ends or dealing directly with the information.  Further, this document
-provides specific examples of what exception handling information is used for
-C/C++.</p>
+   exception handling in LLVM.  It describes the format that LLVM exception
+   handling information takes, which is useful for those interested in creating
+   front-ends or dealing directly with the information.  Further, this document
+   provides specific examples of what exception handling information is used for
+   in C/C++.</p>
 
 </div>
 
@@ -74,27 +78,28 @@ C/C++.</p>
 <div class="doc_text">
 
 <p>Exception handling for most programming languages is designed to recover from
-conditions that rarely occur during general use of an application.  To that end,
-exception handling should not interfere with the main flow of an
-application's algorithm by performing checkpointing tasks such as saving
-the current pc or register state.</p>
+   conditions that rarely occur during general use of an application.  To that
+   end, exception handling should not interfere with the main flow of an
+   application's algorithm by performing checkpointing tasks, such as saving the
+   current pc or register state.</p>
 
 <p>The Itanium ABI Exception Handling Specification defines a methodology for
-providing outlying data in the form of exception tables without inlining
-speculative exception handling code in the flow of an application's main
-algorithm.  Thus, the specification is said to add "zero-cost" to the normal
-execution of an application.</p>
+   providing outlying data in the form of exception tables without inlining
+   speculative exception handling code in the flow of an application's main
+   algorithm.  Thus, the specification is said to add "zero-cost" to the normal
+   execution of an application.</p>
 
 <p>A more complete description of the Itanium ABI exception handling runtime
-support of can be found at <a
-href="http://www.codesourcery.com/cxx-abi/abi-eh.html">Itanium C++ ABI:
-Exception Handling.</a> A description of the exception frame format can be found
-at <a href="http://refspecs.freestandards.org/LSB_3.0.0/LSB-Core-generic/LSB-
-Core-generic/ehframechpt.html">Exception Frames</a>, with details of the Dwarf
-specification at <a href="http://www.eagercon.com/dwarf/dwarf3std.htm">Dwarf 3
-Standard.</a> A description for the C++ exception table formats can be found at
-<a href="http://www.codesourcery.com/cxx-abi/exceptions.pdf">Exception Handling
-Tables.</a></p>
+   support of can be found at
+   <a href="http://www.codesourcery.com/cxx-abi/abi-eh.html">Itanium C++ ABI:
+   Exception Handling</a>. A description of the exception frame format can be
+   found at
+   <a href="http://refspecs.freestandards.org/LSB_3.0.0/LSB-Core-generic/LSB-Core-generic/ehframechpt.html">Exception
+   Frames</a>, with details of the DWARF 3 specification at
+   <a href="http://www.eagercon.com/dwarf/dwarf3std.htm">DWARF 3 Standard</a>.
+   A description for the C++ exception table formats can be found at
+   <a href="http://www.codesourcery.com/cxx-abi/exceptions.pdf">Exception Handling
+   Tables</a>.</p>
 
 </div>
 
@@ -105,41 +110,44 @@ Tables.</a></p>
 
 <div class="doc_text">
 
-<p>When an exception is thrown in llvm code, the runtime does a best effort to
-find a handler suited to process the circumstance.</p>
+<p>When an exception is thrown in LLVM code, the runtime does its best to find a
+   handler suited to processing the circumstance.</p>
 
 <p>The runtime first attempts to find an <i>exception frame</i> corresponding to
-the function where the exception was thrown.  If the programming language (ex.
-C++) supports exception handling, the exception frame contains a reference to an
-exception table describing how to process the exception.  If the language (ex.
-C) does not support exception handling or if the exception needs to be forwarded
-to a prior activation, the exception frame contains information about how to
-unwind the current activation and restore the state of the prior activation.
-This process is repeated until the exception is handled.  If the exception is
-not handled and no activations remain, then the application is terminated with
-an appropriate error message.</p>
+   the function where the exception was thrown.  If the programming language
+   (e.g. C++) supports exception handling, the exception frame contains a
+   reference to an exception table describing how to process the exception.  If
+   the language (e.g. C) does not support exception handling, or if the
+   exception needs to be forwarded to a prior activation, the exception frame
+   contains information about how to unwind the current activation and restore
+   the state of the prior activation.  This process is repeated until the
+   exception is handled.  If the exception is not handled and no activations
+   remain, then the application is terminated with an appropriate error
+   message.</p>
 
-<p>Since different programming languages have different behaviors when handling
-exceptions, the exception handling ABI provides a mechanism for supplying
-<i>personalities.</i> An exception handling personality is defined by way of a
-<i>personality function</i> (ex. for C++ <tt>__gxx_personality_v0</tt>) which
-receives the context of the exception, an <i>exception structure</i> containing
-the exception object type and value, and a reference to the exception table for
-the current function.  The personality function for the current compile unit is
-specified in a <i>common exception frame</i>.</p>
+<p>Because different programming languages have different behaviors when
+   handling exceptions, the exception handling ABI provides a mechanism for
+   supplying <i>personalities.</i> An exception handling personality is defined
+   by way of a <i>personality function</i> (e.g. <tt>__gxx_personality_v0</tt>
+   in C++), which receives the context of the exception, an <i>exception
+   structure</i> containing the exception object type and value, and a reference
+   to the exception table for the current function.  The personality function
+   for the current compile unit is specified in a <i>common exception
+   frame</i>.</p>
 
 <p>The organization of an exception table is language dependent.  For C++, an
-exception table is organized as a series of code ranges defining what to do if
-an exception occurs in that range.  Typically, the information associated with a
-range defines which types of exception objects (using C++ <i>type info</i>) that
-are handled in that range, and an associated action that should take place.
-Actions typically pass control to a <i>landing pad</i>.</p>
+   exception table is organized as a series of code ranges defining what to do
+   if an exception occurs in that range.  Typically, the information associated
+   with a range defines which types of exception objects (using C++ <i>type
+   info</i>) that are handled in that range, and an associated action that
+   should take place.  Actions typically pass control to a <i>landing
+   pad</i>.</p>
 
-<p>A landing pad corresponds to the code found in the catch portion of a
-try/catch sequence.  When execution resumes at a landing pad, it receives the
-exception structure and a selector corresponding to the <i>type</i> of exception
-thrown.  The selector is then used to determine which catch should actually
-process the exception.</p>
+<p>A landing pad corresponds to the code found in the <i>catch</i> portion of
+   a <i>try</i>/<i>catch</i> sequence.  When execution resumes at a landing
+   pad, it receives the exception structure and a selector corresponding to
+   the <i>type</i> of exception thrown.  The selector is then used to determine
+   which <i>catch</i> should actually process the exception.</p>
 
 </div>
 
@@ -151,12 +159,12 @@ process the exception.</p>
 <div class="doc_text">
 
 <p>At the time of this writing, only C++ exception handling support is available
-in LLVM.  So the remainder of this document will be somewhat C++-centric.</p>
+   in LLVM.  So the remainder of this document will be somewhat C++-centric.</p>
 
 <p>From the C++ developers perspective, exceptions are defined in terms of the
-<tt>throw</tt> and <tt>try/catch</tt> statements.  In this section we will
-describe the implementation of llvm exception handling in terms of C++
-examples.</p>
+   <tt>throw</tt> and <tt>try</tt>/<tt>catch</tt> statements.  In this section
+   we will describe the implementation of LLVM exception handling in terms of
+   C++ examples.</p>
 
 </div>
 
@@ -168,17 +176,17 @@ examples.</p>
 <div class="doc_text">
 
 <p>Languages that support exception handling typically provide a <tt>throw</tt>
-operation to initiate the exception process.  Internally, a throw operation
-breaks down into two steps.  First, a request is made to allocate exception
-space for an exception structure.  This structure needs to survive beyond the
-current activation.  This structure will contain the type and value of the
-object being thrown.  Second, a call is made to the runtime to raise the
-exception, passing the exception structure as an argument.</p>
+   operation to initiate the exception process.  Internally, a throw operation
+   breaks down into two steps.  First, a request is made to allocate exception
+   space for an exception structure.  This structure needs to survive beyond the
+   current activation.  This structure will contain the type and value of the
+   object being thrown.  Second, a call is made to the runtime to raise the
+   exception, passing the exception structure as an argument.</p>
 
-<p>In C++, the allocation of the exception structure is done by the
-<tt>__cxa_allocate_exception</tt> runtime function.  The exception raising is
-handled by <tt>__cxa_throw</tt>.  The type of the exception is represented using
-a C++ RTTI type info structure.</p>
+<p>In C++, the allocation of the exception structure is done by
+   the <tt>__cxa_allocate_exception</tt> runtime function.  The exception
+   raising is handled by <tt>__cxa_throw</tt>.  The type of the exception is
+   represented using a C++ RTTI structure.</p>
 
 </div>
 
@@ -189,67 +197,77 @@ a C++ RTTI type info structure.</p>
 
 <div class="doc_text">
 
-<p>A call within the scope of a try statement can potentially raise an exception.
-In those circumstances, the LLVM C++ front-end replaces the call with an
-<tt>invoke</tt> instruction.  Unlike a call, the invoke has two potential
-continuation points; where to continue when the call succeeds as per normal, and
-where to continue if the call raises an exception, either by a throw or the
-unwinding of a throw.</p>
+<p>A call within the scope of a <i>try</i> statement can potentially raise an
+   exception.  In those circumstances, the LLVM C++ front-end replaces the call
+   with an <tt>invoke</tt> instruction.  Unlike a call, the <tt>invoke</tt> has
+   two potential continuation points: where to continue when the call succeeds
+   as per normal; and where to continue if the call raises an exception, either
+   by a throw or the unwinding of a throw.</p>
 
-<p>The term used to define a the place where an invoke continues after an
-exception is called a <i>landing pad</i>.  LLVM landing pads are conceptually
-alternative function entry points where a exception structure reference and a type
-info index are passed in as arguments.  The landing pad saves the exception
-structure reference and then proceeds to select the catch block that corresponds
-to the type info of the exception object.</p>
+<p>The term used to define a the place where an <tt>invoke</tt> continues after
+   an exception is called a <i>landing pad</i>.  LLVM landing pads are
+   conceptually alternative function entry points where an exception structure
+   reference and a type info index are passed in as arguments.  The landing pad
+   saves the exception structure reference and then proceeds to select the catch
+   block that corresponds to the type info of the exception object.</p>
 
-<p>Two llvm intrinsic functions are used convey information about the landing
-pad to the back end.</p>
+<p>Two LLVM intrinsic functions are used to convey information about the landing
+   pad to the back end.</p>
 
-<p><a href="#llvm_eh_exception"><tt>llvm.eh.exception</tt></a> takes no
-arguments and returns a pointer to the exception structure.  This only returns a
-sensible value if called after an invoke has branched to a landing pad.  Due to
-codegen limitations, it must currently be called in the landing pad itself.</p>
+<ol>
+  <li><a href="#llvm_eh_exception"><tt>llvm.eh.exception</tt></a> takes no
+      arguments and returns a pointer to the exception structure.  This only
+      returns a sensible value if called after an <tt>invoke</tt> has branched
+      to a landing pad.  Due to code generation limitations, it must currently
+      be called in the landing pad itself.</li>
 
-<p><a href="#llvm_eh_selector"><tt>llvm.eh.selector</tt></a> takes a minimum of
-three arguments.  The first argument is the reference to the exception
-structure. The second argument is a reference to the personality function to be
-used for this try catch sequence. Each of the remaining arguments is either a
-reference to the type info for a catch statement,
-a <a href="#throw_filters">filter</a> expression,
-or the number zero representing a <a href="#cleanups">cleanup</a>.
-The exception is tested against the arguments sequentially from first to last.
-The result of the <a href="#llvm_eh_selector"><tt>llvm.eh.selector</tt></a> is a
-positive number if the exception matched a type info, a negative number if it matched
-a filter, and zero if it matched a cleanup.  If nothing is matched, the behaviour of
-the program is <a href="#restrictions">undefined</a>.
-This only returns a sensible value if called after an invoke has branched to a
-landing pad.  Due to codegen limitations, it must currently be called in the
-landing pad itself.
-If a type info matched then the selector value is the index of the type info in
-the exception table, which can be obtained using the
-<a href="#llvm_eh_typeid_for"><tt>llvm.eh.typeid.for</tt></a> intrinsic.</p>
+  <li><a href="#llvm_eh_selector"><tt>llvm.eh.selector</tt></a> takes a minimum
+      of three arguments.  The first argument is the reference to the exception
+      structure. The second argument is a reference to the personality function
+      to be used for this <tt>try</tt>/<tt>catch</tt> sequence. Each of the
+      remaining arguments is either a reference to the type info for
+      a <tt>catch</tt> statement, a <a href="#throw_filters">filter</a>
+      expression, or the number zero (<tt>0</tt>) representing
+      a <a href="#cleanups">cleanup</a>.  The exception is tested against the
+      arguments sequentially from first to last.  The result of
+      the <a href="#llvm_eh_selector"><tt>llvm.eh.selector</tt></a> is a
+      positive number if the exception matched a type info, a negative number if
+      it matched a filter, and zero if it matched a cleanup.  If nothing is
+      matched, the behaviour of the program
+      is <a href="#restrictions">undefined</a>.  This only returns a sensible
+      value if called after an <tt>invoke</tt> has branched to a landing pad.
+      Due to codegen limitations, it must currently be called in the landing pad
+      itself.  If a type info matched, then the selector value is the index of
+      the type info in the exception table, which can be obtained using the
+      <a href="#llvm_eh_typeid_for"><tt>llvm.eh.typeid.for</tt></a>
+      intrinsic.</li>
+</ol>
 
 <p>Once the landing pad has the type info selector, the code branches to the
-code for the first catch.  The catch then checks the value of the type info
-selector against the index of type info for that catch.  Since the type info
-index is not known until all the type info have been gathered in the backend,
-the catch code will call the <a
-href="#llvm_eh_typeid_for"><tt>llvm.eh.typeid.for</tt></a> intrinsic to
-determine the index for a given type info.  If the catch fails to match the
-selector then control is passed on to the next catch. Note: Since the landing
-pad will not be used if there is no match in the list of type info on the call
-to <a href="#llvm_eh_selector"><tt>llvm.eh.selector</tt></a>, then neither the
-last catch nor <i>catch all</i> need to perform the the check against the
-selector.</p>
+   code for the first catch.  The catch then checks the value of the type info
+   selector against the index of type info for that catch.  Since the type info
+   index is not known until all the type info have been gathered in the backend,
+   the catch code will call the
+   <a href="#llvm_eh_typeid_for"><tt>llvm.eh.typeid.for</tt></a> intrinsic
+   to determine the index for a given type info.  If the catch fails to match
+   the selector then control is passed on to the next catch. Note: Since the
+   landing pad will not be used if there is no match in the list of type info on
+   the call to <a href="#llvm_eh_selector"><tt>llvm.eh.selector</tt></a>, then
+   neither the last catch nor <i>catch all</i> need to perform the check
+   against the selector.</p>
 
-<p>Finally, the entry and exit of catch code is bracketed with calls to
-<tt>__cxa_begin_catch</tt> and <tt>__cxa_end_catch</tt>.
-<tt>__cxa_begin_catch</tt> takes a exception structure reference as an argument
-and returns the value of the exception object. <tt>__cxa_end_catch</tt>
-takes a exception structure reference as an argument. This function clears the
-exception from the exception space.  Note: a rethrow from within the catch may
-replace this call with a <tt>__cxa_rethrow</tt>.</p>
+<p>Finally, the entry and exit of catch code is bracketed with calls
+   to <tt>__cxa_begin_catch</tt> and <tt>__cxa_end_catch</tt>.</p>
+
+<ul>
+  <li><tt>__cxa_begin_catch</tt> takes a exception structure reference as an
+      argument and returns the value of the exception object.</li>
+
+  <li><tt>__cxa_end_catch</tt> takes a exception structure reference as an
+      argument. This function clears the exception from the exception space.
+      Note: a rethrow from within the catch may replace this call with
+      a <tt>__cxa_rethrow</tt>.</li>
+</ul>
 
 </div>
 
@@ -260,16 +278,15 @@ replace this call with a <tt>__cxa_rethrow</tt>.</p>
 
 <div class="doc_text">
 
-<p>To handle destructors and cleanups in try code, control may not run directly
-from a landing pad to the first catch.  Control may actually flow from the
-landing pad to clean up code and then to the first catch.  Since the required
-clean up for each invoke in a try may be different (ex., intervening
-constructor), there may be several landing pads for a given try.  If cleanups
-need to be run, the number zero should be passed as the last
-<a href="#llvm_eh_selector"><tt>llvm.eh.selector</tt></a> argument.
-However for C++ a <tt>null i8*</tt> <a href="#restrictions">must</a> be passed
-instead.
-</p>
+<p>To handle destructors and cleanups in <tt>try</tt> code, control may not run
+   directly from a landing pad to the first catch.  Control may actually flow
+   from the landing pad to clean up code and then to the first catch.  Since the
+   required clean up for each <tt>invoke</tt> in a <tt>try</tt> may be different
+   (e.g. intervening constructor), there may be several landing pads for a given
+   try.  If cleanups need to be run, the number zero should be passed as the
+   last <a href="#llvm_eh_selector"><tt>llvm.eh.selector</tt></a> argument.
+   However for C++ a <tt>null i8*</tt> <b><a href="#restrictions">must</a></b>
+   be passed instead.</p>
 
 </div>
 
@@ -280,23 +297,23 @@ instead.
 
 <div class="doc_text">
 
-<p>C++ allows the specification of which exception types can be thrown from
-a function.  To represent this a top level landing pad may exist to filter out
-invalid types.  To express this in LLVM code the landing pad will call <a
-href="#llvm_eh_selector"><tt>llvm.eh.selector</tt></a>.  The arguments are a
-reference to the exception structure, a reference to the personality function,
-the length of the filter expression (the number of type infos plus one),
-followed by the type infos themselves.
-<a href="#llvm_eh_selector"><tt>llvm.eh.selector</tt></a> will return a negative
-value if the exception does not match any of the type infos.  If no match is
-found then a call to <tt>__cxa_call_unexpected</tt> should be made, otherwise
-<tt>_Unwind_Resume</tt>.  Each of these functions requires a reference to the
-exception structure.  Note that the most general form of an
-<a href="#llvm_eh_selector"><tt>llvm.eh.selector</tt></a> call can contain
-any number of type infos, filter expressions and cleanups (though having more
-than one cleanup is pointless).  The LLVM C++ front-end can generate such
-<a href="#llvm_eh_selector"><tt>llvm.eh.selector</tt></a> calls due to inlining
-creating nested exception handling scopes.</p>
+<p>C++ allows the specification of which exception types can be thrown from a
+   function.  To represent this a top level landing pad may exist to filter out
+   invalid types.  To express this in LLVM code the landing pad will
+   call <a href="#llvm_eh_selector"><tt>llvm.eh.selector</tt></a>.  The
+   arguments are a reference to the exception structure, a reference to the
+   personality function, the length of the filter expression (the number of type
+   infos plus one), followed by the type infos themselves.
+   <a href="#llvm_eh_selector"><tt>llvm.eh.selector</tt></a> will return a
+   negative value if the exception does not match any of the type infos.  If no
+   match is found then a call to <tt>__cxa_call_unexpected</tt> should be made,
+   otherwise <tt>_Unwind_Resume</tt>.  Each of these functions requires a
+   reference to the exception structure.  Note that the most general form of an
+   <a href="#llvm_eh_selector"><tt>llvm.eh.selector</tt></a> call can contain
+   any number of type infos, filter expressions and cleanups (though having more
+   than one cleanup is pointless).  The LLVM C++ front-end can generate such
+   <a href="#llvm_eh_selector"><tt>llvm.eh.selector</tt></a> calls due to
+   inlining creating nested exception handling scopes.</p>
 
 </div>
 
@@ -308,23 +325,21 @@ creating nested exception handling scopes.</p>
 <div class="doc_text">
 
 <p>The semantics of the invoke instruction require that any exception that
-unwinds through an invoke call should result in a branch to the invoke's unwind
-label.  However such a branch will only happen if the
-<a href="#llvm_eh_selector"><tt>llvm.eh.selector</tt></a> matches.
-Thus in order to ensure correct operation, the front-end must only generate
-<a href="#llvm_eh_selector"><tt>llvm.eh.selector</tt></a> calls that are
-guaranteed to always match whatever exception unwinds through the invoke.
-For most languages it is enough to pass zero, indicating the presence of
-a <a href="#cleanups">cleanup</a>, as the last
-<a href="#llvm_eh_selector"><tt>llvm.eh.selector</tt></a> argument.
-However for C++ this is not sufficient, because the C++ personality function
-will terminate the program if it detects that unwinding the exception only
-results in matches with cleanups.  For C++ a <tt>null i8*</tt> should
-be passed as the last
-<a href="#llvm_eh_selector"><tt>llvm.eh.selector</tt></a> argument instead.
-This is interpreted as a catch-all by the C++ personality function, and will
-always match.
-</p>
+   unwinds through an invoke call should result in a branch to the invoke's
+   unwind label.  However such a branch will only happen if the
+   <a href="#llvm_eh_selector"><tt>llvm.eh.selector</tt></a> matches. Thus in
+   order to ensure correct operation, the front-end must only generate
+   <a href="#llvm_eh_selector"><tt>llvm.eh.selector</tt></a> calls that are
+   guaranteed to always match whatever exception unwinds through the invoke.
+   For most languages it is enough to pass zero, indicating the presence of
+   a <a href="#cleanups">cleanup</a>, as the
+   last <a href="#llvm_eh_selector"><tt>llvm.eh.selector</tt></a> argument.
+   However for C++ this is not sufficient, because the C++ personality function
+   will terminate the program if it detects that unwinding the exception only
+   results in matches with cleanups.  For C++ a <tt>null i8*</tt> should be
+   passed as the last <a href="#llvm_eh_selector"><tt>llvm.eh.selector</tt></a>
+   argument instead.  This is interpreted as a catch-all by the C++ personality
+   function, and will always match.</p>
 
 </div>
 
@@ -336,7 +351,8 @@ always match.
 <div class="doc_text">
 
 <p>LLVM uses several intrinsic functions (name prefixed with "llvm.eh") to
-provide exception handling information at various points in generated code.</p>
+   provide exception handling information at various points in generated
+   code.</p>
 
 </div>
 
@@ -347,8 +363,9 @@ provide exception handling information at various points in generated code.</p>
 
 <div class="doc_text">
 <pre>
-  i8* %<a href="#llvm_eh_exception">llvm.eh.exception</a>( )
+i8* %<a href="#llvm_eh_exception">llvm.eh.exception</a>( )
 </pre>
+</div>
 
 <p>This intrinsic returns a pointer to the exception structure.</p>
 
@@ -361,28 +378,29 @@ provide exception handling information at various points in generated code.</p>
 
 <div class="doc_text">
 <pre>
-  i32 %<a href="#llvm_eh_selector">llvm.eh.selector.i32</a>(i8*, i8*, i8*, ...)
-  i64 %<a href="#llvm_eh_selector">llvm.eh.selector.i64</a>(i8*, i8*, i8*, ...)
+i32 %<a href="#llvm_eh_selector">llvm.eh.selector.i32</a>(i8*, i8*, i8*, ...)
+i64 %<a href="#llvm_eh_selector">llvm.eh.selector.i64</a>(i8*, i8*, i8*, ...)
 </pre>
+</div>
 
 <p>This intrinsic is used to compare the exception with the given type infos,
-filters and cleanups.</p>
+   filters and cleanups.</p>
 
 <p><a href="#llvm_eh_selector"><tt>llvm.eh.selector</tt></a> takes a minimum of
-three arguments.  The first argument is the reference to the exception
-structure. The second argument is a reference to the personality function to be
-used for this try catch sequence. Each of the remaining arguments is either a
-reference to the type info for a catch statement,
-a <a href="#throw_filters">filter</a> expression,
-or the number zero representing a <a href="#cleanups">cleanup</a>.
-The exception is tested against the arguments sequentially from first to last.
-The result of the <a href="#llvm_eh_selector"><tt>llvm.eh.selector</tt></a> is a
-positive number if the exception matched a type info, a negative number if it matched
-a filter, and zero if it matched a cleanup.  If nothing is matched, the behaviour of
-the program is <a href="#restrictions">undefined</a>.
-If a type info matched then the selector value is the index of the type info in
-the exception table, which can be obtained using the
-<a href="#llvm_eh_typeid_for"><tt>llvm.eh.typeid.for</tt></a> intrinsic.</p>
+   three arguments.  The first argument is the reference to the exception
+   structure. The second argument is a reference to the personality function to
+   be used for this try catch sequence. Each of the remaining arguments is
+   either a reference to the type info for a catch statement,
+   a <a href="#throw_filters">filter</a> expression, or the number zero
+   representing a <a href="#cleanups">cleanup</a>.  The exception is tested
+   against the arguments sequentially from first to last.  The result of
+   the <a href="#llvm_eh_selector"><tt>llvm.eh.selector</tt></a> is a positive
+   number if the exception matched a type info, a negative number if it matched
+   a filter, and zero if it matched a cleanup.  If nothing is matched, the
+   behaviour of the program is <a href="#restrictions">undefined</a>.  If a type
+   info matched then the selector value is the index of the type info in the
+   exception table, which can be obtained using the
+   <a href="#llvm_eh_typeid_for"><tt>llvm.eh.typeid.for</tt></a> intrinsic.</p>
 
 </div>
 
@@ -393,14 +411,15 @@ the exception table, which can be obtained using the
 
 <div class="doc_text">
 <pre>
-  i32 %<a href="#llvm_eh_typeid_for">llvm.eh.typeid.for.i32</a>(i8*)
-  i64 %<a href="#llvm_eh_typeid_for">llvm.eh.typeid.for.i64</a>(i8*)
+i32 %<a href="#llvm_eh_typeid_for">llvm.eh.typeid.for.i32</a>(i8*)
+i64 %<a href="#llvm_eh_typeid_for">llvm.eh.typeid.for.i64</a>(i8*)
 </pre>
+</div>
 
 <p>This intrinsic returns the type info index in the exception table of the
-current function.  This value can be used to compare against the result of <a
-href="#llvm_eh_selector"><tt>llvm.eh.selector</tt></a>.  The single argument is
-a reference to a type info.</p>
+   current function.  This value can be used to compare against the result
+   of <a href="#llvm_eh_selector"><tt>llvm.eh.selector</tt></a>.  The single
+   argument is a reference to a type info.</p>
 
 </div>
 
@@ -411,22 +430,25 @@ a reference to a type info.</p>
 
 <div class="doc_text">
 <pre>
-  i32 %<a href="#llvm_eh_sjlj_setjmp">llvm.eh.sjlj.setjmp</a>(i8*)
+i32 %<a href="#llvm_eh_sjlj_setjmp">llvm.eh.sjlj.setjmp</a>(i8*)
 </pre>
+</div>
 
-<p>The SJLJ exception handling uses this intrinsic to force register saving
-for the current function and to store the address of the following instruction
-for use as a destination address by <a href="#llvm_eh_sjlj_longjmp">
-<tt>llvm.eh.sjlj.longjmp</tt></a>. The buffer format and the overall functioning
-of this intrinsic is compatible with the GCC <tt>__builtin_setjmp</tt> 
-implementation, allowing code built with the two compilers to interoperate.</p>
+<p>The SJLJ exception handling uses this intrinsic to force register saving for
+   the current function and to store the address of the following instruction
+   for use as a destination address by <a href="#llvm_eh_sjlj_longjmp">
+   <tt>llvm.eh.sjlj.longjmp</tt></a>. The buffer format and the overall
+   functioning of this intrinsic is compatible with the GCC
+   <tt>__builtin_setjmp</tt> implementation, allowing code built with the
+   two compilers to interoperate.</p>
 
-<p>The single parameter is a pointer to a five word buffer in which the
-calling context is saved. The front end places the frame pointer in the
-first word, and the target implementation of this intrinsic should place the
-destination address for a <a href="#llvm_eh_sjlj_longjmp"><tt>
-llvm.eh.sjlj.longjmp</tt></a> in the second word. The following three words
-are available for use in a target-specific manner.</p>
+<p>The single parameter is a pointer to a five word buffer in which the calling
+   context is saved. The front end places the frame pointer in the first word,
+   and the target implementation of this intrinsic should place the destination
+   address for a
+   <a href="#llvm_eh_sjlj_longjmp"><tt>llvm.eh.sjlj.longjmp</tt></a> in the
+   second word. The following three words are available for use in a
+   target-specific manner.</p>
 
 </div>
 
@@ -437,14 +459,15 @@ are available for use in a target-specific manner.</p>
 
 <div class="doc_text">
 <pre>
-  i8* %<a href="#llvm_eh_sjlj_lsda">llvm.eh.sjlj.lsda</a>( )
+i8* %<a href="#llvm_eh_sjlj_lsda">llvm.eh.sjlj.lsda</a>( )
 </pre>
+</div>
 
 <p>Used for SJLJ based exception handling, the <a href="#llvm_eh_sjlj_lsda">
-  <tt>llvm.eh.sjlj.lsda</tt></a> intrinsic returns the address of the Language
-Specific Data Area (LSDA) for the current function. The SJLJ front-end code
-stores this address in the exception handling function context for use by
-the runtime.</p>
+   <tt>llvm.eh.sjlj.lsda</tt></a> intrinsic returns the address of the Language
+   Specific Data Area (LSDA) for the current function. The SJLJ front-end code
+   stores this address in the exception handling function context for use by the
+   runtime.</p>
 
 </div>
 
@@ -455,13 +478,14 @@ the runtime.</p>
 
 <div class="doc_text">
 <pre>
-  void %<a href="#llvm_eh_sjlj_callsite">llvm.eh.sjlj.callsite</a>(i32)
+void %<a href="#llvm_eh_sjlj_callsite">llvm.eh.sjlj.callsite</a>(i32)
 </pre>
+</div>
 
-<p>The SJLJ front-end allocates call site indices for invoke instrucitons. 
-These values are passed to the back-end via the
-<a href="#llvm_eh_sjlj_callsite"><tt>llvm.eh.sjlj.callsite</tt></a>
-intrinsic, where they are used to build the LSDA call-site table.</p>
+<p>The SJLJ front-end allocates call site indices for invoke instrucitons.
+   These values are passed to the back-end via the
+   <a href="#llvm_eh_sjlj_callsite"><tt>llvm.eh.sjlj.callsite</tt></a>
+   intrinsic, where they are used to build the LSDA call-site table.</p>
 
 </div>
 
@@ -473,7 +497,7 @@ intrinsic, where they are used to build the LSDA call-site table.</p>
 <div class="doc_text">
 
 <p>There are two tables that are used by the exception handling runtime to
-determine which actions should take place when an exception is thrown.</p>
+   determine which actions should take place when an exception is thrown.</p>
 
 </div>
 
@@ -485,11 +509,11 @@ determine which actions should take place when an exception is thrown.</p>
 <div class="doc_text">
 
 <p>An exception handling frame <tt>eh_frame</tt> is very similar to the unwind
-frame used by dwarf debug info.  The frame contains all the information
-necessary to tear down the current frame and restore the state of the prior
-frame.  There is an exception handling frame for each function in a compile
-unit, plus a common exception handling frame that defines information common to
-all functions in the unit.</p>
+   frame used by dwarf debug info.  The frame contains all the information
+   necessary to tear down the current frame and restore the state of the prior
+   frame.  There is an exception handling frame for each function in a compile
+   unit, plus a common exception handling frame that defines information common
+   to all functions in the unit.</p>
 
 <p>Todo - Table details here.</p>
 
@@ -503,9 +527,9 @@ all functions in the unit.</p>
 <div class="doc_text">
 
 <p>An exception table contains information about what actions to take when an
-exception is thrown in a particular part of a function's code.  There is
-one exception table per function except leaf routines and functions that have
-only calls to non-throwing functions will not need an exception table.</p>
+   exception is thrown in a particular part of a function's code.  There is one
+   exception table per function except leaf routines and functions that have
+   only calls to non-throwing functions will not need an exception table.</p>
 
 <p>Todo - Table details here.</p>
 
@@ -520,7 +544,7 @@ only calls to non-throwing functions will not need an exception table.</p>
 
 <ol>
 
-<li><p>Testing/Testing/Testing.</p></li>
+  <li>Testing/Testing/Testing.</li>
 
 </ol>
 
