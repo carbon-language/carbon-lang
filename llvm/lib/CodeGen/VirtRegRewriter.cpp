@@ -1587,6 +1587,7 @@ private:
           MachineInstr *LoadMI = prior(InsertLoc);
           VRM.addSpillSlotUse(SS, LoadMI);
           ++NumPSpills;
+          DistanceMap.insert(std::make_pair(LoadMI, Dist++));
         }
         NextMII = next(MII);
       }
@@ -1678,6 +1679,7 @@ private:
             MachineInstr *LoadMI = prior(InsertLoc);
             VRM.addSpillSlotUse(SSorRMId, LoadMI);
             ++NumLoads;
+            DistanceMap.insert(std::make_pair(LoadMI, Dist++));
           }
 
           // This invalidates Phys.
@@ -1977,6 +1979,7 @@ private:
             MachineInstr *LoadMI = prior(InsertLoc);
             VRM.addSpillSlotUse(SSorRMId, LoadMI);
             ++NumLoads;
+            DistanceMap.insert(std::make_pair(LoadMI, Dist++));
           }
           // This invalidates PhysReg.
           Spills.ClobberPhysReg(PhysReg);
