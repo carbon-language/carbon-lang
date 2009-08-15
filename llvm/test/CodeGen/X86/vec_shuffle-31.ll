@@ -1,8 +1,3 @@
-; RUN: llvm-as < %s | llc -march=x86 -mcpu=yonah -o %t -f
-; RUN: grep pextrw %t | count 1
-; RUN: grep movlhps %t | count 1
-; RUN: grep pshufhw %t | count 1
-; RUN: grep pinsrw %t | count 1
 ; RUN: llvm-as < %s | llc -march=x86 -mcpu=core2 -o %t -f
 ; RUN: grep pshufb %t | count 1
 
