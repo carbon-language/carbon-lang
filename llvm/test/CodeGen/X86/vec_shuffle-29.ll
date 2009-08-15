@@ -1,4 +1,4 @@
-; RUN: llvm-as < %s | llc -march=x86 -mattr=sse41,-ssse3 -disable-mmx -o %t -f
+; RUN: llvm-as < %s | llc -march=x86 -mcpu=yonah -o %t -f
 ; RUN: not grep pextrw %t
 ; RUN: grep pinsrw %t
 
