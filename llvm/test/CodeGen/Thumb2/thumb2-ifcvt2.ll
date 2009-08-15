@@ -1,4 +1,4 @@
-; RUN: llvm-as < %s | llc -march=thumb -mattr=+thumb2 | FileCheck %s
+; RUN: llvm-as < %s | llc -mtriple=thumbv7-apple-darwin | FileCheck %s
 
 define void @foo(i32 %X, i32 %Y) {
 entry:

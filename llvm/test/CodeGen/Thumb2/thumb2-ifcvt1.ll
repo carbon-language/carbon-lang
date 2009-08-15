@@ -1,4 +1,4 @@
-; RUN: llvm-as < %s | llc -march=thumb -mattr=+thumb2 | FileCheck %s
+; RUN: llvm-as < %s | llc -mtriple=thumbv7-apple-darwin | FileCheck %s
 
 define i32 @t1(i32 %a, i32 %b, i32 %c, i32 %d) {
 ; CHECK: t1:
