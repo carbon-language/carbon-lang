@@ -1070,8 +1070,8 @@ SDValue SelectionDAGLegalize::LegalizeOp(SDValue Op) {
         // If this is an unaligned load and the target doesn't support it,
         // expand it.
         if (!TLI.allowsUnalignedMemoryAccesses()) {
-          unsigned ABIAlignment = TLI.getTargetData()->
-            getABITypeAlignment(LD->getMemoryVT().getTypeForEVT(*DAG.getContext()));
+          const Type *Ty = LD->getMemoryVT().getTypeForEVT(*DAG.getContext());
+          unsigned ABIAlignment = TLI.getTargetData()->getABITypeAlignment(Ty);
           if (LD->getAlignment() < ABIAlignment){
             Result = ExpandUnalignedLoad(cast<LoadSDNode>(Result.getNode()), 
                                          DAG, TLI);
@@ -1253,8 +1253,8 @@ SDValue SelectionDAGLegalize::LegalizeOp(SDValue Op) {
             // If this is an unaligned load and the target doesn't support it,
             // expand it.
             if (!TLI.allowsUnalignedMemoryAccesses()) {
-              unsigned ABIAlignment = TLI.getTargetData()->
-                getABITypeAlignment(LD->getMemoryVT().getTypeForEVT(*DAG.getContext()));
+              const Type *Ty = LD->getMemoryVT().getTypeForEVT(*DAG.getContext());
+              unsigned ABIAlignment = TLI.getTargetData()->getABITypeAlignment(Ty);
               if (LD->getAlignment() < ABIAlignment){
                 Result = ExpandUnalignedLoad(cast<LoadSDNode>(Result.getNode()), 
                                              DAG, TLI);
@@ -1331,11 +1331,11 @@ SDValue SelectionDAGLegalize::LegalizeOp(SDValue Op) {
           // If this is an unaligned store and the target doesn't support it,
           // expand it.
           if (!TLI.allowsUnalignedMemoryAccesses()) {
-            unsigned ABIAlignment = TLI.getTargetData()->
-              getABITypeAlignment(ST->getMemoryVT().getTypeForEVT(*DAG.getContext()));
+            const Type *Ty = ST->getMemoryVT().getTypeForEVT(*DAG.getContext());
+            unsigned ABIAlignment = TLI.getTargetData()->getABITypeAlignment(Ty);
             if (ST->getAlignment() < ABIAlignment)
-              Result = ExpandUnalignedStore(cast<StoreSDNode>(Result.getNode()), DAG,
-                                            TLI);
+              Result = ExpandUnalignedStore(cast<StoreSDNode>(Result.getNode()),
+                                            DAG, TLI);
           }
           break;
         case TargetLowering::Custom:
@@ -1430,11 +1430,11 @@ SDValue SelectionDAGLegalize::LegalizeOp(SDValue Op) {
           // If this is an unaligned store and the target doesn't support it,
           // expand it.
           if (!TLI.allowsUnalignedMemoryAccesses()) {
-            unsigned ABIAlignment = TLI.getTargetData()->
-              getABITypeAlignment(ST->getMemoryVT().getTypeForEVT(*DAG.getContext()));
+            const Type *Ty = ST->getMemoryVT().getTypeForEVT(*DAG.getContext());
+            unsigned ABIAlignment = TLI.getTargetData()->getABITypeAlignment(Ty);
             if (ST->getAlignment() < ABIAlignment)
-              Result = ExpandUnalignedStore(cast<StoreSDNode>(Result.getNode()), DAG,
-                                            TLI);
+              Result = ExpandUnalignedStore(cast<StoreSDNode>(Result.getNode()),
+                                            DAG, TLI);
           }
           break;
         case TargetLowering::Custom:
