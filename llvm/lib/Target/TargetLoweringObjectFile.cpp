@@ -392,7 +392,8 @@ void TargetLoweringObjectFileELF::Initialize(MCContext &Ctx,
                   MCSectionELF::SHF_ALLOC, SectionKind::getReadOnly());
   EHFrameSection =
     getELFSection(".eh_frame", MCSectionELF::SHT_PROGBITS, 
-                  MCSectionELF::SHF_ALLOC, SectionKind::getDataRel());
+                  MCSectionELF::SHF_ALLOC | MCSectionELF::SHF_WRITE,
+                  SectionKind::getDataRel());
   
   // Debug Info Sections.
   DwarfAbbrevSection = 
