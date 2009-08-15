@@ -47,7 +47,12 @@ struct CheckString {
   /// Loc - The location in the match file that the check string was specified.
   SMLoc Loc;
   
-  CheckString(const std::string &S, SMLoc L) : Str(S), Loc(L) {}
+  /// IsCheckNext - This is true if this is a CHECK-NEXT: directive (as opposed
+  /// to a CHECK: directive.
+  bool IsCheckNext;
+  
+  CheckString(const std::string &S, SMLoc L, bool isCheckNext)
+    : Str(S), Loc(L), IsCheckNext(isCheckNext) {}
 };
 
 
@@ -106,16 +111,27 @@ static bool ReadCheckFile(SourceMgr &SM,
     if (Ptr == BufferEnd)
       break;
     
+    const char *CheckPrefixStart = Ptr;
+    
+    // When we find a check prefix, keep track of whether we find CHECK: or
+    // CHECK-NEXT:
+    bool IsCheckNext;
+    
     // Verify that the : is present after the prefix.
-    if (Ptr[CheckPrefix.size()] != ':') {
+    if (Ptr[CheckPrefix.size()] == ':') {
+      Ptr += CheckPrefix.size()+1;
+      IsCheckNext = false;
+    } else if (BufferEnd-Ptr > 6 &&
+               memcmp(Ptr+CheckPrefix.size(), "-NEXT:", 6) == 0) {
+      Ptr += CheckPrefix.size()+7;
+      IsCheckNext = true;
+    } else {
       CurPtr = Ptr+1;
       continue;
     }
     
     // Okay, we found the prefix, yay.  Remember the rest of the line, but
     // ignore leading and trailing whitespace.
-    Ptr += CheckPrefix.size()+1;
-    
     while (*Ptr == ' ' || *Ptr == '\t')
       ++Ptr;
     
@@ -136,9 +152,18 @@ static bool ReadCheckFile(SourceMgr &SM,
       return true;
     }
     
+    // Verify that CHECK-NEXT lines have at least one CHECK line before them.
+    if (IsCheckNext && CheckStrings.empty()) {
+      SM.PrintMessage(SMLoc::getFromPointer(CheckPrefixStart),
+                      "found '"+CheckPrefix+"-NEXT:' without previous '"+
+                      CheckPrefix+ ": line", "error");
+      return true;
+    }
+    
     // Okay, add the string we captured to the output vector and move on.
     CheckStrings.push_back(CheckString(std::string(Ptr, CurPtr),
-                                       SMLoc::getFromPointer(Ptr)));
+                                       SMLoc::getFromPointer(Ptr),
+                                       IsCheckNext));
   }
   
   if (CheckStrings.empty()) {
@@ -204,6 +229,45 @@ static MemoryBuffer *CanonicalizeInputFile(MemoryBuffer *MB) {
 }
 
 
+static void PrintCheckFailed(const SourceMgr &SM, const CheckString &CheckStr,
+                             const char *CurPtr, const char *BufferEnd) {
+  // Otherwise, we have an error, emit an error message.
+  SM.PrintMessage(CheckStr.Loc, "expected string not found in input",
+                  "error");
+  
+  // Print the "scanning from here" line.  If the current position is at the
+  // end of a line, advance to the start of the next line.
+  const char *Scan = CurPtr;
+  while (Scan != BufferEnd &&
+         (*Scan == ' ' || *Scan == '\t'))
+    ++Scan;
+  if (*Scan == '\n' || *Scan == '\r')
+    CurPtr = Scan+1;
+  
+  
+  SM.PrintMessage(SMLoc::getFromPointer(CurPtr), "scanning from here",
+                  "note");
+}
+
+static unsigned CountNumNewlinesBetween(const char *Start, const char *End) {
+  unsigned NumNewLines = 0;
+  for (; Start != End; ++Start) {
+    // Scan for newline.
+    if (Start[0] != '\n' && Start[0] != '\r')
+      continue;
+    
+    ++NumNewLines;
+    
+    // Handle \n\r and \r\n as a single newline.
+    if (Start+1 != End &&
+        (Start[0] == '\n' || Start[0] == '\r') &&
+        (Start[0] != Start[1]))
+      ++Start;
+  }
+  
+  return NumNewLines;
+}
+
 int main(int argc, char **argv) {
   sys::PrintStackTraceOnErrorSignal();
   PrettyStackTraceProgram X(argc, argv);
@@ -240,35 +304,50 @@ int main(int argc, char **argv) {
   // file.
   const char *CurPtr = F->getBufferStart(), *BufferEnd = F->getBufferEnd();
   
+  const char *LastMatch = 0;
   for (unsigned StrNo = 0, e = CheckStrings.size(); StrNo != e; ++StrNo) {
     const CheckString &CheckStr = CheckStrings[StrNo];
     
     // Find StrNo in the file.
     const char *Ptr = FindFixedStringInBuffer(CheckStr.Str, CurPtr, *F);
     
-    // If we found a match, we're done, move on.
-    if (Ptr != BufferEnd) {
-      CurPtr = Ptr + CheckStr.Str.size();
-      continue;
+    // If we didn't find a match, reject the input.
+    if (Ptr == BufferEnd) {
+      PrintCheckFailed(SM, CheckStr, CurPtr, BufferEnd);
+      return 1;
     }
     
-    // Otherwise, we have an error, emit an error message.
-    SM.PrintMessage(CheckStr.Loc, "expected string not found in input",
-                    "error");
-    
-    // Print the "scanning from here" line.  If the current position is at the
-    // end of a line, advance to the start of the next line.
-    const char *Scan = CurPtr;
-    while (Scan != BufferEnd &&
-           (*Scan == ' ' || *Scan == '\t'))
-      ++Scan;
-    if (*Scan == '\n' || *Scan == '\r')
-      CurPtr = Scan+1;
-    
-    
-    SM.PrintMessage(SMLoc::getFromPointer(CurPtr), "scanning from here",
-                    "note");
-    return 1;
+    // If this check is a "CHECK-NEXT", verify that the previous match was on
+    // the previous line (i.e. that there is one newline between them).
+    if (CheckStr.IsCheckNext) {
+      // Count the number of newlines between the previous match and this one.
+      assert(LastMatch && "CHECK-NEXT can't be the first check in a file");
+
+      unsigned NumNewLines = CountNumNewlinesBetween(LastMatch, Ptr);
+      if (NumNewLines == 0) {
+        SM.PrintMessage(SMLoc::getFromPointer(Ptr),
+                    CheckPrefix+"-NEXT: is on the same line as previous match",
+                        "error");
+        SM.PrintMessage(SMLoc::getFromPointer(LastMatch),
+                        "previous match was here", "note");
+        return 1;
+      }
+      
+      if (NumNewLines != 1) {
+        SM.PrintMessage(SMLoc::getFromPointer(Ptr),
+                        CheckPrefix+
+                        "-NEXT: is not on the line after the previous match",
+                        "error");
+        SM.PrintMessage(SMLoc::getFromPointer(LastMatch),
+                        "previous match was here", "note");
+        return 1;
+      }
+    }
+
+    // Otherwise, everything is good.  Remember this as the last match and move
+    // on to the next one.
+    LastMatch = Ptr;
+    CurPtr = Ptr + CheckStr.Str.size();
   }
   
   return 0;

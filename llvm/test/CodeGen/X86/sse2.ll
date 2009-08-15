@@ -10,11 +10,11 @@ define void @t1(<2 x double>* %r, <2 x double>* %A, double %B) nounwind  {
         
 ; CHECK: t1:
 ; CHECK: 	movl	8(%esp), %eax
-; CHECK: 	movapd	(%eax), %xmm0
-; CHECK: 	movlpd	12(%esp), %xmm0
-; CHECK: 	movl	4(%esp), %eax
-; CHECK: 	movapd	%xmm0, (%eax)
-; CHECK: 	ret
+; CHECK-NEXT: 	movapd	(%eax), %xmm0
+; CHECK-NEXT: 	movlpd	12(%esp), %xmm0
+; CHECK-NEXT: 	movl	4(%esp), %eax
+; CHECK-NEXT: 	movapd	%xmm0, (%eax)
+; CHECK-NEXT: 	ret
 }
 
 define void @t2(<2 x double>* %r, <2 x double>* %A, double %B) nounwind  {
@@ -26,9 +26,9 @@ define void @t2(<2 x double>* %r, <2 x double>* %A, double %B) nounwind  {
         
 ; CHECK: t2:
 ; CHECK: 	movl	8(%esp), %eax
-; CHECK: 	movapd	(%eax), %xmm0
-; CHECK: 	movhpd	12(%esp), %xmm0
-; CHECK: 	movl	4(%esp), %eax
-; CHECK: 	movapd	%xmm0, (%eax)
-; CHECK: 	ret
+; CHECK-NEXT: 	movapd	(%eax), %xmm0
+; CHECK-NEXT: 	movhpd	12(%esp), %xmm0
+; CHECK-NEXT: 	movl	4(%esp), %eax
+; CHECK-NEXT: 	movapd	%xmm0, (%eax)
+; CHECK-NEXT: 	ret
 }

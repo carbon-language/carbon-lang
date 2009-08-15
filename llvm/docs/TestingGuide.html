@@ -518,13 +518,17 @@ is a "subl" in between those labels.  If it existed somewhere else in the file,
 that would not count: "grep subl" matches if subl exists anywhere in the
 file.</p>
 
+</div>
+
+<!-- _______________________________________________________________________ -->
 <div class="doc_subsubsection"><a 
 name="FileCheck-check-prefix">The FileCheck -check-prefix option</a></div>
+
+<div class="doc_text">
 
 <p>The FileCheck -check-prefix option allows multiple test configurations to be
 driven from one .ll file.  This is useful in many circumstances, for example,
 testing different architectural variants with llc.  Here's a simple example:</p>
-
 
 <div class="doc_code">
 <pre>
@@ -548,6 +552,43 @@ define &lt;4 x i32&gt; @pinsrd_1(i32 %s, &lt;4 x i32&gt; %tmp) nounwind {
 <p>In this case, we're testing that we get the expected code generation with
 both 32-bit and 64-bit code generation.</p>
 
+</div>
+
+<!-- _______________________________________________________________________ -->
+<div class="doc_subsubsection"><a 
+name="FileCheck-CHECK-NEXT">The "CHECK-NEXT:" directive</a></div>
+
+<div class="doc_text">
+
+<p>Sometimes you want to match lines and would like to verify that matches
+happen on exactly consequtive lines with no other lines in between them.  In
+this case, you can use CHECK: and CHECK-NEXT: directives to specify this.  If
+you specified a custom check prefix, just use "&lt;PREFIX&gt;-NEXT:".  For
+example, something like this works as you'd expect:</p>
+
+<div class="doc_code">
+<pre>
+define void @t2(&lt;2 x double&gt;* %r, &lt;2 x double&gt;* %A, double %B) nounwind  {
+	%tmp3 = load &lt;2 x double&gt;* %A, align 16
+	%tmp7 = insertelement &lt;2 x double&gt; undef, double %B, i32 0
+	%tmp9 = shufflevector &lt;2 x double&gt; %tmp3, &lt;2 x double&gt; %tmp7, &lt;2 x i32&gt; &lt; i32 0, i32 2 &gt;
+	store &lt;2 x double&gt; %tmp9, &lt;2 x double&gt;* %r, align 16
+	ret void
+        
+; <b>CHECK:</b> t2:
+; <b>CHECK:</b> 	movl	8(%esp), %eax
+; <b>CHECK-NEXT:</b> 	movapd	(%eax), %xmm0
+; <b>CHECK-NEXT:</b> 	movhpd	12(%esp), %xmm0
+; <b>CHECK-NEXT:</b> 	movl	4(%esp), %eax
+; <b>CHECK-NEXT:</b> 	movapd	%xmm0, (%eax)
+; <b>CHECK-NEXT:</b> 	ret
+}
+</pre>
+</div>
+
+<p>CHECK-NEXT: directives reject the input unless there is exactly one newline
+between it an the previous directive.  A CHECK-NEXT cannot be the first
+directive in a file.</p>
 
 </div>
 
