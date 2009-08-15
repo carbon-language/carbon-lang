@@ -119,7 +119,9 @@ void PIC16DbgInfo::PopulateStructOrUnionTypeInfo (DIType Ty,
   // UniqueSuffix is .number where number is obtained from
   // llvm.dbg.composite<number>.
   // FIXME: This will break when composite type is not represented by
-  // llvm.dbg.composite* global variable. This is not supported.
+  // llvm.dbg.composite* global variable. Since we need to revisit 
+  // PIC16DebugInfo implementation anyways after the MDNodes based 
+  // framework is done, let us continue with the way it is.
   std::string UniqueSuffix = "." + Ty.getGV()->getNameStr().substr(18);
   TagName += UniqueSuffix;
   unsigned short size = CTy.getSizeInBits()/8;
@@ -293,7 +295,7 @@ void PIC16DbgInfo::EndModule(Module &M) {
 /// composite type.
 /// 
 void PIC16DbgInfo::EmitCompositeTypeElements (DICompositeType CTy,
-                                              unsigned SuffixNo) {
+                                              std::string SuffixNo) {
   unsigned long Value = 0;
   DIArray Elements = CTy.getTypeArray();
   for (unsigned i = 0, N = Elements.getNumElements(); i < N; i++) {
@@ -308,8 +310,7 @@ void PIC16DbgInfo::EmitCompositeTypeElements (DICompositeType CTy,
     DITy.getName(ElementName);
     unsigned short ElementSize = DITy.getSizeInBits()/8;
     // Get mangleddd name for this structure/union  element.
-    SmallString<128> MangMemName(ElementName.begin(), ElementName.end());
-    MangMemName.append_uint_32(SuffixNo);
+    std::string MangMemName = ElementName + SuffixNo;
     PopulateDebugInfo(DITy, TypeNo, HasAux, ElementAux, TagName);
     short Class = 0;
     if( CTy.getTag() == dwarf::DW_TAG_union_type)
@@ -330,9 +331,8 @@ void PIC16DbgInfo::EmitCompositeTypeElements (DICompositeType CTy,
 void PIC16DbgInfo::EmitCompositeTypeDecls(Module &M) {
   DebugInfoFinder DbgFinder;
   DbgFinder.processModule(M);
-  unsigned SuffixNo = 0;
-  for (DebugInfoFinder::iterator I = DbgFinder.global_variable_begin(),
-         E = DbgFinder.global_variable_end(); I != E; ++I) {
+  for (DebugInfoFinder::iterator I = DbgFinder.type_begin(),
+         E = DbgFinder.type_end(); I != E; ++I) {
     DICompositeType CTy(*I);
     if (CTy.isNull())
       continue;
@@ -340,8 +340,11 @@ void PIC16DbgInfo::EmitCompositeTypeDecls(Module &M) {
         CTy.getTag() == dwarf::DW_TAG_structure_type ) {
       std::string Name;
       CTy.getName(Name);
-      SmallString<128> MangledCTyName(Name.begin(), Name.end());
-      MangledCTyName.append_uint_32(++SuffixNo);
+      // Get the number after llvm.dbg.composite and make UniqueSuffix from 
+      // it.
+      std::string DIVar = CTy.getGV()->getNameStr();
+      std::string UniqueSuffix = "." + DIVar.substr(18);
+      std::string MangledCTyName = Name + UniqueSuffix;
       unsigned short size = CTy.getSizeInBits()/8;
       int Aux[PIC16Dbg::AuxSize] = {0};
       // 7th and 8th byte represent size of structure/union.
@@ -357,12 +360,10 @@ void PIC16DbgInfo::EmitCompositeTypeDecls(Module &M) {
       EmitAuxEntry(MangledCTyName.c_str(), Aux, PIC16Dbg::AuxSize);
       
       // Emit members.
-      EmitCompositeTypeElements (CTy, SuffixNo);
+      EmitCompositeTypeElements (CTy, UniqueSuffix);
       
       // Emit mangled Symbol for end of structure/union.
-      SmallString<128> EOSSymbol(Name.begin(), Name.end());
-      EOSSymbol += ".eos";
-      EOSSymbol.append_uint_32(SuffixNo);
+      std::string EOSSymbol = ".eos" + UniqueSuffix;
       EmitSymbol(EOSSymbol.c_str(), PIC16Dbg::C_EOS);
       EmitAuxEntry(EOSSymbol.c_str(), Aux, PIC16Dbg::AuxSize, 
                    MangledCTyName.c_str());
