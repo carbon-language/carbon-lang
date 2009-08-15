@@ -39,6 +39,17 @@ static cl::opt<bool>
 NoCanonicalizeWhiteSpace("strict-whitespace",
               cl::desc("Do not treat all horizontal whitespace as equivalent"));
 
+/// CheckString - This is a check that we found in the input file.
+struct CheckString {
+  /// Str - The string to match.
+  std::string Str;
+  
+  /// Loc - The location in the match file that the check string was specified.
+  SMLoc Loc;
+  
+  CheckString(const std::string &S, SMLoc L) : Str(S), Loc(L) {}
+};
+
 
 /// FindStringInBuffer - This is basically just a strstr wrapper that differs in
 /// two ways: first it handles 'nul' characters in memory buffers, second, it
@@ -64,8 +75,7 @@ static const char *FindStringInBuffer(const char *Str, const char *CurPtr,
 /// ReadCheckFile - Read the check file, which specifies the sequence of
 /// expected strings.  The strings are added to the CheckStrings vector.
 static bool ReadCheckFile(SourceMgr &SM,
-                          std::vector<std::pair<std::string, SMLoc> >
-                                         &CheckStrings) {
+                          std::vector<CheckString> &CheckStrings) {
   // Open the check file, and tell SourceMgr about it.
   std::string ErrorStr;
   MemoryBuffer *F =
@@ -115,8 +125,8 @@ static bool ReadCheckFile(SourceMgr &SM,
     }
     
     // Okay, add the string we captured to the output vector and move on.
-    CheckStrings.push_back(std::make_pair(std::string(Ptr, CurPtr),
-                                          SMLoc::getFromPointer(Ptr)));
+    CheckStrings.push_back(CheckString(std::string(Ptr, CurPtr),
+                                       SMLoc::getFromPointer(Ptr)));
   }
   
   if (CheckStrings.empty()) {
@@ -129,10 +139,9 @@ static bool ReadCheckFile(SourceMgr &SM,
 
 // CanonicalizeCheckStrings - Replace all sequences of horizontal whitespace in
 // the check strings with a single space.
-static void CanonicalizeCheckStrings(std::vector<std::pair<std::string, SMLoc> >
-                                     &CheckStrings) {
+static void CanonicalizeCheckStrings(std::vector<CheckString> &CheckStrings) {
   for (unsigned i = 0, e = CheckStrings.size(); i != e; ++i) {
-    std::string &Str = CheckStrings[i].first;
+    std::string &Str = CheckStrings[i].Str;
     
     for (unsigned C = 0; C != Str.size(); ++C) {
       // If C is not a horizontal whitespace, skip it.
@@ -190,7 +199,7 @@ int main(int argc, char **argv) {
   SourceMgr SM;
   
   // Read the expected strings from the check file.
-  std::vector<std::pair<std::string, SMLoc> > CheckStrings;
+  std::vector<CheckString> CheckStrings;
   if (ReadCheckFile(SM, CheckStrings))
     return 2;
 
@@ -219,19 +228,19 @@ int main(int argc, char **argv) {
   const char *CurPtr = F->getBufferStart(), *BufferEnd = F->getBufferEnd();
   
   for (unsigned StrNo = 0, e = CheckStrings.size(); StrNo != e; ++StrNo) {
-    const std::pair<std::string, SMLoc> &CheckStr = CheckStrings[StrNo];
+    const CheckString &CheckStr = CheckStrings[StrNo];
     
     // Find StrNo in the file.
-    const char *Ptr = FindStringInBuffer(CheckStr.first.c_str(), CurPtr, *F);
+    const char *Ptr = FindStringInBuffer(CheckStr.Str.c_str(), CurPtr, *F);
     
     // If we found a match, we're done, move on.
     if (Ptr != BufferEnd) {
-      CurPtr = Ptr + CheckStr.first.size();
+      CurPtr = Ptr + CheckStr.Str.size();
       continue;
     }
     
     // Otherwise, we have an error, emit an error message.
-    SM.PrintMessage(CheckStr.second, "expected string not found in input",
+    SM.PrintMessage(CheckStr.Loc, "expected string not found in input",
                     "error");
     
     // Print the "scanning from here" line.  If the current position is at the
