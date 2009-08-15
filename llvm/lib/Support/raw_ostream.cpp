@@ -72,7 +72,11 @@ size_t raw_ostream::preferred_buffer_size() {
 
 void raw_ostream::SetBuffered() {
   // Ask the subclass to determine an appropriate buffer size.
-  SetBufferSize(preferred_buffer_size());
+  if (size_t Size = preferred_buffer_size())
+    SetBufferSize(Size);
+  else
+    // It may return 0, meaning this stream should be unbuffered.
+    SetUnbuffered();
 }
 
 void raw_ostream::SetBufferSize(size_t Size) {
@@ -315,10 +319,6 @@ raw_fd_ostream::raw_fd_ostream(const char *Filename, bool Binary, bool Force,
     if (Binary)
       sys::Program::ChangeStdoutToBinary();
     ShouldClose = false;
-    // Mimic stdout by defaulting to unbuffered if the output device
-    // is a terminal.
-    if (sys::Process::StandardOutIsDisplayed())
-      SetUnbuffered();
     return;
   }
   
@@ -375,8 +375,15 @@ size_t raw_fd_ostream::preferred_buffer_size() {
 #if !defined(_MSC_VER) // Windows reportedly doesn't have st_blksize.
   assert(FD >= 0 && "File not yet open!");
   struct stat statbuf;
-  if (fstat(FD, &statbuf) == 0)
+  if (fstat(FD, &statbuf) == 0) {
+    // If this is a terminal, don't use buffering. Line buffering
+    // would be a more traditional thing to do, but it's not worth
+    // the complexity.
+    if (S_ISCHR(statbuf.st_mode) && isatty(FD))
+      return 0;
+    // Return the preferred block size.
     return statbuf.st_blksize;
+  }
   error_detected();
 #endif
   return raw_ostream::preferred_buffer_size();
@@ -416,13 +423,9 @@ raw_ostream &raw_fd_ostream::resetColor() {
 //===----------------------------------------------------------------------===//
 
 // Set buffer settings to model stdout and stderr behavior.
-// raw_ostream doesn't support line buffering, so set standard output to be
-// unbuffered when the output device is a terminal. Set standard error to
-// be unbuffered.
-raw_stdout_ostream::raw_stdout_ostream()
-  : raw_fd_ostream(STDOUT_FILENO, false,
-                   sys::Process::StandardOutIsDisplayed()) {}
-raw_stderr_ostream::raw_stderr_ostream():raw_fd_ostream(STDERR_FILENO, false, 
+// Set standard error to be unbuffered by default.
+raw_stdout_ostream::raw_stdout_ostream():raw_fd_ostream(STDOUT_FILENO, false) {}
+raw_stderr_ostream::raw_stderr_ostream():raw_fd_ostream(STDERR_FILENO, false,
                                                         true) {}
 
 // An out of line virtual method to provide a home for the class vtable.
