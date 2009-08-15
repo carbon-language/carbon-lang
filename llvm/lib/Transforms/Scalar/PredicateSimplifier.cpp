@@ -1311,7 +1311,7 @@ namespace {
         TerminatorInst *TI = BB->getTerminator();
         TI->replaceAllUsesWith(UndefValue::get(TI->getType()));
         TI->eraseFromParent();
-        new UnreachableInst(TI->getContext(), BB);
+        new UnreachableInst(BB->getContext(), BB);
         ++NumBlocks;
         modified = true;
       }
