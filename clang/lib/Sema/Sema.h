@@ -2548,6 +2548,9 @@ public:
     /// template instantiation.
     SourceRange InstantiationRange;
 
+    ActiveTemplateInstantiation() : Kind(TemplateInstantiation), Entity(0),
+                                    TemplateArgs(0), NumTemplateArgs(0) {}
+
     friend bool operator==(const ActiveTemplateInstantiation &X,
                            const ActiveTemplateInstantiation &Y) {
       if (X.Kind != Y.Kind)
