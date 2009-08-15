@@ -51,25 +51,33 @@ struct CheckString {
 };
 
 
-/// FindStringInBuffer - This is basically just a strstr wrapper that differs in
-/// two ways: first it handles 'nul' characters in memory buffers, second, it
-/// returns the end of the memory buffer on match failure.
-static const char *FindStringInBuffer(const char *Str, const char *CurPtr,
-                                      const MemoryBuffer &MB) {
-  // Check to see if we have a match.  If so, just return it.
-  if (const char *Res = strstr(CurPtr, Str))
-    return Res;
+/// FindFixedStringInBuffer - This works like strstr, except for two things:
+/// 1) it handles 'nul' characters in memory buffers.  2) it returns the end of
+/// the memory buffer on match failure instead of null.
+static const char *FindFixedStringInBuffer(StringRef Str, const char *CurPtr,
+                                           const MemoryBuffer &MB) {
+  assert(!Str.empty() && "Can't find an empty string");
+  const char *BufEnd = MB.getBufferEnd();
   
-  // If not, check to make sure we didn't just find an embedded nul in the
-  // memory buffer.
-  const char *Ptr = CurPtr + strlen(CurPtr);
-  
-  // If we really reached the end of the file, return it.
-  if (Ptr == MB.getBufferEnd())
-    return Ptr;
+  while (1) {
+    // Scan for the first character in the match string.
+    CurPtr = (char*)memchr(CurPtr, Str[0], BufEnd-CurPtr);
     
-  // Otherwise, just skip this section of the file, including the nul.
-  return FindStringInBuffer(Str, Ptr+1, MB);
+    // If we didn't find the first character of the string, then we failed to
+    // match.
+    if (CurPtr == 0) return BufEnd;
+
+    // If the match string is one character, then we win.
+    if (Str.size() == 1) return CurPtr;
+    
+    // Otherwise, verify that the rest of the string matches.
+    if (Str.size() <= unsigned(BufEnd-CurPtr) &&
+        memcmp(CurPtr+1, Str.data()+1, Str.size()-1) == 0)
+      return CurPtr;
+    
+    // If not, advance past this character and try again.
+    ++CurPtr;
+  }
 }
 
 /// ReadCheckFile - Read the check file, which specifies the sequence of
@@ -95,7 +103,7 @@ static bool ReadCheckFile(SourceMgr &SM,
 
   while (1) {
     // See if Prefix occurs in the memory buffer.
-    const char *Ptr = FindStringInBuffer(Prefix.c_str(), CurPtr, *F);
+    const char *Ptr = FindFixedStringInBuffer(Prefix, CurPtr, *F);
     
     // If we didn't find a match, we're done.
     if (Ptr == BufferEnd)
@@ -231,7 +239,7 @@ int main(int argc, char **argv) {
     const CheckString &CheckStr = CheckStrings[StrNo];
     
     // Find StrNo in the file.
-    const char *Ptr = FindStringInBuffer(CheckStr.Str.c_str(), CurPtr, *F);
+    const char *Ptr = FindFixedStringInBuffer(CheckStr.Str, CurPtr, *F);
     
     // If we found a match, we're done, move on.
     if (Ptr != BufferEnd) {
