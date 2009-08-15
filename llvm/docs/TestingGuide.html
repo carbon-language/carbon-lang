@@ -457,19 +457,103 @@ negatives).</p>
 <p>A powerful feature of the RUN: lines is that it allows any arbitrary commands
    to be executed as part of the test harness.  While standard (portable) unix
    tools like 'grep' work fine on run lines, as you see above, there are a lot
-   of caveats due to interaction with Tcl syntax, and we want to make that the
+   of caveats due to interaction with Tcl syntax, and we want to make sure the
    run lines are portable to a wide range of systems.  Another major problem is
    that grep is not very good at checking to verify that the output of a tools
    contains a series of different output in a specific order.  The FileCheck
    tool was designed to help with these problems.</p>
 
+<p>FileCheck (whose basic command line arguments are described in <a
+   href="http://llvm.org/cmds/FileCheck.html">the FileCheck man page</a> is
+   designed to read a file to check from standard input, and the set of things
+   to verify from a file specified as a command line argument.  A simple example
+   of using FileCheck from a RUN line looks like this:</p>
+   
+<div class="doc_code">
+<pre>
+; RUN: llvm-as &lt; %s | llc -march=x86-64 | <b>FileCheck %s</b>
+</pre>
+</div>
 
-<!-- http://llvm.org/cmds/FileCheck.html -->
+<p>This syntax says to pipe the current file ("%s") into llvm-as, pipe that into
+llc, then pipe the output of llc into FileCheck.  This means that FileCheck will
+be verifying its standard input (the llc output) against the filename argument
+specified (the original .ll file specified by "%s").  To see how this works,
+lets look at the rest of the .ll file (after the RUN line):</p>
+
+<div class="doc_code">
+<pre>
+define void @sub1(i32* %p, i32 %v) {
+entry:
+; <b>CHECK: sub1:</b>
+; <b>CHECK: subl</b>
+        %0 = tail call i32 @llvm.atomic.load.sub.i32.p0i32(i32* %p, i32 %v)
+        ret void
+}
+
+define void @inc4(i64* %p) {
+entry:
+; <b>CHECK: inc4:</b>
+; <b>CHECK: incq</b>
+        %0 = tail call i64 @llvm.atomic.load.add.i64.p0i64(i64* %p, i64 1)
+        ret void
+}
+</pre>
+</div>
+
+<p>Here you can see some "CHECK:" lines specified in comments.  Now you can see
+how the file is piped into llvm-as, then llc, and the machine code output is
+what we are verifying.  FileCheck checks the machine code output to verify that
+it matches what the "CHECK:" lines specify.</p>
+
+<p>The syntax of the CHECK: lines is very simple: they are fixed strings that
+must occur in order.  FileCheck defaults to ignoring horizontal whitespace
+differences (e.g. a space is allowed to match a tab) but otherwise, the contents
+of the CHECK: line is required to match some thing in the test file exactly.</p>
+
+<p>One nice thing about FileCheck (compared to grep) is that it allows merging
+test cases together into logical groups.  For example, because the test above
+is checking for the "sub1:" and "inc4:" labels, it will not match unless there
+is a "subl" in between those labels.  If it existed somewhere else in the file,
+that would not count: "grep subl" matches if subl exists anywhere in the
+file.</p>
+
+<div class="doc_subsubsection"><a 
+name="FileCheck-check-prefix">The FileCheck -check-prefix option</a></div>
+
+<p>The FileCheck -check-prefix option allows multiple test configurations to be
+driven from one .ll file.  This is useful in many circumstances, for example,
+testing different architectural variants with llc.  Here's a simple example:</p>
+
+
+<div class="doc_code">
+<pre>
+; RUN: llvm-as &lt; %s | llc -mtriple=i686-apple-darwin9 -mattr=sse41 \
+; RUN:              | <b>FileCheck %s -check-prefix=X32</b>
+; RUN: llvm-as &lt; %s | llc -mtriple=x86_64-apple-darwin9 -mattr=sse41 \
+; RUN:              | <b>FileCheck %s -check-prefix=X64</b>
+
+define &lt;4 x i32&gt; @pinsrd_1(i32 %s, &lt;4 x i32&gt; %tmp) nounwind {
+        %tmp1 = insertelement &lt;4 x i32&gt; %tmp, i32 %s, i32 1
+        ret &lt;4 x i32&gt; %tmp1
+; <b>X32:</b> pinsrd_1:
+; <b>X32:</b>    pinsrd $1, 4(%esp), %xmm0
+
+; <b>X64:</b> pinsrd_1:
+; <b>X64:</b>    pinsrd $1, %edi, %xmm0
+}
+</pre>
+</div>
+
+<p>In this case, we're testing that we get the expected code generation with
+both 32-bit and 64-bit code generation.</p>
+
 
 </div>
 
 <!-- _______________________________________________________________________ -->
-<div class="doc_subsection"><a name="dgvars">Variables and substitutions</a></div>
+<div class="doc_subsection"><a name="dgvars">Variables and
+substitutions</a></div>
 <!-- _______________________________________________________________________ -->
 <div class="doc_text">
   <p>With a RUN line there are a number of substitutions that are permitted. In
