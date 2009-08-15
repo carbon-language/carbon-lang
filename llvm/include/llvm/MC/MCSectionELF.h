@@ -34,9 +34,10 @@ class MCSectionELF : public MCSection {
   /// explicit section specfied.
   bool IsExplicit;
   
-  MCSectionELF(const StringRef &Section, unsigned T, unsigned F, 
+protected:
+  MCSectionELF(const StringRef &Section, unsigned type, unsigned flags,
                SectionKind K, bool isExplicit)
-    : MCSection(K), SectionName(Section.str()), Type(T), Flags(F), 
+    : MCSection(K), SectionName(Section.str()), Type(type), Flags(flags), 
       IsExplicit(isExplicit) {}
 public:
   
@@ -93,16 +94,16 @@ public:
     SHT_REL              = 0x09U,
 
     // This section type is reserved but has unspecified semantics. 
-    SHT_SHLIB            = 0x0aU,
+    SHT_SHLIB            = 0x0AU,
 
     // This section holds a symbol table.
-    SHT_DYNSYM           = 0x0bU,
+    SHT_DYNSYM           = 0x0BU,
 
     // This section contains an array of pointers to initialization functions.
-    SHT_INIT_ARRAY       = 0x0eU,
+    SHT_INIT_ARRAY       = 0x0EU,
 
     // This section contains an array of pointers to termination functions.
-    SHT_FINI_ARRAY       = 0x0fU,
+    SHT_FINI_ARRAY       = 0x0FU,
 
     // This section contains an array of pointers to functions that are invoked
     // before all other initialization functions.
@@ -150,7 +151,17 @@ public:
     SHF_GROUP            = 0x200U,
 
     // This section holds Thread-Local Storage.
-    SHF_TLS              = 0x400U
+    SHF_TLS              = 0x400U,
+    
+    /// FIRST_TARGET_DEP_FLAG - This is the first flag that subclasses are
+    /// allowed to specify.
+    FIRST_TARGET_DEP_FLAG = 0x800U,
+
+    /// TARGET_INDEP_SHF - This is the bitmask for all the target independent
+    /// section flags.  Targets can define their own target flags above these.
+    /// If they do that, they should implement their own MCSectionELF subclasses
+    /// and implement the virtual method hooks below to handle printing needs.
+    TARGET_INDEP_SHF     = FIRST_TARGET_DEP_FLAG-1U
   };
 
   StringRef getSectionName() const {
@@ -162,6 +173,17 @@ public:
   
   virtual void PrintSwitchToSection(const TargetAsmInfo &TAI,
                                     raw_ostream &OS) const;
+  
+  
+  /// PrintTargetSpecificSectionFlags - Targets that define their own
+  /// MCSectionELF subclasses with target specific section flags should
+  /// implement this method if they end up adding letters to the attributes
+  /// list.
+  virtual void PrintTargetSpecificSectionFlags(const TargetAsmInfo &TAI,
+                                               raw_ostream &OS) const {
+  }
+                                               
+  
 };
 
 } // end namespace llvm

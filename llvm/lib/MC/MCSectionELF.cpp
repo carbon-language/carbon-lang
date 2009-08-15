@@ -17,8 +17,7 @@ using namespace llvm;
 MCSectionELF *MCSectionELF::
 Create(const StringRef &Section, unsigned Type, unsigned Flags,
        SectionKind K, bool isExplicit, MCContext &Ctx) {
-  return new 
-    (Ctx) MCSectionELF(Section, Type, Flags, K, isExplicit);
+  return new (Ctx) MCSectionELF(Section, Type, Flags, K, isExplicit);
 }
 
 // ShouldOmitSectionDirective - Decides whether a '.section' directive
@@ -68,7 +67,6 @@ void MCSectionELF::PrintSwitchToSection(const TargetAsmInfo &TAI,
       OS << ",#tls";
   } else {
     OS << ",\"";
-  
     if (Flags & MCSectionELF::SHF_ALLOC)
       OS << 'a';
     if (Flags & MCSectionELF::SHF_EXECINSTR)
@@ -81,7 +79,11 @@ void MCSectionELF::PrintSwitchToSection(const TargetAsmInfo &TAI,
       OS << 'S';
     if (Flags & MCSectionELF::SHF_TLS)
       OS << 'T';
-   
+    
+    // If there are target-specific flags, print them.
+    if (Flags & ~MCSectionELF::TARGET_INDEP_SHF)
+      PrintTargetSpecificSectionFlags(TAI, OS);
+    
     OS << '"';
 
     if (ShouldPrintSectionType(Type)) {
