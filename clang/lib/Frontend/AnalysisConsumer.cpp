@@ -258,7 +258,7 @@ void AnalysisConsumer::HandleCode(Decl* D, Stmt* Body, Actions& actions) {
       !Ctx->getSourceManager().isFromMainFile(D->getLocation()))
     return;  
 
-  Mgr->setContext(D);
+  Mgr->setEntryContext(D);
   
   // Dispatch on the actions.  
   for (Actions::iterator I = actions.begin(), E = actions.end(); I != E; ++I)
@@ -315,7 +315,7 @@ static void ActionGRExprEngine(AnalysisManager& mgr, GRTransferFuncs* tf,
   }
   
   // Execute the worklist algorithm.
-  Eng.ExecuteWorkList();
+  Eng.ExecuteWorkList(mgr.getEntryStackFrame());
   
   // Release the auditor (if any) so that it doesn't monitor the graph
   // created BugReporter.

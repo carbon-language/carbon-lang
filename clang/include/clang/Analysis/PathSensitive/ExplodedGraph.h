@@ -39,7 +39,6 @@ class ASTContext;
 //===----------------------------------------------------------------------===//
   
 class ExplodedNode : public llvm::FoldingSetNode {
-protected:
   friend class ExplodedGraph;
   friend class GRCoreEngine;
   friend class GRStmtNodeBuilder;
@@ -110,6 +109,10 @@ public:
 
   /// getLocation - Returns the edge associated with the given node.
   ProgramPoint getLocation() const { return Location; }
+
+  const LocationContext *getLocationContext() const { 
+    return getLocation().getContext(); 
+  }
 
   const GRState* getState() const {
     return State;

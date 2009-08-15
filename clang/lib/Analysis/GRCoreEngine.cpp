@@ -146,7 +146,7 @@ void GRCoreEngine::ProcessSwitch(GRSwitchNodeBuilder& Builder) {
 }
 
 /// ExecuteWorkList - Run the worklist algorithm for a maximum number of steps.
-bool GRCoreEngine::ExecuteWorkList(unsigned Steps) {
+bool GRCoreEngine::ExecuteWorkList(const LocationContext *L, unsigned Steps) {
   
   if (G->num_roots() == 0) { // Initialize the analysis by constructing
     // the root if none exists.
@@ -164,7 +164,7 @@ bool GRCoreEngine::ExecuteWorkList(unsigned Steps) {
     
     // Construct an edge representing the
     // starting location in the function.
-    BlockEdge StartLoc(Entry, Succ);
+    BlockEdge StartLoc(Entry, Succ, L);
     
     // Set the current block counter to being empty.
     WList->setBlockCounter(BCounterFactory.GetEmptyCounter());
@@ -230,7 +230,7 @@ void GRCoreEngine::HandleBlockEdge(const BlockEdge& L, ExplodedNode* Pred) {
   // FIXME: Should we allow ProcessBlockEntrance to also manipulate state?
   
   if (ProcessBlockEntrance(Blk, Pred->State, WList->getBlockCounter()))
-    GenerateNode(BlockEntrance(Blk), Pred->State, Pred);
+    GenerateNode(BlockEntrance(Blk, Pred->getLocationContext()), Pred->State, Pred);
 }
 
 void GRCoreEngine::HandleBlockEntrance(const BlockEntrance& L,
@@ -335,7 +335,8 @@ void GRCoreEngine::HandleBlockExit(CFGBlock * B, ExplodedNode* Pred) {
   assert (B->succ_size() == 1 &&
           "Blocks with no terminator should have at most 1 successor.");
     
-  GenerateNode(BlockEdge(B, *(B->succ_begin())), Pred->State, Pred);
+  GenerateNode(BlockEdge(B, *(B->succ_begin()), Pred->getLocationContext()), 
+               Pred->State, Pred);
 }
 
 void GRCoreEngine::HandleBranch(Stmt* Cond, Stmt* Term, CFGBlock * B,
@@ -400,7 +401,7 @@ GRStmtNodeBuilder::~GRStmtNodeBuilder() {
 void GRStmtNodeBuilder::GenerateAutoTransition(ExplodedNode* N) {
   assert (!N->isSink());
   
-  PostStmt Loc(getStmt());
+  PostStmt Loc(getStmt(), N->getLocationContext());
   
   if (Loc == N->getLocation()) {
     // Note: 'N' should be a fresh node because otherwise it shouldn't be
@@ -418,37 +419,37 @@ void GRStmtNodeBuilder::GenerateAutoTransition(ExplodedNode* N) {
 }
 
 static inline PostStmt GetPostLoc(const Stmt* S, ProgramPoint::Kind K,
-                                  const void *tag) {
+                                  const LocationContext *L, const void *tag) {
   switch (K) {
     default:
       assert(false && "Invalid PostXXXKind.");
       
     case ProgramPoint::PostStmtKind:
-      return PostStmt(S, tag);
+      return PostStmt(S, L, tag);
       
     case ProgramPoint::PostLoadKind:
-      return PostLoad(S, tag);
+      return PostLoad(S, L, tag);
 
     case ProgramPoint::PostUndefLocationCheckFailedKind:
-      return PostUndefLocationCheckFailed(S, tag);
+      return PostUndefLocationCheckFailed(S, L, tag);
 
     case ProgramPoint::PostLocationChecksSucceedKind:
-      return PostLocationChecksSucceed(S, tag);
+      return PostLocationChecksSucceed(S, L, tag);
       
     case ProgramPoint::PostOutOfBoundsCheckFailedKind:
-      return PostOutOfBoundsCheckFailed(S, tag);
+      return PostOutOfBoundsCheckFailed(S, L, tag);
       
     case ProgramPoint::PostNullCheckFailedKind:
-      return PostNullCheckFailed(S, tag);
+      return PostNullCheckFailed(S, L, tag);
       
     case ProgramPoint::PostStoreKind:
-      return PostStore(S, tag);
+      return PostStore(S, L, tag);
       
     case ProgramPoint::PostLValueKind:
-      return PostLValue(S, tag);
+      return PostLValue(S, L, tag);
       
     case ProgramPoint::PostPurgeDeadSymbolsKind:
-      return PostPurgeDeadSymbols(S, tag);
+      return PostPurgeDeadSymbols(S, L, tag);
   }
 }
 
@@ -458,8 +459,10 @@ GRStmtNodeBuilder::generateNodeInternal(const Stmt* S, const GRState* State,
                                         ProgramPoint::Kind K,
                                         const void *tag) {
   return K == ProgramPoint::PreStmtKind
-         ? generateNodeInternal(PreStmt(S, tag), State, Pred)
-         : generateNodeInternal(GetPostLoc(S, K, tag), State, Pred); 
+         ? generateNodeInternal(PreStmt(S, Pred->getLocationContext(),tag), 
+                                State, Pred)
+       : generateNodeInternal(GetPostLoc(S, K, Pred->getLocationContext(), tag),
+                              State, Pred); 
 }
 
 ExplodedNode*
@@ -491,7 +494,8 @@ ExplodedNode* GRBranchNodeBuilder::generateNode(const GRState* State,
   bool IsNew;
   
   ExplodedNode* Succ =
-    Eng.G->getNode(BlockEdge(Src, branch ? DstT : DstF), State, &IsNew);
+    Eng.G->getNode(BlockEdge(Src,branch ? DstT:DstF,Pred->getLocationContext()),
+                   State, &IsNew);
   
   Succ->addPredecessor(Pred);
   
@@ -522,7 +526,8 @@ GRIndirectGotoNodeBuilder::generateNode(const iterator& I, const GRState* St,
                                         bool isSink) {
   bool IsNew;
   
-  ExplodedNode* Succ = Eng.G->getNode(BlockEdge(Src, I.getBlock()), St, &IsNew);
+  ExplodedNode* Succ = Eng.G->getNode(BlockEdge(Src, I.getBlock(), 
+                                      Pred->getLocationContext()), St, &IsNew);
               
   Succ->addPredecessor(Pred);
   
@@ -545,7 +550,8 @@ GRSwitchNodeBuilder::generateCaseStmtNode(const iterator& I, const GRState* St){
 
   bool IsNew;
   
-  ExplodedNode* Succ = Eng.G->getNode(BlockEdge(Src, I.getBlock()), St, &IsNew);
+  ExplodedNode* Succ = Eng.G->getNode(BlockEdge(Src, I.getBlock(),
+                                       Pred->getLocationContext()), St, &IsNew);
   Succ->addPredecessor(Pred);
   
   if (IsNew) {
@@ -566,7 +572,8 @@ GRSwitchNodeBuilder::generateDefaultCaseNode(const GRState* St, bool isSink) {
   
   bool IsNew;
   
-  ExplodedNode* Succ = Eng.G->getNode(BlockEdge(Src, DefaultBlock), St, &IsNew);
+  ExplodedNode* Succ = Eng.G->getNode(BlockEdge(Src, DefaultBlock,
+                                       Pred->getLocationContext()), St, &IsNew);
   Succ->addPredecessor(Pred);
   
   if (IsNew) {
@@ -592,7 +599,8 @@ GREndPathNodeBuilder::generateNode(const GRState* State, const void *tag,
   HasGeneratedNode = true;    
   bool IsNew;
   
-  ExplodedNode* Node = Eng.G->getNode(BlockEntrance(&B, tag), State, &IsNew);
+  ExplodedNode* Node = Eng.G->getNode(BlockEntrance(&B, 
+                               Pred->getLocationContext(), tag), State, &IsNew);
   
   Node->addPredecessor(P ? P : Pred);
   

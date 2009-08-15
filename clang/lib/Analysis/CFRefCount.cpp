@@ -181,7 +181,8 @@ public:
   
   ExplodedNode *MakeNode(const GRState *state, ExplodedNode *Pred) {
     if (SNB)
-      return SNB->generateNode(PostStmt(S, tag), state, Pred);
+      return SNB->generateNode(PostStmt(S, Pred->getLocationContext(), tag), 
+                               state, Pred);
     
     assert(ENB);
     return ENB->generateNode(state, Pred);
@@ -3203,7 +3204,8 @@ void CFRefCount::EvalReturn(ExplodedNodeSet& Dst,
         static int ReturnOwnLeakTag = 0;
         state = state->set<RefBindings>(Sym, X);
         ExplodedNode *N =
-          Builder.generateNode(PostStmt(S, &ReturnOwnLeakTag), state, Pred);
+          Builder.generateNode(PostStmt(S, Pred->getLocationContext(),
+                                        &ReturnOwnLeakTag), state, Pred);
         if (N) {
           CFRefReport *report =
             new CFRefLeakReport(*static_cast<CFRefBug*>(leakAtReturn), *this,
@@ -3224,8 +3226,9 @@ void CFRefCount::EvalReturn(ExplodedNodeSet& Dst,
         static int ReturnNotOwnedForOwnedTag = 0;
         state = state->set<RefBindings>(Sym, X ^ RefVal::ErrorReturnedNotOwned);
         if (ExplodedNode *N =
-              Builder.generateNode(PostStmt(S, &ReturnNotOwnedForOwnedTag),
-                                   state, Pred)) {
+            Builder.generateNode(PostStmt(S, Pred->getLocationContext(),
+                                          &ReturnNotOwnedForOwnedTag),
+                                 state, Pred)) {
             CFRefReport *report =
                 new CFRefReport(*static_cast<CFRefBug*>(returnNotOwnedForOwned),
                                 *this, N, Sym);

@@ -16,6 +16,7 @@
 #ifndef LLVM_CLANG_ANALYSIS_GREXPRENGINE
 #define LLVM_CLANG_ANALYSIS_GREXPRENGINE
 
+#include "clang/Analysis/PathSensitive/AnalysisManager.h"
 #include "clang/Analysis/PathSensitive/GRSubEngine.h"
 #include "clang/Analysis/PathSensitive/GRCoreEngine.h"
 #include "clang/Analysis/PathSensitive/GRState.h"
@@ -33,7 +34,8 @@ namespace clang {
   class Checker;
 
 class GRExprEngine : public GRSubEngine {  
-protected:
+  AnalysisManager &AMgr;
+
   GRCoreEngine CoreEngine;
   
   /// G - the simulation graph.
@@ -201,15 +203,15 @@ public:
   
 public:
   GRExprEngine(CFG& cfg, Decl& CD, ASTContext& Ctx, LiveVariables& L,
-               BugReporterData& BRD,
+               AnalysisManager &mgr,
                bool purgeDead, bool eagerlyAssume = true,
                StoreManagerCreator SMC = CreateBasicStoreManager,
                ConstraintManagerCreator CMC = CreateBasicConstraintManager);
 
   ~GRExprEngine();
   
-  void ExecuteWorkList(unsigned Steps = 150000) {
-    CoreEngine.ExecuteWorkList(Steps);
+  void ExecuteWorkList(const LocationContext *L, unsigned Steps = 150000) {
+    CoreEngine.ExecuteWorkList(L, Steps);
   }
   
   /// getContext - Return the ASTContext associated with this analysis.

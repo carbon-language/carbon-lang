@@ -124,7 +124,7 @@ public:
 
   /// ExecuteWorkList - Run the worklist algorithm for a maximum number of
   ///  steps.  Returns true if there is still simulation state on the worklist.
-  bool ExecuteWorkList(unsigned Steps);
+  bool ExecuteWorkList(const LocationContext *L, unsigned Steps);
   
   CFG& getCFG() { return G->getCFG(); }
 };

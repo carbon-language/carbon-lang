@@ -149,11 +149,12 @@ static inline Selector GetNullarySelector(const char* name, ASTContext& Ctx) {
 
 
 GRExprEngine::GRExprEngine(CFG& cfg, Decl& CD, ASTContext& Ctx,
-                           LiveVariables& L, BugReporterData& BRD,
+                           LiveVariables& L, AnalysisManager &mgr,
                            bool purgeDead, bool eagerlyAssume,
                            StoreManagerCreator SMC,
                            ConstraintManagerCreator CMC)
-  : CoreEngine(cfg, CD, Ctx, *this), 
+  : AMgr(mgr),
+    CoreEngine(cfg, CD, Ctx, *this), 
     G(CoreEngine.getGraph()),
     Liveness(L),
     Builder(NULL),
@@ -165,7 +166,7 @@ GRExprEngine::GRExprEngine(CFG& cfg, Decl& CD, ASTContext& Ctx,
     NSExceptionII(NULL), NSExceptionInstanceRaiseSelectors(NULL),
     RaiseSel(GetNullarySelector("raise", G.getContext())), 
     PurgeDead(purgeDead),
-    BR(BRD, *this),
+    BR(mgr, *this),
     EagerlyAssume(eagerlyAssume) {}
 
 GRExprEngine::~GRExprEngine() {    
@@ -1699,7 +1700,8 @@ void GRExprEngine::EvalEagerlyAssume(ExplodedNodeSet &Dst, ExplodedNodeSet &Src,
       if (const GRState *stateTrue = state->assume(V, true)) {
         stateTrue = stateTrue->bindExpr(Ex, 
                                         ValMgr.makeIntVal(1U, Ex->getType()));
-        Dst.Add(Builder->generateNode(PostStmtCustom(Ex, &EagerlyAssumeTag),
+        Dst.Add(Builder->generateNode(PostStmtCustom(Ex, 
+                                &EagerlyAssumeTag, Pred->getLocationContext()),
                                       stateTrue, Pred));
       }
         
@@ -1707,7 +1709,8 @@ void GRExprEngine::EvalEagerlyAssume(ExplodedNodeSet &Dst, ExplodedNodeSet &Src,
       if (const GRState *stateFalse = state->assume(V, false)) {
         stateFalse = stateFalse->bindExpr(Ex, 
                                           ValMgr.makeIntVal(0U, Ex->getType()));
-        Dst.Add(Builder->generateNode(PostStmtCustom(Ex, &EagerlyAssumeTag),
+        Dst.Add(Builder->generateNode(PostStmtCustom(Ex, &EagerlyAssumeTag,
+                                                   Pred->getLocationContext()),
                                       stateFalse, Pred));
       }
     }

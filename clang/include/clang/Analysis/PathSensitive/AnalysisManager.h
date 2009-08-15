@@ -23,7 +23,7 @@ namespace clang {
 
 class AnalysisManager : public BugReporterData {
   AnalysisContextManager ContextMgr;
-  AnalysisContext *RootContext;
+  AnalysisContext *EntryContext;
 
   LocationContextManager LocCtxMgr;
 
@@ -59,7 +59,7 @@ public:
       VisualizeEGDot(vizdot), VisualizeEGUbi(vizubi), PurgeDead(purge),
       EagerlyAssume(eager), TrimGraph(trim) {
 
-    RootContext = ContextMgr.getContext(d);
+    EntryContext = ContextMgr.getContext(d);
   }
     
   AnalysisManager(ASTContext &ctx, Diagnostic &diags, 
@@ -75,22 +75,22 @@ public:
       VisualizeEGDot(vizdot), VisualizeEGUbi(vizubi), PurgeDead(purge),
       EagerlyAssume(eager), TrimGraph(trim) {
 
-    RootContext = 0;
+    EntryContext = 0;
   }
 
-  void setContext(Decl *D) {
-    RootContext = ContextMgr.getContext(D);
+  void setEntryContext(Decl *D) {
+    EntryContext = ContextMgr.getContext(D);
     DisplayedFunction = false;
   }
     
   Decl *getCodeDecl() const { 
     assert (AScope == ScopeDecl);
-    return RootContext->getDecl();
+    return EntryContext->getDecl();
   }
     
   Stmt *getBody() const {
     assert (AScope == ScopeDecl);
-    return RootContext->getBody();
+    return EntryContext->getBody();
   }
     
   StoreManagerCreator getStoreManagerCreator() {
@@ -102,15 +102,15 @@ public:
   }
     
   virtual CFG *getCFG() {
-    return RootContext->getCFG();
+    return EntryContext->getCFG();
   }
     
   virtual ParentMap &getParentMap() {
-    return RootContext->getParentMap();
+    return EntryContext->getParentMap();
   }
 
   virtual LiveVariables *getLiveVariables() {
-    return RootContext->getLiveVariables();
+    return EntryContext->getLiveVariables();
   }
     
   virtual ASTContext &getContext() {
@@ -133,8 +133,8 @@ public:
     return PD.get();      
   }
 
-  StackFrameContext *getRootStackFrame() {
-    return LocCtxMgr.getStackFrame(RootContext, 0, 0);
+  StackFrameContext *getEntryStackFrame() {
+    return LocCtxMgr.getStackFrame(EntryContext, 0, 0);
   }
     
   bool shouldVisualizeGraphviz() const { return VisualizeEGDot; }

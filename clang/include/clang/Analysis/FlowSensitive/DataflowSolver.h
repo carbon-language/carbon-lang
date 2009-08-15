@@ -24,7 +24,7 @@ namespace clang {
 //===----------------------------------------------------------------------===//
 /// DataflowWorkListTy - Data structure representing the worklist used for
 ///  dataflow algorithms.
-//===----------------------------------------------------------------------===//  
+//===----------------------------------------------------------------------===//
 
 class DataflowWorkListTy {
   typedef llvm::SmallPtrSet<const CFGBlock*,20> BlockSet;
@@ -70,11 +70,11 @@ template <> struct ItrTraits<forward_analysis_tag> {
   static StmtItr StmtEnd(const CFGBlock* B) { return B->end(); }
   
   static BlockEdge PrevEdge(const CFGBlock* B, const CFGBlock* Prev) {
-    return BlockEdge(Prev, B);
+    return BlockEdge(Prev, B, 0);
   }
   
   static BlockEdge NextEdge(const CFGBlock* B, const CFGBlock* Next) {
-    return BlockEdge(B, Next);
+    return BlockEdge(B, Next, 0);
   }
 };
 
@@ -93,11 +93,11 @@ template <> struct ItrTraits<backward_analysis_tag> {
   static StmtItr StmtEnd(const CFGBlock* B) { return B->rend(); }    
   
   static BlockEdge PrevEdge(const CFGBlock* B, const CFGBlock* Prev) {
-    return BlockEdge(B, Prev);
+    return BlockEdge(B, Prev, 0);
   }
   
   static BlockEdge NextEdge(const CFGBlock* B, const CFGBlock* Next) {
-    return BlockEdge(Next, B);
+    return BlockEdge(Next, B, 0);
   }
 };
 } // end namespace dataflow
