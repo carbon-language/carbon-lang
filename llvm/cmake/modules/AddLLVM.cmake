@@ -17,7 +17,7 @@ macro(add_llvm_library name)
   # generation is triggered by the main LLVM target library. Necessary
   # for parallel builds:
   if( CURRENT_LLVM_TARGET )
-    add_dependencies(${name} LLVM${CURRENT_LLVM_TARGET})
+    add_dependencies(${name} ${CURRENT_LLVM_TARGET})
   endif()
 endmacro(add_llvm_library name)
 
