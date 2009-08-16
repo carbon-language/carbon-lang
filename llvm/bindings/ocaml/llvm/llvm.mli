@@ -531,6 +531,10 @@ external size_of : lltype -> llvalue = "LLVMSizeOf"
     See the method [llvm::ConstantExpr::getNeg]. *)
 external const_neg : llvalue -> llvalue = "LLVMConstNeg"
 
+(** [const_fneg c] returns the arithmetic negation of the constant float [c].
+    See the method [llvm::ConstantExpr::getFNeg]. *)
+external const_fneg : llvalue -> llvalue = "LLVMConstFNeg"
+
 (** [const_not c] returns the bitwise inverse of the constant [c].
     See the method [llvm::ConstantExpr::getNot]. *)
 external const_not : llvalue -> llvalue = "LLVMConstNot"
@@ -539,13 +543,30 @@ external const_not : llvalue -> llvalue = "LLVMConstNot"
     See the method [llvm::ConstantExpr::getAdd]. *)
 external const_add : llvalue -> llvalue -> llvalue = "LLVMConstAdd"
 
+(** [const_nsw_add c1 c2] returns the constant sum of two constants with no
+    signed wrapping. The result is undefined if the sum overflows.
+    See the method [llvm::ConstantExpr::getNSWAdd]. *)
+external const_nsw_add : llvalue -> llvalue -> llvalue = "LLVMConstNSWAdd"
+
+(** [const_fadd c1 c2] returns the constant sum of two constant floats.
+    See the method [llvm::ConstantExpr::getFAdd]. *)
+external const_fadd : llvalue -> llvalue -> llvalue = "LLVMConstFAdd"
+
 (** [const_sub c1 c2] returns the constant difference, [c1 - c2], of two
     constants. See the method [llvm::ConstantExpr::getSub]. *)
 external const_sub : llvalue -> llvalue -> llvalue = "LLVMConstSub"
 
+(** [const_fsub c1 c2] returns the constant difference, [c1 - c2], of two
+    constant floats. See the method [llvm::ConstantExpr::getFSub]. *)
+external const_fsub : llvalue -> llvalue -> llvalue = "LLVMConstFSub"
+
 (** [const_mul c1 c2] returns the constant product of two constants.
     See the method [llvm::ConstantExpr::getMul]. *)
 external const_mul : llvalue -> llvalue -> llvalue = "LLVMConstMul"
+
+(** [const_fmul c1 c2] returns the constant product of two constants floats.
+    See the method [llvm::ConstantExpr::getFMul]. *)
+external const_fmul : llvalue -> llvalue -> llvalue = "LLVMConstFMul"
 
 (** [const_udiv c1 c2] returns the constant quotient [c1 / c2] of two unsigned
     integer constants.
@@ -554,20 +575,25 @@ external const_udiv : llvalue -> llvalue -> llvalue = "LLVMConstUDiv"
 
 (** [const_sdiv c1 c2] returns the constant quotient [c1 / c2] of two signed
     integer constants.
-    See the method [llvm::ConstantExpr::]. *)
+    See the method [llvm::ConstantExpr::getSDiv]. *)
 external const_sdiv : llvalue -> llvalue -> llvalue = "LLVMConstSDiv"
+
+(** [const_exact_sdiv c1 c2] returns the constant quotient [c1 / c2] of two
+    signed integer constants. The result is undefined if the result is rounded
+		or overflows. See the method [llvm::ConstantExpr::getExactSDiv]. *)
+external const_exact_sdiv : llvalue -> llvalue -> llvalue = "LLVMConstExactSDiv"
 
 (** [const_fdiv c1 c2] returns the constant quotient [c1 / c2] of two floating
     point constants.
     See the method [llvm::ConstantExpr::getFDiv]. *)
 external const_fdiv : llvalue -> llvalue -> llvalue = "LLVMConstFDiv"
 
-(** [const_udiv c1 c2] returns the constant remainder [c1 MOD c2] of two
+(** [const_urem c1 c2] returns the constant remainder [c1 MOD c2] of two
     unsigned integer constants.
     See the method [llvm::ConstantExpr::getURem]. *)
 external const_urem : llvalue -> llvalue -> llvalue = "LLVMConstURem"
 
-(** [const_sdiv c1 c2] returns the constant remainder [c1 MOD c2] of two
+(** [const_srem c1 c2] returns the constant remainder [c1 MOD c2] of two
     signed integer constants.
     See the method [llvm::ConstantExpr::getSRem]. *)
 external const_srem : llvalue -> llvalue -> llvalue = "LLVMConstSRem"
@@ -623,6 +649,12 @@ external const_ashr : llvalue -> llvalue -> llvalue = "LLVMConstAShr"
     constant integers indices from the array [indices].
     See the method [llvm::ConstantExpr::getGetElementPtr]. *)
 external const_gep : llvalue -> llvalue array -> llvalue = "llvm_const_gep"
+
+(** [const_in_bounds_gep pc indices] returns the constant [getElementPtr] of [p1]
+    with the constant integers indices from the array [indices].
+    See the method [llvm::ConstantExpr::getInBoundsGetElementPtr]. *)
+external const_in_bounds_gep : llvalue -> llvalue array -> llvalue
+                            = "llvm_const_in_bounds_gep"
 
 (** [const_trunc c ty] returns the constant truncation of integer constant [c]
     to the smaller integer type [ty].
@@ -684,6 +716,42 @@ external const_inttoptr : llvalue -> lltype -> llvalue = "LLVMConstIntToPtr"
     See the method [llvm::ConstantExpr::getBitCast]. *)
 external const_bitcast : llvalue -> lltype -> llvalue = "LLVMConstBitCast"
 
+(** [const_zext_or_bitcast c ty] returns a constant zext or bitwise cast
+    conversion of constant [c] to type [ty].
+    See the method [llvm::ConstantExpr::getZExtOrBitCast]. *)
+external const_zext_or_bitcast : llvalue -> lltype -> llvalue
+                               = "LLVMConstZExtOrBitCast"
+
+(** [const_sext_or_bitcast c ty] returns a constant sext or bitwise cast
+    conversion of constant [c] to type [ty].
+    See the method [llvm::ConstantExpr::getSExtOrBitCast]. *)
+external const_sext_or_bitcast : llvalue -> lltype -> llvalue
+                               = "LLVMConstSExtOrBitCast"
+
+(** [const_trunc_or_bitcast c ty] returns a constant trunc or bitwise cast
+    conversion of constant [c] to type [ty].
+    See the method [llvm::ConstantExpr::getTruncOrBitCast]. *)
+external const_trunc_or_bitcast : llvalue -> lltype -> llvalue
+                                = "LLVMConstTruncOrBitCast"
+
+(** [const_pointercast c ty] returns a constant bitcast or a pointer-to-int
+    cast conversion of constant [c] to type [ty] of equal size.
+    See the method [llvm::ConstantExpr::getPointerCast]. *)
+external const_pointercast : llvalue -> lltype -> llvalue
+                           = "LLVMConstPointerCast"
+
+(** [const_intcast c ty] returns a constant zext, bitcast, or trunc for integer
+    -> integer casts of constant [c] to type [ty].
+    See the method [llvm::ConstantExpr::getIntCast]. *)
+external const_intcast : llvalue -> lltype -> llvalue
+                       = "LLVMConstIntCast"
+
+(** [const_fpcast c ty] returns a constant fpext, bitcast, or fptrunc for fp ->
+	  fp casts of constant [c] to type [ty].
+    See the method [llvm::ConstantExpr::getFPCast]. *)
+external const_fpcast : llvalue -> lltype -> llvalue
+                      = "LLVMConstFPCast"
+
 (** [const_select cond t f] returns the constant conditional which returns value
     [t] if the boolean constant [cond] is true and the value [f] otherwise.
     See the method [llvm::ConstantExpr::getSelect]. *)
@@ -712,6 +780,18 @@ external const_insertelement : llvalue -> llvalue -> llvalue -> llvalue
     See the method [llvm::ConstantExpr::getShuffleVector]. *)
 external const_shufflevector : llvalue -> llvalue -> llvalue -> llvalue
                              = "LLVMConstShuffleVector"
+
+(** [const_extractvalue agg idxs] returns the constant [idxs]th value of
+    constant aggregate [agg]. Each [idxs] must be less than the size of the
+    aggregate.  See the method [llvm::ConstantExpr::getExtractValue]. *)
+external const_extractvalue : llvalue -> int array -> llvalue
+                            = "llvm_const_extractvalue"
+
+(** [const_insertvalue agg val idxs] inserts the value [val] in the specified
+    indexs [idxs] in the aggegate [agg]. Each [idxs] must be less than the size
+    of the aggregate. See the method [llvm::ConstantExpr::getInsertValue]. *)
+external const_insertvalue : llvalue -> llvalue -> int array -> llvalue
+                           = "llvm_const_insertvalue"
 
 
 (** {7 Operations on global variables, functions, and aliases (globals)} *)

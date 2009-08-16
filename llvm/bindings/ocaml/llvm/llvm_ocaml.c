@@ -452,6 +452,49 @@ CAMLprim LLVMValueRef llvm_const_gep(LLVMValueRef ConstantVal, value Indices) {
                       Wosize_val(Indices));
 }
 
+/* llvalue -> llvalue array -> llvalue */
+CAMLprim LLVMValueRef llvm_const_in_bounds_gep(LLVMValueRef ConstantVal,
+                                               value Indices) {
+  return LLVMConstInBoundsGEP(ConstantVal, (LLVMValueRef*) Op_val(Indices),
+                              Wosize_val(Indices));
+}
+
+/* llvalue -> int array -> llvalue */
+CAMLprim LLVMValueRef llvm_const_extractvalue(LLVMValueRef Aggregate,
+                                              value Indices) {
+  CAMLparam1(Indices);
+  int size = Wosize_val(Indices);
+  int i;
+  LLVMValueRef result;
+
+  unsigned* idxs = (unsigned*)malloc(size * sizeof(unsigned));
+  for (i = 0; i < size; i++) {
+    idxs[i] = Int_val(Field(Indices, i));
+  }
+
+  result = LLVMConstExtractValue(Aggregate, idxs, size);
+  free(idxs);
+  CAMLreturnT(LLVMValueRef, result);
+}
+
+/* llvalue -> llvalue -> int array -> llvalue */
+CAMLprim LLVMValueRef llvm_const_insertvalue(LLVMValueRef Aggregate,
+                                             LLVMValueRef Val, value Indices) {
+  CAMLparam1(Indices);
+  int size = Wosize_val(Indices);
+  int i;
+  LLVMValueRef result;
+
+  unsigned* idxs = (unsigned*)malloc(size * sizeof(unsigned));
+  for (i = 0; i < size; i++) {
+    idxs[i] = Int_val(Field(Indices, i));
+  }
+
+  result = LLVMConstInsertValue(Aggregate, Val, idxs, size);
+  free(idxs);
+  CAMLreturnT(LLVMValueRef, result);
+}
+
 /*--... Operations on global variables, functions, and aliases (globals) ...--*/
 
 /* llvalue -> bool */

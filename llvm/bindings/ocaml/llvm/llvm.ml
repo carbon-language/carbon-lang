@@ -220,7 +220,6 @@ external refine_type : lltype -> lltype -> unit = "llvm_refine_type"
 
 
 (*===-- Values ------------------------------------------------------------===*)
-
 external type_of : llvalue -> lltype = "llvm_type_of"
 external value_name : llvalue -> string = "llvm_value_name"
 external set_value_name : string -> llvalue -> unit = "llvm_set_value_name"
@@ -253,12 +252,18 @@ external const_vector : llvalue array -> llvalue = "llvm_const_vector"
 external align_of : lltype -> llvalue = "LLVMAlignOf"
 external size_of : lltype -> llvalue = "LLVMSizeOf"
 external const_neg : llvalue -> llvalue = "LLVMConstNeg"
+external const_fneg : llvalue -> llvalue = "LLVMConstFNeg"
 external const_not : llvalue -> llvalue = "LLVMConstNot"
 external const_add : llvalue -> llvalue -> llvalue = "LLVMConstAdd"
+external const_nsw_add : llvalue -> llvalue -> llvalue = "LLVMConstNSWAdd"
+external const_fadd : llvalue -> llvalue -> llvalue = "LLVMConstFAdd"
 external const_sub : llvalue -> llvalue -> llvalue = "LLVMConstSub"
+external const_fsub : llvalue -> llvalue -> llvalue = "LLVMConstFSub"
 external const_mul : llvalue -> llvalue -> llvalue = "LLVMConstMul"
+external const_fmul : llvalue -> llvalue -> llvalue = "LLVMConstFMul"
 external const_udiv : llvalue -> llvalue -> llvalue = "LLVMConstUDiv"
 external const_sdiv : llvalue -> llvalue -> llvalue = "LLVMConstSDiv"
+external const_exact_sdiv : llvalue -> llvalue -> llvalue = "LLVMConstExactSDiv"
 external const_fdiv : llvalue -> llvalue -> llvalue = "LLVMConstFDiv"
 external const_urem : llvalue -> llvalue -> llvalue = "LLVMConstURem"
 external const_srem : llvalue -> llvalue -> llvalue = "LLVMConstSRem"
@@ -274,6 +279,8 @@ external const_shl : llvalue -> llvalue -> llvalue = "LLVMConstShl"
 external const_lshr : llvalue -> llvalue -> llvalue = "LLVMConstLShr"
 external const_ashr : llvalue -> llvalue -> llvalue = "LLVMConstAShr"
 external const_gep : llvalue -> llvalue array -> llvalue = "llvm_const_gep"
+external const_in_bounds_gep : llvalue -> llvalue array -> llvalue
+                            = "llvm_const_in_bounds_gep"
 external const_trunc : llvalue -> lltype -> llvalue = "LLVMConstTrunc"
 external const_sext : llvalue -> lltype -> llvalue = "LLVMConstSExt"
 external const_zext : llvalue -> lltype -> llvalue = "LLVMConstZExt"
@@ -286,6 +293,16 @@ external const_fptosi : llvalue -> lltype -> llvalue = "LLVMConstFPToSI"
 external const_ptrtoint : llvalue -> lltype -> llvalue = "LLVMConstPtrToInt"
 external const_inttoptr : llvalue -> lltype -> llvalue = "LLVMConstIntToPtr"
 external const_bitcast : llvalue -> lltype -> llvalue = "LLVMConstBitCast"
+external const_zext_or_bitcast : llvalue -> lltype -> llvalue
+                             = "LLVMConstZExtOrBitCast"
+external const_sext_or_bitcast : llvalue -> lltype -> llvalue
+                             = "LLVMConstSExtOrBitCast"
+external const_trunc_or_bitcast : llvalue -> lltype -> llvalue
+                              = "LLVMConstTruncOrBitCast"
+external const_pointercast : llvalue -> lltype -> llvalue
+                           = "LLVMConstPointerCast"
+external const_intcast : llvalue -> lltype -> llvalue = "LLVMConstIntCast"
+external const_fpcast : llvalue -> lltype -> llvalue = "LLVMConstFPCast"
 external const_select : llvalue -> llvalue -> llvalue -> llvalue
                       = "LLVMConstSelect"
 external const_extractelement : llvalue -> llvalue -> llvalue
@@ -294,6 +311,10 @@ external const_insertelement : llvalue -> llvalue -> llvalue -> llvalue
                              = "LLVMConstInsertElement"
 external const_shufflevector : llvalue -> llvalue -> llvalue -> llvalue
                              = "LLVMConstShuffleVector"
+external const_extractvalue : llvalue -> int array -> llvalue
+                            = "llvm_const_extractvalue"
+external const_insertvalue : llvalue -> llvalue -> int array -> llvalue
+                           = "llvm_const_insertvalue"
 
 (*--... Operations on global variables, functions, and aliases (globals) ...--*)
 external global_parent : llvalue -> llmodule = "LLVMGetGlobalParent"
