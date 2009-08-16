@@ -325,19 +325,23 @@ int main(int argc, char **argv) {
 
       unsigned NumNewLines = CountNumNewlinesBetween(LastMatch, Ptr);
       if (NumNewLines == 0) {
-        SM.PrintMessage(SMLoc::getFromPointer(Ptr),
+        SM.PrintMessage(CheckStr.Loc,
                     CheckPrefix+"-NEXT: is on the same line as previous match",
                         "error");
+        SM.PrintMessage(SMLoc::getFromPointer(Ptr),
+                        "'next' match was here", "note");
         SM.PrintMessage(SMLoc::getFromPointer(LastMatch),
                         "previous match was here", "note");
         return 1;
       }
       
       if (NumNewLines != 1) {
-        SM.PrintMessage(SMLoc::getFromPointer(Ptr),
+        SM.PrintMessage(CheckStr.Loc,
                         CheckPrefix+
                         "-NEXT: is not on the line after the previous match",
                         "error");
+        SM.PrintMessage(SMLoc::getFromPointer(Ptr),
+                        "'next' match was here", "note");
         SM.PrintMessage(SMLoc::getFromPointer(LastMatch),
                         "previous match was here", "note");
         return 1;
