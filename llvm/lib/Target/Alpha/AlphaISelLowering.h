@@ -62,7 +62,6 @@ namespace llvm {
   class AlphaTargetLowering : public TargetLowering {
     int VarArgsOffset;  // What is the offset to the first vaarg
     int VarArgsBase;    // What is the base FrameIndex
-    bool useITOF;
   public:
     explicit AlphaTargetLowering(TargetMachine &TM);
     
@@ -93,8 +92,6 @@ namespace llvm {
     std::vector<unsigned> 
       getRegClassForInlineAsmConstraint(const std::string &Constraint,
                                         EVT VT) const;
-
-    bool hasITOF() { return useITOF; }
 
     MachineBasicBlock *EmitInstrWithCustomInserter(MachineInstr *MI,
                                                    MachineBasicBlock *BB) const;
