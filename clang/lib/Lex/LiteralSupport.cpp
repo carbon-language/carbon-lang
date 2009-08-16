@@ -16,6 +16,7 @@
 #include "clang/Lex/Preprocessor.h"
 #include "clang/Lex/LexDiagnostic.h"
 #include "clang/Basic/TargetInfo.h"
+#include "llvm/ADT/StringRef.h"
 #include "llvm/ADT/StringExtras.h"
 using namespace clang;
 
@@ -604,9 +605,11 @@ bool NumericLiteralParser::GetIntegerValue(llvm::APInt &Val) {
 llvm::APFloat NumericLiteralParser::
 GetFloatValue(const llvm::fltSemantics &Format, bool* isExact) {
   using llvm::APFloat;
+  using llvm::StringRef;
   
   llvm::SmallVector<char,256> floatChars;
-  for (unsigned i = 0, n = ThisTokEnd-ThisTokBegin; i != n; ++i)
+  unsigned n = std::min(SuffixBegin - ThisTokBegin, ThisTokEnd - ThisTokBegin);
+  for (unsigned i = 0; i != n; ++i)
     floatChars.push_back(ThisTokBegin[i]);
   
   floatChars.push_back('\0');
@@ -614,7 +617,8 @@ GetFloatValue(const llvm::fltSemantics &Format, bool* isExact) {
   APFloat V (Format, APFloat::fcZero, false);
   APFloat::opStatus status;
   
-  status = V.convertFromString(&floatChars[0],APFloat::rmNearestTiesToEven);
+  status = V.convertFromString(StringRef(&floatChars[0], n),
+                               APFloat::rmNearestTiesToEven);
   
   if (isExact)
     *isExact = status == APFloat::opOK;
