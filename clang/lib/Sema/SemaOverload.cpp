@@ -4555,7 +4555,7 @@ Sema::BuildCallToObjectOfClassType(Scope *S, Expr *Object,
   if (CheckFunctionCall(Method, TheCall.get()))
     return true;
 
-  return TheCall.release();
+  return MaybeBindToTemporary(TheCall.release()).release();
 }
 
 /// BuildOverloadedArrowExpr - Build a call to an overloaded @c operator->

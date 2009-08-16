@@ -35,10 +35,23 @@ struct C {
 };
 
 // RUN: grep "call void @_ZN1CC1Ev" %t | count 1 &&
-// RUN: grep "call void @_ZN1CD1Ev" %t | count 2
+// RUN: grep "call void @_ZN1CD1Ev" %t | count 2 &&
 void f3() {
   C().f();
 }
 
+// Function call operator
+struct D {
+  D();
+  ~D();
+  
+  D operator()();
+};
+
+// RUN: grep "call void @_ZN1DC1Ev" %t | count 1 &&
+// RUN: grep "call void @_ZN1DD1Ev" %t | count 2
+void f4() {
+  D()();
+}
 
 
