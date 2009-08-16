@@ -649,6 +649,8 @@ let position_at_end bb = position_builder (At_end bb)
 (*--... Terminators ........................................................--*)
 external build_ret_void : llbuilder -> llvalue = "llvm_build_ret_void"
 external build_ret : llvalue -> llbuilder -> llvalue = "llvm_build_ret"
+external build_aggregate_ret : llvalue array -> llbuilder -> llvalue
+                             = "llvm_build_aggregate_ret"
 external build_br : llbasicblock -> llbuilder -> llvalue = "llvm_build_br"
 external build_cond_br : llvalue -> llbasicblock -> llbasicblock -> llbuilder ->
                          llvalue = "llvm_build_cond_br"
@@ -665,14 +667,24 @@ external build_unreachable : llbuilder -> llvalue = "llvm_build_unreachable"
 (*--... Arithmetic .........................................................--*)
 external build_add : llvalue -> llvalue -> string -> llbuilder -> llvalue
                    = "llvm_build_add"
+external build_nsw_add : llvalue -> llvalue -> string -> llbuilder -> llvalue
+                       = "llvm_build_nsw_add"
+external build_fadd : llvalue -> llvalue -> string -> llbuilder -> llvalue
+                    = "llvm_build_fadd"
 external build_sub : llvalue -> llvalue -> string -> llbuilder -> llvalue
                    = "llvm_build_sub"
+external build_fsub : llvalue -> llvalue -> string -> llbuilder -> llvalue
+                    = "llvm_build_fsub"
 external build_mul : llvalue -> llvalue -> string -> llbuilder -> llvalue
                    = "llvm_build_mul"
+external build_fmul : llvalue -> llvalue -> string -> llbuilder -> llvalue
+                    = "llvm_build_fmul"
 external build_udiv : llvalue -> llvalue -> string -> llbuilder -> llvalue
                     = "llvm_build_udiv"
 external build_sdiv : llvalue -> llvalue -> string -> llbuilder -> llvalue
                     = "llvm_build_sdiv"
+external build_exact_sdiv : llvalue -> llvalue -> string -> llbuilder -> llvalue
+                          = "llvm_build_exact_sdiv"
 external build_fdiv : llvalue -> llvalue -> string -> llbuilder -> llvalue
                     = "llvm_build_fdiv"
 external build_urem : llvalue -> llvalue -> string -> llbuilder -> llvalue
@@ -714,6 +726,15 @@ external build_store : llvalue -> llvalue -> llbuilder -> llvalue
                      = "llvm_build_store"
 external build_gep : llvalue -> llvalue array -> string -> llbuilder -> llvalue
                    = "llvm_build_gep"
+external build_in_bounds_gep : llvalue -> llvalue array -> string ->
+                             llbuilder -> llvalue = "llvm_build_in_bounds_gep"
+external build_struct_gep : llvalue -> int -> string -> llbuilder -> llvalue
+                         = "llvm_build_struct_gep"
+
+external build_global_string : string -> string -> llbuilder -> llvalue
+                             = "llvm_build_global_string"
+external build_global_stringptr  : string -> string -> llbuilder -> llvalue
+                                 = "llvm_build_global_stringptr"
 
 (*--... Casts ..............................................................--*)
 external build_trunc : llvalue -> lltype -> string -> llbuilder -> llvalue
@@ -740,6 +761,18 @@ external build_inttoptr : llvalue -> lltype -> string -> llbuilder -> llvalue
                         = "llvm_build_inttoptr"
 external build_bitcast : llvalue -> lltype -> string -> llbuilder -> llvalue
                        = "llvm_build_bitcast"
+external build_zext_or_bitcast : llvalue -> lltype -> string -> llbuilder ->
+                                 llvalue = "llvm_build_zext_or_bitcast"
+external build_sext_or_bitcast : llvalue -> lltype -> string -> llbuilder ->
+                                 llvalue = "llvm_build_sext_or_bitcast"
+external build_trunc_or_bitcast : llvalue -> lltype -> string -> llbuilder ->
+                                  llvalue = "llvm_build_trunc_or_bitcast"
+external build_pointercast : llvalue -> lltype -> string -> llbuilder -> llvalue
+                           = "llvm_build_pointercast"
+external build_intcast : llvalue -> lltype -> string -> llbuilder -> llvalue
+                       = "llvm_build_intcast"
+external build_fpcast : llvalue -> lltype -> string -> llbuilder -> llvalue
+                      = "llvm_build_fpcast"
 
 (*--... Comparisons ........................................................--*)
 external build_icmp : Icmp.t -> llvalue -> llvalue -> string ->
@@ -762,7 +795,17 @@ external build_insertelement : llvalue -> llvalue -> llvalue -> string ->
                                llbuilder -> llvalue = "llvm_build_insertelement"
 external build_shufflevector : llvalue -> llvalue -> llvalue -> string ->
                                llbuilder -> llvalue = "llvm_build_shufflevector"
+external build_extractvalue : llvalue -> int -> string -> llbuilder -> llvalue
+                            = "llvm_build_extractvalue"
+external build_insertvalue : llvalue -> llvalue -> int -> string -> llbuilder ->
+                             llvalue = "llvm_build_insertvalue"
 
+external build_is_null : llvalue -> string -> llbuilder -> llvalue
+                       = "llvm_build_is_null"
+external build_is_not_null : llvalue -> string -> llbuilder -> llvalue
+                           = "llvm_build_is_not_null"
+external build_ptrdiff : llvalue -> llvalue -> string -> llbuilder -> llvalue
+                       = "llvm_build_ptrdiff"
 
 (*===-- Module providers --------------------------------------------------===*)
 

@@ -1259,6 +1259,13 @@ external build_ret_void : llbuilder -> llvalue = "llvm_build_ret_void"
     See the method [llvm::LLVMBuilder::CreateRet]. *)
 external build_ret : llvalue -> llbuilder -> llvalue = "llvm_build_ret"
 
+(** [build_aggregate_ret vs b] creates a
+    [ret {...} { %v1, %v2, ... } ]
+    instruction at the position specified by the instruction builder [b].
+    See the method [llvm::LLVMBuilder::CreateAggregateRet]. *)
+external build_aggregate_ret : llvalue array -> llbuilder -> llvalue
+                             = "llvm_build_aggregate_ret"
+
 (** [build_br bb b] creates a
     [b %bb]
     instruction at the position specified by the instruction builder [b].
@@ -1316,6 +1323,20 @@ external build_unreachable : llbuilder -> llvalue = "llvm_build_unreachable"
 external build_add : llvalue -> llvalue -> string -> llbuilder -> llvalue
                    = "llvm_build_add"
 
+(** [build_nswadd x y name b] creates a
+    [%name = nsw add %x, %y]
+    instruction at the position specified by the instruction builder [b].
+    See the method [llvm::LLVMBuilder::CreateNSWAdd]. *)
+external build_nsw_add : llvalue -> llvalue -> string -> llbuilder -> llvalue
+                      = "llvm_build_nsw_add"
+
+(** [build_fadd x y name b] creates a
+    [%name = fadd %x, %y]
+    instruction at the position specified by the instruction builder [b].
+    See the method [llvm::LLVMBuilder::CreateFAdd]. *)
+external build_fadd : llvalue -> llvalue -> string -> llbuilder -> llvalue
+                    = "llvm_build_fadd"
+
 (** [build_sub x y name b] creates a
     [%name = sub %x, %y]
     instruction at the position specified by the instruction builder [b].
@@ -1323,12 +1344,26 @@ external build_add : llvalue -> llvalue -> string -> llbuilder -> llvalue
 external build_sub : llvalue -> llvalue -> string -> llbuilder -> llvalue
                    = "llvm_build_sub"
 
+(** [build_fsub x y name b] creates a
+    [%name = fsub %x, %y]
+    instruction at the position specified by the instruction builder [b].
+    See the method [llvm::LLVMBuilder::CreateFSub]. *)
+external build_fsub : llvalue -> llvalue -> string -> llbuilder -> llvalue
+                    = "llvm_build_fsub"
+
 (** [build_mul x y name b] creates a
     [%name = mul %x, %y]
     instruction at the position specified by the instruction builder [b].
     See the method [llvm::LLVMBuilder::CreateMul]. *)
 external build_mul : llvalue -> llvalue -> string -> llbuilder -> llvalue
                    = "llvm_build_mul"
+
+(** [build_fmul x y name b] creates a
+    [%name = fmul %x, %y]
+    instruction at the position specified by the instruction builder [b].
+    See the method [llvm::LLVMBuilder::CreateFMul]. *)
+external build_fmul : llvalue -> llvalue -> string -> llbuilder -> llvalue
+                    = "llvm_build_fmul"
 
 (** [build_udiv x y name b] creates a
     [%name = udiv %x, %y]
@@ -1343,6 +1378,13 @@ external build_udiv : llvalue -> llvalue -> string -> llbuilder -> llvalue
     See the method [llvm::LLVMBuilder::CreateSDiv]. *)
 external build_sdiv : llvalue -> llvalue -> string -> llbuilder -> llvalue
                     = "llvm_build_sdiv"
+
+(** [build_exact_sdiv x y name b] creates a
+    [%name = exact sdiv %x, %y]
+    instruction at the position specified by the instruction builder [b].
+    See the method [llvm::LLVMBuilder::CreateExactSDiv]. *)
+external build_exact_sdiv : llvalue -> llvalue -> string -> llbuilder -> llvalue
+                          = "llvm_build_exact_sdiv"
 
 (** [build_fdiv x y name b] creates a
     [%name = fdiv %x, %y]
@@ -1482,11 +1524,38 @@ external build_store : llvalue -> llvalue -> llbuilder -> llvalue
                      = "llvm_build_store"
 
 (** [build_gep p indices name b] creates a
-    [%name = gep %p, indices...]
+    [%name = getelementptr %p, indices...]
     instruction at the position specified by the instruction builder [b].
     See the method [llvm::LLVMBuilder::CreateGetElementPtr]. *)
 external build_gep : llvalue -> llvalue array -> string -> llbuilder -> llvalue
                    = "llvm_build_gep"
+
+(** [build_in_bounds_gep p indices name b] creates a
+    [%name = gelementptr inbounds %p, indices...]
+    instruction at the position specified by the instruction builder [b].
+    See the method [llvm::LLVMBuilder::CreateInBoundsGetElementPtr]. *)
+external build_in_bounds_gep : llvalue -> llvalue array -> string -> llbuilder ->
+                               llvalue = "llvm_build_in_bounds_gep"
+
+(** [build_struct_gep p idx name b] creates a
+    [%name = getelementptr %p, 0, idx]
+    instruction at the position specified by the instruction builder [b].
+    See the method [llvm::LLVMBuilder::CreateStructGetElementPtr]. *)
+external build_struct_gep : llvalue -> int -> string -> llbuilder ->
+                            llvalue = "llvm_build_struct_gep"
+
+(** [build_global_string str name b] creates a series of instructions that adds
+    a global string at the position specified by the instruction builder [b].
+    See the method [llvm::LLVMBuilder::CreateGlobalString]. *)
+external build_global_string : string -> string -> llbuilder -> llvalue
+                             = "llvm_build_global_string"
+
+(** [build_global_stringptr str name b] creates a series of instructions that
+    adds a global string pointer at the position specified by the instruction
+	 	builder [b].
+    See the method [llvm::LLVMBuilder::CreateGlobalStringPtr]. *)
+external build_global_stringptr : string -> string -> llbuilder -> llvalue
+                                = "llvm_build_global_stringptr"
 
 
 (** {7 Casts} *)
@@ -1571,9 +1640,45 @@ external build_inttoptr : llvalue -> lltype -> string -> llbuilder -> llvalue
 (** [build_bitcast v ty name b] creates a
     [%name = bitcast %p to %ty]
     instruction at the position specified by the instruction builder [b].
-    See the method [llvm::LLVMBuilder::CreateBitcast]. *)
+    See the method [llvm::LLVMBuilder::CreateBitCast]. *)
 external build_bitcast : llvalue -> lltype -> string -> llbuilder -> llvalue
                        = "llvm_build_bitcast"
+
+(** [build_zext_or_bitcast v ty name b] creates a zext or bitcast
+    instruction at the position specified by the instruction builder [b].
+    See the method [llvm::LLVMBuilder::CreateZExtOrBitCast]. *)
+external build_zext_or_bitcast : llvalue -> lltype -> string -> llbuilder ->
+                                 llvalue = "llvm_build_zext_or_bitcast"
+
+(** [build_sext_or_bitcast v ty name b] creates a sext or bitcast
+    instruction at the position specified by the instruction builder [b].
+    See the method [llvm::LLVMBuilder::CreateSExtOrBitCast]. *)
+external build_sext_or_bitcast : llvalue -> lltype -> string -> llbuilder ->
+                                 llvalue = "llvm_build_sext_or_bitcast"
+
+(** [build_trunc_or_bitcast v ty name b] creates a trunc or bitcast
+    instruction at the position specified by the instruction builder [b].
+    See the method [llvm::LLVMBuilder::CreateZExtOrBitCast]. *)
+external build_trunc_or_bitcast : llvalue -> lltype -> string -> llbuilder ->
+                                  llvalue = "llvm_build_trunc_or_bitcast"
+
+(** [build_pointercast v ty name b] creates a bitcast or pointer-to-int
+    instruction at the position specified by the instruction builder [b].
+    See the method [llvm::LLVMBuilder::CreatePointerCast]. *)
+external build_pointercast : llvalue -> lltype -> string -> llbuilder -> llvalue
+                           = "llvm_build_pointercast"
+
+(** [build_intcast v ty name b] creates a zext, bitcast, or trunc
+    instruction at the position specified by the instruction builder [b].
+    See the method [llvm::LLVMBuilder::CreateIntCast]. *)
+external build_intcast : llvalue -> lltype -> string -> llbuilder -> llvalue
+                       = "llvm_build_intcast"
+
+(** [build_fpcast v ty name b] creates a fpext, bitcast, or fptrunc
+    instruction at the position specified by the instruction builder [b].
+    See the method [llvm::LLVMBuilder::CreateFPCast]. *)
+external build_fpcast : llvalue -> lltype -> string -> llbuilder -> llvalue
+                      = "llvm_build_fpcast"
 
 
 (** {7 Comparisons} *)
@@ -1645,6 +1750,40 @@ external build_insertelement : llvalue -> llvalue -> llvalue -> string ->
 external build_shufflevector : llvalue -> llvalue -> llvalue -> string ->
                                llbuilder -> llvalue = "llvm_build_shufflevector"
 
+(** [build_insertvalue agg idx name b] creates a
+    [%name = extractvalue %agg, %idx]
+    instruction at the position specified by the instruction builder [b].
+    See the method [llvm::LLVMBuilder::CreateExtractValue]. *)
+external build_extractvalue : llvalue -> int -> string -> llbuilder -> llvalue
+                            = "llvm_build_extractvalue"
+
+(** [build_insertvalue agg val idx name b] creates a
+    [%name = insertvalue %agg, %val, %idx]
+    instruction at the position specified by the instruction builder [b].
+    See the method [llvm::LLVMBuilder::CreateInsertValue]. *)
+external build_insertvalue : llvalue -> llvalue -> int -> string -> llbuilder ->
+                             llvalue = "llvm_build_insertvalue"
+
+(** [build_is_null val name b] creates a
+    [%name = icmp eq %val, null]
+    instruction at the position specified by the instruction builder [b].
+    See the method [llvm::LLVMBuilder::CreateIsNull]. *)
+external build_is_null : llvalue -> string -> llbuilder -> llvalue
+                       = "llvm_build_is_null"
+
+(** [build_is_not_null val name b] creates a
+    [%name = icmp ne %val, null]
+    instruction at the position specified by the instruction builder [b].
+    See the method [llvm::LLVMBuilder::CreateIsNotNull]. *)
+external build_is_not_null : llvalue -> string -> llbuilder -> llvalue
+                           = "llvm_build_is_not_null"
+
+(** [build_ptrdiff lhs rhs name b] creates a series of instructions that measure
+    the difference between two pointer values at the position specified by the
+	 	instruction builder [b].
+    See the method [llvm::LLVMBuilder::CreatePtrDiff]. *)
+external build_ptrdiff : llvalue -> llvalue -> string -> llbuilder -> llvalue
+                       = "llvm_build_ptrdiff"
 
 (** {6 Module providers} *)
 
