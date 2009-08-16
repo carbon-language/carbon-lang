@@ -2942,7 +2942,7 @@ Sema::ActOnCallExpr(Scope *S, ExprArg fn, SourceLocation LParenLoc,
       return ExprError();
   }
 
-  return Owned(TheCall.take());
+  return MaybeBindToTemporary(TheCall.take());
 }
 
 Action::OwningExprResult
