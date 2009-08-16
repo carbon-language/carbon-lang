@@ -93,15 +93,17 @@ RValue CodeGenFunction::EmitReferenceBindingToExpr(const Expr* E,
     Val = EmitAnyExprToTemp(E, /*IsAggLocVolatile=*/false,
                             IsInitializer);
     
-    // We might have to destroy the temporary variable.
-    if (const RecordType *RT = E->getType()->getAs<RecordType>()) {
-      if (CXXRecordDecl *ClassDecl = dyn_cast<CXXRecordDecl>(RT->getDecl())) {
-        if (!ClassDecl->hasTrivialDestructor()) {
-          const CXXDestructorDecl *Dtor = 
-            ClassDecl->getDestructor(getContext());
+    if (IsInitializer) {
+      // We might have to destroy the temporary variable.
+      if (const RecordType *RT = E->getType()->getAs<RecordType>()) {
+        if (CXXRecordDecl *ClassDecl = dyn_cast<CXXRecordDecl>(RT->getDecl())) {
+          if (!ClassDecl->hasTrivialDestructor()) {
+            const CXXDestructorDecl *Dtor = 
+              ClassDecl->getDestructor(getContext());
           
-          CleanupScope scope(*this);
-          EmitCXXDestructorCall(Dtor, Dtor_Complete, Val.getAggregateAddr());
+            CleanupScope scope(*this);
+            EmitCXXDestructorCall(Dtor, Dtor_Complete, Val.getAggregateAddr());
+          }
         }
       }
     }
