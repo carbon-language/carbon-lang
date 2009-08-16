@@ -293,6 +293,10 @@ public:
   Value *VisitCXXNewExpr(const CXXNewExpr *E) {
     return CGF.EmitCXXNewExpr(E);
   }
+  Value *VisitCXXDeleteExpr(const CXXDeleteExpr *E) {
+    CGF.EmitCXXDeleteExpr(E);
+    return 0;
+  }
       
   // Binary Operators.
   Value *EmitMul(const BinOpInfo &Ops) {

@@ -514,6 +514,63 @@ llvm::Value *CodeGenFunction::EmitCXXNewExpr(const CXXNewExpr *E) {
   return NewPtr;
 }
 
+void CodeGenFunction::EmitCXXDeleteExpr(const CXXDeleteExpr *E) {
+  if (E->isArrayForm()) {
+    ErrorUnsupported(E, "delete[] expression");
+    return;
+  };
+
+  QualType DeleteTy = 
+    E->getArgument()->getType()->getAs<PointerType>()->getPointeeType();
+  
+  llvm::Value *Ptr = EmitScalarExpr(E->getArgument());
+  
+  // Null check the pointer.
+  llvm::BasicBlock *DeleteNotNull = createBasicBlock("delete.notnull");
+  llvm::BasicBlock *DeleteEnd = createBasicBlock("delete.end");
+
+  llvm::Value *IsNull = 
+    Builder.CreateICmpEQ(Ptr, llvm::Constant::getNullValue(Ptr->getType()),
+                         "isnull");
+    
+  Builder.CreateCondBr(IsNull, DeleteEnd, DeleteNotNull);
+  EmitBlock(DeleteNotNull);
+    
+  // Call the destructor if necessary.
+  if (const RecordType *RT = DeleteTy->getAs<RecordType>()) {
+    if (CXXRecordDecl *RD = dyn_cast<CXXRecordDecl>(RT->getDecl())) {
+      if (!RD->hasTrivialDestructor()) {
+        const CXXDestructorDecl *Dtor = RD->getDestructor(getContext());
+        if (Dtor->isVirtual()) {
+          ErrorUnsupported(E, "delete expression with virtual destructor");
+          return;
+        }
+        
+        EmitCXXDestructorCall(Dtor, Dtor_Complete, Ptr);
+      }
+    }
+  }
+  
+  // Call delete.
+  FunctionDecl *DeleteFD = E->getOperatorDelete();
+  const FunctionProtoType *DeleteFTy = 
+    DeleteFD->getType()->getAsFunctionProtoType();
+  
+  CallArgList DeleteArgs;
+
+  QualType ArgTy = DeleteFTy->getArgType(0);
+  llvm::Value *DeletePtr = Builder.CreateBitCast(Ptr, ConvertType(ArgTy));
+  DeleteArgs.push_back(std::make_pair(RValue::get(DeletePtr), ArgTy));
+  
+  // Emit the call to delete.
+  EmitCall(CGM.getTypes().getFunctionInfo(DeleteFTy->getResultType(), 
+                                          DeleteArgs),
+           CGM.GetAddrOfFunction(GlobalDecl(DeleteFD)),
+           DeleteArgs, DeleteFD);
+  
+  EmitBlock(DeleteEnd);
+}
+
 static bool canGenerateCXXstructor(const CXXRecordDecl *RD, 
                                    ASTContext &Context) {
   // The class has base classes - we don't support that right now.

@@ -607,6 +607,7 @@ public:
   void PopCXXTemporary();
   
   llvm::Value *EmitCXXNewExpr(const CXXNewExpr *E);
+  void EmitCXXDeleteExpr(const CXXDeleteExpr *E);
   
   //===--------------------------------------------------------------------===//
   //                            Declaration Emission
