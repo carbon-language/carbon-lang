@@ -486,7 +486,6 @@ class CXXConstructExpr : public Expr {
   
   Stmt **Args;
   unsigned NumArgs;
-
   
 protected:
   CXXConstructExpr(ASTContext &C, StmtClass SC, QualType T, 

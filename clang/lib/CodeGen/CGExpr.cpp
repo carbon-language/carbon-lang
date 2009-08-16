@@ -87,8 +87,24 @@ RValue CodeGenFunction::EmitReferenceBindingToExpr(const Expr* E,
       return RValue::get(LV.getAddress());
     Val = EmitLoadOfLValue(LV, E->getType());
   } else {
+    // FIXME: Initializers don't work with casts yet. For example
+    // const A& a = B();
+    // if B inherits from A.
     Val = EmitAnyExprToTemp(E, /*IsAggLocVolatile=*/false,
                             IsInitializer);
+    
+    // We might have to destroy the temporary variable.
+    if (const RecordType *RT = E->getType()->getAs<RecordType>()) {
+      if (CXXRecordDecl *ClassDecl = dyn_cast<CXXRecordDecl>(RT->getDecl())) {
+        if (!ClassDecl->hasTrivialDestructor()) {
+          const CXXDestructorDecl *Dtor = 
+            ClassDecl->getDestructor(getContext());
+          
+          CleanupScope scope(*this);
+          EmitCXXDestructorCall(Dtor, Dtor_Complete, Val.getAggregateAddr());
+        }
+      }
+    }
   }
 
   if (Val.isAggregate()) {
