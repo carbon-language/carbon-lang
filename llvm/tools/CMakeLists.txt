@@ -2,7 +2,7 @@
 # large and three small executables. This is done to minimize memory load
 # in parallel builds.  Please retain this ordering.
 
-if( NOT MSVC )
+if( NOT WIN32 OR MSYS OR CYGWIN )
   # It is useful to build llvm-config before the other tools, so we
   # have a fresh LibDeps.txt for regenerating the hard-coded library
   # dependencies. llvm-config/CMakeLists.txt takes care of this but we
