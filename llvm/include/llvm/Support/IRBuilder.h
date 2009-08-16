@@ -598,7 +598,30 @@ public:
                        const char *Name = "") {
     return CreateCast(Instruction::BitCast, V, DestTy, Name);
   }
-
+  Value *CreateZExtOrBitCast(Value *V, const Type *DestTy,
+                             const char *Name = "") {
+    if (V->getType() == DestTy)
+      return V;
+    if (Constant *VC = dyn_cast<Constant>(V))
+      return Folder.CreateZExtOrBitCast(VC, DestTy);
+    return Insert(CastInst::CreateZExtOrBitCast(V, DestTy), Name);
+  }
+  Value *CreateSExtOrBitCast(Value *V, const Type *DestTy,
+                             const char *Name = "") {
+    if (V->getType() == DestTy)
+      return V;
+    if (Constant *VC = dyn_cast<Constant>(V))
+      return Folder.CreateSExtOrBitCast(VC, DestTy);
+    return Insert(CastInst::CreateSExtOrBitCast(V, DestTy), Name);
+  }
+  Value *CreateTruncOrBitCast(Value *V, const Type *DestTy,
+                              const char *Name = "") {
+    if (V->getType() == DestTy)
+      return V;
+    if (Constant *VC = dyn_cast<Constant>(V))
+      return Folder.CreateTruncOrBitCast(VC, DestTy);
+    return Insert(CastInst::CreateTruncOrBitCast(V, DestTy), Name);
+  }
   Value *CreateCast(Instruction::CastOps Op, Value *V, const Type *DestTy,
                     const char *Name = "") {
     if (V->getType() == DestTy)
@@ -607,6 +630,14 @@ public:
       return Folder.CreateCast(Op, VC, DestTy);
     return Insert(CastInst::Create(Op, V, DestTy), Name);
   }
+  Value *CreatePointerCast(Value *V, const Type *DestTy,
+                           const char *Name = "") {
+    if (V->getType() == DestTy)
+      return V;
+    if (Constant *VC = dyn_cast<Constant>(V))
+      return Folder.CreatePointerCast(VC, DestTy);
+    return Insert(CastInst::CreatePointerCast(V, DestTy), Name);
+  }
   Value *CreateIntCast(Value *V, const Type *DestTy, bool isSigned,
                        const char *Name = "") {
     if (V->getType() == DestTy)
@@ -614,6 +645,13 @@ public:
     if (Constant *VC = dyn_cast<Constant>(V))
       return Folder.CreateIntCast(VC, DestTy, isSigned);
     return Insert(CastInst::CreateIntegerCast(V, DestTy, isSigned), Name);
+  }
+  Value *CreateFPCast(Value *V, const Type *DestTy, const char *Name = "") {
+    if (V->getType() == DestTy)
+      return V;
+    if (Constant *VC = dyn_cast<Constant>(V))
+      return Folder.CreateFPCast(VC, DestTy);
+    return Insert(CastInst::CreateFPCast(V, DestTy), Name);
   }
 
   //===--------------------------------------------------------------------===//

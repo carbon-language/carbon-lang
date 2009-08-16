@@ -142,9 +142,15 @@ public:
                        const Type *DestTy) const {
     return ConstantExpr::getCast(Op, C, DestTy);
   }
+  Constant *CreatePointerCast(Constant *C, const Type *DestTy) const {
+    return ConstantExpr::getPointerCast(C, DestTy);
+  }
   Constant *CreateIntCast(Constant *C, const Type *DestTy,
                           bool isSigned) const {
     return ConstantExpr::getIntegerCast(C, DestTy, isSigned);
+  }
+  Constant *CreateFPCast(Constant *C, const Type *DestTy) const {
+    return ConstantExpr::getFPCast(C, DestTy);
   }
 
   Constant *CreateBitCast(Constant *C, const Type *DestTy) const {
@@ -156,6 +162,13 @@ public:
   Constant *CreatePtrToInt(Constant *C, const Type *DestTy) const {
     return CreateCast(Instruction::PtrToInt, C, DestTy);
   }
+  Constant *CreateZExtOrBitCast(Constant *C, const Type *DestTy) const {
+    return ConstantExpr::getZExtOrBitCast(C, DestTy);
+  }
+  Constant *CreateSExtOrBitCast(Constant *C, const Type *DestTy) const {
+    return ConstantExpr::getSExtOrBitCast(C, DestTy);
+  }
+
   Constant *CreateTruncOrBitCast(Constant *C, const Type *DestTy) const {
     return ConstantExpr::getTruncOrBitCast(C, DestTy);
   }
