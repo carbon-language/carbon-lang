@@ -92,13 +92,6 @@ static bool CanPropagatePredecessorsForPHIs(BasicBlock *BB, BasicBlock *Succ) {
   // is always safe
   if (Succ->getSinglePredecessor()) return true;
 
-  typedef SmallPtrSet<Instruction*, 16> InstrSet;
-  InstrSet BBPHIs;
-
-  // Make a list of all phi nodes in BB
-  BasicBlock::iterator BBI = BB->begin();
-  while (isa<PHINode>(*BBI)) BBPHIs.insert(BBI++);
-
   // Make a list of the predecessors of BB
   typedef SmallPtrSet<BasicBlock*, 16> BlockSet;
   BlockSet BBPreds(pred_begin(BB), pred_end(BB));
@@ -135,9 +128,6 @@ static bool CanPropagatePredecessorsForPHIs(BasicBlock *BB, BasicBlock *Succ) {
           return false;
         }
       }
-      // Remove this phinode from the list of phis in BB, since it has been
-      // handled.
-      BBPHIs.erase(BBPN);
     } else {
       Value* Val = PN->getIncomingValueForBlock(BB);
       for (BlockSet::iterator PI = CommonPreds.begin(), PE = CommonPreds.end();
@@ -155,24 +145,6 @@ static bool CanPropagatePredecessorsForPHIs(BasicBlock *BB, BasicBlock *Succ) {
     }
   }
 
-  // If there are any other phi nodes in BB that don't have a phi node in Succ
-  // to merge with, they must be moved to Succ completely. However, for any
-  // predecessors of Succ, branches will be added to the phi node that just
-  // point to itself. So, for any common predecessors, this must not cause
-  // conflicts.
-  for (InstrSet::iterator I = BBPHIs.begin(), E = BBPHIs.end();
-        I != E; I++) {
-    PHINode *PN = cast<PHINode>(*I);
-    for (BlockSet::iterator PI = CommonPreds.begin(), PE = CommonPreds.end();
-          PI != PE; PI++)
-      if (PN->getIncomingValueForBlock(*PI) != PN) {
-        DEBUG(errs() << "Can't fold, phi node " << PN->getName() << " in " 
-              << BB->getName() << " is conflicting with regard to common "
-              << "predecessor " << (*PI)->getName() << "\n");
-        return false;
-      }
-  }
-
   return true;
 }
 
@@ -184,7 +156,35 @@ static bool TryToSimplifyUncondBranchFromEmptyBlock(BasicBlock *BB,
   // Check to see if merging these blocks would cause conflicts for any of the
   // phi nodes in BB or Succ. If not, we can safely merge.
   if (!CanPropagatePredecessorsForPHIs(BB, Succ)) return false;
-  
+
+  // Check for cases where Succ has multiple predecessors and a PHI node in BB
+  // has uses which will not disappear when the PHI nodes are merged.  It is
+  // possible to handle such cases, but difficult: it requires checking whether
+  // BB dominates Succ, which is non-trivial to calculate in the case where
+  // Succ has multiple predecessors.  Also, it requires checking whether
+  // constructing the necessary self-referential PHI node doesn't intoduce any
+  // conflicts; this isn't too difficult, but the previous code for doing this
+  // was incorrect.
+  //
+  // Note that if this check finds a live use, BB dominates Succ, so BB is
+  // something like a loop pre-header (or rarely, a part of an irreducible CFG);
+  // folding the branch isn't profitable in that case anyway.
+  if (!Succ->getSinglePredecessor()) {
+    BasicBlock::iterator BBI = BB->begin();
+    while (isa<PHINode>(*BBI)) {
+      for (Value::use_iterator UI = BBI->use_begin(), E = BBI->use_end();
+           UI != E; ++UI) {
+        if (PHINode* PN = dyn_cast<PHINode>(*UI)) {
+          if (PN->getIncomingBlock(UI) != BB)
+            return false;
+        } else {
+          return false;
+        }
+      }
+      ++BBI;
+    }
+  }
+
   DOUT << "Killing Trivial BB: \n" << *BB;
   
   if (isa<PHINode>(Succ->begin())) {
@@ -219,38 +219,16 @@ static bool TryToSimplifyUncondBranchFromEmptyBlock(BasicBlock *BB,
     }
   }
   
-  if (isa<PHINode>(&BB->front())) {
-    SmallVector<BasicBlock*, 16>
-    OldSuccPreds(pred_begin(Succ), pred_end(Succ));
-    
-    // Move all PHI nodes in BB to Succ if they are alive, otherwise
-    // delete them.
-    while (PHINode *PN = dyn_cast<PHINode>(&BB->front())) {
-      if (PN->use_empty()) {
-        // Just remove the dead phi.  This happens if Succ's PHIs were the only
-        // users of the PHI nodes.
-        PN->eraseFromParent();
-        continue;
-      }
-    
-      // The instruction is alive, so this means that BB must dominate all
-      // predecessors of Succ (Since all uses of the PN are after its
-      // definition, so in Succ or a block dominated by Succ. If a predecessor
-      // of Succ would not be dominated by BB, PN would violate the def before
-      // use SSA demand). Therefore, we can simply move the phi node to the
-      // next block.
+  while (PHINode *PN = dyn_cast<PHINode>(&BB->front())) {
+    if (Succ->getSinglePredecessor()) {
+      // BB is the only predecessor of Succ, so Succ will end up with exactly
+      // the same predecessors BB had.
       Succ->getInstList().splice(Succ->begin(),
                                  BB->getInstList(), BB->begin());
-      
-      // We need to add new entries for the PHI node to account for
-      // predecessors of Succ that the PHI node does not take into
-      // account.  At this point, since we know that BB dominated succ and all
-      // of its predecessors, this means that we should any newly added
-      // incoming edges should use the PHI node itself as the value for these
-      // edges, because they are loop back edges.
-      for (unsigned i = 0, e = OldSuccPreds.size(); i != e; ++i)
-        if (OldSuccPreds[i] != BB)
-          PN->addIncoming(PN, OldSuccPreds[i]);
+    } else {
+      // We explicitly check for such uses in CanPropagatePredecessorsForPHIs.
+      assert(PN->use_empty() && "There shouldn't be any uses here!");
+      PN->eraseFromParent();
     }
   }
     
