@@ -83,6 +83,11 @@ public:
   /// Return a ConstantInt with the specified value and an implied Type. The
   /// type is the integer type that corresponds to the bit width of the value.
   static ConstantInt* get(LLVMContext &Context, const APInt& V);
+
+  /// Return a ConstantInt constructed from the string strStart with the given
+  /// radix. 
+  static ConstantInt* get(const IntegerType* Ty, const StringRef& Str,
+                          uint8_t radix);
   
   /// If Ty is a vector type, return a Constant with a splat of the given
   /// value. Otherwise return a ConstantInt for the given value.
@@ -250,6 +255,7 @@ public:
   /// only be used for simple constant values like 2.0/1.0 etc, that are
   /// known-valid both as host double and as the target format.
   static Constant* get(const Type* Ty, double V);
+  static Constant* get(const Type* Ty, const StringRef& Str);
   static ConstantFP* get(LLVMContext &Context, const APFloat& V);
   static ConstantFP* getNegativeZero(const Type* Ty);
   

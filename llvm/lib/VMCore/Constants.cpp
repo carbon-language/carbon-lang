@@ -314,6 +314,11 @@ Constant* ConstantInt::get(const Type* Ty, const APInt& V) {
   return C;
 }
 
+ConstantInt* ConstantInt::get(const IntegerType* Ty, const StringRef& Str,
+                              uint8_t radix) {
+  return get(Ty->getContext(), APInt(Ty->getBitWidth(), Str, radix));
+}
+
 //===----------------------------------------------------------------------===//
 //                                ConstantFP
 //===----------------------------------------------------------------------===//
@@ -351,6 +356,22 @@ Constant* ConstantFP::get(const Type* Ty, double V) {
 
   return C;
 }
+
+
+Constant* ConstantFP::get(const Type* Ty, const StringRef& Str) {
+  LLVMContext &Context = Ty->getContext();
+
+  APFloat FV(*TypeToFloatSemantics(Ty->getScalarType()), Str);
+  Constant *C = get(Context, FV);
+
+  // For vectors, broadcast the value.
+  if (const VectorType *VTy = dyn_cast<VectorType>(Ty))
+    return ConstantVector::get(
+      std::vector<Constant *>(VTy->getNumElements(), C));
+
+  return C; 
+}
+
 
 ConstantFP* ConstantFP::getNegativeZero(const Type* Ty) {
   LLVMContext &Context = Ty->getContext();
