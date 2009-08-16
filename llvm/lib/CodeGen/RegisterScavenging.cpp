@@ -40,15 +40,6 @@ void RegScavenger::setUsed(unsigned Reg) {
     RegsAvailable.reset(SubReg);
 }
 
-/// setUnused - Set the register and its sub-registers as being unused.
-void RegScavenger::setUnused(unsigned Reg, const MachineInstr *MI) {
-  RegsAvailable.set(Reg);
-
-  for (const unsigned *SubRegs = TRI->getSubRegisters(Reg);
-       unsigned SubReg = *SubRegs; ++SubRegs)
-    RegsAvailable.set(SubReg);
-}
-
 bool RegScavenger::isAliasUsed(unsigned Reg) const {
   if (isUsed(Reg))
     return true;
@@ -116,16 +107,6 @@ void RegScavenger::enterBasicBlock(MachineBasicBlock *mbb) {
   }
 
   Tracking = false;
-}
-
-void RegScavenger::restoreScavengedReg() {
-  TII->loadRegFromStackSlot(*MBB, MBBI, ScavengedReg,
-                            ScavengingFrameIndex, ScavengedRC);
-  MachineBasicBlock::iterator II = prior(MBBI);
-  TRI->eliminateFrameIndex(II, 0, this);
-  setUsed(ScavengedReg);
-  ScavengedReg = 0;
-  ScavengedRC = NULL;
 }
 
 #ifndef NDEBUG

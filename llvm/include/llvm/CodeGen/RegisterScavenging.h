@@ -95,30 +95,8 @@ public:
   ///
   void skipTo(MachineBasicBlock::iterator I) { MBBI = I; }
 
-  /// isReserved - Returns true if a register is reserved. It is never "unused".
-  bool isReserved(unsigned Reg) const { return ReservedRegs[Reg]; }
-
-  /// isUsed / isUsed - Test if a register is currently being used.
-  ///
-  bool isUsed(unsigned Reg) const   { return !RegsAvailable[Reg]; }
-  bool isUnused(unsigned Reg) const { return RegsAvailable[Reg]; }
-
-  /// isAliasUsed - Is Reg or an alias currently in use?
-  bool isAliasUsed(unsigned Reg) const;
-
   /// getRegsUsed - return all registers currently in use in used.
   void getRegsUsed(BitVector &used, bool includeReserved);
-
-  /// setUsed / setUnused - Mark the state of one or a number of registers.
-  ///
-  void setUsed(unsigned Reg);
-  void setUsed(BitVector &Regs) {
-    RegsAvailable &= ~Regs;
-  }
-  void setUnused(unsigned Reg, const MachineInstr *MI);
-  void setUnused(BitVector &Regs) {
-    RegsAvailable |= Regs;
-  }
 
   /// FindUnusedReg - Find a unused register of the specified register class
   /// from the specified set of registers. It return 0 is none is found.
@@ -146,9 +124,26 @@ public:
   }
 
 private:
-  /// restoreScavengedReg - Restore scavenged by loading it back from the
-  /// emergency spill slot. Mark it used.
-  void restoreScavengedReg();
+  /// isReserved - Returns true if a register is reserved. It is never "unused".
+  bool isReserved(unsigned Reg) const { return ReservedRegs.test(Reg); }
+
+  /// isUsed / isUsed - Test if a register is currently being used.
+  ///
+  bool isUsed(unsigned Reg) const   { return !RegsAvailable.test(Reg); }
+  bool isUnused(unsigned Reg) const { return RegsAvailable.test(Reg); }
+
+  /// isAliasUsed - Is Reg or an alias currently in use?
+  bool isAliasUsed(unsigned Reg) const;
+
+  /// setUsed / setUnused - Mark the state of one or a number of registers.
+  ///
+  void setUsed(unsigned Reg);
+  void setUsed(BitVector &Regs) {
+    RegsAvailable &= ~Regs;
+  }
+  void setUnused(BitVector &Regs) {
+    RegsAvailable |= Regs;
+  }
 
   /// Add Reg and all its sub-registers to BV.
   void addRegWithSubRegs(BitVector &BV, unsigned Reg);
