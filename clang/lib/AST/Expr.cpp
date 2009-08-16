@@ -541,6 +541,18 @@ bool Expr::isUnusedResultAWarning(SourceLocation &Loc, SourceRange &R1,
   }
   case ObjCMessageExprClass:
     return false;
+      
+  case ObjCKVCRefExprClass: {   // Dot syntax for message send.
+#if 0
+    const ObjCKVCRefExpr *KVCRef = cast<ObjCKVCRefExpr>(this);
+    // FIXME: We really want the location of the '.' here.
+    Loc = KVCRef->getLocation();
+    R1 = SourceRange(KVCRef->getLocation(), KVCRef->getLocation());
+    if (KVCRef->getBase())
+      R2 = KVCRef->getBase()->getSourceRange();
+#endif
+    return true;
+  }
   case StmtExprClass: {
     // Statement exprs don't logically have side effects themselves, but are
     // sometimes used in macros in ways that give them a type that is unused.
