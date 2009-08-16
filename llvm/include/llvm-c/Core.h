@@ -33,6 +33,8 @@
 #ifndef LLVM_C_CORE_H
 #define LLVM_C_CORE_H
 
+#include "llvm/Support/DataTypes.h"
+
 #ifdef __cplusplus
 
 /* Need these includes to support the LLVM 'cast' template for the C++ 'wrap' 
@@ -435,8 +437,15 @@ LLVMValueRef LLVMConstPointerNull(LLVMTypeRef Ty);
 /* Operations on scalar constants */
 LLVMValueRef LLVMConstInt(LLVMTypeRef IntTy, unsigned long long N,
                           int SignExtend);
+LLVMValueRef LLVMConstIntOfString(LLVMTypeRef IntTy, const char *Text,
+                                  uint8_t Radix);
+LLVMValueRef LLVMConstIntOfStringAndSize(LLVMTypeRef IntTy, const char *Text,
+                                         unsigned SLen, uint8_t Radix);
 LLVMValueRef LLVMConstReal(LLVMTypeRef RealTy, double N);
 LLVMValueRef LLVMConstRealOfString(LLVMTypeRef RealTy, const char *Text);
+LLVMValueRef LLVMConstRealOfStringAndSize(LLVMTypeRef RealTy, const char *Text,
+                                          unsigned SLen);
+
 
 /* Operations on composite constants */
 LLVMValueRef LLVMConstStringInContext(LLVMContextRef C, const char *Str,

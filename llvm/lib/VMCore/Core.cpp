@@ -440,32 +440,29 @@ LLVMValueRef LLVMConstInt(LLVMTypeRef IntTy, unsigned long long N,
   return wrap(ConstantInt::get(unwrap<IntegerType>(IntTy), N, SignExtend != 0));
 }
 
-static const fltSemantics &SemanticsForType(Type *Ty) {
-  assert(Ty->isFloatingPoint() && "Type is not floating point!");
-  if (Ty == Type::getFloatTy(Ty->getContext()))
-    return APFloat::IEEEsingle;
-  if (Ty == Type::getDoubleTy(Ty->getContext()))
-    return APFloat::IEEEdouble;
-  if (Ty == Type::getX86_FP80Ty(Ty->getContext()))
-    return APFloat::x87DoubleExtended;
-  if (Ty == Type::getFP128Ty(Ty->getContext()))
-    return APFloat::IEEEquad;
-  if (Ty == Type::getPPC_FP128Ty(Ty->getContext()))
-    return APFloat::PPCDoubleDouble;
-  return APFloat::Bogus;
+LLVMValueRef LLVMConstIntOfString(LLVMTypeRef IntTy, const char Str[],
+                                  uint8_t Radix) {
+  return wrap(ConstantInt::get(unwrap<IntegerType>(IntTy), StringRef(Str),
+                               Radix));
+}
+
+LLVMValueRef LLVMConstIntOfStringAndSize(LLVMTypeRef IntTy, const char Str[],
+                                         unsigned SLen, uint8_t Radix) {
+  return wrap(ConstantInt::get(unwrap<IntegerType>(IntTy), StringRef(Str, SLen),
+                               Radix));
 }
 
 LLVMValueRef LLVMConstReal(LLVMTypeRef RealTy, double N) {
-  APFloat APN(N);
-  bool ignored;
-  APN.convert(SemanticsForType(unwrap(RealTy)), APFloat::rmNearestTiesToEven,
-              &ignored);
-  return wrap(ConstantFP::get(getGlobalContext(), APN));
+  return wrap(ConstantFP::get(unwrap(RealTy), N));
 }
 
 LLVMValueRef LLVMConstRealOfString(LLVMTypeRef RealTy, const char *Text) {
-  return wrap(ConstantFP::get(getGlobalContext(),
-                              APFloat(SemanticsForType(unwrap(RealTy)), Text)));
+  return wrap(ConstantFP::get(unwrap(RealTy), StringRef(Text)));
+}
+
+LLVMValueRef LLVMConstRealOfStringAndSize(LLVMTypeRef RealTy, const char Str[],
+                                          unsigned SLen) {
+  return wrap(ConstantFP::get(unwrap(RealTy), StringRef(Str, SLen)));
 }
 
 /*--.. Operations on composite constants ...................................--*/
