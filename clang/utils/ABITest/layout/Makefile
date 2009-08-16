@@ -11,7 +11,7 @@ TIMEOUT := 5
 
 CFLAGS := -std=gnu99
 
-X_COMPILER := /Developer/usr/bin/llvm-gcc-4.2
+X_COMPILER := llvm-gcc
 Y_COMPILER := clang
 CC := gcc
 
