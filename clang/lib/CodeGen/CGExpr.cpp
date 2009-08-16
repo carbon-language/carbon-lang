@@ -49,30 +49,36 @@ llvm::Value *CodeGenFunction::EvaluateExprAsBool(const Expr *E) {
 /// aggregate expression, the aggloc/agglocvolatile arguments indicate where
 /// the result should be returned.
 RValue CodeGenFunction::EmitAnyExpr(const Expr *E, llvm::Value *AggLoc, 
-                                    bool isAggLocVolatile, bool IgnoreResult) {
+                                    bool IsAggLocVolatile, bool IgnoreResult,
+                                    bool IsInitializer) {
   if (!hasAggregateLLVMType(E->getType()))
     return RValue::get(EmitScalarExpr(E, IgnoreResult));
   else if (E->getType()->isAnyComplexType())
     return RValue::getComplex(EmitComplexExpr(E, false, false,
                                               IgnoreResult, IgnoreResult));
   
-  EmitAggExpr(E, AggLoc, isAggLocVolatile, IgnoreResult);
-  return RValue::getAggregate(AggLoc, isAggLocVolatile);
+  EmitAggExpr(E, AggLoc, IsAggLocVolatile, IgnoreResult, IsInitializer);
+  return RValue::getAggregate(AggLoc, IsAggLocVolatile);
 }
 
 /// EmitAnyExprToTemp - Similary to EmitAnyExpr(), however, the result
 /// will always be accessible even if no aggregate location is
 /// provided.
-RValue CodeGenFunction::EmitAnyExprToTemp(const Expr *E, llvm::Value *AggLoc, 
-                                          bool isAggLocVolatile) {
-  if (!AggLoc && hasAggregateLLVMType(E->getType()) && 
+RValue CodeGenFunction::EmitAnyExprToTemp(const Expr *E, 
+                                          bool IsAggLocVolatile,
+                                          bool IsInitializer) {
+  llvm::Value *AggLoc = 0;
+  
+  if (hasAggregateLLVMType(E->getType()) && 
       !E->getType()->isAnyComplexType())
     AggLoc = CreateTempAlloca(ConvertType(E->getType()), "agg.tmp");
-  return EmitAnyExpr(E, AggLoc, isAggLocVolatile);
+  return EmitAnyExpr(E, AggLoc, IsAggLocVolatile, /*IgnoreResult=*/false, 
+                     IsInitializer);
 }
 
 RValue CodeGenFunction::EmitReferenceBindingToExpr(const Expr* E,
-                                                   QualType DestType) {
+                                                   QualType DestType,
+                                                   bool IsInitializer) {
   RValue Val;
   if (E->isLvalue(getContext()) == Expr::LV_Valid) {
     // Emit the expr as an lvalue.
@@ -81,7 +87,8 @@ RValue CodeGenFunction::EmitReferenceBindingToExpr(const Expr* E,
       return RValue::get(LV.getAddress());
     Val = EmitLoadOfLValue(LV, E->getType());
   } else {
-    Val = EmitAnyExprToTemp(E);
+    Val = EmitAnyExprToTemp(E, /*IsAggLocVolatile=*/false,
+                            IsInitializer);
   }
 
   if (Val.isAggregate()) {

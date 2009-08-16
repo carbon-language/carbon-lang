@@ -36,12 +36,13 @@ class VISIBILITY_HIDDEN AggExprEmitter : public StmtVisitor<AggExprEmitter> {
   llvm::Value *DestPtr;
   bool VolatileDest;
   bool IgnoreResult;
-
+  bool IsInitializer;
 public:
   AggExprEmitter(CodeGenFunction &cgf, llvm::Value *destPtr, bool v,
-                 bool ignore)
+                 bool ignore, bool isinit)
     : CGF(cgf), Builder(CGF.Builder),
-      DestPtr(destPtr), VolatileDest(v), IgnoreResult(ignore) {
+      DestPtr(destPtr), VolatileDest(v), IgnoreResult(ignore),
+      IsInitializer(isinit) {
   }
 
   //===--------------------------------------------------------------------===//
@@ -214,7 +215,8 @@ void AggExprEmitter::VisitObjCKVCRefExpr(ObjCKVCRefExpr *E) {
 
 void AggExprEmitter::VisitBinComma(const BinaryOperator *E) {
   CGF.EmitAnyExpr(E->getLHS(), 0, false, true);
-  CGF.EmitAggExpr(E->getRHS(), DestPtr, VolatileDest);
+  CGF.EmitAggExpr(E->getRHS(), DestPtr, VolatileDest,
+                  /*IgnoreResult=*/false, IsInitializer);
 }
 
 void AggExprEmitter::VisitStmtExpr(const StmtExpr *E) {
@@ -323,7 +325,9 @@ void AggExprEmitter::VisitCXXBindTemporaryExpr(CXXBindTemporaryExpr *E) {
   } else 
     Visit(E->getSubExpr());
   
-  CGF.PushCXXTemporary(E->getTemporary(), Val);
+  // Don't make this a live temporary if we're emitting an initializer expr.
+  if (!IsInitializer)
+    CGF.PushCXXTemporary(E->getTemporary(), Val);
 }
 
 void
@@ -339,7 +343,7 @@ AggExprEmitter::VisitCXXConstructExpr(const CXXConstructExpr *E) {
 }
 
 void AggExprEmitter::VisitCXXExprWithTemporaries(CXXExprWithTemporaries *E) {
-  CGF.EmitCXXExprWithTemporaries(E, DestPtr, VolatileDest);
+  CGF.EmitCXXExprWithTemporaries(E, DestPtr, VolatileDest, IsInitializer);
 }
 
 void AggExprEmitter::EmitInitializationToLValue(Expr* E, LValue LV) {
@@ -510,13 +514,14 @@ void AggExprEmitter::VisitInitListExpr(InitListExpr *E) {
 /// the value of the aggregate expression is not needed.  If VolatileDest is
 /// true, DestPtr cannot be 0.
 void CodeGenFunction::EmitAggExpr(const Expr *E, llvm::Value *DestPtr,
-                                  bool VolatileDest, bool IgnoreResult) {
+                                  bool VolatileDest, bool IgnoreResult,
+                                  bool IsInitializer) {
   assert(E && hasAggregateLLVMType(E->getType()) &&
          "Invalid aggregate expression to emit");
   assert ((DestPtr != 0 || VolatileDest == false)
           && "volatile aggregate can't be 0");
   
-  AggExprEmitter(*this, DestPtr, VolatileDest, IgnoreResult)
+  AggExprEmitter(*this, DestPtr, VolatileDest, IgnoreResult, IsInitializer)
     .Visit(const_cast<Expr*>(E));
 }
 

@@ -513,7 +513,8 @@ public:
   ///
   /// \param IgnoreResult - True if the resulting value isn't used.
   RValue EmitAnyExpr(const Expr *E, llvm::Value *AggLoc = 0,
-                     bool isAggLocVolatile = false, bool IgnoreResult = false);
+                     bool IsAggLocVolatile = false, bool IgnoreResult = false,
+                     bool IsInitializer = false);
 
   // EmitVAListRef - Emit a "reference" to a va_list; this is either the address
   // or the value of the expression, depending on how va_list is defined.
@@ -521,8 +522,8 @@ public:
 
   /// EmitAnyExprToTemp - Similary to EmitAnyExpr(), however, the result will
   /// always be accessible even if no aggregate location is provided.
-  RValue EmitAnyExprToTemp(const Expr *E, llvm::Value *AggLoc = 0,
-                           bool isAggLocVolatile = false);
+  RValue EmitAnyExprToTemp(const Expr *E, bool IsAggLocVolatile = false,
+                           bool IsInitializer = false);
 
   /// EmitAggregateCopy - Emit an aggrate copy.
   ///
@@ -862,7 +863,8 @@ public:
 
   /// EmitReferenceBindingToExpr - Emits a reference binding to the passed in
   /// expression. Will emit a temporary variable if E is not an LValue.
-  RValue EmitReferenceBindingToExpr(const Expr* E, QualType DestType);
+  RValue EmitReferenceBindingToExpr(const Expr* E, QualType DestType,
+                                    bool IsInitializer = false);
   
   //===--------------------------------------------------------------------===//
   //                           Expression Emission
@@ -872,7 +874,7 @@ public:
 
   /// EmitScalarExpr - Emit the computation of the specified expression of LLVM
   /// scalar type, returning the result.
-  llvm::Value *EmitScalarExpr(const Expr *E , bool IgnoreResultAssign=false);
+  llvm::Value *EmitScalarExpr(const Expr *E , bool IgnoreResultAssign = false);
 
   /// EmitScalarConversion - Emit a conversion from the specified type to the
   /// specified destination type, both of which are LLVM scalar types.
@@ -890,7 +892,7 @@ public:
   /// aggregate type.  The result is computed into DestPtr.  Note that if
   /// DestPtr is null, the value of the aggregate expression is not needed.
   void EmitAggExpr(const Expr *E, llvm::Value *DestPtr, bool VolatileDest,
-                   bool IgnoreResult = false);
+                   bool IgnoreResult = false, bool IsInitializer = false);
 
   /// EmitGCMemmoveCollectable - Emit special API for structs with object
   /// pointers.
@@ -946,7 +948,8 @@ public:
   
   RValue EmitCXXExprWithTemporaries(const CXXExprWithTemporaries *E,
                                     llvm::Value *AggLoc = 0, 
-                                    bool isAggLocVolatile = false);
+                                    bool IsAggLocVolatile = false,
+                                    bool IsInitializer = false);
                                   
   //===--------------------------------------------------------------------===//
   //                             Internal Helpers

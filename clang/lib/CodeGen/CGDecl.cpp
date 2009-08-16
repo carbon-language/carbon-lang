@@ -361,8 +361,8 @@ void CodeGenFunction::EmitLocalBlockVarDecl(const VarDecl &D) {
       Loc = Builder.CreateStructGEP(DeclPtr, needsCopyDispose*2+4, "x");
     }
     if (Ty->isReferenceType()) {
-      llvm::Value *V = EmitReferenceBindingToExpr(Init, Ty).getScalarVal();
-      EmitStoreOfScalar(V, Loc, false, Ty);
+      RValue RV = EmitReferenceBindingToExpr(Init, Ty, /*IsInitializer=*/true);
+      EmitStoreOfScalar(RV.getScalarVal(), Loc, false, Ty);
     } else if (!hasAggregateLLVMType(Init->getType())) {
       llvm::Value *V = EmitScalarExpr(Init);
       EmitStoreOfScalar(V, Loc, D.getType().isVolatileQualified(), 
