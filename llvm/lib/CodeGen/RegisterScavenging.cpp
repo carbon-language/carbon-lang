@@ -280,41 +280,47 @@ unsigned RegScavenger::FindUnusedReg(const TargetRegisterClass *RegClass,
   return (Reg == -1) ? 0 : Reg;
 }
 
-/// DistanceMap - Keep track the distance of an MI from the current position.
-typedef DenseMap<MachineInstr*, unsigned> DistanceMap;
+/// findSurvivorReg - Return the candidate register that is unused for the
+/// longest after MBBI. UseMI is set to the instruction where the search
+/// stopped.
+///
+/// No more than InstrLimit instructions are inspected.
+///
+unsigned RegScavenger::findSurvivorReg(MachineBasicBlock::iterator MI,
+                                       BitVector &Candidates,
+                                       unsigned InstrLimit,
+                                       MachineBasicBlock::iterator &UseMI) {
+  int Survivor = Candidates.find_first();
+  assert(Survivor > 0 && "No candidates for scavenging");
 
-/// Build a distance map for instructions from I to E.
-static void buildDistanceMap(DistanceMap &DM,
-                             MachineBasicBlock::iterator I,
-                             MachineBasicBlock::iterator E) {
-  DM.clear();
-  for (unsigned d = 0; I != E; ++I, ++d)
-    DM.insert(DistanceMap::value_type(I, d));
-}
+  MachineBasicBlock::iterator ME = MBB->getFirstTerminator();
+  assert(MI != ME && "MI already at terminator");
 
-/// findFirstUse - Calculate the distance to the first use of the
-/// specified register in the range covered by DM.
-static MachineInstr *findFirstUse(const MachineBasicBlock *MBB,
-                                  const DistanceMap &DM,
-                                  unsigned Reg,
-                                  unsigned &Dist) {
-  const MachineRegisterInfo *MRI = &MBB->getParent()->getRegInfo();
-  MachineInstr *UseMI = 0;
-  Dist = ~0U;
-  for (MachineRegisterInfo::reg_iterator RI = MRI->reg_begin(Reg),
-         RE = MRI->reg_end(); RI != RE; ++RI) {
-    MachineInstr *UDMI = &*RI;
-    if (UDMI->getParent() != MBB)
-      continue;
-    DistanceMap::const_iterator DI = DM.find(UDMI);
-    if (DI == DM.end())
-      continue;
-    if (DI->second < Dist) {
-      Dist = DI->second;
-      UseMI = UDMI;
+  for (++MI; InstrLimit > 0 && MI != ME; ++MI, --InstrLimit) {
+    // Remove any candidates touched by instruction.
+    for (unsigned i = 0, e = MI->getNumOperands(); i != e; ++i) {
+      const MachineOperand &MO = MI->getOperand(i);
+      if (!MO.isReg() || MO.isUndef() || !MO.getReg())
+        continue;
+      Candidates.reset(MO.getReg());
+      for (const unsigned *R = TRI->getAliasSet(MO.getReg()); *R; R++)
+        Candidates.reset(*R);
     }
+
+    // Was our survivor untouched by this instruction?
+    if (Candidates.test(Survivor))
+      continue;
+
+    // All candidates gone?
+    if (Candidates.none())
+      break;
+
+    Survivor = Candidates.find_first();
   }
-  return UseMI;
+
+  // We ran out of candidates, so stop the search.
+  UseMI = MI;
+  return Survivor;
 }
 
 unsigned RegScavenger::scavengeRegister(const TargetRegisterClass *RC,
@@ -336,40 +342,15 @@ unsigned RegScavenger::scavengeRegister(const TargetRegisterClass *RC,
       Candidates.reset(MO.getReg());
   }
 
-  // Prepare to call findFirstUse() a number of times.
-  DistanceMap DM;
-  buildDistanceMap(DM, I, MBB->end());
-
   // Find the register whose use is furthest away.
-  unsigned SReg = 0;
-  unsigned MaxDist = 0;
-  MachineInstr *MaxUseMI = 0;
-  int Reg = Candidates.find_first();
-  while (Reg != -1) {
-    unsigned Dist;
-    MachineInstr *UseMI = findFirstUse(MBB, DM, Reg, Dist);
-    for (const unsigned *AS = TRI->getAliasSet(Reg); *AS; ++AS) {
-      unsigned AsDist;
-      MachineInstr *AsUseMI = findFirstUse(MBB, DM, *AS, AsDist);
-      if (AsDist < Dist) {
-        Dist = AsDist;
-        UseMI = AsUseMI;
-      }
-    }
+  MachineBasicBlock::iterator UseMI;
+  unsigned SReg = findSurvivorReg(I, Candidates, 25, UseMI);
 
-    // If we found an unused register there is no reason to spill it. We have
-    // probably found a callee-saved register that has been saved in the
-    // prologue, but happens to be unused at this point.
-    if (!isAliasUsed(Reg))
-      return Reg;
-
-    if (Dist >= MaxDist) {
-      MaxDist = Dist;
-      MaxUseMI = UseMI;
-      SReg = Reg;
-    }
-    Reg = Candidates.find_next(Reg);
-  }
+  // If we found an unused register there is no reason to spill it. We have
+  // probably found a callee-saved register that has been saved in the
+  // prologue, but happens to be unused at this point.
+  if (!isAliasUsed(SReg))
+    return SReg;
 
   assert(ScavengedReg == 0 &&
          "Scavenger slot is live, unable to scavenge another register!");
@@ -383,10 +364,8 @@ unsigned RegScavenger::scavengeRegister(const TargetRegisterClass *RC,
   TRI->eliminateFrameIndex(II, SPAdj, this);
 
   // Restore the scavenged register before its use (or first terminator).
-  II = MaxUseMI
-    ? MachineBasicBlock::iterator(MaxUseMI) : MBB->getFirstTerminator();
-  TII->loadRegFromStackSlot(*MBB, II, SReg, ScavengingFrameIndex, RC);
-  ScavengeRestore = prior(II);
+  TII->loadRegFromStackSlot(*MBB, UseMI, SReg, ScavengingFrameIndex, RC);
+  ScavengeRestore = prior(UseMI);
   // Doing this here leads to infinite regress.
   // ScavengedReg = SReg;
   ScavengedRC = RC;

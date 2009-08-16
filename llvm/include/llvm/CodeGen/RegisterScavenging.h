@@ -150,6 +150,12 @@ private:
 
   /// Add Reg and its aliases to BV.
   void addRegWithAliases(BitVector &BV, unsigned Reg);
+
+  unsigned findSurvivorReg(MachineBasicBlock::iterator MI,
+                           BitVector &Candidates,
+                           unsigned InstrLimit,
+                           MachineBasicBlock::iterator &UseMI);
+
 };
 
 } // End llvm namespace
