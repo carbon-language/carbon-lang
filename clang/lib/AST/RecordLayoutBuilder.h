@@ -73,7 +73,7 @@ class ASTRecordLayoutBuilder {
   void LayoutNonVirtualBases(const CXXRecordDecl *RD);
   void LayoutBaseNonVirtually(const CXXRecordDecl *RD, bool IsVBase);
   void LayoutVirtualBase(const CXXRecordDecl *RD);
-  void LayoutVirtualBases(const CXXRecordDecl *RD,
+  void LayoutVirtualBases(const CXXRecordDecl *RD, const CXXRecordDecl *PB,
                           int64_t Offset,
                                  llvm::SmallSet<const CXXRecordDecl*, 32> &mark,
                      llvm::SmallSet<const CXXRecordDecl*, 32> &IndirectPrimary);
