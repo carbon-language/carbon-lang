@@ -81,11 +81,11 @@ EmitCopyFromReg(SDNode *Node, unsigned ResNo, bool IsClone, bool IsCloned,
             if (!UseRC)
               UseRC = RC;
             else if (RC) {
-              if (UseRC->hasSuperClass(RC))
-                UseRC = RC;
-              else
-                assert((UseRC == RC || RC->hasSuperClass(UseRC)) &&
-                       "Multiple uses expecting different register classes!");
+              const TargetRegisterClass *ComRC = getCommonSubClass(UseRC, RC);
+              // If multiple uses expect disjoint register classes, we emit
+              // copies in AddRegisterOperand.
+              if (ComRC)
+                UseRC = ComRC;
             }
           }
         }
