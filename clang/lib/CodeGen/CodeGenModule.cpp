@@ -657,6 +657,8 @@ llvm::Constant *CodeGenModule::GetOrCreateLLVMFunction(const char *MangledName,
       else if (!ClassDecl->hasUserDeclaredConstructor())
         DeferredDeclsToEmit.push_back(D);
     }
+    else if (isa<CXXDestructorDecl>(FD)) 
+       DeferredDestructorToEmit(D);
     else if (const CXXMethodDecl *MD = dyn_cast<CXXMethodDecl>(FD))
            if (MD->isCopyAssignment())
              DeferredCopyAssignmentToEmit(D);
@@ -765,6 +767,42 @@ void CodeGenModule::DeferredCopyAssignmentToEmit(GlobalDecl CopyAssignDecl) {
   }
   DeferredDeclsToEmit.push_back(CopyAssignDecl);  
 }
+
+void CodeGenModule::DeferredDestructorToEmit(GlobalDecl DtorDecl) {
+  const CXXDestructorDecl *DD = cast<CXXDestructorDecl>(DtorDecl.getDecl());
+  const CXXRecordDecl *ClassDecl = cast<CXXRecordDecl>(DD->getDeclContext());
+  if (ClassDecl->hasTrivialDestructor() ||
+      ClassDecl->hasUserDeclaredDestructor())
+    return;
+
+  for (CXXRecordDecl::base_class_const_iterator Base = ClassDecl->bases_begin();
+       Base != ClassDecl->bases_end(); ++Base) {
+    CXXRecordDecl *BaseClassDecl
+      = cast<CXXRecordDecl>(Base->getType()->getAs<RecordType>()->getDecl());
+    if (const CXXDestructorDecl *BaseDtor = 
+          BaseClassDecl->getDestructor(Context))
+      GetAddrOfCXXDestructor(BaseDtor, Dtor_Complete);
+  }
+ 
+  for (CXXRecordDecl::field_iterator Field = ClassDecl->field_begin(),
+       FieldEnd = ClassDecl->field_end();
+       Field != FieldEnd; ++Field) {
+    QualType FieldType = Context.getCanonicalType((*Field)->getType());
+    if (const ArrayType *Array = Context.getAsArrayType(FieldType))
+      FieldType = Array->getElementType();
+    if (const RecordType *FieldClassType = FieldType->getAs<RecordType>()) {
+      if ((*Field)->isAnonymousStructOrUnion())
+        continue;
+      CXXRecordDecl *FieldClassDecl
+        = cast<CXXRecordDecl>(FieldClassType->getDecl());
+      if (const CXXDestructorDecl *FieldDtor = 
+            FieldClassDecl->getDestructor(Context))
+        GetAddrOfCXXDestructor(FieldDtor, Dtor_Complete);
+    }
+  }
+  DeferredDeclsToEmit.push_back(DtorDecl);
+}
+
 
 /// GetAddrOfFunction - Return the address of the given function.  If Ty is
 /// non-null, then this function will use the specified type if it has to
