@@ -3336,14 +3336,16 @@ public:
   //===--------------------------------------------------------------------===//
   // Extra semantic analysis beyond the C type system
 private:
-  Action::OwningExprResult CheckFunctionCall(FunctionDecl *FDecl,
-                                             CallExpr *TheCall);
+  bool CheckFunctionCall(FunctionDecl *FDecl, CallExpr *TheCall);
+  bool CheckBlockCall(NamedDecl *NDecl, CallExpr *TheCall);
   
-  Action::OwningExprResult CheckBlockCall(NamedDecl *NDecl, CallExpr *TheCall);
   SourceLocation getLocationOfStringLiteralByte(const StringLiteral *SL,
                                                 unsigned ByteNo) const;
   bool CheckablePrintfAttr(const FormatAttr *Format, CallExpr *TheCall);
   bool CheckObjCString(Expr *Arg);
+
+  Action::OwningExprResult CheckBuiltinFunctionCall(unsigned BuiltinID,
+                                                    CallExpr *TheCall);
   bool SemaBuiltinVAStart(CallExpr *TheCall);
   bool SemaBuiltinUnorderedCompare(CallExpr *TheCall);
   bool SemaBuiltinStackAddress(CallExpr *TheCall);

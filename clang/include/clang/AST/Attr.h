@@ -14,6 +14,9 @@
 #ifndef LLVM_CLANG_AST_ATTR_H
 #define LLVM_CLANG_AST_ATTR_H
 
+#include "llvm/Support/Casting.h"
+using llvm::dyn_cast;
+
 #include <cassert>
 #include <cstring>
 #include <string>
@@ -121,6 +124,13 @@ public:
   const Attr *getNext() const { return Next; }
   void setNext(Attr *next) { Next = next; }
 
+  template<typename T> const T *getNext() const {
+    for (const Attr *attr = getNext(); attr; attr = attr->getNext())
+      if (const T *V = dyn_cast<T>(attr))
+        return V;
+    return 0;
+  }
+  
   bool isInherited() const { return Inherited; }
   void setInherited(bool value) { Inherited = value; }
 

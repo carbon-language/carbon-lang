@@ -4343,7 +4343,10 @@ Sema::BuildCallToMemberFunction(Scope *S, Expr *MemExprE,
                               RParenLoc))
     return true;
 
-  return CheckFunctionCall(Method, TheCall.take()).release();
+  if (CheckFunctionCall(Method, TheCall.get()))
+    return true;
+  
+  return TheCall.release();
 }
 
 /// BuildCallToObjectOfClassType - Build a call to an object of class
@@ -4549,7 +4552,10 @@ Sema::BuildCallToObjectOfClassType(Scope *S, Expr *Object,
 
   if (IsError) return true;
 
-  return CheckFunctionCall(Method, TheCall.take()).release();
+  if (CheckFunctionCall(Method, TheCall.get()))
+    return true;
+
+  return TheCall.release();
 }
 
 /// BuildOverloadedArrowExpr - Build a call to an overloaded @c operator->

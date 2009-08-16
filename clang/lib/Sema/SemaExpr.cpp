@@ -2929,11 +2929,18 @@ Sema::ActOnCallExpr(Scope *S, ExprArg fn, SourceLocation LParenLoc,
   // Check for sentinels
   if (NDecl)
     DiagnoseSentinelCalls(NDecl, LParenLoc, Args, NumArgs);
+  
   // Do special checking on direct calls to functions.
-  if (FDecl)
-    return CheckFunctionCall(FDecl, TheCall.take());
-  if (NDecl)
-    return CheckBlockCall(NDecl, TheCall.take());
+  if (FDecl) {
+    if (CheckFunctionCall(FDecl, TheCall.get()))
+      return ExprError();
+    
+    if (unsigned BuiltinID = FDecl->getBuiltinID(Context)) 
+      return CheckBuiltinFunctionCall(BuiltinID, TheCall.take());
+  } else if (NDecl) {
+    if (CheckBlockCall(NDecl, TheCall.get()))
+      return ExprError();
+  }
 
   return Owned(TheCall.take());
 }

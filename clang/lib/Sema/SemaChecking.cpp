@@ -100,31 +100,22 @@ bool Sema::CheckablePrintfAttr(const FormatAttr *Format, CallExpr *TheCall) {
   return false;
 }
 
-/// CheckFunctionCall - Check a direct function call for various correctness
-/// and safety properties not strictly enforced by the C type system.
 Action::OwningExprResult
-Sema::CheckFunctionCall(FunctionDecl *FDecl, CallExpr *TheCall) {
+Sema::CheckBuiltinFunctionCall(unsigned BuiltinID, CallExpr *TheCall) {
   OwningExprResult TheCallResult(Owned(TheCall));
-  // Get the IdentifierInfo* for the called function.
-  IdentifierInfo *FnInfo = FDecl->getIdentifier();
 
-  // None of the checks below are needed for functions that don't have
-  // simple names (e.g., C++ conversion functions).
-  if (!FnInfo)
-    return move(TheCallResult);
-
-  switch (FDecl->getBuiltinID(Context)) {
+  switch (BuiltinID) {
   case Builtin::BI__builtin___CFStringMakeConstantString:
     assert(TheCall->getNumArgs() == 1 &&
            "Wrong # arguments to builtin CFStringMakeConstantString");
     if (CheckObjCString(TheCall->getArg(0)))
       return ExprError();
-    return move(TheCallResult);
+    break;
   case Builtin::BI__builtin_stdarg_start:
   case Builtin::BI__builtin_va_start:
     if (SemaBuiltinVAStart(TheCall))
       return ExprError();
-    return move(TheCallResult);
+    break;
   case Builtin::BI__builtin_isgreater:
   case Builtin::BI__builtin_isgreaterequal:
   case Builtin::BI__builtin_isless:
@@ -133,12 +124,12 @@ Sema::CheckFunctionCall(FunctionDecl *FDecl, CallExpr *TheCall) {
   case Builtin::BI__builtin_isunordered:
     if (SemaBuiltinUnorderedCompare(TheCall))
       return ExprError();
-    return move(TheCallResult);
+    break;
   case Builtin::BI__builtin_return_address:
   case Builtin::BI__builtin_frame_address:
     if (SemaBuiltinStackAddress(TheCall))
       return ExprError();
-    return move(TheCallResult);
+    break;
   case Builtin::BI__builtin_shufflevector:
     return SemaBuiltinShuffleVector(TheCall);
     // TheCall will be freed by the smart pointer here, but that's fine, since
@@ -146,15 +137,15 @@ Sema::CheckFunctionCall(FunctionDecl *FDecl, CallExpr *TheCall) {
   case Builtin::BI__builtin_prefetch:
     if (SemaBuiltinPrefetch(TheCall))
       return ExprError();
-    return move(TheCallResult);
+    break;
   case Builtin::BI__builtin_object_size:
     if (SemaBuiltinObjectSize(TheCall))
       return ExprError();
-    return move(TheCallResult);
+    break;
   case Builtin::BI__builtin_longjmp:
     if (SemaBuiltinLongjmp(TheCall))
       return ExprError();
-    return move(TheCallResult);
+    break;
   case Builtin::BI__sync_fetch_and_add:
   case Builtin::BI__sync_fetch_and_sub:
   case Builtin::BI__sync_fetch_and_or:
@@ -173,9 +164,23 @@ Sema::CheckFunctionCall(FunctionDecl *FDecl, CallExpr *TheCall) {
   case Builtin::BI__sync_lock_release:
     if (SemaBuiltinAtomicOverloaded(TheCall))
       return ExprError();
-    return move(TheCallResult);
+    break;
   }
+  
+  return move(TheCallResult);
+}
 
+/// CheckFunctionCall - Check a direct function call for various correctness
+/// and safety properties not strictly enforced by the C type system.
+bool Sema::CheckFunctionCall(FunctionDecl *FDecl, CallExpr *TheCall) {
+  // Get the IdentifierInfo* for the called function.
+  IdentifierInfo *FnInfo = FDecl->getIdentifier();
+
+  // None of the checks below are needed for functions that don't have
+  // simple names (e.g., C++ conversion functions).
+  if (!FnInfo)
+    return false;
+  
   // FIXME: This mechanism should be abstracted to be less fragile and
   // more efficient. For example, just map function ids to custom
   // handlers.
@@ -193,41 +198,42 @@ Sema::CheckFunctionCall(FunctionDecl *FDecl, CallExpr *TheCall) {
                            HasVAListArg ? 0 : Format->getFirstArg() - 1);
     }
   }
-  for (const Attr *attr = FDecl->getAttrs(); 
-       attr; attr = attr->getNext()) {
-    if (const NonNullAttr *NonNull = dyn_cast<NonNullAttr>(attr))
-      CheckNonNullArguments(NonNull, TheCall);
-  }
+  
+  for (const NonNullAttr *NonNull = FDecl->getAttr<NonNullAttr>(); NonNull; 
+       NonNull = NonNull->getNext<NonNullAttr>())
+    CheckNonNullArguments(NonNull, TheCall);
 
-  return move(TheCallResult);
+  return false;
 }
 
-Action::OwningExprResult
-Sema::CheckBlockCall(NamedDecl *NDecl, CallExpr *TheCall) {
-
-  OwningExprResult TheCallResult(Owned(TheCall));
+bool Sema::CheckBlockCall(NamedDecl *NDecl, CallExpr *TheCall) {
   // Printf checking.
   const FormatAttr *Format = NDecl->getAttr<FormatAttr>();
   if (!Format)
-    return move(TheCallResult);
+    return false;
+  
   const VarDecl *V = dyn_cast<VarDecl>(NDecl);
   if (!V)
-    return move(TheCallResult);
+    return false;
+  
   QualType Ty = V->getType();
   if (!Ty->isBlockPointerType())
-    return move(TheCallResult);
-  if (CheckablePrintfAttr(Format, TheCall)) {
-      bool HasVAListArg = Format->getFirstArg() == 0;
-      if (!HasVAListArg) {
-        const FunctionType *FT = 
-          Ty->getAs<BlockPointerType>()->getPointeeType()->getAsFunctionType();
-        if (const FunctionProtoType *Proto = dyn_cast<FunctionProtoType>(FT))
-          HasVAListArg = !Proto->isVariadic();
-      }
-      CheckPrintfArguments(TheCall, HasVAListArg, Format->getFormatIdx() - 1,
-                           HasVAListArg ? 0 : Format->getFirstArg() - 1);
+    return false;
+  
+  if (!CheckablePrintfAttr(Format, TheCall))
+    return false;
+  
+  bool HasVAListArg = Format->getFirstArg() == 0;
+  if (!HasVAListArg) {
+    const FunctionType *FT = 
+      Ty->getAs<BlockPointerType>()->getPointeeType()->getAsFunctionType();
+    if (const FunctionProtoType *Proto = dyn_cast<FunctionProtoType>(FT))
+      HasVAListArg = !Proto->isVariadic();
   }
-  return move(TheCallResult);
+  CheckPrintfArguments(TheCall, HasVAListArg, Format->getFormatIdx() - 1,
+                       HasVAListArg ? 0 : Format->getFirstArg() - 1);
+
+  return false;
 }
 
 /// SemaBuiltinAtomicOverloaded - We have a call to a function like
