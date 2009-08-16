@@ -31,6 +31,7 @@ class MCContext;
 class MCInst;
 class MCOperand;
 class MCStreamer;
+class MCSymbol;
 
 class VISIBILITY_HIDDEN X86ATTAsmPrinter : public AsmPrinter {
   const X86Subtarget *Subtarget;
@@ -67,7 +68,9 @@ class VISIBILITY_HIDDEN X86ATTAsmPrinter : public AsmPrinter {
   
   // New MCInst printing stuff.
   void printInstruction(const MCInst *MI);
+  MCSymbol *GetPICBaseSymbol();
   MCOperand LowerGlobalAddressOperand(const MachineOperand &MO);
+  MCOperand LowerExternalSymbolOperand(const MachineOperand &MO);
 
   virtual void printMCInst(const MCInst *MI) { printInstruction(MI); }
 
