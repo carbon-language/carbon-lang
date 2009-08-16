@@ -388,9 +388,22 @@ CAMLprim LLVMValueRef llvm_const_of_int64(LLVMTypeRef IntTy, value N,
   return LLVMConstInt(IntTy, Int64_val(N), Bool_val(SExt));
 }
 
+/* lltype -> string -> int -> llvalue */
+CAMLprim LLVMValueRef llvm_const_int_of_string(LLVMTypeRef IntTy, value S,
+                                               value Radix) {
+  return LLVMConstIntOfStringAndSize(IntTy, String_val(S), caml_string_length(S),
+                                     Int_val(Radix));
+}
+
 /* lltype -> float -> llvalue */
 CAMLprim LLVMValueRef llvm_const_float(LLVMTypeRef RealTy, value N) {
   return LLVMConstReal(RealTy, Double_val(N));
+}
+
+/* lltype -> string -> llvalue */
+CAMLprim LLVMValueRef llvm_const_float_of_string(LLVMTypeRef RealTy, value S) {
+  return LLVMConstRealOfStringAndSize(RealTy, String_val(S),
+                                      caml_string_length(S));
 }
 
 /*--... Operations on composite constants ..................................--*/

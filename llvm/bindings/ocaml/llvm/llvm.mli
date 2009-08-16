@@ -469,9 +469,19 @@ external const_int : lltype -> int -> llvalue = "llvm_const_int"
 external const_of_int64 : lltype -> Int64.t -> bool -> llvalue
                         = "llvm_const_of_int64"
 
+(** [const_int_of_string ty s r] returns the integer constant of type [ty] and
+ * value [s], with the radix [r]. See the method [llvm::ConstantInt::get]. *)
+external const_int_of_string : lltype -> string -> int -> llvalue
+                   = "llvm_const_int_of_string"
+
 (** [const_float ty n] returns the floating point constant of type [ty] and
     value [n]. See the method [llvm::ConstantFP::get]. *)
 external const_float : lltype -> float -> llvalue = "llvm_const_float"
+
+(** [const_float_of_string ty s] returns the floating point constant of type
+    [ty] and value [n]. See the method [llvm::ConstantFP::get]. *)
+external const_float_of_string : lltype -> string -> llvalue
+                               = "llvm_const_float_of_string"
 
 
 (** {7 Operations on composite constants} *)

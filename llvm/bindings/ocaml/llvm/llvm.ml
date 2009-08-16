@@ -237,7 +237,11 @@ external is_undef : llvalue -> bool = "llvm_is_undef"
 external const_int : lltype -> int -> llvalue = "llvm_const_int"
 external const_of_int64 : lltype -> Int64.t -> bool -> llvalue
                         = "llvm_const_of_int64"
+external const_int_of_string : lltype -> string -> int -> llvalue
+                             = "llvm_const_int_of_string"
 external const_float : lltype -> float -> llvalue = "llvm_const_float"
+external const_float_of_string : lltype -> string -> llvalue
+                               = "llvm_const_float_of_string"
 
 (*--... Operations on composite constants ..................................--*)
 external const_string : string -> llvalue = "llvm_const_string"

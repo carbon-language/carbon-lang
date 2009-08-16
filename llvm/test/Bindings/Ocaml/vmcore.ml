@@ -212,6 +212,13 @@ let test_constants () =
   ignore (define_global "Const03" c m);
   insist (i64_type = type_of c);
 
+  (* RUN: grep {ConstIntString.*i32.*-1} < %t.ll
+   *)
+  group "int string";
+  let c = const_int_of_string i32_type "-1" 10 in
+  ignore (define_global "ConstIntString" c m);
+  insist (i32_type = type_of c);
+
   (* RUN: grep {Const04.*"cruel\\\\00world"} < %t.ll
    *)
   group "string";
@@ -228,6 +235,7 @@ let test_constants () =
 
   (* RUN: grep {ConstSingle.*2.75} < %t.ll
    * RUN: grep {ConstDouble.*3.1459} < %t.ll
+   * RUN: grep {ConstDoubleString.*1.25} < %t.ll
    *)
   begin group "real";
     let cs = const_float float_type 2.75 in
@@ -236,6 +244,10 @@ let test_constants () =
     
     let cd = const_float double_type 3.1459 in
     ignore (define_global "ConstDouble" cd m);
+    insist (double_type = type_of cd);
+
+    let cd = const_float_of_string double_type "1.25" in
+    ignore (define_global "ConstDoubleString" cd m);
     insist (double_type = type_of cd)
   end;
   
