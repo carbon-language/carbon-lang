@@ -902,11 +902,7 @@ Sema::PerformImplicitConversion(Expr *&From, QualType ToType,
     // FIXME: When can ToType be a reference type?
     assert(!ToType->isReferenceType());
     
-    // FIXME: Keep track of whether the copy constructor is elidable or not.
-    bool Elidable = (isa<CallExpr>(From) || 
-                     isa<CXXTemporaryObjectExpr>(From));
-    From = BuildCXXConstructExpr(ToType, SCS.CopyConstructor, 
-                                 Elidable, &From, 1);
+    From = BuildCXXConstructExpr(ToType, SCS.CopyConstructor, &From, 1);
     return false;
   }
 

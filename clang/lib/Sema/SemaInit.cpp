@@ -176,10 +176,7 @@ bool Sema::CheckInitializerTypes(Expr *&Init, QualType &DeclType,
                                              DirectInit? IK_Direct : IK_Copy);
         if (!Constructor)
           return true;
-        bool Elidable = (isa<CallExpr>(Init) || 
-                         isa<CXXTemporaryObjectExpr>(Init));
-        Init = BuildCXXConstructExpr(DeclType, Constructor, Elidable, &Init, 1);
-        Init = MaybeCreateCXXExprWithTemporaries(Init, /*DestroyTemps=*/true);
+        Init = BuildCXXConstructExpr(DeclType, Constructor, &Init, 1);
         return false;
       }
       

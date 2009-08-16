@@ -503,7 +503,7 @@ public:
   // argument locations.
   llvm::DenseMap<ParmVarDecl *,SourceLocation> UnparsedDefaultArgLocs;
 
-  virtual void AddInitializerToDecl(DeclPtrTy dcl, FullExprArg init);
+  virtual void AddInitializerToDecl(DeclPtrTy dcl, ExprArg init);
   void AddInitializerToDecl(DeclPtrTy dcl, ExprArg init, bool DirectInit);
   void ActOnUninitializedDecl(DeclPtrTy dcl, bool TypeContainsUndeducedAuto);
   virtual void SetDeclDeleted(DeclPtrTy dcl, SourceLocation DelLoc);
@@ -1689,15 +1689,17 @@ public:
                                     CXXConstructorDecl *Constructor,
                                     QualType DeclInitType, 
                                     Expr **Exprs, unsigned NumExprs);
-  
+
+  Expr *BuildCXXConstructExpr(QualType DeclInitType,
+                              CXXConstructorDecl *Constructor,
+                              Expr **Exprs, unsigned NumExprs);
+
   /// BuildCXXConstructExpr - Creates a complete call to a constructor,
   /// including handling of its default argument expressions.
   Expr *BuildCXXConstructExpr(QualType DeclInitType,
                               CXXConstructorDecl *Constructor,
                               bool Elidable,
                               Expr **Exprs, unsigned NumExprs);
-
-  Expr *BuildCXXCopyConstructExpr(Expr *Expr);
   
   /// FinalizeVarWithDestructor - Prepare for calling destructor on the
   /// constructed variable.

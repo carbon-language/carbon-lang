@@ -2996,8 +2996,8 @@ bool Sema::CheckForConstantInitializer(Expr *Init, QualType DclT) {
   return true;
 }
 
-void Sema::AddInitializerToDecl(DeclPtrTy dcl, FullExprArg init) {
-  AddInitializerToDecl(dcl, init.release(), /*DirectInit=*/false);
+void Sema::AddInitializerToDecl(DeclPtrTy dcl, ExprArg init) {
+  AddInitializerToDecl(dcl, move(init), /*DirectInit=*/false);
 }
 
 /// AddInitializerToDecl - Adds the initializer Init to the
@@ -3160,6 +3160,8 @@ void Sema::AddInitializerToDecl(DeclPtrTy dcl, ExprArg init, bool DirectInit) {
     Init->setType(DclT);
   }
     
+  Init = MaybeCreateCXXExprWithTemporaries(Init, 
+                                           /*ShouldDestroyTemporaries=*/true);
   // Attach the initializer to the decl.
   VDecl->setInit(Context, Init);
 

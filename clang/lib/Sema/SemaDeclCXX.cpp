@@ -2377,6 +2377,32 @@ void Sema::DefineImplicitCopyConstructor(SourceLocation CurrentLocation,
   CopyConstructor->setUsed();
 }
 
+Expr *Sema::BuildCXXConstructExpr(QualType DeclInitType,
+                                  CXXConstructorDecl *Constructor,
+                                  Expr **Exprs, unsigned NumExprs) {
+  bool Elidable = false;
+  
+  // [class.copy]p15:
+  // Whenever a temporary class object is copied using a copy constructor, and 
+  // this object and the copy have the same cv-unqualified type, an 
+  // implementation is permitted to treat the original and the copy as two
+  // different ways of referring to the same object and not perform a copy at
+  //all, even if the class copy constructor or destructor have side effects.
+  
+  // FIXME: Is this enough?
+  if (Constructor->isCopyConstructor(Context) && NumExprs == 1) {
+    Expr *E = Exprs[0];
+    while (CXXBindTemporaryExpr *BE = dyn_cast<CXXBindTemporaryExpr>(E))
+      E = BE->getSubExpr();
+    
+    if (isa<CallExpr>(E) || isa<CXXTemporaryObjectExpr>(E))
+      Elidable = true;
+  }
+  
+  return BuildCXXConstructExpr(DeclInitType, Constructor, Elidable,
+                               Exprs, NumExprs);
+}
+
 /// BuildCXXConstructExpr - Creates a complete call to a constructor,
 /// including handling of its default argument expressions.
 Expr *Sema::BuildCXXConstructExpr(QualType DeclInitType, 
@@ -2413,7 +2439,7 @@ void Sema::InitializeVarWithConstructor(VarDecl *VD,
                                         QualType DeclInitType, 
                                         Expr **Exprs, unsigned NumExprs) {
   Expr *Temp = BuildCXXConstructExpr(DeclInitType, Constructor, 
-                                     false, Exprs, NumExprs);  
+                                     Exprs, NumExprs);  
   MarkDeclarationReferenced(VD->getLocation(), Constructor);
   Temp = MaybeCreateCXXExprWithTemporaries(Temp, /*DestroyTemps=*/true);
   VD->setInit(Context, Temp);

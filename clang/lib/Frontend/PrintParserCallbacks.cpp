@@ -109,7 +109,7 @@ namespace {
     /// This allows ActOnDeclarator to register "xx" prior to parsing the
     /// initializer. The declaration above should still result in a warning, 
     /// since the reference to "xx" is uninitialized.
-    virtual void AddInitializerToDecl(DeclPtrTy Dcl, FullExprArg Init) {
+    virtual void AddInitializerToDecl(DeclPtrTy Dcl, ExprArg Init) {
       Out << __FUNCTION__ << "\n";
     }
 
