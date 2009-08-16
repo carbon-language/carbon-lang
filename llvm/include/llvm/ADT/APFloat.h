@@ -109,6 +109,7 @@ namespace llvm {
   typedef signed short exponent_t;
 
   struct fltSemantics;
+  struct StringRef;
 
   /* When bits of a floating point number are truncated, this enum is
      used to indicate what fraction of the LSB those bits represented.
@@ -172,7 +173,7 @@ namespace llvm {
     };
 
     // Constructors.
-    APFloat(const fltSemantics &, const char *);
+    APFloat(const fltSemantics &, const StringRef &);
     APFloat(const fltSemantics &, integerPart);
     APFloat(const fltSemantics &, fltCategory, bool negative, unsigned type=0);
     explicit APFloat(double d);
@@ -234,7 +235,7 @@ namespace llvm {
                                             bool, roundingMode);
     opStatus convertFromZeroExtendedInteger(const integerPart *, unsigned int,
                                             bool, roundingMode);
-    opStatus convertFromString(const char *, roundingMode);
+    opStatus convertFromString(const StringRef&, roundingMode);
     APInt bitcastToAPInt() const;
     double convertToDouble() const;
     float convertToFloat() const;
@@ -312,8 +313,8 @@ namespace llvm {
                                           roundingMode, bool *) const;
     opStatus convertFromUnsignedParts(const integerPart *, unsigned int,
                                       roundingMode);
-    opStatus convertFromHexadecimalString(const char *, roundingMode);
-    opStatus convertFromDecimalString (const char *, roundingMode);
+    opStatus convertFromHexadecimalString(const StringRef&, roundingMode);
+    opStatus convertFromDecimalString (const StringRef&, roundingMode);
     char *convertNormalToHexString(char *, unsigned int, bool,
                                    roundingMode) const;
     opStatus roundSignificandWithExponent(const integerPart *, unsigned int,
