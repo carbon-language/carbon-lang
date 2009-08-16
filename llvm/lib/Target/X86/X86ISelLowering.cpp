@@ -1541,29 +1541,32 @@ X86TargetLowering::LowerFormalArguments(SDValue Chain,
         Offset += 8;
       }
 
-      if (!MemOps.empty())
-          Chain = DAG.getNode(ISD::TokenFactor, dl, MVT::Other,
-                             &MemOps[0], MemOps.size());
+      if (TotalNumXMMRegs != 0 && NumXMMRegs != TotalNumXMMRegs) {
+        // Now store the XMM (fp + vector) parameter registers.
+        SmallVector<SDValue, 11> SaveXMMOps;
+        SaveXMMOps.push_back(Chain);
 
-      // Now store the XMM (fp + vector) parameter registers.
-      SmallVector<SDValue, 11> SaveXMMOps;
-      SaveXMMOps.push_back(Chain);
+        unsigned AL = MF.addLiveIn(X86::AL, X86::GR8RegisterClass);
+        SDValue ALVal = DAG.getCopyFromReg(DAG.getEntryNode(), dl, AL, MVT::i8);
+        SaveXMMOps.push_back(ALVal);
 
-      unsigned AL = MF.addLiveIn(X86::AL, X86::GR8RegisterClass);
-      SDValue ALVal = DAG.getCopyFromReg(DAG.getEntryNode(), dl, AL, MVT::i8);
-      SaveXMMOps.push_back(ALVal);
+        SaveXMMOps.push_back(DAG.getIntPtrConstant(RegSaveFrameIndex));
+        SaveXMMOps.push_back(DAG.getIntPtrConstant(VarArgsFPOffset));
 
-      SaveXMMOps.push_back(DAG.getIntPtrConstant(RegSaveFrameIndex));
-      SaveXMMOps.push_back(DAG.getIntPtrConstant(VarArgsFPOffset));
-
-      for (; NumXMMRegs != TotalNumXMMRegs; ++NumXMMRegs) {
-        unsigned VReg = MF.addLiveIn(XMMArgRegs[NumXMMRegs],
-                                     X86::VR128RegisterClass);
-        SDValue Val = DAG.getCopyFromReg(Chain, dl, VReg, MVT::v4f32);
-        SaveXMMOps.push_back(Val);
+        for (; NumXMMRegs != TotalNumXMMRegs; ++NumXMMRegs) {
+          unsigned VReg = MF.addLiveIn(XMMArgRegs[NumXMMRegs],
+                                       X86::VR128RegisterClass);
+          SDValue Val = DAG.getCopyFromReg(Chain, dl, VReg, MVT::v4f32);
+          SaveXMMOps.push_back(Val);
+        }
+        MemOps.push_back(DAG.getNode(X86ISD::VASTART_SAVE_XMM_REGS, dl,
+                                     MVT::Other,
+                                     &SaveXMMOps[0], SaveXMMOps.size()));
       }
-      Chain = DAG.getNode(X86ISD::VASTART_SAVE_XMM_REGS, dl, MVT::Other,
-                          &SaveXMMOps[0], SaveXMMOps.size());
+
+      if (!MemOps.empty())
+        Chain = DAG.getNode(ISD::TokenFactor, dl, MVT::Other,
+                            &MemOps[0], MemOps.size());
     }
   }
 
