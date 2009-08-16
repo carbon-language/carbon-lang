@@ -602,6 +602,11 @@ public:
   /// independent way (Note: the return type is an i64).
   ///
   static Constant* getSizeOf(const Type* Ty);
+
+  /// getOffsetOf constant expr - computes the offset of a field in a target
+  /// independent way (Note: the return type is an i64).
+  ///
+  static Constant* getOffsetOf(const StructType* Ty, unsigned FieldNo);
   
   static Constant* getNeg(Constant* C);
   static Constant* getFNeg(Constant* C);
