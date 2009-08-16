@@ -15,7 +15,7 @@
 #include "clang/AST/APValue.h"
 #include "clang/AST/ASTContext.h"
 #include "clang/AST/DeclObjC.h"
-#include "clang/AST/Expr.h"
+#include "clang/AST/ExprObjC.h"
 #include "clang/AST/StmtObjC.h"
 #include "clang/AST/StmtCXX.h"
 #include "clang/Basic/TargetInfo.h"
@@ -65,7 +65,15 @@ void Sema::DiagnoseUnusedExprResult(const Stmt *S) {
   if (!E->isUnusedResultAWarning(Loc, R1, R2))
     return;
   
-  Diag(Loc, diag::warn_unused_expr) << R1 << R2;
+  // Okay, we have an unused result.  Depending on what the base expression is,
+  // we might want to make a more specific diagnostic.  Check for one of these
+  // cases now.
+  unsigned DiagID = diag::warn_unused_expr;
+  E = E->IgnoreParens();
+  if (isa<ObjCKVCRefExpr>(E))
+    DiagID = diag::warn_unused_property_expr;
+  
+  Diag(Loc, DiagID) << R1 << R2;
 }
 
 Action::OwningStmtResult

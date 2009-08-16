@@ -1687,6 +1687,9 @@ def ext_typecheck_expression_not_constant_but_accepted : Extension<
   "expression is not a constant, but is accepted as one by GNU extensions">;
 def warn_unused_expr : Warning<"expression result unused">,
   InGroup<UnusedValue>;
+def warn_unused_property_expr : Warning<
+  "property access result unused - getters should not have side effects">,
+  InGroup<UnusedValue>;
 
 def err_incomplete_type_used_in_type_trait_expr : Error<
   "incomplete type %0 used in type trait expression">;

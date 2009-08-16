@@ -25,7 +25,7 @@ int test1(void) {
 @end
 
 void test2() {
-  @"pointless example call for test purposes".length; // expected-warning {{expression result unused}}
+  @"pointless example call for test purposes".length; // expected-warning {{property access result unused - getters should not have side effects}}
 }
 
 
