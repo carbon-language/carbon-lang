@@ -1324,6 +1324,12 @@ val position_at_end : llbasicblock -> llbuilder -> unit
     See the method [llvm::LLVMBuilder::GetInsertBlock]. *)
 external insertion_block : llbuilder -> llbasicblock = "llvm_insertion_block"
 
+(** [insert_into_builder i name b] inserts the specified instruction [i] at the
+    position specified by the instruction builder [b].
+    See the method [llvm::LLVMBuilder::Insert]. *)
+external insert_into_builder : llvalue -> string -> llbuilder -> unit
+                             = "llvm_insert_into_builder"
+
 
 (** {7 Terminators} *)
 

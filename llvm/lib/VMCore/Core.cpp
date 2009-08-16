@@ -1464,6 +1464,11 @@ void LLVMInsertIntoBuilder(LLVMBuilderRef Builder, LLVMValueRef Instr) {
   unwrap(Builder)->Insert(unwrap<Instruction>(Instr));
 }
 
+void LLVMInsertIntoBuilderWithName(LLVMBuilderRef Builder, LLVMValueRef Instr,
+                                   const char *Name) {
+  unwrap(Builder)->Insert(unwrap<Instruction>(Instr), Name);
+}
+
 void LLVMDisposeBuilder(LLVMBuilderRef Builder) {
   delete unwrap(Builder);
 }

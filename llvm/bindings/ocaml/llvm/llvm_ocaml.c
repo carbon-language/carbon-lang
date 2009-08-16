@@ -917,6 +917,13 @@ CAMLprim LLVMBasicBlockRef llvm_insertion_block(LLVMBuilderRef B) {
   return InsertBlock;
 }
 
+/* llvalue -> string -> llbuilder -> unit */
+CAMLprim value llvm_insert_into_builder(LLVMValueRef I, value Name,
+                                               LLVMBuilderRef B) {
+  LLVMInsertIntoBuilderWithName(B, I, String_val(Name));
+  return Val_unit;
+}
+
 /*--... Terminators ........................................................--*/
 
 /* llbuilder -> llvalue */

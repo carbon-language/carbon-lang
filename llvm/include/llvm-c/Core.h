@@ -658,6 +658,8 @@ void LLVMPositionBuilderAtEnd(LLVMBuilderRef Builder, LLVMBasicBlockRef Block);
 LLVMBasicBlockRef LLVMGetInsertBlock(LLVMBuilderRef Builder);
 void LLVMClearInsertionPosition(LLVMBuilderRef Builder);
 void LLVMInsertIntoBuilder(LLVMBuilderRef Builder, LLVMValueRef Instr);
+void LLVMInsertIntoBuilderWithName(LLVMBuilderRef Builder, LLVMValueRef Instr,
+                                   const char *Name);
 void LLVMDisposeBuilder(LLVMBuilderRef Builder);
 
 /* Terminators */

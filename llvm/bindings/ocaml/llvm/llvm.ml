@@ -654,6 +654,8 @@ external builder : unit -> llbuilder = "llvm_builder"
 external position_builder : (llbasicblock, llvalue) llpos -> llbuilder -> unit
                           = "llvm_position_builder"
 external insertion_block : llbuilder -> llbasicblock = "llvm_insertion_block"
+external insert_into_builder : llvalue -> string -> llbuilder -> unit
+                             = "llvm_insert_into_builder"
 
 let builder_at ip =
   let b = builder () in
