@@ -506,10 +506,11 @@ bool Sema::FindAllocationFunctions(SourceLocation StartLoc, SourceRange Range,
   // We don't care about the actual value of this argument.
   // FIXME: Should the Sema create the expression and embed it in the syntax
   // tree? Or should the consumer just recalculate the value?
-  AllocArgs[0] = new (Context) IntegerLiteral(llvm::APInt::getNullValue(
-                                        Context.Target.getPointerWidth(0)),
-                                    Context.getSizeType(),
-                                    SourceLocation());
+  IntegerLiteral Size(llvm::APInt::getNullValue(
+                      Context.Target.getPointerWidth(0)),
+                      Context.getSizeType(),
+                      SourceLocation());
+  AllocArgs[0] = &Size;
   std::copy(PlaceArgs, PlaceArgs + NumPlaceArgs, AllocArgs.begin() + 1);
 
   DeclarationName NewName = Context.DeclarationNames.getCXXOperatorName(
@@ -538,9 +539,6 @@ bool Sema::FindAllocationFunctions(SourceLocation StartLoc, SourceRange Range,
   if (NumPlaceArgs > 0)
     std::copy(&AllocArgs[1], AllocArgs.end(), PlaceArgs);
   
-  // FIXME: This is leaked on error. But so much is currently in Sema that it's
-  // easier to clean it in one go.
-  AllocArgs[0]->Destroy(Context);
   return false;
 }
 
@@ -696,6 +694,8 @@ Sema::ActOnCXXDelete(SourceLocation StartLoc, bool UseGlobal,
   //   type void."
   // DR599 amends "pointer type" to "pointer to object type" in both cases.
 
+  FunctionDecl *OperatorDelete = 0;
+  
   Expr *Ex = (Expr *)Operand.get();
   if (!Ex->isTypeDependent()) {
     QualType Type = Ex->getType();
@@ -718,14 +718,45 @@ Sema::ActOnCXXDelete(SourceLocation StartLoc, bool UseGlobal,
                                  Ex->getSourceRange()))
       return ExprError();
 
-    // FIXME: Look up the correct operator delete overload and pass a pointer
-    // along.
+    // FIXME: This should be shared with the code for finding the delete 
+    // operator in ActOnCXXNew.
+    IntegerLiteral Size(llvm::APInt::getNullValue(
+                        Context.Target.getPointerWidth(0)),
+                        Context.getSizeType(),
+                        SourceLocation());
+    ImplicitCastExpr Cast(Context.getPointerType(Context.VoidTy),
+                          CastExpr::CK_Unknown, &Size, false);
+    Expr *DeleteArg = &Cast;
+    
+    DeclarationName DeleteName = Context.DeclarationNames.getCXXOperatorName(
+                                      ArrayForm ? OO_Array_Delete : OO_Delete);
+
+    if (Pointee->isRecordType() && !UseGlobal) {
+      CXXRecordDecl *Record 
+        = cast<CXXRecordDecl>(Pointee->getAs<RecordType>()->getDecl());
+      // FIXME: We fail to find inherited overloads.
+      if (FindAllocationOverload(StartLoc, SourceRange(), DeleteName,
+                                 &DeleteArg, 1, Record, /*AllowMissing=*/true,
+                                 OperatorDelete))
+        return ExprError();
+    }
+    
+    if (!OperatorDelete) {
+      // Didn't find a member overload. Look for a global one.
+      DeclareGlobalNewDelete();
+      DeclContext *TUDecl = Context.getTranslationUnitDecl();
+      if (FindAllocationOverload(StartLoc, SourceRange(), DeleteName, 
+                                 &DeleteArg, 1, TUDecl, /*AllowMissing=*/false,
+                                 OperatorDelete))
+        return ExprError();
+    }
+    
     // FIXME: Check access and ambiguity of operator delete and destructor.
   }
 
   Operand.release();
   return Owned(new (Context) CXXDeleteExpr(Context.VoidTy, UseGlobal, ArrayForm,
-                                           0, Ex, StartLoc));
+                                           OperatorDelete, Ex, StartLoc));
 }
 
 
