@@ -687,6 +687,43 @@ static void lower_lea64_32mem(MCInst *MI, unsigned OpNo) {
   }
 }
 
+/// LowerGlobalAddressOperand - Lower an MO_GlobalAddress operand to an
+/// MCOperand.
+MCOperand X86ATTAsmPrinter::LowerGlobalAddressOperand(const MachineOperand &MO){
+  //OutContext
+  const GlobalValue *GV = MO.getGlobal();
+  
+  const char *Suffix = "";
+  if (MO.getTargetFlags() == X86II::MO_DARWIN_STUB)
+    Suffix = "$stub";
+  else if (MO.getTargetFlags() == X86II::MO_DARWIN_NONLAZY ||
+           MO.getTargetFlags() == X86II::MO_DARWIN_NONLAZY_PIC_BASE ||
+           MO.getTargetFlags() == X86II::MO_DARWIN_HIDDEN_NONLAZY ||
+           MO.getTargetFlags() == X86II::MO_DARWIN_HIDDEN_NONLAZY_PIC_BASE)
+    Suffix = "$non_lazy_ptr";
+  
+  std::string Name = Mang->getMangledName(GV, Suffix, Suffix[0] != '\0');
+  if (Subtarget->isTargetCygMing())
+    DecorateCygMingName(Name, GV);
+  
+  // Handle dllimport linkage.
+  if (MO.getTargetFlags() == X86II::MO_DLLIMPORT)
+    Name = "__imp_" + Name;
+  
+  if (MO.getTargetFlags() == X86II::MO_DARWIN_NONLAZY ||
+      MO.getTargetFlags() == X86II::MO_DARWIN_NONLAZY_PIC_BASE)
+    GVStubs[Name] = Mang->getMangledName(GV);
+  else if (MO.getTargetFlags() == X86II::MO_DARWIN_HIDDEN_NONLAZY ||
+           MO.getTargetFlags() == X86II::MO_DARWIN_HIDDEN_NONLAZY_PIC_BASE)
+    HiddenGVStubs[Name] = Mang->getMangledName(GV);
+  else if (MO.getTargetFlags() == X86II::MO_DARWIN_STUB)
+    FnStubs[Name] = Mang->getMangledName(GV);
+  
+  // Create a symbol for the name.
+  MCSymbol *Sym = OutContext.GetOrCreateSymbol(Name);
+  return MCOperand::CreateMCValue(MCValue::get(Sym, 0, MO.getOffset()));
+}
+
 /// printMachineInstruction -- Print out a single X86 LLVM instruction MI in
 /// AT&T syntax to the current output stream.
 ///
@@ -718,15 +755,24 @@ void X86ATTAsmPrinter::printMachineInstruction(const MachineInstr *MI) {
       const MachineOperand &MO = MI->getOperand(i);
       
       MCOperand MCOp;
-      if (MO.isReg()) {
+      switch (MO.getType()) {
+      default:
+        O.flush();
+        errs() << "Cannot lower operand #" << i << " of :" << *MI;
+        llvm_unreachable("Unimp");
+      case MachineOperand::MO_Register:
         MCOp = MCOperand::CreateReg(MO.getReg());
-      } else if (MO.isImm()) {
+        break;
+      case MachineOperand::MO_Immediate:
         MCOp = MCOperand::CreateImm(MO.getImm());
-      } else if (MO.isMBB()) {
+        break;
+      case MachineOperand::MO_MachineBasicBlock:
         MCOp = MCOperand::CreateMBBLabel(getFunctionNumber(), 
                                          MO.getMBB()->getNumber());
-      } else {
-        llvm_unreachable("Unimp");
+        break;
+      case MachineOperand::MO_GlobalAddress:
+        MCOp = LowerGlobalAddressOperand(MO);
+        break;
       }
       
       TmpInst.addOperand(MCOp);

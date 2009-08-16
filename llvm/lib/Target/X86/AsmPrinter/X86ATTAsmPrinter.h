@@ -29,6 +29,7 @@ namespace llvm {
 class MachineJumpTableInfo;
 class MCContext;
 class MCInst;
+class MCOperand;
 class MCStreamer;
 
 class VISIBILITY_HIDDEN X86ATTAsmPrinter : public AsmPrinter {
@@ -66,6 +67,7 @@ class VISIBILITY_HIDDEN X86ATTAsmPrinter : public AsmPrinter {
   
   // New MCInst printing stuff.
   void printInstruction(const MCInst *MI);
+  MCOperand LowerGlobalAddressOperand(const MachineOperand &MO);
 
   virtual void printMCInst(const MCInst *MI) { printInstruction(MI); }
 
