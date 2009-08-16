@@ -588,6 +588,9 @@ bool Expr::isUnusedResultAWarning(SourceLocation &Loc, SourceRange &R1,
     // effects (e.g. a placement new with an uninitialized POD).
   case CXXDeleteExprClass:
     return false;
+  case CXXBindTemporaryExprClass:
+    return cast<CXXBindTemporaryExpr>(this)
+      ->getSubExpr()->isUnusedResultAWarning(Loc, R1, R2);
   case CXXExprWithTemporariesClass:
     return cast<CXXExprWithTemporaries>(this)
       ->getSubExpr()->isUnusedResultAWarning(Loc, R1, R2);

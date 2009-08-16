@@ -4041,9 +4041,10 @@ Sema::OwningExprResult Sema::CreateOverloadedUnaryOp(SourceLocation OpLoc,
       UsualUnaryConversions(FnExpr);
       
       input.release();
-      return Owned(new (Context) CXXOperatorCallExpr(Context, Op, FnExpr,
-                                                     &Input, 1, ResultTy, 
-                                                     OpLoc));
+      
+      Expr *CE = new (Context) CXXOperatorCallExpr(Context, Op, FnExpr, 
+                                                   &Input, 1, ResultTy, OpLoc);
+      return MaybeBindToTemporary(CE);
     } else {
       // We matched a built-in operator. Convert the arguments, then
       // break out so that we will build the appropriate built-in
@@ -4196,9 +4197,9 @@ Sema::CreateOverloadedBinOp(SourceLocation OpLoc,
                                                  OpLoc);
         UsualUnaryConversions(FnExpr);
 
-        return Owned(new (Context) CXXOperatorCallExpr(Context, Op, FnExpr, 
-                                                       Args, 2, ResultTy, 
-                                                       OpLoc));
+        Expr *CE = new (Context) CXXOperatorCallExpr(Context, Op, FnExpr, 
+                                                     Args, 2, ResultTy, OpLoc);
+        return MaybeBindToTemporary(CE);
       } else {
         // We matched a built-in operator. Convert the arguments, then
         // break out so that we will build the appropriate built-in
