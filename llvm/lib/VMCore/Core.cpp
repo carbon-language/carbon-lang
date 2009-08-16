@@ -1392,6 +1392,11 @@ LLVMValueRef LLVMBuildRet(LLVMBuilderRef B, LLVMValueRef V) {
   return wrap(unwrap(B)->CreateRet(unwrap(V)));
 }
 
+LLVMValueRef LLVMBuildAggregateRet(LLVMBuilderRef B, LLVMValueRef *RetVals,
+                                   unsigned N) {
+  return wrap(unwrap(B)->CreateAggregateRet(unwrap(RetVals), N));
+}
+
 LLVMValueRef LLVMBuildBr(LLVMBuilderRef B, LLVMBasicBlockRef Dest) {
   return wrap(unwrap(B)->CreateBr(unwrap(Dest)));
 }
@@ -1435,14 +1440,34 @@ LLVMValueRef LLVMBuildAdd(LLVMBuilderRef B, LLVMValueRef LHS, LLVMValueRef RHS,
   return wrap(unwrap(B)->CreateAdd(unwrap(LHS), unwrap(RHS), Name));
 }
 
+LLVMValueRef LLVMBuildNSWAdd(LLVMBuilderRef B, LLVMValueRef LHS, LLVMValueRef RHS,
+                          const char *Name) {
+  return wrap(unwrap(B)->CreateNSWAdd(unwrap(LHS), unwrap(RHS), Name));
+}
+
+LLVMValueRef LLVMBuildFAdd(LLVMBuilderRef B, LLVMValueRef LHS, LLVMValueRef RHS,
+                          const char *Name) {
+  return wrap(unwrap(B)->CreateFAdd(unwrap(LHS), unwrap(RHS), Name));
+}
+
 LLVMValueRef LLVMBuildSub(LLVMBuilderRef B, LLVMValueRef LHS, LLVMValueRef RHS,
                           const char *Name) {
   return wrap(unwrap(B)->CreateSub(unwrap(LHS), unwrap(RHS), Name));
 }
 
+LLVMValueRef LLVMBuildFSub(LLVMBuilderRef B, LLVMValueRef LHS, LLVMValueRef RHS,
+                          const char *Name) {
+  return wrap(unwrap(B)->CreateFSub(unwrap(LHS), unwrap(RHS), Name));
+}
+
 LLVMValueRef LLVMBuildMul(LLVMBuilderRef B, LLVMValueRef LHS, LLVMValueRef RHS,
                           const char *Name) {
   return wrap(unwrap(B)->CreateMul(unwrap(LHS), unwrap(RHS), Name));
+}
+
+LLVMValueRef LLVMBuildFMul(LLVMBuilderRef B, LLVMValueRef LHS, LLVMValueRef RHS,
+                          const char *Name) {
+  return wrap(unwrap(B)->CreateFMul(unwrap(LHS), unwrap(RHS), Name));
 }
 
 LLVMValueRef LLVMBuildUDiv(LLVMBuilderRef B, LLVMValueRef LHS, LLVMValueRef RHS,
@@ -1453,6 +1478,11 @@ LLVMValueRef LLVMBuildUDiv(LLVMBuilderRef B, LLVMValueRef LHS, LLVMValueRef RHS,
 LLVMValueRef LLVMBuildSDiv(LLVMBuilderRef B, LLVMValueRef LHS, LLVMValueRef RHS,
                            const char *Name) {
   return wrap(unwrap(B)->CreateSDiv(unwrap(LHS), unwrap(RHS), Name));
+}
+
+LLVMValueRef LLVMBuildExactSDiv(LLVMBuilderRef B, LLVMValueRef LHS,
+                                LLVMValueRef RHS, const char *Name) {
+  return wrap(unwrap(B)->CreateExactSDiv(unwrap(LHS), unwrap(RHS), Name));
 }
 
 LLVMValueRef LLVMBuildFDiv(LLVMBuilderRef B, LLVMValueRef LHS, LLVMValueRef RHS,
@@ -1557,6 +1587,28 @@ LLVMValueRef LLVMBuildGEP(LLVMBuilderRef B, LLVMValueRef Pointer,
                                    unwrap(Indices) + NumIndices, Name));
 }
 
+LLVMValueRef LLVMBuildInBoundsGEP(LLVMBuilderRef B, LLVMValueRef Pointer,
+                                  LLVMValueRef *Indices, unsigned NumIndices,
+                                  const char *Name) {
+  return wrap(unwrap(B)->CreateInBoundsGEP(unwrap(Pointer), unwrap(Indices),
+                                           unwrap(Indices) + NumIndices, Name));
+}
+
+LLVMValueRef LLVMBuildStructGEP(LLVMBuilderRef B, LLVMValueRef Pointer,
+                                unsigned Idx, const char *Name) {
+  return wrap(unwrap(B)->CreateStructGEP(unwrap(Pointer), Idx, Name));
+}
+
+LLVMValueRef LLVMBuildGlobalString(LLVMBuilderRef B, const char *Str,
+                                   const char *Name) {
+  return wrap(unwrap(B)->CreateGlobalString(Str, Name));
+}
+
+LLVMValueRef LLVMBuildGlobalStringPtr(LLVMBuilderRef B, const char *Str,
+                                      const char *Name) {
+  return wrap(unwrap(B)->CreateGlobalStringPtr(Str, Name));
+}
+
 /*--.. Casts ...............................................................--*/
 
 LLVMValueRef LLVMBuildTrunc(LLVMBuilderRef B, LLVMValueRef Val,
@@ -1617,6 +1669,39 @@ LLVMValueRef LLVMBuildIntToPtr(LLVMBuilderRef B, LLVMValueRef Val,
 LLVMValueRef LLVMBuildBitCast(LLVMBuilderRef B, LLVMValueRef Val,
                               LLVMTypeRef DestTy, const char *Name) {
   return wrap(unwrap(B)->CreateBitCast(unwrap(Val), unwrap(DestTy), Name));
+}
+
+LLVMValueRef LLVMBuildZExtOrBitCast(LLVMBuilderRef B, LLVMValueRef Val,
+                                    LLVMTypeRef DestTy, const char *Name) {
+  return wrap(unwrap(B)->CreateZExtOrBitCast(unwrap(Val), unwrap(DestTy),
+                                             Name));
+}
+
+LLVMValueRef LLVMBuildSExtOrBitCast(LLVMBuilderRef B, LLVMValueRef Val,
+                                    LLVMTypeRef DestTy, const char *Name) {
+  return wrap(unwrap(B)->CreateSExtOrBitCast(unwrap(Val), unwrap(DestTy),
+                                             Name));
+}
+
+LLVMValueRef LLVMBuildTruncOrBitCast(LLVMBuilderRef B, LLVMValueRef Val,
+                                     LLVMTypeRef DestTy, const char *Name) {
+  return wrap(unwrap(B)->CreateTruncOrBitCast(unwrap(Val), unwrap(DestTy),
+                                              Name));
+}
+
+LLVMValueRef LLVMBuildPointerCast(LLVMBuilderRef B, LLVMValueRef Val,
+                                  LLVMTypeRef DestTy, const char *Name) {
+  return wrap(unwrap(B)->CreatePointerCast(unwrap(Val), unwrap(DestTy), Name));
+}
+
+LLVMValueRef LLVMBuildIntCast(LLVMBuilderRef B, LLVMValueRef Val,
+                              LLVMTypeRef DestTy, const char *Name) {
+  return wrap(unwrap(B)->CreateIntCast(unwrap(Val), unwrap(DestTy), Name));
+}
+
+LLVMValueRef LLVMBuildFPCast(LLVMBuilderRef B, LLVMValueRef Val,
+                             LLVMTypeRef DestTy, const char *Name) {
+  return wrap(unwrap(B)->CreateFPCast(unwrap(Val), unwrap(DestTy), Name));
 }
 
 /*--.. Comparisons .........................................................--*/
@@ -1690,6 +1775,21 @@ LLVMValueRef LLVMBuildInsertValue(LLVMBuilderRef B, LLVMValueRef AggVal,
                                   const char *Name) {
   return wrap(unwrap(B)->CreateInsertValue(unwrap(AggVal), unwrap(EltVal),
                                            Index, Name));
+}
+
+LLVMValueRef LLVMBuildIsNull(LLVMBuilderRef B, LLVMValueRef Val,
+                             const char *Name) {
+  return wrap(unwrap(B)->CreateIsNull(unwrap(Val), Name));
+}
+
+LLVMValueRef LLVMBuildIsNotNull(LLVMBuilderRef B, LLVMValueRef Val,
+                                const char *Name) {
+  return wrap(unwrap(B)->CreateIsNotNull(unwrap(Val), Name));
+}
+
+LLVMValueRef LLVMBuildPtrDiff(LLVMBuilderRef B, LLVMValueRef LHS,
+                              LLVMValueRef RHS, const char *Name) {
+  return wrap(unwrap(B)->CreatePtrDiff(unwrap(LHS), unwrap(RHS), Name));
 }
 
 
