@@ -39,7 +39,7 @@ using namespace llvm;
 STATISTIC(NumEmitted, "Number of machine instructions emitted");
 
 namespace {
-template<class CodeEmitter>
+  template<class CodeEmitter>
   class VISIBILITY_HIDDEN Emitter : public MachineFunctionPass {
     const X86InstrInfo  *II;
     const TargetData    *TD;
@@ -103,7 +103,7 @@ template<class CodeEmitter>
 
 template<class CodeEmitter>
   char Emitter<CodeEmitter>::ID = 0;
-}
+} // end anonymous namespace.
 
 /// createX86CodeEmitterPass - Return a pass that emits the collected X86 code
 /// to the specified templated MachineCodeEmitter object.
@@ -352,8 +352,8 @@ void Emitter<CodeEmitter>::emitDisplacementField(const MachineOperand *RelocOp,
 
 template<class CodeEmitter>
 void Emitter<CodeEmitter>::emitMemModRMByte(const MachineInstr &MI,
-                               unsigned Op, unsigned RegOpcodeField,
-                               intptr_t PCAdj) {
+                                            unsigned Op,unsigned RegOpcodeField,
+                                            intptr_t PCAdj) {
   const MachineOperand &Op3 = MI.getOperand(Op+3);
   int DispVal = 0;
   const MachineOperand *DispForReloc = 0;
@@ -477,9 +477,8 @@ void Emitter<CodeEmitter>::emitMemModRMByte(const MachineInstr &MI,
 }
 
 template<class CodeEmitter>
-void Emitter<CodeEmitter>::emitInstruction(
-                              const MachineInstr &MI,
-                              const TargetInstrDesc *Desc) {
+void Emitter<CodeEmitter>::emitInstruction(const MachineInstr &MI,
+                                           const TargetInstrDesc *Desc) {
   DEBUG(errs() << MI);
 
   MCE.processDebugLoc(MI.getDebugLoc());
@@ -487,7 +486,8 @@ void Emitter<CodeEmitter>::emitInstruction(
   unsigned Opcode = Desc->Opcode;
 
   // Emit the lock opcode prefix as needed.
-  if (Desc->TSFlags & X86II::LOCK) MCE.emitByte(0xF0);
+  if (Desc->TSFlags & X86II::LOCK)
+    MCE.emitByte(0xF0);
 
   // Emit segment override opcode prefix as needed.
   switch (Desc->TSFlags & X86II::SegOvrMask) {
@@ -502,13 +502,16 @@ void Emitter<CodeEmitter>::emitInstruction(
   }
 
   // Emit the repeat opcode prefix as needed.
-  if ((Desc->TSFlags & X86II::Op0Mask) == X86II::REP) MCE.emitByte(0xF3);
+  if ((Desc->TSFlags & X86II::Op0Mask) == X86II::REP)
+    MCE.emitByte(0xF3);
 
   // Emit the operand size opcode prefix as needed.
-  if (Desc->TSFlags & X86II::OpSize) MCE.emitByte(0x66);
+  if (Desc->TSFlags & X86II::OpSize)
+    MCE.emitByte(0x66);
 
   // Emit the address size opcode prefix as needed.
-  if (Desc->TSFlags & X86II::AdSize) MCE.emitByte(0x67);
+  if (Desc->TSFlags & X86II::AdSize)
+    MCE.emitByte(0x67);
 
   bool Need0FPrefix = false;
   switch (Desc->TSFlags & X86II::Op0Mask) {
@@ -540,10 +543,9 @@ void Emitter<CodeEmitter>::emitInstruction(
   case 0: break;  // No prefix!
   }
 
+  // Handle REX prefix.
   if (Is64BitMode) {
-    // REX prefix
-    unsigned REX = X86InstrInfo::determineREX(MI);
-    if (REX)
+    if (unsigned REX = X86InstrInfo::determineREX(MI))
       MCE.emitByte(0x40 | REX);
   }
 
@@ -552,8 +554,8 @@ void Emitter<CodeEmitter>::emitInstruction(
     MCE.emitByte(0x0F);
 
   switch (Desc->TSFlags & X86II::Op0Mask) {
-  case X86II::TF:  // F2 0F 38
-  case X86II::T8:  // 0F 38
+  case X86II::TF:    // F2 0F 38
+  case X86II::T8:    // 0F 38
     MCE.emitByte(0x38);
     break;
   case X86II::TA:    // 0F 3A
@@ -582,14 +584,12 @@ void Emitter<CodeEmitter>::emitInstruction(
       llvm_unreachable("psuedo instructions should be removed before code"
                        " emission");
       break;
-    case TargetInstrInfo::INLINEASM: {
+    case TargetInstrInfo::INLINEASM:
       // We allow inline assembler nodes with empty bodies - they can
       // implicitly define registers, which is ok for JIT.
-      if (MI.getOperand(0).getSymbolName()[0]) {
-        llvm_report_error("JIT does not support inline asm!");
-      }
+      assert(MI.getOperand(0).getSymbolName()[0] == 0 && 
+             "JIT does not support inline asm!");
       break;
-    }
     case TargetInstrInfo::DBG_LABEL:
     case TargetInstrInfo::EH_LABEL:
       MCE.emitLabel(MI.getOperand(0).getImm());
@@ -612,45 +612,53 @@ void Emitter<CodeEmitter>::emitInstruction(
     }
     CurOp = NumOps;
     break;
-  case X86II::RawFrm:
+  case X86II::RawFrm: {
     MCE.emitByte(BaseOpcode);
 
-    if (CurOp != NumOps) {
-      const MachineOperand &MO = MI.getOperand(CurOp++);
+    if (CurOp == NumOps)
+      break;
+      
+    const MachineOperand &MO = MI.getOperand(CurOp++);
 
-      DEBUG(errs() << "RawFrm CurOp " << CurOp << "\n");
-      DEBUG(errs() << "isMBB " << MO.isMBB() << "\n");
-      DEBUG(errs() << "isGlobal " << MO.isGlobal() << "\n");
-      DEBUG(errs() << "isSymbol " << MO.isSymbol() << "\n");
-      DEBUG(errs() << "isImm " << MO.isImm() << "\n");
+    DEBUG(errs() << "RawFrm CurOp " << CurOp << "\n");
+    DEBUG(errs() << "isMBB " << MO.isMBB() << "\n");
+    DEBUG(errs() << "isGlobal " << MO.isGlobal() << "\n");
+    DEBUG(errs() << "isSymbol " << MO.isSymbol() << "\n");
+    DEBUG(errs() << "isImm " << MO.isImm() << "\n");
 
-      if (MO.isMBB()) {
-        emitPCRelativeBlockAddress(MO.getMBB());
-      } else if (MO.isGlobal()) {
-        // Assume undefined functions may be outside the Small codespace.
-        bool NeedStub = 
-          (Is64BitMode && 
-              (TM.getCodeModel() == CodeModel::Large ||
-               TM.getSubtarget<X86Subtarget>().isTargetDarwin())) ||
-          Opcode == X86::TAILJMPd;
-        emitGlobalAddress(MO.getGlobal(), X86::reloc_pcrel_word,
-                          MO.getOffset(), 0, NeedStub);
-      } else if (MO.isSymbol()) {
-        emitExternalSymbolAddress(MO.getSymbolName(), X86::reloc_pcrel_word);
-      } else if (MO.isImm()) {
-        if (Opcode == X86::CALLpcrel32 || Opcode == X86::CALL64pcrel32) {
-          // Fix up immediate operand for pc relative calls.
-          intptr_t Imm = (intptr_t)MO.getImm();
-          Imm = Imm - MCE.getCurrentPCValue() - 4;
-          emitConstant(Imm, X86InstrInfo::sizeOfImm(Desc));
-        } else
-          emitConstant(MO.getImm(), X86InstrInfo::sizeOfImm(Desc));
-      } else {
-        llvm_unreachable("Unknown RawFrm operand!");
-      }
+    if (MO.isMBB()) {
+      emitPCRelativeBlockAddress(MO.getMBB());
+      break;
     }
+    
+    if (MO.isGlobal()) {
+      // Assume undefined functions may be outside the Small codespace.
+      bool NeedStub = 
+        (Is64BitMode && 
+            (TM.getCodeModel() == CodeModel::Large ||
+             TM.getSubtarget<X86Subtarget>().isTargetDarwin())) ||
+        Opcode == X86::TAILJMPd;
+      emitGlobalAddress(MO.getGlobal(), X86::reloc_pcrel_word,
+                        MO.getOffset(), 0, NeedStub);
+      break;
+    }
+    
+    if (MO.isSymbol()) {
+      emitExternalSymbolAddress(MO.getSymbolName(), X86::reloc_pcrel_word);
+      break;
+    }
+    
+    assert(MO.isImm() && "Unknown RawFrm operand!");
+    if (Opcode == X86::CALLpcrel32 || Opcode == X86::CALL64pcrel32) {
+      // Fix up immediate operand for pc relative calls.
+      intptr_t Imm = (intptr_t)MO.getImm();
+      Imm = Imm - MCE.getCurrentPCValue() - 4;
+      emitConstant(Imm, X86InstrInfo::sizeOfImm(Desc));
+    } else
+      emitConstant(MO.getImm(), X86InstrInfo::sizeOfImm(Desc));
     break;
-
+  }
+      
   case X86II::AddRegFrm: {
     MCE.emitByte(BaseOpcode + getX86RegNum(MI.getOperand(CurOp++).getReg()));
     
@@ -846,7 +854,7 @@ void Emitter<CodeEmitter>::emitInstruction(
 
   if (!Desc->isVariadic() && CurOp != NumOps) {
 #ifndef NDEBUG
-    errs() << "Cannot encode: " << MI << "\n";
+    errs() << "Cannot encode all operands of: " << MI << "\n";
 #endif
     llvm_unreachable(0);
   }
