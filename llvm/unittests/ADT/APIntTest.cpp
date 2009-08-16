@@ -172,4 +172,15 @@ TEST(APIntTest, fromString) {
   EXPECT_EQ(APInt(1, 1), APInt(1, "1", 16));
 }
 
+TEST(APIntTest, StringDeath) {
+  EXPECT_DEATH(APInt(0, "", 0), "bitwidth too small");
+  EXPECT_DEATH(APInt(32, "", 0), "Radix should be 2, 8, 10, or 16!");
+  EXPECT_DEATH(APInt(32, "", 10), "Invalid string length");
+  EXPECT_DEATH(APInt(32, "-", 10), "string is only a minus!");
+  EXPECT_DEATH(APInt(1, "1234", 10), "Insufficient bit width");
+  EXPECT_DEATH(APInt(32, "\0", 10), "Invalid string length");
+  EXPECT_DEATH(APInt(32, StringRef("1\02", 3), 10), "Invalid character in digit string");
+  EXPECT_DEATH(APInt(32, "1L", 10), "Invalid character in digit string");
+}
+
 }
