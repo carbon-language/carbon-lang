@@ -550,6 +550,9 @@ bool Expr::isUnusedResultAWarning(SourceLocation &Loc, SourceRange &R1,
     R1 = SourceRange(KVCRef->getLocation(), KVCRef->getLocation());
     if (KVCRef->getBase())
       R2 = KVCRef->getBase()->getSourceRange();
+#else
+    Loc = getExprLoc();
+    R1 = getSourceRange();
 #endif
     return true;
   }
