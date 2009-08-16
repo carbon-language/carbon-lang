@@ -12,7 +12,7 @@ void f1() {
   A().f();
 }
 
-// Calls
+// Function calls
 struct B {
   B();
   ~B();
@@ -21,8 +21,24 @@ struct B {
 B g();
 
 // RUN: grep "call void @_ZN1BC1Ev" %t | count 0 &&
-// RUN: grep "call void @_ZN1BD1Ev" %t | count 1
+// RUN: grep "call void @_ZN1BD1Ev" %t | count 1 &&
 void f2() {
   (void)g();
 }
+
+// Member function calls
+struct C {
+  C();
+  ~C();
+  
+  C f();
+};
+
+// RUN: grep "call void @_ZN1CC1Ev" %t | count 1 &&
+// RUN: grep "call void @_ZN1CD1Ev" %t | count 2
+void f3() {
+  C().f();
+}
+
+
 

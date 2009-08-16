@@ -800,6 +800,9 @@ Expr::isLvalueResult Expr::isLvalueInternal(ASTContext &Ctx) const {
   case CXXTypeidExprClass:
     // C++ 5.2.8p1: The result of a typeid expression is an lvalue of ...
     return LV_Valid;
+  case CXXBindTemporaryExprClass:
+    return cast<CXXBindTemporaryExpr>(this)->getSubExpr()->
+      isLvalueInternal(Ctx);
   case ConditionalOperatorClass: {
     // Complicated handling is only for C++.
     if (!Ctx.getLangOptions().CPlusPlus)

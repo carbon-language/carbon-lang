@@ -4345,8 +4345,8 @@ Sema::BuildCallToMemberFunction(Scope *S, Expr *MemExprE,
 
   if (CheckFunctionCall(Method, TheCall.get()))
     return true;
-  
-  return TheCall.release();
+
+  return MaybeBindToTemporary(TheCall.release()).release();
 }
 
 /// BuildCallToObjectOfClassType - Build a call to an object of class
