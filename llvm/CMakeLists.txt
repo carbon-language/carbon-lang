@@ -302,10 +302,14 @@ add_subdirectory(lib/Debugger)
 add_subdirectory(lib/Archive)
 
 add_subdirectory(projects)
-add_subdirectory(tools)
 
-option(LLVM_EXAMPLES "Build LLVM example programs." OFF)
-if (LLVM_EXAMPLES)
+option(LLVM_BUILD_TOOLS "Build LLVM tool programs." ON)
+if(LLVM_BUILD_TOOLS)
+  add_subdirectory(tools)
+endif()
+
+option(LLVM_BUILD_EXAMPLES "Build LLVM example programs." ON)
+if(LLVM_BUILD_EXAMPLES)
   add_subdirectory(examples)
 endif ()
 
