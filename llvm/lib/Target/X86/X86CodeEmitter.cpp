@@ -572,13 +572,15 @@ void Emitter<CodeEmitter>::emitInstruction(
 
   unsigned char BaseOpcode = II->getBaseOpcodeFor(Desc);
   switch (Desc->TSFlags & X86II::FormMask) {
-  default: llvm_unreachable("Unknown FormMask value in X86 MachineCodeEmitter!");
+  default:
+    llvm_unreachable("Unknown FormMask value in X86 MachineCodeEmitter!");
   case X86II::Pseudo:
     // Remember the current PC offset, this is the PIC relocation
     // base address.
     switch (Opcode) {
     default: 
-      llvm_unreachable("psuedo instructions should be removed before code emission");
+      llvm_unreachable("psuedo instructions should be removed before code"
+                       " emission");
       break;
     case TargetInstrInfo::INLINEASM: {
       // We allow inline assembler nodes with empty bodies - they can
@@ -649,36 +651,39 @@ void Emitter<CodeEmitter>::emitInstruction(
     }
     break;
 
-  case X86II::AddRegFrm:
+  case X86II::AddRegFrm: {
     MCE.emitByte(BaseOpcode + getX86RegNum(MI.getOperand(CurOp++).getReg()));
     
-    if (CurOp != NumOps) {
-      const MachineOperand &MO1 = MI.getOperand(CurOp++);
-      unsigned Size = X86InstrInfo::sizeOfImm(Desc);
-      if (MO1.isImm())
-        emitConstant(MO1.getImm(), Size);
-      else {
-        unsigned rt = Is64BitMode ? X86::reloc_pcrel_word
-          : (IsPIC ? X86::reloc_picrel_word : X86::reloc_absolute_word);
-        if (Opcode == X86::MOV64ri64i32)
-          rt = X86::reloc_absolute_word;  // FIXME: add X86II flag?
-        // This should not occur on Darwin for relocatable objects.
-        if (Opcode == X86::MOV64ri)
-          rt = X86::reloc_absolute_dword;  // FIXME: add X86II flag?
-        if (MO1.isGlobal()) {
-          bool NeedStub = isa<Function>(MO1.getGlobal());
-          bool Indirect = gvNeedsNonLazyPtr(MO1, TM);
-          emitGlobalAddress(MO1.getGlobal(), rt, MO1.getOffset(), 0,
-                            NeedStub, Indirect);
-        } else if (MO1.isSymbol())
-          emitExternalSymbolAddress(MO1.getSymbolName(), rt);
-        else if (MO1.isCPI())
-          emitConstPoolAddress(MO1.getIndex(), rt);
-        else if (MO1.isJTI())
-          emitJumpTableAddress(MO1.getIndex(), rt);
-      }
+    if (CurOp == NumOps)
+      break;
+      
+    const MachineOperand &MO1 = MI.getOperand(CurOp++);
+    unsigned Size = X86InstrInfo::sizeOfImm(Desc);
+    if (MO1.isImm()) {
+      emitConstant(MO1.getImm(), Size);
+      break;
     }
+    
+    unsigned rt = Is64BitMode ? X86::reloc_pcrel_word
+      : (IsPIC ? X86::reloc_picrel_word : X86::reloc_absolute_word);
+    if (Opcode == X86::MOV64ri64i32)
+      rt = X86::reloc_absolute_word;  // FIXME: add X86II flag?
+    // This should not occur on Darwin for relocatable objects.
+    if (Opcode == X86::MOV64ri)
+      rt = X86::reloc_absolute_dword;  // FIXME: add X86II flag?
+    if (MO1.isGlobal()) {
+      bool NeedStub = isa<Function>(MO1.getGlobal());
+      bool Indirect = gvNeedsNonLazyPtr(MO1, TM);
+      emitGlobalAddress(MO1.getGlobal(), rt, MO1.getOffset(), 0,
+                        NeedStub, Indirect);
+    } else if (MO1.isSymbol())
+      emitExternalSymbolAddress(MO1.getSymbolName(), rt);
+    else if (MO1.isCPI())
+      emitConstPoolAddress(MO1.getIndex(), rt);
+    else if (MO1.isJTI())
+      emitJumpTableAddress(MO1.getIndex(), rt);
     break;
+  }
 
   case X86II::MRMDestReg: {
     MCE.emitByte(BaseOpcode);
@@ -686,7 +691,8 @@ void Emitter<CodeEmitter>::emitInstruction(
                      getX86RegNum(MI.getOperand(CurOp+1).getReg()));
     CurOp += 2;
     if (CurOp != NumOps)
-      emitConstant(MI.getOperand(CurOp++).getImm(), X86InstrInfo::sizeOfImm(Desc));
+      emitConstant(MI.getOperand(CurOp++).getImm(),
+                   X86InstrInfo::sizeOfImm(Desc));
     break;
   }
   case X86II::MRMDestMem: {
@@ -696,7 +702,8 @@ void Emitter<CodeEmitter>::emitInstruction(
                                   .getReg()));
     CurOp +=  X86AddrNumOperands + 1;
     if (CurOp != NumOps)
-      emitConstant(MI.getOperand(CurOp++).getImm(), X86InstrInfo::sizeOfImm(Desc));
+      emitConstant(MI.getOperand(CurOp++).getImm(),
+                   X86InstrInfo::sizeOfImm(Desc));
     break;
   }
 
@@ -759,29 +766,31 @@ void Emitter<CodeEmitter>::emitInstruction(
                        (Desc->TSFlags & X86II::FormMask)-X86II::MRM0r);
     }
 
-    if (CurOp != NumOps) {
-      const MachineOperand &MO1 = MI.getOperand(CurOp++);
-      unsigned Size = X86InstrInfo::sizeOfImm(Desc);
-      if (MO1.isImm())
-        emitConstant(MO1.getImm(), Size);
-      else {
-        unsigned rt = Is64BitMode ? X86::reloc_pcrel_word
-          : (IsPIC ? X86::reloc_picrel_word : X86::reloc_absolute_word);
-        if (Opcode == X86::MOV64ri32)
-          rt = X86::reloc_absolute_word_sext;  // FIXME: add X86II flag?
-        if (MO1.isGlobal()) {
-          bool NeedStub = isa<Function>(MO1.getGlobal());
-          bool Indirect = gvNeedsNonLazyPtr(MO1, TM);
-          emitGlobalAddress(MO1.getGlobal(), rt, MO1.getOffset(), 0,
-                            NeedStub, Indirect);
-        } else if (MO1.isSymbol())
-          emitExternalSymbolAddress(MO1.getSymbolName(), rt);
-        else if (MO1.isCPI())
-          emitConstPoolAddress(MO1.getIndex(), rt);
-        else if (MO1.isJTI())
-          emitJumpTableAddress(MO1.getIndex(), rt);
-      }
+    if (CurOp == NumOps)
+      break;
+    
+    const MachineOperand &MO1 = MI.getOperand(CurOp++);
+    unsigned Size = X86InstrInfo::sizeOfImm(Desc);
+    if (MO1.isImm()) {
+      emitConstant(MO1.getImm(), Size);
+      break;
     }
+    
+    unsigned rt = Is64BitMode ? X86::reloc_pcrel_word
+      : (IsPIC ? X86::reloc_picrel_word : X86::reloc_absolute_word);
+    if (Opcode == X86::MOV64ri32)
+      rt = X86::reloc_absolute_word_sext;  // FIXME: add X86II flag?
+    if (MO1.isGlobal()) {
+      bool NeedStub = isa<Function>(MO1.getGlobal());
+      bool Indirect = gvNeedsNonLazyPtr(MO1, TM);
+      emitGlobalAddress(MO1.getGlobal(), rt, MO1.getOffset(), 0,
+                        NeedStub, Indirect);
+    } else if (MO1.isSymbol())
+      emitExternalSymbolAddress(MO1.getSymbolName(), rt);
+    else if (MO1.isCPI())
+      emitConstPoolAddress(MO1.getIndex(), rt);
+    else if (MO1.isJTI())
+      emitJumpTableAddress(MO1.getIndex(), rt);
     break;
   }
 
@@ -798,29 +807,31 @@ void Emitter<CodeEmitter>::emitInstruction(
                      PCAdj);
     CurOp += X86AddrNumOperands;
 
-    if (CurOp != NumOps) {
-      const MachineOperand &MO = MI.getOperand(CurOp++);
-      unsigned Size = X86InstrInfo::sizeOfImm(Desc);
-      if (MO.isImm())
-        emitConstant(MO.getImm(), Size);
-      else {
-        unsigned rt = Is64BitMode ? X86::reloc_pcrel_word
-          : (IsPIC ? X86::reloc_picrel_word : X86::reloc_absolute_word);
-        if (Opcode == X86::MOV64mi32)
-          rt = X86::reloc_absolute_word_sext;  // FIXME: add X86II flag?
-        if (MO.isGlobal()) {
-          bool NeedStub = isa<Function>(MO.getGlobal());
-          bool Indirect = gvNeedsNonLazyPtr(MO, TM);
-          emitGlobalAddress(MO.getGlobal(), rt, MO.getOffset(), 0,
-                            NeedStub, Indirect);
-        } else if (MO.isSymbol())
-          emitExternalSymbolAddress(MO.getSymbolName(), rt);
-        else if (MO.isCPI())
-          emitConstPoolAddress(MO.getIndex(), rt);
-        else if (MO.isJTI())
-          emitJumpTableAddress(MO.getIndex(), rt);
-      }
+    if (CurOp == NumOps)
+      break;
+    
+    const MachineOperand &MO = MI.getOperand(CurOp++);
+    unsigned Size = X86InstrInfo::sizeOfImm(Desc);
+    if (MO.isImm()) {
+      emitConstant(MO.getImm(), Size);
+      break;
     }
+    
+    unsigned rt = Is64BitMode ? X86::reloc_pcrel_word
+      : (IsPIC ? X86::reloc_picrel_word : X86::reloc_absolute_word);
+    if (Opcode == X86::MOV64mi32)
+      rt = X86::reloc_absolute_word_sext;  // FIXME: add X86II flag?
+    if (MO.isGlobal()) {
+      bool NeedStub = isa<Function>(MO.getGlobal());
+      bool Indirect = gvNeedsNonLazyPtr(MO, TM);
+      emitGlobalAddress(MO.getGlobal(), rt, MO.getOffset(), 0,
+                        NeedStub, Indirect);
+    } else if (MO.isSymbol())
+      emitExternalSymbolAddress(MO.getSymbolName(), rt);
+    else if (MO.isCPI())
+      emitConstPoolAddress(MO.getIndex(), rt);
+    else if (MO.isJTI())
+      emitJumpTableAddress(MO.getIndex(), rt);
     break;
   }
 
