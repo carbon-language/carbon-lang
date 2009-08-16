@@ -168,18 +168,41 @@ void ASTRecordLayoutBuilder::LayoutVirtualBase(const CXXRecordDecl *RD) {
 }
 
 void ASTRecordLayoutBuilder::LayoutVirtualBases(const CXXRecordDecl *RD,
+                                                int64_t Offset,
+                                 llvm::SmallSet<const CXXRecordDecl*, 32> &mark,
                     llvm::SmallSet<const CXXRecordDecl*, 32> &IndirectPrimary) {
   for (CXXRecordDecl::base_class_const_iterator i = RD->bases_begin(),
          e = RD->bases_end(); i != e; ++i) {
     const CXXRecordDecl *Base = 
       cast<CXXRecordDecl>(i->getType()->getAs<RecordType>()->getDecl());
-    if (i->isVirtual() && !IndirectPrimary.count(Base)) {
-      // Mark it so we don't output it twice.
-      IndirectPrimary.insert(Base);
-      LayoutVirtualBase(Base);
+#if 0
+    const ASTRecordLayout &L = Ctx.getASTRecordLayout(Base);
+    const CXXRecordDecl *PB = L.getPrimaryBase();
+    if (PB && L.getPrimaryBaseWasVirtual()
+        && IndirectPrimary.count(PB)) {
+      int64_t BaseOffset;
+      // FIXME: calculate this.
+      BaseOffset = (1<<63) | (1<<31);
+      VBases.push_back(PB);
+      VBaseOffsets.push_back(BaseOffset);
+    }
+#endif
+    if (i->isVirtual()) {
+      // Mark it so we don't lay it out twice.
+      if (mark.count(Base))
+        continue;
+      if (IndirectPrimary.count(Base)) {
+        int64_t BaseOffset;
+        // FIXME: audit
+        BaseOffset = Offset;
+        // BaseOffset = (1<<63) | (1<<31);
+        VBases.push_back(Base);
+        VBaseOffsets.push_back(BaseOffset);
+      } else
+        LayoutVirtualBase(Base);
     }
     if (Base->getNumVBases())
-      LayoutVirtualBases(Base, IndirectPrimary);
+      LayoutVirtualBases(Base, Offset, mark, IndirectPrimary);
   }
 }
 
@@ -195,13 +218,27 @@ void ASTRecordLayoutBuilder::LayoutBaseNonVirtually(const CXXRecordDecl *RD,
   // Round up the current record size to the base's alignment boundary.
   Size = (Size + (BaseAlign-1)) & ~(BaseAlign-1);
 
-    // Add base class offsets.
+  // Add base class offsets.
   if (IsVirtualBase) {
     VBases.push_back(RD);
     VBaseOffsets.push_back(Size);
   } else {
     Bases.push_back(RD);
     BaseOffsets.push_back(Size);
+  }
+
+  // And now add offsets for all our primary virtual bases as well, so
+  // they all have offsets.
+  const ASTRecordLayout *L = &BaseInfo;
+  const CXXRecordDecl *PB = L->getPrimaryBase();
+  while (PB) {
+    if (L->getPrimaryBaseWasVirtual()) {
+      VBases.push_back(PB);
+      VBaseOffsets.push_back(Size);
+    }
+    PB = L->getPrimaryBase();
+    if (PB)
+      L = &Ctx.getASTRecordLayout(PB);
   }
 
   // Reserve space for this base.
@@ -228,7 +265,7 @@ void ASTRecordLayoutBuilder::Layout(const RecordDecl *D) {
 
   llvm::SmallSet<const CXXRecordDecl*, 32> IndirectPrimary;
 
-  // If this is a C++ class, lay out the nonvirtual bases.
+  // If this is a C++ class, lay out the vtable and the non-virtual bases.
   const CXXRecordDecl *RD = dyn_cast<CXXRecordDecl>(D);
   if (RD) {
     LayoutVtable(RD, IndirectPrimary);
@@ -246,8 +283,10 @@ void ASTRecordLayoutBuilder::Layout(const RecordDecl *D) {
   NonVirtualSize = Size;
   NonVirtualAlignment = Alignment;
 
-  if (RD)
-    LayoutVirtualBases(RD, IndirectPrimary);
+  if (RD) {
+    llvm::SmallSet<const CXXRecordDecl*, 32> mark;
+    LayoutVirtualBases(RD, 0, mark, IndirectPrimary);
+  }
 
   // Finally, round the size of the total struct up to the alignment of the
   // struct itself.

@@ -74,6 +74,8 @@ class ASTRecordLayoutBuilder {
   void LayoutBaseNonVirtually(const CXXRecordDecl *RD, bool IsVBase);
   void LayoutVirtualBase(const CXXRecordDecl *RD);
   void LayoutVirtualBases(const CXXRecordDecl *RD,
+                          int64_t Offset,
+                                 llvm::SmallSet<const CXXRecordDecl*, 32> &mark,
                      llvm::SmallSet<const CXXRecordDecl*, 32> &IndirectPrimary);
   
   /// FinishLayout - Finalize record layout. Adjust record size based on the
