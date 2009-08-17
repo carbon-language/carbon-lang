@@ -1,4 +1,4 @@
-; RUN: llvm-as < %s | opt -abcd -disable-output
+; RUN: llvm-as < %s | opt -ssi-everything -disable-output
 
 define void @test(i32 %x) {
 entry:
