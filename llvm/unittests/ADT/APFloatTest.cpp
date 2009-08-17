@@ -25,11 +25,6 @@ TEST(APFloatTest, Zero) {
   EXPECT_EQ(-0.0, APFloat(APFloat::IEEEdouble, -0.0).convertToDouble());
 }
 
-TEST(APFloatTest, SemanticsDeath) {
-  EXPECT_DEATH(APFloat(APFloat::IEEEsingle, 0.0f).convertToDouble(), "Float semantics are not IEEEdouble");
-  EXPECT_DEATH(APFloat(APFloat::IEEEdouble, 0.0 ).convertToFloat(),  "Float semantics are not IEEEsingle");
-}
-
 TEST(APFloatTest, fromString) {
   EXPECT_EQ(0.0,  APFloat(APFloat::IEEEdouble, "0").convertToDouble());
   EXPECT_EQ(0.0,  APFloat(APFloat::IEEEdouble, "0.").convertToDouble());
@@ -69,6 +64,12 @@ TEST(APFloatTest, fromString) {
   EXPECT_EQ(0.0,  APFloat(APFloat::IEEEdouble, StringRef("0e1\02", 3)).convertToDouble());
 }
 
+#ifdef GTEST_HAS_DEATH_TEST
+TEST(APFloatTest, SemanticsDeath) {
+  EXPECT_DEATH(APFloat(APFloat::IEEEsingle, 0.0f).convertToDouble(), "Float semantics are not IEEEdouble");
+  EXPECT_DEATH(APFloat(APFloat::IEEEdouble, 0.0 ).convertToFloat(),  "Float semantics are not IEEEsingle");
+}
+
 TEST(APFloatTest, StringDeath) {
   EXPECT_DEATH(APFloat(APFloat::IEEEdouble, ""), "Invalid string length");
   EXPECT_DEATH(APFloat(APFloat::IEEEdouble, "-"), "String is only a minus!");
@@ -102,5 +103,6 @@ TEST(APFloatTest, StringDeath) {
 
   EXPECT_DEATH(APFloat(APFloat::IEEEdouble, "0x1p0f"), "Invalid character in exponent");
 }
+#endif
 
 }
