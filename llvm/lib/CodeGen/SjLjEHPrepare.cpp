@@ -499,7 +499,7 @@ bool SjLjEHPass::insertSjLjEHSupport(Function &F) {
         if (I == BB->begin()) continue;
         if (CallInst *CI = dyn_cast<CallInst>(--I)) {
           if (CI->getCalledFunction() == ResumeFn) {
-            Value *NegativeOne = ConstantInt::get(Int32Ty, -1);
+            Value *NegativeOne = Constant::getAllOnesValue(Int32Ty);
             new StoreInst(NegativeOne, CallSite, true, I);  // volatile
           }
         }
