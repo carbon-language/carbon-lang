@@ -1193,9 +1193,30 @@ void CodeGenFunction::EmitCtorPrologue(const CXXConstructorDecl *CD) {
     }
   }
 
-  if (!CD->isTrivial() && CD->getNumBaseOrMemberInitializers() == 0)
+  if (!CD->getNumBaseOrMemberInitializers() && !CD->isTrivial()) {
     // Nontrivial default constructor with no initializer list. It may still
-    // contain non-static data members which require construction.
+    // have bases classes and/or contain non-static data members which require 
+    // construction.
+    for (CXXRecordDecl::base_class_const_iterator Base = 
+          ClassDecl->bases_begin();
+          Base != ClassDecl->bases_end(); ++Base) {
+      // FIXME. copy assignment of virtual base NYI
+      if (Base->isVirtual())
+        continue;
+    
+      CXXRecordDecl *BaseClassDecl
+        = cast<CXXRecordDecl>(Base->getType()->getAs<RecordType>()->getDecl());
+      if (BaseClassDecl->hasTrivialConstructor())
+        continue;
+      if (CXXConstructorDecl *BaseCX = 
+            BaseClassDecl->getDefaultConstructor(getContext())) {
+        LoadOfThis = LoadCXXThis();
+        llvm::Value *V = AddressCXXOfBaseClass(LoadOfThis, ClassDecl,
+                                               BaseClassDecl);
+        EmitCXXConstructorCall(BaseCX, Ctor_Complete, V, 0, 0);
+      }
+    }
+  
     for (CXXRecordDecl::field_iterator Field = ClassDecl->field_begin(),
          FieldEnd = ClassDecl->field_end();
          Field != FieldEnd; ++Field) {
@@ -1203,19 +1224,19 @@ void CodeGenFunction::EmitCtorPrologue(const CXXConstructorDecl *CD) {
       if (!FieldType->getAs<RecordType>() || Field->isAnonymousStructOrUnion())
         continue;
       const RecordType *ClassRec = FieldType->getAs<RecordType>();
-      if (CXXRecordDecl *MemberClassDecl = 
-            dyn_cast<CXXRecordDecl>(ClassRec->getDecl())) {
-        if (MemberClassDecl->hasTrivialConstructor())
-          continue;
-        if (CXXConstructorDecl *MamberCX = 
-              MemberClassDecl->getDefaultConstructor(getContext())) {
-          LoadOfThis = LoadCXXThis();
-          LValue LHS = EmitLValueForField(LoadOfThis, *Field, false, 0);
-          EmitCXXConstructorCall(MamberCX, Ctor_Complete, LHS.getAddress(), 0, 0);
-        }
+      CXXRecordDecl *MemberClassDecl = 
+        dyn_cast<CXXRecordDecl>(ClassRec->getDecl());
+      if (!MemberClassDecl || MemberClassDecl->hasTrivialConstructor())
+        continue;
+      if (CXXConstructorDecl *MamberCX = 
+            MemberClassDecl->getDefaultConstructor(getContext())) {
+        LoadOfThis = LoadCXXThis();
+        LValue LHS = EmitLValueForField(LoadOfThis, *Field, false, 0);
+        EmitCXXConstructorCall(MamberCX, Ctor_Complete, LHS.getAddress(), 0, 0);
       }
     }
-
+  }
+  
   // Initialize the vtable pointer
   if (ClassDecl->isDynamicClass()) {
     if (!LoadOfThis)
@@ -1267,4 +1288,72 @@ void CodeGenFunction::EmitDtorEpilogue(const CXXDestructorDecl *DD) {
                             Dtor_Complete, V);
     }
   }
+  if (DD->getNumBaseOrMemberDestructions() || DD->isTrivial())
+    return;
+  // Case of destructor synthesis with fields and base classes
+  // which have non-trivial destructors. They must be destructed in 
+  // reverse order of their construction.
+  llvm::SmallVector<FieldDecl *, 16> DestructedFields;
+  
+  for (CXXRecordDecl::field_iterator Field = ClassDecl->field_begin(),
+       FieldEnd = ClassDecl->field_end();
+       Field != FieldEnd; ++Field) {
+    QualType FieldType = getContext().getCanonicalType((*Field)->getType());
+    // FIXME. Assert on arrays for now.
+    if (const RecordType *RT = FieldType->getAs<RecordType>()) {
+      CXXRecordDecl *FieldClassDecl = cast<CXXRecordDecl>(RT->getDecl());
+      if (FieldClassDecl->hasTrivialDestructor())
+        continue;
+      DestructedFields.push_back(*Field);
+    }
+  }
+  if (!DestructedFields.empty())
+    for (int i = DestructedFields.size() -1; i >= 0; --i) {
+      FieldDecl *Field = DestructedFields[i];
+      QualType FieldType = Field->getType();
+      const RecordType *RT = FieldType->getAs<RecordType>();
+      CXXRecordDecl *FieldClassDecl = cast<CXXRecordDecl>(RT->getDecl());
+      llvm::Value *LoadOfThis = LoadCXXThis();
+      LValue LHS = EmitLValueForField(LoadOfThis, Field, false, 0);
+      EmitCXXDestructorCall(FieldClassDecl->getDestructor(getContext()),
+                            Dtor_Complete, LHS.getAddress());
+    }
+  
+  llvm::SmallVector<CXXRecordDecl*, 4> DestructedBases;
+  for (CXXRecordDecl::base_class_const_iterator Base = ClassDecl->bases_begin();
+       Base != ClassDecl->bases_end(); ++Base) {
+    // FIXME. copy assignment of virtual base NYI
+    if (Base->isVirtual())
+      continue;
+    
+    CXXRecordDecl *BaseClassDecl
+      = cast<CXXRecordDecl>(Base->getType()->getAs<RecordType>()->getDecl());
+    if (BaseClassDecl->hasTrivialDestructor())
+      continue;
+    DestructedBases.push_back(BaseClassDecl);
+  }
+  if (DestructedBases.empty())
+    return;
+  for (int i = DestructedBases.size() -1; i >= 0; --i) {
+    CXXRecordDecl *BaseClassDecl = DestructedBases[i];
+    llvm::Value *V = AddressCXXOfBaseClass(LoadCXXThis(), 
+                                           ClassDecl,BaseClassDecl);
+    EmitCXXDestructorCall(BaseClassDecl->getDestructor(getContext()),
+                          Dtor_Complete, V);
+  }
 }
+
+void CodeGenFunction::SynthesizeDefaultDestructor(const CXXDestructorDecl *CD,
+                                                  const FunctionDecl *FD,
+                                                  llvm::Function *Fn,
+                                                  const FunctionArgList &Args) {
+  
+  const CXXRecordDecl *ClassDecl = cast<CXXRecordDecl>(CD->getDeclContext());
+  assert(!ClassDecl->hasUserDeclaredDestructor() &&
+         "SynthesizeDefaultDestructor - destructor has user declaration");
+  (void) ClassDecl;
+  
+  StartFunction(FD, FD->getResultType(), Fn, Args, SourceLocation());
+  EmitDtorEpilogue(CD);
+  FinishFunction();
+}  

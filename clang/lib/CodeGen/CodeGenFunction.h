@@ -403,6 +403,11 @@ public:
                                     llvm::Function *Fn,
                                     const FunctionArgList &Args);
   
+  void SynthesizeDefaultDestructor(const CXXDestructorDecl *CD,
+                                    const FunctionDecl *FD,
+                                    llvm::Function *Fn,
+                                    const FunctionArgList &Args);
+  
   /// EmitDtorEpilogue - Emit all code that comes at the end of class's
   /// destructor. This is to call destructors on members and base classes 
   /// in reverse order of their construction.

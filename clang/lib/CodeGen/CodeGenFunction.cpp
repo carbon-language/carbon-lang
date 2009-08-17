@@ -254,6 +254,8 @@ void CodeGenFunction::GenerateCode(const FunctionDecl *FD,
         SynthesizeDefaultConstructor(CD, FD, Fn, Args);
       }
     }
+  else if (const CXXDestructorDecl *DD = dyn_cast<CXXDestructorDecl>(FD))
+         SynthesizeDefaultDestructor(DD, FD, Fn, Args);
   else if (const CXXMethodDecl *MD = dyn_cast<CXXMethodDecl>(FD))
          if (MD->isCopyAssignment())
            SynthesizeCXXCopyAssignment(MD, FD, Fn, Args);
