@@ -13,6 +13,7 @@
 
 #include "clang/AST/ExprObjC.h"
 #include "clang/Analysis/Analyses/LiveVariables.h"
+#include "clang/Analysis/PathSensitive/AnalysisContext.h"
 #include "clang/Analysis/PathSensitive/GRState.h"
 #include "llvm/ADT/ImmutableMap.h"
 #include "llvm/Support/Compiler.h"
@@ -61,7 +62,7 @@ public:
   
   Store BindInternal(Store St, Loc loc, SVal V);  
   Store Remove(Store St, Loc loc);
-  Store getInitialStore();
+  Store getInitialStore(const LocationContext *InitLoc);
 
   // FIXME: Investigate what is using this. This method should be removed.
   virtual Loc getLoc(const VarDecl* VD) {
@@ -488,12 +489,12 @@ Store BasicStoreManager::scanForIvars(Stmt *B, const Decl* SelfDecl, Store St) {
   return St;
 }
 
-Store BasicStoreManager::getInitialStore() {  
+Store BasicStoreManager::getInitialStore(const LocationContext *InitLoc) {  
   // The LiveVariables information already has a compilation of all VarDecls
   // used in the function.  Iterate through this set, and "symbolicate"
   // any VarDecl whose value originally comes from outside the function.
   typedef LiveVariables::AnalysisDataTy LVDataTy;
-  LVDataTy& D = StateMgr.getLiveVariables().getAnalysisData();
+  LVDataTy& D = InitLoc->getLiveVariables()->getAnalysisData();
   Store St = VBFactory.GetEmptyMap().getRoot();
 
   for (LVDataTy::decl_iterator I=D.begin_decl(), E=D.end_decl(); I != E; ++I) {

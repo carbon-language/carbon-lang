@@ -246,7 +246,7 @@ public:
   
   /// getInitialState - Return the initial state used for the root vertex
   ///  in the ExplodedGraph.
-  const GRState* getInitialState();
+  const GRState* getInitialState(const LocationContext *InitLoc);
   
   ExplodedGraph& getGraph() { return G; }
   const ExplodedGraph& getGraph() const { return G; }

@@ -170,7 +170,7 @@ bool GRCoreEngine::ExecuteWorkList(const LocationContext *L, unsigned Steps) {
     WList->setBlockCounter(BCounterFactory.GetEmptyCounter());
     
     // Generate the root.
-    GenerateNode(StartLoc, getInitialState(), 0);
+    GenerateNode(StartLoc, getInitialState(L), 0);
   }
   
   while (Steps && WList->hasWork()) {

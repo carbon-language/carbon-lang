@@ -231,7 +231,9 @@ public:
   SVal EvalBinOp(const GRState *state, BinaryOperator::Opcode Op,Loc L,
                  NonLoc R, QualType resultTy);
 
-  Store getInitialStore() { return RBFactory.GetEmptyMap().getRoot(); }
+  Store getInitialStore(const LocationContext *InitLoc) { 
+    return RBFactory.GetEmptyMap().getRoot(); 
+  }
   
   /// getSelfRegion - Returns the region for the 'self' (Objective-C) or
   ///  'this' object (C++).  When used when analyzing a normal function this

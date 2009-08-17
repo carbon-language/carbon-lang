@@ -25,12 +25,13 @@ class GRBranchNodeBuilder;
 class GRIndirectGotoNodeBuilder;
 class GRSwitchNodeBuilder;
 class GREndPathNodeBuilder;
+class LocationContext;
 
 class GRSubEngine {
 public:
   virtual ~GRSubEngine() {}
 
-  virtual const GRState* getInitialState() = 0;
+  virtual const GRState* getInitialState(const LocationContext *InitLoc) = 0;
 
   virtual GRStateManager& getStateManager() = 0;
 

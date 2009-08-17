@@ -115,12 +115,12 @@ const GRState *GRState::bindExpr(const Stmt* Ex, SVal V,
   return bindExpr(Ex, V, isBlkExpr, Invalidate);
 }
 
-const GRState* GRStateManager::getInitialState() {
-  GRState StateImpl(this, EnvMgr.getInitialEnvironment(), 
-                    StoreMgr->getInitialStore(),
-                    GDMFactory.GetEmptyMap());
+const GRState* GRStateManager::getInitialState(const LocationContext *InitLoc) {
+  GRState State(this, EnvMgr.getInitialEnvironment(), 
+                StoreMgr->getInitialStore(InitLoc),
+                GDMFactory.GetEmptyMap());
 
-  return getPersistentState(StateImpl);
+  return getPersistentState(State);
 }
 
 const GRState* GRStateManager::getPersistentState(GRState& State) {

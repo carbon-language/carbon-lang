@@ -77,7 +77,7 @@ public:
   
   /// getInitialStore - Returns the initial "empty" store representing the
   ///  value bindings upon entry to an analyzed function.
-  virtual Store getInitialStore() = 0;
+  virtual Store getInitialStore(const LocationContext *InitLoc) = 0;
   
   /// getRegionManager - Returns the internal RegionManager object that is
   ///  used to query and manipulate MemRegion objects.

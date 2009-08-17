@@ -202,8 +202,8 @@ void GRExprEngine::AddCheck(GRSimpleAPICheck *A) {
   ((MappedBatchAuditor*) BatchAuditor.get())->AddCheck(A);
 }
 
-const GRState* GRExprEngine::getInitialState() {
-  const GRState *state = StateMgr.getInitialState();
+const GRState* GRExprEngine::getInitialState(const LocationContext *InitLoc) {
+  const GRState *state = StateMgr.getInitialState(InitLoc);
   
   // Precondition: the first argument of 'main' is an integer guaranteed
   //  to be > 0.

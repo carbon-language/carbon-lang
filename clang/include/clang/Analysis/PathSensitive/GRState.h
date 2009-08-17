@@ -454,7 +454,7 @@ public:
   
   ~GRStateManager();
 
-  const GRState *getInitialState();
+  const GRState *getInitialState(const LocationContext *InitLoc);
         
   ASTContext &getContext() { return ValueMgr.getContext(); }
   const ASTContext &getContext() const { return ValueMgr.getContext(); }

@@ -79,6 +79,10 @@ public:
 
   LocationContext *getParent() const { return Parent; }
 
+  LiveVariables *getLiveVariables() const { 
+    return getAnalysisContext()->getLiveVariables();
+  }
+
   void Profile(llvm::FoldingSetNodeID &ID) {
     Profile(ID, Kind, Ctx, Parent);
   }

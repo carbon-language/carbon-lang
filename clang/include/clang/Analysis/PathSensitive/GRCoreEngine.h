@@ -69,8 +69,8 @@ class GRCoreEngine {
                     ExplodedNode* Pred);  
 
   /// Get the initial state from the subengine.
-  const GRState* getInitialState() { 
-    return SubEngine.getInitialState();
+  const GRState* getInitialState(const LocationContext *InitLoc) { 
+    return SubEngine.getInitialState(InitLoc);
   }
 
   void ProcessEndPath(GREndPathNodeBuilder& Builder);
