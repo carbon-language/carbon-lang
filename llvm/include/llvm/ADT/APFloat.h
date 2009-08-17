@@ -109,7 +109,7 @@ namespace llvm {
   typedef signed short exponent_t;
 
   struct fltSemantics;
-  struct StringRef;
+  class StringRef;
 
   /* When bits of a floating point number are truncated, this enum is
      used to indicate what fraction of the LSB those bits represented.
