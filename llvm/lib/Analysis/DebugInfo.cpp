@@ -942,7 +942,7 @@ void DebugInfoFinder::processModule(Module &M) {
        GVI != GVE; ++GVI) {
     GlobalVariable *GV = GVI;
     if (!GV->hasName() || !GV->isConstant() 
-        || strcmp(GV->getName().data(), "llvm.dbg.global_variable")
+        || strncmp(GV->getName().data(), "llvm.dbg.global_variable", 24)
         || !GV->hasInitializer())
       continue;
     DIGlobalVariable DIG(GV);
