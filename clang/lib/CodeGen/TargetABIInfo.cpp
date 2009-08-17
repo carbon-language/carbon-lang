@@ -1526,7 +1526,7 @@ const ABIInfo &CodeGenTypes::getABIInfo() const {
   const char *TargetPrefix = getContext().Target.getTargetPrefix();
   if (strcmp(TargetPrefix, "x86") == 0) {
     bool IsDarwin = strstr(getContext().Target.getTargetTriple(), "darwin");
-    bool isPPCStructReturnABI = IsDarwin ||
+    bool isRegStructReturnABI = IsDarwin ||
        strstr(getContext().Target.getTargetTriple(), "cygwin") ||
        strstr(getContext().Target.getTargetTriple(), "mingw") ||
        strstr(getContext().Target.getTargetTriple(), "netware") ||
@@ -1535,7 +1535,7 @@ const ABIInfo &CodeGenTypes::getABIInfo() const {
     switch (getContext().Target.getPointerWidth(0)) {
     case 32:
       return *(TheABIInfo = 
-          new X86_32ABIInfo(Context, IsDarwin, isPPCStructReturnABI));
+          new X86_32ABIInfo(Context, IsDarwin, isRegStructReturnABI));
     case 64:
       return *(TheABIInfo = new X86_64ABIInfo());
     }
