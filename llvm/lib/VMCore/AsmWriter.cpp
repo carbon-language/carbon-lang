@@ -689,7 +689,7 @@ void SlotTracker::processFunction() {
           !I->hasName())
         CreateFunctionSlot(I);
       for (unsigned i = 0, e = I->getNumOperands(); i != e; ++i) 
-        if (MDNode *N = dyn_cast<MDNode>(I->getOperand(i))) 
+        if (MDNode *N = dyn_cast_or_null<MDNode>(I->getOperand(i)))
           CreateMetadataSlot(N);
     }
   }
