@@ -22,11 +22,14 @@ namespace {
 
 class MCAsmStreamer : public MCStreamer {
   raw_ostream &OS;
+  const TargetAsmInfo &TAI;
   AsmPrinter *Printer;
   MCSection *CurSection;
 public:
-  MCAsmStreamer(MCContext &Context, raw_ostream &_OS, AsmPrinter *_AsmPrinter)
-    : MCStreamer(Context), OS(_OS), Printer(_AsmPrinter), CurSection(0) {}
+  MCAsmStreamer(MCContext &Context, raw_ostream &_OS, const TargetAsmInfo &tai,
+                AsmPrinter *_AsmPrinter)
+    : MCStreamer(Context), OS(_OS), TAI(tai), Printer(_AsmPrinter),
+      CurSection(0) {}
   ~MCAsmStreamer() {}
 
   /// @name MCStreamer Interface
@@ -293,6 +296,6 @@ void MCAsmStreamer::Finish() {
 }
     
 MCStreamer *llvm::createAsmStreamer(MCContext &Context, raw_ostream &OS,
-                                    AsmPrinter *AP) {
-  return new MCAsmStreamer(Context, OS, AP);
+                                    const TargetAsmInfo &TAI, AsmPrinter *AP) {
+  return new MCAsmStreamer(Context, OS, TAI, AP);
 }

@@ -211,21 +211,21 @@ static int AssembleInput(const char *ProgName) {
   if (!Out)
     return 1;
 
-  // See if we can get an asm printer.
-  OwningPtr<AsmPrinter> AP(0);
 
   // FIXME: We shouldn't need to do this (and link in codegen).
   OwningPtr<TargetMachine> TM(TheTarget->createTargetMachine(TripleName, ""));
-  const TargetAsmInfo *TAI = 0;
 
-  if (TM) {
-    TAI = TheTarget->createAsmInfo(TripleName);
-    assert(TAI && "Unable to create target asm info!");
-
-    AP.reset(TheTarget->createAsmPrinter(*Out, *TM, TAI, true));
+  if (!TM) {
+    errs() << ProgName << ": error: could not create target for triple '"
+           << TripleName << "'.\n";
+    return 1;
   }
 
-  OwningPtr<MCStreamer> Str(createAsmStreamer(Ctx, *Out, AP.get()));
+  const TargetAsmInfo *TAI = TheTarget->createAsmInfo(TripleName);
+  assert(TAI && "Unable to create target asm info!");
+
+  OwningPtr<AsmPrinter> AP(TheTarget->createAsmPrinter(*Out, *TM, TAI, true));
+  OwningPtr<MCStreamer> Str(createAsmStreamer(Ctx, *Out, *TAI, AP.get()));
 
   // FIXME: Target hook & command line option for initial section.
   Str.get()->SwitchSection(MCSectionMachO::Create("__TEXT","__text",
