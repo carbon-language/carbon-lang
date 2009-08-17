@@ -95,7 +95,7 @@ void SSI::insertSigmaFunctions(SmallVectorImpl<Instruction *> &value) {
           // Next Basic Block
           BasicBlock *BB_next = TI->getSuccessor(j);
           if (BB_next != BB &&
-              BB_next->getUniquePredecessor() != NULL &&
+              BB_next->getSinglePredecessor() != NULL &&
               dominateAny(BB_next, value[i])) {
             PHINode *PN = PHINode::Create(
                 value[i]->getType(), SSI_SIG, BB_next->begin());
