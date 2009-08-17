@@ -262,14 +262,14 @@ private:
   //
   inline void markConstant(LatticeVal &IV, Value *V, Constant *C) {
     if (IV.markConstant(C)) {
-      DEBUG(errs() << "markConstant: " << *C << ": " << *V);
+      DEBUG(errs() << "markConstant: " << *C << ": " << *V << '\n');
       InstWorkList.push_back(V);
     }
   }
   
   inline void markForcedConstant(LatticeVal &IV, Value *V, Constant *C) {
     IV.markForcedConstant(C);
-    DEBUG(errs() << "markForcedConstant: " << *C << ": " << *V);
+    DEBUG(errs() << "markForcedConstant: " << *C << ": " << *V << '\n');
     InstWorkList.push_back(V);
   }
   
@@ -286,7 +286,7 @@ private:
             if (Function *F = dyn_cast<Function>(V))
               errs() << "Function '" << F->getName() << "'\n";
             else
-              errs() << *V);
+              errs() << *V << '\n');
       // Only instructions go on the work list
       OverdefinedInstWorkList.push_back(V);
     }
@@ -516,7 +516,7 @@ bool SCCPSolver::isEdgeFeasible(BasicBlock *From, BasicBlock *To) {
     return false;
   } else {
 #ifndef NDEBUG
-    cerr << "Unknown terminator instruction: " << *TI;
+    cerr << "Unknown terminator instruction: " << *TI << '\n';
 #endif
     llvm_unreachable(0);
   }
@@ -1278,7 +1278,7 @@ void SCCPSolver::Solve() {
       Value *I = OverdefinedInstWorkList.back();
       OverdefinedInstWorkList.pop_back();
 
-      DEBUG(errs() << "\nPopped off OI-WL: " << *I);
+      DEBUG(errs() << "\nPopped off OI-WL: " << *I << '\n');
 
       // "I" got into the work list because it either made the transition from
       // bottom to constant
@@ -1296,7 +1296,7 @@ void SCCPSolver::Solve() {
       Value *I = InstWorkList.back();
       InstWorkList.pop_back();
 
-      DEBUG(errs() << "\nPopped off I-WL: " << *I);
+      DEBUG(errs() << "\nPopped off I-WL: " << *I << '\n');
 
       // "I" got into the work list because it either made the transition from
       // bottom to constant
@@ -1316,7 +1316,7 @@ void SCCPSolver::Solve() {
       BasicBlock *BB = BBWorkList.back();
       BBWorkList.pop_back();
 
-      DEBUG(errs() << "\nPopped off BBWL: " << *BB);
+      DEBUG(errs() << "\nPopped off BBWL: " << *BB << '\n');
 
       // Notify all instructions in this basic block that they are newly
       // executable.

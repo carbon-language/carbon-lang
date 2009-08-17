@@ -222,7 +222,7 @@ void Reassociate::LinearizeExpr(BinaryOperator *I) {
          isReassociableOp(RHS, I->getOpcode()) &&
          "Not an expression that needs linearization?");
 
-  DOUT << "Linear" << *LHS << *RHS << *I;
+  DOUT << "Linear" << *LHS << '\n' << *RHS << '\n' << *I << '\n';
 
   // Move the RHS instruction to live immediately before I, avoiding breaking
   // dominator properties.
@@ -235,7 +235,7 @@ void Reassociate::LinearizeExpr(BinaryOperator *I) {
 
   ++NumLinear;
   MadeChange = true;
-  DOUT << "Linearized: " << *I;
+  DOUT << "Linearized: " << *I << '\n';
 
   // If D is part of this expression tree, tail recurse.
   if (isReassociableOp(I->getOperand(1), I->getOpcode()))
@@ -334,10 +334,10 @@ void Reassociate::RewriteExprTree(BinaryOperator *I,
     if (I->getOperand(0) != Ops[i].Op ||
         I->getOperand(1) != Ops[i+1].Op) {
       Value *OldLHS = I->getOperand(0);
-      DOUT << "RA: " << *I;
+      DOUT << "RA: " << *I << '\n';
       I->setOperand(0, Ops[i].Op);
       I->setOperand(1, Ops[i+1].Op);
-      DOUT << "TO: " << *I;
+      DOUT << "TO: " << *I << '\n';
       MadeChange = true;
       ++NumChanged;
       
@@ -350,9 +350,9 @@ void Reassociate::RewriteExprTree(BinaryOperator *I,
   assert(i+2 < Ops.size() && "Ops index out of range!");
 
   if (I->getOperand(1) != Ops[i].Op) {
-    DOUT << "RA: " << *I;
+    DOUT << "RA: " << *I << '\n';
     I->setOperand(1, Ops[i].Op);
-    DOUT << "TO: " << *I;
+    DOUT << "TO: " << *I << '\n';
     MadeChange = true;
     ++NumChanged;
   }
@@ -450,7 +450,7 @@ static Instruction *BreakUpSubtract(LLVMContext &Context, Instruction *Sub,
   Sub->replaceAllUsesWith(New);
   Sub->eraseFromParent();
 
-  DOUT << "Negated: " << *New;
+  DOUT << "Negated: " << *New << '\n';
   return New;
 }
 

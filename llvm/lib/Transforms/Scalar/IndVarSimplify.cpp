@@ -183,7 +183,7 @@ ICmpInst *IndVarSimplify::LinearFunctionTestReplace(Loop *L,
     Opcode = ICmpInst::ICMP_EQ;
 
   DOUT << "INDVARS: Rewriting loop exit condition to:\n"
-       << "      LHS:" << *CmpIndVar // includes a newline
+       << "      LHS:" << *CmpIndVar << '\n'
        << "       op:\t"
        << (Opcode == ICmpInst::ICMP_NE ? "!=" : "==") << "\n"
        << "      RHS:\t" << *RHS << "\n";
@@ -273,7 +273,7 @@ void IndVarSimplify::RewriteLoopExitValues(Loop *L,
 
         Value *ExitVal = Rewriter.expandCodeFor(ExitValue, PN->getType(), Inst);
 
-        DOUT << "INDVARS: RLEV: AfterLoopVal = " << *ExitVal
+        DOUT << "INDVARS: RLEV: AfterLoopVal = " << *ExitVal << '\n'
              << "  LoopVal = " << *Inst << "\n";
 
         PN->setIncomingValue(i, ExitVal);
@@ -401,7 +401,7 @@ bool IndVarSimplify::runOnLoop(Loop *L, LPPassManager &LPM) {
 
     ++NumInserted;
     Changed = true;
-    DOUT << "INDVARS: New CanIV: " << *IndVar;
+    DOUT << "INDVARS: New CanIV: " << *IndVar << '\n';
 
     // Now that the official induction variable is established, reinsert
     // the old canonical-looking variable after it so that the IR remains
@@ -506,7 +506,7 @@ void IndVarSimplify::RewriteIVExpressions(Loop *L, const Type *LargestType,
         NewVal->takeName(Op);
       User->replaceUsesOfWith(Op, NewVal);
       UI->setOperandValToReplace(NewVal);
-      DOUT << "INDVARS: Rewrote IV '" << *AR << "' " << *Op
+      DOUT << "INDVARS: Rewrote IV '" << *AR << "' " << *Op << '\n'
            << "   into = " << *NewVal << "\n";
       ++NumRemoved;
       Changed = true;
