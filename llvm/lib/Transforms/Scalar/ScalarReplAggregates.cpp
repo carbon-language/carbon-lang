@@ -255,9 +255,12 @@ bool SROA::performScalarRepl(Function &F) {
     // value cannot be decomposed at all.
     uint64_t AllocaSize = TD->getTypeAllocSize(AI->getAllocatedType());
 
+    // Do not promote [0 x %struct].
+    if (AllocaSize == 0) continue;
+
     // Do not promote any struct whose size is too big.
     if (AllocaSize > SRThreshold) continue;
-        
+
     if ((isa<StructType>(AI->getAllocatedType()) ||
          isa<ArrayType>(AI->getAllocatedType())) &&
         // Do not promote any struct into more than "32" separate vars.
