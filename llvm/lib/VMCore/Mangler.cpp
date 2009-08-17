@@ -105,8 +105,9 @@ std::string Mangler::makeNameProper(const std::string &X,
 
     return Result;
   }
-  
-  Result = X.substr(0, I-X.begin());
+
+  if (NeedPrefix)
+    Result = X.substr(0, I-X.begin());
     
   // Otherwise, construct the string the expensive way.
   for (std::string::const_iterator E = X.end(); I != E; ++I) {
