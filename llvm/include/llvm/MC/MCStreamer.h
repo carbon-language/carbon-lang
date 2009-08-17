@@ -81,7 +81,7 @@ namespace llvm {
     /// @param Section.
     ///
     /// This corresponds to assembler directives like .section, .text, etc.
-    virtual void SwitchSection(MCSection *Section) = 0;
+    virtual void SwitchSection(const MCSection *Section) = 0;
 
     /// EmitLabel - Emit a label for @param Symbol into the current section.
     ///

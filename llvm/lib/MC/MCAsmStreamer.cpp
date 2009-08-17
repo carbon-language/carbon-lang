@@ -24,7 +24,7 @@ class MCAsmStreamer : public MCStreamer {
   raw_ostream &OS;
   const TargetAsmInfo &TAI;
   AsmPrinter *Printer;
-  MCSection *CurSection;
+  const MCSection *CurSection;
 public:
   MCAsmStreamer(MCContext &Context, raw_ostream &_OS, const TargetAsmInfo &tai,
                 AsmPrinter *_AsmPrinter)
@@ -35,7 +35,7 @@ public:
   /// @name MCStreamer Interface
   /// @{
 
-  virtual void SwitchSection(MCSection *Section);
+  virtual void SwitchSection(const MCSection *Section);
 
   virtual void EmitLabel(MCSymbol *Symbol);
 
@@ -98,12 +98,10 @@ static inline MCValue truncateToSize(const MCValue &Value, unsigned Bytes) {
                       truncateToSize(Value.getConstant(), Bytes));
 }
 
-void MCAsmStreamer::SwitchSection(MCSection *Section) {
+void MCAsmStreamer::SwitchSection(const MCSection *Section) {
   if (Section != CurSection) {
     CurSection = Section;
-
-    // FIXME: Needs TargetAsmInfo!
-    Section->PrintSwitchToSection(*(const TargetAsmInfo*)0, OS);
+    Section->PrintSwitchToSection(TAI, OS);
   }
 }
 

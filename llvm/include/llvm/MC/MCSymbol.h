@@ -34,7 +34,7 @@ namespace llvm {
     std::string Name;
     /// Section - The section the symbol is defined in, or null if the symbol
     /// has not been defined in the associated translation unit.
-    MCSection *Section;
+    const MCSection *Section;
     
     /// IsTemporary - True if this is an assembler temporary label, which
     /// typically does not survive in the .o file's symbol table.  Usually
@@ -55,8 +55,8 @@ namespace llvm {
     void operator=(const MCSymbol&); // DO NOT IMPLEMENT
   public:
     
-    MCSection *getSection() const { return Section; }
-    void setSection(MCSection *Value) { Section = Value; }
+    const MCSection *getSection() const { return Section; }
+    void setSection(const MCSection *S) { Section = S; }
 
     bool isExternal() const { return IsExternal; }
     void setExternal(bool Value) { IsExternal = Value; }

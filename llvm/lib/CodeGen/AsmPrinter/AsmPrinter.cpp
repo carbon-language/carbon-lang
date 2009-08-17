@@ -98,23 +98,18 @@ TargetLoweringObjectFile &AsmPrinter::getObjFileLowering() const {
 /// FIXME: Remove support for null sections.
 ///
 void AsmPrinter::SwitchToSection(const MCSection *NS) {
-  // If we're already in this section, we're done.
-  if (CurrentSection == NS) return;
-
   CurrentSection = NS;
-
-  if (NS == 0) return;
-  
-  NS->PrintSwitchToSection(*TAI, O);
+  // FIXME: Remove support for null sections!
+  if (NS)
+    OutStreamer.SwitchSection(NS);
 }
 
 void AsmPrinter::getAnalysisUsage(AnalysisUsage &AU) const {
   AU.setPreservesAll();
   MachineFunctionPass::getAnalysisUsage(AU);
   AU.addRequired<GCModuleInfo>();
-  if (ExuberantAsm) {
+  if (ExuberantAsm)
     AU.addRequired<MachineLoopInfo>();
-  }
 }
 
 bool AsmPrinter::doInitialization(Module &M) {

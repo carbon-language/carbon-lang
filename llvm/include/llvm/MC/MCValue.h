@@ -49,7 +49,7 @@ public:
   ///
   /// @result - The value's associated section, or null for external or constant
   /// values.
-  MCSection *getAssociatedSection() const {
+  const MCSection *getAssociatedSection() const {
     return SymA ? SymA->getSection() : 0;
   }
 
