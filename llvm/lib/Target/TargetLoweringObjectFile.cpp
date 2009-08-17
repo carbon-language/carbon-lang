@@ -304,6 +304,8 @@ getELFSection(StringRef Section, unsigned Type, unsigned Flags,
 
 void TargetLoweringObjectFileELF::Initialize(MCContext &Ctx,
                                              const TargetMachine &TM) {
+  if (UniquingMap != 0)
+    ((ELFUniqueMapTy*)UniquingMap)->clear();
   TargetLoweringObjectFile::Initialize(Ctx, TM);
 
   BSSSection = 
@@ -666,6 +668,8 @@ getMachOSection(const StringRef &Segment, const StringRef &Section,
 
 void TargetLoweringObjectFileMachO::Initialize(MCContext &Ctx,
                                                const TargetMachine &TM) {
+  if (UniquingMap != 0)
+    ((MachOUniqueMapTy*)UniquingMap)->clear();
   TargetLoweringObjectFile::Initialize(Ctx, TM);
   
   TextSection // .text
@@ -946,6 +950,8 @@ getCOFFSection(const char *Name, bool isDirective, SectionKind Kind) const {
 
 void TargetLoweringObjectFileCOFF::Initialize(MCContext &Ctx,
                                               const TargetMachine &TM) {
+  if (UniquingMap != 0)
+    ((COFFUniqueMapTy*)UniquingMap)->clear();
   TargetLoweringObjectFile::Initialize(Ctx, TM);
   TextSection = getCOFFSection("\t.text", true, SectionKind::getText());
   DataSection = getCOFFSection("\t.data", true, SectionKind::getDataRel());
