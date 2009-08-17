@@ -394,7 +394,6 @@ private:
   EnvironmentManager                   EnvMgr;
   llvm::OwningPtr<StoreManager>        StoreMgr;
   llvm::OwningPtr<ConstraintManager>   ConstraintMgr;
-  GRState::IntSetTy::Factory           ISetFactory;
   
   GRState::GenericDataMap::Factory     GDMFactory;
   
@@ -441,7 +440,6 @@ public:
                  llvm::BumpPtrAllocator& alloc, CFG& c,
                  const Decl& cd, LiveVariables& L) 
   : EnvMgr(alloc),
-    ISetFactory(alloc),
     GDMFactory(alloc),
     ValueMgr(alloc, Ctx, *this),
     Alloc(alloc),
