@@ -2156,7 +2156,7 @@ static Constant *ComputeLoadResult(Constant *P,
 /// successful, false if we can't evaluate it.  ActualArgs contains the formal
 /// arguments for the function.
 static bool EvaluateFunction(Function *F, Constant *&RetVal,
-                             const std::vector<Constant*> &ActualArgs,
+                             const SmallVectorImpl<Constant*> &ActualArgs,
                              std::vector<Function*> &CallStack,
                              DenseMap<Constant*, Constant*> &MutatedMemory,
                              std::vector<GlobalVariable*> &AllocaTmps) {
@@ -2251,14 +2251,14 @@ static bool EvaluateFunction(Function *F, Constant *&RetVal,
       Function *Callee = dyn_cast<Function>(getVal(Values, CI->getOperand(0)));
       if (!Callee) return false;  // Cannot resolve.
 
-      std::vector<Constant*> Formals;
+      SmallVector<Constant*, 8> Formals;
       for (User::op_iterator i = CI->op_begin() + 1, e = CI->op_end();
            i != e; ++i)
         Formals.push_back(getVal(Values, *i));
-      
+
       if (Callee->isDeclaration()) {
         // If this is a function we can constant fold, do it.
-        if (Constant *C = ConstantFoldCall(Callee, &Formals[0],
+        if (Constant *C = ConstantFoldCall(Callee, Formals.data(),
                                            Formals.size())) {
           InstResult = C;
         } else {
@@ -2353,8 +2353,9 @@ static bool EvaluateStaticConstructor(Function *F) {
 
   // Call the function.
   Constant *RetValDummy;
-  bool EvalSuccess = EvaluateFunction(F, RetValDummy, std::vector<Constant*>(),
-                                       CallStack, MutatedMemory, AllocaTmps);
+  bool EvalSuccess = EvaluateFunction(F, RetValDummy,
+                                      SmallVector<Constant*, 0>(), CallStack,
+                                      MutatedMemory, AllocaTmps);
   if (EvalSuccess) {
     // We succeeded at evaluation: commit the result.
     DEBUG(errs() << "FULLY EVALUATED GLOBAL CTOR FUNCTION '"
