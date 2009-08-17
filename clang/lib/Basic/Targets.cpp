@@ -1404,6 +1404,84 @@ namespace {
   }
 }
 
+namespace {
+  class BlackfinTargetInfo : public TargetInfo {
+    static const char * const GCCRegNames[];
+  public:
+    BlackfinTargetInfo(const std::string& triple) : TargetInfo(triple) {
+      TLSSupported = false;
+      DoubleAlign = 32;
+      LongLongAlign = 32;
+      LongDoubleAlign = 32;
+      DescriptionString = "e-p:32:32-i64:32-f64:32";
+    }
+
+    virtual void getTargetDefines(const LangOptions &Opts,
+                                  std::vector<char> &Defines) const {
+      DefineStd(Defines, "bfin", Opts);
+      DefineStd(Defines, "BFIN", Opts);
+      Define(Defines, "__ADSPBLACKFIN__");
+      // FIXME: This one is really dependent on -mcpu
+      Define(Defines, "__ADSPLPBLACKFIN__");
+      // FIXME: Add cpu-dependent defines and __SILICON_REVISION__
+    }
+
+    virtual void getTargetBuiltins(const Builtin::Info *&Records,
+                                   unsigned &NumRecords) const {
+      // FIXME: Implement.
+      Records = 0;
+      NumRecords = 0;
+    }
+
+    virtual const char *getTargetPrefix() const {
+      return "bfin";
+    }
+
+    virtual void getGCCRegNames(const char * const *&Names,
+                                unsigned &NumNames) const;
+
+    virtual void getGCCRegAliases(const GCCRegAlias *&Aliases,
+                                  unsigned &NumAliases) const {
+      // No aliases.
+      Aliases = 0;
+      NumAliases = 0;
+    }
+
+    virtual bool validateAsmConstraint(const char *&Name,
+                                       TargetInfo::ConstraintInfo &Info) const {
+      if (strchr("adzDWeABbvfcCtukxywZY", Name[0])) {
+        Info.setAllowsRegister();
+        return true;
+      }
+      return false;
+    }
+
+    virtual const char *getClobbers() const {
+      return "";
+    }
+
+    virtual const char *getVAListDeclaration() const {
+      return "typedef char* __builtin_va_list;";
+    }
+  };
+
+  const char * const BlackfinTargetInfo::GCCRegNames[] = {
+    "r0", "r1", "r2", "r3", "r4", "r5", "r6", "r7",
+    "p0", "p1", "p2", "p3", "p4", "p5", "sp", "fp",
+    "i0", "i1", "i2", "i3", "b0", "b1", "b2", "b3",
+    "l0", "l1", "l2", "l3", "m0", "m1", "m2", "m3",
+    "a0", "a1", "cc",
+    "rets", "reti", "retx", "retn", "rete", "astat", "seqstat", "usp",
+    "argp", "lt0", "lt1", "lc0", "lc1", "lb0", "lb1"
+  };
+
+  void BlackfinTargetInfo::getGCCRegNames(const char * const *&Names,
+                                          unsigned &NumNames) const {
+    Names = GCCRegNames;
+    NumNames = llvm::array_lengthof(GCCRegNames);
+  }
+}
+
 //===----------------------------------------------------------------------===//
 // Driver code
 //===----------------------------------------------------------------------===//
@@ -1479,6 +1557,9 @@ TargetInfo* TargetInfo::CreateTargetInfo(const std::string &T) {
 
   if (T.find("s390x-") == 0)
     return new SystemZTargetInfo(T);
+
+  if (T.find("bfin-") == 0)
+    return new BlackfinTargetInfo(T);
 
   if (IsX86(T)) {
     if (isDarwin)
