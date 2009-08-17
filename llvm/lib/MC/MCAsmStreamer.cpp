@@ -8,7 +8,6 @@
 //===----------------------------------------------------------------------===//
 
 #include "llvm/MC/MCStreamer.h"
-
 #include "llvm/CodeGen/AsmPrinter.h"
 #include "llvm/MC/MCContext.h"
 #include "llvm/MC/MCInst.h"
@@ -17,78 +16,72 @@
 #include "llvm/MC/MCValue.h"
 #include "llvm/Support/ErrorHandling.h"
 #include "llvm/Support/raw_ostream.h"
-
 using namespace llvm;
 
 namespace {
 
-  class MCAsmStreamer : public MCStreamer {
-    raw_ostream &OS;
-    
-    AsmPrinter *Printer;
+class MCAsmStreamer : public MCStreamer {
+  raw_ostream &OS;
+  AsmPrinter *Printer;
+  MCSection *CurSection;
+public:
+  MCAsmStreamer(MCContext &Context, raw_ostream &_OS, AsmPrinter *_AsmPrinter)
+    : MCStreamer(Context), OS(_OS), Printer(_AsmPrinter), CurSection(0) {}
+  ~MCAsmStreamer() {}
 
-    MCSection *CurSection;
+  /// @name MCStreamer Interface
+  /// @{
 
-  public:
-    MCAsmStreamer(MCContext &Context, raw_ostream &_OS, AsmPrinter *_AsmPrinter)
-      : MCStreamer(Context), OS(_OS), Printer(_AsmPrinter), CurSection(0) {}
-    ~MCAsmStreamer() {}
+  virtual void SwitchSection(MCSection *Section);
 
-    /// @name MCStreamer Interface
-    /// @{
+  virtual void EmitLabel(MCSymbol *Symbol);
 
-    virtual void SwitchSection(MCSection *Section);
+  virtual void EmitAssemblerFlag(AssemblerFlag Flag);
 
-    virtual void EmitLabel(MCSymbol *Symbol);
+  virtual void EmitAssignment(MCSymbol *Symbol, const MCValue &Value,
+                              bool MakeAbsolute = false);
 
-    virtual void EmitAssemblerFlag(AssemblerFlag Flag);
+  virtual void EmitSymbolAttribute(MCSymbol *Symbol, SymbolAttr Attribute);
 
-    virtual void EmitAssignment(MCSymbol *Symbol, const MCValue &Value,
-                                bool MakeAbsolute = false);
+  virtual void EmitSymbolDesc(MCSymbol *Symbol, unsigned DescValue);
 
-    virtual void EmitSymbolAttribute(MCSymbol *Symbol, SymbolAttr Attribute);
+  virtual void EmitLocalSymbol(MCSymbol *Symbol, const MCValue &Value);
 
-    virtual void EmitSymbolDesc(MCSymbol *Symbol, unsigned DescValue);
+  virtual void EmitCommonSymbol(MCSymbol *Symbol, unsigned Size,
+                                unsigned Pow2Alignment, bool IsLocal);
 
-    virtual void EmitLocalSymbol(MCSymbol *Symbol, const MCValue &Value);
+  virtual void EmitZerofill(MCSection *Section, MCSymbol *Symbol = NULL,
+                            unsigned Size = 0, unsigned Pow2Alignment = 0);
 
-    virtual void EmitCommonSymbol(MCSymbol *Symbol, unsigned Size,
-                                  unsigned Pow2Alignment, bool IsLocal);
+  virtual void EmitBytes(const StringRef &Data);
 
-    virtual void EmitZerofill(MCSection *Section, MCSymbol *Symbol = NULL,
-                              unsigned Size = 0, unsigned Pow2Alignment = 0);
+  virtual void EmitValue(const MCValue &Value, unsigned Size);
 
-    virtual void EmitBytes(const StringRef &Data);
+  virtual void EmitValueToAlignment(unsigned ByteAlignment, int64_t Value = 0,
+                                    unsigned ValueSize = 1,
+                                    unsigned MaxBytesToEmit = 0);
 
-    virtual void EmitValue(const MCValue &Value, unsigned Size);
+  virtual void EmitValueToOffset(const MCValue &Offset, 
+                                 unsigned char Value = 0);
+  
+  virtual void EmitInstruction(const MCInst &Inst);
 
-    virtual void EmitValueToAlignment(unsigned ByteAlignment, int64_t Value = 0,
-                                      unsigned ValueSize = 1,
-                                      unsigned MaxBytesToEmit = 0);
+  virtual void Finish();
+  
+  /// @}
+};
 
-    virtual void EmitValueToOffset(const MCValue &Offset, 
-                                   unsigned char Value = 0);
-    
-    virtual void EmitInstruction(const MCInst &Inst);
-
-    virtual void Finish();
-    
-    /// @}
-  };
-
-}
+} // end anonymous namespace.
 
 /// Allow printing symbols directly to a raw_ostream with proper quoting.
 static inline raw_ostream &operator<<(raw_ostream &os, const MCSymbol *S) {
   S->print(os);
-
   return os;
 }
 
 /// Allow printing values directly to a raw_ostream.
 static inline raw_ostream &operator<<(raw_ostream &os, const MCValue &Value) {
   Value.print(os);
-
   return os;
 }
 
