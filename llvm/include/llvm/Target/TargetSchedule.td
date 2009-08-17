@@ -62,9 +62,11 @@ def NoItinerary : InstrItinClass;
 // Instruction itinerary data - These values provide a runtime map of an 
 // instruction itinerary class (name) to it's itinerary data.
 //
-class InstrItinData<InstrItinClass Class, list<InstrStage> stages> {
+class InstrItinData<InstrItinClass Class, list<InstrStage> stages,
+                    list<int> operandcycles = []> {
   InstrItinClass TheClass = Class;
   list<InstrStage> Stages = stages;
+  list<int> OperandCycles = operandcycles;
 }
 
 //===----------------------------------------------------------------------===//

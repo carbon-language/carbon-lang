@@ -33,7 +33,8 @@ ExactHazardRecognizer::ExactHazardRecognizer(const InstrItineraryData &LItinData
     for (unsigned idx = 0; ; ++idx) {
       // If the begin stage of an itinerary has 0 cycles and units,
       // then we have reached the end of the itineraries.
-      const InstrStage *IS = ItinData.begin(idx), *E = ItinData.end(idx);
+      const InstrStage *IS = ItinData.beginStage(idx);
+      const InstrStage *E = ItinData.endStage(idx);
       if ((IS->getCycles() == 0) && (IS->getUnits() == 0))
         break;
 
@@ -87,8 +88,8 @@ ExactHazardRecognizer::HazardType ExactHazardRecognizer::getHazardType(SUnit *SU
   // Use the itinerary for the underlying instruction to check for
   // free FU's in the scoreboard at the appropriate future cycles.
   unsigned idx = SU->getInstr()->getDesc().getSchedClass();
-  for (const InstrStage *IS = ItinData.begin(idx), *E = ItinData.end(idx);
-       IS != E; ++IS) {
+  for (const InstrStage *IS = ItinData.beginStage(idx),
+         *E = ItinData.endStage(idx); IS != E; ++IS) {
     // We must find one of the stage's units free for every cycle the
     // stage is occupied. FIXME it would be more accurate to find the
     // same unit free in all the cycles.
@@ -119,8 +120,8 @@ void ExactHazardRecognizer::EmitInstruction(SUnit *SU) {
   // Use the itinerary for the underlying instruction to reserve FU's
   // in the scoreboard at the appropriate future cycles.
   unsigned idx = SU->getInstr()->getDesc().getSchedClass();
-  for (const InstrStage *IS = ItinData.begin(idx), *E = ItinData.end(idx);
-       IS != E; ++IS) {
+  for (const InstrStage *IS = ItinData.beginStage(idx), 
+         *E = ItinData.endStage(idx); IS != E; ++IS) {
     // We must reserve one of the stage's units for every cycle the
     // stage is occupied. FIXME it would be more accurate to reserve
     // the same unit free in all the cycles.

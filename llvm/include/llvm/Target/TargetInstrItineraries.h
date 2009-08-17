@@ -7,9 +7,9 @@
 //
 //===----------------------------------------------------------------------===//
 //
-// This file describes the structures used for instruction itineraries and
-// stages.  This is used by schedulers to determine instruction stages and
-// latencies.
+// This file describes the structures used for instruction
+// itineraries, stages, and operand reads/writes.  This is used by
+// schedulers to determine instruction stages and latencies.
 //
 //===----------------------------------------------------------------------===//
 
@@ -71,15 +71,17 @@ struct InstrStage {
 
 
 //===----------------------------------------------------------------------===//
-/// Instruction itinerary - An itinerary represents a sequential series of steps
-/// required to complete an instruction.  Itineraries are represented as
-/// sequences of instruction stages.
+/// Instruction itinerary - An itinerary represents the scheduling
+/// information for an instruction. This includes a set of stages
+/// occupies by the instruction, and the pipeline cycle in which
+/// operands are read and written.
 ///
 struct InstrItinerary {
-  unsigned First;    ///< Index of first stage in itinerary
-  unsigned Last;     ///< Index of last + 1 stage in itinerary
+  unsigned FirstStage;         ///< Index of first stage in itinerary
+  unsigned LastStage;          ///< Index of last + 1 stage in itinerary
+  unsigned FirstOperandCycle;  ///< Index of first operand rd/wr
+  unsigned LastOperandCycle;   ///< Index of last + 1 operand rd/wr
 };
-
 
 
 //===----------------------------------------------------------------------===//
@@ -88,29 +90,31 @@ struct InstrItinerary {
 ///
 struct InstrItineraryData {
   const InstrStage     *Stages;         ///< Array of stages selected
+  const unsigned       *OperandCycles;  ///< Array of operand cycles selected
   const InstrItinerary *Itineratries;   ///< Array of itineraries selected
 
   /// Ctors.
   ///
-  InstrItineraryData() : Stages(0), Itineratries(0) {}
-  InstrItineraryData(const InstrStage *S, const InstrItinerary *I)
-    : Stages(S), Itineratries(I) {}
+  InstrItineraryData() : Stages(0), OperandCycles(0), Itineratries(0) {}
+  InstrItineraryData(const InstrStage *S, const unsigned *OS,
+                     const InstrItinerary *I)
+    : Stages(S), OperandCycles(OS), Itineratries(I) {}
   
   /// isEmpty - Returns true if there are no itineraries.
   ///
   bool isEmpty() const { return Itineratries == 0; }
   
-  /// begin - Return the first stage of the itinerary.
+  /// beginStage - Return the first stage of the itinerary.
   /// 
-  const InstrStage *begin(unsigned ItinClassIndx) const {
-    unsigned StageIdx = Itineratries[ItinClassIndx].First;
+  const InstrStage *beginStage(unsigned ItinClassIndx) const {
+    unsigned StageIdx = Itineratries[ItinClassIndx].FirstStage;
     return Stages + StageIdx;
   }
 
-  /// end - Return the last+1 stage of the itinerary.
+  /// endStage - Return the last+1 stage of the itinerary.
   /// 
-  const InstrStage *end(unsigned ItinClassIndx) const {
-    unsigned StageIdx = Itineratries[ItinClassIndx].Last;
+  const InstrStage *endStage(unsigned ItinClassIndx) const {
+    unsigned StageIdx = Itineratries[ItinClassIndx].LastStage;
     return Stages + StageIdx;
   }
 
@@ -129,8 +133,8 @@ struct InstrItineraryData {
     // first stage and that all outputs are produced at the end of the
     // latest completing last stage.
     unsigned Latency = 0, StartCycle = 0;
-    for (const InstrStage *IS = begin(ItinClassIndx), *E = end(ItinClassIndx);
-         IS != E; ++IS) {
+    for (const InstrStage *IS = beginStage(ItinClassIndx),
+           *E = endStage(ItinClassIndx); IS != E; ++IS) {
       Latency = std::max(Latency, StartCycle + IS->getCycles());
       StartCycle += IS->getNextCycles();
     }
