@@ -206,7 +206,8 @@ class DefaultABIInfo : public ABIInfo {
 /// X86_32ABIInfo - The X86-32 ABI information.
 class X86_32ABIInfo : public ABIInfo {
   ASTContext &Context;
-  bool IsDarwin;
+  bool IsDarwinVectorABI;
+  bool IsSmallStructInRegABI;
 
   static bool isRegisterSize(unsigned Size) {
     return (Size == 8 || Size == 16 || Size == 32 || Size == 64);
@@ -238,8 +239,9 @@ public:
   virtual llvm::Value *EmitVAArg(llvm::Value *VAListAddr, QualType Ty,
                                  CodeGenFunction &CGF) const;
 
-  X86_32ABIInfo(ASTContext &Context, bool d)
-    : ABIInfo(), Context(Context), IsDarwin(d) {}
+  X86_32ABIInfo(ASTContext &Context, bool d, bool p)
+    : ABIInfo(), Context(Context), IsDarwinVectorABI(d), 
+      IsSmallStructInRegABI(p) {}
 };
 }
 
@@ -300,7 +302,7 @@ ABIArgInfo X86_32ABIInfo::classifyReturnType(QualType RetTy,
     return ABIArgInfo::getIgnore();
   } else if (const VectorType *VT = RetTy->getAsVectorType()) {
     // On Darwin, some vectors are returned in registers.
-    if (IsDarwin) {
+    if (IsDarwinVectorABI) {
       uint64_t Size = Context.getTypeSize(RetTy);
 
       // 128-bit vectors are a special case; they are returned in
@@ -326,8 +328,8 @@ ABIArgInfo X86_32ABIInfo::classifyReturnType(QualType RetTy,
       if (RT->getDecl()->hasFlexibleArrayMember())
         return ABIArgInfo::getIndirect(0);
 
-    // Outside of Darwin, structs and unions are always indirect.
-    if (!IsDarwin && !RetTy->isAnyComplexType())
+    // If specified, structs and unions are always indirect.
+    if (!IsSmallStructInRegABI && !RetTy->isAnyComplexType())
       return ABIArgInfo::getIndirect(0);
 
     // Classify "single element" structs as their element type.
@@ -1524,9 +1526,16 @@ const ABIInfo &CodeGenTypes::getABIInfo() const {
   const char *TargetPrefix = getContext().Target.getTargetPrefix();
   if (strcmp(TargetPrefix, "x86") == 0) {
     bool IsDarwin = strstr(getContext().Target.getTargetTriple(), "darwin");
+    bool isPPCStructReturnABI = IsDarwin ||
+       strstr(getContext().Target.getTargetTriple(), "cygwin") ||
+       strstr(getContext().Target.getTargetTriple(), "mingw") ||
+       strstr(getContext().Target.getTargetTriple(), "netware") ||
+       strstr(getContext().Target.getTargetTriple(), "freebsd") ||
+       strstr(getContext().Target.getTargetTriple(), "openbsd");
     switch (getContext().Target.getPointerWidth(0)) {
     case 32:
-      return *(TheABIInfo = new X86_32ABIInfo(Context, IsDarwin));
+      return *(TheABIInfo = 
+          new X86_32ABIInfo(Context, IsDarwin, isPPCStructReturnABI));
     case 64:
       return *(TheABIInfo = new X86_64ABIInfo());
     }
