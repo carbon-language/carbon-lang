@@ -74,7 +74,7 @@ void CodeGenFunction::EmitCXXGlobalVarDeclInit(const VarDecl &D,
   QualType T = D.getType();
   
   if (T->isReferenceType()) {
-    ErrorUnsupported(Init, "Global variable that binds to a reference");
+    ErrorUnsupported(Init, "global variable that binds to a reference");
   } else if (!hasAggregateLLVMType(T)) {
     llvm::Value *V = EmitScalarExpr(Init);
     EmitStoreOfScalar(V, DeclPtr, T.isVolatileQualified(), T);

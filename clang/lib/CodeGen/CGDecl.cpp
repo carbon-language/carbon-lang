@@ -126,11 +126,6 @@ void CodeGenFunction::EmitStaticBlockVarDecl(const VarDecl &D) {
   if (D.getType()->isVariablyModifiedType())
     EmitVLASize(D.getType());
 
-  if (D.getType()->isReferenceType()) {
-    CGM.ErrorUnsupported(&D, "static declaration with reference type");
-    return;
-  }
-
   if (D.getInit()) {
     llvm::Constant *Init = CGM.EmitConstantExpr(D.getInit(), D.getType(), this);
 
