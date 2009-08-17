@@ -53,6 +53,7 @@ private:
   const llvm::PointerType *PtrToInt8Ty;
   const llvm::FunctionType *IMPTy;
   const llvm::PointerType *IdTy;
+  QualType ASTIdTy;
   const llvm::IntegerType *IntTy;
   const llvm::PointerType *PtrTy;
   const llvm::IntegerType *LongTy;
@@ -226,8 +227,8 @@ CGObjCGNU::CGObjCGNU(CodeGen::CodeGenModule &cgm)
   PtrTy = PtrToInt8Ty;
  
   // Object type
-  IdTy = cast<llvm::PointerType>(
-		  CGM.getTypes().ConvertType(CGM.getContext().getObjCIdType()));
+  ASTIdTy = CGM.getContext().getObjCIdType();
+  IdTy = cast<llvm::PointerType>(CGM.getTypes().ConvertType(ASTIdTy));
  
   // IMP type
   std::vector<const llvm::Type*> IMPArgs;
@@ -257,8 +258,8 @@ llvm::Value *CGObjCGNU::GetSelector(CGBuilderTy &Builder, Selector Sel) {
   llvm::GlobalAlias *&US = UntypedSelectors[Sel.getAsString()];
   if (US == 0)
     US = new llvm::GlobalAlias(llvm::PointerType::getUnqual(SelectorTy),
-                               llvm::GlobalValue::InternalLinkage,
-                               ".objc_untyped_selector_alias",
+                               llvm::GlobalValue::PrivateLinkage,
+                               ".objc_untyped_selector_alias"+Sel.getAsString(),
                                NULL, &TheModule);
   
   return Builder.CreateLoad(US);
@@ -282,7 +283,7 @@ llvm::Value *CGObjCGNU::GetSelector(CGBuilderTy &Builder, const ObjCMethodDecl
   // If it isn't, cache it.
   llvm::GlobalAlias *Sel = new llvm::GlobalAlias(
           llvm::PointerType::getUnqual(SelectorTy),
-          llvm::GlobalValue::InternalLinkage, SelName,
+          llvm::GlobalValue::PrivateLinkage, ".objc_selector_alias" + SelName,
           NULL, &TheModule);
   TypedSelectors[Selector] = Sel;
 
@@ -348,8 +349,8 @@ CGObjCGNU::GenerateMessageSendSuper(CodeGen::CodeGenFunction &CGF,
   CallArgList ActualArgs;
 
   ActualArgs.push_back(
-	  std::make_pair(RValue::get(CGF.Builder.CreateBitCast(Receiver, IdTy)), 
-	  CGF.getContext().getObjCIdType()));
+      std::make_pair(RValue::get(CGF.Builder.CreateBitCast(Receiver, IdTy)),
+      ASTIdTy));
   ActualArgs.push_back(std::make_pair(RValue::get(cmd),
                                       CGF.getContext().getObjCSelType()));
   ActualArgs.insert(ActualArgs.end(), CallArgs.begin(), CallArgs.end());
@@ -436,6 +437,7 @@ CGObjCGNU::GenerateMessageSend(CodeGen::CodeGenFunction &CGF,
                                bool IsClassMessage,
                                const CallArgList &CallArgs,
                                const ObjCMethodDecl *Method) {
+  IdTy = cast<llvm::PointerType>(CGM.getTypes().ConvertType(ASTIdTy));
   llvm::Value *cmd;
   if (Method)
     cmd = GetSelector(CGF.Builder, Method);
@@ -444,8 +446,7 @@ CGObjCGNU::GenerateMessageSend(CodeGen::CodeGenFunction &CGF,
   CallArgList ActualArgs;
 
   ActualArgs.push_back(
-    std::make_pair(RValue::get(CGF.Builder.CreateBitCast(Receiver, IdTy)), 
-    CGF.getContext().getObjCIdType()));
+    std::make_pair(RValue::get(CGF.Builder.CreateBitCast(Receiver, IdTy)), ASTIdTy));
   ActualArgs.push_back(std::make_pair(RValue::get(cmd),
                                       CGF.getContext().getObjCSelType()));
   ActualArgs.insert(ActualArgs.end(), CallArgs.begin(), CallArgs.end());
@@ -495,6 +496,8 @@ llvm::Constant *CGObjCGNU::GenerateMethodList(const std::string &ClassName,
     const llvm::SmallVectorImpl<Selector> &MethodSels, 
     const llvm::SmallVectorImpl<llvm::Constant *> &MethodTypes, 
     bool isClassMethodList) {
+  if (MethodSels.empty())
+    return NULLPtr;
   // Get the method structure type.  
   llvm::StructType *ObjCMethodTy = llvm::StructType::get(VMContext,
     PtrToInt8Ty, // Really a selector, but the runtime creates it us.
@@ -1257,7 +1260,7 @@ llvm::Constant *CGObjCGNU::EnumerationMutationFunction() {
   ASTContext &Ctx = CGM.getContext();
   // void objc_enumerationMutation (id)
   llvm::SmallVector<QualType,16> Params;
-  Params.push_back(Ctx.getObjCIdType());
+  Params.push_back(ASTIdTy);
   const llvm::FunctionType *FTy =
     Types.GetFunctionType(Types.getFunctionInfo(Ctx.VoidTy, Params), false);
   return CGM.CreateRuntimeFunction(FTy, "objc_enumerationMutation");

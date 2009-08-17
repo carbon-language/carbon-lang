@@ -534,12 +534,14 @@ void Sema::MergeTypeDefDecl(TypedefDecl *New, Decl *OldD) {
     case 2: 
       if (!TypeID->isStr("id"))
         break;
+      Context.ObjCIdRedefinitionType = New->getUnderlyingType();
       // Install the built-in type for 'id', ignoring the current definition.
       New->setTypeForDecl(Context.getObjCIdType().getTypePtr());
       return;
     case 5:
       if (!TypeID->isStr("Class"))
         break;
+      Context.ObjCClassRedefinitionType = New->getUnderlyingType();
       // Install the built-in type for 'Class', ignoring the current definition.
       New->setTypeForDecl(Context.getObjCClassType().getTypePtr());
       return;

@@ -1257,7 +1257,7 @@ Sema::CheckReturnStackAddr(Expr *RetValExp, QualType lhsType,
 ///   * taking the address of an array element where the array is on the stack
 static DeclRefExpr* EvalAddr(Expr *E) {
   // We should only be called for evaluating pointer expressions.
-  assert((E->getType()->isPointerType() ||
+  assert((E->getType()->isAnyPointerType() ||
           E->getType()->isBlockPointerType() ||
           E->getType()->isObjCQualifiedIdType()) &&
          "EvalAddr only works on pointers");

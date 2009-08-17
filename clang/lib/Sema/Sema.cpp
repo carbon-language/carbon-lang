@@ -159,6 +159,7 @@ void Sema::ActOnTranslationUnitScope(SourceLocation Loc, Scope *S) {
       );
     PushOnScopeChains(IdTypedef, TUScope);
     Context.setObjCIdType(Context.getTypeDeclType(IdTypedef));
+    Context.ObjCIdRedefinitionType = Context.getObjCIdType();
   }
   // Create the built-in typedef for 'Class'.
   if (Context.getObjCClassType().isNull()) {
@@ -169,6 +170,7 @@ void Sema::ActOnTranslationUnitScope(SourceLocation Loc, Scope *S) {
       );
     PushOnScopeChains(ClassTypedef, TUScope);
     Context.setObjCClassType(Context.getTypeDeclType(ClassTypedef));
+    Context.ObjCClassRedefinitionType = Context.getObjCClassType();
   }
 }
 

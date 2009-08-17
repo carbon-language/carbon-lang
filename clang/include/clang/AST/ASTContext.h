@@ -202,6 +202,11 @@ public:
   llvm::OwningPtr<ExternalASTSource> ExternalSource;
   clang::PrintingPolicy PrintingPolicy;
 
+  // Typedefs which may be provided defining the structure of Objective-C
+  // pseudo-builtins
+  QualType ObjCIdRedefinitionType;
+  QualType ObjCClassRedefinitionType;
+
   /// \brief Source ranges for all of the comments in the source file,
   /// sorted in order of appearance in the translation unit.
   std::vector<SourceRange> Comments;

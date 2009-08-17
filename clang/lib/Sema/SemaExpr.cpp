@@ -26,6 +26,7 @@
 #include "clang/Parse/Scope.h"
 using namespace clang;
 
+
 /// \brief Determine whether the use of this declaration is valid, and
 /// emit any corresponding diagnostics.
 ///
@@ -2127,6 +2128,20 @@ Sema::ActOnMemberReferenceExpr(Scope *S, ExprArg Base, SourceLocation OpLoc,
   DefaultFunctionArrayConversion(BaseExpr);
 
   QualType BaseType = BaseExpr->getType();
+  // If this is an Objective-C pseudo-builtin and a definition is provided then
+  // use that.
+  if (BaseType->isObjCIdType()) {
+    // We have an 'id' type. Rather than fall through, we check if this
+    // is a reference to 'isa'.
+    if (BaseType != Context.ObjCIdRedefinitionType) {
+      BaseType = Context.ObjCIdRedefinitionType;
+      ImpCastExprToType(BaseExpr, BaseType);
+    }
+  } else if (BaseType->isObjCClassType() &&
+      BaseType != Context.ObjCClassRedefinitionType) {
+    BaseType = Context.ObjCClassRedefinitionType;
+    ImpCastExprToType(BaseExpr, BaseType);
+  }
   assert(!BaseType.isNull() && "no type for member expression");
 
   // Get the type being accessed in BaseType.  If this is an arrow, the BaseExpr
@@ -2402,11 +2417,6 @@ Sema::ActOnMemberReferenceExpr(Scope *S, ExprArg Base, SourceLocation OpLoc,
                          << IDecl->getDeclName() << &Member
                          << BaseExpr->getSourceRange());
     }
-    // We have an 'id' type. Rather than fall through, we check if this
-    // is a reference to 'isa'.
-    if (Member.isStr("isa"))
-      return Owned(new (Context) ObjCIsaExpr(BaseExpr, true, MemberLoc,
-                                             Context.getObjCIdType()));
   }
   // Handle properties on 'id' and qualified "id".
   if (OpKind == tok::period && (BaseType->isObjCIdType() || 
@@ -3266,6 +3276,30 @@ QualType Sema::CheckConditionalOperands(Expr *&Cond, Expr *&LHS, Expr *&RHS,
     ImpCastExprToType(LHS, RHSTy); // promote the null to a pointer.
     return RHSTy;
   }
+  // Handle things like Class and struct objc_class*.  Here we case the result
+  // to the pseudo-builtin, because that will be implicitly cast back to the
+  // redefinition type if an attempt is made to access its fields.
+  if (LHSTy->isObjCClassType() &&
+      (RHSTy.getDesugaredType() == Context.ObjCClassRedefinitionType)) {
+    ImpCastExprToType(RHS, LHSTy);
+    return LHSTy;
+  }
+  if (RHSTy->isObjCClassType() &&
+      (LHSTy.getDesugaredType() == Context.ObjCClassRedefinitionType)) {
+    ImpCastExprToType(LHS, RHSTy);
+    return RHSTy;
+  }
+  // And the same for struct objc_object* / id
+  if (LHSTy->isObjCIdType() &&
+      (RHSTy.getDesugaredType() == Context.ObjCIdRedefinitionType)) {
+    ImpCastExprToType(RHS, LHSTy);
+    return LHSTy;
+  }
+  if (RHSTy->isObjCIdType() &&
+      (LHSTy.getDesugaredType() == Context.ObjCIdRedefinitionType)) {
+    ImpCastExprToType(LHS, RHSTy);
+    return RHSTy;
+  }
   // Handle block pointer types.
   if (LHSTy->isBlockPointerType() || RHSTy->isBlockPointerType()) {
     if (!LHSTy->isBlockPointerType() || !RHSTy->isBlockPointerType()) {
@@ -3484,6 +3518,13 @@ Sema::AssignConvertType
 Sema::CheckPointerTypesForAssignment(QualType lhsType, QualType rhsType) {
   QualType lhptee, rhptee;
 
+  if ((lhsType->isObjCClassType() &&
+       (rhsType.getDesugaredType() == Context.ObjCClassRedefinitionType)) ||
+     (rhsType->isObjCClassType() &&
+       (lhsType.getDesugaredType() == Context.ObjCClassRedefinitionType))) {
+      return Compatible;
+  }
+
   // get the "pointed to" type (ignoring qualifiers at the top level)
   lhptee = lhsType->getAs<PointerType>()->getPointeeType();
   rhptee = rhsType->getAs<PointerType>()->getPointeeType();
@@ -3606,6 +3647,13 @@ Sema::CheckAssignmentConstraints(QualType lhsType, QualType rhsType) {
 
   if (lhsType == rhsType)
     return Compatible; // Common case: fast path an exact match.
+
+  if ((lhsType->isObjCClassType() &&
+       (rhsType.getDesugaredType() == Context.ObjCClassRedefinitionType)) ||
+     (rhsType->isObjCClassType() &&
+       (lhsType.getDesugaredType() == Context.ObjCClassRedefinitionType))) {
+      return Compatible;
+  }
 
   // If the left-hand side is a reference type, then we are in a
   // (rare!) case where we've allowed the use of references in C,

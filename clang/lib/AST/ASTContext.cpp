@@ -43,6 +43,8 @@ ASTContext::ASTContext(const LangOptions& LOpts, SourceManager &SM,
   LoadedExternalComments(false), FreeMemory(FreeMem), Target(t), 
   Idents(idents), Selectors(sels),
   BuiltinInfo(builtins), ExternalSource(0), PrintingPolicy(LOpts) {  
+  ObjCIdRedefinitionType = QualType();
+  ObjCClassRedefinitionType = QualType();
   if (size_reserve > 0) Types.reserve(size_reserve);    
   TUDecl = TranslationUnitDecl::Create(*this);
   InitBuiltinTypes();
