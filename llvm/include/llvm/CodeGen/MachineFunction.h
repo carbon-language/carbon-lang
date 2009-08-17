@@ -115,15 +115,6 @@ class MachineFunction {
   // The alignment of the function.
   unsigned Alignment;
 
-  // The currently active call_site value
-  unsigned CallSiteIndex;
-
-  // The largest call_site value encountered
-  unsigned MaxCallSiteIndex;
-
-  // Call sites mapped to corresponding landing pads
-  std::map<MachineBasicBlock*, unsigned> LandingPadCallSiteIndexMap;
-
 public:
   MachineFunction(Function *Fn, const TargetMachine &TM);
   ~MachineFunction();
@@ -168,41 +159,6 @@ public:
   /// setAlignment - Set the alignment (log2, not bytes) of the function.
   ///
   void setAlignment(unsigned A) { Alignment = A; }
-
-  /// getCallSiteIndex() - Get the current call site index
-  ///
-  unsigned getCallSiteIndex() { return CallSiteIndex; }
-
-  /// setCallSiteIndex() - Set the current call site index
-  ///
-  void setCallSiteIndex(unsigned Idx) {
-    CallSiteIndex = Idx;
-    if (CallSiteIndex > MaxCallSiteIndex)
-      MaxCallSiteIndex = CallSiteIndex;
-  }
-
-  /// getMaxCallSiteIndex() - Get the largest call site index issued
-  ///
-  unsigned getMaxCallSiteIndex() { return MaxCallSiteIndex; }
-
-  /// setCallSiteIndexLandingPad() - Map the call site to a landing pad
-  ///
-  void setLandingPadCallSiteIndex(MachineBasicBlock *LandingPad,
-                                  unsigned CallSite) {
-    LandingPadCallSiteIndexMap[LandingPad] = CallSite;
-  }
-
-  /// getCallSiteIndexLandingPad() - Get landing pad for the call site index
-  ///
-  unsigned getLandingPadCallSiteIndex(MachineBasicBlock *LandingPad) {
-    return LandingPadCallSiteIndexMap[LandingPad];
-  }
-
-  /// getCallSiteCount() - Get the count of call site entries
-  ///
-  unsigned getCallSiteCount() {
-    return LandingPadCallSiteIndexMap.size();
-  }
 
   /// MachineFunctionInfo - Keep track of various per-function pieces of
   /// information for backends that would like to do so.

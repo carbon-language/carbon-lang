@@ -640,9 +640,6 @@ void DwarfException::EmitExceptionTable() {
     Asm->EmitULEB128Bytes(SizeSites);
     Asm->EOL("Call-site table length");
 
-
-    assert(MF->getCallSiteCount() == CallSites.size());
-
     // Emit the landing pad site information.
     unsigned idx = 0;
     for (SmallVectorImpl<CallSiteEntry>::const_iterator

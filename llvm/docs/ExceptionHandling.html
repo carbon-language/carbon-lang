@@ -38,7 +38,6 @@
   	<li><a href="#llvm_eh_sjlj_setjmp"><tt>llvm.eh.sjlj.setjmp</tt></a></li>
   	<li><a href="#llvm_eh_sjlj_longjmp"><tt>llvm.eh.sjlj.longjmp</tt></a></li>
   	<li><a href="#llvm_eh_sjlj_lsda"><tt>llvm.eh.sjlj.lsda</tt></a></li>
-  	<li><a href="#llvm_eh_sjlj_callsite"><tt>llvm.eh.sjlj.callsite</tt></a></li>
   </ol></li>
   <li><a href="#asm">Asm Table Formats</a>
   <ol>
@@ -468,24 +467,6 @@
    Specific Data Area (LSDA) for the current function. The SJLJ front-end code
    stores this address in the exception handling function context for use by the
    runtime.</p>
-
-</div>
-
-<!-- ======================================================================= -->
-<div class="doc_subsubsection">
-  <a name="llvm_eh_sjlj_callsite">llvm.eh.sjlj.callsite</a>
-</div>
-
-<div class="doc_text">
-
-<pre>
-  void %<a href="#llvm_eh_sjlj_callsite">llvm.eh.sjlj.callsite</a>(i32)
-</pre>
-
-<p>The SJLJ front-end allocates call site indices for invoke instrucitons.
-   These values are passed to the back-end via the
-   <a href="#llvm_eh_sjlj_callsite"><tt>llvm.eh.sjlj.callsite</tt></a>
-   intrinsic, where they are used to build the LSDA call-site table.</p>
 
 </div>
 
