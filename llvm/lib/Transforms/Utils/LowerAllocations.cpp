@@ -29,8 +29,8 @@ using namespace llvm;
 STATISTIC(NumLowered, "Number of allocations lowered");
 
 namespace {
-  /// LowerAllocations - Turn malloc and free instructions into %malloc and
-  /// %free calls.
+  /// LowerAllocations - Turn malloc and free instructions into @malloc and
+  /// @free calls.
   ///
   class VISIBILITY_HIDDEN LowerAllocations : public BasicBlockPass {
     Constant *MallocFunc;   // Functions in the module we are processing
