@@ -47,18 +47,6 @@ AbstractTypeUser::~AbstractTypeUser() {}
 //                         Type Class Implementation
 //===----------------------------------------------------------------------===//
 
-// Recursive lock used for guarding access to AbstractTypeUsers.
-// NOTE: The true template parameter means this will no-op when we're not in
-// multithreaded mode.
-static ManagedStatic<sys::SmartMutex<true> > AbstractTypeUsersLock;
-
-// Concrete/Abstract TypeDescriptions - We lazily calculate type descriptions
-// for types as they are needed.  Because resolution of types must invalidate
-// all of the abstract type descriptions, we keep them in a seperate map to make
-// this easy.
-static ManagedStatic<TypePrinting> ConcreteTypeDescriptions;
-static ManagedStatic<TypePrinting> AbstractTypeDescriptions;
-
 /// Because of the way Type subclasses are allocated, this function is necessary
 /// to use the correct kind of "delete" operator to deallocate the Type object.
 /// Some type objects (FunctionTy, StructTy) allocate additional space after 
@@ -273,8 +261,11 @@ void Type::typeBecameConcrete(const DerivedType *AbsTy) {
 
 
 std::string Type::getDescription() const {
+  LLVMContextImpl *pImpl = getContext().pImpl;
   TypePrinting &Map =
-    isAbstract() ? *AbstractTypeDescriptions : *ConcreteTypeDescriptions;
+    isAbstract() ?
+      pImpl->AbstractTypeDescriptions :
+      pImpl->ConcreteTypeDescriptions;
   
   std::string DescStr;
   raw_string_ostream DescOS(DescStr);
@@ -983,9 +974,10 @@ bool PointerType::isValidElementType(const Type *ElemTy) {
 // it.  This function is called primarily by the PATypeHandle class.
 void Type::addAbstractTypeUser(AbstractTypeUser *U) const {
   assert(isAbstract() && "addAbstractTypeUser: Current type not abstract!");
-  AbstractTypeUsersLock->acquire();
+  LLVMContextImpl *pImpl = getContext().pImpl;
+  pImpl->AbstractTypeUsersLock.acquire();
   AbstractTypeUsers.push_back(U);
-  AbstractTypeUsersLock->release();
+  pImpl->AbstractTypeUsersLock.release();
 }
 
 
@@ -995,7 +987,8 @@ void Type::addAbstractTypeUser(AbstractTypeUser *U) const {
 // is annihilated, because there is no way to get a reference to it ever again.
 //
 void Type::removeAbstractTypeUser(AbstractTypeUser *U) const {
-  AbstractTypeUsersLock->acquire();
+  LLVMContextImpl *pImpl = getContext().pImpl;
+  pImpl->AbstractTypeUsersLock.acquire();
   
   // Search from back to front because we will notify users from back to
   // front.  Also, it is likely that there will be a stack like behavior to
@@ -1024,7 +1017,7 @@ void Type::removeAbstractTypeUser(AbstractTypeUser *U) const {
   this->destroy();
   }
   
-  AbstractTypeUsersLock->release();
+  pImpl->AbstractTypeUsersLock.release();
 }
 
 // unlockedRefineAbstractTypeTo - This function is used when it is discovered
@@ -1038,9 +1031,10 @@ void DerivedType::unlockedRefineAbstractTypeTo(const Type *NewType) {
   assert(this != NewType && "Can't refine to myself!");
   assert(ForwardType == 0 && "This type has already been refined!");
 
+  LLVMContextImpl *pImpl = getContext().pImpl;
+
   // The descriptions may be out of date.  Conservatively clear them all!
-  if (AbstractTypeDescriptions.isConstructed())
-    AbstractTypeDescriptions->clear();
+  pImpl->AbstractTypeDescriptions.clear();
 
 #ifdef DEBUG_MERGE_TYPES
   DOUT << "REFINING abstract type [" << (void*)this << " "
@@ -1075,7 +1069,7 @@ void DerivedType::unlockedRefineAbstractTypeTo(const Type *NewType) {
   // will not cause users to drop off of the use list.  If we resolve to ourself
   // we succeed!
   //
-  AbstractTypeUsersLock->acquire();
+  pImpl->AbstractTypeUsersLock.acquire();
   while (!AbstractTypeUsers.empty() && NewTy != this) {
     AbstractTypeUser *User = AbstractTypeUsers.back();
 
@@ -1091,7 +1085,7 @@ void DerivedType::unlockedRefineAbstractTypeTo(const Type *NewType) {
     assert(AbstractTypeUsers.size() != OldSize &&
            "AbsTyUser did not remove self from user list!");
   }
-  AbstractTypeUsersLock->release();
+  pImpl->AbstractTypeUsersLock.release();
 
   // If we were successful removing all users from the type, 'this' will be
   // deleted when the last PATypeHolder is destroyed or updated from this type.
@@ -1117,7 +1111,9 @@ void DerivedType::notifyUsesThatTypeBecameConcrete() {
   DOUT << "typeIsREFINED type: " << (void*)this << " " << *this << "\n";
 #endif
 
-  AbstractTypeUsersLock->acquire();
+  LLVMContextImpl *pImpl = getContext().pImpl;
+
+  pImpl->AbstractTypeUsersLock.acquire();
   unsigned OldSize = AbstractTypeUsers.size(); OldSize=OldSize;
   while (!AbstractTypeUsers.empty()) {
     AbstractTypeUser *ATU = AbstractTypeUsers.back();
@@ -1126,7 +1122,7 @@ void DerivedType::notifyUsesThatTypeBecameConcrete() {
     assert(AbstractTypeUsers.size() < OldSize-- &&
            "AbstractTypeUser did not remove itself from the use list!");
   }
-  AbstractTypeUsersLock->release();
+  pImpl->AbstractTypeUsersLock.release();
 }
 
 // refineAbstractType - Called when a contained type is found to be more

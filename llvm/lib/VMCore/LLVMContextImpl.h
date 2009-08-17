@@ -22,6 +22,7 @@
 #include "llvm/DerivedTypes.h"
 #include "llvm/System/Mutex.h"
 #include "llvm/System/RWMutex.h"
+#include "llvm/Assembly/Writer.h"
 #include "llvm/ADT/APFloat.h"
 #include "llvm/ADT/APInt.h"
 #include "llvm/ADT/DenseMap.h"
@@ -135,6 +136,18 @@ public:
   
   // Lock used for guarding access to the type maps.
   sys::SmartMutex<true> TypeMapLock;
+  
+  // Recursive lock used for guarding access to AbstractTypeUsers.
+  // NOTE: The true template parameter means this will no-op when we're not in
+  // multithreaded mode.
+  sys::SmartMutex<true> AbstractTypeUsersLock;
+
+  // Concrete/Abstract TypeDescriptions - We lazily calculate type descriptions
+  // for types as they are needed.  Because resolution of types must invalidate
+  // all of the abstract type descriptions, we keep them in a seperate map to 
+  // make this easy.
+  TypePrinting ConcreteTypeDescriptions;
+  TypePrinting AbstractTypeDescriptions;
   
   TypeMap<ArrayValType, ArrayType> ArrayTypes;
   TypeMap<VectorValType, VectorType> VectorTypes;
