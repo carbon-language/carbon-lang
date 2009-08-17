@@ -15,6 +15,7 @@
 #include "llvm/Type.h"
 #include "llvm/ADT/StringExtras.h"
 #include "llvm/ADT/FoldingSet.h"
+#include "llvm/System/Mutex.h"
 #include "llvm/Support/Streams.h"
 #include "llvm/Support/ManagedStatic.h"
 using namespace llvm;
@@ -124,9 +125,11 @@ public:
 };
 }
 
+static ManagedStatic<sys::SmartMutex<true> > ALMutex;
 static ManagedStatic<FoldingSet<AttributeListImpl> > AttributesLists;
 
 AttributeListImpl::~AttributeListImpl() {
+  sys::SmartScopedLock<true> Lock(*ALMutex);
   AttributesLists->RemoveNode(this);
 }
 
@@ -149,6 +152,9 @@ AttrListPtr AttrListPtr::get(const AttributeWithIndex *Attrs, unsigned NumAttrs)
   FoldingSetNodeID ID;
   AttributeListImpl::Profile(ID, Attrs, NumAttrs);
   void *InsertPos;
+  
+  sys::SmartScopedLock<true> Lock(*ALMutex);
+  
   AttributeListImpl *PAL =
     AttributesLists->FindNodeOrInsertPos(ID, InsertPos);
   
