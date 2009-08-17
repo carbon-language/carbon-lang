@@ -47,9 +47,6 @@ AbstractTypeUser::~AbstractTypeUser() {}
 //                         Type Class Implementation
 //===----------------------------------------------------------------------===//
 
-// Lock used for guarding access to the type maps.
-static ManagedStatic<sys::SmartMutex<true> > TypeMapLock;
-
 // Recursive lock used for guarding access to AbstractTypeUsers.
 // NOTE: The true template parameter means this will no-op when we're not in
 // multithreaded mode.
@@ -759,7 +756,7 @@ const IntegerType *IntegerType::get(LLVMContext &C, unsigned NumBits) {
   
   // First, see if the type is already in the table, for which
   // a reader lock suffices.
-  sys::SmartScopedLock<true> L(*TypeMapLock);
+  sys::SmartScopedLock<true> L(pImpl->TypeMapLock);
   ITy = pImpl->IntegerTypes.get(IVT);
     
   if (!ITy) {
@@ -801,7 +798,7 @@ FunctionType *FunctionType::get(const Type *ReturnType,
   
   LLVMContextImpl *pImpl = ReturnType->getContext().pImpl;
   
-  sys::SmartScopedLock<true> L(*TypeMapLock);
+  sys::SmartScopedLock<true> L(pImpl->TypeMapLock);
   FT = pImpl->FunctionTypes.get(VT);
   
   if (!FT) {
@@ -826,7 +823,7 @@ ArrayType *ArrayType::get(const Type *ElementType, uint64_t NumElements) {
 
   LLVMContextImpl *pImpl = ElementType->getContext().pImpl;
   
-  sys::SmartScopedLock<true> L(*TypeMapLock);
+  sys::SmartScopedLock<true> L(pImpl->TypeMapLock);
   AT = pImpl->ArrayTypes.get(AVT);
       
   if (!AT) {
@@ -860,7 +857,7 @@ VectorType *VectorType::get(const Type *ElementType, unsigned NumElements) {
   
   LLVMContextImpl *pImpl = ElementType->getContext().pImpl;
   
-  sys::SmartScopedLock<true> L(*TypeMapLock);
+  sys::SmartScopedLock<true> L(pImpl->TypeMapLock);
   PT = pImpl->VectorTypes.get(PVT);
     
   if (!PT) {
@@ -892,7 +889,7 @@ StructType *StructType::get(LLVMContext &Context,
   
   LLVMContextImpl *pImpl = Context.pImpl;
   
-  sys::SmartScopedLock<true> L(*TypeMapLock);
+  sys::SmartScopedLock<true> L(pImpl->TypeMapLock);
   ST = pImpl->StructTypes.get(STV);
     
   if (!ST) {
@@ -948,7 +945,7 @@ PointerType *PointerType::get(const Type *ValueType, unsigned AddressSpace) {
   
   LLVMContextImpl *pImpl = ValueType->getContext().pImpl;
   
-  sys::SmartScopedLock<true> L(*TypeMapLock);
+  sys::SmartScopedLock<true> L(pImpl->TypeMapLock);
   PT = pImpl->PointerTypes.get(PVT);
   
   if (!PT) {
@@ -1108,7 +1105,7 @@ void DerivedType::unlockedRefineAbstractTypeTo(const Type *NewType) {
 void DerivedType::refineAbstractTypeTo(const Type *NewType) {
   // All recursive calls will go through unlockedRefineAbstractTypeTo,
   // to avoid deadlock problems.
-  sys::SmartScopedLock<true> L(*TypeMapLock);
+  sys::SmartScopedLock<true> L(NewType->getContext().pImpl->TypeMapLock);
   unlockedRefineAbstractTypeTo(NewType);
 }
 
