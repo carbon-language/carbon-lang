@@ -119,13 +119,12 @@ namespace llvm
       Scanned = begin();
     }
 
-    /// PadToColumn - Align the output to some column number.
+    /// PadToColumn - Align the output to some column number.  If the current
+    /// column is already equal to or more than NewCol, PadToColumn inserts one
+    /// space.
     ///
     /// \param NewCol - The column to move to.
-    /// \param MinPad - The minimum space to give after the most
-    /// recent I/O, even if the current column + minpad > newcol.
-    ///
-    void PadToColumn(unsigned NewCol, unsigned MinPad = 0);
+    void PadToColumn(unsigned NewCol);
 
   private:
     void releaseStream() {

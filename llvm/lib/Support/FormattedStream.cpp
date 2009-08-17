@@ -51,21 +51,20 @@ void formatted_raw_ostream::ComputeColumn() {
 /// \param MinPad - The minimum space to give after the most recent
 /// I/O, even if the current column + minpad > newcol.
 ///
-void formatted_raw_ostream::PadToColumn(unsigned NewCol, unsigned MinPad) { 
+void formatted_raw_ostream::PadToColumn(unsigned NewCol) { 
   // Figure out what's in the buffer and add it to the column count.
   ComputeColumn();
 
   // Output spaces until we reach the desired column.
   unsigned num = NewCol - ColumnScanned;
-  if (NewCol < ColumnScanned || num < MinPad)
-    num = MinPad;
+  if (NewCol < ColumnScanned || num < 1)
+    num = 1;
 
   // Keep a buffer of spaces handy to speed up processing.
   const char *Spaces = "                                                      "
     "                                                                         ";
 
   assert(num < MAX_COLUMN_PAD && "Unexpectedly large column padding");
-
   write(Spaces, num);
 }
 

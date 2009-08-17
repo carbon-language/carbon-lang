@@ -217,7 +217,7 @@ void X86ATTAsmPrinter::emitFunctionHeader(const MachineFunction &MF) {
 
   O << CurrentFnName << ':';
   if (VerboseAsm) {
-    O.PadToColumn(TAI->getCommentColumn(), 1);
+    O.PadToColumn(TAI->getCommentColumn());
     O << TAI->getCommentString() << ' ';
     WriteAsOperand(O, F, /*PrintType=*/false, F->getParent());
   }
@@ -921,7 +921,7 @@ void X86ATTAsmPrinter::PrintGlobalVariable(const GlobalVariable* GVar) {
           EmitAlignment(Align, GVar);
           O << name << ":";
           if (VerboseAsm) {
-            O.PadToColumn(TAI->getCommentColumn(), 1);
+            O.PadToColumn(TAI->getCommentColumn());
             O << TAI->getCommentString() << ' ';
             WriteAsOperand(O, GVar, /*PrintType=*/false, GVar->getParent());
           }
@@ -943,7 +943,7 @@ void X86ATTAsmPrinter::PrintGlobalVariable(const GlobalVariable* GVar) {
           O << ',' << (TAI->getAlignmentIsInBytes() ? (1 << Align) : Align);
       }
       if (VerboseAsm) {
-        O.PadToColumn(TAI->getCommentColumn(), 1);
+        O.PadToColumn(TAI->getCommentColumn());
         O << TAI->getCommentString() << ' ';
         WriteAsOperand(O, GVar, /*PrintType=*/false, GVar->getParent());
       }
@@ -987,7 +987,7 @@ void X86ATTAsmPrinter::PrintGlobalVariable(const GlobalVariable* GVar) {
   EmitAlignment(Align, GVar);
   O << name << ":";
   if (VerboseAsm){
-    O.PadToColumn(TAI->getCommentColumn(), 1);
+    O.PadToColumn(TAI->getCommentColumn());
     O << TAI->getCommentString() << ' ';
     WriteAsOperand(O, GVar, /*PrintType=*/false, GVar->getParent());
   }

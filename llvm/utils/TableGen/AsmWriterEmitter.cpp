@@ -177,7 +177,7 @@ AsmWriterInst::AsmWriterInst(const CodeGenInstruction &CGI, Record *AsmWriter) {
                                     CurColumn++ * OperandSpacing;
               Operands.push_back(
                 AsmWriterOperand("O.PadToColumn(" +
-                                 utostr(DestColumn) + ",1);\n",
+                                 utostr(DestColumn) + ");\n",
                                  AsmWriterOperand::isLiteralStatementOperand));
             }
             break;
@@ -211,7 +211,7 @@ AsmWriterInst::AsmWriterInst(const CodeGenInstruction &CGI, Record *AsmWriter) {
           unsigned DestColumn = FirstOperandColumn + 
                                 CurColumn++ * OperandSpacing;
           Operands.push_back(
-            AsmWriterOperand("O.PadToColumn(" + utostr(DestColumn) + ", 1);\n",
+            AsmWriterOperand("O.PadToColumn(" + utostr(DestColumn) + ");\n",
                              AsmWriterOperand::isLiteralStatementOperand));
           break;
         } else if (std::string("${|}\\").find(AsmString[DollarPos+1]) 

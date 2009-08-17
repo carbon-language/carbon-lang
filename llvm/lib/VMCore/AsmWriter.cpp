@@ -1690,11 +1690,11 @@ void AssemblyWriter::printBasicBlock(const BasicBlock *BB) {
   }
 
   if (BB->getParent() == 0) {
-    Out.PadToColumn(50, 1);
+    Out.PadToColumn(50);
     Out << "; Error: Block without parent!";
   } else if (BB != &BB->getParent()->getEntryBlock()) {  // Not the entry block?
     // Output predecessors for the block...
-    Out.PadToColumn(50, 1);
+    Out.PadToColumn(50);
     Out << ";";
     pred_const_iterator PI = pred_begin(BB), PE = pred_end(BB);
     
@@ -1729,7 +1729,7 @@ void AssemblyWriter::printBasicBlock(const BasicBlock *BB) {
 ///
 void AssemblyWriter::printInfoComment(const Value &V) {
   if (V.getType() != Type::getVoidTy(V.getContext())) {
-    Out.PadToColumn(50, 1);
+    Out.PadToColumn(50);
     Out << "; <";
     TypePrinter.print(V.getType(), Out);
     Out << "> [#uses=" << V.getNumUses() << ']';  // Output # uses

@@ -333,7 +333,7 @@ void AsmPrinter::EmitConstantPool(MachineConstantPool *MCP) {
       O << TAI->getPrivateGlobalPrefix() << "CPI" << getFunctionNumber() << '_'
         << CPI << ':';
       if (VerboseAsm) {
-        O.PadToColumn(TAI->getCommentColumn(), 1);
+        O.PadToColumn(TAI->getCommentColumn());
         O << TAI->getCommentString() << " constant ";
         WriteTypeSymbolic(O, CPE.getType(), MF->getFunction()->getParent());
       }
@@ -606,7 +606,7 @@ void AsmPrinter::EOL() const {
 
 void AsmPrinter::EOL(const std::string &Comment) const {
   if (VerboseAsm && !Comment.empty()) {
-    O.PadToColumn(TAI->getCommentColumn(), 1);
+    O.PadToColumn(TAI->getCommentColumn());
     O << TAI->getCommentString()
       << ' '
       << Comment;
@@ -616,7 +616,7 @@ void AsmPrinter::EOL(const std::string &Comment) const {
 
 void AsmPrinter::EOL(const char* Comment) const {
   if (VerboseAsm && *Comment) {
-    O.PadToColumn(TAI->getCommentColumn(), 1);
+    O.PadToColumn(TAI->getCommentColumn());
     O << TAI->getCommentString()
       << ' '
       << Comment;
@@ -1020,21 +1020,21 @@ void AsmPrinter::EmitGlobalConstantFP(const ConstantFP *CFP,
     if (TAI->getData64bitsDirective(AddrSpace)) {
       O << TAI->getData64bitsDirective(AddrSpace) << i;
       if (VerboseAsm) {
-        O.PadToColumn(TAI->getCommentColumn(), 1);
+        O.PadToColumn(TAI->getCommentColumn());
         O << TAI->getCommentString() << " double " << Val;
       }
       O << '\n';
     } else if (TD->isBigEndian()) {
       O << TAI->getData32bitsDirective(AddrSpace) << unsigned(i >> 32);
       if (VerboseAsm) {
-        O.PadToColumn(TAI->getCommentColumn(), 1);
+        O.PadToColumn(TAI->getCommentColumn());
         O << TAI->getCommentString()
           << " most significant word of double " << Val;
       }
       O << '\n';
       O << TAI->getData32bitsDirective(AddrSpace) << unsigned(i);
       if (VerboseAsm) {
-        O.PadToColumn(TAI->getCommentColumn(), 1);
+        O.PadToColumn(TAI->getCommentColumn());
         O << TAI->getCommentString()
           << " least significant word of double " << Val;
       }
@@ -1042,14 +1042,14 @@ void AsmPrinter::EmitGlobalConstantFP(const ConstantFP *CFP,
     } else {
       O << TAI->getData32bitsDirective(AddrSpace) << unsigned(i);
       if (VerboseAsm) {
-        O.PadToColumn(TAI->getCommentColumn(), 1);
+        O.PadToColumn(TAI->getCommentColumn());
         O << TAI->getCommentString()
           << " least significant word of double " << Val;
       }
       O << '\n';
       O << TAI->getData32bitsDirective(AddrSpace) << unsigned(i >> 32);
       if (VerboseAsm) {
-        O.PadToColumn(TAI->getCommentColumn(), 1);
+        O.PadToColumn(TAI->getCommentColumn());
         O << TAI->getCommentString()
           << " most significant word of double " << Val;
       }
@@ -1061,7 +1061,7 @@ void AsmPrinter::EmitGlobalConstantFP(const ConstantFP *CFP,
     O << TAI->getData32bitsDirective(AddrSpace)
       << CFP->getValueAPF().bitcastToAPInt().getZExtValue();
     if (VerboseAsm) {
-      O.PadToColumn(TAI->getCommentColumn(), 1);
+      O.PadToColumn(TAI->getCommentColumn());
       O << TAI->getCommentString() << " float " << Val;
     }
     O << '\n';
@@ -1079,7 +1079,7 @@ void AsmPrinter::EmitGlobalConstantFP(const ConstantFP *CFP,
     if (TD->isBigEndian()) {
       O << TAI->getData16bitsDirective(AddrSpace) << uint16_t(p[1]);
       if (VerboseAsm) {
-        O.PadToColumn(TAI->getCommentColumn(), 1);
+        O.PadToColumn(TAI->getCommentColumn());
         O << TAI->getCommentString()
           << " most significant halfword of x86_fp80 ~"
           << DoubleVal.convertToDouble();
@@ -1087,25 +1087,25 @@ void AsmPrinter::EmitGlobalConstantFP(const ConstantFP *CFP,
       O << '\n';
       O << TAI->getData16bitsDirective(AddrSpace) << uint16_t(p[0] >> 48);
       if (VerboseAsm) {
-        O.PadToColumn(TAI->getCommentColumn(), 1);
+        O.PadToColumn(TAI->getCommentColumn());
         O << TAI->getCommentString() << " next halfword";
       }
       O << '\n';
       O << TAI->getData16bitsDirective(AddrSpace) << uint16_t(p[0] >> 32);
       if (VerboseAsm) {
-        O.PadToColumn(TAI->getCommentColumn(), 1);
+        O.PadToColumn(TAI->getCommentColumn());
         O << TAI->getCommentString() << " next halfword";
       }
       O << '\n';
       O << TAI->getData16bitsDirective(AddrSpace) << uint16_t(p[0] >> 16);
       if (VerboseAsm) {
-        O.PadToColumn(TAI->getCommentColumn(), 1);
+        O.PadToColumn(TAI->getCommentColumn());
         O << TAI->getCommentString() << " next halfword";
       }
       O << '\n';
       O << TAI->getData16bitsDirective(AddrSpace) << uint16_t(p[0]);
       if (VerboseAsm) {
-        O.PadToColumn(TAI->getCommentColumn(), 1);
+        O.PadToColumn(TAI->getCommentColumn());
         O << TAI->getCommentString()
           << " least significant halfword";
       }
@@ -1113,7 +1113,7 @@ void AsmPrinter::EmitGlobalConstantFP(const ConstantFP *CFP,
      } else {
       O << TAI->getData16bitsDirective(AddrSpace) << uint16_t(p[0]);
       if (VerboseAsm) {
-        O.PadToColumn(TAI->getCommentColumn(), 1);
+        O.PadToColumn(TAI->getCommentColumn());
         O << TAI->getCommentString()
           << " least significant halfword of x86_fp80 ~"
           << DoubleVal.convertToDouble();
@@ -1121,28 +1121,28 @@ void AsmPrinter::EmitGlobalConstantFP(const ConstantFP *CFP,
       O << '\n';
       O << TAI->getData16bitsDirective(AddrSpace) << uint16_t(p[0] >> 16);
       if (VerboseAsm) {
-        O.PadToColumn(TAI->getCommentColumn(), 1);
+        O.PadToColumn(TAI->getCommentColumn());
         O << TAI->getCommentString()
           << " next halfword";
       }
       O << '\n';
       O << TAI->getData16bitsDirective(AddrSpace) << uint16_t(p[0] >> 32);
       if (VerboseAsm) {
-        O.PadToColumn(TAI->getCommentColumn(), 1);
+        O.PadToColumn(TAI->getCommentColumn());
         O << TAI->getCommentString()
           << " next halfword";
       }
       O << '\n';
       O << TAI->getData16bitsDirective(AddrSpace) << uint16_t(p[0] >> 48);
       if (VerboseAsm) {
-        O.PadToColumn(TAI->getCommentColumn(), 1);
+        O.PadToColumn(TAI->getCommentColumn());
         O << TAI->getCommentString()
           << " next halfword";
       }
       O << '\n';
       O << TAI->getData16bitsDirective(AddrSpace) << uint16_t(p[1]);
       if (VerboseAsm) {
-        O.PadToColumn(TAI->getCommentColumn(), 1);
+        O.PadToColumn(TAI->getCommentColumn());
         O << TAI->getCommentString()
           << " most significant halfword";
       }
@@ -1159,28 +1159,28 @@ void AsmPrinter::EmitGlobalConstantFP(const ConstantFP *CFP,
     if (TD->isBigEndian()) {
       O << TAI->getData32bitsDirective(AddrSpace) << uint32_t(p[0] >> 32);
       if (VerboseAsm) {
-        O.PadToColumn(TAI->getCommentColumn(), 1);
+        O.PadToColumn(TAI->getCommentColumn());
         O << TAI->getCommentString()
           << " most significant word of ppc_fp128";
       }
       O << '\n';
       O << TAI->getData32bitsDirective(AddrSpace) << uint32_t(p[0]);
       if (VerboseAsm) {
-        O.PadToColumn(TAI->getCommentColumn(), 1);
+        O.PadToColumn(TAI->getCommentColumn());
         O << TAI->getCommentString()
         << " next word";
       }
       O << '\n';
       O << TAI->getData32bitsDirective(AddrSpace) << uint32_t(p[1] >> 32);
       if (VerboseAsm) {
-        O.PadToColumn(TAI->getCommentColumn(), 1);
+        O.PadToColumn(TAI->getCommentColumn());
         O << TAI->getCommentString()
           << " next word";
       }
       O << '\n';
       O << TAI->getData32bitsDirective(AddrSpace) << uint32_t(p[1]);
       if (VerboseAsm) {
-        O.PadToColumn(TAI->getCommentColumn(), 1);
+        O.PadToColumn(TAI->getCommentColumn());
         O << TAI->getCommentString()
           << " least significant word";
       }
@@ -1188,28 +1188,28 @@ void AsmPrinter::EmitGlobalConstantFP(const ConstantFP *CFP,
      } else {
       O << TAI->getData32bitsDirective(AddrSpace) << uint32_t(p[1]);
       if (VerboseAsm) {
-        O.PadToColumn(TAI->getCommentColumn(), 1);
+        O.PadToColumn(TAI->getCommentColumn());
         O << TAI->getCommentString()
           << " least significant word of ppc_fp128";
       }
       O << '\n';
       O << TAI->getData32bitsDirective(AddrSpace) << uint32_t(p[1] >> 32);
       if (VerboseAsm) {
-        O.PadToColumn(TAI->getCommentColumn(), 1);
+        O.PadToColumn(TAI->getCommentColumn());
         O << TAI->getCommentString()
           << " next word";
       }
       O << '\n';
       O << TAI->getData32bitsDirective(AddrSpace) << uint32_t(p[0]);
       if (VerboseAsm) {
-        O.PadToColumn(TAI->getCommentColumn(), 1);
+        O.PadToColumn(TAI->getCommentColumn());
         O << TAI->getCommentString()
           << " next word";
       }
       O << '\n';
       O << TAI->getData32bitsDirective(AddrSpace) << uint32_t(p[0] >> 32);
       if (VerboseAsm) {
-        O.PadToColumn(TAI->getCommentColumn(), 1);
+        O.PadToColumn(TAI->getCommentColumn());
         O << TAI->getCommentString()
           << " most significant word";
       }
@@ -1242,14 +1242,14 @@ void AsmPrinter::EmitGlobalConstantLargeInt(const ConstantInt *CI,
     else if (TD->isBigEndian()) {
       O << TAI->getData32bitsDirective(AddrSpace) << unsigned(Val >> 32);
       if (VerboseAsm) {
-        O.PadToColumn(TAI->getCommentColumn(), 1);
+        O.PadToColumn(TAI->getCommentColumn());
         O << TAI->getCommentString()
           << " most significant half of i64 " << Val;
       }
       O << '\n';
       O << TAI->getData32bitsDirective(AddrSpace) << unsigned(Val);
       if (VerboseAsm) {
-        O.PadToColumn(TAI->getCommentColumn(), 1);
+        O.PadToColumn(TAI->getCommentColumn());
         O << TAI->getCommentString()
           << " least significant half of i64 " << Val;
       }
@@ -1257,14 +1257,14 @@ void AsmPrinter::EmitGlobalConstantLargeInt(const ConstantInt *CI,
     } else {
       O << TAI->getData32bitsDirective(AddrSpace) << unsigned(Val);
       if (VerboseAsm) {
-        O.PadToColumn(TAI->getCommentColumn(), 1);
+        O.PadToColumn(TAI->getCommentColumn());
         O << TAI->getCommentString()
           << " least significant half of i64 " << Val;
       }
       O << '\n';
       O << TAI->getData32bitsDirective(AddrSpace) << unsigned(Val >> 32);
       if (VerboseAsm) {
-        O.PadToColumn(TAI->getCommentColumn(), 1);
+        O.PadToColumn(TAI->getCommentColumn());
         O << TAI->getCommentString()
           << " most significant half of i64 " << Val;
       }
@@ -1308,7 +1308,7 @@ void AsmPrinter::EmitGlobalConstant(const Constant *CV, unsigned AddrSpace) {
     if (const ConstantInt *CI = dyn_cast<ConstantInt>(CV)) {
       SmallString<40> S;
       CI->getValue().toStringUnsigned(S, 16);
-      O.PadToColumn(TAI->getCommentColumn(), 1);
+      O.PadToColumn(TAI->getCommentColumn());
       O << TAI->getCommentString() << " 0x" << S.c_str();
     }
   }
@@ -1574,7 +1574,7 @@ void AsmPrinter::printInlineAsm(const MachineInstr *MI) const {
 /// that is an implicit def.
 void AsmPrinter::printImplicitDef(const MachineInstr *MI) const {
   if (VerboseAsm) {
-    O.PadToColumn(TAI->getCommentColumn(), 1);
+    O.PadToColumn(TAI->getCommentColumn());
     O << TAI->getCommentString() << " implicit-def: "
       << TRI->getAsmName(MI->getOperand(0).getReg()) << '\n';
   }
@@ -1635,7 +1635,7 @@ void AsmPrinter::printBasicBlockLabel(const MachineBasicBlock *MBB,
   if (printComment) {
     if (const BasicBlock *BB = MBB->getBasicBlock())
       if (BB->hasName()) {
-        O.PadToColumn(TAI->getCommentColumn(), 1);
+        O.PadToColumn(TAI->getCommentColumn());
         O << TAI->getCommentString() << ' ';
         WriteAsOperand(O, BB, /*PrintType=*/false);
       }
@@ -1769,8 +1769,8 @@ void AsmPrinter::EmitComments(const MachineInstr &MI) const {
   
   DebugLocTuple DLT = MF->getDebugLocTuple(MI.getDebugLoc());
 
-  // Print source line info
-  O.PadToColumn(TAI->getCommentColumn(), 1);
+  // Print source line info.
+  O.PadToColumn(TAI->getCommentColumn());
   O << TAI->getCommentString() << " SrcLine ";
   if (DLT.CompileUnit->hasInitializer()) {
     Constant *Name = DLT.CompileUnit->getInitializer();
@@ -1791,7 +1791,7 @@ void AsmPrinter::EmitComments(const MCInst &MI) const
       DebugLocTuple DLT = MF->getDebugLocTuple(MI.getDebugLoc());
 
       // Print source line info
-      O.PadToColumn(TAI->getCommentColumn(), 1);
+      O.PadToColumn(TAI->getCommentColumn());
       O << TAI->getCommentString() << " SrcLine ";
       if (DLT.CompileUnit->hasInitializer()) {
         Constant *Name = DLT.CompileUnit->getInitializer();
@@ -1817,11 +1817,11 @@ void AsmPrinter::EmitComments(const MachineBasicBlock &MBB) const
     if (loop) {
       // Print a newline after bb# annotation.
       O << "\n";
-      O.PadToColumn(TAI->getCommentColumn(), 1);
+      O.PadToColumn(TAI->getCommentColumn());
       O << TAI->getCommentString() << " Loop Depth " << loop->getLoopDepth()
         << '\n';
 
-      O.PadToColumn(TAI->getCommentColumn(), 1);
+      O.PadToColumn(TAI->getCommentColumn());
 
       MachineBasicBlock *Header = loop->getHeader();
       assert(Header && "No header for loop");
@@ -1837,7 +1837,7 @@ void AsmPrinter::EmitComments(const MachineBasicBlock &MBB) const
 
       if (loop->empty()) {
         O << '\n';
-        O.PadToColumn(TAI->getCommentColumn(), 1);
+        O.PadToColumn(TAI->getCommentColumn());
         O << TAI->getCommentString() << " Inner Loop";
       }
 
@@ -1849,7 +1849,7 @@ void AsmPrinter::EmitComments(const MachineBasicBlock &MBB) const
         assert(Header && "No header for loop");
 
         O << '\n';
-        O.PadToColumn(TAI->getCommentColumn(), 1);
+        O.PadToColumn(TAI->getCommentColumn());
         O << TAI->getCommentString() << Indent(CurLoop->getLoopDepth()-1)
           << " Inside Loop BB" << getFunctionNumber() << "_" 
           << Header->getNumber() << " Depth " << CurLoop->getLoopDepth();
@@ -1868,7 +1868,7 @@ void AsmPrinter::PrintChildLoopComment(const MachineLoop *loop) const {
     assert(Header && "No header for loop");
 
     O << '\n';
-    O.PadToColumn(TAI->getCommentColumn(), 1);
+    O.PadToColumn(TAI->getCommentColumn());
 
     O << TAI->getCommentString() << Indent((*cl)->getLoopDepth()-1)
       << " Child Loop BB" << getFunctionNumber() << "_"
