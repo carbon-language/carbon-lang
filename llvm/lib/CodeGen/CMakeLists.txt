@@ -56,6 +56,7 @@ add_llvm_library(LLVMCodeGen
   ShadowStackGC.cpp
   ShrinkWrapping.cpp
   SimpleRegisterCoalescing.cpp
+  SjLjEHPrepare.cpp
   Spiller.cpp
   StackProtector.cpp
   StackSlotColoring.cpp
