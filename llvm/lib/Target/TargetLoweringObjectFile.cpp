@@ -609,11 +609,11 @@ SelectSectionForGlobal(const GlobalValue *GV, SectionKind Kind,
 /// should be placed in.
 const MCSection *TargetLoweringObjectFileELF::
 getSectionForConstant(SectionKind Kind) const {
-  if (Kind.isMergeableConst4())
+  if (Kind.isMergeableConst4() && MergeableConst4Section)
     return MergeableConst4Section;
-  if (Kind.isMergeableConst8())
+  if (Kind.isMergeableConst8() && MergeableConst8Section)
     return MergeableConst8Section;
-  if (Kind.isMergeableConst16())
+  if (Kind.isMergeableConst16() && MergeableConst16Section)
     return MergeableConst16Section;
   if (Kind.isReadOnly())
     return ReadOnlySection;

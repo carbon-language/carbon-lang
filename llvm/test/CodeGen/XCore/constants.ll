@@ -1,0 +1,11 @@
+; RUN: llvm-as < %s | llc -march=xcore -mcpu=xs1b-generic | FileCheck %s
+
+; CHECK: .section .cp.rodata,"ac",@progbits
+; CHECK: .LCPI1_0:
+; CHECK: .long 12345678
+; CHECK: f:
+; CHECK: ldw r0, cp[.LCPI1_0]
+define i32 @f() {
+entry:
+	ret i32 12345678
+}
