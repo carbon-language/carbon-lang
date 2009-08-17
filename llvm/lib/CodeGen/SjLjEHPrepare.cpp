@@ -25,12 +25,12 @@
 #include "llvm/Transforms/Utils/BasicBlockUtils.h"
 #include "llvm/Transforms/Utils/Local.h"
 #include "llvm/ADT/Statistic.h"
+#include "llvm/ADT/SmallVector.h"
 #include "llvm/Support/CommandLine.h"
 #include "llvm/Support/Compiler.h"
 #include "llvm/Support/Debug.h"
 #include "llvm/Support/raw_ostream.h"
 #include "llvm/Target/TargetLowering.h"
-#include <set>
 using namespace llvm;
 
 STATISTIC(NumInvokes, "Number of invokes replaced");
@@ -71,7 +71,7 @@ namespace {
     void markInvokeCallSite(InvokeInst *II, unsigned InvokeNo,
                             Value *CallSite,
                             SwitchInst *CatchSwitch);
-    void splitLiveRangesLiveAcrossInvokes(std::vector<InvokeInst*> &Invokes);
+    void splitLiveRangesLiveAcrossInvokes(SmallVector<InvokeInst*,16> &Invokes);
     bool insertSjLjEHSupport(Function &F);
   };
 } // end anonymous namespace
@@ -165,12 +165,12 @@ static void MarkBlocksLiveIn(BasicBlock *BB, std::set<BasicBlock*> &LiveBBs) {
     MarkBlocksLiveIn(*PI, LiveBBs);
 }
 
-// live across unwind edges.  Each value that is live across an unwind edge
-// we spill into a stack location, guaranteeing that there is nothing live
-// across the unwind edge.  This process also splits all critical edges
-// coming out of invoke's.
+/// splitLiveRangesAcrossInvokes - Each value that is live across an unwind edge
+/// we spill into a stack location, guaranteeing that there is nothing live
+/// across the unwind edge.  This process also splits all critical edges
+/// coming out of invoke's.
 void SjLjEHPass::
-splitLiveRangesLiveAcrossInvokes(std::vector<InvokeInst*> &Invokes) {
+splitLiveRangesLiveAcrossInvokes(SmallVector<InvokeInst*,16> &Invokes) {
   // First step, split all critical edges from invoke instructions.
   for (unsigned i = 0, e = Invokes.size(); i != e; ++i) {
     InvokeInst *II = Invokes[i];
@@ -223,18 +223,13 @@ splitLiveRangesLiveAcrossInvokes(std::vector<InvokeInst*> &Invokes) {
           continue;
 
       // Avoid iterator invalidation by copying users to a temporary vector.
-      std::vector<Instruction*> Users;
+      SmallVector<Instruction*,16> Users;
       for (Value::use_iterator UI = Inst->use_begin(), E = Inst->use_end();
            UI != E; ++UI) {
         Instruction *User = cast<Instruction>(*UI);
         if (User->getParent() != BB || isa<PHINode>(User))
           Users.push_back(User);
       }
-
-      // Scan all of the uses and see if the live range is live across an unwind
-      // edge.  If we find a use live across an invoke edge, create an alloca
-      // and spill the value.
-      std::set<InvokeInst*> InvokesWithStoreInserted;
 
       // Find all of the blocks that this value is live in.
       std::set<BasicBlock*> LiveBBs;
@@ -273,9 +268,9 @@ splitLiveRangesLiveAcrossInvokes(std::vector<InvokeInst*> &Invokes) {
 }
 
 bool SjLjEHPass::insertSjLjEHSupport(Function &F) {
-  std::vector<ReturnInst*> Returns;
-  std::vector<UnwindInst*> Unwinds;
-  std::vector<InvokeInst*> Invokes;
+  SmallVector<ReturnInst*,16> Returns;
+  SmallVector<UnwindInst*,16> Unwinds;
+  SmallVector<InvokeInst*,16> Invokes;
 
   // Look through the terminators of the basic blocks to find invokes, returns
   // and unwinds
@@ -346,11 +341,9 @@ bool SjLjEHPass::insertSjLjEHSupport(Function &F) {
     // SJLJ, we always use the same personality for the whole function,
     // not on a per-selector basis.
     // FIXME: That's a bit ugly. Better way?
-    std::vector<CallInst*> EH_Selectors;
-    std::vector<CallInst*> EH_Exceptions;
-  for (Function::iterator BB = F.begin(), E = F.end(); BB != E; ++BB) {
-  //  for (unsigned i = 0, e = Invokes.size(); i != e; ++i) {
-//      BasicBlock *Pad = Invokes[0]->getUnwindDest();
+    SmallVector<CallInst*,16> EH_Selectors;
+    SmallVector<CallInst*,16> EH_Exceptions;
+    for (Function::iterator BB = F.begin(), E = F.end(); BB != E; ++BB) {
       for (BasicBlock::iterator I = BB->begin(), E = BB->end(); I != E; ++I) {
         if (CallInst *CI = dyn_cast<CallInst>(I)) {
           if (CI->getCalledFunction() == Selector32Fn ||
@@ -381,9 +374,8 @@ bool SjLjEHPass::insertSjLjEHSupport(Function &F) {
       // the instruction hasn't already been removed.
       if (!I->getParent()) continue;
       Value *Val = new LoadInst(ExceptionAddr, "exception", true, I);
-      Val = CastInst::Create(Instruction::IntToPtr, Val,
-                             PointerType::getUnqual(Type::getInt8Ty(F.getContext())),
-                             "", I);
+      Type *Ty = PointerType::getUnqual(Type::getInt8Ty(F.getContext()));
+      Val = CastInst::Create(Instruction::IntToPtr, Val, Ty, "", I);
 
       I->replaceAllUsesWith(Val);
       I->eraseFromParent();
