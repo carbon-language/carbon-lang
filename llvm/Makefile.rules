@@ -891,7 +891,7 @@ $(ToolDir)/$(strip $(TOOLNAME))$(EXEEXT): $(LLVM_CONFIG)
 
 LLVMLibsOptions += $(shell $(LLVM_CONFIG) --libs     $(LINK_COMPONENTS))
 LLVMLibsPaths   += $(LLVM_CONFIG) \
-                  $(shell $(LLVM_CONFIG) --libfiles $(LINK_COMPONENTS))
+                   $(shell $(LLVM_CONFIG) --libfiles $(LINK_COMPONENTS))
 endif
 endif
 
@@ -963,7 +963,7 @@ endif
 # if we're building a library ...
 ifdef LIBRARYNAME
 
-# Make sure there isn't any extranous whitespace on the LIBRARYNAME option
+# Make sure there isn't any extraneous whitespace on the LIBRARYNAME option
 LIBRARYNAME := $(strip $(LIBRARYNAME))
 ifdef LOADABLE_MODULE
 LibName.A  := $(LibDir)/$(LIBRARYNAME).a
