@@ -59,8 +59,8 @@ function(explicit_map_components_to_libraries out_libs)
         list(APPEND expanded_components "LLVM${c}Info")
       endif()
     elseif( c STREQUAL "native" )
-      # TODO: we assume ARCH is X86. In this case, we must use nativecodegen
-      # component instead. Do nothing, as in llvm-config script.
+      # TODO: we assume ARCH is X86.
+      list(APPEND expanded_components "LLVMX86CodeGen")
     elseif( c STREQUAL "nativecodegen" )
       # TODO: we assume ARCH is X86.
       list(APPEND expanded_components "LLVMX86CodeGen")
