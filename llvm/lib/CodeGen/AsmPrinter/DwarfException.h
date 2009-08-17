@@ -155,7 +155,6 @@ class VISIBILITY_HIDDEN DwarfException : public Dwarf {
   /// of any entry - they form gaps in the table.  Entries must be ordered by
   /// try-range address.
   void ComputeCallSiteTable(SmallVectorImpl<CallSiteEntry> &CallSites,
-                            std::map<unsigned,CallSiteEntry*> &CallSiteIndexMap,
                             const RangeMapType &PadMap,
                             const SmallVectorImpl<const LandingPadInfo *> &LPs,
                             const SmallVectorImpl<unsigned> &FirstActions);

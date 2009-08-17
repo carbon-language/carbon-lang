@@ -364,7 +364,6 @@ ComputeActionsTable(const SmallVectorImpl<const LandingPadInfo*> &LandingPads,
 /// try-range address.
 void DwarfException::
 ComputeCallSiteTable(SmallVectorImpl<CallSiteEntry> &CallSites,
-                     std::map<unsigned,CallSiteEntry*> &CallSiteIndexMap,
                      const RangeMapType &PadMap,
                      const SmallVectorImpl<const LandingPadInfo *> &LandingPads,
                      const SmallVectorImpl<unsigned> &FirstActions) {
@@ -438,12 +437,6 @@ ComputeCallSiteTable(SmallVectorImpl<CallSiteEntry> &CallSites,
 
         // Otherwise, create a new call-site.
         CallSites.push_back(Site);
-        // For SjLj handling, map the call site entry to its index
-        if (TAI->getExceptionHandlingType() == ExceptionHandling::SjLj) {
-          unsigned Index =
-            MF->getLandingPadCallSiteIndex(LandingPad->LandingPadBlock);
-          CallSiteIndexMap[Index] = &CallSites.back();
-        }
         PreviousIsInvoke = true;
       } else {
         // Create a gap.
@@ -520,9 +513,7 @@ void DwarfException::EmitExceptionTable() {
 
   // Compute the call-site table.
   SmallVector<CallSiteEntry, 64> CallSites;
-  std::map<unsigned,CallSiteEntry*> CallSiteIndexMap;
-  ComputeCallSiteTable(CallSites, CallSiteIndexMap, PadMap,
-                       LandingPads, FirstActions);
+  ComputeCallSiteTable(CallSites, PadMap, LandingPads, FirstActions);
 
   // Final tallies.
 
@@ -537,8 +528,7 @@ void DwarfException::EmitExceptionTable() {
 
 
   if (TAI->getExceptionHandlingType() == ExceptionHandling::SjLj) {
-    SizeSites = (MF->getMaxCallSiteIndex() - CallSites.size()) *
-      TargetAsmInfo::getULEB128Size(0) * 2;
+    SizeSites = 0;
   } else
     SizeSites = CallSites.size() *
       (SiteStartSize + SiteLengthSize + LandingPadSize);
@@ -546,7 +536,6 @@ void DwarfException::EmitExceptionTable() {
     SizeSites += TargetAsmInfo::getULEB128Size(CallSites[i].Action);
     if (TAI->getExceptionHandlingType() == ExceptionHandling::SjLj)
       SizeSites += TargetAsmInfo::getULEB128Size(i);
-      // FIXME: 'i' above should be the landing pad index
   }
   // Type infos.
   const unsigned TypeInfoSize = TD->getPointerSize(); // DW_EH_PE_absptr
@@ -655,25 +644,11 @@ void DwarfException::EmitExceptionTable() {
     assert(MF->getCallSiteCount() == CallSites.size());
 
     // Emit the landing pad site information.
-    // SjLj handling assigned the call site indices in the front end, so
-    // we need to make sure the table here lines up with that. That's pretty
-    // horrible, and should be fixed ASAP to do that stuff in the back end
-    // instead.
-    std::map<unsigned, CallSiteEntry*>::const_iterator I, E;
-    I = CallSiteIndexMap.begin();
-    E = CallSiteIndexMap.end();
-    for (unsigned CurrIdx = 1; I != E; ++I) {
-      // paranoia.
-      assert(CurrIdx <= I->first);
-      // Fill in any gaps in the table
-      while (CurrIdx++ < I->first) {
-        Asm->EmitULEB128Bytes(0);
-        Asm->EOL("Filler landing pad");
-        Asm->EmitULEB128Bytes(0);
-        Asm->EOL("Filler action");
-      }
-      const CallSiteEntry &S = *(I->second);
-      Asm->EmitULEB128Bytes(I->first - 1);
+    unsigned idx = 0;
+    for (SmallVectorImpl<CallSiteEntry>::const_iterator
+         I = CallSites.begin(), E = CallSites.end(); I != E; ++I, ++idx) {
+      const CallSiteEntry &S = *I;
+      Asm->EmitULEB128Bytes(idx);
       Asm->EOL("Landing pad");
       Asm->EmitULEB128Bytes(S.Action);
       Asm->EOL("Action");
