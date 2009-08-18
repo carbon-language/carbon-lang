@@ -1231,7 +1231,7 @@ BugReport::getEndPath(BugReporterContext& BRC,
     return NULL;
 
   const SourceRange *Beg, *End;
-  getRanges(BRC.getBugReporter(), Beg, End);  
+  getRanges(Beg, End);  
   PathDiagnosticLocation L(S, BRC.getSourceManager());
   
   // Only add the statement itself as a range if we didn't specify any
@@ -1245,9 +1245,7 @@ BugReport::getEndPath(BugReporterContext& BRC,
   return P;
 }
 
-void BugReport::getRanges(BugReporter& BR, const SourceRange*& beg,
-                          const SourceRange*& end) {  
-  
+void BugReport::getRanges(const SourceRange*& beg, const SourceRange*& end) {  
   if (const Expr* E = dyn_cast_or_null<Expr>(getStmt())) {
     R = E->getSourceRange();
     assert(R.isValid());
@@ -1657,7 +1655,7 @@ void BugReporter::FlushReport(BugReportEquivClass& EQ) {
 
   // Emit a summary diagnostic to the regular Diagnostics engine.
   const SourceRange *Beg = 0, *End = 0;
-  R.getRanges(*this, Beg, End);    
+  R.getRanges(Beg, End);    
   Diagnostic& Diag = getDiagnostic();
   FullSourceLoc L(R.getLocation(), getSourceManager());  
   unsigned ErrorDiag = Diag.getCustomDiagID(Diagnostic::Warning,

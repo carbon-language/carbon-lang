@@ -2140,11 +2140,9 @@ namespace {
       return (const CFRefBug&) RangedBugReport::getBugType();
     }
     
-    virtual void getRanges(BugReporter& BR, const SourceRange*& beg,           
-                           const SourceRange*& end) {
-      
+    virtual void getRanges(const SourceRange*& beg, const SourceRange*& end) {
       if (!getBugType().isLeak())
-        RangedBugReport::getRanges(BR, beg, end);
+        RangedBugReport::getRanges(beg, end);
       else
         beg = end = 0;
     }

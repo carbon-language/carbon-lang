@@ -125,8 +125,7 @@ public:
   virtual SourceLocation getLocation() const;
   
   /// getRanges - Returns the source ranges associated with this bug.
-  virtual void getRanges(BugReporter& BR,const SourceRange*& beg,
-                         const SourceRange*& end);
+  virtual void getRanges(const SourceRange*& beg, const SourceRange*& end);
 
   virtual PathDiagnosticPiece* VisitNode(const ExplodedNode* N,
                                          const ExplodedNode* PrevN,
@@ -230,8 +229,7 @@ public:
   void addRange(SourceRange R) { Ranges.push_back(R); }
   
   // FIXME: Move this out of line.
-  void getRanges(BugReporter& BR,const SourceRange*& beg,
-                 const SourceRange*& end) {
+  void getRanges(const SourceRange*& beg, const SourceRange*& end) {
     
     if (Ranges.empty()) {
       beg = NULL;
