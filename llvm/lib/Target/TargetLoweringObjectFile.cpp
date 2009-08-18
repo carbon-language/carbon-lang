@@ -487,6 +487,9 @@ getELFSectionFlags(SectionKind K) {
   if (!K.isMetadata())
     Flags |= MCSectionELF::SHF_ALLOC;
   
+  if (K.isText())
+    Flags |= MCSectionELF::SHF_EXECINSTR;
+  
   if (K.isWriteable())
     Flags |= MCSectionELF::SHF_WRITE;
   
