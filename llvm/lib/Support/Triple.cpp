@@ -117,6 +117,9 @@ void Triple::Parse() const {
   assert(!isInitialized() && "Invalid parse call.");
 
   StringRef ArchName = getArchName();
+  StringRef VendorName = getVendorName();
+  StringRef OSName = getOSName();
+
   if (ArchName.size() == 4 && ArchName[0] == 'i' && 
       ArchName[2] == '8' && ArchName[3] == '6' && 
       ArchName[1] - '3' < 6) // i[3-9]86
@@ -156,7 +159,22 @@ void Triple::Parse() const {
   else
     Arch = UnknownArch;
 
-  StringRef VendorName = getVendorName();
+
+  // Handle some exceptional cases where the OS / environment components are
+  // stuck into the vendor field.
+  if (StringRef(getTriple()).count('-') == 1) {
+    StringRef VendorName = getVendorName();
+
+    if (VendorName.startswith("mingw32")) { // 'i386-mingw32', etc.
+      Vendor = PC;
+      OS = MinGW32;
+      return;
+    }
+
+    // arm-elf is another example, but we don't currently parse anything about
+    // the environment.
+  }
+
   if (VendorName == "apple")
     Vendor = Apple;
   else if (VendorName == "pc")
@@ -164,7 +182,6 @@ void Triple::Parse() const {
   else
     Vendor = UnknownVendor;
 
-  StringRef OSName = getOSName();
   if (OSName.startswith("auroraux"))
     OS = AuroraUX;
   else if (OSName.startswith("cygwin"))

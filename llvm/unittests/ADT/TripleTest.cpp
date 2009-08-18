@@ -92,6 +92,18 @@ TEST(TripleTest, ParsedIDs) {
 
   T = Triple("huh");
   EXPECT_EQ(Triple::UnknownArch, T.getArch());
+
+  // Two exceptional cases.
+
+  T = Triple("i386-mingw32");
+  EXPECT_EQ(Triple::x86, T.getArch());
+  EXPECT_EQ(Triple::PC, T.getVendor());
+  EXPECT_EQ(Triple::MinGW32, T.getOS());
+
+  T = Triple("arm-elf");
+  EXPECT_EQ(Triple::arm, T.getArch());
+  EXPECT_EQ(Triple::UnknownVendor, T.getVendor());
+  EXPECT_EQ(Triple::UnknownOS, T.getOS());
 }
 
 TEST(TripleTest, MutateName) {

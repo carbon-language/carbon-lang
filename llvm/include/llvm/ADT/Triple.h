@@ -29,8 +29,22 @@ class Twine;
 /// behavior for particular targets. This class isolates the mapping
 /// from the components of the target triple to well known IDs.
 ///
-/// See autoconf/config.guess for a glimpse into what they look like
-/// in practice.
+/// At its core the Triple class is designed to be a wrapper for a triple
+/// string; it does not normally change or normalize the triple string, instead
+/// it provides additional APIs to parse normalized parts out of the triple.
+///
+/// One curiosity this implies is that for some odd triples the results of,
+/// e.g., getOSName() can be very different from the result of getOS().  For
+/// example, for 'i386-mingw32', getOS() will return MinGW32, but since
+/// getOSName() is purely based on the string structure that will return the
+/// empty string.
+///
+/// Clients should generally avoid using getOSName() and related APIs unless
+/// they are familiar with the triple format (this is particularly true when
+/// rewriting a triple).
+///
+/// See autoconf/config.guess for a glimpse into what they look like in
+/// practice.
 class Triple {
 public:
   enum ArchType {
