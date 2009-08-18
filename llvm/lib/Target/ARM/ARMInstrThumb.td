@@ -543,7 +543,7 @@ def tREVSH : T1pI<(outs tGPR:$dst), (ins tGPR:$src), IIC_iALU,
                   "revsh", " $dst, $src",
                   [(set tGPR:$dst,
                         (sext_inreg
-                          (or (srl (and tGPR:$src, 0xFFFF), (i32 8)),
+                          (or (srl (and tGPR:$src, 0xFF00), (i32 8)),
                               (shl tGPR:$src, (i32 8))), i16))]>,
                   Requires<[IsThumb1Only, HasV6]>;
 

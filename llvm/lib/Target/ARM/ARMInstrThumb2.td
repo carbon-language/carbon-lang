@@ -951,7 +951,7 @@ def t2REVSH : T2I<(outs GPR:$dst), (ins GPR:$src), IIC_iALU,
                  "revsh", ".w $dst, $src",
                  [(set GPR:$dst,
                     (sext_inreg
-                      (or (srl (and GPR:$src, 0xFFFF), (i32 8)),
+                      (or (srl (and GPR:$src, 0xFF00), (i32 8)),
                           (shl GPR:$src, (i32 8))), i16))]>;
 
 def t2PKHBT : T2I<(outs GPR:$dst), (ins GPR:$src1, GPR:$src2, i32imm:$shamt),
