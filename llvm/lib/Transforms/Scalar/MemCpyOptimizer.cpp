@@ -309,10 +309,8 @@ namespace {
       AU.addRequired<DominatorTree>();
       AU.addRequired<MemoryDependenceAnalysis>();
       AU.addRequired<AliasAnalysis>();
-      AU.addRequired<TargetData>();
       AU.addPreserved<AliasAnalysis>();
       AU.addPreserved<MemoryDependenceAnalysis>();
-      AU.addPreserved<TargetData>();
     }
   
     // Helper fuctions
@@ -350,7 +348,8 @@ bool MemCpyOpt::processStore(StoreInst *SI, BasicBlock::iterator& BBI) {
   if (!ByteVal)
     return false;
 
-  TargetData &TD = getAnalysis<TargetData>();
+  TargetData *TD = getAnalysisIfAvailable<TargetData>();
+  if (!TD) return false;
   AliasAnalysis &AA = getAnalysis<AliasAnalysis>();
   Module *M = SI->getParent()->getParent()->getParent();
 
@@ -358,7 +357,7 @@ bool MemCpyOpt::processStore(StoreInst *SI, BasicBlock::iterator& BBI) {
   // all subsequent stores of the same value to offset from the same pointer.
   // Join these together into ranges, so we can decide whether contiguous blocks
   // are stored.
-  MemsetRanges Ranges(TD);
+  MemsetRanges Ranges(*TD);
   
   Value *StartPtr = SI->getPointerOperand();
   
@@ -392,7 +391,7 @@ bool MemCpyOpt::processStore(StoreInst *SI, BasicBlock::iterator& BBI) {
 
     // Check to see if this store is to a constant offset from the start ptr.
     int64_t Offset;
-    if (!IsPointerOffset(StartPtr, NextStore->getPointerOperand(), Offset, TD))
+    if (!IsPointerOffset(StartPtr, NextStore->getPointerOperand(), Offset, *TD))
       break;
 
     Ranges.addStore(Offset, NextStore);
@@ -421,7 +420,7 @@ bool MemCpyOpt::processStore(StoreInst *SI, BasicBlock::iterator& BBI) {
     if (Range.TheStores.size() == 1) continue;
     
     // If it is profitable to lower this range to memset, do so now.
-    if (!Range.isProfitableToUseMemset(TD))
+    if (!Range.isProfitableToUseMemset(*TD))
       continue;
     
     // Otherwise, we do want to transform this!  Create a new memset.  We put
@@ -511,13 +510,14 @@ bool MemCpyOpt::performCallSlotOptzn(MemCpyInst *cpy, CallInst *C) {
     return false;
 
   // Check that all of src is copied to dest.
-  TargetData& TD = getAnalysis<TargetData>();
+  TargetData* TD = getAnalysisIfAvailable<TargetData>();
+  if (!TD) return false;
 
   ConstantInt* srcArraySize = dyn_cast<ConstantInt>(srcAlloca->getArraySize());
   if (!srcArraySize)
     return false;
 
-  uint64_t srcSize = TD.getTypeAllocSize(srcAlloca->getAllocatedType()) *
+  uint64_t srcSize = TD->getTypeAllocSize(srcAlloca->getAllocatedType()) *
     srcArraySize->getZExtValue();
 
   if (cpyLength->getZExtValue() < srcSize)
@@ -532,7 +532,7 @@ bool MemCpyOpt::performCallSlotOptzn(MemCpyInst *cpy, CallInst *C) {
     if (!destArraySize)
       return false;
 
-    uint64_t destSize = TD.getTypeAllocSize(A->getAllocatedType()) *
+    uint64_t destSize = TD->getTypeAllocSize(A->getAllocatedType()) *
       destArraySize->getZExtValue();
 
     if (destSize < srcSize)
@@ -544,7 +544,7 @@ bool MemCpyOpt::performCallSlotOptzn(MemCpyInst *cpy, CallInst *C) {
       return false;
 
     const Type* StructTy = cast<PointerType>(A->getType())->getElementType();
-    uint64_t destSize = TD.getTypeAllocSize(StructTy);
+    uint64_t destSize = TD->getTypeAllocSize(StructTy);
 
     if (destSize < srcSize)
       return false;
