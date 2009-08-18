@@ -42,12 +42,25 @@ private:
   /// need to take the slow path to write a single character.
   ///
   /// The buffer is in one of three states:
-  ///  1. Unbuffered (Unbuffered == true)
-  ///  1. Uninitialized (Unbuffered == false && OutBufStart == 0).
-  ///  2. Buffered (Unbuffered == false && OutBufStart != 0 &&
+  ///  1. Unbuffered (BufferMode == Unbuffered)
+  ///  1. Uninitialized (BufferMode != Unbuffered && OutBufStart == 0).
+  ///  2. Buffered (BufferMode != Unbuffered && OutBufStart != 0 &&
   ///               OutBufEnd - OutBufStart >= 64).
+  ///
+  /// If buffered, then the raw_ostream owns the buffer if (BufferMode ==
+  /// InternalBuffer); otherwise the buffer has been set via SetBuffer and is
+  /// managed by the subclass.
+  ///
+  /// If a subclass installs an external buffer using SetBuffer then it can wait
+  /// for a \see write_impl() call to handle the data which has been put into
+  /// this buffer.
   char *OutBufStart, *OutBufEnd, *OutBufCur;
-  bool Unbuffered;
+  
+  enum BufferKind {
+    Unbuffered = 0,
+    InternalBuffer,
+    ExternalBuffer
+  } BufferMode;
 
   /// Error This flag is true if an error of any kind has been detected.
   ///
@@ -68,7 +81,7 @@ public:
   };
 
   explicit raw_ostream(bool unbuffered=false)
-    : Unbuffered(unbuffered), Error(false) {
+    : BufferMode(unbuffered ? Unbuffered : InternalBuffer), Error(false) {
     // Start out ready to flush.
     OutBufStart = OutBufEnd = OutBufCur = 0;
   }
@@ -100,9 +113,12 @@ public:
   /// determined buffer size.
   void SetBuffered();
 
-  /// SetBufferrSize - Set the stream to be buffered, using the
+  /// SetBufferSize - Set the stream to be buffered, using the
   /// specified buffer size.
-  void SetBufferSize(size_t Size);
+  void SetBufferSize(size_t Size) {
+    flush();
+    SetBufferAndMode(new char[Size], Size, InternalBuffer);
+  }
 
   size_t GetBufferSize() {
     // If we're supposed to be buffered but haven't actually gotten around
@@ -118,7 +134,10 @@ public:
   /// unbuffered, the stream will flush after every write. This routine
   /// will also flush the buffer immediately when the stream is being
   /// set to unbuffered.
-  void SetUnbuffered();
+  void SetUnbuffered() {
+    flush();
+    SetBufferAndMode(0, 0, Unbuffered);
+  }
 
   size_t GetNumBytesInBuffer() const {
     return OutBufCur - OutBufStart;
@@ -175,7 +194,9 @@ public:
     return *this;
   }
 
-  raw_ostream &operator<<(const std::string& Str) {
+  raw_ostream &operator<<(const std::string &Str) {
+    // Avoid the fast path, it would only increase code size for a marginal win.
+
     write(Str.data(), Str.length());
     return *this;
   }
@@ -232,6 +253,13 @@ private:
   /// by subclasses.  This writes the \args Size bytes starting at
   /// \arg Ptr to the underlying stream.
   /// 
+  /// This function is guaranteed to only be called at a point at which it is
+  /// safe for the subclass to install a new buffer via SetBuffer.
+  ///
+  /// \arg Ptr - The start of the data to be written. For buffered streams this
+  /// is guaranteed to be the start of the buffer.
+  /// \arg Size - The number of bytes to be written.
+  ///
   /// \invariant { Size > 0 }
   virtual void write_impl(const char *Ptr, size_t Size) = 0;
 
@@ -243,6 +271,14 @@ private:
   virtual uint64_t current_pos() = 0;
 
 protected:
+  /// SetBuffer - Use the provided buffer as the raw_ostream buffer. This is
+  /// intended for use only by subclasses which can arrange for the output to go
+  /// directly into the desired output buffer, instead of being copied on each
+  /// flush.
+  void SetBuffer(char *BufferStart, size_t Size) {
+    SetBufferAndMode(BufferStart, Size, ExternalBuffer);
+  }
+
   /// preferred_buffer_size - Return an efficient buffer size for the
   /// underlying output mechanism.
   virtual size_t preferred_buffer_size();
@@ -259,6 +295,9 @@ protected:
   // Private Interface
   //===--------------------------------------------------------------------===//
 private:
+  /// SetBufferAndMode - Install the given buffer and mode.
+  void SetBufferAndMode(char *BufferStart, size_t Size, BufferKind Mode);
+
   /// flush_nonempty - Flush the current buffer, which is known to be
   /// non-empty. This outputs the currently buffered data and resets
   /// the buffer to empty.
@@ -422,7 +461,7 @@ class raw_svector_ostream : public raw_ostream {
   /// counting the bytes currently in the buffer.
   virtual uint64_t current_pos();
 public:
-  explicit raw_svector_ostream(SmallVectorImpl<char> &O) : OS(O) {}
+  explicit raw_svector_ostream(SmallVectorImpl<char> &O);
   ~raw_svector_ostream();
 
   /// tell - Return the current offset with the stream.

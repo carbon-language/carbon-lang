@@ -52,7 +52,8 @@ raw_ostream::~raw_ostream() {
   assert(OutBufCur == OutBufStart &&
          "raw_ostream destructor called with non-empty buffer!");
 
-  delete [] OutBufStart;
+  if (BufferMode == InternalBuffer)
+    delete [] OutBufStart;
 
   // If there are any pending errors, report them now. Clients wishing
   // to avoid llvm_report_error calls should check for errors with
@@ -79,24 +80,21 @@ void raw_ostream::SetBuffered() {
     SetUnbuffered();
 }
 
-void raw_ostream::SetBufferSize(size_t Size) {
-  assert(Size >= 64 &&
-         "Buffer size must be somewhat large for invariants to hold");
-  flush();
+void raw_ostream::SetBufferAndMode(char *BufferStart, size_t Size, 
+                                    BufferKind Mode) {
+  assert(((Mode == Unbuffered && BufferStart == 0 && Size == 0) || 
+          (Mode != Unbuffered && BufferStart && Size >= 64)) &&
+         "stream must be unbuffered, or have >= 64 bytes of buffer");
+  // Make sure the current buffer is free of content (we can't flush here; the
+  // child buffer management logic will be in write_impl).
+  assert(GetNumBytesInBuffer() == 0 && "Current buffer is non-empty!");
 
-  delete [] OutBufStart;
-  OutBufStart = new char[Size];
+  if (BufferMode == InternalBuffer)
+    delete [] OutBufStart;
+  OutBufStart = BufferStart;
   OutBufEnd = OutBufStart+Size;
   OutBufCur = OutBufStart;
-  Unbuffered = false;
-}
-
-void raw_ostream::SetUnbuffered() {
-  flush();
-
-  delete [] OutBufStart;
-  OutBufStart = OutBufEnd = OutBufCur = 0;
-  Unbuffered = true;
+  BufferMode = Mode;
 }
 
 raw_ostream &raw_ostream::operator<<(unsigned long N) {
@@ -180,14 +178,15 @@ raw_ostream &raw_ostream::operator<<(const void *P) {
 
 void raw_ostream::flush_nonempty() {
   assert(OutBufCur > OutBufStart && "Invalid call to flush_nonempty.");
-  write_impl(OutBufStart, OutBufCur - OutBufStart);
-  OutBufCur = OutBufStart;    
+  size_t Length = OutBufCur - OutBufStart;
+  OutBufCur = OutBufStart;
+  write_impl(OutBufStart, Length);
 }
 
 raw_ostream &raw_ostream::write(unsigned char C) {
   // Group exceptional cases into a single branch.
   if (OutBufCur >= OutBufEnd) {
-    if (Unbuffered) {
+    if (BufferMode == Unbuffered) {
       write_impl(reinterpret_cast<char*>(&C), 1);
       return *this;
     }
@@ -198,7 +197,7 @@ raw_ostream &raw_ostream::write(unsigned char C) {
       SetBuffered();
       // It's possible for the underlying stream to decline
       // buffering, so check this condition again.
-      if (Unbuffered) {
+      if (BufferMode == Unbuffered) {
         write_impl(reinterpret_cast<char*>(&C), 1);
         return *this;
       }
@@ -213,7 +212,7 @@ raw_ostream &raw_ostream::write(const char *Ptr, size_t Size) {
   // Group exceptional cases into a single branch.
   if (BUILTIN_EXPECT(OutBufCur+Size > OutBufEnd, false)) {
     if (BUILTIN_EXPECT(!OutBufStart, false)) {
-      if (Unbuffered) {
+      if (BufferMode == Unbuffered) {
         write_impl(Ptr, Size);
         return *this;
       }
@@ -497,6 +496,9 @@ void raw_string_ostream::write_impl(const char *Ptr, size_t Size) {
 //===----------------------------------------------------------------------===//
 //  raw_svector_ostream
 //===----------------------------------------------------------------------===//
+
+raw_svector_ostream::raw_svector_ostream(SmallVectorImpl<char> &O) : OS(O) {
+}
 
 raw_svector_ostream::~raw_svector_ostream() {
   flush();
