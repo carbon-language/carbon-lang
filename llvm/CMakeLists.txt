@@ -159,7 +159,7 @@ endif(WIN32)
 
 include(config-ix)
 
-option(LLVM_ENABLE_PIC "Build Position-Independent Code" OFF)
+option(LLVM_ENABLE_PIC "Build Position-Independent Code" ON)
 
 set(ENABLE_PIC 0)
 if( LLVM_ENABLE_PIC )
