@@ -17,6 +17,7 @@
 #define LLVM_CODEGEN_ASMPRINTER_H
 
 #include "llvm/CodeGen/MachineFunctionPass.h"
+#include "llvm/Support/DebugLoc.h"
 #include "llvm/Target/TargetMachine.h"
 #include "llvm/ADT/DenseMap.h"
 
@@ -24,15 +25,22 @@ namespace llvm {
   class GCStrategy;
   class Constant;
   class ConstantArray;
+  class ConstantFP;
   class ConstantInt;
   class ConstantStruct;
   class ConstantVector;
   class GCMetadataPrinter;
+  class GlobalValue;
   class GlobalVariable;
+  class MachineBasicBlock;
+  class MachineFunction;
+  class MachineInstr;
   class MachineLoopInfo;
   class MachineLoop;
+  class MachineConstantPool;
   class MachineConstantPoolEntry;
   class MachineConstantPoolValue;
+  class MachineJumpTableInfo;
   class MachineModuleInfo;
   class MCInst;
   class MCContext;
@@ -66,11 +74,6 @@ namespace llvm {
     /// function.
     ///
     MachineLoopInfo *LI;
-
-    /// PrintChildLoopComment - Print comments about child loops
-    /// within the loop for this basic block, with nesting.
-    ///
-    void PrintChildLoopComment(const MachineLoop *loop) const;
 
   protected:
     /// MMI - If available, this is a pointer to the current MachineModuleInfo.

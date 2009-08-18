@@ -18,6 +18,7 @@
 #include "llvm/Module.h"
 #include "llvm/CodeGen/GCMetadataPrinter.h"
 #include "llvm/CodeGen/MachineConstantPool.h"
+#include "llvm/CodeGen/MachineFunction.h"
 #include "llvm/CodeGen/MachineJumpTableInfo.h"
 #include "llvm/CodeGen/MachineLoopInfo.h"
 #include "llvm/CodeGen/MachineModuleInfo.h"
@@ -30,7 +31,6 @@
 #include "llvm/Support/CommandLine.h"
 #include "llvm/Support/ErrorHandling.h"
 #include "llvm/Support/FormattedStream.h"
-#include "llvm/Support/IOManip.h"
 #include "llvm/Support/Mangler.h"
 #include "llvm/Target/TargetAsmInfo.h"
 #include "llvm/Target/TargetData.h"
@@ -48,10 +48,6 @@ static cl::opt<cl::boolOrDefault>
 AsmVerbose("asm-verbose", cl::desc("Add comments to directives."),
            cl::init(cl::BOU_UNSET));
 
-static cl::opt<cl::boolOrDefault>
-AsmExuberant("asm-exuberant", cl::desc("Add many comments."),
-           cl::init(cl::BOU_FALSE));
-
 char AsmPrinter::ID = 0;
 AsmPrinter::AsmPrinter(formatted_raw_ostream &o, TargetMachine &tm,
                        const TargetAsmInfo *T, bool VDef)
@@ -68,11 +64,6 @@ AsmPrinter::AsmPrinter(formatted_raw_ostream &o, TargetMachine &tm,
   case cl::BOU_UNSET: VerboseAsm = VDef;  break;
   case cl::BOU_TRUE:  VerboseAsm = true;  break;
   case cl::BOU_FALSE: VerboseAsm = false; break;
-  }
-  switch (AsmExuberant) {
-  case cl::BOU_UNSET: ExuberantAsm = false;  break;
-  case cl::BOU_TRUE:  ExuberantAsm = true;  break;
-  case cl::BOU_FALSE: ExuberantAsm = false; break;
   }
 }
 
@@ -106,7 +97,7 @@ void AsmPrinter::getAnalysisUsage(AnalysisUsage &AU) const {
   AU.setPreservesAll();
   MachineFunctionPass::getAnalysisUsage(AU);
   AU.addRequired<GCModuleInfo>();
-  if (ExuberantAsm)
+  if (VerboseAsm)
     AU.addRequired<MachineLoopInfo>();
 }
 
@@ -238,7 +229,7 @@ void AsmPrinter::SetupMachineFunction(MachineFunction &MF) {
   CurrentFnName = Mang->getMangledName(MF.getFunction());
   IncrementFunctionNumber();
 
-  if (ExuberantAsm) {
+  if (VerboseAsm) {
     LI = &getAnalysis<MachineLoopInfo>();
   }
 }
@@ -1802,10 +1793,50 @@ void AsmPrinter::EmitComments(const MCInst &MI) const
   }
 }
 
+/// Indent - Insert spaces into the character output stream.  The
+/// "level" is multiplied by the "scale" to calculate the number of
+/// spaces to insert.  "level" can represent something like loop
+/// nesting level, for example.
+///
+static formatted_raw_ostream &
+Indent(formatted_raw_ostream &out, int level, int scale = 2) {
+  for(int i = 0; i < level*scale; ++i) {
+    out << " ";
+  }
+  return out;
+}
+
+/// PrintChildLoopComment - Print comments about child loops within
+/// the loop for this basic block, with nesting.
+///
+static void PrintChildLoopComment(formatted_raw_ostream &O,
+                                  const MachineLoop *loop,
+                                  const TargetAsmInfo *TAI,
+                                  int FunctionNumber) {
+  // Add child loop information
+  for(MachineLoop::iterator cl = loop->begin(),
+        clend = loop->end();
+      cl != clend;
+      ++cl) {
+    MachineBasicBlock *Header = (*cl)->getHeader();
+    assert(Header && "No header for loop");
+
+    O << '\n';
+    O.PadToColumn(TAI->getCommentColumn());
+
+    O << TAI->getCommentString();
+    Indent(O, (*cl)->getLoopDepth()-1)
+      << " Child Loop BB" << FunctionNumber << "_"
+      << Header->getNumber() << " Depth " << (*cl)->getLoopDepth();
+
+    PrintChildLoopComment(O, *cl, TAI, FunctionNumber);
+  }
+}
+
 /// EmitComments - Pretty-print comments for basic blocks
 void AsmPrinter::EmitComments(const MachineBasicBlock &MBB) const
 {
-  if (ExuberantAsm) {
+  if (VerboseAsm) {
     // Add loop depth information
     const MachineLoop *loop = LI->getLoopFor(&MBB);
 
@@ -1823,7 +1854,7 @@ void AsmPrinter::EmitComments(const MachineBasicBlock &MBB) const
       
       if (Header == &MBB) {
         O << TAI->getCommentString() << " Loop Header";
-        PrintChildLoopComment(loop);
+        PrintChildLoopComment(O, loop, TAI, getFunctionNumber());
       }
       else {
         O << TAI->getCommentString() << " Loop Header is BB"
@@ -1845,30 +1876,11 @@ void AsmPrinter::EmitComments(const MachineBasicBlock &MBB) const
 
         O << '\n';
         O.PadToColumn(TAI->getCommentColumn());
-        O << TAI->getCommentString() << Indent(CurLoop->getLoopDepth()-1)
-          << " Inside Loop BB" << getFunctionNumber() << "_" 
+        O << TAI->getCommentString();
+        Indent(O, CurLoop->getLoopDepth()-1)
+          << " Inside Loop BB" << getFunctionNumber() << "_"
           << Header->getNumber() << " Depth " << CurLoop->getLoopDepth();
       }
     }
-  }
-}
-
-void AsmPrinter::PrintChildLoopComment(const MachineLoop *loop) const {
-  // Add child loop information
-  for(MachineLoop::iterator cl = loop->begin(),
-        clend = loop->end();
-      cl != clend;
-      ++cl) {
-    MachineBasicBlock *Header = (*cl)->getHeader();
-    assert(Header && "No header for loop");
-
-    O << '\n';
-    O.PadToColumn(TAI->getCommentColumn());
-
-    O << TAI->getCommentString() << Indent((*cl)->getLoopDepth()-1)
-      << " Child Loop BB" << getFunctionNumber() << "_"
-      << Header->getNumber() << " Depth " << (*cl)->getLoopDepth();
-
-    PrintChildLoopComment(*cl);
   }
 }
