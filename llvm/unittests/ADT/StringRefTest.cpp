@@ -96,6 +96,7 @@ TEST(StringRefTest, Utilities) {
   EXPECT_TRUE(Str.find("zz") == StringRef::npos);
 
   EXPECT_TRUE(Str.count('l') == 2);
+  EXPECT_TRUE(Str.count('o') == 1);
   EXPECT_TRUE(Str.count('z') == 0);
   EXPECT_TRUE(Str.count("helloworld") == 0);
   EXPECT_TRUE(Str.count("hello") == 1);

@@ -177,7 +177,7 @@ namespace llvm {
       size_t Count = 0;
       for (size_t i = 0, e = Length; i != e; ++i)
         if (Data[i] == C)
-          return i;
+          ++Count;
       return Count;
     }
 
