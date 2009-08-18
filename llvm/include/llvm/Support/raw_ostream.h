@@ -376,7 +376,8 @@ class raw_os_ostream : public raw_ostream {
   virtual uint64_t current_pos();
 
 public:
-  raw_os_ostream(std::ostream &O) : raw_ostream(true), OS(O) {}
+  raw_os_ostream(std::ostream &O) : OS(O) {}
+  ~raw_os_ostream();
 
   /// tell - Return the current offset with the stream.
   uint64_t tell();
@@ -394,7 +395,8 @@ class raw_string_ostream : public raw_ostream {
   /// counting the bytes currently in the buffer.
   virtual uint64_t current_pos() { return OS.size(); }
 public:
-  explicit raw_string_ostream(std::string &O) : raw_ostream(true), OS(O) {}
+  explicit raw_string_ostream(std::string &O) : OS(O) {}
+  ~raw_string_ostream();
 
   /// tell - Return the current offset with the stream.
   uint64_t tell() { return OS.size() + GetNumBytesInBuffer(); }
@@ -420,8 +422,8 @@ class raw_svector_ostream : public raw_ostream {
   /// counting the bytes currently in the buffer.
   virtual uint64_t current_pos();
 public:
-  explicit raw_svector_ostream(SmallVectorImpl<char> &O)
-    : raw_ostream(true), OS(O) {}
+  explicit raw_svector_ostream(SmallVectorImpl<char> &O) : OS(O) {}
+  ~raw_svector_ostream();
 
   /// tell - Return the current offset with the stream.
   uint64_t tell();

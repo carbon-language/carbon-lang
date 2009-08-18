@@ -456,6 +456,10 @@ raw_ostream &llvm::nulls() {
 //  raw_os_ostream
 //===----------------------------------------------------------------------===//
 
+raw_os_ostream::~raw_os_ostream() {
+  flush();
+}
+
 void raw_os_ostream::write_impl(const char *Ptr, size_t Size) {
   OS.write(Ptr, Size);
 }
@@ -470,6 +474,10 @@ uint64_t raw_os_ostream::tell() {
 //  raw_string_ostream
 //===----------------------------------------------------------------------===//
 
+raw_string_ostream::~raw_string_ostream() {
+  flush();
+}
+
 void raw_string_ostream::write_impl(const char *Ptr, size_t Size) {
   OS.append(Ptr, Size);
 }
@@ -477,6 +485,10 @@ void raw_string_ostream::write_impl(const char *Ptr, size_t Size) {
 //===----------------------------------------------------------------------===//
 //  raw_svector_ostream
 //===----------------------------------------------------------------------===//
+
+raw_svector_ostream::~raw_svector_ostream() {
+  flush();
+}
 
 void raw_svector_ostream::write_impl(const char *Ptr, size_t Size) {
   OS.append(Ptr, Ptr + Size);
