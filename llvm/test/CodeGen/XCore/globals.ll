@@ -68,7 +68,7 @@ entry:
 ; CHECK: G2:
 
 @G3 = constant i32 9401
-; CHECK: .section .cp.rodata,"ac",@progbits
+; CHECK: .section .cp.rodata.cst4,"aMc",@progbits,4
 ; CHECK: G3:
 
 @G4 = global i32* @G1

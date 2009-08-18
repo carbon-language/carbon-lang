@@ -28,11 +28,24 @@ void XCoreTargetObjectFile::Initialize(MCContext &Ctx, const TargetMachine &TM){
                            MCSectionXCore::SHF_DP_SECTION,
                            SectionKind::getBSS(), false, getContext());
   
-  // For now, disable lowering of mergable sections, just drop everything into
-  // ReadOnly.
-  MergeableConst4Section = 0;
-  MergeableConst8Section = 0;
-  MergeableConst16Section = 0;
+  MergeableConst4Section = 
+    MCSectionXCore::Create(".cp.rodata.cst4", MCSectionELF::SHT_PROGBITS,
+                           MCSectionELF::SHF_ALLOC | MCSectionELF::SHF_MERGE |
+                           MCSectionXCore::SHF_CP_SECTION,
+                           SectionKind::getMergeableConst4(), false,
+                           getContext());
+  MergeableConst8Section = 
+    MCSectionXCore::Create(".cp.rodata.cst8", MCSectionELF::SHT_PROGBITS,
+                           MCSectionELF::SHF_ALLOC | MCSectionELF::SHF_MERGE |
+                           MCSectionXCore::SHF_CP_SECTION,
+                           SectionKind::getMergeableConst8(), false,
+                           getContext());
+  MergeableConst16Section = 
+    MCSectionXCore::Create(".cp.rodata.cst16", MCSectionELF::SHT_PROGBITS,
+                           MCSectionELF::SHF_ALLOC | MCSectionELF::SHF_MERGE |
+                           MCSectionXCore::SHF_CP_SECTION,
+                           SectionKind::getMergeableConst16(), false,
+                           getContext());
   
   // TLS globals are lowered in the backend to arrays indexed by the current
   // thread id. After lowering they require no special handling by the linker
