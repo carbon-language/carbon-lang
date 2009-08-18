@@ -72,7 +72,7 @@
 
 /* .. */
 
-#if defined(__Linux__)
+#if defined(__linux__)
 #include <endian.h>
 
 #if __BYTE_ORDER == __BIG_ENDIAN
