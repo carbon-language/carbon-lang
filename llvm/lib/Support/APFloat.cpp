@@ -2132,7 +2132,7 @@ APFloat::opStatus
 APFloat::convertFromHexadecimalString(const StringRef &s,
                                       roundingMode rounding_mode)
 {
-  lostFraction lost_fraction;
+  lostFraction lost_fraction = lfExactlyZero;
   integerPart *significand;
   unsigned int bitPos, partsCount;
   StringRef::iterator dot, firstSignificantDigit;
@@ -2159,7 +2159,6 @@ APFloat::convertFromHexadecimalString(const StringRef &s,
 
     hex_value = hexDigitValue(*p);
     if(hex_value == -1U) {
-      lost_fraction = lfExactlyZero;
       break;
     }
 
