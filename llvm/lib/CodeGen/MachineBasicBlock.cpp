@@ -128,6 +128,9 @@ MachineBasicBlock::iterator MachineBasicBlock::getFirstTerminator() {
   return I;
 }
 
+/// isOnlyReachableViaFallthough - Return true if this basic block has
+/// exactly one predecessor and the control transfer mechanism between
+/// the predecessor and this block is a fall-through.
 bool MachineBasicBlock::isOnlyReachableByFallthrough() const {
   // If this is a landing pad, it isn't a fall through.  If it has no preds,
   // then nothing falls through to it.
@@ -152,7 +155,7 @@ bool MachineBasicBlock::isOnlyReachableByFallthrough() const {
   
   // Otherwise, check the last instruction.
   const MachineInstr &LastInst = Pred->back();
-  return LastInst.getDesc().isBarrier();
+  return !LastInst.getDesc().isBarrier();
 }
 
 void MachineBasicBlock::dump() const {
