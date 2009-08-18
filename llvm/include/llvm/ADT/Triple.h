@@ -37,7 +37,7 @@ public:
     UnknownArch,
     
     alpha,   // Alpha: alpha
-    arm,     // ARM; arm, armv.*
+    arm,     // ARM; arm, armv.*, xscale
     bfin,    // Blackfin: bfin
     cellspu, // CellSPU: spu, cellspu
     mips,    // MIPS: mips, mipsallegrex

@@ -130,7 +130,8 @@ void Triple::Parse() const {
   else if (ArchName == "powerpc64")
     Arch = ppc64;
   else if (ArchName == "arm" ||
-           ArchName.startswith("armv"))
+           ArchName.startswith("armv") ||
+           ArchName == "xscale")
     Arch = arm;
   else if (ArchName == "thumb" ||
            ArchName.startswith("thumbv"))
