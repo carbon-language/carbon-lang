@@ -182,6 +182,10 @@ N: Sumant Kowshik
 E: kowshik@uiuc.edu
 D: Author of the original C backend
 
+N: Rod Kay
+E: rkay@auroraux.org
+D: Author of LLVM Ada bindings
+
 N: Christopher Lamb
 E: christopher.lamb@gmail.com
 D: aligned load/store support, parts of noalias and restrict support
