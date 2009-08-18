@@ -703,22 +703,31 @@ llvm::Constant *CodeGenFunction::GenerateRtti(const CXXRecordDecl *RD) {
   return Rtti;
 }
 
-void CodeGenFunction::GenerateVcalls(std::vector<llvm::Constant *> &methods,
-                                     const CXXRecordDecl *RD,
-                                     llvm::Type *Ptr8Ty) {
-  typedef CXXRecordDecl::method_iterator meth_iter;
-  llvm::Constant *m;
+class ABIBuilder {
+  std::vector<llvm::Constant *> &methods;
+  llvm::Type *Ptr8Ty;
+  llvm::LLVMContext &VMContext;
+public:
+  ABIBuilder(llvm::Module &M, std::vector<llvm::Constant *> &meth)
+    : methods(meth), VMContext(M.getContext()) {
+    Ptr8Ty = llvm::PointerType::get(llvm::Type::getInt8Ty(VMContext), 0);
+  }
+  void GenerateVcalls(const CXXRecordDecl *RD) {
+    typedef CXXRecordDecl::method_iterator meth_iter;
+    llvm::Constant *m;
 
-  // FIXME: audit order
-  for (meth_iter mi = RD->method_begin(),
-         me = RD->method_end(); mi != me; ++mi) {
-    if (mi->isVirtual()) {
-      // FIXME: vcall: offset for virtual base for this function
-      m = llvm::Constant::getNullValue(Ptr8Ty);
-      methods.push_back(m);
+    // FIXME: audit order
+    for (meth_iter mi = RD->method_begin(),
+           me = RD->method_end(); mi != me; ++mi) {
+      if (mi->isVirtual()) {
+        // FIXME: vcall: offset for virtual base for this function
+        m = llvm::Constant::getNullValue(Ptr8Ty);
+        methods.push_back(m);
+      }
     }
   }
-}
+  
+};
 
 void CodeGenFunction::GenerateMethods(std::vector<llvm::Constant *> &methods,
                                       const CXXRecordDecl *RD,
@@ -807,8 +816,9 @@ void CodeGenFunction::GenerateVtableForBase(const CXXRecordDecl *RD,
   }
   
   if (forPrimary || ForVirtualBase) {
+    ABIBuilder b(CGM.getModule(), methods);
     // then comes the the vcall offsets for all our functions...
-    GenerateVcalls(methods, RD, Ptr8Ty);
+    b.GenerateVcalls(RD);
   }
 
   bool Top = true;
@@ -821,10 +831,6 @@ void CodeGenFunction::GenerateVtableForBase(const CXXRecordDecl *RD,
     GenerateVtableForBase(PrimaryBase, true, Offset, Class, rtti, methods,
                           PrimaryBaseWasVirtual, IndirectPrimary);
   }
-
-  // then come the vcall offsets for all our virtual bases.
-  if (!1 && ForVirtualBase)
-    GenerateVcalls(methods, RD, Ptr8Ty);
 
   if (Top) {
     int64_t BaseOffset;
