@@ -640,7 +640,8 @@ ifeq ($(BUILD_COMPONENT), 1)
                   $(TargetCommonOpts) $(CompileCommonOpts) -c
   Preprocess.CXX= $(BUILD_CXX) $(CPP.Flags) $(CPPFLAGS) $(TargetCommonOpts) \
                   $(CompileCommonOpts) $(CXX.Flags) -E
-  Link          = $(BUILD_CXX) $(CPP.Flags) $(CXX.Flags) $(LDFLAGS) \
+  Link          = $(BUILD_CXX) $(CPP.Flags) $(CXX.Flags) $(CXXFLAGS) \
+		  $(LDFLAGS) \
                   $(TargetCommonOpts) $(CompileCommonOpts) $(LD.Flags) $(Strip)
 else
   Compile.C     = $(CC) $(CPP.Flags) $(C.Flags) $(CFLAGS) $(CPPFLAGS) \
@@ -649,7 +650,7 @@ else
                   $(TargetCommonOpts) $(CompileCommonOpts) -c
   Preprocess.CXX= $(CXX) $(CPP.Flags) $(TargetCommonOpts) $(CPPFLAGS) \
                   $(CompileCommonOpts) $(CXX.Flags) -E
-  Link          = $(CXX) $(CPP.Flags) $(CXX.Flags) $(LDFLAGS) \
+  Link          = $(CXX) $(CPP.Flags) $(CXX.Flags) $(CXXFLAGS) $(LDFLAGS) \
                   $(TargetCommonOpts)  $(CompileCommonOpts) $(LD.Flags) $(Strip)
 endif
 
