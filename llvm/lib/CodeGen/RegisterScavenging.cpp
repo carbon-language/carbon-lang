@@ -248,36 +248,12 @@ static void CreateRegClassMask(const TargetRegisterClass *RC, BitVector &Mask) {
     Mask.set(*I);
 }
 
-unsigned RegScavenger::FindUnusedReg(const TargetRegisterClass *RegClass,
-                                     const BitVector &Candidates) const {
-  // Mask off the registers which are not in the TargetRegisterClass.
-  BitVector RegsAvailableCopy(NumPhysRegs, false);
-  CreateRegClassMask(RegClass, RegsAvailableCopy);
-  RegsAvailableCopy &= RegsAvailable;
-
-  // Restrict the search to candidates.
-  RegsAvailableCopy &= Candidates;
-
-  // Returns the first unused (bit is set) register, or 0 is none is found.
-  int Reg = RegsAvailableCopy.find_first();
-  return (Reg == -1) ? 0 : Reg;
-}
-
-unsigned RegScavenger::FindUnusedReg(const TargetRegisterClass *RegClass,
-                                     bool ExCalleeSaved) const {
-  // Mask off the registers which are not in the TargetRegisterClass.
-  BitVector RegsAvailableCopy(NumPhysRegs, false);
-  CreateRegClassMask(RegClass, RegsAvailableCopy);
-  RegsAvailableCopy &= RegsAvailable;
-
-  // If looking for a non-callee-saved register, mask off all the callee-saved
-  // registers.
-  if (ExCalleeSaved)
-    RegsAvailableCopy &= ~CalleeSavedRegs;
-
-  // Returns the first unused (bit is set) register, or 0 is none is found.
-  int Reg = RegsAvailableCopy.find_first();
-  return (Reg == -1) ? 0 : Reg;
+unsigned RegScavenger::FindUnusedReg(const TargetRegisterClass *RC) const {
+  for (TargetRegisterClass::iterator I = RC->begin(), E = RC->end();
+       I != E; ++I)
+    if (!isAliasUsed(*I))
+      return *I;
+  return 0;
 }
 
 /// findSurvivorReg - Return the candidate register that is unused for the

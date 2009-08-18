@@ -1006,12 +1006,8 @@ eliminateCallFramePseudoInstr(MachineFunction &MF, MachineBasicBlock &MBB,
 static
 unsigned findScratchRegister(RegScavenger *RS, const TargetRegisterClass *RC,
                              ARMFunctionInfo *AFI) {
-  unsigned Reg = RS ? RS->FindUnusedReg(RC, true) : (unsigned) ARM::R12;
+  unsigned Reg = RS ? RS->FindUnusedReg(RC) : (unsigned) ARM::R12;
   assert(!AFI->isThumb1OnlyFunction());
-  if (Reg == 0)
-    // Try a already spilled CS register.
-    Reg = RS->FindUnusedReg(RC, AFI->getSpilledCSRegisters());
-
   return Reg;
 }
 

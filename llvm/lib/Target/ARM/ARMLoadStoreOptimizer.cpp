@@ -941,12 +941,8 @@ bool ARMLoadStoreOpt::LoadStoreMultipleOpti(MachineBasicBlock &MBB) {
         // Try to find a free register to use as a new base in case it's needed.
         // First advance to the instruction just before the start of the chain.
         AdvanceRS(MBB, MemOps);
-        // Find a scratch register. Make sure it's a call clobbered register or
-        // a spilled callee-saved register.
-        unsigned Scratch = RS->FindUnusedReg(&ARM::GPRRegClass, true);
-        if (!Scratch)
-          Scratch = RS->FindUnusedReg(&ARM::GPRRegClass,
-                                      AFI->getSpilledCSRegisters());
+        // Find a scratch register.
+        unsigned Scratch = RS->FindUnusedReg(&ARM::GPRRegClass);
         // Process the load / store instructions.
         RS->forward(prior(MBBI));
 

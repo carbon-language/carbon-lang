@@ -213,7 +213,7 @@ static unsigned findScratchRegister(MachineBasicBlock::iterator II,
                                     const TargetRegisterClass *RC,
                                     int SPAdj) {
   assert(RS && "Register scavenging must be on");
-  unsigned Reg = RS->FindUnusedReg(RC, true);
+  unsigned Reg = RS->FindUnusedReg(RC);
   if (Reg == 0)
     Reg = RS->scavengeRegister(RC, II, SPAdj);
   return Reg;

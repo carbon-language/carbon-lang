@@ -527,7 +527,7 @@ static
 unsigned findScratchRegister(MachineBasicBlock::iterator II, RegScavenger *RS,
                              const TargetRegisterClass *RC, int SPAdj) {
   assert(RS && "Register scavenging must be on");
-  unsigned Reg = RS->FindUnusedReg(RC, true);
+  unsigned Reg = RS->FindUnusedReg(RC);
   // FIXME: move ARM callee-saved reg scan to target independent code, then 
   // search for already spilled CS register here.
   if (Reg == 0)
