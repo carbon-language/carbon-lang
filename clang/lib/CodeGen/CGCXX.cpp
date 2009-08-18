@@ -710,6 +710,8 @@ class ABIBuilder {
   llvm::Constant *rtti;
   llvm::LLVMContext &VMContext;
   CodeGenModule &CGM;  // Per-module state.
+
+  typedef CXXRecordDecl::method_iterator method_iter;
 public:
   ABIBuilder(std::vector<llvm::Constant *> &meth,
              const CXXRecordDecl *c,
@@ -720,11 +722,10 @@ public:
   }
 
   void GenerateVcalls(const CXXRecordDecl *RD) {
-    typedef CXXRecordDecl::method_iterator meth_iter;
     llvm::Constant *m;
 
     // FIXME: audit order
-    for (meth_iter mi = RD->method_begin(),
+    for (method_iter mi = RD->method_begin(),
            me = RD->method_end(); mi != me; ++mi) {
       if (mi->isVirtual()) {
         // FIXME: vcall: offset for virtual base for this function
@@ -735,10 +736,9 @@ public:
   }
 
   void GenerateMethods(const CXXRecordDecl *RD) {
-    typedef CXXRecordDecl::method_iterator meth_iter;
     llvm::Constant *m;
 
-    for (meth_iter mi = RD->method_begin(), me = RD->method_end(); mi != me;
+    for (method_iter mi = RD->method_begin(), me = RD->method_end(); mi != me;
          ++mi) {
       if (mi->isVirtual()) {
         m = CGM.GetAddrOfFunction(GlobalDecl(*mi));
