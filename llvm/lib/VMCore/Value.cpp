@@ -11,6 +11,7 @@
 //
 //===----------------------------------------------------------------------===//
 
+#include "LLVMContextImpl.h"
 #include "llvm/Constant.h"
 #include "llvm/Constants.h"
 #include "llvm/DerivedTypes.h"
@@ -378,13 +379,6 @@ LLVMContext &Value::getContext() const { return VTy->getContext(); }
 //                             ValueHandleBase Class
 //===----------------------------------------------------------------------===//
 
-/// ValueHandles - This map keeps track of all of the value handles that are
-/// watching a Value*.  The Value::HasValueHandle bit is used to know whether or
-/// not a value has an entry in this map.
-typedef DenseMap<Value*, ValueHandleBase*> ValueHandlesTy;
-static ManagedStatic<ValueHandlesTy> ValueHandles;
-static ManagedStatic<sys::SmartRWMutex<true> > ValueHandlesLock;
-
 /// AddToExistingUseList - Add this ValueHandle to the use list for VP, where
 /// List is known to point into the existing use list.
 void ValueHandleBase::AddToExistingUseList(ValueHandleBase **List) {
@@ -403,11 +397,13 @@ void ValueHandleBase::AddToExistingUseList(ValueHandleBase **List) {
 /// AddToUseList - Add this ValueHandle to the use list for VP.
 void ValueHandleBase::AddToUseList() {
   assert(VP && "Null pointer doesn't have a use list!");
+  
+  LLVMContextImpl *pImpl = VP->getContext().pImpl;
+  
   if (VP->HasValueHandle) {
     // If this value already has a ValueHandle, then it must be in the
     // ValueHandles map already.
-    sys::SmartScopedReader<true> Reader(*ValueHandlesLock);
-    ValueHandleBase *&Entry = (*ValueHandles)[VP];
+    ValueHandleBase *&Entry = pImpl->ValueHandles[VP];
     assert(Entry != 0 && "Value doesn't have any handles?");
     AddToExistingUseList(&Entry);
     return;
@@ -418,8 +414,7 @@ void ValueHandleBase::AddToUseList() {
   // reallocate itself, which would invalidate all of the PrevP pointers that
   // point into the old table.  Handle this by checking for reallocation and
   // updating the stale pointers only if needed.
-  sys::SmartScopedWriter<true> Writer(*ValueHandlesLock);
-  ValueHandlesTy &Handles = *ValueHandles;
+  DenseMap<Value*, ValueHandleBase*> &Handles = pImpl->ValueHandles;
   const void *OldBucketPtr = Handles.getPointerIntoBucketsArray();
   
   ValueHandleBase *&Entry = Handles[VP];
@@ -435,8 +430,8 @@ void ValueHandleBase::AddToUseList() {
   }
   
   // Okay, reallocation did happen.  Fix the Prev Pointers.
-  for (ValueHandlesTy::iterator I = Handles.begin(), E = Handles.end();
-       I != E; ++I) {
+  for (DenseMap<Value*, ValueHandleBase*>::iterator I = Handles.begin(),
+       E = Handles.end(); I != E; ++I) {
     assert(I->second && I->first == I->second->VP && "List invariant broken!");
     I->second->setPrevPtr(&I->second);
   }
@@ -460,8 +455,8 @@ void ValueHandleBase::RemoveFromUseList() {
   // If the Next pointer was null, then it is possible that this was the last
   // ValueHandle watching VP.  If so, delete its entry from the ValueHandles
   // map.
-  sys::SmartScopedWriter<true> Writer(*ValueHandlesLock);
-  ValueHandlesTy &Handles = *ValueHandles;
+  LLVMContextImpl *pImpl = VP->getContext().pImpl;
+  DenseMap<Value*, ValueHandleBase*> &Handles = pImpl->ValueHandles;
   if (Handles.isPointerIntoBucketsArray(PrevPtr)) {
     Handles.erase(VP);
     VP->HasValueHandle = false;
@@ -474,9 +469,8 @@ void ValueHandleBase::ValueIsDeleted(Value *V) {
 
   // Get the linked list base, which is guaranteed to exist since the
   // HasValueHandle flag is set.
-  ValueHandlesLock->reader_acquire();
-  ValueHandleBase *Entry = (*ValueHandles)[V];
-  ValueHandlesLock->reader_release();
+  LLVMContextImpl *pImpl = V->getContext().pImpl;
+  ValueHandleBase *Entry = pImpl->ValueHandles[V];
   assert(Entry && "Value bit set but no entries exist");
   
   while (Entry) {
@@ -514,9 +508,9 @@ void ValueHandleBase::ValueIsRAUWd(Value *Old, Value *New) {
   
   // Get the linked list base, which is guaranteed to exist since the
   // HasValueHandle flag is set.
-  ValueHandlesLock->reader_acquire();
-  ValueHandleBase *Entry = (*ValueHandles)[Old];
-  ValueHandlesLock->reader_release();
+  LLVMContextImpl *pImpl = Old->getContext().pImpl;
+  ValueHandleBase *Entry = pImpl->ValueHandles[Old];
+
   assert(Entry && "Value bit set but no entries exist");
   
   while (Entry) {

@@ -171,6 +171,12 @@ public:
   const IntegerType *Int32Ty;
   const IntegerType *Int64Ty;
   
+  /// ValueHandles - This map keeps track of all of the value handles that are
+  /// watching a Value*.  The Value::HasValueHandle bit is used to know
+  // whether or not a value has an entry in this map.
+  typedef DenseMap<Value*, ValueHandleBase*> ValueHandlesTy;
+  ValueHandlesTy ValueHandles;
+  
   LLVMContextImpl(LLVMContext &C) : TheTrueVal(0), TheFalseVal(0),
     VoidTy(new Type(C, Type::VoidTyID)),
     LabelTy(new Type(C, Type::LabelTyID)),
