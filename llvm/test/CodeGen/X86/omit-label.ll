@@ -5,7 +5,7 @@
 ; Don't omit these labels' definitions.
 
 ; CHECK: bux:
-; CHECK: .LBB1_1:
+; CHECK: LBB1_1:
 
 define void @bux(i32 %p_53) nounwind optsize {
 entry:
@@ -28,9 +28,9 @@ declare i32 @baz(...)
 
 ; Don't omit this label in the assembly output.
 ; CHECK: int321:
-; CHECK:    jne .LBB2_1
-; CHECK:    jle .LBB2_1
-; CHECK: .LBB2_1:
+; CHECK: LBB2_1
+; CHECK: LBB2_1
+; CHECK: LBB2_1:
 
 define void @int321(i8 signext %p_103, i32 %uint8p_104) nounwind readnone {
 entry:
