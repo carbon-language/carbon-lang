@@ -56,10 +56,7 @@ void DwarfException::EmitCommonEHFrame(const Function *Personality,
     TD->getPointerSize() : -TD->getPointerSize();
 
   // Begin eh frame section.
-  // FIXME: THIS IS A HORRIBLE HACK.  MingW isn't specifying an EHFrame section.
-  if (const MCSection *EHFrameSec = 
-      Asm->getObjFileLowering().getEHFrameSection())
-    Asm->SwitchToSection(EHFrameSec);
+  Asm->SwitchToSection(Asm->getObjFileLowering().getEHFrameSection());
 
   if (TAI->is_EHSymbolPrivate())
     O << TAI->getPrivateGlobalPrefix();
@@ -153,10 +150,7 @@ void DwarfException::EmitEHFrame(const FunctionEHFrameInfo &EHFrameInfo) {
 
   const Function *TheFunc = EHFrameInfo.function;
   
-  // FIXME: THIS IS A HORRIBLE HACK.  MingW isn't specifying an EHFrame section.
-  if (const MCSection *EHFrameSec = 
-      Asm->getObjFileLowering().getEHFrameSection())
-    Asm->SwitchToSection(EHFrameSec);
+  Asm->SwitchToSection(Asm->getObjFileLowering().getEHFrameSection());
   
   // Externally visible entry into the functions eh frame info. If the
   // corresponding function is static, this should not be externally visible.

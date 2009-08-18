@@ -963,6 +963,14 @@ void TargetLoweringObjectFileCOFF::Initialize(MCContext &Ctx,
   StaticDtorSection =
     getCOFFSection(".dtors", false, SectionKind::getDataRel());
   
+  // FIXME: We're emitting LSDA info into a readonly section on COFF, even
+  // though it contains relocatable pointers.  In PIC mode, this is probably a
+  // big runtime hit for C++ apps.  Either the contents of the LSDA need to be
+  // adjusted or this should be a data section.
+  LSDASection =
+    getCOFFSection(".gcc_except_table", false, SectionKind::getReadOnly());
+  EHFrameSection =
+    getCOFFSection(".eh_frame", false, SectionKind::getDataRel());
   
   // Debug info.
   // FIXME: Don't use 'directive' mode here.
