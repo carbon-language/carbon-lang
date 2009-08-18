@@ -124,14 +124,14 @@ int main(int argc, char **argv) {
       return 1;
     }
   } else {                      // Specified stdout
-    // FIXME: errs() is not binary!
-    Out = &errs();
+    // FIXME: outs() is not binary!
+    Out = &outs();
   }
 
   Passes.add(createBitcodeWriterPass(*Out));
   Passes.run(*M.get());
 
-  if (Out != &errs())
+  if (Out != &outs())
     delete Out;
   return 0;
 }
