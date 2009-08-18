@@ -128,14 +128,31 @@ MachineBasicBlock::iterator MachineBasicBlock::getFirstTerminator() {
   return I;
 }
 
-bool
-MachineBasicBlock::isOnlyReachableByFallthrough() const {
-  return !isLandingPad() &&
-         !pred_empty() &&
-         next(pred_begin()) == pred_end() &&
-         (*pred_begin())->isLayoutSuccessor(this) &&
-         ((*pred_begin())->empty() ||
-          !(*pred_begin())->back().getDesc().isBarrier());
+bool MachineBasicBlock::isOnlyReachableByFallthrough() const {
+  // If this is a landing pad, it isn't a fall through.  If it has no preds,
+  // then nothing falls through to it.
+  if (isLandingPad() || pred_empty())
+    return false;
+  
+  // If there isn't exactly one predecessor, it can't be a fall through.
+  const_pred_iterator PI = pred_begin(), PI2 = PI;
+  ++PI;
+  if (PI != pred_end())
+    return false;
+  
+  // The predecessor has to be immediately before this block.
+  const MachineBasicBlock *Pred = *PI;
+  
+  if (!Pred->isLayoutSuccessor(this))
+    return false;
+  
+  // If the block is completely empty, then it definitely does fall through.
+  if (Pred->empty())
+    return true;
+  
+  // Otherwise, check the last instruction.
+  const MachineInstr &LastInst = Pred->back();
+  return LastInst.getDesc().isBarrier();
 }
 
 void MachineBasicBlock::dump() const {
