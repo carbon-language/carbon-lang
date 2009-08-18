@@ -707,9 +707,11 @@ class ABIBuilder {
   std::vector<llvm::Constant *> &methods;
   llvm::Type *Ptr8Ty;
   llvm::LLVMContext &VMContext;
+  CodeGenModule &CGM;  // Per-module state.
 public:
-  ABIBuilder(llvm::Module &M, std::vector<llvm::Constant *> &meth)
-    : methods(meth), VMContext(M.getContext()) {
+  ABIBuilder(std::vector<llvm::Constant *> &meth,
+             CodeGenModule &cgm)
+    : methods(meth), VMContext(cgm.getModule().getContext()), CGM(cgm) {
     Ptr8Ty = llvm::PointerType::get(llvm::Type::getInt8Ty(VMContext), 0);
   }
   void GenerateVcalls(const CXXRecordDecl *RD) {
@@ -726,24 +728,22 @@ public:
       }
     }
   }
-  
-};
 
-void CodeGenFunction::GenerateMethods(std::vector<llvm::Constant *> &methods,
-                                      const CXXRecordDecl *RD,
-                                      llvm::Type *Ptr8Ty) {
-  typedef CXXRecordDecl::method_iterator meth_iter;
-  llvm::Constant *m;
+  void GenerateMethods(const CXXRecordDecl *RD) {
+    typedef CXXRecordDecl::method_iterator meth_iter;
+    llvm::Constant *m;
 
-  for (meth_iter mi = RD->method_begin(), me = RD->method_end(); mi != me;
-       ++mi) {
-    if (mi->isVirtual()) {
-      m = CGM.GetAddrOfFunction(GlobalDecl(*mi));
-      m = llvm::ConstantExpr::getBitCast(m, Ptr8Ty);
-      methods.push_back(m);
+    for (meth_iter mi = RD->method_begin(), me = RD->method_end(); mi != me;
+         ++mi) {
+      if (mi->isVirtual()) {
+        m = CGM.GetAddrOfFunction(GlobalDecl(*mi));
+        m = llvm::ConstantExpr::getBitCast(m, Ptr8Ty);
+        methods.push_back(m);
+      }
     }
   }
-}
+};
+
 
 void CodeGenFunction::GenerateVtableForVBases(const CXXRecordDecl *RD,
                                               const CXXRecordDecl *Class,
@@ -815,8 +815,8 @@ void CodeGenFunction::GenerateVtableForBase(const CXXRecordDecl *RD,
       methods.push_back(*i);
   }
   
+  ABIBuilder b(methods, CGM);
   if (forPrimary || ForVirtualBase) {
-    ABIBuilder b(CGM.getModule(), methods);
     // then comes the the vcall offsets for all our functions...
     b.GenerateVcalls(RD);
   }
@@ -846,7 +846,7 @@ void CodeGenFunction::GenerateVtableForBase(const CXXRecordDecl *RD,
   }
 
   // And add the virtuals for the class to the primary vtable.
-  GenerateMethods(methods, RD, Ptr8Ty);
+  b.GenerateMethods(RD);
 
   // and then the non-virtual bases.
   for (CXXRecordDecl::base_class_const_iterator i = RD->bases_begin(),
