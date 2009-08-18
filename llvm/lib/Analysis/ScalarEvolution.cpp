@@ -307,6 +307,15 @@ void SCEVAddRecExpr::print(raw_ostream &OS) const {
   OS << "}<" << L->getHeader()->getName() + ">";
 }
 
+void SCEVFieldOffsetExpr::print(raw_ostream &OS) const {
+  // LLVM struct fields don't have names, so just print the field number.
+  OS << "offsetof(" << *STy << ", " << FieldNo << ")";
+}
+
+void SCEVAllocSizeExpr::print(raw_ostream &OS) const {
+  OS << "sizeof(" << *AllocTy << ")";
+}
+
 bool SCEVUnknown::isLoopInvariant(const Loop *L) const {
   // All non-instruction values are loop invariant.  All instructions are loop
   // invariant if they are not contained in the specified loop.
@@ -334,6 +343,41 @@ void SCEVUnknown::print(raw_ostream &OS) const {
 //===----------------------------------------------------------------------===//
 //                               SCEV Utilities
 //===----------------------------------------------------------------------===//
+
+static bool CompareTypes(const Type *A, const Type *B) {
+  if (A->getTypeID() != B->getTypeID())
+    return A->getTypeID() < B->getTypeID();
+  if (const IntegerType *AI = dyn_cast<IntegerType>(A)) {
+    const IntegerType *BI = cast<IntegerType>(B);
+    return AI->getBitWidth() < BI->getBitWidth();
+  }
+  if (const PointerType *AI = dyn_cast<PointerType>(A)) {
+    const PointerType *BI = cast<PointerType>(B);
+    return CompareTypes(AI->getElementType(), BI->getElementType());
+  }
+  if (const ArrayType *AI = dyn_cast<ArrayType>(A)) {
+    const ArrayType *BI = cast<ArrayType>(B);
+    if (AI->getNumElements() != BI->getNumElements())
+      return AI->getNumElements() < BI->getNumElements();
+    return CompareTypes(AI->getElementType(), BI->getElementType());
+  }
+  if (const VectorType *AI = dyn_cast<VectorType>(A)) {
+    const VectorType *BI = cast<VectorType>(B);
+    if (AI->getNumElements() != BI->getNumElements())
+      return AI->getNumElements() < BI->getNumElements();
+    return CompareTypes(AI->getElementType(), BI->getElementType());
+  }
+  if (const StructType *AI = dyn_cast<StructType>(A)) {
+    const StructType *BI = cast<StructType>(B);
+    if (AI->getNumElements() != BI->getNumElements())
+      return AI->getNumElements() < BI->getNumElements();
+    for (unsigned i = 0, e = AI->getNumElements(); i != e; ++i)
+      if (CompareTypes(AI->getElementType(i), BI->getElementType(i)) ||
+          CompareTypes(BI->getElementType(i), AI->getElementType(i)))
+        return CompareTypes(AI->getElementType(i), BI->getElementType(i));
+  }
+  return false;
+}
 
 namespace {
   /// SCEVComplexityCompare - Return true if the complexity of the LHS is less
@@ -445,6 +489,21 @@ namespace {
       if (const SCEVCastExpr *LC = dyn_cast<SCEVCastExpr>(LHS)) {
         const SCEVCastExpr *RC = cast<SCEVCastExpr>(RHS);
         return operator()(LC->getOperand(), RC->getOperand());
+      }
+
+      // Compare offsetof expressions.
+      if (const SCEVFieldOffsetExpr *LA = dyn_cast<SCEVFieldOffsetExpr>(LHS)) {
+        const SCEVFieldOffsetExpr *RA = cast<SCEVFieldOffsetExpr>(RHS);
+        if (CompareTypes(LA->getStructType(), RA->getStructType()) ||
+            CompareTypes(RA->getStructType(), LA->getStructType()))
+          return CompareTypes(LA->getStructType(), RA->getStructType());
+        return LA->getFieldNo() < RA->getFieldNo();
+      }
+
+      // Compare sizeof expressions by the allocation type.
+      if (const SCEVAllocSizeExpr *LA = dyn_cast<SCEVAllocSizeExpr>(LHS)) {
+        const SCEVAllocSizeExpr *RA = cast<SCEVAllocSizeExpr>(RHS);
+        return CompareTypes(LA->getAllocType(), RA->getAllocType());
       }
 
       llvm_unreachable("Unknown SCEV kind!");
@@ -976,7 +1035,7 @@ const SCEV *ScalarEvolution::getSignExtendExpr(const SCEV *Op,
 /// unspecified bits out to the given type.
 ///
 const SCEV *ScalarEvolution::getAnyExtendExpr(const SCEV *Op,
-                                             const Type *Ty) {
+                                              const Type *Ty) {
   assert(getTypeSizeInBits(Op->getType()) < getTypeSizeInBits(Ty) &&
          "This is not an extending conversion!");
   assert(isSCEVable(Ty) &&
@@ -2001,6 +2060,76 @@ const SCEV *ScalarEvolution::getUMinExpr(const SCEV *LHS,
   return getNotSCEV(getUMaxExpr(getNotSCEV(LHS), getNotSCEV(RHS)));
 }
 
+const SCEV *ScalarEvolution::getFieldOffsetExpr(const StructType *STy,
+                                                unsigned FieldNo) {
+  // If we have TargetData we can determine the constant offset.
+  if (TD) {
+    const Type *IntPtrTy = TD->getIntPtrType(getContext());
+    const StructLayout &SL = *TD->getStructLayout(STy);
+    uint64_t Offset = SL.getElementOffset(FieldNo);
+    return getIntegerSCEV(Offset, IntPtrTy);
+  }
+
+  // Field 0 is always at offset 0.
+  if (FieldNo == 0) {
+    const Type *Ty = getEffectiveSCEVType(PointerType::getUnqual(STy));
+    return getIntegerSCEV(0, Ty);
+  }
+
+  // Okay, it looks like we really DO need an offsetof expr.  Check to see if we
+  // already have one, otherwise create a new one.
+  FoldingSetNodeID ID;
+  ID.AddInteger(scFieldOffset);
+  ID.AddPointer(STy);
+  ID.AddInteger(FieldNo);
+  void *IP = 0;
+  if (const SCEV *S = UniqueSCEVs.FindNodeOrInsertPos(ID, IP)) return S;
+  SCEV *S = SCEVAllocator.Allocate<SCEVFieldOffsetExpr>();
+  const Type *Ty = getEffectiveSCEVType(PointerType::getUnqual(STy));
+  new (S) SCEVFieldOffsetExpr(ID, Ty, STy, FieldNo);
+  UniqueSCEVs.InsertNode(S, IP);
+  return S;
+}
+
+const SCEV *ScalarEvolution::getAllocSizeExpr(const Type *AllocTy) {
+  // If we have TargetData we can determine the constant size.
+  if (TD && AllocTy->isSized()) {
+    const Type *IntPtrTy = TD->getIntPtrType(getContext());
+    return getIntegerSCEV(TD->getTypeAllocSize(AllocTy), IntPtrTy);
+  }
+
+  // Expand an array size into the element size times the number
+  // of elements.
+  if (const ArrayType *ATy = dyn_cast<ArrayType>(AllocTy)) {
+    const SCEV *E = getAllocSizeExpr(ATy->getElementType());
+    return getMulExpr(
+      E, getConstant(ConstantInt::get(cast<IntegerType>(E->getType()),
+                                      ATy->getNumElements())));
+  }
+
+  // Expand a vector size into the element size times the number
+  // of elements.
+  if (const VectorType *VTy = dyn_cast<VectorType>(AllocTy)) {
+    const SCEV *E = getAllocSizeExpr(VTy->getElementType());
+    return getMulExpr(
+      E, getConstant(ConstantInt::get(cast<IntegerType>(E->getType()),
+                                      VTy->getNumElements())));
+  }
+
+  // Okay, it looks like we really DO need a sizeof expr.  Check to see if we
+  // already have one, otherwise create a new one.
+  FoldingSetNodeID ID;
+  ID.AddInteger(scAllocSize);
+  ID.AddPointer(AllocTy);
+  void *IP = 0;
+  if (const SCEV *S = UniqueSCEVs.FindNodeOrInsertPos(ID, IP)) return S;
+  SCEV *S = SCEVAllocator.Allocate<SCEVAllocSizeExpr>();
+  const Type *Ty = getEffectiveSCEVType(PointerType::getUnqual(AllocTy));
+  new (S) SCEVAllocSizeExpr(ID, Ty, AllocTy);
+  UniqueSCEVs.InsertNode(S, IP);
+  return S;
+}
+
 const SCEV *ScalarEvolution::getUnknown(Value *V) {
   // Don't attempt to do anything other than create a SCEVUnknown object
   // here.  createSCEV only calls getUnknown after checking for all other
@@ -2027,17 +2156,8 @@ const SCEV *ScalarEvolution::getUnknown(Value *V) {
 /// can optionally include pointer types if the ScalarEvolution class
 /// has access to target-specific information.
 bool ScalarEvolution::isSCEVable(const Type *Ty) const {
-  // Integers are always SCEVable.
-  if (Ty->isInteger())
-    return true;
-
-  // Pointers are SCEVable if TargetData information is available
-  // to provide pointer size information.
-  if (isa<PointerType>(Ty))
-    return TD != NULL;
-
-  // Otherwise it's not SCEVable.
-  return false;
+  // Integers and pointers are always SCEVable.
+  return Ty->isInteger() || isa<PointerType>(Ty);
 }
 
 /// getTypeSizeInBits - Return the size in bits of the specified type,
@@ -2049,9 +2169,14 @@ uint64_t ScalarEvolution::getTypeSizeInBits(const Type *Ty) const {
   if (TD)
     return TD->getTypeSizeInBits(Ty);
 
-  // Otherwise, we support only integer types.
-  assert(Ty->isInteger() && "isSCEVable permitted a non-SCEVable type!");
-  return Ty->getPrimitiveSizeInBits();
+  // Integer types have fixed sizes.
+  if (Ty->isInteger())
+    return Ty->getPrimitiveSizeInBits();
+
+  // The only other support type is pointer. Without TargetData, conservatively
+  // assume pointers are 64-bit.
+  assert(isa<PointerType>(Ty) && "isSCEVable permitted a non-SCEVable type!");
+  return 64;
 }
 
 /// getEffectiveSCEVType - Return a type with the same bitwidth as
@@ -2064,8 +2189,12 @@ const Type *ScalarEvolution::getEffectiveSCEVType(const Type *Ty) const {
   if (Ty->isInteger())
     return Ty;
 
+  // The only other support type is pointer.
   assert(isa<PointerType>(Ty) && "Unexpected non-pointer non-integer type!");
-  return TD->getIntPtrType(getContext());
+  if (TD) return TD->getIntPtrType(getContext());
+
+  // Without TargetData, conservatively assume pointers are 64-bit.
+  return Type::getInt64Ty(getContext());
 }
 
 const SCEV *ScalarEvolution::getCouldNotCompute() {
@@ -2132,8 +2261,8 @@ const SCEV *
 ScalarEvolution::getTruncateOrZeroExtend(const SCEV *V,
                                          const Type *Ty) {
   const Type *SrcTy = V->getType();
-  assert((SrcTy->isInteger() || (TD && isa<PointerType>(SrcTy))) &&
-         (Ty->isInteger() || (TD && isa<PointerType>(Ty))) &&
+  assert((SrcTy->isInteger() || isa<PointerType>(SrcTy)) &&
+         (Ty->isInteger() || isa<PointerType>(Ty)) &&
          "Cannot truncate or zero extend with non-integer arguments!");
   if (getTypeSizeInBits(SrcTy) == getTypeSizeInBits(Ty))
     return V;  // No conversion
@@ -2149,8 +2278,8 @@ const SCEV *
 ScalarEvolution::getTruncateOrSignExtend(const SCEV *V,
                                          const Type *Ty) {
   const Type *SrcTy = V->getType();
-  assert((SrcTy->isInteger() || (TD && isa<PointerType>(SrcTy))) &&
-         (Ty->isInteger() || (TD && isa<PointerType>(Ty))) &&
+  assert((SrcTy->isInteger() || isa<PointerType>(SrcTy)) &&
+         (Ty->isInteger() || isa<PointerType>(Ty)) &&
          "Cannot truncate or zero extend with non-integer arguments!");
   if (getTypeSizeInBits(SrcTy) == getTypeSizeInBits(Ty))
     return V;  // No conversion
@@ -2165,8 +2294,8 @@ ScalarEvolution::getTruncateOrSignExtend(const SCEV *V,
 const SCEV *
 ScalarEvolution::getNoopOrZeroExtend(const SCEV *V, const Type *Ty) {
   const Type *SrcTy = V->getType();
-  assert((SrcTy->isInteger() || (TD && isa<PointerType>(SrcTy))) &&
-         (Ty->isInteger() || (TD && isa<PointerType>(Ty))) &&
+  assert((SrcTy->isInteger() || isa<PointerType>(SrcTy)) &&
+         (Ty->isInteger() || isa<PointerType>(Ty)) &&
          "Cannot noop or zero extend with non-integer arguments!");
   assert(getTypeSizeInBits(SrcTy) <= getTypeSizeInBits(Ty) &&
          "getNoopOrZeroExtend cannot truncate!");
@@ -2181,8 +2310,8 @@ ScalarEvolution::getNoopOrZeroExtend(const SCEV *V, const Type *Ty) {
 const SCEV *
 ScalarEvolution::getNoopOrSignExtend(const SCEV *V, const Type *Ty) {
   const Type *SrcTy = V->getType();
-  assert((SrcTy->isInteger() || (TD && isa<PointerType>(SrcTy))) &&
-         (Ty->isInteger() || (TD && isa<PointerType>(Ty))) &&
+  assert((SrcTy->isInteger() || isa<PointerType>(SrcTy)) &&
+         (Ty->isInteger() || isa<PointerType>(Ty)) &&
          "Cannot noop or sign extend with non-integer arguments!");
   assert(getTypeSizeInBits(SrcTy) <= getTypeSizeInBits(Ty) &&
          "getNoopOrSignExtend cannot truncate!");
@@ -2198,8 +2327,8 @@ ScalarEvolution::getNoopOrSignExtend(const SCEV *V, const Type *Ty) {
 const SCEV *
 ScalarEvolution::getNoopOrAnyExtend(const SCEV *V, const Type *Ty) {
   const Type *SrcTy = V->getType();
-  assert((SrcTy->isInteger() || (TD && isa<PointerType>(SrcTy))) &&
-         (Ty->isInteger() || (TD && isa<PointerType>(Ty))) &&
+  assert((SrcTy->isInteger() || isa<PointerType>(SrcTy)) &&
+         (Ty->isInteger() || isa<PointerType>(Ty)) &&
          "Cannot noop or any extend with non-integer arguments!");
   assert(getTypeSizeInBits(SrcTy) <= getTypeSizeInBits(Ty) &&
          "getNoopOrAnyExtend cannot truncate!");
@@ -2213,8 +2342,8 @@ ScalarEvolution::getNoopOrAnyExtend(const SCEV *V, const Type *Ty) {
 const SCEV *
 ScalarEvolution::getTruncateOrNoop(const SCEV *V, const Type *Ty) {
   const Type *SrcTy = V->getType();
-  assert((SrcTy->isInteger() || (TD && isa<PointerType>(SrcTy))) &&
-         (Ty->isInteger() || (TD && isa<PointerType>(Ty))) &&
+  assert((SrcTy->isInteger() || isa<PointerType>(SrcTy)) &&
+         (Ty->isInteger() || isa<PointerType>(Ty)) &&
          "Cannot truncate or noop with non-integer arguments!");
   assert(getTypeSizeInBits(SrcTy) >= getTypeSizeInBits(Ty) &&
          "getTruncateOrNoop cannot extend!");
@@ -2433,7 +2562,7 @@ const SCEV *ScalarEvolution::createNodeForPHI(PHINode *PN) {
 ///
 const SCEV *ScalarEvolution::createNodeForGEP(Operator *GEP) {
 
-  const Type *IntPtrTy = TD->getIntPtrType(getContext());
+  const Type *IntPtrTy = getEffectiveSCEVType(GEP->getType());
   Value *Base = GEP->getOperand(0);
   // Don't attempt to analyze GEPs over unsized objects.
   if (!cast<PointerType>(Base->getType())->getElementType()->isSized())
@@ -2447,19 +2576,16 @@ const SCEV *ScalarEvolution::createNodeForGEP(Operator *GEP) {
     // Compute the (potentially symbolic) offset in bytes for this index.
     if (const StructType *STy = dyn_cast<StructType>(*GTI++)) {
       // For a struct, add the member offset.
-      const StructLayout &SL = *TD->getStructLayout(STy);
       unsigned FieldNo = cast<ConstantInt>(Index)->getZExtValue();
-      uint64_t Offset = SL.getElementOffset(FieldNo);
-      TotalOffset = getAddExpr(TotalOffset, getIntegerSCEV(Offset, IntPtrTy));
+      TotalOffset = getAddExpr(TotalOffset,
+                               getFieldOffsetExpr(STy, FieldNo));
     } else {
       // For an array, add the element offset, explicitly scaled.
       const SCEV *LocalOffset = getSCEV(Index);
       if (!isa<PointerType>(LocalOffset->getType()))
         // Getelementptr indicies are signed.
         LocalOffset = getTruncateOrSignExtend(LocalOffset, IntPtrTy);
-      LocalOffset =
-        getMulExpr(LocalOffset,
-                   getIntegerSCEV(TD->getTypeAllocSize(*GTI), IntPtrTy));
+      LocalOffset = getMulExpr(LocalOffset, getAllocSizeExpr(*GTI));
       TotalOffset = getAddExpr(TotalOffset, LocalOffset);
     }
   }
@@ -2952,7 +3078,6 @@ const SCEV *ScalarEvolution::createSCEV(Value *V) {
     // expressions we handle are GEPs and address literals.
 
   case Instruction::GetElementPtr:
-    if (!TD) break; // Without TD we can't analyze pointers.
     return createNodeForGEP(U);
 
   case Instruction::PHI:
@@ -3946,6 +4071,9 @@ const SCEV *ScalarEvolution::getSCEVAtScope(const SCEV *V, const Loop *L) {
       return Cast;  // must be loop invariant
     return getTruncateExpr(Op, Cast->getType());
   }
+
+  if (isa<SCEVTargetDataConstant>(V))
+    return V;
 
   llvm_unreachable("Unknown SCEV type!");
   return 0;

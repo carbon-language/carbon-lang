@@ -433,6 +433,8 @@ namespace llvm {
     const SCEV *getUMaxExpr(SmallVectorImpl<const SCEV *> &Operands);
     const SCEV *getSMinExpr(const SCEV *LHS, const SCEV *RHS);
     const SCEV *getUMinExpr(const SCEV *LHS, const SCEV *RHS);
+    const SCEV *getFieldOffsetExpr(const StructType *STy, unsigned FieldNo);
+    const SCEV *getAllocSizeExpr(const Type *AllocTy);
     const SCEV *getUnknown(Value *V);
     const SCEV *getCouldNotCompute();
 

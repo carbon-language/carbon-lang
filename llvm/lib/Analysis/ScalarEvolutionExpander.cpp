@@ -158,53 +158,93 @@ Value *SCEVExpander::InsertBinop(Instruction::BinaryOps Opcode,
 /// check to see if the divide was folded.
 static bool FactorOutConstant(const SCEV *&S,
                               const SCEV *&Remainder,
-                              const APInt &Factor,
-                              ScalarEvolution &SE) {
+                              const SCEV *Factor,
+                              ScalarEvolution &SE,
+                              const TargetData *TD) {
   // Everything is divisible by one.
-  if (Factor == 1)
+  if (Factor->isOne())
     return true;
+
+  // x/x == 1.
+  if (S == Factor) {
+    S = SE.getIntegerSCEV(1, S->getType());
+    return true;
+  }
 
   // For a Constant, check for a multiple of the given factor.
   if (const SCEVConstant *C = dyn_cast<SCEVConstant>(S)) {
-    ConstantInt *CI =
-      ConstantInt::get(SE.getContext(), C->getValue()->getValue().sdiv(Factor));
-    // If the quotient is zero and the remainder is non-zero, reject
-    // the value at this scale. It will be considered for subsequent
-    // smaller scales.
-    if (C->isZero() || !CI->isZero()) {
-      const SCEV *Div = SE.getConstant(CI);
-      S = Div;
-      Remainder =
-        SE.getAddExpr(Remainder,
-                      SE.getConstant(C->getValue()->getValue().srem(Factor)));
+    // 0/x == 0.
+    if (C->isZero())
       return true;
+    // Check for divisibility.
+    if (const SCEVConstant *FC = dyn_cast<SCEVConstant>(Factor)) {
+      ConstantInt *CI =
+        ConstantInt::get(SE.getContext(),
+                         C->getValue()->getValue().sdiv(
+                                                   FC->getValue()->getValue()));
+      // If the quotient is zero and the remainder is non-zero, reject
+      // the value at this scale. It will be considered for subsequent
+      // smaller scales.
+      if (!CI->isZero()) {
+        const SCEV *Div = SE.getConstant(CI);
+        S = Div;
+        Remainder =
+          SE.getAddExpr(Remainder,
+                        SE.getConstant(C->getValue()->getValue().srem(
+                                                  FC->getValue()->getValue())));
+        return true;
+      }
     }
   }
 
   // In a Mul, check if there is a constant operand which is a multiple
   // of the given factor.
-  if (const SCEVMulExpr *M = dyn_cast<SCEVMulExpr>(S))
-    if (const SCEVConstant *C = dyn_cast<SCEVConstant>(M->getOperand(0)))
-      if (!C->getValue()->getValue().srem(Factor)) {
-        const SmallVectorImpl<const SCEV *> &MOperands = M->getOperands();
-        SmallVector<const SCEV *, 4> NewMulOps(MOperands.begin(),
-                                               MOperands.end());
-        NewMulOps[0] =
-          SE.getConstant(C->getValue()->getValue().sdiv(Factor));
-        S = SE.getMulExpr(NewMulOps);
-        return true;
+  if (const SCEVMulExpr *M = dyn_cast<SCEVMulExpr>(S)) {
+    if (TD) {
+      // With TargetData, the size is known. Check if there is a constant
+      // operand which is a multiple of the given factor. If so, we can
+      // factor it.
+      const SCEVConstant *FC = cast<SCEVConstant>(Factor);
+      if (const SCEVConstant *C = dyn_cast<SCEVConstant>(M->getOperand(0)))
+        if (!C->getValue()->getValue().srem(FC->getValue()->getValue())) {
+          const SmallVectorImpl<const SCEV *> &MOperands = M->getOperands();
+          SmallVector<const SCEV *, 4> NewMulOps(MOperands.begin(),
+                                                 MOperands.end());
+          NewMulOps[0] =
+            SE.getConstant(C->getValue()->getValue().sdiv(
+                                                   FC->getValue()->getValue()));
+          S = SE.getMulExpr(NewMulOps);
+          return true;
+        }
+    } else {
+      // Without TargetData, check if Factor can be factored out of any of the
+      // Mul's operands. If so, we can just remove it.
+      for (unsigned i = 0, e = M->getNumOperands(); i != e; ++i) {
+        const SCEV *SOp = M->getOperand(i);
+        const SCEV *Remainder = SE.getIntegerSCEV(0, SOp->getType());
+        if (FactorOutConstant(SOp, Remainder, Factor, SE, TD) &&
+            Remainder->isZero()) {
+          const SmallVectorImpl<const SCEV *> &MOperands = M->getOperands();
+          SmallVector<const SCEV *, 4> NewMulOps(MOperands.begin(),
+                                                 MOperands.end());
+          NewMulOps[i] = SOp;
+          S = SE.getMulExpr(NewMulOps);
+          return true;
+        }
       }
+    }
+  }
 
   // In an AddRec, check if both start and step are divisible.
   if (const SCEVAddRecExpr *A = dyn_cast<SCEVAddRecExpr>(S)) {
     const SCEV *Step = A->getStepRecurrence(SE);
     const SCEV *StepRem = SE.getIntegerSCEV(0, Step->getType());
-    if (!FactorOutConstant(Step, StepRem, Factor, SE))
+    if (!FactorOutConstant(Step, StepRem, Factor, SE, TD))
       return false;
     if (!StepRem->isZero())
       return false;
     const SCEV *Start = A->getStart();
-    if (!FactorOutConstant(Start, Remainder, Factor, SE))
+    if (!FactorOutConstant(Start, Remainder, Factor, SE, TD))
       return false;
     S = SE.getAddRecExpr(Start, Step, A->getLoop());
     return true;
@@ -213,9 +253,73 @@ static bool FactorOutConstant(const SCEV *&S,
   return false;
 }
 
+/// SimplifyAddOperands - Sort and simplify a list of add operands. NumAddRecs
+/// is the number of SCEVAddRecExprs present, which are kept at the end of
+/// the list.
+///
+static void SimplifyAddOperands(SmallVectorImpl<const SCEV *> &Ops,
+                                const Type *Ty,
+                                ScalarEvolution &SE) {
+  unsigned NumAddRecs = 0;
+  for (unsigned i = Ops.size(); i > 0 && isa<SCEVAddRecExpr>(Ops[i-1]); --i)
+    ++NumAddRecs;
+  // Group Ops into non-addrecs and addrecs.
+  SmallVector<const SCEV *, 8> NoAddRecs(Ops.begin(), Ops.end() - NumAddRecs);
+  SmallVector<const SCEV *, 8> AddRecs(Ops.end() - NumAddRecs, Ops.end());
+  // Let ScalarEvolution sort and simplify the non-addrecs list.
+  const SCEV *Sum = NoAddRecs.empty() ?
+                    SE.getIntegerSCEV(0, Ty) :
+                    SE.getAddExpr(NoAddRecs);
+  // If it returned an add, use the operands. Otherwise it simplified
+  // the sum into a single value, so just use that.
+  if (const SCEVAddExpr *Add = dyn_cast<SCEVAddExpr>(Sum))
+    Ops = Add->getOperands();
+  else {
+    Ops.clear();
+    if (!Sum->isZero())
+      Ops.push_back(Sum);
+  }
+  // Then append the addrecs.
+  Ops.insert(Ops.end(), AddRecs.begin(), AddRecs.end());
+}
+
+/// SplitAddRecs - Flatten a list of add operands, moving addrec start values
+/// out to the top level. For example, convert {a + b,+,c} to a, b, {0,+,d}.
+/// This helps expose more opportunities for folding parts of the expressions
+/// into GEP indices.
+///
+static void SplitAddRecs(SmallVectorImpl<const SCEV *> &Ops,
+                         const Type *Ty,
+                         ScalarEvolution &SE) {
+  // Find the addrecs.
+  SmallVector<const SCEV *, 8> AddRecs;
+  for (unsigned i = 0, e = Ops.size(); i != e; ++i)
+    while (const SCEVAddRecExpr *A = dyn_cast<SCEVAddRecExpr>(Ops[i])) {
+      const SCEV *Start = A->getStart();
+      if (Start->isZero()) break;
+      const SCEV *Zero = SE.getIntegerSCEV(0, Ty);
+      AddRecs.push_back(SE.getAddRecExpr(Zero,
+                                         A->getStepRecurrence(SE),
+                                         A->getLoop()));
+      if (const SCEVAddExpr *Add = dyn_cast<SCEVAddExpr>(Start)) {
+        Ops[i] = Zero;
+        Ops.insert(Ops.end(), Add->op_begin(), Add->op_end());
+        e += Add->getNumOperands();
+      } else {
+        Ops[i] = Start;
+      }
+    }
+  if (!AddRecs.empty()) {
+    // Add the addrecs onto the end of the list.
+    Ops.insert(Ops.end(), AddRecs.begin(), AddRecs.end());
+    // Resort the operand list, moving any constants to the front.
+    SimplifyAddOperands(Ops, Ty, SE);
+  }
+}
+
 /// expandAddToGEP - Expand a SCEVAddExpr with a pointer type into a GEP
 /// instead of using ptrtoint+arithmetic+inttoptr. This helps
-/// BasicAliasAnalysis analyze the result.
+/// BasicAliasAnalysis and other passes analyze the result.
 ///
 /// Design note: This depends on ScalarEvolution not recognizing inttoptr
 /// and ptrtoint operators, as they may introduce pointer arithmetic
@@ -246,52 +350,62 @@ Value *SCEVExpander::expandAddToGEP(const SCEV *const *op_begin,
   SmallVector<const SCEV *, 8> Ops(op_begin, op_end);
   bool AnyNonZeroIndices = false;
 
+  // Split AddRecs up into parts as either of the parts may be usable
+  // without the other.
+  SplitAddRecs(Ops, Ty, SE);
+
   // Decend down the pointer's type and attempt to convert the other
   // operands into GEP indices, at each level. The first index in a GEP
   // indexes into the array implied by the pointer operand; the rest of
   // the indices index into the element or field type selected by the
   // preceding index.
   for (;;) {
-    APInt ElSize = APInt(SE.getTypeSizeInBits(Ty),
-                         ElTy->isSized() ?  SE.TD->getTypeAllocSize(ElTy) : 0);
-    SmallVector<const SCEV *, 8> NewOps;
+    const SCEV *ElSize = SE.getAllocSizeExpr(ElTy);
+    // If the scale size is not 0, attempt to factor out a scale for
+    // array indexing.
     SmallVector<const SCEV *, 8> ScaledOps;
-    for (unsigned i = 0, e = Ops.size(); i != e; ++i) {
-      // Split AddRecs up into parts as either of the parts may be usable
-      // without the other.
-      if (const SCEVAddRecExpr *A = dyn_cast<SCEVAddRecExpr>(Ops[i]))
-        if (!A->getStart()->isZero()) {
-          const SCEV *Start = A->getStart();
-          Ops.push_back(SE.getAddRecExpr(SE.getIntegerSCEV(0, A->getType()),
-                                         A->getStepRecurrence(SE),
-                                         A->getLoop()));
-          Ops[i] = Start;
-          ++e;
-        }
-      // If the scale size is not 0, attempt to factor out a scale.
-      if (ElSize != 0) {
+    if (ElTy->isSized() && !ElSize->isZero()) {
+      SmallVector<const SCEV *, 8> NewOps;
+      for (unsigned i = 0, e = Ops.size(); i != e; ++i) {
         const SCEV *Op = Ops[i];
-        const SCEV *Remainder = SE.getIntegerSCEV(0, Op->getType());
-        if (FactorOutConstant(Op, Remainder, ElSize, SE)) {
-          ScaledOps.push_back(Op); // Op now has ElSize factored out.
-          NewOps.push_back(Remainder);
-          continue;
+        const SCEV *Remainder = SE.getIntegerSCEV(0, Ty);
+        if (FactorOutConstant(Op, Remainder, ElSize, SE, SE.TD)) {
+          // Op now has ElSize factored out.
+          ScaledOps.push_back(Op);
+          if (!Remainder->isZero())
+            NewOps.push_back(Remainder);
+          AnyNonZeroIndices = true;
+        } else {
+          // The operand was not divisible, so add it to the list of operands
+          // we'll scan next iteration.
+          NewOps.push_back(Ops[i]);
         }
       }
-      // If the operand was not divisible, add it to the list of operands
-      // we'll scan next iteration.
-      NewOps.push_back(Ops[i]);
+      // If we made any changes, update Ops.
+      if (!ScaledOps.empty()) {
+        Ops = NewOps;
+        SimplifyAddOperands(Ops, Ty, SE);
+      }
     }
-    Ops = NewOps;
-    AnyNonZeroIndices |= !ScaledOps.empty();
+
+    // Record the scaled array index for this level of the type. If
+    // we didn't find any operands that could be factored, tentatively
+    // assume that element zero was selected (since the zero offset
+    // would obviously be folded away).
     Value *Scaled = ScaledOps.empty() ?
                     Constant::getNullValue(Ty) :
                     expandCodeFor(SE.getAddExpr(ScaledOps), Ty);
     GepIndices.push_back(Scaled);
 
     // Collect struct field index operands.
-    if (!Ops.empty())
-      while (const StructType *STy = dyn_cast<StructType>(ElTy)) {
+    while (const StructType *STy = dyn_cast<StructType>(ElTy)) {
+      bool FoundFieldNo = false;
+      // An empty struct has no fields.
+      if (STy->getNumElements() == 0) break;
+      if (SE.TD) {
+        // With TargetData, field offsets are known. See if a constant offset
+        // falls within any of the struct fields.
+        if (Ops.empty()) break;
         if (const SCEVConstant *C = dyn_cast<SCEVConstant>(Ops[0]))
           if (SE.getTypeSizeInBits(C->getType()) <= 64) {
             const StructLayout &SL = *SE.TD->getStructLayout(STy);
@@ -304,25 +418,52 @@ Value *SCEVExpander::expandAddToGEP(const SCEV *const *op_begin,
               Ops[0] =
                 SE.getConstant(Ty, FullOffset - SL.getElementOffset(ElIdx));
               AnyNonZeroIndices = true;
-              continue;
+              FoundFieldNo = true;
             }
           }
-        break;
+      } else {
+        // Without TargetData, just check for a SCEVFieldOffsetExpr of the
+        // appropriate struct type.
+        for (unsigned i = 0, e = Ops.size(); i != e; ++i)
+          if (const SCEVFieldOffsetExpr *FO =
+                dyn_cast<SCEVFieldOffsetExpr>(Ops[i]))
+            if (FO->getStructType() == STy) {
+              unsigned FieldNo = FO->getFieldNo();
+              GepIndices.push_back(
+                  ConstantInt::get(Type::getInt32Ty(Ty->getContext()),
+                                   FieldNo));
+              ElTy = STy->getTypeAtIndex(FieldNo);
+              Ops[i] = SE.getConstant(Ty, 0);
+              AnyNonZeroIndices = true;
+              FoundFieldNo = true;
+              break;
+            }
       }
-
-    if (const ArrayType *ATy = dyn_cast<ArrayType>(ElTy)) {
-      ElTy = ATy->getElementType();
-      continue;
+      // If no struct field offsets were found, tentatively assume that
+      // field zero was selected (since the zero offset would obviously
+      // be folded away).
+      if (!FoundFieldNo) {
+        ElTy = STy->getTypeAtIndex(0u);
+        GepIndices.push_back(
+          Constant::getNullValue(Type::getInt32Ty(Ty->getContext())));
+      }
     }
-    break;
+
+    if (const ArrayType *ATy = dyn_cast<ArrayType>(ElTy))
+      ElTy = ATy->getElementType();
+    else
+      break;
   }
 
   // If none of the operands were convertable to proper GEP indices, cast
   // the base to i8* and do an ugly getelementptr with that. It's still
   // better than ptrtoint+arithmetic+inttoptr at least.
   if (!AnyNonZeroIndices) {
+    // Cast the base to i8*.
     V = InsertNoopCastOfTo(V,
        Type::getInt8Ty(Ty->getContext())->getPointerTo(PTy->getAddressSpace()));
+
+    // Expand the operands for a plain byte offset.
     Value *Idx = expandCodeFor(SE.getAddExpr(Ops), Ty);
 
     // Fold a GEP with constant operands.
@@ -345,7 +486,8 @@ Value *SCEVExpander::expandAddToGEP(const SCEV *const *op_begin,
       }
     }
 
-    Value *GEP = Builder.CreateGEP(V, Idx, "scevgep");
+    // Emit a GEP.
+    Value *GEP = Builder.CreateGEP(V, Idx, "uglygep");
     InsertedValues.insert(GEP);
     return GEP;
   }
@@ -368,11 +510,10 @@ Value *SCEVExpander::visitAddExpr(const SCEVAddExpr *S) {
 
   // Turn things like ptrtoint+arithmetic+inttoptr into GEP. See the
   // comments on expandAddToGEP for details.
-  if (SE.TD)
-    if (const PointerType *PTy = dyn_cast<PointerType>(V->getType())) {
-      const SmallVectorImpl<const SCEV *> &Ops = S->getOperands();
-      return expandAddToGEP(&Ops[0], &Ops[Ops.size() - 1], PTy, Ty, V);
-    }
+  if (const PointerType *PTy = dyn_cast<PointerType>(V->getType())) {
+    const SmallVectorImpl<const SCEV *> &Ops = S->getOperands();
+    return expandAddToGEP(&Ops[0], &Ops[Ops.size() - 1], PTy, Ty, V);
+  }
 
   V = InsertNoopCastOfTo(V, Ty);
 
@@ -484,21 +625,19 @@ Value *SCEVExpander::visitAddRecExpr(const SCEVAddRecExpr *S) {
 
     // Turn things like ptrtoint+arithmetic+inttoptr into GEP. See the
     // comments on expandAddToGEP for details.
-    if (SE.TD) {
-      const SCEV *Base = S->getStart();
-      const SCEV *RestArray[1] = { Rest };
-      // Dig into the expression to find the pointer base for a GEP.
-      ExposePointerBase(Base, RestArray[0], SE);
-      // If we found a pointer, expand the AddRec with a GEP.
-      if (const PointerType *PTy = dyn_cast<PointerType>(Base->getType())) {
-        // Make sure the Base isn't something exotic, such as a multiplied
-        // or divided pointer value. In those cases, the result type isn't
-        // actually a pointer type.
-        if (!isa<SCEVMulExpr>(Base) && !isa<SCEVUDivExpr>(Base)) {
-          Value *StartV = expand(Base);
-          assert(StartV->getType() == PTy && "Pointer type mismatch for GEP!");
-          return expandAddToGEP(RestArray, RestArray+1, PTy, Ty, StartV);
-        }
+    const SCEV *Base = S->getStart();
+    const SCEV *RestArray[1] = { Rest };
+    // Dig into the expression to find the pointer base for a GEP.
+    ExposePointerBase(Base, RestArray[0], SE);
+    // If we found a pointer, expand the AddRec with a GEP.
+    if (const PointerType *PTy = dyn_cast<PointerType>(Base->getType())) {
+      // Make sure the Base isn't something exotic, such as a multiplied
+      // or divided pointer value. In those cases, the result type isn't
+      // actually a pointer type.
+      if (!isa<SCEVMulExpr>(Base) && !isa<SCEVUDivExpr>(Base)) {
+        Value *StartV = expand(Base);
+        assert(StartV->getType() == PTy && "Pointer type mismatch for GEP!");
+        return expandAddToGEP(RestArray, RestArray+1, PTy, Ty, StartV);
       }
     }
 
@@ -654,6 +793,14 @@ Value *SCEVExpander::visitUMaxExpr(const SCEVUMaxExpr *S) {
   if (LHS->getType() != S->getType())
     LHS = InsertNoopCastOfTo(LHS, S->getType());
   return LHS;
+}
+
+Value *SCEVExpander::visitFieldOffsetExpr(const SCEVFieldOffsetExpr *S) {
+  return ConstantExpr::getOffsetOf(S->getStructType(), S->getFieldNo());
+}
+
+Value *SCEVExpander::visitAllocSizeExpr(const SCEVAllocSizeExpr *S) {
+  return ConstantExpr::getSizeOf(S->getAllocType());
 }
 
 Value *SCEVExpander::expandCodeFor(const SCEV *SH, const Type *Ty) {

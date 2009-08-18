@@ -115,6 +115,10 @@ namespace llvm {
 
     Value *visitUMaxExpr(const SCEVUMaxExpr *S);
 
+    Value *visitFieldOffsetExpr(const SCEVFieldOffsetExpr *S);
+
+    Value *visitAllocSizeExpr(const SCEVAllocSizeExpr *S);
+
     Value *visitUnknown(const SCEVUnknown *S) {
       return S->getValue();
     }
