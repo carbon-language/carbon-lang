@@ -905,6 +905,7 @@ SDValue SelectionDAGLegalize::LegalizeOp(SDValue Op) {
       // to the appropriate width.
       if (!Ops[2].getValueType().isVector())
         Ops[2] = LegalizeOp(DAG.getShiftAmountOperand(Ops[2]));
+      break;
     }
 
     Result = DAG.UpdateNodeOperands(Result.getValue(0), Ops.data(),
