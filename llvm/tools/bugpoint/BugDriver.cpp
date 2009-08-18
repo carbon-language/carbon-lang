@@ -25,8 +25,13 @@
 #include "llvm/Support/MemoryBuffer.h"
 #include "llvm/Support/SourceMgr.h"
 #include "llvm/Support/raw_ostream.h"
+#include "llvm/System/Host.h"
 #include <memory>
 using namespace llvm;
+
+namespace llvm {
+  Triple TargetTriple;
+}
 
 // Anonymous namespace to define command line options for debugging.
 //
@@ -88,6 +93,20 @@ Module *llvm::ParseInputFile(const std::string &Filename,
     Result = 0;
   }
   
+  // If we don't have an override triple, use the first one to configure
+  // bugpoint, or use the host triple if none provided.
+  if (Result) {
+    if (TargetTriple.getTriple().empty()) {
+      Triple TheTriple(Result->getTargetTriple());
+
+      if (TheTriple.getTriple().empty())
+        TheTriple.setTriple(sys::getHostTriple());
+        
+      TargetTriple.setTriple(TheTriple.getTriple());
+    }
+
+    Result->setTargetTriple(TargetTriple.getTriple());  // override the triple
+  }
   return Result;
 }
 

@@ -17,6 +17,7 @@
 #ifndef BUGPOINT_TOOLRUNNER_H
 #define BUGPOINT_TOOLRUNNER_H
 
+#include "llvm/ADT/Triple.h"
 #include "llvm/Support/CommandLine.h"
 #include "llvm/Support/SystemUtils.h"
 #include <exception>
@@ -25,6 +26,7 @@
 namespace llvm {
 
 extern cl::opt<bool> SaveTemps;
+extern Triple TargetTriple;
 
 class CBE;
 class LLC;

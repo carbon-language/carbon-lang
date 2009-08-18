@@ -14,6 +14,7 @@
 
 #include "BugDriver.h"
 #include "ListReducer.h"
+#include "ToolRunner.h"
 #include "llvm/Constants.h"
 #include "llvm/DerivedTypes.h"
 #include "llvm/Instructions.h"
@@ -937,13 +938,13 @@ bool BugDriver::debugCodeGenerator() {
   outs() << '\n';
   outs() << "The shared object was created with:\n  llc -march=c "
          << SafeModuleBC << " -o temporary.c\n"
-         << "  gcc -xc temporary.c -O2 -o " << SharedObject
-#if defined(sparc) || defined(__sparc__) || defined(__sparcv9)
-         << " -G"            // Compile a shared library, `-G' for Sparc
-#else
-         << " -fPIC -shared"       // `-shared' for Linux/X86, maybe others
-#endif
-         << " -fno-strict-aliasing\n";
+         << "  gcc -xc temporary.c -O2 -o " << SharedObject;
+  if (TargetTriple.getArch() == Triple::sparc)
+    outs() << " -G";              // Compile a shared library, `-G' for Sparc
+  else
+    outs() << " -fPIC -shared";   // `-shared' for Linux/X86, maybe others
+
+  outs() << " -fno-strict-aliasing\n";
 
   return false;
 }

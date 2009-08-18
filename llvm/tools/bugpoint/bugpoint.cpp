@@ -66,6 +66,9 @@ static cl::opt<bool>
 StandardLinkOpts("std-link-opts", 
                  cl::desc("Include the standard link time optimizations"));
 
+static cl::opt<std::string>
+OverrideTriple("mtriple", cl::desc("Override target triple for module"));
+
 /// BugpointIsInterrupted - Set to true when the user presses ctrl-c.
 bool llvm::BugpointIsInterrupted = false;
 
@@ -98,9 +101,15 @@ int main(int argc, char **argv) {
   sys::SetInterruptFunction(BugpointInterruptFunction);
 
   LLVMContext& Context = getGlobalContext();
+  // If we have an override, set it and then track the triple we want Modules
+  // to use.
+  if (!OverrideTriple.empty())
+    TargetTriple.setTriple(OverrideTriple);
+  outs() << "override triple is " << OverrideTriple << '\n';
+
   BugDriver D(argv[0], AsChild, FindBugs, TimeoutValue, MemoryLimit, Context);
   if (D.addSources(InputFilenames)) return 1;
-
+  
   AddToDriver PM(D);
   if (StandardCompileOpts) {
     createStandardModulePasses(&PM, 3,

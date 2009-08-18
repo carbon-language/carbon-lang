@@ -604,7 +604,6 @@ CBE *AbstractInterpreter::createCBE(const char *Argv0,
 // GCC abstraction
 //
 
-#ifdef __APPLE__
 static bool
 IsARMArchitecture(std::vector<std::string> Args)
 {
@@ -620,7 +619,6 @@ IsARMArchitecture(std::vector<std::string> Args)
 
   return false;
 }
-#endif
 
 int GCC::ExecuteProgram(const std::string &ProgramFile,
                         const std::vector<std::string> &Args,
@@ -645,13 +643,13 @@ int GCC::ExecuteProgram(const std::string &ProgramFile,
     GCCArgs.push_back("-fno-strict-aliasing");
   } else {
     GCCArgs.push_back("assembler");
-#ifdef __APPLE__
+
     // For ARM architectures we don't want this flag. bugpoint isn't
     // explicitly told what architecture it is working on, so we get
     // it from gcc flags
-    if (!IsARMArchitecture(ArgsForGCC))
+    if ((TargetTriple.getOS() == Triple::Darwin) &&
+        !IsARMArchitecture(ArgsForGCC))
       GCCArgs.push_back("-force_cpusubtype_ALL");
-#endif
   }
   GCCArgs.push_back(ProgramFile.c_str());  // Specify the input filename...
   GCCArgs.push_back("-x");
@@ -677,9 +675,8 @@ int GCC::ExecuteProgram(const std::string &ProgramFile,
 #if defined (HAVE_LINK_R)
   GCCArgs.push_back("-Wl,-R.");            // Search this dir for .so files
 #endif
-#ifdef __sparc__
-  GCCArgs.push_back("-mcpu=v9");
-#endif
+  if (TargetTriple.getArch() == Triple::sparc)
+    GCCArgs.push_back("-mcpu=v9");
   GCCArgs.push_back(0);                    // NULL terminator
 
   outs() << "<gcc>"; outs().flush();
@@ -777,27 +774,27 @@ int GCC::MakeSharedObject(const std::string &InputFile, FileType fileType,
   GCCArgs.push_back(InputFile.c_str());   // Specify the input filename.
   GCCArgs.push_back("-x");
   GCCArgs.push_back("none");
-#if defined(sparc) || defined(__sparc__) || defined(__sparcv9)
-  GCCArgs.push_back("-G");       // Compile a shared library, `-G' for Sparc
-#elif defined(__APPLE__)
-  // link all source files into a single module in data segment, rather than
-  // generating blocks. dynamic_lookup requires that you set 
-  // MACOSX_DEPLOYMENT_TARGET=10.3 in your env.  FIXME: it would be better for
-  // bugpoint to just pass that in the environment of GCC.
-  GCCArgs.push_back("-single_module");
-  GCCArgs.push_back("-dynamiclib");   // `-dynamiclib' for MacOS X/PowerPC
-  GCCArgs.push_back("-undefined");
-  GCCArgs.push_back("dynamic_lookup");
-#else
-  GCCArgs.push_back("-shared");  // `-shared' for Linux/X86, maybe others
-#endif
+  if (TargetTriple.getArch() == Triple::sparc)
+    GCCArgs.push_back("-G");       // Compile a shared library, `-G' for Sparc
+  else if (TargetTriple.getOS() == Triple::Darwin) {
+    // link all source files into a single module in data segment, rather than
+    // generating blocks. dynamic_lookup requires that you set 
+    // MACOSX_DEPLOYMENT_TARGET=10.3 in your env.  FIXME: it would be better for
+    // bugpoint to just pass that in the environment of GCC.
+    GCCArgs.push_back("-single_module");
+    GCCArgs.push_back("-dynamiclib");   // `-dynamiclib' for MacOS X/PowerPC
+    GCCArgs.push_back("-undefined");
+    GCCArgs.push_back("dynamic_lookup");
+  } else
+    GCCArgs.push_back("-shared");  // `-shared' for Linux/X86, maybe others
 
-#if defined(__ia64__) || defined(__alpha__) || defined(__amd64__)
-  GCCArgs.push_back("-fPIC");   // Requires shared objs to contain PIC
-#endif
-#ifdef __sparc__
-  GCCArgs.push_back("-mcpu=v9");
-#endif
+  if ((TargetTriple.getArch() == Triple::alpha) ||
+      (TargetTriple.getArch() == Triple::x86_64))
+    GCCArgs.push_back("-fPIC");   // Requires shared objs to contain PIC
+
+  if (TargetTriple.getArch() == Triple::sparc)
+    GCCArgs.push_back("-mcpu=v9");
+
   GCCArgs.push_back("-o");
   GCCArgs.push_back(OutputFile.c_str()); // Output to the right filename.
   GCCArgs.push_back("-O2");              // Optimize the program a bit.
