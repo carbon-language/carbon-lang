@@ -139,8 +139,8 @@ bool MachineBasicBlock::isOnlyReachableByFallthrough() const {
   
   // If there isn't exactly one predecessor, it can't be a fall through.
   const_pred_iterator PI = pred_begin(), PI2 = PI;
-  ++PI;
-  if (PI != pred_end())
+  ++PI2;
+  if (PI2 != pred_end())
     return false;
   
   // The predecessor has to be immediately before this block.
