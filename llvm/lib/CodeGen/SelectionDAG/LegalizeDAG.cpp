@@ -898,6 +898,13 @@ SDValue SelectionDAGLegalize::LegalizeOp(SDValue Op) {
       if (!Ops[1].getValueType().isVector())
         Ops[1] = LegalizeOp(DAG.getShiftAmountOperand(Ops[1]));
       break;
+    case ISD::SRL_PARTS:
+    case ISD::SRA_PARTS:
+    case ISD::SHL_PARTS:
+      // Legalizing shifts/rotates requires adjusting the shift amount
+      // to the appropriate width.
+      if (!Ops[2].getValueType().isVector())
+        Ops[2] = LegalizeOp(DAG.getShiftAmountOperand(Ops[2]));
     }
 
     Result = DAG.UpdateNodeOperands(Result.getValue(0), Ops.data(),
