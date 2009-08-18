@@ -22,7 +22,7 @@ LINK_COMPONENTS := $(TARGETS_TO_BUILD) ipo scalaropts linker bitreader bitwriter
 
 include $(LEVEL)/Makefile.common
 
-ifeq ($(OS),Darwin)
+ifeq ($(HOST_OS),Darwin)
     # set dylib internal version number to llvmCore submission number
     ifdef LLVM_SUBMIT_VERSION
         LLVMLibsOptions := $(LLVMLibsOptions) -Wl,-current_version \

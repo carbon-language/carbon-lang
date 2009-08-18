@@ -73,7 +73,7 @@ proc llvm2cpp-test { files } {
     }
 
     set retval [ catch { 
-      exec -keepnewline gcc -g -D__STDC_LIMIT_MACROS -o $executable $generated -I$srcroot/include -I$objroot/include -L$llvmlibsdir -lLLVMCore -lLLVMSupport -lLLVMbzip2 -lLLVMSystem -lstdc++ } msg ] 
+      exec -keepnewline gcc -g -D__STDC_LIMIT_MACROS -D__STDC_CONSTANT_MACROS -o $executable $generated -I$srcroot/include -I$objroot/include -L$llvmlibsdir -lLLVMCore -lLLVMSupport -lLLVMSystem -lstdc++ } msg ] 
     if { $retval != 0 } {
       fail "$test: gcc returned $retval\n$msg"
       continue

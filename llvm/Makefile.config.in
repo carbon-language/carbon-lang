@@ -89,8 +89,11 @@ PROJ_mandir     := $(DESTDIR)$(PROJ_prefix)/share/man
 LLVM_ON_UNIX:=@LLVM_ON_UNIX@
 LLVM_ON_WIN32:=@LLVM_ON_WIN32@
 
-# Target operating system for which LLVM will be compiled.
+# Host operating system for which LLVM will be run.
 OS=@OS@
+HOST_OS=@HOST_OS@
+# Target operating system for which LLVM will compile for.
+TARGET_OS=@TARGET_OS@
 
 # Target hardware architecture
 ARCH=@ARCH@
@@ -128,6 +131,7 @@ LDFLAGS+=@LDFLAGS@
 
 # Path to the library archiver program.
 AR_PATH = @AR@
+AR = @AR@
 
 # Path to the nm program
 NM_PATH = @NM@

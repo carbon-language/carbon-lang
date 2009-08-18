@@ -39,7 +39,7 @@ ifeq ($(ENABLE_PIC),1)
 endif
 
 # No support for lto / gold on windows targets
-ifeq ($(OS), $(filter $(OS), Cygwin MingW))
+ifeq ($(TARGET_OS), $(filter $(TARGET_OS), Cygwin MingW))
   DIRS := $(filter-out lto gold, $(DIRS))
 endif
 

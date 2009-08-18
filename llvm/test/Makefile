@@ -53,7 +53,7 @@ RUNTESTFLAGS += --ignore "$(strip $(IGNORE_TESTS))"
 endif
 
 # Both AuroraUX & Solaris do not have the -m flag for ulimit
-ifeq ($(OS),SunOS)
+ifeq ($(HOST_OS),SunOS)
 ULIMIT=ulimit -t 600 ; ulimit -d 512000 ; ulimit -v 512000 ;
 else
 ULIMIT=ulimit -t 600 ; ulimit -d 512000 ; ulimit -m 512000 ; ulimit -v 512000 ;
@@ -93,7 +93,7 @@ clean::
 	$(RM) -rf `find $(LLVM_OBJ_ROOT)/test -name Output -type d -print`
 
 # dsymutil is used on the Darwin to manipulate DWARF debugging information.
-ifeq ($(OS),Darwin)
+ifeq ($(TARGET_OS),Darwin)
 DSYMUTIL=dsymutil
 else
 DSYMUTIL=true

@@ -287,7 +287,7 @@ CPP.Defines :=
 # OPTIMIZE_OPTION - The optimization level option we want to build LLVM with
 # this can be overridden on the make command line.
 ifndef OPTIMIZE_OPTION
-  ifneq ($(OS),MingW)
+  ifneq ($(HOST_OS),MingW)
     OPTIMIZE_OPTION := -O3
   else
     OPTIMIZE_OPTION := -O2
@@ -297,8 +297,8 @@ endif
 ifeq ($(ENABLE_OPTIMIZED),1)
   BuildMode := Release
   # Don't use -fomit-frame-pointer on Darwin or FreeBSD.
-  ifneq ($(OS),FreeBSD)
-  ifneq ($(OS),Darwin)
+  ifneq ($(HOST_OS),FreeBSD)
+  ifneq ($(HOST_OS),Darwin)
     OmitFramePointer := -fomit-frame-pointer
   endif
   endif
@@ -306,7 +306,7 @@ ifeq ($(ENABLE_OPTIMIZED),1)
   # Darwin requires -fstrict-aliasing to be explicitly enabled.
   # Avoid -fstrict-aliasing on Darwin for now, there are unresolved issues
   # with -fstrict-aliasing and ipa-type-escape radr://6756684
-  #ifeq ($(OS),Darwin)
+  #ifeq ($(HOST_OS),Darwin)
   #  EXTRA_OPTIONS += -fstrict-aliasing -Wstrict-aliasing
   #endif
   CXX.Flags += $(OPTIMIZE_OPTION) $(OmitFramePointer)
@@ -379,10 +379,10 @@ ifdef SHARED_LIBRARY
 endif
 
 ifeq ($(ENABLE_PIC),1)
-  ifeq ($(OS), $(filter $(OS), Cygwin MingW))
+  ifeq ($(HOST_OS), $(filter $(HOST_OS), Cygwin MingW))
     # Nothing. Win32 defaults to PIC and warns when given -fPIC
   else
-    ifeq ($(OS),Darwin)
+    ifeq ($(HOST_OS),Darwin)
       # Common symbols not allowed in dylib files
       CXX.Flags += -fno-common
       C.Flags   += -fno-common
@@ -393,7 +393,7 @@ ifeq ($(ENABLE_PIC),1)
     endif
   endif
 else
-  ifeq ($(OS),Darwin)
+  ifeq ($(HOST_OS),Darwin)
       CXX.Flags += -mdynamic-no-pic
       C.Flags   += -mdynamic-no-pic
   endif
@@ -420,7 +420,7 @@ ifeq ($(ARCH),Alpha)
   LD.Flags += -Wl,--no-relax
 endif
 
-ifeq ($(OS),MingW)
+ifeq ($(HOST_OS),MingW)
   ifeq ($(LLVM_CROSS_COMPILING),1)
     # Work around http://bugs.debian.org/cgi-bin/bugreport.cgi?bug=525016
     ifdef TOOLNAME
@@ -502,7 +502,7 @@ endif
 # Adjust to user's request
 #--------------------------------------------------------------------
 
-ifeq ($(OS),Darwin)
+ifeq ($(HOST_OS),Darwin)
   DARWIN_VERSION := `sw_vers -productVersion`
   # Strip a number like 10.4.7 to 10.4
   DARWIN_VERSION := $(shell echo $(DARWIN_VERSION)| sed -E 's/(10.[0-9]).*/\1/')
@@ -511,14 +511,17 @@ ifeq ($(OS),Darwin)
 
   SharedLinkOptions=-Wl,-flat_namespace -Wl,-undefined -Wl,suppress \
                     -dynamiclib -mmacosx-version-min=$(DARWIN_VERSION)
-  TargetCommonOpts += -mmacosx-version-min=$(DARWIN_VERSION)
 else
-  ifeq ($(OS),Cygwin)
+  ifeq ($(HOST_OS),Cygwin)
     SharedLinkOptions=-shared -nostdlib -Wl,--export-all-symbols \
                       -Wl,--enable-auto-import -Wl,--enable-auto-image-base
   else
     SharedLinkOptions=-shared
   endif
+endif
+
+ifeq ($(TARGET_OS),Darwin)
+  TargetCommonOpts += -mmacosx-version-min=$(DARWIN_VERSION)
 endif
 
 # Adjust LD.Flags depending on the kind of library that is to be built. Note
@@ -558,7 +561,7 @@ ifndef KEEP_SYMBOLS
 endif
 
 # Adjust linker flags for building an executable
-ifneq ($(OS),Darwin)
+ifneq ($(HOST_OS),Darwin)
 ifneq ($(DARWIN_MAJVERS),4)
 ifdef TOOLNAME
 ifdef EXAMPLE_TOOL
@@ -580,7 +583,7 @@ endif
 CompileCommonOpts += -Wall -W -Wno-unused-parameter -Wwrite-strings \
                      $(EXTRA_OPTIONS)
 
-ifeq ($(OS),HP-UX)
+ifeq ($(HOST_OS),HP-UX)
   CompileCommonOpts := -D_REENTRANT -D_HPUX_SOURCE
 endif
 
@@ -608,7 +611,7 @@ ifdef UNIVERSAL
   # Building universal cannot compute dependencies automatically.
   DISABLE_AUTO_DEPENDENCIES=1
 else
-  ifeq ($(OS),Darwin)
+  ifeq ($(TARGET_OS),Darwin)
     ifeq ($(ARCH),x86_64)
       TargetCommonOpts = -m64
     else
@@ -619,7 +622,7 @@ else
   endif
 endif
 
-ifeq ($(OS),SunOS)
+ifeq ($(HOST_OS),SunOS)
 CPP.BaseFlags += -include llvm/System/Solaris.h
 endif
 
@@ -1172,7 +1175,7 @@ endif
 # not exporting all of the weak symbols from the binary.  This reduces dyld
 # startup time by 4x on darwin in some cases.
 ifdef TOOL_NO_EXPORTS
-ifeq ($(OS),Darwin)
+ifeq ($(HOST_OS),Darwin)
 
 # Tiger tools don't support this.
 ifneq ($(DARWIN_MAJVERS),4)
@@ -1180,7 +1183,7 @@ LD.Flags += -Wl,-exported_symbol -Wl,_main
 endif
 endif
 
-ifeq ($(OS), $(filter $(OS), Linux NetBSD FreeBSD))
+ifeq ($(HOST_OS), $(filter $(HOST_OS), Linux NetBSD FreeBSD))
 LD.Flags += -Wl,--version-script=$(LLVM_SRC_ROOT)/autoconf/ExportMap.map
 endif
 endif
@@ -1234,7 +1237,7 @@ endif
 ###############################################################################
 
 # FIXME: This should be checking for "if not GCC or ICC", not for "if HP-UX"
-ifeq ($(OS),HP-UX)
+ifeq ($(HOST_OS),HP-UX)
   DISABLE_AUTO_DEPENDENCIES=1
 endif
 

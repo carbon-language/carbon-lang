@@ -175,11 +175,58 @@ AC_CACHE_CHECK([type of operating system we're going to host on],
     llvm_cv_no_link_all_option="-Wl,--no-whole-archive"
     llvm_cv_os_type="MingW"
     llvm_cv_platform_type="Win32" ;;
+  *-unknown-eabi*)
+    llvm_cv_link_all_option="-Wl,--whole-archive"
+    llvm_cv_no_link_all_option="-Wl,--no-whole-archive"
+    llvm_cv_os_type="Freestanding"
+    llvm_cv_platform_type="Unix" ;;
+  *-unknown-elf*)
+    llvm_cv_link_all_option="-Wl,--whole-archive"
+    llvm_cv_no_link_all_option="-Wl,--no-whole-archive"
+    llvm_cv_os_type="Freestanding"
+    llvm_cv_platform_type="Unix" ;;
   *)
     llvm_cv_link_all_option=""
     llvm_cv_no_link_all_option=""
     llvm_cv_os_type="Unknown"
     llvm_cv_platform_type="Unknown" ;;
+esac])
+
+AC_CACHE_CHECK([type of operating system we're going to target],
+               [llvm_cv_target_os_type],
+[case $target in
+  *-*-aix*)
+    llvm_cv_target_os_type="AIX" ;;
+  *-*-irix*)
+    llvm_cv_target_os_type="IRIX" ;;
+  *-*-cygwin*)
+    llvm_cv_target_os_type="Cygwin" ;;
+  *-*-darwin*)
+    llvm_cv_target_os_type="Darwin" ;;
+  *-*-freebsd*)
+    llvm_cv_target_os_type="FreeBSD" ;;
+  *-*-openbsd*)
+    llvm_cv_target_os_type="OpenBSD" ;;
+  *-*-netbsd*)
+    llvm_cv_target_os_type="NetBSD" ;;
+  *-*-dragonfly*)
+    llvm_cv_target_os_type="DragonFly" ;;
+  *-*-hpux*)
+    llvm_cv_target_os_type="HP-UX" ;;
+  *-*-interix*)
+    llvm_cv_target_os_type="Interix" ;;
+  *-*-linux*)
+    llvm_cv_target_os_type="Linux" ;;
+  *-*-solaris*)
+    llvm_cv_target_os_type="SunOS" ;;
+  *-*-win32*)
+    llvm_cv_target_os_type="Win32" ;;
+  *-*-mingw*)
+    llvm_cv_target_os_type="MingW" ;;
+  *-unknown-eabi*)
+    llvm_cv_target_os_type="Freestanding" ;;
+  *)
+    llvm_cv_target_os_type="Unknown" ;;
 esac])
 
 dnl Make sure we aren't attempting to configure for an unknown system
@@ -190,6 +237,8 @@ fi
 dnl Set the "OS" Makefile variable based on the platform type so the
 dnl makefile can configure itself to specific build hosts
 AC_SUBST(OS,$llvm_cv_os_type)
+AC_SUBST(HOST_OS,$llvm_cv_os_type)
+AC_SUBST(TARGET_OS,$llvm_cv_target_os_type)
 
 dnl Set the LINKALL and NOLINKALL Makefile variables based on the platform
 AC_SUBST(LINKALL,$llvm_cv_link_all_option)
