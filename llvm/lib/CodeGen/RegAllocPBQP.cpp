@@ -702,7 +702,8 @@ bool PBQPRegAlloc::mapPBQPToRegAlloc(const PBQP::Solution &solution) {
       // Get the physical reg, subtracting 1 to account for the spill option.
       unsigned physReg = allowedSets[node][allocSelection - 1];
 
-      DOUT << "VREG " << virtReg << " -> " << tri->getName(physReg) << "\n";
+      DEBUG(errs() << "VREG " << virtReg << " -> "
+                   << tri->getName(physReg) << "\n");
 
       assert(physReg != 0);
 
@@ -724,8 +725,8 @@ bool PBQPRegAlloc::mapPBQPToRegAlloc(const PBQP::Solution &solution) {
         lis->addIntervalsForSpills(*spillInterval, spillIs, loopInfo, *vrm);
       addStackInterval(spillInterval, mri);
 
-      DOUT << "VREG " << virtReg << " -> SPILLED (Cost: "
-           << oldSpillWeight << ", New vregs: ";
+      DEBUG(errs() << "VREG " << virtReg << " -> SPILLED (Cost: "
+                   << oldSpillWeight << ", New vregs: ");
 
       // Copy any newly inserted live intervals into the list of regs to
       // allocate.
@@ -735,12 +736,12 @@ bool PBQPRegAlloc::mapPBQPToRegAlloc(const PBQP::Solution &solution) {
 
         assert(!(*itr)->empty() && "Empty spill range.");
 
-        DOUT << (*itr)->reg << " ";
+        DEBUG(errs() << (*itr)->reg << " ");
 
         vregIntervalsToAlloc.insert(*itr);
       }
 
-      DOUT << ")\n";
+      DEBUG(errs() << ")\n");
 
       // We need another round if spill intervals were added.
       anotherRoundNeeded |= !newSpills.empty();
@@ -863,12 +864,7 @@ bool PBQPRegAlloc::runOnMachineFunction(MachineFunction &MF) {
       PBQP::HeuristicSolver<PBQP::Heuristics::Briggs> solver;
       problem.assignNodeIDs();
       PBQP::Solution solution = solver.solve(problem);
-/*
-      std::cerr << "Solution:\n";
-      for (unsigned i = 0; i < solution.numNodes(); ++i) {
-        std::cerr << "  " << i << " -> " << solution.getSelection(i) << "\n";
-      }
-*/
+
       pbqpAllocComplete = mapPBQPToRegAlloc(solution);
 
       ++round;
