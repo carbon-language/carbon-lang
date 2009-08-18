@@ -51,5 +51,11 @@ void XCoreTargetObjectFile::Initialize(MCContext &Ctx, const TargetMachine &TM){
       MCSectionXCore::Create(".cp.rodata", MCSectionELF::SHT_PROGBITS,
                              MCSectionELF::SHF_ALLOC |
                              MCSectionXCore::SHF_CP_SECTION,
-                             SectionKind::getReadOnly(), false, getContext());
+                             SectionKind::getReadOnlyWithRel(), false,
+                             getContext());
+
+  // Dynamic linking is not supported. Data with relocations is placed in the
+  // same section as data without relocations.
+  DataRelSection = DataRelLocalSection = DataSection;
+  DataRelROSection = DataRelROLocalSection = ReadOnlySection;
 }
