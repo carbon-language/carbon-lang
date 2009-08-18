@@ -182,19 +182,25 @@ DeclSpec::TST Sema::isTagName(IdentifierInfo &II, Scope *S) {
 }
 
 
-
+// Determines the context to return to after temporarily entering a
+// context.  This depends in an unnecessarily complicated way on the
+// exact ordering of callbacks from the parser.
 DeclContext *Sema::getContainingDC(DeclContext *DC) {
-  if (CXXMethodDecl *MD = dyn_cast<CXXMethodDecl>(DC)) {
-    // A C++ out-of-line method will return to the file declaration context.
-    if (MD->isOutOfLine())
-      return MD->getLexicalDeclContext();
 
-    // A C++ inline method is parsed *after* the topmost class it was declared
-    // in is fully parsed (it's "complete").
-    // The parsing of a C++ inline method happens at the declaration context of
-    // the topmost (non-nested) class it is lexically declared in.
-    assert(isa<CXXRecordDecl>(MD->getParent()) && "C++ method not in Record.");
-    DC = MD->getParent();
+  // Functions defined inline within classes aren't parsed until we've
+  // finished parsing the top-level class, so the top-level class is
+  // the context we'll need to return to.
+  if (isa<FunctionDecl>(DC)) {
+    DC = DC->getLexicalParent();
+
+    // A function not defined within a class will always return to its
+    // lexical context.
+    if (!isa<CXXRecordDecl>(DC))
+      return DC;
+
+    // A C++ inline method/friend is parsed *after* the topmost class
+    // it was declared in is fully parsed ("complete");  the topmost
+    // class is the context we need to return to.
     while (CXXRecordDecl *RD = dyn_cast<CXXRecordDecl>(DC->getLexicalParent()))
       DC = RD;
 
@@ -2387,7 +2393,7 @@ Sema::ActOnFunctionDeclarator(Scope* S, Declarator& D, DeclContext* DC,
   FunctionDecl *NewFD;
   if (isFriend) {
     // DC is the namespace in which the function is being declared.
-    assert(DC->isFileContext() || PrevDecl);
+    assert(DC->isFileContext() || D.getCXXScopeSpec().isSet());
 
     // C++ [class.friend]p5
     //   A function can be defined in a friend declaration of a
@@ -2398,6 +2404,7 @@ Sema::ActOnFunctionDeclarator(Scope* S, Declarator& D, DeclContext* DC,
                                        D.getIdentifierLoc(), Name, R,
                                        isInline,
                                        D.getDeclSpec().getFriendSpecLoc());
+    
   } else if (D.getKind() == Declarator::DK_Constructor) {
     // This is a C++ constructor declaration.
     assert(DC->isRecord() &&

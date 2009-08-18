@@ -3590,6 +3590,9 @@ Sema::DeclPtrTy Sema::ActOnFriendDecl(Scope *S,
                                           Redeclaration);
   FD = cast_or_null<FriendFunctionDecl>(ND);
 
+  assert(FD->getDeclContext() == DC);
+  assert(FD->getLexicalDeclContext() == CurContext);
+
   // If this is a dependent context, just add the decl to the
   // class's decl list and don't both with the lookup tables.  This
   // doesn't affect lookup because any call that might find this
