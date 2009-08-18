@@ -1206,12 +1206,14 @@ void BugType::FlushReports(BugReporter &BR) {}
 BugReport::~BugReport() {}
 RangedBugReport::~RangedBugReport() {}
 
-const Stmt* BugReport::getStmt(BugReporter& BR) const {  
+const Stmt* BugReport::getStmt() const {  
   ProgramPoint ProgP = EndNode->getLocation();  
   const Stmt *S = NULL;
   
   if (BlockEntrance* BE = dyn_cast<BlockEntrance>(&ProgP)) {
-    if (BE->getBlock() == &BR.getCFG()->getExit()) S = GetPreviousStmt(EndNode);
+    CFGBlock &Exit = ProgP.getContext()->getCFG()->getExit();
+    if (BE->getBlock() == &Exit)
+      S = GetPreviousStmt(EndNode);
   }
   if (!S)
     S = GetStmt(ProgP);  
@@ -1223,7 +1225,7 @@ PathDiagnosticPiece*
 BugReport::getEndPath(BugReporterContext& BRC,
                       const ExplodedNode* EndPathNode) {
   
-  const Stmt* S = getStmt(BRC.getBugReporter());
+  const Stmt* S = getStmt();
   
   if (!S)
     return NULL;
@@ -1246,7 +1248,7 @@ BugReport::getEndPath(BugReporterContext& BRC,
 void BugReport::getRanges(BugReporter& BR, const SourceRange*& beg,
                           const SourceRange*& end) {  
   
-  if (const Expr* E = dyn_cast_or_null<Expr>(getStmt(BR))) {
+  if (const Expr* E = dyn_cast_or_null<Expr>(getStmt())) {
     R = E->getSourceRange();
     assert(R.isValid());
     beg = &R;

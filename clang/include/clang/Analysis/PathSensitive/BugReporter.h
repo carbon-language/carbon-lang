@@ -101,7 +101,7 @@ public:
   // object.
   // FIXME: If we do need it, we can probably just make it private to
   // BugReporter.
-  const Stmt* getStmt(BugReporter& BR) const;
+  const Stmt* getStmt() const;
   
   const std::string& getDescription() const { return Description; }
 

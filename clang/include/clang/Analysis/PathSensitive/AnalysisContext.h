@@ -79,6 +79,8 @@ public:
 
   LocationContext *getParent() const { return Parent; }
 
+  CFG *getCFG() const { return getAnalysisContext()->getCFG(); }
+
   LiveVariables *getLiveVariables() const { 
     return getAnalysisContext()->getLiveVariables();
   }
