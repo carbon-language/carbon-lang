@@ -36,13 +36,20 @@ static unsigned CountColumns(unsigned Column, const char *Ptr, size_t Size) {
 
 /// ComputeColumn - Examine the current output and figure out which
 /// column we end up in after output.
-void formatted_raw_ostream::ComputeColumn() {
-  // The buffer may have been allocated underneath us.
-  if (Scanned == 0) Scanned = begin();
-  // Scan all characters added since our last scan to determine the new column.
-  ColumnScanned = CountColumns(ColumnScanned, Scanned, end() - Scanned);
-  // We're now current with everything in the buffer.
-  Scanned = end();
+void formatted_raw_ostream::ComputeColumn(const char *Ptr, size_t Size) {
+  // If our previous scan pointer is inside the buffer, assume we already
+  // scanned those bytes. This depends on raw_ostream to not change our buffer
+  // in unexpected ways.
+  if (Ptr <= Scanned && Scanned <= Ptr + Size) {
+    // Scan all characters added since our last scan to determine the new
+    // column.
+    ColumnScanned = CountColumns(ColumnScanned, Scanned, 
+                                 Size - (Scanned - Ptr));
+  } else
+    ColumnScanned = CountColumns(ColumnScanned, Ptr, Size);
+
+  // Update the scanning pointer.
+  Scanned = Ptr + Size;
 }
 
 /// PadToColumn - Align the output to some column number.
@@ -53,7 +60,7 @@ void formatted_raw_ostream::ComputeColumn() {
 ///
 void formatted_raw_ostream::PadToColumn(unsigned NewCol) { 
   // Figure out what's in the buffer and add it to the column count.
-  ComputeColumn();
+  ComputeColumn(getBufferStart(), GetNumBytesInBuffer());
 
   // Output spaces until we reach the desired column.
   unsigned num = NewCol - ColumnScanned;
@@ -70,24 +77,14 @@ void formatted_raw_ostream::PadToColumn(unsigned NewCol) {
 
 void formatted_raw_ostream::write_impl(const char *Ptr, size_t Size) {
   // Figure out what's in the buffer and add it to the column count.
-  ComputeColumn();
+  ComputeColumn(Ptr, Size);
 
   // Write the data to the underlying stream (which is unbuffered, so
   // the data will be immediately written out).
   TheStream->write(Ptr, Size);
 
-  // If this FormattedStream is unbuffered, scan the string that
-  // was just written to determine the new column.
-  if (Ptr == begin()) {
-    // Buffered mode. The buffer is being flushed; reset the scanning
-    // position to the beginning of the buffer.
-    assert(Ptr + Size == end() && "Buffer is not being fully flushed!");
-    Scanned = begin();
-  } else {
-    // Unbuffered mode. Immediately scan the string that was just
-    // written to determine the new column.
-    ColumnScanned = CountColumns(ColumnScanned, Ptr, Size);
-  }
+  // Reset the scanning pointer.
+  Scanned = 0;
 }
 
 /// fouts() - This returns a reference to a formatted_raw_ostream for

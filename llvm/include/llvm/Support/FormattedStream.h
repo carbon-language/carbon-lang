@@ -58,7 +58,7 @@ namespace llvm
     /// Scanned - This points to one past the last character in the
     /// buffer we've scanned.
     ///
-    iterator Scanned;
+    const char *Scanned;
 
     virtual void write_impl(const char *Ptr, size_t Size);
 
@@ -70,10 +70,10 @@ namespace llvm
       return TheStream->tell() - TheStream->GetNumBytesInBuffer();
     }
 
-    /// ComputeColumn - Examine the current output and figure out
-    /// which column we end up in after output.
+    /// ComputeColumn - Examine the given output buffer and figure out which
+    /// column we end up in after output.
     ///
-    void ComputeColumn();
+    void ComputeColumn(const char *Ptr, size_t size);
 
   public:
     /// formatted_raw_ostream - Open the specified file for
@@ -92,7 +92,7 @@ namespace llvm
     }
     explicit formatted_raw_ostream()
       : raw_ostream(), TheStream(0), DeleteStream(false), ColumnScanned(0) {
-      Scanned = begin();
+      Scanned = 0;
     }
 
     ~formatted_raw_ostream() {
@@ -116,7 +116,7 @@ namespace llvm
         SetUnbuffered();
       TheStream->SetUnbuffered();
 
-      Scanned = begin();
+      Scanned = 0;
     }
 
     /// PadToColumn - Align the output to some column number.  If the current

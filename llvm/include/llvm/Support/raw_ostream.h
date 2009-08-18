@@ -251,9 +251,9 @@ protected:
   /// been encountered.
   void error_detected() { Error = true; }
 
-  typedef char * iterator;
-  iterator begin() { return OutBufStart; }
-  iterator end() { return OutBufCur; }
+  /// getBufferStart - Return the beginning of the current stream buffer, or 0
+  /// if the stream is unbuffered.
+  const char *getBufferStart() const { return OutBufStart; }
 
   //===--------------------------------------------------------------------===//
   // Private Interface
