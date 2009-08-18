@@ -399,11 +399,8 @@ else
   endif
 endif
 
-CXX.Flags     += $(CXXFLAGS) -Woverloaded-virtual
-C.Flags       += $(CFLAGS)
-CPP.Defines   += $(CPPFLAGS)
+CXX.Flags     += -Woverloaded-virtual
 CPP.BaseFlags += $(CPP.Defines)
-LD.Flags      += $(LDFLAGS)
 AR.Flags      := cru
 
 # Make Floating point IEEE compliant on Alpha.
@@ -636,31 +633,34 @@ CPP.Flags     += $(sort -I$(PROJ_OBJ_DIR) -I$(PROJ_SRC_DIR) \
 	         $(CPP.BaseFlags)
 
 ifeq ($(BUILD_COMPONENT), 1)
-  Compile.C     = $(BUILD_CC) $(CPP.Flags) $(C.Flags) \
+  Compile.C     = $(BUILD_CC) $(CPP.Flags) $(C.Flags) $(CFLAGS) $(CPPFLAGS) \
                   $(TargetCommonOpts) $(CompileCommonOpts) -c
-  Compile.CXX   = $(BUILD_CXX) $(CPP.Flags) $(CXX.Flags) \
+  Compile.CXX   = $(BUILD_CXX) $(CPP.Flags) $(CXX.Flags) $(CXXFLAGS) \
+		  $(CPPFLAGS) \
                   $(TargetCommonOpts) $(CompileCommonOpts) -c
-  Preprocess.CXX= $(BUILD_CXX) $(CPP.Flags) $(TargetCommonOpts) \
+  Preprocess.CXX= $(BUILD_CXX) $(CPP.Flags) $(CPPFLAGS) $(TargetCommonOpts) \
                   $(CompileCommonOpts) $(CXX.Flags) -E
-  Link          = $(BUILD_CXX) $(CPP.Flags) $(CXX.Flags) \
+  Link          = $(BUILD_CXX) $(CPP.Flags) $(CXX.Flags) $(LDFLAGS) \
                   $(TargetCommonOpts) $(CompileCommonOpts) $(LD.Flags) $(Strip)
 else
-  Compile.C     = $(CC) $(CPP.Flags) $(C.Flags) \
+  Compile.C     = $(CC) $(CPP.Flags) $(C.Flags) $(CFLAGS) $(CPPFLAGS) \
                   $(TargetCommonOpts) $(CompileCommonOpts) -c
-  Compile.CXX   = $(CXX) $(CPP.Flags) $(CXX.Flags) \
+  Compile.CXX   = $(CXX) $(CPP.Flags) $(CXX.Flags) $(CXXFLAGS) $(CPPFLAGS) \
                   $(TargetCommonOpts) $(CompileCommonOpts) -c
-  Preprocess.CXX= $(CXX) $(CPP.Flags) $(TargetCommonOpts) \
+  Preprocess.CXX= $(CXX) $(CPP.Flags) $(TargetCommonOpts) $(CPPFLAGS) \
                   $(CompileCommonOpts) $(CXX.Flags) -E
-  Link          = $(CXX) $(CPP.Flags) $(CXX.Flags) \
+  Link          = $(CXX) $(CPP.Flags) $(CXX.Flags) $(LDFLAGS) \
                   $(TargetCommonOpts)  $(CompileCommonOpts) $(LD.Flags) $(Strip)
 endif
 
-BCCompile.C   = $(LLVMGCCWITHPATH) $(CPP.Flags) $(C.Flags) \
+BCCompile.C   = $(LLVMGCCWITHPATH) $(CPP.Flags) $(C.Flags) $(CFLAGS) \
+		$(CPPFLAGS) \
                 $(TargetCommonOpts) $(CompileCommonOpts)
-Preprocess.C  = $(CC) $(CPP.Flags) $(C.Flags) \
+Preprocess.C  = $(CC) $(CPP.Flags) $(C.Flags) $(CPPFLAGS) \
                 $(TargetCommonOpts) $(CompileCommonOpts) -E
 
-BCCompile.CXX = $(LLVMGXXWITHPATH) $(CPP.Flags) $(CXX.Flags) \
+BCCompile.CXX = $(LLVMGXXWITHPATH) $(CPP.Flags) $(CXX.Flags) $(CXXFLAGS) \
+		$(CPPFLAGS) \
                 $(TargetCommonOpts) $(CompileCommonOpts)
 
 ProgInstall   = $(INSTALL) $(Install.StripFlag) -m 0755
