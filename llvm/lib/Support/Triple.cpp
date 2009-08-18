@@ -28,6 +28,7 @@ const char *Triple::getArchTypeName(ArchType Kind) {
   case mips:    return "mips";
   case mipsel:  return "mipsel";
   case msp430:  return "msp430";
+  case pic16:   return "pic16";
   case ppc64:   return "powerpc64";
   case ppc:     return "powerpc";
   case sparc:   return "sparc";
@@ -66,6 +67,7 @@ const char *Triple::getOSTypeName(OSType Kind) {
   case MinGW64: return "mingw64";
   case NetBSD: return "netbsd";
   case OpenBSD: return "openbsd";
+  case Solaris: return "solaris";
   case Win32: return "win32";
   }
 
@@ -87,6 +89,8 @@ Triple::ArchType Triple::getArchTypeForLLVMName(const StringRef &Name) {
     return mipsel;
   if (Name == "msp430")
     return msp430;
+  if (Name == "pic16")
+    return pic16;
   if (Name == "ppc64")
     return ppc64;
   if (Name == "ppc")
@@ -119,6 +123,8 @@ void Triple::Parse() const {
     Arch = x86;
   else if (ArchName == "amd64" || ArchName == "x86_64")
     Arch = x86_64;
+  else if (ArchName == "pic16")
+    Arch = pic16;
   else if (ArchName == "powerpc")
     Arch = ppc;
   else if (ArchName == "powerpc64")
@@ -144,8 +150,6 @@ void Triple::Parse() const {
     Arch = sparc;
   else if (ArchName == "s390x")
     Arch = systemz;
-  else if (ArchName == "bfin")
-    Arch = bfin;
   else
     Arch = UnknownArch;
 
@@ -178,6 +182,8 @@ void Triple::Parse() const {
     OS = NetBSD;
   else if (OSName.startswith("openbsd"))
     OS = OpenBSD;
+  else if (OSName.startswith("solaris"))
+    OS = Solaris;
   else if (OSName.startswith("win32"))
     OS = Win32;
   else
