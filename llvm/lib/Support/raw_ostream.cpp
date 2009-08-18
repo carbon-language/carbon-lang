@@ -125,19 +125,24 @@ raw_ostream &raw_ostream::operator<<(long N) {
 }
 
 raw_ostream &raw_ostream::operator<<(unsigned long long N) {
-  // Output using 32-bit div/mod when possible.
+  // Handle simple case when value fits in long already.
   if (N == static_cast<unsigned long>(N))
     return this->operator<<(static_cast<unsigned long>(N));
 
-  char NumberBuffer[20];
-  char *EndPtr = NumberBuffer+sizeof(NumberBuffer);
-  char *CurPtr = EndPtr;
-  
-  while (N) {
-    *--CurPtr = '0' + char(N % 10);
-    N /= 10;
-  }
-  return write(CurPtr, EndPtr-CurPtr);
+  // Otherwise divide into at two or three 10**9 chunks and write out using
+  // long div/mod, this is substantially faster on a 32-bit system.
+  unsigned long Top = 0, Mid = 0, Bot = N % 1000000000;
+  N /= 1000000000;
+  if (N > 1000000000) {
+    Mid = N % 1000000000;
+    Top = N / 1000000000;
+  } else
+    Mid = N;
+
+  if (Top)
+    this->operator<<(static_cast<unsigned long>(Top));
+  this->operator<<(static_cast<unsigned long>(Mid));
+  return this->operator<<(static_cast<unsigned long>(Bot));
 }
 
 raw_ostream &raw_ostream::operator<<(long long N) {
