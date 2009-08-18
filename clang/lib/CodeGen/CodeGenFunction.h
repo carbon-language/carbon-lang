@@ -362,28 +362,6 @@ public:
   void FinishFunction(SourceLocation EndLoc=SourceLocation());
 
   llvm::Constant *GenerateRtti(const CXXRecordDecl *RD);
-  void GenerateVBaseOffsets(std::vector<llvm::Constant *> &methods,
-                            const CXXRecordDecl *RD, 
-                           llvm::SmallSet<const CXXRecordDecl *, 32> &SeenVBase,
-                            uint64_t Offset,
-                            const ASTRecordLayout &Layout, llvm::Type *Ptr8Ty);
-  void GenerateVcalls(std::vector<llvm::Constant *> &methods,
-                      const CXXRecordDecl *RD, llvm::Type *Ptr8Ty);
-  void GenerateMethods(std::vector<llvm::Constant *> &methods,
-                       const CXXRecordDecl *RD, llvm::Type *Ptr8Ty);
-  void GenerateVtableForVBases(const CXXRecordDecl *RD,
-                               const CXXRecordDecl *Class,
-                               llvm::Constant *rtti,
-                               std::vector<llvm::Constant *> &methods,
-                    llvm::SmallSet<const CXXRecordDecl *, 32> &IndirectPrimary);
-  void GenerateVtableForBase(const CXXRecordDecl *RD,
-                             bool ForPrimary,
-                             int64_t Offset,
-                             const CXXRecordDecl *Class,
-                             llvm::Constant *rtti,
-                             std::vector<llvm::Constant *> &methods,
-                             bool ForVirtualBase,
-                    llvm::SmallSet<const CXXRecordDecl *, 32> &IndirectPrimary);
   llvm::Value *GenerateVtable(const CXXRecordDecl *RD);
 
   void EmitCtorPrologue(const CXXConstructorDecl *CD);
