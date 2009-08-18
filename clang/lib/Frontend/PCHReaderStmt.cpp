@@ -749,7 +749,7 @@ unsigned PCHStmtReader::VisitObjCImplctSetterGetterRefExpr(
                  cast_or_null<ObjCMethodDecl>(Reader.GetDecl(Record[Idx++])));
   E->setSetterMethod(
                  cast_or_null<ObjCMethodDecl>(Reader.GetDecl(Record[Idx++])));
-  E->setClassProp(
+  E->setInterfaceDecl(
               cast_or_null<ObjCInterfaceDecl>(Reader.GetDecl(Record[Idx++])));
   E->setBase(cast_or_null<Expr>(StmtStack.back()));
   E->setLocation(SourceLocation::getFromRawEncoding(Record[Idx++]));

@@ -679,8 +679,8 @@ void PCHStmtWriter::VisitObjCImplctSetterGetterRefExpr(
   Writer.AddDeclRef(E->getGetterMethod(), Record);
   Writer.AddDeclRef(E->getSetterMethod(), Record);
   
-  // NOTE: ClassProp and Base are mutually exclusive.
-  Writer.AddDeclRef(E->getClassProp(), Record);
+  // NOTE: InterfaceDecl and Base are mutually exclusive.
+  Writer.AddDeclRef(E->getInterfaceDecl(), Record);
   Writer.WriteSubStmt(E->getBase());
   Writer.AddSourceLocation(E->getLocation(), Record);
   Writer.AddSourceLocation(E->getClassLoc(), Record);

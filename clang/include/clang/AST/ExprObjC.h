@@ -279,7 +279,7 @@ class ObjCImplctSetterGetterRefExpr : public Expr {
   SourceLocation Loc;
   // FIXME: Swizzle these into a single pointer.
   Stmt *Base;
-  ObjCInterfaceDecl *ClassProp;
+  ObjCInterfaceDecl *InterfaceDecl;
   SourceLocation ClassLoc;
     
 public:
@@ -288,7 +288,7 @@ public:
                  ObjCMethodDecl *setter,
                  SourceLocation l, Expr *base)
     : Expr(ObjCImplctSetterGetterRefExprClass, t), Setter(setter),
-      Getter(getter), Loc(l), Base(base), ClassProp(0),
+      Getter(getter), Loc(l), Base(base), InterfaceDecl(0),
       ClassLoc(SourceLocation()) {
     }
   ObjCImplctSetterGetterRefExpr(ObjCMethodDecl *getter,
@@ -296,17 +296,17 @@ public:
                  ObjCMethodDecl *setter,
                  SourceLocation l, ObjCInterfaceDecl *C, SourceLocation CL)
     : Expr(ObjCImplctSetterGetterRefExprClass, t), Setter(setter),
-      Getter(getter), Loc(l), Base(0), ClassProp(C), ClassLoc(CL) {
+      Getter(getter), Loc(l), Base(0), InterfaceDecl(C), ClassLoc(CL) {
     }
   explicit ObjCImplctSetterGetterRefExpr(EmptyShell Empty) 
            : Expr(ObjCImplctSetterGetterRefExprClass, Empty){}
 
   ObjCMethodDecl *getGetterMethod() const { return Getter; }
   ObjCMethodDecl *getSetterMethod() const { return Setter; }
-  ObjCInterfaceDecl *getClassProp() const { return ClassProp; }
+  ObjCInterfaceDecl *getInterfaceDecl() const { return InterfaceDecl; }
   void setGetterMethod(ObjCMethodDecl *D) { Getter = D; }
   void setSetterMethod(ObjCMethodDecl *D) { Setter = D; }
-  void setClassProp(ObjCInterfaceDecl *D) { ClassProp = D; }
+  void setInterfaceDecl(ObjCInterfaceDecl *D) { InterfaceDecl = D; }
   
   virtual SourceRange getSourceRange() const {
     if (Base)

@@ -588,7 +588,7 @@ void StmtProfiler::VisitObjCImplctSetterGetterRefExpr(
   VisitExpr(S);
   VisitDecl(S->getGetterMethod());
   VisitDecl(S->getSetterMethod());
-  VisitDecl(S->getClassProp());
+  VisitDecl(S->getInterfaceDecl());
 }
 
 void StmtProfiler::VisitObjCMessageExpr(ObjCMessageExpr *S) {

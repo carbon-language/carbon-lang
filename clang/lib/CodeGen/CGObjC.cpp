@@ -341,8 +341,8 @@ RValue CodeGenFunction::EmitObjCPropertyGet(const Expr *Exp) {
       cast<ObjCImplctSetterGetterRefExpr>(Exp);
     Selector S = KE->getGetterMethod()->getSelector();
     llvm::Value *Receiver;
-    if (KE->getClassProp()) {
-      const ObjCInterfaceDecl *OID = KE->getClassProp();
+    if (KE->getInterfaceDecl()) {
+      const ObjCInterfaceDecl *OID = KE->getInterfaceDecl();
       Receiver = CGM.getObjCRuntime().GetClass(Builder, OID);
     } else if (isa<ObjCSuperExpr>(KE->getBase()))
       return EmitObjCSuperPropertyGet(KE, S);
@@ -351,7 +351,7 @@ RValue CodeGenFunction::EmitObjCPropertyGet(const Expr *Exp) {
     return CGM.getObjCRuntime().
              GenerateMessageSend(*this, Exp->getType(), S, 
                                  Receiver, 
-                                 KE->getClassProp() != 0, CallArgList());
+                                 KE->getInterfaceDecl() != 0, CallArgList());
   }
 }
 
@@ -394,8 +394,8 @@ void CodeGenFunction::EmitObjCPropertySet(const Expr *Exp,
     Selector S = E->getSetterMethod()->getSelector();
     CallArgList Args;
     llvm::Value *Receiver;
-    if (E->getClassProp()) {
-      const ObjCInterfaceDecl *OID = E->getClassProp();
+    if (E->getInterfaceDecl()) {
+      const ObjCInterfaceDecl *OID = E->getInterfaceDecl();
       Receiver = CGM.getObjCRuntime().GetClass(Builder, OID);
     } else if (isa<ObjCSuperExpr>(E->getBase())) {
       EmitObjCSuperPropertySet(E, S, Src);
@@ -405,7 +405,7 @@ void CodeGenFunction::EmitObjCPropertySet(const Expr *Exp,
     Args.push_back(std::make_pair(Src, E->getType()));
     CGM.getObjCRuntime().GenerateMessageSend(*this, getContext().VoidTy, S, 
                                              Receiver, 
-                                             E->getClassProp() != 0, Args);
+                                             E->getInterfaceDecl() != 0, Args);
   } else
     assert (0 && "bad expression node in EmitObjCPropertySet");
 }
