@@ -1486,100 +1486,94 @@ namespace {
 // Driver code
 //===----------------------------------------------------------------------===//
 
-static inline bool IsX86(const std::string& TT) {
-  return (TT.size() >= 5 && TT[0] == 'i' && TT[2] == '8' && TT[3] == '6' &&
-          TT[4] == '-' && TT[1] - '3' < 6);
-}
-
 /// CreateTargetInfo - Return the target info object for the specified target
 /// triple.
 TargetInfo* TargetInfo::CreateTargetInfo(const std::string &T) {
-  // OS detection; this isn't really anywhere near complete.
-  // Additions and corrections are welcome.
-  bool isDarwin = T.find("-darwin") != std::string::npos;
-  bool isDragonFly = T.find("-dragonfly") != std::string::npos;
-  bool isNetBSD = T.find("-netbsd") != std::string::npos;
-  bool isOpenBSD = T.find("-openbsd") != std::string::npos;
-  bool isFreeBSD = T.find("-freebsd") != std::string::npos;
-  bool isSolaris = T.find("-solaris") != std::string::npos;
-  bool isLinux = T.find("-linux") != std::string::npos;
-  bool isWindows = T.find("-windows") != std::string::npos ||
-                   T.find("-win32") != std::string::npos ||
-                   T.find("-mingw") != std::string::npos;
+  llvm::Triple Triple(T);
+  llvm::Triple::OSType os = Triple.getOS();
 
-  if (T.find("ppc-") == 0 || T.find("powerpc-") == 0) {
-    if (isDarwin)
-      return new DarwinTargetInfo<PPCTargetInfo>(T);
-    return new PPC32TargetInfo(T);
-  }
+  switch (Triple.getArch()) {
+  default:
+    return NULL;
 
-  if (T.find("ppc64-") == 0 || T.find("powerpc64-") == 0) {
-    if (isDarwin)
-      return new DarwinTargetInfo<PPC64TargetInfo>(T);
-    return new PPC64TargetInfo(T);
-  }
-
-  if (T.find("armv") == 0 || T.find("arm-") == 0 || T.find("xscale") == 0) {
-    if (isDarwin)
+  case llvm::Triple::arm:
+    switch (os) {
+    case llvm::Triple::Darwin:
       return new DarwinARMTargetInfo(T);
-    if (isFreeBSD)
+    case llvm::Triple::FreeBSD:
       return new FreeBSDTargetInfo<ARMTargetInfo>(T);
-    return new ARMTargetInfo(T);
-  }
+    default:
+      return new ARMTargetInfo(T);
+    }
 
-  if (T.find("sparc-") == 0) {
-    if (isSolaris)
-      return new SolarisSparcV8TargetInfo(T);
-    return new SparcV8TargetInfo(T);
-  }
-
-  if (T.find("x86_64-") == 0 || T.find("amd64-") == 0) {
-    if (isDarwin)
-      return new DarwinX86_64TargetInfo(T);
-    if (isLinux)
-      return new LinuxTargetInfo<X86_64TargetInfo>(T);
-    if (isNetBSD)
-      return new NetBSDTargetInfo<X86_64TargetInfo>(T);
-    if (isOpenBSD)
-      return new OpenBSDX86_64TargetInfo(T);
-    if (isFreeBSD)
-      return new FreeBSDTargetInfo<X86_64TargetInfo>(T);
-    if (isSolaris)
-      return new SolarisTargetInfo<X86_64TargetInfo>(T);
-    return new X86_64TargetInfo(T);
-  }
-
-  if (T.find("pic16-") == 0)
-    return new PIC16TargetInfo(T);
-
-  if (T.find("msp430-") == 0)
-    return new MSP430TargetInfo(T);
-
-  if (T.find("s390x-") == 0)
-    return new SystemZTargetInfo(T);
-
-  if (T.find("bfin-") == 0)
+  case llvm::Triple::bfin:
     return new BlackfinTargetInfo(T);
 
-  if (IsX86(T)) {
-    if (isDarwin)
-      return new DarwinI386TargetInfo(T);
-    if (isLinux)
-      return new LinuxTargetInfo<X86_32TargetInfo>(T);
-    if (isDragonFly)
-      return new DragonFlyBSDTargetInfo<X86_32TargetInfo>(T);
-    if (isNetBSD)
-      return new NetBSDTargetInfo<X86_32TargetInfo>(T);
-    if (isOpenBSD)
-      return new OpenBSDI386TargetInfo(T);
-    if (isFreeBSD)
-      return new FreeBSDTargetInfo<X86_32TargetInfo>(T);
-    if (isSolaris)
-      return new SolarisTargetInfo<X86_32TargetInfo>(T);
-    if (isWindows)
-      return new WindowsX86_32TargetInfo(T);
-    return new X86_32TargetInfo(T);
-  }
+  case llvm::Triple::msp430:
+    return new MSP430TargetInfo(T);
 
-  return NULL;
+  case llvm::Triple::pic16:
+    return new PIC16TargetInfo(T);
+
+  case llvm::Triple::ppc:
+    if (os == llvm::Triple::Darwin)
+      return new DarwinTargetInfo<PPCTargetInfo>(T);
+    return new PPC32TargetInfo(T);
+
+  case llvm::Triple::ppc64:
+    if (os == llvm::Triple::Darwin)
+      return new DarwinTargetInfo<PPC64TargetInfo>(T);
+    return new PPC64TargetInfo(T);
+
+  case llvm::Triple::sparc:
+    if (os == llvm::Triple::Solaris)
+      return new SolarisSparcV8TargetInfo(T);
+    return new SparcV8TargetInfo(T);
+
+  case llvm::Triple::systemz:
+    return new SystemZTargetInfo(T);
+
+  case llvm::Triple::x86:
+    switch (os) {
+    case llvm::Triple::Darwin:
+      return new DarwinI386TargetInfo(T);
+    case llvm::Triple::Linux:
+      return new LinuxTargetInfo<X86_32TargetInfo>(T);
+    case llvm::Triple::DragonFly:
+      return new DragonFlyBSDTargetInfo<X86_32TargetInfo>(T);
+    case llvm::Triple::NetBSD:
+      return new NetBSDTargetInfo<X86_32TargetInfo>(T);
+    case llvm::Triple::OpenBSD:
+      return new OpenBSDI386TargetInfo(T);
+    case llvm::Triple::FreeBSD:
+      return new FreeBSDTargetInfo<X86_32TargetInfo>(T);
+    case llvm::Triple::Solaris:
+      return new SolarisTargetInfo<X86_32TargetInfo>(T);
+    case llvm::Triple::Cygwin:
+    case llvm::Triple::MinGW32:
+    case llvm::Triple::MinGW64:
+    case llvm::Triple::Win32:
+      return new WindowsX86_32TargetInfo(T);
+    default:
+      return new X86_32TargetInfo(T);
+    }
+
+  case llvm::Triple::x86_64:
+    switch (os) {
+    case llvm::Triple::Darwin:
+      return new DarwinX86_64TargetInfo(T);
+    case llvm::Triple::Linux:
+      return new LinuxTargetInfo<X86_64TargetInfo>(T);
+    case llvm::Triple::NetBSD:
+      return new NetBSDTargetInfo<X86_64TargetInfo>(T);
+    case llvm::Triple::OpenBSD:
+      return new OpenBSDX86_64TargetInfo(T);
+    case llvm::Triple::FreeBSD:
+      return new FreeBSDTargetInfo<X86_64TargetInfo>(T);
+    case llvm::Triple::Solaris:
+      return new SolarisTargetInfo<X86_64TargetInfo>(T);
+    default:
+      return new X86_64TargetInfo(T);
+    }
+  }
 }
