@@ -63,9 +63,9 @@ public:
   virtual Value *CallOptimizer(Function *Callee, CallInst *CI, IRBuilder<> &B) 
     =0;
   
-  Value *OptimizeCall(CallInst *CI, const TargetData &TD, IRBuilder<> &B) {
+  Value *OptimizeCall(CallInst *CI, const TargetData *TD, IRBuilder<> &B) {
     Caller = CI->getParent()->getParent();
-    this->TD = &TD;
+    this->TD = TD;
     if (CI->getCalledFunction())
       Context = &CI->getCalledFunction()->getContext();
     return CallOptimizer(CI->getCalledFunction(), CI, B);
@@ -573,7 +573,10 @@ struct VISIBILITY_HIDDEN StrCatOpt : public LibCallOptimization {
     // Handle the simple, do-nothing case: strcat(x, "") -> x
     if (Len == 0)
       return Dst;
-    
+
+    // These optimizations require TargetData.
+    if (!TD) return 0;
+
     EmitStrLenMemCpy(Src, Dst, Len, B);
     return Dst;
   }
@@ -630,6 +633,9 @@ struct VISIBILITY_HIDDEN StrNCatOpt : public StrCatOpt {
     // strncat(x,  c, 0) -> x
     if (SrcLen == 0 || Len == 0) return Dst;
 
+    // These optimizations require TargetData.
+    if (!TD) return 0;
+
     // We don't optimize this case
     if (Len < SrcLen) return 0;
 
@@ -658,6 +664,9 @@ struct VISIBILITY_HIDDEN StrChrOpt : public LibCallOptimization {
     // of the input string and turn this into memchr.
     ConstantInt *CharC = dyn_cast<ConstantInt>(CI->getOperand(2));
     if (CharC == 0) {
+      // These optimizations require TargetData.
+      if (!TD) return 0;
+
       uint64_t Len = GetStringLength(SrcStr);
       if (Len == 0 || FT->getParamType(1) != Type::getInt32Ty(*Context)) // memchr needs i32.
         return 0;
@@ -728,6 +737,9 @@ struct VISIBILITY_HIDDEN StrCmpOpt : public LibCallOptimization {
     uint64_t Len1 = GetStringLength(Str1P);
     uint64_t Len2 = GetStringLength(Str2P);
     if (Len1 && Len2) {
+      // These optimizations require TargetData.
+      if (!TD) return 0;
+
       return EmitMemCmp(Str1P, Str2P,
                         ConstantInt::get(TD->getIntPtrType(*Context),
                         std::min(Len1, Len2)), B);
@@ -799,6 +811,9 @@ struct VISIBILITY_HIDDEN StrCpyOpt : public LibCallOptimization {
     if (Dst == Src)      // strcpy(x,x)  -> x
       return Src;
     
+    // These optimizations require TargetData.
+    if (!TD) return 0;
+
     // See if we can get the length of the input string.
     uint64_t Len = GetStringLength(Src);
     if (Len == 0) return 0;
@@ -845,6 +860,9 @@ struct VISIBILITY_HIDDEN StrNCpyOpt : public LibCallOptimization {
       return 0;
 
     if (Len == 0) return Dst; // strncpy(x, y, 0) -> x
+
+    // These optimizations require TargetData.
+    if (!TD) return 0;
 
     // Let strncpy handle the zero padding
     if (Len > SrcLen+1) return 0;
@@ -957,6 +975,9 @@ struct VISIBILITY_HIDDEN MemCmpOpt : public LibCallOptimization {
 
 struct VISIBILITY_HIDDEN MemCpyOpt : public LibCallOptimization {
   virtual Value *CallOptimizer(Function *Callee, CallInst *CI, IRBuilder<> &B) {
+    // These optimizations require TargetData.
+    if (!TD) return 0;
+
     const FunctionType *FT = Callee->getFunctionType();
     if (FT->getNumParams() != 3 || FT->getReturnType() != FT->getParamType(0) ||
         !isa<PointerType>(FT->getParamType(0)) ||
@@ -975,6 +996,9 @@ struct VISIBILITY_HIDDEN MemCpyOpt : public LibCallOptimization {
 
 struct VISIBILITY_HIDDEN MemMoveOpt : public LibCallOptimization {
   virtual Value *CallOptimizer(Function *Callee, CallInst *CI, IRBuilder<> &B) {
+    // These optimizations require TargetData.
+    if (!TD) return 0;
+
     const FunctionType *FT = Callee->getFunctionType();
     if (FT->getNumParams() != 3 || FT->getReturnType() != FT->getParamType(0) ||
         !isa<PointerType>(FT->getParamType(0)) ||
@@ -1002,6 +1026,9 @@ struct VISIBILITY_HIDDEN MemMoveOpt : public LibCallOptimization {
 
 struct VISIBILITY_HIDDEN MemSetOpt : public LibCallOptimization {
   virtual Value *CallOptimizer(Function *Callee, CallInst *CI, IRBuilder<> &B) {
+    // These optimizations require TargetData.
+    if (!TD) return 0;
+
     const FunctionType *FT = Callee->getFunctionType();
     if (FT->getNumParams() != 3 || FT->getReturnType() != FT->getParamType(0) ||
         !isa<PointerType>(FT->getParamType(0)) ||
@@ -1352,7 +1379,10 @@ struct VISIBILITY_HIDDEN SPrintFOpt : public LibCallOptimization {
       for (unsigned i = 0, e = FormatStr.size(); i != e; ++i)
         if (FormatStr[i] == '%')
           return 0; // we found a format specifier, bail out.
-      
+
+      // These optimizations require TargetData.
+      if (!TD) return 0;
+
       // sprintf(str, fmt) -> llvm.memcpy(str, fmt, strlen(fmt)+1, 1)
       EmitMemCpy(CI->getOperand(1), CI->getOperand(2), // Copy the nul byte.
           ConstantInt::get(TD->getIntPtrType(*Context), FormatStr.size()+1),1,B);
@@ -1378,6 +1408,9 @@ struct VISIBILITY_HIDDEN SPrintFOpt : public LibCallOptimization {
     }
     
     if (FormatStr[1] == 's') {
+      // These optimizations require TargetData.
+      if (!TD) return 0;
+
       // sprintf(dest, "%s", str) -> llvm.memcpy(dest, str, strlen(str)+1, 1)
       if (!isa<PointerType>(CI->getOperand(3)->getType())) return 0;
 
@@ -1434,6 +1467,9 @@ struct VISIBILITY_HIDDEN FWriteOpt : public LibCallOptimization {
 
 struct VISIBILITY_HIDDEN FPutsOpt : public LibCallOptimization {
   virtual Value *CallOptimizer(Function *Callee, CallInst *CI, IRBuilder<> &B) {
+    // These optimizations require TargetData.
+    if (!TD) return 0;
+
     // Require two pointers.  Also, we can't optimize if return value is used.
     const FunctionType *FT = Callee->getFunctionType();
     if (FT->getNumParams() != 2 || !isa<PointerType>(FT->getParamType(0)) ||
@@ -1473,7 +1509,10 @@ struct VISIBILITY_HIDDEN FPrintFOpt : public LibCallOptimization {
       for (unsigned i = 0, e = FormatStr.size(); i != e; ++i)
         if (FormatStr[i] == '%')  // Could handle %% -> % if we cared.
           return 0; // We found a format specifier.
-      
+
+      // These optimizations require TargetData.
+      if (!TD) return 0;
+
       EmitFWrite(CI->getOperand(2), ConstantInt::get(TD->getIntPtrType(*Context),
                                                      FormatStr.size()),
                  CI->getOperand(1), B);
@@ -1547,7 +1586,6 @@ namespace {
     bool doInitialization(Module &M);
 
     virtual void getAnalysisUsage(AnalysisUsage &AU) const {
-      AU.addRequired<TargetData>();
     }
   };
   char SimplifyLibCalls::ID = 0;
@@ -1648,7 +1686,7 @@ bool SimplifyLibCalls::runOnFunction(Function &F) {
   if (Optimizations.empty())
     InitOptimizations();
   
-  const TargetData &TD = getAnalysis<TargetData>();
+  const TargetData *TD = getAnalysisIfAvailable<TargetData>();
   
   IRBuilder<> Builder(F.getContext());
 
