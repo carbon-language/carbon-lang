@@ -426,13 +426,18 @@ static bool IsUserOfGlobalSafeForSRA(User *U, GlobalValue *GV) {
     // Scalar replacing *just* the outer index of the array is probably not
     // going to be a win anyway, so just give up.
     for (++GEPI; // Skip array index.
-         GEPI != E && (isa<ArrayType>(*GEPI) || isa<VectorType>(*GEPI));
+         GEPI != E;
          ++GEPI) {
       uint64_t NumElements;
       if (const ArrayType *SubArrayTy = dyn_cast<ArrayType>(*GEPI))
         NumElements = SubArrayTy->getNumElements();
-      else
-        NumElements = cast<VectorType>(*GEPI)->getNumElements();
+      else if (const VectorType *SubVectorTy = dyn_cast<VectorType>(*GEPI))
+        NumElements = SubVectorTy->getNumElements();
+      else {
+        assert(isa<StructType>(*GEPI) &&
+               "Indexed GEP type is not array, vector, or struct!");
+        continue;
+      }
       
       ConstantInt *IdxVal = dyn_cast<ConstantInt>(GEPI.getOperand());
       if (!IdxVal || IdxVal->getZExtValue() >= NumElements)
