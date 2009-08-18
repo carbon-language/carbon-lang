@@ -1366,7 +1366,7 @@ public:
                                           Scope *CurScope);
 
   virtual OwningStmtResult ActOnReturnStmt(SourceLocation ReturnLoc,
-                                           FullExprArg RetValExp);
+                                           ExprArg RetValExp);
   OwningStmtResult ActOnBlockReturnStmt(SourceLocation ReturnLoc,
                                         Expr *RetValExp);
 

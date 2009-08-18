@@ -867,8 +867,8 @@ static bool IsReturnCopyElidable(ASTContext &Ctx, QualType RetType,
 }
 
 Action::OwningStmtResult
-Sema::ActOnReturnStmt(SourceLocation ReturnLoc, FullExprArg rex) {
-  Expr *RetValExp = rex->takeAs<Expr>();
+Sema::ActOnReturnStmt(SourceLocation ReturnLoc, ExprArg rex) {
+  Expr *RetValExp = rex.takeAs<Expr>();
   if (CurBlock)
     return ActOnBlockReturnStmt(ReturnLoc, RetValExp);
 
@@ -897,6 +897,8 @@ Sema::ActOnReturnStmt(SourceLocation ReturnLoc, FullExprArg rex) {
           << CurDecl->getDeclName() << isa<ObjCMethodDecl>(CurDecl)
           << RetValExp->getSourceRange();
       }
+      
+      RetValExp = MaybeCreateCXXExprWithTemporaries(RetValExp, true);
     }
     return Owned(new (Context) ReturnStmt(ReturnLoc, RetValExp));
   }
@@ -945,6 +947,8 @@ Sema::ActOnReturnStmt(SourceLocation ReturnLoc, FullExprArg rex) {
     if (RetValExp) CheckReturnStackAddr(RetValExp, FnRetType, ReturnLoc);
   }
 
+  if (RetValExp)
+    RetValExp = MaybeCreateCXXExprWithTemporaries(RetValExp, true);
   return Owned(new (Context) ReturnStmt(ReturnLoc, RetValExp));
 }
 

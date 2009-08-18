@@ -374,7 +374,7 @@ namespace {
       return StmtEmpty();
     }
     virtual OwningStmtResult ActOnReturnStmt(SourceLocation ReturnLoc,
-                                             FullExprArg RetValExp) {
+                                             ExprArg RetValExp) {
       Out << __FUNCTION__ << "\n";
       return StmtEmpty();
     }
