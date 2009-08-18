@@ -187,10 +187,17 @@ raw_ostream &raw_ostream::write(unsigned char C) {
       return *this;
     }
     
-    if (!OutBufStart)
-      SetBuffered();
-    else
+    if (OutBufStart)
       flush_nonempty();
+    else {
+      SetBuffered();
+      // It's possible for the underlying stream to decline
+      // buffering, so check this condition again.
+      if (Unbuffered) {
+        write_impl(reinterpret_cast<char*>(&C), 1);
+        return *this;
+      }
+    }
   }
 
   *OutBufCur++ = C;
