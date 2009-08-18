@@ -72,7 +72,7 @@ MCSymbol *X86ATTAsmPrinter::GetPICBaseSymbol() {
   } else {
     assert(Subtarget->isTargetELF() && "Don't know how to print PIC label!");
     Name = ".Lllvm$" + utostr(getFunctionNumber())+".$piclabel";
-  }
+  }     
   return OutContext.GetOrCreateSymbol(Name);
 }
 
@@ -734,9 +734,51 @@ MCOperand X86ATTAsmPrinter::LowerGlobalAddressOperand(const MachineOperand &MO){
   else if (MO.getTargetFlags() == X86II::MO_DARWIN_STUB)
     FnStubs[Name] = Mang->getMangledName(GV);
   
+  
+  // Handle target operand flags.
+  // FIXME: This should be common between external symbols, constant pool etc.
+  MCSymbol *NegatedSymbol = 0;
+  
+  switch (MO.getTargetFlags()) {
+  default:
+    llvm_unreachable("Unknown target flag on GV operand");
+  case X86II::MO_NO_FLAG:    // No flag.
+    break;
+  case X86II::MO_DARWIN_NONLAZY:
+  case X86II::MO_DARWIN_HIDDEN_NONLAZY:
+  case X86II::MO_DLLIMPORT:
+  case X86II::MO_DARWIN_STUB:
+    // These affect the name of the symbol, not any suffix.
+    break;
+  case X86II::MO_GOT_ABSOLUTE_ADDRESS:
+    assert(0 && "Reloc mode unimp!");
+    //O << " + [.-";
+    //PrintPICBaseSymbol();
+    //O << ']';
+    break;      
+  case X86II::MO_PIC_BASE_OFFSET:
+  case X86II::MO_DARWIN_NONLAZY_PIC_BASE:
+  case X86II::MO_DARWIN_HIDDEN_NONLAZY_PIC_BASE:
+    // Subtract the pic base.
+    NegatedSymbol = GetPICBaseSymbol();
+    break;
+      
+  // FIXME: These probably should be a modifier on the symbol or something??
+  case X86II::MO_TLSGD:     Name += "@TLSGD";     break;
+  case X86II::MO_GOTTPOFF:  Name += "@GOTTPOFF";  break;
+  case X86II::MO_INDNTPOFF: Name += "@INDNTPOFF"; break;
+  case X86II::MO_TPOFF:     Name += "@TPOFF";     break;
+  case X86II::MO_NTPOFF:    Name += "@NTPOFF";    break;
+  case X86II::MO_GOTPCREL:  Name += "@GOTPCREL";  break;
+  case X86II::MO_GOT:       Name += "@GOT";       break;
+  case X86II::MO_GOTOFF:    Name += "@GOTOFF";    break;
+  case X86II::MO_PLT:       Name += "@PLT";       break;
+  }
+  
   // Create a symbol for the name.
   MCSymbol *Sym = OutContext.GetOrCreateSymbol(Name);
-  return MCOperand::CreateMCValue(MCValue::get(Sym, 0, MO.getOffset()));
+  return MCOperand::CreateMCValue(MCValue::get(Sym, NegatedSymbol,
+                                               MO.getOffset()));
 }
 
 MCOperand X86ATTAsmPrinter::
