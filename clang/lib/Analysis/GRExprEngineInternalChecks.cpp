@@ -583,7 +583,7 @@ public:
       if (stateNull && !stateNotNull) {
         // Generate an error node.  Check for a null node in case
         // we cache out.
-        if (ExplodedNode *errorNode = C.generateNode(CE, stateNull)) {
+        if (ExplodedNode *errorNode = C.generateNode(CE, stateNull, true)) {
                   
           // Lazily allocate the BugType object if it hasn't already been
           // created. Ownership is transferred to the BugReporter object once
@@ -592,12 +592,15 @@ public:
             BT = new BugType("Argument with 'nonnull' attribute passed null",
                              "API");
           
-          RangedBugReport *R =
-            new RangedBugReport(*BT, "Null pointer passed as an argument to a "
-                                "'nonnull' parameter", errorNode);
+          EnhancedBugReport *R =
+            new EnhancedBugReport(*BT,
+                                  "Null pointer passed as an argument to a "
+                                  "'nonnull' parameter", errorNode);
           
           // Highlight the range of the argument that was null.
-          R->addRange((*I)->getSourceRange());
+          const Expr *arg = *I;
+          R->addRange(arg->getSourceRange());
+          R->addVisitorCreator(registerTrackNullOrUndefValue, arg);
           
           // Emit the bug report.
           C.EmitReport(R);

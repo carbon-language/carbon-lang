@@ -41,8 +41,8 @@ BugReporterContext::~BugReporterContext() {
 //===----------------------------------------------------------------------===//
 
 static inline const Stmt* GetStmt(ProgramPoint P) {
-  if (const PostStmt* PS = dyn_cast<PostStmt>(&P))
-    return PS->getStmt();
+  if (const StmtPoint* SP = dyn_cast<StmtPoint>(&P))
+    return SP->getStmt();
   else if (const BlockEdge* BE = dyn_cast<BlockEdge>(&P))
     return BE->getSrc()->getTerminator();
   

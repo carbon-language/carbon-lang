@@ -244,6 +244,35 @@ public:
   }
 };
   
+class EnhancedBugReport : public RangedBugReport {
+public:
+  typedef void (*VisitorCreator)(BugReporterContext &BRcC, const void *data,
+                                 const ExplodedNode *N);
+  
+private:
+  typedef std::vector<std::pair<VisitorCreator, const void*> > Creators;
+  Creators creators;
+  
+public:
+  EnhancedBugReport(BugType& D, const char* description, ExplodedNode *n)
+   : RangedBugReport(D, description, n) {}
+  
+  EnhancedBugReport(BugType& D, const char *shortDescription,
+                  const char *description, ExplodedNode *n)
+    : RangedBugReport(D, shortDescription, description, n) {}
+  
+  ~EnhancedBugReport() {}
+  
+  void registerInitialVisitors(BugReporterContext& BRC, const ExplodedNode* N) {    
+    for (Creators::iterator I = creators.begin(), E = creators.end(); I!=E; ++I)
+      I->first(BRC, I->second, N);
+  }
+  
+  void addVisitorCreator(VisitorCreator creator, const void *data) {
+    creators.push_back(std::make_pair(creator, data));
+  }
+};
+  
 //===----------------------------------------------------------------------===//
 // BugReporter and friends.
 //===----------------------------------------------------------------------===//
@@ -471,7 +500,7 @@ const Stmt *GetDenomExpr(const ExplodedNode *N);
 const Stmt *GetCalleeExpr(const ExplodedNode *N);
 const Stmt *GetRetValExpr(const ExplodedNode *N);
 
-void registerTrackNullOrUndefValue(BugReporterContext& BRC, const Stmt *S,
+void registerTrackNullOrUndefValue(BugReporterContext& BRC, const void *stmt,
                                    const ExplodedNode* N);
 
 } // end namespace clang::bugreporter

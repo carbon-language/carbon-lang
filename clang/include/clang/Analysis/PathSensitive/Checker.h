@@ -17,6 +17,7 @@
 #include "clang/Analysis/Support/SaveAndRestore.h"
 #include "clang/Analysis/PathSensitive/GRCoreEngine.h"
 #include "clang/Analysis/PathSensitive/GRState.h"
+#include "clang/Analysis/PathSensitive/GRExprEngine.h"
 #include "clang/AST/ExprCXX.h"
 #include "clang/AST/ExprObjC.h"
 #include "clang/AST/StmtCXX.h"
@@ -67,9 +68,18 @@ public:
   ExplodedNode *&getPredecessor() { return Pred; }
   const GRState *getState() { return B.GetState(Pred); }
   
-  ExplodedNode *generateNode(const Stmt* S,
-                                      const GRState *state) {
-    return B.generateNode(S, state, Pred);
+  ASTContext &getASTContext() {
+    return Eng.getContext();
+  }
+  
+  ExplodedNode *generateNode(const Stmt* S, const GRState *state,
+                             bool markAsSink = false) {    
+    ExplodedNode *node = B.generateNode(S, state, Pred);
+    
+    if (markAsSink && node)
+      node->markAsSink();
+    
+    return node;
   }
   
   void addTransition(ExplodedNode *node) {

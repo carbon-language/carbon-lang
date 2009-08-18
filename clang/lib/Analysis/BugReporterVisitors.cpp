@@ -189,6 +189,10 @@ public:
       else if (V.isUndef()) {
         os << "Uninitialized value stored to ";
       }
+      else if (isa<nonloc::ConcreteInt>(V)) {
+        os << "The value " << cast<nonloc::ConcreteInt>(V).getValue()
+           << " is assigned to ";
+      }
       else
         return NULL;
       
@@ -296,8 +300,10 @@ static void registerTrackConstraint(BugReporterContext& BRC, SVal Constraint,
 }
 
 void clang::bugreporter::registerTrackNullOrUndefValue(BugReporterContext& BRC,
-                                                       const Stmt *S,
+                                                       const void *data,
                                                        const ExplodedNode* N) {
+  
+  const Stmt *S = static_cast<const Stmt*>(data);
   
   if (!S)
     return;
