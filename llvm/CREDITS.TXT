@@ -168,6 +168,10 @@ N: Brad Jones
 E: kungfoomaster@nondot.org
 D: Support for packed types
 
+N: Rod Kay
+E: rkay@auroraux.org
+D: Author of LLVM Ada bindings
+
 N: Eric Kidd
 W: http://randomhacks.net/
 D: llvm-config script
@@ -181,10 +185,6 @@ D: Switch lowering refactoring
 N: Sumant Kowshik
 E: kowshik@uiuc.edu
 D: Author of the original C backend
-
-N: Rod Kay
-E: rkay@auroraux.org
-D: Author of LLVM Ada bindings
 
 N: Christopher Lamb
 E: christopher.lamb@gmail.com
