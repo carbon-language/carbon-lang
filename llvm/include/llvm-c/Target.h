@@ -33,8 +33,19 @@ typedef struct LLVMOpaqueTargetData *LLVMTargetDataRef;
 typedef struct LLVMStructLayout *LLVMStructLayoutRef;
 
 /* Declare all of the target-initialization functions that are available. */
+#define LLVM_TARGET(TargetName) void LLVMInitialize##TargetName##TargetInfo();
+#include "llvm/Config/Targets.def"
+
 #define LLVM_TARGET(TargetName) void LLVMInitialize##TargetName##Target();
 #include "llvm/Config/Targets.def"
+
+/** LLVMInitializeAllTargetInfos - The main program should call this function if
+    it wants access to all available targets that LLVM is configured to
+    support. */
+static inline void LLVMInitializeAllTargetInfos() {
+#define LLVM_TARGET(TargetName) LLVMInitialize##TargetName##TargetInfo();
+#include "llvm/Config/Targets.def"
+}
 
 /** LLVMInitializeAllTargets - The main program should call this function if it
     wants to link in all available targets that LLVM is configured to
@@ -50,7 +61,9 @@ static inline void LLVMInitializeAllTargets() {
 static inline int LLVMInitializeNativeTarget() {
   /* If we have a native target, initialize it to ensure it is linked in. */
 #ifdef LLVM_NATIVE_ARCH
-#define DoInit2(TARG)   LLVMInitialize ## TARG ()
+#define DoInit2(TARG) \
+  LLVMInitialize ## TARG ## Info ();          \
+  LLVMInitialize ## TARG ()
 #define DoInit(T) DoInit2(T)
   DoInit(LLVM_NATIVE_ARCH);
   return 0;
