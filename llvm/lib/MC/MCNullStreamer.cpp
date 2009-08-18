@@ -26,7 +26,9 @@ namespace {
     /// @name MCStreamer Interface
     /// @{
 
-    virtual void SwitchSection(const MCSection *Section) {}
+    virtual void SwitchSection(const MCSection *Section) {
+      CurSection = Section;
+    }
 
     virtual void EmitLabel(MCSymbol *Symbol) {}
 
