@@ -123,6 +123,8 @@ void Triple::Parse() const {
     Arch = x86;
   else if (ArchName == "amd64" || ArchName == "x86_64")
     Arch = x86_64;
+  else if (ArchName == "bfin")
+    Arch = bfin;
   else if (ArchName == "pic16")
     Arch = pic16;
   else if (ArchName == "powerpc")
