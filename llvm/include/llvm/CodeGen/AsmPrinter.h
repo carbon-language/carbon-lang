@@ -62,10 +62,6 @@ namespace llvm {
     typedef gcp_map_type::iterator gcp_iterator;
     gcp_map_type GCMetadataPrinters;
 
-    /// CurrentSection - The current section we are emitting to.  This is
-    /// controlled and used by the SwitchToSection method.
-    const MCSection *CurrentSection;
-    
     /// If ExuberantAsm is set, a pointer to the loop info for this
     /// function.
     ///
@@ -127,7 +123,7 @@ namespace llvm {
     std::string CurrentFnName;
     
     /// getCurrentSection() - Return the current section we are emitting to.
-    const MCSection *getCurrentSection() const { return CurrentSection; }
+    const MCSection *getCurrentSection() const;
     
 
     /// VerboseAsm - Emit comments in assembly output if this is true.

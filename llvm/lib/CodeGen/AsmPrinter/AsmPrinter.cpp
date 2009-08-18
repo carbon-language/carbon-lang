@@ -63,7 +63,6 @@ AsmPrinter::AsmPrinter(formatted_raw_ostream &o, TargetMachine &tm,
 
     LastMI(0), LastFn(0), Counter(~0U),
     PrevDLT(0, ~0U, ~0U) {
-  CurrentSection = 0;
   DW = 0; MMI = 0;
   switch (AsmVerbose) {
   case cl::BOU_UNSET: VerboseAsm = VDef;  break;
@@ -91,18 +90,17 @@ TargetLoweringObjectFile &AsmPrinter::getObjFileLowering() const {
 }
 
 /// SwitchToSection - Switch to the specified section of the executable if we
-/// are not already in it!  If "NS" is null, then this causes us to exit the
-/// current section and not reenter another one.  This is generally used for
-/// asmprinter hacks.
-///
-/// FIXME: Remove support for null sections.
-///
+/// are not already in it!
 void AsmPrinter::SwitchToSection(const MCSection *NS) {
-  CurrentSection = NS;
-  // FIXME: Remove support for null sections!
-  if (NS)
-    OutStreamer.SwitchSection(NS);
+  assert(NS != 0 && "Must specify a section to switch to");
+  OutStreamer.SwitchSection(NS);
 }
+
+/// getCurrentSection() - Return the current section we are emitting to.
+const MCSection *AsmPrinter::getCurrentSection() const {
+  return OutStreamer.getCurrentSection();
+}
+
 
 void AsmPrinter::getAnalysisUsage(AnalysisUsage &AU) const {
   AU.setPreservesAll();
@@ -143,8 +141,6 @@ bool AsmPrinter::doInitialization(Module &M) {
       << '\n' << TAI->getCommentString()
       << " End of file scope inline assembly\n";
 
-  SwitchToSection(0);   // Reset back to no section to close off sections.
-  
   if (TAI->doesSupportDebugInformation() ||
       TAI->doesSupportExceptionHandling()) {
     MMI = getAnalysisIfAvailable<MachineModuleInfo>();
@@ -174,7 +170,6 @@ bool AsmPrinter::doFinalization(Module &M) {
     // to stuff that is actually used.  Note that doing so would require targets
     // to notice uses in operands (due to constant exprs etc).  This should
     // happen with the MC stuff eventually.
-    SwitchToSection(0);
 
     // Print out module-level global variables here.
     for (Module::const_global_iterator I = M.global_begin(), E = M.global_end();
@@ -776,7 +771,7 @@ void AsmPrinter::EmitAlignment(unsigned NumBits, const GlobalValue *GV,
   if (TAI->getAlignmentIsInBytes()) NumBits = 1 << NumBits;
   O << TAI->getAlignDirective() << NumBits;
 
-  if (CurrentSection && CurrentSection->getKind().isText())
+  if (getCurrentSection()->getKind().isText())
     if (unsigned FillValue = TAI->getTextAlignFillValue()) {
       O << ',';
       PrintHex(FillValue);

@@ -69,6 +69,9 @@ namespace llvm {
   protected:
     MCStreamer(MCContext &Ctx);
 
+    /// CurSection - This is the current section code is being emitted to, it is
+    /// kept up to date by SwitchSection.
+    const MCSection *CurSection;
   public:
     virtual ~MCStreamer();
 
@@ -78,11 +81,16 @@ namespace llvm {
     /// @{
 
     /// SwitchSection - Set the current section where code is being emitted to
-    /// @param Section.
+    /// @param Section.  This is required to update CurSection.
     ///
     /// This corresponds to assembler directives like .section, .text, etc.
     virtual void SwitchSection(const MCSection *Section) = 0;
 
+    
+    /// getCurrentSection - Return the current seciton that the streamer is
+    /// emitting code to.
+    const MCSection *getCurrentSection() const { return CurSection; }
+    
     /// EmitLabel - Emit a label for @param Symbol into the current section.
     ///
     /// This corresponds to an assembler statement such as:

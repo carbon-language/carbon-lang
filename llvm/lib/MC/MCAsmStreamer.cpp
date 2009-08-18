@@ -24,12 +24,10 @@ class MCAsmStreamer : public MCStreamer {
   raw_ostream &OS;
   const TargetAsmInfo &TAI;
   AsmPrinter *Printer;
-  const MCSection *CurSection;
 public:
   MCAsmStreamer(MCContext &Context, raw_ostream &_OS, const TargetAsmInfo &tai,
                 AsmPrinter *_AsmPrinter)
-    : MCStreamer(Context), OS(_OS), TAI(tai), Printer(_AsmPrinter),
-      CurSection(0) {}
+    : MCStreamer(Context), OS(_OS), TAI(tai), Printer(_AsmPrinter) {}
   ~MCAsmStreamer() {}
 
   /// @name MCStreamer Interface
