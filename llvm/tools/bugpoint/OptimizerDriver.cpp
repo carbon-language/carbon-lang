@@ -77,6 +77,7 @@ void BugDriver::EmitProgressBitcode(const std::string &ID, bool NoFlyer) {
   outs() << "Emitted bitcode to '" << Filename << "'\n";
   if (NoFlyer || PassesToRun.empty()) return;
   outs() << "\n*** You can reproduce the problem with: ";
+  if (UseValgrind) outs() << "valgrind ";
   outs() << "opt " << Filename << " ";
   outs() << getPassesString(PassesToRun) << "\n";
 }
