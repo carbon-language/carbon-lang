@@ -700,6 +700,7 @@ bool BranchFolder::TailMergeBlocks(MachineFunction &MF) {
 
   for (MachineFunction::iterator I = MF.begin(), E = MF.end(); I != E; ++I) {
     if (I->pred_size() >= 2 && I->pred_size() < TailMergeThreshold) {
+      SmallPtrSet<MachineBasicBlock *, 8> UniquePreds;
       MachineBasicBlock *IBB = I;
       MachineBasicBlock *PredBB = prior(I);
       MergePotentials.clear();
@@ -709,6 +710,9 @@ bool BranchFolder::TailMergeBlocks(MachineFunction &MF) {
         MachineBasicBlock* PBB = *P;
         // Skip blocks that loop to themselves, can't tail merge these.
         if (PBB==IBB)
+          continue;
+        // Visit each predecessor only once.
+        if (!UniquePreds.insert(PBB))
           continue;
         MachineBasicBlock *TBB = 0, *FBB = 0;
         SmallVector<MachineOperand, 4> Cond;
@@ -850,27 +854,6 @@ bool BranchFolder::CanFallThrough(MachineBasicBlock *CurBB) {
   return CanFallThrough(CurBB, CurUnAnalyzable, TBB, FBB, Cond);
 }
 
-/// RemoveDuplicateSuccessor - make sure block Pred has at most one
-/// successor edge leading to Succ.  This is only called in one place,
-/// but Chris prefers that it be a separate function.
-static void RemoveDuplicateSuccessor(MachineBasicBlock *Pred,
-                                     MachineBasicBlock *Succ) {
-  MachineBasicBlock::succ_iterator SI = Pred->succ_begin();
-  bool found = false;
-  while (SI != Pred->succ_end()) {
-    if (*SI == Succ) {
-      if (!found) {
-        found = true;
-        ++SI;
-      } else {
-        SI = Pred->removeSuccessor(SI);
-      }
-    } else {
-      ++SI;
-    }
-  }
-}
-
 /// IsBetterFallthrough - Return true if it would be clearly better to
 /// fall-through to MBB1 than to fall through into MBB2.  This has to return
 /// a strict ordering, returning true for both (MBB1,MBB2) and (MBB2,MBB1) will
@@ -914,10 +897,6 @@ void BranchFolder::OptimizeBlock(MachineBasicBlock *MBB) {
       while (!MBB->pred_empty()) {
         MachineBasicBlock *Pred = *(MBB->pred_end()-1);
         Pred->ReplaceUsesOfBlockWith(MBB, FallThrough);
-        // If this resulted in a predecessor with true and false edges
-        // both going to the fallthrough block, clean up; 
-        // BranchFolding doesn't like this.
-        RemoveDuplicateSuccessor(Pred, FallThrough);
       }
       // If MBB was the target of a jump table, update jump tables to go to the
       // fallthrough instead.

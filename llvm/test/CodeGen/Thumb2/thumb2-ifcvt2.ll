@@ -82,7 +82,7 @@ define fastcc void @t2() nounwind {
 entry:
 ; CHECK: t2:
 ; CHECK: cmp r0, #0
-; CHECK: bne.n
+; CHECK: beq.n
 	br i1 undef, label %bb.i.i3, label %growMapping.exit
 
 bb.i.i3:		; preds = %entry

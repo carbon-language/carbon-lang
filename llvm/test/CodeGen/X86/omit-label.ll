@@ -1,7 +1,11 @@
-; RUN: llvm-as < %s | llc -march=x86-64 | grep BB1_1:
+; RUN: llvm-as < %s | llc -march=x86-64 -asm-verbose=false | FileCheck %s
 ; PR4126
+; PR4732
 
-; Don't omit this label's definition.
+; Don't omit these labels' definitions.
+
+; CHECK: bux:
+; CHECK: .LBB1_1:
 
 define void @bux(i32 %p_53) nounwind optsize {
 entry:
@@ -21,3 +25,33 @@ bb3:		; preds = %bb.i, %entry
 }
 
 declare i32 @baz(...)
+
+; Don't omit this label in the assembly output.
+; CHECK: int321:
+; CHECK:    jne .LBB2_1
+; CHECK:    jle .LBB2_1
+; CHECK: .LBB2_1:
+
+define void @int321(i8 signext %p_103, i32 %uint8p_104) nounwind readnone {
+entry:
+  %tobool = icmp eq i8 %p_103, 0                  ; <i1> [#uses=1]
+  %cmp.i = icmp sgt i8 %p_103, 0                  ; <i1> [#uses=1]
+  %or.cond = and i1 %tobool, %cmp.i               ; <i1> [#uses=1]
+  br i1 %or.cond, label %land.end.i, label %for.cond.preheader
+
+land.end.i:                                       ; preds = %entry
+  %conv3.i = sext i8 %p_103 to i32                ; <i32> [#uses=1]
+  %div.i = sdiv i32 1, %conv3.i                   ; <i32> [#uses=1]
+  %tobool.i = icmp eq i32 %div.i, -2147483647     ; <i1> [#uses=0]
+  br label %for.cond.preheader
+
+for.cond.preheader:                               ; preds = %land.end.i, %entry
+  %cmp = icmp sgt i8 %p_103, 1                    ; <i1> [#uses=1]
+  br i1 %cmp, label %for.end.split, label %for.cond
+
+for.cond:                                         ; preds = %for.cond.preheader, %for.cond
+  br label %for.cond
+
+for.end.split:                                    ; preds = %for.cond.preheader
+  ret void
+}
