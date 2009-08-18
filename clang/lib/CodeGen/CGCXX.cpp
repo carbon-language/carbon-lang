@@ -670,7 +670,7 @@ const char *CodeGenModule::getMangledCXXDtorName(const CXXDestructorDecl *D,
   return UniqueMangledName(Name.begin(), Name.end());
 }
 
-llvm::Constant *CodeGenFunction::GenerateRtti(const CXXRecordDecl *RD) {
+llvm::Constant *CodeGenModule::GenerateRtti(const CXXRecordDecl *RD) {
   llvm::Type *Ptr8Ty;
   Ptr8Ty = llvm::PointerType::get(llvm::Type::getInt8Ty(VMContext), 0);
   llvm::Constant *Rtti = llvm::Constant::getNullValue(Ptr8Ty);
@@ -697,7 +697,7 @@ llvm::Constant *CodeGenFunction::GenerateRtti(const CXXRecordDecl *RD) {
   llvm::Constant *C;
   llvm::ArrayType *type = llvm::ArrayType::get(Ptr8Ty, info.size());
   C = llvm::ConstantArray::get(type, info);
-  Rtti = new llvm::GlobalVariable(CGM.getModule(), type, true, linktype, C,
+  Rtti = new llvm::GlobalVariable(getModule(), type, true, linktype, C,
                                   Name);
   Rtti = llvm::ConstantExpr::getBitCast(Rtti, Ptr8Ty);
   return Rtti;
@@ -706,14 +706,19 @@ llvm::Constant *CodeGenFunction::GenerateRtti(const CXXRecordDecl *RD) {
 class ABIBuilder {
   std::vector<llvm::Constant *> &methods;
   llvm::Type *Ptr8Ty;
+  const CXXRecordDecl *Class;
+  llvm::Constant *rtti;
   llvm::LLVMContext &VMContext;
   CodeGenModule &CGM;  // Per-module state.
 public:
   ABIBuilder(std::vector<llvm::Constant *> &meth,
+             const CXXRecordDecl *c,
              CodeGenModule &cgm)
-    : methods(meth), VMContext(cgm.getModule().getContext()), CGM(cgm) {
+    : methods(meth), Class(c), rtti(cgm.GenerateRtti(c)),
+      VMContext(cgm.getModule().getContext()), CGM(cgm) {
     Ptr8Ty = llvm::PointerType::get(llvm::Type::getInt8Ty(VMContext), 0);
   }
+
   void GenerateVcalls(const CXXRecordDecl *RD) {
     typedef CXXRecordDecl::method_iterator meth_iter;
     llvm::Constant *m;
@@ -747,7 +752,6 @@ public:
                              bool forPrimary,
                              int64_t Offset,
                              const CXXRecordDecl *Class,
-                             llvm::Constant *rtti,
                              bool ForVirtualBase,
                    llvm::SmallSet<const CXXRecordDecl *, 32> &IndirectPrimary) {
     llvm::Constant *m = llvm::Constant::getNullValue(Ptr8Ty);
@@ -782,7 +786,7 @@ public:
       if (PrimaryBaseWasVirtual)
         IndirectPrimary.insert(PrimaryBase);
       Top = false;
-      GenerateVtableForBase(PrimaryBase, true, Offset, Class, rtti,
+      GenerateVtableForBase(PrimaryBase, true, Offset, Class,
                             PrimaryBaseWasVirtual, IndirectPrimary);
     }
 
@@ -812,15 +816,13 @@ public:
         cast<CXXRecordDecl>(i->getType()->getAs<RecordType>()->getDecl());
       if (Base != PrimaryBase || PrimaryBaseWasVirtual) {
         uint64_t o = Offset + Layout.getBaseClassOffset(Base);
-        GenerateVtableForBase(Base, true, o, Class, rtti, false,
-                              IndirectPrimary);
+        GenerateVtableForBase(Base, true, o, Class, false, IndirectPrimary);
       }
     }
   }
 
   void GenerateVtableForVBases(const CXXRecordDecl *RD,
                                const CXXRecordDecl *Class,
-                               llvm::Constant *rtti,
                    llvm::SmallSet<const CXXRecordDecl *, 32> &IndirectPrimary) {
     for (CXXRecordDecl::base_class_const_iterator i = RD->bases_begin(),
            e = RD->bases_end(); i != e; ++i) {
@@ -829,10 +831,10 @@ public:
       if (i->isVirtual() && !IndirectPrimary.count(Base)) {
         // Mark it so we don't output it twice.
         IndirectPrimary.insert(Base);
-        GenerateVtableForBase(Base, true, 0, Class, rtti, true, IndirectPrimary);
+        GenerateVtableForBase(Base, true, 0, Class, true, IndirectPrimary);
       }
       if (Base->getNumVBases())
-        GenerateVtableForVBases(Base, Class, rtti, IndirectPrimary);
+        GenerateVtableForVBases(Base, Class, IndirectPrimary);
     }
   }
 
@@ -869,20 +871,19 @@ llvm::Value *CodeGenFunction::GenerateVtable(const CXXRecordDecl *RD) {
   std::vector<llvm::Constant *> methods;
   llvm::Type *Ptr8Ty=llvm::PointerType::get(llvm::Type::getInt8Ty(VMContext),0);
   int64_t Offset = 0;
-  llvm::Constant *rtti = GenerateRtti(RD);
 
   Offset += LLVMPointerWidth;
   Offset += LLVMPointerWidth;
 
   llvm::SmallSet<const CXXRecordDecl *, 32> IndirectPrimary;
 
-  ABIBuilder b(methods, CGM);
+  ABIBuilder b(methods, RD, CGM);
 
   // First comes the vtables for all the non-virtual bases...
-  b.GenerateVtableForBase(RD, true, 0, RD, rtti, false, IndirectPrimary);
+  b.GenerateVtableForBase(RD, true, 0, RD, false, IndirectPrimary);
 
   // then the vtables for all the virtual bases.
-  b.GenerateVtableForVBases(RD, RD, rtti, IndirectPrimary);
+  b.GenerateVtableForVBases(RD, RD, IndirectPrimary);
 
   llvm::Constant *C;
   llvm::ArrayType *type = llvm::ArrayType::get(Ptr8Ty, methods.size());

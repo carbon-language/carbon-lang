@@ -361,7 +361,6 @@ public:
   /// legal to call this function even if there is no current insertion point.
   void FinishFunction(SourceLocation EndLoc=SourceLocation());
 
-  llvm::Constant *GenerateRtti(const CXXRecordDecl *RD);
   llvm::Value *GenerateVtable(const CXXRecordDecl *RD);
 
   void EmitCtorPrologue(const CXXConstructorDecl *CD);

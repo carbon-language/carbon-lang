@@ -232,6 +232,9 @@ public:
   llvm::Constant *GetAddrOfFunction(GlobalDecl GD,
                                     const llvm::Type *Ty = 0);
 
+  /// GenerateRtti - Generate the rtti information for the given type.
+  llvm::Constant *GenerateRtti(const CXXRecordDecl *RD);
+
   /// GetStringForStringLiteral - Return the appropriate bytes for a string
   /// literal, properly padded to match the literal type. If only the address of
   /// a constant is needed consider using GetAddrOfConstantStringLiteral.
