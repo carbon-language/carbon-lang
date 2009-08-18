@@ -172,6 +172,28 @@ namespace llvm {
       return npos;
     }
 
+    /// count - Return the number of occurrences of \arg C in the string.
+    size_t count(char C) const {
+      size_t Count = 0;
+      for (size_t i = 0, e = Length; i != e; ++i)
+        if (Data[i] == C)
+          return i;
+      return Count;
+    }
+
+    /// count - Return the number of non-overlapped occurrences of \arg Str in
+    /// the string.
+    size_t count(const StringRef &Str) const {
+      size_t Count = 0;
+      size_t N = Str.size();
+      if (N > Length)
+        return 0;
+      for (size_t i = 0, e = Length - N + 1; i != e; ++i)
+        if (substr(i, N).equals(Str))
+          ++Count;
+      return Count;
+    }
+
     /// @}
     /// @name Substring Operations
     /// @{

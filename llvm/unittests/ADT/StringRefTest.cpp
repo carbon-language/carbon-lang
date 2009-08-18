@@ -94,6 +94,13 @@ TEST(StringRefTest, Utilities) {
   EXPECT_TRUE(Str.find("hello") == 0);
   EXPECT_TRUE(Str.find("ello") == 1);
   EXPECT_TRUE(Str.find("zz") == StringRef::npos);
+
+  EXPECT_TRUE(Str.count('l') == 2);
+  EXPECT_TRUE(Str.count('z') == 0);
+  EXPECT_TRUE(Str.count("helloworld") == 0);
+  EXPECT_TRUE(Str.count("hello") == 1);
+  EXPECT_TRUE(Str.count("ello") == 1);
+  EXPECT_TRUE(Str.count("zz") == 0);
 }
 
 } // end anonymous namespace
