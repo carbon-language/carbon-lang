@@ -507,15 +507,17 @@ bool PPCAsmPrinter::PrintAsmOperand(const MachineInstr *MI, unsigned OpNo,
   return false;
 }
 
+// At the moment, all inline asm memory operands are a single register.
+// In any case, the output of this routine should always be just one
+// assembler operand.
+
 bool PPCAsmPrinter::PrintAsmMemoryOperand(const MachineInstr *MI, unsigned OpNo,
                                           unsigned AsmVariant,
                                           const char *ExtraCode) {
   if (ExtraCode && ExtraCode[0])
     return true; // Unknown modifier.
-  if (MI->getOperand(OpNo).isReg())
-    printMemRegReg(MI, OpNo);
-  else
-    printMemRegImm(MI, OpNo);
+  assert (MI->getOperand(OpNo).isReg());
+  printOperand(MI, OpNo);
   return false;
 }
 

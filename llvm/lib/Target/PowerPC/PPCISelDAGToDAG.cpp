@@ -143,30 +143,14 @@ namespace {
     }
       
     /// SelectInlineAsmMemoryOperand - Implement addressing mode selection for
-    /// inline asm expressions.
-    virtual bool SelectInlineAsmMemoryOperand(const SDValue &Op,
+    /// inline asm expressions.  It is always correct to compute the value into
+    /// a register.  The case of adding a (possibly relocatable) constant to a
+    /// register can be improved, but it is wrong to substitute Reg+Reg for
+    /// Reg in an asm, because the load or store opcode would have to change.
+   virtual bool SelectInlineAsmMemoryOperand(const SDValue &Op,
                                               char ConstraintCode,
                                               std::vector<SDValue> &OutOps) {
-      SDValue Op0, Op1;
-      switch (ConstraintCode) {
-      default: return true;
-      case 'm':   // memory
-        if (!SelectAddrIdx(Op, Op, Op0, Op1))
-          SelectAddrImm(Op, Op, Op0, Op1);
-        break;
-      case 'o':   // offsetable
-        if (!SelectAddrImm(Op, Op, Op0, Op1)) {
-          Op0 = Op;
-          Op1 = getSmallIPtrImm(0);
-        }
-        break;
-      case 'v':   // not offsetable
-        SelectAddrIdxOnly(Op, Op, Op0, Op1);
-        break;
-      }
-      
-      OutOps.push_back(Op0);
-      OutOps.push_back(Op1);
+      OutOps.push_back(Op);
       return false;
     }
     
