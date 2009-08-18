@@ -235,6 +235,11 @@ class SS42FI<bits<8> o, Format F, dag outs, dag ins, string asm,
               list<dag> pattern>
       : I<o, F, outs, ins, asm, pattern>, TF, Requires<[HasSSE42]>;
       
+//   SS42AI = SSE 4.2 instructions with TA prefix
+class SS42AI<bits<8> o, Format F, dag outs, dag ins, string asm,
+	     list<dag> pattern>
+      : I<o, F, outs, ins, asm, pattern>, TA, Requires<[HasSSE42]>;
+
 // X86-64 Instruction templates...
 //
 
@@ -288,4 +293,3 @@ class MMXID<bits<8> o, Format F, dag outs, dag ins, string asm, list<dag> patter
       : Ii8<o, F, outs, ins, asm, pattern>, XD, Requires<[HasMMX]>;
 class MMXIS<bits<8> o, Format F, dag outs, dag ins, string asm, list<dag> pattern>
       : Ii8<o, F, outs, ins, asm, pattern>, XS, Requires<[HasMMX]>;
-

@@ -3657,6 +3657,11 @@ def MOVNTDQArm : SS48I<0x2A, MRMSrcMem, (outs VR128:$dst), (ins i128mem:$src),
                        "movntdqa\t{$src, $dst|$dst, $src}",
                        [(set VR128:$dst, (int_x86_sse41_movntdqa addr:$src))]>;
 
+
+//===----------------------------------------------------------------------===//
+// SSE4.2 Instructions
+//===----------------------------------------------------------------------===//
+
 /// SS42I_binop_rm_int - Simple SSE 4.2 binary operator
 let Constraints = "$src1 = $dst" in {
   multiclass SS42I_binop_rm_int<bits<8> opc, string OpcodeStr,
@@ -3739,3 +3744,115 @@ let Constraints = "$src1 = $dst" in {
                          (int_x86_sse42_crc32_64 GR64:$src1, GR64:$src2))]>,
                          OpSize, REX_W;
 }
+
+// String/text processing instructions.
+let Defs = [EFLAGS], usesCustomDAGSchedInserter = 1 in {
+def PCMPISTRM128REG : SS42AI<0, Pseudo, (outs VR128:$dst),
+			(ins VR128:$src1, VR128:$src2, i8imm:$src3),
+		    "#PCMPISTRM128rr PSEUDO!",
+		    [(set VR128:$dst,
+			(int_x86_sse42_pcmpistrm128 VR128:$src1, VR128:$src2,
+						    imm:$src3))]>, OpSize;
+def PCMPISTRM128MEM : SS42AI<0, Pseudo, (outs VR128:$dst),
+			(ins VR128:$src1, i128mem:$src2, i8imm:$src3),
+		    "#PCMPISTRM128rm PSEUDO!",
+		    [(set VR128:$dst,
+			(int_x86_sse42_pcmpistrm128 VR128:$src1,
+						    (load addr:$src2),
+						    imm:$src3))]>, OpSize;
+}
+
+let Defs = [XMM0, EFLAGS] in {
+def PCMPISTRM128rr : SS42AI<0x62, MRMSrcReg, (outs),
+			    (ins VR128:$src1, VR128:$src2, i8imm:$src3),
+		     "pcmpistrm\t{$src3, $src2, $src1|$src1, $src2, $src3}",
+		     []>, OpSize;
+def PCMPISTRM128rm : SS42AI<0x62, MRMSrcMem, (outs),
+			    (ins VR128:$src1, i128mem:$src2, i8imm:$src3),
+		     "pcmpistrm\t{$src3, $src2, $src1|$src1, $src2, $src3}",
+		     []>, OpSize;
+}
+
+let Defs = [EFLAGS], Uses = [EAX, EDX],
+	usesCustomDAGSchedInserter = 1 in {
+def PCMPESTRM128REG : SS42AI<0, Pseudo, (outs VR128:$dst),
+			(ins VR128:$src1, VR128:$src3, i8imm:$src5),
+		    "#PCMPESTRM128rr PSEUDO!",
+		    [(set VR128:$dst,
+			(int_x86_sse42_pcmpestrm128 VR128:$src1, EAX,
+						    VR128:$src3,
+						    EDX, imm:$src5))]>, OpSize;
+def PCMPESTRM128MEM : SS42AI<0, Pseudo, (outs VR128:$dst),
+			(ins VR128:$src1, i128mem:$src3, i8imm:$src5),
+		    "#PCMPESTRM128rm PSEUDO!",
+		    [(set VR128:$dst,
+			(int_x86_sse42_pcmpestrm128 VR128:$src1, EAX,
+						    (load addr:$src3),
+						    EDX, imm:$src5))]>, OpSize;
+}
+
+let Defs = [XMM0, EFLAGS], Uses = [EAX, EDX] in {
+def PCMPESTRM128rr : SS42AI<0x62, MRMSrcReg, (outs),
+			    (ins VR128:$src1, VR128:$src3, i8imm:$src5),
+		     "pcmpestrm\t{$src5, $src3, $src1|$src1, $src3, $src5}",
+		     []>, OpSize;
+def PCMPESTRM128rm : SS42AI<0x62, MRMSrcMem, (outs),
+			    (ins VR128:$src1, i128mem:$src3, i8imm:$src5),
+		     "pcmpestrm\t{$src5, $src3, $src1|$src1, $src3, $src5}",
+		     []>, OpSize;
+}
+
+let Defs = [ECX, EFLAGS] in {
+  multiclass SS42AI_pcmpistri<Intrinsic IntId128> {
+    def rr : SS42AI<0x63, MRMSrcReg, (outs),
+		(ins VR128:$src1, VR128:$src2, i8imm:$src3),
+		"pcmpistri\t{$src3, $src2, $src1|$src1, $src2, $src3}",
+		[(set ECX,
+		   (IntId128 VR128:$src1, VR128:$src2, imm:$src3)),
+	         (implicit EFLAGS)]>,
+		OpSize;
+    def rm : SS42AI<0x63, MRMSrcMem, (outs),
+		(ins VR128:$src1, i128mem:$src2, i8imm:$src3),
+		"pcmpistri\t{$src3, $src2, $src1|$src1, $src2, $src3}",
+		[(set ECX,
+		  (IntId128 VR128:$src1, (load addr:$src2), imm:$src3)),
+		 (implicit EFLAGS)]>,
+		OpSize;
+  }
+}
+
+defm PCMPISTRI  : SS42AI_pcmpistri<int_x86_sse42_pcmpistri128>;
+defm PCMPISTRIA : SS42AI_pcmpistri<int_x86_sse42_pcmpistria128>;
+defm PCMPISTRIC : SS42AI_pcmpistri<int_x86_sse42_pcmpistric128>;
+defm PCMPISTRIO : SS42AI_pcmpistri<int_x86_sse42_pcmpistrio128>;
+defm PCMPISTRIS : SS42AI_pcmpistri<int_x86_sse42_pcmpistris128>;
+defm PCMPISTRIZ : SS42AI_pcmpistri<int_x86_sse42_pcmpistriz128>;
+
+let Defs = [ECX, EFLAGS] in {
+let Uses = [EAX, EDX] in {
+  multiclass SS42AI_pcmpestri<Intrinsic IntId128> {
+    def rr : SS42AI<0x61, MRMSrcReg, (outs),
+		(ins VR128:$src1, VR128:$src3, i8imm:$src5),
+		"pcmpestri\t{$src5, $src3, $src1|$src1, $src3, $src5}",
+		[(set ECX,
+		   (IntId128 VR128:$src1, EAX, VR128:$src3, EDX, imm:$src5)),
+	         (implicit EFLAGS)]>,
+		OpSize;
+    def rm : SS42AI<0x61, MRMSrcMem, (outs),
+		(ins VR128:$src1, i128mem:$src3, i8imm:$src5),
+		"pcmpestri\t{$src5, $src3, $src1|$src1, $src3, $src5}",
+		[(set ECX,
+		  (IntId128 VR128:$src1, EAX, (load addr:$src3),
+		    EDX, imm:$src5)),
+		 (implicit EFLAGS)]>,
+		OpSize;
+  }
+}
+}
+
+defm PCMPESTRI  : SS42AI_pcmpestri<int_x86_sse42_pcmpestri128>;
+defm PCMPESTRIA : SS42AI_pcmpestri<int_x86_sse42_pcmpestria128>;
+defm PCMPESTRIC : SS42AI_pcmpestri<int_x86_sse42_pcmpestric128>;
+defm PCMPESTRIO : SS42AI_pcmpestri<int_x86_sse42_pcmpestrio128>;
+defm PCMPESTRIS : SS42AI_pcmpestri<int_x86_sse42_pcmpestris128>;
+defm PCMPESTRIZ : SS42AI_pcmpestri<int_x86_sse42_pcmpestriz128>;

@@ -7596,6 +7596,43 @@ X86TargetLowering::EmitAtomicMinMaxWithCustomInserter(MachineInstr *mInstr,
 }
 
 MachineBasicBlock *
+X86TargetLowering::EmitPCMP(MachineInstr *MI, MachineBasicBlock *BB,
+			    unsigned numArgs, bool memArg) const {
+
+  MachineFunction *F = BB->getParent();
+  DebugLoc dl = MI->getDebugLoc();
+  const TargetInstrInfo *TII = getTargetMachine().getInstrInfo();
+
+  unsigned Opc;
+
+  if (memArg) {
+    Opc = numArgs == 3 ?
+      X86::PCMPISTRM128rm :
+      X86::PCMPESTRM128rm;
+  } else {
+    Opc = numArgs == 3 ?
+      X86::PCMPISTRM128rr :
+      X86::PCMPESTRM128rr;
+  }
+
+  MachineInstrBuilder MIB = BuildMI(BB, dl, TII->get(Opc));
+
+  for (unsigned i = 0; i < numArgs; ++i) {
+    MachineOperand &Op = MI->getOperand(i+1);
+
+    if (!(Op.isReg() && Op.isImplicit()))
+      MIB.addOperand(Op);
+  }
+
+  BuildMI(BB, dl, TII->get(X86::MOVAPSrr), MI->getOperand(0).getReg())
+    .addReg(X86::XMM0);
+
+  F->DeleteMachineInstr(MI);
+
+  return BB;
+}
+
+MachineBasicBlock *
 X86TargetLowering::EmitVAStartSaveXMMRegsWithCustomInserter(
                                                  MachineInstr *MI,
                                                  MachineBasicBlock *MBB) const {
@@ -7804,6 +7841,17 @@ X86TargetLowering::EmitInstrWithCustomInserter(MachineInstr *MI,
     F->DeleteMachineInstr(MI);   // The pseudo instruction is gone now.
     return BB;
   }
+    // String/text processing lowering.
+  case X86::PCMPISTRM128REG:
+    return EmitPCMP(MI, BB, 3, false /* in-mem */);
+  case X86::PCMPISTRM128MEM:
+    return EmitPCMP(MI, BB, 3, true /* in-mem */);
+  case X86::PCMPESTRM128REG:
+    return EmitPCMP(MI, BB, 5, false /* in mem */);
+  case X86::PCMPESTRM128MEM:
+    return EmitPCMP(MI, BB, 5, true /* in mem */);
+
+    // Atomic Lowering.
   case X86::ATOMAND32:
     return EmitAtomicBitwiseWithCustomInserter(MI, BB, X86::AND32rr,
                                                X86::AND32ri, X86::MOV32rm,
