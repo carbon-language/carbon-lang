@@ -1,4 +1,4 @@
-// RUN: clang-cc -triple x86_64-darwin-10 -fobjc-gc -emit-llvm -o %t %s &&
+// RUN: clang-cc -triple x86_64-apple-darwin10 -fobjc-gc -emit-llvm -o %t %s &&
 // RUN: grep objc_assign_strongCast %t | count 4 &&
 // RUN: true
 

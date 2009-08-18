@@ -11,7 +11,7 @@
 // RUN: clang-cc %s -triple x86_64-unknown-unknown -O3 -emit-llvm -o %t &&
 // RUN: not grep '@g0' %t &&
 
-// RUN: clang-cc %s -triple ppc-unknown-unknown -O3 -emit-llvm -o %t &&
+// RUN: clang-cc %s -triple powerpc-unknown-unknown -O3 -emit-llvm -o %t &&
 // RUN: not grep '@g0' %t &&
 // RUN: true
 
