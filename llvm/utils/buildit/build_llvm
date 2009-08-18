@@ -62,10 +62,19 @@ if [ ! -x $CC ] ; then unset CC ; fi
 export CXX=/Developer/usr/bin/llvm-g++
 if [ ! -x $CXX ] ; then unset CXX ; fi
 
-DT_HOME=$DEST_DIR/Developer/usr
-DEST_ROOT="/Developer$DEST_ROOT"
+if [ "x$RC_ProjectName" = "xllvmCore_Embedded" ]; then
+    DT_HOME=$DEST_DIR/Developer/Platforms/iPhoneOS.platform/Developer/usr
+    DEST_ROOT="/Developer/Platforms/iPhoneOS.platform/Developer$DEST_ROOT"
+else
+    DT_HOME=$DEST_DIR/Developer/usr
+    DEST_ROOT="/Developer$DEST_ROOT"
+fi
 if [ "x$DEVELOPER_BIN" != "x" ]; then
-    DT_HOME=$DEST_DIR/$DEVELOPER_DIR/usr
+    if [ "x$RC_ProjectName" = "xllvmCore_Embedded" ]; then
+        DT_HOME=$DEST_DIR/Developer/Platforms/iPhoneOS.platform/$DEVELOPER_DIR/usr
+    else
+        DT_HOME=$DEST_DIR/$DEVELOPER_DIR/usr
+    fi
     DEST_ROOT="/$DEVELOPER_DIR$DEST_ROOT"
 fi
 
