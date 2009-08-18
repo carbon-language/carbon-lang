@@ -10,14 +10,15 @@
 <div class="doc_title">How To Release LLVM To The Public</div>
 <ol>
   <li><a href="#introduction">Introduction</a></li>
+  <li><a href="#criteria">Qualification Criteria</a></li>
   <li><a href="#introduction">Release Timeline</a></li>
   <li><a href="#process">Release Process</a></li>
-  <li><a href="#dist_targets">Distribution Targets</a></li>
 </ol>
 <div class="doc_author">
-  <p>Written by <a href="mailto:rspencer@x10sys.com">Reid Spencer</a>,
-  <a href="mailto:criswell@cs.uiuc.edu">John Criswell</a>,
-  <a href="mailto:tonic@nondot.org">Tanya Lattner</a></p>
+  <p>Written by <a href="mailto:tonic@nondot.org">Tanya Lattner</a>,
+  <a href="mailto:rspencer@x10sys.com">Reid Spencer</a>,
+  <a href="mailto:criswell@cs.uiuc.edu">John Criswell</a>
+  </p>
 </div>
 
 <!-- *********************************************************************** -->
@@ -26,32 +27,23 @@
 
 <div class="doc_text">
   <p>
-  This document collects information about successfully releasing LLVM to the
-  public. It is the release manager's guide to ensuring that a high quality
+  This document collects information about successfully releasing LLVM 
+  (including subprojects llvm-gcc and Clang) to the public. 
+  It is the release manager's responsibility to ensure that a high quality 
   build of LLVM is released. 
   </p>
-
-  <p>
-  The following is the basic criteria for releasing LLVM:
-  </p>
-
-  <ol>
-    <li>Successful configure and build.</li>
-    <li>Clean 'make check'.</li>
-    <li>No regressions in the testsuite from the previous release. This may 
-    include performance regressions for major benchmarks.</li>
-  </ol>
 </div>
 
 <!-- *********************************************************************** -->
 <div class="doc_section"><a name="process">Release Timeline</a></div>
 <!-- *********************************************************************** -->
 <div class="doc_text">
-The release manager should attempt to have a release every 3-4 months because LLVM 
-does time based releases (instead of feature based). The release schedule should
-be roughly as follows:
+  <p>LLVM is released on a time based schedule (currently every 6 months). We
+  do not have dot releases because of the nature of LLVM incremental 
+  developement philosophy. The release schedule is roughly as follows:
+  </p>
 <ol>
-<li>Set code freeze and branch creation date for 3 months after last release 
+<li>Set code freeze and branch creation date for 6 months after last code freeze 
 date. Announce release schedule to the LLVM community and update the website.</li>
 <li>Create release branch and begin release process. </li>
 <li>Send out pre-release for first round of testing. Testing will last 7-10 days.
@@ -71,44 +63,76 @@ pre-release testing.</li>
 <div class="doc_section"><a name="process">Release Process</a></div>
 <!-- *********************************************************************** -->
 
-<!-- ======================================================================= -->
-<div class="doc_subsection"><a name="overview">Process Overview</a></div>
 <div class="doc_text">
   <ol>
+    <li><a href="#release-admin">Release Administrative Tasks</a></li>
+    <ol>
     <li><a href="#branch">Create Release Branch</a></li>
-    <li><a href="#verchanges">Update LLVM Version </a></li>
+    <li><a href="#verchanges">Update Version Numbers</a></li>
+    </ol>
+    <li><a href="#release-build">Building the Release</a></li>
+    <ol>
     <li><a href="#dist">Build the LLVM Source Distributions</a></li>
     <li><a href="#build">Build LLVM</a></li>
-    <li><a href="#llvmgccbin">Build the LLVM GCC Binary Distribution</a></li>
-     <li><a href="#rpm">Build RPM Packages (optional)</a></li>
-    <li><a href="#check">Run 'make check'</a></li>
-    <li><a href="#test">Run LLVM Test Suite</a></li>
-    <li><a href="#prerelease">Pre-Release Testing</a></li>
+    <li><a href="#llvmgccbin">Build the LLVM-GCC Binary Distribution</a></li>
+    <li><a href="#clangbin">Build the Clang Binary Distribution</a></li>
+    <li><a href="#target-build">Target Specific Build Details</a></li>
+    </ol>
+    
+    <li><a href="#release-qualify">Release Qualification Criteria</a></li>
+    <ol>
+    <li><a href="#llvm-qualify">Qualify LLVM</a></li>
+    <li><a href="#llvmgcc-qualify">Qualify LLVM-GCC</a></li>
+    <li><a href="#clang-qualify">Qualify Clang</a></li>
+    <li><a href="#targets">Specific Target Qualification Details</a></li>
+    </ol>
+    
+    <li><a href="#commTest">Community Testing</a></li>    
+    <li><a href="#release-patch">Release Patch Rules</a></li>
+
+    
+    <li><a href="#release-final">Release final tasks</a></li>
+    <ol>
     <li><a href="#tag">Tag the LLVM Release Branch</a></li>
     <li><a href="#updocs">Update Documentation</a></li>
     <li><a href="#updemo">Update the LLVM Demo Page</a></li>
     <li><a href="#webupdates">Update the LLVM Website</a></li>
     <li><a href="#announce">Announce the Release</a></li>
+    </ol>
     
   </ol>
 </div>
 
 <!-- ======================================================================= -->
-<div class="doc_subsection"><a name="branch">Create Release Branch</a></div>
+<div class="doc_subsection"><a name="release-admin">
+Release Administrative Tasks</a></div>
+
+<div class="doc_text">
+This section describes a few administrative tasks that need to be done for the
+release process to begin. Specifically, it involves creating the release branch,
+ resetting version numbers, and creating the release tarballs for the release 
+ team to begin testing.
+</div>
+
+<!-- ======================================================================= -->
+<div class="doc_subsubsection"><a name="branch">Create Release Branch</a></div>
 <div class="doc_text">
 <p>Branch the Subversion HEAD using the following procedure:</p>
   <ol>
     <li>
-    <p>Verify that the current Subversion HEAD is in decent shape by examining nightly
-  tester results.</p></li>
+    <p>Verify that the current Subversion HEAD is in decent shape by examining 
+    nightly tester or buildbot results.</p></li>
     <li>
     <p>Request all developers to refrain from committing. Offenders get commit
     rights taken away (temporarily).</p></li>
   <li>
-  <p> Create the release branch for <tt>llvm</tt>, <tt>llvm-gcc4.2</tt>, and
-  the <tt>test-suite</tt>. The branch name will be <tt>release_XX</tt>,
-  where <tt>XX</tt> is the major and minor release numbers. These branches can
-  be created without checking out anything from subversion.
+  <p> Create the release branch for <tt>llvm</tt>, <tt>llvm-gcc4.2</tt>, 
+  <tt>clang</tt>, and the <tt>test-suite</tt>. The branch name will be 
+  <tt>release_XX</tt>,where <tt>XX</tt> is the major and minor release numbers.
+  Clang will have a different release number than <tt>llvm</tt>/
+  <tt>llvm-gcc4</tt> since its first release was years later 
+  (still deciding if this will be true or not). These branches 
+  can be created without checking out anything from subversion.
   </p>
   
   <div class="doc_code">
@@ -119,6 +143,8 @@ svn copy https://llvm.org/svn/llvm-project/llvm-gcc-4.2/trunk \
          https://llvm.org/svn/llvm-project/llvm-gcc-4.2/branches/release_<i>XX</i>
 svn copy https://llvm.org/svn/llvm-project/test-suite/trunk \
          https://llvm.org/svn/llvm-project/test-suite/branches/release_<i>XX</i>
+svn copy https://llvm.org/svn/llvm-project/cfe/trunk \
+         https://llvm.org/svn/llvm-project/cfe/branches/release_<i>XX</i>
 </pre>
   </div>
 
@@ -135,6 +161,7 @@ svn copy https://llvm.org/svn/llvm-project/test-suite/trunk \
 svn co https://llvm.org/svn/llvm-project/llvm/branches/release_<i>XX</i>
 svn co https://llvm.org/svn/llvm-project/llvm-gcc-4.2/branches/release_<i>XX</i>
 svn co https://llvm.org/svn/llvm-project/test-suite/branches/release_<i>XX</i>
+svn co https://llvm.org/svn/llvm-project/cfe/branches/release_<i>XX</i>
 </pre>
 </div></li>
 
@@ -142,7 +169,7 @@ svn co https://llvm.org/svn/llvm-project/test-suite/branches/release_<i>XX</i>
 </div>
 
 <!-- ======================================================================= -->
-<div class="doc_subsection"><a name="verchanges">Update LLVM Version</a></div>
+<div class="doc_subsubsection"><a name="verchanges">Update LLVM Version</a></div>
 <div class="doc_text">
   <p>
   After creating the LLVM release branch, update the release branches'
@@ -150,18 +177,19 @@ svn co https://llvm.org/svn/llvm-project/test-suite/branches/release_<i>XX</i>
   as well to be the next version (X.X+1svn). Regenerated the configure script
   for both. This must be done for both llvm and the test-suite.
   </p>
+  <p>FIXME: Add a note about clang.</p>
   <p>In addition, the version number of all the Bugzilla components must be
   updated for the next release.
   </p>
 </div>
 
 <!-- ======================================================================= -->
-<div class="doc_subsection"><a name="dist">Build the LLVM Source Distributions</a></div>
+<div class="doc_subsubsection"><a name="dist">Build the LLVM Source Distributions</a></div>
 <div class="doc_text">
   <p>
-  Create source distributions for LLVM, LLVM GCC, and the LLVM Test Suite by
-  exporting the source from Subversion and archiving it.  This can be done with
-  the following commands:
+  Create source distributions for LLVM, LLVM GCC, Clang, and the LLVM Test 
+  Suite by exporting the source from Subversion and archiving it.  This can be 
+  done with the following commands:
   </p>
 
 <div class="doc_code">
@@ -169,15 +197,25 @@ svn co https://llvm.org/svn/llvm-project/test-suite/branches/release_<i>XX</i>
 svn export https://llvm.org/svn/llvm-project/llvm/branches/release_<i>XX</i> llvm-X.X
 svn export https://llvm.org/svn/llvm-project/llvm-gcc-4.2/branches/release_<i>XX</i> llvm-gcc4.2-X.X.source
 svn export https://llvm.org/svn/llvm-project/test-suite/branches/release_<i>XX</i> llvm-test-X.X
-tar -cvf - llvm-X.X          | gzip &gt; llvm-X.X.tar.gz
-tar -cvf - llvm-test-X.X     | gzip &gt; llvm-test-X.X.tar.gz
-tar -cvf - llvm-gcc4.2-X.X.source | gzip &gt; llvm-gcc-4.2-X.X.source.tar.gz
+svn export https://llvm.org/svn/llvm-project/cfe/branches/release_<i>XX</i> clang-X.X
+tar -czvf - llvm-X.X          | gzip &gt; llvm-X.X.tar.gz
+tar -czvf - llvm-test-X.X     | gzip &gt; llvm-test-X.X.tar.gz
+tar -czvf - llvm-gcc4.2-X.X.source | gzip &gt; llvm-gcc-4.2-X.X.source.tar.gz
+tar -czvf - clang-X.X.source | gzip &gt; clang-X.X.source.tar.gz
 </pre>
 </div>
 </div>
 
 <!-- ======================================================================= -->
-<div class="doc_subsection"><a name="build">Build LLVM</a></div>
+<div class="doc_subsection"><a name="release-build">
+Building the Release</a></div>
+
+<div class="doc_text">
+Info about this. Criteria for a successful build.
+</div>
+
+<!-- ======================================================================= -->
+<div class="doc_subsubsection"><a name="build">Build LLVM</a></div>
 <div class="doc_text">
   <p>
   Build both debug and release (optimized) versions of LLVM on all
@@ -187,7 +225,7 @@ tar -cvf - llvm-gcc4.2-X.X.source | gzip &gt; llvm-gcc-4.2-X.X.source.tar.gz
 </div>
 
 <!-- ======================================================================= -->
-<div class="doc_subsection"><a name="llvmgccbin">Build the LLVM GCC Binary Distribution</a></div>
+<div class="doc_subsubsection"><a name="llvmgccbin">Build the LLVM GCC Binary Distribution</a></div>
 <div class="doc_text">
   <p>
   Creating the LLVM GCC binary distribution (release/optimized) requires 
@@ -204,76 +242,81 @@ tar -cvf - llvm-gcc4.2-X.X.source | gzip &gt; llvm-gcc-4.2-X.X.source.tar.gz
     <li>
     Copy the installation directory to a directory named for the specific target.
     For example on Red Hat Enterprise Linux, the directory would be named
-    <tt>llvm-gcc4.0-2.1-x86-linux-RHEL4</tt>. Archive and compress the new directory.  
+    <tt>llvm-gcc4.2-2.6-x86-linux-RHEL4</tt>. Archive and compress the new directory.  
     </li>
   </ol>
 </div>
 
 <!-- ======================================================================= -->
-<div class="doc_subsection"><a name="check">Run 'make check'</a></div>
+<div class="doc_subsubsection"><a name="clangbin">Build Clang Binary Distribution</a></div>
 <div class="doc_text">
   <p>
-  Using the newly built llvm-gcc and llvm, reconfigure llvm to locate llvm-gcc.
-  Run <tt>make check</tt> and ensure there are no unexpected failures. If there
-  are, resolve the failures or file a bug. If there is a fix commited to mainline,
-  merge back into the release branch, and restart testing by 
-  <a href="#build">re-building LLVM</a> and <a href="#build">llvm-gcc</a>. If no
-  fix will be made, XFAIL the test and commit back to the release branch.
+  Creating the Clang binary distribution (release/optimized) requires 
+  performing the following steps for each supported platform:
   </p>
 
+  <ol>
+    <li>
+    Instructions how to build it.
+    </li>
+
+    <li>
+    Instructions on how to package 
+    </li>
+  </ol>
+</div>
+
+
+<!-- ======================================================================= -->
+<div class="doc_subsubsection"><a name="target-build">Target Specific Build 
+Details</a></div>
+<div class="doc_text">
   <p>
-  Ensure that '<tt>make check</tt>' passes on all platforms for all targets. The 
-  test suite must complete with "0 unexpected failures" before sending out the
-  pre-releases for testing.
+  Specify what is used to build llvm, llvm-gcc, clang on each target.
   </p>
+</div>
+
+
+<!-- ======================================================================= -->
+<div class="doc_subsection"><a name="release-qualify">
+Building the Release</a></div>
+
+<div class="doc_text">
+How to qualify the release.
+</div>
+
+
+<!-- ======================================================================= -->
+<div class="doc_subsubsection"><a name="llvm-qualify">Qualify LLVM</a></div>
+<div class="doc_text">
+  <p>
+ Details</p>
 </div>
 
 <!-- ======================================================================= -->
-<div class="doc_subsection"><a name="test">LLVM Test Suite</a></div>
+<div class="doc_subsubsection"><a name="llvmgcc-qualify">Qualify LLVM-GCC</a></div>
 <div class="doc_text">
   <p>
-  Run the <tt>llvm-test</tt> suite and ensure there are no unacceptable
-  failures. Unacceptable failures are regression from the previous release
-  and (optionally) major performance regressions from the previous release. 
-  If a regression is found a bug is filled, but the pre-releases may still go
-  out.</p>
+  Details.</p>
 </div>
 
 <!-- ======================================================================= -->
-<div class="doc_subsection"><a name="rpm">Building RPM packages (optional)</a></div>
+<div class="doc_subsubsection"><a name="clang-qualify">Qualify Clang</a></div>
 <div class="doc_text">
   <p>
-  You can, optionally, create source and binary RPM packages for LLVM. These may
-  make it easier to get LLVM into a distribution. This can be done with the
-  following commands:
-  </p>
-
-<div class="doc_code">
-<pre>
-make dist        # Build the distribution source tarball
-make dist-check  # Check that the source tarball can build itself.
-cp llvm-M.m.tar.gz /usr/src/redhat/SOURCES  # Required by rpmbuild
-make srpm # for source rpm
-make rpm  # for binary rpm
-</pre>
-</div>
-
-  <p>
-  First, use <tt>make dist</tt> to simply build the distribution. Any failures
-  need to be corrected (on the branch). Once <tt>make dist</tt> can be
-  successful, do <tt>make dist-check</tt>. This target will do the same thing as
-  the 'dist' target but also test that distribution to make sure it can build
-  itself and runs <tt>make check</tt> as well. This ensures that needed files
-  are not missing and that the src tarball can be successfully unpacked, built,
-  installed, and cleaned. Once you have a reliable tarball, you need to copy it
-  to the <tt>/usr/src/redhat/SOURCES</tt> directory which is a requirement of
-  the rpmbuild tool. The last two <tt>make</tt> invocations just run rpmbuild to
-  build either a source (<tt>srpm</tt>) or binary (<tt>rpm</tt>) RPM package.
-  </p>
+  Details.</p>
 </div>
 
 <!-- ======================================================================= -->
-<div class="doc_subsection"><a name="prerelease">Pre-Release Testing</a></div>
+<div class="doc_subsubsection"><a name="targets">Specific Target 
+Qualification Details</a></div>
+<div class="doc_text">
+  <p>
+  Details</p>
+</div>
+
+<!-- ======================================================================= -->
+<div class="doc_subsection"><a name="commTest">Community Testing</a></div>
 <div class="doc_text">
   <p>
   Once all testing has been completed and appropriate bugs filed, the pre-release
@@ -300,9 +343,26 @@ make rpm  # for binary rpm
   is determined to be ready and the release manager may move onto the next step.</p>
 </div>
 
+<!-- ======================================================================= -->
+<div class="doc_subsection"><a name="release-patch">Release Patch Rules 
+</a></div>
+<div class="doc_text">
+  <p>
+  Details</p>
+</div>
+
 
 <!-- ======================================================================= -->
-<div class="doc_subsection"><a name="tag">Tag the Release Branch</a></div>
+<div class="doc_subsection"><a name="release-final">Release Final Tasks 
+</a></div>
+<div class="doc_text">
+  <p>
+  Details</p>
+</div>
+
+
+<!-- ======================================================================= -->
+<div class="doc_subsubsection"><a name="tag">Tag the Release Branch</a></div>
 <div class="doc_text">
   <p>Tag the release branch using the following procedure:</p>
 <div class="doc_code">
@@ -318,7 +378,7 @@ svn copy https://llvm.org/svn/llvm-project/test-suite/branches/release_XX \
 </div>
 
 <!-- ======================================================================= -->
-<div class="doc_subsection"><a name="updocs">Update Documentation</a></div>
+<div class="doc_subsubsection"><a name="updocs">Update Documentation</a></div>
 <div class="doc_text">
   <p>
   Review the documentation and ensure that it is up to date.  The Release Notes
@@ -340,7 +400,7 @@ svn copy https://llvm.org/svn/llvm-project/test-suite/branches/release_XX \
 </div>
 
 <!-- ======================================================================= -->
-<div class="doc_subsection"><a name="webupdates">Update the LLVM Website</a></div>
+<div class="doc_subsubsection"><a name="webupdates">Update the LLVM Website</a></div>
 <div class="doc_text">
   <p>
   The website must be updated before the release announcement is sent out. Here is
@@ -364,224 +424,9 @@ svn copy https://llvm.org/svn/llvm-project/test-suite/branches/release_XX \
 </div>
 
 <!-- ======================================================================= -->
-<div class="doc_subsection"><a name="announce">Announce the Release</a></div>
+<div class="doc_subsubsection"><a name="announce">Announce the Release</a></div>
 <div class="doc_text">
   <p>Have Chris send out the release announcement when everything is finished.</p>
-</div>
-
-<!-- *********************************************************************** -->
-<div class="doc_section"><a name="dist_targets">Distribution Targets</a></div>
-<!-- *********************************************************************** -->
-
-<!-- ======================================================================= -->
-<div class="doc_subsection">Overview</div>
-<div class="doc_text">
-  <p>
-  The first thing you need to understand is that there are multiple make targets
-  to support this feature. Here's an overview, we'll delve into the details
-  later.
-  </p>
-
-  <ul>
-    <li><b>distdir</b> - builds the distribution directory from which the 
-        distribution will be packaged</li>
-    <li><b>dist</b> - builds each of the distribution tarballs (tar.gz, 
-        tar.bzip2, .zip). These can be built individually as well, with separate
-        targets.</li>
-    <li><b>dist-check</b> - this is identical to <tt>dist</tt> but includes a
-        check on the distribution that ensures the tarball can: unpack
-         successfully, compile correctly, pass '<tt>make check</tt>', and pass
-         '<tt>make clean</tt>'.</li>
-    <li><b>dist-clean</b>- this just does a normal clean but also cleans up the
-        stuff generated by the other three <tt>dist</tt> targets (above).</li>
-  </ul>
-
-  <p>
-  Okay, that's the basic functionality. When making a release, we want to ensure
-  that the tree you build the distribution from passes
-  <tt>dist-check</tt>. Beyond fixing the usual bugs, there is generally one
-  impediment to making the release in this fashion: missing files. The
-  <tt>dist-check</tt> process guards against that possibility. It will either
-  fail and that failure will indicate what's missing, or it will succeed meaning
-  that it has proved that the tarballs can actually succeed in building LLVM
-  correctly and that it passes <tt>make check</tt>.
-  </p>
-</div>
-
-<!-- ======================================================================= -->
-
-<div class="doc_subsection">distdir</div>
-<div class="doc_text">
-  <p>
-  This target builds the distribution directory which is the directory from 
-  which the tarballs are generated. The distribution directory has the same 
-  name as the release, e.g. LLVM-1.7). This target goes through the following 
-  process:
-  </p>
-
-  <ol>
-    <li>First, if there was an old distribution directory (for the current 
-        release), it is removed in its entirety and you see <tt>Removing old 
-        LLVM-1.7</tt></li>
-    <li>Second, it issues a <tt>make all ENABLE_OPTIMIZED=3D1</tt> to ensure 
-        that the everything in your tree can be built in release mode. Often
-        times there are discrepancies in building between debug and release
-        modes so it enforces release mode first. If that fails, the
-        <tt>distdir</tt> target fails too. This is preceded by the message
-        <tt>Making 'all' to verify build</tt>.</li>
-    <li>Next, it traverses your source tree and copies it to a new directory 
-        that has the name of the release (<tt>LLVM-M.m</tt> in our current
-        case). This is the directory that will get tar'd. It contains all the
-        software that needs to be in the distribution. During the copying
-        process, it omits generated files, SVN directories, and any other
-        "cruft" that's in your build tree. This is done to eliminate the
-        possibility of huge distribution tarballs that include useless or
-        irrelevant stuff in them. This is the trickiest part of making the
-        distribution. Done manually you will either include stuff that
-        shouldn't be in the distribution or exclude stuff that should. This
-        step is preceded by the message <tt>Building Distribution Directory
-        LLVM-1.7</tt></li>
-    <li>The distribution directory is then traversed and all <tt>CVS</tt> or 
-        <tt>.svn</tt> directories are removed. You see: <tt>Eliminating CVS/.svn
-        directories from distribution</tt></li>
-    <li>The recursive <tt>dist-hook</tt> target is executed. This gives each 
-        directory a chance to modify the distribution in some way (more on this 
-        below).</li>
-    <li>The distribution directory is traversed and the correct file
-        permissions and modes are set based on the type of file.</li>
-  </ol>
-
-  <p>
-  To control the process of making the distribution directory correctly, each
-  Makefile can utilize two features:
-  </p>
-
-  <ol>
-    <li><b><tt>EXTRA_DIST</tt></B> - this make variable specifies which files 
-        it should distribute. By default, all source files are automatically 
-        included for distribution as well as certain <tt>well known</tt> files 
-        (see DistAlways variable in Makefile.rules for details). Each Makefile 
-        specifies, via the <tt>EXTRA_DIST</tt> variable, which additional files 
-        need to be distributed. Only those files that are needed to build LLVM 
-        should be added to <tt>EXTRA_DIST</tt>. <tt>EXTRA_DIST</tt> contains a 
-        list of file or directory names that should be distributed. For example, 
-        the top level Makefile contains <tt>EXTRA_DIST := test llvm.spec
-        include</tt>. This means that in addition to regular things that are
-        distributed at the top level (<tt>CREDITS.txt, LICENSE.txt</tt>, etc.)
-        the distribution should contain the entire <tt>test</tt> and
-        <tt>include</tt> directories as well as the <tt>llvm.spec</tt> file.</li>
-    <li><b><tt>dist-hook</tt></B> - this make target can be used to alter the 
-        content of the distribution directory. For example, in the top level 
-        Makefile there is some logic to eliminate files in the <tt>include</tt> 
-        subtree that are generated by the configure script. These should not be 
-        distributed. Similarly, any <tt>dist-hook</tt> target found in any 
-        directory can add or remove or modify things just before it gets
-        packaged. Any transformation is permitted. Generally, not much is
-        needed.</li>
-  </ol>
-
-  <p>
-  You will see various messages if things go wrong:
-  </p>
-
-  <ol>
-    <li>During the copying process, any files that are missing will be flagged 
-        with: <tt>===== WARNING: Distribution Source 'dir/file' Not Found!</tt>
-        These must be corrected by either adding the file or removing it from 
-        <tt>EXTRA_DIST</tt>.</li>
-    <li>If you build the distribution with <tt>VERBOSE=1</tt>, then you might 
-        also see: <tt>Skipping non-existent 'dir/file'</tt> in certain cases
-        where it's okay to skip the file.</li>
-    <li>The target can fail if any of the things it does fail. Error messages 
-        should indicate what went wrong.</li>
-  </ol>
-</div>
-
-<!-- ======================================================================= -->
-<div class="doc_subsection">dist</div>
-<div class="doc_text">
-  <p>
-  This target does exactly what <tt>distdir</tt> target does, but also includes
-  assembling the tarballs. There are actually four related targets here:
-  </p>
-
-  <ul>
-    <li><b><tt>dist-gzip</tt></b>: package the gzipped distribution tar 
-        file. The distribution directory is packaged into a single file ending
-        in <tt>.tar.gz</tt> which is gzip compressed.</li>
-    <li><b><tt>dist-bzip2</tt></b>: package the bzip2 distribution tar file. 
-        The distribution directory is packaged into a single file ending in 
-        <tt>.tar.bzip2</tt> which is bzip2 compressed.</li>
-    <li><b><tt>dist-zip</tt></b>: package the zip distribution file. The 
-        distribution directory is packaged into a single file ending in 
-        <tt>.zip</tt> which is zip compressed.</li>
-    <li><b><tt>dist</tt></b>: does all three, dist-gzip, dist-bzip2,
-        dist-zip</li>
-  </ul>
-</div>
-
-<!-- ======================================================================= -->
-<div class="doc_subsection">dist-check</div>
-<div class="doc_text">
-  <p>
-  This target checks the distribution. The basic idea is that it unpacks the 
-  distribution tarball and ensures that it can build. It takes the following 
-  actions:
-  </p>
-
-  <ol>
-    <li>It depends on the <tt>dist-gzip</tt> target which, if it hasn't already 
-        been built, builds the gzip tar bundle (see dist and distdir
-        above).</li>
-    <li>removes any pre-existing <tt>_distcheckdir</tt> at the top level.</li>
-    <li>creates a new <tt>_distcheckdir</tt> directory at the top level.</li>
-    <li>creates a <tt>build</tt> subdirectory and an <tt>install</tt> 
-        subdirectory under <tt>_distcheckdir</tt>.</li>
-    <li>unzips and untars the release tarball into <tt>_distcheckdir</tt>, 
-        creating <tt>LLVM-1.7</tt> directory (from the tarball).</li>
-    <li>in the build subdirectory, it configures with appropriate options to
-        build from the unpacked source tarball into the <tt>build</tt> directory
-        with installation in the <tt>install</tt> directory.</li>
-    <li>runs <tt>make all</tt></li>
-    <li>runs <tt>make </tt><tt>check</tt></li>
-    <li>runs <tt>make install</tt></li>
-    <li>runs <tt>make uninstall</tt></li>
-    <li>runs <tt>make dist</tt></li>
-    <li>runs <tt>make clean</tt></li>
-    <li>runs <tt>make dist-clean</tt></li>
-  </ol>
-
-  <p>
-  If it can pass all that, the distribution will be deemed distribution worth y
-  and you will see:
-  </p>
-
-  <pre>===== LLVM-1.7.tar.gz Ready For Distribution =====</pre>
-
-  <p>
-  This means the tarball should then be tested on other platforms and have the
-  nightly test run against it. If those all pass, THEN it is ready for
-  distribution.
-  </p>
- 
-  <p>
-  A note about disk space: using <tt>dist-check</tt> will easily triple the
-  amount of disk space your build tree is using. You might want to check
-  available space before you begin.
-  </p>
-</div>
-
-<!-- ======================================================================= -->
-<div class="doc_subsection">dist-clean</div>
-<div class="doc_text">
-  <p>
-  In addition to doing a normal <tt>clean</tt>, this target will clean up the
-  files and directories created by the distribution targets. In particular the
-  distribution directory (<tt>LLVM-X.X</tt>), check directory
-  (<tt>_distcheckdir</tt>), and the various tarballs will be removed. You do
-  this after the release has shipped and you no longer need this stuff in your
-  build tree.
-  </p>
 </div>
 
 <!-- *********************************************************************** -->
