@@ -805,7 +805,7 @@ public:
   LValue EmitObjCMessageExprLValue(const ObjCMessageExpr *E);
   LValue EmitObjCIvarRefLValue(const ObjCIvarRefExpr *E);
   LValue EmitObjCPropertyRefLValue(const ObjCPropertyRefExpr *E);
-  LValue EmitObjCKVCRefLValue(const ObjCKVCRefExpr *E);
+  LValue EmitObjCKVCRefLValue(const ObjCImplctSetterGetterRefExpr *E);
   LValue EmitObjCSuperExprLValue(const ObjCSuperExpr *E);
   LValue EmitStmtExprLValue(const StmtExpr *E);
 

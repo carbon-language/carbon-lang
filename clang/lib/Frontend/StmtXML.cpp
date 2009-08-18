@@ -163,7 +163,8 @@ namespace  {
     void VisitObjCSelectorExpr(ObjCSelectorExpr *Node);
     void VisitObjCProtocolExpr(ObjCProtocolExpr *Node);
     void VisitObjCPropertyRefExpr(ObjCPropertyRefExpr *Node);
-    void VisitObjCKVCRefExpr(ObjCKVCRefExpr *Node);
+    void VisitObjCImplctSetterGetterRefExpr(
+                        ObjCImplctSetterGetterRefExpr *Node);
     void VisitObjCIvarRefExpr(ObjCIvarRefExpr *Node);
     void VisitObjCSuperExpr(ObjCSuperExpr *Node);
 #endif
@@ -438,7 +439,8 @@ void StmtXML::VisitObjCPropertyRefExpr(ObjCPropertyRefExpr *Node) {
   Doc.addAttribute("property", Node->getProperty()->getNameAsString());
 }
 
-void StmtXML::VisitObjCKVCRefExpr(ObjCKVCRefExpr *Node) {
+void StmtXML::VisitObjCImplctSetterGetterRefExpr(
+                             ObjCImplctSetterGetterRefExpr *Node) {
   DumpExpr(Node);
   ObjCMethodDecl *Getter = Node->getGetterMethod();
   ObjCMethodDecl *Setter = Node->getSetterMethod();

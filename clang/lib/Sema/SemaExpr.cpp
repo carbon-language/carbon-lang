@@ -2342,13 +2342,11 @@ Sema::ActOnMemberReferenceExpr(Scope *S, ExprArg Base, SourceLocation OpLoc,
 
         if (Getter)
           PType = Getter->getResultType();
-        else {
-          for (ObjCMethodDecl::param_iterator PI = Setter->param_begin(),
-               E = Setter->param_end(); PI != E; ++PI)
-            PType = (*PI)->getType();
-        }
+        else
+          // Get the expression type from Setter's incoming parameter.
+          PType = (*(Setter->param_end() -1))->getType();
         // FIXME: we must check that the setter has property type.
-        return Owned(new (Context) ObjCKVCRefExpr(Getter, PType,
+        return Owned(new (Context) ObjCImplctSetterGetterRefExpr(Getter, PType,
                                         Setter, MemberLoc, BaseExpr));
       }
       return ExprError(Diag(MemberLoc, diag::err_property_not_found)
@@ -2535,13 +2533,11 @@ Sema::ActOnMemberReferenceExpr(Scope *S, ExprArg Base, SourceLocation OpLoc,
 
       if (Getter)
         PType = Getter->getResultType();
-      else {
-        for (ObjCMethodDecl::param_iterator PI = Setter->param_begin(),
-             E = Setter->param_end(); PI != E; ++PI)
-          PType = (*PI)->getType();
-      }
+      else
+        // Get the expression type from Setter's incoming parameter.
+        PType = (*(Setter->param_end() -1))->getType();
       // FIXME: we must check that the setter has property type.
-      return Owned(new (Context) ObjCKVCRefExpr(Getter, PType,
+      return Owned(new (Context) ObjCImplctSetterGetterRefExpr(Getter, PType,
                                       Setter, MemberLoc, BaseExpr));
     }
     return ExprError(Diag(MemberLoc, diag::err_property_not_found)

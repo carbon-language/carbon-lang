@@ -101,7 +101,8 @@ namespace {
     unsigned VisitObjCProtocolExpr(ObjCProtocolExpr *E);
     unsigned VisitObjCIvarRefExpr(ObjCIvarRefExpr *E);
     unsigned VisitObjCPropertyRefExpr(ObjCPropertyRefExpr *E);
-    unsigned VisitObjCKVCRefExpr(ObjCKVCRefExpr *E);
+    unsigned VisitObjCImplctSetterGetterRefExpr(
+                            ObjCImplctSetterGetterRefExpr *E);
     unsigned VisitObjCMessageExpr(ObjCMessageExpr *E);
     unsigned VisitObjCSuperExpr(ObjCSuperExpr *E);
     unsigned VisitObjCIsaExpr(ObjCIsaExpr *E);
@@ -741,7 +742,8 @@ unsigned PCHStmtReader::VisitObjCPropertyRefExpr(ObjCPropertyRefExpr *E) {
   return 1;
 }
 
-unsigned PCHStmtReader::VisitObjCKVCRefExpr(ObjCKVCRefExpr *E) {
+unsigned PCHStmtReader::VisitObjCImplctSetterGetterRefExpr(
+                                      ObjCImplctSetterGetterRefExpr *E) {
   VisitExpr(E);
   E->setGetterMethod(
                  cast_or_null<ObjCMethodDecl>(Reader.GetDecl(Record[Idx++])));
@@ -1114,7 +1116,7 @@ Stmt *PCHReader::ReadStmt(llvm::BitstreamCursor &Cursor) {
       S = new (Context) ObjCPropertyRefExpr(Empty);
       break;
     case pch::EXPR_OBJC_KVC_REF_EXPR:
-      S = new (Context) ObjCKVCRefExpr(Empty);
+      S = new (Context) ObjCImplctSetterGetterRefExpr(Empty);
       break;
     case pch::EXPR_OBJC_MESSAGE_EXPR:
       S = new (Context) ObjCMessageExpr(Empty);

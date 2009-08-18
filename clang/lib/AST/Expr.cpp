@@ -542,14 +542,15 @@ bool Expr::isUnusedResultAWarning(SourceLocation &Loc, SourceRange &R1,
   case ObjCMessageExprClass:
     return false;
       
-  case ObjCKVCRefExprClass: {   // Dot syntax for message send.
+  case ObjCImplctSetterGetterRefExprClass: {   // Dot syntax for message send.
 #if 0
-    const ObjCKVCRefExpr *KVCRef = cast<ObjCKVCRefExpr>(this);
+    const ObjCImplctSetterGetterRefExpr *Ref = 
+      cast<ObjCImplctSetterGetterRefExpr>(this);
     // FIXME: We really want the location of the '.' here.
-    Loc = KVCRef->getLocation();
-    R1 = SourceRange(KVCRef->getLocation(), KVCRef->getLocation());
-    if (KVCRef->getBase())
-      R2 = KVCRef->getBase()->getSourceRange();
+    Loc = Ref->getLocation();
+    R1 = SourceRange(Ref->getLocation(), Ref->getLocation());
+    if (Ref->getBase())
+      R2 = Ref->getBase()->getSourceRange();
 #else
     Loc = getExprLoc();
     R1 = getSourceRange();
@@ -793,7 +794,7 @@ Expr::isLvalueResult Expr::isLvalueInternal(ASTContext &Ctx) const {
     return LV_Valid;
   case ObjCPropertyRefExprClass: // FIXME: check if read-only property.
     return LV_Valid;
-  case ObjCKVCRefExprClass: // FIXME: check if read-only property.
+  case ObjCImplctSetterGetterRefExprClass: // FIXME: check if read-only property.
     return LV_Valid;
   case PredefinedExprClass:
     return LV_Valid;
@@ -914,9 +915,10 @@ Expr::isModifiableLvalue(ASTContext &Ctx, SourceLocation *Loc) const {
   }
   
   // Assigning to an 'implicit' property?
-  else if (isa<ObjCKVCRefExpr>(this)) {
-    const ObjCKVCRefExpr* KVCExpr = cast<ObjCKVCRefExpr>(this);
-    if (KVCExpr->getSetterMethod() == 0)
+  else if (isa<ObjCImplctSetterGetterRefExpr>(this)) {
+    const ObjCImplctSetterGetterRefExpr* Expr = 
+      cast<ObjCImplctSetterGetterRefExpr>(this);
+    if (Expr->getSetterMethod() == 0)
       return MLV_NoSetterProperty;
   }
   return MLV_Valid;    
@@ -1861,9 +1863,13 @@ Stmt::child_iterator ObjCIvarRefExpr::child_end() { return &Base+1; }
 Stmt::child_iterator ObjCPropertyRefExpr::child_begin() { return &Base; }
 Stmt::child_iterator ObjCPropertyRefExpr::child_end() { return &Base+1; }
 
-// ObjCKVCRefExpr
-Stmt::child_iterator ObjCKVCRefExpr::child_begin() { return &Base; }
-Stmt::child_iterator ObjCKVCRefExpr::child_end() { return &Base+1; }
+// ObjCImplctSetterGetterRefExpr
+Stmt::child_iterator ObjCImplctSetterGetterRefExpr::child_begin() { 
+  return &Base; 
+}
+Stmt::child_iterator ObjCImplctSetterGetterRefExpr::child_end() { 
+  return &Base+1; 
+}
 
 // ObjCSuperExpr
 Stmt::child_iterator ObjCSuperExpr::child_begin() { return child_iterator(); }

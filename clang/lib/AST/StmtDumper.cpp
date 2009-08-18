@@ -148,7 +148,8 @@ namespace  {
     void VisitObjCSelectorExpr(ObjCSelectorExpr *Node);
     void VisitObjCProtocolExpr(ObjCProtocolExpr *Node);
     void VisitObjCPropertyRefExpr(ObjCPropertyRefExpr *Node);
-    void VisitObjCKVCRefExpr(ObjCKVCRefExpr *Node);
+    void VisitObjCImplctSetterGetterRefExpr(
+                                          ObjCImplctSetterGetterRefExpr *Node);
     void VisitObjCIvarRefExpr(ObjCIvarRefExpr *Node);
     void VisitObjCSuperExpr(ObjCSuperExpr *Node);
   };
@@ -521,7 +522,8 @@ void StmtDumper::VisitObjCPropertyRefExpr(ObjCPropertyRefExpr *Node) {
           Node->getProperty()->getNameAsString().c_str());
 }
 
-void StmtDumper::VisitObjCKVCRefExpr(ObjCKVCRefExpr *Node) {
+void StmtDumper::VisitObjCImplctSetterGetterRefExpr(
+                                        ObjCImplctSetterGetterRefExpr *Node) {
   DumpExpr(Node);
   
   ObjCMethodDecl *Getter = Node->getGetterMethod();

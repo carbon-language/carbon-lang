@@ -518,12 +518,15 @@ void StmtPrinter::VisitObjCPropertyRefExpr(ObjCPropertyRefExpr *Node) {
   OS << Node->getProperty()->getNameAsCString();
 }
 
-void StmtPrinter::VisitObjCKVCRefExpr(ObjCKVCRefExpr *Node) {
+void StmtPrinter::VisitObjCImplctSetterGetterRefExpr(
+                                        ObjCImplctSetterGetterRefExpr *Node) {
   if (Node->getBase()) {
     PrintExpr(Node->getBase());
     OS << ".";
   }
-  // FIXME: Setter/Getter names
+  if (Node->getGetterMethod())
+    OS << Node->getGetterMethod()->getNameAsString();
+    
 }
 
 void StmtPrinter::VisitPredefinedExpr(PredefinedExpr *Node) {

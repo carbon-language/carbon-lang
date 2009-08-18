@@ -70,7 +70,7 @@ void Sema::DiagnoseUnusedExprResult(const Stmt *S) {
   // cases now.
   unsigned DiagID = diag::warn_unused_expr;
   E = E->IgnoreParens();
-  if (isa<ObjCKVCRefExpr>(E))
+  if (isa<ObjCImplctSetterGetterRefExpr>(E))
     DiagID = diag::warn_unused_property_expr;
   
   Diag(Loc, DiagID) << R1 << R2;

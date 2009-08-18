@@ -158,7 +158,8 @@ public:
   Value *VisitObjCPropertyRefExpr(ObjCPropertyRefExpr *E) {
     return EmitLoadOfLValue(E);
   }
-  Value *VisitObjCKVCRefExpr(ObjCKVCRefExpr *E) {
+  Value *VisitObjCImplctSetterGetterRefExpr(
+                        ObjCImplctSetterGetterRefExpr *E) {
     return EmitLoadOfLValue(E);
   }
   Value *VisitObjCMessageExpr(ObjCMessageExpr *E) {

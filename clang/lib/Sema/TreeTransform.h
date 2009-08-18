@@ -3409,7 +3409,8 @@ TreeTransform<Derived>::TransformObjCPropertyRefExpr(ObjCPropertyRefExpr *E) {
 
 template<typename Derived> 
 Sema::OwningExprResult 
-TreeTransform<Derived>::TransformObjCKVCRefExpr(ObjCKVCRefExpr *E) { 
+TreeTransform<Derived>::TransformObjCImplctSetterGetterRefExpr(
+                                          ObjCImplctSetterGetterRefExpr *E) { 
   // FIXME: Implement this!
   assert(false && "Cannot transform Objective-C expressions yet");
   return SemaRef.Owned(E->Retain()); 

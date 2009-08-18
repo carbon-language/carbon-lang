@@ -338,7 +338,8 @@ Action::OwningExprResult Sema::ActOnClassPropertyRefExpr(
            E = Setter->param_end(); PI != E; ++PI)
         PType = (*PI)->getType();
     }
-    return Owned(new (Context) ObjCKVCRefExpr(Getter, PType, Setter, 
+    return Owned(new (Context) ObjCImplctSetterGetterRefExpr(
+                                  Getter, PType, Setter, 
                                   propertyNameLoc, IFace, receiverNameLoc));
   }
   return ExprError(Diag(propertyNameLoc, diag::err_property_not_found)

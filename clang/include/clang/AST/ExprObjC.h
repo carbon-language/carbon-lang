@@ -257,13 +257,24 @@ public:
   virtual child_iterator child_end();
 };
 
-/// ObjCKVCRefExpr - A dot-syntax expression to access "implicit" properties 
-/// (i.e. methods following the property naming convention). KVC stands for
-/// Key Value Encoding, a generic concept for accessing or setting a 'Key'
-/// value for an object.
-///
-class ObjCKVCRefExpr : public Expr {
+/// ObjCImplctSetterGetterRefExpr - A dot-syntax expression to access two 
+/// methods; one to set a value to an 'ivar' (Setter) and the other to access 
+/// an 'ivar' (Setter). 
+/// An example for use of this AST is:
+/// @code
+///  @interface Test { }
+///  - (Test *)crash;
+///  - (void)setCrash: (Test*)value;
+/// @end
+/// void  foo(Test *p1, Test *p2) 
+/// {
+///    p2.crash  = p1.crash; // Uses ObjCImplctSetterGetterRefExpr AST
+/// }
+/// @endcode
+class ObjCImplctSetterGetterRefExpr : public Expr {
+  /// Setter - Setter method user declared for setting its 'ivar' to a value
   ObjCMethodDecl *Setter;
+  /// Getter - Getter method user declared for accessing 'ivar' it controls.
   ObjCMethodDecl *Getter;
   SourceLocation Loc;
   // FIXME: Swizzle these into a single pointer.
@@ -272,22 +283,23 @@ class ObjCKVCRefExpr : public Expr {
   SourceLocation ClassLoc;
     
 public:
-  ObjCKVCRefExpr(ObjCMethodDecl *getter,
+  ObjCImplctSetterGetterRefExpr(ObjCMethodDecl *getter,
                  QualType t, 
                  ObjCMethodDecl *setter,
                  SourceLocation l, Expr *base)
-    : Expr(ObjCKVCRefExprClass, t), Setter(setter),
+    : Expr(ObjCImplctSetterGetterRefExprClass, t), Setter(setter),
       Getter(getter), Loc(l), Base(base), ClassProp(0),
       ClassLoc(SourceLocation()) {
     }
-  ObjCKVCRefExpr(ObjCMethodDecl *getter,
+  ObjCImplctSetterGetterRefExpr(ObjCMethodDecl *getter,
                  QualType t, 
                  ObjCMethodDecl *setter,
                  SourceLocation l, ObjCInterfaceDecl *C, SourceLocation CL)
-    : Expr(ObjCKVCRefExprClass, t), Setter(setter),
+    : Expr(ObjCImplctSetterGetterRefExprClass, t), Setter(setter),
       Getter(getter), Loc(l), Base(0), ClassProp(C), ClassLoc(CL) {
     }
-  explicit ObjCKVCRefExpr(EmptyShell Empty) : Expr(ObjCKVCRefExprClass, Empty){}
+  explicit ObjCImplctSetterGetterRefExpr(EmptyShell Empty) 
+           : Expr(ObjCImplctSetterGetterRefExprClass, Empty){}
 
   ObjCMethodDecl *getGetterMethod() const { return Getter; }
   ObjCMethodDecl *getSetterMethod() const { return Setter; }
@@ -311,9 +323,9 @@ public:
   void setClassLoc(SourceLocation L) { ClassLoc = L; }
     
   static bool classof(const Stmt *T) { 
-    return T->getStmtClass() == ObjCKVCRefExprClass; 
+    return T->getStmtClass() == ObjCImplctSetterGetterRefExprClass; 
   }
-  static bool classof(const ObjCKVCRefExpr *) { return true; }
+  static bool classof(const ObjCImplctSetterGetterRefExpr *) { return true; }
     
   // Iterators
   virtual child_iterator child_begin();
