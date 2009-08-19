@@ -1,5 +1,7 @@
 ; RUN: llvm-as < %s | opt -analyze -scalar-evolution -disable-output \
-; RUN:   | grep {\{%d,+,4\}<bb>}
+; RUN:   | grep {\{%d,+,\[^\{\}\]\*\}<bb>}
+
+; ScalarEvolution should be able to understand the loop and eliminate the casts.
 
 define void @foo(i32* nocapture %d, i32 %n) nounwind {
 entry:
