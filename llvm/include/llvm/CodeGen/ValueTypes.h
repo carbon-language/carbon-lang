@@ -111,7 +111,12 @@ namespace llvm {
       iPTR           = 255,
 
       // LastSimpleValueType - The greatest valid SimpleValueType value.
-      LastSimpleValueType = 255
+      LastSimpleValueType = 255,
+
+      // FirstExtendedValueType - This sentinel is needed so that gcc 4.4 won't
+      // optimize away checks of a SimpleValueType compared to
+      // LastSimpleValueType+1.
+      FirstExtendedValueType = 256
     };
 
     SimpleValueType SimpleTy;
