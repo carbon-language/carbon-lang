@@ -171,7 +171,7 @@ std::string Value::getNameStr() const {
 }
 
 void Value::setName(const Twine &NewName) {
-  SmallString<32> NameData;
+  SmallString<256> NameData;
   NewName.toVector(NameData);
 
   const char *NameStr = NameData.data();
