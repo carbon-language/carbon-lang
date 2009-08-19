@@ -86,8 +86,7 @@ private:
   explicit BasicBlock(LLVMContext &C, const Twine &Name = "",
                       Function *Parent = 0, BasicBlock *InsertBefore = 0);
 public:
-  /// getContext - Get the context in which this basic block lives,
-  /// or null if it is not currently attached to a function.
+  /// getContext - Get the context in which this basic block lives.
   LLVMContext &getContext() const;
   
   /// Instruction iterators...
