@@ -495,9 +495,11 @@ void X86JITInfo::emitFunctionStubAtAddr(const Function* F, void *Fn, void *Stub,
   // complains about casting a function pointer to a normal pointer.
   JCE.startGVStub(F, Stub, 5);
   JCE.emitByte(0xE9);
-#if defined (X86_64_JIT)
-  assert(((((intptr_t)Fn-JCE.getCurrentPCValue()-5) << 32) >> 32) == 
-          ((intptr_t)Fn-JCE.getCurrentPCValue()-5) 
+#if defined (X86_64_JIT) && !defined (NDEBUG)
+  // Yes, we need both of these casts, or some broken versions of GCC (4.2.4)
+  // get the signed-ness of the expression wrong.  Go figure.
+  intptr_t Displacement = (intptr_t)Fn - (intptr_t)JCE.getCurrentPCValue() - 5;
+  assert(((Displacement << 32) >> 32) == Displacement
          && "PIC displacement does not fit in displacement field!");
 #endif
   JCE.emitWordLE((intptr_t)Fn-JCE.getCurrentPCValue()-4);
