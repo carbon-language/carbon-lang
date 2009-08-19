@@ -20,6 +20,7 @@
 #ifndef LLVM_CODEGEN_LIVEINTERVAL_ANALYSIS_H
 #define LLVM_CODEGEN_LIVEINTERVAL_ANALYSIS_H
 
+#include "llvm/CodeGen/MachineBasicBlock.h"
 #include "llvm/CodeGen/MachineFunctionPass.h"
 #include "llvm/CodeGen/LiveInterval.h"
 #include "llvm/ADT/BitVector.h"
