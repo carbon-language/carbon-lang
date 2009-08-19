@@ -70,7 +70,7 @@ namespace llvm {
     typedef gcp_map_type::iterator gcp_iterator;
     gcp_map_type GCMetadataPrinters;
 
-    /// If ExuberantAsm is set, a pointer to the loop info for this
+    /// If VerboseAsm is set, a pointer to the loop info for this
     /// function.
     ///
     MachineLoopInfo *LI;
