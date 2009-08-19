@@ -128,6 +128,7 @@ namespace llvm {
       VST4D,
 
       // Vector shuffles:
+      VEXT,         // extract
       VREV64,       // reverse elements within 64-bit doublewords
       VREV32,       // reverse elements within 32-bit words
       VREV16        // reverse elements within 16-bit halfwords

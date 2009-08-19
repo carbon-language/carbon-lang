@@ -487,6 +487,7 @@ const char *ARMTargetLowering::getTargetNodeName(unsigned Opcode) const {
   case ARMISD::VST2D:         return "ARMISD::VST2D";
   case ARMISD::VST3D:         return "ARMISD::VST3D";
   case ARMISD::VST4D:         return "ARMISD::VST4D";
+  case ARMISD::VEXT:          return "ARMISD::VEXT";
   case ARMISD::VREV64:        return "ARMISD::VREV64";
   case ARMISD::VREV32:        return "ARMISD::VREV32";
   case ARMISD::VREV16:        return "ARMISD::VREV16";
@@ -2343,6 +2344,41 @@ SDValue ARM::getVMOVImm(SDNode *N, unsigned ByteSize, SelectionDAG &DAG) {
                      SplatBitSize, DAG);
 }
 
+static bool isVEXTMask(ShuffleVectorSDNode *N, bool &ReverseVEXT,
+                       unsigned &Imm) {
+  EVT VT = N->getValueType(0);
+  unsigned NumElts = VT.getVectorNumElements();
+  ReverseVEXT = false;
+  Imm = N->getMaskElt(0);
+
+  // If this is a VEXT shuffle, the immediate value is the index of the first
+  // element.  The other shuffle indices must be the successive elements after
+  // the first one.
+  unsigned ExpectedElt = Imm;
+  for (unsigned i = 1; i < NumElts; ++i) {
+
+    // Increment the expected index.  If it wraps around, it may still be
+    // a VEXT but the source vectors must be swapped.
+    ExpectedElt += 1;
+    if (ExpectedElt == NumElts * 2) {
+      ExpectedElt = 0;
+      ReverseVEXT = true;
+    }
+
+    if (ExpectedElt != static_cast<unsigned>(N->getMaskElt(i)))
+      return false;
+  }
+
+  // Adjust the index value if the source operands will be swapped.
+  if (ReverseVEXT)
+    Imm -= NumElts;
+
+  // VEXT only handles 8-bit elements so scale the index for larger elements.
+  Imm *= VT.getVectorElementType().getSizeInBits() / 8;
+
+  return true;
+}
+
 /// isVREVMask - Check if a vector shuffle corresponds to a VREV
 /// instruction with the specified blocksize.  (The order of the elements
 /// within each block of the vector is reversed.)
@@ -2458,8 +2494,20 @@ static SDValue LowerVECTOR_SHUFFLE(SDValue Op, SelectionDAG &DAG) {
       return DAG.getNode(ARMISD::VDUP, dl, VT, Op0.getOperand(0));
     }
     return DAG.getNode(ARMISD::VDUPLANE, dl, VT, SVN->getOperand(0),
-		       DAG.getConstant(Lane, MVT::i32));
+                       DAG.getConstant(Lane, MVT::i32));
   }
+
+  bool ReverseVEXT;
+  unsigned Imm;
+  if (isVEXTMask(SVN, ReverseVEXT, Imm)) {
+    SDValue Op0 = SVN->getOperand(0);
+    SDValue Op1 = SVN->getOperand(1);
+    if (ReverseVEXT)
+      std::swap(Op0, Op1);
+    return DAG.getNode(ARMISD::VEXT, dl, VT, Op0, Op1,
+                       DAG.getConstant(Imm, MVT::i32));
+  }
+
   if (isVREVMask(SVN, 64))
     return DAG.getNode(ARMISD::VREV64, dl, VT, SVN->getOperand(0));
   if (isVREVMask(SVN, 32))
