@@ -189,7 +189,8 @@ PathDiagnosticBuilder::ExecutionContinues(const ExplodedNode* N) {
   if (const Stmt *S = GetNextStmt(N))
     return PathDiagnosticLocation(S, getSourceManager());
 
-  return FullSourceLoc(getCodeDecl().getBodyRBrace(), getSourceManager());
+  return FullSourceLoc(N->getLocationContext()->getDecl()->getBodyRBrace(), 
+                       getSourceManager());
 }
   
 PathDiagnosticLocation
@@ -208,7 +209,8 @@ PathDiagnosticBuilder::ExecutionContinues(llvm::raw_string_ostream& os,
        << '.';
   else
     os << "Execution jumps to the end of the "
-       << (isa<ObjCMethodDecl>(getCodeDecl()) ? "method" : "function") << '.';
+       << (isa<ObjCMethodDecl>(N->getLocationContext()->getDecl()) ?
+             "method" : "function") << '.';
   
   return Loc;
 }
