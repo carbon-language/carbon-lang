@@ -2451,7 +2451,8 @@ void Parser::ParseFunctionDeclarator(SourceLocation LParenLoc, Declarator &D,
       delete AttrList;
     }
 
-    SourceLocation Loc = ConsumeParen();  // Eat the closing ')'.
+    SourceLocation RParenLoc = ConsumeParen();  // Eat the closing ')'.
+    SourceLocation EndLoc = RParenLoc;
 
     // cv-qualifier-seq[opt].
     DeclSpec DS;
@@ -2463,13 +2464,13 @@ void Parser::ParseFunctionDeclarator(SourceLocation LParenLoc, Declarator &D,
     if (getLang().CPlusPlus) {
       ParseTypeQualifierListOpt(DS, false /*no attributes*/);
       if (!DS.getSourceRange().getEnd().isInvalid())
-        Loc = DS.getSourceRange().getEnd();
+        EndLoc = DS.getSourceRange().getEnd();
 
       // Parse exception-specification[opt].
       if (Tok.is(tok::kw_throw)) {
         hasExceptionSpec = true;
         ThrowLoc = Tok.getLocation();
-        ParseExceptionSpecification(Loc, Exceptions, ExceptionRanges,
+        ParseExceptionSpecification(EndLoc, Exceptions, ExceptionRanges,
                                     hasAnyExceptionSpec);
         assert(Exceptions.size() == ExceptionRanges.size() &&
                "Produced different number of exception types and ranges.");
@@ -2488,8 +2489,8 @@ void Parser::ParseFunctionDeclarator(SourceLocation LParenLoc, Declarator &D,
                                                Exceptions.data(),
                                                ExceptionRanges.data(),
                                                Exceptions.size(),
-                                               LParenLoc, D),
-                  Loc);
+                                               LParenLoc, RParenLoc, D),
+                  EndLoc);
     return;
   }
 
@@ -2629,7 +2630,8 @@ void Parser::ParseFunctionDeclarator(SourceLocation LParenLoc, Declarator &D,
   PrototypeScope.Exit();
   
   // If we have the closing ')', eat it.
-  SourceLocation Loc = MatchRHSPunctuation(tok::r_paren, LParenLoc);
+  SourceLocation RParenLoc = MatchRHSPunctuation(tok::r_paren, LParenLoc);
+  SourceLocation EndLoc = RParenLoc;
 
   DeclSpec DS;
   bool hasExceptionSpec = false;
@@ -2641,13 +2643,13 @@ void Parser::ParseFunctionDeclarator(SourceLocation LParenLoc, Declarator &D,
     // Parse cv-qualifier-seq[opt].
     ParseTypeQualifierListOpt(DS, false /*no attributes*/);
       if (!DS.getSourceRange().getEnd().isInvalid())
-        Loc = DS.getSourceRange().getEnd();
+        EndLoc = DS.getSourceRange().getEnd();
 
     // Parse exception-specification[opt].
     if (Tok.is(tok::kw_throw)) {
       hasExceptionSpec = true;
       ThrowLoc = Tok.getLocation();
-      ParseExceptionSpecification(Loc, Exceptions, ExceptionRanges,
+      ParseExceptionSpecification(EndLoc, Exceptions, ExceptionRanges,
                                   hasAnyExceptionSpec);
       assert(Exceptions.size() == ExceptionRanges.size() &&
              "Produced different number of exception types and ranges.");
@@ -2663,8 +2665,9 @@ void Parser::ParseFunctionDeclarator(SourceLocation LParenLoc, Declarator &D,
                                              hasAnyExceptionSpec,
                                              Exceptions.data(),
                                              ExceptionRanges.data(),
-                                             Exceptions.size(), LParenLoc, D),
-                Loc);
+                                             Exceptions.size(),
+                                             LParenLoc, RParenLoc, D),
+                EndLoc);
 }
 
 /// ParseFunctionDeclaratorIdentifierList - While parsing a function declarator
@@ -2740,7 +2743,7 @@ void Parser::ParseFunctionDeclaratorIdentifierList(SourceLocation LParenLoc,
                                              /*TypeQuals*/0,
                                              /*exception*/false,
                                              SourceLocation(), false, 0, 0, 0,
-                                             LParenLoc, D),
+                                             LParenLoc, RLoc, D),
                 RLoc);
 }
 

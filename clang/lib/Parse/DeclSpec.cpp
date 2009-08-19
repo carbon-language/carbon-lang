@@ -39,11 +39,13 @@ DeclaratorChunk DeclaratorChunk::getFunction(bool hasProto, bool isVariadic,
                                              ActionBase::TypeTy **Exceptions,
                                              SourceRange *ExceptionRanges,
                                              unsigned NumExceptions,
-                                             SourceLocation Loc,
+                                             SourceLocation LPLoc,
+                                             SourceLocation RPLoc,
                                              Declarator &TheDeclarator) {
   DeclaratorChunk I;
   I.Kind                 = Function;
-  I.Loc                  = Loc;
+  I.Loc                  = LPLoc;
+  I.EndLoc               = RPLoc;
   I.Fun.hasPrototype     = hasProto;
   I.Fun.isVariadic       = isVariadic;
   I.Fun.EllipsisLoc      = EllipsisLoc.getRawEncoding();

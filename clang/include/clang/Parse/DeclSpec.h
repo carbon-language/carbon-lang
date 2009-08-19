@@ -737,7 +737,8 @@ struct DeclaratorChunk {
                                      bool hasAnyExceptionSpec,
                                      ActionBase::TypeTy **Exceptions,
                                      SourceRange *ExceptionRanges,
-                                     unsigned NumExceptions, SourceLocation Loc,
+                                     unsigned NumExceptions,
+                                     SourceLocation LPLoc, SourceLocation RPLoc,
                                      Declarator &TheDeclarator);
   
   /// getBlockPointer - Return a DeclaratorChunk for a block.

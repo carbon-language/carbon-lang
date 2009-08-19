@@ -3758,7 +3758,7 @@ NamedDecl *Sema::ImplicitlyDefineFunction(SourceLocation Loc,
   Declarator D(DS, Declarator::BlockContext);
   D.AddTypeInfo(DeclaratorChunk::getFunction(false, false, SourceLocation(), 0,
                                              0, 0, false, SourceLocation(),
-                                             false, 0,0,0, Loc, D),
+                                             false, 0,0,0, Loc, Loc, D),
                 SourceLocation());
   D.SetIdentifier(&II, Loc);
 

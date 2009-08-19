@@ -1547,7 +1547,8 @@ Parser::OwningExprResult Parser::ParseBlockLiteralExpression() {
                                                        0, 0, 0,
                                                        false, SourceLocation(),
                                                        false, 0, 0, 0,
-                                                       CaretLoc, ParamInfo),
+                                                       CaretLoc, CaretLoc,
+                                                       ParamInfo),
                           CaretLoc);
 
     if (Tok.is(tok::kw___attribute)) {
