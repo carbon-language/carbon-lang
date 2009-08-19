@@ -22,6 +22,7 @@ namespace llvm {
   class Constant;
   class GlobalVariable;
   class Mangler;
+  class MachineBasicBlock;
   class MachineRelocation;
   class MachOCodeEmitter;
   struct MachODySymTab;
