@@ -15,6 +15,7 @@
 #include "llvm/Module.h"
 #include "llvm/CodeGen/MachineModuleInfo.h"
 #include "llvm/CodeGen/MachineFrameInfo.h"
+#include "llvm/CodeGen/MachineFunction.h"
 #include "llvm/CodeGen/MachineLocation.h"
 #include "llvm/MC/MCStreamer.h"
 #include "llvm/Target/TargetAsmInfo.h"
