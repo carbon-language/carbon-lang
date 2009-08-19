@@ -18,6 +18,7 @@
 #include "clang/Basic/LangOptions.h"
 #include "llvm/ADT/APFloat.h"
 #include "llvm/ADT/SmallString.h"
+#include "llvm/ADT/StringRef.h"
 #include "llvm/ADT/STLExtras.h"
 #include "llvm/ADT/Triple.h"
 #include "llvm/MC/MCSectionMachO.h"
@@ -27,13 +28,13 @@ using namespace clang;
 //  Common code shared among targets.
 //===----------------------------------------------------------------------===//
 
-static void Define(std::vector<char> &Buf, const char *Macro,
-                   const char *Val = "1") {
+static void Define(std::vector<char> &Buf, const llvm::StringRef &Macro,
+                   const llvm::StringRef &Val = "1") {
   const char *Def = "#define ";
   Buf.insert(Buf.end(), Def, Def+strlen(Def));
-  Buf.insert(Buf.end(), Macro, Macro+strlen(Macro));
+  Buf.insert(Buf.end(), Macro.begin(), Macro.end());
   Buf.push_back(' ');
-  Buf.insert(Buf.end(), Val, Val+strlen(Val));
+  Buf.insert(Buf.end(), Val.begin(), Val.end());
   Buf.push_back('\n');
 }
 
@@ -53,11 +54,11 @@ static void DefineStd(std::vector<char> &Buf, const char *MacroName,
   llvm::SmallString<20> TmpStr;
   TmpStr = "__";
   TmpStr += MacroName;
-  Define(Buf, TmpStr.c_str());
+  Define(Buf, TmpStr.str());
 
   // Define __unix__.
   TmpStr += "__";
-  Define(Buf, TmpStr.c_str());
+  Define(Buf, TmpStr.str());
 }
 
 //===----------------------------------------------------------------------===//

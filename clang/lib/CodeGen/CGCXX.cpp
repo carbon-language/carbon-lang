@@ -143,7 +143,7 @@ CodeGenFunction::EmitStaticCXXBlockVarDeclInit(const VarDecl &D,
     new llvm::GlobalVariable(CGM.getModule(), llvm::Type::getInt64Ty(VMContext), false,
                              GV->getLinkage(),
                              llvm::Constant::getNullValue(llvm::Type::getInt64Ty(VMContext)),
-                             GuardVName.c_str());
+                             GuardVName.str());
   
   // Load the first byte of the guard variable.
   const llvm::Type *PtrTy = llvm::PointerType::get(llvm::Type::getInt8Ty(VMContext), 0);
@@ -683,7 +683,6 @@ llvm::Constant *CodeGenModule::GenerateRtti(const CXXRecordDecl *RD) {
   QualType ClassTy;
   ClassTy = getContext().getTagDeclType(RD);
   mangleCXXRtti(ClassTy, getContext(), Out);
-  const char *Name = OutName.c_str();
   llvm::GlobalVariable::LinkageTypes linktype;
   linktype = llvm::GlobalValue::WeakAnyLinkage;
   std::vector<llvm::Constant *> info;
@@ -698,7 +697,7 @@ llvm::Constant *CodeGenModule::GenerateRtti(const CXXRecordDecl *RD) {
   llvm::ArrayType *type = llvm::ArrayType::get(Ptr8Ty, info.size());
   C = llvm::ConstantArray::get(type, info);
   Rtti = new llvm::GlobalVariable(getModule(), type, true, linktype, C,
-                                  Name);
+                                  Out.str());
   Rtti = llvm::ConstantExpr::getBitCast(Rtti, Ptr8Ty);
   return Rtti;
 }
@@ -876,7 +875,6 @@ llvm::Value *CodeGenFunction::GenerateVtable(const CXXRecordDecl *RD) {
   QualType ClassTy;
   ClassTy = getContext().getTagDeclType(RD);
   mangleCXXVtable(ClassTy, getContext(), Out);
-  const char *Name = OutName.c_str();
   llvm::GlobalVariable::LinkageTypes linktype;
   linktype = llvm::GlobalValue::WeakAnyLinkage;
   std::vector<llvm::Constant *> methods;
@@ -898,7 +896,7 @@ llvm::Value *CodeGenFunction::GenerateVtable(const CXXRecordDecl *RD) {
   llvm::ArrayType *type = llvm::ArrayType::get(Ptr8Ty, methods.size());
   C = llvm::ConstantArray::get(type, methods);
   llvm::Value *vtable = new llvm::GlobalVariable(CGM.getModule(), type, true,
-                                                 linktype, C, Name);
+                                                 linktype, C, Out.str());
   vtable = Builder.CreateBitCast(vtable, Ptr8Ty);
   vtable = Builder.CreateGEP(vtable,
                        llvm::ConstantInt::get(llvm::Type::getInt64Ty(VMContext),

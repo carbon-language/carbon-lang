@@ -1082,13 +1082,13 @@ Sema::OwningStmtResult Sema::ActOnAsmStmt(SourceLocation AsmLoc,
       return StmtError(Diag(Literal->getLocStart(),diag::err_asm_wide_character)
         << Literal->getSourceRange());
 
-    llvm::SmallString<16> Clobber(Literal->getStrData(),
-                                  Literal->getStrData() +
-                                  Literal->getByteLength());
+    std::string Clobber(Literal->getStrData(),
+                        Literal->getStrData() +
+                        Literal->getByteLength());
 
     if (!Context.Target.isValidGCCRegisterName(Clobber.c_str()))
       return StmtError(Diag(Literal->getLocStart(),
-                  diag::err_asm_unknown_register_name) << Clobber.c_str());
+                  diag::err_asm_unknown_register_name) << Clobber);
   }
 
   constraints.release();

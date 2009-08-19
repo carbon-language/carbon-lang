@@ -75,8 +75,8 @@ void InitHeaderSearch::AddPath(const std::string &Path, IncludeDirGroup Group,
   }
   
   if (Verbose)
-    fprintf(stderr, "ignoring nonexistent directory \"%s\"\n",
-            MappedPath.c_str());
+    llvm::errs() << "ignoring nonexistent directory \""
+                 << MappedPath.str() << "\"\n";
 }
 
 
