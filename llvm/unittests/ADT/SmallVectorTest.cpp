@@ -381,4 +381,22 @@ TEST_F(SmallVectorTest, ConstVectorTest) {
   EXPECT_TRUE(constVector.begin() == constVector.end());
 }
 
+// Direct array access.
+TEST_F(SmallVectorTest, DirectVectorTest) {
+  EXPECT_EQ(0u, theVector.size());
+  EXPECT_EQ(4u, theVector.capacity());
+  EXPECT_EQ(0, Constructable::getNumConstructorCalls());
+  theVector.end()[0] = 1;
+  theVector.end()[1] = 2;
+  theVector.end()[2] = 3;
+  theVector.end()[3] = 4;
+  theVector.set_size(4);
+  EXPECT_EQ(4u, theVector.size());
+  EXPECT_EQ(4, Constructable::getNumConstructorCalls());
+  EXPECT_EQ(1, theVector[0].getValue());
+  EXPECT_EQ(2, theVector[1].getValue());
+  EXPECT_EQ(3, theVector[2].getValue());
+  EXPECT_EQ(4, theVector[3].getValue());
+}
+
 }

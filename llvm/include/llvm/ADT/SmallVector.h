@@ -122,11 +122,11 @@ public:
 
 
   reference operator[](unsigned idx) {
-    assert (Begin + idx < End);
+    assert(Begin + idx < End);
     return Begin[idx];
   }
   const_reference operator[](unsigned idx) const {
-    assert (Begin + idx < End);
+    assert(Begin + idx < End);
     return Begin[idx];
   }
 
@@ -397,6 +397,24 @@ public:
   bool operator<(const SmallVectorImpl &RHS) const {
     return std::lexicographical_compare(begin(), end(),
                                         RHS.begin(), RHS.end());
+  }
+
+  /// capacity - Return the total number of elements in the currently allocated
+  /// buffer.
+  size_t capacity() const { return Capacity - Begin; }
+
+  /// set_size - Set the array size to \arg N, which the current array must have
+  /// enough capacity for.
+  ///
+  /// This does not construct or destroy any elements in the vector.
+  ///
+  /// Clients can use this in conjunction with capacity() to write past the end
+  /// of the buffer when they know that more elements are available, and only
+  /// update the size later. This avoids the cost of value initializing elements
+  /// which will only be overwritten.
+  void set_size(unsigned N) {
+    assert(N <= capacity());
+    End = Begin + N;
   }
 
 private:
