@@ -131,6 +131,7 @@ static Constant *SymbolicallyEvaluateGEP(Constant* const* Ops, unsigned NumOps,
     return 0;
   
   uint64_t BasePtr = 0;
+  bool BaseIsInt = true;
   if (!Ptr->isNullValue()) {
     // If this is a inttoptr from a constant int, we can fold this as the base,
     // otherwise we can't.
@@ -140,19 +141,62 @@ static Constant *SymbolicallyEvaluateGEP(Constant* const* Ops, unsigned NumOps,
           BasePtr = Base->getZExtValue();
     
     if (BasePtr == 0)
-      return 0;
+      BaseIsInt = false;
   }
 
   // If this is a constant expr gep that is effectively computing an
   // "offsetof", fold it into 'cast int Size to T*' instead of 'gep 0, 0, 12'
   for (unsigned i = 1; i != NumOps; ++i)
     if (!isa<ConstantInt>(Ops[i]))
-      return false;
+      return 0;
   
   uint64_t Offset = TD->getIndexedOffset(Ptr->getType(),
                                          (Value**)Ops+1, NumOps-1);
-  Constant *C = ConstantInt::get(TD->getIntPtrType(Context), Offset+BasePtr);
-  return ConstantExpr::getIntToPtr(C, ResultTy);
+  // If the base value for this address is a literal integer value, fold the
+  // getelementptr to the resulting integer value casted to the pointer type.
+  if (BaseIsInt) {
+    Constant *C = ConstantInt::get(TD->getIntPtrType(Context), Offset+BasePtr);
+    return ConstantExpr::getIntToPtr(C, ResultTy);
+  }
+
+  // Otherwise form a regular getelementptr. Recompute the indices so that
+  // we eliminate over-indexing of the notional static type array bounds.
+  // This makes it easy to determine if the getelementptr is "inbounds".
+  // Also, this helps GlobalOpt do SROA on GlobalVariables.
+  const Type *Ty = Ptr->getType();
+  SmallVector<Constant*, 32> NewIdxs;
+  for (unsigned Index = 1; Index != NumOps; ++Index) {
+    if (const SequentialType *ATy = dyn_cast<SequentialType>(Ty)) {
+      // Determine which element of the array the offset points into.
+      uint64_t ElemSize = TD->getTypeAllocSize(ATy->getElementType());
+      if (ElemSize == 0)
+        return 0;
+      uint64_t NewIdx = Offset / ElemSize;
+      Offset -= NewIdx * ElemSize;
+      NewIdxs.push_back(ConstantInt::get(TD->getIntPtrType(Context), NewIdx));
+      Ty = ATy->getElementType();
+    } else if (const StructType *STy = dyn_cast<StructType>(Ty)) {
+      // Determine which field of the struct the offset points into.
+      const StructLayout &SL = *TD->getStructLayout(STy);
+      unsigned ElIdx = SL.getElementContainingOffset(Offset);
+      NewIdxs.push_back(ConstantInt::get(Type::getInt32Ty(Context), ElIdx));
+      Offset -= SL.getElementOffset(ElIdx);
+      Ty = STy->getTypeAtIndex(ElIdx);
+    } else {
+      return 0;
+    }
+  }
+
+  // If the base is the start of a GlobalVariable and all the array indices
+  // remain in their static bounds, the GEP is inbounds. We can check that
+  // all indices are in bounds by just checking the first index only
+  // because we've just normalized all the indices.
+  if (isa<GlobalVariable>(Ptr) && NewIdxs[0]->isNullValue())
+    return ConstantExpr::getInBoundsGetElementPtr(Ptr,
+                                                  &NewIdxs[0], NewIdxs.size());
+
+  // Otherwise it may not be inbounds.
+  return ConstantExpr::getGetElementPtr(Ptr, &NewIdxs[0], NewIdxs.size());
 }
 
 /// FoldBitCast - Constant fold bitcast, symbolically evaluating it with 
