@@ -15,6 +15,7 @@
 #define LLVM_ADT_SMALLSTRING_H
 
 #include "llvm/ADT/SmallVector.h"
+#include "llvm/ADT/StringRef.h"
 #include "llvm/Support/DataTypes.h"
 #include <cstring>
 
@@ -44,6 +45,8 @@ public:
     This->End[0] = 0;
     return this->begin();
   }
+
+  StringRef str() const { return StringRef(this->begin(), this->size()); }
 
   // Extra operators.
   const SmallString &operator=(const char *RHS) {
