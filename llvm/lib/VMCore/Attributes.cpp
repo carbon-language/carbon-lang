@@ -175,14 +175,17 @@ AttrListPtr AttrListPtr::get(const AttributeWithIndex *Attrs, unsigned NumAttrs)
 //===----------------------------------------------------------------------===//
 
 AttrListPtr::AttrListPtr(AttributeListImpl *LI) : AttrList(LI) {
+  sys::SmartScopedLock<true> Lock(*ALMutex);
   if (LI) LI->AddRef();
 }
 
 AttrListPtr::AttrListPtr(const AttrListPtr &P) : AttrList(P.AttrList) {
+  sys::SmartScopedLock<true> Lock(*ALMutex);
   if (AttrList) AttrList->AddRef();  
 }
 
 const AttrListPtr &AttrListPtr::operator=(const AttrListPtr &RHS) {
+  sys::SmartScopedLock<true> Lock(*ALMutex);
   if (AttrList == RHS.AttrList) return *this;
   if (AttrList) AttrList->DropRef();
   AttrList = RHS.AttrList;
@@ -191,6 +194,7 @@ const AttrListPtr &AttrListPtr::operator=(const AttrListPtr &RHS) {
 }
 
 AttrListPtr::~AttrListPtr() {
+  sys::SmartScopedLock<true> Lock(*ALMutex);
   if (AttrList) AttrList->DropRef();
 }
 
