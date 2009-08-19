@@ -707,6 +707,7 @@ class ABIBuilder {
   std::vector<llvm::Constant *> &methods;
   llvm::Type *Ptr8Ty;
   const CXXRecordDecl *Class;
+  const ASTRecordLayout &BLayout;
   llvm::Constant *rtti;
   llvm::LLVMContext &VMContext;
   CodeGenModule &CGM;  // Per-module state.
@@ -716,21 +717,34 @@ public:
   ABIBuilder(std::vector<llvm::Constant *> &meth,
              const CXXRecordDecl *c,
              CodeGenModule &cgm)
-    : methods(meth), Class(c), rtti(cgm.GenerateRtti(c)),
-      VMContext(cgm.getModule().getContext()), CGM(cgm) {
+    : methods(meth), Class(c), BLayout(cgm.getContext().getASTRecordLayout(c)),
+      rtti(cgm.GenerateRtti(c)), VMContext(cgm.getModule().getContext()),
+      CGM(cgm) {
     Ptr8Ty = llvm::PointerType::get(llvm::Type::getInt8Ty(VMContext), 0);
   }
 
-  void GenerateVcalls(const CXXRecordDecl *RD) {
+  llvm::Constant *GenerateVcall(const CXXMethodDecl *MD,
+                                const CXXRecordDecl *RD,
+                                bool VBoundary,
+                                bool SecondaryVirtual) {
+    llvm::Constant *m = 0;
+
+    // FIXME: vcall: offset for virtual base for this function
+    if (SecondaryVirtual || VBoundary)
+      m = llvm::Constant::getNullValue(Ptr8Ty);
+    return m;
+  }
+
+  void GenerateVcalls(const CXXRecordDecl *RD, bool VBoundary,
+                      bool SecondaryVirtual) {
     llvm::Constant *m;
 
-    // FIXME: audit order
     for (method_iter mi = RD->method_begin(),
            me = RD->method_end(); mi != me; ++mi) {
       if (mi->isVirtual()) {
-        // FIXME: vcall: offset for virtual base for this function
-        m = llvm::Constant::getNullValue(Ptr8Ty);
-        methods.push_back(m);
+        m = GenerateVcall(*mi, RD, VBoundary, SecondaryVirtual);
+        if (m)
+          methods.push_back(m);
       }
     }
   }
@@ -750,8 +764,8 @@ public:
 
   void GenerateVtableForBase(const CXXRecordDecl *RD,
                              bool forPrimary,
+                             bool VBoundary,
                              int64_t Offset,
-                             const CXXRecordDecl *Class,
                              bool ForVirtualBase,
                    llvm::SmallSet<const CXXRecordDecl *, 32> &IndirectPrimary) {
     llvm::Constant *m = llvm::Constant::getNullValue(Ptr8Ty);
@@ -762,6 +776,11 @@ public:
     const ASTRecordLayout &Layout = CGM.getContext().getASTRecordLayout(RD);
     const CXXRecordDecl *PrimaryBase = Layout.getPrimaryBase(); 
     const bool PrimaryBaseWasVirtual = Layout.getPrimaryBaseWasVirtual();
+
+    if (VBoundary || forPrimary || ForVirtualBase) {
+      // then comes the the vcall offsets for all our functions...
+      GenerateVcalls(RD, VBoundary, !forPrimary && ForVirtualBase);
+    }
 
     // The virtual base offsets come first...
     // FIXME: Audit, is this right?
@@ -774,11 +793,6 @@ public:
         methods.push_back(*i);
     }
 
-    if (forPrimary || ForVirtualBase) {
-      // then comes the the vcall offsets for all our functions...
-      GenerateVcalls(RD);
-    }
-
     bool Top = true;
 
     // vtables are composed from the chain of primaries.
@@ -786,15 +800,13 @@ public:
       if (PrimaryBaseWasVirtual)
         IndirectPrimary.insert(PrimaryBase);
       Top = false;
-      GenerateVtableForBase(PrimaryBase, true, Offset, Class,
-                            PrimaryBaseWasVirtual, IndirectPrimary);
+      GenerateVtableForBase(PrimaryBase, true, PrimaryBaseWasVirtual|VBoundary,
+                            Offset, PrimaryBaseWasVirtual, IndirectPrimary);
     }
 
     if (Top) {
       int64_t BaseOffset;
       if (ForVirtualBase) {
-        const ASTRecordLayout &BLayout = CGM.getContext()
-          .getASTRecordLayout(Class);
         BaseOffset = -(BLayout.getVBaseClassOffset(RD) / 8);
       } else
         BaseOffset = -Offset/8;
@@ -816,7 +828,7 @@ public:
         cast<CXXRecordDecl>(i->getType()->getAs<RecordType>()->getDecl());
       if (Base != PrimaryBase || PrimaryBaseWasVirtual) {
         uint64_t o = Offset + Layout.getBaseClassOffset(Base);
-        GenerateVtableForBase(Base, true, o, Class, false, IndirectPrimary);
+        GenerateVtableForBase(Base, true, false, o, false, IndirectPrimary);
       }
     }
   }
@@ -831,7 +843,7 @@ public:
       if (i->isVirtual() && !IndirectPrimary.count(Base)) {
         // Mark it so we don't output it twice.
         IndirectPrimary.insert(Base);
-        GenerateVtableForBase(Base, true, 0, Class, true, IndirectPrimary);
+        GenerateVtableForBase(Base, false, true, 0, true, IndirectPrimary);
       }
       if (Base->getNumVBases())
         GenerateVtableForVBases(Base, Class, IndirectPrimary);
@@ -880,7 +892,7 @@ llvm::Value *CodeGenFunction::GenerateVtable(const CXXRecordDecl *RD) {
   ABIBuilder b(methods, RD, CGM);
 
   // First comes the vtables for all the non-virtual bases...
-  b.GenerateVtableForBase(RD, true, 0, RD, false, IndirectPrimary);
+  b.GenerateVtableForBase(RD, true, false, 0, false, IndirectPrimary);
 
   // then the vtables for all the virtual bases.
   b.GenerateVtableForVBases(RD, RD, IndirectPrimary);
