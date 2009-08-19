@@ -54,7 +54,8 @@ double ProfileInfo::getExecutionCount(const BasicBlock *BB) {
     if (ProcessedPreds.insert(*PI).second) {
       double w = getEdgeWeight(getEdge(*PI, BB));
       if (w == MissingValue) {
-        Count = MissingValue; break;
+        Count = MissingValue;
+        break;
       }
       Count += w;
     }
