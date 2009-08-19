@@ -1583,7 +1583,8 @@ Sema::ActOnSizeOfAlignOfExpr(SourceLocation OpLoc, bool isSizeof, bool isType,
   if (TyOrEx == 0) return ExprError();
 
   if (isType) {
-    QualType ArgTy = QualType::getFromOpaquePtr(TyOrEx);
+    // FIXME: Preserve type source info.
+    QualType ArgTy = GetTypeFromParser(TyOrEx);
     return CreateSizeOfAlignOfExpr(ArgTy, OpLoc, isSizeof, ArgRange);
   } 
 
@@ -2955,7 +2956,8 @@ Action::OwningExprResult
 Sema::ActOnCompoundLiteral(SourceLocation LParenLoc, TypeTy *Ty,
                            SourceLocation RParenLoc, ExprArg InitExpr) {
   assert((Ty != 0) && "ActOnCompoundLiteral(): missing type");
-  QualType literalType = QualType::getFromOpaquePtr(Ty);
+  //FIXME: Preserve type source info.
+  QualType literalType = GetTypeFromParser(Ty);
   // FIXME: put back this assert when initializers are worked out.
   //assert((InitExpr != 0) && "ActOnCompoundLiteral(): missing expression");
   Expr *literalExpr = static_cast<Expr*>(InitExpr.get());
@@ -3124,7 +3126,8 @@ Sema::ActOnCastExpr(Scope *S, SourceLocation LParenLoc, TypeTy *Ty,
          "ActOnCastExpr(): missing type or expr");
 
   Expr *castExpr = (Expr *)Op.get();
-  QualType castType = QualType::getFromOpaquePtr(Ty);
+  //FIXME: Preserve type source info.
+  QualType castType = GetTypeFromParser(Ty);
   
   // If the Expr being casted is a ParenListExpr, handle it specially.
   if (isa<ParenListExpr>(castExpr))
@@ -5410,7 +5413,8 @@ Sema::OwningExprResult Sema::ActOnBuiltinOffsetOf(Scope *S,
                                                   SourceLocation RPLoc) {
   // FIXME: This function leaks all expressions in the offset components on
   // error.
-  QualType ArgTy = QualType::getFromOpaquePtr(argty);
+  // FIXME: Preserve type source info.
+  QualType ArgTy = GetTypeFromParser(argty);
   assert(!ArgTy.isNull() && "Missing type argument!");
 
   bool Dependent = ArgTy->isDependentType();
@@ -5523,8 +5527,9 @@ Sema::OwningExprResult Sema::ActOnBuiltinOffsetOf(Scope *S,
 Sema::OwningExprResult Sema::ActOnTypesCompatibleExpr(SourceLocation BuiltinLoc,
                                                       TypeTy *arg1,TypeTy *arg2,
                                                       SourceLocation RPLoc) {
-  QualType argT1 = QualType::getFromOpaquePtr(arg1);
-  QualType argT2 = QualType::getFromOpaquePtr(arg2);
+  // FIXME: Preserve type source info.
+  QualType argT1 = GetTypeFromParser(arg1);
+  QualType argT2 = GetTypeFromParser(arg2);
 
   assert((!argT1.isNull() && !argT2.isNull()) && "Missing type argument(s)");
 
@@ -5747,7 +5752,7 @@ Sema::OwningExprResult Sema::ActOnBlockStmtExpr(SourceLocation CaretLoc,
 Sema::OwningExprResult Sema::ActOnVAArg(SourceLocation BuiltinLoc,
                                         ExprArg expr, TypeTy *type,
                                         SourceLocation RPLoc) {
-  QualType T = QualType::getFromOpaquePtr(type);
+  QualType T = GetTypeFromParser(type);
   Expr *E = static_cast<Expr*>(expr.get());
   Expr *OrigExpr = E;
   

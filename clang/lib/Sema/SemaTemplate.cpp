@@ -215,7 +215,8 @@ void Sema::ActOnTypeParameterDefault(DeclPtrTy TypeParam,
                                      TypeTy *DefaultT) {
   TemplateTypeParmDecl *Parm 
     = cast<TemplateTypeParmDecl>(TypeParam.getAs<Decl>());
-  QualType Default = QualType::getFromOpaquePtr(DefaultT);
+  // FIXME: Preserve type source info.
+  QualType Default = GetTypeFromParser(DefaultT);
 
   // C++0x [temp.param]p9:
   // A default template-argument may be specified for any kind of
@@ -921,7 +922,8 @@ translateTemplateArguments(ASTTemplateArgsPtr &TemplateArgsIn,
   for (unsigned Arg = 0, Last = TemplateArgsIn.size(); Arg != Last; ++Arg) {
     TemplateArgs.push_back(
       ArgIsType[Arg]? TemplateArgument(TemplateArgLocs[Arg],
-                                       QualType::getFromOpaquePtr(Args[Arg]))
+                                       //FIXME: Preserve type source info.
+                                       Sema::GetTypeFromParser(Args[Arg]))
                     : TemplateArgument(reinterpret_cast<Expr *>(Args[Arg])));
   }
 }
@@ -1006,6 +1008,7 @@ QualType Sema::CheckTemplateIdType(TemplateName Name,
   // Build the fully-sugared type for this class template
   // specialization, which refers back to the class template
   // specialization we created or found.
+  //FIXME: Preserve type source info.
   return Context.getTemplateSpecializationType(Name, TemplateArgs,
                                                NumTemplateArgs, CanonType);
 }
@@ -2969,7 +2972,7 @@ Sema::ActOnTypenameType(SourceLocation TypenameLoc, const CXXScopeSpec &SS,
 Sema::TypeResult
 Sema::ActOnTypenameType(SourceLocation TypenameLoc, const CXXScopeSpec &SS,
                         SourceLocation TemplateLoc, TypeTy *Ty) {
-  QualType T = QualType::getFromOpaquePtr(Ty);
+  QualType T = GetTypeFromParser(Ty);
   NestedNameSpecifier *NNS 
     = static_cast<NestedNameSpecifier *>(SS.getScopeRep());
   const TemplateSpecializationType *TemplateId 

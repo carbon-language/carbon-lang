@@ -120,7 +120,8 @@ Sema::ExprResult Sema::ParseObjCEncodeExpression(SourceLocation AtLoc,
                                                  SourceLocation LParenLoc,
                                                  TypeTy *ty,
                                                  SourceLocation RParenLoc) {
-  QualType EncodedType = QualType::getFromOpaquePtr(ty);
+  // FIXME: Preserve type source info ?
+  QualType EncodedType = GetTypeFromParser(ty);
 
   return BuildObjCEncodeExpression(AtLoc, EncodedType, RParenLoc);
 }

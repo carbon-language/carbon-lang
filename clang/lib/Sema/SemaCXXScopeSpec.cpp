@@ -333,7 +333,7 @@ Sema::CXXScopeTy *Sema::ActOnCXXNestedNameSpecifier(Scope *S,
                                                     SourceLocation CCLoc) {
   NestedNameSpecifier *Prefix 
     = static_cast<NestedNameSpecifier *>(SS.getScopeRep());
-  QualType T = QualType::getFromOpaquePtr(Ty);
+  QualType T = GetTypeFromParser(Ty);
   return NestedNameSpecifier::Create(Context, Prefix, /*FIXME:*/false,
                                      T.getTypePtr());
 }

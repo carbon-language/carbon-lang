@@ -31,7 +31,8 @@ Sema::ActOnCXXConversionFunctionExpr(Scope *S, SourceLocation OperatorLoc,
                                      TypeTy *Ty, bool HasTrailingLParen,
                                      const CXXScopeSpec &SS,
                                      bool isAddressOfOperand) {
-  QualType ConvType = QualType::getFromOpaquePtr(Ty);
+  //FIXME: Preserve type source info.
+  QualType ConvType = GetTypeFromParser(Ty);
   CanQualType ConvTypeCanon = Context.getCanonicalType(ConvType);
   DeclarationName ConvName 
     = Context.DeclarationNames.getCXXConversionFunctionName(ConvTypeCanon);
@@ -62,7 +63,11 @@ Sema::ActOnCXXTypeid(SourceLocation OpLoc, SourceLocation LParenLoc,
   NamespaceDecl *StdNs = GetStdNamespace();
   if (!StdNs)
     return ExprError(Diag(OpLoc, diag::err_need_header_before_typeid));
-  
+
+  if (isType)
+    // FIXME: Preserve type source info.
+    TyOrExpr = GetTypeFromParser(TyOrExpr).getAsOpaquePtr();
+
   IdentifierInfo *TypeInfoII = &PP.getIdentifierTable().get("type_info");
   Decl *TypeInfoDecl = LookupQualifiedName(StdNs, TypeInfoII, LookupTagName);
   RecordDecl *TypeInfoRecordDecl = dyn_cast_or_null<RecordDecl>(TypeInfoDecl);
@@ -179,7 +184,8 @@ Sema::ActOnCXXTypeConstructExpr(SourceRange TypeRange, TypeTy *TypeRep,
                                 SourceLocation *CommaLocs,
                                 SourceLocation RParenLoc) {
   assert(TypeRep && "Missing type!");
-  QualType Ty = QualType::getFromOpaquePtr(TypeRep);
+  // FIXME: Preserve type source info.
+  QualType Ty = GetTypeFromParser(TypeRep);
   unsigned NumExprs = exprs.size();
   Expr **Exprs = (Expr**)exprs.get();
   SourceLocation TyBeginLoc = TypeRange.getBegin();
@@ -1051,7 +1057,7 @@ Sema::OwningExprResult Sema::ActOnUnaryTypeTrait(UnaryTypeTrait OTT,
                                                  SourceLocation LParen,
                                                  TypeTy *Ty,
                                                  SourceLocation RParen) {
-  QualType T = QualType::getFromOpaquePtr(Ty);
+  QualType T = GetTypeFromParser(Ty);
   
   // According to http://gcc.gnu.org/onlinedocs/gcc/Type-Traits.html
   // all traits except __is_class, __is_enum and __is_union require a the type

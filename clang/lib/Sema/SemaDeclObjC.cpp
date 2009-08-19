@@ -1668,7 +1668,7 @@ Sema::DeclPtrTy Sema::ActOnMethodDeclaration(
   QualType resultDeclType;
   
   if (ReturnType) {
-    resultDeclType = QualType::getFromOpaquePtr(ReturnType);
+    resultDeclType = GetTypeFromParser(ReturnType);
     
     // Methods cannot return interface types. All ObjC objects are
     // passed by reference.
@@ -1697,7 +1697,7 @@ Sema::DeclPtrTy Sema::ActOnMethodDeclaration(
     if (ArgInfo[i].Type == 0) {
       UnpromotedArgType = ArgType = Context.getObjCIdType();
     } else {
-      UnpromotedArgType = ArgType = QualType::getFromOpaquePtr(ArgInfo[i].Type);
+      UnpromotedArgType = ArgType = GetTypeFromParser(ArgInfo[i].Type);
       // Perform the default array/function conversions (C99 6.7.5.3p[7,8]).
       ArgType = adjustParameterType(ArgType);
     }

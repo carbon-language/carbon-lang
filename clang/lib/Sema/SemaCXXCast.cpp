@@ -104,7 +104,8 @@ Sema::ActOnCXXNamedCast(SourceLocation OpLoc, tok::TokenKind Kind,
                         SourceLocation LParenLoc, ExprArg E,
                         SourceLocation RParenLoc) {
   Expr *Ex = E.takeAs<Expr>();
-  QualType DestType = QualType::getFromOpaquePtr(Ty);
+  // FIXME: Preserve type source info.
+  QualType DestType = GetTypeFromParser(Ty);
   SourceRange OpRange(OpLoc, RParenLoc);
   SourceRange DestRange(LAngleBracketLoc, RAngleBracketLoc);
 

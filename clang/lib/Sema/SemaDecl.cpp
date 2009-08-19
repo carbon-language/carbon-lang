@@ -1564,20 +1564,20 @@ DeclarationName Sema::GetNameForDeclarator(Declarator &D) {
     return DeclarationName(D.getIdentifier());
 
   case Declarator::DK_Constructor: {
-    QualType Ty = QualType::getFromOpaquePtr(D.getDeclaratorIdType());
+    QualType Ty = GetTypeFromParser(D.getDeclaratorIdType());
     return Context.DeclarationNames.getCXXConstructorName(
                                                 Context.getCanonicalType(Ty));
   }
 
   case Declarator::DK_Destructor: {
-    QualType Ty = QualType::getFromOpaquePtr(D.getDeclaratorIdType());
+    QualType Ty = GetTypeFromParser(D.getDeclaratorIdType());
     return Context.DeclarationNames.getCXXDestructorName(
                                                 Context.getCanonicalType(Ty));
   }
 
   case Declarator::DK_Conversion: {
     // FIXME: We'd like to keep the non-canonical type for diagnostics!
-    QualType Ty = QualType::getFromOpaquePtr(D.getDeclaratorIdType());
+    QualType Ty = GetTypeFromParser(D.getDeclaratorIdType());
     return Context.DeclarationNames.getCXXConversionFunctionName(
                                                 Context.getCanonicalType(Ty));
   }
@@ -1651,7 +1651,8 @@ Sema::HandleDeclarator(Scope *S, Declarator &D,
        DS.getTypeSpecType() == DeclSpec::TST_typeofExpr ||
        DS.getTypeSpecType() == DeclSpec::TST_decltype)) {
     if (DeclContext *DC = computeDeclContext(D.getCXXScopeSpec(), true)) {
-      QualType T = QualType::getFromOpaquePtr(DS.getTypeRep());
+      // FIXME: Preserve type source info.
+      QualType T = GetTypeFromParser(DS.getTypeRep());
       EnterDeclaratorContext(S, DC);
       T = RebuildTypeInCurrentInstantiation(T, D.getIdentifierLoc(), Name);
       ExitDeclaratorContext(S);

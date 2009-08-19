@@ -203,7 +203,7 @@ QualType Sema::ConvertDeclSpecToType(const DeclSpec &DS,
     assert(DS.getTypeSpecWidth() == 0 && DS.getTypeSpecComplex() == 0 &&
            DS.getTypeSpecSign() == 0 &&
            "Can't handle qualifiers on typedef names yet!");
-    Result = QualType::getFromOpaquePtr(DS.getTypeRep());
+    Result = GetTypeFromParser(DS.getTypeRep());
 
     if (DeclSpec::ProtocolQualifierListTy PQ = DS.getProtocolQualifiers()) {
       if (const ObjCInterfaceType *Interface = Result->getAsObjCInterfaceType())
@@ -247,7 +247,8 @@ QualType Sema::ConvertDeclSpecToType(const DeclSpec &DS,
     break;
   }
   case DeclSpec::TST_typeofType:
-    Result = QualType::getFromOpaquePtr(DS.getTypeRep());
+    // FIXME: Preserve type source info.
+    Result = GetTypeFromParser(DS.getTypeRep());
     assert(!Result.isNull() && "Didn't get a type for typeof?");
     // TypeQuals handled by caller.
     Result = Context.getTypeOfType(Result);
@@ -777,6 +778,18 @@ QualType Sema::BuildBlockPointerType(QualType T, unsigned Quals,
   return Context.getBlockPointerType(T).getQualifiedType(Quals);
 }
 
+QualType Sema::GetTypeFromParser(TypeTy *Ty, DeclaratorInfo **DInfo) {
+  QualType QT = QualType::getFromOpaquePtr(Ty);
+  DeclaratorInfo *DI = 0;
+  if (LocInfoType *LIT = dyn_cast<LocInfoType>(QT)) {
+    QT = LIT->getType();
+    DI = LIT->getDeclaratorInfo();
+  }
+  
+  if (DInfo) *DInfo = DI;
+  return QT;
+}
+
 /// GetTypeForDeclarator - Convert the type for the specified
 /// declarator to Type instances. Skip the outermost Skip type
 /// objects.
@@ -1039,7 +1052,8 @@ QualType Sema::GetTypeForDeclarator(Declarator &D, Scope *S,
           llvm::SmallVector<QualType, 4> Exceptions;
           Exceptions.reserve(FTI.NumExceptions);
           for(unsigned ei = 0, ee = FTI.NumExceptions; ei != ee; ++ei) {
-            QualType ET = QualType::getFromOpaquePtr(FTI.Exceptions[ei].Ty);
+            // FIXME: Preserve type source info.
+            QualType ET = GetTypeFromParser(FTI.Exceptions[ei].Ty);
             // Check that the type is valid for an exception spec, and drop it
             // if not.
             if (!CheckSpecifiedExceptionType(ET, FTI.Exceptions[ei].Range))
@@ -1126,7 +1140,8 @@ QualType Sema::GetTypeForDeclarator(Declarator &D, Scope *S,
         llvm::SmallVector<QualType, 4> Exceptions;
         Exceptions.reserve(FTI.NumExceptions);
         for(unsigned ei = 0, ee = FTI.NumExceptions; ei != ee; ++ei) {
-          QualType ET = QualType::getFromOpaquePtr(FTI.Exceptions[ei].Ty);
+          // FIXME: Preserve type source info.
+          QualType ET = GetTypeFromParser(FTI.Exceptions[ei].Ty);
           // Check that the type is valid for an exception spec, and drop it if
           // not.
           if (!CheckSpecifiedExceptionType(ET, FTI.Exceptions[ei].Range))
@@ -1587,7 +1602,9 @@ Sema::TypeResult Sema::ActOnTypeName(Scope *S, Declarator &D) {
         << Context.getTypeDeclType(OwnedTag);
   }
 
-  //FIXME: Also pass DeclaratorInfo.
+  if (DInfo)
+    T = CreateLocInfoType(T, DInfo);
+
   return T.getAsOpaquePtr();
 }
 

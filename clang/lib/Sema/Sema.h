@@ -464,6 +464,7 @@ public:
   /// \brief Create a LocInfoType to hold the given QualType and DeclaratorInfo.
   QualType CreateLocInfoType(QualType T, DeclaratorInfo *DInfo);
   DeclarationName GetNameForDeclarator(Declarator &D);
+  static QualType GetTypeFromParser(TypeTy *Ty, DeclaratorInfo **DInfo = 0);
   bool CheckSpecifiedExceptionType(QualType T, const SourceRange &Range);
   bool CheckDistantExceptionSpec(QualType T);
   bool CheckEquivalentExceptionSpec(

@@ -465,7 +465,7 @@ Sema::ActOnBaseSpecifier(DeclPtrTy classdecl, SourceRange SpecifierRange,
 
   AdjustDeclIfTemplate(classdecl);
   CXXRecordDecl *Class = cast<CXXRecordDecl>(classdecl.getAs<Decl>());
-  QualType BaseType = QualType::getFromOpaquePtr(basetype);
+  QualType BaseType = GetTypeFromParser(basetype);
   if (CXXBaseSpecifier *BaseSpec = CheckBaseSpecifier(Class, SpecifierRange,
                                                       Virtual, Access,
                                                       BaseType, BaseLoc))
@@ -617,7 +617,7 @@ Sema::ActOnCXXMemberDeclarator(Scope *S, AccessSpecifier AS, Declarator &D,
     // typedef int f();
     // f a;
     //
-    QualType TDType = QualType::getFromOpaquePtr(DS.getTypeRep());
+    QualType TDType = GetTypeFromParser(DS.getTypeRep());
     isFunc = TDType->isFunctionType();
   }
 
@@ -738,7 +738,7 @@ Sema::ActOnMemInitializer(DeclPtrTy ConstructorD,
     return Diag(IdLoc, diag::err_mem_init_not_member_or_class)
       << MemberOrBase << SourceRange(IdLoc, RParenLoc);
   
-  QualType BaseType = QualType::getFromOpaquePtr(BaseTy);
+  QualType BaseType = GetTypeFromParser(BaseTy);
 
   return BuildBaseInitializer(BaseType, (Expr **)Args, NumArgs, IdLoc,
                               RParenLoc, ClassDecl);
@@ -1688,7 +1688,7 @@ QualType Sema::CheckDestructorDeclarator(Declarator &D,
   //   (7.1.3); however, a typedef-name that names a class shall not
   //   be used as the identifier in the declarator for a destructor
   //   declaration.
-  QualType DeclaratorType = QualType::getFromOpaquePtr(D.getDeclaratorIdType());
+  QualType DeclaratorType = GetTypeFromParser(D.getDeclaratorIdType());
   if (isa<TypedefType>(DeclaratorType)) {
     Diag(D.getIdentifierLoc(), diag::err_destructor_typedef_name)
       << DeclaratorType;
@@ -1814,7 +1814,7 @@ void Sema::CheckConversionDeclarator(Declarator &D, QualType &R,
   // C++ [class.conv.fct]p4:
   //   The conversion-type-id shall not represent a function type nor
   //   an array type.
-  QualType ConvType = QualType::getFromOpaquePtr(D.getDeclaratorIdType());
+  QualType ConvType = GetTypeFromParser(D.getDeclaratorIdType());
   if (ConvType->isArrayType()) {
     Diag(D.getIdentifierLoc(), diag::err_conv_function_to_array);
     ConvType = Context.getPointerType(ConvType);
