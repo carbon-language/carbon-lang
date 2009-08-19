@@ -337,6 +337,12 @@ ifndef REQUIRES_EH
   CXX.Flags += -fno-exceptions
 endif
 
+ifdef REQUIRES_FRAME_POINTER
+  CXX.Flags := $(filter-out -fomit-frame-pointer,$(CXX.Flags))
+  C.Flags   := $(filter-out -fomit-frame-pointer,$(C.Flags))
+  LD.Flags  := $(filter-out -fomit-frame-pointer,$(LD.Flags))
+endif
+
 # IF REQUIRES_RTTI=1 is specified then don't disable run-time type id
 ifndef REQUIRES_RTTI
 #  CXX.Flags += -fno-rtti
