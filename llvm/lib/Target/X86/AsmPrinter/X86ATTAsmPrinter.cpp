@@ -620,6 +620,18 @@ bool X86ATTAsmPrinter::PrintAsmOperand(const MachineInstr *MI, unsigned OpNo,
     
     switch (ExtraCode[0]) {
     default: return true;  // Unknown modifier.
+    case 'a': // This is an address.  Currently only 'i' and 'r' are expected.
+      if (MO.isImm()) {
+        O << MO.getImm();
+        return false;
+      } else if (MO.isReg()) {
+        O << '(';
+        printOperand(MI, OpNo);
+        O << ')';
+        return false;
+      }
+      return true;
+
     case 'c': // Don't print "$" before a global var name or constant.
       if (MO.isImm())
         O << MO.getImm();
