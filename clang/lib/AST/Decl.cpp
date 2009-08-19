@@ -16,6 +16,7 @@
 #include "clang/AST/DeclObjC.h"
 #include "clang/AST/DeclTemplate.h"
 #include "clang/AST/ASTContext.h"
+#include "clang/AST/TypeLoc.h"
 #include "clang/AST/Stmt.h"
 #include "clang/AST/Expr.h"
 #include "clang/AST/PrettyPrinter.h"
@@ -34,6 +35,10 @@ void Attr::Destroy(ASTContext &C) {
   C.Deallocate((void*)this);
 }
 
+/// \brief Return the TypeLoc wrapper for the type source info.
+TypeLoc DeclaratorInfo::getTypeLoc() const {
+  return TypeLoc::Create(Ty, (void*)(this + 1));
+}
 
 //===----------------------------------------------------------------------===//
 // Decl Allocation/Deallocation Method Implementations

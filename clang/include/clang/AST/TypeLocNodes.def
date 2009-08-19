@@ -1,0 +1,53 @@
+//===-- TypeLocNodes.def - Metadata about TypeLoc wrappers ------*- C++ -*-===//
+//
+//                     The LLVM Compiler Infrastructure
+//
+// This file is distributed under the University of Illinois Open Source
+// License. See LICENSE.TXT for details.
+//
+//===----------------------------------------------------------------------===//
+//
+//  This file defines the TypeLoc info database. Each node is
+//  enumerated by providing its name (e.g., "PointerLoc" or "ArrayLoc"),
+//  base class (e.g., "TypeSpecLoc" or "DeclaratorLoc"), and the Type subclass
+//  that the TypeLoc is associated with.
+//
+//    TYPELOC(Class, Base, Type) - Description of the TypeLoc subclass.
+//
+//    ABSTRACT_TYPELOC(Class) - Refers to TypeSpecLoc and DeclaratorLoc.
+//
+//    TYPESPEC_TYPELOC(Class, Type) - A TypeLoc referring to a type-spec type.
+//
+//    DECLARATOR_TYPELOC(Class, Type) - A TypeLoc referring to a type part of
+//    a declarator, excluding type-spec types.
+//
+//===----------------------------------------------------------------------===//
+
+#ifndef ABSTRACT_TYPELOC
+#  define ABSTRACT_TYPELOC(Class) TYPELOC(Class, TypeLoc, Type)
+#endif
+
+#ifndef TYPESPEC_TYPELOC
+#  define TYPESPEC_TYPELOC(Class, Type) TYPELOC(Class, TypeSpecLoc, Type)
+#endif
+
+#ifndef DECLARATOR_TYPELOC
+#  define DECLARATOR_TYPELOC(Class, Type) TYPELOC(Class, DeclaratorLoc, Type)
+#endif
+
+TYPESPEC_TYPELOC(DefaultTypeSpecLoc, Type)
+TYPESPEC_TYPELOC(TypedefLoc, TypedefType)
+DECLARATOR_TYPELOC(PointerLoc, PointerType)
+DECLARATOR_TYPELOC(BlockPointerLoc, BlockPointerType)
+DECLARATOR_TYPELOC(MemberPointerLoc, MemberPointerType)
+DECLARATOR_TYPELOC(ReferenceLoc, ReferenceType)
+DECLARATOR_TYPELOC(FunctionLoc, FunctionType)
+DECLARATOR_TYPELOC(ArrayLoc, ArrayType)
+ABSTRACT_TYPELOC(DeclaratorLoc)
+ABSTRACT_TYPELOC(TypeSpecLoc)
+
+
+#undef DECLARATOR_TYPELOC
+#undef TYPESPEC_TYPELOC
+#undef ABSTRACT_TYPELOC
+#undef TYPELOC

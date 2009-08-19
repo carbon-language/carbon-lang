@@ -918,6 +918,16 @@ public:
   void setObjCImplementation(ObjCCategoryDecl *CatD,
                              ObjCCategoryImplDecl *ImplD);
 
+  /// \brief Allocate an uninitialized DeclaratorInfo.
+  ///
+  /// The caller should initialize the memory held by DeclaratorInfo using
+  /// the TypeLoc wrappers.
+  ///
+  /// \param T the type that will be the basis for type source info. This type
+  /// should refer to how the declarator was written in source code, not to
+  /// what type semantic analysis resolved the declarator to.
+  DeclaratorInfo *CreateDeclaratorInfo(QualType T);
+
 private:
   ASTContext(const ASTContext&); // DO NOT IMPLEMENT
   void operator=(const ASTContext&); // DO NOT IMPLEMENT

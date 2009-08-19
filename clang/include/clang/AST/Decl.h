@@ -28,7 +28,28 @@ class CompoundStmt;
 class StringLiteral;
 class TemplateArgumentList;
 class FunctionTemplateSpecializationInfo;
-  
+class TypeLoc;
+
+/// \brief A container of type source information.
+///
+/// A client can read the relevant info using TypeLoc wrappers, e.g:
+/// @code
+/// TypeLoc TL = DeclaratorInfo->getTypeLoc();
+/// if (PointerLoc *PL = dyn_cast<PointerLoc>(&TL))
+///   PL->getStarLoc().print(OS, SrcMgr);
+/// @endcode
+///
+class DeclaratorInfo {
+  QualType Ty;
+  // Contains a memory block after the class, used for type source information,
+  // allocated by ASTContext.
+  friend class ASTContext;
+  DeclaratorInfo(QualType ty) : Ty(ty) { }
+public:
+  /// \brief Return the TypeLoc wrapper for the type source info.
+  TypeLoc getTypeLoc() const;
+};
+
 /// TranslationUnitDecl - The top declaration context.
 class TranslationUnitDecl : public Decl, public DeclContext {
   ASTContext &Ctx;

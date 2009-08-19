@@ -15,6 +15,7 @@
 #include "clang/AST/DeclCXX.h"
 #include "clang/AST/DeclObjC.h"
 #include "clang/AST/DeclTemplate.h"
+#include "clang/AST/TypeLoc.h"
 #include "clang/AST/Expr.h"
 #include "clang/AST/ExternalASTSource.h"
 #include "clang/AST/RecordLayout.h"
@@ -873,6 +874,22 @@ void ASTContext::setObjCImplementation(ObjCCategoryDecl *CatD,
                            ObjCCategoryImplDecl *ImplD) {
   assert(CatD && ImplD && "Passed null params");
   ObjCImpls[CatD] = ImplD;
+}
+
+/// \brief Allocate an uninitialized DeclaratorInfo.
+///
+/// The caller should initialize the memory held by DeclaratorInfo using
+/// the TypeLoc wrappers.
+///
+/// \param T the type that will be the basis for type source info. This type
+/// should refer to how the declarator was written in source code, not to
+/// what type semantic analysis resolved the declarator to.
+DeclaratorInfo *ASTContext::CreateDeclaratorInfo(QualType T) {
+  unsigned DataSize = TypeLoc::getFullDataSizeForType(T);
+  DeclaratorInfo *DInfo =
+    (DeclaratorInfo*)BumpAlloc.Allocate(sizeof(DeclaratorInfo) + DataSize, 8);
+  new (DInfo) DeclaratorInfo(T);
+  return DInfo;
 }
 
 /// getInterfaceLayoutImpl - Get or compute information about the
