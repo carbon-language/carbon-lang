@@ -1162,8 +1162,9 @@ namespace {
           << bbname << ");";
       break;
     }
-    case Instruction::Unreachable:{
+    case Instruction::Unreachable: {
       Out << "new UnreachableInst("
+          << "getGlobalContext(), "
           << bbname << ");";
       break;
     }
@@ -1239,7 +1240,7 @@ namespace {
       break;
     }
     case Instruction::ICmp: {
-      Out << "ICmpInst* " << iName << " = new ICmpInst(";
+      Out << "ICmpInst* " << iName << " = new ICmpInst(*" << bbname << ", ";
       switch (cast<ICmpInst>(I)->getPredicate()) {
       case ICmpInst::ICMP_EQ:  Out << "ICmpInst::ICMP_EQ";  break;
       case ICmpInst::ICMP_NE:  Out << "ICmpInst::ICMP_NE";  break;
@@ -1255,7 +1256,7 @@ namespace {
       }
       Out << ", " << opNames[0] << ", " << opNames[1] << ", \"";
       printEscapedString(I->getName());
-      Out << "\", " << bbname << ");";
+      Out << "\");";
       break;
     }
     case Instruction::Malloc: {
