@@ -16,6 +16,7 @@
 #define LLVM_LLVMCONTEXT_IMPL_H
 
 #include "ConstantsContext.h"
+#include "LeaksContext.h"
 #include "TypesContext.h"
 #include "llvm/LLVMContext.h"
 #include "llvm/Constants.h"
@@ -133,6 +134,10 @@ public:
   
   ConstantInt *TheTrueVal;
   ConstantInt *TheFalseVal;
+  
+  // Lock used for guarding access to the leak detector
+  sys::SmartMutex<true> LLVMObjectsLock;
+  LeakDetectorImpl<Value> LLVMObjects;
   
   // Lock used for guarding access to the type maps.
   sys::SmartMutex<true> TypeMapLock;
