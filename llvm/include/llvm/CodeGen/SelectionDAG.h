@@ -686,6 +686,11 @@ public:
                         const std::vector<EVT> &ResultTys, const SDValue *Ops,
                         unsigned NumOps);
 
+  /// getTargetExtractSubreg - A convenience function for creating
+  /// TargetInstrInfo::EXTRACT_SUBREG nodes.
+  SDValue getTargetExtractSubreg(int SRIdx, DebugLoc DL, EVT VT,
+                                 SDValue Operand);
+
   /// getNodeIfExists - Get the specified node if it's already available, or
   /// else return NULL.
   SDNode *getNodeIfExists(unsigned Opcode, SDVTList VTs,

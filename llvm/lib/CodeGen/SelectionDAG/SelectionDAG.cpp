@@ -4586,6 +4586,17 @@ SDNode *SelectionDAG::getTargetNode(unsigned Opcode, DebugLoc dl,
   return getNode(~Opcode, dl, ResultTys, Ops, NumOps).getNode();
 }
 
+/// getTargetExtractSubreg - A convenience function for creating
+/// TargetInstrInfo::EXTRACT_SUBREG nodes.
+SDValue
+SelectionDAG::getTargetExtractSubreg(int SRIdx, DebugLoc DL, EVT VT,
+                                     SDValue Operand) {
+  SDValue SRIdxVal = getTargetConstant(SRIdx, MVT::i32);
+  SDNode *Subreg = getTargetNode(TargetInstrInfo::EXTRACT_SUBREG, DL,
+                                 VT, Operand, SRIdxVal);
+  return SDValue(Subreg, 0);
+}
+
 /// getNodeIfExists - Get the specified node if it's already available, or
 /// else return NULL.
 SDNode *SelectionDAG::getNodeIfExists(unsigned Opcode, SDVTList VTList,

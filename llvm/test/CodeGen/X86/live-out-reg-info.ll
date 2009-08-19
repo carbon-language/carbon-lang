@@ -1,4 +1,4 @@
-; RUN: llvm-as < %s | llc -march=x86-64 | grep testl
+; RUN: llvm-as < %s | llc -march=x86-64 | grep {testb	\[$\]1,}
 
 ; Make sure dagcombine doesn't eliminate the comparison due
 ; to an off-by-one bug with ComputeMaskedBits information.

@@ -1743,9 +1743,8 @@ SDNode *X86DAGToDAGISel::Select(SDValue N) {
                                                Result,
                                    CurDAG->getTargetConstant(8, MVT::i8)), 0);
         // Then truncate it down to i8.
-        SDValue SRIdx = CurDAG->getTargetConstant(X86::SUBREG_8BIT, MVT::i32);
-        Result = SDValue(CurDAG->getTargetNode(X86::EXTRACT_SUBREG, dl,
-                                                 MVT::i8, Result, SRIdx), 0);
+        Result = CurDAG->getTargetExtractSubreg(X86::SUBREG_8BIT, dl,
+                                                MVT::i8, Result);
       } else {
         Result = CurDAG->getCopyFromReg(CurDAG->getEntryNode(), dl,
                                         HiReg, NVT, InFlag);
@@ -1919,9 +1918,8 @@ SDNode *X86DAGToDAGISel::Select(SDValue N) {
                                       CurDAG->getTargetConstant(8, MVT::i8)),
                          0);
         // Then truncate it down to i8.
-        SDValue SRIdx = CurDAG->getTargetConstant(X86::SUBREG_8BIT, MVT::i32);
-        Result = SDValue(CurDAG->getTargetNode(X86::EXTRACT_SUBREG, dl,
-                                                 MVT::i8, Result, SRIdx), 0);
+        Result = CurDAG->getTargetExtractSubreg(X86::SUBREG_8BIT, dl,
+                                                MVT::i8, Result);
       } else {
         Result = CurDAG->getCopyFromReg(CurDAG->getEntryNode(), dl,
                                         HiReg, NVT, InFlag);
@@ -1942,6 +1940,105 @@ SDNode *X86DAGToDAGISel::Select(SDValue N) {
 #endif
 
     return NULL;
+  }
+
+  case X86ISD::CMP: {
+                      if (getenv("NOCMP")) break;
+    SDValue N0 = Node->getOperand(0);
+    SDValue N1 = Node->getOperand(1);
+
+    // Look for (X86cmp (and $op, $imm), 0) and see if we can convert it to
+    // use a smaller encoding.
+    if (N0.getNode()->getOpcode() == ISD::AND && N0.getNode()->hasOneUse() &&
+        N0.getValueType() != MVT::i8 &&
+        X86::isZeroNode(N1)) {
+      ConstantSDNode *C = dyn_cast<ConstantSDNode>(N0.getNode()->getOperand(1));
+      if (!C) break;
+
+      // For example, convert "testl %eax, $8" to "testb %al, $8"
+      if ((C->getZExtValue() & ~UINT64_C(0xff)) == 0) {
+        SDValue Imm = CurDAG->getTargetConstant(C->getZExtValue(), MVT::i8);
+        SDValue Reg = N0.getNode()->getOperand(0);
+
+        // On x86-32, only the ABCD registers have 8-bit subregisters.
+        if (!Subtarget->is64Bit()) {
+          TargetRegisterClass *TRC = 0;
+          switch (N0.getValueType().getSimpleVT().SimpleTy) {
+          case MVT::i32: TRC = &X86::GR32_ABCDRegClass; break;
+          case MVT::i16: TRC = &X86::GR16_ABCDRegClass; break;
+          default: llvm_unreachable("Unsupported TEST operand type!");
+          }
+          SDValue RC = CurDAG->getTargetConstant(TRC->getID(), MVT::i32);
+          Reg = SDValue(CurDAG->getTargetNode(X86::COPY_TO_REGCLASS, dl,
+                                              Reg.getValueType(), Reg, RC), 0);
+        }
+
+        // Extract the l-register.
+        SDValue Subreg = CurDAG->getTargetExtractSubreg(X86::SUBREG_8BIT, dl,
+                                                        MVT::i8, Reg);
+
+        // Emit a testb.
+        return CurDAG->getTargetNode(X86::TEST8ri, dl, MVT::i32, Subreg, Imm);
+      }
+
+      // For example, "testl %eax, $2048" to "testb %ah, $8".
+      if ((C->getZExtValue() & ~UINT64_C(0xff00)) == 0) {
+        // Shift the immediate right by 8 bits.
+        SDValue ShiftedImm = CurDAG->getTargetConstant(C->getZExtValue() >> 8,
+                                                       MVT::i8);
+        SDValue Reg = N0.getNode()->getOperand(0);
+
+        // Put the value in an ABCD register.
+        TargetRegisterClass *TRC = 0;
+        switch (N0.getValueType().getSimpleVT().SimpleTy) {
+        case MVT::i64: TRC = &X86::GR64_ABCDRegClass; break;
+        case MVT::i32: TRC = &X86::GR32_ABCDRegClass; break;
+        case MVT::i16: TRC = &X86::GR16_ABCDRegClass; break;
+        default: llvm_unreachable("Unsupported TEST operand type!");
+        }
+        SDValue RC = CurDAG->getTargetConstant(TRC->getID(), MVT::i32);
+        Reg = SDValue(CurDAG->getTargetNode(X86::COPY_TO_REGCLASS, dl,
+                                            Reg.getValueType(), Reg, RC), 0);
+
+        // Extract the h-register.
+        SDValue Subreg = CurDAG->getTargetExtractSubreg(X86::SUBREG_8BIT_HI, dl,
+                                                        MVT::i8, Reg);
+
+        // Emit a testb. No special NOREX tricks are needed since there's
+        // only one GPR operand!
+        return CurDAG->getTargetNode(X86::TEST8ri, dl, MVT::i32,
+                                     Subreg, ShiftedImm);
+      }
+
+      // For example, "testl %eax, $32776" to "testw %ax, $32776".
+      if ((C->getZExtValue() & ~UINT64_C(0xffff)) == 0 &&
+          N0.getValueType() != MVT::i16) {
+        SDValue Imm = CurDAG->getTargetConstant(C->getZExtValue(), MVT::i16);
+        SDValue Reg = N0.getNode()->getOperand(0);
+
+        // Extract the 16-bit subregister.
+        SDValue Subreg = CurDAG->getTargetExtractSubreg(X86::SUBREG_16BIT, dl,
+                                                        MVT::i16, Reg);
+
+        // Emit a testw.
+        return CurDAG->getTargetNode(X86::TEST16ri, dl, MVT::i32, Subreg, Imm);
+      }
+
+      // For example, "testq %rax, $268468232" to "testl %eax, $268468232".
+      if ((C->getZExtValue() & ~UINT64_C(0xffffffff)) == 0 &&
+          N0.getValueType() == MVT::i64) {
+        SDValue Imm = CurDAG->getTargetConstant(C->getZExtValue(), MVT::i32);
+        SDValue Reg = N0.getNode()->getOperand(0);
+
+        // Extract the 32-bit subregister.
+        SDValue Subreg = CurDAG->getTargetExtractSubreg(X86::SUBREG_32BIT, dl,
+                                                        MVT::i32, Reg);
+
+        // Emit a testl.
+        return CurDAG->getTargetNode(X86::TEST32ri, dl, MVT::i32, Subreg, Imm);
+      }
+    }
+    break;
   }
 
   case ISD::DECLARE: {
