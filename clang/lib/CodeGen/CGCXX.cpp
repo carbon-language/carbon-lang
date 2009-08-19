@@ -853,20 +853,20 @@ public:
   void GenerateVBaseOffsets(std::vector<llvm::Constant *> &offsets,
                             const CXXRecordDecl *RD,
                            llvm::SmallSet<const CXXRecordDecl *, 32> &SeenVBase,
-                            uint64_t Offset, const ASTRecordLayout &BLayout) {
+                            uint64_t Offset, const ASTRecordLayout &Layout) {
     for (CXXRecordDecl::base_class_const_iterator i =RD->bases_begin(),
            e = RD->bases_end(); i != e; ++i) {
       const CXXRecordDecl *Base = 
         cast<CXXRecordDecl>(i->getType()->getAs<RecordType>()->getDecl());
       if (i->isVirtual() && !SeenVBase.count(Base)) {
         SeenVBase.insert(Base);
-        int64_t BaseOffset = Offset/8 + BLayout.getVBaseClassOffset(Base) / 8;
+        int64_t BaseOffset = Offset/8 + Layout.getVBaseClassOffset(Base) / 8;
         llvm::Constant *m;
         m = llvm::ConstantInt::get(llvm::Type::getInt64Ty(VMContext), BaseOffset);
         m = llvm::ConstantExpr::getIntToPtr(m, Ptr8Ty);
         offsets.push_back(m);
       }
-      GenerateVBaseOffsets(offsets, Base, SeenVBase, Offset, BLayout);
+      GenerateVBaseOffsets(offsets, Base, SeenVBase, Offset, Layout);
     }
   }
 };
