@@ -165,8 +165,11 @@ static Constant *SymbolicallyEvaluateGEP(Constant* const* Ops, unsigned NumOps,
   // Also, this helps GlobalOpt do SROA on GlobalVariables.
   const Type *Ty = Ptr->getType();
   SmallVector<Constant*, 32> NewIdxs;
-  for (unsigned Index = 1; Index != NumOps; ++Index) {
+  do {
     if (const SequentialType *ATy = dyn_cast<SequentialType>(Ty)) {
+      // The only pointer indexing we'll do is on the first index of the GEP.
+      if (isa<PointerType>(ATy) && ATy != Ptr->getType())
+        break;
       // Determine which element of the array the offset points into.
       uint64_t ElemSize = TD->getTypeAllocSize(ATy->getElementType());
       if (ElemSize == 0)
@@ -183,20 +186,33 @@ static Constant *SymbolicallyEvaluateGEP(Constant* const* Ops, unsigned NumOps,
       Offset -= SL.getElementOffset(ElIdx);
       Ty = STy->getTypeAtIndex(ElIdx);
     } else {
-      return 0;
+      // We've reached some non-indexable type.
+      break;
     }
-  }
+  } while (Ty != cast<PointerType>(ResultTy)->getElementType());
+
+  // If we haven't used up the entire offset by descending the static
+  // type, then the offset is pointing into the middle of an indivisible
+  // member, so we can't simplify it.
+  if (Offset != 0)
+    return 0;
 
   // If the base is the start of a GlobalVariable and all the array indices
   // remain in their static bounds, the GEP is inbounds. We can check that
   // all indices are in bounds by just checking the first index only
   // because we've just normalized all the indices.
-  if (isa<GlobalVariable>(Ptr) && NewIdxs[0]->isNullValue())
-    return ConstantExpr::getInBoundsGetElementPtr(Ptr,
-                                                  &NewIdxs[0], NewIdxs.size());
+  Constant *C = isa<GlobalVariable>(Ptr) && NewIdxs[0]->isNullValue() ?
+    ConstantExpr::getInBoundsGetElementPtr(Ptr, &NewIdxs[0], NewIdxs.size()) :
+    ConstantExpr::getGetElementPtr(Ptr, &NewIdxs[0], NewIdxs.size());
+  assert(cast<PointerType>(C->getType())->getElementType() == Ty &&
+         "Computed GetElementPtr has unexpected type!");
 
-  // Otherwise it may not be inbounds.
-  return ConstantExpr::getGetElementPtr(Ptr, &NewIdxs[0], NewIdxs.size());
+  // If we ended up indexing a member with a type that doesn't match
+  // type type of what the original indices indexed, add a cast.
+  if (Ty != cast<PointerType>(ResultTy)->getElementType())
+    C = ConstantExpr::getBitCast(C, ResultTy);
+
+  return C;
 }
 
 /// FoldBitCast - Constant fold bitcast, symbolically evaluating it with 
