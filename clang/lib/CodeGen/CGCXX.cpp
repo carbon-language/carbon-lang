@@ -784,7 +784,7 @@ public:
 
     // The virtual base offsets come first...
     // FIXME: Audit, is this right?
-    if (forPrimary || !PrimaryBaseWasVirtual) {
+    if (PrimaryBase == 0 || forPrimary || !PrimaryBaseWasVirtual) {
       llvm::SmallSet<const CXXRecordDecl *, 32> SeenVBase;
       std::vector<llvm::Constant *> offsets;
       GenerateVBaseOffsets(offsets, RD, SeenVBase, Offset, Layout);
