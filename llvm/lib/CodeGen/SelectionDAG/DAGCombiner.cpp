@@ -3466,7 +3466,8 @@ SDValue DAGCombiner::ReduceLoadWidth(SDNode *N) {
       // Is the shift amount a multiple of size of VT?
       if ((ShAmt & (EVTBits-1)) == 0) {
         N0 = N0.getOperand(0);
-        if (N0.getValueType().getSizeInBits() <= EVTBits)
+        // Is the load width a multiple of size of VT?
+        if ((N0.getValueType().getSizeInBits() & (EVTBits-1)) != 0)
           return SDValue();
       }
     }
