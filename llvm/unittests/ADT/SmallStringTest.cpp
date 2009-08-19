@@ -44,21 +44,5 @@ TEST_F(SmallStringTest, EmptyStringTest) {
   EXPECT_TRUE(theString.rbegin() == theString.rend());
 }
 
-TEST_F(SmallStringTest, AppendUINT64_MAX) {
-  SCOPED_TRACE("AppendUINT64_MAX");
-  theString.clear();
-  assertEmpty(theString);
-  theString.append_uint(UINT64_MAX);
-  EXPECT_TRUE(0 == strcmp(theString.c_str(),"18446744073709551615"));
-}
-
-TEST_F(SmallStringTest, AppendINT64_MIN) {
-  SCOPED_TRACE("AppendINT64_MIN");
-  theString.clear();
-  assertEmpty(theString);
-  theString.append_sint(INT64_MIN);
-  EXPECT_TRUE(0 == strcmp(theString.c_str(),"-9223372036854775808"));
-}
-
 }
 
