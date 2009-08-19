@@ -624,7 +624,8 @@ bool X86ATTAsmPrinter::PrintAsmOperand(const MachineInstr *MI, unsigned OpNo,
       if (MO.isImm()) {
         O << MO.getImm();
         return false;
-      } else if (MO.isReg()) {
+      } 
+      if (MO.isReg()) {
         O << '(';
         printOperand(MI, OpNo);
         O << ')';
