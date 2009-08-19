@@ -604,6 +604,11 @@ CBE *AbstractInterpreter::createCBE(const char *Argv0,
 // GCC abstraction
 //
 
+#ifdef _MSC_VER
+#define strcasecmp(s1, s2) _stricmp(s1, s2)
+#define strncasecmp(s1, s2, n) _strnicmp(s1, s2, n)
+#endif
+
 static bool
 IsARMArchitecture(std::vector<std::string> Args)
 {
