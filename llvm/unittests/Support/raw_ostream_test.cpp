@@ -53,6 +53,10 @@ TEST(raw_ostreamTest, Types_Buffered) {
   EXPECT_EQ("0x0", printToString((void*) 0));
   EXPECT_EQ("0xbeef", printToString((void*) 0xbeef));
   EXPECT_EQ("0xdeadbeef", printToString((void*) 0xdeadbeef));
+
+  // Min and max.
+  EXPECT_EQ("18446744073709551615", printToString(UINT64_MAX));
+  EXPECT_EQ("-9223372036854775808", printToString(INT64_MIN));
 }
 
 TEST(raw_ostreamTest, Types_Unbuffered) {  
@@ -80,6 +84,10 @@ TEST(raw_ostreamTest, Types_Unbuffered) {
   EXPECT_EQ("0x0", printToStringUnbuffered((void*) 0));
   EXPECT_EQ("0xbeef", printToStringUnbuffered((void*) 0xbeef));
   EXPECT_EQ("0xdeadbeef", printToStringUnbuffered((void*) 0xdeadbeef));
+
+  // Min and max.
+  EXPECT_EQ("18446744073709551615", printToStringUnbuffered(UINT64_MAX));
+  EXPECT_EQ("-9223372036854775808", printToStringUnbuffered(INT64_MIN));
 }
 
 }
