@@ -3115,12 +3115,6 @@ public:
   QualType UsualArithmeticConversions(Expr *&lExpr, Expr *&rExpr,
                                       bool isCompAssign = false);
   
-  /// UsualArithmeticConversionsType - handles the various conversions
-  /// that are common to binary operators (C99 6.3.1.8, C++ [expr]p9)
-  /// and returns the result type of that conversion.
-  QualType UsualArithmeticConversionsType(QualType lhs, QualType rhs);
-                                          
-
   /// AssignConvertType - All of the 'assignment' semantic checks return this
   /// enum to indicate whether the assignment was allowed.  These checks are
   /// done for simple assignments, as well as initialization, return from

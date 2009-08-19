@@ -3101,9 +3101,10 @@ Sema::AddBuiltinOperatorCandidates(OverloadedOperatorKind Op,
       for (unsigned Right = FirstPromotedArithmeticType; 
            Right < LastPromotedArithmeticType; ++Right) {
         QualType LandR[2] = { ArithmeticTypes[Left], ArithmeticTypes[Right] };
-        QualType Result 
-          = isComparison? Context.BoolTy 
-                        : UsualArithmeticConversionsType(LandR[0], LandR[1]);
+        QualType Result
+          = isComparison
+          ? Context.BoolTy
+          : Context.UsualArithmeticConversionsType(LandR[0], LandR[1]);
         AddBuiltinCandidate(Result, LandR, Args, 2, CandidateSet);
       }
     }
@@ -3136,7 +3137,7 @@ Sema::AddBuiltinOperatorCandidates(OverloadedOperatorKind Op,
         QualType LandR[2] = { ArithmeticTypes[Left], ArithmeticTypes[Right] };
         QualType Result = (Op == OO_LessLess || Op == OO_GreaterGreater)
             ? LandR[0]
-            : UsualArithmeticConversionsType(LandR[0], LandR[1]);
+            : Context.UsualArithmeticConversionsType(LandR[0], LandR[1]);
         AddBuiltinCandidate(Result, LandR, Args, 2, CandidateSet);
       }
     }

@@ -1127,7 +1127,7 @@ QualType Sema::GetTypeForDeclarator(Declarator &D, Scope *S,
             }
           } else if (!FTI.hasPrototype) {
             if (ArgTy->isPromotableIntegerType()) {
-              ArgTy = Context.IntTy;
+              ArgTy = Context.getPromotedIntegerType(ArgTy);
             } else if (const BuiltinType* BTy = ArgTy->getAsBuiltinType()) {
               if (BTy->getKind() == BuiltinType::Float)
                 ArgTy = Context.DoubleTy;

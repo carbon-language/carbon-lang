@@ -813,6 +813,11 @@ public:
   /// See C99 6.7.5.3p7 and C99 6.3.2.1p3.
   QualType getArrayDecayedType(QualType T);
   
+  /// getPromotedIntegerType - Returns the type that Promotable will
+  /// promote to: C99 6.3.1.1p2, assuming that Promotable is a promotable
+  /// integer type.
+  QualType getPromotedIntegerType(QualType PromotableType);
+
   /// getIntegerTypeOrder - Returns the highest ranked integer type: 
   /// C99 6.3.1.8p1.  If LHS > RHS, return 1.  If LHS == RHS, return 0. If
   /// LHS < RHS, return -1. 
@@ -868,6 +873,11 @@ public:
   // Functions for calculating composite types
   QualType mergeTypes(QualType, QualType);
   QualType mergeFunctionTypes(QualType, QualType);
+
+  /// UsualArithmeticConversionsType - handles the various conversions
+  /// that are common to binary operators (C99 6.3.1.8, C++ [expr]p9)
+  /// and returns the result type of that conversion.
+  QualType UsualArithmeticConversionsType(QualType lhs, QualType rhs);
 
   //===--------------------------------------------------------------------===//
   //                    Integer Predicates
