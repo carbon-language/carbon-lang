@@ -1483,6 +1483,70 @@ namespace {
   }
 }
 
+namespace {
+
+  // LLVM and Clang cannot be used directly to output native binaries for 
+  // target, but is used to compile C code to llvm bitcode with correct 
+  // type and alignment information.
+  // 
+  // TCE uses the llvm bitcode as input and uses it for generating customized 
+  // target processor and program binary. TCE co-design environment is 
+  // publicly available in http://tce.cs.tut.fi
+
+  class TCETargetInfo : public TargetInfo{
+  public:
+    TCETargetInfo(const std::string& triple) : TargetInfo(triple) {
+      TLSSupported = false;
+      IntWidth = 32;
+      LongWidth = LongLongWidth = 32;
+      IntMaxTWidth = 32;
+      PointerWidth = 32;
+      IntAlign = 32;
+      LongAlign = LongLongAlign = 32;
+      PointerAlign = 32;
+      SizeType = UnsignedInt;
+      IntMaxType = SignedLong;
+      UIntMaxType = UnsignedLong;
+      IntPtrType = SignedInt;
+      PtrDiffType = SignedInt;
+      FloatWidth = 32;
+      FloatAlign = 32;
+      DoubleWidth = 32;
+      DoubleAlign = 32;
+      LongDoubleWidth = 32;
+      LongDoubleAlign = 32;
+      FloatFormat = &llvm::APFloat::IEEEsingle;
+      DoubleFormat = &llvm::APFloat::IEEEsingle;
+      LongDoubleFormat = &llvm::APFloat::IEEEsingle;
+      DescriptionString = "E-p:32:32:32-a0:32:32"
+                          "-i1:8:8-i8:8:8-i16:16:16-i32:32:32-i64:32:64"
+                          "-f32:32:32-f64:32:64";
+    }
+
+    virtual void getTargetDefines(const LangOptions &Opts,
+                                  std::vector<char> &Defines) const {
+      DefineStd(Defines, "tce", Opts);
+      Define(Defines, "__TCE__");
+      Define(Defines, "__TCE_V1__");
+    }
+    virtual void getTargetBuiltins(const Builtin::Info *&Records,
+                                   unsigned &NumRecords) const {}
+    virtual const char *getClobbers() const {return "";}
+    virtual const char *getVAListDeclaration() const {
+      return "typedef void* __builtin_va_list;";
+    }
+    virtual const char *getTargetPrefix() const {return "tce";}
+    virtual void getGCCRegNames(const char * const *&Names,
+                                unsigned &NumNames) const {}
+    virtual bool validateAsmConstraint(const char *&Name,
+                                       TargetInfo::ConstraintInfo &info) const {
+      return true;
+    }
+    virtual void getGCCRegAliases(const GCCRegAlias *&Aliases,
+                                  unsigned &NumAliases) const {}
+  };
+}
+
 //===----------------------------------------------------------------------===//
 // Driver code
 //===----------------------------------------------------------------------===//
@@ -1533,6 +1597,9 @@ TargetInfo* TargetInfo::CreateTargetInfo(const std::string &T) {
 
   case llvm::Triple::systemz:
     return new SystemZTargetInfo(T);
+
+  case llvm::Triple::tce:
+    return new TCETargetInfo(T);
 
   case llvm::Triple::x86:
     switch (os) {
