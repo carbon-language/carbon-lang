@@ -15,6 +15,7 @@
 #define LLVM_CODEGEN_MACHINEFRAMEINFO_H
 
 #include "llvm/ADT/BitVector.h"
+#include "llvm/ADT/DenseSet.h"
 #include "llvm/Support/DataTypes.h"
 #include <cassert>
 #include <iosfwd>
