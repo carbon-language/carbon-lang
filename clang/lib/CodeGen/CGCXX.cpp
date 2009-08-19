@@ -332,6 +332,83 @@ llvm::Value *CodeGenFunction::AddressCXXOfBaseClass(llvm::Value *BaseValue,
   return BaseValue;
 }
 
+/// EmitCXXAggrConstructorCall - This routine essentially creates a (nested)
+/// for-loop to call the default constructor on individual members of the
+/// array. 'Array' is the array type, 'This' is llvm pointer of the start
+/// of the array and 'D' is the default costructor Decl for elements of the
+/// array. It is assumed that all relevant checks have been made by the
+/// caller.
+void
+CodeGenFunction::EmitCXXAggrConstructorCall(const CXXConstructorDecl *D,
+                                            const ArrayType *Array,
+                                            llvm::Value *This) {
+  const ConstantArrayType *CA = dyn_cast<ConstantArrayType>(Array);
+  assert(CA && "Do we support VLA for construction ?");
+  
+  // Create a temporary for the loop index and initialize it with 0.
+  llvm::Value *IndexPtr = CreateTempAlloca(llvm::Type::getInt32Ty(VMContext),
+                                           "loop.index");
+  llvm::Value* zeroConstant = 
+    llvm::Constant::getNullValue(llvm::Type::getInt32Ty(VMContext));
+  Builder.CreateStore(zeroConstant, IndexPtr, false);
+  
+  // Start the loop with a block that tests the condition.
+  llvm::BasicBlock *CondBlock = createBasicBlock("for.cond");
+  llvm::BasicBlock *AfterFor = createBasicBlock("for.end");
+  
+  EmitBlock(CondBlock);
+  
+  llvm::BasicBlock *ForBody = createBasicBlock("for.body");
+  
+  // Generate: if (loop-index < number-of-elements fall to the loop body,
+  // otherwise, go to the block after the for-loop.
+  uint64_t NumElements = CA->getSize().getZExtValue();
+  llvm::Value * NumElementsPtr = 
+  llvm::ConstantInt::get(llvm::Type::getInt32Ty(VMContext), NumElements);
+  llvm::Value *Counter = Builder.CreateLoad(IndexPtr);
+  llvm::Value *IsLess = Builder.CreateICmpULT(Counter, NumElementsPtr, 
+                                              "isless");
+  // If the condition is true, execute the body.
+  Builder.CreateCondBr(IsLess, ForBody, AfterFor);
+  
+  EmitBlock(ForBody);
+  
+  llvm::BasicBlock *ContinueBlock = createBasicBlock("for.inc");
+  
+  // Store the blocks to use for break and continue.
+  // FIXME. Is this needed?
+  BreakContinueStack.push_back(BreakContinue(AfterFor, ContinueBlock));
+  
+  // Inside the loop body, emit the constructor call on the array element.
+  Counter = Builder.CreateLoad(IndexPtr);
+  llvm::Value *Address = Builder.CreateInBoundsGEP(This, Counter, "arrayidx");
+  if (const ConstantArrayType *CAT = 
+      dyn_cast<ConstantArrayType>(Array->getElementType())) {
+    // Need to call this routine again.
+    EmitCXXAggrConstructorCall(D, CAT, Address);
+  } 
+  else
+    EmitCXXConstructorCall(D, Ctor_Complete, Address, 0, 0);
+  
+  // FIXME. Do we need this?
+  BreakContinueStack.pop_back();
+  
+  EmitBlock(ContinueBlock);
+  
+  // Emit the increment of the loop counter.
+  llvm::Value *NextVal = llvm::ConstantInt::get(Counter->getType(), 1);
+  Counter = Builder.CreateLoad(IndexPtr);
+  NextVal = Builder.CreateAdd(Counter, NextVal, "inc");
+  Builder.CreateStore(NextVal, IndexPtr, false);
+  
+  // Finally, branch back up to the condition for the next iteration.
+  EmitBranch(CondBlock);
+  
+  // Emit the fall-through block.
+  EmitBlock(AfterFor, true);
+  
+}
+
 void
 CodeGenFunction::EmitCXXConstructorCall(const CXXConstructorDecl *D, 
                                         CXXCtorType Type, 
@@ -1231,6 +1308,14 @@ void CodeGenFunction::EmitCtorPrologue(const CXXConstructorDecl *CD) {
          FieldEnd = ClassDecl->field_end();
          Field != FieldEnd; ++Field) {
       QualType FieldType = getContext().getCanonicalType((*Field)->getType());
+      const ConstantArrayType *Array = 
+        getContext().getAsConstantArrayType(FieldType);
+      if (Array) {
+        FieldType = Array->getElementType();
+        while (const ConstantArrayType *AT = 
+                getContext().getAsConstantArrayType(FieldType))
+          FieldType = AT->getElementType();
+      }
       if (!FieldType->getAs<RecordType>() || Field->isAnonymousStructOrUnion())
         continue;
       const RecordType *ClassRec = FieldType->getAs<RecordType>();
@@ -1242,7 +1327,16 @@ void CodeGenFunction::EmitCtorPrologue(const CXXConstructorDecl *CD) {
             MemberClassDecl->getDefaultConstructor(getContext())) {
         LoadOfThis = LoadCXXThis();
         LValue LHS = EmitLValueForField(LoadOfThis, *Field, false, 0);
-        EmitCXXConstructorCall(MamberCX, Ctor_Complete, LHS.getAddress(), 0, 0);
+        if (Array) {
+          const llvm::Type *BasePtr = ConvertType(FieldType);
+          BasePtr = llvm::PointerType::getUnqual(BasePtr);
+          llvm::Value *BaseAddrPtr = 
+            Builder.CreateBitCast(LHS.getAddress(), BasePtr);
+          EmitCXXAggrConstructorCall(MamberCX, Array, BaseAddrPtr);
+        }
+        else
+          EmitCXXConstructorCall(MamberCX, Ctor_Complete, LHS.getAddress(), 
+                                 0, 0);
       }
     }
   }

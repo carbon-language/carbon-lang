@@ -582,6 +582,10 @@ public:
                               llvm::Value *This,
                               CallExpr::const_arg_iterator ArgBeg,
                               CallExpr::const_arg_iterator ArgEnd);
+  
+  void EmitCXXAggrConstructorCall(const CXXConstructorDecl *D,
+                                  const ArrayType *Array,
+                                  llvm::Value *This);
 
   void EmitCXXDestructorCall(const CXXDestructorDecl *D, CXXDtorType Type,
                              llvm::Value *This);
