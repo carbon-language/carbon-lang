@@ -19,14 +19,14 @@ let define_main_fn m retval =
     define_function "main" (function_type i32_type [| i32_type;
                                                       str_arr_type;
                                                       str_arr_type |]) m in
-  let b = builder_at_end (entry_block fn) in
+  let b = builder_at_end (global_context ()) (entry_block fn) in
   ignore (build_ret (const_int i32_type retval) b);
   fn
 
 let define_plus m =
   let fn = define_function "plus" (function_type i32_type [| i32_type;
                                                              i32_type |]) m in
-  let b = builder_at_end (entry_block fn) in
+  let b = builder_at_end (global_context ()) (entry_block fn) in
   let add = build_add (param fn 0) (param fn 1) "sum" b in
   ignore (build_ret add b)
 
@@ -52,10 +52,10 @@ let test_genericvalue () =
 
 let test_executionengine () =
   (* create *)
-  let m = create_module "test_module" in
+  let m = create_module (global_context ()) "test_module" in
   let main = define_main_fn m 42 in
   
-  let m2 = create_module "test_module2" in
+  let m2 = create_module (global_context ()) "test_module2" in
   define_plus m2;
   
   let ee = ExecutionEngine.create (ModuleProvider.create m) in

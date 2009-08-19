@@ -13,7 +13,9 @@ exception Error of string
 external register_exns : exn -> unit = "llvm_register_bitreader_exns"
 let _ = register_exns (Error "")
 
-external get_module_provider : Llvm.llmemorybuffer -> Llvm.llmoduleprovider
+external get_module_provider : Llvm.llcontext -> Llvm.llmemorybuffer ->
+                               Llvm.llmoduleprovider
                              = "llvm_get_module_provider"
-external parse_bitcode : Llvm.llmemorybuffer -> Llvm.llmodule
+
+external parse_bitcode : Llvm.llcontext -> Llvm.llmemorybuffer -> Llvm.llmodule
                        = "llvm_parse_bitcode"

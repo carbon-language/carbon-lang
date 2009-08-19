@@ -92,6 +92,24 @@ static value alloc_variant(int tag, void *Value) {
   }
 
 
+/*===-- Contexts ----------------------------------------------------------===*/
+
+/* unit -> llcontext */
+CAMLprim LLVMContextRef llvm_create_context(value Unit) {
+  return LLVMContextCreate();
+}
+
+/* llcontext -> unit */
+CAMLprim value llvm_dispose_context(LLVMContextRef C) {
+  LLVMContextDispose(C);
+  return Val_unit;
+}
+
+/* unit -> llcontext */
+CAMLprim LLVMContextRef llvm_global_context(value Unit) {
+  return LLVMGetGlobalContext();
+}
+
 /*===-- Modules -----------------------------------------------------------===*/
 
 /* string -> llmodule */
@@ -151,6 +169,11 @@ CAMLprim value llvm_dump_module(LLVMModuleRef M) {
 /* lltype -> TypeKind.t */
 CAMLprim value llvm_classify_type(LLVMTypeRef Ty) {
   return Val_int(LLVMGetTypeKind(Ty));
+}
+
+/* lltype -> llcontext */
+CAMLprim LLVMContextRef llvm_type_context(LLVMTypeRef Ty) {
+  return LLVMGetTypeContext(Ty);
 }
 
 /*--... Operations on integer types ........................................--*/
@@ -228,16 +251,17 @@ CAMLprim value llvm_param_types(LLVMTypeRef FunTy) {
 
 /*--... Operations on struct types .........................................--*/
 
-/* lltype array -> lltype */
-CAMLprim LLVMTypeRef llvm_struct_type(value ElementTypes) {
-  return LLVMStructType((LLVMTypeRef *) ElementTypes,
-                        Wosize_val(ElementTypes), 0);
+/* llcontext -> lltype array -> lltype */
+CAMLprim LLVMTypeRef llvm_struct_type(LLVMContextRef C, value ElementTypes) {
+  return LLVMStructTypeInContext(C, (LLVMTypeRef *) ElementTypes,
+                                 Wosize_val(ElementTypes), 0);
 }
 
-/* lltype array -> lltype */
-CAMLprim LLVMTypeRef llvm_packed_struct_type(value ElementTypes) {
-  return LLVMStructType((LLVMTypeRef *) ElementTypes,
-                        Wosize_val(ElementTypes), 1);
+/* llcontext -> lltype array -> lltype */
+CAMLprim LLVMTypeRef llvm_packed_struct_type(LLVMContextRef C,
+                                             value ElementTypes) {
+  return LLVMStructTypeInContext(C, (LLVMTypeRef *) ElementTypes,
+                                 Wosize_val(ElementTypes), 1);
 }
 
 /* lltype -> lltype array */
@@ -425,16 +449,17 @@ CAMLprim LLVMValueRef llvm_const_array(LLVMTypeRef ElementTy,
                         Wosize_val(ElementVals));
 }
 
-/* llvalue array -> llvalue */
-CAMLprim LLVMValueRef llvm_const_struct(value ElementVals) {
-  return LLVMConstStruct((LLVMValueRef *) Op_val(ElementVals),
-                         Wosize_val(ElementVals), 0);
+/* llcontext -> llvalue array -> llvalue */
+CAMLprim LLVMValueRef llvm_const_struct(LLVMContextRef C, value ElementVals) {
+  return LLVMConstStructInContext(C, (LLVMValueRef *) Op_val(ElementVals),
+                                  Wosize_val(ElementVals), 0);
 }
 
-/* llvalue array -> llvalue */
-CAMLprim LLVMValueRef llvm_const_packed_struct(value ElementVals) {
-  return LLVMConstStruct((LLVMValueRef *) Op_val(ElementVals),
-                         Wosize_val(ElementVals), 1);
+/* llcontext -> llvalue array -> llvalue */
+CAMLprim LLVMValueRef llvm_const_packed_struct(LLVMContextRef C,
+                                               value ElementVals) {
+  return LLVMConstStructInContext(C, (LLVMValueRef *) Op_val(ElementVals),
+                                  Wosize_val(ElementVals), 1);
 }
 
 /* llvalue array -> llvalue */
@@ -905,9 +930,9 @@ static value alloc_builder(LLVMBuilderRef B) {
   return V;
 }
 
-/* unit-> llbuilder */
-CAMLprim value llvm_builder(value Unit) {
-  return alloc_builder(LLVMCreateBuilder());
+/* llcontext -> llbuilder */
+CAMLprim value llvm_builder(LLVMContextRef C) {
+  return alloc_builder(LLVMCreateBuilderInContext(C));
 }
 
 /* (llbasicblock, llvalue) llpos -> llbuilder -> unit */

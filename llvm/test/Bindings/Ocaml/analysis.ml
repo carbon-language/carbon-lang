@@ -16,9 +16,9 @@ let bomb msg =
 
 let _ =
   let fty = function_type void_type [| |] in
-  let m = create_module "valid_m" in
+  let m = create_module (global_context ()) "valid_m" in
   let fn = define_function "valid_fn" fty m in
-  let at_entry = builder_at_end (entry_block fn) in
+  let at_entry = builder_at_end (global_context ()) (entry_block fn) in
   ignore (build_ret_void at_entry);
   
   

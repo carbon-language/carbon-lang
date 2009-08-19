@@ -17,6 +17,7 @@ let suite_name = ref ""
 let group_name = ref ""
 let case_num = ref 0
 let print_checkpoints = false
+let context = global_context ()
 
 let group name =
   group_name := !suite_name ^ "/" ^ name;
@@ -47,7 +48,7 @@ let suite name f =
 (*===-- Fixture -----------------------------------------------------------===*)
 
 let filename = Sys.argv.(1)
-let m = create_module filename
+let m = create_module context filename
 let mp = ModuleProvider.create m
 
 
@@ -270,20 +271,20 @@ let test_constants () =
                           one; two; one; two |] in
   ignore (define_global "Const08" c m);
   insist ((vector_type i16_type 8) = (type_of c));
-  
+
   (* RUN: grep {Const09.*.i16 1, i16 2, i32 3, i32 4} < %t.ll
    *)
   group "structure";
-  let c = const_struct [| one; two; three; four |] in
+  let c = const_struct context [| one; two; three; four |] in
   ignore (define_global "Const09" c m);
-  insist ((struct_type [| i16_type; i16_type; i32_type; i32_type |])
+  insist ((struct_type context [| i16_type; i16_type; i32_type; i32_type |])
         = (type_of c));
   
   (* RUN: grep {Const10.*zeroinit} < %t.ll
    *)
   group "null";
-  let c = const_null (packed_struct_type [| i1_type; i8_type;
-                                            i64_type; double_type |]) in
+  let c = const_null (packed_struct_type context [| i1_type; i8_type; i64_type;
+                                                    double_type |]) in
   ignore (define_global "Const10" c m);
   
   (* RUN: grep {Const11.*-1} < %t.ll
@@ -496,7 +497,7 @@ let test_global_variables () =
   insist (is_global_constant g);
   
   begin group "iteration";
-    let m = create_module "temp" in
+    let m = create_module context "temp" in
     
     insist (At_end m = global_begin m);
     insist (At_start m = global_end m);
@@ -556,7 +557,7 @@ let test_functions () =
   let fn = define_function "Fn3" ty m in
   insist (not (is_declaration fn));
   insist (1 = Array.length (basic_blocks fn));
-  ignore (build_unreachable (builder_at_end (entry_block fn)));
+  ignore (build_unreachable (builder_at_end context (entry_block fn)));
   
   (* RUN: grep {define.*Fn4.*Param1.*Param2} < %t.ll
    *)
@@ -570,7 +571,7 @@ let test_functions () =
   insist (i64_type = type_of params.(1));
   set_value_name "Param1" params.(0);
   set_value_name "Param2" params.(1);
-  ignore (build_unreachable (builder_at_end (entry_block fn)));
+  ignore (build_unreachable (builder_at_end context (entry_block fn)));
   
   (* RUN: grep {fastcc.*Fn5} < %t.ll
    *)
@@ -579,7 +580,7 @@ let test_functions () =
   insist (CallConv.c = function_call_conv fn);
   set_function_call_conv CallConv.fast fn;
   insist (CallConv.fast = function_call_conv fn);
-  ignore (build_unreachable (builder_at_end (entry_block fn)));
+  ignore (build_unreachable (builder_at_end context (entry_block fn)));
   
   begin group "gc";
     (* RUN: grep {Fn6.*gc.*shadowstack} < %t.ll
@@ -591,11 +592,11 @@ let test_functions () =
     set_gc None fn;
     insist (None = gc fn);
     set_gc (Some "shadowstack") fn;
-    ignore (build_unreachable (builder_at_end (entry_block fn)));
+    ignore (build_unreachable (builder_at_end context (entry_block fn)));
   end;
   
   begin group "iteration";
-    let m = create_module "temp" in
+    let m = create_module context "temp" in
     
     insist (At_end m = function_begin m);
     insist (At_start m = function_end m);
@@ -625,7 +626,7 @@ let test_functions () =
 
 let test_params () =
   begin group "iteration";
-    let m = create_module "temp" in
+    let m = create_module context "temp" in
     
     let vf = define_function "void" (function_type void_type [| |]) m in
     
@@ -674,7 +675,7 @@ let test_basic_blocks () =
   let fn = declare_function "X" ty m in
   let bb = append_block "Bb1" fn in
   insist (bb = entry_block fn);
-  ignore (build_unreachable (builder_at_end bb));
+  ignore (build_unreachable (builder_at_end context bb));
   
   (* RUN: grep -v Bb2 < %t.ll
    *)
@@ -688,15 +689,15 @@ let test_basic_blocks () =
   let bbb = append_block "b" fn in
   let bba = insert_block "a" bbb in
   insist ([| bba; bbb |] = basic_blocks fn);
-  ignore (build_unreachable (builder_at_end bba));
-  ignore (build_unreachable (builder_at_end bbb));
+  ignore (build_unreachable (builder_at_end context bba));
+  ignore (build_unreachable (builder_at_end context bbb));
   
   (* RUN: grep Bb3 < %t.ll
    *)
   group "name/value";
   let fn = define_function "X4" ty m in
   let bb = entry_block fn in
-  ignore (build_unreachable (builder_at_end bb));
+  ignore (build_unreachable (builder_at_end context bb));
   let bbv = value_of_block bb in
   set_value_name "Bb3" bbv;
   insist ("Bb3" = value_name bbv);
@@ -704,13 +705,13 @@ let test_basic_blocks () =
   group "casts";
   let fn = define_function "X5" ty m in
   let bb = entry_block fn in
-  ignore (build_unreachable (builder_at_end bb));
+  ignore (build_unreachable (builder_at_end context bb));
   insist (bb = block_of_value (value_of_block bb));
   insist (value_is_block (value_of_block bb));
   insist (not (value_is_block (const_null i32_type)));
   
   begin group "iteration";
-    let m = create_module "temp" in
+    let m = create_module context "temp" in
     let f = declare_function "Temp" (function_type i32_type [| |]) m in
     
     insist (At_end f = block_begin f);
@@ -741,11 +742,11 @@ let test_basic_blocks () =
 
 let test_instructions () =
   begin group "iteration";
-    let m = create_module "temp" in
+    let m = create_module context "temp" in
     let fty = function_type void_type [| i32_type; i32_type |] in
     let f = define_function "f" fty m in
     let bb = entry_block f in
-    let b = builder_at (At_end bb) in
+    let b = builder_at context (At_end bb) in
     
     insist (At_end bb = instr_begin bb);
     insist (At_start bb = instr_end bb);
@@ -778,7 +779,7 @@ let test_builder () =
   
   begin group "parent";
     insist (try
-              ignore (insertion_block (builder ()));
+              ignore (insertion_block (builder context));
               false
             with Not_found ->
               true);
@@ -786,7 +787,7 @@ let test_builder () =
     let fty = function_type void_type [| i32_type |] in
     let fn = define_function "BuilderParent" fty m in
     let bb = entry_block fn in
-    let b = builder_at_end bb in
+    let b = builder_at_end context bb in
     let p = param fn 0 in
     let sum = build_add p p "sum" b in
     ignore (build_ret_void b);
@@ -803,21 +804,21 @@ let test_builder () =
      *)
     let fty = function_type void_type [| |] in
     let fn = declare_function "X6" fty m in
-    let b = builder_at_end (append_block "Bb01" fn) in
+    let b = builder_at_end context (append_block "Bb01" fn) in
     ignore (build_ret_void b)
   end;
   
   (* The rest of the tests will use one big function. *)
   let fty = function_type i32_type [| i32_type; i32_type |] in
   let fn = define_function "X7" fty m in
-  let atentry = builder_at_end (entry_block fn) in
+  let atentry = builder_at_end context (entry_block fn) in
   let p1 = param fn 0 ++ set_value_name "P1" in
   let p2 = param fn 1 ++ set_value_name "P2" in
   let f1 = build_uitofp p1 float_type "F1" atentry in
   let f2 = build_uitofp p2 float_type "F2" atentry in
   
   let bb00 = append_block "Bb00" fn in
-  ignore (build_unreachable (builder_at_end bb00));
+  ignore (build_unreachable (builder_at_end context bb00));
   
   group "ret"; begin
     (* RUN: grep {ret.*P1} < %t.ll
@@ -830,7 +831,7 @@ let test_builder () =
     (* RUN: grep {br.*Bb02} < %t.ll
      *)
     let bb02 = append_block "Bb02" fn in
-    let b = builder_at_end bb02 in
+    let b = builder_at_end context bb02 in
     ignore (build_br bb02 b)
   end;
   
@@ -838,7 +839,7 @@ let test_builder () =
     (* RUN: grep {br.*Inst01.*Bb03.*Bb00} < %t.ll
      *)
     let bb03 = append_block "Bb03" fn in
-    let b = builder_at_end bb03 in
+    let b = builder_at_end context bb03 in
     let cond = build_trunc p1 i1_type "Inst01" b in
     ignore (build_cond_br cond bb03 bb00 b)
   end;
@@ -849,10 +850,10 @@ let test_builder () =
      *)
     let bb1 = append_block "SwiBlock1" fn in
     let bb2 = append_block "SwiBlock2" fn in
-    ignore (build_unreachable (builder_at_end bb2));
+    ignore (build_unreachable (builder_at_end context bb2));
     let bb3 = append_block "SwiBlock3" fn in
-    ignore (build_unreachable (builder_at_end bb3));
-    let si = build_switch p1 bb3 1 (builder_at_end bb1) in
+    ignore (build_unreachable (builder_at_end context bb3));
+    let si = build_switch p1 bb3 1 (builder_at_end context bb1) in
     ignore (add_case si (const_int i32_type 2) bb2)
   end;
   
@@ -861,7 +862,7 @@ let test_builder () =
      * RUN: grep {to.*Bb04.*unwind.*Bb00} < %t.ll
      *)
     let bb04 = append_block "Bb04" fn in
-    let b = builder_at_end bb04 in
+    let b = builder_at_end context bb04 in
     ignore (build_invoke fn [| p1; p2 |] bb04 bb00 "Inst02" b)
   end;
   
@@ -869,7 +870,7 @@ let test_builder () =
     (* RUN: grep {unwind} < %t.ll
      *)
     let bb05 = append_block "Bb05" fn in
-    let b = builder_at_end bb05 in
+    let b = builder_at_end context bb05 in
     ignore (build_unwind b)
   end;
   
@@ -877,13 +878,13 @@ let test_builder () =
     (* RUN: grep {unreachable} < %t.ll
      *)
     let bb06 = append_block "Bb06" fn in
-    let b = builder_at_end bb06 in
+    let b = builder_at_end context bb06 in
     ignore (build_unreachable b)
   end;
   
   group "arithmetic"; begin
     let bb07 = append_block "Bb07" fn in
-    let b = builder_at_end bb07 in
+    let b = builder_at_end context bb07 in
     
     (* RUN: grep {Inst03.*add.*P1.*P2} < %t.ll
      * RUN: grep {Inst04.*sub.*P1.*Inst03} < %t.ll
@@ -925,7 +926,7 @@ let test_builder () =
   
   group "memory"; begin
     let bb08 = append_block "Bb08" fn in
-    let b = builder_at_end bb08 in
+    let b = builder_at_end context bb08 in
     
     (* RUN: grep {Inst20.*malloc.*i8 } < %t.ll
      * RUN: grep {Inst21.*malloc.*i8.*P1} < %t.ll
@@ -1037,9 +1038,9 @@ let test_builder () =
     let b2 = append_block "PhiBlock2" fn in
     
     let jb = append_block "PhiJoinBlock" fn in
-    ignore (build_br jb (builder_at_end b1));
-    ignore (build_br jb (builder_at_end b2));
-    let at_jb = builder_at_end jb in
+    ignore (build_br jb (builder_at_end context b1));
+    ignore (build_br jb (builder_at_end context b2));
+    let at_jb = builder_at_end context jb in
     
     let phi = build_phi [(p1, b1)] "PhiNode" at_jb in
     insist ([(p1, b1)] = incoming phi);
@@ -1054,7 +1055,7 @@ let test_builder () =
 (*===-- Module Provider ---------------------------------------------------===*)
 
 let test_module_provider () =
-  let m = create_module "test" in
+  let m = create_module context "test" in
   let mp = ModuleProvider.create m in
   ModuleProvider.dispose mp
 
@@ -1073,7 +1074,7 @@ let test_pass_manager () =
   begin group "function pass manager";
     let fty = function_type void_type [| |] in
     let fn = define_function "FunctionPassManager" fty m in
-    ignore (build_ret_void (builder_at_end (entry_block fn)));
+    ignore (build_ret_void (builder_at_end context (entry_block fn)));
     
     ignore (PassManager.create_function mp
              ++ PassManager.initialize

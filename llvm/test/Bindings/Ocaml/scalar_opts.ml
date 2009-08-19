@@ -19,7 +19,7 @@ let suite name f =
 (*===-- Fixture -----------------------------------------------------------===*)
 
 let filename = Sys.argv.(1)
-let m = create_module filename
+let m = create_module (global_context ()) filename
 let mp = ModuleProvider.create m
 
 
@@ -30,7 +30,7 @@ let test_transforms () =
 
   let fty = function_type void_type [| |] in
   let fn = define_function "fn" fty m in
-  ignore (build_ret_void (builder_at_end (entry_block fn)));
+  ignore (build_ret_void (builder_at_end (global_context ()) (entry_block fn)));
   
   let td = TargetData.create (target_triple m) in
   

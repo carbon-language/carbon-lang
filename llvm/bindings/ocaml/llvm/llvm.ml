@@ -8,6 +8,7 @@
  *===----------------------------------------------------------------------===*)
 
 
+type llcontext
 type llmodule
 type lltype
 type lltypehandle
@@ -127,10 +128,13 @@ type ('a, 'b) llrev_pos =
 | At_start of 'a
 | After of 'b
 
+(*===-- Contexts ----------------------------------------------------------===*)
+external create_context : unit -> llcontext = "llvm_create_context"
+external dispose_context : unit -> llcontext = "llvm_dispose_context"
+external global_context : unit -> llcontext = "llvm_global_context"
 
 (*===-- Modules -----------------------------------------------------------===*)
-
-external create_module : string -> llmodule = "llvm_create_module"
+external create_module : llcontext -> string -> llmodule = "llvm_create_module"
 external dispose_module : llmodule -> unit = "llvm_dispose_module"
 external target_triple: llmodule -> string
                       = "llvm_target_triple"
@@ -147,8 +151,8 @@ external delete_type_name : string -> llmodule -> unit
 external dump_module : llmodule -> unit = "llvm_dump_module"
 
 (*===-- Types -------------------------------------------------------------===*)
-
 external classify_type : lltype -> TypeKind.t = "llvm_classify_type"
+external type_context : lltype -> llcontext = "llvm_type_context"
 
 (*--... Operations on integer types ........................................--*)
 external _i1_type : unit -> lltype = "llvm_i1_type"
@@ -188,8 +192,9 @@ external return_type : lltype -> lltype = "LLVMGetReturnType"
 external param_types : lltype -> lltype array = "llvm_param_types"
 
 (*--... Operations on struct types .........................................--*)
-external struct_type : lltype array -> lltype = "llvm_struct_type"
-external packed_struct_type : lltype array -> lltype = "llvm_packed_struct_type"
+external struct_type : llcontext -> lltype array -> lltype = "llvm_struct_type"
+external packed_struct_type : llcontext -> lltype array -> lltype
+                            = "llvm_packed_struct_type"
 external element_types : lltype -> lltype array = "llvm_element_types"
 external is_packed : lltype -> bool = "llvm_is_packed"
 
@@ -247,8 +252,9 @@ external const_float_of_string : lltype -> string -> llvalue
 external const_string : string -> llvalue = "llvm_const_string"
 external const_stringz : string -> llvalue = "llvm_const_stringz"
 external const_array : lltype -> llvalue array -> llvalue = "llvm_const_array"
-external const_struct : llvalue array -> llvalue = "llvm_const_struct"
-external const_packed_struct : llvalue array -> llvalue
+external const_struct : llcontext -> llvalue array -> llvalue
+                      = "llvm_const_struct"
+external const_packed_struct : llcontext -> llvalue array -> llvalue
                              = "llvm_const_packed_struct"
 external const_vector : llvalue array -> llvalue = "llvm_const_vector"
 
@@ -654,20 +660,20 @@ external incoming : llvalue -> (llvalue * llbasicblock) list = "llvm_incoming"
 
 
 (*===-- Instruction builders ----------------------------------------------===*)
-external builder : unit -> llbuilder = "llvm_builder"
+external builder : llcontext -> llbuilder = "llvm_builder"
 external position_builder : (llbasicblock, llvalue) llpos -> llbuilder -> unit
                           = "llvm_position_builder"
 external insertion_block : llbuilder -> llbasicblock = "llvm_insertion_block"
 external insert_into_builder : llvalue -> string -> llbuilder -> unit
                              = "llvm_insert_into_builder"
 
-let builder_at ip =
-  let b = builder () in
+let builder_at context ip =
+  let b = builder context in
   position_builder ip b;
   b
 
-let builder_before i = builder_at (Before i)
-let builder_at_end bb = builder_at (At_end bb)
+let builder_before context i = builder_at context (Before i)
+let builder_at_end context bb = builder_at context (At_end bb)
 
 let position_before i = position_builder (Before i)
 let position_at_end bb = position_builder (At_end bb)

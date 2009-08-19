@@ -9,7 +9,7 @@
 let test x = if not x then exit 1 else ()
 
 let _ =
-  let m = Llvm.create_module "ocaml_test_module" in
+  let m = Llvm.create_module (Llvm.global_context ()) "ocaml_test_module" in
   
   ignore (Llvm.define_type_name "caml_int_ty" Llvm.i32_type m);
   

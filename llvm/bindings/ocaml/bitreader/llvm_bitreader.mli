@@ -14,16 +14,18 @@
 
 exception Error of string
 
-(** [read_bitcode_file path] reads the bitcode for a new module [m] from the
-    file at [path]. Returns [Success m] if successful, and [Failure msg]
-    otherwise, where [msg] is a description of the error encountered.
-    See the function [llvm::getBitcodeModuleProvider]. *)
-external get_module_provider : Llvm.llmemorybuffer -> Llvm.llmoduleprovider
+(** [get_module_provider context mb] reads the bitcode for a new
+    module provider [m] from the memory buffer [mb] in the context [context].
+    Returns [m] if successful, or raises [Error msg] otherwise, where [msg] is a
+    description of the error encountered. See the function
+    [llvm::getBitcodeModuleProvider]. *)
+external get_module_provider : Llvm.llcontext -> Llvm.llmemorybuffer ->
+                               Llvm.llmoduleprovider
                              = "llvm_get_module_provider"
 
-(** [parse_bitcode mb] parses the bitcode for a new module [m] from the memory
-    buffer [mb]. Returns [Success m] if successful, and [Failure msg] otherwise,
-    where [msg] is a description of the error encountered.
-    See the function [llvm::ParseBitcodeFile]. *)
-external parse_bitcode : Llvm.llmemorybuffer -> Llvm.llmodule
+(** [parse_bitcode context mb] parses the bitcode for a new module [m] from the
+    memory buffer [mb] in the context [context]. Returns [m] if successful, or
+	 	raises [Error msg] otherwise, where [msg] is a description of the error
+	 	encountered. See the function [llvm::ParseBitcodeFile]. *)
+external parse_bitcode : Llvm.llcontext -> Llvm.llmemorybuffer -> Llvm.llmodule
                        = "llvm_parse_bitcode"

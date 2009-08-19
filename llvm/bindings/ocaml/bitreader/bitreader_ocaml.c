@@ -45,27 +45,29 @@ static void llvm_raise(value Prototype, char *Message) {
 
 /*===-- Modules -----------------------------------------------------------===*/
 
-/* Llvm.llmemorybuffer -> Llvm.module */
-CAMLprim value llvm_get_module_provider(LLVMMemoryBufferRef MemBuf) {
+/* Llvm.llcontext -> Llvm.llmemorybuffer -> Llvm.llmodule */
+CAMLprim value llvm_get_module_provider(LLVMContextRef C,
+                                        LLVMMemoryBufferRef MemBuf) {
   CAMLparam0();
   CAMLlocal2(Variant, MessageVal);
   char *Message;
   
   LLVMModuleProviderRef MP;
-  if (LLVMGetBitcodeModuleProvider(MemBuf, &MP, &Message))
+  if (LLVMGetBitcodeModuleProviderInContext(C, MemBuf, &MP, &Message))
     llvm_raise(llvm_bitreader_error_exn, Message);
   
   CAMLreturn((value) MemBuf);
 }
 
-/* Llvm.llmemorybuffer -> Llvm.llmodule */
-CAMLprim value llvm_parse_bitcode(LLVMMemoryBufferRef MemBuf) {
+/* Llvm.llcontext -> Llvm.llmemorybuffer -> Llvm.llmodule */
+CAMLprim value llvm_parse_bitcode(LLVMContextRef C,
+                                  LLVMMemoryBufferRef MemBuf) {
   CAMLparam0();
   CAMLlocal2(Variant, MessageVal);
   LLVMModuleRef M;
   char *Message;
   
-  if (LLVMParseBitcode(MemBuf, &M, &Message))
+  if (LLVMParseBitcodeInContext(C, MemBuf, &M, &Message))
     llvm_raise(llvm_bitreader_error_exn, Message);
   
   CAMLreturn((value) M);
