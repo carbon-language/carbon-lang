@@ -56,9 +56,9 @@ struct LeakDetector {
   /// The specified message will be printed indicating when the check was
   /// performed.
   ///
-  static void checkForGarbage(const std::string &Message) {
+  static void checkForGarbage(LLVMContext &C, const std::string &Message) {
 #ifndef NDEBUG
-    checkForGarbageImpl(Message);
+    checkForGarbageImpl(C, Message);
 #endif
   }
 
@@ -83,7 +83,7 @@ private:
   static void removeGarbageObjectImpl(const Value *Object);
   static void addGarbageObjectImpl(void *Object);
   static void removeGarbageObjectImpl(void *Object);
-  static void checkForGarbageImpl(const std::string &Message);
+  static void checkForGarbageImpl(LLVMContext &C, const std::string &Message);
 };
 
 } // End llvm namespace
