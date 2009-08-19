@@ -1,7 +1,7 @@
-# RUN: llvm-mc -triple i386-unknown-unknown %s | FileCheck %s
+# RUN: llvm-mc -triple i386-apple-darwin9 %s | FileCheck %s
 
 # CHECK: TEST0:
-# CHECK: .p2align 1, 0
+# CHECK: align 1
 TEST0:  
         .align 1
 

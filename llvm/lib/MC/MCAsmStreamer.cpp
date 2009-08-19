@@ -229,7 +229,14 @@ void MCAsmStreamer::EmitValueToAlignment(unsigned ByteAlignment, int64_t Value,
   // Some assemblers don't support non-power of two alignments, so we always
   // emit alignments as a power of two if possible.
   if (isPowerOf2_32(ByteAlignment)) {
-    OS << TAI.getAlignDirective();
+    switch (ValueSize) {
+    default: llvm_unreachable("Invalid size for machine code value!");
+    case 1: OS << TAI.getAlignDirective(); break;
+    // FIXME: use TAI for this!
+    case 2: OS << ".p2alignw "; break;
+    case 4: OS << ".p2alignl "; break;
+    case 8: llvm_unreachable("Unsupported alignment size!");
+    }
     
     if (TAI.getAlignmentIsInBytes())
       OS << ByteAlignment;
