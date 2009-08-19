@@ -269,6 +269,10 @@ D: LTO tool, PassManager rewrite, Loop Pass Manager, Loop Rotate
 D: GCC PCH Integration (llvm-gcc), llvm-gcc improvements
 D: Optimizer improvements, Loop Index Split
 
+N: Sandeep Patel
+E: deeppatel1987@gmail.com
+D: ARM calling conventions rewrite, hard float support
+
 N: Vladimir Prus
 W: http://vladimir_prus.blogspot.com
 E: ghost@cs.msu.su
