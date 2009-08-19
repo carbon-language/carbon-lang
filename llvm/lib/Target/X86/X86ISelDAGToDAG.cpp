@@ -1943,7 +1943,6 @@ SDNode *X86DAGToDAGISel::Select(SDValue N) {
   }
 
   case X86ISD::CMP: {
-                      if (getenv("NOCMP")) break;
     SDValue N0 = Node->getOperand(0);
     SDValue N1 = Node->getOperand(1);
 
