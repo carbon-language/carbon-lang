@@ -59,6 +59,11 @@ static RegisterRegAlloc
 registerPBQPRepAlloc("pbqp", "PBQP register allocator.",
                       llvm::createPBQPRegisterAllocator);
 
+static cl::opt<bool>
+pbqpCoalescing("pbqp-coalescing",
+               cl::desc("Attempt coalescing during PBQP register allocation."),
+               cl::init(false), cl::Hidden);
+
 namespace {
 
   ///
@@ -537,7 +542,11 @@ PBQP::SimpleGraph PBQPRegAlloc::constructPBQPProblem() {
   }
 
   // Get the set of potential coalesces.
-  CoalesceMap coalesces;//(findCoalesces());
+  CoalesceMap coalesces;
+
+  if (pbqpCoalescing) {
+    coalesces = findCoalesces();
+  }
 
   // Construct a PBQP solver for this problem
   PBQP::SimpleGraph problem;
