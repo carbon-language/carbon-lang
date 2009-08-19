@@ -171,6 +171,10 @@ std::string Value::getNameStr() const {
 }
 
 void Value::setName(const Twine &NewName) {
+  // Fast path for common IRBuilder case of setName("") when there is no name.
+  if (NewName.isTriviallyEmpty() && !hasName())
+    return;
+
   SmallString<256> NameData;
   NewName.toVector(NameData);
 
