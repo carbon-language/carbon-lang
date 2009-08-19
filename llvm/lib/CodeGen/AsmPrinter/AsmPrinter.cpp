@@ -80,13 +80,6 @@ TargetLoweringObjectFile &AsmPrinter::getObjFileLowering() const {
   return TM.getTargetLowering()->getObjFileLowering();
 }
 
-/// SwitchToSection - Switch to the specified section of the executable if we
-/// are not already in it!
-void AsmPrinter::SwitchToSection(const MCSection *NS) {
-  assert(NS != 0 && "Must specify a section to switch to");
-  OutStreamer.SwitchSection(NS);
-}
-
 /// getCurrentSection() - Return the current section we are emitting to.
 const MCSection *AsmPrinter::getCurrentSection() const {
   return OutStreamer.getCurrentSection();
@@ -300,7 +293,7 @@ void AsmPrinter::EmitConstantPool(MachineConstantPool *MCP) {
 
   // Now print stuff into the calculated sections.
   for (unsigned i = 0, e = CPSections.size(); i != e; ++i) {
-    SwitchToSection(CPSections[i].S);
+    OutStreamer.SwitchSection(CPSections[i].S);
     EmitAlignment(Log2_32(CPSections[i].Alignment));
 
     unsigned Offset = 0;
@@ -354,12 +347,13 @@ void AsmPrinter::EmitJumpTableInfo(MachineJumpTableInfo *MJTI,
     // function body itself, otherwise the label differences won't make sense.
     // We should also do if the section name is NULL or function is declared in
     // discardable section.
-    SwitchToSection(getObjFileLowering().SectionForGlobal(F, Mang, TM));
+    OutStreamer.SwitchSection(getObjFileLowering().SectionForGlobal(F, Mang,
+                                                                    TM));
   } else {
     // Otherwise, drop it in the readonly section.
     const MCSection *ReadOnlySection = 
       getObjFileLowering().getSectionForConstant(SectionKind::getReadOnly());
-    SwitchToSection(ReadOnlySection);
+    OutStreamer.SwitchSection(ReadOnlySection);
     JTInDiffSection = true;
   }
   
@@ -458,14 +452,14 @@ bool AsmPrinter::EmitSpecialLLVMGlobal(const GlobalVariable *GV) {
   const TargetData *TD = TM.getTargetData();
   unsigned Align = Log2_32(TD->getPointerPrefAlignment());
   if (GV->getName() == "llvm.global_ctors") {
-    SwitchToSection(getObjFileLowering().getStaticCtorSection());
+    OutStreamer.SwitchSection(getObjFileLowering().getStaticCtorSection());
     EmitAlignment(Align, 0);
     EmitXXStructorList(GV->getInitializer());
     return true;
   } 
   
   if (GV->getName() == "llvm.global_dtors") {
-    SwitchToSection(getObjFileLowering().getStaticDtorSection());
+    OutStreamer.SwitchSection(getObjFileLowering().getStaticDtorSection());
     EmitAlignment(Align, 0);
     EmitXXStructorList(GV->getInitializer());
     return true;

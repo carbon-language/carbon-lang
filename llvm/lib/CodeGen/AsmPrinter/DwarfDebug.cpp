@@ -15,6 +15,7 @@
 #include "llvm/Module.h"
 #include "llvm/CodeGen/MachineModuleInfo.h"
 #include "llvm/MC/MCSection.h"
+#include "llvm/MC/MCStreamer.h"
 #include "llvm/Target/TargetAsmInfo.h"
 #include "llvm/Target/TargetData.h"
 #include "llvm/Target/TargetFrameInfo.h"
@@ -787,9 +788,10 @@ DIE *DwarfDebug::CreateGlobalVariableDIE(CompileUnit *DW_Unit,
   std::string LinkageName;
   GV.getLinkageName(LinkageName);
   if (!LinkageName.empty()) {
-    // Skip special LLVM prefix that is used to inform the asm printer to not emit
-    // usual symbol prefix before the symbol name. This happens for Objective-C
-    // symbol names and symbol whose name is replaced using GCC's __asm__ attribute.
+    // Skip special LLVM prefix that is used to inform the asm printer to not
+    // emit usual symbol prefix before the symbol name. This happens for
+    // Objective-C symbol names and symbol whose name is replaced using GCC's
+    // __asm__ attribute.
     if (LinkageName[0] == 1)
       LinkageName = &LinkageName[1];
     AddString(GVDie, dwarf::DW_AT_MIPS_linkage_name, dwarf::DW_FORM_string,
@@ -1362,14 +1364,14 @@ void DwarfDebug::EndModule() {
     DebugTimer->startTimer();
 
   // Standard sections final addresses.
-  Asm->SwitchToSection(Asm->getObjFileLowering().getTextSection());
+  Asm->OutStreamer.SwitchSection(Asm->getObjFileLowering().getTextSection());
   EmitLabel("text_end", 0);
-  Asm->SwitchToSection(Asm->getObjFileLowering().getDataSection());
+  Asm->OutStreamer.SwitchSection(Asm->getObjFileLowering().getDataSection());
   EmitLabel("data_end", 0);
 
   // End text sections.
   for (unsigned i = 1, N = SectionMap.size(); i <= N; ++i) {
-    Asm->SwitchToSection(SectionMap[i]);
+    Asm->OutStreamer.SwitchSection(SectionMap[i]);
     EmitLabel("section_end", i);
   }
 
@@ -1863,39 +1865,40 @@ void DwarfDebug::EmitInitial() {
   if (didInitial) return;
   didInitial = true;
 
+  const TargetLoweringObjectFile &TLOF = Asm->getObjFileLowering();
+  
   // Dwarf sections base addresses.
   if (TAI->doesDwarfRequireFrameSection()) {
-    Asm->SwitchToSection(Asm->getObjFileLowering().getDwarfFrameSection());
+    Asm->OutStreamer.SwitchSection(TLOF.getDwarfFrameSection());
     EmitLabel("section_debug_frame", 0);
   }
 
-  Asm->SwitchToSection(Asm->getObjFileLowering().getDwarfInfoSection());
+  Asm->OutStreamer.SwitchSection(TLOF.getDwarfInfoSection());
   EmitLabel("section_info", 0);
-  Asm->SwitchToSection(Asm->getObjFileLowering().getDwarfAbbrevSection());
+  Asm->OutStreamer.SwitchSection(TLOF.getDwarfAbbrevSection());
   EmitLabel("section_abbrev", 0);
-  Asm->SwitchToSection(Asm->getObjFileLowering().getDwarfARangesSection());
+  Asm->OutStreamer.SwitchSection(TLOF.getDwarfARangesSection());
   EmitLabel("section_aranges", 0);
 
-  if (const MCSection *LineInfoDirective = 
-        Asm->getObjFileLowering().getDwarfMacroInfoSection()) {
-    Asm->SwitchToSection(LineInfoDirective);
+  if (const MCSection *LineInfoDirective = TLOF.getDwarfMacroInfoSection()) {
+    Asm->OutStreamer.SwitchSection(LineInfoDirective);
     EmitLabel("section_macinfo", 0);
   }
 
-  Asm->SwitchToSection(Asm->getObjFileLowering().getDwarfLineSection());
+  Asm->OutStreamer.SwitchSection(TLOF.getDwarfLineSection());
   EmitLabel("section_line", 0);
-  Asm->SwitchToSection(Asm->getObjFileLowering().getDwarfLocSection());
+  Asm->OutStreamer.SwitchSection(TLOF.getDwarfLocSection());
   EmitLabel("section_loc", 0);
-  Asm->SwitchToSection(Asm->getObjFileLowering().getDwarfPubNamesSection());
+  Asm->OutStreamer.SwitchSection(TLOF.getDwarfPubNamesSection());
   EmitLabel("section_pubnames", 0);
-  Asm->SwitchToSection(Asm->getObjFileLowering().getDwarfStrSection());
+  Asm->OutStreamer.SwitchSection(TLOF.getDwarfStrSection());
   EmitLabel("section_str", 0);
-  Asm->SwitchToSection(Asm->getObjFileLowering().getDwarfRangesSection());
+  Asm->OutStreamer.SwitchSection(TLOF.getDwarfRangesSection());
   EmitLabel("section_ranges", 0);
 
-  Asm->SwitchToSection(Asm->getObjFileLowering().getTextSection());
+  Asm->OutStreamer.SwitchSection(TLOF.getTextSection());
   EmitLabel("text_begin", 0);
-  Asm->SwitchToSection(Asm->getObjFileLowering().getDataSection());
+  Asm->OutStreamer.SwitchSection(TLOF.getDataSection());
   EmitLabel("data_begin", 0);
 }
 
@@ -1997,7 +2000,8 @@ void DwarfDebug::EmitDebugInfoPerCU(CompileUnit *Unit) {
 
 void DwarfDebug::EmitDebugInfo() {
   // Start debug info section.
-  Asm->SwitchToSection(Asm->getObjFileLowering().getDwarfInfoSection());
+  Asm->OutStreamer.SwitchSection(
+                            Asm->getObjFileLowering().getDwarfInfoSection());
 
   EmitDebugInfoPerCU(ModuleCU);
 }
@@ -2008,7 +2012,8 @@ void DwarfDebug::EmitAbbreviations() const {
   // Check to see if it is worth the effort.
   if (!Abbreviations.empty()) {
     // Start the debug abbrev section.
-    Asm->SwitchToSection(Asm->getObjFileLowering().getDwarfAbbrevSection());
+    Asm->OutStreamer.SwitchSection(
+                            Asm->getObjFileLowering().getDwarfAbbrevSection());
 
     EmitLabel("abbrev_begin", 0);
 
@@ -2065,7 +2070,8 @@ void DwarfDebug::EmitDebugLines() {
   const int MaxLineDelta = 255 + MinLineDelta;
 
   // Start the dwarf line section.
-  Asm->SwitchToSection(Asm->getObjFileLowering().getDwarfLineSection());
+  Asm->OutStreamer.SwitchSection(
+                            Asm->getObjFileLowering().getDwarfLineSection());
 
   // Construct the section header.
   EmitDifference("line_end", 0, "line_begin", 0, true);
@@ -2224,7 +2230,8 @@ void DwarfDebug::EmitCommonDebugFrame() {
     TD->getPointerSize() : -TD->getPointerSize();
 
   // Start the dwarf frame section.
-  Asm->SwitchToSection(Asm->getObjFileLowering().getDwarfFrameSection());
+  Asm->OutStreamer.SwitchSection(
+                              Asm->getObjFileLowering().getDwarfFrameSection());
 
   EmitLabel("debug_frame_common", 0);
   EmitDifference("debug_frame_common_end", 0,
@@ -2264,7 +2271,8 @@ DwarfDebug::EmitFunctionDebugFrame(const FunctionDebugFrameInfo&DebugFrameInfo){
     return;
 
   // Start the dwarf frame section.
-  Asm->SwitchToSection(Asm->getObjFileLowering().getDwarfFrameSection());
+  Asm->OutStreamer.SwitchSection(
+                              Asm->getObjFileLowering().getDwarfFrameSection());
 
   EmitDifference("debug_frame_end", DebugFrameInfo.Number,
                  "debug_frame_begin", DebugFrameInfo.Number, true);
@@ -2328,7 +2336,8 @@ void DwarfDebug::EmitDebugPubNamesPerCU(CompileUnit *Unit) {
 ///
 void DwarfDebug::EmitDebugPubNames() {
   // Start the dwarf pubnames section.
-  Asm->SwitchToSection(Asm->getObjFileLowering().getDwarfPubNamesSection());
+  Asm->OutStreamer.SwitchSection(
+                          Asm->getObjFileLowering().getDwarfPubNamesSection());
 
   EmitDebugPubNamesPerCU(ModuleCU);
 }
@@ -2339,7 +2348,8 @@ void DwarfDebug::EmitDebugStr() {
   // Check to see if it is worth the effort.
   if (!StringPool.empty()) {
     // Start the dwarf str section.
-    Asm->SwitchToSection(Asm->getObjFileLowering().getDwarfStrSection());
+    Asm->OutStreamer.SwitchSection(
+                                Asm->getObjFileLowering().getDwarfStrSection());
 
     // For each of strings in the string pool.
     for (unsigned StringID = 1, N = StringPool.size();
@@ -2360,7 +2370,8 @@ void DwarfDebug::EmitDebugStr() {
 ///
 void DwarfDebug::EmitDebugLoc() {
   // Start the dwarf loc section.
-  Asm->SwitchToSection(Asm->getObjFileLowering().getDwarfLocSection());
+  Asm->OutStreamer.SwitchSection(
+                              Asm->getObjFileLowering().getDwarfLocSection());
   Asm->EOL();
 }
 
@@ -2368,7 +2379,8 @@ void DwarfDebug::EmitDebugLoc() {
 ///
 void DwarfDebug::EmitDebugARanges() {
   // Start the dwarf aranges section.
-  Asm->SwitchToSection(Asm->getObjFileLowering().getDwarfARangesSection());
+  Asm->OutStreamer.SwitchSection(
+                          Asm->getObjFileLowering().getDwarfARangesSection());
 
   // FIXME - Mock up
 #if 0
@@ -2404,7 +2416,8 @@ void DwarfDebug::EmitDebugARanges() {
 ///
 void DwarfDebug::EmitDebugRanges() {
   // Start the dwarf ranges section.
-  Asm->SwitchToSection(Asm->getObjFileLowering().getDwarfRangesSection());
+  Asm->OutStreamer.SwitchSection(
+                            Asm->getObjFileLowering().getDwarfRangesSection());
   Asm->EOL();
 }
 
@@ -2414,7 +2427,7 @@ void DwarfDebug::EmitDebugMacInfo() {
   if (const MCSection *LineInfo = 
       Asm->getObjFileLowering().getDwarfMacroInfoSection()) {
     // Start the dwarf macinfo section.
-    Asm->SwitchToSection(LineInfo);
+    Asm->OutStreamer.SwitchSection(LineInfo);
     Asm->EOL();
   }
 }
@@ -2444,7 +2457,8 @@ void DwarfDebug::EmitDebugInlineInfo() {
   if (!ModuleCU)
     return;
 
-  Asm->SwitchToSection(Asm->getObjFileLowering().getDwarfDebugInlineSection());
+  Asm->OutStreamer.SwitchSection(
+                        Asm->getObjFileLowering().getDwarfDebugInlineSection());
   Asm->EOL();
   EmitDifference("debug_inlined_end", 1,
                  "debug_inlined_begin", 1, true);
@@ -2469,9 +2483,10 @@ void DwarfDebug::EmitDebugInlineInfo() {
     if (LName.empty())
       Asm->EmitString(Name);
     else {
-      // Skip special LLVM prefix that is used to inform the asm printer to not emit
-      // usual symbol prefix before the symbol name. This happens for Objective-C
-      // symbol names and symbol whose name is replaced using GCC's __asm__ attribute.
+      // Skip special LLVM prefix that is used to inform the asm printer to not
+      // emit usual symbol prefix before the symbol name. This happens for
+      // Objective-C symbol names and symbol whose name is replaced using GCC's
+      // __asm__ attribute.
       if (LName[0] == 1)
         LName = &LName[1];
       Asm->EmitString(LName);

@@ -26,6 +26,7 @@
 #include "llvm/CodeGen/MachineFunctionPass.h"
 #include "llvm/CodeGen/MachineConstantPool.h"
 #include "llvm/CodeGen/MachineInstr.h"
+#include "llvm/MC/MCStreamer.h"
 #include "llvm/Target/TargetData.h"
 #include "llvm/Target/TargetLoweringObjectFile.h"
 #include "llvm/Target/TargetRegistry.h"
@@ -78,7 +79,7 @@ namespace {
 void MSP430AsmPrinter::emitFunctionHeader(const MachineFunction &MF) {
   const Function *F = MF.getFunction();
 
-  SwitchToSection(getObjFileLowering().SectionForGlobal(F, Mang, TM));
+  OutStreamer.SwitchSection(getObjFileLowering().SectionForGlobal(F, Mang, TM));
 
   unsigned FnAlign = MF.getAlignment();
   EmitAlignment(FnAlign, F);

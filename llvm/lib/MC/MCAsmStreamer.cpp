@@ -97,6 +97,7 @@ static inline MCValue truncateToSize(const MCValue &Value, unsigned Bytes) {
 }
 
 void MCAsmStreamer::SwitchSection(const MCSection *Section) {
+  assert(Section && "Cannot switch to a null section!");
   if (Section != CurSection) {
     CurSection = Section;
     Section->PrintSwitchToSection(TAI, OS);

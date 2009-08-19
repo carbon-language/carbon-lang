@@ -16,15 +16,16 @@
 #include "llvm/CodeGen/MachineModuleInfo.h"
 #include "llvm/CodeGen/MachineFrameInfo.h"
 #include "llvm/CodeGen/MachineLocation.h"
-#include "llvm/Support/Dwarf.h"
-#include "llvm/Support/Timer.h"
-#include "llvm/Support/raw_ostream.h"
+#include "llvm/MC/MCStreamer.h"
 #include "llvm/Target/TargetAsmInfo.h"
 #include "llvm/Target/TargetData.h"
 #include "llvm/Target/TargetFrameInfo.h"
 #include "llvm/Target/TargetLoweringObjectFile.h"
 #include "llvm/Target/TargetOptions.h"
 #include "llvm/Target/TargetRegisterInfo.h"
+#include "llvm/Support/Dwarf.h"
+#include "llvm/Support/Timer.h"
+#include "llvm/Support/raw_ostream.h"
 #include "llvm/ADT/StringExtras.h"
 using namespace llvm;
 
@@ -56,7 +57,7 @@ void DwarfException::EmitCommonEHFrame(const Function *Personality,
     TD->getPointerSize() : -TD->getPointerSize();
 
   // Begin eh frame section.
-  Asm->SwitchToSection(Asm->getObjFileLowering().getEHFrameSection());
+  Asm->OutStreamer.SwitchSection(Asm->getObjFileLowering().getEHFrameSection());
 
   if (TAI->is_EHSymbolPrivate())
     O << TAI->getPrivateGlobalPrefix();
@@ -150,7 +151,7 @@ void DwarfException::EmitEHFrame(const FunctionEHFrameInfo &EHFrameInfo) {
 
   const Function *TheFunc = EHFrameInfo.function;
   
-  Asm->SwitchToSection(Asm->getObjFileLowering().getEHFrameSection());
+  Asm->OutStreamer.SwitchSection(Asm->getObjFileLowering().getEHFrameSection());
   
   // Externally visible entry into the functions eh frame info. If the
   // corresponding function is static, this should not be externally visible.
@@ -555,7 +556,7 @@ void DwarfException::EmitExceptionTable() {
 
   // Begin the exception table.
   const MCSection *LSDASection = Asm->getObjFileLowering().getLSDASection();
-  Asm->SwitchToSection(LSDASection);
+  Asm->OutStreamer.SwitchSection(LSDASection);
   Asm->EmitAlignment(2, 0, 0, false);
   O << "GCC_except_table" << SubprogramCount << ":\n";
 

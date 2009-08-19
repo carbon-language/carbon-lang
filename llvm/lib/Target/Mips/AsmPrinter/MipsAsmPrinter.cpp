@@ -28,6 +28,7 @@
 #include "llvm/CodeGen/MachineConstantPool.h"
 #include "llvm/CodeGen/MachineFrameInfo.h"
 #include "llvm/CodeGen/MachineInstr.h"
+#include "llvm/MC/MCStreamer.h"
 #include "llvm/Target/TargetAsmInfo.h"
 #include "llvm/Target/TargetData.h"
 #include "llvm/Target/TargetLoweringObjectFile.h" 
@@ -210,7 +211,7 @@ const char *MipsAsmPrinter::emitCurrentABIString() {
 void MipsAsmPrinter::emitFunctionStart(MachineFunction &MF) {
   // Print out the label for the function.
   const Function *F = MF.getFunction();
-  SwitchToSection(getObjFileLowering().SectionForGlobal(F, Mang, TM));
+  OutStreamer.SwitchSection(getObjFileLowering().SectionForGlobal(F, Mang, TM));
 
   // 2 bits aligned
   EmitAlignment(MF.getAlignment(), F);
@@ -420,7 +421,7 @@ printFCCOperand(const MachineInstr *MI, int opNum, const char *Modifier) {
 }
 
 bool MipsAsmPrinter::doInitialization(Module &M) {
-  // FIXME: Use SwitchToSection.
+  // FIXME: Use SwitchSection.
   
   // Tell the assembler which ABI we are using
   O << "\t.section .mdebug." << emitCurrentABIString() << '\n';
@@ -468,7 +469,8 @@ void MipsAsmPrinter::PrintGlobalVariable(const GlobalVariable *GVar) {
 
   printVisibility(name, GVar->getVisibility());
 
-  SwitchToSection(getObjFileLowering().SectionForGlobal(GVar, Mang, TM));
+  OutStreamer.SwitchSection(getObjFileLowering().SectionForGlobal(GVar, Mang,
+                                                                  TM));
 
   if (C->isNullValue() && !GVar->hasSection()) {
     if (!GVar->isThreadLocal() &&

@@ -22,6 +22,7 @@
 #include "llvm/CodeGen/MachineFrameInfo.h"
 #include "llvm/CodeGen/DwarfWriter.h"
 #include "llvm/CodeGen/MachineModuleInfo.h"
+#include "llvm/MC/MCStreamer.h"
 #include "llvm/Target/TargetRegistry.h"
 #include "llvm/Target/TargetLoweringObjectFile.h"
 #include "llvm/Support/ErrorHandling.h"
@@ -73,7 +74,7 @@ bool PIC16AsmPrinter::runOnMachineFunction(MachineFunction &MF) {
     getObjFileLowering().getSectionForFunction(CurrentFnName);
   // Start the Code Section.
   O <<  "\n";
-  SwitchToSection(fCodeSection);
+  OutStreamer.SwitchSection(fCodeSection);
 
   // Emit the frame address of the function at the beginning of code.
   O << "\tretlw  low(" << PAN::getFrameLabel(CurrentFnName) << ")\n";
@@ -314,7 +315,7 @@ void PIC16AsmPrinter::EmitRomData(Module &M) {
     const std::vector<const GlobalVariable*> &Items = ROSections[i]->Items;
     if (!Items.size()) continue;
     O << "\n";
-    SwitchToSection(PTOF->ROSections[i]->S_);
+    OutStreamer.SwitchSection(PTOF->ROSections[i]->S_);
     for (unsigned j = 0; j < Items.size(); j++) {
       O << Mang->getMangledName(Items[j]);
       Constant *C = Items[j]->getInitializer();
@@ -341,7 +342,7 @@ void PIC16AsmPrinter::EmitFunctionFrame(MachineFunction &MF) {
   
   const MCSection *fPDataSection =
     getObjFileLowering().getSectionForFunctionFrame(CurrentFnName);
-  SwitchToSection(fPDataSection);
+  OutStreamer.SwitchSection(fPDataSection);
   
   // Emit function frame label
   O << PAN::getFrameLabel(CurrentFnName) << ":\n";
@@ -384,7 +385,7 @@ void PIC16AsmPrinter::EmitIData(Module &M) {
     O << "\n";
     if (IDATASections[i]->S_->getName().find("llvm.") != std::string::npos)
       continue;
-    SwitchToSection(IDATASections[i]->S_);
+    OutStreamer.SwitchSection(IDATASections[i]->S_);
     std::vector<const GlobalVariable*> Items = IDATASections[i]->Items;
     for (unsigned j = 0; j < Items.size(); j++) {
       std::string Name = Mang->getMangledName(Items[j]);
@@ -403,7 +404,7 @@ void PIC16AsmPrinter::EmitUData(Module &M) {
   const std::vector<PIC16Section*> &BSSSections = PTOF->BSSSections;
   for (unsigned i = 0; i < BSSSections.size(); i++) {
     O << "\n";
-    SwitchToSection(BSSSections[i]->S_);
+    OutStreamer.SwitchSection(BSSSections[i]->S_);
     std::vector<const GlobalVariable*> Items = BSSSections[i]->Items;
     for (unsigned j = 0; j < Items.size(); j++) {
       std::string Name = Mang->getMangledName(Items[j]);
@@ -428,7 +429,7 @@ void PIC16AsmPrinter::EmitAutos(std::string FunctName) {
     if (AutosSections[i]->S_->getName() == SectionName) { 
       // Set the printing status to true
       AutosSections[i]->setPrintedStatus(true);
-      SwitchToSection(AutosSections[i]->S_);
+      OutStreamer.SwitchSection(AutosSections[i]->S_);
       const std::vector<const GlobalVariable*> &Items = AutosSections[i]->Items;
       for (unsigned j = 0; j < Items.size(); j++) {
         std::string VarName = Mang->getMangledName(Items[j]);
@@ -460,7 +461,7 @@ void PIC16AsmPrinter::EmitRemainingAutos() {
     AutosSections[i]->setPrintedStatus(true);
 
     O << "\n";
-    SwitchToSection(AutosSections[i]->S_);
+    OutStreamer.SwitchSection(AutosSections[i]->S_);
     const std::vector<const GlobalVariable*> &Items = AutosSections[i]->Items;
     for (unsigned j = 0; j < Items.size(); j++) {
       std::string VarName = Mang->getMangledName(Items[j]);

@@ -15,13 +15,14 @@
 #include "llvm/CodeGen/AsmPrinter.h"
 #include "llvm/CodeGen/GCMetadataPrinter.h"
 #include "llvm/Module.h"
-#include "llvm/Support/Compiler.h"
-#include "llvm/Support/ErrorHandling.h"
-#include "llvm/Support/raw_ostream.h"
+#include "llvm/MC/MCStreamer.h"
 #include "llvm/Target/TargetAsmInfo.h"
 #include "llvm/Target/TargetData.h"
 #include "llvm/Target/TargetLoweringObjectFile.h"
 #include "llvm/Target/TargetMachine.h"
+#include "llvm/Support/Compiler.h"
+#include "llvm/Support/ErrorHandling.h"
+#include "llvm/Support/raw_ostream.h"
 using namespace llvm;
 
 namespace {
@@ -64,10 +65,10 @@ static void EmitCamlGlobal(const Module &M, raw_ostream &OS, AsmPrinter &AP,
 
 void OcamlGCMetadataPrinter::beginAssembly(raw_ostream &OS, AsmPrinter &AP,
                                            const TargetAsmInfo &TAI) {
-  AP.SwitchToSection(AP.getObjFileLowering().getTextSection());
+  AP.OutStreamer.SwitchSection(AP.getObjFileLowering().getTextSection());
   EmitCamlGlobal(getModule(), OS, AP, TAI, "code_begin");
 
-  AP.SwitchToSection(AP.getObjFileLowering().getDataSection());
+  AP.OutStreamer.SwitchSection(AP.getObjFileLowering().getDataSection());
   EmitCamlGlobal(getModule(), OS, AP, TAI, "data_begin");
 }
 
@@ -99,16 +100,16 @@ void OcamlGCMetadataPrinter::finishAssembly(raw_ostream &OS, AsmPrinter &AP,
     AddressAlignLog = 3;
   }
 
-  AP.SwitchToSection(AP.getObjFileLowering().getTextSection());
+  AP.OutStreamer.SwitchSection(AP.getObjFileLowering().getTextSection());
   EmitCamlGlobal(getModule(), OS, AP, TAI, "code_end");
 
-  AP.SwitchToSection(AP.getObjFileLowering().getDataSection());
+  AP.OutStreamer.SwitchSection(AP.getObjFileLowering().getDataSection());
   EmitCamlGlobal(getModule(), OS, AP, TAI, "data_end");
 
   OS << AddressDirective << 0; // FIXME: Why does ocaml emit this??
   AP.EOL();
 
-  AP.SwitchToSection(AP.getObjFileLowering().getDataSection());
+  AP.OutStreamer.SwitchSection(AP.getObjFileLowering().getDataSection());
   EmitCamlGlobal(getModule(), OS, AP, TAI, "frametable");
 
   for (iterator I = begin(), IE = end(); I != IE; ++I) {

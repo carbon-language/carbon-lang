@@ -27,15 +27,16 @@
 #include "llvm/CodeGen/MachineFunctionPass.h"
 #include "llvm/CodeGen/MachineConstantPool.h"
 #include "llvm/CodeGen/MachineInstr.h"
+#include "llvm/MC/MCStreamer.h"
 #include "llvm/Target/TargetData.h"
 #include "llvm/Target/TargetLoweringObjectFile.h"
 #include "llvm/Target/TargetRegistry.h"
-#include "llvm/Support/Mangler.h"
 #include "llvm/ADT/Statistic.h"
 #include "llvm/ADT/StringExtras.h"
 #include "llvm/Support/CommandLine.h"
 #include "llvm/Support/ErrorHandling.h"
 #include "llvm/Support/FormattedStream.h"
+#include "llvm/Support/Mangler.h"
 #include "llvm/Support/MathExtras.h"
 #include <algorithm>
 #include <cctype>
@@ -134,7 +135,7 @@ void XCoreAsmPrinter::PrintGlobalVariable(const GlobalVariable *GV) {
 
   const TargetData *TD = TM.getTargetData();
   
-  SwitchToSection(getObjFileLowering().SectionForGlobal(GV, Mang, TM));
+  OutStreamer.SwitchSection(getObjFileLowering().SectionForGlobal(GV, Mang,TM));
   
   std::string name = Mang->getMangledName(GV);
   Constant *C = GV->getInitializer();
@@ -205,7 +206,7 @@ void XCoreAsmPrinter::emitFunctionStart(MachineFunction &MF) {
   // Print out the label for the function.
   const Function *F = MF.getFunction();
 
-  SwitchToSection(getObjFileLowering().SectionForGlobal(F, Mang, TM));
+  OutStreamer.SwitchSection(getObjFileLowering().SectionForGlobal(F, Mang, TM));
   
   // Mark the start of the function
   O << "\t.cc_top " << CurrentFnName << ".function," << CurrentFnName << "\n";

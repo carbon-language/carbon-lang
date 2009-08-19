@@ -25,13 +25,7 @@
 #include "llvm/CodeGen/MachineModuleInfo.h"
 #include "llvm/CodeGen/MachineFunctionPass.h"
 #include "llvm/CodeGen/MachineInstr.h"
-#include "llvm/Support/Mangler.h"
-#include "llvm/Support/MathExtras.h"
-#include "llvm/Support/CommandLine.h"
-#include "llvm/Support/Debug.h"
-#include "llvm/Support/ErrorHandling.h"
-#include "llvm/Support/Compiler.h"
-#include "llvm/Support/FormattedStream.h"
+#include "llvm/MC/MCStreamer.h"
 #include "llvm/Target/TargetAsmInfo.h"
 #include "llvm/Target/TargetLoweringObjectFile.h"
 #include "llvm/Target/TargetInstrInfo.h"
@@ -40,6 +34,13 @@
 #include "llvm/Target/TargetRegistry.h"
 #include "llvm/ADT/Statistic.h"
 #include "llvm/ADT/StringExtras.h"
+#include "llvm/Support/CommandLine.h"
+#include "llvm/Support/Compiler.h"
+#include "llvm/Support/Debug.h"
+#include "llvm/Support/ErrorHandling.h"
+#include "llvm/Support/FormattedStream.h"
+#include "llvm/Support/Mangler.h"
+#include "llvm/Support/MathExtras.h"
 #include <set>
 using namespace llvm;
 
@@ -427,7 +428,7 @@ LinuxAsmPrinter::runOnMachineFunction(MachineFunction &MF)
   // Print out labels for the function.
   const Function *F = MF.getFunction();
 
-  SwitchToSection(getObjFileLowering().SectionForGlobal(F, Mang, TM));
+  OutStreamer.SwitchSection(getObjFileLowering().SectionForGlobal(F, Mang, TM));
   EmitAlignment(MF.getAlignment(), F);
 
   switch (F->getLinkage()) {
@@ -512,7 +513,8 @@ void LinuxAsmPrinter::PrintGlobalVariable(const GlobalVariable *GVar) {
   unsigned Size = TD->getTypeAllocSize(Type);
   unsigned Align = TD->getPreferredAlignmentLog(GVar);
 
-  SwitchToSection(getObjFileLowering().SectionForGlobal(GVar, Mang, TM));
+  OutStreamer.SwitchSection(getObjFileLowering().SectionForGlobal(GVar, Mang,
+                                                                  TM));
 
   if (C->isNullValue() && /* FIXME: Verify correct */
       !GVar->hasSection() &&

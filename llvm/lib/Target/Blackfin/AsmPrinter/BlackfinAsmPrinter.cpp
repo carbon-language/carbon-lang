@@ -23,6 +23,7 @@
 #include "llvm/CodeGen/MachineFunctionPass.h"
 #include "llvm/CodeGen/MachineConstantPool.h"
 #include "llvm/CodeGen/MachineInstr.h"
+#include "llvm/MC/MCStreamer.h"
 #include "llvm/Target/TargetAsmInfo.h"
 #include "llvm/Target/TargetData.h"
 #include "llvm/Target/TargetLoweringObjectFile.h"
@@ -95,7 +96,8 @@ void BlackfinAsmPrinter::PrintGlobalVariable(const GlobalVariable* GV) {
   std::string name = Mang->getMangledName(GV);
   Constant *C = GV->getInitializer();
 
-  SwitchToSection(getObjFileLowering().SectionForGlobal(GV, Mang, TM));
+  OutStreamer.SwitchSection(getObjFileLowering().SectionForGlobal(GV, Mang,
+                                                                  TM));
   emitLinkage(name, GV->getLinkage());
   EmitAlignment(TD->getPreferredAlignmentLog(GV), GV);
   printVisibility(name, GV->getVisibility());
@@ -115,7 +117,7 @@ bool BlackfinAsmPrinter::runOnMachineFunction(MachineFunction &MF) {
   EmitJumpTableInfo(MF.getJumpTableInfo(), MF);
 
   const Function *F = MF.getFunction();
-  SwitchToSection(getObjFileLowering().SectionForGlobal(F, Mang, TM));
+  OutStreamer.SwitchSection(getObjFileLowering().SectionForGlobal(F, Mang, TM));
   EmitAlignment(2, F);
   emitLinkage(CurrentFnName, F->getLinkage());
   printVisibility(CurrentFnName, F->getVisibility());

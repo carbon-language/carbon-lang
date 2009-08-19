@@ -32,6 +32,7 @@
 #include "llvm/CodeGen/MachineInstr.h"
 #include "llvm/CodeGen/MachineInstrBuilder.h"
 #include "llvm/MC/MCSectionMachO.h"
+#include "llvm/MC/MCStreamer.h"
 #include "llvm/Target/TargetAsmInfo.h"
 #include "llvm/Target/TargetLoweringObjectFile.h"
 #include "llvm/Target/TargetRegisterInfo.h"
@@ -614,7 +615,7 @@ bool PPCLinuxAsmPrinter::runOnMachineFunction(MachineFunction &MF) {
 
   // Print out labels for the function.
   const Function *F = MF.getFunction();
-  SwitchToSection(getObjFileLowering().SectionForGlobal(F, Mang, TM));
+  OutStreamer.SwitchSection(getObjFileLowering().SectionForGlobal(F, Mang, TM));
 
   switch (F->getLinkage()) {
   default: llvm_unreachable("Unknown linkage type!");
@@ -675,7 +676,7 @@ bool PPCLinuxAsmPrinter::runOnMachineFunction(MachineFunction &MF) {
   // Print out jump tables referenced by the function.
   EmitJumpTableInfo(MF.getJumpTableInfo(), MF);
 
-  SwitchToSection(getObjFileLowering().SectionForGlobal(F, Mang, TM));
+  OutStreamer.SwitchSection(getObjFileLowering().SectionForGlobal(F, Mang, TM));
 
   // Emit post-function debug information.
   DW->EndFunction(&MF);
@@ -703,7 +704,8 @@ void PPCLinuxAsmPrinter::PrintGlobalVariable(const GlobalVariable *GVar) {
   unsigned Size = TD->getTypeAllocSize(Type);
   unsigned Align = TD->getPreferredAlignmentLog(GVar);
 
-  SwitchToSection(getObjFileLowering().SectionForGlobal(GVar, Mang, TM));
+  OutStreamer.SwitchSection(getObjFileLowering().SectionForGlobal(GVar, Mang,
+                                                                  TM));
 
   if (C->isNullValue() && /* FIXME: Verify correct */
       !GVar->hasSection() &&
@@ -802,7 +804,7 @@ bool PPCDarwinAsmPrinter::runOnMachineFunction(MachineFunction &MF) {
 
   // Print out labels for the function.
   const Function *F = MF.getFunction();
-  SwitchToSection(getObjFileLowering().SectionForGlobal(F, Mang, TM));
+  OutStreamer.SwitchSection(getObjFileLowering().SectionForGlobal(F, Mang, TM));
 
   switch (F->getLinkage()) {
   default: llvm_unreachable("Unknown linkage type!");
@@ -894,19 +896,21 @@ bool PPCDarwinAsmPrinter::doInitialization(Module &M) {
   // large data or debug section causes a branch to exceed 16M limit.
   TargetLoweringObjectFileMachO &TLOFMacho = 
     static_cast<TargetLoweringObjectFileMachO &>(getObjFileLowering());
-  SwitchToSection(TLOFMacho.getTextCoalSection());
+  OutStreamer.SwitchSection(TLOFMacho.getTextCoalSection());
   if (TM.getRelocationModel() == Reloc::PIC_) {
-    SwitchToSection(TLOFMacho.getMachOSection("__TEXT", "__picsymbolstub1",
-                                              MCSectionMachO::S_SYMBOL_STUBS |
-                                       MCSectionMachO::S_ATTR_PURE_INSTRUCTIONS,
-                                              32, SectionKind::getText()));
+    OutStreamer.SwitchSection(
+            TLOFMacho.getMachOSection("__TEXT", "__picsymbolstub1",
+                                      MCSectionMachO::S_SYMBOL_STUBS |
+                                      MCSectionMachO::S_ATTR_PURE_INSTRUCTIONS,
+                                      32, SectionKind::getText()));
   } else if (TM.getRelocationModel() == Reloc::DynamicNoPIC) {
-    SwitchToSection(TLOFMacho.getMachOSection("__TEXT","__symbol_stub1",
-                                              MCSectionMachO::S_SYMBOL_STUBS |
-                                       MCSectionMachO::S_ATTR_PURE_INSTRUCTIONS,
-                                              16, SectionKind::getText()));
+    OutStreamer.SwitchSection(
+            TLOFMacho.getMachOSection("__TEXT","__symbol_stub1",
+                                      MCSectionMachO::S_SYMBOL_STUBS |
+                                      MCSectionMachO::S_ATTR_PURE_INSTRUCTIONS,
+                                      16, SectionKind::getText()));
   }
-  SwitchToSection(getObjFileLowering().getTextSection());
+  OutStreamer.SwitchSection(getObjFileLowering().getTextSection());
 
   return Result;
 }
@@ -938,7 +942,7 @@ void PPCDarwinAsmPrinter::PrintGlobalVariable(const GlobalVariable *GVar) {
 
   const MCSection *TheSection =
     getObjFileLowering().SectionForGlobal(GVar, Mang, TM);
-  SwitchToSection(TheSection);
+  OutStreamer.SwitchSection(TheSection);
 
   /// FIXME: Drive this off the section!
   if (C->isNullValue() && /* FIXME: Verify correct */
@@ -1043,7 +1047,7 @@ bool PPCDarwinAsmPrinter::doFinalization(Module &M) {
                                 32, SectionKind::getText());
      for (StringMap<FnStubInfo>::iterator I = FnStubs.begin(), E = FnStubs.end();
          I != E; ++I) {
-      SwitchToSection(StubSection);
+      OutStreamer.SwitchSection(StubSection);
       EmitAlignment(4);
       const FnStubInfo &Info = I->second;
       O << Info.Stub << ":\n";
@@ -1060,7 +1064,7 @@ bool PPCDarwinAsmPrinter::doFinalization(Module &M) {
       O << "\tmtctr r12\n";
       O << "\tbctr\n";
       
-      SwitchToSection(LSPSection);
+      OutStreamer.SwitchSection(LSPSection);
       O << Info.LazyPtr << ":\n";
       O << "\t.indirect_symbol " << I->getKeyData() << '\n';
       O << (isPPC64 ? "\t.quad" : "\t.long") << " dyld_stub_binding_helper\n";
@@ -1074,7 +1078,7 @@ bool PPCDarwinAsmPrinter::doFinalization(Module &M) {
     
     for (StringMap<FnStubInfo>::iterator I = FnStubs.begin(), E = FnStubs.end();
          I != E; ++I) {
-      SwitchToSection(StubSection);
+      OutStreamer.SwitchSection(StubSection);
       EmitAlignment(4);
       const FnStubInfo &Info = I->second;
       O << Info.Stub << ":\n";
@@ -1084,7 +1088,7 @@ bool PPCDarwinAsmPrinter::doFinalization(Module &M) {
       O << Info.LazyPtr << ")(r11)\n";
       O << "\tmtctr r12\n";
       O << "\tbctr\n";
-      SwitchToSection(LSPSection);
+      OutStreamer.SwitchSection(LSPSection);
       O << Info.LazyPtr << ":\n";
       O << "\t.indirect_symbol " << I->getKeyData() << '\n';
       O << (isPPC64 ? "\t.quad" : "\t.long") << " dyld_stub_binding_helper\n";
@@ -1108,7 +1112,7 @@ bool PPCDarwinAsmPrinter::doFinalization(Module &M) {
   // Output macho stubs for external and common global variables.
   if (!GVStubs.empty()) {
     // Switch with ".non_lazy_symbol_pointer" directive.
-    SwitchToSection(TLOFMacho.getNonLazySymbolPointerSection());
+    OutStreamer.SwitchSection(TLOFMacho.getNonLazySymbolPointerSection());
     EmitAlignment(isPPC64 ? 3 : 2);
     
     for (StringMap<std::string>::iterator I = GVStubs.begin(),
@@ -1120,7 +1124,7 @@ bool PPCDarwinAsmPrinter::doFinalization(Module &M) {
   }
 
   if (!HiddenGVStubs.empty()) {
-    SwitchToSection(getObjFileLowering().getDataSection());
+    OutStreamer.SwitchSection(getObjFileLowering().getDataSection());
     EmitAlignment(isPPC64 ? 3 : 2);
     for (StringMap<std::string>::iterator I = HiddenGVStubs.begin(),
          E = HiddenGVStubs.end(); I != E; ++I) {

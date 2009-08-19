@@ -26,6 +26,7 @@
 #include "llvm/CodeGen/MachineFunctionPass.h"
 #include "llvm/CodeGen/MachineConstantPool.h"
 #include "llvm/CodeGen/MachineInstr.h"
+#include "llvm/MC/MCStreamer.h"
 #include "llvm/Target/TargetAsmInfo.h"
 #include "llvm/Target/TargetData.h"
 #include "llvm/Target/TargetLoweringObjectFile.h"
@@ -84,7 +85,7 @@ void SystemZAsmPrinter::emitFunctionHeader(const MachineFunction &MF) {
   unsigned FnAlign = MF.getAlignment();
   const Function *F = MF.getFunction();
 
-  SwitchToSection(getObjFileLowering().SectionForGlobal(F, Mang, TM));
+  OutStreamer.SwitchSection(getObjFileLowering().SectionForGlobal(F, Mang, TM));
 
   EmitAlignment(FnAlign, F);
 
@@ -317,7 +318,8 @@ void SystemZAsmPrinter::PrintGlobalVariable(const GlobalVariable* GVar) {
 
   O << "\t.type\t" << name << ",@object\n";
 
-  SwitchToSection(getObjFileLowering().SectionForGlobal(GVar, Mang, TM));
+  OutStreamer.SwitchSection(getObjFileLowering().SectionForGlobal(GVar, Mang,
+                                                                  TM));
 
   if (C->isNullValue() && !GVar->hasSection() &&
       !GVar->isThreadLocal() &&

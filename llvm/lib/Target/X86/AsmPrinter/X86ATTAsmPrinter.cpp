@@ -174,7 +174,7 @@ void X86ATTAsmPrinter::emitFunctionHeader(const MachineFunction &MF) {
   if (Subtarget->isTargetCygMing())
     DecorateCygMingName(CurrentFnName, F);
 
-  SwitchToSection(getObjFileLowering().SectionForGlobal(F, Mang, TM));
+  OutStreamer.SwitchSection(getObjFileLowering().SectionForGlobal(F, Mang, TM));
   EmitAlignment(FnAlign, F);
 
   switch (F->getLinkage()) {
@@ -933,7 +933,7 @@ void X86ATTAsmPrinter::PrintGlobalVariable(const GlobalVariable* GVar) {
   SectionKind GVKind = TargetLoweringObjectFile::getKindForGlobal(GVar, TM);
   const MCSection *TheSection =
     getObjFileLowering().SectionForGlobal(GVar, GVKind, Mang, TM);
-  SwitchToSection(TheSection);
+  OutStreamer.SwitchSection(TheSection);
 
   // FIXME: get this stuff from section kind flags.
   if (C->isNullValue() && !GVar->hasSection() &&
@@ -1074,7 +1074,7 @@ bool X86ATTAsmPrinter::doFinalization(Module &M) {
                                   MCSectionMachO::S_ATTR_SELF_MODIFYING_CODE |
                                   MCSectionMachO::S_ATTR_PURE_INSTRUCTIONS,
                                   5, SectionKind::getMetadata());
-      SwitchToSection(TheSection);
+      OutStreamer.SwitchSection(TheSection);
       for (StringMap<std::string>::iterator I = FnStubs.begin(),
            E = FnStubs.end(); I != E; ++I)
         O << I->getKeyData() << ":\n" << "\t.indirect_symbol " << I->second
@@ -1088,7 +1088,7 @@ bool X86ATTAsmPrinter::doFinalization(Module &M) {
         TLOFMacho.getMachOSection("__IMPORT", "__pointers",
                                   MCSectionMachO::S_NON_LAZY_SYMBOL_POINTERS,
                                   SectionKind::getMetadata());
-      SwitchToSection(TheSection);
+      OutStreamer.SwitchSection(TheSection);
       for (StringMap<std::string>::iterator I = GVStubs.begin(),
            E = GVStubs.end(); I != E; ++I)
         O << I->getKeyData() << ":\n\t.indirect_symbol "
@@ -1096,7 +1096,7 @@ bool X86ATTAsmPrinter::doFinalization(Module &M) {
     }
 
     if (!HiddenGVStubs.empty()) {
-      SwitchToSection(getObjFileLowering().getDataSection());
+      OutStreamer.SwitchSection(getObjFileLowering().getDataSection());
       EmitAlignment(2);
       for (StringMap<std::string>::iterator I = HiddenGVStubs.begin(),
            E = HiddenGVStubs.end(); I != E; ++I)
@@ -1128,8 +1128,8 @@ bool X86ATTAsmPrinter::doFinalization(Module &M) {
     TargetLoweringObjectFileCOFF &TLOFMacho = 
       static_cast<TargetLoweringObjectFileCOFF&>(getObjFileLowering());
     
-    SwitchToSection(TLOFMacho.getCOFFSection(".section .drectve", true,
-                                             SectionKind::getMetadata()));
+    OutStreamer.SwitchSection(TLOFMacho.getCOFFSection(".section .drectve",true,
+                                                 SectionKind::getMetadata()));
   
     for (StringSet<>::iterator i = DLLExportedGVs.begin(),
          e = DLLExportedGVs.end(); i != e; ++i)

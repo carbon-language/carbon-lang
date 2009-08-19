@@ -26,11 +26,12 @@
 #include "llvm/ADT/StringExtras.h"
 #include "llvm/Assembly/Writer.h"
 #include "llvm/CodeGen/DwarfWriter.h"
-#include "llvm/Support/ErrorHandling.h"
-#include "llvm/Support/Mangler.h"
+#include "llvm/MC/MCStreamer.h"
 #include "llvm/Target/TargetAsmInfo.h"
 #include "llvm/Target/TargetLoweringObjectFile.h"
 #include "llvm/Target/TargetOptions.h"
+#include "llvm/Support/ErrorHandling.h"
+#include "llvm/Support/Mangler.h"
 using namespace llvm;
 
 STATISTIC(EmittedInsts, "Number of machine instrs printed");
@@ -143,7 +144,7 @@ bool X86IntelAsmPrinter::runOnMachineFunction(MachineFunction &MF) {
 
   decorateName(CurrentFnName, F);
 
-  SwitchToSection(getObjFileLowering().SectionForGlobal(F, Mang, TM));
+  OutStreamer.SwitchSection(getObjFileLowering().SectionForGlobal(F, Mang, TM));
 
   switch (F->getLinkage()) {
   default: llvm_unreachable("Unsupported linkage type!");
@@ -513,7 +514,7 @@ void X86IntelAsmPrinter::PrintGlobalVariable(const GlobalVariable *GV) {
     O << "\tpublic " << name << "\n";
     // FALL THROUGH
   case GlobalValue::InternalLinkage:
-    SwitchToSection(getObjFileLowering().getDataSection());
+    OutStreamer.SwitchSection(getObjFileLowering().getDataSection());
     break;
   default:
     llvm_unreachable("Unknown linkage type!");

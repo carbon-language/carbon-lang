@@ -28,6 +28,7 @@
 #include "llvm/CodeGen/MachineFunctionPass.h"
 #include "llvm/CodeGen/MachineJumpTableInfo.h"
 #include "llvm/MC/MCSectionMachO.h"
+#include "llvm/MC/MCStreamer.h"
 #include "llvm/Target/TargetAsmInfo.h"
 #include "llvm/Target/TargetData.h"
 #include "llvm/Target/TargetLoweringObjectFile.h"
@@ -260,7 +261,7 @@ bool ARMAsmPrinter::runOnMachineFunction(MachineFunction &MF) {
   
   // Print out labels for the function.
   const Function *F = MF.getFunction();
-  SwitchToSection(getObjFileLowering().SectionForGlobal(F, Mang, TM));
+  OutStreamer.SwitchSection(getObjFileLowering().SectionForGlobal(F, Mang, TM));
 
   switch (F->getLinkage()) {
   default: llvm_unreachable("Unknown linkage type!");
@@ -1162,7 +1163,7 @@ void ARMAsmPrinter::PrintGlobalVariable(const GlobalVariable* GVar) {
   
   const MCSection *TheSection =
     getObjFileLowering().SectionForGlobal(GVar, Mang, TM);
-  SwitchToSection(TheSection);
+  OutStreamer.SwitchSection(TheSection);
 
   // FIXME: get this stuff from section kind flags.
   if (C->isNullValue() && !GVar->hasSection() && !GVar->isThreadLocal() &&
@@ -1188,7 +1189,7 @@ void ARMAsmPrinter::PrintGlobalVariable(const GlobalVariable* GVar) {
           O << TAI->getCOMMDirective()  << name << "," << Size
             << ',' << Align;
         } else {
-          SwitchToSection(getObjFileLowering().SectionForGlobal(GVar, Mang,TM));
+          OutStreamer.SwitchSection(TheSection);
           O << "\t.globl " << name << '\n'
             << TAI->getWeakDefDirective() << name << '\n';
           EmitAlignment(Align, GVar);
@@ -1297,7 +1298,7 @@ bool ARMAsmPrinter::doFinalization(Module &M) {
            E = FnStubs.end(); I != E; ++I) {
         const FnStubInfo &Info = I->second;
         
-        SwitchToSection(StubSection);
+        OutStreamer.SwitchSection(StubSection);
         EmitAlignment(2);
         O << "\t.code\t32\n";
 
@@ -1315,7 +1316,7 @@ bool ARMAsmPrinter::doFinalization(Module &M) {
           O << "-(" << Info.SCV << "+8)";
         O << '\n';
         
-        SwitchToSection(LazySymbolPointerSection);
+        OutStreamer.SwitchSection(LazySymbolPointerSection);
         O << Info.LazyPtr << ":\n";
         O << "\t.indirect_symbol " << I->getKeyData() << "\n";
         O << "\t.long\tdyld_stub_binding_helper\n";
@@ -1326,7 +1327,7 @@ bool ARMAsmPrinter::doFinalization(Module &M) {
     // Output non-lazy-pointers for external and common global variables.
     if (!GVNonLazyPtrs.empty()) {
       // Switch with ".non_lazy_symbol_pointer" directive.
-      SwitchToSection(TLOFMacho.getNonLazySymbolPointerSection());
+      OutStreamer.SwitchSection(TLOFMacho.getNonLazySymbolPointerSection());
       EmitAlignment(2);
       for (StringMap<std::string>::iterator I = GVNonLazyPtrs.begin(),
            E = GVNonLazyPtrs.end(); I != E; ++I) {
@@ -1337,7 +1338,7 @@ bool ARMAsmPrinter::doFinalization(Module &M) {
     }
 
     if (!HiddenGVNonLazyPtrs.empty()) {
-      SwitchToSection(getObjFileLowering().getDataSection());
+      OutStreamer.SwitchSection(getObjFileLowering().getDataSection());
       EmitAlignment(2);
       for (StringMap<std::string>::iterator I = HiddenGVNonLazyPtrs.begin(),
              E = HiddenGVNonLazyPtrs.end(); I != E; ++I) {

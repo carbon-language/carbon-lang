@@ -158,10 +158,6 @@ namespace llvm {
     ///
     bool isVerbose() const { return VerboseAsm; }
 
-    /// SwitchToSection - Switch to the specified section of the executable if
-    /// we are not already in it!
-    void SwitchToSection(const MCSection *NS);
-
     /// getGlobalLinkName - Returns the asm/link name of of the specified
     /// global variable.  Should be overridden by each target asm printer to
     /// generate the appropriate value.
