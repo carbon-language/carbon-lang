@@ -95,6 +95,8 @@ void raw_ostream::SetBufferAndMode(char *BufferStart, size_t Size,
   OutBufEnd = OutBufStart+Size;
   OutBufCur = OutBufStart;
   BufferMode = Mode;
+
+  assert(OutBufStart <= OutBufEnd && "Invalid size!");
 }
 
 raw_ostream &raw_ostream::operator<<(unsigned long N) {
@@ -478,15 +480,41 @@ void raw_string_ostream::write_impl(const char *Ptr, size_t Size) {
 //  raw_svector_ostream
 //===----------------------------------------------------------------------===//
 
+// The raw_svector_ostream implementation uses the SmallVector itself as the
+// buffer for the raw_ostream. We guarantee that the raw_ostream buffer is
+// always pointing past the end of the vector, but within the vector
+// capacity. This allows raw_ostream to write directly into the correct place,
+// and we only need to set the vector size when the data is flushed.
+
 raw_svector_ostream::raw_svector_ostream(SmallVectorImpl<char> &O) : OS(O) {
+  // Set up the initial external buffer. We enforce that the buffer must have at
+  // least 128 bytes free; raw_ostream itself only requires 64, but we want to
+  // make sure that we don't grow the buffer unnecessarily on destruction (when
+  // the data is flushed). See the FIXME below.
+  if (OS.capacity() - OS.size() < 128)
+    llvm_report_error("Invalid argument, must have at least 128 bytes free!");
+  SetBuffer(OS.end(), OS.capacity() - OS.size());
 }
 
 raw_svector_ostream::~raw_svector_ostream() {
+  // FIXME: Prevent resizing during this flush().
   flush();
 }
 
 void raw_svector_ostream::write_impl(const char *Ptr, size_t Size) {
-  OS.append(Ptr, Ptr + Size);
+  assert(Ptr == OS.end() && OS.size() + Size <= OS.capacity() &&
+         "Invalid write_impl() call!");
+
+  // We don't need to copy the bytes, just commit the bytes to the
+  // SmallVector.
+  OS.set_size(OS.size() + Size);
+
+  // Grow the vector if necessary.
+  if (OS.capacity() - OS.size() < 64)
+    OS.reserve(OS.capacity() * 2);
+
+  // Update the buffer position.
+  SetBuffer(OS.end(), OS.capacity() - OS.size());
 }
 
 uint64_t raw_svector_ostream::current_pos() { return OS.size(); }

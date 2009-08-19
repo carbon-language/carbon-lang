@@ -452,6 +452,10 @@ class raw_svector_ostream : public raw_ostream {
   /// counting the bytes currently in the buffer.
   virtual uint64_t current_pos();
 public:
+  /// Construct a new raw_svector_ostream.
+  ///
+  /// \arg O - The vector to write to; this *must* have at least 128 bytes of
+  /// free space in it.
   explicit raw_svector_ostream(SmallVectorImpl<char> &O);
   ~raw_svector_ostream();
 };
