@@ -199,7 +199,7 @@ static int AssembleInput(const char *ProgName) {
   
   SourceMgr SrcMgr;
   
-  // Tell SrcMgr about this buffer, which is what TGParser will pick up.
+  // Tell SrcMgr about this buffer, which is what the parser will pick up.
   SrcMgr.AddNewSourceBuffer(Buffer, SMLoc());
   
   // Record the location of the include directories so that the lexer can find
