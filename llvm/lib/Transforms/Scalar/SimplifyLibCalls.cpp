@@ -438,7 +438,8 @@ static uint64_t GetStringLengthH(Value *V, SmallPtrSet<PHINode*, 32> &PHIs) {
   // variable that is a constant and is initialized. The referenced constant
   // initializer is the array that we'll use for optimization.
   GlobalVariable* GV = dyn_cast<GlobalVariable>(GEP->getOperand(0));
-  if (!GV || !GV->isConstant() || !GV->hasInitializer())
+  if (!GV || !GV->isConstant() || !GV->hasInitializer() ||
+      GV->mayBeOverridden())
     return 0;
   Constant *GlobalInit = GV->getInitializer();
   

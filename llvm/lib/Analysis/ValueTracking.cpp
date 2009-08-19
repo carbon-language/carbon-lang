@@ -1061,7 +1061,8 @@ bool llvm::GetConstantStringInfo(Value *V, std::string &Str, uint64_t Offset,
   // variable that is a constant and is initialized. The referenced constant
   // initializer is the array that we'll use for optimization.
   GlobalVariable* GV = dyn_cast<GlobalVariable>(V);
-  if (!GV || !GV->isConstant() || !GV->hasInitializer())
+  if (!GV || !GV->isConstant() || !GV->hasInitializer() ||
+      GV->mayBeOverridden())
     return false;
   Constant *GlobalInit = GV->getInitializer();
   
