@@ -123,7 +123,7 @@ public:
   size_t GetBufferSize() {
     // If we're supposed to be buffered but haven't actually gotten around
     // to allocating the buffer yet, return the value that would be used.
-    if (!Unbuffered && !OutBufStart)
+    if (BufferMode != Unbuffered && OutBufStart == 0)
       return preferred_buffer_size();
 
     // Otherwise just return the size of the allocated buffer.
