@@ -355,9 +355,6 @@ public:
   /// close - Manually flush the stream and close the file.
   void close();
 
-  /// tell - Return the current offset with the file.
-  uint64_t tell() { return pos + GetNumBytesInBuffer(); }
-
   /// seek - Flushes the stream and repositions the underlying file descriptor
   ///  positition to the offset specified from the beginning of the file.
   uint64_t seek(uint64_t off);
@@ -417,9 +414,6 @@ class raw_os_ostream : public raw_ostream {
 public:
   raw_os_ostream(std::ostream &O) : OS(O) {}
   ~raw_os_ostream();
-
-  /// tell - Return the current offset with the stream.
-  uint64_t tell();
 };
 
 /// raw_string_ostream - A raw_ostream that writes to an std::string.  This is a
@@ -436,9 +430,6 @@ class raw_string_ostream : public raw_ostream {
 public:
   explicit raw_string_ostream(std::string &O) : OS(O) {}
   ~raw_string_ostream();
-
-  /// tell - Return the current offset with the stream.
-  uint64_t tell() { return OS.size() + GetNumBytesInBuffer(); }
 
   /// str - Flushes the stream contents to the target string and returns
   ///  the string's reference.
@@ -463,9 +454,6 @@ class raw_svector_ostream : public raw_ostream {
 public:
   explicit raw_svector_ostream(SmallVectorImpl<char> &O);
   ~raw_svector_ostream();
-
-  /// tell - Return the current offset with the stream.
-  uint64_t tell();
 };
 
 /// raw_null_ostream - A raw_ostream that discards all output.
