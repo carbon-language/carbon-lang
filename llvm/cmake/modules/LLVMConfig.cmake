@@ -59,11 +59,9 @@ function(explicit_map_components_to_libraries out_libs)
         list(APPEND expanded_components "LLVM${c}Info")
       endif()
     elseif( c STREQUAL "native" )
-      # TODO: we assume ARCH is X86.
-      list(APPEND expanded_components "LLVMX86CodeGen")
+      list(APPEND expanded_components "LLVM${LLVM_NATIVE_ARCH}CodeGen")
     elseif( c STREQUAL "nativecodegen" )
-      # TODO: we assume ARCH is X86.
-      list(APPEND expanded_components "LLVMX86CodeGen")
+      list(APPEND expanded_components "LLVM${LLVM_NATIVE_ARCH}CodeGen")
     elseif( c STREQUAL "backend" )
       # same case as in `native'.
     elseif( c STREQUAL "engine" )
