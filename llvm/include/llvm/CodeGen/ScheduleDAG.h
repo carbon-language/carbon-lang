@@ -495,6 +495,12 @@ namespace llvm {
     ///
     virtual void ComputeLatency(SUnit *SU) = 0;
 
+    /// ComputeOperandLatency - Override dependence edge latency using
+    /// operand use/def information
+    ///
+    virtual void ComputeOperandLatency(SUnit *Def, SUnit *Use,
+                                       SDep& dep) const { };
+
     /// Schedule - Order nodes according to selected style, filling
     /// in the Sequence member.
     ///

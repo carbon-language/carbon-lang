@@ -17,6 +17,7 @@
 namespace llvm {
 
 class SDep;
+class SUnit;
 
 //===----------------------------------------------------------------------===//
 ///
@@ -40,7 +41,8 @@ public:
 
   // adjustSchedDependency - Perform target specific adjustments to
   // the latency of a schedule dependency.
-  virtual void adjustSchedDependency(SDep&) const { };
+  virtual void adjustSchedDependency(SUnit *def, SUnit *use, 
+                                     SDep& dep) const { };
 };
 
 } // End llvm namespace

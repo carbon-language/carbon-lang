@@ -210,6 +210,10 @@ void ScheduleDAGInstrs::BuildSchedGraph() {
             // Optionally add in a special extra latency for nodes that
             // feed addresses.
             // TODO: Do this for register aliases too.
+            // TODO: Perhaps we should get rid of
+            // SpecialAddressLatency and just move this into
+            // adjustSchedDependency for the targets that care about
+            // it.
             if (SpecialAddressLatency != 0 && !UnitLatencies) {
               MachineInstr *UseMI = UseSU->getInstr();
               const TargetInstrDesc &UseTID = UseMI->getDesc();
@@ -220,8 +224,14 @@ void ScheduleDAGInstrs::BuildSchedGraph() {
                   UseTID.OpInfo[RegUseIndex].isLookupPtrRegClass())
                 LDataLatency += SpecialAddressLatency;
             }
+            // Adjust the dependence latency using operand def/use
+            // information (if any), and then allow the target to
+            // perform its own adjustments.
             const SDep& dep = SDep(SU, SDep::Data, LDataLatency, Reg);
-            ST.adjustSchedDependency((SDep &)dep);
+            if (!UnitLatencies) {
+              ComputeOperandLatency(SU, UseSU, (SDep &)dep);
+              ST.adjustSchedDependency(SU, UseSU, (SDep &)dep);
+            }
             UseSU->addPred(dep);
           }
         }
@@ -231,7 +241,10 @@ void ScheduleDAGInstrs::BuildSchedGraph() {
             SUnit *UseSU = UseList[i];
             if (UseSU != SU) {
               const SDep& dep = SDep(SU, SDep::Data, DataLatency, *Alias);
-              ST.adjustSchedDependency((SDep &)dep);
+              if (!UnitLatencies) {
+                ComputeOperandLatency(SU, UseSU, (SDep &)dep);
+                ST.adjustSchedDependency(SU, UseSU, (SDep &)dep);
+              }
               UseSU->addPred(dep);
             }
           }
@@ -410,13 +423,57 @@ void ScheduleDAGInstrs::ComputeLatency(SUnit *SU) {
 
   // Compute the latency for the node.
   SU->Latency =
-    InstrItins.getLatency(SU->getInstr()->getDesc().getSchedClass());
+    InstrItins.getStageLatency(SU->getInstr()->getDesc().getSchedClass());
 
   // Simplistic target-independent heuristic: assume that loads take
   // extra time.
   if (InstrItins.isEmpty())
     if (SU->getInstr()->getDesc().mayLoad())
       SU->Latency += 2;
+}
+
+void ScheduleDAGInstrs::ComputeOperandLatency(SUnit *Def, SUnit *Use, 
+                                              SDep& dep) const {
+  const InstrItineraryData &InstrItins = TM.getInstrItineraryData();
+  if (InstrItins.isEmpty())
+    return;
+  
+  // For a data dependency with a known register...
+  if ((dep.getKind() != SDep::Data) || (dep.getReg() == 0))
+    return;
+
+  const unsigned Reg = dep.getReg();
+
+  // ... find the definition of the register in the defining
+  // instruction
+  MachineInstr *DefMI = Def->getInstr();
+  int DefIdx = DefMI->findRegisterDefOperandIdx(Reg);
+  if (DefIdx != -1) {
+    int DefCycle = InstrItins.getOperandCycle(DefMI->getDesc().getSchedClass(), DefIdx);
+    if (DefCycle >= 0) {
+      MachineInstr *UseMI = Use->getInstr();
+      const unsigned UseClass = UseMI->getDesc().getSchedClass();
+
+      // For all uses of the register, calculate the maxmimum latency
+      int Latency = -1;
+      for (unsigned i = 0, e = UseMI->getNumOperands(); i != e; ++i) {
+        const MachineOperand &MO = UseMI->getOperand(i);
+        if (!MO.isReg() || !MO.isUse())
+          continue;
+        unsigned MOReg = MO.getReg();
+        if (MOReg != Reg)
+          continue;
+
+        int UseCycle = InstrItins.getOperandCycle(UseClass, i);
+        if (UseCycle >= 0)
+          Latency = std::max(Latency, DefCycle - UseCycle + 1);
+      }
+
+      // If we found a latency, then replace the existing dependence latency.
+      if (Latency >= 0)
+        dep.setLatency(Latency);
+    }
+  }
 }
 
 void ScheduleDAGInstrs::dumpNode(const SUnit *SU) const {

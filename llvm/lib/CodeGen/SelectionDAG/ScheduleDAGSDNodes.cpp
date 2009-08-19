@@ -155,6 +155,9 @@ void ScheduleDAGSDNodes::BuildSchedUnits() {
 void ScheduleDAGSDNodes::AddSchedEdges() {
   const TargetSubtarget &ST = TM.getSubtarget<TargetSubtarget>();
 
+  // Check to see if the scheduler cares about latencies.
+  bool UnitLatencies = ForceUnitLatencies();
+
   // Pass 2: add the preds, succs, etc.
   for (unsigned su = 0, e = SUnits.size(); su != e; ++su) {
     SUnit *SU = &SUnits[su];
@@ -212,8 +215,10 @@ void ScheduleDAGSDNodes::AddSchedEdges() {
 
         const SDep& dep = SDep(OpSU, isChain ? SDep::Order : SDep::Data,
                                OpSU->Latency, PhysReg);
-        if (!isChain)
-          ST.adjustSchedDependency((SDep &)dep);
+        if (!isChain && !UnitLatencies) {
+          ComputeOperandLatency(OpSU, SU, (SDep &)dep);
+          ST.adjustSchedDependency(OpSU, SU, (SDep &)dep);
+        }
 
         SU->addPred(dep);
       }
@@ -242,8 +247,8 @@ void ScheduleDAGSDNodes::ComputeLatency(SUnit *SU) {
   for (SDNode *N = SU->getNode(); N; N = N->getFlaggedNode())
     if (N->isMachineOpcode()) {
       SawMachineOpcode = true;
-      SU->Latency +=
-        InstrItins.getLatency(TII->get(N->getMachineOpcode()).getSchedClass());
+      SU->Latency += InstrItins.
+        getStageLatency(TII->get(N->getMachineOpcode()).getSchedClass());
     }
 }
 

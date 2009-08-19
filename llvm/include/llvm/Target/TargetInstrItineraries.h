@@ -103,7 +103,7 @@ struct InstrItineraryData {
   /// isEmpty - Returns true if there are no itineraries.
   ///
   bool isEmpty() const { return Itineratries == 0; }
-  
+
   /// beginStage - Return the first stage of the itinerary.
   /// 
   const InstrStage *beginStage(unsigned ItinClassIndx) const {
@@ -118,20 +118,17 @@ struct InstrItineraryData {
     return Stages + StageIdx;
   }
 
-  /// getLatency - Return the scheduling latency of the given class.  A
-  /// simple latency value for an instruction is an over-simplification
-  /// for some architectures, but it's a reasonable first approximation.
+  /// getStageLatency - Return the total stage latency of the given
+  /// class.  The latency is the maximum completion time for any stage
+  /// in the itinerary.
   ///
-  unsigned getLatency(unsigned ItinClassIndx) const {
-    // If the target doesn't provide latency information, use a simple
-    // non-zero default value for all instructions.
+  unsigned getStageLatency(unsigned ItinClassIndx) const {
+    // If the target doesn't provide itinerary information, use a
+    // simple non-zero default value for all instructions.
     if (isEmpty())
       return 1;
 
-    // Caclulate the maximum completion time for any stage. The
-    // assumption is that all inputs are consumed at the start of the
-    // first stage and that all outputs are produced at the end of the
-    // latest completing last stage.
+    // Calculate the maximum completion time for any stage.
     unsigned Latency = 0, StartCycle = 0;
     for (const InstrStage *IS = beginStage(ItinClassIndx),
            *E = endStage(ItinClassIndx); IS != E; ++IS) {
@@ -140,6 +137,21 @@ struct InstrItineraryData {
     }
 
     return Latency;
+  }
+
+  /// getOperandCycle - Return the cycle for the given class and
+  /// operand. Return -1 if no cycle is specified for the operand.
+  ///
+  int getOperandCycle(unsigned ItinClassIndx, unsigned OperandIdx) const {
+    if (isEmpty())
+      return -1;
+
+    unsigned FirstIdx = Itineratries[ItinClassIndx].FirstOperandCycle;
+    unsigned LastIdx = Itineratries[ItinClassIndx].LastOperandCycle;
+    if ((FirstIdx + OperandIdx) >= LastIdx)
+      return -1;
+
+    return (int)OperandCycles[FirstIdx + OperandIdx];
   }
 };
 

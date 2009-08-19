@@ -160,6 +160,12 @@ namespace llvm {
     ///
     virtual void ComputeLatency(SUnit *SU);
 
+    /// ComputeOperandLatency - Override dependence edge latency using
+    /// operand use/def information
+    ///
+    virtual void ComputeOperandLatency(SUnit *Def, SUnit *Use,
+                                       SDep& dep) const;
+
     virtual MachineBasicBlock *EmitSchedule();
 
     /// StartBlock - Prepare to perform scheduling in the given block.
