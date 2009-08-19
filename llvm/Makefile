@@ -36,7 +36,7 @@ include $(LEVEL)/Makefile.config
 # FIXME: Remove runtime entirely once we have an understanding of where
 # libprofile etc should go.
 #ifeq ($(LLVMGCC_MAJVERS),4)
-  DIRS := $(filter-out runtime, $(DIRS))
+#  DIRS := $(filter-out runtime, $(DIRS))
 #endif
 
 ifeq ($(MAKECMDGOALS),libs-only)
