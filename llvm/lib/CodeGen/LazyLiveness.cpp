@@ -15,6 +15,7 @@
 #define DEBUG_TYPE "lazyliveness"
 #include "llvm/CodeGen/LazyLiveness.h"
 #include "llvm/CodeGen/MachineDominators.h"
+#include "llvm/CodeGen/MachineFunction.h"
 #include "llvm/CodeGen/MachineRegisterInfo.h"
 #include "llvm/CodeGen/Passes.h"
 #include "llvm/ADT/DepthFirstIterator.h"
