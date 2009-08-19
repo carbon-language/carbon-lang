@@ -316,7 +316,8 @@ void SSI::fixPhis() {
     for (unsigned i = 0, e = PN->getNumIncomingValues(); i < e; ++i) {
       PHINode *PN_father;
       if ((PN_father = dyn_cast<PHINode>(PN->getIncomingValue(i))) &&
-          PN->getParent() == PN_father->getParent()) {
+          PN->getParent() == PN_father->getParent() &&
+          !DT_->dominates(PN->getParent(), PN->getIncomingBlock(i))) {
         BasicBlock *BB = PN->getIncomingBlock(i);
         int pos = PN_father->getBasicBlockIndex(BB);
         PN->setIncomingValue(i, PN_father->getIncomingValue(pos));
