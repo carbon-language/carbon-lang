@@ -604,19 +604,14 @@ CBE *AbstractInterpreter::createCBE(const char *Argv0,
 // GCC abstraction
 //
 
-#ifdef _MSC_VER
-#define strcasecmp(s1, s2) _stricmp(s1, s2)
-#define strncasecmp(s1, s2, n) _strnicmp(s1, s2, n)
-#endif
-
 static bool
 IsARMArchitecture(std::vector<std::string> Args)
 {
   for (std::vector<std::string>::const_iterator
          I = Args.begin(), E = Args.end(); I != E; ++I) {
-    if (!strcasecmp(I->c_str(), "-arch")) {
+    if (!StringsEqualNoCase(*I, "-arch")) {
       ++I;
-      if ((I != E) && !strncasecmp(I->c_str(), "arm", strlen("arm"))) {
+      if ((I != E) && !StringsEqualNoCase(I->c_str(), "arm", strlen("arm"))) {
         return true;
       }
     }
