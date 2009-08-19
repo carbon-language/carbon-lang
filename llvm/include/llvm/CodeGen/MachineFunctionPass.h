@@ -20,9 +20,10 @@
 #define LLVM_CODEGEN_MACHINE_FUNCTION_PASS_H
 
 #include "llvm/Pass.h"
-#include "llvm/CodeGen/MachineFunction.h"
 
 namespace llvm {
+
+class MachineFunction;
 
 /// MachineFunctionPass - This class adapts the FunctionPass interface to
 /// allow convenient creation of passes that operate on the MachineFunction
