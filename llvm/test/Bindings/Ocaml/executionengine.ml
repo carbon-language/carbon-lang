@@ -9,6 +9,12 @@ open Llvm_target
 (* Note that this takes a moment to link, so it's best to keep the number of
    individual tests low. *)
 
+let context = global_context ()
+let i8_type = Llvm.i8_type context
+let i32_type = Llvm.i32_type context
+let i64_type = Llvm.i64_type context
+let double_type = Llvm.double_type context
+
 let bomb msg =
   prerr_endline msg;
   exit 2

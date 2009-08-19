@@ -273,46 +273,56 @@ val string_of_lltype : lltype -> string
 
 (** {7 Operations on integer types} *)
 
-(** The 1-bit integer type. See [llvm::Type::Int1Ty]. *)
-val i1_type : lltype
+(** [i1_type c] returns an integer type of bitwidth 1 in the context [c]. See
+    [llvm::Type::Int1Ty]. *)
+external i1_type : llcontext -> lltype = "llvm_i1_type"
 
-(** The 8-bit integer type. See [llvm::Type::Int8Ty]. *)
-val i8_type : lltype
+(** [i8_type c] returns an integer type of bitwidth 8 in the context [c]. See
+    [llvm::Type::Int8Ty]. *)
+external i8_type : llcontext -> lltype = "llvm_i8_type"
 
-(** The 16-bit integer type. See [llvm::Type::Int16Ty]. *)
-val i16_type : lltype
+(** [i16_type c] returns an integer type of bitwidth 16 in the context [c]. See
+    [llvm::Type::Int16Ty]. *)
+external i16_type : llcontext -> lltype = "llvm_i16_type"
 
-(** The 32-bit integer type. See [llvm::Type::Int32Ty]. *)
-val i32_type : lltype
+(** [i32_type c] returns an integer type of bitwidth 32 in the context [c]. See
+    [llvm::Type::Int32Ty]. *)
+external i32_type : llcontext -> lltype = "llvm_i32_type"
 
-(** The 64-bit integer type. See [llvm::Type::Int64Ty]. *)
-val i64_type : lltype
+(** [i64_type c] returns an integer type of bitwidth 64 in the context [c]. See
+    [llvm::Type::Int64Ty]. *)
+external i64_type : llcontext -> lltype = "llvm_i64_type"
 
-(** [integer_type n] returns an integer type of bitwidth [n].
-    See the method [llvm::IntegerType::get]. *)
-external integer_type : int -> lltype = "llvm_integer_type"
+(** [integer_type c n] returns an integer type of bitwidth [n] in the context
+    [c]. See the method [llvm::IntegerType::get]. *)
+external integer_type : llcontext -> int -> lltype = "llvm_integer_type"
 
-(** [integer_bitwidth ty] returns the number of bits in the integer type [ty].
-    See the method [llvm::IntegerType::getBitWidth]. *)
+(** [integer_bitwidth c ty] returns the number of bits in the integer type [ty]
+    in the context [c].  See the method [llvm::IntegerType::getBitWidth]. *)
 external integer_bitwidth : lltype -> int = "llvm_integer_bitwidth"
 
 
 (** {7 Operations on real types} *)
 
-(** The IEEE 32-bit floating point type. See [llvm::Type::FloatTy]. *)
-val float_type : lltype
+(** [float_type c] returns the IEEE 32-bit floating point type in the context
+    [c]. See [llvm::Type::FloatTy]. *)
+external float_type : llcontext -> lltype = "llvm_float_type"
 
-(** The IEEE 64-bit floating point type. See [llvm::Type::DoubleTy]. *)
-val double_type : lltype
+(** [double_type c] returns the IEEE 64-bit floating point type in the context
+    [c]. See [llvm::Type::DoubleTy]. *)
+external double_type : llcontext -> lltype = "llvm_double_type"
 
-(** The x87 80-bit floating point type. See [llvm::Type::X86_FP80Ty]. *)
-val x86fp80_type : lltype
+(** [x86fp80_type c] returns the x87 80-bit floating point type in the context
+    [c]. See [llvm::Type::X86_FP80Ty]. *)
+external x86fp80_type : llcontext -> lltype = "llvm_x86fp80_type"
 
-(** The IEEE 128-bit floating point type. See [llvm::Type::FP128Ty]. *)
-val fp128_type : lltype
+(** [fp128_type c] returns the IEEE 128-bit floating point type in the context
+    [c]. See [llvm::Type::FP128Ty]. *)
+external fp128_type : llcontext -> lltype = "llvm_fp128_type"
 
-(** The PowerPC 128-bit floating point type. See [llvm::Type::PPC_FP128Ty]. *)
-val ppc_fp128_type : lltype
+(** [ppc_fp128_type c] returns the PowerPC 128-bit floating point type in the
+    context [c]. See [llvm::Type::PPC_FP128Ty]. *)
+external ppc_fp128_type : llcontext -> lltype = "llvm_ppc_fp128_type"
 
 
 (** {7 Operations on function types} *)
@@ -405,18 +415,18 @@ external vector_size : lltype -> int = "llvm_vector_size"
 
 (** {7 Operations on other types} *)
 
-(** [opaque_type ()] creates a new opaque type distinct from any other.
-    Opaque types are useful for building recursive types in combination with
-    {!refine_type}.
-    See [llvm::OpaqueType::get]. *)
-external opaque_type : unit -> lltype = "llvm_opaque_type"
+(** [opaque_type c] creates a new opaque type distinct from any other in the
+    context [c]. Opaque types are useful for building recursive types in
+    combination with {!refine_type}. See [llvm::OpaqueType::get]. *)
+external opaque_type : llcontext -> lltype = "llvm_opaque_type"
 
-(** [void_type] is the type of a function which does not return any value.
-    See [llvm::Type::VoidTy]. *)
-val void_type : lltype
+(** [void_type c] creates a type of a function which does not return any
+    value in the context [c]. See [llvm::Type::VoidTy]. *)
+external void_type : llcontext -> lltype = "llvm_void_type"
 
-(** [label_type] is the type of a basic block. See [llvm::Type::LabelTy]. *)
-val label_type : lltype
+(** [label_type c] creates a type of a basic block in the context [c]. See
+    [llvm::Type::LabelTy]. *)
+external label_type : llcontext -> lltype = "llvm_label_type"
 
 (** {7 Operations on type handles} *)
 
@@ -513,17 +523,18 @@ external const_float_of_string : lltype -> string -> llvalue
 
 (** {7 Operations on composite constants} *)
 
-(** [const_string s] returns the constant [i8] array with the values of the
-    characters in the string [s]. The array is not null-terminated (but see
-    {!const_stringz}). This value can in turn be used as the initializer for a
-    global variable. See the method [llvm::ConstantArray::get]. *)
-external const_string : string -> llvalue = "llvm_const_string"
+(** [const_string c s] returns the constant [i8] array with the values of the
+    characters in the string [s] in the context [c]. The array is not 
+    null-terminated (but see {!const_stringz}). This value can in turn be used
+    as the initializer for a global variable. See the method
+    [llvm::ConstantArray::get]. *)
+external const_string : llcontext -> string -> llvalue = "llvm_const_string"
 
-(** [const_stringz s] returns the constant [i8] array with the values of the
-    characters in the string [s] and a null terminator. This value can in turn
-    be used as the initializer for a global variable.
+(** [const_stringz c s] returns the constant [i8] array with the values of the
+    characters in the string [s] and a null terminator in the context [c]. This
+    value can in turn be used as the initializer for a global variable.
     See the method [llvm::ConstantArray::get]. *)
-external const_stringz : string -> llvalue = "llvm_const_stringz"
+external const_stringz : llcontext -> string -> llvalue = "llvm_const_stringz"
 
 (** [const_array ty elts] returns the constant array of type
     [array_type ty (Array.length elts)] and containing the values [elts].
@@ -1159,15 +1170,16 @@ external entry_block : llvalue -> llbasicblock = "LLVMGetEntryBasicBlock"
     See the method [llvm::BasicBlock::eraseFromParent]. *)
 external delete_block : llbasicblock -> unit = "llvm_delete_block"
 
-(** [append_block name f] creates a new basic block named [name] at the end of
-    function [f].
+(** [append_block c name f] creates a new basic block named [name] at the end of
+    function [f] in the context [c].
     See the constructor of [llvm::BasicBlock]. *)
-external append_block : string -> llvalue -> llbasicblock = "llvm_append_block"
+external append_block : llcontext -> string -> llvalue -> llbasicblock
+                      = "llvm_append_block"
 
-(** [insert_block name bb] creates a new basic block named [name] before the
-    basic block [bb].
+(** [insert_block c name bb] creates a new basic block named [name] before the
+    basic block [bb] in the context [c].
     See the constructor of [llvm::BasicBlock]. *)
-external insert_block : string -> llbasicblock -> llbasicblock
+external insert_block : llcontext -> string -> llbasicblock -> llbasicblock
                       = "llvm_insert_block"
 
 (** [block_parent bb] returns the parent function that owns the basic block.

@@ -155,33 +155,21 @@ external classify_type : lltype -> TypeKind.t = "llvm_classify_type"
 external type_context : lltype -> llcontext = "llvm_type_context"
 
 (*--... Operations on integer types ........................................--*)
-external _i1_type : unit -> lltype = "llvm_i1_type"
-external _i8_type : unit -> lltype = "llvm_i8_type"
-external _i16_type : unit -> lltype = "llvm_i16_type"
-external _i32_type : unit -> lltype = "llvm_i32_type"
-external _i64_type : unit -> lltype = "llvm_i64_type"
+external i1_type : llcontext -> lltype = "llvm_i1_type"
+external i8_type : llcontext -> lltype = "llvm_i8_type"
+external i16_type : llcontext -> lltype = "llvm_i16_type"
+external i32_type : llcontext -> lltype = "llvm_i32_type"
+external i64_type : llcontext -> lltype = "llvm_i64_type"
 
-let i1_type = _i1_type ()
-let i8_type = _i8_type ()
-let i16_type = _i16_type ()
-let i32_type = _i32_type ()
-let i64_type = _i64_type ()
-
-external integer_type : int -> lltype = "llvm_integer_type"
+external integer_type : llcontext -> int -> lltype = "llvm_integer_type"
 external integer_bitwidth : lltype -> int = "llvm_integer_bitwidth"
 
 (*--... Operations on real types ...........................................--*)
-external _float_type : unit -> lltype = "llvm_float_type"
-external _double_type : unit -> lltype = "llvm_double_type"
-external _x86fp80_type : unit -> lltype = "llvm_x86fp80_type"
-external _fp128_type : unit -> lltype = "llvm_fp128_type"
-external _ppc_fp128_type : unit -> lltype = "llvm_ppc_fp128_type"
-
-let float_type = _float_type ()
-let double_type = _double_type ()
-let x86fp80_type = _x86fp80_type ()
-let fp128_type = _fp128_type ()
-let ppc_fp128_type = _ppc_fp128_type ()
+external float_type : llcontext -> lltype = "llvm_float_type"
+external double_type : llcontext -> lltype = "llvm_double_type"
+external x86fp80_type : llcontext -> lltype = "llvm_x86fp80_type"
+external fp128_type : llcontext -> lltype = "llvm_fp128_type"
+external ppc_fp128_type : llcontext -> lltype = "llvm_ppc_fp128_type"
 
 (*--... Operations on function types .......................................--*)
 external function_type : lltype -> lltype array -> lltype = "llvm_function_type"
@@ -211,12 +199,9 @@ external address_space : lltype -> int = "llvm_address_space"
 external vector_size : lltype -> int = "llvm_vector_size"
 
 (*--... Operations on other types ..........................................--*)
-external opaque_type : unit -> lltype = "llvm_opaque_type"
-external _void_type : unit -> lltype = "llvm_void_type"
-external _label_type : unit -> lltype = "llvm_label_type"
-
-let void_type = _void_type ()
-let label_type = _label_type ()
+external opaque_type : llcontext -> lltype = "llvm_opaque_type"
+external void_type : llcontext -> lltype = "llvm_void_type"
+external label_type : llcontext -> lltype = "llvm_label_type"
 
 (*--... Operations on type handles .........................................--*)
 external handle_to_type : lltype -> lltypehandle = "llvm_handle_to_type"
@@ -249,8 +234,8 @@ external const_float_of_string : lltype -> string -> llvalue
                                = "llvm_const_float_of_string"
 
 (*--... Operations on composite constants ..................................--*)
-external const_string : string -> llvalue = "llvm_const_string"
-external const_stringz : string -> llvalue = "llvm_const_stringz"
+external const_string : llcontext -> string -> llvalue = "llvm_const_string"
+external const_stringz : llcontext -> string -> llvalue = "llvm_const_stringz"
 external const_array : lltype -> llvalue array -> llvalue = "llvm_const_array"
 external const_struct : llcontext -> llvalue array -> llvalue
                       = "llvm_const_struct"
@@ -535,8 +520,9 @@ external block_parent : llbasicblock -> llvalue = "LLVMGetBasicBlockParent"
 external basic_blocks : llvalue -> llbasicblock array = "llvm_basic_blocks"
 external entry_block : llvalue -> llbasicblock = "LLVMGetEntryBasicBlock"
 external delete_block : llbasicblock -> unit = "llvm_delete_block"
-external append_block : string -> llvalue -> llbasicblock = "llvm_append_block"
-external insert_block : string -> llbasicblock -> llbasicblock
+external append_block : llcontext -> string -> llvalue -> llbasicblock
+                      = "llvm_append_block"
+external insert_block : llcontext -> string -> llbasicblock -> llbasicblock
                       = "llvm_insert_block"
 external block_begin : llvalue -> (llvalue, llbasicblock) llpos
                      = "llvm_block_begin"
