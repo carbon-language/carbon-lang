@@ -175,7 +175,7 @@ namespace {
       const std::string &Str = S.str();
 
       // If replacement succeeded or warning disabled return with no warning.
-      if (!Rewrite.ReplaceText(SrcRange.getBegin(), Size, &Str[0], Str.size())) {
+      if (!Rewrite.ReplaceText(SrcRange.getBegin(), Size, Str)) {
         ReplacedNodes[Old] = New;
         return;
       }
@@ -188,7 +188,8 @@ namespace {
     void InsertText(SourceLocation Loc, const char *StrData, unsigned StrLen,
                     bool InsertAfter = true) {
       // If insertion succeeded or warning disabled return with no warning.
-      if (!Rewrite.InsertText(Loc, StrData, StrLen, InsertAfter) ||
+      if (!Rewrite.InsertText(Loc, llvm::StringRef(StrData, StrLen),
+                              InsertAfter) ||
           SilenceRewriteMacroWarning)
         return;
       
@@ -206,7 +207,8 @@ namespace {
     void ReplaceText(SourceLocation Start, unsigned OrigLength,
                      const char *NewStr, unsigned NewLength) {
       // If removal succeeded or warning disabled return with no warning.
-      if (!Rewrite.ReplaceText(Start, OrigLength, NewStr, NewLength) ||
+      if (!Rewrite.ReplaceText(Start, OrigLength,
+                               llvm::StringRef(NewStr, NewLength)) ||
           SilenceRewriteMacroWarning)
         return;
       
@@ -1605,8 +1607,7 @@ Stmt *RewriteObjC::RewriteObjCTryStmt(ObjCAtTryStmt *S) {
       assert((*bodyBuf == '{') && "bogus @catch body location");
       
       buf += "1) { id _tmp = _caught;";
-      Rewrite.ReplaceText(startLoc, bodyBuf-startBuf+1, 
-                          buf.c_str(), buf.size());      
+      Rewrite.ReplaceText(startLoc, bodyBuf-startBuf+1, buf);
     } else if (catchDecl) {
       QualType t = catchDecl->getType();
       if (t == Context->getObjCIdType()) {

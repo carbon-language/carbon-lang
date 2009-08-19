@@ -129,13 +129,13 @@ void clang::RewriteMacrosInInput(Preprocessor &PP, llvm::raw_ostream *OS) {
         const IdentifierInfo *II = RawTokens[CurRawTok].getIdentifierInfo();
         if (!strcmp(II->getName(), "warning")) {
           // Comment out #warning.
-          RB.InsertTextAfter(SM.getFileOffset(RawTok.getLocation()), "//", 2);
+          RB.InsertTextAfter(SM.getFileOffset(RawTok.getLocation()), "//");
         } else if (!strcmp(II->getName(), "pragma") &&
                    RawTokens[CurRawTok+1].is(tok::identifier) &&
                   !strcmp(RawTokens[CurRawTok+1].getIdentifierInfo()->getName(),
                           "mark")){
           // Comment out #pragma mark.
-          RB.InsertTextAfter(SM.getFileOffset(RawTok.getLocation()), "//", 2);
+          RB.InsertTextAfter(SM.getFileOffset(RawTok.getLocation()), "//");
         }
       }
       
@@ -165,7 +165,7 @@ void clang::RewriteMacrosInInput(Preprocessor &PP, llvm::raw_ostream *OS) {
       // Comment out a whole run of tokens instead of bracketing each one with
       // comments.  Add a leading space if RawTok didn't have one.
       bool HasSpace = RawTok.hasLeadingSpace();
-      RB.InsertTextAfter(RawOffs, " /*"+HasSpace, 2+!HasSpace);
+      RB.InsertTextAfter(RawOffs, " /*"+HasSpace);
       unsigned EndPos;
 
       do {
@@ -183,7 +183,7 @@ void clang::RewriteMacrosInInput(Preprocessor &PP, llvm::raw_ostream *OS) {
       } while (RawOffs <= PPOffs && !RawTok.isAtStartOfLine() &&
                (PPOffs != RawOffs || !isSameToken(RawTok, PPTok)));
 
-      RB.InsertTextBefore(EndPos, "*/", 2);
+      RB.InsertTextBefore(EndPos, "*/");
       continue;
     }
     
@@ -199,7 +199,7 @@ void clang::RewriteMacrosInInput(Preprocessor &PP, llvm::raw_ostream *OS) {
       PPOffs = SM.getFileOffset(PPLoc);
     }
     Expansion += ' ';
-    RB.InsertTextBefore(InsertPos, &Expansion[0], Expansion.size());
+    RB.InsertTextBefore(InsertPos, Expansion);
   }
 
   // Get the buffer corresponding to MainFileID.  If we haven't changed it, then

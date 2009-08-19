@@ -236,7 +236,8 @@ void RewriteBlocks::InsertText(SourceLocation Loc, const char *StrData,
 
 void RewriteBlocks::ReplaceText(SourceLocation Start, unsigned OrigLength,
                                   const char *NewStr, unsigned NewLength) {
-  if (!Rewrite.ReplaceText(Start, OrigLength, NewStr, NewLength))
+  if (!Rewrite.ReplaceText(Start, OrigLength,
+                           llvm::StringRef(NewStr, NewLength)))
     return;
   Diags.Report(Context->getFullLoc(Start), RewriteFailedDiag);
 }

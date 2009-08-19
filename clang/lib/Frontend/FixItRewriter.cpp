@@ -175,8 +175,7 @@ void FixItRewriter::HandleDiagnostic(Diagnostic::Level DiagLevel,
     // We're replacing code.
     if (Rewrite.ReplaceText(Hint.RemoveRange.getBegin(),
                             Rewrite.getRangeSize(Hint.RemoveRange),
-                            Hint.CodeToInsert.c_str(),
-                            Hint.CodeToInsert.size()))
+                            Hint.CodeToInsert))
       Failed = true;
   }
 
