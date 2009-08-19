@@ -487,12 +487,11 @@ void raw_string_ostream::write_impl(const char *Ptr, size_t Size) {
 // and we only need to set the vector size when the data is flushed.
 
 raw_svector_ostream::raw_svector_ostream(SmallVectorImpl<char> &O) : OS(O) {
-  // Set up the initial external buffer. We enforce that the buffer must have at
+  // Set up the initial external buffer. We make sure that the buffer has at
   // least 128 bytes free; raw_ostream itself only requires 64, but we want to
   // make sure that we don't grow the buffer unnecessarily on destruction (when
   // the data is flushed). See the FIXME below.
-  if (OS.capacity() - OS.size() < 128)
-    llvm_report_error("Invalid argument, must have at least 128 bytes free!");
+  OS.reserve(OS.size() + 128);
   SetBuffer(OS.end(), OS.capacity() - OS.size());
 }
 
@@ -518,6 +517,11 @@ void raw_svector_ostream::write_impl(const char *Ptr, size_t Size) {
 }
 
 uint64_t raw_svector_ostream::current_pos() { return OS.size(); }
+
+StringRef raw_svector_ostream::str() {
+  flush();
+  return StringRef(OS.begin(), OS.size());
+}
 
 //===----------------------------------------------------------------------===//
 //  raw_null_ostream

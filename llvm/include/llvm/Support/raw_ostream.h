@@ -454,10 +454,14 @@ class raw_svector_ostream : public raw_ostream {
 public:
   /// Construct a new raw_svector_ostream.
   ///
-  /// \arg O - The vector to write to; this *must* have at least 128 bytes of
-  /// free space in it.
+  /// \arg O - The vector to write to; this should generally have at least 128
+  /// bytes free to avoid any extraneous memory overhead.
   explicit raw_svector_ostream(SmallVectorImpl<char> &O);
   ~raw_svector_ostream();
+
+  /// str - Flushes the stream contents to the target vector and return a
+  /// StringRef for the vector contents.
+  StringRef str();
 };
 
 /// raw_null_ostream - A raw_ostream that discards all output.
