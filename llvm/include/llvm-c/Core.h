@@ -463,6 +463,7 @@ LLVMValueRef LLVMConstStruct(LLVMValueRef *ConstantVals, unsigned Count,
 LLVMValueRef LLVMConstVector(LLVMValueRef *ScalarConstantVals, unsigned Size);
 
 /* Constant expressions */
+LLVMValueRef LLVMAlignOf(LLVMTypeRef Ty);
 LLVMValueRef LLVMSizeOf(LLVMTypeRef Ty);
 LLVMValueRef LLVMConstNeg(LLVMValueRef ConstantVal);
 LLVMValueRef LLVMConstFNeg(LLVMValueRef ConstantVal);
@@ -674,7 +675,7 @@ void LLVMDisposeBuilder(LLVMBuilderRef Builder);
 /* Terminators */
 LLVMValueRef LLVMBuildRetVoid(LLVMBuilderRef);
 LLVMValueRef LLVMBuildRet(LLVMBuilderRef, LLVMValueRef V);
-LLVMValueRef LLVMBuildAggregateRet(LLVMBuilderRef, LLVMValueRef RetVals,
+LLVMValueRef LLVMBuildAggregateRet(LLVMBuilderRef, LLVMValueRef *RetVals,
                                    unsigned N);
 LLVMValueRef LLVMBuildBr(LLVMBuilderRef, LLVMBasicBlockRef Dest);
 LLVMValueRef LLVMBuildCondBr(LLVMBuilderRef, LLVMValueRef If,
