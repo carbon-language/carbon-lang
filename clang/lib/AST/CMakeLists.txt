@@ -27,6 +27,7 @@ add_clang_library(clangAST
   StmtViz.cpp
   TemplateName.cpp
   Type.cpp
+  TypeLoc.cpp
   )
 
 add_dependencies(clangAST ClangDiagnosticAST)
