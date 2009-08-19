@@ -753,15 +753,12 @@ void AsmPrinter::EmitAlignment(unsigned NumBits, const GlobalValue *GV,
   NumBits = std::max(NumBits, ForcedAlignBits);
   
   if (NumBits == 0) return;   // No need to emit alignment.
-  if (TAI->getAlignmentIsInBytes()) NumBits = 1 << NumBits;
-  O << TAI->getAlignDirective() << NumBits;
-
+  
+  unsigned FillValue = 0;
   if (getCurrentSection()->getKind().isText())
-    if (unsigned FillValue = TAI->getTextAlignFillValue()) {
-      O << ',';
-      PrintHex(FillValue);
-    }
-  O << '\n';
+    FillValue = TAI->getTextAlignFillValue();
+  
+  OutStreamer.EmitValueToAlignment(1 << NumBits, FillValue, 1, 0);
 }
 
 /// EmitZeros - Emit a block of zeros.

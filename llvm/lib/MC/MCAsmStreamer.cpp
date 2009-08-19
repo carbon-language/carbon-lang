@@ -14,7 +14,9 @@
 #include "llvm/MC/MCSectionMachO.h"
 #include "llvm/MC/MCSymbol.h"
 #include "llvm/MC/MCValue.h"
+#include "llvm/Target/TargetAsmInfo.h"
 #include "llvm/Support/ErrorHandling.h"
+#include "llvm/Support/MathExtras.h"
 #include "llvm/Support/raw_ostream.h"
 using namespace llvm;
 
@@ -224,24 +226,37 @@ void MCAsmStreamer::EmitValue(const MCValue &Value, unsigned Size) {
 void MCAsmStreamer::EmitValueToAlignment(unsigned ByteAlignment, int64_t Value,
                                          unsigned ValueSize,
                                          unsigned MaxBytesToEmit) {
-  // Some assemblers don't support .balign, so we always emit as .p2align if
-  // this is a power of two. Otherwise we assume the client knows the target
-  // supports .balign and use that.
-  unsigned Pow2 = Log2_32(ByteAlignment);
-  bool IsPow2 = (1U << Pow2) == ByteAlignment;
+  // Some assemblers don't support non-power of two alignments, so we always
+  // emit alignments as a power of two if possible.
+  if (isPowerOf2_32(ByteAlignment)) {
+    OS << TAI.getAlignDirective();
+    
+    if (TAI.getAlignmentIsInBytes())
+      OS << ByteAlignment;
+    else
+      OS << Log2_32(ByteAlignment);
 
+    if (Value || MaxBytesToEmit) {
+      OS << ", " << truncateToSize(Value, ValueSize);
+
+      if (MaxBytesToEmit) 
+        OS << ", " << MaxBytesToEmit;
+    }
+    OS << '\n';
+    return;
+  }
+  
+  // Non-power of two alignment.  This is not widely supported by assemblers.
+  // FIXME: Parameterize this based on TAI.
   switch (ValueSize) {
-  default:
-    llvm_unreachable("Invalid size for machine code value!");
-  case 8:
-    llvm_unreachable("Unsupported alignment size!");
-  case 1: OS << (IsPow2 ? ".p2align" : ".balign"); break;
-  case 2: OS << (IsPow2 ? ".p2alignw" : ".balignw"); break;
-  case 4: OS << (IsPow2 ? ".p2alignl" : ".balignl"); break;
+  default: llvm_unreachable("Invalid size for machine code value!");
+  case 1: OS << ".balign";  break;
+  case 2: OS << ".balignw"; break;
+  case 4: OS << ".balignl"; break;
+  case 8: llvm_unreachable("Unsupported alignment size!");
   }
 
-  OS << ' ' << (IsPow2 ? Pow2 : ByteAlignment);
-
+  OS << ' ' << ByteAlignment;
   OS << ", " << truncateToSize(Value, ValueSize);
   if (MaxBytesToEmit) 
     OS << ", " << MaxBytesToEmit;
