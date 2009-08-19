@@ -13,6 +13,7 @@
 
 #include "DwarfDebug.h"
 #include "llvm/Module.h"
+#include "llvm/CodeGen/MachineFunction.h"
 #include "llvm/CodeGen/MachineModuleInfo.h"
 #include "llvm/MC/MCSection.h"
 #include "llvm/MC/MCStreamer.h"
