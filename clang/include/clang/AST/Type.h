@@ -290,7 +290,10 @@ public:
 #include "clang/AST/TypeNodes.def"
     TagFirst = Record, TagLast = Enum
   };
-  
+
+protected:
+  enum { TypeClassBitSize = 6 };
+
 private:
   QualType CanonicalType;
 
@@ -300,7 +303,7 @@ private:
   /// TypeClass bitfield - Enum that specifies what subclass this belongs to.
   /// Note that this should stay at the end of the ivars for Type so that
   /// subclasses can pack their bitfields into the same word.
-  unsigned TC : 6;
+  unsigned TC : TypeClassBitSize;
 
   Type(const Type&);           // DO NOT IMPLEMENT.
   void operator=(const Type&); // DO NOT IMPLEMENT.
@@ -2141,7 +2144,7 @@ public:
   }
   static bool classof(const ObjCObjectPointerType *) { return true; }
 };
-    
+
 // Inline function definitions.
 
 /// getUnqualifiedType - Return the type without any qualifiers.

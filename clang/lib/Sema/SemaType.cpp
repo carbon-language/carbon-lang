@@ -1309,6 +1309,23 @@ Sema::GetDeclaratorInfoForDeclarator(Declarator &D, QualType T, unsigned Skip) {
   return DInfo;
 }
 
+/// \brief Create a LocInfoType to hold the given QualType and DeclaratorInfo.
+QualType Sema::CreateLocInfoType(QualType T, DeclaratorInfo *DInfo) {
+  // FIXME: LocInfoTypes are "transient", only needed for passing to/from Parser
+  // and Sema during declaration parsing. Try deallocating/caching them when
+  // it's appropriate, instead of allocating them and keeping them around.
+  LocInfoType *LocT = (LocInfoType*)BumpAlloc.Allocate(sizeof(LocInfoType), 8);
+  new (LocT) LocInfoType(T, DInfo);
+  assert(LocT->getTypeClass() != T->getTypeClass() &&
+         "LocInfoType's TypeClass conflicts with an existing Type class");
+  return QualType(LocT, 0);
+}
+
+void LocInfoType::getAsStringInternal(std::string &Str,
+                                      const PrintingPolicy &Policy) const {
+  assert(false && "LocInfoType should not be used in the type system");
+}
+
 /// CheckSpecifiedExceptionType - Check if the given type is valid in an
 /// exception specification. Incomplete types, or pointers to incomplete types
 /// other than void are not allowed.

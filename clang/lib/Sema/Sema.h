@@ -128,6 +128,40 @@ struct BlockSemaInfo {
   BlockSemaInfo *PrevBlockInfo;
 };
 
+/// \brief Holds a QualType and a DeclaratorInfo* that came out of a declarator
+/// parsing.
+///
+/// LocInfoType is a "transient" type, only needed for passing to/from Parser
+/// and Sema, when we want to preserve type source info for a parsed type.
+/// It will not participate in the type system semantics in any way.
+class LocInfoType : public Type {
+  enum {
+    // The last number that can fit in Type's TC.
+    // Avoids conflict with an existing Type class. 
+    LocInfo = (1 << TypeClassBitSize) - 1
+  };
+
+  DeclaratorInfo *DeclInfo;
+
+  LocInfoType(QualType ty, DeclaratorInfo *DInfo)
+    : Type((TypeClass)LocInfo, ty, ty->isDependentType()), DeclInfo(DInfo) {
+    assert(getTypeClass() == (TypeClass)LocInfo && "LocInfo didn't fit in TC?");
+  }
+  friend class Sema;
+
+public:
+  QualType getType() const { return getCanonicalTypeInternal(); }
+  DeclaratorInfo *getDeclaratorInfo() const { return DeclInfo; }
+
+  virtual void getAsStringInternal(std::string &Str,
+                                   const PrintingPolicy &Policy) const;
+
+  static bool classof(const Type *T) {
+    return T->getTypeClass() == (TypeClass)LocInfo;
+  }
+  static bool classof(const LocInfoType *) { return true; }
+};
+
 /// Sema - This implements semantic analysis and AST building for C.
 class Sema : public Action {
   Sema(const Sema&);           // DO NOT IMPLEMENT
@@ -301,6 +335,8 @@ public:
   /// unit.
   bool CompleteTranslationUnit;
 
+  llvm::BumpPtrAllocator BumpAlloc;
+
   /// \brief The number of SFINAE diagnostics that have been trapped.
   unsigned NumSFINAEErrors;
 
@@ -425,6 +461,8 @@ public:
                                 unsigned Skip = 0, TagDecl **OwnedDecl = 0);
   DeclaratorInfo *GetDeclaratorInfoForDeclarator(Declarator &D, QualType T,
                                                  unsigned Skip);
+  /// \brief Create a LocInfoType to hold the given QualType and DeclaratorInfo.
+  QualType CreateLocInfoType(QualType T, DeclaratorInfo *DInfo);
   DeclarationName GetNameForDeclarator(Declarator &D);
   bool CheckSpecifiedExceptionType(QualType T, const SourceRange &Range);
   bool CheckDistantExceptionSpec(QualType T);

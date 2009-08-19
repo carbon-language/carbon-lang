@@ -764,7 +764,7 @@ llvm::DIType CGDebugInfo::getOrCreateType(QualType Ty,
 #define DEPENDENT_TYPE(Class, Base) case Type::Class:
 #include "clang/AST/TypeNodes.def"
     assert(false && "Dependent types cannot show up in debug information");
-    
+
   case Type::LValueReference:
   case Type::RValueReference:
   case Type::Vector:
