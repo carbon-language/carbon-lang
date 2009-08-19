@@ -8,27 +8,17 @@
 //===----------------------------------------------------------------------===//
 
 #include "llvm/ADT/Twine.h"
+#include "llvm/ADT/SmallString.h"
 #include "llvm/Support/raw_ostream.h"
 using namespace llvm;
 
 std::string Twine::str() const {
-  // FIXME: This should probably use the toVector implementation, once that is
-  // efficient.
-  std::string Res;
-  raw_string_ostream OS(Res);
-  print(OS);
-  OS.flush();
-  return Res;
+  SmallString<256> Vec;
+  toVector(Vec);
+  return std::string(Vec.begin(), Vec.end());
 }
 
 void Twine::toVector(SmallVectorImpl<char> &Out) const {
-  // FIXME: This is very inefficient, since we are creating a large raw_ostream
-  // buffer -- hitting malloc, which we were supposed to avoid -- all when we
-  // have this pretty little small vector available.
-  //
-  // The best way to fix this is to make raw_svector_ostream do the right thing
-  // and be efficient, by augmenting the base raw_ostream with the ability to
-  // have the buffer managed by a concrete implementation.
   raw_svector_ostream OS(Out);
   print(OS);
 }
