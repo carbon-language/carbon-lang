@@ -375,10 +375,6 @@ CodeGenFunction::EmitCXXAggrConstructorCall(const CXXConstructorDecl *D,
   
   llvm::BasicBlock *ContinueBlock = createBasicBlock("for.inc");
   
-  // Store the blocks to use for break and continue.
-  // FIXME. Is this needed?
-  BreakContinueStack.push_back(BreakContinue(AfterFor, ContinueBlock));
-  
   // Inside the loop body, emit the constructor call on the array element.
   Counter = Builder.CreateLoad(IndexPtr);
   llvm::Value *Address = Builder.CreateInBoundsGEP(This, Counter, "arrayidx");
@@ -389,9 +385,6 @@ CodeGenFunction::EmitCXXAggrConstructorCall(const CXXConstructorDecl *D,
   } 
   else
     EmitCXXConstructorCall(D, Ctor_Complete, Address, 0, 0);
-  
-  // FIXME. Do we need this?
-  BreakContinueStack.pop_back();
   
   EmitBlock(ContinueBlock);
   
