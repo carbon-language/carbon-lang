@@ -14,6 +14,7 @@
 #include "clang/Frontend/PCHWriter.h"
 #include "clang/AST/DeclVisitor.h"
 #include "clang/AST/Expr.h"
+#include "clang/AST/TypeLoc.h"
 #include "llvm/Bitcode/BitstreamWriter.h"
 using namespace clang;
 
@@ -47,6 +48,7 @@ namespace {
     void VisitRecordDecl(RecordDecl *D);
     void VisitValueDecl(ValueDecl *D);
     void VisitEnumConstantDecl(EnumConstantDecl *D);
+    void VisitDeclaratorDecl(DeclaratorDecl *D);
     void VisitFunctionDecl(FunctionDecl *D);
     void VisitFieldDecl(FieldDecl *D);
     void VisitVarDecl(VarDecl *D);
@@ -145,9 +147,76 @@ void PCHDeclWriter::VisitEnumConstantDecl(EnumConstantDecl *D) {
   Writer.AddAPSInt(D->getInitVal(), Record);
   Code = pch::DECL_ENUM_CONSTANT;
 }
+namespace {
+
+class TypeLocWriter : public TypeLocVisitor<TypeLocWriter> {
+  PCHWriter &Writer;
+  PCHWriter::RecordData &Record;
+
+public:
+  TypeLocWriter(PCHWriter &Writer, PCHWriter::RecordData &Record)
+    : Writer(Writer), Record(Record) { }
+
+#define ABSTRACT_TYPELOC(CLASS)
+#define TYPELOC(CLASS, PARENT, TYPE) \
+    void Visit##CLASS(CLASS TyLoc); 
+#include "clang/AST/TypeLocNodes.def"
+  
+  void VisitTypeLoc(TypeLoc TyLoc) {
+    assert(0 && "A type loc wrapper was not handled!");
+  }
+};
+
+}
+
+void TypeLocWriter::VisitDefaultTypeSpecLoc(DefaultTypeSpecLoc TyLoc) {
+  Writer.AddSourceLocation(TyLoc.getStartLoc(), Record);
+}
+void TypeLocWriter::VisitTypedefLoc(TypedefLoc TyLoc) {
+  Writer.AddSourceLocation(TyLoc.getNameLoc(), Record);
+}
+void TypeLocWriter::VisitPointerLoc(PointerLoc TyLoc) {
+  Writer.AddSourceLocation(TyLoc.getStarLoc(), Record);
+}
+void TypeLocWriter::VisitBlockPointerLoc(BlockPointerLoc TyLoc) {
+  Writer.AddSourceLocation(TyLoc.getCaretLoc(), Record);
+}
+void TypeLocWriter::VisitMemberPointerLoc(MemberPointerLoc TyLoc) {
+  Writer.AddSourceLocation(TyLoc.getStarLoc(), Record);
+}
+void TypeLocWriter::VisitReferenceLoc(ReferenceLoc TyLoc) {
+  Writer.AddSourceLocation(TyLoc.getAmpLoc(), Record);
+}
+void TypeLocWriter::VisitFunctionLoc(FunctionLoc TyLoc) {
+  Writer.AddSourceLocation(TyLoc.getLParenLoc(), Record);
+  Writer.AddSourceLocation(TyLoc.getRParenLoc(), Record);
+  for (unsigned i = 0, e = TyLoc.getNumArgs(); i != e; ++i)
+    Writer.AddDeclRef(TyLoc.getArg(i), Record);
+}
+void TypeLocWriter::VisitArrayLoc(ArrayLoc TyLoc) {
+  Writer.AddSourceLocation(TyLoc.getLBracketLoc(), Record);
+  Writer.AddSourceLocation(TyLoc.getRBracketLoc(), Record);
+  Record.push_back(TyLoc.getSizeExpr() ? 1 : 0);
+  if (TyLoc.getSizeExpr())
+    Writer.AddStmt(TyLoc.getSizeExpr());
+}
+
+void PCHDeclWriter::VisitDeclaratorDecl(DeclaratorDecl *D) {
+  VisitValueDecl(D);
+  DeclaratorInfo *DInfo = D->getDeclaratorInfo();
+  if (DInfo == 0) {
+    Writer.AddTypeRef(QualType(), Record);
+    return;
+  }
+  
+  Writer.AddTypeRef(DInfo->getTypeLoc().getSourceType(), Record);
+  TypeLocWriter TLW(Writer, Record);
+  for (TypeLoc TL = DInfo->getTypeLoc(); !TL.isNull(); TL = TL.getNextTypeLoc())
+    TLW.Visit(TL);
+}
 
 void PCHDeclWriter::VisitFunctionDecl(FunctionDecl *D) {
-  VisitValueDecl(D);
+  VisitDeclaratorDecl(D);
   Record.push_back(D->isThisDeclarationADefinition());
   if (D->isThisDeclarationADefinition())
     Writer.AddStmt(D->getBody());
@@ -324,7 +393,7 @@ void PCHDeclWriter::VisitObjCPropertyImplDecl(ObjCPropertyImplDecl *D) {
 }
 
 void PCHDeclWriter::VisitFieldDecl(FieldDecl *D) {
-  VisitValueDecl(D);
+  VisitDeclaratorDecl(D);
   Record.push_back(D->isMutable());
   Writer.AddSourceLocation(D->getTypeSpecStartLoc(), Record);
   Record.push_back(D->getBitWidth()? 1 : 0);
@@ -334,7 +403,7 @@ void PCHDeclWriter::VisitFieldDecl(FieldDecl *D) {
 }
 
 void PCHDeclWriter::VisitVarDecl(VarDecl *D) {
-  VisitValueDecl(D);
+  VisitDeclaratorDecl(D);
   Record.push_back(D->getStorageClass()); // FIXME: stable encoding
   Record.push_back(D->isThreadSpecified());
   Record.push_back(D->hasCXXDirectInitializer());
@@ -361,7 +430,8 @@ void PCHDeclWriter::VisitParmVarDecl(ParmVarDecl *D) {
   // If the assumptions about the DECL_PARM_VAR abbrev are true, use it.  Here
   // we dynamically check for the properties that we optimize for, but don't
   // know are true of all PARM_VAR_DECLs.
-  if (!D->hasAttrs() &&
+  if (!D->getDeclaratorInfo() &&
+      !D->hasAttrs() &&
       !D->isImplicit() &&
       !D->isUsed() &&
       D->getAccess() == AS_none &&
@@ -446,6 +516,8 @@ void PCHWriter::WriteDeclsBlockAbbrevs() {
   Abv->Add(BitCodeAbbrevOp(BitCodeAbbrevOp::VBR, 6)); // Name
   // ValueDecl
   Abv->Add(BitCodeAbbrevOp(BitCodeAbbrevOp::VBR, 6)); // Type
+  // DeclaratorDecl
+  Abv->Add(BitCodeAbbrevOp(pch::PREDEF_TYPE_NULL_ID)); // InfoType
   // VarDecl
   Abv->Add(BitCodeAbbrevOp(0));                       // StorageClass
   Abv->Add(BitCodeAbbrevOp(0));                       // isThreadSpecified

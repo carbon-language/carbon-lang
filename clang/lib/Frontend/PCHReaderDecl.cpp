@@ -18,6 +18,7 @@
 #include "clang/AST/DeclVisitor.h"
 #include "clang/AST/DeclGroup.h"
 #include "clang/AST/Expr.h"
+#include "clang/AST/TypeLoc.h"
 using namespace clang;
 
 
@@ -46,6 +47,7 @@ namespace {
     void VisitRecordDecl(RecordDecl *RD);
     void VisitValueDecl(ValueDecl *VD);
     void VisitEnumConstantDecl(EnumConstantDecl *ECD);
+    void VisitDeclaratorDecl(DeclaratorDecl *DD);
     void VisitFunctionDecl(FunctionDecl *FD);
     void VisitFieldDecl(FieldDecl *FD);
     void VisitVarDecl(VarDecl *VD);
@@ -147,8 +149,76 @@ void PCHDeclReader::VisitEnumConstantDecl(EnumConstantDecl *ECD) {
   ECD->setInitVal(Reader.ReadAPSInt(Record, Idx));
 }
 
+namespace {
+
+class TypeLocReader : public TypeLocVisitor<TypeLocReader> {
+  PCHReader &Reader;
+  const PCHReader::RecordData &Record;
+  unsigned &Idx;
+
+public:
+  TypeLocReader(PCHReader &Reader, const PCHReader::RecordData &Record,
+                unsigned &Idx)
+    : Reader(Reader), Record(Record), Idx(Idx) { }
+
+#define ABSTRACT_TYPELOC(CLASS)
+#define TYPELOC(CLASS, PARENT, TYPE) \
+    void Visit##CLASS(CLASS TyLoc); 
+#include "clang/AST/TypeLocNodes.def"
+  
+  void VisitTypeLoc(TypeLoc TyLoc) {
+    assert(0 && "A type loc wrapper was not handled!");
+  }
+};
+
+}
+
+void TypeLocReader::VisitDefaultTypeSpecLoc(DefaultTypeSpecLoc TyLoc) {
+  TyLoc.setStartLoc(SourceLocation::getFromRawEncoding(Record[Idx++]));
+}
+void TypeLocReader::VisitTypedefLoc(TypedefLoc TyLoc) {
+  TyLoc.setNameLoc(SourceLocation::getFromRawEncoding(Record[Idx++]));
+}
+void TypeLocReader::VisitPointerLoc(PointerLoc TyLoc) {
+  TyLoc.setStarLoc(SourceLocation::getFromRawEncoding(Record[Idx++]));
+}
+void TypeLocReader::VisitBlockPointerLoc(BlockPointerLoc TyLoc) {
+  TyLoc.setCaretLoc(SourceLocation::getFromRawEncoding(Record[Idx++]));
+}
+void TypeLocReader::VisitMemberPointerLoc(MemberPointerLoc TyLoc) {
+  TyLoc.setStarLoc(SourceLocation::getFromRawEncoding(Record[Idx++]));
+}
+void TypeLocReader::VisitReferenceLoc(ReferenceLoc TyLoc) {
+  TyLoc.setAmpLoc(SourceLocation::getFromRawEncoding(Record[Idx++]));
+}
+void TypeLocReader::VisitFunctionLoc(FunctionLoc TyLoc) {
+  TyLoc.setLParenLoc(SourceLocation::getFromRawEncoding(Record[Idx++]));
+  TyLoc.setRParenLoc(SourceLocation::getFromRawEncoding(Record[Idx++]));
+  for (unsigned i = 0, e = TyLoc.getNumArgs(); i != e; ++i)
+    TyLoc.setArg(i, cast<ParmVarDecl>(Reader.GetDecl(Record[Idx++])));
+}
+void TypeLocReader::VisitArrayLoc(ArrayLoc TyLoc) {
+  TyLoc.setLBracketLoc(SourceLocation::getFromRawEncoding(Record[Idx++]));
+  TyLoc.setRBracketLoc(SourceLocation::getFromRawEncoding(Record[Idx++]));
+  if (Record[Idx++])
+    TyLoc.setSizeExpr(Reader.ReadDeclExpr());
+}
+
+void PCHDeclReader::VisitDeclaratorDecl(DeclaratorDecl *DD) {
+  VisitValueDecl(DD);
+  QualType InfoTy = Reader.GetType(Record[Idx++]);
+  if (InfoTy.isNull())
+    return;
+
+  DeclaratorInfo *DInfo = Reader.getContext()->CreateDeclaratorInfo(InfoTy);
+  TypeLocReader TLR(Reader, Record, Idx);
+  for (TypeLoc TL = DInfo->getTypeLoc(); !TL.isNull(); TL = TL.getNextTypeLoc())
+    TLR.Visit(TL);
+  DD->setDeclaratorInfo(DInfo);
+}
+
 void PCHDeclReader::VisitFunctionDecl(FunctionDecl *FD) {
-  VisitValueDecl(FD);
+  VisitDeclaratorDecl(FD);
   if (Record[Idx++])
     FD->setLazyBody(Reader.getDeclsCursor().GetCurrentBitNo());
   FD->setPreviousDeclaration(
@@ -333,7 +403,7 @@ void PCHDeclReader::VisitObjCPropertyImplDecl(ObjCPropertyImplDecl *D) {
 }
 
 void PCHDeclReader::VisitFieldDecl(FieldDecl *FD) {
-  VisitValueDecl(FD);
+  VisitDeclaratorDecl(FD);
   FD->setMutable(Record[Idx++]);
   FD->setTypeSpecStartLoc(SourceLocation::getFromRawEncoding(Record[Idx++]));
   if (Record[Idx++])
@@ -341,7 +411,7 @@ void PCHDeclReader::VisitFieldDecl(FieldDecl *FD) {
 }
 
 void PCHDeclReader::VisitVarDecl(VarDecl *VD) {
-  VisitValueDecl(VD);
+  VisitDeclaratorDecl(VD);
   VD->setStorageClass((VarDecl::StorageClass)Record[Idx++]);
   VD->setThreadSpecified(Record[Idx++]);
   VD->setCXXDirectInitializer(Record[Idx++]);
