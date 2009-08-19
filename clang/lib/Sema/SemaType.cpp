@@ -16,6 +16,7 @@
 #include "clang/AST/ASTContext.h"
 #include "clang/AST/DeclObjC.h"
 #include "clang/AST/DeclTemplate.h"
+#include "clang/AST/TypeLoc.h"
 #include "clang/AST/Expr.h"
 #include "clang/Parse/DeclSpec.h"
 #include "llvm/ADT/SmallPtrSet.h"
@@ -881,6 +882,11 @@ QualType Sema::GetTypeForDeclarator(Declarator &D, Scope *S,
   DeclarationName Name;
   if (D.getIdentifier())
     Name = D.getIdentifier();
+  
+  bool ShouldBuildInfo = DInfo != 0;
+  // The QualType referring to the type as written as source code. We can't use
+  // T because it can change due to semantic analysis.
+  QualType SourceTy = T;
 
   // Walk the DeclTypeInfo, building the recursive type as we go.
   // DeclTypeInfos are ordered from the identifier out, which is
@@ -890,6 +896,16 @@ QualType Sema::GetTypeForDeclarator(Declarator &D, Scope *S,
     switch (DeclType.Kind) {
     default: assert(0 && "Unknown decltype!");
     case DeclaratorChunk::BlockPointer:
+      if (ShouldBuildInfo) {
+        if (SourceTy->isFunctionType())
+          SourceTy = Context.getBlockPointerType(SourceTy)
+                                      .getQualifiedType(DeclType.Cls.TypeQuals);
+        else
+          // If not function type Context::getBlockPointerType asserts,
+          // so just give up.
+          ShouldBuildInfo = false;
+      }
+
       // If blocks are disabled, emit an error.
       if (!LangOpts.Blocks)
         Diag(DeclType.Loc, diag::err_blocks_disable);
@@ -898,6 +914,10 @@ QualType Sema::GetTypeForDeclarator(Declarator &D, Scope *S,
                                 Name);
       break;
     case DeclaratorChunk::Pointer:
+      //FIXME: Use ObjCObjectPointer for info when appropriate.
+      if (ShouldBuildInfo)
+        SourceTy = Context.getPointerType(SourceTy)
+                                      .getQualifiedType(DeclType.Ptr.TypeQuals);
       // Verify that we're not building a pointer to pointer to function with
       // exception specification.
       if (getLangOptions().CPlusPlus && CheckDistantExceptionSpec(T)) {
@@ -915,6 +935,15 @@ QualType Sema::GetTypeForDeclarator(Declarator &D, Scope *S,
       T = BuildPointerType(T, DeclType.Ptr.TypeQuals, DeclType.Loc, Name);
       break;
     case DeclaratorChunk::Reference:
+      if (ShouldBuildInfo) {
+        if (DeclType.Ref.LValueRef)
+          SourceTy = Context.getLValueReferenceType(SourceTy);
+        else
+          SourceTy = Context.getRValueReferenceType(SourceTy);
+        unsigned Quals = DeclType.Ref.HasRestrict ? QualType::Restrict : 0; 
+        SourceTy = SourceTy.getQualifiedType(Quals);
+      }
+
       // Verify that we're not building a reference to pointer to function with
       // exception specification.
       if (getLangOptions().CPlusPlus && CheckDistantExceptionSpec(T)) {
@@ -927,6 +956,11 @@ QualType Sema::GetTypeForDeclarator(Declarator &D, Scope *S,
                              DeclType.Loc, Name);
       break;
     case DeclaratorChunk::Array: {
+      if (ShouldBuildInfo)
+        // We just need to get an array type, the exact type doesn't matter.
+        SourceTy = Context.getIncompleteArrayType(SourceTy, ArrayType::Normal,
+                                                DeclType.Arr.TypeQuals);
+
       // Verify that we're not building an array of pointers to function with
       // exception specification.
       if (getLangOptions().CPlusPlus && CheckDistantExceptionSpec(T)) {
@@ -957,6 +991,20 @@ QualType Sema::GetTypeForDeclarator(Declarator &D, Scope *S,
       break;
     }
     case DeclaratorChunk::Function: {
+      if (ShouldBuildInfo) {
+        const DeclaratorChunk::FunctionTypeInfo &FTI = DeclType.Fun;
+        llvm::SmallVector<QualType, 16> ArgTys;
+        
+        for (unsigned i = 0, e = FTI.NumArgs; i != e; ++i) {
+          ParmVarDecl *Param = FTI.ArgInfo[i].Param.getAs<ParmVarDecl>();
+          if (Param)
+            ArgTys.push_back(Param->getType());
+        }
+        SourceTy = Context.getFunctionType(SourceTy, ArgTys.data(),
+                                           ArgTys.size(),
+                                           FTI.isVariadic, FTI.TypeQuals);
+      }
+
       // If the function declarator has a prototype (i.e. it is not () and
       // does not have a K&R-style identifier list), then the arguments are part
       // of the type, otherwise the argument list is ().
@@ -1120,6 +1168,12 @@ QualType Sema::GetTypeForDeclarator(Declarator &D, Scope *S,
         D.setInvalidType(true);
       }
 
+      if (ShouldBuildInfo) {
+        QualType cls = !ClsType.isNull() ? ClsType : Context.IntTy;
+        SourceTy = Context.getMemberPointerType(SourceTy, cls.getTypePtr())
+                                      .getQualifiedType(DeclType.Mem.TypeQuals);
+      }
+
       if (!ClsType.isNull())
         T = BuildMemberPointerType(T, ClsType, DeclType.Mem.TypeQuals,
                                    DeclType.Loc, D.getIdentifier());
@@ -1171,8 +1225,88 @@ QualType Sema::GetTypeForDeclarator(Declarator &D, Scope *S,
   // type, apply the type attribute to the type!)
   if (const AttributeList *Attrs = D.getAttributes())
     ProcessTypeAttributeList(T, Attrs);
-  
+
+  if (ShouldBuildInfo)
+    *DInfo = GetDeclaratorInfoForDeclarator(D, SourceTy, Skip);
+
   return T;
+}
+
+/// \brief Create and instantiate a DeclaratorInfo with type source information.
+///
+/// \param T QualType referring to the type as written in source code.
+DeclaratorInfo *
+Sema::GetDeclaratorInfoForDeclarator(Declarator &D, QualType T, unsigned Skip) {
+  DeclaratorInfo *DInfo = Context.CreateDeclaratorInfo(T);
+  TypeLoc CurrTL = DInfo->getTypeLoc();
+
+  for (unsigned i = Skip, e = D.getNumTypeObjects(); i != e; ++i) {
+    assert(!CurrTL.isNull());
+
+    DeclaratorChunk &DeclType = D.getTypeObject(i);
+    switch (DeclType.Kind) {
+    default: assert(0 && "Unknown decltype!");
+    case DeclaratorChunk::BlockPointer: {
+      BlockPointerLoc &BPL = cast<BlockPointerLoc>(CurrTL);
+      BPL.setCaretLoc(DeclType.Loc);
+      break;
+    }
+    case DeclaratorChunk::Pointer: {
+      //FIXME: ObjCObject pointers.
+      PointerLoc &PL = cast<PointerLoc>(CurrTL);
+      PL.setStarLoc(DeclType.Loc);
+      break;
+    }
+    case DeclaratorChunk::Reference: {
+      ReferenceLoc &RL = cast<ReferenceLoc>(CurrTL);
+      RL.setAmpLoc(DeclType.Loc);
+      break;
+    }
+    case DeclaratorChunk::Array: {
+      DeclaratorChunk::ArrayTypeInfo &ATI = DeclType.Arr;
+      ArrayLoc &AL = cast<ArrayLoc>(CurrTL);
+      AL.setLBracketLoc(DeclType.Loc);
+      AL.setRBracketLoc(DeclType.EndLoc);
+      AL.setSizeExpr(static_cast<Expr*>(ATI.NumElts));
+      //FIXME: Star location for [*].
+      break;
+    }
+    case DeclaratorChunk::Function: {
+      const DeclaratorChunk::FunctionTypeInfo &FTI = DeclType.Fun;
+      FunctionLoc &FL = cast<FunctionLoc>(CurrTL);
+      FL.setLParenLoc(DeclType.Loc);
+      FL.setRParenLoc(DeclType.EndLoc);
+      for (unsigned i = 0, e = FTI.NumArgs, tpi = 0; i != e; ++i) {
+        ParmVarDecl *Param = FTI.ArgInfo[i].Param.getAs<ParmVarDecl>();
+        if (Param) {
+          assert(tpi < FL.getNumArgs());
+          FL.setArg(tpi++, Param);
+        }
+      }
+      break;
+      //FIXME: Exception specs.
+    }
+    case DeclaratorChunk::MemberPointer: {
+      MemberPointerLoc &MPL = cast<MemberPointerLoc>(CurrTL);
+      MPL.setStarLoc(DeclType.Loc);
+      //FIXME: Class location.
+      break;
+    }
+      
+    }
+
+    CurrTL = CurrTL.getNextTypeLoc();
+  }
+  
+  if (TypedefLoc *TL = dyn_cast<TypedefLoc>(&CurrTL)) {
+    TL->setNameLoc(D.getDeclSpec().getTypeSpecTypeLoc());
+  } else {
+    //FIXME: Other typespecs.
+    DefaultTypeSpecLoc &DTL = cast<DefaultTypeSpecLoc>(CurrTL);
+    DTL.setStartLoc(D.getDeclSpec().getTypeSpecTypeLoc());
+  }
+
+  return DInfo;
 }
 
 /// CheckSpecifiedExceptionType - Check if the given type is valid in an

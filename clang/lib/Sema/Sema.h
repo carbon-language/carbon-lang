@@ -423,6 +423,8 @@ public:
   QualType GetTypeForDeclarator(Declarator &D, Scope *S,
                                 DeclaratorInfo **DInfo = 0,
                                 unsigned Skip = 0, TagDecl **OwnedDecl = 0);
+  DeclaratorInfo *GetDeclaratorInfoForDeclarator(Declarator &D, QualType T,
+                                                 unsigned Skip);
   DeclarationName GetNameForDeclarator(Declarator &D);
   bool CheckSpecifiedExceptionType(QualType T, const SourceRange &Range);
   bool CheckDistantExceptionSpec(QualType T);
