@@ -17,6 +17,7 @@
 #include "llvm/Function.h"
 #include "llvm/CodeGen/BinaryObject.h"
 #include "llvm/CodeGen/MachineConstantPool.h"
+#include "llvm/CodeGen/MachineFunction.h"
 #include "llvm/CodeGen/MachineJumpTableInfo.h"
 #include "llvm/CodeGen/MachineRelocation.h"
 #include "llvm/Target/TargetData.h"
