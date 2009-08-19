@@ -867,7 +867,7 @@ void AsmPrinter::EmitConstantValueOnly(const Constant *CV) {
       
       SmallString<40> S;
       ptrMask.toStringUnsigned(S);
-      O << ") & " << S.c_str() << ')';
+      O << ") & " << S.str() << ')';
       break;
     }
     case Instruction::Add:
@@ -1286,7 +1286,7 @@ void AsmPrinter::EmitGlobalConstant(const Constant *CV, unsigned AddrSpace) {
       SmallString<40> S;
       CI->getValue().toStringUnsigned(S, 16);
       O.PadToColumn(TAI->getCommentColumn());
-      O << TAI->getCommentString() << " 0x" << S.c_str();
+      O << TAI->getCommentString() << " 0x" << S.str();
     }
   }
   O << '\n';

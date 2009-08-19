@@ -2168,7 +2168,7 @@ void APInt::toString(SmallVectorImpl<char> &Str, unsigned Radix,
 std::string APInt::toString(unsigned Radix = 10, bool Signed = true) const {
   SmallString<40> S;
   toString(S, Radix, Signed);
-  return S.c_str();
+  return S.str();
 }
 
 
@@ -2176,13 +2176,14 @@ void APInt::dump() const {
   SmallString<40> S, U;
   this->toStringUnsigned(U);
   this->toStringSigned(S);
-  fprintf(stderr, "APInt(%db, %su %ss)", BitWidth, U.c_str(), S.c_str());
+  errs() << "APInt(" << BitWidth << "b, "
+         << U.str() << "u " << S.str() << "s)";
 }
 
 void APInt::print(raw_ostream &OS, bool isSigned) const {
   SmallString<40> S;
   this->toString(S, 10, isSigned);
-  OS << S.c_str();
+  OS << S.str();
 }
 
 std::ostream &llvm::operator<<(std::ostream &o, const APInt &I) {

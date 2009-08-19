@@ -38,14 +38,6 @@ public:
 
 
   // Extra methods.
-  const char *c_str() const {
-    SmallString *This = const_cast<SmallString*>(this);
-    // Ensure that there is a \0 at the end of the string.
-    This->reserve(this->size()+1);
-    This->End[0] = 0;
-    return this->begin();
-  }
-
   StringRef str() const { return StringRef(this->begin(), this->size()); }
 
   // Extra operators.

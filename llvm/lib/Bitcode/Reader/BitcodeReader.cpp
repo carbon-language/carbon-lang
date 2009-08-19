@@ -792,7 +792,7 @@ bool BitcodeReader::ParseMetadata() {
         if (MetadataBase *B = dyn_cast<MetadataBase>(MD))
         Elts.push_back(B);
       }
-      Value *V = NamedMDNode::Create(Context, Name.c_str(), Elts.data(), 
+      Value *V = NamedMDNode::Create(Context, Name.str(), Elts.data(), 
                                      Elts.size(), TheModule);
       MDValueList.AssignValue(V, NextValueNo++);
       break;

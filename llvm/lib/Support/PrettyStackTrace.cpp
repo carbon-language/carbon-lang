@@ -71,8 +71,8 @@ static void CrashHandler(void *Cookie) {
   }
   
   if (!TmpStr.empty()) {
-    __crashreporter_info__ = strdup(TmpStr.c_str());
-    errs() << __crashreporter_info__;
+    __crashreporter_info__ = strdup(std::string(TmpStr.str()).c_str());
+    errs() << TmpStr.str();
   }
   
 #endif
