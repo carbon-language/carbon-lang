@@ -202,17 +202,19 @@ std::string html::EscapeText(const std::string& s, bool EscapeSpaces,
 
 static void AddLineNumber(RewriteBuffer &RB, unsigned LineNo,
                           unsigned B, unsigned E) {
-  llvm::SmallString<100> Str;
-  Str += "<tr><td class=\"num\" id=\"LN";
-  Str.append_uint(LineNo);
-  Str += "\">";
-  Str.append_uint(LineNo);
-  Str += "</td><td class=\"line\">";
+  llvm::SmallString<256> Str;
+  llvm::raw_svector_ostream OS(Str);
+
+  OS << "<tr><td class=\"num\" id=\"LN"
+     << LineNo << "\">"
+     << LineNo << "</td><td class=\"line\">";
   
   if (B == E) { // Handle empty lines.
-    Str += " </td></tr>";
+    OS << " </td></tr>";
+    OS.flush();
     RB.InsertTextBefore(B, &Str[0], Str.size());
   } else {
+    OS.flush();
     RB.InsertTextBefore(B, &Str[0], Str.size());
     RB.InsertTextBefore(E, "</td></tr>", strlen("</td></tr>"));
   }
