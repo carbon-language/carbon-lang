@@ -478,9 +478,9 @@ isEliminableCastPair(
   // We don't want to form an inttoptr or ptrtoint that converts to an integer
   // type that differs from the pointer size.
   if ((Res == Instruction::IntToPtr &&
-          SrcTy != TD->getIntPtrType(CI->getContext())) ||
+          (!TD || SrcTy != TD->getIntPtrType(CI->getContext()))) ||
       (Res == Instruction::PtrToInt &&
-          DstTy != TD->getIntPtrType(CI->getContext())))
+          (!TD || DstTy != TD->getIntPtrType(CI->getContext()))))
     Res = 0;
   
   return Instruction::CastOps(Res);
