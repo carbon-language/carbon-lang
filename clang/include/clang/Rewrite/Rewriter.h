@@ -178,25 +178,6 @@ public:
   bool InsertTextBefore(SourceLocation Loc, const llvm::StringRef &Str) {
     return InsertText(Loc, Str, false);
   }
-
-
-  bool InsertCStrBefore(SourceLocation Loc, const char* Str) {
-    return InsertTextBefore(Loc, Str);
-  }
-  
-  
-  bool InsertCStrAfter(SourceLocation Loc, const char* Str) {
-    return InsertTextAfter(Loc, Str);
-  }
-  
-  bool InsertStrBefore(SourceLocation Loc, const std::string& Str) {
-    return InsertTextBefore(Loc, Str);
-  }
-
-  bool InsertStrAfter(SourceLocation Loc, const std::string& Str) {
-    return InsertTextAfter(Loc, Str);
-  }
-  
   
   /// RemoveText - Remove the specified text region.
   bool RemoveText(SourceLocation Start, unsigned Length);

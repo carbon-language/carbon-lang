@@ -339,10 +339,10 @@ void html::AddHeaderFooterInternalBuiltinCSS(Rewriter& R, FileID FID,
       "</style>\n</head>\n<body>";
 
   // Generate header
-  R.InsertStrBefore(StartLoc, os.str());
+  R.InsertTextBefore(StartLoc, os.str());
   // Generate footer
   
-  R.InsertCStrAfter(EndLoc, "</body></html>\n");
+  R.InsertTextAfter(EndLoc, "</body></html>\n");
 }
 
 /// SyntaxHighlight - Relex the specified FileID and annotate the HTML with

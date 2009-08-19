@@ -270,7 +270,7 @@ void HTMLDiagnostics::ReportDiag(const PathDiagnostic& D) {
     os << "</table>\n<!-- REPORTSUMMARYEXTRA -->\n"
           "<h3>Annotated Source Code</h3>\n";    
     
-    R.InsertStrBefore(SMgr.getLocForStartOfFile(FID), os.str());
+    R.InsertTextBefore(SMgr.getLocForStartOfFile(FID), os.str());
   }
   
   // Embed meta-data tags.
@@ -302,7 +302,7 @@ void HTMLDiagnostics::ReportDiag(const PathDiagnostic& D) {
     os << "\n<!-- BUGMETAEND -->\n";
     
     // Insert the text.
-    R.InsertStrBefore(SMgr.getLocForStartOfFile(FID), os.str());
+    R.InsertTextBefore(SMgr.getLocForStartOfFile(FID), os.str());
   }
   
   // Add CSS, header, and footer.
@@ -511,7 +511,7 @@ void HTMLDiagnostics::HandlePiece(Rewriter& R, FileID BugFileID,
   SourceLocation Loc = 
     SM.getLocForStartOfFile(LPosInfo.first).getFileLocWithOffset(DisplayPos);
 
-  R.InsertStrBefore(Loc, os.str());
+  R.InsertTextBefore(Loc, os.str());
 
   // Now highlight the ranges.  
   for (const SourceRange *I = P.ranges_begin(), *E = P.ranges_end();
@@ -534,7 +534,7 @@ void HTMLDiagnostics::HandlePiece(Rewriter& R, FileID BugFileID,
       std::string EscapedCode = html::EscapeText(Hint->CodeToInsert, true);
       EscapedCode = "<span class=\"CodeInsertionHint\">" + EscapedCode
         + "</span>";
-      R.InsertStrBefore(Hint->InsertionLoc, EscapedCode);
+      R.InsertTextBefore(Hint->InsertionLoc, EscapedCode);
     }
   }
 #endif

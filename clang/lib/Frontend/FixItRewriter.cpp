@@ -159,7 +159,7 @@ void FixItRewriter::HandleDiagnostic(Diagnostic::Level DiagLevel,
     const CodeModificationHint &Hint = Info.getCodeModificationHint(Idx);
     if (!Hint.RemoveRange.isValid()) {
       // We're adding code.
-      if (Rewrite.InsertStrBefore(Hint.InsertionLoc, Hint.CodeToInsert))
+      if (Rewrite.InsertTextBefore(Hint.InsertionLoc, Hint.CodeToInsert))
         Failed = true;
       continue;
     }
