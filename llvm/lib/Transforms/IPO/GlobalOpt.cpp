@@ -1913,7 +1913,7 @@ GlobalVariable *GlobalOpt::FindGlobalCtors(Module &M) {
         return 0;
       
       // Verify that the initializer is simple enough for us to handle.
-      if (!I->hasInitializer()) return 0;
+      if (!I->hasDefinitiveInitializer()) return 0;
       ConstantArray *CA = dyn_cast<ConstantArray>(I->getInitializer());
       if (!CA) return 0;
       for (User::op_iterator i = CA->op_begin(), e = CA->op_end(); i != e; ++i)
@@ -2139,7 +2139,7 @@ static Constant *ComputeLoadResult(Constant *P,
  
   // Access it.
   if (GlobalVariable *GV = dyn_cast<GlobalVariable>(P)) {
-    if (GV->hasInitializer())
+    if (GV->hasDefinitiveInitializer())
       return GV->getInitializer();
     return 0;
   }
@@ -2149,7 +2149,7 @@ static Constant *ComputeLoadResult(Constant *P,
     if (CE->getOpcode() == Instruction::GetElementPtr &&
         isa<GlobalVariable>(CE->getOperand(0))) {
       GlobalVariable *GV = cast<GlobalVariable>(CE->getOperand(0));
-      if (GV->hasInitializer())
+      if (GV->hasDefinitiveInitializer())
         return ConstantFoldLoadThroughGEPConstantExpr(GV->getInitializer(), CE,
                                                       Context);
     }

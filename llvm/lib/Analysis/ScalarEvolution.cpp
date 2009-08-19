@@ -3638,7 +3638,7 @@ ScalarEvolution::ComputeLoadConstantCompareBackedgeTakenCount(
   // Make sure that it is really a constant global we are gepping, with an
   // initializer, and make sure the first IDX is really 0.
   GlobalVariable *GV = dyn_cast<GlobalVariable>(GEP->getOperand(0));
-  if (!GV || !GV->isConstant() || !GV->hasInitializer() ||
+  if (!GV || !GV->isConstant() || !GV->hasDefinitiveInitializer() ||
       GEP->getNumOperands() < 3 || !isa<Constant>(GEP->getOperand(1)) ||
       !cast<Constant>(GEP->getOperand(1))->isNullValue())
     return getCouldNotCompute();

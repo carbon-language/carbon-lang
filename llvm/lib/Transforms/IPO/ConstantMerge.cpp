@@ -78,7 +78,7 @@ bool ConstantMerge::runOnModule(Module &M) {
       }
       
       // Only process constants with initializers.
-      if (GV->isConstant() && GV->hasInitializer()) {
+      if (GV->isConstant() && GV->hasDefinitiveInitializer()) {
         Constant *Init = GV->getInitializer();
 
         // Check to see if the initializer is already known.

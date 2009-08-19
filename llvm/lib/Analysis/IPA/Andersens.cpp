@@ -1061,7 +1061,7 @@ void Andersens::CollectConstraints(Module &M) {
     Constraints.push_back(Constraint(Constraint::AddressOf, getNodeValue(*I),
                                      ObjectIndex));
 
-    if (I->hasInitializer()) {
+    if (I->hasDefinitiveInitializer()) {
       AddGlobalInitializerConstraints(ObjectIndex, I->getInitializer());
     } else {
       // If it doesn't have an initializer (i.e. it's defined in another
