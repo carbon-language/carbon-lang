@@ -185,23 +185,18 @@ void raw_ostream::flush_nonempty() {
 
 raw_ostream &raw_ostream::write(unsigned char C) {
   // Group exceptional cases into a single branch.
-  if (OutBufCur >= OutBufEnd) {
-    if (BufferMode == Unbuffered) {
-      write_impl(reinterpret_cast<char*>(&C), 1);
-      return *this;
-    }
-    
-    if (OutBufStart)
-      flush_nonempty();
-    else {
-      SetBuffered();
-      // It's possible for the underlying stream to decline
-      // buffering, so check this condition again.
+  if (BUILTIN_EXPECT(OutBufCur >= OutBufEnd, false)) {
+    if (BUILTIN_EXPECT(!OutBufStart, false)) {
       if (BufferMode == Unbuffered) {
         write_impl(reinterpret_cast<char*>(&C), 1);
         return *this;
       }
+      // Set up a buffer and start over.
+      SetBuffered();
+      return write(C);
     }
+
+    flush_nonempty();
   }
 
   *OutBufCur++ = C;
@@ -220,6 +215,7 @@ raw_ostream &raw_ostream::write(const char *Ptr, size_t Size) {
       SetBuffered();
       return write(Ptr, Size);
     }
+
     // Write out the data in buffer-sized blocks until the remainder
     // fits within the buffer.
     do {
@@ -259,12 +255,6 @@ void raw_ostream::copy_to_buffer(const char *Ptr, size_t Size) {
 raw_ostream &raw_ostream::operator<<(const format_object_base &Fmt) {
   // If we have more than a few bytes left in our output buffer, try
   // formatting directly onto its end.
-  //
-  // FIXME: This test is a bit silly, since if we don't have enough
-  // space in the buffer we will have to flush the formatted output
-  // anyway. We should just flush upfront in such cases, and use the
-  // whole buffer as our scratch pad. Note, however, that this case is
-  // also necessary for correctness on unbuffered streams.
   size_t NextBufferSize = 127;
   if (OutBufEnd-OutBufCur > 3) {
     size_t BufferBytesLeft = OutBufEnd-OutBufCur;
