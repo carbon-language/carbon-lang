@@ -974,6 +974,12 @@ CAMLprim LLVMValueRef llvm_build_ret(LLVMValueRef Val, value B) {
   return LLVMBuildRet(Builder_val(B), Val);
 }
 
+/* llvalue array -> llbuilder -> llvalue */
+CAMLprim LLVMValueRef llvm_build_aggregate_ret(value RetVals, value B) {
+  return LLVMBuildAggregateRet(Builder_val(B), (LLVMValueRef *) Op_val(RetVals),
+                               Wosize_val(RetVals));
+}
+
 /* llbasicblock -> llbuilder -> llvalue */
 CAMLprim LLVMValueRef llvm_build_br(LLVMBasicBlockRef BB, value B) {
   return LLVMBuildBr(Builder_val(B), BB);
