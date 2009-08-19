@@ -1384,14 +1384,15 @@ open Llvm
 
 exception Error of string
 
-let the_module = create_module "my cool jit"
-let builder = builder ()
+let context = global_context ()
+let the_module = create_module context "my cool jit"
+let builder = builder context
 let named_values:(string, llvalue) Hashtbl.t = Hashtbl.create 10
 
 (* Create an alloca instruction in the entry block of the function. This
  * is used for mutable variables etc. *)
 let create_entry_block_alloca the_function var_name =
-  let builder = builder_at (instr_begin (entry_block the_function)) in
+  let builder = builder_at context (instr_begin (entry_block the_function)) in
   build_alloca double_type var_name builder
 
 let rec codegen_expr = function

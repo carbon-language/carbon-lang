@@ -1173,8 +1173,9 @@ open Llvm
 
 exception Error of string
 
-let the_module = create_module "my cool jit"
-let builder = builder ()
+let context = global_context ()
+let the_module = create_module context "my cool jit"
+let builder = builder context
 let named_values:(string, llvalue) Hashtbl.t = Hashtbl.create 10
 
 let rec codegen_expr = function
