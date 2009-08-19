@@ -703,7 +703,7 @@ llvm::Constant *CodeGenModule::GenerateRtti(const CXXRecordDecl *RD) {
   return Rtti;
 }
 
-class ABIBuilder {
+class VtableBuilder {
   std::vector<llvm::Constant *> &methods;
   llvm::Type *Ptr8Ty;
   const CXXRecordDecl *Class;
@@ -715,9 +715,9 @@ class ABIBuilder {
 
   typedef CXXRecordDecl::method_iterator method_iter;
 public:
-  ABIBuilder(std::vector<llvm::Constant *> &meth,
-             const CXXRecordDecl *c,
-             CodeGenModule &cgm)
+  VtableBuilder(std::vector<llvm::Constant *> &meth,
+                const CXXRecordDecl *c,
+                CodeGenModule &cgm)
     : methods(meth), Class(c), BLayout(cgm.getContext().getASTRecordLayout(c)),
       rtti(cgm.GenerateRtti(c)), VMContext(cgm.getModule().getContext()),
       CGM(cgm) {
@@ -886,7 +886,7 @@ llvm::Value *CodeGenFunction::GenerateVtable(const CXXRecordDecl *RD) {
   Offset += LLVMPointerWidth;
   Offset += LLVMPointerWidth;
 
-  ABIBuilder b(methods, RD, CGM);
+  VtableBuilder b(methods, RD, CGM);
 
   // First comes the vtables for all the non-virtual bases...
   b.GenerateVtableForBase(RD, true, false, 0, false);
