@@ -147,6 +147,7 @@ with another <tt>Value</tt></a> </li>
         </a></li>
     <li><a href="#shutdown">Ending execution with <tt>llvm_shutdown()</tt></a></li>
     <li><a href="#managedstatic">Lazy initialization with <tt>ManagedStatic</tt></a></li>
+    <li><a href="#llvmcontext">Achieving Isolation with <tt>LLVMContext</tt></a></li>
   </ul>
   </li>
 
@@ -2399,6 +2400,50 @@ The <tt>llvm_acquire_global_lock()</tt> and <tt>llvm_release_global_lock</tt>
 APIs provide access to the global lock used to implement the double-checked
 locking for lazy initialization.  These should only be used internally to LLVM,
 and only if you know what you're doing!
+</p>
+</div>
+
+<!-- ======================================================================= -->
+<div class="doc_subsection">
+  <a name="llvmcontext">Achieving Isolation with <tt>LLVMContext</tt></a>
+</div>
+
+<div class="doc_text">
+<p>
+<tt>LLVMContext</tt> is an opaque class in the LLVM API which clients can use
+to operate multiple, isolated instances of LLVM concurrently within the same
+address space.  For instance, in a hypothetical compile-server, the compilation
+of an individual translation unit is conceptually independent from all the 
+others, and it would be desirable to be able to compile incoming translation 
+units concurrently on independent server threads.  Fortunately, 
+<tt>LLVMContext</tt> exists to enable just this kind of scenario!
+</p>
+
+<p>
+Conceptually, <tt>LLVMContext</tt> provides isolation.  Every LLVM entity 
+(<tt>Module</tt>s, <tt>Value</tt>s, <tt>Type</tt>s, <tt>Constant</tt>s, etc.)
+in LLVM's in-memory IR belongs to an <tt>LLVMContext</tt>.  Entities in 
+different contexts <em>cannot</em> interact with each other: <tt>Module</tt>s in
+different contexts cannot be linked together, <tt>Function</tt>s cannot be added
+to <tt>Module</tt>s in different contexts, etc.  What this means is that is is
+safe to compile on multiple threads simultaneously, as long as no two threads
+operate on entities within the same context.
+</p>
+
+<p>
+In practice, very few places in the API require the explicit specification of a
+<tt>LLVMContext</tt>, other than the <tt>Type</tt> creation/lookup APIs.
+Because every <tt>Type</tt> carries a reference to its owning context, most
+other entities can determine what context they belong to by looking at their
+own <tt>Type</tt>.  If you are adding new entities to LLVM IR, please try to
+maintain this interface design.
+</p>
+
+<p>
+For clients that do <em>not</em> require the benefits of isolation, LLVM 
+provides a convenience API <tt>getGlobalContext()</tt>.  This returns a global,
+lazily initialized <tt>LLVMContext</tt> that may be used in situations where
+isolation is not a concern.
 </p>
 </div>
 
