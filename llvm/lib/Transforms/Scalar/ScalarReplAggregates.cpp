@@ -68,7 +68,6 @@ namespace {
     virtual void getAnalysisUsage(AnalysisUsage &AU) const {
       AU.addRequired<DominatorTree>();
       AU.addRequired<DominanceFrontier>();
-      AU.addRequired<TargetData>();
       AU.setPreservesCFG();
     }
 
@@ -150,9 +149,16 @@ FunctionPass *llvm::createScalarReplAggregatesPass(signed int Threshold) {
 
 
 bool SROA::runOnFunction(Function &F) {
-  TD = &getAnalysis<TargetData>();
-  
+  TD = getAnalysisIfAvailable<TargetData>();
+
   bool Changed = performPromotion(F);
+
+  // FIXME: ScalarRepl currently depends on TargetData more than it
+  // theoretically needs to. It should be refactored in order to support
+  // target-independent IR. Until this is done, just skip the actual
+  // scalar-replacement portion of this pass.
+  if (!TD) return Changed;
+
   while (1) {
     bool LocalChange = performScalarRepl(F);
     if (!LocalChange) break;   // No need to repromote if no scalarrepl

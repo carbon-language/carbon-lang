@@ -2284,8 +2284,6 @@ namespace {
     virtual void getAnalysisUsage(AnalysisUsage &AU) const {
       AU.addRequiredID(BreakCriticalEdgesID);
       AU.addRequired<DominatorTree>();
-      AU.addRequired<TargetData>();
-      AU.addPreserved<TargetData>();
     }
 
   private:
@@ -2409,7 +2407,13 @@ namespace {
   bool PredicateSimplifier::runOnFunction(Function &F) {
     DominatorTree *DT = &getAnalysis<DominatorTree>();
     DTDFS = new DomTreeDFS(DT);
-    TargetData *TD = &getAnalysis<TargetData>();
+    TargetData *TD = getAnalysisIfAvailable<TargetData>();
+
+    // FIXME: PredicateSimplifier should still be able to do basic
+    // optimizations without TargetData. But for now, just exit if
+    // it's not available.
+    if (!TD) return false;
+
     Context = &F.getContext();
 
     DEBUG(errs() << "Entering Function: " << F.getName() << "\n");
