@@ -302,7 +302,9 @@ Sema::ActOnCXXNew(SourceLocation StartLoc, bool UseGlobal,
     Skip = 1;
   }
 
-  QualType AllocType = GetTypeForDeclarator(D, /*Scope=*/0, Skip);
+  //FIXME: Store DeclaratorInfo in CXXNew expression.
+  DeclaratorInfo *DInfo = 0;
+  QualType AllocType = GetTypeForDeclarator(D, /*Scope=*/0, &DInfo, Skip);
   if (D.isInvalidType())
     return ExprError();
 
@@ -668,11 +670,12 @@ void Sema::DeclareGlobalAllocationFunction(DeclarationName Name,
   QualType FnType = Context.getFunctionType(Return, &Argument, 1, false, 0);
   FunctionDecl *Alloc =
     FunctionDecl::Create(Context, GlobalCtx, SourceLocation(), Name,
-                         FnType, FunctionDecl::None, false, true,
+                         FnType, /*DInfo=*/0, FunctionDecl::None, false, true,
                          SourceLocation());
   Alloc->setImplicit();
   ParmVarDecl *Param = ParmVarDecl::Create(Context, Alloc, SourceLocation(),
-                                           0, Argument, VarDecl::None, 0);
+                                           0, Argument, /*DInfo=*/0,
+                                           VarDecl::None, 0);
   Alloc->setParams(Context, &Param, 1);
 
   // FIXME: Also add this declaration to the IdentifierResolver, but
@@ -778,8 +781,10 @@ Sema::ActOnCXXConditionDeclarationExpr(Scope *S, SourceLocation StartLoc,
   assert(D.getDeclSpec().getStorageClassSpec() != DeclSpec::SCS_typedef &&
          "Parser allowed 'typedef' as storage class of condition decl.");
 
+  // FIXME: Store DeclaratorInfo in the expression.
+  DeclaratorInfo *DInfo = 0;
   TagDecl *OwnedTag = 0;
-  QualType Ty = GetTypeForDeclarator(D, S, /*Skip=*/0, &OwnedTag);
+  QualType Ty = GetTypeForDeclarator(D, S, &DInfo, /*Skip=*/0, &OwnedTag);
   
   if (Ty->isFunctionType()) { // The declarator shall not specify a function...
     // We exit without creating a CXXConditionDeclExpr because a FunctionDecl

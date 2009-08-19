@@ -783,7 +783,8 @@ QualType Sema::BuildBlockPointerType(QualType T, unsigned Quals,
 /// If OwnedDecl is non-NULL, and this declarator's decl-specifier-seq
 /// owns the declaration of a type (e.g., the definition of a struct
 /// type), then *OwnedDecl will receive the owned declaration.
-QualType Sema::GetTypeForDeclarator(Declarator &D, Scope *S, unsigned Skip,
+QualType Sema::GetTypeForDeclarator(Declarator &D, Scope *S,
+                                    DeclaratorInfo **DInfo, unsigned Skip,
                                     TagDecl **OwnedDecl) {
   bool OmittedReturnType = false;
 
@@ -1416,8 +1417,9 @@ Sema::TypeResult Sema::ActOnTypeName(Scope *S, Declarator &D) {
   // the parser.
   assert(D.getIdentifier() == 0 && "Type name should have no identifier!");
   
+  DeclaratorInfo *DInfo = 0;
   TagDecl *OwnedTag = 0;
-  QualType T = GetTypeForDeclarator(D, S, /*Skip=*/0, &OwnedTag);
+  QualType T = GetTypeForDeclarator(D, S, &DInfo, /*Skip=*/0, &OwnedTag);
   if (D.isInvalidType())
     return true;
 
@@ -1434,6 +1436,7 @@ Sema::TypeResult Sema::ActOnTypeName(Scope *S, Declarator &D) {
         << Context.getTypeDeclType(OwnedTag);
   }
 
+  //FIXME: Also pass DeclaratorInfo.
   return T.getAsOpaquePtr();
 }
 

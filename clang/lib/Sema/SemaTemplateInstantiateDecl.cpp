@@ -119,8 +119,8 @@ Decl *TemplateDeclInstantiator::VisitVarDecl(VarDecl *D) {
   // Build the instantiated declaration
   VarDecl *Var = VarDecl::Create(SemaRef.Context, Owner,
                                  D->getLocation(), D->getIdentifier(),
-                                 T, D->getStorageClass(),
-                                 D->getTypeSpecStartLoc());
+                                 T, D->getDeclaratorInfo(),
+                                 D->getStorageClass(),D->getTypeSpecStartLoc());
   Var->setThreadSpecified(D->isThreadSpecified());
   Var->setCXXDirectInitializer(D->hasCXXDirectInitializer());
   Var->setDeclaredInCondition(D->isDeclaredInCondition());
@@ -199,6 +199,7 @@ Decl *TemplateDeclInstantiator::VisitFieldDecl(FieldDecl *D) {
   }
 
   FieldDecl *Field = SemaRef.CheckFieldDecl(D->getDeclName(), T,
+                                            D->getDeclaratorInfo(),
                                             cast<RecordDecl>(Owner), 
                                             D->getLocation(),
                                             D->isMutable(),
@@ -380,13 +381,14 @@ Decl *TemplateDeclInstantiator::VisitFunctionDecl(FunctionDecl *D) {
 
     Function =
       FriendFunctionDecl::Create(SemaRef.Context, DC, D->getLocation(),
-                                 D->getDeclName(), T, D->isInline(),
-                                 FFD->getFriendLoc());
+                                 D->getDeclName(), T, D->getDeclaratorInfo(),
+                                 D->isInline(), FFD->getFriendLoc());
     Function->setLexicalDeclContext(Owner);
   } else {
     Function =
       FunctionDecl::Create(SemaRef.Context, Owner, D->getLocation(), 
-                           D->getDeclName(), T, D->getStorageClass(),
+                           D->getDeclName(), T, D->getDeclaratorInfo(),
+                           D->getStorageClass(),
                            D->isInline(), D->hasWrittenPrototype(),
                            D->getTypeSpecStartLoc());
   }
@@ -440,8 +442,8 @@ Decl *TemplateDeclInstantiator::VisitCXXMethodDecl(CXXMethodDecl *D) {
   CXXRecordDecl *Record = cast<CXXRecordDecl>(Owner);
   CXXMethodDecl *Method
     = CXXMethodDecl::Create(SemaRef.Context, Record, D->getLocation(), 
-                            D->getDeclName(), T, D->isStatic(), 
-                            D->isInline());
+                            D->getDeclName(), T, D->getDeclaratorInfo(),
+                            D->isStatic(), D->isInline());
   Method->setInstantiationOfMemberFunction(D);
 
   // If we are instantiating a member function defined 
@@ -494,8 +496,8 @@ Decl *TemplateDeclInstantiator::VisitCXXConstructorDecl(CXXConstructorDecl *D) {
                                  SemaRef.Context.getCanonicalType(ClassTy));
   CXXConstructorDecl *Constructor
     = CXXConstructorDecl::Create(SemaRef.Context, Record, D->getLocation(), 
-                                 Name, T, D->isExplicit(), D->isInline(), 
-                                 false);
+                                 Name, T, D->getDeclaratorInfo(),
+                                 D->isExplicit(), D->isInline(), false);
   Constructor->setInstantiationOfMemberFunction(D);
 
   // Attach the parameters
@@ -576,7 +578,8 @@ Decl *TemplateDeclInstantiator::VisitCXXConversionDecl(CXXConversionDecl *D) {
     = CXXConversionDecl::Create(SemaRef.Context, Record,
                                 D->getLocation(),
          SemaRef.Context.DeclarationNames.getCXXConversionFunctionName(ConvTy),
-                                T, D->isInline(), D->isExplicit());
+                                T, D->getDeclaratorInfo(),
+                                D->isInline(), D->isExplicit());
   Conversion->setInstantiationOfMemberFunction(D);
   if (InitMethodInstantiation(Conversion, D))
     Conversion->setInvalidDecl();
@@ -612,12 +615,13 @@ ParmVarDecl *TemplateDeclInstantiator::VisitParmVarDecl(ParmVarDecl *D) {
   ParmVarDecl *Param = 0;
   if (T == OrigT)
     Param = ParmVarDecl::Create(SemaRef.Context, Owner, D->getLocation(),
-                                D->getIdentifier(), T, D->getStorageClass(), 
-                                0);
+                                D->getIdentifier(), T, D->getDeclaratorInfo(),
+                                D->getStorageClass(), 0);
   else
     Param = OriginalParmVarDecl::Create(SemaRef.Context, Owner, 
                                         D->getLocation(), D->getIdentifier(),
-                                        T, OrigT, D->getStorageClass(), 0);
+                                        T, D->getDeclaratorInfo(), OrigT,
+                                        D->getStorageClass(), 0);
 
   // Note: we don't try to instantiate function parameters until after
   // we've instantiated the function's type. Therefore, we don't have

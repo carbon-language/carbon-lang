@@ -2549,7 +2549,8 @@ QualType ASTContext::getCFConstantStringType() {
     for (unsigned i = 0; i < 4; ++i) {
       FieldDecl *Field = FieldDecl::Create(*this, CFConstantStringTypeDecl, 
                                            SourceLocation(), 0,
-                                           FieldTypes[i], /*BitWidth=*/0, 
+                                           FieldTypes[i], /*DInfo=*/0,
+                                           /*BitWidth=*/0, 
                                            /*Mutable=*/false);
       CFConstantStringTypeDecl->addDecl(Field);
     }
@@ -2585,7 +2586,8 @@ QualType ASTContext::getObjCFastEnumerationStateType()
       FieldDecl *Field = FieldDecl::Create(*this, 
                                            ObjCFastEnumerationStateTypeDecl, 
                                            SourceLocation(), 0, 
-                                           FieldTypes[i], /*BitWidth=*/0, 
+                                           FieldTypes[i], /*DInfo=*/0,
+                                           /*BitWidth=*/0, 
                                            /*Mutable=*/false);
       ObjCFastEnumerationStateTypeDecl->addDecl(Field);
     }

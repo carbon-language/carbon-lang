@@ -1431,6 +1431,7 @@ void Sema::ProcessPropertyDecl(ObjCPropertyDecl *property,
                                                   property->getLocation(), 
                                                   property->getIdentifier(),
                                                   property->getType(),
+                                                  /*DInfo=*/0,
                                                   VarDecl::None,
                                                   0);
       SetterMethod->setMethodParams(Context, &Argument, 1);
@@ -1705,11 +1706,13 @@ Sema::DeclPtrTy Sema::ActOnMethodDeclaration(
     if (ArgType == UnpromotedArgType)
       Param = ParmVarDecl::Create(Context, ObjCMethod, ArgInfo[i].NameLoc,
                                   ArgInfo[i].Name, ArgType,
+                                  /*DInfo=*/0, //FIXME: Pass info here.
                                   VarDecl::None, 0);
     else
       Param = OriginalParmVarDecl::Create(Context, ObjCMethod,
                                           ArgInfo[i].NameLoc,
                                           ArgInfo[i].Name, ArgType,
+                                          /*DInfo=*/0, //FIXME: Pass info here.
                                           UnpromotedArgType,
                                           VarDecl::None, 0);
     
@@ -2079,7 +2082,7 @@ Sema::DeclPtrTy Sema::ActOnPropertyImplDecl(SourceLocation AtLoc,
       assert(EnclosingContext && 
              "null DeclContext for synthesized ivar - ActOnPropertyImplDecl");
       Ivar = ObjCIvarDecl::Create(Context, EnclosingContext, PropertyLoc, 
-                                  PropertyIvar, PropType, 
+                                  PropertyIvar, PropType, /*Dinfo=*/0, 
                                   ObjCIvarDecl::Public,
                                   (Expr *)0);
       Ivar->setLexicalDeclContext(IDecl);

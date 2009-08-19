@@ -1296,6 +1296,7 @@ void Sema::AddImplicitlyDeclaredMembersToClass(CXXRecordDecl *ClassDecl) {
                                  ClassDecl->getLocation(), Name,
                                  Context.getFunctionType(Context.VoidTy,
                                                          0, 0, false, 0),
+                                 /*DInfo=*/0,
                                  /*isExplicit=*/false,
                                  /*isInline=*/true,
                                  /*isImplicitlyDeclared=*/true);
@@ -1367,6 +1368,7 @@ void Sema::AddImplicitlyDeclaredMembersToClass(CXXRecordDecl *ClassDecl) {
                                    Context.getFunctionType(Context.VoidTy,
                                                            &ArgType, 1,
                                                            false, 0),
+                                   /*DInfo=*/0,
                                    /*isExplicit=*/false,
                                    /*isInline=*/true,
                                    /*isImplicitlyDeclared=*/true);
@@ -1378,7 +1380,8 @@ void Sema::AddImplicitlyDeclaredMembersToClass(CXXRecordDecl *ClassDecl) {
     ParmVarDecl *FromParam = ParmVarDecl::Create(Context, CopyConstructor,
                                                  ClassDecl->getLocation(),
                                                  /*IdentifierInfo=*/0,
-                                                 ArgType, VarDecl::None, 0);
+                                                 ArgType, /*DInfo=*/0,
+                                                 VarDecl::None, 0);
     CopyConstructor->setParams(Context, &FromParam, 1);
     ClassDecl->addDecl(CopyConstructor);
   }
@@ -1449,7 +1452,7 @@ void Sema::AddImplicitlyDeclaredMembersToClass(CXXRecordDecl *ClassDecl) {
       CXXMethodDecl::Create(Context, ClassDecl, ClassDecl->getLocation(), Name,
                             Context.getFunctionType(RetType, &ArgType, 1,
                                                     false, 0),
-                            /*isStatic=*/false, /*isInline=*/true);
+                            /*DInfo=*/0, /*isStatic=*/false, /*isInline=*/true);
     CopyAssignment->setAccess(AS_public);
     CopyAssignment->setImplicit();
     CopyAssignment->setTrivial(ClassDecl->hasTrivialCopyAssignment());
@@ -1459,7 +1462,8 @@ void Sema::AddImplicitlyDeclaredMembersToClass(CXXRecordDecl *ClassDecl) {
     ParmVarDecl *FromParam = ParmVarDecl::Create(Context, CopyAssignment,
                                                  ClassDecl->getLocation(),
                                                  /*IdentifierInfo=*/0,
-                                                 ArgType, VarDecl::None, 0);
+                                                 ArgType, /*DInfo=*/0,
+                                                 VarDecl::None, 0);
     CopyAssignment->setParams(Context, &FromParam, 1);
 
     // Don't call addedAssignmentOperator. There is no way to distinguish an
@@ -3217,6 +3221,7 @@ Sema::DeclPtrTy Sema::ActOnFinishLinkageSpecification(Scope *S,
 /// occurs within a C++ catch clause, returning the newly-created
 /// variable.
 VarDecl *Sema::BuildExceptionDeclaration(Scope *S, QualType ExDeclType,
+                                         DeclaratorInfo *DInfo,
                                          IdentifierInfo *Name,
                                          SourceLocation Loc,
                                          SourceRange Range) {
@@ -3266,7 +3271,7 @@ VarDecl *Sema::BuildExceptionDeclaration(Scope *S, QualType ExDeclType,
   // FIXME: Need to check for abstract classes.
 
   VarDecl *ExDecl = VarDecl::Create(Context, CurContext, Loc, 
-                                    Name, ExDeclType, VarDecl::None, 
+                                    Name, ExDeclType, DInfo, VarDecl::None, 
                                     Range.getBegin());
 
   if (Invalid)
@@ -3278,7 +3283,8 @@ VarDecl *Sema::BuildExceptionDeclaration(Scope *S, QualType ExDeclType,
 /// ActOnExceptionDeclarator - Parsed the exception-declarator in a C++ catch
 /// handler.
 Sema::DeclPtrTy Sema::ActOnExceptionDeclarator(Scope *S, Declarator &D) {
-  QualType ExDeclType = GetTypeForDeclarator(D, S);
+  DeclaratorInfo *DInfo = 0;
+  QualType ExDeclType = GetTypeForDeclarator(D, S, &DInfo);
 
   bool Invalid = D.isInvalidType();
   IdentifierInfo *II = D.getIdentifier();
@@ -3298,7 +3304,7 @@ Sema::DeclPtrTy Sema::ActOnExceptionDeclarator(Scope *S, Declarator &D) {
     Invalid = true;
   }
 
-  VarDecl *ExDecl = BuildExceptionDeclaration(S, ExDeclType,
+  VarDecl *ExDecl = BuildExceptionDeclaration(S, ExDeclType, DInfo,
                                               D.getIdentifier(),
                                               D.getIdentifierLoc(),
                                             D.getDeclSpec().getSourceRange());
@@ -3456,7 +3462,8 @@ Sema::DeclPtrTy Sema::ActOnFriendDecl(Scope *S,
   assert(D);
 
   SourceLocation Loc = D->getIdentifierLoc();
-  QualType T = GetTypeForDeclarator(*D, S);
+  DeclaratorInfo *DInfo = 0;
+  QualType T = GetTypeForDeclarator(*D, S, &DInfo);
 
   // C++ [class.friend]p1
   //   A friend of a class is a function or class....
@@ -3583,7 +3590,7 @@ Sema::DeclPtrTy Sema::ActOnFriendDecl(Scope *S,
     }
   }
 
-  NamedDecl *ND = ActOnFunctionDeclarator(S, *D, DC, T,
+  NamedDecl *ND = ActOnFunctionDeclarator(S, *D, DC, T, DInfo,
                                           /* PrevDecl = */ FD,
                                           MultiTemplateParamsArg(*this),
                                           IsDefinition,

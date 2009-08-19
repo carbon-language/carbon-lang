@@ -623,7 +623,7 @@ Decl *PCHReader::ReadDeclRecord(uint64_t Offset, unsigned Index) {
     break;
   case pch::DECL_FUNCTION:
     D = FunctionDecl::Create(*Context, 0, SourceLocation(), DeclarationName(), 
-                             QualType());
+                             QualType(), 0);
     break;
   case pch::DECL_OBJC_METHOD:
     D = ObjCMethodDecl::Create(*Context, SourceLocation(), SourceLocation(), 
@@ -633,7 +633,7 @@ Decl *PCHReader::ReadDeclRecord(uint64_t Offset, unsigned Index) {
     D = ObjCInterfaceDecl::Create(*Context, 0, SourceLocation(), 0);
     break;
   case pch::DECL_OBJC_IVAR:
-    D = ObjCIvarDecl::Create(*Context, 0, SourceLocation(), 0, QualType(),
+    D = ObjCIvarDecl::Create(*Context, 0, SourceLocation(), 0, QualType(), 0,
                              ObjCIvarDecl::None);
     break;
   case pch::DECL_OBJC_PROTOCOL:
@@ -670,11 +670,11 @@ Decl *PCHReader::ReadDeclRecord(uint64_t Offset, unsigned Index) {
                                      ObjCPropertyImplDecl::Dynamic, 0);
     break;
   case pch::DECL_FIELD:
-    D = FieldDecl::Create(*Context, 0, SourceLocation(), 0, QualType(), 0, 
+    D = FieldDecl::Create(*Context, 0, SourceLocation(), 0, QualType(), 0, 0, 
                           false, SourceLocation());
     break;
   case pch::DECL_VAR:
-    D = VarDecl::Create(*Context, 0, SourceLocation(), 0, QualType(),
+    D = VarDecl::Create(*Context, 0, SourceLocation(), 0, QualType(), 0,
                         VarDecl::None, SourceLocation());
     break;
 
@@ -683,12 +683,12 @@ Decl *PCHReader::ReadDeclRecord(uint64_t Offset, unsigned Index) {
     break;
 
   case pch::DECL_PARM_VAR:
-    D = ParmVarDecl::Create(*Context, 0, SourceLocation(), 0, QualType(), 
+    D = ParmVarDecl::Create(*Context, 0, SourceLocation(), 0, QualType(), 0, 
                             VarDecl::None, 0);
     break;
   case pch::DECL_ORIGINAL_PARM_VAR:
     D = OriginalParmVarDecl::Create(*Context, 0, SourceLocation(), 0,
-                                    QualType(), QualType(), VarDecl::None, 0);
+                                    QualType(),0, QualType(), VarDecl::None, 0);
     break;
   case pch::DECL_FILE_SCOPE_ASM:
     D = FileScopeAsmDecl::Create(*Context, 0, SourceLocation(), 0);

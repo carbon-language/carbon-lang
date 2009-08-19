@@ -337,6 +337,7 @@ TemplateStmtInstantiator::VisitCXXCatchStmt(CXXCatchStmt *S) {
       return SemaRef.StmtError();
 
     Var = SemaRef.BuildExceptionDeclaration(0, T,
+                                            ExceptionDecl->getDeclaratorInfo(),
                                             ExceptionDecl->getIdentifier(),
                                             ExceptionDecl->getLocation(),
                                             /*FIXME: Inaccurate*/

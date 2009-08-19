@@ -321,8 +321,10 @@ CXXRecordDecl::getDestructor(ASTContext &Context) {
 CXXMethodDecl *
 CXXMethodDecl::Create(ASTContext &C, CXXRecordDecl *RD,
                       SourceLocation L, DeclarationName N,
-                      QualType T, bool isStatic, bool isInline) {
-  return new (C) CXXMethodDecl(CXXMethod, RD, L, N, T, isStatic, isInline);
+                      QualType T, DeclaratorInfo *DInfo,
+                      bool isStatic, bool isInline) {
+  return new (C) CXXMethodDecl(CXXMethod, RD, L, N, T, DInfo,
+                               isStatic, isInline);
 }
 
 
@@ -428,11 +430,12 @@ CXXBaseOrMemberInitializer::~CXXBaseOrMemberInitializer() {
 CXXConstructorDecl *
 CXXConstructorDecl::Create(ASTContext &C, CXXRecordDecl *RD,
                            SourceLocation L, DeclarationName N,
-                           QualType T, bool isExplicit,
+                           QualType T, DeclaratorInfo *DInfo,
+                           bool isExplicit,
                            bool isInline, bool isImplicitlyDeclared) {
   assert(N.getNameKind() == DeclarationName::CXXConstructorName &&
          "Name must refer to a constructor");
-  return new (C) CXXConstructorDecl(RD, L, N, T, isExplicit, isInline,
+  return new (C) CXXConstructorDecl(RD, L, N, T, DInfo, isExplicit, isInline,
                                       isImplicitlyDeclared);
 }
 
@@ -694,10 +697,11 @@ CXXConstructorDecl::Destroy(ASTContext& C) {
 CXXConversionDecl *
 CXXConversionDecl::Create(ASTContext &C, CXXRecordDecl *RD,
                           SourceLocation L, DeclarationName N,
-                          QualType T, bool isInline, bool isExplicit) {
+                          QualType T, DeclaratorInfo *DInfo,
+                          bool isInline, bool isExplicit) {
   assert(N.getNameKind() == DeclarationName::CXXConversionFunctionName &&
          "Name must refer to a conversion function");
-  return new (C) CXXConversionDecl(RD, L, N, T, isInline, isExplicit);
+  return new (C) CXXConversionDecl(RD, L, N, T, DInfo, isInline, isExplicit);
 }
 
 OverloadedFunctionDecl *
@@ -748,9 +752,10 @@ FriendFunctionDecl *FriendFunctionDecl::Create(ASTContext &C,
                                                DeclContext *DC,
                                                SourceLocation L,
                                                DeclarationName N, QualType T,
+                                               DeclaratorInfo *DInfo,
                                                bool isInline,
                                                SourceLocation FriendL) {
-  return new (C) FriendFunctionDecl(DC, L, N, T, isInline, FriendL);
+  return new (C) FriendFunctionDecl(DC, L, N, T, DInfo, isInline, FriendL);
 }
 
 FriendClassDecl *FriendClassDecl::Create(ASTContext &C, DeclContext *DC,

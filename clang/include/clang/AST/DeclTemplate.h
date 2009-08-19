@@ -747,15 +747,16 @@ class NonTypeTemplateParmDecl
 
   NonTypeTemplateParmDecl(DeclContext *DC, SourceLocation L, unsigned D,
                           unsigned P, IdentifierInfo *Id, QualType T,
+                          DeclaratorInfo *DInfo,
                           SourceLocation TSSL = SourceLocation())
-    : VarDecl(NonTypeTemplateParm, DC, L, Id, T, VarDecl::None, TSSL),
+    : VarDecl(NonTypeTemplateParm, DC, L, Id, T, DInfo, VarDecl::None, TSSL),
       TemplateParmPosition(D, P), DefaultArgument(0) 
   { }
 
 public:
   static NonTypeTemplateParmDecl *
   Create(ASTContext &C, DeclContext *DC, SourceLocation L, unsigned D,
-         unsigned P, IdentifierInfo *Id, QualType T,
+         unsigned P, IdentifierInfo *Id, QualType T, DeclaratorInfo *DInfo,
          SourceLocation TypeSpecStartLoc = SourceLocation());
 
   using TemplateParmPosition::getDepth;

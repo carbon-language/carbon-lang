@@ -223,6 +223,27 @@ public:
   static bool classof(const ValueDecl *D) { return true; }
 };
 
+/// \brief Represents a ValueDecl that came out of a declarator.
+/// Contains type source information through DeclaratorInfo.
+class DeclaratorDecl : public ValueDecl {
+  DeclaratorInfo *DeclInfo;
+
+protected:
+  DeclaratorDecl(Kind DK, DeclContext *DC, SourceLocation L,
+                 DeclarationName N, QualType T, DeclaratorInfo *DInfo)
+    : ValueDecl(DK, DC, L, N, T), DeclInfo(DInfo) {}
+
+public:
+  DeclaratorInfo *getDeclaratorInfo() const { return DeclInfo; }
+  void setDeclaratorInfo(DeclaratorInfo *DInfo) { DeclInfo = DInfo; }
+  
+  // Implement isa/cast/dyncast/etc.
+  static bool classof(const Decl *D) {
+    return D->getKind() >= DeclaratorFirst && D->getKind() <= DeclaratorLast;
+  }
+  static bool classof(const DeclaratorDecl *D) { return true; }
+};
+
 /// \brief Structure used to store a statement, the constant value to
 /// which it was evaluated (if any), and whether or not the statement
 /// is an integral constant expression (if known).
@@ -246,7 +267,7 @@ struct EvaluatedStmt {
 
 /// VarDecl - An instance of this class is created to represent a variable
 /// declaration or definition.
-class VarDecl : public ValueDecl, public Redeclarable<VarDecl> {
+class VarDecl : public DeclaratorDecl, public Redeclarable<VarDecl> {
 public:
   enum StorageClass {
     None, Auto, Register, Extern, Static, PrivateExtern
@@ -283,8 +304,9 @@ private:
   friend class StmtIteratorBase;
 protected:
   VarDecl(Kind DK, DeclContext *DC, SourceLocation L, IdentifierInfo *Id,
-          QualType T, StorageClass SC, SourceLocation TSSL = SourceLocation())
-    : ValueDecl(DK, DC, L, Id, T), Init(),
+          QualType T, DeclaratorInfo *DInfo,
+          StorageClass SC, SourceLocation TSSL = SourceLocation())
+    : DeclaratorDecl(DK, DC, L, Id, T, DInfo), Init(),
       ThreadSpecified(false), HasCXXDirectInit(false),
       DeclaredInCondition(false), TypeSpecStartLoc(TSSL) { 
     SClass = SC; 
@@ -304,7 +326,7 @@ public:
 
   static VarDecl *Create(ASTContext &C, DeclContext *DC,
                          SourceLocation L, IdentifierInfo *Id,
-                         QualType T, StorageClass S,
+                         QualType T, DeclaratorInfo *DInfo, StorageClass S,
                          SourceLocation TypeSpecStartLoc = SourceLocation());
 
   virtual ~VarDecl();
@@ -315,6 +337,7 @@ public:
   
   virtual SourceRange getSourceRange() const;
 
+  //FIXME: Use DeclaratorInfo for this.
   SourceLocation getTypeSpecStartLoc() const { return TypeSpecStartLoc; }
   void setTypeSpecStartLoc(SourceLocation SL) {
     TypeSpecStartLoc = SL;
@@ -537,7 +560,7 @@ class ImplicitParamDecl : public VarDecl {
 protected:
   ImplicitParamDecl(Kind DK, DeclContext *DC, SourceLocation L,
                     IdentifierInfo *Id, QualType Tw) 
-    : VarDecl(DK, DC, L, Id, Tw, VarDecl::None) {}
+    : VarDecl(DK, DC, L, Id, Tw, /*DInfo=*/0, VarDecl::None) {}
 public:
   static ImplicitParamDecl *Create(ASTContext &C, DeclContext *DC,
                                    SourceLocation L, IdentifierInfo *Id,
@@ -564,16 +587,17 @@ class ParmVarDecl : public VarDecl {
   
 protected:
   ParmVarDecl(Kind DK, DeclContext *DC, SourceLocation L,
-              IdentifierInfo *Id, QualType T, StorageClass S,
-              Expr *DefArg)
-  : VarDecl(DK, DC, L, Id, T, S), objcDeclQualifier(OBJC_TQ_None) {
+              IdentifierInfo *Id, QualType T, DeclaratorInfo *DInfo,
+              StorageClass S, Expr *DefArg)
+  : VarDecl(DK, DC, L, Id, T, DInfo, S), objcDeclQualifier(OBJC_TQ_None) {
     setDefaultArg(DefArg);
   }
 
 public:
   static ParmVarDecl *Create(ASTContext &C, DeclContext *DC,
                              SourceLocation L,IdentifierInfo *Id,
-                             QualType T, StorageClass S, Expr *DefArg);
+                             QualType T, DeclaratorInfo *DInfo,
+                             StorageClass S, Expr *DefArg);
   
   ObjCDeclQualifier getObjCDeclQualifier() const {
     return ObjCDeclQualifier(objcDeclQualifier);
@@ -649,15 +673,17 @@ protected:
   QualType OriginalType;
 private:
   OriginalParmVarDecl(DeclContext *DC, SourceLocation L,
-                              IdentifierInfo *Id, QualType T, 
+                              IdentifierInfo *Id, QualType T,
+                              DeclaratorInfo *DInfo, 
                               QualType OT, StorageClass S,
                               Expr *DefArg)
-  : ParmVarDecl(OriginalParmVar, DC, L, Id, T, S, DefArg), OriginalType(OT) {}
+  : ParmVarDecl(OriginalParmVar, DC, L, Id, T, DInfo, S, DefArg),
+    OriginalType(OT) {}
 public:
   static OriginalParmVarDecl *Create(ASTContext &C, DeclContext *DC,
                                      SourceLocation L,IdentifierInfo *Id,
-                                     QualType T, QualType OT,
-                                     StorageClass S, Expr *DefArg);
+                                     QualType T, DeclaratorInfo *DInfo,
+                                     QualType OT, StorageClass S, Expr *DefArg);
 
   void setOriginalType(QualType T) { OriginalType = T; }
 
@@ -677,7 +703,7 @@ public:
 /// contains all of the information known about the function. Other,
 /// previous declarations of the function are available via the
 /// getPreviousDeclaration() chain. 
-class FunctionDecl : public ValueDecl, public DeclContext,
+class FunctionDecl : public DeclaratorDecl, public DeclContext,
                      public Redeclarable<FunctionDecl> {
 public:
   enum StorageClass {
@@ -736,10 +762,10 @@ private:
 
 protected:
   FunctionDecl(Kind DK, DeclContext *DC, SourceLocation L,
-               DeclarationName N, QualType T,
+               DeclarationName N, QualType T, DeclaratorInfo *DInfo,
                StorageClass S, bool isInline,
                SourceLocation TSSL = SourceLocation())
-    : ValueDecl(DK, DC, L, N, T), 
+    : DeclaratorDecl(DK, DC, L, N, T, DInfo), 
       DeclContext(DK),
       ParamInfo(0), Body(),
       SClass(S), IsInline(isInline), C99InlineDefinition(false), 
@@ -765,7 +791,8 @@ public:
   }
 
   static FunctionDecl *Create(ASTContext &C, DeclContext *DC, SourceLocation L,
-                              DeclarationName N, QualType T, 
+                              DeclarationName N, QualType T,
+                              DeclaratorInfo *DInfo,
                               StorageClass S = None, bool isInline = false,
                               bool hasWrittenPrototype = true,
                               SourceLocation TSStartLoc = SourceLocation());
@@ -777,6 +804,7 @@ public:
     EndRangeLoc = E;
   }
   
+  //FIXME: Use DeclaratorInfo for this.
   SourceLocation getTypeSpecStartLoc() const { return TypeSpecStartLoc; }
   void setTypeSpecStartLoc(SourceLocation TS) { TypeSpecStartLoc = TS; }
 
@@ -1059,21 +1087,22 @@ public:
 
 /// FieldDecl - An instance of this class is created by Sema::ActOnField to 
 /// represent a member of a struct/union/class.
-class FieldDecl : public ValueDecl {
+class FieldDecl : public DeclaratorDecl {
   // FIXME: This can be packed into the bitfields in Decl.
   bool Mutable : 1;
   Expr *BitWidth;
   SourceLocation TypeSpecStartLoc;
 protected:
   FieldDecl(Kind DK, DeclContext *DC, SourceLocation L, 
-            IdentifierInfo *Id, QualType T, Expr *BW, bool Mutable,
-            SourceLocation TSSL = SourceLocation())
-    : ValueDecl(DK, DC, L, Id, T), Mutable(Mutable), BitWidth(BW),
+            IdentifierInfo *Id, QualType T, DeclaratorInfo *DInfo,
+            Expr *BW, bool Mutable, SourceLocation TSSL = SourceLocation())
+    : DeclaratorDecl(DK, DC, L, Id, T, DInfo), Mutable(Mutable), BitWidth(BW),
       TypeSpecStartLoc(TSSL) { }
 
 public:
   static FieldDecl *Create(ASTContext &C, DeclContext *DC, SourceLocation L, 
-                           IdentifierInfo *Id, QualType T, Expr *BW, 
+                           IdentifierInfo *Id, QualType T,
+                           DeclaratorInfo *DInfo, Expr *BW,
                            bool Mutable,
                            SourceLocation TypeSpecStartLoc = SourceLocation());
 
@@ -1083,6 +1112,7 @@ public:
   /// \brief Set whether this field is mutable (C++ only).
   void setMutable(bool M) { Mutable = M; }
 
+  //FIXME: Use DeclaratorInfo for this.
   SourceLocation getTypeSpecStartLoc() const { return TypeSpecStartLoc; }
   void setTypeSpecStartLoc(SourceLocation TSSL) { TypeSpecStartLoc = TSSL; }
 

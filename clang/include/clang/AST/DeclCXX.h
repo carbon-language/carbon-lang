@@ -716,15 +716,16 @@ public:
 class CXXMethodDecl : public FunctionDecl {
 protected:
   CXXMethodDecl(Kind DK, CXXRecordDecl *RD, SourceLocation L,
-                DeclarationName N, QualType T,
+                DeclarationName N, QualType T, DeclaratorInfo *DInfo,
                 bool isStatic, bool isInline)
-    : FunctionDecl(DK, RD, L, N, T, (isStatic ? Static : None),
+    : FunctionDecl(DK, RD, L, N, T, DInfo, (isStatic ? Static : None),
                    isInline) {}
 
 public:
   static CXXMethodDecl *Create(ASTContext &C, CXXRecordDecl *RD,
                               SourceLocation L, DeclarationName N,
-                              QualType T, bool isStatic = false,
+                              QualType T, DeclaratorInfo *DInfo,
+                              bool isStatic = false,
                               bool isInline = false);
   
   bool isStatic() const { return getStorageClass() == Static; }
@@ -948,9 +949,9 @@ class CXXConstructorDecl : public CXXMethodDecl {
   unsigned NumBaseOrMemberInitializers;
   
   CXXConstructorDecl(CXXRecordDecl *RD, SourceLocation L,
-                     DeclarationName N, QualType T,
+                     DeclarationName N, QualType T, DeclaratorInfo *DInfo,
                      bool isExplicit, bool isInline, bool isImplicitlyDeclared)
-    : CXXMethodDecl(CXXConstructor, RD, L, N, T, false, isInline),
+    : CXXMethodDecl(CXXConstructor, RD, L, N, T, DInfo, false, isInline),
       Explicit(isExplicit), ImplicitlyDefined(false),
       BaseOrMemberInitializers(0), NumBaseOrMemberInitializers(0) { 
     setImplicit(isImplicitlyDeclared);
@@ -960,7 +961,8 @@ class CXXConstructorDecl : public CXXMethodDecl {
 public:
   static CXXConstructorDecl *Create(ASTContext &C, CXXRecordDecl *RD,
                                     SourceLocation L, DeclarationName N,
-                                    QualType T, bool isExplicit,
+                                    QualType T, DeclaratorInfo *DInfo,
+                                    bool isExplicit,
                                     bool isInline, bool isImplicitlyDeclared);
 
   /// isExplicit - Whether this constructor was marked "explicit" or not.  
@@ -1093,7 +1095,7 @@ class CXXDestructorDecl : public CXXMethodDecl {
   CXXDestructorDecl(CXXRecordDecl *RD, SourceLocation L,
                     DeclarationName N, QualType T,
                     bool isInline, bool isImplicitlyDeclared)
-    : CXXMethodDecl(CXXDestructor, RD, L, N, T, false, isInline),
+    : CXXMethodDecl(CXXDestructor, RD, L, N, T, /*DInfo=*/0, false, isInline),
       ImplicitlyDefined(false),
       BaseOrMemberDestructions(0), NumBaseOrMemberDestructions(0) { 
     setImplicit(isImplicitlyDeclared);
@@ -1231,16 +1233,16 @@ class CXXConversionDecl : public CXXMethodDecl {
   bool Explicit : 1;
 
   CXXConversionDecl(CXXRecordDecl *RD, SourceLocation L,
-                    DeclarationName N, QualType T, 
+                    DeclarationName N, QualType T, DeclaratorInfo *DInfo, 
                     bool isInline, bool isExplicit)
-    : CXXMethodDecl(CXXConversion, RD, L, N, T, false, isInline),
+    : CXXMethodDecl(CXXConversion, RD, L, N, T, DInfo, false, isInline),
       Explicit(isExplicit) { }
 
 public:
   static CXXConversionDecl *Create(ASTContext &C, CXXRecordDecl *RD,
                                    SourceLocation L, DeclarationName N,
-                                   QualType T, bool isInline, 
-                                   bool isExplicit);
+                                   QualType T, DeclaratorInfo *DInfo,
+                                   bool isInline, bool isExplicit);
 
   /// isExplicit - Whether this is an explicit conversion operator
   /// (C++0x only). Explicit conversion operators are only considered
@@ -1267,17 +1269,17 @@ class FriendFunctionDecl : public FunctionDecl {
   const SourceLocation FriendLoc;
 
   FriendFunctionDecl(DeclContext *DC, SourceLocation L,
-                     DeclarationName N, QualType T,
+                     DeclarationName N, QualType T, DeclaratorInfo *DInfo,
                      bool isInline, SourceLocation FriendL)
-    : FunctionDecl(FriendFunction, DC, L, N, T, None, isInline),
+    : FunctionDecl(FriendFunction, DC, L, N, T, DInfo, None, isInline),
       FriendLoc(FriendL)
   {}
 
 public:
   static FriendFunctionDecl *Create(ASTContext &C, DeclContext *DC,
                                     SourceLocation L, DeclarationName N,
-                                    QualType T, bool isInline,
-                                    SourceLocation FriendL);
+                                    QualType T, DeclaratorInfo *DInfo,
+                                    bool isInline, SourceLocation FriendL);
 
   SourceLocation getFriendLoc() const {
     return FriendLoc;

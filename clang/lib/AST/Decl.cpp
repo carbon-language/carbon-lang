@@ -84,9 +84,9 @@ const char *VarDecl::getStorageClassSpecifierString(StorageClass SC) {
 
 ParmVarDecl *ParmVarDecl::Create(ASTContext &C, DeclContext *DC,
                                  SourceLocation L, IdentifierInfo *Id,
-                                 QualType T, StorageClass S,
-                                 Expr *DefArg) {
-  return new (C) ParmVarDecl(ParmVar, DC, L, Id, T, S, DefArg);
+                                 QualType T, DeclaratorInfo *DInfo,
+                                 StorageClass S, Expr *DefArg) {
+  return new (C) ParmVarDecl(ParmVar, DC, L, Id, T, DInfo, S, DefArg);
 }
 
 QualType ParmVarDecl::getOriginalType() const {
@@ -130,19 +130,20 @@ bool VarDecl::isExternC(ASTContext &Context) const {
 OriginalParmVarDecl *OriginalParmVarDecl::Create(
                                  ASTContext &C, DeclContext *DC,
                                  SourceLocation L, IdentifierInfo *Id,
-                                 QualType T, QualType OT, StorageClass S,
-                                 Expr *DefArg) {
-  return new (C) OriginalParmVarDecl(DC, L, Id, T, OT, S, DefArg);
+                                 QualType T, DeclaratorInfo *DInfo,
+                                 QualType OT, StorageClass S, Expr *DefArg) {
+  return new (C) OriginalParmVarDecl(DC, L, Id, T, DInfo, OT, S, DefArg);
 }
 
 FunctionDecl *FunctionDecl::Create(ASTContext &C, DeclContext *DC,
                                    SourceLocation L, 
-                                   DeclarationName N, QualType T, 
+                                   DeclarationName N, QualType T,
+                                   DeclaratorInfo *DInfo,
                                    StorageClass S, bool isInline, 
                                    bool hasWrittenPrototype,
                                    SourceLocation TypeSpecStartLoc) {
   FunctionDecl *New 
-    = new (C) FunctionDecl(Function, DC, L, N, T, S, isInline, 
+    = new (C) FunctionDecl(Function, DC, L, N, T, DInfo, S, isInline, 
                            TypeSpecStartLoc);
   New->HasWrittenPrototype = hasWrittenPrototype;
   return New;
@@ -153,9 +154,10 @@ BlockDecl *BlockDecl::Create(ASTContext &C, DeclContext *DC, SourceLocation L) {
 }
 
 FieldDecl *FieldDecl::Create(ASTContext &C, DeclContext *DC, SourceLocation L,
-                             IdentifierInfo *Id, QualType T, Expr *BW,
+                             IdentifierInfo *Id, QualType T,
+                             DeclaratorInfo *DInfo, Expr *BW,
                              bool Mutable, SourceLocation TSSL) {
-  return new (C) FieldDecl(Decl::Field, DC, L, Id, T, BW, Mutable, TSSL);
+  return new (C) FieldDecl(Decl::Field, DC, L, Id, T, DInfo, BW, Mutable, TSSL);
 }
 
 bool FieldDecl::isAnonymousStructOrUnion() const {
@@ -319,9 +321,9 @@ NamedDecl *NamedDecl::getUnderlyingDecl() {
 //===----------------------------------------------------------------------===//
 
 VarDecl *VarDecl::Create(ASTContext &C, DeclContext *DC, SourceLocation L,
-                         IdentifierInfo *Id, QualType T, StorageClass S, 
-                         SourceLocation TypeSpecStartLoc) {
-  return new (C) VarDecl(Var, DC, L, Id, T, S, TypeSpecStartLoc);
+                         IdentifierInfo *Id, QualType T, DeclaratorInfo *DInfo,
+                         StorageClass S, SourceLocation TypeSpecStartLoc) {
+  return new (C) VarDecl(Var, DC, L, Id, T, DInfo, S, TypeSpecStartLoc);
 }
 
 void VarDecl::Destroy(ASTContext& C) {

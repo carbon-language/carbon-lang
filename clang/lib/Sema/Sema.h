@@ -420,8 +420,9 @@ public:
                                   DeclarationName Entity);
   QualType BuildBlockPointerType(QualType T, unsigned Quals,
                                  SourceLocation Loc, DeclarationName Entity);
-  QualType GetTypeForDeclarator(Declarator &D, Scope *S, unsigned Skip = 0,
-                                TagDecl **OwnedDecl = 0);
+  QualType GetTypeForDeclarator(Declarator &D, Scope *S,
+                                DeclaratorInfo **DInfo = 0,
+                                unsigned Skip = 0, TagDecl **OwnedDecl = 0);
   DeclarationName GetNameForDeclarator(Declarator &D);
   bool CheckSpecifiedExceptionType(QualType T, const SourceRange &Range);
   bool CheckDistantExceptionSpec(QualType T);
@@ -473,16 +474,18 @@ public:
                                         Scope *S);
   void DiagnoseFunctionSpecifiers(Declarator& D);
   NamedDecl* ActOnTypedefDeclarator(Scope* S, Declarator& D, DeclContext* DC,
-                                    QualType R, Decl* PrevDecl,
-                                    bool &Redeclaration);
+                                    QualType R, DeclaratorInfo *DInfo,
+                                    Decl* PrevDecl, bool &Redeclaration);
   NamedDecl* ActOnVariableDeclarator(Scope* S, Declarator& D, DeclContext* DC,
-                                     QualType R, NamedDecl* PrevDecl,
+                                     QualType R, DeclaratorInfo *DInfo,
+                                     NamedDecl* PrevDecl,
                                      MultiTemplateParamsArg TemplateParamLists,
                                      bool &Redeclaration);
   void CheckVariableDeclaration(VarDecl *NewVD, NamedDecl *PrevDecl,
                                 bool &Redeclaration);
   NamedDecl* ActOnFunctionDeclarator(Scope* S, Declarator& D, DeclContext* DC,
-                                     QualType R, NamedDecl* PrevDecl, 
+                                     QualType R, DeclaratorInfo *DInfo,
+                                     NamedDecl* PrevDecl, 
                                      MultiTemplateParamsArg TemplateParamLists,
                                      bool IsFunctionDefinition,
                                      bool &Redeclaration);
@@ -571,7 +574,8 @@ public:
                          Declarator &D, Expr *BitfieldWidth,
                          AccessSpecifier AS);
 
-  FieldDecl *CheckFieldDecl(DeclarationName Name, QualType T, 
+  FieldDecl *CheckFieldDecl(DeclarationName Name, QualType T,
+                            DeclaratorInfo *DInfo, 
                             RecordDecl *Record, SourceLocation Loc,
                             bool Mutable, Expr *BitfieldWidth,
                             SourceLocation TSSL,
@@ -1402,6 +1406,7 @@ public:
                                                        StmtArg SynchBody);
 
   VarDecl *BuildExceptionDeclaration(Scope *S, QualType ExDeclType,
+                                     DeclaratorInfo *DInfo,
                                      IdentifierInfo *Name,
                                      SourceLocation Loc,
                                      SourceRange Range);

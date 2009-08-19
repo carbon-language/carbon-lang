@@ -1863,11 +1863,12 @@ NamedDecl * Sema::DeclClonePragmaWeak(NamedDecl *ND, IdentifierInfo *II)
   if (FunctionDecl *FD = dyn_cast<FunctionDecl>(ND)) {
     NewD = FunctionDecl::Create(FD->getASTContext(), FD->getDeclContext(),
                                 FD->getLocation(), DeclarationName(II),
-                                FD->getType());
+                                FD->getType(), FD->getDeclaratorInfo());
   } else if (VarDecl *VD = dyn_cast<VarDecl>(ND)) {
     NewD = VarDecl::Create(VD->getASTContext(), VD->getDeclContext(),
                            VD->getLocation(), II,
-                           VD->getType(), VD->getStorageClass());
+                           VD->getType(), VD->getDeclaratorInfo(),
+                           VD->getStorageClass());
   }
   return NewD;
 }
