@@ -1730,15 +1730,17 @@ static void HandleNSReturnsRetainedAttr(Decl *d, const AttributeList &Attr,
   else if (FunctionDecl *FD = dyn_cast<FunctionDecl>(d))
     RetTy = FD->getResultType();
   else {
-    S.Diag(Attr.getLoc(), diag::warn_attribute_wrong_decl_type)
-        << Attr.getName() << 3 /* function or method */;
+    SourceLocation L = Attr.getLoc();
+    S.Diag(d->getLocStart(), diag::warn_attribute_wrong_decl_type)
+        << SourceRange(L, L) << Attr.getName() << 3 /* function or method */;
     return;
   }
 
   if (!(S.Context.isObjCNSObjectType(RetTy) || RetTy->getAs<PointerType>()
         || RetTy->getAsObjCObjectPointerType())) {
-    S.Diag(Attr.getLoc(), diag::warn_ns_attribute_wrong_return_type)
-      << Attr.getName();
+    SourceLocation L = Attr.getLoc();
+    S.Diag(d->getLocStart(), diag::warn_ns_attribute_wrong_return_type)
+      << SourceRange(L, L) << Attr.getName();
     return;
   }
 
