@@ -897,7 +897,7 @@ QualType Sema::GetTypeForDeclarator(Declarator &D, Scope *S,
     Name = D.getIdentifier();
   
   bool ShouldBuildInfo = DInfo != 0;
-  // The QualType referring to the type as written as source code. We can't use
+  // The QualType referring to the type as written in source code. We can't use
   // T because it can change due to semantic analysis.
   QualType SourceTy = T;
 
@@ -1338,7 +1338,9 @@ QualType Sema::CreateLocInfoType(QualType T, DeclaratorInfo *DInfo) {
 
 void LocInfoType::getAsStringInternal(std::string &Str,
                                       const PrintingPolicy &Policy) const {
-  assert(false && "LocInfoType should not be used in the type system");
+  assert(false && "LocInfoType leaked into the type system; an opaque TypeTy*"
+         " was used directly instead of getting the QualType through"
+         " GetTypeFromParser");
 }
 
 /// CheckSpecifiedExceptionType - Check if the given type is valid in an
