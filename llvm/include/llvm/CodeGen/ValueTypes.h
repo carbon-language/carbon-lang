@@ -113,15 +113,14 @@ namespace llvm {
       // LastSimpleValueType - The greatest valid SimpleValueType value.
       LastSimpleValueType = 255,
 
-      // FirstExtendedValueType - This sentinel is needed so that gcc 4.4 won't
-      // optimize away checks of a SimpleValueType compared to
-      // LastSimpleValueType+1.
-      FirstExtendedValueType = 256
+      // INVALID_SIMPLE_VALUE_TYPE - Simple value types greater than or equal
+      // to this are considered extended value types.
+      INVALID_SIMPLE_VALUE_TYPE = LastSimpleValueType + 1
     };
 
     SimpleValueType SimpleTy;
 
-    MVT() : SimpleTy((SimpleValueType)(LastSimpleValueType+1)) {}
+    MVT() : SimpleTy((SimpleValueType)(INVALID_SIMPLE_VALUE_TYPE)) {}
     MVT(SimpleValueType SVT) : SimpleTy(SVT) { }
     
     bool operator>(const MVT& S)  const { return SimpleTy >  S.SimpleTy; }
@@ -171,7 +170,7 @@ namespace llvm {
     MVT getVectorElementType() const {
       switch (SimpleTy) {
       default:
-        return (MVT::SimpleValueType)(MVT::LastSimpleValueType+1);
+        return (MVT::SimpleValueType)(MVT::INVALID_SIMPLE_VALUE_TYPE);
       case v2i8 :
       case v4i8 :
       case v8i8 :
@@ -284,7 +283,7 @@ namespace llvm {
     static MVT getIntegerVT(unsigned BitWidth) {
       switch (BitWidth) {
       default:
-        return (MVT::SimpleValueType)(MVT::LastSimpleValueType+1);
+        return (MVT::SimpleValueType)(MVT::INVALID_SIMPLE_VALUE_TYPE);
       case 1:
         return MVT::i1;
       case 8:
@@ -337,12 +336,12 @@ namespace llvm {
         if (NumElements == 4)  return MVT::v4f64;
         break;
       }
-      return (MVT::SimpleValueType)(MVT::LastSimpleValueType+1);
+      return (MVT::SimpleValueType)(MVT::INVALID_SIMPLE_VALUE_TYPE);
     }
     
     static MVT getIntVectorWithNumElements(unsigned NumElts) {
       switch (NumElts) {
-      default: return (MVT::SimpleValueType)(MVT::LastSimpleValueType+1);
+      default: return (MVT::SimpleValueType)(MVT::INVALID_SIMPLE_VALUE_TYPE);
       case  1: return MVT::v1i64;
       case  2: return MVT::v2i32;
       case  4: return MVT::v4i16;
@@ -358,13 +357,14 @@ namespace llvm {
     const Type *LLVMTy;
 
   public:
-    EVT() : V((MVT::SimpleValueType)(MVT::LastSimpleValueType+1)), LLVMTy(0) {}
+    EVT() : V((MVT::SimpleValueType)(MVT::INVALID_SIMPLE_VALUE_TYPE)),
+            LLVMTy(0) {}
     EVT(MVT::SimpleValueType SVT) : V(SVT), LLVMTy(0) { }
     EVT(MVT S) : V(S), LLVMTy(0) {}
 
     bool operator==(const EVT VT) const {
       if (V.SimpleTy == VT.V.SimpleTy) {
-        if (V.SimpleTy == MVT::LastSimpleValueType+1)
+        if (V.SimpleTy == MVT::INVALID_SIMPLE_VALUE_TYPE)
           return LLVMTy == VT.LLVMTy;
         return true;
       }
@@ -372,7 +372,7 @@ namespace llvm {
     }
     bool operator!=(const EVT VT) const {
       if (V.SimpleTy == VT.V.SimpleTy) {
-        if (V.SimpleTy == MVT::LastSimpleValueType+1)
+        if (V.SimpleTy == MVT::INVALID_SIMPLE_VALUE_TYPE)
           return LLVMTy != VT.LLVMTy;
         return false;
       }
@@ -390,7 +390,7 @@ namespace llvm {
     /// number of bits.
     static EVT getIntegerVT(LLVMContext &Context, unsigned BitWidth) {
       MVT M = MVT::getIntegerVT(BitWidth);
-      if (M.SimpleTy == MVT::LastSimpleValueType+1)
+      if (M.SimpleTy == MVT::INVALID_SIMPLE_VALUE_TYPE)
         return getExtendedIntegerVT(Context, BitWidth);
       else
         return M;
@@ -400,7 +400,7 @@ namespace llvm {
     /// length, where each element is of type VT.
     static EVT getVectorVT(LLVMContext &Context, EVT VT, unsigned NumElements) {
       MVT M = MVT::getVectorVT(VT.V, NumElements);
-      if (M.SimpleTy == MVT::LastSimpleValueType+1)
+      if (M.SimpleTy == MVT::INVALID_SIMPLE_VALUE_TYPE)
         return getExtendedVectorVT(Context, VT, NumElements);
       else
         return M;
@@ -410,7 +410,7 @@ namespace llvm {
     /// the specified number of elements.
     static EVT getIntVectorWithNumElements(LLVMContext &C, unsigned NumElts) {
       MVT M = MVT::getIntVectorWithNumElements(NumElts);
-      if (M.SimpleTy == MVT::LastSimpleValueType+1)
+      if (M.SimpleTy == MVT::INVALID_SIMPLE_VALUE_TYPE)
         return getVectorVT(C, MVT::i8, NumElts);
       else
         return M;
