@@ -18,6 +18,9 @@
 #include "clang/AST/Expr.h"
 #include "clang/AST/ExprCXX.h"
 #include "clang/AST/ExprObjC.h"
+#include "clang/AST/Stmt.h"
+#include "clang/AST/StmtCXX.h"
+#include "clang/AST/StmtObjC.h"
 #include "clang/Parse/Ownership.h"
 #include "clang/Parse/Designator.h"
 #include "clang/Lex/Preprocessor.h"
@@ -61,7 +64,7 @@ namespace clang {
 ///
 /// For more fine-grained transformations, subclasses can replace any of the
 /// \c TransformXXX functions (where XXX is the name of an AST node, e.g.,
-/// PointerType) to alter the transformation. As mentioned previously,
+/// PointerType, StmtExpr) to alter the transformation. As mentioned previously,
 /// replacing TransformTemplateTypeParmType() allows template instantiation
 /// to substitute template arguments for their corresponding template 
 /// parameters. Additionally, subclasses can override the \c RebuildXXX
@@ -76,9 +79,6 @@ namespace clang {
 /// operands have not changed (\c AlwaysRebuild()), and customize the
 /// default locations and entity names used for type-checking
 /// (\c getBaseLocation(), \c getBaseEntity()).
-///
-/// FIXME: In the future, TreeTransform will support transformation of
-/// statements and expressions as well as types.
 template<typename Derived>
 class TreeTransform {
 protected:
@@ -90,6 +90,7 @@ public:
   typedef Sema::StmtArg StmtArg;
   typedef Sema::ExprArg ExprArg;
   typedef Sema::MultiExprArg MultiExprArg;
+  typedef Sema::MultiStmtArg MultiStmtArg;
   
   /// \brief Initializes a new tree transformer.
   TreeTransform(Sema &SemaRef) : SemaRef(SemaRef) { }
@@ -191,7 +192,13 @@ public:
        
   /// \brief Transform the given statement.
   ///
-  /// FIXME: At the moment, subclasses must override this.
+  /// By default, this routine transforms a statement by delegating to the 
+  /// appropriate TransformXXXStmt function to transform a specific kind of
+  /// statement or the TransformExpr() function to transform an expression.
+  /// Subclasses may override this function to transform statements using some
+  /// other mechanism.
+  ///
+  /// \returns the transformed statement.
   OwningStmtResult TransformStmt(Stmt *S);
   
   /// \brief Transform the given expression.
@@ -222,6 +229,12 @@ public:
   /// By default, acts as the identity function on declarations. Subclasses
   /// may override this function to provide alternate behavior.
   Decl *TransformDecl(Decl *D) { return D; }
+
+  /// \brief Transform the definition of the given declaration.
+  ///
+  /// By default, invokes TransformDecl() to transform the declaration. 
+  /// Subclasses may override this function to provide alternate behavior.
+  Decl *TransformDefinition(Decl *D) { return getDerived().TransformDecl(D); }
   
   /// \brief Transform the given nested-name-specifier.
   ///
@@ -251,12 +264,10 @@ public:
   QualType Transform##CLASS##Type(const CLASS##Type *T);
 #include "clang/AST/TypeNodes.def"      
 
-  OwningStmtResult TransformCompoundStmt(Stmt *S, bool IsStmtExpr) {
-    // FIXME: Actually handle this transformation properly.
-    return getDerived().TransformStmt(S);
-  }
+  OwningStmtResult TransformCompoundStmt(CompoundStmt *S, bool IsStmtExpr);
                                          
-#define STMT(Node, Parent)
+#define STMT(Node, Parent)                        \
+  OwningStmtResult Transform##Node(Node *S);
 #define EXPR(Node, Parent)                        \
   OwningExprResult Transform##Node(Node *E);
 #define ABSTRACT_EXPR(Node, Parent)
@@ -539,6 +550,204 @@ public:
   TemplateName RebuildTemplateName(NestedNameSpecifier *Qualifier,
                                    const IdentifierInfo &II);
   
+  
+  /// \brief Build a new compound statement.
+  ///
+  /// By default, performs semantic analysis to build the new statement.
+  /// Subclasses may override this routine to provide different behavior.
+  OwningStmtResult RebuildCompoundStmt(SourceLocation LBraceLoc,
+                                       MultiStmtArg Statements,
+                                       SourceLocation RBraceLoc,
+                                       bool IsStmtExpr) {
+    return getSema().ActOnCompoundStmt(LBraceLoc, RBraceLoc, move(Statements),
+                                       IsStmtExpr);
+  }
+
+  /// \brief Build a new case statement.
+  ///
+  /// By default, performs semantic analysis to build the new statement.
+  /// Subclasses may override this routine to provide different behavior.
+  OwningStmtResult RebuildCaseStmt(SourceLocation CaseLoc,
+                                   ExprArg LHS,
+                                   SourceLocation EllipsisLoc,
+                                   ExprArg RHS,
+                                   SourceLocation ColonLoc) {
+    return getSema().ActOnCaseStmt(CaseLoc, move(LHS), EllipsisLoc, move(RHS), 
+                                   ColonLoc);
+  }
+  
+  /// \brief Attach the body to a new case statement.
+  ///
+  /// By default, performs semantic analysis to build the new statement.
+  /// Subclasses may override this routine to provide different behavior.
+  OwningStmtResult RebuildCaseStmtBody(StmtArg S, StmtArg Body) {
+    getSema().ActOnCaseStmtBody(S.get(), move(Body));
+    return move(S);
+  }
+  
+  /// \brief Build a new default statement.
+  ///
+  /// By default, performs semantic analysis to build the new statement.
+  /// Subclasses may override this routine to provide different behavior.
+  OwningStmtResult RebuildDefaultStmt(SourceLocation DefaultLoc, 
+                                      SourceLocation ColonLoc,
+                                      StmtArg SubStmt) {
+    return getSema().ActOnDefaultStmt(DefaultLoc, ColonLoc, move(SubStmt), 
+                                      /*CurScope=*/0);
+  }
+  
+  /// \brief Build a new label statement.
+  ///
+  /// By default, performs semantic analysis to build the new statement.
+  /// Subclasses may override this routine to provide different behavior.
+  OwningStmtResult RebuildLabelStmt(SourceLocation IdentLoc, 
+                                    IdentifierInfo *Id,
+                                    SourceLocation ColonLoc,
+                                    StmtArg SubStmt) {
+    return SemaRef.ActOnLabelStmt(IdentLoc, Id, ColonLoc, move(SubStmt));
+  }
+  
+  /// \brief Build a new "if" statement.
+  ///
+  /// By default, performs semantic analysis to build the new statement.
+  /// Subclasses may override this routine to provide different behavior.
+  OwningStmtResult RebuildIfStmt(SourceLocation IfLoc, Sema::FullExprArg Cond, 
+                                 StmtArg Then, SourceLocation ElseLoc, 
+                                 StmtArg Else) {
+    return getSema().ActOnIfStmt(IfLoc, Cond, move(Then), ElseLoc, move(Else));
+  }
+  
+  /// \brief Start building a new switch statement.
+  ///
+  /// By default, performs semantic analysis to build the new statement.
+  /// Subclasses may override this routine to provide different behavior.
+  OwningStmtResult RebuildSwitchStmtStart(ExprArg Cond) {
+    return getSema().ActOnStartOfSwitchStmt(move(Cond));
+  }
+  
+  /// \brief Attach the body to the switch statement.
+  ///
+  /// By default, performs semantic analysis to build the new statement.
+  /// Subclasses may override this routine to provide different behavior.
+  OwningStmtResult RebuildSwitchStmtBody(SourceLocation SwitchLoc, 
+                                         StmtArg Switch, StmtArg Body) {
+    return getSema().ActOnFinishSwitchStmt(SwitchLoc, move(Switch),
+                                         move(Body));
+  }
+
+  /// \brief Build a new while statement.
+  ///
+  /// By default, performs semantic analysis to build the new statement.
+  /// Subclasses may override this routine to provide different behavior.
+  OwningStmtResult RebuildWhileStmt(SourceLocation WhileLoc,
+                                    Sema::FullExprArg Cond,
+                                    StmtArg Body) {
+    return getSema().ActOnWhileStmt(WhileLoc, Cond, move(Body));
+  }
+  
+  /// \brief Build a new do-while statement.
+  ///
+  /// By default, performs semantic analysis to build the new statement.
+  /// Subclasses may override this routine to provide different behavior.
+  OwningStmtResult RebuildDoStmt(SourceLocation DoLoc, StmtArg Body,
+                                 SourceLocation WhileLoc,
+                                 SourceLocation LParenLoc,
+                                 ExprArg Cond,
+                                 SourceLocation RParenLoc) {
+    return getSema().ActOnDoStmt(DoLoc, move(Body), WhileLoc, LParenLoc, 
+                                 move(Cond), RParenLoc);
+  }
+
+  /// \brief Build a new for statement.
+  ///
+  /// By default, performs semantic analysis to build the new statement.
+  /// Subclasses may override this routine to provide different behavior.
+  OwningStmtResult RebuildForStmt(SourceLocation ForLoc, 
+                                  SourceLocation LParenLoc,
+                                  StmtArg Init, ExprArg Cond, ExprArg Inc,
+                                  SourceLocation RParenLoc, StmtArg Body) {
+    return getSema().ActOnForStmt(ForLoc, LParenLoc, move(Init), move(Cond), 
+                                  move(Inc), RParenLoc, move(Body));
+  }
+  
+  /// \brief Build a new goto statement.
+  ///
+  /// By default, performs semantic analysis to build the new statement.
+  /// Subclasses may override this routine to provide different behavior.
+  OwningStmtResult RebuildGotoStmt(SourceLocation GotoLoc,
+                                   SourceLocation LabelLoc,
+                                   LabelStmt *Label) {
+    return getSema().ActOnGotoStmt(GotoLoc, LabelLoc, Label->getID());
+  }
+
+  /// \brief Build a new indirect goto statement.
+  ///
+  /// By default, performs semantic analysis to build the new statement.
+  /// Subclasses may override this routine to provide different behavior.
+  OwningStmtResult RebuildIndirectGotoStmt(SourceLocation GotoLoc,
+                                           SourceLocation StarLoc,
+                                           ExprArg Target) {
+    return getSema().ActOnIndirectGotoStmt(GotoLoc, StarLoc, move(Target));
+  }
+  
+  /// \brief Build a new return statement.
+  ///
+  /// By default, performs semantic analysis to build the new statement.
+  /// Subclasses may override this routine to provide different behavior.
+  OwningStmtResult RebuildReturnStmt(SourceLocation ReturnLoc,
+                                     ExprArg Result) {
+    
+    return getSema().ActOnReturnStmt(ReturnLoc, move(Result));
+  }
+  
+  /// \brief Build a new declaration statement.
+  ///
+  /// By default, performs semantic analysis to build the new statement.
+  /// Subclasses may override this routine to provide different behavior.
+  OwningStmtResult RebuildDeclStmt(Decl **Decls, unsigned NumDecls,
+                                   SourceLocation StartLoc, 
+                                   SourceLocation EndLoc) {
+    return getSema().Owned(
+             new (getSema().Context) DeclStmt(
+                                        DeclGroupRef::Create(getSema().Context,
+                                                             Decls, NumDecls),
+                                              StartLoc, EndLoc));
+  }
+  
+  /// \brief Build a new C++ exception declaration.
+  ///
+  /// By default, performs semantic analysis to build the new decaration.
+  /// Subclasses may override this routine to provide different behavior.
+  VarDecl *RebuildExceptionDecl(VarDecl *ExceptionDecl, QualType T, 
+                                DeclaratorInfo *Declarator,
+                                IdentifierInfo *Name,
+                                SourceLocation Loc,
+                                SourceRange TypeRange) {
+    return getSema().BuildExceptionDeclaration(0, T, Declarator, Name, Loc, 
+                                               TypeRange);
+  }
+
+  /// \brief Build a new C++ catch statement.
+  ///
+  /// By default, performs semantic analysis to build the new statement.
+  /// Subclasses may override this routine to provide different behavior.
+  OwningStmtResult RebuildCXXCatchStmt(SourceLocation CatchLoc,
+                                       VarDecl *ExceptionDecl,
+                                       StmtArg Handler) {
+    return getSema().Owned(
+             new (getSema().Context) CXXCatchStmt(CatchLoc, ExceptionDecl, 
+                                                  Handler.takeAs<Stmt>()));
+  }
+  
+  /// \brief Build a new C++ try statement.
+  ///
+  /// By default, performs semantic analysis to build the new statement.
+  /// Subclasses may override this routine to provide different behavior.
+  OwningStmtResult RebuildCXXTryStmt(SourceLocation TryLoc,
+                                     StmtArg TryBlock,
+                                     MultiStmtArg Handlers) {
+    return getSema().ActOnCXXTryBlock(TryLoc, move(TryBlock), move(Handlers));
+  }
   
   /// \brief Build a new expression that references a declaration.
   ///
@@ -1311,6 +1520,36 @@ public:
   }
 };
 
+template<typename Derived>
+Sema::OwningStmtResult TreeTransform<Derived>::TransformStmt(Stmt *S) {
+  if (!S)
+    return SemaRef.Owned(S);
+  
+  switch (S->getStmtClass()) {
+  case Stmt::NoStmtClass: break;
+      
+  // Transform individual statement nodes
+#define STMT(Node, Parent)                                              \
+  case Stmt::Node##Class: return getDerived().Transform##Node(cast<Node>(S));
+#define EXPR(Node, Parent)
+#include "clang/AST/StmtNodes.def"
+      
+  // Transform expressions by calling TransformExpr.
+#define STMT(Node, Parent)
+#define EXPR(Node, Parent) case Stmt::Node##Class:
+#include "clang/AST/StmtNodes.def"
+    {
+      Sema::OwningExprResult E = getDerived().TransformExpr(cast<Expr>(S));
+      if (E.isInvalid())
+        return getSema().StmtError();
+      
+      return getSema().Owned(E.takeAs<Stmt>());
+    }
+  }  
+  
+  return SemaRef.Owned(S->Retain());
+}
+  
   
 template<typename Derived>
 Sema::OwningExprResult TreeTransform<Derived>::TransformExpr(Expr *E,
@@ -1333,7 +1572,7 @@ template<typename Derived>
 NestedNameSpecifier *
 TreeTransform<Derived>::TransformNestedNameSpecifier(NestedNameSpecifier *NNS,
                                                      SourceRange Range) {
-  // Instantiate the prefix of this nested name specifier.
+  // Transform the prefix of this nested name specifier.
   NestedNameSpecifier *Prefix = NNS->getPrefix();
   if (Prefix) {
     Prefix = getDerived().TransformNestedNameSpecifier(Prefix, Range);
@@ -2075,6 +2314,458 @@ QualType TreeTransform<Derived>::TransformObjCObjectPointerType(
 }
 
 //===----------------------------------------------------------------------===//
+// Statement transformation
+//===----------------------------------------------------------------------===//
+template<typename Derived>
+Sema::OwningStmtResult
+TreeTransform<Derived>::TransformNullStmt(NullStmt *S) { 
+  return SemaRef.Owned(S->Retain()); 
+}
+
+template<typename Derived>
+Sema::OwningStmtResult
+TreeTransform<Derived>::TransformCompoundStmt(CompoundStmt *S) {
+  return getDerived().TransformCompoundStmt(S, false);
+}
+
+template<typename Derived>
+Sema::OwningStmtResult
+TreeTransform<Derived>::TransformCompoundStmt(CompoundStmt *S, 
+                                              bool IsStmtExpr) {
+  bool SubStmtChanged = false;
+  ASTOwningVector<&ActionBase::DeleteStmt> Statements(getSema());
+  for (CompoundStmt::body_iterator B = S->body_begin(), BEnd = S->body_end();
+       B != BEnd; ++B) {
+    OwningStmtResult Result = getDerived().TransformStmt(*B);
+    if (Result.isInvalid())
+      return getSema().StmtError();
+    
+    SubStmtChanged = SubStmtChanged || Result.get() != *B;
+    Statements.push_back(Result.takeAs<Stmt>());
+  }
+  
+  if (!getDerived().AlwaysRebuild() &&
+      !SubStmtChanged)
+    return SemaRef.Owned(S->Retain()); 
+
+  return getDerived().RebuildCompoundStmt(S->getLBracLoc(),
+                                          move_arg(Statements),
+                                          S->getRBracLoc(),
+                                          IsStmtExpr);
+}
+  
+template<typename Derived>
+Sema::OwningStmtResult
+TreeTransform<Derived>::TransformCaseStmt(CaseStmt *S) { 
+  // The case value expressions are not potentially evaluated.
+  EnterExpressionEvaluationContext Unevaluated(SemaRef, Action::Unevaluated);
+  
+  // Transform the left-hand case value.
+  OwningExprResult LHS = getDerived().TransformExpr(S->getLHS());
+  if (LHS.isInvalid())
+    return SemaRef.StmtError();
+  
+  // Transform the right-hand case value (for the GNU case-range extension).
+  OwningExprResult RHS = getDerived().TransformExpr(S->getRHS());
+  if (RHS.isInvalid())
+    return SemaRef.StmtError();
+  
+  // Build the case statement.
+  // Case statements are always rebuilt so that they will attached to their
+  // transformed switch statement.
+  OwningStmtResult Case = getDerived().RebuildCaseStmt(S->getCaseLoc(),
+                                                       move(LHS),
+                                                       S->getEllipsisLoc(),
+                                                       move(RHS),
+                                                       S->getColonLoc());
+  if (Case.isInvalid())
+    return SemaRef.StmtError();
+  
+  // Transform the statement following the case
+  OwningStmtResult SubStmt = getDerived().TransformStmt(S->getSubStmt());
+  if (SubStmt.isInvalid())
+    return SemaRef.StmtError();
+  
+  // Attach the body to the case statement
+  return getDerived().RebuildCaseStmtBody(move(Case), move(SubStmt));
+}
+
+template<typename Derived>
+Sema::OwningStmtResult
+TreeTransform<Derived>::TransformDefaultStmt(DefaultStmt *S) { 
+  // Transform the statement following the default case
+  OwningStmtResult SubStmt = getDerived().TransformStmt(S->getSubStmt());
+  if (SubStmt.isInvalid())
+    return SemaRef.StmtError();
+  
+  // Default statements are always rebuilt
+  return getDerived().RebuildDefaultStmt(S->getDefaultLoc(), S->getColonLoc(),
+                                         move(SubStmt));
+}
+  
+template<typename Derived>
+Sema::OwningStmtResult
+TreeTransform<Derived>::TransformLabelStmt(LabelStmt *S) { 
+  OwningStmtResult SubStmt = getDerived().TransformStmt(S->getSubStmt());
+  if (SubStmt.isInvalid())
+    return SemaRef.StmtError();
+  
+  // FIXME: Pass the real colon location in.
+  SourceLocation ColonLoc = SemaRef.PP.getLocForEndOfToken(S->getIdentLoc());
+  return getDerived().RebuildLabelStmt(S->getIdentLoc(), S->getID(), ColonLoc,
+                                       move(SubStmt));
+}
+  
+template<typename Derived>
+Sema::OwningStmtResult 
+TreeTransform<Derived>::TransformIfStmt(IfStmt *S) { 
+  // Transform the condition
+  OwningExprResult Cond = getDerived().TransformExpr(S->getCond());
+  if (Cond.isInvalid())
+    return SemaRef.StmtError();
+  
+  Sema::FullExprArg FullCond(getSema().FullExpr(Cond));
+  
+  // Transform the "then" branch.
+  OwningStmtResult Then = getDerived().TransformStmt(S->getThen());
+  if (Then.isInvalid())
+    return SemaRef.StmtError();
+  
+  // Transform the "else" branch.
+  OwningStmtResult Else = getDerived().TransformStmt(S->getElse());
+  if (Else.isInvalid())
+    return SemaRef.StmtError();
+  
+  if (!getDerived().AlwaysRebuild() &&
+      FullCond->get() == S->getCond() &&
+      Then.get() == S->getThen() &&
+      Else.get() == S->getElse())
+    return SemaRef.Owned(S->Retain()); 
+  
+  return getDerived().RebuildIfStmt(S->getIfLoc(), FullCond, move(Then),
+                                    S->getElseLoc(), move(Else));  
+}
+
+template<typename Derived>
+Sema::OwningStmtResult
+TreeTransform<Derived>::TransformSwitchStmt(SwitchStmt *S) { 
+  // Transform the condition.
+  OwningExprResult Cond = getDerived().TransformExpr(S->getCond());
+  if (Cond.isInvalid())
+    return SemaRef.StmtError();
+  
+  // Rebuild the switch statement.
+  OwningStmtResult Switch = getDerived().RebuildSwitchStmtStart(move(Cond));
+  if (Switch.isInvalid())
+    return SemaRef.StmtError();
+  
+  // Transform the body of the switch statement.
+  OwningStmtResult Body = getDerived().TransformStmt(S->getBody());
+  if (Body.isInvalid())
+    return SemaRef.StmtError();
+  
+  // Complete the switch statement.
+  return getDerived().RebuildSwitchStmtBody(S->getSwitchLoc(), move(Switch),
+                                            move(Body));
+}
+  
+template<typename Derived>
+Sema::OwningStmtResult
+TreeTransform<Derived>::TransformWhileStmt(WhileStmt *S) { 
+  // Transform the condition
+  OwningExprResult Cond = getDerived().TransformExpr(S->getCond());
+  if (Cond.isInvalid())
+    return SemaRef.StmtError();
+  
+  Sema::FullExprArg FullCond(getSema().FullExpr(Cond));
+  
+  // Transform the body
+  OwningStmtResult Body = getDerived().TransformStmt(S->getBody());
+  if (Body.isInvalid())
+    return SemaRef.StmtError();
+  
+  if (!getDerived().AlwaysRebuild() &&
+      FullCond->get() == S->getCond() &&
+      Body.get() == S->getBody())
+    return SemaRef.Owned(S->Retain()); 
+  
+  return getDerived().RebuildWhileStmt(S->getWhileLoc(), FullCond, move(Body));
+}
+  
+template<typename Derived>
+Sema::OwningStmtResult
+TreeTransform<Derived>::TransformDoStmt(DoStmt *S) {
+  // Transform the condition
+  OwningExprResult Cond = getDerived().TransformExpr(S->getCond());
+  if (Cond.isInvalid())
+    return SemaRef.StmtError();
+  
+  // Transform the body
+  OwningStmtResult Body = getDerived().TransformStmt(S->getBody());
+  if (Body.isInvalid())
+    return SemaRef.StmtError();
+  
+  if (!getDerived().AlwaysRebuild() &&
+      Cond.get() == S->getCond() &&
+      Body.get() == S->getBody())
+    return SemaRef.Owned(S->Retain()); 
+  
+  return getDerived().RebuildDoStmt(S->getDoLoc(), move(Body), S->getWhileLoc(),
+                                    /*FIXME:*/S->getWhileLoc(), move(Cond),
+                                    S->getRParenLoc());
+}
+  
+template<typename Derived>
+Sema::OwningStmtResult
+TreeTransform<Derived>::TransformForStmt(ForStmt *S) { 
+  // Transform the initialization statement
+  OwningStmtResult Init = getDerived().TransformStmt(S->getInit());
+  if (Init.isInvalid())
+    return SemaRef.StmtError();
+  
+  // Transform the condition
+  OwningExprResult Cond = getDerived().TransformExpr(S->getCond());
+  if (Cond.isInvalid())
+    return SemaRef.StmtError();
+  
+  // Transform the increment
+  OwningExprResult Inc = getDerived().TransformExpr(S->getInc());
+  if (Inc.isInvalid())
+    return SemaRef.StmtError();
+  
+  // Transform the body
+  OwningStmtResult Body = getDerived().TransformStmt(S->getBody());
+  if (Body.isInvalid())
+    return SemaRef.StmtError();
+  
+  if (!getDerived().AlwaysRebuild() &&
+      Init.get() == S->getInit() &&
+      Cond.get() == S->getCond() &&
+      Inc.get() == S->getInc() &&
+      Body.get() == S->getBody())
+    return SemaRef.Owned(S->Retain()); 
+  
+  return getDerived().RebuildForStmt(S->getForLoc(), S->getLParenLoc(),
+                                     move(Init), move(Cond), move(Inc),
+                                     S->getRParenLoc(), move(Body));
+}
+
+template<typename Derived>
+Sema::OwningStmtResult 
+TreeTransform<Derived>::TransformGotoStmt(GotoStmt *S) { 
+  // Goto statements must always be rebuilt, to resolve the label.
+  return getDerived().RebuildGotoStmt(S->getGotoLoc(), S->getLabelLoc(), 
+                                      S->getLabel());
+}
+
+template<typename Derived>
+Sema::OwningStmtResult
+TreeTransform<Derived>::TransformIndirectGotoStmt(IndirectGotoStmt *S) { 
+  OwningExprResult Target = getDerived().TransformExpr(S->getTarget());
+  if (Target.isInvalid())
+    return SemaRef.StmtError();
+  
+  if (!getDerived().AlwaysRebuild() &&
+      Target.get() == S->getTarget())
+    return SemaRef.Owned(S->Retain()); 
+
+  return getDerived().RebuildIndirectGotoStmt(S->getGotoLoc(), S->getStarLoc(),
+                                              move(Target));
+}
+
+template<typename Derived>
+Sema::OwningStmtResult
+TreeTransform<Derived>::TransformContinueStmt(ContinueStmt *S) { 
+  return SemaRef.Owned(S->Retain()); 
+}
+  
+template<typename Derived>
+Sema::OwningStmtResult
+TreeTransform<Derived>::TransformBreakStmt(BreakStmt *S) { 
+  return SemaRef.Owned(S->Retain()); 
+}
+  
+template<typename Derived>
+Sema::OwningStmtResult
+TreeTransform<Derived>::TransformReturnStmt(ReturnStmt *S) { 
+  Sema::OwningExprResult Result = getDerived().TransformExpr(S->getRetValue());
+  if (Result.isInvalid())
+    return SemaRef.StmtError();
+
+  // FIXME: We always rebuild the return statement because there is no way 
+  // to tell whether the return type of the function has changed.
+  return getDerived().RebuildReturnStmt(S->getReturnLoc(), move(Result));
+}
+  
+template<typename Derived>
+Sema::OwningStmtResult
+TreeTransform<Derived>::TransformDeclStmt(DeclStmt *S) { 
+  bool DeclChanged = false;
+  llvm::SmallVector<Decl *, 4> Decls;
+  for (DeclStmt::decl_iterator D = S->decl_begin(), DEnd = S->decl_end();
+       D != DEnd; ++D) {
+    Decl *Transformed = getDerived().TransformDefinition(*D);
+    if (!Transformed)
+      return SemaRef.StmtError();
+        
+    if (Transformed != *D)
+      DeclChanged = true;
+    
+    Decls.push_back(Transformed);
+  }
+  
+  if (!getDerived().AlwaysRebuild() && !DeclChanged)
+    return SemaRef.Owned(S->Retain()); 
+  
+  return getDerived().RebuildDeclStmt(Decls.data(), Decls.size(), 
+                                      S->getStartLoc(), S->getEndLoc());
+}
+  
+template<typename Derived>
+Sema::OwningStmtResult
+TreeTransform<Derived>::TransformSwitchCase(SwitchCase *S) { 
+  assert(false && "SwitchCase is abstract and cannot be transformed");
+  return SemaRef.Owned(S->Retain()); 
+}
+
+template<typename Derived>
+Sema::OwningStmtResult
+TreeTransform<Derived>::TransformAsmStmt(AsmStmt *S) {
+  // FIXME: Implement!
+  assert(false && "Inline assembly cannot be transformed");
+  return SemaRef.Owned(S->Retain()); 
+}
+
+
+template<typename Derived>
+Sema::OwningStmtResult
+TreeTransform<Derived>::TransformObjCAtTryStmt(ObjCAtTryStmt *S) { 
+  // FIXME: Implement this
+  assert(false && "Cannot transform an Objective-C @try statement");
+  return SemaRef.Owned(S->Retain()); 
+}
+  
+template<typename Derived>
+Sema::OwningStmtResult
+TreeTransform<Derived>::TransformObjCAtCatchStmt(ObjCAtCatchStmt *S) { 
+  // FIXME: Implement this
+  assert(false && "Cannot transform an Objective-C @catch statement");
+  return SemaRef.Owned(S->Retain());
+}
+  
+template<typename Derived>
+Sema::OwningStmtResult
+TreeTransform<Derived>::TransformObjCAtFinallyStmt(ObjCAtFinallyStmt *S) { 
+  // FIXME: Implement this
+  assert(false && "Cannot transform an Objective-C @finally statement");
+  return SemaRef.Owned(S->Retain()); 
+}
+  
+template<typename Derived>
+Sema::OwningStmtResult
+TreeTransform<Derived>::TransformObjCAtThrowStmt(ObjCAtThrowStmt *S) { 
+  // FIXME: Implement this
+  assert(false && "Cannot transform an Objective-C @throw statement");
+  return SemaRef.Owned(S->Retain()); 
+}
+  
+template<typename Derived>
+Sema::OwningStmtResult
+TreeTransform<Derived>::TransformObjCAtSynchronizedStmt(
+                                                  ObjCAtSynchronizedStmt *S) { 
+  // FIXME: Implement this
+  assert(false && "Cannot transform an Objective-C @synchronized statement");
+  return SemaRef.Owned(S->Retain()); 
+}
+
+template<typename Derived>
+Sema::OwningStmtResult
+TreeTransform<Derived>::TransformObjCForCollectionStmt(
+                                                  ObjCForCollectionStmt *S) { 
+  // FIXME: Implement this
+  assert(false && "Cannot transform an Objective-C for-each statement");
+  return SemaRef.Owned(S->Retain()); 
+}
+
+
+template<typename Derived>
+Sema::OwningStmtResult
+TreeTransform<Derived>::TransformCXXCatchStmt(CXXCatchStmt *S) {
+  // Transform the exception declaration, if any.
+  VarDecl *Var = 0;
+  if (S->getExceptionDecl()) {
+    VarDecl *ExceptionDecl = S->getExceptionDecl();
+    TemporaryBase Rebase(*this, ExceptionDecl->getLocation(),
+                         ExceptionDecl->getDeclName());
+
+    QualType T = getDerived().TransformType(ExceptionDecl->getType());
+    if (T.isNull())
+      return SemaRef.StmtError();
+    
+    Var = getDerived().RebuildExceptionDecl(ExceptionDecl,
+                                            T,
+                                            ExceptionDecl->getDeclaratorInfo(),
+                                            ExceptionDecl->getIdentifier(),
+                                            ExceptionDecl->getLocation(),
+                                            /*FIXME: Inaccurate*/
+                                    SourceRange(ExceptionDecl->getLocation()));
+    if (!Var || Var->isInvalidDecl()) {
+      if (Var)
+        Var->Destroy(SemaRef.Context);
+      return SemaRef.StmtError();
+    }
+  }
+  
+  // Transform the actual exception handler.
+  OwningStmtResult Handler = getDerived().TransformStmt(S->getHandlerBlock());
+  if (Handler.isInvalid()) {
+    if (Var)
+      Var->Destroy(SemaRef.Context);
+    return SemaRef.StmtError();
+  }
+  
+  if (!getDerived().AlwaysRebuild() &&
+      !Var &&
+      Handler.get() == S->getHandlerBlock())
+    return SemaRef.Owned(S->Retain()); 
+
+  return getDerived().RebuildCXXCatchStmt(S->getCatchLoc(),
+                                          Var,
+                                          move(Handler));
+}
+  
+template<typename Derived>
+Sema::OwningStmtResult
+TreeTransform<Derived>::TransformCXXTryStmt(CXXTryStmt *S) {
+  // Transform the try block itself.
+  OwningStmtResult TryBlock 
+    = getDerived().TransformCompoundStmt(S->getTryBlock());
+  if (TryBlock.isInvalid())
+    return SemaRef.StmtError();
+  
+  // Transform the handlers.
+  bool HandlerChanged = false;
+  ASTOwningVector<&ActionBase::DeleteStmt> Handlers(SemaRef);
+  for (unsigned I = 0, N = S->getNumHandlers(); I != N; ++I) {
+    OwningStmtResult Handler 
+      = getDerived().TransformCXXCatchStmt(S->getHandler(I));
+    if (Handler.isInvalid())
+      return SemaRef.StmtError();
+    
+    HandlerChanged = HandlerChanged || Handler.get() != S->getHandler(I);
+    Handlers.push_back(Handler.takeAs<Stmt>());
+  }
+  
+  if (!getDerived().AlwaysRebuild() &&
+      TryBlock.get() == S->getTryBlock() &&
+      !HandlerChanged)
+    return SemaRef.Owned(S->Retain()); 
+
+  return getDerived().RebuildCXXTryStmt(S->getTryLoc(), move(TryBlock),
+                                        move_arg(Handlers));  
+}
+  
+//===----------------------------------------------------------------------===//
 // Expression transformation
 //===----------------------------------------------------------------------===//
 template<typename Derived> 
@@ -2478,12 +3169,12 @@ Sema::OwningExprResult
 TreeTransform<Derived>::TransformDesignatedInitExpr(DesignatedInitExpr *E) { 
   Designation Desig;
   
-  // Instantiate the initializer value
+  // transform the initializer value
   OwningExprResult Init = getDerived().TransformExpr(E->getInit());
   if (Init.isInvalid())
     return SemaRef.ExprError();
   
-  // Instantiate the designators.
+  // transform the designators.
   ASTOwningVector<&ActionBase::DeleteExpr, 4> ArrayExprs(SemaRef);
   bool ExprChanged = false;
   for (DesignatedInitExpr::designators_iterator D = E->designators_begin(),
@@ -2943,7 +3634,7 @@ template<typename Derived>
 Sema::OwningExprResult
 TreeTransform<Derived>::TransformCXXConditionDeclExpr(CXXConditionDeclExpr *E) {
   VarDecl *Var 
-    = cast_or_null<VarDecl>(getDerived().TransformDecl(E->getVarDecl()));
+    = cast_or_null<VarDecl>(getDerived().TransformDefinition(E->getVarDecl()));
   if (!Var)
     return SemaRef.ExprError();
   
@@ -2982,7 +3673,7 @@ TreeTransform<Derived>::TransformCXXNewExpr(CXXNewExpr *E) {
     PlacementArgs.push_back(Arg.take());
   }
   
-  // Instantiate the constructor arguments (if any).
+  // transform the constructor arguments (if any).
   ASTOwningVector<&ActionBase::DeleteExpr> ConstructorArgs(SemaRef);
   for (unsigned I = 0, N = E->getNumConstructorArgs(); I != N; ++I) {
     OwningExprResult Arg = getDerived().TransformExpr(E->getConstructorArg(I));

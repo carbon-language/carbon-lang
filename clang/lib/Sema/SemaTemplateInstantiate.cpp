@@ -294,12 +294,14 @@ namespace {
     DeclarationName Entity;
 
   public:
+    typedef TreeTransform<TemplateInstantiator> inherited;
+    
     TemplateInstantiator(Sema &SemaRef, 
                          const TemplateArgumentList &TemplateArgs,
                          SourceLocation Loc,
                          DeclarationName Entity) 
-    : TreeTransform<TemplateInstantiator>(SemaRef), TemplateArgs(TemplateArgs), 
-      Loc(Loc), Entity(Entity) { }
+      : inherited(SemaRef), TemplateArgs(TemplateArgs), Loc(Loc), 
+        Entity(Entity) { }
 
     /// \brief Determine whether the given type \p T has already been 
     /// transformed.
@@ -319,21 +321,20 @@ namespace {
     /// \brief Transform the given declaration by instantiating a reference to
     /// this declaration.
     Decl *TransformDecl(Decl *D);
-    
-    Sema::OwningStmtResult TransformStmt(Stmt *S) {
-      return SemaRef.InstantiateStmt(S, TemplateArgs);
-    }
 
-    Sema::OwningStmtResult TransformCompoundStmt(CompoundStmt *S, 
-                                                 bool IsStmtExpr) {
-      return SemaRef.InstantiateCompoundStmt(S, TemplateArgs, IsStmtExpr);
-    }
+    /// \brief Transform the definition of the given declaration by 
+    /// instantiating it.
+    Decl *TransformDefinition(Decl *D);
+    
+    /// \brief Rebuild the exception declaration and register the declaration
+    /// as an instantiated local.
+    VarDecl *RebuildExceptionDecl(VarDecl *ExceptionDecl, QualType T, 
+                                  DeclaratorInfo *Declarator,
+                                  IdentifierInfo *Name,
+                                  SourceLocation Loc, SourceRange TypeRange);
     
     Sema::OwningExprResult TransformDeclRefExpr(DeclRefExpr *E);
     
-    Sema::OwningExprResult 
-    TransformCXXConditionDeclExpr(CXXConditionDeclExpr *E);
-      
     /// \brief Transforms a template type parameter type by performing 
     /// substitution of the corresponding template type argument.
     QualType TransformTemplateTypeParmType(const TemplateTypeParmType *T);
@@ -355,6 +356,29 @@ Decl *TemplateInstantiator::TransformDecl(Decl *D) {
   }
   
   return SemaRef.InstantiateCurrentDeclRef(cast_or_null<NamedDecl>(D));
+}
+
+Decl *TemplateInstantiator::TransformDefinition(Decl *D) {
+  Decl *Inst = getSema().InstantiateDecl(D, getSema().CurContext, TemplateArgs);
+  if (!Inst)
+    return 0;
+  
+  getSema().CurrentInstantiationScope->InstantiatedLocal(D, Inst);
+  return Inst;
+}
+
+VarDecl *
+TemplateInstantiator::RebuildExceptionDecl(VarDecl *ExceptionDecl,
+                                           QualType T, 
+                                           DeclaratorInfo *Declarator,
+                                           IdentifierInfo *Name,
+                                           SourceLocation Loc, 
+                                           SourceRange TypeRange) {
+  VarDecl *Var = inherited::RebuildExceptionDecl(ExceptionDecl, T, Declarator,
+                                                 Name, Loc, TypeRange);
+  if (Var && !Var->isInvalidDecl())
+    getSema().CurrentInstantiationScope->InstantiatedLocal(ExceptionDecl, Var);
+  return Var;
 }
 
 Sema::OwningExprResult 
@@ -426,22 +450,6 @@ TemplateInstantiator::TransformDeclRefExpr(DeclRefExpr *E) {
                                           /*FIXME:*/false,
                                           /*FIXME:*/0, 
                                           /*FIXME:*/false);  
-}
-
-Sema::OwningExprResult 
-TemplateInstantiator::TransformCXXConditionDeclExpr(CXXConditionDeclExpr *E) {
-  VarDecl *Var 
-    = cast_or_null<VarDecl>(SemaRef.InstantiateDecl(E->getVarDecl(),
-                                                    SemaRef.CurContext,
-                                                    TemplateArgs));
-  if (!Var)
-    return SemaRef.ExprError();
-  
-  SemaRef.CurrentInstantiationScope->InstantiatedLocal(E->getVarDecl(), Var);
-  return SemaRef.Owned(new (SemaRef.Context) CXXConditionDeclExpr(
-                                                                  E->getStartLoc(), 
-                                                                  SourceLocation(),
-                                                                  Var));
 }
 
 QualType 
@@ -838,6 +846,17 @@ void Sema::InstantiateClassTemplateSpecializationMembers(
   //   below.
   InstantiateClassMembers(PointOfInstantiation, ClassTemplateSpec,
                           ClassTemplateSpec->getTemplateArgs());
+}
+
+Sema::OwningStmtResult 
+Sema::InstantiateStmt(Stmt *S, const TemplateArgumentList &TemplateArgs) {
+  if (!S)
+    return Owned(S);
+
+  TemplateInstantiator Instantiator(*this, TemplateArgs,
+                                    SourceLocation(),
+                                    DeclarationName());
+  return Instantiator.TransformStmt(S);
 }
 
 Sema::OwningExprResult 
