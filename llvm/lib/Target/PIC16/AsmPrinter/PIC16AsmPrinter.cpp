@@ -39,6 +39,7 @@ PIC16AsmPrinter::PIC16AsmPrinter(formatted_raw_ostream &O, TargetMachine &TM,
   PTLI = static_cast<PIC16TargetLowering*>(TM.getTargetLowering());
   PTAI = static_cast<const PIC16TargetAsmInfo*>(T);
   PTOF = (PIC16TargetObjectFile*)&PTLI->getObjFileLowering();
+  CurrentFnPtr = NULL;
 }
 
 bool PIC16AsmPrinter::printMachineInstruction(const MachineInstr *MI) {
@@ -60,6 +61,11 @@ bool PIC16AsmPrinter::runOnMachineFunction(MachineFunction &MF) {
   // Get the mangled name.
   const Function *F = MF.getFunction();
   CurrentFnName = Mang->getMangledName(F);
+  CurrentFnPtr = F;
+
+  // Current function name was mangled in llvm-ld for both
+  // MainLine and InterruptLine and should be demangled here 
+  PAN::updateCallLineSymbol(CurrentFnName, CurrentFnPtr);
 
   // Emit the function frame (args and temps).
   EmitFunctionFrame(MF);
@@ -71,18 +77,23 @@ bool PIC16AsmPrinter::runOnMachineFunction(MachineFunction &MF) {
 
   // Now emit the instructions of function in its code section.
   const MCSection *fCodeSection = 
-    getObjFileLowering().getSectionForFunction(CurrentFnName);
+    getObjFileLowering().getSectionForFunction(CurrentFnName, 
+                                               PAN::isISR(F));
   // Start the Code Section.
   O <<  "\n";
   OutStreamer.SwitchSection(fCodeSection);
-
-  // Emit the frame address of the function at the beginning of code.
-  O << "\tretlw  low(" << PAN::getFrameLabel(CurrentFnName) << ")\n";
-  O << "\tretlw  high(" << PAN::getFrameLabel(CurrentFnName) << ")\n";
+  
+  // If it is not an interrupt function then emit the data address
+  // retrieval code in function code itself.
+  if (!(PAN::isISR(F))) {
+     // Emit the frame address of the function at the beginning of code.
+     O << "\tretlw  low(" << PAN::getFrameLabel(CurrentFnName) << ")\n";
+     O << "\tretlw  high(" << PAN::getFrameLabel(CurrentFnName) << ")\n";
+  }
 
   // Emit function start label.
   O << CurrentFnName << ":\n";
-
+  
   DebugLoc CurDL;
   O << "\n"; 
   // Print out code for the function.
@@ -142,7 +153,9 @@ void PIC16AsmPrinter::printOperand(const MachineInstr *MI, int opNum) {
       if (PAN::isMemIntrinsic(Sname)) {
         LibcallDecls.push_back(createESName(Sname));
       }
-
+      // All the call sites were mangled in llvm-ld pass hence the 
+      // operands for call instructions should be demangled here.
+      PAN::updateCallLineSymbol(Sname, CurrentFnPtr);
       O << Sname;
       break;
     }
@@ -151,7 +164,9 @@ void PIC16AsmPrinter::printOperand(const MachineInstr *MI, int opNum) {
 
       // If its a libcall name, record it to decls section.
       if (PAN::getSymbolTag(Sname) == PAN::LIBCALL) {
-        LibcallDecls.push_back(Sname);
+         // LibCallDecls for InterruptLine functions should have ".IL" suffix 
+         const char *NewName= PAN::getUpdatedLibCallDecl(Sname, CurrentFnPtr);
+         LibcallDecls.push_back(NewName);
       }
 
       // Record a call to intrinsic to print the extern declaration for it.
@@ -160,9 +175,13 @@ void PIC16AsmPrinter::printOperand(const MachineInstr *MI, int opNum) {
         Sym = PAN::addPrefix(Sym);
         LibcallDecls.push_back(createESName(Sym));
       }
-
-      O  << Sym;
-      break;
+      // Update the library call symbols. Library calls to InterruptLine
+      // functions are different. (They have ".IL" in their names)
+      // Also other symbols (frame and temp) for the cloned function
+      // should be updated here.
+      PAN::updateCallLineSymbol(Sym, CurrentFnPtr);
+      O << Sym; 
+     break;
     }
     case MachineOperand::MO_MachineBasicBlock:
       printBasicBlockLabel(MO.getMBB());
@@ -274,7 +293,11 @@ void PIC16AsmPrinter::EmitFunctionDecls(Module &M) {
 
     const char *directive = I->isDeclaration() ? TAI->getExternDirective() :
                                                  TAI->getGlobalDirective();
-      
+   
+    // This is called in initialization. Hence information of the current
+    // function line is not available. Hence UnspecifiedLine. UnspecifiedLine
+    // will be treated as MainLine. 
+    PAN::updateCallLineSymbol(Name, PAN::UnspecifiedLine);
     O << directive << Name << "\n";
     O << directive << PAN::getRetvalLabel(Name) << "\n";
     O << directive << PAN::getArgsLabel(Name) << "\n";
@@ -423,6 +446,13 @@ void PIC16AsmPrinter::EmitAutos(std::string FunctName) {
 
   // Now print Autos section for this function.
   std::string SectionName = PAN::getAutosSectionName(FunctName);
+
+  // If this function is a cloned function then the name of auto section 
+  // will not be present in the list of existing section. Hence this section
+  // should be cloned. 
+  // This function will check and clone
+  PTOF->createClonedSectionForAutos(SectionName);
+
   const std::vector<PIC16Section*> &AutosSections = PTOF->AutosSections;
   for (unsigned i = 0; i < AutosSections.size(); i++) {
     O << "\n";
@@ -436,6 +466,8 @@ void PIC16AsmPrinter::EmitAutos(std::string FunctName) {
         Constant *C = Items[j]->getInitializer();
         const Type *Ty = C->getType();
         unsigned Size = TD->getTypeAllocSize(Ty);
+        // Auto variables should be cloned for the cloned function 
+        PAN::updateCallLineAutos(VarName, CurrentFnName);
         // Emit memory reserve directive.
         O << VarName << "  RES  " << Size << "\n";
       }

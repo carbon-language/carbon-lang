@@ -443,6 +443,7 @@ const char *PIC16TargetLowering::getTargetNodeName(unsigned Opcode) const {
   case PIC16ISD::SELECT_ICC:       return "PIC16ISD::SELECT_ICC";
   case PIC16ISD::BRCOND:           return "PIC16ISD::BRCOND";
   case PIC16ISD::RET:              return "PIC16ISD::RET";
+  case PIC16ISD::RETFIE:           return "PIC16ISD::RETFIE";
   case PIC16ISD::Dummy:            return "PIC16ISD::Dummy";
   }
 }
@@ -1272,7 +1273,10 @@ PIC16TargetLowering::LowerReturn(SDValue Chain,
                         DAG.getConstant (i, MVT::i8));
       
   }
-  return DAG.getNode(PIC16ISD::RET, dl, MVT::Other, Chain);
+  if (PAN::isISR(F))
+     return DAG.getNode(PIC16ISD::RETFIE, dl, MVT::Other, Chain);
+  else
+     return DAG.getNode(PIC16ISD::RET, dl, MVT::Other, Chain);
 }
 
 void PIC16TargetLowering::

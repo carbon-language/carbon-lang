@@ -53,6 +53,7 @@ namespace llvm {
       SELECT_ICC,    // Psuedo to be caught in schedular and expanded to brcond.
       BRCOND,        // Conditional branch.
       RET,           // Return.
+      RETFIE,        // Return from interrupt
       Dummy
     };
 

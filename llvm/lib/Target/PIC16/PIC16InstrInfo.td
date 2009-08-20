@@ -117,6 +117,7 @@ def PIC16Selecticc : SDNode<"PIC16ISD::SELECT_ICC", SDT_PIC16Selecticc,
 
 def PIC16ret       : SDNode<"PIC16ISD::RET", SDTNone, [SDNPHasChain]>;
 
+def PIC16Retfie : SDNode<"PIC16ISD::RETFIE", SDTNone, [SDNPHasChain]>;
 //===----------------------------------------------------------------------===//
 // PIC16 Operand Definitions.
 //===----------------------------------------------------------------------===//
@@ -497,6 +498,10 @@ let isTerminator = 1, isBarrier = 1, isReturn = 1 in
 def Return : 
   ControlFormat<0, (outs), (ins), "return", [(PIC16ret)]>;
 
+//Return instruction to return from ISR
+let isTerminator = 1, isBarrier = 1, isReturn = 1 in
+def Retfie : 
+  ControlFormat<0, (outs), (ins), "retfie", [(PIC16Retfie)]>;
 //===----------------------------------------------------------------------===//
 // PIC16 Replacment Patterns.
 //===----------------------------------------------------------------------===//
