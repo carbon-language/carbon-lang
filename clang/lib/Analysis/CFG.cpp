@@ -925,7 +925,7 @@ CFGBlock* CFGBuilder::VisitForStmt(ForStmt* F) {
     CFGBlock* BodyBlock = addStmt(F->getBody());
 
     if (!BodyBlock)
-      BodyBlock = EntryConditionBlock; // can happen for "for (...;...; ) ;"
+      BodyBlock = ContinueTargetBlock; // can happen for "for (...;...;...) ;"
     else if (Block && !FinishBlock(BodyBlock))
       return 0;
 
