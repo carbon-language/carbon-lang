@@ -174,11 +174,13 @@ totalExponent(StringRef::iterator p, StringRef::iterator end,
   bool negative, overflow;
   int exponent;
 
-  /* Move past the exponent letter and sign to the digits.  */
-  p++;
+  assert(p != end && "Exponent has no digits");
+
   negative = *p == '-';
-  if(*p == '-' || *p == '+')
+  if(*p == '-' || *p == '+') {
     p++;
+    assert(p != end && "Exponent has no digits");
+  }
 
   unsignedExponent = 0;
   overflow = false;
@@ -223,7 +225,7 @@ skipLeadingZeroesAndAnyDot(StringRef::iterator begin, StringRef::iterator end,
   if(*p == '.') {
     *dot = p++;
 
-    assert(end - begin != 1 && "String cannot be just a dot");
+    assert(end - begin != 1 && "Significand has no digits");
 
     while(*p == '0' && p != end)
       p++;
@@ -265,7 +267,7 @@ interpretDecimal(StringRef::iterator begin, StringRef::iterator end,
 
   for (; p != end; ++p) {
     if (*p == '.') {
-      assert(dot == end && "Multiple dots in float");
+      assert(dot == end && "String contains multiple dots");
       dot = p++;
       if (p == end)
         break;
@@ -275,12 +277,12 @@ interpretDecimal(StringRef::iterator begin, StringRef::iterator end,
   }
 
   if (p != end) {
-    assert((*p == 'e' || *p == 'E') && "Invalid character in digit string");
+    assert((*p == 'e' || *p == 'E') && "Invalid character in significand");
+    assert(p != begin && "Significand has no digits");
+    assert((dot == end || p - begin != 1) && "Significand has no digits");
 
     /* p points to the first non-digit in the string */
-    if (*p == 'e' || *p == 'E') {
-      D->exponent = readExponent(p + 1, end);
-    }
+    D->exponent = readExponent(p + 1, end);
 
     /* Implied decimal point?  */
     if (dot == end)
@@ -2146,15 +2148,20 @@ APFloat::convertFromHexadecimalString(const StringRef &s,
   bitPos = partsCount * integerPartWidth;
 
   /* Skip leading zeroes and any (hexa)decimal point.  */
-  StringRef::iterator p = skipLeadingZeroesAndAnyDot(s.begin(), s.end(), &dot);
+  StringRef::iterator begin = s.begin();
+  StringRef::iterator end = s.end();
+  StringRef::iterator p = skipLeadingZeroesAndAnyDot(begin, end, &dot);
   firstSignificantDigit = p;
 
-  for(; p != s.end();) {
+  for(; p != end;) {
     integerPart hex_value;
 
     if(*p == '.') {
-      assert(dot == s.end());
+      assert(dot == end && "String contains multiple dots");
       dot = p++;
+      if (p == end) {
+        break;
+      }
     }
 
     hex_value = hexDigitValue(*p);
@@ -2164,7 +2171,7 @@ APFloat::convertFromHexadecimalString(const StringRef &s,
 
     p++;
 
-    if (p == s.end()) {
+    if (p == end) {
       break;
     } else {
       /* Store the number whilst 4-bit nibbles remain.  */
@@ -2173,8 +2180,8 @@ APFloat::convertFromHexadecimalString(const StringRef &s,
         hex_value <<= bitPos % integerPartWidth;
         significand[bitPos / integerPartWidth] |= hex_value;
       } else {
-        lost_fraction = trailingHexadecimalFraction(p, s.end(), hex_value);
-        while(p != s.end() && hexDigitValue(*p) != -1U)
+        lost_fraction = trailingHexadecimalFraction(p, end, hex_value);
+        while(p != end && hexDigitValue(*p) != -1U)
           p++;
         break;
       }
@@ -2182,15 +2189,17 @@ APFloat::convertFromHexadecimalString(const StringRef &s,
   }
 
   /* Hex floats require an exponent but not a hexadecimal point.  */
-  assert(p != s.end() && (*p == 'p' || *p == 'P') &&
-         "Hex strings require an exponent");
+  assert(p != end && "Hex strings require an exponent");
+  assert((*p == 'p' || *p == 'P') && "Invalid character in significand");
+  assert(p != begin && "Significand has no digits");
+  assert((dot == end || p - begin != 1) && "Significand has no digits");
 
   /* Ignore the exponent if we are zero.  */
   if(p != firstSignificantDigit) {
     int expAdjustment;
 
     /* Implicit hexadecimal point?  */
-    if (dot == s.end())
+    if (dot == end)
       dot = p;
 
     /* Calculate the exponent adjustment implicit in the number of
@@ -2206,7 +2215,7 @@ APFloat::convertFromHexadecimalString(const StringRef &s,
     expAdjustment -= partsCount * integerPartWidth;
 
     /* Adjust for the given exponent.  */
-    exponent = totalExponent(p, s.end(), expAdjustment);
+    exponent = totalExponent(p + 1, end, expAdjustment);
   }
 
   return normalize(rounding_mode, lost_fraction);
@@ -2367,7 +2376,7 @@ APFloat::convertFromDecimalString(const StringRef &str, roundingMode rounding_mo
           }
         }
         decValue = decDigitValue(*p++);
-        assert(decValue < 10U && "Invalid character in digit string");
+        assert(decValue < 10U && "Invalid character in significand");
         multiplier *= 10;
         val = val * 10 + decValue;
         /* The maximum number that can be multiplied by ten with any
@@ -2403,23 +2412,20 @@ APFloat::convertFromString(const StringRef &str, roundingMode rounding_mode)
   /* Handle a leading minus sign.  */
   StringRef::iterator p = str.begin();
   size_t slen = str.size();
-  unsigned isNegative = str.front() == '-';
-  if(isNegative) {
-    sign = 1;
+  sign = *p == '-' ? 1 : 0;
+  if(*p == '-' || *p == '+') {
     p++;
     slen--;
-    assert(slen && "String is only a minus!");
-  } else {
-    sign = 0;
+    assert(slen && "String has no digits");
   }
 
   if(slen >= 2 && p[0] == '0' && (p[1] == 'x' || p[1] == 'X')) {
     assert(slen - 2 && "Invalid string");
-    return convertFromHexadecimalString(str.substr(isNegative + 2),
+    return convertFromHexadecimalString(StringRef(p + 2, slen - 2),
                                         rounding_mode);
   }
 
-  return convertFromDecimalString(str.substr(isNegative), rounding_mode);
+  return convertFromDecimalString(StringRef(p, slen), rounding_mode);
 }
 
 /* Write out a hexadecimal representation of the floating point value

@@ -25,45 +25,284 @@ TEST(APFloatTest, Zero) {
   EXPECT_EQ(-0.0, APFloat(APFloat::IEEEdouble, -0.0).convertToDouble());
 }
 
-TEST(APFloatTest, fromString) {
-  EXPECT_EQ(0.0,  APFloat(APFloat::IEEEdouble, "0").convertToDouble());
-  EXPECT_EQ(0.0,  APFloat(APFloat::IEEEdouble, "0.").convertToDouble());
-  EXPECT_EQ(0.0,  APFloat(APFloat::IEEEdouble, ".0").convertToDouble());
-  EXPECT_EQ(0.0,  APFloat(APFloat::IEEEdouble, "0.0").convertToDouble());
+TEST(APFloatTest, fromZeroDecimalString) {
+  EXPECT_EQ( 0.0, APFloat(APFloat::IEEEdouble,  "0").convertToDouble());
+  EXPECT_EQ(+0.0, APFloat(APFloat::IEEEdouble, "+0").convertToDouble());
   EXPECT_EQ(-0.0, APFloat(APFloat::IEEEdouble, "-0").convertToDouble());
+
+  EXPECT_EQ( 0.0, APFloat(APFloat::IEEEdouble,  "0.").convertToDouble());
+  EXPECT_EQ(+0.0, APFloat(APFloat::IEEEdouble, "+0.").convertToDouble());
   EXPECT_EQ(-0.0, APFloat(APFloat::IEEEdouble, "-0.").convertToDouble());
+
+  EXPECT_EQ( 0.0, APFloat(APFloat::IEEEdouble,  ".0").convertToDouble());
+  EXPECT_EQ(+0.0, APFloat(APFloat::IEEEdouble, "+.0").convertToDouble());
   EXPECT_EQ(-0.0, APFloat(APFloat::IEEEdouble, "-.0").convertToDouble());
+
+  EXPECT_EQ( 0.0, APFloat(APFloat::IEEEdouble,  "0.0").convertToDouble());
+  EXPECT_EQ(+0.0, APFloat(APFloat::IEEEdouble, "+0.0").convertToDouble());
   EXPECT_EQ(-0.0, APFloat(APFloat::IEEEdouble, "-0.0").convertToDouble());
-  EXPECT_EQ(0.0,  APFloat(APFloat::IEEEdouble, "0e1234").convertToDouble());
-  EXPECT_EQ(0.0,  APFloat(APFloat::IEEEdouble, "0e1234").convertToDouble());
-  EXPECT_EQ(0.0,  APFloat(APFloat::IEEEdouble, "00000.").convertToDouble());
-  EXPECT_EQ(0.0,  APFloat(APFloat::IEEEdouble, "0000.00000").convertToDouble());
+
+  EXPECT_EQ( 0.0, APFloat(APFloat::IEEEdouble,  "00000.").convertToDouble());
+  EXPECT_EQ(+0.0, APFloat(APFloat::IEEEdouble, "+00000.").convertToDouble());
+  EXPECT_EQ(-0.0, APFloat(APFloat::IEEEdouble, "-00000.").convertToDouble());
+
   EXPECT_EQ(0.0,  APFloat(APFloat::IEEEdouble, ".00000").convertToDouble());
-  EXPECT_EQ(0.0,  APFloat(APFloat::IEEEdouble, "0.").convertToDouble());
-  EXPECT_EQ(0.0,  APFloat(APFloat::IEEEdouble, "0.e1").convertToDouble());
-  EXPECT_EQ(0.0,  APFloat(APFloat::IEEEdouble, "0.e+1").convertToDouble());
-  EXPECT_EQ(0.0,  APFloat(APFloat::IEEEdouble, "0.e-1").convertToDouble());
-  EXPECT_EQ(0.0,  APFloat(APFloat::IEEEdouble, "000.0000e0").convertToDouble());
-  EXPECT_EQ(0.0,  APFloat(APFloat::IEEEdouble, "000.0000e-0").convertToDouble());
+  EXPECT_EQ(+0.0, APFloat(APFloat::IEEEdouble, "+.00000").convertToDouble());
+  EXPECT_EQ(-0.0, APFloat(APFloat::IEEEdouble, "-.00000").convertToDouble());
+
+  EXPECT_EQ( 0.0, APFloat(APFloat::IEEEdouble,  "0000.00000").convertToDouble());
+  EXPECT_EQ(+0.0, APFloat(APFloat::IEEEdouble, "+0000.00000").convertToDouble());
+  EXPECT_EQ(-0.0, APFloat(APFloat::IEEEdouble, "-0000.00000").convertToDouble());
+}
+
+TEST(APFloatTest, fromZeroDecimalSingleExponentString) {
+  EXPECT_EQ( 0.0, APFloat(APFloat::IEEEdouble,   "0e1").convertToDouble());
+  EXPECT_EQ(+0.0, APFloat(APFloat::IEEEdouble,  "+0e1").convertToDouble());
+  EXPECT_EQ(-0.0, APFloat(APFloat::IEEEdouble,  "-0e1").convertToDouble());
+
+  EXPECT_EQ( 0.0, APFloat(APFloat::IEEEdouble,  "0e+1").convertToDouble());
+  EXPECT_EQ(+0.0, APFloat(APFloat::IEEEdouble, "+0e+1").convertToDouble());
+  EXPECT_EQ(-0.0, APFloat(APFloat::IEEEdouble, "-0e+1").convertToDouble());
+
+  EXPECT_EQ( 0.0, APFloat(APFloat::IEEEdouble,  "0e-1").convertToDouble());
+  EXPECT_EQ(+0.0, APFloat(APFloat::IEEEdouble, "+0e-1").convertToDouble());
+  EXPECT_EQ(-0.0, APFloat(APFloat::IEEEdouble, "-0e-1").convertToDouble());
+
+
+  EXPECT_EQ( 0.0, APFloat(APFloat::IEEEdouble,   "0.e1").convertToDouble());
+  EXPECT_EQ(+0.0, APFloat(APFloat::IEEEdouble,  "+0.e1").convertToDouble());
+  EXPECT_EQ(-0.0, APFloat(APFloat::IEEEdouble,  "-0.e1").convertToDouble());
+
+  EXPECT_EQ( 0.0, APFloat(APFloat::IEEEdouble,  "0.e+1").convertToDouble());
+  EXPECT_EQ(+0.0, APFloat(APFloat::IEEEdouble, "+0.e+1").convertToDouble());
+  EXPECT_EQ(-0.0, APFloat(APFloat::IEEEdouble, "-0.e+1").convertToDouble());
+
+  EXPECT_EQ( 0.0, APFloat(APFloat::IEEEdouble,  "0.e-1").convertToDouble());
+  EXPECT_EQ(+0.0, APFloat(APFloat::IEEEdouble, "+0.e-1").convertToDouble());
+  EXPECT_EQ(-0.0, APFloat(APFloat::IEEEdouble, "-0.e-1").convertToDouble());
+
+  EXPECT_EQ( 0.0, APFloat(APFloat::IEEEdouble,   ".0e1").convertToDouble());
+  EXPECT_EQ(+0.0, APFloat(APFloat::IEEEdouble,  "+.0e1").convertToDouble());
+  EXPECT_EQ(-0.0, APFloat(APFloat::IEEEdouble,  "-.0e1").convertToDouble());
+
+  EXPECT_EQ( 0.0, APFloat(APFloat::IEEEdouble,  ".0e+1").convertToDouble());
+  EXPECT_EQ(+0.0, APFloat(APFloat::IEEEdouble, "+.0e+1").convertToDouble());
+  EXPECT_EQ(-0.0, APFloat(APFloat::IEEEdouble, "-.0e+1").convertToDouble());
+
+  EXPECT_EQ( 0.0, APFloat(APFloat::IEEEdouble,  ".0e-1").convertToDouble());
+  EXPECT_EQ(+0.0, APFloat(APFloat::IEEEdouble, "+.0e-1").convertToDouble());
+  EXPECT_EQ(-0.0, APFloat(APFloat::IEEEdouble, "-.0e-1").convertToDouble());
+
+
+  EXPECT_EQ( 0.0, APFloat(APFloat::IEEEdouble,   "0.0e1").convertToDouble());
+  EXPECT_EQ(+0.0, APFloat(APFloat::IEEEdouble,  "+0.0e1").convertToDouble());
+  EXPECT_EQ(-0.0, APFloat(APFloat::IEEEdouble,  "-0.0e1").convertToDouble());
+
+  EXPECT_EQ( 0.0, APFloat(APFloat::IEEEdouble,  "0.0e+1").convertToDouble());
+  EXPECT_EQ(+0.0, APFloat(APFloat::IEEEdouble, "+0.0e+1").convertToDouble());
+  EXPECT_EQ(-0.0, APFloat(APFloat::IEEEdouble, "-0.0e+1").convertToDouble());
+
+  EXPECT_EQ( 0.0, APFloat(APFloat::IEEEdouble,  "0.0e-1").convertToDouble());
+  EXPECT_EQ(+0.0, APFloat(APFloat::IEEEdouble, "+0.0e-1").convertToDouble());
+  EXPECT_EQ(-0.0, APFloat(APFloat::IEEEdouble, "-0.0e-1").convertToDouble());
+
+
+  EXPECT_EQ( 0.0, APFloat(APFloat::IEEEdouble,  "000.0000e1").convertToDouble());
+  EXPECT_EQ(+0.0, APFloat(APFloat::IEEEdouble, "+000.0000e+1").convertToDouble());
+  EXPECT_EQ(-0.0, APFloat(APFloat::IEEEdouble, "-000.0000e+1").convertToDouble());
+}
+
+TEST(APFloatTest, fromZeroDecimalLargeExponentString) {
+  EXPECT_EQ( 0.0, APFloat(APFloat::IEEEdouble,  "0e1234").convertToDouble());
+  EXPECT_EQ(+0.0, APFloat(APFloat::IEEEdouble, "+0e1234").convertToDouble());
+  EXPECT_EQ(-0.0, APFloat(APFloat::IEEEdouble, "-0e1234").convertToDouble());
+
+  EXPECT_EQ( 0.0, APFloat(APFloat::IEEEdouble,  "0e+1234").convertToDouble());
+  EXPECT_EQ(+0.0, APFloat(APFloat::IEEEdouble, "+0e+1234").convertToDouble());
+  EXPECT_EQ(-0.0, APFloat(APFloat::IEEEdouble, "-0e+1234").convertToDouble());
+
+  EXPECT_EQ( 0.0, APFloat(APFloat::IEEEdouble,  "0e-1234").convertToDouble());
+  EXPECT_EQ(+0.0, APFloat(APFloat::IEEEdouble, "+0e-1234").convertToDouble());
+  EXPECT_EQ(-0.0, APFloat(APFloat::IEEEdouble, "-0e-1234").convertToDouble());
+
   EXPECT_EQ(0.0,  APFloat(APFloat::IEEEdouble, "000.0000e1234").convertToDouble());
   EXPECT_EQ(0.0,  APFloat(APFloat::IEEEdouble, "000.0000e-1234").convertToDouble());
 
-  EXPECT_EQ(0.0,  APFloat(APFloat::IEEEdouble, "0x0p1").convertToDouble());
-  EXPECT_EQ(-0.0, APFloat(APFloat::IEEEdouble, "-0x0p1").convertToDouble());
-  EXPECT_EQ(0.0,  APFloat(APFloat::IEEEdouble, "0x00000.p1").convertToDouble());
-  EXPECT_EQ(0.0,  APFloat(APFloat::IEEEdouble, "0x0000.00000p1").convertToDouble());
-  EXPECT_EQ(0.0,  APFloat(APFloat::IEEEdouble, "0x.00000p1").convertToDouble());
-  EXPECT_EQ(0.0,  APFloat(APFloat::IEEEdouble, "0x0.p1").convertToDouble());
-  EXPECT_EQ(0.0,  APFloat(APFloat::IEEEdouble, "0x0p1234").convertToDouble());
-  EXPECT_EQ(-0.0, APFloat(APFloat::IEEEdouble, "-0x0p1234").convertToDouble());
-  EXPECT_EQ(0.0,  APFloat(APFloat::IEEEdouble, "0x00000.p1234").convertToDouble());
-  EXPECT_EQ(0.0,  APFloat(APFloat::IEEEdouble, "0x0000.00000p1234").convertToDouble());
-  EXPECT_EQ(0.0,  APFloat(APFloat::IEEEdouble, "0x.00000p1234").convertToDouble());
-  EXPECT_EQ(0.0,  APFloat(APFloat::IEEEdouble, "0x0.p1234").convertToDouble());
-  EXPECT_EQ(1.0625,  APFloat(APFloat::IEEEdouble, "0x1.1p0").convertToDouble());
-  EXPECT_EQ(1.0,  APFloat(APFloat::IEEEdouble, "0x1p0").convertToDouble());
+  EXPECT_EQ(0.0,  APFloat(APFloat::IEEEdouble, StringRef("0e1234\02", 6)).convertToDouble());
+}
 
-  EXPECT_EQ(0.0,  APFloat(APFloat::IEEEdouble, StringRef("0e1\02", 3)).convertToDouble());
+TEST(APFloatTest, fromZeroHexadecimalString) {
+  EXPECT_EQ( 0.0, APFloat(APFloat::IEEEdouble,  "0x0p1").convertToDouble());
+  EXPECT_EQ(+0.0, APFloat(APFloat::IEEEdouble, "+0x0p1").convertToDouble());
+  EXPECT_EQ(-0.0, APFloat(APFloat::IEEEdouble, "-0x0p1").convertToDouble());
+
+  EXPECT_EQ( 0.0, APFloat(APFloat::IEEEdouble,  "0x0p+1").convertToDouble());
+  EXPECT_EQ(+0.0, APFloat(APFloat::IEEEdouble, "+0x0p+1").convertToDouble());
+  EXPECT_EQ(-0.0, APFloat(APFloat::IEEEdouble, "-0x0p+1").convertToDouble());
+
+  EXPECT_EQ( 0.0, APFloat(APFloat::IEEEdouble,  "0x0p-1").convertToDouble());
+  EXPECT_EQ(+0.0, APFloat(APFloat::IEEEdouble, "+0x0p-1").convertToDouble());
+  EXPECT_EQ(-0.0, APFloat(APFloat::IEEEdouble, "-0x0p-1").convertToDouble());
+
+
+  EXPECT_EQ( 0.0, APFloat(APFloat::IEEEdouble,  "0x0.p1").convertToDouble());
+  EXPECT_EQ(+0.0, APFloat(APFloat::IEEEdouble, "+0x0.p1").convertToDouble());
+  EXPECT_EQ(-0.0, APFloat(APFloat::IEEEdouble, "-0x0.p1").convertToDouble());
+
+  EXPECT_EQ( 0.0, APFloat(APFloat::IEEEdouble,  "0x0.p+1").convertToDouble());
+  EXPECT_EQ(+0.0, APFloat(APFloat::IEEEdouble, "+0x0.p+1").convertToDouble());
+  EXPECT_EQ(-0.0, APFloat(APFloat::IEEEdouble, "-0x0.p+1").convertToDouble());
+
+  EXPECT_EQ( 0.0, APFloat(APFloat::IEEEdouble,  "0x0.p-1").convertToDouble());
+  EXPECT_EQ(+0.0, APFloat(APFloat::IEEEdouble, "+0x0.p-1").convertToDouble());
+  EXPECT_EQ(-0.0, APFloat(APFloat::IEEEdouble, "-0x0.p-1").convertToDouble());
+
+
+  EXPECT_EQ( 0.0, APFloat(APFloat::IEEEdouble,  "0x.0p1").convertToDouble());
+  EXPECT_EQ(+0.0, APFloat(APFloat::IEEEdouble, "+0x.0p1").convertToDouble());
+  EXPECT_EQ(-0.0, APFloat(APFloat::IEEEdouble, "-0x.0p1").convertToDouble());
+
+  EXPECT_EQ( 0.0, APFloat(APFloat::IEEEdouble,  "0x.0p+1").convertToDouble());
+  EXPECT_EQ(+0.0, APFloat(APFloat::IEEEdouble, "+0x.0p+1").convertToDouble());
+  EXPECT_EQ(-0.0, APFloat(APFloat::IEEEdouble, "-0x.0p+1").convertToDouble());
+
+  EXPECT_EQ( 0.0, APFloat(APFloat::IEEEdouble,  "0x.0p-1").convertToDouble());
+  EXPECT_EQ(+0.0, APFloat(APFloat::IEEEdouble, "+0x.0p-1").convertToDouble());
+  EXPECT_EQ(-0.0, APFloat(APFloat::IEEEdouble, "-0x.0p-1").convertToDouble());
+
+
+  EXPECT_EQ( 0.0, APFloat(APFloat::IEEEdouble,  "0x0.0p1").convertToDouble());
+  EXPECT_EQ(+0.0, APFloat(APFloat::IEEEdouble, "+0x0.0p1").convertToDouble());
+  EXPECT_EQ(-0.0, APFloat(APFloat::IEEEdouble, "-0x0.0p1").convertToDouble());
+
+  EXPECT_EQ( 0.0, APFloat(APFloat::IEEEdouble,  "0x0.0p+1").convertToDouble());
+  EXPECT_EQ(+0.0, APFloat(APFloat::IEEEdouble, "+0x0.0p+1").convertToDouble());
+  EXPECT_EQ(-0.0, APFloat(APFloat::IEEEdouble, "-0x0.0p+1").convertToDouble());
+
+  EXPECT_EQ( 0.0, APFloat(APFloat::IEEEdouble,  "0x0.0p-1").convertToDouble());
+  EXPECT_EQ(+0.0, APFloat(APFloat::IEEEdouble, "+0x0.0p-1").convertToDouble());
+  EXPECT_EQ(-0.0, APFloat(APFloat::IEEEdouble, "-0x0.0p-1").convertToDouble());
+
+
+  EXPECT_EQ( 0.0, APFloat(APFloat::IEEEdouble, "0x00000.p1").convertToDouble());
+  EXPECT_EQ( 0.0, APFloat(APFloat::IEEEdouble, "0x0000.00000p1").convertToDouble());
+  EXPECT_EQ( 0.0, APFloat(APFloat::IEEEdouble, "0x.00000p1").convertToDouble());
+  EXPECT_EQ( 0.0, APFloat(APFloat::IEEEdouble, "0x0.p1").convertToDouble());
+  EXPECT_EQ( 0.0, APFloat(APFloat::IEEEdouble, "0x0p1234").convertToDouble());
+  EXPECT_EQ(-0.0, APFloat(APFloat::IEEEdouble, "-0x0p1234").convertToDouble());
+  EXPECT_EQ( 0.0, APFloat(APFloat::IEEEdouble, "0x00000.p1234").convertToDouble());
+  EXPECT_EQ( 0.0, APFloat(APFloat::IEEEdouble, "0x0000.00000p1234").convertToDouble());
+  EXPECT_EQ( 0.0, APFloat(APFloat::IEEEdouble, "0x.00000p1234").convertToDouble());
+  EXPECT_EQ( 0.0, APFloat(APFloat::IEEEdouble, "0x0.p1234").convertToDouble());
+}
+
+TEST(APFloatTest, fromDecimalString) {
+  EXPECT_EQ(1.0,      APFloat(APFloat::IEEEdouble, "1").convertToDouble());
+  EXPECT_EQ(2.0,      APFloat(APFloat::IEEEdouble, "2.").convertToDouble());
+  EXPECT_EQ(0.5,      APFloat(APFloat::IEEEdouble, ".5").convertToDouble());
+  EXPECT_EQ(1.0,      APFloat(APFloat::IEEEdouble, "1.0").convertToDouble());
+  EXPECT_EQ(-2.0,     APFloat(APFloat::IEEEdouble, "-2").convertToDouble());
+  EXPECT_EQ(-4.0,     APFloat(APFloat::IEEEdouble, "-4.").convertToDouble());
+  EXPECT_EQ(-0.5,     APFloat(APFloat::IEEEdouble, "-.5").convertToDouble());
+  EXPECT_EQ(-1.5,     APFloat(APFloat::IEEEdouble, "-1.5").convertToDouble());
+  EXPECT_EQ(1.25e12,  APFloat(APFloat::IEEEdouble, "1.25e12").convertToDouble());
+  EXPECT_EQ(1.25e+12, APFloat(APFloat::IEEEdouble, "1.25e+12").convertToDouble());
+  EXPECT_EQ(1.25e-12, APFloat(APFloat::IEEEdouble, "1.25e-12").convertToDouble());
+  EXPECT_EQ(1024.0,   APFloat(APFloat::IEEEdouble, "1024.").convertToDouble());
+  EXPECT_EQ(1024.05,  APFloat(APFloat::IEEEdouble, "1024.05000").convertToDouble());
+  EXPECT_EQ(0.05,     APFloat(APFloat::IEEEdouble, ".05000").convertToDouble());
+  EXPECT_EQ(2.0,      APFloat(APFloat::IEEEdouble, "2.").convertToDouble());
+  EXPECT_EQ(2.0e2,    APFloat(APFloat::IEEEdouble, "2.e2").convertToDouble());
+  EXPECT_EQ(2.0e+2,   APFloat(APFloat::IEEEdouble, "2.e+2").convertToDouble());
+  EXPECT_EQ(2.0e-2,   APFloat(APFloat::IEEEdouble, "2.e-2").convertToDouble());
+  EXPECT_EQ(2.05e2,    APFloat(APFloat::IEEEdouble, "002.05000e2").convertToDouble());
+  EXPECT_EQ(2.05e+2,   APFloat(APFloat::IEEEdouble, "002.05000e+2").convertToDouble());
+  EXPECT_EQ(2.05e-2,   APFloat(APFloat::IEEEdouble, "002.05000e-2").convertToDouble());
+  EXPECT_EQ(2.05e12,   APFloat(APFloat::IEEEdouble, "002.05000e12").convertToDouble());
+  EXPECT_EQ(2.05e+12,  APFloat(APFloat::IEEEdouble, "002.05000e+12").convertToDouble());
+  EXPECT_EQ(2.05e-12,  APFloat(APFloat::IEEEdouble, "002.05000e-12").convertToDouble());
+}
+
+TEST(APFloatTest, fromHexadecimalString) {
+  EXPECT_EQ( 1.0, APFloat(APFloat::IEEEdouble,  "0x1p0").convertToDouble());
+  EXPECT_EQ(+1.0, APFloat(APFloat::IEEEdouble, "+0x1p0").convertToDouble());
+  EXPECT_EQ(-1.0, APFloat(APFloat::IEEEdouble, "-0x1p0").convertToDouble());
+
+  EXPECT_EQ( 1.0, APFloat(APFloat::IEEEdouble,  "0x1p+0").convertToDouble());
+  EXPECT_EQ(+1.0, APFloat(APFloat::IEEEdouble, "+0x1p+0").convertToDouble());
+  EXPECT_EQ(-1.0, APFloat(APFloat::IEEEdouble, "-0x1p+0").convertToDouble());
+
+  EXPECT_EQ( 1.0, APFloat(APFloat::IEEEdouble,  "0x1p-0").convertToDouble());
+  EXPECT_EQ(+1.0, APFloat(APFloat::IEEEdouble, "+0x1p-0").convertToDouble());
+  EXPECT_EQ(-1.0, APFloat(APFloat::IEEEdouble, "-0x1p-0").convertToDouble());
+
+
+  EXPECT_EQ( 2.0, APFloat(APFloat::IEEEdouble,  "0x1p1").convertToDouble());
+  EXPECT_EQ(+2.0, APFloat(APFloat::IEEEdouble, "+0x1p1").convertToDouble());
+  EXPECT_EQ(-2.0, APFloat(APFloat::IEEEdouble, "-0x1p1").convertToDouble());
+
+  EXPECT_EQ( 2.0, APFloat(APFloat::IEEEdouble,  "0x1p+1").convertToDouble());
+  EXPECT_EQ(+2.0, APFloat(APFloat::IEEEdouble, "+0x1p+1").convertToDouble());
+  EXPECT_EQ(-2.0, APFloat(APFloat::IEEEdouble, "-0x1p+1").convertToDouble());
+
+  EXPECT_EQ( 0.5, APFloat(APFloat::IEEEdouble,  "0x1p-1").convertToDouble());
+  EXPECT_EQ(+0.5, APFloat(APFloat::IEEEdouble, "+0x1p-1").convertToDouble());
+  EXPECT_EQ(-0.5, APFloat(APFloat::IEEEdouble, "-0x1p-1").convertToDouble());
+
+
+  EXPECT_EQ( 3.0, APFloat(APFloat::IEEEdouble,  "0x1.8p1").convertToDouble());
+  EXPECT_EQ(+3.0, APFloat(APFloat::IEEEdouble, "+0x1.8p1").convertToDouble());
+  EXPECT_EQ(-3.0, APFloat(APFloat::IEEEdouble, "-0x1.8p1").convertToDouble());
+
+  EXPECT_EQ( 3.0, APFloat(APFloat::IEEEdouble,  "0x1.8p+1").convertToDouble());
+  EXPECT_EQ(+3.0, APFloat(APFloat::IEEEdouble, "+0x1.8p+1").convertToDouble());
+  EXPECT_EQ(-3.0, APFloat(APFloat::IEEEdouble, "-0x1.8p+1").convertToDouble());
+
+  EXPECT_EQ( 0.75, APFloat(APFloat::IEEEdouble,  "0x1.8p-1").convertToDouble());
+  EXPECT_EQ(+0.75, APFloat(APFloat::IEEEdouble, "+0x1.8p-1").convertToDouble());
+  EXPECT_EQ(-0.75, APFloat(APFloat::IEEEdouble, "-0x1.8p-1").convertToDouble());
+
+
+  EXPECT_EQ( 8192.0, APFloat(APFloat::IEEEdouble,  "0x1000.000p1").convertToDouble());
+  EXPECT_EQ(+8192.0, APFloat(APFloat::IEEEdouble, "+0x1000.000p1").convertToDouble());
+  EXPECT_EQ(-8192.0, APFloat(APFloat::IEEEdouble, "-0x1000.000p1").convertToDouble());
+
+  EXPECT_EQ( 8192.0, APFloat(APFloat::IEEEdouble,  "0x1000.000p+1").convertToDouble());
+  EXPECT_EQ(+8192.0, APFloat(APFloat::IEEEdouble, "+0x1000.000p+1").convertToDouble());
+  EXPECT_EQ(-8192.0, APFloat(APFloat::IEEEdouble, "-0x1000.000p+1").convertToDouble());
+
+  EXPECT_EQ( 2048.0, APFloat(APFloat::IEEEdouble,  "0x1000.000p-1").convertToDouble());
+  EXPECT_EQ(+2048.0, APFloat(APFloat::IEEEdouble, "+0x1000.000p-1").convertToDouble());
+  EXPECT_EQ(-2048.0, APFloat(APFloat::IEEEdouble, "-0x1000.000p-1").convertToDouble());
+
+
+  EXPECT_EQ( 8192.0, APFloat(APFloat::IEEEdouble,  "0x1000p1").convertToDouble());
+  EXPECT_EQ(+8192.0, APFloat(APFloat::IEEEdouble, "+0x1000p1").convertToDouble());
+  EXPECT_EQ(-8192.0, APFloat(APFloat::IEEEdouble, "-0x1000p1").convertToDouble());
+
+  EXPECT_EQ( 8192.0, APFloat(APFloat::IEEEdouble,  "0x1000p+1").convertToDouble());
+  EXPECT_EQ(+8192.0, APFloat(APFloat::IEEEdouble, "+0x1000p+1").convertToDouble());
+  EXPECT_EQ(-8192.0, APFloat(APFloat::IEEEdouble, "-0x1000p+1").convertToDouble());
+
+  EXPECT_EQ( 2048.0, APFloat(APFloat::IEEEdouble,  "0x1000p-1").convertToDouble());
+  EXPECT_EQ(+2048.0, APFloat(APFloat::IEEEdouble, "+0x1000p-1").convertToDouble());
+  EXPECT_EQ(-2048.0, APFloat(APFloat::IEEEdouble, "-0x1000p-1").convertToDouble());
+
+
+  EXPECT_EQ( 16384.0, APFloat(APFloat::IEEEdouble,  "0x10p10").convertToDouble());
+  EXPECT_EQ(+16384.0, APFloat(APFloat::IEEEdouble, "+0x10p10").convertToDouble());
+  EXPECT_EQ(-16384.0, APFloat(APFloat::IEEEdouble, "-0x10p10").convertToDouble());
+
+  EXPECT_EQ( 16384.0, APFloat(APFloat::IEEEdouble,  "0x10p+10").convertToDouble());
+  EXPECT_EQ(+16384.0, APFloat(APFloat::IEEEdouble, "+0x10p+10").convertToDouble());
+  EXPECT_EQ(-16384.0, APFloat(APFloat::IEEEdouble, "-0x10p+10").convertToDouble());
+
+  EXPECT_EQ( 0.015625, APFloat(APFloat::IEEEdouble,  "0x10p-10").convertToDouble());
+  EXPECT_EQ(+0.015625, APFloat(APFloat::IEEEdouble, "+0x10p-10").convertToDouble());
+  EXPECT_EQ(-0.015625, APFloat(APFloat::IEEEdouble, "-0x10p-10").convertToDouble());
+
+  EXPECT_EQ(1.0625, APFloat(APFloat::IEEEdouble, "0x1.1p0").convertToDouble());
+  EXPECT_EQ(1.0, APFloat(APFloat::IEEEdouble, "0x1p0").convertToDouble());
 }
 
 #ifdef GTEST_HAS_DEATH_TEST
@@ -72,38 +311,198 @@ TEST(APFloatTest, SemanticsDeath) {
   EXPECT_DEATH(APFloat(APFloat::IEEEdouble, 0.0 ).convertToFloat(),  "Float semantics are not IEEEsingle");
 }
 
-TEST(APFloatTest, StringDeath) {
-  EXPECT_DEATH(APFloat(APFloat::IEEEdouble, ""), "Invalid string length");
-  EXPECT_DEATH(APFloat(APFloat::IEEEdouble, "-"), "String is only a minus!");
-  EXPECT_DEATH(APFloat(APFloat::IEEEdouble, "0x"), "Invalid string");
-  EXPECT_DEATH(APFloat(APFloat::IEEEdouble, "."), "String cannot be just a dot");
-  EXPECT_DEATH(APFloat(APFloat::IEEEdouble, "-."), "String cannot be just a dot");
-  EXPECT_DEATH(APFloat(APFloat::IEEEdouble, "0x."), "String cannot be just a dot");
-  EXPECT_DEATH(APFloat(APFloat::IEEEdouble, "-0x."),"String cannot be just a dot");
-  EXPECT_DEATH(APFloat(APFloat::IEEEdouble, "0x0"), "Hex strings require an exponent");
-  EXPECT_DEATH(APFloat(APFloat::IEEEdouble, "0e"), "Exponent has no digits");
-  EXPECT_DEATH(APFloat(APFloat::IEEEdouble, "0e+"), "Exponent has no digits");
-  EXPECT_DEATH(APFloat(APFloat::IEEEdouble, "0e-"), "Exponent has no digits");
+TEST(APFloatTest, StringDecimalDeath) {
+  EXPECT_DEATH(APFloat(APFloat::IEEEdouble,  ""), "Invalid string length");
+  EXPECT_DEATH(APFloat(APFloat::IEEEdouble, "+"), "String has no digits");
+  EXPECT_DEATH(APFloat(APFloat::IEEEdouble, "-"), "String has no digits");
 
-  EXPECT_DEATH(APFloat(APFloat::IEEEdouble, StringRef("\0", 1)), "Invalid character in digit string");
-  EXPECT_DEATH(APFloat(APFloat::IEEEdouble, StringRef("1\0", 2)), "Invalid character in digit string");
-  EXPECT_DEATH(APFloat(APFloat::IEEEdouble, StringRef("1\02", 3)), "Invalid character in digit string");
-  EXPECT_DEATH(APFloat(APFloat::IEEEdouble, StringRef("1\02e1", 5)), "Invalid character in digit string");
+  EXPECT_DEATH(APFloat(APFloat::IEEEdouble, StringRef("\0", 1)), "Invalid character in significand");
+  EXPECT_DEATH(APFloat(APFloat::IEEEdouble, StringRef("1\0", 2)), "Invalid character in significand");
+  EXPECT_DEATH(APFloat(APFloat::IEEEdouble, StringRef("1\02", 3)), "Invalid character in significand");
+  EXPECT_DEATH(APFloat(APFloat::IEEEdouble, StringRef("1\02e1", 5)), "Invalid character in significand");
   EXPECT_DEATH(APFloat(APFloat::IEEEdouble, StringRef("1e\0", 3)), "Invalid character in exponent");
   EXPECT_DEATH(APFloat(APFloat::IEEEdouble, StringRef("1e1\0", 4)), "Invalid character in exponent");
   EXPECT_DEATH(APFloat(APFloat::IEEEdouble, StringRef("1e1\02", 5)), "Invalid character in exponent");
 
-  EXPECT_DEATH(APFloat(APFloat::IEEEdouble, "1.0f"), "Invalid character in digit string");
+  EXPECT_DEATH(APFloat(APFloat::IEEEdouble, "1.0f"), "Invalid character in significand");
 
-  EXPECT_DEATH(APFloat(APFloat::IEEEdouble, StringRef("0x\0", 3)), "Hex strings require an exponent");
-  EXPECT_DEATH(APFloat(APFloat::IEEEdouble, StringRef("0x1\0", 4)), "Hex strings require an exponent");
-  EXPECT_DEATH(APFloat(APFloat::IEEEdouble, StringRef("0x1\02", 5)), "Hex strings require an exponent");
-  EXPECT_DEATH(APFloat(APFloat::IEEEdouble, StringRef("0x1\02p1", 7)), "Hex strings require an exponent");
+  EXPECT_DEATH(APFloat(APFloat::IEEEdouble, ".."), "String contains multiple dots");
+  EXPECT_DEATH(APFloat(APFloat::IEEEdouble, "..0"), "String contains multiple dots");
+  EXPECT_DEATH(APFloat(APFloat::IEEEdouble, "1.0.0"), "String contains multiple dots");
+}
+
+TEST(APFloatTest, StringDecimalSignificandDeath) {
+  EXPECT_DEATH(APFloat(APFloat::IEEEdouble,  "."), "Significand has no digits");
+  EXPECT_DEATH(APFloat(APFloat::IEEEdouble, "+."), "Significand has no digits");
+  EXPECT_DEATH(APFloat(APFloat::IEEEdouble, "-."), "Significand has no digits");
+
+
+  EXPECT_DEATH(APFloat(APFloat::IEEEdouble,  "e"), "Significand has no digits");
+  EXPECT_DEATH(APFloat(APFloat::IEEEdouble, "+e"), "Significand has no digits");
+  EXPECT_DEATH(APFloat(APFloat::IEEEdouble, "-e"), "Significand has no digits");
+
+  EXPECT_DEATH(APFloat(APFloat::IEEEdouble,  "e1"), "Significand has no digits");
+  EXPECT_DEATH(APFloat(APFloat::IEEEdouble, "+e1"), "Significand has no digits");
+  EXPECT_DEATH(APFloat(APFloat::IEEEdouble, "-e1"), "Significand has no digits");
+
+  EXPECT_DEATH(APFloat(APFloat::IEEEdouble,  ".e1"), "Significand has no digits");
+  EXPECT_DEATH(APFloat(APFloat::IEEEdouble, "+.e1"), "Significand has no digits");
+  EXPECT_DEATH(APFloat(APFloat::IEEEdouble, "-.e1"), "Significand has no digits");
+
+
+  EXPECT_DEATH(APFloat(APFloat::IEEEdouble,  ".e"), "Significand has no digits");
+  EXPECT_DEATH(APFloat(APFloat::IEEEdouble, "+.e"), "Significand has no digits");
+  EXPECT_DEATH(APFloat(APFloat::IEEEdouble, "-.e"), "Significand has no digits");
+}
+
+TEST(APFloatTest, StringDecimalExponentDeath) {
+  EXPECT_DEATH(APFloat(APFloat::IEEEdouble,   "1e"), "Exponent has no digits");
+  EXPECT_DEATH(APFloat(APFloat::IEEEdouble,  "+1e"), "Exponent has no digits");
+  EXPECT_DEATH(APFloat(APFloat::IEEEdouble,  "-1e"), "Exponent has no digits");
+
+  EXPECT_DEATH(APFloat(APFloat::IEEEdouble,   "1.e"), "Exponent has no digits");
+  EXPECT_DEATH(APFloat(APFloat::IEEEdouble,  "+1.e"), "Exponent has no digits");
+  EXPECT_DEATH(APFloat(APFloat::IEEEdouble,  "-1.e"), "Exponent has no digits");
+
+  EXPECT_DEATH(APFloat(APFloat::IEEEdouble,   ".1e"), "Exponent has no digits");
+  EXPECT_DEATH(APFloat(APFloat::IEEEdouble,  "+.1e"), "Exponent has no digits");
+  EXPECT_DEATH(APFloat(APFloat::IEEEdouble,  "-.1e"), "Exponent has no digits");
+
+  EXPECT_DEATH(APFloat(APFloat::IEEEdouble,   "1.1e"), "Exponent has no digits");
+  EXPECT_DEATH(APFloat(APFloat::IEEEdouble,  "+1.1e"), "Exponent has no digits");
+  EXPECT_DEATH(APFloat(APFloat::IEEEdouble,  "-1.1e"), "Exponent has no digits");
+
+
+  EXPECT_DEATH(APFloat(APFloat::IEEEdouble, "1e+"), "Exponent has no digits");
+  EXPECT_DEATH(APFloat(APFloat::IEEEdouble, "1e-"), "Exponent has no digits");
+
+  EXPECT_DEATH(APFloat(APFloat::IEEEdouble,  ".1e"), "Exponent has no digits");
+  EXPECT_DEATH(APFloat(APFloat::IEEEdouble, ".1e+"), "Exponent has no digits");
+  EXPECT_DEATH(APFloat(APFloat::IEEEdouble, ".1e-"), "Exponent has no digits");
+
+  EXPECT_DEATH(APFloat(APFloat::IEEEdouble,  "1.0e"), "Exponent has no digits");
+  EXPECT_DEATH(APFloat(APFloat::IEEEdouble, "1.0e+"), "Exponent has no digits");
+  EXPECT_DEATH(APFloat(APFloat::IEEEdouble, "1.0e-"), "Exponent has no digits");
+}
+
+TEST(APFloatTest, StringHexadecimalDeath) {
+  EXPECT_DEATH(APFloat(APFloat::IEEEdouble,  "0x"), "Invalid string");
+  EXPECT_DEATH(APFloat(APFloat::IEEEdouble, "+0x"), "Invalid string");
+  EXPECT_DEATH(APFloat(APFloat::IEEEdouble, "-0x"), "Invalid string");
+
+  EXPECT_DEATH(APFloat(APFloat::IEEEdouble,  "0x0"), "Hex strings require an exponent");
+  EXPECT_DEATH(APFloat(APFloat::IEEEdouble, "+0x0"), "Hex strings require an exponent");
+  EXPECT_DEATH(APFloat(APFloat::IEEEdouble, "-0x0"), "Hex strings require an exponent");
+
+  EXPECT_DEATH(APFloat(APFloat::IEEEdouble,  "0x0."), "Hex strings require an exponent");
+  EXPECT_DEATH(APFloat(APFloat::IEEEdouble, "+0x0."), "Hex strings require an exponent");
+  EXPECT_DEATH(APFloat(APFloat::IEEEdouble, "-0x0."), "Hex strings require an exponent");
+
+  EXPECT_DEATH(APFloat(APFloat::IEEEdouble,  "0x.0"), "Hex strings require an exponent");
+  EXPECT_DEATH(APFloat(APFloat::IEEEdouble, "+0x.0"), "Hex strings require an exponent");
+  EXPECT_DEATH(APFloat(APFloat::IEEEdouble, "-0x.0"), "Hex strings require an exponent");
+
+  EXPECT_DEATH(APFloat(APFloat::IEEEdouble,  "0x0.0"), "Hex strings require an exponent");
+  EXPECT_DEATH(APFloat(APFloat::IEEEdouble, "+0x0.0"), "Hex strings require an exponent");
+  EXPECT_DEATH(APFloat(APFloat::IEEEdouble, "-0x0.0"), "Hex strings require an exponent");
+
+  EXPECT_DEATH(APFloat(APFloat::IEEEdouble, StringRef("0x\0", 3)), "Invalid character in significand");
+  EXPECT_DEATH(APFloat(APFloat::IEEEdouble, StringRef("0x1\0", 4)), "Invalid character in significand");
+  EXPECT_DEATH(APFloat(APFloat::IEEEdouble, StringRef("0x1\02", 5)), "Invalid character in significand");
+  EXPECT_DEATH(APFloat(APFloat::IEEEdouble, StringRef("0x1\02p1", 7)), "Invalid character in significand");
   EXPECT_DEATH(APFloat(APFloat::IEEEdouble, StringRef("0x1p\0", 5)), "Invalid character in exponent");
   EXPECT_DEATH(APFloat(APFloat::IEEEdouble, StringRef("0x1p1\0", 6)), "Invalid character in exponent");
   EXPECT_DEATH(APFloat(APFloat::IEEEdouble, StringRef("0x1p1\02", 7)), "Invalid character in exponent");
 
   EXPECT_DEATH(APFloat(APFloat::IEEEdouble, "0x1p0f"), "Invalid character in exponent");
+
+  EXPECT_DEATH(APFloat(APFloat::IEEEdouble, "0x..p1"), "String contains multiple dots");
+  EXPECT_DEATH(APFloat(APFloat::IEEEdouble, "0x..0p1"), "String contains multiple dots");
+  EXPECT_DEATH(APFloat(APFloat::IEEEdouble, "0x1.0.0p1"), "String contains multiple dots");
+}
+
+TEST(APFloatTest, StringHexadecimalSignificandDeath) {
+  EXPECT_DEATH(APFloat(APFloat::IEEEdouble,  "0x."), "Significand has no digits");
+  EXPECT_DEATH(APFloat(APFloat::IEEEdouble, "+0x."), "Significand has no digits");
+  EXPECT_DEATH(APFloat(APFloat::IEEEdouble, "-0x."), "Significand has no digits");
+
+  EXPECT_DEATH(APFloat(APFloat::IEEEdouble,  "0xp"), "Significand has no digits");
+  EXPECT_DEATH(APFloat(APFloat::IEEEdouble, "+0xp"), "Significand has no digits");
+  EXPECT_DEATH(APFloat(APFloat::IEEEdouble, "-0xp"), "Significand has no digits");
+
+  EXPECT_DEATH(APFloat(APFloat::IEEEdouble,  "0xp+"), "Significand has no digits");
+  EXPECT_DEATH(APFloat(APFloat::IEEEdouble, "+0xp+"), "Significand has no digits");
+  EXPECT_DEATH(APFloat(APFloat::IEEEdouble, "-0xp+"), "Significand has no digits");
+
+  EXPECT_DEATH(APFloat(APFloat::IEEEdouble,  "0xp-"), "Significand has no digits");
+  EXPECT_DEATH(APFloat(APFloat::IEEEdouble, "+0xp-"), "Significand has no digits");
+  EXPECT_DEATH(APFloat(APFloat::IEEEdouble, "-0xp-"), "Significand has no digits");
+
+
+  EXPECT_DEATH(APFloat(APFloat::IEEEdouble,  "0x.p"), "Significand has no digits");
+  EXPECT_DEATH(APFloat(APFloat::IEEEdouble, "+0x.p"), "Significand has no digits");
+  EXPECT_DEATH(APFloat(APFloat::IEEEdouble, "-0x.p"), "Significand has no digits");
+
+  EXPECT_DEATH(APFloat(APFloat::IEEEdouble,  "0x.p+"), "Significand has no digits");
+  EXPECT_DEATH(APFloat(APFloat::IEEEdouble, "+0x.p+"), "Significand has no digits");
+  EXPECT_DEATH(APFloat(APFloat::IEEEdouble, "-0x.p+"), "Significand has no digits");
+
+  EXPECT_DEATH(APFloat(APFloat::IEEEdouble,  "0x.p-"), "Significand has no digits");
+  EXPECT_DEATH(APFloat(APFloat::IEEEdouble, "+0x.p-"), "Significand has no digits");
+  EXPECT_DEATH(APFloat(APFloat::IEEEdouble, "-0x.p-"), "Significand has no digits");
+}
+
+TEST(APFloatTest, StringHexadecimalExponentDeath) {
+  EXPECT_DEATH(APFloat(APFloat::IEEEdouble,  "0x1p"), "Exponent has no digits");
+  EXPECT_DEATH(APFloat(APFloat::IEEEdouble, "+0x1p"), "Exponent has no digits");
+  EXPECT_DEATH(APFloat(APFloat::IEEEdouble, "-0x1p"), "Exponent has no digits");
+
+  EXPECT_DEATH(APFloat(APFloat::IEEEdouble,  "0x1p+"), "Exponent has no digits");
+  EXPECT_DEATH(APFloat(APFloat::IEEEdouble, "+0x1p+"), "Exponent has no digits");
+  EXPECT_DEATH(APFloat(APFloat::IEEEdouble, "-0x1p+"), "Exponent has no digits");
+
+  EXPECT_DEATH(APFloat(APFloat::IEEEdouble,  "0x1p-"), "Exponent has no digits");
+  EXPECT_DEATH(APFloat(APFloat::IEEEdouble, "+0x1p-"), "Exponent has no digits");
+  EXPECT_DEATH(APFloat(APFloat::IEEEdouble, "-0x1p-"), "Exponent has no digits");
+
+
+  EXPECT_DEATH(APFloat(APFloat::IEEEdouble,  "0x1.p"), "Exponent has no digits");
+  EXPECT_DEATH(APFloat(APFloat::IEEEdouble, "+0x1.p"), "Exponent has no digits");
+  EXPECT_DEATH(APFloat(APFloat::IEEEdouble, "-0x1.p"), "Exponent has no digits");
+
+  EXPECT_DEATH(APFloat(APFloat::IEEEdouble,  "0x1.p+"), "Exponent has no digits");
+  EXPECT_DEATH(APFloat(APFloat::IEEEdouble, "+0x1.p+"), "Exponent has no digits");
+  EXPECT_DEATH(APFloat(APFloat::IEEEdouble, "-0x1.p+"), "Exponent has no digits");
+
+  EXPECT_DEATH(APFloat(APFloat::IEEEdouble,  "0x1.p-"), "Exponent has no digits");
+  EXPECT_DEATH(APFloat(APFloat::IEEEdouble, "+0x1.p-"), "Exponent has no digits");
+  EXPECT_DEATH(APFloat(APFloat::IEEEdouble, "-0x1.p-"), "Exponent has no digits");
+
+
+  EXPECT_DEATH(APFloat(APFloat::IEEEdouble,  "0x.1p"), "Exponent has no digits");
+  EXPECT_DEATH(APFloat(APFloat::IEEEdouble, "+0x.1p"), "Exponent has no digits");
+  EXPECT_DEATH(APFloat(APFloat::IEEEdouble, "-0x.1p"), "Exponent has no digits");
+
+  EXPECT_DEATH(APFloat(APFloat::IEEEdouble,  "0x.1p+"), "Exponent has no digits");
+  EXPECT_DEATH(APFloat(APFloat::IEEEdouble, "+0x.1p+"), "Exponent has no digits");
+  EXPECT_DEATH(APFloat(APFloat::IEEEdouble, "-0x.1p+"), "Exponent has no digits");
+
+  EXPECT_DEATH(APFloat(APFloat::IEEEdouble,  "0x.1p-"), "Exponent has no digits");
+  EXPECT_DEATH(APFloat(APFloat::IEEEdouble, "+0x.1p-"), "Exponent has no digits");
+  EXPECT_DEATH(APFloat(APFloat::IEEEdouble, "-0x.1p-"), "Exponent has no digits");
+
+
+  EXPECT_DEATH(APFloat(APFloat::IEEEdouble,  "0x1.1p"), "Exponent has no digits");
+  EXPECT_DEATH(APFloat(APFloat::IEEEdouble, "+0x1.1p"), "Exponent has no digits");
+  EXPECT_DEATH(APFloat(APFloat::IEEEdouble, "-0x1.1p"), "Exponent has no digits");
+
+  EXPECT_DEATH(APFloat(APFloat::IEEEdouble,  "0x1.1p+"), "Exponent has no digits");
+  EXPECT_DEATH(APFloat(APFloat::IEEEdouble, "+0x1.1p+"), "Exponent has no digits");
+  EXPECT_DEATH(APFloat(APFloat::IEEEdouble, "-0x1.1p+"), "Exponent has no digits");
+
+  EXPECT_DEATH(APFloat(APFloat::IEEEdouble,  "0x1.1p-"), "Exponent has no digits");
+  EXPECT_DEATH(APFloat(APFloat::IEEEdouble, "+0x1.1p-"), "Exponent has no digits");
+  EXPECT_DEATH(APFloat(APFloat::IEEEdouble, "-0x1.1p-"), "Exponent has no digits");
 }
 #endif
 
