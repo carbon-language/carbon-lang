@@ -2422,7 +2422,7 @@ units concurrently on independent server threads.  Fortunately,
 <p>
 Conceptually, <tt>LLVMContext</tt> provides isolation.  Every LLVM entity 
 (<tt>Module</tt>s, <tt>Value</tt>s, <tt>Type</tt>s, <tt>Constant</tt>s, etc.)
-in LLVM's in-memory IR belong to an <tt>LLVMContext</tt>.  Entities in 
+in LLVM's in-memory IR belongs to an <tt>LLVMContext</tt>.  Entities in 
 different contexts <em>cannot</em> interact with each other: <tt>Module</tt>s in
 different contexts cannot be linked together, <tt>Function</tt>s cannot be added
 to <tt>Module</tt>s in different contexts, etc.  What this means is that is is
