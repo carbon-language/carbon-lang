@@ -550,6 +550,7 @@ void Sema::ActOnBaseSpecifiers(DeclPtrTy ClassDecl, BaseTy **Bases,
 /// any.
 Sema::DeclPtrTy
 Sema::ActOnCXXMemberDeclarator(Scope *S, AccessSpecifier AS, Declarator &D,
+                               MultiTemplateParamsArg TemplateParameterLists,
                                ExprTy *BW, ExprTy *InitExpr, bool Deleted) {
   const DeclSpec &DS = D.getDeclSpec();
   DeclarationName Name = GetNameForDeclarator(D);
@@ -627,11 +628,13 @@ Sema::ActOnCXXMemberDeclarator(Scope *S, AccessSpecifier AS, Declarator &D,
 
   Decl *Member;
   if (isInstField) {
+    // FIXME: Check for template parameters!
     Member = HandleField(S, cast<CXXRecordDecl>(CurContext), Loc, D, BitWidth,
                          AS);
     assert(Member && "HandleField never returns null");
   } else {
-    Member = ActOnDeclarator(S, D).getAs<Decl>();
+    Member = HandleDeclarator(S, D, move(TemplateParameterLists), false)
+               .getAs<Decl>();
     if (!Member) {
       if (BitWidth) DeleteExpr(BitWidth);
       return DeclPtrTy();
@@ -664,6 +667,11 @@ Sema::ActOnCXXMemberDeclarator(Scope *S, AccessSpecifier AS, Declarator &D,
     }
 
     Member->setAccess(AS);
+    
+    // If we have declared a member function template, set the access of the
+    // templated declaration as well.
+    if (FunctionTemplateDecl *FunTmpl = dyn_cast<FunctionTemplateDecl>(Member))
+      FunTmpl->getTemplatedDecl()->setAccess(AS);
   }
 
   assert((Name || isInstField) && "No identifier for non-field ?");

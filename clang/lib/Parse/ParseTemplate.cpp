@@ -151,6 +151,12 @@ Parser::ParseSingleDeclarationAfterTemplate(
   assert(TemplateInfo.Kind != ParsedTemplateInfo::NonTemplate &&
          "Template information required");
 
+  if (Context == Declarator::MemberContext) {
+    // We are parsing a member template.
+    ParseCXXClassMemberDeclaration(AS, TemplateInfo);
+    return DeclPtrTy::make((void*)0);
+  }
+  
   // Parse the declaration specifiers.
   DeclSpec DS;
   // FIXME: Pass TemplateLoc through for explicit template instantiations

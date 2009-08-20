@@ -905,15 +905,19 @@ void Parser::HandleMemberFunctionDefaultArgs(Declarator& DeclaratorInfo,
 ///       constant-initializer:
 ///         '=' constant-expression
 ///
-void Parser::ParseCXXClassMemberDeclaration(AccessSpecifier AS) {
+void Parser::ParseCXXClassMemberDeclaration(AccessSpecifier AS,
+                                       const ParsedTemplateInfo &TemplateInfo) {
   // static_assert-declaration
   if (Tok.is(tok::kw_static_assert)) {
+    // FIXME: Check for templates
     SourceLocation DeclEnd;
     ParseStaticAssertDeclaration(DeclEnd);
     return;
   }
       
   if (Tok.is(tok::kw_template)) {
+    assert(!TemplateInfo.TemplateParams && 
+           "Nested template improperly parsed?");
     SourceLocation DeclEnd;
     ParseDeclarationStartingWithTemplate(Declarator::MemberContext, DeclEnd, 
                                          AS);
@@ -925,10 +929,12 @@ void Parser::ParseCXXClassMemberDeclaration(AccessSpecifier AS) {
     // __extension__ silences extension warnings in the subexpression.
     ExtensionRAIIObject O(Diags);  // Use RAII to do this.
     ConsumeToken();
-    return ParseCXXClassMemberDeclaration(AS);
+    return ParseCXXClassMemberDeclaration(AS, TemplateInfo);
   }
 
   if (Tok.is(tok::kw_using)) {
+    // FIXME: Check for template aliases
+    
     // Eat 'using'.
     SourceLocation UsingLoc = ConsumeToken();
 
@@ -948,11 +954,12 @@ void Parser::ParseCXXClassMemberDeclaration(AccessSpecifier AS) {
   // decl-specifier-seq:
   // Parse the common declaration-specifiers piece.
   DeclSpec DS;
-  ParseDeclarationSpecifiers(DS, ParsedTemplateInfo(), AS, DSC_class);
+  ParseDeclarationSpecifiers(DS, TemplateInfo, AS, DSC_class);
 
   if (Tok.is(tok::semi)) {
     ConsumeToken();
 
+    // FIXME: Friend templates?
     if (DS.isFriendSpecified())
       Actions.ActOnFriendDecl(CurScope, &DS, /*IsDefinition*/ false);
     else
@@ -996,7 +1003,7 @@ void Parser::ParseCXXClassMemberDeclaration(AccessSpecifier AS) {
         return;
       }
 
-      ParseCXXInlineMethodDef(AS, DeclaratorInfo);
+      ParseCXXInlineMethodDef(AS, DeclaratorInfo, TemplateInfo);
       return;
     }
   }
@@ -1059,15 +1066,20 @@ void Parser::ParseCXXClassMemberDeclaration(AccessSpecifier AS) {
 
     DeclPtrTy ThisDecl;
     if (DS.isFriendSpecified()) {
-      // TODO: handle initializers, bitfields, 'delete'
+      // TODO: handle initializers, bitfields, 'delete', friend templates
       ThisDecl = Actions.ActOnFriendDecl(CurScope, &DeclaratorInfo,
                                          /*IsDefinition*/ false);
-    } else
+    } else {
+      Action::MultiTemplateParamsArg TemplateParams(Actions,
+          TemplateInfo.TemplateParams? TemplateInfo.TemplateParams->data() : 0,
+          TemplateInfo.TemplateParams? TemplateInfo.TemplateParams->size() : 0);
       ThisDecl = Actions.ActOnCXXMemberDeclarator(CurScope, AS,
                                                   DeclaratorInfo,
+                                                  move(TemplateParams),
                                                   BitfieldSize.release(),
                                                   Init.release(),
                                                   Deleted);
+    }
     if (ThisDecl)
       DeclsInGroup.push_back(ThisDecl);
 
@@ -1181,6 +1193,8 @@ void Parser::ParseCXXMemberSpecification(SourceLocation RecordLoc,
       continue;
     }
 
+    // FIXME: Make sure we don't have a template here.
+    
     // Parse all the comma separated declarators.
     ParseCXXClassMemberDeclaration(CurAS);
   }

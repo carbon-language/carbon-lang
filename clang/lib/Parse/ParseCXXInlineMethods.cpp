@@ -21,17 +21,23 @@ using namespace clang;
 /// Declarator is a well formed C++ inline method definition. Now lex its body
 /// and store its tokens for parsing after the C++ class is complete.
 Parser::DeclPtrTy
-Parser::ParseCXXInlineMethodDef(AccessSpecifier AS, Declarator &D) {
+Parser::ParseCXXInlineMethodDef(AccessSpecifier AS, Declarator &D,
+                                const ParsedTemplateInfo &TemplateInfo) {
   assert(D.getTypeObject(0).Kind == DeclaratorChunk::Function &&
          "This isn't a function declarator!");
   assert((Tok.is(tok::l_brace) || Tok.is(tok::colon) || Tok.is(tok::kw_try)) &&
          "Current token not a '{', ':' or 'try'!");
 
+  Action::MultiTemplateParamsArg TemplateParams(Actions,
+                                                TemplateInfo.TemplateParams? TemplateInfo.TemplateParams->data() : 0,
+                                                TemplateInfo.TemplateParams? TemplateInfo.TemplateParams->size() : 0);
   DeclPtrTy FnD;
   if (D.getDeclSpec().isFriendSpecified())
+    // FIXME: Friend templates
     FnD = Actions.ActOnFriendDecl(CurScope, &D, /*IsDefinition*/ true);
-  else
-    FnD = Actions.ActOnCXXMemberDeclarator(CurScope, AS, D, 0, 0);
+  else // FIXME: pass template information through
+    FnD = Actions.ActOnCXXMemberDeclarator(CurScope, AS, D, 
+                                           move(TemplateParams), 0, 0);
 
   HandleMemberFunctionDefaultArgs(D, FnD);
 

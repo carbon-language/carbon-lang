@@ -580,18 +580,6 @@ private:
     }
   };
 
-  void PushParsingClass(DeclPtrTy TagOrTemplate, bool TopLevelClass);
-  void DeallocateParsedClasses(ParsingClass *Class);
-  void PopParsingClass();
-
-  DeclPtrTy ParseCXXInlineMethodDef(AccessSpecifier AS, Declarator &D);
-  void ParseLexedMethodDeclarations(ParsingClass &Class);
-  void ParseLexedMethodDefs(ParsingClass &Class);
-  bool ConsumeAndStoreUntil(tok::TokenKind T1, tok::TokenKind T2, 
-                            CachedTokens &Toks,
-                            tok::TokenKind EarlyAbortIf = tok::unknown,
-                            bool ConsumeFinalToken = true);
-
   /// \brief Contains information about any template-specific
   /// information that has been parsed prior to parsing declaration
   /// specifiers.
@@ -628,6 +616,19 @@ private:
     /// instantiation.
     SourceLocation TemplateLoc;
   };
+  
+  void PushParsingClass(DeclPtrTy TagOrTemplate, bool TopLevelClass);
+  void DeallocateParsedClasses(ParsingClass *Class);
+  void PopParsingClass();
+
+  DeclPtrTy ParseCXXInlineMethodDef(AccessSpecifier AS, Declarator &D,
+                                    const ParsedTemplateInfo &TemplateInfo);
+  void ParseLexedMethodDeclarations(ParsingClass &Class);
+  void ParseLexedMethodDefs(ParsingClass &Class);
+  bool ConsumeAndStoreUntil(tok::TokenKind T1, tok::TokenKind T2, 
+                            CachedTokens &Toks,
+                            tok::TokenKind EarlyAbortIf = tok::unknown,
+                            bool ConsumeFinalToken = true);
 
   //===--------------------------------------------------------------------===//
   // C99 6.9: External Definitions.
@@ -1157,7 +1158,8 @@ private:
                            AccessSpecifier AS = AS_none);
   void ParseCXXMemberSpecification(SourceLocation StartLoc, unsigned TagType,
                                    DeclPtrTy TagDecl);
-  void ParseCXXClassMemberDeclaration(AccessSpecifier AS);
+  void ParseCXXClassMemberDeclaration(AccessSpecifier AS,
+                const ParsedTemplateInfo &TemplateInfo = ParsedTemplateInfo());
   void ParseConstructorInitializer(DeclPtrTy ConstructorDecl);
   MemInitResult ParseMemInitializer(DeclPtrTy ConstructorDecl);
   void HandleMemberFunctionDefaultArgs(Declarator& DeclaratorInfo,

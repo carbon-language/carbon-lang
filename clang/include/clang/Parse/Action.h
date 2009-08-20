@@ -1276,6 +1276,7 @@ public:
   /// specifier on the function.
   virtual DeclPtrTy ActOnCXXMemberDeclarator(Scope *S, AccessSpecifier AS,
                                              Declarator &D,
+                                 MultiTemplateParamsArg TemplateParameterLists,
                                              ExprTy *BitfieldWidth,
                                              ExprTy *Init,
                                              bool Deleted = false) {
