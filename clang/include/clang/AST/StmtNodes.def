@@ -144,7 +144,7 @@ EXPR(ObjCSelectorExpr     , Expr)
 EXPR(ObjCProtocolExpr     , Expr)
 EXPR(ObjCIvarRefExpr      , Expr)
 EXPR(ObjCPropertyRefExpr  , Expr)
-EXPR(ObjCImplctSetterGetterRefExpr , Expr)
+EXPR(ObjCImplicitSetterGetterRefExpr , Expr)
 EXPR(ObjCSuperExpr        , Expr)
 EXPR(ObjCIsaExpr          , Expr)
 

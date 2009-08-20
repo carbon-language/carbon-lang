@@ -257,7 +257,7 @@ public:
   virtual child_iterator child_end();
 };
 
-/// ObjCImplctSetterGetterRefExpr - A dot-syntax expression to access two 
+/// ObjCImplicitSetterGetterRefExpr - A dot-syntax expression to access two 
 /// methods; one to set a value to an 'ivar' (Setter) and the other to access 
 /// an 'ivar' (Setter). 
 /// An example for use of this AST is:
@@ -268,38 +268,42 @@ public:
 /// @end
 /// void  foo(Test *p1, Test *p2) 
 /// {
-///    p2.crash  = p1.crash; // Uses ObjCImplctSetterGetterRefExpr AST
+///    p2.crash  = p1.crash; // Uses ObjCImplicitSetterGetterRefExpr AST
 /// }
 /// @endcode
-class ObjCImplctSetterGetterRefExpr : public Expr {
+class ObjCImplicitSetterGetterRefExpr : public Expr {
   /// Setter - Setter method user declared for setting its 'ivar' to a value
   ObjCMethodDecl *Setter;
   /// Getter - Getter method user declared for accessing 'ivar' it controls.
   ObjCMethodDecl *Getter;
-  SourceLocation Loc;
+  /// Location of the member in the dot syntax notation. This is location
+  /// of the getter method.
+  SourceLocation MemberLoc;
   // FIXME: Swizzle these into a single pointer.
   Stmt *Base;
   ObjCInterfaceDecl *InterfaceDecl;
+  /// Location of the receiver class in the dot syntax notation
+  /// used to call a class method setter/getter.
   SourceLocation ClassLoc;
     
 public:
-  ObjCImplctSetterGetterRefExpr(ObjCMethodDecl *getter,
+  ObjCImplicitSetterGetterRefExpr(ObjCMethodDecl *getter,
                  QualType t, 
                  ObjCMethodDecl *setter,
                  SourceLocation l, Expr *base)
-    : Expr(ObjCImplctSetterGetterRefExprClass, t), Setter(setter),
-      Getter(getter), Loc(l), Base(base), InterfaceDecl(0),
+    : Expr(ObjCImplicitSetterGetterRefExprClass, t), Setter(setter),
+      Getter(getter), MemberLoc(l), Base(base), InterfaceDecl(0),
       ClassLoc(SourceLocation()) {
     }
-  ObjCImplctSetterGetterRefExpr(ObjCMethodDecl *getter,
+  ObjCImplicitSetterGetterRefExpr(ObjCMethodDecl *getter,
                  QualType t, 
                  ObjCMethodDecl *setter,
                  SourceLocation l, ObjCInterfaceDecl *C, SourceLocation CL)
-    : Expr(ObjCImplctSetterGetterRefExprClass, t), Setter(setter),
-      Getter(getter), Loc(l), Base(0), InterfaceDecl(C), ClassLoc(CL) {
+    : Expr(ObjCImplicitSetterGetterRefExprClass, t), Setter(setter),
+      Getter(getter), MemberLoc(l), Base(0), InterfaceDecl(C), ClassLoc(CL) {
     }
-  explicit ObjCImplctSetterGetterRefExpr(EmptyShell Empty) 
-           : Expr(ObjCImplctSetterGetterRefExprClass, Empty){}
+  explicit ObjCImplicitSetterGetterRefExpr(EmptyShell Empty) 
+           : Expr(ObjCImplicitSetterGetterRefExprClass, Empty){}
 
   ObjCMethodDecl *getGetterMethod() const { return Getter; }
   ObjCMethodDecl *getSetterMethod() const { return Setter; }
@@ -310,22 +314,22 @@ public:
   
   virtual SourceRange getSourceRange() const {
     if (Base)
-      return SourceRange(getBase()->getLocStart(), Loc);
-    return SourceRange(ClassLoc, Loc);
+      return SourceRange(getBase()->getLocStart(), MemberLoc);
+    return SourceRange(ClassLoc, MemberLoc);
   }
   const Expr *getBase() const { return cast_or_null<Expr>(Base); }
   Expr *getBase() { return cast_or_null<Expr>(Base); }
   void setBase(Expr *base) { Base = base; }
     
-  SourceLocation getLocation() const { return Loc; }
-  void setLocation(SourceLocation L) { Loc = L; }
+  SourceLocation getLocation() const { return MemberLoc; }
+  void setLocation(SourceLocation L) { MemberLoc = L; }
   SourceLocation getClassLoc() const { return ClassLoc; }
   void setClassLoc(SourceLocation L) { ClassLoc = L; }
     
   static bool classof(const Stmt *T) { 
-    return T->getStmtClass() == ObjCImplctSetterGetterRefExprClass; 
+    return T->getStmtClass() == ObjCImplicitSetterGetterRefExprClass; 
   }
-  static bool classof(const ObjCImplctSetterGetterRefExpr *) { return true; }
+  static bool classof(const ObjCImplicitSetterGetterRefExpr *) { return true; }
     
   // Iterators
   virtual child_iterator child_begin();

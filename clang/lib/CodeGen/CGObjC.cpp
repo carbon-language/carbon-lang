@@ -337,8 +337,8 @@ RValue CodeGenFunction::EmitObjCPropertyGet(const Expr *Exp) {
                                  EmitScalarExpr(E->getBase()), 
                                  false, CallArgList());
   } else {
-    const ObjCImplctSetterGetterRefExpr *KE = 
-      cast<ObjCImplctSetterGetterRefExpr>(Exp);
+    const ObjCImplicitSetterGetterRefExpr *KE = 
+      cast<ObjCImplicitSetterGetterRefExpr>(Exp);
     Selector S = KE->getGetterMethod()->getSelector();
     llvm::Value *Receiver;
     if (KE->getInterfaceDecl()) {
@@ -389,8 +389,8 @@ void CodeGenFunction::EmitObjCPropertySet(const Expr *Exp,
     CGM.getObjCRuntime().GenerateMessageSend(*this, getContext().VoidTy, S, 
                                              EmitScalarExpr(E->getBase()), 
                                              false, Args);
-  } else if (const ObjCImplctSetterGetterRefExpr *E = 
-               dyn_cast<ObjCImplctSetterGetterRefExpr>(Exp)) {
+  } else if (const ObjCImplicitSetterGetterRefExpr *E = 
+               dyn_cast<ObjCImplicitSetterGetterRefExpr>(Exp)) {
     Selector S = E->getSetterMethod()->getSelector();
     CallArgList Args;
     llvm::Value *Receiver;

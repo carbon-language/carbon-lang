@@ -583,8 +583,8 @@ void StmtProfiler::VisitObjCPropertyRefExpr(ObjCPropertyRefExpr *S) {
   VisitDecl(S->getProperty());
 }
 
-void StmtProfiler::VisitObjCImplctSetterGetterRefExpr(
-                                  ObjCImplctSetterGetterRefExpr *S) {
+void StmtProfiler::VisitObjCImplicitSetterGetterRefExpr(
+                                  ObjCImplicitSetterGetterRefExpr *S) {
   VisitExpr(S);
   VisitDecl(S->getGetterMethod());
   VisitDecl(S->getSetterMethod());

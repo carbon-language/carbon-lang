@@ -339,7 +339,7 @@ Action::OwningExprResult Sema::ActOnClassPropertyRefExpr(
            E = Setter->param_end(); PI != E; ++PI)
         PType = (*PI)->getType();
     }
-    return Owned(new (Context) ObjCImplctSetterGetterRefExpr(
+    return Owned(new (Context) ObjCImplicitSetterGetterRefExpr(
                                   Getter, PType, Setter, 
                                   propertyNameLoc, IFace, receiverNameLoc));
   }

@@ -94,8 +94,8 @@ namespace {
     void VisitObjCProtocolExpr(ObjCProtocolExpr *E);
     void VisitObjCIvarRefExpr(ObjCIvarRefExpr *E);
     void VisitObjCPropertyRefExpr(ObjCPropertyRefExpr *E);
-    void VisitObjCImplctSetterGetterRefExpr(
-                        ObjCImplctSetterGetterRefExpr *E);
+    void VisitObjCImplicitSetterGetterRefExpr(
+                        ObjCImplicitSetterGetterRefExpr *E);
     void VisitObjCMessageExpr(ObjCMessageExpr *E);
     void VisitObjCSuperExpr(ObjCSuperExpr *E);
     void VisitObjCIsaExpr(ObjCIsaExpr *E);
@@ -673,8 +673,8 @@ void PCHStmtWriter::VisitObjCPropertyRefExpr(ObjCPropertyRefExpr *E) {
   Code = pch::EXPR_OBJC_PROPERTY_REF_EXPR;
 }
 
-void PCHStmtWriter::VisitObjCImplctSetterGetterRefExpr(
-                                  ObjCImplctSetterGetterRefExpr *E) {
+void PCHStmtWriter::VisitObjCImplicitSetterGetterRefExpr(
+                                  ObjCImplicitSetterGetterRefExpr *E) {
   VisitExpr(E);
   Writer.AddDeclRef(E->getGetterMethod(), Record);
   Writer.AddDeclRef(E->getSetterMethod(), Record);

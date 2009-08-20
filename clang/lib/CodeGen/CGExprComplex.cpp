@@ -120,8 +120,8 @@ public:
   ComplexPairTy VisitObjCPropertyRefExpr(ObjCPropertyRefExpr *E) {
     return EmitLoadOfLValue(E);
   }
-  ComplexPairTy VisitObjCImplctSetterGetterRefExpr(
-                               ObjCImplctSetterGetterRefExpr *E) {
+  ComplexPairTy VisitObjCImplicitSetterGetterRefExpr(
+                               ObjCImplicitSetterGetterRefExpr *E) {
     return EmitLoadOfLValue(E);
   }
   ComplexPairTy VisitObjCMessageExpr(ObjCMessageExpr *E) {

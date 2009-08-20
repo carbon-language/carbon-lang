@@ -542,10 +542,10 @@ bool Expr::isUnusedResultAWarning(SourceLocation &Loc, SourceRange &R1,
   case ObjCMessageExprClass:
     return false;
       
-  case ObjCImplctSetterGetterRefExprClass: {   // Dot syntax for message send.
+  case ObjCImplicitSetterGetterRefExprClass: {   // Dot syntax for message send.
 #if 0
-    const ObjCImplctSetterGetterRefExpr *Ref = 
-      cast<ObjCImplctSetterGetterRefExpr>(this);
+    const ObjCImplicitSetterGetterRefExpr *Ref = 
+      cast<ObjCImplicitSetterGetterRefExpr>(this);
     // FIXME: We really want the location of the '.' here.
     Loc = Ref->getLocation();
     R1 = SourceRange(Ref->getLocation(), Ref->getLocation());
@@ -794,7 +794,7 @@ Expr::isLvalueResult Expr::isLvalueInternal(ASTContext &Ctx) const {
     return LV_Valid;
   case ObjCPropertyRefExprClass: // FIXME: check if read-only property.
     return LV_Valid;
-  case ObjCImplctSetterGetterRefExprClass: // FIXME: check if read-only property.
+  case ObjCImplicitSetterGetterRefExprClass: // FIXME: check if read-only property.
     return LV_Valid;
   case PredefinedExprClass:
     return LV_Valid;
@@ -915,9 +915,9 @@ Expr::isModifiableLvalue(ASTContext &Ctx, SourceLocation *Loc) const {
   }
   
   // Assigning to an 'implicit' property?
-  else if (isa<ObjCImplctSetterGetterRefExpr>(this)) {
-    const ObjCImplctSetterGetterRefExpr* Expr = 
-      cast<ObjCImplctSetterGetterRefExpr>(this);
+  else if (isa<ObjCImplicitSetterGetterRefExpr>(this)) {
+    const ObjCImplicitSetterGetterRefExpr* Expr = 
+      cast<ObjCImplicitSetterGetterRefExpr>(this);
     if (Expr->getSetterMethod() == 0)
       return MLV_NoSetterProperty;
   }
@@ -1863,11 +1863,11 @@ Stmt::child_iterator ObjCIvarRefExpr::child_end() { return &Base+1; }
 Stmt::child_iterator ObjCPropertyRefExpr::child_begin() { return &Base; }
 Stmt::child_iterator ObjCPropertyRefExpr::child_end() { return &Base+1; }
 
-// ObjCImplctSetterGetterRefExpr
-Stmt::child_iterator ObjCImplctSetterGetterRefExpr::child_begin() { 
+// ObjCImplicitSetterGetterRefExpr
+Stmt::child_iterator ObjCImplicitSetterGetterRefExpr::child_begin() { 
   return &Base; 
 }
-Stmt::child_iterator ObjCImplctSetterGetterRefExpr::child_end() { 
+Stmt::child_iterator ObjCImplicitSetterGetterRefExpr::child_end() { 
   return &Base+1; 
 }
 

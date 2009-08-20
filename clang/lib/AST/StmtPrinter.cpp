@@ -518,8 +518,8 @@ void StmtPrinter::VisitObjCPropertyRefExpr(ObjCPropertyRefExpr *Node) {
   OS << Node->getProperty()->getNameAsCString();
 }
 
-void StmtPrinter::VisitObjCImplctSetterGetterRefExpr(
-                                        ObjCImplctSetterGetterRefExpr *Node) {
+void StmtPrinter::VisitObjCImplicitSetterGetterRefExpr(
+                                        ObjCImplicitSetterGetterRefExpr *Node) {
   if (Node->getBase()) {
     PrintExpr(Node->getBase());
     OS << ".";

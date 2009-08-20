@@ -528,7 +528,7 @@ void GRExprEngine::VisitLValue(Expr* Ex, ExplodedNode* Pred,
       return;
       
     case Stmt::ObjCPropertyRefExprClass:
-    case Stmt::ObjCImplctSetterGetterRefExprClass:
+    case Stmt::ObjCImplicitSetterGetterRefExprClass:
       // FIXME: Property assignments are lvalues, but not really "locations".
       //  e.g.:  self.x = something;
       //  Here the "self.x" really can translate to a method call (setter) when
@@ -2787,8 +2787,8 @@ void GRExprEngine::VisitBinaryOperator(BinaryOperator* B,
   Expr* LHS = B->getLHS()->IgnoreParens();
   Expr* RHS = B->getRHS()->IgnoreParens();
   
-  // FIXME: Add proper support for ObjCImplctSetterGetterRefExpr.
-  if (isa<ObjCImplctSetterGetterRefExpr>(LHS)) {
+  // FIXME: Add proper support for ObjCImplicitSetterGetterRefExpr.
+  if (isa<ObjCImplicitSetterGetterRefExpr>(LHS)) {
     Visit(RHS, Pred, Dst);   
     return;
   }

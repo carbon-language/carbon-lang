@@ -24,7 +24,7 @@ namespace llvm {
 
 namespace clang {
   class ObjCPropertyRefExpr;
-  class ObjCImplctSetterGetterRefExpr;
+  class ObjCImplicitSetterGetterRefExpr;
 
 namespace CodeGen {
 
@@ -143,7 +143,7 @@ class LValue {
     // Obj-C property reference expression
     const ObjCPropertyRefExpr *PropertyRefExpr;
     // ObjC 'implicit' property reference expression
-    const ObjCImplctSetterGetterRefExpr *KVCRefExpr;
+    const ObjCImplicitSetterGetterRefExpr *KVCRefExpr;
   };
 
   bool Volatile:1;
@@ -251,7 +251,7 @@ public:
   }
 
   // 'implicit' property ref lvalue
-  const ObjCImplctSetterGetterRefExpr *getKVCRefExpr() const {
+  const ObjCImplicitSetterGetterRefExpr *getKVCRefExpr() const {
     assert(isKVCRef());
     return KVCRefExpr;
   }
@@ -313,7 +313,7 @@ public:
     return R;
   }
   
-  static LValue MakeKVCRef(const ObjCImplctSetterGetterRefExpr *E, 
+  static LValue MakeKVCRef(const ObjCImplicitSetterGetterRefExpr *E, 
                            unsigned Qualifiers) {
     LValue R;
     R.LVType = KVCRef;

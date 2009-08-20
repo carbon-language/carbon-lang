@@ -227,8 +227,8 @@ LValue CodeGenFunction::EmitLValue(const Expr *E) {
     return EmitObjCIvarRefLValue(cast<ObjCIvarRefExpr>(E));
   case Expr::ObjCPropertyRefExprClass:
     return EmitObjCPropertyRefLValue(cast<ObjCPropertyRefExpr>(E));
-  case Expr::ObjCImplctSetterGetterRefExprClass:
-    return EmitObjCKVCRefLValue(cast<ObjCImplctSetterGetterRefExpr>(E));
+  case Expr::ObjCImplicitSetterGetterRefExprClass:
+    return EmitObjCKVCRefLValue(cast<ObjCImplicitSetterGetterRefExpr>(E));
   case Expr::ObjCSuperExprClass:
     return EmitObjCSuperExprLValue(cast<ObjCSuperExpr>(E));
 
@@ -1026,7 +1026,7 @@ LValue CodeGenFunction::EmitMemberExpr(const MemberExpr *E) {
       isUnion = true;
     CVRQualifiers = PTy->getPointeeType().getCVRQualifiers();
   } else if (isa<ObjCPropertyRefExpr>(BaseExpr) ||
-             isa<ObjCImplctSetterGetterRefExpr>(BaseExpr)) {
+             isa<ObjCImplicitSetterGetterRefExpr>(BaseExpr)) {
     RValue RV = EmitObjCPropertyGet(BaseExpr);
     BaseValue = RV.getAggregateAddr();
     if (BaseExpr->getType()->isUnionType())
@@ -1342,7 +1342,7 @@ CodeGenFunction::EmitObjCPropertyRefLValue(const ObjCPropertyRefExpr *E) {
 
 LValue 
 CodeGenFunction::EmitObjCKVCRefLValue(
-                                const ObjCImplctSetterGetterRefExpr *E) {
+                                const ObjCImplicitSetterGetterRefExpr *E) {
   // This is a special l-value that just issues sends when we load or
   // store through it.
   return LValue::MakeKVCRef(E, E->getType().getCVRQualifiers());
