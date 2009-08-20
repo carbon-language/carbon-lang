@@ -407,10 +407,12 @@ it run faster:</p>
 <ul>
 
 <li>Preliminary support for processors, such as the Cortex-A8 and Cortex-A9,
-that implement version 7 of the ARM architecture.  The ARM backend now
-supports both the Thumb2 and Advanced SIMD (Neon) instruction sets.
-These features are still somewhat experimental and subject to change.
-The Neon intrinsics, in particular, may change in future releases of LLVM.
+that implement version v7-A of the ARM architecture.  The ARM backend now
+supports both the Thumb2 and Advanced SIMD (Neon) instruction sets. The
+AAPCS-VFP "hard float" calling conventions are also supported with the
+<tt>-float-abi=hard</tt> flag. These features are still somewhat experimental
+and subject to change. The Neon intrinsics, in particular, may change in future
+releases of LLVM.
 </li>
 </ul>
 
