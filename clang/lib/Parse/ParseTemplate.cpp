@@ -75,7 +75,7 @@ Parser::ParseTemplateDeclarationOrSpecialization(unsigned Context,
   // defining A<T>::B receives just the inner template parameter list
   // (and retrieves the outer template parameter list from its
   // context).
-  bool isSpecialiation = true;
+  bool isSpecialization = true;
   TemplateParameterLists ParamLists;
   do {
     // Consume the 'export', if any.
@@ -106,7 +106,7 @@ Parser::ParseTemplateDeclarationOrSpecialization(unsigned Context,
     }
       
     if (!TemplateParams.empty())
-      isSpecialiation = false;
+      isSpecialization = false;
 
     ParamLists.push_back(
       Actions.ActOnTemplateParameterList(ParamLists.size(), ExportLoc, 
@@ -118,7 +118,7 @@ Parser::ParseTemplateDeclarationOrSpecialization(unsigned Context,
   // Parse the actual template declaration.
   return ParseSingleDeclarationAfterTemplate(Context, 
                                              ParsedTemplateInfo(&ParamLists,
-                                                             isSpecialiation),
+                                                             isSpecialization),
                                              DeclEnd, AS);
 }
 
