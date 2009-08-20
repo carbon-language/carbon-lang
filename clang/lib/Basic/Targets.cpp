@@ -1247,9 +1247,14 @@ namespace {
       Define(Defines, "__pic16");
       Define(Defines, "rom", "__attribute__((address_space(1)))");
       Define(Defines, "ram", "__attribute__((address_space(0)))");
-      Define(Defines, "_section(SectName)", "__attribute__((section(SectName)))");
-      Define(Defines, "_address(Addr)","__attribute__((section(\"Address=\"#Addr)))");
+      Define(Defines, "_section(SectName)", 
+             "__attribute__((section(SectName)))");
+      Define(Defines, "_address(Addr)",
+             "__attribute__((section(\"Address=\"#Addr)))");
       Define(Defines, "_CONFIG(conf)", "asm(\"CONFIG \"#conf)");
+      Define(Defines, "_interrupt",
+             "__attribute__((section(\"interrupt=0x4\"))) \
+             __attribute__((used))");
     }
     virtual void getTargetBuiltins(const Builtin::Info *&Records,
                                    unsigned &NumRecords) const {}
