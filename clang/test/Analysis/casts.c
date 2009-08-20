@@ -1,10 +1,15 @@
-// RUN: clang-cc -analyze -checker-cfref -analyzer-store=region --verify %s
+// RUN: clang-cc -triple x86_64-apple-darwin9 -analyze -checker-cfref -analyzer-store=region --verify %s
 
 // Test if the 'storage' region gets properly initialized after it is cast to
 // 'struct sockaddr *'. 
 
-#include <sys/types.h>
-#include <sys/socket.h>
+typedef unsigned char __uint8_t;
+typedef unsigned int __uint32_t;
+typedef __uint32_t __darwin_socklen_t;
+typedef __uint8_t sa_family_t;
+typedef __darwin_socklen_t socklen_t;
+struct sockaddr { sa_family_t sa_family; };
+struct sockaddr_storage {};
 
 void f(int sock) {
   struct sockaddr_storage storage;
