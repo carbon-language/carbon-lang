@@ -211,15 +211,15 @@ public:
   /// 2. If this block ends with only an unconditional branch, it sets TBB to be
   ///    the destination block.
   /// 3. If this block ends with an conditional branch and it falls through to
-  ///    an successor block, it sets TBB to be the branch destination block and
+  ///    a successor block, it sets TBB to be the branch destination block and
   ///    a list of operands that evaluate the condition. These
   ///    operands can be passed to other TargetInstrInfo methods to create new
   ///    branches.
-  /// 4. If this block ends with an conditional branch and an unconditional
-  ///    block, it returns the 'true' destination in TBB, the 'false'
-  ///    destination in FBB, and a list of operands that evaluate the condition.
-  ///    These operands can be passed to other TargetInstrInfo methods to create
-  ///    new branches.
+  /// 4. If this block ends with a conditional branch followed by an
+  ///    unconditional branch, it returns the 'true' destination in TBB, the
+  ///    'false' destination in FBB, and a list of operands that evaluate the
+  ///    condition.  These operands can be passed to other TargetInstrInfo
+  ///    methods to create new branches.
   ///
   /// Note that RemoveBranch and InsertBranch must be implemented to support
   /// cases where this method returns success.
@@ -233,7 +233,7 @@ public:
                              bool AllowModify = false) const {
     return true;
   }
-  
+
   /// RemoveBranch - Remove the branching code at the end of the specific MBB.
   /// This is only invoked in cases where AnalyzeBranch returns success. It
   /// returns the number of instructions that were removed.
@@ -241,13 +241,12 @@ public:
     assert(0 && "Target didn't implement TargetInstrInfo::RemoveBranch!"); 
     return 0;
   }
-  
-  /// InsertBranch - Insert a branch into the end of the specified
-  /// MachineBasicBlock.  This operands to this method are the same as those
-  /// returned by AnalyzeBranch.  This is invoked in cases where AnalyzeBranch
-  /// returns success and when an unconditional branch (TBB is non-null, FBB is
-  /// null, Cond is empty) needs to be inserted. It returns the number of
-  /// instructions inserted.
+
+  /// InsertBranch - Insert branch code into the end of the specified
+  /// MachineBasicBlock.  The operands to this method are the same as those
+  /// returned by AnalyzeBranch.  This is only invoked in cases where
+  /// AnalyzeBranch returns success. It returns the number of instructions
+  /// inserted.
   ///
   /// It is also invoked by tail merging to add unconditional branches in
   /// cases where AnalyzeBranch doesn't apply because there was no original
