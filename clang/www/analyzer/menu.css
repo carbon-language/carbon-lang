@@ -4,12 +4,12 @@
 
 [id=menu] {
 	position:fixed;
-	width:25ex;
+	width:35ex;
 }
 [id=content] {
 	/* *****  EDIT THIS VALUE IF CONTENT OVERLAPS MENU ***** */
 	position:absolute;
-  left:29ex;
+  left:39ex;
 	padding-right:4ex;
 }
 
