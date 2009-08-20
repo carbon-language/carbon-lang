@@ -37,6 +37,11 @@ namespace llvm {
   /// printed to stderr.  If the error handler returns, then exit(1) will be
   /// called.
   ///
+  /// It is dangerous to naively use an error handler which throws an exception.
+  /// Even though some applications desire to gracefully recover from arbitrary
+  /// faults, blindly throwing exceptions through unfamiliar code isn't a way to
+  /// achieve this.
+  ///
   /// \param user_data - An argument which will be passed to the install error
   /// handler.
   void llvm_install_error_handler(llvm_error_handler_t handler,
@@ -47,7 +52,10 @@ namespace llvm {
   /// llvm_stop_multithreaded().
   void llvm_remove_error_handler();
 
-  /// Reports a serious error, calling any installed error handler.
+  /// Reports a serious error, calling any installed error handler. These
+  /// functions are intended to be used for error conditions which are outside
+  /// the control of the compiler (I/O errors, invalid user input, etc.)
+  ///
   /// If no error handler is installed the default is to print the message to
   /// standard error, followed by a newline.
   /// After the error handler is called this function will call exit(1), it 
@@ -64,6 +72,9 @@ namespace llvm {
 }
 
 /// Prints the message and location info to stderr in !NDEBUG builds.
+/// This is intended to be used for "impossible" situations that imply
+/// a bug in the compiler.
+///
 /// In NDEBUG mode it only prints "UNREACHABLE executed".
 /// Use this instead of assert(0), so that the compiler knows this path
 /// is not reachable even for NDEBUG builds.
@@ -74,4 +85,3 @@ namespace llvm {
 #endif
 
 #endif
-
