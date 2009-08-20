@@ -111,7 +111,7 @@ public:
   ProgramPoint getLocation() const { return Location; }
 
   const LocationContext *getLocationContext() const { 
-    return getLocation().getContext(); 
+    return getLocation().getLocationContext(); 
   }
 
   const GRState* getState() const {

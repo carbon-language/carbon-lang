@@ -1213,7 +1213,7 @@ const Stmt* BugReport::getStmt() const {
   const Stmt *S = NULL;
   
   if (BlockEntrance* BE = dyn_cast<BlockEntrance>(&ProgP)) {
-    CFGBlock &Exit = ProgP.getContext()->getCFG()->getExit();
+    CFGBlock &Exit = ProgP.getLocationContext()->getCFG()->getExit();
     if (BE->getBlock() == &Exit)
       S = GetPreviousStmt(EndNode);
   }

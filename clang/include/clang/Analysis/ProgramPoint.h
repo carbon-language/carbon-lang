@@ -73,7 +73,7 @@ protected:
 public:    
   Kind getKind() const { return K; }
 
-  const LocationContext *getContext() const { return L; }
+  const LocationContext *getLocationContext() const { return L; }
 
   // For use with DenseMap.  This hash is probably slow.
   unsigned getHashValue() const {
