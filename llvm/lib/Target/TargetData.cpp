@@ -24,6 +24,7 @@
 #include "llvm/Support/MathExtras.h"
 #include "llvm/Support/ManagedStatic.h"
 #include "llvm/Support/ErrorHandling.h"
+#include "llvm/System/Mutex.h"
 #include "llvm/ADT/DenseMap.h"
 #include "llvm/ADT/StringExtras.h"
 #include <algorithm>
@@ -131,8 +132,6 @@ const TargetAlignElem TargetData::InvalidAlignmentElem =
 //                       TargetData Class Implementation
 //===----------------------------------------------------------------------===//
 
-typedef DenseMap<const StructType*, StructLayout*> LayoutInfoTy;
-
 /*!
  A TargetDescription string consists of a sequence of hyphen-delimited
  specifiers for target endianness, pointer size and alignments, and various
@@ -171,7 +170,6 @@ typedef DenseMap<const StructType*, StructLayout*> LayoutInfoTy;
  alignment will be used.
  */ 
 void TargetData::init(const std::string &TargetDescription) {
-  LayoutMap = static_cast<void*>(new LayoutInfoTy());
   std::string temp = TargetDescription;
   
   LittleEndian = false;
@@ -236,27 +234,10 @@ void TargetData::init(const std::string &TargetDescription) {
   }
 }
 
-TargetData::TargetData(const std::string &TargetDescription)
-  : ImmutablePass(&ID) {
-  init(TargetDescription);
-}
-
 TargetData::TargetData(const Module *M) 
   : ImmutablePass(&ID) {
   init(M->getDataLayout());
 }
-
-TargetData::TargetData(const TargetData &TD) :
-    ImmutablePass(&ID),
-    LittleEndian(TD.isLittleEndian()),
-    PointerMemSize(TD.PointerMemSize),
-    PointerABIAlign(TD.PointerABIAlign),
-    PointerPrefAlign(TD.PointerPrefAlign),
-    Alignments(TD.Alignments) {
-  LayoutInfoTy *Other = static_cast<LayoutInfoTy*>(TD.LayoutMap);
-  LayoutMap = static_cast<void*>(new LayoutInfoTy(*Other));
-}
-
 
 void
 TargetData::setAlignment(AlignTypeEnum align_type, unsigned char abi_align,
@@ -336,26 +317,61 @@ unsigned TargetData::getAlignmentInfo(AlignTypeEnum AlignType,
                  : Alignments[BestMatchIdx].PrefAlign;
 }
 
-TargetData::~TargetData() {
-  assert(LayoutMap && "LayoutMap not initialized?");
-  LayoutInfoTy &TheMap = *static_cast<LayoutInfoTy*>(LayoutMap);
+namespace {
 
-  // Remove any layouts for this TD.
-  for (LayoutInfoTy::iterator I = TheMap.begin(), E = TheMap.end(); I != E; ) {
-    I->second->~StructLayout();
-    free(I->second);
-    TheMap.erase(I++);
+/// LayoutInfo - The lazy cache of structure layout information maintained by
+/// TargetData.  Note that the struct types must have been free'd before
+/// llvm_shutdown is called (and thus this is deallocated) because all the
+/// targets with cached elements should have been destroyed.
+///
+typedef std::pair<const TargetData*,const StructType*> LayoutKey;
+
+struct DenseMapLayoutKeyInfo {
+  static inline LayoutKey getEmptyKey() { return LayoutKey(0, 0); }
+  static inline LayoutKey getTombstoneKey() {
+    return LayoutKey((TargetData*)(intptr_t)-1, 0);
   }
+  static unsigned getHashValue(const LayoutKey &Val) {
+    return DenseMapInfo<void*>::getHashValue(Val.first) ^
+           DenseMapInfo<void*>::getHashValue(Val.second);
+  }
+  static bool isEqual(const LayoutKey &LHS, const LayoutKey &RHS) {
+    return LHS == RHS;
+  }
+
+  static bool isPod() { return true; }
+};
+
+typedef DenseMap<LayoutKey, StructLayout*, DenseMapLayoutKeyInfo> LayoutInfoTy;
+
+}
+
+static ManagedStatic<LayoutInfoTy> LayoutInfo;
+static ManagedStatic<sys::SmartMutex<true> > LayoutLock;
+
+TargetData::~TargetData() {
+  if (!LayoutInfo.isConstructed())
+    return;
   
-  delete static_cast<LayoutInfoTy*>(LayoutMap);
-  LayoutMap = 0;
+  sys::SmartScopedLock<true> Lock(*LayoutLock);
+  // Remove any layouts for this TD.
+  LayoutInfoTy &TheMap = *LayoutInfo;
+  for (LayoutInfoTy::iterator I = TheMap.begin(), E = TheMap.end(); I != E; ) {
+    if (I->first.first == this) {
+      I->second->~StructLayout();
+      free(I->second);
+      TheMap.erase(I++);
+    } else {
+      ++I;
+    }
+  }
 }
 
 const StructLayout *TargetData::getStructLayout(const StructType *Ty) const {
-  assert(LayoutMap && "LayoutMap not initialized?");
-  LayoutInfoTy &TheMap = *static_cast<LayoutInfoTy*>(LayoutMap);
+  LayoutInfoTy &TheMap = *LayoutInfo;
   
-  StructLayout *&SL = TheMap[Ty];
+  sys::SmartScopedLock<true> Lock(*LayoutLock);
+  StructLayout *&SL = TheMap[LayoutKey(this, Ty)];
   if (SL) return SL;
 
   // Otherwise, create the struct layout.  Because it is variable length, we 
@@ -377,9 +393,10 @@ const StructLayout *TargetData::getStructLayout(const StructType *Ty) const {
 /// removed, this method must be called whenever a StructType is removed to
 /// avoid a dangling pointer in this cache.
 void TargetData::InvalidateStructLayoutInfo(const StructType *Ty) const {
-  assert(LayoutMap && "LayoutMap not initialized?");
-  LayoutInfoTy *LayoutInfo = static_cast<LayoutInfoTy*>(LayoutMap);
-  LayoutInfoTy::iterator I = LayoutInfo->find(Ty);
+  if (!LayoutInfo.isConstructed()) return;  // No cache.
+  
+  sys::SmartScopedLock<true> Lock(*LayoutLock);
+  LayoutInfoTy::iterator I = LayoutInfo->find(LayoutKey(this, Ty));
   if (I == LayoutInfo->end()) return;
   
   I->second->~StructLayout();
