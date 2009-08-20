@@ -1061,6 +1061,8 @@ protected:
   /// \brief Data that is common to all of the declarations of a given
   /// class template.
   struct Common {
+    Common() : InstantiatedFromMember(0) {}
+
     /// \brief The class template specializations for this class
     /// template, including explicit specializations and instantiations.
     llvm::FoldingSet<ClassTemplateSpecializationDecl> Specializations;
@@ -1072,6 +1074,10 @@ protected:
 
     /// \brief The injected-class-name type for this class template.
     QualType InjectedClassNameType;
+
+    /// \brief The templated member class from which this was most
+    /// directly instantiated (or null).
+    ClassTemplateDecl *InstantiatedFromMember;
   };
 
   /// \brief Previous declaration of this class template.
@@ -1150,6 +1156,35 @@ public:
   /// };
   /// \endcode
   QualType getInjectedClassNameType(ASTContext &Context);
+
+  /// \brief Retrieve the member class template that this class template was
+  /// derived from.
+  ///
+  /// This routine will return non-NULL for templated member classes of
+  /// class templates.  For example, given:
+  ///
+  /// \code
+  /// template <typename T>
+  /// struct X {
+  ///   template <typename U> struct A {};
+  /// };
+  /// \endcode
+  ///
+  /// X<int>::A<float> is a ClassTemplateSpecializationDecl (whose parent
+  /// is X<int>, also a CTSD) for which getSpecializedTemplate() will
+  /// return X<int>::A<U>, a TemplateClassDecl (whose parent is again
+  /// X<int>) for which getInstantiatedFromMemberTemplate() will return
+  /// X<T>::A<U>, a TemplateClassDecl (whose parent is X<T>, also a TCD).
+  ///
+  /// \returns null if this is not an instantiation of a member class template.
+  ClassTemplateDecl *getInstantiatedFromMemberTemplate() const {
+    return CommonPtr->InstantiatedFromMember;
+  }
+
+  void setInstantiatedFromMemberTemplate(ClassTemplateDecl *CTD) {
+    assert(!CommonPtr->InstantiatedFromMember);
+    CommonPtr->InstantiatedFromMember = CTD;
+  }
 
   // Implement isa/cast/dyncast support
   static bool classof(const Decl *D)

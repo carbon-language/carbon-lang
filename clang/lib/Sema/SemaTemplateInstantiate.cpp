@@ -568,6 +568,38 @@ Sema::InstantiateBaseSpecifiers(CXXRecordDecl *Instantiation,
   return Invalid;
 }
 
+/// \brief Force a template's pattern class to be instantiated.
+///
+/// \returns true if an error occurred
+bool Sema::InstantiateTemplatePattern(SourceLocation PointOfInstantiation,
+                                      CXXRecordDecl *Pattern) {
+  if (Pattern->getDefinition(Context)) return false;
+
+  ClassTemplateDecl *PatternTemp = Pattern->getDescribedClassTemplate();
+  if (!PatternTemp) return false;
+
+  // Check whether this template is a lazy instantiation of a
+  // dependent member template, e.g. Inner<U> in
+  // Outer<int>::Inner<U>.
+  ClassTemplateDecl *PatternPatternTemp
+    = PatternTemp->getInstantiatedFromMemberTemplate();
+  if (!PatternPatternTemp) return false;
+  
+  ClassTemplateSpecializationDecl *Spec = 0;
+  for (DeclContext *Parent = Pattern->getDeclContext();
+       Parent && !Spec; Parent = Parent->getParent())
+    Spec = dyn_cast<ClassTemplateSpecializationDecl>(Parent);
+  assert(Spec && "Not a member of a class template specialization?");
+
+  // TODO: the error message from a nested failure here is probably
+  // not ideal.
+  return InstantiateClass(PointOfInstantiation,
+                          Pattern,
+                          PatternPatternTemp->getTemplatedDecl(),
+                          Spec->getTemplateArgs(),
+                          /* ExplicitInstantiation = */ false);
+}
+
 /// \brief Instantiate the definition of a class from a given pattern.
 ///
 /// \param PointOfInstantiation The point of instantiation within the
@@ -591,6 +623,10 @@ Sema::InstantiateClass(SourceLocation PointOfInstantiation,
                        const TemplateArgumentList &TemplateArgs,
                        bool ExplicitInstantiation) {
   bool Invalid = false;
+
+  // Lazily instantiate member templates here.
+  if (InstantiateTemplatePattern(PointOfInstantiation, Pattern))
+    return true;
   
   CXXRecordDecl *PatternDef 
     = cast_or_null<CXXRecordDecl>(Pattern->getDefinition(Context));

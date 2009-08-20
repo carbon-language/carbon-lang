@@ -53,6 +53,8 @@ namespace {
     Decl *VisitCXXConversionDecl(CXXConversionDecl *D);
     ParmVarDecl *VisitParmVarDecl(ParmVarDecl *D);
     Decl *VisitOriginalParmVarDecl(OriginalParmVarDecl *D);
+    Decl *VisitClassTemplateDecl(ClassTemplateDecl *D);
+    Decl *VisitTemplateTypeParmDecl(TemplateTypeParmDecl *D);
 
     // Base case. FIXME: Remove once we can instantiate everything.
     Decl *VisitDecl(Decl *) { 
@@ -69,6 +71,9 @@ namespace {
                              llvm::SmallVectorImpl<ParmVarDecl *> &Params);
     bool InitFunctionInstantiation(FunctionDecl *New, FunctionDecl *Tmpl);
     bool InitMethodInstantiation(CXXMethodDecl *New, CXXMethodDecl *Tmpl);
+
+    TemplateParameterList *
+      InstantiateTemplateParams(TemplateParameterList *List);
   };
 }
 
@@ -320,6 +325,28 @@ Decl *TemplateDeclInstantiator::VisitEnumDecl(EnumDecl *D) {
 Decl *TemplateDeclInstantiator::VisitEnumConstantDecl(EnumConstantDecl *D) {
   assert(false && "EnumConstantDecls can only occur within EnumDecls.");
   return 0;
+}
+
+Decl *TemplateDeclInstantiator::VisitClassTemplateDecl(ClassTemplateDecl *D) {
+  TemplateParameterList *TempParams = D->getTemplateParameters();
+  TemplateParameterList *InstParams = InstantiateTemplateParams(TempParams);
+  if (!InstParams) return NULL;
+
+  CXXRecordDecl *Pattern = D->getTemplatedDecl();
+  CXXRecordDecl *RecordInst
+    = CXXRecordDecl::Create(SemaRef.Context, Pattern->getTagKind(), Owner,
+                            Pattern->getLocation(), Pattern->getIdentifier(),
+                            Pattern->getTagKeywordLoc(), /*PrevDecl=*/ NULL);
+
+  ClassTemplateDecl *Inst
+    = ClassTemplateDecl::Create(SemaRef.Context, Owner, D->getLocation(),
+                                D->getIdentifier(), InstParams, RecordInst, 0);
+  RecordInst->setDescribedClassTemplate(Inst);
+  Inst->setAccess(D->getAccess());
+  Inst->setInstantiatedFromMemberTemplate(D);
+
+  Owner->addDecl(Inst);
+  return Inst;
 }
 
 Decl *TemplateDeclInstantiator::VisitCXXRecordDecl(CXXRecordDecl *D) {
@@ -639,11 +666,78 @@ TemplateDeclInstantiator::VisitOriginalParmVarDecl(OriginalParmVarDecl *D) {
   return VisitParmVarDecl(D);
 }
 
+Decl *TemplateDeclInstantiator::VisitTemplateTypeParmDecl(
+                                                    TemplateTypeParmDecl *D) {
+  // TODO: don't always clone when decls are refcounted.
+  const Type* T = D->getTypeForDecl();
+  assert(T->isTemplateTypeParmType());
+  const TemplateTypeParmType *TTPT = T->getAs<TemplateTypeParmType>();
+  
+  TemplateTypeParmDecl *Inst =
+    TemplateTypeParmDecl::Create(SemaRef.Context, Owner, D->getLocation(),
+                                 TTPT->getDepth(), TTPT->getIndex(),
+                                 TTPT->getName(),
+                                 D->wasDeclaredWithTypename(),
+                                 D->isParameterPack());
+
+  if (D->hasDefaultArgument()) {
+    QualType DefaultPattern = D->getDefaultArgument();
+    QualType DefaultInst
+      = SemaRef.InstantiateType(DefaultPattern, TemplateArgs,
+                                D->getDefaultArgumentLoc(),
+                                D->getDeclName());
+    
+    Inst->setDefaultArgument(DefaultInst,
+                             D->getDefaultArgumentLoc(),
+                             D->defaultArgumentWasInherited() /* preserve? */);
+  }
+
+  return Inst;
+}
+
 Decl *Sema::InstantiateDecl(Decl *D, DeclContext *Owner,
                             const TemplateArgumentList &TemplateArgs) {
   TemplateDeclInstantiator Instantiator(*this, Owner, TemplateArgs);
   return Instantiator.Visit(D);
 }
+
+/// \brief Instantiates a nested template parameter list in the current
+/// instantiation context.
+///
+/// \param L The parameter list to instantiate
+///
+/// \returns NULL if there was an error
+TemplateParameterList *
+TemplateDeclInstantiator::InstantiateTemplateParams(TemplateParameterList *L) {
+  // Get errors for all the parameters before bailing out.
+  bool Invalid = false;
+
+  unsigned N = L->size();
+  typedef llvm::SmallVector<Decl*,8> ParamVector;
+  ParamVector Params;
+  Params.reserve(N);
+  for (TemplateParameterList::iterator PI = L->begin(), PE = L->end();
+       PI != PE; ++PI) {
+    Decl *D = Visit(*PI);
+    Params.push_back(D);
+    Invalid = Invalid || !D;
+  }
+
+  // Clean up if we had an error.
+  if (Invalid) {
+    for (ParamVector::iterator PI = Params.begin(), PE = Params.end();
+         PI != PE; ++PI)
+      if (*PI)
+        (*PI)->Destroy(SemaRef.Context);
+    return NULL;
+  }
+
+  TemplateParameterList *InstL
+    = TemplateParameterList::Create(SemaRef.Context, L->getTemplateLoc(),
+                                    L->getLAngleLoc(), &Params.front(), N,
+                                    L->getRAngleLoc());
+  return InstL;
+} 
 
 /// \brief Instantiates the type of the given function, including
 /// instantiating all of the function parameters.

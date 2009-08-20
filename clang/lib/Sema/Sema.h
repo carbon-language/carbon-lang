@@ -2847,6 +2847,10 @@ public:
                             const TemplateArgumentList &TemplateArgs);
 
   bool
+  InstantiateTemplatePattern(SourceLocation PointOfInstantiation,
+                             CXXRecordDecl *Pattern);
+
+  bool
   InstantiateClass(SourceLocation PointOfInstantiation,
                    CXXRecordDecl *Instantiation, CXXRecordDecl *Pattern,
                    const TemplateArgumentList &TemplateArgs,
