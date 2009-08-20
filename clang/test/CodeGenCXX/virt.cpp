@@ -219,7 +219,7 @@ struct test5_D  : virtual test5_B1, virtual test5_B21, virtual test5_B31 {
 // CHECK-LP32-NEXT: .space 4
 // CHECK-LP32-NEXT: .space 4
 // CHECK-LP32-NEXT: .space 4
-// CHECK-LP32: .long __ZTI7test5_D
+// CHECK-LP32-NEXT: .long __ZTI7test5_D
 // CHECK-LP32-NEXT: .long __ZN8test5_B36funcB3Ev
 // CHECK-LP32-NEXT: .long __ZN8test5_B26funcB2Ev
 // CHECK-LP32-NEXT: .long __ZN8test5_B16funcB1Ev
@@ -237,7 +237,7 @@ struct test5_D  : virtual test5_B1, virtual test5_B21, virtual test5_B31 {
 // CHECK-LP32 .space 4
 // CHECK-LP32 .long 8						FIXME
 // CHECK-LP32: .space 4
-// CHECK-LP32-NEXT .space 4					FIXME
+// CHECK-LP32-NEXT: .space 4
 // CHECK-LP32: .long 4
 // CHECK-LP32-NEXT: .space 4
 // CHECK-LP32-NEXT: .space 4
@@ -251,7 +251,7 @@ struct test5_D  : virtual test5_B1, virtual test5_B21, virtual test5_B31 {
 // CHECK-LP32-NEXT: .long __ZTI7test5_D
 // CHECK-LP32-NEXT: .long __ZN4B2328funcB232Ev
 // CHECK-LP32-NEXT: .space 4
-// CHECK-LP32-NEXT:.long 4294967280
+// CHECK-LP32-NEXT: .long 4294967280
 // CHECK-LP32-NEXT: .long __ZTI7test5_D
 // CHECK-LP32-NEXT: .long __ZN4B2318funcB231Ev
 
@@ -271,7 +271,7 @@ struct test5_D  : virtual test5_B1, virtual test5_B21, virtual test5_B31 {
 // CHECK-LP64-NEXT: .space 8
 // CHECK-LP64-NEXT: .space 8
 // CHECK-LP64-NEXT: .space 8
-// CHECK-LP64: .quad __ZTI7test5_D
+// CHECK-LP64-NEXT: .quad __ZTI7test5_D
 // CHECK-LP64-NEXT: .quad __ZN8test5_B36funcB3Ev
 // CHECK-LP64-NEXT: .quad __ZN8test5_B26funcB2Ev
 // CHECK-LP64-NEXT: .quad __ZN8test5_B16funcB1Ev
@@ -289,7 +289,7 @@ struct test5_D  : virtual test5_B1, virtual test5_B21, virtual test5_B31 {
 // CHECK-LP64 .space 8
 // CHECK-LP64 .quad 16						FIXME
 // CHECK-LP64: .space 8
-// CHECK-LP64-NEXT .space 8					FIXME
+// CHECK-LP64-NEXT: .space 8
 // CHECK-LP64: .quad 8
 // CHECK-LP64-NEXT: .space 8
 // CHECK-LP64-NEXT: .space 8
@@ -303,7 +303,7 @@ struct test5_D  : virtual test5_B1, virtual test5_B21, virtual test5_B31 {
 // CHECK-LP64-NEXT: .quad __ZTI7test5_D
 // CHECK-LP64-NEXT: .quad __ZN4B2328funcB232Ev
 // CHECK-LP64-NEXT: .space 8
-// CHECK-LP64-NEXT:.quad 18446744073709551584
+// CHECK-LP64-NEXT: .quad 18446744073709551584
 // CHECK-LP64-NEXT: .quad __ZTI7test5_D
 // CHECK-LP64-NEXT: .quad __ZN4B2318funcB231Ev
 
@@ -552,6 +552,75 @@ struct test9_D  : virtual test9_B1, virtual test9_B21, virtual test9_B31 {
 // CHECK-LP32-NEXT: .long __ZTI7test9_D
 // CHECK-LP32-NEXT: .long __ZN10test9_B2318funcB231Ev
 
+struct test10_O { int i; };
+
+struct test10_B1 : virtual test10_O {
+  virtual void ftest10_B1() { }
+};
+
+struct test10_B2aa : virtual test10_O {
+  int i;
+};
+struct test10_B2ab : virtual test10_O {
+  int i;
+};
+struct test10_B2a : virtual test10_B2aa, virtual test10_B2ab,virtual test10_O {
+  virtual void ftest10_B2a() { }
+};
+struct test10_B2b : virtual test10_O {
+  virtual void ftest10_B2b() { }
+};
+struct test10_B2 : test10_B2a {
+  virtual void ftest10_B2() { }
+};
+class test10_D : test10_B1, test10_B2 {
+  
+  void ftest10_B2aa() { }
+};
+
+// CHECK-LP64:__ZTV8test10_D:
+// CHECK-LP64-NEXT: .quad 40
+// CHECK-LP64-NEXT: .quad 24
+// CHECK-LP64-NEXT: .quad 16
+// CHECK-LP64-NEXT: .space 8
+// CHECK-LP64-NEXT: .quad __ZTI8test10_D
+// CHECK-LP64-NEXT: .quad __ZN9test10_B110ftest10_B1Ev
+// CHECK-LP64-NEXT: .quad 32
+// CHECK-LP64-NEXT: .quad 8
+// CHECK-LP64-NEXT: .quad 16
+// CHECK-LP64-NEXT: .quad 18446744073709551608
+// CHECK-LP64-NEXT: .quad __ZTI8test10_D
+// CHECK-LP64-NEXT: .quad __ZN10test10_B2a11ftest10_B2aEv
+// CHECK-LP64-NEXT: .quad __ZN9test10_B210ftest10_B2Ev
+// CHECK-LP64-NEXT: .quad 18446744073709551608
+// CHECK-LP64-NEXT: .quad 18446744073709551592
+// CHECK-LP64-NEXT: .quad __ZTI8test10_D
+// CHECK-LP64-NEXT: .quad 18446744073709551592
+// CHECK-LP64-NEXT: .quad 18446744073709551576
+// CHECK-LP64-NEXT: .quad __ZTI8test10_D
+
+// CHECK-LP32: __ZTV8test10_D:
+// CHECK-LP32-NEXT: .long 20
+// CHECK-LP32-NEXT: .long 12
+// CHECK-LP32-NEXT: .long 8
+// CHECK-LP32-NEXT: .space 4
+// CHECK-LP32-NEXT: .long __ZTI8test10_D
+// CHECK-LP32-NEXT: .long __ZN9test10_B110ftest10_B1Ev
+// CHECK-LP32-NEXT: .long 16
+// CHECK-LP32-NEXT: .long 4
+// CHECK-LP32-NEXT: .long 8
+// CHECK-LP32-NEXT: .long 4294967292
+// CHECK-LP32-NEXT: .long __ZTI8test10_D
+// CHECK-LP32-NEXT: .long __ZN10test10_B2a11ftest10_B2aEv
+// CHECK-LP32-NEXT: .long __ZN9test10_B210ftest10_B2Ev
+// CHECK-LP32-NEXT: .long 4294967292
+// CHECK-LP32-NEXT: .long 4294967284
+// CHECK-LP32-NEXT: .long __ZTI8test10_D
+// CHECK-LP32-NEXT: .long 4294967284
+// CHECK-LP32-NEXT: .long 4294967276
+// CHECK-LP32-NEXT: .long __ZTI8test10_D
+
+
 
 
 // CHECK-LP64: __ZTV1B:
@@ -633,6 +702,7 @@ struct test9_D  : virtual test9_B1, virtual test9_B21, virtual test9_B31 {
 // CHECK-LP64-NEXT: .quad __ZN2D14bar5Ev
 
 
+test10_D d10;
 test9_D d9;
 test8_D d8;
 

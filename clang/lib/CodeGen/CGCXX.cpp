@@ -831,21 +831,20 @@ public:
   }
 
   void GenerateVBaseOffsets(std::vector<llvm::Constant *> &offsets,
-                            const CXXRecordDecl *RD,
-                            uint64_t Offset, const ASTRecordLayout &Layout) {
+                            const CXXRecordDecl *RD, uint64_t Offset) {
     for (CXXRecordDecl::base_class_const_iterator i =RD->bases_begin(),
            e = RD->bases_end(); i != e; ++i) {
       const CXXRecordDecl *Base = 
         cast<CXXRecordDecl>(i->getType()->getAs<RecordType>()->getDecl());
       if (i->isVirtual() && !SeenVBase.count(Base)) {
         SeenVBase.insert(Base);
-        int64_t BaseOffset = Offset/8 + Layout.getVBaseClassOffset(Base) / 8;
+        int64_t BaseOffset = -(Offset/8) + BLayout.getVBaseClassOffset(Base)/8;
         llvm::Constant *m;
-        m = llvm::ConstantInt::get(llvm::Type::getInt64Ty(VMContext), BaseOffset);
+        m = llvm::ConstantInt::get(llvm::Type::getInt64Ty(VMContext),BaseOffset);
         m = llvm::ConstantExpr::getIntToPtr(m, Ptr8Ty);
         offsets.push_back(m);
       }
-      GenerateVBaseOffsets(offsets, Base, Offset, Layout);
+      GenerateVBaseOffsets(offsets, Base, Offset);
     }
   }
 
@@ -885,7 +884,7 @@ public:
     // FIXME: Audit, is this right?
     if (PrimaryBase == 0 || forPrimary || !PrimaryBaseWasVirtual) {
       std::vector<llvm::Constant *> offsets;
-      GenerateVBaseOffsets(offsets, RD, Offset, Layout);
+      GenerateVBaseOffsets(offsets, RD, Offset);
       for (std::vector<llvm::Constant *>::reverse_iterator i = offsets.rbegin(),
              e = offsets.rend(); i != e; ++i)
         methods.push_back(*i);
@@ -942,7 +941,8 @@ public:
         // Mark it so we don't output it twice.
         IndirectPrimary.insert(Base);
         SeenVBase.clear();
-        GenerateVtableForBase(Base, false, true, 0, true);
+        int64_t BaseOffset = BLayout.getVBaseClassOffset(Base);
+        GenerateVtableForBase(Base, false, true, BaseOffset, true);
       }
       if (Base->getNumVBases())
         GenerateVtableForVBases(Base, Class);
