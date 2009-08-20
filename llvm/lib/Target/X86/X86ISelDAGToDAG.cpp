@@ -813,6 +813,19 @@ bool X86DAGToDAGISel::MatchAddress(SDValue N, X86ISelAddressMode &AM) {
     AM.Scale = 1;
   }
 
+  // Post-processing: Convert foo to foo(%rip), even in non-PIC mode,
+  // because it has a smaller encoding.
+  // TODO: Which other code models can use this?
+  if (TM.getCodeModel() == CodeModel::Small &&
+      Subtarget->is64Bit() &&
+      AM.Scale == 1 &&
+      AM.BaseType == X86ISelAddressMode::RegBase &&
+      AM.Base.Reg.getNode() == 0 &&
+      AM.IndexReg.getNode() == 0 &&
+      AM.SymbolFlags == 0 &&
+      AM.hasSymbolicDisplacement())
+    AM.Base.Reg = CurDAG->getRegister(X86::RIP, MVT::i64);
+
   return false;
 }
 

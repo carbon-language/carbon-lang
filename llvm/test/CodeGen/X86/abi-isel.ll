@@ -191,7 +191,7 @@ entry:
 	ret void
 
 ; LINUX-64-STATIC: foo00:
-; LINUX-64-STATIC: movl	src, %eax
+; LINUX-64-STATIC: movl	src(%rip), %eax
 ; LINUX-64-STATIC: movl	%eax, dst
 ; LINUX-64-STATIC: ret
 }
@@ -203,7 +203,7 @@ entry:
 	ret void
 
 ; LINUX-64-STATIC: fxo00:
-; LINUX-64-STATIC: movl	xsrc, %eax
+; LINUX-64-STATIC: movl	xsrc(%rip), %eax
 ; LINUX-64-STATIC: movl	%eax, xdst
 ; LINUX-64-STATIC: ret
 }
@@ -233,8 +233,8 @@ entry:
 	store i32 %1, i32* %0, align 4
 	ret void
 ; LINUX-64-STATIC: foo02:
-; LINUX-64-STATIC: movl    src, %
-; LINUX-64-STATIC: movq    ptr, %
+; LINUX-64-STATIC: movl    src(%rip), %
+; LINUX-64-STATIC: movq    ptr(%rip), %
 ; LINUX-64-STATIC: movl
 ; LINUX-64-STATIC: ret
 }
@@ -245,8 +245,8 @@ entry:
 	%1 = load i32* getelementptr ([32 x i32]* @xsrc, i32 0, i64 0), align 4
 	store i32 %1, i32* %0, align 4
 ; LINUX-64-STATIC: fxo02:
-; LINUX-64-STATIC: movl    xsrc, %
-; LINUX-64-STATIC: movq    ptr, %
+; LINUX-64-STATIC: movl    xsrc(%rip), %
+; LINUX-64-STATIC: movq    ptr(%rip), %
 ; LINUX-64-STATIC: movl
 ; LINUX-64-STATIC: ret
 	ret void
@@ -258,7 +258,7 @@ entry:
 	store i32 %0, i32* getelementptr ([131072 x i32]* @ddst, i32 0, i64 0), align 32
 	ret void
 ; LINUX-64-STATIC: foo03:
-; LINUX-64-STATIC: movl    dsrc, %eax
+; LINUX-64-STATIC: movl    dsrc(%rip), %eax
 ; LINUX-64-STATIC: movl    %eax, ddst
 ; LINUX-64-STATIC: ret
 }
@@ -279,8 +279,8 @@ entry:
 	store i32 %1, i32* %0, align 4
 	ret void
 ; LINUX-64-STATIC: foo05:
-; LINUX-64-STATIC: movl    dsrc, %
-; LINUX-64-STATIC: movq    dptr, %
+; LINUX-64-STATIC: movl    dsrc(%rip), %
+; LINUX-64-STATIC: movq    dptr(%rip), %
 ; LINUX-64-STATIC: movl
 ; LINUX-64-STATIC: ret
 }
@@ -291,8 +291,8 @@ entry:
 	store i32 %0, i32* getelementptr ([131072 x i32]* @ldst, i32 0, i64 0), align 4
 	ret void
 ; LINUX-64-STATIC: foo06:
-; LINUX-64-STATIC: movl    lsrc, %eax
-; LINUX-64-STATIC: movl    %eax, ldst
+; LINUX-64-STATIC: movl    lsrc(%rip), %eax
+; LINUX-64-STATIC: movl    %eax, ldst(%rip)
 ; LINUX-64-STATIC: ret
 }
 
@@ -312,8 +312,8 @@ entry:
 	store i32 %1, i32* %0, align 4
 	ret void
 ; LINUX-64-STATIC: foo08:
-; LINUX-64-STATIC: movl    lsrc, %
-; LINUX-64-STATIC: movq    lptr, %
+; LINUX-64-STATIC: movl    lsrc(%rip), %
+; LINUX-64-STATIC: movq    lptr(%rip), %
 ; LINUX-64-STATIC: movl
 ; LINUX-64-STATIC: ret
 }
@@ -324,8 +324,8 @@ entry:
 	store i32 %0, i32* getelementptr ([131072 x i32]* @dst, i32 0, i64 16), align 4
 	ret void
 ; LINUX-64-STATIC: qux00:
-; LINUX-64-STATIC: movl    src+64, %eax
-; LINUX-64-STATIC: movl    %eax, dst+64
+; LINUX-64-STATIC: movl    src+64(%rip), %eax
+; LINUX-64-STATIC: movl    %eax, dst+64(%rip)
 ; LINUX-64-STATIC: ret
 }
 
@@ -335,8 +335,8 @@ entry:
 	store i32 %0, i32* getelementptr ([32 x i32]* @xdst, i32 0, i64 16), align 4
 	ret void
 ; LINUX-64-STATIC: qxx00:
-; LINUX-64-STATIC: movl    xsrc+64, %eax
-; LINUX-64-STATIC: movl    %eax, xdst+64
+; LINUX-64-STATIC: movl    xsrc+64(%rip), %eax
+; LINUX-64-STATIC: movl    %eax, xdst+64(%rip)
 ; LINUX-64-STATIC: ret
 }
 
@@ -365,8 +365,8 @@ entry:
 	%2 = getelementptr i32* %0, i64 16
 	store i32 %1, i32* %2, align 4
 ; LINUX-64-STATIC: qux02:
-; LINUX-64-STATIC: movl    src+64, %eax
-; LINUX-64-STATIC: movq    ptr, %rcx
+; LINUX-64-STATIC: movl    src+64(%rip), %eax
+; LINUX-64-STATIC: movq    ptr(%rip), %rcx
 ; LINUX-64-STATIC: movl    %eax, 64(%rcx)
 ; LINUX-64-STATIC: ret
 	ret void
@@ -379,8 +379,8 @@ entry:
 	%2 = getelementptr i32* %0, i64 16
 	store i32 %1, i32* %2, align 4
 ; LINUX-64-STATIC: qxx02:
-; LINUX-64-STATIC: movl    xsrc+64, %eax
-; LINUX-64-STATIC: movq    ptr, %rcx
+; LINUX-64-STATIC: movl    xsrc+64(%rip), %eax
+; LINUX-64-STATIC: movq    ptr(%rip), %rcx
 ; LINUX-64-STATIC: movl    %eax, 64(%rcx)
 ; LINUX-64-STATIC: ret
 	ret void
@@ -392,8 +392,8 @@ entry:
 	store i32 %0, i32* getelementptr ([131072 x i32]* @ddst, i32 0, i64 16), align 32
 	ret void
 ; LINUX-64-STATIC: qux03:
-; LINUX-64-STATIC: movl    dsrc+64, %eax
-; LINUX-64-STATIC: movl    %eax, ddst+64
+; LINUX-64-STATIC: movl    dsrc+64(%rip), %eax
+; LINUX-64-STATIC: movl    %eax, ddst+64(%rip)
 ; LINUX-64-STATIC: ret
 }
 
@@ -402,7 +402,7 @@ entry:
 	store i32* getelementptr ([131072 x i32]* @ddst, i32 0, i64 16), i32** @dptr, align 8
 	ret void
 ; LINUX-64-STATIC: qux04:
-; LINUX-64-STATIC: movq    $ddst+64, dptr
+; LINUX-64-STATIC: movq    $ddst+64, dptr(%rip)
 ; LINUX-64-STATIC: ret
 }
 
@@ -413,8 +413,8 @@ entry:
 	%2 = getelementptr i32* %0, i64 16
 	store i32 %1, i32* %2, align 4
 ; LINUX-64-STATIC: qux05:
-; LINUX-64-STATIC: movl    dsrc+64, %eax
-; LINUX-64-STATIC: movq    dptr, %rcx
+; LINUX-64-STATIC: movl    dsrc+64(%rip), %eax
+; LINUX-64-STATIC: movq    dptr(%rip), %rcx
 ; LINUX-64-STATIC: movl    %eax, 64(%rcx)
 ; LINUX-64-STATIC: ret
 	ret void
@@ -426,7 +426,7 @@ entry:
 	store i32 %0, i32* getelementptr ([131072 x i32]* @ldst, i32 0, i64 16), align 4
 	ret void
 ; LINUX-64-STATIC: qux06:
-; LINUX-64-STATIC: movl    lsrc+64, %eax
+; LINUX-64-STATIC: movl    lsrc+64(%rip), %eax
 ; LINUX-64-STATIC: movl    %eax, ldst+64
 ; LINUX-64-STATIC: ret
 }
@@ -447,8 +447,8 @@ entry:
 	%2 = getelementptr i32* %0, i64 16
 	store i32 %1, i32* %2, align 4
 ; LINUX-64-STATIC: qux08:
-; LINUX-64-STATIC: movl    lsrc+64, %eax
-; LINUX-64-STATIC: movq    lptr, %rcx
+; LINUX-64-STATIC: movl    lsrc+64(%rip), %eax
+; LINUX-64-STATIC: movq    lptr(%rip), %rcx
 ; LINUX-64-STATIC: movl    %eax, 64(%rcx)
 ; LINUX-64-STATIC: ret
 	ret void
@@ -512,7 +512,7 @@ entry:
 	ret void
 ; LINUX-64-STATIC: ind02:
 ; LINUX-64-STATIC: movl    src(,%rdi,4), %eax
-; LINUX-64-STATIC: movq    ptr, %rcx
+; LINUX-64-STATIC: movq    ptr(%rip), %rcx
 ; LINUX-64-STATIC: movl    %eax, (%rcx,%rdi,4)
 ; LINUX-64-STATIC: ret
 }
@@ -527,7 +527,7 @@ entry:
 	ret void
 ; LINUX-64-STATIC: ixd02:
 ; LINUX-64-STATIC: movl    xsrc(,%rdi,4), %eax
-; LINUX-64-STATIC: movq    ptr, %rcx
+; LINUX-64-STATIC: movq    ptr(%rip), %rcx
 ; LINUX-64-STATIC: movl    %eax, (%rcx,%rdi,4)
 ; LINUX-64-STATIC: ret
 }
@@ -566,7 +566,7 @@ entry:
 	ret void
 ; LINUX-64-STATIC: ind05:
 ; LINUX-64-STATIC: movl    dsrc(,%rdi,4), %eax
-; LINUX-64-STATIC: movq    dptr, %rcx
+; LINUX-64-STATIC: movq    dptr(%rip), %rcx
 ; LINUX-64-STATIC: movl    %eax, (%rcx,%rdi,4)
 ; LINUX-64-STATIC: ret
 }
@@ -605,7 +605,7 @@ entry:
 	ret void
 ; LINUX-64-STATIC: ind08:
 ; LINUX-64-STATIC: movl    lsrc(,%rdi,4), %eax
-; LINUX-64-STATIC: movq    lptr, %rcx
+; LINUX-64-STATIC: movq    lptr(%rip), %rcx
 ; LINUX-64-STATIC: movl    %eax, (%rcx,%rdi,4)
 ; LINUX-64-STATIC: ret
 }
@@ -673,7 +673,7 @@ entry:
 	ret void
 ; LINUX-64-STATIC: off02:
 ; LINUX-64-STATIC: movl    src+64(,%rdi,4), %eax
-; LINUX-64-STATIC: movq    ptr, %rcx
+; LINUX-64-STATIC: movq    ptr(%rip), %rcx
 ; LINUX-64-STATIC: movl    %eax, 64(%rcx,%rdi,4)
 ; LINUX-64-STATIC: ret
 }
@@ -689,7 +689,7 @@ entry:
 	ret void
 ; LINUX-64-STATIC: oxf02:
 ; LINUX-64-STATIC: movl    xsrc+64(,%rdi,4), %eax
-; LINUX-64-STATIC: movq    ptr, %rcx
+; LINUX-64-STATIC: movq    ptr(%rip), %rcx
 ; LINUX-64-STATIC: movl    %eax, 64(%rcx,%rdi,4)
 ; LINUX-64-STATIC: ret
 }
@@ -731,7 +731,7 @@ entry:
 	ret void
 ; LINUX-64-STATIC: off05:
 ; LINUX-64-STATIC: movl    dsrc+64(,%rdi,4), %eax
-; LINUX-64-STATIC: movq    dptr, %rcx
+; LINUX-64-STATIC: movq    dptr(%rip), %rcx
 ; LINUX-64-STATIC: movl    %eax, 64(%rcx,%rdi,4)
 ; LINUX-64-STATIC: ret
 }
@@ -773,7 +773,7 @@ entry:
 	ret void
 ; LINUX-64-STATIC: off08:
 ; LINUX-64-STATIC: movl    lsrc+64(,%rdi,4), %eax
-; LINUX-64-STATIC: movq    lptr, %rcx
+; LINUX-64-STATIC: movq    lptr(%rip), %rcx
 ; LINUX-64-STATIC: movl    %eax, 64(%rcx,%rdi,4)
 ; LINUX-64-STATIC: ret
 }
@@ -784,8 +784,8 @@ entry:
 	store i32 %0, i32* getelementptr ([131072 x i32]* @dst, i32 0, i64 65536), align 4
 	ret void
 ; LINUX-64-STATIC: moo00:
-; LINUX-64-STATIC: movl    src+262144, %eax
-; LINUX-64-STATIC: movl    %eax, dst+262144
+; LINUX-64-STATIC: movl    src+262144(%rip), %eax
+; LINUX-64-STATIC: movl    %eax, dst+262144(%rip)
 ; LINUX-64-STATIC: ret
 }
 
@@ -794,7 +794,7 @@ entry:
 	store i32* getelementptr ([131072 x i32]* @dst, i32 0, i64 65536), i32** @ptr, align 8
 	ret void
 ; LINUX-64-STATIC: moo01:
-; LINUX-64-STATIC: movq    $dst+262144, ptr
+; LINUX-64-STATIC: movq    $dst+262144, ptr(%rip)
 ; LINUX-64-STATIC: ret
 }
 
@@ -806,8 +806,8 @@ entry:
 	store i32 %1, i32* %2, align 4
 	ret void
 ; LINUX-64-STATIC: moo02:
-; LINUX-64-STATIC: movl    src+262144, %eax
-; LINUX-64-STATIC: movq    ptr, %rcx
+; LINUX-64-STATIC: movl    src+262144(%rip), %eax
+; LINUX-64-STATIC: movq    ptr(%rip), %rcx
 ; LINUX-64-STATIC: movl    %eax, 262144(%rcx)
 ; LINUX-64-STATIC: ret
 }
@@ -818,8 +818,8 @@ entry:
 	store i32 %0, i32* getelementptr ([131072 x i32]* @ddst, i32 0, i64 65536), align 32
 	ret void
 ; LINUX-64-STATIC: moo03:
-; LINUX-64-STATIC: movl    dsrc+262144, %eax
-; LINUX-64-STATIC: movl    %eax, ddst+262144
+; LINUX-64-STATIC: movl    dsrc+262144(%rip), %eax
+; LINUX-64-STATIC: movl    %eax, ddst+262144(%rip)
 ; LINUX-64-STATIC: ret
 }
 
@@ -840,8 +840,8 @@ entry:
 	store i32 %1, i32* %2, align 4
 	ret void
 ; LINUX-64-STATIC: moo05:
-; LINUX-64-STATIC: movl    dsrc+262144, %eax
-; LINUX-64-STATIC: movq    dptr, %rcx
+; LINUX-64-STATIC: movl    dsrc+262144(%rip), %eax
+; LINUX-64-STATIC: movq    dptr(%rip), %rcx
 ; LINUX-64-STATIC: movl    %eax, 262144(%rcx)
 ; LINUX-64-STATIC: ret
 }
@@ -852,8 +852,8 @@ entry:
 	store i32 %0, i32* getelementptr ([131072 x i32]* @ldst, i32 0, i64 65536), align 4
 	ret void
 ; LINUX-64-STATIC: moo06:
-; LINUX-64-STATIC: movl    lsrc+262144, %eax
-; LINUX-64-STATIC: movl    %eax, ldst+262144
+; LINUX-64-STATIC: movl    lsrc+262144(%rip), %eax
+; LINUX-64-STATIC: movl    %eax, ldst+262144(%rip)
 ; LINUX-64-STATIC: ret
 }
 
@@ -874,8 +874,8 @@ entry:
 	store i32 %1, i32* %2, align 4
 	ret void
 ; LINUX-64-STATIC: moo08:
-; LINUX-64-STATIC: movl    lsrc+262144, %eax
-; LINUX-64-STATIC: movq    lptr, %rcx
+; LINUX-64-STATIC: movl    lsrc+262144(%rip), %eax
+; LINUX-64-STATIC: movq    lptr(%rip), %rcx
 ; LINUX-64-STATIC: movl    %eax, 262144(%rcx)
 ; LINUX-64-STATIC: ret
 }
@@ -902,7 +902,7 @@ entry:
 	ret void
 ; LINUX-64-STATIC: big01:
 ; LINUX-64-STATIC: leaq    dst+262144(,%rdi,4), %rax
-; LINUX-64-STATIC: movq    %rax, ptr
+; LINUX-64-STATIC: movq    %rax, ptr(%rip)
 ; LINUX-64-STATIC: ret
 }
 
@@ -917,7 +917,7 @@ entry:
 	ret void
 ; LINUX-64-STATIC: big02:
 ; LINUX-64-STATIC: movl    src+262144(,%rdi,4), %eax
-; LINUX-64-STATIC: movq    ptr, %rcx
+; LINUX-64-STATIC: movq    ptr(%rip), %rcx
 ; LINUX-64-STATIC: movl    %eax, 262144(%rcx,%rdi,4)
 ; LINUX-64-STATIC: ret
 }
@@ -959,7 +959,7 @@ entry:
 	ret void
 ; LINUX-64-STATIC: big05:
 ; LINUX-64-STATIC: movl    dsrc+262144(,%rdi,4), %eax
-; LINUX-64-STATIC: movq    dptr, %rcx
+; LINUX-64-STATIC: movq    dptr(%rip), %rcx
 ; LINUX-64-STATIC: movl    %eax, 262144(%rcx,%rdi,4)
 ; LINUX-64-STATIC: ret
 }
@@ -1001,7 +1001,7 @@ entry:
 	ret void
 ; LINUX-64-STATIC: big08:
 ; LINUX-64-STATIC: movl    lsrc+262144(,%rdi,4), %eax
-; LINUX-64-STATIC: movq    lptr, %rcx
+; LINUX-64-STATIC: movq    lptr(%rip), %rcx
 ; LINUX-64-STATIC: movl    %eax, 262144(%rcx,%rdi,4)
 ; LINUX-64-STATIC: ret
 }
@@ -1132,7 +1132,7 @@ entry:
 	%1 = bitcast i32* %0 to i8*
 	ret i8* %1
 ; LINUX-64-STATIC: har02:
-; LINUX-64-STATIC: movq    ptr, %rax
+; LINUX-64-STATIC: movq    ptr(%rip), %rax
 ; LINUX-64-STATIC: ret
 }
 
@@ -1158,7 +1158,7 @@ entry:
 	%1 = bitcast i32* %0 to i8*
 	ret i8* %1
 ; LINUX-64-STATIC: har05:
-; LINUX-64-STATIC: movq    dptr, %rax
+; LINUX-64-STATIC: movq    dptr(%rip), %rax
 ; LINUX-64-STATIC: ret
 }
 
@@ -1184,7 +1184,7 @@ entry:
 	%1 = bitcast i32* %0 to i8*
 	ret i8* %1
 ; LINUX-64-STATIC: har08:
-; LINUX-64-STATIC: movq    lptr, %rax
+; LINUX-64-STATIC: movq    lptr(%rip), %rax
 ; LINUX-64-STATIC: ret
 }
 
@@ -1227,7 +1227,7 @@ entry:
 	%2 = bitcast i32* %1 to i8*
 	ret i8* %2
 ; LINUX-64-STATIC: bat02:
-; LINUX-64-STATIC: movq    ptr, %rax
+; LINUX-64-STATIC: movq    ptr(%rip), %rax
 ; LINUX-64-STATIC: addq    $64, %rax
 ; LINUX-64-STATIC: ret
 }
@@ -1255,7 +1255,7 @@ entry:
 	%2 = bitcast i32* %1 to i8*
 	ret i8* %2
 ; LINUX-64-STATIC: bat05:
-; LINUX-64-STATIC: movq    dptr, %rax
+; LINUX-64-STATIC: movq    dptr(%rip), %rax
 ; LINUX-64-STATIC: addq    $64, %rax
 ; LINUX-64-STATIC: ret
 }
@@ -1283,7 +1283,7 @@ entry:
 	%2 = bitcast i32* %1 to i8*
 	ret i8* %2
 ; LINUX-64-STATIC: bat08:
-; LINUX-64-STATIC: movq    lptr, %rax
+; LINUX-64-STATIC: movq    lptr(%rip), %rax
 ; LINUX-64-STATIC: addq    $64, %rax
 ; LINUX-64-STATIC: ret
 }
@@ -1320,7 +1320,7 @@ entry:
 	ret i8* %2
 ; LINUX-64-STATIC: bam02:
 ; LINUX-64-STATIC: movl    $262144, %eax
-; LINUX-64-STATIC: addq    ptr, %rax
+; LINUX-64-STATIC: addq    ptr(%rip), %rax
 ; LINUX-64-STATIC: ret
 }
 
@@ -1348,7 +1348,7 @@ entry:
 	ret i8* %2
 ; LINUX-64-STATIC: bam05:
 ; LINUX-64-STATIC: movl    $262144, %eax
-; LINUX-64-STATIC: addq    dptr, %rax
+; LINUX-64-STATIC: addq    dptr(%rip), %rax
 ; LINUX-64-STATIC: ret
 }
 
@@ -1376,7 +1376,7 @@ entry:
 	ret i8* %2
 ; LINUX-64-STATIC: bam08:
 ; LINUX-64-STATIC: movl    $262144, %eax
-; LINUX-64-STATIC: addq    lptr, %rax
+; LINUX-64-STATIC: addq    lptr(%rip), %rax
 ; LINUX-64-STATIC: ret
 }
 
@@ -1432,7 +1432,7 @@ entry:
 	%3 = bitcast i32* %2 to i8*
 	ret i8* %3
 ; LINUX-64-STATIC: cat02:
-; LINUX-64-STATIC: movq    ptr, %rax
+; LINUX-64-STATIC: movq    ptr(%rip), %rax
 ; LINUX-64-STATIC: leaq    64(%rax,%rdi,4), %rax
 ; LINUX-64-STATIC: ret
 }
@@ -1467,7 +1467,7 @@ entry:
 	%3 = bitcast i32* %2 to i8*
 	ret i8* %3
 ; LINUX-64-STATIC: cat05:
-; LINUX-64-STATIC: movq    dptr, %rax
+; LINUX-64-STATIC: movq    dptr(%rip), %rax
 ; LINUX-64-STATIC: leaq    64(%rax,%rdi,4), %rax
 ; LINUX-64-STATIC: ret
 }
@@ -1502,7 +1502,7 @@ entry:
 	%3 = bitcast i32* %2 to i8*
 	ret i8* %3
 ; LINUX-64-STATIC: cat08:
-; LINUX-64-STATIC: movq    lptr, %rax
+; LINUX-64-STATIC: movq    lptr(%rip), %rax
 ; LINUX-64-STATIC: leaq    64(%rax,%rdi,4), %rax
 ; LINUX-64-STATIC: ret
 }
@@ -1559,7 +1559,7 @@ entry:
 	%3 = bitcast i32* %2 to i8*
 	ret i8* %3
 ; LINUX-64-STATIC: cam02:
-; LINUX-64-STATIC: movq    ptr, %rax
+; LINUX-64-STATIC: movq    ptr(%rip), %rax
 ; LINUX-64-STATIC: leaq    262144(%rax,%rdi,4), %rax
 ; LINUX-64-STATIC: ret
 }
@@ -1594,7 +1594,7 @@ entry:
 	%3 = bitcast i32* %2 to i8*
 	ret i8* %3
 ; LINUX-64-STATIC: cam05:
-; LINUX-64-STATIC: movq    dptr, %rax
+; LINUX-64-STATIC: movq    dptr(%rip), %rax
 ; LINUX-64-STATIC: leaq    262144(%rax,%rdi,4), %rax
 ; LINUX-64-STATIC: ret
 }
@@ -1629,7 +1629,7 @@ entry:
 	%3 = bitcast i32* %2 to i8*
 	ret i8* %3
 ; LINUX-64-STATIC: cam08:
-; LINUX-64-STATIC: movq    lptr, %rax
+; LINUX-64-STATIC: movq    lptr(%rip), %rax
 ; LINUX-64-STATIC: leaq    262144(%rax,%rdi,4), %rax
 ; LINUX-64-STATIC: ret
 }

@@ -8,7 +8,7 @@ target triple = "x86_64-unknown-linux-gnu"
 define i32 @foo() nounwind readonly {
 entry:
 ; CHECK-SMALL:  foo:
-; CHECK-SMALL:   movl data, %eax
+; CHECK-SMALL:   movl data(%rip), %eax
 ; CHECK-KERNEL: foo:
 ; CHECK-KERNEL:  movl data, %eax
 	%0 = load i32* getelementptr ([0 x i32]* @data, i64 0, i64 0), align 4		; <i32> [#uses=1]
@@ -18,7 +18,7 @@ entry:
 define i32 @foo2() nounwind readonly {
 entry:
 ; CHECK-SMALL:  foo2:
-; CHECK-SMALL:   movl data+40, %eax
+; CHECK-SMALL:   movl data+40(%rip), %eax
 ; CHECK-KERNEL: foo2:
 ; CHECK-KERNEL:  movl data+40, %eax
 	%0 = load i32* getelementptr ([0 x i32]* @data, i32 0, i64 10), align 4		; <i32> [#uses=1]
@@ -28,7 +28,7 @@ entry:
 define i32 @foo3() nounwind readonly {
 entry:
 ; CHECK-SMALL:  foo3:
-; CHECK-SMALL:   movl data-40, %eax
+; CHECK-SMALL:   movl data-40(%rip), %eax
 ; CHECK-KERNEL: foo3:
 ; CHECK-KERNEL:  movq $-40, %rax
 	%0 = load i32* getelementptr ([0 x i32]* @data, i32 0, i64 -10), align 4		; <i32> [#uses=1]
@@ -50,7 +50,7 @@ entry:
 define i32 @foo1() nounwind readonly {
 entry:
 ; CHECK-SMALL:  foo1:
-; CHECK-SMALL:   movl data+16777212, %eax
+; CHECK-SMALL:   movl data+16777212(%rip), %eax
 ; CHECK-KERNEL: foo1:
 ; CHECK-KERNEL:  movl data+16777212, %eax
         %0 = load i32* getelementptr ([0 x i32]* @data, i32 0, i64 4194303), align 4            ; <i32> [#uses=1]
@@ -59,7 +59,7 @@ entry:
 define i32 @foo5() nounwind readonly {
 entry:
 ; CHECK-SMALL:  foo5:
-; CHECK-SMALL:   movl data-16777216, %eax
+; CHECK-SMALL:   movl data-16777216(%rip), %eax
 ; CHECK-KERNEL: foo5:
 ; CHECK-KERNEL:  movq $-16777216, %rax
 	%0 = load i32* getelementptr ([0 x i32]* @data, i32 0, i64 -4194304), align 4		; <i32> [#uses=1]
