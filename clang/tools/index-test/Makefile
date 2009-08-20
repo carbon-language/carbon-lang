@@ -11,6 +11,7 @@ LEVEL = ../../../..
 TOOLNAME = index-test
 CPPFLAGS += -I$(PROJ_SRC_DIR)/../../include -I$(PROJ_OBJ_DIR)/../../include
 CXXFLAGS = -fno-rtti
+NO_INSTALL = 1
 
 # No plugins, optimize startup time.
 TOOL_NO_EXPORTS = 1
