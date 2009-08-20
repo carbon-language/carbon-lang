@@ -412,10 +412,70 @@ CodeGenFunction::EmitCXXAggrConstructorCall(const CXXConstructorDecl *D,
   EmitBlock(AfterFor, true);
 }
 
+/// EmitCXXAggrDestructorCall - calls the default destructor on array
+/// elements in reverse order of construction.
 void
 CodeGenFunction::EmitCXXAggrDestructorCall(const CXXDestructorDecl *D,
                                            const ArrayType *Array,
                                            llvm::Value *This) {
+  const ConstantArrayType *CA = dyn_cast<ConstantArrayType>(Array);
+  assert(CA && "Do we support VLA for destruction ?");
+  llvm::Value *One = llvm::ConstantInt::get(llvm::Type::getInt64Ty(VMContext), 
+                                            1);
+  uint64_t ElementCount = 1;
+  const ConstantArrayType *CAW = CA;
+  do {
+    ElementCount *= CAW->getSize().getZExtValue();
+    CAW = dyn_cast<ConstantArrayType>(CAW->getElementType());
+  } while (CAW);
+  // Create a temporary for the loop index and initialize it with count of
+  // array elements.
+  llvm::Value *IndexPtr = CreateTempAlloca(llvm::Type::getInt64Ty(VMContext),
+                                           "loop.index");
+  // Index = ElementCount;
+  llvm::Value* UpperCount = 
+    llvm::ConstantInt::get(llvm::Type::getInt64Ty(VMContext), ElementCount);
+  Builder.CreateStore(UpperCount, IndexPtr, false);
+  
+  // Start the loop with a block that tests the condition.
+  llvm::BasicBlock *CondBlock = createBasicBlock("for.cond");
+  llvm::BasicBlock *AfterFor = createBasicBlock("for.end");
+  
+  EmitBlock(CondBlock);
+  
+  llvm::BasicBlock *ForBody = createBasicBlock("for.body");
+  
+  // Generate: if (loop-index != 0 fall to the loop body,
+  // otherwise, go to the block after the for-loop.
+  llvm::Value* zeroConstant = 
+    llvm::Constant::getNullValue(llvm::Type::getInt64Ty(VMContext));
+  llvm::Value *Counter = Builder.CreateLoad(IndexPtr);
+  llvm::Value *IsNE = Builder.CreateICmpNE(Counter, zeroConstant,
+                                            "isne");
+  // If the condition is true, execute the body.
+  Builder.CreateCondBr(IsNE, ForBody, AfterFor);
+  
+  EmitBlock(ForBody);
+  
+  llvm::BasicBlock *ContinueBlock = createBasicBlock("for.inc");
+  // Inside the loop body, emit the constructor call on the array element.
+  Counter = Builder.CreateLoad(IndexPtr);
+  Counter = Builder.CreateSub(Counter, One);
+  llvm::Value *Address = Builder.CreateInBoundsGEP(This, Counter, "arrayidx");
+  EmitCXXDestructorCall(D, Dtor_Complete, Address);
+  
+  EmitBlock(ContinueBlock);
+  
+  // Emit the decrement of the loop counter.
+  Counter = Builder.CreateLoad(IndexPtr);
+  Counter = Builder.CreateSub(Counter, One, "dec");
+  Builder.CreateStore(Counter, IndexPtr, false);
+  
+  // Finally, branch back up to the condition for the next iteration.
+  EmitBranch(CondBlock);
+  
+  // Emit the fall-through block.
+  EmitBlock(AfterFor, true);
 }
 
 void

@@ -11,7 +11,7 @@ float vf = 1.00;
 
 struct S {
   S() : iS(i++), f1(vf++) {printf("S::S()\n");}
-//  ~S(){printf("S::~S()\n"); }
+  ~S(){printf("S::~S(iS = %d  f1 = %f)\n", iS, f1); }
   int iS;
   float f1;
 };
