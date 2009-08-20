@@ -341,7 +341,7 @@ class test8_D : test8_B1, test8_B2, test8_B3 {
 // CHECK-LP32-NEXT: .long __ZN8test8_B19ftest8_B1Ev
 // CHECK-LP32-NEXT: .long 20
 // CHECK-LP32-NEXT: .long 12
-// CHECK-LP32: .long 4294967292
+// CHECK-LP32-NEXT: .long 4294967292
 // CHECK-LP32-NEXT: .long __ZTI7test8_D
 // CHECK-LP32-NEXT: .long __ZN9test8_B2a10ftest8_B2aEv
 // CHECK-LP32-NEXT: .long __ZN8test8_B29ftest8_B2Ev
@@ -368,7 +368,7 @@ class test8_D : test8_B1, test8_B2, test8_B3 {
 // CHECK-LP64-NEXT: .quad __ZN8test8_B19ftest8_B1Ev
 // CHECK-LP64-NEXT: .quad 40
 // CHECK-LP64-NEXT: .quad 24
-// CHECK-LP64: .quad 18446744073709551608
+// CHECK-LP64-NEXT: .quad 18446744073709551608
 // CHECK-LP64-NEXT: .quad __ZTI7test8_D
 // CHECK-LP64-NEXT: .quad __ZN9test8_B2a10ftest8_B2aEv
 // CHECK-LP64-NEXT: .quad __ZN8test8_B29ftest8_B2Ev

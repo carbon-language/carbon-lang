@@ -788,6 +788,7 @@ class VtableBuilder {
   const CXXRecordDecl *Class;
   const ASTRecordLayout &BLayout;
   llvm::SmallSet<const CXXRecordDecl *, 32> IndirectPrimary;
+  llvm::SmallSet<const CXXRecordDecl *, 32> SeenVBase;
   llvm::Constant *rtti;
   llvm::LLVMContext &VMContext;
   CodeGenModule &CGM;  // Per-module state.
@@ -829,6 +830,25 @@ public:
     }
   }
 
+  void GenerateVBaseOffsets(std::vector<llvm::Constant *> &offsets,
+                            const CXXRecordDecl *RD,
+                            uint64_t Offset, const ASTRecordLayout &Layout) {
+    for (CXXRecordDecl::base_class_const_iterator i =RD->bases_begin(),
+           e = RD->bases_end(); i != e; ++i) {
+      const CXXRecordDecl *Base = 
+        cast<CXXRecordDecl>(i->getType()->getAs<RecordType>()->getDecl());
+      if (i->isVirtual() && !SeenVBase.count(Base)) {
+        SeenVBase.insert(Base);
+        int64_t BaseOffset = Offset/8 + Layout.getVBaseClassOffset(Base) / 8;
+        llvm::Constant *m;
+        m = llvm::ConstantInt::get(llvm::Type::getInt64Ty(VMContext), BaseOffset);
+        m = llvm::ConstantExpr::getIntToPtr(m, Ptr8Ty);
+        offsets.push_back(m);
+      }
+      GenerateVBaseOffsets(offsets, Base, Offset, Layout);
+    }
+  }
+
   void GenerateMethods(const CXXRecordDecl *RD) {
     llvm::Constant *m;
 
@@ -864,9 +884,8 @@ public:
     // The virtual base offsets come first...
     // FIXME: Audit, is this right?
     if (PrimaryBase == 0 || forPrimary || !PrimaryBaseWasVirtual) {
-      llvm::SmallSet<const CXXRecordDecl *, 32> SeenVBase;
       std::vector<llvm::Constant *> offsets;
-      GenerateVBaseOffsets(offsets, RD, SeenVBase, Offset, Layout);
+      GenerateVBaseOffsets(offsets, RD, Offset, Layout);
       for (std::vector<llvm::Constant *>::reverse_iterator i = offsets.rbegin(),
              e = offsets.rend(); i != e; ++i)
         methods.push_back(*i);
@@ -907,6 +926,7 @@ public:
         cast<CXXRecordDecl>(i->getType()->getAs<RecordType>()->getDecl());
       if (Base != PrimaryBase || PrimaryBaseWasVirtual) {
         uint64_t o = Offset + Layout.getBaseClassOffset(Base);
+        SeenVBase.clear();
         GenerateVtableForBase(Base, true, false, o, false);
       }
     }
@@ -921,30 +941,11 @@ public:
       if (i->isVirtual() && !IndirectPrimary.count(Base)) {
         // Mark it so we don't output it twice.
         IndirectPrimary.insert(Base);
+        SeenVBase.clear();
         GenerateVtableForBase(Base, false, true, 0, true);
       }
       if (Base->getNumVBases())
         GenerateVtableForVBases(Base, Class);
-    }
-  }
-
-  void GenerateVBaseOffsets(std::vector<llvm::Constant *> &offsets,
-                            const CXXRecordDecl *RD,
-                           llvm::SmallSet<const CXXRecordDecl *, 32> &SeenVBase,
-                            uint64_t Offset, const ASTRecordLayout &Layout) {
-    for (CXXRecordDecl::base_class_const_iterator i =RD->bases_begin(),
-           e = RD->bases_end(); i != e; ++i) {
-      const CXXRecordDecl *Base = 
-        cast<CXXRecordDecl>(i->getType()->getAs<RecordType>()->getDecl());
-      if (i->isVirtual() && !SeenVBase.count(Base)) {
-        SeenVBase.insert(Base);
-        int64_t BaseOffset = Offset/8 + Layout.getVBaseClassOffset(Base) / 8;
-        llvm::Constant *m;
-        m = llvm::ConstantInt::get(llvm::Type::getInt64Ty(VMContext), BaseOffset);
-        m = llvm::ConstantExpr::getIntToPtr(m, Ptr8Ty);
-        offsets.push_back(m);
-      }
-      GenerateVBaseOffsets(offsets, Base, SeenVBase, Offset, Layout);
     }
   }
 };
