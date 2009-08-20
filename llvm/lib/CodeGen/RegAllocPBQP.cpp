@@ -734,6 +734,7 @@ bool PBQPRegAlloc::mapPBQPToRegAlloc(const PBQP::Solution &solution) {
         lis->addIntervalsForSpills(*spillInterval, spillIs, loopInfo, *vrm);
       addStackInterval(spillInterval, mri);
 
+      (void) oldSpillWeight;
       DEBUG(errs() << "VREG " << virtReg << " -> SPILLED (Cost: "
                    << oldSpillWeight << ", New vregs: ");
 
