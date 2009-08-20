@@ -156,13 +156,13 @@ const TargetAlignElem TargetData::InvalidAlignmentElem =
  <br><br>
  <i>@verbatim<type><size>:<abi_align>:<pref_align>@endverbatim</i>: Numeric type
  alignment. Type is
- one of <i>i|f|v|a</i>, corresponding to integer, floating point, vector (aka
- packed) or aggregate.  Size indicates the size, e.g., 32 or 64 bits.
+ one of <i>i|f|v|a</i>, corresponding to integer, floating point, vector, or
+ aggregate.  Size indicates the size, e.g., 32 or 64 bits.
  \p
- The default string, fully specified is:
+ The default string, fully specified, is:
  <br><br>
- "E-p:64:64:64-a0:0:0-f32:32:32-f64:0:64"
- "-i1:8:8-i8:8:8-i16:16:16-i32:32:32-i64:0:64"
+ "E-p:64:64:64-a0:0:8-f32:32:32-f64:64:64"
+ "-i1:8:8-i8:8:8-i16:16:16-i32:32:32-i64:32:64"
  "-v64:64:64-v128:128:128"
  <br><br>
  Note that in the case of aggregates, 0 is the default ABI and preferred
@@ -185,9 +185,9 @@ void TargetData::init(const std::string &TargetDescription) {
   setAlignment(INTEGER_ALIGN,   4,  8, 64);  // i64
   setAlignment(FLOAT_ALIGN,     4,  4, 32);  // float
   setAlignment(FLOAT_ALIGN,     8,  8, 64);  // double
-  setAlignment(VECTOR_ALIGN,    8,  8, 64);  // v2i32
+  setAlignment(VECTOR_ALIGN,    8,  8, 64);  // v2i32, v1i64, ...
   setAlignment(VECTOR_ALIGN,   16, 16, 128); // v16i8, v8i16, v4i32, ...
-  setAlignment(AGGREGATE_ALIGN, 0,  8,  0);  // struct, union, class, ...
+  setAlignment(AGGREGATE_ALIGN, 0,  8,  0);  // struct
 
   while (!temp.empty()) {
     std::string token = getToken(temp, "-");
