@@ -215,41 +215,6 @@ void Sema::DefaultFunctionArrayConversion(Expr *&E) {
   }
 }
 
-/// \brief Whether this is a promotable bitfield reference according
-/// to C99 6.3.1.1p2, bullet 2.
-///
-/// \returns the type this bit-field will promote to, or NULL if no
-/// promotion occurs.
-static QualType isPromotableBitField(Expr *E, ASTContext &Context) {
-  FieldDecl *Field = E->getBitField();
-  if (!Field)
-    return QualType();
-
-  const BuiltinType *BT = Field->getType()->getAsBuiltinType();
-  if (!BT)
-    return QualType();
-
-  if (BT->getKind() != BuiltinType::Bool &&
-      BT->getKind() != BuiltinType::Int &&
-      BT->getKind() != BuiltinType::UInt) 
-    return QualType();
-
-  llvm::APSInt BitWidthAP;
-  if (!Field->getBitWidth()->isIntegerConstantExpr(BitWidthAP, Context))
-    return QualType();
-
-  uint64_t BitWidth = BitWidthAP.getZExtValue();
-  uint64_t IntSize = Context.getTypeSize(Context.IntTy);
-  if (BitWidth < IntSize ||
-      (Field->getType()->isSignedIntegerType() && BitWidth == IntSize))
-    return Context.IntTy;
-
-  if (BitWidth == IntSize && Field->getType()->isUnsignedIntegerType())
-    return Context.UnsignedIntTy;
-
-  return QualType();
-}
-
 /// UsualUnaryConversions - Performs various conversions that are common to most
 /// operators (C99 6.3). The conversions of array and function types are 
 /// sometimes surpressed. For example, the array->pointer conversion doesn't
@@ -272,18 +237,17 @@ Expr *Sema::UsualUnaryConversions(Expr *&Expr) {
   //   value is converted to an int; otherwise, it is converted to an
   //   unsigned int. These are called the integer promotions. All
   //   other types are unchanged by the integer promotions.
+  QualType PTy = Context.isPromotableBitField(Expr);
+  if (!PTy.isNull()) {
+    ImpCastExprToType(Expr, PTy);
+    return Expr;
+  }
   if (Ty->isPromotableIntegerType()) {
     QualType PT = Context.getPromotedIntegerType(Ty);
     ImpCastExprToType(Expr, PT);
     return Expr;
-  } else {
-    QualType T = isPromotableBitField(Expr, Context);
-    if (!T.isNull()) {
-      ImpCastExprToType(Expr, T);
-      return Expr;
-    }
-  } 
-    
+  }
+
   DefaultFunctionArrayConversion(Expr);
   return Expr;
 }
@@ -355,10 +319,10 @@ QualType Sema::UsualArithmeticConversions(Expr *&lhsExpr, Expr *&rhsExpr,
     return lhs;
 
   // Perform bitfield promotions.
-  QualType LHSBitfieldPromoteTy = isPromotableBitField(lhsExpr, Context);
+  QualType LHSBitfieldPromoteTy = Context.isPromotableBitField(lhsExpr);
   if (!LHSBitfieldPromoteTy.isNull())
     lhs = LHSBitfieldPromoteTy;
-  QualType RHSBitfieldPromoteTy = isPromotableBitField(rhsExpr, Context);
+  QualType RHSBitfieldPromoteTy = Context.isPromotableBitField(rhsExpr);
   if (!RHSBitfieldPromoteTy.isNull())
     rhs = RHSBitfieldPromoteTy;
 
@@ -3948,15 +3912,12 @@ inline QualType Sema::CheckAdditionOperands( // C99 6.5.6
       }
       
       if (CompLHSTy) {
-        QualType LHSTy = lex->getType();
-        if (LHSTy->isPromotableIntegerType())
-          LHSTy = Context.getPromotedIntegerType(LHSTy);
-        else {
-          QualType T = isPromotableBitField(lex, Context);
-          if (!T.isNull())
-            LHSTy = T;
+        QualType LHSTy = Context.isPromotableBitField(lex);
+        if (LHSTy.isNull()) {
+          LHSTy = lex->getType();
+          if (LHSTy->isPromotableIntegerType())
+            LHSTy = Context.getPromotedIntegerType(LHSTy);
         }
-
         *CompLHSTy = LHSTy;
       }
       return PExp->getType();
@@ -4118,13 +4079,11 @@ QualType Sema::CheckShiftOperands(Expr *&lex, Expr *&rex, SourceLocation Loc,
 
   // Shifts don't perform usual arithmetic conversions, they just do integer
   // promotions on each operand. C99 6.5.7p3
-  QualType LHSTy = lex->getType();
-  if (LHSTy->isPromotableIntegerType())
-    LHSTy = Context.getPromotedIntegerType(LHSTy);
-  else {
-    QualType T = isPromotableBitField(lex, Context);
-    if (!T.isNull())
-      LHSTy = T;
+  QualType LHSTy = Context.isPromotableBitField(lex);
+  if (LHSTy.isNull()) {
+    LHSTy = lex->getType();
+    if (LHSTy->isPromotableIntegerType())
+      LHSTy = Context.getPromotedIntegerType(LHSTy);
   }
   if (!isCompAssign)
     ImpCastExprToType(lex, LHSTy);

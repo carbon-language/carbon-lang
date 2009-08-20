@@ -818,6 +818,13 @@ public:
   /// integer type.
   QualType getPromotedIntegerType(QualType PromotableType);
 
+  /// \brief Whether this is a promotable bitfield reference according
+  /// to C99 6.3.1.1p2, bullet 2 (and GCC extensions).
+  ///
+  /// \returns the type this bit-field will promote to, or NULL if no
+  /// promotion occurs.
+  QualType isPromotableBitField(Expr *E);
+
   /// getIntegerTypeOrder - Returns the highest ranked integer type: 
   /// C99 6.3.1.8p1.  If LHS > RHS, return 1.  If LHS == RHS, return 0. If
   /// LHS < RHS, return -1. 

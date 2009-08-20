@@ -2487,6 +2487,37 @@ unsigned ASTContext::getIntegerRank(Type *T) {
   }
 }
 
+/// \brief Whether this is a promotable bitfield reference according
+/// to C99 6.3.1.1p2, bullet 2 (and GCC extensions).
+///
+/// \returns the type this bit-field will promote to, or NULL if no
+/// promotion occurs.
+QualType ASTContext::isPromotableBitField(Expr *E) {
+  FieldDecl *Field = E->getBitField();
+  if (!Field)
+    return QualType();
+
+  QualType FT = Field->getType();
+
+  llvm::APSInt BitWidthAP = Field->getBitWidth()->EvaluateAsInt(*this);
+  uint64_t BitWidth = BitWidthAP.getZExtValue();
+  uint64_t IntSize = getTypeSize(IntTy);
+  // GCC extension compatibility: if the bit-field size is less than or equal
+  // to the size of int, it gets promoted no matter what its type is.
+  // For instance, unsigned long bf : 4 gets promoted to signed int.
+  if (BitWidth < IntSize)
+    return IntTy;
+
+  if (BitWidth == IntSize)
+    return FT->isSignedIntegerType() ? IntTy : UnsignedIntTy;
+
+  // Types bigger than int are not subject to promotions, and therefore act
+  // like the base type.
+  // FIXME: This doesn't quite match what gcc does, but what gcc does here
+  // is ridiculous.
+  return QualType();
+}
+
 /// getPromotedIntegerType - Returns the type that Promotable will
 /// promote to: C99 6.3.1.1p2, assuming that Promotable is a promotable
 /// integer type.
