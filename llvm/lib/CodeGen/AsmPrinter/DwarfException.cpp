@@ -272,6 +272,19 @@ unsigned DwarfException::
 ComputeActionsTable(const SmallVectorImpl<const LandingPadInfo*> &LandingPads,
                     SmallVectorImpl<ActionEntry> &Actions,
                     SmallVectorImpl<unsigned> &FirstActions) {
+
+  // The action table follows the call-site table in the LSDA. The individual
+  // records are of two types:
+  //
+  //   * Catch clause
+  //   * Exception specification
+  //
+  // The two record kinds have the same format, with only small differences.
+  // They are distinguished by the "switch value" field: Catch clauses
+  // (TypeInfos) have strictly positive switch values, and exception
+  // specifications (FilterIds) have strictly negative switch values. Value 0
+  // indicates a catch-all clause.
+  //
   // Negative type IDs index into FilterIds. Positive type IDs index into
   // TypeInfos.  The value written for a positive type ID is just the type ID
   // itself.  For a negative type ID, however, the value written is the
@@ -337,7 +350,7 @@ ComputeActionsTable(const SmallVectorImpl<const LandingPadInfo*> &LandingPads,
         SizeAction = SizeTypeID + TargetAsmInfo::getSLEB128Size(NextAction);
         SizeSiteActions += SizeAction;
 
-        ActionEntry Action = {ValueForTypeID, NextAction, PrevAction};
+        ActionEntry Action = { ValueForTypeID, NextAction, PrevAction };
         Actions.push_back(Action);
         PrevAction = &Actions.back();
       }
@@ -346,6 +359,11 @@ ComputeActionsTable(const SmallVectorImpl<const LandingPadInfo*> &LandingPads,
       FirstAction = SizeActions + SizeSiteActions - SizeAction + 1;
     } // else identical - re-use previous FirstAction
 
+    // Information used when created the call-site table. The action record
+    // field of the call site record is the offset of the first associated
+    // action record, relative to the start of the actions table. This value is
+    // biased by 1 (1 in dicating the start of the actions table), and 0
+    // indicates that there are no actions.
     FirstActions.push_back(FirstAction);
 
     // Compute this sites contribution to size.
@@ -358,7 +376,7 @@ ComputeActionsTable(const SmallVectorImpl<const LandingPadInfo*> &LandingPads,
 }
 
 /// ComputeCallSiteTable - Compute the call-site table.  The entry for an invoke
-/// has a try-range containing the call, a non-zero landing pad and an
+/// has a try-range containing the call, a non-zero landing pad, and an
 /// appropriate action.  The entry for an ordinary call has a try-range
 /// containing the call and zero for the landing pad and the action.  Calls
 /// marked 'nounwind' have no entry and must not be contained in the try-range
@@ -402,18 +420,18 @@ ComputeCallSiteTable(SmallVectorImpl<CallSiteEntry> &CallSites,
         // Nope, it was just some random label.
         continue;
 
-      PadRange P = L->second;
+      const PadRange &P = L->second;
       const LandingPadInfo *LandingPad = LandingPads[P.PadIndex];
       assert(BeginLabel == LandingPad->BeginLabels[P.RangeIndex] &&
              "Inconsistent landing pad map!");
 
-      // For Dwarf exception handling (SjLj handling doesn't use this)
-      // If some instruction between the previous try-range and this one may
-      // throw, create a call-site entry with no landing pad for the region
-      // between the try-ranges.
+      // For Dwarf exception handling (SjLj handling doesn't use this). If some
+      // instruction between the previous try-range and this one may throw,
+      // create a call-site entry with no landing pad for the region between the
+      // try-ranges.
       if (SawPotentiallyThrowing &&
           TAI->getExceptionHandlingType() == ExceptionHandling::Dwarf) {
-        CallSiteEntry Site = {LastLabel, BeginLabel, 0, 0};
+        CallSiteEntry Site = { LastLabel, BeginLabel, 0, 0 };
         CallSites.push_back(Site);
         PreviousIsInvoke = false;
       }
@@ -423,9 +441,12 @@ ComputeCallSiteTable(SmallVectorImpl<CallSiteEntry> &CallSites,
 
       if (LandingPad->LandingPadLabel) {
         // This try-range is for an invoke.
-        CallSiteEntry Site = {BeginLabel, LastLabel,
-                              LandingPad->LandingPadLabel,
-                              FirstActions[P.PadIndex]};
+        CallSiteEntry Site = {
+          BeginLabel,
+          LastLabel,
+          LandingPad->LandingPadLabel,
+          FirstActions[P.PadIndex]
+        };
 
         // Try to merge with the previous call-site.
         if (PreviousIsInvoke) {
@@ -452,7 +473,7 @@ ComputeCallSiteTable(SmallVectorImpl<CallSiteEntry> &CallSites,
   // region following the try-range.
   if (SawPotentiallyThrowing &&
       TAI->getExceptionHandlingType() == ExceptionHandling::Dwarf) {
-    CallSiteEntry Site = {LastLabel, 0, 0, 0};
+    CallSiteEntry Site = { LastLabel, 0, 0, 0 };
     CallSites.push_back(Site);
   }
 }
@@ -468,14 +489,14 @@ ComputeCallSiteTable(SmallVectorImpl<CallSiteEntry> &CallSites,
 ///     invokes in the try.  There is also a reference to the landing pad that
 ///     handles the exception once processed.  Finally an index into the actions
 ///     table.
-///  2. The action table, in our case, is composed of pairs of type ids and next
+///  2. The action table, in our case, is composed of pairs of type IDs and next
 ///     action offset.  Starting with the action index from the landing pad
-///     site, each type Id is checked for a match to the current exception.  If
+///     site, each type ID is checked for a match to the current exception.  If
 ///     it matches then the exception and type id are passed on to the landing
 ///     pad.  Otherwise the next action is looked up.  This chain is terminated
 ///     with a next action of zero.  If no type id is found the the frame is
 ///     unwound and handling continues.
-///  3. Type id table contains references to all the C++ typeinfo for all
+///  3. Type ID table contains references to all the C++ typeinfo for all
 ///     catches in the function.  This tables is reversed indexed base 1.
 void DwarfException::EmitExceptionTable() {
   const std::vector<GlobalVariable *> &TypeInfos = MMI->getTypeInfos();
@@ -575,14 +596,14 @@ void DwarfException::EmitExceptionTable() {
 
   // Emit the header.
   Asm->EmitInt8(dwarf::DW_EH_PE_omit);
-  Asm->EOL("LPStart format (DW_EH_PE_omit)");
+  Asm->EOL("@LPStart format (DW_EH_PE_omit)");
 
 #if 0
   if (TypeInfos.empty() && FilterIds.empty()) {
     // If there are no typeinfos or filters, there is nothing to emit, optimize
     // by specifying the "omit" encoding.
     Asm->EmitInt8(dwarf::DW_EH_PE_omit);
-    Asm->EOL("TType format (DW_EH_PE_omit)");
+    Asm->EOL("@TType format (DW_EH_PE_omit)");
   } else {
     // Okay, we have actual filters or typeinfos to emit.  As such, we need to
     // pick a type encoding for them.  We're about to emit a list of pointers to
@@ -626,12 +647,12 @@ void DwarfException::EmitExceptionTable() {
   // FIXME: does this apply to Dwarf also? The above #if 0 implies yes?
   if (!HaveTTData) {
     Asm->EmitInt8(dwarf::DW_EH_PE_omit);
-    Asm->EOL("TType format (DW_EH_PE_omit)");
+    Asm->EOL("@TType format (DW_EH_PE_omit)");
   } else {
     Asm->EmitInt8(dwarf::DW_EH_PE_absptr);
-    Asm->EOL("TType format (DW_EH_PE_absptr)");
+    Asm->EOL("@TType format (DW_EH_PE_absptr)");
     Asm->EmitULEB128Bytes(TypeOffset);
-    Asm->EOL("TType base offset");
+    Asm->EOL("@TType base offset");
   }
 #endif
 
@@ -640,15 +661,22 @@ void DwarfException::EmitExceptionTable() {
     Asm->EmitInt8(dwarf::DW_EH_PE_udata4);
     Asm->EOL("Call site format (DW_EH_PE_udata4)");
     Asm->EmitULEB128Bytes(SizeSites);
-    Asm->EOL("Call-site table length");
+    Asm->EOL("Call site table length");
 
     // Emit the landing pad site information.
     unsigned idx = 0;
     for (SmallVectorImpl<CallSiteEntry>::const_iterator
          I = CallSites.begin(), E = CallSites.end(); I != E; ++I, ++idx) {
       const CallSiteEntry &S = *I;
+
+      // Offset of the landing pad, counted in 16-byte bundles relative to the
+      // @LPStart address.
       Asm->EmitULEB128Bytes(idx);
       Asm->EOL("Landing pad");
+
+      // Offset of the first associated action record, relative to the start of
+      // the action table. This value is biased by 1 (1 indicates the start of
+      // the action table), and 0 indicates that there are no actions.
       Asm->EmitULEB128Bytes(S.Action);
       Asm->EOL("Action");
     }
@@ -656,12 +684,38 @@ void DwarfException::EmitExceptionTable() {
     // DWARF Exception handling
     assert(TAI->getExceptionHandlingType() == ExceptionHandling::Dwarf);
 
+    // The call-site table is a list of all call sites that may throw an
+    // exception (including C++ 'throw' statements) in the procedure
+    // fragment. It immediately follows the LSDA header. Each entry indicates,
+    // for a given call, the first corresponding action record and corresponding
+    // landing pad.
+    //
+    // The table begins with the number of bytes, stored as an LEB128
+    // compressed, unsigned integer. The records immediately follow the record
+    // count. They are sorted in increasing call-site address. Each record
+    // indicates:
+    //
+    //   * The position of the call-site.
+    //   * The position of the landing pad.
+    //   * The first action record for that call site.
+    //
+    // A missing entry in the call-site table indicates that a call is not
+    // supposed to throw. Such calls include:
+    //
+    //   * Calls to destructors within cleanup code. C++ semantics forbids these
+    //     calls to throw.
+    //   * Calls to intrinsic routines in the standard library which are known
+    //     not to throw (sin, memcpy, et al).
+    //
+    // If the runtime does not find the call-site entry for a given call, it
+    // will call `terminate()'.
+
+    // Emit the landing pad call site table.
     Asm->EmitInt8(dwarf::DW_EH_PE_udata4);
     Asm->EOL("Call site format (DW_EH_PE_udata4)");
     Asm->EmitULEB128Bytes(SizeSites);
-    Asm->EOL("Call-site table length");
+    Asm->EOL("Call site table size");
 
-    // Emit the landing pad site information.
     for (SmallVectorImpl<CallSiteEntry>::const_iterator
          I = CallSites.begin(), E = CallSites.end(); I != E; ++I) {
       const CallSiteEntry &S = *I;
@@ -676,6 +730,9 @@ void DwarfException::EmitExceptionTable() {
         BeginNumber = S.BeginLabel;
       }
 
+      // Offset of the call site relative to the previous call site, counted in
+      // number of 16-byte bundles. The first call site is counted relative to
+      // the start of the procedure fragment.
       EmitSectionOffset(BeginTag, "eh_func_begin", BeginNumber, SubprogramCount,
                         true, true);
       Asm->EOL("Region start");
@@ -688,6 +745,8 @@ void DwarfException::EmitExceptionTable() {
 
       Asm->EOL("Region length");
 
+      // Offset of the landing pad, counted in 16-byte bundles relative to the
+      // @LPStart address.
       if (!S.PadLabel)
         Asm->EmitInt32(0);
       else
@@ -696,25 +755,61 @@ void DwarfException::EmitExceptionTable() {
 
       Asm->EOL("Landing pad");
 
+      // Offset of the first associated action record, relative to the start of
+      // the action table. This value is biased by 1 (1 indicates the start of
+      // the action table), and 0 indicates that there are no actions.
       Asm->EmitULEB128Bytes(S.Action);
       Asm->EOL("Action");
     }
   }
 
-  // Emit the actions.
+  // Emit the Action Table.
   for (SmallVectorImpl<ActionEntry>::const_iterator
          I = Actions.begin(), E = Actions.end(); I != E; ++I) {
     const ActionEntry &Action = *I;
+
+    // Type Filter
+    //
+    //   Used by the runtime to match the type of the thrown exception to the
+    //   type of the catch clauses or the types in the exception specification.
+
     Asm->EmitSLEB128Bytes(Action.ValueForTypeID);
     Asm->EOL("TypeInfo index");
+
+    // Action Record
+    //
+    //   Self-relative signed displacement in bytes of the next action record,
+    //   or 0 if there is no next action record.
+
     Asm->EmitSLEB128Bytes(Action.NextAction);
     Asm->EOL("Next action");
   }
 
-  // Emit the type ids.
+  // Emit the Catch Clauses. The code for the catch clauses following the same
+  // try is similar to a switch statement. The catch clause action record
+  // informs the runtime about the type of a catch clause and about the
+  // associated switch value.
+  //
+  //  Action Record Fields:
+  //  
+  //   * Filter Value
+  //     Positive value, starting at 1. Index in the types table of the
+  //     __typeinfo for the catch-clause type. 1 is the first word preceding
+  //     TTBase, 2 is the second word, and so on. Used by the runtime to check
+  //     if the thrown exception type matches the catch-clause type. Back-end
+  //     generated switch statements check against this value.
+  //
+  //   * Next
+  //     Signed offset, in bytes from the start of this field, to the next
+  //     chained action record, or zero if none.
+  //
+  // The order of the action records determined by the next field is the order
+  // of the catch clauses as they appear in the source code, and must be kept in
+  // the same order. As a result, changing the order of the catch clause would
+  // change the semantics of the program.
   for (std::vector<GlobalVariable *>::const_reverse_iterator
          I = TypeInfos.rbegin(), E = TypeInfos.rend(); I != E; ++I) {
-    GlobalVariable *GV = *I;
+    const GlobalVariable *GV = *I;
     PrintRelDirective();
 
     if (GV) {
@@ -727,7 +822,7 @@ void DwarfException::EmitExceptionTable() {
     Asm->EOL("TypeInfo");
   }
 
-  // Emit the filter typeids.
+  // Emit the Type Table.
   for (std::vector<unsigned>::const_iterator
          I = FilterIds.begin(), E = FilterIds.end(); I < E; ++I) {
     unsigned TypeID = *I;
