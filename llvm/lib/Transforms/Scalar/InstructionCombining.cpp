@@ -3084,7 +3084,7 @@ Instruction *InstCombiner::visitSDiv(BinaryOperator &I) {
     if (SubOperator *Sub = dyn_cast<SubOperator>(Op0))
       if (isa<Constant>(Sub->getOperand(0)) &&
           cast<Constant>(Sub->getOperand(0))->isNullValue() &&
-          Sub->hasNoSignedOverflow())
+          Sub->hasNoSignedWrap())
         return BinaryOperator::CreateSDiv(Sub->getOperand(1),
                                           ConstantExpr::getNeg(RHS));
   }

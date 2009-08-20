@@ -461,10 +461,10 @@ static uint64_t GetOptimizationFlags(const Value *V) {
 
   if (const OverflowingBinaryOperator *OBO =
         dyn_cast<OverflowingBinaryOperator>(V)) {
-    if (OBO->hasNoSignedOverflow())
-      Flags |= 1 << bitc::OBO_NO_SIGNED_OVERFLOW;
-    if (OBO->hasNoUnsignedOverflow())
-      Flags |= 1 << bitc::OBO_NO_UNSIGNED_OVERFLOW;
+    if (OBO->hasNoSignedWrap())
+      Flags |= 1 << bitc::OBO_NO_SIGNED_WRAP;
+    if (OBO->hasNoUnsignedWrap())
+      Flags |= 1 << bitc::OBO_NO_UNSIGNED_WRAP;
   } else if (const SDivOperator *Div = dyn_cast<SDivOperator>(V)) {
     if (Div->isExact())
       Flags |= 1 << bitc::SDIV_EXACT;

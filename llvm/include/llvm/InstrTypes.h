@@ -201,19 +201,19 @@ public:
   static BinaryOperator *CreateNSWAdd(Value *V1, Value *V2,
                                       const Twine &Name = "") {
     BinaryOperator *BO = CreateAdd(V1, V2, Name);
-    cast<AddOperator>(BO)->setHasNoSignedOverflow(true);
+    cast<AddOperator>(BO)->setHasNoSignedWrap(true);
     return BO;
   }
   static BinaryOperator *CreateNSWAdd(Value *V1, Value *V2,
                                       const Twine &Name, BasicBlock *BB) {
     BinaryOperator *BO = CreateAdd(V1, V2, Name, BB);
-    cast<AddOperator>(BO)->setHasNoSignedOverflow(true);
+    cast<AddOperator>(BO)->setHasNoSignedWrap(true);
     return BO;
   }
   static BinaryOperator *CreateNSWAdd(Value *V1, Value *V2,
                                       const Twine &Name, Instruction *I) {
     BinaryOperator *BO = CreateAdd(V1, V2, Name, I);
-    cast<AddOperator>(BO)->setHasNoSignedOverflow(true);
+    cast<AddOperator>(BO)->setHasNoSignedWrap(true);
     return BO;
   }
 

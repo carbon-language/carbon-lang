@@ -69,21 +69,21 @@ public:
 class OverflowingBinaryOperator : public Operator {
   ~OverflowingBinaryOperator(); // do not implement
 public:
-  /// hasNoUnsignedOverflow - Test whether this operation is known to never
-  /// undergo unsigned overflow.
-  bool hasNoUnsignedOverflow() const {
+  /// hasNoUnsignedWrap - Test whether this operation is known to never
+  /// undergo unsigned overflow, aka the nuw property.
+  bool hasNoUnsignedWrap() const {
     return SubclassOptionalData & (1 << 0);
   }
-  void setHasNoUnsignedOverflow(bool B) {
+  void setHasNoUnsignedWrap(bool B) {
     SubclassOptionalData = (SubclassOptionalData & ~(1 << 0)) | (B << 0);
   }
 
-  /// hasNoSignedOverflow - Test whether this operation is known to never
-  /// undergo signed overflow.
-  bool hasNoSignedOverflow() const {
+  /// hasNoSignedWrap - Test whether this operation is known to never
+  /// undergo signed overflow, aka the nsw property.
+  bool hasNoSignedWrap() const {
     return SubclassOptionalData & (1 << 1);
   }
-  void setHasNoSignedOverflow(bool B) {
+  void setHasNoSignedWrap(bool B) {
     SubclassOptionalData = (SubclassOptionalData & ~(1 << 1)) | (B << 1);
   }
 

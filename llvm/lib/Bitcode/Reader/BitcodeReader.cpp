@@ -883,10 +883,10 @@ bool BitcodeReader::ResolveGlobalAndAliasInits() {
 static void SetOptimizationFlags(Value *V, uint64_t Flags) {
   if (OverflowingBinaryOperator *OBO =
         dyn_cast<OverflowingBinaryOperator>(V)) {
-    if (Flags & (1 << bitc::OBO_NO_SIGNED_OVERFLOW))
-      OBO->setHasNoSignedOverflow(true);
-    if (Flags & (1 << bitc::OBO_NO_UNSIGNED_OVERFLOW))
-      OBO->setHasNoUnsignedOverflow(true);
+    if (Flags & (1 << bitc::OBO_NO_SIGNED_WRAP))
+      OBO->setHasNoSignedWrap(true);
+    if (Flags & (1 << bitc::OBO_NO_UNSIGNED_WRAP))
+      OBO->setHasNoUnsignedWrap(true);
   } else if (SDivOperator *Div = dyn_cast<SDivOperator>(V)) {
     if (Flags & (1 << bitc::SDIV_EXACT))
       Div->setIsExact(true);

@@ -895,9 +895,9 @@ static void WriteMDNodes(formatted_raw_ostream &Out, TypePrinting &TypePrinter,
 static void WriteOptimizationInfo(raw_ostream &Out, const User *U) {
   if (const OverflowingBinaryOperator *OBO =
         dyn_cast<OverflowingBinaryOperator>(U)) {
-    if (OBO->hasNoUnsignedOverflow())
+    if (OBO->hasNoUnsignedWrap())
       Out << " nuw";
-    if (OBO->hasNoSignedOverflow())
+    if (OBO->hasNoSignedWrap())
       Out << " nsw";
   } else if (const SDivOperator *Div = dyn_cast<SDivOperator>(U)) {
     if (Div->isExact())

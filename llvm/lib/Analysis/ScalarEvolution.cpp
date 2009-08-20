@@ -795,7 +795,7 @@ const SCEV *ScalarEvolution::getZeroExtendExpr(const SCEV *Op,
 
       // If we have special knowledge that this addrec won't overflow,
       // we don't need to do any further analysis.
-      if (AR->hasNoUnsignedOverflow())
+      if (AR->hasNoUnsignedWrap())
         return getAddRecExpr(getZeroExtendExpr(Start, Ty),
                              getZeroExtendExpr(Step, Ty),
                              L);
@@ -934,7 +934,7 @@ const SCEV *ScalarEvolution::getSignExtendExpr(const SCEV *Op,
 
       // If we have special knowledge that this addrec won't overflow,
       // we don't need to do any further analysis.
-      if (AR->hasNoSignedOverflow())
+      if (AR->hasNoSignedWrap())
         return getAddRecExpr(getSignExtendExpr(Start, Ty),
                              getSignExtendExpr(Step, Ty),
                              L);
@@ -2497,17 +2497,17 @@ const SCEV *ScalarEvolution::createNodeForPHI(PHINode *PN) {
                     getSCEV(OBO->getOperand(1)) ==
                       PHISCEV->getStepRecurrence(*this)) {
                   const SCEVAddRecExpr *PostInc = PHISCEV->getPostIncExpr(*this);
-                  if (OBO->hasNoUnsignedOverflow()) {
+                  if (OBO->hasNoUnsignedWrap()) {
                     const_cast<SCEVAddRecExpr *>(PHISCEV)
-                      ->setHasNoUnsignedOverflow(true);
+                      ->setHasNoUnsignedWrap(true);
                     const_cast<SCEVAddRecExpr *>(PostInc)
-                      ->setHasNoUnsignedOverflow(true);
+                      ->setHasNoUnsignedWrap(true);
                   }
-                  if (OBO->hasNoSignedOverflow()) {
+                  if (OBO->hasNoSignedWrap()) {
                     const_cast<SCEVAddRecExpr *>(PHISCEV)
-                      ->setHasNoSignedOverflow(true);
+                      ->setHasNoSignedWrap(true);
                     const_cast<SCEVAddRecExpr *>(PostInc)
-                      ->setHasNoSignedOverflow(true);
+                      ->setHasNoSignedWrap(true);
                   }
                 }
 

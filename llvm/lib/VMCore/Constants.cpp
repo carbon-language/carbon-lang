@@ -634,7 +634,7 @@ Constant* ConstantExpr::getNSWAdd(Constant* C1, Constant* C2) {
   // Set nsw attribute, assuming constant folding didn't eliminate the
   // Add.
   if (AddOperator *Add = dyn_cast<AddOperator>(C))
-    Add->setHasNoSignedOverflow(true);
+    Add->setHasNoSignedWrap(true);
   return C;
 }
 

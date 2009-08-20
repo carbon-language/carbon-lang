@@ -2082,9 +2082,9 @@ bool LLParser::ParseValID(ValID &ID) {
       return Error(ID.Loc,"constexpr requires integer, fp, or vector operands");
     Constant *C = ConstantExpr::get(Opc, Val0, Val1);
     if (NUW)
-      cast<OverflowingBinaryOperator>(C)->setHasNoUnsignedOverflow(true);
+      cast<OverflowingBinaryOperator>(C)->setHasNoUnsignedWrap(true);
     if (NSW)
-      cast<OverflowingBinaryOperator>(C)->setHasNoSignedOverflow(true);
+      cast<OverflowingBinaryOperator>(C)->setHasNoSignedWrap(true);
     if (Exact)
       cast<SDivOperator>(C)->setIsExact(true);
     ID.ConstantVal = C;
@@ -2665,9 +2665,9 @@ bool LLParser::ParseInstruction(Instruction *&Inst, BasicBlock *BB,
           return Error(ModifierLoc, "nsw only applies to integer operations");
       }
       if (NUW)
-        cast<OverflowingBinaryOperator>(Inst)->setHasNoUnsignedOverflow(true);
+        cast<OverflowingBinaryOperator>(Inst)->setHasNoUnsignedWrap(true);
       if (NSW)
-        cast<OverflowingBinaryOperator>(Inst)->setHasNoSignedOverflow(true);
+        cast<OverflowingBinaryOperator>(Inst)->setHasNoSignedWrap(true);
     }
     return Result;
   }

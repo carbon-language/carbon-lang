@@ -426,12 +426,12 @@ namespace llvm {
       return cast<SCEVAddRecExpr>(SE.getAddExpr(this, getStepRecurrence(SE)));
     }
 
-    bool hasNoUnsignedOverflow() const { return SubclassData & (1 << 0); }
-    void setHasNoUnsignedOverflow(bool B) {
+    bool hasNoUnsignedWrap() const { return SubclassData & (1 << 0); }
+    void setHasNoUnsignedWrap(bool B) {
       SubclassData = (SubclassData & ~(1 << 0)) | (B << 0);
     }
-    bool hasNoSignedOverflow() const { return SubclassData & (1 << 1); }
-    void setHasNoSignedOverflow(bool B) {
+    bool hasNoSignedWrap() const { return SubclassData & (1 << 1); }
+    void setHasNoSignedWrap(bool B) {
       SubclassData = (SubclassData & ~(1 << 1)) | (B << 1);
     }
 

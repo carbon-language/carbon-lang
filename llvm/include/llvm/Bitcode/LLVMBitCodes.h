@@ -180,8 +180,8 @@ namespace bitc {
   /// OverflowingBinaryOperatorOptionalFlags - Flags for serializing
   /// OverflowingBinaryOperator's SubclassOptionalData contents.
   enum OverflowingBinaryOperatorOptionalFlags {
-    OBO_NO_UNSIGNED_OVERFLOW = 0,
-    OBO_NO_SIGNED_OVERFLOW = 1
+    OBO_NO_UNSIGNED_WRAP = 0,
+    OBO_NO_SIGNED_WRAP = 1
   };
 
   /// SDivOperatorOptionalFlags - Flags for serializing SDivOperator's
