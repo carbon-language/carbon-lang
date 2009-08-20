@@ -58,6 +58,9 @@ void llvm_report_error(const Twine &reason) {
 
 void llvm_unreachable_internal(const char *msg, const char *file, 
                                unsigned line) {
+  // This code intentionally doesn't call the ErrorHandler callback, because
+  // llvm_unreachable is intended to be used to indicate "impossible"
+  // situations, and not legitimate runtime errors.
   if (msg)
     errs() << msg << "\n";
   errs() << "UNREACHABLE executed";
