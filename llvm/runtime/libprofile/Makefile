@@ -8,7 +8,9 @@
 ##===----------------------------------------------------------------------===##
 
 LEVEL = ../..
+ifneq ($(wildcard $(LLVMGCC)),)
 BYTECODE_LIBRARY = 1
+endif
 SHARED_LIBRARY = 1
 LOADABLE_MODULE = 1
 LIBRARYNAME = profile_rt
