@@ -655,7 +655,7 @@ let isCall = 1,
 def : T1Pat<(addc   tGPR:$lhs, imm0_7:$rhs),
             (tADDi3 tGPR:$lhs, imm0_7:$rhs)>;
 def : T1Pat<(addc   tGPR:$lhs, imm8_255:$rhs),
-            (tADDi3 tGPR:$lhs, imm8_255:$rhs)>;
+            (tADDi8 tGPR:$lhs, imm8_255:$rhs)>;
 def : T1Pat<(addc   tGPR:$lhs, tGPR:$rhs),
             (tADDrr tGPR:$lhs, tGPR:$rhs)>;
 
