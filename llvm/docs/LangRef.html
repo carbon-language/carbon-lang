@@ -4004,11 +4004,11 @@ entry:
 <p>If the <tt>inbounds</tt> keyword is present, the result value of the
    <tt>getelementptr</tt> is undefined if the base pointer is not an
    <i>in bounds</i> address of an allocated object, or if any of the addresses
-   formed by successive addition of the offsets implied by the indices to
-   the base address are not an <i>in bounds</i> address of that allocated
-   object.
+   that would be formed by successive addition of the offsets implied by the
+   indices to the base address with infinitely precise arithmetic are not an
+   <i>in bounds</i> address of that allocated object.
    The <i>in bounds</i> addresses for an allocated object are all the addresses
-   that point into the object, plus the address one past the end.</p>
+   that point into the object, plus the address one byte past the end.</p>
 
 <p>If the <tt>inbounds</tt> keyword is not present, the offsets are added to
    the base address with silently-wrapping two's complement arithmetic, and
