@@ -60,6 +60,8 @@ TEST(APFloatTest, fromString) {
   EXPECT_EQ(0.0,  APFloat(APFloat::IEEEdouble, "0x0000.00000p1234").convertToDouble());
   EXPECT_EQ(0.0,  APFloat(APFloat::IEEEdouble, "0x.00000p1234").convertToDouble());
   EXPECT_EQ(0.0,  APFloat(APFloat::IEEEdouble, "0x0.p1234").convertToDouble());
+  EXPECT_EQ(1.0625,  APFloat(APFloat::IEEEdouble, "0x1.1p0").convertToDouble());
+  EXPECT_EQ(1.0,  APFloat(APFloat::IEEEdouble, "0x1p0").convertToDouble());
 
   EXPECT_EQ(0.0,  APFloat(APFloat::IEEEdouble, StringRef("0e1\02", 3)).convertToDouble());
 }

@@ -2153,7 +2153,7 @@ APFloat::convertFromHexadecimalString(const StringRef &s,
     integerPart hex_value;
 
     if(*p == '.') {
-      assert(dot == 0);
+      assert(dot == s.end());
       dot = p++;
     }
 
@@ -2190,7 +2190,7 @@ APFloat::convertFromHexadecimalString(const StringRef &s,
     int expAdjustment;
 
     /* Implicit hexadecimal point?  */
-    if(!dot)
+    if (dot == s.end())
       dot = p;
 
     /* Calculate the exponent adjustment implicit in the number of
