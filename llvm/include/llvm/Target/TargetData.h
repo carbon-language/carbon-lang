@@ -91,6 +91,9 @@ private:
    */
   static const TargetAlignElem InvalidAlignmentElem;
 
+  /// Opaque pointer for the StructType -> StructLayout map
+  void* LayoutMap;
+
   //! Set/initialize target alignments
   void setAlignment(AlignTypeEnum align_type, unsigned char abi_align,
                     unsigned char pref_align, uint32_t bit_width);
@@ -107,6 +110,9 @@ private:
     return (&align != &InvalidAlignmentElem);
   }
 
+  // DO NOT IMPLEMENT
+  void operator=(const TargetData&);
+  
 public:
   /// Default ctor.
   ///
@@ -118,22 +124,11 @@ public:
   }
 
   /// Constructs a TargetData from a specification string. See init().
-  explicit TargetData(const std::string &TargetDescription)
-    : ImmutablePass(&ID) {
-    init(TargetDescription);
-  }
+  explicit TargetData(const std::string &TargetDescription);
 
   /// Initialize target data from properties stored in the module.
   explicit TargetData(const Module *M);
-
-  TargetData(const TargetData &TD) :
-    ImmutablePass(&ID),
-    LittleEndian(TD.isLittleEndian()),
-    PointerMemSize(TD.PointerMemSize),
-    PointerABIAlign(TD.PointerABIAlign),
-    PointerPrefAlign(TD.PointerPrefAlign),
-    Alignments(TD.Alignments)
-  { }
+  TargetData(const TargetData &TD);
 
   ~TargetData();  // Not virtual, do not subclass this class
 
