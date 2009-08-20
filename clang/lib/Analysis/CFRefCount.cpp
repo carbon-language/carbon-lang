@@ -1128,13 +1128,15 @@ RetainSummary* RetainSummaryManager::getSummary(FunctionDecl* FD) {
         //   ... it is okay to use 'x' since 'y' has a reference to it
         //
         // We handle this and similar cases with the follow heuristic.  If the
-        // function name contains "InsertValue", "SetValue" or "AddValue" then
-        // we assume that arguments may "escape."
-        //
+        // function name contains "InsertValue", "SetValue", "AddValue",
+        // "AppendValue", or "SetAttribute", then we assume that arguments may
+        // "escape."  This means that something else holds on to the object,
+        // allowing it be used even after its local retain count drops to 0.
         ArgEffect E = (CStrInCStrNoCase(FName, "InsertValue") ||
                        CStrInCStrNoCase(FName, "AddValue") ||
                        CStrInCStrNoCase(FName, "SetValue") ||
-                       CStrInCStrNoCase(FName, "AppendValue"))
+                       CStrInCStrNoCase(FName, "AppendValue") ||
+                       CStrInCStrNoCase(FName, "SetAttribute"))
                       ? MayEscape : DoNothing;
         
         S = getPersistentSummary(RetEffect::MakeNoRet(), DoNothing, E);

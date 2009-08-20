@@ -1,6 +1,5 @@
-//>>SLICER
-// RUN: clang-cc -analyze -checker-cfref -analyzer-store=basic -verify %s &&
-// RUN: clang-cc -analyze -checker-cfref -analyzer-store=region -verify %s
+// RUN: clang-cc -triple x86_64-apple-darwin10 -analyze -checker-cfref -analyzer-store=basic -verify %s &&
+// RUN: clang-cc -triple x86_64-apple-darwin10 -analyze -checker-cfref -analyzer-store=region -verify %s
 
 #if __has_feature(attribute_ns_returns_retained)
 #define NS_RETURNS_RETAINED __attribute__((ns_returns_retained))
@@ -28,6 +27,16 @@ typedef unsigned int uint32_t;
 typedef unsigned long long uint64_t;
 typedef unsigned int UInt32;
 typedef signed long CFIndex;
+typedef struct {
+    CFIndex location;
+    CFIndex length;
+} CFRange;
+static __inline__ __attribute__((always_inline)) CFRange CFRangeMake(CFIndex loc, CFIndex len) {
+    CFRange range;
+    range.location = loc;
+    range.length = len;
+    return range;
+}
 typedef const void * CFTypeRef;
 typedef const struct __CFString * CFStringRef;
 typedef const struct __CFAllocator * CFAllocatorRef;
@@ -43,8 +52,17 @@ typedef struct __CFArray * CFMutableArrayRef;
 extern CFMutableArrayRef CFArrayCreateMutable(CFAllocatorRef allocator, CFIndex capacity, const CFArrayCallBacks *callBacks);
 extern const void *CFArrayGetValueAtIndex(CFArrayRef theArray, CFIndex idx);
 extern void CFArrayAppendValue(CFMutableArrayRef theArray, const void *value);
+typedef struct {
+}
+CFDictionaryKeyCallBacks;
+extern const CFDictionaryKeyCallBacks kCFTypeDictionaryKeyCallBacks;
+typedef struct {
+}
+CFDictionaryValueCallBacks;
+extern const CFDictionaryValueCallBacks kCFTypeDictionaryValueCallBacks;
 typedef const struct __CFDictionary * CFDictionaryRef;
 typedef struct __CFDictionary * CFMutableDictionaryRef;
+extern CFMutableDictionaryRef CFDictionaryCreateMutable(CFAllocatorRef allocator, CFIndex capacity, const CFDictionaryKeyCallBacks *keyCallBacks, const CFDictionaryValueCallBacks *valueCallBacks);
 typedef UInt32 CFStringEncoding;
 enum {
 kCFStringEncodingMacRoman = 0,     kCFStringEncodingWindowsLatin1 = 0x0500,     kCFStringEncodingISOLatin1 = 0x0201,     kCFStringEncodingNextStepLatin = 0x0B01,     kCFStringEncodingASCII = 0x0600,     kCFStringEncodingUnicode = 0x0100,     kCFStringEncodingUTF8 = 0x08000100,     kCFStringEncodingNonLossyASCII = 0x0BFF      ,     kCFStringEncodingUTF16 = 0x0100,     kCFStringEncodingUTF16BE = 0x10000100,     kCFStringEncodingUTF16LE = 0x14000100,      kCFStringEncodingUTF32 = 0x0c000100,     kCFStringEncodingUTF32BE = 0x18000100,     kCFStringEncodingUTF32LE = 0x1c000100  };
@@ -60,6 +78,16 @@ typedef natural_t mach_port_name_t;
 typedef mach_port_name_t mach_port_t;
 typedef int kern_return_t;
 typedef kern_return_t mach_error_t;
+enum {
+kCFNumberSInt8Type = 1,     kCFNumberSInt16Type = 2,     kCFNumberSInt32Type = 3,     kCFNumberSInt64Type = 4,     kCFNumberFloat32Type = 5,     kCFNumberFloat64Type = 6,      kCFNumberCharType = 7,     kCFNumberShortType = 8,     kCFNumberIntType = 9,     kCFNumberLongType = 10,     kCFNumberLongLongType = 11,     kCFNumberFloatType = 12,     kCFNumberDoubleType = 13,      kCFNumberCFIndexType = 14,      kCFNumberNSIntegerType = 15,     kCFNumberCGFloatType = 16,     kCFNumberMaxType = 16    };
+typedef CFIndex CFNumberType;
+typedef const struct __CFNumber * CFNumberRef;
+extern CFNumberRef CFNumberCreate(CFAllocatorRef allocator, CFNumberType theType, const void *valuePtr);
+typedef const struct __CFAttributedString *CFAttributedStringRef;
+typedef struct __CFAttributedString *CFMutableAttributedStringRef;
+extern CFAttributedStringRef CFAttributedStringCreate(CFAllocatorRef alloc, CFStringRef str, CFDictionaryRef attributes) ;
+extern CFMutableAttributedStringRef CFAttributedStringCreateMutableCopy(CFAllocatorRef alloc, CFIndex maxLength, CFAttributedStringRef aStr) ;
+extern void CFAttributedStringSetAttribute(CFMutableAttributedStringRef aStr, CFRange range, CFStringRef attrName, CFTypeRef value) ;
 typedef signed char BOOL;
 typedef unsigned long NSUInteger;
 @class NSString, Protocol;
@@ -83,6 +111,10 @@ typedef struct {
 }
 NSFastEnumerationState;
 @protocol NSFastEnumeration  - (NSUInteger)countByEnumeratingWithState:(NSFastEnumerationState *)state objects:(id *)stackbuf count:(NSUInteger)len;
+@end           @class NSString, NSDictionary;
+@interface NSValue : NSObject <NSCopying, NSCoding>  - (void)getValue:(void *)value;
+@end  @interface NSNumber : NSValue  - (char)charValue;
+- (id)initWithInt:(int)value;
 @end   @class NSString;
 @interface NSArray : NSObject <NSCopying, NSMutableCopying, NSCoding, NSFastEnumeration>  - (NSUInteger)count;
 @end  @interface NSArray (NSArrayCreation)  + (id)array;
@@ -97,11 +129,11 @@ typedef double NSTimeInterval;
 - ( const char *)UTF8String;
 - (id)initWithUTF8String:(const char *)nullTerminatedCString;
 + (id)stringWithUTF8String:(const char *)nullTerminatedCString;
-@end       @class NSString, NSData;
+@end        @class NSString, NSURL, NSError;
 @interface NSData : NSObject <NSCopying, NSMutableCopying, NSCoding>  - (NSUInteger)length;
 + (id)dataWithBytesNoCopy:(void *)bytes length:(NSUInteger)length;
 + (id)dataWithBytesNoCopy:(void *)bytes length:(NSUInteger)length freeWhenDone:(BOOL)b;
-@end             @class NSString;
+@end   @class NSLocale, NSDate, NSCalendar, NSTimeZone, NSError, NSArray, NSMutableDictionary;
 @interface NSDictionary : NSObject <NSCopying, NSMutableCopying, NSCoding, NSFastEnumeration>  - (NSUInteger)count;
 @end    @interface NSMutableDictionary : NSDictionary  - (void)removeObjectForKey:(id)aKey;
 - (void)setObject:(id)anObject forKey:(id)aKey;
@@ -113,9 +145,6 @@ typedef struct CGSize CGSize;
 struct CGRect {
 };
 typedef struct CGRect CGRect;
-@protocol NSLocking  - (void)lock;
-- (id)init;
-@end @class NSURLAuthenticationChallenge;
 typedef mach_port_t io_object_t;
 typedef char io_name_t[128];
 typedef io_object_t io_iterator_t;
@@ -138,37 +167,32 @@ extern DADiskRef DADiskCreateFromBSDName( CFAllocatorRef allocator, DASessionRef
 extern DADiskRef DADiskCreateFromIOMedia( CFAllocatorRef allocator, DASessionRef session, io_service_t media );
 extern CFDictionaryRef DADiskCopyDescription( DADiskRef disk );
 extern DADiskRef DADiskCopyWholeDisk( DADiskRef disk );
-typedef struct CGColorSpace *CGColorSpaceRef;
+@interface NSTask : NSObject - (id)init;
+@end                    typedef struct CGColorSpace *CGColorSpaceRef;
 typedef struct CGImage *CGImageRef;
-  typedef struct CGLayer *CGLayerRef;
-           @class NSArray, NSError, NSEvent, NSMenu, NSUndoManager, NSWindow;
+typedef struct CGLayer *CGLayerRef;
 @interface NSResponder : NSObject <NSCoding> {
 }
 @end    @protocol NSAnimatablePropertyContainer      - (id)animator;
 @end  extern NSString *NSAnimationTriggerOrderIn ;
 @interface NSView : NSResponder  <NSAnimatablePropertyContainer>  {
-struct __VFlags2 {
-}
-_vFlags2;
-}
-@end   extern NSString * const NSFullScreenModeAllScreens;
-@protocol NSChangeSpelling - (void)changeSpelling:(id)sender;
-@end      @protocol NSIgnoreMisspelledWords - (void)ignoreSpelling:(id)sender;
-@end  @class NSColor, NSFont, NSNotification;
-@interface NSText : NSView <NSChangeSpelling, NSIgnoreMisspelledWords> {
 }
 @end @protocol NSValidatedUserInterfaceItem - (SEL)action;
 @end   @protocol NSUserInterfaceValidations - (BOOL)validateUserInterfaceItem:(id <NSValidatedUserInterfaceItem>)anItem;
-@end @class NSArray, NSError, NSImage, NSView, NSNotificationCenter, NSURL, NSScreen, NSRunningApplication;
+@end  @class NSDate, NSDictionary, NSError, NSException, NSNotification;
 @interface NSApplication : NSResponder <NSUserInterfaceValidations> {
 }
 @end   enum {
 NSTerminateCancel = 0,         NSTerminateNow = 1,         NSTerminateLater = 2 };
 typedef NSUInteger NSApplicationTerminateReply;
 @protocol NSApplicationDelegate <NSObject> @optional        - (NSApplicationTerminateReply)applicationShouldTerminate:(NSApplication *)sender;
-@end    enum {
+@end  @class NSAttributedString, NSEvent, NSFont, NSFormatter, NSImage, NSMenu, NSText, NSView, NSTextView;
+@interface NSCell : NSObject <NSCopying, NSCoding> {
 }
-_CFlags;
+@end @class NSTextField, NSPanel, NSArray, NSWindow, NSImage, NSButton, NSError;
+typedef struct {
+}
+CVTimeStamp;
 @interface CIImage : NSObject <NSCoding, NSCopying> {
 }
 typedef int CIFormat;
@@ -182,7 +206,7 @@ extern DADissenterRef DADissenterCreate( CFAllocatorRef allocator, DAReturn stat
 - (CGImageRef)createCGImage:(CIImage *)im fromRect:(CGRect)r;
 - (CGImageRef)createCGImage:(CIImage *)im fromRect:(CGRect)r     format:(CIFormat)f colorSpace:(CGColorSpaceRef)cs;
 - (CGLayerRef)createCGLayerWithSize:(CGSize)size info:(CFDictionaryRef)d;
-@end @class NSURL;
+@end extern NSString* const QCRendererEventKey;
 @protocol QCCompositionRenderer - (NSDictionary*) attributes;
 @end   @interface QCRenderer : NSObject <QCCompositionRenderer> {
 }
@@ -195,11 +219,11 @@ extern DADissenterRef DADissenterCreate( CFAllocatorRef allocator, DAReturn stat
 ICEXIFOrientation1 = 1,     ICEXIFOrientation2 = 2,     ICEXIFOrientation3 = 3,     ICEXIFOrientation4 = 4,     ICEXIFOrientation5 = 5,     ICEXIFOrientation6 = 6,     ICEXIFOrientation7 = 7,     ICEXIFOrientation8 = 8, };
 @class ICDevice;
 @protocol ICDeviceDelegate <NSObject>  @required      - (void)didRemoveDevice:(ICDevice*)device;
-@end  @class ICCameraDevice;
+@end extern NSString *const ICScannerStatusWarmingUp;
 @class ICScannerDevice;
 @protocol ICScannerDeviceDelegate <ICDeviceDelegate>  @optional       - (void)scannerDeviceDidBecomeAvailable:(ICScannerDevice*)scanner;
 @end
-  
+
 //===----------------------------------------------------------------------===//
 // Test cases.
 //===----------------------------------------------------------------------===//
@@ -811,6 +835,49 @@ void IOServiceAddMatchingNotification_wrapper(IONotificationPortRef notifyPort, 
 }
 
 //===----------------------------------------------------------------------===//
+// Test of handling objects whose references "escape" to containers.
+//===----------------------------------------------------------------------===//
+
+// <rdar://problem/6539791>
+void rdar_6539791(CFMutableDictionaryRef y, void* key, void* val_key) {
+  CFMutableDictionaryRef x = CFDictionaryCreateMutable(kCFAllocatorDefault, 1, &kCFTypeDictionaryKeyCallBacks, &kCFTypeDictionaryValueCallBacks);
+  CFDictionaryAddValue(y, key, x);
+  CFRelease(x); // the dictionary keeps a reference, so the object isn't deallocated yet
+  signed z = 1;
+  CFNumberRef value = CFNumberCreate(kCFAllocatorDefault, kCFNumberSInt32Type, &z);
+  if (value) {
+    CFDictionaryAddValue(x, val_key, value); // no-warning
+    CFRelease(value);
+    CFDictionaryAddValue(y, val_key, value); // no-warning
+  }
+}
+
+// <rdar://problem/6560661>
+// Same issue, except with "AppendValue" functions.
+void rdar_6560661(CFMutableArrayRef x) {
+  signed z = 1;
+  CFNumberRef value = CFNumberCreate(kCFAllocatorDefault, kCFNumberSInt32Type, &z);
+  // CFArrayAppendValue keeps a reference to value.
+  CFArrayAppendValue(x, value);
+  CFRelease(value);
+  CFRetain(value);
+  CFRelease(value); // no-warning
+}
+
+// <rdar://problem/7152619>
+// Same issue, excwept with "CFAttributeStringSetAttribute".
+void rdar_7152619(CFStringRef str) {
+  CFAttributedStringRef string = CFAttributedStringCreate(kCFAllocatorDefault, str, 0);
+  CFMutableAttributedStringRef attrString = CFAttributedStringCreateMutableCopy(kCFAllocatorDefault, 100, string);
+  CFRelease(string);
+  NSNumber *number = [[NSNumber alloc] initWithInt:5]; // expected-warning{{leak}}
+  CFAttributedStringSetAttribute(attrString, CFRangeMake(0, 1), str, number);
+  [number release];
+  [number retain];
+  CFRelease(attrString);  
+}
+
+//===----------------------------------------------------------------------===//
 // Tests of ownership attributes.
 //===----------------------------------------------------------------------===//
 
@@ -823,7 +890,6 @@ typedef NSString* MyStringTy;
 - (NSString*) returnsAnOwnedCFString  CF_RETURNS_RETAINED; // no-warning
 - (MyStringTy) returnsAnOwnedTypedString NS_RETURNS_RETAINED; // no-warning
 - (int) returnsAnOwnedInt NS_RETURNS_RETAINED; // expected-warning{{'ns_returns_retained' attribute only applies to functions or methods that return a pointer or Objective-C object}}
-- (id<FooP>) returnsOwnedProt NS_RETURNS_RETAINED; // no-warning
 @end
 
 static int ownership_attribute_doesnt_go_here NS_RETURNS_RETAINED; // expected-warning{{'ns_returns_retained' attribute only applies to function or method types}}
@@ -872,6 +938,4 @@ CFDateRef returnsRetainedCFDate()  {
   return (NSDate*) returnsRetainedCFDate(); // no-warning
 }
 @end
-
-
 
