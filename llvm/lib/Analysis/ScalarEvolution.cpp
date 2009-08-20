@@ -1682,7 +1682,7 @@ const SCEV *ScalarEvolution::getUDivExpr(const SCEV *LHS,
 
   if (const SCEVConstant *RHSC = dyn_cast<SCEVConstant>(RHS)) {
     if (RHSC->getValue()->equalsInt(1))
-      return LHS;                            // X udiv 1 --> x
+      return LHS;                               // X udiv 1 --> x
     if (RHSC->isZero())
       return getIntegerSCEV(0, LHS->getType()); // value is undefined
 
@@ -3533,8 +3533,8 @@ ScalarEvolution::ComputeBackedgeTakenCountFromExitCondICmp(const Loop *L,
     if (!isa<SCEVCouldNotCompute>(TC)) return TC;
     break;
   }
-  case ICmpInst::ICMP_EQ: {
-    // Convert to: while (X-Y == 0)           // while (X == Y)
+  case ICmpInst::ICMP_EQ: {                     // while (X == Y)
+    // Convert to: while (X-Y == 0)
     const SCEV *TC = HowFarToNonZero(getMinusSCEV(LHS, RHS), L);
     if (!isa<SCEVCouldNotCompute>(TC)) return TC;
     break;
@@ -3986,7 +3986,7 @@ const SCEV *ScalarEvolution::getSCEVAtScope(const SCEV *V, const Loop *L) {
                                               getContext());
         else
           C = ConstantFoldInstOperands(I->getOpcode(), I->getType(),
-                                       &Operands[0], Operands.size(), 
+                                       &Operands[0], Operands.size(),
                                        getContext());
         Pair.first->second = C;
         return getSCEV(C);
@@ -4235,7 +4235,7 @@ const SCEV *ScalarEvolution::HowFarToZero(const SCEV *V, const Loop *L) {
 
       // First, handle unitary steps.
       if (StepC->getValue()->equalsInt(1))      // 1*N = -Start (mod 2^BW), so:
-        return getNegativeSCEV(Start);       //   N = -Start (as unsigned)
+        return getNegativeSCEV(Start);          //   N = -Start (as unsigned)
       if (StepC->getValue()->isAllOnesValue())  // -1*N = -Start (mod 2^BW), so:
         return Start;                           //    N = Start (as unsigned)
 

@@ -24,7 +24,7 @@ namespace llvm {
   /// rewrite expressions in canonical form.
   ///
   /// Clients should create an instance of this class when rewriting is needed,
-  /// and destroy it when finished to allow the release of the associated 
+  /// and destroy it when finished to allow the release of the associated
   /// memory.
   struct SCEVExpander : public SCEVVisitor<SCEVExpander, Value*> {
     ScalarEvolution &SE;
@@ -62,7 +62,7 @@ namespace llvm {
 
   private:
     LLVMContext &getContext() const { return SE.getContext(); }
-    
+
     /// InsertBinop - Insert the specified binary operator, doing a small amount
     /// of work to avoid inserting an obviously redundant operation.
     Value *InsertBinop(Instruction::BinaryOps Opcode, Value *LHS, Value *RHS);
@@ -126,4 +126,3 @@ namespace llvm {
 }
 
 #endif
-

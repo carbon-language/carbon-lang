@@ -208,7 +208,7 @@ static Constant *SymbolicallyEvaluateGEP(Constant* const* Ops, unsigned NumOps,
          "Computed GetElementPtr has unexpected type!");
 
   // If we ended up indexing a member with a type that doesn't match
-  // type type of what the original indices indexed, add a cast.
+  // the type of what the original indices indexed, add a cast.
   if (Ty != cast<PointerType>(ResultTy)->getElementType())
     C = ConstantExpr::getBitCast(C, ResultTy);
 

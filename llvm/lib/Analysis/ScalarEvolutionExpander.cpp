@@ -53,10 +53,9 @@ Value *SCEVExpander::InsertNoopCastOfTo(Value *V, const Type *Ty) {
         return CE->getOperand(0);
   }
 
-  // FIXME: keep track of the cast instruction.
   if (Constant *C = dyn_cast<Constant>(V))
     return ConstantExpr::getCast(Op, C, Ty);
-  
+
   if (Argument *A = dyn_cast<Argument>(V)) {
     // Check to see if there is already a cast!
     for (Value::use_iterator UI = A->use_begin(), E = A->use_end();
@@ -317,13 +316,17 @@ static void SplitAddRecs(SmallVectorImpl<const SCEV *> &Ops,
   }
 }
 
-/// expandAddToGEP - Expand a SCEVAddExpr with a pointer type into a GEP
-/// instead of using ptrtoint+arithmetic+inttoptr. This helps
-/// BasicAliasAnalysis and other passes analyze the result.
+/// expandAddToGEP - Expand an addition expression with a pointer type into
+/// a GEP instead of using ptrtoint+arithmetic+inttoptr. This helps
+/// BasicAliasAnalysis and other passes analyze the result. See the rules
+/// for getelementptr vs. inttoptr in
+/// http://llvm.org/docs/LangRef.html#pointeraliasing
+/// for details.
 ///
-/// Design note: This depends on ScalarEvolution not recognizing inttoptr
-/// and ptrtoint operators, as they may introduce pointer arithmetic
-/// which may not be safely converted into getelementptr.
+/// Design note: The correctness of using getelmeentptr here depends on
+/// ScalarEvolution not recognizing inttoptr and ptrtoint operators, as
+/// they may introduce pointer arithmetic which may not be safely converted
+/// into getelementptr.
 ///
 /// Design note: It might seem desirable for this function to be more
 /// loop-aware. If some of the indices are loop-invariant while others
