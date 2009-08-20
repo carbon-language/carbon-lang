@@ -375,26 +375,24 @@ CodeGenFunction::EmitCXXAggrConstructorCall(const CXXConstructorDecl *D,
   
   llvm::BasicBlock *ContinueBlock = createBasicBlock("for.inc");
   // Inside the loop body, emit the constructor call on the array element.
+  Counter = Builder.CreateLoad(IndexPtr);
   if (const ConstantArrayType *CAT = 
       dyn_cast<ConstantArrayType>(Array->getElementType())) {
-    // Need to call this routine again.
     uint32_t delta = 1;
     const ConstantArrayType *CAW = CAT;
     do {
       delta *= CAW->getSize().getZExtValue();
       CAW = dyn_cast<ConstantArrayType>(CAW->getElementType());
     } while (CAW);
-    // Address = This + delta*Counter
+    // Address = This + delta*Counter for current loop iteration.
     llvm::Value *DeltaPtr = 
       llvm::ConstantInt::get(llvm::Type::getInt32Ty(VMContext), delta);
-    Counter = Builder.CreateLoad(IndexPtr);
     DeltaPtr = Builder.CreateMul(Counter, DeltaPtr, "mul");
     llvm::Value *Address = 
       Builder.CreateInBoundsGEP(This, DeltaPtr, "arrayidx");
     EmitCXXAggrConstructorCall(D, CAT, Address);
   } 
   else {
-    Counter = Builder.CreateLoad(IndexPtr);
     llvm::Value *Address = Builder.CreateInBoundsGEP(This, Counter, "arrayidx");
     EmitCXXConstructorCall(D, Ctor_Complete, Address, 0, 0);
   }
