@@ -1146,7 +1146,7 @@ CFGBlock* CFGBuilder::VisitWhileStmt(WhileStmt* W) {
     CFGBlock* BodyBlock = addStmt(W->getBody());
 
     if (!BodyBlock)
-      BodyBlock = EntryConditionBlock; // can happen for "while(...) ;"
+      BodyBlock = ContinueTargetBlock; // can happen for "while(...) ;"
     else if (Block) {
       if (!FinishBlock(BodyBlock))
         return 0;
