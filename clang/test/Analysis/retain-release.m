@@ -94,19 +94,24 @@ typedef unsigned long NSUInteger;
 extern void NSLog(NSString *format, ...) __attribute__((format(__NSString__, 1, 2)));
 typedef struct _NSZone NSZone;
 @class NSInvocation, NSMethodSignature, NSCoder, NSString, NSEnumerator;
-@protocol NSObject  - (BOOL)isEqual:(id)object;
+@protocol NSObject
+- (BOOL)isEqual:(id)object;
 - (id)retain;
 - (oneway void)release;
 - (id)autorelease;
 @end  @protocol NSCopying  - (id)copyWithZone:(NSZone *)zone;
 @end  @protocol NSMutableCopying  - (id)mutableCopyWithZone:(NSZone *)zone;
 @end  @protocol NSCoding  - (void)encodeWithCoder:(NSCoder *)aCoder;
-@end    @interface NSObject <NSObject> {
-}
+@end
+@interface NSObject <NSObject> {}
 + (id)allocWithZone:(NSZone *)zone;
 + (id)alloc;
 - (void)dealloc;
-@end      extern id NSAllocateObject(Class aClass, NSUInteger extraBytes, NSZone *zone);
+@end
+@interface NSObject (NSCoderMethods)
+- (id)awakeAfterUsingCoder:(NSCoder *)aDecoder;
+@end
+extern id NSAllocateObject(Class aClass, NSUInteger extraBytes, NSZone *zone);
 typedef struct {
 }
 NSFastEnumerationState;
@@ -647,7 +652,8 @@ typedef CFTypeRef OtherRef;
 @end
 
 //===----------------------------------------------------------------------===//
-//<rdar://problem/6320065> false positive - init method returns an object owned by caller
+//<rdar://problem/6320065> false positive - init method returns an object
+// owned by caller
 //===----------------------------------------------------------------------===//
 
 @interface RDar6320065 : NSObject {
@@ -690,7 +696,21 @@ int RDar6320065_test() {
 }
 
 //===----------------------------------------------------------------------===//
-// <rdar://problem/6859457> [NSData dataWithBytesNoCopy] does not return a retained object
+// <rdar://problem/7129086> -awakeAfterUsingCoder: returns an owned object 
+//  and claims the receiver
+//===----------------------------------------------------------------------===//
+
+@interface RDar7129086 : NSObject {} @end
+@implementation RDar7129086
+- (id)awakeAfterUsingCoder:(NSCoder *)aDecoder {
+  [self release]; // no-warning
+  return [NSString alloc];  // no-warning
+}
+@end
+
+//===----------------------------------------------------------------------===//
+// <rdar://problem/6859457> [NSData dataWithBytesNoCopy] does not return a
+//  retained object
 //===----------------------------------------------------------------------===//
 
 @interface RDar6859457 : NSObject {}

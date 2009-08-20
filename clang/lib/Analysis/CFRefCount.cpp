@@ -635,8 +635,8 @@ class VISIBILITY_HIDDEN RetainSummaryManager {
   ///  objects.
   RetEffect ObjCAllocRetE;
 
-  /// ObjCInitRetE - Default return effect for init methods returning Objective-C
-  ///  objects.
+  /// ObjCInitRetE - Default return effect for init methods returning 
+  ///   Objective-C objects.
   RetEffect ObjCInitRetE;
   
   RetainSummary DefaultSummary;
@@ -1452,8 +1452,13 @@ void RetainSummaryManager::InitializeMethodSummaries() {
   
   // Create the "init" selector.  It just acts as a pass-through for the
   // receiver.
-  addNSObjectMethSummary(GetNullarySelector("init", Ctx),
-                         getPersistentSummary(ObjCInitRetE, DecRefMsg));
+  RetainSummary *InitSumm = getPersistentSummary(ObjCInitRetE, DecRefMsg);  
+  addNSObjectMethSummary(GetNullarySelector("init", Ctx), InitSumm);
+
+  // awakeAfterUsingCoder: behaves basically like an 'init' method.  It
+  // claims the receiver and returns a retained object.
+  addNSObjectMethSummary(GetUnarySelector("awakeAfterUsingCoder", Ctx),
+                         InitSumm);
   
   // The next methods are allocators.
   RetainSummary *AllocSumm = getPersistentSummary(ObjCAllocRetE);  
