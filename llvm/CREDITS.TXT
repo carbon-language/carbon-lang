@@ -186,6 +186,10 @@ N: Sumant Kowshik
 E: kowshik@uiuc.edu
 D: Author of the original C backend
 
+N: Benjamin Kramer
+E: benny.kra@gmail.com
+D: Miscellaneous bug fixes
+
 N: Christopher Lamb
 E: christopher.lamb@gmail.com
 D: aligned load/store support, parts of noalias and restrict support
