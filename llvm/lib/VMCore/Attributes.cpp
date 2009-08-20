@@ -15,6 +15,7 @@
 #include "llvm/Type.h"
 #include "llvm/ADT/StringExtras.h"
 #include "llvm/ADT/FoldingSet.h"
+#include "llvm/System/Atomic.h"
 #include "llvm/System/Mutex.h"
 #include "llvm/Support/Streams.h"
 #include "llvm/Support/ManagedStatic.h"
@@ -97,7 +98,7 @@ Attributes Attribute::typeIncompatible(const Type *Ty) {
 
 namespace llvm {
 class AttributeListImpl : public FoldingSetNode {
-  unsigned RefCount;
+  sys::cas_flag RefCount;
   
   // AttributesList is uniqued, these should not be publicly available.
   void operator=(const AttributeListImpl &); // Do not implement
@@ -111,8 +112,11 @@ public:
     RefCount = 0;
   }
   
-  void AddRef() { ++RefCount; }
-  void DropRef() { if (--RefCount == 0) delete this; }
+  void AddRef() { sys::AtomicIncrement(&RefCount); }
+  void DropRef() {
+    sys::cas_flag old = sys::AtomicDecrement(&RefCount);
+    if (old == 0) delete this;
+  }
   
   void Profile(FoldingSetNodeID &ID) const {
     Profile(ID, Attrs.data(), Attrs.size());
@@ -175,17 +179,14 @@ AttrListPtr AttrListPtr::get(const AttributeWithIndex *Attrs, unsigned NumAttrs)
 //===----------------------------------------------------------------------===//
 
 AttrListPtr::AttrListPtr(AttributeListImpl *LI) : AttrList(LI) {
-  sys::SmartScopedLock<true> Lock(*ALMutex);
   if (LI) LI->AddRef();
 }
 
 AttrListPtr::AttrListPtr(const AttrListPtr &P) : AttrList(P.AttrList) {
-  sys::SmartScopedLock<true> Lock(*ALMutex);
   if (AttrList) AttrList->AddRef();  
 }
 
 const AttrListPtr &AttrListPtr::operator=(const AttrListPtr &RHS) {
-  sys::SmartScopedLock<true> Lock(*ALMutex);
   if (AttrList == RHS.AttrList) return *this;
   if (AttrList) AttrList->DropRef();
   AttrList = RHS.AttrList;
@@ -194,7 +195,6 @@ const AttrListPtr &AttrListPtr::operator=(const AttrListPtr &RHS) {
 }
 
 AttrListPtr::~AttrListPtr() {
-  sys::SmartScopedLock<true> Lock(*ALMutex);
   if (AttrList) AttrList->DropRef();
 }
 
