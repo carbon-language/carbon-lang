@@ -6,22 +6,24 @@
 
 extern "C" int printf(...);
 
+int count = 1;
+
 struct S {
-  S() : iS(1), fS(1.23) {};
+  S() : iS(count++), fS(1.23) {};
   ~S(){printf("S::~S(%d, %f)\n", iS, fS); };
   int iS;
   float fS;
 };
 
 struct Q {
-  Q() : iQ(2), dQ(2.34) {};
+  Q() : iQ(count++), dQ(2.34) {};
   ~Q(){printf("Q::~Q(%d, %f)\n", iQ, dQ); };
   int iQ;
   double dQ;
 };
 
 struct P {
-  P() : fP(3.45) , iP(3) {};
+  P() : fP(3.45) , iP(count++) {};
   ~P(){printf("P::~P(%d, %f)\n", iP, fP); };
   float fP;
   int iP;
@@ -33,6 +35,10 @@ struct M  : Q, P {
   Q q;
 
   P p; 
+
+ P p_arr[3];
+
+ Q q_arr[2][3];
 
 };
 
