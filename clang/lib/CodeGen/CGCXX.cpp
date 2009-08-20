@@ -413,6 +413,12 @@ CodeGenFunction::EmitCXXAggrConstructorCall(const CXXConstructorDecl *D,
 }
 
 void
+CodeGenFunction::EmitCXXAggrDestructorCall(const CXXDestructorDecl *D,
+                                           const ArrayType *Array,
+                                           llvm::Value *This) {
+}
+
+void
 CodeGenFunction::EmitCXXConstructorCall(const CXXConstructorDecl *D, 
                                         CXXCtorType Type, 
                                         llvm::Value *This,
@@ -1314,12 +1320,8 @@ void CodeGenFunction::EmitCtorPrologue(const CXXConstructorDecl *CD) {
       QualType FieldType = getContext().getCanonicalType((*Field)->getType());
       const ConstantArrayType *Array = 
         getContext().getAsConstantArrayType(FieldType);
-      if (Array) {
-        FieldType = Array->getElementType();
-        while (const ConstantArrayType *AT = 
-                getContext().getAsConstantArrayType(FieldType))
-          FieldType = AT->getElementType();
-      }
+      if (Array)
+        FieldType = getContext().getBaseElementType(FieldType);
       if (!FieldType->getAs<RecordType>() || Field->isAnonymousStructOrUnion())
         continue;
       const RecordType *ClassRec = FieldType->getAs<RecordType>();
@@ -1374,16 +1376,27 @@ void CodeGenFunction::EmitDtorEpilogue(const CXXDestructorDecl *DD) {
     if (DD->isMemberToDestroy(BaseOrMember)) {
       FieldDecl *FD = DD->getMemberToDestroy(BaseOrMember);
       QualType FieldType = getContext().getCanonicalType((FD)->getType());
-      assert(!getContext().getAsArrayType(FieldType) 
-             && "FIXME. Field arrays destruction unsupported");
+      const ConstantArrayType *Array = 
+        getContext().getAsConstantArrayType(FieldType);
+      if (Array)
+        FieldType = getContext().getBaseElementType(FieldType);
       const RecordType *RT = FieldType->getAs<RecordType>();
       CXXRecordDecl *FieldClassDecl = cast<CXXRecordDecl>(RT->getDecl());
       if (FieldClassDecl->hasTrivialDestructor())
         continue;
       llvm::Value *LoadOfThis = LoadCXXThis();
       LValue LHS = EmitLValueForField(LoadOfThis, FD, false, 0);
-      EmitCXXDestructorCall(FieldClassDecl->getDestructor(getContext()),
-                            Dtor_Complete, LHS.getAddress());
+      if (Array) {
+        const llvm::Type *BasePtr = ConvertType(FieldType);
+        BasePtr = llvm::PointerType::getUnqual(BasePtr);
+        llvm::Value *BaseAddrPtr = 
+          Builder.CreateBitCast(LHS.getAddress(), BasePtr);
+        EmitCXXAggrDestructorCall(FieldClassDecl->getDestructor(getContext()), 
+                                  Array, BaseAddrPtr);
+      }
+      else
+        EmitCXXDestructorCall(FieldClassDecl->getDestructor(getContext()),
+                              Dtor_Complete, LHS.getAddress());
     } else {
       const RecordType *RT =
         DD->getAnyBaseClassToDestroy(BaseOrMember)->getAs<RecordType>();
@@ -1407,7 +1420,8 @@ void CodeGenFunction::EmitDtorEpilogue(const CXXDestructorDecl *DD) {
        FieldEnd = ClassDecl->field_end();
        Field != FieldEnd; ++Field) {
     QualType FieldType = getContext().getCanonicalType((*Field)->getType());
-    // FIXME. Assert on arrays for now.
+    if (getContext().getAsConstantArrayType(FieldType))
+      FieldType = getContext().getBaseElementType(FieldType);
     if (const RecordType *RT = FieldType->getAs<RecordType>()) {
       CXXRecordDecl *FieldClassDecl = cast<CXXRecordDecl>(RT->getDecl());
       if (FieldClassDecl->hasTrivialDestructor())
@@ -1419,12 +1433,25 @@ void CodeGenFunction::EmitDtorEpilogue(const CXXDestructorDecl *DD) {
     for (int i = DestructedFields.size() -1; i >= 0; --i) {
       FieldDecl *Field = DestructedFields[i];
       QualType FieldType = Field->getType();
+      const ConstantArrayType *Array = 
+        getContext().getAsConstantArrayType(FieldType);
+        if (Array)
+          FieldType = getContext().getBaseElementType(FieldType);
       const RecordType *RT = FieldType->getAs<RecordType>();
       CXXRecordDecl *FieldClassDecl = cast<CXXRecordDecl>(RT->getDecl());
       llvm::Value *LoadOfThis = LoadCXXThis();
       LValue LHS = EmitLValueForField(LoadOfThis, Field, false, 0);
-      EmitCXXDestructorCall(FieldClassDecl->getDestructor(getContext()),
-                            Dtor_Complete, LHS.getAddress());
+      if (Array) {
+        const llvm::Type *BasePtr = ConvertType(FieldType);
+        BasePtr = llvm::PointerType::getUnqual(BasePtr);
+        llvm::Value *BaseAddrPtr = 
+        Builder.CreateBitCast(LHS.getAddress(), BasePtr);
+        EmitCXXAggrDestructorCall(FieldClassDecl->getDestructor(getContext()), 
+                                  Array, BaseAddrPtr);
+      }
+      else
+        EmitCXXDestructorCall(FieldClassDecl->getDestructor(getContext()),
+                              Dtor_Complete, LHS.getAddress());
     }
   
   llvm::SmallVector<CXXRecordDecl*, 4> DestructedBases;

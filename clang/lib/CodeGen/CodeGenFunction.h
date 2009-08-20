@@ -587,6 +587,10 @@ public:
                                   const ArrayType *Array,
                                   llvm::Value *This);
 
+  void EmitCXXAggrDestructorCall(const CXXDestructorDecl *D,
+                                 const ArrayType *Array,
+                                 llvm::Value *This);
+  
   void EmitCXXDestructorCall(const CXXDestructorDecl *D, CXXDtorType Type,
                              llvm::Value *This);
   
