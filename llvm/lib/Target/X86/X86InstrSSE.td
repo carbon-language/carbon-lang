@@ -3792,11 +3792,11 @@ def PCMPESTRM128MEM : SS42AI<0, Pseudo, (outs VR128:$dst),
 }
 
 let Defs = [XMM0, EFLAGS], Uses = [EAX, EDX] in {
-def PCMPESTRM128rr : SS42AI<0x62, MRMSrcReg, (outs),
+def PCMPESTRM128rr : SS42AI<0x60, MRMSrcReg, (outs),
 			    (ins VR128:$src1, VR128:$src3, i8imm:$src5),
 		     "pcmpestrm\t{$src5, $src3, $src1|$src1, $src3, $src5}",
 		     []>, OpSize;
-def PCMPESTRM128rm : SS42AI<0x62, MRMSrcMem, (outs),
+def PCMPESTRM128rm : SS42AI<0x60, MRMSrcMem, (outs),
 			    (ins VR128:$src1, i128mem:$src3, i8imm:$src5),
 		     "pcmpestrm\t{$src5, $src3, $src1|$src1, $src3, $src5}",
 		     []>, OpSize;
