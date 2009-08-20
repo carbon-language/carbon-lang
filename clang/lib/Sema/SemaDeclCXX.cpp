@@ -3422,7 +3422,6 @@ Sema::DeclPtrTy Sema::ActOnFriendDecl(Scope *S,
 
       // The record declaration we get from friend declarations is not
       // canonicalized; see ActOnTag.
-      assert(RD);
 
       // C++ [class.friend]p2: A class shall not be defined inside
       //   a friend declaration.

@@ -1263,7 +1263,13 @@ public:
 };
 
 /// FriendFunctionDecl - Represents the declaration (and possibly
-/// the definition) of a friend function.
+/// the definition) of a friend function.  For example:
+///
+/// @code
+/// class A {
+///   friend int foo(int);
+/// };
+/// @endcode
 class FriendFunctionDecl : public FunctionDecl {
   // Location of the 'friend' specifier.
   const SourceLocation FriendLoc;
@@ -1293,13 +1299,20 @@ public:
 };
   
 /// FriendClassDecl - Represents the declaration of a friend class.
+/// For example:
+/// 
+/// @code
+/// class X {
+///   friend class Y;
+/// };
+/// @endcode
 class FriendClassDecl : public Decl {
   // The friended type.  In C++0x, this can be an arbitrary type,
   // which we simply ignore if it's not a record type.
-  const QualType FriendType;
+  QualType FriendType;
 
   // Location of the 'friend' specifier.
-  const SourceLocation FriendLoc;
+  SourceLocation FriendLoc;
 
   FriendClassDecl(DeclContext *DC, SourceLocation L,
                   QualType T, SourceLocation FriendL)
