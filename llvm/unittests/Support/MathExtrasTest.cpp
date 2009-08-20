@@ -1,4 +1,4 @@
-//===- llvm/unittest/Support/MathExtrasTest.cpp - math utils tests --------===//
+//===- unittests/Support/MathExtrasTest.cpp - math utils tests ------------===//
 //
 //                     The LLVM Compiler Infrastructure
 //
