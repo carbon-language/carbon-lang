@@ -127,7 +127,7 @@ struct test3_D  : virtual test3_B1 {
 // CHECK-LP32-NEXT: .space 4
 // CHECK-LP32-NEXT: .space 4
 // CHECK-LP32-NEXT: .space 4
-// CHECK-LP32: .long __ZTI7test3_D
+// CHECK-LP32-NEXT: .long __ZTI7test3_D
 // CHECK-LP32-NEXT: .long __ZN8test3_B36funcB3Ev
 // CHECK-LP32-NEXT: .long __ZN8test3_B26funcB2Ev
 // CHECK-LP32-NEXT: .long __ZN8test3_B16funcB1Ev
@@ -141,7 +141,7 @@ struct test3_D  : virtual test3_B1 {
 // CHECK-LP64-NEXT: .space 8
 // CHECK-LP64-NEXT: .space 8
 // CHECK-LP64-NEXT: .space 8
-// CHECK-LP64: .quad __ZTI7test3_D
+// CHECK-LP64-NEXT: .quad __ZTI7test3_D
 // CHECK-LP64-NEXT: .quad __ZN8test3_B36funcB3Ev
 // CHECK-LP64-NEXT: .quad __ZN8test3_B26funcB2Ev
 // CHECK-LP64-NEXT: .quad __ZN8test3_B16funcB1Ev
