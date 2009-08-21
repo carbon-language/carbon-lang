@@ -323,7 +323,7 @@ TEST(APIntTest, StringDeath) {
   EXPECT_DEATH(APInt(32, "", 0), "Invalid string length");
   EXPECT_DEATH(APInt(32, "0", 0), "Radix should be 2, 8, 10, or 16!");
   EXPECT_DEATH(APInt(32, "", 10), "Invalid string length");
-  EXPECT_DEATH(APInt(32, "-", 10), "string is only a minus!");
+  EXPECT_DEATH(APInt(32, "-", 10), "String is only a sign, needs a value.");
   EXPECT_DEATH(APInt(1, "1234", 10), "Insufficient bit width");
   EXPECT_DEATH(APInt(32, "\0", 10), "Invalid string length");
   EXPECT_DEATH(APInt(32, StringRef("1\02", 3), 10), "Invalid character in digit string");
