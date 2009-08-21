@@ -2740,7 +2740,7 @@ APFloat::convertQuadrupleAPFloatToAPInt() const
   words[0] = mysignificand;
   words[1] = ((uint64_t)(sign & 1) << 63) |
              ((myexponent & 0x7fff) << 48) |
-             (mysignificand & 0xffffffffffffLL);
+             (mysignificand2 & 0xffffffffffffLL);
 
   return APInt(128, 2, words);
 }
