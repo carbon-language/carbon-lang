@@ -223,7 +223,7 @@ namespace {
     APFloat APF = APFloat(CFP->getValueAPF());  // copy
     if (CFP->getType() == Type::getFloatTy(CFP->getContext()))
       APF.convert(APFloat::IEEEdouble, APFloat::rmNearestTiesToEven, &ignored);
-    Out << "ConstantFP::get(";
+    Out << "ConstantFP::get(getGlobalContext(), ";
     Out << "APFloat(";
 #if HAVE_PRINTF_A
     char Buffer[100];
@@ -1214,7 +1214,7 @@ namespace {
       break;
     }
     case Instruction::FCmp: {
-      Out << "FCmpInst* " << iName << " = new FCmpInst(";
+      Out << "FCmpInst* " << iName << " = new FCmpInst(*" << bbname << ", ";
       switch (cast<FCmpInst>(I)->getPredicate()) {
       case FCmpInst::FCMP_FALSE: Out << "FCmpInst::FCMP_FALSE"; break;
       case FCmpInst::FCMP_OEQ  : Out << "FCmpInst::FCMP_OEQ"; break;
@@ -1236,7 +1236,7 @@ namespace {
       }
       Out << ", " << opNames[0] << ", " << opNames[1] << ", \"";
       printEscapedString(I->getName());
-      Out << "\", " << bbname << ");";
+      Out << "\");";
       break;
     }
     case Instruction::ICmp: {
