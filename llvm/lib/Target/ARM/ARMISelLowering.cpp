@@ -2344,19 +2344,17 @@ SDValue ARM::getVMOVImm(SDNode *N, unsigned ByteSize, SelectionDAG &DAG) {
                      SplatBitSize, DAG);
 }
 
-static bool isVEXTMask(ShuffleVectorSDNode *N, bool &ReverseVEXT,
-                       unsigned &Imm) {
-  EVT VT = N->getValueType(0);
+static bool isVEXTMask(const SmallVectorImpl<int> &M, EVT VT,
+                       bool &ReverseVEXT, unsigned &Imm) {
   unsigned NumElts = VT.getVectorNumElements();
   ReverseVEXT = false;
-  Imm = N->getMaskElt(0);
+  Imm = M[0];
 
   // If this is a VEXT shuffle, the immediate value is the index of the first
   // element.  The other shuffle indices must be the successive elements after
   // the first one.
   unsigned ExpectedElt = Imm;
   for (unsigned i = 1; i < NumElts; ++i) {
-
     // Increment the expected index.  If it wraps around, it may still be
     // a VEXT but the source vectors must be swapped.
     ExpectedElt += 1;
@@ -2365,7 +2363,7 @@ static bool isVEXTMask(ShuffleVectorSDNode *N, bool &ReverseVEXT,
       ReverseVEXT = true;
     }
 
-    if (ExpectedElt != static_cast<unsigned>(N->getMaskElt(i)))
+    if (ExpectedElt != static_cast<unsigned>(M[i]))
       return false;
   }
 
@@ -2382,20 +2380,20 @@ static bool isVEXTMask(ShuffleVectorSDNode *N, bool &ReverseVEXT,
 /// isVREVMask - Check if a vector shuffle corresponds to a VREV
 /// instruction with the specified blocksize.  (The order of the elements
 /// within each block of the vector is reversed.)
-static bool isVREVMask(ShuffleVectorSDNode *N, unsigned BlockSize) {
+static bool isVREVMask(const SmallVectorImpl<int> &M, EVT VT,
+                       unsigned BlockSize) {
   assert((BlockSize==16 || BlockSize==32 || BlockSize==64) &&
          "Only possible block sizes for VREV are: 16, 32, 64");
 
-  EVT VT = N->getValueType(0);
   unsigned NumElts = VT.getVectorNumElements();
   unsigned EltSz = VT.getVectorElementType().getSizeInBits();
-  unsigned BlockElts = N->getMaskElt(0) + 1;
+  unsigned BlockElts = M[0] + 1;
 
   if (BlockSize <= EltSz || BlockSize != BlockElts * EltSz)
     return false;
 
   for (unsigned i = 0; i < NumElts; ++i) {
-    if ((unsigned) N->getMaskElt(i) !=
+    if ((unsigned) M[i] !=
         (i - i%BlockElts) + (BlockElts - 1 - i%BlockElts))
       return false;
   }
@@ -2476,10 +2474,28 @@ static SDValue LowerBUILD_VECTOR(SDValue Op, SelectionDAG &DAG) {
   return SDValue();
 }
 
+/// isShuffleMaskLegal - Targets can use this to indicate that they only
+/// support *some* VECTOR_SHUFFLE operations, those with specific masks.
+/// By default, if a target supports the VECTOR_SHUFFLE node, all mask values
+/// are assumed to be legal.
+bool
+ARMTargetLowering::isShuffleMaskLegal(const SmallVectorImpl<int> &M,
+                                      EVT VT) const {
+  bool ReverseVEXT;
+  unsigned Imm;
+
+  return (ShuffleVectorSDNode::isSplatMask(&M[0], VT) ||
+          isVREVMask(M, VT, 64) ||
+          isVREVMask(M, VT, 32) ||
+          isVREVMask(M, VT, 16) ||
+          isVEXTMask(M, VT, ReverseVEXT, Imm));
+}
+
 static SDValue LowerVECTOR_SHUFFLE(SDValue Op, SelectionDAG &DAG) {
   ShuffleVectorSDNode *SVN = cast<ShuffleVectorSDNode>(Op.getNode());
   DebugLoc dl = Op.getDebugLoc();
   EVT VT = Op.getValueType();
+  SmallVector<int, 8> ShuffleMask;
 
   // Convert shuffles that are directly supported on NEON to target-specific
   // DAG nodes, instead of keeping them as shuffles and matching them again
@@ -2487,7 +2503,9 @@ static SDValue LowerVECTOR_SHUFFLE(SDValue Op, SelectionDAG &DAG) {
   // of inconsistencies between legalization and selection.
   // FIXME: floating-point vectors should be canonicalized to integer vectors
   // of the same time so that they get CSEd properly.
-  if (SVN->isSplat()) {
+  SVN->getMask(ShuffleMask);
+
+  if (ShuffleVectorSDNode::isSplatMask(&ShuffleMask[0], VT)) {
     int Lane = SVN->getSplatIndex();
     SDValue Op0 = SVN->getOperand(0);
     if (Lane == 0 && Op0.getOpcode() == ISD::SCALAR_TO_VECTOR) {
@@ -2499,7 +2517,7 @@ static SDValue LowerVECTOR_SHUFFLE(SDValue Op, SelectionDAG &DAG) {
 
   bool ReverseVEXT;
   unsigned Imm;
-  if (isVEXTMask(SVN, ReverseVEXT, Imm)) {
+  if (isVEXTMask(ShuffleMask, VT, ReverseVEXT, Imm)) {
     SDValue Op0 = SVN->getOperand(0);
     SDValue Op1 = SVN->getOperand(1);
     if (ReverseVEXT)
@@ -2508,11 +2526,11 @@ static SDValue LowerVECTOR_SHUFFLE(SDValue Op, SelectionDAG &DAG) {
                        DAG.getConstant(Imm, MVT::i32));
   }
 
-  if (isVREVMask(SVN, 64))
+  if (isVREVMask(ShuffleMask, VT, 64))
     return DAG.getNode(ARMISD::VREV64, dl, VT, SVN->getOperand(0));
-  if (isVREVMask(SVN, 32))
+  if (isVREVMask(ShuffleMask, VT, 32))
     return DAG.getNode(ARMISD::VREV32, dl, VT, SVN->getOperand(0));
-  if (isVREVMask(SVN, 16))
+  if (isVREVMask(ShuffleMask, VT, 16))
     return DAG.getNode(ARMISD::VREV16, dl, VT, SVN->getOperand(0));
 
   return SDValue();
