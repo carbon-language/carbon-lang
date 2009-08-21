@@ -1362,8 +1362,10 @@ void CodeGenFunction::EmitCtorPrologue(const CXXConstructorDecl *CD) {
       // non-static data member initilaizers.
       FieldDecl *Field = Member->getMember();
       QualType FieldType = getContext().getCanonicalType((Field)->getType());
-      assert(!getContext().getAsArrayType(FieldType) 
-             && "FIXME. Field arrays initialization unsupported");
+      const ConstantArrayType *Array = 
+      getContext().getAsConstantArrayType(FieldType);
+      if (Array)
+        FieldType = getContext().getBaseElementType(FieldType);
       
       LoadOfThis = LoadCXXThis();
       LValue LHS = EmitLValueForField(LoadOfThis, Field, false, 0);
@@ -1371,10 +1373,19 @@ void CodeGenFunction::EmitCtorPrologue(const CXXConstructorDecl *CD) {
         if (!Field->isAnonymousStructOrUnion()) {
           assert(Member->getConstructor() && 
                  "EmitCtorPrologue - no constructor to initialize member");
-          EmitCXXConstructorCall(Member->getConstructor(),
-                                 Ctor_Complete, LHS.getAddress(),
-                                 Member->const_arg_begin(), 
-                                 Member->const_arg_end());
+          if (Array) {
+            const llvm::Type *BasePtr = ConvertType(FieldType);
+            BasePtr = llvm::PointerType::getUnqual(BasePtr);
+            llvm::Value *BaseAddrPtr = 
+            Builder.CreateBitCast(LHS.getAddress(), BasePtr);
+            EmitCXXAggrConstructorCall(Member->getConstructor(), 
+                                       Array, BaseAddrPtr);
+          }
+          else
+            EmitCXXConstructorCall(Member->getConstructor(),
+                                   Ctor_Complete, LHS.getAddress(),
+                                   Member->const_arg_begin(), 
+                                   Member->const_arg_end());
           continue;
         }
         else {

@@ -46,6 +46,9 @@ struct N : M , P, Q {
             }
   float ld;
   float ff;
+  M arr_m[3];
+  P arr_p[1][3];
+  Q arr_q[2][3][4];
 };
 
 int main() {
