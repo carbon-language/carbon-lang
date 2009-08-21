@@ -981,8 +981,8 @@ bool AsmParser::ParseDirectiveFill() {
   
   Lexer.Lex();
 
-  if (FillSize != 1 && FillSize != 2 && FillSize != 4)
-    return TokError("invalid '.fill' size, expected 1, 2, or 4");
+  if (FillSize != 1 && FillSize != 2 && FillSize != 4 && FillSize != 8)
+    return TokError("invalid '.fill' size, expected 1, 2, 4, or 8");
 
   for (uint64_t i = 0, e = NumValues; i != e; ++i)
     Out.EmitValue(MCValue::get(FillExpr), FillSize);

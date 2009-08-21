@@ -10,3 +10,8 @@ TEST0:
 # CHECK: .short 3
 TEST1:  
         .fill 2, 2, 3
+
+# CHECK: TEST2:
+# CHECK: .quad 4
+TEST2:  
+        .fill 1, 8, 4
