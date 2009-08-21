@@ -52,7 +52,7 @@ namespace llvm {
     void EmitDefinedVars (Module &M);
     void EmitIData (Module &M);
     void EmitUData (Module &M);
-    void EmitAutos (const Function *F);
+    void EmitAutos (std::string FunctName);
     void EmitRemainingAutos ();
     void EmitRomData (Module &M);
     void EmitFunctionFrame(MachineFunction &MF);

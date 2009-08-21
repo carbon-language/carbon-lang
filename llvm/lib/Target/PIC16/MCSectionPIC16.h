@@ -28,8 +28,7 @@ namespace llvm {
   public:
     
     const std::string &getName() const { return Name; }
-
-    void setName(std::string name) { Name = name; }    
+    
     static MCSectionPIC16 *Create(const StringRef &Name, 
                                   SectionKind K, MCContext &Ctx);
     

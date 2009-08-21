@@ -22,19 +22,8 @@
 #include <cassert>
 #include <cstring>
 #include <string>
-namespace llvm {
-namespace PIC16Overlay {
-  // Implement Overlay through colors because we may want to enhance overlay
-  // architecture later. More colors can be added then. 
-  // Idea here is that functions with same color can be overlayed.
-  enum Overlay {
-    // A color name can only consist of upper case letters and underscore.
-    GREEN, // Stands for mainline functions that can be overlayed.
-    GREEN_IL, // Interrupt line version of GREEN.
-    RED // Stands for functions that can not be overlayed.
-  };
-}
 
+namespace llvm {
   // A Central class to manage all ABI naming conventions.
   // PAN - [P]ic16 [A]BI [N]ames
   class PAN {
@@ -424,22 +413,6 @@ namespace PIC16Overlay {
           return getAutosSectionName(Fname);
         }
       }
-    }
-    inline static std::string getOverlayStr(unsigned Color) {
-      std::string Str = "Overlay=";
-      Str.append(getSectionNameForColor(Color));
-      return Str;
-    }
-
-    inline static std::string getSectionNameForColor(unsigned Color) {
-      switch (Color) {
-        default:
-          assert( 0 && "Color not supported");
-        case PIC16Overlay::GREEN:
-          return "GREEN";
-        case PIC16Overlay::GREEN_IL:
-          return "GREEN_IL";
-      }   
     }
 
     inline static std::string getAutosSectionForColor(std::string Color) {

@@ -73,7 +73,7 @@ bool PIC16AsmPrinter::runOnMachineFunction(MachineFunction &MF) {
   DbgInfo.BeginFunction(MF);
 
   // Emit the autos section of function.
-  EmitAutos(F);
+  EmitAutos(CurrentFnName);
 
   // Now emit the instructions of function in its code section.
   const MCSection *fCodeSection = 
@@ -362,10 +362,9 @@ void PIC16AsmPrinter::EmitFunctionFrame(MachineFunction &MF) {
   const TargetData *TD = TM.getTargetData();
   // Emit the data section name.
   O << "\n"; 
- 
-  std::string SectionName = getObjFileLowering().getNameForFunctFrame(F);
+  
   const MCSection *fPDataSection =
-    getObjFileLowering().getSectionForFunctionFrame(SectionName); 
+    getObjFileLowering().getSectionForFunctionFrame(CurrentFnName);
   OutStreamer.SwitchSection(fPDataSection);
   
   // Emit function frame label
@@ -441,12 +440,12 @@ void PIC16AsmPrinter::EmitUData(Module &M) {
   }
 }
 
-void PIC16AsmPrinter::EmitAutos(const Function *F) {
+void PIC16AsmPrinter::EmitAutos(std::string FunctName) {
   // Section names for all globals are already set.
   const TargetData *TD = TM.getTargetData();
 
   // Now print Autos section for this function.
-  std::string SectionName = PAN::getAutosSectionName(CurrentFnName);
+  std::string SectionName = PAN::getAutosSectionName(FunctName);
 
   // If this function is a cloned function then the name of auto section 
   // will not be present in the list of existing section. Hence this section
@@ -460,15 +459,6 @@ void PIC16AsmPrinter::EmitAutos(const Function *F) {
     if (AutosSections[i]->S_->getName() == SectionName) { 
       // Set the printing status to true
       AutosSections[i]->setPrintedStatus(true);
-      // Overlay auto sections with same function color.
-      std::string BaseSectionName = getObjFileLowering().
-                                    getNameForFunctFrame(F, true);
-      if (BaseSectionName != F->getName()) {
-        std::string NewSectionName = PAN::getAutosSectionName(BaseSectionName);
-        const_cast<MCSectionPIC16 *>(AutosSections[i]->S_)->setName(
-                                                            NewSectionName);
-      }
-
       OutStreamer.SwitchSection(AutosSections[i]->S_);
       const std::vector<const GlobalVariable*> &Items = AutosSections[i]->Items;
       for (unsigned j = 0; j < Items.size(); j++) {
