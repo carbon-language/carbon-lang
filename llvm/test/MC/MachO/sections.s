@@ -121,8 +121,7 @@
 // CHECK:     ('address', 0)
 // CHECK:     ('size', 0)
 // CHECK:     ('offset', 2464)
-        // FIXME: We aren't setting alignment correctly yet.
-// CHECX:     ('alignment', 2)
+// CHECK:     ('alignment', 2)
 // CHECK:     ('reloc_offset', 0)
 // CHECK:     ('num_reloc', 0)
 // CHECK:     ('flags', 0x3)
@@ -135,8 +134,7 @@
 // CHECK:     ('address', 0)
 // CHECK:     ('size', 0)
 // CHECK:     ('offset', 2464)
-        // FIXME: We aren't setting alignment correctly yet.
-// CHECX:     ('alignment', 3)
+// CHECK:     ('alignment', 3)
 // CHECK:     ('reloc_offset', 0)
 // CHECK:     ('num_reloc', 0)
 // CHECK:     ('flags', 0x4)
@@ -149,8 +147,7 @@
 // CHECK:     ('address', 0)
 // CHECK:     ('size', 0)
 // CHECK:     ('offset', 2464)
-        // FIXME: We aren't setting alignment correctly yet.
-// CHECX:     ('alignment', 4)
+// CHECK:     ('alignment', 4)
 // CHECK:     ('reloc_offset', 0)
 // CHECK:     ('num_reloc', 0)
 // CHECK:     ('flags', 0xe)
@@ -241,8 +238,7 @@
 // CHECK:     ('address', 0)
 // CHECK:     ('size', 0)
 // CHECK:     ('offset', 2464)
-        // FIXME: We aren't setting alignment correctly yet.
-// CHECX:     ('alignment', 2)
+// CHECK:     ('alignment', 2)
 // CHECK:     ('reloc_offset', 0)
 // CHECK:     ('num_reloc', 0)
 // CHECK:     ('flags', 0x6)
@@ -255,8 +251,7 @@
 // CHECK:     ('address', 0)
 // CHECK:     ('size', 0)
 // CHECK:     ('offset', 2464)
-        // FIXME: We aren't setting alignment correctly yet.
-// CHECX:     ('alignment', 2)
+// CHECK:     ('alignment', 2)
 // CHECK:     ('reloc_offset', 0)
 // CHECK:     ('num_reloc', 0)
 // CHECK:     ('flags', 0x7)
@@ -282,8 +277,7 @@
 // CHECK:     ('address', 0)
 // CHECK:     ('size', 0)
 // CHECK:     ('offset', 2464)
-        // FIXME: We aren't setting alignment correctly yet.
-// CHECX:     ('alignment', 2)
+// CHECK:     ('alignment', 2)
 // CHECK:     ('reloc_offset', 0)
 // CHECK:     ('num_reloc', 0)
 // CHECK:     ('flags', 0x9)
@@ -296,8 +290,7 @@
 // CHECK:     ('address', 0)
 // CHECK:     ('size', 0)
 // CHECK:     ('offset', 2464)
-        // FIXME: We aren't setting alignment correctly yet.
-// CHECX:     ('alignment', 2)
+// CHECK:     ('alignment', 2)
 // CHECK:     ('reloc_offset', 0)
 // CHECK:     ('num_reloc', 0)
 // CHECK:     ('flags', 0xa)
@@ -427,8 +420,7 @@
 // CHECK:     ('address', 0)
 // CHECK:     ('size', 0)
 // CHECK:     ('offset', 2464)
-        // FIXME: We aren't setting alignment correctly yet.
-// CHECX:     ('alignment', 2)
+// CHECK:     ('alignment', 2)
 // CHECK:     ('reloc_offset', 0)
 // CHECK:     ('num_reloc', 0)
 // CHECK:     ('flags', 0x10000005)
@@ -441,8 +433,7 @@
 // CHECK:     ('address', 0)
 // CHECK:     ('size', 0)
 // CHECK:     ('offset', 2464)
-        // FIXME: We aren't setting alignment correctly yet.
-// CHECX:     ('alignment', 2)
+// CHECK:     ('alignment', 2)
 // CHECK:     ('reloc_offset', 0)
 // CHECK:     ('num_reloc', 0)
 // CHECK:     ('flags', 0x10000005)

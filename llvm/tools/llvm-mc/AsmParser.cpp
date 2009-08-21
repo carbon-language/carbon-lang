@@ -794,13 +794,24 @@ bool AsmParser::ParseDirectiveSectionSwitch(const char *Segment,
   
   // FIXME: Arch specific.
   // FIXME: Cache this!
-  // FIXME: Handle the implicit alignment!!
   MCSection *S = 0; // Ctx.GetSection(Section);
   if (S == 0)
     S = MCSectionMachO::Create(Segment, Section, TAA, StubSize,
                                SectionKind(), Ctx);
   
   Out.SwitchSection(S);
+
+  // Set the implicit alignment, if any.
+  //
+  // FIXME: This isn't really what 'as' does; I think it just uses the implicit
+  // alignment on the section (e.g., if one manually inserts bytes into the
+  // section, then just issueing the section switch directive will not realign
+  // the section. However, this is arguably more reasonable behavior, and there
+  // is no good reason for someone to intentionally emit incorrectly sized
+  // values into the implicitly aligned sections.
+  if (Align)
+    Out.EmitValueToAlignment(Align, 0, 1, 0);
+
   return false;
 }
 
