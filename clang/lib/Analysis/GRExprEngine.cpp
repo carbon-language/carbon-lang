@@ -209,7 +209,7 @@ const GRState* GRExprEngine::getInitialState(const LocationContext *InitLoc) {
   //  to be > 0.
   // FIXME: It would be nice if we had a more general mechanism to add
   // such preconditions.  Some day.
-  if (const FunctionDecl *FD = dyn_cast<FunctionDecl>(&StateMgr.getCodeDecl()))
+  if (const FunctionDecl *FD = dyn_cast<FunctionDecl>(InitLoc->getDecl()))
     if (strcmp(FD->getIdentifier()->getName(), "main") == 0 &&
         FD->getNumParams() > 0) {
       const ParmVarDecl *PD = FD->getParamDecl(0);
