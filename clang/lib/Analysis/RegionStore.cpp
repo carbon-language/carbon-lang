@@ -15,6 +15,7 @@
 //
 //===----------------------------------------------------------------------===//
 #include "clang/Analysis/PathSensitive/MemRegion.h"
+#include "clang/Analysis/PathSensitive/AnalysisContext.h"
 #include "clang/Analysis/PathSensitive/GRState.h"
 #include "clang/Analysis/PathSensitive/GRStateTrait.h"
 #include "clang/Analysis/Analyses/LiveVariables.h"
@@ -169,18 +170,13 @@ class VISIBILITY_HIDDEN RegionStoreManager : public StoreManager {
   RegionBindings::Factory RBFactory;
 
   const MemRegion* SelfRegion;
-  const ImplicitParamDecl *SelfDecl;
 
 public:
   RegionStoreManager(GRStateManager& mgr, const RegionStoreFeatures &f) 
     : StoreManager(mgr),
       Features(f),
       RBFactory(mgr.getAllocator()),
-      SelfRegion(0), SelfDecl(0) {
-    if (const ObjCMethodDecl* MD =
-          dyn_cast<ObjCMethodDecl>(&StateMgr.getCodeDecl()))
-      SelfDecl = MD->getSelfDecl();
-  }
+    SelfRegion(0) {}
 
   virtual ~RegionStoreManager() {}
 
@@ -232,22 +228,35 @@ public:
                  NonLoc R, QualType resultTy);
 
   Store getInitialStore(const LocationContext *InitLoc) { 
-    return RBFactory.GetEmptyMap().getRoot(); 
+    RegionBindings B = RBFactory.GetEmptyMap();
+
+    // Eagerly bind 'self' to SelfRegion, because this is the only place we can
+    // get the ObjCMethodDecl.
+    typedef LiveVariables::AnalysisDataTy LVDataTy;
+    LVDataTy &D = InitLoc->getLiveVariables()->getAnalysisData();
+    for (LVDataTy::decl_iterator I=D.begin_decl(), E=D.end_decl(); I!=E; ++I){
+      const NamedDecl *ND = I->first;
+
+      if (const ImplicitParamDecl *PD = dyn_cast<ImplicitParamDecl>(ND)) {
+        const Decl &CD = *InitLoc->getDecl();
+        if (const ObjCMethodDecl *MD = dyn_cast<ObjCMethodDecl>(&CD)) {
+          if (MD->getSelfDecl() == PD) {
+            SelfRegion = MRMgr.getObjCObjectRegion(MD->getClassInterface(),
+                                                   MRMgr.getHeapRegion());
+            B = RBFactory.Add(B, MRMgr.getVarRegion(PD),
+                              ValMgr.makeLoc(SelfRegion));
+          }
+        }
+      }
+    }
+
+    return B.getRoot();
   }
   
   /// getSelfRegion - Returns the region for the 'self' (Objective-C) or
   ///  'this' object (C++).  When used when analyzing a normal function this
   ///  method returns NULL.
   const MemRegion* getSelfRegion(Store) {
-    if (!SelfDecl)
-      return 0;
-    
-    if (!SelfRegion) {
-      const ObjCMethodDecl *MD = cast<ObjCMethodDecl>(&StateMgr.getCodeDecl());
-      SelfRegion = MRMgr.getObjCObjectRegion(MD->getClassInterface(),
-                                             MRMgr.getHeapRegion());
-    }
-    
     return SelfRegion;
   }
  
@@ -1196,9 +1205,6 @@ SVal RegionStoreManager::RetrieveVar(const GRState *state,
   
   // Lazily derive a value for the VarRegion.
   const VarDecl *VD = R->getDecl();
-    
-  if (VD == SelfDecl)
-    return loc::MemRegionVal(getSelfRegion(0));
     
   if (R->hasGlobalsOrParametersStorage())
     return ValMgr.getRegionValueSymbolValOrUnknown(R, VD->getType());
