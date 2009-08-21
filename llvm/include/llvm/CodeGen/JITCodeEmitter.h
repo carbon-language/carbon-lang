@@ -19,6 +19,7 @@
 
 #include <string>
 #include "llvm/Support/DataTypes.h"
+#include "llvm/Support/MathExtras.h"
 #include "llvm/CodeGen/MachineCodeEmitter.h"
 
 using namespace std;
@@ -161,17 +162,26 @@ public:
   /// alignment (saturated to BufferEnd of course).
   void emitAlignment(unsigned Alignment) {
     if (Alignment == 0) Alignment = 1;
+    uint8_t *NewPtr = (uint8_t*)RoundUpToAlignment((uintptr_t)CurBufferPtr,
+                                                   Alignment);
+    CurBufferPtr = std::min(NewPtr, BufferEnd);
+  }
 
-    if(Alignment <= (uintptr_t)(BufferEnd-CurBufferPtr)) {
-      // Move the current buffer ptr up to the specified alignment.
-      CurBufferPtr =
-        (uint8_t*)(((uintptr_t)CurBufferPtr+Alignment-1) &
-                   ~(uintptr_t)(Alignment-1));
-    } else {
+  /// emitAlignmentWithFill - Similar to emitAlignment, except that the
+  /// extra bytes are filled with the provided byte.
+  void emitAlignmentWithFill(unsigned Alignment, uint8_t Fill) {
+    if (Alignment == 0) Alignment = 1;
+    uint8_t *NewPtr = (uint8_t*)RoundUpToAlignment((uintptr_t)CurBufferPtr,
+                                                   Alignment);
+    // Fail if we don't have room.
+    if (NewPtr > BufferEnd) {
       CurBufferPtr = BufferEnd;
+      return;
+    }
+    while (CurBufferPtr < NewPtr) {
+      *CurBufferPtr++ = Fill;
     }
   }
-  
 
   /// emitULEB128Bytes - This callback is invoked when a ULEB128 needs to be
   /// written to the output stream.

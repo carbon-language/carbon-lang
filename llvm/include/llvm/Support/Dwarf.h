@@ -449,6 +449,7 @@ enum dwarf_constants {
 
   // Call frame instruction encodings
   DW_CFA_extended = 0x00,
+  DW_CFA_nop = 0x00,
   DW_CFA_advance_loc = 0x40,
   DW_CFA_offset = 0x80,
   DW_CFA_restore = 0xc0,

@@ -650,6 +650,10 @@ sys::MemoryBlock DefaultJITMemoryManager::allocateNewSlab(size_t size) {
   }
   LastSlab = B;
   ++NumSlabs;
+  // Initialize the slab to garbage when debugging.
+  if (PoisonMemory) {
+    memset(B.base(), 0xCD, B.size());
+  }
   return B;
 }
 

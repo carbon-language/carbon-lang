@@ -396,20 +396,10 @@ unsigned char* JITDwarfEmitter::EmitExceptionTable(MachineFunction* MF,
                         TargetAsmInfo::getULEB128Size(SizeSites) + 
                         SizeSites + SizeActions + SizeTypes;
 
-  unsigned TotalSize = sizeof(int8_t) + // LPStart format
-                       sizeof(int8_t) + // TType format
-                       TargetAsmInfo::getULEB128Size(TypeOffset) + // TType base offset
-                       TypeOffset;
-
-  unsigned SizeAlign = (4 - TotalSize) & 3;
-
   // Begin the exception table.
-  JCE->emitAlignment(4);
-  for (unsigned i = 0; i != SizeAlign; ++i) {
-    JCE->emitByte(0);
-    // Asm->EOL("Padding");
-  }
-  
+  JCE->emitAlignmentWithFill(4, 0);
+  // Asm->EOL("Padding");
+
   unsigned char* DwarfExceptionTable = (unsigned char*)JCE->getCurrentPCValue();
 
   // Emit the header.
@@ -496,8 +486,8 @@ unsigned char* JITDwarfEmitter::EmitExceptionTable(MachineFunction* MF,
     JCE->emitULEB128Bytes(TypeID);
     //Asm->EOL("Filter TypeInfo index");
   }
-  
-  JCE->emitAlignment(4);
+
+  JCE->emitAlignmentWithFill(4, 0);
 
   return DwarfExceptionTable;
 }
@@ -546,11 +536,12 @@ JITDwarfEmitter::EmitCommonEHFrame(const Function* Personality) const {
   std::vector<MachineMove> Moves;
   RI->getInitialFrameState(Moves);
   EmitFrameMoves(0, Moves);
-  JCE->emitAlignment(PointerSize);
-  
-  JCE->emitInt32At((uintptr_t*)StartCommonPtr, 
-              (uintptr_t)((unsigned char*)JCE->getCurrentPCValue() - 
-                          FrameCommonBeginPtr));
+
+  JCE->emitAlignmentWithFill(PointerSize, dwarf::DW_CFA_nop);
+
+  JCE->emitInt32At((uintptr_t*)StartCommonPtr,
+                   (uintptr_t)((unsigned char*)JCE->getCurrentPCValue() -
+                               FrameCommonBeginPtr));
 
   return StartCommonPtr;
 }
@@ -590,14 +581,14 @@ JITDwarfEmitter::EmitEHFrame(const Function* Personality,
   // Indicate locations of function specific  callee saved registers in
   // frame.
   EmitFrameMoves((intptr_t)StartFunction, MMI->getFrameMoves());
-      
-  JCE->emitAlignment(PointerSize);
-  
+
+  JCE->emitAlignmentWithFill(PointerSize, dwarf::DW_CFA_nop);
+
   // Indicate the size of the table
-  JCE->emitInt32At((uintptr_t*)StartEHPtr, 
-              (uintptr_t)((unsigned char*)JCE->getCurrentPCValue() - 
-                          StartEHPtr));
-  
+  JCE->emitInt32At((uintptr_t*)StartEHPtr,
+                   (uintptr_t)((unsigned char*)JCE->getCurrentPCValue() -
+                               StartEHPtr));
+
   // Double zeroes for the unwind runtime
   if (PointerSize == 8) {
     JCE->emitInt64(0);
@@ -606,7 +597,6 @@ JITDwarfEmitter::EmitEHFrame(const Function* Personality,
     JCE->emitInt32(0);
     JCE->emitInt32(0);
   }
-
   
   return StartEHPtr;
 }
