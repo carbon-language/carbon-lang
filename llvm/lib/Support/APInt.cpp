@@ -46,30 +46,27 @@ inline static uint64_t* getMemory(unsigned numWords) {
 
 /// A utility function that converts a character to a digit.
 inline static unsigned getDigit(char cdigit, uint8_t radix) {
-  // Get a digit
-  unsigned digit = 0;
+  unsigned r;
+
   if (radix == 16) {
-    if (!isxdigit(cdigit))
-      llvm_unreachable("Invalid hex digit in string");
-    if (isdigit(cdigit))
-      digit = cdigit - '0';
-    else if (cdigit >= 'a')
-      digit = cdigit - 'a' + 10;
-    else if (cdigit >= 'A')
-      digit = cdigit - 'A' + 10;
-    else
-      llvm_unreachable("huh? we shouldn't get here");
-  } else if (isdigit(cdigit)) {
-    digit = cdigit - '0';
-    assert((radix == 10 ||
-            (radix == 8 && digit != 8 && digit != 9) ||
-            (radix == 2 && (digit == 0 || digit == 1))) &&
-           "Invalid digit in string for given radix");
-  } else {
-    llvm_unreachable("Invalid character in digit string");
+    r = cdigit - '0';
+    if (r <= 9)
+      return r;
+
+    r = cdigit - 'A';
+    if (r <= 5)
+      return r + 10;
+
+    r = cdigit - 'a';
+    if (r <= 5)
+      return r + 10;
   }
 
-  return digit;
+  r = cdigit - '0';
+  if (r < radix)
+    return r;
+
+  return -1U;
 }
 
 
@@ -2076,6 +2073,7 @@ void APInt::fromString(unsigned numbits, const StringRef& str, uint8_t radix) {
   // Enter digit traversal loop
   for (StringRef::iterator e = str.end(); p != e; ++p) {
     unsigned digit = getDigit(*p, radix);
+    assert(digit < radix && "Invalid character in digit string");
 
     // Shift or multiply the value by the radix
     if (slen > 1) {
