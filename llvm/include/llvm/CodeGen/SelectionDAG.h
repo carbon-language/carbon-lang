@@ -99,7 +99,7 @@ class SelectionDAG {
   NodeAllocatorType NodeAllocator;
 
   /// CSEMap - This structure is used to memoize nodes, automatically performing
-  /// CSE with existing nodes with a duplicate is requested.
+  /// CSE with existing nodes when a duplicate is requested.
   FoldingSet<SDNode> CSEMap;
 
   /// OperandAllocator - Pool allocation for machine-opcode SDNode operands.
