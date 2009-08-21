@@ -457,7 +457,26 @@ Decl *TemplateDeclInstantiator::VisitFunctionDecl(FunctionDecl *D) {
 }
 
 Decl *TemplateDeclInstantiator::VisitCXXMethodDecl(CXXMethodDecl *D) {
-  // FIXME: Look for existing, explicit specializations.
+  // Check whether there is already a function template specialization for
+  // this declaration.
+  FunctionTemplateDecl *FunctionTemplate = D->getDescribedFunctionTemplate();
+  void *InsertPos = 0;
+  if (FunctionTemplate) {
+    llvm::FoldingSetNodeID ID;
+    FunctionTemplateSpecializationInfo::Profile(ID, 
+                                          TemplateArgs.getFlatArgumentList(),
+                                                TemplateArgs.flat_size(),
+                                                SemaRef.Context);
+    
+    FunctionTemplateSpecializationInfo *Info 
+      = FunctionTemplate->getSpecializations().FindNodeOrInsertPos(ID, 
+                                                                   InsertPos);
+    
+    // If we already have a function template specialization, return it.
+    if (Info)
+      return Info->Function;
+  }
+
   Sema::LocalInstantiationScope Scope(SemaRef);
 
   llvm::SmallVector<ParmVarDecl *, 4> Params;
@@ -471,7 +490,9 @@ Decl *TemplateDeclInstantiator::VisitCXXMethodDecl(CXXMethodDecl *D) {
     = CXXMethodDecl::Create(SemaRef.Context, Record, D->getLocation(), 
                             D->getDeclName(), T, D->getDeclaratorInfo(),
                             D->isStatic(), D->isInline());
-  Method->setInstantiationOfMemberFunction(D);
+
+  if (!FunctionTemplate)
+    Method->setInstantiationOfMemberFunction(D);
 
   // If we are instantiating a member function defined 
   // out-of-line, the instantiation will have the same lexical
@@ -501,8 +522,14 @@ Decl *TemplateDeclInstantiator::VisitCXXMethodDecl(CXXMethodDecl *D) {
   SemaRef.CheckFunctionDeclaration(Method, PrevDecl, Redeclaration,
                                    /*FIXME:*/OverloadableAttrRequired);
 
-  if (!Method->isInvalidDecl() || !PrevDecl)
-    Owner->addDecl(Method);
+  if (FunctionTemplate)
+    // Record this function template specialization.
+    Method->setFunctionTemplateSpecialization(SemaRef.Context,
+                                              FunctionTemplate,
+                                              &TemplateArgs,
+                                              InsertPos);
+  else if (!Method->isInvalidDecl() || !PrevDecl)
+      Owner->addDecl(Method);
   return Method;
 }
 

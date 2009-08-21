@@ -2237,6 +2237,48 @@ Sema::AddMethodCandidate(CXXMethodDecl *Method, Expr *Object,
   }
 }
 
+/// \brief Add a C++ member function template as a candidate to the candidate
+/// set, using template argument deduction to produce an appropriate member
+/// function template specialization.
+void 
+Sema::AddMethodTemplateCandidate(FunctionTemplateDecl *MethodTmpl,
+                                 bool HasExplicitTemplateArgs,
+                                 const TemplateArgument *ExplicitTemplateArgs,
+                                 unsigned NumExplicitTemplateArgs,
+                                 Expr *Object, Expr **Args, unsigned NumArgs,
+                                 OverloadCandidateSet& CandidateSet,
+                                 bool SuppressUserConversions,
+                                 bool ForceRValue) {
+  // C++ [over.match.funcs]p7:
+  //   In each case where a candidate is a function template, candidate 
+  //   function template specializations are generated using template argument
+  //   deduction (14.8.3, 14.8.2). Those candidates are then handled as 
+  //   candidate functions in the usual way.113) A given name can refer to one
+  //   or more function templates and also to a set of overloaded non-template
+  //   functions. In such a case, the candidate functions generated from each
+  //   function template are combined with the set of non-template candidate
+  //   functions.
+  TemplateDeductionInfo Info(Context);
+  FunctionDecl *Specialization = 0;
+  if (TemplateDeductionResult Result
+      = DeduceTemplateArguments(MethodTmpl, HasExplicitTemplateArgs,
+                                ExplicitTemplateArgs, NumExplicitTemplateArgs,
+                                Args, NumArgs, Specialization, Info)) {
+        // FIXME: Record what happened with template argument deduction, so
+        // that we can give the user a beautiful diagnostic.
+        (void)Result;
+        return;
+      }
+  
+  // Add the function template specialization produced by template argument
+  // deduction as a candidate.
+  assert(Specialization && "Missing member function template specialization?");
+  assert(isa<CXXMethodDecl>(Specialization) && 
+         "Specialization is not a member function?");
+  AddMethodCandidate(cast<CXXMethodDecl>(Specialization), Object, Args, NumArgs, 
+                     CandidateSet, SuppressUserConversions, ForceRValue);
+}
+
 /// \brief Add a C++ function template as a candidate in the candidate set,
 /// using template argument deduction to produce an appropriate function
 /// template specialization.
@@ -4276,19 +4318,36 @@ Sema::BuildCallToMemberFunction(Scope *S, Expr *MemExprE,
   Expr *ObjectArg = MemExpr->getBase();
 
   CXXMethodDecl *Method = 0;
-  if (OverloadedFunctionDecl *Ovl 
-        = dyn_cast<OverloadedFunctionDecl>(MemExpr->getMemberDecl())) {
+  if (isa<OverloadedFunctionDecl>(MemExpr->getMemberDecl()) ||
+      isa<FunctionTemplateDecl>(MemExpr->getMemberDecl())) {
     // Add overload candidates
     OverloadCandidateSet CandidateSet;
-    for (OverloadedFunctionDecl::function_iterator Func = Ovl->function_begin(),
-                                                FuncEnd = Ovl->function_end();
-         Func != FuncEnd; ++Func) {
-      assert(isa<CXXMethodDecl>(*Func) && "Function is not a method");
-      Method = cast<CXXMethodDecl>(*Func);
-      AddMethodCandidate(Method, ObjectArg, Args, NumArgs, CandidateSet, 
-                         /*SuppressUserConversions=*/false);
-    }
-
+    DeclarationName DeclName = MemExpr->getMemberDecl()->getDeclName();
+    
+    if (OverloadedFunctionDecl *Ovl 
+          = dyn_cast<OverloadedFunctionDecl>(MemExpr->getMemberDecl())) {
+      for (OverloadedFunctionDecl::function_iterator 
+                Func = Ovl->function_begin(),
+             FuncEnd = Ovl->function_end();
+           Func != FuncEnd; ++Func) {
+        if (Method = dyn_cast<CXXMethodDecl>(*Func))
+          AddMethodCandidate(Method, ObjectArg, Args, NumArgs, CandidateSet, 
+                             /*SuppressUserConversions=*/false);
+        else
+          AddMethodTemplateCandidate(cast<FunctionTemplateDecl>(*Func), 
+                                     /*FIXME:*/false, /*FIXME:*/0, 
+                                     /*FIXME:*/0, ObjectArg, Args, NumArgs,
+                                     CandidateSet,
+                                     /*SuppressUsedConversions=*/false);
+      }
+    } else
+      AddMethodTemplateCandidate(
+                          cast<FunctionTemplateDecl>(MemExpr->getMemberDecl()), 
+                                 /*FIXME:*/false, /*FIXME:*/0, 
+                                 /*FIXME:*/0, ObjectArg, Args, NumArgs,
+                                 CandidateSet,
+                                 /*SuppressUsedConversions=*/false);
+      
     OverloadCandidateSet::iterator Best;
     switch (BestViableFunction(CandidateSet, MemExpr->getLocStart(), Best)) {
     case OR_Success:
@@ -4298,7 +4357,7 @@ Sema::BuildCallToMemberFunction(Scope *S, Expr *MemExprE,
     case OR_No_Viable_Function:
       Diag(MemExpr->getSourceRange().getBegin(), 
            diag::err_ovl_no_viable_member_function_in_call)
-        << Ovl->getDeclName() << MemExprE->getSourceRange();
+        << DeclName << MemExprE->getSourceRange();
       PrintOverloadCandidates(CandidateSet, /*OnlyViable=*/false);
       // FIXME: Leaking incoming expressions!
       return true;
@@ -4306,7 +4365,7 @@ Sema::BuildCallToMemberFunction(Scope *S, Expr *MemExprE,
     case OR_Ambiguous:
       Diag(MemExpr->getSourceRange().getBegin(), 
            diag::err_ovl_ambiguous_member_call)
-        << Ovl->getDeclName() << MemExprE->getSourceRange();
+        << DeclName << MemExprE->getSourceRange();
       PrintOverloadCandidates(CandidateSet, /*OnlyViable=*/false);
       // FIXME: Leaking incoming expressions!
       return true;
@@ -4315,7 +4374,7 @@ Sema::BuildCallToMemberFunction(Scope *S, Expr *MemExprE,
       Diag(MemExpr->getSourceRange().getBegin(), 
            diag::err_ovl_deleted_member_call)
         << Best->Function->isDeleted()
-        << Ovl->getDeclName() << MemExprE->getSourceRange();
+        << DeclName << MemExprE->getSourceRange();
       PrintOverloadCandidates(CandidateSet, /*OnlyViable=*/false);
       // FIXME: Leaking incoming expressions!
       return true;

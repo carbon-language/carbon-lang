@@ -939,18 +939,35 @@ Sema::BuildDeclarationNameExpr(SourceLocation Loc, NamedDecl *D,
           Ctx = Method->getParent();
           MemberType = Method->getType();
         }
+      } else if (FunctionTemplateDecl *FunTmpl 
+                   = dyn_cast<FunctionTemplateDecl>(D)) {
+        if (CXXMethodDecl *Method 
+              = dyn_cast<CXXMethodDecl>(FunTmpl->getTemplatedDecl())) {
+          if (!Method->isStatic()) {          
+            Ctx = Method->getParent();
+            MemberType = Context.OverloadTy;
+          }
+        }
       } else if (OverloadedFunctionDecl *Ovl 
                    = dyn_cast<OverloadedFunctionDecl>(D)) {
+        // FIXME: We need an abstraction for iterating over one or more function
+        // templates or functions. This code is far too repetitive!
         for (OverloadedFunctionDecl::function_iterator 
                Func = Ovl->function_begin(),
                FuncEnd = Ovl->function_end();
              Func != FuncEnd; ++Func) {
-          if (CXXMethodDecl *DMethod = dyn_cast<CXXMethodDecl>(*Func))
-            if (!DMethod->isStatic()) {
-              Ctx = Ovl->getDeclContext();
-              MemberType = Context.OverloadTy;
-              break;
-            }
+          CXXMethodDecl *DMethod = 0;
+          if (FunctionTemplateDecl *FunTmpl 
+                = dyn_cast<FunctionTemplateDecl>(*Func))
+            DMethod = dyn_cast<CXXMethodDecl>(FunTmpl->getTemplatedDecl());
+          else
+            DMethod = dyn_cast<CXXMethodDecl>(*Func);
+
+          if (DMethod && !DMethod->isStatic()) {
+            Ctx = DMethod->getDeclContext();
+            MemberType = Context.OverloadTy;
+            break;
+          }
         }
       }
 
@@ -2111,6 +2128,13 @@ Sema::ActOnMemberReferenceExpr(Scope *S, ExprArg Base, SourceLocation OpLoc,
       return Owned(new (Context) MemberExpr(BaseExpr, OpKind == tok::arrow,
                                             MemberFn, MemberLoc,
                                             MemberFn->getType()));
+    }
+    if (FunctionTemplateDecl *FunTmpl 
+          = dyn_cast<FunctionTemplateDecl>(MemberDecl)) {
+      MarkDeclarationReferenced(MemberLoc, MemberDecl);
+      return Owned(new (Context) MemberExpr(BaseExpr, OpKind == tok::arrow,
+                                            FunTmpl, MemberLoc,
+                                            Context.OverloadTy));
     }
     if (OverloadedFunctionDecl *Ovl
           = dyn_cast<OverloadedFunctionDecl>(MemberDecl))

@@ -804,6 +804,14 @@ public:
                           OverloadCandidateSet& CandidateSet,
                           bool SuppressUserConversions = false,
                           bool ForceRValue = false);
+  void AddMethodTemplateCandidate(FunctionTemplateDecl *MethodTmpl,
+                                  bool HasExplicitTemplateArgs,
+                                  const TemplateArgument *ExplicitTemplateArgs,
+                                  unsigned NumExplicitTemplateArgs,
+                                  Expr *Object, Expr **Args, unsigned NumArgs,
+                                  OverloadCandidateSet& CandidateSet,
+                                  bool SuppressUserConversions = false,
+                                  bool ForceRValue = false);
   void AddTemplateOverloadCandidate(FunctionTemplateDecl *FunctionTemplate,
                                     bool HasExplicitTemplateArgs,
                                   const TemplateArgument *ExplicitTemplateArgs,
