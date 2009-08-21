@@ -783,11 +783,11 @@ def SBC64ri32 : RILI<0xC24,
 
 let Uses = [PSW] in {
 def SUBE32rr : RREI<0xB999, (outs GR32:$dst), (ins GR32:$src1, GR32:$src2),
-                    "sbcr\t{$dst, $src2}",
+                    "slbr\t{$dst, $src2}",
                     [(set GR32:$dst, (sube GR32:$src1, GR32:$src2)),
                      (implicit PSW)]>;
 def SUBE64rr : RREI<0xB989, (outs GR64:$dst), (ins GR64:$src1, GR64:$src2),
-                    "sbcgr\t{$dst, $src2}",
+                    "slbgr\t{$dst, $src2}",
                     [(set GR64:$dst, (sube GR64:$src1, GR64:$src2)),
                      (implicit PSW)]>;
 }
