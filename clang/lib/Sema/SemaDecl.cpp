@@ -1240,22 +1240,6 @@ void Sema::CheckFallThroughForBlock(QualType BlockTy, Stmt *Body) {
 /// parameters are complete.
 bool Sema::CheckParmsForFunctionDef(FunctionDecl *FD) {
   bool HasInvalidParm = false;
-
-  // PIC16 uses section string to encode the info about ISR.
-  // Flash error if ISR has arguments.
-  const char *TargetPrefix = Context.Target.getTargetPrefix();
-  if (strcmp(TargetPrefix, "pic16") == 0) { 
-    unsigned ParamCount = FD->getNumParams();
-    if (const SectionAttr *SA = FD->getAttr<SectionAttr>()) {
-        const std::string &SecString = SA->getName(); 
-        if (SecString.find("interrupt") != std::string::npos 
-            && ParamCount > 0) {
-          Diag(FD->getLocation(), diag::warn_ISR_has_arguments) 
-                          << FD->getNameAsString();
-      }
-    }
-  }
-
   for (unsigned p = 0, NumParams = FD->getNumParams(); p < NumParams; ++p) {
     ParmVarDecl *Param = FD->getParamDecl(p);
 
