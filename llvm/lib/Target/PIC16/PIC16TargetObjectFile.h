@@ -12,6 +12,7 @@
 
 #include "llvm/Target/TargetLoweringObjectFile.h"
 #include "llvm/ADT/StringMap.h"
+#include "llvm/Function.h"
 #include <vector>
 #include <string>
 
@@ -84,6 +85,9 @@ namespace llvm {
     // If the current function is cloned then create the new autos section
     // also. 
     void createClonedSectionForAutos(const std::string &SecName);
+    std::string getNameForFunctFrame(const Function *F, 
+                                     bool IsAutosSection = false); 
+
   private:
     std::string getSectionNameForSym(const std::string &Sym) const;
 

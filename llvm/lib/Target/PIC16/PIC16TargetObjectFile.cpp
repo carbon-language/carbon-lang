@@ -82,6 +82,35 @@ getSectionForFunctionFrame(const std::string &FnName) const {
   return getPIC16Section(T.c_str(), SectionKind::getDataRel());
 }
 
+std::string PIC16TargetObjectFile::getNameForFunctFrame(const Function *F,
+                                                          bool IsAutosSection) {
+  std::string SectionName = F->getName();
+  if (F->hasSection()) {
+    std::string Sectn = F->getSection();
+    std::string StrToFind = "Overlay=";
+    unsigned Pos = Sectn.find(StrToFind);
+    if (Pos != std::string::npos) {
+      Pos += StrToFind.length();
+      std::string Color = "";
+      char c = Sectn.at(Pos);
+      // A Color can only consist on upper case letters or underscore.
+      while ((c >= 'A' && c<= 'Z') || c == '_') {
+        Color.append(1,c);
+        Pos++;
+        if (Pos >= Sectn.length())
+          break;
+        c = Sectn.at(Pos);
+      }
+      // Autos Section need to be given a different name from function frame. 
+      if (IsAutosSection)
+        SectionName = PAN::getAutosSectionForColor(Color);
+      else
+        SectionName = Color;
+    }
+  }
+  return SectionName;
+}
+
 const MCSection *
 PIC16TargetObjectFile::getBSSSectionForGlobal(const GlobalVariable *GV) const {
   assert(GV->hasInitializer() && "This global doesn't need space");

@@ -44,6 +44,7 @@ namespace PIC16CC {
     UGE
   };
 }
+
   // External symbol names require memory to live till the program end.
   // So we have to allocate it and keep.
   inline static const char *createESName (const std::string &name) {
