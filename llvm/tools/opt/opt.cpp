@@ -47,7 +47,7 @@ PassList(cl::desc("Optimizations available:"));
 // Other command line options...
 //
 static cl::opt<std::string>
-InputFilename(cl::Positional, cl::desc("<input bitcode file>"), 
+InputFilename(cl::Positional, cl::desc("<input bitcode file>"),
     cl::init("-"), cl::value_desc("filename"));
 
 static cl::opt<std::string>
@@ -77,20 +77,20 @@ StripDebug("strip-debug",
 static cl::opt<bool>
 DisableInline("disable-inlining", cl::desc("Do not run the inliner pass"));
 
-static cl::opt<bool> 
-DisableOptimizations("disable-opt", 
+static cl::opt<bool>
+DisableOptimizations("disable-opt",
                      cl::desc("Do not run any optimization passes"));
 
-static cl::opt<bool> 
+static cl::opt<bool>
 DisableInternalize("disable-internalize",
                    cl::desc("Do not mark all symbols as internal"));
 
 static cl::opt<bool>
-StandardCompileOpts("std-compile-opts", 
+StandardCompileOpts("std-compile-opts",
                    cl::desc("Include the standard compile time optimizations"));
 
 static cl::opt<bool>
-StandardLinkOpts("std-link-opts", 
+StandardLinkOpts("std-link-opts",
                  cl::desc("Include the standard link time optimizations"));
 
 static cl::opt<bool>
@@ -128,7 +128,7 @@ namespace {
 struct CallGraphSCCPassPrinter : public CallGraphSCCPass {
   static char ID;
   const PassInfo *PassToPrint;
-  CallGraphSCCPassPrinter(const PassInfo *PI) : 
+  CallGraphSCCPassPrinter(const PassInfo *PI) :
     CallGraphSCCPass(&ID), PassToPrint(PI) {}
 
   virtual bool runOnSCC(const std::vector<CallGraphNode *>&SCC) {
@@ -147,7 +147,7 @@ struct CallGraphSCCPassPrinter : public CallGraphSCCPass {
     // Get and print pass...
     return false;
   }
-  
+
   virtual const char *getPassName() const { return "'Pass' Printer"; }
 
   virtual void getAnalysisUsage(AnalysisUsage &AU) const {
@@ -192,7 +192,7 @@ struct FunctionPassPrinter : public FunctionPass {
                                             PassToPrint(PI) {}
 
   virtual bool runOnFunction(Function &F) {
-    if (!Quiet) { 
+    if (!Quiet) {
       outs() << "Printing analysis '" << PassToPrint->getPassName()
               << "' for function '" << F.getName() << "':\n";
     }
@@ -216,7 +216,7 @@ char FunctionPassPrinter::ID = 0;
 struct LoopPassPrinter : public LoopPass {
   static char ID;
   const PassInfo *PassToPrint;
-  LoopPassPrinter(const PassInfo *PI) : 
+  LoopPassPrinter(const PassInfo *PI) :
     LoopPass(&ID), PassToPrint(PI) {}
 
   virtual bool runOnLoop(Loop *L, LPPassManager &LPM) {
@@ -230,7 +230,7 @@ struct LoopPassPrinter : public LoopPass {
     // Get and print pass...
     return false;
   }
-  
+
   virtual const char *getPassName() const { return "'Pass' Printer"; }
 
   virtual void getAnalysisUsage(AnalysisUsage &AU) const {
@@ -244,7 +244,7 @@ char LoopPassPrinter::ID = 0;
 struct BasicBlockPassPrinter : public BasicBlockPass {
   const PassInfo *PassToPrint;
   static char ID;
-  BasicBlockPassPrinter(const PassInfo *PI) 
+  BasicBlockPassPrinter(const PassInfo *PI)
     : BasicBlockPass(&ID), PassToPrint(PI) {}
 
   virtual bool runOnBasicBlock(BasicBlock &BB) {
@@ -277,8 +277,8 @@ inline void addPass(PassManager &PM, Pass *P) {
   if (VerifyEach) PM.add(createVerifierPass());
 }
 
-/// AddOptimizationPasses - This routine adds optimization passes 
-/// based on selected optimization level, OptLevel. This routine 
+/// AddOptimizationPasses - This routine adds optimization passes
+/// based on selected optimization level, OptLevel. This routine
 /// duplicates llvm-gcc behaviour.
 ///
 /// OptLevel - Optimization Level
@@ -310,7 +310,7 @@ void AddStandardCompilePasses(PassManager &PM) {
   llvm::Pass *InliningPass = !DisableInline ? createFunctionInliningPass() : 0;
 
   // -std-compile-opts adds the same module passes as -O3.
-  createStandardModulePasses(&PM, 3, 
+  createStandardModulePasses(&PM, 3,
                              /*OptimizeSize=*/ false,
                              /*UnitAtATime=*/ true,
                              /*UnrollLoops=*/ true,
@@ -360,7 +360,7 @@ int main(int argc, char **argv) {
       M.reset(ParseBitcodeFile(Buffer, Context, &ErrorMessage));
       delete Buffer;
     }
-    
+
     if (M.get() == 0) {
       errs() << argv[0] << ": ";
       if (ErrorMessage.size())
@@ -410,7 +410,7 @@ int main(int argc, char **argv) {
       FPasses = new FunctionPassManager(new ExistingModuleProvider(M.get()));
       FPasses->add(new TargetData(M.get()));
     }
-      
+
     // If the -strip-debug command line option was specified, add it.  If
     // -std-compile-opts was also specified, it will handle StripDebug.
     if (StripDebug && !StandardCompileOpts)
@@ -420,18 +420,18 @@ int main(int argc, char **argv) {
     for (unsigned i = 0; i < PassList.size(); ++i) {
       // Check to see if -std-compile-opts was specified before this option.  If
       // so, handle it.
-      if (StandardCompileOpts && 
+      if (StandardCompileOpts &&
           StandardCompileOpts.getPosition() < PassList.getPosition(i)) {
         AddStandardCompilePasses(Passes);
         StandardCompileOpts = false;
       }
-      
-      if (StandardLinkOpts && 
+
+      if (StandardLinkOpts &&
           StandardLinkOpts.getPosition() < PassList.getPosition(i)) {
         AddStandardLinkPasses(Passes);
         StandardLinkOpts = false;
       }
-      
+
       if (OptLevelO1 && OptLevelO1.getPosition() < PassList.getPosition(i)) {
         AddOptimizationPasses(Passes, *FPasses, 1);
         OptLevelO1 = false;
@@ -475,21 +475,21 @@ int main(int argc, char **argv) {
             Passes.add(new ModulePassPrinter(PassInf));
         }
       }
-      
+
       if (PrintEachXForm)
         Passes.add(createPrintModulePass(&errs()));
     }
-    
+
     // If -std-compile-opts was specified at the end of the pass list, add them.
     if (StandardCompileOpts) {
       AddStandardCompilePasses(Passes);
       StandardCompileOpts = false;
-    }    
+    }
 
     if (StandardLinkOpts) {
       AddStandardLinkPasses(Passes);
       StandardLinkOpts = false;
-    }    
+    }
 
     if (OptLevelO1) {
       AddOptimizationPasses(Passes, *FPasses, 1);
