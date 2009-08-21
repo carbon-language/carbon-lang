@@ -215,7 +215,7 @@ const GRState* GRExprEngine::getInitialState(const LocationContext *InitLoc) {
       const ParmVarDecl *PD = FD->getParamDecl(0);
       QualType T = PD->getType();
       if (T->isIntegerType())
-        if (const MemRegion *R = state->getRegion(PD)) {
+        if (const MemRegion *R = state->getRegion(PD, InitLoc)) {
           SVal V = state->getSVal(loc::MemRegionVal(R));
           SVal Constraint = EvalBinOp(state, BinaryOperator::GT, V,
                                       ValMgr.makeZeroVal(T),
@@ -967,8 +967,8 @@ void GRExprEngine::VisitLogicalExpr(BinaryOperator* B, ExplodedNode* Pred,
 // Transfer functions: Loads and stores.
 //===----------------------------------------------------------------------===//
 
-void GRExprEngine::VisitDeclRefExpr(DeclRefExpr* Ex, ExplodedNode* Pred, 
-                                    ExplodedNodeSet& Dst, bool asLValue) {
+void GRExprEngine::VisitDeclRefExpr(DeclRefExpr *Ex, ExplodedNode *Pred, 
+                                    ExplodedNodeSet &Dst, bool asLValue) {
   
   const GRState* state = GetState(Pred);
 
@@ -976,7 +976,7 @@ void GRExprEngine::VisitDeclRefExpr(DeclRefExpr* Ex, ExplodedNode* Pred,
 
   if (const VarDecl* VD = dyn_cast<VarDecl>(D)) {
 
-    SVal V = state->getLValue(VD);
+    SVal V = state->getLValue(VD, Pred->getLocationContext());
 
     if (asLValue)
       MakeNode(Dst, Ex, Pred, state->bindExpr(Ex, V),
@@ -1781,7 +1781,7 @@ void GRExprEngine::VisitObjCForCollectionStmt(ObjCForCollectionStmt* S,
   if (DeclStmt* DS = dyn_cast<DeclStmt>(elem)) {
     VarDecl* ElemD = cast<VarDecl>(DS->getSingleDecl());
     assert (ElemD->getInit() == 0);
-    ElementV = GetState(Pred)->getLValue(ElemD);
+    ElementV = GetState(Pred)->getLValue(ElemD, Pred->getLocationContext());
     VisitObjCForCollectionStmtAux(S, Pred, Dst, ElementV);
     return;
   }
@@ -2130,7 +2130,8 @@ void GRExprEngine::VisitCompoundLiteralExpr(CompoundLiteralExpr* CL,
   }
 }
 
-void GRExprEngine::VisitDeclStmt(DeclStmt* DS, ExplodedNode* Pred, ExplodedNodeSet& Dst) {  
+void GRExprEngine::VisitDeclStmt(DeclStmt *DS, ExplodedNode *Pred,
+                                 ExplodedNodeSet& Dst) {  
 
   // The CFG has one DeclStmt per Decl.  
   Decl* D = *DS->decl_begin();
@@ -2188,6 +2189,8 @@ void GRExprEngine::VisitDeclStmt(DeclStmt* DS, ExplodedNode* Pred, ExplodedNodeS
     }
     
     // Decls without InitExpr are not initialized explicitly.
+    const LocationContext *LC = (*I)->getLocationContext();
+
     if (InitEx) {
       SVal InitVal = state->getSVal(InitEx);
       QualType T = VD->getType();
@@ -2199,17 +2202,17 @@ void GRExprEngine::VisitDeclStmt(DeclStmt* DS, ExplodedNode* Pred, ExplodedNodeS
         InitVal = ValMgr.getConjuredSymbolVal(InitEx, Count);
       }        
       
-      state = state->bindDecl(VD, InitVal);
+      state = state->bindDecl(VD, LC, InitVal);
       
       // The next thing to do is check if the GRTransferFuncs object wants to
       // update the state based on the new binding.  If the GRTransferFunc
       // object doesn't do anything, just auto-propagate the current state.
       GRStmtNodeBuilderRef BuilderRef(Dst, *Builder, *this, *I, state, DS,true);
-      getTF().EvalBind(BuilderRef, loc::MemRegionVal(state->getRegion(VD)),
+      getTF().EvalBind(BuilderRef, loc::MemRegionVal(state->getRegion(VD, LC)),
                        InitVal);      
     } 
     else {
-      state = state->bindDeclWithNoInit(VD);
+      state = state->bindDeclWithNoInit(VD, LC);
       MakeNode(Dst, DS, *I, state);
     }
   }

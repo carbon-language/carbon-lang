@@ -33,7 +33,8 @@ namespace llvm { class raw_ostream; }
 namespace clang {
  
 class MemRegionManager;
-class MemSpaceRegion;  
+class MemSpaceRegion;
+class LocationContext;
       
 //===----------------------------------------------------------------------===//
 // Base region classes.
@@ -423,17 +424,27 @@ public:
   
 class VarRegion : public DeclRegion {
   friend class MemRegionManager;
+
+  // Data.
+  const LocationContext *LC;
   
-  VarRegion(const VarDecl* vd, const MemRegion* sReg)
-    : DeclRegion(vd, sReg, VarRegionKind) {}
+  // Constructors and private methods.
+  VarRegion(const VarDecl* vd, const LocationContext *lC, const MemRegion* sReg)
+    : DeclRegion(vd, sReg, VarRegionKind), LC(lC) {}
 
   static void ProfileRegion(llvm::FoldingSetNodeID& ID, const VarDecl* VD,
-                            const MemRegion* superRegion) {
+                            const LocationContext *LC,
+                            const MemRegion *superRegion) {
     DeclRegion::ProfileRegion(ID, VD, superRegion, VarRegionKind);
+    ID.AddPointer(LC);
   }
   
+  void Profile(llvm::FoldingSetNodeID& ID) const;
+  
 public:  
-  const VarDecl* getDecl() const { return cast<VarDecl>(D); }  
+  const VarDecl *getDecl() const { return cast<VarDecl>(D); }
+  
+  const LocationContext *getLocationContext() const { return LC; }
   
   QualType getValueType(ASTContext& C) const { 
     // FIXME: We can cache this if needed.
@@ -633,13 +644,14 @@ public:
   StringRegion* getStringRegion(const StringLiteral* Str);
 
   /// getVarRegion - Retrieve or create the memory region associated with
-  ///  a specified VarDecl.
-  VarRegion* getVarRegion(const VarDecl* vd);
+  ///  a specified VarDecl and LocationContext.
+  VarRegion* getVarRegion(const VarDecl *D, const LocationContext *LC);
   
   /// getElementRegion - Retrieve the memory region associated with the
   ///  associated element type, index, and super region.
   ElementRegion *getElementRegion(QualType elementType, SVal Idx,
-                                  const MemRegion* superRegion,ASTContext &Ctx);
+                                  const MemRegion *superRegion,
+                                  ASTContext &Ctx);
   
   ElementRegion *getElementRegionWithSuper(const ElementRegion *ER,
                                            const MemRegion *superRegion) {
@@ -794,10 +806,14 @@ template <> struct MemRegionManagerTrait<StringRegion> {
   
 template <> struct MemRegionManagerTrait<VarRegion> {
   typedef MemRegion SuperRegionTy;
-  static const SuperRegionTy* getSuperRegion(MemRegionManager& MRMgr,
-                                             const VarDecl *d) {
-    if (d->hasLocalStorage()) {
-      return isa<ParmVarDecl>(d) || isa<ImplicitParamDecl>(d)
+  static const SuperRegionTy* getSuperRegion(MemRegionManager &MRMgr,
+                                             const VarDecl *D,
+                                             const LocationContext *LC) {
+    
+    // FIXME: Make stack regions have a location context?
+    
+    if (D->hasLocalStorage()) {
+      return isa<ParmVarDecl>(D) || isa<ImplicitParamDecl>(D)
              ? MRMgr.getStackArgumentsRegion() : MRMgr.getStackRegion();
     }
     

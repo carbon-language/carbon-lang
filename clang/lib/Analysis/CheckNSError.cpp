@@ -42,7 +42,8 @@ class VISIBILITY_HIDDEN NSErrorCheck : public BugType {
   bool CheckNSErrorArgument(QualType ArgTy);
   bool CheckCFErrorArgument(QualType ArgTy);
   
-  void CheckParamDeref(VarDecl* V, const GRState *state, BugReporter& BR);
+  void CheckParamDeref(const VarDecl *V, const LocationContext *LC,
+                       const GRState *state, BugReporter& BR);
   
   void EmitRetTyWarning(BugReporter& BR, const Decl& CodeDecl);
   
@@ -94,8 +95,7 @@ void NSErrorCheck::FlushReports(BugReporter& BR) {
     // Scan the parameters for an implicit null dereference.
     for (llvm::SmallVectorImpl<VarDecl*>::iterator I=ErrorParams.begin(),
           E=ErrorParams.end(); I!=E; ++I)    
-        CheckParamDeref(*I, (*RI)->getState(), BR);
-
+        CheckParamDeref(*I, (*RI)->getLocationContext(), (*RI)->getState(), BR);
   }
 }
 
@@ -191,10 +191,12 @@ bool NSErrorCheck::CheckCFErrorArgument(QualType ArgTy) {
   return TT->getDecl()->getIdentifier() == II;
 }
 
-void NSErrorCheck::CheckParamDeref(VarDecl* Param, const GRState *rootState,
+void NSErrorCheck::CheckParamDeref(const VarDecl *Param,
+                                   const LocationContext *LC,
+                                   const GRState *rootState,
                                    BugReporter& BR) {
   
-  SVal ParamL = rootState->getLValue(Param);
+  SVal ParamL = rootState->getLValue(Param, LC);
   const MemRegion* ParamR = cast<loc::MemRegionVal>(ParamL).getRegionAs<VarRegion>();
   assert (ParamR && "Parameters always have VarRegions.");
   SVal ParamSVal = rootState->getSVal(ParamR);

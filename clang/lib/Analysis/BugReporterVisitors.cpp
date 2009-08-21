@@ -314,7 +314,7 @@ void clang::bugreporter::registerTrackNullOrUndefValue(BugReporterContext& BRC,
   if (const DeclRefExpr *DR = dyn_cast<DeclRefExpr>(S)) {        
     if (const VarDecl *VD = dyn_cast<VarDecl>(DR->getDecl())) {                
       const VarRegion *R =
-      StateMgr.getRegionManager().getVarRegion(VD);
+      StateMgr.getRegionManager().getVarRegion(VD, N->getLocationContext());
       
       // What did we load?
       SVal V = state->getSVal(S);

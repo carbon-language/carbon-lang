@@ -206,7 +206,7 @@ public:
   // Utility methods for getting regions.
   //==---------------------------------------------------------------------==//
 
-  const VarRegion* getRegion(const VarDecl* D) const;
+  const VarRegion* getRegion(const VarDecl *D, const LocationContext *LC) const;
 
   const MemRegion* getSelfRegion() const;
 
@@ -230,9 +230,11 @@ public:
     return bindExpr(Ex, V, true, false);
   }
   
-  const GRState *bindDecl(const VarDecl* VD, SVal IVal) const;
+  const GRState *bindDecl(const VarDecl *VD, const LocationContext *LC,
+                          SVal V) const;
   
-  const GRState *bindDeclWithNoInit(const VarDecl* VD) const;  
+  const GRState *bindDeclWithNoInit(const VarDecl *VD,
+                                    const LocationContext *LC) const;  
   
   const GRState *bindLoc(Loc location, SVal V) const;
   
@@ -241,7 +243,7 @@ public:
   const GRState *unbindLoc(Loc LV) const;
 
   /// Get the lvalue for a variable reference.
-  SVal getLValue(const VarDecl *decl) const;
+  SVal getLValue(const VarDecl *D, const LocationContext *LC) const;
   
   /// Get the lvalue for a StringLiteral.
   SVal getLValue(const StringLiteral *literal) const;
@@ -599,8 +601,9 @@ public:
 // Out-of-line method definitions for GRState.
 //===----------------------------------------------------------------------===//
 
-inline const VarRegion* GRState::getRegion(const VarDecl* D) const {
-  return Mgr->getRegionManager().getVarRegion(D);
+inline const VarRegion* GRState::getRegion(const VarDecl *D,
+                                           const LocationContext *LC) const {
+  return Mgr->getRegionManager().getVarRegion(D, LC);
 }
 
 inline const MemRegion* GRState::getSelfRegion() const {
@@ -621,12 +624,15 @@ inline const GRState *GRState::bindCompoundLiteral(const CompoundLiteralExpr* CL
   return Mgr->StoreMgr->BindCompoundLiteral(this, CL, V);
 }
   
-inline const GRState *GRState::bindDecl(const VarDecl* VD, SVal IVal) const {
-  return Mgr->StoreMgr->BindDecl(this, VD, IVal);
+inline const GRState *GRState::bindDecl(const VarDecl* VD,
+                                        const LocationContext *LC,
+                                        SVal IVal) const {
+  return Mgr->StoreMgr->BindDecl(this, VD, LC, IVal);
 }
 
-inline const GRState *GRState::bindDeclWithNoInit(const VarDecl* VD) const {
-  return Mgr->StoreMgr->BindDeclWithNoInit(this, VD);
+inline const GRState *GRState::bindDeclWithNoInit(const VarDecl* VD,
+                                                  const LocationContext *LC) const {
+  return Mgr->StoreMgr->BindDeclWithNoInit(this, VD, LC);
 }
   
 inline const GRState *GRState::bindLoc(Loc LV, SVal V) const {
@@ -637,8 +643,9 @@ inline const GRState *GRState::bindLoc(SVal LV, SVal V) const {
   return !isa<Loc>(LV) ? this : bindLoc(cast<Loc>(LV), V);
 }
   
-inline SVal GRState::getLValue(const VarDecl* VD) const {
-  return Mgr->StoreMgr->getLValueVar(this, VD);
+inline SVal GRState::getLValue(const VarDecl* VD,
+                               const LocationContext *LC) const {
+  return Mgr->StoreMgr->getLValueVar(this, VD, LC);
 }
 
 inline SVal GRState::getLValue(const StringLiteral *literal) const {

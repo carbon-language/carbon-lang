@@ -88,7 +88,8 @@ public:
   //   caller's responsibility to 'delete' the returned map.
   virtual SubRegionMap *getSubRegionMap(const GRState *state) = 0;
 
-  virtual SVal getLValueVar(const GRState *state, const VarDecl *vd) = 0;
+  virtual SVal getLValueVar(const GRState *ST, const VarDecl *VD,
+                            const LocationContext *LC) = 0;
 
   virtual SVal getLValueString(const GRState *state,
                                const StringLiteral* sl) = 0;
@@ -144,11 +145,12 @@ public:
                                   SymbolReaper& SymReaper,
                       llvm::SmallVectorImpl<const MemRegion*>& RegionRoots) = 0;
 
-  virtual const GRState *BindDecl(const GRState *state, const VarDecl *vd, 
-                                   SVal initVal) = 0;
+  virtual const GRState *BindDecl(const GRState *ST, const VarDecl *VD,
+                                  const LocationContext *LC, SVal initVal) = 0;
 
-  virtual const GRState *BindDeclWithNoInit(const GRState *state,
-                                             const VarDecl *vd) = 0;
+  virtual const GRState *BindDeclWithNoInit(const GRState *ST,
+                                            const VarDecl *VD,
+                                            const LocationContext *LC) = 0;
 
   virtual const GRState *InvalidateRegion(const GRState *state,
                                           const MemRegion *R,

@@ -65,8 +65,8 @@ public:
   Store getInitialStore(const LocationContext *InitLoc);
 
   // FIXME: Investigate what is using this. This method should be removed.
-  virtual Loc getLoc(const VarDecl* VD) {
-    return ValMgr.makeLoc(MRMgr.getVarRegion(VD));
+  virtual Loc getLoc(const VarDecl* VD, const LocationContext *LC) {
+    return ValMgr.makeLoc(MRMgr.getVarRegion(VD, LC));
   }
   
   const GRState *BindCompoundLiteral(const GRState *state,
@@ -75,12 +75,13 @@ public:
     return state;
   }
   
-  SVal getLValueVar(const GRState *state, const VarDecl* VD);
-  SVal getLValueString(const GRState *state, const StringLiteral* S);
+  SVal getLValueVar(const GRState *state, const VarDecl *VD,
+                    const LocationContext *LC);
+  SVal getLValueString(const GRState *state, const StringLiteral *S);
   SVal getLValueCompoundLiteral(const GRState *state,
-                                const CompoundLiteralExpr* CL);
+                                const CompoundLiteralExpr *CL);
   SVal getLValueIvar(const GRState *state, const ObjCIvarDecl* D, SVal Base);
-  SVal getLValueField(const GRState *state, SVal Base, const FieldDecl* D);  
+  SVal getLValueField(const GRState *state, SVal Base, const FieldDecl *D);  
   SVal getLValueElement(const GRState *state, QualType elementType,
                         SVal Base, SVal Offset);
 
@@ -100,15 +101,19 @@ public:
 
   void iterBindings(Store store, BindingsHandler& f);
 
-  const GRState *BindDecl(const GRState *state, const VarDecl* VD, SVal InitVal) {
-    return state->makeWithStore(BindDeclInternal(state->getStore(),VD, &InitVal));
+  const GRState *BindDecl(const GRState *state, const VarDecl *VD,
+                          const LocationContext *LC, SVal InitVal) {
+    return state->makeWithStore(BindDeclInternal(state->getStore(),VD, LC,
+                                                 &InitVal));
   }
 
-  const GRState *BindDeclWithNoInit(const GRState *state, const VarDecl* VD) {
-    return state->makeWithStore(BindDeclInternal(state->getStore(), VD, 0));
+  const GRState *BindDeclWithNoInit(const GRState *state, const VarDecl *VD,
+                                    const LocationContext *LC) {
+    return state->makeWithStore(BindDeclInternal(state->getStore(), VD, LC, 0));
   }
 
-  Store BindDeclInternal(Store store, const VarDecl* VD, SVal* InitVal);
+  Store BindDeclInternal(Store store, const VarDecl *VD,
+                         const LocationContext *LC, SVal *InitVal);
 
   static inline BindingsTy GetBindings(Store store) {
     return BindingsTy(static_cast<const BindingsTy::TreeTy*>(store));
@@ -128,8 +133,9 @@ StoreManager* clang::CreateBasicStoreManager(GRStateManager& StMgr) {
   return new BasicStoreManager(StMgr);
 }
 
-SVal BasicStoreManager::getLValueVar(const GRState *state, const VarDecl* VD) {
-  return ValMgr.makeLoc(MRMgr.getVarRegion(VD));
+SVal BasicStoreManager::getLValueVar(const GRState *state, const VarDecl* VD,
+                                     const LocationContext *LC) {
+  return ValMgr.makeLoc(MRMgr.getVarRegion(VD, LC));
 }
 
 SVal BasicStoreManager::getLValueString(const GRState *state, 
@@ -510,7 +516,7 @@ Store BasicStoreManager::getInitialStore(const LocationContext *InitLoc) {
           SelfRegion = MRMgr.getObjCObjectRegion(MD->getClassInterface(),
                                                  MRMgr.getHeapRegion());
           
-          St = BindInternal(St, ValMgr.makeLoc(MRMgr.getVarRegion(PD)),
+          St = BindInternal(St, ValMgr.makeLoc(MRMgr.getVarRegion(PD, InitLoc)),
                             ValMgr.makeLoc(SelfRegion));
           
           // Scan the method for ivar references.  While this requires an
@@ -526,7 +532,7 @@ Store BasicStoreManager::getInitialStore(const LocationContext *InitLoc) {
 
       // Initialize globals and parameters to symbolic values.
       // Initialize local variables to undefined.
-      const MemRegion *R = ValMgr.getRegionManager().getVarRegion(VD);
+      const MemRegion *R = ValMgr.getRegionManager().getVarRegion(VD, InitLoc);
       SVal X = R->hasGlobalsOrParametersStorage()
                ? ValMgr.getRegionValueSymbolVal(R)
                : UndefinedVal();
@@ -538,6 +544,7 @@ Store BasicStoreManager::getInitialStore(const LocationContext *InitLoc) {
 }
 
 Store BasicStoreManager::BindDeclInternal(Store store, const VarDecl* VD,
+                                          const LocationContext *LC,
                                           SVal* InitVal) {
                  
   BasicValueFactory& BasicVals = StateMgr.getBasicVals();
@@ -568,16 +575,16 @@ Store BasicStoreManager::BindDeclInternal(Store store, const VarDecl* VD,
       if (!InitVal) {
         QualType T = VD->getType();
         if (Loc::IsLocType(T))
-          store = BindInternal(store, getLoc(VD),
+          store = BindInternal(store, getLoc(VD, LC),
                        loc::ConcreteInt(BasicVals.getValue(0, T)));
         else if (T->isIntegerType())
-          store = BindInternal(store, getLoc(VD),
+          store = BindInternal(store, getLoc(VD, LC),
                        nonloc::ConcreteInt(BasicVals.getValue(0, T)));
         else {
           // assert(0 && "ignore other types of variables");
         }
       } else {
-        store = BindInternal(store, getLoc(VD), *InitVal);
+        store = BindInternal(store, getLoc(VD, LC), *InitVal);
       }
     }
   } else {
@@ -585,7 +592,7 @@ Store BasicStoreManager::BindDeclInternal(Store store, const VarDecl* VD,
     QualType T = VD->getType();
     if (ValMgr.getSymbolManager().canSymbolicate(T)) {
       SVal V = InitVal ? *InitVal : UndefinedVal();
-      store = BindInternal(store, getLoc(VD), V);
+      store = BindInternal(store, getLoc(VD, LC), V);
     }
   }
 

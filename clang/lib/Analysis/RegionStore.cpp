@@ -204,7 +204,8 @@ public:
   /// getLValueVar - Returns an SVal that represents the lvalue of a
   ///  variable.  Within RegionStore a variable has an associated
   ///  VarRegion, and the lvalue of the variable is the lvalue of that region.
-  SVal getLValueVar(const GRState *state, const VarDecl* VD);
+  SVal getLValueVar(const GRState *ST, const VarDecl *VD,
+                    const LocationContext *LC);
   
   SVal getLValueIvar(const GRState *state, const ObjCIvarDecl* D, SVal Base);
 
@@ -243,7 +244,7 @@ public:
           if (MD->getSelfDecl() == PD) {
             SelfRegion = MRMgr.getObjCObjectRegion(MD->getClassInterface(),
                                                    MRMgr.getHeapRegion());
-            B = RBFactory.Add(B, MRMgr.getVarRegion(PD),
+            B = RBFactory.Add(B, MRMgr.getVarRegion(PD, InitLoc),
                               ValMgr.makeLoc(SelfRegion));
           }
         }
@@ -280,9 +281,11 @@ public:
   const GRState *BindCompoundLiteral(const GRState *state,
                                  const CompoundLiteralExpr* CL, SVal V);
   
-  const GRState *BindDecl(const GRState *state, const VarDecl* VD, SVal InitVal);
+  const GRState *BindDecl(const GRState *ST, const VarDecl *VD,
+                          const LocationContext *LC, SVal InitVal);
 
-  const GRState *BindDeclWithNoInit(const GRState *state, const VarDecl* VD) {
+  const GRState *BindDeclWithNoInit(const GRState *state, const VarDecl*,
+                                    const LocationContext *) {
     return state;
   }
 
@@ -547,8 +550,9 @@ SVal RegionStoreManager::getLValueString(const GRState *St,
 /// getLValueVar - Returns an SVal that represents the lvalue of a
 ///  variable.  Within RegionStore a variable has an associated
 ///  VarRegion, and the lvalue of the variable is the lvalue of that region.
-SVal RegionStoreManager::getLValueVar(const GRState *St, const VarDecl* VD) {
-  return loc::MemRegionVal(MRMgr.getVarRegion(VD));
+SVal RegionStoreManager::getLValueVar(const GRState *ST, const VarDecl *VD,
+                                      const LocationContext *LC) {
+  return loc::MemRegionVal(MRMgr.getVarRegion(VD, LC));
 }
 
 /// getLValueCompoundLiteral - Returns an SVal representing the lvalue
@@ -1345,18 +1349,20 @@ const GRState *RegionStoreManager::Bind(const GRState *state, Loc L, SVal V) {
   return state->makeWithStore(RBFactory.Add(B, R, V).getRoot());
 }
 
-const GRState *RegionStoreManager::BindDecl(const GRState *state, 
-                                            const VarDecl* VD, SVal InitVal) {
+const GRState *RegionStoreManager::BindDecl(const GRState *ST,
+                                            const VarDecl *VD,
+                                            const LocationContext *LC,
+                                            SVal InitVal) {
 
   QualType T = VD->getType();
-  VarRegion* VR = MRMgr.getVarRegion(VD);
+  VarRegion* VR = MRMgr.getVarRegion(VD, LC);
 
   if (T->isArrayType())
-    return BindArray(state, VR, InitVal);
+    return BindArray(ST, VR, InitVal);
   if (T->isStructureType())
-    return BindStruct(state, VR, InitVal);
+    return BindStruct(ST, VR, InitVal);
 
-  return Bind(state, ValMgr.makeLoc(VR), InitVal);
+  return Bind(ST, ValMgr.makeLoc(VR), InitVal);
 }
 
 // FIXME: this method should be merged into Bind().

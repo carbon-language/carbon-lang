@@ -98,6 +98,10 @@ void DeclRegion::Profile(llvm::FoldingSetNodeID& ID) const {
   DeclRegion::ProfileRegion(ID, D, superRegion, getKind());
 }
 
+void VarRegion::Profile(llvm::FoldingSetNodeID &ID) const {
+  VarRegion::ProfileRegion(ID, getDecl(), LC, superRegion);
+}
+
 void SymbolicRegion::ProfileRegion(llvm::FoldingSetNodeID& ID, SymbolRef sym,
                                    const MemRegion *sreg) {
   ID.AddInteger((unsigned) MemRegion::SymbolicRegionKind);
@@ -249,8 +253,9 @@ StringRegion* MemRegionManager::getStringRegion(const StringLiteral* Str) {
   return getRegion<StringRegion>(Str);
 }
 
-VarRegion* MemRegionManager::getVarRegion(const VarDecl* d) {
-  return getRegion<VarRegion>(d);
+VarRegion* MemRegionManager::getVarRegion(const VarDecl* D,
+                                          const LocationContext *LC) {
+  return getRegion<VarRegion>(D, LC);
 }
 
 CompoundLiteralRegion*
