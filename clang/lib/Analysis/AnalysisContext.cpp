@@ -81,26 +81,29 @@ AnalysisContext *AnalysisContextManager::getContext(Decl *D) {
 }
 
 void LocationContext::Profile(llvm::FoldingSetNodeID &ID, ContextKind k,
-                              AnalysisContext *ctx, LocationContext *parent) {
+                              AnalysisContext *ctx,
+                              const LocationContext *parent) {
   ID.AddInteger(k);
   ID.AddPointer(ctx);
   ID.AddPointer(parent);
 }
 
 void StackFrameContext::Profile(llvm::FoldingSetNodeID &ID,AnalysisContext *ctx,
-                                LocationContext *parent, Stmt *s) {
+                                const LocationContext *parent, const Stmt *s) {
   LocationContext::Profile(ID, StackFrame, ctx, parent);
   ID.AddPointer(s);
 }
 
 void ScopeContext::Profile(llvm::FoldingSetNodeID &ID, AnalysisContext *ctx,
-                           LocationContext *parent, Stmt *s) {
+                           const LocationContext *parent, const Stmt *s) {
   LocationContext::Profile(ID, Scope, ctx, parent);
   ID.AddPointer(s);
 }
 
-StackFrameContext *LocationContextManager::getStackFrame(AnalysisContext *ctx, 
-                                             LocationContext *parent, Stmt *s) {
+StackFrameContext*
+LocationContextManager::getStackFrame(AnalysisContext *ctx, 
+                                      const LocationContext *parent,
+                                      const Stmt *s) {
   llvm::FoldingSetNodeID ID;
   StackFrameContext::Profile(ID, ctx, parent, s);
   void *InsertPos;
@@ -115,7 +118,8 @@ StackFrameContext *LocationContextManager::getStackFrame(AnalysisContext *ctx,
 }
 
 ScopeContext *LocationContextManager::getScope(AnalysisContext *ctx,
-                                             LocationContext *parent, Stmt *s) {
+                                               const LocationContext *parent,
+                                               const Stmt *s) {
   llvm::FoldingSetNodeID ID;
   ScopeContext::Profile(ID, ctx, parent, s);
   void *InsertPos;

@@ -71,10 +71,11 @@ public:
 private:
   ContextKind Kind;
   AnalysisContext *Ctx;
-  LocationContext *Parent;
+  const LocationContext *Parent;
 
 protected:
-  LocationContext(ContextKind k, AnalysisContext *ctx, LocationContext *parent)
+  LocationContext(ContextKind k, AnalysisContext *ctx,
+                  const LocationContext *parent)
     : Kind(k), Ctx(ctx), Parent(parent) {}
 
 public:
@@ -82,7 +83,7 @@ public:
 
   AnalysisContext *getAnalysisContext() const { return Ctx; }
 
-  LocationContext *getParent() const { return Parent; }
+  const LocationContext *getParent() const { return Parent; }
 
   const Decl *getDecl() const { return getAnalysisContext()->getDecl(); }
 
@@ -101,16 +102,17 @@ public:
   }
 
   static void Profile(llvm::FoldingSetNodeID &ID, ContextKind k,
-                      AnalysisContext *ctx, LocationContext *parent);
+                      AnalysisContext *ctx, const LocationContext *parent);
 
   static bool classof(const LocationContext*) { return true; }
 };
 
 class StackFrameContext : public LocationContext {
-  Stmt *CallSite;
+  const Stmt *CallSite;
 
 public:
-  StackFrameContext(AnalysisContext *ctx, LocationContext *parent, Stmt *s)
+  StackFrameContext(AnalysisContext *ctx, const LocationContext *parent,
+                    const Stmt *s)
     : LocationContext(StackFrame, ctx, parent), CallSite(s) {}
 
   void Profile(llvm::FoldingSetNodeID &ID) {
@@ -118,7 +120,7 @@ public:
   }
 
   static void Profile(llvm::FoldingSetNodeID &ID, AnalysisContext *ctx,
-                      LocationContext *parent, Stmt *s);
+                      const LocationContext *parent, const Stmt *s);
 
   static bool classof(const LocationContext* Ctx) { 
     return Ctx->getKind() == StackFrame; 
@@ -126,10 +128,11 @@ public:
 };
 
 class ScopeContext : public LocationContext {
-  Stmt *Enter;
+  const Stmt *Enter;
 
 public:
-  ScopeContext(AnalysisContext *ctx, LocationContext *parent, Stmt *s)
+  ScopeContext(AnalysisContext *ctx, const LocationContext *parent,
+               const Stmt *s)
     : LocationContext(Scope, ctx, parent), Enter(s) {}
 
   void Profile(llvm::FoldingSetNodeID &ID) {
@@ -137,7 +140,7 @@ public:
   }
 
   static void Profile(llvm::FoldingSetNodeID &ID, AnalysisContext *ctx,
-                      LocationContext *parent, Stmt *s);
+                      const LocationContext *parent, const Stmt *s);
 
   static bool classof(const LocationContext* Ctx) { 
     return Ctx->getKind() == Scope; 
@@ -148,13 +151,13 @@ class LocationContextManager {
   llvm::FoldingSet<LocationContext> Contexts;
 
 public:
-  StackFrameContext *getStackFrame(AnalysisContext *ctx,LocationContext *parent,
-                                   Stmt *s);
+  StackFrameContext *getStackFrame(AnalysisContext *ctx,
+                                   const LocationContext *parent,
+                                   const Stmt *s);
 
-  ScopeContext *getScope(AnalysisContext *ctx,LocationContext *parent, Stmt *s);
-
+  ScopeContext *getScope(AnalysisContext *ctx, const LocationContext *parent,
+                         const Stmt *s);
 };
-
-}
-
+  
+} // end clang namespace
 #endif
