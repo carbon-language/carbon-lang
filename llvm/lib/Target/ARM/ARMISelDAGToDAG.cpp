@@ -1415,6 +1415,36 @@ SDNode *ARMDAGToDAGISel::Select(SDValue Op) {
                             N->getOperand(4), N->getOperand(5), Chain };
     return CurDAG->getTargetNode(Opc, dl, MVT::Other, Ops, 8);
   }
+  case ARMISD::VZIP16: {
+    EVT VT = N->getValueType(0);
+    return CurDAG->getTargetNode(ARM::VZIPd16, dl, VT, VT,
+                                 N->getOperand(0), N->getOperand(1));
+  }
+  case ARMISD::VZIP32: {
+    EVT VT = N->getValueType(0);
+    return CurDAG->getTargetNode(ARM::VZIPq32, dl, VT, VT,
+                                 N->getOperand(0), N->getOperand(1));
+  }
+  case ARMISD::VUZP16: {
+    EVT VT = N->getValueType(0);
+    return CurDAG->getTargetNode(ARM::VUZPd16, dl, VT, VT,
+                                 N->getOperand(0), N->getOperand(1));
+  }
+  case ARMISD::VUZP32: {
+    EVT VT = N->getValueType(0);
+    return CurDAG->getTargetNode(ARM::VUZPq32, dl, VT, VT,
+                                 N->getOperand(0), N->getOperand(1));
+  }
+  case ARMISD::VTRN16: {
+    EVT VT = N->getValueType(0);
+    return CurDAG->getTargetNode(ARM::VTRNd16, dl, VT, VT,
+                                 N->getOperand(0), N->getOperand(1));
+  }
+  case ARMISD::VTRN32: {
+    EVT VT = N->getValueType(0);
+    return CurDAG->getTargetNode(ARM::VTRNq32, dl, VT, VT,
+                                 N->getOperand(0), N->getOperand(1));
+  }
   }
 
   return SelectCode(Op);

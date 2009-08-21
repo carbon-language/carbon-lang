@@ -492,6 +492,15 @@ const char *ARMTargetLowering::getTargetNodeName(unsigned Opcode) const {
   case ARMISD::VREV64:        return "ARMISD::VREV64";
   case ARMISD::VREV32:        return "ARMISD::VREV32";
   case ARMISD::VREV16:        return "ARMISD::VREV16";
+  case ARMISD::VZIP32:        return "ARMISD::VZIP32";
+  case ARMISD::VZIP16:        return "ARMISD::VZIP16";
+  case ARMISD::VZIP8:         return "ARMISD::VZIP8";
+  case ARMISD::VUZP32:        return "ARMISD::VUZP32";
+  case ARMISD::VUZP16:        return "ARMISD::VUZP16";
+  case ARMISD::VUZP8:         return "ARMISD::VUZP8";
+  case ARMISD::VTRN32:        return "ARMISD::VTRN32";
+  case ARMISD::VTRN16:        return "ARMISD::VTRN16";
+  case ARMISD::VTRN8:         return "ARMISD::VTRN8";
   }
 }
 
