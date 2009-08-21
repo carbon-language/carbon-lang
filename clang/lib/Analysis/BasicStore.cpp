@@ -502,7 +502,7 @@ Store BasicStoreManager::getInitialStore(const LocationContext *InitLoc) {
 
     // Handle implicit parameters.
     if (ImplicitParamDecl* PD = dyn_cast<ImplicitParamDecl>(ND)) {
-      const Decl& CD = StateMgr.getCodeDecl();      
+      const Decl& CD = *InitLoc->getDecl();      
       if (const ObjCMethodDecl* MD = dyn_cast<ObjCMethodDecl>(&CD)) {
         if (MD->getSelfDecl() == PD) {
           // Create a region for "self".
