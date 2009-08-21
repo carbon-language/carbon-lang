@@ -138,8 +138,10 @@ static Constant *SymbolicallyEvaluateGEP(Constant* const* Ops, unsigned NumOps,
     // otherwise we can't.
     if (ConstantExpr *CE = dyn_cast<ConstantExpr>(Ptr))
       if (CE->getOpcode() == Instruction::IntToPtr)
-        if (ConstantInt *Base = dyn_cast<ConstantInt>(CE->getOperand(0)))
+        if (ConstantInt *Base = dyn_cast<ConstantInt>(CE->getOperand(0))) {
           BasePtr = Base->getValue();
+          BasePtr.zextOrTrunc(BitWidth);
+        }
     
     if (BasePtr == 0)
       BaseIsInt = false;
