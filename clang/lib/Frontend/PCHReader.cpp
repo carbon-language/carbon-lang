@@ -1562,6 +1562,12 @@ void PCHReader::InitializeContext(ASTContext &Ctx) {
       Context->setsigjmp_bufDecl(Tag->getDecl());
     }
   }
+  if (unsigned ObjCIdRedef 
+        = SpecialTypes[pch::SPECIAL_TYPE_OBJC_ID_REDEFINITION])
+    Context->ObjCIdRedefinitionType = GetType(ObjCIdRedef);
+  if (unsigned ObjCClassRedef 
+      = SpecialTypes[pch::SPECIAL_TYPE_OBJC_CLASS_REDEFINITION])
+    Context->ObjCClassRedefinitionType = GetType(ObjCClassRedef);
 }
 
 /// \brief Retrieve the name of the original source file name

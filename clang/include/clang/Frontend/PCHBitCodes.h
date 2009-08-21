@@ -427,7 +427,11 @@ namespace clang {
       /// \brief C jmp_buf typedef type
       SPECIAL_TYPE_jmp_buf                     = 8,
       /// \brief C sigjmp_buf typedef type
-      SPECIAL_TYPE_sigjmp_buf                  = 9
+      SPECIAL_TYPE_sigjmp_buf                  = 9,
+      /// \brief Objective-C "id" redefinition type
+      SPECIAL_TYPE_OBJC_ID_REDEFINITION        = 10,
+      /// \brief Objective-C "Class" redefinition type
+      SPECIAL_TYPE_OBJC_CLASS_REDEFINITION     = 11,
     };
 
     /// \brief Record codes for each kind of declaration.

@@ -1846,6 +1846,8 @@ void PCHWriter::WritePCH(Sema &SemaRef, MemorizeStatCalls *StatCalls,
   AddTypeRef(Context.getFILEType(), Record);
   AddTypeRef(Context.getjmp_bufType(), Record);
   AddTypeRef(Context.getsigjmp_bufType(), Record);
+  AddTypeRef(Context.ObjCIdRedefinitionType, Record);
+  AddTypeRef(Context.ObjCClassRedefinitionType, Record);
   Stream.EmitRecord(pch::SPECIAL_TYPES, Record);
   
   // Keep writing types and declarations until all types and
