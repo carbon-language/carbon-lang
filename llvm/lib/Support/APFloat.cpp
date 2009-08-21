@@ -2710,6 +2710,42 @@ APFloat::convertPPCDoubleDoubleAPFloatToAPInt() const
 }
 
 APInt
+APFloat::convertQuadrupleAPFloatToAPInt() const
+{
+  assert(semantics == (const llvm::fltSemantics*)&IEEEquad);
+  assert (partCount()==2);
+
+  uint64_t myexponent, mysignificand, mysignificand2;
+
+  if (category==fcNormal) {
+    myexponent = exponent+16383; //bias
+    mysignificand = significandParts()[0];
+    mysignificand2 = significandParts()[1];
+    if (myexponent==1 && !(mysignificand2 & 0x1000000000000LL))
+      myexponent = 0;   // denormal
+  } else if (category==fcZero) {
+    myexponent = 0;
+    mysignificand = mysignificand2 = 0;
+  } else if (category==fcInfinity) {
+    myexponent = 0x7fff;
+    mysignificand = mysignificand2 = 0;
+  } else {
+    assert(category == fcNaN && "Unknown category!");
+    myexponent = 0x7fff;
+    mysignificand = significandParts()[0];
+    mysignificand2 = significandParts()[1];
+  }
+
+  uint64_t words[2];
+  words[0] = mysignificand;
+  words[1] = ((uint64_t)(sign & 1) << 63) |
+             ((myexponent & 0x7fff) << 48) |
+             (mysignificand & 0xffffffffffffLL);
+
+  return APInt(128, 2, words);
+}
+
+APInt
 APFloat::convertDoubleAPFloatToAPInt() const
 {
   assert(semantics == (const llvm::fltSemantics*)&IEEEdouble);
@@ -2777,9 +2813,12 @@ APFloat::bitcastToAPInt() const
 {
   if (semantics == (const llvm::fltSemantics*)&IEEEsingle)
     return convertFloatAPFloatToAPInt();
-  
+
   if (semantics == (const llvm::fltSemantics*)&IEEEdouble)
     return convertDoubleAPFloatToAPInt();
+
+  if (semantics == (const llvm::fltSemantics*)&IEEEquad)
+    return convertQuadrupleAPFloatToAPInt();
 
   if (semantics == (const llvm::fltSemantics*)&PPCDoubleDouble)
     return convertPPCDoubleDoubleAPFloatToAPInt();
@@ -2897,6 +2936,46 @@ APFloat::initFromPPCDoubleDoubleAPInt(const APInt &api)
 }
 
 void
+APFloat::initFromQuadrupleAPInt(const APInt &api)
+{
+  assert(api.getBitWidth()==128);
+  uint64_t i1 = api.getRawData()[0];
+  uint64_t i2 = api.getRawData()[1];
+  uint64_t myexponent = (i2 >> 48) & 0x7fff;
+  uint64_t mysignificand  = i1;
+  uint64_t mysignificand2 = i2 & 0xffffffffffffLL;
+
+  initialize(&APFloat::IEEEquad);
+  assert(partCount()==2);
+
+  sign = static_cast<unsigned int>(i2>>63);
+  if (myexponent==0 &&
+      (mysignificand==0 && mysignificand2==0)) {
+    // exponent, significand meaningless
+    category = fcZero;
+  } else if (myexponent==0x7fff &&
+             (mysignificand==0 && mysignificand2==0)) {
+    // exponent, significand meaningless
+    category = fcInfinity;
+  } else if (myexponent==0x7fff &&
+             (mysignificand!=0 || mysignificand2 !=0)) {
+    // exponent meaningless
+    category = fcNaN;
+    significandParts()[0] = mysignificand;
+    significandParts()[1] = mysignificand2;
+  } else {
+    category = fcNormal;
+    exponent = myexponent - 16383;
+    significandParts()[0] = mysignificand;
+    significandParts()[1] = mysignificand2;
+    if (myexponent==0)          // denormal
+      exponent = -16382;
+    else
+      significandParts()[1] |= 0x1000000000000LL;  // integer bit
+  }
+}
+
+void
 APFloat::initFromDoubleAPInt(const APInt &api)
 {
   assert(api.getBitWidth()==64);
@@ -2975,8 +3054,9 @@ APFloat::initFromAPInt(const APInt& api, bool isIEEE)
     return initFromDoubleAPInt(api);
   else if (api.getBitWidth()==80)
     return initFromF80LongDoubleAPInt(api);
-  else if (api.getBitWidth()==128 && !isIEEE)
-    return initFromPPCDoubleDoubleAPInt(api);
+  else if (api.getBitWidth()==128)
+    return (isIEEE ?
+            initFromQuadrupleAPInt(api) : initFromPPCDoubleDoubleAPInt(api));
   else
     llvm_unreachable(0);
 }

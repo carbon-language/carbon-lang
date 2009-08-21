@@ -322,11 +322,13 @@ namespace llvm {
 
     APInt convertFloatAPFloatToAPInt() const;
     APInt convertDoubleAPFloatToAPInt() const;
+    APInt convertQuadrupleAPFloatToAPInt() const;
     APInt convertF80LongDoubleAPFloatToAPInt() const;
     APInt convertPPCDoubleDoubleAPFloatToAPInt() const;
     void initFromAPInt(const APInt& api, bool isIEEE = false);
     void initFromFloatAPInt(const APInt& api);
     void initFromDoubleAPInt(const APInt& api);
+    void initFromQuadrupleAPInt(const APInt &api);
     void initFromF80LongDoubleAPInt(const APInt& api);
     void initFromPPCDoubleDoubleAPInt(const APInt& api);
 
