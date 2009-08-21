@@ -488,17 +488,23 @@ Decl *TemplateDeclInstantiator::VisitCXXMethodDecl(CXXMethodDecl *D) {
   CXXMethodDecl *Method = 0;
   
   DeclarationName Name = D->getDeclName();
-  CXXConstructorDecl *ConstructorD = dyn_cast<CXXConstructorDecl>(D);
-  if (ConstructorD) {
+  if (CXXConstructorDecl *Constructor = dyn_cast<CXXConstructorDecl>(D)) {
     QualType ClassTy = SemaRef.Context.getTypeDeclType(Record);
     Name = SemaRef.Context.DeclarationNames.getCXXConstructorName(
                                     SemaRef.Context.getCanonicalType(ClassTy));
     Method = CXXConstructorDecl::Create(SemaRef.Context, Record, 
-                                        ConstructorD->getLocation(), 
+                                        Constructor->getLocation(), 
                                         Name, T, 
-                                        ConstructorD->getDeclaratorInfo(),
-                                        ConstructorD->isExplicit(), 
-                                        ConstructorD->isInline(), false);
+                                        Constructor->getDeclaratorInfo(),
+                                        Constructor->isExplicit(), 
+                                        Constructor->isInline(), false);
+  } else if (CXXDestructorDecl *Destructor = dyn_cast<CXXDestructorDecl>(D)) {
+    QualType ClassTy = SemaRef.Context.getTypeDeclType(Record);
+    Name = SemaRef.Context.DeclarationNames.getCXXDestructorName(
+                                   SemaRef.Context.getCanonicalType(ClassTy));
+    Method = CXXDestructorDecl::Create(SemaRef.Context, Record,
+                                       Destructor->getLocation(), Name,
+                                       T, Destructor->isInline(), false);
   } else {
     Method = CXXMethodDecl::Create(SemaRef.Context, Record, D->getLocation(), 
                                    D->getDeclName(), T, D->getDeclaratorInfo(),
@@ -558,34 +564,7 @@ Decl *TemplateDeclInstantiator::VisitCXXConstructorDecl(CXXConstructorDecl *D) {
 }
 
 Decl *TemplateDeclInstantiator::VisitCXXDestructorDecl(CXXDestructorDecl *D) {
-  Sema::LocalInstantiationScope Scope(SemaRef);
-
-  llvm::SmallVector<ParmVarDecl *, 4> Params;
-  QualType T = InstantiateFunctionType(D, Params);
-  if (T.isNull())
-    return 0;
-  assert(Params.size() == 0 && "Destructor with parameters?");
-
-  // Build the instantiated destructor declaration.
-  CXXRecordDecl *Record = cast<CXXRecordDecl>(Owner);
-  CanQualType ClassTy = 
-    SemaRef.Context.getCanonicalType(SemaRef.Context.getTypeDeclType(Record));
-  CXXDestructorDecl *Destructor
-    = CXXDestructorDecl::Create(SemaRef.Context, Record,
-                                D->getLocation(),
-             SemaRef.Context.DeclarationNames.getCXXDestructorName(ClassTy),
-                                T, D->isInline(), false);
-  Destructor->setInstantiationOfMemberFunction(D);
-  if (InitMethodInstantiation(Destructor, D))
-    Destructor->setInvalidDecl();
-
-  bool Redeclaration = false;
-  bool OverloadableAttrRequired = false;
-  NamedDecl *PrevDecl = 0;
-  SemaRef.CheckFunctionDeclaration(Destructor, PrevDecl, Redeclaration,
-                                   /*FIXME:*/OverloadableAttrRequired);
-  Owner->addDecl(Destructor);
-  return Destructor;
+  return VisitCXXMethodDecl(D);
 }
 
 Decl *TemplateDeclInstantiator::VisitCXXConversionDecl(CXXConversionDecl *D) {
