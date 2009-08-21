@@ -2599,11 +2599,24 @@ Sema::PerformInitializationByConstructor(QualType ClassType,
   DeclContext::lookup_const_iterator Con, ConEnd;
   for (llvm::tie(Con, ConEnd) = ClassDecl->lookup(ConstructorName);
        Con != ConEnd; ++Con) {
-    CXXConstructorDecl *Constructor = cast<CXXConstructorDecl>(*Con);
+    // Find the constructor (which may be a template).
+    CXXConstructorDecl *Constructor = 0;
+    FunctionTemplateDecl *ConstructorTmpl= dyn_cast<FunctionTemplateDecl>(*Con);
+    if (ConstructorTmpl)
+      Constructor 
+        = cast<CXXConstructorDecl>(ConstructorTmpl->getTemplatedDecl());
+    else
+      Constructor = cast<CXXConstructorDecl>(*Con);
+
     if ((Kind == IK_Direct) ||
         (Kind == IK_Copy && Constructor->isConvertingConstructor()) ||
-        (Kind == IK_Default && Constructor->isDefaultConstructor()))
-      AddOverloadCandidate(Constructor, Args, NumArgs, CandidateSet);
+        (Kind == IK_Default && Constructor->isDefaultConstructor())) {
+      if (ConstructorTmpl)
+        AddTemplateOverloadCandidate(ConstructorTmpl, false, 0, 0, 
+                                     Args, NumArgs, CandidateSet);
+      else
+        AddOverloadCandidate(Constructor, Args, NumArgs, CandidateSet);
+    }
   }
 
   // FIXME: When we decide not to synthesize the implicitly-declared

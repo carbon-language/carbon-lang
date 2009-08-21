@@ -485,10 +485,25 @@ Decl *TemplateDeclInstantiator::VisitCXXMethodDecl(CXXMethodDecl *D) {
 
   // Build the instantiated method declaration.
   CXXRecordDecl *Record = cast<CXXRecordDecl>(Owner);
-  CXXMethodDecl *Method
-    = CXXMethodDecl::Create(SemaRef.Context, Record, D->getLocation(), 
-                            D->getDeclName(), T, D->getDeclaratorInfo(),
-                            D->isStatic(), D->isInline());
+  CXXMethodDecl *Method = 0;
+  
+  DeclarationName Name = D->getDeclName();
+  CXXConstructorDecl *ConstructorD = dyn_cast<CXXConstructorDecl>(D);
+  if (ConstructorD) {
+    QualType ClassTy = SemaRef.Context.getTypeDeclType(Record);
+    Name = SemaRef.Context.DeclarationNames.getCXXConstructorName(
+                                    SemaRef.Context.getCanonicalType(ClassTy));
+    Method = CXXConstructorDecl::Create(SemaRef.Context, Record, 
+                                        ConstructorD->getLocation(), 
+                                        Name, T, 
+                                        ConstructorD->getDeclaratorInfo(),
+                                        ConstructorD->isExplicit(), 
+                                        ConstructorD->isInline(), false);
+  } else {
+    Method = CXXMethodDecl::Create(SemaRef.Context, Record, D->getLocation(), 
+                                   D->getDeclName(), T, D->getDeclaratorInfo(),
+                                   D->isStatic(), D->isInline());
+  }
 
   if (!FunctionTemplate)
     Method->setInstantiationOfMemberFunction(D);
@@ -507,15 +522,20 @@ Decl *TemplateDeclInstantiator::VisitCXXMethodDecl(CXXMethodDecl *D) {
   if (InitMethodInstantiation(Method, D))
     Method->setInvalidDecl();
 
-  NamedDecl *PrevDecl 
-    = SemaRef.LookupQualifiedName(Owner, Method->getDeclName(), 
-                                  Sema::LookupOrdinaryName, true);
-  // In C++, the previous declaration we find might be a tag type
-  // (class or enum). In this case, the new declaration will hide the
-  // tag type. Note that this does does not apply if we're declaring a
-  // typedef (C++ [dcl.typedef]p4).
-  if (PrevDecl && PrevDecl->getIdentifierNamespace() == Decl::IDNS_Tag)
-    PrevDecl = 0;
+  NamedDecl *PrevDecl = 0;
+  
+  if (!FunctionTemplate) {
+    PrevDecl = SemaRef.LookupQualifiedName(Owner, Name, 
+                                           Sema::LookupOrdinaryName, true);
+  
+    // In C++, the previous declaration we find might be a tag type
+    // (class or enum). In this case, the new declaration will hide the
+    // tag type. Note that this does does not apply if we're declaring a
+    // typedef (C++ [dcl.typedef]p4).
+    if (PrevDecl && PrevDecl->getIdentifierNamespace() == Decl::IDNS_Tag)
+      PrevDecl = 0;
+  }
+  
   bool Redeclaration = false;
   bool OverloadableAttrRequired = false;
   SemaRef.CheckFunctionDeclaration(Method, PrevDecl, Redeclaration,
@@ -528,60 +548,16 @@ Decl *TemplateDeclInstantiator::VisitCXXMethodDecl(CXXMethodDecl *D) {
                                               &TemplateArgs,
                                               InsertPos);
   else if (!Method->isInvalidDecl() || !PrevDecl)
-      Owner->addDecl(Method);
+    Owner->addDecl(Method);
+  
   return Method;
 }
 
 Decl *TemplateDeclInstantiator::VisitCXXConstructorDecl(CXXConstructorDecl *D) {
-  // FIXME: Look for existing, explicit specializations.
-  Sema::LocalInstantiationScope Scope(SemaRef);
-
-  llvm::SmallVector<ParmVarDecl *, 4> Params;
-  QualType T = InstantiateFunctionType(D, Params);
-  if (T.isNull())
-    return 0;
-
-  // Build the instantiated method declaration.
-  CXXRecordDecl *Record = cast<CXXRecordDecl>(Owner);
-  QualType ClassTy = SemaRef.Context.getTypeDeclType(Record);
-  DeclarationName Name
-    = SemaRef.Context.DeclarationNames.getCXXConstructorName(
-                                 SemaRef.Context.getCanonicalType(ClassTy));
-  CXXConstructorDecl *Constructor
-    = CXXConstructorDecl::Create(SemaRef.Context, Record, D->getLocation(), 
-                                 Name, T, D->getDeclaratorInfo(),
-                                 D->isExplicit(), D->isInline(), false);
-  Constructor->setInstantiationOfMemberFunction(D);
-
-  // Attach the parameters
-  for (unsigned P = 0; P < Params.size(); ++P)
-    Params[P]->setOwningFunction(Constructor);
-  Constructor->setParams(SemaRef.Context, Params.data(), Params.size());
-
-  if (InitMethodInstantiation(Constructor, D))
-    Constructor->setInvalidDecl();
-
-  NamedDecl *PrevDecl 
-    = SemaRef.LookupQualifiedName(Owner, Name, Sema::LookupOrdinaryName, true);
-
-  // In C++, the previous declaration we find might be a tag type
-  // (class or enum). In this case, the new declaration will hide the
-  // tag type. Note that this does does not apply if we're declaring a
-  // typedef (C++ [dcl.typedef]p4).
-  if (PrevDecl && PrevDecl->getIdentifierNamespace() == Decl::IDNS_Tag)
-    PrevDecl = 0;
-  bool Redeclaration = false;
-  bool OverloadableAttrRequired = false;
-  SemaRef.CheckFunctionDeclaration(Constructor, PrevDecl, Redeclaration,
-                                   /*FIXME:*/OverloadableAttrRequired);
-
-  Record->addedConstructor(SemaRef.Context, Constructor);
-  Owner->addDecl(Constructor);
-  return Constructor;
+  return VisitCXXMethodDecl(D);
 }
 
 Decl *TemplateDeclInstantiator::VisitCXXDestructorDecl(CXXDestructorDecl *D) {
-  // FIXME: Look for existing, explicit specializations.
   Sema::LocalInstantiationScope Scope(SemaRef);
 
   llvm::SmallVector<ParmVarDecl *, 4> Params;

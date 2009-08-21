@@ -1343,11 +1343,27 @@ bool Sema::IsUserDefinedConversion(Expr *From, QualType ToType,
       for (llvm::tie(Con, ConEnd) 
              = ToRecordDecl->lookup(ConstructorName);
            Con != ConEnd; ++Con) {
-        CXXConstructorDecl *Constructor = cast<CXXConstructorDecl>(*Con);
+        // Find the constructor (which may be a template).
+        CXXConstructorDecl *Constructor = 0;
+        FunctionTemplateDecl *ConstructorTmpl
+          = dyn_cast<FunctionTemplateDecl>(*Con);
+        if (ConstructorTmpl)
+          Constructor 
+            = cast<CXXConstructorDecl>(ConstructorTmpl->getTemplatedDecl());
+        else
+          Constructor = cast<CXXConstructorDecl>(*Con);
+        
         if (!Constructor->isInvalidDecl() &&
-            Constructor->isConvertingConstructor())
-          AddOverloadCandidate(Constructor, &From, 1, CandidateSet,
-                               /*SuppressUserConversions=*/true, ForceRValue);
+            Constructor->isConvertingConstructor()) {
+          if (ConstructorTmpl)
+            AddTemplateOverloadCandidate(ConstructorTmpl, false, 0, 0, &From, 
+                                         1, CandidateSet,
+                                         /*SuppressUserConversions=*/true, 
+                                         ForceRValue);
+          else
+            AddOverloadCandidate(Constructor, &From, 1, CandidateSet,
+                                 /*SuppressUserConversions=*/true, ForceRValue);
+        }
       }
     }
   }
@@ -4324,29 +4340,18 @@ Sema::BuildCallToMemberFunction(Scope *S, Expr *MemExprE,
     OverloadCandidateSet CandidateSet;
     DeclarationName DeclName = MemExpr->getMemberDecl()->getDeclName();
     
-    if (OverloadedFunctionDecl *Ovl 
-          = dyn_cast<OverloadedFunctionDecl>(MemExpr->getMemberDecl())) {
-      for (OverloadedFunctionDecl::function_iterator 
-                Func = Ovl->function_begin(),
-             FuncEnd = Ovl->function_end();
-           Func != FuncEnd; ++Func) {
-        if ((Method = dyn_cast<CXXMethodDecl>(*Func)))
-          AddMethodCandidate(Method, ObjectArg, Args, NumArgs, CandidateSet, 
-                             /*SuppressUserConversions=*/false);
-        else
-          AddMethodTemplateCandidate(cast<FunctionTemplateDecl>(*Func), 
-                                     /*FIXME:*/false, /*FIXME:*/0, 
-                                     /*FIXME:*/0, ObjectArg, Args, NumArgs,
-                                     CandidateSet,
-                                     /*SuppressUsedConversions=*/false);
-      }
-    } else
-      AddMethodTemplateCandidate(
-                          cast<FunctionTemplateDecl>(MemExpr->getMemberDecl()), 
-                                 /*FIXME:*/false, /*FIXME:*/0, 
-                                 /*FIXME:*/0, ObjectArg, Args, NumArgs,
-                                 CandidateSet,
-                                 /*SuppressUsedConversions=*/false);
+    for (OverloadIterator Func(MemExpr->getMemberDecl()), FuncEnd;
+         Func != FuncEnd; ++Func) {
+      if ((Method = dyn_cast<CXXMethodDecl>(*Func)))
+        AddMethodCandidate(Method, ObjectArg, Args, NumArgs, CandidateSet, 
+                           /*SuppressUserConversions=*/false);
+      else
+        AddMethodTemplateCandidate(cast<FunctionTemplateDecl>(*Func), 
+                                   /*FIXME:*/false, /*FIXME:*/0, 
+                                   /*FIXME:*/0, ObjectArg, Args, NumArgs,
+                                   CandidateSet,
+                                   /*SuppressUsedConversions=*/false);
+    }
       
     OverloadCandidateSet::iterator Best;
     switch (BestViableFunction(CandidateSet, MemExpr->getLocStart(), Best)) {

@@ -712,6 +712,18 @@ OverloadedFunctionDecl::Create(ASTContext &C, DeclContext *DC,
   return new (C) OverloadedFunctionDecl(DC, N);
 }
 
+OverloadIterator::OverloadIterator(NamedDecl *ND) : D(0) {
+  if (!ND)
+    return;
+  
+  if (isa<FunctionDecl>(ND) || isa<FunctionTemplateDecl>(ND))
+    D = ND;
+  else if (OverloadedFunctionDecl *Ovl = dyn_cast<OverloadedFunctionDecl>(ND)) {
+    D = ND;
+    Iter = Ovl->function_begin();
+  }
+}
+
 void OverloadedFunctionDecl::addOverload(AnyFunctionDecl F) {
   Functions.push_back(F);
   this->setLocation(F.get()->getLocation());

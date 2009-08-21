@@ -161,6 +161,8 @@ public:
   OverloadIterator(OverloadedFunctionDecl *Ovl) 
     : D(Ovl), Iter(Ovl->function_begin()) { }
   
+  OverloadIterator(NamedDecl *ND);
+  
   reference operator*() const;
   
   pointer operator->() const { return (**this).get(); }

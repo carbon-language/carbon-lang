@@ -844,7 +844,10 @@ void Parser::ParseDeclarationSpecifiers(DeclSpec &DS,
       // being defined and the next token is a '(', then this is a
       // constructor declaration. We're done with the decl-specifiers
       // and will treat this token as an identifier.
-      if (getLang().CPlusPlus && CurScope->isClassScope() &&
+      if (getLang().CPlusPlus && 
+          (CurScope->isClassScope() || 
+           (CurScope->isTemplateParamScope() && 
+            CurScope->getParent()->isClassScope())) &&
           Actions.isCurrentClassName(*Tok.getIdentifierInfo(), CurScope) && 
           NextToken().getKind() == tok::l_paren)
         goto DoneWithDeclSpec;
