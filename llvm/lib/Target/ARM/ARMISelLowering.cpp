@@ -493,15 +493,9 @@ const char *ARMTargetLowering::getTargetNodeName(unsigned Opcode) const {
   case ARMISD::VREV64:        return "ARMISD::VREV64";
   case ARMISD::VREV32:        return "ARMISD::VREV32";
   case ARMISD::VREV16:        return "ARMISD::VREV16";
-  case ARMISD::VZIP32:        return "ARMISD::VZIP32";
-  case ARMISD::VZIP16:        return "ARMISD::VZIP16";
-  case ARMISD::VZIP8:         return "ARMISD::VZIP8";
-  case ARMISD::VUZP32:        return "ARMISD::VUZP32";
-  case ARMISD::VUZP16:        return "ARMISD::VUZP16";
-  case ARMISD::VUZP8:         return "ARMISD::VUZP8";
-  case ARMISD::VTRN32:        return "ARMISD::VTRN32";
-  case ARMISD::VTRN16:        return "ARMISD::VTRN16";
-  case ARMISD::VTRN8:         return "ARMISD::VTRN8";
+  case ARMISD::VZIP:          return "ARMISD::VZIP";
+  case ARMISD::VUZP:          return "ARMISD::VUZP";
+  case ARMISD::VTRN:          return "ARMISD::VTRN";
   }
 }
 
@@ -2566,7 +2560,7 @@ static SDValue GeneratePerfectShuffle(unsigned PFEntry, SDValue LHS,
   case OP_VDUP2:
   case OP_VDUP3:
     return DAG.getNode(ARMISD::VDUPLANE, dl, VT,
-                       OpLHS, DAG.getConstant(OpNum-OP_VDUP0+1, MVT::i32));
+                       OpLHS, DAG.getConstant(OpNum-OP_VDUP0, MVT::i32));
   case OP_VEXT1:
   case OP_VEXT2:
   case OP_VEXT3:
@@ -2575,19 +2569,16 @@ static SDValue GeneratePerfectShuffle(unsigned PFEntry, SDValue LHS,
                        DAG.getConstant(OpNum-OP_VEXT1+1, MVT::i32));
   case OP_VUZPL:
   case OP_VUZPR:
-    return DAG.getNode(VT.is64BitVector() ? ARMISD::VUZP16 : ARMISD::VUZP32,
-                       dl, DAG.getVTList(VT, VT),
+    return DAG.getNode(ARMISD::VUZP, dl, DAG.getVTList(VT, VT),
                        OpLHS, OpRHS).getValue(OpNum-OP_VUZPL);
   case OP_VZIPL:
   case OP_VZIPR:
-    return DAG.getNode(VT.is64BitVector() ? ARMISD::VZIP16 : ARMISD::VZIP32,
-                       dl, DAG.getVTList(VT, VT),
+    return DAG.getNode(ARMISD::VZIP, dl, DAG.getVTList(VT, VT),
                        OpLHS, OpRHS).getValue(OpNum-OP_VZIPL);
   case OP_VTRNL:
   case OP_VTRNR:
-    return DAG.getNode(VT.is64BitVector() ? ARMISD::VTRN16 : ARMISD::VTRN32,
-                       dl, DAG.getVTList(VT, VT),
-                       OpLHS, OpRHS).getValue(0);
+    return DAG.getNode(ARMISD::VTRN, dl, DAG.getVTList(VT, VT),
+                       OpLHS, OpRHS).getValue(OpNum-OP_VTRNL);
   }
 }
 

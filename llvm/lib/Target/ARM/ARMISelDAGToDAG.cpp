@@ -1415,34 +1415,55 @@ SDNode *ARMDAGToDAGISel::Select(SDValue Op) {
                             N->getOperand(4), N->getOperand(5), Chain };
     return CurDAG->getTargetNode(Opc, dl, MVT::Other, Ops, 8);
   }
-  case ARMISD::VZIP16: {
+  case ARMISD::VZIP: {
+    unsigned Opc = 0;
     EVT VT = N->getValueType(0);
-    return CurDAG->getTargetNode(ARM::VZIPd16, dl, VT, VT,
+    switch (VT.getSimpleVT().SimpleTy) {
+    default: return NULL;
+    case MVT::v8i8:  Opc = ARM::VZIPd8; break;
+    case MVT::v4i16: Opc = ARM::VZIPd16; break;
+    case MVT::v2f32:
+    case MVT::v2i32: Opc = ARM::VZIPd32; break;
+    case MVT::v16i8: Opc = ARM::VZIPq8; break;
+    case MVT::v8i16: Opc = ARM::VZIPq16; break;
+    case MVT::v4f32:
+    case MVT::v4i32: Opc = ARM::VZIPq32; break;
+    }
+    return CurDAG->getTargetNode(Opc, dl, VT, VT,
                                  N->getOperand(0), N->getOperand(1));
   }
-  case ARMISD::VZIP32: {
+  case ARMISD::VUZP: {
+    unsigned Opc = 0;
     EVT VT = N->getValueType(0);
-    return CurDAG->getTargetNode(ARM::VZIPq32, dl, VT, VT,
+    switch (VT.getSimpleVT().SimpleTy) {
+    default: return NULL;
+    case MVT::v8i8:  Opc = ARM::VUZPd8; break;
+    case MVT::v4i16: Opc = ARM::VUZPd16; break;
+    case MVT::v2f32:
+    case MVT::v2i32: Opc = ARM::VUZPd32; break;
+    case MVT::v16i8: Opc = ARM::VUZPq8; break;
+    case MVT::v8i16: Opc = ARM::VUZPq16; break;
+    case MVT::v4f32:
+    case MVT::v4i32: Opc = ARM::VUZPq32; break;
+    }
+    return CurDAG->getTargetNode(Opc, dl, VT, VT,
                                  N->getOperand(0), N->getOperand(1));
   }
-  case ARMISD::VUZP16: {
+  case ARMISD::VTRN: {
+    unsigned Opc = 0;
     EVT VT = N->getValueType(0);
-    return CurDAG->getTargetNode(ARM::VUZPd16, dl, VT, VT,
-                                 N->getOperand(0), N->getOperand(1));
-  }
-  case ARMISD::VUZP32: {
-    EVT VT = N->getValueType(0);
-    return CurDAG->getTargetNode(ARM::VUZPq32, dl, VT, VT,
-                                 N->getOperand(0), N->getOperand(1));
-  }
-  case ARMISD::VTRN16: {
-    EVT VT = N->getValueType(0);
-    return CurDAG->getTargetNode(ARM::VTRNd16, dl, VT, VT,
-                                 N->getOperand(0), N->getOperand(1));
-  }
-  case ARMISD::VTRN32: {
-    EVT VT = N->getValueType(0);
-    return CurDAG->getTargetNode(ARM::VTRNq32, dl, VT, VT,
+    switch (VT.getSimpleVT().SimpleTy) {
+    default: return NULL;
+    case MVT::v8i8:  Opc = ARM::VTRNd8; break;
+    case MVT::v4i16: Opc = ARM::VTRNd16; break;
+    case MVT::v2f32:
+    case MVT::v2i32: Opc = ARM::VTRNd32; break;
+    case MVT::v16i8: Opc = ARM::VTRNq8; break;
+    case MVT::v8i16: Opc = ARM::VTRNq16; break;
+    case MVT::v4f32:
+    case MVT::v4i32: Opc = ARM::VTRNq32; break;
+    }
+    return CurDAG->getTargetNode(Opc, dl, VT, VT,
                                  N->getOperand(0), N->getOperand(1));
   }
   }

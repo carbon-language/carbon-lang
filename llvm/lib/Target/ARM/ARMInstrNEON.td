@@ -111,15 +111,9 @@ def NEONvrev16    : SDNode<"ARMISD::VREV16", SDTARMVSHUF>;
 
 def SDTARMVSHUF2  : SDTypeProfile<2, 2, [SDTCisVec<0>, SDTCisSameAs<0, 1>,
                                          SDTCisSameAs<0, 2>, SDTCisSameAs<0, 3>]>;
-def NEONzip32     : SDNode<"ARMISD::VZIP32", SDTARMVSHUF2>;
-def NEONzip16     : SDNode<"ARMISD::VZIP16", SDTARMVSHUF2>;
-def NEONzip8      : SDNode<"ARMISD::VZIP8", SDTARMVSHUF2>;
-def NEONuzp32     : SDNode<"ARMISD::VUZP32", SDTARMVSHUF2>;
-def NEONuzp16     : SDNode<"ARMISD::VUZP16", SDTARMVSHUF2>;
-def NEONuzp8      : SDNode<"ARMISD::VUZP16", SDTARMVSHUF2>;
-def NEONtrn32     : SDNode<"ARMISD::VTRN32", SDTARMVSHUF2>;
-def NEONtrn16     : SDNode<"ARMISD::VTRN16", SDTARMVSHUF2>;
-def NEONtrn8      : SDNode<"ARMISD::VTRN8", SDTARMVSHUF2>;
+def NEONzip       : SDNode<"ARMISD::VZIP", SDTARMVSHUF2>;
+def NEONuzp       : SDNode<"ARMISD::VUZP", SDTARMVSHUF2>;
+def NEONtrn       : SDNode<"ARMISD::VTRN", SDTARMVSHUF2>;
 
 //===----------------------------------------------------------------------===//
 // NEON operand definitions
