@@ -44,6 +44,35 @@ inline static uint64_t* getMemory(unsigned numWords) {
   return result;
 }
 
+/// A utility function that converts a character to a digit.
+inline static unsigned getDigit(char cdigit, uint8_t radix) {
+  // Get a digit
+  unsigned digit = 0;
+  if (radix == 16) {
+    if (!isxdigit(cdigit))
+      llvm_unreachable("Invalid hex digit in string");
+    if (isdigit(cdigit))
+      digit = cdigit - '0';
+    else if (cdigit >= 'a')
+      digit = cdigit - 'a' + 10;
+    else if (cdigit >= 'A')
+      digit = cdigit - 'A' + 10;
+    else
+      llvm_unreachable("huh? we shouldn't get here");
+  } else if (isdigit(cdigit)) {
+    digit = cdigit - '0';
+    assert((radix == 10 ||
+            (radix == 8 && digit != 8 && digit != 9) ||
+            (radix == 2 && (digit == 0 || digit == 1))) &&
+           "Invalid digit in string for given radix");
+  } else {
+    llvm_unreachable("Invalid character in digit string");
+  }
+
+  return digit;
+}
+
+
 void APInt::initSlowCase(unsigned numBits, uint64_t val, bool isSigned) {
   pVal = getClearedMemory(getNumWords());
   pVal[0] = val;
@@ -611,22 +640,27 @@ unsigned APInt::getBitsNeeded(const StringRef& str, uint8_t radix) {
   if (radix == 16)
     return slen * 4 + isNegative;
 
-  // Otherwise it must be radix == 10, the hard case
-  assert(radix == 10 && "Invalid radix");
-
   // This is grossly inefficient but accurate. We could probably do something
   // with a computation of roughly slen*64/20 and then adjust by the value of
   // the first few digits. But, I'm not sure how accurate that could be.
 
   // Compute a sufficient number of bits that is always large enough but might
-  // be too large. This avoids the assertion in the constructor.
-  unsigned sufficient = slen*64/18;
+  // be too large. This avoids the assertion in the constructor. This
+  // calculation doesn't work appropriately for the numbers 0-9, so just use 4
+  // bits in that case.
+  unsigned sufficient = slen == 1 ? 4 : slen * 64/18;
 
   // Convert to the actual binary value.
   APInt tmp(sufficient, StringRef(p, slen), radix);
 
-  // Compute how many bits are required.
-  return isNegative + tmp.logBase2() + 1;
+  // Compute how many bits are required. If the log is infinite, assume we need
+  // just bit.
+  unsigned log = tmp.logBase2();
+  if (log == (unsigned)-1) {
+    return isNegative + 1;
+  } else {
+    return isNegative + log + 1;
+  }
 }
 
 // From http://www.burtleburtle.net, byBob Jenkins.
@@ -2039,29 +2073,7 @@ void APInt::fromString(unsigned numbits, const StringRef& str, uint8_t radix) {
 
   // Enter digit traversal loop
   for (StringRef::iterator e = str.end(); p != e; ++p) {
-    // Get a digit
-    unsigned digit = 0;
-    char cdigit = *p;
-    if (radix == 16) {
-      if (!isxdigit(cdigit))
-        llvm_unreachable("Invalid hex digit in string");
-      if (isdigit(cdigit))
-        digit = cdigit - '0';
-      else if (cdigit >= 'a')
-        digit = cdigit - 'a' + 10;
-      else if (cdigit >= 'A')
-        digit = cdigit - 'A' + 10;
-      else
-        llvm_unreachable("huh? we shouldn't get here");
-    } else if (isdigit(cdigit)) {
-      digit = cdigit - '0';
-      assert((radix == 10 ||
-              (radix == 8 && digit != 8 && digit != 9) ||
-              (radix == 2 && (digit == 0 || digit == 1))) &&
-             "Invalid digit in string for given radix");
-    } else {
-      llvm_unreachable("Invalid character in digit string");
-    }
+    unsigned digit = getDigit(*p, radix);
 
     // Shift or multiply the value by the radix
     if (slen > 1) {

@@ -235,6 +235,88 @@ TEST(APIntTest, fromString) {
   EXPECT_EQ(APInt(32, -32), APInt(32, "-20", 16));
 }
 
+TEST(APIntTest, StringBitsNeeded2) {
+  EXPECT_EQ(1U, APInt::getBitsNeeded(  "0", 2));
+  EXPECT_EQ(1U, APInt::getBitsNeeded(  "1", 2));
+  EXPECT_EQ(2U, APInt::getBitsNeeded( "10", 2));
+  EXPECT_EQ(2U, APInt::getBitsNeeded( "11", 2));
+  EXPECT_EQ(3U, APInt::getBitsNeeded("100", 2));
+
+  EXPECT_EQ(1U, APInt::getBitsNeeded(  "+0", 2));
+  EXPECT_EQ(1U, APInt::getBitsNeeded(  "+1", 2));
+  EXPECT_EQ(2U, APInt::getBitsNeeded( "+10", 2));
+  EXPECT_EQ(2U, APInt::getBitsNeeded( "+11", 2));
+  EXPECT_EQ(3U, APInt::getBitsNeeded("+100", 2));
+
+  EXPECT_EQ(2U, APInt::getBitsNeeded(  "-0", 2));
+  EXPECT_EQ(2U, APInt::getBitsNeeded(  "-1", 2));
+  EXPECT_EQ(3U, APInt::getBitsNeeded( "-10", 2));
+  EXPECT_EQ(3U, APInt::getBitsNeeded( "-11", 2));
+  EXPECT_EQ(4U, APInt::getBitsNeeded("-100", 2));
+}
+
+TEST(APIntTest, StringBitsNeeded8) {
+  EXPECT_EQ(3U, APInt::getBitsNeeded( "0", 8));
+  EXPECT_EQ(3U, APInt::getBitsNeeded( "7", 8));
+  EXPECT_EQ(6U, APInt::getBitsNeeded("10", 8));
+  EXPECT_EQ(6U, APInt::getBitsNeeded("17", 8));
+  EXPECT_EQ(6U, APInt::getBitsNeeded("20", 8));
+
+  EXPECT_EQ(3U, APInt::getBitsNeeded( "+0", 8));
+  EXPECT_EQ(3U, APInt::getBitsNeeded( "+7", 8));
+  EXPECT_EQ(6U, APInt::getBitsNeeded("+10", 8));
+  EXPECT_EQ(6U, APInt::getBitsNeeded("+17", 8));
+  EXPECT_EQ(6U, APInt::getBitsNeeded("+20", 8));
+
+  EXPECT_EQ(4U, APInt::getBitsNeeded( "-0", 8));
+  EXPECT_EQ(4U, APInt::getBitsNeeded( "-7", 8));
+  EXPECT_EQ(7U, APInt::getBitsNeeded("-10", 8));
+  EXPECT_EQ(7U, APInt::getBitsNeeded("-17", 8));
+  EXPECT_EQ(7U, APInt::getBitsNeeded("-20", 8));
+}
+
+TEST(APIntTest, StringBitsNeeded10) {
+  EXPECT_EQ(1U, APInt::getBitsNeeded( "0", 10));
+  EXPECT_EQ(2U, APInt::getBitsNeeded( "3", 10));
+  EXPECT_EQ(4U, APInt::getBitsNeeded( "9", 10));
+  EXPECT_EQ(4U, APInt::getBitsNeeded("10", 10));
+  EXPECT_EQ(5U, APInt::getBitsNeeded("19", 10));
+  EXPECT_EQ(5U, APInt::getBitsNeeded("20", 10));
+
+  EXPECT_EQ(1U, APInt::getBitsNeeded( "+0", 10));
+  EXPECT_EQ(4U, APInt::getBitsNeeded( "+9", 10));
+  EXPECT_EQ(4U, APInt::getBitsNeeded("+10", 10));
+  EXPECT_EQ(5U, APInt::getBitsNeeded("+19", 10));
+  EXPECT_EQ(5U, APInt::getBitsNeeded("+20", 10));
+
+  EXPECT_EQ(2U, APInt::getBitsNeeded( "-0", 10));
+  EXPECT_EQ(5U, APInt::getBitsNeeded( "-9", 10));
+  EXPECT_EQ(5U, APInt::getBitsNeeded("-10", 10));
+  EXPECT_EQ(6U, APInt::getBitsNeeded("-19", 10));
+  EXPECT_EQ(6U, APInt::getBitsNeeded("-20", 10));
+}
+
+TEST(APIntTest, StringBitsNeeded16) {
+  EXPECT_EQ(4U, APInt::getBitsNeeded( "0", 16));
+  EXPECT_EQ(4U, APInt::getBitsNeeded( "F", 16));
+  EXPECT_EQ(8U, APInt::getBitsNeeded("10", 16));
+  EXPECT_EQ(8U, APInt::getBitsNeeded("1F", 16));
+  EXPECT_EQ(8U, APInt::getBitsNeeded("20", 16));
+
+  EXPECT_EQ(4U, APInt::getBitsNeeded( "+0", 16));
+  EXPECT_EQ(4U, APInt::getBitsNeeded( "+F", 16));
+  EXPECT_EQ(8U, APInt::getBitsNeeded("+10", 16));
+  EXPECT_EQ(8U, APInt::getBitsNeeded("+1F", 16));
+  EXPECT_EQ(8U, APInt::getBitsNeeded("+20", 16));
+
+  EXPECT_EQ(5U, APInt::getBitsNeeded( "-0", 16));
+  EXPECT_EQ(5U, APInt::getBitsNeeded( "-F", 16));
+  EXPECT_EQ(9U, APInt::getBitsNeeded("-10", 16));
+  EXPECT_EQ(9U, APInt::getBitsNeeded("-1F", 16));
+  EXPECT_EQ(9U, APInt::getBitsNeeded("-20", 16));
+}
+
+
 #ifdef GTEST_HAS_DEATH_TEST
 TEST(APIntTest, StringDeath) {
   EXPECT_DEATH(APInt(0, "", 0), "Bitwidth too small");
