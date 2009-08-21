@@ -76,8 +76,6 @@ def warn_unused_parameter : Warning<"unused parameter %0">,
   InGroup<UnusedParameter>, DefaultIgnore;
 def warn_decl_in_param_list : Warning<
   "declaration of %0 will not be visible outside of this function">;
-def warn_ISR_has_arguments : Warning<
-  "Interrupt Service Routine (%0) has arguments">;
 
 def warn_implicit_function_decl : Warning<
   "implicit declaration of function %0">,
