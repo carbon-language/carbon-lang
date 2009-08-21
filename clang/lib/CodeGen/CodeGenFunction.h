@@ -568,6 +568,12 @@ public:
                                      const CXXRecordDecl *ClassDecl, 
                                      const CXXRecordDecl *BaseClassDecl);
   
+  void EmitClassAggrMemberwiseCopy(llvm::Value *DestValue, 
+                                   llvm::Value *SrcValue,
+                                   const ArrayType *Array,
+                                   const CXXRecordDecl *BaseClassDecl,
+                                   QualType Ty);
+
   void EmitClassMemberwiseCopy(llvm::Value *DestValue, llvm::Value *SrcValue,
                                const CXXRecordDecl *ClassDecl, 
                                const CXXRecordDecl *BaseClassDecl,

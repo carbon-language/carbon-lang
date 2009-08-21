@@ -57,6 +57,36 @@ struct X  : M, N, P { // ...
         };
 };
 
+static int ix = 1;
+// class with user-defined copy constructor.
+struct S {
+  S() : iS(ix++) {  }
+  S(const S& arg) { *this = arg; }
+  int iS;
+};
+
+// class with trivial copy constructor.
+struct I {
+  I() : iI(ix++) {  }
+  int iI;
+};
+
+struct XM {
+  XM() {  }
+  double dXM;
+  S ARR_S[3][4][2];
+  void pr() {
+   for (unsigned i = 0; i < 3; i++)
+     for (unsigned j = 0; j < 4; j++)
+      for (unsigned k = 0; k < 2; k++)
+        printf("ARR_S[%d][%d][%d] = %d\n", i,j,k, ARR_S[i][j][k].iS);
+   for (unsigned i = 0; i < 3; i++)
+      for (unsigned k = 0; k < 2; k++)
+        printf("ARR_I[%d][%d] = %d\n", i,k, ARR_I[i][k].iI);
+  }
+  I ARR_I[3][2];
+};
+
 int main()
 {
 	X a;
@@ -65,6 +95,10 @@ int main()
 	X x;
 	X c(x);
         c.pr();
+
+        XM m0;
+	XM m1 = m0;
+        m1.pr();
 }
 // CHECK-LP64: .globl  __ZN1XC1ERK1X
 // CHECK-LP64: .weak_definition __ZN1XC1ERK1X
