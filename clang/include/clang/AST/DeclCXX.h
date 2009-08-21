@@ -559,6 +559,11 @@ public:
   /// list of conversion functions.
   void addConversionFunction(ASTContext &Context, CXXConversionDecl *ConvDecl);
 
+  /// \brief Add a new conversion function template to the list of conversion
+  /// functions.
+  void addConversionFunction(ASTContext &Context, 
+                             FunctionTemplateDecl *ConvDecl);
+
   /// isAggregate - Whether this class is an aggregate (C++
   /// [dcl.init.aggr]), which is a class with no user-declared
   /// constructors, no private or protected non-static data members,

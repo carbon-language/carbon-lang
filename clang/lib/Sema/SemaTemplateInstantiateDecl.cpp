@@ -505,6 +505,17 @@ Decl *TemplateDeclInstantiator::VisitCXXMethodDecl(CXXMethodDecl *D) {
     Method = CXXDestructorDecl::Create(SemaRef.Context, Record,
                                        Destructor->getLocation(), Name,
                                        T, Destructor->isInline(), false);
+  } else if (CXXConversionDecl *Conversion = dyn_cast<CXXConversionDecl>(D)) {
+    CanQualType ConvTy 
+      = SemaRef.Context.getCanonicalType(
+                                      T->getAsFunctionType()->getResultType());
+    Name = SemaRef.Context.DeclarationNames.getCXXConversionFunctionName(
+                                                                      ConvTy);
+    Method = CXXConversionDecl::Create(SemaRef.Context, Record,
+                                       Conversion->getLocation(), Name,
+                                       T, Conversion->getDeclaratorInfo(),
+                                       Conversion->isInline(), 
+                                       Conversion->isExplicit());
   } else {
     Method = CXXMethodDecl::Create(SemaRef.Context, Record, D->getLocation(), 
                                    D->getDeclName(), T, D->getDeclaratorInfo(),
@@ -541,11 +552,6 @@ Decl *TemplateDeclInstantiator::VisitCXXMethodDecl(CXXMethodDecl *D) {
     if (PrevDecl && PrevDecl->getIdentifierNamespace() == Decl::IDNS_Tag)
       PrevDecl = 0;
   }
-  
-  bool Redeclaration = false;
-  bool OverloadableAttrRequired = false;
-  SemaRef.CheckFunctionDeclaration(Method, PrevDecl, Redeclaration,
-                                   /*FIXME:*/OverloadableAttrRequired);
 
   if (FunctionTemplate)
     // Record this function template specialization.
@@ -553,7 +559,13 @@ Decl *TemplateDeclInstantiator::VisitCXXMethodDecl(CXXMethodDecl *D) {
                                               FunctionTemplate,
                                               &TemplateArgs,
                                               InsertPos);
-  else if (!Method->isInvalidDecl() || !PrevDecl)
+  
+  bool Redeclaration = false;
+  bool OverloadableAttrRequired = false;
+  SemaRef.CheckFunctionDeclaration(Method, PrevDecl, Redeclaration,
+                                   /*FIXME:*/OverloadableAttrRequired);
+
+  if (!FunctionTemplate && (!Method->isInvalidDecl() || !PrevDecl))
     Owner->addDecl(Method);
   
   return Method;
@@ -568,37 +580,7 @@ Decl *TemplateDeclInstantiator::VisitCXXDestructorDecl(CXXDestructorDecl *D) {
 }
 
 Decl *TemplateDeclInstantiator::VisitCXXConversionDecl(CXXConversionDecl *D) {
-  // FIXME: Look for existing, explicit specializations.
-  Sema::LocalInstantiationScope Scope(SemaRef);
-
-  llvm::SmallVector<ParmVarDecl *, 4> Params;
-  QualType T = InstantiateFunctionType(D, Params);
-  if (T.isNull())
-    return 0;
-  assert(Params.size() == 0 && "Destructor with parameters?");
-
-  // Build the instantiated conversion declaration.
-  CXXRecordDecl *Record = cast<CXXRecordDecl>(Owner);
-  QualType ClassTy = SemaRef.Context.getTypeDeclType(Record);
-  CanQualType ConvTy 
-    = SemaRef.Context.getCanonicalType(T->getAsFunctionType()->getResultType());
-  CXXConversionDecl *Conversion
-    = CXXConversionDecl::Create(SemaRef.Context, Record,
-                                D->getLocation(),
-         SemaRef.Context.DeclarationNames.getCXXConversionFunctionName(ConvTy),
-                                T, D->getDeclaratorInfo(),
-                                D->isInline(), D->isExplicit());
-  Conversion->setInstantiationOfMemberFunction(D);
-  if (InitMethodInstantiation(Conversion, D))
-    Conversion->setInvalidDecl();
-
-  bool Redeclaration = false;
-  bool OverloadableAttrRequired = false;
-  NamedDecl *PrevDecl = 0;
-  SemaRef.CheckFunctionDeclaration(Conversion, PrevDecl, Redeclaration,
-                                   /*FIXME:*/OverloadableAttrRequired);
-  Owner->addDecl(Conversion);
-  return Conversion;  
+  return VisitCXXMethodDecl(D);
 }
 
 ParmVarDecl *TemplateDeclInstantiator::VisitParmVarDecl(ParmVarDecl *D) {

@@ -823,6 +823,9 @@ public:
   void AddConversionCandidate(CXXConversionDecl *Conversion,
                               Expr *From, QualType ToType,
                               OverloadCandidateSet& CandidateSet);
+  void AddTemplateConversionCandidate(FunctionTemplateDecl *FunctionTemplate,
+                                      Expr *From, QualType ToType,
+                                      OverloadCandidateSet &CandidateSet);
   void AddSurrogateCandidate(CXXConversionDecl *Conversion,
                              const FunctionProtoType *Proto,
                              Expr *Object, Expr **Args, unsigned NumArgs,
@@ -2552,6 +2555,16 @@ public:
                           FunctionDecl *&Specialization,
                           TemplateDeductionInfo &Info);
   
+  TemplateDeductionResult
+  DeduceTemplateArguments(FunctionTemplateDecl *FunctionTemplate,
+                          QualType ToType,
+                          CXXConversionDecl *&Specialization,
+                          TemplateDeductionInfo &Info);
+
+  FunctionTemplateDecl *getMoreSpecializedTemplate(FunctionTemplateDecl *FT1,
+                                                   FunctionTemplateDecl *FT2,
+                                                   bool isCallContext);
+
   void MarkDeducedTemplateParameters(const TemplateArgumentList &TemplateArgs,
                                      llvm::SmallVectorImpl<bool> &Deduced);
           

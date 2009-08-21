@@ -1396,8 +1396,11 @@ Sema::DeduceTemplateArguments(FunctionTemplateDecl *FunctionTemplate,
     
     // FIXME: C++0x [temp.deduct.call] paragraphs 6-9 deal with function
     // pointer parameters. 
+
+    // FIXME: we need to check that the deduced A is the same as A,
+    // modulo the various allowed differences.
   }
-  
+
   return FinishTemplateArgumentDeduction(FunctionTemplate, Deduced, 
                                          Specialization, Info);
 }
@@ -1472,6 +1475,141 @@ Sema::DeduceTemplateArguments(FunctionTemplateDecl *FunctionTemplate,
                                          Specialization, Info);
 }
 
+/// \brief Deduce template arguments for a templated conversion
+/// function (C++ [temp.deduct.conv]) and, if successful, produce a
+/// conversion function template specialization.
+Sema::TemplateDeductionResult
+Sema::DeduceTemplateArguments(FunctionTemplateDecl *FunctionTemplate,
+                              QualType ToType,
+                              CXXConversionDecl *&Specialization,
+                              TemplateDeductionInfo &Info) {
+  CXXConversionDecl *Conv 
+    = cast<CXXConversionDecl>(FunctionTemplate->getTemplatedDecl());
+  QualType FromType = Conv->getConversionType();
+
+  // Canonicalize the types for deduction.
+  QualType P = Context.getCanonicalType(FromType);
+  QualType A = Context.getCanonicalType(ToType);
+
+  // C++0x [temp.deduct.conv]p3:
+  //   If P is a reference type, the type referred to by P is used for
+  //   type deduction.
+  if (const ReferenceType *PRef = P->getAs<ReferenceType>())
+    P = PRef->getPointeeType();
+
+  // C++0x [temp.deduct.conv]p3:
+  //   If A is a reference type, the type referred to by A is used
+  //   for type deduction.
+  if (const ReferenceType *ARef = A->getAs<ReferenceType>())
+    A = ARef->getPointeeType();
+  // C++ [temp.deduct.conv]p2:
+  //
+  //   If A is not a reference type: 
+  else {
+    assert(!A->isReferenceType() && "Reference types were handled above");
+
+    //   - If P is an array type, the pointer type produced by the
+    //     array-to-pointer standard conversion (4.2) is used in place 
+    //     of P for type deduction; otherwise,
+    if (P->isArrayType())
+      P = Context.getArrayDecayedType(P);
+    //   - If P is a function type, the pointer type produced by the
+    //     function-to-pointer standard conversion (4.3) is used in
+    //     place of P for type deduction; otherwise,
+    else if (P->isFunctionType())
+      P = Context.getPointerType(P);
+    //   - If P is a cv-qualified type, the top level cv-qualifiers of
+    //     P’s type are ignored for type deduction.
+    else
+      P = P.getUnqualifiedType();
+
+    // C++0x [temp.deduct.conv]p3:
+    //   If A is a cv-qualified type, the top level cv-qualifiers of A’s
+    //   type are ignored for type deduction.
+    A = A.getUnqualifiedType();
+  }
+
+  // Template argument deduction for function templates in a SFINAE context.
+  // Trap any errors that might occur.
+  SFINAETrap Trap(*this);  
+
+  // C++ [temp.deduct.conv]p1:
+  //   Template argument deduction is done by comparing the return
+  //   type of the template conversion function (call it P) with the
+  //   type that is required as the result of the conversion (call it
+  //   A) as described in 14.8.2.4.
+  TemplateParameterList *TemplateParams
+    = FunctionTemplate->getTemplateParameters();
+  llvm::SmallVector<TemplateArgument, 4> Deduced;
+  Deduced.resize(TemplateParams->size());  
+
+  // C++0x [temp.deduct.conv]p4:
+  //   In general, the deduction process attempts to find template
+  //   argument values that will make the deduced A identical to
+  //   A. However, there are two cases that allow a difference:
+  unsigned TDF = 0;
+  //     - If the original A is a reference type, A can be more
+  //       cv-qualified than the deduced A (i.e., the type referred to
+  //       by the reference)
+  if (ToType->isReferenceType())
+    TDF |= TDF_ParamWithReferenceType;
+  //     - The deduced A can be another pointer or pointer to member
+  //       type that can be converted to A via a qualiﬁcation
+  //       conversion.
+  //
+  // (C++0x [temp.deduct.conv]p6 clarifies that this only happens when
+  // both P and A are pointers or member pointers. In this case, we
+  // just ignore cv-qualifiers completely).
+  if ((P->isPointerType() && A->isPointerType()) ||
+      (P->isMemberPointerType() && P->isMemberPointerType()))
+    TDF |= TDF_IgnoreQualifiers;
+  if (TemplateDeductionResult Result
+        = ::DeduceTemplateArguments(Context, TemplateParams,
+                                    P, A, Info, Deduced, TDF))
+    return Result;
+
+  // FIXME: we need to check that the deduced A is the same as A,
+  // modulo the various allowed differences.
+  
+  // Finish template argument deduction.
+  FunctionDecl *Spec = 0;
+  TemplateDeductionResult Result
+    = FinishTemplateArgumentDeduction(FunctionTemplate, Deduced, Spec, Info);
+  Specialization = cast_or_null<CXXConversionDecl>(Spec);
+  return Result;
+}
+
+/// \brief Returns the more specialization function template according
+/// to the rules of function template partial ordering (C++ [temp.func.order]).
+///
+/// \param FT1 the first function template
+///
+/// \param FT2 the second function template
+///
+/// \param isCallContext whether partial ordering is being performed
+/// for a function call (which ignores the return types of the
+/// functions).
+/// 
+/// \returns the more specialization function template. If neither
+/// template is more specialized, returns NULL.
+FunctionTemplateDecl *
+Sema::getMoreSpecializedTemplate(FunctionTemplateDecl *FT1,
+                                 FunctionTemplateDecl *FT2,
+                                 bool isCallContext) {
+#if 0
+  // FIXME: Implement this
+  bool Better1 = isAtLeastAsSpecializedAs(*this, FT1, FT2, isCallContext);
+  bool Better2 = isAtLeastAsSpecializedAs(*this, FT2, FT1, isCallContext);
+  if (Better1 == Better2)
+    return 0;
+  if (Better1)
+    return FT1;
+  return FT2;
+#else
+  Diag(SourceLocation(), diag::unsup_function_template_partial_ordering);
+  return 0;
+#endif
+}
 
 static void 
 MarkDeducedTemplateParameters(Sema &SemaRef,

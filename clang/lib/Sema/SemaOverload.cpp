@@ -1302,6 +1302,19 @@ Sema::IsQualificationConversion(QualType FromType, QualType ToType)
     FromType.getUnqualifiedType() == ToType.getUnqualifiedType();
 }
 
+/// \brief Given a function template or function, extract the function template
+/// declaration (if any) and the underlying function declaration.
+template<typename T>
+static void GetFunctionAndTemplate(AnyFunctionDecl Orig, T *&Function,
+                                   FunctionTemplateDecl *&FunctionTemplate) {
+  FunctionTemplate = dyn_cast<FunctionTemplateDecl>(Orig);
+  if (FunctionTemplate)
+    Function = cast<T>(FunctionTemplate->getTemplatedDecl());
+  else
+    Function = cast<T>(Orig);
+}
+
+
 /// Determines whether there is a user-defined conversion sequence
 /// (C++ [over.ics.user]) that converts expression From to the type
 /// ToType. If such a conversion exists, User will contain the
@@ -1381,9 +1394,21 @@ bool Sema::IsUserDefinedConversion(Expr *From, QualType ToType,
       for (OverloadedFunctionDecl::function_iterator Func 
              = Conversions->function_begin();
            Func != Conversions->function_end(); ++Func) {
-        CXXConversionDecl *Conv = cast<CXXConversionDecl>(*Func);
-        if (AllowExplicit || !Conv->isExplicit())
-          AddConversionCandidate(Conv, From, ToType, CandidateSet);
+        CXXConversionDecl *Conv;
+        FunctionTemplateDecl *ConvTemplate;
+        GetFunctionAndTemplate(*Func, Conv, ConvTemplate);
+        if (ConvTemplate)
+          Conv = dyn_cast<CXXConversionDecl>(ConvTemplate->getTemplatedDecl());
+        else 
+          Conv = dyn_cast<CXXConversionDecl>(*Func);
+
+        if (AllowExplicit || !Conv->isExplicit()) {
+          if (ConvTemplate)
+            AddTemplateConversionCandidate(ConvTemplate, From, ToType, 
+                                           CandidateSet);
+          else
+            AddConversionCandidate(Conv, From, ToType, CandidateSet);
+        }
       }
     }
   }
@@ -2295,9 +2320,9 @@ Sema::AddMethodTemplateCandidate(FunctionTemplateDecl *MethodTmpl,
                      CandidateSet, SuppressUserConversions, ForceRValue);
 }
 
-/// \brief Add a C++ function template as a candidate in the candidate set,
-/// using template argument deduction to produce an appropriate function
-/// template specialization.
+/// \brief Add a C++ function template specialization as a candidate
+/// in the candidate set, using template argument deduction to produce
+/// an appropriate function template specialization.
 void 
 Sema::AddTemplateOverloadCandidate(FunctionTemplateDecl *FunctionTemplate,
                                    bool HasExplicitTemplateArgs,
@@ -2345,6 +2370,9 @@ void
 Sema::AddConversionCandidate(CXXConversionDecl *Conversion,
                              Expr *From, QualType ToType,
                              OverloadCandidateSet& CandidateSet) {
+  assert(!Conversion->getDescribedFunctionTemplate() &&
+         "Conversion function templates use AddTemplateConversionCandidate");
+
   // Add this candidate
   CandidateSet.push_back(OverloadCandidate());
   OverloadCandidate& Candidate = CandidateSet.back();
@@ -2402,6 +2430,35 @@ Sema::AddConversionCandidate(CXXConversionDecl *Conversion,
     assert(false && 
            "Can only end up with a standard conversion sequence or failure");
   }
+}
+
+/// \brief Adds a conversion function template specialization
+/// candidate to the overload set, using template argument deduction
+/// to deduce the template arguments of the conversion function
+/// template from the type that we are converting to (C++
+/// [temp.deduct.conv]).
+void 
+Sema::AddTemplateConversionCandidate(FunctionTemplateDecl *FunctionTemplate,
+                                     Expr *From, QualType ToType,
+                                     OverloadCandidateSet &CandidateSet) {
+  assert(isa<CXXConversionDecl>(FunctionTemplate->getTemplatedDecl()) &&
+         "Only conversion function templates permitted here");
+
+  TemplateDeductionInfo Info(Context);
+  CXXConversionDecl *Specialization = 0;
+  if (TemplateDeductionResult Result
+        = DeduceTemplateArguments(FunctionTemplate, ToType, 
+                                  Specialization, Info)) {
+    // FIXME: Record what happened with template argument deduction, so
+    // that we can give the user a beautiful diagnostic.
+    (void)Result;
+    return;
+  }
+                            
+  // Add the conversion function template specialization produced by
+  // template argument deduction as a candidate.
+  assert(Specialization && "Missing function template specialization?");
+  AddConversionCandidate(Specialization, From, ToType, CandidateSet);
 }
 
 /// AddSurrogateCandidate - Adds a "surrogate" candidate function that
@@ -2801,7 +2858,15 @@ BuiltinCandidateTypeSet::AddTypesConvertedFrom(QualType Ty,
       for (OverloadedFunctionDecl::function_iterator Func 
              = Conversions->function_begin();
            Func != Conversions->function_end(); ++Func) {
-        CXXConversionDecl *Conv = cast<CXXConversionDecl>(*Func);
+        CXXConversionDecl *Conv;
+        FunctionTemplateDecl *ConvTemplate;
+        GetFunctionAndTemplate(*Func, Conv, ConvTemplate);
+
+        // Skip conversion function templates; they don't tell us anything 
+        // about which builtin types we can convert to.
+        if (ConvTemplate)
+          continue;
+
         if (AllowExplicitConversions || !Conv->isExplicit())
           AddTypesConvertedFrom(Conv->getConversionType(), false, false);
       }
@@ -3543,8 +3608,11 @@ Sema::isBetterOverloadCandidate(const OverloadCandidate& Cand1,
   //      if not that,
   if (Cand1.Function && Cand1.Function->getPrimaryTemplate() &&
       Cand2.Function && Cand2.Function->getPrimaryTemplate())
-    // FIXME: Implement partial ordering of function templates.
-    Diag(SourceLocation(), diag::unsup_function_template_partial_ordering);
+    if (FunctionTemplateDecl *BetterTemplate
+          = getMoreSpecializedTemplate(Cand1.Function->getPrimaryTemplate(),
+                                       Cand2.Function->getPrimaryTemplate(),
+                                       true))
+      return BetterTemplate == Cand1.Function->getPrimaryTemplate();
 
   //   -- the context is an initialization by user-defined conversion
   //      (see 8.5, 13.3.1.5) and the standard conversion sequence
@@ -3842,21 +3910,61 @@ Sema::ResolveAddressOfOverloadedFunction(Expr *From, QualType ToType,
   // C++ [over.over]p4:
   //   If more than one function is selected, [...]
   llvm::SmallVector<FunctionDecl *, 4> RemainingMatches;
+  typedef llvm::SmallPtrSet<FunctionDecl *, 4>::iterator MatchIter;
   if (FoundNonTemplateFunction) {
-    // [...] any function template specializations in the set are eliminated 
-    // if the set also contains a non-template function, [...]
-    for (llvm::SmallPtrSet<FunctionDecl *, 4>::iterator M = Matches.begin(),
-                                                     MEnd = Matches.end();
-         M != MEnd; ++M)
+    //   [...] any function template specializations in the set are
+    //   eliminated if the set also contains a non-template function, [...]
+    for (MatchIter M = Matches.begin(), MEnd = Matches.end(); M != MEnd; ++M)
       if ((*M)->getPrimaryTemplate() == 0)
         RemainingMatches.push_back(*M);
   } else {
-    // [...] and any given function template specialization F1 is eliminated 
-    // if the set contains a second function template specialization whose 
-    // function template is more specialized than the function template of F1 
-    // according to the partial ordering rules of 14.5.5.2.
-    // FIXME: Implement this!
-    RemainingMatches.append(Matches.begin(), Matches.end());
+    //   [...] and any given function template specialization F1 is
+    //   eliminated if the set contains a second function template
+    //   specialization whose function template is more specialized
+    //   than the function template of F1 according to the partial
+    //   ordering rules of 14.5.5.2.
+
+    // The algorithm specified above is quadratic. We instead use a
+    // two-pass algorithm (similar to the one used to identify the
+    // best viable function in an overload set) that identifies the
+    // best function template (if it exists).
+    MatchIter Best = Matches.begin();
+    MatchIter M = Best, MEnd = Matches.end();
+    // Find the most specialized function.
+    for (++M; M != MEnd; ++M)
+      if (getMoreSpecializedTemplate((*M)->getPrimaryTemplate(),
+                                     (*Best)->getPrimaryTemplate(),
+                                     false) 
+            == (*M)->getPrimaryTemplate())
+        Best = M;
+
+    // Determine whether this function template is more specialized
+    // that all of the others.
+    bool Ambiguous = false;
+    for (M = Matches.begin(); M != MEnd; ++M) {
+      if (M != Best &&
+          getMoreSpecializedTemplate((*M)->getPrimaryTemplate(),
+                                     (*Best)->getPrimaryTemplate(),
+                                     false)
+           != (*Best)->getPrimaryTemplate()) {
+        Ambiguous = true;
+        break;
+      }
+    }
+
+    // If one function template was more specialized than all of the
+    // others, return it.
+    if (!Ambiguous)
+      return *Best;
+
+    // We could not find a most-specialized function template, which
+    // is equivalent to having a set of function templates with more
+    // than one such template. So, we place all of the function
+    // templates into the set of remaining matches and produce a
+    // diagnostic below. FIXME: we could perform the quadratic
+    // algorithm here, pruning the result set to limit the number of
+    // candidates output later.
+     RemainingMatches.append(Matches.begin(), Matches.end());
   }
   
   // [...] After such eliminations, if any, there shall remain exactly one 
@@ -4468,7 +4576,14 @@ Sema::BuildCallToObjectOfClassType(Scope *S, Expr *Object,
          Func = Conversions->function_begin(),
          FuncEnd = Conversions->function_end();
        Func != FuncEnd; ++Func) {
-    CXXConversionDecl *Conv = cast<CXXConversionDecl>(*Func);
+    CXXConversionDecl *Conv;
+    FunctionTemplateDecl *ConvTemplate;
+    GetFunctionAndTemplate(*Func, Conv, ConvTemplate);
+
+    // Skip over templated conversion functions; they aren't
+    // surrogates.
+    if (ConvTemplate)
+      continue;
 
     // Strip the reference type (if any) and then the pointer type (if
     // any) to get down to what might be a function type.

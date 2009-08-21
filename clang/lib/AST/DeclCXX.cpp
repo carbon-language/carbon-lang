@@ -279,9 +279,17 @@ void CXXRecordDecl::addedAssignmentOperator(ASTContext &Context,
 
 void CXXRecordDecl::addConversionFunction(ASTContext &Context, 
                                           CXXConversionDecl *ConvDecl) {
+  assert(!ConvDecl->getDescribedFunctionTemplate() &&
+         "Conversion function templates should cast to FunctionTemplateDecl.");
   Conversions.addOverload(ConvDecl);
 }
 
+void CXXRecordDecl::addConversionFunction(ASTContext &Context, 
+                                          FunctionTemplateDecl *ConvDecl) {
+  assert(isa<CXXConversionDecl>(ConvDecl->getTemplatedDecl()) &&
+         "Function template is not a conversion function template");
+  Conversions.addOverload(ConvDecl);
+}
 
 CXXConstructorDecl *
 CXXRecordDecl::getDefaultConstructor(ASTContext &Context) {

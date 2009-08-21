@@ -1853,9 +1853,6 @@ void Sema::CheckConversionDeclarator(Declarator &D, QualType &R,
 Sema::DeclPtrTy Sema::ActOnConversionDeclarator(CXXConversionDecl *Conversion) {
   assert(Conversion && "Expected to receive a conversion function declaration");
 
-  // Set the lexical context of this conversion function
-  Conversion->setLexicalDeclContext(CurContext);
-
   CXXRecordDecl *ClassDecl = cast<CXXRecordDecl>(Conversion->getDeclContext());
 
   // Make sure we aren't redeclaring the conversion function.
@@ -1887,19 +1884,25 @@ Sema::DeclPtrTy Sema::ActOnConversionDeclarator(CXXConversionDecl *Conversion) {
   }
 
   if (Conversion->getPreviousDeclaration()) {
+    const NamedDecl *ExpectedPrevDecl = Conversion->getPreviousDeclaration();
+    if (FunctionTemplateDecl *ConversionTemplate 
+          = Conversion->getDescribedFunctionTemplate())
+      ExpectedPrevDecl = ConversionTemplate->getPreviousDeclaration();
     OverloadedFunctionDecl *Conversions = ClassDecl->getConversionFunctions();
     for (OverloadedFunctionDecl::function_iterator 
            Conv = Conversions->function_begin(),
            ConvEnd = Conversions->function_end();
          Conv != ConvEnd; ++Conv) {
-      if (*Conv 
-            == cast_or_null<NamedDecl>(Conversion->getPreviousDeclaration())) {
+      if (*Conv == ExpectedPrevDecl) {
         *Conv = Conversion;
         return DeclPtrTy::make(Conversion);
       }
     }
     assert(Conversion->isInvalidDecl() && "Conversion should not get here.");
-  } else 
+  } else if (FunctionTemplateDecl *ConversionTemplate 
+               = Conversion->getDescribedFunctionTemplate())
+    ClassDecl->addConversionFunction(Context, ConversionTemplate);
+  else if (!Conversion->getPrimaryTemplate()) // ignore specializations
     ClassDecl->addConversionFunction(Context, Conversion);
 
   return DeclPtrTy::make(Conversion);
@@ -2845,13 +2848,24 @@ Sema::CheckReferenceInit(Expr *&Init, QualType DeclType,
     for (OverloadedFunctionDecl::function_iterator Func 
            = Conversions->function_begin();
          Func != Conversions->function_end(); ++Func) {
-      CXXConversionDecl *Conv = cast<CXXConversionDecl>(*Func);
+      FunctionTemplateDecl *ConvTemplate 
+        = dyn_cast<FunctionTemplateDecl>(*Func);
+      CXXConversionDecl *Conv;
+      if (ConvTemplate)
+        Conv = cast<CXXConversionDecl>(ConvTemplate->getTemplatedDecl());
+      else
+        Conv = cast<CXXConversionDecl>(*Func);
 
       // If the conversion function doesn't return a reference type,
       // it can't be considered for this conversion.
       if (Conv->getConversionType()->isLValueReferenceType() &&
-          (AllowExplicit || !Conv->isExplicit()))
-        AddConversionCandidate(Conv, Init, DeclType, CandidateSet);
+          (AllowExplicit || !Conv->isExplicit())) {
+        if (ConvTemplate)
+          AddTemplateConversionCandidate(ConvTemplate, Init, DeclType, 
+                                         CandidateSet);
+        else
+          AddConversionCandidate(Conv, Init, DeclType, CandidateSet);
+      }
     }
 
     OverloadCandidateSet::iterator Best;
