@@ -304,7 +304,7 @@ static void ActionGRExprEngine(AnalysisManager& mgr, GRTransferFuncs* tf,
   
   if (StandardWarnings) {
     Eng.RegisterInternalChecks();
-    RegisterAppleChecks(Eng);
+    RegisterAppleChecks(Eng, *mgr.getCodeDecl());
   }
 
   // Set the graph auditor.

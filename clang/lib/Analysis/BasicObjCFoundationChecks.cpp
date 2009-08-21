@@ -535,7 +535,7 @@ clang::CreateAuditCFRetainRelease(ASTContext& Ctx, BugReporter& BR) {
 // Check registration.
 //===----------------------------------------------------------------------===//
 
-void clang::RegisterAppleChecks(GRExprEngine& Eng) {
+void clang::RegisterAppleChecks(GRExprEngine& Eng, const Decl &D) {
   ASTContext& Ctx = Eng.getContext();
   BugReporter &BR = Eng.getBugReporter();
 
@@ -544,5 +544,5 @@ void clang::RegisterAppleChecks(GRExprEngine& Eng) {
   Eng.AddCheck(CreateAuditCFNumberCreate(Ctx, BR), Stmt::CallExprClass);  
   Eng.AddCheck(CreateAuditCFRetainRelease(Ctx, BR), Stmt::CallExprClass);
   
-  RegisterNSErrorChecks(BR, Eng);
+  RegisterNSErrorChecks(BR, Eng, D);
 }

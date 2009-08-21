@@ -46,7 +46,7 @@ void CheckObjCDealloc(ObjCImplementationDecl* D, const LangOptions& L,
 void CheckObjCInstMethSignature(ObjCImplementationDecl* ID, BugReporter& BR);
 void CheckObjCUnusedIvar(ObjCImplementationDecl* D, BugReporter& BR);
   
-void RegisterAppleChecks(GRExprEngine& Eng);
+void RegisterAppleChecks(GRExprEngine& Eng, const Decl &D);
   
 void CheckSecuritySyntaxOnly(Decl *D, BugReporter &BR);
 

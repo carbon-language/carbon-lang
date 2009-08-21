@@ -28,14 +28,15 @@ using namespace clang;
 
 namespace {
 class VISIBILITY_HIDDEN NSErrorCheck : public BugType {
+  const Decl &CodeDecl;
   const bool isNSErrorWarning;
   IdentifierInfo * const II;
   GRExprEngine &Eng;
   
-  void CheckSignature(ObjCMethodDecl& MD, QualType& ResultTy,
+  void CheckSignature(const ObjCMethodDecl& MD, QualType& ResultTy,
                       llvm::SmallVectorImpl<VarDecl*>& ErrorParams);
   
-  void CheckSignature(FunctionDecl& MD, QualType& ResultTy,
+  void CheckSignature(const FunctionDecl& MD, QualType& ResultTy,
                       llvm::SmallVectorImpl<VarDecl*>& ErrorParams);
 
   bool CheckNSErrorArgument(QualType ArgTy);
@@ -43,13 +44,14 @@ class VISIBILITY_HIDDEN NSErrorCheck : public BugType {
   
   void CheckParamDeref(VarDecl* V, const GRState *state, BugReporter& BR);
   
-  void EmitRetTyWarning(BugReporter& BR, Decl& CodeDecl);
+  void EmitRetTyWarning(BugReporter& BR, const Decl& CodeDecl);
   
 public:
-  NSErrorCheck(bool isNSError, GRExprEngine& eng)
-  : BugType(isNSError ? "NSError** null dereference" 
-                      : "CFErrorRef* null dereference",
-            "Coding Conventions (Apple)"),
+  NSErrorCheck(const Decl &D, bool isNSError, GRExprEngine& eng)
+    : BugType(isNSError ? "NSError** null dereference" 
+                        : "CFErrorRef* null dereference",
+              "Coding Conventions (Apple)"),
+    CodeDecl(D),
     isNSErrorWarning(isNSError), 
     II(&eng.getContext().Idents.get(isNSErrorWarning ? "NSError":"CFErrorRef")),
     Eng(eng) {}
@@ -59,27 +61,25 @@ public:
   
 } // end anonymous namespace
 
-void clang::RegisterNSErrorChecks(BugReporter& BR, GRExprEngine &Eng) {
-  BR.Register(new NSErrorCheck(true, Eng));
-  BR.Register(new NSErrorCheck(false, Eng));
+void clang::RegisterNSErrorChecks(BugReporter& BR, GRExprEngine &Eng, 
+                                  const Decl &D) {
+  BR.Register(new NSErrorCheck(D, true, Eng));
+  BR.Register(new NSErrorCheck(D, false, Eng));
 }
 
 void NSErrorCheck::FlushReports(BugReporter& BR) {
   // Get the analysis engine and the exploded analysis graph.
   ExplodedGraph& G = Eng.getGraph();
   
-  // Get the declaration of the method/function that was analyzed.
-  Decl& CodeDecl = G.getCodeDecl();
-    
   // Get the ASTContext, which is useful for querying type information.
   ASTContext &Ctx = BR.getContext();
 
   QualType ResultTy;
   llvm::SmallVector<VarDecl*, 5> ErrorParams;
 
-  if (ObjCMethodDecl* MD = dyn_cast<ObjCMethodDecl>(&CodeDecl))
+  if (const ObjCMethodDecl* MD = dyn_cast<ObjCMethodDecl>(&CodeDecl))
     CheckSignature(*MD, ResultTy, ErrorParams);
-  else if (FunctionDecl* FD = dyn_cast<FunctionDecl>(&CodeDecl))
+  else if (const FunctionDecl* FD = dyn_cast<FunctionDecl>(&CodeDecl))
     CheckSignature(*FD, ResultTy, ErrorParams);
   else
     return;
@@ -99,7 +99,7 @@ void NSErrorCheck::FlushReports(BugReporter& BR) {
   }
 }
 
-void NSErrorCheck::EmitRetTyWarning(BugReporter& BR, Decl& CodeDecl) {
+void NSErrorCheck::EmitRetTyWarning(BugReporter& BR, const Decl& CodeDecl) {
   std::string sbuf;
   llvm::raw_string_ostream os(sbuf);
   
@@ -121,7 +121,7 @@ void NSErrorCheck::EmitRetTyWarning(BugReporter& BR, Decl& CodeDecl) {
 }
 
 void
-NSErrorCheck::CheckSignature(ObjCMethodDecl& M, QualType& ResultTy,
+NSErrorCheck::CheckSignature(const ObjCMethodDecl& M, QualType& ResultTy,
                              llvm::SmallVectorImpl<VarDecl*>& ErrorParams) {
 
   ResultTy = M.getResultType();
@@ -140,13 +140,13 @@ NSErrorCheck::CheckSignature(ObjCMethodDecl& M, QualType& ResultTy,
 }
 
 void
-NSErrorCheck::CheckSignature(FunctionDecl& F, QualType& ResultTy,
+NSErrorCheck::CheckSignature(const FunctionDecl& F, QualType& ResultTy,
                              llvm::SmallVectorImpl<VarDecl*>& ErrorParams) {
   
   ResultTy = F.getResultType();
   
-  for (FunctionDecl::param_iterator I=F.param_begin(), 
-       E=F.param_end(); I!=E; ++I)  {
+  for (FunctionDecl::param_const_iterator I = F.param_begin(), 
+                                          E = F.param_end(); I != E; ++I)  {
     
     QualType T = (*I)->getType();    
     

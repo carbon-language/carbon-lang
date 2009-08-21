@@ -41,7 +41,7 @@ GRSimpleAPICheck *CreateAuditCFNumberCreate(ASTContext& Ctx,
 GRSimpleAPICheck *CreateAuditCFRetainRelease(ASTContext& Ctx,
                                              BugReporter& BR);
   
-void RegisterNSErrorChecks(BugReporter& BR, GRExprEngine &Eng);
+void RegisterNSErrorChecks(BugReporter& BR, GRExprEngine &Eng, const Decl &D);
   
 } // end clang namespace
 
