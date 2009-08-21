@@ -869,11 +869,43 @@ public:
                                 const CXXRecordDecl *RD,
                                 bool VBoundary,
                                 bool SecondaryVirtual) {
+    typedef CXXMethodDecl::method_iterator meth_iter;
+    // No vcall for methods that don't override in primary vtables.
     llvm::Constant *m = 0;
 
-    // FIXME: vcall: offset for virtual base for this function
     if (SecondaryVirtual || VBoundary)
       m = llvm::Constant::getNullValue(Ptr8Ty);
+
+    int64_t Offset = 0;
+    int64_t BaseOffset = 0;
+    for (meth_iter mi = MD->begin_overridden_methods(),
+           me = MD->end_overridden_methods();
+         mi != me; ++mi) {
+      const CXXRecordDecl *DefBase = (*mi)->getParent();
+      // FIXME: vcall: offset for virtual base for this function
+      // m = llvm::ConstantInt::get(llvm::Type::getInt64Ty(VMContext), 900);
+      // m = llvm::Constant::getNullValue(Ptr8Ty);
+      for (CXXRecordDecl::base_class_const_iterator i = RD->bases_begin(),
+             e = RD->bases_end(); i != e; ++i) {
+        const CXXRecordDecl *Base =
+          cast<CXXRecordDecl>(i->getType()->getAs<RecordType>()->getDecl());
+        if (DefBase == Base) {
+          if (!i->isVirtual())
+            break;
+
+          // FIXME: drop the 700-, just for debugging
+          BaseOffset = 700- -(BLayout.getVBaseClassOffset(Base) / 8);
+          m = llvm::ConstantInt::get(llvm::Type::getInt64Ty(VMContext),
+                                     BaseOffset);
+          m = llvm::ConstantExpr::getIntToPtr(m, Ptr8Ty);
+          break;
+        } else {
+          // FIXME: more searching.
+          (void)Offset;
+        }
+      }
+    }
+
     return m;
   }
 
@@ -966,16 +998,17 @@ public:
         AddMethod(*mi, FirstIndex);
   }
 
-  void GenerateVtableForBase(const CXXRecordDecl *RD,
-                             bool forPrimary,
-                             bool VBoundary,
-                             int64_t Offset,
-                             bool ForVirtualBase,
-                             int32_t FirstIndex) {
+  int64_t GenerateVtableForBase(const CXXRecordDecl *RD,
+                                bool forPrimary,
+                                bool VBoundary,
+                                int64_t Offset,
+                                bool ForVirtualBase,
+                                int32_t FirstIndex) {
     llvm::Constant *m = llvm::Constant::getNullValue(Ptr8Ty);
+    int64_t AddressPoint=0;
 
     if (RD && !RD->isDynamicClass())
-      return;
+      return 0;
 
     const ASTRecordLayout &Layout = CGM.getContext().getASTRecordLayout(RD);
     const CXXRecordDecl *PrimaryBase = Layout.getPrimaryBase(); 
@@ -1003,8 +1036,8 @@ public:
       if (PrimaryBaseWasVirtual)
         IndirectPrimary.insert(PrimaryBase);
       Top = false;
-      GenerateVtableForBase(PrimaryBase, true, PrimaryBaseWasVirtual|VBoundary,
-                            Offset, PrimaryBaseWasVirtual, FirstIndex);
+      AddressPoint = GenerateVtableForBase(PrimaryBase, true, PrimaryBaseWasVirtual|VBoundary,
+                                           Offset, PrimaryBaseWasVirtual, FirstIndex);
     }
 
     if (Top) {
@@ -1017,6 +1050,7 @@ public:
       m = llvm::ConstantExpr::getIntToPtr(m, Ptr8Ty);
       methods.push_back(m);
       methods.push_back(rtti);
+      AddressPoint = methods.size();
     }
 
     // And add the virtuals for the class to the primary vtable.
@@ -1036,6 +1070,7 @@ public:
         GenerateVtableForBase(Base, true, false, o, false, FirstIndex);
       }
     }
+    return AddressPoint;
   }
 
   void GenerateVtableForVBases(const CXXRecordDecl *RD,
@@ -1068,15 +1103,12 @@ llvm::Value *CodeGenFunction::GenerateVtable(const CXXRecordDecl *RD) {
   linktype = llvm::GlobalValue::WeakAnyLinkage;
   std::vector<llvm::Constant *> methods;
   llvm::Type *Ptr8Ty=llvm::PointerType::get(llvm::Type::getInt8Ty(VMContext),0);
-  int64_t Offset = 0;
-
-  Offset += LLVMPointerWidth;
-  Offset += LLVMPointerWidth;
+  int64_t Offset;
 
   VtableBuilder b(methods, RD, CGM);
 
   // First comes the vtables for all the non-virtual bases...
-  b.GenerateVtableForBase(RD, true, false, 0, false, 0);
+  Offset = b.GenerateVtableForBase(RD, true, false, 0, false, 0);
 
   // then the vtables for all the virtual bases.
   b.GenerateVtableForVBases(RD, RD);
@@ -1089,7 +1121,7 @@ llvm::Value *CodeGenFunction::GenerateVtable(const CXXRecordDecl *RD) {
   vtable = Builder.CreateBitCast(vtable, Ptr8Ty);
   vtable = Builder.CreateGEP(vtable,
                        llvm::ConstantInt::get(llvm::Type::getInt64Ty(VMContext),
-                                                    Offset/8));
+                                              Offset*LLVMPointerWidth/8));
   return vtable;
 }
 
