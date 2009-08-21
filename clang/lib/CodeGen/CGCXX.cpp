@@ -851,14 +851,19 @@ llvm::Constant *CodeGenModule::GenerateRtti(const CXXRecordDecl *RD) {
 class VtableBuilder {
   std::vector<llvm::Constant *> &methods;
   llvm::Type *Ptr8Ty;
+  /// Class - The most derived class that this vtable is being built for.
   const CXXRecordDecl *Class;
+  /// BLayout - Layout for the most derived class that this vtable is being
+  /// built for.
   const ASTRecordLayout &BLayout;
   llvm::SmallSet<const CXXRecordDecl *, 32> IndirectPrimary;
   llvm::SmallSet<const CXXRecordDecl *, 32> SeenVBase;
   llvm::Constant *rtti;
   llvm::LLVMContext &VMContext;
   CodeGenModule &CGM;  // Per-module state.
-
+  /// Index - Maps a method decl into a vtable index.  Useful for virtual
+  /// dispatch codegen.
+  llvm::DenseMap<const CXXMethodDecl *, int32_t> Index;
   typedef CXXRecordDecl::method_iterator method_iter;
 public:
   VtableBuilder(std::vector<llvm::Constant *> &meth,
@@ -914,24 +919,69 @@ public:
     }
   }
 
-  void GenerateMethods(const CXXRecordDecl *RD) {
-    llvm::Constant *m;
+  void StartNewTable() {
+    SeenVBase.clear();
+  }
 
-    for (method_iter mi = RD->method_begin(), me = RD->method_end(); mi != me;
-         ++mi) {
-      if (mi->isVirtual()) {
-        m = CGM.GetAddrOfFunction(GlobalDecl(*mi));
-        m = llvm::ConstantExpr::getBitCast(m, Ptr8Ty);
-        methods.push_back(m);
+  inline uint32_t nottoobig(uint64_t t) {
+    assert(t < (uint32_t)-1ULL || "vtable too big");
+    return t;
+  }
+#if 0
+  inline uint32_t nottoobig(uint32_t t) {
+    return t;
+  }
+#endif
+
+  void AddMethod(const CXXMethodDecl *MD, int32_t FirstIndex) {
+    typedef CXXMethodDecl::method_iterator meth_iter;
+
+    llvm::Constant *m;
+    m = CGM.GetAddrOfFunction(GlobalDecl(MD), Ptr8Ty);
+    m = llvm::ConstantExpr::getBitCast(m, Ptr8Ty);
+
+    // FIXME: Don't like the nested loops.  For very large inheritance
+    // heirarchies we could have a table on the side with the final overridder
+    // and just replace each instance of an overridden method once.  Would be
+    // nice to measure the cost/benefit on real code.
+
+    // If we can find a previously allocated slot for this, reuse it.
+    for (meth_iter mi = MD->begin_overridden_methods(),
+           e = MD->end_overridden_methods();
+         mi != e; ++mi) {
+      const CXXMethodDecl *OMD = *mi;
+      llvm::Constant *om;
+      om = CGM.GetAddrOfFunction(GlobalDecl(OMD), Ptr8Ty);
+      om = llvm::ConstantExpr::getBitCast(om, Ptr8Ty);
+
+      for (int32_t i = FirstIndex, e = nottoobig(methods.size()); i != e; ++i) {
+        // FIXME: begin_overridden_methods might be too lax, covariance */
+        if (methods[i] == om) {
+          methods[i] = m;
+          Index[MD] = i;
+          return;
+        }
       }
     }
+
+    // else allocate a new slot.
+    Index[MD] = methods.size();
+    methods.push_back(m);
+  }
+
+  void GenerateMethods(const CXXRecordDecl *RD, int32_t FirstIndex) {
+    for (method_iter mi = RD->method_begin(), me = RD->method_end(); mi != me;
+         ++mi)
+      if (mi->isVirtual())
+        AddMethod(*mi, FirstIndex);
   }
 
   void GenerateVtableForBase(const CXXRecordDecl *RD,
                              bool forPrimary,
                              bool VBoundary,
                              int64_t Offset,
-                             bool ForVirtualBase) {
+                             bool ForVirtualBase,
+                             int32_t FirstIndex) {
     llvm::Constant *m = llvm::Constant::getNullValue(Ptr8Ty);
 
     if (RD && !RD->isDynamicClass())
@@ -964,7 +1014,7 @@ public:
         IndirectPrimary.insert(PrimaryBase);
       Top = false;
       GenerateVtableForBase(PrimaryBase, true, PrimaryBaseWasVirtual|VBoundary,
-                            Offset, PrimaryBaseWasVirtual);
+                            Offset, PrimaryBaseWasVirtual, FirstIndex);
     }
 
     if (Top) {
@@ -980,7 +1030,7 @@ public:
     }
 
     // And add the virtuals for the class to the primary vtable.
-    GenerateMethods(RD);
+    GenerateMethods(RD, FirstIndex);
 
     // and then the non-virtual bases.
     for (CXXRecordDecl::base_class_const_iterator i = RD->bases_begin(),
@@ -991,8 +1041,9 @@ public:
         cast<CXXRecordDecl>(i->getType()->getAs<RecordType>()->getDecl());
       if (Base != PrimaryBase || PrimaryBaseWasVirtual) {
         uint64_t o = Offset + Layout.getBaseClassOffset(Base);
-        SeenVBase.clear();
-        GenerateVtableForBase(Base, true, false, o, false);
+        StartNewTable();
+        FirstIndex = methods.size();
+        GenerateVtableForBase(Base, true, false, o, false, FirstIndex);
       }
     }
   }
@@ -1006,9 +1057,10 @@ public:
       if (i->isVirtual() && !IndirectPrimary.count(Base)) {
         // Mark it so we don't output it twice.
         IndirectPrimary.insert(Base);
-        SeenVBase.clear();
+        StartNewTable();
         int64_t BaseOffset = BLayout.getVBaseClassOffset(Base);
-        GenerateVtableForBase(Base, false, true, BaseOffset, true);
+        int32_t FirstIndex = methods.size();
+        GenerateVtableForBase(Base, false, true, BaseOffset, true, FirstIndex);
       }
       if (Base->getNumVBases())
         GenerateVtableForVBases(Base, Class);
@@ -1034,7 +1086,7 @@ llvm::Value *CodeGenFunction::GenerateVtable(const CXXRecordDecl *RD) {
   VtableBuilder b(methods, RD, CGM);
 
   // First comes the vtables for all the non-virtual bases...
-  b.GenerateVtableForBase(RD, true, false, 0, false);
+  b.GenerateVtableForBase(RD, true, false, 0, false, 0);
 
   // then the vtables for all the virtual bases.
   b.GenerateVtableForVBases(RD, RD);

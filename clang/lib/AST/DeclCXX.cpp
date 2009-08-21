@@ -332,6 +332,8 @@ typedef llvm::DenseMap<const CXXMethodDecl*,
                        std::vector<const CXXMethodDecl *> *> 
                        OverriddenMethodsMapTy;
 
+// FIXME: We hate static data.  This doesn't survive PCH saving/loading, and
+// the vtable building code uses it at CG time.
 static OverriddenMethodsMapTy *OverriddenMethods = 0;
 
 void CXXMethodDecl::addOverriddenMethod(const CXXMethodDecl *MD) {

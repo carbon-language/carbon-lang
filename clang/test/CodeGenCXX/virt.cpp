@@ -620,6 +620,36 @@ class test10_D : test10_B1, test10_B2 {
 // CHECK-LP32-NEXT: .long 4294967276
 // CHECK-LP32-NEXT: .long __ZTI8test10_D
 
+struct test11_B {
+  virtual void B1() { }
+  virtual void D() { }
+  virtual void B2() { }
+};
+
+struct test11_D : test11_B {
+  virtual void D1() { }
+  virtual void D() { }
+  virtual void D2() { }
+};
+
+// CHECK-LP32:__ZTV8test11_D:
+// CHECK-LP32-NEXT: .space 4
+// CHECK-LP32-NEXT: .long __ZTI8test11_D
+// CHECK-LP32-NEXT: .long __ZN8test11_B2B1Ev
+// CHECK-LP32-NEXT: .long __ZN8test11_D1DEv
+// CHECK-LP32-NEXT: .long __ZN8test11_B2B2Ev
+// CHECK-LP32-NEXT: .long __ZN8test11_D2D1Ev
+// CHECK-LP32-NEXT: .long __ZN8test11_D2D2Ev
+
+
+// CHECK-LP64:__ZTV8test11_D:
+// CHECK-LP64-NEXT: .space 8
+// CHECK-LP64-NEXT: .quad __ZTI8test11_D
+// CHECK-LP64-NEXT: .quad __ZN8test11_B2B1Ev
+// CHECK-LP64-NEXT: .quad __ZN8test11_D1DEv
+// CHECK-LP64-NEXT: .quad __ZN8test11_B2B2Ev
+// CHECK-LP64-NEXT: .quad __ZN8test11_D2D1Ev
+// CHECK-LP64-NEXT: .quad __ZN8test11_D2D2Ev
 
 
 
@@ -702,6 +732,7 @@ class test10_D : test10_B1, test10_B2 {
 // CHECK-LP64-NEXT: .quad __ZN2D14bar5Ev
 
 
+test11_D d11;
 test10_D d10;
 test9_D d9;
 test8_D d8;
