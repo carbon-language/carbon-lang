@@ -60,7 +60,7 @@ void APInt::initSlowCase(const APInt& that) {
 
 APInt::APInt(unsigned numBits, unsigned numWords, const uint64_t bigVal[])
   : BitWidth(numBits), VAL(0) {
-  assert(BitWidth && "bitwidth too small");
+  assert(BitWidth && "Bitwidth too small");
   assert(bigVal && "Null pointer detected!");
   if (isSingleWord())
     VAL = bigVal[0];
@@ -78,7 +78,7 @@ APInt::APInt(unsigned numBits, unsigned numWords, const uint64_t bigVal[])
 
 APInt::APInt(unsigned numbits, const StringRef& Str, uint8_t radix) 
   : BitWidth(numbits), VAL(0) {
-  assert(BitWidth && "bitwidth too small");
+  assert(BitWidth && "Bitwidth too small");
   fromString(numbits, Str, radix);
 }
 
@@ -589,12 +589,16 @@ APInt& APInt::flip(unsigned bitPosition) {
 
 unsigned APInt::getBitsNeeded(const StringRef& str, uint8_t radix) {
   assert(!str.empty() && "Invalid string length");
+  assert((radix == 10 || radix == 8 || radix == 16 || radix == 2) &&
+         "Radix should be 2, 8, 10, or 16!");
 
   size_t slen = str.size();
 
   // Each computation below needs to know if its negative
+  StringRef::iterator p = str.begin();
   unsigned isNegative = str.front() == '-';
-  if (isNegative) {
+  if (*p == '-' || *p == '+') {
+    p++;
     slen--;
     assert(slen && "string is only a minus!");
   }
@@ -619,7 +623,7 @@ unsigned APInt::getBitsNeeded(const StringRef& str, uint8_t radix) {
   unsigned sufficient = slen*64/18;
 
   // Convert to the actual binary value.
-  APInt tmp(sufficient, str.substr(isNegative), radix);
+  APInt tmp(sufficient, StringRef(p, slen), radix);
 
   // Compute how many bits are required.
   return isNegative + tmp.logBase2() + 1;
@@ -2004,13 +2008,14 @@ void APInt::udivrem(const APInt &LHS, const APInt &RHS,
 
 void APInt::fromString(unsigned numbits, const StringRef& str, uint8_t radix) {
   // Check our assumptions here
+  assert(!str.empty() && "Invalid string length");
   assert((radix == 10 || radix == 8 || radix == 16 || radix == 2) &&
          "Radix should be 2, 8, 10, or 16!");
-  assert(!str.empty() && "Invalid string length");
+
   StringRef::iterator p = str.begin();
   size_t slen = str.size();
   bool isNeg = *p == '-';
-  if (isNeg) {
+  if (*p == '-' || *p == '+') {
     p++;
     slen--;
     assert(slen && "string is only a minus!");

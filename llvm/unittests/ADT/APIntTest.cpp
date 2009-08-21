@@ -164,18 +164,82 @@ TEST(APIntTest, i1) {
 }
 
 TEST(APIntTest, fromString) {
-  EXPECT_EQ(APInt(1, 0), APInt(1, "0", 10));
-  EXPECT_EQ(APInt(1, 1), APInt(1, "1", 10));
-  EXPECT_EQ(APInt(1, 1), APInt(1, "-1", 10));
-  EXPECT_EQ(APInt(1, 1), APInt(1, "1", 2));
-  EXPECT_EQ(APInt(1, 1), APInt(1, "1", 8));
-  EXPECT_EQ(APInt(1, 1), APInt(1, "1", 16));
+  EXPECT_EQ(APInt(32, 0), APInt(32,   "0", 2));
+  EXPECT_EQ(APInt(32, 1), APInt(32,   "1", 2));
+  EXPECT_EQ(APInt(32, 2), APInt(32,  "10", 2));
+  EXPECT_EQ(APInt(32, 3), APInt(32,  "11", 2));
+  EXPECT_EQ(APInt(32, 4), APInt(32, "100", 2));
+
+  EXPECT_EQ(APInt(32, 0), APInt(32,   "+0", 2));
+  EXPECT_EQ(APInt(32, 1), APInt(32,   "+1", 2));
+  EXPECT_EQ(APInt(32, 2), APInt(32,  "+10", 2));
+  EXPECT_EQ(APInt(32, 3), APInt(32,  "+11", 2));
+  EXPECT_EQ(APInt(32, 4), APInt(32, "+100", 2));
+
+  EXPECT_EQ(APInt(32, -0), APInt(32,   "-0", 2));
+  EXPECT_EQ(APInt(32, -1), APInt(32,   "-1", 2));
+  EXPECT_EQ(APInt(32, -2), APInt(32,  "-10", 2));
+  EXPECT_EQ(APInt(32, -3), APInt(32,  "-11", 2));
+  EXPECT_EQ(APInt(32, -4), APInt(32, "-100", 2));
+
+
+  EXPECT_EQ(APInt(32,  0), APInt(32,  "0",  8));
+  EXPECT_EQ(APInt(32,  1), APInt(32,  "1",  8));
+  EXPECT_EQ(APInt(32,  7), APInt(32,  "7",  8));
+  EXPECT_EQ(APInt(32,  8), APInt(32,  "10", 8));
+  EXPECT_EQ(APInt(32, 15), APInt(32,  "17", 8));
+  EXPECT_EQ(APInt(32, 16), APInt(32,  "20", 8));
+
+  EXPECT_EQ(APInt(32,  +0), APInt(32,  "+0",  8));
+  EXPECT_EQ(APInt(32,  +1), APInt(32,  "+1",  8));
+  EXPECT_EQ(APInt(32,  +7), APInt(32,  "+7",  8));
+  EXPECT_EQ(APInt(32,  +8), APInt(32,  "+10", 8));
+  EXPECT_EQ(APInt(32, +15), APInt(32,  "+17", 8));
+  EXPECT_EQ(APInt(32, +16), APInt(32,  "+20", 8));
+
+  EXPECT_EQ(APInt(32,  -0), APInt(32,  "-0",  8));
+  EXPECT_EQ(APInt(32,  -1), APInt(32,  "-1",  8));
+  EXPECT_EQ(APInt(32,  -7), APInt(32,  "-7",  8));
+  EXPECT_EQ(APInt(32,  -8), APInt(32,  "-10", 8));
+  EXPECT_EQ(APInt(32, -15), APInt(32,  "-17", 8));
+  EXPECT_EQ(APInt(32, -16), APInt(32,  "-20", 8));
+
+
+  EXPECT_EQ(APInt(32,  0), APInt(32,  "0", 10));
+  EXPECT_EQ(APInt(32,  1), APInt(32,  "1", 10));
+  EXPECT_EQ(APInt(32,  9), APInt(32,  "9", 10));
+  EXPECT_EQ(APInt(32, 10), APInt(32, "10", 10));
+  EXPECT_EQ(APInt(32, 19), APInt(32, "19", 10));
+  EXPECT_EQ(APInt(32, 20), APInt(32, "20", 10));
+
+  EXPECT_EQ(APInt(32,  -0), APInt(32,  "-0", 10));
+  EXPECT_EQ(APInt(32,  -1), APInt(32,  "-1", 10));
+  EXPECT_EQ(APInt(32,  -9), APInt(32,  "-9", 10));
+  EXPECT_EQ(APInt(32, -10), APInt(32, "-10", 10));
+  EXPECT_EQ(APInt(32, -19), APInt(32, "-19", 10));
+  EXPECT_EQ(APInt(32, -20), APInt(32, "-20", 10));
+
+
+  EXPECT_EQ(APInt(32,  0), APInt(32,  "0", 16));
+  EXPECT_EQ(APInt(32,  1), APInt(32,  "1", 16));
+  EXPECT_EQ(APInt(32, 15), APInt(32,  "F", 16));
+  EXPECT_EQ(APInt(32, 16), APInt(32, "10", 16));
+  EXPECT_EQ(APInt(32, 31), APInt(32, "1F", 16));
+  EXPECT_EQ(APInt(32, 32), APInt(32, "20", 16));
+
+  EXPECT_EQ(APInt(32,  -0), APInt(32,  "-0", 16));
+  EXPECT_EQ(APInt(32,  -1), APInt(32,  "-1", 16));
+  EXPECT_EQ(APInt(32, -15), APInt(32,  "-F", 16));
+  EXPECT_EQ(APInt(32, -16), APInt(32, "-10", 16));
+  EXPECT_EQ(APInt(32, -31), APInt(32, "-1F", 16));
+  EXPECT_EQ(APInt(32, -32), APInt(32, "-20", 16));
 }
 
 #ifdef GTEST_HAS_DEATH_TEST
 TEST(APIntTest, StringDeath) {
-  EXPECT_DEATH(APInt(0, "", 0), "bitwidth too small");
-  EXPECT_DEATH(APInt(32, "", 0), "Radix should be 2, 8, 10, or 16!");
+  EXPECT_DEATH(APInt(0, "", 0), "Bitwidth too small");
+  EXPECT_DEATH(APInt(32, "", 0), "Invalid string length");
+  EXPECT_DEATH(APInt(32, "0", 0), "Radix should be 2, 8, 10, or 16!");
   EXPECT_DEATH(APInt(32, "", 10), "Invalid string length");
   EXPECT_DEATH(APInt(32, "-", 10), "string is only a minus!");
   EXPECT_DEATH(APInt(1, "1234", 10), "Insufficient bit width");
