@@ -139,22 +139,28 @@ void MCMachOStreamer::EmitZerofill(MCSection *Section, MCSymbol *Symbol,
 }
 
 void MCMachOStreamer::EmitBytes(const StringRef &Data) {
-  llvm_unreachable("FIXME: Not yet implemented!");
+  MCDataFragment *DF = new MCDataFragment(CurSectionData);
+  DF->getContents().append(Data.begin(), Data.end());
 }
 
 void MCMachOStreamer::EmitValue(const MCValue &Value, unsigned Size) {
-  llvm_unreachable("FIXME: Not yet implemented!");
+  new MCFillFragment(Value, Size, 1, CurSectionData);
 }
 
 void MCMachOStreamer::EmitValueToAlignment(unsigned ByteAlignment,
                                            int64_t Value, unsigned ValueSize,
                                            unsigned MaxBytesToEmit) {
-  llvm_unreachable("FIXME: Not yet implemented!");
+  new MCAlignFragment(ByteAlignment, Value, ValueSize, MaxBytesToEmit,
+                      CurSectionData);
+
+  // Update the maximum alignment on the current section if necessary
+  if (ByteAlignment > CurSectionData->getAlignment())
+    CurSectionData->setAlignment(ByteAlignment);
 }
 
 void MCMachOStreamer::EmitValueToOffset(const MCValue &Offset,
                                         unsigned char Value) {
-  llvm_unreachable("FIXME: Not yet implemented!");
+  new MCOrgFragment(Offset, Value, 1, CurSectionData);
 }
 
 void MCMachOStreamer::EmitInstruction(const MCInst &Inst) {
