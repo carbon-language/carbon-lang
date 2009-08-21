@@ -623,14 +623,15 @@ unsigned APInt::getBitsNeeded(const StringRef& str, uint8_t radix) {
 
   size_t slen = str.size();
 
-  // Each computation below needs to know if its negative
+  // Each computation below needs to know if it's negative.
   StringRef::iterator p = str.begin();
-  unsigned isNegative = str.front() == '-';
+  unsigned isNegative = *p == '-';
   if (*p == '-' || *p == '+') {
     p++;
     slen--;
-    assert(slen && "string is only a minus!");
+    assert(slen && "String is only a sign, needs a value.");
   }
+
   // For radixes of power-of-two values, the bits required is accurately and
   // easily computed
   if (radix == 2)
@@ -2052,7 +2053,7 @@ void APInt::fromString(unsigned numbits, const StringRef& str, uint8_t radix) {
   if (*p == '-' || *p == '+') {
     p++;
     slen--;
-    assert(slen && "string is only a minus!");
+    assert(slen && "String is only a sign, needs a value.");
   }
   assert((slen <= numbits || radix != 2) && "Insufficient bit width");
   assert(((slen-1)*3 <= numbits || radix != 8) && "Insufficient bit width");
