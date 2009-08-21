@@ -4330,7 +4330,7 @@ Sema::BuildCallToMemberFunction(Scope *S, Expr *MemExprE,
                 Func = Ovl->function_begin(),
              FuncEnd = Ovl->function_end();
            Func != FuncEnd; ++Func) {
-        if (Method = dyn_cast<CXXMethodDecl>(*Func))
+        if ((Method = dyn_cast<CXXMethodDecl>(*Func)))
           AddMethodCandidate(Method, ObjectArg, Args, NumArgs, CandidateSet, 
                              /*SuppressUserConversions=*/false);
         else
