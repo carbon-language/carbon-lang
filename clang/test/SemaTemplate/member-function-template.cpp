@@ -28,3 +28,14 @@ void test_X_f1(X x, int i, float f) {
   int &ir2 = x.f1(f, i);
   int &ir3 = x.f1(i, i);
 }
+
+void test_X_f0_address() {
+  int& (X::*pm1)(int) = &X::f0;
+  float& (X::*pm2)(float) = &X::f0;
+}
+
+void test_X_f1_address() {
+  int& (X::*pm1)(int) = &X::f1;
+  float& (X::*pm2)(float) = &X::f1;
+  int& (X::*pm3)(float, int) = &X::f1;
+}
