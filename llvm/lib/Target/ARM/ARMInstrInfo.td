@@ -327,8 +327,8 @@ def addrmodepc : Operand<i32>,
   let MIOperandInfo = (ops GPR, i32imm);
 }
 
-def lane_cst : Operand<i32> {
-  let PrintMethod = "printLaneOperand";
+def nohash_imm : Operand<i32> {
+  let PrintMethod = "printNoHashImmediate";
 }
 
 //===----------------------------------------------------------------------===//
@@ -581,7 +581,7 @@ def LEApcrel : AXI1<0x0, (outs GPR:$dst), (ins i32imm:$label, pred:$p),
                    []>;
 
 def LEApcrelJT : AXI1<0x0, (outs GPR:$dst),
-                           (ins i32imm:$label, lane_cst:$id, pred:$p),
+                           (ins i32imm:$label, nohash_imm:$id, pred:$p),
           Pseudo, IIC_iALUi,
    !strconcat(!strconcat(".set ${:private}PCRELV${:uid}, "
                          "(${label}_${id}-(",

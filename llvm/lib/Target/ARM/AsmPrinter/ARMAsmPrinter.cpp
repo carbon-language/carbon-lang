@@ -164,7 +164,7 @@ namespace {
     void printJTBlockOperand(const MachineInstr *MI, int OpNum);
     void printJT2BlockOperand(const MachineInstr *MI, int OpNum);
     void printTBAddrMode(const MachineInstr *MI, int OpNum);
-    void printLaneOperand(const MachineInstr *MI, int OpNum);
+    void printNoHashImmediate(const MachineInstr *MI, int OpNum);
 
     virtual bool PrintAsmOperand(const MachineInstr *MI, unsigned OpNum,
                                  unsigned AsmVariant, const char *ExtraCode);
@@ -1010,7 +1010,7 @@ void ARMAsmPrinter::printTBAddrMode(const MachineInstr *MI, int OpNum) {
   O << ']';
 }
 
-void ARMAsmPrinter::printLaneOperand(const MachineInstr *MI, int OpNum) {
+void ARMAsmPrinter::printNoHashImmediate(const MachineInstr *MI, int OpNum) {
   O << MI->getOperand(OpNum).getImm();
 }
 
@@ -1029,7 +1029,9 @@ bool ARMAsmPrinter::PrintAsmOperand(const MachineInstr *MI, unsigned OpNum,
       }
       // Fallthrough
     case 'c': // Don't print "#" before an immediate operand.
-      printLaneOperand(MI, OpNum);
+      if (!MI->getOperand(OpNum).isImm())
+        return true;
+      printNoHashImmediate(MI, OpNum);
       return false;
     case 'P': // Print a VFP double precision register.
       printOperand(MI, OpNum);

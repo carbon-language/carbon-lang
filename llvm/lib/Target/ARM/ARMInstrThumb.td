@@ -632,7 +632,7 @@ def tLEApcrel : T1I<(outs tGPR:$dst), (ins i32imm:$label, pred:$p), IIC_iALUi,
                     "adr$p $dst, #$label", []>;
 
 def tLEApcrelJT : T1I<(outs tGPR:$dst),
-                      (ins i32imm:$label, lane_cst:$id, pred:$p),
+                      (ins i32imm:$label, nohash_imm:$id, pred:$p),
                       IIC_iALUi, "adr$p $dst, #${label}_${id}", []>;
 
 //===----------------------------------------------------------------------===//
