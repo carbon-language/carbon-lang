@@ -2522,7 +2522,7 @@ void SelectionDAGLowering::visitShuffleVector(User &I) {
       }
     }
 
-    if (RangeUse[0] == 0 && RangeUse[0] == 0) {
+    if (RangeUse[0] == 0 && RangeUse[1] == 0) {
       setValue(&I, DAG.getUNDEF(VT));  // Vectors are not used.
       return;
     }
