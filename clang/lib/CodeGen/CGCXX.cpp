@@ -1169,6 +1169,91 @@ void CodeGenFunction::EmitClassAggrMemberwiseCopy(llvm::Value *Dest,
   EmitBlock(AfterFor, true);
 }
 
+/// EmitClassAggrCopyAssignment - This routine generates code to assign a class
+/// array of objects from SrcValue to DestValue. Assignment can be either a 
+/// bitwise assignment or via a copy assignment operator function call.
+/// FIXME. This can be consolidated with EmitClassAggrMemberwiseCopy
+void CodeGenFunction::EmitClassAggrCopyAssignment(llvm::Value *Dest, 
+                                            llvm::Value *Src,
+                                            const ArrayType *Array,
+                                            const CXXRecordDecl *BaseClassDecl, 
+                                            QualType Ty) {
+  const ConstantArrayType *CA = dyn_cast<ConstantArrayType>(Array);
+  assert(CA && "VLA cannot be asssigned");
+  bool BitwiseAssign = BaseClassDecl->hasTrivialCopyAssignment();
+  
+  // Create a temporary for the loop index and initialize it with 0.
+  llvm::Value *IndexPtr = CreateTempAlloca(llvm::Type::getInt64Ty(VMContext),
+                                           "loop.index");
+  llvm::Value* zeroConstant = 
+  llvm::Constant::getNullValue(llvm::Type::getInt64Ty(VMContext));
+  Builder.CreateStore(zeroConstant, IndexPtr, false);
+  // Start the loop with a block that tests the condition.
+  llvm::BasicBlock *CondBlock = createBasicBlock("for.cond");
+  llvm::BasicBlock *AfterFor = createBasicBlock("for.end");
+  
+  EmitBlock(CondBlock);
+  
+  llvm::BasicBlock *ForBody = createBasicBlock("for.body");
+  // Generate: if (loop-index < number-of-elements fall to the loop body,
+  // otherwise, go to the block after the for-loop.
+  uint64_t NumElements = getContext().getConstantArrayElementCount(CA);
+  llvm::Value * NumElementsPtr = 
+  llvm::ConstantInt::get(llvm::Type::getInt64Ty(VMContext), NumElements);
+  llvm::Value *Counter = Builder.CreateLoad(IndexPtr);
+  llvm::Value *IsLess = Builder.CreateICmpULT(Counter, NumElementsPtr, 
+                                              "isless");
+  // If the condition is true, execute the body.
+  Builder.CreateCondBr(IsLess, ForBody, AfterFor);
+  
+  EmitBlock(ForBody);
+  llvm::BasicBlock *ContinueBlock = createBasicBlock("for.inc");
+  // Inside the loop body, emit the assignment operator call on array element.
+  Counter = Builder.CreateLoad(IndexPtr);
+  Src = Builder.CreateInBoundsGEP(Src, Counter, "srcaddress");
+  Dest = Builder.CreateInBoundsGEP(Dest, Counter, "destaddress");
+  const CXXMethodDecl *MD = 0;
+  if (BitwiseAssign)
+    EmitAggregateCopy(Dest, Src, Ty);
+  else {
+    bool hasCopyAssign = BaseClassDecl->hasConstCopyAssignment(getContext(),
+                                                               MD);
+    assert(hasCopyAssign && "EmitClassAggrCopyAssignment - No user assign");
+    (void)hasCopyAssign;
+    const FunctionProtoType *FPT = MD->getType()->getAsFunctionProtoType();
+    const llvm::Type *LTy =
+    CGM.getTypes().GetFunctionType(CGM.getTypes().getFunctionInfo(MD),
+                                   FPT->isVariadic());
+    llvm::Constant *Callee = CGM.GetAddrOfFunction(GlobalDecl(MD), LTy);
+    
+    CallArgList CallArgs;
+    // Push the this (Dest) ptr.
+    CallArgs.push_back(std::make_pair(RValue::get(Dest),
+                                      MD->getThisType(getContext())));
+    
+    // Push the Src ptr.
+    CallArgs.push_back(std::make_pair(RValue::get(Src),
+                                      MD->getParamDecl(0)->getType()));
+    QualType ResultType =
+    MD->getType()->getAsFunctionType()->getResultType();
+    EmitCall(CGM.getTypes().getFunctionInfo(ResultType, CallArgs),
+             Callee, CallArgs, MD);
+  }
+  EmitBlock(ContinueBlock);
+  
+  // Emit the increment of the loop counter.
+  llvm::Value *NextVal = llvm::ConstantInt::get(Counter->getType(), 1);
+  Counter = Builder.CreateLoad(IndexPtr);
+  NextVal = Builder.CreateAdd(Counter, NextVal, "inc");
+  Builder.CreateStore(NextVal, IndexPtr, false);
+  
+  // Finally, branch back up to the condition for the next iteration.
+  EmitBranch(CondBlock);
+  
+  // Emit the fall-through block.
+  EmitBlock(AfterFor, true);
+}
+
 /// EmitClassMemberwiseCopy - This routine generates code to copy a class
 /// object from SrcValue to DestValue. Copying can be either a bitwise copy
 /// or via a copy constructor call.
@@ -1207,6 +1292,7 @@ void CodeGenFunction::EmitClassMemberwiseCopy(
 /// EmitClassCopyAssignment - This routine generates code to copy assign a class
 /// object from SrcValue to DestValue. Assignment can be either a bitwise 
 /// assignment of via an assignment operator call.
+// FIXME. Consolidate this with EmitClassMemberwiseCopy as they share a lot.
 void CodeGenFunction::EmitClassCopyAssignment(
                                         llvm::Value *Dest, llvm::Value *Src,
                                         const CXXRecordDecl *ClassDecl, 
@@ -1394,19 +1480,29 @@ void CodeGenFunction::SynthesizeCXXCopyAssignment(const CXXMethodDecl *CD,
        FieldEnd = ClassDecl->field_end();
        Field != FieldEnd; ++Field) {
     QualType FieldType = getContext().getCanonicalType((*Field)->getType());
-    
-    // FIXME. How about copy assignment of  arrays!
-    assert(!getContext().getAsArrayType(FieldType) &&
-           "FIXME. Copy assignment of arrays NYI");
+    const ConstantArrayType *Array = 
+      getContext().getAsConstantArrayType(FieldType);
+    if (Array)
+      FieldType = getContext().getBaseElementType(FieldType);
     
     if (const RecordType *FieldClassType = FieldType->getAs<RecordType>()) {
       CXXRecordDecl *FieldClassDecl
       = cast<CXXRecordDecl>(FieldClassType->getDecl());
       LValue LHS = EmitLValueForField(LoadOfThis, *Field, false, 0);
       LValue RHS = EmitLValueForField(LoadOfSrc, *Field, false, 0);
-      
-      EmitClassCopyAssignment(LHS.getAddress(), RHS.getAddress(), 
-                              0 /*ClassDecl*/, FieldClassDecl, FieldType);
+      if (Array) {
+        const llvm::Type *BasePtr = ConvertType(FieldType);
+        BasePtr = llvm::PointerType::getUnqual(BasePtr);
+        llvm::Value *DestBaseAddrPtr =
+          Builder.CreateBitCast(LHS.getAddress(), BasePtr);
+        llvm::Value *SrcBaseAddrPtr =
+          Builder.CreateBitCast(RHS.getAddress(), BasePtr);
+        EmitClassAggrCopyAssignment(DestBaseAddrPtr, SrcBaseAddrPtr, Array,
+                                    FieldClassDecl, FieldType);
+      }
+      else
+        EmitClassCopyAssignment(LHS.getAddress(), RHS.getAddress(), 
+                               0 /*ClassDecl*/, FieldClassDecl, FieldType);
       continue;
     }
     // Do a built-in assignment of scalar data members.

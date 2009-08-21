@@ -41,10 +41,17 @@ struct N  : B {
   int N2;
   void pr() {
     printf("N1 = %d N2 = %d\n", N1, N2);
+    for (unsigned i = 0; i < 3; i++)
+      for (unsigned j = 0; j < 2; j++)
+	printf("arr_b[%d][%d] = %f\n", i,j,arr_b[i][j].B1);
     B::pr();
   }
   N& operator=(const N& arg) { N1 = arg.N1; N2 = arg.N2; 
+    			       for (unsigned i = 0; i < 3; i++)
+      			         for (unsigned j = 0; j < 2; j++)
+				   arr_b[i][j] = arg.arr_b[i][j];
                                return *this; }
+  B arr_b[3][2];
 };
 
 struct Q  : B {
