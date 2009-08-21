@@ -88,7 +88,7 @@ std::string PIC16TargetObjectFile::getNameForFunctFrame(const Function *F,
   if (F->hasSection()) {
     std::string Sectn = F->getSection();
     std::string StrToFind = "Overlay=";
-    unsigned Pos = Sectn.find(StrToFind);
+    size_t Pos = Sectn.find(StrToFind);
     if (Pos != std::string::npos) {
       Pos += StrToFind.length();
       std::string Color = "";
