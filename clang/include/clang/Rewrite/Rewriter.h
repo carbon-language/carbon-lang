@@ -64,18 +64,17 @@ public:
                   bool InsertAfter = true);
   
 
-  /// InsertTextBefore - Insert some text before the specified point,
-  /// where the offset in the buffer is specified relative to the original
-  /// SourceBuffer.
-  ///
+  /// InsertTextBefore - Insert some text before the specified point, where the
+  /// offset in the buffer is specified relative to the original
+  /// SourceBuffer. The text is inserted before the specified location.  This is
+  /// method is the same as InsertText with "InsertAfter == false".
   void InsertTextBefore(unsigned OrigOffset, const llvm::StringRef &Str) {
     InsertText(OrigOffset, Str, false);
   }
   
-  /// InsertText - Insert some text at the specified point, where the offset in
-  /// the buffer is specified relative to the original SourceBuffer.  The
-  /// text is inserted after the specified location.  This is method is the
-  /// same as InsertText with "InsertAfter == false".
+  /// InsertTextAfter - Insert some text at the specified point, where the
+  /// offset in the buffer is specified relative to the original SourceBuffer.
+  /// The text is inserted after the specified location.
   void InsertTextAfter(unsigned OrigOffset, const llvm::StringRef &Str) {
     InsertText(OrigOffset, Str);
   }
