@@ -83,6 +83,9 @@ bool AsmParser::Run() {
       TheCondState.Ignore != StartingCondState.Ignore)
     return TokError("unmatched .ifs or .elses");
   
+  if (!HadError)  
+    Out.Finish();
+
   return HadError;
 }
 
@@ -407,90 +410,126 @@ bool AsmParser::ParseStatement() {
       return ParseDirectiveSectionSwitch("__TEXT", "__text",
                                      MCSectionMachO::S_ATTR_PURE_INSTRUCTIONS);
     if (IDVal == ".const")
-      return ParseDirectiveSectionSwitch("__TEXT", "__const", 0);
+      return ParseDirectiveSectionSwitch("__TEXT", "__const");
     if (IDVal == ".static_const")
-      return ParseDirectiveSectionSwitch("__TEXT", "__static_const", 0);
+      return ParseDirectiveSectionSwitch("__TEXT", "__static_const");
     if (IDVal == ".cstring")
       return ParseDirectiveSectionSwitch("__TEXT","__cstring", 
                                          MCSectionMachO::S_CSTRING_LITERALS);
     if (IDVal == ".literal4")
       return ParseDirectiveSectionSwitch("__TEXT", "__literal4",
-                                         MCSectionMachO::S_4BYTE_LITERALS);
+                                         MCSectionMachO::S_4BYTE_LITERALS,
+                                         4);
     if (IDVal == ".literal8")
       return ParseDirectiveSectionSwitch("__TEXT", "__literal8",
-                                         MCSectionMachO::S_8BYTE_LITERALS);
+                                         MCSectionMachO::S_8BYTE_LITERALS,
+                                         8);
     if (IDVal == ".literal16")
       return ParseDirectiveSectionSwitch("__TEXT","__literal16",
-                                         MCSectionMachO::S_16BYTE_LITERALS);
+                                         MCSectionMachO::S_16BYTE_LITERALS,
+                                         16);
     if (IDVal == ".constructor")
-      return ParseDirectiveSectionSwitch("__TEXT","__constructor", 0);
+      return ParseDirectiveSectionSwitch("__TEXT","__constructor");
     if (IDVal == ".destructor")
-      return ParseDirectiveSectionSwitch("__TEXT","__destructor", 0);
+      return ParseDirectiveSectionSwitch("__TEXT","__destructor");
     if (IDVal == ".fvmlib_init0")
-      return ParseDirectiveSectionSwitch("__TEXT","__fvmlib_init0", 0);
+      return ParseDirectiveSectionSwitch("__TEXT","__fvmlib_init0");
     if (IDVal == ".fvmlib_init1")
-      return ParseDirectiveSectionSwitch("__TEXT","__fvmlib_init1", 0);
+      return ParseDirectiveSectionSwitch("__TEXT","__fvmlib_init1");
+
+    // FIXME: The assembler manual claims that this has the self modify code
+    // flag, at least on x86-32, but that does not appear to be correct.
     if (IDVal == ".symbol_stub")
       return ParseDirectiveSectionSwitch("__TEXT","__symbol_stub",
                                          MCSectionMachO::S_SYMBOL_STUBS |
-                                    MCSectionMachO::S_ATTR_SELF_MODIFYING_CODE |
                                        MCSectionMachO::S_ATTR_PURE_INSTRUCTIONS,
                                           // FIXME: Different on PPC and ARM.
-                                         16);
-    // FIXME: .picsymbol_stub on PPC.
+                                         0, 16);
+    // FIXME: PowerPC only?
+    if (IDVal == ".picsymbol_stub")
+      return ParseDirectiveSectionSwitch("__TEXT","__picsymbol_stub",
+                                         MCSectionMachO::S_SYMBOL_STUBS |
+                                       MCSectionMachO::S_ATTR_PURE_INSTRUCTIONS,
+                                         0, 26);
     if (IDVal == ".data")
-      return ParseDirectiveSectionSwitch("__DATA", "__data", 0);
+      return ParseDirectiveSectionSwitch("__DATA", "__data");
     if (IDVal == ".static_data")
-      return ParseDirectiveSectionSwitch("__DATA", "__static_data", 0);
+      return ParseDirectiveSectionSwitch("__DATA", "__static_data");
+
+    // FIXME: The section names of these two are misspelled in the assembler
+    // manual.
     if (IDVal == ".non_lazy_symbol_pointer")
-      return ParseDirectiveSectionSwitch("__DATA", "__nl_symbol_pointer",
-                                    MCSectionMachO::S_NON_LAZY_SYMBOL_POINTERS);
+      return ParseDirectiveSectionSwitch("__DATA", "__nl_symbol_ptr",
+                                     MCSectionMachO::S_NON_LAZY_SYMBOL_POINTERS,
+                                         4);
     if (IDVal == ".lazy_symbol_pointer")
-      return ParseDirectiveSectionSwitch("__DATA", "__la_symbol_pointer",
-                                         MCSectionMachO::S_LAZY_SYMBOL_POINTERS);
+      return ParseDirectiveSectionSwitch("__DATA", "__la_symbol_ptr",
+                                         MCSectionMachO::S_LAZY_SYMBOL_POINTERS,
+                                         4);
+
     if (IDVal == ".dyld")
-      return ParseDirectiveSectionSwitch("__DATA", "__dyld", 0);
+      return ParseDirectiveSectionSwitch("__DATA", "__dyld");
     if (IDVal == ".mod_init_func")
       return ParseDirectiveSectionSwitch("__DATA", "__mod_init_func",
-                                      MCSectionMachO::S_MOD_INIT_FUNC_POINTERS);
+                                       MCSectionMachO::S_MOD_INIT_FUNC_POINTERS,
+                                         4);
     if (IDVal == ".mod_term_func")
       return ParseDirectiveSectionSwitch("__DATA", "__mod_term_func",
-                                      MCSectionMachO::S_MOD_TERM_FUNC_POINTERS);
+                                       MCSectionMachO::S_MOD_TERM_FUNC_POINTERS,
+                                         4);
     if (IDVal == ".const_data")
-      return ParseDirectiveSectionSwitch("__DATA", "__const", 0);
+      return ParseDirectiveSectionSwitch("__DATA", "__const");
     
     
-    // FIXME: Verify attributes on sections.
     if (IDVal == ".objc_class")
-      return ParseDirectiveSectionSwitch("__OBJC", "__class", 0);
+      return ParseDirectiveSectionSwitch("__OBJC", "__class", 
+                                         MCSectionMachO::S_ATTR_NO_DEAD_STRIP);
     if (IDVal == ".objc_meta_class")
-      return ParseDirectiveSectionSwitch("__OBJC", "__meta_class", 0);
+      return ParseDirectiveSectionSwitch("__OBJC", "__meta_class",
+                                         MCSectionMachO::S_ATTR_NO_DEAD_STRIP);
     if (IDVal == ".objc_cat_cls_meth")
-      return ParseDirectiveSectionSwitch("__OBJC", "__cat_cls_meth", 0);
+      return ParseDirectiveSectionSwitch("__OBJC", "__cat_cls_meth",
+                                         MCSectionMachO::S_ATTR_NO_DEAD_STRIP);
     if (IDVal == ".objc_cat_inst_meth")
-      return ParseDirectiveSectionSwitch("__OBJC", "__cat_inst_meth", 0);
+      return ParseDirectiveSectionSwitch("__OBJC", "__cat_inst_meth",
+                                         MCSectionMachO::S_ATTR_NO_DEAD_STRIP);
     if (IDVal == ".objc_protocol")
-      return ParseDirectiveSectionSwitch("__OBJC", "__protocol", 0);
+      return ParseDirectiveSectionSwitch("__OBJC", "__protocol",
+                                         MCSectionMachO::S_ATTR_NO_DEAD_STRIP);
     if (IDVal == ".objc_string_object")
-      return ParseDirectiveSectionSwitch("__OBJC", "__string_object", 0);
+      return ParseDirectiveSectionSwitch("__OBJC", "__string_object",
+                                         MCSectionMachO::S_ATTR_NO_DEAD_STRIP);
     if (IDVal == ".objc_cls_meth")
-      return ParseDirectiveSectionSwitch("__OBJC", "__cls_meth", 0);
+      return ParseDirectiveSectionSwitch("__OBJC", "__cls_meth",
+                                         MCSectionMachO::S_ATTR_NO_DEAD_STRIP);
     if (IDVal == ".objc_inst_meth")
-      return ParseDirectiveSectionSwitch("__OBJC", "__inst_meth", 0);
+      return ParseDirectiveSectionSwitch("__OBJC", "__inst_meth",
+                                         MCSectionMachO::S_ATTR_NO_DEAD_STRIP);
     if (IDVal == ".objc_cls_refs")
-      return ParseDirectiveSectionSwitch("__OBJC", "__cls_refs", 0);
+      return ParseDirectiveSectionSwitch("__OBJC", "__cls_refs",
+                                         MCSectionMachO::S_ATTR_NO_DEAD_STRIP |
+                                         MCSectionMachO::S_LITERAL_POINTERS,
+                                         4);
     if (IDVal == ".objc_message_refs")
-      return ParseDirectiveSectionSwitch("__OBJC", "__message_refs", 0);
+      return ParseDirectiveSectionSwitch("__OBJC", "__message_refs",
+                                         MCSectionMachO::S_ATTR_NO_DEAD_STRIP |
+                                         MCSectionMachO::S_LITERAL_POINTERS,
+                                         4);
     if (IDVal == ".objc_symbols")
-      return ParseDirectiveSectionSwitch("__OBJC", "__symbols", 0);
+      return ParseDirectiveSectionSwitch("__OBJC", "__symbols",
+                                         MCSectionMachO::S_ATTR_NO_DEAD_STRIP);
     if (IDVal == ".objc_category")
-      return ParseDirectiveSectionSwitch("__OBJC", "__category", 0);
+      return ParseDirectiveSectionSwitch("__OBJC", "__category",
+                                         MCSectionMachO::S_ATTR_NO_DEAD_STRIP);
     if (IDVal == ".objc_class_vars")
-      return ParseDirectiveSectionSwitch("__OBJC", "__class_vars", 0);
+      return ParseDirectiveSectionSwitch("__OBJC", "__class_vars",
+                                         MCSectionMachO::S_ATTR_NO_DEAD_STRIP);
     if (IDVal == ".objc_instance_vars")
-      return ParseDirectiveSectionSwitch("__OBJC", "__instance_vars", 0);
+      return ParseDirectiveSectionSwitch("__OBJC", "__instance_vars",
+                                         MCSectionMachO::S_ATTR_NO_DEAD_STRIP);
     if (IDVal == ".objc_module_info")
-      return ParseDirectiveSectionSwitch("__OBJC", "__module_info", 0);
+      return ParseDirectiveSectionSwitch("__OBJC", "__module_info",
+                                         MCSectionMachO::S_ATTR_NO_DEAD_STRIP);
     if (IDVal == ".objc_class_names")
       return ParseDirectiveSectionSwitch("__TEXT", "__cstring",
                                          MCSectionMachO::S_CSTRING_LITERALS);
@@ -501,7 +540,8 @@ bool AsmParser::ParseStatement() {
       return ParseDirectiveSectionSwitch("__TEXT", "__cstring",
                                          MCSectionMachO::S_CSTRING_LITERALS);
     if (IDVal == ".objc_selector_strs")
-      return ParseDirectiveSectionSwitch("__OBJC", "__selector_strs", 0);
+      return ParseDirectiveSectionSwitch("__OBJC", "__selector_strs",
+                                         MCSectionMachO::S_CSTRING_LITERALS);
     
     // Assembler features
     if (IDVal == ".set")
@@ -744,18 +784,17 @@ bool AsmParser::ParseDirectiveDarwinSection() {
 }
 
 /// ParseDirectiveSectionSwitch - 
-///
-/// FIXME! Many of these directives implicitly cause a ".align" directive to get
-/// emitted, we don't do this yet which can lead to subtle miscompiles.
 bool AsmParser::ParseDirectiveSectionSwitch(const char *Segment,
                                             const char *Section,
-                                            unsigned TAA, unsigned StubSize) {
+                                            unsigned TAA, unsigned Align,
+                                            unsigned StubSize) {
   if (Lexer.isNot(AsmToken::EndOfStatement))
     return TokError("unexpected token in section switching directive");
   Lexer.Lex();
   
   // FIXME: Arch specific.
   // FIXME: Cache this!
+  // FIXME: Handle the implicit alignment!!
   MCSection *S = 0; // Ctx.GetSection(Section);
   if (S == 0)
     S = MCSectionMachO::Create(Segment, Section, TAA, StubSize,

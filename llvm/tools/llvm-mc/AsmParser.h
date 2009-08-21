@@ -100,7 +100,8 @@ private:
   // Directive Parsing.
   bool ParseDirectiveDarwinSection(); // Darwin specific ".section".
   bool ParseDirectiveSectionSwitch(const char *Segment, const char *Section,
-                                   unsigned TAA, unsigned StubSize = 0);
+                                   unsigned TAA = 0, unsigned ImplicitAlign = 0,
+                                   unsigned StubSize = 0);
   bool ParseDirectiveAscii(bool ZeroTerminated); // ".ascii", ".asciiz"
   bool ParseDirectiveValue(unsigned Size); // ".byte", ".long", ...
   bool ParseDirectiveFill(); // ".fill"
