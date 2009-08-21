@@ -1072,12 +1072,13 @@ bool AsmParser::ParseDirectiveAlign(bool IsPow2, unsigned ValueSize) {
     Alignment = 1LL << Alignment;
   }
 
-  // Diagnose non-sensical max bytes to fill.
+  // Diagnose non-sensical max bytes to fill, which are treated as missing (this
+  // matches 'as').
   if (MaxBytesLoc.isValid()) {
     if (MaxBytesToFill < 1) {
       Warning(MaxBytesLoc, "alignment directive can never be satisfied in this "
-              "many bytes, ignoring");
-      return false;
+              "many bytes, ignoring maximum bytes expression");
+      MaxBytesToFill = 0;
     }
 
     if (MaxBytesToFill >= Alignment) {
