@@ -1949,16 +1949,29 @@ def VREV16q8  : VREV16Q<0b00, "vrev16.8", v16i8>;
 
 //   VEXT     : Vector Extract
 
-def  VEXTd    : N3V<0,1,0b11,0b0000,0,0, (outs DPR:$dst),
-                    (ins DPR:$lhs, DPR:$rhs, i32imm:$index), NoItinerary,
-                    "vext.8\t$dst, $lhs, $rhs, $index", "",
-                    [(set DPR:$dst, (v8i8 (NEONvext (v8i8 DPR:$lhs),
-                                           (v8i8 DPR:$rhs), imm:$index)))]>;
-def  VEXTq    : N3V<0,1,0b11,0b0000,1,0, (outs QPR:$dst),
-                    (ins QPR:$lhs, QPR:$rhs, i32imm:$index), NoItinerary,
-                    "vext.8\t$dst, $lhs, $rhs, $index", "",
-                    [(set QPR:$dst, (v16i8 (NEONvext (v16i8 QPR:$lhs),
-                                            (v16i8 QPR:$rhs), imm:$index)))]>;
+class VEXTd<string OpcodeStr, ValueType Ty>
+  : N3V<0,1,0b11,0b0000,0,0, (outs DPR:$dst),
+        (ins DPR:$lhs, DPR:$rhs, i32imm:$index), NoItinerary,
+        !strconcat(OpcodeStr, "\t$dst, $lhs, $rhs, $index"), "",
+        [(set DPR:$dst, (Ty (NEONvext (Ty DPR:$lhs),
+                                      (Ty DPR:$rhs), imm:$index)))]>;
+
+class VEXTq<string OpcodeStr, ValueType Ty>
+  : N3V<0,1,0b11,0b0000,1,0, (outs QPR:$dst),
+        (ins QPR:$lhs, QPR:$rhs, i32imm:$index), NoItinerary,
+        !strconcat(OpcodeStr, "\t$dst, $lhs, $rhs, $index"), "",
+        [(set QPR:$dst, (Ty (NEONvext (Ty QPR:$lhs),
+                                      (Ty QPR:$rhs), imm:$index)))]>;
+
+def VEXTd8  : VEXTd<"vext.8",  v8i8>;
+def VEXTd16 : VEXTd<"vext.16", v4i16>;
+def VEXTd32 : VEXTd<"vext.32", v2i32>;
+def VEXTdf  : VEXTd<"vext.32", v2f32>;
+
+def VEXTq8  : VEXTq<"vext.8",  v16i8>;
+def VEXTq16 : VEXTq<"vext.16", v8i16>;
+def VEXTq32 : VEXTq<"vext.32", v4i32>;
+def VEXTqf  : VEXTq<"vext.32", v4f32>;
 
 //   VTRN     : Vector Transpose
 

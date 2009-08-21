@@ -2371,9 +2371,6 @@ static bool isVEXTMask(const SmallVectorImpl<int> &M, EVT VT,
   if (ReverseVEXT)
     Imm -= NumElts;
 
-  // VEXT only handles 8-bit elements so scale the index for larger elements.
-  Imm *= VT.getVectorElementType().getSizeInBits() / 8;
-
   return true;
 }
 
