@@ -107,7 +107,8 @@ OptLevelO3("O3",
 
 static cl::opt<bool>
 UnitAtATime("funit-at-a-time",
-            cl::desc("Enable IPO. This is same as llvm-gcc's -funit-at-a-time"));
+            cl::desc("Enable IPO. This is same as llvm-gcc's -funit-at-a-time"),
+	    cl::init(true));
 
 static cl::opt<bool>
 DisableSimplifyLibCalls("disable-simplify-libcalls",
