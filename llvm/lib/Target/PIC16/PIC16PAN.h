@@ -433,12 +433,12 @@ namespace PIC16Overlay {
 
     inline static std::string getSectionNameForColor(unsigned Color) {
       switch (Color) {
+        default:
+          assert( 0 && "Color not supported");
         case PIC16Overlay::GREEN:
           return "GREEN";
         case PIC16Overlay::GREEN_IL:
           return "GREEN_IL";
-        default:
-          assert( 0 && "Color not supported");
       }   
     }
 
