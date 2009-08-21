@@ -593,7 +593,7 @@ DICompileUnit DIFactory::CreateCompileUnit(unsigned LangID,
   
   M.addTypeName("llvm.dbg.compile_unit.type", Init->getType());
   GlobalVariable *GV = new GlobalVariable(M, Init->getType(), true,
-                                          GlobalValue::LinkOnceAnyLinkage,
+                                          GlobalValue::InternalLinkage,
                                           Init, "llvm.dbg.compile_unit");
   GV->setSection("llvm.metadata");
   return DICompileUnit(GV);
@@ -760,7 +760,7 @@ DISubprogram DIFactory::CreateSubprogram(DIDescriptor Context,
   
   M.addTypeName("llvm.dbg.subprogram.type", Init->getType());
   GlobalVariable *GV = new GlobalVariable(M, Init->getType(), true,
-                                          GlobalValue::LinkOnceAnyLinkage,
+                                          GlobalValue::InternalLinkage,
                                           Init, "llvm.dbg.subprogram");
   GV->setSection("llvm.metadata");
   return DISubprogram(GV);
