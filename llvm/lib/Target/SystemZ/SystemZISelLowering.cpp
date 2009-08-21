@@ -165,6 +165,46 @@ SDValue SystemZTargetLowering::LowerOperation(SDValue Op, SelectionDAG &DAG) {
 }
 
 //===----------------------------------------------------------------------===//
+//                       SystemZ Inline Assembly Support
+//===----------------------------------------------------------------------===//
+
+/// getConstraintType - Given a constraint letter, return the type of
+/// constraint it is for this target.
+TargetLowering::ConstraintType
+SystemZTargetLowering::getConstraintType(const std::string &Constraint) const {
+  if (Constraint.size() == 1) {
+    switch (Constraint[0]) {
+    case 'r':
+      return C_RegisterClass;
+    default:
+      break;
+    }
+  }
+  return TargetLowering::getConstraintType(Constraint);
+}
+
+std::pair<unsigned, const TargetRegisterClass*>
+SystemZTargetLowering::
+getRegForInlineAsmConstraint(const std::string &Constraint,
+                             EVT VT) const {
+  if (Constraint.size() == 1) {
+    // GCC Constraint Letters
+    switch (Constraint[0]) {
+    default: break;
+    case 'r':   // GENERAL_REGS
+      if (VT == MVT::i32)
+        return std::make_pair(0U, SystemZ::GR32RegisterClass);
+      else if (VT == MVT::i128)
+        return std::make_pair(0U, SystemZ::GR128RegisterClass);
+
+      return std::make_pair(0U, SystemZ::GR64RegisterClass);
+    }
+  }
+
+  return TargetLowering::getRegForInlineAsmConstraint(Constraint, VT);
+}
+
+//===----------------------------------------------------------------------===//
 //                      Calling Convention Implementation
 //===----------------------------------------------------------------------===//
 

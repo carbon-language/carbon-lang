@@ -69,6 +69,11 @@ namespace llvm {
       return 1;
     }
 
+    std::pair<unsigned, const TargetRegisterClass*>
+    getRegForInlineAsmConstraint(const std::string &Constraint, EVT VT) const;
+    TargetLowering::ConstraintType
+    getConstraintType(const std::string &Constraint) const;
+
     SDValue LowerBR_CC(SDValue Op, SelectionDAG &DAG);
     SDValue LowerSELECT_CC(SDValue Op, SelectionDAG &DAG);
     SDValue LowerGlobalAddress(SDValue Op, SelectionDAG &DAG);
