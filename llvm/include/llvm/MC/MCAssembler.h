@@ -12,6 +12,7 @@
 
 #include "llvm/ADT/ilist.h"
 #include "llvm/ADT/ilist_node.h"
+#include "llvm/Support/DataTypes.h"
 
 namespace llvm {
 class raw_ostream;
