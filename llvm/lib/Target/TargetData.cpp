@@ -172,6 +172,7 @@ const TargetAlignElem TargetData::InvalidAlignmentElem =
 void TargetData::init(const std::string &TargetDescription) {
   std::string temp = TargetDescription;
   
+  LayoutMap = 0;
   LittleEndian = false;
   PointerMemSize = 8;
   PointerABIAlign   = 8;
@@ -317,61 +318,30 @@ unsigned TargetData::getAlignmentInfo(AlignTypeEnum AlignType,
                  : Alignments[BestMatchIdx].PrefAlign;
 }
 
-namespace {
-
-/// LayoutInfo - The lazy cache of structure layout information maintained by
-/// TargetData.  Note that the struct types must have been free'd before
-/// llvm_shutdown is called (and thus this is deallocated) because all the
-/// targets with cached elements should have been destroyed.
-///
-typedef std::pair<const TargetData*,const StructType*> LayoutKey;
-
-struct DenseMapLayoutKeyInfo {
-  static inline LayoutKey getEmptyKey() { return LayoutKey(0, 0); }
-  static inline LayoutKey getTombstoneKey() {
-    return LayoutKey((TargetData*)(intptr_t)-1, 0);
-  }
-  static unsigned getHashValue(const LayoutKey &Val) {
-    return DenseMapInfo<void*>::getHashValue(Val.first) ^
-           DenseMapInfo<void*>::getHashValue(Val.second);
-  }
-  static bool isEqual(const LayoutKey &LHS, const LayoutKey &RHS) {
-    return LHS == RHS;
-  }
-
-  static bool isPod() { return true; }
-};
-
-typedef DenseMap<LayoutKey, StructLayout*, DenseMapLayoutKeyInfo> LayoutInfoTy;
-
-}
-
-static ManagedStatic<LayoutInfoTy> LayoutInfo;
-static ManagedStatic<sys::SmartMutex<true> > LayoutLock;
+typedef DenseMap<const StructType*, StructLayout*>LayoutInfoTy;
 
 TargetData::~TargetData() {
-  if (!LayoutInfo.isConstructed())
+  if (!LayoutMap)
     return;
   
-  sys::SmartScopedLock<true> Lock(*LayoutLock);
   // Remove any layouts for this TD.
-  LayoutInfoTy &TheMap = *LayoutInfo;
+  LayoutInfoTy &TheMap = *static_cast<LayoutInfoTy*>(LayoutMap);
   for (LayoutInfoTy::iterator I = TheMap.begin(), E = TheMap.end(); I != E; ) {
-    if (I->first.first == this) {
-      I->second->~StructLayout();
-      free(I->second);
-      TheMap.erase(I++);
-    } else {
-      ++I;
-    }
+    I->second->~StructLayout();
+    free(I->second);
+    TheMap.erase(I++);
   }
+  
+  delete static_cast<LayoutInfoTy*>(LayoutMap);
 }
 
 const StructLayout *TargetData::getStructLayout(const StructType *Ty) const {
-  LayoutInfoTy &TheMap = *LayoutInfo;
+  if (!LayoutMap)
+    LayoutMap = static_cast<void*>(new LayoutInfoTy());
   
-  sys::SmartScopedLock<true> Lock(*LayoutLock);
-  StructLayout *&SL = TheMap[LayoutKey(this, Ty)];
+  LayoutInfoTy &TheMap = *static_cast<LayoutInfoTy*>(LayoutMap);
+  
+  StructLayout *&SL = TheMap[Ty];
   if (SL) return SL;
 
   // Otherwise, create the struct layout.  Because it is variable length, we 
@@ -393,10 +363,10 @@ const StructLayout *TargetData::getStructLayout(const StructType *Ty) const {
 /// removed, this method must be called whenever a StructType is removed to
 /// avoid a dangling pointer in this cache.
 void TargetData::InvalidateStructLayoutInfo(const StructType *Ty) const {
-  if (!LayoutInfo.isConstructed()) return;  // No cache.
+  if (!LayoutMap) return;  // No cache.
   
-  sys::SmartScopedLock<true> Lock(*LayoutLock);
-  LayoutInfoTy::iterator I = LayoutInfo->find(LayoutKey(this, Ty));
+  LayoutInfoTy* LayoutInfo = static_cast<LayoutInfoTy*>(LayoutMap);
+  LayoutInfoTy::iterator I = LayoutInfo->find(Ty);
   if (I == LayoutInfo->end()) return;
   
   I->second->~StructLayout();

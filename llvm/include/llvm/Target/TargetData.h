@@ -91,6 +91,9 @@ private:
    */
   static const TargetAlignElem InvalidAlignmentElem;
 
+  // Opaque pointer for the StructType -> StructLayout map.
+  mutable void* LayoutMap;
+
   //! Set/initialize target alignments
   void setAlignment(AlignTypeEnum align_type, unsigned char abi_align,
                     unsigned char pref_align, uint32_t bit_width);
@@ -132,7 +135,8 @@ public:
     PointerMemSize(TD.PointerMemSize),
     PointerABIAlign(TD.PointerABIAlign),
     PointerPrefAlign(TD.PointerPrefAlign),
-    Alignments(TD.Alignments)
+    Alignments(TD.Alignments),
+    LayoutMap(0)
   { }
 
   ~TargetData();  // Not virtual, do not subclass this class
