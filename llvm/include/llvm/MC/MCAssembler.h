@@ -66,6 +66,7 @@ public:
   // FIXME: This should be abstract, fix sentinel.
   virtual uint64_t getMaxFileSize() const {
     assert(0 && "Invalid getMaxFileSize call !");
+    return 0;
   };
 
   /// @name Assembler Backend Support
