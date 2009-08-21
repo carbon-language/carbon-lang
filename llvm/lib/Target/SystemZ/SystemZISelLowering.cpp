@@ -126,10 +126,14 @@ SystemZTargetLowering::SystemZTargetLowering(SystemZTargetMachine &tm) :
   setOperationAction(ISD::SELECT_CC,        MVT::f32, Custom);
   setOperationAction(ISD::SELECT_CC,        MVT::f64, Custom);
 
-  // Funny enough: we don't have 64-bit signed versions of these stuff, but have
-  // unsigned.
   setOperationAction(ISD::MULHS,            MVT::i64, Expand);
   setOperationAction(ISD::SMUL_LOHI,        MVT::i64, Expand);
+
+  // FIXME: Can we support these natively?
+  setOperationAction(ISD::UMUL_LOHI,        MVT::i64, Expand);
+  setOperationAction(ISD::SRL_PARTS,        MVT::i64, Expand);
+  setOperationAction(ISD::SHL_PARTS,        MVT::i64, Expand);
+  setOperationAction(ISD::SRA_PARTS,        MVT::i64, Expand);
 
   // Lower some FP stuff
   setOperationAction(ISD::FSIN,             MVT::f32, Expand);
