@@ -1,0 +1,159 @@
+#!/usr/bin/env python
+
+import struct
+import sys
+
+class Reader:
+   def __init__(self, path):
+      if path == '-':
+         self.file = sys.stdin
+      else:
+         self.file = open(path,'rb')
+      self.isLSB = None
+      self.pos = 0
+
+   def setLSB(self, isLSB):
+      self.isLSB = bool(isLSB)
+
+   def tell(self):
+      return self.pos
+
+   def read(self, N):
+      data = self.file.read(N)
+      self.pos += len(data)
+      if len(data) != N:
+         raise ValueError,"Out of data!"
+      return data
+
+   def read32(self):
+      return struct.unpack('><'[self.isLSB] + 'I', self.read(4))[0]
+
+def dumpmacho(path, opts):
+   f = Reader(path)
+
+   magic = f.read(4)
+   if magic == '\xFE\xED\xFA\xCE':
+      f.setLSB(False)
+   elif magic == '\xCE\xFA\xED\xFE':
+      f.setLSB(True)
+   else:
+      raise ValueError,"Not a Mach-O object file: %r (bad magic)" % path
+
+   print "('cputype', %r)" % f.read32()
+   print "('cpusubtype', %r)" % f.read32()
+   filetype = f.read32()
+   print "('filetype', %r)" % filetype
+   
+   numLoadCommands = f.read32()
+   print "('num_load_commands', %r)" % filetype
+
+   loadCommandsSize = f.read32()
+   print "('load_commands_size', %r)" % loadCommandsSize
+
+   print "('flag', %r)" % f.read32()
+
+   start = f.tell()
+
+   print "('load_commands', ["
+   for i in range(numLoadCommands):
+      dumpLoadCommand(f, i, opts)
+   print "])"
+
+   if f.tell() - start != loadCommandsSize:
+      raise ValueError,"%s: warning: invalid load commands size: %r" % (sys.argv, loadCommandsSize)
+
+def dumpLoadCommand(f, i, opts):
+   start = f.tell()
+
+   print "  # Load Command %r" % i
+   cmd = f.read32()
+   print " (('command', %r)" % cmd
+   cmdSize = f.read32()
+   print "  ('size', %r)" % cmdSize
+
+   if cmd == 1:
+      dumpSegmentLoadCommand32(f, opts)
+   elif cmd == 2:
+      dumpSymtabCommand(f, opts)
+   elif cmd == 11:
+      dumpDysymtabCommand(f, opts)
+   else:
+      print >>sys.stderr,"%s: warning: unknown load command: %r" % (sys.argv[0], cmd)
+      f.read(cmdSize - 8)
+   print " ),"
+
+   if f.tell() - start != cmdSize:
+      raise ValueError,"%s: warning: invalid load command size: %r" % (sys.argv, cmdSize)
+
+def dumpSegmentLoadCommand32(f, opts):
+   print "  ('segment_name', %r)" % f.read(16) 
+   print "  ('vm_addr', %r)" % f.read32()
+   print "  ('vm_size', %r)" % f.read32()
+   print "  ('file_offset', %r)" % f.read32()
+   print "  ('file_size', %r)" % f.read32()
+   print "  ('maxprot', %r)" % f.read32()
+   print "  ('initprot', %r)" % f.read32()
+   numSections = f.read32()
+   print "  ('num_sections', %r)" % numSections
+   print "  ('flags', %r)" % f.read32()
+
+   print "  ('sections', ["
+   for i in range(numSections):
+      dumpSection32(f, i, opts)
+   print "  ])"
+
+def dumpSymtabCommand(f, opts):
+   print "  ('symoff', %r)" % f.read32()
+   print "  ('nsyms', %r)" % f.read32()
+   print "  ('stroff', %r)" % f.read32()
+   print "  ('strsize', %r)" % f.read32()
+
+def dumpDysymtabCommand(f, opts):   
+   print "  ('ilocalsym', %r)" % f.read32()
+   print "  ('nlocalsym', %r)" % f.read32()
+   print "  ('iextdefsym', %r)" % f.read32()
+   print "  ('nextdefsym', %r)" % f.read32()
+   print "  ('iundefsym', %r)" % f.read32()
+   print "  ('nundefsym', %r)" % f.read32()
+   print "  ('tocoff', %r)" % f.read32()
+   print "  ('ntoc', %r)" % f.read32()
+   print "  ('modtaboff', %r)" % f.read32()
+   print "  ('nmodtab', %r)" % f.read32()
+   print "  ('extrefsymoff', %r)" % f.read32()
+   print "  ('nextrefsyms', %r)" % f.read32()
+   print "  ('indirectsymoff', %r)" % f.read32()
+   print "  ('nindirectsyms', %r)" % f.read32()
+   print "  ('extreloff', %r)" % f.read32()
+   print "  ('nextrel', %r)" % f.read32()
+   print "  ('locreloff', %r)" % f.read32()
+   print "  ('nlocrel', %r)" % f.read32()
+
+def dumpSection32(f, i, opts):
+   print "    # Section %r" % i
+   print "   (('section_name', %r)" % f.read(16)
+   print "    ('segment_name', %r)" % f.read(16)
+   print "    ('address', %r)" % f.read32()
+   print "    ('size', %r)" % f.read32()
+   print "    ('offset', %r)" % f.read32()
+   print "    ('alignment', %r)" % f.read32()
+   print "    ('reloc_offset', %r)" % f.read32()
+   print "    ('num_reloc', %r)" % f.read32()
+   print "    ('flags', %#x)" % f.read32()
+   print "    ('reserved1', %r)" % f.read32()
+   print "    ('reserved2', %r)" % f.read32()
+   print "   ),"
+   
+def main():
+    from optparse import OptionParser, OptionGroup
+    parser = OptionParser("usage: %prog [options] {files}")
+
+    (opts, args) = parser.parse_args()
+
+    if not args:
+       args.append('-')
+
+    for arg in args:
+       dumpmacho(arg, opts)
+
+if __name__ == '__main__':
+   main()

@@ -38,6 +38,20 @@ static cl::opt<std::string>
 OutputFilename("o", cl::desc("Output filename"),
                cl::value_desc("filename"));
 
+enum OutputFileType {
+  OFT_AssemblyFile,
+  OFT_ObjectFile
+};
+static cl::opt<OutputFileType>
+FileType("filetype", cl::init(OFT_AssemblyFile),
+  cl::desc("Choose an output file type:"),
+  cl::values(
+       clEnumValN(OFT_AssemblyFile, "asm",
+                  "Emit an assembly ('.s') file"),
+       clEnumValN(OFT_ObjectFile, "obj",
+                  "Emit a native object ('.o') file"),
+       clEnumValEnd));
+
 static cl::opt<bool>
 Force("f", cl::desc("Overwrite output files"));
 
@@ -221,11 +235,19 @@ static int AssembleInput(const char *ProgName) {
     return 1;
   }
 
-  const TargetAsmInfo *TAI = TheTarget->createAsmInfo(TripleName);
-  assert(TAI && "Unable to create target asm info!");
+  OwningPtr<AsmPrinter> AP;
+  OwningPtr<MCStreamer> Str;
 
-  OwningPtr<AsmPrinter> AP(TheTarget->createAsmPrinter(*Out, *TM, TAI, true));
-  OwningPtr<MCStreamer> Str(createAsmStreamer(Ctx, *Out, *TAI, AP.get()));
+  if (FileType == OFT_AssemblyFile) {
+    const TargetAsmInfo *TAI = TheTarget->createAsmInfo(TripleName);
+    assert(TAI && "Unable to create target asm info!");
+
+    AP.reset(TheTarget->createAsmPrinter(*Out, *TM, TAI, true));
+    Str.reset(createAsmStreamer(Ctx, *Out, *TAI, AP.get()));
+  } else {
+    assert(FileType == OFT_ObjectFile && "Invalid file type!");
+    Str.reset(createMachOStreamer(Ctx, *Out));
+  }
 
   // FIXME: Target hook & command line option for initial section.
   Str.get()->SwitchSection(MCSectionMachO::Create("__TEXT","__text",
