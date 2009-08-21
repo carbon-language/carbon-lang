@@ -5,7 +5,6 @@
 #include "llvm/Support/ErrorHandling.h"
 #include "llvm/Support/raw_ostream.h"
 #include <vector>
-#include <iostream>
 using namespace llvm;
 using std::vector;
 using std::string;
