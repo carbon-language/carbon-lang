@@ -131,7 +131,17 @@ namespace llvm {
       VEXT,         // extract
       VREV64,       // reverse elements within 64-bit doublewords
       VREV32,       // reverse elements within 32-bit words
-      VREV16        // reverse elements within 16-bit halfwords
+      VREV16,       // reverse elements within 16-bit halfwords
+
+      VZIP32,
+      VZIP16,
+      VZIP8,
+      VUZP32,
+      VUZP16,
+      VUZP8,
+      VTRN32,
+      VTRN16,
+      VTRN8
     };
   }
 

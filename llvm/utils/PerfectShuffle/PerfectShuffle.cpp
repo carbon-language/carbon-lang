@@ -444,8 +444,6 @@ int main() {
 }
 
 
-#define GENERATE_ALTIVEC
-
 #ifdef GENERATE_ALTIVEC
 
 ///===---------------------------------------------------------------------===//
@@ -496,5 +494,78 @@ struct vsldoi : public Operator {
 vsldoi<1> the_vsldoi1("vsldoi4" , OP_VSLDOI4);
 vsldoi<2> the_vsldoi2("vsldoi8" , OP_VSLDOI8);
 vsldoi<3> the_vsldoi3("vsldoi12", OP_VSLDOI12);
+
+#endif
+
+#define GENERATE_NEON
+
+#ifdef GENERATE_NEON
+enum {
+  OP_COPY = 0,   // Copy, used for things like <u,u,u,3> to say it is <0,1,2,3>
+  OP_VREV,
+  OP_VDUP0,
+  OP_VDUP1,
+  OP_VDUP2,
+  OP_VDUP3,
+  OP_VEXT1,
+  OP_VEXT2,
+  OP_VEXT3,
+  OP_VUZPL, // VUZP, left result
+  OP_VUZPR, // VUZP, right result
+  OP_VZIPL, // VZIP, left result
+  OP_VZIPR, // VZIP, right result
+  OP_VTRNL, // VTRN, left result
+  OP_VTRNR  // VTRN, right result
+};
+
+struct vrev : public Operator {
+  vrev() : Operator(0x1032, "vrev", OP_VREV) {}
+} the_vrev;
+
+template<unsigned Elt>
+struct vdup : public Operator {
+  vdup(const char *N, unsigned Opc)
+    : Operator(MakeMask(Elt, Elt, Elt, Elt), N, Opc) {}
+};
+
+vdup<0> the_vdup0("vdup0", OP_VDUP0);
+vdup<1> the_vdup1("vdup1", OP_VDUP1);
+vdup<2> the_vdup2("vdup2", OP_VDUP2);
+vdup<3> the_vdup3("vdup3", OP_VDUP3);
+
+template<unsigned N>
+struct vext : public Operator {
+  vext(const char *Name, unsigned Opc)
+    : Operator(MakeMask(N&7, (N+1)&7, (N+2)&7, (N+3)&7), Name, Opc) {
+  }
+};
+
+vext<1> the_vext1("vext1", OP_VEXT1);
+vext<2> the_vext2("vext2", OP_VEXT2);
+vext<3> the_vext3("vext3", OP_VEXT3);
+
+struct vuzpl : public Operator {
+  vuzpl() : Operator(0x1032, "vuzpl", OP_VUZPL, 2) {}
+} the_vuzpl;
+
+struct vuzpr : public Operator {
+  vuzpr() : Operator(0x4602, "vuzpr", OP_VUZPR, 2) {}
+} the_vuzpr;
+
+struct vzipl : public Operator {
+  vzipl() : Operator(0x6273, "vzipl", OP_VZIPL, 2) {}
+} the_vzipl;
+
+struct vzipr : public Operator {
+  vzipr() : Operator(0x4051, "vzipr", OP_VZIPR, 2) {}
+} the_vzipr;
+
+struct vtrnl : public Operator {
+  vtrnl() : Operator(0x5173, "vtrnl", OP_VTRNL, 2) {}
+} the_vtrnl;
+
+struct vtrnr : public Operator {
+  vtrnr() : Operator(0x4062, "vtrnr", OP_VTRNR, 2) {}
+} the_vtrnr;
 
 #endif

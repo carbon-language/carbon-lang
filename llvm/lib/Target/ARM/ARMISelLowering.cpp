@@ -17,6 +17,7 @@
 #include "ARMConstantPoolValue.h"
 #include "ARMISelLowering.h"
 #include "ARMMachineFunctionInfo.h"
+#include "ARMPerfectShuffle.h"
 #include "ARMRegisterInfo.h"
 #include "ARMSubtarget.h"
 #include "ARMTargetMachine.h"
@@ -2488,6 +2489,26 @@ static SDValue LowerBUILD_VECTOR(SDValue Op, SelectionDAG &DAG) {
 bool
 ARMTargetLowering::isShuffleMaskLegal(const SmallVectorImpl<int> &M,
                                       EVT VT) const {
+  if (VT.getVectorNumElements() == 4 &&
+      (VT.is128BitVector() || VT.is64BitVector())) {
+    unsigned PFIndexes[4];
+    for (unsigned i = 0; i != 4; ++i) {
+      if (M[i] < 0)
+        PFIndexes[i] = 8;
+      else
+        PFIndexes[i] = M[i];
+    }
+
+    // Compute the index in the perfect shuffle table.
+    unsigned PFTableIndex =
+      PFIndexes[0]*9*9*9+PFIndexes[1]*9*9+PFIndexes[2]*9+PFIndexes[3];
+    unsigned PFEntry = PerfectShuffleTable[PFTableIndex];
+    unsigned Cost = (PFEntry >> 30);
+
+    if (Cost <= 4)
+      return true;
+  }
+
   bool ReverseVEXT;
   unsigned Imm;
 
@@ -2498,10 +2519,84 @@ ARMTargetLowering::isShuffleMaskLegal(const SmallVectorImpl<int> &M,
           isVEXTMask(M, VT, ReverseVEXT, Imm));
 }
 
+/// GeneratePerfectShuffle - Given an entry in the perfect-shuffle table, emit
+/// the specified operations to build the shuffle.
+static SDValue GeneratePerfectShuffle(unsigned PFEntry, SDValue LHS,
+                                      SDValue RHS, SelectionDAG &DAG,
+                                      DebugLoc dl) {
+  unsigned OpNum = (PFEntry >> 26) & 0x0F;
+  unsigned LHSID = (PFEntry >> 13) & ((1 << 13)-1);
+  unsigned RHSID = (PFEntry >>  0) & ((1 << 13)-1);
+
+  enum {
+    OP_COPY = 0, // Copy, used for things like <u,u,u,3> to say it is <0,1,2,3>
+    OP_VREV,
+    OP_VDUP0,
+    OP_VDUP1,
+    OP_VDUP2,
+    OP_VDUP3,
+    OP_VEXT1,
+    OP_VEXT2,
+    OP_VEXT3,
+    OP_VUZPL, // VUZP, left result
+    OP_VUZPR, // VUZP, right result
+    OP_VZIPL, // VZIP, left result
+    OP_VZIPR, // VZIP, right result
+    OP_VTRNL, // VTRN, left result
+    OP_VTRNR  // VTRN, right result
+  };
+
+  if (OpNum == OP_COPY) {
+    if (LHSID == (1*9+2)*9+3) return LHS;
+    assert(LHSID == ((4*9+5)*9+6)*9+7 && "Illegal OP_COPY!");
+    return RHS;
+  }
+
+  SDValue OpLHS, OpRHS;
+  OpLHS = GeneratePerfectShuffle(PerfectShuffleTable[LHSID], LHS, RHS, DAG, dl);
+  OpRHS = GeneratePerfectShuffle(PerfectShuffleTable[RHSID], LHS, RHS, DAG, dl);
+  EVT VT = OpLHS.getValueType();
+
+  switch (OpNum) {
+  default: llvm_unreachable("Unknown shuffle opcode!");
+  case OP_VREV:
+    return DAG.getNode(ARMISD::VREV64, dl, VT, OpLHS);
+  case OP_VDUP0:
+  case OP_VDUP1:
+  case OP_VDUP2:
+  case OP_VDUP3:
+    return DAG.getNode(ARMISD::VDUPLANE, dl, VT,
+                       OpLHS, DAG.getConstant(OpNum-OP_VDUP0+1, MVT::i32));
+  case OP_VEXT1:
+  case OP_VEXT2:
+  case OP_VEXT3:
+    return DAG.getNode(ARMISD::VEXT, dl, VT,
+                       OpLHS, OpRHS,
+                       DAG.getConstant(OpNum-OP_VEXT1+1, MVT::i32));
+  case OP_VUZPL:
+  case OP_VUZPR:
+    return DAG.getNode(VT.is64BitVector() ? ARMISD::VUZP16 : ARMISD::VUZP32,
+                       dl, DAG.getVTList(VT, VT),
+                       OpLHS, OpRHS).getValue(OpNum-OP_VUZPL);
+  case OP_VZIPL:
+  case OP_VZIPR:
+    return DAG.getNode(VT.is64BitVector() ? ARMISD::VZIP16 : ARMISD::VZIP32,
+                       dl, DAG.getVTList(VT, VT),
+                       OpLHS, OpRHS).getValue(OpNum-OP_VZIPL);
+  case OP_VTRNL:
+  case OP_VTRNR:
+    return DAG.getNode(VT.is64BitVector() ? ARMISD::VTRN16 : ARMISD::VTRN32,
+                       dl, DAG.getVTList(VT, VT),
+                       OpLHS, OpRHS).getValue(0);
+  }
+}
+
 static SDValue LowerVECTOR_SHUFFLE(SDValue Op, SelectionDAG &DAG) {
-  ShuffleVectorSDNode *SVN = cast<ShuffleVectorSDNode>(Op.getNode());
+  SDValue V1 = Op.getOperand(0);
+  SDValue V2 = Op.getOperand(1);
   DebugLoc dl = Op.getDebugLoc();
   EVT VT = Op.getValueType();
+  ShuffleVectorSDNode *SVN = cast<ShuffleVectorSDNode>(Op.getNode());
   SmallVector<int, 8> ShuffleMask;
 
   // Convert shuffles that are directly supported on NEON to target-specific
@@ -2514,11 +2609,10 @@ static SDValue LowerVECTOR_SHUFFLE(SDValue Op, SelectionDAG &DAG) {
 
   if (ShuffleVectorSDNode::isSplatMask(&ShuffleMask[0], VT)) {
     int Lane = SVN->getSplatIndex();
-    SDValue Op0 = SVN->getOperand(0);
-    if (Lane == 0 && Op0.getOpcode() == ISD::SCALAR_TO_VECTOR) {
-      return DAG.getNode(ARMISD::VDUP, dl, VT, Op0.getOperand(0));
+    if (Lane == 0 && V1.getOpcode() == ISD::SCALAR_TO_VECTOR) {
+      return DAG.getNode(ARMISD::VDUP, dl, VT, V1.getOperand(0));
     }
-    return DAG.getNode(ARMISD::VDUPLANE, dl, VT, SVN->getOperand(0),
+    return DAG.getNode(ARMISD::VDUPLANE, dl, VT, V1,
                        DAG.getConstant(Lane, MVT::i32));
   }
 
@@ -2534,11 +2628,32 @@ static SDValue LowerVECTOR_SHUFFLE(SDValue Op, SelectionDAG &DAG) {
   }
 
   if (isVREVMask(ShuffleMask, VT, 64))
-    return DAG.getNode(ARMISD::VREV64, dl, VT, SVN->getOperand(0));
+    return DAG.getNode(ARMISD::VREV64, dl, VT, V1);
   if (isVREVMask(ShuffleMask, VT, 32))
-    return DAG.getNode(ARMISD::VREV32, dl, VT, SVN->getOperand(0));
+    return DAG.getNode(ARMISD::VREV32, dl, VT, V1);
   if (isVREVMask(ShuffleMask, VT, 16))
-    return DAG.getNode(ARMISD::VREV16, dl, VT, SVN->getOperand(0));
+    return DAG.getNode(ARMISD::VREV16, dl, VT, V1);
+
+  if (VT.getVectorNumElements() == 4 &&
+      (VT.is128BitVector() || VT.is64BitVector())) {
+    unsigned PFIndexes[4];
+    for (unsigned i = 0; i != 4; ++i) {
+      if (ShuffleMask[i] < 0)
+        PFIndexes[i] = 8;
+      else
+        PFIndexes[i] = ShuffleMask[i];
+    }
+
+    // Compute the index in the perfect shuffle table.
+    unsigned PFTableIndex =
+      PFIndexes[0]*9*9*9+PFIndexes[1]*9*9+PFIndexes[2]*9+PFIndexes[3];
+
+    unsigned PFEntry = PerfectShuffleTable[PFTableIndex];
+    unsigned Cost = (PFEntry >> 30);
+
+    if (Cost <= 4)
+      return GeneratePerfectShuffle(PFEntry, V1, V2, DAG, dl);
+  }
 
   return SDValue();
 }
