@@ -129,8 +129,9 @@ static Constant *SymbolicallyEvaluateGEP(Constant* const* Ops, unsigned NumOps,
   Constant *Ptr = Ops[0];
   if (!TD || !cast<PointerType>(Ptr->getType())->getElementType()->isSized())
     return 0;
-  
-  uint64_t BasePtr = 0;
+
+  unsigned BitWidth = TD->getTypeSizeInBits(TD->getIntPtrType(Context));
+  APInt BasePtr(BitWidth, 0);
   bool BaseIsInt = true;
   if (!Ptr->isNullValue()) {
     // If this is a inttoptr from a constant int, we can fold this as the base,
@@ -138,7 +139,7 @@ static Constant *SymbolicallyEvaluateGEP(Constant* const* Ops, unsigned NumOps,
     if (ConstantExpr *CE = dyn_cast<ConstantExpr>(Ptr))
       if (CE->getOpcode() == Instruction::IntToPtr)
         if (ConstantInt *Base = dyn_cast<ConstantInt>(CE->getOperand(0)))
-          BasePtr = Base->getZExtValue();
+          BasePtr = Base->getValue();
     
     if (BasePtr == 0)
       BaseIsInt = false;
@@ -150,12 +151,13 @@ static Constant *SymbolicallyEvaluateGEP(Constant* const* Ops, unsigned NumOps,
     if (!isa<ConstantInt>(Ops[i]))
       return 0;
   
-  uint64_t Offset = TD->getIndexedOffset(Ptr->getType(),
-                                         (Value**)Ops+1, NumOps-1);
+  APInt Offset = APInt(BitWidth,
+                       TD->getIndexedOffset(Ptr->getType(),
+                                            (Value**)Ops+1, NumOps-1));
   // If the base value for this address is a literal integer value, fold the
   // getelementptr to the resulting integer value casted to the pointer type.
   if (BaseIsInt) {
-    Constant *C = ConstantInt::get(TD->getIntPtrType(Context), Offset+BasePtr);
+    Constant *C = ConstantInt::get(Context, Offset+BasePtr);
     return ConstantExpr::getIntToPtr(C, ResultTy);
   }
 
@@ -171,19 +173,21 @@ static Constant *SymbolicallyEvaluateGEP(Constant* const* Ops, unsigned NumOps,
       if (isa<PointerType>(ATy) && ATy != Ptr->getType())
         break;
       // Determine which element of the array the offset points into.
-      uint64_t ElemSize = TD->getTypeAllocSize(ATy->getElementType());
+      APInt ElemSize(BitWidth, TD->getTypeAllocSize(ATy->getElementType()));
       if (ElemSize == 0)
         return 0;
-      uint64_t NewIdx = Offset / ElemSize;
+      APInt NewIdx = Offset.udiv(ElemSize);
       Offset -= NewIdx * ElemSize;
       NewIdxs.push_back(ConstantInt::get(TD->getIntPtrType(Context), NewIdx));
       Ty = ATy->getElementType();
     } else if (const StructType *STy = dyn_cast<StructType>(Ty)) {
-      // Determine which field of the struct the offset points into.
+      // Determine which field of the struct the offset points into. The
+      // getZExtValue is at least as safe as the StructLayout API because we
+      // know the offset is within the struct at this point.
       const StructLayout &SL = *TD->getStructLayout(STy);
-      unsigned ElIdx = SL.getElementContainingOffset(Offset);
+      unsigned ElIdx = SL.getElementContainingOffset(Offset.getZExtValue());
       NewIdxs.push_back(ConstantInt::get(Type::getInt32Ty(Context), ElIdx));
-      Offset -= SL.getElementOffset(ElIdx);
+      Offset -= APInt(BitWidth, SL.getElementOffset(ElIdx));
       Ty = STy->getTypeAtIndex(ElIdx);
     } else {
       // We've reached some non-indexable type.
