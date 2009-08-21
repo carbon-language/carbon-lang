@@ -61,9 +61,6 @@ let TargetPrefix = "arm" in {  // All intrinsics start with "llvm.arm.".
                  LLVMTruncatedElementVectorType<0>,
                  LLVMTruncatedElementVectorType<0>],
                 [IntrNoMem]>;
-  class Neon_2Result_Intrinsic
-    : Intrinsic<[llvm_anyvector_ty, LLVMMatchType<0>],
-                [LLVMMatchType<0>, LLVMMatchType<0>], [IntrNoMem]>;
   class Neon_CvtFxToFP_Intrinsic
     : Intrinsic<[llvm_anyfloat_ty], [llvm_anyint_ty, llvm_i32_ty], [IntrNoMem]>;
   class Neon_CvtFPToFx_Intrinsic
@@ -314,15 +311,6 @@ def int_arm_neon_vtbx1 : Neon_Tbl3Arg_Intrinsic;
 def int_arm_neon_vtbx2 : Neon_Tbl4Arg_Intrinsic;
 def int_arm_neon_vtbx3 : Neon_Tbl5Arg_Intrinsic;
 def int_arm_neon_vtbx4 : Neon_Tbl6Arg_Intrinsic;
-
-// Vector Transpose.
-def int_arm_neon_vtrn : Neon_2Result_Intrinsic;
-
-// Vector Interleave (vzip).
-def int_arm_neon_vzip : Neon_2Result_Intrinsic;
-
-// Vector Deinterleave (vuzp).
-def int_arm_neon_vuzp : Neon_2Result_Intrinsic;
 
 let TargetPrefix = "arm" in {
 
