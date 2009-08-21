@@ -329,7 +329,7 @@ bool Sema::isCurrentClassName(const IdentifierInfo &II, Scope *,
                               const CXXScopeSpec *SS) {
   CXXRecordDecl *CurDecl;
   if (SS && SS->isSet() && !SS->isInvalid()) {
-    DeclContext *DC = computeDeclContext(*SS);
+    DeclContext *DC = computeDeclContext(*SS, true);
     CurDecl = dyn_cast_or_null<CXXRecordDecl>(DC);
   } else
     CurDecl = dyn_cast_or_null<CXXRecordDecl>(CurContext);

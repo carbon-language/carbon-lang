@@ -5,6 +5,9 @@ class X0 {
 public:
   typedef int size_type;
   
+  X0(int);
+  ~X0();
+  
   void f0(const T&, const U&);
   
   T& operator[](int i) const;
@@ -46,4 +49,10 @@ template<typename T, typename U>
 void X0<T, U>::f0(const T&, const U&) { // expected-error{{redefinition}}
 }
 
-// FIXME: test out-of-line constructors, destructors
+// Test out-of-line constructors, destructors
+template<typename T, typename U>
+X0<T, U>::X0(int x) : value(x) { }
+
+template<typename T, typename U>
+X0<T, U>::~X0() { }
+
