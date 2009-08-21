@@ -226,9 +226,10 @@ protected:
   /// cfg - The CFG associated with this analysis graph.
   CFG& cfg;
   
+  // FIXME: Remove.
   /// CodeDecl - The declaration containing the code being analyzed.  This
   ///  can be a FunctionDecl or and ObjCMethodDecl.
-  Decl& CodeDecl;
+  const Decl& CodeDecl;
   
   /// Ctx - The ASTContext used to "interpret" CodeDecl.
   ASTContext& Ctx;
@@ -261,7 +262,7 @@ public:
     return V;
   }
 
-  ExplodedGraph(CFG& c, Decl& cd, ASTContext& ctx)
+  ExplodedGraph(CFG& c, const Decl &cd, ASTContext& ctx)
     : cfg(c), CodeDecl(cd), Ctx(ctx), NumNodes(0) {}
 
   virtual ~ExplodedGraph() {}
@@ -310,7 +311,7 @@ public:
   CFG& getCFG() { return cfg; }
   ASTContext& getContext() { return Ctx; }
 
-  Decl& getCodeDecl() { return CodeDecl; }
+  // FIXME: Remove.
   const Decl& getCodeDecl() const { return CodeDecl; }
 
   const FunctionDecl* getFunctionDecl() const {

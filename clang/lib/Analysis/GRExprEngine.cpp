@@ -148,8 +148,8 @@ static inline Selector GetNullarySelector(const char* name, ASTContext& Ctx) {
 }
 
 
-GRExprEngine::GRExprEngine(CFG& cfg, Decl& CD, ASTContext& Ctx,
-                           LiveVariables& L, AnalysisManager &mgr,
+GRExprEngine::GRExprEngine(CFG &cfg, const Decl &CD, ASTContext &Ctx,
+                           LiveVariables &L, AnalysisManager &mgr,
                            bool purgeDead, bool eagerlyAssume,
                            StoreManagerCreator SMC,
                            ConstraintManagerCreator CMC)

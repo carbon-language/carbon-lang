@@ -83,7 +83,7 @@ public:
     DisplayedFunction = false;
   }
     
-  Decl *getCodeDecl() const { 
+  const Decl *getCodeDecl() const { 
     assert (AScope == ScopeDecl);
     return EntryContext->getDecl();
   }

@@ -87,13 +87,13 @@ static bool scan_ivar_release(Stmt* S, ObjCIvarDecl* ID,
   return false;
 }
 
-void clang::CheckObjCDealloc(ObjCImplementationDecl* D,
+void clang::CheckObjCDealloc(const ObjCImplementationDecl* D,
                              const LangOptions& LOpts, BugReporter& BR) {
 
   assert (LOpts.getGCMode() != LangOptions::GCOnly);
   
   ASTContext& Ctx = BR.getContext();
-  ObjCInterfaceDecl* ID = D->getClassInterface();
+  const ObjCInterfaceDecl* ID = D->getClassInterface();
     
   // Does the class contain any ivars that are pointers (or id<...>)?
   // If not, skip the check entirely.

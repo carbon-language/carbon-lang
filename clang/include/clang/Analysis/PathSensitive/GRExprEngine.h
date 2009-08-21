@@ -202,7 +202,7 @@ public:
   ErrorNodes ExplicitOOBMemAccesses;
   
 public:
-  GRExprEngine(CFG& cfg, Decl& CD, ASTContext& Ctx, LiveVariables& L,
+  GRExprEngine(CFG& cfg, const Decl &CD, ASTContext& Ctx, LiveVariables& L,
                AnalysisManager &mgr,
                bool purgeDead, bool eagerlyAssume = true,
                StoreManagerCreator SMC = CreateBasicStoreManager,

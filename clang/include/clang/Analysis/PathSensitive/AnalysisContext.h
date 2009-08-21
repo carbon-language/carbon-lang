@@ -17,7 +17,7 @@
 
 #include "llvm/ADT/OwningPtr.h"
 #include "llvm/ADT/FoldingSet.h"
-#include <map>
+#include "llvm/ADT/DenseMap.h"
 
 namespace clang {
 
@@ -31,8 +31,7 @@ class ImplicitParamDecl;
 /// AnalysisContext contains the context data for the function or method under
 /// analysis.
 class AnalysisContext {
-  Decl *D;
-  Stmt *Body;
+  const Decl *D;
 
   // AnalysisContext owns the following data.
   CFG *cfg;
@@ -40,11 +39,10 @@ class AnalysisContext {
   ParentMap *PM;
 
 public:
-  AnalysisContext() : D(0), Body(0), cfg(0), liveness(0), PM(0) {}
+  AnalysisContext(const Decl *d) : D(d), cfg(0), liveness(0), PM(0) {}
   ~AnalysisContext();
 
-  void setDecl(Decl* d) { D = d; }
-  Decl *getDecl() { return D; }
+  const Decl *getDecl() { return D; }
   Stmt *getBody();
   CFG *getCFG();
   ParentMap &getParentMap();
@@ -56,12 +54,12 @@ public:
 };
 
 class AnalysisContextManager {
-  std::map<Decl*, AnalysisContext> Contexts;
-
+  typedef llvm::DenseMap<const Decl*, AnalysisContext*> ContextMap;
+  ContextMap Contexts;
 public:
-  typedef std::map<Decl*, AnalysisContext>::iterator iterator;
-
-  AnalysisContext *getContext(Decl *D);
+  ~AnalysisContextManager();
+  
+  AnalysisContext *getContext(const Decl *D);
 };
 
 class LocationContext : public llvm::FoldingSetNode {

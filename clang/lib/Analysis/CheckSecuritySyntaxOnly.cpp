@@ -229,7 +229,7 @@ void WalkAST::CheckCall_gets(const CallExpr *CE, const FunctionDecl *FD) {
 // Entry point for check.
 //===----------------------------------------------------------------------===//
 
-void clang::CheckSecuritySyntaxOnly(Decl *D, BugReporter &BR) {  
+void clang::CheckSecuritySyntaxOnly(const Decl *D, BugReporter &BR) {  
   WalkAST walker(BR);
   walker.Visit(D->getBody());  
 }

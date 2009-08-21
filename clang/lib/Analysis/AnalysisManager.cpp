@@ -27,7 +27,7 @@ void AnalysisManager::DisplayFunction() {
   // FIXME: Is getCodeDecl() always a named decl?
   if (isa<FunctionDecl>(getCodeDecl()) ||
       isa<ObjCMethodDecl>(getCodeDecl())) {
-    NamedDecl *ND = cast<NamedDecl>(getCodeDecl());
+    const NamedDecl *ND = cast<NamedDecl>(getCodeDecl());
     SourceManager &SM = getContext().getSourceManager();
     llvm::cerr << "ANALYZE: "
                << SM.getPresumedLoc(ND->getLocation()).getFilename()

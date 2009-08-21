@@ -36,10 +36,10 @@ static bool AreTypesCompatible(QualType Derived, QualType Ancestor,
   return C.typesAreCompatible(Derived, Ancestor);
 }
 
-static void CompareReturnTypes(ObjCMethodDecl* MethDerived,
-                               ObjCMethodDecl* MethAncestor,
-                               BugReporter& BR, ASTContext& Ctx,
-                               ObjCImplementationDecl* ID) {
+static void CompareReturnTypes(const ObjCMethodDecl *MethDerived,
+                               const ObjCMethodDecl *MethAncestor,
+                               BugReporter &BR, ASTContext &Ctx,
+                               const ObjCImplementationDecl *ID) {
     
   QualType ResDerived  = MethDerived->getResultType();
   QualType ResAncestor = MethAncestor->getResultType(); 
@@ -69,11 +69,11 @@ static void CompareReturnTypes(ObjCMethodDecl* MethDerived,
   }
 }
 
-void clang::CheckObjCInstMethSignature(ObjCImplementationDecl* ID,
+void clang::CheckObjCInstMethSignature(const ObjCImplementationDecl* ID,
                                        BugReporter& BR) {
   
-  ObjCInterfaceDecl* D = ID->getClassInterface();
-  ObjCInterfaceDecl* C = D->getSuperClass();
+  const ObjCInterfaceDecl* D = ID->getClassInterface();
+  const ObjCInterfaceDecl* C = D->getSuperClass();
 
   if (!C)
     return;

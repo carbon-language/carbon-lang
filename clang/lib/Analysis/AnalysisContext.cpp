@@ -28,10 +28,15 @@ AnalysisContext::~AnalysisContext() {
   delete PM;
 }
 
+AnalysisContextManager::~AnalysisContextManager() {
+  for (ContextMap::iterator I = Contexts.begin(), E = Contexts.end(); I!=E; ++I)
+    delete I->second;
+}
+
 Stmt *AnalysisContext::getBody() {
-  if (FunctionDecl *FD = dyn_cast<FunctionDecl>(D))
+  if (const FunctionDecl *FD = dyn_cast<FunctionDecl>(D))
     return FD->getBody();
-  else if (ObjCMethodDecl *MD = dyn_cast<ObjCMethodDecl>(D))
+  else if (const ObjCMethodDecl *MD = dyn_cast<ObjCMethodDecl>(D))
     return MD->getBody();
 
   llvm::llvm_unreachable("unknown code decl");
@@ -70,14 +75,12 @@ LiveVariables *AnalysisContext::getLiveVariables() {
   return liveness;
 }
 
-AnalysisContext *AnalysisContextManager::getContext(Decl *D) {
-  iterator I = Contexts.find(D);
-  if (I != Contexts.end())
-    return &(I->second);
-
-  AnalysisContext &Ctx = Contexts[D];
-  Ctx.setDecl(D);
-  return &Ctx;
+AnalysisContext *AnalysisContextManager::getContext(const Decl *D) {
+  AnalysisContext *&AC = Contexts[D];
+  if (!AC)
+    AC = new AnalysisContext(D);
+  
+  return AC;
 }
 
 void LocationContext::Profile(llvm::FoldingSetNodeID &ID, ContextKind k,

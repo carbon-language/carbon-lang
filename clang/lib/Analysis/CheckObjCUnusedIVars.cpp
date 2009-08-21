@@ -62,7 +62,8 @@ static void Scan(IvarUsageMap& M, const ObjCPropertyImplDecl* D) {
     I->second = Used;
 }
 
-void clang::CheckObjCUnusedIvar(ObjCImplementationDecl* D, BugReporter& BR) {
+void clang::CheckObjCUnusedIvar(const ObjCImplementationDecl *D,
+                                BugReporter &BR) {
 
   const ObjCInterfaceDecl* ID = D->getClassInterface();
   IvarUsageMap M;

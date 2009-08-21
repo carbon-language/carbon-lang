@@ -40,15 +40,17 @@ void CheckUninitializedValues(CFG& cfg, ASTContext& Ctx, Diagnostic& Diags,
 GRTransferFuncs* MakeCFRefCountTF(ASTContext& Ctx, bool GCEnabled,
                                   const LangOptions& lopts); 
   
-void CheckObjCDealloc(ObjCImplementationDecl* D, const LangOptions& L,
+void CheckObjCDealloc(const ObjCImplementationDecl* D, const LangOptions& L,
                       BugReporter& BR);
   
-void CheckObjCInstMethSignature(ObjCImplementationDecl* ID, BugReporter& BR);
-void CheckObjCUnusedIvar(ObjCImplementationDecl* D, BugReporter& BR);
+void CheckObjCInstMethSignature(const ObjCImplementationDecl *ID,
+                                BugReporter& BR);
+
+void CheckObjCUnusedIvar(const ObjCImplementationDecl *D, BugReporter& BR);
   
 void RegisterAppleChecks(GRExprEngine& Eng, const Decl &D);
   
-void CheckSecuritySyntaxOnly(Decl *D, BugReporter &BR);
+void CheckSecuritySyntaxOnly(const Decl *D, BugReporter &BR);
 
   
 } // end namespace clang
