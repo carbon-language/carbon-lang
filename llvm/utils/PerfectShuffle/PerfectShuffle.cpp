@@ -21,11 +21,11 @@
 struct Operator;
 
 // Masks are 4-nibble hex numbers.  Values 0-7 in any nibble means that it takes
-// an element from that value of the input vectors.  A value of 8 means the 
+// an element from that value of the input vectors.  A value of 8 means the
 // entry is undefined.
 
 // Mask manipulation functions.
-static inline unsigned short MakeMask(unsigned V0, unsigned V1, 
+static inline unsigned short MakeMask(unsigned V0, unsigned V1,
                                       unsigned V2, unsigned V3) {
   return (V0 << (3*4)) | (V1 << (2*4)) | (V2 << (1*4)) | (V3 << (0*4));
 }
@@ -70,7 +70,7 @@ static unsigned short getLHSOnlyMask(unsigned short Mask) {
 /// getCompressedMask - Turn a 16-bit uncompressed mask (where each elt uses 4
 /// bits) into a compressed 13-bit mask, where each elt is multiplied by 9.
 static unsigned getCompressedMask(unsigned short Mask) {
-  return getMaskElt(Mask, 0)*9*9*9 + getMaskElt(Mask, 1)*9*9 + 
+  return getMaskElt(Mask, 0)*9*9*9 + getMaskElt(Mask, 1)*9*9 +
          getMaskElt(Mask, 2)*9     + getMaskElt(Mask, 3);
 }
 
@@ -87,7 +87,7 @@ struct ShuffleVal {
   unsigned Cost;  // Number of instrs used to generate this value.
   Operator *Op;   // The Operation used to generate this value.
   unsigned short Arg0, Arg1;  // Input operands for this value.
-  
+
   ShuffleVal() : Cost(1000000) {}
 };
 
@@ -113,11 +113,11 @@ struct Operator {
     assert(TheOperators.back() == this);
     TheOperators.pop_back();
   }
-  
+
   bool isOnlyLHSOperator() const {
     return isOnlyLHSMask(ShuffleMask);
   }
-  
+
   const char *getName() const { return Name; }
   
   unsigned short getTransformedMask(unsigned short LHSMask, unsigned RHSMask) {
@@ -156,7 +156,7 @@ static void PrintOperation(unsigned ValNo, unsigned short Vals[]) {
   std::cerr << "t" << ValNo;
   PrintMask(ThisOp, std::cerr);
   std::cerr << " = " << ShufTab[ThisOp].Op->getName() << "(";
-    
+
   if (ShufTab[ShufTab[ThisOp].Arg0].Cost == 0) {
     std::cerr << getZeroCostOpName(ShufTab[ThisOp].Arg0);
     PrintMask(ShufTab[ThisOp].Arg0, std::cerr);
@@ -168,7 +168,7 @@ static void PrintOperation(unsigned ValNo, unsigned short Vals[]) {
         break;
       }
   }
-  
+
   if (!ShufTab[Vals[ValNo]].Op->isOnlyLHSOperator()) {
     std::cerr << ", ";
     if (ShufTab[ShufTab[ThisOp].Arg1].Cost == 0) {
@@ -193,21 +193,21 @@ static unsigned getNumEntered() {
   return Count;
 }
 
-static void EvaluateOps(unsigned short Elt, unsigned short Vals[], 
+static void EvaluateOps(unsigned short Elt, unsigned short Vals[],
                         unsigned &NumVals) {
   if (ShufTab[Elt].Cost == 0) return;
 
   // If this value has already been evaluated, it is free.  FIXME: match undefs.
   for (unsigned i = 0, e = NumVals; i != e; ++i)
     if (Vals[i] == Elt) return;
-  
+
   // Otherwise, get the operands of the value, then add it.
   unsigned Arg0 = ShufTab[Elt].Arg0, Arg1 = ShufTab[Elt].Arg1;
   if (ShufTab[Arg0].Cost)
     EvaluateOps(Arg0, Vals, NumVals);
   if (Arg0 != Arg1 && ShufTab[Arg1].Cost)
     EvaluateOps(Arg1, Vals, NumVals);
-  
+
   Vals[NumVals++] = Elt;
 }
 
@@ -220,7 +220,7 @@ int main() {
   ShufTab[0x4567].Cost = 0;
   ShufTab[0x4567].Op = 0;
   ShufTab[0x4567].Arg0 = 0x4567;
-  
+
   // Seed the first-level of shuffles, shuffles whose inputs are the input to
   // the vectorshuffle operation.
   bool MadeChange = true;
@@ -230,7 +230,7 @@ int main() {
     ++OpCount;
     std::cerr << "Starting iteration #" << OpCount << " with "
               << getNumEntered() << " entries established.\n";
-    
+
     // Scan the table for two reasons: First, compute the maximum cost of any
     // operation left in the table.  Second, make sure that values with undefs
     // have the cheapest alternative that they match.
@@ -239,7 +239,7 @@ int main() {
       if (!isValidMask(i)) continue;
       if (ShufTab[i].Cost > MaxCost)
         MaxCost = ShufTab[i].Cost;
-      
+
       // If this value has an undef, make it be computed the cheapest possible
       // way of any of the things that it matches.
       if (hasUndefElements(i)) {
@@ -266,10 +266,10 @@ int main() {
           UndefIdx = 3;
         else
           abort();
-        
+
         unsigned MinVal  = i;
         unsigned MinCost = ShufTab[i].Cost;
-        
+
         // Scan the 8 entries.
         for (unsigned j = 0; j != 8; ++j) {
           unsigned NewElt = setMaskElt(i, UndefIdx, j);
@@ -278,15 +278,15 @@ int main() {
             MinVal = NewElt;
           }
         }
-        
+
         // If we found something cheaper than what was here before, use it.
         if (i != MinVal) {
           MadeChange = true;
           ShufTab[i] = ShufTab[MinVal];
         }
-      } 
+      }
     }
-    
+
     for (unsigned LHS = 0; LHS != 0x8889; ++LHS) {
       if (!isValidMask(LHS)) continue;
       if (ShufTab[LHS].Cost > 1000) continue;
@@ -295,7 +295,7 @@ int main() {
       // we already have, don't consider it.
       if (ShufTab[LHS].Cost + 1 >= MaxCost)
         continue;
-        
+
       for (unsigned opnum = 0, e = TheOperators.size(); opnum != e; ++opnum) {
         Operator *Op = TheOperators[opnum];
 
@@ -310,20 +310,20 @@ int main() {
           ShufTab[ResultMask].Arg1 = LHS;
           MadeChange = true;
         }
-        
+
         // If this is a two input instruction, include the op(x,y) cases.  If
         // this is a one input instruction, skip this.
         if (Op->isOnlyLHSOperator()) continue;
-        
+
         for (unsigned RHS = 0; RHS != 0x8889; ++RHS) {
           if (!isValidMask(RHS)) continue;
           if (ShufTab[RHS].Cost > 1000) continue;
-          
+
           // If nothing involving this operand could possibly be cheaper than
           // what we already have, don't consider it.
           if (ShufTab[RHS].Cost + 1 >= MaxCost)
             continue;
-          
+
 
           // Evaluate op(LHS,RHS)
           unsigned ResultMask = Op->getTransformedMask(LHS, RHS);
@@ -332,7 +332,7 @@ int main() {
               ShufTab[ResultMask].Cost <= ShufTab[LHS].Cost ||
               ShufTab[ResultMask].Cost <= ShufTab[RHS].Cost)
             continue;
-          
+
           // Figure out the cost to evaluate this, knowing that CSE's only need
           // to be evaluated once.
           unsigned short Vals[30];
@@ -352,10 +352,10 @@ int main() {
       }
     }
   }
-  
+
   std::cerr << "Finished Table has " << getNumEntered()
             << " entries established.\n";
-  
+
   unsigned CostArray[10] = { 0 };
 
   // Compute a cost histogram.
@@ -366,33 +366,33 @@ int main() {
     else
       ++CostArray[ShufTab[i].Cost];
   }
-  
+
   for (unsigned i = 0; i != 9; ++i)
     if (CostArray[i])
       std::cout << "// " << CostArray[i] << " entries have cost " << i << "\n";
   if (CostArray[9])
     std::cout << "// " << CostArray[9] << " entries have higher cost!\n";
-  
-  
+
+
   // Build up the table to emit.
   std::cout << "\n// This table is 6561*4 = 26244 bytes in size.\n";
   std::cout << "static const unsigned PerfectShuffleTable[6561+1] = {\n";
-  
+
   for (unsigned i = 0; i != 0x8889; ++i) {
     if (!isValidMask(i)) continue;
-    
+
     // CostSat - The cost of this operation saturated to two bits.
     unsigned CostSat = ShufTab[i].Cost;
     if (CostSat > 4) CostSat = 4;
     if (CostSat == 0) CostSat = 1;
     --CostSat;  // Cost is now between 0-3.
-    
+
     unsigned OpNum = ShufTab[i].Op ? ShufTab[i].Op->OpNum : 0;
     assert(OpNum < 16 && "Too few bits to encode operation!");
-    
+
     unsigned LHS = getCompressedMask(ShufTab[i].Arg0);
     unsigned RHS = getCompressedMask(ShufTab[i].Arg1);
-    
+
     // Encode this as 2 bits of saturated cost, 4 bits of opcodes, 13 bits of
     // LHS, and 13 bits of RHS = 32 bits.
     unsigned Val = (CostSat << 30) | (OpNum << 26) | (LHS << 13) | RHS;
@@ -417,7 +417,7 @@ int main() {
       }
     }
     std::cout << "\n";
-  }  
+  }
   std::cout << "  0\n};\n";
 
   if (0) {
@@ -427,7 +427,7 @@ int main() {
       if (ShufTab[i].Cost < 1000) {
         PrintMask(i, std::cerr);
         std::cerr << " - Cost " << ShufTab[i].Cost << " - ";
-        
+
         unsigned short Vals[30];
         unsigned NumVals = 0;
         EvaluateOps(i, Vals, NumVals);
