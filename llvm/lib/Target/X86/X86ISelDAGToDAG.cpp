@@ -737,7 +737,7 @@ bool X86DAGToDAGISel::MatchWrapper(SDValue N, X86ISelAddressMode &AM) {
       // Under X86-64 non-small code model, GV (and friends) are 64-bits, so
       // they cannot be folded into immediate fields.
       // FIXME: This can be improved for kernel and other models?
-      (M == CodeModel::Small || CodeModel::Kernel) &&
+      (M == CodeModel::Small || M == CodeModel::Kernel) &&
       // Base and index reg must be 0 in order to use %rip as base and lowering
       // must allow RIP.
       !AM.hasBaseOrIndexReg() && N.getOpcode() == X86ISD::WrapperRIP) {
