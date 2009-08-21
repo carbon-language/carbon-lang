@@ -17,6 +17,8 @@ public:
   void f3(size_type) const;
   void f4() ;
   
+  operator T*() const;
+  
   T value;
 };
 
@@ -56,3 +58,8 @@ X0<T, U>::X0(int x) : value(x) { }
 template<typename T, typename U>
 X0<T, U>::~X0() { }
 
+// Test out-of-line conversion functions.
+template<typename T, typename U>
+X0<T, U>::operator T*() const {
+  return &value;
+}
