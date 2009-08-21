@@ -805,6 +805,9 @@ public:
   /// (which needn't actually be an array type).
   QualType getBaseElementType(QualType QT);
   
+  /// getConstantArrayElementCount - Returns number of constant array elements.
+  uint64_t getConstantArrayElementCount(const ConstantArrayType *CA) const;
+  
   /// getArrayDecayedType - Return the properly qualified result of decaying the
   /// specified array type to a pointer.  This operation is non-trivial when
   /// handling typedefs etc.  The canonical type of "T" must be an array type,

@@ -346,10 +346,10 @@ CodeGenFunction::EmitCXXAggrConstructorCall(const CXXConstructorDecl *D,
   assert(CA && "Do we support VLA for construction ?");
   
   // Create a temporary for the loop index and initialize it with 0.
-  llvm::Value *IndexPtr = CreateTempAlloca(llvm::Type::getInt32Ty(VMContext),
+  llvm::Value *IndexPtr = CreateTempAlloca(llvm::Type::getInt64Ty(VMContext),
                                            "loop.index");
   llvm::Value* zeroConstant = 
-    llvm::Constant::getNullValue(llvm::Type::getInt32Ty(VMContext));
+    llvm::Constant::getNullValue(llvm::Type::getInt64Ty(VMContext));
   Builder.CreateStore(zeroConstant, IndexPtr, false);
   
   // Start the loop with a block that tests the condition.
@@ -364,7 +364,7 @@ CodeGenFunction::EmitCXXAggrConstructorCall(const CXXConstructorDecl *D,
   // otherwise, go to the block after the for-loop.
   uint64_t NumElements = CA->getSize().getZExtValue();
   llvm::Value * NumElementsPtr = 
-  llvm::ConstantInt::get(llvm::Type::getInt32Ty(VMContext), NumElements);
+  llvm::ConstantInt::get(llvm::Type::getInt64Ty(VMContext), NumElements);
   llvm::Value *Counter = Builder.CreateLoad(IndexPtr);
   llvm::Value *IsLess = Builder.CreateICmpULT(Counter, NumElementsPtr, 
                                               "isless");
@@ -378,15 +378,10 @@ CodeGenFunction::EmitCXXAggrConstructorCall(const CXXConstructorDecl *D,
   Counter = Builder.CreateLoad(IndexPtr);
   if (const ConstantArrayType *CAT = 
       dyn_cast<ConstantArrayType>(Array->getElementType())) {
-    uint32_t delta = 1;
-    const ConstantArrayType *CAW = CAT;
-    do {
-      delta *= CAW->getSize().getZExtValue();
-      CAW = dyn_cast<ConstantArrayType>(CAW->getElementType());
-    } while (CAW);
+    uint64_t delta = getContext().getConstantArrayElementCount(CAT);
     // Address = This + delta*Counter for current loop iteration.
     llvm::Value *DeltaPtr = 
-      llvm::ConstantInt::get(llvm::Type::getInt32Ty(VMContext), delta);
+      llvm::ConstantInt::get(llvm::Type::getInt64Ty(VMContext), delta);
     DeltaPtr = Builder.CreateMul(Counter, DeltaPtr, "mul");
     llvm::Value *Address = 
       Builder.CreateInBoundsGEP(This, DeltaPtr, "arrayidx");
@@ -422,12 +417,7 @@ CodeGenFunction::EmitCXXAggrDestructorCall(const CXXDestructorDecl *D,
   assert(CA && "Do we support VLA for destruction ?");
   llvm::Value *One = llvm::ConstantInt::get(llvm::Type::getInt64Ty(VMContext), 
                                             1);
-  uint64_t ElementCount = 1;
-  const ConstantArrayType *CAW = CA;
-  do {
-    ElementCount *= CAW->getSize().getZExtValue();
-    CAW = dyn_cast<ConstantArrayType>(CAW->getElementType());
-  } while (CAW);
+  uint64_t ElementCount = getContext().getConstantArrayElementCount(CA);
   // Create a temporary for the loop index and initialize it with count of
   // array elements.
   llvm::Value *IndexPtr = CreateTempAlloca(llvm::Type::getInt64Ty(VMContext),

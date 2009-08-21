@@ -2382,6 +2382,17 @@ QualType ASTContext::getBaseElementType(const VariableArrayType *VAT) {
   return ElemTy;
 }
 
+/// getConstantArrayElementCount - Returns number of constant array elements.
+uint64_t 
+ASTContext::getConstantArrayElementCount(const ConstantArrayType *CA)  const {
+  uint64_t ElementCount = 1;
+  do {
+    ElementCount *= CA->getSize().getZExtValue();
+    CA = dyn_cast<ConstantArrayType>(CA->getElementType());
+  } while (CA);
+  return ElementCount;
+}
+
 /// getFloatingRank - Return a relative rank for floating point types.
 /// This routine will assert if passed a built-in type that isn't a float.
 static FloatingRank getFloatingRank(QualType T) {
