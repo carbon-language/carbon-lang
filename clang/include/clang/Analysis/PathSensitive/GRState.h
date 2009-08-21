@@ -208,8 +208,6 @@ public:
 
   const VarRegion* getRegion(const VarDecl *D, const LocationContext *LC) const;
 
-  const MemRegion* getSelfRegion() const;
-
   //==---------------------------------------------------------------------==//
   // Binding and retrieving values to/from the environment and symbolic store.
   //==---------------------------------------------------------------------==//
@@ -606,10 +604,6 @@ inline const VarRegion* GRState::getRegion(const VarDecl *D,
   return Mgr->getRegionManager().getVarRegion(D, LC);
 }
 
-inline const MemRegion* GRState::getSelfRegion() const {
-  return Mgr->StoreMgr->getSelfRegion(getStore());
-}
-  
 inline const GRState *GRState::assume(SVal Cond, bool Assumption) const {
   return Mgr->ConstraintMgr->Assume(this, Cond, Assumption);
 }

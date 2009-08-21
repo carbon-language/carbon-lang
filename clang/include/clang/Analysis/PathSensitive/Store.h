@@ -136,11 +136,6 @@ public:
     return UnknownVal();
   }
   
-  /// getSelfRegion - Returns the region for the 'self' (Objective-C) or
-  ///  'this' object (C++).  When used when analyzing a normal function this
-  ///  method returns NULL.
-  virtual const MemRegion* getSelfRegion(Store store) = 0;
-
   virtual void RemoveDeadBindings(GRState &state, Stmt* Loc,
                                   SymbolReaper& SymReaper,
                       llvm::SmallVectorImpl<const MemRegion*>& RegionRoots) = 0;

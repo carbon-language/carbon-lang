@@ -16,6 +16,7 @@
 #include "llvm/Support/raw_ostream.h"
 #include "clang/Analysis/PathSensitive/MemRegion.h"
 #include "clang/Analysis/PathSensitive/ValueManager.h"
+#include "clang/Analysis/PathSensitive/AnalysisContext.h"
 
 using namespace clang;
 
@@ -37,7 +38,6 @@ bool SubRegion::isSubRegionOf(const MemRegion* R) const {
   }
   return false;
 }
-
 
 MemRegionManager* SubRegion::getMemRegionManager() const {
   const SubRegion* r = this;
@@ -253,8 +253,15 @@ StringRegion* MemRegionManager::getStringRegion(const StringLiteral* Str) {
   return getRegion<StringRegion>(Str);
 }
 
-VarRegion* MemRegionManager::getVarRegion(const VarDecl* D,
+VarRegion* MemRegionManager::getVarRegion(const VarDecl *D,
                                           const LocationContext *LC) {
+  
+  // FIXME: Once we implement scope handling, we will need to properly lookup
+  // 'D' to the proper LocationContext.  For now, just strip down to the
+  // StackFrame.
+  while (!isa<StackFrameContext>(LC))
+    LC = LC->getParent();
+  
   return getRegion<VarRegion>(D, LC);
 }
 

@@ -37,6 +37,13 @@ Stmt *AnalysisContext::getBody() {
   llvm::llvm_unreachable("unknown code decl");
 }
 
+const ImplicitParamDecl *AnalysisContext::getSelfDecl() const {
+  if (const ObjCMethodDecl *MD = dyn_cast<ObjCMethodDecl>(D))
+    return MD->getSelfDecl();
+  
+  return NULL;
+}
+
 CFG *AnalysisContext::getCFG() {
   if (!cfg) 
     cfg = CFG::buildCFG(getBody(), &D->getASTContext());

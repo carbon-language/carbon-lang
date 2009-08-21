@@ -3028,13 +3028,19 @@ void CFRefCount::EvalObjCMessageExpr(ExplodedNodeSet& Dst,
     if (isa<ObjCMethodDecl>(&Eng.getGraph().getCodeDecl())) {      
       if (Expr* Receiver = ME->getReceiver()) {
         SVal X = St->getSValAsScalarOrLoc(Receiver);
-        if (loc::MemRegionVal* L = dyn_cast<loc::MemRegionVal>(&X))
-          if (L->getBaseRegion() == St->getSelfRegion()) {
-            // Update the summary to make the default argument effect
-            // 'StopTracking'.
-            Summ = Summaries.copySummary(Summ);
-            Summ->setDefaultArgEffect(StopTracking);
-          }
+        if (loc::MemRegionVal* L = dyn_cast<loc::MemRegionVal>(&X)) {          
+          // Get the region associated with 'self'.
+          const LocationContext *LC = Pred->getLocationContext();          
+          if (const ImplicitParamDecl *SelfDecl = LC->getSelfDecl()) {
+            SVal SelfVal = St->getSVal(St->getRegion(SelfDecl, LC));          
+            if (L->getBaseRegion() == SelfVal.getAsRegion()) {
+              // Update the summary to make the default argument effect
+              // 'StopTracking'.
+              Summ = Summaries.copySummary(Summ);
+              Summ->setDefaultArgEffect(StopTracking);
+            }
+          } 
+        }
       }
     }
   }

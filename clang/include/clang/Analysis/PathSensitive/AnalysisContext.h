@@ -26,7 +26,8 @@ class Stmt;
 class CFG;
 class LiveVariables;
 class ParentMap;
-
+class ImplicitParamDecl;
+  
 /// AnalysisContext contains the context data for the function or method under
 /// analysis.
 class AnalysisContext {
@@ -48,6 +49,10 @@ public:
   CFG *getCFG();
   ParentMap &getParentMap();
   LiveVariables *getLiveVariables();
+  
+  /// Return the ImplicitParamDecl* associated with 'self' if this
+  /// AnalysisContext wraps an ObjCMethodDecl.  Returns NULL otherwise.
+  const ImplicitParamDecl *getSelfDecl() const;
 };
 
 class AnalysisContextManager {
@@ -85,6 +90,10 @@ public:
 
   LiveVariables *getLiveVariables() const { 
     return getAnalysisContext()->getLiveVariables();
+  }
+  
+  const ImplicitParamDecl *getSelfDecl() const {
+    return Ctx->getSelfDecl();
   }
 
   void Profile(llvm::FoldingSetNodeID &ID) {

@@ -36,11 +36,9 @@ public:
   
 class VISIBILITY_HIDDEN BasicStoreManager : public StoreManager {
   BindingsTy::Factory VBFactory;
-  const MemRegion* SelfRegion;
-  
 public:
   BasicStoreManager(GRStateManager& mgr)
-    : StoreManager(mgr), VBFactory(mgr.getAllocator()), SelfRegion(0) {}
+    : StoreManager(mgr), VBFactory(mgr.getAllocator()) {}
   
   ~BasicStoreManager() {}
 
@@ -58,7 +56,8 @@ public:
     return state->makeWithStore(BindInternal(state->getStore(), L, V));
   }
 
-  Store scanForIvars(Stmt *B, const Decl* SelfDecl, Store St);
+  Store scanForIvars(Stmt *B, const Decl* SelfDecl,
+                     const MemRegion *SelfRegion, Store St);
   
   Store BindInternal(Store St, Loc loc, SVal V);  
   Store Remove(Store St, Loc loc);
@@ -88,11 +87,6 @@ public:
   /// ArrayToPointer - Used by GRExprEngine::VistCast to handle implicit
   ///  conversions between arrays and pointers.
   SVal ArrayToPointer(Loc Array) { return Array; }
-
-  /// getSelfRegion - Returns the region for the 'self' (Objective-C) or
-  ///  'this' object (C++).  When used when analyzing a normal function this
-  ///  method returns NULL.
-  const MemRegion* getSelfRegion(Store) { return SelfRegion; }
     
   /// RemoveDeadBindings - Scans a BasicStore of 'state' for dead values.
   ///  It updatees the GRState object in place with the values removed.
@@ -148,7 +142,8 @@ SVal BasicStoreManager::getLValueCompoundLiteral(const GRState *state,
   return ValMgr.makeLoc(MRMgr.getCompoundLiteralRegion(CL));
 }
 
-SVal BasicStoreManager::getLValueIvar(const GRState *state, const ObjCIvarDecl* D,
+SVal BasicStoreManager::getLValueIvar(const GRState *state,
+                                      const ObjCIvarDecl* D,
                                       SVal Base) {
   
   if (Base.isUnknownOrUndef())
@@ -158,9 +153,7 @@ SVal BasicStoreManager::getLValueIvar(const GRState *state, const ObjCIvarDecl* 
 
   if (isa<loc::MemRegionVal>(BaseL)) {
     const MemRegion *BaseR = cast<loc::MemRegionVal>(BaseL).getRegion();
-
-    if (BaseR == SelfRegion)
-      return ValMgr.makeLoc(MRMgr.getObjCIvarRegion(D, BaseR));
+    return ValMgr.makeLoc(MRMgr.getObjCIvarRegion(D, BaseR));
   }
   
   return UnknownVal();
@@ -343,12 +336,7 @@ Store BasicStoreManager::BindInternal(Store store, Loc loc, SVal V) {
       
   if (!(isa<VarRegion>(R) || isa<ObjCIvarRegion>(R)))
     return store;
-      
-  // We only track bindings to self.ivar.
-  if (const ObjCIvarRegion *IVR = dyn_cast<ObjCIvarRegion>(R))
-    if (IVR->getSuperRegion() != SelfRegion)
-      return store;
-      
+
   if (nonloc::LocAsInteger *X = dyn_cast<nonloc::LocAsInteger>(&V)) {
     // Only convert 'V' to a location iff the underlying region type
     // is a location as well.
@@ -468,7 +456,8 @@ BasicStoreManager::RemoveDeadBindings(GRState &state, Stmt* Loc,
   state.setStore(store);
 }
 
-Store BasicStoreManager::scanForIvars(Stmt *B, const Decl* SelfDecl, Store St) {
+Store BasicStoreManager::scanForIvars(Stmt *B, const Decl* SelfDecl,
+                                      const MemRegion *SelfRegion, Store St) {
   for (Stmt::child_iterator CI=B->child_begin(), CE=B->child_end();
        CI != CE; ++CI) {
     
@@ -489,7 +478,7 @@ Store BasicStoreManager::scanForIvars(Stmt *B, const Decl* SelfDecl, Store St) {
       }
     }
     else
-      St = scanForIvars(*CI, SelfDecl, St);
+      St = scanForIvars(*CI, SelfDecl, SelfRegion, St);
   }
   
   return St;
@@ -511,17 +500,18 @@ Store BasicStoreManager::getInitialStore(const LocationContext *InitLoc) {
       const Decl& CD = *InitLoc->getDecl();      
       if (const ObjCMethodDecl* MD = dyn_cast<ObjCMethodDecl>(&CD)) {
         if (MD->getSelfDecl() == PD) {
-          // Create a region for "self".
-          assert (SelfRegion == 0);
-          SelfRegion = MRMgr.getObjCObjectRegion(MD->getClassInterface(),
-                                                 MRMgr.getHeapRegion());
+          // FIXME: Just use a symbolic region, and remove ObjCObjectRegion
+          // entirely.
+          const ObjCObjectRegion *SelfRegion =
+            MRMgr.getObjCObjectRegion(MD->getClassInterface(),
+                                      MRMgr.getHeapRegion());
           
           St = BindInternal(St, ValMgr.makeLoc(MRMgr.getVarRegion(PD, InitLoc)),
                             ValMgr.makeLoc(SelfRegion));
           
           // Scan the method for ivar references.  While this requires an
           // entire AST scan, the cost should not be high in practice.
-          St = scanForIvars(MD->getBody(), PD, St);
+          St = scanForIvars(MD->getBody(), PD, SelfRegion, St);
         }
       }
     }
@@ -641,11 +631,6 @@ const GRState *BasicStoreManager::InvalidateRegion(const GRState *state,
   if (!(isa<VarRegion>(R) || isa<ObjCIvarRegion>(R)))
       return state;
       
-  // We only track bindings to self.ivar.
-  if (const ObjCIvarRegion *IVR = dyn_cast<ObjCIvarRegion>(R))
-    if (IVR->getSuperRegion() != SelfRegion)
-      return state;
-
   QualType T = cast<TypedRegion>(R)->getValueType(R->getContext());
   SVal V = ValMgr.getConjuredSymbolVal(E, T, Count);
   return Bind(state, loc::MemRegionVal(R), V);

@@ -168,15 +168,11 @@ public:
 class VISIBILITY_HIDDEN RegionStoreManager : public StoreManager {
   const RegionStoreFeatures Features;
   RegionBindings::Factory RBFactory;
-
-  const MemRegion* SelfRegion;
-
 public:
   RegionStoreManager(GRStateManager& mgr, const RegionStoreFeatures &f) 
     : StoreManager(mgr),
       Features(f),
-      RBFactory(mgr.getAllocator()),
-    SelfRegion(0) {}
+      RBFactory(mgr.getAllocator()) {}
 
   virtual ~RegionStoreManager() {}
 
@@ -229,38 +225,9 @@ public:
                  NonLoc R, QualType resultTy);
 
   Store getInitialStore(const LocationContext *InitLoc) { 
-    RegionBindings B = RBFactory.GetEmptyMap();
-
-    // Eagerly bind 'self' to SelfRegion, because this is the only place we can
-    // get the ObjCMethodDecl.
-    typedef LiveVariables::AnalysisDataTy LVDataTy;
-    LVDataTy &D = InitLoc->getLiveVariables()->getAnalysisData();
-    for (LVDataTy::decl_iterator I=D.begin_decl(), E=D.end_decl(); I!=E; ++I){
-      const NamedDecl *ND = I->first;
-
-      if (const ImplicitParamDecl *PD = dyn_cast<ImplicitParamDecl>(ND)) {
-        const Decl &CD = *InitLoc->getDecl();
-        if (const ObjCMethodDecl *MD = dyn_cast<ObjCMethodDecl>(&CD)) {
-          if (MD->getSelfDecl() == PD) {
-            SelfRegion = MRMgr.getObjCObjectRegion(MD->getClassInterface(),
-                                                   MRMgr.getHeapRegion());
-            B = RBFactory.Add(B, MRMgr.getVarRegion(PD, InitLoc),
-                              ValMgr.makeLoc(SelfRegion));
-          }
-        }
-      }
-    }
-
-    return B.getRoot();
+    return RBFactory.GetEmptyMap().getRoot();
   }
-  
-  /// getSelfRegion - Returns the region for the 'self' (Objective-C) or
-  ///  'this' object (C++).  When used when analyzing a normal function this
-  ///  method returns NULL.
-  const MemRegion* getSelfRegion(Store) {
-    return SelfRegion;
-  }
- 
+
   //===-------------------------------------------------------------------===//
   // Binding values to regions.
   //===-------------------------------------------------------------------===//
