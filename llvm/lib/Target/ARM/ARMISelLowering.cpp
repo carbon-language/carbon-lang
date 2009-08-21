@@ -2403,6 +2403,53 @@ static bool isVREVMask(const SmallVectorImpl<int> &M, EVT VT,
   return true;
 }
 
+static bool isVTRNMask(const SmallVectorImpl<int> &M, EVT VT,
+                       unsigned &WhichResult) {
+  unsigned NumElts = VT.getVectorNumElements();
+  WhichResult = (M[0] == 0 ? 0 : 1);
+  for (unsigned i = 0; i < NumElts; i += 2) {
+    if ((unsigned) M[i] != i + WhichResult ||
+        (unsigned) M[i+1] != i + NumElts + WhichResult)
+      return false;
+  }
+  return true;
+}
+
+static bool isVUZPMask(const SmallVectorImpl<int> &M, EVT VT,
+                       unsigned &WhichResult) {
+  unsigned NumElts = VT.getVectorNumElements();
+  WhichResult = (M[0] == 0 ? 0 : 1);
+  for (unsigned i = 0; i != NumElts; ++i) {
+    if ((unsigned) M[i] != 2 * i + WhichResult)
+      return false;
+  }
+
+  // VUZP.32 for 64-bit vectors is a pseudo-instruction alias for VTRN.32.
+  if (VT.is64BitVector() && VT.getVectorElementType().getSizeInBits() == 32)
+    return false;
+
+  return true;
+}
+
+static bool isVZIPMask(const SmallVectorImpl<int> &M, EVT VT,
+                       unsigned &WhichResult) {
+  unsigned NumElts = VT.getVectorNumElements();
+  WhichResult = (M[0] == 0 ? 0 : 1);
+  unsigned Idx = WhichResult * NumElts / 2;
+  for (unsigned i = 0; i != NumElts; i += 2) {
+    if ((unsigned) M[i] != Idx ||
+        (unsigned) M[i+1] != Idx + NumElts)
+      return false;
+    Idx += 1;
+  }
+
+  // VZIP.32 for 64-bit vectors is a pseudo-instruction alias for VTRN.32.
+  if (VT.is64BitVector() && VT.getVectorElementType().getSizeInBits() == 32)
+    return false;
+
+  return true;
+}
+
 static SDValue BuildSplat(SDValue Val, EVT VT, SelectionDAG &DAG, DebugLoc dl) {
   // Canonicalize all-zeros and all-ones vectors.
   ConstantSDNode *ConstVal = cast<ConstantSDNode>(Val.getNode());
@@ -2504,13 +2551,16 @@ ARMTargetLowering::isShuffleMaskLegal(const SmallVectorImpl<int> &M,
   }
 
   bool ReverseVEXT;
-  unsigned Imm;
+  unsigned Imm, WhichResult;
 
   return (ShuffleVectorSDNode::isSplatMask(&M[0], VT) ||
           isVREVMask(M, VT, 64) ||
           isVREVMask(M, VT, 32) ||
           isVREVMask(M, VT, 16) ||
-          isVEXTMask(M, VT, ReverseVEXT, Imm));
+          isVEXTMask(M, VT, ReverseVEXT, Imm) ||
+          isVTRNMask(M, VT, WhichResult) ||
+          isVUZPMask(M, VT, WhichResult) ||
+          isVZIPMask(M, VT, WhichResult));
 }
 
 /// GeneratePerfectShuffle - Given an entry in the perfect-shuffle table, emit
@@ -2610,11 +2660,9 @@ static SDValue LowerVECTOR_SHUFFLE(SDValue Op, SelectionDAG &DAG) {
   bool ReverseVEXT;
   unsigned Imm;
   if (isVEXTMask(ShuffleMask, VT, ReverseVEXT, Imm)) {
-    SDValue Op0 = SVN->getOperand(0);
-    SDValue Op1 = SVN->getOperand(1);
     if (ReverseVEXT)
-      std::swap(Op0, Op1);
-    return DAG.getNode(ARMISD::VEXT, dl, VT, Op0, Op1,
+      std::swap(V1, V2);
+    return DAG.getNode(ARMISD::VEXT, dl, VT, V1, V2,
                        DAG.getConstant(Imm, MVT::i32));
   }
 
@@ -2625,6 +2673,24 @@ static SDValue LowerVECTOR_SHUFFLE(SDValue Op, SelectionDAG &DAG) {
   if (isVREVMask(ShuffleMask, VT, 16))
     return DAG.getNode(ARMISD::VREV16, dl, VT, V1);
 
+  // Check for Neon shuffles that modify both input vectors in place.
+  // If both results are used, i.e., if there are two shuffles with the same
+  // source operands and with masks corresponding to both results of one of
+  // these operations, DAG memoization will ensure that a single node is
+  // used for both shuffles.
+  unsigned WhichResult;
+  if (isVTRNMask(ShuffleMask, VT, WhichResult))
+    return DAG.getNode(ARMISD::VTRN, dl, DAG.getVTList(VT, VT),
+                       V1, V2).getValue(WhichResult);
+  if (isVUZPMask(ShuffleMask, VT, WhichResult))
+    return DAG.getNode(ARMISD::VUZP, dl, DAG.getVTList(VT, VT),
+                       V1, V2).getValue(WhichResult);
+  if (isVZIPMask(ShuffleMask, VT, WhichResult))
+    return DAG.getNode(ARMISD::VZIP, dl, DAG.getVTList(VT, VT),
+                       V1, V2).getValue(WhichResult);
+
+  // If the shuffle is not directly supported and it has 4 elements, use
+  // the PerfectShuffle-generated table to synthesize it from other shuffles.
   if (VT.getVectorNumElements() == 4 &&
       (VT.is128BitVector() || VT.is64BitVector())) {
     unsigned PFIndexes[4];
