@@ -86,6 +86,13 @@ def FMOV64mry : Pseudo<(outs), (ins rriaddr:$dst, FP64:$src),
                        "stdy\t{$src, $dst}",
                        [(store FP64:$src, rriaddr:$dst)]>;
 
+def FCOPYSIGN32 : Pseudo<(outs FP32:$dst), (ins FP32:$src1, FP32:$src2),
+                         "cpsdr\t{$dst, $src2, $src1}",
+                         [(set FP32:$dst, (fcopysign FP32:$src1, FP32:$src2))]>;
+def FCOPYSIGN64 : Pseudo<(outs FP64:$dst), (ins FP64:$src1, FP64:$src2),
+                         "cpsdr\t{$dst, $src2, $src1}",
+                         [(set FP64:$dst, (fcopysign FP64:$src1, FP64:$src2))]>;
+
 //===----------------------------------------------------------------------===//
 // Arithmetic Instructions
 
