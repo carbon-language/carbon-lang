@@ -70,8 +70,8 @@ void PIC16TargetObjectFile::Initialize(MCContext &Ctx, const TargetMachine &tm){
 }
 
 const MCSection *PIC16TargetObjectFile::
-getSectionForFunction(const std::string &FnName, bool isInterrupt) const {
-  std::string T = PAN::getCodeSectionName(FnName, isInterrupt);
+getSectionForFunction(const std::string &FnName) const {
+  std::string T = PAN::getCodeSectionName(FnName);
   return getPIC16Section(T.c_str(), SectionKind::getText());
 }
 
@@ -196,48 +196,6 @@ PIC16TargetObjectFile::getSectionForAuto(const GlobalVariable *GV) const {
   return FoundAutoSec->S_;
 }
 
-void PIC16TargetObjectFile::createClonedSectionForAutos(const std::string &SecName) {
-
-  // If the function is cloned then it will have ".IL" in its name
-  // If this function is not cloned then return;
-  if (SecName.find(".IL") == std::string::npos) 
-      return;
-
-  // Come here if the function is cloned.
-  // Get the name of the original section from which it has been cloned.
-  std::string OrigName = SecName;
-  OrigName.replace(SecName.find(".IL"),3,"");
-
-  // Find original section
-  PIC16Section *FoundAutoSec = NULL;
-  for (unsigned i = 0; i < AutosSections.size(); i++) {
-    if (AutosSections[i]->S_->getName() == OrigName) {
-      FoundAutoSec = AutosSections[i];
-      break; 
-    }
-  }
-
-  // No auto section exists for the original function.
-  if (!FoundAutoSec)
-    return;
-
-  // Create new section for the cloned function 
-  const MCSectionPIC16 *NewSection =
-      getPIC16Section(SecName.c_str(), SectionKind::getMetadata());
-  
-  PIC16Section *NewAutoSec = new PIC16Section(NewSection);
-  // Add this newly created autos section to the list of AutosSections.
-  AutosSections.push_back(NewAutoSec);
-
-  // Add the items from the original section to the new section
-  // Donot mangle them here. Because mangling them here will distort 
-  // the original names. 
-  // These names will be mangled them at the time of printing only
-  const std::vector<const GlobalVariable*> &Items = FoundAutoSec->Items;
-  for (unsigned j = 0; j < Items.size(); j++) {
-    NewAutoSec->Items.push_back(Items[j]); 
-  }
-}
 
 // Override default implementation to put the true globals into
 // multiple data sections if required.

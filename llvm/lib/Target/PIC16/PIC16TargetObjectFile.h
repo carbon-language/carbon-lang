@@ -77,13 +77,10 @@ namespace llvm {
                                                     Mangler *Mang,
                                                     const TargetMachine&) const;
 
-    const MCSection *getSectionForFunction(const std::string &FnName, 
-                                           bool isInterrupt=false) const;
+    const MCSection *getSectionForFunction(const std::string &FnName) const;
     const MCSection *getSectionForFunctionFrame(const std::string &FnName)const;
     
-    // If the current function is cloned then create the new autos section
-    // also. 
-    void createClonedSectionForAutos(const std::string &SecName);
+    
   private:
     std::string getSectionNameForSym(const std::string &Sym) const;
 

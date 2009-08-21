@@ -17,7 +17,7 @@ BUILT_SOURCES = PIC16GenRegisterInfo.h.inc PIC16GenRegisterNames.inc \
 		PIC16GenDAGISel.inc PIC16GenCallingConv.inc \
 		PIC16GenSubtarget.inc
 
-DIRS = AsmPrinter TargetInfo PIC16Passes
+DIRS = AsmPrinter TargetInfo
 
 include $(LEVEL)/Makefile.common
 

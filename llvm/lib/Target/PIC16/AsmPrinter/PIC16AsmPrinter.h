@@ -73,7 +73,6 @@ namespace llvm {
     PIC16DbgInfo DbgInfo;
     const PIC16TargetAsmInfo *PTAI;
     std::list<const char *> LibcallDecls; // List of extern decls.
-    const Function *CurrentFnPtr;   // Hold the pointer to current Function 
   };
 } // end of namespace
 
