@@ -150,6 +150,8 @@ void MCMachOStreamer::EmitValue(const MCValue &Value, unsigned Size) {
 void MCMachOStreamer::EmitValueToAlignment(unsigned ByteAlignment,
                                            int64_t Value, unsigned ValueSize,
                                            unsigned MaxBytesToEmit) {
+  if (MaxBytesToEmit == 0)
+    MaxBytesToEmit = ByteAlignment;
   new MCAlignFragment(ByteAlignment, Value, ValueSize, MaxBytesToEmit,
                       CurSectionData);
 
@@ -160,7 +162,7 @@ void MCMachOStreamer::EmitValueToAlignment(unsigned ByteAlignment,
 
 void MCMachOStreamer::EmitValueToOffset(const MCValue &Offset,
                                         unsigned char Value) {
-  new MCOrgFragment(Offset, Value, 1, CurSectionData);
+  new MCOrgFragment(Offset, Value, CurSectionData);
 }
 
 void MCMachOStreamer::EmitInstruction(const MCInst &Inst) {

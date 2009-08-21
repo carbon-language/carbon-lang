@@ -8,6 +8,8 @@
 //===----------------------------------------------------------------------===//
 
 #include "llvm/MC/MCAssembler.h"
+
+#include "llvm/ADT/Twine.h"
 #include "llvm/MC/MCSectionMachO.h"
 #include "llvm/Support/DataTypes.h"
 #include "llvm/Support/ErrorHandling.h"
@@ -232,17 +234,58 @@ MCAssembler::~MCAssembler() {
 }
 
 void MCAssembler::LayoutSection(MCSectionData &SD) {
-  uint64_t Offset = SD.getFileOffset();
+  uint64_t FileOffset = SD.getFileOffset();
+  uint64_t SectionOffset = 0;
 
   for (MCSectionData::iterator it = SD.begin(), ie = SD.end(); it != ie; ++it) {
     MCFragment &F = *it;
-    F.setFileOffset(Offset);
-    F.setFileSize(F.getMaxFileSize());
-    Offset += F.getFileSize();
+
+    F.setFileOffset(FileOffset);
+
+    // Evaluate fragment size.
+    switch (F.getKind()) {
+    case MCFragment::FT_Align: {
+      MCAlignFragment &AF = cast<MCAlignFragment>(F);
+      
+      uint64_t AlignedOffset =
+        RoundUpToAlignment(SectionOffset, AF.getAlignment());
+      uint64_t PaddingBytes = AlignedOffset - SectionOffset;
+
+      if (PaddingBytes > AF.getMaxBytesToEmit())
+        AF.setFileSize(0);
+      else
+        AF.setFileSize(PaddingBytes);
+      break;
+    }
+
+    case MCFragment::FT_Data:
+    case MCFragment::FT_Fill:
+      F.setFileSize(F.getMaxFileSize());
+      break;
+
+    case MCFragment::FT_Org: {
+      MCOrgFragment &OF = cast<MCOrgFragment>(F);
+
+      if (!OF.getOffset().isAbsolute())
+        llvm_unreachable("FIXME: Not yet implemented!");
+      uint64_t OrgOffset = OF.getOffset().getConstant();
+
+      // FIXME: We need a way to communicate this error.
+      if (OrgOffset < SectionOffset)
+        llvm_report_error("invalid .org offset '" + Twine(OrgOffset) + 
+                          "' (section offset '" + Twine(SectionOffset) + "'");
+        
+      F.setFileSize(OrgOffset - SectionOffset);
+      break;
+    }      
+    }
+
+    FileOffset += F.getFileSize();
+    SectionOffset += F.getFileSize();
   }
 
   // FIXME: Pad section?
-  SD.setFileSize(Offset - SD.getFileOffset());
+  SD.setFileSize(FileOffset - SD.getFileOffset());
 }
 
 /// WriteFileData - Write the \arg F data to the output file.
@@ -251,39 +294,68 @@ static void WriteFileData(raw_ostream &OS, const MCFragment &F,
   uint64_t Start = OS.tell();
   (void) Start;
     
+  assert(F.getFileOffset() == Start && "Invalid file offset!");
+
   // FIXME: Embed in fragments instead?
   switch (F.getKind()) {
-  default:
-    assert(0 && "Invalid section kind!");
+  case MCFragment::FT_Align: {
+    MCAlignFragment &AF = cast<MCAlignFragment>(F);
+    uint64_t Count = AF.getFileSize() / AF.getValueSize();
+
+    // FIXME: This error shouldn't actually occur (the front end should emit
+    // multiple .align directives to enforce the semantics it wants), but is
+    // severe enough that we want to report it. How to handle this?
+    if (Count * AF.getValueSize() != AF.getFileSize())
+      llvm_report_error("undefined .align directive, value size '" + 
+                        Twine(AF.getValueSize()) + 
+                        "' is not a divisor of padding size '" +
+                        Twine(AF.getFileSize()) + "'");
+
+    for (uint64_t i = 0; i != Count; ++i) {
+      switch (AF.getValueSize()) {
+      default:
+        assert(0 && "Invalid size!");
+      case 1: MOW.Write8 (uint8_t (AF.getValue())); break;
+      case 2: MOW.Write16(uint16_t(AF.getValue())); break;
+      case 4: MOW.Write32(uint32_t(AF.getValue())); break;
+      case 8: MOW.Write64(uint64_t(AF.getValue())); break;
+      }
+    }
+    break;
+  }
 
   case MCFragment::FT_Data:
     OS << cast<MCDataFragment>(F).getContents().str();
     break;
-
-  case MCFragment::FT_Align:
-    llvm_unreachable("FIXME: Not yet implemented!");
 
   case MCFragment::FT_Fill: {
     MCFillFragment &FF = cast<MCFillFragment>(F);
 
     if (!FF.getValue().isAbsolute())
       llvm_unreachable("FIXME: Not yet implemented!");
+    int64_t Value = FF.getValue().getConstant();
 
     for (uint64_t i = 0, e = FF.getCount(); i != e; ++i) {
       switch (FF.getValueSize()) {
       default:
         assert(0 && "Invalid size!");
-      case 1: MOW.Write8 (uint8_t (FF.getValue().getConstant())); break;
-      case 2: MOW.Write16(uint16_t(FF.getValue().getConstant())); break;
-      case 4: MOW.Write32(uint32_t(FF.getValue().getConstant())); break;
-      case 8: MOW.Write64(uint64_t(FF.getValue().getConstant())); break;
+      case 1: MOW.Write8 (uint8_t (Value)); break;
+      case 2: MOW.Write16(uint16_t(Value)); break;
+      case 4: MOW.Write32(uint32_t(Value)); break;
+      case 8: MOW.Write64(uint64_t(Value)); break;
       }
     }
     break;
   }
     
-  case MCFragment::FT_Org:
-    llvm_unreachable("FIXME: Not yet implemented!");
+  case MCFragment::FT_Org: {
+    MCOrgFragment &OF = cast<MCOrgFragment>(F);
+
+    for (uint64_t i = 0, e = OF.getFileSize(); i != e; ++i)
+      MOW.Write8(uint8_t(OF.getValue()));
+
+    break;
+  }
   }
 
   assert(OS.tell() - Start == F.getFileSize());

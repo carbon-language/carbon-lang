@@ -6,6 +6,13 @@
         .short 0xABCD
         .long 0xABCDABCD
         .quad 0xABCDABCDABCDABCD
+.org 30
+        .long 0xF000            // 34
+        .p2align  3, 0xAB       // 40 (0xAB * 6)
+        .short 0                // 42
+        .p2alignw 3, 0xABCD     // 48 (0xABCD * 2)
+        .short 0                // 50
+        .p2alignw 3, 0xABCD, 5  // 50
 
 // CHECK: ('cputype', 7)
 // CHECK: ('cpusubtype', 3)
@@ -19,9 +26,9 @@
 // CHECK:   ('size', 192)
 // CHECK:   ('segment_name', '\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00')
 // CHECK:   ('vm_addr', 0)
-// CHECK:   ('vm_size', 20)
+// CHECK:   ('vm_size', 50)
 // CHECK:   ('file_offset', 220)
-// CHECK:   ('file_size', 20)
+// CHECK:   ('file_size', 50)
 // CHECK:   ('maxprot', 7)
 // CHECK:   ('initprot', 7)
 // CHECK:   ('num_sections', 2)
@@ -44,9 +51,9 @@
 // CHECK:    (('section_name', '__data\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00')
 // CHECK:     ('segment_name', '__DATA\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00')
 // CHECK:     ('address', 0)
-// CHECK:     ('size', 20)
+// CHECK:     ('size', 50)
 // CHECK:     ('offset', 220)
-// CHECK:     ('alignment', 0)
+// CHECK:     ('alignment', 3)
 // CHECK:     ('reloc_offset', 0)
 // CHECK:     ('num_reloc', 0)
 // CHECK:     ('flags', 0x0)

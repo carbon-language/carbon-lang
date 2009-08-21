@@ -64,7 +64,7 @@ public:
   FragmentType getKind() const { return Kind; }
 
   // FIXME: This should be abstract, fix sentinel.
-  virtual unsigned getMaxFileSize() const {
+  virtual uint64_t getMaxFileSize() const {
     assert(0 && "Invalid getMaxFileSize call !");
   };
 
@@ -102,7 +102,7 @@ public:
   /// @name Accessors
   /// @{
 
-  unsigned getMaxFileSize() const {
+  uint64_t getMaxFileSize() const {
     return Contents.size();
   }
 
@@ -141,7 +141,7 @@ public:
   /// @name Accessors
   /// @{
 
-  unsigned getMaxFileSize() const {
+  uint64_t getMaxFileSize() const {
     return std::max(Alignment - 1, MaxBytesToEmit);
   }
 
@@ -180,7 +180,7 @@ public:
   /// @name Accessors
   /// @{
 
-  unsigned getMaxFileSize() const {
+  uint64_t getMaxFileSize() const {
     return ValueSize * Count;
   }
 
@@ -203,29 +203,23 @@ class MCOrgFragment : public MCFragment {
   MCValue Offset;
 
   /// Value - Value to use for filling bytes.  
-  int64_t Value;
-
-  /// ValueSize - The size (in bytes) of \arg Value to use when filling.
-  unsigned ValueSize;
+  int8_t Value;
 
 public:
-  MCOrgFragment(MCValue _Offset, int64_t _Value, unsigned _ValueSize,
-                MCSectionData *SD = 0)
+  MCOrgFragment(MCValue _Offset, int8_t _Value, MCSectionData *SD = 0)
     : MCFragment(FT_Org, SD),
-      Offset(_Offset), Value(_Value), ValueSize(_ValueSize) {}
+      Offset(_Offset), Value(_Value) {}
   /// @name Accessors
   /// @{
 
-  unsigned getMaxFileSize() const {
-    // FIXME
-    return 0;
+  uint64_t getMaxFileSize() const {
+    // FIXME: This doesn't make much sense.
+    return ~UINT64_C(0);
   }
 
   MCValue getOffset() const { return Offset; }
   
-  int64_t getValue() const { return Value; }
-  
-  unsigned getValueSize() const { return ValueSize; }
+  uint8_t getValue() const { return Value; }
 
   /// @}
 
