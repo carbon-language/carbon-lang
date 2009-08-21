@@ -104,9 +104,11 @@ struct Operator {
   unsigned short ShuffleMask;
   unsigned short OpNum;
   const char *Name;
-  
-  Operator(unsigned short shufflemask, const char *name, unsigned opnum)
-    : ShuffleMask(shufflemask), OpNum(opnum), Name(name) {
+  unsigned Cost;
+
+  Operator(unsigned short shufflemask, const char *name, unsigned opnum,
+           unsigned cost = 1)
+    : ShuffleMask(shufflemask), OpNum(opnum), Name(name), Cost(cost) {
     TheOperators.push_back(this);
   }
   ~Operator() {
@@ -119,7 +121,8 @@ struct Operator {
   }
 
   const char *getName() const { return Name; }
-  
+  unsigned getCost() const { return Cost; }
+
   unsigned short getTransformedMask(unsigned short LHSMask, unsigned RHSMask) {
     // Extract the elements from LHSMask and RHSMask, as appropriate.
     unsigned Result = 0;
@@ -302,7 +305,7 @@ int main() {
         // Evaluate op(LHS,LHS)
         unsigned ResultMask = Op->getTransformedMask(LHS, LHS);
 
-        unsigned Cost = ShufTab[LHS].Cost + 1;
+        unsigned Cost = ShufTab[LHS].Cost + Op->getCost();
         if (Cost < ShufTab[ResultMask].Cost) {
           ShufTab[ResultMask].Cost = Cost;
           ShufTab[ResultMask].Op = Op;
@@ -340,7 +343,7 @@ int main() {
           EvaluateOps(LHS, Vals, NumVals);
           EvaluateOps(RHS, Vals, NumVals);
 
-          unsigned Cost = NumVals + 1;
+          unsigned Cost = NumVals + Op->getCost();
           if (Cost < ShufTab[ResultMask].Cost) {
             ShufTab[ResultMask].Cost = Cost;
             ShufTab[ResultMask].Op = Op;
