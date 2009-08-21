@@ -167,7 +167,7 @@ public:
   ///  inserted after any other text that has been previously inserted
   ///  at the some point (the default behavior for InsertText).
   bool InsertTextAfter(SourceLocation Loc, const llvm::StringRef &Str) {
-    return InsertText(Loc, Str, false);
+    return InsertText(Loc, Str);
   }    
   
   /// InsertText - Insert the specified string at the specified location in the
