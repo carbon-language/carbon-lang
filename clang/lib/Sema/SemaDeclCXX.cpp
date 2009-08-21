@@ -3279,8 +3279,7 @@ VarDecl *Sema::BuildExceptionDeclaration(Scope *S, QualType ExDeclType,
   // FIXME: Need to check for abstract classes.
 
   VarDecl *ExDecl = VarDecl::Create(Context, CurContext, Loc, 
-                                    Name, ExDeclType, DInfo, VarDecl::None, 
-                                    Range.getBegin());
+                                    Name, ExDeclType, DInfo, VarDecl::None);
 
   if (Invalid)
     ExDecl->setInvalidDecl();

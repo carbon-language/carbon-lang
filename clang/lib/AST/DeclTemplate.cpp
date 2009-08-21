@@ -236,10 +236,8 @@ NonTypeTemplateParmDecl *
 NonTypeTemplateParmDecl::Create(ASTContext &C, DeclContext *DC,
                                 SourceLocation L, unsigned D, unsigned P,
                                 IdentifierInfo *Id, QualType T,
-                                DeclaratorInfo *DInfo,
-                                SourceLocation TypeSpecStartLoc) {
-  return new (C) NonTypeTemplateParmDecl(DC, L, D, P, Id, T, DInfo,
-                                         TypeSpecStartLoc);
+                                DeclaratorInfo *DInfo) {
+  return new (C) NonTypeTemplateParmDecl(DC, L, D, P, Id, T, DInfo);
 }
 
 SourceLocation NonTypeTemplateParmDecl::getDefaultArgumentLoc() const {

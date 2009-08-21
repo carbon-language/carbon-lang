@@ -1509,9 +1509,10 @@ Sema::DeclPtrTy Sema::BuildAnonymousStructOrUnion(Scope *S, DeclSpec &DS,
   if (RecordDecl *OwningClass = dyn_cast<RecordDecl>(Owner)) {
     Anon = FieldDecl::Create(Context, OwningClass, Record->getLocation(),
                              /*IdentifierInfo=*/0, 
-                             Context.getTypeDeclType(Record), /*DInfo=*/0,
-                             /*BitWidth=*/0, /*Mutable=*/false,
-                             DS.getSourceRange().getBegin());
+                             Context.getTypeDeclType(Record),
+                             // FIXME: Type source info.
+                             /*DInfo=*/0,
+                             /*BitWidth=*/0, /*Mutable=*/false);
     Anon->setAccess(AS_public);
     if (getLangOptions().CPlusPlus)
       FieldCollector->Add(cast<FieldDecl>(Anon));
@@ -1536,8 +1537,10 @@ Sema::DeclPtrTy Sema::BuildAnonymousStructOrUnion(Scope *S, DeclSpec &DS,
 
     Anon = VarDecl::Create(Context, Owner, Record->getLocation(),
                            /*IdentifierInfo=*/0, 
-                           Context.getTypeDeclType(Record), /*DInfo=*/0,
-                           SC, DS.getSourceRange().getBegin());
+                           Context.getTypeDeclType(Record),
+                           // FIXME: Type source info.
+                           /*DInfo=*/0,
+                           SC);
   }
   Anon->setImplicit();
 
@@ -2151,9 +2154,7 @@ Sema::ActOnVariableDeclarator(Scope* S, Declarator& D, DeclContext* DC,
   }        
   
   NewVD = VarDecl::Create(Context, DC, D.getIdentifierLoc(), 
-                          II, R, DInfo, SC, 
-                          // FIXME: Move to DeclGroup...
-                          D.getDeclSpec().getSourceRange().getBegin());
+                          II, R, DInfo, SC);
 
   if (D.isInvalidType())
     NewVD->setInvalidDecl();
@@ -2459,9 +2460,7 @@ Sema::ActOnFunctionDeclarator(Scope* S, Declarator& D, DeclContext* DC,
       // code path.
       NewFD = FunctionDecl::Create(Context, DC, D.getIdentifierLoc(),
                                    Name, R, DInfo, SC, isInline, 
-                                   /*hasPrototype=*/true,
-                                   // FIXME: Move to DeclGroup...
-                                   D.getDeclSpec().getSourceRange().getBegin());
+                                   /*hasPrototype=*/true);
       D.setInvalidType();
     }
   } else if (D.getKind() == Declarator::DK_Conversion) {
@@ -2510,9 +2509,7 @@ Sema::ActOnFunctionDeclarator(Scope* S, Declarator& D, DeclContext* DC,
     
     NewFD = FunctionDecl::Create(Context, DC,
                                  D.getIdentifierLoc(),
-                                 Name, R, DInfo, SC, isInline, HasPrototype,
-                                 // FIXME: Move to DeclGroup...
-                                 D.getDeclSpec().getSourceRange().getBegin());
+                                 Name, R, DInfo, SC, isInline, HasPrototype);
   }
 
   if (D.isInvalidType())
@@ -4546,7 +4543,7 @@ FieldDecl *Sema::CheckFieldDecl(DeclarationName Name, QualType T,
   }
   
   FieldDecl *NewFD = FieldDecl::Create(Context, Record, Loc, II, T, DInfo,
-                                       BitWidth, Mutable, TSSL);
+                                       BitWidth, Mutable);
   if (InvalidDecl)
     NewFD->setInvalidDecl();
 

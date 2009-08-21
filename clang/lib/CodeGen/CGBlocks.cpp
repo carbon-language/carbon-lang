@@ -694,8 +694,7 @@ uint64_t BlockFunction::getBlockOffset(const BlockDeclRefExpr *BDRE) {
                                                        llvm::APInt(32, Pad),
                                                        ArrayType::Normal, 0);
     ValueDecl *PadDecl = VarDecl::Create(getContext(), 0, SourceLocation(),
-                                         0, QualType(PadTy), 0, VarDecl::None,
-                                         SourceLocation());
+                                         0, QualType(PadTy), 0, VarDecl::None);
     Expr *E;
     E = new (getContext()) DeclRefExpr(PadDecl, PadDecl->getType(),
                                        SourceLocation(), false, false);

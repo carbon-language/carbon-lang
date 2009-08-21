@@ -236,7 +236,9 @@ protected:
 public:
   DeclaratorInfo *getDeclaratorInfo() const { return DeclInfo; }
   void setDeclaratorInfo(DeclaratorInfo *DInfo) { DeclInfo = DInfo; }
-  
+
+  SourceLocation getTypeSpecStartLoc() const;
+
   // Implement isa/cast/dyncast/etc.
   static bool classof(const Decl *D) {
     return D->getKind() >= DeclaratorFirst && D->getKind() <= DeclaratorLast;
@@ -299,16 +301,13 @@ private:
   /// condition, e.g., if (int x = foo()) { ... }.
   bool DeclaredInCondition : 1;
 
-  // Move to DeclGroup when it is implemented.
-  SourceLocation TypeSpecStartLoc;
   friend class StmtIteratorBase;
 protected:
   VarDecl(Kind DK, DeclContext *DC, SourceLocation L, IdentifierInfo *Id,
-          QualType T, DeclaratorInfo *DInfo,
-          StorageClass SC, SourceLocation TSSL = SourceLocation())
+          QualType T, DeclaratorInfo *DInfo, StorageClass SC)
     : DeclaratorDecl(DK, DC, L, Id, T, DInfo), Init(),
       ThreadSpecified(false), HasCXXDirectInit(false),
-      DeclaredInCondition(false), TypeSpecStartLoc(TSSL) { 
+      DeclaredInCondition(false) { 
     SClass = SC; 
   }
 
@@ -326,8 +325,7 @@ public:
 
   static VarDecl *Create(ASTContext &C, DeclContext *DC,
                          SourceLocation L, IdentifierInfo *Id,
-                         QualType T, DeclaratorInfo *DInfo, StorageClass S,
-                         SourceLocation TypeSpecStartLoc = SourceLocation());
+                         QualType T, DeclaratorInfo *DInfo, StorageClass S);
 
   virtual ~VarDecl();
   virtual void Destroy(ASTContext& C);
@@ -336,12 +334,6 @@ public:
   void setStorageClass(StorageClass SC) { SClass = SC; }
   
   virtual SourceRange getSourceRange() const;
-
-  //FIXME: Use DeclaratorInfo for this.
-  SourceLocation getTypeSpecStartLoc() const { return TypeSpecStartLoc; }
-  void setTypeSpecStartLoc(SourceLocation SL) {
-    TypeSpecStartLoc = SL;
-  }
 
   const Expr *getInit() const { 
     if (Init.isNull())
@@ -731,9 +723,6 @@ private:
   bool IsTrivial : 1; // sunk from CXXMethodDecl
   bool IsCopyAssignment : 1;  // sunk from CXXMethodDecl
   bool HasImplicitReturnZero : 1;
-
-  // Move to DeclGroup when it is implemented.
-  SourceLocation TypeSpecStartLoc;
   
   /// \brief End part of this FunctionDecl's source range.
   ///
@@ -763,8 +752,7 @@ private:
 protected:
   FunctionDecl(Kind DK, DeclContext *DC, SourceLocation L,
                DeclarationName N, QualType T, DeclaratorInfo *DInfo,
-               StorageClass S, bool isInline,
-               SourceLocation TSSL = SourceLocation())
+               StorageClass S, bool isInline)
     : DeclaratorDecl(DK, DC, L, N, T, DInfo), 
       DeclContext(DK),
       ParamInfo(0), Body(),
@@ -773,7 +761,7 @@ protected:
       HasWrittenPrototype(true), IsDeleted(false), IsTrivial(false),
       IsCopyAssignment(false),
       HasImplicitReturnZero(false),
-      TypeSpecStartLoc(TSSL), EndRangeLoc(L), TemplateOrSpecialization() {}
+      EndRangeLoc(L), TemplateOrSpecialization() {}
 
   virtual ~FunctionDecl() {}
   virtual void Destroy(ASTContext& C);
@@ -794,8 +782,7 @@ public:
                               DeclarationName N, QualType T,
                               DeclaratorInfo *DInfo,
                               StorageClass S = None, bool isInline = false,
-                              bool hasWrittenPrototype = true,
-                              SourceLocation TSStartLoc = SourceLocation());
+                              bool hasWrittenPrototype = true);
 
   virtual SourceRange getSourceRange() const {
     return SourceRange(getLocation(), EndRangeLoc);
@@ -803,10 +790,6 @@ public:
   void setLocEnd(SourceLocation E) {
     EndRangeLoc = E;
   }
-  
-  //FIXME: Use DeclaratorInfo for this.
-  SourceLocation getTypeSpecStartLoc() const { return TypeSpecStartLoc; }
-  void setTypeSpecStartLoc(SourceLocation TS) { TypeSpecStartLoc = TS; }
 
   /// getBody - Retrieve the body (definition) of the function. The
   /// function body might be in any of the (re-)declarations of this
@@ -1091,30 +1074,23 @@ class FieldDecl : public DeclaratorDecl {
   // FIXME: This can be packed into the bitfields in Decl.
   bool Mutable : 1;
   Expr *BitWidth;
-  SourceLocation TypeSpecStartLoc;
 protected:
   FieldDecl(Kind DK, DeclContext *DC, SourceLocation L, 
             IdentifierInfo *Id, QualType T, DeclaratorInfo *DInfo,
-            Expr *BW, bool Mutable, SourceLocation TSSL = SourceLocation())
-    : DeclaratorDecl(DK, DC, L, Id, T, DInfo), Mutable(Mutable), BitWidth(BW),
-      TypeSpecStartLoc(TSSL) { }
+            Expr *BW, bool Mutable)
+    : DeclaratorDecl(DK, DC, L, Id, T, DInfo), Mutable(Mutable), BitWidth(BW)
+      { }
 
 public:
   static FieldDecl *Create(ASTContext &C, DeclContext *DC, SourceLocation L, 
                            IdentifierInfo *Id, QualType T,
-                           DeclaratorInfo *DInfo, Expr *BW,
-                           bool Mutable,
-                           SourceLocation TypeSpecStartLoc = SourceLocation());
+                           DeclaratorInfo *DInfo, Expr *BW, bool Mutable);
 
   /// isMutable - Determines whether this field is mutable (C++ only).
   bool isMutable() const { return Mutable; }
 
   /// \brief Set whether this field is mutable (C++ only).
   void setMutable(bool M) { Mutable = M; }
-
-  //FIXME: Use DeclaratorInfo for this.
-  SourceLocation getTypeSpecStartLoc() const { return TypeSpecStartLoc; }
-  void setTypeSpecStartLoc(SourceLocation TSSL) { TypeSpecStartLoc = TSSL; }
 
   /// isBitfield - Determines whether this field is a bitfield.
   bool isBitField() const { return BitWidth != NULL; }

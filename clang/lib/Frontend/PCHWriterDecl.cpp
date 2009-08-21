@@ -229,7 +229,6 @@ void PCHDeclWriter::VisitFunctionDecl(FunctionDecl *D) {
   Record.push_back(D->hasInheritedPrototype());
   Record.push_back(D->hasWrittenPrototype());
   Record.push_back(D->isDeleted());
-  Writer.AddSourceLocation(D->getTypeSpecStartLoc(), Record);
   Writer.AddSourceLocation(D->getLocEnd(), Record);
   // FIXME: C++ TemplateOrInstantiation
   Record.push_back(D->param_size());
@@ -395,7 +394,6 @@ void PCHDeclWriter::VisitObjCPropertyImplDecl(ObjCPropertyImplDecl *D) {
 void PCHDeclWriter::VisitFieldDecl(FieldDecl *D) {
   VisitDeclaratorDecl(D);
   Record.push_back(D->isMutable());
-  Writer.AddSourceLocation(D->getTypeSpecStartLoc(), Record);
   Record.push_back(D->getBitWidth()? 1 : 0);
   if (D->getBitWidth())
     Writer.AddStmt(D->getBitWidth());
@@ -409,7 +407,6 @@ void PCHDeclWriter::VisitVarDecl(VarDecl *D) {
   Record.push_back(D->hasCXXDirectInitializer());
   Record.push_back(D->isDeclaredInCondition());
   Writer.AddDeclRef(D->getPreviousDeclaration(), Record);
-  Writer.AddSourceLocation(D->getTypeSpecStartLoc(), Record);
   Record.push_back(D->getInit()? 1 : 0);
   if (D->getInit())
     Writer.AddStmt(D->getInit());
@@ -524,7 +521,6 @@ void PCHWriter::WriteDeclsBlockAbbrevs() {
   Abv->Add(BitCodeAbbrevOp(0));                       // hasCXXDirectInitializer
   Abv->Add(BitCodeAbbrevOp(0));                       // isDeclaredInCondition
   Abv->Add(BitCodeAbbrevOp(0));                       // PrevDecl
-  Abv->Add(BitCodeAbbrevOp(BitCodeAbbrevOp::VBR, 6)); // TypeSpecStartLoc
   Abv->Add(BitCodeAbbrevOp(0));                       // HasInit
   // ParmVarDecl
   Abv->Add(BitCodeAbbrevOp(0));                       // ObjCDeclQualifier

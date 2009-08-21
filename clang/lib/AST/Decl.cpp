@@ -140,11 +140,9 @@ FunctionDecl *FunctionDecl::Create(ASTContext &C, DeclContext *DC,
                                    DeclarationName N, QualType T,
                                    DeclaratorInfo *DInfo,
                                    StorageClass S, bool isInline, 
-                                   bool hasWrittenPrototype,
-                                   SourceLocation TypeSpecStartLoc) {
+                                   bool hasWrittenPrototype) {
   FunctionDecl *New 
-    = new (C) FunctionDecl(Function, DC, L, N, T, DInfo, S, isInline, 
-                           TypeSpecStartLoc);
+    = new (C) FunctionDecl(Function, DC, L, N, T, DInfo, S, isInline);
   New->HasWrittenPrototype = hasWrittenPrototype;
   return New;
 }
@@ -155,9 +153,8 @@ BlockDecl *BlockDecl::Create(ASTContext &C, DeclContext *DC, SourceLocation L) {
 
 FieldDecl *FieldDecl::Create(ASTContext &C, DeclContext *DC, SourceLocation L,
                              IdentifierInfo *Id, QualType T,
-                             DeclaratorInfo *DInfo, Expr *BW,
-                             bool Mutable, SourceLocation TSSL) {
-  return new (C) FieldDecl(Decl::Field, DC, L, Id, T, DInfo, BW, Mutable, TSSL);
+                             DeclaratorInfo *DInfo, Expr *BW, bool Mutable) {
+  return new (C) FieldDecl(Decl::Field, DC, L, Id, T, DInfo, BW, Mutable);
 }
 
 bool FieldDecl::isAnonymousStructOrUnion() const {
@@ -317,13 +314,23 @@ NamedDecl *NamedDecl::getUnderlyingDecl() {
 }
 
 //===----------------------------------------------------------------------===//
+// DeclaratorDecl Implementation
+//===----------------------------------------------------------------------===//
+
+SourceLocation DeclaratorDecl::getTypeSpecStartLoc() const {
+  if (DeclInfo)
+    return DeclInfo->getTypeLoc().getTypeSpecRange().getBegin();
+  return SourceLocation();
+}
+
+//===----------------------------------------------------------------------===//
 // VarDecl Implementation
 //===----------------------------------------------------------------------===//
 
 VarDecl *VarDecl::Create(ASTContext &C, DeclContext *DC, SourceLocation L,
                          IdentifierInfo *Id, QualType T, DeclaratorInfo *DInfo,
-                         StorageClass S, SourceLocation TypeSpecStartLoc) {
-  return new (C) VarDecl(Var, DC, L, Id, T, DInfo, S, TypeSpecStartLoc);
+                         StorageClass S) {
+  return new (C) VarDecl(Var, DC, L, Id, T, DInfo, S);
 }
 
 void VarDecl::Destroy(ASTContext& C) {

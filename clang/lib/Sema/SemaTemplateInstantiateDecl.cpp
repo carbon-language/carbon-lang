@@ -125,7 +125,7 @@ Decl *TemplateDeclInstantiator::VisitVarDecl(VarDecl *D) {
   VarDecl *Var = VarDecl::Create(SemaRef.Context, Owner,
                                  D->getLocation(), D->getIdentifier(),
                                  T, D->getDeclaratorInfo(),
-                                 D->getStorageClass(),D->getTypeSpecStartLoc());
+                                 D->getStorageClass());
   Var->setThreadSpecified(D->isThreadSpecified());
   Var->setCXXDirectInitializer(D->hasCXXDirectInitializer());
   Var->setDeclaredInCondition(D->isDeclaredInCondition());
@@ -416,8 +416,7 @@ Decl *TemplateDeclInstantiator::VisitFunctionDecl(FunctionDecl *D) {
       FunctionDecl::Create(SemaRef.Context, Owner, D->getLocation(), 
                            D->getDeclName(), T, D->getDeclaratorInfo(),
                            D->getStorageClass(),
-                           D->isInline(), D->hasWrittenPrototype(),
-                           D->getTypeSpecStartLoc());
+                           D->isInline(), D->hasWrittenPrototype());
   }
   
   // Attach the parameters

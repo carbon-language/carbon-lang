@@ -231,7 +231,6 @@ void PCHDeclReader::VisitFunctionDecl(FunctionDecl *FD) {
   FD->setHasInheritedPrototype(Record[Idx++]);
   FD->setHasWrittenPrototype(Record[Idx++]);
   FD->setDeleted(Record[Idx++]);
-  FD->setTypeSpecStartLoc(SourceLocation::getFromRawEncoding(Record[Idx++]));
   FD->setLocEnd(SourceLocation::getFromRawEncoding(Record[Idx++]));
   // FIXME: C++ TemplateOrInstantiation
   unsigned NumParams = Record[Idx++];
@@ -405,7 +404,6 @@ void PCHDeclReader::VisitObjCPropertyImplDecl(ObjCPropertyImplDecl *D) {
 void PCHDeclReader::VisitFieldDecl(FieldDecl *FD) {
   VisitDeclaratorDecl(FD);
   FD->setMutable(Record[Idx++]);
-  FD->setTypeSpecStartLoc(SourceLocation::getFromRawEncoding(Record[Idx++]));
   if (Record[Idx++])
     FD->setBitWidth(Reader.ReadDeclExpr());
 }
@@ -418,7 +416,6 @@ void PCHDeclReader::VisitVarDecl(VarDecl *VD) {
   VD->setDeclaredInCondition(Record[Idx++]);
   VD->setPreviousDeclaration(
                          cast_or_null<VarDecl>(Reader.GetDecl(Record[Idx++])));
-  VD->setTypeSpecStartLoc(SourceLocation::getFromRawEncoding(Record[Idx++]));
   if (Record[Idx++])
     VD->setInit(*Reader.getContext(), Reader.ReadDeclExpr());
 }
@@ -741,11 +738,11 @@ Decl *PCHReader::ReadDeclRecord(uint64_t Offset, unsigned Index) {
     break;
   case pch::DECL_FIELD:
     D = FieldDecl::Create(*Context, 0, SourceLocation(), 0, QualType(), 0, 0, 
-                          false, SourceLocation());
+                          false);
     break;
   case pch::DECL_VAR:
     D = VarDecl::Create(*Context, 0, SourceLocation(), 0, QualType(), 0,
-                        VarDecl::None, SourceLocation());
+                        VarDecl::None);
     break;
 
   case pch::DECL_IMPLICIT_PARAM:

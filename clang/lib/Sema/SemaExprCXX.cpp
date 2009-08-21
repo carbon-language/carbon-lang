@@ -676,8 +676,7 @@ void Sema::DeclareGlobalAllocationFunction(DeclarationName Name,
   QualType FnType = Context.getFunctionType(Return, &Argument, 1, false, 0);
   FunctionDecl *Alloc =
     FunctionDecl::Create(Context, GlobalCtx, SourceLocation(), Name,
-                         FnType, /*DInfo=*/0, FunctionDecl::None, false, true,
-                         SourceLocation());
+                         FnType, /*DInfo=*/0, FunctionDecl::None, false, true);
   Alloc->setImplicit();
   ParmVarDecl *Param = ParmVarDecl::Create(Context, Alloc, SourceLocation(),
                                            0, Argument, /*DInfo=*/0,
