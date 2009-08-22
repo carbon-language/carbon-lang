@@ -162,7 +162,7 @@ def dumpNlist32(f, i, opts):
    n_type = f.read8()
    print "    ('n_type', %#x)" % n_type
    n_sect = f.read8()
-   print "    ('n_type', %r)" % n_sect
+   print "    ('n_sect', %r)" % n_sect
    n_desc = f.read16()
    print "    ('n_desc', %r)" % n_desc
    n_value = f.read32()
