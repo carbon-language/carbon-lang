@@ -2,31 +2,55 @@
 
 import struct
 import sys
+import StringIO
 
 class Reader:
    def __init__(self, path):
       if path == '-':
-         self.file = sys.stdin
+         # Snarf all the data so we can seek.
+         self.file = StringIO.StringIO(sys.stdin.read())
       else:
          self.file = open(path,'rb')
       self.isLSB = None
-      self.pos = 0
+
+      self.string_table = None
 
    def setLSB(self, isLSB):
       self.isLSB = bool(isLSB)
 
    def tell(self):
-      return self.pos
+      return self.file.tell()
+
+   def seek(self, pos):
+      self.file.seek(pos)
 
    def read(self, N):
       data = self.file.read(N)
-      self.pos += len(data)
       if len(data) != N:
          raise ValueError,"Out of data!"
       return data
 
+   def read8(self):
+      return ord(self.read(1))
+
+   def read16(self):
+      return struct.unpack('><'[self.isLSB] + 'H', self.read(2))[0]
+
    def read32(self):
       return struct.unpack('><'[self.isLSB] + 'I', self.read(4))[0]
+
+   def registerStringTable(self, strings):
+      if self.string_table is not None:
+         raise ValueError,"%s: warning: multiple string tables" % sys.argv[0]
+
+      self.string_table = strings
+
+   def getString(self, index):
+      if self.string_table is None:
+         raise ValueError,"%s: warning: no string table registered" % sys.argv[0]
+      
+      end = self.string_table.index('\x00', index)
+      return self.string_table[index:end]
 
 def dumpmacho(path, opts):
    f = Reader(path)
@@ -60,7 +84,7 @@ def dumpmacho(path, opts):
    print "])"
 
    if f.tell() - start != loadCommandsSize:
-      raise ValueError,"%s: warning: invalid load commands size: %r" % (sys.argv, loadCommandsSize)
+      raise ValueError,"%s: warning: invalid load commands size: %r" % (sys.argv[0], loadCommandsSize)
 
 def dumpLoadCommand(f, i, opts):
    start = f.tell()
@@ -83,7 +107,7 @@ def dumpLoadCommand(f, i, opts):
    print " ),"
 
    if f.tell() - start != cmdSize:
-      raise ValueError,"%s: warning: invalid load command size: %r" % (sys.argv, cmdSize)
+      raise ValueError,"%s: warning: invalid load command size: %r" % (sys.argv[0], cmdSize)
 
 def dumpSegmentLoadCommand32(f, opts):
    print "  ('segment_name', %r)" % f.read(16) 
@@ -103,10 +127,45 @@ def dumpSegmentLoadCommand32(f, opts):
    print "  ])"
 
 def dumpSymtabCommand(f, opts):
-   print "  ('symoff', %r)" % f.read32()
-   print "  ('nsyms', %r)" % f.read32()
-   print "  ('stroff', %r)" % f.read32()
-   print "  ('strsize', %r)" % f.read32()
+   symoff = f.read32()
+   print "  ('symoff', %r)" % symoff
+   nsyms = f.read32()
+   print "  ('nsyms', %r)" % nsyms
+   stroff = f.read32()
+   print "  ('stroff', %r)" % stroff
+   strsize = f.read32()
+   print "  ('strsize', %r)" % strsize
+
+   prev_pos = f.tell()
+
+   f.seek(stroff)
+   string_data = f.read(strsize)
+   print "  ('_string_data', %r)" % string_data
+
+   f.registerStringTable(string_data)
+
+   f.seek(symoff)
+   print "  ('_symbols', ["
+   for i in range(nsyms):
+      dumpNlist32(f, i, opts)
+   print "  ])"
+      
+   f.seek(prev_pos)
+
+def dumpNlist32(f, i, opts):
+   print "    # Symbol %r" % i
+   n_strx = f.read32()
+   print "   (('n_strx', %r)" % n_strx
+   n_type = f.read8()
+   print "    ('n_type', %#x)" % n_type
+   n_sect = f.read8()
+   print "    ('n_type', %r)" % n_sect
+   n_desc = f.read16()
+   print "    ('n_desc', %r)" % n_desc
+   n_value = f.read32()
+   print "    ('n_value', %r)" % n_value
+   print "    ('_string', %r)" % f.getString(n_strx)
+   print "   ),"
 
 def dumpDysymtabCommand(f, opts):   
    print "  ('ilocalsym', %r)" % f.read32()
@@ -121,12 +180,25 @@ def dumpDysymtabCommand(f, opts):
    print "  ('nmodtab', %r)" % f.read32()
    print "  ('extrefsymoff', %r)" % f.read32()
    print "  ('nextrefsyms', %r)" % f.read32()
-   print "  ('indirectsymoff', %r)" % f.read32()
-   print "  ('nindirectsyms', %r)" % f.read32()
+   indirectsymoff = f.read32()
+   print "  ('indirectsymoff', %r)" % indirectsymoff
+   nindirectsyms = f.read32()
+   print "  ('nindirectsyms', %r)" % nindirectsyms
    print "  ('extreloff', %r)" % f.read32()
    print "  ('nextrel', %r)" % f.read32()
    print "  ('locreloff', %r)" % f.read32()
    print "  ('nlocrel', %r)" % f.read32()
+
+   prev_pos = f.tell()
+
+   f.seek(indirectsymoff)
+   print "  ('_indirect_symbols', ["
+   for i in range(nindirectsyms):
+      print "    # Indirect Symbol %r" % i
+      print "    (('symbol_index', %r),)," % f.read32()
+   print "  ])"
+      
+   f.seek(prev_pos)
 
 def dumpSection32(f, i, opts):
    print "    # Section %r" % i

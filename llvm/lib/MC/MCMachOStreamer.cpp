@@ -91,15 +91,12 @@ void MCMachOStreamer::SwitchSection(const MCSection *Section) {
 }
 
 void MCMachOStreamer::EmitLabel(MCSymbol *Symbol) {
-  assert(Symbol->getSection() == 0 && "Cannot emit a symbol twice!");
+  assert(Symbol->isUndefined() && "Cannot define a symbol twice!");
   assert(CurSection && "Cannot emit before setting section!");
-  assert(!getContext().GetSymbolValue(Symbol) &&
-         "Cannot emit symbol which was directly assigned to!");
 
   llvm_unreachable("FIXME: Not yet implemented!");
 
-  Symbol->setSection(CurSection);
-  Symbol->setExternal(false);
+  Symbol->setSection(*CurSection);
 }
 
 void MCMachOStreamer::EmitAssemblerFlag(AssemblerFlag Flag) {
@@ -109,7 +106,9 @@ void MCMachOStreamer::EmitAssemblerFlag(AssemblerFlag Flag) {
 void MCMachOStreamer::EmitAssignment(MCSymbol *Symbol,
                                      const MCValue &Value,
                                      bool MakeAbsolute) {
-  assert(!Symbol->getSection() && "Cannot assign to a label!");
+  // Only absolute symbols can be redefined.
+  assert((Symbol->isUndefined() || Symbol->isAbsolute()) &&
+         "Cannot define a symbol twice!");
 
   llvm_unreachable("FIXME: Not yet implemented!");
 }

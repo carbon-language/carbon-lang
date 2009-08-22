@@ -149,10 +149,6 @@ bool AsmParser::ParsePrimaryExpr(AsmExpr *&Res) {
     // This is a label, this should be parsed as part of an expression, to
     // handle things like LFOO+4.
     MCSymbol *Sym = Ctx.GetOrCreateSymbol(Lexer.getTok().getIdentifier());
-
-    // If this is use of an undefined symbol then mark it external.
-    if (!Sym->getSection() && !Ctx.GetSymbolValue(Sym))
-      Sym->setExternal(true);
     
     Res = new AsmSymbolRefExpr(Sym);
     Lexer.Lex(); // Eat identifier.
@@ -376,10 +372,8 @@ bool AsmParser::ParseStatement() {
     // FIXME: This doesn't diagnose assignment to a symbol which has been
     // implicitly marked as external.
     MCSymbol *Sym = Ctx.GetOrCreateSymbol(IDVal);
-    if (Sym->getSection())
+    if (!Sym->isUndefined())
       return Error(IDLoc, "invalid symbol redefinition");
-    if (Ctx.GetSymbolValue(Sym))
-      return Error(IDLoc, "symbol already used as assembler variable");
     
     // Since we saw a label, create a symbol and emit it.
     // FIXME: If the label starts with L it is an assembler temporary label.
@@ -687,15 +681,11 @@ bool AsmParser::ParseAssignment(const StringRef &Name, bool IsDotSet) {
   // Diagnose assignment to a label.
   //
   // FIXME: Diagnostics. Note the location of the definition as a label.
-  // FIXME: This doesn't diagnose assignment to a symbol which has been
-  // implicitly marked as external.
   // FIXME: Handle '.'.
   // FIXME: Diagnose assignment to protected identifier (e.g., register name).
   MCSymbol *Sym = Ctx.GetOrCreateSymbol(Name);
-  if (Sym->getSection())
-    return Error(EqualLoc, "invalid assignment to symbol emitted as a label");
-  if (Sym->isExternal())
-    return Error(EqualLoc, "invalid assignment to external symbol");
+  if (!Sym->isUndefined() && !Sym->isAbsolute())
+    return Error(EqualLoc, "symbol has already been defined");
 
   // Do the assignment.
   Out.EmitAssignment(Sym, Value, IsDotSet);
@@ -1117,10 +1107,6 @@ bool AsmParser::ParseDirectiveSymbolAttribute(MCStreamer::SymbolAttr Attr) {
       
       MCSymbol *Sym = Ctx.GetOrCreateSymbol(Name);
 
-      // If this is use of an undefined symbol then mark it external.
-      if (!Sym->getSection() && !Ctx.GetSymbolValue(Sym))
-        Sym->setExternal(true);
-
       Out.EmitSymbolAttribute(Sym, Attr);
 
       if (Lexer.is(AsmToken::EndOfStatement))
@@ -1213,8 +1199,7 @@ bool AsmParser::ParseDirectiveComm(bool IsLocal) {
     return Error(Pow2AlignmentLoc, "invalid '.comm' or '.lcomm' directive "
                  "alignment, can't be less than zero");
 
-  // TODO: Symbol must be undefined or it is a error to re-defined the symbol
-  if (Sym->getSection() || Ctx.GetSymbolValue(Sym))
+  if (!Sym->isUndefined())
     return Error(IDLoc, "invalid symbol redefinition");
 
   // Create the Symbol as a common or local common with Size and Pow2Alignment
@@ -1305,8 +1290,7 @@ bool AsmParser::ParseDirectiveDarwinZerofill() {
     return Error(Pow2AlignmentLoc, "invalid '.zerofill' directive alignment, "
                  "can't be less than zero");
 
-  // TODO: Symbol must be undefined or it is a error to re-defined the symbol
-  if (Sym->getSection() || Ctx.GetSymbolValue(Sym))
+  if (!Sym->isUndefined())
     return Error(IDLoc, "invalid symbol redefinition");
 
   // FIXME: Arch specific.

@@ -16,6 +16,7 @@
 
 #include <string>
 #include "llvm/ADT/StringRef.h"
+#include "llvm/Support/DataTypes.h"
 
 namespace llvm {
   class MCSection;
@@ -30,38 +31,68 @@ namespace llvm {
   /// it is a reference to an external entity, it has a null section.  
   /// 
   class MCSymbol {
+    // Special sentinal value for the absolute pseudo section.
+    //
+    // FIXME: Use a PointerInt wrapper for this?
+    static const MCSection *AbsolutePseudoSection;
+
     /// Name - The name of the symbol.
     std::string Name;
-    /// Section - The section the symbol is defined in, or null if the symbol
-    /// has not been defined in the associated translation unit.
+
+    /// Section - The section the symbol is defined in. This is null for
+    /// undefined symbols, and the special AbsolutePseudoSection value for
+    /// absolute symbols.
     const MCSection *Section;
     
     /// IsTemporary - True if this is an assembler temporary label, which
     /// typically does not survive in the .o file's symbol table.  Usually
     /// "Lfoo" or ".foo".
     unsigned IsTemporary : 1;
-    
-    /// IsExternal - True if this symbol has been implicitly defined as an
-    /// external, for example by using it in an expression without ever emitting
-    /// it as a label. The @var Section for an external symbol is always null.
-    unsigned IsExternal : 1;
 
   private:  // MCContext creates and uniques these.
     friend class MCContext;
     MCSymbol(const StringRef &_Name, bool _IsTemporary) 
-      : Name(_Name), Section(0), IsTemporary(_IsTemporary), IsExternal(false) {}
+      : Name(_Name), Section(0),
+        IsTemporary(_IsTemporary) {}
     
     MCSymbol(const MCSymbol&);       // DO NOT IMPLEMENT
     void operator=(const MCSymbol&); // DO NOT IMPLEMENT
   public:
-    
-    const MCSection *getSection() const { return Section; }
-    void setSection(const MCSection *S) { Section = S; }
-
-    bool isExternal() const { return IsExternal; }
-    void setExternal(bool Value) { IsExternal = Value; }
-
+    /// getName - Get the symbol name.
     const std::string &getName() const { return Name; }
+
+    /// @name Symbol Location Functions
+    /// @{
+
+    /// isUndefined - Check if this symbol undefined (i.e., implicitly defined).
+    bool isUndefined() const {
+      return Section == 0;
+    }
+
+    /// isAbsolute - Check if this this is an absolute symbol.
+    bool isAbsolute() const {
+      return Section == AbsolutePseudoSection;
+    }
+
+    /// getSection - Get the section associated with a defined, non-absolute
+    /// symbol.
+    const MCSection &getSection() const {
+      assert(!isUndefined() && !isAbsolute() && "Invalid accessor!");
+      return *Section;
+    }
+
+    /// setSection - Mark the symbol as defined in the section \arg S.
+    void setSection(const MCSection &S) { Section = &S; }
+
+    /// setUndefined - Mark the symbol as undefined.
+    void setUndefined() {
+      Section = 0;
+    }
+
+    /// setAbsolute - Mark the symbol as absolute.
+    void setAbsolute() { Section = AbsolutePseudoSection; }
+
+    /// @}
 
     /// print - Print the value to the stream \arg OS.
     void print(raw_ostream &OS) const;

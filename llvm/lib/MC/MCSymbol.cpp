@@ -12,6 +12,10 @@
 
 using namespace llvm;
 
+// Sentinel value for the absolute pseudo section.
+const MCSection *MCSymbol::AbsolutePseudoSection =
+  reinterpret_cast<const MCSection *>(1);
+
 /// NeedsQuoting - Return true if the string \arg Str needs quoting, i.e., it
 /// does not match [a-zA-Z_.][a-zA-Z0-9_.]*.
 //

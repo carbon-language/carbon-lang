@@ -107,14 +107,11 @@ void MCAsmStreamer::SwitchSection(const MCSection *Section) {
 }
 
 void MCAsmStreamer::EmitLabel(MCSymbol *Symbol) {
-  assert(Symbol->getSection() == 0 && "Cannot emit a symbol twice!");
+  assert(Symbol->isUndefined() && "Cannot define a symbol twice!");
   assert(CurSection && "Cannot emit before setting section!");
-  assert(!getContext().GetSymbolValue(Symbol) && 
-         "Cannot emit symbol which was directly assigned to!");
 
   OS << Symbol << ":\n";
-  Symbol->setSection(CurSection);
-  Symbol->setExternal(false);
+  Symbol->setSection(*CurSection);
 }
 
 void MCAsmStreamer::EmitAssemblerFlag(AssemblerFlag Flag) {
@@ -127,7 +124,9 @@ void MCAsmStreamer::EmitAssemblerFlag(AssemblerFlag Flag) {
 
 void MCAsmStreamer::EmitAssignment(MCSymbol *Symbol, const MCValue &Value,
                                    bool MakeAbsolute) {
-  assert(!Symbol->getSection() && "Cannot assign to a label!");
+  // Only absolute symbols can be redefined.
+  assert((Symbol->isUndefined() || Symbol->isAbsolute()) &&
+         "Cannot define a symbol twice!");
 
   if (MakeAbsolute) {
     OS << ".set " << Symbol << ", " << Value << '\n';

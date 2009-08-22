@@ -49,9 +49,10 @@ public:
   ///
   /// @result - The value's associated section, or null for external or constant
   /// values.
-  const MCSection *getAssociatedSection() const {
-    return SymA ? SymA->getSection() : 0;
-  }
+  //
+  // FIXME: Switch to a tagged section, so this can return the tagged section
+  // value.
+  const MCSection *getAssociatedSection() const;
 
   /// print - Print the value to the stream \arg OS.
   void print(raw_ostream &OS) const;
