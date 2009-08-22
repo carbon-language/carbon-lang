@@ -24,7 +24,7 @@ set(sources
   X86JITInfo.cpp
   X86RegisterInfo.cpp
   X86Subtarget.cpp
-  X86TargetAsmInfo.cpp
+  X86MCAsmInfo.cpp
   X86TargetMachine.cpp
   X86FastISel.cpp
   )

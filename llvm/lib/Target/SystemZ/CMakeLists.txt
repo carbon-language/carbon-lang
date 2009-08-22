@@ -16,7 +16,7 @@ add_llvm_target(SystemZCodeGen
   SystemZInstrInfo.cpp
   SystemZRegisterInfo.cpp
   SystemZSubtarget.cpp
-  SystemZTargetAsmInfo.cpp
+  SystemZMCAsmInfo.cpp
   SystemZTargetMachine.cpp
   )
 

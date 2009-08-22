@@ -13,7 +13,7 @@ tablegen(MSP430GenSubtarget.inc -gen-subtarget)
 add_llvm_target(MSP430CodeGen
   MSP430ISelDAGToDAG.cpp
   MSP430RegisterInfo.cpp
-  MSP430TargetAsmInfo.cpp
+  MSP430MCAsmInfo.cpp
   MSP430InstrInfo.cpp
   MSP430ISelLowering.cpp
   MSP430Subtarget.cpp

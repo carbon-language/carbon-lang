@@ -23,7 +23,7 @@ add_llvm_target(PowerPCCodeGen
   PPCPredicates.cpp
   PPCRegisterInfo.cpp
   PPCSubtarget.cpp
-  PPCTargetAsmInfo.cpp
+  PPCMCAsmInfo.cpp
   PPCTargetMachine.cpp
   )
 

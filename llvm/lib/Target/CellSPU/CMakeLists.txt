@@ -19,7 +19,7 @@ add_llvm_target(CellSPUCodeGen
   SPUISelLowering.cpp
   SPURegisterInfo.cpp
   SPUSubtarget.cpp
-  SPUTargetAsmInfo.cpp
+  SPUMCAsmInfo.cpp
   SPUTargetMachine.cpp
   )
 
