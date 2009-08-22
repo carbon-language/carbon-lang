@@ -15,6 +15,7 @@
 #include "PIC16DebugInfo.h" 
 #include "llvm/GlobalVariable.h"
 #include "llvm/CodeGen/MachineFunction.h"
+#include "llvm/MC/MCAsmInfo.h"
 #include "llvm/Support/DebugLoc.h"
 #include "llvm/Support/FormattedStream.h"
 #include "llvm/ADT/SmallString.h"

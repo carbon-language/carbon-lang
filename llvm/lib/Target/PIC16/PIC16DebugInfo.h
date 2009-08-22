@@ -92,6 +92,7 @@ namespace llvm {
 
   class PIC16DbgInfo {
     formatted_raw_ostream &O;
+    const MCAsmInfo *TAI;
     std::string CurFile;
     unsigned CurLine;
 
@@ -100,7 +101,8 @@ namespace llvm {
     bool EmitDebugDirectives;
 
   public:
-    PIC16DbgInfo(formatted_raw_ostream &o): O(o) {
+    PIC16DbgInfo(formatted_raw_ostream &o, const MCAsmInfo *T)
+      : O(o), TAI(T) {
       CurFile = "";
       CurLine = 0;
       EmitDebugDirectives = false; 
