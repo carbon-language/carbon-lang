@@ -289,6 +289,23 @@ raw_ostream &raw_ostream::operator<<(const format_object_base &Fmt) {
   }
 }
 
+/// indent - Insert 'NumSpaces' spaces.
+raw_ostream &raw_ostream::indent(unsigned NumSpaces) {
+  const char *Spaces = "                ";
+
+  // Usually the indentation is small, handle it with a fastpath.
+  if (NumSpaces <= 16)
+    return write(Spaces, NumSpaces);
+  
+  while (NumSpaces) {
+    unsigned NumToWrite = std::min(NumSpaces, 16U);
+    write(Spaces, NumToWrite);
+    NumSpaces -= NumToWrite;
+  }
+  return *this;
+}
+
+
 //===----------------------------------------------------------------------===//
 //  Formatted Output
 //===----------------------------------------------------------------------===//

@@ -230,6 +230,10 @@ public:
   // Formatted output, see the format() function in Support/Format.h.
   raw_ostream &operator<<(const format_object_base &Fmt);
 
+  /// indent - Insert 'NumSpaces' spaces.
+  raw_ostream &indent(unsigned NumSpaces);
+  
+  
   /// Changes the foreground color of text that will be output from this point
   /// forward.
   /// @param colors ANSI color to use, the special SAVEDCOLOR can be used to
