@@ -254,10 +254,6 @@ private:
   //
   // FIXME: This could all be kept private to the assembler implementation.
 
-  /// FileOffset - The offset of this section in the object file. This is ~0
-  /// until initialized.
-  uint64_t FileOffset;
-
   /// FileSize - The size of this section in the object file. This is ~0 until
   /// initialized.
   uint64_t FileSize;
@@ -300,12 +296,6 @@ public:
     return FileSize;
   }
   void setFileSize(uint64_t Value) { FileSize = Value; }
-
-  uint64_t getFileOffset() const {
-    assert(FileOffset != ~UINT64_C(0) && "File offset not set!");
-    return FileOffset;
-  }
-  void setFileOffset(uint64_t Value) { FileOffset = Value; }
 
   /// @}
 };

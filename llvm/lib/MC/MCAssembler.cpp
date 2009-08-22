@@ -102,11 +102,6 @@ public:
 
   /// @}
   
-  static unsigned getPrologSize32(unsigned NumSections) {
-    return Header32Size + SegmentLoadCommand32Size + 
-      NumSections * Section32Size;
-  }
-
   void WriteHeader32(unsigned NumSections) {
     // struct mach_header (28 bytes)
 
@@ -166,7 +161,7 @@ public:
     assert(OS.tell() - Start == SegmentLoadCommand32Size);
   }
 
-  void WriteSection32(const MCSectionData &SD) {
+  void WriteSection32(const MCSectionData &SD, uint64_t FileOffset) {
     // struct section (68 bytes)
 
     uint64_t Start = OS.tell();
@@ -179,7 +174,7 @@ public:
     WriteString(Section.getSegmentName(), 16);
     Write32(0); // address
     Write32(SD.getFileSize()); // size
-    Write32(SD.getFileOffset());
+    Write32(FileOffset);
 
     assert(isPowerOf2_32(SD.getAlignment()) && "Invalid alignment!");
     Write32(Log2_32(SD.getAlignment()));
@@ -191,6 +186,39 @@ public:
 
     assert(OS.tell() - Start == Section32Size);
   }
+
+  void WriteProlog(MCAssembler &Asm) {
+    unsigned NumSections = Asm.size();
+
+    // Compute the file offsets for all the sections in advance, so that we can
+    // write things out in order.
+    SmallVector<uint64_t, 16> SectionFileOffsets;
+    SectionFileOffsets.resize(NumSections);
+  
+    // The section data starts after the header, the segment load command, and
+    // the section headers.
+    uint64_t FileOffset = Header32Size + SegmentLoadCommand32Size + 
+      NumSections * Section32Size;
+    uint64_t SectionDataSize = 0;
+    unsigned Index = 0;
+    for (MCAssembler::iterator it = Asm.begin(),
+           ie = Asm.end(); it != ie; ++it, ++Index) {
+      SectionFileOffsets[Index] = FileOffset;
+      FileOffset += it->getFileSize();
+      SectionDataSize += it->getFileSize();
+    }
+
+    // Write the prolog, starting with the header and load command...
+    WriteHeader32(NumSections);
+    WriteSegmentLoadCommand32(NumSections, SectionDataSize);
+  
+    // ... and then the section headers.
+    Index = 0;
+    for (MCAssembler::iterator it = Asm.begin(),
+           ie = Asm.end(); it != ie; ++it, ++Index)
+      WriteSection32(*it, SectionFileOffsets[Index]);
+  }
+
 };
 
 }
@@ -218,7 +246,6 @@ MCSectionData::MCSectionData() : Section(*(MCSection*)0) {}
 MCSectionData::MCSectionData(const MCSection &_Section, MCAssembler *A)
   : Section(_Section),
     Alignment(1),
-    FileOffset(~UINT64_C(0)),
     FileSize(~UINT64_C(0))
 {
   if (A)
@@ -369,31 +396,17 @@ static void WriteFileData(raw_ostream &OS, const MCSectionData &SD,
 }
 
 void MCAssembler::Finish() {
-  unsigned NumSections = Sections.size();
-
   // Layout the sections and fragments.
-  uint64_t Offset = MachObjectWriter::getPrologSize32(NumSections);
-  uint64_t SectionDataSize = 0;
-  for (iterator it = begin(), ie = end(); it != ie; ++it) {
-    it->setFileOffset(Offset);
-
+  for (iterator it = begin(), ie = end(); it != ie; ++it)
     LayoutSection(*it);
-
-    Offset += it->getFileSize();
-    SectionDataSize += it->getFileSize();
-  }
 
   MachObjectWriter MOW(OS);
 
-  // Write the prolog, starting with the header and load command...
-  MOW.WriteHeader32(NumSections);
-  MOW.WriteSegmentLoadCommand32(NumSections, SectionDataSize);
-  
-  // ... and then the section headers.
-  for (iterator it = begin(), ie = end(); it != ie; ++it)
-    MOW.WriteSection32(*it);
+  // Write the prolog, followed by the data for all the sections & fragments.
+  MOW.WriteProlog(*this);
 
-  // Finally, write the section data.
+  // FIXME: This should move into the Mach-O writer, it should have control over
+  // what goes where.
   for (iterator it = begin(), ie = end(); it != ie; ++it)
     WriteFileData(OS, *it, MOW);
 
