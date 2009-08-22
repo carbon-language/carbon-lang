@@ -20,6 +20,7 @@
   <li><a href="#introduction">Introduction</a>
   <ol>
     <li><a href="#itanium">Itanium ABI Zero-cost Exception Handling</a></li>
+    <li><a href="#sjlj">Setjmp/Longjmp Exception Handling</a></li>
     <li><a href="#overview">Overview</a></li>
   </ol></li>
   <li><a href="#codegen">LLVM Code Generation</a>
@@ -100,6 +101,38 @@
    <a href="http://www.codesourcery.com/cxx-abi/exceptions.pdf">Exception Handling
    Tables</a>.</p>
 
+</div>
+
+<!-- ======================================================================= -->
+<div class="doc_subsection">
+  <a name="sjlj">Setjmp/Longjmp Exception Handling</a>
+</div>
+
+<div class="doc_text">
+
+<p>Setjmp/Longjmp (SJLJ) based exception handling uses LLVM intrinsics
+   <a href="#llvm_eh_sjlj_setjmp"><tt>llvm.eh.sjlj.setjmp</tt></a> and
+   <a href="#llvm_eh_sjlj_longjmp"><tt>llvm.eh.sjlj.longjmp</tt></a> to
+   handle control flow for exception handling.</p>
+
+<p>For each function which does exception processing, be it try/catch blocks
+   or cleanups, that function registers itself on a global frame list. When
+   exceptions are being unwound, the runtime uses this list to identify which
+   functions need processing.<p>
+
+<p>Landing pad selection is encoded in the call site entry of the function
+   context. The runtime returns to the function via
+   <a href="#llvm_eh_sjlj_longjmp"><tt>llvm.eh.sjlj.longjmp</tt></a>, where
+   a switch table transfers control to the appropriate landing pad based on
+   the index stored in the function context.</p>
+
+<p>In contrast to DWARF exception handling, which encodes exception regions
+   and frame information in out-of-line tables, SJLJ exception handling
+   builds and removes the unwind frame context at runtime. This results in
+   faster exception handling at the expense of slower execution when no
+   exceptions are thrown. As exceptions are, by their nature, intended for
+   uncommon code paths, DWARF exception handling is generally preferred to
+   SJLJ.</p>
 </div>
 
 <!-- ======================================================================= -->
@@ -282,10 +315,10 @@
    from the landing pad to clean up code and then to the first catch.  Since the
    required clean up for each <tt>invoke</tt> in a <tt>try</tt> may be different
    (e.g. intervening constructor), there may be several landing pads for a given
-   try.  If cleanups need to be run, the number zero should be passed as the
+   try.  If cleanups need to be run, an <tt>i32 0</tt> should be passed as the
    last <a href="#llvm_eh_selector"><tt>llvm.eh.selector</tt></a> argument.
-   However for C++ a <tt>null i8*</tt> <b><a href="#restrictions">must</a></b>
-   be passed instead.</p>
+   However, when using DWARF exception handling with C++, a <tt>i8* null</tt>
+   <a href="#restrictions">must</a> be passed instead.</p>
 
 </div>
 
