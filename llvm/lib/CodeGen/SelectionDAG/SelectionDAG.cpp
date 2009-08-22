@@ -5017,7 +5017,6 @@ void SDNode::Profile(FoldingSetNodeID &ID) const {
 
 static ManagedStatic<std::set<EVT, EVT::compareRawBits> > EVTs;
 static EVT VTs[MVT::LAST_VALUETYPE];
-static ManagedStatic<sys::SmartMutex<true> > VTMutex;
 
 /// getValueTypeList - Return a pointer to the specified value type.
 ///
