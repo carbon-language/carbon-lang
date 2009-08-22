@@ -23,8 +23,9 @@
 #include "llvm/CodeGen/RegAllocRegistry.h"
 #include "llvm/Target/TargetInstrInfo.h"
 #include "llvm/Target/TargetMachine.h"
-#include "llvm/Support/Debug.h"
 #include "llvm/Support/Compiler.h"
+#include "llvm/Support/Debug.h"
+#include "llvm/Support/raw_ostream.h"
 #include "llvm/ADT/Statistic.h"
 #include "llvm/ADT/STLExtras.h"
 #include <map>
@@ -196,9 +197,10 @@ void RegAllocSimple::AllocateBasicBlock(MachineBasicBlock &MBB) {
       if (MO.isReg() && MO.getReg() &&
           TargetRegisterInfo::isVirtualRegister(MO.getReg())) {
         unsigned virtualReg = (unsigned) MO.getReg();
-        DOUT << "op: " << MO << "\n";
-        DOUT << "\t inst[" << i << "]: ";
-        DEBUG(MI->print(*cerr.stream(), TM));
+        DEBUG({
+            errs() << "op: " << MO << "\n" << "\t inst[" << i << "]: ";
+            MI->print(errs(), TM);
+          });
 
         // make sure the same virtual register maps to the same physical
         // register in any given instruction
@@ -226,7 +228,8 @@ void RegAllocSimple::AllocateBasicBlock(MachineBasicBlock &MBB) {
           }
         }
         MO.setReg(physReg);
-        DOUT << "virt: " << virtualReg << ", phys: " << MO.getReg() << "\n";
+        DEBUG(errs() << "virt: " << virtualReg
+                     << ", phys: " << MO.getReg() << "\n");
       }
     }
     RegClassIdx.clear();
@@ -238,7 +241,7 @@ void RegAllocSimple::AllocateBasicBlock(MachineBasicBlock &MBB) {
 /// runOnMachineFunction - Register allocate the whole function
 ///
 bool RegAllocSimple::runOnMachineFunction(MachineFunction &Fn) {
-  DOUT << "Machine Function\n";
+  DEBUG(errs() << "Machine Function\n");
   MF = &Fn;
   TM = &MF->getTarget();
   TRI = TM->getRegisterInfo();
