@@ -1,4 +1,4 @@
-//=====-- XCoreTargetAsmInfo.h - XCore asm properties ---------*- C++ -*--====//
+//=====-- SparcMCAsmInfo.h - Sparc asm properties -------------*- C++ -*--====//
 //
 //                     The LLVM Compiler Infrastructure
 //
@@ -7,21 +7,20 @@
 //
 //===----------------------------------------------------------------------===//
 //
-// This file contains the declaration of the XCoreTargetAsmInfo class.
+// This file contains the declaration of the SparcMCAsmInfo class.
 //
 //===----------------------------------------------------------------------===//
 
-#ifndef XCORETARGETASMINFO_H
-#define XCORETARGETASMINFO_H
+#ifndef SPARCTARGETASMINFO_H
+#define SPARCTARGETASMINFO_H
 
-#include "llvm/Target/TargetAsmInfo.h"
+#include "llvm/MC/MCAsmInfo.h"
 
 namespace llvm {
   class Target;
   class StringRef;
-  class XCoreTargetAsmInfo : public TargetAsmInfo {
-  public:
-    explicit XCoreTargetAsmInfo(const Target &T, const StringRef &TT);
+  struct SparcELFMCAsmInfo : public MCAsmInfo {
+    explicit SparcELFMCAsmInfo(const Target &T, const StringRef &TT);
   };
 
 } // namespace llvm

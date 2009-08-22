@@ -42,7 +42,7 @@ namespace llvm {
   class AsmPrinter;
   class GCStrategy;
   class Constant;
-  class TargetAsmInfo;
+  class MCAsmInfo;
   
   
   namespace GC {

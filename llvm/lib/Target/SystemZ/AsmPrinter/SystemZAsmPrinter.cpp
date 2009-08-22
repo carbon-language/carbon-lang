@@ -27,7 +27,7 @@
 #include "llvm/CodeGen/MachineConstantPool.h"
 #include "llvm/CodeGen/MachineInstr.h"
 #include "llvm/MC/MCStreamer.h"
-#include "llvm/Target/TargetAsmInfo.h"
+#include "llvm/MC/MCAsmInfo.h"
 #include "llvm/Target/TargetData.h"
 #include "llvm/Target/TargetLoweringObjectFile.h"
 #include "llvm/Target/TargetRegistry.h"
@@ -44,7 +44,7 @@ namespace {
   class VISIBILITY_HIDDEN SystemZAsmPrinter : public AsmPrinter {
   public:
     SystemZAsmPrinter(formatted_raw_ostream &O, TargetMachine &TM,
-                      const TargetAsmInfo *TAI, bool V)
+                      const MCAsmInfo *TAI, bool V)
       : AsmPrinter(O, TM, TAI, V) {}
 
     virtual const char *getPassName() const {

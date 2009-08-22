@@ -10,7 +10,7 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include "SparcTargetAsmInfo.h"
+#include "SparcMCAsmInfo.h"
 #include "SparcTargetMachine.h"
 #include "Sparc.h"
 #include "llvm/PassManager.h"
@@ -20,7 +20,7 @@ using namespace llvm;
 extern "C" void LLVMInitializeSparcTarget() {
   // Register the target.
   RegisterTargetMachine<SparcTargetMachine> X(TheSparcTarget);
-  RegisterAsmInfo<SparcELFTargetAsmInfo> Y(TheSparcTarget);
+  RegisterAsmInfo<SparcELFMCAsmInfo> Y(TheSparcTarget);
 
 }
 

@@ -11,7 +11,7 @@
 //===----------------------------------------------------------------------===//
 
 #include "ARMTargetMachine.h"
-#include "ARMTargetAsmInfo.h"
+#include "ARMMCAsmInfo.h"
 #include "ARMFrameInfo.h"
 #include "ARM.h"
 #include "llvm/PassManager.h"
@@ -27,14 +27,14 @@ static cl::opt<bool> DisableLdStOpti("disable-arm-loadstore-opti", cl::Hidden,
 static cl::opt<bool> DisableIfConversion("disable-arm-if-conversion",cl::Hidden,
                               cl::desc("Disable if-conversion pass"));
 
-static const TargetAsmInfo *createTargetAsmInfo(const Target &T,
+static const MCAsmInfo *createMCAsmInfo(const Target &T,
                                                 const StringRef &TT) {
   Triple TheTriple(TT);
   switch (TheTriple.getOS()) {
   case Triple::Darwin:
-    return new ARMDarwinTargetAsmInfo();
+    return new ARMDarwinMCAsmInfo();
   default:
-    return new ARMELFTargetAsmInfo();
+    return new ARMELFMCAsmInfo();
   }
 }
 
@@ -45,8 +45,8 @@ extern "C" void LLVMInitializeARMTarget() {
   RegisterTargetMachine<ThumbTargetMachine> Y(TheThumbTarget);
   
   // Register the target asm info.
-  RegisterAsmInfoFn A(TheARMTarget, createTargetAsmInfo);
-  RegisterAsmInfoFn B(TheThumbTarget, createTargetAsmInfo);
+  RegisterAsmInfoFn A(TheARMTarget, createMCAsmInfo);
+  RegisterAsmInfoFn B(TheThumbTarget, createMCAsmInfo);
 }
 
 /// TargetMachine ctor - Create an ARM architecture model.

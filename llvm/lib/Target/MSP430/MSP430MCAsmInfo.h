@@ -1,4 +1,4 @@
-//=====-- MSP430TargetAsmInfo.h - MSP430 asm properties -------*- C++ -*--====//
+//=====-- MSP430MCAsmInfo.h - MSP430 asm properties -----------*- C++ -*--====//
 //
 //                     The LLVM Compiler Infrastructure
 //
@@ -7,20 +7,20 @@
 //
 //===----------------------------------------------------------------------===//
 //
-// This file contains the declaration of the MSP430TargetAsmInfo class.
+// This file contains the declaration of the MSP430MCAsmInfo class.
 //
 //===----------------------------------------------------------------------===//
 
 #ifndef MSP430TARGETASMINFO_H
 #define MSP430TARGETASMINFO_H
 
-#include "llvm/Target/TargetAsmInfo.h"
+#include "llvm/MC/MCAsmInfo.h"
 
 namespace llvm {
   class Target;
   class StringRef;
-  struct MSP430TargetAsmInfo : public TargetAsmInfo {
-    explicit MSP430TargetAsmInfo(const Target &T, const StringRef &TT);
+  struct MSP430MCAsmInfo : public MCAsmInfo {
+    explicit MSP430MCAsmInfo(const Target &T, const StringRef &TT);
   };
 
 } // namespace llvm

@@ -239,7 +239,7 @@ static int AssembleInput(const char *ProgName) {
   OwningPtr<MCStreamer> Str;
 
   if (FileType == OFT_AssemblyFile) {
-    const TargetAsmInfo *TAI = TheTarget->createAsmInfo(TripleName);
+    const MCAsmInfo *TAI = TheTarget->createAsmInfo(TripleName);
     assert(TAI && "Unable to create target asm info!");
 
     AP.reset(TheTarget->createAsmPrinter(*Out, *TM, TAI, true));

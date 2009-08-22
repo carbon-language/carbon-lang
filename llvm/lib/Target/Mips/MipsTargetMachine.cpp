@@ -12,7 +12,7 @@
 //===----------------------------------------------------------------------===//
 
 #include "Mips.h"
-#include "MipsTargetAsmInfo.h"
+#include "MipsMCAsmInfo.h"
 #include "MipsTargetMachine.h"
 #include "llvm/PassManager.h"
 #include "llvm/Target/TargetRegistry.h"
@@ -22,8 +22,8 @@ extern "C" void LLVMInitializeMipsTarget() {
   // Register the target.
   RegisterTargetMachine<MipsTargetMachine> X(TheMipsTarget);
   RegisterTargetMachine<MipselTargetMachine> Y(TheMipselTarget);
-  RegisterAsmInfo<MipsTargetAsmInfo> A(TheMipsTarget);
-  RegisterAsmInfo<MipsTargetAsmInfo> B(TheMipselTarget);
+  RegisterAsmInfo<MipsMCAsmInfo> A(TheMipsTarget);
+  RegisterAsmInfo<MipsMCAsmInfo> B(TheMipselTarget);
 }
 
 // DataLayout --> Big-endian, 32-bit pointer/ABI/alignment

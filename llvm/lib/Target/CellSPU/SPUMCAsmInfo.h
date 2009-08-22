@@ -1,4 +1,4 @@
-//=====-- SparcTargetAsmInfo.h - Sparc asm properties ---------*- C++ -*--====//
+//===-- SPUMCAsmInfo.h - Cell SPU asm properties ---------------*- C++ -*--===//
 //
 //                     The LLVM Compiler Infrastructure
 //
@@ -7,22 +7,22 @@
 //
 //===----------------------------------------------------------------------===//
 //
-// This file contains the declaration of the SparcTargetAsmInfo class.
+// This file contains the declaration of the SPUMCAsmInfo class.
 //
 //===----------------------------------------------------------------------===//
 
-#ifndef SPARCTARGETASMINFO_H
-#define SPARCTARGETASMINFO_H
+#ifndef SPUTARGETASMINFO_H
+#define SPUTARGETASMINFO_H
 
-#include "llvm/Target/TargetAsmInfo.h"
+#include "llvm/MC/MCAsmInfo.h"
 
 namespace llvm {
   class Target;
   class StringRef;
-  struct SparcELFTargetAsmInfo : public TargetAsmInfo {
-    explicit SparcELFTargetAsmInfo(const Target &T, const StringRef &TT);
+  
+  struct SPULinuxMCAsmInfo : public MCAsmInfo {
+    explicit SPULinuxMCAsmInfo(const Target &T, const StringRef &TT);
   };
-
 } // namespace llvm
 
-#endif
+#endif /* SPUTARGETASMINFO_H */

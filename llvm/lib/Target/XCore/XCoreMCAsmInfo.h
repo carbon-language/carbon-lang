@@ -1,4 +1,4 @@
-//=====-- AlphaTargetAsmInfo.h - Alpha asm properties ---------*- C++ -*--====//
+//=====-- XCoreMCAsmInfo.h - XCore asm properties -------------*- C++ -*--====//
 //
 //                     The LLVM Compiler Infrastructure
 //
@@ -7,21 +7,21 @@
 //
 //===----------------------------------------------------------------------===//
 //
-// This file contains the declaration of the AlphaTargetAsmInfo class.
+// This file contains the declaration of the XCoreMCAsmInfo class.
 //
 //===----------------------------------------------------------------------===//
 
-#ifndef ALPHATARGETASMINFO_H
-#define ALPHATARGETASMINFO_H
+#ifndef XCORETARGETASMINFO_H
+#define XCORETARGETASMINFO_H
 
-#include "llvm/Target/TargetAsmInfo.h"
+#include "llvm/MC/MCAsmInfo.h"
 
 namespace llvm {
   class Target;
   class StringRef;
-
-  struct AlphaTargetAsmInfo : public TargetAsmInfo {
-    explicit AlphaTargetAsmInfo(const Target &T, const StringRef &TT);
+  class XCoreMCAsmInfo : public MCAsmInfo {
+  public:
+    explicit XCoreMCAsmInfo(const Target &T, const StringRef &TT);
   };
 
 } // namespace llvm

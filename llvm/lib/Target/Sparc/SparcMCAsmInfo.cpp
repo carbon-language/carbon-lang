@@ -1,4 +1,4 @@
-//===-- SparcTargetAsmInfo.cpp - Sparc asm properties ---------------------===//
+//===-- SparcMCAsmInfo.cpp - Sparc asm properties -------------------------===//
 //
 //                     The LLVM Compiler Infrastructure
 //
@@ -7,16 +7,15 @@
 //
 //===----------------------------------------------------------------------===//
 //
-// This file contains the declarations of the SparcTargetAsmInfo properties.
+// This file contains the declarations of the SparcMCAsmInfo properties.
 //
 //===----------------------------------------------------------------------===//
 
-#include "SparcTargetAsmInfo.h"
+#include "SparcMCAsmInfo.h"
 #include "llvm/ADT/SmallVector.h"
 using namespace llvm;
 
-SparcELFTargetAsmInfo::SparcELFTargetAsmInfo(const Target &T,
-                                             const StringRef &TT) {
+SparcELFMCAsmInfo::SparcELFMCAsmInfo(const Target &T, const StringRef &TT) {
   Data16bitsDirective = "\t.half\t";
   Data32bitsDirective = "\t.word\t";
   Data64bitsDirective = 0;  // .xword is only supported by V9.

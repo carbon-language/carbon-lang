@@ -25,7 +25,7 @@ namespace llvm {
   class GlobalValue;
   class StringRef;
   class TargetMachine;
-  class TargetAsmInfo;
+  class MCAsmInfo;
   
 class TargetLoweringObjectFile {
   MCContext *Ctx;

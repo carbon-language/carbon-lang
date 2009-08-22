@@ -34,7 +34,7 @@ class MachineInstr;
 class Value;
 class Module;
 class GlobalVariable;
-class TargetAsmInfo;
+class MCAsmInfo;
 class raw_ostream;
 class Instruction;
 class DICompileUnit;
@@ -68,7 +68,7 @@ public:
   /// BeginModule - Emit all Dwarf sections that should come prior to the
   /// content.
   void BeginModule(Module *M, MachineModuleInfo *MMI, raw_ostream &OS,
-                   AsmPrinter *A, const TargetAsmInfo *T);
+                   AsmPrinter *A, const MCAsmInfo *T);
   
   /// EndModule - Emit all Dwarf sections that should come after the content.
   ///

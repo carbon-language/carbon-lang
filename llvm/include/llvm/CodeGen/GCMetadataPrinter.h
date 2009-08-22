@@ -63,10 +63,10 @@ namespace llvm {
     
     /// beginAssembly/finishAssembly - Emit module metadata as assembly code.
     virtual void beginAssembly(raw_ostream &OS, AsmPrinter &AP,
-                               const TargetAsmInfo &TAI);
+                               const MCAsmInfo &TAI);
     
     virtual void finishAssembly(raw_ostream &OS, AsmPrinter &AP,
-                                const TargetAsmInfo &TAI);
+                                const MCAsmInfo &TAI);
     
     virtual ~GCMetadataPrinter();
   };

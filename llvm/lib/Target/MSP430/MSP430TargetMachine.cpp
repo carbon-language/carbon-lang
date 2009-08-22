@@ -12,18 +12,18 @@
 //===----------------------------------------------------------------------===//
 
 #include "MSP430.h"
-#include "MSP430TargetAsmInfo.h"
+#include "MSP430MCAsmInfo.h"
 #include "MSP430TargetMachine.h"
 #include "llvm/PassManager.h"
 #include "llvm/CodeGen/Passes.h"
-#include "llvm/Target/TargetAsmInfo.h"
+#include "llvm/MC/MCAsmInfo.h"
 #include "llvm/Target/TargetRegistry.h"
 using namespace llvm;
 
 extern "C" void LLVMInitializeMSP430Target() {
   // Register the target.
   RegisterTargetMachine<MSP430TargetMachine> X(TheMSP430Target);
-  RegisterAsmInfo<MSP430TargetAsmInfo> Z(TheMSP430Target);
+  RegisterAsmInfo<MSP430MCAsmInfo> Z(TheMSP430Target);
 }
 
 MSP430TargetMachine::MSP430TargetMachine(const Target &T,

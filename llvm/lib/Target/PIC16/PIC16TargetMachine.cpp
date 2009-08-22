@@ -12,7 +12,7 @@
 //===----------------------------------------------------------------------===//
 
 #include "PIC16.h"
-#include "PIC16TargetAsmInfo.h"
+#include "PIC16MCAsmInfo.h"
 #include "PIC16TargetMachine.h"
 #include "llvm/PassManager.h"
 #include "llvm/CodeGen/Passes.h"
@@ -24,7 +24,7 @@ extern "C" void LLVMInitializePIC16Target() {
   // Register the target. Curretnly the codegen works for
   // enhanced pic16 mid-range.
   RegisterTargetMachine<PIC16TargetMachine> X(ThePIC16Target);
-  RegisterAsmInfo<PIC16TargetAsmInfo> A(ThePIC16Target);
+  RegisterAsmInfo<PIC16MCAsmInfo> A(ThePIC16Target);
 }
 
 

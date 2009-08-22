@@ -1,4 +1,4 @@
-//===-- AlphaTargetAsmInfo.cpp - Alpha asm properties -----------*- C++ -*-===//
+//===-- AlphaMCAsmInfo.cpp - Alpha asm properties ---------------*- C++ -*-===//
 //
 //                     The LLVM Compiler Infrastructure
 //
@@ -7,14 +7,14 @@
 //
 //===----------------------------------------------------------------------===//
 //
-// This file contains the declarations of the AlphaTargetAsmInfo properties.
+// This file contains the declarations of the AlphaMCAsmInfo properties.
 //
 //===----------------------------------------------------------------------===//
 
-#include "AlphaTargetAsmInfo.h"
+#include "AlphaMCAsmInfo.h"
 using namespace llvm;
 
-AlphaTargetAsmInfo::AlphaTargetAsmInfo(const Target &T, const StringRef &TT) {
+AlphaMCAsmInfo::AlphaMCAsmInfo(const Target &T, const StringRef &TT) {
   AlignmentIsInBytes = false;
   PrivateGlobalPrefix = "$";
   PICJumpTableDirective = ".gprel32";

@@ -10,7 +10,7 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include "XCoreTargetAsmInfo.h"
+#include "XCoreMCAsmInfo.h"
 #include "XCoreTargetMachine.h"
 #include "XCore.h"
 #include "llvm/Module.h"
@@ -40,5 +40,5 @@ bool XCoreTargetMachine::addInstSelector(PassManagerBase &PM,
 // Force static initialization.
 extern "C" void LLVMInitializeXCoreTarget() {
   RegisterTargetMachine<XCoreTargetMachine> X(TheXCoreTarget);
-  RegisterAsmInfo<XCoreTargetAsmInfo> Y(TheXCoreTarget);
+  RegisterAsmInfo<XCoreMCAsmInfo> Y(TheXCoreTarget);
 }

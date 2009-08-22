@@ -35,7 +35,7 @@ class DbgScope;
 class DbgConcreteScope;
 class MachineFrameInfo;
 class MachineModuleInfo;
-class TargetAsmInfo;
+class MCAsmInfo;
 class Timer;
 
 //===----------------------------------------------------------------------===//
@@ -458,7 +458,7 @@ public:
   //===--------------------------------------------------------------------===//
   // Main entry points.
   //
-  DwarfDebug(raw_ostream &OS, AsmPrinter *A, const TargetAsmInfo *T);
+  DwarfDebug(raw_ostream &OS, AsmPrinter *A, const MCAsmInfo *T);
   virtual ~DwarfDebug();
 
   /// ShouldEmitDwarfDebug - Returns true if Dwarf debugging declarations should

@@ -15,7 +15,7 @@
 #define DEBUG_TYPE "asm-printer"
 #include "MSP430.h"
 #include "MSP430InstrInfo.h"
-#include "MSP430TargetAsmInfo.h"
+#include "MSP430MCAsmInfo.h"
 #include "MSP430TargetMachine.h"
 #include "llvm/Constants.h"
 #include "llvm/DerivedTypes.h"
@@ -44,7 +44,7 @@ namespace {
   class VISIBILITY_HIDDEN MSP430AsmPrinter : public AsmPrinter {
   public:
     MSP430AsmPrinter(formatted_raw_ostream &O, TargetMachine &TM,
-                     const TargetAsmInfo *TAI, bool V)
+                     const MCAsmInfo *TAI, bool V)
       : AsmPrinter(O, TM, TAI, V) {}
 
     virtual const char *getPassName() const {

@@ -14,7 +14,7 @@
 #include "llvm/MC/MCSectionMachO.h"
 #include "llvm/MC/MCSymbol.h"
 #include "llvm/MC/MCValue.h"
-#include "llvm/Target/TargetAsmInfo.h"
+#include "llvm/MC/MCAsmInfo.h"
 #include "llvm/Support/ErrorHandling.h"
 #include "llvm/Support/MathExtras.h"
 #include "llvm/Support/raw_ostream.h"
@@ -24,10 +24,10 @@ namespace {
 
 class MCAsmStreamer : public MCStreamer {
   raw_ostream &OS;
-  const TargetAsmInfo &TAI;
+  const MCAsmInfo &TAI;
   AsmPrinter *Printer;
 public:
-  MCAsmStreamer(MCContext &Context, raw_ostream &_OS, const TargetAsmInfo &tai,
+  MCAsmStreamer(MCContext &Context, raw_ostream &_OS, const MCAsmInfo &tai,
                 AsmPrinter *_AsmPrinter)
     : MCStreamer(Context), OS(_OS), TAI(tai), Printer(_AsmPrinter) {}
   ~MCAsmStreamer() {}
@@ -314,6 +314,6 @@ void MCAsmStreamer::Finish() {
 }
     
 MCStreamer *llvm::createAsmStreamer(MCContext &Context, raw_ostream &OS,
-                                    const TargetAsmInfo &TAI, AsmPrinter *AP) {
+                                    const MCAsmInfo &TAI, AsmPrinter *AP) {
   return new MCAsmStreamer(Context, OS, TAI, AP);
 }

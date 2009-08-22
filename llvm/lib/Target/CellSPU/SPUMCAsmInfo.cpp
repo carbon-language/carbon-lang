@@ -1,4 +1,4 @@
-//===-- SPUTargetAsmInfo.cpp - Cell SPU asm properties ----------*- C++ -*-===//
+//===-- SPUMCAsmInfo.cpp - Cell SPU asm properties ------------------------===//
 //
 //                     The LLVM Compiler Infrastructure
 //
@@ -7,14 +7,14 @@
 //
 //===----------------------------------------------------------------------===//
 //
-// This file contains the declarations of the SPUTargetAsmInfo properties.
+// This file contains the declarations of the SPUMCAsmInfo properties.
 //
 //===----------------------------------------------------------------------===//
 
-#include "SPUTargetAsmInfo.h"
+#include "SPUMCAsmInfo.h"
 using namespace llvm;
 
-SPULinuxTargetAsmInfo::SPULinuxTargetAsmInfo(const Target &T, const StringRef &TT) {
+SPULinuxMCAsmInfo::SPULinuxMCAsmInfo(const Target &T, const StringRef &TT) {
   ZeroDirective = "\t.space\t";
   SetDirective = "\t.set";
   Data64bitsDirective = "\t.quad\t";

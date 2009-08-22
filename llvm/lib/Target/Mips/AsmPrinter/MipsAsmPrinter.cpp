@@ -29,7 +29,7 @@
 #include "llvm/CodeGen/MachineFrameInfo.h"
 #include "llvm/CodeGen/MachineInstr.h"
 #include "llvm/MC/MCStreamer.h"
-#include "llvm/Target/TargetAsmInfo.h"
+#include "llvm/MC/MCAsmInfo.h"
 #include "llvm/Target/TargetData.h"
 #include "llvm/Target/TargetLoweringObjectFile.h" 
 #include "llvm/Target/TargetMachine.h"
@@ -54,7 +54,7 @@ namespace {
     const MipsSubtarget *Subtarget;
   public:
     explicit MipsAsmPrinter(formatted_raw_ostream &O, TargetMachine &TM, 
-                            const TargetAsmInfo *T, bool V)
+                            const MCAsmInfo *T, bool V)
       : AsmPrinter(O, TM, T, V) {
       Subtarget = &TM.getSubtarget<MipsSubtarget>();
     }

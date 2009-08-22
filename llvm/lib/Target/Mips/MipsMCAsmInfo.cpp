@@ -1,4 +1,4 @@
-//===-- MipsTargetAsmInfo.cpp - Mips asm properties -------------*- C++ -*-===//
+//===-- MipsMCAsmInfo.cpp - Mips asm properties ---------------------------===//
 //
 //                     The LLVM Compiler Infrastructure
 //
@@ -7,14 +7,14 @@
 //
 //===----------------------------------------------------------------------===//
 //
-// This file contains the declarations of the MipsTargetAsmInfo properties.
+// This file contains the declarations of the MipsMCAsmInfo properties.
 //
 //===----------------------------------------------------------------------===//
 
-#include "MipsTargetAsmInfo.h"
+#include "MipsMCAsmInfo.h"
 using namespace llvm;
 
-MipsTargetAsmInfo::MipsTargetAsmInfo(const Target &T, const StringRef &TT) {
+MipsMCAsmInfo::MipsMCAsmInfo(const Target &T, const StringRef &TT) {
   AlignmentIsInBytes          = false;
   COMMDirectiveTakesAlignment = true;
   Data16bitsDirective         = "\t.half\t";

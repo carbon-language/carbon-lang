@@ -1,4 +1,4 @@
-//===-- COFFTargetAsmInfo.cpp - COFF asm properties -------------*- C++ -*-===//
+//===-- COFFMCAsmInfo.cpp - COFF asm properties -----------------*- C++ -*-===//
 //
 //                     The LLVM Compiler Infrastructure
 //
@@ -12,11 +12,11 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include "llvm/Target/COFFTargetAsmInfo.h"
+#include "llvm/MC/MCAsmInfoCOFF.h"
 #include "llvm/ADT/SmallVector.h"
 using namespace llvm;
 
-COFFTargetAsmInfo::COFFTargetAsmInfo() {
+COFFMCAsmInfo::COFFMCAsmInfo() {
   GlobalPrefix = "_";
   LCOMMDirective = "\t.lcomm\t";
   COMMDirectiveTakesAlignment = false;

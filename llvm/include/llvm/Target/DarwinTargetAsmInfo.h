@@ -1,4 +1,4 @@
-//===---- DarwinTargetAsmInfo.h - Darwin asm properties ---------*- C++ -*-===//
+//===---- DarwinMCAsmInfo.h - Darwin asm properties -------------*- C++ -*-===//
 //
 //                     The LLVM Compiler Infrastructure
 //
@@ -15,7 +15,7 @@
 #ifndef LLVM_DARWIN_TARGET_ASM_INFO_H
 #define LLVM_DARWIN_TARGET_ASM_INFO_H
 
-#include "llvm/Target/TargetAsmInfo.h"
+#include "llvm/MC/MCAsmInfo.h"
 
 namespace llvm {
   class GlobalValue;
@@ -23,8 +23,8 @@ namespace llvm {
   class Type;
   class Mangler;
 
-  struct DarwinTargetAsmInfo : public TargetAsmInfo {
-    explicit DarwinTargetAsmInfo();
+  struct DarwinMCAsmInfo : public MCAsmInfo {
+    explicit DarwinMCAsmInfo();
   };
 }
 

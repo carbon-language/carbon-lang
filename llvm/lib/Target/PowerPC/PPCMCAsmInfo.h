@@ -1,4 +1,4 @@
-//=====-- PPCTargetAsmInfo.h - PPC asm properties -------------*- C++ -*--====//
+//=====-- PPCMCAsmInfo.h - PPC asm properties -----------------*- C++ -*--====//
 //
 //                     The LLVM Compiler Infrastructure
 //
@@ -7,24 +7,23 @@
 //
 //===----------------------------------------------------------------------===//
 //
-// This file contains the declaration of the DarwinTargetAsmInfo class.
+// This file contains the declaration of the DarwinMCAsmInfo class.
 //
 //===----------------------------------------------------------------------===//
 
 #ifndef PPCTARGETASMINFO_H
 #define PPCTARGETASMINFO_H
 
-#include "llvm/Target/TargetAsmInfo.h"
-#include "llvm/Target/DarwinTargetAsmInfo.h"
+#include "llvm/MC/MCAsmInfoDarwin.h"
 
 namespace llvm {
 
-  struct PPCDarwinTargetAsmInfo : public DarwinTargetAsmInfo {
-    explicit PPCDarwinTargetAsmInfo(bool is64Bit);
+  struct PPCDarwinMCAsmInfo : public DarwinMCAsmInfo {
+    explicit PPCDarwinMCAsmInfo(bool is64Bit);
   };
 
-  struct PPCLinuxTargetAsmInfo : public TargetAsmInfo {
-    explicit PPCLinuxTargetAsmInfo(bool is64Bit);
+  struct PPCLinuxMCAsmInfo : public MCAsmInfo {
+    explicit PPCLinuxMCAsmInfo(bool is64Bit);
   };
 
 } // namespace llvm

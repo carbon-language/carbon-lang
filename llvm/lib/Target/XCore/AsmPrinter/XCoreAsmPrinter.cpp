@@ -16,7 +16,7 @@
 #include "XCore.h"
 #include "XCoreInstrInfo.h"
 #include "XCoreSubtarget.h"
-#include "XCoreTargetAsmInfo.h"
+#include "XCoreMCAsmInfo.h"
 #include "XCoreTargetMachine.h"
 #include "llvm/Constants.h"
 #include "llvm/DerivedTypes.h"
@@ -56,7 +56,7 @@ namespace {
     const XCoreSubtarget &Subtarget;
   public:
     explicit XCoreAsmPrinter(formatted_raw_ostream &O, TargetMachine &TM,
-                             const TargetAsmInfo *T, bool V)
+                             const MCAsmInfo *T, bool V)
       : AsmPrinter(O, TM, T, V), DW(0),
       Subtarget(TM.getSubtarget<XCoreSubtarget>()) {}
 

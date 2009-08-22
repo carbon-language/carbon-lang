@@ -17,7 +17,7 @@
 #include "llvm/CodeGen/MachineFunctionPass.h"
 #include "llvm/Support/Compiler.h"
 #include "llvm/Target/TargetMachine.h"
-#include "llvm/Target/TargetAsmInfo.h"
+#include "llvm/MC/MCAsmInfo.h"
 using namespace llvm;
 
 namespace {

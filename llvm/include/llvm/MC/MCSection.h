@@ -20,7 +20,7 @@
 
 namespace llvm {
   class MCContext;
-  class TargetAsmInfo;
+  class MCAsmInfo;
   class raw_ostream;
   
   /// MCSection - Instances of this class represent a uniqued identifier for a
@@ -37,7 +37,7 @@ namespace llvm {
 
     SectionKind getKind() const { return Kind; }
     
-    virtual void PrintSwitchToSection(const TargetAsmInfo &TAI,
+    virtual void PrintSwitchToSection(const MCAsmInfo &TAI,
                                       raw_ostream &OS) const = 0;
   };
 
@@ -62,7 +62,7 @@ namespace llvm {
     const std::string &getName() const { return Name; }
     bool isDirective() const { return IsDirective; }
     
-    virtual void PrintSwitchToSection(const TargetAsmInfo &TAI,
+    virtual void PrintSwitchToSection(const MCAsmInfo &TAI,
                                       raw_ostream &OS) const;
   };
   

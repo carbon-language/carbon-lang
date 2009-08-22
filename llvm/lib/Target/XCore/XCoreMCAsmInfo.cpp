@@ -1,4 +1,4 @@
-//===-- XCoreTargetAsmInfo.cpp - XCore asm properties ---------------------===//
+//===-- XCoreMCAsmInfo.cpp - XCore asm properties -------------------------===//
 //
 //                     The LLVM Compiler Infrastructure
 //
@@ -7,10 +7,10 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include "XCoreTargetAsmInfo.h"
+#include "XCoreMCAsmInfo.h"
 using namespace llvm;
 
-XCoreTargetAsmInfo::XCoreTargetAsmInfo(const Target &T, const StringRef &TT) {
+XCoreMCAsmInfo::XCoreMCAsmInfo(const Target &T, const StringRef &TT) {
   SupportsDebugInformation = true;
   Data16bitsDirective = "\t.short\t";
   Data32bitsDirective = "\t.long\t";

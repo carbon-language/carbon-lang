@@ -1,4 +1,4 @@
-//===-- PPCTargetAsmInfo.cpp - PPC asm properties ---------------*- C++ -*-===//
+//===-- PPCMCAsmInfo.cpp - PPC asm properties -------------------*- C++ -*-===//
 //
 //                     The LLVM Compiler Infrastructure
 //
@@ -7,14 +7,14 @@
 //
 //===----------------------------------------------------------------------===//
 //
-// This file contains the declarations of the DarwinTargetAsmInfo properties.
+// This file contains the declarations of the DarwinMCAsmInfo properties.
 //
 //===----------------------------------------------------------------------===//
 
-#include "PPCTargetAsmInfo.h"
+#include "PPCMCAsmInfo.h"
 using namespace llvm;
 
-PPCDarwinTargetAsmInfo::PPCDarwinTargetAsmInfo(bool is64Bit) {
+PPCDarwinMCAsmInfo::PPCDarwinMCAsmInfo(bool is64Bit) {
   PCSymbol = ".";
   CommentString = ";";
   ExceptionsType = ExceptionHandling::Dwarf;
@@ -24,7 +24,7 @@ PPCDarwinTargetAsmInfo::PPCDarwinTargetAsmInfo(bool is64Bit) {
   AssemblerDialect = 1;           // New-Style mnemonics.
 }
 
-PPCLinuxTargetAsmInfo::PPCLinuxTargetAsmInfo(bool is64Bit) {
+PPCLinuxMCAsmInfo::PPCLinuxMCAsmInfo(bool is64Bit) {
   CommentString = "#";
   GlobalPrefix = "";
   PrivateGlobalPrefix = ".L";

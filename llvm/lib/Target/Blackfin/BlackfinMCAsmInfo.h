@@ -1,4 +1,4 @@
-//====-- SystemZTargetAsmInfo.h - SystemZ asm properties -------*- C++ -*--===//
+//===-- BlackfinMCAsmInfo.h - Blackfin asm properties ---------*- C++ -*--====//
 //
 //                     The LLVM Compiler Infrastructure
 //
@@ -7,21 +7,21 @@
 //
 //===----------------------------------------------------------------------===//
 //
-// This file contains the declaration of the SystemZTargetAsmInfo class.
+// This file contains the declaration of the BlackfinMCAsmInfo class.
 //
 //===----------------------------------------------------------------------===//
 
-#ifndef SystemZTARGETASMINFO_H
-#define SystemZTARGETASMINFO_H
+#ifndef BLACKFINTARGETASMINFO_H
+#define BLACKFINTARGETASMINFO_H
 
-#include "llvm/Target/TargetAsmInfo.h"
+#include "llvm/MC/MCAsmInfo.h"
 
 namespace llvm {
   class Target;
   class StringRef;
 
-  struct SystemZTargetAsmInfo : public TargetAsmInfo {
-    explicit SystemZTargetAsmInfo(const Target &T, const StringRef &TT);
+  struct BlackfinMCAsmInfo : public MCAsmInfo {
+    explicit BlackfinMCAsmInfo(const Target &T, const StringRef &TT);
   };
 
 } // namespace llvm

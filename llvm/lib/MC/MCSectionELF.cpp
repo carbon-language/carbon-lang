@@ -10,7 +10,7 @@
 #include "llvm/MC/MCSectionELF.h"
 #include "llvm/MC/MCContext.h"
 #include "llvm/Support/raw_ostream.h"
-#include "llvm/Target/TargetAsmInfo.h"
+#include "llvm/MC/MCAsmInfo.h"
 
 using namespace llvm;
 
@@ -23,7 +23,7 @@ Create(const StringRef &Section, unsigned Type, unsigned Flags,
 // ShouldOmitSectionDirective - Decides whether a '.section' directive
 // should be printed before the section name
 bool MCSectionELF::ShouldOmitSectionDirective(const char *Name,
-                                        const TargetAsmInfo &TAI) const {
+                                        const MCAsmInfo &TAI) const {
   
   // FIXME: Does .section .bss/.data/.text work everywhere??
   if (strcmp(Name, ".text") == 0 ||
@@ -44,7 +44,7 @@ bool MCSectionELF::ShouldPrintSectionType(unsigned Ty) const {
   return true;
 }
 
-void MCSectionELF::PrintSwitchToSection(const TargetAsmInfo &TAI,
+void MCSectionELF::PrintSwitchToSection(const MCAsmInfo &TAI,
                                         raw_ostream &OS) const {
    
   if (ShouldOmitSectionDirective(SectionName.c_str(), TAI)) {

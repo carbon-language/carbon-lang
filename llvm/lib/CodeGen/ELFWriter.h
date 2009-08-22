@@ -32,7 +32,7 @@ namespace llvm {
   class MachineCodeEmitter;
   class MachineConstantPoolEntry;
   class ObjectCodeEmitter;
-  class TargetAsmInfo;
+  class MCAsmInfo;
   class TargetELFWriterInfo;
   class TargetLoweringObjectFile;
   class raw_ostream;
@@ -88,7 +88,7 @@ namespace llvm {
 
     /// TAI - Target Asm Info, provide information about section names for
     /// globals and other target specific stuff.
-    const TargetAsmInfo *TAI;
+    const MCAsmInfo *TAI;
 
     //===------------------------------------------------------------------===//
     // Properties inferred automatically from the target machine.

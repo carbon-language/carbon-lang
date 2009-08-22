@@ -48,7 +48,7 @@ namespace llvm {
   class MCStreamer;
   class DwarfWriter;
   class Mangler;
-  class TargetAsmInfo;
+  class MCAsmInfo;
   class TargetLoweringObjectFile;
   class Type;
   class formatted_raw_ostream;
@@ -96,7 +96,7 @@ namespace llvm {
     
     /// Target Asm Printer information.
     ///
-    const TargetAsmInfo *TAI;
+    const MCAsmInfo *TAI;
 
     /// Target Register Information.
     ///
@@ -149,7 +149,7 @@ namespace llvm {
 
   protected:
     explicit AsmPrinter(formatted_raw_ostream &o, TargetMachine &TM,
-                        const TargetAsmInfo *T, bool V);
+                        const MCAsmInfo *T, bool V);
     
   public:
     virtual ~AsmPrinter();

@@ -44,7 +44,7 @@
 #include "llvm/CodeGen/MachineConstantPool.h"
 #include "llvm/MC/MCContext.h"
 #include "llvm/MC/MCSectionELF.h"
-#include "llvm/Target/TargetAsmInfo.h"
+#include "llvm/MC/MCAsmInfo.h"
 #include "llvm/Target/TargetData.h"
 #include "llvm/Target/TargetELFWriterInfo.h"
 #include "llvm/Target/TargetLowering.h"
@@ -80,7 +80,7 @@ ELFWriter::ELFWriter(raw_ostream &o, TargetMachine &tm)
     isLittleEndian(TM.getTargetData()->isLittleEndian()),
     ElfHdr(isLittleEndian, is64Bit) {
 
-  TAI = TM.getTargetAsmInfo();
+  TAI = TM.getMCAsmInfo();
   TEW = TM.getELFWriterInfo();
 
   // Create the object code emitter object for this target.

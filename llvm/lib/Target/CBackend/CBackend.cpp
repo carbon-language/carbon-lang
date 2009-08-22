@@ -33,7 +33,7 @@
 #include "llvm/CodeGen/Passes.h"
 #include "llvm/CodeGen/IntrinsicLowering.h"
 #include "llvm/Transforms/Scalar.h"
-#include "llvm/Target/TargetAsmInfo.h"
+#include "llvm/MC/MCAsmInfo.h"
 #include "llvm/Target/TargetData.h"
 #include "llvm/Target/TargetRegistry.h"
 #include "llvm/Support/CallSite.h"
@@ -86,7 +86,7 @@ namespace {
     Mangler *Mang;
     LoopInfo *LI;
     const Module *TheModule;
-    const TargetAsmInfo* TAsm;
+    const MCAsmInfo* TAsm;
     const TargetData* TD;
     std::map<const Type *, std::string> TypeNames;
     std::map<const ConstantFP *, unsigned> FPConstantMap;
@@ -3239,7 +3239,7 @@ std::string CWriter::InterpretASMConstraint(InlineAsm::ConstraintInfo& c) {
 
   const char *const *table = 0;
   
-  // Grab the translation table from TargetAsmInfo if it exists.
+  // Grab the translation table from MCAsmInfo if it exists.
   if (!TAsm) {
     std::string Triple = TheModule->getTargetTriple();
     if (Triple.empty())

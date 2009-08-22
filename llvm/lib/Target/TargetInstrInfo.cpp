@@ -12,7 +12,7 @@
 //===----------------------------------------------------------------------===//
 
 #include "llvm/Target/TargetInstrInfo.h"
-#include "llvm/Target/TargetAsmInfo.h"
+#include "llvm/MC/MCAsmInfo.h"
 #include "llvm/Target/TargetRegisterInfo.h"
 #include "llvm/Support/ErrorHandling.h"
 using namespace llvm;
@@ -73,7 +73,7 @@ bool TargetInstrInfo::isUnpredicatedTerminator(const MachineInstr *MI) const {
 /// Variable-length instructions are not handled here; this function
 /// may be overloaded in the target code to do that.
 unsigned TargetInstrInfo::getInlineAsmLength(const char *Str,
-                                             const TargetAsmInfo &TAI) const {
+                                             const MCAsmInfo &TAI) const {
   
   
   // Count the number of instructions in the asm.

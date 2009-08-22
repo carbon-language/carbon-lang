@@ -19,14 +19,14 @@
 #include "llvm/CodeGen/MachineModuleInfo.h"
 #include "llvm/Support/Dwarf.h"
 #include "llvm/Support/ErrorHandling.h"
-#include "llvm/Target/TargetAsmInfo.h"
+#include "llvm/MC/MCAsmInfo.h"
 #include "llvm/Target/TargetData.h"
 #include "llvm/Target/TargetFrameInfo.h"
 #include "llvm/Target/TargetRegisterInfo.h"
 
 using namespace llvm;
 
-Dwarf::Dwarf(raw_ostream &OS, AsmPrinter *A, const TargetAsmInfo *T,
+Dwarf::Dwarf(raw_ostream &OS, AsmPrinter *A, const MCAsmInfo *T,
              const char *flavor)
 : O(OS), Asm(A), TAI(T), TD(Asm->TM.getTargetData()),
   RI(Asm->TM.getRegisterInfo()), M(NULL), MF(NULL), MMI(NULL),

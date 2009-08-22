@@ -16,7 +16,7 @@
 #include "llvm/CodeGen/GCMetadataPrinter.h"
 #include "llvm/Module.h"
 #include "llvm/MC/MCStreamer.h"
-#include "llvm/Target/TargetAsmInfo.h"
+#include "llvm/MC/MCAsmInfo.h"
 #include "llvm/Target/TargetData.h"
 #include "llvm/Target/TargetLoweringObjectFile.h"
 #include "llvm/Target/TargetMachine.h"
@@ -30,10 +30,10 @@ namespace {
   class VISIBILITY_HIDDEN OcamlGCMetadataPrinter : public GCMetadataPrinter {
   public:
     void beginAssembly(raw_ostream &OS, AsmPrinter &AP,
-                       const TargetAsmInfo &TAI);
+                       const MCAsmInfo &TAI);
 
     void finishAssembly(raw_ostream &OS, AsmPrinter &AP,
-                        const TargetAsmInfo &TAI);
+                        const MCAsmInfo &TAI);
   };
 
 }
@@ -44,7 +44,7 @@ Y("ocaml", "ocaml 3.10-compatible collector");
 void llvm::linkOcamlGCPrinter() { }
 
 static void EmitCamlGlobal(const Module &M, raw_ostream &OS, AsmPrinter &AP,
-                           const TargetAsmInfo &TAI, const char *Id) {
+                           const MCAsmInfo &TAI, const char *Id) {
   const std::string &MId = M.getModuleIdentifier();
 
   std::string Mangled;
@@ -64,7 +64,7 @@ static void EmitCamlGlobal(const Module &M, raw_ostream &OS, AsmPrinter &AP,
 }
 
 void OcamlGCMetadataPrinter::beginAssembly(raw_ostream &OS, AsmPrinter &AP,
-                                           const TargetAsmInfo &TAI) {
+                                           const MCAsmInfo &TAI) {
   AP.OutStreamer.SwitchSection(AP.getObjFileLowering().getTextSection());
   EmitCamlGlobal(getModule(), OS, AP, TAI, "code_begin");
 
@@ -89,7 +89,7 @@ void OcamlGCMetadataPrinter::beginAssembly(raw_ostream &OS, AsmPrinter &AP,
 /// either condition is detected in a function which uses the GC.
 ///
 void OcamlGCMetadataPrinter::finishAssembly(raw_ostream &OS, AsmPrinter &AP,
-                                            const TargetAsmInfo &TAI) {
+                                            const MCAsmInfo &TAI) {
   const char *AddressDirective;
   int AddressAlignLog;
   if (AP.TM.getTargetData()->getPointerSize() == sizeof(int32_t)) {

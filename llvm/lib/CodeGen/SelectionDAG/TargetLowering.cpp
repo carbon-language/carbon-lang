@@ -12,7 +12,7 @@
 //===----------------------------------------------------------------------===//
 
 #include "llvm/Target/TargetLowering.h"
-#include "llvm/Target/TargetAsmInfo.h"
+#include "llvm/MC/MCAsmInfo.h"
 #include "llvm/Target/TargetData.h"
 #include "llvm/Target/TargetLoweringObjectFile.h"
 #include "llvm/Target/TargetMachine.h"
@@ -530,7 +530,7 @@ TargetLowering::TargetLowering(TargetMachine &tm,TargetLoweringObjectFile *tlof)
   InitLibcallCallingConvs(LibcallCallingConvs);
 
   // Tell Legalize whether the assembler supports DEBUG_LOC.
-  const TargetAsmInfo *TASM = TM.getTargetAsmInfo();
+  const MCAsmInfo *TASM = TM.getMCAsmInfo();
   if (!TASM || !TASM->hasDotLocAndDotFile())
     setOperationAction(ISD::DEBUG_LOC, MVT::Other, Expand);
 }

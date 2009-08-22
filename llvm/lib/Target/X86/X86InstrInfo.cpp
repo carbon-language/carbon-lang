@@ -31,7 +31,7 @@
 #include "llvm/Support/ErrorHandling.h"
 #include "llvm/Support/raw_ostream.h"
 #include "llvm/Target/TargetOptions.h"
-#include "llvm/Target/TargetAsmInfo.h"
+#include "llvm/MC/MCAsmInfo.h"
 using namespace llvm;
 
 namespace {
@@ -2993,7 +2993,7 @@ static unsigned GetInstSizeWithDesc(const MachineInstr &MI,
       const MachineFunction *MF = MI.getParent()->getParent();
       const TargetInstrInfo &TII = *MF->getTarget().getInstrInfo();
       FinalSize += TII.getInlineAsmLength(MI.getOperand(0).getSymbolName(),
-                                          *MF->getTarget().getTargetAsmInfo());
+                                          *MF->getTarget().getMCAsmInfo());
       break;
     }
     case TargetInstrInfo::DBG_LABEL:

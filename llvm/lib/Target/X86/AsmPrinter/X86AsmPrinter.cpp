@@ -17,7 +17,7 @@
 #include "X86.h"
 #include "X86ATTAsmPrinter.h"
 #include "X86IntelAsmPrinter.h"
-#include "llvm/Target/TargetAsmInfo.h"
+#include "llvm/MC/MCAsmInfo.h"
 #include "llvm/Target/TargetRegistry.h"
 using namespace llvm;
 
@@ -27,9 +27,9 @@ using namespace llvm;
 ///
 static AsmPrinter *createX86CodePrinterPass(formatted_raw_ostream &o,
                                             TargetMachine &tm,
-                                            const TargetAsmInfo *tai,
+                                            const MCAsmInfo *tai,
                                             bool verbose) {
-  if (tm.getTargetAsmInfo()->getAssemblerDialect() == 1)
+  if (tm.getMCAsmInfo()->getAssemblerDialect() == 1)
     return new X86IntelAsmPrinter(o, tm, tai, verbose);
   return new X86ATTAsmPrinter(o, tm, tai, verbose);
 }

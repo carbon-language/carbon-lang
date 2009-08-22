@@ -1,4 +1,4 @@
-//===-- X86TargetAsmInfo.cpp - X86 asm properties ---------------*- C++ -*-===//
+//===-- X86MCAsmInfo.cpp - X86 asm properties -----------------------------===//
 //
 //                     The LLVM Compiler Infrastructure
 //
@@ -7,11 +7,11 @@
 //
 //===----------------------------------------------------------------------===//
 //
-// This file contains the declarations of the X86TargetAsmInfo properties.
+// This file contains the declarations of the X86MCAsmInfo properties.
 //
 //===----------------------------------------------------------------------===//
 
-#include "X86TargetAsmInfo.h"
+#include "X86MCAsmInfo.h"
 #include "X86TargetMachine.h"
 #include "llvm/ADT/Triple.h"
 #include "llvm/Support/CommandLine.h"
@@ -43,7 +43,7 @@ static const char *const x86_asm_table[] = {
   "{cc}", "cc",
   0,0};
 
-X86DarwinTargetAsmInfo::X86DarwinTargetAsmInfo(const Triple &Triple) {
+X86DarwinMCAsmInfo::X86DarwinMCAsmInfo(const Triple &Triple) {
   AsmTransCBE = x86_asm_table;
   AssemblerDialect = AsmWriterFlavor;
     
@@ -76,7 +76,7 @@ X86DarwinTargetAsmInfo::X86DarwinTargetAsmInfo(const Triple &Triple) {
   AbsoluteEHSectionOffsets = false;
 }
 
-X86ELFTargetAsmInfo::X86ELFTargetAsmInfo(const Triple &Triple) {
+X86ELFMCAsmInfo::X86ELFMCAsmInfo(const Triple &Triple) {
   AsmTransCBE = x86_asm_table;
   AssemblerDialect = AsmWriterFlavor;
 
@@ -101,13 +101,13 @@ X86ELFTargetAsmInfo::X86ELFTargetAsmInfo(const Triple &Triple) {
     NonexecutableStackDirective = "\t.section\t.note.GNU-stack,\"\",@progbits";
 }
 
-X86COFFTargetAsmInfo::X86COFFTargetAsmInfo(const Triple &Triple) {
+X86COFFMCAsmInfo::X86COFFMCAsmInfo(const Triple &Triple) {
   AsmTransCBE = x86_asm_table;
   AssemblerDialect = AsmWriterFlavor;
 }
 
 
-X86WinTargetAsmInfo::X86WinTargetAsmInfo(const Triple &Triple) {
+X86WinMCAsmInfo::X86WinMCAsmInfo(const Triple &Triple) {
   AsmTransCBE = x86_asm_table;
   AssemblerDialect = AsmWriterFlavor;
 

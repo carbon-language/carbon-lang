@@ -29,7 +29,7 @@
 #include "llvm/CodeGen/MachineJumpTableInfo.h"
 #include "llvm/MC/MCSectionMachO.h"
 #include "llvm/MC/MCStreamer.h"
-#include "llvm/Target/TargetAsmInfo.h"
+#include "llvm/MC/MCAsmInfo.h"
 #include "llvm/Target/TargetData.h"
 #include "llvm/Target/TargetLoweringObjectFile.h"
 #include "llvm/Target/TargetMachine.h"
@@ -111,7 +111,7 @@ namespace {
     bool InCPMode;
   public:
     explicit ARMAsmPrinter(formatted_raw_ostream &O, TargetMachine &TM,
-                           const TargetAsmInfo *T, bool V)
+                           const MCAsmInfo *T, bool V)
       : AsmPrinter(O, TM, T, V), DW(0), AFI(NULL), MCP(NULL),
         InCPMode(false) {
       Subtarget = &TM.getSubtarget<ARMSubtarget>();
@@ -423,7 +423,7 @@ void ARMAsmPrinter::printOperand(const MachineInstr *MI, int OpNum,
 }
 
 static void printSOImm(formatted_raw_ostream &O, int64_t V, bool VerboseAsm,
-                       const TargetAsmInfo *TAI) {
+                       const MCAsmInfo *TAI) {
   // Break it up into two parts that make up a shifter immediate.
   V = ARM_AM::getSOImmVal(V);
   assert(V != -1 && "Not a valid so_imm value!");

@@ -1,4 +1,4 @@
-//===-- llvm/Target/TargetAsmInfo.h - Asm info ------------------*- C++ -*-===//
+//===-- llvm/MC/MCAsmInfo.h - Asm info --------------------------*- C++ -*-===//
 //
 //                     The LLVM Compiler Infrastructure
 //
@@ -23,11 +23,11 @@
 namespace llvm {
   template <typename T> class SmallVectorImpl;
   
-  /// TargetAsmInfo - This class is intended to be used as a base class for asm
+  /// MCAsmInfo - This class is intended to be used as a base class for asm
   /// properties and features specific to the target.
   namespace ExceptionHandling { enum ExceptionsType { None, Dwarf, SjLj }; }
 
-  class TargetAsmInfo {
+  class MCAsmInfo {
   protected:
     //===------------------------------------------------------------------===//
     // Properties to be set by the target writer, used to configure asm printer.
@@ -310,8 +310,8 @@ namespace llvm {
     const char *const *AsmTransCBE; // Defaults to empty
 
   public:
-    explicit TargetAsmInfo();
-    virtual ~TargetAsmInfo();
+    explicit MCAsmInfo();
+    virtual ~MCAsmInfo();
 
     /// getSLEB128Size - Compute the number of bytes required for a signed
     /// leb128 value.

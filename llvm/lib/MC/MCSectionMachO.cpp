@@ -72,7 +72,7 @@ Create(const StringRef &Segment, const StringRef &Section,
                                   Reserved2, K);
 }
 
-void MCSectionMachO::PrintSwitchToSection(const TargetAsmInfo &TAI,
+void MCSectionMachO::PrintSwitchToSection(const MCAsmInfo &TAI,
                                           raw_ostream &OS) const {
   OS << "\t.section\t" << getSegmentName() << ',' << getSectionName();
   

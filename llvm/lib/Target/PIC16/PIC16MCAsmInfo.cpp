@@ -1,4 +1,4 @@
-//===-- PIC16TargetAsmInfo.cpp - PIC16 asm properties ---------------------===//
+//===-- PIC16MCAsmInfo.cpp - PIC16 asm properties -------------------------===//
 //
 //                     The LLVM Compiler Infrastructure
 //
@@ -7,11 +7,11 @@
 //
 //===----------------------------------------------------------------------===//
 //
-// This file contains the declarations of the PIC16TargetAsmInfo properties.
+// This file contains the declarations of the PIC16MCAsmInfo properties.
 //
 //===----------------------------------------------------------------------===//
 
-#include "PIC16TargetAsmInfo.h"
+#include "PIC16MCAsmInfo.h"
 
 // FIXME: Layering violation to get enums and static function, should be moved
 // to separate headers.
@@ -19,7 +19,7 @@
 #include "PIC16ISelLowering.h"
 using namespace llvm;
 
-PIC16TargetAsmInfo::PIC16TargetAsmInfo(const Target &T, const StringRef &TT) {
+PIC16MCAsmInfo::PIC16MCAsmInfo(const Target &T, const StringRef &TT) {
   CommentString = ";";
   GlobalPrefix = PAN::getTagName(PAN::PREFIX_SYMBOL);
   GlobalDirective = "\tglobal\t";
@@ -43,8 +43,8 @@ PIC16TargetAsmInfo::PIC16TargetAsmInfo(const Target &T, const StringRef &TT) {
   HasSingleParameterDotFile = false;
 }
 
-const char *PIC16TargetAsmInfo::
-getDataASDirective(unsigned Size, unsigned AS) const {
+const char *PIC16MCAsmInfo::getDataASDirective(unsigned Size,
+                                               unsigned AS) const {
   if (AS != PIC16ISD::ROM_SPACE)
     return 0;
   

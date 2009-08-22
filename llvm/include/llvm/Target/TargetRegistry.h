@@ -27,7 +27,7 @@ namespace llvm {
   class AsmPrinter;
   class MCAsmParser;
   class Module;
-  class TargetAsmInfo;
+  class MCAsmInfo;
   class TargetAsmParser;
   class TargetMachine;
   class formatted_raw_ostream;
@@ -46,14 +46,14 @@ namespace llvm {
 
     typedef unsigned (*TripleMatchQualityFnTy)(const std::string &TT);
 
-    typedef const TargetAsmInfo *(*AsmInfoCtorFnTy)(const Target &T,
-                                                    const StringRef &TT);
+    typedef const MCAsmInfo *(*AsmInfoCtorFnTy)(const Target &T,
+                                                const StringRef &TT);
     typedef TargetMachine *(*TargetMachineCtorTy)(const Target &T,
                                                   const std::string &TT,
                                                   const std::string &Features);
     typedef AsmPrinter *(*AsmPrinterCtorTy)(formatted_raw_ostream &OS,
                                             TargetMachine &TM,
-                                            const TargetAsmInfo *TAI,
+                                            const MCAsmInfo *TAI,
                                             bool VerboseAsm);
     typedef TargetAsmParser *(*AsmParserCtorTy)(const Target &T,
                                                 MCAsmParser &P);
@@ -111,14 +111,14 @@ namespace llvm {
     bool hasAsmParser() const { return AsmParserCtorFn != 0; }
 
     
-    /// createAsmInfo - Create a TargetAsmInfo implementation for the specified
+    /// createAsmInfo - Create a MCAsmInfo implementation for the specified
     /// target triple.
     ///
     /// \arg Triple - This argument is used to determine the target machine
     /// feature set; it should always be provided. Generally this should be
     /// either the target triple from the module, or the target triple of the
     /// host if that does not exist.
-    const TargetAsmInfo *createAsmInfo(const StringRef &Triple) const {
+    const MCAsmInfo *createAsmInfo(const StringRef &Triple) const {
       if (!AsmInfoCtorFn)
         return 0;
       return AsmInfoCtorFn(*this, Triple);
@@ -140,7 +140,7 @@ namespace llvm {
 
     /// createAsmPrinter - Create a target specific assembly printer pass.
     AsmPrinter *createAsmPrinter(formatted_raw_ostream &OS, TargetMachine &TM,
-                                 const TargetAsmInfo *TAI, bool Verbose) const {
+                                 const MCAsmInfo *TAI, bool Verbose) const {
       if (!AsmPrinterCtorFn)
         return 0;
       return AsmPrinterCtorFn(OS, TM, TAI, Verbose);
@@ -243,7 +243,7 @@ namespace llvm {
                                Target::TripleMatchQualityFnTy TQualityFn,
                                bool HasJIT = false);
 
-    /// RegisterAsmInfo - Register a TargetAsmInfo implementation for the
+    /// RegisterAsmInfo - Register a MCAsmInfo implementation for the
     /// given target.
     /// 
     /// Clients are responsible for ensuring that registration doesn't occur
@@ -251,7 +251,7 @@ namespace llvm {
     /// this is done by initializing all targets at program startup.
     /// 
     /// @param T - The target being registered.
-    /// @param Fn - A function to construct a TargetAsmInfo for the target.
+    /// @param Fn - A function to construct a MCAsmInfo for the target.
     static void RegisterAsmInfo(Target &T, Target::AsmInfoCtorFnTy Fn) {
       // Ignore duplicate registration.
       if (!T.AsmInfoCtorFn)
@@ -340,16 +340,16 @@ namespace llvm {
   ///
   /// extern "C" void LLVMInitializeFooTarget() {
   ///   extern Target TheFooTarget;
-  ///   RegisterAsmInfo<FooTargetAsmInfo> X(TheFooTarget);
+  ///   RegisterAsmInfo<FooMCAsmInfo> X(TheFooTarget);
   /// }
-  template<class TargetAsmInfoImpl>
+  template<class MCAsmInfoImpl>
   struct RegisterAsmInfo {
     RegisterAsmInfo(Target &T) {
       TargetRegistry::RegisterAsmInfo(T, &Allocator);
     }
   private:
-    static const TargetAsmInfo *Allocator(const Target &T, const StringRef &TT){
-      return new TargetAsmInfoImpl(T, TT);
+    static const MCAsmInfo *Allocator(const Target &T, const StringRef &TT) {
+      return new MCAsmInfoImpl(T, TT);
     }
     
   };
@@ -406,7 +406,7 @@ namespace llvm {
 
   private:
     static AsmPrinter *Allocator(formatted_raw_ostream &OS, TargetMachine &TM,
-                                 const TargetAsmInfo *TAI, bool Verbose) {
+                                 const MCAsmInfo *TAI, bool Verbose) {
       return new AsmPrinterImpl(OS, TM, TAI, Verbose);
     }
   };

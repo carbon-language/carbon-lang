@@ -1,4 +1,4 @@
-//===-- SPUTargetAsmInfo.h - Cell SPU asm properties -----------*- C++ -*--===//
+//====-- SystemZMCAsmInfo.h - SystemZ asm properties -----------*- C++ -*--===//
 //
 //                     The LLVM Compiler Infrastructure
 //
@@ -7,22 +7,23 @@
 //
 //===----------------------------------------------------------------------===//
 //
-// This file contains the declaration of the SPUTargetAsmInfo class.
+// This file contains the declaration of the SystemZMCAsmInfo class.
 //
 //===----------------------------------------------------------------------===//
 
-#ifndef SPUTARGETASMINFO_H
-#define SPUTARGETASMINFO_H
+#ifndef SystemZTARGETASMINFO_H
+#define SystemZTARGETASMINFO_H
 
-#include "llvm/Target/TargetAsmInfo.h"
+#include "llvm/MC/MCAsmInfo.h"
 
 namespace llvm {
   class Target;
   class StringRef;
-  
-  struct SPULinuxTargetAsmInfo : public TargetAsmInfo {
-    explicit SPULinuxTargetAsmInfo(const Target &T, const StringRef &TT);
+
+  struct SystemZMCAsmInfo : public MCAsmInfo {
+    explicit SystemZMCAsmInfo(const Target &T, const StringRef &TT);
   };
+
 } // namespace llvm
 
-#endif /* SPUTARGETASMINFO_H */
+#endif

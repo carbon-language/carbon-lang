@@ -28,7 +28,7 @@
 #include "llvm/System/Path.h"
 #include "llvm/System/Process.h"
 #include "llvm/Target/SubtargetFeature.h"
-#include "llvm/Target/TargetAsmInfo.h"
+#include "llvm/MC/MCAsmInfo.h"
 #include "llvm/Target/TargetMachine.h"
 #include "llvm/Target/TargetRegistry.h"
 #include "llvm/Target/TargetSelect.h"
@@ -458,7 +458,7 @@ void LTOModule::lazyParseSymbols()
         _symbolsParsed = true;
         
         // Use mangler to add GlobalPrefix to names to match linker names.
-        Mangler mangler(*_module, _target->getTargetAsmInfo()->getGlobalPrefix());
+        Mangler mangler(*_module, _target->getMCAsmInfo()->getGlobalPrefix());
         // add chars used in ObjC method names so method names aren't mangled
         mangler.markCharAcceptable('[');
         mangler.markCharAcceptable(']');

@@ -1,4 +1,4 @@
-//===-- SystemZTargetAsmInfo.cpp - SystemZ asm properties -----------------===//
+//===-- SystemZMCAsmInfo.cpp - SystemZ asm properties ---------------------===//
 //
 //                     The LLVM Compiler Infrastructure
 //
@@ -7,15 +7,14 @@
 //
 //===----------------------------------------------------------------------===//
 //
-// This file contains the declarations of the SystemZTargetAsmInfo properties.
+// This file contains the declarations of the SystemZMCAsmInfo properties.
 //
 //===----------------------------------------------------------------------===//
 
-#include "SystemZTargetAsmInfo.h"
+#include "SystemZMCAsmInfo.h"
 using namespace llvm;
 
-SystemZTargetAsmInfo::SystemZTargetAsmInfo(const Target &T,
-                                           const StringRef &TT) {
+SystemZMCAsmInfo::SystemZMCAsmInfo(const Target &T, const StringRef &TT) {
   AlignmentIsInBytes = true;
 
   PrivateGlobalPrefix = ".L";

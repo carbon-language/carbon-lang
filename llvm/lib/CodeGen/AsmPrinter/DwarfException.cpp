@@ -18,7 +18,7 @@
 #include "llvm/CodeGen/MachineFunction.h"
 #include "llvm/CodeGen/MachineLocation.h"
 #include "llvm/MC/MCStreamer.h"
-#include "llvm/Target/TargetAsmInfo.h"
+#include "llvm/MC/MCAsmInfo.h"
 #include "llvm/Target/TargetData.h"
 #include "llvm/Target/TargetFrameInfo.h"
 #include "llvm/Target/TargetLoweringObjectFile.h"
@@ -36,7 +36,7 @@ static TimerGroup &getDwarfTimerGroup() {
 }
 
 DwarfException::DwarfException(raw_ostream &OS, AsmPrinter *A,
-                               const TargetAsmInfo *T)
+                               const MCAsmInfo *T)
   : Dwarf(OS, A, T, "eh"), shouldEmitTable(false), shouldEmitMoves(false),
     shouldEmitTableModule(false), shouldEmitMovesModule(false),
     ExceptionTimer(0) {
@@ -304,7 +304,7 @@ ComputeActionsTable(const SmallVectorImpl<const LandingPadInfo*> &LandingPads,
   for (std::vector<unsigned>::const_iterator
          I = FilterIds.begin(), E = FilterIds.end(); I != E; ++I) {
     FilterOffsets.push_back(Offset);
-    Offset -= TargetAsmInfo::getULEB128Size(*I);
+    Offset -= MCAsmInfo::getULEB128Size(*I);
   }
 
   FirstActions.reserve(LandingPads.size());
@@ -328,12 +328,12 @@ ComputeActionsTable(const SmallVectorImpl<const LandingPadInfo*> &LandingPads,
         const unsigned SizePrevIds = PrevLPI->TypeIds.size();
         assert(Actions.size());
         PrevAction = &Actions.back();
-        SizeAction = TargetAsmInfo::getSLEB128Size(PrevAction->NextAction) +
-          TargetAsmInfo::getSLEB128Size(PrevAction->ValueForTypeID);
+        SizeAction = MCAsmInfo::getSLEB128Size(PrevAction->NextAction) +
+          MCAsmInfo::getSLEB128Size(PrevAction->ValueForTypeID);
 
         for (unsigned j = NumShared; j != SizePrevIds; ++j) {
           SizeAction -=
-            TargetAsmInfo::getSLEB128Size(PrevAction->ValueForTypeID);
+            MCAsmInfo::getSLEB128Size(PrevAction->ValueForTypeID);
           SizeAction += -PrevAction->NextAction;
           PrevAction = PrevAction->Previous;
         }
@@ -344,10 +344,10 @@ ComputeActionsTable(const SmallVectorImpl<const LandingPadInfo*> &LandingPads,
         int TypeID = TypeIds[J];
         assert(-1 - TypeID < (int)FilterOffsets.size() && "Unknown filter id!");
         int ValueForTypeID = TypeID < 0 ? FilterOffsets[-1 - TypeID] : TypeID;
-        unsigned SizeTypeID = TargetAsmInfo::getSLEB128Size(ValueForTypeID);
+        unsigned SizeTypeID = MCAsmInfo::getSLEB128Size(ValueForTypeID);
 
         int NextAction = SizeAction ? -(SizeAction + SizeTypeID) : 0;
-        SizeAction = SizeTypeID + TargetAsmInfo::getSLEB128Size(NextAction);
+        SizeAction = SizeTypeID + MCAsmInfo::getSLEB128Size(NextAction);
         SizeSiteActions += SizeAction;
 
         ActionEntry Action = { ValueForTypeID, NextAction, PrevAction };
@@ -556,22 +556,22 @@ void DwarfException::EmitExceptionTable() {
     SizeSites = CallSites.size() *
       (SiteStartSize + SiteLengthSize + LandingPadSize);
   for (unsigned i = 0, e = CallSites.size(); i < e; ++i) {
-    SizeSites += TargetAsmInfo::getULEB128Size(CallSites[i].Action);
+    SizeSites += MCAsmInfo::getULEB128Size(CallSites[i].Action);
     if (TAI->getExceptionHandlingType() == ExceptionHandling::SjLj)
-      SizeSites += TargetAsmInfo::getULEB128Size(i);
+      SizeSites += MCAsmInfo::getULEB128Size(i);
   }
   // Type infos.
   const unsigned TypeInfoSize = TD->getPointerSize(); // DW_EH_PE_absptr
   unsigned SizeTypes = TypeInfos.size() * TypeInfoSize;
 
   unsigned TypeOffset = sizeof(int8_t) + // Call site format
-    TargetAsmInfo::getULEB128Size(SizeSites) + // Call-site table length
+    MCAsmInfo::getULEB128Size(SizeSites) + // Call-site table length
     SizeSites + SizeActions + SizeTypes;
 
   unsigned TotalSize = sizeof(int8_t) + // LPStart format
                        sizeof(int8_t) + // TType format
        (HaveTTData ?
-          TargetAsmInfo::getULEB128Size(TypeOffset) : 0) + // TType base offset
+          MCAsmInfo::getULEB128Size(TypeOffset) : 0) + // TType base offset
                        TypeOffset;
 
   unsigned SizeAlign = (4 - TotalSize) & 3;

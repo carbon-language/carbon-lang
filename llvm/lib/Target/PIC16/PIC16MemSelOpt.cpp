@@ -22,7 +22,7 @@
 #define DEBUG_TYPE "pic16-codegen"
 #include "PIC16.h"
 #include "PIC16InstrInfo.h"
-#include "PIC16TargetAsmInfo.h"
+#include "PIC16MCAsmInfo.h"
 #include "PIC16TargetMachine.h"
 #include "llvm/CodeGen/MachineFunctionPass.h"
 #include "llvm/CodeGen/MachineInstrBuilder.h"

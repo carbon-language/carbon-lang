@@ -1,4 +1,4 @@
-//=====-- ARMTargetAsmInfo.h - ARM asm properties -------------*- C++ -*--====//
+//=====-- ARMMCAsmInfo.h - ARM asm properties -------------*- C++ -*--====//
 //
 //                     The LLVM Compiler Infrastructure
 //
@@ -7,23 +7,23 @@
 //
 //===----------------------------------------------------------------------===//
 //
-// This file contains the declaration of the ARMTargetAsmInfo class.
+// This file contains the declaration of the ARMMCAsmInfo class.
 //
 //===----------------------------------------------------------------------===//
 
 #ifndef LLVM_ARMTARGETASMINFO_H
 #define LLVM_ARMTARGETASMINFO_H
 
-#include "llvm/Target/DarwinTargetAsmInfo.h"
+#include "llvm/MC/MCAsmInfoDarwin.h"
 
 namespace llvm {
 
-  struct ARMDarwinTargetAsmInfo : public DarwinTargetAsmInfo {
-    explicit ARMDarwinTargetAsmInfo();
+  struct ARMDarwinMCAsmInfo : public DarwinMCAsmInfo {
+    explicit ARMDarwinMCAsmInfo();
   };
 
-  struct ARMELFTargetAsmInfo : public TargetAsmInfo {
-    explicit ARMELFTargetAsmInfo();
+  struct ARMELFMCAsmInfo : public MCAsmInfo {
+    explicit ARMELFMCAsmInfo();
   };
 
 } // namespace llvm

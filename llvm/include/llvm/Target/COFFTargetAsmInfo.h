@@ -1,4 +1,4 @@
-//===-- COFFTargetAsmInfo.h - COFF asm properties ---------------*- C++ -*-===//
+//===-- MCAsmInfoCOFF.h - COFF asm properties -------------------*- C++ -*-===//
 //
 //                     The LLVM Compiler Infrastructure
 //
@@ -10,12 +10,12 @@
 #ifndef LLVM_COFF_TARGET_ASM_INFO_H
 #define LLVM_COFF_TARGET_ASM_INFO_H
 
-#include "llvm/Target/TargetAsmInfo.h"
+#include "llvm/MC/MCAsmInfo.h"
 
 namespace llvm {
-  class COFFTargetAsmInfo : public TargetAsmInfo {
+  class COFFMCAsmInfo : public MCAsmInfo {
   protected:
-    explicit COFFTargetAsmInfo();
+    explicit COFFMCAsmInfo();
       
   };
 }

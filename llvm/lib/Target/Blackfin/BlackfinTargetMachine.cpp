@@ -12,7 +12,7 @@
 
 #include "BlackfinTargetMachine.h"
 #include "Blackfin.h"
-#include "BlackfinTargetAsmInfo.h"
+#include "BlackfinMCAsmInfo.h"
 #include "llvm/PassManager.h"
 #include "llvm/Target/TargetRegistry.h"
 
@@ -20,7 +20,7 @@ using namespace llvm;
 
 extern "C" void LLVMInitializeBlackfinTarget() {
   RegisterTargetMachine<BlackfinTargetMachine> X(TheBlackfinTarget);
-  RegisterAsmInfo<BlackfinTargetAsmInfo> Y(TheBlackfinTarget);
+  RegisterAsmInfo<BlackfinMCAsmInfo> Y(TheBlackfinTarget);
 
 }
 

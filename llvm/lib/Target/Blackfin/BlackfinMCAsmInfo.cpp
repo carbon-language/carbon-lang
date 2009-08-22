@@ -1,4 +1,4 @@
-//===-- MSP430TargetAsmInfo.cpp - MSP430 asm properties -------------------===//
+//===-- BlackfinMCAsmInfo.cpp - Blackfin asm properties -------------------===//
 //
 //                     The LLVM Compiler Infrastructure
 //
@@ -7,13 +7,15 @@
 //
 //===----------------------------------------------------------------------===//
 //
-// This file contains the declarations of the MSP430TargetAsmInfo properties.
+// This file contains the declarations of the BlackfinMCAsmInfo properties.
 //
 //===----------------------------------------------------------------------===//
 
-#include "MSP430TargetAsmInfo.h"
+#include "BlackfinMCAsmInfo.h"
+
 using namespace llvm;
 
-MSP430TargetAsmInfo::MSP430TargetAsmInfo(const Target &T, const StringRef &TT) {
-  AlignmentIsInBytes = false;
+BlackfinMCAsmInfo::BlackfinMCAsmInfo(const Target &T, const StringRef &TT) {
+  GlobalPrefix = "_";
+  CommentString = "//";
 }

@@ -15,7 +15,7 @@
 #define DEBUG_TYPE "asm-printer"
 #include "llvm/MC/MCInst.h"
 #include "X86ATTAsmPrinter.h"
-#include "llvm/Target/TargetAsmInfo.h"
+#include "llvm/MC/MCAsmInfo.h"
 #include "llvm/Support/ErrorHandling.h"
 #include "llvm/Support/FormattedStream.h"
 using namespace llvm;

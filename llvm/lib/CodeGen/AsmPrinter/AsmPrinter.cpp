@@ -32,7 +32,7 @@
 #include "llvm/Support/ErrorHandling.h"
 #include "llvm/Support/FormattedStream.h"
 #include "llvm/Support/Mangler.h"
-#include "llvm/Target/TargetAsmInfo.h"
+#include "llvm/MC/MCAsmInfo.h"
 #include "llvm/Target/TargetData.h"
 #include "llvm/Target/TargetLowering.h"
 #include "llvm/Target/TargetLoweringObjectFile.h"
@@ -50,7 +50,7 @@ AsmVerbose("asm-verbose", cl::desc("Add comments to directives."),
 
 char AsmPrinter::ID = 0;
 AsmPrinter::AsmPrinter(formatted_raw_ostream &o, TargetMachine &tm,
-                       const TargetAsmInfo *T, bool VDef)
+                       const MCAsmInfo *T, bool VDef)
   : MachineFunctionPass(&ID), FunctionNumber(0), O(o),
     TM(tm), TAI(T), TRI(tm.getRegisterInfo()),
 
@@ -1792,7 +1792,7 @@ Indent(formatted_raw_ostream &out, int level, int scale = 2) {
 ///
 static void PrintChildLoopComment(formatted_raw_ostream &O,
                                   const MachineLoop *loop,
-                                  const TargetAsmInfo *TAI,
+                                  const MCAsmInfo *TAI,
                                   int FunctionNumber) {
   // Add child loop information
   for(MachineLoop::iterator cl = loop->begin(),

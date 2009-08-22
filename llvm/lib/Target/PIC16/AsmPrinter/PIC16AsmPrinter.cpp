@@ -14,7 +14,7 @@
 
 #include "PIC16AsmPrinter.h"
 #include "MCSectionPIC16.h"
-#include "PIC16TargetAsmInfo.h"
+#include "PIC16MCAsmInfo.h"
 #include "llvm/DerivedTypes.h"
 #include "llvm/Function.h"
 #include "llvm/Module.h"
@@ -34,10 +34,10 @@ using namespace llvm;
 #include "PIC16GenAsmWriter.inc"
 
 PIC16AsmPrinter::PIC16AsmPrinter(formatted_raw_ostream &O, TargetMachine &TM,
-                                 const TargetAsmInfo *T, bool V)
+                                 const MCAsmInfo *T, bool V)
 : AsmPrinter(O, TM, T, V), DbgInfo(O, T) {
   PTLI = static_cast<PIC16TargetLowering*>(TM.getTargetLowering());
-  PTAI = static_cast<const PIC16TargetAsmInfo*>(T);
+  PTAI = static_cast<const PIC16MCAsmInfo*>(T);
   PTOF = (PIC16TargetObjectFile*)&PTLI->getObjFileLowering();
 }
 

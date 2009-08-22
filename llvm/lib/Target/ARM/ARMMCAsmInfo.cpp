@@ -1,4 +1,4 @@
-//===-- ARMTargetAsmInfo.cpp - ARM asm properties ---------------*- C++ -*-===//
+//===-- ARMMCAsmInfo.cpp - ARM asm properties -------------------*- C++ -*-===//
 //
 //                     The LLVM Compiler Infrastructure
 //
@@ -7,11 +7,11 @@
 //
 //===----------------------------------------------------------------------===//
 //
-// This file contains the declarations of the ARMTargetAsmInfo properties.
+// This file contains the declarations of the ARMMCAsmInfo properties.
 //
 //===----------------------------------------------------------------------===//
 
-#include "ARMTargetAsmInfo.h"
+#include "ARMMCAsmInfo.h"
 using namespace llvm;
 
 static const char *const arm_asm_table[] = {
@@ -40,7 +40,7 @@ static const char *const arm_asm_table[] = {
   0,0
 };
 
-ARMDarwinTargetAsmInfo::ARMDarwinTargetAsmInfo() {
+ARMDarwinMCAsmInfo::ARMDarwinMCAsmInfo() {
   AsmTransCBE = arm_asm_table;
   Data64bitsDirective = 0;
   CommentString = "@";
@@ -52,7 +52,7 @@ ARMDarwinTargetAsmInfo::ARMDarwinTargetAsmInfo() {
   AbsoluteEHSectionOffsets = false;
 }
 
-ARMELFTargetAsmInfo::ARMELFTargetAsmInfo() {
+ARMELFMCAsmInfo::ARMELFMCAsmInfo() {
   AlignmentIsInBytes = false;
   Data64bitsDirective = 0;
   CommentString = "@";

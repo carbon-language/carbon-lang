@@ -1,4 +1,4 @@
-//===-- TargetAsmInfo.cpp - Asm Info ---------------------------------------==//
+//===-- MCAsmInfo.cpp - Asm Info -------------------------------------------==//
 //
 //                     The LLVM Compiler Infrastructure
 //
@@ -12,12 +12,12 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include "llvm/Target/TargetAsmInfo.h"
+#include "llvm/MC/MCAsmInfo.h"
 #include <cctype>
 #include <cstring>
 using namespace llvm;
 
-TargetAsmInfo::TargetAsmInfo() {
+MCAsmInfo::MCAsmInfo() {
   ZeroFillDirective = 0;
   NonexecutableStackDirective = 0;
   NeedsSet = false;
@@ -85,11 +85,11 @@ TargetAsmInfo::TargetAsmInfo() {
   AsmTransCBE = 0;
 }
 
-TargetAsmInfo::~TargetAsmInfo() {
+MCAsmInfo::~MCAsmInfo() {
 }
 
 
-unsigned TargetAsmInfo::getULEB128Size(unsigned Value) {
+unsigned MCAsmInfo::getULEB128Size(unsigned Value) {
   unsigned Size = 0;
   do {
     Value >>= 7;
@@ -98,7 +98,7 @@ unsigned TargetAsmInfo::getULEB128Size(unsigned Value) {
   return Size;
 }
 
-unsigned TargetAsmInfo::getSLEB128Size(int Value) {
+unsigned MCAsmInfo::getSLEB128Size(int Value) {
   unsigned Size = 0;
   int Sign = Value >> (8 * sizeof(Value) - 1);
   bool IsMore;

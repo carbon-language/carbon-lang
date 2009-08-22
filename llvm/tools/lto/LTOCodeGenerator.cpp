@@ -39,7 +39,7 @@
 #include "llvm/System/Signals.h"
 #include "llvm/Target/SubtargetFeature.h"
 #include "llvm/Target/TargetOptions.h"
-#include "llvm/Target/TargetAsmInfo.h"
+#include "llvm/MC/MCAsmInfo.h"
 #include "llvm/Target/TargetData.h"
 #include "llvm/Target/TargetMachine.h"
 #include "llvm/Target/TargetRegistry.h"
@@ -359,7 +359,7 @@ void LTOCodeGenerator::applyScopeRestrictions()
         // mark which symbols can not be internalized 
         if ( !_mustPreserveSymbols.empty() ) {
             Mangler mangler(*mergedModule, 
-                                _target->getTargetAsmInfo()->getGlobalPrefix());
+                                _target->getMCAsmInfo()->getGlobalPrefix());
             std::vector<const char*> mustPreserveList;
             for (Module::iterator f = mergedModule->begin(), 
                                         e = mergedModule->end(); f != e; ++f) {
@@ -395,7 +395,7 @@ bool LTOCodeGenerator::generateAssemblyCode(formatted_raw_ostream& out,
     Module* mergedModule = _linker.getModule();
 
     // If target supports exception handling then enable it now.
-    switch (_target->getTargetAsmInfo()->getExceptionHandlingType()) {
+    switch (_target->getMCAsmInfo()->getExceptionHandlingType()) {
     case ExceptionHandling::Dwarf:
       llvm::DwarfExceptionHandling = true;
       break;

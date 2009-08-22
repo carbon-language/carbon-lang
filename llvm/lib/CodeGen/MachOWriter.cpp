@@ -29,7 +29,7 @@
 #include "llvm/DerivedTypes.h"
 #include "llvm/Module.h"
 #include "llvm/PassManager.h"
-#include "llvm/Target/TargetAsmInfo.h"
+#include "llvm/MC/MCAsmInfo.h"
 #include "llvm/Target/TargetData.h"
 #include "llvm/Target/TargetMachine.h"
 #include "llvm/Target/TargetMachOWriterInfo.h"
@@ -61,7 +61,7 @@ MachOWriter::MachOWriter(raw_ostream &o, TargetMachine &tm)
   is64Bit = TM.getTargetData()->getPointerSizeInBits() == 64;
   isLittleEndian = TM.getTargetData()->isLittleEndian();
 
-  TAI = TM.getTargetAsmInfo();
+  TAI = TM.getMCAsmInfo();
 
   // Create the machine code emitter object for this target.
   MachOCE = new MachOCodeEmitter(*this, *getTextSection(true));
@@ -743,7 +743,7 @@ void MachOWriter::InitMem(const Constant *C, uintptr_t Offset,
 //===----------------------------------------------------------------------===//
 
 MachOSym::MachOSym(const GlobalValue *gv, std::string name, uint8_t sect,
-                   const TargetAsmInfo *TAI) :
+                   const MCAsmInfo *TAI) :
   GV(gv), n_strx(0), n_type(sect == NO_SECT ? N_UNDF : N_SECT), n_sect(sect),
   n_desc(0), n_value(0) {
 

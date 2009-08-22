@@ -25,7 +25,7 @@
 #include "llvm/CodeGen/MachineConstantPool.h"
 #include "llvm/CodeGen/MachineInstr.h"
 #include "llvm/MC/MCStreamer.h"
-#include "llvm/Target/TargetAsmInfo.h"
+#include "llvm/MC/MCAsmInfo.h"
 #include "llvm/Target/TargetLoweringObjectFile.h"
 #include "llvm/Target/TargetRegistry.h"
 #include "llvm/ADT/Statistic.h"
@@ -53,7 +53,7 @@ namespace {
     unsigned BBNumber;
   public:
     explicit SparcAsmPrinter(formatted_raw_ostream &O, TargetMachine &TM,
-                             const TargetAsmInfo *T, bool V)
+                             const MCAsmInfo *T, bool V)
       : AsmPrinter(O, TM, T, V), BBNumber(0) {}
 
     virtual const char *getPassName() const {

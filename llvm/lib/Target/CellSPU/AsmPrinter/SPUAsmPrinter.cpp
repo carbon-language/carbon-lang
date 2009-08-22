@@ -26,7 +26,7 @@
 #include "llvm/CodeGen/MachineFunctionPass.h"
 #include "llvm/CodeGen/MachineInstr.h"
 #include "llvm/MC/MCStreamer.h"
-#include "llvm/Target/TargetAsmInfo.h"
+#include "llvm/MC/MCAsmInfo.h"
 #include "llvm/Target/TargetLoweringObjectFile.h"
 #include "llvm/Target/TargetInstrInfo.h"
 #include "llvm/Target/TargetOptions.h"
@@ -53,7 +53,7 @@ namespace {
     std::set<std::string> FnStubs, GVStubs;
   public:
     explicit SPUAsmPrinter(formatted_raw_ostream &O, TargetMachine &TM,
-                           const TargetAsmInfo *T, bool V) :
+                           const MCAsmInfo *T, bool V) :
       AsmPrinter(O, TM, T, V) {}
 
     virtual const char *getPassName() const {
@@ -290,7 +290,7 @@ namespace {
     DwarfWriter *DW;
   public:
     explicit LinuxAsmPrinter(formatted_raw_ostream &O, TargetMachine &TM,
-                             const TargetAsmInfo *T, bool V)
+                             const MCAsmInfo *T, bool V)
       : SPUAsmPrinter(O, TM, T, V), DW(0) {}
 
     virtual const char *getPassName() const {

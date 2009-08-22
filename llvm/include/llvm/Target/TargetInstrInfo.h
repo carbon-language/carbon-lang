@@ -19,7 +19,7 @@
 
 namespace llvm {
 
-class TargetAsmInfo;
+class MCAsmInfo;
 class TargetRegisterClass;
 class TargetRegisterInfo;
 class LiveVariables;
@@ -464,7 +464,7 @@ public:
   /// Measure the specified inline asm to determine an approximation of its
   /// length.
   virtual unsigned getInlineAsmLength(const char *Str,
-                                      const TargetAsmInfo &TAI) const;
+                                      const MCAsmInfo &TAI) const;
 };
 
 /// TargetInstrInfoImpl - This is the default implementation of

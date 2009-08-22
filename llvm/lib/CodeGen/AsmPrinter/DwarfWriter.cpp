@@ -39,7 +39,7 @@ DwarfWriter::~DwarfWriter() {
 void DwarfWriter::BeginModule(Module *M,
                               MachineModuleInfo *MMI,
                               raw_ostream &OS, AsmPrinter *A,
-                              const TargetAsmInfo *T) {
+                              const MCAsmInfo *T) {
   DE = new DwarfException(OS, A, T);
   DD = new DwarfDebug(OS, A, T);
   DE->BeginModule(M, MMI);

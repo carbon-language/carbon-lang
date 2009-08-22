@@ -21,7 +21,7 @@
 namespace llvm {
 
 class Target;
-class TargetAsmInfo;
+class MCAsmInfo;
 class TargetData;
 class TargetSubtarget;
 class TargetInstrInfo;
@@ -102,7 +102,7 @@ protected: // Can only create subclasses.
   
   /// AsmInfo - Contains target specific asm information.
   ///
-  const TargetAsmInfo *AsmInfo;
+  const MCAsmInfo *AsmInfo;
   
 public:
   virtual ~TargetMachine();
@@ -120,9 +120,9 @@ public:
   virtual       TargetLowering    *getTargetLowering() const { return 0; }
   virtual const TargetData            *getTargetData() const { return 0; }
   
-  /// getTargetAsmInfo - Return target specific asm information.
+  /// getMCAsmInfo - Return target specific asm information.
   ///
-  const TargetAsmInfo *getTargetAsmInfo() const { return AsmInfo; }
+  const MCAsmInfo *getMCAsmInfo() const { return AsmInfo; }
   
   /// getSubtarget - This method returns a pointer to the specified type of
   /// TargetSubtarget.  In debug builds, it verifies that the object being

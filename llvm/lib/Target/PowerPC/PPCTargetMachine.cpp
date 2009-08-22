@@ -12,7 +12,7 @@
 //===----------------------------------------------------------------------===//
 
 #include "PPC.h"
-#include "PPCTargetAsmInfo.h"
+#include "PPCMCAsmInfo.h"
 #include "PPCTargetMachine.h"
 #include "llvm/PassManager.h"
 #include "llvm/Target/TargetOptions.h"
@@ -20,13 +20,13 @@
 #include "llvm/Support/FormattedStream.h"
 using namespace llvm;
 
-static const TargetAsmInfo *createTargetAsmInfo(const Target &T,
+static const MCAsmInfo *createMCAsmInfo(const Target &T,
                                                 const StringRef &TT) {
   Triple TheTriple(TT);
   bool isPPC64 = TheTriple.getArch() == Triple::ppc64;
   if (TheTriple.getOS() == Triple::Darwin)
-    return new PPCDarwinTargetAsmInfo(isPPC64);
-  return new PPCLinuxTargetAsmInfo(isPPC64);
+    return new PPCDarwinMCAsmInfo(isPPC64);
+  return new PPCLinuxMCAsmInfo(isPPC64);
   
 }
 
@@ -35,8 +35,8 @@ extern "C" void LLVMInitializePowerPCTarget() {
   RegisterTargetMachine<PPC32TargetMachine> A(ThePPC32Target);  
   RegisterTargetMachine<PPC64TargetMachine> B(ThePPC64Target);
   
-  RegisterAsmInfoFn C(ThePPC32Target, createTargetAsmInfo);
-  RegisterAsmInfoFn D(ThePPC64Target, createTargetAsmInfo);
+  RegisterAsmInfoFn C(ThePPC32Target, createMCAsmInfo);
+  RegisterAsmInfoFn D(ThePPC64Target, createMCAsmInfo);
 }
 
 

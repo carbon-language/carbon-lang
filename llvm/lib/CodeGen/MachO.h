@@ -21,7 +21,7 @@
 namespace llvm {
 
 class GlobalValue;
-class TargetAsmInfo;
+class MCAsmInfo;
 
 /// MachOSym - This struct contains information about each symbol that is
 /// added to logical symbol table for the module.  This is eventually
@@ -68,7 +68,7 @@ struct MachOSym {
   };
   
   MachOSym(const GlobalValue *gv, std::string name, uint8_t sect,
-           const TargetAsmInfo *TAI);
+           const MCAsmInfo *TAI);
 
   struct SymCmp {
     // FIXME: this does not appear to be sorting 'f' after 'F'

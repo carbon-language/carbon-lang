@@ -24,7 +24,7 @@ namespace llvm {
 
 struct LandingPadInfo;
 class MachineModuleInfo;
-class TargetAsmInfo;
+class MCAsmInfo;
 class Timer;
 class raw_ostream;
 
@@ -164,7 +164,7 @@ public:
   //===--------------------------------------------------------------------===//
   // Main entry points.
   //
-  DwarfException(raw_ostream &OS, AsmPrinter *A, const TargetAsmInfo *T);
+  DwarfException(raw_ostream &OS, AsmPrinter *A, const MCAsmInfo *T);
   virtual ~DwarfException();
 
   /// BeginModule - Emit all exception information that should come prior to the

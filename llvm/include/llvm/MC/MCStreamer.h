@@ -25,7 +25,7 @@ namespace llvm {
   class MCSymbol;
   class StringRef;
   class raw_ostream;
-  class TargetAsmInfo;
+  class MCAsmInfo;
 
   /// MCStreamer - Streaming machine code generation interface.  This interface
   /// is intended to provide a programatic interface that is very similar to the
@@ -241,7 +241,7 @@ namespace llvm {
   ///
   /// \arg AP - If given, an AsmPrinter to use for printing instructions.
   MCStreamer *createAsmStreamer(MCContext &Ctx, raw_ostream &OS,
-                                const TargetAsmInfo &TAI, AsmPrinter *AP = 0);
+                                const MCAsmInfo &TAI, AsmPrinter *AP = 0);
 
   // FIXME: These two may end up getting rolled into a single
   // createObjectStreamer interface, which implements the assembler backend, and

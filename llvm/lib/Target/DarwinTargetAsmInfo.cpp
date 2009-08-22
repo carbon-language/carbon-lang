@@ -1,4 +1,4 @@
-//===-- DarwinTargetAsmInfo.cpp - Darwin asm properties ---------*- C++ -*-===//
+//===-- MCAsmInfoDarwin.cpp - Darwin asm properties -------------*- C++ -*-===//
 //
 //                     The LLVM Compiler Infrastructure
 //
@@ -12,10 +12,10 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include "llvm/Target/DarwinTargetAsmInfo.h"
+#include "llvm/MC/MCAsmInfoDarwin.h"
 using namespace llvm;
 
-DarwinTargetAsmInfo::DarwinTargetAsmInfo() {
+DarwinMCAsmInfo::DarwinMCAsmInfo() {
   // Common settings for all Darwin targets.
   // Syntax:
   GlobalPrefix = "_";

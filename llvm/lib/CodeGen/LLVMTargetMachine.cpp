@@ -20,7 +20,7 @@
 #include "llvm/CodeGen/GCStrategy.h"
 #include "llvm/CodeGen/MachineFunctionAnalysis.h"
 #include "llvm/Target/TargetOptions.h"
-#include "llvm/Target/TargetAsmInfo.h"
+#include "llvm/MC/MCAsmInfo.h"
 #include "llvm/Target/TargetRegistry.h"
 #include "llvm/Transforms/Scalar.h"
 #include "llvm/Support/CommandLine.h"
@@ -108,7 +108,7 @@ bool LLVMTargetMachine::addAssemblyEmitter(PassManagerBase &PM,
                                            bool Verbose,
                                            formatted_raw_ostream &Out) {
   FunctionPass *Printer =
-    getTarget().createAsmPrinter(Out, *this, getTargetAsmInfo(), Verbose);
+    getTarget().createAsmPrinter(Out, *this, getMCAsmInfo(), Verbose);
   if (!Printer)
     return true;
 
@@ -239,7 +239,7 @@ bool LLVMTargetMachine::addCommonCodeGenPasses(PassManagerBase &PM,
 
   // Turn exception handling constructs into something the code generators can
   // handle.
-  switch (getTargetAsmInfo()->getExceptionHandlingType())
+  switch (getMCAsmInfo()->getExceptionHandlingType())
   {
   case ExceptionHandling::SjLj:
     // SjLj piggy-backs on dwarf for this bit. The cleanups done apply to both

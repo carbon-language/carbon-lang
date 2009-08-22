@@ -33,7 +33,7 @@
 #include "llvm/CodeGen/MachineInstrBuilder.h"
 #include "llvm/MC/MCSectionMachO.h"
 #include "llvm/MC/MCStreamer.h"
-#include "llvm/Target/TargetAsmInfo.h"
+#include "llvm/MC/MCAsmInfo.h"
 #include "llvm/Target/TargetLoweringObjectFile.h"
 #include "llvm/Target/TargetRegisterInfo.h"
 #include "llvm/Target/TargetInstrInfo.h"
@@ -87,7 +87,7 @@ namespace {
     uint64_t LabelID;
   public:
     explicit PPCAsmPrinter(formatted_raw_ostream &O, TargetMachine &TM,
-                           const TargetAsmInfo *T, bool V)
+                           const MCAsmInfo *T, bool V)
       : AsmPrinter(O, TM, T, V),
         Subtarget(TM.getSubtarget<PPCSubtarget>()), LabelID(0) {}
 
@@ -346,7 +346,7 @@ namespace {
   class VISIBILITY_HIDDEN PPCLinuxAsmPrinter : public PPCAsmPrinter {
   public:
     explicit PPCLinuxAsmPrinter(formatted_raw_ostream &O, TargetMachine &TM,
-                                const TargetAsmInfo *T, bool V)
+                                const MCAsmInfo *T, bool V)
       : PPCAsmPrinter(O, TM, T, V){}
 
     virtual const char *getPassName() const {
@@ -372,7 +372,7 @@ namespace {
     formatted_raw_ostream &OS;
   public:
     explicit PPCDarwinAsmPrinter(formatted_raw_ostream &O, TargetMachine &TM,
-                                 const TargetAsmInfo *T, bool V)
+                                 const MCAsmInfo *T, bool V)
       : PPCAsmPrinter(O, TM, T, V), OS(O) {}
 
     virtual const char *getPassName() const {
@@ -1151,7 +1151,7 @@ bool PPCDarwinAsmPrinter::doFinalization(Module &M) {
 ///
 static AsmPrinter *createPPCAsmPrinterPass(formatted_raw_ostream &o,
                                            TargetMachine &tm,
-                                           const TargetAsmInfo *tai,
+                                           const MCAsmInfo *tai,
                                            bool verbose) {
   const PPCSubtarget *Subtarget = &tm.getSubtarget<PPCSubtarget>();
 
