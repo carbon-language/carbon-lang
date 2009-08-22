@@ -285,6 +285,55 @@ ToolChain *OpenBSDHostInfo::getToolChain(const ArgList &Args,
   return TC;
 }
 
+// AuroraUX Host Info
+
+/// AuroraUXHostInfo - AuroraUX host information implementation.
+class AuroraUXHostInfo : public HostInfo {
+  /// Cache of tool chains we have created.
+  mutable llvm::StringMap<ToolChain*> ToolChains;
+
+public:
+  AuroraUXHostInfo(const Driver &D, const llvm::Triple& Triple)
+    : HostInfo(D, Triple) {}
+  ~AuroraUXHostInfo();
+
+  virtual bool useDriverDriver() const;
+
+  virtual types::ID lookupTypeForExtension(const char *Ext) const {
+    return types::lookupTypeForExtension(Ext);
+  }
+
+  virtual ToolChain *getToolChain(const ArgList &Args,
+				  const char *ArchName) const;
+};
+
+AuroraUXHostInfo::~AuroraUXHostInfo() {
+  for (llvm::StringMap<ToolChain*>::iterator
+	 it = ToolChains.begin(), ie = ToolChains.end(); it != ie; ++it)
+    delete it->second;
+}
+
+bool AuroraUXHostInfo::useDriverDriver() const {
+  return false;
+}
+
+ToolChain *AuroraUXHostInfo::getToolChain(const ArgList &Args,
+					  const char *ArchName) const {
+  assert(!ArchName &&
+	 "Unexpected arch name on platform without driver driver support.");
+
+  ToolChain *&TC = ToolChains[getArchName()];
+
+  if (!TC) {
+    llvm::Triple TCTriple(getTriple());
+    TCTriple.setArchName(getArchName());
+
+    TC = new toolchains::AuroraUX(*this, TCTriple);
+  }
+
+  return TC;
+}
+
 // FreeBSD Host Info
 
 /// FreeBSDHostInfo -  FreeBSD host information implementation.
@@ -459,6 +508,12 @@ ToolChain *LinuxHostInfo::getToolChain(const ArgList &Args,
   return TC;
 }
 
+}
+
+const HostInfo *
+clang::driver::createAuroraUXHostInfo(const Driver &D,
+				      const llvm::Triple& Triple){
+  return new AuroraUXHostInfo(D, Triple);
 }
 
 const HostInfo *

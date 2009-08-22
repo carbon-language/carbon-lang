@@ -1248,6 +1248,8 @@ const HostInfo *Driver::GetHostInfo(const char *TripleStr) const {
     Triple.setArchName("powerpc64");
 
   switch (Triple.getOS()) {
+  case llvm::Triple::AuroraUX:
+    return createAuroraUXHostInfo(*this, Triple);
   case llvm::Triple::Darwin:
     return createDarwinHostInfo(*this, Triple);
   case llvm::Triple::DragonFly:

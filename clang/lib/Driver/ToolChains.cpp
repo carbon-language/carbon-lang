@@ -449,6 +449,48 @@ Tool &FreeBSD::SelectTool(const Compilation &C, const JobAction &JA) const {
   return *T;
 }
 
+/// AuroraUX - AuroraUX tool chain which can call as(1) and ld(1) directly.
+
+AuroraUX::AuroraUX(const HostInfo &Host, const llvm::Triple& Triple)
+  : Generic_GCC(Host, Triple) {
+
+  // Path mangling to find libexec
+  std::string Path(getHost().getDriver().Dir);
+
+  Path += "/../libexec";
+  getProgramPaths().push_back(Path);
+  getProgramPaths().push_back(getHost().getDriver().Dir);  
+
+  getFilePaths().push_back(getHost().getDriver().Dir + "/../lib");
+  getFilePaths().push_back("/usr/lib");
+  getFilePaths().push_back("/usr/sfw/lib");
+  getFilePaths().push_back("/opt/gcc4/lib");
+
+}
+
+Tool &AuroraUX::SelectTool(const Compilation &C, const JobAction &JA) const {
+  Action::ActionClass Key;
+  if (getHost().getDriver().ShouldUseClangCompiler(C, JA, getArchName()))
+    Key = Action::AnalyzeJobClass;
+  else
+    Key = JA.getKind();
+
+  Tool *&T = Tools[Key];
+  if (!T) {
+    switch (Key) {
+    case Action::AssembleJobClass:
+      T = new tools::auroraux::Assemble(*this); break;
+    case Action::LinkJobClass:
+      T = new tools::auroraux::Link(*this); break;
+    default:
+      T = &Generic_GCC::SelectTool(C, JA);
+    }
+  }
+
+  return *T;
+}
+
+
 /// Linux toolchain (very bare-bones at the moment).
 
 Linux::Linux(const HostInfo &Host, const llvm::Triple& Triple)

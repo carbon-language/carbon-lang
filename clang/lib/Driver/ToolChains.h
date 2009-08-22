@@ -107,6 +107,13 @@ public:
   virtual const char *GetDefaultRelocationModel() const { return "pic"; }
 };
 
+class VISIBILITY_HIDDEN AuroraUX : public Generic_GCC {
+public:
+  AuroraUX(const HostInfo &Host, const llvm::Triple& Triple);
+
+  virtual Tool &SelectTool(const Compilation &C, const JobAction &JA) const;
+};
+
 class VISIBILITY_HIDDEN OpenBSD : public Generic_GCC {
 public:
   OpenBSD(const HostInfo &Host, const llvm::Triple& Triple);
