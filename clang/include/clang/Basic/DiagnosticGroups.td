@@ -138,11 +138,7 @@ def Most : DiagGroup<"most", [
     UnusedVariable,
     VectorConversions,
     VolatileRegisterVar,
-    // FIXME. Too many errors (-Werror) in a key project.
-    // ReadOnlySetterAttrs,
     Reorder
-    // FIXME. Too many errors (-Werror) in a key project.
-    // UndeclaredSelector
  ]>;
 
 // -Wall is -Wmost -Wparentheses
