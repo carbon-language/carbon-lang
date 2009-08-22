@@ -33,11 +33,6 @@ namespace llvm
     ///
     const static bool PRESERVE_STREAM = false;
 
-    /// MAX_COLUMN_PAD - This is the maximum column padding we ever
-    /// expect to see.
-    ///
-    const static unsigned MAX_COLUMN_PAD = 100;
-
   private:
     /// TheStream - The real stream we output to. We set it to be
     /// unbuffered, since we're already doing our own buffering.
