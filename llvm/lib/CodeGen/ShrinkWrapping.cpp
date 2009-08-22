@@ -297,20 +297,26 @@ void PEI::calculateAnticAvail(MachineFunction &Fn) {
     }
   }
 
-  DEBUG(if (ShrinkWrapDebugging >= Details) {
-      DOUT << "-----------------------------------------------------------\n";
-      DOUT << " Antic/Avail Sets:\n";
-      DOUT << "-----------------------------------------------------------\n";
-      DOUT << "iterations = " << iterations << "\n";
-      DOUT << "-----------------------------------------------------------\n";
-      DOUT << "MBB | USED | ANTIC_IN | ANTIC_OUT | AVAIL_IN | AVAIL_OUT\n";
-      DOUT << "-----------------------------------------------------------\n";
-      for (MachineFunction::iterator MBBI = Fn.begin(), MBBE = Fn.end();
-           MBBI != MBBE; ++MBBI) {
-        MachineBasicBlock* MBB = MBBI;
-        dumpSets(MBB);
+  DEBUG({
+      if (ShrinkWrapDebugging >= Details) {
+        errs()
+          << "-----------------------------------------------------------\n"
+          << " Antic/Avail Sets:\n"
+          << "-----------------------------------------------------------\n"
+          << "iterations = " << iterations << "\n"
+          << "-----------------------------------------------------------\n"
+          << "MBB | USED | ANTIC_IN | ANTIC_OUT | AVAIL_IN | AVAIL_OUT\n"
+          << "-----------------------------------------------------------\n";
+
+        for (MachineFunction::iterator MBBI = Fn.begin(), MBBE = Fn.end();
+             MBBI != MBBE; ++MBBI) {
+          MachineBasicBlock* MBB = MBBI;
+          dumpSets(MBB);
+        }
+
+        errs()
+          << "-----------------------------------------------------------\n";
       }
-      DOUT << "-----------------------------------------------------------\n";
     });
 }
 
@@ -460,7 +466,7 @@ bool PEI::calculateSets(MachineFunction &Fn) {
 
   if (allCSRUsesInEntryBlock) {
     DEBUG(errs() << "DISABLED: " << Fn.getFunction()->getName()
-          << ": all CSRs used in EntryBlock\n");
+                 << ": all CSRs used in EntryBlock\n");
     ShrinkWrapThisFunction = false;
   } else {
     bool allCSRsUsedInEntryFanout = true;
@@ -472,7 +478,7 @@ bool PEI::calculateSets(MachineFunction &Fn) {
     }
     if (allCSRsUsedInEntryFanout) {
       DEBUG(errs() << "DISABLED: " << Fn.getFunction()->getName()
-            << ": all CSRs used in imm successors of EntryBlock\n");
+                   << ": all CSRs used in imm successors of EntryBlock\n");
       ShrinkWrapThisFunction = false;
     }
   }
@@ -499,8 +505,8 @@ bool PEI::calculateSets(MachineFunction &Fn) {
         CSRUsedInChokePoints |= CSRUsed[MBB];
         if (CSRUsedInChokePoints == UsedCSRegs) {
           DEBUG(errs() << "DISABLED: " << Fn.getFunction()->getName()
-                << ": all CSRs used in choke point(s) at "
-                << getBasicBlockName(MBB) << "\n");
+                       << ": all CSRs used in choke point(s) at "
+                       << getBasicBlockName(MBB) << "\n");
           ShrinkWrapThisFunction = false;
           break;
         }
@@ -945,10 +951,10 @@ void PEI::verifySpillRestorePlacement() {
     if (spilled.empty())
       continue;
 
-    DOUT << "SAVE[" << getBasicBlockName(MBB) << "] = "
-         << stringifyCSRegSet(spilled)
-         << "  RESTORE[" << getBasicBlockName(MBB) << "] = "
-         << stringifyCSRegSet(CSRRestore[MBB]) << "\n";
+    DEBUG(errs() << "SAVE[" << getBasicBlockName(MBB) << "] = "
+                 << stringifyCSRegSet(spilled)
+                 << "  RESTORE[" << getBasicBlockName(MBB) << "] = "
+                 << stringifyCSRegSet(CSRRestore[MBB]) << "\n");
 
     if (CSRRestore[MBB].intersects(spilled)) {
       restored |= (CSRRestore[MBB] & spilled);
@@ -978,10 +984,10 @@ void PEI::verifySpillRestorePlacement() {
         if (restored != spilled) {
           CSRegSet notRestored = (spilled - restored);
           DEBUG(errs() << MF->getFunction()->getName() << ": "
-                << stringifyCSRegSet(notRestored)
-                << " spilled at " << getBasicBlockName(MBB)
-                << " are never restored on path to return "
-                << getBasicBlockName(SBB) << "\n");
+                       << stringifyCSRegSet(notRestored)
+                       << " spilled at " << getBasicBlockName(MBB)
+                       << " are never restored on path to return "
+                       << getBasicBlockName(SBB) << "\n");
         }
         restored.clear();
       }
@@ -998,10 +1004,10 @@ void PEI::verifySpillRestorePlacement() {
     if (restored.empty())
       continue;
 
-    DOUT << "SAVE[" << getBasicBlockName(MBB) << "] = "
-         << stringifyCSRegSet(CSRSave[MBB])
-         << "  RESTORE[" << getBasicBlockName(MBB) << "] = "
-         << stringifyCSRegSet(restored) << "\n";
+    DEBUG(errs() << "SAVE[" << getBasicBlockName(MBB) << "] = "
+                 << stringifyCSRegSet(CSRSave[MBB])
+                 << "  RESTORE[" << getBasicBlockName(MBB) << "] = "
+                 << stringifyCSRegSet(restored) << "\n");
 
     if (CSRSave[MBB].intersects(restored)) {
       spilled |= (CSRSave[MBB] & restored);
@@ -1026,9 +1032,9 @@ void PEI::verifySpillRestorePlacement() {
     if (spilled != restored) {
       CSRegSet notSpilled = (restored - spilled);
       DEBUG(errs() << MF->getFunction()->getName() << ": "
-            << stringifyCSRegSet(notSpilled)
-            << " restored at " << getBasicBlockName(MBB)
-            << " are never spilled\n");
+                   << stringifyCSRegSet(notSpilled)
+                   << " restored at " << getBasicBlockName(MBB)
+                   << " are never spilled\n");
     }
   }
 }
@@ -1072,14 +1078,15 @@ std::string PEI::stringifyCSRegSet(const CSRegSet& s) {
 }
 
 void PEI::dumpSet(const CSRegSet& s) {
-  DOUT << stringifyCSRegSet(s) << "\n";
+  DEBUG(errs() << stringifyCSRegSet(s) << "\n");
 }
 
 void PEI::dumpUsed(MachineBasicBlock* MBB) {
-  if (MBB) {
-    DOUT << "CSRUsed[" << getBasicBlockName(MBB) << "] = "
-         << stringifyCSRegSet(CSRUsed[MBB])  << "\n";
-  }
+  DEBUG({
+      if (MBB)
+        errs() << "CSRUsed[" << getBasicBlockName(MBB) << "] = "
+               << stringifyCSRegSet(CSRUsed[MBB])  << "\n";
+    });
 }
 
 void PEI::dumpAllUsed() {
@@ -1091,27 +1098,29 @@ void PEI::dumpAllUsed() {
 }
 
 void PEI::dumpSets(MachineBasicBlock* MBB) {
-  if (MBB) {
-    DOUT << getBasicBlockName(MBB)           << " | "
-         << stringifyCSRegSet(CSRUsed[MBB])  << " | "
-         << stringifyCSRegSet(AnticIn[MBB])  << " | "
-         << stringifyCSRegSet(AnticOut[MBB]) << " | "
-         << stringifyCSRegSet(AvailIn[MBB])  << " | "
-         << stringifyCSRegSet(AvailOut[MBB]) << "\n";
-  }
+  DEBUG({
+      if (MBB)
+        errs() << getBasicBlockName(MBB)           << " | "
+               << stringifyCSRegSet(CSRUsed[MBB])  << " | "
+               << stringifyCSRegSet(AnticIn[MBB])  << " | "
+               << stringifyCSRegSet(AnticOut[MBB]) << " | "
+               << stringifyCSRegSet(AvailIn[MBB])  << " | "
+               << stringifyCSRegSet(AvailOut[MBB]) << "\n";
+    });
 }
 
 void PEI::dumpSets1(MachineBasicBlock* MBB) {
-  if (MBB) {
-    DOUT << getBasicBlockName(MBB)             << " | "
-         << stringifyCSRegSet(CSRUsed[MBB])    << " | "
-         << stringifyCSRegSet(AnticIn[MBB])    << " | "
-         << stringifyCSRegSet(AnticOut[MBB])   << " | "
-         << stringifyCSRegSet(AvailIn[MBB])    << " | "
-         << stringifyCSRegSet(AvailOut[MBB])   << " | "
-         << stringifyCSRegSet(CSRSave[MBB])    << " | "
-         << stringifyCSRegSet(CSRRestore[MBB]) << "\n";
-  }
+  DEBUG({
+      if (MBB)
+        errs() << getBasicBlockName(MBB)             << " | "
+               << stringifyCSRegSet(CSRUsed[MBB])    << " | "
+               << stringifyCSRegSet(AnticIn[MBB])    << " | "
+               << stringifyCSRegSet(AnticOut[MBB])   << " | "
+               << stringifyCSRegSet(AvailIn[MBB])    << " | "
+               << stringifyCSRegSet(AvailOut[MBB])   << " | "
+               << stringifyCSRegSet(CSRSave[MBB])    << " | "
+               << stringifyCSRegSet(CSRRestore[MBB]) << "\n";
+    });
 }
 
 void PEI::dumpAllSets() {
@@ -1123,20 +1132,21 @@ void PEI::dumpAllSets() {
 }
 
 void PEI::dumpSRSets() {
-  for (MachineFunction::iterator MBB = MF->begin(), E = MF->end();
-       MBB != E; ++MBB) {
-    if (! CSRSave[MBB].empty()) {
-      DOUT << "SAVE[" << getBasicBlockName(MBB) << "] = "
-           << stringifyCSRegSet(CSRSave[MBB]);
-      if (CSRRestore[MBB].empty())
-        DOUT << "\n";
-    }
-    if (! CSRRestore[MBB].empty()) {
-      if (! CSRSave[MBB].empty())
-        DOUT << "    ";
-      DOUT << "RESTORE[" << getBasicBlockName(MBB) << "] = "
-           << stringifyCSRegSet(CSRRestore[MBB]) << "\n";
-    }
-  }
+  DEBUG({
+      for (MachineFunction::iterator MBB = MF->begin(), E = MF->end();
+           MBB != E; ++MBB) {
+        if (!CSRSave[MBB].empty()) {
+          errs() << "SAVE[" << getBasicBlockName(MBB) << "] = "
+                 << stringifyCSRegSet(CSRSave[MBB]);
+          if (CSRRestore[MBB].empty())
+            errs() << '\n';
+        }
+
+        if (!CSRRestore[MBB].empty() && !CSRSave[MBB].empty())
+          errs() << "    "
+                 << "RESTORE[" << getBasicBlockName(MBB) << "] = "
+                 << stringifyCSRegSet(CSRRestore[MBB]) << "\n";
+      }
+    });
 }
 #endif
