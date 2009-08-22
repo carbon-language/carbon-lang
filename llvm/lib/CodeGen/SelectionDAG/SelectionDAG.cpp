@@ -459,7 +459,7 @@ static void AddNodeIDCustom(FoldingSetNodeID &ID, const SDNode *N) {
   }
   case ISD::VECTOR_SHUFFLE: {
     const ShuffleVectorSDNode *SVN = cast<ShuffleVectorSDNode>(N);
-    for (unsigned i = 0, e = N->getValueType(0).getVectorNumElements(); 
+    for (unsigned i = 0, e = N->getValueType(0).getVectorNumElements();
          i != e; ++i)
       ID.AddInteger(SVN->getMaskElt(i));
     break;
@@ -808,7 +808,7 @@ void SelectionDAG::init(MachineFunction &mf, MachineModuleInfo *mmi,
   MF = &mf;
   MMI = mmi;
   DW = dw;
-  Context = &mf.getFunction()->getContext();  
+  Context = &mf.getFunction()->getContext();
 }
 
 SelectionDAG::~SelectionDAG() {
@@ -962,7 +962,7 @@ SDValue SelectionDAG::getGlobalAddress(const GlobalValue *GV,
                                        unsigned char TargetFlags) {
   assert((TargetFlags == 0 || isTargetGA) &&
          "Cannot set target flags on target-independent globals");
-  
+
   // Truncate (with sign-extension) the offset value to the pointer size.
   EVT PTy = TLI.getPointerTy();
   unsigned BitWidth = PTy.getSizeInBits();
@@ -1033,7 +1033,7 @@ SDValue SelectionDAG::getJumpTable(int JTI, EVT VT, bool isTarget,
 
 SDValue SelectionDAG::getConstantPool(Constant *C, EVT VT,
                                       unsigned Alignment, int Offset,
-                                      bool isTarget, 
+                                      bool isTarget,
                                       unsigned char TargetFlags) {
   assert((TargetFlags == 0 || isTarget) &&
          "Cannot set target flags on target-independent globals");
@@ -1159,10 +1159,10 @@ static void commuteShuffle(SDValue &N1, SDValue &N2, SmallVectorImpl<int> &M) {
   }
 }
 
-SDValue SelectionDAG::getVectorShuffle(EVT VT, DebugLoc dl, SDValue N1, 
+SDValue SelectionDAG::getVectorShuffle(EVT VT, DebugLoc dl, SDValue N1,
                                        SDValue N2, const int *Mask) {
   assert(N1.getValueType() == N2.getValueType() && "Invalid VECTOR_SHUFFLE");
-  assert(VT.isVector() && N1.getValueType().isVector() && 
+  assert(VT.isVector() && N1.getValueType().isVector() &&
          "Vector Shuffle VTs must be a vectors");
   assert(VT.getVectorElementType() == N1.getValueType().getVectorElementType()
          && "Vector Shuffle VTs must have same element type");
@@ -1171,7 +1171,7 @@ SDValue SelectionDAG::getVectorShuffle(EVT VT, DebugLoc dl, SDValue N1,
   if (N1.getOpcode() == ISD::UNDEF && N2.getOpcode() == ISD::UNDEF)
     return getUNDEF(VT);
 
-  // Validate that all indices in Mask are within the range of the elements 
+  // Validate that all indices in Mask are within the range of the elements
   // input to the shuffle.
   unsigned NElts = VT.getVectorNumElements();
   SmallVector<int, 8> MaskVec;
@@ -1179,18 +1179,18 @@ SDValue SelectionDAG::getVectorShuffle(EVT VT, DebugLoc dl, SDValue N1,
     assert(Mask[i] < (int)(NElts * 2) && "Index out of range");
     MaskVec.push_back(Mask[i]);
   }
-  
+
   // Canonicalize shuffle v, v -> v, undef
   if (N1 == N2) {
     N2 = getUNDEF(VT);
     for (unsigned i = 0; i != NElts; ++i)
       if (MaskVec[i] >= (int)NElts) MaskVec[i] -= NElts;
   }
-  
+
   // Canonicalize shuffle undef, v -> v, undef.  Commute the shuffle mask.
   if (N1.getOpcode() == ISD::UNDEF)
     commuteShuffle(N1, N2, MaskVec);
-  
+
   // Canonicalize all index into lhs, -> shuffle lhs, undef
   // Canonicalize all index into rhs, -> shuffle rhs, undef
   bool AllLHS = true, AllRHS = true;
@@ -1213,7 +1213,7 @@ SDValue SelectionDAG::getVectorShuffle(EVT VT, DebugLoc dl, SDValue N1,
     N1 = getUNDEF(VT);
     commuteShuffle(N1, N2, MaskVec);
   }
-  
+
   // If Identity shuffle, or all shuffle in to undef, return that node.
   bool AllUndef = true;
   bool Identity = true;
@@ -1231,17 +1231,17 @@ SDValue SelectionDAG::getVectorShuffle(EVT VT, DebugLoc dl, SDValue N1,
   AddNodeIDNode(ID, ISD::VECTOR_SHUFFLE, getVTList(VT), Ops, 2);
   for (unsigned i = 0; i != NElts; ++i)
     ID.AddInteger(MaskVec[i]);
-  
+
   void* IP = 0;
   if (SDNode *E = CSEMap.FindNodeOrInsertPos(ID, IP))
     return SDValue(E, 0);
-  
+
   // Allocate the mask array for the node out of the BumpPtrAllocator, since
   // SDNode doesn't have access to it.  This memory will be "leaked" when
   // the node is deallocated, but recovered when the NodeAllocator is released.
   int *MaskAlloc = OperandAllocator.Allocate<int>(NElts);
   memcpy(MaskAlloc, &MaskVec[0], NElts * sizeof(int));
-  
+
   ShuffleVectorSDNode *N = NodeAllocator.Allocate<ShuffleVectorSDNode>();
   new (N) ShuffleVectorSDNode(VT, dl, N1, N2, MaskAlloc);
   CSEMap.InsertNode(N, IP);
@@ -1501,7 +1501,7 @@ bool SelectionDAG::SignBitIsZero(SDValue Op, unsigned Depth) const {
   // This predicate is not safe for vector operations.
   if (Op.getValueType().isVector())
     return false;
-  
+
   unsigned BitWidth = Op.getValueSizeInBits();
   return MaskedValueIsZero(Op, APInt::getSignBit(BitWidth), Depth);
 }
@@ -3392,7 +3392,7 @@ SDValue SelectionDAG::getMemcpy(SDValue Chain, DebugLoc dl, SDValue Dst,
                     false, false, false, false, 0,
                     TLI.getLibcallCallingConv(RTLIB::MEMCPY), false,
                     /*isReturnValueUsed=*/false,
-                    getExternalSymbol(TLI.getLibcallName(RTLIB::MEMCPY), 
+                    getExternalSymbol(TLI.getLibcallName(RTLIB::MEMCPY),
                                       TLI.getPointerTy()),
                     Args, *this, dl);
   return CallResult.second;
@@ -3441,7 +3441,7 @@ SDValue SelectionDAG::getMemmove(SDValue Chain, DebugLoc dl, SDValue Dst,
                     false, false, false, false, 0,
                     TLI.getLibcallCallingConv(RTLIB::MEMMOVE), false,
                     /*isReturnValueUsed=*/false,
-                    getExternalSymbol(TLI.getLibcallName(RTLIB::MEMMOVE), 
+                    getExternalSymbol(TLI.getLibcallName(RTLIB::MEMMOVE),
                                       TLI.getPointerTy()),
                     Args, *this, dl);
   return CallResult.second;
@@ -3500,7 +3500,7 @@ SDValue SelectionDAG::getMemset(SDValue Chain, DebugLoc dl, SDValue Dst,
                     false, false, false, false, 0,
                     TLI.getLibcallCallingConv(RTLIB::MEMSET), false,
                     /*isReturnValueUsed=*/false,
-                    getExternalSymbol(TLI.getLibcallName(RTLIB::MEMSET), 
+                    getExternalSymbol(TLI.getLibcallName(RTLIB::MEMSET),
                                       TLI.getPointerTy()),
                     Args, *this, dl);
   return CallResult.second;
@@ -5777,7 +5777,7 @@ bool BuildVectorSDNode::isConstantSplat(APInt &SplatValue,
 
     SplatValue = HighValue | LowValue;
     SplatUndef = HighUndef & LowUndef;
-   
+
     sz = HalfSize;
   }
 
@@ -5792,7 +5792,7 @@ bool ShuffleVectorSDNode::isSplatMask(const int *Mask, EVT VT) {
     /* search */;
 
   assert(i != e && "VECTOR_SHUFFLE node with all undef indices!");
-  
+
   // Make sure all remaining elements are either undef or the same as the first
   // non-undef value.
   for (int Idx = Mask[i]; i != e; ++i)
