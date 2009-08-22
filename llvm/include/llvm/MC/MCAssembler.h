@@ -312,6 +312,10 @@ public:
   /// Offset - The offset to apply to the fragment address to form this symbol's
   /// value.
   uint64_t Offset;
+    
+  /// IsExternal - True if this symbol is visible outside this translation
+  /// unit.
+  unsigned IsExternal : 1;
 
 public:
   // Only for use as sentinel.
@@ -329,6 +333,13 @@ public:
 
   uint64_t getOffset() const { return Offset; }
   void setOffset(uint64_t Value) { Offset = Value; }
+
+    /// @}
+    /// @name Symbol Attributes
+    /// @{
+
+    bool isExternal() const { return IsExternal; }
+    void setExternal(bool Value) { IsExternal = Value; }
 
   /// @}  
 };

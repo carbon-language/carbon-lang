@@ -43,7 +43,7 @@ namespace llvm {
     /// undefined symbols, and the special AbsolutePseudoSection value for
     /// absolute symbols.
     const MCSection *Section;
-    
+
     /// IsTemporary - True if this is an assembler temporary label, which
     /// typically does not survive in the .o file's symbol table.  Usually
     /// "Lfoo" or ".foo".
@@ -52,8 +52,7 @@ namespace llvm {
   private:  // MCContext creates and uniques these.
     friend class MCContext;
     MCSymbol(const StringRef &_Name, bool _IsTemporary) 
-      : Name(_Name), Section(0),
-        IsTemporary(_IsTemporary) {}
+      : Name(_Name), Section(0), IsTemporary(_IsTemporary) {}
     
     MCSymbol(const MCSymbol&);       // DO NOT IMPLEMENT
     void operator=(const MCSymbol&); // DO NOT IMPLEMENT
@@ -61,7 +60,7 @@ namespace llvm {
     /// getName - Get the symbol name.
     const std::string &getName() const { return Name; }
 
-    /// @name Symbol Location Functions
+    /// @name Symbol Type
     /// @{
 
     /// isUndefined - Check if this symbol undefined (i.e., implicitly defined).

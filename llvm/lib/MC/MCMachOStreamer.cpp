@@ -142,7 +142,14 @@ void MCMachOStreamer::EmitAssignment(MCSymbol *Symbol,
 
 void MCMachOStreamer::EmitSymbolAttribute(MCSymbol *Symbol,
                                           SymbolAttr Attribute) {
-  llvm_unreachable("FIXME: Not yet implemented!");
+  switch (Attribute) {
+  default:
+    llvm_unreachable("FIXME: Not yet implemented!");
+
+  case MCStreamer::Global:
+    getSymbolData(*Symbol).setExternal(true);
+    break;
+  }
 }
 
 void MCMachOStreamer::EmitSymbolDesc(MCSymbol *Symbol, unsigned DescValue) {

@@ -9,6 +9,7 @@
 
 #include "llvm/MC/MCAssembler.h"
 
+#include "llvm/ADT/DenseMap.h"
 #include "llvm/ADT/SmallString.h"
 #include "llvm/ADT/StringMap.h"
 #include "llvm/ADT/Twine.h"
@@ -48,6 +49,37 @@ class MachObjectWriter {
     LCT_Segment = 0x1,
     LCT_Symtab = 0x2,
     LCT_Dysymtab = 0xb
+  };
+
+  // See <mach-o/nlist.h>.
+  enum SymbolTypeType {
+    STT_Undefined = 0x00,
+    STT_Absolute  = 0x02,
+    STT_Section   = 0x0e
+  };
+
+  enum SymbolTypeFlags {
+    // If any of these bits are set, then the entry is a stab entry number (see
+    // <mach-o/stab.h>. Otherwise the other masks apply.
+    STF_StabsEntryMask = 0xe0,
+
+    STF_TypeMask       = 0x0e,
+    STF_External       = 0x01,
+    STF_PrivateExtern  = 0x10
+  };
+
+  /// MachSymbolData - Helper struct for containing some precomputed information
+  /// on symbols.
+  struct MachSymbolData {
+    MCSymbolData *SymbolData;
+    uint64_t StringIndex;
+    uint8_t SectionIndex;
+
+    // Support lexicographic sorting.
+    bool operator<(const MachSymbolData &RHS) const {
+      const std::string &Name = SymbolData->getSymbol().getName();
+      return Name < RHS.SymbolData->getSymbol().getName();
+    }
   };
 
   raw_ostream &OS;
@@ -245,43 +277,130 @@ public:
     assert(OS.tell() - Start == DysymtabLoadCommandSize);
   }
 
-  void WriteNlist32(uint32_t StringIndex, uint8_t Type, uint8_t Sect,
-                    int16_t Desc, uint32_t Value) {
+  void WriteNlist32(MachSymbolData &MSD) {
+    MCSymbol &Symbol = MSD.SymbolData->getSymbol();
+    uint8_t Type = 0;
+
+    // Set the N_TYPE bits. See <mach-o/nlist.h>.
+    //
+    // FIXME: Are the prebound or indirect fields possible here?
+    if (Symbol.isUndefined())
+      Type = STT_Undefined;
+    else if (Symbol.isAbsolute())
+      Type = STT_Absolute;
+    else
+      Type = STT_Section;
+
+    // FIXME: Set STAB bits.
+
+    // FIXME: Set private external bit.
+
+    // Set external bit.
+    if (MSD.SymbolData->isExternal())
+      Type |= STF_External;
+
     // struct nlist (12 bytes)
 
-    Write32(StringIndex);
+    Write32(MSD.StringIndex);
     Write8(Type);
-    Write8(Sect);
-    Write16(Desc);
-    Write32(Value);
+    Write8(MSD.SectionIndex);
+    Write16(0); // FIXME: Desc
+    Write32(0); // FIXME: Value
   }
 
-  /// ComputeStringTable - Compute the string table, for use in the symbol
-  /// table.
+  /// ComputeSymbolTable - Compute the symbol table data
   ///
   /// \param StringTable [out] - The string table data.
   /// \param StringIndexMap [out] - Map from symbol names to offsets in the
   /// string table.
-  void ComputeStringTable(MCAssembler &Asm, SmallString<256> &StringTable,
-                          StringMap<uint64_t> &StringIndexMap) {
-    // Build the string table.
-    //
-    // FIXME: Does 'as' ever bother to compress this when we have a suffix
-    // match?
+
+  void ComputeSymbolTable(MCAssembler &Asm, SmallString<256> &StringTable,
+                          std::vector<MachSymbolData> &LocalSymbolData,
+                          std::vector<MachSymbolData> &ExternalSymbolData,
+                          std::vector<MachSymbolData> &UndefinedSymbolData) {
+    // Build section lookup table.
+    DenseMap<const MCSection*, uint8_t> SectionIndexMap;
+    unsigned Index = 1;
+    for (MCAssembler::iterator it = Asm.begin(),
+           ie = Asm.end(); it != ie; ++it, ++Index)
+      SectionIndexMap[&it->getSection()] = Index;
+    assert(Index <= 256 && "Too many sections!");
 
     // Index 0 is always the empty string.
+    StringMap<uint64_t> StringIndexMap;
     StringTable += '\x00';
+
+    // Build the symbol arrays and the string table, but only for non-local
+    // symbols.
+    //
+    // The particular order that we collect the symbols and create the string
+    // table, then sort the symbols is chosen to match 'as'. Even though it
+    // doesn't matter for correctness, this is important for letting us diff .o
+    // files.
     for (MCAssembler::symbol_iterator it = Asm.symbol_begin(),
            ie = Asm.symbol_end(); it != ie; ++it) {
-      StringRef Name = it->getSymbol().getName();
-      uint64_t &Entry = StringIndexMap[Name];
+      MCSymbol &Symbol = it->getSymbol();
 
+      if (!it->isExternal())
+        continue;
+
+      uint64_t &Entry = StringIndexMap[Symbol.getName()];
       if (!Entry) {
         Entry = StringTable.size();
-        StringTable += Name;
+        StringTable += Symbol.getName();
         StringTable += '\x00';
       }
+
+      MachSymbolData MSD;
+      MSD.SymbolData = it;
+      MSD.StringIndex = Entry;
+
+      if (Symbol.isUndefined()) {
+        MSD.SectionIndex = 0;
+        UndefinedSymbolData.push_back(MSD);
+      } else if (Symbol.isAbsolute()) {
+        MSD.SectionIndex = 0;
+        ExternalSymbolData.push_back(MSD);
+      } else {
+        MSD.SectionIndex = SectionIndexMap.lookup(&Symbol.getSection());
+        assert(MSD.SectionIndex && "Invalid section index!");
+        ExternalSymbolData.push_back(MSD);
+      }
     }
+
+    // Now add the data for local symbols.
+    for (MCAssembler::symbol_iterator it = Asm.symbol_begin(),
+           ie = Asm.symbol_end(); it != ie; ++it) {
+      MCSymbol &Symbol = it->getSymbol();
+
+      if (it->isExternal())
+        continue;
+
+      uint64_t &Entry = StringIndexMap[Symbol.getName()];
+      if (!Entry) {
+        Entry = StringTable.size();
+        StringTable += Symbol.getName();
+        StringTable += '\x00';
+      }
+
+      MachSymbolData MSD;
+      MSD.SymbolData = it;
+      MSD.StringIndex = Entry;
+
+      assert(!Symbol.isUndefined() && "Local symbol can not be undefined!");
+      if (Symbol.isAbsolute()) {
+        MSD.SectionIndex = 0;
+        LocalSymbolData.push_back(MSD);
+      } else {
+        MSD.SectionIndex = SectionIndexMap.lookup(&Symbol.getSection());
+        assert(MSD.SectionIndex && "Invalid section index!");
+        LocalSymbolData.push_back(MSD);
+      }
+    }
+
+    // External and undefined symbols are required to be in lexicographic order.
+    std::sort(ExternalSymbolData.begin(), ExternalSymbolData.end());
+    std::sort(UndefinedSymbolData.begin(), UndefinedSymbolData.end());
 
     // The string table is padded to a multiple of 4.
     //
@@ -295,12 +414,15 @@ public:
 
     // Compute symbol table information.
     SmallString<256> StringTable;
-    StringMap<uint64_t> StringIndexMap;
+    std::vector<MachSymbolData> LocalSymbolData;
+    std::vector<MachSymbolData> ExternalSymbolData;
+    std::vector<MachSymbolData> UndefinedSymbolData;
     unsigned NumSymbols = Asm.symbol_size();
 
     // No symbol table command is written if there are no symbols.
     if (NumSymbols)
-      ComputeStringTable(Asm, StringTable, StringIndexMap);
+      ComputeSymbolTable(Asm, StringTable, LocalSymbolData, ExternalSymbolData,
+                         UndefinedSymbolData);
 
     // Compute the file offsets for all the sections in advance, so that we can
     // write things out in order.
@@ -350,13 +472,13 @@ public:
       WriteSymtabLoadCommand(SymbolTableOffset, NumSymbols,
                              StringTableOffset, StringTable.size());
 
-      // FIXME: Get correct symbol indices and counts.
       unsigned FirstLocalSymbol = 0;
-      unsigned NumLocalSymbols = NumSymbols;
-      unsigned FirstExternalSymbol = NumLocalSymbols;
-      unsigned NumExternalSymbols = 0;
-      unsigned FirstUndefinedSymbol = NumLocalSymbols;
-      unsigned NumUndefinedSymbols = 0;
+      unsigned NumLocalSymbols = LocalSymbolData.size();
+      unsigned FirstExternalSymbol = FirstLocalSymbol + NumLocalSymbols;
+      unsigned NumExternalSymbols = ExternalSymbolData.size();
+      unsigned FirstUndefinedSymbol = FirstExternalSymbol + NumExternalSymbols;
+      unsigned NumUndefinedSymbols = UndefinedSymbolData.size();
+      // FIXME: Get correct symbol indices and counts for indirect symbols.
       unsigned IndirectSymbolOffset = 0;
       unsigned NumIndirectSymbols = 0;
       WriteDysymtabLoadCommand(FirstLocalSymbol, NumLocalSymbols,
@@ -373,18 +495,15 @@ public:
     if (NumSymbols) {
       // FIXME: Check that offsets match computed ones.
 
-      // FIXME: These need to be reordered, both to segregate into categories
-      // as well as to order some sublists.
+      // FIXME: Some of these are ordered by name to help the linker.
 
       // Write the symbol table entries.
-      for (MCAssembler::symbol_iterator it = Asm.symbol_begin(),
-             ie = Asm.symbol_end(); it != ie; ++it) {
-        MCSymbol &Sym = it->getSymbol();
-        uint64_t Index = StringIndexMap[Sym.getName()];
-        assert(Index && "Invalid index!");
-        WriteNlist32(Index, /*FIXME: Type=*/0, /*FIXME: Sect=*/0,
-                     /*FIXME: Desc=*/0, /*FIXME: Value=*/0);
-      }
+      for (unsigned i = 0, e = LocalSymbolData.size(); i != e; ++i)
+        WriteNlist32(LocalSymbolData[i]);
+      for (unsigned i = 0, e = ExternalSymbolData.size(); i != e; ++i)
+        WriteNlist32(ExternalSymbolData[i]);
+      for (unsigned i = 0, e = UndefinedSymbolData.size(); i != e; ++i)
+        WriteNlist32(UndefinedSymbolData[i]);
 
       // Write the string table.
       OS << StringTable.str();
@@ -427,7 +546,8 @@ MCSymbolData::MCSymbolData() : Symbol(*(MCSymbol*)0) {}
 
 MCSymbolData::MCSymbolData(MCSymbol &_Symbol, MCFragment *_Fragment,
                            uint64_t _Offset, MCAssembler *A)
-  : Symbol(_Symbol), Fragment(_Fragment), Offset(_Offset) 
+  : Symbol(_Symbol), Fragment(_Fragment), Offset(_Offset),
+    IsExternal(false)
 {
   if (A)
     A->getSymbolList().push_back(this);
