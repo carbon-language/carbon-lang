@@ -5017,19 +5017,17 @@ void SDNode::Profile(FoldingSetNodeID &ID) const {
 
 static ManagedStatic<std::set<EVT, EVT::compareRawBits> > EVTs;
 static EVT VTs[MVT::LAST_VALUETYPE];
+static ManagedStatic<sys::SmartMutex<true> > VTMutex;
 
 /// getValueTypeList - Return a pointer to the specified value type.
 ///
 const EVT *SDNode::getValueTypeList(EVT VT) {
+  sys::SmartScopedLock<true> Lock(*VTMutex);
   if (VT.isExtended()) {
     return &(*EVTs->insert(VT).first);
   } else {
-    // All writes to this location will have the same value, so it's ok
-    // to race on it.  We only need to ensure that at least one write has
-    // succeeded before we return the pointer into the array.
     VTs[VT.getSimpleVT().SimpleTy] = VT;
-    sys::MemoryFence();
-    return VTs + VT.getSimpleVT().SimpleTy;
+    return &VTs[VT.getSimpleVT().SimpleTy];
   }
 }
 
