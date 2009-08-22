@@ -50,11 +50,10 @@
 #include "llvm/Target/TargetLowering.h"
 #include "llvm/Target/TargetLoweringObjectFile.h"
 #include "llvm/Target/TargetMachine.h"
-#include "llvm/Support/Mangler.h"
-#include "llvm/Support/Streams.h"
-#include "llvm/Support/raw_ostream.h"
 #include "llvm/Support/Debug.h"
 #include "llvm/Support/ErrorHandling.h"
+#include "llvm/Support/Mangler.h"
+#include "llvm/Support/raw_ostream.h"
 
 using namespace llvm;
 
@@ -1067,9 +1066,9 @@ void ELFWriter::OutputSectionsAndSectionTable() {
   // Emit all of sections to the file and build the section header table.
   for (ELFSectionIter I=SectionList.begin(), E=SectionList.end(); I != E; ++I) {
     ELFSection &S = *(*I);
-    DOUT << "SectionIdx: " << S.SectionIdx << ", Name: " << S.getName()
-         << ", Size: " << S.Size << ", Offset: " << S.Offset
-         << ", SectionData Size: " << S.size() << "\n";
+    DEBUG(errs() << "SectionIdx: " << S.SectionIdx << ", Name: " << S.getName()
+                 << ", Size: " << S.Size << ", Offset: " << S.Offset
+                 << ", SectionData Size: " << S.size() << "\n");
 
     // Align FileOff to whatever the alignment restrictions of the section are.
     if (S.size()) {
