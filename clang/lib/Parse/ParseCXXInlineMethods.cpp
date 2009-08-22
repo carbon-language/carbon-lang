@@ -44,6 +44,8 @@ Parser::ParseCXXInlineMethodDef(AccessSpecifier AS, Declarator &D,
   // Consume the tokens and store them for later parsing.
 
   getCurrentClass().MethodDefs.push_back(LexedMethod(FnD));
+  getCurrentClass().MethodDefs.back().TemplateScope 
+    = CurScope->isTemplateParamScope();
   CachedTokens &Toks = getCurrentClass().MethodDefs.back().Toks;
 
   tok::TokenKind kind = Tok.getKind();
@@ -99,9 +101,11 @@ void Parser::ParseLexedMethodDeclarations(ParsingClass &Class) {
   for (; !Class.MethodDecls.empty(); Class.MethodDecls.pop_front()) {
     LateParsedMethodDeclaration &LM = Class.MethodDecls.front();
     
-    // FIXME: For member function templates, we'll need to introduce a
-    // scope for the template parameters.
-
+    // If this is a member template, introduce the template parameter scope.
+    ParseScope TemplateScope(this, Scope::TemplateParamScope, LM.TemplateScope);
+    if (LM.TemplateScope)
+      Actions.ActOnReenterTemplateScope(CurScope, LM.Method);
+    
     // Start the delayed C++ method declaration
     Actions.ActOnStartDelayedCXXMethodDeclaration(CurScope, LM.Method);
 
@@ -161,6 +165,11 @@ void Parser::ParseLexedMethodDefs(ParsingClass &Class) {
   for (; !Class.MethodDefs.empty(); Class.MethodDefs.pop_front()) {
     LexedMethod &LM = Class.MethodDefs.front();
 
+    // If this is a member template, introduce the template parameter scope.
+    ParseScope TemplateScope(this, Scope::TemplateParamScope, LM.TemplateScope);
+    if (LM.TemplateScope)
+      Actions.ActOnReenterTemplateScope(CurScope, LM.D);
+    
     assert(!LM.Toks.empty() && "Empty body!");
     // Append the current token at the end of the new token stream so that it
     // doesn't get lost.

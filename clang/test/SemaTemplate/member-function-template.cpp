@@ -39,3 +39,6 @@ void test_X_f1_address() {
   float& (X::*pm2)(float) = &X::f1;
   int& (X::*pm3)(float, int) = &X::f1;
 }
+
+// PR4608
+class A { template <class x> x a(x z) { return z+y; } int y; };

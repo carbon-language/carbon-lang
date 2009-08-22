@@ -3526,7 +3526,13 @@ Sema::DeclPtrTy Sema::ActOnStartOfFunctionDef(Scope *FnBodyScope,
 Sema::DeclPtrTy Sema::ActOnStartOfFunctionDef(Scope *FnBodyScope, DeclPtrTy D) {
   if (!D)
     return D;
-  FunctionDecl *FD = cast<FunctionDecl>(D.getAs<Decl>());
+  FunctionDecl *FD = 0;
+  
+  if (FunctionTemplateDecl *FunTmpl 
+        = dyn_cast<FunctionTemplateDecl>(D.getAs<Decl>()))
+    FD = FunTmpl->getTemplatedDecl();
+  else
+    FD = cast<FunctionDecl>(D.getAs<Decl>());
 
   CurFunctionNeedsScopeChecking = false;
   
@@ -3624,7 +3630,15 @@ Sema::DeclPtrTy Sema::ActOnFinishFunctionBody(DeclPtrTy D, StmtArg BodyArg,
                                               bool IsInstantiation) {
   Decl *dcl = D.getAs<Decl>();
   Stmt *Body = BodyArg.takeAs<Stmt>();
-  if (FunctionDecl *FD = dyn_cast_or_null<FunctionDecl>(dcl)) {
+
+  FunctionDecl *FD = 0;
+  FunctionTemplateDecl *FunTmpl = dyn_cast_or_null<FunctionTemplateDecl>(dcl);
+  if (FunTmpl)
+    FD = FunTmpl->getTemplatedDecl();
+  else
+    FD = dyn_cast_or_null<FunctionDecl>(dcl);
+
+  if (FD) {
     FD->setBody(Body);
     if (FD->isMain(Context))
       // C and C++ allow for main to automagically return 0.
@@ -3711,7 +3725,7 @@ Sema::DeclPtrTy Sema::ActOnFinishFunctionBody(DeclPtrTy D, StmtArg BodyArg,
   // C++ constructors that have function-try-blocks can't have return 
   // statements in the handlers of that block. (C++ [except.handle]p14) 
   // Verify this.
-  if (isa<CXXConstructorDecl>(dcl) && isa<CXXTryStmt>(Body))
+  if (FD && isa<CXXConstructorDecl>(FD) && isa<CXXTryStmt>(Body))
     DiagnoseReturnInConstructorExceptionHandler(cast<CXXTryStmt>(Body));
   
   if (CXXDestructorDecl *Destructor = dyn_cast<CXXDestructorDecl>(dcl))

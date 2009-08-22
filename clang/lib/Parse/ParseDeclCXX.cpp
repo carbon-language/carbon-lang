@@ -861,6 +861,7 @@ void Parser::HandleMemberFunctionDefaultArgs(Declarator& DeclaratorInfo,
         getCurrentClass().MethodDecls.push_back(
                                 LateParsedMethodDeclaration(ThisDecl));
         LateMethod = &getCurrentClass().MethodDecls.back();
+        LateMethod->TemplateScope = CurScope->isTemplateParamScope();
 
         // Add all of the parameters prior to this one (they don't
         // have default arguments).

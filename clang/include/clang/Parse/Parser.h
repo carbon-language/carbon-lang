@@ -462,7 +462,13 @@ private:
   struct LexedMethod {
     Action::DeclPtrTy D;
     CachedTokens Toks;
-    explicit LexedMethod(Action::DeclPtrTy MD) : D(MD) {}
+
+    /// \brief Whether this member function had an associated template
+    /// scope. When true, D is a template declaration.
+    /// othewise, it is a member function declaration.
+    bool TemplateScope;
+
+    explicit LexedMethod(Action::DeclPtrTy MD) : D(MD), TemplateScope(false) {}
   };
 
   /// LateParsedDefaultArgument - Keeps track of a parameter that may
@@ -489,11 +495,17 @@ private:
   /// until the class itself is completely-defined, such as a default
   /// argument (C++ [class.mem]p2).
   struct LateParsedMethodDeclaration {
-    explicit LateParsedMethodDeclaration(Action::DeclPtrTy M) : Method(M) { }
+    explicit LateParsedMethodDeclaration(Action::DeclPtrTy M) 
+      : Method(M), TemplateScope(false) { }
 
     /// Method - The method declaration.
     Action::DeclPtrTy Method;
 
+    /// \brief Whether this member function had an associated template
+    /// scope. When true, D is a template declaration.
+    /// othewise, it is a member function declaration.
+    bool TemplateScope;
+    
     /// DefaultArgs - Contains the parameters of the function and
     /// their default arguments. At least one of the parameters will
     /// have a default argument, but all of the parameters of the
