@@ -130,7 +130,7 @@ bool MachineLICM::runOnMachineFunction(MachineFunction &MF) {
   if (F->hasFnAttr(Attribute::OptimizeForSize))
     return false;
 
-  DOUT << "******** Machine LICM ********\n";
+  DEBUG(errs() << "******** Machine LICM ********\n");
 
   Changed = false;
   TM = &MF.getTarget();
@@ -218,28 +218,28 @@ bool MachineLICM::IsLoopInvariantInst(MachineInstr &I) {
   }
 
   DEBUG({
-      DOUT << "--- Checking if we can hoist " << I;
+      errs() << "--- Checking if we can hoist " << I;
       if (I.getDesc().getImplicitUses()) {
-        DOUT << "  * Instruction has implicit uses:\n";
+        errs() << "  * Instruction has implicit uses:\n";
 
         const TargetRegisterInfo *TRI = TM->getRegisterInfo();
         for (const unsigned *ImpUses = I.getDesc().getImplicitUses();
              *ImpUses; ++ImpUses)
-          DOUT << "      -> " << TRI->getName(*ImpUses) << "\n";
+          errs() << "      -> " << TRI->getName(*ImpUses) << "\n";
       }
 
       if (I.getDesc().getImplicitDefs()) {
-        DOUT << "  * Instruction has implicit defines:\n";
+        errs() << "  * Instruction has implicit defines:\n";
 
         const TargetRegisterInfo *TRI = TM->getRegisterInfo();
         for (const unsigned *ImpDefs = I.getDesc().getImplicitDefs();
              *ImpDefs; ++ImpDefs)
-          DOUT << "      -> " << TRI->getName(*ImpDefs) << "\n";
+          errs() << "      -> " << TRI->getName(*ImpDefs) << "\n";
       }
     });
 
   if (I.getDesc().getImplicitDefs() || I.getDesc().getImplicitUses()) {
-    DOUT << "Cannot hoist with implicit defines or uses\n";
+    DEBUG(errs() << "Cannot hoist with implicit defines or uses\n");
     return false;
   }
 
@@ -374,8 +374,7 @@ void MachineLICM::Hoist(MachineInstr &MI) {
   if (CI != CSEMap.end()) {
     const MachineInstr *Dup = LookForDuplicate(&MI, CI->second, RegInfo);
     if (Dup) {
-      DOUT << "CSEing " << MI;
-      DOUT << " with " << *Dup;
+      DEBUG(errs() << "CSEing " << MI << " with " << *Dup);
       for (unsigned i = 0, e = MI.getNumOperands(); i != e; ++i) {
         const MachineOperand &MO = MI.getOperand(i);
         if (MO.isReg() && MO.isDef())
