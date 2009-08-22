@@ -512,7 +512,7 @@ CodeGenFunction::EmitCXXConstructExpr(llvm::Value *Dest,
 
   // Code gen optimization to eliminate copy constructor and return 
   // its first argument instead.
-  if (E->isElidable()) {
+  if (getContext().getLangOptions().ElideConstructors && E->isElidable()) {
     CXXConstructExpr::const_arg_iterator i = E->arg_begin();
     EmitAggExpr((*i), Dest, false);
     return;

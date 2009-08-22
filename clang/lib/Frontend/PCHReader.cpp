@@ -107,6 +107,7 @@ PCHValidator::ReadLanguageOptions(const LangOptions &LangOpts) {
   PARSE_LANGOPT_BENIGN(getVisibilityMode());
   PARSE_LANGOPT_BENIGN(InstantiationDepth);
   PARSE_LANGOPT_IMPORTANT(OpenCL, diag::warn_pch_opencl);
+  PARSE_LANGOPT_IMPORTANT(ElideConstructors, diag::warn_elide_constructors);
 #undef PARSE_LANGOPT_IRRELEVANT
 #undef PARSE_LANGOPT_BENIGN
 

@@ -86,6 +86,8 @@ public:
 
   unsigned OpenCL            : 1; // OpenCL C99 language extensions.
 
+  unsigned ElideConstructors : 1; // Whether C++ copy constructors should be
+                                  // elided if possible.
 private:
   unsigned GC : 2;                // Objective-C Garbage Collection modes.  We
                                   // declare this enum as unsigned because MSVC
@@ -136,6 +138,7 @@ public:
 
     // FIXME: The default should be 1.
     AccessControl = 0;
+    ElideConstructors = 1;
     
     OverflowChecking = 0;
     ObjCGCBitmapPrint = 0;

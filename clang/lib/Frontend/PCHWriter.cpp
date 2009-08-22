@@ -621,6 +621,7 @@ void PCHWriter::WriteLanguageOptions(const LangOptions &LangOpts) {
   Record.push_back(LangOpts.getVisibilityMode());
   Record.push_back(LangOpts.InstantiationDepth);
   Record.push_back(LangOpts.OpenCL);
+  Record.push_back(LangOpts.ElideConstructors);
   Stream.EmitRecord(pch::LANGUAGE_OPTIONS, Record);
 }
 

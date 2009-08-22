@@ -651,6 +651,11 @@ static llvm::cl::opt<bool>
 AccessControl("faccess-control", 
               llvm::cl::desc("Enable C++ access control"));
 
+static llvm::cl::opt<bool>
+NoElideConstructors("fno-elide-constructors",
+                    llvm::cl::desc("Disable C++ copy constructor elision"));
+
+
 // It might be nice to add bounds to the CommandLine library directly.
 struct OptLevelParser : public llvm::cl::parser<unsigned> {
   bool parse(llvm::cl::Option &O, const char *ArgName,
@@ -797,6 +802,8 @@ static void InitializeLanguageStandard(LangOptions &Options, LangKind LK,
 
   if (AccessControl)
     Options.AccessControl = 1;
+  
+  Options.ElideConstructors = !NoElideConstructors;
   
   // OpenCL and C++ both have bool, true, false keywords.
   Options.Bool = Options.OpenCL | Options.CPlusPlus;
