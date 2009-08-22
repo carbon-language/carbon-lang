@@ -19,7 +19,7 @@ MipsMCAsmInfo::MipsMCAsmInfo(const Target &T, const StringRef &TT) {
   COMMDirectiveTakesAlignment = true;
   Data16bitsDirective         = "\t.half\t";
   Data32bitsDirective         = "\t.word\t";
-  Data64bitsDirective         = NULL;
+  Data64bitsDirective         = 0;
   PrivateGlobalPrefix         = "$";
   CommentString               = "#";
   ZeroDirective               = "\t.space\t";
