@@ -9,12 +9,10 @@
 
 #include "llvm/MC/MCStreamer.h"
 
-#include "llvm/ADT/DenseMap.h"
 #include "llvm/MC/MCAssembler.h"
 #include "llvm/MC/MCContext.h"
 #include "llvm/MC/MCSection.h"
 #include "llvm/MC/MCSymbol.h"
-#include "llvm/MC/MCValue.h"
 #include "llvm/Support/ErrorHandling.h"
 using namespace llvm;
 
@@ -99,16 +97,17 @@ public:
 
 void MCMachOStreamer::SwitchSection(const MCSection *Section) {
   assert(Section && "Cannot switch to a null section!");
+  
+  // If already in this section, then this is a noop.
+  if (Section == CurSection) return;
+  
+  CurSection = Section;
+  MCSectionData *&Entry = SectionMap[Section];
 
-  if (Section != CurSection) {
-    CurSection = Section;
-    MCSectionData *&Entry = SectionMap[Section];
+  if (!Entry)
+    Entry = new MCSectionData(*Section, &Assembler);
 
-    if (!Entry)
-      Entry = new MCSectionData(*Section, &Assembler);
-
-    CurSectionData = Entry;
-  }
+  CurSectionData = Entry;
 }
 
 void MCMachOStreamer::EmitLabel(MCSymbol *Symbol) {
