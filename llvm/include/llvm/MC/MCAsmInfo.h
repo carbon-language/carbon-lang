@@ -18,7 +18,6 @@
 
 #include "llvm/Support/DataTypes.h"
 #include <cassert>
-#include <string>
 
 namespace llvm {
   template <typename T> class SmallVectorImpl;
