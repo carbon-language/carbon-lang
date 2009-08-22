@@ -26,6 +26,7 @@
 #include "llvm/ADT/Statistic.h"
 #include "llvm/Support/Compiler.h"
 #include "llvm/Support/Debug.h"
+#include "llvm/Support/raw_ostream.h"
 using namespace llvm;
 
 STATISTIC(NumSunk, "Number of machine instructions sunk");
@@ -91,7 +92,7 @@ bool MachineSinking::AllUsesDominatedByBlock(unsigned Reg,
 
 
 bool MachineSinking::runOnMachineFunction(MachineFunction &MF) {
-  DOUT << "******** Machine Sinking ********\n";
+  DEBUG(errs() << "******** Machine Sinking ********\n");
   
   CurMF = &MF;
   TM = &CurMF->getTarget();
