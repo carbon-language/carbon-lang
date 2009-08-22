@@ -97,6 +97,7 @@ def UnusedVariable : DiagGroup<"unused-variable">;
 def ReadOnlySetterAttrs : DiagGroup<"readonly-setter-attrs">;
 def Reorder : DiagGroup<"reorder">;
 def UndeclaredSelector : DiagGroup<"undeclared-selector">;
+def SuperSubClassMismatch : DiagGroup<"super-class-method-mismatch">;
 def : DiagGroup<"variadic-macros">;
 def VectorConversions : DiagGroup<"vector-conversions">;      // clang specific
 def VolatileRegisterVar : DiagGroup<"volatile-register-var">;
@@ -137,9 +138,11 @@ def Most : DiagGroup<"most", [
     UnusedVariable,
     VectorConversions,
     VolatileRegisterVar,
-    ReadOnlySetterAttrs,
-    Reorder,
-    UndeclaredSelector
+    // FIXME. Too many errors (-Werror) in a key project.
+    // ReadOnlySetterAttrs,
+    Reorder
+    // FIXME. Too many errors (-Werror) in a key project.
+    // UndeclaredSelector
  ]>;
 
 // -Wall is -Wmost -Wparentheses
