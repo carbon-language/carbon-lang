@@ -202,7 +202,6 @@ MCFragment::MCFragment() : Kind(FragmentType(~0)) {
 
 MCFragment::MCFragment(FragmentType _Kind, MCSectionData *SD)
   : Kind(_Kind),
-    FileOffset(~UINT64_C(0)),
     FileSize(~UINT64_C(0))
 {
   if (SD)
@@ -234,22 +233,20 @@ MCAssembler::~MCAssembler() {
 }
 
 void MCAssembler::LayoutSection(MCSectionData &SD) {
-  uint64_t FileOffset = SD.getFileOffset();
-  uint64_t SectionOffset = 0;
+  uint64_t Offset = 0;
 
   for (MCSectionData::iterator it = SD.begin(), ie = SD.end(); it != ie; ++it) {
     MCFragment &F = *it;
 
-    F.setFileOffset(FileOffset);
+    F.setOffset(Offset);
 
     // Evaluate fragment size.
     switch (F.getKind()) {
     case MCFragment::FT_Align: {
       MCAlignFragment &AF = cast<MCAlignFragment>(F);
       
-      uint64_t AlignedOffset =
-        RoundUpToAlignment(SectionOffset, AF.getAlignment());
-      uint64_t PaddingBytes = AlignedOffset - SectionOffset;
+      uint64_t AlignedOffset = RoundUpToAlignment(Offset, AF.getAlignment());
+      uint64_t PaddingBytes = AlignedOffset - Offset;
 
       if (PaddingBytes > AF.getMaxBytesToEmit())
         AF.setFileSize(0);
@@ -271,21 +268,20 @@ void MCAssembler::LayoutSection(MCSectionData &SD) {
       uint64_t OrgOffset = OF.getOffset().getConstant();
 
       // FIXME: We need a way to communicate this error.
-      if (OrgOffset < SectionOffset)
+      if (OrgOffset < Offset)
         llvm_report_error("invalid .org offset '" + Twine(OrgOffset) + 
-                          "' (section offset '" + Twine(SectionOffset) + "'");
+                          "' (section offset '" + Twine(Offset) + "'");
         
-      F.setFileSize(OrgOffset - SectionOffset);
+      F.setFileSize(OrgOffset - Offset);
       break;
     }      
     }
 
-    FileOffset += F.getFileSize();
-    SectionOffset += F.getFileSize();
+    Offset += F.getFileSize();
   }
 
   // FIXME: Pad section?
-  SD.setFileSize(FileOffset - SD.getFileOffset());
+  SD.setFileSize(Offset);
 }
 
 /// WriteFileData - Write the \arg F data to the output file.
@@ -294,8 +290,6 @@ static void WriteFileData(raw_ostream &OS, const MCFragment &F,
   uint64_t Start = OS.tell();
   (void) Start;
     
-  assert(F.getFileOffset() == Start && "Invalid file offset!");
-
   // FIXME: Embed in fragments instead?
   switch (F.getKind()) {
   case MCFragment::FT_Align: {
