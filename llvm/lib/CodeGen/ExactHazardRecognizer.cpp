@@ -20,7 +20,7 @@
 #include "llvm/Support/raw_ostream.h"
 #include "llvm/Target/TargetInstrItineraries.h"
 
-namespace llvm {
+using namespace llvm;
 
 ExactHazardRecognizer::ExactHazardRecognizer(const InstrItineraryData &LItinData) :
   ScheduleHazardRecognizer(), ItinData(LItinData) 
@@ -50,7 +50,7 @@ ExactHazardRecognizer::ExactHazardRecognizer(const InstrItineraryData &LItinData
   ScoreboardHead = 0;
 
   DEBUG(errs() << "Using exact hazard recognizer: ScoreboardDepth = " 
-        << ScoreboardDepth << '\n');
+               << ScoreboardDepth << '\n');
 }
 
 ExactHazardRecognizer::~ExactHazardRecognizer() {
@@ -154,5 +154,3 @@ void ExactHazardRecognizer::AdvanceCycle() {
   Scoreboard[ScoreboardHead] = 0;
   ScoreboardHead = getFutureIndex(1);
 }
-
-} /* namespace llvm */
