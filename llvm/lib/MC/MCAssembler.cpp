@@ -9,6 +9,8 @@
 
 #include "llvm/MC/MCAssembler.h"
 
+#include "llvm/ADT/SmallString.h"
+#include "llvm/ADT/StringMap.h"
 #include "llvm/ADT/Twine.h"
 #include "llvm/MC/MCSectionMachO.h"
 #include "llvm/Support/DataTypes.h"
@@ -18,7 +20,10 @@
 
 using namespace llvm;
 
-namespace {
+class MachObjectWriter;
+
+static void WriteFileData(raw_ostream &OS, const MCSectionData &SD,
+                          MachObjectWriter &MOW);
 
 class MachObjectWriter {
   // See <mach-o/loader.h>.
@@ -31,13 +36,18 @@ class MachObjectWriter {
   static const unsigned Header64Size = 32;
   static const unsigned SegmentLoadCommand32Size = 56;
   static const unsigned Section32Size = 68;
+  static const unsigned SymtabLoadCommandSize = 24;
+  static const unsigned DysymtabLoadCommandSize = 80;
+  static const unsigned Nlist32Size = 12;
 
   enum HeaderFileType {
     HFT_Object = 0x1
   };
 
   enum LoadCommandType {
-    LCT_Segment = 0x1
+    LCT_Segment = 0x1,
+    LCT_Symtab = 0x2,
+    LCT_Dysymtab = 0xb
   };
 
   raw_ostream &OS;
@@ -102,7 +112,7 @@ public:
 
   /// @}
   
-  void WriteHeader32(unsigned NumSections) {
+  void WriteHeader32(unsigned NumLoadCommands, unsigned LoadCommandsSize) {
     // struct mach_header (28 bytes)
 
     uint64_t Start = OS.tell();
@@ -119,18 +129,11 @@ public:
     Write32(HFT_Object);
 
     // Object files have a single load command, the segment.
-    Write32(1);
-    Write32(SegmentLoadCommand32Size + NumSections * Section32Size);
+    Write32(NumLoadCommands);
+    Write32(LoadCommandsSize);
     Write32(0); // Flags
 
     assert(OS.tell() - Start == Header32Size);
-  }
-
-  void WriteLoadCommandHeader(uint32_t Cmd, uint32_t CmdSize) {
-    assert((CmdSize & 0x3) == 0 && "Invalid size!");
-
-    Write32(Cmd);
-    Write32(CmdSize);
   }
 
   /// WriteSegmentLoadCommand32 - Write a 32-bit segment load command.
@@ -138,6 +141,7 @@ public:
   /// \arg NumSections - The number of sections in this segment.
   /// \arg SectionDataSize - The total size of the sections.
   void WriteSegmentLoadCommand32(unsigned NumSections,
+                                 uint64_t SectionDataStartOffset,
                                  uint64_t SectionDataSize) {
     // struct segment_command (56 bytes)
 
@@ -150,8 +154,7 @@ public:
     WriteString("", 16);
     Write32(0); // vmaddr
     Write32(SectionDataSize); // vmsize
-    Write32(Header32Size + SegmentLoadCommand32Size + 
-            NumSections * Section32Size); // file offset
+    Write32(SectionDataStartOffset); // file offset
     Write32(SectionDataSize); // file size
     Write32(0x7); // maxprot
     Write32(0x7); // initprot
@@ -187,18 +190,137 @@ public:
     assert(OS.tell() - Start == Section32Size);
   }
 
-  void WriteProlog(MCAssembler &Asm) {
+  void WriteSymtabLoadCommand(uint32_t SymbolOffset, uint32_t NumSymbols,
+                              uint32_t StringTableOffset,
+                              uint32_t StringTableSize) {
+    // struct symtab_command (24 bytes)
+
+    uint64_t Start = OS.tell();
+    (void) Start;
+
+    Write32(LCT_Symtab);
+    Write32(SymtabLoadCommandSize);
+    Write32(SymbolOffset);
+    Write32(NumSymbols);
+    Write32(StringTableOffset);
+    Write32(StringTableSize);
+
+    assert(OS.tell() - Start == SymtabLoadCommandSize);
+  }
+
+  void WriteDysymtabLoadCommand(uint32_t FirstLocalSymbol,
+                                uint32_t NumLocalSymbols,
+                                uint32_t FirstExternalSymbol,
+                                uint32_t NumExternalSymbols,
+                                uint32_t FirstUndefinedSymbol,
+                                uint32_t NumUndefinedSymbols,
+                                uint32_t IndirectSymbolOffset,
+                                uint32_t NumIndirectSymbols) {
+    // struct dysymtab_command (80 bytes)
+
+    uint64_t Start = OS.tell();
+    (void) Start;
+
+    Write32(LCT_Dysymtab);
+    Write32(DysymtabLoadCommandSize);
+    Write32(FirstLocalSymbol);
+    Write32(NumLocalSymbols);
+    Write32(FirstExternalSymbol);
+    Write32(NumExternalSymbols);
+    Write32(FirstUndefinedSymbol);
+    Write32(NumUndefinedSymbols);
+    Write32(0); // tocoff
+    Write32(0); // ntoc
+    Write32(0); // modtaboff
+    Write32(0); // nmodtab
+    Write32(0); // extrefsymoff
+    Write32(0); // nextrefsyms
+    Write32(IndirectSymbolOffset);
+    Write32(NumIndirectSymbols);
+    Write32(0); // extreloff
+    Write32(0); // nextrel
+    Write32(0); // locreloff
+    Write32(0); // nlocrel
+
+    assert(OS.tell() - Start == DysymtabLoadCommandSize);
+  }
+
+  void WriteNlist32(uint32_t StringIndex, uint8_t Type, uint8_t Sect,
+                    int16_t Desc, uint32_t Value) {
+    // struct nlist (12 bytes)
+
+    Write32(StringIndex);
+    Write8(Type);
+    Write8(Sect);
+    Write16(Desc);
+    Write32(Value);
+  }
+
+  /// ComputeStringTable - Compute the string table, for use in the symbol
+  /// table.
+  ///
+  /// \param StringTable [out] - The string table data.
+  /// \param StringIndexMap [out] - Map from symbol names to offsets in the
+  /// string table.
+  void ComputeStringTable(MCAssembler &Asm, SmallString<256> &StringTable,
+                          StringMap<uint64_t> &StringIndexMap) {
+    // Build the string table.
+    //
+    // FIXME: Does 'as' ever bother to compress this when we have a suffix
+    // match?
+
+    // Index 0 is always the empty string.
+    StringTable += '\x00';
+    for (MCAssembler::symbol_iterator it = Asm.symbol_begin(),
+           ie = Asm.symbol_end(); it != ie; ++it) {
+      StringRef Name = it->getSymbol().getName();
+      uint64_t &Entry = StringIndexMap[Name];
+
+      if (!Entry) {
+        Entry = StringTable.size();
+        StringTable += Name;
+        StringTable += '\x00';
+      }
+    }
+
+    // The string table is padded to a multiple of 4.
+    //
+    // FIXME: Check to see if this varies per arch.
+    while (StringTable.size() % 4)
+      StringTable += '\x00';
+  }
+
+  void WriteObject(MCAssembler &Asm) {
     unsigned NumSections = Asm.size();
+
+    // Compute symbol table information.
+    SmallString<256> StringTable;
+    StringMap<uint64_t> StringIndexMap;
+    unsigned NumSymbols = Asm.symbol_size();
+
+    // No symbol table command is written if there are no symbols.
+    if (NumSymbols)
+      ComputeStringTable(Asm, StringTable, StringIndexMap);
 
     // Compute the file offsets for all the sections in advance, so that we can
     // write things out in order.
     SmallVector<uint64_t, 16> SectionFileOffsets;
     SectionFileOffsets.resize(NumSections);
   
-    // The section data starts after the header, the segment load command, and
-    // the section headers.
-    uint64_t FileOffset = Header32Size + SegmentLoadCommand32Size + 
-      NumSections * Section32Size;
+    // The section data starts after the header, the segment load command (and
+    // section headers) and the symbol table.
+    unsigned NumLoadCommands = 1;
+    uint64_t LoadCommandsSize =
+      SegmentLoadCommand32Size + NumSections * Section32Size;
+
+    // Add the symbol table load command sizes, if used.
+    if (NumSymbols) {
+      NumLoadCommands += 2;
+      LoadCommandsSize += SymtabLoadCommandSize + DysymtabLoadCommandSize;
+    }
+
+    uint64_t FileOffset = Header32Size + LoadCommandsSize;
+    uint64_t SectionDataStartOffset = FileOffset;
     uint64_t SectionDataSize = 0;
     unsigned Index = 0;
     for (MCAssembler::iterator it = Asm.begin(),
@@ -209,19 +331,66 @@ public:
     }
 
     // Write the prolog, starting with the header and load command...
-    WriteHeader32(NumSections);
-    WriteSegmentLoadCommand32(NumSections, SectionDataSize);
+    WriteHeader32(NumLoadCommands, LoadCommandsSize);
+    WriteSegmentLoadCommand32(NumSections, SectionDataStartOffset,
+                              SectionDataSize);
   
     // ... and then the section headers.
     Index = 0;
     for (MCAssembler::iterator it = Asm.begin(),
            ie = Asm.end(); it != ie; ++it, ++Index)
       WriteSection32(*it, SectionFileOffsets[Index]);
+
+    // Write the symbol table load command, if used.
+    if (NumSymbols) {
+      // The string table is written after all the section data.
+      uint64_t SymbolTableOffset = SectionDataStartOffset + SectionDataSize;
+      uint64_t StringTableOffset =
+        SymbolTableOffset + NumSymbols * Nlist32Size;
+      WriteSymtabLoadCommand(SymbolTableOffset, NumSymbols,
+                             StringTableOffset, StringTable.size());
+
+      // FIXME: Get correct symbol indices and counts.
+      unsigned FirstLocalSymbol = 0;
+      unsigned NumLocalSymbols = NumSymbols;
+      unsigned FirstExternalSymbol = NumLocalSymbols;
+      unsigned NumExternalSymbols = 0;
+      unsigned FirstUndefinedSymbol = NumLocalSymbols;
+      unsigned NumUndefinedSymbols = 0;
+      unsigned IndirectSymbolOffset = 0;
+      unsigned NumIndirectSymbols = 0;
+      WriteDysymtabLoadCommand(FirstLocalSymbol, NumLocalSymbols,
+                               FirstExternalSymbol, NumExternalSymbols,
+                               FirstUndefinedSymbol, NumUndefinedSymbols,
+                               IndirectSymbolOffset, NumIndirectSymbols);
+    }
+
+    // Write the actual section data.
+    for (MCAssembler::iterator it = Asm.begin(), ie = Asm.end(); it != ie; ++it)
+      WriteFileData(OS, *it, *this);
+
+    // Write the symbol table data, if used.
+    if (NumSymbols) {
+      // FIXME: Check that offsets match computed ones.
+
+      // FIXME: These need to be reordered, both to segregate into categories
+      // as well as to order some sublists.
+
+      // Write the symbol table entries.
+      for (MCAssembler::symbol_iterator it = Asm.symbol_begin(),
+             ie = Asm.symbol_end(); it != ie; ++it) {
+        MCSymbol &Sym = it->getSymbol();
+        uint64_t Index = StringIndexMap[Sym.getName()];
+        assert(Index && "Invalid index!");
+        WriteNlist32(Index, /*FIXME: Type=*/0, /*FIXME: Sect=*/0,
+                     /*FIXME: Desc=*/0, /*FIXME: Value=*/0);
+      }
+
+      // Write the string table.
+      OS << StringTable.str();
+    }
   }
-
 };
-
-}
 
 /* *** */
 
@@ -250,6 +419,18 @@ MCSectionData::MCSectionData(const MCSection &_Section, MCAssembler *A)
 {
   if (A)
     A->getSectionList().push_back(this);
+}
+
+/* *** */
+
+MCSymbolData::MCSymbolData() : Symbol(*(MCSymbol*)0) {}
+
+MCSymbolData::MCSymbolData(MCSymbol &_Symbol, MCFragment *_Fragment,
+                           uint64_t _Offset, MCAssembler *A)
+  : Symbol(_Symbol), Fragment(_Fragment), Offset(_Offset) 
+{
+  if (A)
+    A->getSymbolList().push_back(this);
 }
 
 /* *** */
@@ -400,15 +581,9 @@ void MCAssembler::Finish() {
   for (iterator it = begin(), ie = end(); it != ie; ++it)
     LayoutSection(*it);
 
+  // Write the object file.
   MachObjectWriter MOW(OS);
-
-  // Write the prolog, followed by the data for all the sections & fragments.
-  MOW.WriteProlog(*this);
-
-  // FIXME: This should move into the Mach-O writer, it should have control over
-  // what goes where.
-  for (iterator it = begin(), ie = end(); it != ie; ++it)
-    WriteFileData(OS, *it, MOW);
+  MOW.WriteObject(*this);
 
   OS.flush();
 }

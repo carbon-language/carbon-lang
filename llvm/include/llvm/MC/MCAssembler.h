@@ -64,7 +64,7 @@ public:
 
   // FIXME: This should be abstract, fix sentinel.
   virtual uint64_t getMaxFileSize() const {
-    assert(0 && "Invalid getMaxFileSize call !");
+    assert(0 && "Invalid getMaxFileSize call!");
     return 0;
   };
 
@@ -270,7 +270,6 @@ public:
   unsigned getAlignment() const { return Alignment; }
   void setAlignment(unsigned Value) { Alignment = Value; }
 
-
   /// @name Section List Access
   /// @{
 
@@ -284,6 +283,8 @@ public:
   const_iterator end() const { return Fragments.end(); }
 
   size_t size() const { return Fragments.size(); }
+
+  bool empty() const { return Fragments.empty(); }
 
   /// @}
   /// @name Assembler Backend Support
@@ -300,12 +301,48 @@ public:
   /// @}
 };
 
+// FIXME: Same concerns as with SectionData.
+class MCSymbolData : public ilist_node<MCSymbolData> {
+public:
+  MCSymbol &Symbol;
+
+  /// Fragment - The fragment this symbol's value is relative to, if any.
+  MCFragment *Fragment;
+
+  /// Offset - The offset to apply to the fragment address to form this symbol's
+  /// value.
+  uint64_t Offset;
+
+public:
+  // Only for use as sentinel.
+  MCSymbolData();
+  MCSymbolData(MCSymbol &_Symbol, MCFragment *_Fragment, uint64_t _Offset,
+               MCAssembler *A = 0);
+
+  /// @name Accessors
+  /// @{
+
+  MCSymbol &getSymbol() const { return Symbol; }
+
+  MCFragment *getFragment() const { return Fragment; }
+  void setFragment(MCFragment *Value) { Fragment = Value; }
+
+  uint64_t getOffset() const { return Offset; }
+  void setOffset(uint64_t Value) { Offset = Value; }
+
+  /// @}  
+};
+
 class MCAssembler {
 public:
   typedef iplist<MCSectionData> SectionDataListType;
+  typedef iplist<MCSymbolData> SymbolDataListType;
 
   typedef SectionDataListType::const_iterator const_iterator;
   typedef SectionDataListType::iterator iterator;
+
+  typedef SymbolDataListType::const_iterator const_symbol_iterator;
+  typedef SymbolDataListType::iterator symbol_iterator;
 
 private:
   MCAssembler(const MCAssembler&);    // DO NOT IMPLEMENT
@@ -314,6 +351,8 @@ private:
   raw_ostream &OS;
   
   iplist<MCSectionData> Sections;
+
+  iplist<MCSymbolData> Symbols;
 
 private:
   /// LayoutSection - Assign offsets and sizes to the fragments in the section
@@ -349,6 +388,21 @@ public:
   const_iterator end() const { return Sections.end(); }
 
   size_t size() const { return Sections.size(); }
+
+  /// @}
+  /// @name Symbol List Access
+  /// @{
+
+  const SymbolDataListType &getSymbolList() const { return Symbols; }
+  SymbolDataListType &getSymbolList() { return Symbols; }
+
+  symbol_iterator symbol_begin() { return Symbols.begin(); }
+  const_symbol_iterator symbol_begin() const { return Symbols.begin(); }
+
+  symbol_iterator symbol_end() { return Symbols.end(); }
+  const_symbol_iterator symbol_end() const { return Symbols.end(); }
+
+  size_t symbol_size() const { return Symbols.size(); }
 
   /// @}
 };

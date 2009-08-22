@@ -26,6 +26,27 @@ class MCMachOStreamer : public MCStreamer {
   MCSectionData *CurSectionData;
 
   DenseMap<const MCSection*, MCSectionData*> SectionMap;
+  
+  DenseMap<const MCSymbol*, MCSymbolData*> SymbolMap;
+
+private:
+  MCFragment *getCurrentFragment() const {
+    assert(CurSectionData && "No current section!");
+
+    if (!CurSectionData->empty())
+      return &CurSectionData->getFragmentList().back();
+
+    return 0;
+  }
+
+  MCSymbolData &getSymbolData(MCSymbol &Symbol) {
+    MCSymbolData *&Entry = SymbolMap[&Symbol];
+
+    if (!Entry)
+      Entry = new MCSymbolData(Symbol, 0, 0, &Assembler);
+
+    return *Entry;
+  }
 
 public:
   MCMachOStreamer(MCContext &Context, raw_ostream &_OS)
@@ -92,10 +113,16 @@ void MCMachOStreamer::SwitchSection(const MCSection *Section) {
 
 void MCMachOStreamer::EmitLabel(MCSymbol *Symbol) {
   assert(Symbol->isUndefined() && "Cannot define a symbol twice!");
-  assert(CurSection && "Cannot emit before setting section!");
 
-  llvm_unreachable("FIXME: Not yet implemented!");
+  MCDataFragment *F = dyn_cast_or_null<MCDataFragment>(getCurrentFragment());
+  if (!F)
+    F = new MCDataFragment(CurSectionData);
 
+  MCSymbolData &SD = getSymbolData(*Symbol);
+  assert(!SD.getFragment() && "Unexpected fragment on symbol data!");
+  SD.setFragment(F);
+  SD.setOffset(F->getContents().size());
+  
   Symbol->setSection(*CurSection);
 }
 
@@ -138,7 +165,9 @@ void MCMachOStreamer::EmitZerofill(MCSection *Section, MCSymbol *Symbol,
 }
 
 void MCMachOStreamer::EmitBytes(const StringRef &Data) {
-  MCDataFragment *DF = new MCDataFragment(CurSectionData);
+  MCDataFragment *DF = dyn_cast_or_null<MCDataFragment>(getCurrentFragment());
+  if (!DF)
+    DF = new MCDataFragment(CurSectionData);
   DF->getContents().append(Data.begin(), Data.end());
 }
 
@@ -154,7 +183,7 @@ void MCMachOStreamer::EmitValueToAlignment(unsigned ByteAlignment,
   new MCAlignFragment(ByteAlignment, Value, ValueSize, MaxBytesToEmit,
                       CurSectionData);
 
-  // Update the maximum alignment on the current section if necessary
+  // Update the maximum alignment on the current section if necessary.
   if (ByteAlignment > CurSectionData->getAlignment())
     CurSectionData->setAlignment(ByteAlignment);
 }
