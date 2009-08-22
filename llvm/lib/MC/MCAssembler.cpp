@@ -8,17 +8,14 @@
 //===----------------------------------------------------------------------===//
 
 #include "llvm/MC/MCAssembler.h"
-
+#include "llvm/MC/MCSectionMachO.h"
+#include "llvm/Target/TargetMachOWriterInfo.h"
 #include "llvm/ADT/DenseMap.h"
 #include "llvm/ADT/SmallString.h"
 #include "llvm/ADT/StringMap.h"
 #include "llvm/ADT/Twine.h"
-#include "llvm/MC/MCSectionMachO.h"
-#include "llvm/Support/DataTypes.h"
 #include "llvm/Support/ErrorHandling.h"
 #include "llvm/Support/raw_ostream.h"
-#include "llvm/Target/TargetMachOWriterInfo.h"
-
 using namespace llvm;
 
 class MachObjectWriter;
