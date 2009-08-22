@@ -2134,8 +2134,11 @@ static SDValue LowerShift(SDNode *N, SelectionDAG &DAG,
                        N->getOperand(0), NegatedCount);
   }
 
-  assert(VT == MVT::i64 &&
-         (N->getOpcode() == ISD::SRL || N->getOpcode() == ISD::SRA) &&
+  // We can get here for a node like i32 = ISD::SHL i32, i64
+  if (VT != MVT::i64)
+    return SDValue();
+
+  assert((N->getOpcode() == ISD::SRL || N->getOpcode() == ISD::SRA) &&
          "Unknown shift to lower!");
 
   // We only lower SRA, SRL of 1 here, all others use generic lowering.
