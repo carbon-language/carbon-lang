@@ -13,6 +13,7 @@
 define <8 x i8> @vtrni8(<8 x i8>* %A, <8 x i8>* %B) nounwind {
 ;CHECK: vtrni8:
 ;CHECK: vtrn.8
+;CHECK-NEXT: vadd.i8
 	%tmp1 = load <8 x i8>* %A
 	%tmp2 = load <8 x i8>* %B
 	%tmp3 = shufflevector <8 x i8> %tmp1, <8 x i8> %tmp2, <8 x i32> <i32 0, i32 8, i32 2, i32 10, i32 4, i32 12, i32 6, i32 14>
@@ -24,6 +25,7 @@ define <8 x i8> @vtrni8(<8 x i8>* %A, <8 x i8>* %B) nounwind {
 define <4 x i16> @vtrni16(<4 x i16>* %A, <4 x i16>* %B) nounwind {
 ;CHECK: vtrni16:
 ;CHECK: vtrn.16
+;CHECK-NEXT: vadd.i16
 	%tmp1 = load <4 x i16>* %A
 	%tmp2 = load <4 x i16>* %B
 	%tmp3 = shufflevector <4 x i16> %tmp1, <4 x i16> %tmp2, <4 x i32> <i32 0, i32 4, i32 2, i32 6>
@@ -35,6 +37,7 @@ define <4 x i16> @vtrni16(<4 x i16>* %A, <4 x i16>* %B) nounwind {
 define <2 x i32> @vtrni32(<2 x i32>* %A, <2 x i32>* %B) nounwind {
 ;CHECK: vtrni32:
 ;CHECK: vtrn.32
+;CHECK-NEXT: vadd.i32
 	%tmp1 = load <2 x i32>* %A
 	%tmp2 = load <2 x i32>* %B
 	%tmp3 = shufflevector <2 x i32> %tmp1, <2 x i32> %tmp2, <2 x i32> <i32 0, i32 2>
@@ -46,6 +49,7 @@ define <2 x i32> @vtrni32(<2 x i32>* %A, <2 x i32>* %B) nounwind {
 define <2 x float> @vtrnf(<2 x float>* %A, <2 x float>* %B) nounwind {
 ;CHECK: vtrnf:
 ;CHECK: vtrn.32
+;CHECK-NEXT: vadd.f32
 	%tmp1 = load <2 x float>* %A
 	%tmp2 = load <2 x float>* %B
 	%tmp3 = shufflevector <2 x float> %tmp1, <2 x float> %tmp2, <2 x i32> <i32 0, i32 2>
@@ -57,6 +61,7 @@ define <2 x float> @vtrnf(<2 x float>* %A, <2 x float>* %B) nounwind {
 define <16 x i8> @vtrnQi8(<16 x i8>* %A, <16 x i8>* %B) nounwind {
 ;CHECK: vtrnQi8:
 ;CHECK: vtrn.8
+;CHECK-NEXT: vadd.i8
 	%tmp1 = load <16 x i8>* %A
 	%tmp2 = load <16 x i8>* %B
 	%tmp3 = shufflevector <16 x i8> %tmp1, <16 x i8> %tmp2, <16 x i32> <i32 0, i32 16, i32 2, i32 18, i32 4, i32 20, i32 6, i32 22, i32 8, i32 24, i32 10, i32 26, i32 12, i32 28, i32 14, i32 30>
@@ -68,6 +73,7 @@ define <16 x i8> @vtrnQi8(<16 x i8>* %A, <16 x i8>* %B) nounwind {
 define <8 x i16> @vtrnQi16(<8 x i16>* %A, <8 x i16>* %B) nounwind {
 ;CHECK: vtrnQi16:
 ;CHECK: vtrn.16
+;CHECK-NEXT: vadd.i16
 	%tmp1 = load <8 x i16>* %A
 	%tmp2 = load <8 x i16>* %B
 	%tmp3 = shufflevector <8 x i16> %tmp1, <8 x i16> %tmp2, <8 x i32> <i32 0, i32 8, i32 2, i32 10, i32 4, i32 12, i32 6, i32 14>
@@ -79,6 +85,7 @@ define <8 x i16> @vtrnQi16(<8 x i16>* %A, <8 x i16>* %B) nounwind {
 define <4 x i32> @vtrnQi32(<4 x i32>* %A, <4 x i32>* %B) nounwind {
 ;CHECK: vtrnQi32:
 ;CHECK: vtrn.32
+;CHECK-NEXT: vadd.i32
 	%tmp1 = load <4 x i32>* %A
 	%tmp2 = load <4 x i32>* %B
 	%tmp3 = shufflevector <4 x i32> %tmp1, <4 x i32> %tmp2, <4 x i32> <i32 0, i32 4, i32 2, i32 6>
@@ -90,6 +97,7 @@ define <4 x i32> @vtrnQi32(<4 x i32>* %A, <4 x i32>* %B) nounwind {
 define <4 x float> @vtrnQf(<4 x float>* %A, <4 x float>* %B) nounwind {
 ;CHECK: vtrnQf:
 ;CHECK: vtrn.32
+;CHECK-NEXT: vadd.f32
 	%tmp1 = load <4 x float>* %A
 	%tmp2 = load <4 x float>* %B
 	%tmp3 = shufflevector <4 x float> %tmp1, <4 x float> %tmp2, <4 x i32> <i32 0, i32 4, i32 2, i32 6>
