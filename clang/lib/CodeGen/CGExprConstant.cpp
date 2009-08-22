@@ -378,11 +378,14 @@ public:
   }
   
   llvm::Constant *VisitCastExpr(CastExpr* E) {
-    // GCC cast to union extension
-    if (E->getType()->isUnionType()) {
+    switch (E->getCastKind()) {
+    case CastExpr::CK_ToUnion: {
+      // GCC cast to union extension
+      assert(E->getType()->isUnionType() &&
+             "Destination type is not union type!");
       const llvm::Type *Ty = ConvertType(E->getType());
       Expr *SubExpr = E->getSubExpr();
-      
+
       llvm::Constant *C = 
         CGM.EmitConstantExpr(SubExpr, SubExpr->getType(), CGF);
       if (!C)
@@ -396,28 +399,30 @@ public:
       Types.push_back(C->getType());
       unsigned CurSize = CGM.getTargetData().getTypeAllocSize(C->getType());
       unsigned TotalSize = CGM.getTargetData().getTypeAllocSize(Ty);
-      
+    
       assert(CurSize <= TotalSize && "Union size mismatch!");
       if (unsigned NumPadBytes = TotalSize - CurSize) {
         const llvm::Type *Ty = llvm::Type::getInt8Ty(VMContext);
         if (NumPadBytes > 1)
           Ty = llvm::ArrayType::get(Ty, NumPadBytes);
-        
+
         Elts.push_back(llvm::Constant::getNullValue(Ty));
         Types.push_back(Ty);
       }
-      
-      llvm::StructType* STy = llvm::StructType::get(C->getType()->getContext(),
-                                                    Types, false);
+    
+      llvm::StructType* STy =
+        llvm::StructType::get(C->getType()->getContext(), Types, false);
       return llvm::ConstantStruct::get(STy, Elts);
     }
-    
-    // Explicit and implicit no-op casts
-    QualType Ty = E->getType(), SubTy = E->getSubExpr()->getType();
-    if (CGM.getContext().hasSameUnqualifiedType(Ty, SubTy)) {
-      return Visit(E->getSubExpr());
+    default: {
+      // FIXME: This should be handled by the CK_NoOp cast kind.
+      // Explicit and implicit no-op casts
+      QualType Ty = E->getType(), SubTy = E->getSubExpr()->getType();
+      if (CGM.getContext().hasSameUnqualifiedType(Ty, SubTy))
+          return Visit(E->getSubExpr());
+      return 0;
     }
-    return 0;
+    }
   }
 
   llvm::Constant *VisitCXXDefaultArgExpr(CXXDefaultArgExpr *DAE) {
