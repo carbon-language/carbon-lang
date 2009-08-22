@@ -13,12 +13,13 @@
 #include "VirtRegMap.h"
 #include "llvm/CodeGen/LiveIntervalAnalysis.h"
 #include "llvm/CodeGen/LiveStackAnalysis.h"
+#include "llvm/CodeGen/MachineFrameInfo.h"
 #include "llvm/CodeGen/MachineFunction.h"
 #include "llvm/CodeGen/MachineRegisterInfo.h"
-#include "llvm/CodeGen/MachineFrameInfo.h"
 #include "llvm/Target/TargetMachine.h"
 #include "llvm/Target/TargetInstrInfo.h"
 #include "llvm/Support/Debug.h"
+#include "llvm/Support/raw_ostream.h"
 
 using namespace llvm;
 
@@ -137,7 +138,8 @@ protected:
     VNInfo *vni =
       li->getNextValue(storeInstIdx, 0, true, lis->getVNInfoAllocator());
     li->addKill(vni, storeInstIdx, false);
-    DOUT << "    Inserting store range: [" << start << ", " << end << ")\n";
+    DEBUG(errs() << "    Inserting store range: [" << start
+                 << ", " << end << ")\n");
     LiveRange lr(start, end, vni);
       
     li->addRange(lr);
@@ -202,7 +204,8 @@ protected:
     VNInfo *vni =
       li->getNextValue(loadInstIdx, 0, true, lis->getVNInfoAllocator());
     li->addKill(vni, lis->getInstructionIndex(mi), false);
-    DOUT << "    Intserting load range: [" << start << ", " << end << ")\n";
+    DEBUG(errs() << "    Intserting load range: [" << start
+                 << ", " << end << ")\n");
     LiveRange lr(start, end, vni);
 
     li->addRange(lr);
@@ -214,7 +217,7 @@ protected:
   /// immediately before each use, and stores after each def. No folding is
   /// attempted.
   std::vector<LiveInterval*> trivialSpillEverywhere(LiveInterval *li) {
-    DOUT << "Spilling everywhere " << *li << "\n";
+    DEBUG(errs() << "Spilling everywhere " << *li << "\n");
 
     assert(li->weight != HUGE_VALF &&
            "Attempting to spill already spilled value.");
@@ -222,7 +225,7 @@ protected:
     assert(!li->isStackSlot() &&
            "Trying to spill a stack slot.");
 
-    DOUT << "Trivial spill everywhere of reg" << li->reg << "\n";
+    DEBUG(errs() << "Trivial spill everywhere of reg" << li->reg << "\n");
 
     std::vector<LiveInterval*> added;
     
@@ -234,7 +237,7 @@ protected:
 
       MachineInstr *mi = &*regItr;
 
-      DOUT << "  Processing " << *mi;
+      DEBUG(errs() << "  Processing " << *mi);
 
       do {
         ++regItr;
