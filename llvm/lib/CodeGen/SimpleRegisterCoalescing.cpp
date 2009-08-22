@@ -181,13 +181,18 @@ bool SimpleRegisterCoalescing::AdjustCopiesBackFrom(LiveInterval &IntA,
       *tri_->getSubRegisters(IntB.reg)) {
     for (const unsigned* SR = tri_->getSubRegisters(IntB.reg); *SR; ++SR)
       if (li_->hasInterval(*SR) && IntA.overlaps(li_->getInterval(*SR))) {
-        DOUT << "Interfere with sub-register ";
-        DEBUG(li_->getInterval(*SR).print(DOUT, tri_));
+        DEBUG({
+            errs() << "Interfere with sub-register ";
+            li_->getInterval(*SR).print(errs(), tri_);
+          });
         return false;
       }
   }
   
-  DOUT << "\nExtending: "; IntB.print(DOUT, tri_);
+  DEBUG({
+      errs() << "\nExtending: ";
+      IntB.print(errs(), tri_);
+    });
   
   unsigned FillerStart = ValLR->end, FillerEnd = BLR->start;
   // We are about to delete CopyMI, so need to remove it as the 'instruction
@@ -217,8 +222,11 @@ bool SimpleRegisterCoalescing::AdjustCopiesBackFrom(LiveInterval &IntA,
     IntB.addKills(ValLR->valno, BValNo->kills);
     IntB.MergeValueNumberInto(BValNo, ValLR->valno);
   }
-  DOUT << "   result = "; IntB.print(DOUT, tri_);
-  DOUT << "\n";
+  DEBUG({
+      errs() << "   result = ";
+      IntB.print(errs(), tri_);
+      errs() << "\n";
+    });
 
   // If the source instruction was killing the source register before the
   // merge, unset the isKill marker given the live range has been extended.
@@ -444,7 +452,10 @@ bool SimpleRegisterCoalescing::RemoveCopyByCommutingDef(LiveInterval &IntA,
 
   // We need to insert a new liverange: [ALR.start, LastUse). It may be we can
   // simply extend BLR if CopyMI doesn't end the range.
-  DOUT << "\nExtending: "; IntB.print(DOUT, tri_);
+  DEBUG({
+      errs() << "\nExtending: ";
+      IntB.print(errs(), tri_);
+    });
 
   // Remove val#'s defined by copies that will be coalesced away.
   for (unsigned i = 0, e = BDeadValNos.size(); i != e; ++i) {
@@ -491,13 +502,21 @@ bool SimpleRegisterCoalescing::RemoveCopyByCommutingDef(LiveInterval &IntA,
   IntB.addKills(ValNo, BKills);
   ValNo->setHasPHIKill(BHasPHIKill);
 
-  DOUT << "   result = "; IntB.print(DOUT, tri_);
-  DOUT << "\n";
+  DEBUG({
+      errs() << "   result = ";
+      IntB.print(errs(), tri_);
+      errs() << '\n';
+      errs() << "\nShortening: ";
+      IntA.print(errs(), tri_);
+    });
 
-  DOUT << "\nShortening: "; IntA.print(DOUT, tri_);
   IntA.removeValNo(AValNo);
-  DOUT << "   result = "; IntA.print(DOUT, tri_);
-  DOUT << "\n";
+
+  DEBUG({
+      errs() << "   result = ";
+      IntA.print(errs(), tri_);
+      errs() << '\n';
+    });
 
   ++numCommutes;
   return true;
@@ -1185,14 +1204,18 @@ SimpleRegisterCoalescing::CanJoinExtractSubRegToPhysReg(unsigned DstReg,
   LiveInterval &RHS = li_->getInterval(SrcReg);
   if (li_->hasInterval(RealDstReg) &&
       RHS.overlaps(li_->getInterval(RealDstReg))) {
-    DOUT << "Interfere with register ";
-    DEBUG(li_->getInterval(RealDstReg).print(DOUT, tri_));
+    DEBUG({
+        errs() << "Interfere with register ";
+        li_->getInterval(RealDstReg).print(errs(), tri_);
+      });
     return false; // Not coalescable
   }
   for (const unsigned* SR = tri_->getSubRegisters(RealDstReg); *SR; ++SR)
     if (li_->hasInterval(*SR) && RHS.overlaps(li_->getInterval(*SR))) {
-      DOUT << "Interfere with sub-register ";
-      DEBUG(li_->getInterval(*SR).print(DOUT, tri_));
+      DEBUG({
+          errs() << "Interfere with sub-register ";
+          li_->getInterval(*SR).print(errs(), tri_);
+        });
       return false; // Not coalescable
     }
   return true;
@@ -1212,14 +1235,18 @@ SimpleRegisterCoalescing::CanJoinInsertSubRegToPhysReg(unsigned DstReg,
   LiveInterval &RHS = li_->getInterval(DstReg);
   if (li_->hasInterval(RealSrcReg) &&
       RHS.overlaps(li_->getInterval(RealSrcReg))) {
-    DOUT << "Interfere with register ";
-    DEBUG(li_->getInterval(RealSrcReg).print(DOUT, tri_));
+    DEBUG({
+        errs() << "Interfere with register ";
+        li_->getInterval(RealSrcReg).print(errs(), tri_);
+      });
     return false; // Not coalescable
   }
   for (const unsigned* SR = tri_->getSubRegisters(RealSrcReg); *SR; ++SR)
     if (li_->hasInterval(*SR) && RHS.overlaps(li_->getInterval(*SR))) {
-      DOUT << "Interfere with sub-register ";
-      DEBUG(li_->getInterval(*SR).print(DOUT, tri_));
+      DEBUG({
+          errs() << "Interfere with sub-register ";
+          li_->getInterval(*SR).print(errs(), tri_);
+        });
       return false; // Not coalescable
     }
   return true;
@@ -1248,7 +1275,7 @@ bool SimpleRegisterCoalescing::JoinCopy(CopyRec &TheCopy, bool &Again) {
   if (JoinedCopies.count(CopyMI) || ReMatCopies.count(CopyMI))
     return false; // Already done.
 
-  DOUT << li_->getInstructionIndex(CopyMI) << '\t' << *CopyMI;
+  DEBUG(errs() << li_->getInstructionIndex(CopyMI) << '\t' << *CopyMI);
 
   unsigned SrcReg, DstReg, SrcSubIdx = 0, DstSubIdx = 0;
   bool isExtSubReg = CopyMI->getOpcode() == TargetInstrInfo::EXTRACT_SUBREG;
@@ -1268,8 +1295,8 @@ bool SimpleRegisterCoalescing::JoinCopy(CopyRec &TheCopy, bool &Again) {
     if (SrcSubIdx && SrcSubIdx != DstSubIdx) {
       // r1025 = INSERT_SUBREG r1025, r1024<2>, 2 Then r1024 has already been
       // coalesced to a larger register so the subreg indices cancel out.
-      DOUT << "\tSource of insert_subreg is already coalesced "
-           << "to another register.\n";
+      DEBUG(errs() << "\tSource of insert_subreg is already coalesced "
+                   << "to another register.\n");
       return false;  // Not coalescable.
     }
   } else if (!tii_->isMoveInstr(*CopyMI, SrcReg, DstReg, SrcSubIdx, DstSubIdx)){
@@ -1278,7 +1305,7 @@ bool SimpleRegisterCoalescing::JoinCopy(CopyRec &TheCopy, bool &Again) {
 
   // If they are already joined we continue.
   if (SrcReg == DstReg) {
-    DOUT << "\tCopy already coalesced.\n";
+    DEBUG(errs() << "\tCopy already coalesced.\n");
     return false;  // Not coalescable.
   }
   
@@ -1287,17 +1314,17 @@ bool SimpleRegisterCoalescing::JoinCopy(CopyRec &TheCopy, bool &Again) {
 
   // If they are both physical registers, we cannot join them.
   if (SrcIsPhys && DstIsPhys) {
-    DOUT << "\tCan not coalesce physregs.\n";
+    DEBUG(errs() << "\tCan not coalesce physregs.\n");
     return false;  // Not coalescable.
   }
   
   // We only join virtual registers with allocatable physical registers.
   if (SrcIsPhys && !allocatableRegs_[SrcReg]) {
-    DOUT << "\tSrc reg is unallocatable physreg.\n";
+    DEBUG(errs() << "\tSrc reg is unallocatable physreg.\n");
     return false;  // Not coalescable.
   }
   if (DstIsPhys && !allocatableRegs_[DstReg]) {
-    DOUT << "\tDst reg is unallocatable physreg.\n";
+    DEBUG(errs() << "\tDst reg is unallocatable physreg.\n");
     return false;  // Not coalescable.
   }
 
@@ -1312,8 +1339,8 @@ bool SimpleRegisterCoalescing::JoinCopy(CopyRec &TheCopy, bool &Again) {
     assert(DstSubRC && "Illegal subregister index");
     if (!DstSubRC->contains(SrcSubReg)) {
       DEBUG(errs() << "\tIncompatible destination regclass: "
-            << tri_->getName(SrcSubReg) << " not in " << DstSubRC->getName()
-            << ".\n");
+                   << tri_->getName(SrcSubReg) << " not in "
+                   << DstSubRC->getName() << ".\n");
       return false;             // Not coalescable.
     }
   }
@@ -1329,8 +1356,8 @@ bool SimpleRegisterCoalescing::JoinCopy(CopyRec &TheCopy, bool &Again) {
     assert(SrcSubRC && "Illegal subregister index");
     if (!SrcSubRC->contains(DstReg)) {
       DEBUG(errs() << "\tIncompatible source regclass: "
-            << tri_->getName(DstSubReg) << " not in " << SrcSubRC->getName()
-            << ".\n");
+                   << tri_->getName(DstSubReg) << " not in "
+                   << SrcSubRC->getName() << ".\n");
       (void)DstSubReg;
       return false;             // Not coalescable.
     }
@@ -1354,7 +1381,7 @@ bool SimpleRegisterCoalescing::JoinCopy(CopyRec &TheCopy, bool &Again) {
         // r1024<2> = EXTRACT_SUBREG EAX, 2. Then r1024 has already been
         // coalesced to a larger register so the subreg indices cancel out.
         if (DstSubIdx != SubIdx) {
-          DOUT << "\t Sub-register indices mismatch.\n";
+          DEBUG(errs() << "\t Sub-register indices mismatch.\n");
           return false; // Not coalescable.
         }
       } else
@@ -1367,7 +1394,7 @@ bool SimpleRegisterCoalescing::JoinCopy(CopyRec &TheCopy, bool &Again) {
         // EAX = INSERT_SUBREG EAX, r1024<2>, 2 Then r1024 has already been
         // coalesced to a larger register so the subreg indices cancel out.
         if (SrcSubIdx != SubIdx) {
-          DOUT << "\t Sub-register indices mismatch.\n";
+          DEBUG(errs() << "\t Sub-register indices mismatch.\n");
           return false; // Not coalescable.
         }
       } else
@@ -1376,8 +1403,8 @@ bool SimpleRegisterCoalescing::JoinCopy(CopyRec &TheCopy, bool &Again) {
     } else if ((DstIsPhys && isExtSubReg) ||
                (SrcIsPhys && (isInsSubReg || isSubRegToReg))) {
       if (!isSubRegToReg && CopyMI->getOperand(1).getSubReg()) {
-        DOUT << "\tSrc of extract_subreg already coalesced with reg"
-             << " of a super-class.\n";
+        DEBUG(errs() << "\tSrc of extract_subreg already coalesced with reg"
+                     << " of a super-class.\n");
         return false; // Not coalescable.
       }
 
@@ -1400,7 +1427,7 @@ bool SimpleRegisterCoalescing::JoinCopy(CopyRec &TheCopy, bool &Again) {
           // class as the would be resulting register.
           SubIdx = 0;
         else {
-          DOUT << "\t Sub-register indices mismatch.\n";
+          DEBUG(errs() << "\t Sub-register indices mismatch.\n");
           return false; // Not coalescable.
         }
       }
@@ -1412,7 +1439,7 @@ bool SimpleRegisterCoalescing::JoinCopy(CopyRec &TheCopy, bool &Again) {
             NewRC = tri_->getMatchingSuperRegClass(SrcRC, DstRC, SubIdx);
           }
         if (!NewRC) {
-          DOUT << "\t Conflicting sub-register indices.\n";
+          DEBUG(errs() << "\t Conflicting sub-register indices.\n");
           return false;  // Not coalescable
         }
 
@@ -1485,8 +1512,8 @@ bool SimpleRegisterCoalescing::JoinCopy(CopyRec &TheCopy, bool &Again) {
       NewRC = getCommonSubClass(SrcRC, DstRC);
       if (!NewRC) {
         DEBUG(errs() << "\tDisjoint regclasses: "
-              << SrcRC->getName() << ", "
-              << DstRC->getName() << ".\n");
+                     << SrcRC->getName() << ", "
+                     << DstRC->getName() << ".\n");
         return false;           // Not coalescable.
       }
       if (DstRC->getSize() > SrcRC->getSize())
@@ -1500,7 +1527,7 @@ bool SimpleRegisterCoalescing::JoinCopy(CopyRec &TheCopy, bool &Again) {
         (isExtSubReg || DstRC->isASubClass()) &&
         !isWinToJoinCrossClass(LargeReg, SmallReg,
                                allocatableRCRegs_[NewRC].count())) {
-      DOUT << "\tSrc/Dest are different register classes.\n";
+      DEBUG(errs() << "\tSrc/Dest are different register classes.\n");
       // Allow the coalescer to try again in case either side gets coalesced to
       // a physical register that's compatible with the other side. e.g.
       // r1024 = MOV32to32_ r1025
@@ -1521,9 +1548,11 @@ bool SimpleRegisterCoalescing::JoinCopy(CopyRec &TheCopy, bool &Again) {
   assert(SrcInt.reg == SrcReg && DstInt.reg == DstReg &&
          "Register mapping is horribly broken!");
 
-  DOUT << "\t\tInspecting "; SrcInt.print(DOUT, tri_);
-  DOUT << " and "; DstInt.print(DOUT, tri_);
-  DOUT << ": ";
+  DEBUG({
+      errs() << "\t\tInspecting "; SrcInt.print(errs(), tri_);
+      errs() << " and "; DstInt.print(errs(), tri_);
+      errs() << ": ";
+    });
 
   // Save a copy of the virtual register live interval. We'll manually
   // merge this into the "real" physical register live interval this is
@@ -1553,7 +1582,7 @@ bool SimpleRegisterCoalescing::JoinCopy(CopyRec &TheCopy, bool &Again) {
           if (!isWinToJoinVRWithSrcPhysReg(CopyMI, CopyMBB, DstInt, SrcInt)) {
             mri_->setRegAllocationHint(DstInt.reg, 0, SrcReg);
             ++numAborts;
-            DOUT << "\tMay tie down a physical register, abort!\n";
+            DEBUG(errs() << "\tMay tie down a physical register, abort!\n");
             Again = true;  // May be possible to coalesce later.
             return false;
           }
@@ -1561,7 +1590,7 @@ bool SimpleRegisterCoalescing::JoinCopy(CopyRec &TheCopy, bool &Again) {
           if (!isWinToJoinVRWithDstPhysReg(CopyMI, CopyMBB, DstInt, SrcInt)) {
             mri_->setRegAllocationHint(SrcInt.reg, 0, DstReg);
             ++numAborts;
-            DOUT << "\tMay tie down a physical register, abort!\n";
+            DEBUG(errs() << "\tMay tie down a physical register, abort!\n");
             Again = true;  // May be possible to coalesce later.
             return false;
           }
@@ -1585,7 +1614,7 @@ bool SimpleRegisterCoalescing::JoinCopy(CopyRec &TheCopy, bool &Again) {
                                    mri_->use_end()) / Length) < Ratio)) {
           mri_->setRegAllocationHint(JoinVInt.reg, 0, JoinPReg);
           ++numAborts;
-          DOUT << "\tMay tie down a physical register, abort!\n";
+          DEBUG(errs() << "\tMay tie down a physical register, abort!\n");
           Again = true;  // May be possible to coalesce later.
           return false;
         }
@@ -1604,7 +1633,7 @@ bool SimpleRegisterCoalescing::JoinCopy(CopyRec &TheCopy, bool &Again) {
     // Only coalesce an empty interval (defined by implicit_def) with
     // another interval which has a valno defined by the CopyMI and the CopyMI
     // is a kill of the implicit def.
-    DOUT << "Not profitable!\n";
+    DEBUG(errs() << "Not profitable!\n");
     return false;
   }
 
@@ -1626,7 +1655,7 @@ bool SimpleRegisterCoalescing::JoinCopy(CopyRec &TheCopy, bool &Again) {
     }
     
     // Otherwise, we are unable to join the intervals.
-    DOUT << "Interference!\n";
+    DEBUG(errs() << "Interference!\n");
     Again = true;  // May be possible to coalesce later.
     return false;
   }
@@ -1749,8 +1778,11 @@ bool SimpleRegisterCoalescing::JoinCopy(CopyRec &TheCopy, bool &Again) {
       mri_->setRegAllocationHint(ResDstInt->reg, 0, 0);
   }
 
-  DOUT << "\n\t\tJoined.  Result = "; ResDstInt->print(DOUT, tri_);
-  DOUT << "\n";
+  DEBUG({
+      errs() << "\n\t\tJoined.  Result = ";
+      ResDstInt->print(errs(), tri_);
+      errs() << "\n";
+    });
 
   ++numJoins;
   return true;
@@ -2060,8 +2092,10 @@ SimpleRegisterCoalescing::JoinIntervals(LiveInterval &LHS, LiveInterval &RHS,
     } else {
       for (const unsigned* SR = tri_->getSubRegisters(LHS.reg); *SR; ++SR)
         if (li_->hasInterval(*SR) && RHS.overlaps(li_->getInterval(*SR))) {
-          DOUT << "Interfere with sub-register ";
-          DEBUG(li_->getInterval(*SR).print(DOUT, tri_));
+          DEBUG({
+              errs() << "Interfere with sub-register ";
+              li_->getInterval(*SR).print(errs(), tri_);
+            });
           return false;
         }
     }
@@ -2075,8 +2109,10 @@ SimpleRegisterCoalescing::JoinIntervals(LiveInterval &LHS, LiveInterval &RHS,
     } else {
       for (const unsigned* SR = tri_->getSubRegisters(RHS.reg); *SR; ++SR)
         if (li_->hasInterval(*SR) && LHS.overlaps(li_->getInterval(*SR))) {
-          DOUT << "Interfere with sub-register ";
-          DEBUG(li_->getInterval(*SR).print(DOUT, tri_));
+          DEBUG({
+              errs() << "Interfere with sub-register ";
+              li_->getInterval(*SR).print(errs(), tri_);
+            });
           return false;
         }
     }
@@ -2402,7 +2438,7 @@ void SimpleRegisterCoalescing::CopyCoalesceInMBB(MachineBasicBlock *MBB,
 }
 
 void SimpleRegisterCoalescing::joinIntervals() {
-  DOUT << "********** JOINING INTERVALS ***********\n";
+  DEBUG(errs() << "********** JOINING INTERVALS ***********\n");
 
   if (NewHeuristic)
     JoinQueue = new JoinPriorityQueue<CopyRecSort>(this);
@@ -2592,8 +2628,8 @@ bool SimpleRegisterCoalescing::runOnMachineFunction(MachineFunction &fn) {
   loopInfo = &getAnalysis<MachineLoopInfo>();
 
   DEBUG(errs() << "********** SIMPLE REGISTER COALESCING **********\n"
-        << "********** Function: "
-        << ((Value*)mf_->getFunction())->getName() << '\n');
+               << "********** Function: "
+               << ((Value*)mf_->getFunction())->getName() << '\n');
 
   allocatableRegs_ = tri_->getAllocatableSet(fn);
   for (TargetRegisterInfo::regclass_iterator I = tri_->regclass_begin(),
@@ -2605,10 +2641,10 @@ bool SimpleRegisterCoalescing::runOnMachineFunction(MachineFunction &fn) {
   if (EnableJoining) {
     joinIntervals();
     DEBUG({
-        DOUT << "********** INTERVALS POST JOINING **********\n";
+        errs() << "********** INTERVALS POST JOINING **********\n";
         for (LiveIntervals::iterator I = li_->begin(), E = li_->end(); I != E; ++I){
-          I->second->print(DOUT, tri_);
-          DOUT << "\n";
+          I->second->print(errs(), tri_);
+          errs() << "\n";
         }
       });
   }
