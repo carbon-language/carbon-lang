@@ -1014,12 +1014,13 @@ Sema::PerformImplicitConversion(Expr *&From, QualType ToType,
     ImpCastExprToType(From, ToType);
     break;
 
-  case ICK_Pointer_Member:
-    if (CheckMemberPointerConversion(From, ToType))
-      return true;
-    ImpCastExprToType(From, ToType);
-    break;
-
+    case ICK_Pointer_Member: {
+      CastExpr::CastKind Kind = CastExpr::CK_Unknown;
+      if (CheckMemberPointerConversion(From, ToType, Kind))
+        return true;
+      ImpCastExprToType(From, ToType, Kind);
+      break;
+    }
   case ICK_Boolean_Conversion:
     FromType = Context.BoolTy;
     ImpCastExprToType(From, FromType);

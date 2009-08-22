@@ -117,6 +117,7 @@ namespace  {
     
     // Exprs
     void VisitExpr(Expr *Node);
+    void VisitCastExpr(CastExpr *Node);
     void VisitDeclRefExpr(DeclRefExpr *Node);
     void VisitPredefinedExpr(PredefinedExpr *Node);
     void VisitCharacterLiteral(CharacterLiteral *Node);
@@ -298,22 +299,56 @@ void StmtDumper::VisitExpr(Expr *Node) {
   DumpExpr(Node);
 }
 
+void StmtDumper::VisitCastExpr(CastExpr *Node) {
+  DumpExpr(Node);
+  fprintf(F, " ");
+  switch (Node->getCastKind()) {
+  case CastExpr::CK_Unknown:
+    fprintf(F, "<Unknown>");
+    break;
+  case CastExpr::CK_BitCast:
+    fprintf(F, "<BitCast>");
+    break;
+  case CastExpr::CK_NoOp:
+    fprintf(F, "<NoOp>");
+    break;
+  case CastExpr::CK_DerivedToBase:
+    fprintf(F, "<DerivedToBase>");
+    break;
+  case CastExpr::CK_Dynamic:
+    fprintf(F, "<Dynamic>");
+    break;
+  case CastExpr::CK_ToUnion:
+    fprintf(F, "<ToUnion>");
+    break;
+  case CastExpr::CK_ArrayToPointerDecay:
+    fprintf(F, "<ArrayToPointerDecay>");
+    break;
+  case CastExpr::CK_NullToMemberPointer:
+    fprintf(F, "<NullToMemberPointer>");
+    break;
+  case CastExpr::CK_BaseToDerivedMemberPointer:
+    fprintf(F, "<BaseToDerivedMemberPointer>");
+    break;
+  }
+}
+
 void StmtDumper::VisitDeclRefExpr(DeclRefExpr *Node) {
   DumpExpr(Node);
 
   fprintf(F, " ");
   switch (Node->getDecl()->getKind()) {
-    case Decl::Function: fprintf(F,"FunctionDecl"); break;
-    case Decl::Var: fprintf(F,"Var"); break;
-    case Decl::ParmVar: fprintf(F,"ParmVar"); break;
-    case Decl::EnumConstant: fprintf(F,"EnumConstant"); break;
-    case Decl::Typedef: fprintf(F,"Typedef"); break;
-    case Decl::Record: fprintf(F,"Record"); break;
-    case Decl::Enum: fprintf(F,"Enum"); break;
-    case Decl::CXXRecord: fprintf(F,"CXXRecord"); break;
-    case Decl::ObjCInterface: fprintf(F,"ObjCInterface"); break;
-    case Decl::ObjCClass: fprintf(F,"ObjCClass"); break;
-    default: fprintf(F,"Decl"); break;
+  default: fprintf(F,"Decl"); break;
+  case Decl::Function: fprintf(F,"FunctionDecl"); break;
+  case Decl::Var: fprintf(F,"Var"); break;
+  case Decl::ParmVar: fprintf(F,"ParmVar"); break;
+  case Decl::EnumConstant: fprintf(F,"EnumConstant"); break;
+  case Decl::Typedef: fprintf(F,"Typedef"); break;
+  case Decl::Record: fprintf(F,"Record"); break;
+  case Decl::Enum: fprintf(F,"Enum"); break;
+  case Decl::CXXRecord: fprintf(F,"CXXRecord"); break;
+  case Decl::ObjCInterface: fprintf(F,"ObjCInterface"); break;
+  case Decl::ObjCClass: fprintf(F,"ObjCClass"); break;
   }
   
   fprintf(F, "='%s' %p", Node->getDecl()->getNameAsString().c_str(), 

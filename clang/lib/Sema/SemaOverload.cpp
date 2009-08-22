@@ -1199,11 +1199,17 @@ bool Sema::IsMemberPointerConversion(Expr *From, QualType FromType,
 /// for which IsMemberPointerConversion has already returned true. It returns
 /// true and produces a diagnostic if there was an error, or returns false
 /// otherwise.
-bool Sema::CheckMemberPointerConversion(Expr *From, QualType ToType) {
+bool Sema::CheckMemberPointerConversion(Expr *From, QualType ToType, 
+                                        CastExpr::CastKind &Kind) {
   QualType FromType = From->getType();
   const MemberPointerType *FromPtrType = FromType->getAs<MemberPointerType>();
-  if (!FromPtrType)
+  if (!FromPtrType) {
+    // This must be a null pointer to member pointer conversion
+    assert(From->isNullPointerConstant(Context) && 
+           "Expr must be null pointer constant!");
+    Kind = CastExpr::CK_NullToMemberPointer;
     return false;
+  }
 
   const MemberPointerType *ToPtrType = ToType->getAs<MemberPointerType>();
   assert(ToPtrType && "No member pointer cast has a target type "
@@ -1245,6 +1251,8 @@ bool Sema::CheckMemberPointerConversion(Expr *From, QualType ToType) {
     return true;
   }
 
+  // Must be a base to derived member conversion.
+  Kind = CastExpr::CK_BaseToDerivedMemberPointer;
   return false;
 }
 

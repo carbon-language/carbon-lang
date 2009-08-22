@@ -1181,7 +1181,14 @@ public:
     CK_ToUnion,
     
     /// CK_ArrayToPointerDecay - Array to pointer decay.
-    CK_ArrayToPointerDecay
+    CK_ArrayToPointerDecay,
+    
+    /// CK_NullToMemberPointer - Null pointer to member pointer.
+    CK_NullToMemberPointer,
+    
+    /// CK_BaseToDerivedMemberPointer - Member pointer in base class to
+    /// member pointer in derived class.
+    CK_BaseToDerivedMemberPointer
   };
   
   struct CastInfo {

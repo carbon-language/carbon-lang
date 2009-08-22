@@ -735,7 +735,8 @@ public:
   bool CheckPointerConversion(Expr *From, QualType ToType);
   bool IsMemberPointerConversion(Expr *From, QualType FromType, QualType ToType,
                                  QualType &ConvertedType);
-  bool CheckMemberPointerConversion(Expr *From, QualType ToType);
+  bool CheckMemberPointerConversion(Expr *From, QualType ToType,
+                                    CastExpr::CastKind &Kind);
   bool IsQualificationConversion(QualType FromType, QualType ToType);
   bool IsUserDefinedConversion(Expr *From, QualType ToType, 
                                UserDefinedConversionSequence& User,
