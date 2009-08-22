@@ -156,7 +156,7 @@ namespace llvm {
     /// data of the specified size to the specified numeric address space.
     virtual const char *getDataASDirective(unsigned Size, unsigned AS) const {
       assert(AS != 0 && "Don't know the directives for default addr space");
-      return NULL;
+      return 0;
     }
 
     /// SunStyleELFSectionSwitchSyntax - This is true if this target uses "Sun
