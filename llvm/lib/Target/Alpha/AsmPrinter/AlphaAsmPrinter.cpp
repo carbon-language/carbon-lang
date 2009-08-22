@@ -99,7 +99,7 @@ void AlphaAsmPrinter::printOp(const MachineOperand &MO, bool IsCallOp) {
     return;
 
   case MachineOperand::MO_ConstantPoolIndex:
-    O << TAI->getPrivateGlobalPrefix() << "CPI" << getFunctionNumber() << "_"
+    O << MAI->getPrivateGlobalPrefix() << "CPI" << getFunctionNumber() << "_"
       << MO.getIndex();
     return;
 
@@ -112,7 +112,7 @@ void AlphaAsmPrinter::printOp(const MachineOperand &MO, bool IsCallOp) {
     return;
 
   case MachineOperand::MO_JumpTableIndex:
-    O << TAI->getPrivateGlobalPrefix() << "JTI" << getFunctionNumber()
+    O << MAI->getPrivateGlobalPrefix() << "JTI" << getFunctionNumber()
       << '_' << MO.getIndex();
     return;
 
@@ -155,7 +155,7 @@ bool AlphaAsmPrinter::runOnMachineFunction(MachineFunction &MF) {
   case Function::WeakODRLinkage:
   case Function::LinkOnceAnyLinkage:
   case Function::LinkOnceODRLinkage:
-    O << TAI->getWeakRefDirective() << CurrentFnName << "\n";
+    O << MAI->getWeakRefDirective() << CurrentFnName << "\n";
     break;
   }
 
@@ -224,11 +224,11 @@ void AlphaAsmPrinter::PrintGlobalVariable(const GlobalVariable *GVar) {
    case GlobalValue::WeakAnyLinkage:
    case GlobalValue::WeakODRLinkage:
    case GlobalValue::CommonLinkage:
-    O << TAI->getWeakRefDirective() << name << '\n';
+    O << MAI->getWeakRefDirective() << name << '\n';
     break;
    case GlobalValue::AppendingLinkage:
    case GlobalValue::ExternalLinkage:
-      O << TAI->getGlobalDirective() << name << "\n";
+      O << MAI->getGlobalDirective() << name << "\n";
       break;
     case GlobalValue::InternalLinkage:
     case GlobalValue::PrivateLinkage:
@@ -239,7 +239,7 @@ void AlphaAsmPrinter::PrintGlobalVariable(const GlobalVariable *GVar) {
     }
 
   // 3: Type, Size, Align
-  if (TAI->hasDotTypeDotSizeDirective()) {
+  if (MAI->hasDotTypeDotSizeDirective()) {
     O << "\t.type\t" << name << ", @object\n";
     O << "\t.size\t" << name << ", " << Size << "\n";
   }

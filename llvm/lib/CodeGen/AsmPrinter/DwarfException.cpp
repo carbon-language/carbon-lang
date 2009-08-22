@@ -60,8 +60,8 @@ void DwarfException::EmitCommonEHFrame(const Function *Personality,
   // Begin eh frame section.
   Asm->OutStreamer.SwitchSection(Asm->getObjFileLowering().getEHFrameSection());
 
-  if (TAI->is_EHSymbolPrivate())
-    O << TAI->getPrivateGlobalPrefix();
+  if (MAI->is_EHSymbolPrivate())
+    O << MAI->getPrivateGlobalPrefix();
 
   O << "EH_frame" << Index << ":\n";
   EmitLabel("section_eh_frame", Index);
@@ -99,7 +99,7 @@ void DwarfException::EmitCommonEHFrame(const Function *Personality,
     Asm->EmitULEB128Bytes(7);
     Asm->EOL("Augmentation Size");
 
-    if (TAI->getNeedsIndirectEncoding()) {
+    if (MAI->getNeedsIndirectEncoding()) {
       Asm->EmitInt8(dwarf::DW_EH_PE_pcrel | dwarf::DW_EH_PE_sdata4 |
                     dwarf::DW_EH_PE_indirect);
       Asm->EOL("Personality (pcrel sdata4 indirect)");
@@ -109,11 +109,11 @@ void DwarfException::EmitCommonEHFrame(const Function *Personality,
     }
 
     PrintRelDirective(true);
-    O << TAI->getPersonalityPrefix();
+    O << MAI->getPersonalityPrefix();
     Asm->EmitExternalGlobal((const GlobalVariable *)(Personality));
-    O << TAI->getPersonalitySuffix();
-    if (strcmp(TAI->getPersonalitySuffix(), "+4@GOTPCREL"))
-      O << "-" << TAI->getPCSymbol();
+    O << MAI->getPersonalitySuffix();
+    if (strcmp(MAI->getPersonalitySuffix(), "+4@GOTPCREL"))
+      O << "-" << MAI->getPCSymbol();
     Asm->EOL("Personality");
 
     Asm->EmitInt8(dwarf::DW_EH_PE_pcrel | dwarf::DW_EH_PE_sdata4);
@@ -157,12 +157,12 @@ void DwarfException::EmitEHFrame(const FunctionEHFrameInfo &EHFrameInfo) {
   // Externally visible entry into the functions eh frame info. If the
   // corresponding function is static, this should not be externally visible.
   if (!TheFunc->hasLocalLinkage())
-    if (const char *GlobalEHDirective = TAI->getGlobalEHDirective())
+    if (const char *GlobalEHDirective = MAI->getGlobalEHDirective())
       O << GlobalEHDirective << EHFrameInfo.FnName << "\n";
 
   // If corresponding function is weak definition, this should be too.
-  if (TheFunc->isWeakForLinker() && TAI->getWeakDefDirective())
-    O << TAI->getWeakDefDirective() << EHFrameInfo.FnName << "\n";
+  if (TheFunc->isWeakForLinker() && MAI->getWeakDefDirective())
+    O << MAI->getWeakDefDirective() << EHFrameInfo.FnName << "\n";
 
   // If there are no calls then you can't unwind.  This may mean we can omit the
   // EH Frame, but some environments do not handle weak absolute symbols. If
@@ -170,13 +170,13 @@ void DwarfException::EmitEHFrame(const FunctionEHFrameInfo &EHFrameInfo) {
   // info is to be available for non-EH uses.
   if (!EHFrameInfo.hasCalls && !UnwindTablesMandatory &&
       (!TheFunc->isWeakForLinker() ||
-       !TAI->getWeakDefDirective() ||
-       TAI->getSupportsWeakOmittedEHFrame())) {
+       !MAI->getWeakDefDirective() ||
+       MAI->getSupportsWeakOmittedEHFrame())) {
     O << EHFrameInfo.FnName << " = 0\n";
     // This name has no connection to the function, so it might get
     // dead-stripped when the function is not, erroneously.  Prohibit
     // dead-stripping unconditionally.
-    if (const char *UsedDirective = TAI->getUsedDirective())
+    if (const char *UsedDirective = MAI->getUsedDirective())
       O << UsedDirective << EHFrameInfo.FnName << "\n\n";
   } else {
     O << EHFrameInfo.FnName << ":\n";
@@ -233,7 +233,7 @@ void DwarfException::EmitEHFrame(const FunctionEHFrameInfo &EHFrameInfo) {
     // on unused functions (calling undefined externals) being dead-stripped to
     // link correctly.  Yes, there really is.
     if (MMI->isUsedFunction(EHFrameInfo.function))
-      if (const char *UsedDirective = TAI->getUsedDirective())
+      if (const char *UsedDirective = MAI->getUsedDirective())
         O << UsedDirective << EHFrameInfo.FnName << "\n\n";
   }
 }
@@ -430,7 +430,7 @@ ComputeCallSiteTable(SmallVectorImpl<CallSiteEntry> &CallSites,
       // create a call-site entry with no landing pad for the region between the
       // try-ranges.
       if (SawPotentiallyThrowing &&
-          TAI->getExceptionHandlingType() == ExceptionHandling::Dwarf) {
+          MAI->getExceptionHandlingType() == ExceptionHandling::Dwarf) {
         CallSiteEntry Site = { LastLabel, BeginLabel, 0, 0 };
         CallSites.push_back(Site);
         PreviousIsInvoke = false;
@@ -472,7 +472,7 @@ ComputeCallSiteTable(SmallVectorImpl<CallSiteEntry> &CallSites,
   // function may throw, create a call-site entry with no landing pad for the
   // region following the try-range.
   if (SawPotentiallyThrowing &&
-      TAI->getExceptionHandlingType() == ExceptionHandling::Dwarf) {
+      MAI->getExceptionHandlingType() == ExceptionHandling::Dwarf) {
     CallSiteEntry Site = { LastLabel, 0, 0, 0 };
     CallSites.push_back(Site);
   }
@@ -546,18 +546,18 @@ void DwarfException::EmitExceptionTable() {
   const unsigned LandingPadSize = sizeof(int32_t); // DW_EH_PE_udata4
   unsigned SizeSites;
 
-  bool HaveTTData = (TAI->getExceptionHandlingType() == ExceptionHandling::SjLj)
+  bool HaveTTData = (MAI->getExceptionHandlingType() == ExceptionHandling::SjLj)
     ? (!TypeInfos.empty() || !FilterIds.empty()) : true;
 
 
-  if (TAI->getExceptionHandlingType() == ExceptionHandling::SjLj) {
+  if (MAI->getExceptionHandlingType() == ExceptionHandling::SjLj) {
     SizeSites = 0;
   } else
     SizeSites = CallSites.size() *
       (SiteStartSize + SiteLengthSize + LandingPadSize);
   for (unsigned i = 0, e = CallSites.size(); i < e; ++i) {
     SizeSites += MCAsmInfo::getULEB128Size(CallSites[i].Action);
-    if (TAI->getExceptionHandlingType() == ExceptionHandling::SjLj)
+    if (MAI->getExceptionHandlingType() == ExceptionHandling::SjLj)
       SizeSites += MCAsmInfo::getULEB128Size(i);
   }
   // Type infos.
@@ -588,7 +588,7 @@ void DwarfException::EmitExceptionTable() {
   }
 
   EmitLabel("exception", SubprogramCount);
-  if (TAI->getExceptionHandlingType() == ExceptionHandling::SjLj) {
+  if (MAI->getExceptionHandlingType() == ExceptionHandling::SjLj) {
     std::string SjLjName = "_lsda_";
     SjLjName += MF->getFunction()->getName().str();
     EmitLabel(SjLjName.c_str(), 0);
@@ -657,7 +657,7 @@ void DwarfException::EmitExceptionTable() {
 #endif
 
   // SjLj Exception handilng
-  if (TAI->getExceptionHandlingType() == ExceptionHandling::SjLj) {
+  if (MAI->getExceptionHandlingType() == ExceptionHandling::SjLj) {
     Asm->EmitInt8(dwarf::DW_EH_PE_udata4);
     Asm->EOL("Call site format (DW_EH_PE_udata4)");
     Asm->EmitULEB128Bytes(SizeSites);
@@ -682,7 +682,7 @@ void DwarfException::EmitExceptionTable() {
     }
   } else {
     // DWARF Exception handling
-    assert(TAI->getExceptionHandlingType() == ExceptionHandling::Dwarf);
+    assert(MAI->getExceptionHandlingType() == ExceptionHandling::Dwarf);
 
     // The call-site table is a list of all call sites that may throw an
     // exception (including C++ 'throw' statements) in the procedure
@@ -836,7 +836,7 @@ void DwarfException::EmitExceptionTable() {
 /// EndModule - Emit all exception information that should come after the
 /// content.
 void DwarfException::EndModule() {
-  if (TAI->getExceptionHandlingType() != ExceptionHandling::Dwarf)
+  if (MAI->getExceptionHandlingType() != ExceptionHandling::Dwarf)
     return;
   if (TimePassesIsEnabled)
     ExceptionTimer->startTimer();
@@ -864,7 +864,7 @@ void DwarfException::BeginFunction(MachineFunction *MF) {
   this->MF = MF;
   shouldEmitTable = shouldEmitMoves = false;
 
-  if (MMI && TAI->doesSupportExceptionHandling()) {
+  if (MMI && MAI->doesSupportExceptionHandling()) {
     // Map all labels and get rid of any dead landing pads.
     MMI->TidyLandingPads();
 

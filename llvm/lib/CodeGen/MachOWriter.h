@@ -78,7 +78,7 @@ namespace llvm {
     bool is64Bit, isLittleEndian;
 
     // Target Asm Info
-    const MCAsmInfo *TAI;
+    const MCAsmInfo *MAI;
 
     /// Header - An instance of MachOHeader that we will update while we build
     /// the file, and then emit during finalization.

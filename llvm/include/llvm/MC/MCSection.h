@@ -37,7 +37,7 @@ namespace llvm {
 
     SectionKind getKind() const { return Kind; }
     
-    virtual void PrintSwitchToSection(const MCAsmInfo &TAI,
+    virtual void PrintSwitchToSection(const MCAsmInfo &MAI,
                                       raw_ostream &OS) const = 0;
   };
 
@@ -62,7 +62,7 @@ namespace llvm {
     const std::string &getName() const { return Name; }
     bool isDirective() const { return IsDirective; }
     
-    virtual void PrintSwitchToSection(const MCAsmInfo &TAI,
+    virtual void PrintSwitchToSection(const MCAsmInfo &MAI,
                                       raw_ostream &OS) const;
   };
   

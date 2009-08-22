@@ -1334,7 +1334,7 @@ void DwarfDebug::BeginModule(Module *M, MachineModuleInfo *mmi) {
 
   // Print out .file directives to specify files for .loc directives. These are
   // printed out early so that they precede any .loc directives.
-  if (TAI->hasDotLocAndDotFile()) {
+  if (MAI->hasDotLocAndDotFile()) {
     for (unsigned i = 1, e = getNumSourceIds()+1; i != e; ++i) {
       // Remember source id starts at 1.
       std::pair<unsigned, unsigned> Id = getSourceDirectoryAndFileIds(i);
@@ -1654,7 +1654,7 @@ unsigned DwarfDebug::RecordInlinedFnStart(DISubprogram &SP, DICompileUnit CU,
                                           unsigned Line, unsigned Col) {
   unsigned LabelID = MMI->NextLabelID();
 
-  if (!TAI->doesDwarfUsesInlineInfoSection())
+  if (!MAI->doesDwarfUsesInlineInfoSection())
     return LabelID;
 
   if (TimePassesIsEnabled)
@@ -1732,7 +1732,7 @@ unsigned DwarfDebug::RecordInlinedFnStart(DISubprogram &SP, DICompileUnit CU,
 
 /// RecordInlinedFnEnd - Indicate the end of inlined subroutine.
 unsigned DwarfDebug::RecordInlinedFnEnd(DISubprogram &SP) {
-  if (!TAI->doesDwarfUsesInlineInfoSection())
+  if (!MAI->doesDwarfUsesInlineInfoSection())
     return 0;
 
   if (TimePassesIsEnabled)
@@ -1844,7 +1844,7 @@ void DwarfDebug::EmitInitial() {
   const TargetLoweringObjectFile &TLOF = Asm->getObjFileLowering();
   
   // Dwarf sections base addresses.
-  if (TAI->doesDwarfRequireFrameSection()) {
+  if (MAI->doesDwarfRequireFrameSection()) {
     Asm->OutStreamer.SwitchSection(TLOF.getDwarfFrameSection());
     EmitLabel("section_debug_frame", 0);
   }
@@ -2037,7 +2037,7 @@ void DwarfDebug::EmitEndOfLineMatrix(unsigned SectionEnd) {
 void DwarfDebug::EmitDebugLines() {
   // If the target is using .loc/.file, the assembler will be emitting the
   // .debug_line table automatically.
-  if (TAI->hasDotLocAndDotFile())
+  if (MAI->hasDotLocAndDotFile())
     return;
 
   // Minimum line delta, thus ranging from -10..(255-10).
@@ -2116,7 +2116,7 @@ void DwarfDebug::EmitDebugLines() {
 
     /*if (Asm->isVerbose()) {
       const MCSection *S = SectionMap[j + 1];
-      O << '\t' << TAI->getCommentString() << " Section"
+      O << '\t' << MAI->getCommentString() << " Section"
         << S->getName() << '\n';
     }*/
     Asm->EOL();
@@ -2136,7 +2136,7 @@ void DwarfDebug::EmitDebugLines() {
       else {
         std::pair<unsigned, unsigned> SourceID =
           getSourceDirectoryAndFileIds(LineInfo.getSourceID());
-        O << '\t' << TAI->getCommentString() << ' '
+        O << '\t' << MAI->getCommentString() << ' '
           << getSourceDirectoryName(SourceID.first) << ' '
           << getSourceFileName(SourceID.second)
           <<" :" << utostr_32(LineInfo.getLine()) << '\n';
@@ -2197,7 +2197,7 @@ void DwarfDebug::EmitDebugLines() {
 /// EmitCommonDebugFrame - Emit common frame info into a debug frame section.
 ///
 void DwarfDebug::EmitCommonDebugFrame() {
-  if (!TAI->doesDwarfRequireFrameSection())
+  if (!MAI->doesDwarfRequireFrameSection())
     return;
 
   int stackGrowth =
@@ -2243,7 +2243,7 @@ void DwarfDebug::EmitCommonDebugFrame() {
 /// section.
 void
 DwarfDebug::EmitFunctionDebugFrame(const FunctionDebugFrameInfo&DebugFrameInfo){
-  if (!TAI->doesDwarfRequireFrameSection())
+  if (!MAI->doesDwarfRequireFrameSection())
     return;
 
   // Start the dwarf frame section.
@@ -2427,7 +2427,7 @@ void DwarfDebug::EmitDebugMacInfo() {
 /// __debug_info section, and the low_pc is the starting address for the
 /// inlining instance.
 void DwarfDebug::EmitDebugInlineInfo() {
-  if (!TAI->doesDwarfUsesInlineInfoSection())
+  if (!MAI->doesDwarfUsesInlineInfoSection())
     return;
 
   if (!ModuleCU)
@@ -2479,9 +2479,9 @@ void DwarfDebug::EmitDebugInlineInfo() {
       Asm->EmitInt32(SP->getOffset()); Asm->EOL("DIE offset");
 
       if (TD->getPointerSize() == sizeof(int32_t))
-        O << TAI->getData32bitsDirective();
+        O << MAI->getData32bitsDirective();
       else
-        O << TAI->getData64bitsDirective();
+        O << MAI->getData64bitsDirective();
 
       PrintLabelName("label", *LI); Asm->EOL("low_pc");
     }

@@ -405,7 +405,7 @@ static unsigned getNumJTEntries(const std::vector<MachineJumpTableEntry> &JT,
 unsigned ARMBaseInstrInfo::GetInstSizeInBytes(const MachineInstr *MI) const {
   const MachineBasicBlock &MBB = *MI->getParent();
   const MachineFunction *MF = MBB.getParent();
-  const MCAsmInfo *TAI = MF->getTarget().getMCAsmInfo();
+  const MCAsmInfo *MAI = MF->getTarget().getMCAsmInfo();
 
   // Basic size info comes from the TSFlags field.
   const TargetInstrDesc &TID = MI->getDesc();
@@ -416,7 +416,7 @@ unsigned ARMBaseInstrInfo::GetInstSizeInBytes(const MachineInstr *MI) const {
   default: {
     // If this machine instr is an inline asm, measure it.
     if (MI->getOpcode() == ARM::INLINEASM)
-      return getInlineAsmLength(MI->getOperand(0).getSymbolName(), *TAI);
+      return getInlineAsmLength(MI->getOperand(0).getSymbolName(), *MAI);
     if (MI->isLabel())
       return 0;
     switch (Opc) {

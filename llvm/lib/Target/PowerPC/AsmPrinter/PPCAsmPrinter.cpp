@@ -324,7 +324,7 @@ namespace {
       // Map symbol -> label of TOC entry.
       if (TOC.count(Name) == 0) {
         std::string Label;
-        Label += TAI->getPrivateGlobalPrefix();
+        Label += MAI->getPrivateGlobalPrefix();
         Label += "C";
         Label += utostr(LabelID++);
 
@@ -406,17 +406,17 @@ void PPCAsmPrinter::printOp(const MachineOperand &MO) {
     printBasicBlockLabel(MO.getMBB());
     return;
   case MachineOperand::MO_JumpTableIndex:
-    O << TAI->getPrivateGlobalPrefix() << "JTI" << getFunctionNumber()
+    O << MAI->getPrivateGlobalPrefix() << "JTI" << getFunctionNumber()
       << '_' << MO.getIndex();
     // FIXME: PIC relocation model
     return;
   case MachineOperand::MO_ConstantPoolIndex:
-    O << TAI->getPrivateGlobalPrefix() << "CPI" << getFunctionNumber()
+    O << MAI->getPrivateGlobalPrefix() << "CPI" << getFunctionNumber()
       << '_' << MO.getIndex();
     return;
   case MachineOperand::MO_ExternalSymbol: {
     // Computing the address of an external symbol, not calling it.
-    std::string Name(TAI->getGlobalPrefix());
+    std::string Name(MAI->getGlobalPrefix());
     Name += MO.getSymbolName();
     
     if (TM.getRelocationModel() != Reloc::Static) {
@@ -719,12 +719,12 @@ void PPCLinuxAsmPrinter::PrintGlobalVariable(const GlobalVariable *GVar) {
         O << name << ":\n";
         O << "\t.zero " << Size << '\n';
       } else if (GVar->hasLocalLinkage()) {
-        O << TAI->getLCOMMDirective() << name << ',' << Size;
+        O << MAI->getLCOMMDirective() << name << ',' << Size;
       } else {
         O << ".comm " << name << ',' << Size;
       }
       if (VerboseAsm) {
-        O << "\t\t" << TAI->getCommentString() << " '";
+        O << "\t\t" << MAI->getCommentString() << " '";
         WriteAsOperand(O, GVar, /*PrintType=*/false, GVar->getParent());
         O << "'";
       }
@@ -761,7 +761,7 @@ void PPCLinuxAsmPrinter::PrintGlobalVariable(const GlobalVariable *GVar) {
   EmitAlignment(Align, GVar);
   O << name << ":";
   if (VerboseAsm) {
-    O << "\t\t\t\t" << TAI->getCommentString() << " '";
+    O << "\t\t\t\t" << MAI->getCommentString() << " '";
     WriteAsOperand(O, GVar, /*PrintType=*/false, GVar->getParent());
     O << "'";
   }
@@ -958,14 +958,14 @@ void PPCDarwinAsmPrinter::PrintGlobalVariable(const GlobalVariable *GVar) {
       O << "\t.zerofill __DATA, __common, " << name << ", "
         << Size << ", " << Align;
     } else if (GVar->hasLocalLinkage()) {
-      O << TAI->getLCOMMDirective() << name << ',' << Size << ',' << Align;
+      O << MAI->getLCOMMDirective() << name << ',' << Size << ',' << Align;
     } else if (!GVar->hasCommonLinkage()) {
       O << "\t.globl " << name << '\n'
-        << TAI->getWeakDefDirective() << name << '\n';
+        << MAI->getWeakDefDirective() << name << '\n';
       EmitAlignment(Align, GVar);
       O << name << ":";
       if (VerboseAsm) {
-        O << "\t\t\t\t" << TAI->getCommentString() << " ";
+        O << "\t\t\t\t" << MAI->getCommentString() << " ";
         WriteAsOperand(O, GVar, /*PrintType=*/false, GVar->getParent());
       }
       O << '\n';
@@ -978,7 +978,7 @@ void PPCDarwinAsmPrinter::PrintGlobalVariable(const GlobalVariable *GVar) {
         O << ',' << Align;
     }
     if (VerboseAsm) {
-      O << "\t\t" << TAI->getCommentString() << " '";
+      O << "\t\t" << MAI->getCommentString() << " '";
       WriteAsOperand(O, GVar, /*PrintType=*/false, GVar->getParent());
       O << "'";
     }
@@ -1013,7 +1013,7 @@ void PPCDarwinAsmPrinter::PrintGlobalVariable(const GlobalVariable *GVar) {
   EmitAlignment(Align, GVar);
   O << name << ":";
   if (VerboseAsm) {
-    O << "\t\t\t\t" << TAI->getCommentString() << " '";
+    O << "\t\t\t\t" << MAI->getCommentString() << " '";
     WriteAsOperand(O, GVar, /*PrintType=*/false, GVar->getParent());
     O << "'";
   }
@@ -1097,7 +1097,7 @@ bool PPCDarwinAsmPrinter::doFinalization(Module &M) {
 
   O << '\n';
 
-  if (TAI->doesSupportExceptionHandling() && MMI) {
+  if (MAI->doesSupportExceptionHandling() && MMI) {
     // Add the (possibly multiple) personalities to the set of global values.
     // Only referenced functions get into the Personalities list.
     const std::vector<Function *> &Personalities = MMI->getPersonalities();

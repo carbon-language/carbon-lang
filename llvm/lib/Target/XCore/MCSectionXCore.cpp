@@ -26,7 +26,7 @@ MCSectionXCore::Create(const StringRef &Section, unsigned Type,
 
 /// PrintTargetSpecificSectionFlags - This handles the XCore-specific cp/dp
 /// section flags.
-void MCSectionXCore::PrintTargetSpecificSectionFlags(const MCAsmInfo &TAI,
+void MCSectionXCore::PrintTargetSpecificSectionFlags(const MCAsmInfo &MAI,
                                                      raw_ostream &OS) const {
   if (getFlags() & MCSectionXCore::SHF_CP_SECTION)
     OS << 'c';

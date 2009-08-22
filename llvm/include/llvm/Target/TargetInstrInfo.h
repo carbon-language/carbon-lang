@@ -464,7 +464,7 @@ public:
   /// Measure the specified inline asm to determine an approximation of its
   /// length.
   virtual unsigned getInlineAsmLength(const char *Str,
-                                      const MCAsmInfo &TAI) const;
+                                      const MCAsmInfo &MAI) const;
 };
 
 /// TargetInstrInfoImpl - This is the default implementation of

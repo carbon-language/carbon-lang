@@ -53,7 +53,7 @@ namespace llvm {
                                                   const std::string &Features);
     typedef AsmPrinter *(*AsmPrinterCtorTy)(formatted_raw_ostream &OS,
                                             TargetMachine &TM,
-                                            const MCAsmInfo *TAI,
+                                            const MCAsmInfo *MAI,
                                             bool VerboseAsm);
     typedef TargetAsmParser *(*AsmParserCtorTy)(const Target &T,
                                                 MCAsmParser &P);
@@ -140,10 +140,10 @@ namespace llvm {
 
     /// createAsmPrinter - Create a target specific assembly printer pass.
     AsmPrinter *createAsmPrinter(formatted_raw_ostream &OS, TargetMachine &TM,
-                                 const MCAsmInfo *TAI, bool Verbose) const {
+                                 const MCAsmInfo *MAI, bool Verbose) const {
       if (!AsmPrinterCtorFn)
         return 0;
-      return AsmPrinterCtorFn(OS, TM, TAI, Verbose);
+      return AsmPrinterCtorFn(OS, TM, MAI, Verbose);
     }
 
     /// createAsmParser - Create a target specific assembly parser.
@@ -406,8 +406,8 @@ namespace llvm {
 
   private:
     static AsmPrinter *Allocator(formatted_raw_ostream &OS, TargetMachine &TM,
-                                 const MCAsmInfo *TAI, bool Verbose) {
-      return new AsmPrinterImpl(OS, TM, TAI, Verbose);
+                                 const MCAsmInfo *MAI, bool Verbose) {
+      return new AsmPrinterImpl(OS, TM, MAI, Verbose);
     }
   };
 

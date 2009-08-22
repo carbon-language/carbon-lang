@@ -68,7 +68,7 @@ struct MachOSym {
   };
   
   MachOSym(const GlobalValue *gv, std::string name, uint8_t sect,
-           const MCAsmInfo *TAI);
+           const MCAsmInfo *MAI);
 
   struct SymCmp {
     // FIXME: this does not appear to be sorting 'f' after 'F'

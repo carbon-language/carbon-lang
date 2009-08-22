@@ -80,7 +80,7 @@ ELFWriter::ELFWriter(raw_ostream &o, TargetMachine &tm)
     isLittleEndian(TM.getTargetData()->isLittleEndian()),
     ElfHdr(isLittleEndian, is64Bit) {
 
-  TAI = TM.getMCAsmInfo();
+  MAI = TM.getMCAsmInfo();
   TEW = TM.getELFWriterInfo();
 
   // Create the object code emitter object for this target.
@@ -687,7 +687,7 @@ bool ELFWriter::doFinalization(Module &M) {
     SymbolList.push_back(ELFSym::getExtSym(*I));
 
   // Emit non-executable stack note
-  if (TAI->getNonexecutableStackDirective())
+  if (MAI->getNonexecutableStackDirective())
     getNonExecStackSection();
 
   // Emit a symbol for each section created until now, skip null section

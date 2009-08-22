@@ -44,8 +44,8 @@ namespace {
   class VISIBILITY_HIDDEN MSP430AsmPrinter : public AsmPrinter {
   public:
     MSP430AsmPrinter(formatted_raw_ostream &O, TargetMachine &TM,
-                     const MCAsmInfo *TAI, bool V)
-      : AsmPrinter(O, TM, TAI, V) {}
+                     const MCAsmInfo *MAI, bool V)
+      : AsmPrinter(O, TM, MAI, V) {}
 
     virtual const char *getPassName() const {
       return "MSP430 Assembly Printer";
@@ -132,7 +132,7 @@ bool MSP430AsmPrinter::runOnMachineFunction(MachineFunction &MF) {
       printMachineInstruction(II);
   }
 
-  if (TAI->hasDotTypeDotSizeDirective())
+  if (MAI->hasDotTypeDotSizeDirective())
     O << "\t.size\t" << CurrentFnName << ", .-" << CurrentFnName << '\n';
 
   // We didn't modify anything
@@ -180,7 +180,7 @@ void MSP430AsmPrinter::printOperand(const MachineInstr *MI, int OpNum,
   }
   case MachineOperand::MO_ExternalSymbol: {
     bool isCallOp = Modifier && !strcmp(Modifier, "call");
-    std::string Name(TAI->getGlobalPrefix());
+    std::string Name(MAI->getGlobalPrefix());
     Name += MO.getSymbolName();
     if (isCallOp)
       O << '#';

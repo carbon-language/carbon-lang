@@ -25,7 +25,7 @@ MCSectionPIC16 *MCSectionPIC16::Create(const StringRef &Name,
 }
 
 
-void MCSectionPIC16::PrintSwitchToSection(const MCAsmInfo &TAI,
+void MCSectionPIC16::PrintSwitchToSection(const MCAsmInfo &MAI,
                                           raw_ostream &OS) const {
   OS << getName() << '\n';
 }

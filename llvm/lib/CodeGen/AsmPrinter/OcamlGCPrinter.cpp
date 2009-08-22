@@ -30,10 +30,10 @@ namespace {
   class VISIBILITY_HIDDEN OcamlGCMetadataPrinter : public GCMetadataPrinter {
   public:
     void beginAssembly(raw_ostream &OS, AsmPrinter &AP,
-                       const MCAsmInfo &TAI);
+                       const MCAsmInfo &MAI);
 
     void finishAssembly(raw_ostream &OS, AsmPrinter &AP,
-                        const MCAsmInfo &TAI);
+                        const MCAsmInfo &MAI);
   };
 
 }
@@ -44,11 +44,11 @@ Y("ocaml", "ocaml 3.10-compatible collector");
 void llvm::linkOcamlGCPrinter() { }
 
 static void EmitCamlGlobal(const Module &M, raw_ostream &OS, AsmPrinter &AP,
-                           const MCAsmInfo &TAI, const char *Id) {
+                           const MCAsmInfo &MAI, const char *Id) {
   const std::string &MId = M.getModuleIdentifier();
 
   std::string Mangled;
-  Mangled += TAI.getGlobalPrefix();
+  Mangled += MAI.getGlobalPrefix();
   Mangled += "caml";
   size_t Letter = Mangled.size();
   Mangled.append(MId.begin(), std::find(MId.begin(), MId.end(), '.'));
@@ -58,18 +58,18 @@ static void EmitCamlGlobal(const Module &M, raw_ostream &OS, AsmPrinter &AP,
   // Capitalize the first letter of the module name.
   Mangled[Letter] = toupper(Mangled[Letter]);
 
-  if (const char *GlobalDirective = TAI.getGlobalDirective())
+  if (const char *GlobalDirective = MAI.getGlobalDirective())
     OS << GlobalDirective << Mangled << "\n";
   OS << Mangled << ":\n";
 }
 
 void OcamlGCMetadataPrinter::beginAssembly(raw_ostream &OS, AsmPrinter &AP,
-                                           const MCAsmInfo &TAI) {
+                                           const MCAsmInfo &MAI) {
   AP.OutStreamer.SwitchSection(AP.getObjFileLowering().getTextSection());
-  EmitCamlGlobal(getModule(), OS, AP, TAI, "code_begin");
+  EmitCamlGlobal(getModule(), OS, AP, MAI, "code_begin");
 
   AP.OutStreamer.SwitchSection(AP.getObjFileLowering().getDataSection());
-  EmitCamlGlobal(getModule(), OS, AP, TAI, "data_begin");
+  EmitCamlGlobal(getModule(), OS, AP, MAI, "data_begin");
 }
 
 /// emitAssembly - Print the frametable. The ocaml frametable format is thus:
@@ -89,28 +89,28 @@ void OcamlGCMetadataPrinter::beginAssembly(raw_ostream &OS, AsmPrinter &AP,
 /// either condition is detected in a function which uses the GC.
 ///
 void OcamlGCMetadataPrinter::finishAssembly(raw_ostream &OS, AsmPrinter &AP,
-                                            const MCAsmInfo &TAI) {
+                                            const MCAsmInfo &MAI) {
   const char *AddressDirective;
   int AddressAlignLog;
   if (AP.TM.getTargetData()->getPointerSize() == sizeof(int32_t)) {
-    AddressDirective = TAI.getData32bitsDirective();
+    AddressDirective = MAI.getData32bitsDirective();
     AddressAlignLog = 2;
   } else {
-    AddressDirective = TAI.getData64bitsDirective();
+    AddressDirective = MAI.getData64bitsDirective();
     AddressAlignLog = 3;
   }
 
   AP.OutStreamer.SwitchSection(AP.getObjFileLowering().getTextSection());
-  EmitCamlGlobal(getModule(), OS, AP, TAI, "code_end");
+  EmitCamlGlobal(getModule(), OS, AP, MAI, "code_end");
 
   AP.OutStreamer.SwitchSection(AP.getObjFileLowering().getDataSection());
-  EmitCamlGlobal(getModule(), OS, AP, TAI, "data_end");
+  EmitCamlGlobal(getModule(), OS, AP, MAI, "data_end");
 
   OS << AddressDirective << 0; // FIXME: Why does ocaml emit this??
   AP.EOL();
 
   AP.OutStreamer.SwitchSection(AP.getObjFileLowering().getDataSection());
-  EmitCamlGlobal(getModule(), OS, AP, TAI, "frametable");
+  EmitCamlGlobal(getModule(), OS, AP, MAI, "frametable");
 
   for (iterator I = begin(), IE = end(); I != IE; ++I) {
     GCFunctionInfo &FI = **I;
@@ -126,7 +126,7 @@ void OcamlGCMetadataPrinter::finishAssembly(raw_ostream &OS, AsmPrinter &AP,
       llvm_report_error(Msg.str()); // Very rude!
     }
 
-    OS << "\t" << TAI.getCommentString() << " live roots for "
+    OS << "\t" << MAI.getCommentString() << " live roots for "
        << FI.getFunction().getName() << "\n";
 
     for (GCFunctionInfo::iterator J = FI.begin(), JE = FI.end(); J != JE; ++J) {
@@ -141,7 +141,7 @@ void OcamlGCMetadataPrinter::finishAssembly(raw_ostream &OS, AsmPrinter &AP,
       }
 
       OS << AddressDirective
-         << TAI.getPrivateGlobalPrefix() << "label" << J->Num;
+         << MAI.getPrivateGlobalPrefix() << "label" << J->Num;
       AP.EOL("call return address");
 
       AP.EmitInt16(FrameSize);

@@ -20,11 +20,11 @@ GCMetadataPrinter::GCMetadataPrinter() { }
 GCMetadataPrinter::~GCMetadataPrinter() { }
 
 void GCMetadataPrinter::beginAssembly(raw_ostream &OS, AsmPrinter &AP,
-                                      const MCAsmInfo &TAI) {
+                                      const MCAsmInfo &MAI) {
   // Default is no action.
 }
 
 void GCMetadataPrinter::finishAssembly(raw_ostream &OS, AsmPrinter &AP,
-                                       const MCAsmInfo &TAI) {
+                                       const MCAsmInfo &MAI) {
   // Default is no action.
 }

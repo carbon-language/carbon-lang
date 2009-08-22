@@ -450,7 +450,7 @@ void PIC16DbgInfo::EmitVarDebugInfo(Module &M) {
     bool HasAux = false;
     int Aux[PIC16Dbg::AuxSize] = { 0 };
     std::string TagName = "";
-    std::string VarName = TAI->getGlobalPrefix()+DIGV.getGlobal()->getNameStr();
+    std::string VarName = MAI->getGlobalPrefix()+DIGV.getGlobal()->getNameStr();
     PopulateDebugInfo(Ty, TypeNo, HasAux, Aux, TagName);
     // Emit debug info only if type information is availaible.
     if (TypeNo != PIC16Dbg::T_NULL) {

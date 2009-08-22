@@ -60,7 +60,7 @@ void X86ATTAsmPrinter::print_pcrel_imm(const MCInst *MI, unsigned OpNo) {
   else if (Op.isMBBLabel())
     // FIXME: Keep in sync with printBasicBlockLabel.  printBasicBlockLabel
     // should eventually call into this code, not the other way around.
-    O << TAI->getPrivateGlobalPrefix() << "BB" << Op.getMBBLabelFunction()
+    O << MAI->getPrivateGlobalPrefix() << "BB" << Op.getMBBLabelFunction()
       << '_' << Op.getMBBLabelBlock();
   else
     llvm_unreachable("Unknown pcrel immediate operand");

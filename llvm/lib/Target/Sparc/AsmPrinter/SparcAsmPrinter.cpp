@@ -167,7 +167,7 @@ void SparcAsmPrinter::printOperand(const MachineInstr *MI, int opNum) {
     O << MO.getSymbolName();
     break;
   case MachineOperand::MO_ConstantPoolIndex:
-    O << TAI->getPrivateGlobalPrefix() << "CPI" << getFunctionNumber() << "_"
+    O << MAI->getPrivateGlobalPrefix() << "CPI" << getFunctionNumber() << "_"
       << MO.getIndex();
     break;
   default:
@@ -239,8 +239,8 @@ void SparcAsmPrinter::PrintGlobalVariable(const GlobalVariable* GVar) {
       if (GVar->hasLocalLinkage())
         O << "\t.local " << name << '\n';
 
-      O << TAI->getCOMMDirective() << name << ',' << Size;
-      if (TAI->getCOMMDirectiveTakesAlignment())
+      O << MAI->getCOMMDirective() << name << ',' << Size;
+      if (MAI->getCOMMDirectiveTakesAlignment())
         O << ',' << (1 << Align);
 
       O << '\n';
@@ -262,7 +262,7 @@ void SparcAsmPrinter::PrintGlobalVariable(const GlobalVariable* GVar) {
     // their name or something.  For now, just emit them as external.
    case GlobalValue::ExternalLinkage:
     // If external or appending, declare as a global symbol
-    O << TAI->getGlobalDirective() << name << '\n';
+    O << MAI->getGlobalDirective() << name << '\n';
     // FALL THROUGH
    case GlobalValue::PrivateLinkage:
    case GlobalValue::LinkerPrivateLinkage:
@@ -280,7 +280,7 @@ void SparcAsmPrinter::PrintGlobalVariable(const GlobalVariable* GVar) {
 
   EmitAlignment(Align, GVar);
 
-  if (TAI->hasDotTypeDotSizeDirective()) {
+  if (MAI->hasDotTypeDotSizeDirective()) {
     O << "\t.type " << name << ",#object\n";
     O << "\t.size " << name << ',' << Size << '\n';
   }

@@ -221,7 +221,7 @@ namespace {
       
       if (ACPV->hasModifier()) O << "(" << ACPV->getModifier() << ")";
       if (ACPV->getPCAdjustment() != 0) {
-        O << "-(" << TAI->getPrivateGlobalPrefix() << "PC"
+        O << "-(" << MAI->getPrivateGlobalPrefix() << "PC"
           << ACPV->getLabelId()
           << "+" << (unsigned)ACPV->getPCAdjustment();
          if (ACPV->mustAddCurrentAddress())
@@ -280,7 +280,7 @@ bool ARMAsmPrinter::runOnMachineFunction(MachineFunction &MF) {
       O << "\t.globl\t" << CurrentFnName << "\n";
       O << "\t.weak_definition\t" << CurrentFnName << "\n";
     } else {
-      O << TAI->getWeakRefDirective() << CurrentFnName << "\n";
+      O << MAI->getWeakRefDirective() << CurrentFnName << "\n";
     }
     break;
   }
@@ -328,7 +328,7 @@ bool ARMAsmPrinter::runOnMachineFunction(MachineFunction &MF) {
     }
   }
 
-  if (TAI->hasDotTypeDotSizeDirective())
+  if (MAI->hasDotTypeDotSizeDirective())
     O << "\t.size " << CurrentFnName << ", .-" << CurrentFnName << "\n";
 
   // Emit post-function debug information.
@@ -410,11 +410,11 @@ void ARMAsmPrinter::printOperand(const MachineInstr *MI, int OpNum,
     break;
   }
   case MachineOperand::MO_ConstantPoolIndex:
-    O << TAI->getPrivateGlobalPrefix() << "CPI" << getFunctionNumber()
+    O << MAI->getPrivateGlobalPrefix() << "CPI" << getFunctionNumber()
       << '_' << MO.getIndex();
     break;
   case MachineOperand::MO_JumpTableIndex:
-    O << TAI->getPrivateGlobalPrefix() << "JTI" << getFunctionNumber()
+    O << MAI->getPrivateGlobalPrefix() << "JTI" << getFunctionNumber()
       << '_' << MO.getIndex();
     break;
   default:
@@ -423,7 +423,7 @@ void ARMAsmPrinter::printOperand(const MachineInstr *MI, int OpNum,
 }
 
 static void printSOImm(formatted_raw_ostream &O, int64_t V, bool VerboseAsm,
-                       const MCAsmInfo *TAI) {
+                       const MCAsmInfo *MAI) {
   // Break it up into two parts that make up a shifter immediate.
   V = ARM_AM::getSOImmVal(V);
   assert(V != -1 && "Not a valid so_imm value!");
@@ -437,7 +437,7 @@ static void printSOImm(formatted_raw_ostream &O, int64_t V, bool VerboseAsm,
     O << "#" << Imm << ", " << Rot;
     // Pretty printed version.
     if (VerboseAsm)
-      O << ' ' << TAI->getCommentString()
+      O << ' ' << MAI->getCommentString()
         << ' ' << (int)ARM_AM::rotr32(Imm, Rot);
   } else {
     O << "#" << Imm;
@@ -449,7 +449,7 @@ static void printSOImm(formatted_raw_ostream &O, int64_t V, bool VerboseAsm,
 void ARMAsmPrinter::printSOImmOperand(const MachineInstr *MI, int OpNum) {
   const MachineOperand &MO = MI->getOperand(OpNum);
   assert(MO.isImm() && "Not a valid so_imm value!");
-  printSOImm(O, MO.getImm(), VerboseAsm, TAI);
+  printSOImm(O, MO.getImm(), VerboseAsm, MAI);
 }
 
 /// printSOImm2PartOperand - SOImm is broken into two pieces using a 'mov'
@@ -459,7 +459,7 @@ void ARMAsmPrinter::printSOImm2PartOperand(const MachineInstr *MI, int OpNum) {
   assert(MO.isImm() && "Not a valid so_imm value!");
   unsigned V1 = ARM_AM::getSOImmTwoPartFirst(MO.getImm());
   unsigned V2 = ARM_AM::getSOImmTwoPartSecond(MO.getImm());
-  printSOImm(O, V1, VerboseAsm, TAI);
+  printSOImm(O, V1, VerboseAsm, MAI);
   O << "\n\torr";
   printPredicateOperand(MI, 2);
   O << " ";
@@ -467,7 +467,7 @@ void ARMAsmPrinter::printSOImm2PartOperand(const MachineInstr *MI, int OpNum) {
   O << ", ";
   printOperand(MI, 0); 
   O << ", ";
-  printSOImm(O, V2, VerboseAsm, TAI);
+  printSOImm(O, V2, VerboseAsm, MAI);
 }
 
 // so_reg is a 4-operand unit corresponding to register forms of the A5.1
@@ -881,7 +881,7 @@ void ARMAsmPrinter::printSBitModifierOperand(const MachineInstr *MI, int OpNum){
 
 void ARMAsmPrinter::printPCLabel(const MachineInstr *MI, int OpNum) {
   int Id = (int)MI->getOperand(OpNum).getImm();
-  O << TAI->getPrivateGlobalPrefix() << "PC" << Id;
+  O << MAI->getPrivateGlobalPrefix() << "PC" << Id;
 }
 
 void ARMAsmPrinter::printRegisterList(const MachineInstr *MI, int OpNum) {
@@ -902,7 +902,7 @@ void ARMAsmPrinter::printCPInstOperand(const MachineInstr *MI, int OpNum,
   // data itself.
   if (!strcmp(Modifier, "label")) {
     unsigned ID = MI->getOperand(OpNum).getImm();
-    O << TAI->getPrivateGlobalPrefix() << "CPI" << getFunctionNumber()
+    O << MAI->getPrivateGlobalPrefix() << "CPI" << getFunctionNumber()
       << '_' << ID << ":\n";
   } else {
     assert(!strcmp(Modifier, "cpentry") && "Unknown modifier for CPE");
@@ -924,16 +924,16 @@ void ARMAsmPrinter::printJTBlockOperand(const MachineInstr *MI, int OpNum) {
   const MachineOperand &MO1 = MI->getOperand(OpNum);
   const MachineOperand &MO2 = MI->getOperand(OpNum+1); // Unique Id
   unsigned JTI = MO1.getIndex();
-  O << TAI->getPrivateGlobalPrefix() << "JTI" << getFunctionNumber()
+  O << MAI->getPrivateGlobalPrefix() << "JTI" << getFunctionNumber()
     << '_' << JTI << '_' << MO2.getImm() << ":\n";
 
-  const char *JTEntryDirective = TAI->getData32bitsDirective();
+  const char *JTEntryDirective = MAI->getData32bitsDirective();
 
   const MachineFunction *MF = MI->getParent()->getParent();
   const MachineJumpTableInfo *MJTI = MF->getJumpTableInfo();
   const std::vector<MachineJumpTableEntry> &JT = MJTI->getJumpTables();
   const std::vector<MachineBasicBlock*> &JTBBs = JT[JTI].MBBs;
-  bool UseSet= TAI->getSetDirective() && TM.getRelocationModel() == Reloc::PIC_;
+  bool UseSet= MAI->getSetDirective() && TM.getRelocationModel() == Reloc::PIC_;
   SmallPtrSet<MachineBasicBlock*, 8> JTSets;
   for (unsigned i = 0, e = JTBBs.size(); i != e; ++i) {
     MachineBasicBlock *MBB = JTBBs[i];
@@ -944,12 +944,12 @@ void ARMAsmPrinter::printJTBlockOperand(const MachineInstr *MI, int OpNum) {
 
     O << JTEntryDirective << ' ';
     if (UseSet)
-      O << TAI->getPrivateGlobalPrefix() << getFunctionNumber()
+      O << MAI->getPrivateGlobalPrefix() << getFunctionNumber()
         << '_' << JTI << '_' << MO2.getImm()
         << "_set_" << MBB->getNumber();
     else if (TM.getRelocationModel() == Reloc::PIC_) {
       printBasicBlockLabel(MBB, false, false, false);
-      O << '-' << TAI->getPrivateGlobalPrefix() << "JTI"
+      O << '-' << MAI->getPrivateGlobalPrefix() << "JTI"
         << getFunctionNumber() << '_' << JTI << '_' << MO2.getImm();
     } else {
       printBasicBlockLabel(MBB, false, false, false);
@@ -963,7 +963,7 @@ void ARMAsmPrinter::printJT2BlockOperand(const MachineInstr *MI, int OpNum) {
   const MachineOperand &MO1 = MI->getOperand(OpNum);
   const MachineOperand &MO2 = MI->getOperand(OpNum+1); // Unique Id
   unsigned JTI = MO1.getIndex();
-  O << TAI->getPrivateGlobalPrefix() << "JTI" << getFunctionNumber()
+  O << MAI->getPrivateGlobalPrefix() << "JTI" << getFunctionNumber()
     << '_' << JTI << '_' << MO2.getImm() << ":\n";
 
   const MachineFunction *MF = MI->getParent()->getParent();
@@ -979,13 +979,13 @@ void ARMAsmPrinter::printJT2BlockOperand(const MachineInstr *MI, int OpNum) {
   for (unsigned i = 0, e = JTBBs.size(); i != e; ++i) {
     MachineBasicBlock *MBB = JTBBs[i];
     if (ByteOffset)
-      O << TAI->getData8bitsDirective();
+      O << MAI->getData8bitsDirective();
     else if (HalfWordOffset)
-      O << TAI->getData16bitsDirective();
+      O << MAI->getData16bitsDirective();
     if (ByteOffset || HalfWordOffset) {
       O << '(';
       printBasicBlockLabel(MBB, false, false, false);
-      O << "-" << TAI->getPrivateGlobalPrefix() << "JTI" << getFunctionNumber()
+      O << "-" << MAI->getPrivateGlobalPrefix() << "JTI" << getFunctionNumber()
         << '_' << JTI << '_' << MO2.getImm() << ")/2";
     } else {
       O << "\tb.w ";
@@ -1172,7 +1172,7 @@ void ARMAsmPrinter::PrintGlobalVariable(const GlobalVariable* GVar) {
       // Don't put things that should go in the cstring section into "comm".
       !TheSection->getKind().isMergeableCString()) {
     if (GVar->hasExternalLinkage()) {
-      if (const char *Directive = TAI->getZeroFillDirective()) {
+      if (const char *Directive = MAI->getZeroFillDirective()) {
         O << "\t.globl\t" << name << "\n";
         O << Directive << "__DATA, __common, " << name << ", "
           << Size << ", " << Align << "\n";
@@ -1185,42 +1185,42 @@ void ARMAsmPrinter::PrintGlobalVariable(const GlobalVariable* GVar) {
 
       if (isDarwin) {
         if (GVar->hasLocalLinkage()) {
-          O << TAI->getLCOMMDirective()  << name << "," << Size
+          O << MAI->getLCOMMDirective()  << name << "," << Size
             << ',' << Align;
         } else if (GVar->hasCommonLinkage()) {
-          O << TAI->getCOMMDirective()  << name << "," << Size
+          O << MAI->getCOMMDirective()  << name << "," << Size
             << ',' << Align;
         } else {
           OutStreamer.SwitchSection(TheSection);
           O << "\t.globl " << name << '\n'
-            << TAI->getWeakDefDirective() << name << '\n';
+            << MAI->getWeakDefDirective() << name << '\n';
           EmitAlignment(Align, GVar);
           O << name << ":";
           if (VerboseAsm) {
-            O << "\t\t\t\t" << TAI->getCommentString() << ' ';
+            O << "\t\t\t\t" << MAI->getCommentString() << ' ';
             WriteAsOperand(O, GVar, /*PrintType=*/false, GVar->getParent());
           }
           O << '\n';
           EmitGlobalConstant(C);
           return;
         }
-      } else if (TAI->getLCOMMDirective() != NULL) {
+      } else if (MAI->getLCOMMDirective() != NULL) {
         if (GVar->hasLocalLinkage()) {
-          O << TAI->getLCOMMDirective() << name << "," << Size;
+          O << MAI->getLCOMMDirective() << name << "," << Size;
         } else {
-          O << TAI->getCOMMDirective()  << name << "," << Size;
-          if (TAI->getCOMMDirectiveTakesAlignment())
-            O << ',' << (TAI->getAlignmentIsInBytes() ? (1 << Align) : Align);
+          O << MAI->getCOMMDirective()  << name << "," << Size;
+          if (MAI->getCOMMDirectiveTakesAlignment())
+            O << ',' << (MAI->getAlignmentIsInBytes() ? (1 << Align) : Align);
         }
       } else {
         if (GVar->hasLocalLinkage())
           O << "\t.local\t" << name << "\n";
-        O << TAI->getCOMMDirective()  << name << "," << Size;
-        if (TAI->getCOMMDirectiveTakesAlignment())
-          O << "," << (TAI->getAlignmentIsInBytes() ? (1 << Align) : Align);
+        O << MAI->getCOMMDirective()  << name << "," << Size;
+        if (MAI->getCOMMDirectiveTakesAlignment())
+          O << "," << (MAI->getAlignmentIsInBytes() ? (1 << Align) : Align);
       }
       if (VerboseAsm) {
-        O << "\t\t" << TAI->getCommentString() << " ";
+        O << "\t\t" << MAI->getCommentString() << " ";
         WriteAsOperand(O, GVar, /*PrintType=*/false, GVar->getParent());
       }
       O << "\n";
@@ -1258,11 +1258,11 @@ void ARMAsmPrinter::PrintGlobalVariable(const GlobalVariable* GVar) {
   EmitAlignment(Align, GVar);
   O << name << ":";
   if (VerboseAsm) {
-    O << "\t\t\t\t" << TAI->getCommentString() << " ";
+    O << "\t\t\t\t" << MAI->getCommentString() << " ";
     WriteAsOperand(O, GVar, /*PrintType=*/false, GVar->getParent());
   }
   O << "\n";
-  if (TAI->hasDotTypeDotSizeDirective())
+  if (MAI->hasDotTypeDotSizeDirective())
     O << "\t.size " << name << ", " << Size << "\n";
 
   EmitGlobalConstant(C);

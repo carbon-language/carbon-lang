@@ -28,28 +28,28 @@ using namespace llvm;
 
 Dwarf::Dwarf(raw_ostream &OS, AsmPrinter *A, const MCAsmInfo *T,
              const char *flavor)
-: O(OS), Asm(A), TAI(T), TD(Asm->TM.getTargetData()),
+: O(OS), Asm(A), MAI(T), TD(Asm->TM.getTargetData()),
   RI(Asm->TM.getRegisterInfo()), M(NULL), MF(NULL), MMI(NULL),
   SubprogramCount(0), Flavor(flavor), SetCounter(1) {}
 
 void Dwarf::PrintRelDirective(bool Force32Bit, bool isInSection) const {
-  if (isInSection && TAI->getDwarfSectionOffsetDirective())
-    O << TAI->getDwarfSectionOffsetDirective();
+  if (isInSection && MAI->getDwarfSectionOffsetDirective())
+    O << MAI->getDwarfSectionOffsetDirective();
   else if (Force32Bit || TD->getPointerSize() == sizeof(int32_t))
-    O << TAI->getData32bitsDirective();
+    O << MAI->getData32bitsDirective();
   else
-    O << TAI->getData64bitsDirective();
+    O << MAI->getData64bitsDirective();
 }
 
 /// PrintLabelName - Print label name in form used by Dwarf writer.
 ///
 void Dwarf::PrintLabelName(const char *Tag, unsigned Number) const {
-  O << TAI->getPrivateGlobalPrefix() << Tag;
+  O << MAI->getPrivateGlobalPrefix() << Tag;
   if (Number) O << Number;
 }
 void Dwarf::PrintLabelName(const char *Tag, unsigned Number,
                            const char *Suffix) const {
-  O << TAI->getPrivateGlobalPrefix() << Tag;
+  O << MAI->getPrivateGlobalPrefix() << Tag;
   if (Number) O << Number;
   O << Suffix;
 }
@@ -67,13 +67,13 @@ void Dwarf::EmitReference(const char *Tag, unsigned Number,
                           bool IsPCRelative, bool Force32Bit) const {
   PrintRelDirective(Force32Bit);
   PrintLabelName(Tag, Number);
-  if (IsPCRelative) O << "-" << TAI->getPCSymbol();
+  if (IsPCRelative) O << "-" << MAI->getPCSymbol();
 }
 void Dwarf::EmitReference(const std::string &Name, bool IsPCRelative,
                           bool Force32Bit) const {
   PrintRelDirective(Force32Bit);
   O << Name;
-  if (IsPCRelative) O << "-" << TAI->getPCSymbol();
+  if (IsPCRelative) O << "-" << MAI->getPCSymbol();
 }
 
 /// EmitDifference - Emit the difference between two labels.  Some assemblers do
@@ -82,7 +82,7 @@ void Dwarf::EmitReference(const std::string &Name, bool IsPCRelative,
 void Dwarf::EmitDifference(const char *TagHi, unsigned NumberHi,
                            const char *TagLo, unsigned NumberLo,
                            bool IsSmall) {
-  if (TAI->needsSet()) {
+  if (MAI->needsSet()) {
     O << "\t.set\t";
     PrintLabelName("set", SetCounter, Flavor);
     O << ",";
@@ -108,11 +108,11 @@ void Dwarf::EmitSectionOffset(const char* Label, const char* Section,
                               bool useSet) {
   bool printAbsolute = false;
   if (isEH)
-    printAbsolute = TAI->isAbsoluteEHSectionOffsets();
+    printAbsolute = MAI->isAbsoluteEHSectionOffsets();
   else
-    printAbsolute = TAI->isAbsoluteDebugSectionOffsets();
+    printAbsolute = MAI->isAbsoluteDebugSectionOffsets();
 
-  if (TAI->needsSet() && useSet) {
+  if (MAI->needsSet() && useSet) {
     O << "\t.set\t";
     PrintLabelName("set", SetCounter, Flavor);
     O << ",";

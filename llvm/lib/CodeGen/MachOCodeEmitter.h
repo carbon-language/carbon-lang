@@ -30,7 +30,7 @@ class MachOCodeEmitter : public ObjectCodeEmitter {
   /// machine directly, indicating what header values and flags to set.
   bool is64Bit, isLittleEndian;
 
-  const MCAsmInfo *TAI;
+  const MCAsmInfo *MAI;
 
   /// Relocations - These are the relocations that the function needs, as
   /// emitted.

@@ -37,7 +37,7 @@ PIC16AsmPrinter::PIC16AsmPrinter(formatted_raw_ostream &O, TargetMachine &TM,
                                  const MCAsmInfo *T, bool V)
 : AsmPrinter(O, TM, T, V), DbgInfo(O, T) {
   PTLI = static_cast<PIC16TargetLowering*>(TM.getTargetLowering());
-  PTAI = static_cast<const PIC16MCAsmInfo*>(T);
+  PMAI = static_cast<const PIC16MCAsmInfo*>(T);
   PTOF = (PIC16TargetObjectFile*)&PTLI->getObjFileLowering();
 }
 
@@ -199,18 +199,18 @@ void PIC16AsmPrinter::printLibcallDecls() {
   // If no libcalls used, return.
   if (LibcallDecls.empty()) return;
 
-  O << TAI->getCommentString() << "External decls for libcalls - BEGIN." <<"\n";
+  O << MAI->getCommentString() << "External decls for libcalls - BEGIN." <<"\n";
   // Remove duplicate entries.
   LibcallDecls.sort(is_before);
   LibcallDecls.unique(is_duplicate);
 
   for (std::list<const char*>::const_iterator I = LibcallDecls.begin(); 
        I != LibcallDecls.end(); I++) {
-    O << TAI->getExternDirective() << *I << "\n";
-    O << TAI->getExternDirective() << PAN::getArgsLabel(*I) << "\n";
-    O << TAI->getExternDirective() << PAN::getRetvalLabel(*I) << "\n";
+    O << MAI->getExternDirective() << *I << "\n";
+    O << MAI->getExternDirective() << PAN::getArgsLabel(*I) << "\n";
+    O << MAI->getExternDirective() << PAN::getRetvalLabel(*I) << "\n";
   }
-  O << TAI->getCommentString() << "External decls for libcalls - END." <<"\n";
+  O << MAI->getCommentString() << "External decls for libcalls - END." <<"\n";
 }
 
 /// doInitialization - Perfrom Module level initializations here.
@@ -250,7 +250,7 @@ bool PIC16AsmPrinter::doInitialization(Module &M) {
 ///
 void PIC16AsmPrinter::EmitFunctionDecls(Module &M) {
  // Emit declarations for external functions.
-  O <<"\n"<<TAI->getCommentString() << "Function Declarations - BEGIN." <<"\n";
+  O <<"\n"<<MAI->getCommentString() << "Function Declarations - BEGIN." <<"\n";
   for (Module::iterator I = M.begin(), E = M.end(); I != E; I++) {
     if (I->isIntrinsic())
       continue;
@@ -272,15 +272,15 @@ void PIC16AsmPrinter::EmitFunctionDecls(Module &M) {
     // tracking both kind of references in printInstrunction.
     if (I->isDeclaration() && PAN::isMemIntrinsic(Name)) continue;
 
-    const char *directive = I->isDeclaration() ? TAI->getExternDirective() :
-                                                 TAI->getGlobalDirective();
+    const char *directive = I->isDeclaration() ? MAI->getExternDirective() :
+                                                 MAI->getGlobalDirective();
       
     O << directive << Name << "\n";
     O << directive << PAN::getRetvalLabel(Name) << "\n";
     O << directive << PAN::getArgsLabel(Name) << "\n";
   }
 
-  O << TAI->getCommentString() << "Function Declarations - END." <<"\n";
+  O << MAI->getCommentString() << "Function Declarations - END." <<"\n";
 }
 
 // Emit variables imported from other Modules.
@@ -288,11 +288,11 @@ void PIC16AsmPrinter::EmitUndefinedVars(Module &M) {
   std::vector<const GlobalVariable*> Items = PTOF->ExternalVarDecls->Items;
   if (!Items.size()) return;
 
-  O << "\n" << TAI->getCommentString() << "Imported Variables - BEGIN" << "\n";
+  O << "\n" << MAI->getCommentString() << "Imported Variables - BEGIN" << "\n";
   for (unsigned j = 0; j < Items.size(); j++) {
-    O << TAI->getExternDirective() << Mang->getMangledName(Items[j]) << "\n";
+    O << MAI->getExternDirective() << Mang->getMangledName(Items[j]) << "\n";
   }
-  O << TAI->getCommentString() << "Imported Variables - END" << "\n";
+  O << MAI->getCommentString() << "Imported Variables - END" << "\n";
 }
 
 // Emit variables defined in this module and are available to other modules.
@@ -300,11 +300,11 @@ void PIC16AsmPrinter::EmitDefinedVars(Module &M) {
   std::vector<const GlobalVariable*> Items = PTOF->ExternalVarDefs->Items;
   if (!Items.size()) return;
 
-  O << "\n" << TAI->getCommentString() << "Exported Variables - BEGIN" << "\n";
+  O << "\n" << MAI->getCommentString() << "Exported Variables - BEGIN" << "\n";
   for (unsigned j = 0; j < Items.size(); j++) {
-    O << TAI->getGlobalDirective() << Mang->getMangledName(Items[j]) << "\n";
+    O << MAI->getGlobalDirective() << Mang->getMangledName(Items[j]) << "\n";
   }
-  O <<  TAI->getCommentString() << "Exported Variables - END" << "\n";
+  O <<  MAI->getCommentString() << "Exported Variables - END" << "\n";
 }
 
 // Emit initialized data placed in ROM.

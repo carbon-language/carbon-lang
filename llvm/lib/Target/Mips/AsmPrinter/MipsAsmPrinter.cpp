@@ -221,7 +221,7 @@ void MipsAsmPrinter::emitFunctionStart(MachineFunction &MF) {
 
   printVisibility(CurrentFnName, F->getVisibility());
 
-  if ((TAI->hasDotTypeDotSizeDirective()) && Subtarget->isLinux())
+  if ((MAI->hasDotTypeDotSizeDirective()) && Subtarget->isLinux())
     O << "\t.type\t"   << CurrentFnName << ", @function\n";
 
   O << CurrentFnName << ":\n";
@@ -241,7 +241,7 @@ void MipsAsmPrinter::emitFunctionEnd(MachineFunction &MF) {
   O << "\t.set\treorder\n"; 
 
   O << "\t.end\t" << CurrentFnName << '\n';
-  if (TAI->hasDotTypeDotSizeDirective() && !Subtarget->isLinux())
+  if (MAI->hasDotTypeDotSizeDirective() && !Subtarget->isLinux())
     O << "\t.size\t" << CurrentFnName << ", .-" << CurrentFnName << '\n';
 }
 
@@ -370,12 +370,12 @@ void MipsAsmPrinter::printOperand(const MachineInstr *MI, int opNum) {
       break;
 
     case MachineOperand::MO_JumpTableIndex:
-      O << TAI->getPrivateGlobalPrefix() << "JTI" << getFunctionNumber()
+      O << MAI->getPrivateGlobalPrefix() << "JTI" << getFunctionNumber()
       << '_' << MO.getIndex();
       break;
 
     case MachineOperand::MO_ConstantPoolIndex:
-      O << TAI->getPrivateGlobalPrefix() << "CPI"
+      O << MAI->getPrivateGlobalPrefix() << "CPI"
         << getFunctionNumber() << "_" << MO.getIndex();
       break;
   
@@ -480,8 +480,8 @@ void MipsAsmPrinter::PrintGlobalVariable(const GlobalVariable *GVar) {
       if (GVar->hasLocalLinkage())
         O << "\t.local\t" << name << '\n';
 
-      O << TAI->getCOMMDirective() << name << ',' << Size;
-      if (TAI->getCOMMDirectiveTakesAlignment())
+      O << MAI->getCOMMDirective() << name << ',' << Size;
+      if (MAI->getCOMMDirectiveTakesAlignment())
         O << ',' << (1 << Align);
 
       O << '\n';
@@ -503,7 +503,7 @@ void MipsAsmPrinter::PrintGlobalVariable(const GlobalVariable *GVar) {
     // or something.  For now, just emit them as external.
    case GlobalValue::ExternalLinkage:
     // If external or appending, declare as a global symbol
-    O << TAI->getGlobalDirective() << name << '\n';
+    O << MAI->getGlobalDirective() << name << '\n';
     // Fall Through
    case GlobalValue::PrivateLinkage:
    case GlobalValue::LinkerPrivateLinkage:
@@ -523,7 +523,7 @@ void MipsAsmPrinter::PrintGlobalVariable(const GlobalVariable *GVar) {
 
   EmitAlignment(Align, GVar);
 
-  if (TAI->hasDotTypeDotSizeDirective() && printSizeAndType) {
+  if (MAI->hasDotTypeDotSizeDirective() && printSizeAndType) {
     O << "\t.type " << name << ",@object\n";
     O << "\t.size " << name << ',' << Size << '\n';
   }

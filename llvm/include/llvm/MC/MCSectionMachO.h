@@ -166,7 +166,7 @@ public:
                                            unsigned  &TAA,       // Out.
                                            unsigned  &StubSize); // Out.
   
-  virtual void PrintSwitchToSection(const MCAsmInfo &TAI,
+  virtual void PrintSwitchToSection(const MCAsmInfo &MAI,
                                     raw_ostream &OS) const;
 };
 

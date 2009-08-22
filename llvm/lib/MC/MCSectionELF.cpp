@@ -23,13 +23,13 @@ Create(const StringRef &Section, unsigned Type, unsigned Flags,
 // ShouldOmitSectionDirective - Decides whether a '.section' directive
 // should be printed before the section name
 bool MCSectionELF::ShouldOmitSectionDirective(const char *Name,
-                                        const MCAsmInfo &TAI) const {
+                                        const MCAsmInfo &MAI) const {
   
   // FIXME: Does .section .bss/.data/.text work everywhere??
   if (strcmp(Name, ".text") == 0 ||
       strcmp(Name, ".data") == 0 ||
       (strcmp(Name, ".bss") == 0 &&
-       !TAI.usesELFSectionDirectiveForBSS())) 
+       !MAI.usesELFSectionDirectiveForBSS())) 
     return true;
 
   return false;
@@ -44,10 +44,10 @@ bool MCSectionELF::ShouldPrintSectionType(unsigned Ty) const {
   return true;
 }
 
-void MCSectionELF::PrintSwitchToSection(const MCAsmInfo &TAI,
+void MCSectionELF::PrintSwitchToSection(const MCAsmInfo &MAI,
                                         raw_ostream &OS) const {
    
-  if (ShouldOmitSectionDirective(SectionName.c_str(), TAI)) {
+  if (ShouldOmitSectionDirective(SectionName.c_str(), MAI)) {
     OS << '\t' << getSectionName() << '\n';
     return;
   }
@@ -55,7 +55,7 @@ void MCSectionELF::PrintSwitchToSection(const MCAsmInfo &TAI,
   OS << "\t.section\t" << getSectionName();
   
   // Handle the weird solaris syntax if desired.
-  if (TAI.usesSunStyleELFSectionSwitchSyntax() && 
+  if (MAI.usesSunStyleELFSectionSwitchSyntax() && 
       !(Flags & MCSectionELF::SHF_MERGE)) {
     if (Flags & MCSectionELF::SHF_ALLOC)
       OS << ",#alloc";
@@ -82,7 +82,7 @@ void MCSectionELF::PrintSwitchToSection(const MCAsmInfo &TAI,
     
     // If there are target-specific flags, print them.
     if (Flags & ~MCSectionELF::TARGET_INDEP_SHF)
-      PrintTargetSpecificSectionFlags(TAI, OS);
+      PrintTargetSpecificSectionFlags(MAI, OS);
     
     OS << '"';
 
@@ -90,7 +90,7 @@ void MCSectionELF::PrintSwitchToSection(const MCAsmInfo &TAI,
       OS << ',';
    
       // If comment string is '@', e.g. as on ARM - use '%' instead
-      if (TAI.getCommentString()[0] == '@')
+      if (MAI.getCommentString()[0] == '@')
         OS << '%';
       else
         OS << '@';

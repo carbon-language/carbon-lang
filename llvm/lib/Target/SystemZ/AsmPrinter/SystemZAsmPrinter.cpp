@@ -44,8 +44,8 @@ namespace {
   class VISIBILITY_HIDDEN SystemZAsmPrinter : public AsmPrinter {
   public:
     SystemZAsmPrinter(formatted_raw_ostream &O, TargetMachine &TM,
-                      const MCAsmInfo *TAI, bool V)
-      : AsmPrinter(O, TM, TAI, V) {}
+                      const MCAsmInfo *MAI, bool V)
+      : AsmPrinter(O, TM, MAI, V) {}
 
     virtual const char *getPassName() const {
       return "SystemZ Assembly Printer";
@@ -140,7 +140,7 @@ bool SystemZAsmPrinter::runOnMachineFunction(MachineFunction &MF) {
       printMachineInstruction(II);
   }
 
-  if (TAI->hasDotTypeDotSizeDirective())
+  if (MAI->hasDotTypeDotSizeDirective())
     O << "\t.size\t" << CurrentFnName << ", .-" << CurrentFnName << '\n';
 
   // Print out jump tables referenced by the function.
@@ -182,7 +182,7 @@ void SystemZAsmPrinter::printPCRelImmOperand(const MachineInstr *MI, int OpNum) 
     return;
   }
   case MachineOperand::MO_ExternalSymbol: {
-    std::string Name(TAI->getGlobalPrefix());
+    std::string Name(MAI->getGlobalPrefix());
     Name += MO.getSymbolName();
     O << Name;
 
@@ -224,12 +224,12 @@ void SystemZAsmPrinter::printOperand(const MachineInstr *MI, int OpNum,
     printBasicBlockLabel(MO.getMBB());
     return;
   case MachineOperand::MO_JumpTableIndex:
-    O << TAI->getPrivateGlobalPrefix() << "JTI" << getFunctionNumber() << '_'
+    O << MAI->getPrivateGlobalPrefix() << "JTI" << getFunctionNumber() << '_'
       << MO.getIndex();
 
     return;
   case MachineOperand::MO_ConstantPoolIndex:
-    O << TAI->getPrivateGlobalPrefix() << "CPI" << getFunctionNumber() << '_'
+    O << MAI->getPrivateGlobalPrefix() << "CPI" << getFunctionNumber() << '_'
       << MO.getIndex();
 
     printOffset(MO.getOffset());
@@ -242,7 +242,7 @@ void SystemZAsmPrinter::printOperand(const MachineInstr *MI, int OpNum,
     break;
   }
   case MachineOperand::MO_ExternalSymbol: {
-    std::string Name(TAI->getGlobalPrefix());
+    std::string Name(MAI->getGlobalPrefix());
     Name += MO.getSymbolName();
     O << Name;
     break;
@@ -330,12 +330,12 @@ void SystemZAsmPrinter::PrintGlobalVariable(const GlobalVariable* GVar) {
     if (GVar->hasLocalLinkage())
       O << "\t.local\t" << name << '\n';
 
-    O << TAI->getCOMMDirective()  << name << ',' << Size;
-    if (TAI->getCOMMDirectiveTakesAlignment())
-      O << ',' << (TAI->getAlignmentIsInBytes() ? (1 << Align) : Align);
+    O << MAI->getCOMMDirective()  << name << ',' << Size;
+    if (MAI->getCOMMDirectiveTakesAlignment())
+      O << ',' << (MAI->getAlignmentIsInBytes() ? (1 << Align) : Align);
 
     if (VerboseAsm) {
-      O << "\t\t" << TAI->getCommentString() << ' ';
+      O << "\t\t" << MAI->getCommentString() << ' ';
       WriteAsOperand(O, GVar, /*PrintType=*/false, GVar->getParent());
     }
     O << '\n';
@@ -370,11 +370,11 @@ void SystemZAsmPrinter::PrintGlobalVariable(const GlobalVariable* GVar) {
   EmitAlignment(Align, GVar, 1);
   O << name << ":";
   if (VerboseAsm) {
-    O << "\t\t\t\t" << TAI->getCommentString() << ' ';
+    O << "\t\t\t\t" << MAI->getCommentString() << ' ';
     WriteAsOperand(O, GVar, /*PrintType=*/false, GVar->getParent());
   }
   O << '\n';
-  if (TAI->hasDotTypeDotSizeDirective())
+  if (MAI->hasDotTypeDotSizeDirective())
     O << "\t.size\t" << name << ", " << Size << '\n';
 
   EmitGlobalConstant(C);

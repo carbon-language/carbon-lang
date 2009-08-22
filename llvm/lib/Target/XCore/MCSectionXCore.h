@@ -44,7 +44,7 @@ public:
   
   /// PrintTargetSpecificSectionFlags - This handles the XCore-specific cp/dp
   /// section flags.
-  virtual void PrintTargetSpecificSectionFlags(const MCAsmInfo &TAI,
+  virtual void PrintTargetSpecificSectionFlags(const MCAsmInfo &MAI,
                                                raw_ostream &OS) const;
 
 };

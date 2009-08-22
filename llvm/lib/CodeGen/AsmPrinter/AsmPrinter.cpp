@@ -52,7 +52,7 @@ char AsmPrinter::ID = 0;
 AsmPrinter::AsmPrinter(formatted_raw_ostream &o, TargetMachine &tm,
                        const MCAsmInfo *T, bool VDef)
   : MachineFunctionPass(&ID), FunctionNumber(0), O(o),
-    TM(tm), TAI(T), TRI(tm.getRegisterInfo()),
+    TM(tm), MAI(T), TRI(tm.getRegisterInfo()),
 
     OutContext(*new MCContext()),
     OutStreamer(*createAsmStreamer(OutContext, O, *T, this)),
@@ -99,16 +99,16 @@ bool AsmPrinter::doInitialization(Module &M) {
   const_cast<TargetLoweringObjectFile&>(getObjFileLowering())
     .Initialize(OutContext, TM);
   
-  Mang = new Mangler(M, TAI->getGlobalPrefix(), TAI->getPrivateGlobalPrefix(),
-                     TAI->getLinkerPrivateGlobalPrefix());
+  Mang = new Mangler(M, MAI->getGlobalPrefix(), MAI->getPrivateGlobalPrefix(),
+                     MAI->getLinkerPrivateGlobalPrefix());
   
-  if (TAI->doesAllowQuotesInName())
+  if (MAI->doesAllowQuotesInName())
     Mang->setUseQuotes(true);
   
   GCModuleInfo *MI = getAnalysisIfAvailable<GCModuleInfo>();
   assert(MI && "AsmPrinter didn't require GCModuleInfo?");
 
-  if (TAI->hasSingleParameterDotFile()) {
+  if (MAI->hasSingleParameterDotFile()) {
     /* Very minimal debug info. It is ignored if we emit actual
        debug info. If we don't, this at helps the user find where
        a function came from. */
@@ -117,22 +117,22 @@ bool AsmPrinter::doInitialization(Module &M) {
 
   for (GCModuleInfo::iterator I = MI->begin(), E = MI->end(); I != E; ++I)
     if (GCMetadataPrinter *MP = GetOrCreateGCPrinter(*I))
-      MP->beginAssembly(O, *this, *TAI);
+      MP->beginAssembly(O, *this, *MAI);
   
   if (!M.getModuleInlineAsm().empty())
-    O << TAI->getCommentString() << " Start of file scope inline assembly\n"
+    O << MAI->getCommentString() << " Start of file scope inline assembly\n"
       << M.getModuleInlineAsm()
-      << '\n' << TAI->getCommentString()
+      << '\n' << MAI->getCommentString()
       << " End of file scope inline assembly\n";
 
-  if (TAI->doesSupportDebugInformation() ||
-      TAI->doesSupportExceptionHandling()) {
+  if (MAI->doesSupportDebugInformation() ||
+      MAI->doesSupportExceptionHandling()) {
     MMI = getAnalysisIfAvailable<MachineModuleInfo>();
     if (MMI)
       MMI->AnalyzeModule(M);
     DW = getAnalysisIfAvailable<DwarfWriter>();
     if (DW)
-      DW->BeginModule(&M, MMI, O, this, TAI);
+      DW->BeginModule(&M, MMI, O, this, MAI);
   }
 
   return false;
@@ -145,11 +145,11 @@ bool AsmPrinter::doFinalization(Module &M) {
     PrintGlobalVariable(I);
   
   // Emit final debug information.
-  if (TAI->doesSupportDebugInformation() || TAI->doesSupportExceptionHandling())
+  if (MAI->doesSupportDebugInformation() || MAI->doesSupportExceptionHandling())
     DW->EndModule();
   
   // If the target wants to know about weak references, print them all.
-  if (TAI->getWeakRefDirective()) {
+  if (MAI->getWeakRefDirective()) {
     // FIXME: This is not lazy, it would be nice to only print weak references
     // to stuff that is actually used.  Note that doing so would require targets
     // to notice uses in operands (due to constant exprs etc).  This should
@@ -159,16 +159,16 @@ bool AsmPrinter::doFinalization(Module &M) {
     for (Module::const_global_iterator I = M.global_begin(), E = M.global_end();
          I != E; ++I) {
       if (I->hasExternalWeakLinkage())
-        O << TAI->getWeakRefDirective() << Mang->getMangledName(I) << '\n';
+        O << MAI->getWeakRefDirective() << Mang->getMangledName(I) << '\n';
     }
     
     for (Module::const_iterator I = M.begin(), E = M.end(); I != E; ++I) {
       if (I->hasExternalWeakLinkage())
-        O << TAI->getWeakRefDirective() << Mang->getMangledName(I) << '\n';
+        O << MAI->getWeakRefDirective() << Mang->getMangledName(I) << '\n';
     }
   }
 
-  if (TAI->getSetDirective()) {
+  if (MAI->getSetDirective()) {
     O << '\n';
     for (Module::const_alias_iterator I = M.alias_begin(), E = M.alias_end();
          I != E; ++I) {
@@ -177,16 +177,16 @@ bool AsmPrinter::doFinalization(Module &M) {
       const GlobalValue *GV = cast<GlobalValue>(I->getAliasedGlobal());
       std::string Target = Mang->getMangledName(GV);
 
-      if (I->hasExternalLinkage() || !TAI->getWeakRefDirective())
+      if (I->hasExternalLinkage() || !MAI->getWeakRefDirective())
         O << "\t.globl\t" << Name << '\n';
       else if (I->hasWeakLinkage())
-        O << TAI->getWeakRefDirective() << Name << '\n';
+        O << MAI->getWeakRefDirective() << Name << '\n';
       else if (!I->hasLocalLinkage())
         llvm_unreachable("Invalid alias linkage");
 
       printVisibility(Name, I->getVisibility());
 
-      O << TAI->getSetDirective() << ' ' << Name << ", " << Target << '\n';
+      O << MAI->getSetDirective() << ' ' << Name << ", " << Target << '\n';
     }
   }
 
@@ -194,14 +194,14 @@ bool AsmPrinter::doFinalization(Module &M) {
   assert(MI && "AsmPrinter didn't require GCModuleInfo?");
   for (GCModuleInfo::iterator I = MI->end(), E = MI->begin(); I != E; )
     if (GCMetadataPrinter *MP = GetOrCreateGCPrinter(*--I))
-      MP->finishAssembly(O, *this, *TAI);
+      MP->finishAssembly(O, *this, *MAI);
 
   // If we don't have any trampolines, then we don't require stack memory
   // to be executable. Some targets have a directive to declare this.
   Function *InitTrampolineIntrinsic = M.getFunction("llvm.init.trampoline");
   if (!InitTrampolineIntrinsic || InitTrampolineIntrinsic->use_empty())
-    if (TAI->getNonexecutableStackDirective())
-      O << TAI->getNonexecutableStackDirective() << '\n';
+    if (MAI->getNonexecutableStackDirective())
+      O << MAI->getNonexecutableStackDirective() << '\n';
 
   delete Mang; Mang = 0;
   DW = 0; MMI = 0;
@@ -214,7 +214,7 @@ std::string
 AsmPrinter::getCurrentFunctionEHName(const MachineFunction *MF) const {
   assert(MF && "No machine function?");
   return Mang->getMangledName(MF->getFunction(), ".eh",
-                              TAI->is_EHSymbolPrivate());
+                              MAI->is_EHSymbolPrivate());
 }
 
 void AsmPrinter::SetupMachineFunction(MachineFunction &MF) {
@@ -309,11 +309,11 @@ void AsmPrinter::EmitConstantPool(MachineConstantPool *MCP) {
       const Type *Ty = CPE.getType();
       Offset = NewOffset + TM.getTargetData()->getTypeAllocSize(Ty);
 
-      O << TAI->getPrivateGlobalPrefix() << "CPI" << getFunctionNumber() << '_'
+      O << MAI->getPrivateGlobalPrefix() << "CPI" << getFunctionNumber() << '_'
         << CPI << ':';
       if (VerboseAsm) {
-        O.PadToColumn(TAI->getCommentColumn());
-        O << TAI->getCommentString() << " constant ";
+        O.PadToColumn(MAI->getCommentColumn());
+        O << MAI->getCommentString() << " constant ";
         WriteTypeSymbolic(O, CPE.getType(), MF->getFunction()->getParent());
       }
       O << '\n';
@@ -369,7 +369,7 @@ void AsmPrinter::EmitJumpTableInfo(MachineJumpTableInfo *MJTI,
     // the number of relocations the assembler will generate for the jump table.
     // Set directives are all printed before the jump table itself.
     SmallPtrSet<MachineBasicBlock*, 16> EmittedSets;
-    if (TAI->getSetDirective() && IsPic)
+    if (MAI->getSetDirective() && IsPic)
       for (unsigned ii = 0, ee = JTBBs.size(); ii != ee; ++ii)
         if (EmittedSets.insert(JTBBs[ii]))
           printPICJumpTableSetLabel(i, JTBBs[ii]);
@@ -379,11 +379,11 @@ void AsmPrinter::EmitJumpTableInfo(MachineJumpTableInfo *MJTI,
     // the assembler and linker the extents of the jump table object.  The
     // second label is actually referenced by the code.
     if (JTInDiffSection) {
-      if (const char *JTLabelPrefix = TAI->getJumpTableSpecialLabelPrefix())
+      if (const char *JTLabelPrefix = MAI->getJumpTableSpecialLabelPrefix())
         O << JTLabelPrefix << "JTI" << getFunctionNumber() << '_' << i << ":\n";
     }
     
-    O << TAI->getPrivateGlobalPrefix() << "JTI" << getFunctionNumber() 
+    O << MAI->getPrivateGlobalPrefix() << "JTI" << getFunctionNumber() 
       << '_' << i << ":\n";
     
     for (unsigned ii = 0, ee = JTBBs.size(); ii != ee; ++ii) {
@@ -400,11 +400,11 @@ void AsmPrinter::printPICJumpTableEntry(const MachineJumpTableInfo *MJTI,
   
   // Use JumpTableDirective otherwise honor the entry size from the jump table
   // info.
-  const char *JTEntryDirective = TAI->getJumpTableDirective(isPIC);
+  const char *JTEntryDirective = MAI->getJumpTableDirective(isPIC);
   bool HadJTEntryDirective = JTEntryDirective != NULL;
   if (!HadJTEntryDirective) {
     JTEntryDirective = MJTI->getEntrySize() == 4 ?
-      TAI->getData32bitsDirective() : TAI->getData64bitsDirective();
+      MAI->getData32bitsDirective() : MAI->getData64bitsDirective();
   }
 
   O << JTEntryDirective << ' ';
@@ -416,15 +416,15 @@ void AsmPrinter::printPICJumpTableEntry(const MachineJumpTableInfo *MJTI,
   // references to the target basic blocks.
   if (!isPIC) {
     printBasicBlockLabel(MBB, false, false, false);
-  } else if (TAI->getSetDirective()) {
-    O << TAI->getPrivateGlobalPrefix() << getFunctionNumber()
+  } else if (MAI->getSetDirective()) {
+    O << MAI->getPrivateGlobalPrefix() << getFunctionNumber()
       << '_' << uid << "_set_" << MBB->getNumber();
   } else {
     printBasicBlockLabel(MBB, false, false, false);
     // If the arch uses custom Jump Table directives, don't calc relative to
     // JT
     if (!HadJTEntryDirective) 
-      O << '-' << TAI->getPrivateGlobalPrefix() << "JTI"
+      O << '-' << MAI->getPrivateGlobalPrefix() << "JTI"
         << getFunctionNumber() << '_' << uid;
   }
 }
@@ -435,7 +435,7 @@ void AsmPrinter::printPICJumpTableEntry(const MachineJumpTableInfo *MJTI,
 /// do nothing and return false.
 bool AsmPrinter::EmitSpecialLLVMGlobal(const GlobalVariable *GV) {
   if (GV->getName() == "llvm.used") {
-    if (TAI->getUsedDirective() != 0)    // No need to emit this at all.
+    if (MAI->getUsedDirective() != 0)    // No need to emit this at all.
       EmitLLVMUsedList(GV->getInitializer());
     return true;
   }
@@ -468,11 +468,11 @@ bool AsmPrinter::EmitSpecialLLVMGlobal(const GlobalVariable *GV) {
   return false;
 }
 
-/// EmitLLVMUsedList - For targets that define a TAI::UsedDirective, mark each
+/// EmitLLVMUsedList - For targets that define a MAI::UsedDirective, mark each
 /// global in the specified llvm.used list for which emitUsedDirectiveFor
 /// is true, as being used with this directive.
 void AsmPrinter::EmitLLVMUsedList(Constant *List) {
-  const char *Directive = TAI->getUsedDirective();
+  const char *Directive = MAI->getUsedDirective();
 
   // Should be an array of 'i8*'.
   ConstantArray *InitList = dyn_cast<ConstantArray>(List);
@@ -513,13 +513,13 @@ void AsmPrinter::EmitXXStructorList(Constant *List) {
 const std::string &AsmPrinter::getGlobalLinkName(const GlobalVariable *GV,
                                                  std::string &LinkName) const {
   if (isa<Function>(GV)) {
-    LinkName += TAI->getFunctionAddrPrefix();
+    LinkName += MAI->getFunctionAddrPrefix();
     LinkName += Mang->getMangledName(GV);
-    LinkName += TAI->getFunctionAddrSuffix();
+    LinkName += MAI->getFunctionAddrSuffix();
   } else {
-    LinkName += TAI->getGlobalVarAddrPrefix();
+    LinkName += MAI->getGlobalVarAddrPrefix();
     LinkName += Mang->getMangledName(GV);
-    LinkName += TAI->getGlobalVarAddrSuffix();
+    LinkName += MAI->getGlobalVarAddrSuffix();
   }  
   
   return LinkName;
@@ -586,8 +586,8 @@ void AsmPrinter::EOL() const {
 
 void AsmPrinter::EOL(const std::string &Comment) const {
   if (VerboseAsm && !Comment.empty()) {
-    O.PadToColumn(TAI->getCommentColumn());
-    O << TAI->getCommentString()
+    O.PadToColumn(MAI->getCommentColumn());
+    O << MAI->getCommentString()
       << ' '
       << Comment;
   }
@@ -596,8 +596,8 @@ void AsmPrinter::EOL(const std::string &Comment) const {
 
 void AsmPrinter::EOL(const char* Comment) const {
   if (VerboseAsm && *Comment) {
-    O.PadToColumn(TAI->getCommentColumn());
-    O << TAI->getCommentString()
+    O.PadToColumn(MAI->getCommentColumn());
+    O << MAI->getCommentString()
       << ' '
       << Comment;
   }
@@ -607,11 +607,11 @@ void AsmPrinter::EOL(const char* Comment) const {
 /// EmitULEB128Bytes - Emit an assembler byte data directive to compose an
 /// unsigned leb128 value.
 void AsmPrinter::EmitULEB128Bytes(unsigned Value) const {
-  if (TAI->hasLEB128()) {
+  if (MAI->hasLEB128()) {
     O << "\t.uleb128\t"
       << Value;
   } else {
-    O << TAI->getData8bitsDirective();
+    O << MAI->getData8bitsDirective();
     PrintULEB128(Value);
   }
 }
@@ -619,11 +619,11 @@ void AsmPrinter::EmitULEB128Bytes(unsigned Value) const {
 /// EmitSLEB128Bytes - print an assembler byte data directive to compose a
 /// signed leb128 value.
 void AsmPrinter::EmitSLEB128Bytes(int Value) const {
-  if (TAI->hasLEB128()) {
+  if (MAI->hasLEB128()) {
     O << "\t.sleb128\t"
       << Value;
   } else {
-    O << TAI->getData8bitsDirective();
+    O << MAI->getData8bitsDirective();
     PrintSLEB128(Value);
   }
 }
@@ -631,29 +631,29 @@ void AsmPrinter::EmitSLEB128Bytes(int Value) const {
 /// EmitInt8 - Emit a byte directive and value.
 ///
 void AsmPrinter::EmitInt8(int Value) const {
-  O << TAI->getData8bitsDirective();
+  O << MAI->getData8bitsDirective();
   PrintHex(Value & 0xFF);
 }
 
 /// EmitInt16 - Emit a short directive and value.
 ///
 void AsmPrinter::EmitInt16(int Value) const {
-  O << TAI->getData16bitsDirective();
+  O << MAI->getData16bitsDirective();
   PrintHex(Value & 0xFFFF);
 }
 
 /// EmitInt32 - Emit a long directive and value.
 ///
 void AsmPrinter::EmitInt32(int Value) const {
-  O << TAI->getData32bitsDirective();
+  O << MAI->getData32bitsDirective();
   PrintHex(Value);
 }
 
 /// EmitInt64 - Emit a long long directive and value.
 ///
 void AsmPrinter::EmitInt64(uint64_t Value) const {
-  if (TAI->getData64bitsDirective()) {
-    O << TAI->getData64bitsDirective();
+  if (MAI->getData64bitsDirective()) {
+    O << MAI->getData64bitsDirective();
     PrintHex(Value);
   } else {
     if (TM.getTargetData()->isBigEndian()) {
@@ -706,11 +706,11 @@ void AsmPrinter::EmitString(const std::string &String) const {
 }
 
 void AsmPrinter::EmitString(const char *String, unsigned Size) const {
-  const char* AscizDirective = TAI->getAscizDirective();
+  const char* AscizDirective = MAI->getAscizDirective();
   if (AscizDirective)
     O << AscizDirective;
   else
-    O << TAI->getAsciiDirective();
+    O << MAI->getAsciiDirective();
   O << '\"';
   for (unsigned i = 0; i < Size; ++i)
     printStringChar(O, String[i]);
@@ -756,7 +756,7 @@ void AsmPrinter::EmitAlignment(unsigned NumBits, const GlobalValue *GV,
   
   unsigned FillValue = 0;
   if (getCurrentSection()->getKind().isText())
-    FillValue = TAI->getTextAlignFillValue();
+    FillValue = MAI->getTextAlignFillValue();
   
   OutStreamer.EmitValueToAlignment(1 << NumBits, FillValue, 1, 0);
 }
@@ -765,14 +765,14 @@ void AsmPrinter::EmitAlignment(unsigned NumBits, const GlobalValue *GV,
 ///
 void AsmPrinter::EmitZeros(uint64_t NumZeros, unsigned AddrSpace) const {
   if (NumZeros) {
-    if (TAI->getZeroDirective()) {
-      O << TAI->getZeroDirective() << NumZeros;
-      if (TAI->getZeroDirectiveSuffix())
-        O << TAI->getZeroDirectiveSuffix();
+    if (MAI->getZeroDirective()) {
+      O << MAI->getZeroDirective() << NumZeros;
+      if (MAI->getZeroDirectiveSuffix())
+        O << MAI->getZeroDirectiveSuffix();
       O << '\n';
     } else {
       for (; NumZeros; --NumZeros)
-        O << TAI->getData8bitsDirective(AddrSpace) << "0\n";
+        O << MAI->getData8bitsDirective(AddrSpace) << "0\n";
     }
   }
 }
@@ -790,13 +790,13 @@ void AsmPrinter::EmitConstantValueOnly(const Constant *CV) {
     // decorating it with GlobalVarAddrPrefix/Suffix or
     // FunctionAddrPrefix/Suffix (these all default to "" )
     if (isa<Function>(GV)) {
-      O << TAI->getFunctionAddrPrefix()
+      O << MAI->getFunctionAddrPrefix()
         << Mang->getMangledName(GV)
-        << TAI->getFunctionAddrSuffix();
+        << MAI->getFunctionAddrSuffix();
     } else {
-      O << TAI->getGlobalVarAddrPrefix()
+      O << MAI->getGlobalVarAddrPrefix()
         << Mang->getMangledName(GV)
-        << TAI->getGlobalVarAddrSuffix();
+        << MAI->getGlobalVarAddrSuffix();
     }
   } else if (const ConstantExpr *CE = dyn_cast<ConstantExpr>(CV)) {
     const TargetData *TD = TM.getTargetData();
@@ -929,12 +929,12 @@ static void printAsCString(formatted_raw_ostream &O, const ConstantArray *CVA,
 ///
 void AsmPrinter::EmitString(const ConstantArray *CVA) const {
   unsigned NumElts = CVA->getNumOperands();
-  if (TAI->getAscizDirective() && NumElts && 
+  if (MAI->getAscizDirective() && NumElts && 
       cast<ConstantInt>(CVA->getOperand(NumElts-1))->getZExtValue() == 0) {
-    O << TAI->getAscizDirective();
+    O << MAI->getAscizDirective();
     printAsCString(O, CVA, NumElts-1);
   } else {
-    O << TAI->getAsciiDirective();
+    O << MAI->getAsciiDirective();
     printAsCString(O, CVA, NumElts);
   }
   O << '\n';
@@ -994,40 +994,40 @@ void AsmPrinter::EmitGlobalConstantFP(const ConstantFP *CFP,
   if (CFP->getType() == Type::getDoubleTy(Context)) {
     double Val = CFP->getValueAPF().convertToDouble();  // for comment only
     uint64_t i = CFP->getValueAPF().bitcastToAPInt().getZExtValue();
-    if (TAI->getData64bitsDirective(AddrSpace)) {
-      O << TAI->getData64bitsDirective(AddrSpace) << i;
+    if (MAI->getData64bitsDirective(AddrSpace)) {
+      O << MAI->getData64bitsDirective(AddrSpace) << i;
       if (VerboseAsm) {
-        O.PadToColumn(TAI->getCommentColumn());
-        O << TAI->getCommentString() << " double " << Val;
+        O.PadToColumn(MAI->getCommentColumn());
+        O << MAI->getCommentString() << " double " << Val;
       }
       O << '\n';
     } else if (TD->isBigEndian()) {
-      O << TAI->getData32bitsDirective(AddrSpace) << unsigned(i >> 32);
+      O << MAI->getData32bitsDirective(AddrSpace) << unsigned(i >> 32);
       if (VerboseAsm) {
-        O.PadToColumn(TAI->getCommentColumn());
-        O << TAI->getCommentString()
+        O.PadToColumn(MAI->getCommentColumn());
+        O << MAI->getCommentString()
           << " most significant word of double " << Val;
       }
       O << '\n';
-      O << TAI->getData32bitsDirective(AddrSpace) << unsigned(i);
+      O << MAI->getData32bitsDirective(AddrSpace) << unsigned(i);
       if (VerboseAsm) {
-        O.PadToColumn(TAI->getCommentColumn());
-        O << TAI->getCommentString()
+        O.PadToColumn(MAI->getCommentColumn());
+        O << MAI->getCommentString()
           << " least significant word of double " << Val;
       }
       O << '\n';
     } else {
-      O << TAI->getData32bitsDirective(AddrSpace) << unsigned(i);
+      O << MAI->getData32bitsDirective(AddrSpace) << unsigned(i);
       if (VerboseAsm) {
-        O.PadToColumn(TAI->getCommentColumn());
-        O << TAI->getCommentString()
+        O.PadToColumn(MAI->getCommentColumn());
+        O << MAI->getCommentString()
           << " least significant word of double " << Val;
       }
       O << '\n';
-      O << TAI->getData32bitsDirective(AddrSpace) << unsigned(i >> 32);
+      O << MAI->getData32bitsDirective(AddrSpace) << unsigned(i >> 32);
       if (VerboseAsm) {
-        O.PadToColumn(TAI->getCommentColumn());
-        O << TAI->getCommentString()
+        O.PadToColumn(MAI->getCommentColumn());
+        O << MAI->getCommentString()
           << " most significant word of double " << Val;
       }
       O << '\n';
@@ -1035,11 +1035,11 @@ void AsmPrinter::EmitGlobalConstantFP(const ConstantFP *CFP,
     return;
   } else if (CFP->getType() == Type::getFloatTy(Context)) {
     float Val = CFP->getValueAPF().convertToFloat();  // for comment only
-    O << TAI->getData32bitsDirective(AddrSpace)
+    O << MAI->getData32bitsDirective(AddrSpace)
       << CFP->getValueAPF().bitcastToAPInt().getZExtValue();
     if (VerboseAsm) {
-      O.PadToColumn(TAI->getCommentColumn());
-      O << TAI->getCommentString() << " float " << Val;
+      O.PadToColumn(MAI->getCommentColumn());
+      O << MAI->getCommentString() << " float " << Val;
     }
     O << '\n';
     return;
@@ -1054,73 +1054,73 @@ void AsmPrinter::EmitGlobalConstantFP(const ConstantFP *CFP,
     DoubleVal.convert(APFloat::IEEEdouble, APFloat::rmNearestTiesToEven,
                       &ignored);
     if (TD->isBigEndian()) {
-      O << TAI->getData16bitsDirective(AddrSpace) << uint16_t(p[1]);
+      O << MAI->getData16bitsDirective(AddrSpace) << uint16_t(p[1]);
       if (VerboseAsm) {
-        O.PadToColumn(TAI->getCommentColumn());
-        O << TAI->getCommentString()
+        O.PadToColumn(MAI->getCommentColumn());
+        O << MAI->getCommentString()
           << " most significant halfword of x86_fp80 ~"
           << DoubleVal.convertToDouble();
       }
       O << '\n';
-      O << TAI->getData16bitsDirective(AddrSpace) << uint16_t(p[0] >> 48);
+      O << MAI->getData16bitsDirective(AddrSpace) << uint16_t(p[0] >> 48);
       if (VerboseAsm) {
-        O.PadToColumn(TAI->getCommentColumn());
-        O << TAI->getCommentString() << " next halfword";
+        O.PadToColumn(MAI->getCommentColumn());
+        O << MAI->getCommentString() << " next halfword";
       }
       O << '\n';
-      O << TAI->getData16bitsDirective(AddrSpace) << uint16_t(p[0] >> 32);
+      O << MAI->getData16bitsDirective(AddrSpace) << uint16_t(p[0] >> 32);
       if (VerboseAsm) {
-        O.PadToColumn(TAI->getCommentColumn());
-        O << TAI->getCommentString() << " next halfword";
+        O.PadToColumn(MAI->getCommentColumn());
+        O << MAI->getCommentString() << " next halfword";
       }
       O << '\n';
-      O << TAI->getData16bitsDirective(AddrSpace) << uint16_t(p[0] >> 16);
+      O << MAI->getData16bitsDirective(AddrSpace) << uint16_t(p[0] >> 16);
       if (VerboseAsm) {
-        O.PadToColumn(TAI->getCommentColumn());
-        O << TAI->getCommentString() << " next halfword";
+        O.PadToColumn(MAI->getCommentColumn());
+        O << MAI->getCommentString() << " next halfword";
       }
       O << '\n';
-      O << TAI->getData16bitsDirective(AddrSpace) << uint16_t(p[0]);
+      O << MAI->getData16bitsDirective(AddrSpace) << uint16_t(p[0]);
       if (VerboseAsm) {
-        O.PadToColumn(TAI->getCommentColumn());
-        O << TAI->getCommentString()
+        O.PadToColumn(MAI->getCommentColumn());
+        O << MAI->getCommentString()
           << " least significant halfword";
       }
       O << '\n';
      } else {
-      O << TAI->getData16bitsDirective(AddrSpace) << uint16_t(p[0]);
+      O << MAI->getData16bitsDirective(AddrSpace) << uint16_t(p[0]);
       if (VerboseAsm) {
-        O.PadToColumn(TAI->getCommentColumn());
-        O << TAI->getCommentString()
+        O.PadToColumn(MAI->getCommentColumn());
+        O << MAI->getCommentString()
           << " least significant halfword of x86_fp80 ~"
           << DoubleVal.convertToDouble();
       }
       O << '\n';
-      O << TAI->getData16bitsDirective(AddrSpace) << uint16_t(p[0] >> 16);
+      O << MAI->getData16bitsDirective(AddrSpace) << uint16_t(p[0] >> 16);
       if (VerboseAsm) {
-        O.PadToColumn(TAI->getCommentColumn());
-        O << TAI->getCommentString()
+        O.PadToColumn(MAI->getCommentColumn());
+        O << MAI->getCommentString()
           << " next halfword";
       }
       O << '\n';
-      O << TAI->getData16bitsDirective(AddrSpace) << uint16_t(p[0] >> 32);
+      O << MAI->getData16bitsDirective(AddrSpace) << uint16_t(p[0] >> 32);
       if (VerboseAsm) {
-        O.PadToColumn(TAI->getCommentColumn());
-        O << TAI->getCommentString()
+        O.PadToColumn(MAI->getCommentColumn());
+        O << MAI->getCommentString()
           << " next halfword";
       }
       O << '\n';
-      O << TAI->getData16bitsDirective(AddrSpace) << uint16_t(p[0] >> 48);
+      O << MAI->getData16bitsDirective(AddrSpace) << uint16_t(p[0] >> 48);
       if (VerboseAsm) {
-        O.PadToColumn(TAI->getCommentColumn());
-        O << TAI->getCommentString()
+        O.PadToColumn(MAI->getCommentColumn());
+        O << MAI->getCommentString()
           << " next halfword";
       }
       O << '\n';
-      O << TAI->getData16bitsDirective(AddrSpace) << uint16_t(p[1]);
+      O << MAI->getData16bitsDirective(AddrSpace) << uint16_t(p[1]);
       if (VerboseAsm) {
-        O.PadToColumn(TAI->getCommentColumn());
-        O << TAI->getCommentString()
+        O.PadToColumn(MAI->getCommentColumn());
+        O << MAI->getCommentString()
           << " most significant halfword";
       }
       O << '\n';
@@ -1134,60 +1134,60 @@ void AsmPrinter::EmitGlobalConstantFP(const ConstantFP *CFP,
     APInt api = CFP->getValueAPF().bitcastToAPInt();
     const uint64_t *p = api.getRawData();
     if (TD->isBigEndian()) {
-      O << TAI->getData32bitsDirective(AddrSpace) << uint32_t(p[0] >> 32);
+      O << MAI->getData32bitsDirective(AddrSpace) << uint32_t(p[0] >> 32);
       if (VerboseAsm) {
-        O.PadToColumn(TAI->getCommentColumn());
-        O << TAI->getCommentString()
+        O.PadToColumn(MAI->getCommentColumn());
+        O << MAI->getCommentString()
           << " most significant word of ppc_fp128";
       }
       O << '\n';
-      O << TAI->getData32bitsDirective(AddrSpace) << uint32_t(p[0]);
+      O << MAI->getData32bitsDirective(AddrSpace) << uint32_t(p[0]);
       if (VerboseAsm) {
-        O.PadToColumn(TAI->getCommentColumn());
-        O << TAI->getCommentString()
+        O.PadToColumn(MAI->getCommentColumn());
+        O << MAI->getCommentString()
         << " next word";
       }
       O << '\n';
-      O << TAI->getData32bitsDirective(AddrSpace) << uint32_t(p[1] >> 32);
+      O << MAI->getData32bitsDirective(AddrSpace) << uint32_t(p[1] >> 32);
       if (VerboseAsm) {
-        O.PadToColumn(TAI->getCommentColumn());
-        O << TAI->getCommentString()
+        O.PadToColumn(MAI->getCommentColumn());
+        O << MAI->getCommentString()
           << " next word";
       }
       O << '\n';
-      O << TAI->getData32bitsDirective(AddrSpace) << uint32_t(p[1]);
+      O << MAI->getData32bitsDirective(AddrSpace) << uint32_t(p[1]);
       if (VerboseAsm) {
-        O.PadToColumn(TAI->getCommentColumn());
-        O << TAI->getCommentString()
+        O.PadToColumn(MAI->getCommentColumn());
+        O << MAI->getCommentString()
           << " least significant word";
       }
       O << '\n';
      } else {
-      O << TAI->getData32bitsDirective(AddrSpace) << uint32_t(p[1]);
+      O << MAI->getData32bitsDirective(AddrSpace) << uint32_t(p[1]);
       if (VerboseAsm) {
-        O.PadToColumn(TAI->getCommentColumn());
-        O << TAI->getCommentString()
+        O.PadToColumn(MAI->getCommentColumn());
+        O << MAI->getCommentString()
           << " least significant word of ppc_fp128";
       }
       O << '\n';
-      O << TAI->getData32bitsDirective(AddrSpace) << uint32_t(p[1] >> 32);
+      O << MAI->getData32bitsDirective(AddrSpace) << uint32_t(p[1] >> 32);
       if (VerboseAsm) {
-        O.PadToColumn(TAI->getCommentColumn());
-        O << TAI->getCommentString()
+        O.PadToColumn(MAI->getCommentColumn());
+        O << MAI->getCommentString()
           << " next word";
       }
       O << '\n';
-      O << TAI->getData32bitsDirective(AddrSpace) << uint32_t(p[0]);
+      O << MAI->getData32bitsDirective(AddrSpace) << uint32_t(p[0]);
       if (VerboseAsm) {
-        O.PadToColumn(TAI->getCommentColumn());
-        O << TAI->getCommentString()
+        O.PadToColumn(MAI->getCommentColumn());
+        O << MAI->getCommentString()
           << " next word";
       }
       O << '\n';
-      O << TAI->getData32bitsDirective(AddrSpace) << uint32_t(p[0] >> 32);
+      O << MAI->getData32bitsDirective(AddrSpace) << uint32_t(p[0] >> 32);
       if (VerboseAsm) {
-        O.PadToColumn(TAI->getCommentColumn());
-        O << TAI->getCommentString()
+        O.PadToColumn(MAI->getCommentColumn());
+        O << MAI->getCommentString()
           << " most significant word";
       }
       O << '\n';
@@ -1214,35 +1214,35 @@ void AsmPrinter::EmitGlobalConstantLargeInt(const ConstantInt *CI,
     else
       Val = RawData[i];
 
-    if (TAI->getData64bitsDirective(AddrSpace))
-      O << TAI->getData64bitsDirective(AddrSpace) << Val << '\n';
+    if (MAI->getData64bitsDirective(AddrSpace))
+      O << MAI->getData64bitsDirective(AddrSpace) << Val << '\n';
     else if (TD->isBigEndian()) {
-      O << TAI->getData32bitsDirective(AddrSpace) << unsigned(Val >> 32);
+      O << MAI->getData32bitsDirective(AddrSpace) << unsigned(Val >> 32);
       if (VerboseAsm) {
-        O.PadToColumn(TAI->getCommentColumn());
-        O << TAI->getCommentString()
+        O.PadToColumn(MAI->getCommentColumn());
+        O << MAI->getCommentString()
           << " most significant half of i64 " << Val;
       }
       O << '\n';
-      O << TAI->getData32bitsDirective(AddrSpace) << unsigned(Val);
+      O << MAI->getData32bitsDirective(AddrSpace) << unsigned(Val);
       if (VerboseAsm) {
-        O.PadToColumn(TAI->getCommentColumn());
-        O << TAI->getCommentString()
+        O.PadToColumn(MAI->getCommentColumn());
+        O << MAI->getCommentString()
           << " least significant half of i64 " << Val;
       }
       O << '\n';
     } else {
-      O << TAI->getData32bitsDirective(AddrSpace) << unsigned(Val);
+      O << MAI->getData32bitsDirective(AddrSpace) << unsigned(Val);
       if (VerboseAsm) {
-        O.PadToColumn(TAI->getCommentColumn());
-        O << TAI->getCommentString()
+        O.PadToColumn(MAI->getCommentColumn());
+        O << MAI->getCommentString()
           << " least significant half of i64 " << Val;
       }
       O << '\n';
-      O << TAI->getData32bitsDirective(AddrSpace) << unsigned(Val >> 32);
+      O << MAI->getData32bitsDirective(AddrSpace) << unsigned(Val >> 32);
       if (VerboseAsm) {
-        O.PadToColumn(TAI->getCommentColumn());
-        O << TAI->getCommentString()
+        O.PadToColumn(MAI->getCommentColumn());
+        O << MAI->getCommentString()
           << " most significant half of i64 " << Val;
       }
       O << '\n';
@@ -1285,8 +1285,8 @@ void AsmPrinter::EmitGlobalConstant(const Constant *CV, unsigned AddrSpace) {
     if (const ConstantInt *CI = dyn_cast<ConstantInt>(CV)) {
       SmallString<40> S;
       CI->getValue().toStringUnsigned(S, 16);
-      O.PadToColumn(TAI->getCommentColumn());
-      O << TAI->getCommentString() << " 0x" << S.str();
+      O.PadToColumn(MAI->getCommentColumn());
+      O << MAI->getCommentString() << " 0x" << S.str();
     }
   }
   O << '\n';
@@ -1305,10 +1305,10 @@ void AsmPrinter::EmitMachineConstantPoolValue(MachineConstantPoolValue *MCPV) {
 /// for their own strange codes.
 void AsmPrinter::PrintSpecial(const MachineInstr *MI, const char *Code) const {
   if (!strcmp(Code, "private")) {
-    O << TAI->getPrivateGlobalPrefix();
+    O << MAI->getPrivateGlobalPrefix();
   } else if (!strcmp(Code, "comment")) {
     if (VerboseAsm)
-      O << TAI->getCommentString();
+      O << MAI->getCommentString();
   } else if (!strcmp(Code, "uid")) {
     // Comparing the address of MI isn't sufficient, because machineinstrs may
     // be allocated to the same address across functions.
@@ -1333,10 +1333,10 @@ void AsmPrinter::PrintSpecial(const MachineInstr *MI, const char *Code) const {
 /// processDebugLoc - Processes the debug information of each machine
 /// instruction's DebugLoc.
 void AsmPrinter::processDebugLoc(DebugLoc DL) {
-  if (!TAI || !DW)
+  if (!MAI || !DW)
     return;
   
-  if (TAI->doesSupportDebugInformation() && DW->ShouldEmitDwarfDebug()) {
+  if (MAI->doesSupportDebugInformation() && DW->ShouldEmitDwarfDebug()) {
     if (!DL.isUnknown()) {
       DebugLocTuple CurDLT = MF->getDebugLocTuple(DL);
 
@@ -1368,15 +1368,15 @@ void AsmPrinter::printInlineAsm(const MachineInstr *MI) const {
   // If this asmstr is empty, just print the #APP/#NOAPP markers.
   // These are useful to see where empty asm's wound up.
   if (AsmStr[0] == 0) {
-    O << TAI->getCommentString() << TAI->getInlineAsmStart() << "\n\t";
-    O << TAI->getCommentString() << TAI->getInlineAsmEnd() << '\n';
+    O << MAI->getCommentString() << MAI->getInlineAsmStart() << "\n\t";
+    O << MAI->getCommentString() << MAI->getInlineAsmEnd() << '\n';
     return;
   }
   
-  O << TAI->getCommentString() << TAI->getInlineAsmStart() << "\n\t";
+  O << MAI->getCommentString() << MAI->getInlineAsmStart() << "\n\t";
 
   // The variant of the current asmprinter.
-  int AsmPrinterVariant = TAI->getAssemblerDialect();
+  int AsmPrinterVariant = MAI->getAssemblerDialect();
 
   int CurVariant = -1;            // The number of the {.|.|.} region we are in.
   const char *LastEmitted = AsmStr; // One past the last character emitted.
@@ -1544,15 +1544,15 @@ void AsmPrinter::printInlineAsm(const MachineInstr *MI) const {
     }
     }
   }
-  O << "\n\t" << TAI->getCommentString() << TAI->getInlineAsmEnd() << '\n';
+  O << "\n\t" << MAI->getCommentString() << MAI->getInlineAsmEnd() << '\n';
 }
 
 /// printImplicitDef - This method prints the specified machine instruction
 /// that is an implicit def.
 void AsmPrinter::printImplicitDef(const MachineInstr *MI) const {
   if (VerboseAsm) {
-    O.PadToColumn(TAI->getCommentColumn());
-    O << TAI->getCommentString() << " implicit-def: "
+    O.PadToColumn(MAI->getCommentColumn());
+    O << MAI->getCommentString() << " implicit-def: "
       << TRI->getAsmName(MI->getOperand(0).getReg()) << '\n';
   }
 }
@@ -1564,7 +1564,7 @@ void AsmPrinter::printLabel(const MachineInstr *MI) const {
 }
 
 void AsmPrinter::printLabel(unsigned Id) const {
-  O << TAI->getPrivateGlobalPrefix() << "label" << Id << ":\n";
+  O << MAI->getPrivateGlobalPrefix() << "label" << Id << ":\n";
 }
 
 /// PrintAsmOperand - Print the specified operand of MI, an INLINEASM
@@ -1595,15 +1595,15 @@ void AsmPrinter::printBasicBlockLabel(const MachineBasicBlock *MBB,
       EmitAlignment(Log2_32(Align));
   }
 
-  O << TAI->getPrivateGlobalPrefix() << "BB" << getFunctionNumber() << '_'
+  O << MAI->getPrivateGlobalPrefix() << "BB" << getFunctionNumber() << '_'
     << MBB->getNumber();
   if (printColon)
     O << ':';
   if (printComment) {
     if (const BasicBlock *BB = MBB->getBasicBlock())
       if (BB->hasName()) {
-        O.PadToColumn(TAI->getCommentColumn());
-        O << TAI->getCommentString() << ' ';
+        O.PadToColumn(MAI->getCommentColumn());
+        O << MAI->getCommentString() << ' ';
         WriteAsOperand(O, BB, /*PrintType=*/false);
       }
 
@@ -1616,26 +1616,26 @@ void AsmPrinter::printBasicBlockLabel(const MachineBasicBlock *MBB,
 /// specified MachineBasicBlock for a jumptable entry.
 void AsmPrinter::printPICJumpTableSetLabel(unsigned uid, 
                                            const MachineBasicBlock *MBB) const {
-  if (!TAI->getSetDirective())
+  if (!MAI->getSetDirective())
     return;
   
-  O << TAI->getSetDirective() << ' ' << TAI->getPrivateGlobalPrefix()
+  O << MAI->getSetDirective() << ' ' << MAI->getPrivateGlobalPrefix()
     << getFunctionNumber() << '_' << uid << "_set_" << MBB->getNumber() << ',';
   printBasicBlockLabel(MBB, false, false, false);
-  O << '-' << TAI->getPrivateGlobalPrefix() << "JTI" << getFunctionNumber() 
+  O << '-' << MAI->getPrivateGlobalPrefix() << "JTI" << getFunctionNumber() 
     << '_' << uid << '\n';
 }
 
 void AsmPrinter::printPICJumpTableSetLabel(unsigned uid, unsigned uid2,
                                            const MachineBasicBlock *MBB) const {
-  if (!TAI->getSetDirective())
+  if (!MAI->getSetDirective())
     return;
   
-  O << TAI->getSetDirective() << ' ' << TAI->getPrivateGlobalPrefix()
+  O << MAI->getSetDirective() << ' ' << MAI->getPrivateGlobalPrefix()
     << getFunctionNumber() << '_' << uid << '_' << uid2
     << "_set_" << MBB->getNumber() << ',';
   printBasicBlockLabel(MBB, false, false, false);
-  O << '-' << TAI->getPrivateGlobalPrefix() << "JTI" << getFunctionNumber() 
+  O << '-' << MAI->getPrivateGlobalPrefix() << "JTI" << getFunctionNumber() 
     << '_' << uid << '_' << uid2 << '\n';
 }
 
@@ -1652,15 +1652,15 @@ void AsmPrinter::printDataDirective(const Type *type, unsigned AddrSpace) {
   case Type::IntegerTyID: {
     unsigned BitWidth = cast<IntegerType>(type)->getBitWidth();
     if (BitWidth <= 8)
-      O << TAI->getData8bitsDirective(AddrSpace);
+      O << MAI->getData8bitsDirective(AddrSpace);
     else if (BitWidth <= 16)
-      O << TAI->getData16bitsDirective(AddrSpace);
+      O << MAI->getData16bitsDirective(AddrSpace);
     else if (BitWidth <= 32)
-      O << TAI->getData32bitsDirective(AddrSpace);
+      O << MAI->getData32bitsDirective(AddrSpace);
     else if (BitWidth <= 64) {
-      assert(TAI->getData64bitsDirective(AddrSpace) &&
+      assert(MAI->getData64bitsDirective(AddrSpace) &&
              "Target cannot handle 64-bit constant exprs!");
-      O << TAI->getData64bitsDirective(AddrSpace);
+      O << MAI->getData64bitsDirective(AddrSpace);
     } else {
       llvm_unreachable("Target cannot handle given data directive width!");
     }
@@ -1668,15 +1668,15 @@ void AsmPrinter::printDataDirective(const Type *type, unsigned AddrSpace) {
   }
   case Type::PointerTyID:
     if (TD->getPointerSize() == 8) {
-      assert(TAI->getData64bitsDirective(AddrSpace) &&
+      assert(MAI->getData64bitsDirective(AddrSpace) &&
              "Target cannot handle 64-bit pointer exprs!");
-      O << TAI->getData64bitsDirective(AddrSpace);
+      O << MAI->getData64bitsDirective(AddrSpace);
     } else if (TD->getPointerSize() == 2) {
-      O << TAI->getData16bitsDirective(AddrSpace);
+      O << MAI->getData16bitsDirective(AddrSpace);
     } else if (TD->getPointerSize() == 1) {
-      O << TAI->getData8bitsDirective(AddrSpace);
+      O << MAI->getData8bitsDirective(AddrSpace);
     } else {
-      O << TAI->getData32bitsDirective(AddrSpace);
+      O << MAI->getData32bitsDirective(AddrSpace);
     }
     break;
   }
@@ -1685,10 +1685,10 @@ void AsmPrinter::printDataDirective(const Type *type, unsigned AddrSpace) {
 void AsmPrinter::printVisibility(const std::string& Name,
                                  unsigned Visibility) const {
   if (Visibility == GlobalValue::HiddenVisibility) {
-    if (const char *Directive = TAI->getHiddenDirective())
+    if (const char *Directive = MAI->getHiddenDirective())
       O << Directive << Name << '\n';
   } else if (Visibility == GlobalValue::ProtectedVisibility) {
-    if (const char *Directive = TAI->getProtectedDirective())
+    if (const char *Directive = MAI->getProtectedDirective())
       O << Directive << Name << '\n';
   }
 }
@@ -1737,8 +1737,8 @@ void AsmPrinter::EmitComments(const MachineInstr &MI) const {
   DebugLocTuple DLT = MF->getDebugLocTuple(MI.getDebugLoc());
 
   // Print source line info.
-  O.PadToColumn(TAI->getCommentColumn());
-  O << TAI->getCommentString() << " SrcLine ";
+  O.PadToColumn(MAI->getCommentColumn());
+  O << MAI->getCommentString() << " SrcLine ";
   if (DLT.CompileUnit->hasInitializer()) {
     Constant *Name = DLT.CompileUnit->getInitializer();
     if (ConstantArray *NameString = dyn_cast<ConstantArray>(Name))
@@ -1758,8 +1758,8 @@ void AsmPrinter::EmitComments(const MCInst &MI) const
       DebugLocTuple DLT = MF->getDebugLocTuple(MI.getDebugLoc());
 
       // Print source line info
-      O.PadToColumn(TAI->getCommentColumn());
-      O << TAI->getCommentString() << " SrcLine ";
+      O.PadToColumn(MAI->getCommentColumn());
+      O << MAI->getCommentString() << " SrcLine ";
       if (DLT.CompileUnit->hasInitializer()) {
         Constant *Name = DLT.CompileUnit->getInitializer();
         if (ConstantArray *NameString = dyn_cast<ConstantArray>(Name))
@@ -1792,7 +1792,7 @@ Indent(formatted_raw_ostream &out, int level, int scale = 2) {
 ///
 static void PrintChildLoopComment(formatted_raw_ostream &O,
                                   const MachineLoop *loop,
-                                  const MCAsmInfo *TAI,
+                                  const MCAsmInfo *MAI,
                                   int FunctionNumber) {
   // Add child loop information
   for(MachineLoop::iterator cl = loop->begin(),
@@ -1803,14 +1803,14 @@ static void PrintChildLoopComment(formatted_raw_ostream &O,
     assert(Header && "No header for loop");
 
     O << '\n';
-    O.PadToColumn(TAI->getCommentColumn());
+    O.PadToColumn(MAI->getCommentColumn());
 
-    O << TAI->getCommentString();
+    O << MAI->getCommentString();
     Indent(O, (*cl)->getLoopDepth()-1)
       << " Child Loop BB" << FunctionNumber << "_"
       << Header->getNumber() << " Depth " << (*cl)->getLoopDepth();
 
-    PrintChildLoopComment(O, *cl, TAI, FunctionNumber);
+    PrintChildLoopComment(O, *cl, MAI, FunctionNumber);
   }
 }
 
@@ -1824,28 +1824,28 @@ void AsmPrinter::EmitComments(const MachineBasicBlock &MBB) const
     if (loop) {
       // Print a newline after bb# annotation.
       O << "\n";
-      O.PadToColumn(TAI->getCommentColumn());
-      O << TAI->getCommentString() << " Loop Depth " << loop->getLoopDepth()
+      O.PadToColumn(MAI->getCommentColumn());
+      O << MAI->getCommentString() << " Loop Depth " << loop->getLoopDepth()
         << '\n';
 
-      O.PadToColumn(TAI->getCommentColumn());
+      O.PadToColumn(MAI->getCommentColumn());
 
       MachineBasicBlock *Header = loop->getHeader();
       assert(Header && "No header for loop");
       
       if (Header == &MBB) {
-        O << TAI->getCommentString() << " Loop Header";
-        PrintChildLoopComment(O, loop, TAI, getFunctionNumber());
+        O << MAI->getCommentString() << " Loop Header";
+        PrintChildLoopComment(O, loop, MAI, getFunctionNumber());
       }
       else {
-        O << TAI->getCommentString() << " Loop Header is BB"
+        O << MAI->getCommentString() << " Loop Header is BB"
           << getFunctionNumber() << "_" << loop->getHeader()->getNumber();
       }
 
       if (loop->empty()) {
         O << '\n';
-        O.PadToColumn(TAI->getCommentColumn());
-        O << TAI->getCommentString() << " Inner Loop";
+        O.PadToColumn(MAI->getCommentColumn());
+        O << MAI->getCommentString() << " Inner Loop";
       }
 
       // Add parent loop information
@@ -1856,8 +1856,8 @@ void AsmPrinter::EmitComments(const MachineBasicBlock &MBB) const
         assert(Header && "No header for loop");
 
         O << '\n';
-        O.PadToColumn(TAI->getCommentColumn());
-        O << TAI->getCommentString();
+        O.PadToColumn(MAI->getCommentColumn());
+        O << MAI->getCommentString();
         Indent(O, CurLoop->getLoopDepth()-1)
           << " Inside Loop BB" << getFunctionNumber() << "_"
           << Header->getNumber() << " Depth " << CurLoop->getLoopDepth();

@@ -29,7 +29,7 @@ Create(const StringRef &Name, bool IsDirective, SectionKind K, MCContext &Ctx) {
   return new (Ctx) MCSectionCOFF(Name, IsDirective, K);
 }
 
-void MCSectionCOFF::PrintSwitchToSection(const MCAsmInfo &TAI,
+void MCSectionCOFF::PrintSwitchToSection(const MCAsmInfo &MAI,
                                          raw_ostream &OS) const {
   
   if (isDirective()) {

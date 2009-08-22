@@ -43,9 +43,9 @@ namespace llvm {
     ///
     AsmPrinter *Asm;
 
-    /// TAI - Target asm information.
+    /// MAI - Target asm information.
     /// 
-    const MCAsmInfo *TAI;
+    const MCAsmInfo *MAI;
 
     /// TD - Target data.
     /// 
@@ -88,7 +88,7 @@ namespace llvm {
     //
     const AsmPrinter *getAsm() const { return Asm; }
     MachineModuleInfo *getMMI() const { return MMI; }
-    const MCAsmInfo *getMCAsmInfo() const { return TAI; }
+    const MCAsmInfo *getMCAsmInfo() const { return MAI; }
     const TargetData *getTargetData() const { return TD; }
 
     void PrintRelDirective(bool Force32Bit = false,

@@ -193,7 +193,7 @@ void X86ATTAsmPrinter::emitFunctionHeader(const MachineFunction &MF) {
   case Function::WeakODRLinkage:
     if (Subtarget->isTargetDarwin()) {
       O << "\t.globl\t" << CurrentFnName << '\n';
-      O << TAI->getWeakDefDirective() << CurrentFnName << '\n';
+      O << MAI->getWeakDefDirective() << CurrentFnName << '\n';
     } else if (Subtarget->isTargetCygMing()) {
       O << "\t.globl\t" << CurrentFnName << "\n"
            "\t.linkonce discard\n";
@@ -217,8 +217,8 @@ void X86ATTAsmPrinter::emitFunctionHeader(const MachineFunction &MF) {
 
   O << CurrentFnName << ':';
   if (VerboseAsm) {
-    O.PadToColumn(TAI->getCommentColumn());
-    O << TAI->getCommentString() << ' ';
+    O.PadToColumn(MAI->getCommentColumn());
+    O << MAI->getCommentString() << ' ';
     WriteAsOperand(O, F, /*PrintType=*/false, F->getParent());
   }
   O << '\n';
@@ -255,7 +255,7 @@ bool X86ATTAsmPrinter::runOnMachineFunction(MachineFunction &MF) {
   emitFunctionHeader(MF);
 
   // Emit pre-function debug and/or EH information.
-  if (TAI->doesSupportDebugInformation() || TAI->doesSupportExceptionHandling())
+  if (MAI->doesSupportDebugInformation() || MAI->doesSupportExceptionHandling())
     DW->BeginFunction(&MF);
 
   // Print out code for the function.
@@ -287,11 +287,11 @@ bool X86ATTAsmPrinter::runOnMachineFunction(MachineFunction &MF) {
     O << "\tnop\n";
   }
 
-  if (TAI->hasDotTypeDotSizeDirective())
+  if (MAI->hasDotTypeDotSizeDirective())
     O << "\t.size\t" << CurrentFnName << ", .-" << CurrentFnName << '\n';
 
   // Emit post-function debug information.
-  if (TAI->doesSupportDebugInformation() || TAI->doesSupportExceptionHandling())
+  if (MAI->doesSupportDebugInformation() || MAI->doesSupportExceptionHandling())
     DW->EndFunction(&MF);
 
   // Print out jump tables referenced by the function.
@@ -308,11 +308,11 @@ void X86ATTAsmPrinter::printSymbolOperand(const MachineOperand &MO) {
   switch (MO.getType()) {
   default: llvm_unreachable("unknown symbol type!");
   case MachineOperand::MO_JumpTableIndex:
-    O << TAI->getPrivateGlobalPrefix() << "JTI" << getFunctionNumber() << '_'
+    O << MAI->getPrivateGlobalPrefix() << "JTI" << getFunctionNumber() << '_'
       << MO.getIndex();
     break;
   case MachineOperand::MO_ConstantPoolIndex:
-    O << TAI->getPrivateGlobalPrefix() << "CPI" << getFunctionNumber() << '_'
+    O << MAI->getPrivateGlobalPrefix() << "CPI" << getFunctionNumber() << '_'
       << MO.getIndex();
     printOffset(MO.getOffset());
     break;
@@ -535,18 +535,18 @@ void X86ATTAsmPrinter::printMemReference(const MachineInstr *MI, unsigned Op,
 
 void X86ATTAsmPrinter::printPICJumpTableSetLabel(unsigned uid,
                                            const MachineBasicBlock *MBB) const {
-  if (!TAI->getSetDirective())
+  if (!MAI->getSetDirective())
     return;
 
   // We don't need .set machinery if we have GOT-style relocations
   if (Subtarget->isPICStyleGOT())
     return;
 
-  O << TAI->getSetDirective() << ' ' << TAI->getPrivateGlobalPrefix()
+  O << MAI->getSetDirective() << ' ' << MAI->getPrivateGlobalPrefix()
     << getFunctionNumber() << '_' << uid << "_set_" << MBB->getNumber() << ',';
   printBasicBlockLabel(MBB, false, false, false);
   if (Subtarget->isPICStyleRIPRel())
-    O << '-' << TAI->getPrivateGlobalPrefix() << "JTI" << getFunctionNumber()
+    O << '-' << MAI->getPrivateGlobalPrefix() << "JTI" << getFunctionNumber()
       << '_' << uid << '\n';
   else {
     O << '-';
@@ -568,12 +568,12 @@ void X86ATTAsmPrinter::printPICJumpTableEntry(const MachineJumpTableInfo *MJTI,
                                               const MachineBasicBlock *MBB,
                                               unsigned uid) const {
   const char *JTEntryDirective = MJTI->getEntrySize() == 4 ?
-    TAI->getData32bitsDirective() : TAI->getData64bitsDirective();
+    MAI->getData32bitsDirective() : MAI->getData64bitsDirective();
 
   O << JTEntryDirective << ' ';
 
   if (Subtarget->isPICStyleRIPRel() || Subtarget->isPICStyleStubPIC()) {
-    O << TAI->getPrivateGlobalPrefix() << getFunctionNumber()
+    O << MAI->getPrivateGlobalPrefix() << getFunctionNumber()
       << '_' << uid << "_set_" << MBB->getNumber();
   } else if (Subtarget->isPICStyleGOT()) {
     printBasicBlockLabel(MBB, false, false, false);
@@ -950,7 +950,7 @@ void X86ATTAsmPrinter::PrintGlobalVariable(const GlobalVariable* GVar) {
       // Don't put things that should go in the cstring section into "comm".
       !TheSection->getKind().isMergeableCString()) {
     if (GVar->hasExternalLinkage()) {
-      if (const char *Directive = TAI->getZeroFillDirective()) {
+      if (const char *Directive = MAI->getZeroFillDirective()) {
         O << "\t.globl " << name << '\n';
         O << Directive << "__DATA, __common, " << name << ", "
           << Size << ", " << Align << '\n';
@@ -962,41 +962,41 @@ void X86ATTAsmPrinter::PrintGlobalVariable(const GlobalVariable* GVar) {
         (GVar->hasLocalLinkage() || GVar->isWeakForLinker())) {
       if (Size == 0) Size = 1;   // .comm Foo, 0 is undefined, avoid it.
 
-      if (TAI->getLCOMMDirective() != NULL) {
+      if (MAI->getLCOMMDirective() != NULL) {
         if (GVar->hasLocalLinkage()) {
-          O << TAI->getLCOMMDirective() << name << ',' << Size;
+          O << MAI->getLCOMMDirective() << name << ',' << Size;
           if (Subtarget->isTargetDarwin())
             O << ',' << Align;
         } else if (Subtarget->isTargetDarwin() && !GVar->hasCommonLinkage()) {
           O << "\t.globl " << name << '\n'
-            << TAI->getWeakDefDirective() << name << '\n';
+            << MAI->getWeakDefDirective() << name << '\n';
           EmitAlignment(Align, GVar);
           O << name << ":";
           if (VerboseAsm) {
-            O.PadToColumn(TAI->getCommentColumn());
-            O << TAI->getCommentString() << ' ';
+            O.PadToColumn(MAI->getCommentColumn());
+            O << MAI->getCommentString() << ' ';
             WriteAsOperand(O, GVar, /*PrintType=*/false, GVar->getParent());
           }
           O << '\n';
           EmitGlobalConstant(C);
           return;
         } else {
-          O << TAI->getCOMMDirective()  << name << ',' << Size;
-          if (TAI->getCOMMDirectiveTakesAlignment())
-            O << ',' << (TAI->getAlignmentIsInBytes() ? (1 << Align) : Align);
+          O << MAI->getCOMMDirective()  << name << ',' << Size;
+          if (MAI->getCOMMDirectiveTakesAlignment())
+            O << ',' << (MAI->getAlignmentIsInBytes() ? (1 << Align) : Align);
         }
       } else {
         if (!Subtarget->isTargetCygMing()) {
           if (GVar->hasLocalLinkage())
             O << "\t.local\t" << name << '\n';
         }
-        O << TAI->getCOMMDirective()  << name << ',' << Size;
-        if (TAI->getCOMMDirectiveTakesAlignment())
-          O << ',' << (TAI->getAlignmentIsInBytes() ? (1 << Align) : Align);
+        O << MAI->getCOMMDirective()  << name << ',' << Size;
+        if (MAI->getCOMMDirectiveTakesAlignment())
+          O << ',' << (MAI->getAlignmentIsInBytes() ? (1 << Align) : Align);
       }
       if (VerboseAsm) {
-        O.PadToColumn(TAI->getCommentColumn());
-        O << TAI->getCommentString() << ' ';
+        O.PadToColumn(MAI->getCommentColumn());
+        O << MAI->getCommentString() << ' ';
         WriteAsOperand(O, GVar, /*PrintType=*/false, GVar->getParent());
       }
       O << '\n';
@@ -1013,7 +1013,7 @@ void X86ATTAsmPrinter::PrintGlobalVariable(const GlobalVariable* GVar) {
   case GlobalValue::LinkerPrivateLinkage:
     if (Subtarget->isTargetDarwin()) {
       O << "\t.globl " << name << '\n'
-        << TAI->getWeakDefDirective() << name << '\n';
+        << MAI->getWeakDefDirective() << name << '\n';
     } else if (Subtarget->isTargetCygMing()) {
       O << "\t.globl\t" << name << "\n"
            "\t.linkonce same_size\n";
@@ -1039,15 +1039,15 @@ void X86ATTAsmPrinter::PrintGlobalVariable(const GlobalVariable* GVar) {
   EmitAlignment(Align, GVar);
   O << name << ":";
   if (VerboseAsm){
-    O.PadToColumn(TAI->getCommentColumn());
-    O << TAI->getCommentString() << ' ';
+    O.PadToColumn(MAI->getCommentColumn());
+    O << MAI->getCommentString() << ' ';
     WriteAsOperand(O, GVar, /*PrintType=*/false, GVar->getParent());
   }
   O << '\n';
 
   EmitGlobalConstant(C);
 
-  if (TAI->hasDotTypeDotSizeDirective())
+  if (MAI->hasDotTypeDotSizeDirective())
     O << "\t.size\t" << name << ", " << Size << '\n';
 }
 
@@ -1066,7 +1066,7 @@ bool X86ATTAsmPrinter::doFinalization(Module &M) {
     
     // Add the (possibly multiple) personalities to the set of global value
     // stubs.  Only referenced functions get into the Personalities list.
-    if (TAI->doesSupportExceptionHandling() && MMI && !Subtarget->is64Bit()) {
+    if (MAI->doesSupportExceptionHandling() && MMI && !Subtarget->is64Bit()) {
       const std::vector<Function*> &Personalities = MMI->getPersonalities();
       for (unsigned i = 0, e = Personalities.size(); i != e; ++i) {
         if (Personalities[i])
@@ -1110,7 +1110,7 @@ bool X86ATTAsmPrinter::doFinalization(Module &M) {
       EmitAlignment(2);
       for (StringMap<std::string>::iterator I = HiddenGVStubs.begin(),
            E = HiddenGVStubs.end(); I != E; ++I)
-        O << I->getKeyData() << ":\n" << TAI->getData32bitsDirective()
+        O << I->getKeyData() << ":\n" << MAI->getData32bitsDirective()
           << I->second << '\n';
     }
 

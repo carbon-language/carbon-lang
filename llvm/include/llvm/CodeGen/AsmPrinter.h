@@ -96,7 +96,7 @@ namespace llvm {
     
     /// Target Asm Printer information.
     ///
-    const MCAsmInfo *TAI;
+    const MCAsmInfo *MAI;
 
     /// Target Register Information.
     ///

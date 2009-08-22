@@ -325,22 +325,22 @@ void SPUAsmPrinter::printOp(const MachineOperand &MO) {
     printBasicBlockLabel(MO.getMBB());
     return;
   case MachineOperand::MO_JumpTableIndex:
-    O << TAI->getPrivateGlobalPrefix() << "JTI" << getFunctionNumber()
+    O << MAI->getPrivateGlobalPrefix() << "JTI" << getFunctionNumber()
       << '_' << MO.getIndex();
     return;
   case MachineOperand::MO_ConstantPoolIndex:
-    O << TAI->getPrivateGlobalPrefix() << "CPI" << getFunctionNumber()
+    O << MAI->getPrivateGlobalPrefix() << "CPI" << getFunctionNumber()
       << '_' << MO.getIndex();
     return;
   case MachineOperand::MO_ExternalSymbol:
     // Computing the address of an external symbol, not calling it.
     if (TM.getRelocationModel() != Reloc::Static) {
-      std::string Name(TAI->getGlobalPrefix()); Name += MO.getSymbolName();
+      std::string Name(MAI->getGlobalPrefix()); Name += MO.getSymbolName();
       GVStubs.insert(Name);
       O << "L" << Name << "$non_lazy_ptr";
       return;
     }
-    O << TAI->getGlobalPrefix() << MO.getSymbolName();
+    O << MAI->getGlobalPrefix() << MO.getSymbolName();
     return;
   case MachineOperand::MO_GlobalAddress: {
     // Computing the address of a global symbol, not calling it.
@@ -528,11 +528,11 @@ void LinuxAsmPrinter::PrintGlobalVariable(const GlobalVariable *GVar) {
         O << name << ":\n";
         O << "\t.zero " << Size << '\n';
       } else if (GVar->hasLocalLinkage()) {
-        O << TAI->getLCOMMDirective() << name << ',' << Size;
+        O << MAI->getLCOMMDirective() << name << ',' << Size;
       } else {
         O << ".comm " << name << ',' << Size;
       }
-      O << "\t\t" << TAI->getCommentString() << " '";
+      O << "\t\t" << MAI->getCommentString() << " '";
       WriteAsOperand(O, GVar, /*PrintType=*/false, GVar->getParent());
       O << "'\n";
       return;
@@ -566,7 +566,7 @@ void LinuxAsmPrinter::PrintGlobalVariable(const GlobalVariable *GVar) {
   }
 
   EmitAlignment(Align, GVar);
-  O << name << ":\t\t\t\t" << TAI->getCommentString() << " '";
+  O << name << ":\t\t\t\t" << MAI->getCommentString() << " '";
   WriteAsOperand(O, GVar, /*PrintType=*/false, GVar->getParent());
   O << "'\n";
 

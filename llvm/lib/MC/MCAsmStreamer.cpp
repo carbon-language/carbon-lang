@@ -24,12 +24,12 @@ namespace {
 
 class MCAsmStreamer : public MCStreamer {
   raw_ostream &OS;
-  const MCAsmInfo &TAI;
+  const MCAsmInfo &MAI;
   AsmPrinter *Printer;
 public:
   MCAsmStreamer(MCContext &Context, raw_ostream &_OS, const MCAsmInfo &tai,
                 AsmPrinter *_AsmPrinter)
-    : MCStreamer(Context), OS(_OS), TAI(tai), Printer(_AsmPrinter) {}
+    : MCStreamer(Context), OS(_OS), MAI(tai), Printer(_AsmPrinter) {}
   ~MCAsmStreamer() {}
 
   /// @name MCStreamer Interface
@@ -102,7 +102,7 @@ void MCAsmStreamer::SwitchSection(const MCSection *Section) {
   assert(Section && "Cannot switch to a null section!");
   if (Section != CurSection) {
     CurSection = Section;
-    Section->PrintSwitchToSection(TAI, OS);
+    Section->PrintSwitchToSection(MAI, OS);
   }
 }
 
@@ -230,14 +230,14 @@ void MCAsmStreamer::EmitValueToAlignment(unsigned ByteAlignment, int64_t Value,
   if (isPowerOf2_32(ByteAlignment)) {
     switch (ValueSize) {
     default: llvm_unreachable("Invalid size for machine code value!");
-    case 1: OS << TAI.getAlignDirective(); break;
-    // FIXME: use TAI for this!
+    case 1: OS << MAI.getAlignDirective(); break;
+    // FIXME: use MAI for this!
     case 2: OS << ".p2alignw "; break;
     case 4: OS << ".p2alignl "; break;
     case 8: llvm_unreachable("Unsupported alignment size!");
     }
     
-    if (TAI.getAlignmentIsInBytes())
+    if (MAI.getAlignmentIsInBytes())
       OS << ByteAlignment;
     else
       OS << Log2_32(ByteAlignment);
@@ -253,7 +253,7 @@ void MCAsmStreamer::EmitValueToAlignment(unsigned ByteAlignment, int64_t Value,
   }
   
   // Non-power of two alignment.  This is not widely supported by assemblers.
-  // FIXME: Parameterize this based on TAI.
+  // FIXME: Parameterize this based on MAI.
   switch (ValueSize) {
   default: llvm_unreachable("Invalid size for machine code value!");
   case 1: OS << ".balign";  break;
@@ -314,6 +314,6 @@ void MCAsmStreamer::Finish() {
 }
     
 MCStreamer *llvm::createAsmStreamer(MCContext &Context, raw_ostream &OS,
-                                    const MCAsmInfo &TAI, AsmPrinter *AP) {
-  return new MCAsmStreamer(Context, OS, TAI, AP);
+                                    const MCAsmInfo &MAI, AsmPrinter *AP) {
+  return new MCAsmStreamer(Context, OS, MAI, AP);
 }

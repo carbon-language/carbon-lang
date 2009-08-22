@@ -70,7 +70,7 @@ namespace llvm {
     PIC16TargetObjectFile *PTOF;
     PIC16TargetLowering *PTLI;
     PIC16DbgInfo DbgInfo;
-    const PIC16MCAsmInfo *PTAI;
+    const PIC16MCAsmInfo *PMAI;
     std::list<const char *> LibcallDecls; // List of extern decls.
   };
 } // end of namespace

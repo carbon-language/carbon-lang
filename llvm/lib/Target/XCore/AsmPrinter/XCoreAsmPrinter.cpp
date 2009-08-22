@@ -97,7 +97,7 @@ namespace {
 void XCoreAsmPrinter::
 emitGlobalDirective(const std::string &name)
 {
-  O << TAI->getGlobalDirective() << name;
+  O << MAI->getGlobalDirective() << name;
   O << "\n";
 }
 
@@ -117,12 +117,12 @@ emitArrayBound(const std::string &name, const GlobalVariable *GV)
   if (const ArrayType *ATy = dyn_cast<ArrayType>(
     cast<PointerType>(GV->getType())->getElementType()))
   {
-    O << TAI->getGlobalDirective() << name << ".globound" << "\n";
-    O << TAI->getSetDirective() << name << ".globound" << ","
+    O << MAI->getGlobalDirective() << name << ".globound" << "\n";
+    O << MAI->getSetDirective() << name << ".globound" << ","
       << ATy->getNumElements() << "\n";
     if (GV->hasWeakLinkage() || GV->hasLinkOnceLinkage()) {
       // TODO Use COMDAT groups for LinkOnceLinkage
-      O << TAI->getWeakDefDirective() << name << ".globound" << "\n";
+      O << MAI->getWeakDefDirective() << name << ".globound" << "\n";
     }
   }
 }
@@ -156,7 +156,7 @@ void XCoreAsmPrinter::PrintGlobalVariable(const GlobalVariable *GV) {
     emitGlobalDirective(name);
     // TODO Use COMDAT groups for LinkOnceLinkage
     if (GV->hasWeakLinkage() || GV->hasLinkOnceLinkage()) {
-      O << TAI->getWeakDefDirective() << name << "\n";
+      O << MAI->getWeakDefDirective() << name << "\n";
     }
     // FALL THROUGH
   case GlobalValue::InternalLinkage:
@@ -179,7 +179,7 @@ void XCoreAsmPrinter::PrintGlobalVariable(const GlobalVariable *GV) {
   if (GV->isThreadLocal()) {
     Size *= MaxThreads;
   }
-  if (TAI->hasDotTypeDotSizeDirective()) {
+  if (MAI->hasDotTypeDotSizeDirective()) {
     O << "\t.type " << name << ",@object\n";
     O << "\t.size " << name << "," << Size << "\n";
   }
@@ -225,13 +225,13 @@ void XCoreAsmPrinter::emitFunctionStart(MachineFunction &MF) {
   case Function::WeakAnyLinkage:
   case Function::WeakODRLinkage:
     // TODO Use COMDAT groups for LinkOnceLinkage
-    O << TAI->getGlobalDirective() << CurrentFnName << "\n";
-    O << TAI->getWeakDefDirective() << CurrentFnName << "\n";
+    O << MAI->getGlobalDirective() << CurrentFnName << "\n";
+    O << MAI->getWeakDefDirective() << CurrentFnName << "\n";
     break;
   }
   // (1 << 1) byte aligned
   EmitAlignment(MF.getAlignment(), F, 1);
-  if (TAI->hasDotTypeDotSizeDirective()) {
+  if (MAI->hasDotTypeDotSizeDirective()) {
     O << "\t.type " << CurrentFnName << ",@function\n";
   }
   O << CurrentFnName << ":\n";
@@ -331,11 +331,11 @@ void XCoreAsmPrinter::printOperand(const MachineInstr *MI, int opNum) {
     O << MO.getSymbolName();
     break;
   case MachineOperand::MO_ConstantPoolIndex:
-    O << TAI->getPrivateGlobalPrefix() << "CPI" << getFunctionNumber()
+    O << MAI->getPrivateGlobalPrefix() << "CPI" << getFunctionNumber()
       << '_' << MO.getIndex();
     break;
   case MachineOperand::MO_JumpTableIndex:
-    O << TAI->getPrivateGlobalPrefix() << "JTI" << getFunctionNumber()
+    O << MAI->getPrivateGlobalPrefix() << "JTI" << getFunctionNumber()
       << '_' << MO.getIndex();
     break;
   default:

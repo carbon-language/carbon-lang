@@ -40,8 +40,8 @@ namespace {
   class VISIBILITY_HIDDEN BlackfinAsmPrinter : public AsmPrinter {
   public:
     BlackfinAsmPrinter(formatted_raw_ostream &O, TargetMachine &TM,
-                       const MCAsmInfo *TAI, bool V)
-      : AsmPrinter(O, TM, TAI, V) {}
+                       const MCAsmInfo *MAI, bool V)
+      : AsmPrinter(O, TM, MAI, V) {}
 
     virtual const char *getPassName() const {
       return "Blackfin Assembly Printer";
@@ -75,14 +75,14 @@ void BlackfinAsmPrinter::emitLinkage(const std::string &name,
   case GlobalValue::LinkerPrivateLinkage:
     break;
   case GlobalValue::ExternalLinkage:
-    O << TAI->getGlobalDirective() << name << "\n";
+    O << MAI->getGlobalDirective() << name << "\n";
     break;
   case GlobalValue::LinkOnceAnyLinkage:
   case GlobalValue::LinkOnceODRLinkage:
   case GlobalValue::WeakAnyLinkage:
   case GlobalValue::WeakODRLinkage:
-    O << TAI->getGlobalDirective() << name << "\n";
-    O << TAI->getWeakDefDirective() << name << "\n";
+    O << MAI->getGlobalDirective() << name << "\n";
+    O << MAI->getWeakDefDirective() << name << "\n";
     break;
   }
 }
@@ -180,11 +180,11 @@ void BlackfinAsmPrinter::printOperand(const MachineInstr *MI, int opNum) {
     O << Mang->makeNameProper(MO.getSymbolName());
     break;
   case MachineOperand::MO_ConstantPoolIndex:
-    O << TAI->getPrivateGlobalPrefix() << "CPI" << getFunctionNumber() << "_"
+    O << MAI->getPrivateGlobalPrefix() << "CPI" << getFunctionNumber() << "_"
       << MO.getIndex();
     break;
   case MachineOperand::MO_JumpTableIndex:
-    O << TAI->getPrivateGlobalPrefix() << "JTI" << getFunctionNumber()
+    O << MAI->getPrivateGlobalPrefix() << "JTI" << getFunctionNumber()
       << '_' << MO.getIndex();
     break;
   default:

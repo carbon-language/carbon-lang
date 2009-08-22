@@ -226,14 +226,14 @@ void X86IntelAsmPrinter::printOp(const MachineOperand &MO,
   case MachineOperand::MO_JumpTableIndex: {
     bool isMemOp  = Modifier && !strcmp(Modifier, "mem");
     if (!isMemOp) O << "OFFSET ";
-    O << TAI->getPrivateGlobalPrefix() << "JTI" << getFunctionNumber()
+    O << MAI->getPrivateGlobalPrefix() << "JTI" << getFunctionNumber()
       << "_" << MO.getIndex();
     return;
   }
   case MachineOperand::MO_ConstantPoolIndex: {
     bool isMemOp  = Modifier && !strcmp(Modifier, "mem");
     if (!isMemOp) O << "OFFSET ";
-    O << "[" << TAI->getPrivateGlobalPrefix() << "CPI"
+    O << "[" << MAI->getPrivateGlobalPrefix() << "CPI"
       << getFunctionNumber() << "_" << MO.getIndex();
     printOffset(MO.getOffset());
     O << "]";
@@ -258,7 +258,7 @@ void X86IntelAsmPrinter::printOp(const MachineOperand &MO,
     return;
   }
   case MachineOperand::MO_ExternalSymbol: {
-    O << TAI->getGlobalPrefix() << MO.getSymbolName();
+    O << MAI->getGlobalPrefix() << MO.getSymbolName();
     return;
   }
   default:
@@ -293,7 +293,7 @@ void X86IntelAsmPrinter::print_pcrel_imm(const MachineInstr *MI, unsigned OpNo){
   }
 
   case MachineOperand::MO_ExternalSymbol:
-    O << TAI->getGlobalPrefix() << MO.getSymbolName();
+    O << MAI->getGlobalPrefix() << MO.getSymbolName();
     return;
   }
 }
@@ -357,10 +357,10 @@ void X86IntelAsmPrinter::printMemReference(const MachineInstr *MI, unsigned Op,
 
 void X86IntelAsmPrinter::printPICJumpTableSetLabel(unsigned uid,
                                            const MachineBasicBlock *MBB) const {
-  if (!TAI->getSetDirective())
+  if (!MAI->getSetDirective())
     return;
 
-  O << TAI->getSetDirective() << ' ' << TAI->getPrivateGlobalPrefix()
+  O << MAI->getSetDirective() << ' ' << MAI->getPrivateGlobalPrefix()
     << getFunctionNumber() << '_' << uid << "_set_" << MBB->getNumber() << ',';
   printBasicBlockLabel(MBB, false, false, false);
   O << '-' << "\"L" << getFunctionNumber() << "$pb\"'\n";
@@ -525,8 +525,8 @@ void X86IntelAsmPrinter::PrintGlobalVariable(const GlobalVariable *GV) {
   
   O << name << ":";
   if (VerboseAsm)
-    O.PadToColumn(TAI->getCommentColumn());
-    O << TAI->getCommentString()
+    O.PadToColumn(MAI->getCommentColumn());
+    O << MAI->getCommentString()
     << " " << GV->getName();
   O << '\n';
   
