@@ -5022,12 +5022,15 @@ static ManagedStatic<sys::SmartMutex<true> > VTMutex;
 /// getValueTypeList - Return a pointer to the specified value type.
 ///
 const EVT *SDNode::getValueTypeList(EVT VT) {
-  sys::SmartScopedLock<true> Lock(*VTMutex);
   if (VT.isExtended()) {
     return &(*EVTs->insert(VT).first);
   } else {
+    // All writes to this location will have the same value, so it's ok
+    // to race on it.  We only need to ensure that at least one write has
+    // succeeded before we return the pointer into the array.
     VTs[VT.getSimpleVT().SimpleTy] = VT;
-    return &VTs[VT.getSimpleVT().SimpleTy];
+    sys::MemoryFence();
+    return VTs + VT.getSimpleVT().SimpleTy;
   }
 }
 
