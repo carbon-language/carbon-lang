@@ -21,16 +21,16 @@
 namespace llvm {
   class Triple;
 
-  struct X86DarwinMCAsmInfo : public DarwinMCAsmInfo {
-    explicit X86DarwinMCAsmInfo(const Triple &Triple);
+  struct X86MCAsmInfoDarwin : public MCAsmInfoDarwin {
+    explicit X86MCAsmInfoDarwin(const Triple &Triple);
   };
 
   struct X86ELFMCAsmInfo : public MCAsmInfo {
     explicit X86ELFMCAsmInfo(const Triple &Triple);
   };
 
-  struct X86COFFMCAsmInfo : public COFFMCAsmInfo {
-    explicit X86COFFMCAsmInfo(const Triple &Triple);
+  struct X86MCAsmInfoCOFF : public MCAsmInfoCOFF {
+    explicit X86MCAsmInfoCOFF(const Triple &Triple);
   };
 
   struct X86WinMCAsmInfo : public MCAsmInfo {

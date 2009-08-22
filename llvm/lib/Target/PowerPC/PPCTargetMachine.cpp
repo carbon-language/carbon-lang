@@ -25,7 +25,7 @@ static const MCAsmInfo *createMCAsmInfo(const Target &T,
   Triple TheTriple(TT);
   bool isPPC64 = TheTriple.getArch() == Triple::ppc64;
   if (TheTriple.getOS() == Triple::Darwin)
-    return new PPCDarwinMCAsmInfo(isPPC64);
+    return new PPCMCAsmInfoDarwin(isPPC64);
   return new PPCLinuxMCAsmInfo(isPPC64);
   
 }

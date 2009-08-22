@@ -27,11 +27,11 @@ static const MCAsmInfo *createMCAsmInfo(const Target &T,
   Triple TheTriple(TT);
   switch (TheTriple.getOS()) {
   case Triple::Darwin:
-    return new X86DarwinMCAsmInfo(TheTriple);
+    return new X86MCAsmInfoDarwin(TheTriple);
   case Triple::MinGW32:
   case Triple::MinGW64:
   case Triple::Cygwin:
-    return new X86COFFMCAsmInfo(TheTriple);
+    return new X86MCAsmInfoCOFF(TheTriple);
   case Triple::Win32:
     return new X86WinMCAsmInfo(TheTriple);
   default:

@@ -23,8 +23,8 @@ namespace llvm {
   class Type;
   class Mangler;
 
-  struct DarwinMCAsmInfo : public MCAsmInfo {
-    explicit DarwinMCAsmInfo();
+  struct MCAsmInfoDarwin : public MCAsmInfo {
+    explicit MCAsmInfoDarwin();
   };
 }
 

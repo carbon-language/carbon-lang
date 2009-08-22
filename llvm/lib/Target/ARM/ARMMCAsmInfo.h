@@ -18,8 +18,8 @@
 
 namespace llvm {
 
-  struct ARMDarwinMCAsmInfo : public DarwinMCAsmInfo {
-    explicit ARMDarwinMCAsmInfo();
+  struct ARMMCAsmInfoDarwin : public MCAsmInfoDarwin {
+    explicit ARMMCAsmInfoDarwin();
   };
 
   struct ARMELFMCAsmInfo : public MCAsmInfo {

@@ -32,7 +32,7 @@ static const MCAsmInfo *createMCAsmInfo(const Target &T,
   Triple TheTriple(TT);
   switch (TheTriple.getOS()) {
   case Triple::Darwin:
-    return new ARMDarwinMCAsmInfo();
+    return new ARMMCAsmInfoDarwin();
   default:
     return new ARMELFMCAsmInfo();
   }

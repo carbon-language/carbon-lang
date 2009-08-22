@@ -7,7 +7,7 @@
 //
 //===----------------------------------------------------------------------===//
 //
-// This file contains the declaration of the DarwinMCAsmInfo class.
+// This file contains the declaration of the MCAsmInfoDarwin class.
 //
 //===----------------------------------------------------------------------===//
 
@@ -18,8 +18,8 @@
 
 namespace llvm {
 
-  struct PPCDarwinMCAsmInfo : public DarwinMCAsmInfo {
-    explicit PPCDarwinMCAsmInfo(bool is64Bit);
+  struct PPCMCAsmInfoDarwin : public MCAsmInfoDarwin {
+    explicit PPCMCAsmInfoDarwin(bool is64Bit);
   };
 
   struct PPCLinuxMCAsmInfo : public MCAsmInfo {

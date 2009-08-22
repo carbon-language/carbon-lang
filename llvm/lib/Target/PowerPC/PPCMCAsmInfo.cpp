@@ -7,14 +7,14 @@
 //
 //===----------------------------------------------------------------------===//
 //
-// This file contains the declarations of the DarwinMCAsmInfo properties.
+// This file contains the declarations of the MCAsmInfoDarwin properties.
 //
 //===----------------------------------------------------------------------===//
 
 #include "PPCMCAsmInfo.h"
 using namespace llvm;
 
-PPCDarwinMCAsmInfo::PPCDarwinMCAsmInfo(bool is64Bit) {
+PPCMCAsmInfoDarwin::PPCMCAsmInfoDarwin(bool is64Bit) {
   PCSymbol = ".";
   CommentString = ";";
   ExceptionsType = ExceptionHandling::Dwarf;

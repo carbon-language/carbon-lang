@@ -13,9 +13,9 @@
 #include "llvm/MC/MCAsmInfo.h"
 
 namespace llvm {
-  class COFFMCAsmInfo : public MCAsmInfo {
+  class MCAsmInfoCOFF : public MCAsmInfo {
   protected:
-    explicit COFFMCAsmInfo();
+    explicit MCAsmInfoCOFF();
       
   };
 }

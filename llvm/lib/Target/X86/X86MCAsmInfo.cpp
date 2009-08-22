@@ -43,7 +43,7 @@ static const char *const x86_asm_table[] = {
   "{cc}", "cc",
   0,0};
 
-X86DarwinMCAsmInfo::X86DarwinMCAsmInfo(const Triple &Triple) {
+X86MCAsmInfoDarwin::X86MCAsmInfoDarwin(const Triple &Triple) {
   AsmTransCBE = x86_asm_table;
   AssemblerDialect = AsmWriterFlavor;
     
@@ -101,7 +101,7 @@ X86ELFMCAsmInfo::X86ELFMCAsmInfo(const Triple &Triple) {
     NonexecutableStackDirective = "\t.section\t.note.GNU-stack,\"\",@progbits";
 }
 
-X86COFFMCAsmInfo::X86COFFMCAsmInfo(const Triple &Triple) {
+X86MCAsmInfoCOFF::X86MCAsmInfoCOFF(const Triple &Triple) {
   AsmTransCBE = x86_asm_table;
   AssemblerDialect = AsmWriterFlavor;
 }

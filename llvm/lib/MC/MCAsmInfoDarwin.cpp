@@ -15,7 +15,7 @@
 #include "llvm/MC/MCAsmInfoDarwin.h"
 using namespace llvm;
 
-DarwinMCAsmInfo::DarwinMCAsmInfo() {
+MCAsmInfoDarwin::MCAsmInfoDarwin() {
   // Common settings for all Darwin targets.
   // Syntax:
   GlobalPrefix = "_";
