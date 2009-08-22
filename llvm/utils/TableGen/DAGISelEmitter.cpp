@@ -1957,23 +1957,6 @@ void DAGISelEmitter::EmitInstructionSelector(raw_ostream &OS) {
      << "                              MVT::Other, Tmp, Chain);\n"
      << "}\n\n";
 
-  OS << "SDNode *Select_DECLARE(const SDValue &N) {\n"
-     << "  SDValue Chain = N.getOperand(0);\n"
-     << "  SDValue N1 = N.getOperand(1);\n"
-     << "  SDValue N2 = N.getOperand(2);\n"
-     << "  if (!isa<FrameIndexSDNode>(N1) || !isa<GlobalAddressSDNode>(N2)) {\n"
-     << "    CannotYetSelect(N);\n"
-     << "  }\n"
-     << "  int FI = cast<FrameIndexSDNode>(N1)->getIndex();\n"
-     << "  GlobalValue *GV = cast<GlobalAddressSDNode>(N2)->getGlobal();\n"
-     << "  SDValue Tmp1 = "
-     << "CurDAG->getTargetFrameIndex(FI, TLI.getPointerTy());\n"
-     << "  SDValue Tmp2 = "
-     << "CurDAG->getTargetGlobalAddress(GV, TLI.getPointerTy());\n"
-     << "  return CurDAG->SelectNodeTo(N.getNode(), TargetInstrInfo::DECLARE,\n"
-     << "                              MVT::Other, Tmp1, Tmp2, Chain);\n"
-     << "}\n\n";
-
   OS << "// The main instruction selector code.\n"
      << "SDNode *SelectCode(SDValue N) {\n"
      << "  MVT::SimpleValueType NVT = N.getNode()->getValueType(0).getSimpleVT().SimpleTy;\n"
@@ -2007,7 +1990,6 @@ void DAGISelEmitter::EmitInstructionSelector(raw_ostream &OS) {
      << "  case ISD::INLINEASM: return Select_INLINEASM(N);\n"
      << "  case ISD::DBG_LABEL: return Select_DBG_LABEL(N);\n"
      << "  case ISD::EH_LABEL: return Select_EH_LABEL(N);\n"
-     << "  case ISD::DECLARE: return Select_DECLARE(N);\n"
      << "  case ISD::UNDEF: return Select_UNDEF(N);\n";
 
   // Loop over all of the case statements, emiting a call to each method we

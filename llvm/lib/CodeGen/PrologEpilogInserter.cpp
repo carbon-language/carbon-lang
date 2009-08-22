@@ -637,11 +637,6 @@ void PEI::replaceFrameIndices(MachineFunction &Fn) {
     if (RS) RS->enterBasicBlock(BB);
 
     for (MachineBasicBlock::iterator I = BB->begin(); I != BB->end(); ) {
-      if (I->getOpcode() == TargetInstrInfo::DECLARE) {
-        // Ignore it.
-        ++I;
-        continue;
-      }
 
       if (I->getOpcode() == FrameSetupOpcode ||
           I->getOpcode() == FrameDestroyOpcode) {

@@ -502,12 +502,6 @@ namespace ISD {
     DBG_LABEL,
     EH_LABEL,
 
-    // DECLARE - Represents a llvm.dbg.declare intrinsic. It's used to track
-    // local variable declarations for debugging information. First operand is
-    // a chain, while the next two operands are first two arguments (address
-    // and variable) of a llvm.dbg.declare instruction.
-    DECLARE,
-
     // STACKSAVE - STACKSAVE has one operand, an input chain.  It produces a
     // value, the same type as the pointer type for the system, and an output
     // chain.

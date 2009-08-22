@@ -1094,47 +1094,6 @@ SDNode *PPCDAGToDAGISel::Select(SDValue Op) {
                                             Chain), 0);
     return CurDAG->SelectNodeTo(N, PPC::BCTR, MVT::Other, Chain);
   }
-  case ISD::DECLARE: {
-    SDValue Chain = N->getOperand(0);
-    SDValue N1 = N->getOperand(1);
-    SDValue N2 = N->getOperand(2);
-    FrameIndexSDNode *FINode = dyn_cast<FrameIndexSDNode>(N1);
-    
-    // FIXME: We need to handle this for VLAs.
-    if (!FINode) {
-      ReplaceUses(Op.getValue(0), Chain);
-      return NULL;
-    }
-    
-    if (N2.getOpcode() == ISD::ADD) {
-      if (N2.getOperand(0).getOpcode() == ISD::ADD &&
-          N2.getOperand(0).getOperand(0).getOpcode() == PPCISD::GlobalBaseReg &&
-          N2.getOperand(0).getOperand(1).getOpcode() == PPCISD::Hi &&
-          N2.getOperand(1).getOpcode() == PPCISD::Lo)
-        N2 = N2.getOperand(0).getOperand(1).getOperand(0);
-      else if (N2.getOperand(0).getOpcode() == ISD::ADD &&
-          N2.getOperand(0).getOperand(0).getOpcode() == PPCISD::GlobalBaseReg &&
-          N2.getOperand(0).getOperand(1).getOpcode() == PPCISD::Lo &&
-               N2.getOperand(1).getOpcode() == PPCISD::Hi)
-        N2 = N2.getOperand(0).getOperand(1).getOperand(0);
-      else if (N2.getOperand(0).getOpcode() == PPCISD::Hi &&
-               N2.getOperand(1).getOpcode() == PPCISD::Lo)
-        N2 = N2.getOperand(0).getOperand(0);
-    }
-    
-    // If we don't have a global address here, the debug info is mangled, just
-    // drop it.
-    if (!isa<GlobalAddressSDNode>(N2)) {
-      ReplaceUses(Op.getValue(0), Chain);
-      return NULL;
-    }
-    int FI = cast<FrameIndexSDNode>(N1)->getIndex();
-    GlobalValue *GV = cast<GlobalAddressSDNode>(N2)->getGlobal();
-    SDValue Tmp1 = CurDAG->getTargetFrameIndex(FI, TLI.getPointerTy());
-    SDValue Tmp2 = CurDAG->getTargetGlobalAddress(GV, TLI.getPointerTy());
-    return CurDAG->SelectNodeTo(N, TargetInstrInfo::DECLARE,
-                                MVT::Other, Tmp1, Tmp2, Chain);
-  }
   }
   
   return SelectCode(Op);

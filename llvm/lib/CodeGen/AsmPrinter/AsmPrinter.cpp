@@ -1567,16 +1567,6 @@ void AsmPrinter::printLabel(unsigned Id) const {
   O << TAI->getPrivateGlobalPrefix() << "label" << Id << ":\n";
 }
 
-/// printDeclare - This method prints a local variable declaration used by
-/// debug tables.
-/// FIXME: It doesn't really print anything rather it inserts a DebugVariable
-/// entry into dwarf table.
-void AsmPrinter::printDeclare(const MachineInstr *MI) const {
-  unsigned FI = MI->getOperand(0).getIndex();
-  GlobalValue *GV = MI->getOperand(1).getGlobal();
-  DW->RecordVariable(cast<GlobalVariable>(GV), FI, MI);
-}
-
 /// PrintAsmOperand - Print the specified operand of MI, an INLINEASM
 /// instruction, using the specified assembler variant.  Targets should
 /// overried this to format as appropriate.

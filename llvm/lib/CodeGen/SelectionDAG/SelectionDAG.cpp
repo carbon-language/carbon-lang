@@ -512,7 +512,6 @@ static bool doNotCSE(SDNode *N) {
   case ISD::DBG_LABEL:
   case ISD::DBG_STOPPOINT:
   case ISD::EH_LABEL:
-  case ISD::DECLARE:
     return true;   // Never CSE these nodes.
   }
 
@@ -5255,7 +5254,6 @@ std::string SDNode::getOperationName(const SelectionDAG *G) const {
   case ISD::INLINEASM:     return "inlineasm";
   case ISD::DBG_LABEL:     return "dbg_label";
   case ISD::EH_LABEL:      return "eh_label";
-  case ISD::DECLARE:       return "declare";
   case ISD::HANDLENODE:    return "handlenode";
 
   // Unary operators

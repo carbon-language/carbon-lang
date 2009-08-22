@@ -51,7 +51,7 @@ public:
     DBG_LABEL = 2,
     EH_LABEL = 3,
     GC_LABEL = 4,
-    DECLARE = 5,
+    // FIXME: DECLARE is removed. Readjust enum values ?
 
     /// EXTRACT_SUBREG - This instruction takes two operands: a register
     /// that has subregisters, and a subregister index. It returns the

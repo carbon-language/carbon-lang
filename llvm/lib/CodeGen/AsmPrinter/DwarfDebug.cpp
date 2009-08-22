@@ -1502,7 +1502,6 @@ void DwarfDebug::EndFunction(MachineFunction *MF) {
     DbgScopeMap.clear();
     DbgAbstractScopeMap.clear();
     DbgConcreteScopeMap.clear();
-    InlinedVariableScopes.clear();
     FunctionDbgScope = NULL;
     LexicalScopeStack.clear();
     AbstractInstanceRootList.clear();
@@ -1609,8 +1608,7 @@ unsigned DwarfDebug::RecordRegionEnd(GlobalVariable *V) {
 }
 
 /// RecordVariable - Indicate the declaration of a local variable.
-void DwarfDebug::RecordVariable(GlobalVariable *GV, unsigned FrameIndex,
-                                const MachineInstr *MI) {
+void DwarfDebug::RecordVariable(GlobalVariable *GV, unsigned FrameIndex) {
   if (TimePassesIsEnabled)
     DebugTimer->startTimer();
 
@@ -1623,18 +1621,22 @@ void DwarfDebug::RecordVariable(GlobalVariable *GV, unsigned FrameIndex,
     DIGlobalVariable DG(GV);
     Scope = getOrCreateScope(DG.getContext().getGV());
   } else {
-    DenseMap<const MachineInstr *, DbgScope *>::iterator
-      SI = InlinedVariableScopes.find(MI);
-
-    if (SI != InlinedVariableScopes.end()) {
-      // or GV is an inlined local variable.
-      Scope = SI->second;
-      InlinedFnVar = true;
-    } else {
-      DIVariable DV(GV);
-      GlobalVariable *V = DV.getContext().getGV();
-
-      // or GV is a local variable.
+    bool InlinedVar = false;
+    DIVariable DV(GV);
+    GlobalVariable *V = DV.getContext().getGV();
+    DISubprogram SP(V);
+    if (!SP.isNull()) {
+      // SP is inserted into DbgAbstractScopeMap when inlined function
+      // start was recorded by RecordInlineFnStart.
+      DenseMap<GlobalVariable *, DbgScope *>::iterator
+        I = DbgAbstractScopeMap.find(SP.getGV());
+      if (I != DbgAbstractScopeMap.end()) {
+        InlinedVar = true;
+        Scope = I->second;
+      }
+    }
+    if (!InlinedVar) {
+      // GV is a local variable.
       Scope = getOrCreateScope(V);
     }
   }
@@ -1766,33 +1768,6 @@ unsigned DwarfDebug::RecordInlinedFnEnd(DISubprogram &SP) {
     DebugTimer->stopTimer();
 
   return ID;
-}
-
-/// RecordVariableScope - Record scope for the variable declared by
-/// DeclareMI. DeclareMI must describe TargetInstrInfo::DECLARE. Record scopes
-/// for only inlined subroutine variables. Other variables's scopes are
-/// determined during RecordVariable().
-void DwarfDebug::RecordVariableScope(DIVariable &DV,
-                                     const MachineInstr *DeclareMI) {
-  if (TimePassesIsEnabled)
-    DebugTimer->startTimer();
-
-  DISubprogram SP(DV.getContext().getGV());
-
-  if (SP.isNull()) {
-    if (TimePassesIsEnabled)
-      DebugTimer->stopTimer();
-
-    return;
-  }
-
-  DenseMap<GlobalVariable *, DbgScope *>::iterator
-    I = DbgAbstractScopeMap.find(SP.getGV());
-  if (I != DbgAbstractScopeMap.end())
-    InlinedVariableScopes[DeclareMI] = I->second;
-
-  if (TimePassesIsEnabled)
-    DebugTimer->stopTimer();
 }
 
 //===----------------------------------------------------------------------===//

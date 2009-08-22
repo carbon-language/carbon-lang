@@ -3965,14 +3965,23 @@ SelectionDAGLowering::visitIntrinsicCall(CallInst &I, unsigned Intrinsic) {
     if (OptLevel != CodeGenOpt::None) 
       // FIXME: Variable debug info is not supported here.
       return 0;
-
+    DwarfWriter *DW = DAG.getDwarfWriter();
+    if (!DW)
+      return 0;
     DbgDeclareInst &DI = cast<DbgDeclareInst>(I);
     if (!isValidDebugInfoIntrinsic(DI, CodeGenOpt::None))
       return 0;
 
     Value *Variable = DI.getVariable();
-    DAG.setRoot(DAG.getNode(ISD::DECLARE, dl, MVT::Other, getRoot(),
-                            getValue(DI.getAddress()), getValue(Variable)));
+    Value *Address = DI.getAddress();
+    if (BitCastInst *BCI = dyn_cast<BitCastInst>(Address))
+      Address = BCI->getOperand(0);
+    AllocaInst *AI = dyn_cast<AllocaInst>(Address);
+    // Don't handle byval struct arguments or VLAs, for example.
+    if (!AI)
+      return 0;
+    int FI = FuncInfo.StaticAllocaMap[AI];
+    DW->RecordVariable(cast<GlobalVariable>(Variable), FI);
     return 0;
   }
   case Intrinsic::eh_exception: {

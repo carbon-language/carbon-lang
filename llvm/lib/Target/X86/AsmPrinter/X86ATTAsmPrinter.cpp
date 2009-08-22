@@ -831,9 +831,6 @@ void X86ATTAsmPrinter::printMachineInstruction(const MachineInstr *MI) {
     O << '\t';
     printInlineAsm(MI);
     return;
-  case TargetInstrInfo::DECLARE:
-    printDeclare(MI);
-    return;
   case TargetInstrInfo::IMPLICIT_DEF:
     printImplicitDef(MI);
     return;

@@ -119,7 +119,6 @@ BlackfinTargetLowering::BlackfinTargetLowering(TargetMachine &TM)
   setOperationAction(ISD::DEBUG_LOC, MVT::Other, Expand);
   setOperationAction(ISD::DBG_LABEL, MVT::Other, Expand);
   setOperationAction(ISD::EH_LABEL, MVT::Other, Expand);
-  setOperationAction(ISD::DECLARE, MVT::Other, Expand);
 
   // Use the default implementation.
   setOperationAction(ISD::VACOPY, MVT::Other, Expand);

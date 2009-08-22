@@ -154,10 +154,6 @@ class VISIBILITY_HIDDEN DwarfDebug : public Dwarf {
   /// information is used to populate debug_inlined section.
   DenseMap<GlobalVariable *, SmallVector<unsigned, 4> > InlineInfo;
 
-  /// InlinedVariableScopes - Scopes information for the inlined subroutine
-  /// variables.
-  DenseMap<const MachineInstr *, DbgScope *> InlinedVariableScopes;
-
   /// AbstractInstanceRootMap - Map of abstract instance roots of inlined
   /// functions. These are subroutine entries that contain a DW_AT_inline
   /// attribute.
@@ -516,8 +512,7 @@ public:
   unsigned RecordRegionEnd(GlobalVariable *V);
 
   /// RecordVariable - Indicate the declaration of  a local variable.
-  void RecordVariable(GlobalVariable *GV, unsigned FrameIndex,
-                      const MachineInstr *MI);
+  void RecordVariable(GlobalVariable *GV, unsigned FrameIndex);
 
   //// RecordInlinedFnStart - Indicate the start of inlined subroutine.
   unsigned RecordInlinedFnStart(DISubprogram &SP, DICompileUnit CU,
@@ -526,11 +521,6 @@ public:
   /// RecordInlinedFnEnd - Indicate the end of inlined subroutine.
   unsigned RecordInlinedFnEnd(DISubprogram &SP);
 
-  /// RecordVariableScope - Record scope for the variable declared by
-  /// DeclareMI. DeclareMI must describe TargetInstrInfo::DECLARE. Record scopes
-  /// for only inlined subroutine variables. Other variables's scopes are
-  /// determined during RecordVariable().
-  void RecordVariableScope(DIVariable &DV, const MachineInstr *DeclareMI);
 };
 
 } // End of namespace llvm

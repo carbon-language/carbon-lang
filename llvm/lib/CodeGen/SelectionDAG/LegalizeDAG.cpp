@@ -2252,7 +2252,6 @@ void SelectionDAGLegalize::ExpandNode(SDNode *Node,
     Results.push_back(DAG.getConstant(1, Node->getValueType(0)));
     break;
   case ISD::EH_RETURN:
-  case ISD::DECLARE:
   case ISD::DBG_LABEL:
   case ISD::EH_LABEL:
   case ISD::PREFETCH:

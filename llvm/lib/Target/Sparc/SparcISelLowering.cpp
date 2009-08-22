@@ -661,7 +661,6 @@ SparcTargetLowering::SparcTargetLowering(TargetMachine &TM)
   setOperationAction(ISD::DBG_STOPPOINT, MVT::Other, Expand);
   setOperationAction(ISD::DBG_LABEL, MVT::Other, Expand);
   setOperationAction(ISD::EH_LABEL, MVT::Other, Expand);
-  setOperationAction(ISD::DECLARE, MVT::Other, Expand);
 
   setStackPointerRegisterToSaveRestore(SP::O6);
 

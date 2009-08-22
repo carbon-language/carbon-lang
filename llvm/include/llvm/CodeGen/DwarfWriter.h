@@ -98,8 +98,7 @@ public:
 
   /// RecordVariable - Indicate the declaration of  a local variable.
   ///
-  void RecordVariable(GlobalVariable *GV, unsigned FrameIndex, 
-                      const MachineInstr *MI);
+  void RecordVariable(GlobalVariable *GV, unsigned FrameIndex);
 
   /// ShouldEmitDwarfDebug - Returns true if Dwarf debugging declarations should
   /// be emitted.
@@ -111,10 +110,6 @@ public:
 
   /// RecordInlinedFnEnd - Indicate the end of inlined subroutine.
   unsigned RecordInlinedFnEnd(DISubprogram SP);
-
-  /// RecordVariableScope - Record scope for the variable declared by
-  /// DeclareMI. DeclareMI must describe TargetInstrInfo::DECLARE.
-  void RecordVariableScope(DIVariable &DV, const MachineInstr *DeclareMI);
 };
 
 

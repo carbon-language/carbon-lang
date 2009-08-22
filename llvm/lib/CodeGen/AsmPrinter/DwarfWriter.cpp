@@ -96,9 +96,8 @@ unsigned DwarfWriter::getRecordSourceLineCount() {
 
 /// RecordVariable - Indicate the declaration of  a local variable.
 ///
-void DwarfWriter::RecordVariable(GlobalVariable *GV, unsigned FrameIndex,
-                                 const MachineInstr *MI) {
-  DD->RecordVariable(GV, FrameIndex, MI);
+void DwarfWriter::RecordVariable(GlobalVariable *GV, unsigned FrameIndex) {
+  DD->RecordVariable(GV, FrameIndex);
 }
 
 /// ShouldEmitDwarfDebug - Returns true if Dwarf debugging declarations should
@@ -119,9 +118,3 @@ unsigned DwarfWriter::RecordInlinedFnEnd(DISubprogram SP) {
   return DD->RecordInlinedFnEnd(SP);
 }
 
-/// RecordVariableScope - Record scope for the variable declared by
-/// DeclareMI. DeclareMI must describe TargetInstrInfo::DECLARE.
-void DwarfWriter::RecordVariableScope(DIVariable &DV,
-                                      const MachineInstr *DeclareMI) {
-  DD->RecordVariableScope(DV, DeclareMI);
-}

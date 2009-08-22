@@ -347,7 +347,7 @@ X86TargetLowering::X86TargetLowering(X86TargetMachine &TM)
     setOperationAction(ISD::ATOMIC_SWAP, MVT::i64, Custom);
   }
 
-  // Use the default ISD::DBG_STOPPOINT, ISD::DECLARE expansion.
+  // Use the default ISD::DBG_STOPPOINT.
   setOperationAction(ISD::DBG_STOPPOINT, MVT::Other, Expand);
   // FIXME - use subtarget debug flags
   if (!Subtarget->isTargetDarwin() &&

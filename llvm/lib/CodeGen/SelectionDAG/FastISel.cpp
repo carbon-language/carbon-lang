@@ -422,12 +422,7 @@ bool FastISel::SelectCall(User *I) {
     // Determine the debug globalvariable.
     GlobalValue *GV = cast<GlobalVariable>(Variable);
     
-    // Build the DECLARE instruction.
-    const TargetInstrDesc &II = TII.get(TargetInstrInfo::DECLARE);
-    MachineInstr *DeclareMI 
-      = BuildMI(MBB, DL, II).addFrameIndex(FI).addGlobalAddress(GV);
-    DIVariable DV(cast<GlobalVariable>(GV));
-    DW->RecordVariableScope(DV, DeclareMI);
+    DW->RecordVariable(cast<GlobalVariable>(GV), FI);
     return true;
   }
   case Intrinsic::eh_exception: {
