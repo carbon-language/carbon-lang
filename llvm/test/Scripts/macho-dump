@@ -37,7 +37,10 @@ class Reader:
       return struct.unpack('><'[self.isLSB] + 'H', self.read(2))[0]
 
    def read32(self):
-      return struct.unpack('><'[self.isLSB] + 'I', self.read(4))[0]
+      # Force to 32-bit, if possible; otherwise these might be long ints on a
+      # big-endian platform. FIXME: Why???
+      Value = struct.unpack('><'[self.isLSB] + 'I', self.read(4))[0]
+      return int(Value)
 
    def registerStringTable(self, strings):
       if self.string_table is not None:
