@@ -13,7 +13,7 @@
 
 #include "DwarfLabel.h"
 #include "llvm/ADT/FoldingSet.h"
-#include <ostream>
+#include "llvm/Support/raw_ostream.h"
 
 using namespace llvm;
 
@@ -25,10 +25,7 @@ void DWLabel::Profile(FoldingSetNodeID &ID) const {
 }
 
 #ifndef NDEBUG
-void DWLabel::print(std::ostream *O) const {
-  if (O) print(*O);
-}
-void DWLabel::print(std::ostream &O) const {
+void DWLabel::print(raw_ostream &O) const {
   O << "." << Tag;
   if (Number) O << Number;
 }

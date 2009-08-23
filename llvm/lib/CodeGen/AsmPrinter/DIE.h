@@ -19,8 +19,7 @@
 #include "llvm/ADT/SmallVector.h"
 #include "llvm/Support/Compiler.h"
 #include "llvm/Support/Dwarf.h"
-#include "llvm/Support/raw_ostream.h"
-#include <iosfwd>
+#include <vector>
 
 namespace llvm {
   class AsmPrinter;
@@ -103,10 +102,7 @@ namespace llvm {
     void Emit(const AsmPrinter *Asm) const;
 
 #ifndef NDEBUG
-    void print(std::ostream *O) {
-      if (O) print(*O);
-    }
-    void print(std::ostream &O);
+    void print(raw_ostream &O);
     void dump();
 #endif
   };
@@ -198,10 +194,7 @@ namespace llvm {
     void Profile(FoldingSetNodeID &ID) ;
 
 #ifndef NDEBUG
-    void print(std::ostream *O, unsigned IncIndent = 0) {
-      if (O) print(*O, IncIndent);
-    }
-    void print(std::ostream &O, unsigned IncIndent = 0);
+    void print(raw_ostream &O, unsigned IncIndent = 0);
     void dump();
 #endif
   };
@@ -248,10 +241,7 @@ namespace llvm {
     static bool classof(const DIEValue *) { return true; }
 
 #ifndef NDEBUG
-    void print(std::ostream *O) {
-      if (O) print(*O);
-    }
-    virtual void print(std::ostream &O) = 0;
+    virtual void print(raw_ostream &O) = 0;
     void dump();
 #endif
   };
@@ -297,7 +287,7 @@ namespace llvm {
     static bool classof(const DIEValue *I) { return I->getType() == isInteger; }
 
 #ifndef NDEBUG
-    virtual void print(std::ostream &O);
+    virtual void print(raw_ostream &O);
 #endif
   };
 
@@ -329,7 +319,7 @@ namespace llvm {
     static bool classof(const DIEValue *S) { return S->getType() == isString; }
 
 #ifndef NDEBUG
-    virtual void print(std::ostream &O);
+    virtual void print(raw_ostream &O);
 #endif
   };
 
@@ -359,7 +349,7 @@ namespace llvm {
     static bool classof(const DIEValue *L) { return L->getType() == isLabel; }
 
 #ifndef NDEBUG
-    virtual void print(std::ostream &O);
+    virtual void print(raw_ostream &O);
 #endif
   };
 
@@ -392,7 +382,7 @@ namespace llvm {
     }
 
 #ifndef NDEBUG
-    virtual void print(std::ostream &O);
+    virtual void print(raw_ostream &O);
 #endif
   };
 
@@ -431,7 +421,7 @@ namespace llvm {
     }
 
 #ifndef NDEBUG
-    virtual void print(std::ostream &O);
+    virtual void print(raw_ostream &O);
 #endif
   };
 
@@ -464,7 +454,7 @@ namespace llvm {
     static bool classof(const DIEValue *D) { return D->getType() == isDelta; }
 
 #ifndef NDEBUG
-    virtual void print(std::ostream &O);
+    virtual void print(raw_ostream &O);
 #endif
   };
 
@@ -500,7 +490,7 @@ namespace llvm {
     static bool classof(const DIEValue *E) { return E->getType() == isEntry; }
 
 #ifndef NDEBUG
-    virtual void print(std::ostream &O);
+    virtual void print(raw_ostream &O);
 #endif
   };
 
@@ -544,7 +534,7 @@ namespace llvm {
     static bool classof(const DIEValue *E) { return E->getType() == isBlock; }
 
 #ifndef NDEBUG
-    virtual void print(std::ostream &O);
+    virtual void print(raw_ostream &O);
 #endif
   };
 
