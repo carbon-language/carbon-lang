@@ -208,10 +208,7 @@ void XCoreRegisterInfo::eliminateFrameIndex(MachineBasicBlock::iterator II,
   
   assert(Offset%4 == 0 && "Misaligned stack offset");
 
-  #ifndef NDEBUG
-  DOUT << "Offset             : " << Offset << "\n";
-  DOUT << "<--------->\n";
-  #endif
+  DEBUG(errs() << "Offset             : " << Offset << "\n" << "<--------->\n");
   
   Offset/=4;
   

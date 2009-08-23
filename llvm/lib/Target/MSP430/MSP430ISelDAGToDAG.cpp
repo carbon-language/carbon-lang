@@ -129,14 +129,10 @@ void MSP430DAGToDAGISel::InstructionSelect() {
   DEBUG(BB->dump());
 
   // Codegen the basic block.
-#ifndef NDEBUG
-  DOUT << "===== Instruction selection begins:\n";
+  DEBUG(errs() << "===== Instruction selection begins:\n");
   Indent = 0;
-#endif
   SelectRoot(*CurDAG);
-#ifndef NDEBUG
-  DOUT << "===== Instruction selection ends:\n";
-#endif
+  DEBUG(errs() << "===== Instruction selection ends:\n");
 
   CurDAG->RemoveDeadNodes();
 }
@@ -146,21 +142,17 @@ SDNode *MSP430DAGToDAGISel::Select(SDValue Op) {
   DebugLoc dl = Op.getDebugLoc();
 
   // Dump information about the Node being selected
-  #ifndef NDEBUG
-  DOUT << std::string(Indent, ' ') << "Selecting: ";
+  DEBUG(errs().indent(Indent) << "Selecting: ");
   DEBUG(Node->dump(CurDAG));
-  DOUT << "\n";
+  DEBUG(errs() << "\n");
   Indent += 2;
-  #endif
 
   // If we have a custom node, we already have selected!
   if (Node->isMachineOpcode()) {
-    #ifndef NDEBUG
-    DOUT << std::string(Indent-2, ' ') << "== ";
-    DEBUG(Node->dump(CurDAG));
-    DOUT << "\n";
+    DEBUG(errs().indent(Indent-2) << "== ";
+          Node->dump(CurDAG);
+          errs() << "\n");
     Indent -= 2;
-    #endif
     return NULL;
   }
 
@@ -182,15 +174,13 @@ SDNode *MSP430DAGToDAGISel::Select(SDValue Op) {
   // Select the default instruction
   SDNode *ResNode = SelectCode(Op);
 
-  #ifndef NDEBUG
-  DOUT << std::string(Indent-2, ' ') << "=> ";
+  DEBUG(errs() << std::string(Indent-2, ' ') << "=> ");
   if (ResNode == NULL || ResNode == Op.getNode())
     DEBUG(Op.getNode()->dump(CurDAG));
   else
     DEBUG(ResNode->dump(CurDAG));
-  DOUT << "\n";
+  DEBUG(errs() << "\n");
   Indent -= 2;
-  #endif
 
   return ResNode;
 }

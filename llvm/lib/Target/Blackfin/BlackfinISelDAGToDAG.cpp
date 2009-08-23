@@ -77,7 +77,7 @@ FunctionPass *llvm::createBlackfinISelDag(BlackfinTargetMachine &TM,
 void BlackfinDAGToDAGISel::InstructionSelect() {
   // Select target instructions for the DAG.
   SelectRoot(*CurDAG);
-  DOUT << "Selected selection DAG before regclass fixup:\n";
+  DEBUG(errs() << "Selected selection DAG before regclass fixup:\n");
   DEBUG(CurDAG->dump());
   FixRegisterClasses(*CurDAG);
 }

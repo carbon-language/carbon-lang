@@ -316,21 +316,15 @@ void Emitter<CodeEmitter>::emitMachineBasicBlock(MachineBasicBlock *BB,
 
 template<class CodeEmitter>
 void Emitter<CodeEmitter>::emitWordLE(unsigned Binary) {
-#ifndef NDEBUG
-  DOUT << "  0x" << std::hex << std::setw(8) << std::setfill('0')
-       << Binary << std::dec << "\n";
-#endif
+  DEBUG(errs() << "  0x";
+        errs().write_hex(Binary) << "\n");
   MCE.emitWordLE(Binary);
 }
 
 template<class CodeEmitter>
 void Emitter<CodeEmitter>::emitDWordLE(uint64_t Binary) {
-#ifndef NDEBUG
-  DOUT << "  0x" << std::hex << std::setw(8) << std::setfill('0')
-       << (unsigned)Binary << std::dec << "\n";
-  DOUT << "  0x" << std::hex << std::setw(8) << std::setfill('0')
-       << (unsigned)(Binary >> 32) << std::dec << "\n";
-#endif
+  DEBUG(errs() << "  0x";
+        errs().write_hex(Binary) << "\n");
   MCE.emitDWordLE(Binary);
 }
 
@@ -582,8 +576,8 @@ void Emitter<CodeEmitter>::emitPseudoMoveInstruction(const MachineInstr &MI) {
 
 template<class CodeEmitter>
 void Emitter<CodeEmitter>::addPCLabel(unsigned LabelID) {
-  DOUT << "  ** LPC" << LabelID << " @ "
-       << (void*)MCE.getCurrentPCValue() << '\n';
+  DEBUG(errs() << "  ** LPC" << LabelID << " @ "
+        << (void*)MCE.getCurrentPCValue() << '\n');
   JTI->addPCLabelAddr(LabelID, MCE.getCurrentPCValue());
 }
 
@@ -1145,7 +1139,8 @@ void Emitter<CodeEmitter>::emitInlineJumpTable(unsigned JTIndex) {
   // Remember the base address of the inline jump table.
   uintptr_t JTBase = MCE.getCurrentPCValue();
   JTI->addJumpTableBaseAddr(JTIndex, JTBase);
-  DOUT << "  ** Jump Table #" << JTIndex << " @ " << (void*)JTBase << '\n';
+  DEBUG(errs() << "  ** Jump Table #" << JTIndex << " @ " << (void*)JTBase
+               << '\n');
 
   // Now emit the jump table entries.
   const std::vector<MachineBasicBlock*> &MBBs = (*MJTEs)[JTIndex].MBBs;

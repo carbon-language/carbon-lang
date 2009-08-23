@@ -362,31 +362,23 @@ eliminateFrameIndex(MachineBasicBlock::iterator II, int SPAdj,
            "Instr doesn't have FrameIndex operand!");
   }
 
-#ifndef NDEBUG
-  DEBUG(errs() << "\nFunction : " << MF.getFunction()->getName() << "\n");
-  DEBUG(errs() << "<--------->\n");
-  DEBUG(MI.print(errs()));
-#endif
+  DEBUG(errs() << "\nFunction : " << MF.getFunction()->getName() << "\n";
+        errs() << "<--------->\n" << MI);
 
   int FrameIndex = MI.getOperand(i).getIndex();
   int stackSize  = MF.getFrameInfo()->getStackSize();
   int spOffset   = MF.getFrameInfo()->getObjectOffset(FrameIndex);
 
-#ifndef NDEBUG
-  DOUT << "FrameIndex : " << FrameIndex << "\n";
-  DOUT << "spOffset   : " << spOffset << "\n";
-  DOUT << "stackSize  : " << stackSize << "\n";
-#endif
+  DEBUG(errs() << "FrameIndex : " << FrameIndex << "\n"
+               << "spOffset   : " << spOffset << "\n"
+               << "stackSize  : " << stackSize << "\n");
 
   // as explained on LowerFormalArguments, detect negative offsets
   // and adjust SPOffsets considering the final stack size.
   int Offset = ((spOffset < 0) ? (stackSize + (-(spOffset+4))) : (spOffset));
   Offset    += MI.getOperand(i-1).getImm();
 
-  #ifndef NDEBUG
-  DOUT << "Offset     : " << Offset << "\n";
-  DOUT << "<--------->\n";
-  #endif
+  DEBUG(errs() << "Offset     : " << Offset << "\n" << "<--------->\n");
 
   MI.getOperand(i-1).ChangeToImmediate(Offset);
   MI.getOperand(i).ChangeToRegister(getFrameRegister(MF), false);

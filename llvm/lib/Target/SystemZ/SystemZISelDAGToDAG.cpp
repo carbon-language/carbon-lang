@@ -195,7 +195,7 @@ static bool isImmZExt12(int64_t Val, int64_t &Imm) {
 bool SystemZDAGToDAGISel::MatchAddress(SDValue N, SystemZRRIAddressMode &AM,
                                        bool is12Bit, unsigned Depth) {
   DebugLoc dl = N.getDebugLoc();
-  DOUT << "MatchAddress: "; DEBUG(AM.dump());
+  DEBUG(errs() << "MatchAddress: "; AM.dump());
   // Limit recursion.
   if (Depth > 5)
     return MatchAddressBase(N, AM);
@@ -403,7 +403,7 @@ bool SystemZDAGToDAGISel::SelectAddrRI12(SDValue Op, SDValue& Addr,
     if (AM12.Disp == 0 && AM20.Disp != 0)
       return false;
 
-  DOUT << "MatchAddress (final): "; DEBUG(AM12.dump());
+  DEBUG(errs() << "MatchAddress (final): "; AM12.dump());
 
   EVT VT = Addr.getValueType();
   if (AM12.BaseType == SystemZRRIAddressMode::RegBase) {
@@ -446,7 +446,7 @@ bool SystemZDAGToDAGISel::SelectAddrRI(SDValue Op, SDValue& Addr,
   if (!Done && MatchAddress(Addr, AM, /* is12Bit */ false))
     return false;
 
-  DOUT << "MatchAddress (final): "; DEBUG(AM.dump());
+  DEBUG(errs() << "MatchAddress (final): "; AM.dump());
 
   EVT VT = Addr.getValueType();
   if (AM.BaseType == SystemZRRIAddressMode::RegBase) {
@@ -494,7 +494,7 @@ bool SystemZDAGToDAGISel::SelectAddrRRI12(SDValue Op, SDValue Addr,
     if (AM12.Disp == 0 && AM20.Disp != 0)
       return false;
 
-  DOUT << "MatchAddress (final): "; DEBUG(AM12.dump());
+  DEBUG(errs() << "MatchAddress (final): "; AM12.dump());
 
   EVT VT = Addr.getValueType();
   if (AM12.BaseType == SystemZRRIAddressMode::RegBase) {
@@ -538,7 +538,7 @@ bool SystemZDAGToDAGISel::SelectAddrRRI20(SDValue Op, SDValue Addr,
   if (!Done && MatchAddress(Addr, AM, /* is12Bit */ false))
     return false;
 
-  DOUT << "MatchAddress (final): "; DEBUG(AM.dump());
+  DEBUG(errs() << "MatchAddress (final): "; AM.dump());
 
   EVT VT = Addr.getValueType();
   if (AM.BaseType == SystemZRRIAddressMode::RegBase) {
@@ -604,14 +604,10 @@ void SystemZDAGToDAGISel::InstructionSelect() {
   DEBUG(BB->dump());
 
   // Codegen the basic block.
-#ifndef NDEBUG
-  DOUT << "===== Instruction selection begins:\n";
+  DEBUG(errs() << "===== Instruction selection begins:\n");
   Indent = 0;
-#endif
   SelectRoot(*CurDAG);
-#ifndef NDEBUG
-  DOUT << "===== Instruction selection ends:\n";
-#endif
+  DEBUG(errs() << "===== Instruction selection ends:\n");
 
   CurDAG->RemoveDeadNodes();
 }
@@ -623,21 +619,17 @@ SDNode *SystemZDAGToDAGISel::Select(SDValue Op) {
   unsigned Opcode = Node->getOpcode();
 
   // Dump information about the Node being selected
-  #ifndef NDEBUG
-  DOUT << std::string(Indent, ' ') << "Selecting: ";
-  DEBUG(Node->dump(CurDAG));
-  DOUT << "\n";
+  DEBUG(errs().indent(Indent) << "Selecting: ";
+        Node->dump(CurDAG);
+        errs() << "\n");
   Indent += 2;
-  #endif
 
   // If we have a custom node, we already have selected!
   if (Node->isMachineOpcode()) {
-    #ifndef NDEBUG
-    DOUT << std::string(Indent-2, ' ') << "== ";
-    DEBUG(Node->dump(CurDAG));
-    DOUT << "\n";
+    DEBUG(errs().indent(Indent-2) << "== ";
+          Node->dump(CurDAG);
+          errs() << "\n");
     Indent -= 2;
-    #endif
     return NULL; // Already selected.
   }
 
@@ -702,11 +694,9 @@ SDNode *SystemZDAGToDAGISel::Select(SDValue Op) {
                                                                     MVT::i32));
 
       ReplaceUses(Op.getValue(0), SDValue(Div, 0));
-      #ifndef NDEBUG
-      DOUT << std::string(Indent-2, ' ') << "=> ";
-      DEBUG(Result->dump(CurDAG));
-      DOUT << "\n";
-      #endif
+      DEBUG(errs().indent(Indent-2) << "=> ";
+            Result->dump(CurDAG);
+            errs() << "\n");
     }
 
     // Copy the remainder (even subreg) result, if it is needed.
@@ -719,11 +709,9 @@ SDNode *SystemZDAGToDAGISel::Select(SDValue Op) {
                                                                     MVT::i32));
 
       ReplaceUses(Op.getValue(1), SDValue(Rem, 0));
-      #ifndef NDEBUG
-      DOUT << std::string(Indent-2, ' ') << "=> ";
-      DEBUG(Result->dump(CurDAG));
-      DOUT << "\n";
-      #endif
+      DEBUG(errs().indent(Indent-2) << "=> ";
+            Result->dump(CurDAG);
+            errs() << "\n");
     }
 
 #ifndef NDEBUG
@@ -795,11 +783,9 @@ SDNode *SystemZDAGToDAGISel::Select(SDValue Op) {
                                           CurDAG->getTargetConstant(SubRegIdx,
                                                                     MVT::i32));
       ReplaceUses(Op.getValue(0), SDValue(Div, 0));
-      #ifndef NDEBUG
-      DOUT << std::string(Indent-2, ' ') << "=> ";
-      DEBUG(Result->dump(CurDAG));
-      DOUT << "\n";
-      #endif
+      DEBUG(errs().indent(Indent-2) << "=> ";
+            Result->dump(CurDAG);
+            errs() << "\n");
     }
 
     // Copy the remainder (even subreg) result, if it is needed.
@@ -811,11 +797,9 @@ SDNode *SystemZDAGToDAGISel::Select(SDValue Op) {
                                           CurDAG->getTargetConstant(SubRegIdx,
                                                                     MVT::i32));
       ReplaceUses(Op.getValue(1), SDValue(Rem, 0));
-      #ifndef NDEBUG
-      DOUT << std::string(Indent-2, ' ') << "=> ";
-      DEBUG(Result->dump(CurDAG));
-      DOUT << "\n";
-      #endif
+      DEBUG(errs().indent(Indent-2) << "=> ";
+            Result->dump(CurDAG);
+            errs() << "\n");
     }
 
 #ifndef NDEBUG
@@ -829,15 +813,14 @@ SDNode *SystemZDAGToDAGISel::Select(SDValue Op) {
   // Select the default instruction
   SDNode *ResNode = SelectCode(Op);
 
-  #ifndef NDEBUG
-  DOUT << std::string(Indent-2, ' ') << "=> ";
-  if (ResNode == NULL || ResNode == Op.getNode())
-    DEBUG(Op.getNode()->dump(CurDAG));
-  else
-    DEBUG(ResNode->dump(CurDAG));
-  DOUT << "\n";
+  DEBUG(errs().indent(Indent-2) << "=> ";
+        if (ResNode == NULL || ResNode == Op.getNode())
+          Op.getNode()->dump(CurDAG);
+        else
+          ResNode->dump(CurDAG);
+        errs() << "\n";
+        );
   Indent -= 2;
-  #endif
 
   return ResNode;
 }

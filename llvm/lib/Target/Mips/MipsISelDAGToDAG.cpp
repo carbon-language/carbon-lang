@@ -108,22 +108,16 @@ private:
 
 /// InstructionSelect - This callback is invoked by
 /// SelectionDAGISel when it has created a SelectionDAG for us to codegen.
-void MipsDAGToDAGISel::
-InstructionSelect() 
-{
+void MipsDAGToDAGISel::InstructionSelect() {
   DEBUG(BB->dump());
   // Codegen the basic block.
-  #ifndef NDEBUG
-  DOUT << "===== Instruction selection begins:\n";
+  DEBUG(errs() << "===== Instruction selection begins:\n");
   Indent = 0;
-  #endif
 
   // Select target instructions for the DAG.
   SelectRoot(*CurDAG);
 
-  #ifndef NDEBUG
-  DOUT << "===== Instruction selection ends:\n";
-  #endif
+  DEBUG(errs() << "===== Instruction selection ends:\n");
 
   CurDAG->RemoveDeadNodes();
 }
@@ -187,29 +181,23 @@ SelectAddr(SDValue Op, SDValue Addr, SDValue &Offset, SDValue &Base)
 
 /// Select instructions not customized! Used for
 /// expanded, promoted and normal instructions
-SDNode* MipsDAGToDAGISel::
-Select(SDValue N) 
-{
+SDNode* MipsDAGToDAGISel::Select(SDValue N) {
   SDNode *Node = N.getNode();
   unsigned Opcode = Node->getOpcode();
   DebugLoc dl = Node->getDebugLoc();
 
   // Dump information about the Node being selected
-  #ifndef NDEBUG
-  DOUT << std::string(Indent, ' ') << "Selecting: ";
-  DEBUG(Node->dump(CurDAG));
-  DOUT << "\n";
+  DEBUG(errs().indent(Indent) << "Selecting: ";
+        Node->dump(CurDAG);
+        errs() << "\n");
   Indent += 2;
-  #endif
 
   // If we have a custom node, we already have selected!
   if (Node->isMachineOpcode()) {
-    #ifndef NDEBUG
-    DOUT << std::string(Indent-2, ' ') << "== ";
-    DEBUG(Node->dump(CurDAG));
-    DOUT << "\n";
+    DEBUG(errs().indent(Indent-2) << "== ";
+          Node->dump(CurDAG);
+          errs() << "\n");
     Indent -= 2;
-    #endif
     return NULL;
   }
 
@@ -373,15 +361,13 @@ Select(SDValue N)
   // Select the default instruction
   SDNode *ResNode = SelectCode(N);
 
-  #ifndef NDEBUG
-  DOUT << std::string(Indent-2, ' ') << "=> ";
+  DEBUG(errs().indent(Indent-2) << "=> ");
   if (ResNode == NULL || ResNode == N.getNode())
     DEBUG(N.getNode()->dump(CurDAG));
   else
     DEBUG(ResNode->dump(CurDAG));
-  DOUT << "\n";
+  DEBUG(errs() << "\n");
   Indent -= 2;
-  #endif
 
   return ResNode;
 }
