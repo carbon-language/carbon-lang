@@ -2203,17 +2203,11 @@ void APInt::print(raw_ostream &OS, bool isSigned) const {
   OS << S.str();
 }
 
-std::ostream &llvm::operator<<(std::ostream &o, const APInt &I) {
-  raw_os_ostream OS(o);
-  OS << I;
-  return o;
-}
-
 // This implements a variety of operations on a representation of
 // arbitrary precision, two's-complement, bignum integer values.
 
-/* Assumed by lowHalf, highHalf, partMSB and partLSB.  A fairly safe
-   and unrestricting assumption.  */
+// Assumed by lowHalf, highHalf, partMSB and partLSB.  A fairly safe
+// and unrestricting assumption.
 #define COMPILE_TIME_ASSERT(cond) extern int CTAssert[(cond) ? 1 : -1]
 COMPILE_TIME_ASSERT(integerPartWidth % 2 == 0);
 
