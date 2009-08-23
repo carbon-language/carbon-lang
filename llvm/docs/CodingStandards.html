@@ -990,12 +990,14 @@ library. There are two problems with this:</p>
 </ol>
 
 <p>Note that using the other stream headers (<tt>&lt;sstream&gt;</tt> for
-example) is allowed normally, it is just <tt>&lt;iostream&gt;</tt> that is
-causing problems.</p>
+example) is not problematic in this regard (just <tt>&lt;iostream&gt;</tt>).
+However, raw_ostream provides various APIs that are better performing for almost
+every use than std::ostream style APIs, so you should just use it for new
+code.</p>
 
-<p>In addition, new code should always
-use <a href="#ll_raw_ostream"><tt>raw_ostream</tt></a> or
-the <tt>llvm::MemoryBuffer</tt> API (for reading in files).</p>
+<p><b>New code should always
+use <a href="#ll_raw_ostream"><tt>raw_ostream</tt></a> for writing, or
+the <tt>llvm::MemoryBuffer</tt> API for reading files.</b></p>
 
 </div>
 
