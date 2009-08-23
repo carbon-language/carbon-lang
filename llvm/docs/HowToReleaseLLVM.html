@@ -202,7 +202,7 @@ svn export https://llvm.org/svn/llvm-project/cfe/branches/release_<i>XX</i> clan
 tar -czvf - llvm-X.X          | gzip &gt; llvm-X.X.tar.gz
 tar -czvf - llvm-test-X.X     | gzip &gt; llvm-test-X.X.tar.gz
 tar -czvf - llvm-gcc4.2-X.X.source | gzip &gt; llvm-gcc-4.2-X.X.source.tar.gz
-tar -czvf - clang-X.X.source | gzip &gt; clang-X.X.source.tar.gz
+tar -czvf - clang-X.X | gzip &gt; clang-X.X.tar.gz
 </pre>
 </div>
 </div>
@@ -213,16 +213,22 @@ Building the Release</a></div>
 
 <div class="doc_text">
 The build of <tt>llvm</tt>, <tt>llvm-gcc</tt>, and <tt>clang</tt> must be free
-of errors and warnings in both debug and release modes. If both debug and 
-release builds are clean, then the release passes build qualification.
+of errors and warnings in both debug, release, and release-asserts builds. 
+If all builds are clean, then the release passes build qualification.
+
+<ol>
+<li>debug: ENABLE_OPTIMIZED=0</li>
+<li>release: ENABLE_OPTIMIZED=1</li>
+<li>release-asserts: ENABLE_OPTIMIZED=1 DISABLE_ASSERTIONS=1</li>
+</ol>
 </div>
 
 <!-- ======================================================================= -->
 <div class="doc_subsubsection"><a name="build">Build LLVM</a></div>
 <div class="doc_text">
   <p>
-  Build both debug and release (optimized) versions of LLVM on all supported
-  platforms. Direction to build llvm are 
+  Build both debug, release (optimized), and release-asserts versions of 
+  LLVM on all supported platforms. Direction to build llvm are 
   <a href="http://llvm.org/docs/GettingStarted.html#quickstart">here</a>.
   </p>
 </div>
@@ -239,8 +245,9 @@ release builds are clean, then the release passes build qualification.
     <li>
     Build the LLVM GCC front-end by following the directions in the README.LLVM
     file. The frontend must be compiled with c, c++, objc (mac only), 
-    objc++ (mac only) and fortran support.
-    Be sure to build with LLVM_VERSION_INFO=X.X, where X is the major and
+    objc++ (mac only) and fortran support. </li>
+    <li>Please boostrap as well.</li>
+    <li>Be sure to build with LLVM_VERSION_INFO=X.X, where X is the major and
     minor release numbers.
     </li>
 
@@ -257,7 +264,7 @@ release builds are clean, then the release passes build qualification.
 Binary Distribution</a></div>
 <div class="doc_text">
   <p>
-  Creating the Clang binary distribution (release/optimized) requires 
+  Creating the Clang binary distribution (debug/release/release-asserts) requires 
   performing the following steps for each supported platform:
   </p>
 
@@ -291,11 +298,11 @@ Details</a></div>
   <tr><th>Architecture</th><th>OS</th><th>compiler</th></tr>
   <tr><td>x86-32</td><td>Mac OS 10.5</td><td>gcc 4.0.1</td></tr>
   <tr><td>x86-32</td><td>Linux</td><td>gcc 4.2.X, gcc 4.3.X</td></tr>
-  <tr><td>x86-32</td><td>FreeBSD</td><td>gcc ?</td></tr>
-   <tr><td>x86-32</td><td>mingw</td><td>gcc ?</td></tr>
+  <tr><td>x86-32</td><td>FreeBSD</td><td>gcc 4.2.X</td></tr>
+   <tr><td>x86-32</td><td>mingw</td><td>gcc 3.4.5</td></tr>
   <tr><td>x86-64</td><td>Mac OS 10.5</td><td>gcc 4.0.1</td></tr>
   <tr><td>x86-64</td><td>Linux</td><td>gcc 4.2.X, gcc 4.3.X</td></tr>
-  <tr><td>x86-64</td><td>FreeBSD</td><td>gcc?</td></tr>
+  <tr><td>x86-64</td><td>FreeBSD</td><td>gcc 4.2.X</td></tr>
  
   </table> 
   </p>
@@ -311,7 +318,12 @@ Building the Release</a></div>
  A release is qualified when it has no regressions from the previous 
  release (or baseline). Regressions are related to correctness only and not 
  performance at this time. <b>Regressions are new failures in the set of tests that
- are used to qualify each product and do not include anything not in the list.</b>
+ are used to qualify each product and only include things on the list. 
+ Ultimately, there is no end to the number of possible bugs in a release.  We 
+ need a very concrete and definitive release criteria that ensures we have 
+ monotonically improving quality on some metric.  The metric we use is 
+ described below.  This doesn't mean that we don't care about other things, 
+ but this are things that must be satisfied before a release can go out</b>
 </div>
 
 
