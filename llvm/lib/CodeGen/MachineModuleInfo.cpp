@@ -24,7 +24,6 @@
 #include "llvm/Module.h"
 #include "llvm/Support/Dwarf.h"
 #include "llvm/Support/ErrorHandling.h"
-#include "llvm/Support/Streams.h"
 using namespace llvm;
 using namespace llvm::dwarf;
 

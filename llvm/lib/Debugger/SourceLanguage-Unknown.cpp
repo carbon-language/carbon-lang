@@ -15,9 +15,8 @@
 
 #include "llvm/Debugger/SourceLanguage.h"
 #include "llvm/Debugger/ProgramInfo.h"
-#include "llvm/Support/Streams.h"
+#include "llvm/Support/raw_ostream.h"
 #include <cassert>
-#include <ostream>
 using namespace llvm;
 
 //===----------------------------------------------------------------------===//
@@ -132,7 +131,7 @@ SourceFunctionInfo *SLU::lookupFunction(const std::string &FunctionName,
   SourceFunctionInfo *Found = IP.first->second;
   ++IP.first;
   if (IP.first != IP.second)
-    cout << "Whoa, found multiple functions with the same name.  I should"
+    outs() << "Whoa, found multiple functions with the same name.  I should"
          << " ask the user which one to use: FIXME!\n";
   return Found;
 }

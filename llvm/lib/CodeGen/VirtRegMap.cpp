@@ -259,11 +259,6 @@ bool VirtRegMap::FindUnusedRegisters(LiveIntervals* LIs) {
   return AnyUnused;
 }
 
-void VirtRegMap::print(std::ostream &OS, const Module* M) const {
-  raw_os_ostream RawOS(OS);
-  print(RawOS, M);
-}
-
 void VirtRegMap::print(raw_ostream &OS, const Module* M) const {
   const TargetRegisterInfo* TRI = MF->getTarget().getRegisterInfo();
 
@@ -283,5 +278,5 @@ void VirtRegMap::print(raw_ostream &OS, const Module* M) const {
 }
 
 void VirtRegMap::dump() const {
-  print(cerr);
+  print(errs());
 }

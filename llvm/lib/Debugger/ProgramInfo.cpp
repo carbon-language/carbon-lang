@@ -23,7 +23,6 @@
 #include "llvm/Debugger/SourceFile.h"
 #include "llvm/Debugger/SourceLanguage.h"
 #include "llvm/Support/SlowOperationInformer.h"
-#include "llvm/Support/Streams.h"
 #include "llvm/ADT/STLExtras.h"
 using namespace llvm;
 
@@ -184,7 +183,7 @@ void SourceFunctionInfo::getSourceLocation(unsigned &RetLineNo,
             if (SD) {             // We found the first stop point!
               // This is just a sanity check.
               if (getSourceFile().getDescriptor() != SD)
-                cout << "WARNING: first line of function is not in the"
+                outs() << "WARNING: first line of function is not in the"
                      << " file that the function descriptor claims it is in.\n";
               break;
             }

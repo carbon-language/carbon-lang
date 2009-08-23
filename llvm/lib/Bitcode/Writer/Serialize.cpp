@@ -12,11 +12,8 @@
 //===----------------------------------------------------------------------===//
 
 #include "llvm/Bitcode/Serialize.h"
-#include "string.h"
-
-#ifdef DEBUG_BACKPATCH
-#include "llvm/Support/Streams.h"
-#endif
+#include "llvm/Support/raw_ostream.h"
+#include <cstring>
 
 using namespace llvm;
 
@@ -86,7 +83,7 @@ SerializedPtrID Serializer::getPtrId(const void* ptr) {
   if (I == PtrMap.end()) {
     unsigned id = PtrMap.size()+1;
 #ifdef DEBUG_BACKPATCH
-    llvm::cerr << "Registered PTR: " << ptr << " => " << id << "\n";
+    errs() << "Registered PTR: " << ptr << " => " << id << "\n";
 #endif
     PtrMap[ptr] = id;
     return id;

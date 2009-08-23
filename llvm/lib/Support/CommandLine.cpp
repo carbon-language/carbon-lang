@@ -851,13 +851,12 @@ size_t basic_parser_impl::getOptionWidth(const Option &O) const {
 //
 void basic_parser_impl::printOptionInfo(const Option &O,
                                         size_t GlobalWidth) const {
-  cout << "  -" << O.ArgStr;
+  outs() << "  -" << O.ArgStr;
 
   if (const char *ValName = getValueName())
-    cout << "=<" << getValueStr(O, ValName) << ">";
+    outs() << "=<" << getValueStr(O, ValName) << '>';
 
-  cout << std::string(GlobalWidth-getOptionWidth(O), ' ') << " - "
-       << O.HelpStr << "\n";
+  outs().indent(GlobalWidth-getOptionWidth(O)) << " - " << O.HelpStr << '\n';
 }
 
 
@@ -990,21 +989,21 @@ void generic_parser_base::printOptionInfo(const Option &O,
                                           size_t GlobalWidth) const {
   if (O.hasArgStr()) {
     size_t L = std::strlen(O.ArgStr);
-    cout << "  -" << O.ArgStr << std::string(GlobalWidth-L-6, ' ')
-         << " - " << O.HelpStr << "\n";
+    outs() << "  -" << O.ArgStr << std::string(GlobalWidth-L-6, ' ')
+           << " - " << O.HelpStr << '\n';
 
     for (unsigned i = 0, e = getNumOptions(); i != e; ++i) {
       size_t NumSpaces = GlobalWidth-strlen(getOption(i))-8;
-      cout << "    =" << getOption(i) << std::string(NumSpaces, ' ')
-           << " -   " << getDescription(i) << "\n";
+      outs() << "    =" << getOption(i) << std::string(NumSpaces, ' ')
+             << " -   " << getDescription(i) << '\n';
     }
   } else {
     if (O.HelpStr[0])
-      cout << "  " << O.HelpStr << "\n";
+      outs() << "  " << O.HelpStr << "\n";
     for (unsigned i = 0, e = getNumOptions(); i != e; ++i) {
       size_t L = std::strlen(getOption(i));
-      cout << "    -" << getOption(i) << std::string(GlobalWidth-L-8, ' ')
-           << " - " << getDescription(i) << "\n";
+      outs() << "    -" << getOption(i) << std::string(GlobalWidth-L-8, ' ')
+             << " - " << getDescription(i) << "\n";
     }
   }
 }
@@ -1063,9 +1062,9 @@ public:
     }
 
     if (ProgramOverview)
-      cout << "OVERVIEW: " << ProgramOverview << "\n";
+      outs() << "OVERVIEW: " << ProgramOverview << "\n";
 
-    cout << "USAGE: " << ProgramName << " [options]";
+    outs() << "USAGE: " << ProgramName << " [options]";
 
     // Print out the positional options.
     Option *CAOpt = 0;   // The cl::ConsumeAfter option, if it exists...
@@ -1075,28 +1074,28 @@ public:
 
     for (size_t i = CAOpt != 0, e = PositionalOpts.size(); i != e; ++i) {
       if (PositionalOpts[i]->ArgStr[0])
-        cout << " --" << PositionalOpts[i]->ArgStr;
-      cout << " " << PositionalOpts[i]->HelpStr;
+        outs() << " --" << PositionalOpts[i]->ArgStr;
+      outs() << " " << PositionalOpts[i]->HelpStr;
     }
 
     // Print the consume after option info if it exists...
-    if (CAOpt) cout << " " << CAOpt->HelpStr;
+    if (CAOpt) outs() << " " << CAOpt->HelpStr;
 
-    cout << "\n\n";
+    outs() << "\n\n";
 
     // Compute the maximum argument length...
     MaxArgLen = 0;
     for (size_t i = 0, e = Opts.size(); i != e; ++i)
       MaxArgLen = std::max(MaxArgLen, Opts[i].second->getOptionWidth());
 
-    cout << "OPTIONS:\n";
+    outs() << "OPTIONS:\n";
     for (size_t i = 0, e = Opts.size(); i != e; ++i)
       Opts[i].second->printOptionInfo(MaxArgLen);
 
     // Print any extra help the user has declared.
     for (std::vector<const char *>::iterator I = MoreHelp->begin(),
           E = MoreHelp->end(); I != E; ++I)
-      cout << *I;
+      outs() << *I;
     MoreHelp->clear();
 
     // Halt the program since help information was printed
@@ -1125,42 +1124,43 @@ namespace {
 class VersionPrinter {
 public:
   void print() {
-        cout << "Low Level Virtual Machine (http://llvm.org/):\n";
-        cout << "  " << PACKAGE_NAME << " version " << PACKAGE_VERSION;
+    raw_ostream &stdout = outs();
+    stdout << "Low Level Virtual Machine (http://llvm.org/):\n";
+    stdout << "  " << PACKAGE_NAME << " version " << PACKAGE_VERSION;
 #ifdef LLVM_VERSION_INFO
-        cout << LLVM_VERSION_INFO;
+    stdout << LLVM_VERSION_INFO;
 #endif
-        cout << "\n  ";
+    stdout << "\n  ";
 #ifndef __OPTIMIZE__
-        cout << "DEBUG build";
+    stdout << "DEBUG build";
 #else
-        cout << "Optimized build";
+    stdout << "Optimized build";
 #endif
 #ifndef NDEBUG
-        cout << " with assertions";
+    stdout << " with assertions";
 #endif
-        cout << ".\n";
-        cout << "  Built " << __DATE__ << "(" << __TIME__ << ").\n";
-        cout << "\n";
-        cout << "  Registered Targets:\n";
+    stdout << ".\n";
+    stdout << "  Built " << __DATE__ << "(" << __TIME__ << ").\n";
+    stdout << "\n";
+    stdout << "  Registered Targets:\n";
 
-        std::vector<std::pair<std::string, const Target*> > Targets;
-        size_t Width = 0;
-        for (TargetRegistry::iterator it = TargetRegistry::begin(), 
-               ie = TargetRegistry::end(); it != ie; ++it) {
-          Targets.push_back(std::make_pair(it->getName(), &*it));
-          Width = std::max(Width, ::strlen(it->getName()));
-        }
-        std::sort(Targets.begin(), Targets.end());
+      std::vector<std::pair<std::string, const Target*> > Targets;
+      size_t Width = 0;
+      for (TargetRegistry::iterator it = TargetRegistry::begin(), 
+             ie = TargetRegistry::end(); it != ie; ++it) {
+        Targets.push_back(std::make_pair(it->getName(), &*it));
+        Width = std::max(Width, ::strlen(it->getName()));
+      }
+      std::sort(Targets.begin(), Targets.end());
 
-        for (unsigned i = 0, e = Targets.size(); i != e; ++i) {
-          const Target *T = Targets[i].second;
-          cout << "    " << T->getName()
+      for (unsigned i = 0, e = Targets.size(); i != e; ++i) {
+        const Target *T = Targets[i].second;
+        stdout << "    " << T->getName()
                << std::string(Width - ::strlen(T->getName()), ' ') << " - "
                << T->getShortDescription() << "\n";
-        }
-        if (Targets.empty())
-          cout << "    (none)\n";
+      }
+      if (Targets.empty())
+        stdout << "    (none)\n";
   }
   void operator=(bool OptionWasSpecified) {
     if (OptionWasSpecified) {

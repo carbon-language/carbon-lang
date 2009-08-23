@@ -2598,9 +2598,9 @@ SimpleRegisterCoalescing::lastRegisterUse(unsigned Start, unsigned End,
 
 void SimpleRegisterCoalescing::printRegName(unsigned reg) const {
   if (TargetRegisterInfo::isPhysicalRegister(reg))
-    cerr << tri_->getName(reg);
+    errs() << tri_->getName(reg);
   else
-    cerr << "%reg" << reg;
+    errs() << "%reg" << reg;
 }
 
 void SimpleRegisterCoalescing::releaseMemory() {

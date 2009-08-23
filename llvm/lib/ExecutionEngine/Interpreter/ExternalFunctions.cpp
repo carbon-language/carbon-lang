@@ -24,7 +24,6 @@
 #include "llvm/Module.h"
 #include "llvm/Config/config.h"     // Detect libffi
 #include "llvm/Support/ErrorHandling.h"
-#include "llvm/Support/Streams.h"
 #include "llvm/System/DynamicLibrary.h"
 #include "llvm/Target/TargetData.h"
 #include "llvm/Support/ManagedStatic.h"
@@ -279,7 +278,7 @@ GenericValue Interpreter::callExternalFunction(Function *F,
 #endif // USE_LIBFFI
 
   if (F->getName() == "__main")
-    cerr << "Tried to execute an unknown external function: "
+    errs() << "Tried to execute an unknown external function: "
       << F->getType()->getDescription() << " __main\n";
   else
     llvm_report_error("Tried to execute an unknown external function: " +
@@ -393,7 +392,8 @@ GenericValue lle_X_sprintf(const FunctionType *FT,
         sprintf(Buffer, FmtBuf, (void*)GVTOP(Args[ArgNo++])); break;
       case 's':
         sprintf(Buffer, FmtBuf, (char*)GVTOP(Args[ArgNo++])); break;
-      default:  cerr << "<unknown printf code '" << *FmtStr << "'!>";
+      default:
+        errs() << "<unknown printf code '" << *FmtStr << "'!>";
         ArgNo++; break;
       }
       strcpy(OutputBuffer, Buffer);
@@ -414,7 +414,7 @@ GenericValue lle_X_printf(const FunctionType *FT,
   NewArgs.push_back(PTOGV((void*)&Buffer[0]));
   NewArgs.insert(NewArgs.end(), Args.begin(), Args.end());
   GenericValue GV = lle_X_sprintf(FT, NewArgs);
-  cout << Buffer;
+  outs() << Buffer;
   return GV;
 }
 

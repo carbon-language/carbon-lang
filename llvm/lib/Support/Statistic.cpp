@@ -24,16 +24,15 @@
 #include "llvm/ADT/Statistic.h"
 #include "llvm/Support/CommandLine.h"
 #include "llvm/Support/ManagedStatic.h"
-#include "llvm/Support/Streams.h"
+#include "llvm/Support/raw_ostream.h"
 #include "llvm/System/Mutex.h"
 #include "llvm/ADT/StringExtras.h"
 #include <algorithm>
-#include <ostream>
 #include <cstring>
 using namespace llvm;
 
 // GetLibSupportInfoOutputFile - Return a file stream to print our output on.
-namespace llvm { extern std::ostream *GetLibSupportInfoOutputFile(); }
+namespace llvm { extern raw_ostream *GetLibSupportInfoOutputFile(); }
 
 /// -stats - Command line option to cause transformations to emit stats about
 /// what they did.
@@ -96,7 +95,7 @@ StatisticInfo::~StatisticInfo() {
   if (Stats.empty()) return;
 
   // Get the stream to write to.
-  std::ostream &OutStream = *GetLibSupportInfoOutputFile();
+  raw_ostream &OutStream = *GetLibSupportInfoOutputFile();
 
   // Figure out how long the biggest Value and Name fields are.
   unsigned MaxNameLen = 0, MaxValLen = 0;
@@ -125,8 +124,9 @@ StatisticInfo::~StatisticInfo() {
     
   }
   
-  OutStream << std::endl;  // Flush the output stream...
+  OutStream << '\n';  // Flush the output stream...
+  OutStream.flush();
   
-  if (&OutStream != cerr.stream() && &OutStream != cout.stream())
+  if (&OutStream != &outs() && &OutStream != &errs())
     delete &OutStream;   // Close the file.
 }
