@@ -208,6 +208,7 @@ public:
   /// to the specified stream.
   ///
   void print(std::ostream &OS) const;
+  void print(raw_ostream &OS) const;
 
   /// viewCFG - This function is meant for use from the debugger.  You can just
   /// say 'call F->viewCFG()' and a ghostview window should pop up from the
