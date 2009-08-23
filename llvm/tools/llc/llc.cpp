@@ -137,8 +137,10 @@ static formatted_raw_ostream *GetOutputStream(const char *TargetName,
     sys::RemoveFileOnSignal(sys::Path(OutputFilename));
 
     std::string error;
-    raw_fd_ostream *FDOut = new raw_fd_ostream(OutputFilename.c_str(),
-                                               /*Binary=*/true, Force, error);
+    raw_fd_ostream *FDOut =
+      new raw_fd_ostream(OutputFilename.c_str(), error,
+                         (Force ? raw_fd_ostream::F_Force : 0)|
+                         raw_fd_ostream::F_Binary);
     if (!error.empty()) {
       errs() << error << '\n';
       if (!Force)
@@ -187,8 +189,11 @@ static formatted_raw_ostream *GetOutputStream(const char *TargetName,
   sys::RemoveFileOnSignal(sys::Path(OutputFilename));
 
   std::string error;
-  raw_fd_ostream *FDOut = new raw_fd_ostream(OutputFilename.c_str(),
-                                             Binary, Force, error);
+  unsigned OpenFlags = 0;
+  if (Force) OpenFlags |= raw_fd_ostream::F_Force;
+  if (Binary) OpenFlags |= raw_fd_ostream::F_Binary;
+  raw_fd_ostream *FDOut = new raw_fd_ostream(OutputFilename.c_str(), error,
+                                             OpenFlags);
   if (!error.empty()) {
     errs() << error << '\n';
     if (!Force)

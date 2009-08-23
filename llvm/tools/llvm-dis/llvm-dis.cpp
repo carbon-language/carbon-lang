@@ -50,90 +50,70 @@ int main(int argc, char **argv) {
   
   LLVMContext &Context = getGlobalContext();
   llvm_shutdown_obj Y;  // Call llvm_shutdown() on exit.
-  try {
-    cl::ParseCommandLineOptions(argc, argv, "llvm .bc -> .ll disassembler\n");
+  
+  
+  cl::ParseCommandLineOptions(argc, argv, "llvm .bc -> .ll disassembler\n");
 
-    raw_ostream *Out = &outs();  // Default to printing to stdout.
-    std::string ErrorMessage;
-
-    std::auto_ptr<Module> M;
-   
-    if (MemoryBuffer *Buffer
-           = MemoryBuffer::getFileOrSTDIN(InputFilename, &ErrorMessage)) {
-      M.reset(ParseBitcodeFile(Buffer, Context, &ErrorMessage));
-      delete Buffer;
-    }
-
-    if (M.get() == 0) {
-      errs() << argv[0] << ": ";
-      if (ErrorMessage.size())
-        errs() << ErrorMessage << "\n";
-      else
-        errs() << "bitcode didn't read correctly.\n";
-      return 1;
-    }
-    
-    if (DontPrint) {
-      // Just use stdout.  We won't actually print anything on it.
-    } else if (OutputFilename != "") {   // Specified an output filename?
-      if (OutputFilename != "-") { // Not stdout?
-        std::string ErrorInfo;
-        Out = new raw_fd_ostream(OutputFilename.c_str(), /*Binary=*/false,
-                                 Force, ErrorInfo);
-        if (!ErrorInfo.empty()) {
-          errs() << ErrorInfo << '\n';
-          if (!Force)
-            errs() << "Use -f command line argument to force output\n";
-          delete Out;
-          return 1;
-        }
-      }
-    } else {
-      if (InputFilename == "-") {
-        OutputFilename = "-";
-      } else {
-        std::string IFN = InputFilename;
-        int Len = IFN.length();
-        if (IFN[Len-3] == '.' && IFN[Len-2] == 'b' && IFN[Len-1] == 'c') {
-          // Source ends in .bc
-          OutputFilename = std::string(IFN.begin(), IFN.end()-3)+".ll";
-        } else {
-          OutputFilename = IFN+".ll";
-        }
-
-        std::string ErrorInfo;
-        Out = new raw_fd_ostream(OutputFilename.c_str(), /*Binary=*/false,
-                                 Force, ErrorInfo);
-        if (!ErrorInfo.empty()) {
-          errs() << ErrorInfo << '\n';
-          if (!Force)
-            errs() << "Use -f command line argument to force output\n";
-          delete Out;
-          return 1;
-        }
-
-        // Make sure that the Out file gets unlinked from the disk if we get a
-        // SIGINT
-        sys::RemoveFileOnSignal(sys::Path(OutputFilename));
-      }
-    }
-
-    // All that llvm-dis does is write the assembly to a file.
-    if (!DontPrint) {
-      PassManager Passes;
-      Passes.add(createPrintModulePass(Out));
-      Passes.run(*M.get());
-    }
-
-    if (Out != &outs())
-      delete Out;
-    return 0;
-  } catch (const std::string& msg) {
-    errs() << argv[0] << ": " << msg << "\n";
-  } catch (...) {
-    errs() << argv[0] << ": Unexpected unknown exception occurred.\n";
+  std::string ErrorMessage;
+  std::auto_ptr<Module> M;
+ 
+  if (MemoryBuffer *Buffer
+         = MemoryBuffer::getFileOrSTDIN(InputFilename, &ErrorMessage)) {
+    M.reset(ParseBitcodeFile(Buffer, Context, &ErrorMessage));
+    delete Buffer;
   }
 
-  return 1;
+  if (M.get() == 0) {
+    errs() << argv[0] << ": ";
+    if (ErrorMessage.size())
+      errs() << ErrorMessage << "\n";
+    else
+      errs() << "bitcode didn't read correctly.\n";
+    return 1;
+  }
+  
+  // Just use stdout.  We won't actually print anything on it.
+  if (DontPrint)
+    OutputFilename = "-";
+  
+  if (OutputFilename.empty()) { // Unspecified output, infer it.
+    if (InputFilename == "-") {
+      OutputFilename = "-";
+    } else {
+      const std::string &IFN = InputFilename;
+      int Len = IFN.length();
+      // If the source ends in .bc, strip it off.
+      if (IFN[Len-3] == '.' && IFN[Len-2] == 'b' && IFN[Len-1] == 'c')
+        OutputFilename = std::string(IFN.begin(), IFN.end()-3)+".ll";
+      else
+        OutputFilename = IFN+".ll";
+    }
+  }
+  
+  std::string ErrorInfo;
+  std::auto_ptr<raw_fd_ostream> 
+  Out(new raw_fd_ostream(OutputFilename.c_str(), ErrorInfo,
+                         (Force?raw_fd_ostream::F_Force : 0) |
+                         raw_fd_ostream::F_Binary));
+  if (!ErrorInfo.empty()) {
+    errs() << ErrorInfo << '\n';
+    if (!Force)
+      errs() << "Use -f command line argument to force output\n";
+    return 1;
+  }
+
+  // Make sure that the Out file gets unlinked from the disk if we get a
+  // SIGINT.
+  if (OutputFilename != "-")
+    sys::RemoveFileOnSignal(sys::Path(OutputFilename));
+
+  // All that llvm-dis does is write the assembly to a file.
+  if (!DontPrint) {
+    PassManager Passes;
+    Passes.add(createPrintModulePass(Out.get()));
+    Passes.run(*M.get());
+  }
+
+  return 0;
 }
 

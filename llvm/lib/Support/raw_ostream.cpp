@@ -322,8 +322,12 @@ void format_object_base::home() {
 /// occurs, information about the error is put into ErrorInfo, and the
 /// stream should be immediately destroyed; the string will be empty
 /// if no error occurred.
-raw_fd_ostream::raw_fd_ostream(const char *Filename, bool Binary, bool Force,
-                               std::string &ErrorInfo) : pos(0) {
+raw_fd_ostream::raw_fd_ostream(const char *Filename, std::string &ErrorInfo,
+                               unsigned Flags) : pos(0) {
+  // Verify that we don't have both "append" and "force".
+  assert((!(Flags & F_Force) || !(Flags & F_Append)) &&
+         "Cannot specify both 'force' and 'append' file creation flags!");
+  
   ErrorInfo.clear();
 
   // Handle "-" as stdout.
@@ -331,20 +335,26 @@ raw_fd_ostream::raw_fd_ostream(const char *Filename, bool Binary, bool Force,
     FD = STDOUT_FILENO;
     // If user requested binary then put stdout into binary mode if
     // possible.
-    if (Binary)
+    if (Flags & F_Binary)
       sys::Program::ChangeStdoutToBinary();
     ShouldClose = false;
     return;
   }
   
-  int Flags = O_WRONLY|O_CREAT|O_TRUNC;
+  int OpenFlags = O_WRONLY|O_CREAT;
 #ifdef O_BINARY
   if (Binary)
-    Flags |= O_BINARY;
+    OpenFlags |= O_BINARY;
 #endif
-  if (!Force)
-    Flags |= O_EXCL;
-  FD = open(Filename, Flags, 0664);
+  
+  if (Flags & F_Force)
+    OpenFlags |= O_TRUNC;
+  else if (Flags & F_Append)
+    OpenFlags |= O_APPEND;
+  else
+    OpenFlags |= O_EXCL;
+  
+  FD = open(Filename, OpenFlags, 0664);
   if (FD < 0) {
     ErrorInfo = "Error opening output file '" + std::string(Filename) + "'";
     ShouldClose = false;
@@ -354,13 +364,13 @@ raw_fd_ostream::raw_fd_ostream(const char *Filename, bool Binary, bool Force,
 }
 
 raw_fd_ostream::~raw_fd_ostream() {
-  if (FD >= 0) {
-    flush();
-    if (ShouldClose)
-      if (::close(FD) != 0)
-        error_detected();
-  }
+  if (FD < 0) return;
+  flush();
+  if (ShouldClose)
+    if (::close(FD) != 0)
+      error_detected();
 }
+
 
 void raw_fd_ostream::write_impl(const char *Ptr, size_t Size) {
   assert (FD >= 0 && "File already closed.");

@@ -65,8 +65,8 @@ int main(int argc, char **argv) {
   if (!Quiet)
     outs() << argv[0] << ": Updating '" << OutputFilename
            << "', contents changed.\n";
-  raw_fd_ostream OutStream(OutputFilename.c_str(), /*Binary=*/true,
-                           /*Force=*/true, ErrorStr);
+  raw_fd_ostream OutStream(OutputFilename.c_str(), ErrorStr,
+                           raw_fd_ostream::F_Force|raw_fd_ostream::F_Binary);
   if (!ErrorStr.empty()) {
     errs() << argv[0] << ": Unable to write output '"
            << OutputFilename << "': " << ErrorStr << '\n';

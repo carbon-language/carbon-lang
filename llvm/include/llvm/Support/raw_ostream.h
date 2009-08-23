@@ -334,19 +334,32 @@ class raw_fd_ostream : public raw_ostream {
   virtual size_t preferred_buffer_size();
 
 public:
-  /// raw_fd_ostream - Open the specified file for writing. If an
-  /// error occurs, information about the error is put into ErrorInfo,
-  /// and the stream should be immediately destroyed; the string will
-  /// be empty if no error occurred.
+  
+  enum {
+    /// F_Force - When opening a file, this flag makes raw_fd_ostream overwrite
+    /// a file if it already exists instead of emitting an error.   This may not
+    /// be specified with F_Append.
+    F_Force  = 1,
+
+    /// F_Append - When opening a file, if it already exists append to the
+    /// existing file instead of returning an error.  This may not be specified
+    /// with F_Force.
+    F_Append = 2,
+
+    /// F_Binary - The file should be opened in binary mode on platforms that
+    /// support this distinction.
+    F_Binary = 4
+  };
+  
+  /// raw_fd_ostream - Open the specified file for writing. If an error occurs,
+  /// information about the error is put into ErrorInfo, and the stream should
+  /// be immediately destroyed; the string will be empty if no error occurred.
+  /// This allows optional flags to control how the file will be opened.
   ///
   /// \param Filename - The file to open. If this is "-" then the
   /// stream will use stdout instead.
-  /// \param Binary - The file should be opened in binary mode on
-  /// platforms that support this distinction.
-  /// \param Force - Don't consider the case where the file already
-  /// exists to be an error.
-  raw_fd_ostream(const char *Filename, bool Binary, bool Force,
-                 std::string &ErrorInfo);
+  raw_fd_ostream(const char *Filename, std::string &ErrorInfo,
+                 unsigned Flags = 0);
 
   /// raw_fd_ostream ctor - FD is the file descriptor that this writes to.  If
   /// ShouldClose is true, this closes the file when the stream is destroyed.

@@ -39,8 +39,6 @@
 #include "llvm/Support/Debug.h"
 #include "llvm/Support/ErrorHandling.h"
 #include "llvm/Support/raw_ostream.h"
-#include <fstream>
-
 using namespace llvm;
 
 namespace {
@@ -65,7 +63,7 @@ namespace {
     const bool allowPhysDoubleDefs;
 
     const char *const OutFileName;
-    std::ostream *OS;
+    raw_ostream *OS;
     const MachineFunction *MF;
     const TargetMachine *TM;
     const TargetRegisterInfo *TRI;
@@ -173,21 +171,24 @@ static RegisterPass<MachineVerifier>
 MachineVer("machineverifier", "Verify generated machine code");
 static const PassInfo *const MachineVerifyID = &MachineVer;
 
-FunctionPass *
-llvm::createMachineVerifierPass(bool allowPhysDoubleDefs)
-{
+FunctionPass *llvm::createMachineVerifierPass(bool allowPhysDoubleDefs) {
   return new MachineVerifier(allowPhysDoubleDefs);
 }
 
-bool
-MachineVerifier::runOnMachineFunction(MachineFunction &MF)
-{
-  std::ofstream OutFile;
+bool MachineVerifier::runOnMachineFunction(MachineFunction &MF) {
+  raw_ostream *OutFile = 0;
   if (OutFileName) {
-    OutFile.open(OutFileName, std::ios::out | std::ios::app);
-    OS = &OutFile;
+    std::string ErrorInfo;
+    OutFile = new raw_fd_ostream(OutFileName, ErrorInfo,
+                                 raw_fd_ostream::F_Append);
+    if (!ErrorInfo.empty()) {
+      errs() << "Error opening '" << OutFileName << "': " << ErrorInfo << '\n';
+      exit(1);
+    }
+    
+    OS = OutFile;
   } else {
-    OS = cerr.stream();
+    OS = &errs();
   }
 
   foundErrors = 0;
@@ -212,14 +213,10 @@ MachineVerifier::runOnMachineFunction(MachineFunction &MF)
   }
   visitMachineFunctionAfter();
 
-  if (OutFileName)
-    OutFile.close();
-  else if (foundErrors) {
-    std::string msg;
-    raw_string_ostream Msg(msg);
-    Msg << "Found " << foundErrors << " machine code errors.";
-    llvm_report_error(Msg.str());
-  }
+  if (OutFile)
+    delete OutFile;
+  else if (foundErrors)
+    llvm_report_error("Found "+Twine(foundErrors)+" machine code errors.");
 
   // Clean up.
   regsLive.clear();
@@ -234,7 +231,7 @@ MachineVerifier::runOnMachineFunction(MachineFunction &MF)
 
 void MachineVerifier::report(const char *msg, const MachineFunction *MF) {
   assert(MF);
-  *OS << "\n";
+  *OS << '\n';
   if (!foundErrors++)
     MF->print(*OS);
   *OS << "*** Bad machine code: " << msg << " ***\n"

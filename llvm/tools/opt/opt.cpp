@@ -376,8 +376,9 @@ int main(int argc, char **argv) {
     raw_ostream *Out = &outs();  // Default to printing to stdout...
     if (OutputFilename != "-") {
       std::string ErrorInfo;
-      Out = new raw_fd_ostream(OutputFilename.c_str(), /*Binary=*/true,
-                               Force, ErrorInfo);
+      Out = new raw_fd_ostream(OutputFilename.c_str(), ErrorInfo,
+                               raw_fd_ostream::F_Binary |
+                               (Force ? raw_fd_ostream::F_Force : 0));
       if (!ErrorInfo.empty()) {
         errs() << ErrorInfo << '\n';
         if (!Force)

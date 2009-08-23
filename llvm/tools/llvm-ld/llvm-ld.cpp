@@ -229,8 +229,8 @@ void GenerateBitcode(Module* M, const std::string& FileName) {
 
   // Create the output file.
   std::string ErrorInfo;
-  raw_fd_ostream Out(FileName.c_str(), /*Binary=*/true, /*Force=*/true,
-                     ErrorInfo);
+  raw_fd_ostream Out(FileName.c_str(), ErrorInfo,
+                     raw_fd_ostream::F_Force | raw_fd_ostream::F_Binary);
   if (!ErrorInfo.empty())
     PrintAndExit(ErrorInfo);
 
@@ -427,8 +427,8 @@ static void EmitShellScript(char **argv) {
 
   // Output the script to start the program...
   std::string ErrorInfo;
-  raw_fd_ostream Out2(OutputFilename.c_str(), /*Binary=*/false, /*Force=*/true,
-                      ErrorInfo);
+  raw_fd_ostream Out2(OutputFilename.c_str(), ErrorInfo,
+                      llvm::raw_fd_ostream::F_Force);
   if (!ErrorInfo.empty())
     PrintAndExit(ErrorInfo);
 

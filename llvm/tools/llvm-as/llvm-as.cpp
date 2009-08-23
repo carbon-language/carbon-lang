@@ -58,88 +58,64 @@ int main(int argc, char **argv) {
   llvm_shutdown_obj Y;  // Call llvm_shutdown() on exit.
   cl::ParseCommandLineOptions(argc, argv, "llvm .ll -> .bc assembler\n");
 
-  int exitCode = 0;
-  raw_ostream *Out = 0;
-  try {
-    // Parse the file now...
-    SMDiagnostic Err;
-    std::auto_ptr<Module> M(ParseAssemblyFile(InputFilename, Err, Context));
-    if (M.get() == 0) {
-      Err.Print(argv[0], errs());
-      return 1;
-    }
-
-    if (!DisableVerify) {
-      std::string Err;
-      if (verifyModule(*M.get(), ReturnStatusAction, &Err)) {
-        errs() << argv[0]
-               << ": assembly parsed, but does not verify as correct!\n";
-        errs() << Err;
-        return 1;
-      } 
-    }
-
-    if (DumpAsm) errs() << "Here's the assembly:\n" << *M.get();
-
-    if (OutputFilename != "") {   // Specified an output filename?
-      if (OutputFilename != "-") {  // Not stdout?
-        std::string ErrorInfo;
-        Out = new raw_fd_ostream(OutputFilename.c_str(), /*Binary=*/true,
-                                 Force, ErrorInfo);
-        if (!ErrorInfo.empty()) {
-          errs() << ErrorInfo << '\n';
-          if (!Force)
-            errs() << "Use -f command line argument to force output\n";
-          delete Out;
-          return 1;
-        }
-      } else {                      // Specified stdout
-        // FIXME: outs() is not binary!
-        Out = &outs();
-      }
-    } else {
-      if (InputFilename == "-") {
-        OutputFilename = "-";
-        Out = &outs();
-      } else {
-        std::string IFN = InputFilename;
-        int Len = IFN.length();
-        if (IFN[Len-3] == '.' && IFN[Len-2] == 'l' && IFN[Len-1] == 'l') {
-          // Source ends in .ll
-          OutputFilename = std::string(IFN.begin(), IFN.end()-3);
-        } else {
-          OutputFilename = IFN;   // Append a .bc to it
-        }
-        OutputFilename += ".bc";
-
-        std::string ErrorInfo;
-        Out = new raw_fd_ostream(OutputFilename.c_str(), /*Binary=*/true,
-                                 Force, ErrorInfo);
-        if (!ErrorInfo.empty()) {
-          errs() << ErrorInfo << '\n';
-          if (!Force)
-            errs() << "Use -f command line argument to force output\n";
-          delete Out;
-          return 1;
-        }
-        // Make sure that the Out file gets unlinked from the disk if we get a
-        // SIGINT
-        sys::RemoveFileOnSignal(sys::Path(OutputFilename));
-      }
-    }
-
-    if (!DisableOutput)
-      if (Force || !CheckBitcodeOutputToConsole(Out,true))
-        WriteBitcodeToFile(M.get(), *Out);
-  } catch (const std::string& msg) {
-    errs() << argv[0] << ": " << msg << "\n";
-    exitCode = 1;
-  } catch (...) {
-    errs() << argv[0] << ": Unexpected unknown exception occurred.\n";
-    exitCode = 1;
+  // Parse the file now...
+  SMDiagnostic Err;
+  std::auto_ptr<Module> M(ParseAssemblyFile(InputFilename, Err, Context));
+  if (M.get() == 0) {
+    Err.Print(argv[0], errs());
+    return 1;
   }
 
-  if (Out != &outs()) delete Out;
-  return exitCode;
+  if (!DisableVerify) {
+    std::string Err;
+    if (verifyModule(*M.get(), ReturnStatusAction, &Err)) {
+      errs() << argv[0]
+             << ": assembly parsed, but does not verify as correct!\n";
+      errs() << Err;
+      return 1;
+    } 
+  }
+
+  if (DumpAsm) errs() << "Here's the assembly:\n" << *M.get();
+
+  // Infer the output filename if needed.
+  if (OutputFilename.empty()) {
+    if (InputFilename == "-") {
+      OutputFilename = "-";
+    } else {
+      std::string IFN = InputFilename;
+      int Len = IFN.length();
+      if (IFN[Len-3] == '.' && IFN[Len-2] == 'l' && IFN[Len-1] == 'l') {
+        // Source ends in .ll
+        OutputFilename = std::string(IFN.begin(), IFN.end()-3);
+      } else {
+        OutputFilename = IFN;   // Append a .bc to it
+      }
+      OutputFilename += ".bc";
+    }
+  }
+  
+  std::string ErrorInfo;
+  std::auto_ptr<raw_ostream> Out
+  (new raw_fd_ostream(OutputFilename.c_str(), ErrorInfo,
+                      (Force?raw_fd_ostream::F_Force : 0) |
+                      raw_fd_ostream::F_Binary));
+  if (!ErrorInfo.empty()) {
+    errs() << ErrorInfo << '\n';
+    if (!Force)
+      errs() << "Use -f command line argument to force output\n";
+    return 1;
+  }
+  
+  
+  // Make sure that the Out file gets unlinked from the disk if we get a
+  // SIGINT.
+  if (OutputFilename != "-")
+    sys::RemoveFileOnSignal(sys::Path(OutputFilename));
+
+  if (!DisableOutput)
+    if (Force || !CheckBitcodeOutputToConsole(Out.get(), true))
+      WriteBitcodeToFile(M.get(), *Out);
+  return 0;
 }
 

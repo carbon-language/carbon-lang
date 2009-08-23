@@ -174,16 +174,18 @@ static const Target *GetTarget(const char *ProgName) {
 }
 
 static formatted_raw_ostream *GetOutputStream() {
-  if (OutputFilename == "" || OutputFilename == "-")
-    return &fouts();
+  if (OutputFilename == "")
+    OutputFilename = "-";
 
   // Make sure that the Out file gets unlinked from the disk if we get a
-  // SIGINT
-  sys::RemoveFileOnSignal(sys::Path(OutputFilename));
+  // SIGINT.
+  if (OutputFilename != "-")
+    sys::RemoveFileOnSignal(sys::Path(OutputFilename));
 
   std::string Err;
-  raw_fd_ostream *Out = new raw_fd_ostream(OutputFilename.c_str(),
-                                           /*Binary=*/false, Force, Err);
+  raw_fd_ostream *Out = new raw_fd_ostream(OutputFilename.c_str(), Err,
+                                           raw_fd_ostream::F_Binary |
+                                         (Force ? raw_fd_ostream::F_Force : 0));
   if (!Err.empty()) {
     errs() << Err << '\n';
     if (!Force)
