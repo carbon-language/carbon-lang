@@ -542,10 +542,10 @@ void PCHWriter::WriteMetadata(ASTContext &Context, const char *isysroot) {
   
     if (!MainFilePath.isAbsolute()) {
       llvm::sys::Path P = llvm::sys::Path::GetCurrentDirectory();
-      P.appendComponent(MainFilePath.toString());
-      MainFileName = P.toString();
+      P.appendComponent(MainFilePath.str());
+      MainFileName = P.str();
     } else {
-      MainFileName = MainFilePath.toString();
+      MainFileName = MainFilePath.str();
     }
 
     const char *MainFileNameStr = MainFileName.c_str();
@@ -895,8 +895,8 @@ void PCHWriter::WriteSourceManagerBlock(SourceManager &SourceMgr,
         std::string FilenameStr;
         if (!FilePath.isAbsolute()) {
           llvm::sys::Path P = llvm::sys::Path::GetCurrentDirectory();
-          P.appendComponent(FilePath.toString());
-          FilenameStr = P.toString();
+          P.appendComponent(FilePath.str());
+          FilenameStr = P.str();
           Filename = FilenameStr.c_str();
         }
         

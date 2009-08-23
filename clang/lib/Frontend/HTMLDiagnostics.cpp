@@ -151,7 +151,7 @@ void HTMLDiagnostics::ReportDiag(const PathDiagnostic& D) {
   
     if (!Directory.isDirectory()) {
       llvm::errs() << "warning: could not create directory '"
-                   << Directory.toString() << "'\n"
+                   << Directory.str() << "'\n"
                    << "reason: " << ErrorMsg << '\n'; 
       
       noDir = true;
@@ -236,7 +236,7 @@ void HTMLDiagnostics::ReportDiag(const PathDiagnostic& D) {
   
   if (!llvm::sys::Path(Entry->getName()).isAbsolute()) {
     llvm::sys::Path P = llvm::sys::Path::GetCurrentDirectory();
-    DirName = P.toString() + "/";
+    DirName = P.str() + "/";
   }
     
   // Add the name of the file as an <h1> tag.  
@@ -329,10 +329,10 @@ void HTMLDiagnostics::ReportDiag(const PathDiagnostic& D) {
     H.appendSuffix("html");
     F.renamePathOnDisk(H, NULL);
     
-    os.open(H.toString().c_str());
+    os.open(H.c_str());
     
     if (!os) {
-      llvm::errs() << "warning: could not create file '" << F.toString() << "'\n";
+      llvm::errs() << "warning: could not create file '" << F.str() << "'\n";
       return;
     }
 

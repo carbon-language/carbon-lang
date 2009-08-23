@@ -19,6 +19,7 @@
 
 #include "clang/Basic/FileManager.h"
 #include "llvm/ADT/SmallString.h"
+#include "llvm/Support/raw_ostream.h"
 #include "llvm/System/Path.h"
 #include "llvm/Config/config.h"
 using namespace clang;

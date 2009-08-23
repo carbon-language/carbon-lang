@@ -478,19 +478,19 @@ bool Driver::HandleImmediateArgs(const Compilation &C) {
   // FIXME: The following handlers should use a callback mechanism, we
   // don't know what the client would like to do.
   if (Arg *A = C.getArgs().getLastArg(options::OPT_print_file_name_EQ)) {
-    llvm::outs() << GetFilePath(A->getValue(C.getArgs()), TC).toString() 
+    llvm::outs() << GetFilePath(A->getValue(C.getArgs()), TC).str() 
                  << "\n";
     return false;
   }
 
   if (Arg *A = C.getArgs().getLastArg(options::OPT_print_prog_name_EQ)) {
-    llvm::outs() << GetProgramPath(A->getValue(C.getArgs()), TC).toString() 
+    llvm::outs() << GetProgramPath(A->getValue(C.getArgs()), TC).str() 
                  << "\n";
     return false;
   }
 
   if (C.getArgs().hasArg(options::OPT_print_libgcc_file_name)) {
-    llvm::outs() << GetFilePath("libgcc.a", TC).toString() << "\n";
+    llvm::outs() << GetFilePath("libgcc.a", TC).str() << "\n";
     return false;
   }
 
@@ -1239,7 +1239,7 @@ std::string Driver::GetTemporaryPath(const char *Suffix) const {
   P.eraseFromDisk(false, 0);
 
   P.appendSuffix(Suffix);
-  return P.toString();
+  return P.str();
 }
 
 const HostInfo *Driver::GetHostInfo(const char *TripleStr) const {

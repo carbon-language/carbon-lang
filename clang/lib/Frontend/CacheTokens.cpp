@@ -543,10 +543,10 @@ void clang::CacheTokens(Preprocessor &PP, llvm::raw_fd_ostream* OS) {
   
   if (!MainFilePath.isAbsolute()) {
     llvm::sys::Path P = llvm::sys::Path::GetCurrentDirectory();
-    P.appendComponent(MainFilePath.toString());
-    MainFileName = P.toString();
+    P.appendComponent(MainFilePath.str());
+    MainFileName = P.str();
   } else {
-    MainFileName = MainFilePath.toString();
+    MainFileName = MainFilePath.str();
   }
 
   // Create the PTHWriter.

@@ -16,6 +16,7 @@
 #include "clang/Basic/FileManager.h"
 #include "llvm/Support/Compiler.h"
 #include "llvm/Support/MemoryBuffer.h"
+#include "llvm/Support/raw_ostream.h"
 #include "llvm/System/Path.h"
 #include <algorithm>
 using namespace clang;

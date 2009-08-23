@@ -1743,7 +1743,7 @@ static llvm::raw_ostream *ComputeOutFile(const std::string &InFile,
     llvm::sys::Path Path(InFile);
     Path.eraseSuffix();
     Path.appendSuffix(Extension);
-    OutFile = Path.toString();
+    OutFile = Path.str();
   } else {
     OutFile = "-";
   }

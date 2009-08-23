@@ -475,11 +475,10 @@ static ExplodedNode::Auditor* CreateUbiViz() {
   if (!ErrMsg.empty())
     return 0;
 
-  llvm::errs() << "Writing '" << Filename << "'.\n";
+  llvm::errs() << "Writing '" << Filename.str() << "'.\n";
   
   llvm::OwningPtr<llvm::raw_fd_ostream> Stream;
-  std::string filename = Filename.toString();
-  Stream.reset(new llvm::raw_fd_ostream(filename.c_str(), ErrMsg,
+  Stream.reset(new llvm::raw_fd_ostream(Filename.c_str(), ErrMsg,
                                         llvm::raw_fd_ostream::F_Force));
 
   if (!ErrMsg.empty())

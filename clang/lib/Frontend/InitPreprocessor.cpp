@@ -78,7 +78,7 @@ static void AddQuotedIncludePath(std::vector<char> &Buf,
     
   // Escape double quotes etc.
   Buf.push_back('"');
-  std::string EscapedFile = Lexer::Stringify(Path.toString());
+  std::string EscapedFile = Lexer::Stringify(Path.str());
   Buf.insert(Buf.end(), EscapedFile.begin(), EscapedFile.end());
   Buf.push_back('"');
 }

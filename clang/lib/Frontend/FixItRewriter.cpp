@@ -55,7 +55,7 @@ bool FixItRewriter::WriteFixedFile(const std::string &InFileName,
     Path.eraseSuffix();
     Path.appendSuffix("fixit." + Suffix);
     std::string Err;
-    OutFile = new llvm::raw_fd_ostream(Path.toString().c_str(), Err,
+    OutFile = new llvm::raw_fd_ostream(Path.c_str(), Err,
                                        llvm::raw_fd_ostream::F_Binary |
                                        llvm::raw_fd_ostream::F_Force);
     OwnedStream.reset(OutFile);
