@@ -32,11 +32,11 @@ MachineBasicBlock::~MachineBasicBlock() {
   LeakDetector::removeGarbageObject(this);
 }
 
-std::ostream& llvm::operator<<(std::ostream &OS, const MachineBasicBlock &MBB) {
+std::ostream &llvm::operator<<(std::ostream &OS, const MachineBasicBlock &MBB) {
   MBB.print(OS);
   return OS;
 }
-raw_ostream& llvm::operator<<(raw_ostream &OS, const MachineBasicBlock &MBB) {
+raw_ostream &llvm::operator<<(raw_ostream &OS, const MachineBasicBlock &MBB) {
   MBB.print(OS);
   return OS;
 }
@@ -48,7 +48,7 @@ raw_ostream& llvm::operator<<(raw_ostream &OS, const MachineBasicBlock &MBB) {
 /// MBBs start out as #-1. When a MBB is added to a MachineFunction, it
 /// gets the next available unique MBB number. If it is removed from a
 /// MachineFunction, it goes back to being #-1.
-void ilist_traits<MachineBasicBlock>::addNodeToList(MachineBasicBlock* N) {
+void ilist_traits<MachineBasicBlock>::addNodeToList(MachineBasicBlock *N) {
   MachineFunction &MF = *N->getParent();
   N->Number = MF.addToMBBNumbering(N);
 
@@ -60,7 +60,7 @@ void ilist_traits<MachineBasicBlock>::addNodeToList(MachineBasicBlock* N) {
   LeakDetector::removeGarbageObject(N);
 }
 
-void ilist_traits<MachineBasicBlock>::removeNodeFromList(MachineBasicBlock* N) {
+void ilist_traits<MachineBasicBlock>::removeNodeFromList(MachineBasicBlock *N) {
   N->getParent()->removeFromMBBNumbering(N->Number);
   N->Number = -1;
   LeakDetector::addGarbageObject(N);
@@ -70,7 +70,7 @@ void ilist_traits<MachineBasicBlock>::removeNodeFromList(MachineBasicBlock* N) {
 /// addNodeToList (MI) - When we add an instruction to a basic block
 /// list, we update its parent pointer and add its operands from reg use/def
 /// lists if appropriate.
-void ilist_traits<MachineInstr>::addNodeToList(MachineInstr* N) {
+void ilist_traits<MachineInstr>::addNodeToList(MachineInstr *N) {
   assert(N->getParent() == 0 && "machine instruction already in a basic block");
   N->setParent(Parent);
   
@@ -85,7 +85,7 @@ void ilist_traits<MachineInstr>::addNodeToList(MachineInstr* N) {
 /// removeNodeFromList (MI) - When we remove an instruction from a basic block
 /// list, we update its parent pointer and remove its operands from reg use/def
 /// lists if appropriate.
-void ilist_traits<MachineInstr>::removeNodeFromList(MachineInstr* N) {
+void ilist_traits<MachineInstr>::removeNodeFromList(MachineInstr *N) {
   assert(N->getParent() != 0 && "machine instruction not in a basic block");
 
   // Remove from the use/def lists.
@@ -99,10 +99,10 @@ void ilist_traits<MachineInstr>::removeNodeFromList(MachineInstr* N) {
 /// transferNodesFromList (MI) - When moving a range of instructions from one
 /// MBB list to another, we need to update the parent pointers and the use/def
 /// lists.
-void ilist_traits<MachineInstr>::transferNodesFromList(
-      ilist_traits<MachineInstr>& fromList,
-      MachineBasicBlock::iterator first,
-      MachineBasicBlock::iterator last) {
+void ilist_traits<MachineInstr>::
+transferNodesFromList(ilist_traits<MachineInstr> &fromList,
+                      MachineBasicBlock::iterator first,
+                      MachineBasicBlock::iterator last) {
   assert(Parent->getParent() == fromList.Parent->getParent() &&
         "MachineInstr parent mismatch!");
 
@@ -182,14 +182,14 @@ void MachineBasicBlock::print(std::ostream &OS,
 void MachineBasicBlock::print(raw_ostream &OS,
                               const PrefixPrinter &prefix) const {
   const MachineFunction *MF = getParent();
-  if(!MF) {
+  if (!MF) {
     OS << "Can't print out MachineBasicBlock because parent MachineFunction"
        << " is null\n";
     return;
   }
 
   const BasicBlock *LBB = getBasicBlock();
-  OS << "\n";
+  OS << '\n';
   if (LBB) OS << LBB->getName() << ": ";
   OS << (const void*)this
      << ", LLVM BB @" << (const void*) LBB << ", ID#" << getNumber();
@@ -202,18 +202,18 @@ void MachineBasicBlock::print(raw_ostream &OS,
     OS << "Live Ins:";
     for (const_livein_iterator I = livein_begin(),E = livein_end(); I != E; ++I)
       OutputReg(OS, *I, TRI);
-    OS << "\n";
+    OS << '\n';
   }
   // Print the preds of this block according to the CFG.
   if (!pred_empty()) {
     OS << "    Predecessors according to CFG:";
     for (const_pred_iterator PI = pred_begin(), E = pred_end(); PI != E; ++PI)
-      OS << " " << *PI << " (#" << (*PI)->getNumber() << ")";
-    OS << "\n";
+      OS << ' ' << *PI << " (#" << (*PI)->getNumber() << ')';
+    OS << '\n';
   }
   
   for (const_iterator I = begin(); I != end(); ++I) {
-    prefix(OS, *I) << "\t";
+    prefix(OS, *I) << '\t';
     I->print(OS, &getParent()->getTarget());
   }
 
@@ -221,8 +221,8 @@ void MachineBasicBlock::print(raw_ostream &OS,
   if (!succ_empty()) {
     OS << "    Successors according to CFG:";
     for (const_succ_iterator SI = succ_begin(), E = succ_end(); SI != E; ++SI)
-      OS << " " << *SI << " (#" << (*SI)->getNumber() << ")";
-    OS << "\n";
+      OS << ' ' << *SI << " (#" << (*SI)->getNumber() << ')';
+    OS << '\n';
   }
 }
 
@@ -277,16 +277,15 @@ void MachineBasicBlock::removePredecessor(MachineBasicBlock *pred) {
   Predecessors.erase(I);
 }
 
-void MachineBasicBlock::transferSuccessors(MachineBasicBlock *fromMBB)
-{
+void MachineBasicBlock::transferSuccessors(MachineBasicBlock *fromMBB) {
   if (this == fromMBB)
     return;
   
-  for(MachineBasicBlock::succ_iterator iter = fromMBB->succ_begin(), 
-      end = fromMBB->succ_end(); iter != end; ++iter) {
-      addSuccessor(*iter);
-  }
-  while(!fromMBB->succ_empty())
+  for (MachineBasicBlock::succ_iterator I = fromMBB->succ_begin(), 
+       E = fromMBB->succ_end(); I != E; ++I)
+    addSuccessor(*I);
+  
+  while (!fromMBB->succ_empty())
     fromMBB->removeSuccessor(fromMBB->succ_begin());
 }
 
