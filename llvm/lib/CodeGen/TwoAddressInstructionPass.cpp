@@ -558,15 +558,15 @@ TwoAddressInstructionPass::CommuteInstruction(MachineBasicBlock::iterator &mi,
                                MachineFunction::iterator &mbbi,
                                unsigned RegB, unsigned RegC, unsigned Dist) {
   MachineInstr *MI = mi;
-  DOUT << "2addr: COMMUTING  : " << *MI;
+  DEBUG(errs() << "2addr: COMMUTING  : " << *MI);
   MachineInstr *NewMI = TII->commuteInstruction(MI);
 
   if (NewMI == 0) {
-    DOUT << "2addr: COMMUTING FAILED!\n";
+    DEBUG(errs() << "2addr: COMMUTING FAILED!\n");
     return false;
   }
 
-  DOUT << "2addr: COMMUTED TO: " << *NewMI;
+  DEBUG(errs() << "2addr: COMMUTED TO: " << *NewMI);
   // If the instruction changed to commute it, update livevar.
   if (NewMI != MI) {
     if (LV)
@@ -613,8 +613,8 @@ TwoAddressInstructionPass::ConvertInstTo3Addr(MachineBasicBlock::iterator &mi,
                                               unsigned RegB, unsigned Dist) {
   MachineInstr *NewMI = TII->convertToThreeAddress(mbbi, mi, LV);
   if (NewMI) {
-    DOUT << "2addr: CONVERTING 2-ADDR: " << *mi;
-    DOUT << "2addr:         TO 3-ADDR: " << *NewMI;
+    DEBUG(errs() << "2addr: CONVERTING 2-ADDR: " << *mi);
+    DEBUG(errs() << "2addr:         TO 3-ADDR: " << *NewMI);
     bool Sunk = false;
 
     if (NewMI->findRegisterUseOperand(RegB, false, TRI))
@@ -739,7 +739,7 @@ static bool isSafeToDelete(MachineInstr *MI, unsigned Reg,
 /// runOnMachineFunction - Reduce two-address instructions to two operands.
 ///
 bool TwoAddressInstructionPass::runOnMachineFunction(MachineFunction &MF) {
-  DOUT << "Machine Function\n";
+  DEBUG(errs() << "Machine Function\n");
   const TargetMachine &TM = MF.getTarget();
   MRI = &MF.getRegInfo();
   TII = TM.getInstrInfo();
@@ -748,7 +748,7 @@ bool TwoAddressInstructionPass::runOnMachineFunction(MachineFunction &MF) {
 
   bool MadeChange = false;
 
-  DOUT << "********** REWRITING TWO-ADDR INSTRS **********\n";
+  DEBUG(errs() << "********** REWRITING TWO-ADDR INSTRS **********\n");
   DEBUG(errs() << "********** Function: " 
         << MF.getFunction()->getName() << '\n');
 
@@ -783,7 +783,7 @@ bool TwoAddressInstructionPass::runOnMachineFunction(MachineFunction &MF) {
 
         if (FirstTied) {
           ++NumTwoAddressInstrs;
-          DOUT << '\t' << *mi;
+          DEBUG(errs() << '\t' << *mi);
         }
 
         FirstTied = false;
@@ -953,7 +953,7 @@ bool TwoAddressInstructionPass::runOnMachineFunction(MachineFunction &MF) {
               DefMI->getDesc().isAsCheapAsAMove() &&
               DefMI->isSafeToReMat(TII, regB) &&
               isProfitableToReMat(regB, rc, mi, DefMI, mbbi, Dist)){
-            DEBUG(cerr << "2addr: REMATTING : " << *DefMI << "\n");
+            DEBUG(errs() << "2addr: REMATTING : " << *DefMI << "\n");
             TII->reMaterialize(*mbbi, mi, regA, regASubIdx, DefMI);
             ReMatRegs.set(regB);
             ++NumReMats;
@@ -977,7 +977,7 @@ bool TwoAddressInstructionPass::runOnMachineFunction(MachineFunction &MF) {
               LV->addVirtualRegisterDead(regB, prevMI);
           }
 
-          DOUT << "\t\tprepend:\t" << *prevMI;
+          DEBUG(errs() << "\t\tprepend:\t" << *prevMI);
           
           // Replace all occurences of regB with regA.
           for (unsigned i = 0, e = mi->getNumOperands(); i != e; ++i) {
@@ -991,7 +991,7 @@ bool TwoAddressInstructionPass::runOnMachineFunction(MachineFunction &MF) {
         mi->getOperand(ti).setReg(mi->getOperand(si).getReg());
         MadeChange = true;
 
-        DOUT << "\t\trewrite to:\t" << *mi;
+        DEBUG(errs() << "\t\trewrite to:\t" << *mi);
       }
 
       mi = nmi;
