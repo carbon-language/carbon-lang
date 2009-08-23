@@ -849,9 +849,9 @@ LowerSTORE(SDValue Op, SelectionDAG &DAG, const SPUSubtarget *ST) {
     // to the stack pointer, which is always aligned.
 #if !defined(NDEBUG)
       if (DebugFlag && isCurrentDebugType(DEBUG_TYPE)) {
-        cerr << "CellSPU LowerSTORE: basePtr = ";
+        errs() << "CellSPU LowerSTORE: basePtr = ";
         basePtr.getNode()->dump(&DAG);
-        cerr << "\n";
+        errs() << "\n";
       }
 #endif
 
@@ -874,9 +874,9 @@ LowerSTORE(SDValue Op, SelectionDAG &DAG, const SPUSubtarget *ST) {
       const SDValue &currentRoot = DAG.getRoot();
 
       DAG.setRoot(result);
-      cerr << "------- CellSPU:LowerStore result:\n";
+      errs() << "------- CellSPU:LowerStore result:\n";
       DAG.dump();
-      cerr << "-------\n";
+      errs() << "-------\n";
       DAG.setRoot(currentRoot);
     }
 #endif
@@ -2622,9 +2622,9 @@ SPUTargetLowering::LowerOperation(SDValue Op, SelectionDAG &DAG)
   switch (Opc) {
   default: {
 #ifndef NDEBUG
-    cerr << "SPUTargetLowering::LowerOperation(): need to lower this!\n";
-    cerr << "Op.getOpcode() = " << Opc << "\n";
-    cerr << "*Op.getNode():\n";
+    errs() << "SPUTargetLowering::LowerOperation(): need to lower this!\n";
+    errs() << "Op.getOpcode() = " << Opc << "\n";
+    errs() << "*Op.getNode():\n";
     Op.getNode()->dump();
 #endif
     llvm_unreachable(0);
@@ -2715,9 +2715,9 @@ void SPUTargetLowering::ReplaceNodeResults(SDNode *N,
 
   switch (Opc) {
   default: {
-    cerr << "SPUTargetLowering::ReplaceNodeResults(): need to fix this!\n";
-    cerr << "Op.getOpcode() = " << Opc << "\n";
-    cerr << "*Op.getNode():\n";
+    errs() << "SPUTargetLowering::ReplaceNodeResults(): need to fix this!\n";
+    errs() << "Op.getOpcode() = " << Opc << "\n";
+    errs() << "*Op.getNode():\n";
     N->dump();
     abort();
     /*NOTREACHED*/
@@ -2771,7 +2771,7 @@ SPUTargetLowering::PerformDAGCombine(SDNode *N, DAGCombinerInfo &DCI) const
 
 #if !defined(NDEBUG)
           if (DebugFlag && isCurrentDebugType(DEBUG_TYPE)) {
-            cerr << "\n"
+            errs() << "\n"
                  << "Replace: (add (SPUindirect <arg>, <arg>), 0)\n"
                  << "With:    (SPUindirect <arg>, <arg>)\n";
           }
@@ -2787,7 +2787,7 @@ SPUTargetLowering::PerformDAGCombine(SDNode *N, DAGCombinerInfo &DCI) const
 
 #if !defined(NDEBUG)
           if (DebugFlag && isCurrentDebugType(DEBUG_TYPE)) {
-            cerr << "\n"
+            errs() << "\n"
                  << "Replace: (add (SPUindirect <arg>, " << CN1->getSExtValue()
                  << "), " << CN0->getSExtValue() << ")\n"
                  << "With:    (SPUindirect <arg>, "
@@ -2811,11 +2811,11 @@ SPUTargetLowering::PerformDAGCombine(SDNode *N, DAGCombinerInfo &DCI) const
       // Types must match, however...
 #if !defined(NDEBUG)
       if (DebugFlag && isCurrentDebugType(DEBUG_TYPE)) {
-        cerr << "\nReplace: ";
+        errs() << "\nReplace: ";
         N->dump(&DAG);
-        cerr << "\nWith:    ";
+        errs() << "\nWith:    ";
         Op0.getNode()->dump(&DAG);
-        cerr << "\n";
+        errs() << "\n";
       }
 #endif
 
@@ -2830,11 +2830,11 @@ SPUTargetLowering::PerformDAGCombine(SDNode *N, DAGCombinerInfo &DCI) const
         // (SPUindirect (SPUaform <addr>, 0), 0) ->
         // (SPUaform <addr>, 0)
 
-        DEBUG(cerr << "Replace: ");
+        DEBUG(errs() << "Replace: ");
         DEBUG(N->dump(&DAG));
-        DEBUG(cerr << "\nWith:    ");
+        DEBUG(errs() << "\nWith:    ");
         DEBUG(Op0.getNode()->dump(&DAG));
-        DEBUG(cerr << "\n");
+        DEBUG(errs() << "\n");
 
         return Op0;
       }
@@ -2847,7 +2847,7 @@ SPUTargetLowering::PerformDAGCombine(SDNode *N, DAGCombinerInfo &DCI) const
 
 #if !defined(NDEBUG)
           if (DebugFlag && isCurrentDebugType(DEBUG_TYPE)) {
-            cerr << "\n"
+            errs() << "\n"
                  << "Replace: (SPUindirect (add <arg>, <arg>), 0)\n"
                  << "With:    (SPUindirect <arg>, <arg>)\n";
           }
@@ -2909,11 +2909,11 @@ SPUTargetLowering::PerformDAGCombine(SDNode *N, DAGCombinerInfo &DCI) const
   // Otherwise, return unchanged.
 #ifndef NDEBUG
   if (Result.getNode()) {
-    DEBUG(cerr << "\nReplace.SPU: ");
+    DEBUG(errs() << "\nReplace.SPU: ");
     DEBUG(N->dump(&DAG));
-    DEBUG(cerr << "\nWith:        ");
+    DEBUG(errs() << "\nWith:        ");
     DEBUG(Result.getNode()->dump(&DAG));
-    DEBUG(cerr << "\n");
+    DEBUG(errs() << "\n");
   }
 #endif
 

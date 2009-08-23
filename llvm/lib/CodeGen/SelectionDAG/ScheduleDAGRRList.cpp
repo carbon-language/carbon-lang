@@ -201,9 +201,9 @@ void ScheduleDAGRRList::ReleasePred(SUnit *SU, const SDep *PredEdge) {
   
 #ifndef NDEBUG
   if (PredSU->NumSuccsLeft < 0) {
-    cerr << "*** Scheduling failed! ***\n";
+    errs() << "*** Scheduling failed! ***\n";
     PredSU->dump(this);
-    cerr << " has been released too many times!\n";
+    errs() << " has been released too many times!\n";
     llvm_unreachable(0);
   }
 #endif
@@ -828,9 +828,9 @@ void ScheduleDAGRRList::ReleaseSucc(SUnit *SU, const SDep *SuccEdge) {
   
 #ifndef NDEBUG
   if (SuccSU->NumPredsLeft < 0) {
-    cerr << "*** Scheduling failed! ***\n";
+    errs() << "*** Scheduling failed! ***\n";
     SuccSU->dump(this);
-    cerr << " has been released too many times!\n";
+    errs() << " has been released too many times!\n";
     llvm_unreachable(0);
   }
 #endif

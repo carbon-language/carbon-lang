@@ -155,7 +155,7 @@ namespace llvm {
 MachineBasicBlock *TargetLowering::EmitInstrWithCustomInserter(MachineInstr *MI,
                                                  MachineBasicBlock *MBB) const {
 #ifndef NDEBUG
-  cerr << "If a target marks an instruction with "
+  errs() << "If a target marks an instruction with "
           "'usesCustomDAGSchedInserter', it must implement "
           "TargetLowering::EmitInstrWithCustomInserter!";
 #endif
@@ -662,7 +662,7 @@ void SelectionDAGISel::SelectAllBasicBlocks(Function &Fn,
              I != E; ++I, ++j)
           if (Fn.paramHasAttr(j, Attribute::ByVal)) {
             if (EnableFastISelVerbose || EnableFastISelAbort)
-              cerr << "FastISel skips entry block due to byval argument\n";
+              errs() << "FastISel skips entry block due to byval argument\n";
             SuppressFastISel = true;
             break;
           }
@@ -727,7 +727,7 @@ void SelectionDAGISel::SelectAllBasicBlocks(Function &Fn,
         if (isa<TerminatorInst>(BI))
           if (!HandlePHINodesInSuccessorBlocksFast(LLVMBB, FastIS)) {
             if (EnableFastISelVerbose || EnableFastISelAbort) {
-              cerr << "FastISel miss: ";
+              errs() << "FastISel miss: ";
               BI->dump();
             }
             assert(!EnableFastISelAbort && 
@@ -746,7 +746,7 @@ void SelectionDAGISel::SelectAllBasicBlocks(Function &Fn,
         // Then handle certain instructions as single-LLVM-Instruction blocks.
         if (isa<CallInst>(BI)) {
           if (EnableFastISelVerbose || EnableFastISelAbort) {
-            cerr << "FastISel missed call: ";
+            errs() << "FastISel missed call: ";
             BI->dump();
           }
 
@@ -768,7 +768,7 @@ void SelectionDAGISel::SelectAllBasicBlocks(Function &Fn,
         // For now, be a little lenient about non-branch terminators.
         if (!isa<TerminatorInst>(BI) || isa<BranchInst>(BI)) {
           if (EnableFastISelVerbose || EnableFastISelAbort) {
-            cerr << "FastISel miss: ";
+            errs() << "FastISel miss: ";
             BI->dump();
           }
           if (EnableFastISelAbort)

@@ -34,6 +34,7 @@
 #include "llvm/Target/TargetLoweringObjectFile.h"
 #include "llvm/Support/Debug.h"
 #include "llvm/Support/ErrorHandling.h"
+#include "llvm/Support/raw_ostream.h"
 #include "llvm/ADT/VectorExtras.h"
 using namespace llvm;
 
@@ -225,7 +226,7 @@ MSP430TargetLowering::LowerCCCArguments(SDValue Chain,
       default: 
         {
 #ifndef NDEBUG
-          cerr << "LowerFormalArguments Unhandled argument type: "
+          errs() << "LowerFormalArguments Unhandled argument type: "
                << RegVT.getSimpleVT().SimpleTy << "\n";
 #endif
           llvm_unreachable(0);
@@ -257,7 +258,7 @@ MSP430TargetLowering::LowerCCCArguments(SDValue Chain,
       // Load the argument to a virtual register
       unsigned ObjSize = VA.getLocVT().getSizeInBits()/8;
       if (ObjSize > 2) {
-        cerr << "LowerFormalArguments Unhandled argument type: "
+        errs() << "LowerFormalArguments Unhandled argument type: "
              << VA.getLocVT().getSimpleVT().SimpleTy
              << "\n";
       }

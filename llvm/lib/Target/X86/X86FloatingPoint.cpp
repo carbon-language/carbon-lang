@@ -76,12 +76,12 @@ namespace {
     unsigned StackTop;          // The current top of the FP stack.
 
     void dumpStack() const {
-      cerr << "Stack contents:";
+      errs() << "Stack contents:";
       for (unsigned i = 0; i != StackTop; ++i) {
-        cerr << " FP" << Stack[i];
+        errs() << " FP" << Stack[i];
         assert(RegMap[Stack[i]] == i && "Stack[] doesn't match RegMap[]!");
       }
-      cerr << "\n";
+      errs() << "\n";
     }
   private:
     /// isStackEmpty - Return true if the FP stack is empty.

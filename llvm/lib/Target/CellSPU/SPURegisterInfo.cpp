@@ -365,7 +365,7 @@ SPURegisterInfo::eliminateFrameIndex(MachineBasicBlock::iterator II, int SPAdj,
   SPOp.ChangeToRegister(SPU::R1, false);
   if (Offset > SPUFrameInfo::maxFrameOffset()
       || Offset < SPUFrameInfo::minFrameOffset()) {
-    cerr << "Large stack adjustment ("
+    errs() << "Large stack adjustment ("
          << Offset
          << ") in SPURegisterInfo::eliminateFrameIndex.";
   } else {

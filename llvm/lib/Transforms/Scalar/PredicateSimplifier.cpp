@@ -277,16 +277,16 @@ namespace {
 
 #ifndef NDEBUG
     virtual void dump() const {
-      dump(*cerr.stream());
+      dump(errs());
     }
 
-    void dump(std::ostream &os) const {
+    void dump(raw_ostream &os) const {
       os << "Predicate simplifier DomTreeDFS: \n";
       dump(Entry, 0, os);
       os << "\n\n";
     }
 
-    void dump(Node *N, int depth, std::ostream &os) const {
+    void dump(Node *N, int depth, raw_ostream &os) const {
       ++depth;
       for (int i = 0; i < depth; ++i) { os << " "; }
       os << "[" << depth << "] ";
@@ -656,10 +656,10 @@ namespace {
 #ifndef NDEBUG
       virtual ~Node() {}
       virtual void dump() const {
-        dump(*cerr.stream());
+        dump(errs());
       }
     private:
-      void dump(std::ostream &os) const {
+      void dump(raw_ostream &os) const {
         static const std::string names[32] =
           { "000000", "000001", "000002", "000003", "000004", "000005",
             "000006", "000007", "000008", "000009", "     >", "    >=",
@@ -887,10 +887,10 @@ namespace {
 #ifndef NDEBUG
     virtual ~InequalityGraph() {}
     virtual void dump() {
-      dump(*cerr.stream());
+      dump(errs());
     }
 
-    void dump(std::ostream &os) {
+    void dump(raw_ostream &os) {
       for (unsigned i = 1; i <= Nodes.size(); ++i) {
         os << i << " = {";
         node(i)->dump(os);
@@ -923,10 +923,10 @@ namespace {
 #ifndef NDEBUG
       virtual ~ScopedRange() {}
       virtual void dump() const {
-        dump(*cerr.stream());
+        dump(errs());
       }
 
-      void dump(std::ostream &os) const {
+      void dump(raw_ostream &os) const {
         os << "{";
         for (const_iterator I = begin(), E = end(); I != E; ++I) {
           os << &I->second << " (" << I->first->getDFSNumIn() << "), ";
@@ -1035,10 +1035,10 @@ namespace {
     virtual ~ValueRanges() {}
 
     virtual void dump() const {
-      dump(*cerr.stream());
+      dump(errs());
     }
 
-    void dump(std::ostream &os) const {
+    void dump(raw_ostream &os) const {
       for (unsigned i = 0, e = Ranges.size(); i != e; ++i) {
         os << (i+1) << " = ";
         Ranges[i].dump(os);

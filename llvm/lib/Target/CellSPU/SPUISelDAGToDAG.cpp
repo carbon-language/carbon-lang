@@ -520,7 +520,7 @@ SPUDAGToDAGISel::DFormAddressPredicate(SDValue Op, SDValue N, SDValue &Base,
     // Stack frame index must be less than 512 (divided by 16):
     FrameIndexSDNode *FIN = dyn_cast<FrameIndexSDNode>(N);
     int FI = int(FIN->getIndex());
-    DEBUG(cerr << "SelectDFormAddr: ISD::FrameIndex = "
+    DEBUG(errs() << "SelectDFormAddr: ISD::FrameIndex = "
                << FI << "\n");
     if (SPUFrameInfo::FItoStackOffset(FI) < maxOffset) {
       Base = CurDAG->getTargetConstant(0, PtrTy);
@@ -545,7 +545,7 @@ SPUDAGToDAGISel::DFormAddressPredicate(SDValue Op, SDValue N, SDValue &Base,
       if (Op0.getOpcode() == ISD::FrameIndex) {
         FrameIndexSDNode *FIN = dyn_cast<FrameIndexSDNode>(Op0);
         int FI = int(FIN->getIndex());
-        DEBUG(cerr << "SelectDFormAddr: ISD::ADD offset = " << offset
+        DEBUG(errs() << "SelectDFormAddr: ISD::ADD offset = " << offset
                    << " frame index = " << FI << "\n");
 
         if (SPUFrameInfo::FItoStackOffset(FI) < maxOffset) {
@@ -566,7 +566,7 @@ SPUDAGToDAGISel::DFormAddressPredicate(SDValue Op, SDValue N, SDValue &Base,
       if (Op1.getOpcode() == ISD::FrameIndex) {
         FrameIndexSDNode *FIN = dyn_cast<FrameIndexSDNode>(Op1);
         int FI = int(FIN->getIndex());
-        DEBUG(cerr << "SelectDFormAddr: ISD::ADD offset = " << offset
+        DEBUG(errs() << "SelectDFormAddr: ISD::ADD offset = " << offset
                    << " frame index = " << FI << "\n");
 
         if (SPUFrameInfo::FItoStackOffset(FI) < maxOffset) {

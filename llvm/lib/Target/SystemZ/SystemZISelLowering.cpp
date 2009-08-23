@@ -34,6 +34,7 @@
 #include "llvm/Target/TargetOptions.h"
 #include "llvm/Target/TargetLoweringObjectFile.h"
 #include "llvm/Support/Debug.h"
+#include "llvm/Support/raw_ostream.h"
 #include "llvm/ADT/VectorExtras.h"
 using namespace llvm;
 
@@ -289,7 +290,7 @@ SystemZTargetLowering::LowerCCCArguments(SDValue Chain,
       switch (LocVT.getSimpleVT().SimpleTy) {
       default:
 #ifndef NDEBUG
-        cerr << "LowerFormalArguments Unhandled argument type: "
+        errs() << "LowerFormalArguments Unhandled argument type: "
              << LocVT.getSimpleVT().SimpleTy
              << "\n";
 #endif

@@ -138,9 +138,9 @@ void ScheduleDAGFast::ReleasePred(SUnit *SU, SDep *PredEdge) {
   
 #ifndef NDEBUG
   if (PredSU->NumSuccsLeft < 0) {
-    cerr << "*** Scheduling failed! ***\n";
+    errs() << "*** Scheduling failed! ***\n";
     PredSU->dump(this);
-    cerr << " has been released too many times!\n";
+    errs() << " has been released too many times!\n";
     llvm_unreachable(0);
   }
 #endif
@@ -604,16 +604,16 @@ void ScheduleDAGFast::ListScheduleBottomUp() {
         continue;
       }
       if (!AnyNotSched)
-        cerr << "*** List scheduling failed! ***\n";
+        errs() << "*** List scheduling failed! ***\n";
       SUnits[i].dump(this);
-      cerr << "has not been scheduled!\n";
+      errs() << "has not been scheduled!\n";
       AnyNotSched = true;
     }
     if (SUnits[i].NumSuccsLeft != 0) {
       if (!AnyNotSched)
-        cerr << "*** List scheduling failed! ***\n";
+        errs() << "*** List scheduling failed! ***\n";
       SUnits[i].dump(this);
-      cerr << "has successors left!\n";
+      errs() << "has successors left!\n";
       AnyNotSched = true;
     }
   }

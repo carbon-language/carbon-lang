@@ -145,8 +145,8 @@ eliminateCallFramePseudoInstr(MachineFunction &MF, MachineBasicBlock &MBB,
       if (!isU6 && !isImmU16(Amount)) {
         // FIX could emit multiple instructions in this case.
 #ifndef NDEBUG
-        cerr << "eliminateCallFramePseudoInstr size too big: "
-             << Amount << "\n";
+        errs() << "eliminateCallFramePseudoInstr size too big: "
+               << Amount << "\n";
 #endif
         llvm_unreachable(0);
       }

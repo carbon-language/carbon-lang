@@ -87,7 +87,7 @@ void InternalizePass::LoadFile(const char *Filename) {
   // Load the APIFile...
   std::ifstream In(Filename);
   if (!In.good()) {
-    cerr << "WARNING: Internalize couldn't load file '" << Filename
+    errs() << "WARNING: Internalize couldn't load file '" << Filename
          << "'! Continuing as if it's empty.\n";
     return; // Just continue as if the file were empty
   }
