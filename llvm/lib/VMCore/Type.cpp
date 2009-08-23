@@ -1208,19 +1208,6 @@ bool SequentialType::indexValid(const Value *V) const {
 }
 
 namespace llvm {
-std::ostream &operator<<(std::ostream &OS, const Type *T) {
-  if (T == 0)
-    OS << "<null> value!\n";
-  else
-    T->print(OS);
-  return OS;
-}
-
-std::ostream &operator<<(std::ostream &OS, const Type &T) {
-  T.print(OS);
-  return OS;
-}
-
 raw_ostream &operator<<(raw_ostream &OS, const Type &T) {
   T.print(OS);
   return OS;

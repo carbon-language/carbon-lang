@@ -1999,20 +1999,11 @@ void AssemblyWriter::printInstruction(const Instruction &I) {
 //                       External Interface declarations
 //===----------------------------------------------------------------------===//
 
-void Module::print(std::ostream &o, AssemblyAnnotationWriter *AAW) const {
-  raw_os_ostream OS(o);
-  print(OS, AAW);
-}
 void Module::print(raw_ostream &ROS, AssemblyAnnotationWriter *AAW) const {
   SlotTracker SlotTable(this);
   formatted_raw_ostream OS(ROS);
   AssemblyWriter W(OS, SlotTable, this, AAW);
   W.write(this);
-}
-
-void Type::print(std::ostream &o) const {
-  raw_os_ostream OS(o);
-  print(OS);
 }
 
 void Type::print(raw_ostream &OS) const {

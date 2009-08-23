@@ -468,7 +468,6 @@ public:
 public:
   /// Print the module to an output stream with AssemblyAnnotationWriter.
   void print(raw_ostream &OS, AssemblyAnnotationWriter *AAW) const;
-  void print(std::ostream &OS, AssemblyAnnotationWriter *AAW) const;
   
   /// Dump the module to stderr (for debugging).
   void dump() const;
@@ -482,11 +481,7 @@ public:
 /// @}
 };
 
-/// An iostream inserter for modules.
-inline std::ostream &operator<<(std::ostream &O, const Module &M) {
-  M.print(O, 0);
-  return O;
-}
+/// An raw_ostream inserter for modules.
 inline raw_ostream &operator<<(raw_ostream &O, const Module &M) {
   M.print(O, 0);
   return O;

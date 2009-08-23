@@ -737,9 +737,9 @@ void Interpreter::visitAllocationInst(AllocationInst &I) {
   // Allocate enough memory to hold the type...
   void *Memory = malloc(MemToAlloc);
 
-  DOUT << "Allocated Type: " << *Ty << " (" << TypeSize << " bytes) x " 
-       << NumElements << " (Total: " << MemToAlloc << ") at "
-       << uintptr_t(Memory) << '\n';
+  DEBUG(errs() << "Allocated Type: " << *Ty << " (" << TypeSize << " bytes) x " 
+               << NumElements << " (Total: " << MemToAlloc << ") at "
+               << uintptr_t(Memory) << '\n');
 
   GenericValue Result = PTOGV(Memory);
   assert(Result.PointerVal != 0 && "Null pointer returned by malloc!");
@@ -795,7 +795,7 @@ GenericValue Interpreter::executeGEPOperation(Value *Ptr, gep_type_iterator I,
 
   GenericValue Result;
   Result.PointerVal = ((char*)getOperandValue(Ptr, SF).PointerVal) + Total;
-  DOUT << "GEP Index " << Total << " bytes.\n";
+  DEBUG(errs() << "GEP Index " << Total << " bytes.\n");
   return Result;
 }
 

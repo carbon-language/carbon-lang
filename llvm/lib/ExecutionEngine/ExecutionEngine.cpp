@@ -814,7 +814,7 @@ void ExecutionEngine::StoreValueToMemory(const GenericValue &Val,
     *((PointerTy*)Ptr) = Val.PointerVal;
     break;
   default:
-    cerr << "Cannot store value of type " << *Ty << "!\n";
+    errs() << "Cannot store value of type " << *Ty << "!\n";
   }
 
   if (sys::isLittleEndianHost() != getTargetData()->isLittleEndian())
@@ -930,7 +930,7 @@ void ExecutionEngine::InitializeMemory(const Constant *Init, void *Addr) {
     return;
   }
 
-  cerr << "Bad Type: " << *Init->getType() << "\n";
+  errs() << "Bad Type: " << *Init->getType() << "\n";
   llvm_unreachable("Unknown constant type to initialize memory with!");
 }
 

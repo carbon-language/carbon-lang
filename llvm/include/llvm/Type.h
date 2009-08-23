@@ -168,7 +168,6 @@ protected:
 
 public:
   void print(raw_ostream &O) const;
-  void print(std::ostream &O) const;
 
   /// @brief Debugging support: print to stderr
   void dump() const;
@@ -485,7 +484,6 @@ template <> inline bool isa_impl<PointerType, Type>(const Type &Ty) {
   return Ty.getTypeID() == Type::PointerTyID;
 }
 
-std::ostream &operator<<(std::ostream &OS, const Type &T);
 raw_ostream &operator<<(raw_ostream &OS, const Type &T);
 
 } // End llvm namespace

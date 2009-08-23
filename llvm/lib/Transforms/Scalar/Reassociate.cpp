@@ -62,11 +62,11 @@ namespace {
 ///
 static void PrintOps(Instruction *I, const std::vector<ValueEntry> &Ops) {
   Module *M = I->getParent()->getParent()->getParent();
-  cerr << Instruction::getOpcodeName(I->getOpcode()) << " "
+  errs() << Instruction::getOpcodeName(I->getOpcode()) << " "
        << *Ops[0].Op->getType();
   for (unsigned i = 0, e = Ops.size(); i != e; ++i) {
-    WriteAsOperand(*cerr.stream() << " ", Ops[i].Op, false, M);
-    cerr << "," << Ops[i].Rank;
+    WriteAsOperand(errs() << " ", Ops[i].Op, false, M);
+    errs() << "," << Ops[i].Rank;
   }
 }
 #endif

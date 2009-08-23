@@ -238,7 +238,7 @@ bool ProfileInfoPrinterPass::runOnModule(Module &M) {
     ProfileAnnotator PA(PI);
 
     if (FunctionsToPrint.empty() || PrintAllCode)
-      M.print(std::cout, &PA);
+      M.print(outs(), &PA);
     else
       // Print just a subset of the functions.
       for (std::set<Function*>::iterator I = FunctionsToPrint.begin(),
