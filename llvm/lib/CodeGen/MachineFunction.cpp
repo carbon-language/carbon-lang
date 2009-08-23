@@ -220,9 +220,8 @@ void MachineFunction::dump() const {
   print(*cerr.stream());
 }
 
-void MachineFunction::print(std::ostream &OS,
-                            const PrefixPrinter &prefix) const {
-  OS << "# Machine code for " << Fn->getNameStr () << "():\n";
+void MachineFunction::print(std::ostream &OS) const {
+  OS << "# Machine code for " << Fn->getNameStr() << "():\n";
 
   // Print Frame Information
   FrameInfo->print(*this, OS);
@@ -263,12 +262,10 @@ void MachineFunction::print(std::ostream &OS,
     OS << "\n";
   }
   
-  for (const_iterator BB = begin(); BB != end(); ++BB) {
-    prefix(OS, *BB);
-    BB->print(OS, prefix);
-  }
+  for (const_iterator BB = begin(), E = end(); BB != E; ++BB)
+    BB->print(OS);
 
-  OS << "\n# End machine code for " << Fn->getNameStr () << "().\n\n";
+  OS << "\n# End machine code for " << Fn->getNameStr() << "().\n\n";
 }
 
 namespace llvm {
