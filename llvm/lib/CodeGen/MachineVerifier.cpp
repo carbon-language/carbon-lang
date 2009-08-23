@@ -232,13 +232,11 @@ MachineVerifier::runOnMachineFunction(MachineFunction &MF)
   return false;                 // no changes
 }
 
-void
-MachineVerifier::report(const char *msg, const MachineFunction *MF)
-{
+void MachineVerifier::report(const char *msg, const MachineFunction *MF) {
   assert(MF);
   *OS << "\n";
   if (!foundErrors++)
-    MF->print(OS);
+    MF->print(*OS);
   *OS << "*** Bad machine code: " << msg << " ***\n"
       << "- function:    " << MF->getFunction()->getNameStr() << "\n";
 }

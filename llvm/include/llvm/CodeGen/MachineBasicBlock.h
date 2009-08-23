@@ -311,13 +311,7 @@ public:
   // Debugging methods.
   void dump() const;
   void print(std::ostream &OS) const;
-  void print(std::ostream *OS) const {
-    if (OS) print(*OS); 
-  }
   void print(raw_ostream &OS) const;
-  void print(raw_ostream *OS) const {
-    if (OS) print(*OS);
-  }
 
   /// getNumber - MachineBasicBlocks are uniquely numbered at the function
   /// level, unless they're not in a MachineFunction yet, in which case this
