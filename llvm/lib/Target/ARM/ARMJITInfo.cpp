@@ -22,7 +22,6 @@
 #include "llvm/Config/alloca.h"
 #include "llvm/Support/Debug.h"
 #include "llvm/Support/ErrorHandling.h"
-#include "llvm/Support/Streams.h"
 #include "llvm/Support/raw_ostream.h"
 #include "llvm/System/Memory.h"
 #include <cstdlib>

@@ -37,7 +37,6 @@
 #include "llvm/Support/Debug.h"
 #include "llvm/Support/ErrorHandling.h"
 #include "llvm/Support/MathExtras.h"
-#include "llvm/Support/Streams.h"
 #include "llvm/Support/raw_ostream.h"
 #include "llvm/ADT/SmallPtrSet.h"
 #include "llvm/ADT/Statistic.h"
@@ -107,37 +106,37 @@ namespace {
     }
 
     void dump() {
-      cerr << "X86ISelAddressMode " << this << '\n';
-      cerr << "Base.Reg ";
+      errs() << "X86ISelAddressMode " << this << '\n';
+      errs() << "Base.Reg ";
       if (Base.Reg.getNode() != 0)
         Base.Reg.getNode()->dump(); 
       else
-        cerr << "nul";
-      cerr << " Base.FrameIndex " << Base.FrameIndex << '\n';
-      cerr << " Scale" << Scale << '\n';
-      cerr << "IndexReg ";
+        errs() << "nul";
+      errs() << " Base.FrameIndex " << Base.FrameIndex << '\n'
+             << " Scale" << Scale << '\n'
+             << "IndexReg ";
       if (IndexReg.getNode() != 0)
         IndexReg.getNode()->dump();
       else
-        cerr << "nul"; 
-      cerr << " Disp " << Disp << '\n';
-      cerr << "GV ";
+        errs() << "nul"; 
+      errs() << " Disp " << Disp << '\n'
+             << "GV ";
       if (GV)
         GV->dump();
       else
-        cerr << "nul";
-      cerr << " CP ";
+        errs() << "nul";
+      errs() << " CP ";
       if (CP)
         CP->dump();
       else
-        cerr << "nul";
-      cerr << '\n';
-      cerr << "ES ";
+        errs() << "nul";
+      errs() << '\n'
+             << "ES ";
       if (ES)
-        cerr << ES;
+        errs() << ES;
       else
-        cerr << "nul";
-      cerr << " JT" << JT << " Align" << Align << '\n';
+        errs() << "nul";
+      errs() << " JT" << JT << " Align" << Align << '\n';
     }
   };
 }
