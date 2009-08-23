@@ -19,9 +19,9 @@
 #include "llvm/DerivedTypes.h"
 #include "llvm/Module.h"
 #include "llvm/ModuleProvider.h"
-#include "llvm/ADT/Statistic.h"
-#include "llvm/Config/alloca.h"
 #include "llvm/ExecutionEngine/GenericValue.h"
+#include "llvm/ADT/Statistic.h"
+#include "llvm/ADT/SmallVector.h"
 #include "llvm/Support/Debug.h"
 #include "llvm/Support/ErrorHandling.h"
 #include "llvm/Support/MutexGuard.h"
@@ -859,9 +859,11 @@ void ExecutionEngine::LoadValueFromMemory(GenericValue &Result,
     // Host and target are different endian - reverse copy the stored
     // bytes into a buffer, and load from that.
     uint8_t *Src = (uint8_t*)Ptr;
-    uint8_t *Buf = (uint8_t*)alloca(LoadBytes);
-    std::reverse_copy(Src, Src + LoadBytes, Buf);
-    Ptr = (GenericValue*)Buf;
+    
+    SmallVector<uint8_t, 20> Buf;
+    Buf.resize(LoadBytes+1);
+    std::reverse_copy(Src, Src + LoadBytes, Buf.data());
+    Ptr = (GenericValue*)Buf.data();
   }
 
   switch (Ty->getTypeID()) {
