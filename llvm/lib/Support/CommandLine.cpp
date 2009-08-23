@@ -22,7 +22,6 @@
 #include "llvm/Support/ErrorHandling.h"
 #include "llvm/Support/MemoryBuffer.h"
 #include "llvm/Support/ManagedStatic.h"
-#include "llvm/Support/Streams.h"
 #include "llvm/Target/TargetRegistry.h"
 #include "llvm/System/Path.h"
 #include <algorithm>
@@ -124,7 +123,7 @@ static void GetOptionInfo(std::vector<Option*> &PositionalOpts,
       // Add argument to the argument map!
       if (!OptionsMap.insert(std::pair<std::string,Option*>(OptionNames[i],
                                                             O)).second) {
-        cerr << ProgramName << ": CommandLine Error: Argument '"
+        errs() << ProgramName << ": CommandLine Error: Argument '"
              << OptionNames[i] << "' defined more than once!\n";
       }
     }
@@ -203,7 +202,7 @@ static inline bool ProvideOption(Option *Handler, const char *ArgName,
   case ValueOptional:
     break;
   default:
-    cerr << ProgramName
+    errs() << ProgramName
          << ": Bad ValueMask flag! CommandLine usage error:"
          << Handler->getValueExpectedFlag() << "\n";
     llvm_unreachable(0);
@@ -609,7 +608,7 @@ void cl::ParseCommandLineOptions(int argc, char **argv,
 
     if (Handler == 0) {
       if (SinkOpts.empty()) {
-        cerr << ProgramName << ": Unknown command line argument '"
+        errs() << ProgramName << ": Unknown command line argument '"
              << argv[i] << "'.  Try: '" << argv[0] << " --help'\n";
         ErrorParsing = true;
       } else {
@@ -651,7 +650,7 @@ void cl::ParseCommandLineOptions(int argc, char **argv,
 
   // Check and handle positional arguments now...
   if (NumPositionalRequired > PositionalVals.size()) {
-    cerr << ProgramName
+    errs() << ProgramName
          << ": Not enough positional command line arguments specified!\n"
          << "Must specify at least " << NumPositionalRequired
          << " positional arguments: See: " << argv[0] << " --help\n";
@@ -659,7 +658,7 @@ void cl::ParseCommandLineOptions(int argc, char **argv,
     ErrorParsing = true;
   } else if (!HasUnlimitedPositionals
              && PositionalVals.size() > PositionalOpts.size()) {
-    cerr << ProgramName
+    errs() << ProgramName
          << ": Too many positional arguments specified!\n"
          << "Can specify at most " << PositionalOpts.size()
          << " positional arguments: See: " << argv[0] << " --help\n";
@@ -771,11 +770,11 @@ void cl::ParseCommandLineOptions(int argc, char **argv,
 bool Option::error(std::string Message, const char *ArgName) {
   if (ArgName == 0) ArgName = ArgStr;
   if (ArgName[0] == 0)
-    cerr << HelpStr;  // Be nice for positional arguments
+    errs() << HelpStr;  // Be nice for positional arguments
   else
-    cerr << ProgramName << ": for the -" << ArgName;
+    errs() << ProgramName << ": for the -" << ArgName;
 
-  cerr << " option: " << Message << "\n";
+  errs() << " option: " << Message << "\n";
   return true;
 }
 
@@ -824,7 +823,7 @@ size_t alias::getOptionWidth() const {
 // Print out the option for the alias.
 void alias::printOptionInfo(size_t GlobalWidth) const {
   size_t L = std::strlen(ArgStr);
-  cerr << "  -" << ArgStr << std::string(GlobalWidth-L-6, ' ') << " - "
+  errs() << "  -" << ArgStr << std::string(GlobalWidth-L-6, ' ') << " - "
          << HelpStr << "\n";
 }
 
@@ -1124,43 +1123,41 @@ namespace {
 class VersionPrinter {
 public:
   void print() {
-    raw_ostream &stdout = outs();
-    stdout << "Low Level Virtual Machine (http://llvm.org/):\n";
-    stdout << "  " << PACKAGE_NAME << " version " << PACKAGE_VERSION;
+    outs() << "Low Level Virtual Machine (http://llvm.org/):\n"
+           << "  " << PACKAGE_NAME << " version " << PACKAGE_VERSION;
 #ifdef LLVM_VERSION_INFO
-    stdout << LLVM_VERSION_INFO;
+    outs() << LLVM_VERSION_INFO;
 #endif
-    stdout << "\n  ";
+    outs() << "\n  ";
 #ifndef __OPTIMIZE__
-    stdout << "DEBUG build";
+    outs() << "DEBUG build";
 #else
-    stdout << "Optimized build";
+    outs() << "Optimized build";
 #endif
 #ifndef NDEBUG
-    stdout << " with assertions";
+    outs() << " with assertions";
 #endif
-    stdout << ".\n";
-    stdout << "  Built " << __DATE__ << "(" << __TIME__ << ").\n";
-    stdout << "\n";
-    stdout << "  Registered Targets:\n";
+    outs() << ".\n"
+           << "  Built " << __DATE__ << " (" << __TIME__ << ").\n"
+           << "\n"
+           << "  Registered Targets:\n";
 
-      std::vector<std::pair<std::string, const Target*> > Targets;
-      size_t Width = 0;
-      for (TargetRegistry::iterator it = TargetRegistry::begin(), 
-             ie = TargetRegistry::end(); it != ie; ++it) {
-        Targets.push_back(std::make_pair(it->getName(), &*it));
-        Width = std::max(Width, ::strlen(it->getName()));
-      }
-      std::sort(Targets.begin(), Targets.end());
+    std::vector<std::pair<std::string, const Target*> > Targets;
+    size_t Width = 0;
+    for (TargetRegistry::iterator it = TargetRegistry::begin(), 
+           ie = TargetRegistry::end(); it != ie; ++it) {
+      Targets.push_back(std::make_pair(it->getName(), &*it));
+      Width = std::max(Width, Targets.back().first.length());
+    }
+    std::sort(Targets.begin(), Targets.end());
 
-      for (unsigned i = 0, e = Targets.size(); i != e; ++i) {
-        const Target *T = Targets[i].second;
-        stdout << "    " << T->getName()
-               << std::string(Width - ::strlen(T->getName()), ' ') << " - "
-               << T->getShortDescription() << "\n";
-      }
-      if (Targets.empty())
-        stdout << "    (none)\n";
+    for (unsigned i = 0, e = Targets.size(); i != e; ++i) {
+      outs() << "    " << Targets[i].first
+             << std::string(Width - Targets[i].first.length(), ' ') << " - "
+             << Targets[i].second->getShortDescription() << "\n";
+    }
+    if (Targets.empty())
+      outs() << "    (none)\n";
   }
   void operator=(bool OptionWasSpecified) {
     if (OptionWasSpecified) {
