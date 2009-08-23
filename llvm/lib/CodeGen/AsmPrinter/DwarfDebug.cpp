@@ -183,10 +183,10 @@ public:
 
 #ifndef NDEBUG
 void DbgScope::dump() const {
-  std::string Indent(IndentLevel, ' ');
-
-  cerr << Indent; Desc.dump();
-  cerr << " [" << StartLabelID << ", " << EndLabelID << "]\n";
+  raw_ostream &err = errs();
+  err.indent(IndentLevel);
+  Desc.dump();
+  err << " [" << StartLabelID << ", " << EndLabelID << "]\n";
 
   IndentLevel += 2;
 

@@ -1774,19 +1774,6 @@ void AsmPrinter::EmitComments(const MCInst &MI) const
   }
 }
 
-/// Indent - Insert spaces into the character output stream.  The
-/// "level" is multiplied by the "scale" to calculate the number of
-/// spaces to insert.  "level" can represent something like loop
-/// nesting level, for example.
-///
-static formatted_raw_ostream &
-Indent(formatted_raw_ostream &out, int level, int scale = 2) {
-  for(int i = 0; i < level*scale; ++i) {
-    out << " ";
-  }
-  return out;
-}
-
 /// PrintChildLoopComment - Print comments about child loops within
 /// the loop for this basic block, with nesting.
 ///
@@ -1806,7 +1793,7 @@ static void PrintChildLoopComment(formatted_raw_ostream &O,
     O.PadToColumn(MAI->getCommentColumn());
 
     O << MAI->getCommentString();
-    Indent(O, (*cl)->getLoopDepth()-1)
+    O.indent(((*cl)->getLoopDepth()-1)*2)
       << " Child Loop BB" << FunctionNumber << "_"
       << Header->getNumber() << " Depth " << (*cl)->getLoopDepth();
 
@@ -1858,7 +1845,7 @@ void AsmPrinter::EmitComments(const MachineBasicBlock &MBB) const
         O << '\n';
         O.PadToColumn(MAI->getCommentColumn());
         O << MAI->getCommentString();
-        Indent(O, CurLoop->getLoopDepth()-1)
+        O.indent((CurLoop->getLoopDepth()-1)*2)
           << " Inside Loop BB" << getFunctionNumber() << "_"
           << Header->getNumber() << " Depth " << CurLoop->getLoopDepth();
       }
