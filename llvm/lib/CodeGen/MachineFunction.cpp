@@ -44,7 +44,7 @@ namespace {
     std::ostream *OS;
     const std::string Banner;
 
-    Printer (std::ostream *os, const std::string &banner) 
+    Printer(std::ostream *os, const std::string &banner) 
       : MachineFunctionPass(&ID), OS(os), Banner(banner) {}
 
     const char *getPassName() const { return "MachineFunction Printer"; }
@@ -217,11 +217,16 @@ MachineFunction::DeleteMachineBasicBlock(MachineBasicBlock *MBB) {
 }
 
 void MachineFunction::dump() const {
-  print(*cerr.stream());
+  print(errs());
 }
 
 void MachineFunction::print(std::ostream &OS) const {
-  OS << "# Machine code for " << Fn->getNameStr() << "():\n";
+  raw_os_ostream RawOS(OS);
+  print(RawOS);
+}
+
+void MachineFunction::print(raw_ostream &OS) const {
+  OS << "# Machine code for " << Fn->getName() << "():\n";
 
   // Print Frame Information
   FrameInfo->print(*this, OS);
@@ -230,10 +235,7 @@ void MachineFunction::print(std::ostream &OS) const {
   JumpTableInfo->print(OS);
 
   // Print Constant Pool
-  {
-    raw_os_ostream OSS(OS);
-    ConstantPool->print(OSS);
-  }
+  ConstantPool->print(OS);
   
   const TargetRegisterInfo *TRI = getTarget().getRegisterInfo();
   
@@ -247,25 +249,25 @@ void MachineFunction::print(std::ostream &OS) const {
         OS << " Reg #" << I->first;
       
       if (I->second)
-        OS << " in VR#" << I->second << " ";
+        OS << " in VR#" << I->second << ' ';
     }
-    OS << "\n";
+    OS << '\n';
   }
   if (RegInfo && !RegInfo->liveout_empty()) {
     OS << "Live Outs:";
     for (MachineRegisterInfo::liveout_iterator
          I = RegInfo->liveout_begin(), E = RegInfo->liveout_end(); I != E; ++I)
       if (TRI)
-        OS << " " << TRI->getName(*I);
+        OS << ' ' << TRI->getName(*I);
       else
         OS << " Reg #" << *I;
-    OS << "\n";
+    OS << '\n';
   }
   
   for (const_iterator BB = begin(), E = end(); BB != E; ++BB)
     BB->print(OS);
 
-  OS << "\n# End machine code for " << Fn->getNameStr() << "().\n\n";
+  OS << "\n# End machine code for " << Fn->getName() << "().\n\n";
 }
 
 namespace llvm {
@@ -407,7 +409,7 @@ MachineFrameInfo::getPristineRegs(const MachineBasicBlock *MBB) const {
 }
 
 
-void MachineFrameInfo::print(const MachineFunction &MF, std::ostream &OS) const{
+void MachineFrameInfo::print(const MachineFunction &MF, raw_ostream &OS) const{
   const TargetFrameInfo *FI = MF.getTarget().getFrameInfo();
   int ValOffset = (FI ? FI->getOffsetOfLocalArea() : 0);
 
@@ -444,7 +446,7 @@ void MachineFrameInfo::print(const MachineFunction &MF, std::ostream &OS) const{
 }
 
 void MachineFrameInfo::dump(const MachineFunction &MF) const {
-  print(MF, *cerr.stream());
+  print(MF, errs());
 }
 
 //===----------------------------------------------------------------------===//
@@ -483,7 +485,7 @@ MachineJumpTableInfo::ReplaceMBBInJumpTables(MachineBasicBlock *Old,
   return MadeChange;
 }
 
-void MachineJumpTableInfo::print(std::ostream &OS) const {
+void MachineJumpTableInfo::print(raw_ostream &OS) const {
   // FIXME: this is lame, maybe we could print out the MBB numbers or something
   // like {1, 2, 4, 5, 3, 0}
   for (unsigned i = 0, e = JumpTables.size(); i != e; ++i) {
@@ -492,7 +494,7 @@ void MachineJumpTableInfo::print(std::ostream &OS) const {
   }
 }
 
-void MachineJumpTableInfo::dump() const { print(*cerr.stream()); }
+void MachineJumpTableInfo::dump() const { print(errs()); }
 
 
 //===----------------------------------------------------------------------===//

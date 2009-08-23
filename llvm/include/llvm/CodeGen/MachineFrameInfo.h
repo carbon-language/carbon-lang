@@ -18,10 +18,10 @@
 #include "llvm/ADT/DenseSet.h"
 #include "llvm/Support/DataTypes.h"
 #include <cassert>
-#include <iosfwd>
 #include <vector>
 
 namespace llvm {
+class raw_ostream;
 class TargetData;
 class TargetRegisterClass;
 class Type;
@@ -423,7 +423,7 @@ public:
   /// print - Used by the MachineFunction printer to print information about
   /// stack objects.  Implemented in MachineFunction.cpp
   ///
-  void print(const MachineFunction &MF, std::ostream &OS) const;
+  void print(const MachineFunction &MF, raw_ostream &OS) const;
 
   /// dump - Print the function to stderr.
   void dump(const MachineFunction &MF) const;
