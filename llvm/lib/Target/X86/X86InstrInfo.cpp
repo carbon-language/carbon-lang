@@ -34,20 +34,18 @@
 #include "llvm/MC/MCAsmInfo.h"
 using namespace llvm;
 
-namespace {
-  cl::opt<bool>
-  NoFusing("disable-spill-fusing",
-           cl::desc("Disable fusing of spill code into instructions"));
-  cl::opt<bool>
-  PrintFailedFusing("print-failed-fuse-candidates",
-                    cl::desc("Print instructions that the allocator wants to"
-                             " fuse, but the X86 backend currently can't"),
-                    cl::Hidden);
-  cl::opt<bool>
-  ReMatPICStubLoad("remat-pic-stub-load",
-                   cl::desc("Re-materialize load from stub in PIC mode"),
-                   cl::init(false), cl::Hidden);
-}
+static cl::opt<bool>
+NoFusing("disable-spill-fusing",
+         cl::desc("Disable fusing of spill code into instructions"));
+static cl::opt<bool>
+PrintFailedFusing("print-failed-fuse-candidates",
+                  cl::desc("Print instructions that the allocator wants to"
+                           " fuse, but the X86 backend currently can't"),
+                  cl::Hidden);
+static cl::opt<bool>
+ReMatPICStubLoad("remat-pic-stub-load",
+                 cl::desc("Re-materialize load from stub in PIC mode"),
+                 cl::init(false), cl::Hidden);
 
 X86InstrInfo::X86InstrInfo(X86TargetMachine &tm)
   : TargetInstrInfoImpl(X86Insts, array_lengthof(X86Insts)),
@@ -2215,7 +2213,7 @@ X86InstrInfo::foldMemoryOperandImpl(MachineFunction &MF,
   
   // No fusion 
   if (PrintFailedFusing)
-    cerr << "We failed to fuse operand " << i << " in " << *MI;
+    errs() << "We failed to fuse operand " << i << " in " << *MI;
   return NULL;
 }
 

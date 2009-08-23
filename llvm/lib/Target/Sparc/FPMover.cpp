@@ -21,6 +21,7 @@
 #include "llvm/ADT/Statistic.h"
 #include "llvm/Support/Debug.h"
 #include "llvm/Support/ErrorHandling.h"
+#include "llvm/Support/raw_ostream.h"
 using namespace llvm;
 
 STATISTIC(NumFpDs , "Number of instructions translated");
@@ -113,12 +114,12 @@ bool FPMover::runOnMachineBasicBlock(MachineBasicBlock &MBB) {
         
       MI->getOperand(0).setReg(EvenDestReg);
       MI->getOperand(1).setReg(EvenSrcReg);
-      DOUT << "FPMover: the modified instr is: " << *MI;
+      DEBUG(errs() << "FPMover: the modified instr is: " << *MI);
       // Insert copy for the other half of the double.
       if (DestDReg != SrcDReg) {
         MI = BuildMI(MBB, I, dl, TM.getInstrInfo()->get(SP::FMOVS), OddDestReg)
           .addReg(OddSrcReg);
-        DOUT << "FPMover: the inserted instr is: " << *MI;
+        DEBUG(errs() << "FPMover: the inserted instr is: " << *MI);
       }
       ++NumFpDs;
     }

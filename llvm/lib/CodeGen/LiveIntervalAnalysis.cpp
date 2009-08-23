@@ -517,19 +517,21 @@ bool LiveIntervals::runOnMachineFunction(MachineFunction &fn) {
 
 /// print - Implement the dump method.
 void LiveIntervals::print(std::ostream &O, const Module* ) const {
-  O << "********** INTERVALS **********\n";
+  raw_os_ostream OS(O);
+  OS << "********** INTERVALS **********\n";
   for (const_iterator I = begin(), E = end(); I != E; ++I) {
-    I->second->print(O, tri_);
-    O << "\n";
+    I->second->print(OS, tri_);
+    OS << "\n";
   }
 
-  O << "********** MACHINEINSTRS **********\n";
+  OS << "********** MACHINEINSTRS **********\n";
+
   for (MachineFunction::iterator mbbi = mf_->begin(), mbbe = mf_->end();
        mbbi != mbbe; ++mbbi) {
-    O << ((Value*)mbbi->getBasicBlock())->getNameStr() << ":\n";
+    OS << ((Value*)mbbi->getBasicBlock())->getName() << ":\n";
     for (MachineBasicBlock::iterator mii = mbbi->begin(),
            mie = mbbi->end(); mii != mie; ++mii) {
-      O << getInstructionIndex(mii) << '\t' << *mii;
+      OS << getInstructionIndex(mii) << '\t' << *mii;
     }
   }
 }

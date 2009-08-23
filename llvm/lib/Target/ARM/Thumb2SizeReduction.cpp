@@ -19,6 +19,7 @@
 #include "llvm/Support/CommandLine.h"
 #include "llvm/Support/Compiler.h"
 #include "llvm/Support/Debug.h"
+#include "llvm/Support/raw_ostream.h"
 #include "llvm/ADT/DenseMap.h"
 #include "llvm/ADT/Statistic.h"
 using namespace llvm;
@@ -353,7 +354,7 @@ Thumb2SizeReduce::ReduceLoadStore(MachineBasicBlock &MBB, MachineInstr *MI,
   for (unsigned e = MI->getNumOperands(); OpNum != e; ++OpNum)
     MIB.addOperand(MI->getOperand(OpNum));
 
-  DOUT << "Converted 32-bit: " << *MI << "       to 16-bit: " << *MIB;
+  DEBUG(errs() << "Converted 32-bit: " << *MI << "       to 16-bit: " << *MIB);
 
   MBB.erase(MI);
   ++NumLdSts;
@@ -471,7 +472,7 @@ Thumb2SizeReduce::ReduceTo2Addr(MachineBasicBlock &MBB, MachineInstr *MI,
     MIB.addOperand(MI->getOperand(i));
   }
 
-  DOUT << "Converted 32-bit: " << *MI << "       to 16-bit: " << *MIB;
+  DEBUG(errs() << "Converted 32-bit: " << *MI << "       to 16-bit: " << *MIB);
 
   MBB.erase(MI);
   ++Num2Addrs;
@@ -571,7 +572,7 @@ Thumb2SizeReduce::ReduceToNarrow(MachineBasicBlock &MBB, MachineInstr *MI,
   if (!TID.isPredicable() && NewTID.isPredicable())
     AddDefaultPred(MIB);
 
-  DOUT << "Converted 32-bit: " << *MI << "       to 16-bit: " << *MIB;
+  DEBUG(errs() << "Converted 32-bit: " << *MI << "       to 16-bit: " << *MIB);
 
   MBB.erase(MI);
   ++NumNarrows;

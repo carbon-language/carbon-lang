@@ -15,7 +15,6 @@
 #define LLVM_TARGET_ARM_CONSTANTPOOLVALUE_H
 
 #include "llvm/CodeGen/MachineConstantPool.h"
-#include <iosfwd>
 
 namespace llvm {
 
@@ -80,18 +79,11 @@ public:
 
   virtual void AddSelectionDAGCSEId(FoldingSetNodeID &ID);
 
-  void print(std::ostream *O) const { if (O) print(*O); }
-  void print(std::ostream &O) const;
   void print(raw_ostream *O) const { if (O) print(*O); }
   void print(raw_ostream &O) const;
   void dump() const;
 };
 
-inline std::ostream &operator<<(std::ostream &O,
-                                const ARMConstantPoolValue &V) {
-  V.print(O);
-  return O;
-}
 
 inline raw_ostream &operator<<(raw_ostream &O, const ARMConstantPoolValue &V) {
   V.print(O);

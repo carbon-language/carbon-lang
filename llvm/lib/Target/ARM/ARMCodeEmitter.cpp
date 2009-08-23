@@ -259,7 +259,7 @@ unsigned Emitter<CodeEmitter>::getMachineOpValue(const MachineInstr &MI,
     emitMachineBasicBlock(MO.getMBB(), ARM::reloc_arm_branch);
   else {
 #ifndef NDEBUG
-    cerr << MO;
+    errs() << MO;
 #endif
     llvm_unreachable(0);
   }
@@ -336,7 +336,7 @@ void Emitter<CodeEmitter>::emitDWordLE(uint64_t Binary) {
 
 template<class CodeEmitter>
 void Emitter<CodeEmitter>::emitInstruction(const MachineInstr &MI) {
-  DOUT << "JIT: " << (void*)MCE.getCurrentPCValue() << ":\t" << MI;
+  DEBUG(errs() << "JIT: " << (void*)MCE.getCurrentPCValue() << ":\t" << MI);
 
   MCE.processDebugLoc(MI.getDebugLoc());
 
@@ -418,8 +418,8 @@ void Emitter<CodeEmitter>::emitConstPoolInstruction(const MachineInstr &MI) {
     ARMConstantPoolValue *ACPV =
       static_cast<ARMConstantPoolValue*>(MCPE.Val.MachineCPVal);
 
-    DOUT << "  ** ARM constant pool #" << CPI << " @ "
-         << (void*)MCE.getCurrentPCValue() << " " << *ACPV << '\n';
+    DEBUG(errs() << "  ** ARM constant pool #" << CPI << " @ "
+          << (void*)MCE.getCurrentPCValue() << " " << *ACPV << '\n');
 
     GlobalValue *GV = ACPV->getGV();
     if (GV) {

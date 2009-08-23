@@ -193,11 +193,11 @@ void XCoreRegisterInfo::eliminateFrameIndex(MachineBasicBlock::iterator II,
   #ifndef NDEBUG
   DEBUG(errs() << "\nFunction         : " 
         << MF.getFunction()->getName() << "\n");
-  DOUT << "<--------->\n";
-  MI.print(DOUT);
-  DOUT << "FrameIndex         : " << FrameIndex << "\n";
-  DOUT << "FrameOffset        : " << Offset << "\n";
-  DOUT << "StackSize          : " << StackSize << "\n";
+  DEBUG(errs() << "<--------->\n");
+  DEBUG(MI.print(errs()));
+  DEBUG(errs() << "FrameIndex         : " << FrameIndex << "\n");
+  DEBUG(errs() << "FrameOffset        : " << Offset << "\n");
+  DEBUG(errs() << "StackSize          : " << StackSize << "\n");
   #endif
 
   Offset += StackSize;

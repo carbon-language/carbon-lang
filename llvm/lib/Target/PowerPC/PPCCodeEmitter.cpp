@@ -58,8 +58,7 @@ namespace {
 
   template <class CodeEmitter>
   class VISIBILITY_HIDDEN Emitter : public MachineFunctionPass,
-      public PPCCodeEmitter
-  {
+      public PPCCodeEmitter {
     TargetMachine &TM;
     CodeEmitter &MCE;
 
@@ -267,7 +266,7 @@ unsigned PPCCodeEmitter::getMachineOpValue(const MachineInstr &MI,
                                                Reloc, MO.getMBB()));
   } else {
 #ifndef NDEBUG
-    cerr << "ERROR: Unknown type of MachineOperand: " << MO << "\n";
+    errs() << "ERROR: Unknown type of MachineOperand: " << MO << "\n";
 #endif
     llvm_unreachable(0);
   }

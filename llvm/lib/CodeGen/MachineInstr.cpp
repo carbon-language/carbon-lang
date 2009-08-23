@@ -183,11 +183,6 @@ bool MachineOperand::isIdenticalTo(const MachineOperand &Other) const {
 
 /// print - Print the specified machine operand.
 ///
-void MachineOperand::print(std::ostream &OS, const TargetMachine *TM) const {
-  raw_os_ostream RawOS(OS);
-  print(RawOS, TM);
-}
-
 void MachineOperand::print(raw_ostream &OS, const TargetMachine *TM) const {
   switch (getType()) {
   case MachineOperand::MO_Register:
@@ -948,12 +943,7 @@ bool MachineInstr::hasVolatileMemoryRef() const {
 }
 
 void MachineInstr::dump() const {
-  cerr << "  " << *this;
-}
-
-void MachineInstr::print(std::ostream &OS, const TargetMachine *TM) const {
-  raw_os_ostream RawOS(OS);
-  print(RawOS, TM);
+  errs() << "  " << *this;
 }
 
 void MachineInstr::print(raw_ostream &OS, const TargetMachine *TM) const {

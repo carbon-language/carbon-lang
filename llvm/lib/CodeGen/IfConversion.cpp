@@ -1133,7 +1133,7 @@ void IfConverter::PredicateBlock(BBInfo &BBI,
       continue;
     if (!TII->PredicateInstruction(I, Cond)) {
 #ifndef NDEBUG
-      cerr << "Unable to predicate " << *I << "!\n";
+      errs() << "Unable to predicate " << *I << "!\n";
 #endif
       llvm_unreachable(0);
     }
@@ -1169,7 +1169,7 @@ void IfConverter::CopyAndPredicateBlock(BBInfo &ToBBI, BBInfo &FromBBI,
     if (!isPredicated)
       if (!TII->PredicateInstruction(MI, Cond)) {
 #ifndef NDEBUG
-        cerr << "Unable to predicate " << *I << "!\n";
+        errs() << "Unable to predicate " << *I << "!\n";
 #endif
         llvm_unreachable(0);
       }

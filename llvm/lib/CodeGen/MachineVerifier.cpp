@@ -254,7 +254,7 @@ MachineVerifier::report(const char *msg, const MachineInstr *MI)
   assert(MI);
   report(msg, MI->getParent());
   *OS << "- instruction: ";
-  MI->print(OS, TM);
+  MI->print(*OS, TM);
 }
 
 void

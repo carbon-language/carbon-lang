@@ -362,21 +362,21 @@ eliminateFrameIndex(MachineBasicBlock::iterator II, int SPAdj,
            "Instr doesn't have FrameIndex operand!");
   }
 
-  #ifndef NDEBUG
+#ifndef NDEBUG
   DEBUG(errs() << "\nFunction : " << MF.getFunction()->getName() << "\n");
-  DOUT << "<--------->\n";
-  MI.print(DOUT);
-  #endif
+  DEBUG(errs() << "<--------->\n");
+  DEBUG(MI.print(errs()));
+#endif
 
   int FrameIndex = MI.getOperand(i).getIndex();
   int stackSize  = MF.getFrameInfo()->getStackSize();
   int spOffset   = MF.getFrameInfo()->getObjectOffset(FrameIndex);
 
-  #ifndef NDEBUG
+#ifndef NDEBUG
   DOUT << "FrameIndex : " << FrameIndex << "\n";
   DOUT << "spOffset   : " << spOffset << "\n";
   DOUT << "stackSize  : " << stackSize << "\n";
-  #endif
+#endif
 
   // as explained on LowerFormalArguments, detect negative offsets
   // and adjust SPOffsets considering the final stack size.

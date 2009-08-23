@@ -27,6 +27,7 @@
 #include "llvm/Support/Compiler.h"
 #include "llvm/Support/Debug.h"
 #include "llvm/Support/ErrorHandling.h"
+#include "llvm/Support/raw_ostream.h"
 #include "llvm/ADT/SmallVector.h"
 #include "llvm/ADT/STLExtras.h"
 #include "llvm/ADT/Statistic.h"
@@ -771,11 +772,11 @@ bool ARMConstantIslands::CPEIsInRange(MachineInstr *MI, unsigned UserOffset,
   assert(CPEOffset%4 == 0 && "Misaligned CPE");
 
   if (DoDump) {
-    DOUT << "User of CPE#" << CPEMI->getOperand(0).getImm()
-         << " max delta=" << MaxDisp
-         << " insn address=" << UserOffset
-         << " CPE address=" << CPEOffset
-         << " offset=" << int(CPEOffset-UserOffset) << "\t" << *MI;
+    DEBUG(errs() << "User of CPE#" << CPEMI->getOperand(0).getImm()
+                 << " max delta=" << MaxDisp
+                 << " insn address=" << UserOffset
+                 << " CPE address=" << CPEOffset
+                 << " offset=" << int(CPEOffset-UserOffset) << "\t" << *MI);
   }
 
   return OffsetIsInRange(UserOffset, CPEOffset, MaxDisp, NegOk);
@@ -1148,7 +1149,8 @@ bool ARMConstantIslands::HandleConstantPoolUser(MachineFunction &MF,
       break;
     }
 
-  DOUT << "  Moved CPE to #" << ID << " CPI=" << CPI << "\t" << *UserMI;
+  DEBUG(errs() << "  Moved CPE to #" << ID << " CPI=" << CPI
+           << '\t' << *UserMI);
 
   return true;
 }
@@ -1204,11 +1206,11 @@ bool ARMConstantIslands::BBIsInRange(MachineInstr *MI,MachineBasicBlock *DestBB,
   unsigned BrOffset   = GetOffsetOf(MI) + PCAdj;
   unsigned DestOffset = BBOffsets[DestBB->getNumber()];
 
-  DOUT << "Branch of destination BB#" << DestBB->getNumber()
-       << " from BB#" << MI->getParent()->getNumber()
-       << " max delta=" << MaxDisp
-       << " from " << GetOffsetOf(MI) << " to " << DestOffset
-       << " offset " << int(DestOffset-BrOffset) << "\t" << *MI;
+  DEBUG(errs() << "Branch of destination BB#" << DestBB->getNumber()
+               << " from BB#" << MI->getParent()->getNumber()
+               << " max delta=" << MaxDisp
+               << " from " << GetOffsetOf(MI) << " to " << DestOffset
+               << " offset " << int(DestOffset-BrOffset) << "\t" << *MI);
 
   if (BrOffset <= DestOffset) {
     // Branch before the Dest.
@@ -1255,7 +1257,7 @@ ARMConstantIslands::FixUpUnconditionalBr(MachineFunction &MF, ImmBranch &Br) {
   HasFarJump = true;
   NumUBrFixed++;
 
-  DOUT << "  Changed B to long jump " << *MI;
+  DEBUG(errs() << "  Changed B to long jump " << *MI);
 
   return true;
 }
@@ -1299,7 +1301,8 @@ ARMConstantIslands::FixUpConditionalBr(MachineFunction &MF, ImmBranch &Br) {
       // b   L1
       MachineBasicBlock *NewDest = BMI->getOperand(0).getMBB();
       if (BBIsInRange(MI, NewDest, Br.MaxDisp)) {
-        DOUT << "  Invert Bcc condition and swap its destination with " << *BMI;
+        DEBUG(errs() << "  Invert Bcc condition and swap its destination with "
+                     << *BMI);
         BMI->getOperand(0).setMBB(DestBB);
         MI->getOperand(0).setMBB(NewDest);
         MI->getOperand(1).setImm(CC);

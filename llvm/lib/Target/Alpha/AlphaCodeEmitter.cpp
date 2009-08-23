@@ -170,7 +170,7 @@ static unsigned getAlphaRegNumber(unsigned Reg) {
 }
 
 unsigned AlphaCodeEmitter::getMachineOpValue(const MachineInstr &MI,
-                           		             const MachineOperand &MO) {
+                                             const MachineOperand &MO) {
 
   unsigned rv = 0; // Return value; defaults to 0 for unhandled cases
                    // or things that get fixed up later by the JIT.
@@ -180,7 +180,7 @@ unsigned AlphaCodeEmitter::getMachineOpValue(const MachineInstr &MI,
   } else if (MO.isImm()) {
     rv = MO.getImm();
   } else if (MO.isGlobal() || MO.isSymbol() || MO.isCPI()) {
-    DOUT << MO << " is a relocated op for " << MI << "\n";
+    DEBUG(errs() << MO << " is a relocated op for " << MI << "\n");
     unsigned Reloc = 0;
     int Offset = 0;
     bool useGOT = false;
@@ -235,7 +235,7 @@ unsigned AlphaCodeEmitter::getMachineOpValue(const MachineInstr &MI,
                                                Alpha::reloc_bsr, MO.getMBB()));
   } else {
 #ifndef NDEBUG
-    cerr << "ERROR: Unknown type of MachineOperand: " << MO << "\n";
+    errs() << "ERROR: Unknown type of MachineOperand: " << MO << "\n";
 #endif
     llvm_unreachable(0);
   }
