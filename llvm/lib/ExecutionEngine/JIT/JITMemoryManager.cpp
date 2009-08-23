@@ -357,7 +357,7 @@ namespace {
       // another block of memory and add it to the free list.
       if (largest < ActualSize ||
           largest <= FreeRangeHeader::getMinBlockSize()) {
-        DOUT << "JIT: Allocating another slab of memory for function.";
+        DEBUG(errs() << "JIT: Allocating another slab of memory for function.");
         candidateBlock = allocateNewCodeSlab((size_t)ActualSize);
       }
 

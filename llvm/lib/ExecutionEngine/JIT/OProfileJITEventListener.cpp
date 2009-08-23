@@ -50,9 +50,9 @@ OProfileJITEventListener::OProfileJITEventListener()
     : Agent(op_open_agent()) {
   if (Agent == NULL) {
     const std::string err_str = sys::StrError();
-    DOUT << "Failed to connect to OProfile agent: " << err_str << "\n";
+    DEBUG(errs() << "Failed to connect to OProfile agent: " << err_str << "\n");
   } else {
-    DOUT << "Connected to OProfile agent.\n";
+    DEBUG(errs() << "Connected to OProfile agent.\n");
   }
 }
 
@@ -60,9 +60,10 @@ OProfileJITEventListener::~OProfileJITEventListener() {
   if (Agent != NULL) {
     if (op_close_agent(Agent) == -1) {
       const std::string err_str = sys::StrError();
-      DOUT << "Failed to disconnect from OProfile agent: " << err_str << "\n";
+      DEBUG(errs() << "Failed to disconnect from OProfile agent: "
+                   << err_str << "\n");
     } else {
-      DOUT << "Disconnected from OProfile agent.\n";
+      DEBUG(errs() << "Disconnected from OProfile agent.\n");
     }
   }
 }
@@ -99,8 +100,8 @@ static debug_line_info LineStartToOProfileFormat(
   const DebugLocTuple& tuple = MF.getDebugLocTuple(Loc);
   Result.lineno = tuple.Line;
   Result.filename = Filenames.getFilename(tuple.CompileUnit);
-  DOUT << "Mapping " << reinterpret_cast<void*>(Result.vma) << " to "
-       << Result.filename << ":" << Result.lineno << "\n";
+  DEBUG(errs() << "Mapping " << reinterpret_cast<void*>(Result.vma) << " to "
+               << Result.filename << ":" << Result.lineno << "\n");
   return Result;
 }
 

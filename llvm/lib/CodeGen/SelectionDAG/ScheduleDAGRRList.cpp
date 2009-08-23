@@ -30,6 +30,7 @@
 #include "llvm/ADT/SmallSet.h"
 #include "llvm/ADT/Statistic.h"
 #include "llvm/ADT/STLExtras.h"
+#include "llvm/Support/raw_ostream.h"
 #include <climits>
 using namespace llvm;
 
@@ -164,7 +165,7 @@ private:
 
 /// Schedule - Schedule the DAG using list scheduling.
 void ScheduleDAGRRList::Schedule() {
-  DOUT << "********** List Scheduling **********\n";
+  DEBUG(errs() << "********** List Scheduling **********\n");
 
   NumLiveRegs = 0;
   LiveRegDefs.resize(TRI->getNumRegs(), NULL);  
@@ -238,7 +239,7 @@ void ScheduleDAGRRList::ReleasePredecessors(SUnit *SU, unsigned CurCycle) {
 /// count of its predecessors. If a predecessor pending count is zero, add it to
 /// the Available queue.
 void ScheduleDAGRRList::ScheduleNodeBottomUp(SUnit *SU, unsigned CurCycle) {
-  DOUT << "*** Scheduling [" << CurCycle << "]: ";
+  DEBUG(errs() << "*** Scheduling [" << CurCycle << "]: ");
   DEBUG(SU->dump(this));
 
   assert(CurCycle >= SU->getHeight() && "Node scheduled below its height!");
@@ -283,7 +284,7 @@ void ScheduleDAGRRList::CapturePred(SDep *PredEdge) {
 /// UnscheduleNodeBottomUp - Remove the node from the schedule, update its and
 /// its predecessor states to reflect the change.
 void ScheduleDAGRRList::UnscheduleNodeBottomUp(SUnit *SU) {
-  DOUT << "*** Unscheduling [" << SU->getHeight() << "]: ";
+  DEBUG(errs() << "*** Unscheduling [" << SU->getHeight() << "]: ");
   DEBUG(SU->dump(this));
 
   AvailableQueue->UnscheduledNode(SU);
@@ -370,7 +371,7 @@ SUnit *ScheduleDAGRRList::CopyAndMoveSuccessors(SUnit *SU) {
     if (!TII->unfoldMemoryOperand(*DAG, N, NewNodes))
       return NULL;
 
-    DOUT << "Unfolding SU # " << SU->NodeNum << "\n";
+    DEBUG(errs() << "Unfolding SU # " << SU->NodeNum << "\n");
     assert(NewNodes.size() == 2 && "Expected a load folding node!");
 
     N = NewNodes[1];
@@ -489,7 +490,7 @@ SUnit *ScheduleDAGRRList::CopyAndMoveSuccessors(SUnit *SU) {
     SU = NewSU;
   }
 
-  DOUT << "Duplicating SU # " << SU->NodeNum << "\n";
+  DEBUG(errs() << "Duplicating SU # " << SU->NodeNum << "\n");
   NewSU = CreateClone(SU);
 
   // New SUnit has the exact same predecessors.
@@ -770,8 +771,8 @@ void ScheduleDAGRRList::ListScheduleBottomUp() {
           // Issue copies, these can be expensive cross register class copies.
           SmallVector<SUnit*, 2> Copies;
           InsertCopiesAndMoveSuccs(LRDef, Reg, DestRC, RC, Copies);
-          DOUT << "Adding an edge from SU #" << TrySU->NodeNum
-               << " to SU #" << Copies.front()->NodeNum << "\n";
+          DEBUG(errs() << "Adding an edge from SU #" << TrySU->NodeNum
+                       << " to SU #" << Copies.front()->NodeNum << "\n");
           AddPred(TrySU, SDep(Copies.front(), SDep::Order, /*Latency=*/1,
                               /*Reg=*/0, /*isNormalMemory=*/false,
                               /*isMustAlias=*/false,
@@ -779,8 +780,8 @@ void ScheduleDAGRRList::ListScheduleBottomUp() {
           NewDef = Copies.back();
         }
 
-        DOUT << "Adding an edge from SU #" << NewDef->NodeNum
-             << " to SU #" << TrySU->NodeNum << "\n";
+        DEBUG(errs() << "Adding an edge from SU #" << NewDef->NodeNum
+                     << " to SU #" << TrySU->NodeNum << "\n");
         LiveRegDefs[Reg] = NewDef;
         AddPred(NewDef, SDep(TrySU, SDep::Order, /*Latency=*/1,
                              /*Reg=*/0, /*isNormalMemory=*/false,
@@ -857,7 +858,7 @@ void ScheduleDAGRRList::ReleaseSuccessors(SUnit *SU) {
 /// count of its successors. If a successor pending count is zero, add it to
 /// the Available queue.
 void ScheduleDAGRRList::ScheduleNodeTopDown(SUnit *SU, unsigned CurCycle) {
-  DOUT << "*** Scheduling [" << CurCycle << "]: ";
+  DEBUG(errs() << "*** Scheduling [" << CurCycle << "]: ");
   DEBUG(SU->dump(this));
 
   assert(CurCycle >= SU->getDepth() && "Node scheduled above its depth!");
@@ -1329,9 +1330,9 @@ void RegReductionPriorityQueue<SF>::PrescheduleNodesWithMultipleUses() {
 
     // Ok, the transformation is safe and the heuristics suggest it is
     // profitable. Update the graph.
-    DOUT << "Prescheduling SU # " << SU->NodeNum
-         << " next to PredSU # " << PredSU->NodeNum
-         << " to guide scheduling in the presence of multiple uses\n";
+    DEBUG(errs() << "Prescheduling SU # " << SU->NodeNum
+                 << " next to PredSU # " << PredSU->NodeNum
+                 << " to guide scheduling in the presence of multiple uses\n");
     for (unsigned i = 0; i != PredSU->Succs.size(); ++i) {
       SDep Edge = PredSU->Succs[i];
       assert(!Edge.isAssignedRegDep());
@@ -1419,8 +1420,8 @@ void RegReductionPriorityQueue<SF>::AddPseudoTwoAddrDeps() {
              (hasCopyToRegUse(SU) && !hasCopyToRegUse(SuccSU)) ||
              (!SU->isCommutable && SuccSU->isCommutable)) &&
             !scheduleDAG->IsReachable(SuccSU, SU)) {
-          DOUT << "Adding a pseudo-two-addr edge from SU # " << SU->NodeNum
-               << " to SU #" << SuccSU->NodeNum << "\n";
+          DEBUG(errs() << "Adding a pseudo-two-addr edge from SU # "
+                       << SU->NodeNum << " to SU #" << SuccSU->NodeNum << "\n");
           scheduleDAG->AddPred(SU, SDep(SuccSU, SDep::Order, /*Latency=*/0,
                                         /*Reg=*/0, /*isNormalMemory=*/false,
                                         /*isMustAlias=*/false,

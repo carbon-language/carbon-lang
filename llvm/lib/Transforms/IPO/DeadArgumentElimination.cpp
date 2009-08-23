@@ -552,7 +552,7 @@ void DAE::MarkLive(const RetOrArg &RA) {
   if (!LiveValues.insert(RA).second)
     return; // We were already marked Live.
 
-  DOUT << "DAE - Marking " << RA.getDescription() << " live\n";
+  DEBUG(errs() << "DAE - Marking " << RA.getDescription() << " live\n");
   PropagateLiveness(RA);
 }
 
@@ -916,7 +916,7 @@ bool DAE::runOnModule(Module &M) {
   // removed.  We can do this if they never call va_start.  This loop cannot be
   // fused with the next loop, because deleting a function invalidates
   // information computed while surveying other functions.
-  DOUT << "DAE - Deleting dead varargs\n";
+  DEBUG(errs() << "DAE - Deleting dead varargs\n");
   for (Module::iterator I = M.begin(), E = M.end(); I != E; ) {
     Function &F = *I++;
     if (F.getFunctionType()->isVarArg())
@@ -927,7 +927,7 @@ bool DAE::runOnModule(Module &M) {
   // We assume all arguments are dead unless proven otherwise (allowing us to
   // determine that dead arguments passed into recursive functions are dead).
   //
-  DOUT << "DAE - Determining liveness\n";
+  DEBUG(errs() << "DAE - Determining liveness\n");
   for (Module::iterator I = M.begin(), E = M.end(); I != E; ++I)
     SurveyFunction(*I);
   

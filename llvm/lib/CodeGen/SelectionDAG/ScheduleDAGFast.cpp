@@ -25,6 +25,7 @@
 #include "llvm/ADT/STLExtras.h"
 #include "llvm/Support/CommandLine.h"
 #include "llvm/Support/ErrorHandling.h"
+#include "llvm/Support/raw_ostream.h"
 using namespace llvm;
 
 STATISTIC(NumUnfolds,    "Number of nodes unfolded");
@@ -109,7 +110,7 @@ private:
 
 /// Schedule - Schedule the DAG using list scheduling.
 void ScheduleDAGFast::Schedule() {
-  DOUT << "********** List Scheduling **********\n";
+  DEBUG(errs() << "********** List Scheduling **********\n");
 
   NumLiveRegs = 0;
   LiveRegDefs.resize(TRI->getNumRegs(), NULL);  
@@ -175,7 +176,7 @@ void ScheduleDAGFast::ReleasePredecessors(SUnit *SU, unsigned CurCycle) {
 /// count of its predecessors. If a predecessor pending count is zero, add it to
 /// the Available queue.
 void ScheduleDAGFast::ScheduleNodeBottomUp(SUnit *SU, unsigned CurCycle) {
-  DOUT << "*** Scheduling [" << CurCycle << "]: ";
+  DEBUG(errs() << "*** Scheduling [" << CurCycle << "]: ");
   DEBUG(SU->dump(this));
 
   assert(CurCycle >= SU->getHeight() && "Node scheduled below its height!");
@@ -233,7 +234,7 @@ SUnit *ScheduleDAGFast::CopyAndMoveSuccessors(SUnit *SU) {
     if (!TII->unfoldMemoryOperand(*DAG, N, NewNodes))
       return NULL;
 
-    DOUT << "Unfolding SU # " << SU->NodeNum << "\n";
+    DEBUG(errs() << "Unfolding SU # " << SU->NodeNum << "\n");
     assert(NewNodes.size() == 2 && "Expected a load folding node!");
 
     N = NewNodes[1];
@@ -343,7 +344,7 @@ SUnit *ScheduleDAGFast::CopyAndMoveSuccessors(SUnit *SU) {
     SU = NewSU;
   }
 
-  DOUT << "Duplicating SU # " << SU->NodeNum << "\n";
+  DEBUG(errs() << "Duplicating SU # " << SU->NodeNum << "\n");
   NewSU = Clone(SU);
 
   // New SUnit has the exact same predecessors.
@@ -550,16 +551,16 @@ void ScheduleDAGFast::ListScheduleBottomUp() {
           // Issue copies, these can be expensive cross register class copies.
           SmallVector<SUnit*, 2> Copies;
           InsertCopiesAndMoveSuccs(LRDef, Reg, DestRC, RC, Copies);
-          DOUT << "Adding an edge from SU # " << TrySU->NodeNum
-               << " to SU #" << Copies.front()->NodeNum << "\n";
+          DEBUG(errs() << "Adding an edge from SU # " << TrySU->NodeNum
+                       << " to SU #" << Copies.front()->NodeNum << "\n");
           AddPred(TrySU, SDep(Copies.front(), SDep::Order, /*Latency=*/1,
                               /*Reg=*/0, /*isNormalMemory=*/false,
                               /*isMustAlias=*/false, /*isArtificial=*/true));
           NewDef = Copies.back();
         }
 
-        DOUT << "Adding an edge from SU # " << NewDef->NodeNum
-             << " to SU #" << TrySU->NodeNum << "\n";
+        DEBUG(errs() << "Adding an edge from SU # " << NewDef->NodeNum
+                     << " to SU #" << TrySU->NodeNum << "\n");
         LiveRegDefs[Reg] = NewDef;
         AddPred(NewDef, SDep(TrySU, SDep::Order, /*Latency=*/1,
                              /*Reg=*/0, /*isNormalMemory=*/false,

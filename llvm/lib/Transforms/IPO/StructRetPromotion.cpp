@@ -105,12 +105,12 @@ bool SRETPromotion::PromoteReturn(CallGraphNode *CGN) {
 
   // Check if it is ok to perform this promotion.
   if (isSafeToUpdateAllCallers(F) == false) {
-    DOUT << "SretPromotion: Not all callers can be updated\n";
+    DEBUG(errs() << "SretPromotion: Not all callers can be updated\n");
     NumRejectedSRETUses++;
     return false;
   }
 
-  DOUT << "SretPromotion: sret argument will be promoted\n";
+  DEBUG(errs() << "SretPromotion: sret argument will be promoted\n");
   NumSRET++;
   // [1] Replace use of sret parameter 
   AllocaInst *TheAlloca = new AllocaInst(STy, NULL, "mrv", 

@@ -633,11 +633,11 @@ bool MergeFunctions::runOnModule(Module &M) {
   bool LocalChanged;
   do {
     LocalChanged = false;
-    DOUT << "size: " << FnMap.size() << "\n";
+    DEBUG(errs() << "size: " << FnMap.size() << "\n");
     for (std::map<unsigned long, std::vector<Function *> >::iterator
          I = FnMap.begin(), E = FnMap.end(); I != E; ++I) {
       std::vector<Function *> &FnVec = I->second;
-      DOUT << "hash (" << I->first << "): " << FnVec.size() << "\n";
+      DEBUG(errs() << "hash (" << I->first << "): " << FnVec.size() << "\n");
 
       for (int i = 0, e = FnVec.size(); i != e; ++i) {
         for (int j = i + 1; j != e; ++j) {

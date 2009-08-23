@@ -243,13 +243,13 @@ static void *CreateArgv(LLVMContext &C, ExecutionEngine *EE,
   unsigned PtrSize = EE->getTargetData()->getPointerSize();
   char *Result = new char[(InputArgv.size()+1)*PtrSize];
 
-  DOUT << "JIT: ARGV = " << (void*)Result << "\n";
+  DEBUG(errs() << "JIT: ARGV = " << (void*)Result << "\n");
   const Type *SBytePtr = PointerType::getUnqual(Type::getInt8Ty(C));
 
   for (unsigned i = 0; i != InputArgv.size(); ++i) {
     unsigned Size = InputArgv[i].size()+1;
     char *Dest = new char[Size];
-    DOUT << "JIT: ARGV[" << i << "] = " << (void*)Dest << "\n";
+    DEBUG(errs() << "JIT: ARGV[" << i << "] = " << (void*)Dest << "\n");
 
     std::copy(InputArgv[i].begin(), InputArgv[i].end(), Dest);
     Dest[Size-1] = 0;
@@ -899,7 +899,7 @@ void ExecutionEngine::LoadValueFromMemory(GenericValue &Result,
 // specified memory location...
 //
 void ExecutionEngine::InitializeMemory(const Constant *Init, void *Addr) {
-  DOUT << "JIT: Initializing " << Addr << " ";
+  DEBUG(errs() << "JIT: Initializing " << Addr << " ");
   DEBUG(Init->dump());
   if (isa<UndefValue>(Init)) {
     return;

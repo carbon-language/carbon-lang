@@ -30,6 +30,7 @@
 #include "llvm/Support/Debug.h"
 #include "llvm/Support/Compiler.h"
 #include "llvm/Support/ErrorHandling.h"
+#include "llvm/Support/raw_ostream.h"
 #include "llvm/ADT/PriorityQueue.h"
 #include "llvm/ADT/Statistic.h"
 #include <climits>
@@ -87,7 +88,7 @@ private:
 
 /// Schedule - Schedule the DAG using list scheduling.
 void ScheduleDAGList::Schedule() {
-  DOUT << "********** List Scheduling **********\n";
+  DEBUG(errs() << "********** List Scheduling **********\n");
   
   // Build the scheduling graph.
   BuildSchedGraph();
@@ -141,7 +142,7 @@ void ScheduleDAGList::ReleaseSuccessors(SUnit *SU) {
 /// count of its successors. If a successor pending count is zero, add it to
 /// the Available queue.
 void ScheduleDAGList::ScheduleNodeTopDown(SUnit *SU, unsigned CurCycle) {
-  DOUT << "*** Scheduling [" << CurCycle << "]: ";
+  DEBUG(errs() << "*** Scheduling [" << CurCycle << "]: ");
   DEBUG(SU->dump(this));
   
   Sequence.push_back(SU);
@@ -233,7 +234,7 @@ void ScheduleDAGList::ListScheduleTopDown() {
     } else if (!HasNoopHazards) {
       // Otherwise, we have a pipeline stall, but no other problem, just advance
       // the current cycle and try again.
-      DOUT << "*** Advancing cycle, no work to do\n";
+      DEBUG(errs() << "*** Advancing cycle, no work to do\n");
       HazardRec->AdvanceCycle();
       ++NumStalls;
       ++CurCycle;
@@ -241,7 +242,7 @@ void ScheduleDAGList::ListScheduleTopDown() {
       // Otherwise, we have no instructions to issue and we have instructions
       // that will fault if we don't do this right.  This is the case for
       // processors without pipeline interlocks and other cases.
-      DOUT << "*** Emitting noop\n";
+      DEBUG(errs() << "*** Emitting noop\n");
       HazardRec->EmitNoop();
       Sequence.push_back(0);   // NULL here means noop
       ++NumNoops;

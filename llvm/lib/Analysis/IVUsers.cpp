@@ -257,7 +257,7 @@ bool IVUsers::AddUsersIfInteresting(Instruction *I) {
         const SCEV *NewStart = SE->getMinusSCEV(Start, Stride);
         StrideUses->addUser(NewStart, User, I);
         StrideUses->Users.back().setIsUseOfPostIncrementedValue(true);
-        DOUT << "   USING POSTINC SCEV, START=" << *NewStart<< "\n";
+        DEBUG(errs() << "   USING POSTINC SCEV, START=" << *NewStart<< "\n");
       } else {
         StrideUses->addUser(Start, User, I);
       }

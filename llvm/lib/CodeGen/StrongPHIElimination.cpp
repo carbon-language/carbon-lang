@@ -554,8 +554,8 @@ void StrongPHIElimination::processBlock(MachineBasicBlock* MBB) {
     // Add the renaming set for this PHI node to our overall renaming information
     for (std::map<unsigned, MachineBasicBlock*>::iterator QI = PHIUnion.begin(),
          QE = PHIUnion.end(); QI != QE; ++QI) {
-      DOUT << "Adding Renaming: " << QI->first << " -> "
-           << P->getOperand(0).getReg() << "\n";
+      DEBUG(errs() << "Adding Renaming: " << QI->first << " -> "
+                   << P->getOperand(0).getReg() << "\n");
     }
     
     RenameSets.insert(std::make_pair(P->getOperand(0).getReg(), PHIUnion));
@@ -697,7 +697,8 @@ void StrongPHIElimination::ScheduleCopies(MachineBasicBlock* MBB,
         TII->copyRegToReg(*PI->getParent(), PI, t,
                           curr.second, RC, RC);
         
-        DOUT << "Inserted copy from " << curr.second << " to " << t << "\n";
+        DEBUG(errs() << "Inserted copy from " << curr.second << " to " << t
+                     << "\n");
         
         // Push temporary on Stacks
         Stacks[curr.second].push_back(t);
@@ -713,8 +714,8 @@ void StrongPHIElimination::ScheduleCopies(MachineBasicBlock* MBB,
       TII->copyRegToReg(*MBB, MBB->getFirstTerminator(), curr.second,
                         map[curr.first], RC, RC);
       map[curr.first] = curr.second;
-      DOUT << "Inserted copy from " << curr.first << " to "
-           << curr.second << "\n";
+      DEBUG(errs() << "Inserted copy from " << curr.first << " to "
+                   << curr.second << "\n");
       
       // Push this copy onto InsertedPHICopies so we can
       // update LiveIntervals with it.
@@ -928,7 +929,8 @@ bool StrongPHIElimination::runOnMachineFunction(MachineFunction &Fn) {
         unsigned reg = OI->first;
         ++OI;
         I->second.erase(reg);
-        DOUT << "Removing Renaming: " << reg << " -> " << I->first << "\n";
+        DEBUG(errs() << "Removing Renaming: " << reg << " -> " << I->first
+                     << "\n");
       }
     }
   }
@@ -945,7 +947,7 @@ bool StrongPHIElimination::runOnMachineFunction(MachineFunction &Fn) {
     while (I->second.size()) {
       std::map<unsigned, MachineBasicBlock*>::iterator SI = I->second.begin();
       
-      DOUT << "Renaming: " << SI->first << " -> " << I->first << "\n";
+      DEBUG(errs() << "Renaming: " << SI->first << " -> " << I->first << "\n");
       
       if (SI->first != I->first) {
         if (mergeLiveIntervals(I->first, SI->first)) {
@@ -977,8 +979,8 @@ bool StrongPHIElimination::runOnMachineFunction(MachineFunction &Fn) {
           R.valno->setCopy(--SI->second->getFirstTerminator());
           R.valno->def = LiveIntervals::getDefIndex(instrIdx);
           
-          DOUT << "Renaming failed: " << SI->first << " -> "
-               << I->first << "\n";
+          DEBUG(errs() << "Renaming failed: " << SI->first << " -> "
+                       << I->first << "\n");
         }
       }
       
