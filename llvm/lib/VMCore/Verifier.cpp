@@ -65,7 +65,6 @@
 #include "llvm/Support/ErrorHandling.h"
 #include "llvm/Support/raw_ostream.h"
 #include <algorithm>
-#include <sstream>
 #include <cstdarg>
 using namespace llvm;
 
@@ -116,7 +115,9 @@ namespace {
                           // What to do if verification fails.
     Module *Mod;          // Module we are verifying right now
     DominatorTree *DT; // Dominator Tree, caution can be null!
-    std::stringstream msgs;  // A stringstream to collect messages
+       
+    std::string Messages;
+    raw_string_ostream MessagesStr;
 
     /// InstInThisBlock - when verifying a basic block, keep track of all of the
     /// instructions we have seen so far.  This allows us to do efficient
@@ -127,20 +128,20 @@ namespace {
     Verifier()
       : FunctionPass(&ID), 
       Broken(false), RealPass(true), action(AbortProcessAction),
-      DT(0), msgs( std::ios::app | std::ios::out ) {}
+      DT(0), MessagesStr(Messages) {}
     explicit Verifier(VerifierFailureAction ctn)
       : FunctionPass(&ID), 
       Broken(false), RealPass(true), action(ctn), DT(0),
-      msgs( std::ios::app | std::ios::out ) {}
+      MessagesStr(Messages) {}
     explicit Verifier(bool AB)
       : FunctionPass(&ID), 
       Broken(false), RealPass(true),
       action( AB ? AbortProcessAction : PrintMessageAction), DT(0),
-      msgs( std::ios::app | std::ios::out ) {}
+      MessagesStr(Messages) {}
     explicit Verifier(DominatorTree &dt)
       : FunctionPass(&ID), 
       Broken(false), RealPass(false), action(PrintMessageAction),
-      DT(&dt), msgs( std::ios::app | std::ios::out ) {}
+      DT(&dt), MessagesStr(Messages) {}
 
 
     bool doInitialization(Module &M) {
@@ -206,20 +207,20 @@ namespace {
     ///
     bool abortIfBroken() {
       if (!Broken) return false;
-      msgs << "Broken module found, ";
+      MessagesStr << "Broken module found, ";
       switch (action) {
       default: llvm_unreachable("Unknown action");
       case AbortProcessAction:
-        msgs << "compilation aborted!\n";
-        cerr << msgs.str();
+        MessagesStr << "compilation aborted!\n";
+        errs() << MessagesStr.str();
         // Client should choose different reaction if abort is not desired
         abort();
       case PrintMessageAction:
-        msgs << "verification continues.\n";
-        cerr << msgs.str();
+        MessagesStr << "verification continues.\n";
+        errs() << MessagesStr.str();
         return false;
       case ReturnStatusAction:
-        msgs << "compilation terminated.\n";
+        MessagesStr << "compilation terminated.\n";
         return true;
       }
     }
@@ -286,18 +287,17 @@ namespace {
     void WriteValue(const Value *V) {
       if (!V) return;
       if (isa<Instruction>(V)) {
-        msgs << *V;
+        MessagesStr << *V;
       } else {
-        WriteAsOperand(msgs, V, true, Mod);
-        msgs << "\n";
+        WriteAsOperand(MessagesStr, V, true, Mod);
+        MessagesStr << "\n";
       }
     }
 
     void WriteType(const Type *T) {
       if (!T) return;
-      raw_os_ostream RO(msgs);
-      RO << ' ';
-      WriteTypeSymbolic(RO, T, Mod);
+      MessagesStr << ' ';
+      WriteTypeSymbolic(MessagesStr, T, Mod);
     }
 
 
@@ -307,7 +307,7 @@ namespace {
     void CheckFailed(const Twine &Message,
                      const Value *V1 = 0, const Value *V2 = 0,
                      const Value *V3 = 0, const Value *V4 = 0) {
-      msgs << Message.str() << "\n";
+      MessagesStr << Message.str() << "\n";
       WriteValue(V1);
       WriteValue(V2);
       WriteValue(V3);
@@ -317,7 +317,7 @@ namespace {
 
     void CheckFailed(const Twine &Message, const Value* V1,
                      const Type* T2, const Value* V3 = 0) {
-      msgs << Message.str() << "\n";
+      MessagesStr << Message.str() << "\n";
       WriteValue(V1);
       WriteType(T2);
       WriteValue(V3);
@@ -1764,8 +1764,6 @@ bool llvm::verifyModule(const Module &M, VerifierFailureAction action,
   PM.run(const_cast<Module&>(M));
   
   if (ErrorInfo && V->Broken)
-    *ErrorInfo = V->msgs.str();
+    *ErrorInfo = V->MessagesStr.str();
   return V->Broken;
 }
-
-// vim: sw=2

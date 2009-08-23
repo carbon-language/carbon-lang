@@ -11,8 +11,8 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include "LLVMContextImpl.h"
 #include "llvm/Constants.h"
+#include "LLVMContextImpl.h"
 #include "ConstantFold.h"
 #include "llvm/DerivedTypes.h"
 #include "llvm/GlobalValue.h"
@@ -27,6 +27,7 @@
 #include "llvm/Support/ErrorHandling.h"
 #include "llvm/Support/ManagedStatic.h"
 #include "llvm/Support/MathExtras.h"
+#include "llvm/Support/raw_ostream.h"
 #include "llvm/System/Mutex.h"
 #include "llvm/System/RWMutex.h"
 #include "llvm/System/Threading.h"
@@ -110,10 +111,11 @@ void Constant::destroyConstantImpl() {
   while (!use_empty()) {
     Value *V = use_back();
 #ifndef NDEBUG      // Only in -g mode...
-    if (!isa<Constant>(V))
-      DOUT << "While deleting: " << *this
-           << "\n\nUse still stuck around after Def is destroyed: "
-           << *V << "\n\n";
+    if (!isa<Constant>(V)) {
+      errs() << "While deleting: " << *this
+             << "\n\nUse still stuck around after Def is destroyed: "
+             << *V << "\n\n";
+    }
 #endif
     assert(isa<Constant>(V) && "References remain to Constant being destroyed");
     Constant *CV = cast<Constant>(V);
