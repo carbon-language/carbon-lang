@@ -13,3 +13,5 @@ add_clang_executable(clang
 
 add_dependencies(clang clang-cc)
 
+install(TARGETS clang
+  RUNTIME DESTINATION bin)

@@ -1,3 +1,6 @@
+# Clang version information
+set(CLANG_VERSION 1.0)
+
 macro(add_clang_library name)
   set(srcs ${ARGN})
   if(MSVC_IDE OR XCODE)
@@ -36,8 +39,6 @@ macro(add_clang_executable name)
     set(srcs ${srcs} ${headers})
   endif(MSVC_IDE)
   add_llvm_executable( ${name} ${srcs} )
-  install(TARGETS ${name}
-    RUNTIME DESTINATION bin)
 endmacro(add_clang_executable)
 
 include_directories(
