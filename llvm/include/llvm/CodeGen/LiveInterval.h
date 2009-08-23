@@ -24,7 +24,6 @@
 #include "llvm/ADT/SmallVector.h"
 #include "llvm/Support/Allocator.h"
 #include "llvm/Support/AlignOf.h"
-#include <iosfwd>
 #include <cassert>
 #include <climits>
 
@@ -49,7 +48,6 @@ namespace llvm {
   /// index of the MBB in which the PHI originally existed. This can be used
   /// to insert code (spills or copies) which deals with the value, which will
   /// be live in to the block.
-
   class VNInfo {
   private:
     enum {
@@ -183,7 +181,7 @@ namespace llvm {
 
   };
 
-  inline bool operator<(const VNInfo::KillInfo &k1, const VNInfo::KillInfo &k2) {
+  inline bool operator<(const VNInfo::KillInfo &k1, const VNInfo::KillInfo &k2){
     return k1.killIdx < k2.killIdx;
   }
   
@@ -221,16 +219,12 @@ namespace llvm {
     }
 
     void dump() const;
-    void print(std::ostream &os) const;
-    void print(std::ostream *os) const { if (os) print(*os); }
     void print(raw_ostream &os) const;
-    void print(raw_ostream *os) const { if (os) print(*os); }
 
   private:
     LiveRange(); // DO NOT IMPLEMENT
   };
 
-  std::ostream& operator<<(std::ostream& os, const LiveRange &LR);
   raw_ostream& operator<<(raw_ostream& os, const LiveRange &LR);
 
 
@@ -351,7 +345,7 @@ namespace llvm {
     /// getNextValue - Create a new value number and return it.  MIIdx specifies
     /// the instruction that defines the value number.
     VNInfo *getNextValue(unsigned MIIdx, MachineInstr *CopyMI,
-                         bool isDefAccurate, BumpPtrAllocator &VNInfoAllocator) {
+                         bool isDefAccurate, BumpPtrAllocator &VNInfoAllocator){
 
       assert(MIIdx != ~0u && MIIdx != ~1u &&
              "PHI def / unused flags should now be passed explicitly.");
@@ -366,7 +360,8 @@ namespace llvm {
 
     /// Create a copy of the given value. The new value will be identical except
     /// for the Value number.
-    VNInfo *createValueCopy(const VNInfo *orig, BumpPtrAllocator &VNInfoAllocator) {
+    VNInfo *createValueCopy(const VNInfo *orig,
+                            BumpPtrAllocator &VNInfoAllocator) {
 
       VNInfo *VNI =
         static_cast<VNInfo*>(VNInfoAllocator.Allocate((unsigned)sizeof(VNInfo),
@@ -605,14 +600,7 @@ namespace llvm {
       return beginNumber() < other.beginNumber();
     }
 
-    void print(std::ostream &OS, const TargetRegisterInfo *TRI = 0) const;
-    void print(std::ostream *OS, const TargetRegisterInfo *TRI = 0) const {
-      if (OS) print(*OS, TRI);
-    }
     void print(raw_ostream &OS, const TargetRegisterInfo *TRI = 0) const;
-    void print(raw_ostream *OS, const TargetRegisterInfo *TRI = 0) const {
-      if (OS) print(*OS, TRI);
-    }
     void dump() const;
 
   private:
@@ -624,10 +612,6 @@ namespace llvm {
 
   };
 
-  inline std::ostream &operator<<(std::ostream &OS, const LiveInterval &LI) {
-    LI.print(OS);
-    return OS;
-  }
   inline raw_ostream &operator<<(raw_ostream &OS, const LiveInterval &LI) {
     LI.print(OS);
     return OS;
