@@ -23,8 +23,7 @@
 #include "llvm/Analysis/ValueTracking.h"
 #include "llvm/Support/Dwarf.h"
 #include "llvm/Support/DebugLoc.h"
-#include "llvm/Support/Streams.h"
-
+#include "llvm/Support/raw_ostream.h"
 using namespace llvm;
 using namespace llvm::dwarf;
 
@@ -342,17 +341,17 @@ bool DISubprogram::describes(const Function *F) {
 
 /// dump - Print descriptor.
 void DIDescriptor::dump() const {
-  cerr << "[" << dwarf::TagString(getTag()) << "] ";
-  cerr << std::hex << "[GV:" << DbgGV << "]" << std::dec;
+  errs() << "[" << dwarf::TagString(getTag()) << "] [GV:";
+  errs().write_hex((intptr_t)DbgGV) << ']';
 }
 
 /// dump - Print compile unit.
 void DICompileUnit::dump() const {
   if (getLanguage())
-    cerr << " [" << dwarf::LanguageString(getLanguage()) << "] ";
+    errs() << " [" << dwarf::LanguageString(getLanguage()) << "] ";
 
   std::string Res1, Res2;
-  cerr << " [" << getDirectory(Res1) << "/" << getFilename(Res2) << " ]";
+  errs() << " [" << getDirectory(Res1) << "/" << getFilename(Res2) << " ]";
 }
 
 /// dump - Print type.
@@ -361,27 +360,27 @@ void DIType::dump() const {
 
   std::string Res;
   if (!getName(Res).empty())
-    cerr << " [" << Res << "] ";
+    errs() << " [" << Res << "] ";
 
   unsigned Tag = getTag();
-  cerr << " [" << dwarf::TagString(Tag) << "] ";
+  errs() << " [" << dwarf::TagString(Tag) << "] ";
 
   // TODO : Print context
   getCompileUnit().dump();
-  cerr << " [" 
-       << getLineNumber() << ", " 
-       << getSizeInBits() << ", "
-       << getAlignInBits() << ", "
-       << getOffsetInBits() 
-       << "] ";
+  errs() << " [" 
+         << getLineNumber() << ", " 
+         << getSizeInBits() << ", "
+         << getAlignInBits() << ", "
+         << getOffsetInBits() 
+         << "] ";
 
   if (isPrivate()) 
-    cerr << " [private] ";
+    errs() << " [private] ";
   else if (isProtected())
-    cerr << " [protected] ";
+    errs() << " [protected] ";
 
   if (isForwardDecl())
-    cerr << " [fwd] ";
+    errs() << " [fwd] ";
 
   if (isBasicType(Tag))
     DIBasicType(DbgGV).dump();
@@ -390,21 +389,21 @@ void DIType::dump() const {
   else if (isCompositeType(Tag))
     DICompositeType(DbgGV).dump();
   else {
-    cerr << "Invalid DIType\n";
+    errs() << "Invalid DIType\n";
     return;
   }
 
-  cerr << "\n";
+  errs() << "\n";
 }
 
 /// dump - Print basic type.
 void DIBasicType::dump() const {
-  cerr << " [" << dwarf::AttributeEncodingString(getEncoding()) << "] ";
+  errs() << " [" << dwarf::AttributeEncodingString(getEncoding()) << "] ";
 }
 
 /// dump - Print derived type.
 void DIDerivedType::dump() const {
-  cerr << "\n\t Derived From: "; getTypeDerivedFrom().dump();
+  errs() << "\n\t Derived From: "; getTypeDerivedFrom().dump();
 }
 
 /// dump - Print composite type.
@@ -412,32 +411,32 @@ void DICompositeType::dump() const {
   DIArray A = getTypeArray();
   if (A.isNull())
     return;
-  cerr << " [" << A.getNumElements() << " elements]";
+  errs() << " [" << A.getNumElements() << " elements]";
 }
 
 /// dump - Print global.
 void DIGlobal::dump() const {
   std::string Res;
   if (!getName(Res).empty())
-    cerr << " [" << Res << "] ";
+    errs() << " [" << Res << "] ";
 
   unsigned Tag = getTag();
-  cerr << " [" << dwarf::TagString(Tag) << "] ";
+  errs() << " [" << dwarf::TagString(Tag) << "] ";
 
   // TODO : Print context
   getCompileUnit().dump();
-  cerr << " [" << getLineNumber() << "] ";
+  errs() << " [" << getLineNumber() << "] ";
 
   if (isLocalToUnit())
-    cerr << " [local] ";
+    errs() << " [local] ";
 
   if (isDefinition())
-    cerr << " [def] ";
+    errs() << " [def] ";
 
   if (isGlobalVariable(Tag))
     DIGlobalVariable(DbgGV).dump();
 
-  cerr << "\n";
+  errs() << "\n";
 }
 
 /// dump - Print subprogram.
@@ -447,19 +446,21 @@ void DISubprogram::dump() const {
 
 /// dump - Print global variable.
 void DIGlobalVariable::dump() const {
-  cerr << " ["; getGlobal()->dump(); cerr << "] ";
+  errs() << " [";
+  getGlobal()->dump();
+  errs() << "] ";
 }
 
 /// dump - Print variable.
 void DIVariable::dump() const {
   std::string Res;
   if (!getName(Res).empty())
-    cerr << " [" << Res << "] ";
+    errs() << " [" << Res << "] ";
 
   getCompileUnit().dump();
-  cerr << " [" << getLineNumber() << "] ";
+  errs() << " [" << getLineNumber() << "] ";
   getType().dump();
-  cerr << "\n";
+  errs() << "\n";
 }
 
 //===----------------------------------------------------------------------===//

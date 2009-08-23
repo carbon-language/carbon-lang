@@ -16,7 +16,7 @@
 #include "llvm/Analysis/ProfileInfoTypes.h"
 #include "llvm/Module.h"
 #include "llvm/InstrTypes.h"
-#include "llvm/Support/Streams.h"
+#include "llvm/Support/raw_ostream.h"
 #include <cstdio>
 #include <cstdlib>
 #include <map>
@@ -38,7 +38,7 @@ static void ReadProfilingBlock(const char *ToolName, FILE *F,
   // Read the number of entries...
   unsigned NumEntries;
   if (fread(&NumEntries, sizeof(unsigned), 1, F) != 1) {
-    cerr << ToolName << ": data packet truncated!\n";
+    errs() << ToolName << ": data packet truncated!\n";
     perror(0);
     exit(1);
   }
@@ -49,7 +49,7 @@ static void ReadProfilingBlock(const char *ToolName, FILE *F,
 
   // Read in the block of data...
   if (fread(&TempSpace[0], sizeof(unsigned)*NumEntries, 1, F) != 1) {
-    cerr << ToolName << ": data packet truncated!\n";
+    errs() << ToolName << ": data packet truncated!\n";
     perror(0);
     exit(1);
   }
@@ -78,7 +78,7 @@ ProfileInfoLoader::ProfileInfoLoader(const char *ToolName,
                                      M(TheModule), Warned(false) {
   FILE *F = fopen(Filename.c_str(), "r");
   if (F == 0) {
-    cerr << ToolName << ": Error opening '" << Filename << "': ";
+    errs() << ToolName << ": Error opening '" << Filename << "': ";
     perror(0);
     exit(1);
   }
@@ -96,7 +96,7 @@ ProfileInfoLoader::ProfileInfoLoader(const char *ToolName,
     case ArgumentInfo: {
       unsigned ArgLength;
       if (fread(&ArgLength, sizeof(unsigned), 1, F) != 1) {
-        cerr << ToolName << ": arguments packet truncated!\n";
+        errs() << ToolName << ": arguments packet truncated!\n";
         perror(0);
         exit(1);
       }
@@ -107,7 +107,7 @@ ProfileInfoLoader::ProfileInfoLoader(const char *ToolName,
 
       if (ArgLength)
         if (fread(&Chars[0], (ArgLength+3) & ~3, 1, F) != 1) {
-          cerr << ToolName << ": arguments packet truncated!\n";
+          errs() << ToolName << ": arguments packet truncated!\n";
           perror(0);
           exit(1);
         }
@@ -132,7 +132,7 @@ ProfileInfoLoader::ProfileInfoLoader(const char *ToolName,
       break;
 
     default:
-      cerr << ToolName << ": Unknown packet type #" << PacketType << "!\n";
+      errs() << ToolName << ": Unknown packet type #" << PacketType << "!\n";
       exit(1);
     }
   }

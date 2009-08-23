@@ -21,7 +21,7 @@
 #include "llvm/Analysis/ProfileInfoLoader.h"
 #include "llvm/Support/CommandLine.h"
 #include "llvm/Support/Compiler.h"
-#include "llvm/Support/Streams.h"
+#include "llvm/Support/raw_ostream.h"
 using namespace llvm;
 
 static cl::opt<std::string>
@@ -92,8 +92,8 @@ bool LoaderPass::runOnModule(Module &M) {
       }
     }
     if (ei != ECs.size()) {
-      cerr << "WARNING: profile information is inconsistent with "
-           << "the current program!\n";
+      errs() << "WARNING: profile information is inconsistent with "
+             << "the current program!\n";
     }
   }
 
@@ -108,8 +108,8 @@ bool LoaderPass::runOnModule(Module &M) {
           BlockInformation[F][BB] = BCs[bi++];
     }
     if (bi != BCs.size()) {
-      cerr << "WARNING: profile information is inconsistent with "
-           << "the current program!\n";
+      errs() << "WARNING: profile information is inconsistent with "
+             << "the current program!\n";
     }
   }
 
@@ -123,8 +123,8 @@ bool LoaderPass::runOnModule(Module &M) {
         FunctionInformation[F] = FCs[fi++];
     }
     if (fi != FCs.size()) {
-      cerr << "WARNING: profile information is inconsistent with "
-           << "the current program!\n";
+      errs() << "WARNING: profile information is inconsistent with "
+             << "the current program!\n";
     }
   }
 
