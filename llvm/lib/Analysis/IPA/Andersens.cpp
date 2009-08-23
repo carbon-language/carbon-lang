@@ -607,7 +607,7 @@ namespace {
     //===------------------------------------------------------------------===//
     // Implement Analyize interface
     //
-    void print(std::ostream &O, const Module* M) const {
+    void print(raw_ostream &O, const Module*) const {
       PrintPointsToGraph();
     }
   };

@@ -659,7 +659,7 @@ bool SelectionDAG::RemoveNodeFromCSEMaps(SDNode *N) {
   if (!Erased && N->getValueType(N->getNumValues()-1) != MVT::Flag &&
       !N->isMachineOpcode() && !doNotCSE(N)) {
     N->dump(this);
-    cerr << "\n";
+    errs() << "\n";
     llvm_unreachable("Node is not in map!");
   }
 #endif
@@ -5644,16 +5644,17 @@ static void DumpNodes(const SDNode *N, unsigned indent, const SelectionDAG *G) {
     if (N->getOperand(i).getNode()->hasOneUse())
       DumpNodes(N->getOperand(i).getNode(), indent+2, G);
     else
-      cerr << "\n" << std::string(indent+2, ' ')
-           << (void*)N->getOperand(i).getNode() << ": <multiple use>";
+      errs() << "\n" << std::string(indent+2, ' ')
+             << (void*)N->getOperand(i).getNode() << ": <multiple use>";
 
 
-  cerr << "\n" << std::string(indent, ' ');
+  errs() << "\n";
+  errs().indent(indent);
   N->dump(G);
 }
 
 void SelectionDAG::dump() const {
-  cerr << "SelectionDAG has " << AllNodes.size() << " nodes:";
+  errs() << "SelectionDAG has " << AllNodes.size() << " nodes:";
 
   for (allnodes_const_iterator I = allnodes_begin(), E = allnodes_end();
        I != E; ++I) {
@@ -5664,7 +5665,7 @@ void SelectionDAG::dump() const {
 
   if (getRoot().getNode()) DumpNodes(getRoot().getNode(), 2, this);
 
-  cerr << "\n\n";
+  errs() << "\n\n";
 }
 
 void SDNode::printr(raw_ostream &OS, const SelectionDAG *G) const {

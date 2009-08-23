@@ -57,7 +57,7 @@ struct PostDominatorTree : public FunctionPass {
     return DT->properlyDominates(A, B);
   }
 
-  virtual void print(std::ostream &OS, const Module*) const;
+  virtual void print(raw_ostream &OS, const Module*) const;
 };
 
 FunctionPass* createPostDomTree();

@@ -55,7 +55,7 @@ void ExtAddrMode::print(raw_ostream &OS) const {
 
 void ExtAddrMode::dump() const {
   print(errs());
-  cerr << '\n';
+  errs() << '\n';
 }
 
 

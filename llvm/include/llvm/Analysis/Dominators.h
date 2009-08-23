@@ -22,7 +22,6 @@
 #define LLVM_ANALYSIS_DOMINATORS_H
 
 #include "llvm/Pass.h"
-#include "llvm/BasicBlock.h"
 #include "llvm/Function.h"
 #include "llvm/Instructions.h"
 #include "llvm/ADT/DenseMap.h"
@@ -830,7 +829,7 @@ public:
     DT->releaseMemory();
   }
   
-  virtual void print(std::ostream &OS, const Module* M= 0) const;
+  virtual void print(raw_ostream &OS, const Module* M= 0) const;
 };
 
 //===-------------------------------------
@@ -978,7 +977,7 @@ public:
 
   /// print - Convert to human readable form
   ///
-  virtual void print(std::ostream &OS, const Module* = 0) const;
+  virtual void print(raw_ostream &OS, const Module* = 0) const;
 };
 
 

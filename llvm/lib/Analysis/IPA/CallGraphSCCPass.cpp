@@ -20,6 +20,7 @@
 #include "llvm/ADT/SCCIterator.h"
 #include "llvm/PassManagers.h"
 #include "llvm/Function.h"
+#include "llvm/Support/raw_ostream.h"
 using namespace llvm;
 
 //===----------------------------------------------------------------------===//
@@ -56,7 +57,7 @@ public:
 
   // Print passes managed by this manager
   void dumpPassStructure(unsigned Offset) {
-    llvm::cerr << std::string(Offset*2, ' ') << "Call Graph SCC Pass Manager\n";
+    errs().indent(Offset*2) << "Call Graph SCC Pass Manager\n";
     for (unsigned Index = 0; Index < getNumContainedPasses(); ++Index) {
       Pass *P = getContainedPass(Index);
       P->dumpPassStructure(Offset + 1);
@@ -65,9 +66,8 @@ public:
   }
 
   Pass *getContainedPass(unsigned N) {
-    assert ( N < PassVector.size() && "Pass number out of range!");
-    Pass *FP = static_cast<Pass *>(PassVector[N]);
-    return FP;
+    assert(N < PassVector.size() && "Pass number out of range!");
+    return static_cast<Pass *>(PassVector[N]);
   }
 
   virtual PassManagerType getPassManagerType() const { 

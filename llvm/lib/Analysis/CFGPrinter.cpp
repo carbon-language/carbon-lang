@@ -26,9 +26,6 @@
 #include "llvm/Support/Compiler.h"
 #include "llvm/Support/GraphWriter.h"
 #include "llvm/Config/config.h"
-#include <iosfwd>
-#include <sstream>
-#include <fstream>
 using namespace llvm;
 
 namespace llvm {
@@ -96,7 +93,7 @@ namespace {
       return false;
     }
 
-    void print(std::ostream &OS, const Module* = 0) const {}
+    void print(raw_ostream &OS, const Module* = 0) const {}
 
     virtual void getAnalysisUsage(AnalysisUsage &AU) const {
       AU.setPreservesAll();
@@ -118,7 +115,7 @@ namespace {
       return false;
     }
 
-    void print(std::ostream &OS, const Module* = 0) const {}
+    void print(raw_ostream &OS, const Module* = 0) const {}
 
     virtual void getAnalysisUsage(AnalysisUsage &AU) const {
       AU.setPreservesAll();
@@ -150,7 +147,7 @@ namespace {
       return false;
     }
 
-    void print(std::ostream &OS, const Module* = 0) const {}
+    void print(raw_ostream &OS, const Module* = 0) const {}
 
     virtual void getAnalysisUsage(AnalysisUsage &AU) const {
       AU.setPreservesAll();
@@ -179,7 +176,7 @@ namespace {
       cerr << "\n";
       return false;
     }
-    void print(std::ostream &OS, const Module* = 0) const {}
+    void print(raw_ostream &OS, const Module* = 0) const {}
 
     virtual void getAnalysisUsage(AnalysisUsage &AU) const {
       AU.setPreservesAll();

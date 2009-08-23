@@ -29,6 +29,7 @@
 #include "llvm/Target/TargetRegisterInfo.h"
 #include "llvm/Support/Compiler.h"
 #include "llvm/Support/ErrorHandling.h"
+#include "llvm/Support/raw_ostream.h"
 
 using namespace llvm;
 
@@ -108,7 +109,7 @@ GCStrategy::~GCStrategy() {
 bool GCStrategy::initializeCustomLowering(Module &M) { return false; }
  
 bool GCStrategy::performCustomLowering(Function &F) {
-  cerr << "gc " << getName() << " must override performCustomLowering.\n";
+  errs() << "gc " << getName() << " must override performCustomLowering.\n";
   llvm_unreachable(0);
   return 0;
 }

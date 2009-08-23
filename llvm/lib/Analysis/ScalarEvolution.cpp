@@ -5193,7 +5193,3 @@ void ScalarEvolution::print(raw_ostream &OS, const Module* ) const {
     PrintLoopInfo(OS, &SE, *I);
 }
 
-void ScalarEvolution::print(std::ostream &o, const Module *M) const {
-  raw_os_ostream OS(o);
-  print(OS, M);
-}

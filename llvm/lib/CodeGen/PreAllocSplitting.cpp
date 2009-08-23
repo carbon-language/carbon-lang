@@ -121,13 +121,10 @@ namespace {
     }
 
     /// print - Implement the dump method.
-    virtual void print(std::ostream &O, const Module* M = 0) const {
+    virtual void print(raw_ostream &O, const Module* M = 0) const {
       LIs->print(O, M);
     }
 
-    void print(std::ostream *O, const Module* M = 0) const {
-      if (O) print(*O, M);
-    }
 
   private:
     MachineBasicBlock::iterator

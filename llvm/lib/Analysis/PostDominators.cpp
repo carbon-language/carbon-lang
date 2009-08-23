@@ -41,9 +41,8 @@ PostDominatorTree::~PostDominatorTree() {
   delete DT;
 }
 
-void PostDominatorTree::print(std::ostream &OS, const Module *) const {
-  raw_os_ostream OSS(OS);
-  DT->print(OSS);
+void PostDominatorTree::print(raw_ostream &OS, const Module *) const {
+  DT->print(OS);
 }
 
 

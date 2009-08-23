@@ -35,6 +35,7 @@
 #include "llvm/Support/Compiler.h"
 #include "llvm/Support/ErrorHandling.h"
 #include "llvm/Support/MathExtras.h"
+#include "llvm/Support/raw_ostream.h"
 #include "llvm/ADT/DenseMap.h"
 #include "llvm/ADT/SmallVector.h"
 #include "llvm/ADT/SmallPtrSet.h"
@@ -950,7 +951,9 @@ SDValue SelectionDAGLegalize::LegalizeOp(SDValue Op) {
   switch (Node->getOpcode()) {
   default:
 #ifndef NDEBUG
-    cerr << "NODE: "; Node->dump(&DAG); cerr << "\n";
+    errs() << "NODE: ";
+    Node->dump(&DAG);
+    errs() << "\n";
 #endif
     llvm_unreachable("Do not know how to legalize this operator!");
 

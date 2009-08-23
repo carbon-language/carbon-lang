@@ -59,7 +59,7 @@ namespace {
     virtual void getAnalysisUsage(AnalysisUsage &AU) const {
       AU.setPreservesAll();
     }
-    virtual void print(std::ostream &O, const Module *M) const {}
+    virtual void print(raw_ostream &O, const Module *M) const {}
 
   };
 }

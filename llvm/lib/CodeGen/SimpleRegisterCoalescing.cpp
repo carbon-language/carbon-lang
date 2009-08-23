@@ -2792,7 +2792,7 @@ bool SimpleRegisterCoalescing::runOnMachineFunction(MachineFunction &fn) {
 }
 
 /// print - Implement the dump method.
-void SimpleRegisterCoalescing::print(std::ostream &O, const Module* m) const {
+void SimpleRegisterCoalescing::print(raw_ostream &O, const Module* m) const {
    li_->print(O, m);
 }
 

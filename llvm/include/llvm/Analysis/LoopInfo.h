@@ -938,7 +938,7 @@ public:
 
   virtual void releaseMemory() { LI.releaseMemory(); }
 
-  virtual void print(std::ostream &O, const Module* M = 0) const;
+  virtual void print(raw_ostream &O, const Module* M = 0) const;
   
   virtual void getAnalysisUsage(AnalysisUsage &AU) const;
 

@@ -48,9 +48,8 @@ bool DominatorTree::runOnFunction(Function &F) {
   return false;
 }
 
-void DominatorTree::print(std::ostream &OS, const Module *) const {
-  raw_os_ostream OSS(OS);
-  DT->print(OSS);
+void DominatorTree::print(raw_ostream &OS, const Module *) const {
+  DT->print(OS);
 }
 
 
@@ -264,8 +263,7 @@ DominanceFrontier::calculate(const DominatorTree &DT,
   return *Result;
 }
 
-void DominanceFrontierBase::print(std::ostream &O, const Module* ) const {
-  raw_os_ostream OS(O);
+void DominanceFrontierBase::print(raw_ostream &OS, const Module* ) const {
   for (const_iterator I = begin(), E = end(); I != E; ++I) {
     OS << "  DomFrontier for BB";
     if (I->first)

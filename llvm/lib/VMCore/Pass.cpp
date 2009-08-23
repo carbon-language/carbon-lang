@@ -19,6 +19,7 @@
 #include "llvm/ModuleProvider.h"
 #include "llvm/ADT/STLExtras.h"
 #include "llvm/Support/ManagedStatic.h"
+#include "llvm/Support/raw_ostream.h"
 #include "llvm/System/Atomic.h"
 #include "llvm/System/Mutex.h"
 #include "llvm/System/Threading.h"
@@ -45,7 +46,7 @@ bool Pass::mustPreserveAnalysisID(const PassInfo *AnalysisID) const {
 
 // dumpPassStructure - Implement the -debug-passes=Structure option
 void Pass::dumpPassStructure(unsigned Offset) {
-  cerr << std::string(Offset*2, ' ') << getPassName() << "\n";
+  errs().indent(Offset*2) << getPassName() << "\n";
 }
 
 /// getPassName - Return a nice clean name for a pass.  This usually
@@ -62,13 +63,13 @@ const char *Pass::getPassName() const {
 // to print out the contents of an analysis.  Otherwise it is not necessary to
 // implement this method.
 //
-void Pass::print(std::ostream &O,const Module*) const {
+void Pass::print(raw_ostream &O,const Module*) const {
   O << "Pass::print not implemented for pass: '" << getPassName() << "'!\n";
 }
 
 // dump - call print(cerr);
 void Pass::dump() const {
-  print(*cerr.stream(), 0);
+  print(errs(), 0);
 }
 
 //===----------------------------------------------------------------------===//

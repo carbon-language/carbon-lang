@@ -223,8 +223,6 @@ inline raw_ostream &operator<<(raw_ostream &OS, const ConstantRange &CR) {
   return OS;
 }
 
-std::ostream &operator<<(std::ostream &OS, const ConstantRange &CR);
-
 } // End llvm namespace
 
 #endif

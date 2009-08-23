@@ -347,7 +347,7 @@ namespace llvm {
     virtual bool runOnMachineFunction(MachineFunction&);
 
     /// print - Implement the dump method.
-    virtual void print(std::ostream &O, const Module* = 0) const;
+    virtual void print(raw_ostream &O, const Module* = 0) const;
 
     /// addIntervalsForSpills - Create new intervals for spilled defs / uses of
     /// the given interval. FIXME: It also returns the weight of the spill slot

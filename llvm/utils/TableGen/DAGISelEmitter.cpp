@@ -2071,7 +2071,7 @@ void DAGISelEmitter::EmitInstructionSelector(raw_ostream &OS) {
      << "}\n\n";
 
   OS << "void CannotYetSelectIntrinsic(SDValue N) DISABLE_INLINE {\n"
-     << "  cerr << \"Cannot yet select: \";\n"
+     << "  errs() << \"Cannot yet select: \";\n"
      << "  unsigned iid = cast<ConstantSDNode>(N.getOperand("
      << "N.getOperand(0).getValueType() == MVT::Other))->getZExtValue();\n"
      << " llvm_report_error(\"Cannot yet select: intrinsic %\" +\n"

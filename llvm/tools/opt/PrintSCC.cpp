@@ -39,7 +39,7 @@ namespace {
     CFGSCC() : FunctionPass(&ID) {}
     bool runOnFunction(Function& func);
 
-    void print(std::ostream &O, const Module* = 0) const { }
+    void print(raw_ostream &O, const Module* = 0) const { }
 
     virtual void getAnalysisUsage(AnalysisUsage &AU) const {
       AU.setPreservesAll();
@@ -53,7 +53,7 @@ namespace {
     // run - Print out SCCs in the call graph for the specified module.
     bool runOnModule(Module &M);
 
-    void print(std::ostream &O, const Module* = 0) const { }
+    void print(raw_ostream &O, const Module* = 0) const { }
 
     // getAnalysisUsage - This pass requires the CallGraph.
     virtual void getAnalysisUsage(AnalysisUsage &AU) const {

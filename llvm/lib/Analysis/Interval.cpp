@@ -37,8 +37,7 @@ bool Interval::isLoop() const {
 }
 
 
-void Interval::print(std::ostream &O) const {
-  raw_os_ostream OS(O);
+void Interval::print(raw_ostream &OS) const {
   OS << "-------------------------------------------------------------\n"
        << "Interval Contents:\n";
 

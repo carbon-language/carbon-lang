@@ -93,7 +93,7 @@ GCStrategy *GCModuleInfo::getOrCreateStrategy(const Module *M,
     }
   }
  
-  cerr << "unsupported GC: " << Name << "\n";
+  errs() << "unsupported GC: " << Name << "\n";
   llvm_unreachable(0);
 }
 

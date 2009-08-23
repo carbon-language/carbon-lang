@@ -16,8 +16,9 @@
 #include "llvm/Module.h"
 #include "llvm/Type.h"
 #include "llvm/CodeGen/IntrinsicLowering.h"
-#include "llvm/Support/IRBuilder.h"
 #include "llvm/Support/ErrorHandling.h"
+#include "llvm/Support/IRBuilder.h"
+#include "llvm/Support/raw_ostream.h"
 #include "llvm/Target/TargetData.h"
 #include "llvm/ADT/SmallVector.h"
 using namespace llvm;
@@ -396,8 +397,8 @@ void IntrinsicLowering::LowerIntrinsicCall(CallInst *CI) {
   case Intrinsic::stacksave:
   case Intrinsic::stackrestore: {
     if (!Warned)
-      cerr << "WARNING: this target does not support the llvm.stack"
-           << (Callee->getIntrinsicID() == Intrinsic::stacksave ?
+      errs() << "WARNING: this target does not support the llvm.stack"
+             << (Callee->getIntrinsicID() == Intrinsic::stacksave ?
                "save" : "restore") << " intrinsic.\n";
     Warned = true;
     if (Callee->getIntrinsicID() == Intrinsic::stacksave)
@@ -407,8 +408,8 @@ void IntrinsicLowering::LowerIntrinsicCall(CallInst *CI) {
     
   case Intrinsic::returnaddress:
   case Intrinsic::frameaddress:
-    cerr << "WARNING: this target does not support the llvm."
-         << (Callee->getIntrinsicID() == Intrinsic::returnaddress ?
+    errs() << "WARNING: this target does not support the llvm."
+           << (Callee->getIntrinsicID() == Intrinsic::returnaddress ?
              "return" : "frame") << "address intrinsic.\n";
     CI->replaceAllUsesWith(ConstantPointerNull::get(
                                             cast<PointerType>(CI->getType())));
@@ -420,8 +421,8 @@ void IntrinsicLowering::LowerIntrinsicCall(CallInst *CI) {
   case Intrinsic::pcmarker:
     break;    // Simply strip out pcmarker on unsupported architectures
   case Intrinsic::readcyclecounter: {
-    cerr << "WARNING: this target does not support the llvm.readcyclecoun"
-         << "ter intrinsic.  It is being lowered to a constant 0\n";
+    errs() << "WARNING: this target does not support the llvm.readcyclecoun"
+           << "ter intrinsic.  It is being lowered to a constant 0\n";
     CI->replaceAllUsesWith(ConstantInt::get(Type::getInt64Ty(Context), 0));
     break;
   }

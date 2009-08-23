@@ -140,7 +140,7 @@ struct CallGraphSCCPassPrinter : public CallGraphSCCPass {
         Function *F = SCC[i]->getFunction();
         if (F) {
           outs().flush();
-          getAnalysisID<Pass>(PassToPrint).print(cout, F->getParent());
+          getAnalysisID<Pass>(PassToPrint).print(outs(), F->getParent());
           cout << std::flush;
         }
       }
@@ -169,7 +169,7 @@ struct ModulePassPrinter : public ModulePass {
     if (!Quiet) {
       outs() << "Printing analysis '" << PassToPrint->getPassName() << "':\n";
       outs().flush();
-      getAnalysisID<Pass>(PassToPrint).print(cout, &M);
+      getAnalysisID<Pass>(PassToPrint).print(outs(), &M);
       cout << std::flush;
     }
 
@@ -199,7 +199,7 @@ struct FunctionPassPrinter : public FunctionPass {
     }
     // Get and print pass...
     outs().flush();
-    getAnalysisID<Pass>(PassToPrint).print(cout, F.getParent());
+    getAnalysisID<Pass>(PassToPrint).print(outs(), F.getParent());
     cout << std::flush;
     return false;
   }
@@ -224,7 +224,7 @@ struct LoopPassPrinter : public LoopPass {
     if (!Quiet) {
       outs() << "Printing analysis '" << PassToPrint->getPassName() << "':\n";
       outs().flush();
-      getAnalysisID<Pass>(PassToPrint).print(cout,
+      getAnalysisID<Pass>(PassToPrint).print(outs(),
                                   L->getHeader()->getParent()->getParent());
       cout << std::flush;
     }
@@ -256,7 +256,7 @@ struct BasicBlockPassPrinter : public BasicBlockPass {
 
     // Get and print pass...
     outs().flush();
-    getAnalysisID<Pass>(PassToPrint).print(cout, BB.getParent()->getParent());
+    getAnalysisID<Pass>(PassToPrint).print(outs(), BB.getParent()->getParent());
     cout << std::flush;
     return false;
   }

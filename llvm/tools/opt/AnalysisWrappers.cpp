@@ -34,27 +34,31 @@ namespace {
     static char ID; // Pass ID, replacement for typeid
     ExternalFunctionsPassedConstants() : ModulePass(&ID) {}
     virtual bool runOnModule(Module &M) {
-      for (Module::iterator I = M.begin(), E = M.end(); I != E; ++I)
-        if (I->isDeclaration()) {
-          bool PrintedFn = false;
-          for (Value::use_iterator UI = I->use_begin(), E = I->use_end();
-               UI != E; ++UI)
-            if (Instruction *User = dyn_cast<Instruction>(*UI)) {
-              CallSite CS = CallSite::get(User);
-              if (CS.getInstruction()) {
-                for (CallSite::arg_iterator AI = CS.arg_begin(),
-                       E = CS.arg_end(); AI != E; ++AI)
-                  if (isa<Constant>(*AI)) {
-                    if (!PrintedFn) {
-                      errs() << "Function '" << I->getName() << "':\n";
-                      PrintedFn = true;
-                    }
-                    errs() << *User;
-                    break;
-                  }
-              }
+      for (Module::iterator I = M.begin(), E = M.end(); I != E; ++I) {
+        if (!I->isDeclaration()) continue;
+        
+        bool PrintedFn = false;
+        for (Value::use_iterator UI = I->use_begin(), E = I->use_end();
+             UI != E; ++UI) {
+          Instruction *User = dyn_cast<Instruction>(*UI);
+          if (!User) continue;
+          
+          CallSite CS = CallSite::get(User);
+          if (!CS.getInstruction()) continue;
+          
+          for (CallSite::arg_iterator AI = CS.arg_begin(),
+               E = CS.arg_end(); AI != E; ++AI) {
+            if (!isa<Constant>(*AI)) continue;
+
+            if (!PrintedFn) {
+              errs() << "Function '" << I->getName() << "':\n";
+              PrintedFn = true;
             }
+            errs() << *User;
+            break;
+          }
         }
+      }
 
       return false;
     }
@@ -78,7 +82,7 @@ namespace {
       AU.addRequiredTransitive<CallGraph>();
     }
     virtual bool runOnModule(Module &M) {
-      getAnalysis<CallGraph>().print(std::cerr, &M);
+      getAnalysis<CallGraph>().print(errs(), &M);
       return false;
     }
   };

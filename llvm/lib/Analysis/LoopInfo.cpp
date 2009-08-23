@@ -309,8 +309,7 @@ void LoopInfo::getAnalysisUsage(AnalysisUsage &AU) const {
   AU.addRequired<DominatorTree>();
 }
 
-void LoopInfo::print(std::ostream &OS, const Module*) const {
-  raw_os_ostream OSS(OS);
-  LI.print(OSS);
+void LoopInfo::print(raw_ostream &OS, const Module*) const {
+  LI.print(OS);
 }
 

@@ -196,7 +196,6 @@ public:
 
   raw_ostream &operator<<(const std::string &Str) {
     // Avoid the fast path, it would only increase code size for a marginal win.
-
     write(Str.data(), Str.length());
     return *this;
   }
@@ -220,6 +219,7 @@ public:
     this->operator<<(ftostr(N));
     return *this;
   }
+  
 
   /// write_hex - Output \arg N in hexadecimal, without any prefix or padding.
   raw_ostream &write_hex(unsigned long long N);

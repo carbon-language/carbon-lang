@@ -228,8 +228,7 @@ void LoopVR::getAnalysisUsage(AnalysisUsage &AU) const {
 
 bool LoopVR::runOnFunction(Function &F) { Map.clear(); return false; }
 
-void LoopVR::print(std::ostream &os, const Module *) const {
-  raw_os_ostream OS(os);
+void LoopVR::print(raw_ostream &OS, const Module *) const {
   for (std::map<Value *, ConstantRange *>::const_iterator I = Map.begin(),
        E = Map.end(); I != E; ++I) {
     OS << *I->first << ": " << *I->second << '\n';

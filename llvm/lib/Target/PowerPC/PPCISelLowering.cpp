@@ -2635,7 +2635,7 @@ PPCTargetLowering::LowerCall_SVR4(SDValue Chain, SDValue Callee,
       
       if (Result) {
 #ifndef NDEBUG
-        cerr << "Call operand #" << i << " has unhandled type "
+        errs() << "Call operand #" << i << " has unhandled type "
              << ArgVT.getEVTString() << "\n";
 #endif
         llvm_unreachable(0);

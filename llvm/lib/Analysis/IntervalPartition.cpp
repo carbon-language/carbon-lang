@@ -32,7 +32,7 @@ void IntervalPartition::releaseMemory() {
   RootInterval = 0;
 }
 
-void IntervalPartition::print(std::ostream &O, const Module*) const {
+void IntervalPartition::print(raw_ostream &O, const Module*) const {
   for(unsigned i = 0, e = Intervals.size(); i != e; ++i)
     Intervals[i]->print(O);
 }

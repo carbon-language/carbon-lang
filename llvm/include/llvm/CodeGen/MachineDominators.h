@@ -162,7 +162,7 @@ public:
   
   virtual void releaseMemory();
   
-  virtual void print(std::ostream &OS, const Module*) const;
+  virtual void print(raw_ostream &OS, const Module*) const;
 };
 
 //===-------------------------------------

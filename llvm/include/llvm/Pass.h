@@ -30,9 +30,7 @@
 #define LLVM_PASS_H
 
 #include "llvm/Support/DataTypes.h"
-#include "llvm/Support/Streams.h"
 #include <cassert>
-#include <iosfwd>
 #include <utility>
 #include <vector>
 
@@ -47,6 +45,7 @@ class ImmutablePass;
 class PMStack;
 class AnalysisResolver;
 class PMDataManager;
+class raw_ostream;
 
 // AnalysisID - Use the PassInfo to identify a pass...
 typedef const PassInfo* AnalysisID;
@@ -103,8 +102,7 @@ public:
   /// provide the Module* in case the analysis doesn't need it it can just be
   /// ignored.
   ///
-  virtual void print(std::ostream &O, const Module *M) const;
-  void print(std::ostream *O, const Module *M) const { if (O) print(*O, M); }
+  virtual void print(raw_ostream &O, const Module *M) const;
   void dump() const; // dump - Print to stderr.
 
   /// Each pass is responsible for assigning a pass manager to itself.
@@ -202,9 +200,6 @@ public:
   AnalysisType &getAnalysisID(const PassInfo *PI, Function &F);
 };
 
-inline std::ostream &operator<<(std::ostream &OS, const Pass &P) {
-  P.print(OS, 0); return OS;
-}
 
 //===----------------------------------------------------------------------===//
 /// ModulePass class - This class is used to implement unstructured

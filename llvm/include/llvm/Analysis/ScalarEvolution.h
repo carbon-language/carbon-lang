@@ -601,11 +601,7 @@ namespace llvm {
     virtual bool runOnFunction(Function &F);
     virtual void releaseMemory();
     virtual void getAnalysisUsage(AnalysisUsage &AU) const;
-    void print(raw_ostream &OS, const Module* = 0) const;
-    virtual void print(std::ostream &OS, const Module* = 0) const;
-    void print(std::ostream *OS, const Module* M = 0) const {
-      if (OS) print(*OS, M);
-    }
+    virtual void print(raw_ostream &OS, const Module* = 0) const;
 
   private:
     FoldingSet<SCEV> UniqueSCEVs;
