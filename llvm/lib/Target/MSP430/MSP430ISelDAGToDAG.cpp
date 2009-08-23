@@ -130,7 +130,7 @@ void MSP430DAGToDAGISel::InstructionSelect() {
 
   // Codegen the basic block.
   DEBUG(errs() << "===== Instruction selection begins:\n");
-  Indent = 0;
+  DEBUG(Indent = 0);
   SelectRoot(*CurDAG);
   DEBUG(errs() << "===== Instruction selection ends:\n");
 
@@ -145,14 +145,14 @@ SDNode *MSP430DAGToDAGISel::Select(SDValue Op) {
   DEBUG(errs().indent(Indent) << "Selecting: ");
   DEBUG(Node->dump(CurDAG));
   DEBUG(errs() << "\n");
-  Indent += 2;
+  DEBUG(Indent += 2);
 
   // If we have a custom node, we already have selected!
   if (Node->isMachineOpcode()) {
     DEBUG(errs().indent(Indent-2) << "== ";
           Node->dump(CurDAG);
           errs() << "\n");
-    Indent -= 2;
+    DEBUG(Indent -= 2);
     return NULL;
   }
 
@@ -180,7 +180,7 @@ SDNode *MSP430DAGToDAGISel::Select(SDValue Op) {
   else
     DEBUG(ResNode->dump(CurDAG));
   DEBUG(errs() << "\n");
-  Indent -= 2;
+  DEBUG(Indent -= 2);
 
   return ResNode;
 }

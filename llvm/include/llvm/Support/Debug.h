@@ -32,7 +32,9 @@ namespace llvm {
 // is specified.  This should probably not be referenced directly, instead, use
 // the DEBUG macro below.
 //
+#ifndef NDEBUG
 extern bool DebugFlag;
+#endif
 
 // isCurrentDebugType - Return true if the specified string is the debug type
 // specified on the command line, or if none was specified on the command line

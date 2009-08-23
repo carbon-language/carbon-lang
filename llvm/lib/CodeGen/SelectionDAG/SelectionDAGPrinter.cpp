@@ -141,8 +141,8 @@ void SelectionDAG::viewGraph(const std::string &Title) {
   ViewGraph(this, "dag." + getMachineFunction().getFunction()->getNameStr(), 
             false, Title);
 #else
-  cerr << "SelectionDAG::viewGraph is only available in debug builds on "
-       << "systems with Graphviz or gv!\n";
+  errs() << "SelectionDAG::viewGraph is only available in debug builds on "
+         << "systems with Graphviz or gv!\n";
 #endif  // NDEBUG
 }
 
@@ -158,8 +158,8 @@ void SelectionDAG::clearGraphAttrs() {
 #ifndef NDEBUG
   NodeGraphAttrs.clear();
 #else
-  cerr << "SelectionDAG::clearGraphAttrs is only available in debug builds"
-       << " on systems with Graphviz or gv!\n";
+  errs() << "SelectionDAG::clearGraphAttrs is only available in debug builds"
+         << " on systems with Graphviz or gv!\n";
 #endif
 }
 
@@ -170,8 +170,8 @@ void SelectionDAG::setGraphAttrs(const SDNode *N, const char *Attrs) {
 #ifndef NDEBUG
   NodeGraphAttrs[N] = Attrs;
 #else
-  cerr << "SelectionDAG::setGraphAttrs is only available in debug builds"
-       << " on systems with Graphviz or gv!\n";
+  errs() << "SelectionDAG::setGraphAttrs is only available in debug builds"
+         << " on systems with Graphviz or gv!\n";
 #endif
 }
 
@@ -188,8 +188,8 @@ const std::string SelectionDAG::getGraphAttrs(const SDNode *N) const {
   else
     return "";
 #else
-  cerr << "SelectionDAG::getGraphAttrs is only available in debug builds"
-       << " on systems with Graphviz or gv!\n";
+  errs() << "SelectionDAG::getGraphAttrs is only available in debug builds"
+         << " on systems with Graphviz or gv!\n";
   return std::string("");
 #endif
 }
@@ -200,8 +200,8 @@ void SelectionDAG::setGraphColor(const SDNode *N, const char *Color) {
 #ifndef NDEBUG
   NodeGraphAttrs[N] = std::string("color=") + Color;
 #else
-  cerr << "SelectionDAG::setGraphColor is only available in debug builds"
-       << " on systems with Graphviz or gv!\n";
+  errs() << "SelectionDAG::setGraphColor is only available in debug builds"
+         << " on systems with Graphviz or gv!\n";
 #endif
 }
 
@@ -232,8 +232,8 @@ bool SelectionDAG::setSubgraphColorHelper(SDNode *N, const char *Color, DenseSet
     }
   }
 #else
-  cerr << "SelectionDAG::setSubgraphColor is only available in debug builds"
-       << " on systems with Graphviz or gv!\n";
+  errs() << "SelectionDAG::setSubgraphColor is only available in debug builds"
+         << " on systems with Graphviz or gv!\n";
 #endif
   return hit_limit;
 }
@@ -255,8 +255,8 @@ void SelectionDAG::setSubgraphColor(SDNode *N, const char *Color) {
   }
 
 #else
-  cerr << "SelectionDAG::setSubgraphColor is only available in debug builds"
-       << " on systems with Graphviz or gv!\n";
+  errs() << "SelectionDAG::setSubgraphColor is only available in debug builds"
+         << " on systems with Graphviz or gv!\n";
 #endif
 }
 

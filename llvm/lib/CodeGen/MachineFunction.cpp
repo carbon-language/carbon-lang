@@ -305,8 +305,8 @@ void MachineFunction::viewCFG() const
 #ifndef NDEBUG
   ViewGraph(this, "mf" + getFunction()->getNameStr());
 #else
-  cerr << "SelectionDAG::viewGraph is only available in debug builds on "
-       << "systems with Graphviz or gv!\n";
+  errs() << "SelectionDAG::viewGraph is only available in debug builds on "
+         << "systems with Graphviz or gv!\n";
 #endif // NDEBUG
 }
 
@@ -315,8 +315,8 @@ void MachineFunction::viewCFGOnly() const
 #ifndef NDEBUG
   ViewGraph(this, "mf" + getFunction()->getNameStr(), true);
 #else
-  cerr << "SelectionDAG::viewGraph is only available in debug builds on "
-       << "systems with Graphviz or gv!\n";
+  errs() << "SelectionDAG::viewGraph is only available in debug builds on "
+         << "systems with Graphviz or gv!\n";
 #endif // NDEBUG
 }
 

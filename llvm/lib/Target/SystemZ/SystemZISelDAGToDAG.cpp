@@ -607,7 +607,7 @@ void SystemZDAGToDAGISel::InstructionSelect() {
 
   // Codegen the basic block.
   DEBUG(errs() << "===== Instruction selection begins:\n");
-  Indent = 0;
+  DEBUG(Indent = 0);
   SelectRoot(*CurDAG);
   DEBUG(errs() << "===== Instruction selection ends:\n");
 
@@ -624,14 +624,14 @@ SDNode *SystemZDAGToDAGISel::Select(SDValue Op) {
   DEBUG(errs().indent(Indent) << "Selecting: ";
         Node->dump(CurDAG);
         errs() << "\n");
-  Indent += 2;
+  DEBUG(Indent += 2);
 
   // If we have a custom node, we already have selected!
   if (Node->isMachineOpcode()) {
     DEBUG(errs().indent(Indent-2) << "== ";
           Node->dump(CurDAG);
           errs() << "\n");
-    Indent -= 2;
+    DEBUG(Indent -= 2);
     return NULL; // Already selected.
   }
 
@@ -822,7 +822,7 @@ SDNode *SystemZDAGToDAGISel::Select(SDValue Op) {
           ResNode->dump(CurDAG);
         errs() << "\n";
         );
-  Indent -= 2;
+  DEBUG(Indent -= 2);
 
   return ResNode;
 }

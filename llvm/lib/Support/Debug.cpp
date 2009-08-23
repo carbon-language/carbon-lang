@@ -27,9 +27,10 @@
 #include "llvm/Support/Debug.h"
 using namespace llvm;
 
+// All Debug.h functionality is a no-op in NDEBUG mode.
+#ifndef NDEBUG
 bool llvm::DebugFlag;  // DebugFlag - Exported boolean set by the -debug option
 
-#ifndef NDEBUG
 // -debug - Command line option to enable the DEBUG statements in the passes.
 // This flag may only be enabled in debug builds.
 static cl::opt<bool, true>
@@ -48,16 +49,15 @@ static cl::opt<DebugOnlyOpt, true, cl::parser<std::string> >
 DebugOnly("debug-only", cl::desc("Enable a specific type of debug output"),
           cl::Hidden, cl::value_desc("debug string"),
           cl::location(DebugOnlyOptLoc), cl::ValueRequired);
-#endif
 
 // isCurrentDebugType - Return true if the specified string is the debug type
 // specified on the command line, or if none was specified on the command line
 // with the -debug-only=X option.
 //
 bool llvm::isCurrentDebugType(const char *DebugType) {
-#ifndef NDEBUG
   return CurrentDebugType.empty() || DebugType == CurrentDebugType;
-#else
-  return false;
-#endif
 }
+#else
+// Avoid "has no symbols" warning.
+int Debug_dummy = 0;
+#endif

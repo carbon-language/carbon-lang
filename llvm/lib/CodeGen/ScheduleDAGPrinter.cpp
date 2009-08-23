@@ -93,7 +93,7 @@ void ScheduleDAG::viewGraph() {
     ViewGraph(this, "dag." + MF.getFunction()->getNameStr(), false,
               "Scheduling-Units Graph for " + MF.getFunction()->getNameStr());
 #else
-  cerr << "ScheduleDAG::viewGraph is only available in debug builds on "
-       << "systems with Graphviz or gv!\n";
+  errs() << "ScheduleDAG::viewGraph is only available in debug builds on "
+         << "systems with Graphviz or gv!\n";
 #endif  // NDEBUG
 }
