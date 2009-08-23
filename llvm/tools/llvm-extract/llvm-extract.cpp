@@ -110,29 +110,20 @@ int main(int argc, char **argv) {
   Passes.add(createDeadTypeEliminationPass());   // Remove dead types...
   Passes.add(createStripDeadPrototypesPass());   // Remove dead func decls
 
-  raw_ostream *Out = 0;
-
-  if (OutputFilename != "-") {  // Not stdout?
-    std::string ErrorInfo;
-    Out = new raw_fd_ostream(OutputFilename.c_str(), ErrorInfo,
-                             raw_fd_ostream::F_Binary |
-                             (Force ? raw_fd_ostream::F_Force : 0));
-    if (!ErrorInfo.empty()) {
-      errs() << ErrorInfo << '\n';
-      if (!Force)
-        errs() << "Use -f command line argument to force output\n";
-      delete Out;
-      return 1;
-    }
-  } else {                      // Specified stdout
-    // FIXME: outs() is not binary!
-    Out = &outs();
+  std::string ErrorInfo;
+  std::auto_ptr<raw_fd_ostream>
+  Out(new raw_fd_ostream(OutputFilename.c_str(), ErrorInfo,
+                         raw_fd_ostream::F_Binary |
+                         (Force ? raw_fd_ostream::F_Force : 0)));
+  if (!ErrorInfo.empty()) {
+    errs() << ErrorInfo << '\n';
+    if (!Force)
+      errs() << "Use -f command line argument to force output\n";
+    return 1;
   }
 
   Passes.add(createBitcodeWriterPass(*Out));
   Passes.run(*M.get());
 
-  if (Out != &outs())
-    delete Out;
   return 0;
 }

@@ -118,25 +118,22 @@ int main(int argc, char **argv) {
 
   if (DumpAsm) errs() << "Here's the assembly:\n" << *Composite.get();
 
-  // FIXME: outs() is not binary!
-  raw_ostream *Out = &outs();  // Default to printing to stdout...
-  if (OutputFilename != "-") {
-    std::string ErrorInfo;
-    Out = new raw_fd_ostream(OutputFilename.c_str(), ErrorInfo,
-                             raw_fd_ostream::F_Binary |
-                             (Force ? raw_fd_ostream::F_Force : 0));
-    if (!ErrorInfo.empty()) {
-      errs() << ErrorInfo << '\n';
-      if (!Force)
-        errs() << "Use -f command line argument to force output\n";
-      delete Out;
-      return 1;
-    }
+  std::string ErrorInfo;
+  std::auto_ptr<raw_ostream> 
+  Out(new raw_fd_ostream(OutputFilename.c_str(), ErrorInfo,
+                         raw_fd_ostream::F_Binary |
+                         (Force ? raw_fd_ostream::F_Force : 0)));
+  if (!ErrorInfo.empty()) {
+    errs() << ErrorInfo << '\n';
+    if (!Force)
+      errs() << "Use -f command line argument to force output\n";
+    return 1;
+  }
 
     // Make sure that the Out file gets unlinked from the disk if we get a
     // SIGINT
+  if (OutputFilename != "-")
     sys::RemoveFileOnSignal(sys::Path(OutputFilename));
-  }
 
   if (verifyModule(*Composite.get())) {
     errs() << argv[0] << ": linked module is broken!\n";
@@ -146,6 +143,5 @@ int main(int argc, char **argv) {
   if (Verbose) errs() << "Writing bitcode...\n";
   WriteBitcodeToFile(Composite.get(), *Out);
 
-  if (Out != &outs()) delete Out;
   return 0;
 }
