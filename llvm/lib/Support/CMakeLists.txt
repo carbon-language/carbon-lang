@@ -22,7 +22,6 @@ add_llvm_library(LLVMSupport
   SmallPtrSet.cpp
   SourceMgr.cpp
   Statistic.cpp
-  Streams.cpp
   StringExtras.cpp
   StringMap.cpp
   StringPool.cpp
