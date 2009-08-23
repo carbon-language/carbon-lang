@@ -395,9 +395,8 @@ int main(int argc, char **argv) {
     // If the output is set to be emitted to standard out, and standard out is a
     // console, print out a warning message and refuse to do it.  We don't
     // impress anyone by spewing tons of binary goo to a terminal.
-    if (!Force && !NoOutput && CheckBitcodeOutputToConsole(Out,!Quiet)) {
+    if (!Force && !NoOutput && CheckBitcodeOutputToConsole(*Out, !Quiet))
       NoOutput = true;
-    }
 
     // Create a PassManager to hold and optimize the collection of passes we are
     // about to build...

@@ -114,7 +114,7 @@ int main(int argc, char **argv) {
     sys::RemoveFileOnSignal(sys::Path(OutputFilename));
 
   if (!DisableOutput)
-    if (Force || !CheckBitcodeOutputToConsole(Out.get(), true))
+    if (Force || !CheckBitcodeOutputToConsole(*Out, true))
       WriteBitcodeToFile(M.get(), *Out);
   return 0;
 }

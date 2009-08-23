@@ -20,6 +20,7 @@
 #include "llvm/ADT/Triple.h"
 #include "llvm/Support/CommandLine.h"
 #include "llvm/Support/SystemUtils.h"
+#include "llvm/System/Path.h"
 #include <exception>
 #include <vector>
 
