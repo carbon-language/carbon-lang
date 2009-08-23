@@ -1724,7 +1724,7 @@ GCMetadataPrinter *AsmPrinter::GetOrCreateGCPrinter(GCStrategy *S) {
       return GMP;
     }
   
-  cerr << "no GCMetadataPrinter registered for GC: " << Name << "\n";
+  errs() << "no GCMetadataPrinter registered for GC: " << Name << "\n";
   llvm_unreachable(0);
 }
 

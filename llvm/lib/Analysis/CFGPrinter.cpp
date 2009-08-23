@@ -25,7 +25,6 @@
 #include "llvm/Support/CFG.h"
 #include "llvm/Support/Compiler.h"
 #include "llvm/Support/GraphWriter.h"
-#include "llvm/Config/config.h"
 using namespace llvm;
 
 namespace llvm {
@@ -136,14 +135,16 @@ namespace {
 
     virtual bool runOnFunction(Function &F) {
       std::string Filename = "cfg." + F.getNameStr() + ".dot";
-      cerr << "Writing '" << Filename << "'...";
-      std::ofstream File(Filename.c_str());
+      errs() << "Writing '" << Filename << "'...";
+      
+      std::string ErrorInfo;
+      raw_fd_ostream File(Filename.c_str(), ErrorInfo, raw_fd_ostream::F_Force);
 
-      if (File.good())
+      if (ErrorInfo.empty())
         WriteGraph(File, (const Function*)&F);
       else
-        cerr << "  error opening file for writing!";
-      cerr << "\n";
+        errs() << "  error opening file for writing!";
+      errs() << "\n";
       return false;
     }
 
@@ -166,14 +167,16 @@ namespace {
     explicit CFGOnlyPrinter(void *pid) : FunctionPass(pid) {}
     virtual bool runOnFunction(Function &F) {
       std::string Filename = "cfg." + F.getNameStr() + ".dot";
-      cerr << "Writing '" << Filename << "'...";
-      std::ofstream File(Filename.c_str());
+      errs() << "Writing '" << Filename << "'...";
 
-      if (File.good())
+      std::string ErrorInfo;
+      raw_fd_ostream File(Filename.c_str(), ErrorInfo, raw_fd_ostream::F_Force);
+      
+      if (ErrorInfo.empty())
         WriteGraph(File, (const Function*)&F, true);
       else
-        cerr << "  error opening file for writing!";
-      cerr << "\n";
+        errs() << "  error opening file for writing!";
+      errs() << "\n";
       return false;
     }
     void print(raw_ostream &OS, const Module* = 0) const {}

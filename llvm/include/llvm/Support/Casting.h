@@ -235,7 +235,7 @@ inline typename cast_retty<X, Y>::ret_type dyn_cast_or_null(const Y &Val) {
 
 
 #ifdef DEBUG_CAST_OPERATORS
-#include "llvm/Support/Streams.h"
+#include "llvm/Support/raw_ostream.h"
 
 struct bar {
   bar() {}
@@ -251,7 +251,7 @@ struct foo {
 };
 
 template <> inline bool isa_impl<foo,bar>(const bar &Val) {
-  cerr << "Classof: " << &Val << "\n";
+  errs() << "Classof: " << &Val << "\n";
   return true;
 }
 

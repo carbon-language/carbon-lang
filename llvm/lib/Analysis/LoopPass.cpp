@@ -272,7 +272,7 @@ bool LPPassManager::runOnFunction(Function &F) {
 
 /// Print passes managed by this manager
 void LPPassManager::dumpPassStructure(unsigned Offset) {
-  llvm::cerr << std::string(Offset*2, ' ') << "Loop Pass Manager\n";
+  errs().indent(Offset*2) << "Loop Pass Manager\n";
   for (unsigned Index = 0; Index < getNumContainedPasses(); ++Index) {
     Pass *P = getContainedPass(Index);
     P->dumpPassStructure(Offset + 1);

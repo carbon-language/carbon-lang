@@ -193,8 +193,8 @@ void BlockExtractorPass::LoadFile(const char *Filename) {
   // Load the BlockFile...
   std::ifstream In(Filename);
   if (!In.good()) {
-    cerr << "WARNING: BlockExtractor couldn't load file '" << Filename
-         << "'!\n";
+    errs() << "WARNING: BlockExtractor couldn't load file '" << Filename
+           << "'!\n";
     return;
   }
   while (In) {
