@@ -36,6 +36,10 @@ class CGRecordLayoutBuilder {
   /// Packed - Whether the resulting LLVM struct will be packed or not.
   bool Packed;
 
+  /// ContainsMemberPointer - Whether one of the fields is a member pointer
+  /// or is a struct that contains a member pointer.
+  bool ContainsMemberPointer;
+  
   /// Alignment - Contains the alignment of the RecordDecl.
   unsigned Alignment;
 
@@ -72,7 +76,8 @@ class CGRecordLayoutBuilder {
   llvm::SmallVector<LLVMBitFieldInfo, 16> LLVMBitFields;
   
   CGRecordLayoutBuilder(CodeGenTypes &Types) 
-    : Types(Types), Packed(false), Alignment(0), AlignmentAsLLVMStruct(1)
+    : Types(Types), Packed(false), ContainsMemberPointer(false)
+    , Alignment(0), AlignmentAsLLVMStruct(1)
     , BitsAvailableInLastField(0), NextFieldOffsetInBytes(0) { }
 
   /// Layout - Will layout a RecordDecl.
@@ -113,6 +118,9 @@ class CGRecordLayoutBuilder {
   unsigned getTypeAlignment(const llvm::Type *Ty) const;
   uint64_t getTypeSizeInBytes(const llvm::Type *Ty) const;
 
+  /// CheckForMemberPointer - Check if the field contains a member pointer.
+  void CheckForMemberPointer(const FieldDecl *FD);
+  
 public:
   /// ComputeLayout - Return the right record layout for a given record decl.
   static CGRecordLayout *ComputeLayout(CodeGenTypes &Types, 

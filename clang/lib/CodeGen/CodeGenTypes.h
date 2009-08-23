@@ -53,17 +53,27 @@ namespace CodeGen {
   /// lowering AST types to LLVM types.
   class CGRecordLayout {
     CGRecordLayout(); // DO NOT IMPLEMENT
+    
+    /// LLVMType - The LLVMType corresponding to this record layout.
+    const llvm::Type *LLVMType;
+    
+    /// ContainsMemberPointer - Whether one of the fields in this record layout
+    /// is a member pointer, or a struct that contains a member pointer.
+    bool ContainsMemberPointer;
+    
   public:
-    CGRecordLayout(const llvm::Type *T) 
-      : STy(T) { }
+    CGRecordLayout(const llvm::Type *T, bool ContainsMemberPointer) 
+      : LLVMType(T), ContainsMemberPointer(ContainsMemberPointer) { }
 
     /// getLLVMType - Return llvm type associated with this record.
     const llvm::Type *getLLVMType() const {
-      return STy;
+      return LLVMType;
     }
 
-  private:
-    const llvm::Type *STy;
+    bool containsMemberPointer() const {
+      return ContainsMemberPointer;
+    }
+    
   };
   
 /// CodeGenTypes - This class organizes the cross-module state that is used

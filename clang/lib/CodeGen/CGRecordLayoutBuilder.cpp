@@ -301,6 +301,25 @@ uint64_t CGRecordLayoutBuilder::getTypeSizeInBytes(const llvm::Type *Ty) const {
   return Types.getTargetData().getTypeAllocSize(Ty);
 }
 
+void CGRecordLayoutBuilder::CheckForMemberPointer(const FieldDecl *FD) {
+  // This record already contains a member pointer.
+  if (ContainsMemberPointer)
+    return;
+  
+  // Can only have member pointers if we're compiling C++.
+  if (!Types.getContext().getLangOptions().CPlusPlus)
+    return;
+  
+  QualType Ty = FD->getType();
+  
+  if (Ty->isMemberPointerType()) {
+    // We have a member pointer!
+    ContainsMemberPointer = true;
+    return;
+  }
+  
+}
+
 CGRecordLayout *
 CGRecordLayoutBuilder::ComputeLayout(CodeGenTypes &Types,
                                      const RecordDecl *D) {
@@ -330,5 +349,5 @@ CGRecordLayoutBuilder::ComputeLayout(CodeGenTypes &Types,
     Types.addBitFieldInfo(Info.FD, Info.FieldNo, Info.Start, Info.Size);
   }
   
-  return new CGRecordLayout(Ty);
+  return new CGRecordLayout(Ty, Builder.ContainsMemberPointer);
 }

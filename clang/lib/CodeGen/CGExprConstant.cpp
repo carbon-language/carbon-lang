@@ -800,6 +800,14 @@ llvm::Constant *CodeGenModule::EmitNullConstant(QualType T) {
       return llvm::ConstantArray::get(ATy, Array);
     }
   }
+
+  if (const RecordType *RT = T->getAs<RecordType>()) {
+    const CGRecordLayout *Layout = Types.getCGRecordLayout(RT->getDecl());
+    if (Layout->containsMemberPointer()) {
+      assert(0 && "FIXME: No support for structs with member pointers yet!");
+    }
+
+  }
   
   // FIXME: Handle structs that contain member pointers.
   if (T->isMemberPointerType()) 
