@@ -1330,9 +1330,9 @@ void EmitCmdLineVecFill(const Init* CmdLine, const std::string& ToolName,
           O << "for (PathVector::const_iterator B = inFiles.begin()"
             << ", E = inFiles.end();\n"
             << IndentLevel << "B != E; ++B)\n"
-            << IndentLevel << Indent1 << "vec.push_back(B->toString());\n";
+            << IndentLevel << Indent1 << "vec.push_back(B->str());\n";
         else
-          O << "vec.push_back(inFile.toString());\n";
+          O << "vec.push_back(inFile.str());\n";
       }
       else if (cmd == "$OUTFILE") {
         O << "vec.push_back(out_file);\n";
@@ -1556,7 +1556,7 @@ void EmitGenerateActionMethod (const ToolDescription& D,
 
   O << '\n' << Indent2
     << "out_file = OutFilename(" << (IsJoin ? "sys::Path(),\n" : "inFile,\n")
-    << Indent3 << "TempDir, stop_compilation, output_suffix).toString();\n\n";
+    << Indent3 << "TempDir, stop_compilation, output_suffix).str();\n\n";
 
   // cmd_line is either a string or a 'case' construct.
   if (!D.CmdLine)

@@ -19,8 +19,8 @@
 #include "llvm/Debugger/SourceFile.h"
 #include "llvm/Debugger/InferiorProcess.h"
 #include "llvm/Support/FileUtilities.h"
+#include "llvm/Support/raw_ostream.h"
 #include "llvm/ADT/StringExtras.h"
-#include <iostream>
 #include <cstdlib>
 using namespace llvm;
 
@@ -56,7 +56,7 @@ void CLIDebugger::startProgramRunning() {
   if (!Status)
     throw Err;
   if (TheProgramInfo->getProgramTimeStamp() != Status->getTimestamp()) {
-    std::cout << "'" << Program << "' has changed; re-reading program.\n";
+    outs() << "'" << Program.str() << "' has changed; re-reading program.\n";
 
     // Unload an existing program.  This kills the program if necessary.
     Dbg.unloadProgram();
@@ -64,11 +64,11 @@ void CLIDebugger::startProgramRunning() {
     TheProgramInfo = 0;
     CurrentFile = 0;
 
-    Dbg.loadProgram(Program.toString(), Context);
+    Dbg.loadProgram(Program.str(), Context);
     TheProgramInfo = new ProgramInfo(Dbg.getProgram());
   }
 
-  std::cout << "Starting program: " << Dbg.getProgramPath() << "\n";
+  outs() << "Starting program: " << Dbg.getProgramPath() << "\n";
   Dbg.createProgram();
 
   // There was no current frame.
@@ -83,7 +83,7 @@ bool CLIDebugger::printSourceLine(unsigned LineNo) {
   const char *LineStart, *LineEnd;
   CurrentFile->getSourceLine(LineNo-1, LineStart, LineEnd);
   if (LineStart == 0) return true;
-  std::cout << LineNo;
+  outs() << LineNo;
 
   // If this is the line the program is currently stopped at, print a marker.
   if (Dbg.isProgramRunning()) {
@@ -93,10 +93,10 @@ bool CLIDebugger::printSourceLine(unsigned LineNo) {
                                                          CurSFI);
 
     if (CurLineNo == LineNo && CurrentFile == &CurSFI->getSourceText())
-      std::cout << " ->";
+      outs() << " ->";
   }
 
-  std::cout << "\t" << std::string(LineStart, LineEnd) << "\n";
+  outs() << "\t" << std::string(LineStart, LineEnd) << "\n";
   return false;
 }
 
@@ -117,19 +117,19 @@ void CLIDebugger::printProgramLocation(bool PrintLocation) {
   if (PrintLocation) {
     // FIXME: print the current function arguments
     if (const GlobalVariable *FuncDesc = SF.getFunctionDesc())
-      std::cout << getProgramInfo().getFunction(FuncDesc).getSymbolicName();
+      outs() << getProgramInfo().getFunction(FuncDesc).getSymbolicName();
     else
-      std::cout << "<unknown function>";
+      outs() << "<unknown function>";
 
     CurrentFile = &FileDesc->getSourceText();
 
-    std::cout << " at " << CurrentFile->getFilename() << ":" << LineNo;
-    if (ColNo) std::cout << ":" << ColNo;
-    std::cout << "\n";
+    outs() << " at " << CurrentFile->getFilename() << ":" << LineNo;
+    if (ColNo) outs() << ":" << ColNo;
+    outs() << "\n";
   }
 
   if (printSourceLine(LineNo))
-    std::cout << "<could not load source file>\n";
+    outs() << "<could not load source file>\n";
   else {
     LineListedStart = LineNo-ListSize/2+1;
     if ((int)LineListedStart < 1) LineListedStart = 1;
@@ -241,14 +241,15 @@ void CLIDebugger::fileCommand(std::string &Options) {
 
   // If requested, start the new program.
   if (Prog.empty()) {
-    std::cout << "Unloaded program.\n";
+    outs() << "Unloaded program.\n";
   } else {
-    std::cout << "Loading program... " << std::flush;
+    outs() << "Loading program... ";
+    outs().flush();
     Dbg.loadProgram(Prog, Context);
     assert(Dbg.isProgramLoaded() &&
            "loadProgram succeeded, but not program loaded!");
     TheProgramInfo = new ProgramInfo(Dbg.getProgram());
-    std::cout << "successfully loaded '" << Dbg.getProgramPath() << "'!\n";
+    outs() << "successfully loaded '" << Dbg.getProgramPath() << "'!\n";
   }
 }
 
@@ -391,29 +392,29 @@ void CLIDebugger::backtraceCommand(std::string &Options) {
   try {
     for (unsigned i = 0; ; ++i) {
       StackFrame &SF = RI.getStackFrame(i);
-      std::cout << "#" << i;
+      outs() << "#" << i;
       if (i == RI.getCurrentFrameIdx())
-        std::cout << " ->";
-      std::cout << "\t" << SF.getFrameID() << " in ";
+        outs() << " ->";
+      outs() << "\t" << SF.getFrameID() << " in ";
       if (const GlobalVariable *G = SF.getFunctionDesc())
-        std::cout << PI.getFunction(G).getSymbolicName();
+        outs() << PI.getFunction(G).getSymbolicName();
 
       unsigned LineNo, ColNo;
       const SourceFileInfo *SFI;
       SF.getSourceLocation(LineNo, ColNo, SFI);
       if (!SFI->getBaseName().empty()) {
-        std::cout << " at " << SFI->getBaseName();
+        outs() << " at " << SFI->getBaseName();
         if (LineNo) {
-          std::cout << ":" << LineNo;
+          outs() << ":" << LineNo;
           if (ColNo)
-            std::cout << ":" << ColNo;
+            outs() << ":" << ColNo;
         }
       }
 
       // FIXME: when we support shared libraries, we should print ' from foo.so'
       // if the stack frame is from a different object than the current one.
 
-      std::cout << "\n";
+      outs() << "\n";
     }
   } catch (...) {
     // Stop automatically when we run off the bottom of the stack.
@@ -522,11 +523,11 @@ void CLIDebugger::infoCommand(std::string &Options) {
   } else if (What == "functions") {
     const std::map<const GlobalVariable*, SourceFunctionInfo*> &Functions
       = getProgramInfo().getSourceFunctions();
-    std::cout << "All defined functions:\n";
+    outs() << "All defined functions:\n";
     // FIXME: GDB groups these by source file.  We could do that I guess.
     for (std::map<const GlobalVariable*, SourceFunctionInfo*>::const_iterator
            I = Functions.begin(), E = Functions.end(); I != E; ++I) {
-      std::cout << I->second->getSymbolicName() << "\n";
+      outs() << I->second->getSymbolicName() << "\n";
     }
 
   } else if (What == "source") {
@@ -537,30 +538,30 @@ void CLIDebugger::infoCommand(std::string &Options) {
     const SourceFileInfo &SF =
       getProgramInfo().getSourceFile(CurrentFile->getDescriptor());
 
-    std::cout << "Current source file is: " << SF.getBaseName() << "\n"
-              << "Compilation directory is: " << SF.getDirectory() << "\n";
+    outs() << "Current source file is: " << SF.getBaseName() << "\n"
+            << "Compilation directory is: " << SF.getDirectory() << "\n";
     if (unsigned NL = CurrentFile->getNumLines())
-      std::cout << "Located in: " << CurrentFile->getFilename() << "\n"
-                << "Contains " << NL << " lines\n";
+      outs() << "Located in: " << CurrentFile->getFilename() << "\n"
+              << "Contains " << NL << " lines\n";
     else
-      std::cout << "Could not find source file.\n";
-    std::cout << "Source language is "
-              << SF.getLanguage().getSourceLanguageName() << "\n";
+      outs() << "Could not find source file.\n";
+    outs() << "Source language is "
+           << SF.getLanguage().getSourceLanguageName() << "\n";
 
   } else if (What == "sources") {
     const std::map<const GlobalVariable*, SourceFileInfo*> &SourceFiles =
       getProgramInfo().getSourceFiles();
-    std::cout << "Source files for the program:\n";
+    outs() << "Source files for the program:\n";
     for (std::map<const GlobalVariable*, SourceFileInfo*>::const_iterator I =
            SourceFiles.begin(), E = SourceFiles.end(); I != E;) {
-      std::cout << I->second->getDirectory() << "/"
-                << I->second->getBaseName();
+      outs() << I->second->getDirectory() << "/"
+             << I->second->getBaseName();
       ++I;
-      if (I != E) std::cout << ", ";
+      if (I != E) outs() << ", ";
     }
-    std::cout << "\n";
+    outs() << "\n";
   } else if (What == "target") {
-    std::cout << Dbg.getRunningProcess().getStatus();
+    outs() << Dbg.getRunningProcess().getStatus();
   } else {
     // See if this is something handled by the current language.
     if (getCurrentLanguage().printInfo(What))
@@ -746,7 +747,7 @@ void CLIDebugger::listCommand(std::string &Options) {
     if (LineStart == 0)
       throw "Could not load source file '" + CurrentFile->getFilename() + "'!";
     else
-      std::cout << "<end of file>\n";
+      outs() << "<end of file>\n";
   }
 }
 
@@ -762,11 +763,11 @@ void CLIDebugger::setCommand(std::string &Options) {
     if (!getToken(Options).empty())
       throw "set language expects one argument at most.";
     if (Lang == "") {
-      std::cout << "The currently understood settings are:\n\n"
-                << "local or auto  Automatic setting based on source file\n"
-                << "c              Use the C language\n"
-                << "c++            Use the C++ language\n"
-                << "unknown        Use when source language is not supported\n";
+      outs() << "The currently understood settings are:\n\n"
+             << "local or auto  Automatic setting based on source file\n"
+             << "c              Use the C language\n"
+             << "c++            Use the C++ language\n"
+             << "unknown        Use when source language is not supported\n";
     } else if (Lang == "local" || Lang == "auto") {
       CurrentLanguage = 0;
     } else if (Lang == "c") {
@@ -799,28 +800,28 @@ void CLIDebugger::showCommand(std::string &Options) {
     throw "show command expects one argument.";
 
   if (What == "args") {
-    std::cout << "Argument list to give program when started is \"";
+    outs() << "Argument list to give program when started is \"";
     // FIXME: This doesn't print stuff correctly if the arguments have spaces in
     // them, but currently the only way to get that is to use the --args command
     // line argument.  This should really handle escaping all hard characters as
     // needed.
     for (unsigned i = 0, e = Dbg.getNumProgramArguments(); i != e; ++i)
-      std::cout << (i ? " " : "") << Dbg.getProgramArgument(i);
-    std::cout << "\"\n";
+      outs() << (i ? " " : "") << Dbg.getProgramArgument(i);
+    outs() << "\"\n";
 
   } else if (What == "language") {
-    std::cout << "The current source language is '";
+    outs() << "The current source language is '";
     if (CurrentLanguage)
-      std::cout << CurrentLanguage->getSourceLanguageName();
+      outs() << CurrentLanguage->getSourceLanguageName();
     else
-      std::cout << "auto; currently "
-                << getCurrentLanguage().getSourceLanguageName();
-    std::cout << "'.\n";
+      outs() << "auto; currently "
+             << getCurrentLanguage().getSourceLanguageName();
+    outs() << "'.\n";
   } else if (What == "listsize") {
-    std::cout << "Number of source lines llvm-db will list by default is "
-              << ListSize << ".\n";
+    outs() << "Number of source lines llvm-db will list by default is "
+           << ListSize << ".\n";
   } else if (What == "prompt") {
-    std::cout << "llvm-db's prompt is \"" << Prompt << "\".\n";
+    outs() << "llvm-db's prompt is \"" << Prompt << "\".\n";
   } else {
     throw "Unknown show command '" + What + "'.  Try 'help show'.";
   }
@@ -835,16 +836,16 @@ void CLIDebugger::helpCommand(std::string &Options) {
   // Getting detailed help on a particular command?
   if (!Command.empty()) {
     CLICommand *C = getCommand(Command);
-    std::cout << C->getShortHelp() << ".\n" << C->getLongHelp();
+    outs() << C->getShortHelp() << ".\n" << C->getLongHelp();
 
     // If there are aliases for this option, print them out.
     const std::vector<std::string> &Names = C->getOptionNames();
     if (Names.size() > 1) {
-      std::cout << "The '" << Command << "' command is known as: '"
-                << Names[0] << "'";
+      outs() << "The '" << Command << "' command is known as: '"
+             << Names[0] << "'";
       for (unsigned i = 1, e = Names.size(); i != e; ++i)
-        std::cout << ", '" << Names[i] << "'";
-      std::cout << "\n";
+        outs() << ", '" << Names[i] << "'";
+      outs() << "\n";
     }
 
   } else {
@@ -859,7 +860,7 @@ void CLIDebugger::helpCommand(std::string &Options) {
     for (std::map<std::string, CLICommand*>::iterator I = CommandTable.begin(),
            E = CommandTable.end(); I != E; ++I)
       if (I->first == I->second->getPrimaryOptionName())
-        std::cout << I->first << std::string(MaxSize - I->first.size(), ' ')
-                  << " - " << I->second->getShortHelp() << "\n";
+        outs() << I->first << std::string(MaxSize - I->first.size(), ' ')
+               << " - " << I->second->getShortHelp() << "\n";
   }
 }

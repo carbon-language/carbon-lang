@@ -344,8 +344,8 @@ Archive::getAllModules(std::vector<Module*>& Modules,
 
   for (iterator I=begin(), E=end(); I != E; ++I) {
     if (I->isBitcode()) {
-      std::string FullMemberName = archPath.toString() +
-        "(" + I->getPath().toString() + ")";
+      std::string FullMemberName = archPath.str() +
+        "(" + I->getPath().str() + ")";
       MemoryBuffer *Buffer =
         MemoryBuffer::getNewMemBuffer(I->getSize(), FullMemberName.c_str());
       memcpy((char*)Buffer->getBufferStart(), I->getData(), I->getSize());
@@ -484,8 +484,8 @@ Archive::findModuleDefiningSymbol(const std::string& symbol,
     return 0;
 
   // Now, load the bitcode module to get the ModuleProvider
-  std::string FullMemberName = archPath.toString() + "(" +
-    mbr->getPath().toString() + ")";
+  std::string FullMemberName = archPath.str() + "(" +
+    mbr->getPath().str() + ")";
   MemoryBuffer *Buffer =MemoryBuffer::getNewMemBuffer(mbr->getSize(),
                                                       FullMemberName.c_str());
   memcpy((char*)Buffer->getBufferStart(), mbr->getData(), mbr->getSize());
@@ -534,8 +534,8 @@ Archive::findModulesDefiningSymbols(std::set<std::string>& symbols,
       if (mbr->isBitcode()) {
         // Get the symbols
         std::vector<std::string> symbols;
-        std::string FullMemberName = archPath.toString() + "(" +
-          mbr->getPath().toString() + ")";
+        std::string FullMemberName = archPath.str() + "(" +
+          mbr->getPath().str() + ")";
         ModuleProvider* MP = 
           GetBitcodeSymbols((const unsigned char*)At, mbr->getSize(),
                             FullMemberName, Context, symbols, error);
@@ -552,7 +552,7 @@ Archive::findModulesDefiningSymbols(std::set<std::string>& symbols,
         } else {
           if (error)
             *error = "Can't parse bitcode member: " + 
-              mbr->getPath().toString() + ": " + *error;
+              mbr->getPath().str() + ": " + *error;
           delete mbr;
           return false;
         }
@@ -612,7 +612,7 @@ bool Archive::isBitcodeArchive() {
       continue;
     
     std::string FullMemberName = 
-      archPath.toString() + "(" + I->getPath().toString() + ")";
+      archPath.str() + "(" + I->getPath().str() + ")";
 
     MemoryBuffer *Buffer =
       MemoryBuffer::getNewMemBuffer(I->getSize(), FullMemberName.c_str());

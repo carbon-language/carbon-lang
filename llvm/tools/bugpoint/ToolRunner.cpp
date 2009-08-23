@@ -13,11 +13,12 @@
 
 #define DEBUG_TYPE "toolrunner"
 #include "ToolRunner.h"
-#include "llvm/Config/config.h"   // for HAVE_LINK_R
 #include "llvm/System/Program.h"
 #include "llvm/Support/CommandLine.h"
 #include "llvm/Support/Debug.h"
 #include "llvm/Support/FileUtilities.h"
+#include "llvm/Support/raw_ostream.h"
+#include "llvm/Config/config.h"   // for HAVE_LINK_R
 #include <fstream>
 #include <sstream>
 using namespace llvm;
@@ -232,7 +233,7 @@ AbstractInterpreter *AbstractInterpreter::createLLI(const char *Argv0,
                                                     std::string &Message,
                                      const std::vector<std::string> *ToolArgs) {
   std::string LLIPath =
-    FindExecutable("lli", Argv0, (void *)(intptr_t)&createLLI).toString();
+    FindExecutable("lli", Argv0, (void *)(intptr_t)&createLLI).str();
   if (!LLIPath.empty()) {
     Message = "Found lli: " + LLIPath + "\n";
     return new LLI(LLIPath, ToolArgs);
@@ -332,7 +333,7 @@ AbstractInterpreter *AbstractInterpreter::createCustom(
     pos = ExecCommandLine.find_first_of(delimiters, lastPos);
   }
 
-  std::string CmdPath = sys::Program::FindProgramByName(Command).toString();
+  std::string CmdPath = sys::Program::FindProgramByName(Command).str();
   if (CmdPath.empty()) {
     Message = 
       std::string("Cannot find '") + Command + 
@@ -407,7 +408,7 @@ int LLC::ExecuteProgram(const std::string &Bitcode,
   GCCArgs.insert(GCCArgs.end(), gccArgs.begin(), gccArgs.end());
 
   // Assuming LLC worked, compile the result with GCC and run it.
-  return gcc->ExecuteProgram(OutputAsmFile.toString(), Args, GCC::AsmFile,
+  return gcc->ExecuteProgram(OutputAsmFile.str(), Args, GCC::AsmFile,
                              InputFile, OutputFile, GCCArgs,
                              Timeout, MemoryLimit);
 }
@@ -419,7 +420,7 @@ LLC *AbstractInterpreter::createLLC(const char *Argv0,
                                     const std::vector<std::string> *Args,
                                     const std::vector<std::string> *GCCArgs) {
   std::string LLCPath =
-    FindExecutable("llc", Argv0, (void *)(intptr_t)&createLLC).toString();
+    FindExecutable("llc", Argv0, (void *)(intptr_t)&createLLC).str();
   if (LLCPath.empty()) {
     Message = "Cannot find `llc' in executable directory or PATH!\n";
     return 0;
@@ -505,7 +506,7 @@ int JIT::ExecuteProgram(const std::string &Bitcode,
 AbstractInterpreter *AbstractInterpreter::createJIT(const char *Argv0,
                    std::string &Message, const std::vector<std::string> *Args) {
   std::string LLIPath =
-    FindExecutable("lli", Argv0, (void *)(intptr_t)&createJIT).toString();
+    FindExecutable("lli", Argv0, (void *)(intptr_t)&createJIT).str();
   if (!LLIPath.empty()) {
     Message = "Found lli: " + LLIPath + "\n";
     return new JIT(LLIPath, Args);
@@ -572,7 +573,7 @@ int CBE::ExecuteProgram(const std::string &Bitcode,
   std::vector<std::string> GCCArgs(ArgsForGCC);
   GCCArgs.insert(GCCArgs.end(), SharedLibs.begin(), SharedLibs.end());
 
-  return gcc->ExecuteProgram(OutputCFile.toString(), Args, GCC::CFile,
+  return gcc->ExecuteProgram(OutputCFile.str(), Args, GCC::CFile,
                              InputFile, OutputFile, GCCArgs,
                              Timeout, MemoryLimit);
 }
@@ -591,7 +592,7 @@ CBE *AbstractInterpreter::createCBE(const char *Argv0,
     return 0;
   }
 
-  Message = "Found llc: " + LLCPath.toString() + "\n";
+  Message = "Found llc: " + LLCPath.str() + "\n";
   GCC *gcc = GCC::create(Message, GCCArgs);
   if (!gcc) {
     errs() << Message << "\n";
@@ -757,7 +758,7 @@ int GCC::MakeSharedObject(const std::string &InputFile, FileType fileType,
     errs() << "Error making unique filename: " << ErrMsg << "\n";
     exit(1);
   }
-  OutputFile = uniqueFilename.toString();
+  OutputFile = uniqueFilename.str();
 
   std::vector<const char*> GCCArgs;
   
@@ -839,6 +840,6 @@ GCC *GCC::create(std::string &Message,
   if (!RemoteClient.empty())
     RemoteClientPath = sys::Program::FindProgramByName(RemoteClient);
 
-  Message = "Found gcc: " + GCCPath.toString() + "\n";
+  Message = "Found gcc: " + GCCPath.str() + "\n";
   return new GCC(GCCPath, RemoteClientPath, Args);
 }

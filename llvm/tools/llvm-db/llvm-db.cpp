@@ -17,8 +17,8 @@
 #include "llvm/Support/CommandLine.h"
 #include "llvm/Support/ManagedStatic.h"
 #include "llvm/Support/PrettyStackTrace.h"
+#include "llvm/Support/raw_ostream.h"
 #include "llvm/System/Signals.h"
-#include <iostream>
 using namespace llvm;
 
 namespace {
@@ -57,13 +57,13 @@ int main(int argc, char **argv, char * const *envp) {
   
   LLVMContext &Context = getGlobalContext();
   llvm_shutdown_obj Y;  // Call llvm_shutdown() on exit.
-  std::cout << "NOTE: llvm-db is known useless right now.\n";
+  outs() << "NOTE: llvm-db is known useless right now.\n";
   try {
     cl::ParseCommandLineOptions(argc, argv,
                                 "llvm source-level debugger\n");
 
     if (!Quiet)
-      std::cout << "llvm-db: The LLVM source-level debugger\n";
+      outs() << "llvm-db: The LLVM source-level debugger\n";
 
     // Merge Inputfile and InputArgs into the InputArgs list...
     if (!InputFile.empty() && InputArgs.empty())
@@ -85,7 +85,7 @@ int main(int argc, char **argv, char * const *envp) {
       try {
         D.fileCommand(InputArgs[0]);
       } catch (const std::string &Error) {
-        std::cout << "Error: " << Error << "\n";
+        outs() << "Error: " << Error << "\n";
       }
 
       Dbg.setProgramArguments(InputArgs.begin()+1, InputArgs.end());

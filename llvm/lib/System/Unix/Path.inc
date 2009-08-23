@@ -119,7 +119,7 @@ void Path::makeAbsolute() {
 
   CWD.appendComponent(path);
 
-  path = CWD.toString();
+  path = CWD.str();
 }
 
 Path
@@ -502,7 +502,7 @@ static bool AddPermissionBits(const Path &File, int bits) {
 
   // Get the file's current mode.
   struct stat buf;
-  if (0 != stat(File.toString().c_str(), &buf))
+  if (0 != stat(File.c_str(), &buf))
     return false;
   // Change the file to have whichever permissions bits from 'bits'
   // that the umask would not disable.
@@ -759,7 +759,7 @@ bool
 Path::renamePathOnDisk(const Path& newName, std::string* ErrMsg) {
   if (0 != ::rename(path.c_str(), newName.c_str()))
     return MakeErrMsg(ErrMsg, std::string("can't rename '") + path + "' as '" +
-               newName.toString() + "'");
+               newName.str() + "'");
   return false;
 }
 
@@ -781,13 +781,13 @@ sys::CopyFile(const sys::Path &Dest, const sys::Path &Src, std::string* ErrMsg){
   int outFile = -1;
   inFile = ::open(Src.c_str(), O_RDONLY);
   if (inFile == -1)
-    return MakeErrMsg(ErrMsg, Src.toString() +
+    return MakeErrMsg(ErrMsg, Src.str() +
       ": can't open source file to copy");
 
   outFile = ::open(Dest.c_str(), O_WRONLY|O_CREAT, 0666);
   if (outFile == -1) {
     ::close(inFile);
-    return MakeErrMsg(ErrMsg, Dest.toString() +
+    return MakeErrMsg(ErrMsg, Dest.str() +
       ": can't create destination file for copy");
   }
 
@@ -797,7 +797,7 @@ sys::CopyFile(const sys::Path &Dest, const sys::Path &Src, std::string* ErrMsg){
       if (errno != EINTR && errno != EAGAIN) {
         ::close(inFile);
         ::close(outFile);
-        return MakeErrMsg(ErrMsg, Src.toString()+": can't read source file");
+        return MakeErrMsg(ErrMsg, Src.str()+": can't read source file");
       }
     } else {
       char *BufPtr = Buffer;
@@ -807,7 +807,7 @@ sys::CopyFile(const sys::Path &Dest, const sys::Path &Src, std::string* ErrMsg){
           if (errno != EINTR && errno != EAGAIN) {
             ::close(inFile);
             ::close(outFile);
-            return MakeErrMsg(ErrMsg, Dest.toString() +
+            return MakeErrMsg(ErrMsg, Dest.str() +
               ": can't write destination file");
           }
         } else {

@@ -257,10 +257,8 @@ raw_ostream &WriteGraph(raw_ostream &O, const GraphType &G,
 }
 
 template<typename GraphType>
-sys::Path WriteGraph(const GraphType &G,
-                     const std::string& Name,
-                     bool ShortNames = false,
-                     const std::string& Title = "") {
+sys::Path WriteGraph(const GraphType &G, const std::string &Name,
+                     bool ShortNames = false, const std::string &Title = "") {
   std::string ErrMsg;
   sys::Path Filename = sys::Path::GetTemporaryDirectory(&ErrMsg);
   if (Filename.isEmpty()) {
@@ -273,7 +271,7 @@ sys::Path WriteGraph(const GraphType &G,
     return sys::Path();
   }
 
-  errs() << "Writing '" << Filename << "'... ";
+  errs() << "Writing '" << Filename.str() << "'... ";
 
   std::string ErrorInfo;
   raw_fd_ostream O(Filename.c_str(), ErrorInfo, raw_fd_ostream::F_Force);
@@ -282,7 +280,7 @@ sys::Path WriteGraph(const GraphType &G,
     WriteGraph(O, G, ShortNames, Name, Title);
     errs() << " done. \n";
   } else {
-    errs() << "error opening file '" << Filename << "' for writing!\n";
+    errs() << "error opening file '" << Filename.str() << "' for writing!\n";
     Filename.clear();
   }
 
@@ -293,16 +291,13 @@ sys::Path WriteGraph(const GraphType &G,
 /// then cleanup.  For use from the debugger.
 ///
 template<typename GraphType>
-void ViewGraph(const GraphType& G,
-               const std::string& Name,
-               bool ShortNames = false,
-               const std::string& Title = "",
+void ViewGraph(const GraphType &G, const std::string &Name,
+               bool ShortNames = false, const std::string &Title = "",
                GraphProgram::Name Program = GraphProgram::DOT) {
-  sys::Path Filename =  WriteGraph(G, Name, ShortNames, Title);
+  sys::Path Filename = WriteGraph(G, Name, ShortNames, Title);
 
-  if (Filename.isEmpty()) {
+  if (Filename.isEmpty())
     return;
-  }
 
   DisplayGraph(Filename, true, Program);
 }

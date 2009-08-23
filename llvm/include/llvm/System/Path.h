@@ -15,11 +15,9 @@
 #define LLVM_SYSTEM_PATH_H
 
 #include "llvm/System/TimeValue.h"
-#include "llvm/Support/raw_ostream.h"
 #include <set>
 #include <string>
 #include <vector>
-#include <iosfwd>
 
 namespace llvm {
 namespace sys {
@@ -217,7 +215,7 @@ namespace sys {
       /// Compares \p this Path with \p that Path for inequality.
       /// @returns true if \p this and \p that refer to different things.
       /// @brief Inequality Operator
-      bool operator!=(const Path &that) const;
+      bool operator!=(const Path &that) const { return !(*this == that); }
 
       /// Determines if \p this Path is less than \p that Path. This is required
       /// so that Path objects can be placed into ordered collections (e.g.
@@ -249,13 +247,7 @@ namespace sys {
       /// @brief Determines if the path name is empty (invalid).
       bool isEmpty() const { return path.empty(); }
 
-      /// This function returns the current contents of the path as a
-      /// std::string. This allows the underlying path string to be manipulated.
-      /// @returns std::string containing the path name.
-      /// @brief Returns the path as a std::string.
-      const std::string &toString() const { return path; }
-
-      /// This function returns the last component of the path name. The last
+       /// This function returns the last component of the path name. The last
       /// component is the file or directory name occuring after the last
       /// directory separator. If no directory separator is present, the entire
       /// path name is returned (i.e. same as toString).
@@ -286,6 +278,8 @@ namespace sys {
       /// @returns a 'C' string containing the path name.
       /// @brief Returns the path as a C string.
       const char *c_str() const { return path.c_str(); }
+      const std::string &str() const { return path; }
+
 
       /// size - Return the length in bytes of this path name.
       size_t size() const { return path.size(); }
@@ -714,24 +708,6 @@ namespace sys {
   /// This is the OS-specific path separator: a colon on Unix or a semicolon
   /// on Windows.
   extern const char PathSeparator;
-}
-
-inline raw_ostream& operator<<(raw_ostream& strm, const sys::Path& aPath) {
-  strm << aPath.toString();
-  return strm;
-}
-
-inline raw_ostream& operator<<(raw_ostream& strm,
-                               const sys::PathWithStatus& aPath) {
-  strm << static_cast<const sys::Path&>(aPath);
-  return strm;
-}
-
-std::ostream& operator<<(std::ostream& strm, const sys::Path& aPath);
-inline std::ostream& operator<<(std::ostream& strm,
-                                const sys::PathWithStatus& aPath) {
-  strm << static_cast<const sys::Path&>(aPath);
-  return strm;
 }
 
 }

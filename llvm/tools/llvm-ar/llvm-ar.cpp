@@ -364,7 +364,7 @@ bool doPrint(std::string* ErrMsg) {
           continue;
 
         if (Verbose)
-          std::cout << "Printing " << I->getPath().toString() << "\n";
+          std::cout << "Printing " << I->getPath().str() << "\n";
 
         unsigned len = I->getSize();
         std::cout.write(data, len);
@@ -422,11 +422,10 @@ doDisplayTable(std::string* ErrMsg) {
         std::cout << " " << std::setw(4) << I->getUser();
         std::cout << "/" << std::setw(4) << I->getGroup();
         std::cout << " " << std::setw(8) << I->getSize();
-        std::cout << " " << std::setw(20) <<
-          I->getModTime().toString().substr(4);
-        std::cout << " " << I->getPath().toString() << "\n";
+        std::cout << " " << std::setw(20) << I->getModTime().str().substr(4);
+        std::cout << " " << I->getPath().str() << "\n";
       } else {
-        std::cout << I->getPath().toString() << "\n";
+        std::cout << I->getPath().str() << "\n";
       }
     }
   }
@@ -528,7 +527,7 @@ doMove(std::string* ErrMsg) {
   if (AddBefore || InsertBefore || AddAfter) {
     for (Archive::iterator I = TheArchive->begin(), E= TheArchive->end();
          I != E; ++I ) {
-      if (RelPos == I->getPath().toString()) {
+      if (RelPos == I->getPath().str()) {
         if (AddAfter) {
           moveto_spot = I;
           moveto_spot++;
@@ -616,7 +615,7 @@ doReplaceOrInsert(std::string* ErrMsg) {
     std::set<sys::Path>::iterator found = remaining.end();
     for (std::set<sys::Path>::iterator RI = remaining.begin(),
          RE = remaining.end(); RI != RE; ++RI ) {
-      std::string compare(RI->toString());
+      std::string compare(RI->str());
       if (TruncateNames && compare.length() > 15) {
         const char* nm = compare.c_str();
         unsigned len = compare.length();
@@ -629,7 +628,7 @@ doReplaceOrInsert(std::string* ErrMsg) {
           len = 15;
         compare.assign(nm,len);
       }
-      if (compare == I->getPath().toString()) {
+      if (compare == I->getPath().str()) {
         found = RI;
         break;
       }
@@ -661,9 +660,9 @@ doReplaceOrInsert(std::string* ErrMsg) {
     }
 
     // Determine if this is the place where we should insert
-    if ((AddBefore || InsertBefore) && (RelPos == I->getPath().toString()))
+    if ((AddBefore || InsertBefore) && RelPos == I->getPath().str())
       insert_spot = I;
-    else if (AddAfter && (RelPos == I->getPath().toString())) {
+    else if (AddAfter && RelPos == I->getPath().str()) {
       insert_spot = I;
       insert_spot++;
     }
@@ -719,14 +718,14 @@ int main(int argc, char **argv) {
     if (!ArchivePath.exists()) {
       // Produce a warning if we should and we're creating the archive
       if (!Create)
-        errs() << argv[0] << ": creating " << ArchivePath.toString() << "\n";
+        errs() << argv[0] << ": creating " << ArchivePath.str() << "\n";
       TheArchive = Archive::CreateEmpty(ArchivePath, Context);
       TheArchive->writeToDisk();
     } else {
       std::string Error;
       TheArchive = Archive::OpenAndLoad(ArchivePath, Context, &Error);
       if (TheArchive == 0) {
-        errs() << argv[0] << ": error loading '" << ArchivePath << "': "
+        errs() << argv[0] << ": error loading '" << ArchivePath.str() << "': "
                << Error << "!\n";
         return 1;
       }

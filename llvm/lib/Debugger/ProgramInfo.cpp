@@ -22,6 +22,7 @@
 #include "llvm/Module.h"
 #include "llvm/Debugger/SourceFile.h"
 #include "llvm/Debugger/SourceLanguage.h"
+#include "llvm/Support/raw_ostream.h"
 #include "llvm/Support/SlowOperationInformer.h"
 #include "llvm/ADT/STLExtras.h"
 using namespace llvm;
@@ -135,7 +136,7 @@ SourceFile &SourceFileInfo::getSourceText() const {
       tmpPath.set(Directory);
     tmpPath.appendComponent(BaseName);
     if (tmpPath.canRead())
-      SourceText = new SourceFile(tmpPath.toString(), Descriptor);
+      SourceText = new SourceFile(tmpPath.str(), Descriptor);
     else
       SourceText = new SourceFile(BaseName, Descriptor);
   }

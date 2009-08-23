@@ -202,9 +202,8 @@ const void* LTOCodeGenerator::compile(size_t* length, std::string& errMsg)
     sys::RemoveFileOnSignal(uniqueObjPath);
 
     // assemble the assembly code
-    const std::string& uniqueObjStr = uniqueObjPath.toString();
-    bool asmResult = this->assemble(uniqueAsmPath.toString(), 
-                                                        uniqueObjStr, errMsg);
+    const std::string& uniqueObjStr = uniqueObjPath.str();
+    bool asmResult = this->assemble(uniqueAsmPath.str(), uniqueObjStr, errMsg);
     if ( !asmResult ) {
         // remove old buffer if compile() called twice
         delete _nativeObjectFile;

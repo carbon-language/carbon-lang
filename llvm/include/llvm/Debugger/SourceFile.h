@@ -60,7 +60,7 @@ namespace llvm {
 
     /// getFilename - Return the fully resolved path that this file was loaded
     /// from.
-    const std::string &getFilename() const { return Filename.toString(); }
+    const std::string &getFilename() const { return Filename.str(); }
 
     /// getSourceLine - Given a line number, return the start and end of the
     /// line in the file.  If the line number is invalid, or if the file could

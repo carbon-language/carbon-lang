@@ -35,6 +35,7 @@
 #include "llvm/Support/MemoryBuffer.h"
 #include "llvm/Support/PrettyStackTrace.h"
 #include "llvm/Support/SystemUtils.h"
+#include "llvm/Support/raw_ostream.h"
 #include "llvm/System/Signals.h"
 #include "llvm/Config/config.h"
 #include <memory>
@@ -466,7 +467,7 @@ static void EmitShellScript(char **argv) {
     if (FullLibraryPath.isEmpty())
       FullLibraryPath = sys::Path::FindLibrary(*i);
     if (!FullLibraryPath.isEmpty())
-      Out2 << "    -load=" << FullLibraryPath.toString() << " \\\n";
+      Out2 << "    -load=" << FullLibraryPath.str() << " \\\n";
   }
   Out2 << "    "  << BitcodeOutputFilename << " ${1+\"$@\"}\n";
   Out2.close();
@@ -572,7 +573,7 @@ int main(int argc, char **argv, char **envp) {
       sys::Path ExeFile( OutputFilename );
       if (ExeFile.getSuffix() == "") {
         ExeFile.appendSuffix("exe");
-        OutputFilename = ExeFile.toString();
+        OutputFilename = ExeFile.str();
       }
     }
 #endif
@@ -652,11 +653,11 @@ int main(int argc, char **argv, char **envp) {
 
         // Generate an assembly language file for the bitcode.
         std::string ErrMsg;
-        if (0 != GenerateAssembly(AssemblyFile.toString(), BitcodeOutputFilename,
+        if (0 != GenerateAssembly(AssemblyFile.str(), BitcodeOutputFilename,
             llc, ErrMsg))
           PrintAndExit(ErrMsg);
 
-        if (0 != GenerateNative(OutputFilename, AssemblyFile.toString(),
+        if (0 != GenerateNative(OutputFilename, AssemblyFile.str(),
                                 NativeLinkItems, gcc, envp, ErrMsg))
           PrintAndExit(ErrMsg);
 
@@ -682,12 +683,11 @@ int main(int argc, char **argv, char **envp) {
 
         // Generate an assembly language file for the bitcode.
         std::string ErrMsg;
-        if (0 != GenerateCFile(
-            CFile.toString(), BitcodeOutputFilename, llc, ErrMsg))
+        if (GenerateCFile(CFile.str(), BitcodeOutputFilename, llc, ErrMsg))
           PrintAndExit(ErrMsg);
 
-        if (0 != GenerateNative(OutputFilename, CFile.toString(), 
-                                NativeLinkItems, gcc, envp, ErrMsg))
+        if (GenerateNative(OutputFilename, CFile.str(), 
+                           NativeLinkItems, gcc, envp, ErrMsg))
           PrintAndExit(ErrMsg);
 
         // Remove the assembly language file.

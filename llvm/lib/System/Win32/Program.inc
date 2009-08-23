@@ -92,7 +92,7 @@ static HANDLE RedirectIO(const Path *path, int fd, std::string* ErrMsg) {
   if (path->isEmpty())
     fname = "NUL";
   else
-    fname = path->toString().c_str();
+    fname = path->c_str();
 
   SECURITY_ATTRIBUTES sa;
   sa.nLength = sizeof(sa);
@@ -258,11 +258,10 @@ Program::Execute(const Path& path,
   CloseHandle(si.hStdError);
 
   // Now return an error if the process didn't get created.
-  if (!rc)
-  {
+  if (!rc) {
     SetLastError(err);
     MakeErrMsg(ErrMsg, std::string("Couldn't execute program '") +
-               path.toString() + "'");
+               path.str() + "'");
     return false;
   }
   Pid_ = pi.dwProcessId;

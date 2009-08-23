@@ -14,11 +14,12 @@
 #ifndef LLVM_LINKER_H
 #define LLVM_LINKER_H
 
-#include "llvm/System/Path.h"
 #include <memory>
 #include <vector>
+#include "llvm/ADT/StringRef.h"
 
 namespace llvm {
+  namespace sys { class Path; }
 
 class Module;
 class LLVMContext;
@@ -64,11 +65,10 @@ class Linker {
     /// Construct the Linker with an empty module which will be given the
     /// name \p progname. \p progname will also be used for error messages.
     /// @brief Construct with empty module
-    Linker(
-        const StringRef& progname, ///< name of tool running linker
-        const StringRef& modulename, ///< name of linker's end-result module
-        LLVMContext& C, ///< Context for global info
-        unsigned Flags = 0  ///< ControlFlags (one or more |'d together)
+    Linker(const StringRef &progname, ///< name of tool running linker
+           const StringRef &modulename, ///< name of linker's end-result module
+           LLVMContext &C, ///< Context for global info
+           unsigned Flags = 0  ///< ControlFlags (one or more |'d together)
     );
 
     /// Construct the Linker with a previously defined module, \p aModule. Use

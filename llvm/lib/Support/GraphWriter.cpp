@@ -64,9 +64,10 @@ void llvm::DisplayGraph(const sys::Path &Filename, bool wait,
   
   errs() << "Running 'Graphviz' program... ";
   if (sys::Program::ExecuteAndWait(Graphviz, &args[0],0,0,0,0,&ErrMsg))
-     errs() << "Error viewing graph " << Filename << ": " << ErrMsg << "\n";
+    errs() << "Error viewing graph " << Filename.str() << ": " << ErrMsg
+           << "\n";
   else
-     Filename.eraseFromDisk();
+    Filename.eraseFromDisk();
 
 #elif (HAVE_GV && (HAVE_DOT || HAVE_FDP || HAVE_NEATO || \
                    HAVE_TWOPI || HAVE_CIRCO))

@@ -97,7 +97,7 @@ static bool RedirectIO(const Path *Path, int FD, std::string* ErrMsg) {
     // Redirect empty paths to /dev/null
     File = "/dev/null";
   else
-    File = Path->toString();
+    File = Path->str();
 
   // Open the file
   int InFD = open(File.c_str(), FD == 0 ? O_RDONLY : O_WRONLY|O_CREAT, 0666);
@@ -156,7 +156,7 @@ Program::Execute(const Path& path,
 {
   if (!path.canExecute()) {
     if (ErrMsg)
-      *ErrMsg = path.toString() + " is not executable";
+      *ErrMsg = path.str() + " is not executable";
     return false;
   }
 

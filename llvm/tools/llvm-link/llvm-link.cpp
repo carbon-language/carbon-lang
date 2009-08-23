@@ -21,6 +21,7 @@
 #include "llvm/Support/ManagedStatic.h"
 #include "llvm/Support/MemoryBuffer.h"
 #include "llvm/Support/PrettyStackTrace.h"
+#include "llvm/Support/raw_ostream.h"
 #include "llvm/System/Signals.h"
 #include "llvm/System/Path.h"
 #include <memory>
@@ -58,7 +59,7 @@ static inline std::auto_ptr<Module> LoadFile(const std::string &FN,
     if (Verbose) errs() << "Loading '" << Filename.c_str() << "'\n";
     Module* Result = 0;
     
-    const std::string &FNStr = Filename.toString();
+    const std::string &FNStr = Filename.str();
     if (MemoryBuffer *Buffer = MemoryBuffer::getFileOrSTDIN(FNStr,
                                                             &ErrorMessage)) {
       Result = ParseBitcodeFile(Buffer, Context, &ErrorMessage);

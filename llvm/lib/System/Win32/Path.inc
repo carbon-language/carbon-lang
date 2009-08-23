@@ -808,8 +808,8 @@ CopyFile(const sys::Path &Dest, const sys::Path &Src, std::string* ErrMsg) {
   // Can't use CopyFile macro defined in Windows.h because it would mess up the
   // above line.  We use the expansion it would have in a non-UNICODE build.
   if (!::CopyFileA(Src.c_str(), Dest.c_str(), false))
-    return MakeErrMsg(ErrMsg, "Can't copy '" + Src.toString() +
-               "' to '" + Dest.toString() + "': ");
+    return MakeErrMsg(ErrMsg, "Can't copy '" + Src.str() +
+               "' to '" + Dest.str() + "': ");
   return false;
 }
 

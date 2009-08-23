@@ -27,9 +27,9 @@
 #include "llvm/Target/TargetData.h"
 #include "llvm/Support/FileUtilities.h"
 #include "llvm/Support/CommandLine.h"
+#include "llvm/Support/raw_ostream.h"
 #include "llvm/System/Path.h"
 #include "llvm/System/Program.h"
-#include "llvm/Config/alloca.h"
 
 #define DONT_GET_PLUGIN_LOADER_OPTION
 #include "llvm/Support/PluginLoader.h"
@@ -136,7 +136,7 @@ bool BugDriver::runPasses(const std::vector<const PassInfo*> &Passes,
            << ErrMsg << "\n";
     return(1);
   }
-  OutputFilename = uniqueFilename.toString();
+  OutputFilename = uniqueFilename.str();
 
   // set up the input file name
   sys::Path inputFilename("bugpoint-input.bc");
@@ -152,29 +152,26 @@ bool BugDriver::runPasses(const std::vector<const PassInfo*> &Passes,
   
   
   if (!ErrInfo.empty()) {
-    errs() << "Error opening bitcode file: " << inputFilename << "\n";
+    errs() << "Error opening bitcode file: " << inputFilename.str() << "\n";
     return 1;
   }
   WriteBitcodeToFile(Program, InFile);
   InFile.close();
 
   // setup the child process' arguments
-  const char** args = (const char**)
-    alloca(sizeof(const char*) * 
-           (Passes.size()+13+2*PluginLoader::getNumPlugins()+NumExtraArgs));
-  int n = 0;
+  SmallVector<const char*, 8> Args;
   sys::Path tool = sys::Program::FindProgramByName(ToolName);
   if (UseValgrind) {
-    args[n++] = "valgrind";
-    args[n++] = "--error-exitcode=1";
-    args[n++] = "-q";
-    args[n++] = tool.c_str();
+    Args.push_back("valgrind");
+    Args.push_back("--error-exitcode=1");
+    Args.push_back("-q");
+    Args.push_back(tool.c_str());
   } else
-    args[n++] = ToolName;
+    Args.push_back(ToolName);
 
-  args[n++] = "-as-child";
-  args[n++] = "-child-output";
-  args[n++] = OutputFilename.c_str();
+  Args.push_back("-as-child");
+  Args.push_back("-child-output");
+  Args.push_back(OutputFilename.c_str());
   std::vector<std::string> pass_args;
   for (unsigned i = 0, e = PluginLoader::getNumPlugins(); i != e; ++i) {
     pass_args.push_back( std::string("-load"));
@@ -185,11 +182,11 @@ bool BugDriver::runPasses(const std::vector<const PassInfo*> &Passes,
     pass_args.push_back( std::string("-") + (*I)->getPassArgument() );
   for (std::vector<std::string>::const_iterator I = pass_args.begin(),
        E = pass_args.end(); I != E; ++I )
-    args[n++] = I->c_str();
-  args[n++] = inputFilename.c_str();
+    Args.push_back(I->c_str());
+  Args.push_back(inputFilename.c_str());
   for (unsigned i = 0; i < NumExtraArgs; ++i)
-    args[n++] = *ExtraArgs;
-  args[n++] = 0;
+    Args.push_back(*ExtraArgs);
+  Args.push_back(0);
 
   sys::Path prog;
   if (UseValgrind)
@@ -201,7 +198,8 @@ bool BugDriver::runPasses(const std::vector<const PassInfo*> &Passes,
   sys::Path Nowhere;
   const sys::Path *Redirects[3] = {0, &Nowhere, &Nowhere};
 
-  int result = sys::Program::ExecuteAndWait(prog, args, 0, (SilencePasses ? Redirects : 0),
+  int result = sys::Program::ExecuteAndWait(prog, Args.data(), 0,
+                                            (SilencePasses ? Redirects : 0),
                                             Timeout, MemoryLimit, &ErrMsg);
 
   // If we are supposed to delete the bitcode file or if the passes crashed,

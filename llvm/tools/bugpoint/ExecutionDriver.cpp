@@ -18,6 +18,7 @@
 #include "llvm/Support/Debug.h"
 #include "llvm/Support/FileUtilities.h"
 #include "llvm/Support/SystemUtils.h"
+#include "llvm/Support/raw_ostream.h"
 #include <fstream>
 
 using namespace llvm;
@@ -280,9 +281,9 @@ void BugDriver::compileProgram(Module *M) {
            << "\n";
     exit(1);
   }
-  if (writeProgramToFile(BitcodeFile.toString(), M)) {
+  if (writeProgramToFile(BitcodeFile.str(), M)) {
     errs() << ToolName << ": Error emitting bitcode to file '"
-           << BitcodeFile << "'!\n";
+           << BitcodeFile.str() << "'!\n";
     exit(1);
   }
 
@@ -290,7 +291,7 @@ void BugDriver::compileProgram(Module *M) {
   FileRemover BitcodeFileRemover(BitcodeFile, !SaveTemps);
 
   // Actually compile the program!
-  Interpreter->compileProgram(BitcodeFile.toString());
+  Interpreter->compileProgram(BitcodeFile.str());
 }
 
 
@@ -315,7 +316,7 @@ std::string BugDriver::executeProgram(std::string OutputFile,
              << ErrMsg << "!\n";
       exit(1);
     }
-    BitcodeFile = uniqueFilename.toString();
+    BitcodeFile = uniqueFilename.str();
 
     if (writeProgramToFile(BitcodeFile, Program)) {
       errs() << ToolName << ": Error emitting bitcode to file '"
@@ -338,7 +339,7 @@ std::string BugDriver::executeProgram(std::string OutputFile,
            << ErrMsg << "\n";
     exit(1);
   }
-  OutputFile = uniqueFile.toString();
+  OutputFile = uniqueFile.str();
 
   // Figure out which shared objects to run, if any.
   std::vector<std::string> SharedObjs(AdditionalSOs);
@@ -393,7 +394,7 @@ std::string BugDriver::compileSharedObject(const std::string &BitcodeFile) {
   GCC::FileType FT = SafeInterpreter->OutputCode(BitcodeFile, OutputFile);
 
   std::string SharedObjectFile;
-  if (gcc->MakeSharedObject(OutputFile.toString(), FT,
+  if (gcc->MakeSharedObject(OutputFile.str(), FT,
                             SharedObjectFile, AdditionalLinkerArgs))
     exit(1);
 
@@ -447,7 +448,7 @@ bool BugDriver::diffProgram(const std::string &BitcodeFile,
   std::string Error;
   bool FilesDifferent = false;
   if (int Diff = DiffFilesWithTolerance(sys::Path(ReferenceOutputFile),
-                                        sys::Path(Output.toString()),
+                                        sys::Path(Output.str()),
                                         AbsTolerance, RelTolerance, &Error)) {
     if (Diff == 2) {
       errs() << "While diffing output: " << Error << '\n';

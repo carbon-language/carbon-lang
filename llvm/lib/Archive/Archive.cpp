@@ -31,7 +31,7 @@ ArchiveMember::getMemberSize() const {
 
   // If it has a long filename, include the name length
   if (hasLongFilename())
-    result += path.toString().length() + 1;
+    result += path.str().length() + 1;
 
   // If its now odd lengthed, include the padding byte
   if (result % 2 != 0 )
@@ -76,38 +76,38 @@ bool ArchiveMember::replaceWith(const sys::Path& newFile, std::string* ErrMsg) {
   path = newFile;
 
   // SVR4 symbol tables have an empty name
-  if (path.toString() == ARFILE_SVR4_SYMTAB_NAME)
+  if (path.str() == ARFILE_SVR4_SYMTAB_NAME)
     flags |= SVR4SymbolTableFlag;
   else
     flags &= ~SVR4SymbolTableFlag;
 
   // BSD4.4 symbol tables have a special name
-  if (path.toString() == ARFILE_BSD4_SYMTAB_NAME)
+  if (path.str() == ARFILE_BSD4_SYMTAB_NAME)
     flags |= BSD4SymbolTableFlag;
   else
     flags &= ~BSD4SymbolTableFlag;
 
   // LLVM symbol tables have a very specific name
-  if (path.toString() == ARFILE_LLVM_SYMTAB_NAME)
+  if (path.str() == ARFILE_LLVM_SYMTAB_NAME)
     flags |= LLVMSymbolTableFlag;
   else
     flags &= ~LLVMSymbolTableFlag;
 
   // String table name
-  if (path.toString() == ARFILE_STRTAB_NAME)
+  if (path.str() == ARFILE_STRTAB_NAME)
     flags |= StringTableFlag;
   else
     flags &= ~StringTableFlag;
 
   // If it has a slash then it has a path
-  bool hasSlash = path.toString().find('/') != std::string::npos;
+  bool hasSlash = path.str().find('/') != std::string::npos;
   if (hasSlash)
     flags |= HasPathFlag;
   else
     flags &= ~HasPathFlag;
 
   // If it has a slash or its over 15 chars then its a long filename format
-  if (hasSlash || path.toString().length() > 15)
+  if (hasSlash || path.str().length() > 15)
     flags |= HasLongFilenameFlag;
   else
     flags &= ~HasLongFilenameFlag;
@@ -217,7 +217,7 @@ bool llvm::GetBitcodeSymbols(const sys::Path& fName,
   std::auto_ptr<MemoryBuffer> Buffer(
                        MemoryBuffer::getFileOrSTDIN(fName.c_str()));
   if (!Buffer.get()) {
-    if (ErrMsg) *ErrMsg = "Could not open file '" + fName.toString() + "'";
+    if (ErrMsg) *ErrMsg = "Could not open file '" + fName.str() + "'";
     return true;
   }
   

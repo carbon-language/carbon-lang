@@ -96,10 +96,10 @@ bool
 Linker::LinkInArchive(const sys::Path &Filename, bool &is_native) {
   // Make sure this is an archive file we're dealing with
   if (!Filename.isArchive())
-    return error("File '" + Filename.toString() + "' is not an archive.");
+    return error("File '" + Filename.str() + "' is not an archive.");
 
   // Open the archive file
-  verbose("Linking archive file '" + Filename.toString() + "'");
+  verbose("Linking archive file '" + Filename.str() + "'");
 
   // Find all of the symbols currently undefined in the bitcode program.
   // If all the symbols are defined, the program is complete, and there is
@@ -108,8 +108,7 @@ Linker::LinkInArchive(const sys::Path &Filename, bool &is_native) {
   GetAllUndefinedSymbols(Composite, UndefinedSymbols);
 
   if (UndefinedSymbols.empty()) {
-    verbose("No symbols undefined, skipping library '" +
-            Filename.toString() + "'");
+    verbose("No symbols undefined, skipping library '" + Filename.str() + "'");
     return false;  // No need to link anything in!
   }
 
@@ -120,7 +119,7 @@ Linker::LinkInArchive(const sys::Path &Filename, bool &is_native) {
   Archive* arch = AutoArch.get();
 
   if (!arch)
-    return error("Cannot read archive '" + Filename.toString() +
+    return error("Cannot read archive '" + Filename.str() +
                  "': " + ErrMsg);
   if (!arch->isBitcodeArchive()) {
     is_native = true;
@@ -143,7 +142,7 @@ Linker::LinkInArchive(const sys::Path &Filename, bool &is_native) {
     // Find the modules we need to link into the target module
     std::set<ModuleProvider*> Modules;
     if (!arch->findModulesDefiningSymbols(UndefinedSymbols, Modules, &ErrMsg))
-      return error("Cannot find symbols in '" + Filename.toString() + 
+      return error("Cannot find symbols in '" + Filename.str() + 
                    "': " + ErrMsg);
 
     // If we didn't find any more modules to link this time, we are done

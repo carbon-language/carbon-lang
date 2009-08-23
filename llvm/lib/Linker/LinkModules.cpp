@@ -26,6 +26,7 @@
 #include "llvm/Instructions.h"
 #include "llvm/Assembly/Writer.h"
 #include "llvm/Support/ErrorHandling.h"
+#include "llvm/Support/raw_ostream.h"
 #include "llvm/System/Path.h"
 #include "llvm/ADT/DenseMap.h"
 #include <sstream>

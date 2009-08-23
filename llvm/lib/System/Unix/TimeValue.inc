@@ -21,7 +21,7 @@
 namespace llvm {
   using namespace sys;
 
-std::string TimeValue::toString() const {
+std::string TimeValue::str() const {
   char buffer[32];
 
   time_t ourTime = time_t(this->toEpochTime());

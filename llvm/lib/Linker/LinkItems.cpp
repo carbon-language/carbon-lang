@@ -14,10 +14,10 @@
 
 #include "llvm/Linker.h"
 #include "llvm/Module.h"
+#include "llvm/Bitcode/ReaderWriter.h"
+#include "llvm/System/Path.h"
 #include "llvm/Support/ErrorHandling.h"
 #include "llvm/Support/MemoryBuffer.h"
-#include "llvm/Bitcode/ReaderWriter.h"
-
 using namespace llvm;
 
 // LinkItems - This function is the main entry point into linking. It takes a
@@ -93,7 +93,7 @@ bool Linker::LinkInLibrary(const StringRef &Lib, bool& is_native) {
 
     case sys::Archive_FileType:
       if (LinkInArchive(Pathname, is_native))
-        return error("Cannot link archive '" + Pathname.toString() + "'");
+        return error("Cannot link archive '" + Pathname.str() + "'");
       break;
 
     case sys::ELF_Relocatable_FileType:
@@ -158,7 +158,7 @@ bool Linker::LinkInFile(const sys::Path &File, bool &is_native) {
   is_native = false;
   
   // Check for a file of name "-", which means "read standard input"
-  if (File.toString() == "-") {
+  if (File.str() == "-") {
     std::auto_ptr<Module> M;
     if (MemoryBuffer *Buffer = MemoryBuffer::getSTDIN()) {
       M.reset(ParseBitcodeFile(Buffer, Context, &Error));
@@ -173,7 +173,7 @@ bool Linker::LinkInFile(const sys::Path &File, bool &is_native) {
 
   // Make sure we can at least read the file
   if (!File.canRead())
-    return error("Cannot find linker input '" + File.toString() + "'");
+    return error("Cannot find linker input '" + File.str() + "'");
 
   // If its an archive, try to link it in
   std::string Magic;
@@ -181,26 +181,26 @@ bool Linker::LinkInFile(const sys::Path &File, bool &is_native) {
   switch (sys::IdentifyFileType(Magic.c_str(), 64)) {
     default: llvm_unreachable("Bad file type identification");
     case sys::Unknown_FileType:
-      return warning("Ignoring file '" + File.toString() + 
+      return warning("Ignoring file '" + File.str() + 
                    "' because does not contain bitcode.");
 
     case sys::Archive_FileType:
       // A user may specify an ar archive without -l, perhaps because it
       // is not installed as a library. Detect that and link the archive.
-      verbose("Linking archive file '" + File.toString() + "'");
+      verbose("Linking archive file '" + File.str() + "'");
       if (LinkInArchive(File, is_native))
         return true;
       break;
 
     case sys::Bitcode_FileType: {
-      verbose("Linking bitcode file '" + File.toString() + "'");
+      verbose("Linking bitcode file '" + File.str() + "'");
       std::auto_ptr<Module> M(LoadObject(File));
       if (M.get() == 0)
-        return error("Cannot load file '" + File.toString() + "': " + Error);
+        return error("Cannot load file '" + File.str() + "': " + Error);
       if (LinkInModule(M.get(), &Error))
-        return error("Cannot link file '" + File.toString() + "': " + Error);
+        return error("Cannot link file '" + File.str() + "': " + Error);
 
-      verbose("Linked in file '" + File.toString() + "'");
+      verbose("Linked in file '" + File.str() + "'");
       break;
     }
 

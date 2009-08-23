@@ -826,8 +826,9 @@ static bool TestCodeGenerator(BugDriver &BD, Module *Test, Module *Safe) {
            << ErrMsg << "\n";
     exit(1);
   }
-  if (BD.writeProgramToFile(TestModuleBC.toString(), Test)) {
-    errs() << "Error writing bitcode to `" << TestModuleBC << "'\nExiting.";
+  if (BD.writeProgramToFile(TestModuleBC.str(), Test)) {
+    errs() << "Error writing bitcode to `" << TestModuleBC.str()
+           << "'\nExiting.";
     exit(1);
   }
   delete Test;
@@ -840,16 +841,17 @@ static bool TestCodeGenerator(BugDriver &BD, Module *Test, Module *Safe) {
     exit(1);
   }
 
-  if (BD.writeProgramToFile(SafeModuleBC.toString(), Safe)) {
-    errs() << "Error writing bitcode to `" << SafeModuleBC << "'\nExiting.";
+  if (BD.writeProgramToFile(SafeModuleBC.str(), Safe)) {
+    errs() << "Error writing bitcode to `" << SafeModuleBC.str()
+           << "'\nExiting.";
     exit(1);
   }
-  std::string SharedObject = BD.compileSharedObject(SafeModuleBC.toString());
+  std::string SharedObject = BD.compileSharedObject(SafeModuleBC.str());
   delete Safe;
 
   // Run the code generator on the `Test' code, loading the shared library.
   // The function returns whether or not the new output differs from reference.
-  int Result = BD.diffProgram(TestModuleBC.toString(), SharedObject, false);
+  int Result = BD.diffProgram(TestModuleBC.str(), SharedObject, false);
 
   if (Result)
     errs() << ": still failing!\n";
@@ -899,8 +901,9 @@ bool BugDriver::debugCodeGenerator() {
     exit(1);
   }
 
-  if (writeProgramToFile(TestModuleBC.toString(), ToCodeGen)) {
-    errs() << "Error writing bitcode to `" << TestModuleBC << "'\nExiting.";
+  if (writeProgramToFile(TestModuleBC.str(), ToCodeGen)) {
+    errs() << "Error writing bitcode to `" << TestModuleBC.str()
+           << "'\nExiting.";
     exit(1);
   }
   delete ToCodeGen;
@@ -913,31 +916,33 @@ bool BugDriver::debugCodeGenerator() {
     exit(1);
   }
 
-  if (writeProgramToFile(SafeModuleBC.toString(), ToNotCodeGen)) {
-    errs() << "Error writing bitcode to `" << SafeModuleBC << "'\nExiting.";
+  if (writeProgramToFile(SafeModuleBC.str(), ToNotCodeGen)) {
+    errs() << "Error writing bitcode to `" << SafeModuleBC.str()
+           << "'\nExiting.";
     exit(1);
   }
-  std::string SharedObject = compileSharedObject(SafeModuleBC.toString());
+  std::string SharedObject = compileSharedObject(SafeModuleBC.str());
   delete ToNotCodeGen;
 
   outs() << "You can reproduce the problem with the command line: \n";
   if (isExecutingJIT()) {
-    outs() << "  lli -load " << SharedObject << " " << TestModuleBC;
+    outs() << "  lli -load " << SharedObject << " " << TestModuleBC.str();
   } else {
-    outs() << "  llc -f " << TestModuleBC << " -o " << TestModuleBC<< ".s\n";
-    outs() << "  gcc " << SharedObject << " " << TestModuleBC
-              << ".s -o " << TestModuleBC << ".exe";
+    outs() << "  llc -f " << TestModuleBC.str() << " -o " << TestModuleBC.str()
+           << ".s\n";
+    outs() << "  gcc " << SharedObject << " " << TestModuleBC.str()
+              << ".s -o " << TestModuleBC.str() << ".exe";
 #if defined (HAVE_LINK_R)
     outs() << " -Wl,-R.";
 #endif
     outs() << "\n";
-    outs() << "  " << TestModuleBC << ".exe";
+    outs() << "  " << TestModuleBC.str() << ".exe";
   }
   for (unsigned i=0, e = InputArgv.size(); i != e; ++i)
     outs() << " " << InputArgv[i];
   outs() << '\n';
   outs() << "The shared object was created with:\n  llc -march=c "
-         << SafeModuleBC << " -o temporary.c\n"
+         << SafeModuleBC.str() << " -o temporary.c\n"
          << "  gcc -xc temporary.c -O2 -o " << SharedObject;
   if (TargetTriple.getArch() == Triple::sparc)
     outs() << " -G";              // Compile a shared library, `-G' for Sparc

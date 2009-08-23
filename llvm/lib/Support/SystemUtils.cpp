@@ -15,6 +15,7 @@
 #include "llvm/Support/SystemUtils.h"
 #include "llvm/System/Process.h"
 #include "llvm/System/Program.h"
+#include "llvm/Support/raw_ostream.h"
 using namespace llvm;
 
 bool llvm::CheckBitcodeOutputToConsole(raw_ostream &stream_to_check,

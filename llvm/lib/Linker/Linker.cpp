@@ -14,9 +14,10 @@
 #include "llvm/Linker.h"
 #include "llvm/Module.h"
 #include "llvm/Bitcode/ReaderWriter.h"
-#include "llvm/Config/config.h"
+#include "llvm/System/Path.h"
 #include "llvm/Support/MemoryBuffer.h"
 #include "llvm/Support/raw_ostream.h"
+#include "llvm/Config/config.h"
 using namespace llvm;
 
 Linker::Linker(const StringRef &progname, const StringRef &modname,
@@ -69,11 +70,8 @@ Linker::addPath(const sys::Path& path) {
 
 void
 Linker::addPaths(const std::vector<std::string>& paths) {
-  for (unsigned i = 0; i != paths.size(); ++i) {
-    sys::Path aPath;
-    aPath.set(paths[i]);
-    LibPaths.push_back(aPath);
-  }
+  for (unsigned i = 0, e = paths.size(); i != e; ++i)
+    LibPaths.push_back(sys::Path(paths[i]));
 }
 
 void
@@ -100,16 +98,15 @@ Linker::LoadObject(const sys::Path &FN) {
   std::string ParseErrorMessage;
   Module *Result = 0;
   
-  const std::string &FNS = FN.toString();
-  std::auto_ptr<MemoryBuffer> Buffer(MemoryBuffer::getFileOrSTDIN(FNS.c_str()));
+  std::auto_ptr<MemoryBuffer> Buffer(MemoryBuffer::getFileOrSTDIN(FN.c_str()));
   if (Buffer.get())
     Result = ParseBitcodeFile(Buffer.get(), Context, &ParseErrorMessage);
   else
-    ParseErrorMessage = "Error reading file '" + FNS + "'";
+    ParseErrorMessage = "Error reading file '" + FN.str() + "'";
     
   if (Result)
     return std::auto_ptr<Module>(Result);
-  Error = "Bitcode file '" + FN.toString() + "' could not be loaded";
+  Error = "Bitcode file '" + FN.str() + "' could not be loaded";
   if (ParseErrorMessage.size())
     Error += ": " + ParseErrorMessage;
   return std::auto_ptr<Module>();
