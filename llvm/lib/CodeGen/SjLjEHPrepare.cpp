@@ -82,8 +82,8 @@ char SjLjEHPass::ID = 0;
 FunctionPass *llvm::createSjLjEHPass(const TargetLowering *TLI) {
   return new SjLjEHPass(TLI);
 }
-// doInitialization - Make sure that there is a prototype for abort in the
-// current module.
+// doInitialization - Set up decalarations and types needed to process
+// exceptions.
 bool SjLjEHPass::doInitialization(Module &M) {
   // Build the function context structure.
   // builtin_setjmp uses a five word jbuf
@@ -119,6 +119,7 @@ bool SjLjEHPass::doInitialization(Module &M) {
   Selector32Fn = Intrinsic::getDeclaration(&M, Intrinsic::eh_selector_i32);
   Selector64Fn = Intrinsic::getDeclaration(&M, Intrinsic::eh_selector_i64);
   ExceptionFn = Intrinsic::getDeclaration(&M, Intrinsic::eh_exception);
+  PersonalityFn = 0;
 
   return true;
 }
@@ -280,9 +281,32 @@ bool SjLjEHPass::insertSjLjEHSupport(Function &F) {
   // If we don't have any invokes or unwinds, there's nothing to do.
   if (Unwinds.empty() && Invokes.empty()) return false;
 
+  // Find the eh.selector.*  and eh.exception calls. We'll use the first
+  // eh.selector to determine the right personality function to use. For
+  // SJLJ, we always use the same personality for the whole function,
+  // not on a per-selector basis.
+  // FIXME: That's a bit ugly. Better way?
+  SmallVector<CallInst*,16> EH_Selectors;
+  SmallVector<CallInst*,16> EH_Exceptions;
+  for (Function::iterator BB = F.begin(), E = F.end(); BB != E; ++BB) {
+    for (BasicBlock::iterator I = BB->begin(), E = BB->end(); I != E; ++I) {
+      if (CallInst *CI = dyn_cast<CallInst>(I)) {
+        if (CI->getCalledFunction() == Selector32Fn ||
+            CI->getCalledFunction() == Selector64Fn) {
+          if (!PersonalityFn) PersonalityFn = CI->getOperand(2);
+          EH_Selectors.push_back(CI);
+        } else if (CI->getCalledFunction() == ExceptionFn) {
+          EH_Exceptions.push_back(CI);
+        }
+      }
+    }
+  }
+  // If we don't have any eh.selector calls, we can't determine the personality
+  // function. Without a personality function, we can't process exceptions.
+  if (!PersonalityFn) return false;
+
   NumInvokes += Invokes.size();
   NumUnwinds += Unwinds.size();
-
 
   if (!Invokes.empty()) {
     // We have invokes, so we need to add register/unregister calls to get
@@ -322,26 +346,6 @@ bool SjLjEHPass::insertSjLjEHSupport(Function &F) {
                                                      "exception_gep",
                                                      EntryBB->getTerminator());
 
-    // Find the eh.selector.*  and eh.exception calls. We'll use the first
-    // ex.selector to determine the right personality function to use. For
-    // SJLJ, we always use the same personality for the whole function,
-    // not on a per-selector basis.
-    // FIXME: That's a bit ugly. Better way?
-    SmallVector<CallInst*,16> EH_Selectors;
-    SmallVector<CallInst*,16> EH_Exceptions;
-    for (Function::iterator BB = F.begin(), E = F.end(); BB != E; ++BB) {
-      for (BasicBlock::iterator I = BB->begin(), E = BB->end(); I != E; ++I) {
-        if (CallInst *CI = dyn_cast<CallInst>(I)) {
-          if (CI->getCalledFunction() == Selector32Fn ||
-              CI->getCalledFunction() == Selector64Fn) {
-            if (!PersonalityFn) PersonalityFn = CI->getOperand(2);
-            EH_Selectors.push_back(CI);
-          } else if (CI->getCalledFunction() == ExceptionFn) {
-            EH_Exceptions.push_back(CI);
-          }
-        }
-      }
-    }
     // The result of the eh.selector call will be replaced with a
     // a reference to the selector value returned in the function
     // context. We leave the selector itself so the EH analysis later
