@@ -37,7 +37,6 @@
 #include "llvm/ADT/SmallPtrSet.h"
 #include "llvm/ADT/SmallSet.h"
 #include "llvm/ADT/STLExtras.h"
-#include "llvm/Config/alloca.h"
 #include <algorithm>
 using namespace llvm;
 

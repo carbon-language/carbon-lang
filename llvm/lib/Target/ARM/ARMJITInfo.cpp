@@ -19,7 +19,6 @@
 #include "ARMSubtarget.h"
 #include "llvm/Function.h"
 #include "llvm/CodeGen/JITCodeEmitter.h"
-#include "llvm/Config/alloca.h"
 #include "llvm/Support/Debug.h"
 #include "llvm/Support/ErrorHandling.h"
 #include "llvm/Support/raw_ostream.h"

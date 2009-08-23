@@ -16,7 +16,7 @@
 //===          is guaranteed to work on *all* UNIX variants.
 //===----------------------------------------------------------------------===//
 
-#include "llvm/Config/alloca.h"
+#include "llvm/ADT/SmallVector.h"
 #include "Unix.h"
 #if HAVE_SYS_STAT_H
 #include <sys/stat.h>
@@ -400,7 +400,9 @@ Path::getSuffix() const {
 
 bool Path::getMagicNumber(std::string& Magic, unsigned len) const {
   assert(len < 1024 && "Request for magic string too long");
-  char* buf = (char*) alloca(1 + len);
+  SmallVector<char, 128> Buf;
+  Buf.resize(1 + len);
+  char* buf = Buf.data();
   int fd = ::open(path.c_str(), O_RDONLY);
   if (fd < 0)
     return false;
@@ -829,7 +831,9 @@ Path::makeUnique(bool reuse_current, std::string* ErrMsg) {
 
   // Append an XXXXXX pattern to the end of the file for use with mkstemp,
   // mktemp or our own implementation.
-  char *FNBuffer = (char*) alloca(path.size()+8);
+  SmallVector<char, 128> Buf;
+  Buf.resize(path.size()+8);
+  char *FNBuffer = Buf.data();
     path.copy(FNBuffer,path.size());
   if (isDirectory())
     strcpy(FNBuffer+path.size(), "/XXXXXX");
