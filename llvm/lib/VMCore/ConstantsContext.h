@@ -20,6 +20,7 @@
 #include "llvm/Operator.h"
 #include "llvm/Support/Debug.h"
 #include "llvm/Support/ErrorHandling.h"
+#include "llvm/Support/raw_ostream.h"
 #include "llvm/System/Mutex.h"
 #include "llvm/System/RWMutex.h"
 #include <map>
@@ -773,7 +774,7 @@ public:
   }
 
   void dump() const {
-    DOUT << "Constant.cpp: ValueMap\n";
+    DEBUG(errs() << "Constant.cpp: ValueMap\n");
   }
 };
 

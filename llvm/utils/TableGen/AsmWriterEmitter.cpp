@@ -658,8 +658,8 @@ void AsmWriterEmitter::run(raw_ostream &O) {
     
     // If we don't have enough bits for this operand, don't include it.
     if (NumBits > BitsLeft) {
-      DOUT << "Not enough bits to densely encode " << NumBits
-           << " more bits\n";
+      DEBUG(errs() << "Not enough bits to densely encode " << NumBits
+                   << " more bits\n");
       break;
     }
     

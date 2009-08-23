@@ -38,7 +38,7 @@ void ValueSymbolTable::reinsertValue(Value* V) {
 
   // Try inserting the name, assuming it won't conflict.
   if (vmap.insert(V->Name)) {
-    //DOUT << " Inserted value: " << V->Name << ": " << *V << "\n";
+    //DEBUG(errs() << " Inserted value: " << V->Name << ": " << *V << "\n");
     return;
   }
   
@@ -62,14 +62,14 @@ void ValueSymbolTable::reinsertValue(Value* V) {
       // Newly inserted name.  Success!
       NewName.setValue(V);
       V->Name = &NewName;
-      //DEBUG(DOUT << " Inserted value: " << UniqueName << ": " << *V << "\n");
+     //DEBUG(errs() << " Inserted value: " << UniqueName << ": " << *V << "\n");
       return;
     }
   }
 }
 
 void ValueSymbolTable::removeValueName(ValueName *V) {
-  //DEBUG(DOUT << " Removing Value: " << V->getKeyData() << "\n");
+  //DEBUG(errs() << " Removing Value: " << V->getKeyData() << "\n");
   // Remove the value from the symbol table.
   vmap.remove(V);
 }
@@ -82,7 +82,7 @@ ValueName *ValueSymbolTable::createValueName(const StringRef &Name, Value *V) {
   ValueName &Entry = vmap.GetOrCreateValue(Name);
   if (Entry.getValue() == 0) {
     Entry.setValue(V);
-    //DEBUG(DOUT << " Inserted value: " << Entry.getKeyData() << ": "
+    //DEBUG(errs() << " Inserted value: " << Entry.getKeyData() << ": "
     //           << *V << "\n");
     return &Entry;
   }
@@ -102,7 +102,7 @@ ValueName *ValueSymbolTable::createValueName(const StringRef &Name, Value *V) {
     if (NewName.getValue() == 0) {
       // Newly inserted name.  Success!
       NewName.setValue(V);
-      //DEBUG(DOUT << " Inserted value: " << UniqueName << ": " << *V << "\n");
+     //DEBUG(errs() << " Inserted value: " << UniqueName << ": " << *V << "\n");
       return &NewName;
     }
   }
@@ -112,10 +112,10 @@ ValueName *ValueSymbolTable::createValueName(const StringRef &Name, Value *V) {
 // dump - print out the symbol table
 //
 void ValueSymbolTable::dump() const {
-  //DOUT << "ValueSymbolTable:\n";
+  //DEBUG(errs() << "ValueSymbolTable:\n");
   for (const_iterator I = begin(), E = end(); I != E; ++I) {
-    //DOUT << "  '" << I->getKeyData() << "' = ";
+    //DEBUG(errs() << "  '" << I->getKeyData() << "' = ");
     I->getValue()->dump();
-    //DOUT << "\n";
+    //DEBUG(errs() << "\n");
   }
 }

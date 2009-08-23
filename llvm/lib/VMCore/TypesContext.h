@@ -304,8 +304,8 @@ public:
   void RefineAbstractType(TypeClass *Ty, const DerivedType *OldType,
                         const Type *NewType) {
 #ifdef DEBUG_MERGE_TYPES
-    DOUT << "RefineAbstractType(" << (void*)OldType << "[" << *OldType
-         << "], " << (void*)NewType << " [" << *NewType << "])\n";
+    DEBUG(errs() << "RefineAbstractType(" << (void*)OldType << "[" << *OldType
+                 << "], " << (void*)NewType << " [" << *NewType << "])\n");
 #endif
     
     // Otherwise, we are changing one subelement type into another.  Clearly the
@@ -410,12 +410,12 @@ public:
 
   void print(const char *Arg) const {
 #ifdef DEBUG_MERGE_TYPES
-    DOUT << "TypeMap<>::" << Arg << " table contents:\n";
+    DEBUG(errs() << "TypeMap<>::" << Arg << " table contents:\n");
     unsigned i = 0;
     for (typename std::map<ValType, PATypeHolder>::const_iterator I
            = Map.begin(), E = Map.end(); I != E; ++I)
-      DOUT << " " << (++i) << ". " << (void*)I->second.get() << " "
-           << *I->second.get() << "\n";
+      DEBUG(errs() << " " << (++i) << ". " << (void*)I->second.get() << " "
+                   << *I->second.get() << "\n");
 #endif
   }
 
