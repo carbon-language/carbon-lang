@@ -28,9 +28,10 @@ static void WriteGraphToFile(std::ostream &O, const std::string &GraphName,
                              const GraphType &GT) {
   std::string Filename = GraphName + ".dot";
   O << "Writing '" << Filename << "'...";
-  std::ofstream F(Filename.c_str());
+  std::string ErrInfo;
+  raw_fd_ostream F(Filename.c_str(), ErrInfo, raw_fd_ostream::F_Force);
 
-  if (F.good())
+  if (ErrInfo.empty())
     WriteGraph(F, GT);
   else
     O << "  error opening file for writing!";
