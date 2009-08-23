@@ -538,38 +538,6 @@ namespace llvm {
 
     void printRegName(unsigned reg) const;
   };
-
-  /// IntervalPrefixPrinter - Print live interval indices before each
-  /// instruction.
-  class IntervalPrefixPrinter : public PrefixPrinter {
-  private:
-    const LiveIntervals &liinfo;
-
-  public:
-    IntervalPrefixPrinter(const LiveIntervals &lii)
-        : liinfo(lii) {};
-
-    // We need null implementations of the other virtual functions to
-    // avoid warnings about hidden virtual functions.
-
-    raw_ostream &operator()(raw_ostream &out,
-                            const MachineBasicBlock &instr) const {
-      return out;
-    }
-    
-    raw_ostream &operator()(raw_ostream &out,
-                            const MachineInstr &instr) const;
-
-    std::ostream &operator()(std::ostream &out,
-                             const MachineBasicBlock &instr) const {
-      return out;
-    }
-    
-    std::ostream &operator()(std::ostream &out,
-                             const MachineInstr &instr) const {
-      return out;
-    }
-  };
 } // End llvm namespace
 
 #endif

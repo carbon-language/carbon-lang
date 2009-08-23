@@ -2550,8 +2550,3 @@ LiveRange LiveIntervals::addLiveRangeToEndOfBlock(unsigned reg,
   return LR;
 }
 
-raw_ostream &
-IntervalPrefixPrinter::operator()(raw_ostream &out,
-                                  const MachineInstr &instr) const {
-      return out << liinfo.getInstructionIndex(&instr);
-}
