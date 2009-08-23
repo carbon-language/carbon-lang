@@ -414,6 +414,8 @@ public:
         llvm::StructType::get(C->getType()->getContext(), Types, false);
       return llvm::ConstantStruct::get(STy, Elts);
     }
+    case CastExpr::CK_NullToMemberPointer:
+      return CGM.EmitNullConstant(E->getType());
     default: {
       // FIXME: This should be handled by the CK_NoOp cast kind.
       // Explicit and implicit no-op casts
