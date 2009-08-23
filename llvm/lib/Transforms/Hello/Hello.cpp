@@ -16,7 +16,7 @@
 #include "llvm/Pass.h"
 #include "llvm/Function.h"
 #include "llvm/ADT/StringExtras.h"
-#include "llvm/Support/Streams.h"
+#include "llvm/Support/raw_ostream.h"
 #include "llvm/ADT/Statistic.h"
 using namespace llvm;
 
@@ -32,7 +32,7 @@ namespace {
       HelloCounter++;
       std::string fname = F.getName();
       EscapeString(fname);
-      cerr << "Hello: " << fname << "\n";
+      errs() << "Hello: " << fname << "\n";
       return false;
     }
   };
@@ -51,7 +51,7 @@ namespace {
       HelloCounter++;
       std::string fname = F.getName();
       EscapeString(fname);
-      cerr << "Hello: " << fname << "\n";
+      errs() << "Hello: " << fname << "\n";
       return false;
     }
 

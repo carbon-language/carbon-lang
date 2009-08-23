@@ -56,7 +56,6 @@
 #include "llvm/Support/CallSite.h"
 #include "llvm/Support/CFG.h"
 #include "llvm/Support/InstVisitor.h"
-#include "llvm/Support/Streams.h"
 #include "llvm/ADT/SmallPtrSet.h"
 #include "llvm/ADT/SmallVector.h"
 #include "llvm/ADT/StringExtras.h"
@@ -85,9 +84,9 @@ namespace {  // Anonymous namespace for class
 
       for (Function::iterator I = F.begin(), E = F.end(); I != E; ++I) {
         if (I->empty() || !I->back().isTerminator()) {
-          cerr << "Basic Block does not have terminator!\n";
+          errs() << "Basic Block does not have terminator!\n";
           WriteAsOperand(errs(), I, true);
-          cerr << "\n";
+          errs() << "\n";
           Broken = true;
         }
       }

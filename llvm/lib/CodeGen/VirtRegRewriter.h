@@ -10,27 +10,9 @@
 #ifndef LLVM_CODEGEN_VIRTREGREWRITER_H
 #define LLVM_CODEGEN_VIRTREGREWRITER_H
 
-#include "llvm/Target/TargetRegisterInfo.h"
-#include "llvm/ADT/BitVector.h"
-#include "llvm/ADT/IndexedMap.h"
-#include "llvm/ADT/SmallPtrSet.h"
-#include "llvm/ADT/SmallVector.h"
-#include "llvm/Support/Streams.h"
-#include "llvm/Function.h"
 #include "llvm/CodeGen/LiveIntervalAnalysis.h"
-#include "llvm/CodeGen/MachineFrameInfo.h"
 #include "llvm/CodeGen/MachineFunction.h"
-#include "llvm/CodeGen/MachineInstrBuilder.h"
-#include "llvm/CodeGen/MachineRegisterInfo.h"
-#include "llvm/Target/TargetMachine.h"
-#include "llvm/Target/TargetInstrInfo.h"
-#include "llvm/Support/CommandLine.h"
-#include "llvm/Support/Debug.h"
-#include "llvm/ADT/BitVector.h"
-#include "llvm/ADT/DenseMap.h"
-#include "llvm/ADT/SmallSet.h"
 #include "VirtRegMap.h"
-#include <map>
 
 namespace llvm {
   

@@ -16,7 +16,7 @@
 #include "llvm/ADT/StringExtras.h"
 #include "llvm/ADT/StringRef.h"
 #include "llvm/Support/ManagedStatic.h"
-#include "llvm/Support/Streams.h"
+#include "llvm/Support/raw_ostream.h"
 #include "llvm/System/RWMutex.h"
 #include "llvm/System/Threading.h"
 #include <algorithm>
@@ -79,7 +79,7 @@ Type* TypeSymbolTable::remove(iterator Entry) {
 
 #if DEBUG_SYMBOL_TABLE
   dump();
-  cerr << " Removing Value: " << Result->getName() << "\n";
+  errs() << " Removing Value: " << Result->getName() << "\n";
 #endif
 
   tmap.erase(Entry);
@@ -90,9 +90,9 @@ Type* TypeSymbolTable::remove(iterator Entry) {
   // list...
   if (Result->isAbstract()) {
 #if DEBUG_ABSTYPE
-    cerr << "Removing abstract type from symtab"
-         << Result->getDescription()
-         << "\n";
+    errs() << "Removing abstract type from symtab"
+           << Result->getDescription()
+           << "\n";
 #endif
     cast<DerivedType>(Result)->removeAbstractTypeUser(this);
   }
@@ -112,7 +112,7 @@ void TypeSymbolTable::insert(const StringRef &Name, const Type* T) {
     
 #if DEBUG_SYMBOL_TABLE
     dump();
-    cerr << " Inserted type: " << Name << ": " << T->getDescription() << "\n";
+    errs() << " Inserted type: " << Name << ": " << T->getDescription() << "\n";
 #endif
   } else {
     // If there is a name conflict...
@@ -124,8 +124,8 @@ void TypeSymbolTable::insert(const StringRef &Name, const Type* T) {
     
 #if DEBUG_SYMBOL_TABLE
     dump();
-    cerr << " Inserting type: " << UniqueName << ": "
-        << T->getDescription() << "\n";
+    errs() << " Inserting type: " << UniqueName << ": "
+           << T->getDescription() << "\n";
 #endif
 
     // Insert the tmap entry
@@ -138,7 +138,7 @@ void TypeSymbolTable::insert(const StringRef &Name, const Type* T) {
   if (T->isAbstract()) {
     cast<DerivedType>(T)->addAbstractTypeUser(this);
 #if DEBUG_ABSTYPE
-    cerr << "Added abstract type to ST: " << T->getDescription() << "\n";
+    errs() << "Added abstract type to ST: " << T->getDescription() << "\n";
 #endif
   }
 }
@@ -156,14 +156,14 @@ void TypeSymbolTable::refineAbstractType(const DerivedType *OldType,
   for (iterator I = begin(), E = end(); I != E; ++I) {
     if (I->second == (Type*)OldType) {  // FIXME when Types aren't const.
 #if DEBUG_ABSTYPE
-      cerr << "Removing type " << OldType->getDescription() << "\n";
+      errs() << "Removing type " << OldType->getDescription() << "\n";
 #endif
       OldType->removeAbstractTypeUser(this);
 
       I->second = (Type*)NewType;  // TODO FIXME when types aren't const
       if (NewType->isAbstract()) {
 #if DEBUG_ABSTYPE
-        cerr << "Added type " << NewType->getDescription() << "\n";
+        errs() << "Added type " << NewType->getDescription() << "\n";
 #endif
         cast<DerivedType>(NewType)->addAbstractTypeUser(this);
       }
@@ -184,13 +184,13 @@ void TypeSymbolTable::typeBecameConcrete(const DerivedType *AbsTy) {
 }
 
 static void DumpTypes(const std::pair<const std::string, const Type*>& T ) {
-  cerr << "  '" << T.first << "' = ";
+  errs() << "  '" << T.first << "' = ";
   T.second->dump();
-  cerr << "\n";
+  errs() << "\n";
 }
 
 void TypeSymbolTable::dump() const {
-  cerr << "TypeSymbolPlane: ";
+  errs() << "TypeSymbolPlane: ";
   sys::SmartScopedReader<true> Reader(*TypeSymbolTableLock);
   for_each(tmap.begin(), tmap.end(), DumpTypes);
 }

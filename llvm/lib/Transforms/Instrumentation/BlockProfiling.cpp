@@ -19,13 +19,11 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include "llvm/Constants.h"
 #include "llvm/DerivedTypes.h"
-#include "llvm/LLVMContext.h"
 #include "llvm/Module.h"
 #include "llvm/Pass.h"
 #include "llvm/Support/Compiler.h"
-#include "llvm/Support/Streams.h"
+#include "llvm/Support/raw_ostream.h"
 #include "llvm/Transforms/Instrumentation.h"
 #include "RSProfiling.h"
 #include "ProfilingUtils.h"
@@ -53,8 +51,8 @@ ModulePass *llvm::createFunctionProfilerPass() {
 bool FunctionProfiler::runOnModule(Module &M) {
   Function *Main = M.getFunction("main");
   if (Main == 0) {
-    cerr << "WARNING: cannot insert function profiling into a module"
-         << " with no main function!\n";
+    errs() << "WARNING: cannot insert function profiling into a module"
+           << " with no main function!\n";
     return false;  // No main, no instrumentation!
   }
 
@@ -100,8 +98,8 @@ ModulePass *llvm::createBlockProfilerPass() { return new BlockProfiler(); }
 bool BlockProfiler::runOnModule(Module &M) {
   Function *Main = M.getFunction("main");
   if (Main == 0) {
-    cerr << "WARNING: cannot insert block profiling into a module"
-         << " with no main function!\n";
+    errs() << "WARNING: cannot insert block profiling into a module"
+           << " with no main function!\n";
     return false;  // No main, no instrumentation!
   }
 

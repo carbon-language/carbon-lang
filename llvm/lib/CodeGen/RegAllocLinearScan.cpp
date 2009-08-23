@@ -233,7 +233,7 @@ namespace {
       bool Error = false;
       for (unsigned i = 0, e = tri_->getNumRegs(); i != e; ++i) {
         if (regUse_[i] != 0) {
-          cerr << tri_->getName(i) << " is still in use!\n";
+          errs() << tri_->getName(i) << " is still in use!\n";
           Error = true;
         }
       }
