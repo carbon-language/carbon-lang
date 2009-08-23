@@ -54,29 +54,16 @@ namespace CodeGen {
   class CGRecordLayout {
     CGRecordLayout(); // DO NOT IMPLEMENT
   public:
-    CGRecordLayout(const llvm::Type *T, 
-                   const llvm::SmallSet<unsigned, 8> &PF) 
-      : STy(T), PaddingFields(PF) {
-      // FIXME : Collect info about fields that requires adjustments 
-      // (i.e. fields that do not directly map to llvm struct fields.)
-    }
+    CGRecordLayout(const llvm::Type *T) 
+      : STy(T) { }
 
     /// getLLVMType - Return llvm type associated with this record.
     const llvm::Type *getLLVMType() const {
       return STy;
     }
 
-    bool isPaddingField(unsigned No) const {
-      return PaddingFields.count(No) != 0;
-    }
-
-    unsigned getNumPaddingFields() {
-      return PaddingFields.size();
-    }
-
   private:
     const llvm::Type *STy;
-    llvm::SmallSet<unsigned, 8> PaddingFields;
   };
   
 /// CodeGenTypes - This class organizes the cross-module state that is used

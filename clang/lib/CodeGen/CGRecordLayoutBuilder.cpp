@@ -330,5 +330,5 @@ CGRecordLayoutBuilder::ComputeLayout(CodeGenTypes &Types,
     Types.addBitFieldInfo(Info.FD, Info.FieldNo, Info.Start, Info.Size);
   }
   
-  return new CGRecordLayout(Ty, llvm::SmallSet<unsigned, 8>());
+  return new CGRecordLayout(Ty);
 }
