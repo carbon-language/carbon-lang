@@ -95,29 +95,24 @@ void llvm::DisplayGraph(const sys::Path &Filename, bool wait,
 
   // Find which program the user wants
 #if HAVE_DOT
-  if (program == GraphProgram::DOT) {
+  if (program == GraphProgram::DOT)
     prog = sys::Path(LLVM_PATH_DOT);
-  }
 #endif
 #if (HAVE_FDP)
-  if (program == GraphProgram::FDP) {
+  if (program == GraphProgram::FDP)
     prog = sys::Path(LLVM_PATH_FDP);
-  }
 #endif
 #if (HAVE_NEATO)
-  if (program == GraphProgram::NEATO) {
+  if (program == GraphProgram::NEATO)
     prog = sys::Path(LLVM_PATH_NEATO);
-    }
 #endif
 #if (HAVE_TWOPI)
-  if (program == GraphProgram::TWOPI) {
+  if (program == GraphProgram::TWOPI)
     prog = sys::Path(LLVM_PATH_TWOPI);
-  }
 #endif
 #if (HAVE_CIRCO)
-  if (program == GraphProgram::CIRCO) {
+  if (program == GraphProgram::CIRCO)
     prog = sys::Path(LLVM_PATH_CIRCO);
-  }
 #endif
 
   std::vector<const char*> args;
@@ -132,8 +127,9 @@ void llvm::DisplayGraph(const sys::Path &Filename, bool wait,
   
   errs() << "Running '" << prog << "' program... ";
 
-  if (sys::Program::ExecuteAndWait(prog, &args[0],0,0,0,0,&ErrMsg)) {
-     errs() << "Error viewing graph " << Filename << ": '" << ErrMsg << "\n";
+  if (sys::Program::ExecuteAndWait(prog, &args[0], 0, 0, 0, 0, &ErrMsg)) {
+     errs() << "Error viewing graph " << Filename.str() << ": '"
+            << ErrMsg << "\n";
   } else {
     errs() << " done. \n";
 
@@ -153,7 +149,7 @@ void llvm::DisplayGraph(const sys::Path &Filename, bool wait,
     }
     else {
        sys::Program::ExecuteNoWait(gv, &args[0],0,0,0,&ErrMsg);
-       errs() << "Remember to erase graph files: " << Filename << " "
+       errs() << "Remember to erase graph files: " << Filename.str() << " "
               << PSFilename << "\n";
     }
   }
@@ -167,7 +163,8 @@ void llvm::DisplayGraph(const sys::Path &Filename, bool wait,
   
   errs() << "Running 'dotty' program... ";
   if (sys::Program::ExecuteAndWait(dotty, &args[0],0,0,0,0,&ErrMsg)) {
-     errs() << "Error viewing graph " << Filename << ": " << ErrMsg << "\n";
+     errs() << "Error viewing graph " << Filename.str() << ": "
+            << ErrMsg << "\n";
   } else {
 #ifdef __MINGW32__ // Dotty spawns another app and doesn't wait until it returns
     return;
