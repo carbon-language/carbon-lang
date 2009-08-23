@@ -15,7 +15,6 @@
 #ifndef LLVM_CODEGEN_PASSES_H
 #define LLVM_CODEGEN_PASSES_H
 
-#include <iosfwd>
 #include <string>
 
 namespace llvm {
@@ -25,6 +24,7 @@ namespace llvm {
   class TargetMachine;
   class TargetLowering;
   class RegisterCoalescer;
+  class raw_ostream;
 
   /// createUnreachableBlockEliminationPass - The LLVM code generator does not
   /// work well with unreachable basic blocks (what live ranges make sense for a
@@ -36,7 +36,7 @@ namespace llvm {
 
   /// MachineFunctionPrinter pass - This pass prints out the machine function to
   /// the given stream, as a debugging tool.
-  FunctionPass *createMachineFunctionPrinterPass(std::ostream *OS,
+  FunctionPass *createMachineFunctionPrinterPass(raw_ostream &OS,
                                                  const std::string &Banner ="");
 
   /// MachineLoopInfo pass - This pass is a loop analysis pass.
@@ -166,7 +166,7 @@ namespace llvm {
   
   /// Creates a pass to print GC metadata.
   /// 
-  FunctionPass *createGCInfoPrinter(std::ostream &OS);
+  FunctionPass *createGCInfoPrinter(raw_ostream &OS);
   
   /// createMachineLICMPass - This pass performs LICM on machine instructions.
   /// 

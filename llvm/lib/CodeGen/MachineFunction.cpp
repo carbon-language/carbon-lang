@@ -33,18 +33,16 @@
 #include "llvm/Support/Compiler.h"
 #include "llvm/Support/GraphWriter.h"
 #include "llvm/Support/raw_ostream.h"
-#include <fstream>
-#include <sstream>
 using namespace llvm;
 
 namespace {
   struct VISIBILITY_HIDDEN Printer : public MachineFunctionPass {
     static char ID;
 
-    std::ostream *OS;
+    raw_ostream &OS;
     const std::string Banner;
 
-    Printer(std::ostream *os, const std::string &banner) 
+    Printer(raw_ostream &os, const std::string &banner) 
       : MachineFunctionPass(&ID), OS(os), Banner(banner) {}
 
     const char *getPassName() const { return "MachineFunction Printer"; }
@@ -55,8 +53,8 @@ namespace {
     }
 
     bool runOnMachineFunction(MachineFunction &MF) {
-      (*OS) << Banner;
-      MF.print (*OS);
+      OS << Banner;
+      MF.print(OS);
       return false;
     }
   };
@@ -66,7 +64,7 @@ namespace {
 /// Returns a newly-created MachineFunction Printer pass. The default banner is
 /// empty.
 ///
-FunctionPass *llvm::createMachineFunctionPrinterPass(std::ostream *OS,
+FunctionPass *llvm::createMachineFunctionPrinterPass(raw_ostream &OS,
                                                      const std::string &Banner){
   return new Printer(OS, Banner);
 }
@@ -220,11 +218,6 @@ void MachineFunction::dump() const {
   print(errs());
 }
 
-void MachineFunction::print(std::ostream &OS) const {
-  raw_os_ostream RawOS(OS);
-  print(RawOS);
-}
-
 void MachineFunction::print(raw_ostream &OS) const {
   OS << "# Machine code for " << Fn->getName() << "():\n";
 
@@ -284,15 +277,16 @@ namespace llvm {
           !Node->getBasicBlock()->getName().empty())
         return Node->getBasicBlock()->getNameStr() + ":";
 
-      std::ostringstream Out;
-      if (ShortNames) {
-        Out << Node->getNumber() << ':';
-        return Out.str();
+      std::string OutStr;
+      {
+        raw_string_ostream OSS(OutStr);
+        
+        if (ShortNames)
+          OSS << Node->getNumber() << ':';
+        else
+          Node->print(OSS);
       }
 
-      Node->print(Out);
-
-      std::string OutStr = Out.str();
       if (OutStr[0] == '\n') OutStr.erase(OutStr.begin());
 
       // Process string output to make it nicer...

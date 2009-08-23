@@ -239,15 +239,15 @@ bool MachineSinking::SinkInstruction(MachineInstr *MI, bool &SawStore) {
   if (MI->getParent() == SuccToSinkTo)
     return false;
   
-  DEBUG(cerr << "Sink instr " << *MI);
-  DEBUG(cerr << "to block " << *SuccToSinkTo);
+  DEBUG(errs() << "Sink instr " << *MI);
+  DEBUG(errs() << "to block " << *SuccToSinkTo);
   
   // If the block has multiple predecessors, this would introduce computation on
   // a path that it doesn't already exist.  We could split the critical edge,
   // but for now we just punt.
   // FIXME: Split critical edges if not backedges.
   if (SuccToSinkTo->pred_size() > 1) {
-    DEBUG(cerr << " *** PUNTING: Critical edge found\n");
+    DEBUG(errs() << " *** PUNTING: Critical edge found\n");
     return false;
   }
   

@@ -207,7 +207,6 @@ public:
   /// print - Print out the MachineFunction in a format suitable for debugging
   /// to the specified stream.
   ///
-  void print(std::ostream &OS) const;
   void print(raw_ostream &OS) const;
 
   /// viewCFG - This function is meant for use from the debugger.  You can just

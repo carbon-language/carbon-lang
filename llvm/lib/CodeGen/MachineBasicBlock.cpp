@@ -32,10 +32,6 @@ MachineBasicBlock::~MachineBasicBlock() {
   LeakDetector::removeGarbageObject(this);
 }
 
-std::ostream &llvm::operator<<(std::ostream &OS, const MachineBasicBlock &MBB) {
-  MBB.print(OS);
-  return OS;
-}
 raw_ostream &llvm::operator<<(raw_ostream &OS, const MachineBasicBlock &MBB) {
   MBB.print(OS);
   return OS;
@@ -159,7 +155,7 @@ bool MachineBasicBlock::isOnlyReachableByFallthrough() const {
 }
 
 void MachineBasicBlock::dump() const {
-  print(*cerr.stream());
+  print(errs());
 }
 
 static inline void OutputReg(raw_ostream &os, unsigned RegNo,
@@ -171,11 +167,6 @@ static inline void OutputReg(raw_ostream &os, unsigned RegNo,
       os << " %mreg(" << RegNo << ")";
   } else
     os << " %reg" << RegNo;
-}
-
-void MachineBasicBlock::print(std::ostream &OS) const {
-  raw_os_ostream RawOS(OS);
-  print(RawOS);
 }
 
 void MachineBasicBlock::print(raw_ostream &OS) const {

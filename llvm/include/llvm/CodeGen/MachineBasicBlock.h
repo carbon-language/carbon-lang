@@ -310,7 +310,6 @@ public:
 
   // Debugging methods.
   void dump() const;
-  void print(std::ostream &OS) const;
   void print(raw_ostream &OS) const;
 
   /// getNumber - MachineBasicBlocks are uniquely numbered at the function
@@ -339,7 +338,6 @@ private:   // Methods used to maintain doubly linked list of blocks...
   void removePredecessor(MachineBasicBlock *pred);
 };
 
-std::ostream& operator<<(std::ostream &OS, const MachineBasicBlock &MBB);
 raw_ostream& operator<<(raw_ostream &OS, const MachineBasicBlock &MBB);
 
 //===--------------------------------------------------------------------===//

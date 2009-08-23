@@ -78,10 +78,10 @@ LLVMTargetMachine::addPassesToEmitFile(PassManagerBase &PM,
   PM.add(createDebugLabelFoldingPass());
 
   if (PrintMachineCode)
-    PM.add(createMachineFunctionPrinterPass(cerr));
+    PM.add(createMachineFunctionPrinterPass(errs()));
 
   if (addPreEmitPass(PM, OptLevel) && PrintMachineCode)
-    PM.add(createMachineFunctionPrinterPass(cerr));
+    PM.add(createMachineFunctionPrinterPass(errs()));
 
   if (OptLevel != CodeGenOpt::None)
     PM.add(createCodePlacementOptPass());
@@ -178,7 +178,7 @@ bool LLVMTargetMachine::addPassesToEmitMachineCode(PassManagerBase &PM,
     return true;
 
   if (addPreEmitPass(PM, OptLevel) && PrintMachineCode)
-    PM.add(createMachineFunctionPrinterPass(cerr));
+    PM.add(createMachineFunctionPrinterPass(errs()));
 
   addCodeEmitter(PM, OptLevel, MCE);
   if (PrintEmittedAsm)
@@ -203,7 +203,7 @@ bool LLVMTargetMachine::addPassesToEmitMachineCode(PassManagerBase &PM,
     return true;
 
   if (addPreEmitPass(PM, OptLevel) && PrintMachineCode)
-    PM.add(createMachineFunctionPrinterPass(cerr));
+    PM.add(createMachineFunctionPrinterPass(errs()));
 
   addCodeEmitter(PM, OptLevel, JCE);
   if (PrintEmittedAsm)
@@ -217,7 +217,7 @@ bool LLVMTargetMachine::addPassesToEmitMachineCode(PassManagerBase &PM,
 static void printAndVerify(PassManagerBase &PM,
                            bool allowDoubleDefs = false) {
   if (PrintMachineCode)
-    PM.add(createMachineFunctionPrinterPass(cerr));
+    PM.add(createMachineFunctionPrinterPass(errs()));
 
   if (VerifyMachineCode)
     PM.add(createMachineVerifierPass(allowDoubleDefs));
@@ -334,7 +334,7 @@ bool LLVMTargetMachine::addCommonCodeGenPasses(PassManagerBase &PM,
   printAndVerify(PM);
 
   if (PrintGCInfo)
-    PM.add(createGCInfoPrinter(*cerr));
+    PM.add(createGCInfoPrinter(errs()));
 
   return false;
 }
