@@ -44,11 +44,9 @@ bool FixItRewriter::WriteFixedFile(const std::string &InFileName,
   llvm::raw_ostream *OutFile;
   if (!OutFileName.empty()) {
     std::string Err;
-    OutFile = new llvm::raw_fd_ostream(OutFileName.c_str(), 
-                                       // set binary mode (critical for Windoze)
-                                       true, 
-                                       /*Force=*/true,
-                                       Err);
+    OutFile = new llvm::raw_fd_ostream(OutFileName.c_str(), Err,
+                                       llvm::raw_fd_ostream::F_Binary |
+                                       llvm::raw_fd_ostream::F_Force);
     OwnedStream.reset(OutFile);
   } else if (InFileName == "-") {
     OutFile = &llvm::outs();
@@ -58,11 +56,9 @@ bool FixItRewriter::WriteFixedFile(const std::string &InFileName,
     Path.eraseSuffix();
     Path.appendSuffix("fixit." + Suffix);
     std::string Err;
-    OutFile = new llvm::raw_fd_ostream(Path.toString().c_str(), 
-                                       // set binary mode (critical for Windoze)
-                                       true, 
-                                       /*Force=*/true,
-                                       Err);
+    OutFile = new llvm::raw_fd_ostream(Path.toString().c_str(), Err,
+                                       llvm::raw_fd_ostream::F_Binary |
+                                       llvm::raw_fd_ostream::F_Force);
     OwnedStream.reset(OutFile);
   }  
 

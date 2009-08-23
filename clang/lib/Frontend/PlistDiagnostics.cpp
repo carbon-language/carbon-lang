@@ -337,7 +337,8 @@ PlistDiagnostics::~PlistDiagnostics() {
 
   // Open the file.
   std::string ErrMsg;
-  llvm::raw_fd_ostream o(OutputFile.c_str(), false, /*Force=*/true, ErrMsg);
+  llvm::raw_fd_ostream o(OutputFile.c_str(), ErrMsg,
+                         llvm::raw_fd_ostream::F_Force);
   if (!ErrMsg.empty()) {
     llvm::errs() << "warning: could not creat file: " << OutputFile << '\n';
     return;

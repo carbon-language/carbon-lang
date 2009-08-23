@@ -63,7 +63,6 @@
 #include "llvm/Support/MemoryBuffer.h"
 #include "llvm/Support/PluginLoader.h"
 #include "llvm/Support/PrettyStackTrace.h"
-#include "llvm/Support/Streams.h"
 #include "llvm/Support/Timer.h"
 #include "llvm/System/Host.h"
 #include "llvm/System/Path.h"
@@ -1701,8 +1700,9 @@ static void SetUpBuildDumpLog(unsigned argc, char **argv,
                               llvm::OwningPtr<DiagnosticClient> &DiagClient) {
   
   std::string ErrorInfo;
-  BuildLogFile = new llvm::raw_fd_ostream(DumpBuildInformation.c_str(), false,
-                                          /*Force=*/true, ErrorInfo);
+  BuildLogFile = new llvm::raw_fd_ostream(DumpBuildInformation.c_str(),
+                                          ErrorInfo,
+                                          llvm::raw_fd_ostream::F_Force);
   
   if (!ErrorInfo.empty()) {
     llvm::errs() << "error opening -dump-build-information file '"
@@ -1729,41 +1729,37 @@ static void SetUpBuildDumpLog(unsigned argc, char **argv,
 // Main driver
 //===----------------------------------------------------------------------===//
 
-static llvm::raw_ostream* ComputeOutFile(const std::string& InFile,
-                                         const char* Extension,
+static llvm::raw_ostream *ComputeOutFile(const std::string &InFile,
+                                         const char *Extension,
                                          bool Binary,
                                          llvm::sys::Path& OutPath) {
-  llvm::raw_ostream* Ret;
-  bool UseStdout = false;
+  llvm::raw_ostream *Ret;
   std::string OutFile;
-  if (OutputFile == "-" || (OutputFile.empty() && InFile == "-")) {
-    UseStdout = true;
-  } else if (!OutputFile.empty()) {
+  if (!OutputFile.empty())
     OutFile = OutputFile;
+  else if (InFile == "-") {
+    OutFile = "-";
   } else if (Extension) {
     llvm::sys::Path Path(InFile);
     Path.eraseSuffix();
     Path.appendSuffix(Extension);
     OutFile = Path.toString();
   } else {
-    UseStdout = true;
+    OutFile = "-";
   }
 
-  if (UseStdout) {
-    Ret = new llvm::raw_stdout_ostream();
-    if (Binary)
-      llvm::sys::Program::ChangeStdoutToBinary();
-  } else {
-    std::string Error;
-    Ret = new llvm::raw_fd_ostream(OutFile.c_str(), Binary,
-                                   /*Force=*/true, Error);
-    if (!Error.empty()) {
-      // FIXME: Don't fail this way.
-      llvm::cerr << "ERROR: " << Error << "\n";
-      ::exit(1);
-    }
-    OutPath = OutFile;
+  std::string Error;
+  Ret = new llvm::raw_fd_ostream(OutFile.c_str(), Error,
+                                 (Binary ? llvm::raw_fd_ostream::F_Binary : 0) |
+                                 llvm::raw_fd_ostream::F_Force);
+  if (!Error.empty()) {
+    // FIXME: Don't fail this way.
+    llvm::errs() << "ERROR: " << Error << "\n";
+    ::exit(1);
   }
+  
+  if (OutFile != "-")
+    OutPath = OutFile;
 
   return Ret;
 }
@@ -1915,7 +1911,7 @@ static void ProcessInputFile(Preprocessor &PP, PreprocessorFactory &PPF,
     if (OutputFile.empty() || OutputFile == "-") {
       // FIXME: Don't fail this way.
       // FIXME: Verify that we can actually seek in the given file.
-      llvm::cerr << "ERROR: PTH requires an seekable file for output!\n";
+      llvm::errs() << "ERROR: PTH requires an seekable file for output!\n";
       ::exit(1);
     }
     OS.reset(ComputeOutFile(InFile, 0, true, OutPath));
@@ -2307,17 +2303,17 @@ int main(int argc, char **argv) {
       llvm::raw_ostream *DependencyOS;
       if (DependencyTargets.empty()) {
         // FIXME: Use a proper diagnostic
-        llvm::cerr << "-dependency-file requires at least one -MT option\n";
+        llvm::errs() << "-dependency-file requires at least one -MT option\n";
         HadErrors = true;
         continue;
       }
       std::string ErrStr;
       DependencyOS =
-          new llvm::raw_fd_ostream(DependencyFile.c_str(), false,
-                                   /*Force=*/true, ErrStr);
+          new llvm::raw_fd_ostream(DependencyFile.c_str(), ErrStr,
+                                   llvm::raw_fd_ostream::F_Force);
       if (!ErrStr.empty()) {
         // FIXME: Use a proper diagnostic
-        llvm::cerr << "unable to open dependency file: " + ErrStr;
+        llvm::errs() << "unable to open dependency file: " + ErrStr;
         HadErrors = true;
         continue;
       }
