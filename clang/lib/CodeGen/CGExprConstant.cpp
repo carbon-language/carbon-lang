@@ -801,6 +801,7 @@ llvm::Constant *CodeGenModule::EmitNullConstant(QualType T) {
     }
   }
 
+#if 0
   if (const RecordType *RT = T->getAs<RecordType>()) {
     const CGRecordLayout *Layout = Types.getCGRecordLayout(RT->getDecl());
     if (Layout->containsMemberPointer()) {
@@ -808,6 +809,7 @@ llvm::Constant *CodeGenModule::EmitNullConstant(QualType T) {
     }
 
   }
+#endif
   
   // FIXME: Handle structs that contain member pointers.
   if (T->isMemberPointerType()) 
