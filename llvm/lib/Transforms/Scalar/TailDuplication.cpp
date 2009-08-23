@@ -273,7 +273,7 @@ void TailDup::eliminateUnconditionalBranch(BranchInst *Branch) {
           // Remove from DestBlock, move right before the term in DomBlock.
           DestBlock->getInstList().remove(I);
           DomBlock->getInstList().insert(DomBlock->getTerminator(), I);
-          DOUT << "Hoisted: " << *I;
+          DEBUG(errs() << "Hoisted: " << *I);
         }
       }
     }

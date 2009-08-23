@@ -466,7 +466,7 @@ bool LICM::isLoopInvariantInst(Instruction &I) {
 /// position, and may either delete it or move it to outside of the loop.
 ///
 void LICM::sink(Instruction &I) {
-  DOUT << "LICM sinking instruction: " << I;
+  DEBUG(errs() << "LICM sinking instruction: " << I);
 
   SmallVector<BasicBlock*, 8> ExitBlocks;
   CurLoop->getExitBlocks(ExitBlocks);
@@ -860,7 +860,7 @@ void LICM::FindPromotableValuesInLoop(
     for (AliasSet::iterator I = AS.begin(), E = AS.end(); I != E; ++I)
       ValueToAllocaMap.insert(std::make_pair(I->getValue(), AI));
 
-    DOUT << "LICM: Promoting value: " << *V << "\n";
+    DEBUG(errs() << "LICM: Promoting value: " << *V << "\n");
   }
 }
 

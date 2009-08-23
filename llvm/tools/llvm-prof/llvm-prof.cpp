@@ -243,7 +243,7 @@ bool ProfileInfoPrinterPass::runOnModule(Module &M) {
       // Print just a subset of the functions.
       for (std::set<Function*>::iterator I = FunctionsToPrint.begin(),
              E = FunctionsToPrint.end(); I != E; ++I)
-        (*I)->print(std::cout, &PA);
+        (*I)->print(outs(), &PA);
   }
 
   return false;

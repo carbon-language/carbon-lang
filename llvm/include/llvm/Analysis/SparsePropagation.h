@@ -17,7 +17,6 @@
 
 #include "llvm/ADT/DenseMap.h"
 #include "llvm/ADT/SmallPtrSet.h"
-#include <iosfwd>
 #include <vector>
 #include <set>
 
@@ -32,6 +31,7 @@ namespace llvm {
   class Function;
   class SparseSolver;
   class LLVMContext;
+  class raw_ostream;
 
   template<typename T> class SmallVectorImpl;
   
@@ -100,7 +100,7 @@ public:
   }
   
   /// PrintValue - Render the specified lattice value to the specified stream.
-  virtual void PrintValue(LatticeVal V, std::ostream &OS);
+  virtual void PrintValue(LatticeVal V, raw_ostream &OS);
 };
 
   
@@ -141,7 +141,7 @@ public:
   ///
   void Solve(Function &F);
   
-  void Print(Function &F, std::ostream &OS) const;
+  void Print(Function &F, raw_ostream &OS) const;
 
   /// getLatticeState - Return the LatticeVal object that corresponds to the
   /// value.  If an value is not in the map, it is returned as untracked,

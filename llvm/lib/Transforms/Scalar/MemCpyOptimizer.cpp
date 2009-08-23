@@ -24,6 +24,7 @@
 #include "llvm/Analysis/MemoryDependenceAnalysis.h"
 #include "llvm/Support/Debug.h"
 #include "llvm/Support/GetElementPtrTypeIterator.h"
+#include "llvm/Support/raw_ostream.h"
 #include "llvm/Target/TargetData.h"
 #include <list>
 using namespace llvm;
@@ -454,10 +455,10 @@ bool MemCpyOpt::processStore(StoreInst *SI, BasicBlock::iterator& BBI) {
       ConstantInt::get(Type::getInt32Ty(SI->getContext()), Range.Alignment)
     };
     Value *C = CallInst::Create(MemSetF, Ops, Ops+4, "", InsertPt);
-    DEBUG(cerr << "Replace stores:\n";
+    DEBUG(errs() << "Replace stores:\n";
           for (unsigned i = 0, e = Range.TheStores.size(); i != e; ++i)
-            cerr << *Range.TheStores[i];
-          cerr << "With: " << *C); C=C;
+            errs() << *Range.TheStores[i];
+          errs() << "With: " << *C); C=C;
   
     // Don't invalidate the iterator
     BBI = BI;

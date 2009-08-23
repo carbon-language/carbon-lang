@@ -1385,8 +1385,8 @@ namespace {
     }
 
     bool makeEqual(Value *V1, Value *V2) {
-      DOUT << "makeEqual(" << *V1 << ", " << *V2 << ")\n";
-      DOUT << "context is ";
+      DEBUG(errs() << "makeEqual(" << *V1 << ", " << *V2 << ")\n");
+      DEBUG(errs() << "context is ");
       DEBUG(if (TopInst) 
               errs() << "I: " << *TopInst << "\n";
             else 
@@ -1491,8 +1491,8 @@ namespace {
             ToNotify.push_back(I);
           }
 
-          DOUT << "Simply removing " << *I2
-               << ", replacing with " << *V1 << "\n";
+          DEBUG(errs() << "Simply removing " << *I2
+                       << ", replacing with " << *V1 << "\n");
           I2->replaceAllUsesWith(V1);
           // leave it dead; it'll get erased later.
           ++NumInstruction;
@@ -1523,8 +1523,8 @@ namespace {
 
         // If that killed the instruction, stop here.
         if (I2 && isInstructionTriviallyDead(I2)) {
-          DOUT << "Killed all uses of " << *I2
-               << ", replacing with " << *V1 << "\n";
+          DEBUG(errs() << "Killed all uses of " << *I2
+                       << ", replacing with " << *V1 << "\n");
           continue;
         }
 
@@ -1730,10 +1730,12 @@ namespace {
     /// add - adds a new property to the work queue
     void add(Value *V1, Value *V2, ICmpInst::Predicate Pred,
              Instruction *I = NULL) {
-      DOUT << "adding " << *V1 << " " << Pred << " " << *V2;
-      if (I) DOUT << " context: " << *I;
-      else DOUT << " default context (" << Top->getDFSNumIn() << ")";
-      DOUT << "\n";
+      DEBUG(errs() << "adding " << *V1 << " " << Pred << " " << *V2);
+      if (I)
+        DEBUG(errs() << " context: " << *I);
+      else 
+        DEBUG(errs() << " default context (" << Top->getDFSNumIn() << ")");
+      DEBUG(errs() << "\n");
 
       assert(V1->getType() == V2->getType() &&
              "Can't relate two values with different types.");
@@ -2132,9 +2134,9 @@ namespace {
 
     /// solve - process the work queue
     void solve() {
-      //DOUT << "WorkList entry, size: " << WorkList.size() << "\n";
+      //DEBUG(errs() << "WorkList entry, size: " << WorkList.size() << "\n");
       while (!WorkList.empty()) {
-        //DOUT << "WorkList size: " << WorkList.size() << "\n";
+        //DEBUG(errs() << "WorkList size: " << WorkList.size() << "\n");
 
         Operation &O = WorkList.front();
         TopInst = O.ContextInst;
@@ -2349,7 +2351,7 @@ namespace {
 
     // Tries to simplify each Instruction and add new properties.
     void visitInstruction(Instruction *I, DomTreeDFS::Node *DT) {
-      DOUT << "Considering instruction " << *I << "\n";
+      DEBUG(errs() << "Considering instruction " << *I << "\n");
       DEBUG(VN->dump());
       DEBUG(IG->dump());
       DEBUG(VR->dump());
@@ -2372,7 +2374,7 @@ namespace {
       if (V != I) {
         modified = true;
         ++NumInstruction;
-        DOUT << "Removing " << *I << ", replacing with " << *V << "\n";
+        DEBUG(errs() << "Removing " << *I << ", replacing with " << *V << "\n");
         if (unsigned n = VN->valueNumber(I, DTDFS->getRootNode()))
           if (VN->value(n) == I) IG->remove(n);
         VN->remove(I);
@@ -2389,18 +2391,18 @@ namespace {
         if (V != Oper) {
           modified = true;
           ++NumVarsReplaced;
-          DOUT << "Resolving " << *I;
+          DEBUG(errs() << "Resolving " << *I);
           I->setOperand(i, V);
-          DOUT << " into " << *I;
+          DEBUG(errs() << " into " << *I);
         }
       }
 #endif
 
       std::string name = I->getParent()->getName();
-      DOUT << "push (%" << name << ")\n";
+      DEBUG(errs() << "push (%" << name << ")\n");
       Forwards visit(this, DT);
       visit.visit(*I);
-      DOUT << "pop (%" << name << ")\n";
+      DEBUG(errs() << "pop (%" << name << ")\n");
     }
   };
 

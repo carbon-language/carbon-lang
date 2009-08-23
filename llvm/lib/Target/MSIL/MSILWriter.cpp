@@ -281,7 +281,7 @@ std::string MSILWriter::getConvModopt(unsigned CallingConvID) {
   case CallingConv::X86_StdCall:
     return "modopt([mscorlib]System.Runtime.CompilerServices.CallConvStdcall) ";
   default:
-    cerr << "CallingConvID = " << CallingConvID << '\n';
+    errs() << "CallingConvID = " << CallingConvID << '\n';
     llvm_unreachable("Unsupported calling convention");
   }
   return ""; // Not reached
@@ -327,7 +327,7 @@ std::string MSILWriter::getPrimitiveTypeName(const Type* Ty, bool isSigned) {
   case Type::DoubleTyID:
     return "float64 "; 
   default:
-    cerr << "Type = " << *Ty << '\n';
+    errs() << "Type = " << *Ty << '\n';
     llvm_unreachable("Invalid primitive type");
   }
   return ""; // Not reached
@@ -355,7 +355,7 @@ std::string MSILWriter::getTypeName(const Type* Ty, bool isSigned,
       return getArrayTypeName(Ty->getTypeID(),Ty);
     return "valuetype '"+getArrayTypeName(Ty->getTypeID(),Ty)+"' ";
   default:
-    cerr << "Type = " << *Ty << '\n';
+    errs() << "Type = " << *Ty << '\n';
     llvm_unreachable("Invalid type in getTypeName()");
   }
   return ""; // Not reached
@@ -399,7 +399,7 @@ std::string MSILWriter::getTypePostfix(const Type* Ty, bool Expand,
   case Type::PointerTyID:
     return "i"+utostr(TD->getTypeAllocSize(Ty));
   default:
-    cerr << "TypeID = " << Ty->getTypeID() << '\n';
+    errs() << "TypeID = " << Ty->getTypeID() << '\n';
     llvm_unreachable("Invalid type in TypeToPostfix()");
   }
   return ""; // Not reached
@@ -426,7 +426,7 @@ void MSILWriter::printPtrLoad(uint64_t N) {
     printSimpleInstruction("ldc.i4",utostr(N).c_str());
     // FIXME: Need overflow test?
     if (!isUInt32(N)) {
-      cerr << "Value = " << utostr(N) << '\n';
+      errs() << "Value = " << utostr(N) << '\n';
       llvm_unreachable("32-bit pointer overflowed");
     }
     break;
@@ -469,7 +469,7 @@ void MSILWriter::printConstLoad(const Constant* C) {
     // Undefined constant value = NULL.
     printPtrLoad(0);
   } else {
-    cerr << "Constant = " << *C << '\n';
+    errs() << "Constant = " << *C << '\n';
     llvm_unreachable("Invalid constant value");
   }
   Out << '\n';
@@ -518,7 +518,7 @@ void MSILWriter::printValueLoad(const Value* V) {
     printConstantExpr(cast<ConstantExpr>(V));
     break;
   default:
-    cerr << "Value = " << *V << '\n';
+    errs() << "Value = " << *V << '\n';
     llvm_unreachable("Invalid value location");
   }
 }
@@ -533,7 +533,7 @@ void MSILWriter::printValueSave(const Value* V) {
     printSimpleInstruction("stloc",getValueName(V).c_str());
     break;
   default:
-    cerr << "Value  = " << *V << '\n';
+    errs() << "Value  = " << *V << '\n';
     llvm_unreachable("Invalid value location");
   }
 }
@@ -695,7 +695,7 @@ void MSILWriter::printCastInstruction(unsigned int Op, const Value* V,
     // FIXME: meaning that ld*/st* instruction do not change data format.
     break;
   default:
-    cerr << "Opcode = " << Op << '\n';
+    errs() << "Opcode = " << Op << '\n';
     llvm_unreachable("Invalid conversion instruction");
   }
 }

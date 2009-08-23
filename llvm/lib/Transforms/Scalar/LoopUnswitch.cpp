@@ -751,7 +751,7 @@ static void RemoveFromWorklist(Instruction *I,
 static void ReplaceUsesOfWith(Instruction *I, Value *V, 
                               std::vector<Instruction*> &Worklist,
                               Loop *L, LPPassManager *LPM) {
-  DOUT << "Replace with '" << *V << "': " << *I;
+  DEBUG(errs() << "Replace with '" << *V << "': " << *I);
 
   // Add uses to the worklist, which may be dead now.
   for (unsigned i = 0, e = I->getNumOperands(); i != e; ++i)
@@ -813,7 +813,7 @@ void LoopUnswitch::RemoveBlockIfDead(BasicBlock *BB,
     return;
   }
 
-  DOUT << "Nuking dead block: " << *BB;
+  DEBUG(errs() << "Nuking dead block: " << *BB);
   
   // Remove the instructions in the basic block from the worklist.
   for (BasicBlock::iterator I = BB->begin(), E = BB->end(); I != E; ++I) {
@@ -1002,7 +1002,7 @@ void LoopUnswitch::SimplifyCode(std::vector<Instruction*> &Worklist, Loop *L) {
     
     // Simple DCE.
     if (isInstructionTriviallyDead(I)) {
-      DOUT << "Remove dead instruction '" << *I;
+      DEBUG(errs() << "Remove dead instruction '" << *I);
       
       // Add uses to the worklist, which may be dead now.
       for (unsigned i = 0, e = I->getNumOperands(); i != e; ++i)
@@ -1091,7 +1091,7 @@ void LoopUnswitch::SimplifyCode(std::vector<Instruction*> &Worklist, Loop *L) {
         // remove dead blocks.
         break;  // FIXME: Enable.
 
-        DOUT << "Folded branch: " << *BI;
+        DEBUG(errs() << "Folded branch: " << *BI);
         BasicBlock *DeadSucc = BI->getSuccessor(CB->getZExtValue());
         BasicBlock *LiveSucc = BI->getSuccessor(!CB->getZExtValue());
         DeadSucc->removePredecessor(BI->getParent(), true);

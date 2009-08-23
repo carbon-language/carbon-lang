@@ -15,6 +15,7 @@
 #include "llvm/Analysis/Interval.h"
 #include "llvm/BasicBlock.h"
 #include "llvm/Support/CFG.h"
+#include "llvm/Support/raw_ostream.h"
 #include <algorithm>
 
 using namespace llvm;
@@ -29,29 +30,30 @@ bool Interval::isLoop() const {
   // There is a loop in this interval iff one of the predecessors of the header
   // node lives in the interval.
   for (::pred_iterator I = ::pred_begin(HeaderNode), E = ::pred_end(HeaderNode);
-       I != E; ++I) {
-    if (contains(*I)) return true;
-  }
+       I != E; ++I)
+    if (contains(*I))
+      return true;
   return false;
 }
 
 
-void Interval::print(std::ostream &o) const {
-  o << "-------------------------------------------------------------\n"
+void Interval::print(std::ostream &O) const {
+  raw_os_ostream OS(O);
+  OS << "-------------------------------------------------------------\n"
        << "Interval Contents:\n";
 
   // Print out all of the basic blocks in the interval...
   for (std::vector<BasicBlock*>::const_iterator I = Nodes.begin(),
          E = Nodes.end(); I != E; ++I)
-    o << **I << "\n";
+    OS << **I << "\n";
 
-  o << "Interval Predecessors:\n";
+  OS << "Interval Predecessors:\n";
   for (std::vector<BasicBlock*>::const_iterator I = Predecessors.begin(),
          E = Predecessors.end(); I != E; ++I)
-    o << **I << "\n";
+    OS << **I << "\n";
 
-  o << "Interval Successors:\n";
+  OS << "Interval Successors:\n";
   for (std::vector<BasicBlock*>::const_iterator I = Successors.begin(),
          E = Successors.end(); I != E; ++I)
-    o << **I << "\n";
+    OS << **I << "\n";
 }

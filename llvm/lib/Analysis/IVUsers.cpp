@@ -228,14 +228,14 @@ bool IVUsers::AddUsersIfInteresting(Instruction *I) {
     if (LI->getLoopFor(User->getParent()) != L) {
       if (isa<PHINode>(User) || Processed.count(User) ||
           !AddUsersIfInteresting(User)) {
-        DOUT << "FOUND USER in other loop: " << *User << '\n'
-             << "   OF SCEV: " << *ISE << "\n";
+        DEBUG(errs() << "FOUND USER in other loop: " << *User << '\n'
+                     << "   OF SCEV: " << *ISE << '\n');
         AddUserToIVUsers = true;
       }
     } else if (Processed.count(User) ||
                !AddUsersIfInteresting(User)) {
-      DOUT << "FOUND USER: " << *User << '\n'
-           << "   OF SCEV: " << *ISE << "\n";
+      DEBUG(errs() << "FOUND USER: " << *User << '\n'
+                   << "   OF SCEV: " << *ISE << '\n');
       AddUserToIVUsers = true;
     }
 

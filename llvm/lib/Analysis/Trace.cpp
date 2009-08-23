@@ -18,7 +18,7 @@
 #include "llvm/Analysis/Trace.h"
 #include "llvm/Function.h"
 #include "llvm/Assembly/Writer.h"
-#include "llvm/Support/Streams.h"
+#include "llvm/Support/raw_ostream.h"
 using namespace llvm;
 
 Function *Trace::getFunction() const {
@@ -31,8 +31,8 @@ Module *Trace::getModule() const {
 
 /// print - Write trace to output stream.
 ///
-void Trace::print(std::ostream &O) const {
-  Function *F = getFunction ();
+void Trace::print(raw_ostream &O) const {
+  Function *F = getFunction();
   O << "; Trace from function " << F->getNameStr() << ", blocks:\n";
   for (const_iterator i = begin(), e = end(); i != e; ++i) {
     O << "; ";
@@ -46,5 +46,5 @@ void Trace::print(std::ostream &O) const {
 /// output stream.
 ///
 void Trace::dump() const {
-  print(cerr);
+  print(errs());
 }

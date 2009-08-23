@@ -231,7 +231,7 @@ void CodeGenPrepare::EliminateMostlyEmptyBlock(BasicBlock *BB) {
   BranchInst *BI = cast<BranchInst>(BB->getTerminator());
   BasicBlock *DestBB = BI->getSuccessor(0);
 
-  DOUT << "MERGING MOSTLY EMPTY BLOCKS - BEFORE:\n" << *BB << *DestBB;
+  DEBUG(errs() << "MERGING MOSTLY EMPTY BLOCKS - BEFORE:\n" << *BB << *DestBB);
 
   // If the destination block has a single pred, then this is a trivial edge,
   // just collapse it.
@@ -245,7 +245,7 @@ void CodeGenPrepare::EliminateMostlyEmptyBlock(BasicBlock *BB) {
       if (isEntry && BB != &BB->getParent()->getEntryBlock())
         BB->moveBefore(&BB->getParent()->getEntryBlock());
       
-      DOUT << "AFTER:\n" << *DestBB << "\n\n\n";
+      DEBUG(errs() << "AFTER:\n" << *DestBB << "\n\n\n");
       return;
     }
   }
@@ -284,7 +284,7 @@ void CodeGenPrepare::EliminateMostlyEmptyBlock(BasicBlock *BB) {
   BB->replaceAllUsesWith(DestBB);
   BB->eraseFromParent();
 
-  DOUT << "AFTER:\n" << *DestBB << "\n\n\n";
+  DEBUG(errs() << "AFTER:\n" << *DestBB << "\n\n\n");
 }
 
 

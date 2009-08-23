@@ -39,6 +39,7 @@
 #include "llvm/Support/IRBuilder.h"
 #include "llvm/Support/MathExtras.h"
 #include "llvm/Support/Compiler.h"
+#include "llvm/Support/raw_ostream.h"
 #include "llvm/ADT/SmallVector.h"
 #include "llvm/ADT/Statistic.h"
 using namespace llvm;
@@ -244,8 +245,8 @@ bool SROA::performScalarRepl(Function &F) {
     // constructs like "void foo() { int A[] = {1,2,3,4,5,6,7,8,9...}; }" if 'A'
     // is only subsequently read.
     if (Instruction *TheCopy = isOnlyCopiedFromConstantGlobal(AI)) {
-      DOUT << "Found alloca equal to global: " << *AI;
-      DOUT << "  memcpy = " << *TheCopy;
+      DEBUG(errs() << "Found alloca equal to global: " << *AI);
+      DEBUG(errs() << "  memcpy = " << *TheCopy);
       Constant *TheSrc = cast<Constant>(TheCopy->getOperand(2));
       AI->replaceAllUsesWith(ConstantExpr::getBitCast(TheSrc, AI->getType()));
       TheCopy->eraseFromParent();  // Don't mutate the global.
@@ -306,13 +307,14 @@ bool SROA::performScalarRepl(Function &F) {
       // we just get a lot of insert/extracts.  If at least one vector is
       // involved, then we probably really do have a union of vector/array.
       if (VectorTy && isa<VectorType>(VectorTy) && HadAVector) {
-        DOUT << "CONVERT TO VECTOR: " << *AI << "  TYPE = " << *VectorTy <<"\n";
+        DEBUG(errs() << "CONVERT TO VECTOR: " << *AI << "  TYPE = "
+                     << *VectorTy << '\n');
         
         // Create and insert the vector alloca.
         NewAI = new AllocaInst(VectorTy, 0, "",  AI->getParent()->begin());
         ConvertUsesToScalar(AI, NewAI, 0);
       } else {
-        DOUT << "CONVERT TO SCALAR INTEGER: " << *AI << "\n";
+        DEBUG(errs() << "CONVERT TO SCALAR INTEGER: " << *AI << "\n");
         
         // Create and insert the integer alloca.
         const Type *NewTy = IntegerType::get(AI->getContext(), AllocaSize*8);
@@ -336,7 +338,7 @@ bool SROA::performScalarRepl(Function &F) {
 /// predicate, do SROA now.
 void SROA::DoScalarReplacement(AllocationInst *AI, 
                                std::vector<AllocationInst*> &WorkList) {
-  DOUT << "Found inst to SROA: " << *AI;
+  DEBUG(errs() << "Found inst to SROA: " << *AI);
   SmallVector<AllocaInst*, 32> ElementAllocas;
   if (const StructType *ST = dyn_cast<StructType>(AI->getAllocatedType())) {
     ElementAllocas.reserve(ST->getNumContainedTypes());
@@ -487,7 +489,7 @@ void SROA::isSafeElementUse(Value *Ptr, bool isFirstElt, AllocationInst *AI,
         if (Info.isUnsafe) return;
         break;
       }
-      DOUT << "  Transformation preventing inst: " << *User;
+      DEBUG(errs() << "  Transformation preventing inst: " << *User);
       return MarkUnsafe(Info);
     case Instruction::Call:
       if (MemIntrinsic *MI = dyn_cast<MemIntrinsic>(User)) {
@@ -497,10 +499,10 @@ void SROA::isSafeElementUse(Value *Ptr, bool isFirstElt, AllocationInst *AI,
           break;
         }
       }
-      DOUT << "  Transformation preventing inst: " << *User;
+      DEBUG(errs() << "  Transformation preventing inst: " << *User);
       return MarkUnsafe(Info);
     default:
-      DOUT << "  Transformation preventing inst: " << *User;
+      DEBUG(errs() << "  Transformation preventing inst: " << *User);
       return MarkUnsafe(Info);
     }
   }
@@ -925,7 +927,7 @@ void SROA::RewriteStoreUserOfWholeAlloca(StoreInst *SI,
                           IntegerType::get(SI->getContext(), AllocaSizeBits), 
                           "", SI);
 
-  DOUT << "PROMOTING STORE TO WHOLE ALLOCA: " << *AI << *SI;
+  DEBUG(errs() << "PROMOTING STORE TO WHOLE ALLOCA: " << *AI << *SI);
 
   // There are two forms here: AI could be an array or struct.  Both cases
   // have different ways to compute the element offset.
@@ -1041,7 +1043,7 @@ void SROA::RewriteLoadUserOfWholeAlloca(LoadInst *LI, AllocationInst *AI,
       TD->getTypeAllocSizeInBits(LI->getType()) != AllocaSizeBits)
     return;
   
-  DOUT << "PROMOTING LOAD OF WHOLE ALLOCA: " << *AI << *LI;
+  DEBUG(errs() << "PROMOTING LOAD OF WHOLE ALLOCA: " << *AI << *LI);
   
   // There are two forms here: AI could be an array or struct.  Both cases
   // have different ways to compute the element offset.
@@ -1168,7 +1170,7 @@ int SROA::isSafeAllocaToScalarRepl(AllocationInst *AI) {
        I != E; ++I) {
     isSafeUseOfAllocation(cast<Instruction>(*I), AI, Info);
     if (Info.isUnsafe) {
-      DOUT << "Cannot transform: " << *AI << "  due to user: " << **I;
+      DEBUG(errs() << "Cannot transform: " << *AI << "  due to user: " << **I);
       return 0;
     }
   }

@@ -29,6 +29,7 @@
 #include "llvm/Support/Compiler.h"
 #include "llvm/Support/Debug.h"
 #include "llvm/Support/ErrorHandling.h"
+#include "llvm/Support/raw_ostream.h"
 #include "llvm/ADT/StringExtras.h"
 #include <algorithm>
 #include <set>
@@ -236,8 +237,8 @@ Function *CodeExtractor::constructFunction(const Values &inputs,
                                            BasicBlock *newHeader,
                                            Function *oldFunction,
                                            Module *M) {
-  DOUT << "inputs: " << inputs.size() << "\n";
-  DOUT << "outputs: " << outputs.size() << "\n";
+  DEBUG(errs() << "inputs: " << inputs.size() << "\n");
+  DEBUG(errs() << "outputs: " << outputs.size() << "\n");
 
   // This function returns unsigned, outputs will go back by reference.
   switch (NumExitBlocks) {
@@ -253,25 +254,25 @@ Function *CodeExtractor::constructFunction(const Values &inputs,
   for (Values::const_iterator i = inputs.begin(),
          e = inputs.end(); i != e; ++i) {
     const Value *value = *i;
-    DOUT << "value used in func: " << *value << "\n";
+    DEBUG(errs() << "value used in func: " << *value << "\n");
     paramTy.push_back(value->getType());
   }
 
   // Add the types of the output values to the function's argument list.
   for (Values::const_iterator I = outputs.begin(), E = outputs.end();
        I != E; ++I) {
-    DOUT << "instr used in func: " << **I << "\n";
+    DEBUG(errs() << "instr used in func: " << **I << "\n");
     if (AggregateArgs)
       paramTy.push_back((*I)->getType());
     else
       paramTy.push_back(PointerType::getUnqual((*I)->getType()));
   }
 
-  DOUT << "Function type: " << *RetTy << " f(";
+  DEBUG(errs() << "Function type: " << *RetTy << " f(");
   for (std::vector<const Type*>::iterator i = paramTy.begin(),
          e = paramTy.end(); i != e; ++i)
-    DOUT << **i << ", ";
-  DOUT << ")\n";
+    DEBUG(errs() << **i << ", ");
+  DEBUG(errs() << ")\n");
 
   if (AggregateArgs && (inputs.size() + outputs.size() > 0)) {
     PointerType *StructPtr =

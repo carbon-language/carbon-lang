@@ -2085,10 +2085,11 @@ void Value::print(raw_ostream &ROS, AssemblyAnnotationWriter *AAW) const {
   }
 }
 
+/*
 void Value::print(std::ostream &O, AssemblyAnnotationWriter *AAW) const {
   raw_os_ostream OS(O);
   print(OS, AAW);
-}
+}*/
 
 // Value::dump - allow easy printing of Values from the debugger.
 void Value::dump() const { print(errs()); errs() << '\n'; }

@@ -552,7 +552,7 @@ static GlobalVariable *SRAGlobal(GlobalVariable *GV, const TargetData &TD,
   if (NewGlobals.empty())
     return 0;
 
-  DOUT << "PERFORMING GLOBAL SRA ON: " << *GV;
+  DEBUG(errs() << "PERFORMING GLOBAL SRA ON: " << *GV);
 
   Constant *NullInt = Constant::getNullValue(Type::getInt32Ty(Context));
 
@@ -781,14 +781,14 @@ static bool OptimizeAwayTrappingUsesOfLoads(GlobalVariable *GV, Constant *LV,
   }
 
   if (Changed) {
-    DOUT << "OPTIMIZED LOADS FROM STORED ONCE POINTER: " << *GV;
+    DEBUG(errs() << "OPTIMIZED LOADS FROM STORED ONCE POINTER: " << *GV);
     ++NumGlobUses;
   }
 
   // If we nuked all of the loads, then none of the stores are needed either,
   // nor is the global.
   if (AllNonStoreUsesGone) {
-    DOUT << "  *** GLOBAL NOW DEAD!\n";
+    DEBUG(errs() << "  *** GLOBAL NOW DEAD!\n");
     CleanupConstantGlobalUsers(GV, 0, Context);
     if (GV->use_empty()) {
       GV->eraseFromParent();
@@ -823,7 +823,7 @@ static void ConstantPropUsersOf(Value *V, LLVMContext &Context) {
 static GlobalVariable *OptimizeGlobalAddressOfMalloc(GlobalVariable *GV,
                                                      MallocInst *MI,
                                                      LLVMContext &Context) {
-  DOUT << "PROMOTING MALLOC GLOBAL: " << *GV << "  MALLOC = " << *MI;
+  DEBUG(errs() << "PROMOTING MALLOC GLOBAL: " << *GV << "  MALLOC = " << *MI);
   ConstantInt *NElements = cast<ConstantInt>(MI->getArraySize());
 
   if (NElements->getZExtValue() != 1) {
@@ -1269,7 +1269,7 @@ static void RewriteUsesOfLoadForHeapSRoA(LoadInst *Load,
 /// it up into multiple allocations of arrays of the fields.
 static GlobalVariable *PerformHeapAllocSRoA(GlobalVariable *GV, MallocInst *MI,
                                             LLVMContext &Context){
-  DOUT << "SROA HEAP ALLOC: " << *GV << "  MALLOC = " << *MI;
+  DEBUG(errs() << "SROA HEAP ALLOC: " << *GV << "  MALLOC = " << *MI);
   const StructType *STy = cast<StructType>(MI->getAllocatedType());
 
   // There is guaranteed to be at least one use of the malloc (storing
@@ -1587,7 +1587,7 @@ static bool TryToShrinkGlobalToBoolean(GlobalVariable *GV, Constant *OtherVal,
     if (!isa<LoadInst>(I) && !isa<StoreInst>(I))
       return false;
   
-  DOUT << "   *** SHRINKING TO BOOL: " << *GV;
+  DEBUG(errs() << "   *** SHRINKING TO BOOL: " << *GV);
   
   // Create the new global, initializing it to false.
   GlobalVariable *NewGV = new GlobalVariable(Context,
@@ -1666,7 +1666,7 @@ bool GlobalOpt::ProcessInternalGlobal(GlobalVariable *GV,
   GV->removeDeadConstantUsers();
 
   if (GV->use_empty()) {
-    DOUT << "GLOBAL DEAD: " << *GV;
+    DEBUG(errs() << "GLOBAL DEAD: " << *GV);
     GV->eraseFromParent();
     ++NumDeleted;
     return true;
@@ -1709,7 +1709,7 @@ bool GlobalOpt::ProcessInternalGlobal(GlobalVariable *GV,
         GS.AccessingFunction->getName() == "main" &&
         GS.AccessingFunction->hasExternalLinkage() &&
         GV->getType()->getAddressSpace() == 0) {
-      DOUT << "LOCALIZING GLOBAL: " << *GV;
+      DEBUG(errs() << "LOCALIZING GLOBAL: " << *GV);
       Instruction* FirstI = GS.AccessingFunction->getEntryBlock().begin();
       const Type* ElemTy = GV->getType()->getElementType();
       // FIXME: Pass Global's alignment when globals have alignment
@@ -1726,7 +1726,7 @@ bool GlobalOpt::ProcessInternalGlobal(GlobalVariable *GV,
     // If the global is never loaded (but may be stored to), it is dead.
     // Delete it now.
     if (!GS.isLoaded) {
-      DOUT << "GLOBAL NEVER LOADED: " << *GV;
+      DEBUG(errs() << "GLOBAL NEVER LOADED: " << *GV);
 
       // Delete any stores we can find to the global.  We may not be able to
       // make it completely dead though.
@@ -1742,7 +1742,7 @@ bool GlobalOpt::ProcessInternalGlobal(GlobalVariable *GV,
       return Changed;
 
     } else if (GS.StoredType <= GlobalStatus::isInitializerStored) {
-      DOUT << "MARKING CONSTANT: " << *GV;
+      DEBUG(errs() << "MARKING CONSTANT: " << *GV);
       GV->setConstant(true);
 
       // Clean up any obviously simplifiable users now.
@@ -1750,8 +1750,8 @@ bool GlobalOpt::ProcessInternalGlobal(GlobalVariable *GV,
 
       // If the global is dead now, just nuke it.
       if (GV->use_empty()) {
-        DOUT << "   *** Marking constant allowed us to simplify "
-             << "all users and delete global!\n";
+        DEBUG(errs() << "   *** Marking constant allowed us to simplify "
+                     << "all users and delete global!\n");
         GV->eraseFromParent();
         ++NumDeleted;
       }
@@ -1780,8 +1780,8 @@ bool GlobalOpt::ProcessInternalGlobal(GlobalVariable *GV,
                                      GV->getContext());
 
           if (GV->use_empty()) {
-            DOUT << "   *** Substituting initializer allowed us to "
-                 << "simplify all users and delete global!\n";
+            DEBUG(errs() << "   *** Substituting initializer allowed us to "
+                         << "simplify all users and delete global!\n");
             GV->eraseFromParent();
             ++NumDeleted;
           } else {

@@ -29,7 +29,7 @@ using namespace llvm;
 AbstractLatticeFunction::~AbstractLatticeFunction() {}
 
 /// PrintValue - Render the specified lattice value to the specified stream.
-void AbstractLatticeFunction::PrintValue(LatticeVal V, std::ostream &OS) {
+void AbstractLatticeFunction::PrintValue(LatticeVal V, raw_ostream &OS) {
   if (V == UndefVal)
     OS << "undefined";
   else if (V == OverdefinedVal)
@@ -312,7 +312,7 @@ void SparseSolver::Solve(Function &F) {
   }
 }
 
-void SparseSolver::Print(Function &F, std::ostream &OS) const {
+void SparseSolver::Print(Function &F, raw_ostream &OS) const {
   OS << "\nFUNCTION: " << F.getNameStr() << "\n";
   for (Function::iterator BB = F.begin(), E = F.end(); BB != E; ++BB) {
     if (!BBExecutable.count(BB))

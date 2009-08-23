@@ -416,7 +416,7 @@ private:
 
   void visitInstruction(Instruction &I) {
     // If a new instruction is added to LLVM that we don't handle...
-    cerr << "SCCP: Don't know how to handle: " << I;
+    errs() << "SCCP: Don't know how to handle: " << I;
     markOverdefined(&I);   // Just in case
   }
 };
@@ -516,7 +516,7 @@ bool SCCPSolver::isEdgeFeasible(BasicBlock *From, BasicBlock *To) {
     return false;
   } else {
 #ifndef NDEBUG
-    cerr << "Unknown terminator instruction: " << *TI << '\n';
+    errs() << "Unknown terminator instruction: " << *TI << '\n';
 #endif
     llvm_unreachable(0);
   }

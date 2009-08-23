@@ -52,10 +52,11 @@
 #include "llvm/Analysis/LoopPass.h"
 #include "llvm/Support/CFG.h"
 #include "llvm/Support/Compiler.h"
+#include "llvm/Support/CommandLine.h"
 #include "llvm/Support/Debug.h"
+#include "llvm/Support/raw_ostream.h"
 #include "llvm/Transforms/Utils/Local.h"
 #include "llvm/Transforms/Utils/BasicBlockUtils.h"
-#include "llvm/Support/CommandLine.h"
 #include "llvm/ADT/SmallVector.h"
 #include "llvm/ADT/Statistic.h"
 #include "llvm/ADT/STLExtras.h"
@@ -182,11 +183,11 @@ ICmpInst *IndVarSimplify::LinearFunctionTestReplace(Loop *L,
   else
     Opcode = ICmpInst::ICMP_EQ;
 
-  DOUT << "INDVARS: Rewriting loop exit condition to:\n"
-       << "      LHS:" << *CmpIndVar << '\n'
-       << "       op:\t"
-       << (Opcode == ICmpInst::ICMP_NE ? "!=" : "==") << "\n"
-       << "      RHS:\t" << *RHS << "\n";
+  DEBUG(errs() << "INDVARS: Rewriting loop exit condition to:\n"
+               << "      LHS:" << *CmpIndVar << '\n'
+               << "       op:\t"
+               << (Opcode == ICmpInst::ICMP_NE ? "!=" : "==") << "\n"
+               << "      RHS:\t" << *RHS << "\n");
 
   ICmpInst *Cond = new ICmpInst(BI, Opcode, CmpIndVar, ExitCnt, "exitcond");
 
@@ -273,8 +274,8 @@ void IndVarSimplify::RewriteLoopExitValues(Loop *L,
 
         Value *ExitVal = Rewriter.expandCodeFor(ExitValue, PN->getType(), Inst);
 
-        DOUT << "INDVARS: RLEV: AfterLoopVal = " << *ExitVal << '\n'
-             << "  LoopVal = " << *Inst << "\n";
+        DEBUG(errs() << "INDVARS: RLEV: AfterLoopVal = " << *ExitVal << '\n'
+                     << "  LoopVal = " << *Inst << "\n");
 
         PN->setIncomingValue(i, ExitVal);
 
@@ -401,7 +402,7 @@ bool IndVarSimplify::runOnLoop(Loop *L, LPPassManager &LPM) {
 
     ++NumInserted;
     Changed = true;
-    DOUT << "INDVARS: New CanIV: " << *IndVar << '\n';
+    DEBUG(errs() << "INDVARS: New CanIV: " << *IndVar << '\n');
 
     // Now that the official induction variable is established, reinsert
     // the old canonical-looking variable after it so that the IR remains
@@ -506,8 +507,8 @@ void IndVarSimplify::RewriteIVExpressions(Loop *L, const Type *LargestType,
         NewVal->takeName(Op);
       User->replaceUsesOfWith(Op, NewVal);
       UI->setOperandValToReplace(NewVal);
-      DOUT << "INDVARS: Rewrote IV '" << *AR << "' " << *Op << '\n'
-           << "   into = " << *NewVal << "\n";
+      DEBUG(errs() << "INDVARS: Rewrote IV '" << *AR << "' " << *Op << '\n'
+                   << "   into = " << *NewVal << "\n");
       ++NumRemoved;
       Changed = true;
 

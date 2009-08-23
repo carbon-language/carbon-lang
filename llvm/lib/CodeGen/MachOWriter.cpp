@@ -634,7 +634,7 @@ void MachOWriter::InitMem(const Constant *C, uintptr_t Offset,
       }
       case Instruction::Add:
       default:
-        cerr << "ConstantExpr not handled as global var init: " << *CE << "\n";
+        errs() << "ConstantExpr not handled as global var init: " << *CE <<"\n";
         llvm_unreachable(0);
       }
     } else if (PC->getType()->isSingleValueType()) {
@@ -732,7 +732,7 @@ void MachOWriter::InitMem(const Constant *C, uintptr_t Offset,
         WorkList.push_back(CPair(CPS->getOperand(i),
                                  PA+SL->getElementOffset(i)));
     } else {
-      cerr << "Bad Type: " << *PC->getType() << "\n";
+      errs() << "Bad Type: " << *PC->getType() << "\n";
       llvm_unreachable("Unknown constant type to initialize memory with!");
     }
   }

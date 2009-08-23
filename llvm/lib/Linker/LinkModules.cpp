@@ -25,7 +25,6 @@
 #include "llvm/ValueSymbolTable.h"
 #include "llvm/Instructions.h"
 #include "llvm/Assembly/Writer.h"
-#include "llvm/Support/Streams.h"
 #include "llvm/Support/ErrorHandling.h"
 #include "llvm/System/Path.h"
 #include "llvm/ADT/DenseMap.h"
@@ -145,7 +144,7 @@ protected:
 
   // for debugging...
   virtual void dump() const {
-    cerr << "AbstractTypeSet!\n";
+    errs() << "AbstractTypeSet!\n";
   }
 };
 }
@@ -338,11 +337,11 @@ static bool LinkTypes(Module *Dest, const Module *Src, std::string *Err) {
 static void PrintMap(const std::map<const Value*, Value*> &M) {
   for (std::map<const Value*, Value*>::const_iterator I = M.begin(), E =M.end();
        I != E; ++I) {
-    cerr << " Fr: " << (void*)I->first << " ";
+    errs() << " Fr: " << (void*)I->first << " ";
     I->first->dump();
-    cerr << " To: " << (void*)I->second << " ";
+    errs() << " To: " << (void*)I->second << " ";
     I->second->dump();
-    cerr << "\n";
+    errs() << "\n";
   }
 }
 #endif
@@ -414,10 +413,10 @@ static Value *RemapOperand(const Value *In,
   }
 
 #ifndef NDEBUG
-  cerr << "LinkModules ValueMap: \n";
+  errs() << "LinkModules ValueMap: \n";
   PrintMap(ValueMap);
 
-  cerr << "Couldn't remap value: " << (void*)In << " " << *In << "\n";
+  errs() << "Couldn't remap value: " << (void*)In << " " << *In << "\n";
   llvm_unreachable("Couldn't remap value!");
 #endif
   return 0;
@@ -1280,10 +1279,10 @@ Linker::LinkModules(Module *Dest, Module *Src, std::string *ErrorMsg) {
 
   if (!Src->getDataLayout().empty() && !Dest->getDataLayout().empty() &&
       Src->getDataLayout() != Dest->getDataLayout())
-    cerr << "WARNING: Linking two modules of different data layouts!\n";
+    errs() << "WARNING: Linking two modules of different data layouts!\n";
   if (!Src->getTargetTriple().empty() &&
       Dest->getTargetTriple() != Src->getTargetTriple())
-    cerr << "WARNING: Linking two modules of different target triples!\n";
+    errs() << "WARNING: Linking two modules of different target triples!\n";
 
   // Append the module inline asm string.
   if (!Src->getModuleInlineAsm().empty()) {

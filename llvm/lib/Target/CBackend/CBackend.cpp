@@ -319,7 +319,7 @@ namespace {
 
     void visitInstruction(Instruction &I) {
 #ifndef NDEBUG
-      cerr << "C Writer does not know about " << I;
+      errs() << "C Writer does not know about " << I;
 #endif
       llvm_unreachable(0);
     }
@@ -506,7 +506,7 @@ CWriter::printSimpleType(formatted_raw_ostream &Out, const Type *Ty,
     
   default:
 #ifndef NDEBUG
-    cerr << "Unknown primitive type: " << *Ty << "\n";
+    errs() << "Unknown primitive type: " << *Ty << "\n";
 #endif
     llvm_unreachable(0);
   }
@@ -553,7 +553,7 @@ CWriter::printSimpleType(std::ostream &Out, const Type *Ty, bool isSigned,
     
   default:
 #ifndef NDEBUG
-    cerr << "Unknown primitive type: " << *Ty << "\n";
+    errs() << "Unknown primitive type: " << *Ty << "\n";
 #endif
     llvm_unreachable(0);
   }
@@ -1110,7 +1110,7 @@ void CWriter::printConstant(Constant *CPV, bool Static) {
     }
     default:
 #ifndef NDEBUG
-      cerr << "CWriter Error: Unhandled constant expression: "
+      errs() << "CWriter Error: Unhandled constant expression: "
            << *CE << "\n";
 #endif
       llvm_unreachable(0);
@@ -1323,7 +1323,7 @@ void CWriter::printConstant(Constant *CPV, bool Static) {
     // FALL THROUGH
   default:
 #ifndef NDEBUG
-    cerr << "Unknown constant type: " << *CPV << "\n";
+    errs() << "Unknown constant type: " << *CPV << "\n";
 #endif
     llvm_unreachable(0);
   }
@@ -2735,7 +2735,7 @@ void CWriter::visitBinaryOperator(Instruction &I) {
     case Instruction::AShr: Out << " >> "; break;
     default: 
 #ifndef NDEBUG
-       cerr << "Invalid operator type!" << I;
+       errs() << "Invalid operator type!" << I;
 #endif
        llvm_unreachable(0);
     }
@@ -2776,7 +2776,7 @@ void CWriter::visitICmpInst(ICmpInst &I) {
   case ICmpInst::ICMP_SGT: Out << " > "; break;
   default:
 #ifndef NDEBUG
-    cerr << "Invalid icmp predicate!" << I; 
+    errs() << "Invalid icmp predicate!" << I; 
 #endif
     llvm_unreachable(0);
   }

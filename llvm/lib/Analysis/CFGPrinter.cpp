@@ -44,19 +44,21 @@ struct DOTGraphTraits<const Function*> : public DefaultDOTGraphTraits {
     if (ShortNames && !Node->getName().empty())
       return Node->getNameStr() + ":";
 
-    std::ostringstream Out;
+    std::string Str;
+    raw_string_ostream OS(Str);
+
     if (ShortNames) {
-      WriteAsOperand(Out, Node, false);
-      return Out.str();
+      WriteAsOperand(OS, Node, false);
+      return OS.str();
     }
 
     if (Node->getName().empty()) {
-      WriteAsOperand(Out, Node, false);
-      Out << ":";
+      WriteAsOperand(OS, Node, false);
+      OS << ":";
     }
-
-    Out << *Node;
-    std::string OutStr = Out.str();
+    
+    OS << *Node;
+    std::string OutStr = OS.str();
     if (OutStr[0] == '\n') OutStr.erase(OutStr.begin());
 
     // Process string output to make it nicer...

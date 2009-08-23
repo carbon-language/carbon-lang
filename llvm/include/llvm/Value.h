@@ -19,7 +19,6 @@
 #include "llvm/ADT/StringRef.h"
 #include "llvm/ADT/Twine.h"
 #include "llvm/Support/Casting.h"
-#include <iosfwd>
 #include <string>
 
 namespace llvm {
@@ -97,7 +96,6 @@ public:
 
   /// print - Implement operator<< on Value.
   ///
-  void print(std::ostream &O, AssemblyAnnotationWriter *AAW = 0) const;
   void print(raw_ostream &O, AssemblyAnnotationWriter *AAW = 0) const;
 
   /// All values are typed, get the type of this value.
@@ -280,10 +278,6 @@ public:
   }
 };
 
-inline std::ostream &operator<<(std::ostream &OS, const Value &V) {
-  V.print(OS);
-  return OS;
-}
 inline raw_ostream &operator<<(raw_ostream &OS, const Value &V) {
   V.print(OS);
   return OS;
