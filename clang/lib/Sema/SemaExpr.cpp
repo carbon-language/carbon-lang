@@ -4237,28 +4237,10 @@ QualType Sema::CheckCompareOperands(Expr *&lex, Expr *&rex, SourceLocation Loc,
     QualType RCanPointeeTy =
       Context.getCanonicalType(rType->getAs<PointerType>()->getPointeeType());
 
-    if (isRelational) {
-      if (lType->isFunctionPointerType() || rType->isFunctionPointerType()) {
-        Diag(Loc, diag::ext_typecheck_ordered_comparison_of_function_pointers)
-          << lType << rType << lex->getSourceRange() << rex->getSourceRange();
-      }
-      if (LCanPointeeTy->isVoidType() != RCanPointeeTy->isVoidType()) {
-        Diag(Loc, diag::ext_typecheck_comparison_of_distinct_pointers)
-          << lType << rType << lex->getSourceRange() << rex->getSourceRange();
-      }
-    } else {
-      if (lType->isFunctionPointerType() != rType->isFunctionPointerType()) {
-        if (!LHSIsNull && !RHSIsNull)
-          Diag(Loc, diag::ext_typecheck_comparison_of_distinct_pointers)
-            << lType << rType << lex->getSourceRange() << rex->getSourceRange();
-      }
-    }
-
-    // Simple check: if the pointee types are identical, we're done.
-    if (LCanPointeeTy == RCanPointeeTy)
-      return ResultTy;
-
     if (getLangOptions().CPlusPlus) {
+      if (LCanPointeeTy == RCanPointeeTy)
+        return ResultTy;
+
       // C++ [expr.rel]p2:
       //   [...] Pointer conversions (4.10) and qualification
       //   conversions (4.4) are performed on pointer operands (or on
@@ -4278,15 +4260,29 @@ QualType Sema::CheckCompareOperands(Expr *&lex, Expr *&rex, SourceLocation Loc,
       ImpCastExprToType(rex, T);
       return ResultTy;
     }
-
-    if (!LHSIsNull && !RHSIsNull &&                       // C99 6.5.9p2
-        !LCanPointeeTy->isVoidType() && !RCanPointeeTy->isVoidType() &&
-        !Context.typesAreCompatible(LCanPointeeTy.getUnqualifiedType(),
-                                    RCanPointeeTy.getUnqualifiedType())) {
+    // C99 6.5.9p2 and C99 6.5.8p2
+    if (Context.typesAreCompatible(LCanPointeeTy.getUnqualifiedType(),
+                                   RCanPointeeTy.getUnqualifiedType())) {
+      // Valid unless a relational comparison of function pointers
+      if (isRelational && LCanPointeeTy->isFunctionType()) {
+        Diag(Loc, diag::ext_typecheck_ordered_comparison_of_function_pointers)
+          << lType << rType << lex->getSourceRange() << rex->getSourceRange();
+      }
+    } else if (!isRelational &&
+               (LCanPointeeTy->isVoidType() || RCanPointeeTy->isVoidType())) {
+      // Valid unless comparison between non-null pointer and function pointer
+      if ((LCanPointeeTy->isFunctionType() || RCanPointeeTy->isFunctionType())
+          && !LHSIsNull && !RHSIsNull) {
+        Diag(Loc, diag::ext_typecheck_comparison_of_fptr_to_void)
+          << lType << rType << lex->getSourceRange() << rex->getSourceRange();
+      }
+    } else {
+      // Invalid
       Diag(Loc, diag::ext_typecheck_comparison_of_distinct_pointers)
         << lType << rType << lex->getSourceRange() << rex->getSourceRange();
     }
-    ImpCastExprToType(rex, lType); // promote the pointer to pointer
+    if (LCanPointeeTy != RCanPointeeTy)
+      ImpCastExprToType(rex, lType); // promote the pointer to pointer
     return ResultTy;
   }
   // C++ allows comparison of pointers with null pointer constants.
