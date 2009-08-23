@@ -4358,10 +4358,16 @@ QualType Sema::CheckCompareOperands(Expr *&lex, Expr *&rex, SourceLocation Loc,
     }
   }
   if (lType->isAnyPointerType() && rType->isIntegerType()) {
-    if (!RHSIsNull) {
-      unsigned DiagID = isRelational
-           ? diag::ext_typecheck_ordered_comparison_of_pointer_integer
-           : diag::ext_typecheck_comparison_of_pointer_integer;
+    unsigned DiagID = 0;
+    if (RHSIsNull) {
+      if (isRelational)
+        DiagID = diag::ext_typecheck_ordered_comparison_of_pointer_and_zero;
+    } else if (isRelational)
+      DiagID = diag::ext_typecheck_ordered_comparison_of_pointer_integer;
+    else
+      DiagID = diag::ext_typecheck_comparison_of_pointer_integer;
+    
+    if (DiagID) {
       Diag(Loc, DiagID)
         << lType << rType << lex->getSourceRange() << rex->getSourceRange();
     }
@@ -4369,11 +4375,16 @@ QualType Sema::CheckCompareOperands(Expr *&lex, Expr *&rex, SourceLocation Loc,
     return ResultTy;
   }
   if (lType->isIntegerType() && rType->isAnyPointerType()) {
-    if (!LHSIsNull) {
-      unsigned DiagID = isRelational
-        ? diag::ext_typecheck_ordered_comparison_of_pointer_integer
-        : diag::ext_typecheck_comparison_of_pointer_integer;
+    unsigned DiagID = 0;
+    if (LHSIsNull) {
+      if (isRelational)
+        DiagID = diag::ext_typecheck_ordered_comparison_of_pointer_and_zero;
+    } else if (isRelational)
+      DiagID = diag::ext_typecheck_ordered_comparison_of_pointer_integer;
+    else
+      DiagID = diag::ext_typecheck_comparison_of_pointer_integer;
       
+    if (DiagID) {
       Diag(Loc, DiagID)
         << lType << rType << lex->getSourceRange() << rex->getSourceRange();
     }

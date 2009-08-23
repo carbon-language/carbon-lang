@@ -1348,6 +1348,8 @@ def err_typecheck_sub_ptr_compatible : Error<
   "%0 and %1 are not pointers to compatible types">;
 def ext_typecheck_ordered_comparison_of_pointer_integer : ExtWarn<
   "ordered comparison between pointer and integer (%0 and %1)">;
+def ext_typecheck_ordered_comparison_of_pointer_and_zero : Extension<
+  "ordered comparison between pointer and zero (%0 and %1) is an extension">;
 def ext_typecheck_ordered_comparison_of_function_pointers : ExtWarn<
   "ordered comparison of function pointers (%0 and %1)">;
 def ext_typecheck_comparison_of_pointer_integer : ExtWarn<

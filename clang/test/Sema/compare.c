@@ -5,7 +5,8 @@
 int test(char *C) { // nothing here should warn.
   return C != ((void*)0);
   return C != (void*)0;
-  return C != 0;
+  return C != 0;  
+  return C != 1;  // expected-warning {{comparison between pointer and integer ('char *' and 'int')}}
 }
 
 int equal(char *a, const char *b) {
@@ -18,7 +19,8 @@ int arrays(char (*a)[5], char(*b)[10], char(*c)[5]) {
 }
 
 int pointers(int *a) {
-  return a > 0; // no warning.  rdar://7163039
+  return a > 0; // expected-warning {{ordered comparison between pointer and zero ('int *' and 'int') is an extension}}
+  return a > 42; // expected-warning {{ordered comparison between pointer and integer ('int *' and 'int')}}
   return a > (void *)0; // expected-warning {{comparison of distinct pointer types}}
 }
 
