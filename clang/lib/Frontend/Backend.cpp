@@ -328,7 +328,7 @@ void BackendConsumer::EmitAssembly() {
   std::string Error;
   if (!AddEmitPasses(Error)) {
     // FIXME: Don't fail this way.
-    llvm::cerr << "ERROR: " << Error << "\n";
+    llvm::errs() << "ERROR: " << Error << "\n";
     ::exit(1);
   }
 
