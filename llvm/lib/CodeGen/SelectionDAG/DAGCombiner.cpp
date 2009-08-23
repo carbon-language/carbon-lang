@@ -3460,7 +3460,7 @@ SDValue DAGCombiner::ReduceLoadWidth(SDNode *N) {
 
   unsigned EVTBits = ExtVT.getSizeInBits();
   unsigned ShAmt = 0;
-  if (N0.getOpcode() == ISD::SRL && N0.hasOneUse()) {
+  if (N0.getOpcode() == ISD::SRL && N0.hasOneUse() && ExtVT.isRound()) {
     if (ConstantSDNode *N01 = dyn_cast<ConstantSDNode>(N0.getOperand(1))) {
       ShAmt = N01->getZExtValue();
       // Is the shift amount a multiple of size of VT?
