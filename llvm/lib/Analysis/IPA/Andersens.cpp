@@ -85,7 +85,9 @@
 #define FULL_UNIVERSAL 0
 
 using namespace llvm;
+#ifndef NDEBUG
 STATISTIC(NumIters      , "Number of iterations to reach convergence");
+#endif
 STATISTIC(NumConstraints, "Number of constraints");
 STATISTIC(NumNodes      , "Number of nodes");
 STATISTIC(NumUnified    , "Number of variables unified");

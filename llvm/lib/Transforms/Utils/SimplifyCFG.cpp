@@ -614,6 +614,7 @@ static bool SimplifyEqualityComparisonWithOnlyPredecessor(TerminatorInst *TI,
         assert(ThisCases.size() == 1 && "Branch can only have one case!");
         // Insert the new branch.
         Instruction *NI = BranchInst::Create(ThisDef, TI);
+        (void) NI;
 
         // Remove PHI node entries for the dead edge.
         ThisCases[0].second->removePredecessor(TI->getParent());
@@ -681,6 +682,7 @@ static bool SimplifyEqualityComparisonWithOnlyPredecessor(TerminatorInst *TI,
 
     // Insert the new branch.
     Instruction *NI = BranchInst::Create(TheRealDest, TI);
+    (void) NI;
 
     DEBUG(errs() << "Threading pred instr: " << *Pred->getTerminator()
               << "Through successor TI: " << *TI << "Leaving: " << *NI << "\n");
@@ -1450,6 +1452,7 @@ static bool SimplifyCondBranchToTwoReturns(BranchInst *BI) {
   Value *RI = !TrueValue ?
               ReturnInst::Create(BI->getContext(), BI) :
               ReturnInst::Create(BI->getContext(), TrueValue, BI);
+  (void) RI;
       
   DEBUG(errs() << "\nCHANGING BRANCH TO TWO RETURNS INTO SELECT:"
                << "\n  " << *BI << "NewRet = " << *RI
