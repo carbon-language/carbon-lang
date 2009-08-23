@@ -17,37 +17,22 @@ using namespace llvm;
 
 namespace {
   class WriteBitcodePass : public ModulePass {
-    // FIXME: Kill off std::ostream
-    std::ostream *Out;
-    raw_ostream *RawOut; // raw_ostream to print on
+    raw_ostream &OS; // raw_ostream to print on
   public:
     static char ID; // Pass identification, replacement for typeid
-    explicit WriteBitcodePass(std::ostream &o)
-      : ModulePass(&ID), Out(&o), RawOut(0) {}
     explicit WriteBitcodePass(raw_ostream &o)
-      : ModulePass(&ID), Out(0), RawOut(&o) {}
+      : ModulePass(&ID), OS(o) {}
     
     const char *getPassName() const { return "Bitcode Writer"; }
     
     bool runOnModule(Module &M) {
-      if (Out) {
-        WriteBitcodeToFile(&M, *Out);
-      } else {
-        WriteBitcodeToFile(&M, *RawOut);
-      }
+      WriteBitcodeToFile(&M, OS);
       return false;
     }
   };
 }
 
 char WriteBitcodePass::ID = 0;
-
-/// CreateBitcodeWriterPass - Create and return a pass that writes the module
-/// to the specified ostream.
-ModulePass *llvm::CreateBitcodeWriterPass(std::ostream &Str) {
-  return new WriteBitcodePass(Str);
-}
-
 
 /// createBitcodeWriterPass - Create and return a pass that writes the module
 /// to the specified ostream.

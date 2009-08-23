@@ -51,10 +51,10 @@ namespace {
 ///
 bool BugDriver::writeProgramToFile(const std::string &Filename,
                                    Module *M) const {
-  std::ios::openmode io_mode = std::ios::out | std::ios::trunc |
-                               std::ios::binary;
-  std::ofstream Out(Filename.c_str(), io_mode);
-  if (!Out.good()) return true;
+  std::string ErrInfo;
+  raw_fd_ostream Out(Filename.c_str(), ErrInfo,
+                     raw_fd_ostream::F_Force|raw_fd_ostream::F_Binary);
+  if (!ErrInfo.empty()) return true;
   
   WriteBitcodeToFile(M ? M : Program, Out);
   return false;
@@ -83,11 +83,10 @@ void BugDriver::EmitProgressBitcode(const std::string &ID, bool NoFlyer) {
 }
 
 int BugDriver::runPassesAsChild(const std::vector<const PassInfo*> &Passes) {
-
-  std::ios::openmode io_mode = std::ios::out | std::ios::trunc |
-                               std::ios::binary;
-  std::ofstream OutFile(ChildOutput.c_str(), io_mode);
-  if (!OutFile.good()) {
+  std::string ErrInfo;
+  raw_fd_ostream OutFile(ChildOutput.c_str(), ErrInfo,
+                         raw_fd_ostream::F_Force|raw_fd_ostream::F_Binary);
+  if (!ErrInfo.empty()) {
     errs() << "Error opening bitcode file: " << ChildOutput << "\n";
     return 1;
   }
@@ -106,7 +105,7 @@ int BugDriver::runPassesAsChild(const std::vector<const PassInfo*> &Passes) {
   PM.add(createVerifierPass());
 
   // Write bitcode out to disk as the last step...
-  PM.add(CreateBitcodeWriterPass(OutFile));
+  PM.add(createBitcodeWriterPass(OutFile));
 
   // Run all queued passes.
   PM.run(*Program);
@@ -146,12 +145,15 @@ bool BugDriver::runPasses(const std::vector<const PassInfo*> &Passes,
            << ErrMsg << "\n";
     return(1);
   }
-  std::ios::openmode io_mode = std::ios::out | std::ios::trunc |
-                               std::ios::binary;
-  std::ofstream InFile(inputFilename.c_str(), io_mode);
-  if (!InFile.good()) {
+  
+  std::string ErrInfo;
+  raw_fd_ostream InFile(inputFilename.c_str(), ErrInfo,
+                        raw_fd_ostream::F_Force|raw_fd_ostream::F_Binary);
+  
+  
+  if (!ErrInfo.empty()) {
     errs() << "Error opening bitcode file: " << inputFilename << "\n";
-    return(1);
+    return 1;
   }
   WriteBitcodeToFile(Program, InFile);
   InFile.close();

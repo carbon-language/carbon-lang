@@ -14,7 +14,6 @@
 #ifndef LLVM_BITCODE_H
 #define LLVM_BITCODE_H
 
-#include <iosfwd>
 #include <string>
 
 namespace llvm {
@@ -41,10 +40,6 @@ namespace llvm {
   Module *ParseBitcodeFile(MemoryBuffer *Buffer, LLVMContext& Context,
                            std::string *ErrMsg = 0);
 
-  /// WriteBitcodeToFile - Write the specified module to the specified output
-  /// stream.
-  void WriteBitcodeToFile(const Module *M, std::ostream &Out);
-
   /// WriteBitcodeToFile - Write the specified module to the specified
   /// raw output stream.
   void WriteBitcodeToFile(const Module *M, raw_ostream &Out);
@@ -52,10 +47,6 @@ namespace llvm {
   /// WriteBitcodeToStream - Write the specified module to the specified
   /// raw output stream.
   void WriteBitcodeToStream(const Module *M, BitstreamWriter &Stream);
-
-  /// CreateBitcodeWriterPass - Create and return a pass that writes the module
-  /// to the specified ostream.
-  ModulePass *CreateBitcodeWriterPass(std::ostream &Str);
 
   /// createBitcodeWriterPass - Create and return a pass that writes the module
   /// to the specified ostream.

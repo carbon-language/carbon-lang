@@ -47,10 +47,7 @@
 #include "llvm/Transforms/IPO.h"
 #include "llvm/Transforms/Scalar.h"
 #include "llvm/Config/config.h"
-
-
 #include <cstdlib>
-#include <fstream>
 #include <unistd.h>
 #include <fcntl.h>
 
@@ -139,31 +136,34 @@ void LTOCodeGenerator::addMustPreserveSymbol(const char* sym)
 }
 
 
-bool LTOCodeGenerator::writeMergedModules(const char* path, std::string& errMsg)
-{
-    if ( this->determineTarget(errMsg) ) 
-        return true;
+bool LTOCodeGenerator::writeMergedModules(const char *path,
+                                          std::string &errMsg) {
+  if (determineTarget(errMsg))
+    return true;
 
-    // mark which symbols can not be internalized 
-    this->applyScopeRestrictions();
+  // mark which symbols can not be internalized 
+  applyScopeRestrictions();
 
-    // create output file
-    std::ofstream out(path, std::ios_base::out|std::ios::trunc|std::ios::binary);
-    if ( out.fail() ) {
-        errMsg = "could not open bitcode file for writing: ";
-        errMsg += path;
-        return true;
-    }
+  // create output file
+  std::string ErrInfo;
+  raw_fd_ostream Out(path, ErrInfo,
+                     raw_fd_ostream::F_Force|raw_fd_ostream::F_Binary);
+  if (!ErrInfo.empty()) {
+    errMsg = "could not open bitcode file for writing: ";
+    errMsg += path;
+    return true;
+  }
     
-    // write bitcode to it
-    WriteBitcodeToFile(_linker.getModule(), out);
-    if ( out.fail() ) {
-        errMsg = "could not write bitcode file: ";
-        errMsg += path;
-        return true;
-    }
-    
-    return false;
+  // write bitcode to it
+  WriteBitcodeToFile(_linker.getModule(), Out);
+  
+  if (Out.has_error()) {
+    errMsg = "could not write bitcode file: ";
+    errMsg += path;
+    return true;
+  }
+  
+  return false;
 }
 
 
