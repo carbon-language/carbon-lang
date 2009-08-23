@@ -16,23 +16,19 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include "llvm/Config/config.h"
-#include "llvm/ADT/OwningPtr.h"
 #include "llvm/Support/CommandLine.h"
 #include "llvm/Support/ErrorHandling.h"
 #include "llvm/Support/MemoryBuffer.h"
 #include "llvm/Support/ManagedStatic.h"
+#include "llvm/Support/raw_ostream.h"
 #include "llvm/Target/TargetRegistry.h"
 #include "llvm/System/Path.h"
-#include <algorithm>
-#include <functional>
+#include "llvm/ADT/OwningPtr.h"
+#include "llvm/Config/config.h"
 #include <map>
-#include <ostream>
 #include <set>
-#include <cstdlib>
 #include <cerrno>
-#include <cstring>
-#include <climits>
+#include <cstdlib>
 using namespace llvm;
 using namespace cl;
 
