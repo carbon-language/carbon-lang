@@ -343,7 +343,7 @@ raw_fd_ostream::raw_fd_ostream(const char *Filename, std::string &ErrorInfo,
   
   int OpenFlags = O_WRONLY|O_CREAT;
 #ifdef O_BINARY
-  if (Binary)
+  if (Flags & F_Binary)
     OpenFlags |= O_BINARY;
 #endif
   
