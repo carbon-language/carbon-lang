@@ -20,12 +20,11 @@
 #include "clang/Basic/OnDiskHashTable.h"
 #include "clang/Lex/Lexer.h"
 #include "clang/Lex/Preprocessor.h"
-#include "llvm/ADT/StringMap.h"
+#include "llvm/Support/Compiler.h"
 #include "llvm/Support/MemoryBuffer.h"
 #include "llvm/Support/raw_ostream.h"
 #include "llvm/System/Path.h"
-#include "llvm/Support/Compiler.h"
-#include "llvm/Support/Streams.h"
+#include "llvm/ADT/StringMap.h"
 
 // FIXME: put this somewhere else?
 #ifndef S_ISDIR

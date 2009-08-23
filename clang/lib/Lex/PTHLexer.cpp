@@ -97,7 +97,7 @@ LexNextToken:
   //===--------------------------------------==//
 #if 0  
   SourceManager& SM = PP->getSourceManager();
-  llvm::cerr << SM.getFileEntryForID(FileID)->getName()
+  llvm::errs() << SM.getFileEntryForID(FileID)->getName()
     << ':' << SM.getLogicalLineNumber(Tok.getLocation())
     << ':' << SM.getLogicalColumnNumber(Tok.getLocation())
     << '\n';

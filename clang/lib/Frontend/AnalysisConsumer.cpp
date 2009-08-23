@@ -17,8 +17,6 @@
 #include "clang/AST/ASTConsumer.h"
 #include "clang/AST/Decl.h"
 #include "clang/AST/DeclObjC.h"
-#include "llvm/Support/Compiler.h"
-#include "llvm/ADT/OwningPtr.h"
 #include "clang/Analysis/CFG.h"
 #include "clang/Analysis/Analyses/LiveVariables.h"
 #include "clang/Analysis/PathDiagnostic.h"
@@ -32,10 +30,11 @@
 #include "clang/Analysis/PathSensitive/GRTransferFuncs.h"
 #include "clang/Analysis/PathSensitive/GRExprEngine.h"
 #include "llvm/Support/CommandLine.h"
-#include "llvm/Support/Streams.h"
+#include "llvm/Support/Compiler.h"
 #include "llvm/Support/raw_ostream.h"
 #include "llvm/System/Path.h"
 #include "llvm/System/Program.h"
+#include "llvm/ADT/OwningPtr.h"
 
 using namespace clang;
 
@@ -476,7 +475,7 @@ static ExplodedNode::Auditor* CreateUbiViz() {
   if (!ErrMsg.empty())
     return 0;
 
-  llvm::cerr << "Writing '" << Filename << "'.\n";
+  llvm::errs() << "Writing '" << Filename << "'.\n";
   
   llvm::OwningPtr<llvm::raw_fd_ostream> Stream;
   std::string filename = Filename.toString();
@@ -534,7 +533,7 @@ UbigraphViz::UbigraphViz(llvm::raw_ostream* out, llvm::sys::Path& dir,
 
 UbigraphViz::~UbigraphViz() {
   Out.reset(0);
-  llvm::cerr << "Running 'ubiviz' program... ";
+  llvm::errs() << "Running 'ubiviz' program... ";
   std::string ErrMsg;
   llvm::sys::Path Ubiviz = llvm::sys::Program::FindProgramByName("ubiviz");
   std::vector<const char*> args;
@@ -543,7 +542,7 @@ UbigraphViz::~UbigraphViz() {
   args.push_back(0);
   
   if (llvm::sys::Program::ExecuteAndWait(Ubiviz, &args[0],0,0,0,0,&ErrMsg)) {
-    llvm::cerr << "Error viewing graph: " << ErrMsg << "\n";
+    llvm::errs() << "Error viewing graph: " << ErrMsg << "\n";
   }
   
   // Delete the directory.

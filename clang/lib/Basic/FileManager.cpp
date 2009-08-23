@@ -20,7 +20,6 @@
 #include "clang/Basic/FileManager.h"
 #include "llvm/ADT/SmallString.h"
 #include "llvm/System/Path.h"
-#include "llvm/Support/Streams.h"
 #include "llvm/Config/config.h"
 using namespace clang;
 
@@ -247,14 +246,14 @@ const FileEntry *FileManager::getFile(const char *NameStart,
   
   // Nope, there isn't.  Check to see if the file exists.
   struct stat StatBuf;
-  //llvm::cerr << "STATING: " << Filename;
+  //llvm::errs() << "STATING: " << Filename;
   if (stat_cached(InterndFileName, &StatBuf) ||   // Error stat'ing.
         S_ISDIR(StatBuf.st_mode)) {           // A directory?
     // If this file doesn't exist, we leave a null in FileEntries for this path.
-    //llvm::cerr << ": Not existing\n";
+    //llvm::errs() << ": Not existing\n";
     return 0;
   }
-  //llvm::cerr << ": exists\n";
+  //llvm::errs() << ": exists\n";
   
   // It exists.  See if we have already opened a file with the same inode.
   // This occurs when one dir is symlinked to another, for example.
@@ -276,15 +275,15 @@ const FileEntry *FileManager::getFile(const char *NameStart,
 }
 
 void FileManager::PrintStats() const {
-  llvm::cerr << "\n*** File Manager Stats:\n";
-  llvm::cerr << UniqueFiles.size() << " files found, "
-             << UniqueDirs.size() << " dirs found.\n";
-  llvm::cerr << NumDirLookups << " dir lookups, "
-             << NumDirCacheMisses << " dir cache misses.\n";
-  llvm::cerr << NumFileLookups << " file lookups, "
-             << NumFileCacheMisses << " file cache misses.\n";
+  llvm::errs() << "\n*** File Manager Stats:\n";
+  llvm::errs() << UniqueFiles.size() << " files found, "
+               << UniqueDirs.size() << " dirs found.\n";
+  llvm::errs() << NumDirLookups << " dir lookups, "
+               << NumDirCacheMisses << " dir cache misses.\n";
+  llvm::errs() << NumFileLookups << " file lookups, "
+               << NumFileCacheMisses << " file cache misses.\n";
   
-  //llvm::cerr << PagesMapped << BytesOfPagesMapped << FSLookups;
+  //llvm::errs() << PagesMapped << BytesOfPagesMapped << FSLookups;
 }
 
 int MemorizeStatCalls::stat(const char *path, struct stat *buf) {

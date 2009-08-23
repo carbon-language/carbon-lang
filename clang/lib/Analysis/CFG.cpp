@@ -16,13 +16,12 @@
 #include "clang/Analysis/CFG.h"
 #include "clang/AST/StmtVisitor.h"
 #include "clang/AST/PrettyPrinter.h"
+#include "llvm/Support/GraphWriter.h"
+#include "llvm/Support/Compiler.h"
+#include "llvm/Support/Allocator.h"
+#include "llvm/Support/Format.h"
 #include "llvm/ADT/DenseMap.h"
 #include "llvm/ADT/SmallPtrSet.h"
-#include "llvm/Support/GraphWriter.h"
-#include "llvm/Support/Streams.h"
-#include "llvm/Support/Compiler.h"
-#include <llvm/Support/Allocator.h>
-#include <llvm/Support/Format.h>
 
 using namespace clang;
 

@@ -22,10 +22,9 @@
 #include "clang/Basic/SourceManager.h"
 #include "clang/Basic/SourceManager.h"
 #include "clang/Basic/PrettyStackTrace.h"
-#include "llvm/Support/Streams.h"
-#include "llvm/ADT/ImmutableList.h"
 #include "llvm/Support/Compiler.h"
 #include "llvm/Support/raw_ostream.h"
+#include "llvm/ADT/ImmutableList.h"
 
 #ifndef NDEBUG
 #include "llvm/Support/GraphWriter.h"
@@ -3292,7 +3291,7 @@ void GRExprEngine::ViewGraph(ExplodedNode** Beg, ExplodedNode** End) {
   std::auto_ptr<ExplodedGraph> TrimmedG(G.Trim(Beg, End).first);
 
   if (!TrimmedG.get())
-    llvm::cerr << "warning: Trimmed ExplodedGraph is empty.\n";
+    llvm::errs() << "warning: Trimmed ExplodedGraph is empty.\n";
   else
     llvm::ViewGraph(*TrimmedG->roots_begin(), "TrimmedGRExprEngine");    
   

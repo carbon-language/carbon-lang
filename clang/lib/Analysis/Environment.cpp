@@ -12,9 +12,8 @@
 //===----------------------------------------------------------------------===//
 #include "clang/Analysis/PathSensitive/GRState.h"
 #include "clang/Analysis/Analyses/LiveVariables.h"
-#include "llvm/ADT/ImmutableMap.h"
-#include "llvm/Support/Streams.h"
 #include "llvm/Support/Compiler.h"
+#include "llvm/ADT/ImmutableMap.h"
 
 using namespace clang;
 

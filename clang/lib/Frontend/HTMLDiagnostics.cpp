@@ -23,7 +23,6 @@
 #include "clang/Lex/Preprocessor.h"
 #include "llvm/Support/Compiler.h"
 #include "llvm/Support/MemoryBuffer.h"
-#include "llvm/Support/Streams.h"
 #include "llvm/Support/raw_ostream.h"
 #include "llvm/System/Path.h"
 #include <fstream>
@@ -151,9 +150,9 @@ void HTMLDiagnostics::ReportDiag(const PathDiagnostic& D) {
     Directory.createDirectoryOnDisk(true, &ErrorMsg);
   
     if (!Directory.isDirectory()) {
-      llvm::cerr << "warning: could not create directory '"
-                 << Directory.toString() << "'\n"
-                 << "reason: " << ErrorMsg << '\n'; 
+      llvm::errs() << "warning: could not create directory '"
+                   << Directory.toString() << "'\n"
+                   << "reason: " << ErrorMsg << '\n'; 
       
       noDir = true;
       
@@ -313,7 +312,7 @@ void HTMLDiagnostics::ReportDiag(const PathDiagnostic& D) {
   const RewriteBuffer *Buf = R.getRewriteBufferFor(FID);
   
   if (!Buf) {
-    llvm::cerr << "warning: no diagnostics generated for main file.\n";
+    llvm::errs() << "warning: no diagnostics generated for main file.\n";
     return;
   }
 
@@ -333,7 +332,7 @@ void HTMLDiagnostics::ReportDiag(const PathDiagnostic& D) {
     os.open(H.toString().c_str());
     
     if (!os) {
-      llvm::cerr << "warning: could not create file '" << F.toString() << "'\n";
+      llvm::errs() << "warning: could not create file '" << F.toString() << "'\n";
       return;
     }
 

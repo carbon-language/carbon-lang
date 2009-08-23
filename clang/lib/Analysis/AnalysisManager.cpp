@@ -13,7 +13,6 @@
 
 #include "clang/Analysis/PathSensitive/AnalysisManager.h"
 #include "clang/Basic/SourceManager.h"
-#include "llvm/Support/Streams.h"
 
 using namespace clang;
 
@@ -29,8 +28,8 @@ void AnalysisManager::DisplayFunction() {
       isa<ObjCMethodDecl>(getCodeDecl())) {
     const NamedDecl *ND = cast<NamedDecl>(getCodeDecl());
     SourceManager &SM = getContext().getSourceManager();
-    llvm::cerr << "ANALYZE: "
-               << SM.getPresumedLoc(ND->getLocation()).getFilename()
-               << ' ' << ND->getNameAsString() << '\n';
+    llvm::errs() << "ANALYZE: "
+                 << SM.getPresumedLoc(ND->getLocation()).getFilename()
+                 << ' ' << ND->getNameAsString() << '\n';
   }
 }

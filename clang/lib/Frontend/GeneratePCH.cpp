@@ -23,7 +23,6 @@
 #include "llvm/System/Path.h"
 #include "llvm/Support/Compiler.h"
 #include "llvm/Support/raw_ostream.h"
-#include "llvm/Support/Streams.h"
 #include <string>
 
 using namespace clang;

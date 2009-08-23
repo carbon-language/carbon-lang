@@ -17,9 +17,7 @@
 #include "llvm/Support/Compiler.h"
 #include "llvm/Support/MemoryBuffer.h"
 #include "llvm/System/Path.h"
-#include "llvm/Support/Streams.h"
 #include <algorithm>
-#include <iostream>
 using namespace clang;
 using namespace SrcMgr;
 using llvm::MemoryBuffer;
@@ -1062,11 +1060,11 @@ bool SourceManager::isBeforeInTranslationUnit(SourceLocation LHS,
 /// PrintStats - Print statistics to stderr.
 ///
 void SourceManager::PrintStats() const {
-  llvm::cerr << "\n*** Source Manager Stats:\n";
-  llvm::cerr << FileInfos.size() << " files mapped, " << MemBufferInfos.size()
-             << " mem buffers mapped.\n";
-  llvm::cerr << SLocEntryTable.size() << " SLocEntry's allocated, "
-             << NextOffset << "B of Sloc address space used.\n";
+  llvm::errs() << "\n*** Source Manager Stats:\n";
+  llvm::errs() << FileInfos.size() << " files mapped, " << MemBufferInfos.size()
+               << " mem buffers mapped.\n";
+  llvm::errs() << SLocEntryTable.size() << " SLocEntry's allocated, "
+               << NextOffset << "B of Sloc address space used.\n";
     
   unsigned NumLineNumsComputed = 0;
   unsigned NumFileBytesMapped = 0;
@@ -1075,10 +1073,10 @@ void SourceManager::PrintStats() const {
     NumFileBytesMapped  += I->second->getSizeBytesMapped();
   }
   
-  llvm::cerr << NumFileBytesMapped << " bytes of files mapped, "
-             << NumLineNumsComputed << " files with line #'s computed.\n";
-  llvm::cerr << "FileID scans: " << NumLinearScans << " linear, "
-             << NumBinaryProbes << " binary.\n";
+  llvm::errs() << NumFileBytesMapped << " bytes of files mapped, "
+               << NumLineNumsComputed << " files with line #'s computed.\n";
+  llvm::errs() << "FileID scans: " << NumLinearScans << " linear, "
+               << NumBinaryProbes << " binary.\n";
 }
 
 ExternalSLocEntrySource::~ExternalSLocEntrySource() { }
