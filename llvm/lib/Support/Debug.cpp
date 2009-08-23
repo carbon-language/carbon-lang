@@ -29,28 +29,26 @@ using namespace llvm;
 
 bool llvm::DebugFlag;  // DebugFlag - Exported boolean set by the -debug option
 
-namespace {
 #ifndef NDEBUG
-  // -debug - Command line option to enable the DEBUG statements in the passes.
-  // This flag may only be enabled in debug builds.
-  static cl::opt<bool, true>
-  Debug("debug", cl::desc("Enable debug output"), cl::Hidden,
-        cl::location(DebugFlag));
+// -debug - Command line option to enable the DEBUG statements in the passes.
+// This flag may only be enabled in debug builds.
+static cl::opt<bool, true>
+Debug("debug", cl::desc("Enable debug output"), cl::Hidden,
+      cl::location(DebugFlag));
 
-  static std::string CurrentDebugType;
-  static struct DebugOnlyOpt {
-    void operator=(const std::string &Val) const {
-      DebugFlag |= !Val.empty();
-      CurrentDebugType = Val;
-    }
-  } DebugOnlyOptLoc;
+static std::string CurrentDebugType;
+static struct DebugOnlyOpt {
+  void operator=(const std::string &Val) const {
+    DebugFlag |= !Val.empty();
+    CurrentDebugType = Val;
+  }
+} DebugOnlyOptLoc;
 
-  static cl::opt<DebugOnlyOpt, true, cl::parser<std::string> >
-  DebugOnly("debug-only", cl::desc("Enable a specific type of debug output"),
-            cl::Hidden, cl::value_desc("debug string"),
-            cl::location(DebugOnlyOptLoc), cl::ValueRequired);
+static cl::opt<DebugOnlyOpt, true, cl::parser<std::string> >
+DebugOnly("debug-only", cl::desc("Enable a specific type of debug output"),
+          cl::Hidden, cl::value_desc("debug string"),
+          cl::location(DebugOnlyOptLoc), cl::ValueRequired);
 #endif
-}
 
 // isCurrentDebugType - Return true if the specified string is the debug type
 // specified on the command line, or if none was specified on the command line
@@ -62,24 +60,4 @@ bool llvm::isCurrentDebugType(const char *DebugType) {
 #else
   return false;
 #endif
-}
-
-/// getNullOutputStream - Return a null string that does not output
-/// anything.  This hides the static variable from other modules.
-///
-OStream &llvm::getNullOutputStream() {
-  static llvm::OStream NullStream(0);
-  return NullStream;
-}
-
-// getErrorOutputStream - Returns the error output stream (std::cerr). This
-// places the std::c* I/O streams into one .cpp file and relieves the whole
-// program from having to have hundreds of static c'tor/d'tors for them.
-// 
-OStream &llvm::getErrorOutputStream(const char *DebugType) {
-  static OStream cnoout(0);
-  if (DebugFlag && isCurrentDebugType(DebugType))
-    return cerr;
-  else
-    return cnoout;
 }

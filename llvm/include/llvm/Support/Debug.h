@@ -26,8 +26,6 @@
 #ifndef LLVM_SUPPORT_DEBUG_H
 #define LLVM_SUPPORT_DEBUG_H
 
-#include "llvm/Support/Streams.h"
-
 namespace llvm {
 
 // DebugFlag - This boolean is set to true if the '-debug' command line option
@@ -40,7 +38,11 @@ extern bool DebugFlag;
 // specified on the command line, or if none was specified on the command line
 // with the -debug-only=X option.
 //
+#ifndef NDEBUG
 bool isCurrentDebugType(const char *Type);
+#else
+#define isCurrentDebugType(X) (false)
+#endif
 
 // DEBUG_WITH_TYPE macro - This macro should be used by passes to emit debug
 // information.  In the '-debug' option is specified on the commandline, and if
@@ -72,24 +74,7 @@ bool isCurrentDebugType(const char *Type);
 #endif
 
 #define DEBUG(X) DEBUG_WITH_TYPE(DEBUG_TYPE, X)
-
-/// getNullOutputStream - Return a null string that does not output
-/// anything.  This hides the static variable from other modules.
-///
-OStream &getNullOutputStream();
-
-/// getErrorOutputStream - Returns the error output stream (std::cerr). This
-/// places the std::c* I/O streams into one .cpp file and relieves the whole
-/// program from having to have hundreds of static c'tor/d'tors for them.
-///
-OStream &getErrorOutputStream(const char *DebugType);
-
-#ifdef NDEBUG
-#define DOUT llvm::getNullOutputStream()
-#else
-#define DOUT llvm::getErrorOutputStream(DEBUG_TYPE)
-#endif
-
+  
 } // End llvm namespace
 
 #endif
