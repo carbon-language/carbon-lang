@@ -23,8 +23,8 @@ void Stmt::viewAST() const {
 #ifndef NDEBUG
   llvm::ViewGraph(this,"AST");
 #else
-  llvm::cerr << "Stmt::viewAST is only available in debug builds on "
-  << "systems with Graphviz or gv!\n";
+  llvm::errs() << "Stmt::viewAST is only available in debug builds on "
+               << "systems with Graphviz or gv!\n";
 #endif
 }
 
