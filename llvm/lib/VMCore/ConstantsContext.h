@@ -1,4 +1,4 @@
-//===---------------- ConstantsContext.h - Implementation ------*- C++ -*--===//
+//===-- ConstantsContext.h - Constants-related Context Interals -----------===//
 //
 //                     The LLVM Compiler Infrastructure
 //

@@ -1,4 +1,4 @@
-//===----------------- LLVMContextImpl.h - Implementation ------*- C++ -*--===//
+//===-- LLVMContextImpl.h - The LLVMContextImpl opaque class --------------===//
 //
 //                     The LLVM Compiler Infrastructure
 //

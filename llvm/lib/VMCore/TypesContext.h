@@ -1,4 +1,4 @@
-//===-------------------- TypesContext.h - Implementation ------*- C++ -*--===//
+//===-- TypesContext.h - Types-related Context Internals ------------------===//
 //
 //                     The LLVM Compiler Infrastructure
 //
