@@ -32,6 +32,7 @@
 #include "llvm/Assembly/Writer.h"
 #include "llvm/Support/CFG.h"
 #include "llvm/Support/Compiler.h"
+#include "llvm/Support/raw_ostream.h"
 #include <algorithm>
 #include <map>
 #include <set>
@@ -161,8 +162,8 @@ EXTERN_TEMPLATE_INSTANTIATION(class DomTreeNodeBase<BasicBlock>);
 EXTERN_TEMPLATE_INSTANTIATION(class DomTreeNodeBase<MachineBasicBlock>);
 
 template<class NodeT>
-static std::ostream &operator<<(std::ostream &o,
-                                const DomTreeNodeBase<NodeT> *Node) {
+static raw_ostream &operator<<(raw_ostream &o,
+                               const DomTreeNodeBase<NodeT> *Node) {
   if (Node->getBlock())
     WriteAsOperand(o, Node->getBlock(), false);
   else
@@ -174,9 +175,9 @@ static std::ostream &operator<<(std::ostream &o,
 }
 
 template<class NodeT>
-static void PrintDomTree(const DomTreeNodeBase<NodeT> *N, std::ostream &o,
+static void PrintDomTree(const DomTreeNodeBase<NodeT> *N, raw_ostream &o,
                          unsigned Lev) {
-  o << std::string(2*Lev, ' ') << "[" << Lev << "] " << N;
+  o.indent(2*Lev) << "[" << Lev << "] " << N;
   for (typename DomTreeNodeBase<NodeT>::const_iterator I = N->begin(),
        E = N->end(); I != E; ++I)
     PrintDomTree<NodeT>(*I, o, Lev+1);
@@ -534,7 +535,7 @@ public:
 
   /// print - Convert to human readable form
   ///
-  virtual void print(std::ostream &o, const Module* ) const {
+  void print(raw_ostream &o) const {
     o << "=============================--------------------------------\n";
     if (this->isPostDominator())
       o << "Inorder PostDominator Tree: ";
@@ -545,14 +546,6 @@ public:
     o << "\n";
 
     PrintDomTree<NodeT>(getRootNode(), o, 1);
-  }
-  
-  void print(std::ostream *OS, const Module* M = 0) const {
-    if (OS) print(*OS, M);
-  }
-  
-  virtual void dump() {
-    print(llvm::cerr);
   }
   
 protected:
@@ -837,9 +830,7 @@ public:
     DT->releaseMemory();
   }
   
-  virtual void print(std::ostream &OS, const Module* M= 0) const {
-    DT->print(OS, M);
-  }
+  virtual void print(std::ostream &OS, const Module* M= 0) const;
 };
 
 //===-------------------------------------
@@ -988,10 +979,6 @@ public:
   /// print - Convert to human readable form
   ///
   virtual void print(std::ostream &OS, const Module* = 0) const;
-  void print(std::ostream *OS, const Module* M = 0) const {
-    if (OS) print(*OS, M);
-  }
-  virtual void dump();
 };
 
 

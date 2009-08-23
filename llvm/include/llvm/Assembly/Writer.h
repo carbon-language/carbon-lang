@@ -17,7 +17,6 @@
 #ifndef LLVM_ASSEMBLY_WRITER_H
 #define LLVM_ASSEMBLY_WRITER_H
 
-#include <iosfwd>
 #include <string>
 
 namespace llvm {
@@ -71,8 +70,6 @@ void WriteTypeSymbolic(raw_ostream &, const Type *, const Module *M);
 // then even constants get pretty-printed; for example, the type of a null
 // pointer is printed symbolically.
 //
-void WriteAsOperand(std::ostream &, const Value *, bool PrintTy = true,
-                    const Module *Context = 0);
 void WriteAsOperand(raw_ostream &, const Value *, bool PrintTy = true,
                     const Module *Context = 0);
 

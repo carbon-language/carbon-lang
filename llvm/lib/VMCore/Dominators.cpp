@@ -23,22 +23,9 @@
 #include "llvm/ADT/SmallVector.h"
 #include "llvm/Analysis/DominatorInternals.h"
 #include "llvm/Instructions.h"
-#include "llvm/Support/Streams.h"
+#include "llvm/Support/raw_ostream.h"
 #include <algorithm>
 using namespace llvm;
-
-namespace llvm {
-static std::ostream &operator<<(std::ostream &o,
-                                const std::set<BasicBlock*> &BBs) {
-  for (std::set<BasicBlock*>::const_iterator I = BBs.begin(), E = BBs.end();
-       I != E; ++I)
-    if (*I)
-      WriteAsOperand(o, *I, false);
-    else
-      o << " <<exit node>>";
-  return o;
-}
-}
 
 //===----------------------------------------------------------------------===//
 //  DominatorTree Implementation
@@ -60,6 +47,13 @@ bool DominatorTree::runOnFunction(Function &F) {
   DT->recalculate(F);
   return false;
 }
+
+void DominatorTree::print(std::ostream &OS, const Module *) const {
+  raw_os_ostream OSS(OS);
+  DT->print(OSS);
+}
+
+
 
 //===----------------------------------------------------------------------===//
 //  DominanceFrontier Implementation
@@ -270,18 +264,25 @@ DominanceFrontier::calculate(const DominatorTree &DT,
   return *Result;
 }
 
-void DominanceFrontierBase::print(std::ostream &o, const Module* ) const {
+void DominanceFrontierBase::print(std::ostream &O, const Module* ) const {
+  raw_os_ostream OS(O);
   for (const_iterator I = begin(), E = end(); I != E; ++I) {
-    o << "  DomFrontier for BB";
+    OS << "  DomFrontier for BB";
     if (I->first)
-      WriteAsOperand(o, I->first, false);
+      WriteAsOperand(OS, I->first, false);
     else
-      o << " <<exit node>>";
-    o << " is:\t" << I->second << "\n";
+      OS << " <<exit node>>";
+    OS << " is:\t";
+    
+    const std::set<BasicBlock*> &BBs = I->second;
+    
+    for (std::set<BasicBlock*>::const_iterator I = BBs.begin(), E = BBs.end();
+         I != E; ++I)
+      if (*I)
+        WriteAsOperand(OS, *I, false);
+      else
+        OS << " <<exit node>>";
+    OS << "\n";
   }
-}
-
-void DominanceFrontierBase::dump() {
-  print (llvm::cerr);
 }
 

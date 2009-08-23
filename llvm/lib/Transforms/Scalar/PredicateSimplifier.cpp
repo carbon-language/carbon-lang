@@ -425,10 +425,10 @@ namespace {
 #ifndef NDEBUG
     virtual ~ValueNumbering() {}
     virtual void dump() {
-      dump(*cerr.stream());
+      print(errs());
     }
 
-    void dump(std::ostream &os) {
+    void print(raw_ostream &os) {
       for (unsigned i = 1; i <= Values.size(); ++i) {
         os << i << " = ";
         WriteAsOperand(os, Values[i-1]);

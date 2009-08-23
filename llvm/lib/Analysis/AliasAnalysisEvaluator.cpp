@@ -81,13 +81,16 @@ X("aa-eval", "Exhaustive Alias Analysis Precision Evaluator", false, true);
 
 FunctionPass *llvm::createAAEvalPass() { return new AAEval(); }
 
-static void PrintResults(const char *Msg, bool P, const Value *V1, const Value *V2,
-                         const Module *M) {
+static void PrintResults(const char *Msg, bool P, const Value *V1,
+                         const Value *V2, const Module *M) {
   if (P) {
-    std::stringstream s1, s2;
-    WriteAsOperand(s1, V1, true, M);
-    WriteAsOperand(s2, V2, true, M);
-    std::string o1(s1.str()), o2(s2.str());
+    std::string o1, o2;
+    {
+      raw_string_ostream os1(o1), os2(o2);
+      WriteAsOperand(os1, V1, true, M);
+      WriteAsOperand(os2, V2, true, M);
+    }
+    
     if (o2 < o1)
       std::swap(o1, o2);
     errs() << "  " << Msg << ":\t"

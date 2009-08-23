@@ -1218,16 +1218,6 @@ static void WriteAsOperandInternal(raw_ostream &Out, const Value *V,
     Out << "<badref>";
 }
 
-/// WriteAsOperand - Write the name of the specified value out to the specified
-/// ostream.  This can be useful when you just want to print int %reg126, not
-/// the whole instruction that generated it.
-///
-void llvm::WriteAsOperand(std::ostream &Out, const Value *V, bool PrintType,
-                          const Module *Context) {
-  raw_os_ostream OS(Out);
-  WriteAsOperand(OS, V, PrintType, Context);
-}
-
 void llvm::WriteAsOperand(raw_ostream &Out, const Value *V,
                           bool PrintType, const Module *Context) {
 
@@ -2075,12 +2065,6 @@ void Value::print(raw_ostream &ROS, AssemblyAnnotationWriter *AAW) const {
     llvm_unreachable("Unknown value to print out!");
   }
 }
-
-/*
-void Value::print(std::ostream &O, AssemblyAnnotationWriter *AAW) const {
-  raw_os_ostream OS(O);
-  print(OS, AAW);
-}*/
 
 // Value::dump - allow easy printing of Values from the debugger.
 void Value::dump() const { print(errs()); errs() << '\n'; }

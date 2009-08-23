@@ -454,8 +454,8 @@ public:
 #endif
   }
 
-  void print(std::ostream &OS, unsigned Depth = 0) const {
-    OS << std::string(Depth*2, ' ') << "Loop at depth " << getLoopDepth()
+  void print(raw_ostream &OS, unsigned Depth = 0) const {
+    OS.indent(Depth*2) << "Loop at depth " << getLoopDepth()
        << " containing: ";
 
     for (unsigned i = 0; i < getBlocks().size(); ++i) {
@@ -472,12 +472,8 @@ public:
       (*I)->print(OS, Depth+2);
   }
   
-  void print(std::ostream *O, unsigned Depth = 0) const {
-    if (O) print(*O, Depth);
-  }
-  
   void dump() const {
-    print(cerr);
+    print(errs());
   }
   
 protected:
@@ -878,7 +874,7 @@ public:
   
   // Debugging
   
-  void print(std::ostream &OS, const Module* ) const {
+  void print(raw_ostream &OS) const {
     for (unsigned i = 0; i < TopLevelLoops.size(); ++i)
       TopLevelLoops[i]->print(OS);
   #if 0
@@ -942,10 +938,8 @@ public:
 
   virtual void releaseMemory() { LI.releaseMemory(); }
 
-  virtual void print(std::ostream &O, const Module* M = 0) const {
-    LI.print(O, M);
-  }
-
+  virtual void print(std::ostream &O, const Module* M = 0) const;
+  
   virtual void getAnalysisUsage(AnalysisUsage &AU) const;
 
   /// removeLoop - This removes the specified top-level loop from this loop info

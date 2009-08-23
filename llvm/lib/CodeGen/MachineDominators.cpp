@@ -51,3 +51,8 @@ MachineDominatorTree::~MachineDominatorTree() {
 void MachineDominatorTree::releaseMemory() {
   DT->releaseMemory();
 }
+
+void MachineDominatorTree::print(std::ostream &OS, const Module*) const {
+  raw_os_ostream OSS(OS);
+  DT->print(OSS);
+}

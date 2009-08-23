@@ -33,14 +33,19 @@ F("postdomtree", "Post-Dominator Tree Construction", true, true);
 
 bool PostDominatorTree::runOnFunction(Function &F) {
   DT->recalculate(F);
-  DEBUG(DT->dump());
+  DEBUG(DT->print(errs()));
   return false;
 }
 
-PostDominatorTree::~PostDominatorTree()
-{
+PostDominatorTree::~PostDominatorTree() {
   delete DT;
 }
+
+void PostDominatorTree::print(std::ostream &OS, const Module *) const {
+  raw_os_ostream OSS(OS);
+  DT->print(OSS);
+}
+
 
 FunctionPass* llvm::createPostDomTree() {
   return new PostDominatorTree();

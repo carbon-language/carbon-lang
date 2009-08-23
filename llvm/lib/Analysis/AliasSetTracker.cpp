@@ -22,7 +22,8 @@
 #include "llvm/Support/Compiler.h"
 #include "llvm/Support/ErrorHandling.h"
 #include "llvm/Support/InstIterator.h"
-#include "llvm/Support/Streams.h"
+#include "llvm/Support/Format.h"
+#include "llvm/Support/raw_ostream.h"
 using namespace llvm;
 
 /// mergeSetIn - Merge the specified alias set into this alias set.
@@ -531,8 +532,8 @@ void AliasSetTracker::copyValue(Value *From, Value *To) {
 //               AliasSet/AliasSetTracker Printing Support
 //===----------------------------------------------------------------------===//
 
-void AliasSet::print(std::ostream &OS) const {
-  OS << "  AliasSet[" << (void*)this << "," << RefCount << "] ";
+void AliasSet::print(raw_ostream &OS) const {
+  OS << "  AliasSet[" << format("0x%p", (void*)this) << "," << RefCount << "] ";
   OS << (AliasTy == MustAlias ? "must" : "may") << " alias, ";
   switch (AccessTy) {
   case NoModRef: OS << "No access "; break;
@@ -564,7 +565,7 @@ void AliasSet::print(std::ostream &OS) const {
   OS << "\n";
 }
 
-void AliasSetTracker::print(std::ostream &OS) const {
+void AliasSetTracker::print(raw_ostream &OS) const {
   OS << "Alias Set Tracker: " << AliasSets.size() << " alias sets for "
      << PointerMap.size() << " pointer values.\n";
   for (const_iterator I = begin(), E = end(); I != E; ++I)
@@ -572,8 +573,8 @@ void AliasSetTracker::print(std::ostream &OS) const {
   OS << "\n";
 }
 
-void AliasSet::dump() const { print (cerr); }
-void AliasSetTracker::dump() const { print(cerr); }
+void AliasSet::dump() const { print(errs()); }
+void AliasSetTracker::dump() const { print(errs()); }
 
 //===----------------------------------------------------------------------===//
 //                     ASTCallbackVH Class Implementation
@@ -614,7 +615,7 @@ namespace {
 
       for (inst_iterator I = inst_begin(F), E = inst_end(F); I != E; ++I)
         Tracker->add(&*I);
-      Tracker->print(cerr);
+      Tracker->print(errs());
       delete Tracker;
       return false;
     }

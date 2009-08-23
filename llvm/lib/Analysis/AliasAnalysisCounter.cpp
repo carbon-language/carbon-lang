@@ -42,33 +42,33 @@ namespace {
     }
 
     void printLine(const char *Desc, unsigned Val, unsigned Sum) {
-      cerr <<  "  " << Val << " " << Desc << " responses ("
-           << Val*100/Sum << "%)\n";
+      errs() <<  "  " << Val << " " << Desc << " responses ("
+             << Val*100/Sum << "%)\n";
     }
     ~AliasAnalysisCounter() {
       unsigned AASum = No+May+Must;
       unsigned MRSum = NoMR+JustRef+JustMod+MR;
       if (AASum + MRSum) { // Print a report if any counted queries occurred...
-        cerr << "\n===== Alias Analysis Counter Report =====\n"
-             << "  Analysis counted: " << Name << "\n"
-             << "  " << AASum << " Total Alias Queries Performed\n";
+        errs() << "\n===== Alias Analysis Counter Report =====\n"
+               << "  Analysis counted: " << Name << "\n"
+               << "  " << AASum << " Total Alias Queries Performed\n";
         if (AASum) {
           printLine("no alias",     No, AASum);
           printLine("may alias",   May, AASum);
           printLine("must alias", Must, AASum);
-          cerr << "  Alias Analysis Counter Summary: " << No*100/AASum << "%/"
-               << May*100/AASum << "%/" << Must*100/AASum<<"%\n\n";
+          errs() << "  Alias Analysis Counter Summary: " << No*100/AASum << "%/"
+                 << May*100/AASum << "%/" << Must*100/AASum<<"%\n\n";
         }
 
-        cerr << "  " << MRSum    << " Total Mod/Ref Queries Performed\n";
+        errs() << "  " << MRSum    << " Total Mod/Ref Queries Performed\n";
         if (MRSum) {
           printLine("no mod/ref",    NoMR, MRSum);
           printLine("ref",        JustRef, MRSum);
           printLine("mod",        JustMod, MRSum);
           printLine("mod/ref",         MR, MRSum);
-          cerr << "  Mod/Ref Analysis Counter Summary: " <<NoMR*100/MRSum<< "%/"
-               << JustRef*100/MRSum << "%/" << JustMod*100/MRSum << "%/"
-               << MR*100/MRSum <<"%\n\n";
+          errs() << "  Mod/Ref Analysis Counter Summary: " <<NoMR*100/MRSum
+                 << "%/" << JustRef*100/MRSum << "%/" << JustMod*100/MRSum
+                 << "%/" << MR*100/MRSum <<"%\n\n";
         }
       }
     }
@@ -139,13 +139,13 @@ AliasAnalysisCounter::alias(const Value *V1, unsigned V1Size,
   }
 
   if (PrintAll || (PrintAllFailures && R == MayAlias)) {
-    cerr << AliasString << ":\t";
-    cerr << "[" << V1Size << "B] ";
-    WriteAsOperand(*cerr.stream(), V1, true, M);
-    cerr << ", ";
-    cerr << "[" << V2Size << "B] ";
-    WriteAsOperand(*cerr.stream(), V2, true, M);
-    cerr << "\n";
+    errs() << AliasString << ":\t";
+    errs() << "[" << V1Size << "B] ";
+    WriteAsOperand(errs(), V1, true, M);
+    errs() << ", ";
+    errs() << "[" << V2Size << "B] ";
+    WriteAsOperand(errs(), V2, true, M);
+    errs() << "\n";
   }
 
   return R;
