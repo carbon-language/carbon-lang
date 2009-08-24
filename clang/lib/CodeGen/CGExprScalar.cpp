@@ -226,7 +226,6 @@ public:
   Value *VisitImplicitValueInitExpr(const ImplicitValueInitExpr *E) {
     return llvm::Constant::getNullValue(ConvertType(E->getType()));
   }
-  Value *VisitImplicitCastExpr(const ImplicitCastExpr *E);
   Value *VisitCastExpr(const CastExpr *E) {
     // Make sure to evaluate VLA bounds now so that we have them for later.
     if (E->getType()->isVariablyModifiedType())
@@ -609,46 +608,6 @@ Value *ScalarExprEmitter::VisitArraySubscriptExpr(ArraySubscriptExpr *E) {
   return Builder.CreateExtractElement(Base, Idx, "vecext");
 }
 
-/// VisitImplicitCastExpr - Implicit casts are the same as normal casts, but
-/// also handle things like function to pointer-to-function decay, and array to
-/// pointer decay.
-Value *ScalarExprEmitter::VisitImplicitCastExpr(const ImplicitCastExpr *E) {
-  const Expr *Op = E->getSubExpr();
-  
-  // If this is due to array->pointer conversion, emit the array expression as
-  // an l-value.
-  if (Op->getType()->isArrayType()) {
-    assert(E->getCastKind() == CastExpr::CK_ArrayToPointerDecay);
-    Value *V = EmitLValue(Op).getAddress();  // Bitfields can't be arrays.
-
-    // Note that VLA pointers are always decayed, so we don't need to do
-    // anything here.
-    if (!Op->getType()->isVariableArrayType()) {
-      assert(isa<llvm::PointerType>(V->getType()) && "Expected pointer");
-      assert(isa<llvm::ArrayType>(cast<llvm::PointerType>(V->getType())
-                                 ->getElementType()) &&
-             "Expected pointer to array");
-      V = Builder.CreateStructGEP(V, 0, "arraydecay");
-    }
-    
-    // The resultant pointer type can be implicitly casted to other pointer
-    // types as well (e.g. void*) and can be implicitly converted to integer.
-    const llvm::Type *DestTy = ConvertType(E->getType());
-    if (V->getType() != DestTy) {
-      if (isa<llvm::PointerType>(DestTy))
-        V = Builder.CreateBitCast(V, DestTy, "ptrconv");
-      else {
-        assert(isa<llvm::IntegerType>(DestTy) && "Unknown array decay");
-        V = Builder.CreatePtrToInt(V, DestTy, "ptrconv");
-      }
-    }
-    return V;
-  }
-
-  return EmitCastExpr(Op, E->getType(), E->getCastKind());
-}
-
-
 // VisitCastExpr - Emit code for an explicit or implicit cast.  Implicit casts
 // have to handle a more broad range of conversions than explicit casts, as they
 // handle things like function to ptr-to-function decay etc.
@@ -660,6 +619,35 @@ Value *ScalarExprEmitter::EmitCastExpr(const Expr *E, QualType DestTy,
   switch (Kind) {
   default:
     break;
+  case CastExpr::CK_ArrayToPointerDecay: {
+    assert(E->getType()->isArrayType() &&
+           "Array to pointer decay must have array source type!");
+    
+    Value *V = EmitLValue(E).getAddress();  // Bitfields can't be arrays.
+
+    // Note that VLA pointers are always decayed, so we don't need to do
+    // anything here.
+    if (!E->getType()->isVariableArrayType()) {
+      assert(isa<llvm::PointerType>(V->getType()) && "Expected pointer");
+      assert(isa<llvm::ArrayType>(cast<llvm::PointerType>(V->getType())
+                                 ->getElementType()) &&
+             "Expected pointer to array");
+      V = Builder.CreateStructGEP(V, 0, "arraydecay");
+    }
+    
+    // The resultant pointer type can be implicitly casted to other pointer
+    // types as well (e.g. void*) and can be implicitly converted to integer.
+    const llvm::Type *DestLTy = ConvertType(DestTy);
+    if (V->getType() != DestLTy) {
+      if (isa<llvm::PointerType>(DestLTy))
+        V = Builder.CreateBitCast(V, DestLTy, "ptrconv");
+      else {
+        assert(isa<llvm::IntegerType>(DestLTy) && "Unknown array decay");
+        V = Builder.CreatePtrToInt(V, DestLTy, "ptrconv");
+      }
+    }
+    return V;
+  }      
   case CastExpr::CK_NullToMemberPointer:
     return CGF.CGM.EmitNullConstant(DestTy);
   }
