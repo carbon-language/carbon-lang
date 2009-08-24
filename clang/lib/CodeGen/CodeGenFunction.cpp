@@ -404,15 +404,6 @@ void CodeGenFunction::EmitBranchOnBoolExpr(const Expr *Cond,
   Builder.CreateCondBr(CondV, TrueBlock, FalseBlock);
 }
 
-/// getCGRecordLayout - Return record layout info.
-const CGRecordLayout *CodeGenFunction::getCGRecordLayout(CodeGenTypes &CGT,
-                                                         QualType Ty) {
-  const RecordType *RTy = Ty->getAs<RecordType>();
-  assert (RTy && "Unexpected type. RecordType expected here.");
-
-  return CGT.getCGRecordLayout(RTy->getDecl());
-}
-
 /// ErrorUnsupported - Print out an error that codegen doesn't support the
 /// specified stmt yet.
 void CodeGenFunction::ErrorUnsupported(const Stmt *S, const char *Type,
