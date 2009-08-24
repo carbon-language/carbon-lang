@@ -183,8 +183,24 @@ void CodeExtractor::severSplitPHINodes(BasicBlock *&Header) {
 void CodeExtractor::splitReturnBlocks() {
   for (std::set<BasicBlock*>::iterator I = BlocksToExtract.begin(),
          E = BlocksToExtract.end(); I != E; ++I)
-    if (ReturnInst *RI = dyn_cast<ReturnInst>((*I)->getTerminator()))
-      (*I)->splitBasicBlock(RI, (*I)->getName()+".ret");
+    if (ReturnInst *RI = dyn_cast<ReturnInst>((*I)->getTerminator())) {
+      BasicBlock *New = (*I)->splitBasicBlock(RI, (*I)->getName()+".ret");
+      if (DT) {
+        // Old dominates New. New node domiantes all other nodes dominated
+        //by Old.
+        DomTreeNode *OldNode = DT->getNode(*I);
+        std::vector<DomTreeNode *> Children;
+        for (DomTreeNode::iterator DI = OldNode->begin(), DE = OldNode->end();
+             DI != DE; ++DI) 
+          Children.push_back(*DI);
+
+        DomTreeNode *NewNode = DT->addNewBlock(New, *I);
+
+        for (std::vector<DomTreeNode *>::iterator I = Children.begin(),
+               E = Children.end(); I != E; ++I) 
+          DT->changeImmediateDominator(*I, NewNode);
+      }
+    }
 }
 
 // findInputsOutputs - Find inputs to, outputs from the code region.
