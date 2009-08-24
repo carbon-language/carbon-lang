@@ -2883,6 +2883,31 @@ BuiltinCandidateTypeSet::AddTypesConvertedFrom(QualType Ty,
   }
 }
 
+/// \brief Helper function for AddBuiltinOperatorCandidates() that adds
+/// the volatile- and non-volatile-qualified assignment operators for the
+/// given type to the candidate set.
+static void AddBuiltinAssignmentOperatorCandidates(Sema &S,
+                                                   QualType T,
+                                                   Expr **Args, 
+                                                   unsigned NumArgs,
+                                    OverloadCandidateSet &CandidateSet) {
+  QualType ParamTypes[2];
+  
+  // T& operator=(T&, T)
+  ParamTypes[0] = S.Context.getLValueReferenceType(T);
+  ParamTypes[1] = T;
+  S.AddBuiltinCandidate(ParamTypes[0], ParamTypes, Args, 2, CandidateSet,
+                        /*IsAssignmentOperator=*/true);
+  
+  if (!S.Context.getCanonicalType(T).isVolatileQualified()) {
+    // volatile T& operator=(volatile T&, T)
+    ParamTypes[0] = S.Context.getLValueReferenceType(T.withVolatile());
+    ParamTypes[1] = T;
+    S.AddBuiltinCandidate(ParamTypes[0], ParamTypes, Args, 2, CandidateSet,
+                          /*IsAssignmentOperator=*/true);    
+  }
+}
+                                                   
 /// AddBuiltinOperatorCandidates - Add the appropriate built-in
 /// operator overloads to the candidate set (C++ [over.built]), based
 /// on the operator @p Op and the arguments given. For example, if the
@@ -2906,7 +2931,7 @@ Sema::AddBuiltinOperatorCandidates(OverloadedOperatorKind Op,
   const unsigned NumArithmeticTypes = 16;
   QualType ArithmeticTypes[NumArithmeticTypes] = {
     Context.BoolTy, Context.CharTy, Context.WCharTy, 
-//    Context.Char16Ty, Context.Char32Ty, 
+// FIXME:   Context.Char16Ty, Context.Char32Ty, 
     Context.SignedCharTy, Context.ShortTy,
     Context.UnsignedCharTy, Context.UnsignedShortTy,
     Context.IntTy, Context.LongTy, Context.LongLongTy,
@@ -3119,12 +3144,29 @@ Sema::AddBuiltinOperatorCandidates(OverloadedOperatorKind Op,
     //      operator '->', the built-in candidates set is empty.
     break;
 
+  case OO_EqualEqual:
+  case OO_ExclaimEqual:
+    // C++ [over.match.oper]p16:
+    //   For every pointer to member type T, there exist candidate operator 
+    //   functions of the form 
+    //
+    //        bool operator==(T,T);
+    //        bool operator!=(T,T);
+    for (BuiltinCandidateTypeSet::iterator 
+           MemPtr = CandidateTypes.member_pointer_begin(),
+           MemPtrEnd = CandidateTypes.member_pointer_end();
+         MemPtr != MemPtrEnd;
+         ++MemPtr) {
+      QualType ParamTypes[2] = { *MemPtr, *MemPtr };
+      AddBuiltinCandidate(Context.BoolTy, ParamTypes, Args, 2, CandidateSet);
+    }
+      
+    // Fall through
+      
   case OO_Less:
   case OO_Greater:
   case OO_LessEqual:
   case OO_GreaterEqual:
-  case OO_EqualEqual:
-  case OO_ExclaimEqual:
     // C++ [over.built]p15:
     //
     //   For every pointer or enumeration type T, there exist
@@ -3279,30 +3321,23 @@ Sema::AddBuiltinOperatorCandidates(OverloadedOperatorKind Op,
     // C++ [over.built]p20:
     //
     //   For every pair (T, VQ), where T is an enumeration or
-    //   (FIXME:) pointer to member type and VQ is either volatile or
+    //   pointer to member type and VQ is either volatile or
     //   empty, there exist candidate operator functions of the form
     //
     //        VQ T&      operator=(VQ T&, T);
-    for (BuiltinCandidateTypeSet::iterator Enum 
-           = CandidateTypes.enumeration_begin();
-         Enum != CandidateTypes.enumeration_end(); ++Enum) {
-      QualType ParamTypes[2];
-
-      // T& operator=(T&, T)
-      ParamTypes[0] = Context.getLValueReferenceType(*Enum);
-      ParamTypes[1] = *Enum;
-      AddBuiltinCandidate(ParamTypes[0], ParamTypes, Args, 2, CandidateSet,
-                          /*IsAssignmentOperator=*/false);
-
-      if (!Context.getCanonicalType(*Enum).isVolatileQualified()) {
-        // volatile T& operator=(volatile T&, T)
-        ParamTypes[0] = Context.getLValueReferenceType((*Enum).withVolatile());
-        ParamTypes[1] = *Enum;
-        AddBuiltinCandidate(ParamTypes[0], ParamTypes, Args, 2, CandidateSet,
-                            /*IsAssignmentOperator=*/false);
-      }
-    }
-    // Fall through.
+    for (BuiltinCandidateTypeSet::iterator
+           Enum = CandidateTypes.enumeration_begin(),
+           EnumEnd = CandidateTypes.enumeration_end();
+         Enum != EnumEnd; ++Enum)
+      AddBuiltinAssignmentOperatorCandidates(*this, *Enum, Args, 2, 
+                                             CandidateSet);
+    for (BuiltinCandidateTypeSet::iterator
+           MemPtr = CandidateTypes.member_pointer_begin(),
+         MemPtrEnd = CandidateTypes.member_pointer_end();
+         MemPtr != MemPtrEnd; ++MemPtr)
+      AddBuiltinAssignmentOperatorCandidates(*this, *MemPtr, Args, 2, 
+                                             CandidateSet);
+      // Fall through.
 
   case OO_PlusEqual:
   case OO_MinusEqual:
