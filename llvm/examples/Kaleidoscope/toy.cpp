@@ -1107,12 +1107,13 @@ int main() {
 
   // Make the module, which holds all the code.
   TheModule = new Module("my cool jit", Context);
-  
-  // Create the JIT.
-  TheExecutionEngine = EngineBuilder(TheModule).create();
 
   {
     ExistingModuleProvider OurModuleProvider(TheModule);
+
+    // Create the JIT.
+    TheExecutionEngine = EngineBuilder(&OurModuleProvider).create();
+
     FunctionPassManager OurFPM(&OurModuleProvider);
       
     // Set up the optimizer pipeline.  Start with registering info about how the
