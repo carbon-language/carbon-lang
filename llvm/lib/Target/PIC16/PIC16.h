@@ -17,7 +17,6 @@
 
 #include "llvm/Support/ErrorHandling.h"
 #include "llvm/Target/TargetMachine.h"
-#include <iosfwd>
 #include <cassert>
 #include <sstream>
 #include <cstring>
