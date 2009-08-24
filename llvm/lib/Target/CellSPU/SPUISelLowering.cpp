@@ -1963,7 +1963,9 @@ static SDValue LowerEXTRACT_VECTOR_ELT(SDValue Op, SelectionDAG &DAG) {
     assert(prefslot_begin != -1 && prefslot_end != -1 &&
            "LowerEXTRACT_VECTOR_ELT: preferred slots uninitialized");
 
-    unsigned int ShufBytes[16];
+    unsigned int ShufBytes[16] = {
+      0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0
+    };
     for (int i = 0; i < 16; ++i) {
       // zero fill uppper part of preferred slot, don't care about the
       // other slots:
