@@ -620,13 +620,13 @@ bool PPCLinuxAsmPrinter::runOnMachineFunction(MachineFunction &MF) {
   switch (F->getLinkage()) {
   default: llvm_unreachable("Unknown linkage type!");
   case Function::PrivateLinkage:
-  case Function::LinkerPrivateLinkage:
   case Function::InternalLinkage:  // Symbols default to internal.
     break;
   case Function::ExternalLinkage:
     O << "\t.global\t" << CurrentFnName << '\n'
       << "\t.type\t" << CurrentFnName << ", @function\n";
     break;
+  case Function::LinkerPrivateLinkage:
   case Function::WeakAnyLinkage:
   case Function::WeakODRLinkage:
   case Function::LinkOnceAnyLinkage:
@@ -738,6 +738,7 @@ void PPCLinuxAsmPrinter::PrintGlobalVariable(const GlobalVariable *GVar) {
    case GlobalValue::WeakAnyLinkage:
    case GlobalValue::WeakODRLinkage:
    case GlobalValue::CommonLinkage:
+   case GlobalValue::LinkerPrivateLinkage:
     O << "\t.global " << name << '\n'
       << "\t.type " << name << ", @object\n"
       << "\t.weak " << name << '\n';
@@ -752,7 +753,6 @@ void PPCLinuxAsmPrinter::PrintGlobalVariable(const GlobalVariable *GVar) {
     // FALL THROUGH
    case GlobalValue::InternalLinkage:
    case GlobalValue::PrivateLinkage:
-   case GlobalValue::LinkerPrivateLinkage:
     break;
    default:
     llvm_unreachable("Unknown linkage type!");
@@ -809,7 +809,6 @@ bool PPCDarwinAsmPrinter::runOnMachineFunction(MachineFunction &MF) {
   switch (F->getLinkage()) {
   default: llvm_unreachable("Unknown linkage type!");
   case Function::PrivateLinkage:
-  case Function::LinkerPrivateLinkage:
   case Function::InternalLinkage:  // Symbols default to internal.
     break;
   case Function::ExternalLinkage:
@@ -819,6 +818,7 @@ bool PPCDarwinAsmPrinter::runOnMachineFunction(MachineFunction &MF) {
   case Function::WeakODRLinkage:
   case Function::LinkOnceAnyLinkage:
   case Function::LinkOnceODRLinkage:
+  case Function::LinkerPrivateLinkage:
     O << "\t.globl\t" << CurrentFnName << '\n';
     O << "\t.weak_definition\t" << CurrentFnName << '\n';
     break;
@@ -992,6 +992,7 @@ void PPCDarwinAsmPrinter::PrintGlobalVariable(const GlobalVariable *GVar) {
    case GlobalValue::WeakAnyLinkage:
    case GlobalValue::WeakODRLinkage:
    case GlobalValue::CommonLinkage:
+   case GlobalValue::LinkerPrivateLinkage:
     O << "\t.globl " << name << '\n'
       << "\t.weak_definition " << name << '\n';
     break;
@@ -1004,7 +1005,6 @@ void PPCDarwinAsmPrinter::PrintGlobalVariable(const GlobalVariable *GVar) {
     // FALL THROUGH
    case GlobalValue::InternalLinkage:
    case GlobalValue::PrivateLinkage:
-   case GlobalValue::LinkerPrivateLinkage:
     break;
    default:
     llvm_unreachable("Unknown linkage type!");

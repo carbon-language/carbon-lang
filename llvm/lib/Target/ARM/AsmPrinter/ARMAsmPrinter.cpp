@@ -266,12 +266,12 @@ bool ARMAsmPrinter::runOnMachineFunction(MachineFunction &MF) {
   switch (F->getLinkage()) {
   default: llvm_unreachable("Unknown linkage type!");
   case Function::PrivateLinkage:
-  case Function::LinkerPrivateLinkage:
   case Function::InternalLinkage:
     break;
   case Function::ExternalLinkage:
     O << "\t.globl\t" << CurrentFnName << "\n";
     break;
+  case Function::LinkerPrivateLinkage:
   case Function::WeakAnyLinkage:
   case Function::WeakODRLinkage:
   case Function::LinkOnceAnyLinkage:
@@ -1234,6 +1234,7 @@ void ARMAsmPrinter::PrintGlobalVariable(const GlobalVariable* GVar) {
   case GlobalValue::LinkOnceODRLinkage:
   case GlobalValue::WeakAnyLinkage:
   case GlobalValue::WeakODRLinkage:
+  case GlobalValue::LinkerPrivateLinkage:
     if (isDarwin) {
       O << "\t.globl " << name << "\n"
         << "\t.weak_definition " << name << "\n";
@@ -1248,7 +1249,6 @@ void ARMAsmPrinter::PrintGlobalVariable(const GlobalVariable* GVar) {
     O << "\t.globl " << name << "\n";
     break;
   case GlobalValue::PrivateLinkage:
-  case GlobalValue::LinkerPrivateLinkage:
   case GlobalValue::InternalLinkage:
     break;
   default:
