@@ -1277,10 +1277,10 @@ void darwin::Assemble::ConstructJob(Compilation &C, const JobAction &JA,
   CmdArgs.push_back(Args.MakeArgString(getToolChain().getArchName().c_str()));
 
   CmdArgs.push_back("-force_cpusubtype_ALL");
-  if ((Args.hasArg(options::OPT_mkernel) ||
+  if (getToolChain().getTriple().getArch() != llvm::Triple::x86_64 &&
+      (Args.hasArg(options::OPT_mkernel) ||
        Args.hasArg(options::OPT_static) ||
-       Args.hasArg(options::OPT_fapple_kext)) &&
-      !Args.hasArg(options::OPT_dynamic))
+       Args.hasArg(options::OPT_fapple_kext)))
     CmdArgs.push_back("-static");
 
   Args.AddAllArgValues(CmdArgs, options::OPT_Wa_COMMA,
