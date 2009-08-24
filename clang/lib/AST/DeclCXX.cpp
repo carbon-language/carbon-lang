@@ -604,6 +604,8 @@ CXXConstructorDecl::setBaseOrMemberInitializers(
   for (CXXRecordDecl::base_class_iterator VBase =
        ClassDecl->vbases_begin(),
        E = ClassDecl->vbases_end(); VBase != E; ++VBase) {
+    if (VBase->getType()->isDependentType())
+      continue;
     if (CXXBaseOrMemberInitializer *Value = 
         AllBaseFields.lookup(VBase->getType()->getAs<RecordType>()))
       AllToInit.push_back(Value);
@@ -611,8 +613,7 @@ CXXConstructorDecl::setBaseOrMemberInitializers(
       CXXRecordDecl *VBaseDecl = 
         cast<CXXRecordDecl>(VBase->getType()->getAs<RecordType>()->getDecl());
       assert(VBaseDecl && "setBaseOrMemberInitializers - VBaseDecl null");
-      if (!VBaseDecl->getDefaultConstructor(C) && 
-          !VBase->getType()->isDependentType())
+      if (!VBaseDecl->getDefaultConstructor(C))
         Bases.push_back(VBase);
       CXXBaseOrMemberInitializer *Member = 
         new (C) CXXBaseOrMemberInitializer(VBase->getType(), 0, 0,
@@ -628,6 +629,9 @@ CXXConstructorDecl::setBaseOrMemberInitializers(
     // Virtuals are in the virtual base list and already constructed.
     if (Base->isVirtual())
       continue;
+    // Skip dependent types.
+    if (Base->getType()->isDependentType())
+      continue;
     if (CXXBaseOrMemberInitializer *Value = 
         AllBaseFields.lookup(Base->getType()->getAs<RecordType>()))
       AllToInit.push_back(Value);
@@ -635,8 +639,7 @@ CXXConstructorDecl::setBaseOrMemberInitializers(
       CXXRecordDecl *BaseDecl = 
         cast<CXXRecordDecl>(Base->getType()->getAs<RecordType>()->getDecl());
       assert(BaseDecl && "setBaseOrMemberInitializers - BaseDecl null");
-      if (!BaseDecl->getDefaultConstructor(C) && 
-          !Base->getType()->isDependentType())
+      if (!BaseDecl->getDefaultConstructor(C))
         Bases.push_back(Base);
       CXXBaseOrMemberInitializer *Member = 
       new (C) CXXBaseOrMemberInitializer(Base->getType(), 0, 0,

@@ -23,3 +23,10 @@ template<typename _Container> class insert_iterator {
     insert_iterator(_Container& __x) : container(&__x) {}
 };
 
+// PR4763
+template<typename T> struct s0 {};
+template<typename T> struct s0_traits {};
+template<typename T> struct s1 : s0<typename s0_traits<T>::t0> {
+  s1() {}
+};
+
