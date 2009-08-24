@@ -4,6 +4,10 @@ struct X0 { // expected-note{{candidate}}
   X0(int); // expected-note{{candidate}}
   template<typename T> X0(T);
   template<typename T, typename U> X0(T*, U*);
+  
+  // PR4761
+  template<typename T> X0() : f0(T::foo) {}
+  int f0;
 };
 
 void accept_X0(X0);

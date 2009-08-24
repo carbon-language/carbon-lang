@@ -703,6 +703,8 @@ Sema::ActOnMemInitializer(DeclPtrTy ConstructorD,
   if (!ConstructorD)
     return true;
   
+  AdjustDeclIfTemplate(ConstructorD);
+  
   CXXConstructorDecl *Constructor 
     = dyn_cast<CXXConstructorDecl>(ConstructorD.getAs<Decl>());
   if (!Constructor) {
@@ -922,6 +924,8 @@ void Sema::ActOnMemInitializers(DeclPtrTy ConstructorDecl,
                                 MemInitTy **MemInits, unsigned NumMemInits) {
   if (!ConstructorDecl)
     return;
+
+  AdjustDeclIfTemplate(ConstructorDecl);
   
   CXXConstructorDecl *Constructor 
     = dyn_cast<CXXConstructorDecl>(ConstructorDecl.getAs<Decl>());
@@ -1040,6 +1044,8 @@ void Sema::ActOnMemInitializers(DeclPtrTy ConstructorDecl,
 void Sema::ActOnDefaultCtorInitializers(DeclPtrTy CDtorDecl) {
   if (!CDtorDecl)
     return;
+  
+  AdjustDeclIfTemplate(CDtorDecl);
   
   if (CXXConstructorDecl *Constructor 
       = dyn_cast<CXXConstructorDecl>(CDtorDecl.getAs<Decl>()))
@@ -1529,6 +1535,8 @@ void Sema::ActOnStartDelayedCXXMethodDeclaration(Scope *S, DeclPtrTy MethodD) {
   if (!MethodD)
     return;
   
+  AdjustDeclIfTemplate(MethodD);
+  
   CXXScopeSpec SS;
   FunctionDecl *Method = cast<FunctionDecl>(MethodD.getAs<Decl>());
   QualType ClassTy 
@@ -1568,6 +1576,8 @@ void Sema::ActOnDelayedCXXMethodParameter(Scope *S, DeclPtrTy ParamD) {
 void Sema::ActOnFinishDelayedCXXMethodDeclaration(Scope *S, DeclPtrTy MethodD) {
   if (!MethodD)
     return;
+  
+  AdjustDeclIfTemplate(MethodD);
   
   FunctionDecl *Method = cast<FunctionDecl>(MethodD.getAs<Decl>());
   CXXScopeSpec SS;
@@ -3648,6 +3658,8 @@ Sema::DeclPtrTy Sema::ActOnFriendDecl(Scope *S,
 }
 
 void Sema::SetDeclDeleted(DeclPtrTy dcl, SourceLocation DelLoc) {
+  AdjustDeclIfTemplate(dcl);
+  
   Decl *Dcl = dcl.getAs<Decl>();
   FunctionDecl *Fn = dyn_cast<FunctionDecl>(Dcl);
   if (!Fn) {
@@ -3782,6 +3794,8 @@ bool Sema::CheckOverridingFunctionExceptionSpec(const CXXMethodDecl *New,
 /// static data member of class X, names should be looked up in the scope of
 /// class X.
 void Sema::ActOnCXXEnterDeclInitializer(Scope *S, DeclPtrTy Dcl) {
+  AdjustDeclIfTemplate(Dcl);
+  
   Decl *D = Dcl.getAs<Decl>();
   // If there is no declaration, there was an error parsing it.
   if (D == 0)
@@ -3805,6 +3819,8 @@ void Sema::ActOnCXXEnterDeclInitializer(Scope *S, DeclPtrTy Dcl) {
 /// ActOnCXXExitDeclInitializer - Invoked after we are finished parsing an
 /// initializer for the declaration 'Dcl'.
 void Sema::ActOnCXXExitDeclInitializer(Scope *S, DeclPtrTy Dcl) {
+  AdjustDeclIfTemplate(Dcl);
+  
   Decl *D = Dcl.getAs<Decl>();
   // If there is no declaration, there was an error parsing it.
   if (D == 0)

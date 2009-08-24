@@ -174,7 +174,7 @@ void Parser::ParseLexedMethodDefs(ParsingClass &Class) {
     // Append the current token at the end of the new token stream so that it
     // doesn't get lost.
     LM.Toks.push_back(Tok);
-    PP.EnterTokenStream(&LM.Toks.front(), LM.Toks.size(), true, false);
+    PP.EnterTokenStream(LM.Toks.data(), LM.Toks.size(), true, false);
 
     // Consume the previously pushed token.
     ConsumeAnyToken();
