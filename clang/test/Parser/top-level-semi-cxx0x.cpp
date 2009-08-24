@@ -7,3 +7,9 @@ void bar() { };
 void wibble();
 
 ;
+
+namespace Blah {
+  void f() { };
+  
+  void g();
+}
