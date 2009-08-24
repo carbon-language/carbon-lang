@@ -16,6 +16,7 @@
 #include "CodeGenFunction.h"
 #include "clang/AST/RecordLayout.h"
 #include "llvm/Type.h"
+#include "llvm/ADT/Triple.h"
 
 using namespace clang;
 using namespace CodeGen;
@@ -1521,32 +1522,44 @@ const ABIInfo &CodeGenTypes::getABIInfo() const {
   if (TheABIInfo)
     return *TheABIInfo;
 
-  // For now we just cache this in the CodeGenTypes and don't bother
-  // to free it.
-  const char *TargetPrefix = getContext().Target.getTargetPrefix();
-  if (strcmp(TargetPrefix, "x86") == 0) {
-    bool IsDarwin = strstr(getContext().Target.getTargetTriple(), "darwin");
-    bool isRegStructReturnABI = IsDarwin ||
-       strstr(getContext().Target.getTargetTriple(), "cygwin") ||
-       strstr(getContext().Target.getTargetTriple(), "mingw") ||
-       strstr(getContext().Target.getTargetTriple(), "netware") ||
-       strstr(getContext().Target.getTargetTriple(), "freebsd") ||
-       strstr(getContext().Target.getTargetTriple(), "openbsd");
-    switch (getContext().Target.getPointerWidth(0)) {
-    case 32:
-      return *(TheABIInfo = 
-          new X86_32ABIInfo(Context, IsDarwin, isRegStructReturnABI));
-    case 64:
-      return *(TheABIInfo = new X86_64ABIInfo());
+  // For now we just cache the ABIInfo in CodeGenTypes and don't free it.
+
+  llvm::Triple TargetTriple(getContext().Target.getTargetTriple());
+  switch (TargetTriple.getArch()) {
+  default:
+    return *(TheABIInfo = new DefaultABIInfo);
+
+  case llvm::Triple::x86: {
+    llvm::Triple::OSType OS = TargetTriple.getOS();
+    
+    if (OS == llvm::Triple::Darwin)
+      return *(TheABIInfo = new X86_32ABIInfo(Context, true, true));
+
+    switch (OS) {
+    case llvm::Triple::Cygwin:
+    case llvm::Triple::DragonFly:
+    case llvm::Triple::MinGW32:
+    case llvm::Triple::MinGW64:
+    case llvm::Triple::NetBSD:
+    case llvm::Triple::OpenBSD:
+      return *(TheABIInfo = new X86_32ABIInfo(Context, false, true));
+
+    default:
+      return *(TheABIInfo = new X86_32ABIInfo(Context, false, false));
     }
-  } else if (strcmp(TargetPrefix, "arm") == 0) {
-    // FIXME: Support for OABI?
-    return *(TheABIInfo = new ARMABIInfo());
-  } else if (strcmp(TargetPrefix, "pic16") == 0) {
-    return *(TheABIInfo = new PIC16ABIInfo());
-  } else if (strcmp(TargetPrefix, "s390x") == 0) {
-    return *(TheABIInfo = new SystemZABIInfo());
   }
 
-  return *(TheABIInfo = new DefaultABIInfo);
+  case llvm::Triple::x86_64:
+    return *(TheABIInfo = new X86_64ABIInfo());
+
+  case llvm::Triple::arm:
+    // FIXME: Support for OABI?
+    return *(TheABIInfo = new ARMABIInfo());
+
+  case llvm::Triple::pic16:
+    return *(TheABIInfo = new PIC16ABIInfo());
+
+  case llvm::Triple::systemz:
+    return *(TheABIInfo = new SystemZABIInfo());
+  }
 }
