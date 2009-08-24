@@ -15,7 +15,6 @@
 #define LLVM_SUPPORT_RAW_OSTREAM_H
 
 #include "llvm/ADT/StringRef.h"
-#include <iosfwd>
 
 namespace llvm {
   class format_object_base;
@@ -406,24 +405,6 @@ raw_ostream &nulls();
 //===----------------------------------------------------------------------===//
 // Output Stream Adaptors
 //===----------------------------------------------------------------------===//
-
-/// raw_os_ostream - A raw_ostream that writes to an std::ostream.  This is a
-/// simple adaptor class.  It does not check for output errors; clients should
-/// use the underlying stream to detect errors.
-class raw_os_ostream : public raw_ostream {
-  std::ostream &OS;
-
-  /// write_impl - See raw_ostream::write_impl.
-  virtual void write_impl(const char *Ptr, size_t Size);
-
-  /// current_pos - Return the current position within the stream, not
-  /// counting the bytes currently in the buffer.
-  virtual uint64_t current_pos();
-
-public:
-  raw_os_ostream(std::ostream &O) : OS(O) {}
-  ~raw_os_ostream();
-};
 
 /// raw_string_ostream - A raw_ostream that writes to an std::string.  This is a
 /// simple adaptor class. This class does not encounter output errors.

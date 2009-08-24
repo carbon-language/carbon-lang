@@ -20,7 +20,6 @@
 #include "llvm/Support/Compiler.h"
 #include "llvm/Support/ErrorHandling.h"
 #include "llvm/ADT/StringExtras.h"
-#include <ostream>
 #include <sys/stat.h>
 #include <sys/types.h>
 
@@ -485,19 +484,6 @@ raw_ostream &llvm::nulls() {
   return S;
 }
 
-//===----------------------------------------------------------------------===//
-//  raw_os_ostream
-//===----------------------------------------------------------------------===//
-
-raw_os_ostream::~raw_os_ostream() {
-  flush();
-}
-
-void raw_os_ostream::write_impl(const char *Ptr, size_t Size) {
-  OS.write(Ptr, Size);
-}
-
-uint64_t raw_os_ostream::current_pos() { return OS.tellp(); }
 
 //===----------------------------------------------------------------------===//
 //  raw_string_ostream
