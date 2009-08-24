@@ -64,6 +64,7 @@
 #include "llvm/Support/PluginLoader.h"
 #include "llvm/Support/PrettyStackTrace.h"
 #include "llvm/Support/Timer.h"
+#include "llvm/Support/raw_ostream.h"
 #include "llvm/System/Host.h"
 #include "llvm/System/Path.h"
 #include "llvm/System/Process.h"

@@ -14,11 +14,10 @@
 #ifndef DRIVER_ASTCONSUMERS_H
 #define DRIVER_ASTCONSUMERS_H
 
-#include "llvm/Support/raw_ostream.h"
 #include <string>
-#include <iosfwd>
 
 namespace llvm {
+  class raw_ostream;
   class Module;
   class LLVMContext;
   namespace sys { class Path; }
@@ -37,13 +36,13 @@ class LangOptions;
 // original C code.  The output is intended to be in a format such that
 // clang could re-parse the output back into the same AST, but the
 // implementation is still incomplete.
-ASTConsumer *CreateASTPrinter(llvm::raw_ostream* OS);
+ASTConsumer *CreateASTPrinter(llvm::raw_ostream *OS);
 
 // AST XML-printer: prints out the AST in a XML format 
 // The output is intended to be in a format such that
 // clang or any other tool could re-parse the output back into the same AST, 
 // but the implementation is still incomplete.
-ASTConsumer *CreateASTPrinterXML(llvm::raw_ostream* OS);
+ASTConsumer *CreateASTPrinterXML(llvm::raw_ostream *OS);
 
 // AST dumper: dumps the raw AST in human-readable form to stderr; this is
 // intended for debugging.
@@ -60,8 +59,8 @@ ASTConsumer *CreateDeclContextPrinter();
 
 // ObjC rewriter: attempts tp rewrite ObjC constructs into pure C code.
 // This is considered experimental, and only works with Apple's ObjC runtime.
-ASTConsumer *CreateObjCRewriter(const std::string& InFile,
-                                llvm::raw_ostream* OS,
+ASTConsumer *CreateObjCRewriter(const std::string &InFile,
+                                llvm::raw_ostream *OS,
                                 Diagnostic &Diags,
                                 const LangOptions &LOpts,
                                 bool SilenceRewriteMacroWarning);

@@ -21,7 +21,7 @@
 #include "clang/Basic/FileManager.h"
 #include "clang/AST/ASTContext.h"
 #include "llvm/Support/MemoryBuffer.h"
-
+#include "llvm/Support/raw_ostream.h"
 using namespace clang;
 
 //===----------------------------------------------------------------------===//
