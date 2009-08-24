@@ -529,7 +529,11 @@ define i32 @main() {                                              <i>; i32()* </
 
   <dt><tt><b><a name="linkage_linker_private">linker_private</a></b></tt>: </dt>
   <dd>Similar to private, but the symbol is passed through the assembler and
-      removed by the linker after evaluation.</dd>
+      removed by the linker after evaluation.  Note that (unlike private
+      symbols) linker_private symbols are subject to coalescing by the linker:
+      weak symbols get merged and redefinitions are rejected.  However, unlike
+      normal strong symbols, they are removed by the linker from the final
+      linked image (executable or dynamic library).</dd>
 
   <dt><tt><b><a name="linkage_internal">internal</a></b></tt>: </dt>
   <dd>Similar to private, but the value shows as a local symbol
