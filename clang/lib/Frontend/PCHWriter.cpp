@@ -526,8 +526,9 @@ void PCHWriter::WriteMetadata(ASTContext &Context, const char *isysroot) {
   Record.push_back(CLANG_VERSION_MAJOR);
   Record.push_back(CLANG_VERSION_MINOR);
   Record.push_back(isysroot != 0);
-  const char *Triple = Target.getTargetTriple();
-  Stream.EmitRecordWithBlob(MetaAbbrevCode, Record, Triple, strlen(Triple));
+  const std::string &TripleStr = Target.getTriple().getTriple();
+  Stream.EmitRecordWithBlob(MetaAbbrevCode, Record,
+                            TripleStr.data(), TripleStr.size());
   
   // Original file name
   SourceManager &SM = Context.getSourceManager();

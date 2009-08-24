@@ -115,9 +115,9 @@ PCHValidator::ReadLanguageOptions(const LangOptions &LangOpts) {
 }
 
 bool PCHValidator::ReadTargetTriple(const std::string &Triple) {
-  if (Triple != PP.getTargetInfo().getTargetTriple()) {
+  if (Triple != PP.getTargetInfo().getTriple().getTriple()) {
     Reader.Diag(diag::warn_pch_target_triple)
-      << Triple << PP.getTargetInfo().getTargetTriple();
+      << Triple << PP.getTargetInfo().getTriple().getTriple();
     return true;
   }
   return false;

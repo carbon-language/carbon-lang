@@ -16,6 +16,7 @@
 
 // FIXME: Daniel isn't smart enough to use a prototype for this.
 #include "llvm/ADT/StringMap.h"
+#include "llvm/ADT/Triple.h"
 #include "llvm/Support/DataTypes.h"
 #include <cassert>
 #include <vector>
@@ -37,7 +38,7 @@ namespace Builtin { struct Info; }
 /// TargetInfo - This class exposes information about the current target.
 ///
 class TargetInfo {
-  std::string Triple;
+  llvm::Triple Triple;
 protected:
   // Target values set by the ctor of the actual target implementation.  Default
   // values are specified by the TargetInfo constructor.
@@ -287,9 +288,9 @@ public:
   /// llvm intrinsics.
   virtual const char *getTargetPrefix() const = 0;
     
-  /// getTargetTriple - Return the target triple of the primary target.
-  const char *getTargetTriple() const {
-    return Triple.c_str();
+  /// getTriple - Return the target triple of the primary target.
+  const llvm::Triple &getTriple() const {
+    return Triple;
   }
   
   const char *getTargetDescription() const {

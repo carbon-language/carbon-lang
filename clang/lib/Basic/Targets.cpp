@@ -69,14 +69,14 @@ namespace {
 template<typename TgtInfo>
 class OSTargetInfo : public TgtInfo {
 protected:
-  virtual void getOSDefines(const LangOptions &Opts, const char *Triple,
+  virtual void getOSDefines(const LangOptions &Opts, const llvm::Triple &Triple,
                             std::vector<char> &Defines) const=0;
 public:
   OSTargetInfo(const std::string& triple) : TgtInfo(triple) {}
   virtual void getTargetDefines(const LangOptions &Opts,
                                 std::vector<char> &Defines) const {
     TgtInfo::getTargetDefines(Opts, Defines);
-    getOSDefines(Opts, TgtInfo::getTargetTriple(), Defines);
+    getOSDefines(Opts, TgtInfo::getTriple(), Defines);
   }
 
 };
@@ -104,14 +104,14 @@ static void getDarwinDefines(std::vector<char> &Defs, const LangOptions &Opts) {
     Define(Defs, "__DYNAMIC__");
 }
 
-static void getDarwinOSXDefines(std::vector<char> &Defs, const char *TripleStr){
-  llvm::Triple TheTriple(TripleStr);
-  if (TheTriple.getOS() != llvm::Triple::Darwin)
+static void getDarwinOSXDefines(std::vector<char> &Defs,
+                                const llvm::Triple &Triple) {
+  if (Triple.getOS() != llvm::Triple::Darwin)
     return;
   
   // Figure out which "darwin number" the target triple is.  "darwin9" -> 10.5.
   unsigned Maj, Min, Rev;
-  TheTriple.getDarwinNumber(Maj, Min, Rev);
+  Triple.getDarwinNumber(Maj, Min, Rev);
   
   char MacOSXStr[] = "1000";
   if (Maj >= 4 && Maj <= 13) { // 10.0-10.9
@@ -126,14 +126,13 @@ static void getDarwinOSXDefines(std::vector<char> &Defs, const char *TripleStr){
 }
 
 static void getDarwinIPhoneOSDefines(std::vector<char> &Defs,
-                                     const char *TripleStr) {
-  llvm::Triple TheTriple(TripleStr);
-  if (TheTriple.getOS() != llvm::Triple::Darwin)
+                                     const llvm::Triple &Triple) {
+  if (Triple.getOS() != llvm::Triple::Darwin)
     return;
   
   // Figure out which "darwin number" the target triple is.  "darwin9" -> 10.5.
   unsigned Maj, Min, Rev;
-  TheTriple.getDarwinNumber(Maj, Min, Rev);
+  Triple.getDarwinNumber(Maj, Min, Rev);
   
   // When targetting iPhone OS, interpret the minor version and
   // revision as the iPhone OS version
@@ -151,14 +150,13 @@ static void getDarwinIPhoneOSDefines(std::vector<char> &Defs,
 
 /// GetDarwinLanguageOptions - Set the default language options for darwin.
 static void GetDarwinLanguageOptions(LangOptions &Opts,
-                                     const char *TripleStr) {
+                                     const llvm::Triple &Triple) {
   Opts.NeXTRuntime = true;
   
-  llvm::Triple TheTriple(TripleStr);
-  if (TheTriple.getOS() != llvm::Triple::Darwin)
+  if (Triple.getOS() != llvm::Triple::Darwin)
     return;
 
-  unsigned MajorVersion = TheTriple.getDarwinMajorNumber();
+  unsigned MajorVersion = Triple.getDarwinMajorNumber();
 
   // Blocks and stack protectors default to on for 10.6 (darwin10) and beyond.
   if (MajorVersion > 9) {
@@ -169,7 +167,7 @@ static void GetDarwinLanguageOptions(LangOptions &Opts,
   // Non-fragile ABI (in 64-bit mode) default to on for 10.5 (darwin9) and
   // beyond.
   if (MajorVersion >= 9 && Opts.ObjC1 &&
-      TheTriple.getArch() == llvm::Triple::x86_64)
+      Triple.getArch() == llvm::Triple::x86_64)
     Opts.ObjCNonFragileABI = 1;
 }
 
@@ -177,7 +175,7 @@ namespace {
 template<typename Target>
 class DarwinTargetInfo : public OSTargetInfo<Target> {
 protected:
-  virtual void getOSDefines(const LangOptions &Opts, const char *Triple,
+  virtual void getOSDefines(const LangOptions &Opts, const llvm::Triple &Triple,
                     std::vector<char> &Defines) const {
     getDarwinDefines(Defines, Opts);
     getDarwinOSXDefines(Defines, Triple);
@@ -188,7 +186,7 @@ protected:
   /// options.
   virtual void getDefaultLangOptions(LangOptions &Opts) {
     TargetInfo::getDefaultLangOptions(Opts);
-    GetDarwinLanguageOptions(Opts, TargetInfo::getTargetTriple());
+    GetDarwinLanguageOptions(Opts, TargetInfo::getTriple());
   }
 public:
   DarwinTargetInfo(const std::string& triple) :
@@ -218,7 +216,7 @@ public:
 template<typename Target>
 class DragonFlyBSDTargetInfo : public OSTargetInfo<Target> {
 protected:
-  virtual void getOSDefines(const LangOptions &Opts, const char *Triple,
+  virtual void getOSDefines(const LangOptions &Opts, const llvm::Triple &Triple,
                     std::vector<char> &Defs) const {
     // DragonFly defines; list based off of gcc output
     Define(Defs, "__DragonFly__");
@@ -237,11 +235,13 @@ public:
 template<typename Target>
 class FreeBSDTargetInfo : public OSTargetInfo<Target> {
 protected:
-  virtual void getOSDefines(const LangOptions &Opts, const char *Triple,
+  virtual void getOSDefines(const LangOptions &Opts, const llvm::Triple &Triple,
                     std::vector<char> &Defs) const {
     // FreeBSD defines; list based off of gcc output
 
-    const char *FreeBSD = strstr(Triple, "-freebsd");
+    // FIXME: Move version number handling to llvm::Triple.
+    const char *FreeBSD = strstr(Triple.getTriple().c_str(),
+                                 "-freebsd");
     FreeBSD += strlen("-freebsd");
     char release[] = "X";
     release[0] = FreeBSD[0];
@@ -265,7 +265,7 @@ public:
 template<typename Target>
 class LinuxTargetInfo : public OSTargetInfo<Target> {
 protected:
-  virtual void getOSDefines(const LangOptions &Opts, const char *Triple,
+  virtual void getOSDefines(const LangOptions &Opts, const llvm::Triple &Triple,
                            std::vector<char> &Defs) const {
     // Linux defines; list based off of gcc output
     DefineStd(Defs, "unix", Opts);
@@ -284,7 +284,7 @@ public:
 template<typename Target>
 class NetBSDTargetInfo : public OSTargetInfo<Target> {
 protected:
-  virtual void getOSDefines(const LangOptions &Opts, const char *Triple,
+  virtual void getOSDefines(const LangOptions &Opts, const llvm::Triple &Triple,
                     std::vector<char> &Defs) const {
     // NetBSD defines; list based off of gcc output
     Define(Defs, "__NetBSD__", "1");
@@ -302,7 +302,7 @@ public:
 template<typename Target>
 class OpenBSDTargetInfo : public OSTargetInfo<Target> {
 protected:
-  virtual void getOSDefines(const LangOptions &Opts, const char *Triple,
+  virtual void getOSDefines(const LangOptions &Opts, const llvm::Triple &Triple,
                     std::vector<char> &Defs) const {
     // OpenBSD defines; list based off of gcc output
 
@@ -319,7 +319,7 @@ public:
 template<typename Target>
 class SolarisTargetInfo : public OSTargetInfo<Target> {
 protected:
-  virtual void getOSDefines(const LangOptions &Opts, const char *Triple,
+  virtual void getOSDefines(const LangOptions &Opts, const llvm::Triple &Triple,
                                 std::vector<char> &Defs) const {
     DefineStd(Defs, "sun", Opts);
     DefineStd(Defs, "unix", Opts);
@@ -339,7 +339,7 @@ public:
 
 /// GetWindowsLanguageOptions - Set the default language options for Windows.
 static void GetWindowsLanguageOptions(LangOptions &Opts,
-                                     const char *Triple) {
+                                     const llvm::Triple &Triple) {
   Opts.Microsoft = true;
 }
 
@@ -923,7 +923,7 @@ public:
 
   virtual void getDefaultLangOptions(LangOptions &Opts) {
     X86_32TargetInfo::getDefaultLangOptions(Opts);
-    GetWindowsLanguageOptions(Opts, getTargetTriple());
+    GetWindowsLanguageOptions(Opts, getTriple());
   }
 };
 } // end anonymous namespace
@@ -1092,7 +1092,7 @@ namespace {
 class DarwinARMTargetInfo : 
   public DarwinTargetInfo<ARMTargetInfo> {
 protected:
-  virtual void getOSDefines(const LangOptions &Opts, const char *Triple,
+  virtual void getOSDefines(const LangOptions &Opts, const llvm::Triple &Triple,
                     std::vector<char> &Defines) const {
     getDarwinDefines(Defines, Opts);
     getDarwinIPhoneOSDefines(Defines, Triple);

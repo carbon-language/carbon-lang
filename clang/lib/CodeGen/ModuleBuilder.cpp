@@ -54,7 +54,7 @@ namespace {
     virtual void Initialize(ASTContext &Context) {
       Ctx = &Context;
       
-      M->setTargetTriple(Ctx->Target.getTargetTriple());
+      M->setTargetTriple(Ctx->Target.getTriple().getTriple());
       M->setDataLayout(Ctx->Target.getTargetDescription());
       TD.reset(new llvm::TargetData(Ctx->Target.getTargetDescription()));
       Builder.reset(new CodeGen::CodeGenModule(Context, CompileOpts,

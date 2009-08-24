@@ -1524,18 +1524,16 @@ const ABIInfo &CodeGenTypes::getABIInfo() const {
 
   // For now we just cache the ABIInfo in CodeGenTypes and don't free it.
 
-  llvm::Triple TargetTriple(getContext().Target.getTargetTriple());
-  switch (TargetTriple.getArch()) {
+  const llvm::Triple &Triple(getContext().Target.getTriple());
+  switch (Triple.getArch()) {
   default:
     return *(TheABIInfo = new DefaultABIInfo);
 
-  case llvm::Triple::x86: {
-    llvm::Triple::OSType OS = TargetTriple.getOS();
-    
-    if (OS == llvm::Triple::Darwin)
+  case llvm::Triple::x86:
+    if (Triple.getOS() == llvm::Triple::Darwin)
       return *(TheABIInfo = new X86_32ABIInfo(Context, true, true));
 
-    switch (OS) {
+    switch (Triple.getOS()) {
     case llvm::Triple::Cygwin:
     case llvm::Triple::DragonFly:
     case llvm::Triple::MinGW32:
@@ -1547,7 +1545,6 @@ const ABIInfo &CodeGenTypes::getABIInfo() const {
     default:
       return *(TheABIInfo = new X86_32ABIInfo(Context, false, false));
     }
-  }
 
   case llvm::Triple::x86_64:
     return *(TheABIInfo = new X86_64ABIInfo());
