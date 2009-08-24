@@ -15,6 +15,7 @@
 #include "clang/Parse/ParseDiagnostic.h"
 #include "clang/Parse/DeclSpec.h"
 #include "clang/Parse/Scope.h"
+#include "llvm/Support/Compiler.h"
 using namespace clang;
 
 /// \brief Parse a template declaration, explicit instantiation, or
@@ -27,6 +28,29 @@ Parser::ParseDeclarationStartingWithTemplate(unsigned Context,
     return ParseExplicitInstantiation(ConsumeToken(), DeclEnd);
 
   return ParseTemplateDeclarationOrSpecialization(Context, DeclEnd, AS);
+}
+
+/// \brief RAII class that manages the template parameter depth.
+namespace {
+  class VISIBILITY_HIDDEN TemplateParameterDepthCounter {
+    unsigned &Depth;
+    unsigned AddedLevels;
+
+  public:
+    explicit TemplateParameterDepthCounter(unsigned &Depth) 
+      : Depth(Depth), AddedLevels(0) { }
+    
+    ~TemplateParameterDepthCounter() {
+      Depth -= AddedLevels;
+    }
+    
+    void operator++() { 
+      ++Depth;
+      ++AddedLevels;
+    }
+    
+    operator unsigned() const { return Depth; }
+  };
 }
 
 /// \brief Parse a template declaration or an explicit specialization.
@@ -77,6 +101,7 @@ Parser::ParseTemplateDeclarationOrSpecialization(unsigned Context,
   // context).
   bool isSpecialization = true;
   TemplateParameterLists ParamLists;
+  TemplateParameterDepthCounter Depth(TemplateParameterDepth);
   do {
     // Consume the 'export', if any.
     SourceLocation ExportLoc;
@@ -96,7 +121,7 @@ Parser::ParseTemplateDeclarationOrSpecialization(unsigned Context,
     // Parse the '<' template-parameter-list '>'
     SourceLocation LAngleLoc, RAngleLoc;
     TemplateParameterList TemplateParams;
-    if (ParseTemplateParameters(ParamLists.size(), TemplateParams, LAngleLoc, 
+    if (ParseTemplateParameters(Depth, TemplateParams, LAngleLoc, 
                                 RAngleLoc)) {
       // Skip until the semi-colon or a }.
       SkipUntil(tok::r_brace, true, true);
@@ -104,15 +129,17 @@ Parser::ParseTemplateDeclarationOrSpecialization(unsigned Context,
         ConsumeToken();
       return DeclPtrTy();      
     }
-      
-    if (!TemplateParams.empty())
-      isSpecialization = false;
 
     ParamLists.push_back(
-      Actions.ActOnTemplateParameterList(ParamLists.size(), ExportLoc, 
+      Actions.ActOnTemplateParameterList(Depth, ExportLoc, 
                                          TemplateLoc, LAngleLoc, 
                                          TemplateParams.data(),
                                          TemplateParams.size(), RAngleLoc));
+
+    if (!TemplateParams.empty()) {
+      isSpecialization = false;
+      ++Depth;
+    }    
   } while (Tok.is(tok::kw_export) || Tok.is(tok::kw_template));
 
   // Parse the actual template declaration.

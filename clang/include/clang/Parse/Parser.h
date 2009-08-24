@@ -90,6 +90,9 @@ class Parser {
   /// argument list.
   bool GreaterThanIsOperator;
 
+  /// The "depth" of the template parameters currently being parsed.
+  unsigned TemplateParameterDepth;
+  
   /// \brief RAII object that makes '>' behave either as an operator
   /// or as the closing angle bracket for a template argument list.
   struct GreaterThanIsOperatorScope {
