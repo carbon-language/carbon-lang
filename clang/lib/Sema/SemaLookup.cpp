@@ -755,6 +755,9 @@ Sema::CppLookupName(Scope *S, DeclarationName Name,
 
   for (; S; S = S->getParent()) {
     DeclContext *Ctx = static_cast<DeclContext *>(S->getEntity());
+    if (Ctx->isTransparentContext())
+      continue;
+
     assert(Ctx && Ctx->isFileContext() &&
            "We should have been looking only at file context here already.");
 

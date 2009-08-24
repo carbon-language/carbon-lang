@@ -25,3 +25,11 @@ extern "C" int const bar;
 // <rdar://problem/6895431>
 extern "C" struct bar d;
 extern struct bar e;
+
+extern "C++" {
+  namespace N0 {
+    struct X0 {
+      int foo(int x) { return x; }
+    };
+  }
+}
