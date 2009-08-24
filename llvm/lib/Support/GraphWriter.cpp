@@ -125,7 +125,7 @@ void llvm::DisplayGraph(const sys::Path &Filename, bool wait,
   args.push_back(PSFilename.c_str());
   args.push_back(0);
   
-  errs() << "Running '" << prog << "' program... ";
+  errs() << "Running '" << prog.str() << "' program... ";
 
   if (sys::Program::ExecuteAndWait(prog, &args[0], 0, 0, 0, 0, &ErrMsg)) {
      errs() << "Error viewing graph " << Filename.str() << ": '"
@@ -150,7 +150,7 @@ void llvm::DisplayGraph(const sys::Path &Filename, bool wait,
     else {
        sys::Program::ExecuteNoWait(gv, &args[0],0,0,0,&ErrMsg);
        errs() << "Remember to erase graph files: " << Filename.str() << " "
-              << PSFilename << "\n";
+              << PSFilename.str() << "\n";
     }
   }
 #elif HAVE_DOTTY
