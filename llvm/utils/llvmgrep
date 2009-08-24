@@ -33,7 +33,7 @@ if test -d "$TOPDIR" ; then
     *) grep_cmd="egrep -l -n" ;;
   esac
   ./utils/llvmdo -topdir "$TOPDIR" \
-    -dirs "include lib tools utils docs examples test projects cmake" $grep_cmd "$*"
+    -dirs "include lib tools utils docs examples test unittests projects cmake" $grep_cmd "$*"
 else
   echo "Can't find LLVM top directory"
 fi
