@@ -1092,6 +1092,7 @@ AC_CHECK_FUNCS([strerror strerror_r strerror_s ])
 AC_CHECK_FUNCS([strtoll strtoq sysconf malloc_zone_statistics ])
 AC_CHECK_FUNCS([setjmp longjmp sigsetjmp siglongjmp])
 AC_C_PRINTF_A
+dnl FIXME: This is no longer used, please remove (but test)!!!
 AC_FUNC_ALLOCA
 AC_FUNC_RAND48
 
