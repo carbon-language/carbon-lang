@@ -177,7 +177,7 @@ class DefinedSVal : public SVal {
 protected:
   DefinedSVal(const void* d, bool isLoc, unsigned ValKind)
     : SVal(d, isLoc, ValKind) {}
-  
+public:
   // Implement isa<T> support.
   static inline bool classof(const SVal *V) {
     return !V->isUnknownOrUndef();
