@@ -30,7 +30,6 @@
 #include "llvm/Support/ConstantRange.h"
 #include "llvm/ADT/FoldingSet.h"
 #include "llvm/ADT/DenseMap.h"
-#include <iosfwd>
 #include <map>
 
 namespace llvm {
@@ -109,8 +108,6 @@ namespace llvm {
     /// specified stream.  This should really only be used for debugging
     /// purposes.
     virtual void print(raw_ostream &OS) const = 0;
-    void print(std::ostream &OS) const;
-    void print(std::ostream *OS) const { if (OS) print(*OS); }
 
     /// dump - This method is used for debugging.
     ///
@@ -118,11 +115,6 @@ namespace llvm {
   };
 
   inline raw_ostream &operator<<(raw_ostream &OS, const SCEV &S) {
-    S.print(OS);
-    return OS;
-  }
-
-  inline std::ostream &operator<<(std::ostream &OS, const SCEV &S) {
     S.print(OS);
     return OS;
   }

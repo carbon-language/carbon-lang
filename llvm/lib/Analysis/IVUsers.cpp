@@ -345,11 +345,6 @@ void IVUsers::print(raw_ostream &OS, const Module *M) const {
   }
 }
 
-void IVUsers::print(std::ostream &o, const Module *M) const {
-  raw_os_ostream OS(o);
-  print(OS, M);
-}
-
 void IVUsers::dump() const {
   print(errs());
 }

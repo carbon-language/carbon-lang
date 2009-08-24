@@ -121,11 +121,6 @@ void SCEV::dump() const {
   errs() << '\n';
 }
 
-void SCEV::print(std::ostream &o) const {
-  raw_os_ostream OS(o);
-  print(OS);
-}
-
 bool SCEV::isZero() const {
   if (const SCEVConstant *SC = dyn_cast<SCEVConstant>(this))
     return SC->getValue()->isZero();

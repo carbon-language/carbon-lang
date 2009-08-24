@@ -350,8 +350,3 @@ void LoopDependenceAnalysis::print(raw_ostream &OS, const Module*) const {
   // TODO: doc why const_cast is safe
   PrintLoopInfo(OS, const_cast<LoopDependenceAnalysis*>(this), this->L);
 }
-
-void LoopDependenceAnalysis::print(std::ostream &OS, const Module *M) const {
-  raw_os_ostream os(OS);
-  print(os, M);
-}

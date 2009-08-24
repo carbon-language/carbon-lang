@@ -23,9 +23,9 @@
 #include "llvm/Support/InstIterator.h"
 #include "llvm/Support/raw_ostream.h"
 #include "llvm/Target/TargetData.h"
+using namespace llvm;
 
-namespace llvm {
-char PointerTracking::ID=0;
+char PointerTracking::ID = 0;
 PointerTracking::PointerTracking() : FunctionPass(&ID) {}
 
 bool PointerTracking::runOnFunction(Function &F) {
@@ -252,11 +252,5 @@ void PointerTracking::print(raw_ostream &OS, const Module* M) const {
   }
 }
 
-void PointerTracking::print(std::ostream &o, const Module* M) const {
-  raw_os_ostream OS(o);
-  print(OS, M);
-}
-
 static RegisterPass<PointerTracking> X("pointertracking",
                                        "Track pointer bounds", false, true);
-}
