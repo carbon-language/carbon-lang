@@ -3354,11 +3354,13 @@ llvm::Constant *CGObjCCommonMac::BuildIvarLayout(
         printf("0x%x%s",  s[i], s[i] != 0 ? ", " : "");
     printf("\n");
   }
-
+// Turn off this optimization.
+#if 0
   // if ivar_layout bitmap is all 1 bits (nothing skipped) then use NULL as
   // final layout.
   if (ForStrongLayout && !BytesSkipped)
     return llvm::Constant::getNullValue(PtrTy);
+#endif
   llvm::GlobalVariable * Entry =
     CreateMetadataVar("\01L_OBJC_CLASS_NAME_",
                       llvm::ConstantArray::get(VMContext, BitMap.c_str()),
