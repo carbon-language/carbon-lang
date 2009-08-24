@@ -25,3 +25,11 @@ void f1(volatile Base *b, Derived1 *d1, const Derived2 *d2) {
   if (d1 == d2) // expected-error{{comparison of distinct}}
     return;
 }
+
+// PR4691
+int ptrcmp1(void *a, int *b) {
+  return a < b;
+}
+int ptrcmp2(long *a, int *b) {
+  return a < b; // expected-error{{distinct}}
+}

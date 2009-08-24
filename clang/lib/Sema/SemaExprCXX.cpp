@@ -1510,15 +1510,20 @@ QualType Sema::CXXCheckConditionalOperands(Expr *&Cond, Expr *&LHS, Expr *&RHS,
 
 /// \brief Find a merged pointer type and convert the two expressions to it.
 ///
-/// This finds the composite pointer type for @p E1 and @p E2 according to
-/// C++0x 5.9p2. It converts both expressions to this type and returns it.
+/// This finds the composite pointer type (or member pointer type) for @p E1
+/// and @p E2 according to C++0x 5.9p2. It converts both expressions to this
+/// type and returns it.
 /// It does not emit diagnostics.
 QualType Sema::FindCompositePointerType(Expr *&E1, Expr *&E2) {
   assert(getLangOptions().CPlusPlus && "This function assumes C++");
   QualType T1 = E1->getType(), T2 = E2->getType();
-  if(!T1->isAnyPointerType() && !T2->isAnyPointerType())
-    return QualType();
+  
+  if (!T1->isPointerType() && !T1->isMemberPointerType() &&
+      !T2->isPointerType() && !T2->isMemberPointerType())
+   return QualType();
 
+  // FIXME: Do we need to work on the canonical types?
+  
   // C++0x 5.9p2
   //   Pointer conversions and qualification conversions are performed on
   //   pointer operands to bring them to their composite pointer type. If
@@ -1532,8 +1537,10 @@ QualType Sema::FindCompositePointerType(Expr *&E1, Expr *&E2) {
     ImpCastExprToType(E2, T1);
     return T1;
   }
-  // Now both have to be pointers.
-  if(!T1->isPointerType() || !T2->isPointerType())
+  
+  // Now both have to be pointers or member pointers.
+  if (!T1->isPointerType() && !T1->isMemberPointerType() &&
+      !T2->isPointerType() && !T2->isMemberPointerType())
     return QualType();
 
   //   Otherwise, of one of the operands has type "pointer to cv1 void," then
@@ -1547,20 +1554,56 @@ QualType Sema::FindCompositePointerType(Expr *&E1, Expr *&E2) {
   // conversions in both directions. If only one works, or if the two composite
   // types are the same, we have succeeded.
   llvm::SmallVector<unsigned, 4> QualifierUnion;
+  llvm::SmallVector<std::pair<const Type *, const Type *>, 4> MemberOfClass;
   QualType Composite1 = T1, Composite2 = T2;
-  const PointerType *Ptr1, *Ptr2;
-  while ((Ptr1 = Composite1->getAs<PointerType>()) &&
-         (Ptr2 = Composite2->getAs<PointerType>())) {
-    Composite1 = Ptr1->getPointeeType();
-    Composite2 = Ptr2->getPointeeType();
-    QualifierUnion.push_back(
-      Composite1.getCVRQualifiers() | Composite2.getCVRQualifiers());
-  }
-  // Rewrap the composites as pointers with the union CVRs.
-  for (llvm::SmallVector<unsigned, 4>::iterator I = QualifierUnion.begin(),
-       E = QualifierUnion.end(); I != E; ++I) {
-    Composite1 = Context.getPointerType(Composite1.getQualifiedType(*I));
-    Composite2 = Context.getPointerType(Composite2.getQualifiedType(*I));
+  do {
+    const PointerType *Ptr1, *Ptr2;
+    if ((Ptr1 = Composite1->getAs<PointerType>()) &&
+        (Ptr2 = Composite2->getAs<PointerType>())) {
+      Composite1 = Ptr1->getPointeeType();
+      Composite2 = Ptr2->getPointeeType();
+      QualifierUnion.push_back(
+                 Composite1.getCVRQualifiers() | Composite2.getCVRQualifiers());
+      MemberOfClass.push_back(std::make_pair((const Type *)0, (const Type *)0));
+      continue;
+    }
+    
+    const MemberPointerType *MemPtr1, *MemPtr2;
+    if ((MemPtr1 = Composite1->getAs<MemberPointerType>()) &&
+        (MemPtr2 = Composite2->getAs<MemberPointerType>())) {
+      Composite1 = MemPtr1->getPointeeType();
+      Composite2 = MemPtr2->getPointeeType();
+      QualifierUnion.push_back(
+                 Composite1.getCVRQualifiers() | Composite2.getCVRQualifiers());
+      MemberOfClass.push_back(std::make_pair(MemPtr1->getClass(),
+                                             MemPtr2->getClass()));
+      continue;
+    }
+    
+    // FIXME: block pointer types?
+    
+    // Cannot unwrap any more types.
+    break;
+  } while (true);
+  
+  // Rewrap the composites as pointers or member pointers with the union CVRs.
+  llvm::SmallVector<std::pair<const Type *, const Type *>, 4>::iterator MOC
+    = MemberOfClass.begin();
+  for (llvm::SmallVector<unsigned, 4>::iterator 
+         I = QualifierUnion.begin(),
+         E = QualifierUnion.end(); 
+       I != E; (void)++I, ++MOC) {
+    if (MOC->first && MOC->second) {
+      // Rebuild member pointer type
+      Composite1 = Context.getMemberPointerType(Composite1.getQualifiedType(*I),
+                                                MOC->first);
+      Composite2 = Context.getMemberPointerType(Composite2.getQualifiedType(*I),
+                                                MOC->second);
+    } else {
+      // Rebuild pointer type
+      Composite1 = Context.getPointerType(Composite1.getQualifiedType(*I));
+      Composite2 = Context.getPointerType(Composite2.getQualifiedType(*I));
+    }
   }
 
   ImplicitConversionSequence E1ToC1 = TryImplicitConversion(E1, Composite1);

@@ -4247,7 +4247,7 @@ QualType Sema::CheckCompareOperands(Expr *&lex, Expr *&rex, SourceLocation Loc,
       //   a pointer operand and a null pointer constant) to bring
       //   them to their composite pointer type. [...]
       //
-      // C++ [expr.eq]p2 uses the same notion for (in)equality
+      // C++ [expr.eq]p1 uses the same notion for (in)equality
       // comparisons of pointers.
       QualType T = FindCompositePointerType(lex, rex);
       if (T.isNull()) {
@@ -4285,20 +4285,53 @@ QualType Sema::CheckCompareOperands(Expr *&lex, Expr *&rex, SourceLocation Loc,
       ImpCastExprToType(rex, lType); // promote the pointer to pointer
     return ResultTy;
   }
-  // C++ allows comparison of pointers with null pointer constants.
+  
   if (getLangOptions().CPlusPlus) {
-    if (lType->isPointerType() && RHSIsNull) {
+    // Comparison of pointers with null pointer constants and equality 
+    // comparisons of member pointers to null pointer constants.
+    if (RHSIsNull && 
+        (lType->isPointerType() ||
+         (!isRelational && lType->isMemberPointerType()))) {
       ImpCastExprToType(rex, lType);
       return ResultTy;
     }
-    if (rType->isPointerType() && LHSIsNull) {
+    if (LHSIsNull &&
+        (rType->isPointerType() ||
+         (!isRelational && rType->isMemberPointerType()))) {
       ImpCastExprToType(lex, rType);
       return ResultTy;
     }
-    // And comparison of nullptr_t with itself.
+
+    // Comparison of member pointers.
+    if (!isRelational && 
+        lType->isMemberPointerType() && rType->isMemberPointerType()) {
+      // C++ [expr.eq]p2:
+      //   In addition, pointers to members can be compared, or a pointer to 
+      //   member and a null pointer constant. Pointer to member conversions 
+      //   (4.11) and qualification conversions (4.4) are performed to bring 
+      //   them to a common type. If one operand is a null pointer constant, 
+      //   the common type is the type of the other operand. Otherwise, the 
+      //   common type is a pointer to member type similar (4.4) to the type 
+      //   of one of the operands, with a cv-qualification signature (4.4) 
+      //   that is the union of the cv-qualification signatures of the operand 
+      //   types.
+      QualType T = FindCompositePointerType(lex, rex);
+      if (T.isNull()) {
+        Diag(Loc, diag::err_typecheck_comparison_of_distinct_pointers)
+        << lType << rType << lex->getSourceRange() << rex->getSourceRange();
+        return QualType();
+      }
+      
+      ImpCastExprToType(lex, T);
+      ImpCastExprToType(rex, T);
+      return ResultTy;
+    }
+    
+    // Comparison of nullptr_t with itself.
     if (lType->isNullPtrType() && rType->isNullPtrType())
       return ResultTy;
   }
+  
   // Handle block pointer types.
   if (!isRelational && lType->isBlockPointerType() && rType->isBlockPointerType()) {
     QualType lpointee = lType->getAs<BlockPointerType>()->getPointeeType();

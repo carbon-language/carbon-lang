@@ -40,6 +40,14 @@ void f() {
 
   // Conversion to member of base.
   pdi1 = pdid; // expected-error {{incompatible type assigning 'int struct D::*', expected 'int struct A::*'}}
+  
+  // Comparisons
+  int (A::*pf2)(int, int);
+  int (D::*pf3)(int, int) = 0;
+  bool b1 = (pf == pf2); (void)b1;
+  bool b2 = (pf != pf2); (void)b2;
+  bool b3 = (pf == pf3); (void)b3;
+  bool b4 = (pf != 0); (void)b4;
 }
 
 struct TheBase

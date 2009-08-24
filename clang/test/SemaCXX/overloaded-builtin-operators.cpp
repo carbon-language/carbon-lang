@@ -20,11 +20,21 @@ struct Enum2 {
   operator E2();
 };
 
+
+struct X { 
+  void f();
+};
+
+typedef void (X::*pmf)();
+struct Xpmf {
+  operator pmf();
+};
+
 yes& islong(long);
 yes& islong(unsigned long); // FIXME: shouldn't be needed
 no& islong(int);
 
-void f(Short s, Long l, Enum1 e1, Enum2 e2) {
+void f(Short s, Long l, Enum1 e1, Enum2 e2, Xpmf pmf) {
   // C++ [over.built]p8
   int i1 = +e1;
   int i2 = -e2;
@@ -37,6 +47,10 @@ void f(Short s, Long l, Enum1 e1, Enum2 e2) {
   (void)static_cast<yes&>(islong(s + l));
   (void)static_cast<no&>(islong(s + s));
 
+  // C++ [over.built]p16
+  (void)(pmf == &X::f);
+  (void)(pmf == 0);
+  
   // C++ [over.built]p17
   (void)static_cast<yes&>(islong(s % l));
   (void)static_cast<yes&>(islong(l << s));
@@ -53,7 +67,15 @@ struct LongRef {
   operator volatile long&();
 };
 
-void g(ShortRef sr, LongRef lr) {
+struct XpmfRef {
+  operator pmf&();
+};
+
+struct E2Ref {
+  operator E2&();
+};
+
+void g(ShortRef sr, LongRef lr, E2Ref e2_ref, XpmfRef pmf_ref) {
   // C++ [over.built]p3
   short s1 = sr++;
 
@@ -64,6 +86,14 @@ void g(ShortRef sr, LongRef lr) {
   short& sr1 = (sr *= lr);
   volatile long& lr1 = (lr *= sr);
 
+  // C++ [over.built]p20:
+  E2 e2r2;
+  e2r2 = e2_ref;
+  
+  pmf &pmr = (pmf_ref = &X::f); // expected-error{{no viable overloaded '='}}
+  pmf pmr2;
+  pmr2 = pmf_ref;
+               
   // C++ [over.built]p22
   short& sr2 = (sr %= lr);
   volatile long& lr2 = (lr <<= sr);

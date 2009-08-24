@@ -170,7 +170,7 @@ void test()
     i1 ? &MixedFields::ci : &MixedFieldsDerived::i;
   const volatile int (MixedFields::*mp2) =
     i1 ? &MixedFields::ci : &MixedFields::cvi;
-  i1 ? &MixedFields::ci : &MixedFields::vi; // expected-error {{incompatible operand types}}
+  (void)(i1 ? &MixedFields::ci : &MixedFields::vi);
   // Conversion of primitives does not result in an lvalue.
   &(i1 ? i1 : d1); // expected-error {{address expression must be an lvalue or a function designator}}
 
