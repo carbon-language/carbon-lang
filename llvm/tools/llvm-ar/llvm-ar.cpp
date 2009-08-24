@@ -24,6 +24,7 @@
 #include <algorithm>
 #include <iomanip>
 #include <memory>
+#include <fstream>
 using namespace llvm;
 
 // Option for compatibility with AIX, not used but must allow it to be present.

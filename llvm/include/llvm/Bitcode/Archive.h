@@ -22,7 +22,6 @@
 #include "llvm/System/Path.h"
 #include <map>
 #include <set>
-#include <fstream>
 
 namespace llvm {
   class MemoryBuffer;
