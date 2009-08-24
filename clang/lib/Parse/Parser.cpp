@@ -375,7 +375,7 @@ void Parser::ParseTranslationUnit() {
 ///       external-declaration: [C99 6.9], declaration: [C++ dcl.dcl]
 ///         function-definition
 ///         declaration
-/// [EXT]   ';'
+/// [C++0x] empty-declaration
 /// [GNU]   asm-definition
 /// [GNU]   __extension__ external-declaration
 /// [OBJC]  objc-class-definition
@@ -388,12 +388,17 @@ void Parser::ParseTranslationUnit() {
 /// [GNU] asm-definition:
 ///         simple-asm-expr ';'
 ///
+/// [C++0x] empty-declaration:
+///           ';'
+///
 Parser::DeclGroupPtrTy Parser::ParseExternalDeclaration() {
   DeclPtrTy SingleDecl;
   switch (Tok.getKind()) {
   case tok::semi:
-    Diag(Tok, diag::ext_top_level_semi)
-      << CodeModificationHint::CreateRemoval(SourceRange(Tok.getLocation()));
+    if (!getLang().CPlusPlus0x)
+      Diag(Tok, diag::ext_top_level_semi)
+        << CodeModificationHint::CreateRemoval(SourceRange(Tok.getLocation()));
+      
     ConsumeToken();
     // TODO: Invoke action for top-level semicolon.
     return DeclGroupPtrTy();

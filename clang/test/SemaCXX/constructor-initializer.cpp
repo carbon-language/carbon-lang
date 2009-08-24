@@ -122,4 +122,3 @@ struct Q {
 
   float *pf;
 };
-
