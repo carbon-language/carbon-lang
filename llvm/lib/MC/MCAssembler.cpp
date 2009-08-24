@@ -311,12 +311,68 @@ public:
     Write32(0); // FIXME: Value
   }
 
+  void BindIndirectSymbols(MCAssembler &Asm) {
+    // This is the point where 'as' creates actual symbols for indirect symbols
+    // (in the following two passes). It would be easier for us to do this
+    // sooner when we see the attribute, but that makes getting the order in the
+    // symbol table much more complicated than it is worth.
+    //
+    // FIXME: Revisit this when the dust settles.
+
+    // FIXME: This should not be needed.
+    DenseMap<MCSymbol*, MCSymbolData *> SymbolMap;
+
+    for (MCAssembler::symbol_iterator it = Asm.symbol_begin(),
+           ie = Asm.symbol_end(); it != ie; ++it)
+      SymbolMap[&it->getSymbol()] = it;
+
+    // Bind non lazy symbol pointers first.
+    for (MCAssembler::indirect_symbol_iterator it = Asm.indirect_symbol_begin(),
+           ie = Asm.indirect_symbol_end(); it != ie; ++it) {
+      // FIXME: cast<> support!
+      const MCSectionMachO &Section =
+        static_cast<const MCSectionMachO&>(it->SectionData->getSection());
+
+      unsigned Type =
+        Section.getTypeAndAttributes() & MCSectionMachO::SECTION_TYPE;
+      if (Type != MCSectionMachO::S_NON_LAZY_SYMBOL_POINTERS)
+        continue;
+
+      MCSymbolData *&Entry = SymbolMap[it->Symbol];
+      if (!Entry)
+        Entry = new MCSymbolData(*it->Symbol, 0, 0, &Asm);
+    }
+
+    // Then lazy symbol pointers and symbol stubs.
+    for (MCAssembler::indirect_symbol_iterator it = Asm.indirect_symbol_begin(),
+           ie = Asm.indirect_symbol_end(); it != ie; ++it) {
+      // FIXME: cast<> support!
+      const MCSectionMachO &Section =
+        static_cast<const MCSectionMachO&>(it->SectionData->getSection());
+
+      unsigned Type =
+        Section.getTypeAndAttributes() & MCSectionMachO::SECTION_TYPE;
+      if (Type != MCSectionMachO::S_LAZY_SYMBOL_POINTERS &&
+          Type != MCSectionMachO::S_SYMBOL_STUBS)
+        continue;
+
+      MCSymbolData *&Entry = SymbolMap[it->Symbol];
+      if (!Entry) {
+        Entry = new MCSymbolData(*it->Symbol, 0, 0, &Asm);
+
+        // Set the symbol type to undefined lazy, but only on construction.
+        //
+        // FIXME: Do not hardcode.
+        Entry->setFlags(Entry->getFlags() | 0x0001);
+      }
+    }
+  }
+
   /// ComputeSymbolTable - Compute the symbol table data
   ///
   /// \param StringTable [out] - The string table data.
   /// \param StringIndexMap [out] - Map from symbol names to offsets in the
   /// string table.
-
   void ComputeSymbolTable(MCAssembler &Asm, SmallString<256> &StringTable,
                           std::vector<MachSymbolData> &LocalSymbolData,
                           std::vector<MachSymbolData> &ExternalSymbolData,
@@ -414,6 +470,8 @@ public:
   void WriteObject(MCAssembler &Asm) {
     unsigned NumSections = Asm.size();
 
+    BindIndirectSymbols(Asm);
+
     // Compute symbol table information.
     SmallString<256> StringTable;
     std::vector<MachSymbolData> LocalSymbolData;
@@ -467,22 +525,32 @@ public:
 
     // Write the symbol table load command, if used.
     if (NumSymbols) {
-      // The string table is written after all the section data.
-      uint64_t SymbolTableOffset = SectionDataStartOffset + SectionDataSize;
-      uint64_t StringTableOffset =
-        SymbolTableOffset + NumSymbols * Nlist32Size;
-      WriteSymtabLoadCommand(SymbolTableOffset, NumSymbols,
-                             StringTableOffset, StringTable.size());
-
       unsigned FirstLocalSymbol = 0;
       unsigned NumLocalSymbols = LocalSymbolData.size();
       unsigned FirstExternalSymbol = FirstLocalSymbol + NumLocalSymbols;
       unsigned NumExternalSymbols = ExternalSymbolData.size();
       unsigned FirstUndefinedSymbol = FirstExternalSymbol + NumExternalSymbols;
       unsigned NumUndefinedSymbols = UndefinedSymbolData.size();
-      // FIXME: Get correct symbol indices and counts for indirect symbols.
-      unsigned IndirectSymbolOffset = 0;
-      unsigned NumIndirectSymbols = 0;
+      unsigned NumIndirectSymbols = Asm.indirect_symbol_size();
+      unsigned NumSymTabSymbols =
+        NumLocalSymbols + NumExternalSymbols + NumUndefinedSymbols;
+      uint64_t IndirectSymbolSize = NumIndirectSymbols * 4;
+      uint64_t IndirectSymbolOffset = 0;
+
+      // If used, the indirect symbols are written after the section data.
+      if (NumIndirectSymbols)
+        IndirectSymbolOffset = SectionDataStartOffset + SectionDataSize;
+
+      // The symbol table is written after the indirect symbol data.
+      uint64_t SymbolTableOffset =
+        SectionDataStartOffset + SectionDataSize + IndirectSymbolSize;
+
+      // The string table is written after symbol table.
+      uint64_t StringTableOffset =
+        SymbolTableOffset + NumSymTabSymbols * Nlist32Size;
+      WriteSymtabLoadCommand(SymbolTableOffset, NumSymTabSymbols,
+                             StringTableOffset, StringTable.size());
+
       WriteDysymtabLoadCommand(FirstLocalSymbol, NumLocalSymbols,
                                FirstExternalSymbol, NumExternalSymbols,
                                FirstUndefinedSymbol, NumUndefinedSymbols,
@@ -495,9 +563,13 @@ public:
 
     // Write the symbol table data, if used.
     if (NumSymbols) {
-      // FIXME: Check that offsets match computed ones.
+      // Write the indirect symbol entries.
+      //
+      // FIXME: We need the symbol index map for this.
+      for (unsigned i = 0, e = Asm.indirect_symbol_size(); i != e; ++i)
+        Write32(0);
 
-      // FIXME: Some of these are ordered by name to help the linker.
+      // FIXME: Check that offsets match computed ones.
 
       // Write the symbol table entries.
       for (unsigned i = 0, e = LocalSymbolData.size(); i != e; ++i)

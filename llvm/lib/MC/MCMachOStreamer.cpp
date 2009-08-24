@@ -165,6 +165,16 @@ void MCMachOStreamer::EmitAssignment(MCSymbol *Symbol,
 
 void MCMachOStreamer::EmitSymbolAttribute(MCSymbol *Symbol,
                                           SymbolAttr Attribute) {
+  // Indirect symbols are handled differently, to match how 'as' handles
+  // them. This makes writing matching .o files easier.
+  if (Attribute == MCStreamer::IndirectSymbol) {
+    IndirectSymbolData ISD;
+    ISD.Symbol = Symbol;
+    ISD.SectionData = CurSectionData;
+    Assembler.getIndirectSymbols().push_back(ISD);
+    return;
+  }
+
   // Adding a symbol attribute always introduces the symbol, note that an
   // important side effect of calling getSymbolData here is to register the
   // symbol with the assembler.
@@ -177,6 +187,7 @@ void MCMachOStreamer::EmitSymbolAttribute(MCSymbol *Symbol,
   // In the future it might be worth trying to make these operations more well
   // defined.
   switch (Attribute) {
+  case MCStreamer::IndirectSymbol:
   case MCStreamer::Hidden:
   case MCStreamer::Internal:
   case MCStreamer::Protected:
@@ -193,10 +204,6 @@ void MCMachOStreamer::EmitSymbolAttribute(MCSymbol *Symbol,
     SD.setFlags(SD.getFlags() | SF_NoDeadStrip);
     if (Symbol->isUndefined())
       SD.setFlags(SD.getFlags() | SF_ReferenceTypeUndefinedLazy);
-    break;
-
-  case MCStreamer::IndirectSymbol:
-    llvm_unreachable("FIXME: Not yet implemented!");
     break;
 
     // Since .reference sets the no dead strip bit, it is equivalent to

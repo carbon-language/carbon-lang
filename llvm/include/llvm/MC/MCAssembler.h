@@ -16,6 +16,7 @@
 #include "llvm/MC/MCValue.h"
 #include "llvm/Support/Casting.h"
 #include "llvm/Support/DataTypes.h"
+#include <vector> // FIXME: Shouldn't be needed.
 
 namespace llvm {
 class raw_ostream;
@@ -360,6 +361,12 @@ public:
   /// @}  
 };
 
+// FIXME: This really doesn't belong here. See comments below.
+struct IndirectSymbolData {
+  MCSymbol *Symbol;
+  MCSectionData *SectionData;
+};
+
 class MCAssembler {
 public:
   typedef iplist<MCSectionData> SectionDataListType;
@@ -371,6 +378,8 @@ public:
   typedef SymbolDataListType::const_iterator const_symbol_iterator;
   typedef SymbolDataListType::iterator symbol_iterator;
 
+  typedef std::vector<IndirectSymbolData>::iterator indirect_symbol_iterator;
+
 private:
   MCAssembler(const MCAssembler&);    // DO NOT IMPLEMENT
   void operator=(const MCAssembler&); // DO NOT IMPLEMENT
@@ -380,6 +389,8 @@ private:
   iplist<MCSectionData> Sections;
 
   iplist<MCSymbolData> Symbols;
+
+  std::vector<IndirectSymbolData> IndirectSymbols;
 
 private:
   /// LayoutSection - Assign offsets and sizes to the fragments in the section
@@ -430,6 +441,27 @@ public:
   const_symbol_iterator symbol_end() const { return Symbols.end(); }
 
   size_t symbol_size() const { return Symbols.size(); }
+
+  /// @}
+  /// @name Indirect Symbol List Access
+  /// @{
+
+  // FIXME: This is a total hack, this should not be here. Once things are
+  // factored so that the streamer has direct access to the .o writer, it can
+  // disappear.
+  std::vector<IndirectSymbolData> &getIndirectSymbols() {
+    return IndirectSymbols;
+  }
+
+  indirect_symbol_iterator indirect_symbol_begin() {
+    return IndirectSymbols.begin();
+  }
+
+  indirect_symbol_iterator indirect_symbol_end() {
+    return IndirectSymbols.end();
+  }
+
+  size_t indirect_symbol_size() const { return IndirectSymbols.size(); }
 
   /// @}
 };
