@@ -19,6 +19,7 @@
 #include "llvm/Config/config.h"
 #include "llvm/Support/Compiler.h"
 #include "llvm/Support/ErrorHandling.h"
+#include "llvm/ADT/STLExtras.h"
 #include "llvm/ADT/StringExtras.h"
 #include <sys/stat.h>
 #include <sys/types.h>
@@ -298,14 +299,16 @@ raw_ostream &raw_ostream::operator<<(const format_object_base &Fmt) {
 
 /// indent - Insert 'NumSpaces' spaces.
 raw_ostream &raw_ostream::indent(unsigned NumSpaces) {
-  const char *Spaces = "                ";
+  static const char Spaces[] = "                                "
+                               "                                "
+                               "                ";
 
   // Usually the indentation is small, handle it with a fastpath.
-  if (NumSpaces <= 16)
+  if (NumSpaces <= array_lengthof(Spaces))
     return write(Spaces, NumSpaces);
   
   while (NumSpaces) {
-    unsigned NumToWrite = std::min(NumSpaces, 16U);
+    unsigned NumToWrite = std::min(NumSpaces, (unsigned)array_lengthof(Spaces));
     write(Spaces, NumToWrite);
     NumSpaces -= NumToWrite;
   }
