@@ -317,6 +317,13 @@ public:
   /// unit.
   unsigned IsExternal : 1;
 
+  /// IsPrivateExtern - True if this symbol is private extern.
+  unsigned IsPrivateExtern : 1;
+
+  /// Flags - The Flags field is used by object file implementations to store
+  /// additional per symbol information which is not easily classified.
+  uint32_t Flags;
+
 public:
   // Only for use as sentinel.
   MCSymbolData();
@@ -334,13 +341,22 @@ public:
   uint64_t getOffset() const { return Offset; }
   void setOffset(uint64_t Value) { Offset = Value; }
 
-    /// @}
-    /// @name Symbol Attributes
-    /// @{
+  /// @}
+  /// @name Symbol Attributes
+  /// @{
+  
+  bool isExternal() const { return IsExternal; }
+  void setExternal(bool Value) { IsExternal = Value; }
+  
+  bool isPrivateExtern() const { return IsPrivateExtern; }
+  void setPrivateExtern(bool Value) { IsPrivateExtern = Value; }
+  
+  /// getFlags - Get the (implementation defined) symbol flags.
+  uint32_t getFlags() const { return Flags; }
 
-    bool isExternal() const { return IsExternal; }
-    void setExternal(bool Value) { IsExternal = Value; }
-
+  /// setFlags - Set the (implementation defined) symbol flags.
+  void setFlags(uint32_t Value) { Flags = Value; }
+  
   /// @}  
 };
 

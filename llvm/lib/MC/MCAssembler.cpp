@@ -291,7 +291,8 @@ public:
 
     // FIXME: Set STAB bits.
 
-    // FIXME: Set private external bit.
+    if (MSD.SymbolData->isPrivateExtern())
+      Type |= STF_PrivateExtern;
 
     // Set external bit.
     if (MSD.SymbolData->isExternal() || Symbol.isUndefined())
@@ -302,7 +303,11 @@ public:
     Write32(MSD.StringIndex);
     Write8(Type);
     Write8(MSD.SectionIndex);
-    Write16(0); // FIXME: Desc
+    
+    // The Mach-O streamer uses the lowest 16-bits of the flags for the 'desc'
+    // value.
+    Write16(MSD.SymbolData->getFlags() & 0xFFFF);
+
     Write32(0); // FIXME: Value
   }
 
@@ -544,7 +549,7 @@ MCSymbolData::MCSymbolData() : Symbol(*(MCSymbol*)0) {}
 MCSymbolData::MCSymbolData(MCSymbol &_Symbol, MCFragment *_Fragment,
                            uint64_t _Offset, MCAssembler *A)
   : Symbol(_Symbol), Fragment(_Fragment), Offset(_Offset),
-    IsExternal(false)
+    IsExternal(false), IsPrivateExtern(false), Flags(0)
 {
   if (A)
     A->getSymbolList().push_back(this);

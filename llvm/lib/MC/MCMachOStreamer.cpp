@@ -19,6 +19,27 @@ using namespace llvm;
 namespace {
 
 class MCMachOStreamer : public MCStreamer {
+  /// SymbolFlags - We store the value for the 'desc' symbol field in the lowest
+  /// 16 bits of the implementation defined flags.
+  enum SymbolFlags { // See <mach-o/nlist.h>.
+    SF_DescFlagsMask                        = 0xFFFF,
+
+    // Reference type flags.
+    SF_ReferenceTypeMask                    = 0x0007,
+    SF_ReferenceTypeUndefinedNonLazy        = 0x0000,
+    SF_ReferenceTypeUndefinedLazy           = 0x0001,
+    SF_ReferenceTypeDefined                 = 0x0002,
+    SF_ReferenceTypePrivateDefined          = 0x0003,
+    SF_ReferenceTypePrivateUndefinedNonLazy = 0x0004,
+    SF_ReferenceTypePrivateUndefinedLazy    = 0x0005,
+
+    // Other 'desc' flags.
+    SF_NoDeadStrip                          = 0x0020,
+    SF_WeakReference                        = 0x0040,
+    SF_WeakDefinition                       = 0x0080
+  };
+
+private:
   MCAssembler Assembler;
 
   MCSectionData *CurSectionData;
@@ -121,6 +142,9 @@ void MCMachOStreamer::EmitLabel(MCSymbol *Symbol) {
   assert(!SD.getFragment() && "Unexpected fragment on symbol data!");
   SD.setFragment(F);
   SD.setOffset(F->getContents().size());
+
+  // This causes the reference type and weak reference flags to be cleared.
+  SD.setFlags(SD.getFlags() & ~(SF_WeakReference | SF_ReferenceTypeMask));
   
   Symbol->setSection(*CurSection);
 }
@@ -141,18 +165,71 @@ void MCMachOStreamer::EmitAssignment(MCSymbol *Symbol,
 
 void MCMachOStreamer::EmitSymbolAttribute(MCSymbol *Symbol,
                                           SymbolAttr Attribute) {
+  // Adding a symbol attribute always introduces the symbol, note that an
+  // important side effect of calling getSymbolData here is to register the
+  // symbol with the assembler.
+  MCSymbolData &SD = getSymbolData(*Symbol);
+
+  // The implementation of symbol attributes is designed to match 'as', but it
+  // leaves much to desired. It doesn't really make sense to arbitrarily add and
+  // remove flags, but 'as' allows this (in particular, see .desc).
+  //
+  // In the future it might be worth trying to make these operations more well
+  // defined.
   switch (Attribute) {
-  default:
-    llvm_unreachable("FIXME: Not yet implemented!");
+  case MCStreamer::Hidden:
+  case MCStreamer::Internal:
+  case MCStreamer::Protected:
+  case MCStreamer::Weak:
+    assert(0 && "Invalid symbol attribute for Mach-O!");
+    break;
 
   case MCStreamer::Global:
     getSymbolData(*Symbol).setExternal(true);
+    break;
+
+  case MCStreamer::LazyReference:
+    // FIXME: This requires -dynamic.
+    SD.setFlags(SD.getFlags() | SF_NoDeadStrip);
+    if (Symbol->isUndefined())
+      SD.setFlags(SD.getFlags() | SF_ReferenceTypeUndefinedLazy);
+    break;
+
+  case MCStreamer::IndirectSymbol:
+    llvm_unreachable("FIXME: Not yet implemented!");
+    break;
+
+    // Since .reference sets the no dead strip bit, it is equivalent to
+    // .no_dead_strip in practice.
+  case MCStreamer::Reference:
+  case MCStreamer::NoDeadStrip:
+    SD.setFlags(SD.getFlags() | SF_NoDeadStrip);
+    break;
+
+  case MCStreamer::PrivateExtern:
+    SD.setExternal(true);
+    SD.setPrivateExtern(true);
+    break;
+
+  case MCStreamer::WeakReference:
+    // FIXME: This requires -dynamic.
+    if (Symbol->isUndefined())
+      SD.setFlags(SD.getFlags() | SF_WeakReference);
+    break;
+
+  case MCStreamer::WeakDefinition:
+    // FIXME: 'as' enforces that this is defined and global. The manual claims
+    // it has to be in a coalesced section, but this isn't enforced.
+    SD.setFlags(SD.getFlags() | SF_WeakDefinition);
     break;
   }
 }
 
 void MCMachOStreamer::EmitSymbolDesc(MCSymbol *Symbol, unsigned DescValue) {
-  llvm_unreachable("FIXME: Not yet implemented!");
+  // Encode the 'desc' value into the lowest implementation defined bits.
+  assert(DescValue == (DescValue & SF_DescFlagsMask) && 
+         "Invalid .desc value!");
+  getSymbolData(*Symbol).setFlags(DescValue & SF_DescFlagsMask);
 }
 
 void MCMachOStreamer::EmitLocalSymbol(MCSymbol *Symbol, const MCValue &Value) {
