@@ -172,10 +172,21 @@ public:
   
   void* getData() const { return Data; }  
 };
-
-class NonLoc : public SVal {
+  
+class DefinedSVal : public SVal {
 protected:
-  NonLoc(unsigned SubKind, const void* d) : SVal(d, false, SubKind) {}
+  DefinedSVal(const void* d, bool isLoc, unsigned ValKind)
+    : SVal(d, isLoc, ValKind) {}
+  
+  // Implement isa<T> support.
+  static inline bool classof(const SVal *V) {
+    return !V->isUnknownOrUndef();
+  }    
+};
+
+class NonLoc : public DefinedSVal {
+protected:
+  NonLoc(unsigned SubKind, const void* d) : DefinedSVal(d, false, SubKind) {}
   
 public:
   void dumpToStream(llvm::raw_ostream& Out) const;
@@ -186,15 +197,15 @@ public:
   }
 };
 
-class Loc : public SVal {
+class Loc : public DefinedSVal {
 protected:
   Loc(unsigned SubKind, const void* D)
-  : SVal(const_cast<void*>(D), true, SubKind) {}
+  : DefinedSVal(const_cast<void*>(D), true, SubKind) {}
 
 public:
   void dumpToStream(llvm::raw_ostream& Out) const;
 
-  Loc(const Loc& X) : SVal(X.Data, true, X.getSubKind()) {}
+  Loc(const Loc& X) : DefinedSVal(X.Data, true, X.getSubKind()) {}
   Loc& operator=(const Loc& X) { memcpy(this, &X, sizeof(Loc)); return *this; }
     
   // Implement isa<T> support.
