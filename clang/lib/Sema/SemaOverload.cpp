@@ -1392,6 +1392,9 @@ bool Sema::IsUserDefinedConversion(Expr *From, QualType ToType,
 
   if (!AllowConversionFunctions) {
     // Don't allow any conversion functions to enter the overload set.
+  } else if (RequireCompleteType(From->getLocStart(), From->getType(), 0, 
+                                 From->getSourceRange())) {
+    // No conversion functions from incomplete types.
   } else if (const RecordType *FromRecordType 
                = From->getType()->getAs<RecordType>()) {
     if (CXXRecordDecl *FromRecordDecl 
@@ -2699,6 +2702,10 @@ class BuiltinCandidateTypeSet  {
   /// used in the built-in candidates.
   TypeSet EnumerationTypes;
 
+  /// Sema - The semantic analysis instance where we are building the
+  /// candidate type set.
+  Sema &SemaRef;
+  
   /// Context - The AST context in which we will build the type sets.
   ASTContext &Context;
 
@@ -2709,7 +2716,8 @@ public:
   /// iterator - Iterates through the types that are part of the set.
   typedef TypeSet::iterator iterator;
 
-  BuiltinCandidateTypeSet(ASTContext &Context) : Context(Context) { }
+  BuiltinCandidateTypeSet(Sema &SemaRef) 
+    : SemaRef(SemaRef), Context(SemaRef.Context) { }
 
   void AddTypesConvertedFrom(QualType Ty, bool AllowUserConversions,
                              bool AllowExplicitConversions);
@@ -2860,6 +2868,11 @@ BuiltinCandidateTypeSet::AddTypesConvertedFrom(QualType Ty,
     EnumerationTypes.insert(Ty);
   } else if (AllowUserConversions) {
     if (const RecordType *TyRec = Ty->getAs<RecordType>()) {
+      if (SemaRef.RequireCompleteType(SourceLocation(), Ty, 0)) {
+        // No conversion functions in incomplete types.
+        return;
+      }
+      
       CXXRecordDecl *ClassDecl = cast<CXXRecordDecl>(TyRec->getDecl());
       // FIXME: Visit conversion functions in the base classes, too.
       OverloadedFunctionDecl *Conversions 
@@ -2942,7 +2955,7 @@ Sema::AddBuiltinOperatorCandidates(OverloadedOperatorKind Op,
   // Find all of the types that the arguments can convert to, but only
   // if the operator we're looking at has built-in operator candidates
   // that make use of these types.
-  BuiltinCandidateTypeSet CandidateTypes(Context);
+  BuiltinCandidateTypeSet CandidateTypes(*this);
   if (Op == OO_Less || Op == OO_Greater || Op == OO_LessEqual ||
       Op == OO_GreaterEqual || Op == OO_EqualEqual || Op == OO_ExclaimEqual ||
       Op == OO_Plus || (Op == OO_Minus && NumArgs == 2) || Op == OO_Equal ||
@@ -4612,33 +4625,35 @@ Sema::BuildCallToObjectOfClassType(Scope *S, Expr *Object,
   //   functions for each conversion function declared in an
   //   accessible base class provided the function is not hidden
   //   within T by another intervening declaration.
-  //
-  // FIXME: Look in base classes for more conversion operators!
-  OverloadedFunctionDecl *Conversions 
-    = cast<CXXRecordDecl>(Record->getDecl())->getConversionFunctions();
-  for (OverloadedFunctionDecl::function_iterator 
-         Func = Conversions->function_begin(),
-         FuncEnd = Conversions->function_end();
-       Func != FuncEnd; ++Func) {
-    CXXConversionDecl *Conv;
-    FunctionTemplateDecl *ConvTemplate;
-    GetFunctionAndTemplate(*Func, Conv, ConvTemplate);
+  
+  if (!RequireCompleteType(SourceLocation(), Object->getType(), 0)) {
+    // FIXME: Look in base classes for more conversion operators!
+    OverloadedFunctionDecl *Conversions 
+      = cast<CXXRecordDecl>(Record->getDecl())->getConversionFunctions();
+    for (OverloadedFunctionDecl::function_iterator 
+           Func = Conversions->function_begin(),
+           FuncEnd = Conversions->function_end();
+         Func != FuncEnd; ++Func) {
+      CXXConversionDecl *Conv;
+      FunctionTemplateDecl *ConvTemplate;
+      GetFunctionAndTemplate(*Func, Conv, ConvTemplate);
 
-    // Skip over templated conversion functions; they aren't
-    // surrogates.
-    if (ConvTemplate)
-      continue;
+      // Skip over templated conversion functions; they aren't
+      // surrogates.
+      if (ConvTemplate)
+        continue;
 
-    // Strip the reference type (if any) and then the pointer type (if
-    // any) to get down to what might be a function type.
-    QualType ConvType = Conv->getConversionType().getNonReferenceType();
-    if (const PointerType *ConvPtrType = ConvType->getAs<PointerType>())
-      ConvType = ConvPtrType->getPointeeType();
+      // Strip the reference type (if any) and then the pointer type (if
+      // any) to get down to what might be a function type.
+      QualType ConvType = Conv->getConversionType().getNonReferenceType();
+      if (const PointerType *ConvPtrType = ConvType->getAs<PointerType>())
+        ConvType = ConvPtrType->getPointeeType();
 
-    if (const FunctionProtoType *Proto = ConvType->getAsFunctionProtoType())
-      AddSurrogateCandidate(Conv, Proto, Object, Args, NumArgs, CandidateSet);
+      if (const FunctionProtoType *Proto = ConvType->getAsFunctionProtoType())
+        AddSurrogateCandidate(Conv, Proto, Object, Args, NumArgs, CandidateSet);
+    }
   }
-
+  
   // Perform overload resolution.
   OverloadCandidateSet::iterator Best;
   switch (BestViableFunction(CandidateSet, Object->getLocStart(), Best)) {

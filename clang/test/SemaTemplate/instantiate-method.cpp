@@ -72,3 +72,12 @@ void test_converts_to(ConvertsTo<int> ci, ConvertsTo<int *> cip) {
   int i = ci;
   int *ip = cip;
 }
+
+// PR4660
+template<class T> struct A0 { operator T*(); };
+template<class T> struct A1;
+
+int *a(A0<int> &x0, A1<int> &x1) {
+  int *y0 = x0;
+  int *y1 = x1; // expected-error{{initializing}}
+}

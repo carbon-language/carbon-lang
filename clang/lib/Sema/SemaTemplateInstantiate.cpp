@@ -624,12 +624,19 @@ bool Sema::InstantiateTemplatePattern(SourceLocation PointOfInstantiation,
 /// \param TemplateArgs The template arguments to be substituted into
 /// the pattern.
 ///
+/// \param ExplicitInstantiation whether this is an explicit instantiation
+/// (otherwise, it is an implicit instantiation).
+///
+/// \param Complain whether to complain if the class cannot be instantiated due
+/// to the lack of a definition.
+///
 /// \returns true if an error occurred, false otherwise.
 bool
 Sema::InstantiateClass(SourceLocation PointOfInstantiation,
                        CXXRecordDecl *Instantiation, CXXRecordDecl *Pattern,
                        const TemplateArgumentList &TemplateArgs,
-                       bool ExplicitInstantiation) {
+                       bool ExplicitInstantiation,
+                       bool Complain) {
   bool Invalid = false;
 
   // Lazily instantiate member templates here.
@@ -639,7 +646,9 @@ Sema::InstantiateClass(SourceLocation PointOfInstantiation,
   CXXRecordDecl *PatternDef 
     = cast_or_null<CXXRecordDecl>(Pattern->getDefinition(Context));
   if (!PatternDef) {
-    if (Pattern == Instantiation->getInstantiatedFromMemberClass()) {
+    if (!Complain) {
+      // Say nothing
+    } else if (Pattern == Instantiation->getInstantiatedFromMemberClass()) {
       Diag(PointOfInstantiation,
            diag::err_implicit_instantiate_member_undefined)
         << Context.getTypeDeclType(Instantiation);
@@ -713,7 +722,8 @@ Sema::InstantiateClass(SourceLocation PointOfInstantiation,
 bool 
 Sema::InstantiateClassTemplateSpecialization(
                            ClassTemplateSpecializationDecl *ClassTemplateSpec,
-                           bool ExplicitInstantiation) {
+                           bool ExplicitInstantiation,
+                           bool Complain) {
   // Perform the actual instantiation on the canonical declaration.
   ClassTemplateSpec = cast<ClassTemplateSpecializationDecl>(
                                          ClassTemplateSpec->getCanonicalDecl());
@@ -791,7 +801,8 @@ Sema::InstantiateClassTemplateSpecialization(
 
   bool Result = InstantiateClass(ClassTemplateSpec->getLocation(),
                                  ClassTemplateSpec, Pattern, *TemplateArgs,
-                                 ExplicitInstantiation);
+                                 ExplicitInstantiation,
+                                 Complain);
   
   for (unsigned I = 0, N = Matched.size(); I != N; ++I) {
     // FIXME: Implement TemplateArgumentList::Destroy!

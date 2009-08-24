@@ -549,9 +549,15 @@ public:
   /// getConversions - Retrieve the overload set containing all of the
   /// conversion functions in this class.
   OverloadedFunctionDecl *getConversionFunctions() { 
+    assert((this->isDefinition() || 
+            cast<RecordType>(getTypeForDecl())->isBeingDefined()) &&
+           "getConversionFunctions() called on incomplete type");
     return &Conversions; 
   }
   const OverloadedFunctionDecl *getConversionFunctions() const { 
+    assert((this->isDefinition() || 
+            cast<RecordType>(getTypeForDecl())->isBeingDefined()) &&
+           "getConversionFunctions() called on incomplete type");
     return &Conversions; 
   }
 

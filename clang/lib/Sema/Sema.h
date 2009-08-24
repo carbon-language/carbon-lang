@@ -2875,12 +2875,13 @@ public:
   InstantiateClass(SourceLocation PointOfInstantiation,
                    CXXRecordDecl *Instantiation, CXXRecordDecl *Pattern,
                    const TemplateArgumentList &TemplateArgs,
-                   bool ExplicitInstantiation);
+                   bool ExplicitInstantiation,
+                   bool Complain = true);
 
   bool 
   InstantiateClassTemplateSpecialization(
                            ClassTemplateSpecializationDecl *ClassTemplateSpec,
-                           bool ExplicitInstantiation);
+                           bool ExplicitInstantiation, bool Complain = true);
 
   void InstantiateClassMembers(SourceLocation PointOfInstantiation,
                                CXXRecordDecl *Instantiation,

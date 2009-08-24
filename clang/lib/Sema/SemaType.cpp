@@ -1752,7 +1752,8 @@ void Sema::ProcessTypeAttributeList(QualType &Result, const AttributeList *AL) {
 ///
 /// @param diag The diagnostic value (e.g., 
 /// @c diag::err_typecheck_decl_incomplete_type) that will be used
-/// for the error message if @p T is incomplete.
+/// for the error message if @p T is incomplete. If 0, no diagnostic will be
+/// emitted.
 ///
 /// @param Range1  An optional range in the source code that will be a
 /// part of the "incomplete type" error message.
@@ -1792,7 +1793,8 @@ bool Sema::RequireCompleteType(SourceLocation Loc, QualType T, unsigned diag,
         if (Loc.isValid())
           ClassTemplateSpec->setLocation(Loc);
         return InstantiateClassTemplateSpecialization(ClassTemplateSpec,
-                                             /*ExplicitInstantiation=*/false);
+                                             /*ExplicitInstantiation=*/false,
+                                                      /*Complain=*/diag != 0);
       }
     } else if (CXXRecordDecl *Rec 
                  = dyn_cast<CXXRecordDecl>(Record->getDecl())) {
@@ -1805,11 +1807,15 @@ bool Sema::RequireCompleteType(SourceLocation Loc, QualType T, unsigned diag,
           Spec = dyn_cast<ClassTemplateSpecializationDecl>(Parent);
         assert(Spec && "Not a member of a class template specialization?");
         return InstantiateClass(Loc, Rec, Pattern, Spec->getTemplateArgs(),
-                                /*ExplicitInstantiation=*/false);
+                                /*ExplicitInstantiation=*/false,
+                                /*Complain=*/diag != 0);
       }
     }
   }
 
+  if (diag == 0)
+    return true;
+  
   if (PrintType.isNull())
     PrintType = T;
 
