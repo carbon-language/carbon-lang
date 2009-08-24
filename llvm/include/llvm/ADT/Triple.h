@@ -238,6 +238,14 @@ public:
   /// architecture.
   static const char *getArchTypeName(ArchType Kind);
 
+  /// getArchTypePrefix - Get the "prefix" canonical name for the \arg Kind
+  /// architecture. This is the prefix used by the architecture specific
+  /// builtins, and is suitable for passing to \see
+  /// Intrinsic::getIntrinsicForGCCBuiltin().
+  ///
+  /// \return - The architecture prefix, or 0 if none is defined.
+  static const char *getArchTypePrefix(ArchType Kind);
+
   /// getVendorTypeName - Get the canonical name for the \arg Kind
   /// vendor.
   static const char *getVendorTypeName(VendorType Kind);

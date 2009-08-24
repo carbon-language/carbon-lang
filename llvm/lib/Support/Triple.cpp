@@ -43,6 +43,31 @@ const char *Triple::getArchTypeName(ArchType Kind) {
   return "<invalid>";
 }
 
+const char *Triple::getArchTypePrefix(ArchType Kind) {
+  switch (Kind) {
+  default:
+    return 0;
+
+  case alpha:   return "alpha";
+
+  case arm:
+  case thumb:   return "arm";
+
+  case bfin:    return "bfin";
+
+  case cellspu: return "spu";
+
+  case ppc64:
+  case ppc:     return "ppc";
+
+  case sparc:   return "sparc";
+
+  case x86:
+  case x86_64:  return "x86";
+  case xcore:   return "xcore";
+  }
+}
+
 const char *Triple::getVendorTypeName(VendorType Kind) {
   switch (Kind) {
   case UnknownVendor: return "unknown";
