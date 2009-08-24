@@ -656,7 +656,14 @@ Value *ScalarExprEmitter::EmitCastExpr(const Expr *E, QualType DestTy,
                                        CastExpr::CastKind Kind) {
   if (!DestTy->isVoidType())
     TestAndClearIgnoreResultAssign();
-
+  
+  switch (Kind) {
+  default:
+    break;
+  case CastExpr::CK_NullToMemberPointer:
+    return CGF.CGM.EmitNullConstant(DestTy);
+  }
+  
   // Handle cases where the source is an non-complex type.
   
   if (!CGF.hasAggregateLLVMType(E->getType())) {

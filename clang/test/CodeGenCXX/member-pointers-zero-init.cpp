@@ -17,11 +17,18 @@ int A::* aaa[2][2];
 int A::* b = 0;
 
 void f() {
-  // RUN: grep "%.* = icmp ne i64 %.*, -1" %t
+  // RUN: grep "%.* = icmp ne i64 %.*, -1" %t | count 2 &&
   if (a) { }
+  if (a != 0) { }
+
+  // RUN: grep "%.* = icmp ne i64 -1, %.*" %t | count 1 &&
+  if (0 != a) { }
   
-  // FIXME: This doesn't yet work
-//  if (a != 0) { }
+  // RUN: grep "%.* = icmp eq i64 %.*, -1" %t | count 1 &&
+  if (a == 0) { }
+
+  // RUN: grep "%.* = icmp eq i64 -1, %.*" %t | count 1
+  if (0 == a) { }
     
 }
 
