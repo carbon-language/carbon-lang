@@ -19,6 +19,8 @@
 #include "clang/AST/ExternalASTSource.h"
 #include "clang/AST/Stmt.h"
 #include "clang/Parse/Parser.h"
+#include <cstdio>
+
 using namespace clang;
 
 //===----------------------------------------------------------------------===//

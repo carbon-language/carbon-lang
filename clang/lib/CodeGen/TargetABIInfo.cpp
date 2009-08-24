@@ -17,6 +17,7 @@
 #include "clang/AST/RecordLayout.h"
 #include "llvm/Type.h"
 #include "llvm/ADT/Triple.h"
+#include <cstdio>
 
 using namespace clang;
 using namespace CodeGen;

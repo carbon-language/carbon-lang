@@ -16,6 +16,8 @@
 #include "clang/AST/Expr.h"
 #include "clang/AST/TypeLoc.h"
 #include "llvm/Bitcode/BitstreamWriter.h"
+#include <cstdio>
+
 using namespace clang;
 
 //===----------------------------------------------------------------------===//

@@ -28,6 +28,7 @@
 #include "llvm/ADT/DenseSet.h"
 #include "llvm/Target/TargetData.h"
 #include <sstream>
+#include <cstdio>
 
 using namespace clang;
 using namespace CodeGen;

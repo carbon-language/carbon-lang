@@ -19,6 +19,8 @@
 #include "llvm/Support/raw_ostream.h"
 #include "llvm/System/Path.h"
 #include "llvm/ADT/OwningPtr.h"
+#include <cstdio>
+
 using namespace clang;
 
 FixItRewriter::FixItRewriter(Diagnostic &Diags, SourceManager &SourceMgr,

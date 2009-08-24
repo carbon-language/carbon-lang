@@ -19,6 +19,7 @@
 #include "clang/AST/Type.h"
 #include "clang/AST/ASTContext.h"
 #include "clang/AST/ASTDiagnostic.h"
+#include <cstdio>
 using namespace clang;
 
 static struct StmtClassNameTable {

@@ -26,6 +26,8 @@
 #include "llvm/Support/Timer.h"
 #include "llvm/Support/raw_ostream.h"
 #include "llvm/System/Path.h"
+#include <cstdio>
+
 using namespace clang;
 
 //===----------------------------------------------------------------------===//

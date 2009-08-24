@@ -17,6 +17,8 @@
 #include "llvm/Module.h"
 #include "llvm/Target/TargetData.h"
 #include <algorithm>
+#include <cstdio>
+
 using namespace clang;
 using namespace CodeGen;
 
