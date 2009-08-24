@@ -21,6 +21,7 @@
 #include "llvm/Support/SourceMgr.h"
 #include "llvm/Support/raw_ostream.h"
 #include "llvm/Assembly/Parser.h"
+#include <cstdio>
 #include <cstdlib>
 #include <cstring>
 using namespace llvm;
