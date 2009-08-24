@@ -4292,13 +4292,13 @@ QualType Sema::CheckCompareOperands(Expr *&lex, Expr *&rex, SourceLocation Loc,
     if (RHSIsNull && 
         (lType->isPointerType() ||
          (!isRelational && lType->isMemberPointerType()))) {
-      ImpCastExprToType(rex, lType);
+      ImpCastExprToType(rex, lType, CastExpr::CK_NullToMemberPointer);
       return ResultTy;
     }
     if (LHSIsNull &&
         (rType->isPointerType() ||
          (!isRelational && rType->isMemberPointerType()))) {
-      ImpCastExprToType(lex, rType);
+      ImpCastExprToType(lex, rType, CastExpr::CK_NullToMemberPointer);
       return ResultTy;
     }
 
