@@ -444,7 +444,7 @@ public:
   /// \brief Construct an empty character literal.
   CharacterLiteral(EmptyShell Empty) : Expr(CharacterLiteralClass, Empty) { }
 
-  SourceLocation getLoc() const { return Loc; }
+  SourceLocation getLocation() const { return Loc; }
   bool isWide() const { return IsWide; }
   
   virtual SourceRange getSourceRange() const { return SourceRange(Loc); }

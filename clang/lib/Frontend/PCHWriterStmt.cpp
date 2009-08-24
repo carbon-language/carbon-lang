@@ -355,7 +355,7 @@ void PCHStmtWriter::VisitStringLiteral(StringLiteral *E) {
 void PCHStmtWriter::VisitCharacterLiteral(CharacterLiteral *E) {
   VisitExpr(E);
   Record.push_back(E->getValue());
-  Writer.AddSourceLocation(E->getLoc(), Record);
+  Writer.AddSourceLocation(E->getLocation(), Record);
   Record.push_back(E->isWide());
   Code = pch::EXPR_CHARACTER_LITERAL;
 }
