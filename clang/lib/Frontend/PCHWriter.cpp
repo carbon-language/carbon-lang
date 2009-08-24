@@ -527,8 +527,7 @@ void PCHWriter::WriteMetadata(ASTContext &Context, const char *isysroot) {
   Record.push_back(CLANG_VERSION_MINOR);
   Record.push_back(isysroot != 0);
   const std::string &TripleStr = Target.getTriple().getTriple();
-  Stream.EmitRecordWithBlob(MetaAbbrevCode, Record,
-                            TripleStr.data(), TripleStr.size());
+  Stream.EmitRecordWithBlob(MetaAbbrevCode, Record, TripleStr);
   
   // Original file name
   SourceManager &SM = Context.getSourceManager();
@@ -554,8 +553,7 @@ void PCHWriter::WriteMetadata(ASTContext &Context, const char *isysroot) {
                                                       isysroot);
     RecordData Record;
     Record.push_back(pch::ORIGINAL_FILE_NAME);
-    Stream.EmitRecordWithBlob(FileAbbrevCode, Record, MainFileNameStr,
-                              strlen(MainFileNameStr));
+    Stream.EmitRecordWithBlob(FileAbbrevCode, Record, MainFileNameStr);
   }
 }
 
@@ -697,7 +695,7 @@ void PCHWriter::WriteStatCache(MemorizeStatCalls &StatCalls,
   }
   
   // Create the on-disk hash table in a buffer.
-  llvm::SmallVector<char, 4096> StatCacheData; 
+  llvm::SmallString<4096> StatCacheData; 
   uint32_t BucketOffset;
   {
     llvm::raw_svector_ostream Out(StatCacheData);
@@ -720,9 +718,7 @@ void PCHWriter::WriteStatCache(MemorizeStatCalls &StatCalls,
   Record.push_back(pch::STAT_CACHE);
   Record.push_back(BucketOffset);
   Record.push_back(NumStatEntries);
-  Stream.EmitRecordWithBlob(StatCacheAbbrev, Record, 
-                            &StatCacheData.front(), 
-                            StatCacheData.size());
+  Stream.EmitRecordWithBlob(StatCacheAbbrev, Record, StatCacheData.str());
 }
 
 //===----------------------------------------------------------------------===//
@@ -902,8 +898,7 @@ void PCHWriter::WriteSourceManagerBlock(SourceManager &SourceMgr,
         }
         
         Filename = adjustFilenameForRelocatablePCH(Filename, isysroot);
-        Stream.EmitRecordWithBlob(SLocFileAbbrv, Record, Filename, 
-                                  strlen(Filename));
+        Stream.EmitRecordWithBlob(SLocFileAbbrv, Record, Filename);
 
         // FIXME: For now, preload all file source locations, so that
         // we get the appropriate File entries in the reader. This is
@@ -918,12 +913,13 @@ void PCHWriter::WriteSourceManagerBlock(SourceManager &SourceMgr,
         // the reader side).
         const llvm::MemoryBuffer *Buffer = Content->getBuffer();
         const char *Name = Buffer->getBufferIdentifier();
-        Stream.EmitRecordWithBlob(SLocBufferAbbrv, Record, Name, strlen(Name) + 1);
+        Stream.EmitRecordWithBlob(SLocBufferAbbrv, Record,
+                                  llvm::StringRef(Name, strlen(Name) + 1));
         Record.clear();
         Record.push_back(pch::SM_SLOC_BUFFER_BLOB);
         Stream.EmitRecordWithBlob(SLocBufferBlobAbbrv, Record,
-                             Buffer->getBufferStart(),
-                             Buffer->getBufferSize() + 1);
+                                  llvm::StringRef(Buffer->getBufferStart(),
+                                                  Buffer->getBufferSize() + 1));
 
         if (strcmp(Name, "<built-in>") == 0)
           PreloadSLocs.push_back(SLocEntryOffsets.size());
@@ -1368,7 +1364,7 @@ void PCHWriter::WriteMethodPool(Sema &SemaRef) {
       return;
 
     // Create the on-disk hash table in a buffer.
-    llvm::SmallVector<char, 4096> MethodPool; 
+    llvm::SmallString<4096> MethodPool; 
     uint32_t BucketOffset;
     SelectorOffsets.resize(SelVector.size());
     {
@@ -1399,9 +1395,7 @@ void PCHWriter::WriteMethodPool(Sema &SemaRef) {
     Record.push_back(pch::METHOD_POOL);
     Record.push_back(BucketOffset);
     Record.push_back(NumSelectorsInMethodPool);
-    Stream.EmitRecordWithBlob(MethodPoolAbbrev, Record, 
-                              &MethodPool.front(), 
-                              MethodPool.size());
+    Stream.EmitRecordWithBlob(MethodPoolAbbrev, Record, MethodPool.str());
 
     // Create a blob abbreviation for the selector table offsets.
     Abbrev = new BitCodeAbbrev();
@@ -1556,7 +1550,7 @@ void PCHWriter::WriteIdentifierTable(Preprocessor &PP) {
     }
 
     // Create the on-disk hash table in a buffer.
-    llvm::SmallVector<char, 4096> IdentifierTable; 
+    llvm::SmallString<4096> IdentifierTable; 
     uint32_t BucketOffset;
     {
       PCHIdentifierTableTrait Trait(*this, PP);
@@ -1577,9 +1571,7 @@ void PCHWriter::WriteIdentifierTable(Preprocessor &PP) {
     RecordData Record;
     Record.push_back(pch::IDENTIFIER_TABLE);
     Record.push_back(BucketOffset);
-    Stream.EmitRecordWithBlob(IDTableAbbrev, Record, 
-                              &IdentifierTable.front(), 
-                              IdentifierTable.size());
+    Stream.EmitRecordWithBlob(IDTableAbbrev, Record, IdentifierTable.str());
   }
 
   // Write the offsets table for identifier IDs.
