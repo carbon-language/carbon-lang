@@ -139,9 +139,7 @@ struct CallGraphSCCPassPrinter : public CallGraphSCCPass {
       for (unsigned i = 0, e = SCC.size(); i != e; ++i) {
         Function *F = SCC[i]->getFunction();
         if (F) {
-          outs().flush();
           getAnalysisID<Pass>(PassToPrint).print(outs(), F->getParent());
-          outs().flush();
         }
       }
     }
@@ -168,9 +166,7 @@ struct ModulePassPrinter : public ModulePass {
   virtual bool runOnModule(Module &M) {
     if (!Quiet) {
       outs() << "Printing analysis '" << PassToPrint->getPassName() << "':\n";
-      outs().flush();
       getAnalysisID<Pass>(PassToPrint).print(outs(), &M);
-      outs().flush();
     }
 
     // Get and print pass...
@@ -198,9 +194,7 @@ struct FunctionPassPrinter : public FunctionPass {
               << "' for function '" << F.getName() << "':\n";
     }
     // Get and print pass...
-    outs().flush();
     getAnalysisID<Pass>(PassToPrint).print(outs(), F.getParent());
-    outs().flush();
     return false;
   }
 
@@ -223,10 +217,8 @@ struct LoopPassPrinter : public LoopPass {
   virtual bool runOnLoop(Loop *L, LPPassManager &LPM) {
     if (!Quiet) {
       outs() << "Printing analysis '" << PassToPrint->getPassName() << "':\n";
-      outs().flush();
       getAnalysisID<Pass>(PassToPrint).print(outs(),
                                   L->getHeader()->getParent()->getParent());
-      outs().flush();
     }
     // Get and print pass...
     return false;
@@ -255,9 +247,7 @@ struct BasicBlockPassPrinter : public BasicBlockPass {
     }
 
     // Get and print pass...
-    outs().flush();
     getAnalysisID<Pass>(PassToPrint).print(outs(), BB.getParent()->getParent());
-    outs().flush();
     return false;
   }
 
