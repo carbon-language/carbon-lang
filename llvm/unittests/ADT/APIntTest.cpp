@@ -17,6 +17,13 @@ using namespace llvm;
 
 namespace {
 
+// Support APInt output to an std::ostream.
+inline std::ostream &operator<<(std::ostream &OS, const APInt &Value) {
+  raw_os_ostream RawOS(OS);
+  RawOS << Value;
+  return OS;
+}
+
 // Test that APInt shift left works when bitwidth > 64 and shiftamt == 0
 TEST(APIntTest, ShiftLeftByZero) {
   APInt One = APInt::getNullValue(65) + 1;
