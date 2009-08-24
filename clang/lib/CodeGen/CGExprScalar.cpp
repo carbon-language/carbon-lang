@@ -232,9 +232,9 @@ public:
     if (E->getType()->isVariablyModifiedType())
       CGF.EmitVLASize(E->getType());
 
-    return EmitCastExpr(E->getSubExpr(), E->getType());
+    return EmitCastExpr(E->getSubExpr(), E->getType(), E->getCastKind());
   }
-  Value *EmitCastExpr(const Expr *E, QualType T);
+  Value *EmitCastExpr(const Expr *E, QualType T, CastExpr::CastKind Kind);
 
   Value *VisitCallExpr(const CallExpr *E) {
     if (E->getCallReturnType()->isReferenceType())
@@ -645,14 +645,15 @@ Value *ScalarExprEmitter::VisitImplicitCastExpr(const ImplicitCastExpr *E) {
     return V;
   }
 
-  return EmitCastExpr(Op, E->getType());
+  return EmitCastExpr(Op, E->getType(), E->getCastKind());
 }
 
 
 // VisitCastExpr - Emit code for an explicit or implicit cast.  Implicit casts
 // have to handle a more broad range of conversions than explicit casts, as they
 // handle things like function to ptr-to-function decay etc.
-Value *ScalarExprEmitter::EmitCastExpr(const Expr *E, QualType DestTy) {
+Value *ScalarExprEmitter::EmitCastExpr(const Expr *E, QualType DestTy,
+                                       CastExpr::CastKind Kind) {
   if (!DestTy->isVoidType())
     TestAndClearIgnoreResultAssign();
 
