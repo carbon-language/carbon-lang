@@ -4,7 +4,7 @@
 
 ; var 2.1 - 0x00ab00ab
 define i32 @t2_const_var2_1_ok_1(i32 %lhs) {
-;CHECK: t2_const_var_1_ok_1:
+;CHECK: t2_const_var2_1_ok_1:
 ;CHECK: #11206827
     %ret = add i32 %lhs, 11206827 ; 0x00ab00ab
     ret i32 %ret
