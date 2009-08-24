@@ -10,8 +10,13 @@ namespace std { class type_info {}; }
 
 struct dummy {};
 
+template<typename T>
+int f0(T x) {
+  return (sizeof(x) == sizeof(int))? 0 : (sizeof(x) == sizeof(double))? 1 : 2;
+}
+
 template <typename T, typename U>
-T f(T t1, U u1, int i1)
+T f1(T t1, U u1, int i1)
 {
   T t2 = i1;
   t2 = i1 + u1;

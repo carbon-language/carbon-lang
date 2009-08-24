@@ -158,7 +158,8 @@ private:
   /// if we can evaluate to a known value, otherwise return -1.
   TryResult TryEvaluateBool(Expr *S) {
     Expr::EvalResult Result;
-    if (S->Evaluate(Result, *Context) && Result.Val.isInt())
+    if (!S->isTypeDependent() && !S->isValueDependent() &&
+        S->Evaluate(Result, *Context) && Result.Val.isInt())
       return Result.Val.getInt().getBoolValue();
 
     return TryResult();
