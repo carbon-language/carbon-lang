@@ -557,8 +557,10 @@ RValue CodeGenFunction::EmitBuiltinExpr(const FunctionDecl *FD,
   
   // See if we have a target specific intrinsic.
   const char *Name = getContext().BuiltinInfo.GetName(BuiltinID);
-  Intrinsic::ID IntrinsicID =
-    Intrinsic::getIntrinsicForGCCBuiltin(Target.getTargetPrefix(), Name);
+  Intrinsic::ID IntrinsicID = Intrinsic::not_intrinsic;
+  if (const char *Prefix =
+      llvm::Triple::getArchTypePrefix(Target.getTriple().getArch()))  
+    IntrinsicID = Intrinsic::getIntrinsicForGCCBuiltin(Prefix, Name);
   
   if (IntrinsicID != Intrinsic::not_intrinsic) {
     SmallVector<Value*, 16> Args;
@@ -610,12 +612,16 @@ RValue CodeGenFunction::EmitBuiltinExpr(const FunctionDecl *FD,
 
 Value *CodeGenFunction::EmitTargetBuiltinExpr(unsigned BuiltinID,
                                               const CallExpr *E) {
-  const char *TargetPrefix = Target.getTargetPrefix();
-  if (strcmp(TargetPrefix, "x86") == 0)
+  switch (Target.getTriple().getArch()) {
+  case llvm::Triple::x86:
+  case llvm::Triple::x86_64:
     return EmitX86BuiltinExpr(BuiltinID, E);
-  else if (strcmp(TargetPrefix, "ppc") == 0)
+  case llvm::Triple::ppc:
+  case llvm::Triple::ppc64:
     return EmitPPCBuiltinExpr(BuiltinID, E);
-  return 0;
+  default:
+    return 0;
+  }
 }
 
 Value *CodeGenFunction::EmitX86BuiltinExpr(unsigned BuiltinID, 

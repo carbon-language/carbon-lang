@@ -377,9 +377,6 @@ public:
            "  void* reg_save_area;"
            "} __builtin_va_list[1];";*/
   }
-  virtual const char *getTargetPrefix() const {
-    return "ppc";
-  }
   virtual void getGCCRegNames(const char * const *&Names,
                               unsigned &NumNames) const;
   virtual void getGCCRegAliases(const GCCRegAlias *&Aliases,
@@ -581,9 +578,6 @@ public:
                                  unsigned &NumRecords) const {
     Records = BuiltinInfo;
     NumRecords = clang::X86::LastTSBuiltin-Builtin::FirstTSBuiltin;
-  }
-  virtual const char *getTargetPrefix() const {
-    return "x86";
   }
   virtual void getGCCRegNames(const char * const *&Names,
                               unsigned &NumNames) const {
@@ -1051,9 +1045,6 @@ public:
   virtual const char *getVAListDeclaration() const {
     return "typedef char* __builtin_va_list;";
   }
-  virtual const char *getTargetPrefix() const {
-    return "arm";
-  }
   virtual void getGCCRegNames(const char * const *&Names,
                               unsigned &NumNames) const {
     // FIXME: Implement.
@@ -1126,9 +1117,6 @@ public:
   }
   virtual const char *getVAListDeclaration() const {
     return "typedef void* __builtin_va_list;";
-  }
-  virtual const char *getTargetPrefix() const {
-    return "sparc";
   }
   virtual void getGCCRegNames(const char * const *&Names,
                               unsigned &NumNames) const;
@@ -1258,9 +1246,12 @@ namespace {
     }
     virtual void getTargetBuiltins(const Builtin::Info *&Records,
                                    unsigned &NumRecords) const {}
-    virtual const char *getVAListDeclaration() const { return "";}
-    virtual const char *getClobbers() const {return "";}
-    virtual const char *getTargetPrefix() const {return "pic16";}
+    virtual const char *getVAListDeclaration() const { 
+      return "";
+    }
+    virtual const char *getClobbers() const {
+      return "";
+    }
     virtual void getGCCRegNames(const char * const *&Names,
                                 unsigned &NumNames) const {}
     virtual bool validateAsmConstraint(const char *&Name,
@@ -1304,9 +1295,6 @@ namespace {
      // FIXME: Implement.
       Records = 0;
       NumRecords = 0;
-    }
-    virtual const char *getTargetPrefix() const {
-      return "msp430";
     }
     virtual void getGCCRegNames(const char * const *&Names,
                                 unsigned &NumNames) const;
@@ -1365,9 +1353,6 @@ namespace {
       // FIXME: Implement.
       Records = 0;
       NumRecords = 0;
-    }
-    virtual const char *getTargetPrefix() const {
-      return "s390x";
     }
 
     virtual void getDefaultLangOptions(LangOptions &Opts) {
@@ -1437,10 +1422,6 @@ namespace {
       // FIXME: Implement.
       Records = 0;
       NumRecords = 0;
-    }
-
-    virtual const char *getTargetPrefix() const {
-      return "bfin";
     }
 
     virtual void getGCCRegNames(const char * const *&Names,
@@ -1536,11 +1517,12 @@ namespace {
     }
     virtual void getTargetBuiltins(const Builtin::Info *&Records,
                                    unsigned &NumRecords) const {}
-    virtual const char *getClobbers() const {return "";}
+    virtual const char *getClobbers() const {
+      return "";
+    }
     virtual const char *getVAListDeclaration() const {
       return "typedef void* __builtin_va_list;";
     }
-    virtual const char *getTargetPrefix() const {return "tce";}
     virtual void getGCCRegNames(const char * const *&Names,
                                 unsigned &NumNames) const {}
     virtual bool validateAsmConstraint(const char *&Name,

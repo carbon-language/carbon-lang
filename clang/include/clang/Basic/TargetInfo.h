@@ -284,10 +284,6 @@ public:
   virtual const char *getClobbers() const = 0;
   
 
-  /// getTargetPrefix - Return the target prefix used for identifying
-  /// llvm intrinsics.
-  virtual const char *getTargetPrefix() const = 0;
-    
   /// getTriple - Return the target triple of the primary target.
   const llvm::Triple &getTriple() const {
     return Triple;
