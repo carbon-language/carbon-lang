@@ -19,6 +19,7 @@
 #include "llvm/Config/config.h"
 #include "llvm/Support/Compiler.h"
 #include "llvm/Support/ErrorHandling.h"
+#include "llvm/ADT/StringExtras.h"
 #include <ostream>
 #include <sys/stat.h>
 #include <sys/types.h>
@@ -172,6 +173,13 @@ raw_ostream &raw_ostream::operator<<(const void *P) {
 
   return write_hex((uintptr_t) P);
 }
+
+raw_ostream &raw_ostream::operator<<(double N) {
+  this->operator<<(ftostr(N));
+  return *this;
+}
+
+
 
 void raw_ostream::flush_nonempty() {
   assert(OutBufCur > OutBufStart && "Invalid call to flush_nonempty.");

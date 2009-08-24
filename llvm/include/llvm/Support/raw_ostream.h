@@ -14,11 +14,7 @@
 #ifndef LLVM_SUPPORT_RAW_OSTREAM_H
 #define LLVM_SUPPORT_RAW_OSTREAM_H
 
-#include "llvm/ADT/StringExtras.h"
 #include "llvm/ADT/StringRef.h"
-#include <cassert>
-#include <cstring>
-#include <string>
 #include <iosfwd>
 
 namespace llvm {
@@ -215,11 +211,7 @@ public:
     return *this;
   }
 
-  raw_ostream &operator<<(double N) {
-    this->operator<<(ftostr(N));
-    return *this;
-  }
-  
+  raw_ostream &operator<<(double N);  
 
   /// write_hex - Output \arg N in hexadecimal, without any prefix or padding.
   raw_ostream &write_hex(unsigned long long N);

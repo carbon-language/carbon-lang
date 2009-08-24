@@ -17,13 +17,13 @@
 #include "llvm/CodeGen/MachineFrameInfo.h"
 #include "llvm/CodeGen/MachineFunction.h"
 #include "llvm/CodeGen/MachineModuleInfo.h"
-#include "llvm/Support/Dwarf.h"
-#include "llvm/Support/ErrorHandling.h"
 #include "llvm/MC/MCAsmInfo.h"
 #include "llvm/Target/TargetData.h"
 #include "llvm/Target/TargetFrameInfo.h"
 #include "llvm/Target/TargetRegisterInfo.h"
-
+#include "llvm/Support/Dwarf.h"
+#include "llvm/Support/ErrorHandling.h"
+#include "llvm/ADT/StringExtras.h"
 using namespace llvm;
 
 Dwarf::Dwarf(raw_ostream &OS, AsmPrinter *A, const MCAsmInfo *T,
