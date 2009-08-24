@@ -294,7 +294,7 @@ public:
     // FIXME: Set private external bit.
 
     // Set external bit.
-    if (MSD.SymbolData->isExternal())
+    if (MSD.SymbolData->isExternal() || Symbol.isUndefined())
       Type |= STF_External;
 
     // struct nlist (12 bytes)
@@ -339,7 +339,7 @@ public:
            ie = Asm.symbol_end(); it != ie; ++it) {
       MCSymbol &Symbol = it->getSymbol();
 
-      if (!it->isExternal())
+      if (!it->isExternal() && !Symbol.isUndefined())
         continue;
 
       uint64_t &Entry = StringIndexMap[Symbol.getName()];
@@ -371,7 +371,7 @@ public:
            ie = Asm.symbol_end(); it != ie; ++it) {
       MCSymbol &Symbol = it->getSymbol();
 
-      if (it->isExternal())
+      if (it->isExternal() || Symbol.isUndefined())
         continue;
 
       uint64_t &Entry = StringIndexMap[Symbol.getName()];
@@ -385,7 +385,6 @@ public:
       MSD.SymbolData = it;
       MSD.StringIndex = Entry;
 
-      assert(!Symbol.isUndefined() && "Local symbol can not be undefined!");
       if (Symbol.isAbsolute()) {
         MSD.SectionIndex = 0;
         LocalSymbolData.push_back(MSD);
