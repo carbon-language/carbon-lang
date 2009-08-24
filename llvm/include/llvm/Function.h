@@ -45,7 +45,7 @@ template<> struct ilist_traits<BasicBlock>
 
   static ValueSymbolTable *getSymTab(Function *ItemParent);
 private:
-  mutable ilist_node<BasicBlock> Sentinel;
+  mutable ILIST_NODE<BasicBlock> Sentinel;
 };
 
 template<> struct ilist_traits<Argument>
@@ -62,7 +62,7 @@ template<> struct ilist_traits<Argument>
 
   static ValueSymbolTable *getSymTab(Function *ItemParent);
 private:
-  mutable ilist_node<Argument> Sentinel;
+  mutable ILIST_NODE<Argument> Sentinel;
 };
 
 class Function : public GlobalValue,

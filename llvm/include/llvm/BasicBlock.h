@@ -47,7 +47,7 @@ template<> struct ilist_traits<Instruction>
   Instruction *ensureHead(Instruction*) const { return createSentinel(); }
   static void noteHead(Instruction*, Instruction*) {}
 private:
-  mutable ilist_node<Instruction> Sentinel;
+  mutable ILIST_NODE<Instruction> Sentinel;
 };
 
 /// This represents a single basic block in LLVM. A basic block is simply a
