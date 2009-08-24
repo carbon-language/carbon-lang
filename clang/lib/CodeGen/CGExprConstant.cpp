@@ -783,6 +783,10 @@ llvm::Constant *CodeGenModule::EmitConstantExpr(const Expr *E,
 }
 
 llvm::Constant *CodeGenModule::EmitNullConstant(QualType T) {
+  // No need to check for member pointers when not compiling C++.
+  if (!getContext().getLangOptions().CPlusPlus)
+    return llvm::Constant::getNullValue(getTypes().ConvertTypeForMem(T));
+    
   if (const ConstantArrayType *CAT = Context.getAsConstantArrayType(T)) {
     
     QualType ElementTy = CAT->getElementType();
@@ -801,15 +805,17 @@ llvm::Constant *CodeGenModule::EmitNullConstant(QualType T) {
     }
   }
 
-#if 0
   if (const RecordType *RT = T->getAs<RecordType>()) {
-    const CGRecordLayout *Layout = Types.getCGRecordLayout(RT->getDecl());
-    if (Layout->containsMemberPointer()) {
+    const RecordDecl *RD = RT->getDecl();
+    // FIXME: It would be better if there was a way to explicitly compute the 
+    // record layout instead of converting to a type.
+    Types.ConvertTagDeclType(RD);
+    
+    const CGRecordLayout &Layout = Types.getCGRecordLayout(RD);
+    if (Layout.containsMemberPointer()) {
       assert(0 && "FIXME: No support for structs with member pointers yet!");
     }
-
   }
-#endif
   
   // FIXME: Handle structs that contain member pointers.
   if (T->isMemberPointerType()) 

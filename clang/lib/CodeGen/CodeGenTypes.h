@@ -162,7 +162,7 @@ public:
   const llvm::FunctionType *GetFunctionType(const CGFunctionInfo &Info,
                                             bool IsVariadic);
   
-  const CGRecordLayout *getCGRecordLayout(const TagDecl*) const;
+  const CGRecordLayout &getCGRecordLayout(const TagDecl*) const;
   
   /// getLLVMFieldNo - Return llvm::StructType element number
   /// that corresponds to the field FD.

@@ -479,7 +479,7 @@ void CodeGenTypes::addBitFieldInfo(const FieldDecl *FD, unsigned FieldNo,
 }
 
 /// getCGRecordLayout - Return record layout info for the given llvm::Type.
-const CGRecordLayout *
+const CGRecordLayout &
 CodeGenTypes::getCGRecordLayout(const TagDecl *TD) const {
   const Type *Key = 
     Context.getTagDeclType(TD).getTypePtr();
@@ -487,5 +487,5 @@ CodeGenTypes::getCGRecordLayout(const TagDecl *TD) const {
     = CGRecordLayouts.find(Key);
   assert (I != CGRecordLayouts.end() 
           && "Unable to find record layout information for type");
-  return I->second;
+  return *I->second;
 }
