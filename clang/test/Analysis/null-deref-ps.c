@@ -272,4 +272,13 @@ void f13() {
   if (((((int) x) << 2) + 1) >> 1) *x = 1; // no-warning
 }
 
+// PR 4759 - Attribute non-null checking by the analyzer was not correctly
+// handling pointer values that were undefined.
+void pr4759_aux(int *p) __attribute__((nonnull));
+
+void pr4759() {
+  int *p;
+  pr4759_aux(p); // expected-warning{{undefined}}
+}
+
 
