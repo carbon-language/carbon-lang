@@ -1,4 +1,4 @@
-// RUN: clang -ccc-clang-archs "" -ccc-host-triple ppc64-pc-freebsd8 %s -### 2> %t.log &&
+// RUN: clang -ccc-clang-archs "" -ccc-host-triple powerpc64-pc-freebsd8 %s -### 2> %t.log &&
 // RUN: cat %t.log &&
 // RUN: grep 'clang-cc" "-triple" "powerpc64-pc-freebsd8"' %t.log &&
 // RUN: grep 'as" "-o" ".*\.o" ".*\.s' %t.log &&

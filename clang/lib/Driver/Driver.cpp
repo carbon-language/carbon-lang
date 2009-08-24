@@ -1246,20 +1246,6 @@ const HostInfo *Driver::GetHostInfo(const char *TripleStr) const {
   llvm::PrettyStackTraceString CrashInfo("Constructing host");
   llvm::Triple Triple(TripleStr);
 
-  // Normalize Arch a bit. 
-  //
-  // FIXME: We shouldn't need to do this once everything goes through the triple
-  // interface.
-  if (Triple.getArchName() == "i686") 
-    Triple.setArchName("i386");
-  else if (Triple.getArchName() == "amd64")
-    Triple.setArchName("x86_64");
-  else if (Triple.getArchName() == "ppc" || 
-           Triple.getArchName() == "Power Macintosh")
-    Triple.setArchName("powerpc");
-  else if (Triple.getArchName() == "ppc64")
-    Triple.setArchName("powerpc64");
-
   switch (Triple.getOS()) {
   case llvm::Triple::AuroraUX:
     return createAuroraUXHostInfo(*this, Triple);
