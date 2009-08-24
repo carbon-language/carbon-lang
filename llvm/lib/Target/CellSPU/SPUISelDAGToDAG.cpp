@@ -322,6 +322,9 @@ namespace {
     /// target-specific node if it hasn't already been changed.
     SDNode *Select(SDValue Op);
 
+    //! Emit the instruction sequence for i128 sext
+    SDNode *SelectSEXTi128(SDValue &Op, EVT OpVT);
+
     //! Emit the instruction sequence for i64 shl
     SDNode *SelectSHLi64(SDValue &Op, EVT OpVT);
 
@@ -833,6 +836,10 @@ SPUDAGToDAGISel::Select(SDValue Op) {
         }
       }
     }
+  } else if (Opc == ISD::SIGN_EXTEND) {
+    if (OpVT == MVT::i128) {
+      return SelectSEXTi128(Op, OpVT);
+    }
   } else if (Opc == ISD::SHL) {
     if (OpVT == MVT::i64) {
       return SelectSHLi64(Op, OpVT);
@@ -954,6 +961,58 @@ SPUDAGToDAGISel::Select(SDValue Op) {
       return CurDAG->getTargetNode(NewOpc, dl, OpVT, Ops, n_ops);
   } else
     return SelectCode(Op);
+}
+
+/*!
+ * Emit the instruction sequence for i64 -> i128 sign extend. The basic
+ * algorithm is to duplicate the sign bit using rotmai to generate at
+ * least one byte full of sign bits. Then propagate the "sign-byte" into
+ * theleftmost words and the i64 into the rightmost words using shufb.
+ *
+ * @param Op The sext operand
+ * @param OpVT The type to extend to
+ * @return The SDNode with the entire instruction sequence
+ */
+SDNode *
+SPUDAGToDAGISel::SelectSEXTi128(SDValue &Op, EVT OpVT)
+{
+  DebugLoc dl = Op.getDebugLoc();
+
+  // Type to extend from
+  SDValue Op0 = Op.getOperand(0);
+  EVT Op0VT = Op0.getValueType();
+
+  assert((OpVT == MVT::i128 && Op0VT == MVT::i64) &&
+         "LowerSIGN_EXTEND: input and/or output operand have wrong size");
+
+  // Create shuffle mask
+  unsigned mask1 = 0x10101010; // byte  0 -  3 and 4 - 7
+  unsigned mask2 = 0x01020304; // byte  8 - 11
+  unsigned mask3 = 0x05060708; // byte 12 - 15
+  SDValue shufMask = CurDAG->getNode(ISD::BUILD_VECTOR, dl, MVT::v4i32,
+                             CurDAG->getConstant(mask1, MVT::i32),
+                             CurDAG->getConstant(mask1, MVT::i32),
+                             CurDAG->getConstant(mask2, MVT::i32),
+                             CurDAG->getConstant(mask3, MVT::i32));
+  SDNode *shufMaskLoad = emitBuildVector(shufMask);
+
+  // Word wise arithmetic right shift to generate at least one byte
+  // that contains sign bits.
+  SDNode *PromoteScalar = SelectCode(CurDAG->getNode(SPUISD::PREFSLOT2VEC, dl,
+                                                     MVT::v2i64, Op0, Op0));
+  SDNode *sraVal = SelectCode(CurDAG->getNode(ISD::SRA, dl, MVT::v2i64,
+                                         SDValue(PromoteScalar, 0),
+                                         CurDAG->getConstant(31, MVT::i32)));
+
+  // Shuffle bytes - Copy the sign bits into the upper 64 bits
+  // and the input value into the lower 64 bits.
+  SDNode *extShuffle = SelectCode(CurDAG->getNode(SPUISD::SHUFB, dl,
+                                                  MVT::v2i64, Op0,
+                                                  SDValue(sraVal, 0),
+                                                  SDValue(shufMaskLoad, 0)));
+
+  return SelectCode(CurDAG->getNode(ISD::BIT_CONVERT, dl, MVT::i128,
+                                    SDValue(extShuffle, 0)));
 }
 
 /*!

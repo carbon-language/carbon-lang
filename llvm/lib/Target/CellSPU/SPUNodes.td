@@ -87,9 +87,9 @@ def SPUshlquad_l_bits: SDNode<"SPUISD::SHLQUAD_L_BITS", SPUvecshift_type, []>;
 def SPUshlquad_l_bytes: SDNode<"SPUISD::SHLQUAD_L_BYTES", SPUvecshift_type, []>;
 
 // Vector shifts (ISD::SHL,SRL,SRA are for _integers_ only):
-def SPUvec_shl: SDNode<"SPUISD::VEC_SHL", SPUvecshift_type, []>;
-def SPUvec_srl: SDNode<"SPUISD::VEC_SRL", SPUvecshift_type, []>;
-def SPUvec_sra: SDNode<"SPUISD::VEC_SRA", SPUvecshift_type, []>;
+def SPUvec_shl: SDNode<"ISD::SHL", SPUvecshift_type, []>;
+def SPUvec_srl: SDNode<"ISD::SRL", SPUvecshift_type, []>;
+def SPUvec_sra: SDNode<"ISD::SRA", SPUvecshift_type, []>;
 
 def SPUvec_rotl: SDNode<"SPUISD::VEC_ROTL", SPUvecshift_type, []>;
 def SPUvec_rotr: SDNode<"SPUISD::VEC_ROTR", SPUvecshift_type, []>;

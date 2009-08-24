@@ -350,6 +350,9 @@ SPUTargetLowering::SPUTargetLowering(SPUTargetMachine &TM)
   // Custom lower i128 -> i64 truncates
   setOperationAction(ISD::TRUNCATE, MVT::i64, Custom);
 
+  // Custom lower i64 -> i128 sign extend
+  setOperationAction(ISD::SIGN_EXTEND, MVT::i128, Custom);
+
   setOperationAction(ISD::FP_TO_SINT, MVT::i8, Promote);
   setOperationAction(ISD::FP_TO_UINT, MVT::i8, Promote);
   setOperationAction(ISD::FP_TO_SINT, MVT::i16, Promote);
@@ -511,9 +514,6 @@ SPUTargetLowering::getTargetNodeName(unsigned Opcode) const
     node_names[(unsigned) SPUISD::VEC2PREFSLOT] = "SPUISD::VEC2PREFSLOT";
     node_names[(unsigned) SPUISD::SHLQUAD_L_BITS] = "SPUISD::SHLQUAD_L_BITS";
     node_names[(unsigned) SPUISD::SHLQUAD_L_BYTES] = "SPUISD::SHLQUAD_L_BYTES";
-    node_names[(unsigned) SPUISD::VEC_SHL] = "SPUISD::VEC_SHL";
-    node_names[(unsigned) SPUISD::VEC_SRL] = "SPUISD::VEC_SRL";
-    node_names[(unsigned) SPUISD::VEC_SRA] = "SPUISD::VEC_SRA";
     node_names[(unsigned) SPUISD::VEC_ROTL] = "SPUISD::VEC_ROTL";
     node_names[(unsigned) SPUISD::VEC_ROTR] = "SPUISD::VEC_ROTR";
     node_names[(unsigned) SPUISD::ROTBYTES_LEFT] = "SPUISD::ROTBYTES_LEFT";
@@ -2610,6 +2610,45 @@ static SDValue LowerTRUNCATE(SDValue Op, SelectionDAG &DAG)
   return SDValue();             // Leave the truncate unmolested
 }
 
+//! Custom lower ISD::SIGN_EXTEND
+static SDValue LowerSIGN_EXTEND(SDValue Op, SelectionDAG &DAG)
+{
+  // Type to extend to
+  EVT VT = Op.getValueType();
+  DebugLoc dl = Op.getDebugLoc();
+
+  // Type to extend from
+  SDValue Op0 = Op.getOperand(0);
+  EVT Op0VT = Op0.getValueType();
+
+  assert((VT == MVT::i128 && Op0VT == MVT::i64) &&
+          "LowerSIGN_EXTEND: input and/or output operand have wrong size");
+
+  // Create shuffle mask
+  unsigned mask1 = 0x10101010; // byte  0 -  3 and 4 - 7
+  unsigned mask2 = 0x01020304; // byte  8 - 11
+  unsigned mask3 = 0x05060708; // byte 12 - 15
+  SDValue shufMask = DAG.getNode(ISD::BUILD_VECTOR, dl, MVT::v4i32,
+                                 DAG.getConstant(mask1, MVT::i32),
+                                 DAG.getConstant(mask1, MVT::i32),
+                                 DAG.getConstant(mask2, MVT::i32),
+                                 DAG.getConstant(mask3, MVT::i32));
+
+  // Word wise arithmetic right shift to generate a byte that contains sign bits
+  SDValue sraVal = DAG.getNode(ISD::SRA,
+                 dl,
+                 MVT::v2i64,
+                 DAG.getNode(SPUISD::PREFSLOT2VEC, dl, MVT::v2i64, Op0, Op0),
+                 DAG.getConstant(31, MVT::i32));
+
+  // shuffle bytes - copies the sign bits into the upper 64 bits
+  // and the input value into the lower 64 bits
+  SDValue extShuffle = DAG.getNode(SPUISD::SHUFB, dl, MVT::v2i64,
+                                       Op0, sraVal, shufMask);
+
+  return DAG.getNode(ISD::BIT_CONVERT, dl, MVT::i128, extShuffle);
+}
+
 //! Custom (target-specific) lowering entry point
 /*!
   This is where LLVM's DAG selection process calls to do target-specific
@@ -2702,6 +2741,9 @@ SPUTargetLowering::LowerOperation(SDValue Op, SelectionDAG &DAG)
 
   case ISD::TRUNCATE:
     return LowerTRUNCATE(Op, DAG);
+
+  case ISD::SIGN_EXTEND:
+    return LowerSIGN_EXTEND(Op, DAG);
   }
 
   return SDValue();
@@ -2864,9 +2906,6 @@ SPUTargetLowering::PerformDAGCombine(SDNode *N, DAGCombinerInfo &DCI) const
   }
   case SPUISD::SHLQUAD_L_BITS:
   case SPUISD::SHLQUAD_L_BYTES:
-  case SPUISD::VEC_SHL:
-  case SPUISD::VEC_SRL:
-  case SPUISD::VEC_SRA:
   case SPUISD::ROTBYTES_LEFT: {
     SDValue Op1 = N->getOperand(1);
 
@@ -2994,9 +3033,6 @@ SPUTargetLowering::computeMaskedBitsForTargetNode(const SDValue Op,
   case SPUISD::VEC2PREFSLOT:
   case SPUISD::SHLQUAD_L_BITS:
   case SPUISD::SHLQUAD_L_BYTES:
-  case SPUISD::VEC_SHL:
-  case SPUISD::VEC_SRL:
-  case SPUISD::VEC_SRA:
   case SPUISD::VEC_ROTL:
   case SPUISD::VEC_ROTR:
   case SPUISD::ROTBYTES_LEFT:

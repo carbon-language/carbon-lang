@@ -43,9 +43,6 @@ namespace llvm {
       VEC2PREFSLOT,             ///< Extract element 0
       SHLQUAD_L_BITS,           ///< Rotate quad left, by bits
       SHLQUAD_L_BYTES,          ///< Rotate quad left, by bytes
-      VEC_SHL,                  ///< Vector shift left
-      VEC_SRL,                  ///< Vector shift right (logical)
-      VEC_SRA,                  ///< Vector shift right (arithmetic)
       VEC_ROTL,                 ///< Vector rotate left
       VEC_ROTR,                 ///< Vector rotate right
       ROTBYTES_LEFT,            ///< Rotate bytes (loads -> ROTQBYI)
