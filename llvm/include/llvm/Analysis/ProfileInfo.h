@@ -36,20 +36,21 @@ namespace llvm {
   public:
     // Types for handling profiling information.
     typedef std::pair<const BasicBlock*, const BasicBlock*> Edge;
-    typedef std::map<Edge, double> EdgeCounts;
+    typedef std::pair<Edge, double> EdgeWeight;
+    typedef std::map<Edge, double> EdgeWeights;
     typedef std::map<const BasicBlock*, double> BlockCounts;
 
   protected:
-    // EdgeCounts - Count the number of times a transition between two blocks is
-    // executed.  As a special case, we also hold an edge from the null
-    // BasicBlock to the entry block to indicate how many times the function was
-    // entered.
-    std::map<const Function*, EdgeCounts> EdgeInformation;
+    // EdgeInformation - Count the number of times a transition between two
+    // blocks is executed. As a special case, we also hold an edge from the
+    // null BasicBlock to the entry block to indicate how many times the
+    // function was entered.
+    std::map<const Function*, EdgeWeights> EdgeInformation;
 
-    // BlockCounts - Count the number of times a block is executed.
+    // BlockInformation - Count the number of times a block is executed.
     std::map<const Function*, BlockCounts> BlockInformation;
 
-    // FunctionCounts - Count the number of times a function is executed.
+    // FunctionInformation - Count the number of times a function is executed.
     std::map<const Function*, double> FunctionInformation;
   public:
     static char ID; // Class identification, replacement for typeinfo
@@ -57,7 +58,7 @@ namespace llvm {
 
     // MissingValue - The value that is returned for execution counts in case
     // no value is available.
-    static const int MissingValue = -1;
+    static const double MissingValue;
 
     // getFunction() - Returns the Function for an Edge, checking for validity.
     static const Function* getFunction(Edge e) {
@@ -66,7 +67,7 @@ namespace llvm {
     }
 
     // getEdge() - Creates an Edge from two BasicBlocks.
-    static Edge getEdge(const BasicBlock* Src, const BasicBlock* Dest) {
+    static Edge getEdge(const BasicBlock *Src, const BasicBlock *Dest) {
       return std::make_pair(Src, Dest);
     }
 
@@ -78,14 +79,18 @@ namespace llvm {
     double getExecutionCount(const BasicBlock *BB);
 
     double getEdgeWeight(Edge e) const {
-      std::map<const Function*, EdgeCounts>::const_iterator J =
+      std::map<const Function*, EdgeWeights>::const_iterator J =
         EdgeInformation.find(getFunction(e));
       if (J == EdgeInformation.end()) return MissingValue;
 
-      EdgeCounts::const_iterator I = J->second.find(e);
+      EdgeWeights::const_iterator I = J->second.find(e);
       if (I == J->second.end()) return MissingValue;
 
       return I->second;
+    }
+
+    EdgeWeights &getEdgeWeights (const Function *F) {
+      return EdgeInformation[F];
     }
 
     //===------------------------------------------------------------------===//

@@ -26,6 +26,8 @@ char ProfileInfo::ID = 0;
 
 ProfileInfo::~ProfileInfo() {}
 
+const double ProfileInfo::MissingValue = -1;
+
 double ProfileInfo::getExecutionCount(const BasicBlock *BB) {
   std::map<const Function*, BlockCounts>::iterator J =
     BlockInformation.find(BB->getParent());
@@ -60,7 +62,7 @@ double ProfileInfo::getExecutionCount(const BasicBlock *BB) {
       Count += w;
     }
 
-  BlockInformation[BB->getParent()][BB] = Count;
+  if (Count != MissingValue) BlockInformation[BB->getParent()][BB] = Count;
   return Count;
 }
 
@@ -72,7 +74,7 @@ double ProfileInfo::getExecutionCount(const Function *F) {
     return J->second;
 
   double Count = getExecutionCount(&F->getEntryBlock());
-  FunctionInformation[F] = Count;
+  if (Count != MissingValue) FunctionInformation[F] = Count;
   return Count;
 }
 
