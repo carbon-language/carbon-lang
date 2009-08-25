@@ -744,14 +744,14 @@ public:
     if (Constant *LC = dyn_cast<Constant>(LHS))
       if (Constant *RC = dyn_cast<Constant>(RHS))
         return Folder.CreateICmp(P, LC, RC);
-    return Insert(new ICmpInst(Context, P, LHS, RHS), Name);
+    return Insert(new ICmpInst(P, LHS, RHS), Name);
   }
   Value *CreateFCmp(CmpInst::Predicate P, Value *LHS, Value *RHS,
                     const Twine &Name = "") {
     if (Constant *LC = dyn_cast<Constant>(LHS))
       if (Constant *RC = dyn_cast<Constant>(RHS))
         return Folder.CreateFCmp(P, LC, RC);
-    return Insert(new FCmpInst(Context, P, LHS, RHS), Name);
+    return Insert(new FCmpInst(P, LHS, RHS), Name);
   }
 
   //===--------------------------------------------------------------------===//

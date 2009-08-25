@@ -606,7 +606,7 @@ public:
   /// instruction into a BasicBlock right before the specified instruction.
   /// The specified Instruction is allowed to be a dereferenced end iterator.
   /// @brief Create a CmpInst
-  static CmpInst *Create(LLVMContext &Context, OtherOps Op,
+  static CmpInst *Create(OtherOps Op,
                          unsigned short predicate, Value *S1,
                          Value *S2, const Twine &Name = "",
                          Instruction *InsertBefore = 0);

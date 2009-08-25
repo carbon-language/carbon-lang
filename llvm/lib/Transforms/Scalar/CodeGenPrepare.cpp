@@ -519,7 +519,7 @@ static bool OptimizeCmpExpression(CmpInst *CI) {
       BasicBlock::iterator InsertPt = UserBB->getFirstNonPHI();
 
       InsertedCmp =
-        CmpInst::Create(DefBB->getContext(), CI->getOpcode(), 
+        CmpInst::Create(CI->getOpcode(),
                         CI->getPredicate(),  CI->getOperand(0),
                         CI->getOperand(1), "", InsertPt);
       MadeChange = true;

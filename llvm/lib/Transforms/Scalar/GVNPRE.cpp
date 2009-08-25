@@ -864,7 +864,7 @@ Value* GVNPRE::phi_translate(Value* V, BasicBlock* pred, BasicBlock* succ) {
                                         newOp1, newOp2,
                                         BO->getName()+".expr");
       else if (CmpInst* C = dyn_cast<CmpInst>(U))
-        newVal = CmpInst::Create(Context, C->getOpcode(),
+        newVal = CmpInst::Create(C->getOpcode(),
                                  C->getPredicate(),
                                  newOp1, newOp2,
                                  C->getName()+".expr");
@@ -1684,7 +1684,7 @@ void GVNPRE::insertion_pre(Value* e, BasicBlock* BB,
                                         BO->getName()+".gvnpre",
                                         (*PI)->getTerminator());
       else if (CmpInst* C = dyn_cast<CmpInst>(U))
-        newVal = CmpInst::Create(Context, C->getOpcode(),
+        newVal = CmpInst::Create(C->getOpcode(),
                                  C->getPredicate(), s1, s2,
                                  C->getName()+".gvnpre", 
                                  (*PI)->getTerminator());

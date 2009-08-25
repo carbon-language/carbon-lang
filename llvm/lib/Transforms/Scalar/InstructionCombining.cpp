@@ -1893,7 +1893,7 @@ static Value *FoldOperationIntoSelectOperand(Instruction &I, Value *SO,
   if (BinaryOperator *BO = dyn_cast<BinaryOperator>(&I))
     New = BinaryOperator::Create(BO->getOpcode(), Op0, Op1,SO->getName()+".op");
   else if (CmpInst *CI = dyn_cast<CmpInst>(&I))
-    New = CmpInst::Create(*Context, CI->getOpcode(), CI->getPredicate(),
+    New = CmpInst::Create(CI->getOpcode(), CI->getPredicate(),
                           Op0, Op1, SO->getName()+".cmp");
   else {
     llvm_unreachable("Unknown binary instruction type!");
@@ -1982,7 +1982,7 @@ Instruction *InstCombiner::FoldOpIntoPhi(Instruction &I) {
                                        PN->getIncomingValue(i), C, "phitmp",
                                        NonConstBB->getTerminator());
         else if (CmpInst *CI = dyn_cast<CmpInst>(&I))
-          InV = CmpInst::Create(*Context, CI->getOpcode(), 
+          InV = CmpInst::Create(CI->getOpcode(),
                                 CI->getPredicate(),
                                 PN->getIncomingValue(i), C, "phitmp",
                                 NonConstBB->getTerminator());
@@ -3006,8 +3006,7 @@ Instruction *InstCombiner::visitUDiv(BinaryOperator &I) {
 
     // X udiv C, where C >= signbit
     if (C->getValue().isNegative()) {
-      Value *IC = InsertNewInstBefore(new ICmpInst(*Context,
-                                                    ICmpInst::ICMP_ULT, Op0, C),
+      Value *IC = InsertNewInstBefore(new ICmpInst(ICmpInst::ICMP_ULT, Op0, C),
                                       I);
       return SelectInst::Create(IC, Constant::getNullValue(I.getType()),
                                 ConstantInt::get(I.getType(), 1));
@@ -3388,26 +3387,26 @@ static Value *getICmpValue(bool sign, unsigned code, Value *LHS, Value *RHS,
   case  0: return ConstantInt::getFalse(*Context);
   case  1: 
     if (sign)
-      return new ICmpInst(*Context, ICmpInst::ICMP_SGT, LHS, RHS);
+      return new ICmpInst(ICmpInst::ICMP_SGT, LHS, RHS);
     else
-      return new ICmpInst(*Context, ICmpInst::ICMP_UGT, LHS, RHS);
-  case  2: return new ICmpInst(*Context, ICmpInst::ICMP_EQ,  LHS, RHS);
+      return new ICmpInst(ICmpInst::ICMP_UGT, LHS, RHS);
+  case  2: return new ICmpInst(ICmpInst::ICMP_EQ,  LHS, RHS);
   case  3: 
     if (sign)
-      return new ICmpInst(*Context, ICmpInst::ICMP_SGE, LHS, RHS);
+      return new ICmpInst(ICmpInst::ICMP_SGE, LHS, RHS);
     else
-      return new ICmpInst(*Context, ICmpInst::ICMP_UGE, LHS, RHS);
+      return new ICmpInst(ICmpInst::ICMP_UGE, LHS, RHS);
   case  4: 
     if (sign)
-      return new ICmpInst(*Context, ICmpInst::ICMP_SLT, LHS, RHS);
+      return new ICmpInst(ICmpInst::ICMP_SLT, LHS, RHS);
     else
-      return new ICmpInst(*Context, ICmpInst::ICMP_ULT, LHS, RHS);
-  case  5: return new ICmpInst(*Context, ICmpInst::ICMP_NE,  LHS, RHS);
+      return new ICmpInst(ICmpInst::ICMP_ULT, LHS, RHS);
+  case  5: return new ICmpInst(ICmpInst::ICMP_NE,  LHS, RHS);
   case  6: 
     if (sign)
-      return new ICmpInst(*Context, ICmpInst::ICMP_SLE, LHS, RHS);
+      return new ICmpInst(ICmpInst::ICMP_SLE, LHS, RHS);
     else
-      return new ICmpInst(*Context, ICmpInst::ICMP_ULE, LHS, RHS);
+      return new ICmpInst(ICmpInst::ICMP_ULE, LHS, RHS);
   case  7: return ConstantInt::getTrue(*Context);
   }
 }
@@ -3421,39 +3420,39 @@ static Value *getFCmpValue(bool isordered, unsigned code,
   default: llvm_unreachable("Illegal FCmp code!");
   case  0:
     if (isordered)
-      return new FCmpInst(*Context, FCmpInst::FCMP_ORD, LHS, RHS);
+      return new FCmpInst(FCmpInst::FCMP_ORD, LHS, RHS);
     else
-      return new FCmpInst(*Context, FCmpInst::FCMP_UNO, LHS, RHS);
+      return new FCmpInst(FCmpInst::FCMP_UNO, LHS, RHS);
   case  1: 
     if (isordered)
-      return new FCmpInst(*Context, FCmpInst::FCMP_OGT, LHS, RHS);
+      return new FCmpInst(FCmpInst::FCMP_OGT, LHS, RHS);
     else
-      return new FCmpInst(*Context, FCmpInst::FCMP_UGT, LHS, RHS);
+      return new FCmpInst(FCmpInst::FCMP_UGT, LHS, RHS);
   case  2: 
     if (isordered)
-      return new FCmpInst(*Context, FCmpInst::FCMP_OEQ, LHS, RHS);
+      return new FCmpInst(FCmpInst::FCMP_OEQ, LHS, RHS);
     else
-      return new FCmpInst(*Context, FCmpInst::FCMP_UEQ, LHS, RHS);
+      return new FCmpInst(FCmpInst::FCMP_UEQ, LHS, RHS);
   case  3: 
     if (isordered)
-      return new FCmpInst(*Context, FCmpInst::FCMP_OGE, LHS, RHS);
+      return new FCmpInst(FCmpInst::FCMP_OGE, LHS, RHS);
     else
-      return new FCmpInst(*Context, FCmpInst::FCMP_UGE, LHS, RHS);
+      return new FCmpInst(FCmpInst::FCMP_UGE, LHS, RHS);
   case  4: 
     if (isordered)
-      return new FCmpInst(*Context, FCmpInst::FCMP_OLT, LHS, RHS);
+      return new FCmpInst(FCmpInst::FCMP_OLT, LHS, RHS);
     else
-      return new FCmpInst(*Context, FCmpInst::FCMP_ULT, LHS, RHS);
+      return new FCmpInst(FCmpInst::FCMP_ULT, LHS, RHS);
   case  5: 
     if (isordered)
-      return new FCmpInst(*Context, FCmpInst::FCMP_ONE, LHS, RHS);
+      return new FCmpInst(FCmpInst::FCMP_ONE, LHS, RHS);
     else
-      return new FCmpInst(*Context, FCmpInst::FCMP_UNE, LHS, RHS);
+      return new FCmpInst(FCmpInst::FCMP_UNE, LHS, RHS);
   case  6: 
     if (isordered)
-      return new FCmpInst(*Context, FCmpInst::FCMP_OLE, LHS, RHS);
+      return new FCmpInst(FCmpInst::FCMP_OLE, LHS, RHS);
     else
-      return new FCmpInst(*Context, FCmpInst::FCMP_ULE, LHS, RHS);
+      return new FCmpInst(FCmpInst::FCMP_ULE, LHS, RHS);
   case  7: return ConstantInt::getTrue(*Context);
   }
 }
@@ -3658,13 +3657,13 @@ Instruction *InstCombiner::InsertRangeTest(Value *V, Constant *Lo, Constant *Hi,
     
   if (Inside) {
     if (Lo == Hi)  // Trivially false.
-      return new ICmpInst(*Context, ICmpInst::ICMP_NE, V, V);
+      return new ICmpInst(ICmpInst::ICMP_NE, V, V);
 
     // V >= Min && V < Hi --> V < Hi
     if (cast<ConstantInt>(Lo)->isMinValue(isSigned)) {
       ICmpInst::Predicate pred = (isSigned ? 
         ICmpInst::ICMP_SLT : ICmpInst::ICMP_ULT);
-      return new ICmpInst(*Context, pred, V, Hi);
+      return new ICmpInst(pred, V, Hi);
     }
 
     // Emit V-Lo <u Hi-Lo
@@ -3672,18 +3671,18 @@ Instruction *InstCombiner::InsertRangeTest(Value *V, Constant *Lo, Constant *Hi,
     Instruction *Add = BinaryOperator::CreateAdd(V, NegLo, V->getName()+".off");
     InsertNewInstBefore(Add, IB);
     Constant *UpperBound = ConstantExpr::getAdd(NegLo, Hi);
-    return new ICmpInst(*Context, ICmpInst::ICMP_ULT, Add, UpperBound);
+    return new ICmpInst(ICmpInst::ICMP_ULT, Add, UpperBound);
   }
 
   if (Lo == Hi)  // Trivially true.
-    return new ICmpInst(*Context, ICmpInst::ICMP_EQ, V, V);
+    return new ICmpInst(ICmpInst::ICMP_EQ, V, V);
 
   // V < Min || V >= Hi -> V > Hi-1
   Hi = SubOne(cast<ConstantInt>(Hi));
   if (cast<ConstantInt>(Lo)->isMinValue(isSigned)) {
     ICmpInst::Predicate pred = (isSigned ? 
         ICmpInst::ICMP_SGT : ICmpInst::ICMP_UGT);
-    return new ICmpInst(*Context, pred, V, Hi);
+    return new ICmpInst(pred, V, Hi);
   }
 
   // Emit V-Lo >u Hi-1-Lo
@@ -3692,7 +3691,7 @@ Instruction *InstCombiner::InsertRangeTest(Value *V, Constant *Lo, Constant *Hi,
   Instruction *Add = BinaryOperator::CreateAdd(V, NegLo, V->getName()+".off");
   InsertNewInstBefore(Add, IB);
   Constant *LowerBound = ConstantExpr::getAdd(NegLo, Hi);
-  return new ICmpInst(*Context, ICmpInst::ICMP_UGT, Add, LowerBound);
+  return new ICmpInst(ICmpInst::ICMP_UGT, Add, LowerBound);
 }
 
 // isRunOfOnes - Returns true iff Val consists of one contiguous run of 1s with
@@ -3790,7 +3789,7 @@ Instruction *InstCombiner::FoldAndOfICmps(Instruction &I,
       LHSCst->getValue().isPowerOf2()) {
     Instruction *NewOr = BinaryOperator::CreateOr(Val, Val2);
     InsertNewInstBefore(NewOr, I);
-    return new ICmpInst(*Context, LHSCC, NewOr, LHSCst);
+    return new ICmpInst(LHSCC, NewOr, LHSCst);
   }
   
   // From here on, we only handle:
@@ -3850,11 +3849,11 @@ Instruction *InstCombiner::FoldAndOfICmps(Instruction &I,
     default: llvm_unreachable("Unknown integer condition code!");
     case ICmpInst::ICMP_ULT:
       if (LHSCst == SubOne(RHSCst)) // (X != 13 & X u< 14) -> X < 13
-        return new ICmpInst(*Context, ICmpInst::ICMP_ULT, Val, LHSCst);
+        return new ICmpInst(ICmpInst::ICMP_ULT, Val, LHSCst);
       break;                        // (X != 13 & X u< 15) -> no change
     case ICmpInst::ICMP_SLT:
       if (LHSCst == SubOne(RHSCst)) // (X != 13 & X s< 14) -> X < 13
-        return new ICmpInst(*Context, ICmpInst::ICMP_SLT, Val, LHSCst);
+        return new ICmpInst(ICmpInst::ICMP_SLT, Val, LHSCst);
       break;                        // (X != 13 & X s< 15) -> no change
     case ICmpInst::ICMP_EQ:         // (X != 13 & X == 15) -> X == 15
     case ICmpInst::ICMP_UGT:        // (X != 13 & X u> 15) -> X u> 15
@@ -3866,7 +3865,7 @@ Instruction *InstCombiner::FoldAndOfICmps(Instruction &I,
         Instruction *Add = BinaryOperator::CreateAdd(Val, AddCST,
                                                      Val->getName()+".off");
         InsertNewInstBefore(Add, I);
-        return new ICmpInst(*Context, ICmpInst::ICMP_UGT, Add,
+        return new ICmpInst(ICmpInst::ICMP_UGT, Add,
                             ConstantInt::get(Add->getType(), 1));
       }
       break;                        // (X != 13 & X != 15) -> no change
@@ -3912,7 +3911,7 @@ Instruction *InstCombiner::FoldAndOfICmps(Instruction &I,
       break;
     case ICmpInst::ICMP_NE:
       if (RHSCst == AddOne(LHSCst)) // (X u> 13 & X != 14) -> X u> 14
-        return new ICmpInst(*Context, LHSCC, Val, RHSCst);
+        return new ICmpInst(LHSCC, Val, RHSCst);
       break;                        // (X u> 13 & X != 15) -> no change
     case ICmpInst::ICMP_ULT:        // (X u> 13 & X u< 15) -> (X-14) <u 1
       return InsertRangeTest(Val, AddOne(LHSCst),
@@ -3931,7 +3930,7 @@ Instruction *InstCombiner::FoldAndOfICmps(Instruction &I,
       break;
     case ICmpInst::ICMP_NE:
       if (RHSCst == AddOne(LHSCst)) // (X s> 13 & X != 14) -> X s> 14
-        return new ICmpInst(*Context, LHSCC, Val, RHSCst);
+        return new ICmpInst(LHSCC, Val, RHSCst);
       break;                        // (X s> 13 & X != 15) -> no change
     case ICmpInst::ICMP_SLT:        // (X s> 13 & X s< 15) -> (X-14) s< 1
       return InsertRangeTest(Val, AddOne(LHSCst),
@@ -3957,7 +3956,7 @@ Instruction *InstCombiner::FoldAndOfFCmps(Instruction &I, FCmpInst *LHS,
         // false.
         if (LHSC->getValueAPF().isNaN() || RHSC->getValueAPF().isNaN())
           return ReplaceInstUsesWith(I, ConstantInt::getFalse(*Context));
-        return new FCmpInst(*Context, FCmpInst::FCMP_ORD, 
+        return new FCmpInst(FCmpInst::FCMP_ORD,
                             LHS->getOperand(0), RHS->getOperand(0));
       }
     
@@ -3965,7 +3964,7 @@ Instruction *InstCombiner::FoldAndOfFCmps(Instruction &I, FCmpInst *LHS,
     // "fcmp ord x,x" is "fcmp ord x, 0".
     if (isa<ConstantAggregateZero>(LHS->getOperand(1)) &&
         isa<ConstantAggregateZero>(RHS->getOperand(1)))
-      return new FCmpInst(*Context, FCmpInst::FCMP_ORD, 
+      return new FCmpInst(FCmpInst::FCMP_ORD,
                           LHS->getOperand(0), RHS->getOperand(0));
     return 0;
   }
@@ -3984,7 +3983,7 @@ Instruction *InstCombiner::FoldAndOfFCmps(Instruction &I, FCmpInst *LHS,
   if (Op0LHS == Op1LHS && Op0RHS == Op1RHS) {
     // Simplify (fcmp cc0 x, y) & (fcmp cc1 x, y).
     if (Op0CC == Op1CC)
-      return new FCmpInst(*Context, (FCmpInst::Predicate)Op0CC, Op0LHS, Op0RHS);
+      return new FCmpInst((FCmpInst::Predicate)Op0CC, Op0LHS, Op0RHS);
     
     if (Op0CC == FCmpInst::FCMP_FALSE || Op1CC == FCmpInst::FCMP_FALSE)
       return ReplaceInstUsesWith(I, ConstantInt::getFalse(*Context));
@@ -4119,7 +4118,7 @@ Instruction *InstCombiner::visitAnd(BinaryOperator &I) {
         // (1 << x) & 1 --> zext(x == 0)
         // (1 >> x) & 1 --> zext(x == 0)
         if (AndRHSMask == 1 && Op0LHS == AndRHS) {
-          Instruction *NewICmp = new ICmpInst(*Context, ICmpInst::ICMP_EQ,
+          Instruction *NewICmp = new ICmpInst(ICmpInst::ICMP_EQ,
                                     Op0RHS, Constant::getNullValue(I.getType()));
           InsertNewInstBefore(NewICmp, I);
           return new ZExtInst(NewICmp, I.getType());
@@ -4550,7 +4549,7 @@ Instruction *InstCombiner::FoldOrOfICmps(Instruction &I,
                                                      Val->getName()+".off");
         InsertNewInstBefore(Add, I);
         AddCST = ConstantExpr::getSub(AddOne(RHSCst), LHSCst);
-        return new ICmpInst(*Context, ICmpInst::ICMP_ULT, Add, AddCST);
+        return new ICmpInst(ICmpInst::ICMP_ULT, Add, AddCST);
       }
       break;                         // (X == 13 | X == 15) -> no change
     case ICmpInst::ICMP_UGT:         // (X == 13 | X u> 14) -> no change
@@ -4665,7 +4664,7 @@ Instruction *InstCombiner::FoldOrOfFCmps(Instruction &I, FCmpInst *LHS,
         
         // Otherwise, no need to compare the two constants, compare the
         // rest.
-        return new FCmpInst(*Context, FCmpInst::FCMP_UNO, 
+        return new FCmpInst(FCmpInst::FCMP_UNO,
                             LHS->getOperand(0), RHS->getOperand(0));
       }
     
@@ -4673,7 +4672,7 @@ Instruction *InstCombiner::FoldOrOfFCmps(Instruction &I, FCmpInst *LHS,
     // "fcmp uno x,x" is "fcmp uno x, 0".
     if (isa<ConstantAggregateZero>(LHS->getOperand(1)) &&
         isa<ConstantAggregateZero>(RHS->getOperand(1)))
-      return new FCmpInst(*Context, FCmpInst::FCMP_UNO, 
+      return new FCmpInst(FCmpInst::FCMP_UNO,
                           LHS->getOperand(0), RHS->getOperand(0));
     
     return 0;
@@ -4691,7 +4690,7 @@ Instruction *InstCombiner::FoldOrOfFCmps(Instruction &I, FCmpInst *LHS,
   if (Op0LHS == Op1LHS && Op0RHS == Op1RHS) {
     // Simplify (fcmp cc0 x, y) | (fcmp cc1 x, y).
     if (Op0CC == Op1CC)
-      return new FCmpInst(*Context, (FCmpInst::Predicate)Op0CC,
+      return new FCmpInst((FCmpInst::Predicate)Op0CC,
                           Op0LHS, Op0RHS);
     if (Op0CC == FCmpInst::FCMP_TRUE || Op1CC == FCmpInst::FCMP_TRUE)
       return ReplaceInstUsesWith(I, ConstantInt::getTrue(*Context));
@@ -5083,11 +5082,11 @@ Instruction *InstCombiner::visitXor(BinaryOperator &I) {
     if (RHS == ConstantInt::getTrue(*Context) && Op0->hasOneUse()) {
       // xor (cmp A, B), true = not (cmp A, B) = !cmp A, B
       if (ICmpInst *ICI = dyn_cast<ICmpInst>(Op0))
-        return new ICmpInst(*Context, ICI->getInversePredicate(),
+        return new ICmpInst(ICI->getInversePredicate(),
                             ICI->getOperand(0), ICI->getOperand(1));
 
       if (FCmpInst *FCI = dyn_cast<FCmpInst>(Op0))
-        return new FCmpInst(*Context, FCI->getInversePredicate(),
+        return new FCmpInst(FCI->getInversePredicate(),
                             FCI->getOperand(0), FCI->getOperand(1));
     }
 
@@ -5101,7 +5100,6 @@ Instruction *InstCombiner::visitXor(BinaryOperator &I) {
                                              ConstantInt::getTrue(*Context),
                                              Op0C->getDestTy())) {
               Instruction *NewCI = InsertNewInstBefore(CmpInst::Create(
-                                     *Context,
                                      CI->getOpcode(), CI->getInversePredicate(),
                                      CI->getOperand(0), CI->getOperand(1)), I);
               NewCI->takeName(CI);
@@ -5596,7 +5594,7 @@ Instruction *InstCombiner::FoldGEPICmp(GEPOperator *GEPLHS, Value *RHS,
     // If not, synthesize the offset the hard way.
     if (Offset == 0)
       Offset = EmitGEPOffset(GEPLHS, I, *this);
-    return new ICmpInst(*Context, ICmpInst::getSignedPredicate(Cond), Offset,
+    return new ICmpInst(ICmpInst::getSignedPredicate(Cond), Offset,
                         Constant::getNullValue(Offset->getType()));
   } else if (GEPOperator *GEPRHS = dyn_cast<GEPOperator>(RHS)) {
     // If the base pointers are different, but the indices are the same, just
@@ -5614,7 +5612,7 @@ Instruction *InstCombiner::FoldGEPICmp(GEPOperator *GEPLHS, Value *RHS,
 
       // If all indices are the same, just compare the base pointers.
       if (IndicesTheSame)
-        return new ICmpInst(*Context, ICmpInst::getSignedPredicate(Cond), 
+        return new ICmpInst(ICmpInst::getSignedPredicate(Cond),
                             GEPLHS->getOperand(0), GEPRHS->getOperand(0));
 
       // Otherwise, the base pointers are different and the indices are
@@ -5671,8 +5669,7 @@ Instruction *InstCombiner::FoldGEPICmp(GEPOperator *GEPLHS, Value *RHS,
         Value *LHSV = GEPLHS->getOperand(DiffOperand);
         Value *RHSV = GEPRHS->getOperand(DiffOperand);
         // Make sure we do a signed comparison here.
-        return new ICmpInst(*Context,
-                            ICmpInst::getSignedPredicate(Cond), LHSV, RHSV);
+        return new ICmpInst(ICmpInst::getSignedPredicate(Cond), LHSV, RHSV);
       }
     }
 
@@ -5684,7 +5681,7 @@ Instruction *InstCombiner::FoldGEPICmp(GEPOperator *GEPLHS, Value *RHS,
       // ((gep Ptr, OFFSET1) cmp (gep Ptr, OFFSET2)  --->  (OFFSET1 cmp OFFSET2)
       Value *L = EmitGEPOffset(GEPLHS, I, *this);
       Value *R = EmitGEPOffset(GEPRHS, I, *this);
-      return new ICmpInst(*Context, ICmpInst::getSignedPredicate(Cond), L, R);
+      return new ICmpInst(ICmpInst::getSignedPredicate(Cond), L, R);
     }
   }
   return 0;
@@ -5879,7 +5876,7 @@ Instruction *InstCombiner::FoldFCmp_IntToFP_Cst(FCmpInst &I,
 
   // Lower this FP comparison into an appropriate integer version of the
   // comparison.
-  return new ICmpInst(*Context, Pred, LHSI->getOperand(0), RHSInt);
+  return new ICmpInst(Pred, LHSI->getOperand(0), RHSInt);
 }
 
 Instruction *InstCombiner::visitFCmpInst(FCmpInst &I) {
@@ -5967,14 +5964,14 @@ Instruction *InstCombiner::visitFCmpInst(FCmpInst &I) {
             // Fold the known value into the constant operand.
             Op1 = ConstantExpr::getCompare(I.getPredicate(), C, RHSC);
             // Insert a new FCmp of the other select operand.
-            Op2 = InsertNewInstBefore(new FCmpInst(*Context, I.getPredicate(),
+            Op2 = InsertNewInstBefore(new FCmpInst(I.getPredicate(),
                                                       LHSI->getOperand(2), RHSC,
                                                       I.getName()), I);
           } else if (Constant *C = dyn_cast<Constant>(LHSI->getOperand(2))) {
             // Fold the known value into the constant operand.
             Op2 = ConstantExpr::getCompare(I.getPredicate(), C, RHSC);
             // Insert a new FCmp of the other select operand.
-            Op1 = InsertNewInstBefore(new FCmpInst(*Context, I.getPredicate(),
+            Op1 = InsertNewInstBefore(new FCmpInst(I.getPredicate(),
                                                       LHSI->getOperand(1), RHSC,
                                                       I.getName()), I);
           }
@@ -6074,7 +6071,7 @@ Instruction *InstCombiner::visitICmpInst(ICmpInst &I) {
     if (I.isEquality() && CI->isNullValue() &&
         match(Op0, m_Sub(m_Value(A), m_Value(B)))) {
       // (icmp cond A B) if cond is equality
-      return new ICmpInst(*Context, I.getPredicate(), A, B);
+      return new ICmpInst(I.getPredicate(), A, B);
     }
     
     // If we have an icmp le or icmp ge instruction, turn it into the
@@ -6085,22 +6082,22 @@ Instruction *InstCombiner::visitICmpInst(ICmpInst &I) {
     case ICmpInst::ICMP_ULE:
       if (CI->isMaxValue(false))                 // A <=u MAX -> TRUE
         return ReplaceInstUsesWith(I, ConstantInt::getTrue(*Context));
-      return new ICmpInst(*Context, ICmpInst::ICMP_ULT, Op0,
+      return new ICmpInst(ICmpInst::ICMP_ULT, Op0,
                           AddOne(CI));
     case ICmpInst::ICMP_SLE:
       if (CI->isMaxValue(true))                  // A <=s MAX -> TRUE
         return ReplaceInstUsesWith(I, ConstantInt::getTrue(*Context));
-      return new ICmpInst(*Context, ICmpInst::ICMP_SLT, Op0,
+      return new ICmpInst(ICmpInst::ICMP_SLT, Op0,
                           AddOne(CI));
     case ICmpInst::ICMP_UGE:
       if (CI->isMinValue(false))                 // A >=u MIN -> TRUE
         return ReplaceInstUsesWith(I, ConstantInt::getTrue(*Context));
-      return new ICmpInst(*Context, ICmpInst::ICMP_UGT, Op0,
+      return new ICmpInst(ICmpInst::ICMP_UGT, Op0,
                           SubOne(CI));
     case ICmpInst::ICMP_SGE:
       if (CI->isMinValue(true))                  // A >=s MIN -> TRUE
         return ReplaceInstUsesWith(I, ConstantInt::getTrue(*Context));
-      return new ICmpInst(*Context, ICmpInst::ICMP_SGT, Op0,
+      return new ICmpInst(ICmpInst::ICMP_SGT, Op0,
                           SubOne(CI));
     }
     
@@ -6147,10 +6144,10 @@ Instruction *InstCombiner::visitICmpInst(ICmpInst &I) {
     // figured out that the LHS is a constant.  Just constant fold this now so
     // that code below can assume that Min != Max.
     if (!isa<Constant>(Op0) && Op0Min == Op0Max)
-      return new ICmpInst(*Context, I.getPredicate(),
+      return new ICmpInst(I.getPredicate(),
                           ConstantInt::get(*Context, Op0Min), Op1);
     if (!isa<Constant>(Op1) && Op1Min == Op1Max)
-      return new ICmpInst(*Context, I.getPredicate(), Op0, 
+      return new ICmpInst(I.getPredicate(), Op0,
                           ConstantInt::get(*Context, Op1Min));
 
     // Based on the range information we know about the LHS, see if we can
@@ -6171,15 +6168,15 @@ Instruction *InstCombiner::visitICmpInst(ICmpInst &I) {
       if (Op0Min.uge(Op1Max))          // A <u B -> false if min(A) >= max(B)
         return ReplaceInstUsesWith(I, ConstantInt::getFalse(*Context));
       if (Op1Min == Op0Max)            // A <u B -> A != B if max(A) == min(B)
-        return new ICmpInst(*Context, ICmpInst::ICMP_NE, Op0, Op1);
+        return new ICmpInst(ICmpInst::ICMP_NE, Op0, Op1);
       if (ConstantInt *CI = dyn_cast<ConstantInt>(Op1)) {
         if (Op1Max == Op0Min+1)        // A <u C -> A == C-1 if min(A)+1 == C
-          return new ICmpInst(*Context, ICmpInst::ICMP_EQ, Op0,
+          return new ICmpInst(ICmpInst::ICMP_EQ, Op0,
                               SubOne(CI));
 
         // (x <u 2147483648) -> (x >s -1)  -> true if sign bit clear
         if (CI->isMinValue(true))
-          return new ICmpInst(*Context, ICmpInst::ICMP_SGT, Op0,
+          return new ICmpInst(ICmpInst::ICMP_SGT, Op0,
                            Constant::getAllOnesValue(Op0->getType()));
       }
       break;
@@ -6190,15 +6187,15 @@ Instruction *InstCombiner::visitICmpInst(ICmpInst &I) {
         return ReplaceInstUsesWith(I, ConstantInt::getFalse(*Context));
 
       if (Op1Max == Op0Min)            // A >u B -> A != B if min(A) == max(B)
-        return new ICmpInst(*Context, ICmpInst::ICMP_NE, Op0, Op1);
+        return new ICmpInst(ICmpInst::ICMP_NE, Op0, Op1);
       if (ConstantInt *CI = dyn_cast<ConstantInt>(Op1)) {
         if (Op1Min == Op0Max-1)        // A >u C -> A == C+1 if max(a)-1 == C
-          return new ICmpInst(*Context, ICmpInst::ICMP_EQ, Op0,
+          return new ICmpInst(ICmpInst::ICMP_EQ, Op0,
                               AddOne(CI));
 
         // (x >u 2147483647) -> (x <s 0)  -> true if sign bit set
         if (CI->isMaxValue(true))
-          return new ICmpInst(*Context, ICmpInst::ICMP_SLT, Op0,
+          return new ICmpInst(ICmpInst::ICMP_SLT, Op0,
                               Constant::getNullValue(Op0->getType()));
       }
       break;
@@ -6208,10 +6205,10 @@ Instruction *InstCombiner::visitICmpInst(ICmpInst &I) {
       if (Op0Min.sge(Op1Max))          // A <s B -> false if min(A) >= max(C)
         return ReplaceInstUsesWith(I, ConstantInt::getFalse(*Context));
       if (Op1Min == Op0Max)            // A <s B -> A != B if max(A) == min(B)
-        return new ICmpInst(*Context, ICmpInst::ICMP_NE, Op0, Op1);
+        return new ICmpInst(ICmpInst::ICMP_NE, Op0, Op1);
       if (ConstantInt *CI = dyn_cast<ConstantInt>(Op1)) {
         if (Op1Max == Op0Min+1)        // A <s C -> A == C-1 if min(A)+1 == C
-          return new ICmpInst(*Context, ICmpInst::ICMP_EQ, Op0,
+          return new ICmpInst(ICmpInst::ICMP_EQ, Op0,
                               SubOne(CI));
       }
       break;
@@ -6222,10 +6219,10 @@ Instruction *InstCombiner::visitICmpInst(ICmpInst &I) {
         return ReplaceInstUsesWith(I, ConstantInt::getFalse(*Context));
 
       if (Op1Max == Op0Min)            // A >s B -> A != B if min(A) == max(B)
-        return new ICmpInst(*Context, ICmpInst::ICMP_NE, Op0, Op1);
+        return new ICmpInst(ICmpInst::ICMP_NE, Op0, Op1);
       if (ConstantInt *CI = dyn_cast<ConstantInt>(Op1)) {
         if (Op1Min == Op0Max-1)        // A >s C -> A == C+1 if max(A)-1 == C
-          return new ICmpInst(*Context, ICmpInst::ICMP_EQ, Op0,
+          return new ICmpInst(ICmpInst::ICMP_EQ, Op0,
                               AddOne(CI));
       }
       break;
@@ -6264,7 +6261,7 @@ Instruction *InstCombiner::visitICmpInst(ICmpInst &I) {
     if (I.isSignedPredicate() &&
         ((Op0KnownZero.isNegative() && Op1KnownZero.isNegative()) ||
          (Op0KnownOne.isNegative() && Op1KnownOne.isNegative())))
-      return new ICmpInst(*Context, I.getUnsignedPredicate(), Op0, Op1);
+      return new ICmpInst(I.getUnsignedPredicate(), Op0, Op1);
   }
 
   // Test if the ICmpInst instruction is used exclusively by a select as
@@ -6306,7 +6303,7 @@ Instruction *InstCombiner::visitICmpInst(ICmpInst &I) {
               break;
             }
           if (isAllZeros)
-            return new ICmpInst(*Context, I.getPredicate(), LHSI->getOperand(0),
+            return new ICmpInst(I.getPredicate(), LHSI->getOperand(0),
                     Constant::getNullValue(LHSI->getOperand(0)->getType()));
         }
         break;
@@ -6329,14 +6326,14 @@ Instruction *InstCombiner::visitICmpInst(ICmpInst &I) {
             // Fold the known value into the constant operand.
             Op1 = ConstantExpr::getICmp(I.getPredicate(), C, RHSC);
             // Insert a new ICmp of the other select operand.
-            Op2 = InsertNewInstBefore(new ICmpInst(*Context, I.getPredicate(),
+            Op2 = InsertNewInstBefore(new ICmpInst(I.getPredicate(),
                                                    LHSI->getOperand(2), RHSC,
                                                    I.getName()), I);
           } else if (Constant *C = dyn_cast<Constant>(LHSI->getOperand(2))) {
             // Fold the known value into the constant operand.
             Op2 = ConstantExpr::getICmp(I.getPredicate(), C, RHSC);
             // Insert a new ICmp of the other select operand.
-            Op1 = InsertNewInstBefore(new ICmpInst(*Context, I.getPredicate(),
+            Op1 = InsertNewInstBefore(new ICmpInst(I.getPredicate(),
                                                    LHSI->getOperand(1), RHSC,
                                                    I.getName()), I);
           }
@@ -6391,7 +6388,7 @@ Instruction *InstCombiner::visitICmpInst(ICmpInst &I) {
           Op1 = InsertBitCastBefore(Op1, Op0->getType(), I);
         }
       }
-      return new ICmpInst(*Context, I.getPredicate(), Op0, Op1);
+      return new ICmpInst(I.getPredicate(), Op0, Op1);
     }
   }
   
@@ -6418,7 +6415,7 @@ Instruction *InstCombiner::visitICmpInst(ICmpInst &I) {
         case Instruction::Sub:
         case Instruction::Xor:
           if (I.isEquality())    // a+x icmp eq/ne b+x --> a icmp b
-            return new ICmpInst(*Context, I.getPredicate(), Op0I->getOperand(0),
+            return new ICmpInst(I.getPredicate(), Op0I->getOperand(0),
                                 Op1I->getOperand(0));
           // icmp u/s (a ^ signbit), (b ^ signbit) --> icmp s/u a, b
           if (ConstantInt *CI = dyn_cast<ConstantInt>(Op0I->getOperand(1))) {
@@ -6426,7 +6423,7 @@ Instruction *InstCombiner::visitICmpInst(ICmpInst &I) {
               ICmpInst::Predicate Pred = I.isSignedPredicate()
                                              ? I.getUnsignedPredicate()
                                              : I.getSignedPredicate();
-              return new ICmpInst(*Context, Pred, Op0I->getOperand(0),
+              return new ICmpInst(Pred, Op0I->getOperand(0),
                                   Op1I->getOperand(0));
             }
             
@@ -6435,7 +6432,7 @@ Instruction *InstCombiner::visitICmpInst(ICmpInst &I) {
                                              ? I.getUnsignedPredicate()
                                              : I.getSignedPredicate();
               Pred = I.getSwappedPredicate(Pred);
-              return new ICmpInst(*Context, Pred, Op0I->getOperand(0),
+              return new ICmpInst(Pred, Op0I->getOperand(0),
                                   Op1I->getOperand(0));
             }
           }
@@ -6459,7 +6456,7 @@ Instruction *InstCombiner::visitICmpInst(ICmpInst &I) {
                                                             Mask);
               InsertNewInstBefore(And1, I);
               InsertNewInstBefore(And2, I);
-              return new ICmpInst(*Context, I.getPredicate(), And1, And2);
+              return new ICmpInst(I.getPredicate(), And1, And2);
             }
           }
           break;
@@ -6472,7 +6469,7 @@ Instruction *InstCombiner::visitICmpInst(ICmpInst &I) {
   { Value *A, *B;
     if (match(Op0, m_Not(m_Value(A))) &&
         match(Op1, m_Not(m_Value(B))))
-      return new ICmpInst(*Context, I.getPredicate(), B, A);
+      return new ICmpInst(I.getPredicate(), B, A);
   }
   
   if (I.isEquality()) {
@@ -6481,12 +6478,12 @@ Instruction *InstCombiner::visitICmpInst(ICmpInst &I) {
     // -x == -y --> x == y
     if (match(Op0, m_Neg(m_Value(A))) &&
         match(Op1, m_Neg(m_Value(B))))
-      return new ICmpInst(*Context, I.getPredicate(), A, B);
+      return new ICmpInst(I.getPredicate(), A, B);
     
     if (match(Op0, m_Xor(m_Value(A), m_Value(B)))) {
       if (A == Op1 || B == Op1) {    // (A^B) == A  ->  B == 0
         Value *OtherVal = A == Op1 ? B : A;
-        return new ICmpInst(*Context, I.getPredicate(), OtherVal,
+        return new ICmpInst(I.getPredicate(), OtherVal,
                             Constant::getNullValue(A->getType()));
       }
 
@@ -6498,15 +6495,15 @@ Instruction *InstCombiner::visitICmpInst(ICmpInst &I) {
           Constant *NC = 
                    ConstantInt::get(*Context, C1->getValue() ^ C2->getValue());
           Instruction *Xor = BinaryOperator::CreateXor(C, NC, "tmp");
-          return new ICmpInst(*Context, I.getPredicate(), A,
+          return new ICmpInst(I.getPredicate(), A,
                               InsertNewInstBefore(Xor, I));
         }
         
         // A^B == A^D -> B == D
-        if (A == C) return new ICmpInst(*Context, I.getPredicate(), B, D);
-        if (A == D) return new ICmpInst(*Context, I.getPredicate(), B, C);
-        if (B == C) return new ICmpInst(*Context, I.getPredicate(), A, D);
-        if (B == D) return new ICmpInst(*Context, I.getPredicate(), A, C);
+        if (A == C) return new ICmpInst(I.getPredicate(), B, D);
+        if (A == D) return new ICmpInst(I.getPredicate(), B, C);
+        if (B == C) return new ICmpInst(I.getPredicate(), A, D);
+        if (B == D) return new ICmpInst(I.getPredicate(), A, C);
       }
     }
     
@@ -6514,18 +6511,18 @@ Instruction *InstCombiner::visitICmpInst(ICmpInst &I) {
         (A == Op0 || B == Op0)) {
       // A == (A^B)  ->  B == 0
       Value *OtherVal = A == Op0 ? B : A;
-      return new ICmpInst(*Context, I.getPredicate(), OtherVal,
+      return new ICmpInst(I.getPredicate(), OtherVal,
                           Constant::getNullValue(A->getType()));
     }
 
     // (A-B) == A  ->  B == 0
     if (match(Op0, m_Sub(m_Specific(Op1), m_Value(B))))
-      return new ICmpInst(*Context, I.getPredicate(), B, 
+      return new ICmpInst(I.getPredicate(), B, 
                           Constant::getNullValue(B->getType()));
 
     // A == (A-B)  ->  B == 0
     if (match(Op1, m_Sub(m_Specific(Op0), m_Value(B))))
-      return new ICmpInst(*Context, I.getPredicate(), B,
+      return new ICmpInst(I.getPredicate(), B,
                           Constant::getNullValue(B->getType()));
     
     // (X&Z) == (Y&Z) -> (X^Y) & Z == 0
@@ -6669,10 +6666,10 @@ Instruction *InstCombiner::FoldICmpDivCst(ICmpInst &ICI, BinaryOperator *DivI,
     if (LoOverflow && HiOverflow)
       return ReplaceInstUsesWith(ICI, ConstantInt::getFalse(*Context));
     else if (HiOverflow)
-      return new ICmpInst(*Context, DivIsSigned ? ICmpInst::ICMP_SGE : 
+      return new ICmpInst(DivIsSigned ? ICmpInst::ICMP_SGE :
                           ICmpInst::ICMP_UGE, X, LoBound);
     else if (LoOverflow)
-      return new ICmpInst(*Context, DivIsSigned ? ICmpInst::ICMP_SLT : 
+      return new ICmpInst(DivIsSigned ? ICmpInst::ICMP_SLT :
                           ICmpInst::ICMP_ULT, X, HiBound);
     else
       return InsertRangeTest(X, LoBound, HiBound, DivIsSigned, true, ICI);
@@ -6680,10 +6677,10 @@ Instruction *InstCombiner::FoldICmpDivCst(ICmpInst &ICI, BinaryOperator *DivI,
     if (LoOverflow && HiOverflow)
       return ReplaceInstUsesWith(ICI, ConstantInt::getTrue(*Context));
     else if (HiOverflow)
-      return new ICmpInst(*Context, DivIsSigned ? ICmpInst::ICMP_SLT : 
+      return new ICmpInst(DivIsSigned ? ICmpInst::ICMP_SLT :
                           ICmpInst::ICMP_ULT, X, LoBound);
     else if (LoOverflow)
-      return new ICmpInst(*Context, DivIsSigned ? ICmpInst::ICMP_SGE : 
+      return new ICmpInst(DivIsSigned ? ICmpInst::ICMP_SGE :
                           ICmpInst::ICMP_UGE, X, HiBound);
     else
       return InsertRangeTest(X, LoBound, HiBound, DivIsSigned, false, ICI);
@@ -6693,7 +6690,7 @@ Instruction *InstCombiner::FoldICmpDivCst(ICmpInst &ICI, BinaryOperator *DivI,
       return ReplaceInstUsesWith(ICI, ConstantInt::getTrue(*Context));
     if (LoOverflow == -1)   // Low bound is less than input range.
       return ReplaceInstUsesWith(ICI, ConstantInt::getFalse(*Context));
-    return new ICmpInst(*Context, Pred, X, LoBound);
+    return new ICmpInst(Pred, X, LoBound);
   case ICmpInst::ICMP_UGT:
   case ICmpInst::ICMP_SGT:
     if (HiOverflow == +1)       // High bound greater than input range.
@@ -6701,9 +6698,9 @@ Instruction *InstCombiner::FoldICmpDivCst(ICmpInst &ICI, BinaryOperator *DivI,
     else if (HiOverflow == -1)  // High bound less than input range.
       return ReplaceInstUsesWith(ICI, ConstantInt::getTrue(*Context));
     if (Pred == ICmpInst::ICMP_UGT)
-      return new ICmpInst(*Context, ICmpInst::ICMP_UGE, X, HiBound);
+      return new ICmpInst(ICmpInst::ICMP_UGE, X, HiBound);
     else
-      return new ICmpInst(*Context, ICmpInst::ICMP_SGE, X, HiBound);
+      return new ICmpInst(ICmpInst::ICMP_SGE, X, HiBound);
   }
 }
 
@@ -6732,7 +6729,7 @@ Instruction *InstCombiner::visitICmpInstWithInstAndIntCst(ICmpInst &ICI,
         APInt NewRHS(RHS->getValue());
         NewRHS.zext(SrcBits);
         NewRHS |= KnownOne;
-        return new ICmpInst(*Context, ICI.getPredicate(), LHSI->getOperand(0),
+        return new ICmpInst(ICI.getPredicate(), LHSI->getOperand(0),
                             ConstantInt::get(*Context, NewRHS));
       }
     }
@@ -6761,10 +6758,10 @@ Instruction *InstCombiner::visitICmpInstWithInstAndIntCst(ICmpInst &ICI,
         isTrueIfPositive ^= true;
         
         if (isTrueIfPositive)
-          return new ICmpInst(*Context, ICmpInst::ICMP_SGT, CompareVal,
+          return new ICmpInst(ICmpInst::ICMP_SGT, CompareVal,
                               SubOne(RHS));
         else
-          return new ICmpInst(*Context, ICmpInst::ICMP_SLT, CompareVal,
+          return new ICmpInst(ICmpInst::ICMP_SLT, CompareVal,
                               AddOne(RHS));
       }
 
@@ -6775,7 +6772,7 @@ Instruction *InstCombiner::visitICmpInstWithInstAndIntCst(ICmpInst &ICI,
           ICmpInst::Predicate Pred = ICI.isSignedPredicate()
                                          ? ICI.getUnsignedPredicate()
                                          : ICI.getSignedPredicate();
-          return new ICmpInst(*Context, Pred, LHSI->getOperand(0),
+          return new ICmpInst(Pred, LHSI->getOperand(0),
                               ConstantInt::get(*Context, RHSV ^ SignBit));
         }
 
@@ -6786,7 +6783,7 @@ Instruction *InstCombiner::visitICmpInstWithInstAndIntCst(ICmpInst &ICI,
                                          ? ICI.getUnsignedPredicate()
                                          : ICI.getSignedPredicate();
           Pred = ICI.getSwappedPredicate(Pred);
-          return new ICmpInst(*Context, Pred, LHSI->getOperand(0),
+          return new ICmpInst(Pred, LHSI->getOperand(0),
                               ConstantInt::get(*Context, RHSV ^ NotSignBit));
         }
       }
@@ -6818,7 +6815,7 @@ Instruction *InstCombiner::visitICmpInstWithInstAndIntCst(ICmpInst &ICI,
             BinaryOperator::CreateAnd(Cast->getOperand(0),
                            ConstantInt::get(*Context, NewCST), LHSI->getName());
           InsertNewInstBefore(NewAnd, ICI);
-          return new ICmpInst(*Context, ICI.getPredicate(), NewAnd,
+          return new ICmpInst(ICI.getPredicate(), NewAnd,
                               ConstantInt::get(*Context, NewCI));
         }
       }
@@ -6951,7 +6948,7 @@ Instruction *InstCombiner::visitICmpInstWithInstAndIntCst(ICmpInst &ICI,
           BinaryOperator::CreateAnd(LHSI->getOperand(0),
                                     Mask, LHSI->getName()+".mask");
         Value *And = InsertNewInstBefore(AndI, ICI);
-        return new ICmpInst(*Context, ICI.getPredicate(), And,
+        return new ICmpInst(ICI.getPredicate(), And,
                             ConstantInt::get(*Context, RHSV.lshr(ShAmtVal)));
       }
     }
@@ -6968,8 +6965,7 @@ Instruction *InstCombiner::visitICmpInstWithInstAndIntCst(ICmpInst &ICI,
                                   Mask, LHSI->getName()+".mask");
       Value *And = InsertNewInstBefore(AndI, ICI);
       
-      return new ICmpInst(*Context,
-                          TrueIfSigned ? ICmpInst::ICMP_NE : ICmpInst::ICMP_EQ,
+      return new ICmpInst(TrueIfSigned ? ICmpInst::ICMP_NE : ICmpInst::ICMP_EQ,
                           And, Constant::getNullValue(And->getType()));
     }
     break;
@@ -7010,7 +7006,7 @@ Instruction *InstCombiner::visitICmpInstWithInstAndIntCst(ICmpInst &ICI,
     if (LHSI->hasOneUse() &&
         MaskedValueIsZero(LHSI->getOperand(0), 
                           APInt::getLowBitsSet(Comp.getBitWidth(), ShAmtVal))) {
-      return new ICmpInst(*Context, ICI.getPredicate(), LHSI->getOperand(0),
+      return new ICmpInst(ICI.getPredicate(), LHSI->getOperand(0),
                           ConstantExpr::getShl(RHS, ShAmt));
     }
       
@@ -7023,7 +7019,7 @@ Instruction *InstCombiner::visitICmpInstWithInstAndIntCst(ICmpInst &ICI,
         BinaryOperator::CreateAnd(LHSI->getOperand(0),
                                   Mask, LHSI->getName()+".mask");
       Value *And = InsertNewInstBefore(AndI, ICI);
-      return new ICmpInst(*Context, ICI.getPredicate(), And,
+      return new ICmpInst(ICI.getPredicate(), And,
                           ConstantExpr::getShl(RHS, ShAmt));
     }
     break;
@@ -7056,18 +7052,18 @@ Instruction *InstCombiner::visitICmpInstWithInstAndIntCst(ICmpInst &ICI,
 
       if (ICI.isSignedPredicate()) {
         if (CR.getLower().isSignBit()) {
-          return new ICmpInst(*Context, ICmpInst::ICMP_SLT, LHSI->getOperand(0),
+          return new ICmpInst(ICmpInst::ICMP_SLT, LHSI->getOperand(0),
                               ConstantInt::get(*Context, CR.getUpper()));
         } else if (CR.getUpper().isSignBit()) {
-          return new ICmpInst(*Context, ICmpInst::ICMP_SGE, LHSI->getOperand(0),
+          return new ICmpInst(ICmpInst::ICMP_SGE, LHSI->getOperand(0),
                               ConstantInt::get(*Context, CR.getLower()));
         }
       } else {
         if (CR.getLower().isMinValue()) {
-          return new ICmpInst(*Context, ICmpInst::ICMP_ULT, LHSI->getOperand(0),
+          return new ICmpInst(ICmpInst::ICMP_ULT, LHSI->getOperand(0),
                               ConstantInt::get(*Context, CR.getUpper()));
         } else if (CR.getUpper().isMinValue()) {
-          return new ICmpInst(*Context, ICmpInst::ICMP_UGE, LHSI->getOperand(0),
+          return new ICmpInst(ICmpInst::ICMP_UGE, LHSI->getOperand(0),
                               ConstantInt::get(*Context, CR.getLower()));
         }
       }
@@ -7092,7 +7088,7 @@ Instruction *InstCombiner::visitICmpInstWithInstAndIntCst(ICmpInst &ICI,
               BinaryOperator::CreateURem(BO->getOperand(0), BO->getOperand(1),
                                          BO->getName());
             InsertNewInstBefore(NewRem, ICI);
-            return new ICmpInst(*Context, ICI.getPredicate(), NewRem, 
+            return new ICmpInst(ICI.getPredicate(), NewRem,
                                 Constant::getNullValue(BO->getType()));
           }
         }
@@ -7101,7 +7097,7 @@ Instruction *InstCombiner::visitICmpInstWithInstAndIntCst(ICmpInst &ICI,
         // Replace ((add A, B) != C) with (A != C-B) if B & C are constants.
         if (ConstantInt *BOp1C = dyn_cast<ConstantInt>(BO->getOperand(1))) {
           if (BO->hasOneUse())
-            return new ICmpInst(*Context, ICI.getPredicate(), BO->getOperand(0),
+            return new ICmpInst(ICI.getPredicate(), BO->getOperand(0),
                                 ConstantExpr::getSub(RHS, BOp1C));
         } else if (RHSV == 0) {
           // Replace ((add A, B) != 0) with (A != -B) if A or B is
@@ -7109,14 +7105,14 @@ Instruction *InstCombiner::visitICmpInstWithInstAndIntCst(ICmpInst &ICI,
           Value *BOp0 = BO->getOperand(0), *BOp1 = BO->getOperand(1);
           
           if (Value *NegVal = dyn_castNegVal(BOp1))
-            return new ICmpInst(*Context, ICI.getPredicate(), BOp0, NegVal);
+            return new ICmpInst(ICI.getPredicate(), BOp0, NegVal);
           else if (Value *NegVal = dyn_castNegVal(BOp0))
-            return new ICmpInst(*Context, ICI.getPredicate(), NegVal, BOp1);
+            return new ICmpInst(ICI.getPredicate(), NegVal, BOp1);
           else if (BO->hasOneUse()) {
             Instruction *Neg = BinaryOperator::CreateNeg(BOp1);
             InsertNewInstBefore(Neg, ICI);
             Neg->takeName(BO);
-            return new ICmpInst(*Context, ICI.getPredicate(), BOp0, Neg);
+            return new ICmpInst(ICI.getPredicate(), BOp0, Neg);
           }
         }
         break;
@@ -7124,14 +7120,14 @@ Instruction *InstCombiner::visitICmpInstWithInstAndIntCst(ICmpInst &ICI,
         // For the xor case, we can xor two constants together, eliminating
         // the explicit xor.
         if (Constant *BOC = dyn_cast<Constant>(BO->getOperand(1)))
-          return new ICmpInst(*Context, ICI.getPredicate(), BO->getOperand(0), 
+          return new ICmpInst(ICI.getPredicate(), BO->getOperand(0), 
                               ConstantExpr::getXor(RHS, BOC));
         
         // FALLTHROUGH
       case Instruction::Sub:
         // Replace (([sub|xor] A, B) != 0) with (A != B)
         if (RHSV == 0)
-          return new ICmpInst(*Context, ICI.getPredicate(), BO->getOperand(0),
+          return new ICmpInst(ICI.getPredicate(), BO->getOperand(0),
                               BO->getOperand(1));
         break;
         
@@ -7158,7 +7154,7 @@ Instruction *InstCombiner::visitICmpInstWithInstAndIntCst(ICmpInst &ICI,
           
           // If we have ((X & C) == C), turn it into ((X & C) != 0).
           if (RHS == BOC && RHSV.isPowerOf2())
-            return new ICmpInst(*Context, isICMP_NE ? ICmpInst::ICMP_EQ :
+            return new ICmpInst(isICMP_NE ? ICmpInst::ICMP_EQ :
                                 ICmpInst::ICMP_NE, LHSI,
                                 Constant::getNullValue(RHS->getType()));
           
@@ -7168,7 +7164,7 @@ Instruction *InstCombiner::visitICmpInstWithInstAndIntCst(ICmpInst &ICI,
             Constant *Zero = Constant::getNullValue(X->getType());
             ICmpInst::Predicate pred = isICMP_NE ? 
               ICmpInst::ICMP_SLT : ICmpInst::ICMP_SGE;
-            return new ICmpInst(*Context, pred, X, Zero);
+            return new ICmpInst(pred, X, Zero);
           }
           
           // ((X & ~7) == 0) --> X < 8
@@ -7177,7 +7173,7 @@ Instruction *InstCombiner::visitICmpInstWithInstAndIntCst(ICmpInst &ICI,
             Constant *NegX = ConstantExpr::getNeg(BOC);
             ICmpInst::Predicate pred = isICMP_NE ? 
               ICmpInst::ICMP_UGE : ICmpInst::ICMP_ULT;
-            return new ICmpInst(*Context, pred, X, NegX);
+            return new ICmpInst(pred, X, NegX);
           }
         }
       default: break;
@@ -7221,7 +7217,7 @@ Instruction *InstCombiner::visitICmpInstWithCastAndCast(ICmpInst &ICI) {
     }
 
     if (RHSOp)
-      return new ICmpInst(*Context, ICI.getPredicate(), LHSCIOp, RHSOp);
+      return new ICmpInst(ICI.getPredicate(), LHSCIOp, RHSOp);
   }
   
   // The code below only handles extension cast instructions, so far.
@@ -7246,15 +7242,15 @@ Instruction *InstCombiner::visitICmpInstWithCastAndCast(ICmpInst &ICI) {
 
     // Deal with equality cases early.
     if (ICI.isEquality())
-      return new ICmpInst(*Context, ICI.getPredicate(), LHSCIOp, RHSCIOp);
+      return new ICmpInst(ICI.getPredicate(), LHSCIOp, RHSCIOp);
 
     // A signed comparison of sign extended values simplifies into a
     // signed comparison.
     if (isSignedCmp && isSignedExt)
-      return new ICmpInst(*Context, ICI.getPredicate(), LHSCIOp, RHSCIOp);
+      return new ICmpInst(ICI.getPredicate(), LHSCIOp, RHSCIOp);
 
     // The other three cases all fold into an unsigned comparison.
-    return new ICmpInst(*Context, ICI.getUnsignedPredicate(), LHSCIOp, RHSCIOp);
+    return new ICmpInst(ICI.getUnsignedPredicate(), LHSCIOp, RHSCIOp);
   }
 
   // If we aren't dealing with a constant on the RHS, exit early
@@ -7281,7 +7277,7 @@ Instruction *InstCombiner::visitICmpInstWithCastAndCast(ICmpInst &ICI) {
     // However, we allow this when the compare is EQ/NE, because they are
     // signless.
     if (isSignedExt == isSignedCmp || ICI.isEquality())
-      return new ICmpInst(*Context, ICI.getPredicate(), LHSCIOp, Res1);
+      return new ICmpInst(ICI.getPredicate(), LHSCIOp, Res1);
     return 0;
   }
 
@@ -7310,7 +7306,7 @@ Instruction *InstCombiner::visitICmpInstWithCastAndCast(ICmpInst &ICI) {
       // We're performing an unsigned comp with a sign extended value.
       // This is true if the input is >= 0. [aka >s -1]
       Constant *NegOne = Constant::getAllOnesValue(SrcTy);
-      Result = InsertNewInstBefore(new ICmpInst(*Context, ICmpInst::ICMP_SGT, 
+      Result = InsertNewInstBefore(new ICmpInst(ICmpInst::ICMP_SGT,
                                    LHSCIOp, NegOne, ICI.getName()), ICI);
     } else {
       // Unsigned extend & unsigned compare -> always true.
@@ -8492,7 +8488,7 @@ Instruction *InstCombiner::visitTrunc(TruncInst &CI) {
     Constant *One = ConstantInt::get(Src->getType(), 1);
     Src = InsertNewInstBefore(BinaryOperator::CreateAnd(Src, One, "tmp"), CI);
     Value *Zero = Constant::getNullValue(Src->getType());
-    return new ICmpInst(*Context, ICmpInst::ICMP_NE, Src, Zero);
+    return new ICmpInst(ICmpInst::ICMP_NE, Src, Zero);
   }
 
   // Optimize trunc(lshr(), c) to pull the shift through the truncate.
@@ -10593,7 +10589,7 @@ Instruction *InstCombiner::FoldPHIArgBinOpIntoPHI(PHINode &PN) {
   if (BinaryOperator *BinOp = dyn_cast<BinaryOperator>(FirstInst))
     return BinaryOperator::Create(BinOp->getOpcode(), LHSVal, RHSVal);
   CmpInst *CIOp = cast<CmpInst>(FirstInst);
-  return CmpInst::Create(*Context, CIOp->getOpcode(), CIOp->getPredicate(), 
+  return CmpInst::Create(CIOp->getOpcode(), CIOp->getPredicate(),
                          LHSVal, RHSVal);
 }
 
@@ -10844,7 +10840,7 @@ Instruction *InstCombiner::FoldPHIArgOpIntoPHI(PHINode &PN) {
   if (BinaryOperator *BinOp = dyn_cast<BinaryOperator>(FirstInst))
     return BinaryOperator::Create(BinOp->getOpcode(), PhiVal, ConstantOp);
   if (CmpInst *CIOp = dyn_cast<CmpInst>(FirstInst))
-    return CmpInst::Create(*Context, CIOp->getOpcode(), CIOp->getPredicate(), 
+    return CmpInst::Create(CIOp->getOpcode(), CIOp->getPredicate(),
                            PhiVal, ConstantOp);
   assert(isa<LoadInst>(FirstInst) && "Unknown operation");
   

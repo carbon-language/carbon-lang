@@ -159,7 +159,7 @@ BasicBlock* LowerSwitch::switchConvert(CaseItr Begin, CaseItr End,
   Function::iterator FI = OrigBlock;
   F->getBasicBlockList().insert(++FI, NewNode);
 
-  ICmpInst* Comp = new ICmpInst(Default->getContext(), ICmpInst::ICMP_SLT,
+  ICmpInst* Comp = new ICmpInst(ICmpInst::ICMP_SLT,
                                 Val, Pivot.Low, "Pivot");
   NewNode->getInstList().push_back(Comp);
   BranchInst::Create(LBranch, RBranch, Comp, NewNode);

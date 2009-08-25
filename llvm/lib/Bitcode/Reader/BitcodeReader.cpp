@@ -1781,9 +1781,9 @@ bool BitcodeReader::ParseFunctionBody(Function *F) {
         return Error("Invalid CMP record");
       
       if (LHS->getType()->isFPOrFPVector())
-        I = new FCmpInst(Context, (FCmpInst::Predicate)Record[OpNum], LHS, RHS);
+        I = new FCmpInst((FCmpInst::Predicate)Record[OpNum], LHS, RHS);
       else
-        I = new ICmpInst(Context, (ICmpInst::Predicate)Record[OpNum], LHS, RHS);
+        I = new ICmpInst((ICmpInst::Predicate)Record[OpNum], LHS, RHS);
       break;
     }
 

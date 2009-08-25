@@ -2506,7 +2506,7 @@ CmpInst::CmpInst(const Type *ty, OtherOps op, unsigned short predicate,
 }
 
 CmpInst *
-CmpInst::Create(LLVMContext &Context, OtherOps Op, unsigned short predicate,
+CmpInst::Create(OtherOps Op, unsigned short predicate,
                 Value *S1, Value *S2, 
                 const Twine &Name, Instruction *InsertBefore) {
   if (Op == Instruction::ICmp) {
@@ -2514,7 +2514,7 @@ CmpInst::Create(LLVMContext &Context, OtherOps Op, unsigned short predicate,
       return new ICmpInst(InsertBefore, CmpInst::Predicate(predicate),
                           S1, S2, Name);
     else
-      return new ICmpInst(Context, CmpInst::Predicate(predicate),
+      return new ICmpInst(CmpInst::Predicate(predicate),
                           S1, S2, Name);
   }
   
@@ -2522,7 +2522,7 @@ CmpInst::Create(LLVMContext &Context, OtherOps Op, unsigned short predicate,
     return new FCmpInst(InsertBefore, CmpInst::Predicate(predicate),
                         S1, S2, Name);
   else
-    return new FCmpInst(Context, CmpInst::Predicate(predicate),
+    return new FCmpInst(CmpInst::Predicate(predicate),
                         S1, S2, Name);
 }
 
@@ -2875,12 +2875,12 @@ BinaryOperator *BinaryOperator::clone(LLVMContext&) const {
 }
 
 FCmpInst* FCmpInst::clone(LLVMContext &Context) const {
-  FCmpInst *New = new FCmpInst(Context, getPredicate(), Op<0>(), Op<1>());
+  FCmpInst *New = new FCmpInst(getPredicate(), Op<0>(), Op<1>());
   New->SubclassOptionalData = SubclassOptionalData;
   return New;
 }
 ICmpInst* ICmpInst::clone(LLVMContext &Context) const {
-  ICmpInst *New = new ICmpInst(Context, getPredicate(), Op<0>(), Op<1>());
+  ICmpInst *New = new ICmpInst(getPredicate(), Op<0>(), Op<1>());
   New->SubclassOptionalData = SubclassOptionalData;
   return New;
 }

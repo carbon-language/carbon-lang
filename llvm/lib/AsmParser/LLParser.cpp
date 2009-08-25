@@ -3089,13 +3089,13 @@ bool LLParser::ParseCompare(Instruction *&Inst, PerFunctionState &PFS,
   if (Opc == Instruction::FCmp) {
     if (!LHS->getType()->isFPOrFPVector())
       return Error(Loc, "fcmp requires floating point operands");
-    Inst = new FCmpInst(Context, CmpInst::Predicate(Pred), LHS, RHS);
+    Inst = new FCmpInst(CmpInst::Predicate(Pred), LHS, RHS);
   } else {
     assert(Opc == Instruction::ICmp && "Unknown opcode for CmpInst!");
     if (!LHS->getType()->isIntOrIntVector() &&
         !isa<PointerType>(LHS->getType()))
       return Error(Loc, "icmp requires integer operands");
-    Inst = new ICmpInst(Context, CmpInst::Predicate(Pred), LHS, RHS);
+    Inst = new ICmpInst(CmpInst::Predicate(Pred), LHS, RHS);
   }
   return false;
 }

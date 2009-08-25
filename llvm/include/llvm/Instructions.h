@@ -696,7 +696,6 @@ public:
 
   /// @brief Constructor with no-insertion semantics
   ICmpInst(
-    LLVMContext &Context, ///< Context to construct within
     Predicate pred, ///< The predicate to use for the comparison
     Value *LHS,     ///< The left-hand-side of the expression
     Value *RHS,     ///< The right-hand-side of the expression
@@ -867,7 +866,6 @@ public:
 
   /// @brief Constructor with no-insertion semantics
   FCmpInst(
-    LLVMContext &Context, ///< Context to build in
     Predicate pred, ///< The predicate to use for the comparison
     Value *LHS,     ///< The left-hand-side of the expression
     Value *RHS,     ///< The right-hand-side of the expression
