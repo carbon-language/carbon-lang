@@ -97,7 +97,7 @@ void DwarfException::EmitCommonInformationEntry(const Function *Personality,
   Asm->EmitInt8(RI->getDwarfRegNum(RI->getRARegister(), true));
   Asm->EOL("CIE Return Address Column");
 
-  // If there is a personality, we need to indicate the functions location.
+  // If there is a personality, we need to indicate the function's location.
   if (Personality) {
     Asm->EmitULEB128Bytes(7);
     Asm->EOL("Augmentation Size");
@@ -240,6 +240,8 @@ EmitFrameDescriptionEntry(const FunctionEHFrameInfo &EHFrameInfo) {
       if (const char *UsedDirective = MAI->getUsedDirective())
         O << UsedDirective << EHFrameInfo.FnName << "\n\n";
   }
+
+  Asm->EOL();
 }
 
 /// SharedTypeIds - How many leading type ids two landing pads have in common.
