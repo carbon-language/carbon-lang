@@ -26,7 +26,7 @@ class raw_ostream;
 template <>
 struct ilist_traits<MachineInstr> : public ilist_default_traits<MachineInstr> {
 private:
-  mutable ilist_node<MachineInstr> Sentinel;
+  mutable ILIST_NODE<MachineInstr> Sentinel;
 
   // this is only set by the MachineBasicBlock owning the LiveList
   friend class MachineBasicBlock;

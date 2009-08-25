@@ -15,32 +15,62 @@
 #ifndef LLVM_ADT_ILIST_NODE_H
 #define LLVM_ADT_ILIST_NODE_H
 
+#undef LLVM_COMPACTIFY_SENTINELS
+/// @brief activate small sentinel structs
+/// Comment out if you want better debuggability
+/// of ilist<> end() iterators.
+/// See also llvm/ADT/ilist.h, where the
+/// same change must be made.
+///
+#define LLVM_COMPACTIFY_SENTINELS 1
+
 namespace llvm {
 
 template<typename NodeTy>
-struct ilist_nextprev_traits;
+struct ilist_traits;
+
+/// ilist_half_node - Base class that provides prev services for sentinels.
+///
+template<typename NodeTy>
+class ilist_half_node {
+  friend struct ilist_traits<NodeTy>;
+  NodeTy *Prev;
+protected:
+  NodeTy *getPrev() { return Prev; }
+  const NodeTy *getPrev() const { return Prev; }
+  void setPrev(NodeTy *P) { Prev = P; }
+  ilist_half_node() : Prev(0) {}
+};
 
 template<typename NodeTy>
-struct ilist_traits;
+struct ilist_nextprev_traits;
 
 /// ilist_node - Base class that provides next/prev services for nodes
 /// that use ilist_nextprev_traits or ilist_default_traits.
 ///
 template<typename NodeTy>
-class ilist_node {
-private:
+class ilist_node : ilist_half_node<NodeTy> {
   friend struct ilist_nextprev_traits<NodeTy>;
   friend struct ilist_traits<NodeTy>;
-  NodeTy *Prev, *Next;
-  NodeTy *getPrev() { return Prev; }
+  NodeTy *Next;
   NodeTy *getNext() { return Next; }
-  const NodeTy *getPrev() const { return Prev; }
   const NodeTy *getNext() const { return Next; }
-  void setPrev(NodeTy *N) { Prev = N; }
   void setNext(NodeTy *N) { Next = N; }
 protected:
-  ilist_node() : Prev(0), Next(0) {}
+  ilist_node() : Next(0) {}
 };
+
+/// When assertions are off, the Next field of sentinels
+/// will not be accessed. So it is not necessary to allocate
+/// space for it. The following macro selects the most
+/// efficient traits class. The LLVM_COMPACTIFY_SENTINELS
+/// preprocessor symbol controls this.
+///
+#if defined(LLVM_COMPACTIFY_SENTINELS) && LLVM_COMPACTIFY_SENTINELS
+#   define ILIST_NODE ilist_half_node
+#else
+#   define ILIST_NODE ilist_node
+#endif
 
 } // End llvm namespace
 
