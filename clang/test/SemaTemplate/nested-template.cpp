@@ -46,6 +46,8 @@ void Outer<X>::Inner0<Y>::f(X, Y) {
 template<typename X>
 template<typename Y>
 struct Outer<X>::Inner1<Y>::ReallyInner {
+  static Y value3;
+  
   void g(X, Y);
 };
 
@@ -81,3 +83,7 @@ X Outer<X>::Inner1<Y>::value1 = 0;
 template<typename X>
 template<typename Y>
 Y Outer<X>::Inner1<Y>::value2 = Y();
+
+template<typename X>
+template<typename Y>
+Y Outer<X>::Inner1<Y>::ReallyInner::value3 = Y();
