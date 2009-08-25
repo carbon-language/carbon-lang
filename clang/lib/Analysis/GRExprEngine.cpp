@@ -1354,9 +1354,11 @@ static bool EvalOSAtomicCompareAndSwap(ExplodedNodeSet& Dst,
     if (theValueVal.isUndef() || oldValueVal.isUndef()) {
       return false;      
     }
+    
+    SValuator &SVator = Engine.getSValuator();
         
     // Perform the comparison.
-    SVal Cmp = Engine.EvalBinOp(stateLoad, BinaryOperator::EQ, theValueVal,
+    SVal Cmp = SVator.EvalBinOp(stateLoad, BinaryOperator::EQ, theValueVal,
                                 oldValueVal, Engine.getContext().IntTy);
 
     const GRState *stateEqual = stateLoad->assume(Cmp, true);
@@ -1370,9 +1372,8 @@ static bool EvalOSAtomicCompareAndSwap(ExplodedNodeSet& Dst,
       // Handle implicit value casts.
       if (const TypedRegion *R =
           dyn_cast_or_null<TypedRegion>(location.getAsRegion())) {
-        llvm::tie(state, val) =
-          Engine.getSValuator().EvalCast(val, state, R->getValueType(C),
-                                         newValueExpr->getType());
+        llvm::tie(state, val) = SVator.EvalCast(val, state, R->getValueType(C),
+                                                newValueExpr->getType());
       }      
       
       Engine.EvalStore(TmpStore, theValueExpr, N, stateEqual, location, 
@@ -3030,39 +3031,6 @@ void GRExprEngine::VisitBinaryOperator(BinaryOperator* B,
       }
     }
   }
-}
-
-//===----------------------------------------------------------------------===//
-// Transfer-function Helpers.
-//===----------------------------------------------------------------------===//
-
-SVal GRExprEngine::EvalBinOp(const GRState* state, BinaryOperator::Opcode Op, 
-                             SVal L, SVal R, QualType T) {
-  
-  if (L.isUndef() || R.isUndef())
-    return UndefinedVal();
-  
-  if (L.isUnknown() || R.isUnknown())
-    return UnknownVal();
-  
-  if (isa<Loc>(L)) {
-    if (isa<Loc>(R))
-      return SVator.EvalBinOpLL(Op, cast<Loc>(L), cast<Loc>(R), T);
-    else
-      return SVator.EvalBinOpLN(state, Op, cast<Loc>(L), cast<NonLoc>(R), T);
-  }
-  
-  if (isa<Loc>(R)) {
-    // Support pointer arithmetic where the increment/decrement operand
-    // is on the left and the pointer on the right.
-    
-    assert (Op == BinaryOperator::Add || Op == BinaryOperator::Sub);
-    
-    // Commute the operands.
-    return SVator.EvalBinOpLN(state, Op, cast<Loc>(R), cast<NonLoc>(L), T);
-  }
-  else
-    return SVator.EvalBinOpNN(Op, cast<NonLoc>(L), cast<NonLoc>(R), T);
 }
 
 //===----------------------------------------------------------------------===//

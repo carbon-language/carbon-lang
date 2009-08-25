@@ -17,6 +17,35 @@
 
 using namespace clang;
 
+
+SVal SValuator::EvalBinOp(const GRState *ST, BinaryOperator::Opcode Op,
+                          SVal L, SVal R, QualType T) {
+
+  if (L.isUndef() || R.isUndef())
+    return UndefinedVal();
+  
+  if (L.isUnknown() || R.isUnknown())
+    return UnknownVal();
+  
+  if (isa<Loc>(L)) {
+    if (isa<Loc>(R))
+      return EvalBinOpLL(Op, cast<Loc>(L), cast<Loc>(R), T);
+
+    return EvalBinOpLN(ST, Op, cast<Loc>(L), cast<NonLoc>(R), T);
+  }
+  
+  if (isa<Loc>(R)) {
+    // Support pointer arithmetic where the increment/decrement operand
+    // is on the left and the pointer on the right.    
+    assert(Op == BinaryOperator::Add || Op == BinaryOperator::Sub);
+    
+    // Commute the operands.
+    return EvalBinOpLN(ST, Op, cast<Loc>(R), cast<NonLoc>(L), T);
+  }
+
+  return EvalBinOpNN(Op, cast<NonLoc>(L), cast<NonLoc>(R), T);  
+}
+
 SValuator::CastResult SValuator::EvalCast(SVal val, const GRState *state, 
                                           QualType castTy, QualType originalTy){
   

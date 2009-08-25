@@ -592,8 +592,10 @@ public:
     return R.isValid() ? SVator.EvalBinOpNN(op, L, cast<NonLoc>(R), T) : R;
   }
   
-  SVal EvalBinOp(const GRState *state, BinaryOperator::Opcode op,
-                 SVal lhs, SVal rhs, QualType T);
+  SVal EvalBinOp(const GRState *ST, BinaryOperator::Opcode Op,
+                 SVal LHS, SVal RHS, QualType T) {
+    return SVator.EvalBinOp(ST, Op, LHS, RHS, T);
+  }
 
 protected:
   

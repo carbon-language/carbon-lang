@@ -59,6 +59,9 @@ public:
 
   virtual SVal EvalBinOpLN(const GRState *state, BinaryOperator::Opcode Op,
                            Loc lhs, NonLoc rhs, QualType resultTy) = 0;  
+  
+  SVal EvalBinOp(const GRState *ST, BinaryOperator::Opcode Op,
+                 SVal L, SVal R, QualType T);
 };
   
 SValuator* CreateSimpleSValuator(ValueManager &valMgr);
