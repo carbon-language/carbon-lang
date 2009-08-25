@@ -328,7 +328,16 @@ void MSP430RegisterInfo::emitEpilogue(MachineFunction &MF,
   //  mergeSPUpdatesUp(MBB, MBBI, StackPtr, &NumBytes);
 
   if (MFI->hasVarSizedObjects()) {
-    llvm_unreachable("Not implemented yet!");
+    BuildMI(MBB, MBBI, DL,
+            TII.get(MSP430::MOV16rr), MSP430::SPW).addReg(MSP430::FPW);
+    if (CSSize) {
+      MachineInstr *MI =
+        BuildMI(MBB, MBBI, DL,
+                TII.get(MSP430::SUB16ri), MSP430::SPW)
+        .addReg(MSP430::SPW).addImm(CSSize);
+      // The SRW implicit def is dead.
+      MI->getOperand(3).setIsDead();
+    }
   } else {
     // adjust stack pointer back: SPW += numbytes
     if (NumBytes) {
