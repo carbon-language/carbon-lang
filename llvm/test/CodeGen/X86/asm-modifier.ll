@@ -19,3 +19,23 @@ entry:
   %asmtmp = tail call i16 asm "movw\09%gs:${1:a}, ${0:w}", "=r,ir,~{dirflag},~{fpsr},~{flags}"(i32 %address) nounwind ; <i16> [#uses=1]
   ret i16 %asmtmp
 }
+
+@n = global i32 42                                ; <i32*> [#uses=3]
+@y = common global i32 0                          ; <i32*> [#uses=3]
+
+define void @test3() nounwind {
+entry:
+; CHECK: test3:
+; CHECK: movl _n, %eax
+  call void asm sideeffect "movl ${0:a}, %eax", "ir,~{dirflag},~{fpsr},~{flags},~{eax}"(i32* @n) nounwind
+  ret void
+}
+
+define void @test4() nounwind {
+entry:
+; CHECK: test4:
+; CHECK: movl	L_y$non_lazy_ptr, %ecx
+; CHECK: movl (%ecx), %eax
+  call void asm sideeffect "movl ${0:a}, %eax", "ir,~{dirflag},~{fpsr},~{flags},~{eax}"(i32* @y) nounwind
+  ret void
+}

@@ -625,6 +625,10 @@ bool X86ATTAsmPrinter::PrintAsmOperand(const MachineInstr *MI, unsigned OpNo,
         O << MO.getImm();
         return false;
       } 
+      if (MO.isGlobal() || MO.isCPI() || MO.isJTI() || MO.isSymbol()) {
+        printSymbolOperand(MO);
+        return false;
+      }
       if (MO.isReg()) {
         O << '(';
         printOperand(MI, OpNo);
