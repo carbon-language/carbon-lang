@@ -254,52 +254,49 @@ namespace llvm {
     //===--- Dwarf Emission Directives -----------------------------------===//
 
     /// AbsoluteDebugSectionOffsets - True if we should emit abolute section
-    /// offsets for debug information. Defaults to false.
-    bool AbsoluteDebugSectionOffsets;
+    /// offsets for debug information.
+    bool AbsoluteDebugSectionOffsets;        // Defaults to false.
 
     /// AbsoluteEHSectionOffsets - True if we should emit abolute section
     /// offsets for EH information. Defaults to false.
     bool AbsoluteEHSectionOffsets;
 
     /// HasLEB128 - True if target asm supports leb128 directives.
-    ///
-    bool HasLEB128; // Defaults to false.
+    bool HasLEB128;                          // Defaults to false.
 
     /// hasDotLocAndDotFile - True if target asm supports .loc and .file
     /// directives for emitting debugging information.
-    ///
-    bool HasDotLocAndDotFile; // Defaults to false.
+    bool HasDotLocAndDotFile;                // Defaults to false.
 
     /// SupportsDebugInformation - True if target supports emission of debugging
     /// information.
-    bool SupportsDebugInformation;
+    bool SupportsDebugInformation;           // Defaults to false.
 
-    /// SupportsExceptionHandling - True if target supports
-    /// exception handling.
-    ///
-    // Defaults to None
-    ExceptionHandling::ExceptionsType ExceptionsType;
+    /// SupportsExceptionHandling - True if target supports exception handling.
+    ExceptionHandling::ExceptionsType ExceptionsType; // Defaults to None
 
     /// RequiresFrameSection - true if the Dwarf2 output needs a frame section
-    ///
-    bool DwarfRequiresFrameSection; // Defaults to true.
+    bool DwarfRequiresFrameSection;          // Defaults to true.
 
     /// DwarfUsesInlineInfoSection - True if DwarfDebugInlineSection is used to
     /// encode inline subroutine information.
-    bool DwarfUsesInlineInfoSection; // Defaults to false.
+    bool DwarfUsesInlineInfoSection;         // Defaults to false.
 
     /// Is_EHSymbolPrivate - If set, the "_foo.eh" is made private so that it
     /// doesn't show up in the symbol table of the object file.
-    bool Is_EHSymbolPrivate;                // Defaults to true.
+    bool Is_EHSymbolPrivate;                 // Defaults to true.
+
+    /// ForceEncodingOfFDETo32Bits - If set, the encoding of some of the FDE
+    /// data is forced to 32-bit.
+    bool ForceEncodingOfFDETo32Bits;         // Defaults to true.
 
     /// GlobalEHDirective - This is the directive used to make exception frame
     /// tables globally visible.
-    ///
-    const char *GlobalEHDirective;          // Defaults to NULL.
+    const char *GlobalEHDirective;           // Defaults to NULL.
 
     /// SupportsWeakEmptyEHFrame - True if target assembler and linker will
     /// handle a weak_definition of constant 0 for an omitted EH frame.
-    bool SupportsWeakOmittedEHFrame;  // Defaults to true.
+    bool SupportsWeakOmittedEHFrame;         // Defaults to true.
 
     /// DwarfSectionOffsetDirective - Special section offset directive.
     const char* DwarfSectionOffsetDirective; // Defaults to NULL
@@ -507,6 +504,9 @@ namespace llvm {
     }
     bool is_EHSymbolPrivate() const {
       return Is_EHSymbolPrivate;
+    }
+    bool forceEncodingOfFDETo32Bits() const {
+      return ForceEncodingOfFDETo32Bits;
     }
     const char *getGlobalEHDirective() const {
       return GlobalEHDirective;
