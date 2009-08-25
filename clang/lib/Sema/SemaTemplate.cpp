@@ -444,14 +444,15 @@ Sema::CheckClassTemplate(Scope *S, unsigned TagSpec, TagUseKind TUK,
                          SourceLocation KWLoc, const CXXScopeSpec &SS,
                          IdentifierInfo *Name, SourceLocation NameLoc,
                          AttributeList *Attr,
-                         MultiTemplateParamsArg TemplateParameterLists,
+                         TemplateParameterList *TemplateParams,
                          AccessSpecifier AS) {
-  assert(TemplateParameterLists.size() > 0 && "No template parameter lists?");
+  assert(TemplateParams && TemplateParams->size() > 0 && 
+         "No template parameters");
   assert(TUK != TUK_Reference && "Can only declare or define class templates");
   bool Invalid = false;
 
   // Check that we can declare a template here.
-  if (CheckTemplateDeclScope(S, TemplateParameterLists))
+  if (CheckTemplateDeclScope(S, TemplateParams))
     return true;
 
   TagDecl::TagKind Kind;
@@ -469,27 +470,30 @@ Sema::CheckClassTemplate(Scope *S, unsigned TagSpec, TagUseKind TUK,
   }
 
   // Find any previous declaration with this name.
-  LookupResult Previous = LookupParsedName(S, &SS, Name, LookupOrdinaryName,
-                                           true);
+  DeclContext *SemanticContext;
+  LookupResult Previous;
+  if (SS.isNotEmpty() && !SS.isInvalid()) {
+    SemanticContext = computeDeclContext(SS, true);
+    if (!SemanticContext) {
+      // FIXME: Produce a reasonable diagnostic here
+      return true;
+    }
+    
+    Previous = LookupQualifiedName(SemanticContext, Name, LookupOrdinaryName, 
+                                   true);
+  } else {
+    SemanticContext = CurContext;
+    Previous = LookupName(S, Name, LookupOrdinaryName, true);
+  }
+  
   assert(!Previous.isAmbiguous() && "Ambiguity in class template redecl?");
   NamedDecl *PrevDecl = 0;
   if (Previous.begin() != Previous.end())
     PrevDecl = *Previous.begin();
 
-  if (PrevDecl && !isDeclInScope(PrevDecl, CurContext, S))
+  if (PrevDecl && !isDeclInScope(PrevDecl, SemanticContext, S))
     PrevDecl = 0;
   
-  DeclContext *SemanticContext = CurContext;
-  if (SS.isNotEmpty() && !SS.isInvalid()) {
-    SemanticContext = computeDeclContext(SS);
-
-    // FIXME: need to match up several levels of template parameter lists here.
-  }
-
-  // FIXME: member templates!
-  TemplateParameterList *TemplateParams 
-    = static_cast<TemplateParameterList *>(*TemplateParameterLists.release());
-
   // If there is a previous declaration with the same name, check
   // whether this is a valid redeclaration.
   ClassTemplateDecl *PrevClassTemplate 
@@ -2106,28 +2110,20 @@ Sema::TemplateParameterListsAreEqual(TemplateParameterList *New,
 /// If the template declaration is valid in this scope, returns
 /// false. Otherwise, issues a diagnostic and returns true.
 bool 
-Sema::CheckTemplateDeclScope(Scope *S, 
-                             MultiTemplateParamsArg &TemplateParameterLists) {
-  assert(TemplateParameterLists.size() > 0 && "Not a template");
-
+Sema::CheckTemplateDeclScope(Scope *S, TemplateParameterList *TemplateParams) {
   // Find the nearest enclosing declaration scope.
   while ((S->getFlags() & Scope::DeclScope) == 0 ||
          (S->getFlags() & Scope::TemplateParamScope) != 0)
     S = S->getParent();
   
-  TemplateParameterList *TemplateParams = 
-    static_cast<TemplateParameterList*>(*TemplateParameterLists.get());
-  SourceLocation TemplateLoc = TemplateParams->getTemplateLoc();
-  SourceRange TemplateRange 
-    = SourceRange(TemplateLoc, TemplateParams->getRAngleLoc());
-
   // C++ [temp]p2:
   //   A template-declaration can appear only as a namespace scope or
   //   class scope declaration.
   DeclContext *Ctx = static_cast<DeclContext *>(S->getEntity());
   if (Ctx && isa<LinkageSpecDecl>(Ctx) &&
       cast<LinkageSpecDecl>(Ctx)->getLanguage() != LinkageSpecDecl::lang_cxx)
-    return Diag(TemplateLoc, diag::err_template_linkage) << TemplateRange;
+    return Diag(TemplateParams->getTemplateLoc(), diag::err_template_linkage) 
+             << TemplateParams->getSourceRange();
   
   while (Ctx && isa<LinkageSpecDecl>(Ctx))
     Ctx = Ctx->getParent();
@@ -2135,8 +2131,9 @@ Sema::CheckTemplateDeclScope(Scope *S,
   if (Ctx && (Ctx->isFileContext() || Ctx->isRecord()))
     return false;
 
-  return Diag(TemplateLoc, diag::err_template_outside_namespace_or_class_scope)
-    << TemplateRange;
+  return Diag(TemplateParams->getTemplateLoc(), 
+              diag::err_template_outside_namespace_or_class_scope)
+    << TemplateParams->getSourceRange();
 }
 
 /// \brief Check whether a class template specialization or explicit
@@ -2369,57 +2366,47 @@ Sema::ActOnClassTemplateSpecialization(Scope *S, unsigned TagSpec,
 
   // Check the validity of the template headers that introduce this
   // template.
-  // FIXME: Once we have member templates, we'll need to check
-  // C++ [temp.expl.spec]p17-18, where we could have multiple levels of
-  // template<> headers.
-  if (TemplateParameterLists.size() == 0)
-    Diag(KWLoc, diag::err_template_spec_needs_header)
-      << CodeModificationHint::CreateInsertion(KWLoc, "template<> ");
-  else {
-    TemplateParameterList *TemplateParams 
-      = static_cast<TemplateParameterList*>(*TemplateParameterLists.get());
-    if (TemplateParameterLists.size() > 1) {
-      Diag(TemplateParams->getTemplateLoc(),
-           diag::err_template_spec_extra_headers);
-      return true;
-    }
+  TemplateParameterList *TemplateParams
+    = MatchTemplateParametersToScopeSpecifier(TemplateNameLoc, SS, 
+                        (TemplateParameterList**)TemplateParameterLists.get(), 
+                                              TemplateParameterLists.size());
+  if (TemplateParams && TemplateParams->size() > 0) {
+    isPartialSpecialization = true;
 
-    if (TemplateParams->size() > 0) {
-      isPartialSpecialization = true;
-
-      // C++ [temp.class.spec]p10:
-      //   The template parameter list of a specialization shall not
-      //   contain default template argument values.
-      for (unsigned I = 0, N = TemplateParams->size(); I != N; ++I) {
-        Decl *Param = TemplateParams->getParam(I);
-        if (TemplateTypeParmDecl *TTP = dyn_cast<TemplateTypeParmDecl>(Param)) {
-          if (TTP->hasDefaultArgument()) {
-            Diag(TTP->getDefaultArgumentLoc(), 
-                 diag::err_default_arg_in_partial_spec);
-            TTP->setDefaultArgument(QualType(), SourceLocation(), false);
-          }
-        } else if (NonTypeTemplateParmDecl *NTTP
-                     = dyn_cast<NonTypeTemplateParmDecl>(Param)) {
-          if (Expr *DefArg = NTTP->getDefaultArgument()) {
-            Diag(NTTP->getDefaultArgumentLoc(), 
-                 diag::err_default_arg_in_partial_spec)
-              << DefArg->getSourceRange();
-            NTTP->setDefaultArgument(0);
-            DefArg->Destroy(Context);
-          }
-        } else {
-          TemplateTemplateParmDecl *TTP = cast<TemplateTemplateParmDecl>(Param);
-          if (Expr *DefArg = TTP->getDefaultArgument()) {
-            Diag(TTP->getDefaultArgumentLoc(), 
-                 diag::err_default_arg_in_partial_spec)
-              << DefArg->getSourceRange();
-            TTP->setDefaultArgument(0);
-            DefArg->Destroy(Context);
-          }
+    // C++ [temp.class.spec]p10:
+    //   The template parameter list of a specialization shall not
+    //   contain default template argument values.
+    for (unsigned I = 0, N = TemplateParams->size(); I != N; ++I) {
+      Decl *Param = TemplateParams->getParam(I);
+      if (TemplateTypeParmDecl *TTP = dyn_cast<TemplateTypeParmDecl>(Param)) {
+        if (TTP->hasDefaultArgument()) {
+          Diag(TTP->getDefaultArgumentLoc(), 
+               diag::err_default_arg_in_partial_spec);
+          TTP->setDefaultArgument(QualType(), SourceLocation(), false);
+        }
+      } else if (NonTypeTemplateParmDecl *NTTP
+                   = dyn_cast<NonTypeTemplateParmDecl>(Param)) {
+        if (Expr *DefArg = NTTP->getDefaultArgument()) {
+          Diag(NTTP->getDefaultArgumentLoc(), 
+               diag::err_default_arg_in_partial_spec)
+            << DefArg->getSourceRange();
+          NTTP->setDefaultArgument(0);
+          DefArg->Destroy(Context);
+        }
+      } else {
+        TemplateTemplateParmDecl *TTP = cast<TemplateTemplateParmDecl>(Param);
+        if (Expr *DefArg = TTP->getDefaultArgument()) {
+          Diag(TTP->getDefaultArgumentLoc(), 
+               diag::err_default_arg_in_partial_spec)
+            << DefArg->getSourceRange();
+          TTP->setDefaultArgument(0);
+          DefArg->Destroy(Context);
         }
       }
     }
-  }
+  } else if (!TemplateParams)
+    Diag(KWLoc, diag::err_template_spec_needs_header)
+      << CodeModificationHint::CreateInsertion(KWLoc, "template<> ");
 
   // Check that the specialization uses the same tag kind as the
   // original template.
@@ -2482,7 +2469,7 @@ Sema::ActOnClassTemplateSpecialization(Scope *S, unsigned TagSpec,
                                 ClassTemplate->getIdentifier(),
                                 TemplateNameLoc,
                                 Attr,
-                                move(TemplateParameterLists),
+                                TemplateParams,
                                 AS_none);
     }
 

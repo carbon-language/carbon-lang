@@ -2258,7 +2258,7 @@ public:
                                 SourceLocation KWLoc, const CXXScopeSpec &SS,
                                 IdentifierInfo *Name, SourceLocation NameLoc,
                                 AttributeList *Attr,
-                                MultiTemplateParamsArg TemplateParameterLists,
+                                TemplateParameterList *TemplateParams,
                                 AccessSpecifier AS);
 
   QualType CheckTemplateIdType(TemplateName Template,
@@ -2378,8 +2378,7 @@ public:
                                       SourceLocation TemplateArgLoc
                                        = SourceLocation());
   
-  bool CheckTemplateDeclScope(Scope *S, 
-                              MultiTemplateParamsArg &TemplateParameterLists);
+  bool CheckTemplateDeclScope(Scope *S, TemplateParameterList *TemplateParams);
 
   /// \brief Called when the parser has parsed a C++ typename
   /// specifier, e.g., "typename T::type".

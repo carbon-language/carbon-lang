@@ -2106,11 +2106,6 @@ Sema::ActOnVariableDeclarator(Scope* S, Declarator& D, DeclContext* DC,
     }
   }
         
-  // Check that we can declare a template here.
-  if (TemplateParamLists.size() && 
-      CheckTemplateDeclScope(S, TemplateParamLists))
-    return 0;
-  
   // Match up the template parameter lists with the scope specifier, then
   // determine whether we have a template or a template specialization.
   if (TemplateParameterList *TemplateParams
@@ -2391,11 +2386,6 @@ Sema::ActOnFunctionDeclarator(Scope* S, Declarator& D, DeclContext* DC,
     D.setInvalidType();
   }
 
-  // Check that we can declare a template here.
-  if (TemplateParamLists.size() && 
-      CheckTemplateDeclScope(S, TemplateParamLists))
-    return 0;
-  
   bool isVirtualOkay = false;
   FunctionDecl *NewFD;
   if (isFriend) {
@@ -2515,6 +2505,11 @@ Sema::ActOnFunctionDeclarator(Scope* S, Declarator& D, DeclContext* DC,
                                                   TemplateParamLists.size())) {
     if (TemplateParams->size() > 0) {
       // This is a function template
+      
+      // Check that we can declare a template here.
+      if (CheckTemplateDeclScope(S, TemplateParams))
+        return 0;
+      
       FunctionTemplate = FunctionTemplateDecl::Create(Context, CurContext,
                                                       NewFD->getLocation(),
                                                       Name, TemplateParams,
@@ -3960,8 +3955,9 @@ Sema::DeclPtrTy Sema::ActOnTag(Scope *S, unsigned TagSpec, TagUseKind TUK,
         OwnedDecl = false;
         DeclResult Result = CheckClassTemplate(S, TagSpec, TUK, KWLoc,
                                                SS, Name, NameLoc, Attr,
-                                               move(TemplateParameterLists),
+                                               TemplateParams,
                                                AS);
+        TemplateParameterLists.release();
         return Result.get();
       } else {
         // FIXME: diagnose the extraneous 'template<>', once we recover
