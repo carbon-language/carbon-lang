@@ -591,16 +591,6 @@ ParmVarDecl *TemplateDeclInstantiator::VisitParmVarDecl(ParmVarDecl *D) {
 
   QualType T = SemaRef.adjustParameterType(OrigT);
 
-  if (D->getDefaultArg()) {
-    // FIXME: Leave a marker for "uninstantiated" default
-    // arguments. They only get instantiated on demand at the call
-    // site.
-    unsigned DiagID = SemaRef.Diags.getCustomDiagID(Diagnostic::Warning,
-        "sorry, dropping default argument during template instantiation");
-    SemaRef.Diag(D->getDefaultArg()->getSourceRange().getBegin(), DiagID)
-      << D->getDefaultArg()->getSourceRange();
-  }
-
   // Allocate the parameter
   ParmVarDecl *Param = 0;
   if (T == OrigT)
@@ -613,6 +603,10 @@ ParmVarDecl *TemplateDeclInstantiator::VisitParmVarDecl(ParmVarDecl *D) {
                                         T, D->getDeclaratorInfo(), OrigT,
                                         D->getStorageClass(), 0);
 
+  // Mark the default argument as being uninstantiated.
+  if (Expr *Arg = D->getDefaultArg())
+    Param->setUninstantiatedDefaultArg(Arg);
+  
   // Note: we don't try to instantiate function parameters until after
   // we've instantiated the function's type. Therefore, we don't have
   // to check for 'void' parameter types here.

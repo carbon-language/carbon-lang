@@ -117,7 +117,7 @@ Sema::SetParamDefaultArgument(ParmVarDecl *Param, ExprArg DefaultArg,
   //   copy-initialization semantics (8.5).
   if (CheckInitializerTypes(Arg, ParamType, EqualLoc, 
                             Param->getDeclName(), /*DirectInit=*/false))
-    return false;
+    return true;
 
   Arg = MaybeCreateCXXExprWithTemporaries(Arg, /*DestroyTemps=*/false);
   
@@ -126,7 +126,7 @@ Sema::SetParamDefaultArgument(ParmVarDecl *Param, ExprArg DefaultArg,
   
   DefaultArg.release();
   
-  return true;
+  return false;
 }
 
 /// ActOnParamDefaultArgument - Check whether the default argument

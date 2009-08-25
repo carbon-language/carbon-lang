@@ -2500,6 +2500,33 @@ Sema::ConvertArgumentsForCall(CallExpr *Call, Expr *Fn,
         Diag(UnparsedDefaultArgLocs[Param], 
               diag::note_default_argument_declared_here);
       } else {
+        if (Param->hasUninstantiatedDefaultArg()) {
+          Expr *UninstExpr = Param->getUninstantiatedDefaultArg();
+
+          // Instantiate the expression.
+          const TemplateArgumentList &ArgList = 
+            getTemplateInstantiationArgs(FDecl);
+          
+          // FIXME: We should really make a new InstantiatingTemplate ctor
+          // that has a better message - right now we're just piggy-backing 
+          // off the "default template argument" error message.
+          InstantiatingTemplate Inst(*this, Call->getSourceRange().getBegin(),
+                                     FDecl->getPrimaryTemplate(),
+                                     ArgList.getFlatArgumentList(),
+                                     ArgList.flat_size());
+
+          OwningExprResult Result
+            = InstantiateExpr(UninstExpr, 
+                              getTemplateInstantiationArgs(FDecl));
+          if (Result.isInvalid()) 
+            return true;
+          
+          if (SetParamDefaultArgument(Param, move(Result), 
+                                      /*FIXME:EqualLoc*/
+                                      UninstExpr->getSourceRange().getBegin()))
+            return true;
+        }
+        
         Expr *DefaultExpr = Param->getDefaultArg();
         
         // If the default expression creates temporaries, we need to
