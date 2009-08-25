@@ -1222,9 +1222,6 @@ static void HandleFormatAttr(Decl *d, const AttributeList &Attr, Sema &S) {
     return;
   }
 
-  // FIXME: in C++ the implicit 'this' function parameter also counts.  this is
-  // needed in order to be compatible with GCC the index must start in 1 and the
-  // limit is numargs+1
   unsigned NumArgs  = getFunctionOrMethodNumArgs(d);
   unsigned FirstIdx = 1;
 
@@ -1271,6 +1268,16 @@ static void HandleFormatAttr(Decl *d, const AttributeList &Attr, Sema &S) {
     return;
   }
 
+  // FIXME: We should handle the implicit 'this' parameter in a more generic
+  // way that can be used for other arguments.
+  bool HasImplicitThisParam = false;
+  if (CXXMethodDecl *MD = dyn_cast<CXXMethodDecl>(d)) {
+    if (MD->isInstance()) {
+      HasImplicitThisParam = true;
+      NumArgs++;
+    }
+  }
+  
   if (Idx.getZExtValue() < FirstIdx || Idx.getZExtValue() > NumArgs) {
     S.Diag(Attr.getLoc(), diag::err_attribute_argument_out_of_bounds)
       << "format" << 2 << IdxExpr->getSourceRange();
@@ -1280,6 +1287,8 @@ static void HandleFormatAttr(Decl *d, const AttributeList &Attr, Sema &S) {
   // FIXME: Do we need to bounds check?
   unsigned ArgIdx = Idx.getZExtValue() - 1;
 
+  if (HasImplicitThisParam) ArgIdx--;
+  
   // make sure the format string is really a string
   QualType Ty = getFunctionOrMethodArgType(d, ArgIdx);
 
