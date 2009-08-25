@@ -63,6 +63,7 @@
 #include "llvm/Constants.h"
 #include "llvm/DerivedTypes.h"
 #include "llvm/GlobalVariable.h"
+#include "llvm/GlobalAlias.h"
 #include "llvm/Instructions.h"
 #include "llvm/LLVMContext.h"
 #include "llvm/Operator.h"
@@ -2906,6 +2907,8 @@ const SCEV *ScalarEvolution::createSCEV(Value *V) {
     return getIntegerSCEV(0, V->getType());
   else if (isa<UndefValue>(V))
     return getIntegerSCEV(0, V->getType());
+  else if (GlobalAlias *GA = dyn_cast<GlobalAlias>(V))
+    return GA->mayBeOverridden() ? getUnknown(V) : getSCEV(GA->getAliasee());
   else
     return getUnknown(V);
 
