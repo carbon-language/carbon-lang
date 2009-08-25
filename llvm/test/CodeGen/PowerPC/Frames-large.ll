@@ -5,13 +5,6 @@
 ; RUN: llc < %t.bc -march=ppc64 | FileCheck %s -check-prefix=PPC64-NOFP
 ; RUN: llc < %t.bc -march=ppc64 -disable-fp-elim | FileCheck %s -check-prefix=PPC64-FP
 
-; RUN: llvm-as < %s | llc -march=ppc64 -mtriple=powerpc-apple-darwin8 -disable-fp-elim > %t
-; RUN: grep {std r31, 40(r1)} %t
-; RUN: grep {lis r0, -1} %t
-; RUN: grep {ori r0, r0, 32656} %t
-; RUN: grep {stdux r1, r1, r0} %t
-; RUN: grep {ld r1, 0(r1)} %t
-; RUN: grep {ld r31, 40(r1)} %t
 
 target triple = "powerpc-apple-darwin8"
 
