@@ -98,18 +98,16 @@ private:
 public:
   /// Construct a GRCoreEngine object to analyze the provided CFG using
   ///  a DFS exploration of the exploded graph.
-  GRCoreEngine(CFG& cfg, const Decl &cd, ASTContext& ctx,
-               GRSubEngine& subengine)
-    : SubEngine(subengine), G(new ExplodedGraph(cfg, cd, ctx)), 
+  GRCoreEngine(ASTContext& ctx, GRSubEngine& subengine)
+    : SubEngine(subengine), G(new ExplodedGraph(ctx)), 
       WList(GRWorkList::MakeBFS()),
       BCounterFactory(G->getAllocator()) {}
 
   /// Construct a GRCoreEngine object to analyze the provided CFG and to
   ///  use the provided worklist object to execute the worklist algorithm.
   ///  The GRCoreEngine object assumes ownership of 'wlist'.
-  GRCoreEngine(CFG& cfg, const Decl &cd, ASTContext& ctx, GRWorkList* wlist,
-               GRSubEngine& subengine)
-    : SubEngine(subengine), G(new ExplodedGraph(cfg, cd, ctx)), WList(wlist),
+  GRCoreEngine(ASTContext& ctx, GRWorkList* wlist, GRSubEngine& subengine)
+    : SubEngine(subengine), G(new ExplodedGraph(ctx)), WList(wlist),
       BCounterFactory(G->getAllocator()) {}
 
   ~GRCoreEngine() {
@@ -126,8 +124,6 @@ public:
   /// ExecuteWorkList - Run the worklist algorithm for a maximum number of
   ///  steps.  Returns true if there is still simulation state on the worklist.
   bool ExecuteWorkList(const LocationContext *L, unsigned Steps);
-  
-  CFG& getCFG() { return G->getCFG(); }
 };
   
 class GRStmtNodeBuilder {

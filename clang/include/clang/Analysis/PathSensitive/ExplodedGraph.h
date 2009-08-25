@@ -223,14 +223,6 @@ protected:
   /// Allocator - BumpPtrAllocator to create nodes.
   llvm::BumpPtrAllocator Allocator;
   
-  /// cfg - The CFG associated with this analysis graph.
-  CFG& cfg;
-  
-  // FIXME: Remove.
-  /// CodeDecl - The declaration containing the code being analyzed.  This
-  ///  can be a FunctionDecl or and ObjCMethodDecl.
-  const Decl& CodeDecl;
-  
   /// Ctx - The ASTContext used to "interpret" CodeDecl.
   ASTContext& Ctx;
   
@@ -247,7 +239,7 @@ public:
                         bool* IsNew = 0);
   
   ExplodedGraph* MakeEmptyGraph() const {
-    return new ExplodedGraph(cfg, CodeDecl, Ctx);
+    return new ExplodedGraph(Ctx);
   }
 
   /// addRoot - Add an untyped node to the set of roots.
@@ -262,8 +254,7 @@ public:
     return V;
   }
 
-  ExplodedGraph(CFG& c, const Decl &cd, ASTContext& ctx)
-    : cfg(c), CodeDecl(cd), Ctx(ctx), NumNodes(0) {}
+  ExplodedGraph(ASTContext& ctx) : Ctx(ctx), NumNodes(0) {}
 
   virtual ~ExplodedGraph() {}
 
@@ -308,16 +299,9 @@ public:
   const_eop_iterator eop_end() const { return EndNodes.end(); }
 
   llvm::BumpPtrAllocator& getAllocator() { return Allocator; }
-  CFG& getCFG() { return cfg; }
+
   ASTContext& getContext() { return Ctx; }
 
-  // FIXME: Remove.
-  const Decl& getCodeDecl() const { return CodeDecl; }
-
-  const FunctionDecl* getFunctionDecl() const {
-    return llvm::dyn_cast<FunctionDecl>(&CodeDecl);
-  }
-  
   typedef llvm::DenseMap<const ExplodedNode*, ExplodedNode*> NodeMap;
 
   std::pair<ExplodedGraph*, InterExplodedGraphMap*>

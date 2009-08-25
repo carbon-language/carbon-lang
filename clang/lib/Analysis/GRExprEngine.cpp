@@ -153,7 +153,7 @@ GRExprEngine::GRExprEngine(CFG &cfg, const Decl &CD, ASTContext &Ctx,
                            StoreManagerCreator SMC,
                            ConstraintManagerCreator CMC)
   : AMgr(mgr),
-    CoreEngine(cfg, CD, Ctx, *this), 
+    CoreEngine(Ctx, *this), 
     G(CoreEngine.getGraph()),
     Liveness(L),
     Builder(NULL),
@@ -316,7 +316,7 @@ void GRExprEngine::Visit(Stmt* S, ExplodedNode* Pred, ExplodedNodeSet& Dst) {
   //  this check when we KNOW that there is no block-level subexpression.
   //  The motivation is that this check requires a hashtable lookup.
   
-  if (S != CurrentStmt && getCFG().isBlkExpr(S)) {
+  if (S != CurrentStmt && Pred->getLocationContext()->getCFG()->isBlkExpr(S)) {
     Dst.Add(Pred);
     return;
   }
@@ -494,7 +494,7 @@ void GRExprEngine::VisitLValue(Expr* Ex, ExplodedNode* Pred,
   
   Ex = Ex->IgnoreParens();
   
-  if (Ex != CurrentStmt && getCFG().isBlkExpr(Ex)) {
+  if (Ex != CurrentStmt && Pred->getLocationContext()->getCFG()->isBlkExpr(Ex)) {
     Dst.Add(Pred);
     return;
   }
@@ -807,7 +807,7 @@ void GRExprEngine::ProcessIndirectGoto(GRIndirectGotoNodeBuilder& builder) {
 void GRExprEngine::VisitGuardedExpr(Expr* Ex, Expr* L, Expr* R,
                                     ExplodedNode* Pred, ExplodedNodeSet& Dst) {
   
-  assert (Ex == CurrentStmt && getCFG().isBlkExpr(Ex));
+  assert (Ex == CurrentStmt && Pred->getLocationContext()->getCFG()->isBlkExpr(Ex));
   
   const GRState* state = GetState(Pred);
   SVal X = state->getBlkExprSVal(Ex);
@@ -917,7 +917,7 @@ void GRExprEngine::VisitLogicalExpr(BinaryOperator* B, ExplodedNode* Pred,
   assert(B->getOpcode() == BinaryOperator::LAnd ||
          B->getOpcode() == BinaryOperator::LOr);
   
-  assert(B == CurrentStmt && getCFG().isBlkExpr(B));
+  assert(B == CurrentStmt && Pred->getLocationContext()->getCFG()->isBlkExpr(B));
   
   const GRState* state = GetState(Pred);
   SVal X = state->getBlkExprSVal(B);

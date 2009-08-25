@@ -3025,7 +3025,7 @@ void CFRefCount::EvalObjCMessageExpr(ExplodedNodeSet& Dst,
 
     // Special-case: are we sending a mesage to "self"?
     //  This is a hack.  When we have full-IP this should be removed.
-    if (isa<ObjCMethodDecl>(&Eng.getGraph().getCodeDecl())) {      
+    if (isa<ObjCMethodDecl>(Pred->getLocationContext()->getDecl())) {      
       if (Expr* Receiver = ME->getReceiver()) {
         SVal X = St->getSValAsScalarOrLoc(Receiver);
         if (loc::MemRegionVal* L = dyn_cast<loc::MemRegionVal>(&X)) {          

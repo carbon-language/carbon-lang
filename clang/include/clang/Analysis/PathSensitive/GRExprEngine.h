@@ -217,9 +217,6 @@ public:
   /// getContext - Return the ASTContext associated with this analysis.
   ASTContext& getContext() const { return G.getContext(); }
   
-  /// getCFG - Returns the CFG associated with this analysis.
-  CFG& getCFG() { return G.getCFG(); }
-  
   SValuator &getSValuator() { return SVator; }
   
   GRTransferFuncs& getTF() { return *StateMgr.TF; }

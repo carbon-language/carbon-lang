@@ -151,7 +151,7 @@ bool GRCoreEngine::ExecuteWorkList(const LocationContext *L, unsigned Steps) {
   if (G->num_roots() == 0) { // Initialize the analysis by constructing
     // the root if none exists.
     
-    CFGBlock* Entry = &getCFG().getEntry();
+    CFGBlock* Entry = &(L->getCFG()->getEntry());
     
     assert (Entry->empty() && 
             "Entry block must be empty.");
@@ -214,9 +214,9 @@ void GRCoreEngine::HandleBlockEdge(const BlockEdge& L, ExplodedNode* Pred) {
   CFGBlock* Blk = L.getDst();
   
   // Check if we are entering the EXIT block. 
-  if (Blk == &getCFG().getExit()) {
+  if (Blk == &(Pred->getLocationContext()->getCFG()->getExit())) {
     
-    assert (getCFG().getExit().size() == 0 
+    assert (Pred->getLocationContext()->getCFG()->getExit().size() == 0 
             && "EXIT block cannot contain Stmts.");
 
     // Process the final state transition.
