@@ -274,7 +274,7 @@ sys::Path WriteGraph(const GraphType &G, const std::string &Name,
   errs() << "Writing '" << Filename.str() << "'... ";
 
   std::string ErrorInfo;
-  raw_fd_ostream O(Filename.c_str(), ErrorInfo, raw_fd_ostream::F_Force);
+  raw_fd_ostream O(Filename.c_str(), ErrorInfo);
 
   if (ErrorInfo.empty()) {
     WriteGraph(O, G, ShortNames, Name, Title);

@@ -368,7 +368,6 @@ GCC::FileType LLC::OutputCode(const std::string &Bitcode,
 
   LLCArgs.push_back ("-o");
   LLCArgs.push_back (OutputAsmFile.c_str()); // Output to the Asm file
-  LLCArgs.push_back ("-f");                  // Overwrite as necessary...
   LLCArgs.push_back (Bitcode.c_str());      // This is the input bitcode
   LLCArgs.push_back (0);
 

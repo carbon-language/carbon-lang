@@ -335,9 +335,9 @@ void format_object_base::home() {
 /// if no error occurred.
 raw_fd_ostream::raw_fd_ostream(const char *Filename, std::string &ErrorInfo,
                                unsigned Flags) : pos(0) {
-  // Verify that we don't have both "append" and "force".
-  assert((!(Flags & F_Force) || !(Flags & F_Append)) &&
-         "Cannot specify both 'force' and 'append' file creation flags!");
+  // Verify that we don't have both "append" and "excl".
+  assert((!(Flags & F_Excl) || !(Flags & F_Append)) &&
+         "Cannot specify both 'excl' and 'append' file creation flags!");
   
   ErrorInfo.clear();
 
@@ -358,11 +358,11 @@ raw_fd_ostream::raw_fd_ostream(const char *Filename, std::string &ErrorInfo,
     OpenFlags |= O_BINARY;
 #endif
   
-  if (Flags & F_Force)
-    OpenFlags |= O_TRUNC;
-  else if (Flags & F_Append)
+  if (Flags & F_Append)
     OpenFlags |= O_APPEND;
   else
+    OpenFlags |= O_TRUNC;
+  if (Flags & F_Excl)
     OpenFlags |= O_EXCL;
   
   FD = open(Filename, OpenFlags, 0664);

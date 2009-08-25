@@ -110,7 +110,6 @@ int main(int argc, char **argv) {
     if (OutputFilename != "-") {
       std::string ErrInfo;
       out = new raw_fd_ostream(OutputFilename.c_str(), ErrInfo,
-                               raw_fd_ostream::F_Force|
                                raw_fd_ostream::F_Binary);
     }
   }

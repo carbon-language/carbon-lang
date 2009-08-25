@@ -38,7 +38,7 @@ OutputFilename("o", cl::desc("Override output filename"),
                cl::value_desc("filename"));
 
 static cl::opt<bool>
-Force("f", cl::desc("Overwrite output files"));
+Force("f", cl::desc("Enable binary output on terminals"));
 
 static cl::opt<bool>
 DisableOutput("disable-output", cl::desc("Disable output"), cl::init(false));
@@ -98,12 +98,9 @@ int main(int argc, char **argv) {
   std::string ErrorInfo;
   std::auto_ptr<raw_ostream> Out
   (new raw_fd_ostream(OutputFilename.c_str(), ErrorInfo,
-                      (Force?raw_fd_ostream::F_Force : 0) |
                       raw_fd_ostream::F_Binary));
   if (!ErrorInfo.empty()) {
     errs() << ErrorInfo << '\n';
-    if (!Force)
-      errs() << "Use -f command line argument to force output\n";
     return 1;
   }
   

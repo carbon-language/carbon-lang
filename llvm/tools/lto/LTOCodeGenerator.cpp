@@ -148,7 +148,7 @@ bool LTOCodeGenerator::writeMergedModules(const char *path,
   // create output file
   std::string ErrInfo;
   raw_fd_ostream Out(path, ErrInfo,
-                     raw_fd_ostream::F_Force|raw_fd_ostream::F_Binary);
+                     raw_fd_ostream::F_Binary);
   if (!ErrInfo.empty()) {
     errMsg = "could not open bitcode file for writing: ";
     errMsg += path;
@@ -179,8 +179,7 @@ const void* LTOCodeGenerator::compile(size_t* length, std::string& errMsg)
     // generate assembly code
     bool genResult = false;
     {
-      raw_fd_ostream asmFD(uniqueAsmPath.c_str(), errMsg,
-                           raw_fd_ostream::F_Force);
+      raw_fd_ostream asmFD(uniqueAsmPath.c_str(), errMsg);
       formatted_raw_ostream asmFile(asmFD);
       if (!errMsg.empty())
         return NULL;

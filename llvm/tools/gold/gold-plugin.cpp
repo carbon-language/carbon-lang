@@ -364,7 +364,7 @@ ld_plugin_status all_symbols_read_hook(void) {
   }
   raw_fd_ostream *objFile = 
     new raw_fd_ostream(uniqueObjPath.c_str(), ErrMsg,
-                       raw_fd_ostream::F_Force|raw_fd_ostream::F_Binary);
+                       raw_fd_ostream::F_Binary);
   if (!ErrMsg.empty()) {
     delete objFile;
     (*message)(LDPL_ERROR, "%s", ErrMsg.c_str());

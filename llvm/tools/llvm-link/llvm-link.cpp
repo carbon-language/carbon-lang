@@ -22,6 +22,7 @@
 #include "llvm/Support/MemoryBuffer.h"
 #include "llvm/Support/PrettyStackTrace.h"
 #include "llvm/Support/raw_ostream.h"
+#include "llvm/Support/SystemUtils.h"
 #include "llvm/System/Signals.h"
 #include "llvm/System/Path.h"
 #include <memory>
@@ -35,7 +36,8 @@ static cl::opt<std::string>
 OutputFilename("o", cl::desc("Override output filename"), cl::init("-"),
                cl::value_desc("filename"));
 
-static cl::opt<bool> Force("f", cl::desc("Overwrite output files"));
+static cl::opt<bool>
+Force("f", cl::desc("Enable binary output on terminals"));
 
 static cl::opt<bool>
 Verbose("v", cl::desc("Print information about actions taken"));
@@ -122,12 +124,9 @@ int main(int argc, char **argv) {
   std::string ErrorInfo;
   std::auto_ptr<raw_ostream> 
   Out(new raw_fd_ostream(OutputFilename.c_str(), ErrorInfo,
-                         raw_fd_ostream::F_Binary |
-                         (Force ? raw_fd_ostream::F_Force : 0)));
+                         raw_fd_ostream::F_Binary));
   if (!ErrorInfo.empty()) {
     errs() << ErrorInfo << '\n';
-    if (!Force)
-      errs() << "Use -f command line argument to force output\n";
     return 1;
   }
 
@@ -142,7 +141,8 @@ int main(int argc, char **argv) {
   }
 
   if (Verbose) errs() << "Writing bitcode...\n";
-  WriteBitcodeToFile(Composite.get(), *Out);
+  if (Force || !CheckBitcodeOutputToConsole(*Out, true))
+    WriteBitcodeToFile(Composite.get(), *Out);
 
   return 0;
 }

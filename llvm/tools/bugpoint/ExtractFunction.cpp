@@ -337,8 +337,7 @@ Module *BugDriver::ExtractMappedBlocksFromModule(const
   sys::RemoveFileOnSignal(uniqueFilename);
 
   std::string ErrorInfo;
-  raw_fd_ostream BlocksToNotExtractFile(uniqueFilename.c_str(), ErrorInfo,
-                                        raw_fd_ostream::F_Force);
+  raw_fd_ostream BlocksToNotExtractFile(uniqueFilename.c_str(), ErrorInfo);
   if (!ErrorInfo.empty()) {
     outs() << "*** Basic Block extraction failed!\n";
     errs() << "Error writing list of blocks to not extract: " << ErrorInfo

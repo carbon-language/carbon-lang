@@ -53,7 +53,7 @@ FileType("filetype", cl::init(OFT_AssemblyFile),
        clEnumValEnd));
 
 static cl::opt<bool>
-Force("f", cl::desc("Overwrite output files"));
+Force("f", cl::desc("Enable binary output on terminals"));
 
 static cl::list<std::string>
 IncludeDirs("I", cl::desc("Directory of include files"),
@@ -184,12 +184,9 @@ static formatted_raw_ostream *GetOutputStream() {
 
   std::string Err;
   raw_fd_ostream *Out = new raw_fd_ostream(OutputFilename.c_str(), Err,
-                                           raw_fd_ostream::F_Binary |
-                                         (Force ? raw_fd_ostream::F_Force : 0));
+                                           raw_fd_ostream::F_Binary);
   if (!Err.empty()) {
     errs() << Err << '\n';
-    if (!Force)
-      errs() << "Use -f command line argument to force output\n";
     delete Out;
     return 0;
   }

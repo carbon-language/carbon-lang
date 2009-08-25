@@ -23,6 +23,7 @@
 #include "llvm/Support/MemoryBuffer.h"
 #include "llvm/Support/PrettyStackTrace.h"
 #include "llvm/Support/raw_ostream.h"
+#include "llvm/Support/SystemUtils.h"
 #include "llvm/System/Signals.h"
 #include <memory>
 using namespace llvm;
@@ -37,7 +38,7 @@ OutputFilename("o", cl::desc("Specify output filename"),
                cl::value_desc("filename"), cl::init("-"));
 
 static cl::opt<bool>
-Force("f", cl::desc("Overwrite output files"));
+Force("f", cl::desc("Enable binary output on terminals"));
 
 static cl::opt<bool>
 DeleteFn("delete", cl::desc("Delete specified Globals from Module"));
@@ -113,16 +114,15 @@ int main(int argc, char **argv) {
   std::string ErrorInfo;
   std::auto_ptr<raw_fd_ostream>
   Out(new raw_fd_ostream(OutputFilename.c_str(), ErrorInfo,
-                         raw_fd_ostream::F_Binary |
-                         (Force ? raw_fd_ostream::F_Force : 0)));
+                         raw_fd_ostream::F_Binary));
   if (!ErrorInfo.empty()) {
     errs() << ErrorInfo << '\n';
-    if (!Force)
-      errs() << "Use -f command line argument to force output\n";
     return 1;
   }
 
-  Passes.add(createBitcodeWriterPass(*Out));
+  if (Force || !CheckBitcodeOutputToConsole(*Out, true))
+    Passes.add(createBitcodeWriterPass(*Out));
+
   Passes.run(*M.get());
 
   return 0;

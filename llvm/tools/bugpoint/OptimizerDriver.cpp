@@ -53,7 +53,7 @@ bool BugDriver::writeProgramToFile(const std::string &Filename,
                                    Module *M) const {
   std::string ErrInfo;
   raw_fd_ostream Out(Filename.c_str(), ErrInfo,
-                     raw_fd_ostream::F_Force|raw_fd_ostream::F_Binary);
+                     raw_fd_ostream::F_Binary);
   if (!ErrInfo.empty()) return true;
   
   WriteBitcodeToFile(M ? M : Program, Out);
@@ -85,7 +85,7 @@ void BugDriver::EmitProgressBitcode(const std::string &ID, bool NoFlyer) {
 int BugDriver::runPassesAsChild(const std::vector<const PassInfo*> &Passes) {
   std::string ErrInfo;
   raw_fd_ostream OutFile(ChildOutput.c_str(), ErrInfo,
-                         raw_fd_ostream::F_Force|raw_fd_ostream::F_Binary);
+                         raw_fd_ostream::F_Binary);
   if (!ErrInfo.empty()) {
     errs() << "Error opening bitcode file: " << ChildOutput << "\n";
     return 1;
@@ -148,7 +148,7 @@ bool BugDriver::runPasses(const std::vector<const PassInfo*> &Passes,
   
   std::string ErrInfo;
   raw_fd_ostream InFile(inputFilename.c_str(), ErrInfo,
-                        raw_fd_ostream::F_Force|raw_fd_ostream::F_Binary);
+                        raw_fd_ostream::F_Binary);
   
   
   if (!ErrInfo.empty()) {

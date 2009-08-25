@@ -55,7 +55,8 @@ InputFilename(cl::Positional, cl::desc("<input bitcode>"), cl::init("-"));
 static cl::opt<std::string>
 OutputFilename("o", cl::desc("Output filename"), cl::value_desc("filename"));
 
-static cl::opt<bool> Force("f", cl::desc("Overwrite output files"));
+static cl::opt<bool>
+Force("f", cl::desc("Enable binary output on terminals"));
 
 // Determine optimization level.
 static cl::opt<char>
@@ -139,12 +140,9 @@ static formatted_raw_ostream *GetOutputStream(const char *TargetName,
     std::string error;
     raw_fd_ostream *FDOut =
       new raw_fd_ostream(OutputFilename.c_str(), error,
-                         (Force ? raw_fd_ostream::F_Force : 0)|
                          raw_fd_ostream::F_Binary);
     if (!error.empty()) {
       errs() << error << '\n';
-      if (!Force)
-        errs() << "Use -f command line argument to force output\n";
       delete FDOut;
       return 0;
     }
@@ -190,14 +188,11 @@ static formatted_raw_ostream *GetOutputStream(const char *TargetName,
 
   std::string error;
   unsigned OpenFlags = 0;
-  if (Force) OpenFlags |= raw_fd_ostream::F_Force;
   if (Binary) OpenFlags |= raw_fd_ostream::F_Binary;
   raw_fd_ostream *FDOut = new raw_fd_ostream(OutputFilename.c_str(), error,
                                              OpenFlags);
   if (!error.empty()) {
     errs() << error << '\n';
-    if (!Force)
-      errs() << "Use -f command line argument to force output\n";
     delete FDOut;
     return 0;
   }

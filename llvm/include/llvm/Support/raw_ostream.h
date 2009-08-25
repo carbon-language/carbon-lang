@@ -328,18 +328,17 @@ class raw_fd_ostream : public raw_ostream {
 public:
   
   enum {
-    /// F_Force - When opening a file, this flag makes raw_fd_ostream overwrite
-    /// a file if it already exists instead of emitting an error.   This may not
-    /// be specified with F_Append.
-    F_Force  = 1,
+    /// F_Excl - When opening a file, this flag makes raw_fd_ostream
+    /// report an error if the file already exists.
+    F_Excl  = 1,
 
     /// F_Append - When opening a file, if it already exists append to the
     /// existing file instead of returning an error.  This may not be specified
-    /// with F_Force.
+    /// with F_Excl.
     F_Append = 2,
 
     /// F_Binary - The file should be opened in binary mode on platforms that
-    /// support this distinction.
+    /// make this distinction.
     F_Binary = 4
   };
   

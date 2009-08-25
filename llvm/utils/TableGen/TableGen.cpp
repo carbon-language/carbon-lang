@@ -171,8 +171,7 @@ int main(int argc, char **argv) {
   raw_ostream *Out = &outs();
   if (OutputFilename != "-") {
     std::string Error;
-    Out = new raw_fd_ostream(OutputFilename.c_str(), Error,
-                             raw_fd_ostream::F_Force);
+    Out = new raw_fd_ostream(OutputFilename.c_str(), Error);
 
     if (!Error.empty()) {
       errs() << argv[0] << ": error opening " << OutputFilename 
