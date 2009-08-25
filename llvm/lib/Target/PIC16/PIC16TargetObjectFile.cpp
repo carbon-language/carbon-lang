@@ -19,9 +19,9 @@
 using namespace llvm;
 
 
-MCSectionPIC16 *MCSectionPIC16::Create(const StringRef &Name, 
-                                       SectionKind K, MCContext &Ctx) {
-  return new (Ctx) MCSectionPIC16(Name, K);
+MCSectionPIC16 *MCSectionPIC16::Create(const StringRef &Name, SectionKind K, 
+                                       int Address, MCContext &Ctx) {
+  return new (Ctx) MCSectionPIC16(Name, K, Address);
 }
 
 
@@ -38,12 +38,12 @@ PIC16TargetObjectFile::PIC16TargetObjectFile()
 }
 
 const MCSectionPIC16 *PIC16TargetObjectFile::
-getPIC16Section(const char *Name, SectionKind Kind) const {
+getPIC16Section(const char *Name, SectionKind Kind, int Address) const {
   MCSectionPIC16 *&Entry = SectionsByName[Name];
   if (Entry)
     return Entry;
 
-  return Entry = MCSectionPIC16::Create(Name, Kind, getContext());
+  return Entry = MCSectionPIC16::Create(Name, Kind, Address, getContext());
 }
 
 

@@ -18,20 +18,65 @@
 
 namespace llvm {
 
+  /// MCSectionPIC16 - Represents a physical section in PIC16 COFF.
+  /// Contains data objects.
+  ///
   class MCSectionPIC16 : public MCSection {
+    /// Name of the section to uniquely identify it.
     std::string Name;
+
+    /// User can specify an address at which a section should be placed. 
+    /// Negative value here means user hasn't specified any. 
+    int Address; 
+
+    /// FIXME: Keep overlay information here. uncomment the decl below.
+    /// Overlay information - Sections with same color can be overlaid on
+    /// one another.
+    /// std::string Color; 
+
+    /// Conatined data objects.
+    std::vector<const GlobalVariable *>Items;
+
+    /// Total size of all data objects contained here.
+    unsigned Size;
     
-    MCSectionPIC16(const StringRef &name, SectionKind K)
-      : MCSection(K), Name(name) {
+    MCSectionPIC16(const StringRef &name, SectionKind K, int addr)
+      : MCSection(K), Name(name), Address(addr) {
     }
     
   public:
-    
+    /// Return the name of the section.
     const std::string &getName() const { return Name; }
+
+    /// Return the Address of the section.
+    int getAddress() const { return Address; }
+
+    /// PIC16 Terminology for section kinds is as below.
+    /// UDATA - BSS
+    /// IDATA - initialized data (equiv to Metadata) 
+    /// ROMDATA - ReadOnly.
+    /// UDATA_OVR - Sections that can be overlaid. Section of such type is
+    ///             used to contain function autos an frame. We can think of
+    ///             it as equiv to llvm ThreadBSS)
+    /// So, let's have some convenience functions to Map PIC16 Section types 
+    /// to SectionKind just for the sake of better readability.
+    static SectionKind UDATA_Kind() { return SectionKind::getBSS(); } 
+    static SectionKind IDATA_Kind() { return SectionKind::getMetadata(); }
+    static SectionKind ROMDATA_Kind() { return SectionKind::getReadOnly(); }
+    static SectionKind UDATA_OVR_Kind() { return SectionKind::getThreadBSS(); }
+
+    // If we could just do getKind() == UDATA_Kind() ?
+    bool isUDATA_Kind() { return getKind().isBSS(); }
+    bool isIDATA_Kind() { return getKind().isMetadata(); }
+    bool isROMDATA_Kind() { return getKind().isMetadata(); }
+    bool isUDATA_OVR_Kind() { return getKind().isThreadBSS(); }
+
+    /// This would be the only way to create a section. 
+    static MCSectionPIC16 *Create(const StringRef &Name, SectionKind K, 
+                                  int Address, MCContext &Ctx);
     
-    static MCSectionPIC16 *Create(const StringRef &Name, 
-                                  SectionKind K, MCContext &Ctx);
-    
+    /// Override this as PIC16 has its own way of printing switching
+    /// to a section.
     virtual void PrintSwitchToSection(const MCAsmInfo &MAI,
                                       raw_ostream &OS) const;
   };

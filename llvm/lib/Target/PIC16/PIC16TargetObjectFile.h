@@ -53,7 +53,8 @@ namespace llvm {
     const TargetMachine *TM;
     
     const MCSectionPIC16 *getPIC16Section(const char *Name,
-                                          SectionKind K) const;
+                                          SectionKind K, 
+                                          int Address = -1) const;
   public:
     mutable std::vector<PIC16Section*> BSSSections;
     mutable std::vector<PIC16Section*> IDATASections;
