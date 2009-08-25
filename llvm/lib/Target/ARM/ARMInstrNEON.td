@@ -73,33 +73,6 @@ def NEONvduplane  : SDNode<"ARMISD::VDUPLANE",
                            SDTypeProfile<1, 2, [SDTCisVec<0>, SDTCisVec<1>,
                                                 SDTCisVT<2, i32>]>>;
 
-def SDTARMVLD2    : SDTypeProfile<2, 1, [SDTCisSameAs<0, 1>, SDTCisPtrTy<2>]>;
-def SDTARMVLD3    : SDTypeProfile<3, 1, [SDTCisSameAs<0, 1>,
-                                         SDTCisSameAs<0, 2>, SDTCisPtrTy<3>]>;
-def SDTARMVLD4    : SDTypeProfile<4, 1, [SDTCisSameAs<0, 1>,
-                                         SDTCisSameAs<0, 2>,
-                                         SDTCisSameAs<0, 3>, SDTCisPtrTy<4>]>;
-def NEONvld2d     : SDNode<"ARMISD::VLD2D", SDTARMVLD2,
-                           [SDNPHasChain, SDNPMayLoad]>;
-def NEONvld3d     : SDNode<"ARMISD::VLD3D", SDTARMVLD3,
-                           [SDNPHasChain, SDNPMayLoad]>;
-def NEONvld4d     : SDNode<"ARMISD::VLD4D", SDTARMVLD4,
-                           [SDNPHasChain, SDNPMayLoad]>;
-
-def SDTARMVST2    : SDTypeProfile<0, 3, [SDTCisPtrTy<0>, SDTCisSameAs<1, 2>]>;
-def SDTARMVST3    : SDTypeProfile<0, 4, [SDTCisPtrTy<0>, SDTCisSameAs<1, 2>,
-                                         SDTCisSameAs<1, 3>]>;
-def SDTARMVST4    : SDTypeProfile<0, 5, [SDTCisPtrTy<0>, SDTCisSameAs<1, 2>,
-                                         SDTCisSameAs<1, 3>,
-                                         SDTCisSameAs<1, 4>]>;
-
-def NEONvst2d     : SDNode<"ARMISD::VST2D", SDTARMVST2,
-                           [SDNPHasChain, SDNPMayStore]>;
-def NEONvst3d     : SDNode<"ARMISD::VST3D", SDTARMVST3,
-                           [SDNPHasChain, SDNPMayStore]>;
-def NEONvst4d     : SDNode<"ARMISD::VST4D", SDTARMVST4,
-                           [SDNPHasChain, SDNPMayStore]>;
-
 def SDTARMVEXT    : SDTypeProfile<1, 3, [SDTCisVec<0>, SDTCisSameAs<0, 1>,
                                          SDTCisSameAs<0, 2>, SDTCisVT<3, i32>]>;
 def NEONvext      : SDNode<"ARMISD::VEXT", SDTARMVEXT>;
