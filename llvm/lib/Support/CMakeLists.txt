@@ -30,6 +30,7 @@ add_llvm_library(LLVMSupport
   Timer.cpp
   Triple.cpp
   Twine.cpp
+  raw_os_ostream.cpp
   raw_ostream.cpp
   )
 
