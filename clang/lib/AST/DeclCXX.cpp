@@ -454,7 +454,7 @@ bool CXXConstructorDecl::isDefaultConstructor() const {
   //   A default constructor for a class X is a constructor of class
   //   X that can be called without an argument.
   return (getNumParams() == 0) ||
-         (getNumParams() > 0 && getParamDecl(0)->getDefaultArg() != 0);
+         (getNumParams() > 0 && getParamDecl(0)->hasDefaultArg());
 }
 
 bool 

@@ -176,7 +176,13 @@ bool Sema::CheckInitializerTypes(Expr *&Init, QualType &DeclType,
                                              DirectInit? IK_Direct : IK_Copy);
         if (!Constructor)
           return true;
-        Init = BuildCXXConstructExpr(DeclType, Constructor, &Init, 1);
+        
+        OwningExprResult InitResult = 
+          BuildCXXConstructExpr(DeclType, Constructor, &Init, 1);
+        if (InitResult.isInvalid())
+          return true;
+        
+        Init = InitResult.takeAs<Expr>();
         return false;
       }
       

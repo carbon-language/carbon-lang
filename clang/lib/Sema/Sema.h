@@ -1752,16 +1752,16 @@ public:
                                     QualType DeclInitType, 
                                     Expr **Exprs, unsigned NumExprs);
 
-  Expr *BuildCXXConstructExpr(QualType DeclInitType,
-                              CXXConstructorDecl *Constructor,
-                              Expr **Exprs, unsigned NumExprs);
+  OwningExprResult BuildCXXConstructExpr(QualType DeclInitType,
+                                         CXXConstructorDecl *Constructor,
+                                         Expr **Exprs, unsigned NumExprs);
 
   /// BuildCXXConstructExpr - Creates a complete call to a constructor,
   /// including handling of its default argument expressions.
-  Expr *BuildCXXConstructExpr(QualType DeclInitType,
-                              CXXConstructorDecl *Constructor,
-                              bool Elidable,
-                              Expr **Exprs, unsigned NumExprs);
+  OwningExprResult BuildCXXConstructExpr(QualType DeclInitType,
+                                         CXXConstructorDecl *Constructor,
+                                         bool Elidable,
+                                         Expr **Exprs, unsigned NumExprs);
   
   /// BuildCXXDefaultArgExpr - Creates a CXXDefaultArgExpr, instantiating
   /// the default expr if needed.

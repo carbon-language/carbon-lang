@@ -2407,9 +2407,10 @@ void Sema::DefineImplicitCopyConstructor(SourceLocation CurrentLocation,
   CopyConstructor->setUsed();
 }
 
-Expr *Sema::BuildCXXConstructExpr(QualType DeclInitType,
-                                  CXXConstructorDecl *Constructor,
-                                  Expr **Exprs, unsigned NumExprs) {
+Sema::OwningExprResult
+Sema::BuildCXXConstructExpr(QualType DeclInitType,
+                            CXXConstructorDecl *Constructor,
+                            Expr **Exprs, unsigned NumExprs) {
   bool Elidable = false;
   
   // [class.copy]p15:
@@ -2435,10 +2436,12 @@ Expr *Sema::BuildCXXConstructExpr(QualType DeclInitType,
 
 /// BuildCXXConstructExpr - Creates a complete call to a constructor,
 /// including handling of its default argument expressions.
-Expr *Sema::BuildCXXConstructExpr(QualType DeclInitType, 
-                                  CXXConstructorDecl *Constructor,
-                                  bool Elidable,
-                                  Expr **Exprs, unsigned NumExprs) {
+Sema::OwningExprResult
+Sema::BuildCXXConstructExpr(QualType DeclInitType, 
+                            CXXConstructorDecl *Constructor,
+                            bool Elidable,
+                            Expr **Exprs, 
+                            unsigned NumExprs) {
   CXXConstructExpr *Temp = CXXConstructExpr::Create(Context, DeclInitType, 
                                                     Constructor, 
                                                     Elidable, Exprs, NumExprs);
@@ -2461,15 +2464,18 @@ Expr *Sema::BuildCXXConstructExpr(QualType DeclInitType,
     Expr *Arg = CXXDefaultArgExpr::Create(Context, FDecl->getParamDecl(j));
     Temp->setArg(j, Arg);
   }
-  return Temp;
+  return Owned(Temp);
 }
 
 void Sema::InitializeVarWithConstructor(VarDecl *VD, 
                                         CXXConstructorDecl *Constructor,
                                         QualType DeclInitType, 
                                         Expr **Exprs, unsigned NumExprs) {
-  Expr *Temp = BuildCXXConstructExpr(DeclInitType, Constructor, 
-                                     Exprs, NumExprs);  
+  OwningExprResult TempResult = BuildCXXConstructExpr(DeclInitType, Constructor, 
+                                                      Exprs, NumExprs);
+  assert(!TempResult.isInvalid() && "FIXME: Error handling");
+  
+  Expr *Temp = TempResult.takeAs<Expr>();
   MarkDeclarationReferenced(VD->getLocation(), Constructor);
   Temp = MaybeCreateCXXExprWithTemporaries(Temp, /*DestroyTemps=*/true);
   VD->setInit(Context, Temp);

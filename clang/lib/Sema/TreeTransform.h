@@ -1380,10 +1380,8 @@ public:
                                            MultiExprArg Args) {
     unsigned NumArgs = Args.size();
     Expr **ArgsExprs = (Expr **)Args.release();
-    return getSema().Owned(SemaRef.BuildCXXConstructExpr(T, Constructor,
-                                                         IsElidable,
-                                                         ArgsExprs,
-                                                         NumArgs));
+    return getSema().BuildCXXConstructExpr(T, Constructor, IsElidable,
+                                           ArgsExprs, NumArgs);
   }
 
   /// \brief Build a new object-construction expression.

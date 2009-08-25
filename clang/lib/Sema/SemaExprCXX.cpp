@@ -943,7 +943,13 @@ Sema::PerformImplicitConversion(Expr *&From, QualType ToType,
     // FIXME: When can ToType be a reference type?
     assert(!ToType->isReferenceType());
     
-    From = BuildCXXConstructExpr(ToType, SCS.CopyConstructor, &From, 1);
+    OwningExprResult FromResult = 
+      BuildCXXConstructExpr(ToType, SCS.CopyConstructor, &From, 1);
+    
+    if (FromResult.isInvalid())
+      return true;
+    
+    From = FromResult.takeAs<Expr>();
     return false;
   }
 
