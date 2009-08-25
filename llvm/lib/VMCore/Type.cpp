@@ -304,55 +304,55 @@ const Type *StructType::getTypeAtIndex(unsigned Idx) const {
 //===----------------------------------------------------------------------===//
 
 const Type *Type::getVoidTy(LLVMContext &C) {
-  return C.pImpl->VoidTy;
+  return &C.pImpl->VoidTy;
 }
 
 const Type *Type::getLabelTy(LLVMContext &C) {
-  return C.pImpl->LabelTy;
+  return &C.pImpl->LabelTy;
 }
 
 const Type *Type::getFloatTy(LLVMContext &C) {
-  return C.pImpl->FloatTy;
+  return &C.pImpl->FloatTy;
 }
 
 const Type *Type::getDoubleTy(LLVMContext &C) {
-  return C.pImpl->DoubleTy;
+  return &C.pImpl->DoubleTy;
 }
 
 const Type *Type::getMetadataTy(LLVMContext &C) {
-  return C.pImpl->MetadataTy;
+  return &C.pImpl->MetadataTy;
 }
 
 const Type *Type::getX86_FP80Ty(LLVMContext &C) {
-  return C.pImpl->X86_FP80Ty;
+  return &C.pImpl->X86_FP80Ty;
 }
 
 const Type *Type::getFP128Ty(LLVMContext &C) {
-  return C.pImpl->FP128Ty;
+  return &C.pImpl->FP128Ty;
 }
 
 const Type *Type::getPPC_FP128Ty(LLVMContext &C) {
-  return C.pImpl->PPC_FP128Ty;
+  return &C.pImpl->PPC_FP128Ty;
 }
 
 const IntegerType *Type::getInt1Ty(LLVMContext &C) {
-  return C.pImpl->Int1Ty;
+  return &C.pImpl->Int1Ty;
 }
 
 const IntegerType *Type::getInt8Ty(LLVMContext &C) {
-  return C.pImpl->Int8Ty;
+  return &C.pImpl->Int8Ty;
 }
 
 const IntegerType *Type::getInt16Ty(LLVMContext &C) {
-  return C.pImpl->Int16Ty;
+  return &C.pImpl->Int16Ty;
 }
 
 const IntegerType *Type::getInt32Ty(LLVMContext &C) {
-  return C.pImpl->Int32Ty;
+  return &C.pImpl->Int32Ty;
 }
 
 const IntegerType *Type::getInt64Ty(LLVMContext &C) {
-  return C.pImpl->Int64Ty;
+  return &C.pImpl->Int64Ty;
 }
 
 //===----------------------------------------------------------------------===//

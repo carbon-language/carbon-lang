@@ -147,6 +147,21 @@ public:
   // multithreaded mode.
   sys::SmartMutex<true> AbstractTypeUsersLock;
 
+  // Basic type instances.
+  const Type VoidTy;
+  const Type LabelTy;
+  const Type FloatTy;
+  const Type DoubleTy;
+  const Type MetadataTy;
+  const Type X86_FP80Ty;
+  const Type FP128Ty;
+  const Type PPC_FP128Ty;
+  const IntegerType Int1Ty;
+  const IntegerType Int8Ty;
+  const IntegerType Int16Ty;
+  const IntegerType Int32Ty;
+  const IntegerType Int64Ty;
+
   // Concrete/Abstract TypeDescriptions - We lazily calculate type descriptions
   // for types as they are needed.  Because resolution of types must invalidate
   // all of the abstract type descriptions, we keep them in a seperate map to 
@@ -160,22 +175,7 @@ public:
   TypeMap<FunctionValType, FunctionType> FunctionTypes;
   TypeMap<StructValType, StructType> StructTypes;
   TypeMap<IntegerValType, IntegerType> IntegerTypes;
-  
-  const Type *VoidTy;
-  const Type *LabelTy;
-  const Type *FloatTy;
-  const Type *DoubleTy;
-  const Type *MetadataTy;
-  const Type *X86_FP80Ty;
-  const Type *FP128Ty;
-  const Type *PPC_FP128Ty;
-  
-  const IntegerType *Int1Ty;
-  const IntegerType *Int8Ty;
-  const IntegerType *Int16Ty;
-  const IntegerType *Int32Ty;
-  const IntegerType *Int64Ty;
-  
+
   /// ValueHandles - This map keeps track of all of the value handles that are
   /// watching a Value*.  The Value::HasValueHandle bit is used to know
   // whether or not a value has an entry in this map.
@@ -183,42 +183,19 @@ public:
   ValueHandlesTy ValueHandles;
   
   LLVMContextImpl(LLVMContext &C) : TheTrueVal(0), TheFalseVal(0),
-    VoidTy(new Type(C, Type::VoidTyID)),
-    LabelTy(new Type(C, Type::LabelTyID)),
-    FloatTy(new Type(C, Type::FloatTyID)),
-    DoubleTy(new Type(C, Type::DoubleTyID)),
-    MetadataTy(new Type(C, Type::MetadataTyID)),
-    X86_FP80Ty(new Type(C, Type::X86_FP80TyID)),
-    FP128Ty(new Type(C, Type::FP128TyID)),
-    PPC_FP128Ty(new Type(C, Type::PPC_FP128TyID)),
-    Int1Ty(new IntegerType(C, 1)),
-    Int8Ty(new IntegerType(C, 8)),
-    Int16Ty(new IntegerType(C, 16)),
-    Int32Ty(new IntegerType(C, 32)),
-    Int64Ty(new IntegerType(C, 64)) { }
-  
-  ~LLVMContextImpl() {
-    // In principle, we should delete the member types here.  However,
-    // this causes destruction order issues with the types in the TypeMaps.
-    // For now, just leak this, which is at least not a regression from the
-    // previous behavior, though still undesirable.
-#if 0
-    delete VoidTy;
-    delete LabelTy;
-    delete FloatTy;
-    delete DoubleTy;
-    delete MetadataTy;
-    delete X86_FP80Ty;
-    delete FP128Ty;
-    delete PPC_FP128Ty;
-    
-    delete Int1Ty;
-    delete Int8Ty;
-    delete Int16Ty;
-    delete Int32Ty;
-    delete Int64Ty;
-#endif
-  }
+    VoidTy(C, Type::VoidTyID),
+    LabelTy(C, Type::LabelTyID),
+    FloatTy(C, Type::FloatTyID),
+    DoubleTy(C, Type::DoubleTyID),
+    MetadataTy(C, Type::MetadataTyID),
+    X86_FP80Ty(C, Type::X86_FP80TyID),
+    FP128Ty(C, Type::FP128TyID),
+    PPC_FP128Ty(C, Type::PPC_FP128TyID),
+    Int1Ty(C, 1),
+    Int8Ty(C, 8),
+    Int16Ty(C, 16),
+    Int32Ty(C, 32),
+    Int64Ty(C, 64) { }
 };
 
 }
