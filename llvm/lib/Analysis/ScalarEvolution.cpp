@@ -4349,7 +4349,7 @@ static bool HasSameValue(const SCEV *A, const SCEV *B) {
     if (const SCEVUnknown *BU = dyn_cast<SCEVUnknown>(B))
       if (const Instruction *AI = dyn_cast<Instruction>(AU->getValue()))
         if (const Instruction *BI = dyn_cast<Instruction>(BU->getValue()))
-          if (AI->isIdenticalTo(BI))
+          if (AI->isIdenticalTo(BI) && !AI->mayReadFromMemory())
             return true;
 
   // Otherwise assume they may have a different value.
