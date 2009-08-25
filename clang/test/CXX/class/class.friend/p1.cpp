@@ -18,6 +18,11 @@ struct Derived : public Base {
 
 int myglobal;
 
+void global_function();
+extern "C" {
+  void global_c_function();
+}
+
 class A {
   class AInner {
   };
@@ -28,6 +33,9 @@ class A {
   friend int Outer::Inner::missing_field; //expected-error {{ friends can only be classes or functions }}
   friend int myoperation(float); // okay
   friend int myglobal;   // expected-error {{ friends can only be classes or functions }}
+
+  friend void global_function();
+  friend void global_c_function();
 
   void a_member();
   friend void A::a_member(); // expected-error {{ friends cannot be members of the declaring class }}
