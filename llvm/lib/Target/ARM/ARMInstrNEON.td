@@ -183,14 +183,12 @@ def VSTRQ : NI4<(outs), (ins QPR:$src, addrmode4:$addr),
 
 //   VLD1     : Vector Load (multiple single elements)
 class VLD1D<string OpcodeStr, ValueType Ty, Intrinsic IntOp>
-  : NLdSt<(outs DPR:$dst), (ins addrmode6:$addr),
-          NoItinerary,
-          !strconcat(OpcodeStr, "\t\\{$dst\\}, $addr"),
+  : NLdSt<(outs DPR:$dst), (ins addrmode6:$addr), NoItinerary,
+          !strconcat(OpcodeStr, "\t\\{$dst\\}, $addr"), "",
           [(set DPR:$dst, (Ty (IntOp addrmode6:$addr)))]>;
 class VLD1Q<string OpcodeStr, ValueType Ty, Intrinsic IntOp>
-  : NLdSt<(outs QPR:$dst), (ins addrmode6:$addr),
-          NoItinerary,
-          !strconcat(OpcodeStr, "\t${dst:dregpair}, $addr"),
+  : NLdSt<(outs QPR:$dst), (ins addrmode6:$addr), NoItinerary,
+          !strconcat(OpcodeStr, "\t${dst:dregpair}, $addr"), "",
           [(set QPR:$dst, (Ty (IntOp addrmode6:$addr)))]>;
 
 def  VLD1d8   : VLD1D<"vld1.8",  v8i8,  int_arm_neon_vld1>;
@@ -209,9 +207,8 @@ let mayLoad = 1 in {
 
 //   VLD2     : Vector Load (multiple 2-element structures)
 class VLD2D<string OpcodeStr>
-  : NLdSt<(outs DPR:$dst1, DPR:$dst2), (ins addrmode6:$addr),
-          NoItinerary,
-          !strconcat(OpcodeStr, "\t\\{$dst1,$dst2\\}, $addr"), []>;
+  : NLdSt<(outs DPR:$dst1, DPR:$dst2), (ins addrmode6:$addr), NoItinerary,
+          !strconcat(OpcodeStr, "\t\\{$dst1,$dst2\\}, $addr"), "", []>;
 
 def  VLD2d8   : VLD2D<"vld2.8">;
 def  VLD2d16  : VLD2D<"vld2.16">;
@@ -221,7 +218,7 @@ def  VLD2d32  : VLD2D<"vld2.32">;
 class VLD3D<string OpcodeStr>
   : NLdSt<(outs DPR:$dst1, DPR:$dst2, DPR:$dst3), (ins addrmode6:$addr),
           NoItinerary,
-          !strconcat(OpcodeStr, "\t\\{$dst1,$dst2,$dst3\\}, $addr"), []>;
+          !strconcat(OpcodeStr, "\t\\{$dst1,$dst2,$dst3\\}, $addr"), "", []>;
 
 def  VLD3d8   : VLD3D<"vld3.8">;
 def  VLD3d16  : VLD3D<"vld3.16">;
@@ -230,9 +227,9 @@ def  VLD3d32  : VLD3D<"vld3.32">;
 //   VLD4     : Vector Load (multiple 4-element structures)
 class VLD4D<string OpcodeStr>
   : NLdSt<(outs DPR:$dst1, DPR:$dst2, DPR:$dst3, DPR:$dst4),
-          (ins addrmode6:$addr),
-          NoItinerary,
-          !strconcat(OpcodeStr, "\t\\{$dst1,$dst2,$dst3,$dst4\\}, $addr"), []>;
+          (ins addrmode6:$addr), NoItinerary,
+          !strconcat(OpcodeStr, "\t\\{$dst1,$dst2,$dst3,$dst4\\}, $addr"),
+          "", []>;
 
 def  VLD4d8   : VLD4D<"vld4.8">;
 def  VLD4d16  : VLD4D<"vld4.16">;
@@ -241,14 +238,12 @@ def  VLD4d32  : VLD4D<"vld4.32">;
 
 //   VST1     : Vector Store (multiple single elements)
 class VST1D<string OpcodeStr, ValueType Ty, Intrinsic IntOp>
-  : NLdSt<(outs), (ins addrmode6:$addr, DPR:$src),
-          NoItinerary,
-          !strconcat(OpcodeStr, "\t\\{$src\\}, $addr"),
+  : NLdSt<(outs), (ins addrmode6:$addr, DPR:$src), NoItinerary,
+          !strconcat(OpcodeStr, "\t\\{$src\\}, $addr"), "",
           [(IntOp addrmode6:$addr, (Ty DPR:$src))]>;
 class VST1Q<string OpcodeStr, ValueType Ty, Intrinsic IntOp>
-  : NLdSt<(outs), (ins addrmode6:$addr, QPR:$src),
-          NoItinerary,
-          !strconcat(OpcodeStr, "\t${src:dregpair}, $addr"),
+  : NLdSt<(outs), (ins addrmode6:$addr, QPR:$src), NoItinerary,
+          !strconcat(OpcodeStr, "\t${src:dregpair}, $addr"), "",
           [(IntOp addrmode6:$addr, (Ty QPR:$src))]>;
 
 def  VST1d8   : VST1D<"vst1.8",  v8i8,  int_arm_neon_vst1>;
@@ -268,7 +263,7 @@ let mayStore = 1 in {
 //   VST2     : Vector Store (multiple 2-element structures)
 class VST2D<string OpcodeStr>
   : NLdSt<(outs), (ins addrmode6:$addr, DPR:$src1, DPR:$src2), NoItinerary,
-          !strconcat(OpcodeStr, "\t\\{$src1,$src2\\}, $addr"), []>;
+          !strconcat(OpcodeStr, "\t\\{$src1,$src2\\}, $addr"), "", []>;
 
 def  VST2d8   : VST2D<"vst2.8">;
 def  VST2d16  : VST2D<"vst2.16">;
@@ -278,7 +273,7 @@ def  VST2d32  : VST2D<"vst2.32">;
 class VST3D<string OpcodeStr>
   : NLdSt<(outs), (ins addrmode6:$addr, DPR:$src1, DPR:$src2, DPR:$src3),
           NoItinerary,
-          !strconcat(OpcodeStr, "\t\\{$src1,$src2,$src3\\}, $addr"), []>;
+          !strconcat(OpcodeStr, "\t\\{$src1,$src2,$src3\\}, $addr"), "", []>;
 
 def  VST3d8   : VST3D<"vst3.8">;
 def  VST3d16  : VST3D<"vst3.16">;
@@ -288,7 +283,8 @@ def  VST3d32  : VST3D<"vst3.32">;
 class VST4D<string OpcodeStr>
   : NLdSt<(outs), (ins addrmode6:$addr,
                    DPR:$src1, DPR:$src2, DPR:$src3, DPR:$src4), NoItinerary,
-          !strconcat(OpcodeStr, "\t\\{$src1,$src2,$src3,$src4\\}, $addr"), []>;
+          !strconcat(OpcodeStr, "\t\\{$src1,$src2,$src3,$src4\\}, $addr"),
+          "", []>;
 
 def  VST4d8   : VST4D<"vst4.8">;
 def  VST4d16  : VST4D<"vst4.16">;
