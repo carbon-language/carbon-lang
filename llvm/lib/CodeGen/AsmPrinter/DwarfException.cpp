@@ -49,11 +49,10 @@ DwarfException::~DwarfException() {
   delete ExceptionTimer;
 }
 
-/// EmitCommonInformationEntry - Emit a Common Information Entry (CIE). This
-/// holds information that is shared among many Frame Description Entries.
-/// There is at least one CIE in every non-empty .debug_frame section.
-void DwarfException::EmitCommonInformationEntry(const Function *Personality,
-                                                unsigned Index) {
+/// EmitCIE - Emit a Common Information Entry (CIE). This holds information that
+/// is shared among many Frame Description Entries.  There is at least one CIE
+/// in every non-empty .debug_frame section.
+void DwarfException::EmitCIE(const Function *Personality, unsigned Index) {
   // Size and sign of stack growth.
   int stackGrowth =
     Asm->TM.getFrameInfo()->getStackGrowthDirection() ==
@@ -147,10 +146,8 @@ void DwarfException::EmitCommonInformationEntry(const Function *Personality,
   Asm->EOL();
 }
 
-/// EmitFrameDescriptionEntry - Emit the Frame Description Entry (FDE) for the
-/// function.
-void DwarfException::
-EmitFrameDescriptionEntry(const FunctionEHFrameInfo &EHFrameInfo) {
+/// EmitFDE - Emit the Frame Description Entry (FDE) for the function.
+void DwarfException::EmitFDE(const FunctionEHFrameInfo &EHFrameInfo) {
   assert(!EHFrameInfo.function->hasAvailableExternallyLinkage() && 
          "Should not emit 'available externally' functions at all");
 
@@ -850,11 +847,11 @@ void DwarfException::EndModule() {
   if (shouldEmitMovesModule || shouldEmitTableModule) {
     const std::vector<Function *> Personalities = MMI->getPersonalities();
     for (unsigned i = 0; i < Personalities.size(); ++i)
-      EmitCommonInformationEntry(Personalities[i], i);
+      EmitCIE(Personalities[i], i);
 
     for (std::vector<FunctionEHFrameInfo>::iterator I = EHFrames.begin(),
            E = EHFrames.end(); I != E; ++I)
-      EmitFrameDescriptionEntry(*I);
+      EmitFDE(*I);
   }
 
   if (TimePassesIsEnabled)
