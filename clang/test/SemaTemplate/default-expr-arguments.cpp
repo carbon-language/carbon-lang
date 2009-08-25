@@ -23,8 +23,11 @@ template<typename T> struct F {
 	F(T t = 10);
 };
 
+struct FD : F<int> { };
+
 void g2() {
 	F<int> f;
+  FD fd;
 }
 
 template<typename T> struct G {
