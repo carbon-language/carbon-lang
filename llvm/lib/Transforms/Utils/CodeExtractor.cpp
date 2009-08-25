@@ -361,6 +361,9 @@ Function *CodeExtractor::constructFunction(const Values &inputs,
   return newFunction;
 }
 
+/// FindPhiPredForUseInBlock - Given a value and a basic block, find a PHI
+/// that uses the value within the basic block, and return the predecessor
+/// block associated with that use, or return 0 if none is found.
 static BasicBlock* FindPhiPredForUseInBlock(Value* Used, BasicBlock* BB) {
   for (Value::use_iterator UI = Used->use_begin(),
        UE = Used->use_end(); UI != UE; ++UI) {
