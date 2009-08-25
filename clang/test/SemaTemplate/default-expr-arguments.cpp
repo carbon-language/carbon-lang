@@ -18,3 +18,11 @@ void g() {
   f3(10);
   f3(S()); // expected-note{{in instantiation of default argument for 'f3<struct S>' required here}}
 }
+
+template<typename T> struct F {
+	F(T t = 10);
+};
+
+void g2() {
+	F<int> f;
+}

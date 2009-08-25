@@ -2442,29 +2442,28 @@ Sema::BuildCXXConstructExpr(QualType DeclInitType,
                             bool Elidable,
                             Expr **Exprs, 
                             unsigned NumExprs) {
-  CXXConstructExpr *Temp = CXXConstructExpr::Create(Context, DeclInitType, 
-                                                    Constructor, 
-                                                    Elidable, Exprs, NumExprs);
+  ExprOwningPtr<CXXConstructExpr> Temp(this, 
+                                       CXXConstructExpr::Create(Context, 
+                                                                DeclInitType, 
+                                                                Constructor, 
+                                                                Elidable,
+                                                                Exprs,
+                                                                NumExprs));
   // default arguments must be added to constructor call expression.
   FunctionDecl *FDecl = cast<FunctionDecl>(Constructor);
   unsigned NumArgsInProto = FDecl->param_size();
   for (unsigned j = NumExprs; j != NumArgsInProto; j++) {
-    Expr *DefaultExpr = FDecl->getParamDecl(j)->getDefaultArg();
-    
-    // If the default expression creates temporaries, we need to
-    // push them to the current stack of expression temporaries so they'll
-    // be properly destroyed.
-    if (CXXExprWithTemporaries *E 
-        = dyn_cast_or_null<CXXExprWithTemporaries>(DefaultExpr)) {
-      assert(!E->shouldDestroyTemporaries() && 
-             "Can't destroy temporaries in a default argument expr!");
-      for (unsigned I = 0, N = E->getNumTemporaries(); I != N; ++I)
-        ExprTemporaries.push_back(E->getTemporary(I));
-    }
-    Expr *Arg = CXXDefaultArgExpr::Create(Context, FDecl->getParamDecl(j));
-    Temp->setArg(j, Arg);
+    ParmVarDecl *Param = FDecl->getParamDecl(j);
+
+    OwningExprResult ArgExpr = 
+      BuildCXXDefaultArgExpr(/*FIXME:*/SourceLocation(),
+                             FDecl, Param);
+    if (ArgExpr.isInvalid())
+      return ExprError();
+
+    Temp->setArg(j, ArgExpr.takeAs<Expr>());
   }
-  return Owned(Temp);
+  return move(Temp);
 }
 
 bool Sema::InitializeVarWithConstructor(VarDecl *VD, 
