@@ -285,11 +285,16 @@ protected:
   /// \brief Placeholder type used in Init to denote an unparsed C++ default
   /// argument.
   struct UnparsedDefaultArgument;
-  
+
+  /// \brief Placeholder type used in Init to denote an uninstantiated C++ 
+  /// default argument.
+  struct UninstantiatedDefaultArgument;
+
   /// \brief The initializer for this variable or, for a ParmVarDecl, the 
   /// C++ default argument.
-  mutable llvm::PointerUnion3<Stmt *, EvaluatedStmt *, UnparsedDefaultArgument*>
-    Init;
+  mutable llvm::PointerUnion4<Stmt *, EvaluatedStmt *, 
+                              UnparsedDefaultArgument *, 
+                              UninstantiatedDefaultArgument *> Init;
   
 private:
   // FIXME: This can be packed into the bitfields in Decl.
@@ -600,20 +605,32 @@ public:
     
   const Expr *getDefaultArg() const { 
     assert(!hasUnparsedDefaultArg() && "Default argument is not yet parsed!");
+    assert(!hasUninstantiatedDefaultArg() && 
+           "Default argument is not yet instantiated!");
     return getInit();
   }
   Expr *getDefaultArg() { 
     assert(!hasUnparsedDefaultArg() && "Default argument is not yet parsed!");
+    assert(!hasUninstantiatedDefaultArg() && 
+           "Default argument is not yet instantiated!");
     return getInit();
   }
   void setDefaultArg(Expr *defarg) { 
     Init = reinterpret_cast<Stmt *>(defarg);
   }
 
+  void setUninstantiatedDefaultArg(Expr *arg) {
+    Init = reinterpret_cast<UninstantiatedDefaultArgument *>(arg);
+  }
+  Expr *getUninstantiatedDefaultArg() {
+    return (Expr *)Init.get<UninstantiatedDefaultArgument *>();
+  }
+  
   /// hasDefaultArg - Determines whether this parameter has a default argument,
   /// either parsed or not.
   bool hasDefaultArg() const {
-    return getInit() || hasUnparsedDefaultArg();
+    return getInit() || hasUnparsedDefaultArg() || 
+      hasUninstantiatedDefaultArg();
   }
   
   /// hasUnparsedDefaultArg - Determines whether this parameter has a
@@ -630,6 +647,10 @@ public:
     return Init.is<UnparsedDefaultArgument*>();
   }
 
+  bool hasUninstantiatedDefaultArg() const {
+    return Init.is<UninstantiatedDefaultArgument*>();
+  }
+  
   /// setUnparsedDefaultArg - Specify that this parameter has an
   /// unparsed default argument. The argument will be replaced with a
   /// real default argument via setDefaultArg when the class
