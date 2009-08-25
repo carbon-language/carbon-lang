@@ -283,10 +283,6 @@ namespace llvm {
     /// doesn't show up in the symbol table of the object file.
     bool Is_EHSymbolPrivate;                 // Defaults to true.
 
-    /// ForceEncodingOfFDETo32Bits - If set, the encoding of some of the FDE
-    /// data is forced to 32-bit.
-    bool ForceEncodingOfFDETo32Bits;         // Defaults to true.
-
     /// GlobalEHDirective - This is the directive used to make exception frame
     /// tables globally visible.
     const char *GlobalEHDirective;           // Defaults to NULL.
@@ -501,9 +497,6 @@ namespace llvm {
     }
     bool is_EHSymbolPrivate() const {
       return Is_EHSymbolPrivate;
-    }
-    bool forceEncodingOfFDETo32Bits() const {
-      return ForceEncodingOfFDETo32Bits;
     }
     const char *getGlobalEHDirective() const {
       return GlobalEHDirective;

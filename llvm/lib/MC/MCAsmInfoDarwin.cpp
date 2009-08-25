@@ -52,7 +52,6 @@ MCAsmInfoDarwin::MCAsmInfoDarwin() {
   // doesn't hurt anything.
   // FIXME: I need to get this from Triple.
   Is_EHSymbolPrivate = false;
-  ForceEncodingOfFDETo32Bits = false;
   GlobalEHDirective = "\t.globl\t";
   SupportsWeakOmittedEHFrame = false;
 

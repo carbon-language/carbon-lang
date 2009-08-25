@@ -79,7 +79,6 @@ MCAsmInfo::MCAsmInfo() {
   DwarfRequiresFrameSection = true;
   DwarfUsesInlineInfoSection = false;
   Is_EHSymbolPrivate = true;
-  ForceEncodingOfFDETo32Bits = true;
   GlobalEHDirective = 0;
   SupportsWeakOmittedEHFrame = true;
   DwarfSectionOffsetDirective = 0;
