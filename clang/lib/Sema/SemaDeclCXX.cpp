@@ -101,6 +101,34 @@ namespace {
   }
 }
 
+bool
+Sema::SetParamDefaultArgument(ParmVarDecl *Param, ExprArg DefaultArg,
+                              SourceLocation EqualLoc)
+{
+  QualType ParamType = Param->getType();
+
+  Expr *Arg = (Expr *)DefaultArg.get();
+  
+  // C++ [dcl.fct.default]p5
+  //   A default argument expression is implicitly converted (clause
+  //   4) to the parameter type. The default argument expression has
+  //   the same semantic constraints as the initializer expression in
+  //   a declaration of a variable of the parameter type, using the
+  //   copy-initialization semantics (8.5).
+  if (CheckInitializerTypes(Arg, ParamType, EqualLoc, 
+                            Param->getDeclName(), /*DirectInit=*/false))
+    return false;
+
+  Arg = MaybeCreateCXXExprWithTemporaries(Arg, /*DestroyTemps=*/false);
+  
+  // Okay: add the default argument to the parameter
+  Param->setDefaultArg(Arg);
+  
+  DefaultArg.release();
+  
+  return true;
+}
+
 /// ActOnParamDefaultArgument - Check whether the default argument
 /// provided for a function parameter is well-formed. If so, attach it
 /// to the parameter declaration.
@@ -131,30 +159,7 @@ Sema::ActOnParamDefaultArgument(DeclPtrTy param, SourceLocation EqualLoc,
     return;
   }
   
-  // C++ [dcl.fct.default]p5
-  //   A default argument expression is implicitly converted (clause
-  //   4) to the parameter type. The default argument expression has
-  //   the same semantic constraints as the initializer expression in
-  //   a declaration of a variable of the parameter type, using the
-  //   copy-initialization semantics (8.5).
-  Expr *DefaultArgPtr = DefaultArg.get();
-  bool DefaultInitFailed = CheckInitializerTypes(DefaultArgPtr, ParamType,
-                                                 EqualLoc,
-                                                 Param->getDeclName(),
-                                                 /*DirectInit=*/false);
-  if (DefaultArgPtr != DefaultArg.get()) {
-    DefaultArg.take();
-    DefaultArg.reset(DefaultArgPtr);
-  }
-  if (DefaultInitFailed) {
-    return;
-  }
-
-  DefaultArgPtr = MaybeCreateCXXExprWithTemporaries(DefaultArg.take(),
-                                                    /*DestroyTemps=*/false);
-  
-  // Okay: add the default argument to the parameter
-  Param->setDefaultArg(DefaultArgPtr);
+  SetParamDefaultArgument(Param, move(DefaultArg), EqualLoc);
 }
 
 /// ActOnParamUnparsedDefaultArgument - We've seen a default

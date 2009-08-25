@@ -542,6 +542,9 @@ public:
                                                  SourceLocation EqualLoc,
                                                  SourceLocation ArgLoc);
   virtual void ActOnParamDefaultArgumentError(DeclPtrTy param);
+  bool SetParamDefaultArgument(ParmVarDecl *Param, ExprArg DefaultArg,
+                               SourceLocation EqualLoc);
+
   
   // Contains the locations of the beginning of unparsed default
   // argument locations.

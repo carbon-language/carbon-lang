@@ -2492,14 +2492,15 @@ Sema::ConvertArgumentsForCall(CallExpr *Call, Expr *Fn,
       if (PerformCopyInitialization(Arg, ProtoArgType, "passing"))
         return true;
     } else {
-      if (FDecl->getParamDecl(i)->hasUnparsedDefaultArg()) {
+      ParmVarDecl *Param = FDecl->getParamDecl(i);
+      if (Param->hasUnparsedDefaultArg()) {
         Diag (Call->getSourceRange().getBegin(),
               diag::err_use_of_default_argument_to_function_declared_later) <<
         FDecl << cast<CXXRecordDecl>(FDecl->getDeclContext())->getDeclName();
-        Diag(UnparsedDefaultArgLocs[FDecl->getParamDecl(i)], 
+        Diag(UnparsedDefaultArgLocs[Param], 
               diag::note_default_argument_declared_here);
       } else {
-        Expr *DefaultExpr = FDecl->getParamDecl(i)->getDefaultArg();
+        Expr *DefaultExpr = Param->getDefaultArg();
         
         // If the default expression creates temporaries, we need to
         // push them to the current stack of expression temporaries so they'll
@@ -2514,7 +2515,7 @@ Sema::ConvertArgumentsForCall(CallExpr *Call, Expr *Fn,
       }
   
       // We already type-checked the argument, so we know it works.
-      Arg = CXXDefaultArgExpr::Create(Context, FDecl->getParamDecl(i));
+      Arg = CXXDefaultArgExpr::Create(Context, Param);
     }
     
     QualType ArgType = Arg->getType();
