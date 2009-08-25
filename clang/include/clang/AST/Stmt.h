@@ -174,7 +174,7 @@ public:
   
   /// \brief Destroy the current statement and its children.
   void Destroy(ASTContext &Ctx) { 
-    assert(RefCount >= 0);
+    assert(RefCount >= 1);
     if (--RefCount == 0)
       DoDestroy(Ctx); 
   }
