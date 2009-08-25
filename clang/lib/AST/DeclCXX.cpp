@@ -529,6 +529,8 @@ CXXDestructorDecl::computeBaseOrMembersToDestroy(ASTContext &C) {
   
   for (CXXRecordDecl::base_class_iterator VBase = ClassDecl->vbases_begin(),
        E = ClassDecl->vbases_end(); VBase != E; ++VBase) {
+    if (VBase->getType()->isDependentType())
+      continue;
     // Skip over virtual bases which have trivial destructors.
     CXXRecordDecl *BaseClassDecl
       = cast<CXXRecordDecl>(VBase->getType()->getAs<RecordType>()->getDecl());
@@ -542,6 +544,8 @@ CXXDestructorDecl::computeBaseOrMembersToDestroy(ASTContext &C) {
        ClassDecl->bases_begin(),
        E = ClassDecl->bases_end(); Base != E; ++Base) {
     if (Base->isVirtual())
+      continue;
+    if (Base->getType()->isDependentType())
       continue;
     // Skip over virtual bases which have trivial destructors.
     CXXRecordDecl *BaseClassDecl
