@@ -355,11 +355,11 @@ Decl *TemplateInstantiator::TransformDecl(Decl *D) {
     return Template;
   }
   
-  return SemaRef.InstantiateCurrentDeclRef(cast_or_null<NamedDecl>(D));
+  return SemaRef.FindInstantiatedDecl(cast_or_null<NamedDecl>(D));
 }
 
 Decl *TemplateInstantiator::TransformDefinition(Decl *D) {
-  Decl *Inst = getSema().InstantiateDecl(D, getSema().CurContext, TemplateArgs);
+  Decl *Inst = getSema().SubstDecl(D, getSema().CurContext, TemplateArgs);
   if (!Inst)
     return 0;
   
@@ -441,7 +441,7 @@ TemplateInstantiator::TransformDeclRefExpr(DeclRefExpr *E) {
                                                            false, false));
   }
   
-  NamedDecl *InstD = SemaRef.InstantiateCurrentDeclRef(D);
+  NamedDecl *InstD = SemaRef.FindInstantiatedDecl(D);
   if (!InstD)
     return SemaRef.ExprError();
   
@@ -485,7 +485,8 @@ TemplateInstantiator::TransformTemplateTypeParmType(
                                                    T->getName());
 }
 
-/// \brief Instantiate the type T with a given set of template arguments.
+/// \brief Perform substitution on the type T with a given set of template
+/// arguments.
 ///
 /// This routine substitutes the given template arguments into the
 /// type T and produces the instantiated type.
@@ -511,9 +512,9 @@ TemplateInstantiator::TransformTemplateTypeParmType(
 ///
 /// \returns If the instantiation succeeds, the instantiated
 /// type. Otherwise, produces diagnostics and returns a NULL type.
-QualType Sema::InstantiateType(QualType T, 
-                               const TemplateArgumentList &TemplateArgs,
-                               SourceLocation Loc, DeclarationName Entity) {
+QualType Sema::SubstType(QualType T, 
+                         const TemplateArgumentList &TemplateArgs,
+                         SourceLocation Loc, DeclarationName Entity) {
   assert(!ActiveTemplateInstantiations.empty() &&
          "Cannot perform an instantiation without some context on the "
          "instantiation stack");
@@ -526,16 +527,16 @@ QualType Sema::InstantiateType(QualType T,
   return Instantiator.TransformType(T);
 }
 
-/// \brief Instantiate the base class specifiers of the given class
-/// template specialization.
+/// \brief Perform substitution on the base class specifiers of the
+/// given class template specialization.
 ///
 /// Produces a diagnostic and returns true on error, returns false and
 /// attaches the instantiated base classes to the class template
 /// specialization if successful.
 bool 
-Sema::InstantiateBaseSpecifiers(CXXRecordDecl *Instantiation,
-                                CXXRecordDecl *Pattern,
-                                const TemplateArgumentList &TemplateArgs) {
+Sema::SubstBaseSpecifiers(CXXRecordDecl *Instantiation,
+                          CXXRecordDecl *Pattern,
+                          const TemplateArgumentList &TemplateArgs) {
   bool Invalid = false;
   llvm::SmallVector<CXXBaseSpecifier*, 4> InstantiatedBases;
   for (ClassTemplateSpecializationDecl::base_class_iterator 
@@ -546,10 +547,10 @@ Sema::InstantiateBaseSpecifiers(CXXRecordDecl *Instantiation,
       continue;
     }
 
-    QualType BaseType = InstantiateType(Base->getType(), 
-                                        TemplateArgs, 
-                                        Base->getSourceRange().getBegin(),
-                                        DeclarationName());
+    QualType BaseType = SubstType(Base->getType(), 
+                                  TemplateArgs, 
+                                  Base->getSourceRange().getBegin(),
+                                  DeclarationName());
     if (BaseType.isNull()) {
       Invalid = true;
       continue;
@@ -675,15 +676,15 @@ Sema::InstantiateClass(SourceLocation PointOfInstantiation,
   // Start the definition of this instantiation.
   Instantiation->startDefinition();
 
-  // Instantiate the base class specifiers.
-  if (InstantiateBaseSpecifiers(Instantiation, Pattern, TemplateArgs))
+  // Do substitution on the base class specifiers.
+  if (SubstBaseSpecifiers(Instantiation, Pattern, TemplateArgs))
     Invalid = true;
 
   llvm::SmallVector<DeclPtrTy, 4> Fields;
   for (RecordDecl::decl_iterator Member = Pattern->decls_begin(),
          MemberEnd = Pattern->decls_end(); 
        Member != MemberEnd; ++Member) {
-    Decl *NewMember = InstantiateDecl(*Member, Instantiation, TemplateArgs);
+    Decl *NewMember = SubstDecl(*Member, Instantiation, TemplateArgs);
     if (NewMember) {
       if (NewMember->isInvalidDecl())
         Invalid = true;
@@ -813,13 +814,13 @@ Sema::InstantiateClassTemplateSpecialization(
   return Result;
 }
 
-/// \brief Instantiate the definitions of all of the member of the
-/// given class, which is an instantiation of a class template or a
-/// member class of a template.
+/// \brief Instantiates the definitions of all of the member
+/// of the given class, which is an instantiation of a class template
+/// or a member class of a template.
 void
 Sema::InstantiateClassMembers(SourceLocation PointOfInstantiation,
-                              CXXRecordDecl *Instantiation,
-                              const TemplateArgumentList &TemplateArgs) {
+                        CXXRecordDecl *Instantiation,
+                        const TemplateArgumentList &TemplateArgs) {
   for (DeclContext::decl_iterator D = Instantiation->decls_begin(),
                                DEnd = Instantiation->decls_end();
        D != DEnd; ++D) {
@@ -860,7 +861,7 @@ void Sema::InstantiateClassTemplateSpecializationMembers(
 }
 
 Sema::OwningStmtResult 
-Sema::InstantiateStmt(Stmt *S, const TemplateArgumentList &TemplateArgs) {
+Sema::SubstStmt(Stmt *S, const TemplateArgumentList &TemplateArgs) {
   if (!S)
     return Owned(S);
 
@@ -871,7 +872,7 @@ Sema::InstantiateStmt(Stmt *S, const TemplateArgumentList &TemplateArgs) {
 }
 
 Sema::OwningExprResult 
-Sema::InstantiateExpr(Expr *E, const TemplateArgumentList &TemplateArgs) {
+Sema::SubstExpr(Expr *E, const TemplateArgumentList &TemplateArgs) {
   if (!E)
     return Owned(E);
   
@@ -881,9 +882,9 @@ Sema::InstantiateExpr(Expr *E, const TemplateArgumentList &TemplateArgs) {
   return Instantiator.TransformExpr(E);
 }
 
-/// \brief Instantiate a nested-name-specifier.
+/// \brief Do template substitution on a nested-name-specifier.
 NestedNameSpecifier *
-Sema::InstantiateNestedNameSpecifier(NestedNameSpecifier *NNS,
+Sema::SubstNestedNameSpecifier(NestedNameSpecifier *NNS,
                                      SourceRange Range,
                                      const TemplateArgumentList &TemplateArgs) {
   TemplateInstantiator Instantiator(*this, TemplateArgs, Range.getBegin(),
@@ -892,15 +893,15 @@ Sema::InstantiateNestedNameSpecifier(NestedNameSpecifier *NNS,
 }
 
 TemplateName
-Sema::InstantiateTemplateName(TemplateName Name, SourceLocation Loc,
-                              const TemplateArgumentList &TemplateArgs) {
+Sema::SubstTemplateName(TemplateName Name, SourceLocation Loc,
+                        const TemplateArgumentList &TemplateArgs) {
   TemplateInstantiator Instantiator(*this, TemplateArgs, Loc,
                                     DeclarationName());
   return Instantiator.TransformTemplateName(Name);
 }
 
-TemplateArgument Sema::Instantiate(TemplateArgument Arg, 
-                                   const TemplateArgumentList &TemplateArgs) {
+TemplateArgument Sema::Subst(TemplateArgument Arg, 
+                             const TemplateArgumentList &TemplateArgs) {
   TemplateInstantiator Instantiator(*this, TemplateArgs, SourceLocation(),
                                     DeclarationName());
   return Instantiator.TransformTemplateArgument(Arg);

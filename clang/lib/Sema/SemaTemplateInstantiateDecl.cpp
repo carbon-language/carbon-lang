@@ -67,13 +67,13 @@ namespace {
     }
 
     // Helper functions for instantiating methods.
-    QualType InstantiateFunctionType(FunctionDecl *D,
+    QualType SubstFunctionType(FunctionDecl *D,
                              llvm::SmallVectorImpl<ParmVarDecl *> &Params);
     bool InitFunctionInstantiation(FunctionDecl *New, FunctionDecl *Tmpl);
     bool InitMethodInstantiation(CXXMethodDecl *New, CXXMethodDecl *Tmpl);
 
     TemplateParameterList *
-      InstantiateTemplateParams(TemplateParameterList *List);
+      SubstTemplateParams(TemplateParameterList *List);
   };
 }
 
@@ -93,8 +93,8 @@ Decl *TemplateDeclInstantiator::VisitTypedefDecl(TypedefDecl *D) {
   bool Invalid = false;
   QualType T = D->getUnderlyingType();
   if (T->isDependentType()) {
-    T = SemaRef.InstantiateType(T, TemplateArgs, 
-                                D->getLocation(), D->getDeclName());
+    T = SemaRef.SubstType(T, TemplateArgs, 
+                          D->getLocation(), D->getDeclName());
     if (T.isNull()) {
       Invalid = true;
       T = SemaRef.Context.IntTy;
@@ -114,10 +114,10 @@ Decl *TemplateDeclInstantiator::VisitTypedefDecl(TypedefDecl *D) {
 }
 
 Decl *TemplateDeclInstantiator::VisitVarDecl(VarDecl *D) {
-  // Instantiate the type of the declaration
-  QualType T = SemaRef.InstantiateType(D->getType(), TemplateArgs,
-                                       D->getTypeSpecStartLoc(),
-                                       D->getDeclName());
+  // Do substitution on the type of the declaration
+  QualType T = SemaRef.SubstType(D->getType(), TemplateArgs,
+                                 D->getTypeSpecStartLoc(),
+                                 D->getDeclName());
   if (T.isNull())
     return 0;
 
@@ -150,7 +150,7 @@ Decl *TemplateDeclInstantiator::VisitVarDecl(VarDecl *D) {
   
   if (D->getInit()) {
     OwningExprResult Init 
-      = SemaRef.InstantiateExpr(D->getInit(), TemplateArgs);
+      = SemaRef.SubstExpr(D->getInit(), TemplateArgs);
     if (Init.isInvalid())
       Var->setInvalidDecl();
     else
@@ -171,8 +171,8 @@ Decl *TemplateDeclInstantiator::VisitFieldDecl(FieldDecl *D) {
   bool Invalid = false;
   QualType T = D->getType();
   if (T->isDependentType())  {
-    T = SemaRef.InstantiateType(T, TemplateArgs,
-                                D->getLocation(), D->getDeclName());
+    T = SemaRef.SubstType(T, TemplateArgs,
+                          D->getLocation(), D->getDeclName());
     if (!T.isNull() && T->isFunctionType()) {
       // C++ [temp.arg.type]p3:
       //   If a declaration acquires a function type through a type
@@ -195,7 +195,7 @@ Decl *TemplateDeclInstantiator::VisitFieldDecl(FieldDecl *D) {
     EnterExpressionEvaluationContext Unevaluated(SemaRef, Action::Unevaluated);
     
     OwningExprResult InstantiatedBitWidth
-      = SemaRef.InstantiateExpr(BitWidth, TemplateArgs);
+      = SemaRef.SubstExpr(BitWidth, TemplateArgs);
     if (InstantiatedBitWidth.isInvalid()) {
       Invalid = true;
       BitWidth = 0;
@@ -225,8 +225,8 @@ Decl *TemplateDeclInstantiator::VisitFieldDecl(FieldDecl *D) {
 Decl *TemplateDeclInstantiator::VisitFriendClassDecl(FriendClassDecl *D) {
   QualType T = D->getFriendType();
   if (T->isDependentType())  {
-    T = SemaRef.InstantiateType(T, TemplateArgs, D->getLocation(),
-                                DeclarationName());
+    T = SemaRef.SubstType(T, TemplateArgs, D->getLocation(),
+                          DeclarationName());
     assert(T.isNull() || getLangOptions().CPlusPlus0x || T->isRecordType());
   }
 
@@ -248,7 +248,7 @@ Decl *TemplateDeclInstantiator::VisitStaticAssertDecl(StaticAssertDecl *D) {
   EnterExpressionEvaluationContext Unevaluated(SemaRef, Action::Unevaluated);
   
   OwningExprResult InstantiatedAssertExpr
-    = SemaRef.InstantiateExpr(AssertExpr, TemplateArgs);
+    = SemaRef.SubstExpr(AssertExpr, TemplateArgs);
   if (InstantiatedAssertExpr.isInvalid())
     return 0;
 
@@ -284,7 +284,7 @@ Decl *TemplateDeclInstantiator::VisitEnumDecl(EnumDecl *D) {
       EnterExpressionEvaluationContext Unevaluated(SemaRef, 
                                                    Action::Unevaluated);
       
-      Value = SemaRef.InstantiateExpr(UninstValue, TemplateArgs);
+      Value = SemaRef.SubstExpr(UninstValue, TemplateArgs);
     }
 
     // Drop the initial value and continue.
@@ -329,7 +329,7 @@ Decl *TemplateDeclInstantiator::VisitEnumConstantDecl(EnumConstantDecl *D) {
 
 Decl *TemplateDeclInstantiator::VisitClassTemplateDecl(ClassTemplateDecl *D) {
   TemplateParameterList *TempParams = D->getTemplateParameters();
-  TemplateParameterList *InstParams = InstantiateTemplateParams(TempParams);
+  TemplateParameterList *InstParams = SubstTemplateParams(TempParams);
   if (!InstParams) return NULL;
 
   CXXRecordDecl *Pattern = D->getTemplatedDecl();
@@ -391,7 +391,7 @@ Decl *TemplateDeclInstantiator::VisitFunctionDecl(FunctionDecl *D) {
   Sema::LocalInstantiationScope Scope(SemaRef);
   
   llvm::SmallVector<ParmVarDecl *, 4> Params;
-  QualType T = InstantiateFunctionType(D, Params);
+  QualType T = SubstFunctionType(D, Params);
   if (T.isNull())
     return 0;
 
@@ -479,7 +479,7 @@ Decl *TemplateDeclInstantiator::VisitCXXMethodDecl(CXXMethodDecl *D) {
   Sema::LocalInstantiationScope Scope(SemaRef);
 
   llvm::SmallVector<ParmVarDecl *, 4> Params;
-  QualType T = InstantiateFunctionType(D, Params);
+  QualType T = SubstFunctionType(D, Params);
   if (T.isNull())
     return 0;
 
@@ -584,7 +584,7 @@ Decl *TemplateDeclInstantiator::VisitCXXConversionDecl(CXXConversionDecl *D) {
 }
 
 ParmVarDecl *TemplateDeclInstantiator::VisitParmVarDecl(ParmVarDecl *D) {
-  QualType OrigT = SemaRef.InstantiateType(D->getOriginalType(), TemplateArgs,
+  QualType OrigT = SemaRef.SubstType(D->getOriginalType(), TemplateArgs,
                                            D->getLocation(), D->getDeclName());
   if (OrigT.isNull())
     return 0;
@@ -640,9 +640,9 @@ Decl *TemplateDeclInstantiator::VisitTemplateTypeParmDecl(
   if (D->hasDefaultArgument()) {
     QualType DefaultPattern = D->getDefaultArgument();
     QualType DefaultInst
-      = SemaRef.InstantiateType(DefaultPattern, TemplateArgs,
-                                D->getDefaultArgumentLoc(),
-                                D->getDeclName());
+      = SemaRef.SubstType(DefaultPattern, TemplateArgs,
+                          D->getDefaultArgumentLoc(),
+                          D->getDeclName());
     
     Inst->setDefaultArgument(DefaultInst,
                              D->getDefaultArgumentLoc(),
@@ -652,8 +652,8 @@ Decl *TemplateDeclInstantiator::VisitTemplateTypeParmDecl(
   return Inst;
 }
 
-Decl *Sema::InstantiateDecl(Decl *D, DeclContext *Owner,
-                            const TemplateArgumentList &TemplateArgs) {
+Decl *Sema::SubstDecl(Decl *D, DeclContext *Owner,
+                      const TemplateArgumentList &TemplateArgs) {
   TemplateDeclInstantiator Instantiator(*this, Owner, TemplateArgs);
   return Instantiator.Visit(D);
 }
@@ -665,7 +665,7 @@ Decl *Sema::InstantiateDecl(Decl *D, DeclContext *Owner,
 ///
 /// \returns NULL if there was an error
 TemplateParameterList *
-TemplateDeclInstantiator::InstantiateTemplateParams(TemplateParameterList *L) {
+TemplateDeclInstantiator::SubstTemplateParams(TemplateParameterList *L) {
   // Get errors for all the parameters before bailing out.
   bool Invalid = false;
 
@@ -696,21 +696,21 @@ TemplateDeclInstantiator::InstantiateTemplateParams(TemplateParameterList *L) {
   return InstL;
 } 
 
-/// \brief Instantiates the type of the given function, including
-/// instantiating all of the function parameters.
+/// \brief Does substitution on the type of the given function, including
+/// all of the function parameters.
 ///
-/// \param D The function that we will be instantiated
+/// \param D The function whose type will be the basis of the substitution
 ///
 /// \param Params the instantiated parameter declarations
 
-/// \returns the instantiated function's type if successfull, a NULL
+/// \returns the instantiated function's type if successful, a NULL
 /// type if there was an error.
 QualType 
-TemplateDeclInstantiator::InstantiateFunctionType(FunctionDecl *D,
+TemplateDeclInstantiator::SubstFunctionType(FunctionDecl *D,
                               llvm::SmallVectorImpl<ParmVarDecl *> &Params) {
   bool InvalidDecl = false;
 
-  // Instantiate the function parameters
+  // Substitute all of the function's formal parameter types.
   TemplateDeclInstantiator ParamInstantiator(SemaRef, 0, TemplateArgs);
   llvm::SmallVector<QualType, 4> ParamTys;
   for (FunctionDecl::param_iterator P = D->param_begin(), 
@@ -742,8 +742,8 @@ TemplateDeclInstantiator::InstantiateFunctionType(FunctionDecl *D,
   const FunctionProtoType *Proto = D->getType()->getAsFunctionProtoType();
   assert(Proto && "Missing prototype?");
   QualType ResultType 
-    = SemaRef.InstantiateType(Proto->getResultType(), TemplateArgs,
-                              D->getLocation(), D->getDeclName());
+    = SemaRef.SubstType(Proto->getResultType(), TemplateArgs,
+                        D->getLocation(), D->getDeclName());
   if (ResultType.isNull())
     return QualType();
 
@@ -881,7 +881,7 @@ void Sema::InstantiateFunctionDefinition(SourceLocation PointOfInstantiation,
 
   // Instantiate the function body.
   OwningStmtResult Body 
-    = InstantiateStmt(Pattern, getTemplateInstantiationArgs(Function));
+    = SubstStmt(Pattern, getTemplateInstantiationArgs(Function));
 
   ActOnFinishFunctionBody(DeclPtrTy::make(Function), move(Body), 
                           /*IsInstantiation=*/true);
@@ -982,7 +982,7 @@ void Sema::InstantiateStaticDataMemberDefinition(
   else 
     ActOnUninitializedDecl(DeclPtrTy::make(Var), false);
 #else
-  Var = cast_or_null<VarDecl>(InstantiateDecl(Def, Var->getDeclContext(),
+  Var = cast_or_null<VarDecl>(SubstDecl(Def, Var->getDeclContext(),
                                           getTemplateInstantiationArgs(Var)));
 #endif
   
@@ -1068,7 +1068,7 @@ static NamedDecl *findInstantiationOf(ASTContext &Ctx,
 /// X<T>::<Kind>::KnownValue) to its instantiation
 /// (X<int>::<Kind>::KnownValue). InstantiateCurrentDeclRef() performs
 /// this mapping from within the instantiation of X<int>.
-NamedDecl * Sema::InstantiateCurrentDeclRef(NamedDecl *D) {
+NamedDecl * Sema::FindInstantiatedDecl(NamedDecl *D) {
   DeclContext *ParentDC = D->getDeclContext();
   if (isa<ParmVarDecl>(D) || ParentDC->isFunctionOrMethod()) {
     // D is a local of some kind. Look into the map of local
@@ -1077,7 +1077,7 @@ NamedDecl * Sema::InstantiateCurrentDeclRef(NamedDecl *D) {
   }
 
   if (NamedDecl *ParentDecl = dyn_cast<NamedDecl>(ParentDC)) {
-    ParentDecl = InstantiateCurrentDeclRef(ParentDecl);
+    ParentDecl = FindInstantiatedDecl(ParentDecl);
     if (!ParentDecl)
       return 0;
 

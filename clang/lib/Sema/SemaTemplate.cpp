@@ -1234,9 +1234,9 @@ bool Sema::CheckTemplateArgumentList(TemplateDecl *Template,
 
           TemplateArgumentList TemplateArgs(Context, Converted,
                                             /*TakeArgs=*/false);
-          ArgType = InstantiateType(ArgType, TemplateArgs,
-                                    TTP->getDefaultArgumentLoc(),
-                                    TTP->getDeclName());
+          ArgType = SubstType(ArgType, TemplateArgs,
+                              TTP->getDefaultArgumentLoc(),
+                              TTP->getDeclName());
         }
 
         if (ArgType.isNull())
@@ -1256,8 +1256,8 @@ bool Sema::CheckTemplateArgumentList(TemplateDecl *Template,
         TemplateArgumentList TemplateArgs(Context, Converted,
                                           /*TakeArgs=*/false);
 
-        Sema::OwningExprResult E = InstantiateExpr(NTTP->getDefaultArgument(), 
-                                                   TemplateArgs);
+        Sema::OwningExprResult E = SubstExpr(NTTP->getDefaultArgument(), 
+                                             TemplateArgs);
         if (E.isInvalid())
           return true;
         
@@ -1269,7 +1269,7 @@ bool Sema::CheckTemplateArgumentList(TemplateDecl *Template,
         if (!TempParm->hasDefaultArgument())
           break;
 
-        // FIXME: Instantiate default argument
+        // FIXME: Subst default argument
         Arg = TemplateArgument(TempParm->getDefaultArgument());
       }
     } else {
@@ -1296,11 +1296,11 @@ bool Sema::CheckTemplateArgumentList(TemplateDecl *Template,
                  = dyn_cast<NonTypeTemplateParmDecl>(*Param)) {
       // Check non-type template parameters.
 
-      // Instantiate the type of the non-type template parameter with
-      // the template arguments we've seen thus far.
+      // Do substitution on the type of the non-type template parameter
+      // with the template arguments we've seen thus far.
       QualType NTTPType = NTTP->getType();
       if (NTTPType->isDependentType()) {
-        // Instantiate the type of the non-type template parameter.
+        // Do substitution on the type of the non-type template parameter.
         InstantiatingTemplate Inst(*this, TemplateLoc, 
                                    Template, Converted.getFlatArguments(),
                                    Converted.flatSize(),
@@ -1308,9 +1308,9 @@ bool Sema::CheckTemplateArgumentList(TemplateDecl *Template,
 
         TemplateArgumentList TemplateArgs(Context, Converted,
                                           /*TakeArgs=*/false);
-        NTTPType = InstantiateType(NTTPType, TemplateArgs,
-                                   NTTP->getLocation(),
-                                   NTTP->getDeclName());
+        NTTPType = SubstType(NTTPType, TemplateArgs,
+                             NTTP->getLocation(),
+                             NTTP->getDeclName());
         // If that worked, check the non-type template parameter type
         // for validity.
         if (!NTTPType.isNull())
@@ -2931,7 +2931,7 @@ Sema::ActOnExplicitInstantiation(Scope *S, SourceLocation TemplateLoc,
                                     getTemplateInstantiationArgs(Record),
                                     /*ExplicitInstantiation=*/true))
       return true;
-  } else // Instantiate all of the members of class.
+  } else // Instantiate all of the members of the class.
     InstantiateClassMembers(TemplateLoc, Record, 
                             getTemplateInstantiationArgs(Record));
 

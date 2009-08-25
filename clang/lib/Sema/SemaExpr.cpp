@@ -2452,7 +2452,7 @@ Sema::OwningExprResult Sema::BuildCXXDefaultArgExpr(SourceLocation CallLoc,
                                  ArgList.getFlatArgumentList(),
                                  ArgList.flat_size());
 
-      OwningExprResult Result = InstantiateExpr(UninstExpr, ArgList);
+      OwningExprResult Result = SubstExpr(UninstExpr, ArgList);
       if (Result.isInvalid()) 
         return ExprError();
       

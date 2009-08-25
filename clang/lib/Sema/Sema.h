@@ -2858,22 +2858,20 @@ public:
 
   void PerformPendingImplicitInstantiations();
   
-  QualType InstantiateType(QualType T, const TemplateArgumentList &TemplateArgs,
-                           SourceLocation Loc, DeclarationName Entity);
+  QualType SubstType(QualType T, const TemplateArgumentList &TemplateArgs,
+                     SourceLocation Loc, DeclarationName Entity);
   
-  OwningExprResult InstantiateExpr(Expr *E, 
-                                   const TemplateArgumentList &TemplateArgs);
+  OwningExprResult SubstExpr(Expr *E, const TemplateArgumentList &TemplateArgs);
 
-  OwningStmtResult InstantiateStmt(Stmt *S, 
-                                   const TemplateArgumentList &TemplateArgs);
+  OwningStmtResult SubstStmt(Stmt *S, const TemplateArgumentList &TemplateArgs);
 
-  Decl *InstantiateDecl(Decl *D, DeclContext *Owner,
-                        const TemplateArgumentList &TemplateArgs);
+  Decl *SubstDecl(Decl *D, DeclContext *Owner,
+                  const TemplateArgumentList &TemplateArgs);
 
   bool 
-  InstantiateBaseSpecifiers(CXXRecordDecl *Instantiation,
-                            CXXRecordDecl *Pattern,
-                            const TemplateArgumentList &TemplateArgs);
+  SubstBaseSpecifiers(CXXRecordDecl *Instantiation,
+                      CXXRecordDecl *Pattern,
+                      const TemplateArgumentList &TemplateArgs);
 
   bool
   InstantiateTemplatePattern(SourceLocation PointOfInstantiation,
@@ -2900,25 +2898,25 @@ public:
                            ClassTemplateSpecializationDecl *ClassTemplateSpec);
 
   NestedNameSpecifier *
-  InstantiateNestedNameSpecifier(NestedNameSpecifier *NNS,
-                                 SourceRange Range,
-                                 const TemplateArgumentList &TemplateArgs);
+  SubstNestedNameSpecifier(NestedNameSpecifier *NNS,
+                           SourceRange Range,
+                           const TemplateArgumentList &TemplateArgs);
 
   TemplateName
-  InstantiateTemplateName(TemplateName Name, SourceLocation Loc,
-                          const TemplateArgumentList &TemplateArgs);
-  TemplateArgument Instantiate(TemplateArgument Arg,
-                               const TemplateArgumentList &TemplateArgs);
+  SubstTemplateName(TemplateName Name, SourceLocation Loc,
+                    const TemplateArgumentList &TemplateArgs);
+  TemplateArgument Subst(TemplateArgument Arg,
+                         const TemplateArgumentList &TemplateArgs);
 
   void InstantiateFunctionDefinition(SourceLocation PointOfInstantiation,
                                      FunctionDecl *Function,
                                      bool Recursive = false);
   void InstantiateStaticDataMemberDefinition(
-                                          SourceLocation PointOfInstantiation,
-                                             VarDecl *Var,
-                                             bool Recursive = false);
+                                     SourceLocation PointOfInstantiation,
+                                     VarDecl *Var,
+                                     bool Recursive = false);
 
-  NamedDecl *InstantiateCurrentDeclRef(NamedDecl *D);
+  NamedDecl *FindInstantiatedDecl(NamedDecl *D);
     
   // Objective-C declarations.
   virtual DeclPtrTy ActOnStartClassInterface(SourceLocation AtInterfaceLoc,
