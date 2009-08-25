@@ -49,8 +49,9 @@ B<clang>.
 
 =item B<-f>
 
-Overwrite output files. By default, B<llc> will refuse to overwrite
-an output file which already exists.
+Enable binary output on terminals.  Normally, B<llvm-extract> will refuse to
+write raw bitcode output if the output stream is a terminal. With this option,
+B<llvm-extract> will write raw bitcode regardless of the output device.
 
 =item B<-mtriple>=I<target triple>
 

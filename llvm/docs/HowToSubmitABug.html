@@ -183,12 +183,12 @@ to llvm-gcc (in addition to the options you already pass).  Once your have
 foo.bc, one of the following commands should fail:</p>
 
 <ol>
-<li><tt><b>llc</b> foo.bc -f</tt></li>
-<li><tt><b>llc</b> foo.bc -f -relocation-model=pic</tt></li>
-<li><tt><b>llc</b> foo.bc -f -relocation-model=static</tt></li>
-<li><tt><b>llc</b> foo.bc -f -enable-eh</tt></li>
-<li><tt><b>llc</b> foo.bc -f -relocation-model=pic -enable-eh</tt></li>
-<li><tt><b>llc</b> foo.bc -f -relocation-model=static -enable-eh</tt></li>
+<li><tt><b>llc</b> foo.bc</tt></li>
+<li><tt><b>llc</b> foo.bc -relocation-model=pic</tt></li>
+<li><tt><b>llc</b> foo.bc -relocation-model=static</tt></li>
+<li><tt><b>llc</b> foo.bc -enable-eh</tt></li>
+<li><tt><b>llc</b> foo.bc -relocation-model=pic -enable-eh</tt></li>
+<li><tt><b>llc</b> foo.bc -relocation-model=static -enable-eh</tt></li>
 </ol>
 
 <p>If none of these crash, please follow the instructions for a
@@ -320,7 +320,7 @@ the following:</p>
 
 <div class="doc_code">
 <p><tt>
-<b>llc</b> test.bc -o test.s -f<br>
+<b>llc</b> test.bc -o test.s<br>
 <b>gcc</b> test.s safe.so -o test.llc<br>
 ./test.llc [program options]
 </tt></p>

@@ -28,9 +28,9 @@ unless the B<-o> option is specified (see below).
 
 =item B<-f>
 
-Force overwrite.  Normally, B<llvm-extract> will refuse to overwrite an
-output file that already exists.  With this option, B<llvm-extract>
-will overwrite the output file and replace it with new bitcode.
+Enable binary output on terminals.  Normally, B<llvm-extract> will refuse to
+write raw bitcode output if the output stream is a terminal. With this option,
+B<llvm-extract> will write raw bitcode regardless of the output device.
 
 =item B<--func> I<function-name>
 

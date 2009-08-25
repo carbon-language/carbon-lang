@@ -1616,9 +1616,9 @@ bool RegMapping_Fer::compatible_class(MachineFunction &amp;mf,
 
 <div class="doc_code">
 <pre>
-$ llc -f -regalloc=simple file.bc -o sp.s;
-$ llc -f -regalloc=local file.bc -o lc.s;
-$ llc -f -regalloc=linearscan file.bc -o ln.s;
+$ llc -regalloc=simple file.bc -o sp.s;
+$ llc -regalloc=local file.bc -o lc.s;
+$ llc -regalloc=linearscan file.bc -o ln.s;
 </pre>
 </div>
 
