@@ -25,6 +25,9 @@ struct Outer {
     T foo(U);
     template<typename V> T bar(V);
     template<typename V> T* bar(V);
+    
+    static T value1;
+    static U value2;
   };
 };
 
@@ -70,3 +73,11 @@ template<typename Z>
 X* Outer<X>::Inner1<Y>::bar(Z) {
   return 0;
 }
+
+template<typename X>
+template<typename Y>
+X Outer<X>::Inner1<Y>::value1 = 0;
+
+template<typename X>
+template<typename Y>
+Y Outer<X>::Inner1<Y>::value2 = Y();
