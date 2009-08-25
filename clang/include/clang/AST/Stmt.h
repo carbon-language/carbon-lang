@@ -174,6 +174,7 @@ public:
   
   /// \brief Destroy the current statement and its children.
   void Destroy(ASTContext &Ctx) { 
+    assert(RefCount >= 0);
     if (--RefCount == 0)
       DoDestroy(Ctx); 
   }
@@ -183,6 +184,7 @@ public:
   /// Invoke the Retain() operation when this statement or expression
   /// is being shared by another owner.
   Stmt *Retain() {
+    assert(RefCount >= 1);
     ++RefCount;
     return this;
   }
