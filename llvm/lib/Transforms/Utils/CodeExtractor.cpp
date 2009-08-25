@@ -189,14 +189,14 @@ void CodeExtractor::splitReturnBlocks() {
         // Old dominates New. New node domiantes all other nodes dominated
         //by Old.
         DomTreeNode *OldNode = DT->getNode(*I);
-        std::vector<DomTreeNode *> Children;
+        SmallVector<DomTreeNode*, 8> Children;
         for (DomTreeNode::iterator DI = OldNode->begin(), DE = OldNode->end();
              DI != DE; ++DI) 
           Children.push_back(*DI);
 
         DomTreeNode *NewNode = DT->addNewBlock(New, *I);
 
-        for (std::vector<DomTreeNode *>::iterator I = Children.begin(),
+        for (SmallVector<DomTreeNode*, 8>::iterator I = Children.begin(),
                E = Children.end(); I != E; ++I) 
           DT->changeImmediateDominator(*I, NewNode);
       }
