@@ -26,9 +26,6 @@ add_subdirectory(llvm-prof)
 add_subdirectory(llvm-link)
 add_subdirectory(lli)
 
-# gccas and gccld are deprecated:
-# add_subdirectory(gccas)
-# add_subdirectory(gccld)
 add_subdirectory(llvm-extract)
 add_subdirectory(llvm-db)
 
