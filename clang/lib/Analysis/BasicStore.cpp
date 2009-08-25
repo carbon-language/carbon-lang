@@ -271,7 +271,7 @@ SValuator::CastResult BasicStoreManager::Retrieve(const GRState *state,
   if (isa<UnknownVal>(loc))
     return SValuator::CastResult(state, UnknownVal());
   
-  assert (!isa<UndefinedVal>(loc));
+  assert(!isa<UndefinedVal>(loc));
   
   switch (loc.getSubKind()) {
 
@@ -296,8 +296,12 @@ SValuator::CastResult BasicStoreManager::Retrieve(const GRState *state,
         return SValuator::CastResult(state, UnknownVal());
       
       BindingsTy B = GetBindings(state->getStore());
-      BindingsTy::data_type* T = B.lookup(R);
-      return SValuator::CastResult(state, T ? *T : UnknownVal());
+      BindingsTy::data_type *Val = B.lookup(R);
+      
+      if (!Val)
+        break;
+      
+      return CastRetrievedVal(*Val, state, cast<TypedRegion>(R), T);
     }
       
     case loc::ConcreteIntKind:

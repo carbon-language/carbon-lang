@@ -177,10 +177,16 @@ public:
   /// iterBindings - Iterate over the bindings in the Store.
   virtual void iterBindings(Store store, BindingsHandler& f) = 0;
 
-private:
+protected:
   CastResult MakeElementRegion(const GRState *state, const MemRegion *region,
                                QualType pointeeTy, QualType castToTy,
                                uint64_t index = 0);
+  
+  /// CastRetrievedVal - Used by subclasses of StoreManager to implement
+  ///  implicit casts that arise from loads from regions that are reinterpreted
+  ///  as another region.
+  SValuator::CastResult CastRetrievedVal(SVal val, const GRState *state,
+                                         const TypedRegion *R, QualType castTy);    
 };
 
 // FIXME: Do we still need this?

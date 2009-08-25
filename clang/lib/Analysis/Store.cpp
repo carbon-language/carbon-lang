@@ -197,3 +197,19 @@ StoreManager::CastRegion(const GRState *state, const MemRegion* R,
   
   return CastResult(state, R);
 }
+
+
+/// CastRetrievedVal - Used by subclasses of StoreManager to implement
+///  implicit casts that arise from loads from regions that are reinterpreted
+///  as another region.
+SValuator::CastResult StoreManager::CastRetrievedVal(SVal V,
+                                                     const GRState *state,
+                                                     const TypedRegion *R,
+                                                     QualType castTy) {
+  if (castTy.isNull())
+    return SValuator::CastResult(state, V);
+  
+  ASTContext &Ctx = ValMgr.getContext();  
+  return ValMgr.getSValuator().EvalCast(V, state, castTy, R->getValueType(Ctx));
+}
+

@@ -533,3 +533,12 @@ int test_array_compound(int *q, int *r, int *z) {
   return j;
 }
 
+// This test case previously crashed with -analyzer-store=basic because the
+// symbolic value stored in 'x' wouldn't be implicitly casted to a signed value
+// during the comparison.
+int rdar_7124210(unsigned int x) {
+  enum { SOME_CONSTANT = 123 };
+  int compare = ((signed) SOME_CONSTANT) == *((signed *) &x);
+  return compare ? 0 : 1; // Forces the evaluation of the symbolic constraint.
+}
+

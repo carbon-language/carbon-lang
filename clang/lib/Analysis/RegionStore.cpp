@@ -299,9 +299,6 @@ public:
   SVal RetrieveFieldOrElementCommon(const GRState *state, const TypedRegion *R,
                                     QualType Ty, const MemRegion *superR);
   
-  SValuator::CastResult CastRetrievedVal(SVal val, const GRState *state,
-                                         const TypedRegion *R, QualType castTy);
-
   /// Retrieve the values in a struct and return a CompoundVal, used when doing
   /// struct copy: 
   /// struct s x, y; 
@@ -1245,17 +1242,6 @@ SVal RegionStoreManager::RetrieveArray(const GRState *state,
   assert(isa<ConstantArrayType>(R->getValueType(getContext())));
   return ValMgr.makeLazyCompoundVal(state, R);
 #endif
-}
-
-SValuator::CastResult RegionStoreManager::CastRetrievedVal(SVal V,
-                                                           const GRState *state,
-                                                           const TypedRegion *R,
-                                                           QualType castTy) {
-  if (castTy.isNull())
-    return SValuator::CastResult(state, V);
-  
-  ASTContext &Ctx = getContext();  
-  return ValMgr.getSValuator().EvalCast(V, state, castTy, R->getValueType(Ctx));
 }
 
 //===----------------------------------------------------------------------===//
