@@ -1,5 +1,3 @@
-; RUN: llvm-as < %s | opt -simplifycfg | llvm-dis | grep region | count 2
-; RUN: llvm-as < %s | opt -simplifycfg | llvm-dis | grep func.start | count 2
 ; RUN: llvm-as < %s | opt -simplifycfg | llvm-dis | not grep "br label"
 
 	%llvm.dbg.anchor.type = type { i32, i32 }

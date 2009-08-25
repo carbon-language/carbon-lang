@@ -207,17 +207,17 @@ static void UpdateCallGraphAfterInlining(CallSite CS,
 /// to the llvm.dbg.func.start of the function F. Otherwise return NULL.
 static const DbgRegionEndInst *findFnRegionEndMarker(const Function *F) {
 
-  GlobalVariable *FnStart = NULL;
+  MDNode *FnStart = NULL;
   const DbgRegionEndInst *FnEnd = NULL;
   for (Function::const_iterator FI = F->begin(), FE =F->end(); FI != FE; ++FI) 
     for (BasicBlock::const_iterator BI = FI->begin(), BE = FI->end(); BI != BE;
          ++BI) {
       if (FnStart == NULL)  {
         if (const DbgFuncStartInst *FSI = dyn_cast<DbgFuncStartInst>(BI)) {
-          DISubprogram SP(cast<GlobalVariable>(FSI->getSubprogram()));
+          DISubprogram SP(FSI->getSubprogram());
           assert (SP.isNull() == false && "Invalid llvm.dbg.func.start");
           if (SP.describes(F))
-            FnStart = SP.getGV();
+            FnStart = SP.getNode();
         }
       } else {
         if (const DbgRegionEndInst *REI = dyn_cast<DbgRegionEndInst>(BI))

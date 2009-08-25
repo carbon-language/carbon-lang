@@ -17,6 +17,7 @@
 #ifndef LLVM_ANALYSIS_DEBUGINFO_H
 #define LLVM_ANALYSIS_DEBUGINFO_H
 
+#include "llvm/Metadata.h"
 #include "llvm/Target/TargetMachine.h"
 #include "llvm/ADT/StringMap.h"
 #include "llvm/ADT/DenseMap.h"
@@ -44,12 +45,12 @@ namespace llvm {
 
   class DIDescriptor {
   protected:    
-    GlobalVariable *DbgGV;
+    MDNode *DbgNode;
 
-    /// DIDescriptor constructor.  If the specified GV is non-null, this checks
+    /// DIDescriptor constructor.  If the specified node is non-null, check
     /// to make sure that the tag in the descriptor matches 'RequiredTag'.  If
     /// not, the debug info is corrupt and we ignore it.
-    DIDescriptor(GlobalVariable *GV, unsigned RequiredTag);
+    DIDescriptor(MDNode *N, unsigned RequiredTag);
 
     const std::string &getStringField(unsigned Elt, std::string &Result) const;
     unsigned getUnsignedField(unsigned Elt) const {
@@ -60,18 +61,18 @@ namespace llvm {
 
     template <typename DescTy>
     DescTy getFieldAs(unsigned Elt) const {
-      return DescTy(getDescriptorField(Elt).getGV());
+      return DescTy(getDescriptorField(Elt).getNode());
     }
 
     GlobalVariable *getGlobalVariableField(unsigned Elt) const;
 
   public:
-    explicit DIDescriptor() : DbgGV(0) {}
-    explicit DIDescriptor(GlobalVariable *GV) : DbgGV(GV) {}
+    explicit DIDescriptor() : DbgNode(0) {}
+    explicit DIDescriptor(MDNode *N) : DbgNode(N) {}
 
-    bool isNull() const { return DbgGV == 0; }
+    bool isNull() const { return DbgNode == 0; }
 
-    GlobalVariable *getGV() const { return DbgGV; }
+    MDNode *getNode() const { return DbgNode; }
 
     unsigned getVersion() const {
       return getUnsignedField(0) & LLVMDebugVersionMask;
@@ -81,8 +82,8 @@ namespace llvm {
       return getUnsignedField(0) & ~LLVMDebugVersionMask;
     }
 
-    /// ValidDebugInfo - Return true if V represents valid debug info value.
-    static bool ValidDebugInfo(Value *V, CodeGenOpt::Level OptLevel);
+    /// ValidDebugInfo - Return true if N represents valid debug info value.
+    static bool ValidDebugInfo(MDNode *N, CodeGenOpt::Level OptLevel);
 
     /// dump - print descriptor.
     void dump() const;
@@ -91,8 +92,8 @@ namespace llvm {
   /// DISubrange - This is used to represent ranges, for array bounds.
   class DISubrange : public DIDescriptor {
   public:
-    explicit DISubrange(GlobalVariable *GV = 0)
-      : DIDescriptor(GV, dwarf::DW_TAG_subrange_type) {}
+    explicit DISubrange(MDNode *N = 0)
+      : DIDescriptor(N, dwarf::DW_TAG_subrange_type) {}
 
     int64_t getLo() const { return (int64_t)getUInt64Field(1); }
     int64_t getHi() const { return (int64_t)getUInt64Field(2); }
@@ -101,7 +102,8 @@ namespace llvm {
   /// DIArray - This descriptor holds an array of descriptors.
   class DIArray : public DIDescriptor {
   public:
-    explicit DIArray(GlobalVariable *GV = 0) : DIDescriptor(GV) {}
+    explicit DIArray(MDNode *N = 0) 
+      : DIDescriptor(N) {}
 
     unsigned getNumElements() const;
     DIDescriptor getElement(unsigned Idx) const {
@@ -112,8 +114,8 @@ namespace llvm {
   /// DICompileUnit - A wrapper for a compile unit.
   class DICompileUnit : public DIDescriptor {
   public:
-    explicit DICompileUnit(GlobalVariable *GV = 0)
-      : DIDescriptor(GV, dwarf::DW_TAG_compile_unit) {}
+    explicit DICompileUnit(MDNode *N = 0)
+      : DIDescriptor(N, dwarf::DW_TAG_compile_unit) {}
 
     unsigned getLanguage() const     { return getUnsignedField(2); }
     const std::string &getFilename(std::string &F) const {
@@ -154,8 +156,8 @@ namespace llvm {
   /// type/precision or a file/line pair for location info.
   class DIEnumerator : public DIDescriptor {
   public:
-    explicit DIEnumerator(GlobalVariable *GV = 0)
-      : DIDescriptor(GV, dwarf::DW_TAG_enumerator) {}
+    explicit DIEnumerator(MDNode *N = 0)
+      : DIDescriptor(N, dwarf::DW_TAG_enumerator) {}
 
     const std::string &getName(std::string &F) const {
       return getStringField(1, F);
@@ -175,10 +177,11 @@ namespace llvm {
     };
 
   protected:
-    DIType(GlobalVariable *GV, unsigned Tag) : DIDescriptor(GV, Tag) {}
+    DIType(MDNode *N, unsigned Tag) 
+      : DIDescriptor(N, Tag) {}
     // This ctor is used when the Tag has already been validated by a derived
     // ctor.
-    DIType(GlobalVariable *GV, bool, bool) : DIDescriptor(GV) {}
+    DIType(MDNode *N, bool, bool) : DIDescriptor(N) {}
 
   public:
     /// isDerivedType - Return true if the specified tag is legal for
@@ -198,7 +201,7 @@ namespace llvm {
     /// Verify - Verify that a type descriptor is well formed.
     bool Verify() const;
   public:
-    explicit DIType(GlobalVariable *GV);
+    explicit DIType(MDNode *N);
     explicit DIType() {}
     virtual ~DIType() {}
 
@@ -231,8 +234,8 @@ namespace llvm {
   /// DIBasicType - A basic type, like 'int' or 'float'.
   class DIBasicType : public DIType {
   public:
-    explicit DIBasicType(GlobalVariable *GV)
-      : DIType(GV, dwarf::DW_TAG_base_type) {}
+    explicit DIBasicType(MDNode *N = 0)
+      : DIType(N, dwarf::DW_TAG_base_type) {}
 
     unsigned getEncoding() const { return getUnsignedField(9); }
 
@@ -244,13 +247,13 @@ namespace llvm {
   /// a typedef, a pointer or reference, etc.
   class DIDerivedType : public DIType {
   protected:
-    explicit DIDerivedType(GlobalVariable *GV, bool, bool)
-      : DIType(GV, true, true) {}
+    explicit DIDerivedType(MDNode *N, bool, bool)
+      : DIType(N, true, true) {}
   public:
-    explicit DIDerivedType(GlobalVariable *GV)
-      : DIType(GV, true, true) {
-      if (GV && !isDerivedType(getTag()))
-        DbgGV = 0;
+    explicit DIDerivedType(MDNode *N = 0)
+      : DIType(N, true, true) {
+      if (DbgNode && !isDerivedType(getTag()))
+        DbgNode = 0;
     }
 
     DIType getTypeDerivedFrom() const { return getFieldAs<DIType>(9); }
@@ -272,10 +275,10 @@ namespace llvm {
   /// FIXME: Why is this a DIDerivedType??
   class DICompositeType : public DIDerivedType {
   public:
-    explicit DICompositeType(GlobalVariable *GV)
-      : DIDerivedType(GV, true, true) {
-      if (GV && !isCompositeType(getTag()))
-        DbgGV = 0;
+    explicit DICompositeType(MDNode *N = 0)
+      : DIDerivedType(N, true, true) {
+      if (N && !isCompositeType(getTag()))
+        DbgNode = 0;
     }
 
     DIArray getTypeArray() const { return getFieldAs<DIArray>(10); }
@@ -291,8 +294,8 @@ namespace llvm {
   /// DIGlobal - This is a common class for global variables and subprograms.
   class DIGlobal : public DIDescriptor {
   protected:
-    explicit DIGlobal(GlobalVariable *GV, unsigned RequiredTag)
-      : DIDescriptor(GV, RequiredTag) {}
+    explicit DIGlobal(MDNode *N, unsigned RequiredTag)
+      : DIDescriptor(N, RequiredTag) {}
 
     /// isSubprogram - Return true if the specified tag is legal for
     /// DISubprogram.
@@ -335,8 +338,8 @@ namespace llvm {
   /// DISubprogram - This is a wrapper for a subprogram (e.g. a function).
   class DISubprogram : public DIGlobal {
   public:
-    explicit DISubprogram(GlobalVariable *GV = 0)
-      : DIGlobal(GV, dwarf::DW_TAG_subprogram) {}
+    explicit DISubprogram(MDNode *N = 0)
+      : DIGlobal(N, dwarf::DW_TAG_subprogram) {}
 
     DICompositeType getType() const { return getFieldAs<DICompositeType>(8); }
 
@@ -346,7 +349,7 @@ namespace llvm {
       DICompositeType DCT(getFieldAs<DICompositeType>(8));
       if (!DCT.isNull()) {
         DIArray A = DCT.getTypeArray();
-        DIType T(A.getElement(0).getGV());
+        DIType T(A.getElement(0).getNode());
         return T.getName(F);
       }
       DIType T(getFieldAs<DIType>(8));
@@ -367,8 +370,8 @@ namespace llvm {
   /// DIGlobalVariable - This is a wrapper for a global variable.
   class DIGlobalVariable : public DIGlobal {
   public:
-    explicit DIGlobalVariable(GlobalVariable *GV = 0)
-      : DIGlobal(GV, dwarf::DW_TAG_variable) {}
+    explicit DIGlobalVariable(MDNode *N = 0)
+      : DIGlobal(N, dwarf::DW_TAG_variable) {}
 
     GlobalVariable *getGlobal() const { return getGlobalVariableField(11); }
 
@@ -383,10 +386,10 @@ namespace llvm {
   /// global etc).
   class DIVariable : public DIDescriptor {
   public:
-    explicit DIVariable(GlobalVariable *GV = 0)
-      : DIDescriptor(GV) {
-      if (GV && !isVariable(getTag()))
-        DbgGV = 0;
+    explicit DIVariable(MDNode *N = 0)
+      : DIDescriptor(N) {
+      if (DbgNode && !isVariable(getTag()))
+        DbgNode = 0;
     }
 
     DIDescriptor getContext() const { return getDescriptorField(1); }
@@ -410,8 +413,8 @@ namespace llvm {
   /// DIBlock - This is a wrapper for a block (e.g. a function, scope, etc).
   class DIBlock : public DIDescriptor {
   public:
-    explicit DIBlock(GlobalVariable *GV = 0)
-      : DIDescriptor(GV, dwarf::DW_TAG_lexical_block) {}
+    explicit DIBlock(MDNode *N = 0)
+      : DIDescriptor(N, dwarf::DW_TAG_lexical_block) {}
 
     DIDescriptor getContext() const { return getDescriptorField(1); }
   };
@@ -538,10 +541,6 @@ namespace llvm {
 
   private:
     Constant *GetTagConstant(unsigned TAG);
-    Constant *GetStringConstant(const std::string &String);
-
-    /// getCastToEmpty - Return the descriptor as a Constant* with type '{}*'.
-    Constant *getCastToEmpty(DIDescriptor D);
   };
 
   /// Finds the stoppoint coressponding to this instruction, that is the
@@ -603,7 +602,6 @@ namespace llvm {
 
   /// isInlinedFnEnd - Return true if REI is ending an inlined function.
   bool isInlinedFnEnd(DbgRegionEndInst &REI, const Function *CurrentFn);
-
   /// DebugInfoFinder - This object collects DebugInfo from a module.
   class DebugInfoFinder {
 
@@ -647,7 +645,7 @@ namespace llvm {
     bool addType(DIType DT);
 
   public:
-    typedef SmallVector<GlobalVariable *, 8>::iterator iterator;
+    typedef SmallVector<MDNode *, 8>::iterator iterator;
     iterator compile_unit_begin()    { return CUs.begin(); }
     iterator compile_unit_end()      { return CUs.end(); }
     iterator subprogram_begin()      { return SPs.begin(); }
@@ -663,12 +661,11 @@ namespace llvm {
     unsigned type_count()            { return TYs.size(); }
 
   private:
-    SmallVector<GlobalVariable *, 8> CUs;  // Compile Units
-    SmallVector<GlobalVariable *, 8> SPs;  // Subprograms
-    SmallVector<GlobalVariable *, 8> GVs;  // Global Variables
-    SmallVector<GlobalVariable *, 8> TYs;  // Types
-    SmallPtrSet<GlobalVariable *, 64> NodesSeen;
-    
+    SmallVector<MDNode *, 8> CUs;  // Compile Units
+    SmallVector<MDNode *, 8> SPs;  // Subprograms
+    SmallVector<MDNode *, 8> GVs;  // Global Variables;
+    SmallVector<MDNode *, 8> TYs;  // Types
+    SmallPtrSet<MDNode *, 64> NodesSeen;
   };
 } // end namespace llvm
 

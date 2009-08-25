@@ -327,7 +327,7 @@ public:
   /// getOrCreateDebugLocID - Look up the DebugLocTuple index with the given
   /// source file, line, and column. If none currently exists, create a new
   /// DebugLocTuple, and insert it into the DebugIdMap.
-  unsigned getOrCreateDebugLocID(GlobalVariable *CompileUnit,
+  unsigned getOrCreateDebugLocID(MDNode *CompileUnit,
                                  unsigned Line, unsigned Col);
 
   /// getDebugLocTuple - Get the DebugLocTuple for a given DebugLoc object.

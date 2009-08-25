@@ -1593,9 +1593,9 @@ SDValue SelectionDAGLegalize::ExpandDBG_STOPPOINT(SDNode* Node) {
   bool useLABEL = TLI.isOperationLegalOrCustom(ISD::DBG_LABEL, MVT::Other);
 
   const DbgStopPointSDNode *DSP = cast<DbgStopPointSDNode>(Node);
-  GlobalVariable *CU_GV = cast<GlobalVariable>(DSP->getCompileUnit());
-  if (DW && (useDEBUG_LOC || useLABEL) && !CU_GV->isDeclaration()) {
-    DICompileUnit CU(cast<GlobalVariable>(DSP->getCompileUnit()));
+  MDNode *CU_Node = DSP->getCompileUnit();
+  if (DW && (useDEBUG_LOC || useLABEL)) {
+    DICompileUnit CU(CU_Node);
 
     unsigned Line = DSP->getLine();
     unsigned Col = DSP->getColumn();
@@ -1607,7 +1607,7 @@ SDValue SelectionDAGLegalize::ExpandDBG_STOPPOINT(SDNode* Node) {
         return DAG.getNode(ISD::DEBUG_LOC, dl, MVT::Other, Node->getOperand(0),
                            DAG.getConstant(Line, MVT::i32),
                            DAG.getConstant(Col, MVT::i32),
-                           DAG.getSrcValue(CU.getGV()));
+                           DAG.getSrcValue(CU.getNode()));
       } else {
         unsigned ID = DW->RecordSourceLine(Line, Col, CU);
         return DAG.getLabel(ISD::DBG_LABEL, dl, Node->getOperand(0), ID);

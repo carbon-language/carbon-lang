@@ -117,7 +117,7 @@ namespace llvm {
 
 
     private:
-    void SwitchToCU (GlobalVariable *CU);
+    void SwitchToCU (MDNode *CU);
     void SwitchToLine (unsigned Line, bool IsInBeginFunction = false);
 
     void PopulateDebugInfo (DIType Ty, unsigned short &TypeNo, bool &HasAux,

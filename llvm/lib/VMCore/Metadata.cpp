@@ -82,7 +82,7 @@ MDNode *MDNode::get(LLVMContext &Context, Value*const* Vals, unsigned NumVals) {
   V.reserve(NumVals);
   for (unsigned i = 0; i < NumVals; ++i)
     V.push_back(Vals[i]);
-  
+
   return pImpl->MDNodes.getOrCreate(Type::getMetadataTy(Context), V);
 }
 
