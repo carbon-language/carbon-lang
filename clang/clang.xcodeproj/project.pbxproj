@@ -109,6 +109,18 @@
 		84D9A8880C1A57E100AC7ABC /* AttributeList.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 84D9A8870C1A57E100AC7ABC /* AttributeList.cpp */; };
 		84D9A88C0C1A581300AC7ABC /* AttributeList.h in CopyFiles */ = {isa = PBXBuildFile; fileRef = 84D9A88B0C1A581300AC7ABC /* AttributeList.h */; };
 		906BF4B00F83BA2E001071FA /* ConvertUTF.c in Sources */ = {isa = PBXBuildFile; fileRef = 906BF4AF0F83BA2E001071FA /* ConvertUTF.c */; };
+		90FD6D7B103C3D49005F5B73 /* Analyzer.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 90FD6D6D103C3D49005F5B73 /* Analyzer.cpp */; };
+		90FD6D7C103C3D49005F5B73 /* ASTLocation.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 90FD6D6E103C3D49005F5B73 /* ASTLocation.cpp */; };
+		90FD6D7D103C3D49005F5B73 /* DeclReferenceMap.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 90FD6D70103C3D49005F5B73 /* DeclReferenceMap.cpp */; };
+		90FD6D7E103C3D49005F5B73 /* Entity.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 90FD6D71103C3D49005F5B73 /* Entity.cpp */; };
+		90FD6D7F103C3D49005F5B73 /* GlobalSelector.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 90FD6D73103C3D49005F5B73 /* GlobalSelector.cpp */; };
+		90FD6D80103C3D49005F5B73 /* Handlers.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 90FD6D74103C3D49005F5B73 /* Handlers.cpp */; };
+		90FD6D81103C3D49005F5B73 /* Indexer.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 90FD6D75103C3D49005F5B73 /* Indexer.cpp */; };
+		90FD6D82103C3D49005F5B73 /* IndexProvider.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 90FD6D76103C3D49005F5B73 /* IndexProvider.cpp */; };
+		90FD6D83103C3D49005F5B73 /* Program.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 90FD6D77103C3D49005F5B73 /* Program.cpp */; };
+		90FD6D84103C3D49005F5B73 /* ResolveLocation.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 90FD6D79103C3D49005F5B73 /* ResolveLocation.cpp */; };
+		90FD6D85103C3D49005F5B73 /* SelectorMap.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 90FD6D7A103C3D49005F5B73 /* SelectorMap.cpp */; };
+		90FD6DB6103D977E005F5B73 /* index-test.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 90FD6DB5103D977E005F5B73 /* index-test.cpp */; };
 		BDF87CF70FD746F300BBF872 /* SemaTemplateDeduction.cpp in Sources */ = {isa = PBXBuildFile; fileRef = BDF87CF60FD746F300BBF872 /* SemaTemplateDeduction.cpp */; };
 		DE01DA490B12ADA300AC22CE /* PPCallbacks.h in CopyFiles */ = {isa = PBXBuildFile; fileRef = DE01DA480B12ADA300AC22CE /* PPCallbacks.h */; };
 		DE06756C0C051CFE00EBBFD8 /* ParseExprCXX.cpp in Sources */ = {isa = PBXBuildFile; fileRef = DE06756B0C051CFE00EBBFD8 /* ParseExprCXX.cpp */; };
@@ -493,6 +505,46 @@
 		90FB99DE0F98FB1D008F9415 /* DeclContextInternals.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = DeclContextInternals.h; path = clang/AST/DeclContextInternals.h; sourceTree = "<group>"; };
 		90FB99DF0F98FB1D008F9415 /* DeclVisitor.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = DeclVisitor.h; path = clang/AST/DeclVisitor.h; sourceTree = "<group>"; };
 		90FB99E00F98FB1D008F9415 /* ExternalASTSource.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = ExternalASTSource.h; path = clang/AST/ExternalASTSource.h; sourceTree = "<group>"; };
+		90FD6D5F103C3D21005F5B73 /* Analyzer.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = Analyzer.h; path = clang/Index/Analyzer.h; sourceTree = "<group>"; };
+		90FD6D60103C3D21005F5B73 /* ASTLocation.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = ASTLocation.h; path = clang/Index/ASTLocation.h; sourceTree = "<group>"; };
+		90FD6D61103C3D21005F5B73 /* DeclReferenceMap.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = DeclReferenceMap.h; path = clang/Index/DeclReferenceMap.h; sourceTree = "<group>"; };
+		90FD6D62103C3D21005F5B73 /* Entity.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = Entity.h; path = clang/Index/Entity.h; sourceTree = "<group>"; };
+		90FD6D63103C3D21005F5B73 /* GlobalSelector.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = GlobalSelector.h; path = clang/Index/GlobalSelector.h; sourceTree = "<group>"; };
+		90FD6D64103C3D21005F5B73 /* Handlers.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = Handlers.h; path = clang/Index/Handlers.h; sourceTree = "<group>"; };
+		90FD6D65103C3D21005F5B73 /* Indexer.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = Indexer.h; path = clang/Index/Indexer.h; sourceTree = "<group>"; };
+		90FD6D66103C3D21005F5B73 /* IndexProvider.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = IndexProvider.h; path = clang/Index/IndexProvider.h; sourceTree = "<group>"; };
+		90FD6D67103C3D21005F5B73 /* Program.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = Program.h; path = clang/Index/Program.h; sourceTree = "<group>"; };
+		90FD6D68103C3D21005F5B73 /* SelectorMap.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = SelectorMap.h; path = clang/Index/SelectorMap.h; sourceTree = "<group>"; };
+		90FD6D69103C3D21005F5B73 /* STLExtras.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = STLExtras.h; path = clang/Index/STLExtras.h; sourceTree = "<group>"; };
+		90FD6D6A103C3D21005F5B73 /* TranslationUnit.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = TranslationUnit.h; path = clang/Index/TranslationUnit.h; sourceTree = "<group>"; };
+		90FD6D6B103C3D21005F5B73 /* Utils.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = Utils.h; path = clang/Index/Utils.h; sourceTree = "<group>"; };
+		90FD6D6D103C3D49005F5B73 /* Analyzer.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = Analyzer.cpp; path = lib/Index/Analyzer.cpp; sourceTree = "<group>"; };
+		90FD6D6E103C3D49005F5B73 /* ASTLocation.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = ASTLocation.cpp; path = lib/Index/ASTLocation.cpp; sourceTree = "<group>"; };
+		90FD6D6F103C3D49005F5B73 /* ASTVisitor.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = ASTVisitor.h; path = lib/Index/ASTVisitor.h; sourceTree = "<group>"; };
+		90FD6D70103C3D49005F5B73 /* DeclReferenceMap.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = DeclReferenceMap.cpp; path = lib/Index/DeclReferenceMap.cpp; sourceTree = "<group>"; };
+		90FD6D71103C3D49005F5B73 /* Entity.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = Entity.cpp; path = lib/Index/Entity.cpp; sourceTree = "<group>"; };
+		90FD6D72103C3D49005F5B73 /* EntityImpl.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = EntityImpl.h; path = lib/Index/EntityImpl.h; sourceTree = "<group>"; };
+		90FD6D73103C3D49005F5B73 /* GlobalSelector.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = GlobalSelector.cpp; path = lib/Index/GlobalSelector.cpp; sourceTree = "<group>"; };
+		90FD6D74103C3D49005F5B73 /* Handlers.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = Handlers.cpp; path = lib/Index/Handlers.cpp; sourceTree = "<group>"; };
+		90FD6D75103C3D49005F5B73 /* Indexer.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = Indexer.cpp; path = lib/Index/Indexer.cpp; sourceTree = "<group>"; };
+		90FD6D76103C3D49005F5B73 /* IndexProvider.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = IndexProvider.cpp; path = lib/Index/IndexProvider.cpp; sourceTree = "<group>"; };
+		90FD6D77103C3D49005F5B73 /* Program.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = Program.cpp; path = lib/Index/Program.cpp; sourceTree = "<group>"; };
+		90FD6D78103C3D49005F5B73 /* ProgramImpl.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = ProgramImpl.h; path = lib/Index/ProgramImpl.h; sourceTree = "<group>"; };
+		90FD6D79103C3D49005F5B73 /* ResolveLocation.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = ResolveLocation.cpp; path = lib/Index/ResolveLocation.cpp; sourceTree = "<group>"; };
+		90FD6D7A103C3D49005F5B73 /* SelectorMap.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = SelectorMap.cpp; path = lib/Index/SelectorMap.cpp; sourceTree = "<group>"; };
+		90FD6D86103C3D80005F5B73 /* Analyses.def */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; name = Analyses.def; path = clang/Frontend/Analyses.def; sourceTree = "<group>"; };
+		90FD6D87103C3D80005F5B73 /* AnalysisConsumer.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = AnalysisConsumer.h; path = clang/Frontend/AnalysisConsumer.h; sourceTree = "<group>"; };
+		90FD6D88103C3D80005F5B73 /* ASTConsumers.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = ASTConsumers.h; path = clang/Frontend/ASTConsumers.h; sourceTree = "<group>"; };
+		90FD6D89103C3D80005F5B73 /* ASTUnit.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = ASTUnit.h; path = clang/Frontend/ASTUnit.h; sourceTree = "<group>"; };
+		90FD6D8A103C3D80005F5B73 /* CommandLineSourceLoc.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = CommandLineSourceLoc.h; path = clang/Frontend/CommandLineSourceLoc.h; sourceTree = "<group>"; };
+		90FD6D8B103C3D80005F5B73 /* DeclContextXML.def */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; name = DeclContextXML.def; path = clang/Frontend/DeclContextXML.def; sourceTree = "<group>"; };
+		90FD6D8C103C3D80005F5B73 /* DeclXML.def */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; name = DeclXML.def; path = clang/Frontend/DeclXML.def; sourceTree = "<group>"; };
+		90FD6D8D103C3D80005F5B73 /* DocumentXML.def */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; name = DocumentXML.def; path = clang/Frontend/DocumentXML.def; sourceTree = "<group>"; };
+		90FD6D8E103C3D80005F5B73 /* DocumentXML.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = DocumentXML.h; path = clang/Frontend/DocumentXML.h; sourceTree = "<group>"; };
+		90FD6D8F103C3D80005F5B73 /* StmtXML.def */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; name = StmtXML.def; path = clang/Frontend/StmtXML.def; sourceTree = "<group>"; };
+		90FD6D90103C3D80005F5B73 /* TypeXML.def */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; name = TypeXML.def; path = clang/Frontend/TypeXML.def; sourceTree = "<group>"; };
+		90FD6D91103C3D80005F5B73 /* Utils.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = Utils.h; path = clang/Frontend/Utils.h; sourceTree = "<group>"; };
+		90FD6DB5103D977E005F5B73 /* index-test.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = "index-test.cpp"; path = "tools/index-test/index-test.cpp"; sourceTree = "<group>"; };
 		BDF87CF60FD746F300BBF872 /* SemaTemplateDeduction.cpp */ = {isa = PBXFileReference; fileEncoding = 4; indentWidth = 2; lastKnownFileType = sourcecode.cpp.cpp; name = SemaTemplateDeduction.cpp; path = lib/Sema/SemaTemplateDeduction.cpp; sourceTree = "<group>"; tabWidth = 2; };
 		DE01DA480B12ADA300AC22CE /* PPCallbacks.h */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.c.h; path = PPCallbacks.h; sourceTree = "<group>"; };
 		DE06756B0C051CFE00EBBFD8 /* ParseExprCXX.cpp */ = {isa = PBXFileReference; fileEncoding = 30; indentWidth = 2; lastKnownFileType = sourcecode.cpp.cpp; name = ParseExprCXX.cpp; path = lib/Parse/ParseExprCXX.cpp; sourceTree = "<group>"; tabWidth = 2; };
@@ -748,6 +800,7 @@
 		08FB7795FE84155DC02AAC07 /* Libraries */ = {
 			isa = PBXGroup;
 			children = (
+				90FD6D6C103C3D2D005F5B73 /* Index */,
 				DED7D7500A5242C7003AD0FB /* Basic */,
 				DED7D78C0A5242E6003AD0FB /* Lex */,
 				DE1F22600A7D8C9B00FBF588 /* Parse */,
@@ -962,6 +1015,55 @@
 				35F9B1560D1C6B2E00DDFDAE /* UninitializedValues.h */,
 			);
 			name = Analyses;
+			sourceTree = "<group>";
+		};
+		90FD6D5E103C3D03005F5B73 /* Index */ = {
+			isa = PBXGroup;
+			children = (
+				90FD6D5F103C3D21005F5B73 /* Analyzer.h */,
+				90FD6D60103C3D21005F5B73 /* ASTLocation.h */,
+				90FD6D61103C3D21005F5B73 /* DeclReferenceMap.h */,
+				90FD6D62103C3D21005F5B73 /* Entity.h */,
+				90FD6D63103C3D21005F5B73 /* GlobalSelector.h */,
+				90FD6D64103C3D21005F5B73 /* Handlers.h */,
+				90FD6D65103C3D21005F5B73 /* Indexer.h */,
+				90FD6D66103C3D21005F5B73 /* IndexProvider.h */,
+				90FD6D67103C3D21005F5B73 /* Program.h */,
+				90FD6D68103C3D21005F5B73 /* SelectorMap.h */,
+				90FD6D69103C3D21005F5B73 /* STLExtras.h */,
+				90FD6D6A103C3D21005F5B73 /* TranslationUnit.h */,
+				90FD6D6B103C3D21005F5B73 /* Utils.h */,
+			);
+			name = Index;
+			sourceTree = "<group>";
+		};
+		90FD6D6C103C3D2D005F5B73 /* Index */ = {
+			isa = PBXGroup;
+			children = (
+				90FD6D6D103C3D49005F5B73 /* Analyzer.cpp */,
+				90FD6D6E103C3D49005F5B73 /* ASTLocation.cpp */,
+				90FD6D6F103C3D49005F5B73 /* ASTVisitor.h */,
+				90FD6D70103C3D49005F5B73 /* DeclReferenceMap.cpp */,
+				90FD6D71103C3D49005F5B73 /* Entity.cpp */,
+				90FD6D72103C3D49005F5B73 /* EntityImpl.h */,
+				90FD6D73103C3D49005F5B73 /* GlobalSelector.cpp */,
+				90FD6D74103C3D49005F5B73 /* Handlers.cpp */,
+				90FD6D75103C3D49005F5B73 /* Indexer.cpp */,
+				90FD6D76103C3D49005F5B73 /* IndexProvider.cpp */,
+				90FD6D77103C3D49005F5B73 /* Program.cpp */,
+				90FD6D78103C3D49005F5B73 /* ProgramImpl.h */,
+				90FD6D79103C3D49005F5B73 /* ResolveLocation.cpp */,
+				90FD6D7A103C3D49005F5B73 /* SelectorMap.cpp */,
+			);
+			name = Index;
+			sourceTree = "<group>";
+		};
+		90FD6DB4103D9763005F5B73 /* index-test */ = {
+			isa = PBXGroup;
+			children = (
+				90FD6DB5103D977E005F5B73 /* index-test.cpp */,
+			);
+			name = "index-test";
 			sourceTree = "<group>";
 		};
 		C6859E8C029090F304C91782 /* Documentation */ = {
@@ -1223,6 +1325,7 @@
 		DED7D72E0A524295003AD0FB /* include */ = {
 			isa = PBXGroup;
 			children = (
+				90FD6D5E103C3D03005F5B73 /* Index */,
 				DED7D7300A524295003AD0FB /* Basic */,
 				DED7D7390A524295003AD0FB /* Lex */,
 				DE1F21F20A7D84E800FBF588 /* Parse */,
@@ -1351,6 +1454,7 @@
 		DEDFE61F0F7B3AE10035BD10 /* Tools */ = {
 			isa = PBXGroup;
 			children = (
+				90FD6DB4103D9763005F5B73 /* index-test */,
 				DEDFE6200F7B3AE90035BD10 /* clang-cc */,
 				DEDFE6210F7B3AF10035BD10 /* clang */,
 			);
@@ -1401,6 +1505,18 @@
 		DEF1615D0F65C7FC0098507F /* Frontend */ = {
 			isa = PBXGroup;
 			children = (
+				90FD6D86103C3D80005F5B73 /* Analyses.def */,
+				90FD6D87103C3D80005F5B73 /* AnalysisConsumer.h */,
+				90FD6D88103C3D80005F5B73 /* ASTConsumers.h */,
+				90FD6D89103C3D80005F5B73 /* ASTUnit.h */,
+				90FD6D8A103C3D80005F5B73 /* CommandLineSourceLoc.h */,
+				90FD6D8B103C3D80005F5B73 /* DeclContextXML.def */,
+				90FD6D8C103C3D80005F5B73 /* DeclXML.def */,
+				90FD6D8D103C3D80005F5B73 /* DocumentXML.def */,
+				90FD6D8E103C3D80005F5B73 /* DocumentXML.h */,
+				90FD6D8F103C3D80005F5B73 /* StmtXML.def */,
+				90FD6D90103C3D80005F5B73 /* TypeXML.def */,
+				90FD6D91103C3D80005F5B73 /* Utils.h */,
 				DEF161620F65C81C0098507F /* CompileOptions.h */,
 				DEF168620F9549250098507F /* FixItRewriter.h */,
 				DEF169220F9645960098507F /* FrontendDiagnostic.h */,
@@ -1709,6 +1825,18 @@
 				1AFF8AE31012BFC900D248DA /* CGRecordLayoutBuilder.cpp in Sources */,
 				1AE4EE3E103B89ED00888A23 /* StmtProfile.cpp in Sources */,
 				1AE4EE40103B8A0A00888A23 /* TargetABIInfo.cpp in Sources */,
+				90FD6D7B103C3D49005F5B73 /* Analyzer.cpp in Sources */,
+				90FD6D7C103C3D49005F5B73 /* ASTLocation.cpp in Sources */,
+				90FD6D7D103C3D49005F5B73 /* DeclReferenceMap.cpp in Sources */,
+				90FD6D7E103C3D49005F5B73 /* Entity.cpp in Sources */,
+				90FD6D7F103C3D49005F5B73 /* GlobalSelector.cpp in Sources */,
+				90FD6D80103C3D49005F5B73 /* Handlers.cpp in Sources */,
+				90FD6D81103C3D49005F5B73 /* Indexer.cpp in Sources */,
+				90FD6D82103C3D49005F5B73 /* IndexProvider.cpp in Sources */,
+				90FD6D83103C3D49005F5B73 /* Program.cpp in Sources */,
+				90FD6D84103C3D49005F5B73 /* ResolveLocation.cpp in Sources */,
+				90FD6D85103C3D49005F5B73 /* SelectorMap.cpp in Sources */,
+				90FD6DB6103D977E005F5B73 /* index-test.cpp in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
