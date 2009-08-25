@@ -369,7 +369,7 @@ emitCallAndSwitchStatement(Function *newFunction, BasicBlock *codeReplacer,
                            Values &inputs, Values &outputs) {
   // Emit a call to the new function, passing in: *pointer to struct (if
   // aggregating parameters), or plan inputs and allocated memory for outputs
-  std::vector<Value*> params, StructValues, ReloadOutputs;
+  std::vector<Value*> params, StructValues, ReloadOutputs, Reloads;
   
   LLVMContext &Context = newFunction->getContext();
 
@@ -446,6 +446,7 @@ emitCallAndSwitchStatement(Function *newFunction, BasicBlock *codeReplacer,
       Output = ReloadOutputs[i];
     }
     LoadInst *load = new LoadInst(Output, outputs[i]->getName()+".reload");
+    Reloads.push_back(load);
     codeReplacer->getInstList().push_back(load);
     std::vector<User*> Users(outputs[i]->use_begin(), outputs[i]->use_end());
     for (unsigned u = 0, e = Users.size(); u != e; ++u) {
@@ -532,8 +533,25 @@ emitCallAndSwitchStatement(Function *newFunction, BasicBlock *codeReplacer,
                 DominatesDef = false;
             }
 
-            if (DT)
+            if (DT) {
               DominatesDef = DT->dominates(DefBlock, OldTarget);
+              
+              // If the output value is used by a phi in the target block,
+              // then we need to test for dominance of the phi's predecessor
+              // instead.  Unfortunately, this a little complicated since we
+              // have already rewritten uses of the value to uses of the reload.
+              for (Value::use_iterator UI = Reloads[out]->use_begin(),
+                   UE = Reloads[out]->use_end(); UI != UE; ++UI) {
+                 PHINode *P = dyn_cast<PHINode>(*UI);
+                 if (!P || P->getParent() != OldTarget) continue;
+                 
+                 BasicBlock* pred = P->getIncomingBlock(UI);
+                 if (DT->dominates(DefBlock, pred)) {
+                   DominatesDef = true;
+                   break;
+                 }
+              }
+            }
 
             if (DominatesDef) {
               if (AggregateArgs) {
