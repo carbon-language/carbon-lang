@@ -5014,8 +5014,20 @@ void SDNode::Profile(FoldingSetNodeID &ID) const {
   AddNodeIDNode(ID, this);
 }
 
+namespace {
+  struct EVTArray {
+    std::vector<EVT> VTs;
+    
+    EVTArray() {
+      VTs.reserve(MVT::LAST_VALUETYPE);
+      for (unsigned i = 0; i < MVT::LAST_VALUETYPE; ++i)
+        VTs.push_back(MVT((MVT::SimpleValueType)i));
+    }
+  };
+}
+
 static ManagedStatic<std::set<EVT, EVT::compareRawBits> > EVTs;
-static EVT VTs[MVT::LAST_VALUETYPE];
+static ManagedStatic<EVTArray> SimpleVTArray;
 static ManagedStatic<sys::SmartMutex<true> > VTMutex;
 
 /// getValueTypeList - Return a pointer to the specified value type.
@@ -5025,12 +5037,7 @@ const EVT *SDNode::getValueTypeList(EVT VT) {
     sys::SmartScopedLock<true> Lock(*VTMutex);
     return &(*EVTs->insert(VT).first);
   } else {
-    // All writes to this location will have the same value, so it's ok
-    // to race on it.  We only need to ensure that at least one write has
-    // succeeded before we return the pointer into the array.
-    VTs[VT.getSimpleVT().SimpleTy] = VT;
-    sys::MemoryFence();
-    return VTs + VT.getSimpleVT().SimpleTy;
+    return &SimpleVTArray->VTs[VT.getSimpleVT().SimpleTy];
   }
 }
 
