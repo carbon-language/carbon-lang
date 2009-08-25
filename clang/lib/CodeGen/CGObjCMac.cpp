@@ -3050,7 +3050,12 @@ void CGObjCCommonMac::BuildAggrIvarLayout(const ObjCImplementationDecl *OI,
     if (RD) {
       if (Field->isBitField()) {
         CodeGenTypes::BitFieldInfo Info = CGM.getTypes().getBitFieldInfo(Field);
-        FieldOffset = Layout->getElementOffset(Info.FieldNo);
+        
+        const llvm::Type *Ty = 
+          CGM.getTypes().ConvertTypeForMemRecursive(Field->getType());
+        uint64_t TypeSize = 
+          CGM.getTypes().getTargetData().getTypeAllocSize(Ty);
+        FieldOffset = Info.FieldNo * TypeSize;
       } else
         FieldOffset =
           Layout->getElementOffset(CGM.getTypes().getLLVMFieldNo(Field));
