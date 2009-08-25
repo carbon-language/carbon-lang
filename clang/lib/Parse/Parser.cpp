@@ -35,7 +35,7 @@ public:
 
 Parser::Parser(Preprocessor &pp, Action &actions)
   : CrashInfo(*this), PP(pp), Actions(actions), Diags(PP.getDiagnostics()), 
-    TemplateParameterDepth(0), GreaterThanIsOperator(true) {
+    GreaterThanIsOperator(true), TemplateParameterDepth(0) {
   Tok.setKind(tok::eof);
   CurScope = 0;
   NumCachedScopes = 0;
