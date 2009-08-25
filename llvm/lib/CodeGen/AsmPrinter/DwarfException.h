@@ -70,13 +70,14 @@ class VISIBILITY_HIDDEN DwarfException : public Dwarf {
   /// ExceptionTimer - Timer for the Dwarf exception writer.
   Timer *ExceptionTimer;
 
-  /// EmitCommonEHFrame - Emit the common eh unwind frame.
-  ///
-  void EmitCommonEHFrame(const Function *Personality, unsigned Index);
+  /// EmitCommonInformationEntry - Emit a Common Information Entry (CIE). This
+  /// holds information that is shared among many Frame Description Entries.
+  /// There is at least one CIE in every non-empty .debug_frame section.
+  void EmitCommonInformationEntry(const Function *Personality, unsigned Index);
 
-  /// EmitEHFrame - Emit function exception frame information.
-  ///
-  void EmitEHFrame(const FunctionEHFrameInfo &EHFrameInfo);
+  /// EmitFrameDescriptionEntry - Emit the Frame Description Entry (FDE) for the
+  /// function.
+  void EmitFrameDescriptionEntry(const FunctionEHFrameInfo &EHFrameInfo);
 
   /// EmitExceptionTable - Emit landing pads and actions.
   ///
