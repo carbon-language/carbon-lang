@@ -41,10 +41,6 @@ class GRExprEngine : public GRSubEngine {
   /// G - the simulation graph.
   ExplodedGraph& G;
   
-  /// Liveness - live-variables information the ValueDecl* and block-level
-  ///  Expr* in the CFG.  Used to prune out dead state.
-  LiveVariables& Liveness;
-
   /// Builder - The current GRStmtNodeBuilder which is used when building the
   ///  nodes for a given statement.
   GRStmtNodeBuilder* Builder;
@@ -89,15 +85,6 @@ class GRExprEngine : public GRSubEngine {
   //   destructor is called before the rest of the GRExprEngine is destroyed.
   GRBugReporter BR;
   
-  /// EargerlyAssume - A flag indicating how the engine should handle
-  //   expressions such as: 'x = (y != 0)'.  When this flag is true then
-  //   the subexpression 'y != 0' will be eagerly assumed to be true or false,
-  //   thus evaluating it to the integers 0 or 1 respectively.  The upside
-  //   is that this can increase analysis precision until we have a better way
-  //   to lazily evaluate such logic.  The downside is that it eagerly
-  //   bifurcates paths.
-  const bool EagerlyAssume;
-
 public:
   typedef llvm::SmallPtrSet<ExplodedNode*,2> ErrorNodes;  
   typedef llvm::DenseMap<ExplodedNode*, Expr*> UndefArgsTy;
@@ -202,11 +189,7 @@ public:
   ErrorNodes ExplicitOOBMemAccesses;
   
 public:
-  GRExprEngine(CFG& cfg, const Decl &CD, ASTContext& Ctx, LiveVariables& L,
-               AnalysisManager &mgr,
-               bool purgeDead, bool eagerlyAssume = true,
-               StoreManagerCreator SMC = CreateBasicStoreManager,
-               ConstraintManagerCreator CMC = CreateBasicConstraintManager);
+  GRExprEngine(AnalysisManager &mgr);
 
   ~GRExprEngine();
   
@@ -216,6 +199,8 @@ public:
   
   /// getContext - Return the ASTContext associated with this analysis.
   ASTContext& getContext() const { return G.getContext(); }
+
+  AnalysisManager &getAnalysisManager() const { return AMgr; }
   
   SValuator &getSValuator() { return SVator; }
   
@@ -235,11 +220,6 @@ public:
   void ViewGraph(bool trim = false);
   
   void ViewGraph(ExplodedNode** Beg, ExplodedNode** End);
-  
-  /// getLiveness - Returned computed live-variables information for the
-  ///  analyzed function.  
-  const LiveVariables& getLiveness() const { return Liveness; }  
-  LiveVariables& getLiveness() { return Liveness; }
   
   /// getInitialState - Return the initial state used for the root vertex
   ///  in the ExplodedGraph.

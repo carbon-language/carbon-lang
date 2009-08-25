@@ -16,6 +16,7 @@
 #define LLVM_CLANG_ANALYSIS_EXPLODEDGRAPH
 
 #include "clang/Analysis/ProgramPoint.h"
+#include "clang/Analysis/PathSensitive/AnalysisContext.h"
 #include "clang/AST/Decl.h"
 #include "llvm/ADT/SmallVector.h"
 #include "llvm/ADT/FoldingSet.h"
@@ -113,6 +114,10 @@ public:
   const LocationContext *getLocationContext() const { 
     return getLocation().getLocationContext(); 
   }
+
+  const Decl &getCodeDecl() const { return *getLocationContext()->getDecl(); }
+
+  CFG &getCFG() const { return *getLocationContext()->getCFG(); }
 
   const GRState* getState() const {
     return State;

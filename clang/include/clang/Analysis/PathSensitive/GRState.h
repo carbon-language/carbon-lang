@@ -72,12 +72,9 @@ class GRStateManager;
 ///  used as a functional object; that is once it is created and made
 ///  "persistent" in a FoldingSet its values will never change.
 class GRState : public llvm::FoldingSetNode {
-public:  
-  // Typedefs.  
+public: 
   typedef llvm::ImmutableSet<llvm::APSInt*>                IntSetTy;
   typedef llvm::ImmutableMap<void*, void*>                 GenericDataMap;  
-  
-  typedef GRStateManager ManagerTy;
   
 private:
   void operator=(const GRState& R) const;
@@ -222,7 +219,8 @@ public:
   const GRState *bindExpr(const Stmt* Ex, SVal V, bool isBlkExpr,
                           bool Invalidate) const;
   
-  const GRState *bindExpr(const Stmt* Ex, SVal V, bool Invalidate = true) const;
+  const GRState *bindExpr(const Stmt* Ex, SVal V, CFG &cfg, 
+                          bool Invalidate = true) const;
   
   const GRState *bindBlkExpr(const Stmt *Ex, SVal V) const {
     return bindExpr(Ex, V, true, false);
@@ -418,36 +416,22 @@ private:
   ///  is set by GRExprEngine.
   Stmt* CurrentStmt;
   
-  /// cfg - The CFG for the analyzed function/method.
-  CFG& cfg;
-  
-  /// codedecl - The Decl representing the function/method being analyzed.
-  const Decl& codedecl;
-    
   /// TF - Object that represents a bundle of transfer functions
   ///  for manipulating and creating SVals.
   GRTransferFuncs* TF;
 
-  /// Liveness - live-variables information of the ValueDecl* and block-level
-  /// Expr* in the CFG. Used to get initial store and prune out dead state.
-  LiveVariables& Liveness;
-  
 public:
   
   GRStateManager(ASTContext& Ctx,
                  StoreManagerCreator CreateStoreManager,
                  ConstraintManagerCreator CreateConstraintManager,
-                 llvm::BumpPtrAllocator& alloc, CFG& c,
-                 const Decl& cd, LiveVariables& L) 
-  : EnvMgr(alloc),
-    GDMFactory(alloc),
-    ValueMgr(alloc, Ctx, *this),
-    Alloc(alloc),
-    cfg(c),
-    codedecl(cd),
-    Liveness(L) {
-      StoreMgr.reset((*CreateStoreManager)(*this));
-      ConstraintMgr.reset((*CreateConstraintManager)(*this));
+                 llvm::BumpPtrAllocator& alloc)
+    : EnvMgr(alloc), 
+      GDMFactory(alloc), 
+      ValueMgr(alloc, Ctx, *this), 
+      Alloc(alloc) {
+    StoreMgr.reset((*CreateStoreManager)(*this));
+    ConstraintMgr.reset((*CreateConstraintManager)(*this));
   }
   
   ~GRStateManager();
@@ -457,7 +441,6 @@ public:
   ASTContext &getContext() { return ValueMgr.getContext(); }
   const ASTContext &getContext() const { return ValueMgr.getContext(); }
                  
-  const Decl &getCodeDecl() { return codedecl; }
   GRTransferFuncs& getTransferFuncs() { return *TF; }
 
   BasicValueFactory &getBasicVals() {
@@ -477,7 +460,6 @@ public:
   ValueManager &getValueManager() { return ValueMgr; }
   const ValueManager &getValueManager() const { return ValueMgr; }
   
-  LiveVariables& getLiveVariables() { return Liveness; }
   llvm::BumpPtrAllocator& getAllocator() { return Alloc; }
 
   MemRegionManager& getRegionManager() {

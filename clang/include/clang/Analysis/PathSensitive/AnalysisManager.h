@@ -43,6 +43,14 @@ class AnalysisManager : public BugReporterData {
   bool VisualizeEGDot;
   bool VisualizeEGUbi;
   bool PurgeDead;
+
+  /// EargerlyAssume - A flag indicating how the engine should handle
+  //   expressions such as: 'x = (y != 0)'.  When this flag is true then
+  //   the subexpression 'y != 0' will be eagerly assumed to be true or false,
+  //   thus evaluating it to the integers 0 or 1 respectively.  The upside
+  //   is that this can increase analysis precision until we have a better way
+  //   to lazily evaluate such logic.  The downside is that it eagerly
+  //   bifurcates paths.
   bool EagerlyAssume;
   bool TrimGraph;
 
@@ -113,12 +121,12 @@ public:
     return EntryContext->getLiveVariables();
   }
     
-  virtual ASTContext &getContext() {
+  virtual ASTContext &getASTContext() {
     return Ctx;
   }
     
   virtual SourceManager &getSourceManager() {
-    return getContext().getSourceManager();
+    return getASTContext().getSourceManager();
   }
     
   virtual Diagnostic &getDiagnostic() {

@@ -277,7 +277,7 @@ static void ActionWarnDeadStores(AnalysisManager& mgr) {
 
 static void ActionWarnUninitVals(AnalysisManager& mgr) {
   if (CFG* c = mgr.getCFG())
-    CheckUninitializedValues(*c, mgr.getContext(), mgr.getDiagnostic());
+    CheckUninitializedValues(*c, mgr.getASTContext(), mgr.getDiagnostic());
 }
 
 
@@ -294,10 +294,7 @@ static void ActionGRExprEngine(AnalysisManager& mgr, GRTransferFuncs* tf,
   LiveVariables* L = mgr.getLiveVariables();
   if (!L) return;
 
-  GRExprEngine Eng(*mgr.getCFG(), *mgr.getCodeDecl(), mgr.getContext(), *L, mgr,
-                   mgr.shouldPurgeDead(), mgr.shouldEagerlyAssume(),
-                   mgr.getStoreManagerCreator(), 
-                   mgr.getConstraintManagerCreator());
+  GRExprEngine Eng(mgr);
 
   Eng.setTransferFunctions(tf);
   
@@ -331,7 +328,7 @@ static void ActionGRExprEngine(AnalysisManager& mgr, GRTransferFuncs* tf,
 static void ActionCheckerCFRefAux(AnalysisManager& mgr, bool GCEnabled,
                                   bool StandardWarnings) {
   
-  GRTransferFuncs* TF = MakeCFRefCountTF(mgr.getContext(),
+  GRTransferFuncs* TF = MakeCFRefCountTF(mgr.getASTContext(),
                                          GCEnabled,
                                          mgr.getLangOptions());
     

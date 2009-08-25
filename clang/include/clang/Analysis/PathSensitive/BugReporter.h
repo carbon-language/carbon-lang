@@ -280,7 +280,7 @@ public:
   virtual ~BugReporterData();
   virtual Diagnostic& getDiagnostic() = 0;  
   virtual PathDiagnosticClient* getPathDiagnosticClient() = 0;  
-  virtual ASTContext& getContext() = 0;
+  virtual ASTContext& getASTContext() = 0;
   virtual SourceManager& getSourceManager() = 0;
   virtual CFG* getCFG() = 0;
   virtual ParentMap& getParentMap() = 0;
@@ -324,7 +324,7 @@ public:
   iterator begin() { return BugTypes.begin(); }
   iterator end() { return BugTypes.end(); }
   
-  ASTContext& getContext() { return D.getContext(); }
+  ASTContext& getContext() { return D.getASTContext(); }
   
   SourceManager& getSourceManager() { return D.getSourceManager(); }
   
@@ -457,14 +457,8 @@ public:
     return BR.getSourceManager();
   }
   
-  const Decl& getCodeDecl() {
-    return getStateManager().getCodeDecl();
-  }
-  
-  const CFG& getCFG() {
-    return *BR.getCFG();
-  }
-  
+  const Decl &getCodeDecl();
+  const CFG &getCFG();
   virtual BugReport::NodeResolver& getNodeResolver() = 0;  
 };
 

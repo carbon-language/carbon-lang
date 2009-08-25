@@ -2900,7 +2900,7 @@ void CFRefCount::EvalSummary(ExplodedNodeSet& Dst,
         unsigned Count = Builder.getCurrentBlockCount();
         ValueManager &ValMgr = Eng.getValueManager();
         SVal X = ValMgr.getConjuredSymbolVal(Ex, T, Count);
-        state = state->bindExpr(Ex, X, false);
+        state = state->bindExpr(Ex, X, Pred->getCFG(), false);
       }      
       
       break;
@@ -2911,14 +2911,14 @@ void CFRefCount::EvalSummary(ExplodedNodeSet& Dst,
       assert (arg_end >= arg_beg);
       assert (idx < (unsigned) (arg_end - arg_beg));
       SVal V = state->getSValAsScalarOrLoc(*(arg_beg+idx));
-      state = state->bindExpr(Ex, V, false);
+      state = state->bindExpr(Ex, V, Pred->getCFG(), false);
       break;
     }
       
     case RetEffect::ReceiverAlias: {
       assert (Receiver);
       SVal V = state->getSValAsScalarOrLoc(Receiver);
-      state = state->bindExpr(Ex, V, false);
+      state = state->bindExpr(Ex, V, Pred->getCFG(), false);
       break;
     }
       
@@ -2930,7 +2930,7 @@ void CFRefCount::EvalSummary(ExplodedNodeSet& Dst,
       QualType RetT = GetReturnType(Ex, ValMgr.getContext());      
       state = state->set<RefBindings>(Sym, RefVal::makeOwned(RE.getObjKind(),
                                                             RetT));
-      state = state->bindExpr(Ex, ValMgr.makeLoc(Sym), false);
+      state = state->bindExpr(Ex, ValMgr.makeLoc(Sym), Pred->getCFG(), false);
 
       // FIXME: Add a flag to the checker where allocations are assumed to
       // *not fail.
@@ -2953,7 +2953,7 @@ void CFRefCount::EvalSummary(ExplodedNodeSet& Dst,
       QualType RetT = GetReturnType(Ex, ValMgr.getContext());      
       state = state->set<RefBindings>(Sym, RefVal::makeNotOwned(RE.getObjKind(),
                                                                RetT));
-      state = state->bindExpr(Ex, ValMgr.makeLoc(Sym), false);
+      state = state->bindExpr(Ex, ValMgr.makeLoc(Sym), Pred->getCFG(), false);
       break;
     }
   }
@@ -3184,7 +3184,7 @@ void CFRefCount::EvalReturn(ExplodedNodeSet& Dst,
     
   // Any leaks or other errors?
   if (X.isReturnedOwned() && X.getCount() == 0) {
-    const Decl *CD = &Eng.getStateManager().getCodeDecl();    
+    const Decl *CD = Eng.getAnalysisManager().getCodeDecl();    
     if (const ObjCMethodDecl* MD = dyn_cast<ObjCMethodDecl>(CD)) {      
       const RetainSummary &Summ = *Summaries.getMethodSummary(MD);
       RetEffect RE = Summ.getRetEffect();
@@ -3227,7 +3227,7 @@ void CFRefCount::EvalReturn(ExplodedNodeSet& Dst,
     } 
   }
   else if (X.isReturnedNotOwned()) {
-    const Decl *CD = &Eng.getStateManager().getCodeDecl();    
+    const Decl *CD = Eng.getAnalysisManager().getCodeDecl();    
     if (const ObjCMethodDecl* MD = dyn_cast<ObjCMethodDecl>(CD)) {
       const RetainSummary &Summ = *Summaries.getMethodSummary(MD);
       if (Summ.getRetEffect().isOwned()) {

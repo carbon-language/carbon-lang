@@ -98,7 +98,7 @@ const GRState *GRState::bindExpr(const Stmt* Ex, SVal V, bool isBlkExpr,
   return Mgr->getPersistentState(NewSt);
 }
 
-const GRState *GRState::bindExpr(const Stmt* Ex, SVal V,
+const GRState *GRState::bindExpr(const Stmt* Ex, SVal V, CFG &cfg,
                                  bool Invalidate) const {
   
   bool isBlkExpr = false;
@@ -106,7 +106,7 @@ const GRState *GRState::bindExpr(const Stmt* Ex, SVal V,
   if (Ex == Mgr->CurrentStmt) {
       // FIXME: Should this just be an assertion?  When would we want to set
       // the value of a block-level expression if it wasn't CurrentStmt?
-    isBlkExpr = Mgr->cfg.isBlkExpr(Ex);
+    isBlkExpr = cfg.isBlkExpr(Ex);
     
     if (!isBlkExpr)
       return this;
