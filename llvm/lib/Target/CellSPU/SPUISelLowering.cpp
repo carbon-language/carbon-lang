@@ -350,7 +350,7 @@ SPUTargetLowering::SPUTargetLowering(SPUTargetMachine &TM)
   // Custom lower i128 -> i64 truncates
   setOperationAction(ISD::TRUNCATE, MVT::i64, Custom);
 
-  // Custom lower i64 -> i128 sign extend
+  // Custom lower i32/i64 -> i128 sign extend
   setOperationAction(ISD::SIGN_EXTEND, MVT::i128, Custom);
 
   setOperationAction(ISD::FP_TO_SINT, MVT::i8, Promote);
@@ -2610,41 +2610,57 @@ static SDValue LowerTRUNCATE(SDValue Op, SelectionDAG &DAG)
   return SDValue();             // Leave the truncate unmolested
 }
 
-//! Custom lower ISD::SIGN_EXTEND
+/*!
+ * Emit the instruction sequence for i64/i32 -> i128 sign extend. The basic
+ * algorithm is to duplicate the sign bit using rotmai to generate at
+ * least one byte full of sign bits. Then propagate the "sign-byte" into
+ * the leftmost words and the i64/i32 into the rightmost words using shufb.
+ *
+ * @param Op The sext operand
+ * @param DAG The current DAG
+ * @return The SDValue with the entire instruction sequence
+ */
 static SDValue LowerSIGN_EXTEND(SDValue Op, SelectionDAG &DAG)
 {
-  // Type to extend to
-  EVT VT = Op.getValueType();
   DebugLoc dl = Op.getDebugLoc();
+
+  // Type to extend to
+  MVT OpVT = Op.getValueType().getSimpleVT();
+  EVT VecVT = EVT::getVectorVT(*DAG.getContext(),
+                               OpVT, (128 / OpVT.getSizeInBits()));
 
   // Type to extend from
   SDValue Op0 = Op.getOperand(0);
-  EVT Op0VT = Op0.getValueType();
+  MVT Op0VT = Op0.getValueType().getSimpleVT();
 
-  assert((VT == MVT::i128 && Op0VT == MVT::i64) &&
+  // The type to extend to needs to be a i128 and
+  // the type to extend from needs to be i64 or i32.
+  assert((OpVT == MVT::i128 && (Op0VT == MVT::i64 || Op0VT == MVT::i32)) &&
           "LowerSIGN_EXTEND: input and/or output operand have wrong size");
 
   // Create shuffle mask
-  unsigned mask1 = 0x10101010; // byte  0 -  3 and 4 - 7
-  unsigned mask2 = 0x01020304; // byte  8 - 11
-  unsigned mask3 = 0x05060708; // byte 12 - 15
+  unsigned mask1 = 0x10101010; // byte 0 - 3 and 4 - 7
+  unsigned mask2 = Op0VT == MVT::i64 ? 0x00010203 : 0x10101010; // byte  8 - 11
+  unsigned mask3 = Op0VT == MVT::i64 ? 0x04050607 : 0x00010203; // byte 12 - 15
   SDValue shufMask = DAG.getNode(ISD::BUILD_VECTOR, dl, MVT::v4i32,
                                  DAG.getConstant(mask1, MVT::i32),
                                  DAG.getConstant(mask1, MVT::i32),
                                  DAG.getConstant(mask2, MVT::i32),
                                  DAG.getConstant(mask3, MVT::i32));
 
-  // Word wise arithmetic right shift to generate a byte that contains sign bits
+  // Word wise arithmetic right shift to generate at least one byte
+  // that contains sign bits.
+  MVT mvt = Op0VT == MVT::i64 ? MVT::v2i64 : MVT::v4i32;
   SDValue sraVal = DAG.getNode(ISD::SRA,
                  dl,
-                 MVT::v2i64,
-                 DAG.getNode(SPUISD::PREFSLOT2VEC, dl, MVT::v2i64, Op0, Op0),
+                 mvt,
+                 DAG.getNode(SPUISD::PREFSLOT2VEC, dl, mvt, Op0, Op0),
                  DAG.getConstant(31, MVT::i32));
 
-  // shuffle bytes - copies the sign bits into the upper 64 bits
-  // and the input value into the lower 64 bits
-  SDValue extShuffle = DAG.getNode(SPUISD::SHUFB, dl, MVT::v2i64,
-                                       Op0, sraVal, shufMask);
+  // Shuffle bytes - Copy the sign bits into the upper 64 bits
+  // and the input value into the lower 64 bits.
+  SDValue extShuffle = DAG.getNode(SPUISD::SHUFB, dl, mvt,
+      DAG.getNode(ISD::ANY_EXTEND, dl, MVT::i128, Op0), sraVal, shufMask);
 
   return DAG.getNode(ISD::BIT_CONVERT, dl, MVT::i128, extShuffle);
 }

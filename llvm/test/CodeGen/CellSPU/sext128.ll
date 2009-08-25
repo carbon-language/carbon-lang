@@ -6,13 +6,42 @@ target triple = "spu"
 
 define i128 @sext_i64_i128(i64 %a) {
 entry:
+        %0 = sext i64 %a to i128
+        ret i128 %0
 ; CHECK: 	long	269488144
 ; CHECK: 	long	269488144
-; CHECK:	long	16909060
-; CHECK: 	long	84281096
+; CHECK:	long	66051
+; CHECK: 	long	67438087
 ; CHECK: 	rotmai
 ; CHECK:	lqa
 ; CHECK:	shufb
-        %0 = sext i64 %a to i128
-        ret i128 %0
 }
+
+define i128 @sext_i32_i128(i32 %a) {
+entry:
+        %0 = sext i32 %a to i128
+        ret i128 %0
+; CHECK: 	long	269488144
+; CHECK: 	long	269488144
+; CHECK: 	long	269488144
+; CHECK:	long	66051
+; CHECK: 	rotmai
+; CHECK:	lqa
+; CHECK:	shufb
+}
+
+define i128 @sext_i32_i128a(float %a) {
+entry:
+  %0 = call i32 @myfunc(float %a)
+  %1 = sext i32 %0 to i128
+  ret i128 %1
+; CHECK: 	long	269488144
+; CHECK: 	long	269488144
+; CHECK: 	long	269488144
+; CHECK:	long	66051
+; CHECK: 	rotmai
+; CHECK:	lqa
+; CHECK:	shufb
+}
+
+declare i32 @myfunc(float)
