@@ -7,11 +7,13 @@
 //
 //===----------------------------------------------------------------------===//
 
+#define DEBUG_TYPE "assembler"
 #include "llvm/MC/MCAssembler.h"
 #include "llvm/MC/MCSectionMachO.h"
 #include "llvm/Target/TargetMachOWriterInfo.h"
 #include "llvm/ADT/DenseMap.h"
 #include "llvm/ADT/SmallString.h"
+#include "llvm/ADT/Statistic.h"
 #include "llvm/ADT/StringMap.h"
 #include "llvm/ADT/Twine.h"
 #include "llvm/Support/ErrorHandling.h"
@@ -20,6 +22,8 @@
 using namespace llvm;
 
 class MachObjectWriter;
+
+STATISTIC(EmittedFragments, "Number of emitted assembler fragments");
 
 static void WriteFileData(raw_ostream &OS, const MCSectionData &SD,
                           MachObjectWriter &MOW);
@@ -692,6 +696,8 @@ static void WriteFileData(raw_ostream &OS, const MCFragment &F,
   uint64_t Start = OS.tell();
   (void) Start;
     
+  ++EmittedFragments;
+
   // FIXME: Embed in fragments instead?
   switch (F.getKind()) {
   case MCFragment::FT_Align: {
