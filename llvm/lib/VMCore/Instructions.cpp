@@ -1272,10 +1272,12 @@ ShuffleVectorInst::ShuffleVectorInst(Value *V1, Value *V2, Value *Mask,
 ShuffleVectorInst::ShuffleVectorInst(Value *V1, Value *V2, Value *Mask,
                                      const Twine &Name,
                                      BasicBlock *InsertAtEnd)
-  : Instruction(V1->getType(), ShuffleVector,
-                OperandTraits<ShuffleVectorInst>::op_begin(this),
-                OperandTraits<ShuffleVectorInst>::operands(this),
-                InsertAtEnd) {
+: Instruction(VectorType::get(cast<VectorType>(V1->getType())->getElementType(),
+                cast<VectorType>(Mask->getType())->getNumElements()),
+              ShuffleVector,
+              OperandTraits<ShuffleVectorInst>::op_begin(this),
+              OperandTraits<ShuffleVectorInst>::operands(this),
+              InsertAtEnd) {
   assert(isValidOperands(V1, V2, Mask) &&
          "Invalid shuffle vector instruction operands!");
 
