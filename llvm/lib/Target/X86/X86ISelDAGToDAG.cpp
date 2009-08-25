@@ -79,7 +79,8 @@ namespace {
 
     X86ISelAddressMode()
       : BaseType(RegBase), Scale(1), IndexReg(), Disp(0),
-        Segment(), GV(0), CP(0), ES(0), JT(-1), Align(0), SymbolFlags(0) {
+        Segment(), GV(0), CP(0), ES(0), JT(-1), Align(0),
+        SymbolFlags(X86II::MO_NO_FLAG) {
     }
 
     bool hasSymbolicDisplacement() const {
@@ -821,7 +822,7 @@ bool X86DAGToDAGISel::MatchAddress(SDValue N, X86ISelAddressMode &AM) {
       AM.BaseType == X86ISelAddressMode::RegBase &&
       AM.Base.Reg.getNode() == 0 &&
       AM.IndexReg.getNode() == 0 &&
-      AM.SymbolFlags == 0 &&
+      AM.SymbolFlags == X86II::MO_NO_FLAG &&
       AM.hasSymbolicDisplacement())
     AM.Base.Reg = CurDAG->getRegister(X86::RIP, MVT::i64);
 
