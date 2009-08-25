@@ -1,4 +1,4 @@
-; RUN: not llvm-as %s -f |& grep {not verify as correct}
+; RUN: not llvm-as %s |& grep {not verify as correct}
 ; PR1042
 
 define i32 @foo() {

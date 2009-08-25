@@ -1,4 +1,4 @@
-; RUN: llvm-as %s -o /dev/null -f
+; RUN: llvm-as %s -o /dev/null
 
 ; This testcase failed due to a bad assertion in SymbolTable.cpp, removed in
 ; the 1.20 revision. Basically the symbol table assumed that if there was an

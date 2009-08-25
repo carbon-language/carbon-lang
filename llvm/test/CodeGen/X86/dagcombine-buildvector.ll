@@ -1,4 +1,4 @@
-; RUN: llvm-as < %s | llc -march=x86 -mcpu=penryn -disable-mmx -o %t -f
+; RUN: llvm-as < %s | llc -march=x86 -mcpu=penryn -disable-mmx -o %t
 ; RUN: grep unpcklpd %t | count 1
 ; RUN: grep movapd %t | count 1
 ; RUN: grep movaps %t | count 1

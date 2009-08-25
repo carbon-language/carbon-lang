@@ -1,4 +1,4 @@
-; RUN: llvm-as %s -f -o %t.bc
+; RUN: llvm-as %s -o %t.bc
 ; RUN: lli %t.bc > /dev/null
 
 define void @test(i8* %P, i16* %P.upgrd.1, i32* %P.upgrd.2, i64* %P.upgrd.3) {

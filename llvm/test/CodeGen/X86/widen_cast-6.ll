@@ -1,4 +1,4 @@
-; RUN: llvm-as < %s | llc -march=x86 -mattr=+sse41 -disable-mmx -o %t -f
+; RUN: llvm-as < %s | llc -march=x86 -mattr=+sse41 -disable-mmx -o %t
 ; RUN: grep movd  %t | count 1
 
 ; Test bit convert that requires widening in the operand.

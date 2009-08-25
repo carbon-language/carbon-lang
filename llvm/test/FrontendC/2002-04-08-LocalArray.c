@@ -1,4 +1,4 @@
-// RUN: %llvmgcc -S %s -o - | llvm-as -f -o /dev/null
+// RUN: %llvmgcc -S %s -o - | llvm-as -o /dev/null
 
 /* GCC is not outputting the static array to the LLVM backend, so bad things
  * happen.  Note that if this is defined static, everything seems fine.

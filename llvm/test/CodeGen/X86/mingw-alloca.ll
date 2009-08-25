@@ -1,4 +1,4 @@
-; RUN: llvm-as < %s | llc -o %t -f
+; RUN: llvm-as < %s | llc -o %t
 ; RUN: grep __alloca %t | count 2
 ; RUN: grep 4294967288 %t
 ; RUN: grep {pushl	%eax} %t

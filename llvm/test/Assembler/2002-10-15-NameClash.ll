@@ -1,4 +1,4 @@
-; RUN: llvm-as %s -o /dev/null -f
+; RUN: llvm-as %s -o /dev/null
 
 declare i32 @"ArrayRef"([100 x i32] * %Array)
 

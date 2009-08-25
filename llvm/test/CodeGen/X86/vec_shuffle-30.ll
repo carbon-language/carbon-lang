@@ -1,4 +1,4 @@
-; RUN: llvm-as < %s | llc -march=x86 -mattr=sse41 -disable-mmx -o %t -f
+; RUN: llvm-as < %s | llc -march=x86 -mattr=sse41 -disable-mmx -o %t
 ; RUN: grep pshufhw %t | grep 161 | count 1
 ; RUN: grep shufps %t | count 1
 ; RUN: not grep pslldq %t

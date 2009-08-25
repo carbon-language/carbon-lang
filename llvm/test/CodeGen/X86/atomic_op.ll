@@ -1,4 +1,4 @@
-; RUN: llvm-as < %s | llc -march=x86 -o %t1 -f
+; RUN: llvm-as < %s | llc -march=x86 -o %t1
 ; RUN: grep "lock" %t1 | count 17
 ; RUN: grep "xaddl" %t1 | count 4 
 ; RUN: grep "cmpxchgl"  %t1 | count 13 

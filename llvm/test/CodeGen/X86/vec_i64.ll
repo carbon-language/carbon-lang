@@ -1,4 +1,4 @@
-; RUN: llvm-as < %s | llc -march=x86 -mattr=+sse2 -o %t -f
+; RUN: llvm-as < %s | llc -march=x86 -mattr=+sse2 -o %t
 ; RUN: grep movq %t | count 2
 
 ; Used movq to load i64 into a v2i64 when the top i64 is 0.

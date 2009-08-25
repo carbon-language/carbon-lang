@@ -69,7 +69,7 @@ Output/%.bc: Output/%.ll $(LGCCAS)
 # LLVM source, use the non-transforming assembler.
 #
 Output/%.bc: %.ll $(LLVMAS) Output/.dir
-	-$(LLVMAS) -f $< -o $@
+	-$(LLVMAS) $< -o $@
 
 ## Cancel built-in implicit rules that override above rules
 %: %.s

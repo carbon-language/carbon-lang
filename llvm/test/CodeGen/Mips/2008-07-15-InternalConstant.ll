@@ -1,4 +1,4 @@
-; RUN: llvm-as < %s | llc -march=mips -f -o %t
+; RUN: llvm-as < %s | llc -march=mips -o %t
 ; RUN: grep {rodata.str1.4,"aMS",@progbits}  %t | count 1
 ; RUN: grep {r.data,}  %t | count 1
 ; RUN: grep {\%hi} %t | count 2

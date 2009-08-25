@@ -1,5 +1,5 @@
 ; The assembler should catch an undefined argument type .
-; RUN: not llvm-as %s -o /dev/null -f |& grep {use of undefined type named 'typedef.bc_struct'}
+; RUN: not llvm-as %s -o /dev/null |& grep {use of undefined type named 'typedef.bc_struct'}
 
 ; %typedef.bc_struct = type opaque
 

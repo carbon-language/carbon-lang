@@ -1,10 +1,10 @@
-; RUN: llvm-as < %s | llc -mtriple=x86_64-apple-darwin -o %t1 -f
+; RUN: llvm-as < %s | llc -mtriple=x86_64-apple-darwin -o %t1
 ; RUN: grep GOTPCREL %t1 | count 4
 ; RUN: grep %%rip      %t1 | count 6
 ; RUN: grep movq     %t1 | count 6
 ; RUN: grep leaq     %t1 | count 1
 ; RUN: llvm-as < %s | \
-; RUN:   llc -mtriple=x86_64-pc-linux -relocation-model=static -o %t2 -f
+; RUN:   llc -mtriple=x86_64-pc-linux -relocation-model=static -o %t2
 ; RUN: grep movl %t2 | count 2
 ; RUN: grep movq %t2 | count 2
 

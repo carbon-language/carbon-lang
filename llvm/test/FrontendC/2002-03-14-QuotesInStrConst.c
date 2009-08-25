@@ -1,4 +1,4 @@
-// RUN: %llvmgcc -S %s -o - | llvm-as -f -o /dev/null
+// RUN: %llvmgcc -S %s -o - | llvm-as -o /dev/null
 
 /* GCC was not escaping quotes in string constants correctly, so this would
  * get emitted:

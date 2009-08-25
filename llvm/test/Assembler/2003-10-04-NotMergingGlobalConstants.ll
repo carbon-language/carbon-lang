@@ -1,4 +1,4 @@
-; RUN: llvm-as %s -o /dev/null -f
+; RUN: llvm-as %s -o /dev/null
 
 %T = type i32
 @X = global i32* null           ; <i32**> [#uses=0]

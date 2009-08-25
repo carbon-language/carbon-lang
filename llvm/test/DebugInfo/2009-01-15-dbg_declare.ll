@@ -1,5 +1,5 @@
 
-; RUN: llvm-as < %s | llc -f -o /dev/null
+; RUN: llvm-as < %s | llc -o /dev/null
 ; XFAIL: powerpc
 
 target triple = "powerpc-apple-darwin9.5"

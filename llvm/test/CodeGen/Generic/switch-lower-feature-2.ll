@@ -1,4 +1,4 @@
-; RUN: llvm-as < %s | llc -march=x86 -o %t -f
+; RUN: llvm-as < %s | llc -march=x86 -o %t
 ; RUN: grep jb %t | count 1
 ; RUN: grep \\\$6 %t | count 2
 ; RUN: grep 1024 %t | count 1

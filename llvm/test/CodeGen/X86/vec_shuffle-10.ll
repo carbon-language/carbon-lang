@@ -1,4 +1,4 @@
-; RUN: llvm-as < %s | llc -march=x86 -mattr=+sse2 -o %t -f
+; RUN: llvm-as < %s | llc -march=x86 -mattr=+sse2 -o %t
 ; RUN: grep unpcklps %t | count 1
 ; RUN: grep pshufd   %t | count 1
 ; RUN: not grep {sub.*esp} %t

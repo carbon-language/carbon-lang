@@ -1,4 +1,4 @@
-// RUN: %llvmgcc -S %s -o - | llvm-as -f -o /dev/null
+// RUN: %llvmgcc -S %s -o - | llvm-as -o /dev/null
 
 static int unused_func(void) {
   return 1;

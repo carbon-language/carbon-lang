@@ -1,6 +1,6 @@
 ;test all the shifted and signextending adds and subs with and without consts
 ;
-; RUN: llvm-as < %s | llc -march=alpha -o %t.s -f
+; RUN: llvm-as < %s | llc -march=alpha -o %t.s
 ; RUN: grep {	addl} %t.s | count 2
 ; RUN: grep {	addq} %t.s | count 2
 ; RUN: grep {	subl} %t.s | count 2

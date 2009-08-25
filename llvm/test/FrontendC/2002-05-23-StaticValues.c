@@ -1,4 +1,4 @@
-// RUN: %llvmgcc -S %s -o - | llvm-as -f -o /dev/null
+// RUN: %llvmgcc -S %s -o - | llvm-as -o /dev/null
 
 /* Make sure the frontend is correctly marking static stuff as internal! */
 

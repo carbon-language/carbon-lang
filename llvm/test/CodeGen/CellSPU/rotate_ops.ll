@@ -1,4 +1,4 @@
-; RUN: llvm-as -o - %s | llc -march=cellspu -f -o %t1.s
+; RUN: llvm-as -o - %s | llc -march=cellspu -o %t1.s
 ; RUN: grep rot          %t1.s | count 85
 ; RUN: grep roth         %t1.s | count 8
 ; RUN: grep roti.*5      %t1.s | count 1

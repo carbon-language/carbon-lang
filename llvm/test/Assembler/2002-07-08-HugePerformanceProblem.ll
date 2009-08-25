@@ -1,6 +1,6 @@
 ; This file takes about 48 __MINUTES__ to assemble using as.  This is WAY too
 ; long.  The type resolution code needs to be sped up a lot.
-; RUN: llvm-as %s -o /dev/null -f	
+; RUN: llvm-as %s -o /dev/null
 	%ALL_INTERSECTIONS_METHOD = type i32 (%OBJECT*, %RAY*, %ISTACK*)*
 	%BBOX = type { %BBOX_VECT, %BBOX_VECT }
 	%BBOX_TREE = type { i16, i16, %BBOX, %BBOX_TREE** }

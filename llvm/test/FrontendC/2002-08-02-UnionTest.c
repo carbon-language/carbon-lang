@@ -1,4 +1,4 @@
-// RUN: %llvmgcc -S %s -o - | llvm-as -f -o /dev/null
+// RUN: %llvmgcc -S %s -o - | llvm-as -o /dev/null
 
 /* In this testcase, the return value of foo() is being promotedto a register
  * which breaks stuff

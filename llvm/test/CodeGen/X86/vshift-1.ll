@@ -1,4 +1,4 @@
-; RUN: llvm-as < %s | llc -march=x86 -mattr=+sse2 -disable-mmx -o %t -f
+; RUN: llvm-as < %s | llc -march=x86 -mattr=+sse2 -disable-mmx -o %t
 ; RUN: grep psllq  %t | count 2
 ; RUN: grep pslld %t | count 2
 ; RUN: grep psllw %t | count 2

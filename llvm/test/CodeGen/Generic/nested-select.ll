@@ -1,4 +1,4 @@
-; RUN: llvm-as < %s | llc -o /dev/null -f
+; RUN: llvm-as < %s | llc -o /dev/null
 
 ; Test that select of a select works
 

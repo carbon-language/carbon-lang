@@ -1,4 +1,4 @@
-; RUN: llvm-as %s -o /dev/null -f
+; RUN: llvm-as %s -o /dev/null
 ; It looks like the assembler is not forward resolving the function declaraion
 ; correctly.
 

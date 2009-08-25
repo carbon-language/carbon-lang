@@ -1,4 +1,4 @@
-; RUN: llvm-as < %s | llc -march=x86 -mattr=sse41 -o %t -f
+; RUN: llvm-as < %s | llc -march=x86 -mattr=sse41 -o %t
 ; RUN: grep unpcklps %t | count 3
 ; RUN: grep unpckhps %t | count 1
  

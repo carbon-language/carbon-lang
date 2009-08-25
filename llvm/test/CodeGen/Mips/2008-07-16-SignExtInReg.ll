@@ -1,4 +1,4 @@
-; RUN: llvm-as < %s | llc -march=mips -f -o %t
+; RUN: llvm-as < %s | llc -march=mips -o %t
 ; RUN: grep seh %t | count 1
 ; RUN: grep seb %t | count 1
 

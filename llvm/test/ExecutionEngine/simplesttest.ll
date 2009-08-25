@@ -1,4 +1,4 @@
-; RUN: llvm-as %s -f -o %t.bc
+; RUN: llvm-as %s -o %t.bc
 ; RUN: lli %t.bc > /dev/null
 
 define i32 @main() {

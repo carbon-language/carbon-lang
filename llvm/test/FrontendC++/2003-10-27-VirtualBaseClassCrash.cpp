@@ -1,4 +1,4 @@
-// RUN: %llvmgxx -S %s -o - | llvm-as -f -o /dev/null
+// RUN: %llvmgxx -S %s -o - | llvm-as -o /dev/null
 
 
 template<class T>

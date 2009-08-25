@@ -1,4 +1,4 @@
-; RUN: llvm-as < %s | llc -march=mips -f -o %t
+; RUN: llvm-as < %s | llc -march=mips -o %t
 ; RUN: grep {c\\..*\\.s} %t | count 3
 ; RUN: grep {bc1\[tf\]} %t | count 3
 

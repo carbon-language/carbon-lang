@@ -1,7 +1,7 @@
-; RUN: llvm-as < %s | llc -march=x86 -mattr=+sse,-sse2 -mtriple=i386-apple-darwin -o %t -f
+; RUN: llvm-as < %s | llc -march=x86 -mattr=+sse,-sse2 -mtriple=i386-apple-darwin -o %t
 ; RUN: grep shufps %t | count 4
 ; RUN: grep movaps %t | count 2
-; RUN: llvm-as < %s | llc -march=x86 -mattr=+sse2 -mtriple=i386-apple-darwin -o %t -f
+; RUN: llvm-as < %s | llc -march=x86 -mattr=+sse2 -mtriple=i386-apple-darwin -o %t
 ; RUN: grep pshufd %t | count 4
 ; RUN: not grep shufps %t
 ; RUN: not grep mov %t

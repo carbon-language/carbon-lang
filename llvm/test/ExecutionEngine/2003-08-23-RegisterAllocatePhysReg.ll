@@ -1,4 +1,4 @@
-; RUN: llvm-as %s -f -o %t.bc
+; RUN: llvm-as %s -o %t.bc
 ; RUN: lli %t.bc > /dev/null
 
 ; This testcase exposes a bug in the local register allocator where it runs out

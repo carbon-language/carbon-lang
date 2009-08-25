@@ -1,4 +1,4 @@
-; RUN: llvm-as %s -o /dev/null -f
+; RUN: llvm-as %s -o /dev/null
 
 define void @test(i32* %P, i32* %Q) {
 entry:

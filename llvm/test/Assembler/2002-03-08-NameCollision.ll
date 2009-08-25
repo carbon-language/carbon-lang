@@ -1,4 +1,4 @@
-; RUN: llvm-as %s -o /dev/null -f
+; RUN: llvm-as %s -o /dev/null
 
 ; Method arguments were being checked for collisions at the global scope before
 ; the method object was created by the parser.  Because of this, false

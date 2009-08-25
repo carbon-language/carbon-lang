@@ -1,5 +1,5 @@
 ; All of these ands and shifts should be folded into rlwimi's
-; RUN: llvm-as < %s | llc -march=ppc32 -o %t -f
+; RUN: llvm-as < %s | llc -march=ppc32 -o %t
 ; RUN: not grep mulhwu %t
 ; RUN: not grep srawi %t 
 ; RUN: not grep add %t 

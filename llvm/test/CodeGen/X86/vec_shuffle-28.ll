@@ -1,4 +1,4 @@
-; RUN: llvm-as < %s | llc -march=x86 -mcpu=core2 -o %t -f
+; RUN: llvm-as < %s | llc -march=x86 -mcpu=core2 -o %t
 ; RUN: grep pshufb %t | count 1
 
 ; FIXME: this test has a superfluous punpcklqdq pre-pshufb currently.

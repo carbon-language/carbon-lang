@@ -1,4 +1,4 @@
-; RUN: llvm-as < %s | llc -march=ppc32 -mcpu=g5 -o %t -f
+; RUN: llvm-as < %s | llc -march=ppc32 -mcpu=g5 -o %t
 ; RUN: grep vcmpeqfp. %t
 ; RUN: not grep mfcr %t
 

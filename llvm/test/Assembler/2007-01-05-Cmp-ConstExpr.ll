@@ -1,5 +1,5 @@
 ; Test Case for PR1080
-; RUN: llvm-as %s -o /dev/null -f
+; RUN: llvm-as %s -o /dev/null
 
 @str = internal constant [4 x i8] c"-ga\00"             ; <[4 x i8]*> [#uses=2]
 

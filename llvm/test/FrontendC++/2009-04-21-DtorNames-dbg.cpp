@@ -1,4 +1,4 @@
-// RUN: %llvmgcc -c -g %s -o - | llc -O0 -f -o %t.s
+// RUN: %llvmgcc -c -g %s -o - | llc -O0 -o %t.s
 // RUN: %compile_c %t.s -o %t.o
 // PR4025
 

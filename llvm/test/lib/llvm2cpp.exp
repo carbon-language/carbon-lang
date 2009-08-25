@@ -48,7 +48,7 @@ proc llvm2cpp-test { files } {
     # Run llvm-as/llvm-dis
     set pipeline llvm-as|llvm-dis
     set retval [ catch { 
-      exec -keepnewline $llvmas < $test -o - | $llvmdis -f -o $assembly 2>/dev/null } msg ]
+      exec -keepnewline $llvmas < $test -o - | $llvmdis-o $assembly 2>/dev/null } msg ]
 
     if { $retval != 0 } {
       fail "$test: $pipeline returned $retval\n$msg"
@@ -65,7 +65,7 @@ proc llvm2cpp-test { files } {
     }
 
     set retval [ catch { 
-      exec -keepnewline $llc -march=cpp -f -o $generated < $bytecode 2>/dev/null } msg]
+      exec -keepnewline $llc -march=cpp-o $generated < $bytecode 2>/dev/null } msg]
 
     if { $retval != 0 } {
       fail "$test: llvm2cpp returned $retval\n$msg"

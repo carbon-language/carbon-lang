@@ -1,4 +1,4 @@
-; RUN: llvm-as < %s | llc -march=x86 -mattr=+sse2 -mtriple=i386-apple-darwin -o %t -f
+; RUN: llvm-as < %s | llc -march=x86 -mattr=+sse2 -mtriple=i386-apple-darwin -o %t
 ; RUN: not grep and %t
 ; RUN: not grep psrldq %t
 ; RUN: grep xorps %t

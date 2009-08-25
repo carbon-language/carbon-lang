@@ -1,4 +1,4 @@
-; RUN: llvm-as < %s | llc -march=x86 -mattr=sse41 -o %t -f
+; RUN: llvm-as < %s | llc -march=x86 -mattr=sse41 -o %t
 ; RUN: grep punpcklbw %t | count 16
 ; RUN: grep punpckhbw %t | count 16
 ; RUN: grep "pshufd" %t | count 16

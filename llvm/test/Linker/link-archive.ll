@@ -1,8 +1,8 @@
 ; Test linking of a bc file to an archive via llvm-ld. 
 ; PR1434
-; RUN: llvm-as %s -o %t.bar.bc -f
+; RUN: llvm-as %s -o %t.bar.bc
 ; RUN: echo {define i32* @foo(i32 %x) \{ ret i32* @baz \} \
-; RUN:   @baz = external global i32 } | llvm-as -o %t.foo.bc -f
+; RUN:   @baz = external global i32 } | llvm-as -o %t.foo.bc
 ; RUN: llvm-ar rcf %t.foo.a %t.foo.bc
 ; RUN: llvm-ar rcf %t.bar.a %t.bar.bc
 ; RUN: llvm-ld -disable-opt %t.bar.bc %t.foo.a -o %t.bc 

@@ -1,4 +1,4 @@
-; RUN: llvm-as < %s | llc -march=x86 -mattr=+sse41 -o %t -f
+; RUN: llvm-as < %s | llc -march=x86 -mattr=+sse41 -o %t
 ; RUN: grep extractps   %t | count 1
 ; RUN: grep pextrd      %t | count 1
 ; RUN: not grep pshufd  %t

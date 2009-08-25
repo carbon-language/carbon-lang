@@ -1,4 +1,4 @@
-; RUN: llvm-as < %s | llc -march=x86 -mattr=+sse42 -disable-mmx -o %t -f
+; RUN: llvm-as < %s | llc -march=x86 -mattr=+sse42 -disable-mmx -o %t
 ; RUN: grep paddb  %t | count 1
 ; RUN: grep pextrb %t | count 1
 ; RUN: not grep pextrw %t

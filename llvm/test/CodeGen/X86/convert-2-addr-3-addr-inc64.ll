@@ -1,4 +1,4 @@
-; RUN: llvm-as < %s | llc -march=x86-64 -o %t -f -stats -info-output-file - | \
+; RUN: llvm-as < %s | llc -march=x86-64 -o %t -stats -info-output-file - | \
 ; RUN:   grep {asm-printer} | grep {Number of machine instrs printed} | grep 5
 ; RUN: grep {leal	1(\%rsi),} %t
 

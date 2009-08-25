@@ -1,4 +1,4 @@
-; RUN: llvm-as %s -o /dev/null -f
+; RUN: llvm-as %s -o /dev/null
 
 ; This testcase used to fail due to a lack of this diff in Value.cpp:
 ; diff -r1.16 Value.cpp

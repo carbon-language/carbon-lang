@@ -1,4 +1,4 @@
-; RUN: llvm-as < %s | llc -march=cpp -cppgen=program -f -o %t
+; RUN: llvm-as < %s | llc -march=cpp -cppgen=program -o %t
 ; RUN: grep "BranchInst::Create(label_if_then, label_if_end, int1_cmp, label_entry);" %t
 
 define i32 @some_func(i32 %a) nounwind {

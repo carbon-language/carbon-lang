@@ -1,4 +1,4 @@
-; RUN: llvm-as < %s | opt -inline -f - | llvm-dis | grep "define internal i32 @bar" 
+; RUN: llvm-as < %s | opt -inline - | llvm-dis | grep "define internal i32 @bar" 
 @llvm.noinline = appending global [1 x i8*] [ i8* bitcast (i32 (i32, i32)* @bar to i8*) ], section "llvm.metadata"		; <[1 x i8*]*> [#uses=0]
 
 define internal i32 @bar(i32 %x, i32 %y) {

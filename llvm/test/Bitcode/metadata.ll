@@ -1,4 +1,4 @@
-; RUN: llvm-as < %s | llvm-dis -f -o /dev/null
+; RUN: llvm-as < %s | llvm-dis -o /dev/null
 
 !llvm.foo = !{!0}
 !0 = metadata !{i32 42}

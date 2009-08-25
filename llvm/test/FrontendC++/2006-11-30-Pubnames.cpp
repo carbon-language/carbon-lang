@@ -1,7 +1,7 @@
 // This is a regression test on debug info to make sure that we can access 
 // qualified global names.
 // RUN: %llvmgcc -S -O0 -g %s -o - | llvm-as | \
-// RUN:   llc --disable-fp-elim -o %t.s -f -O0
+// RUN:   llc --disable-fp-elim -o %t.s -O0
 // RUN: %compile_c %t.s -o %t.o
 // RUN: %link %t.o -o %t.exe
 // RUN: %llvmdsymutil %t.exe 

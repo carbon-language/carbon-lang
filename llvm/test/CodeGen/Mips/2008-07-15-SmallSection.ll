@@ -1,5 +1,5 @@
-; RUN: llvm-as < %s | llc -mips-ssection-threshold=8 -march=mips -f -o %t0
-; RUN: llvm-as < %s | llc -mips-ssection-threshold=0 -march=mips -f -o %t1
+; RUN: llvm-as < %s | llc -mips-ssection-threshold=8 -march=mips -o %t0
+; RUN: llvm-as < %s | llc -mips-ssection-threshold=0 -march=mips -o %t1
 ; RUN: grep {sdata} %t0 | count 1
 ; RUN: grep {sbss} %t0 | count 1
 ; RUN: grep {gp_rel} %t0 | count 2

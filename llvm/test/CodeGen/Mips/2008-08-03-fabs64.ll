@@ -1,4 +1,4 @@
-; RUN: llvm-as < %s | llc -march=mips -f -o %t
+; RUN: llvm-as < %s | llc -march=mips -o %t
 ; RUN: grep {lui.*32767} %t | count 1
 ; RUN: grep {ori.*65535} %t | count 1
 

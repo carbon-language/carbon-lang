@@ -1,4 +1,4 @@
-; RUN: llvm-as < %s | llc -march=cpp -cppgen=program -f -o %t
+; RUN: llvm-as < %s | llc -march=cpp -cppgen=program -o %t
 
 define x86_fp80 @some_func() nounwind {
 entry:

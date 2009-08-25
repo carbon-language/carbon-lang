@@ -1,6 +1,6 @@
 // This is a regression test on debug info to make sure that we can set a
 // breakpoint on a objective message.
-// RUN: %llvmgcc -S -O0 -g %s -o - | llvm-as | llc -o %t.s -f -O0 
+// RUN: %llvmgcc -S -O0 -g %s -o - | llvm-as | llc -o %t.s -O0
 // RUN: %compile_c %t.s -o %t.o
 // RUN: %link %t.o -o %t.exe -framework Foundation
 // RUN: echo {break randomFunc\n} > %t.in 

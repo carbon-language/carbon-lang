@@ -1,5 +1,5 @@
 ; RUN: llvm-as < %s | \
-; RUN:   llc -mtriple=arm-linux-gnueabi -o %t -f
+; RUN:   llc -mtriple=arm-linux-gnueabi -o %t
 ; RUN: grep set %t   | count 5
 ; RUN: grep globl %t | count 4
 ; RUN: grep weak %t  | count 1

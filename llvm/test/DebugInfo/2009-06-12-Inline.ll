@@ -1,4 +1,4 @@
-; RUN: llvm-as < %s | llc -f -o /dev/null 
+; RUN: llvm-as < %s | llc -o /dev/null
 	%llvm.dbg.anchor.type = type { i32, i32 }
 	%llvm.dbg.basictype.type = type { i32, { }*, i8*, { }*, i32, i64, i64, i64, i32, i32 }
 	%llvm.dbg.compile_unit.type = type { i32, { }*, i32, i8*, i8*, i8*, i1, i1, i8*, i32 }

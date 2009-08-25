@@ -1,4 +1,4 @@
-; RUN: llvm-as < %s | llc -march=x86 -mcpu=core2 -o %t -f
+; RUN: llvm-as < %s | llc -march=x86 -mcpu=core2 -o %t
 ; RUN: grep pshufb %t | count 1
 
 define <8 x i16> @shuf3(<8 x i16> %T0, <8 x i16> %T1) nounwind readnone {

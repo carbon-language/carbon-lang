@@ -1,4 +1,4 @@
-; RUN: llvm-as < %s | llc -march=x86 -mattr=+sse42 -disable-mmx -o %t -f
+; RUN: llvm-as < %s | llc -march=x86 -mattr=+sse42 -disable-mmx -o %t
 ; RUN: grep pmulld  %t | count 1
 ; RUN: grep psubd  %t | count 1
 ; RUN: grep movaps %t | count 1

@@ -1,5 +1,5 @@
 ; RUN: llvm-as < %s | \
-; RUN:   llc -mtriple=x86_64-pc-linux -relocation-model=pic -o %t1 -f
+; RUN:   llc -mtriple=x86_64-pc-linux -relocation-model=pic -o %t1
 ; RUN: grep {movq	a@GOTPCREL(%rip),} %t1
 
 @a = global i32 0

@@ -1,4 +1,4 @@
-; RUN: llvm-as %s -o /dev/null -f
+; RUN: llvm-as %s -o /dev/null
 
 ; Another name collision problem.  Here the problem was that if a forward
 ; declaration for a method was found, that this would cause spurious conflicts

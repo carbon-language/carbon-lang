@@ -1,4 +1,4 @@
-// RUN: %llvmgxx -S %s -o - | llvm-as -f -o /dev/null
+// RUN: %llvmgxx -S %s -o - | llvm-as -o /dev/null
 
 // Default placement versions of operator new.
 #include <new>

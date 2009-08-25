@@ -1,6 +1,6 @@
 ; Make sure we don't get an assertion failure, even though this is a parse 
 ; error
-; RUN: not llvm-as %s -o /dev/null -f |& grep {'@foo' defined with}
+; RUN: not llvm-as %s -o /dev/null |& grep {'@foo' defined with}
 
 %ty = type void (i32)
 

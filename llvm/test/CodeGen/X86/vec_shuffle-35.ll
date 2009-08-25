@@ -1,10 +1,10 @@
-; RUN: llvm-as < %s | llc -march=x86 -mcpu=yonah -stack-alignment=16 -o %t -f
+; RUN: llvm-as < %s | llc -march=x86 -mcpu=yonah -stack-alignment=16 -o %t
 ; RUN: grep pextrw %t | count 13
 ; RUN: grep pinsrw %t | count 14
 ; RUN: grep rolw %t | count 13
 ; RUN: not grep esp %t
 ; RUN: not grep ebp %t
-; RUN: llvm-as < %s | llc -march=x86 -mcpu=core2 -stack-alignment=16 -o %t -f
+; RUN: llvm-as < %s | llc -march=x86 -mcpu=core2 -stack-alignment=16 -o %t
 ; RUN: grep pshufb %t | count 3
 
 define <16 x i8> @shuf1(<16 x i8> %T0) nounwind readnone {

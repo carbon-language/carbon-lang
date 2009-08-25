@@ -1,4 +1,4 @@
-// RUN: %llvmgcc -S %s -o - | llvm-as -f -o /dev/null
+// RUN: %llvmgcc -S %s -o - | llvm-as -o /dev/null
 
 /* This code used to break GCC's SSA computation code.  It would create
    uses of B & C that are not dominated by their definitions.  See:
