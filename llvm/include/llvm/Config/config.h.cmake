@@ -425,9 +425,6 @@
 /* Define to 1 if you have the <windows.h> header file. */
 #cmakedefine HAVE_WINDOWS_H ${HAVE_WINDOWS_H}
 
-/* Define to 1 for ilist sentinel compaction */
-#cmakedefine LLVM_COMPACT_SENTINELS ${LLVM_COMPACT_SENTINELS}
-
 /* Installation directory for binary executables */
 #undef LLVM_BINDIR
 

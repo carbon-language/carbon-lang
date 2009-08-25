@@ -361,17 +361,6 @@ else
   AC_SUBST(DISABLE_ASSERTIONS,[[DISABLE_ASSERTIONS=1]])
 fi
 
-dnl LLVM_COMPACT_SENTINELS : can be used to shrink ilist's end iterators and disable certain checks on them:
-if test ${ENABLE_OPTIMIZED},${DISABLE_ASSERTIONS} = "ENABLE_OPTIMIZED=1,DISABLE_ASSERTIONS=1" ; then
-  AC_SUBST(LLVM_COMPACT_SENTINELS,[1])
-else
-  AC_SUBST(LLVM_COMPACT_SENTINELS,[0])
-fi
-
-AC_DEFINE_UNQUOTED([LLVM_COMPACT_SENTINELS],$LLVM_COMPACT_SENTINELS,
-                   [Define to 1 for ilist sentinel compaction])
-
-
 dnl --enable-expensive-checks : check whether they want to turn on expensive debug checks:
 AC_ARG_ENABLE(expensive-checks,AS_HELP_STRING(
   --enable-expensive-checks,[Compile with expensive debug checks enabled (default is NO)]),, enableval="no")
