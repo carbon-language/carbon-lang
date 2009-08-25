@@ -78,7 +78,7 @@ public:
   unsigned getAlignment() const { return (1u << SubclassData) >> 1; }
   void setAlignment(unsigned Align);
 
-  virtual Instruction *clone(LLVMContext &Context) const = 0;
+  virtual AllocationInst *clone(LLVMContext &Context) const = 0;
 
   // Methods for support type inquiry through isa, cast, and dyn_cast:
   static inline bool classof(const AllocationInst *) { return true; }
@@ -1276,10 +1276,6 @@ class ExtractElementInst : public Instruction {
   ExtractElementInst(Value *Vec, Value *Idx, const Twine &NameStr,
                      BasicBlock *InsertAtEnd);
 public:
-  static ExtractElementInst *Create(const ExtractElementInst &EE) {
-    return Create(EE.getOperand(0), EE.getOperand(1));
-  }
-
   static ExtractElementInst *Create(Value *Vec, Value *Idx,
                                    const Twine &NameStr = "",
                                    Instruction *InsertBefore = 0) {
@@ -1330,9 +1326,6 @@ class InsertElementInst : public Instruction {
   InsertElementInst(Value *Vec, Value *NewElt, Value *Idx,
                     const Twine &NameStr, BasicBlock *InsertAtEnd);
 public:
-  static InsertElementInst *Create(const InsertElementInst &IE) {
-    return Create(IE.getOperand(0), IE.getOperand(1), IE.getOperand(2));
-  }
   static InsertElementInst *Create(Value *Vec, Value *NewElt, Value *Idx,
                                    const Twine &NameStr = "",
                                    Instruction *InsertBefore = 0) {
@@ -2638,7 +2631,7 @@ public:
   );
 
   /// @brief Clone an identical TruncInst
-  virtual CastInst *clone(LLVMContext &Context) const;
+  virtual TruncInst *clone(LLVMContext &Context) const;
 
   /// @brief Methods for support type inquiry through isa, cast, and dyn_cast:
   static inline bool classof(const TruncInst *) { return true; }
@@ -2674,7 +2667,7 @@ public:
   );
 
   /// @brief Clone an identical ZExtInst
-  virtual CastInst *clone(LLVMContext &Context) const;
+  virtual ZExtInst *clone(LLVMContext &Context) const;
 
   /// @brief Methods for support type inquiry through isa, cast, and dyn_cast:
   static inline bool classof(const ZExtInst *) { return true; }
@@ -2710,7 +2703,7 @@ public:
   );
 
   /// @brief Clone an identical SExtInst
-  virtual CastInst *clone(LLVMContext &Context) const;
+  virtual SExtInst *clone(LLVMContext &Context) const;
 
   /// @brief Methods for support type inquiry through isa, cast, and dyn_cast:
   static inline bool classof(const SExtInst *) { return true; }
@@ -2746,7 +2739,7 @@ public:
   );
 
   /// @brief Clone an identical FPTruncInst
-  virtual CastInst *clone(LLVMContext &Context) const;
+  virtual FPTruncInst *clone(LLVMContext &Context) const;
 
   /// @brief Methods for support type inquiry through isa, cast, and dyn_cast:
   static inline bool classof(const FPTruncInst *) { return true; }
@@ -2782,7 +2775,7 @@ public:
   );
 
   /// @brief Clone an identical FPExtInst
-  virtual CastInst *clone(LLVMContext &Context) const;
+  virtual FPExtInst *clone(LLVMContext &Context) const;
 
   /// @brief Methods for support type inquiry through isa, cast, and dyn_cast:
   static inline bool classof(const FPExtInst *) { return true; }
@@ -2818,7 +2811,7 @@ public:
   );
 
   /// @brief Clone an identical UIToFPInst
-  virtual CastInst *clone(LLVMContext &Context) const;
+  virtual UIToFPInst *clone(LLVMContext &Context) const;
 
   /// @brief Methods for support type inquiry through isa, cast, and dyn_cast:
   static inline bool classof(const UIToFPInst *) { return true; }
@@ -2854,7 +2847,7 @@ public:
   );
 
   /// @brief Clone an identical SIToFPInst
-  virtual CastInst *clone(LLVMContext &Context) const;
+  virtual SIToFPInst *clone(LLVMContext &Context) const;
 
   /// @brief Methods for support type inquiry through isa, cast, and dyn_cast:
   static inline bool classof(const SIToFPInst *) { return true; }
@@ -2890,7 +2883,7 @@ public:
   );
 
   /// @brief Clone an identical FPToUIInst
-  virtual CastInst *clone(LLVMContext &Context) const;
+  virtual FPToUIInst *clone(LLVMContext &Context) const;
 
   /// @brief Methods for support type inquiry through isa, cast, and dyn_cast:
   static inline bool classof(const FPToUIInst *) { return true; }
@@ -2926,7 +2919,7 @@ public:
   );
 
   /// @brief Clone an identical FPToSIInst
-  virtual CastInst *clone(LLVMContext &Context) const;
+  virtual FPToSIInst *clone(LLVMContext &Context) const;
 
   /// @brief Methods for support type inquiry through isa, cast, and dyn_cast:
   static inline bool classof(const FPToSIInst *) { return true; }
@@ -2962,7 +2955,7 @@ public:
   );
 
   /// @brief Clone an identical IntToPtrInst
-  virtual CastInst *clone(LLVMContext &Context) const;
+  virtual IntToPtrInst *clone(LLVMContext &Context) const;
 
   // Methods for support type inquiry through isa, cast, and dyn_cast:
   static inline bool classof(const IntToPtrInst *) { return true; }
@@ -2998,7 +2991,7 @@ public:
   );
 
   /// @brief Clone an identical PtrToIntInst
-  virtual CastInst *clone(LLVMContext &Context) const;
+  virtual PtrToIntInst *clone(LLVMContext &Context) const;
 
   // Methods for support type inquiry through isa, cast, and dyn_cast:
   static inline bool classof(const PtrToIntInst *) { return true; }
@@ -3034,7 +3027,7 @@ public:
   );
 
   /// @brief Clone an identical BitCastInst
-  virtual CastInst *clone(LLVMContext &Context) const;
+  virtual BitCastInst *clone(LLVMContext &Context) const;
 
   // Methods for support type inquiry through isa, cast, and dyn_cast:
   static inline bool classof(const BitCastInst *) { return true; }

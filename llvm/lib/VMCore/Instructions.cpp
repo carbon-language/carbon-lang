@@ -2933,73 +2933,73 @@ StoreInst *StoreInst::clone(LLVMContext&) const {
   return New;
 }
 
-CastInst *TruncInst::clone(LLVMContext&) const {
+TruncInst *TruncInst::clone(LLVMContext&) const {
   TruncInst *New = new TruncInst(getOperand(0), getType());
   New->SubclassOptionalData = SubclassOptionalData;
   return New;
 }
 
-CastInst *ZExtInst::clone(LLVMContext&) const {
+ZExtInst *ZExtInst::clone(LLVMContext&) const {
   ZExtInst *New = new ZExtInst(getOperand(0), getType());
   New->SubclassOptionalData = SubclassOptionalData;
   return New;
 }
 
-CastInst *SExtInst::clone(LLVMContext&) const {
+SExtInst *SExtInst::clone(LLVMContext&) const {
   SExtInst *New = new SExtInst(getOperand(0), getType());
   New->SubclassOptionalData = SubclassOptionalData;
   return New;
 }
 
-CastInst *FPTruncInst::clone(LLVMContext&) const {
+FPTruncInst *FPTruncInst::clone(LLVMContext&) const {
   FPTruncInst *New = new FPTruncInst(getOperand(0), getType());
   New->SubclassOptionalData = SubclassOptionalData;
   return New;
 }
 
-CastInst *FPExtInst::clone(LLVMContext&) const {
+FPExtInst *FPExtInst::clone(LLVMContext&) const {
   FPExtInst *New = new FPExtInst(getOperand(0), getType());
   New->SubclassOptionalData = SubclassOptionalData;
   return New;
 }
 
-CastInst *UIToFPInst::clone(LLVMContext&) const {
+UIToFPInst *UIToFPInst::clone(LLVMContext&) const {
   UIToFPInst *New = new UIToFPInst(getOperand(0), getType());
   New->SubclassOptionalData = SubclassOptionalData;
   return New;
 }
 
-CastInst *SIToFPInst::clone(LLVMContext&) const {
+SIToFPInst *SIToFPInst::clone(LLVMContext&) const {
   SIToFPInst *New = new SIToFPInst(getOperand(0), getType());
   New->SubclassOptionalData = SubclassOptionalData;
   return New;
 }
 
-CastInst *FPToUIInst::clone(LLVMContext&) const {
+FPToUIInst *FPToUIInst::clone(LLVMContext&) const {
   FPToUIInst *New = new FPToUIInst(getOperand(0), getType());
   New->SubclassOptionalData = SubclassOptionalData;
   return New;
 }
 
-CastInst *FPToSIInst::clone(LLVMContext&) const {
+FPToSIInst *FPToSIInst::clone(LLVMContext&) const {
   FPToSIInst *New = new FPToSIInst(getOperand(0), getType());
   New->SubclassOptionalData = SubclassOptionalData;
   return New;
 }
 
-CastInst *PtrToIntInst::clone(LLVMContext&) const {
+PtrToIntInst *PtrToIntInst::clone(LLVMContext&) const {
   PtrToIntInst *New = new PtrToIntInst(getOperand(0), getType());
   New->SubclassOptionalData = SubclassOptionalData;
   return New;
 }
 
-CastInst *IntToPtrInst::clone(LLVMContext&) const {
+IntToPtrInst *IntToPtrInst::clone(LLVMContext&) const {
   IntToPtrInst *New = new IntToPtrInst(getOperand(0), getType());
   New->SubclassOptionalData = SubclassOptionalData;
   return New;
 }
 
-CastInst *BitCastInst::clone(LLVMContext&) const {
+BitCastInst *BitCastInst::clone(LLVMContext&) const {
   BitCastInst *New = new BitCastInst(getOperand(0), getType());
   New->SubclassOptionalData = SubclassOptionalData;
   return New;

@@ -53,7 +53,7 @@ protected:
   virtual void setSuccessorV(unsigned idx, BasicBlock *B) = 0;
 public:
 
-  virtual Instruction *clone(LLVMContext &Context) const = 0;
+  virtual TerminatorInst *clone(LLVMContext &Context) const = 0;
 
   /// getNumSuccessors - Return the number of successors that this terminator
   /// has.
