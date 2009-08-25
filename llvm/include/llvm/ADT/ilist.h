@@ -39,14 +39,7 @@
 #define LLVM_ADT_ILIST_H
 
 #include "llvm/ADT/iterator.h"
-#include "llvm/Config/config.h"
 #include <cassert>
-
-#if defined(LLVM_COMPACT_SENTINELS) && LLVM_COMPACT_SENTINELS
-#   define sentinel_tail_assert(COND)
-#else
-#   define sentinel_tail_assert(COND) assert(COND)
-#endif
 
 namespace llvm {
 
@@ -196,12 +189,12 @@ public:
 
   // Accessors...
   operator pointer() const {
-    sentinel_tail_assert(Traits::getNext(NodePtr) != 0 && "Dereferencing end()!");
+    assert(Traits::getNext(NodePtr) != 0 && "Dereferencing end()!");
     return NodePtr;
   }
 
   reference operator*() const {
-    sentinel_tail_assert(Traits::getNext(NodePtr) != 0 && "Dereferencing end()!");
+    assert(Traits::getNext(NodePtr) != 0 && "Dereferencing end()!");
     return *NodePtr;
   }
   pointer operator->() const { return &operator*(); }
@@ -222,7 +215,7 @@ public:
   }
   ilist_iterator &operator++() {      // preincrement - Advance
     NodePtr = Traits::getNext(NodePtr);
-    sentinel_tail_assert(NodePtr && "++'d off the end of an ilist!");
+    assert(NodePtr && "++'d off the end of an ilist!");
     return *this;
   }
   ilist_iterator operator--(int) {    // postdecrement operators...
