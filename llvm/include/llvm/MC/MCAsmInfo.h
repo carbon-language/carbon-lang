@@ -16,12 +16,9 @@
 #ifndef LLVM_TARGET_ASM_INFO_H
 #define LLVM_TARGET_ASM_INFO_H
 
-#include "llvm/Support/DataTypes.h"
 #include <cassert>
 
 namespace llvm {
-  template <typename T> class SmallVectorImpl;
-  
   /// MCAsmInfo - This class is intended to be used as a base class for asm
   /// properties and features specific to the target.
   namespace ExceptionHandling { enum ExceptionsType { None, Dwarf, SjLj }; }
@@ -34,7 +31,7 @@ namespace llvm {
 
     /// ZeroFillDirective - Directive for emitting a global to the ZeroFill
     /// section on this target.  Null if this target doesn't support zerofill.
-    const char *ZeroFillDirective;        // Default is null.
+    const char *ZeroFillDirective;           // Default is null.
 
     /// NonexecutableStackDirective - Directive for declaring to the
     /// linker and beyond that the emitted code does not require stack
@@ -50,77 +47,77 @@ namespace llvm {
     /// .long x-y
     /// is relocated if the relative locations of x and y change at linktime.
     /// We want both these things in different places.
-    bool NeedsSet;                        // Defaults to false.
+    bool NeedsSet;                           // Defaults to false.
     
     /// MaxInstLength - This is the maximum possible length of an instruction,
     /// which is needed to compute the size of an inline asm.
-    unsigned MaxInstLength;               // Defaults to 4.
+    unsigned MaxInstLength;                  // Defaults to 4.
     
     /// PCSymbol - The symbol used to represent the current PC.  Used in PC
     /// relative expressions.
-    const char *PCSymbol;                 // Defaults to "$".
+    const char *PCSymbol;                    // Defaults to "$".
 
     /// SeparatorChar - This character, if specified, is used to separate
     /// instructions from each other when on the same line.  This is used to
     /// measure inline asm instructions.
-    char SeparatorChar;                   // Defaults to ';'
+    char SeparatorChar;                      // Defaults to ';'
 
     /// CommentColumn - This indicates the comment num (zero-based) at
     /// which asm comments should be printed.
-    unsigned CommentColumn;               // Defaults to 60
+    unsigned CommentColumn;                  // Defaults to 60
 
     /// CommentString - This indicates the comment character used by the
     /// assembler.
-    const char *CommentString;            // Defaults to "#"
+    const char *CommentString;               // Defaults to "#"
 
     /// GlobalPrefix - If this is set to a non-empty string, it is prepended
     /// onto all global symbols.  This is often used for "_" or ".".
-    const char *GlobalPrefix;             // Defaults to ""
+    const char *GlobalPrefix;                // Defaults to ""
 
     /// PrivateGlobalPrefix - This prefix is used for globals like constant
     /// pool entries that are completely private to the .s file and should not
     /// have names in the .o file.  This is often "." or "L".
-    const char *PrivateGlobalPrefix;      // Defaults to "."
+    const char *PrivateGlobalPrefix;         // Defaults to "."
     
     /// LinkerPrivateGlobalPrefix - This prefix is used for symbols that should
     /// be passed through the assembler but be removed by the linker.  This
     /// is "l" on Darwin, currently used for some ObjC metadata.
-    const char *LinkerPrivateGlobalPrefix;      // Defaults to ""
+    const char *LinkerPrivateGlobalPrefix;   // Defaults to ""
     
     /// JumpTableSpecialLabelPrefix - If not null, a extra (dead) label is
     /// emitted before jump tables with the specified prefix.
-    const char *JumpTableSpecialLabelPrefix;  // Default to null.
+    const char *JumpTableSpecialLabelPrefix; // Default to null.
     
     /// GlobalVarAddrPrefix/Suffix - If these are nonempty, these strings
     /// will enclose any GlobalVariable (that isn't a function)
     ///
-    const char *GlobalVarAddrPrefix;      // Defaults to ""
-    const char *GlobalVarAddrSuffix;      // Defaults to ""
+    const char *GlobalVarAddrPrefix;         // Defaults to ""
+    const char *GlobalVarAddrSuffix;         // Defaults to ""
 
     /// FunctionAddrPrefix/Suffix - If these are nonempty, these strings
     /// will enclose any GlobalVariable that points to a function.
     ///
-    const char *FunctionAddrPrefix;       // Defaults to ""
-    const char *FunctionAddrSuffix;       // Defaults to ""
+    const char *FunctionAddrPrefix;          // Defaults to ""
+    const char *FunctionAddrSuffix;          // Defaults to ""
 
     /// PersonalityPrefix/Suffix - If these are nonempty, these strings will
     /// enclose any personality function in the common frame section.
     /// 
-    const char *PersonalityPrefix;        // Defaults to ""
-    const char *PersonalitySuffix;        // Defaults to ""
+    const char *PersonalityPrefix;           // Defaults to ""
+    const char *PersonalitySuffix;           // Defaults to ""
 
     /// NeedsIndirectEncoding - If set, we need to set the indirect encoding bit
     /// for EH in Dwarf.
     /// 
-    bool NeedsIndirectEncoding;           // Defaults to false
+    bool NeedsIndirectEncoding;              // Defaults to false
 
     /// InlineAsmStart/End - If these are nonempty, they contain a directive to
     /// emit before and after an inline assembly statement.
-    const char *InlineAsmStart;           // Defaults to "#APP\n"
-    const char *InlineAsmEnd;             // Defaults to "#NO_APP\n"
+    const char *InlineAsmStart;              // Defaults to "#APP\n"
+    const char *InlineAsmEnd;                // Defaults to "#NO_APP\n"
 
     /// AssemblerDialect - Which dialect of an assembler variant to use.
-    unsigned AssemblerDialect;            // Defaults to 0
+    unsigned AssemblerDialect;               // Defaults to 0
 
     /// AllowQuotesInName - This is true if the assembler allows for complex
     /// symbol names to be surrounded in quotes.  This defaults to false.
@@ -132,25 +129,25 @@ namespace llvm {
     /// number of zero bytes emitted to the current section.  Common cases are
     /// "\t.zero\t" and "\t.space\t".  If this is set to null, the
     /// Data*bitsDirective's will be used to emit zero bytes.
-    const char *ZeroDirective;            // Defaults to "\t.zero\t"
-    const char *ZeroDirectiveSuffix;      // Defaults to ""
+    const char *ZeroDirective;               // Defaults to "\t.zero\t"
+    const char *ZeroDirectiveSuffix;         // Defaults to ""
 
     /// AsciiDirective - This directive allows emission of an ascii string with
     /// the standard C escape characters embedded into it.
-    const char *AsciiDirective;           // Defaults to "\t.ascii\t"
+    const char *AsciiDirective;              // Defaults to "\t.ascii\t"
     
     /// AscizDirective - If not null, this allows for special handling of
     /// zero terminated strings on this target.  This is commonly supported as
     /// ".asciz".  If a target doesn't support this, it can be set to null.
-    const char *AscizDirective;           // Defaults to "\t.asciz\t"
+    const char *AscizDirective;              // Defaults to "\t.asciz\t"
 
     /// DataDirectives - These directives are used to output some unit of
     /// integer data to the current section.  If a data directive is set to
     /// null, smaller data directives will be used to emit the large sizes.
-    const char *Data8bitsDirective;       // Defaults to "\t.byte\t"
-    const char *Data16bitsDirective;      // Defaults to "\t.short\t"
-    const char *Data32bitsDirective;      // Defaults to "\t.long\t"
-    const char *Data64bitsDirective;      // Defaults to "\t.quad\t"
+    const char *Data8bitsDirective;          // Defaults to "\t.byte\t"
+    const char *Data16bitsDirective;         // Defaults to "\t.short\t"
+    const char *Data32bitsDirective;         // Defaults to "\t.long\t"
+    const char *Data64bitsDirective;         // Defaults to "\t.quad\t"
 
     /// getDataASDirective - Return the directive that should be used to emit
     /// data of the specified size to the specified numeric address space.
@@ -162,94 +159,94 @@ namespace llvm {
     /// SunStyleELFSectionSwitchSyntax - This is true if this target uses "Sun
     /// Style" syntax for section switching ("#alloc,#write" etc) instead of the
     /// normal ELF syntax (,"a,w") in .section directives.
-    bool SunStyleELFSectionSwitchSyntax;   // Defaults to false.
+    bool SunStyleELFSectionSwitchSyntax;     // Defaults to false.
 
     /// UsesELFSectionDirectiveForBSS - This is true if this target uses ELF
     /// '.section' directive before the '.bss' one. It's used for PPC/Linux 
     /// which doesn't support the '.bss' directive only.
-    bool UsesELFSectionDirectiveForBSS;  // Defaults to false.
+    bool UsesELFSectionDirectiveForBSS;      // Defaults to false.
     
     //===--- Alignment Information ----------------------------------------===//
 
     /// AlignDirective - The directive used to emit round up to an alignment
     /// boundary.
     ///
-    const char *AlignDirective;           // Defaults to "\t.align\t"
+    const char *AlignDirective;              // Defaults to "\t.align\t"
 
     /// AlignmentIsInBytes - If this is true (the default) then the asmprinter
     /// emits ".align N" directives, where N is the number of bytes to align to.
     /// Otherwise, it emits ".align log2(N)", e.g. 3 to align to an 8 byte
     /// boundary.
-    bool AlignmentIsInBytes;              // Defaults to true
+    bool AlignmentIsInBytes;                 // Defaults to true
 
     /// TextAlignFillValue - If non-zero, this is used to fill the executable
     /// space created as the result of a alignment directive.
-    unsigned TextAlignFillValue;
+    unsigned TextAlignFillValue;             // Defaults to 0
 
     //===--- Section Switching Directives ---------------------------------===//
     
     /// JumpTableDirective - if non-null, the directive to emit before jump
     /// table entries.  FIXME: REMOVE THIS.
-    const char *JumpTableDirective;
-    const char *PICJumpTableDirective;
+    const char *JumpTableDirective;          // Defaults to NULL.
+    const char *PICJumpTableDirective;       // Defaults to NULL.
 
 
     //===--- Global Variable Emission Directives --------------------------===//
     
     /// GlobalDirective - This is the directive used to declare a global entity.
     ///
-    const char *GlobalDirective;          // Defaults to NULL.
+    const char *GlobalDirective;             // Defaults to NULL.
 
     /// ExternDirective - This is the directive used to declare external 
     /// globals.
     ///
-    const char *ExternDirective;          // Defaults to NULL.
+    const char *ExternDirective;             // Defaults to NULL.
     
     /// SetDirective - This is the name of a directive that can be used to tell
     /// the assembler to set the value of a variable to some expression.
-    const char *SetDirective;             // Defaults to null.
+    const char *SetDirective;                // Defaults to null.
     
     /// LCOMMDirective - This is the name of a directive (if supported) that can
     /// be used to efficiently declare a local (internal) block of zero
     /// initialized data in the .bss/.data section.  The syntax expected is:
     /// @verbatim <LCOMMDirective> SYMBOLNAME LENGTHINBYTES, ALIGNMENT
     /// @endverbatim
-    const char *LCOMMDirective;           // Defaults to null.
+    const char *LCOMMDirective;              // Defaults to null.
     
-    const char *COMMDirective;            // Defaults to "\t.comm\t".
+    const char *COMMDirective;               // Defaults to "\t.comm\t".
 
     /// COMMDirectiveTakesAlignment - True if COMMDirective take a third
     /// argument that specifies the alignment of the declaration.
-    bool COMMDirectiveTakesAlignment;     // Defaults to true.
+    bool COMMDirectiveTakesAlignment;        // Defaults to true.
     
     /// HasDotTypeDotSizeDirective - True if the target has .type and .size
     /// directives, this is true for most ELF targets.
-    bool HasDotTypeDotSizeDirective;      // Defaults to true.
+    bool HasDotTypeDotSizeDirective;         // Defaults to true.
 
     /// HasSingleParameterDotFile - True if the target has a single parameter
     /// .file directive, this is true for ELF targets.
-    bool HasSingleParameterDotFile;      // Defaults to true.
+    bool HasSingleParameterDotFile;          // Defaults to true.
 
     /// UsedDirective - This directive, if non-null, is used to declare a global
     /// as being used somehow that the assembler can't see.  This prevents dead
     /// code elimination on some targets.
-    const char *UsedDirective;            // Defaults to null.
+    const char *UsedDirective;               // Defaults to NULL.
 
     /// WeakRefDirective - This directive, if non-null, is used to declare a
     /// global as being a weak undefined symbol.
-    const char *WeakRefDirective;         // Defaults to null.
+    const char *WeakRefDirective;            // Defaults to NULL.
     
     /// WeakDefDirective - This directive, if non-null, is used to declare a
     /// global as being a weak defined symbol.
-    const char *WeakDefDirective;         // Defaults to null.
+    const char *WeakDefDirective;            // Defaults to NULL.
     
     /// HiddenDirective - This directive, if non-null, is used to declare a
     /// global or function as having hidden visibility.
-    const char *HiddenDirective;          // Defaults to "\t.hidden\t".
+    const char *HiddenDirective;             // Defaults to "\t.hidden\t".
 
     /// ProtectedDirective - This directive, if non-null, is used to declare a
     /// global or function as having protected visibility.
-    const char *ProtectedDirective;       // Defaults to "\t.protected\t".
+    const char *ProtectedDirective;          // Defaults to "\t.protected\t".
 
     //===--- Dwarf Emission Directives -----------------------------------===//
 
@@ -303,7 +300,7 @@ namespace llvm {
     
     //===--- CBE Asm Translation Table -----------------------------------===//
 
-    const char *const *AsmTransCBE; // Defaults to empty
+    const char *const *AsmTransCBE;          // Defaults to empty
 
   public:
     explicit MCAsmInfo();
