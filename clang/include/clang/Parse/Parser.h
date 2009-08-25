@@ -318,12 +318,12 @@ private:
   /// for expressions in C.
   ///
   /// This returns true if the token was annotated.
-  bool TryAnnotateTypeOrScopeToken();
+  bool TryAnnotateTypeOrScopeToken(bool EnteringContext = false);
 
   /// TryAnnotateCXXScopeToken - Like TryAnnotateTypeOrScopeToken but only
   /// annotates C++ scope specifiers.  This returns true if the token was
   /// annotated.
-  bool TryAnnotateCXXScopeToken();
+  bool TryAnnotateCXXScopeToken(bool EnteringContext = false);
 
   /// TentativeParsingAction - An object that is used as a kind of "tentative
   /// parsing transaction". It gets instantiated to mark the token position and
@@ -775,7 +775,8 @@ private:
   /// was parsed from the token stream.  Note that this routine will not parse
   /// ::new or ::delete, it will just leave them in the token stream.
   ///
-  bool ParseOptionalCXXScopeSpecifier(CXXScopeSpec &SS);
+  bool ParseOptionalCXXScopeSpecifier(CXXScopeSpec &SS, 
+                                      bool EnteringContext = false);
   
   //===--------------------------------------------------------------------===//
   // C++ 5.2p1: C++ Casts

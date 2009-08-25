@@ -1,5 +1,4 @@
 // RUN: clang-cc -fsyntax-only -verify %s
-
 class A;
 
 class S {
@@ -25,6 +24,7 @@ struct Outer {
     
     T foo(U);
     template<typename V> T bar(V);
+    template<typename V> T* bar(V);
   };
 };
 
@@ -35,9 +35,6 @@ public:
   void f(X, Y);
 };
 
-#if 0
-// FIXME: These don't parse properly because we can't handle the template-name
-// "Inner0" or "Inner1" after the dependent type Outer<X>. 
 template<typename X>
 template<typename Y>
 void Outer<X>::Inner0<Y>::f(X, Y) {
@@ -66,4 +63,10 @@ template<typename Z>
 X Outer<X>::Inner1<Y>::bar(Z) {
   return X();
 }
-#endif
+
+template<typename X>
+template<typename Y>
+template<typename Z>
+X* Outer<X>::Inner1<Y>::bar(Z) {
+  return 0;
+}

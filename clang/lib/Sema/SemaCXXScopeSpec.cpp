@@ -48,11 +48,11 @@ DeclContext *Sema::computeDeclContext(const CXXScopeSpec &SS,
       return Record;
     
     if (EnteringContext) {
-      // We are entering the context of the nested name specifier, so try to
-      // match the nested name specifier to either a primary class template
-      // or a class template partial specialization.
       if (const TemplateSpecializationType *SpecType
             = dyn_cast_or_null<TemplateSpecializationType>(NNS->getAsType())) {
+        // We are entering the context of the nested name specifier, so try to
+        // match the nested name specifier to either a primary class template
+        // or a class template partial specialization.
         if (ClassTemplateDecl *ClassTemplate 
               = dyn_cast_or_null<ClassTemplateDecl>(
                             SpecType->getTemplateName().getAsTemplateDecl())) {
@@ -74,6 +74,10 @@ DeclContext *Sema::computeDeclContext(const CXXScopeSpec &SS,
                 = ClassTemplate->findPartialSpecialization(ContextType))
             return PartialSpec;
         }
+      } else if (const RecordType *RecordT 
+                   = dyn_cast_or_null<RecordType>(NNS->getAsType())) {
+        // The nested name specifier refers to a member of a class template.
+        return RecordT->getDecl();
       }
       
       std::string NNSString;
@@ -260,17 +264,14 @@ Sema::CXXScopeTy *Sema::ActOnCXXNestedNameSpecifier(Scope *S,
                                                     const CXXScopeSpec &SS,
                                                     SourceLocation IdLoc,
                                                     SourceLocation CCLoc,
-                                                    IdentifierInfo &II) {
+                                                    IdentifierInfo &II,
+                                                    bool EnteringContext) {
   NestedNameSpecifier *Prefix 
     = static_cast<NestedNameSpecifier *>(SS.getScopeRep());
 
-  // If the prefix already refers to an unknown specialization, there
-  // is no name lookup to perform. Just build the resulting
-  // nested-name-specifier.
-  if (Prefix && isUnknownSpecialization(SS))
-    return NestedNameSpecifier::Create(Context, Prefix, &II);
-
-  NamedDecl *SD = LookupParsedName(S, &SS, &II, LookupNestedNameSpecifierName);
+  NamedDecl *SD = LookupParsedName(S, &SS, &II, LookupNestedNameSpecifierName,
+                                   false, false, SourceLocation(),
+                                   EnteringContext);
 
   if (SD) {
     if (NamespaceDecl *Namespace = dyn_cast<NamespaceDecl>(SD))
@@ -303,13 +304,16 @@ Sema::CXXScopeTy *Sema::ActOnCXXNestedNameSpecifier(Scope *S,
 
     // Fall through to produce an error: we found something that isn't
     // a class or a namespace.
-  }
+  } else if (SS.isSet() && isDependentScopeSpecifier(SS))
+    return NestedNameSpecifier::Create(Context, Prefix, &II);
 
   // If we didn't find anything during our lookup, try again with
   // ordinary name lookup, which can help us produce better error
   // messages.
   if (!SD)
-    SD = LookupParsedName(S, &SS, &II, LookupOrdinaryName);
+    SD = LookupParsedName(S, &SS, &II, LookupOrdinaryName,
+                          false, false, SourceLocation(),
+                          EnteringContext);
   unsigned DiagID;
   if (SD)
     DiagID = diag::err_expected_class_or_namespace;

@@ -72,7 +72,7 @@ Sema::TypeTy *Sema::getTypeName(IdentifierInfo &II, SourceLocation NameLoc,
   // refer to a member of an unknown specialization.
   if (SS && isUnknownSpecialization(*SS))
     return 0;
-
+  
   LookupResult Result 
     = LookupParsedName(S, SS, &II, LookupOrdinaryName, false, false);
 

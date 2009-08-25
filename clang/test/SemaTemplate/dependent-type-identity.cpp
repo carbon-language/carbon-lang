@@ -59,7 +59,7 @@ struct X1 {
   void f6(typename N::X2<U>::template apply<U> *);
   void f6(typename N::X2<U>::template apply<T> *);
   void f6(typename ::N::X2<type>::template apply<U_type> *); // expected-error{{redeclar}}
-
+  
   void f7(typename N::X2<T>::template apply<U> *); // expected-note{{previous}}
   void f7(typename N::X2<U>::template apply<U> *);
   void f7(typename N::X2<U>::template apply<T> *);

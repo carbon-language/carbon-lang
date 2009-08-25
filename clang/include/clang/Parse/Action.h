@@ -190,14 +190,28 @@ public:
   virtual bool isCurrentClassName(const IdentifierInfo &II, Scope *S,
                                   const CXXScopeSpec *SS = 0) = 0;
 
-  /// \brief Determines whether the identifier II is a template name
-  /// in the current scope. If so, the kind of template name is
-  /// returned, and \p TemplateDecl receives the declaration. An
-  /// optional CXXScope can be passed to indicate the C++ scope in
-  /// which the identifier will be found.
+  /// \brief Determine whether the given identifier refers to the name of a
+  /// template.
+  ///
+  /// \param II the identifier that we are querying to determine whether it
+  /// is a template.
+  ///
+  /// \param S the scope in which name lookup occurs
+  ///
+  /// \param SS the C++ scope specifier that precedes the template name, if
+  /// any.
+  ///
+  /// \param EnteringContext whether we are potentially entering the context
+  /// referred to by the scope specifier \p SS
+  ///
+  /// \param Template if the name does refer to a template, the declaration
+  /// of the template that the name refers to.
+  ///
+  /// \returns the kind of template that this name refers to.
   virtual TemplateNameKind isTemplateName(const IdentifierInfo &II, Scope *S,
-                                          TemplateTy &Template,
-                                          const CXXScopeSpec *SS = 0) = 0;
+                                          const CXXScopeSpec *SS,
+                                          bool EnteringContext,
+                                          TemplateTy &Template) = 0;
 
   /// ActOnCXXGlobalScopeSpecifier - Return the object that represents the
   /// global scope ('::').
@@ -216,7 +230,8 @@ public:
                                                   const CXXScopeSpec &SS,
                                                   SourceLocation IdLoc,
                                                   SourceLocation CCLoc,
-                                                  IdentifierInfo &II) {
+                                                  IdentifierInfo &II,
+                                                  bool EnteringContext) {
     return 0;
   }
 
@@ -1990,9 +2005,28 @@ public:
   virtual bool isCurrentClassName(const IdentifierInfo& II, Scope *S,
                                   const CXXScopeSpec *SS);
 
+  /// \brief Determine whether the given identifier refers to the name of a
+  /// template.
+  ///
+  /// \param II the identifier that we are querying to determine whether it
+  /// is a template.
+  ///
+  /// \param S the scope in which name lookup occurs
+  ///
+  /// \param SS the C++ scope specifier that precedes the template name, if
+  /// any.
+  ///
+  /// \param EnteringContext whether we are potentially entering the context
+  /// referred to by the scope specifier \p SS
+  ///
+  /// \param Template if the name does refer to a template, the declaration
+  /// of the template that the name refers to.
+  ///
+  /// \returns the kind of template that this name refers to.
   virtual TemplateNameKind isTemplateName(const IdentifierInfo &II, Scope *S,
-                                          TemplateTy &Template,
-                                          const CXXScopeSpec *SS = 0);
+                                          const CXXScopeSpec *SS,
+                                          bool EnteringContext,
+                                          TemplateTy &Template);
 
   /// ActOnDeclarator - If this is a typedef declarator, we modify the
   /// IdentifierInfo::FETokenInfo field to keep track of this fact, until S is

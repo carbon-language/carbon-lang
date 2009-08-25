@@ -4378,7 +4378,8 @@ TreeTransform<Derived>::RebuildNestedNameSpecifier(NestedNameSpecifier *Prefix,
   SS.setScopeRep(Prefix);
   return static_cast<NestedNameSpecifier *>(
                     SemaRef.ActOnCXXNestedNameSpecifier(0, SS, Range.getEnd(), 
-                                                        Range.getEnd(), II));
+                                                        Range.getEnd(), II,
+                                                        false));
 }
 
 template<typename Derived>
@@ -4435,7 +4436,7 @@ TreeTransform<Derived>::RebuildTemplateName(NestedNameSpecifier *Qualifier,
   SS.setRange(SourceRange(getDerived().getBaseLocation()));
   SS.setScopeRep(Qualifier);
   Sema::TemplateTy Template;
-  TemplateNameKind TNK = SemaRef.isTemplateName(II, 0, Template, &SS);
+  TemplateNameKind TNK = SemaRef.isTemplateName(II, 0, &SS, false, Template);
   if (TNK == TNK_Non_template) {
     SemaRef.Diag(getDerived().getBaseLocation(), 
                  diag::err_template_kw_refers_to_non_template)

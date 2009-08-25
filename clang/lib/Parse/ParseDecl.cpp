@@ -728,7 +728,7 @@ void Parser::ParseDeclarationSpecifiers(DeclSpec &DS,
         
     case tok::coloncolon: // ::foo::bar
       // Annotate C++ scope specifiers.  If we get one, loop.
-      if (TryAnnotateCXXScopeToken())
+      if (TryAnnotateCXXScopeToken(true))
         continue;
       goto DoneWithDeclSpec;
 
@@ -743,7 +743,7 @@ void Parser::ParseDeclarationSpecifiers(DeclSpec &DS,
             ->Kind == TNK_Type_template) {
         // We have a qualified template-id, e.g., N::A<int>
         CXXScopeSpec SS;
-        ParseOptionalCXXScopeSpecifier(SS);
+        ParseOptionalCXXScopeSpecifier(SS, true);
         assert(Tok.is(tok::annot_template_id) && 
                "ParseOptionalCXXScopeSpecifier not working");
         AnnotateTemplateIdTokenAsType(&SS);
@@ -820,7 +820,7 @@ void Parser::ParseDeclarationSpecifiers(DeclSpec &DS,
     case tok::identifier: {
       // In C++, check to see if this is a scope specifier like foo::bar::, if
       // so handle it as such.  This is important for ctor parsing.
-      if (getLang().CPlusPlus && TryAnnotateCXXScopeToken())
+      if (getLang().CPlusPlus && TryAnnotateCXXScopeToken(true))
         continue;
       
       // This identifier can only be a typedef name if we haven't already seen
@@ -2023,7 +2023,7 @@ void Parser::ParseDeclaratorInternal(Declarator &D,
       (Tok.is(tok::coloncolon) || Tok.is(tok::identifier) ||
        Tok.is(tok::annot_cxxscope))) {
     CXXScopeSpec SS;
-    if (ParseOptionalCXXScopeSpecifier(SS)) {
+    if (ParseOptionalCXXScopeSpecifier(SS, true)) {
       if(Tok.isNot(tok::star)) {
         // The scope spec really belongs to the direct-declarator.
         D.getCXXScopeSpec() = SS;
@@ -2180,7 +2180,7 @@ void Parser::ParseDirectDeclarator(Declarator &D) {
     if (D.mayHaveIdentifier()) {
       // ParseDeclaratorInternal might already have parsed the scope.
       bool afterCXXScope = D.getCXXScopeSpec().isSet() ||
-        ParseOptionalCXXScopeSpecifier(D.getCXXScopeSpec());
+        ParseOptionalCXXScopeSpecifier(D.getCXXScopeSpec(), true);
       if (afterCXXScope) {
         // Change the declaration context for name lookup, until this function
         // is exited (and the declarator has been parsed).

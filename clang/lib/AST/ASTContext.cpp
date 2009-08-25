@@ -2235,13 +2235,7 @@ ASTContext::getCanonicalNestedNameSpecifier(NestedNameSpecifier *NNS) {
   case NestedNameSpecifier::TypeSpec:
   case NestedNameSpecifier::TypeSpecWithTemplate: {
     QualType T = getCanonicalType(QualType(NNS->getAsType(), 0));
-    NestedNameSpecifier *Prefix = 0;
-
-    // FIXME: This isn't the right check!
-    if (T->isDependentType())
-      Prefix = getCanonicalNestedNameSpecifier(NNS->getPrefix());
-
-    return NestedNameSpecifier::Create(*this, Prefix, 
+    return NestedNameSpecifier::Create(*this, 0, 
                  NNS->getKind() == NestedNameSpecifier::TypeSpecWithTemplate, 
                                        T.getTypePtr());
   }

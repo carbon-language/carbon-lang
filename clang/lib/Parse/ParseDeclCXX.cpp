@@ -534,7 +534,7 @@ void Parser::ParseClassSpecifier(tok::TokenKind TagTokKind,
   
   // Parse the (optional) nested-name-specifier.
   CXXScopeSpec SS;
-  if (getLang().CPlusPlus && ParseOptionalCXXScopeSpecifier(SS))
+  if (getLang().CPlusPlus && ParseOptionalCXXScopeSpecifier(SS, true))
     if (Tok.isNot(tok::identifier) && Tok.isNot(tok::annot_template_id))
       Diag(Tok, diag::err_expected_ident);
 
@@ -809,7 +809,7 @@ Parser::BaseResult Parser::ParseBaseSpecifier(DeclPtrTy ClassDecl) {
 
   // Parse optional '::' and optional nested-name-specifier.
   CXXScopeSpec SS;
-  ParseOptionalCXXScopeSpecifier(SS);
+  ParseOptionalCXXScopeSpecifier(SS, true);
 
   // The location of the base class itself.
   SourceLocation BaseLoc = Tok.getLocation();

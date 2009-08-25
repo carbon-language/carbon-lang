@@ -870,7 +870,7 @@ Parser::OwningExprResult Parser::ParseSimpleAsm(SourceLocation *EndLoc) {
 /// 
 /// Note that this routine emits an error if you call it with ::new or ::delete
 /// as the current tokens, so only call it in contexts where these are invalid.
-bool Parser::TryAnnotateTypeOrScopeToken() {
+bool Parser::TryAnnotateTypeOrScopeToken(bool EnteringContext) {
   assert((Tok.is(tok::identifier) || Tok.is(tok::coloncolon) 
           || Tok.is(tok::kw_typename)) &&
          "Cannot be a type or scope token!");
@@ -884,7 +884,7 @@ bool Parser::TryAnnotateTypeOrScopeToken() {
     //            simple-template-id
     SourceLocation TypenameLoc = ConsumeToken();
     CXXScopeSpec SS;
-    bool HadNestedNameSpecifier = ParseOptionalCXXScopeSpecifier(SS);
+    bool HadNestedNameSpecifier = ParseOptionalCXXScopeSpecifier(SS, false);
     if (!HadNestedNameSpecifier) {
       Diag(Tok.getLocation(), diag::err_expected_qualified_after_typename);
       return false;
@@ -928,7 +928,7 @@ bool Parser::TryAnnotateTypeOrScopeToken() {
 
   CXXScopeSpec SS;
   if (getLang().CPlusPlus)
-    ParseOptionalCXXScopeSpecifier(SS);
+    ParseOptionalCXXScopeSpecifier(SS, EnteringContext);
 
   if (Tok.is(tok::identifier)) {
     // Determine whether the identifier is a type name.
@@ -960,7 +960,7 @@ bool Parser::TryAnnotateTypeOrScopeToken() {
       TemplateTy Template;
       if (TemplateNameKind TNK 
             = Actions.isTemplateName(*Tok.getIdentifierInfo(),
-                                     CurScope, Template, &SS))
+                                     CurScope, &SS, EnteringContext, Template))
         if (AnnotateTemplateIdToken(Template, TNK, &SS)) {
           // If an unrecoverable error occurred, we need to return true here,
           // because the token stream is in a damaged state.  We may not return
@@ -1015,14 +1015,14 @@ bool Parser::TryAnnotateTypeOrScopeToken() {
 /// 
 /// Note that this routine emits an error if you call it with ::new or ::delete
 /// as the current tokens, so only call it in contexts where these are invalid.
-bool Parser::TryAnnotateCXXScopeToken() {
+bool Parser::TryAnnotateCXXScopeToken(bool EnteringContext) {
   assert(getLang().CPlusPlus &&
          "Call sites of this function should be guarded by checking for C++");
   assert((Tok.is(tok::identifier) || Tok.is(tok::coloncolon)) &&
          "Cannot be a type or scope token!");
 
   CXXScopeSpec SS;
-  if (!ParseOptionalCXXScopeSpecifier(SS))
+  if (!ParseOptionalCXXScopeSpecifier(SS, EnteringContext))
     return Tok.is(tok::annot_template_id);
 
   // Push the current token back into the token stream (or revert it if it is

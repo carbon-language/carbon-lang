@@ -30,10 +30,11 @@ using namespace clang;
 ///         nested-name-specifier identifier '::'
 ///         nested-name-specifier 'template'[opt] simple-template-id '::' [TODO]
 ///
-bool Parser::ParseOptionalCXXScopeSpecifier(CXXScopeSpec &SS) {
+bool Parser::ParseOptionalCXXScopeSpecifier(CXXScopeSpec &SS,
+                                            bool EnteringContext) {
   assert(getLang().CPlusPlus &&
          "Call sites of this function should be guarded by checking for C++");
-
+  
   if (Tok.is(tok::annot_cxxscope)) {
     SS.setScopeRep(Tok.getAnnotationValue());
     SS.setRange(Tok.getAnnotationRange());
@@ -106,7 +107,6 @@ bool Parser::ParseOptionalCXXScopeSpecifier(CXXScopeSpec &SS) {
       if (TemplateId->Kind == TNK_Type_template || 
           TemplateId->Kind == TNK_Dependent_template_name) {
         AnnotateTemplateIdTokenAsType(&SS);
-        SS.setScopeRep(0);
 
         assert(Tok.is(tok::annot_typename) && 
                "AnnotateTemplateIdTokenAsType isn't working");
@@ -164,7 +164,8 @@ bool Parser::ParseOptionalCXXScopeSpecifier(CXXScopeSpec &SS) {
         continue;
       
       SS.setScopeRep(
-        Actions.ActOnCXXNestedNameSpecifier(CurScope, SS, IdLoc, CCLoc, II));
+        Actions.ActOnCXXNestedNameSpecifier(CurScope, SS, IdLoc, CCLoc, II,
+                                            EnteringContext));
       SS.setEndLoc(CCLoc);
       continue;
     }
@@ -173,8 +174,9 @@ bool Parser::ParseOptionalCXXScopeSpecifier(CXXScopeSpec &SS) {
     //   type-name '<'
     if (Next.is(tok::less)) {
       TemplateTy Template;
-      if (TemplateNameKind TNK = Actions.isTemplateName(II, CurScope,
-                                                        Template, &SS)) {
+      if (TemplateNameKind TNK = Actions.isTemplateName(II, CurScope, &SS,
+                                                        EnteringContext,
+                                                        Template)) {
         // We have found a template name, so annotate this this token
         // with a template-id annotation. We do not permit the
         // template-id to be translated into a type annotation,

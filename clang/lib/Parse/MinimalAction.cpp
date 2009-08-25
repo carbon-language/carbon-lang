@@ -159,8 +159,9 @@ bool MinimalAction::isCurrentClassName(const IdentifierInfo &, Scope *,
 
 TemplateNameKind 
 MinimalAction::isTemplateName(const IdentifierInfo &II, Scope *S,
-                              TemplateTy &TemplateDecl,
-                              const CXXScopeSpec *SS) {
+                              const CXXScopeSpec *SS,
+                              bool EnteringScope,
+                              TemplateTy &TemplateDecl) {
   return TNK_Non_template;
 }
 

@@ -1116,7 +1116,7 @@ Sema::LookupQualifiedName(DeclContext *LookupCtx, DeclarationName Name,
 /// @param S        The scope from which unqualified name lookup will
 /// begin.
 /// 
-/// @param SS       An optional C++ scope-specified, e.g., "::N::M".
+/// @param SS       An optional C++ scope-specifier, e.g., "::N::M".
 ///
 /// @param Name     The name of the entity that name lookup will
 /// search for.
@@ -1125,49 +1125,56 @@ Sema::LookupQualifiedName(DeclContext *LookupCtx, DeclarationName Name,
 /// name lookup. At present, this is only used to produce diagnostics when 
 /// C library functions (like "malloc") are implicitly declared.
 ///
+/// @param EnteringContext Indicates whether we are going to enter the
+/// context of the scope-specifier SS (if present).
+///
 /// @returns The result of qualified or unqualified name lookup.
 Sema::LookupResult
 Sema::LookupParsedName(Scope *S, const CXXScopeSpec *SS, 
                        DeclarationName Name, LookupNameKind NameKind,
                        bool RedeclarationOnly, bool AllowBuiltinCreation,
-                       SourceLocation Loc) {
-  if (SS && (SS->isSet() || SS->isInvalid())) {
-    // If the scope specifier is invalid, don't even look for
+                       SourceLocation Loc,
+                       bool EnteringContext) {
+  if (SS && SS->isInvalid()) {
+    // When the scope specifier is invalid, don't even look for
     // anything.
-    if (SS->isInvalid())
-      return LookupResult::CreateLookupResult(Context, 0);
-
-    assert(!isUnknownSpecialization(*SS) && "Can't lookup dependent types");
-
-    if (isDependentScopeSpecifier(*SS)) {
-      // Determine whether we are looking into the current
-      // instantiation. 
-      NestedNameSpecifier *NNS 
-        = static_cast<NestedNameSpecifier *>(SS->getScopeRep());
-      CXXRecordDecl *Current = getCurrentInstantiationOf(NNS);
-      assert(Current && "Bad dependent scope specifier");
+    return LookupResult::CreateLookupResult(Context, 0);
+  }
+  
+  if (SS && SS->isSet()) {
+    if (DeclContext *DC = computeDeclContext(*SS, EnteringContext)) {
+      // We have resolved the scope specifier to a particular declaration 
+      // contex, and will perform name lookup in that context.
       
-      // We nested name specifier refers to the current instantiation,
-      // so now we will look for a member of the current instantiation
-      // (C++0x [temp.dep.type]).
-      unsigned IDNS = getIdentifierNamespacesFromLookupNameKind(NameKind, true);
-      DeclContext::lookup_iterator I, E;
-      for (llvm::tie(I, E) = Current->lookup(Name); I != E; ++I)
-        if (isAcceptableLookupResult(*I, NameKind, IDNS))
-          return LookupResult::CreateLookupResult(Context, I, E);
+      if (DC->isDependentContext()) {
+        // If this is a dependent context, then we are looking for a member of
+        // the current instantiation. This is a narrow search that looks into
+        // just the described declaration context (C++0x [temp.dep.type]).
+        unsigned IDNS = getIdentifierNamespacesFromLookupNameKind(NameKind, 
+                                                                  true);
+        DeclContext::lookup_iterator I, E;
+        for (llvm::tie(I, E) = DC->lookup(Name); I != E; ++I)
+          if (isAcceptableLookupResult(*I, NameKind, IDNS))
+            return LookupResult::CreateLookupResult(Context, I, E);
+      }
+      
+      // Qualified name lookup into the named declaration context.
+      // The declaration context must be complete.
+      if (RequireCompleteDeclContext(*SS))
+        return LookupResult::CreateLookupResult(Context, 0);
+            
+      return LookupQualifiedName(DC, Name, NameKind, RedeclarationOnly);
     }
 
-    if (RequireCompleteDeclContext(*SS))
-      return LookupResult::CreateLookupResult(Context, 0);
-
-    return LookupQualifiedName(computeDeclContext(*SS),
-                               Name, NameKind, RedeclarationOnly);
+    // We could not resolve the scope specified to a specific declaration
+    // context, which means that SS refers to an unknown specialization. 
+    // Name lookup can't find anything in this case.
+    return LookupResult::CreateLookupResult(Context, 0);
   }
 
-  LookupResult result(LookupName(S, Name, NameKind, RedeclarationOnly, 
-                    AllowBuiltinCreation, Loc));
-  
-  return(result);
+  // Perform unqualified name lookup starting in the given scope. 
+  return LookupName(S, Name, NameKind, RedeclarationOnly, AllowBuiltinCreation, 
+                    Loc);
 }
 
 

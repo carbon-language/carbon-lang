@@ -409,7 +409,7 @@ Parser::TPResult Parser::TryParseDeclarator(bool mayBeAbstract,
 
   while (1) {
     if (Tok.is(tok::coloncolon) || Tok.is(tok::identifier))
-      TryAnnotateCXXScopeToken();
+      TryAnnotateCXXScopeToken(true);
 
     if (Tok.is(tok::star) || Tok.is(tok::amp) || Tok.is(tok::caret) ||
         (Tok.is(tok::annot_cxxscope) && NextToken().is(tok::star))) {

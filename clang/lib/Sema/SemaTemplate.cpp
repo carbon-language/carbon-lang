@@ -27,10 +27,19 @@ using namespace clang;
 /// passed to indicate the C++ scope in which the identifier will be
 /// found. 
 TemplateNameKind Sema::isTemplateName(const IdentifierInfo &II, Scope *S,
-                                      TemplateTy &TemplateResult,
-                                      const CXXScopeSpec *SS) {
-  NamedDecl *IIDecl = LookupParsedName(S, SS, &II, LookupOrdinaryName);
-
+                                      const CXXScopeSpec *SS,
+                                      bool EnteringContext,
+                                      TemplateTy &TemplateResult) {                                      
+  LookupResult Found = LookupParsedName(S, SS, &II, LookupOrdinaryName, 
+                                        false, false, SourceLocation(),
+                                        EnteringContext);
+  
+  // FIXME: Cope with ambiguous name-lookup results.
+  assert(!Found.isAmbiguous() && 
+         "Cannot handle template name-lookup ambiguities");
+  
+  NamedDecl *IIDecl = Found;
+  
   TemplateNameKind TNK = TNK_Non_template;
   TemplateDecl *Template = 0;
 
@@ -1116,7 +1125,7 @@ Sema::ActOnDependentTemplateName(SourceLocation TemplateKWLoc,
     // "template" keyword is now permitted). We follow the C++0x
     // rules, even in C++03 mode, retroactively applying the DR.
     TemplateTy Template;
-    TemplateNameKind TNK = isTemplateName(Name, 0, Template, &SS);
+    TemplateNameKind TNK = isTemplateName(Name, 0, &SS, false, Template);
     if (TNK == TNK_Non_template) {
       Diag(NameLoc, diag::err_template_kw_refers_to_non_template)
         << &Name;

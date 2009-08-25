@@ -1265,7 +1265,8 @@ public:
                                 LookupNameKind NameKind, 
                                 bool RedeclarationOnly = false,
                                 bool AllowBuiltinCreation = false,
-                                SourceLocation Loc = SourceLocation());
+                                SourceLocation Loc = SourceLocation(),
+                                bool EnteringContext = false);
 
   ObjCProtocolDecl *LookupProtocol(IdentifierInfo *II);
   ObjCCategoryImplDecl *LookupObjCCategoryImpl(IdentifierInfo *II);
@@ -1951,7 +1952,8 @@ public:
                                                   const CXXScopeSpec &SS,
                                                   SourceLocation IdLoc,
                                                   SourceLocation CCLoc,
-                                                  IdentifierInfo &II);
+                                                  IdentifierInfo &II,
+                                                  bool EnteringContext);
 
   /// ActOnCXXNestedNameSpecifier - Called during parsing of a
   /// nested-name-specifier that involves a template-id, e.g.,
@@ -2205,8 +2207,9 @@ public:
   // C++ Templates [C++ 14]
   //
   virtual TemplateNameKind isTemplateName(const IdentifierInfo &II, Scope *S,
-                                          TemplateTy &Template,
-                                          const CXXScopeSpec *SS = 0);
+                                          const CXXScopeSpec *SS,
+                                          bool EnteringContext,
+                                          TemplateTy &Template);
   bool DiagnoseTemplateParameterShadow(SourceLocation Loc, Decl *PrevDecl);
   TemplateDecl *AdjustDeclIfTemplate(DeclPtrTy &Decl);
 
