@@ -2467,18 +2467,21 @@ Sema::BuildCXXConstructExpr(QualType DeclInitType,
   return Owned(Temp);
 }
 
-void Sema::InitializeVarWithConstructor(VarDecl *VD, 
+bool Sema::InitializeVarWithConstructor(VarDecl *VD, 
                                         CXXConstructorDecl *Constructor,
                                         QualType DeclInitType, 
                                         Expr **Exprs, unsigned NumExprs) {
   OwningExprResult TempResult = BuildCXXConstructExpr(DeclInitType, Constructor, 
                                                       Exprs, NumExprs);
-  assert(!TempResult.isInvalid() && "FIXME: Error handling");
+  if (TempResult.isInvalid())
+    return true;
   
   Expr *Temp = TempResult.takeAs<Expr>();
   MarkDeclarationReferenced(VD->getLocation(), Constructor);
   Temp = MaybeCreateCXXExprWithTemporaries(Temp, /*DestroyTemps=*/true);
   VD->setInit(Context, Temp);
+  
+  return false;
 }
 
 void Sema::FinalizeVarWithDestructor(VarDecl *VD, QualType DeclInitType)
@@ -2555,8 +2558,9 @@ void Sema::AddCXXDirectInitializerToDecl(DeclPtrTy Dcl,
       RealDecl->setInvalidDecl();
     else {
       VDecl->setCXXDirectInitializer(true);
-      InitializeVarWithConstructor(VDecl, Constructor, DeclInitType, 
-                                   (Expr**)Exprs.release(), NumExprs);
+      if (InitializeVarWithConstructor(VDecl, Constructor, DeclInitType, 
+                                       (Expr**)Exprs.release(), NumExprs))
+        RealDecl->setInvalidDecl();
       FinalizeVarWithDestructor(VDecl, DeclInitType);
     }
     return;
