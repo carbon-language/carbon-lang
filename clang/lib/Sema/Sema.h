@@ -1921,6 +1921,14 @@ public:
                                                TypeTy *Ty,
                                                SourceLocation RParen);
 
+  virtual OwningExprResult
+  ActOnPseudoDtorReferenceExpr(Scope *S, ExprArg Base,
+                               SourceLocation OpLoc,
+                               tok::TokenKind OpKind,
+                               SourceLocation ClassNameLoc,
+                               IdentifierInfo *ClassName,
+                               const CXXScopeSpec *SS = 0);
+  
   /// MaybeCreateCXXExprWithTemporaries - If the list of temporaries is 
   /// non-empty, will create a new CXXExprWithTemporaries expression.
   /// Otherwise, just returs the passed in expression.

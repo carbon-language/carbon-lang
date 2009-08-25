@@ -1682,11 +1682,35 @@ Expr *Sema::MaybeCreateCXXExprWithTemporaries(Expr *SubExpr,
   return E;
 }
 
+Sema::OwningExprResult
+Sema::ActOnPseudoDtorReferenceExpr(Scope *S, ExprArg Base,
+                                   SourceLocation OpLoc,
+                                   tok::TokenKind OpKind,
+                                   SourceLocation ClassNameLoc,
+                                   IdentifierInfo *ClassName,
+                                   const CXXScopeSpec *SS) {
+  if (SS && SS->isInvalid())
+    return ExprError();
+  
+  // Since this might be a postfix expression, get rid of ParenListExprs.
+  Base = MaybeConvertParenListExprToParenExpr(S, move(Base));
+  
+  Expr *BaseExpr = Base.takeAs<Expr>();
+  assert(BaseExpr && "no record expression");
+  
+  // Perform default conversions.
+  DefaultFunctionArrayConversion(BaseExpr);
+  
+  QualType BaseType = BaseExpr->getType();
+  return ExprError();
+}
+
 Sema::OwningExprResult Sema::ActOnFinishFullExpr(ExprArg Arg) {
   Expr *FullExpr = Arg.takeAs<Expr>();
   if (FullExpr)
     FullExpr = MaybeCreateCXXExprWithTemporaries(FullExpr, 
                                                  /*ShouldDestroyTemps=*/true);
+
 
   return Owned(FullExpr);
 }

@@ -933,16 +933,32 @@ Parser::ParsePostfixExpressionSuffix(OwningExprResult LHS) {
         ParseOptionalCXXScopeSpecifier(SS);
       }
 
-      if (Tok.isNot(tok::identifier)) {
+      if (Tok.is(tok::identifier)) {
+        if (!LHS.isInvalid())
+          LHS = Actions.ActOnMemberReferenceExpr(CurScope, move(LHS), OpLoc,
+                                                 OpKind, Tok.getLocation(),
+                                                 *Tok.getIdentifierInfo(),
+                                                 ObjCImpDecl, &SS);
+      } else if (getLang().CPlusPlus && Tok.is(tok::tilde)) {
+        // We have a C++ pseudo-destructor.
+        
+        // Consume the tilde.
+        ConsumeToken();
+        
+        if (!Tok.is(tok::identifier)) {
+          Diag(Tok, diag::err_expected_ident);
+          return ExprError();
+        }
+        
+        if (!LHS.isInvalid())
+          LHS = Actions.ActOnPseudoDtorReferenceExpr(CurScope, move(LHS), 
+                                                     OpLoc, OpKind,
+                                                     Tok.getLocation(), 
+                                                     Tok.getIdentifierInfo(),
+                                                     &SS);
+      } else {
         Diag(Tok, diag::err_expected_ident);
         return ExprError();
-      }
-
-      if (!LHS.isInvalid()) {
-        LHS = Actions.ActOnMemberReferenceExpr(CurScope, move(LHS), OpLoc,
-                                               OpKind, Tok.getLocation(),
-                                               *Tok.getIdentifierInfo(),
-                                               ObjCImpDecl, &SS);
       }
 
       if (getLang().CPlusPlus)

@@ -1958,7 +1958,6 @@ Sema::ActOnMemberReferenceExpr(Scope *S, ExprArg Base, SourceLocation OpLoc,
                                tok::TokenKind OpKind, SourceLocation MemberLoc,
                                IdentifierInfo &Member,
                                DeclPtrTy ObjCImpDecl, const CXXScopeSpec *SS) {
-  // FIXME: handle the CXXScopeSpec for proper lookup of qualified-ids
   if (SS && SS->isInvalid())
     return ExprError();
 

@@ -1263,7 +1263,16 @@ public:
     return ExprEmpty();
   }
 
-
+  virtual OwningExprResult
+  ActOnPseudoDtorReferenceExpr(Scope *S, ExprArg Base,
+                               SourceLocation OpLoc,
+                               tok::TokenKind OpKind,
+                               SourceLocation ClassNameLoc,
+                               IdentifierInfo *ClassName,
+                               const CXXScopeSpec *SS = 0) {
+    return ExprEmpty();
+  }
+  
   /// ActOnFinishFullExpr - Called whenever a full expression has been parsed.
   /// (C++ [intro.execution]p12).
   virtual OwningExprResult ActOnFinishFullExpr(ExprArg Expr) {
