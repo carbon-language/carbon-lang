@@ -1763,6 +1763,12 @@ public:
                               bool Elidable,
                               Expr **Exprs, unsigned NumExprs);
   
+  /// BuildCXXDefaultArgExpr - Creates a CXXDefaultArgExpr, instantiating
+  /// the default expr if needed.
+  OwningExprResult BuildCXXDefaultArgExpr(SourceLocation CallLoc,
+                                          FunctionDecl *FD,
+                                          ParmVarDecl *Param);
+  
   /// FinalizeVarWithDestructor - Prepare for calling destructor on the
   /// constructed variable.
   void FinalizeVarWithDestructor(VarDecl *VD, QualType DeclInitType);

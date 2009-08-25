@@ -2429,6 +2429,57 @@ Sema::ActOnMemberReferenceExpr(Scope *S, ExprArg Base, SourceLocation OpLoc,
   return ExprError();
 }
 
+Sema::OwningExprResult Sema::BuildCXXDefaultArgExpr(SourceLocation CallLoc,
+                                                    FunctionDecl *FD,
+                                                    ParmVarDecl *Param) {
+  if (Param->hasUnparsedDefaultArg()) {
+    Diag (CallLoc,
+          diag::err_use_of_default_argument_to_function_declared_later) <<
+      FD << cast<CXXRecordDecl>(FD->getDeclContext())->getDeclName();
+    Diag(UnparsedDefaultArgLocs[Param], 
+          diag::note_default_argument_declared_here);
+  } else {
+    if (Param->hasUninstantiatedDefaultArg()) {
+      Expr *UninstExpr = Param->getUninstantiatedDefaultArg();
+
+      // Instantiate the expression.
+      const TemplateArgumentList &ArgList = getTemplateInstantiationArgs(FD);
+      
+      // FIXME: We should really make a new InstantiatingTemplate ctor
+      // that has a better message - right now we're just piggy-backing 
+      // off the "default template argument" error message.
+      InstantiatingTemplate Inst(*this, CallLoc, FD->getPrimaryTemplate(),
+                                 ArgList.getFlatArgumentList(),
+                                 ArgList.flat_size());
+
+      OwningExprResult Result = InstantiateExpr(UninstExpr, ArgList);
+      if (Result.isInvalid()) 
+        return ExprError();
+      
+      if (SetParamDefaultArgument(Param, move(Result), 
+                                  /*FIXME:EqualLoc*/
+                                  UninstExpr->getSourceRange().getBegin()))
+        return ExprError();
+    }
+    
+    Expr *DefaultExpr = Param->getDefaultArg();
+    
+    // If the default expression creates temporaries, we need to
+    // push them to the current stack of expression temporaries so they'll
+    // be properly destroyed.
+    if (CXXExprWithTemporaries *E 
+          = dyn_cast_or_null<CXXExprWithTemporaries>(DefaultExpr)) {
+      assert(!E->shouldDestroyTemporaries() && 
+             "Can't destroy temporaries in a default argument expr!");
+      for (unsigned I = 0, N = E->getNumTemporaries(); I != N; ++I)
+        ExprTemporaries.push_back(E->getTemporary(I));
+    }
+  }
+
+  // We already type-checked the argument, so we know it works.
+  return Owned(CXXDefaultArgExpr::Create(Context, Param));
+}
+
 /// ConvertArgumentsForCall - Converts the arguments specified in
 /// Args/NumArgs to the parameter types of the function FDecl with
 /// function prototype Proto. Call is the call expression itself, and
@@ -2493,60 +2544,16 @@ Sema::ConvertArgumentsForCall(CallExpr *Call, Expr *Fn,
         return true;
     } else {
       ParmVarDecl *Param = FDecl->getParamDecl(i);
-      if (Param->hasUnparsedDefaultArg()) {
-        Diag (Call->getSourceRange().getBegin(),
-              diag::err_use_of_default_argument_to_function_declared_later) <<
-        FDecl << cast<CXXRecordDecl>(FDecl->getDeclContext())->getDeclName();
-        Diag(UnparsedDefaultArgLocs[Param], 
-              diag::note_default_argument_declared_here);
-      } else {
-        if (Param->hasUninstantiatedDefaultArg()) {
-          Expr *UninstExpr = Param->getUninstantiatedDefaultArg();
-
-          // Instantiate the expression.
-          const TemplateArgumentList &ArgList = 
-            getTemplateInstantiationArgs(FDecl);
-          
-          // FIXME: We should really make a new InstantiatingTemplate ctor
-          // that has a better message - right now we're just piggy-backing 
-          // off the "default template argument" error message.
-          InstantiatingTemplate Inst(*this, Call->getSourceRange().getBegin(),
-                                     FDecl->getPrimaryTemplate(),
-                                     ArgList.getFlatArgumentList(),
-                                     ArgList.flat_size());
-
-          OwningExprResult Result
-            = InstantiateExpr(UninstExpr, 
-                              getTemplateInstantiationArgs(FDecl));
-          if (Result.isInvalid()) 
-            return true;
-          
-          if (SetParamDefaultArgument(Param, move(Result), 
-                                      /*FIXME:EqualLoc*/
-                                      UninstExpr->getSourceRange().getBegin()))
-            return true;
-        }
-        
-        Expr *DefaultExpr = Param->getDefaultArg();
-        
-        // If the default expression creates temporaries, we need to
-        // push them to the current stack of expression temporaries so they'll
-        // be properly destroyed.
-        if (CXXExprWithTemporaries *E 
-              = dyn_cast_or_null<CXXExprWithTemporaries>(DefaultExpr)) {
-          assert(!E->shouldDestroyTemporaries() && 
-                 "Can't destroy temporaries in a default argument expr!");
-          for (unsigned I = 0, N = E->getNumTemporaries(); I != N; ++I)
-            ExprTemporaries.push_back(E->getTemporary(I));
-        }
-      }
-  
-      // We already type-checked the argument, so we know it works.
-      Arg = CXXDefaultArgExpr::Create(Context, Param);
+     
+      OwningExprResult ArgExpr = 
+        BuildCXXDefaultArgExpr(Call->getSourceRange().getBegin(),
+                               FDecl, Param);
+      if (ArgExpr.isInvalid())
+        return true;
+      
+      Arg = ArgExpr.takeAs<Expr>();
     }
     
-    QualType ArgType = Arg->getType();
-
     Call->setArg(i, Arg);
   }
 
