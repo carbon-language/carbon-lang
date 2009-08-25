@@ -107,6 +107,12 @@ Sema::SetParamDefaultArgument(ParmVarDecl *Param, ExprArg DefaultArg,
 {
   QualType ParamType = Param->getType();
 
+  if (RequireCompleteType(Param->getLocation(), Param->getType(),
+                          diag::err_typecheck_decl_incomplete_type)) {
+    Param->setInvalidDecl();
+    return true;
+  }
+
   Expr *Arg = (Expr *)DefaultArg.get();
   
   // C++ [dcl.fct.default]p5

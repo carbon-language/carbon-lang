@@ -26,3 +26,11 @@ template<typename T> struct F {
 void g2() {
 	F<int> f;
 }
+
+template<typename T> struct G {
+	G(T) {}
+};
+
+void s(G<int> flags = 10) { }
+
+
