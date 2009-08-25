@@ -124,6 +124,13 @@ Sema::ActOnParamDefaultArgument(DeclPtrTy param, SourceLocation EqualLoc,
     return;
   }
 
+  // Check that the default argument is well-formed
+  CheckDefaultArgumentVisitor DefaultArgChecker(DefaultArg.get(), this);
+  if (DefaultArgChecker.Visit(DefaultArg.get())) {
+    Param->setInvalidDecl();
+    return;
+  }
+  
   // C++ [dcl.fct.default]p5
   //   A default argument expression is implicitly converted (clause
   //   4) to the parameter type. The default argument expression has
@@ -140,13 +147,6 @@ Sema::ActOnParamDefaultArgument(DeclPtrTy param, SourceLocation EqualLoc,
     DefaultArg.reset(DefaultArgPtr);
   }
   if (DefaultInitFailed) {
-    return;
-  }
-
-  // Check that the default argument is well-formed
-  CheckDefaultArgumentVisitor DefaultArgChecker(DefaultArg.get(), this);
-  if (DefaultArgChecker.Visit(DefaultArg.get())) {
-    Param->setInvalidDecl();
     return;
   }
 
