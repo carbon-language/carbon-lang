@@ -542,3 +542,15 @@ int rdar_7124210(unsigned int x) {
   return compare ? 0 : 1; // Forces the evaluation of the symbolic constraint.
 }
 
+void pr4781(unsigned long *raw1) {
+  unsigned long *cook, *raw0;
+  unsigned long dough[32];
+  int i;
+  cook = dough;
+  for( i = 0; i < 16; i++, raw1++ ) {
+    raw0 = raw1++;
+    *cook = (*raw0 & 0x00fc0000L) << 6;
+    *cook |= (*raw0 & 0x00000fc0L) << 10;
+  }
+}
+

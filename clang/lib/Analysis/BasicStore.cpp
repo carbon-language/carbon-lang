@@ -340,6 +340,13 @@ Store BasicStoreManager::BindInternal(Store store, Loc loc, SVal V) {
   if (!(isa<VarRegion>(R) || isa<ObjCIvarRegion>(R)))
     return store;
 
+  const TypedRegion *TyR = cast<TypedRegion>(R);
+  
+  // Do not bind to arrays.  We need to explicitly check for this so that
+  // we do not encounter any weirdness of trying to load/store from arrays.
+  if (TyR->isBoundable() && TyR->getValueType(C)->isArrayType())
+    return store;  
+
   if (nonloc::LocAsInteger *X = dyn_cast<nonloc::LocAsInteger>(&V)) {
     // Only convert 'V' to a location iff the underlying region type
     // is a location as well.
@@ -347,11 +354,8 @@ Store BasicStoreManager::BindInternal(Store store, Loc loc, SVal V) {
     // a pointer.  We may wish to flag a type error here if the types
     // are incompatible.  This may also cause lots of breakage
     // elsewhere. Food for thought.
-    if (const TypedRegion *TyR = dyn_cast<TypedRegion>(R)) {
-      if (TyR->isBoundable() &&
-          Loc::IsLocType(TyR->getValueType(C)))              
-        V = X->getLoc();
-    }
+    if (TyR->isBoundable() && Loc::IsLocType(TyR->getValueType(C)))              
+      V = X->getLoc();
   }
 
   BindingsTy B = GetBindings(store);
