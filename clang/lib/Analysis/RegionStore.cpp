@@ -750,8 +750,14 @@ SVal RegionStoreManager::EvalBinOp(const GRState *state,
     case MemRegion::SymbolicRegionKind: {
       const SymbolicRegion *SR = cast<SymbolicRegion>(MR);
       SymbolRef Sym = SR->getSymbol();
-      QualType T = Sym->getType(getContext());      
-      QualType EleTy = T->getAs<PointerType>()->getPointeeType();        
+      QualType T = Sym->getType(getContext());
+      QualType EleTy;
+      
+      if (const PointerType *PT = T->getAs<PointerType>())
+        EleTy = PT->getPointeeType();
+      else
+        EleTy = T->getAsObjCObjectPointerType()->getPointeeType();
+      
       SVal ZeroIdx = ValMgr.makeZeroArrayIndex();
       ER = MRMgr.getElementRegion(EleTy, ZeroIdx, SR, getContext());
       break;        
