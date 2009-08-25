@@ -1634,6 +1634,7 @@ void CodeGenModule::EmitTopLevelDecl(Decl *D) {
     return;
   
   switch (D->getKind()) {
+  case Decl::CXXConversion:
   case Decl::CXXMethod:
   case Decl::Function:
     // Skip function templates
