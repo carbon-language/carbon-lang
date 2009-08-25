@@ -397,8 +397,6 @@ int main(int argc, char **argv) {
     Passes.doFinalization();
   }
 
-  Out->flush();
-
   // Delete the ostream if it's not a stdout stream
   if (Out != &fouts()) delete Out;
 

@@ -469,8 +469,6 @@ bool LTOCodeGenerator::generateAssemblyCode(formatted_raw_ostream& out,
 
     codeGenPasses->doFinalization();
 
-    out.flush();
-
     return false; // success
 }
 
