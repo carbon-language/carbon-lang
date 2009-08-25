@@ -361,6 +361,17 @@ Function *CodeExtractor::constructFunction(const Values &inputs,
   return newFunction;
 }
 
+static BasicBlock* FindPhiPredForUseInBlock(Value* Used, BasicBlock* BB) {
+  for (Value::use_iterator UI = Used->use_begin(),
+       UE = Used->use_end(); UI != UE; ++UI) {
+     PHINode *P = dyn_cast<PHINode>(*UI);
+     if (P && P->getParent() == BB)
+       return P->getIncomingBlock(UI);
+  }
+  
+  return 0;
+}
+
 /// emitCallAndSwitchStatement - This method sets up the caller side by adding
 /// the call instruction, splitting any PHI nodes in the header block as
 /// necessary.
@@ -540,17 +551,10 @@ emitCallAndSwitchStatement(Function *newFunction, BasicBlock *codeReplacer,
               // then we need to test for dominance of the phi's predecessor
               // instead.  Unfortunately, this a little complicated since we
               // have already rewritten uses of the value to uses of the reload.
-              for (Value::use_iterator UI = Reloads[out]->use_begin(),
-                   UE = Reloads[out]->use_end(); UI != UE; ++UI) {
-                 PHINode *P = dyn_cast<PHINode>(*UI);
-                 if (!P || P->getParent() != OldTarget) continue;
-                 
-                 BasicBlock* pred = P->getIncomingBlock(UI);
-                 if (DT->dominates(DefBlock, pred)) {
-                   DominatesDef = true;
-                   break;
-                 }
-              }
+              BasicBlock* pred = FindPhiPredForUseInBlock(Reloads[out], 
+                                                          OldTarget);
+              if (pred && DT && DT->dominates(DefBlock, pred))
+                DominatesDef = true;
             }
 
             if (DominatesDef) {
