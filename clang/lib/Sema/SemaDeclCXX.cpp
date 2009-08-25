@@ -277,7 +277,7 @@ void Sema::CheckCXXDefaultArguments(FunctionDecl *FD) {
   // Find first parameter with a default argument
   for (p = 0; p < NumParams; ++p) {
     ParmVarDecl *Param = FD->getParamDecl(p);
-    if (Param->getDefaultArg())
+    if (Param->hasDefaultArg())
       break;
   }
 
@@ -290,7 +290,7 @@ void Sema::CheckCXXDefaultArguments(FunctionDecl *FD) {
   unsigned LastMissingDefaultArg = 0;
   for(; p < NumParams; ++p) {
     ParmVarDecl *Param = FD->getParamDecl(p);
-    if (!Param->getDefaultArg()) {
+    if (!Param->hasDefaultArg()) {
       if (Param->isInvalidDecl())
         /* We already complained about this parameter. */;
       else if (Param->getIdentifier())
