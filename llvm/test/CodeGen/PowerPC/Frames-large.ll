@@ -1,24 +1,10 @@
-; RUN: llvm-as < %s | llc -march=ppc32 -mtriple=powerpc-apple-darwin8 > %t
-; RUN: not grep {stw r31, 20(r1)} %t
-; RUN: grep {lis r0, -1} %t
-; RUN: grep {ori r0, r0, 32704} %t
-; RUN: grep {stwux r1, r1, r0} %t
-; RUN: grep {lwz r1, 0(r1)} %t
-; RUN: not grep {lwz r31, 20(r1)} %t
-; RUN: llvm-as < %s | llc -march=ppc32 -mtriple=powerpc-apple-darwin8 -disable-fp-elim > %t
-; RUN: grep {stw r31, 20(r1)} %t
-; RUN: grep {lis r0, -1} %t
-; RUN: grep {ori r0, r0, 32704} %t
-; RUN: grep {stwux r1, r1, r0} %t
-; RUN: grep {lwz r1, 0(r1)} %t
-; RUN: grep {lwz r31, 20(r1)} %t
-; RUN: llvm-as < %s | llc -march=ppc64 -mtriple=powerpc-apple-darwin8 > %t
-; RUN: not grep {std r31, 40(r1)} %t
-; RUN: grep {lis r0, -1} %t
-; RUN: grep {ori r0, r0, 32656} %t
-; RUN: grep {stdux r1, r1, r0} %t
-; RUN: grep {ld r1, 0(r1)} %t
-; RUN: not grep {ld r31, 40(r1)} %t
+; RUN: llvm-as < %s > %t.bc
+; RUN: llc < %t.bc -march=ppc32 | FileCheck %s -check-prefix=PPC32-NOFP
+; RUN: llc < %t.bc -march=ppc32 -disable-fp-elim | FileCheck %s -check-prefix=PPC32-FP
+
+; RUN: llc < %t.bc -march=ppc64 | FileCheck %s -check-prefix=PPC64-NOFP
+; RUN: llc < %t.bc -march=ppc64 -disable-fp-elim | FileCheck %s -check-prefix=PPC64-FP
+
 ; RUN: llvm-as < %s | llc -march=ppc64 -mtriple=powerpc-apple-darwin8 -disable-fp-elim > %t
 ; RUN: grep {std r31, 40(r1)} %t
 ; RUN: grep {lis r0, -1} %t
@@ -27,8 +13,47 @@
 ; RUN: grep {ld r1, 0(r1)} %t
 ; RUN: grep {ld r31, 40(r1)} %t
 
-define i32* @f1() {
+target triple = "powerpc-apple-darwin8"
+
+define i32* @f1() nounwind {
         %tmp = alloca i32, i32 8191             ; <i32*> [#uses=1]
         ret i32* %tmp
 }
 
+; PPC32-NOFP: _f1:
+; PPC32-NOFP: 	lis r0, -1
+; PPC32-NOFP: 	ori r0, r0, 32704
+; PPC32-NOFP: 	stwux r1, r1, r0
+; PPC32-NOFP: 	addi r3, r1, 68
+; PPC32-NOFP: 	lwz r1, 0(r1)
+; PPC32-NOFP: 	blr 
+
+; PPC32-FP: _f1:
+; PPC32-FP:	stw r31, 20(r1)
+; PPC32-FP:	lis r0, -1
+; PPC32-FP:	ori r0, r0, 32704
+; PPC32-FP:	stwux r1, r1, r0
+; ...
+; PPC32-FP:	lwz r1, 0(r1)
+; PPC32-FP:	lwz r31, 20(r1)
+; PPC32-FP:	blr 
+
+
+; PPC64-NOFP: _f1:
+; PPC64-NOFP: 	lis r0, -1
+; PPC64-NOFP: 	ori r0, r0, 32656
+; PPC64-NOFP: 	stdux r1, r1, r0
+; PPC64-NOFP: 	addi r3, r1, 116
+; PPC64-NOFP: 	ld r1, 0(r1)
+; PPC64-NOFP: 	blr 
+
+
+; PPC64-FP: _f1:
+; PPC64-FP:	std r31, 40(r1)
+; PPC64-FP:	lis r0, -1
+; PPC64-FP:	ori r0, r0, 32656
+; PPC64-FP:	stdux r1, r1, r0
+; ...
+; PPC64-FP:	ld r1, 0(r1)
+; PPC64-FP:	ld r31, 40(r1)
+; PPC64-FP:	blr 
