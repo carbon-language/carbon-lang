@@ -1,4 +1,4 @@
-// RUN: clang-cc -g -o %t  %s -emit-llvm-bc && llc %t -f -o %t.s
+// RUN: clang-cc -g -o %t  %s -emit-llvm-bc && llc %t -o %t.s
 # 1 "a.c"
 # 1 "a.c" 1
 # 1 "<built-in>" 1

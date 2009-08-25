@@ -46,8 +46,7 @@ bool FixItRewriter::WriteFixedFile(const std::string &InFileName,
   if (!OutFileName.empty()) {
     std::string Err;
     OutFile = new llvm::raw_fd_ostream(OutFileName.c_str(), Err,
-                                       llvm::raw_fd_ostream::F_Binary |
-                                       llvm::raw_fd_ostream::F_Force);
+                                       llvm::raw_fd_ostream::F_Binary);
     OwnedStream.reset(OutFile);
   } else if (InFileName == "-") {
     OutFile = &llvm::outs();
@@ -58,8 +57,7 @@ bool FixItRewriter::WriteFixedFile(const std::string &InFileName,
     Path.appendSuffix("fixit." + Suffix);
     std::string Err;
     OutFile = new llvm::raw_fd_ostream(Path.c_str(), Err,
-                                       llvm::raw_fd_ostream::F_Binary |
-                                       llvm::raw_fd_ostream::F_Force);
+                                       llvm::raw_fd_ostream::F_Binary);
     OwnedStream.reset(OutFile);
   }  
 

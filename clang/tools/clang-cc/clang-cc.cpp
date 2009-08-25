@@ -1702,8 +1702,7 @@ static void SetUpBuildDumpLog(unsigned argc, char **argv,
   
   std::string ErrorInfo;
   BuildLogFile = new llvm::raw_fd_ostream(DumpBuildInformation.c_str(),
-                                          ErrorInfo,
-                                          llvm::raw_fd_ostream::F_Force);
+                                          ErrorInfo);
   
   if (!ErrorInfo.empty()) {
     llvm::errs() << "error opening -dump-build-information file '"
@@ -1751,8 +1750,7 @@ static llvm::raw_ostream *ComputeOutFile(const std::string &InFile,
 
   std::string Error;
   Ret = new llvm::raw_fd_ostream(OutFile.c_str(), Error,
-                                 (Binary ? llvm::raw_fd_ostream::F_Binary : 0) |
-                                 llvm::raw_fd_ostream::F_Force);
+                                 (Binary ? llvm::raw_fd_ostream::F_Binary : 0));
   if (!Error.empty()) {
     // FIXME: Don't fail this way.
     llvm::errs() << "ERROR: " << Error << "\n";
@@ -2310,8 +2308,7 @@ int main(int argc, char **argv) {
       }
       std::string ErrStr;
       DependencyOS =
-          new llvm::raw_fd_ostream(DependencyFile.c_str(), ErrStr,
-                                   llvm::raw_fd_ostream::F_Force);
+          new llvm::raw_fd_ostream(DependencyFile.c_str(), ErrStr);
       if (!ErrStr.empty()) {
         // FIXME: Use a proper diagnostic
         llvm::errs() << "unable to open dependency file: " + ErrStr;
