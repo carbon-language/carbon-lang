@@ -13,6 +13,11 @@
 #include "llvm/ADT/StringRef.h"
 #include <string>
 
+// Some system headers or GCC predefined macros conflict with identifiers in
+// this file.  Undefine them here.
+#undef mips
+#undef sparc
+
 namespace llvm {
 class StringRef;
 class Twine;
