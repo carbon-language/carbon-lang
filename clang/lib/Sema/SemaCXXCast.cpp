@@ -84,11 +84,13 @@ static TryCastResult TryStaticMemberPointerUpcast(Sema &Self, QualType SrcType,
 static TryCastResult TryStaticImplicitCast(Sema &Self, Expr *SrcExpr,
                                            QualType DestType, bool CStyle,
                                            const SourceRange &OpRange,
-                                           unsigned &msg);
+                                           unsigned &msg,
+                                           CXXMethodDecl *&ConversionDecl);
 static TryCastResult TryStaticCast(Sema &Self, Expr *SrcExpr,
                                    QualType DestType, bool CStyle,
                                    const SourceRange &OpRange,
-                                   CastExpr::CastKind &Kind, unsigned &msg);
+                                   CastExpr::CastKind &Kind, unsigned &msg,
+                                   CXXMethodDecl *&ConversionDecl);
 static TryCastResult TryConstCast(Sema &Self, Expr *SrcExpr, QualType DestType,
                                   bool CStyle, unsigned &msg);
 static TryCastResult TryReinterpretCast(Sema &Self, Expr *SrcExpr,
@@ -370,8 +372,10 @@ CheckStaticCast(Sema &Self, Expr *&SrcExpr, QualType DestType,
     Self.DefaultFunctionArrayConversion(SrcExpr);
 
   unsigned msg = diag::err_bad_cxx_cast_generic;
+  CXXMethodDecl *ConversionDecl = 0;
   if (TryStaticCast(Self, SrcExpr, DestType, /*CStyle*/false, OpRange, 
-                    Kind, msg)
+                    Kind, msg,
+                    ConversionDecl)
       != TC_Success && msg != 0)
     Self.Diag(OpRange.getBegin(), msg) << CT_Static
       << SrcExpr->getType() << DestType << OpRange;
@@ -383,7 +387,8 @@ CheckStaticCast(Sema &Self, Expr *&SrcExpr, QualType DestType,
 static TryCastResult TryStaticCast(Sema &Self, Expr *SrcExpr,
                                    QualType DestType, bool CStyle,
                                    const SourceRange &OpRange,
-                                   CastExpr::CastKind &Kind, unsigned &msg)
+                                   CastExpr::CastKind &Kind, unsigned &msg,
+                                   CXXMethodDecl *&ConversionDecl)
 {
   // The order the tests is not entirely arbitrary. There is one conversion
   // that can be handled in two different ways. Given:
@@ -417,7 +422,8 @@ static TryCastResult TryStaticCast(Sema &Self, Expr *SrcExpr,
 
   // C++ 5.2.9p2: An expression e can be explicitly converted to a type T
   //   [...] if the declaration "T t(e);" is well-formed, [...].
-  tcr = TryStaticImplicitCast(Self, SrcExpr, DestType, CStyle, OpRange, msg);
+  tcr = TryStaticImplicitCast(Self, SrcExpr, DestType, CStyle, OpRange, msg,
+                              ConversionDecl);
   if (tcr != TC_NotApplicable)
     return tcr;
 
@@ -746,7 +752,8 @@ TryStaticMemberPointerUpcast(Sema &Self, QualType SrcType, QualType DestType,
 ///   @c static_cast if the declaration "T t(e);" is well-formed [...].
 TryCastResult
 TryStaticImplicitCast(Sema &Self, Expr *SrcExpr, QualType DestType,
-                      bool CStyle, const SourceRange &OpRange, unsigned &msg)
+                      bool CStyle, const SourceRange &OpRange, unsigned &msg,
+                      CXXMethodDecl *&ConversionDecl)
 {
   if (DestType->isReferenceType()) {
     // At this point of CheckStaticCast, if the destination is a reference,
@@ -767,9 +774,9 @@ TryStaticImplicitCast(Sema &Self, Expr *SrcExpr, QualType DestType,
   if (DestType->isRecordType()) {
     // There are no further possibilities for the target type being a class,
     // neither in static_cast nor in a C-style cast. So we can fail here.
-    // FIXME: We need to store this constructor in the AST.
-    if (Self.PerformInitializationByConstructor(DestType, &SrcExpr, 1,
-          OpRange.getBegin(), OpRange, DeclarationName(), Sema::IK_Direct))
+    if ((ConversionDecl = 
+          Self.PerformInitializationByConstructor(DestType, &SrcExpr, 1,
+              OpRange.getBegin(), OpRange, DeclarationName(), Sema::IK_Direct)))
       return TC_Success;
     // The function already emitted an error.
     msg = 0;
@@ -1008,7 +1015,8 @@ static TryCastResult TryReinterpretCast(Sema &Self, Expr *SrcExpr,
 }
 
 bool Sema::CXXCheckCStyleCast(SourceRange R, QualType CastTy, Expr *&CastExpr,
-                              CastExpr::CastKind &Kind, bool FunctionalStyle)
+                              CastExpr::CastKind &Kind, bool FunctionalStyle,
+                              CXXMethodDecl *&ConversionDecl)
 {
   // This test is outside everything else because it's the only case where
   // a non-lvalue-reference target type does not lead to decay.
@@ -1038,7 +1046,8 @@ bool Sema::CXXCheckCStyleCast(SourceRange R, QualType CastTy, Expr *&CastExpr,
   TryCastResult tcr = TryConstCast(*this, CastExpr, CastTy, /*CStyle*/true,msg);
   if (tcr == TC_NotApplicable) {
     // ... or if that is not possible, a static_cast, ignoring const, ...
-    tcr = TryStaticCast(*this, CastExpr, CastTy, /*CStyle*/true, R, Kind, msg);
+    tcr = TryStaticCast(*this, CastExpr, CastTy, /*CStyle*/true, R, Kind, msg,
+                        ConversionDecl);
     if (tcr == TC_NotApplicable) {
       // ... and finally a reinterpret_cast, ignoring const.
       tcr = TryReinterpretCast(*this, CastExpr, CastTy, /*CStyle*/true, R, msg);

@@ -2902,9 +2902,12 @@ Sema::ActOnInitList(SourceLocation LBraceLoc, MultiExprArg initlist,
 
 /// CheckCastTypes - Check type constraints for casting between types.
 bool Sema::CheckCastTypes(SourceRange TyR, QualType castType, Expr *&castExpr,
-                          CastExpr::CastKind& Kind, bool FunctionalStyle) {
+                          CastExpr::CastKind& Kind, 
+                          CXXMethodDecl *& ConversionDecl,
+                          bool FunctionalStyle) {
   if (getLangOptions().CPlusPlus)
-    return CXXCheckCStyleCast(TyR, castType, castExpr, Kind, FunctionalStyle);
+    return CXXCheckCStyleCast(TyR, castType, castExpr, Kind, FunctionalStyle,
+                              ConversionDecl);
 
   DefaultFunctionArrayConversion(castExpr);
 
@@ -3031,9 +3034,9 @@ Sema::ActOnCastExpr(Scope *S, SourceLocation LParenLoc, TypeTy *Ty,
   // If the Expr being casted is a ParenListExpr, handle it specially.
   if (isa<ParenListExpr>(castExpr))
     return ActOnCastOfParenListExpr(S, LParenLoc, RParenLoc, move(Op),castType);
-
+  CXXMethodDecl *ConversionDecl = 0;
   if (CheckCastTypes(SourceRange(LParenLoc, RParenLoc), castType, castExpr, 
-                     Kind))
+                     Kind, ConversionDecl))
     return ExprError();
   
   Op.release();

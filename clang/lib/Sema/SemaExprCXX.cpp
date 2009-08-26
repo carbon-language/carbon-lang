@@ -210,12 +210,15 @@ Sema::ActOnCXXTypeConstructExpr(SourceRange TypeRange, TypeTy *TypeRep,
   //
   if (NumExprs == 1) {
     CastExpr::CastKind Kind = CastExpr::CK_Unknown;
-    if (CheckCastTypes(TypeRange, Ty, Exprs[0], Kind, /*functional-style*/true))
+    CXXMethodDecl *ConversionDecl = 0;
+    if (CheckCastTypes(TypeRange, Ty, Exprs[0], Kind, ConversionDecl,
+                       /*functional-style*/true))
       return ExprError();
     exprs.release();
     return Owned(new (Context) CXXFunctionalCastExpr(Ty.getNonReferenceType(),
                                                      Ty, TyBeginLoc, Kind,
-                                                     Exprs[0], RParenLoc));
+                                                     Exprs[0], ConversionDecl, 
+                                                     RParenLoc));
   }
 
   if (const RecordType *RT = Ty->getAs<RecordType>()) {
