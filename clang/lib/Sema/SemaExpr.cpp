@@ -3387,9 +3387,9 @@ Action::OwningExprResult Sema::ActOnConditionalOp(SourceLocation QuestionLoc,
   Cond.release();
   LHS.release();
   RHS.release();
-  return Owned(new (Context) ConditionalOperator(CondExpr,
+  return Owned(new (Context) ConditionalOperator(CondExpr, QuestionLoc,
                                                  isLHSNull ? 0 : LHSExpr,
-                                                 RHSExpr, result));
+                                                 ColonLoc, RHSExpr, result));
 }
 
 // CheckPointerTypesForAssignment - This is a very tricky routine (despite

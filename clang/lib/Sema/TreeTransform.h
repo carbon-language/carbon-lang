@@ -3023,13 +3023,10 @@ TreeTransform<Derived>::TransformConditionalOperator(ConditionalOperator *E) {
       RHS.get() == E->getRHS())
     return SemaRef.Owned(E->Retain());
   
-  // FIXM: ? and : locations are broken.
-  SourceLocation FakeQuestionLoc = E->getCond()->getLocEnd();
-  SourceLocation FakeColonLoc = E->getFalseExpr()->getLocStart();
   return getDerived().RebuildConditionalOperator(move(Cond), 
-                                                 FakeQuestionLoc,
+                                                 E->getQuestionLoc(),
                                                  move(LHS), 
-                                                 FakeColonLoc,
+                                                 E->getColonLoc(),
                                                  move(RHS));
 }
   

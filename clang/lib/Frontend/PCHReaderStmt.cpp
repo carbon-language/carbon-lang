@@ -491,6 +491,8 @@ unsigned PCHStmtReader::VisitConditionalOperator(ConditionalOperator *E) {
   E->setCond(cast<Expr>(StmtStack[StmtStack.size() - 3]));
   E->setLHS(cast_or_null<Expr>(StmtStack[StmtStack.size() - 2]));
   E->setRHS(cast_or_null<Expr>(StmtStack[StmtStack.size() - 1]));
+  E->setQuestionLoc(SourceLocation::getFromRawEncoding(Record[Idx++]));
+  E->setColonLoc(SourceLocation::getFromRawEncoding(Record[Idx++]));
   return 3;
 }
 

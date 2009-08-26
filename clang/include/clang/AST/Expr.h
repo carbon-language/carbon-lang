@@ -1546,8 +1546,10 @@ public:
 class ConditionalOperator : public Expr {
   enum { COND, LHS, RHS, END_EXPR };
   Stmt* SubExprs[END_EXPR]; // Left/Middle/Right hand sides.
+  SourceLocation QuestionLoc, ColonLoc;
 public:
-  ConditionalOperator(Expr *cond, Expr *lhs, Expr *rhs, QualType t)
+  ConditionalOperator(Expr *cond, SourceLocation QLoc, Expr *lhs,
+                      SourceLocation CLoc, Expr *rhs, QualType t)
     : Expr(ConditionalOperatorClass, t,
            // FIXME: the type of the conditional operator doesn't
            // depend on the type of the conditional, but the standard
@@ -1555,7 +1557,9 @@ public:
            ((lhs && lhs->isTypeDependent()) || (rhs && rhs->isTypeDependent())),
            (cond->isValueDependent() || 
             (lhs && lhs->isValueDependent()) ||
-            (rhs && rhs->isValueDependent()))) {
+            (rhs && rhs->isValueDependent()))),
+      QuestionLoc(QLoc),
+      ColonLoc(CLoc) {
     SubExprs[COND] = cond;
     SubExprs[LHS] = lhs;
     SubExprs[RHS] = rhs;
@@ -1589,6 +1593,12 @@ public:
 
   Expr *getRHS() const { return cast<Expr>(SubExprs[RHS]); }
   void setRHS(Expr *E) { SubExprs[RHS] = E; }
+
+  SourceLocation getQuestionLoc() const { return QuestionLoc; }
+  void setQuestionLoc(SourceLocation L) { QuestionLoc = L; }
+
+  SourceLocation getColonLoc() const { return ColonLoc; }
+  void setColonLoc(SourceLocation L) { ColonLoc = L; }
 
   virtual SourceRange getSourceRange() const {
     return SourceRange(getCond()->getLocStart(), getRHS()->getLocEnd());

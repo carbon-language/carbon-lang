@@ -2591,7 +2591,9 @@ Stmt *RewriteObjC::SynthMessageExpr(ObjCMessageExpr *Exp) {
                                                       SourceLocation());
     // (sizeof(returnType) <= 8 ? objc_msgSend(...) : objc_msgSend_stret(...))
     ConditionalOperator *CondExpr = 
-      new (Context) ConditionalOperator(lessThanExpr, CE, STCE, returnType);
+      new (Context) ConditionalOperator(lessThanExpr,
+                                        SourceLocation(), CE,
+                                        SourceLocation(), STCE, returnType);
     ReplacingStmt = new (Context) ParenExpr(SourceLocation(), SourceLocation(), CondExpr);
   }
   // delete Exp; leak for now, see RewritePropertySetter() usage for more info. 

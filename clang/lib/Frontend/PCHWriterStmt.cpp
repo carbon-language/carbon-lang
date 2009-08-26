@@ -453,6 +453,8 @@ void PCHStmtWriter::VisitConditionalOperator(ConditionalOperator *E) {
   Writer.WriteSubStmt(E->getCond());
   Writer.WriteSubStmt(E->getLHS());
   Writer.WriteSubStmt(E->getRHS());
+  Writer.AddSourceLocation(E->getQuestionLoc(), Record);
+  Writer.AddSourceLocation(E->getColonLoc(), Record);
   Code = pch::EXPR_CONDITIONAL_OPERATOR;
 }
 
