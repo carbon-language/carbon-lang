@@ -483,8 +483,6 @@ public:
 
   virtual TypeResult ActOnTypeName(Scope *S, Declarator &D);
 
-  bool RequireCompleteType(SourceLocation Loc, QualType T, unsigned diag,
-                           SourceRange Range1 = SourceRange());
   bool RequireCompleteType(SourceLocation Loc, QualType T,
                            const PartialDiagnostic &PD);
   

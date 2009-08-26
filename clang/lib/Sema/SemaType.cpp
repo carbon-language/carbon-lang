@@ -1751,31 +1751,11 @@ void Sema::ProcessTypeAttributeList(QualType &Result, const AttributeList *AL) {
 ///
 /// @param T  The type that this routine is examining for completeness.
 ///
-/// @param diag The diagnostic value (e.g., 
-/// @c diag::err_typecheck_decl_incomplete_type) that will be used
-/// for the error message if @p T is incomplete. If 0, no diagnostic will be
-/// emitted.
-///
-/// @param Range1  An optional range in the source code that will be a
-/// part of the "incomplete type" error message.
-///
-/// @param Range2  An optional range in the source code that will be a
-/// part of the "incomplete type" error message.
-///
-/// @param PrintType If non-NULL, the type that should be printed
-/// instead of @p T. This parameter should be used when the type that
-/// we're checking for incompleteness isn't the type that should be
-/// displayed to the user, e.g., when T is a type and PrintType is a
-/// pointer to T.
+/// @param PD The partial diagnostic that will be printed out if T is not a 
+/// complete type.
 ///
 /// @returns @c true if @p T is incomplete and a diagnostic was emitted,
 /// @c false otherwise.
-bool Sema::RequireCompleteType(SourceLocation Loc, QualType T, unsigned diag,
-                               SourceRange Range1) {
-  return RequireCompleteType(Loc, T, 
-                             PDiag(diag) << Range1);
-}
-
 bool Sema::RequireCompleteType(SourceLocation Loc, QualType T,
                                const PartialDiagnostic &PD) {
   unsigned diag = PD.getDiagID();

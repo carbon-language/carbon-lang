@@ -272,7 +272,8 @@ Sema::ActOnCXXTypeConstructExpr(SourceRange TypeRange, TypeTy *TypeRep,
                           diag::err_value_init_for_array_type) << FullRange);
   if (!Ty->isDependentType() && !Ty->isVoidType() &&
       RequireCompleteType(TyBeginLoc, Ty,
-                          diag::err_invalid_incomplete_type_use, FullRange))
+                          PDiag(diag::err_invalid_incomplete_type_use)
+                            << FullRange))
     return ExprError();
 
   if (RequireNonAbstractType(TyBeginLoc, Ty,
@@ -486,8 +487,8 @@ bool Sema::CheckAllocatedType(QualType AllocType, SourceLocation Loc,
       << AllocType << 1 << R;
   else if (!AllocType->isDependentType() &&
            RequireCompleteType(Loc, AllocType,
-                               diag::err_new_incomplete_type,
-                               R))
+                               PDiag(diag::err_new_incomplete_type)
+                                 << R))
     return true;
   else if (RequireNonAbstractType(Loc, AllocType,
                                   diag::err_allocation_of_abstract_type))
@@ -727,8 +728,8 @@ Sema::ActOnCXXDelete(SourceLocation StartLoc, bool UseGlobal,
         << Type << Ex->getSourceRange());
     else if (!Pointee->isDependentType() &&
              RequireCompleteType(StartLoc, Pointee, 
-                                 diag::warn_delete_incomplete,
-                                 Ex->getSourceRange()))
+                                 PDiag(diag::warn_delete_incomplete)
+                                   << Ex->getSourceRange()))
       return ExprError();
 
     // FIXME: This should be shared with the code for finding the delete 

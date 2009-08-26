@@ -15,6 +15,7 @@
 #include "SemaInherit.h"
 #include "clang/AST/ExprCXX.h"
 #include "clang/AST/ASTContext.h"
+#include "clang/Basic/PartialDiagnostic.h"
 #include "llvm/ADT/SmallVector.h"
 #include <set>
 using namespace clang;
@@ -227,8 +228,8 @@ CheckDynamicCast(Sema &Self, Expr *&SrcExpr, QualType DestType,
     assert(DestPointer && "Reference to void is not possible");
   } else if (DestRecord) {
     if (Self.RequireCompleteType(OpRange.getBegin(), DestPointee,
-                                    diag::err_bad_dynamic_cast_incomplete,
-                                    DestRange))
+                                 PDiag(diag::err_bad_dynamic_cast_incomplete)
+                                   << DestRange))
       return;
   } else {
     Self.Diag(OpRange.getBegin(), diag::err_bad_dynamic_cast_not_class)
@@ -265,8 +266,8 @@ CheckDynamicCast(Sema &Self, Expr *&SrcExpr, QualType DestType,
   const RecordType *SrcRecord = SrcPointee->getAs<RecordType>();
   if (SrcRecord) {
     if (Self.RequireCompleteType(OpRange.getBegin(), SrcPointee,
-                                    diag::err_bad_dynamic_cast_incomplete,
-                                    SrcExpr->getSourceRange()))
+                                 PDiag(diag::err_bad_dynamic_cast_incomplete)
+                                   << SrcExpr->getSourceRange()))
       return;
   } else {
     Self.Diag(OpRange.getBegin(), diag::err_bad_dynamic_cast_not_class)

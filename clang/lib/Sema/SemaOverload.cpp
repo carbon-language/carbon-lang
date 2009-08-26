@@ -19,6 +19,7 @@
 #include "clang/AST/Expr.h"
 #include "clang/AST/ExprCXX.h"
 #include "clang/AST/TypeOrdering.h"
+#include "clang/Basic/PartialDiagnostic.h"
 #include "llvm/ADT/SmallPtrSet.h"
 #include "llvm/ADT/STLExtras.h"
 #include "llvm/Support/Compiler.h"
@@ -1392,8 +1393,9 @@ bool Sema::IsUserDefinedConversion(Expr *From, QualType ToType,
 
   if (!AllowConversionFunctions) {
     // Don't allow any conversion functions to enter the overload set.
-  } else if (RequireCompleteType(From->getLocStart(), From->getType(), 0, 
-                                 From->getSourceRange())) {
+  } else if (RequireCompleteType(From->getLocStart(), From->getType(), 
+                                 PDiag(0) 
+                                   << From->getSourceRange())) {
     // No conversion functions from incomplete types.
   } else if (const RecordType *FromRecordType 
                = From->getType()->getAs<RecordType>()) {

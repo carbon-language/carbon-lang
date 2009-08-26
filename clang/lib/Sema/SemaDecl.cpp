@@ -23,8 +23,9 @@
 #include "clang/AST/StmtCXX.h"
 #include "clang/AST/StmtObjC.h"
 #include "clang/Parse/DeclSpec.h"
-#include "clang/Basic/TargetInfo.h"
+#include "clang/Basic/PartialDiagnostic.h"
 #include "clang/Basic/SourceManager.h"
+#include "clang/Basic/TargetInfo.h"
 // FIXME: layering (ideally, Sema shouldn't be dependent on Lex API's)
 #include "clang/Lex/Preprocessor.h"
 #include "clang/Lex/HeaderSearch.h" 

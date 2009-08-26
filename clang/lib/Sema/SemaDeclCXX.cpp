@@ -18,6 +18,7 @@
 #include "clang/AST/DeclVisitor.h"
 #include "clang/AST/TypeOrdering.h"
 #include "clang/AST/StmtVisitor.h"
+#include "clang/Basic/PartialDiagnostic.h"
 #include "clang/Lex/Preprocessor.h"
 #include "clang/Parse/DeclSpec.h"
 #include "llvm/ADT/STLExtras.h"
@@ -390,8 +391,9 @@ Sema::CheckBaseSpecifier(CXXRecordDecl *Class,
   // C++ [class.derived]p2:
   //   The class-name in a base-specifier shall not be an incompletely
   //   defined class.
-  if (RequireCompleteType(BaseLoc, BaseType, diag::err_incomplete_base_class,
-                          SpecifierRange))
+  if (RequireCompleteType(BaseLoc, BaseType, 
+                          PDiag(diag::err_incomplete_base_class)
+                            << SpecifierRange))
     return 0;
 
   // If the base class is polymorphic or isn't empty, the new one is/isn't, too.

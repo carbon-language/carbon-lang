@@ -1347,8 +1347,8 @@ bool Sema::CheckSizeOfAlignOfOperand(QualType exprType,
   
   if (RequireCompleteType(OpLoc, exprType,
                           isSizeof ? diag::err_sizeof_incomplete_type : 
-                          diag::err_alignof_incomplete_type,
-                          ExprRange))
+                          PDiag(diag::err_alignof_incomplete_type)
+                            << ExprRange))
     return true;
   
   // Reject sizeof(interface) and sizeof(interface<proto>) in 64-bit mode.
@@ -1799,8 +1799,9 @@ Sema::ActOnArraySubscriptExpr(Scope *S, ExprArg Base, SourceLocation LLoc,
   }
   
   if (!ResultType->isDependentType() &&
-      RequireCompleteType(LLoc, ResultType, diag::err_subscript_incomplete_type,
-                          BaseExpr->getSourceRange()))
+      RequireCompleteType(LLoc, ResultType, 
+                          PDiag(diag::err_subscript_incomplete_type)
+                            << BaseExpr->getSourceRange()))
     return ExprError();
   
   // Diagnose bad cases where we step over interface counts.
@@ -2047,8 +2048,8 @@ Sema::BuildMemberReferenceExpr(Scope *S, ExprArg Base, SourceLocation OpLoc,
   if (const RecordType *RTy = BaseType->getAs<RecordType>()) {
     RecordDecl *RDecl = RTy->getDecl();
     if (RequireCompleteType(OpLoc, BaseType,
-                               diag::err_typecheck_incomplete_tag,
-                               BaseExpr->getSourceRange()))
+                            PDiag(diag::err_typecheck_incomplete_tag)
+                              << BaseExpr->getSourceRange()))
       return ExprError();
 
     DeclContext *DC = RDecl;
@@ -2564,8 +2565,8 @@ Sema::ConvertArgumentsForCall(CallExpr *Call, Expr *Fn,
 
       if (RequireCompleteType(Arg->getSourceRange().getBegin(),
                               ProtoArgType,
-                              diag::err_call_incomplete_argument,
-                              Arg->getSourceRange()))
+                              PDiag(diag::err_call_incomplete_argument)
+                                << Arg->getSourceRange()))
         return true;
 
       // Pass the argument.
@@ -2801,8 +2802,8 @@ Sema::ActOnCallExpr(Scope *S, ExprArg fn, SourceLocation LParenLoc,
   if (!FuncT->getResultType()->isVoidType() &&
       RequireCompleteType(Fn->getSourceRange().getBegin(),
                           FuncT->getResultType(),
-                          diag::err_call_incomplete_return,
-                          TheCall->getSourceRange()))
+                          PDiag(diag::err_call_incomplete_return)
+                            << TheCall->getSourceRange()))
     return ExprError();
 
   // We know the result type of the call, set it.
@@ -2835,8 +2836,8 @@ Sema::ActOnCallExpr(Scope *S, ExprArg fn, SourceLocation LParenLoc,
       DefaultArgumentPromotion(Arg);
       if (RequireCompleteType(Arg->getSourceRange().getBegin(),
                               Arg->getType(),
-                              diag::err_call_incomplete_argument,
-                              Arg->getSourceRange()))
+                              PDiag(diag::err_call_incomplete_argument)
+                                << Arg->getSourceRange()))
         return ExprError();
       TheCall->setArg(i, Arg);
     }
@@ -2882,8 +2883,9 @@ Sema::ActOnCompoundLiteral(SourceLocation LParenLoc, TypeTy *Ty,
         << SourceRange(LParenLoc, literalExpr->getSourceRange().getEnd()));
   } else if (!literalType->isDependentType() &&
              RequireCompleteType(LParenLoc, literalType,
-                                 diag::err_typecheck_decl_incomplete_type,
-                SourceRange(LParenLoc, literalExpr->getSourceRange().getEnd())))
+                      PDiag(diag::err_typecheck_decl_incomplete_type)
+                        << SourceRange(LParenLoc, 
+                                       literalExpr->getSourceRange().getEnd())))
     return ExprError();
 
   if (CheckInitializerTypes(literalExpr, literalType, LParenLoc,
@@ -4626,8 +4628,8 @@ static bool CheckForModifiableLvalue(Expr *E, SourceLocation Loc, Sema &S) {
   case Expr::MLV_IncompleteType:
   case Expr::MLV_IncompleteVoidType:
     return S.RequireCompleteType(Loc, E->getType(),
-                      diag::err_typecheck_incomplete_type_not_modifiable_lvalue,
-                                    E->getSourceRange());
+                PDiag(diag::err_typecheck_incomplete_type_not_modifiable_lvalue)
+                  << E->getSourceRange());
   case Expr::MLV_DuplicateVectorComponents:
     Diag = diag::err_typecheck_duplicate_vector_components_not_mlvalue;
     break;

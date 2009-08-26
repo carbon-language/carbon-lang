@@ -16,6 +16,7 @@
 #include "clang/AST/DeclTemplate.h"
 #include "clang/AST/ExprCXX.h"
 #include "clang/AST/NestedNameSpecifier.h"
+#include "clang/Basic/PartialDiagnostic.h"
 #include "clang/Parse/DeclSpec.h"
 #include "llvm/ADT/STLExtras.h"
 #include "llvm/Support/raw_ostream.h"
@@ -229,8 +230,8 @@ bool Sema::RequireCompleteDeclContext(const CXXScopeSpec &SS) {
     // The type must be complete.
     return RequireCompleteType(SS.getRange().getBegin(),
                                Context.getTypeDeclType(Tag),
-                               diag::err_incomplete_nested_name_spec,
-                               SS.getRange());
+                               PDiag(diag::err_incomplete_nested_name_spec)
+                                 << SS.getRange());
   }
 
   return false;
