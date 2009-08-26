@@ -213,7 +213,6 @@ public:
   }
 
   /// getExitEdges - Return all pairs of (_inside_block_,_outside_block_).
-  /// (Modelled after getExitingBlocks().)
   typedef std::pair<const BlockT*,const BlockT*> Edge;
   void getExitEdges(SmallVectorImpl<Edge> &ExitEdges) const {
     // Sort the blocks vector so that we can use binary search to do quick
