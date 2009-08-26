@@ -27,6 +27,7 @@
 #include "llvm/Support/MemoryBuffer.h"
 #include "llvm/Support/PrettyStackTrace.h"
 #include "llvm/Support/raw_ostream.h"
+#include "llvm/Support/Format.h"
 #include "llvm/System/Signals.h"
 #include <algorithm>
 #include <iostream>
@@ -172,32 +173,32 @@ bool ProfileInfoPrinterPass::runOnModule(Module &M) {
   for (unsigned i = 0, e = FunctionCounts.size(); i != e; ++i)
     TotalExecutions += FunctionCounts[i].second;
 
-  std::cout << "===" << std::string(73, '-') << "===\n"
-            << "LLVM profiling output for execution";
-  if (PIL.getNumExecutions() != 1) std::cout << "s";
-  std::cout << ":\n";
+  outs() << "===" << std::string(73, '-') << "===\n"
+         << "LLVM profiling output for execution";
+  if (PIL.getNumExecutions() != 1) outs() << "s";
+  outs() << ":\n";
 
   for (unsigned i = 0, e = PIL.getNumExecutions(); i != e; ++i) {
-    std::cout << "  ";
-    if (e != 1) std::cout << i+1 << ". ";
-    std::cout << PIL.getExecution(i) << "\n";
+    outs() << "  ";
+    if (e != 1) outs() << i+1 << ". ";
+    outs() << PIL.getExecution(i) << "\n";
   }
 
-  std::cout << "\n===" << std::string(73, '-') << "===\n";
-  std::cout << "Function execution frequencies:\n\n";
+  outs() << "\n===" << std::string(73, '-') << "===\n";
+  outs() << "Function execution frequencies:\n\n";
 
   // Print out the function frequencies...
-  std::cout << " ##   Frequency\n";
+  outs() << " ##   Frequency\n";
   for (unsigned i = 0, e = FunctionCounts.size(); i != e; ++i) {
     if (FunctionCounts[i].second == 0) {
-      std::cout << "\n  NOTE: " << e-i << " function" <<
-             (e-i-1 ? "s were" : " was") << " never executed!\n";
+      outs() << "\n  NOTE: " << e-i << " function" 
+        << (e-i-1 ? "s were" : " was") << " never executed!\n";
       break;
     }
 
-    std::cout << std::setw(3) << i+1 << ". " 
-      << std::setw(5) << FunctionCounts[i].second << "/"
-      << TotalExecutions << " "
+    outs() << format("%3d", i+1) << ". "
+      << format("%5.2g", FunctionCounts[i].second) << "/"
+      << format("%g", TotalExecutions) << " "
       << FunctionCounts[i].first->getNameStr() << "\n";
   }
 
@@ -211,29 +212,28 @@ bool ProfileInfoPrinterPass::runOnModule(Module &M) {
   sort(Counts.begin(), Counts.end(),
        PairSecondSortReverse<BasicBlock*>());
   
-  std::cout << "\n===" << std::string(73, '-') << "===\n";
-  std::cout << "Top 20 most frequently executed basic blocks:\n\n";
+  outs() << "\n===" << std::string(73, '-') << "===\n";
+  outs() << "Top 20 most frequently executed basic blocks:\n\n";
   
   // Print out the function frequencies...
-  std::cout <<" ##      %% \tFrequency\n";
+  outs() <<" ##      %% \tFrequency\n";
   unsigned BlocksToPrint = Counts.size();
   if (BlocksToPrint > 20) BlocksToPrint = 20;
   for (unsigned i = 0; i != BlocksToPrint; ++i) {
     if (Counts[i].second == 0) break;
     Function *F = Counts[i].first->getParent();
-    std::cout << std::setw(3) << i+1 << ". " 
-              << std::setw(5) << std::setprecision(3) 
-              << Counts[i].second/(double)TotalExecutions*100 << "% "
-              << std::setw(5) << Counts[i].second << "/"
-              << TotalExecutions << "\t"
-              << F->getNameStr() << "() - "
-              << Counts[i].first->getNameStr() << "\n";
+    outs() << format("%3d", i+1) << ". " 
+      << format("%5g", Counts[i].second/(double)TotalExecutions*100) << "% "
+      << format("%5.0f", Counts[i].second) << "/"
+      << format("%g", TotalExecutions) << "\t"
+      << F->getNameStr() << "() - "
+       << Counts[i].first->getNameStr() << "\n";
     FunctionsToPrint.insert(F);
   }
 
   if (PrintAnnotatedLLVM || PrintAllCode) {
-    std::cout << "\n===" << std::string(73, '-') << "===\n";
-    std::cout << "Annotated LLVM code for the module:\n\n";
+    outs() << "\n===" << std::string(73, '-') << "===\n";
+    outs() << "Annotated LLVM code for the module:\n\n";
   
     ProfileAnnotator PA(PI);
 
