@@ -91,6 +91,71 @@ int main() {
 // CHECK-LP64: movl $1, 12(%rax)
 // CHECK-LP64: movl $2, 8(%rax)
 
+struct test12_A {
+  virtual void foo0() { }
+  virtual void foo() { }
+} *test12_pa;
+
+struct test12_B : public test12_A {
+  virtual void foo() { }
+} *test12_pb;
+
+struct test12_D : public test12_B {
+} *test12_pd;
+void test12_foo() {
+  test12_pa->foo0();
+  test12_pb->foo0();
+  test12_pd->foo0();
+  test12_pa->foo();
+  test12_pb->foo();
+  test12_pd->foo();
+}
+
+// CHECK-LPOPT32:__Z10test12_foov:
+// CHECK-LPOPT32: movl _test12_pa, %eax
+// CHECK-LPOPT32-NEXT: movl (%eax), %ecx
+// CHECK-LPOPT32-NEXT: movl %eax, (%esp)
+// CHECK-LPOPT32-NEXT: call *(%ecx)
+// CHECK-LPOPT32-NEXT: movl _test12_pb, %eax
+// CHECK-LPOPT32-NEXT: movl (%eax), %ecx
+// CHECK-LPOPT32-NEXT: movl %eax, (%esp)
+// CHECK-LPOPT32-NEXT: call *(%ecx)
+// CHECK-LPOPT32-NEXT: movl _test12_pd, %eax
+// CHECK-LPOPT32-NEXT: movl (%eax), %ecx
+// CHECK-LPOPT32-NEXT: movl %eax, (%esp)
+// CHECK-LPOPT32-NEXT: call *(%ecx)
+// CHECK-LPOPT32-NEXT: movl _test12_pa, %eax
+// CHECK-LPOPT32-NEXT: movl (%eax), %ecx
+// CHECK-LPOPT32-NEXT: movl %eax, (%esp)
+// CHECK-LPOPT32-NEXT: call *4(%ecx)
+// CHECK-LPOPT32-NEXT: movl _test12_pb, %eax
+// CHECK-LPOPT32-NEXT: movl (%eax), %ecx
+// CHECK-LPOPT32-NEXT: movl %eax, (%esp)
+// CHECK-LPOPT32-NEXT: call *4(%ecx)
+// CHECK-LPOPT32-NEXT: movl _test12_pd, %eax
+// CHECK-LPOPT32-NEXT: movl (%eax), %ecx
+// CHECK-LPOPT32-NEXT: movl %eax, (%esp)
+// CHECK-LPOPT32-NEXT: call *4(%ecx)
+
+// CHECK-LPOPT64:__Z10test12_foov:
+// CHECK-LPOPT64: movq _test12_pa(%rip), %rdi
+// CHECK-LPOPT64-NEXT: movq (%rdi), %rax
+// CHECK-LPOPT64-NEXT: call *(%rax)
+// CHECK-LPOPT64-NEXT: movq _test12_pb(%rip), %rdi
+// CHECK-LPOPT64-NEXT: movq (%rdi), %rax
+// CHECK-LPOPT64-NEXT: call *(%rax)
+// CHECK-LPOPT64-NEXT: movq _test12_pd(%rip), %rdi
+// CHECK-LPOPT64-NEXT: movq (%rdi), %rax
+// CHECK-LPOPT64-NEXT: call *(%rax)
+// CHECK-LPOPT64-NEXT: movq _test12_pa(%rip), %rdi
+// CHECK-LPOPT64-NEXT: movq (%rdi), %rax
+// CHECK-LPOPT64-NEXT: call *8(%rax)
+// CHECK-LPOPT64-NEXT: movq _test12_pb(%rip), %rdi
+// CHECK-LPOPT64-NEXT: movq (%rdi), %rax
+// CHECK-LPOPT64-NEXT: call *8(%rax)
+// CHECK-LPOPT64-NEXT: movq _test12_pd(%rip), %rdi
+// CHECK-LPOPT64-NEXT: movq (%rdi), %rax
+// CHECK-LPOPT64-NEXT: call *8(%rax)
 
 struct test6_B2 { virtual void funcB2(); char b[1000]; };
 struct test6_B1 : virtual test6_B2 { virtual void funcB1(); };
@@ -115,7 +180,7 @@ struct test3_B3 { virtual void funcB3(); };
 struct test3_B2 : virtual test3_B3 { virtual void funcB2(); };
 struct test3_B1 : virtual test3_B2 { virtual void funcB1(); };
 
-struct test3_D  : virtual test3_B1 {
+struct test3_D : virtual test3_B1 {
   virtual void funcD() { }
 };
 
@@ -650,7 +715,6 @@ struct test11_D : test11_B {
 // CHECK-LP64-NEXT: .quad __ZN8test11_B2B2Ev
 // CHECK-LP64-NEXT: .quad __ZN8test11_D2D1Ev
 // CHECK-LP64-NEXT: .quad __ZN8test11_D2D2Ev
-
 
 
 // CHECK-LP64: __ZTV1B:
