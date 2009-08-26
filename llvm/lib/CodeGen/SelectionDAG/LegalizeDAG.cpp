@@ -1279,10 +1279,13 @@ SDValue SelectionDAGLegalize::LegalizeOp(SDValue Op) {
           break;
         case TargetLowering::Expand:
           // f64 = EXTLOAD f32 should expand to LOAD, FP_EXTEND
-          if (SrcVT == MVT::f32 && Node->getValueType(0) == MVT::f64) {
+          // f128 = EXTLOAD {f32,f64} too
+          if ((SrcVT == MVT::f32 && (Node->getValueType(0) == MVT::f64 ||
+                                     Node->getValueType(0) == MVT::f128)) ||
+              (SrcVT == MVT::f64 && Node->getValueType(0) == MVT::f128)) {
             SDValue Load = DAG.getLoad(SrcVT, dl, Tmp1, Tmp2, LD->getSrcValue(),
-                                         LD->getSrcValueOffset(),
-                                         LD->isVolatile(), LD->getAlignment());
+                                       LD->getSrcValueOffset(),
+                                       LD->isVolatile(), LD->getAlignment());
             Result = DAG.getNode(ISD::FP_EXTEND, dl,
                                  Node->getValueType(0), Load);
             Tmp1 = LegalizeOp(Result);  // Relegalize new nodes.
