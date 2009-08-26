@@ -4332,6 +4332,7 @@ Sema::CreateOverloadedBinOp(SourceLocation OpLoc,
                             FunctionSet &Functions,
                             Expr *LHS, Expr *RHS) {
   Expr *Args[2] = { LHS, RHS };
+  LHS=RHS=0; //Please use only Args instead of LHS/RHS couple
 
   BinaryOperator::Opcode Opc = static_cast<BinaryOperator::Opcode>(OpcIn);
   OverloadedOperatorKind Op = BinaryOperator::getOverloadedOperator(Opc);
@@ -4339,10 +4340,10 @@ Sema::CreateOverloadedBinOp(SourceLocation OpLoc,
 
   // If either side is type-dependent, create an appropriate dependent
   // expression.
-  if (LHS->isTypeDependent() || RHS->isTypeDependent()) {
+  if (Args[0]->isTypeDependent() || Args[1]->isTypeDependent()) {
     // .* cannot be overloaded.
     if (Opc == BinaryOperator::PtrMemD)
-      return Owned(new (Context) BinaryOperator(LHS, RHS, Opc,
+      return Owned(new (Context) BinaryOperator(Args[0], Args[1], Opc,
                                                 Context.DependentTy, OpLoc));
 
     OverloadedFunctionDecl *Overloads 
@@ -4364,14 +4365,14 @@ Sema::CreateOverloadedBinOp(SourceLocation OpLoc,
   // If this is the .* operator, which is not overloadable, just
   // create a built-in binary operator.
   if (Opc == BinaryOperator::PtrMemD)
-    return CreateBuiltinBinOp(OpLoc, Opc, LHS, RHS);
+    return CreateBuiltinBinOp(OpLoc, Opc, Args[0], Args[1]);
 
   // If this is one of the assignment operators, we only perform
   // overload resolution if the left-hand side is a class or
   // enumeration type (C++ [expr.ass]p3).
   if (Opc >= BinaryOperator::Assign && Opc <= BinaryOperator::OrAssign &&
-      !LHS->getType()->isOverloadableType())
-    return CreateBuiltinBinOp(OpLoc, Opc, LHS, RHS);
+      !Args[0]->getType()->isOverloadableType())
+    return CreateBuiltinBinOp(OpLoc, Opc, Args[0], Args[1]);
 
   // Build an empty overload set.
   OverloadCandidateSet CandidateSet;
@@ -4398,15 +4399,15 @@ Sema::CreateOverloadedBinOp(SourceLocation OpLoc,
 
         // Convert the arguments.
         if (CXXMethodDecl *Method = dyn_cast<CXXMethodDecl>(FnDecl)) {
-          if (PerformObjectArgumentInitialization(LHS, Method) ||
-              PerformCopyInitialization(RHS, FnDecl->getParamDecl(0)->getType(),
+          if (PerformObjectArgumentInitialization(Args[0], Method) ||
+              PerformCopyInitialization(Args[1], FnDecl->getParamDecl(0)->getType(),
                                         "passing"))
             return ExprError();
         } else {
           // Convert the arguments.
-          if (PerformCopyInitialization(LHS, FnDecl->getParamDecl(0)->getType(),
+          if (PerformCopyInitialization(Args[0], FnDecl->getParamDecl(0)->getType(),
                                         "passing") ||
-              PerformCopyInitialization(RHS, FnDecl->getParamDecl(1)->getType(),
+              PerformCopyInitialization(Args[1], FnDecl->getParamDecl(1)->getType(),
                                         "passing"))
             return ExprError();
         }
@@ -4428,9 +4429,9 @@ Sema::CreateOverloadedBinOp(SourceLocation OpLoc,
         // We matched a built-in operator. Convert the arguments, then
         // break out so that we will build the appropriate built-in
         // operator node.
-        if (PerformImplicitConversion(LHS, Best->BuiltinTypes.ParamTypes[0],
+        if (PerformImplicitConversion(Args[0], Best->BuiltinTypes.ParamTypes[0],
                                       Best->Conversions[0], "passing") ||
-            PerformImplicitConversion(RHS, Best->BuiltinTypes.ParamTypes[1],
+            PerformImplicitConversion(Args[1], Best->BuiltinTypes.ParamTypes[1],
                                       Best->Conversions[1], "passing"))
           return ExprError();
 
@@ -4442,10 +4443,10 @@ Sema::CreateOverloadedBinOp(SourceLocation OpLoc,
       // For class as left operand for assignment or compound assigment operator
       // do not fall through to handling in built-in, but report that no overloaded
       // assignment operator found
-      if (LHS->getType()->isRecordType() && Opc >= BinaryOperator::Assign && Opc <= BinaryOperator::OrAssign) {
+      if (Args[0]->getType()->isRecordType() && Opc >= BinaryOperator::Assign && Opc <= BinaryOperator::OrAssign) {
         Diag(OpLoc,  diag::err_ovl_no_viable_oper)
              << BinaryOperator::getOpcodeStr(Opc)
-             << LHS->getSourceRange() << RHS->getSourceRange();
+             << Args[0]->getSourceRange() << Args[1]->getSourceRange();
         return ExprError();
       }
       // No viable function; fall through to handling this as a
@@ -4455,7 +4456,7 @@ Sema::CreateOverloadedBinOp(SourceLocation OpLoc,
     case OR_Ambiguous:
       Diag(OpLoc,  diag::err_ovl_ambiguous_oper)
           << BinaryOperator::getOpcodeStr(Opc)
-          << LHS->getSourceRange() << RHS->getSourceRange();
+          << Args[0]->getSourceRange() << Args[1]->getSourceRange();
       PrintOverloadCandidates(CandidateSet, /*OnlyViable=*/true);
       return ExprError();
 
@@ -4463,7 +4464,7 @@ Sema::CreateOverloadedBinOp(SourceLocation OpLoc,
       Diag(OpLoc, diag::err_ovl_deleted_oper)
         << Best->Function->isDeleted()
         << BinaryOperator::getOpcodeStr(Opc)
-        << LHS->getSourceRange() << RHS->getSourceRange();
+        << Args[0]->getSourceRange() << Args[1]->getSourceRange();
       PrintOverloadCandidates(CandidateSet, /*OnlyViable=*/true);
       return ExprError();
     }
@@ -4471,7 +4472,7 @@ Sema::CreateOverloadedBinOp(SourceLocation OpLoc,
   // Either we found no viable overloaded operator or we matched a
   // built-in operator. In either case, try to build a built-in
   // operation.
-  return CreateBuiltinBinOp(OpLoc, Opc, LHS, RHS);
+  return CreateBuiltinBinOp(OpLoc, Opc, Args[0], Args[1]);
 }
 
 /// BuildCallToMemberFunction - Build a call to a member
