@@ -82,7 +82,7 @@ public:
 
   uint64_t getAddress() const;
 
-  unsigned getFileSize() const { 
+  uint64_t getFileSize() const { 
     assert(FileSize != ~UINT64_C(0) && "File size not set!");
     return FileSize;
   }
@@ -267,6 +267,9 @@ private:
   /// initialized.
   uint64_t Address;
 
+  /// Size - The content size of this section. This is ~0 until initialized.
+  uint64_t Size;
+
   /// FileSize - The size of this section in the object file. This is ~0 until
   /// initialized.
   uint64_t FileSize;
@@ -305,13 +308,19 @@ public:
   //
   // FIXME: This could all be kept private to the assembler implementation.
 
-  unsigned getAddress() const { 
+  uint64_t getAddress() const { 
     assert(Address != ~UINT64_C(0) && "Address not set!");
     return Address;
   }
   void setAddress(uint64_t Value) { Address = Value; }
 
-  unsigned getFileSize() const { 
+  uint64_t getSize() const { 
+    assert(Size != ~UINT64_C(0) && "File size not set!");
+    return Size;
+  }
+  void setSize(uint64_t Value) { Size = Value; }
+
+  uint64_t getFileSize() const { 
     assert(FileSize != ~UINT64_C(0) && "File size not set!");
     return FileSize;
   }
@@ -414,7 +423,11 @@ private:
   /// LayoutSection - Assign offsets and sizes to the fragments in the section
   /// \arg SD, and update the section size. The section file offset should
   /// already have been computed.
-  void LayoutSection(MCSectionData &SD);
+  ///
+  /// \param NextAlign - The alignment for the section end address, which may
+  /// add padding bytes to the section (these are included in the section "file"
+  /// size, but not its regular size).
+  void LayoutSection(MCSectionData &SD, unsigned NextAlign);
 
 public:
   /// Construct a new assembler instance.

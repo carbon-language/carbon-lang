@@ -217,7 +217,7 @@ public:
     WriteString(Section.getSectionName(), 16);
     WriteString(Section.getSegmentName(), 16);
     Write32(SD.getAddress()); // address
-    Write32(SD.getFileSize()); // size
+    Write32(SD.getSize()); // size
     Write32(FileOffset);
 
     assert(isPowerOf2_32(SD.getAlignment()) && "Invalid alignment!");
@@ -507,11 +507,6 @@ public:
     if (NumSymbols)
       ComputeSymbolTable(Asm, StringTable, LocalSymbolData, ExternalSymbolData,
                          UndefinedSymbolData);
-
-    // Compute the file offsets for all the sections in advance, so that we can
-    // write things out in order.
-    SmallVector<uint64_t, 16> SectionFileOffsets;
-    SectionFileOffsets.resize(NumSections);
   
     // The section data starts after the header, the segment load command (and
     // section headers) and the symbol table.
@@ -525,27 +520,22 @@ public:
       LoadCommandsSize += SymtabLoadCommandSize + DysymtabLoadCommandSize;
     }
 
-    uint64_t FileOffset = Header32Size + LoadCommandsSize;
-    uint64_t SectionDataStartOffset = FileOffset;
+    uint64_t SectionDataStart = Header32Size + LoadCommandsSize;
+    uint64_t SectionDataEnd = SectionDataStart;
     uint64_t SectionDataSize = 0;
-    unsigned Index = 0;
-    for (MCAssembler::iterator it = Asm.begin(),
-           ie = Asm.end(); it != ie; ++it, ++Index) {
-      SectionFileOffsets[Index] = FileOffset;
-      FileOffset += it->getFileSize();
-      SectionDataSize += it->getFileSize();
+    if (!Asm.getSectionList().empty()) {
+      MCSectionData &SD = Asm.getSectionList().back();
+      SectionDataSize = SD.getAddress() + SD.getSize();
+      SectionDataEnd = SectionDataStart + SD.getAddress() + SD.getFileSize();
     }
 
     // Write the prolog, starting with the header and load command...
     WriteHeader32(NumLoadCommands, LoadCommandsSize);
-    WriteSegmentLoadCommand32(NumSections, SectionDataStartOffset,
-                              SectionDataSize);
+    WriteSegmentLoadCommand32(NumSections, SectionDataStart, SectionDataSize);
   
     // ... and then the section headers.
-    Index = 0;
-    for (MCAssembler::iterator it = Asm.begin(),
-           ie = Asm.end(); it != ie; ++it, ++Index)
-      WriteSection32(*it, SectionFileOffsets[Index]);
+    for (MCAssembler::iterator it = Asm.begin(), ie = Asm.end(); it != ie; ++it)
+      WriteSection32(*it, SectionDataStart + it->getAddress());
 
     // Write the symbol table load command, if used.
     if (NumSymbols) {
@@ -563,11 +553,10 @@ public:
 
       // If used, the indirect symbols are written after the section data.
       if (NumIndirectSymbols)
-        IndirectSymbolOffset = SectionDataStartOffset + SectionDataSize;
+        IndirectSymbolOffset = SectionDataEnd;
 
       // The symbol table is written after the indirect symbol data.
-      uint64_t SymbolTableOffset =
-        SectionDataStartOffset + SectionDataSize + IndirectSymbolSize;
+      uint64_t SymbolTableOffset = SectionDataEnd + IndirectSymbolSize;
 
       // The string table is written after symbol table.
       uint64_t StringTableOffset =
@@ -675,6 +664,7 @@ MCSectionData::MCSectionData(const MCSection &_Section, MCAssembler *A)
   : Section(_Section),
     Alignment(1),
     Address(~UINT64_C(0)),
+    Size(~UINT64_C(0)),
     FileSize(~UINT64_C(0))
 {
   if (A)
@@ -701,26 +691,24 @@ MCAssembler::MCAssembler(raw_ostream &_OS) : OS(_OS) {}
 MCAssembler::~MCAssembler() {
 }
 
-void MCAssembler::LayoutSection(MCSectionData &SD) {
-  uint64_t Offset = 0;
+void MCAssembler::LayoutSection(MCSectionData &SD, unsigned NextAlign) {
+  uint64_t Address = SD.getAddress();
 
   for (MCSectionData::iterator it = SD.begin(), ie = SD.end(); it != ie; ++it) {
     MCFragment &F = *it;
 
-    F.setOffset(Offset);
+    F.setOffset(Address - SD.getAddress());
 
     // Evaluate fragment size.
     switch (F.getKind()) {
     case MCFragment::FT_Align: {
       MCAlignFragment &AF = cast<MCAlignFragment>(F);
       
-      uint64_t AlignedOffset = RoundUpToAlignment(Offset, AF.getAlignment());
-      uint64_t PaddingBytes = AlignedOffset - Offset;
-
-      if (PaddingBytes > AF.getMaxBytesToEmit())
+      uint64_t Size = RoundUpToAlignment(Address, AF.getAlignment()) - Address;
+      if (Size > AF.getMaxBytesToEmit())
         AF.setFileSize(0);
       else
-        AF.setFileSize(PaddingBytes);
+        AF.setFileSize(Size);
       break;
     }
 
@@ -735,22 +723,24 @@ void MCAssembler::LayoutSection(MCSectionData &SD) {
       if (!OF.getOffset().isAbsolute())
         llvm_unreachable("FIXME: Not yet implemented!");
       uint64_t OrgOffset = OF.getOffset().getConstant();
+      uint64_t Offset = Address - SD.getAddress();
 
       // FIXME: We need a way to communicate this error.
       if (OrgOffset < Offset)
         llvm_report_error("invalid .org offset '" + Twine(OrgOffset) + 
-                          "' (section offset '" + Twine(Offset) + "'");
+                          "' (at offset '" + Twine(Offset) + "'");
         
       F.setFileSize(OrgOffset - Offset);
       break;
     }      
     }
 
-    Offset += F.getFileSize();
+    Address += F.getFileSize();
   }
 
-  // FIXME: Pad section?
-  SD.setFileSize(Offset);
+  // Set the section sizes.
+  SD.setSize(Address - SD.getAddress());
+  SD.setFileSize(RoundUpToAlignment(Address, NextAlign) - SD.getAddress());
 }
 
 /// WriteFileData - Write the \arg F data to the output file.
@@ -836,16 +826,32 @@ static void WriteFileData(raw_ostream &OS, const MCSectionData &SD,
          ie = SD.end(); it != ie; ++it)
     WriteFileData(OS, *it, MOW);
 
+  // Add section padding.
+  assert(SD.getFileSize() >= SD.getSize() && "Invalid section sizes!");
+  MOW.WriteZeros(SD.getFileSize() - SD.getSize());
+
   assert(OS.tell() - Start == SD.getFileSize());
 }
 
 void MCAssembler::Finish() {
   // Layout the sections and fragments.
   uint64_t Address = 0;
-  for (iterator it = begin(), ie = end(); it != ie; ++it) {
-    it->setAddress(Address);
-    LayoutSection(*it);
-    Address += it->getFileSize();
+  for (iterator it = begin(), ie = end(); it != ie;) {
+    MCSectionData &SD = *it;
+
+    // Select the amount of padding alignment we need, based on either the next
+    // sections alignment or the default alignment.
+    //
+    // FIXME: This should probably match the native word size.
+    unsigned NextAlign = 4;
+    ++it;
+    if (it != ie)
+      NextAlign = it->getAlignment();
+
+    // Layout the section fragments and its size.
+    SD.setAddress(Address);
+    LayoutSection(SD, NextAlign);
+    Address += SD.getFileSize();
   }
 
   // Write the object file.
