@@ -171,26 +171,28 @@ add a set of optimizations to run.  The code looks like this:</p>
 
 <div class="doc_code">
 <pre>
-    ExistingModuleProvider OurModuleProvider(TheModule);
-    FunctionPassManager OurFPM(&amp;OurModuleProvider);
-      
-    // Set up the optimizer pipeline.  Start with registering info about how the
-    // target lays out data structures.
-    OurFPM.add(new TargetData(*TheExecutionEngine->getTargetData()));
-    // Do simple "peephole" optimizations and bit-twiddling optzns.
-    OurFPM.add(createInstructionCombiningPass());
-    // Reassociate expressions.
-    OurFPM.add(createReassociatePass());
-    // Eliminate Common SubExpressions.
-    OurFPM.add(createGVNPass());
-    // Simplify the control flow graph (deleting unreachable blocks, etc).
-    OurFPM.add(createCFGSimplificationPass());
+  ExistingModuleProvider *OurModuleProvider =
+      new ExistingModuleProvider(TheModule);
 
-    // Set the global so the code gen can use this.
-    TheFPM = &amp;OurFPM;
+  FunctionPassManager OurFPM(OurModuleProvider);
 
-    // Run the main "interpreter loop" now.
-    MainLoop();
+  // Set up the optimizer pipeline.  Start with registering info about how the
+  // target lays out data structures.
+  OurFPM.add(new TargetData(*TheExecutionEngine->getTargetData()));
+  // Do simple "peephole" optimizations and bit-twiddling optzns.
+  OurFPM.add(createInstructionCombiningPass());
+  // Reassociate expressions.
+  OurFPM.add(createReassociatePass());
+  // Eliminate Common SubExpressions.
+  OurFPM.add(createGVNPass());
+  // Simplify the control flow graph (deleting unreachable blocks, etc).
+  OurFPM.add(createCFGSimplificationPass());
+
+  // Set the global so the code gen can use this.
+  TheFPM = &amp;OurFPM;
+
+  // Run the main "interpreter loop" now.
+  MainLoop();
 </pre>
 </div>
 
@@ -298,8 +300,8 @@ by adding a global variable and a call in <tt>main</tt>:</p>
 ...
 int main() {
   ..
-  <b>// Create the JIT.
-    TheExecutionEngine = EngineBuilder(TheModule).create();</b>
+  <b>// Create the JIT.  This takes ownership of the module and module provider.
+  TheExecutionEngine = EngineBuilder(OurModuleProvider).create();</b>
   ..
 }
 </pre>
@@ -1076,38 +1078,38 @@ int main() {
 
   // Make the module, which holds all the code.
   TheModule = new Module("my cool jit", getGlobalContext());
-  
-  // Create the JIT.
-  TheExecutionEngine = EngineBuilder(TheModule).create();
 
-  {
-    ExistingModuleProvider OurModuleProvider(TheModule);
-    FunctionPassManager OurFPM(&amp;OurModuleProvider);
-      
-    // Set up the optimizer pipeline.  Start with registering info about how the
-    // target lays out data structures.
-    OurFPM.add(new TargetData(*TheExecutionEngine-&gt;getTargetData()));
-    // Do simple "peephole" optimizations and bit-twiddling optzns.
-    OurFPM.add(createInstructionCombiningPass());
-    // Reassociate expressions.
-    OurFPM.add(createReassociatePass());
-    // Eliminate Common SubExpressions.
-    OurFPM.add(createGVNPass());
-    // Simplify the control flow graph (deleting unreachable blocks, etc).
-    OurFPM.add(createCFGSimplificationPass());
+  ExistingModuleProvider *OurModuleProvider =
+      new ExistingModuleProvider(TheModule);
 
-    // Set the global so the code gen can use this.
-    TheFPM = &amp;OurFPM;
+  // Create the JIT.  This takes ownership of the module and module provider.
+  TheExecutionEngine = EngineBuilder(OurModuleProvider).create();
 
-    // Run the main "interpreter loop" now.
-    MainLoop();
-    
-    TheFPM = 0;
-    
-    // Print out all of the generated code.
-    TheModule-&gt;dump();
-  }  // Free module provider (and thus the module) and pass manager.
-                                   
+  FunctionPassManager OurFPM(OurModuleProvider);
+
+  // Set up the optimizer pipeline.  Start with registering info about how the
+  // target lays out data structures.
+  OurFPM.add(new TargetData(*TheExecutionEngine-&gt;getTargetData()));
+  // Do simple "peephole" optimizations and bit-twiddling optzns.
+  OurFPM.add(createInstructionCombiningPass());
+  // Reassociate expressions.
+  OurFPM.add(createReassociatePass());
+  // Eliminate Common SubExpressions.
+  OurFPM.add(createGVNPass());
+  // Simplify the control flow graph (deleting unreachable blocks, etc).
+  OurFPM.add(createCFGSimplificationPass());
+
+  // Set the global so the code gen can use this.
+  TheFPM = &amp;OurFPM;
+
+  // Run the main "interpreter loop" now.
+  MainLoop();
+
+  TheFPM = 0;
+
+  // Print out all of the generated code.
+  TheModule-&gt;dump();
+
   return 0;
 }
 </pre>

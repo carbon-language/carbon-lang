@@ -1108,42 +1108,40 @@ int main() {
   // Make the module, which holds all the code.
   TheModule = new Module("my cool jit", Context);
 
-  {
-    ExistingModuleProvider OurModuleProvider(TheModule);
+  ExistingModuleProvider *OurModuleProvider =
+      new ExistingModuleProvider(TheModule);
 
-    // Create the JIT.
-    TheExecutionEngine = EngineBuilder(&OurModuleProvider).create();
+  // Create the JIT.  This takes ownership of the module and module provider.
+  TheExecutionEngine = EngineBuilder(OurModuleProvider).create();
 
-    FunctionPassManager OurFPM(&OurModuleProvider);
-      
-    // Set up the optimizer pipeline.  Start with registering info about how the
-    // target lays out data structures.
-    OurFPM.add(new TargetData(*TheExecutionEngine->getTargetData()));
-    // Promote allocas to registers.
-    OurFPM.add(createPromoteMemoryToRegisterPass());
-    // Do simple "peephole" optimizations and bit-twiddling optzns.
-    OurFPM.add(createInstructionCombiningPass());
-    // Reassociate expressions.
-    OurFPM.add(createReassociatePass());
-    // Eliminate Common SubExpressions.
-    OurFPM.add(createGVNPass());
-    // Simplify the control flow graph (deleting unreachable blocks, etc).
-    OurFPM.add(createCFGSimplificationPass());
+  FunctionPassManager OurFPM(OurModuleProvider);
 
-    OurFPM.doInitialization();
+  // Set up the optimizer pipeline.  Start with registering info about how the
+  // target lays out data structures.
+  OurFPM.add(new TargetData(*TheExecutionEngine->getTargetData()));
+  // Promote allocas to registers.
+  OurFPM.add(createPromoteMemoryToRegisterPass());
+  // Do simple "peephole" optimizations and bit-twiddling optzns.
+  OurFPM.add(createInstructionCombiningPass());
+  // Reassociate expressions.
+  OurFPM.add(createReassociatePass());
+  // Eliminate Common SubExpressions.
+  OurFPM.add(createGVNPass());
+  // Simplify the control flow graph (deleting unreachable blocks, etc).
+  OurFPM.add(createCFGSimplificationPass());
 
-    // Set the global so the code gen can use this.
-    TheFPM = &OurFPM;
+  OurFPM.doInitialization();
 
-    // Run the main "interpreter loop" now.
-    MainLoop();
-    
-    TheFPM = 0;
-    
-    // Print out all of the generated code.
-    TheModule->dump();
-    
-  }  // Free module provider (and thus the module) and pass manager.
-  
+  // Set the global so the code gen can use this.
+  TheFPM = &OurFPM;
+
+  // Run the main "interpreter loop" now.
+  MainLoop();
+
+  TheFPM = 0;
+
+  // Print out all of the generated code.
+  TheModule->dump();
+
   return 0;
 }
