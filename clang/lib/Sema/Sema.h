@@ -1584,6 +1584,14 @@ public:
                                                    SourceLocation LLoc,
                                                    ExprArg Idx,
                                                    SourceLocation RLoc);
+  
+  OwningExprResult BuildMemberReferenceExpr(Scope *S, ExprArg Base,
+                                            SourceLocation OpLoc,
+                                            tok::TokenKind OpKind,
+                                            SourceLocation MemberLoc,
+                                            DeclarationName MemberName,
+                                            DeclPtrTy ImplDecl,
+                                            const CXXScopeSpec *SS = 0);
   virtual OwningExprResult ActOnMemberReferenceExpr(Scope *S, ExprArg Base,
                                                     SourceLocation OpLoc,
                                                     tok::TokenKind OpKind,
@@ -3312,7 +3320,8 @@ public:
   
   /// type checking primary expressions.
   QualType CheckExtVectorComponent(QualType baseType, SourceLocation OpLoc,
-                                   IdentifierInfo &Comp, SourceLocation CmpLoc);
+                                   const IdentifierInfo *Comp, 
+                                   SourceLocation CmpLoc);
   
   /// type checking declaration initializers (C99 6.7.8)
   

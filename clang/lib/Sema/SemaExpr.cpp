@@ -1803,11 +1803,12 @@ Sema::ActOnArraySubscriptExpr(Scope *S, ExprArg Base, SourceLocation LLoc,
 
 QualType Sema::
 CheckExtVectorComponent(QualType baseType, SourceLocation OpLoc,
-                        IdentifierInfo &CompName, SourceLocation CompLoc) {
+                        const IdentifierInfo *CompName, 
+                        SourceLocation CompLoc) {
   const ExtVectorType *vecType = baseType->getAsExtVectorType();
 
   // The vector accessor can't exceed the number of elements.
-  const char *compStr = CompName.getName();
+  const char *compStr = CompName->getName();
 
   // This flag determines whether or not the component is one of the four
   // special names that indicate a subset of exactly half the elements are
@@ -1844,7 +1845,7 @@ CheckExtVectorComponent(QualType baseType, SourceLocation OpLoc,
   // Ensure no component accessor exceeds the width of the vector type it
   // operates on.
   if (!HalvingSwizzle) {
-    compStr = CompName.getName();
+    compStr = CompName->getName();
 
     if (HexSwizzle)
       compStr++;
@@ -1872,7 +1873,7 @@ CheckExtVectorComponent(QualType baseType, SourceLocation OpLoc,
   // vec4.s0 is a float, vec4.s23 is a vec3, etc.
   // vec4.hi, vec4.lo, vec4.e, and vec4.o all return vec2.
   unsigned CompSize = HalvingSwizzle ? vecType->getNumElements() / 2
-                                     : CompName.getLength();
+                                     : CompName->getLength();
   if (HexSwizzle)
     CompSize--;
 
@@ -1890,11 +1891,11 @@ CheckExtVectorComponent(QualType baseType, SourceLocation OpLoc,
 }
 
 static Decl *FindGetterNameDeclFromProtocolList(const ObjCProtocolDecl*PDecl,
-                                                IdentifierInfo &Member,
+                                                IdentifierInfo *Member,
                                                 const Selector &Sel,
                                                 ASTContext &Context) {
   
-  if (ObjCPropertyDecl *PD = PDecl->FindPropertyDeclaration(&Member))
+  if (ObjCPropertyDecl *PD = PDecl->FindPropertyDeclaration(Member))
     return PD;
   if (ObjCMethodDecl *OMD = PDecl->getInstanceMethod(Sel))
     return OMD;
@@ -1909,14 +1910,14 @@ static Decl *FindGetterNameDeclFromProtocolList(const ObjCProtocolDecl*PDecl,
 }
 
 static Decl *FindGetterNameDecl(const ObjCObjectPointerType *QIdTy,
-                                IdentifierInfo &Member,
+                                IdentifierInfo *Member,
                                 const Selector &Sel,
                                 ASTContext &Context) {
   // Check protocols on qualified interfaces.
   Decl *GDecl = 0;
   for (ObjCObjectPointerType::qual_iterator I = QIdTy->qual_begin(),
        E = QIdTy->qual_end(); I != E; ++I) {
-    if (ObjCPropertyDecl *PD = (*I)->FindPropertyDeclaration(&Member)) {
+    if (ObjCPropertyDecl *PD = (*I)->FindPropertyDeclaration(Member)) {
       GDecl = PD;
       break;
     }
@@ -1953,10 +1954,10 @@ ObjCMethodDecl *Sema::FindMethodInNestedImplementations(
   return Method;
 }
 
-Action::OwningExprResult
-Sema::ActOnMemberReferenceExpr(Scope *S, ExprArg Base, SourceLocation OpLoc,
+Action::OwningExprResult 
+Sema::BuildMemberReferenceExpr(Scope *S, ExprArg Base, SourceLocation OpLoc,
                                tok::TokenKind OpKind, SourceLocation MemberLoc,
-                               IdentifierInfo &Member,
+                               DeclarationName MemberName, 
                                DeclPtrTy ObjCImpDecl, const CXXScopeSpec *SS) {
   if (SS && SS->isInvalid())
     return ExprError();
@@ -1994,7 +1995,7 @@ Sema::ActOnMemberReferenceExpr(Scope *S, ExprArg Base, SourceLocation OpLoc,
       return Owned(new (Context) CXXUnresolvedMemberExpr(Context,
                                                          BaseExpr, true, 
                                                          OpLoc, 
-                                                     DeclarationName(&Member),
+                                                         MemberName,
                                                          MemberLoc));
     else if (const PointerType *PT = BaseType->getAs<PointerType>())
       BaseType = PT->getPointeeType();
@@ -2021,7 +2022,7 @@ Sema::ActOnMemberReferenceExpr(Scope *S, ExprArg Base, SourceLocation OpLoc,
         return Owned(new (Context) CXXUnresolvedMemberExpr(Context,
                                                            BaseExpr, false, 
                                                            OpLoc, 
-                                                     DeclarationName(&Member),
+                                                           MemberName,
                                                            MemberLoc));
     }
   }
@@ -2048,8 +2049,7 @@ Sema::ActOnMemberReferenceExpr(Scope *S, ExprArg Base, SourceLocation OpLoc,
 
     // The record definition is complete, now make sure the member is valid.
     LookupResult Result
-      = LookupQualifiedName(DC, DeclarationName(&Member),  
-                            LookupMemberName, false);
+      = LookupQualifiedName(DC, MemberName, LookupMemberName, false);
 
     if (SS && SS->isSet()) {
       QualType BaseTypeCanon 
@@ -2068,10 +2068,10 @@ Sema::ActOnMemberReferenceExpr(Scope *S, ExprArg Base, SourceLocation OpLoc,
 
     if (!Result)
       return ExprError(Diag(MemberLoc, diag::err_typecheck_no_member)
-               << &Member << BaseExpr->getSourceRange());
+               << MemberName << BaseExpr->getSourceRange());
     if (Result.isAmbiguous()) {
-      DiagnoseAmbiguousLookup(Result, DeclarationName(&Member),
-                              MemberLoc, BaseExpr->getSourceRange());
+      DiagnoseAmbiguousLookup(Result, MemberName, MemberLoc,
+                              BaseExpr->getSourceRange());
       return ExprError();
     }
     
@@ -2146,20 +2146,21 @@ Sema::ActOnMemberReferenceExpr(Scope *S, ExprArg Base, SourceLocation OpLoc,
     }
     if (isa<TypeDecl>(MemberDecl))
       return ExprError(Diag(MemberLoc,diag::err_typecheck_member_reference_type)
-        << DeclarationName(&Member) << int(OpKind == tok::arrow));
+        << MemberName << int(OpKind == tok::arrow));
 
     // We found a declaration kind that we didn't expect. This is a
     // generic error message that tells the user that she can't refer
     // to this member with '.' or '->'.
     return ExprError(Diag(MemberLoc,
                           diag::err_typecheck_member_reference_unknown)
-      << DeclarationName(&Member) << int(OpKind == tok::arrow));
+      << MemberName << int(OpKind == tok::arrow));
   }
 
   // Handle properties on ObjC 'Class' types.
   if (OpKind == tok::period && BaseType->isObjCClassType()) {
     // Also must look for a getter name which uses property syntax.
-    Selector Sel = PP.getSelectorTable().getNullarySelector(&Member);
+    IdentifierInfo *Member = MemberName.getAsIdentifierInfo();
+    Selector Sel = PP.getSelectorTable().getNullarySelector(Member);
     if (ObjCMethodDecl *MD = getCurMethodDecl()) {
       ObjCInterfaceDecl *IFace = MD->getClassInterface();
       ObjCMethodDecl *Getter;
@@ -2173,7 +2174,7 @@ Sema::ActOnMemberReferenceExpr(Scope *S, ExprArg Base, SourceLocation OpLoc,
       // will look for the matching setter, in case it is needed.
       Selector SetterSel = 
         SelectorTable::constructSetterName(PP.getIdentifierTable(), 
-                                           PP.getSelectorTable(), &Member);
+                                           PP.getSelectorTable(), Member);
       ObjCMethodDecl *Setter = IFace->lookupClassMethod(SetterSel);
       if (!Setter) {
         // If this reference is in an @implementation, also check for 'private'
@@ -2200,7 +2201,7 @@ Sema::ActOnMemberReferenceExpr(Scope *S, ExprArg Base, SourceLocation OpLoc,
                                         Setter, MemberLoc, BaseExpr));
       }
       return ExprError(Diag(MemberLoc, diag::err_property_not_found)
-        << &Member << BaseType);
+        << MemberName << BaseType);
     }
   }
   // Handle access to Objective-C instance variables, such as "Obj->ivar" and
@@ -2211,9 +2212,11 @@ Sema::ActOnMemberReferenceExpr(Scope *S, ExprArg Base, SourceLocation OpLoc,
     const ObjCInterfaceType *IFaceT = 
       OPT ? OPT->getInterfaceType() : BaseType->getAsObjCInterfaceType();
     if (IFaceT) {
+      IdentifierInfo *Member = MemberName.getAsIdentifierInfo();
+
       ObjCInterfaceDecl *IDecl = IFaceT->getDecl();
       ObjCInterfaceDecl *ClassDeclared;
-      ObjCIvarDecl *IV = IDecl->lookupInstanceVariable(&Member, ClassDeclared);
+      ObjCIvarDecl *IV = IDecl->lookupInstanceVariable(Member, ClassDeclared);
       
       if (IV) {
         // If the decl being referenced had an error, return an error for this
@@ -2262,7 +2265,7 @@ Sema::ActOnMemberReferenceExpr(Scope *S, ExprArg Base, SourceLocation OpLoc,
                                                    OpKind == tok::arrow));
       }
       return ExprError(Diag(MemberLoc, diag::err_typecheck_member_reference_ivar)
-                         << IDecl->getDeclName() << &Member
+                         << IDecl->getDeclName() << MemberName
                          << BaseExpr->getSourceRange());
     }
   }
@@ -2270,9 +2273,10 @@ Sema::ActOnMemberReferenceExpr(Scope *S, ExprArg Base, SourceLocation OpLoc,
   if (OpKind == tok::period && (BaseType->isObjCIdType() || 
                                 BaseType->isObjCQualifiedIdType())) {
     const ObjCObjectPointerType *QIdTy = BaseType->getAsObjCObjectPointerType();
+    IdentifierInfo *Member = MemberName.getAsIdentifierInfo();
     
     // Check protocols on qualified interfaces.
-    Selector Sel = PP.getSelectorTable().getNullarySelector(&Member);
+    Selector Sel = PP.getSelectorTable().getNullarySelector(Member);
     if (Decl *PMDecl = FindGetterNameDecl(QIdTy, Member, Sel, Context)) {
       if (ObjCPropertyDecl *PD = dyn_cast<ObjCPropertyDecl>(PMDecl)) {
         // Check the use of this declaration
@@ -2295,7 +2299,7 @@ Sema::ActOnMemberReferenceExpr(Scope *S, ExprArg Base, SourceLocation OpLoc,
     }
 
     return ExprError(Diag(MemberLoc, diag::err_property_not_found)
-                       << &Member << BaseType);
+                       << MemberName << BaseType);
   }
   // Handle Objective-C property access, which is "Obj.property" where Obj is a
   // pointer to a (potentially qualified) interface type.
@@ -2304,14 +2308,15 @@ Sema::ActOnMemberReferenceExpr(Scope *S, ExprArg Base, SourceLocation OpLoc,
       (OPT = BaseType->getAsObjCInterfacePointerType())) {
     const ObjCInterfaceType *IFaceT = OPT->getInterfaceType();
     ObjCInterfaceDecl *IFace = IFaceT->getDecl();
+    IdentifierInfo *Member = MemberName.getAsIdentifierInfo();
     
     // Search for a declared property first.
-    if (ObjCPropertyDecl *PD = IFace->FindPropertyDeclaration(&Member)) {
+    if (ObjCPropertyDecl *PD = IFace->FindPropertyDeclaration(Member)) {
       // Check whether we can reference this property.
       if (DiagnoseUseOfDecl(PD, MemberLoc))
         return ExprError();
       QualType ResTy = PD->getType();
-      Selector Sel = PP.getSelectorTable().getNullarySelector(&Member);
+      Selector Sel = PP.getSelectorTable().getNullarySelector(Member);
       ObjCMethodDecl *Getter = IFace->lookupInstanceMethod(Sel);
       if (DiagnosePropertyAccessorMismatch(PD, Getter, MemberLoc))
         ResTy = Getter->getResultType();
@@ -2321,7 +2326,7 @@ Sema::ActOnMemberReferenceExpr(Scope *S, ExprArg Base, SourceLocation OpLoc,
     // Check protocols on qualified interfaces.
     for (ObjCObjectPointerType::qual_iterator I = OPT->qual_begin(),
          E = OPT->qual_end(); I != E; ++I)
-      if (ObjCPropertyDecl *PD = (*I)->FindPropertyDeclaration(&Member)) {
+      if (ObjCPropertyDecl *PD = (*I)->FindPropertyDeclaration(Member)) {
         // Check whether we can reference this property.
         if (DiagnoseUseOfDecl(PD, MemberLoc))
           return ExprError();
@@ -2331,7 +2336,7 @@ Sema::ActOnMemberReferenceExpr(Scope *S, ExprArg Base, SourceLocation OpLoc,
       }
     for (ObjCObjectPointerType::qual_iterator I = OPT->qual_begin(),
          E = OPT->qual_end(); I != E; ++I)
-      if (ObjCPropertyDecl *PD = (*I)->FindPropertyDeclaration(&Member)) {
+      if (ObjCPropertyDecl *PD = (*I)->FindPropertyDeclaration(Member)) {
         // Check whether we can reference this property.
         if (DiagnoseUseOfDecl(PD, MemberLoc))
           return ExprError();
@@ -2345,7 +2350,7 @@ Sema::ActOnMemberReferenceExpr(Scope *S, ExprArg Base, SourceLocation OpLoc,
     // FIXME: The logic for looking up nullary and unary selectors should be
     // shared with the code in ActOnInstanceMessage.
 
-    Selector Sel = PP.getSelectorTable().getNullarySelector(&Member);
+    Selector Sel = PP.getSelectorTable().getNullarySelector(Member);
     ObjCMethodDecl *Getter = IFace->lookupInstanceMethod(Sel);
 
     // If this reference is in an @implementation, check for 'private' methods.
@@ -2364,7 +2369,7 @@ Sema::ActOnMemberReferenceExpr(Scope *S, ExprArg Base, SourceLocation OpLoc,
     // will look for the matching setter, in case it is needed.
     Selector SetterSel = 
       SelectorTable::constructSetterName(PP.getIdentifierTable(), 
-                                         PP.getSelectorTable(), &Member);
+                                         PP.getSelectorTable(), Member);
     ObjCMethodDecl *Setter = IFace->lookupInstanceMethod(SetterSel);
     if (!Setter) {
       // If this reference is in an @implementation, also check for 'private'
@@ -2391,22 +2396,23 @@ Sema::ActOnMemberReferenceExpr(Scope *S, ExprArg Base, SourceLocation OpLoc,
                                       Setter, MemberLoc, BaseExpr));
     }
     return ExprError(Diag(MemberLoc, diag::err_property_not_found)
-      << &Member << BaseType);
+      << MemberName << BaseType);
   }
   
   // Handle the following exceptional case (*Obj).isa.
   if (OpKind == tok::period && 
       BaseType->isSpecificBuiltinType(BuiltinType::ObjCId) &&
-      Member.isStr("isa"))
+      MemberName.getAsIdentifierInfo()->isStr("isa"))
     return Owned(new (Context) ObjCIsaExpr(BaseExpr, false, MemberLoc,
                                            Context.getObjCIdType()));
 
   // Handle 'field access' to vectors, such as 'V.xx'.
   if (BaseType->isExtVectorType()) {
+    IdentifierInfo *Member = MemberName.getAsIdentifierInfo();
     QualType ret = CheckExtVectorComponent(BaseType, OpLoc, Member, MemberLoc);
     if (ret.isNull())
       return ExprError();
-    return Owned(new (Context) ExtVectorElementExpr(ret, BaseExpr, Member,
+    return Owned(new (Context) ExtVectorElementExpr(ret, BaseExpr, *Member,
                                                     MemberLoc));
   }
 
@@ -2426,6 +2432,15 @@ Sema::ActOnMemberReferenceExpr(Scope *S, ExprArg Base, SourceLocation OpLoc,
   }
 
   return ExprError();
+}
+
+Action::OwningExprResult
+Sema::ActOnMemberReferenceExpr(Scope *S, ExprArg Base, SourceLocation OpLoc,
+                               tok::TokenKind OpKind, SourceLocation MemberLoc,
+                               IdentifierInfo &Member,
+                               DeclPtrTy ObjCImpDecl, const CXXScopeSpec *SS) {
+  return BuildMemberReferenceExpr(S, move(Base), OpLoc, OpKind, MemberLoc, 
+                                  DeclarationName(&Member), ObjCImpDecl, SS);
 }
 
 Sema::OwningExprResult Sema::BuildCXXDefaultArgExpr(SourceLocation CallLoc,
