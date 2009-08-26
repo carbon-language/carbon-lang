@@ -18,6 +18,7 @@
 #include "clang/AST/DeclTemplate.h"
 #include "clang/AST/TypeLoc.h"
 #include "clang/AST/Expr.h"
+#include "clang/Basic/PartialDiagnostic.h"
 #include "clang/Parse/DeclSpec.h"
 #include "llvm/ADT/SmallPtrSet.h"
 using namespace clang;
@@ -1772,6 +1773,18 @@ void Sema::ProcessTypeAttributeList(QualType &Result, const AttributeList *AL) {
 bool Sema::RequireCompleteType(SourceLocation Loc, QualType T, unsigned diag,
                                SourceRange Range1, SourceRange Range2,
                                QualType PrintType) {
+  if (!PrintType.isNull())
+    return RequireCompleteType(Loc, T, 
+                               PDiag(diag) << Range1 << Range2 << PrintType);
+  
+  return RequireCompleteType(Loc, T, 
+                             PDiag(diag) << Range1 << Range2);
+}
+
+bool Sema::RequireCompleteType(SourceLocation Loc, QualType T,
+                               const PartialDiagnostic &PD) {
+  unsigned diag = PD.getDiagID();
+  
   // FIXME: Add this assertion to help us flush out problems with
   // checking for dependent types and type-dependent expressions.
   //
@@ -1816,11 +1829,8 @@ bool Sema::RequireCompleteType(SourceLocation Loc, QualType T, unsigned diag,
   if (diag == 0)
     return true;
   
-  if (PrintType.isNull())
-    PrintType = T;
-
   // We have an incomplete type. Produce a diagnostic.
-  Diag(Loc, diag) << PrintType << Range1 << Range2;
+  Diag(Loc, PD) << T;
 
   // If the type was a forward declaration of a class/struct/union
   // type, produce 

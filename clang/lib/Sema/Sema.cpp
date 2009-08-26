@@ -19,6 +19,7 @@
 #include "clang/AST/DeclObjC.h"
 #include "clang/AST/Expr.h"
 #include "clang/Lex/Preprocessor.h"
+#include "clang/Basic/PartialDiagnostic.h"
 #include "clang/Basic/TargetInfo.h"
 using namespace clang;
 
@@ -362,6 +363,15 @@ Sema::SemaDiagnosticBuilder::~SemaDiagnosticBuilder() {
   }
 }
 
+Sema::SemaDiagnosticBuilder
+Sema::Diag(SourceLocation Loc, const PartialDiagnostic& PD) {
+  SemaDiagnosticBuilder Builder(Diag(Loc, PD.getDiagID()));
+  PD.Emit(Builder);
+  
+  return Builder;
+}
+
 void Sema::ActOnComment(SourceRange Comment) {
   Context.Comments.push_back(Comment);
 }
+

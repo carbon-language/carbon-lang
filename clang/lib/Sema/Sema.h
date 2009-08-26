@@ -401,6 +401,9 @@ public:
     return SemaDiagnosticBuilder(DB, *this, DiagID);
   }
 
+  /// \brief Emit a partial diagnostic.
+  SemaDiagnosticBuilder Diag(SourceLocation Loc, const PartialDiagnostic& PD);
+
   virtual void DeleteExpr(ExprTy *E);
   virtual void DeleteStmt(StmtTy *S);
 
@@ -484,7 +487,9 @@ public:
                               SourceRange Range1 = SourceRange(),
                               SourceRange Range2 = SourceRange(),
                               QualType PrintType = QualType());
-
+  bool RequireCompleteType(SourceLocation Loc, QualType T,
+                           const PartialDiagnostic &PD);
+  
   QualType getQualifiedNameType(const CXXScopeSpec &SS, QualType T);
 
   QualType BuildTypeofExprType(Expr *E);
