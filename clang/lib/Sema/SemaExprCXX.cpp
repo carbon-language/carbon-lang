@@ -1683,7 +1683,7 @@ Expr *Sema::MaybeCreateCXXExprWithTemporaries(Expr *SubExpr,
 }
 
 Sema::OwningExprResult
-Sema::ActOnPseudoDtorReferenceExpr(Scope *S, ExprArg Base,
+Sema::ActOnDestructorReferenceExpr(Scope *S, ExprArg Base,
                                    SourceLocation OpLoc,
                                    tok::TokenKind OpKind,
                                    SourceLocation ClassNameLoc,

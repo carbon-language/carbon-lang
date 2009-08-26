@@ -1920,9 +1920,9 @@ public:
                                                SourceLocation LParen,
                                                TypeTy *Ty,
                                                SourceLocation RParen);
-
+  
   virtual OwningExprResult
-  ActOnPseudoDtorReferenceExpr(Scope *S, ExprArg Base,
+  ActOnDestructorReferenceExpr(Scope *S, ExprArg Base,
                                SourceLocation OpLoc,
                                tok::TokenKind OpKind,
                                SourceLocation ClassNameLoc,

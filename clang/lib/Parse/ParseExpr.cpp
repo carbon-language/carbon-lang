@@ -951,7 +951,7 @@ Parser::ParsePostfixExpressionSuffix(OwningExprResult LHS) {
         }
         
         if (!LHS.isInvalid())
-          LHS = Actions.ActOnPseudoDtorReferenceExpr(CurScope, move(LHS), 
+          LHS = Actions.ActOnDestructorReferenceExpr(CurScope, move(LHS), 
                                                      OpLoc, OpKind,
                                                      Tok.getLocation(), 
                                                      Tok.getIdentifierInfo(),

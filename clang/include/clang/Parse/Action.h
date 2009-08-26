@@ -1263,8 +1263,11 @@ public:
     return ExprEmpty();
   }
 
+  /// ActOnDestructorReferenceExpr - Parsed a destructor reference, for example:
+  ///
+  /// t->~T();
   virtual OwningExprResult
-  ActOnPseudoDtorReferenceExpr(Scope *S, ExprArg Base,
+  ActOnDestructorReferenceExpr(Scope *S, ExprArg Base,
                                SourceLocation OpLoc,
                                tok::TokenKind OpKind,
                                SourceLocation ClassNameLoc,
