@@ -126,7 +126,7 @@ void CodeGenFunction::StartObjCMethod(const ObjCMethodDecl *OMD,
 /// its pointer, name, and types registered in the class struture.  
 void CodeGenFunction::GenerateObjCMethod(const ObjCMethodDecl *OMD) {
   // Check if we should generate debug info for this method.
-  if (CGM.getDebugInfo() && !OMD->hasAttr<NodebugAttr>())
+  if (CGM.getDebugInfo() && !OMD->hasAttr<NoDebugAttr>())
     DebugInfo = CGM.getDebugInfo();
   StartObjCMethod(OMD, OMD->getClassInterface());
   EmitStmt(OMD->getBody());

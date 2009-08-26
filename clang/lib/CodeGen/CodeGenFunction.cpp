@@ -202,7 +202,7 @@ void CodeGenFunction::StartFunction(const Decl *D, QualType RetTy,
 void CodeGenFunction::GenerateCode(const FunctionDecl *FD,
                                    llvm::Function *Fn) {
   // Check if we should generate debug info for this function.
-  if (CGM.getDebugInfo() && !FD->hasAttr<NodebugAttr>())
+  if (CGM.getDebugInfo() && !FD->hasAttr<NoDebugAttr>())
     DebugInfo = CGM.getDebugInfo();
   
   FunctionArgList Args;

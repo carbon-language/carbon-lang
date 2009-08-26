@@ -548,10 +548,10 @@ Attr *PCHReader::ReadAttributes() {
       break;
 
     SIMPLE_ATTR(Malloc);
+    SIMPLE_ATTR(NoDebug);
+    SIMPLE_ATTR(NoInline);
     SIMPLE_ATTR(NoReturn);
     SIMPLE_ATTR(NoThrow);
-    SIMPLE_ATTR(Nodebug);
-    SIMPLE_ATTR(Noinline);
     
     case Attr::NonNull: {
       unsigned Size = Record[Idx++];

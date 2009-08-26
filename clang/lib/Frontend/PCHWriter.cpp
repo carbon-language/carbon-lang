@@ -1673,10 +1673,10 @@ void PCHWriter::WriteAttributeRecord(const Attr *Attr) {
     case Attr::GNUInline:
     case Attr::IBOutletKind:
     case Attr::Malloc:
+    case Attr::NoDebug:
     case Attr::NoReturn:
     case Attr::NoThrow:
-    case Attr::Nodebug:
-    case Attr::Noinline:
+    case Attr::NoInline:
       break;
 
     case Attr::NonNull: {

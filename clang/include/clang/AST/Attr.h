@@ -63,11 +63,11 @@ public:
     GNUInline,
     IBOutletKind, // Clang-specific.  Use "Kind" suffix to not conflict with
     Malloc,
+    NoDebug,
+    NoInline,
+    NonNull,
     NoReturn,
     NoThrow,
-    Nodebug,
-    Noinline,
-    NonNull,
     ObjCException,
     ObjCNSObject,
     CFReturnsRetained,   // Clang/Checker-specific.
@@ -496,9 +496,9 @@ public:
   static bool classof(const CleanupAttr *A) { return true; }
 };
 
-DEF_SIMPLE_ATTR(Nodebug);
+DEF_SIMPLE_ATTR(NoDebug);
 DEF_SIMPLE_ATTR(WarnUnusedResult);  
-DEF_SIMPLE_ATTR(Noinline);
+DEF_SIMPLE_ATTR(NoInline);
 
 class RegparmAttr : public Attr {
   unsigned NumParams;

@@ -1635,7 +1635,7 @@ static void HandleModeAttr(Decl *D, const AttributeList &Attr, Sema &S) {
     cast<ValueDecl>(D)->setType(NewTy);
 }
 
-static void HandleNodebugAttr(Decl *d, const AttributeList &Attr, Sema &S) {
+static void HandleNoDebugAttr(Decl *d, const AttributeList &Attr, Sema &S) {
   // check the attribute arguments.
   if (Attr.getNumArgs() > 0) {
     S.Diag(Attr.getLoc(), diag::err_attribute_wrong_number_arguments) << 0;
@@ -1648,10 +1648,10 @@ static void HandleNodebugAttr(Decl *d, const AttributeList &Attr, Sema &S) {
     return;
   }
 
-  d->addAttr(::new (S.Context) NodebugAttr());
+  d->addAttr(::new (S.Context) NoDebugAttr());
 }
 
-static void HandleNoinlineAttr(Decl *d, const AttributeList &Attr, Sema &S) {
+static void HandleNoInlineAttr(Decl *d, const AttributeList &Attr, Sema &S) {
   // check the attribute arguments.
   if (Attr.getNumArgs() != 0) {
     S.Diag(Attr.getLoc(), diag::err_attribute_wrong_number_arguments) << 0;
@@ -1664,7 +1664,7 @@ static void HandleNoinlineAttr(Decl *d, const AttributeList &Attr, Sema &S) {
     return;
   }
 
-  d->addAttr(::new (S.Context) NoinlineAttr());
+  d->addAttr(::new (S.Context) NoInlineAttr());
 }
 
 static void HandleGNUInlineAttr(Decl *d, const AttributeList &Attr, Sema &S) {
@@ -1843,8 +1843,8 @@ static void ProcessDeclAttribute(Scope *scope, Decl *D,
   case AttributeList::AT_const:       HandleConstAttr     (D, Attr, S); break;
   case AttributeList::AT_pure:        HandlePureAttr      (D, Attr, S); break;
   case AttributeList::AT_cleanup:     HandleCleanupAttr   (D, Attr, S); break;
-  case AttributeList::AT_nodebug:     HandleNodebugAttr   (D, Attr, S); break;
-  case AttributeList::AT_noinline:    HandleNoinlineAttr  (D, Attr, S); break;
+  case AttributeList::AT_nodebug:     HandleNoDebugAttr   (D, Attr, S); break;
+  case AttributeList::AT_noinline:    HandleNoInlineAttr  (D, Attr, S); break;
   case AttributeList::AT_regparm:     HandleRegparmAttr   (D, Attr, S); break;
   case AttributeList::IgnoredAttribute:
   case AttributeList::AT_no_instrument_function:  // Interacts with -pg.
