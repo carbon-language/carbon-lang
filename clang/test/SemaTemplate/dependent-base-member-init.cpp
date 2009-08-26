@@ -1,5 +1,9 @@
 // RUN: clang-cc -fsyntax-only -verify %s
 
+// PR4381
+template<class T> struct X {};
+template<typename T> struct Y : public X<T>::X { };
+
 // PR4621
 class A1 {
   A1(int x) {}

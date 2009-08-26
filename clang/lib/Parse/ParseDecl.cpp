@@ -2248,7 +2248,7 @@ void Parser::ParseDirectDeclarator(Declarator &D) {
       } else if (Tok.is(tok::tilde)) {
         // This should be a C++ destructor.
         SourceLocation TildeLoc = ConsumeToken();
-        if (Tok.is(tok::identifier)) {
+        if (Tok.is(tok::identifier) || Tok.is(tok::annot_template_id)) {
           // FIXME: Inaccurate.
           SourceLocation NameLoc = Tok.getLocation();
           SourceLocation EndLoc;

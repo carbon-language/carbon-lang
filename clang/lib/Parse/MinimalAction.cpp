@@ -143,7 +143,8 @@ void MinimalAction::ActOnTranslationUnitScope(SourceLocation Loc, Scope *S) {
 /// FIXME: Use the passed CXXScopeSpec for accurate C++ type checking.
 Action::TypeTy *
 MinimalAction::getTypeName(IdentifierInfo &II, SourceLocation Loc,
-                           Scope *S, const CXXScopeSpec *SS) {
+                           Scope *S, const CXXScopeSpec *SS,
+                           bool isClassName) {
   if (TypeNameInfo *TI = II.getFETokenInfo<TypeNameInfo>())
     if (TI->isTypeName)
       return TI;

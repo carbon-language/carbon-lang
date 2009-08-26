@@ -457,7 +457,8 @@ Parser::TypeResult Parser::ParseClassName(SourceLocation &EndLocation,
 
   // We have an identifier; check whether it is actually a type.
   TypeTy *Type = Actions.getTypeName(*Tok.getIdentifierInfo(), 
-                                     Tok.getLocation(), CurScope, SS);
+                                     Tok.getLocation(), CurScope, SS,
+                                     true);
   if (!Type) {
     Diag(Tok, DestrExpected ? diag::err_destructor_class_name 
                             : diag::err_expected_class_name);

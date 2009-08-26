@@ -170,11 +170,27 @@ public:
   
   /// getTypeName - Return non-null if the specified identifier is a type name
   /// in the current scope.
-  /// An optional CXXScopeSpec can be passed to indicate the C++ scope (class or
-  /// namespace) that the identifier must be a member of.
-  /// i.e. for "foo::bar", 'II' will be "bar" and 'SS' will be "foo::".
+  ///
+  /// \param II the identifier for which we are performing name lookup
+  ///
+  /// \param NameLoc the location of the identifier
+  ///
+  /// \param S the scope in which this name lookup occurs
+  ///
+  /// \param SS if non-NULL, the C++ scope specifier that precedes the 
+  /// identifier
+  ///
+  /// \param isClassName whether this is a C++ class-name production, in 
+  /// which we can end up referring to a member of an unknown specialization 
+  /// that we know (from the grammar) is supposed to be a type. For example,
+  /// this occurs when deriving from "std::vector<T>::allocator_type", where T 
+  /// is a template parameter.
+  ///
+  /// \returns the type referred to by this identifier, or NULL if the type
+  /// does not name an identifier.
   virtual TypeTy *getTypeName(IdentifierInfo &II, SourceLocation NameLoc,
-                              Scope *S, const CXXScopeSpec *SS = 0) = 0;
+                              Scope *S, const CXXScopeSpec *SS = 0,
+                              bool isClassName = false) = 0;
 
   /// isTagName() - This method is called *for error recovery purposes only*
   /// to determine if the specified name is a valid tag name ("struct foo").  If
@@ -2009,8 +2025,27 @@ public:
 
   /// getTypeName - This looks at the IdentifierInfo::FETokenInfo field to
   /// determine whether the name is a typedef or not in this scope.
+  ///
+  /// \param II the identifier for which we are performing name lookup
+  ///
+  /// \param NameLoc the location of the identifier
+  ///
+  /// \param S the scope in which this name lookup occurs
+  ///
+  /// \param SS if non-NULL, the C++ scope specifier that precedes the 
+  /// identifier
+  ///
+  /// \param isClassName whether this is a C++ class-name production, in 
+  /// which we can end up referring to a member of an unknown specialization 
+  /// that we know (from the grammar) is supposed to be a type. For example,
+  /// this occurs when deriving from "std::vector<T>::allocator_type", where T 
+  /// is a template parameter.
+  ///
+  /// \returns the type referred to by this identifier, or NULL if the type
+  /// does not name an identifier.
   virtual TypeTy *getTypeName(IdentifierInfo &II, SourceLocation NameLoc,
-                              Scope *S, const CXXScopeSpec *SS);
+                              Scope *S, const CXXScopeSpec *SS,
+                              bool isClassName = false);
 
   /// isCurrentClassName - Always returns false, because MinimalAction
   /// does not support C++ classes with constructors.

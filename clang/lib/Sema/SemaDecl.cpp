@@ -60,7 +60,8 @@ Sema::DeclGroupPtrTy Sema::ConvertDeclToDeclGroup(DeclPtrTy Ptr) {
 /// If name lookup results in an ambiguity, this routine will complain
 /// and then return NULL.
 Sema::TypeTy *Sema::getTypeName(IdentifierInfo &II, SourceLocation NameLoc,
-                                Scope *S, const CXXScopeSpec *SS) {
+                                Scope *S, const CXXScopeSpec *SS,
+                                bool isClassName) {
   // C++ [temp.res]p3:
   //   A qualified-id that refers to a type and in which the
   //   nested-name-specifier depends on a template-parameter (14.6.2)
@@ -70,8 +71,17 @@ Sema::TypeTy *Sema::getTypeName(IdentifierInfo &II, SourceLocation NameLoc,
   //
   // We therefore do not perform any name lookup if the result would
   // refer to a member of an unknown specialization.
-  if (SS && isUnknownSpecialization(*SS))
-    return 0;
+  if (SS && isUnknownSpecialization(*SS)) {
+    if (!isClassName)
+      return 0;
+    
+    // We know from the grammar that this name refers to a type, so build a 
+    // TypenameType node to describe the type.
+    // FIXME: Record somewhere that this TypenameType node has no "typename"
+    // keyword associated with it.
+    return CheckTypenameType((NestedNameSpecifier *)SS->getScopeRep(),
+                             II, SS->getRange()).getAsOpaquePtr();
+  }
   
   LookupResult Result 
     = LookupParsedName(S, SS, &II, LookupOrdinaryName, false, false);

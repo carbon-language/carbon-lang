@@ -501,7 +501,8 @@ public:
   DeclGroupPtrTy ConvertDeclToDeclGroup(DeclPtrTy Ptr);
 
   virtual TypeTy *getTypeName(IdentifierInfo &II, SourceLocation NameLoc, 
-                              Scope *S, const CXXScopeSpec *SS);
+                              Scope *S, const CXXScopeSpec *SS,
+                              bool isClassName = false);
   virtual DeclSpec::TST isTagName(IdentifierInfo &II, Scope *S);
   
   virtual DeclPtrTy ActOnDeclarator(Scope *S, Declarator &D) {
