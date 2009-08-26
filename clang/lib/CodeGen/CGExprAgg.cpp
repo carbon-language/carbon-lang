@@ -177,7 +177,12 @@ void AggExprEmitter::VisitCastExpr(CastExpr *E) {
                                LValue::MakeAddr(CastPtr, 0));
     return;
   }
-
+  if (E->getCastKind() == CastExpr::CK_UserDefinedConversion) {
+    CXXFunctionalCastExpr *CXXFExpr = cast<CXXFunctionalCastExpr>(E);
+    CGF.EmitCXXFunctionalCastExpr(CXXFExpr);
+    return;
+  }
+  
   // FIXME: Remove the CK_Unknown check here.
   assert((E->getCastKind() == CastExpr::CK_NoOp || 
           E->getCastKind() == CastExpr::CK_Unknown) && 
