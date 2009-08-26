@@ -13,11 +13,12 @@
 
 #include "SemaInherit.h"
 #include "Sema.h"
-#include "clang/AST/ExprCXX.h"
 #include "clang/AST/ASTContext.h"
-#include "clang/Parse/DeclSpec.h"
-#include "clang/Lex/Preprocessor.h"
+#include "clang/AST/ExprCXX.h"
+#include "clang/Basic/PartialDiagnostic.h"
 #include "clang/Basic/TargetInfo.h"
+#include "clang/Lex/Preprocessor.h"
+#include "clang/Parse/DeclSpec.h"
 #include "llvm/ADT/STLExtras.h"
 using namespace clang;
 
@@ -147,9 +148,9 @@ bool Sema::CheckCXXThrowOperand(SourceLocation ThrowLoc, Expr *&E) {
   }
   if (!isPointer || !Ty->isVoidType()) {
     if (RequireCompleteType(ThrowLoc, Ty,
-                            isPointer ? diag::err_throw_incomplete_ptr
-                                      : diag::err_throw_incomplete,
-                            E->getSourceRange(), SourceRange(), QualType()))
+                            PDiag(isPointer ? diag::err_throw_incomplete_ptr
+                                            : diag::err_throw_incomplete)
+                              << E->getSourceRange()))
       return true;
   }
 
@@ -1081,8 +1082,7 @@ Sema::OwningExprResult Sema::ActOnUnaryTypeTrait(UnaryTypeTrait OTT,
   // to be complete.
   if (OTT != UTT_IsClass && OTT != UTT_IsEnum && OTT != UTT_IsUnion) {
     if (RequireCompleteType(KWLoc, T, 
-                            diag::err_incomplete_type_used_in_type_trait_expr,
-                            SourceRange(), SourceRange(), T))
+                            diag::err_incomplete_type_used_in_type_trait_expr))
       return ExprError();
   }
 

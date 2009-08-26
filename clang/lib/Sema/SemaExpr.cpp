@@ -14,13 +14,14 @@
 #include "Sema.h"
 #include "clang/AST/ASTContext.h"
 #include "clang/AST/DeclObjC.h"
+#include "clang/AST/DeclTemplate.h"
 #include "clang/AST/ExprCXX.h"
 #include "clang/AST/ExprObjC.h"
-#include "clang/AST/DeclTemplate.h"
-#include "clang/Lex/Preprocessor.h"
-#include "clang/Lex/LiteralSupport.h"
+#include "clang/Basic/PartialDiagnostic.h"
 #include "clang/Basic/SourceManager.h"
 #include "clang/Basic/TargetInfo.h"
+#include "clang/Lex/LiteralSupport.h"
+#include "clang/Lex/Preprocessor.h"
 #include "clang/Parse/DeclSpec.h"
 #include "clang/Parse/Designator.h"
 #include "clang/Parse/Scope.h"
@@ -3989,9 +3990,9 @@ inline QualType Sema::CheckAdditionOperands( // C99 6.5.6
               !PExp->getType()->isDependentType()) ||
               PExp->getType()->isObjCObjectPointerType()) &&
              RequireCompleteType(Loc, PointeeTy,
-                                 diag::err_typecheck_arithmetic_incomplete_type,
-                                 PExp->getSourceRange(), SourceRange(),
-                                 PExp->getType()))
+                           PDiag(diag::err_typecheck_arithmetic_incomplete_type) 
+                             << PExp->getSourceRange() 
+                             << PExp->getType()))
           return QualType();
       }
       // Diagnose bad cases where we step over interface counts.
@@ -4065,10 +4066,9 @@ QualType Sema::CheckSubtractionOperands(Expr *&lex, Expr *&rex,
       ComplainAboutFunc = lex;
     } else if (!lpointee->isDependentType() &&
                RequireCompleteType(Loc, lpointee, 
-                                   diag::err_typecheck_sub_ptr_object,
-                                   lex->getSourceRange(),
-                                   SourceRange(),
-                                   lex->getType()))
+                                   PDiag(diag::err_typecheck_sub_ptr_object)
+                                     << lex->getSourceRange() 
+                                     << lex->getType()))
       return QualType();
 
     // Diagnose bad cases where we step over interface counts.
@@ -4118,10 +4118,9 @@ QualType Sema::CheckSubtractionOperands(Expr *&lex, Expr *&rex,
           ComplainAboutFunc = rex;
       } else if (!rpointee->isDependentType() &&
                  RequireCompleteType(Loc, rpointee,
-                                     diag::err_typecheck_sub_ptr_object,
-                                     rex->getSourceRange(),
-                                     SourceRange(),
-                                     rex->getType()))
+                                     PDiag(diag::err_typecheck_sub_ptr_object)
+                                       << rex->getSourceRange()
+                                       << rex->getType()))
         return QualType();
 
       if (getLangOptions().CPlusPlus) {
@@ -4772,9 +4771,9 @@ QualType Sema::CheckIncrementDecrementOperand(Expr *Op, SourceLocation OpLoc,
       Diag(OpLoc, diag::ext_gnu_ptr_func_arith)
         << ResType << Op->getSourceRange();
     } else if (RequireCompleteType(OpLoc, PointeeTy,
-                               diag::err_typecheck_arithmetic_incomplete_type,
-                                   Op->getSourceRange(), SourceRange(),
-                                   ResType))
+                           PDiag(diag::err_typecheck_arithmetic_incomplete_type)
+                             << Op->getSourceRange() 
+                             << ResType))
       return QualType();
     // Diagnose bad cases where we step over interface counts.
     else if (PointeeTy->isObjCInterfaceType() && LangOpts.ObjCNonFragileABI) {

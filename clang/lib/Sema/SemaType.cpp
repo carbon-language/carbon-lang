@@ -1771,12 +1771,7 @@ void Sema::ProcessTypeAttributeList(QualType &Result, const AttributeList *AL) {
 /// @returns @c true if @p T is incomplete and a diagnostic was emitted,
 /// @c false otherwise.
 bool Sema::RequireCompleteType(SourceLocation Loc, QualType T, unsigned diag,
-                               SourceRange Range1, SourceRange Range2,
-                               QualType PrintType) {
-  if (!PrintType.isNull())
-    return RequireCompleteType(Loc, T, 
-                               PDiag(diag) << Range1 << Range2 << PrintType);
-  
+                               SourceRange Range1, SourceRange Range2) {
   return RequireCompleteType(Loc, T, 
                              PDiag(diag) << Range1 << Range2);
 }
