@@ -14,6 +14,7 @@
 #include "AsmParser.h"
 
 #include "AsmExpr.h"
+#include "llvm/ADT/SmallString.h"
 #include "llvm/ADT/Twine.h"
 #include "llvm/MC/MCContext.h"
 #include "llvm/MC/MCInst.h"
@@ -24,6 +25,48 @@
 #include "llvm/Support/raw_ostream.h"
 #include "llvm/Target/TargetAsmParser.h"
 using namespace llvm;
+
+// Mach-O section uniquing.
+//
+// FIXME: Figure out where this should live, it should be shared by
+// TargetLoweringObjectFile.
+typedef StringMap<const MCSectionMachO*> MachOUniqueMapTy;
+
+AsmParser::~AsmParser() {
+  // If we have the MachO uniquing map, free it.
+  delete (MachOUniqueMapTy*)SectionUniquingMap;
+}
+
+const MCSection *AsmParser::getMachOSection(const StringRef &Segment,
+                                            const StringRef &Section,
+                                            unsigned TypeAndAttributes,
+                                            unsigned Reserved2,
+                                            SectionKind Kind) const {
+  // We unique sections by their segment/section pair.  The returned section
+  // may not have the same flags as the requested section, if so this should be
+  // diagnosed by the client as an error.
+  
+  // Create the map if it doesn't already exist.
+  if (SectionUniquingMap == 0)
+    SectionUniquingMap = new MachOUniqueMapTy();
+  MachOUniqueMapTy &Map = *(MachOUniqueMapTy*)SectionUniquingMap;
+  
+  // Form the name to look up.
+  SmallString<64> Name;
+  Name += Segment;
+  Name.push_back(',');
+  Name += Section;
+
+  // Do the lookup, if we have a hit, return it.
+  const MCSectionMachO *&Entry = Map[Name.str()];
+
+  // FIXME: This should validate the type and attributes.
+  if (Entry) return Entry;
+
+  // Otherwise, return a new section.
+  return Entry = MCSectionMachO::Create(Segment, Section, TypeAndAttributes,
+                                        Reserved2, Kind, Ctx);
+}
 
 void AsmParser::Warning(SMLoc L, const Twine &Msg) {
   Lexer.PrintMessage(L, Msg.str(), "warning");
@@ -40,6 +83,15 @@ bool AsmParser::TokError(const char *Msg) {
 }
 
 bool AsmParser::Run() {
+  // Create the initial section.
+  //
+  // FIXME: Support -n.
+  // FIXME: Target hook & command line option for initial section.
+  Out.SwitchSection(getMachOSection("__TEXT", "__text",
+                                    MCSectionMachO::S_ATTR_PURE_INSTRUCTIONS,
+                                    0, SectionKind()));
+
+
   // Prime the lexer.
   Lexer.Lex();
   
@@ -770,15 +822,9 @@ bool AsmParser::ParseDirectiveDarwinSection() {
   if (!ErrorStr.empty())
     return Error(Loc, ErrorStr.c_str());
   
-  // FIXME: CACHE THESE.
-  
   // FIXME: Arch specific.
-  MCSection *S = 0; //Ctx.GetSection(Section);
-  if (S == 0)
-    S = MCSectionMachO::Create(Segment, Section, TAA, StubSize,
-                               SectionKind(), Ctx);
-  
-  Out.SwitchSection(S);
+  Out.SwitchSection(getMachOSection(Segment, Section, TAA, StubSize,
+                                    SectionKind()));
   return false;
 }
 
@@ -792,13 +838,8 @@ bool AsmParser::ParseDirectiveSectionSwitch(const char *Segment,
   Lexer.Lex();
   
   // FIXME: Arch specific.
-  // FIXME: Cache this!
-  MCSection *S = 0; // Ctx.GetSection(Section);
-  if (S == 0)
-    S = MCSectionMachO::Create(Segment, Section, TAA, StubSize,
-                               SectionKind(), Ctx);
-  
-  Out.SwitchSection(S);
+  Out.SwitchSection(getMachOSection(Segment, Section, TAA, StubSize,
+                                    SectionKind()));
 
   // Set the implicit alignment, if any.
   //

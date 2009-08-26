@@ -18,6 +18,7 @@
 #include "AsmLexer.h"
 #include "AsmCond.h"
 #include "llvm/MC/MCAsmParser.h"
+#include "llvm/MC/MCSectionMachO.h"
 #include "llvm/MC/MCStreamer.h"
 
 namespace llvm {
@@ -40,10 +41,15 @@ private:
   AsmCond TheCondState;
   std::vector<AsmCond> TheCondStack;
 
+  // FIXME: Figure out where this should leave, the code is a copy of that which
+  // is also used by TargetLoweringObjectFile.
+  mutable void *SectionUniquingMap;
+
 public:
   AsmParser(SourceMgr &_SM, MCContext &_Ctx, MCStreamer &_Out)
-    : Lexer(_SM), Ctx(_Ctx), Out(_Out), TargetParser(0) {}
-  ~AsmParser() {}
+    : Lexer(_SM), Ctx(_Ctx), Out(_Out), TargetParser(0),
+      SectionUniquingMap(0) {}
+  ~AsmParser();
 
   bool Run();
   
@@ -70,6 +76,13 @@ public:
 
 private:
   MCSymbol *CreateSymbol(StringRef Name);
+
+  // FIXME: See comment on SectionUniquingMap.
+  const MCSection *getMachOSection(const StringRef &Segment,
+                                   const StringRef &Section,
+                                   unsigned TypeAndAttributes,
+                                   unsigned Reserved2,
+                                   SectionKind Kind) const;
 
   bool ParseStatement();
 

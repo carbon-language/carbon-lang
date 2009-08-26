@@ -1,5 +1,8 @@
 // RUN: llvm-mc -triple i386-apple-darwin9 %s -filetype=obj -o - | macho-dump | FileCheck %s
 
+        .text
+	.section	__TEXT,__text,regular,pure_instructions
+        
         .const
         .static_const
         .cstring
