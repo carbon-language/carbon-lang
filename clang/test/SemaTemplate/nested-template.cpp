@@ -87,3 +87,7 @@ Y Outer<X>::Inner1<Y>::value2 = Y();
 template<typename X>
 template<typename Y>
 Y Outer<X>::Inner1<Y>::ReallyInner::value3 = Y();
+
+template<typename X>
+template<typename Y>
+Y Outer<X>::Inner1<Y*>::ReallyInner::value4; // expected-error{{Outer<X>::Inner1<Y *>::ReallyInner::}}

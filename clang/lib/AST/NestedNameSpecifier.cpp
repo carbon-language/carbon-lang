@@ -131,15 +131,33 @@ NestedNameSpecifier::print(llvm::raw_ostream &OS,
     std::string TypeStr;
     Type *T = getAsType();
 
-    // If this is a qualified name type, suppress the qualification:
-    // it's part of our nested-name-specifier sequence anyway.  FIXME:
-    // We should be able to assert that this doesn't happen.
-    if (const QualifiedNameType *QualT = dyn_cast<QualifiedNameType>(T))
-      T = QualT->getNamedType().getTypePtr();
-    
     PrintingPolicy InnerPolicy(Policy);
     InnerPolicy.SuppressTagKind = true;
-    T->getAsStringInternal(TypeStr, InnerPolicy);
+    
+    // Nested-name-specifiers are intended to contain minimally-qualified
+    // types. An actual QualifiedNameType will not occur, since we'll store
+    // just the type that is referred to in the nested-name-specifier (e.g.,
+    // a TypedefType, TagType, etc.). However, when we are dealing with
+    // dependent template-id types (e.g., Outer<T>::template Inner<U>), 
+    // the type requires its own nested-name-specifier for uniqueness, so we
+    // suppress that nested-name-specifier during printing.
+    assert(!isa<QualifiedNameType>(T) && 
+           "Qualified name type in nested-name-specifier");
+    if (const TemplateSpecializationType *SpecType
+          = dyn_cast<TemplateSpecializationType>(T)) {
+      // Print the template name without its corresponding 
+      // nested-name-specifier.
+      SpecType->getTemplateName().print(OS, InnerPolicy, true);
+      
+      // Print the template argument list.
+      TypeStr = TemplateSpecializationType::PrintTemplateArgumentList(
+                                                          SpecType->getArgs(), 
+                                                       SpecType->getNumArgs(), 
+                                                                 InnerPolicy);
+    } else {
+      // Print the type normally
+      T->getAsStringInternal(TypeStr, InnerPolicy);
+    }
     OS << TypeStr;
     break;
   }

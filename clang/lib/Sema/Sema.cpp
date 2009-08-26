@@ -79,8 +79,7 @@ static void ConvertArgToStringFn(Diagnostic::ArgumentKind Kind, intptr_t Val,
     else
       assert(ModLen == 0 && ArgLen == 0 &&
              "Invalid modifier for DeclarationName argument");
-  } else {
-    assert(Kind == Diagnostic::ak_nameddecl);
+  } else if (Kind == Diagnostic::ak_nameddecl) {
     if (ModLen == 1 && Modifier[0] == 'q' && ArgLen == 0)
       S = reinterpret_cast<NamedDecl*>(Val)->getQualifiedNameAsString();
     else { 
@@ -88,6 +87,11 @@ static void ConvertArgToStringFn(Diagnostic::ArgumentKind Kind, intptr_t Val,
            "Invalid modifier for NamedDecl* argument");
       S = reinterpret_cast<NamedDecl*>(Val)->getNameAsString();
     }
+  } else {
+    llvm::raw_string_ostream OS(S);
+    assert(Kind == Diagnostic::ak_nestednamespec);
+    reinterpret_cast<NestedNameSpecifier*> (Val)->print(OS, 
+                                                        Context.PrintingPolicy);
   }
   
   Output.push_back('\'');

@@ -1633,7 +1633,7 @@ Sema::HandleDeclarator(Scope *S, Declarator &D,
         << D.getDeclSpec().getSourceRange() << D.getSourceRange();
     return DeclPtrTy();
   }
-  
+   
   // The scope passed in may not be a decl scope.  Zip up the scope tree until
   // we find one that is.
   while ((S->getFlags() & Scope::DeclScope) == 0 ||
@@ -1701,7 +1701,19 @@ Sema::HandleDeclarator(Scope *S, Declarator &D,
                           D.getIdentifierLoc());
   } else { // Something like "int foo::x;"
     DC = computeDeclContext(D.getCXXScopeSpec(), true);
-    // FIXME: RequireCompleteDeclContext(D.getCXXScopeSpec()); ?
+    
+    if (!DC) {
+      // If we could not compute the declaration context, it's because the
+      // declaration context is dependent but does not refer to a class,
+      // class template, or class template partial specialization. Complain
+      // and return early, to avoid the coming semantic disaster.
+      Diag(D.getIdentifierLoc(), 
+           diag::err_template_qualified_declarator_no_match)
+        << (NestedNameSpecifier*)D.getCXXScopeSpec().getScopeRep()
+        << D.getCXXScopeSpec().getRange();
+      return DeclPtrTy();
+    }
+    
     PrevDecl = LookupQualifiedName(DC, Name, LookupOrdinaryName, true);
 
     // C++ 7.3.1.2p2:

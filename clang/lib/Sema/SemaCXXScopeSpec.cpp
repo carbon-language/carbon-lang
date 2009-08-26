@@ -79,17 +79,6 @@ DeclContext *Sema::computeDeclContext(const CXXScopeSpec &SS,
         // The nested name specifier refers to a member of a class template.
         return RecordT->getDecl();
       }
-      
-      std::string NNSString;
-      {
-        llvm::raw_string_ostream OS(NNSString);
-        NNS->print(OS, Context.PrintingPolicy);
-      }
-      
-      // FIXME: Allow us to pass a nested-name-specifier to Diag?
-      Diag(SS.getRange().getBegin(), 
-           diag::err_template_qualified_declarator_no_match)
-        << NNSString << SS.getRange();
     }
     
     return 0;
@@ -298,6 +287,9 @@ Sema::CXXScopeTy *Sema::ActOnCXXNestedNameSpecifier(Scope *S,
                                            T.getTypePtr());
     }
     
+    // FIXME: It would be nice to maintain the namespace alias name, then
+    // see through that alias when resolving the nested-name-specifier down to
+    // a declaration context.
     if (NamespaceAliasDecl *Alias = dyn_cast<NamespaceAliasDecl>(SD))
       return NestedNameSpecifier::Create(Context, Prefix,
                                          Alias->getNamespace());
@@ -404,8 +396,6 @@ void Sema::ActOnCXXEnterDeclaratorScope(Scope *S, const CXXScopeSpec &SS) {
   assert(SS.isSet() && "Parser passed invalid CXXScopeSpec.");
   if (DeclContext *DC = computeDeclContext(SS, true))
     EnterDeclaratorContext(S, DC);
-  else
-    const_cast<CXXScopeSpec&>(SS).setScopeRep(0);
 }
 
 /// ActOnCXXExitDeclaratorScope - Called when a declarator that previously
@@ -415,8 +405,8 @@ void Sema::ActOnCXXEnterDeclaratorScope(Scope *S, const CXXScopeSpec &SS) {
 /// defining scope.
 void Sema::ActOnCXXExitDeclaratorScope(Scope *S, const CXXScopeSpec &SS) {
   assert(SS.isSet() && "Parser passed invalid CXXScopeSpec.");
-  assert((SS.isInvalid() || S->getEntity() == computeDeclContext(SS, true)) && 
-         "Context imbalance!");
-  if (!SS.isInvalid())
+  if (SS.isInvalid())
+    return;
+  if (computeDeclContext(SS, true))
     ExitDeclaratorContext(S);
 }
