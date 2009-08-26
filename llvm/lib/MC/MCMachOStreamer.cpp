@@ -159,7 +159,14 @@ void MCMachOStreamer::EmitLabel(MCSymbol *Symbol) {
 }
 
 void MCMachOStreamer::EmitAssemblerFlag(AssemblerFlag Flag) {
-  llvm_unreachable("FIXME: Not yet implemented!");
+  switch (Flag) {
+  default:
+    llvm_unreachable("FIXME: Not yet implemented!");
+
+  case SubsectionsViaSymbols:
+    Assembler.setSubsectionsViaSymbols(true);
+    break;
+  }
 }
 
 void MCMachOStreamer::EmitAssignment(MCSymbol *Symbol,

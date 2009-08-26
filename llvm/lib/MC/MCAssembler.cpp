@@ -48,6 +48,10 @@ class MachObjectWriter {
     HFT_Object = 0x1
   };
 
+  enum HeaderFlags {
+    HF_SubsectionsViaSymbols = 0x2000
+  };
+
   enum LoadCommandType {
     LCT_Segment = 0x1,
     LCT_Symtab = 0x2,
@@ -167,7 +171,13 @@ public:
 
   /// @}
   
-  void WriteHeader32(unsigned NumLoadCommands, unsigned LoadCommandsSize) {
+  void WriteHeader32(unsigned NumLoadCommands, unsigned LoadCommandsSize,
+                     bool SubsectionsViaSymbols) {
+    uint32_t Flags = 0;
+
+    if (SubsectionsViaSymbols)
+      Flags |= HF_SubsectionsViaSymbols;
+
     // struct mach_header (28 bytes)
 
     uint64_t Start = OS.tell();
@@ -177,16 +187,13 @@ public:
 
     // FIXME: Support cputype.
     Write32(TargetMachOWriterInfo::HDR_CPU_TYPE_I386);
-
     // FIXME: Support cpusubtype.
     Write32(TargetMachOWriterInfo::HDR_CPU_SUBTYPE_I386_ALL);
-
     Write32(HFT_Object);
-
-    // Object files have a single load command, the segment.
-    Write32(NumLoadCommands);
+    Write32(NumLoadCommands);    // Object files have a single load command, the
+                                 // segment.
     Write32(LoadCommandsSize);
-    Write32(0); // Flags
+    Write32(Flags);
 
     assert(OS.tell() - Start == Header32Size);
   }
@@ -674,7 +681,8 @@ public:
     }
 
     // Write the prolog, starting with the header and load command...
-    WriteHeader32(NumLoadCommands, LoadCommandsSize);
+    WriteHeader32(NumLoadCommands, LoadCommandsSize,
+                  Asm.getSubsectionsViaSymbols());
     WriteSegmentLoadCommand32(NumSections, SectionDataStart, SectionDataSize);
   
     // ... and then the section headers.
@@ -864,7 +872,11 @@ MCSymbolData::MCSymbolData(MCSymbol &_Symbol, MCFragment *_Fragment,
 
 /* *** */
 
-MCAssembler::MCAssembler(raw_ostream &_OS) : OS(_OS) {}
+MCAssembler::MCAssembler(raw_ostream &_OS)
+  : OS(_OS),
+    SubsectionsViaSymbols(false)
+{
+}
 
 MCAssembler::~MCAssembler() {
 }

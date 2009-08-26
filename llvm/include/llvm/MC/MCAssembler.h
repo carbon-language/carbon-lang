@@ -496,6 +496,8 @@ private:
 
   std::vector<IndirectSymbolData> IndirectSymbols;
 
+  unsigned SubsectionsViaSymbols : 1;
+
 private:
   /// LayoutSection - Assign offsets and sizes to the fragments in the section
   /// \arg SD, and update the section size. The section file offset should
@@ -520,6 +522,14 @@ public:
 
   /// Finish - Do final processing and write the object to the output stream.
   void Finish();
+
+  // FIXME: This does not belong here.
+  bool getSubsectionsViaSymbols() const {
+    return SubsectionsViaSymbols;
+  }
+  void setSubsectionsViaSymbols(bool Value) {
+    SubsectionsViaSymbols = Value;
+  }
 
   /// @name Section List Access
   /// @{
