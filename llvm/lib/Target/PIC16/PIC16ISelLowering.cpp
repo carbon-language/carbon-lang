@@ -533,6 +533,10 @@ SDValue PIC16TargetLowering::ExpandStore(SDNode *N, SelectionDAG &DAG) {
     SDValue SrcLo, SrcHi;
     GetExpandedParts(Src, DAG, SrcLo, SrcHi);
     SDValue ChainLo = Chain, ChainHi = Chain;
+    // FIXME: This makes unsafe assumptions. The Chain may be a TokenFactor
+    // created for an unrelated purpose, in which case it may not have
+    // exactly two operands. Also, even if it does have two operands, they
+    // may not be the low and high parts of an aligned load that was split.
     if (Chain.getOpcode() == ISD::TokenFactor) {
       ChainLo = Chain.getOperand(0);
       ChainHi = Chain.getOperand(1);
@@ -560,16 +564,19 @@ SDValue PIC16TargetLowering::ExpandStore(SDNode *N, SelectionDAG &DAG) {
     GetExpandedParts(SrcHi, DAG, SrcHi1, SrcHi2);
 
     SDValue ChainLo = Chain, ChainHi = Chain;
+    // FIXME: This makes unsafe assumptions; see the FIXME above.
     if (Chain.getOpcode() == ISD::TokenFactor) {  
       ChainLo = Chain.getOperand(0);
       ChainHi = Chain.getOperand(1);
     }
     SDValue ChainLo1 = ChainLo, ChainLo2 = ChainLo, ChainHi1 = ChainHi,
             ChainHi2 = ChainHi;
+    // FIXME: This makes unsafe assumptions; see the FIXME above.
     if (ChainLo.getOpcode() == ISD::TokenFactor) {
       ChainLo1 = ChainLo.getOperand(0);
       ChainLo2 = ChainLo.getOperand(1);
     }
+    // FIXME: This makes unsafe assumptions; see the FIXME above.
     if (ChainHi.getOpcode() == ISD::TokenFactor) {
       ChainHi1 = ChainHi.getOperand(0);
       ChainHi2 = ChainHi.getOperand(1);
@@ -601,6 +608,7 @@ SDValue PIC16TargetLowering::ExpandStore(SDNode *N, SelectionDAG &DAG) {
     SDValue SrcLo, SrcHi;
     GetExpandedParts(Src, DAG, SrcLo, SrcHi);
     SDValue ChainLo = Chain, ChainHi = Chain;
+    // FIXME: This makes unsafe assumptions; see the FIXME above.
     if (Chain.getOpcode() == ISD::TokenFactor) {
       ChainLo = Chain.getOperand(0);
       ChainHi = Chain.getOperand(1);
