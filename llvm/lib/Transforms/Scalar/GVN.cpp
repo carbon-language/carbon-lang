@@ -730,10 +730,8 @@ namespace {
     void dump(DenseMap<uint32_t, Value*>& d);
     bool iterateOnFunction(Function &F);
     Value* CollapsePhi(PHINode* p);
-    bool isSafeReplacement(PHINode* p, Instruction* inst);
     bool performPRE(Function& F);
     Value* lookupNumber(BasicBlock* BB, uint32_t num);
-    bool mergeBlockIntoPredecessor(BasicBlock* BB);
     Value* AttemptRedundancyElimination(Instruction* orig, unsigned valno);
     void cleanupGlobalSets();
     void verifyRemoved(const Instruction *I) const;
@@ -758,6 +756,19 @@ void GVN::dump(DenseMap<uint32_t, Value*>& d) {
   printf("}\n");
 }
 
+static bool isSafeReplacement(PHINode* p, Instruction* inst) {
+  if (!isa<PHINode>(inst))
+    return true;
+  
+  for (Instruction::use_iterator UI = p->use_begin(), E = p->use_end();
+       UI != E; ++UI)
+    if (PHINode* use_phi = dyn_cast<PHINode>(UI))
+      if (use_phi->getParent() == inst->getParent())
+        return false;
+  
+  return true;
+}
+
 Value* GVN::CollapsePhi(PHINode* p) {
   Value* constVal = p->hasConstantValue();
   if (!constVal) return 0;
@@ -770,19 +781,6 @@ Value* GVN::CollapsePhi(PHINode* p) {
     if (isSafeReplacement(p, inst))
       return inst;
   return 0;
-}
-
-bool GVN::isSafeReplacement(PHINode* p, Instruction* inst) {
-  if (!isa<PHINode>(inst))
-    return true;
-  
-  for (Instruction::use_iterator UI = p->use_begin(), E = p->use_end();
-       UI != E; ++UI)
-    if (PHINode* use_phi = dyn_cast<PHINode>(UI))
-      if (use_phi->getParent() == inst->getParent())
-        return false;
-  
-  return true;
 }
 
 /// GetValueForBlock - Get the value to use within the specified basic block.
