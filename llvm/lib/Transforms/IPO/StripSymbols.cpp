@@ -203,56 +203,167 @@ static bool StripSymbolNames(Module &M, bool PreserveDbgInfo) {
 // llvm.dbg.region.end calls, and any globals they point to if now dead.
 static bool StripDebugInfo(Module &M) {
 
-  // Remove all of the calls to the debugger intrinsics, and remove them from
-  // the module.
+  SmallPtrSet<const GlobalValue*, 8> llvmUsedValues;
+  findUsedValues(M.getGlobalVariable("llvm.used"), llvmUsedValues);
+  findUsedValues(M.getGlobalVariable("llvm.compiler.used"), llvmUsedValues);
+
+  DebugInfoFinder DbgFinder;
+  DbgFinder.processModule(M);
+
+  // These anchors use LinkOnce linkage so that the optimizer does not
+  // remove them accidently. Set InternalLinkage for all these debug
+  // info anchors.
+  for (DebugInfoFinder::iterator I = DbgFinder.compile_unit_begin(),
+         E = DbgFinder.compile_unit_end(); I != E; ++I)
+    (*I)->setLinkage(GlobalValue::InternalLinkage);
+  for (DebugInfoFinder::iterator I = DbgFinder.global_variable_begin(),
+         E = DbgFinder.global_variable_end(); I != E; ++I)
+    (*I)->setLinkage(GlobalValue::InternalLinkage);
+  for (DebugInfoFinder::iterator I = DbgFinder.subprogram_begin(),
+         E = DbgFinder.subprogram_end(); I != E; ++I)
+    (*I)->setLinkage(GlobalValue::InternalLinkage);
+
+
+ // Delete all dbg variables.
+  for (Module::global_iterator I = M.global_begin(), E = M.global_end(); 
+       I != E; ++I) {
+    GlobalVariable *GV = dyn_cast<GlobalVariable>(I);
+    if (!GV) continue;
+    if (!GV->use_empty() && llvmUsedValues.count(I) == 0) {
+      if (GV->getName().startswith("llvm.dbg")) {
+        GV->replaceAllUsesWith(UndefValue::get(GV->getType()));
+      }
+    }
+  }
+
   Function *FuncStart = M.getFunction("llvm.dbg.func.start");
   Function *StopPoint = M.getFunction("llvm.dbg.stoppoint");
   Function *RegionStart = M.getFunction("llvm.dbg.region.start");
   Function *RegionEnd = M.getFunction("llvm.dbg.region.end");
   Function *Declare = M.getFunction("llvm.dbg.declare");
 
+  std::vector<Constant*> DeadConstants;
+
+  // Remove all of the calls to the debugger intrinsics, and remove them from
+  // the module.
   if (FuncStart) {
     while (!FuncStart->use_empty()) {
       CallInst *CI = cast<CallInst>(FuncStart->use_back());
+      Value *Arg = CI->getOperand(1);
+      assert(CI->use_empty() && "llvm.dbg intrinsic should have void result");
       CI->eraseFromParent();
+      if (Arg->use_empty())
+        if (Constant *C = dyn_cast<Constant>(Arg)) 
+          DeadConstants.push_back(C);
     }
     FuncStart->eraseFromParent();
   }
   if (StopPoint) {
     while (!StopPoint->use_empty()) {
       CallInst *CI = cast<CallInst>(StopPoint->use_back());
+      Value *Arg = CI->getOperand(3);
+      assert(CI->use_empty() && "llvm.dbg intrinsic should have void result");
       CI->eraseFromParent();
+      if (Arg->use_empty())
+        if (Constant *C = dyn_cast<Constant>(Arg)) 
+          DeadConstants.push_back(C);
     }
     StopPoint->eraseFromParent();
   }
   if (RegionStart) {
     while (!RegionStart->use_empty()) {
       CallInst *CI = cast<CallInst>(RegionStart->use_back());
+      Value *Arg = CI->getOperand(1);
+      assert(CI->use_empty() && "llvm.dbg intrinsic should have void result");
       CI->eraseFromParent();
+      if (Arg->use_empty())
+        if (Constant *C = dyn_cast<Constant>(Arg)) 
+          DeadConstants.push_back(C);
     }
     RegionStart->eraseFromParent();
   }
   if (RegionEnd) {
     while (!RegionEnd->use_empty()) {
       CallInst *CI = cast<CallInst>(RegionEnd->use_back());
+      Value *Arg = CI->getOperand(1);
+      assert(CI->use_empty() && "llvm.dbg intrinsic should have void result");
       CI->eraseFromParent();
+      if (Arg->use_empty())
+        if (Constant *C = dyn_cast<Constant>(Arg)) 
+          DeadConstants.push_back(C);
     }
     RegionEnd->eraseFromParent();
   }
   if (Declare) {
     while (!Declare->use_empty()) {
       CallInst *CI = cast<CallInst>(Declare->use_back());
+      Value *Arg1 = CI->getOperand(1);
+      Value *Arg2 = CI->getOperand(2);
+      assert(CI->use_empty() && "llvm.dbg intrinsic should have void result");
       CI->eraseFromParent();
+      if (Arg1->use_empty()) {
+        if (Constant *C = dyn_cast<Constant>(Arg1)) 
+          DeadConstants.push_back(C);
+        else 
+          RecursivelyDeleteTriviallyDeadInstructions(Arg1);
+      }
+      if (Arg2->use_empty())
+        if (Constant *C = dyn_cast<Constant>(Arg2)) 
+          DeadConstants.push_back(C);
     }
     Declare->eraseFromParent();
   }
 
-  NamedMDNode *NMD = M.getNamedMetadata("llvm.dbg.gv");
-  if (NMD)
-    NMD->eraseFromParent();
+  // llvm.dbg.compile_units and llvm.dbg.subprograms are marked as linkonce
+  // but since we are removing all debug information, make them internal now.
+  // FIXME: Use private linkage maybe?
+  if (Constant *C = M.getNamedGlobal("llvm.dbg.compile_units"))
+    if (GlobalVariable *GV = dyn_cast<GlobalVariable>(C))
+      GV->setLinkage(GlobalValue::InternalLinkage);
 
-  // Remove dead metadata.
-  M.getContext().RemoveDeadMetadata();
+  if (Constant *C = M.getNamedGlobal("llvm.dbg.subprograms"))
+    if (GlobalVariable *GV = dyn_cast<GlobalVariable>(C))
+      GV->setLinkage(GlobalValue::InternalLinkage);
+ 
+  if (Constant *C = M.getNamedGlobal("llvm.dbg.global_variables"))
+    if (GlobalVariable *GV = dyn_cast<GlobalVariable>(C))
+      GV->setLinkage(GlobalValue::InternalLinkage);
+
+  // Delete all dbg variables.
+  for (Module::global_iterator I = M.global_begin(), E = M.global_end(); 
+       I != E; ++I) {
+    GlobalVariable *GV = dyn_cast<GlobalVariable>(I);
+    if (!GV) continue;
+    if (GV->use_empty() && llvmUsedValues.count(I) == 0
+        && (!GV->hasSection() 
+            || strcmp(GV->getSection().c_str(), "llvm.metadata") == 0))
+      DeadConstants.push_back(GV);
+  }
+
+  if (DeadConstants.empty())
+    return false;
+
+  // Delete any internal globals that were only used by the debugger intrinsics.
+  while (!DeadConstants.empty()) {
+    Constant *C = DeadConstants.back();
+    DeadConstants.pop_back();
+    if (GlobalVariable *GV = dyn_cast<GlobalVariable>(C)) {
+      if (GV->hasLocalLinkage())
+        RemoveDeadConstant(GV);
+    }
+    else
+      RemoveDeadConstant(C);
+  }
+
+  // Remove all llvm.dbg types.
+  TypeSymbolTable &ST = M.getTypeSymbolTable();
+  for (TypeSymbolTable::iterator TI = ST.begin(), TE = ST.end(); TI != TE; ) {
+    if (!strncmp(TI->first.c_str(), "llvm.dbg.", 9))
+      ST.remove(TI++);
+    else 
+      ++TI;
+  }
+  
   return true;
 }
 

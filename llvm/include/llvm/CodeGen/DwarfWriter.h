@@ -33,7 +33,7 @@ class MachineFunction;
 class MachineInstr;
 class Value;
 class Module;
-class MDNode;
+class GlobalVariable;
 class MCAsmInfo;
 class raw_ostream;
 class Instruction;
@@ -88,17 +88,17 @@ public:
   unsigned RecordSourceLine(unsigned Line, unsigned Col, DICompileUnit CU);
 
   /// RecordRegionStart - Indicate the start of a region.
-  unsigned RecordRegionStart(MDNode *N);
+  unsigned RecordRegionStart(GlobalVariable *V);
 
   /// RecordRegionEnd - Indicate the end of a region.
-  unsigned RecordRegionEnd(MDNode *N);
+  unsigned RecordRegionEnd(GlobalVariable *V);
 
   /// getRecordSourceLineCount - Count source lines.
   unsigned getRecordSourceLineCount();
 
   /// RecordVariable - Indicate the declaration of  a local variable.
   ///
-  void RecordVariable(MDNode *N, unsigned FrameIndex);
+  void RecordVariable(GlobalVariable *GV, unsigned FrameIndex);
 
   /// ShouldEmitDwarfDebug - Returns true if Dwarf debugging declarations should
   /// be emitted.

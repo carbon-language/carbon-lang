@@ -19,19 +19,19 @@
 #include <vector>
 
 namespace llvm {
-  class MDNode;
+  class GlobalVariable;
 
   /// DebugLocTuple - Debug location tuple of filename id, line and column.
   ///
   struct DebugLocTuple {
-    MDNode *CompileUnit;
+    GlobalVariable *CompileUnit;
     unsigned Line, Col;
 
     DebugLocTuple()
       : CompileUnit(0), Line(~0U), Col(~0U) {};
 
-    DebugLocTuple(MDNode *n, unsigned l, unsigned c)
-      : CompileUnit(n), Line(l), Col(c) {};
+    DebugLocTuple(GlobalVariable *v, unsigned l, unsigned c)
+      : CompileUnit(v), Line(l), Col(c) {};
 
     bool operator==(const DebugLocTuple &DLT) const {
       return CompileUnit == DLT.CompileUnit &&
@@ -69,10 +69,10 @@ namespace llvm {
       return DebugLocTuple(0, ~0U, ~0U);
     }
     static inline DebugLocTuple getTombstoneKey() {
-      return DebugLocTuple((MDNode*)~1U, ~1U, ~1U);
+      return DebugLocTuple((GlobalVariable*)~1U, ~1U, ~1U);
     }
     static unsigned getHashValue(const DebugLocTuple &Val) {
-      return DenseMapInfo<MDNode*>::getHashValue(Val.CompileUnit) ^
+      return DenseMapInfo<GlobalVariable*>::getHashValue(Val.CompileUnit) ^
              DenseMapInfo<unsigned>::getHashValue(Val.Line) ^
              DenseMapInfo<unsigned>::getHashValue(Val.Col);
     }

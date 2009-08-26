@@ -1,4 +1,3 @@
-
 //===-- PIC16DebugInfo.cpp - Implementation for PIC16 Debug Information ======//
 //
 //                     The LLVM Compiler Infrastructure
@@ -70,7 +69,7 @@ void PIC16DbgInfo::PopulateDerivedTypeInfo (DIType Ty, unsigned short &TypeNo,
   
   // We also need to encode the the information about the base type of
   // pointer in TypeNo.
-  DIType BaseType = DIDerivedType(Ty.getNode()).getTypeDerivedFrom();
+  DIType BaseType = DIDerivedType(Ty.getGV()).getTypeDerivedFrom();
   PopulateDebugInfo(BaseType, TypeNo, HasAux, Aux, TagName);
 }
 
@@ -79,7 +78,7 @@ void PIC16DbgInfo::PopulateArrayTypeInfo (DIType Ty, unsigned short &TypeNo,
                                           bool &HasAux, int Aux[],
                                           std::string &TagName) {
 
-  DICompositeType CTy = DICompositeType(Ty.getNode());
+  DICompositeType CTy = DICompositeType(Ty.getGV());
   DIArray Elements = CTy.getTypeArray();
   unsigned short size = 1;
   unsigned short Dimension[4]={0,0,0,0};
@@ -88,7 +87,7 @@ void PIC16DbgInfo::PopulateArrayTypeInfo (DIType Ty, unsigned short &TypeNo,
     if (Element.getTag() == dwarf::DW_TAG_subrange_type) {
       TypeNo = TypeNo << PIC16Dbg::S_DERIVED;
       TypeNo = TypeNo | PIC16Dbg::DT_ARY;
-      DISubrange SubRange = DISubrange(Element.getNode());
+      DISubrange SubRange = DISubrange(Element.getGV());
       Dimension[i] = SubRange.getHi() - SubRange.getLo() + 1;
       // Each dimension is represented by 2 bytes starting at byte 9.
       Aux[8+i*2+0] = Dimension[i];
@@ -111,7 +110,7 @@ void PIC16DbgInfo::PopulateStructOrUnionTypeInfo (DIType Ty,
                                                   unsigned short &TypeNo,
                                                   bool &HasAux, int Aux[],
                                                   std::string &TagName) {
-  DICompositeType CTy = DICompositeType(Ty.getNode());
+  DICompositeType CTy = DICompositeType(Ty.getGV());
   TypeNo = TypeNo << PIC16Dbg::S_BASIC;
   if (Ty.getTag() == dwarf::DW_TAG_structure_type)
     TypeNo = TypeNo | PIC16Dbg::T_STRUCT;
@@ -124,7 +123,7 @@ void PIC16DbgInfo::PopulateStructOrUnionTypeInfo (DIType Ty,
   // llvm.dbg.composite* global variable. Since we need to revisit 
   // PIC16DebugInfo implementation anyways after the MDNodes based 
   // framework is done, let us continue with the way it is.
-  std::string UniqueSuffix = "." + Ty.getNode()->getNameStr().substr(18);
+  std::string UniqueSuffix = "." + Ty.getGV()->getNameStr().substr(18);
   TagName += UniqueSuffix;
   unsigned short size = CTy.getSizeInBits()/8;
   // 7th and 8th byte represent size.
@@ -211,10 +210,11 @@ void PIC16DbgInfo::BeginModule(Module &M) {
   DbgFinder.processModule(M);
   if (DbgFinder.compile_unit_count() != 0) {
     // FIXME : What if more then one CUs are present in a module ?
-    MDNode *CU = *DbgFinder.compile_unit_begin();
+    GlobalVariable *CU = *DbgFinder.compile_unit_begin();
     EmitDebugDirectives = true;
     SwitchToCU(CU);
   }
+
   // Emit debug info for decls of composite types.
   EmitCompositeTypeDecls(M);
 }
@@ -259,7 +259,7 @@ void PIC16DbgInfo::ChangeDebugLoc(const MachineFunction &MF,
   if (! EmitDebugDirectives) return;
   assert (! DL.isUnknown()  && "can't change to invalid debug loc");
 
-  MDNode *CU = MF.getDebugLocTuple(DL).CompileUnit;
+  GlobalVariable *CU = MF.getDebugLocTuple(DL).CompileUnit;
   unsigned line = MF.getDebugLocTuple(DL).Line;
 
   SwitchToCU(CU);
@@ -306,7 +306,8 @@ void PIC16DbgInfo::EmitCompositeTypeElements (DICompositeType CTy,
     int ElementAux[PIC16Dbg::AuxSize] = { 0 };
     std::string TagName = "";
     std::string ElementName;
-    DIDerivedType DITy(Element.getNode());
+    GlobalVariable *GV = Element.getGV();
+    DIDerivedType DITy(GV);
     DITy.getName(ElementName);
     unsigned short ElementSize = DITy.getSizeInBits()/8;
     // Get mangleddd name for this structure/union  element.
@@ -342,7 +343,7 @@ void PIC16DbgInfo::EmitCompositeTypeDecls(Module &M) {
       CTy.getName(Name);
       // Get the number after llvm.dbg.composite and make UniqueSuffix from 
       // it.
-      std::string DIVar = CTy.getNode()->getNameStr();
+      std::string DIVar = CTy.getGV()->getNameStr();
       std::string UniqueSuffix = "." + DIVar.substr(18);
       std::string MangledCTyName = Name + UniqueSuffix;
       unsigned short size = CTy.getSizeInBits()/8;
@@ -440,7 +441,7 @@ void PIC16DbgInfo::EmitSymbol(std::string Name, short Class, unsigned short
 void PIC16DbgInfo::EmitVarDebugInfo(Module &M) {
   DebugInfoFinder DbgFinder;
   DbgFinder.processModule(M);
-  
+
   for (DebugInfoFinder::iterator I = DbgFinder.global_variable_begin(),
          E = DbgFinder.global_variable_end(); I != E; ++I) {
     DIGlobalVariable DIGV(*I);
@@ -465,7 +466,7 @@ void PIC16DbgInfo::EmitVarDebugInfo(Module &M) {
 
 /// SwitchToCU - Switch to a new compilation unit.
 ///
-void PIC16DbgInfo::SwitchToCU(MDNode *CU) {
+void PIC16DbgInfo::SwitchToCU(GlobalVariable *CU) {
   // Get the file path from CU.
   DICompileUnit cu(CU);
   std::string DirName, FileName;

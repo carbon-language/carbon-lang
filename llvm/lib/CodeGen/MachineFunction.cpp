@@ -333,7 +333,7 @@ unsigned MachineFunction::addLiveIn(unsigned PReg,
 /// getOrCreateDebugLocID - Look up the DebugLocTuple index with the given
 /// source file, line, and column. If none currently exists, create a new
 /// DebugLocTuple, and insert it into the DebugIdMap.
-unsigned MachineFunction::getOrCreateDebugLocID(MDNode *CompileUnit,
+unsigned MachineFunction::getOrCreateDebugLocID(GlobalVariable *CompileUnit,
                                                 unsigned Line, unsigned Col) {
   DebugLocTuple Tuple(CompileUnit, Line, Col);
   DenseMap<DebugLocTuple, unsigned>::iterator II

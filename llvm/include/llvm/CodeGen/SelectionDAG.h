@@ -322,7 +322,7 @@ public:
   SDValue getValueType(EVT);
   SDValue getRegister(unsigned Reg, EVT VT);
   SDValue getDbgStopPoint(DebugLoc DL, SDValue Root, 
-                          unsigned Line, unsigned Col, MDNode *CU);
+                          unsigned Line, unsigned Col, Value *CU);
   SDValue getLabel(unsigned Opcode, DebugLoc dl, SDValue Root,
                    unsigned LabelID);
 

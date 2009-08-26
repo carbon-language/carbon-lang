@@ -10,7 +10,7 @@
 // This file contains support for writing dwarf debug info into asm files.
 //
 //===----------------------------------------------------------------------===//
-#define DEBUG_TYPE "dwarfdebug"
+
 #include "DwarfDebug.h"
 #include "llvm/Module.h"
 #include "llvm/CodeGen/MachineFunction.h"
@@ -24,7 +24,6 @@
 #include "llvm/Target/TargetRegisterInfo.h"
 #include "llvm/ADT/StringExtras.h"
 #include "llvm/Support/Timer.h"
-#include "llvm/Support/Debug.h"
 #include "llvm/System/Path.h"
 using namespace llvm;
 
@@ -57,13 +56,11 @@ class VISIBILITY_HIDDEN CompileUnit {
 
   /// GVToDieMap - Tracks the mapping of unit level debug informaton
   /// variables to debug information entries.
-  /// FIXME : Rename GVToDieMap -> NodeToDieMap
-  std::map<MDNode *, DIE *> GVToDieMap;
+  std::map<GlobalVariable *, DIE *> GVToDieMap;
 
   /// GVToDIEEntryMap - Tracks the mapping of unit level debug informaton
   /// descriptors to debug information entries using a DIEEntry proxy.
-  /// FIXME : Rename
-  std::map<MDNode *, DIEEntry *> GVToDIEEntryMap;
+  std::map<GlobalVariable *, DIEEntry *> GVToDIEEntryMap;
 
   /// Globals - A map of globally visible named entities for this unit.
   ///
@@ -92,12 +89,12 @@ public:
 
   /// getDieMapSlotFor - Returns the debug information entry map slot for the
   /// specified debug variable.
-  DIE *&getDieMapSlotFor(MDNode *N) { return GVToDieMap[N]; }
+  DIE *&getDieMapSlotFor(GlobalVariable *GV) { return GVToDieMap[GV]; }
 
   /// getDIEEntrySlotFor - Returns the debug information entry proxy slot for
   /// the specified debug variable.
-  DIEEntry *&getDIEEntrySlotFor(MDNode *N) {
-    return GVToDIEEntryMap[N];
+  DIEEntry *&getDIEEntrySlotFor(GlobalVariable *GV) {
+    return GVToDIEEntryMap[GV];
   }
 
   /// AddDie - Adds or interns the DIE to the compile unit.
@@ -242,7 +239,7 @@ DwarfDebug::~DwarfDebug() {
   for (unsigned j = 0, M = Values.size(); j < M; ++j)
     delete Values[j];
 
-  for (DenseMap<const MDNode *, DbgScope *>::iterator
+  for (DenseMap<const GlobalVariable *, DbgScope *>::iterator
          I = AbstractInstanceRootMap.begin(),
          E = AbstractInstanceRootMap.end(); I != E;++I)
     delete I->second;
@@ -534,7 +531,7 @@ void DwarfDebug::AddType(CompileUnit *DW_Unit, DIE *Entity, DIType Ty) {
     return;
 
   // Check for pre-existence.
-  DIEEntry *&Slot = DW_Unit->getDIEEntrySlotFor(Ty.getNode());
+  DIEEntry *&Slot = DW_Unit->getDIEEntrySlotFor(Ty.getGV());
 
   // If it exists then use the existing value.
   if (Slot) {
@@ -548,20 +545,19 @@ void DwarfDebug::AddType(CompileUnit *DW_Unit, DIE *Entity, DIType Ty) {
   // Construct type.
   DIE Buffer(dwarf::DW_TAG_base_type);
   if (Ty.isBasicType(Ty.getTag()))
-    ConstructTypeDIE(DW_Unit, Buffer, DIBasicType(Ty.getNode()));
-  else if (Ty.isCompositeType(Ty.getTag()))
-    ConstructTypeDIE(DW_Unit, Buffer, DICompositeType(Ty.getNode()));
+    ConstructTypeDIE(DW_Unit, Buffer, DIBasicType(Ty.getGV()));
+  else if (Ty.isDerivedType(Ty.getTag()))
+    ConstructTypeDIE(DW_Unit, Buffer, DIDerivedType(Ty.getGV()));
   else {
-    assert(Ty.isDerivedType(Ty.getTag()) && "Unknown kind of DIType");
-    ConstructTypeDIE(DW_Unit, Buffer, DIDerivedType(Ty.getNode()));
-
+    assert(Ty.isCompositeType(Ty.getTag()) && "Unknown kind of DIType");
+    ConstructTypeDIE(DW_Unit, Buffer, DICompositeType(Ty.getGV()));
   }
 
   // Add debug information entry to entity and appropriate context.
   DIE *Die = NULL;
   DIDescriptor Context = Ty.getContext();
   if (!Context.isNull())
-    Die = DW_Unit->getDieMapSlotFor(Context.getNode());
+    Die = DW_Unit->getDieMapSlotFor(Context.getGV());
 
   if (Die) {
     DIE *Child = new DIE(Buffer);
@@ -646,7 +642,7 @@ void DwarfDebug::ConstructTypeDIE(CompileUnit *DW_Unit, DIE &Buffer,
     // Add enumerators to enumeration type.
     for (unsigned i = 0, N = Elements.getNumElements(); i < N; ++i) {
       DIE *ElemDie = NULL;
-      DIEnumerator Enum(Elements.getElement(i).getNode());
+      DIEnumerator Enum(Elements.getElement(i).getGV());
       ElemDie = ConstructEnumTypeDIE(DW_Unit, &Enum);
       Buffer.AddChild(ElemDie);
     }
@@ -656,7 +652,7 @@ void DwarfDebug::ConstructTypeDIE(CompileUnit *DW_Unit, DIE &Buffer,
     // Add return type.
     DIArray Elements = CTy.getTypeArray();
     DIDescriptor RTy = Elements.getElement(0);
-    AddType(DW_Unit, &Buffer, DIType(RTy.getNode()));
+    AddType(DW_Unit, &Buffer, DIType(RTy.getGV()));
 
     // Add prototype flag.
     AddUInt(&Buffer, dwarf::DW_AT_prototyped, dwarf::DW_FORM_flag, 1);
@@ -665,7 +661,7 @@ void DwarfDebug::ConstructTypeDIE(CompileUnit *DW_Unit, DIE &Buffer,
     for (unsigned i = 1, N = Elements.getNumElements(); i < N; ++i) {
       DIE *Arg = new DIE(dwarf::DW_TAG_formal_parameter);
       DIDescriptor Ty = Elements.getElement(i);
-      AddType(DW_Unit, Arg, DIType(Ty.getNode()));
+      AddType(DW_Unit, Arg, DIType(Ty.getGV()));
       Buffer.AddChild(Arg);
     }
   }
@@ -683,15 +679,13 @@ void DwarfDebug::ConstructTypeDIE(CompileUnit *DW_Unit, DIE &Buffer,
     // Add elements to structure type.
     for (unsigned i = 0, N = Elements.getNumElements(); i < N; ++i) {
       DIDescriptor Element = Elements.getElement(i);
-      if (Element.isNull())
-        continue;
       DIE *ElemDie = NULL;
       if (Element.getTag() == dwarf::DW_TAG_subprogram)
         ElemDie = CreateSubprogramDIE(DW_Unit,
-                                      DISubprogram(Element.getNode()));
+                                      DISubprogram(Element.getGV()));
       else
         ElemDie = CreateMemberDIE(DW_Unit,
-                                  DIDerivedType(Element.getNode()));
+                                  DIDerivedType(Element.getGV()));
       Buffer.AddChild(ElemDie);
     }
 
@@ -768,7 +762,7 @@ void DwarfDebug::ConstructArrayTypeDIE(CompileUnit *DW_Unit, DIE &Buffer,
   for (unsigned i = 0, N = Elements.getNumElements(); i < N; ++i) {
     DIDescriptor Element = Elements.getElement(i);
     if (Element.getTag() == dwarf::DW_TAG_subrange_type)
-      ConstructSubrangeDIE(Buffer, DISubrange(Element.getNode()), IndexTy);
+      ConstructSubrangeDIE(Buffer, DISubrange(Element.getGV()), IndexTy);
   }
 }
 
@@ -895,7 +889,7 @@ DIE *DwarfDebug::CreateSubprogramDIE(CompileUnit *DW_Unit,
     if (Args.isNull() || SPTag != dwarf::DW_TAG_subroutine_type)
       AddType(DW_Unit, SPDie, SPTy);
     else
-      AddType(DW_Unit, SPDie, DIType(Args.getElement(0).getNode()));
+      AddType(DW_Unit, SPDie, DIType(Args.getElement(0).getGV()));
   }
 
   if (!SP.isDefinition()) {
@@ -906,7 +900,7 @@ DIE *DwarfDebug::CreateSubprogramDIE(CompileUnit *DW_Unit,
     if (SPTag == dwarf::DW_TAG_subroutine_type)
       for (unsigned i = 1, N =  Args.getNumElements(); i < N; ++i) {
         DIE *Arg = new DIE(dwarf::DW_TAG_formal_parameter);
-        AddType(DW_Unit, Arg, DIType(Args.getElement(i).getNode()));
+        AddType(DW_Unit, Arg, DIType(Args.getElement(i).getGV()));
         AddUInt(Arg, dwarf::DW_AT_artificial, dwarf::DW_FORM_flag, 1); // ??
         SPDie->AddChild(Arg);
       }
@@ -916,7 +910,7 @@ DIE *DwarfDebug::CreateSubprogramDIE(CompileUnit *DW_Unit,
     AddUInt(SPDie, dwarf::DW_AT_external, dwarf::DW_FORM_flag, 1);
 
   // DW_TAG_inlined_subroutine may refer to this DIE.
-  DIE *&Slot = DW_Unit->getDieMapSlotFor(SP.getNode());
+  DIE *&Slot = DW_Unit->getDieMapSlotFor(SP.getGV());
   Slot = SPDie;
   return SPDie;
 }
@@ -925,7 +919,7 @@ DIE *DwarfDebug::CreateSubprogramDIE(CompileUnit *DW_Unit,
 ///
 CompileUnit &DwarfDebug::FindCompileUnit(DICompileUnit Unit) const {
   DenseMap<Value *, CompileUnit *>::const_iterator I =
-    CompileUnitMap.find(Unit.getNode());
+    CompileUnitMap.find(Unit.getGV());
   assert(I != CompileUnitMap.end() && "Missing compile unit.");
   return *I->second;
 }
@@ -978,26 +972,26 @@ DIE *DwarfDebug::CreateDbgScopeVariable(DbgVariable *DV, CompileUnit *Unit) {
 
 /// getOrCreateScope - Returns the scope associated with the given descriptor.
 ///
-DbgScope *DwarfDebug::getOrCreateScope(MDNode *N) {
-  DbgScope *&Slot = DbgScopeMap[N];
+DbgScope *DwarfDebug::getOrCreateScope(GlobalVariable *V) {
+  DbgScope *&Slot = DbgScopeMap[V];
   if (Slot) return Slot;
 
   DbgScope *Parent = NULL;
-  DIBlock Block(N);
+  DIBlock Block(V);
 
   // Don't create a new scope if we already created one for an inlined function.
-  DenseMap<const MDNode *, DbgScope *>::iterator
-    II = AbstractInstanceRootMap.find(N);
+  DenseMap<const GlobalVariable *, DbgScope *>::iterator
+    II = AbstractInstanceRootMap.find(V);
   if (II != AbstractInstanceRootMap.end())
     return LexicalScopeStack.back();
 
   if (!Block.isNull()) {
     DIDescriptor ParentDesc = Block.getContext();
     Parent =
-      ParentDesc.isNull() ?  NULL : getOrCreateScope(ParentDesc.getNode());
+      ParentDesc.isNull() ?  NULL : getOrCreateScope(ParentDesc.getGV());
   }
 
-  Slot = new DbgScope(Parent, DIDescriptor(N));
+  Slot = new DbgScope(Parent, DIDescriptor(V));
 
   if (Parent)
     Parent->AddScope(Slot);
@@ -1106,10 +1100,10 @@ void DwarfDebug::ConstructFunctionDbgScope(DbgScope *RootScope,
     return;
 
   // Get the subprogram debug information entry.
-  DISubprogram SPD(Desc.getNode());
+  DISubprogram SPD(Desc.getGV());
 
   // Get the subprogram die.
-  DIE *SPDie = ModuleCU->getDieMapSlotFor(SPD.getNode());
+  DIE *SPDie = ModuleCU->getDieMapSlotFor(SPD.getGV());
   assert(SPDie && "Missing subprogram descriptor");
 
   if (!AbstractScope) {
@@ -1182,8 +1176,8 @@ unsigned DwarfDebug::GetOrCreateSourceID(const std::string &DirName,
   return SrcId;
 }
 
-void DwarfDebug::ConstructCompileUnit(MDNode *N) {
-  DICompileUnit DIUnit(N);
+void DwarfDebug::ConstructCompileUnit(GlobalVariable *GV) {
+  DICompileUnit DIUnit(GV);
   std::string Dir, FN, Prod;
   unsigned ID = GetOrCreateSourceID(DIUnit.getDirectory(Dir),
                                     DIUnit.getFilename(FN));
@@ -1220,15 +1214,15 @@ void DwarfDebug::ConstructCompileUnit(MDNode *N) {
     ModuleCU = Unit;
   }
 
-  CompileUnitMap[DIUnit.getNode()] = Unit;
+  CompileUnitMap[DIUnit.getGV()] = Unit;
   CompileUnits.push_back(Unit);
 }
 
-void DwarfDebug::ConstructGlobalVariableDIE(MDNode *N) {
-  DIGlobalVariable DI_GV(N);
+void DwarfDebug::ConstructGlobalVariableDIE(GlobalVariable *GV) {
+  DIGlobalVariable DI_GV(GV);
 
   // Check for pre-existence.
-  DIE *&Slot = ModuleCU->getDieMapSlotFor(DI_GV.getNode());
+  DIE *&Slot = ModuleCU->getDieMapSlotFor(DI_GV.getGV());
   if (Slot)
     return;
 
@@ -1254,11 +1248,11 @@ void DwarfDebug::ConstructGlobalVariableDIE(MDNode *N) {
   return;
 }
 
-void DwarfDebug::ConstructSubprogram(MDNode *N) {
-  DISubprogram SP(N);
+void DwarfDebug::ConstructSubprogram(GlobalVariable *GV) {
+  DISubprogram SP(GV);
 
   // Check for pre-existence.
-  DIE *&Slot = ModuleCU->getDieMapSlotFor(N);
+  DIE *&Slot = ModuleCU->getDieMapSlotFor(GV);
   if (Slot)
     return;
 
@@ -1541,9 +1535,6 @@ unsigned DwarfDebug::RecordSourceLine(Value *V, unsigned Line, unsigned Col) {
 /// correspondence to the source line list.
 unsigned DwarfDebug::RecordSourceLine(unsigned Line, unsigned Col,
                                       DICompileUnit CU) {
-  if (!MMI)
-    return 0;
-
   if (TimePassesIsEnabled)
     DebugTimer->startTimer();
 
@@ -1578,11 +1569,11 @@ unsigned DwarfDebug::getOrCreateSourceID(const std::string &DirName,
 }
 
 /// RecordRegionStart - Indicate the start of a region.
-unsigned DwarfDebug::RecordRegionStart(MDNode *N) {
+unsigned DwarfDebug::RecordRegionStart(GlobalVariable *V) {
   if (TimePassesIsEnabled)
     DebugTimer->startTimer();
 
-  DbgScope *Scope = getOrCreateScope(N);
+  DbgScope *Scope = getOrCreateScope(V);
   unsigned ID = MMI->NextLabelID();
   if (!Scope->getStartLabelID()) Scope->setStartLabelID(ID);
   LexicalScopeStack.push_back(Scope);
@@ -1594,11 +1585,11 @@ unsigned DwarfDebug::RecordRegionStart(MDNode *N) {
 }
 
 /// RecordRegionEnd - Indicate the end of a region.
-unsigned DwarfDebug::RecordRegionEnd(MDNode *N) {
+unsigned DwarfDebug::RecordRegionEnd(GlobalVariable *V) {
   if (TimePassesIsEnabled)
     DebugTimer->startTimer();
 
-  DbgScope *Scope = getOrCreateScope(N);
+  DbgScope *Scope = getOrCreateScope(V);
   unsigned ID = MMI->NextLabelID();
   Scope->setEndLabelID(ID);
   // FIXME : region.end() may not be in the last basic block.
@@ -1615,36 +1606,41 @@ unsigned DwarfDebug::RecordRegionEnd(MDNode *N) {
 }
 
 /// RecordVariable - Indicate the declaration of a local variable.
-void DwarfDebug::RecordVariable(MDNode *N, unsigned FrameIndex) {
+void DwarfDebug::RecordVariable(GlobalVariable *GV, unsigned FrameIndex) {
   if (TimePassesIsEnabled)
     DebugTimer->startTimer();
 
-  DIDescriptor Desc(N);
+  DIDescriptor Desc(GV);
   DbgScope *Scope = NULL;
   bool InlinedFnVar = false;
 
-  if (Desc.getTag() == dwarf::DW_TAG_variable)
-    Scope = getOrCreateScope(DIGlobalVariable(N).getContext().getNode());
-  else {
+  if (Desc.getTag() == dwarf::DW_TAG_variable) {
+    // GV is a global variable.
+    DIGlobalVariable DG(GV);
+    Scope = getOrCreateScope(DG.getContext().getGV());
+  } else {
     bool InlinedVar = false;
-    MDNode *Context = DIVariable(N).getContext().getNode();
-    DISubprogram SP(Context);
+    DIVariable DV(GV);
+    GlobalVariable *V = DV.getContext().getGV();
+    DISubprogram SP(V);
     if (!SP.isNull()) {
       // SP is inserted into DbgAbstractScopeMap when inlined function
       // start was recorded by RecordInlineFnStart.
-      DenseMap<MDNode *, DbgScope *>::iterator
-        I = DbgAbstractScopeMap.find(SP.getNode());
+      DenseMap<GlobalVariable *, DbgScope *>::iterator
+        I = DbgAbstractScopeMap.find(SP.getGV());
       if (I != DbgAbstractScopeMap.end()) {
         InlinedVar = true;
         Scope = I->second;
       }
     }
-    if (!InlinedVar) 
-      Scope = getOrCreateScope(Context);
+    if (!InlinedVar) {
+      // GV is a local variable.
+      Scope = getOrCreateScope(V);
+    }
   }
 
   assert(Scope && "Unable to find the variable's scope");
-  DbgVariable *DV = new DbgVariable(DIVariable(N), FrameIndex, InlinedFnVar);
+  DbgVariable *DV = new DbgVariable(DIVariable(GV), FrameIndex, InlinedFnVar);
   Scope->AddVariable(DV);
 
   if (TimePassesIsEnabled)
@@ -1662,17 +1658,17 @@ unsigned DwarfDebug::RecordInlinedFnStart(DISubprogram &SP, DICompileUnit CU,
   if (TimePassesIsEnabled)
     DebugTimer->startTimer();
 
-  MDNode *Node = SP.getNode();
-  DenseMap<const MDNode *, DbgScope *>::iterator
-    II = AbstractInstanceRootMap.find(Node);
+  GlobalVariable *GV = SP.getGV();
+  DenseMap<const GlobalVariable *, DbgScope *>::iterator
+    II = AbstractInstanceRootMap.find(GV);
 
   if (II == AbstractInstanceRootMap.end()) {
     // Create an abstract instance entry for this inlined function if it doesn't
     // already exist.
-    DbgScope *Scope = new DbgScope(NULL, DIDescriptor(Node));
+    DbgScope *Scope = new DbgScope(NULL, DIDescriptor(GV));
 
     // Get the compile unit context.
-    DIE *SPDie = ModuleCU->getDieMapSlotFor(Node);
+    DIE *SPDie = ModuleCU->getDieMapSlotFor(GV);
     if (!SPDie)
       SPDie = CreateSubprogramDIE(ModuleCU, SP, false, true);
 
@@ -1684,18 +1680,18 @@ unsigned DwarfDebug::RecordInlinedFnStart(DISubprogram &SP, DICompileUnit CU,
     AddUInt(SPDie, dwarf::DW_AT_inline, 0, dwarf::DW_INL_declared_not_inlined);
 
     // Keep track of the abstract scope for this function.
-    DbgAbstractScopeMap[Node] = Scope;
+    DbgAbstractScopeMap[GV] = Scope;
 
-    AbstractInstanceRootMap[Node] = Scope;
+    AbstractInstanceRootMap[GV] = Scope;
     AbstractInstanceRootList.push_back(Scope);
   }
 
   // Create a concrete inlined instance for this inlined function.
-  DbgConcreteScope *ConcreteScope = new DbgConcreteScope(DIDescriptor(Node));
+  DbgConcreteScope *ConcreteScope = new DbgConcreteScope(DIDescriptor(GV));
   DIE *ScopeDie = new DIE(dwarf::DW_TAG_inlined_subroutine);
   ScopeDie->setAbstractCompileUnit(ModuleCU);
 
-  DIE *Origin = ModuleCU->getDieMapSlotFor(Node);
+  DIE *Origin = ModuleCU->getDieMapSlotFor(GV);
   AddDIEEntry(ScopeDie, dwarf::DW_AT_abstract_origin,
               dwarf::DW_FORM_ref4, Origin);
   AddUInt(ScopeDie, dwarf::DW_AT_call_file, 0, ModuleCU->getID());
@@ -1709,20 +1705,20 @@ unsigned DwarfDebug::RecordInlinedFnStart(DISubprogram &SP, DICompileUnit CU,
   LexicalScopeStack.back()->AddConcreteInst(ConcreteScope);
 
   // Keep track of the concrete scope that's inlined into this function.
-  DenseMap<MDNode *, SmallVector<DbgScope *, 8> >::iterator
-    SI = DbgConcreteScopeMap.find(Node);
+  DenseMap<GlobalVariable *, SmallVector<DbgScope *, 8> >::iterator
+    SI = DbgConcreteScopeMap.find(GV);
 
   if (SI == DbgConcreteScopeMap.end())
-    DbgConcreteScopeMap[Node].push_back(ConcreteScope);
+    DbgConcreteScopeMap[GV].push_back(ConcreteScope);
   else
     SI->second.push_back(ConcreteScope);
 
   // Track the start label for this inlined function.
-  DenseMap<MDNode *, SmallVector<unsigned, 4> >::iterator
-    I = InlineInfo.find(Node);
+  DenseMap<GlobalVariable *, SmallVector<unsigned, 4> >::iterator
+    I = InlineInfo.find(GV);
 
   if (I == InlineInfo.end())
-    InlineInfo[Node].push_back(LabelID);
+    InlineInfo[GV].push_back(LabelID);
   else
     I->second.push_back(LabelID);
 
@@ -1740,9 +1736,9 @@ unsigned DwarfDebug::RecordInlinedFnEnd(DISubprogram &SP) {
   if (TimePassesIsEnabled)
     DebugTimer->startTimer();
 
-  MDNode *Node = SP.getNode();
-  DenseMap<MDNode *, SmallVector<DbgScope *, 8> >::iterator
-    I = DbgConcreteScopeMap.find(Node);
+  GlobalVariable *GV = SP.getGV();
+  DenseMap<GlobalVariable *, SmallVector<DbgScope *, 8> >::iterator
+    I = DbgConcreteScopeMap.find(GV);
 
   if (I == DbgConcreteScopeMap.end()) {
     // FIXME: Can this situation actually happen? And if so, should it?
@@ -2447,11 +2443,11 @@ void DwarfDebug::EmitDebugInlineInfo() {
   Asm->EmitInt16(dwarf::DWARF_VERSION); Asm->EOL("Dwarf Version");
   Asm->EmitInt8(TD->getPointerSize()); Asm->EOL("Address Size (in bytes)");
 
-  for (DenseMap<MDNode *, SmallVector<unsigned, 4> >::iterator
+  for (DenseMap<GlobalVariable *, SmallVector<unsigned, 4> >::iterator
          I = InlineInfo.begin(), E = InlineInfo.end(); I != E; ++I) {
-    MDNode *Node = I->first;
+    GlobalVariable *GV = I->first;
     SmallVector<unsigned, 4> &Labels = I->second;
-    DISubprogram SP(Node);
+    DISubprogram SP(GV);
     std::string Name;
     std::string LName;
 
@@ -2477,7 +2473,7 @@ void DwarfDebug::EmitDebugInlineInfo() {
 
     for (SmallVector<unsigned, 4>::iterator LI = Labels.begin(),
            LE = Labels.end(); LI != LE; ++LI) {
-      DIE *SP = ModuleCU->getDieMapSlotFor(Node);
+      DIE *SP = ModuleCU->getDieMapSlotFor(GV);
       Asm->EmitInt32(SP->getOffset()); Asm->EOL("DIE offset");
 
       if (TD->getPointerSize() == sizeof(int32_t))

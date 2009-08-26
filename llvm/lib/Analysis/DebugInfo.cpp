@@ -21,7 +21,6 @@
 #include "llvm/LLVMContext.h"
 #include "llvm/Module.h"
 #include "llvm/Analysis/ValueTracking.h"
-#include "llvm/ADT/SmallPtrSet.h"
 #include "llvm/Support/Dwarf.h"
 #include "llvm/Support/DebugLoc.h"
 #include "llvm/Support/raw_ostream.h"
@@ -33,12 +32,18 @@ using namespace llvm::dwarf;
 //===----------------------------------------------------------------------===//
 
 /// ValidDebugInfo - Return true if V represents valid debug info value.
-/// FIXME : Add DIDescriptor.isValid()
-bool DIDescriptor::ValidDebugInfo(MDNode *N, CodeGenOpt::Level OptLevel) {
-  if (!N)
+bool DIDescriptor::ValidDebugInfo(Value *V, CodeGenOpt::Level OptLevel) {
+  if (!V)
     return false;
 
-  DIDescriptor DI(N);
+  GlobalVariable *GV = dyn_cast<GlobalVariable>(V->stripPointerCasts());
+  if (!GV)
+    return false;
+
+  if (!GV->hasInternalLinkage () && !GV->hasLinkOnceLinkage())
+    return false;
+
+  DIDescriptor DI(GV);
 
   // Check current version. Allow Version6 for now.
   unsigned Version = DI.getVersion();
@@ -48,13 +53,13 @@ bool DIDescriptor::ValidDebugInfo(MDNode *N, CodeGenOpt::Level OptLevel) {
   unsigned Tag = DI.getTag();
   switch (Tag) {
   case DW_TAG_variable:
-    assert(DIVariable(N).Verify() && "Invalid DebugInfo value");
+    assert(DIVariable(GV).Verify() && "Invalid DebugInfo value");
     break;
   case DW_TAG_compile_unit:
-    assert(DICompileUnit(N).Verify() && "Invalid DebugInfo value");
+    assert(DICompileUnit(GV).Verify() && "Invalid DebugInfo value");
     break;
   case DW_TAG_subprogram:
-    assert(DISubprogram(N).Verify() && "Invalid DebugInfo value");
+    assert(DISubprogram(GV).Verify() && "Invalid DebugInfo value");
     break;
   case DW_TAG_lexical_block:
     // FIXME: This interfers with the quality of generated code during
@@ -69,58 +74,67 @@ bool DIDescriptor::ValidDebugInfo(MDNode *N, CodeGenOpt::Level OptLevel) {
   return true;
 }
 
-DIDescriptor::DIDescriptor(MDNode *N, unsigned RequiredTag) {
-  DbgNode = N;
+DIDescriptor::DIDescriptor(GlobalVariable *GV, unsigned RequiredTag) {
+  DbgGV = GV;
   
   // If this is non-null, check to see if the Tag matches. If not, set to null.
-  if (N && getTag() != RequiredTag) {
-    DbgNode = 0;
-  }
+  if (GV && getTag() != RequiredTag)
+    DbgGV = 0;
 }
 
 const std::string &
 DIDescriptor::getStringField(unsigned Elt, std::string &Result) const {
-  Result.clear();
-  if (DbgNode == 0)
+  if (DbgGV == 0) {
+    Result.clear();
     return Result;
+  }
 
-  if (Elt < DbgNode->getNumElements()) 
-    if (MDString *MDS = dyn_cast_or_null<MDString>(DbgNode->getElement(Elt))) {
-      Result.assign(MDS->begin(), MDS->begin() + MDS->length());
-      return Result;
-    }
-  
+  Constant *C = DbgGV->getInitializer();
+  if (C == 0 || Elt >= C->getNumOperands()) {
+    Result.clear();
+    return Result;
+  }
+
+  // Fills in the string if it succeeds
+  if (!GetConstantStringInfo(C->getOperand(Elt), Result))
+    Result.clear();
+
   return Result;
 }
 
 uint64_t DIDescriptor::getUInt64Field(unsigned Elt) const {
-  if (DbgNode == 0) 
+  if (DbgGV == 0) return 0;
+  if (!DbgGV->hasInitializer()) return 0;
+
+  Constant *C = DbgGV->getInitializer();
+  if (C == 0 || Elt >= C->getNumOperands())
     return 0;
 
-  if (Elt < DbgNode->getNumElements())
-    if (ConstantInt *CI = dyn_cast<ConstantInt>(DbgNode->getElement(Elt)))
-      return CI->getZExtValue();
-  
+  if (ConstantInt *CI = dyn_cast<ConstantInt>(C->getOperand(Elt)))
+    return CI->getZExtValue();
   return 0;
 }
 
 DIDescriptor DIDescriptor::getDescriptorField(unsigned Elt) const {
-  if (DbgNode == 0) 
+  if (DbgGV == 0) return DIDescriptor();
+
+  Constant *C = DbgGV->getInitializer();
+  if (C == 0 || Elt >= C->getNumOperands())
     return DIDescriptor();
 
-  if (Elt < DbgNode->getNumElements() && DbgNode->getElement(Elt))
-    return DIDescriptor(dyn_cast<MDNode>(DbgNode->getElement(Elt)));
-
-  return DIDescriptor();
+  C = C->getOperand(Elt);
+  return DIDescriptor(dyn_cast<GlobalVariable>(C->stripPointerCasts()));
 }
 
 GlobalVariable *DIDescriptor::getGlobalVariableField(unsigned Elt) const {
-  if (DbgNode == 0) 
+  if (DbgGV == 0) return 0;
+
+  Constant *C = DbgGV->getInitializer();
+  if (C == 0 || Elt >= C->getNumOperands())
     return 0;
 
-  if (Elt < DbgNode->getNumElements())
-      return dyn_cast<GlobalVariable>(DbgNode->getElement(Elt));
-  return 0;
+  C = C->getOperand(Elt);
+  return dyn_cast<GlobalVariable>(C->stripPointerCasts());
 }
 
 //===----------------------------------------------------------------------===//
@@ -128,13 +142,12 @@ GlobalVariable *DIDescriptor::getGlobalVariableField(unsigned Elt) const {
 //===----------------------------------------------------------------------===//
 
 // Needed by DIVariable::getType().
-DIType::DIType(MDNode *N) : DIDescriptor(N) {
-  if (!N) return;
+DIType::DIType(GlobalVariable *GV) : DIDescriptor(GV) {
+  if (!GV) return;
   unsigned tag = getTag();
   if (tag != dwarf::DW_TAG_base_type && !DIDerivedType::isDerivedType(tag) &&
-      !DICompositeType::isCompositeType(tag)) {
-    DbgNode = 0;
-  }
+      !DICompositeType::isCompositeType(tag))
+    DbgGV = 0;
 }
 
 /// isDerivedType - Return true if the specified tag is legal for
@@ -151,8 +164,9 @@ bool DIType::isDerivedType(unsigned Tag) {
   case dwarf::DW_TAG_inheritance:
     return true;
   default:
-    // CompositeTypes are currently modelled as DerivedTypes.
-    return isCompositeType(Tag);
+    // FIXME: Even though it doesn't make sense, CompositeTypes are current
+    // modelled as DerivedTypes, this should return true for them as well.
+    return false;
   }
 }
 
@@ -186,8 +200,10 @@ bool DIVariable::isVariable(unsigned Tag) {
 }
 
 unsigned DIArray::getNumElements() const {
-  assert (DbgNode && "Invalid DIArray");
-  return DbgNode->getNumElements();
+  assert (DbgGV && "Invalid DIArray");
+  Constant *C = DbgGV->getInitializer();
+  assert (C && "Invalid DIArray initializer");
+  return C->getNumOperands();
 }
 
 /// replaceAllUsesWith - Replace all uses of debug info referenced by
@@ -198,8 +214,8 @@ void DIDerivedType::replaceAllUsesWith(DIDescriptor &D) {
     return;
 
   assert (!D.isNull() && "Can not replace with null");
-  DbgNode->replaceAllUsesWith(D.getNode());
-  delete DbgNode;
+  getGV()->replaceAllUsesWith(D.getGV());
+  getGV()->eraseFromParent();
 }
 
 /// Verify - Verify that a compile unit is well formed.
@@ -325,8 +341,8 @@ bool DISubprogram::describes(const Function *F) {
 
 /// dump - Print descriptor.
 void DIDescriptor::dump() const {
-  errs() << "[" << dwarf::TagString(getTag()) << "] ";
-  errs().write_hex((intptr_t)DbgNode) << ']';
+  errs() << "[" << dwarf::TagString(getTag()) << "] [GV:";
+  errs().write_hex((intptr_t)DbgGV) << ']';
 }
 
 /// dump - Print compile unit.
@@ -367,11 +383,11 @@ void DIType::dump() const {
     errs() << " [fwd] ";
 
   if (isBasicType(Tag))
-    DIBasicType(DbgNode).dump();
+    DIBasicType(DbgGV).dump();
   else if (isDerivedType(Tag))
-    DIDerivedType(DbgNode).dump();
+    DIDerivedType(DbgGV).dump();
   else if (isCompositeType(Tag))
-    DICompositeType(DbgNode).dump();
+    DICompositeType(DbgGV).dump();
   else {
     errs() << "Invalid DIType\n";
     return;
@@ -418,7 +434,7 @@ void DIGlobal::dump() const {
     errs() << " [def] ";
 
   if (isGlobalVariable(Tag))
-    DIGlobalVariable(DbgNode).dump();
+    DIGlobalVariable(DbgGV).dump();
 
   errs() << "\n";
 }
@@ -458,10 +474,41 @@ DIFactory::DIFactory(Module &m)
   EmptyStructPtr = PointerType::getUnqual(StructType::get(VMContext));
 }
 
+/// getCastToEmpty - Return this descriptor as a Constant* with type '{}*'.
+/// This is only valid when the descriptor is non-null.
+Constant *DIFactory::getCastToEmpty(DIDescriptor D) {
+  if (D.isNull()) return llvm::Constant::getNullValue(EmptyStructPtr);
+  return ConstantExpr::getBitCast(D.getGV(), EmptyStructPtr);
+}
+
 Constant *DIFactory::GetTagConstant(unsigned TAG) {
   assert((TAG & LLVMDebugVersionMask) == 0 &&
          "Tag too large for debug encoding!");
   return ConstantInt::get(Type::getInt32Ty(VMContext), TAG | LLVMDebugVersion);
+}
+
+Constant *DIFactory::GetStringConstant(const std::string &String) {
+  // Check string cache for previous edition.
+  Constant *&Slot = StringCache[String];
+  
+  // Return Constant if previously defined.
+  if (Slot) return Slot;
+  
+  const PointerType *DestTy = PointerType::getUnqual(Type::getInt8Ty(VMContext));
+  
+  // If empty string then use a i8* null instead.
+  if (String.empty())
+    return Slot = ConstantPointerNull::get(DestTy);
+
+  // Construct string as an llvm constant.
+  Constant *ConstStr = ConstantArray::get(VMContext, String);
+    
+  // Otherwise create and return a new string global.
+  GlobalVariable *StrGV = new GlobalVariable(M, ConstStr->getType(), true,
+                                             GlobalVariable::InternalLinkage,
+                                             ConstStr, ".str");
+  StrGV->setSection("llvm.metadata");
+  return Slot = ConstantExpr::getBitCast(StrGV, DestTy);
 }
 
 //===----------------------------------------------------------------------===//
@@ -471,27 +518,50 @@ Constant *DIFactory::GetTagConstant(unsigned TAG) {
 /// GetOrCreateArray - Create an descriptor for an array of descriptors. 
 /// This implicitly uniques the arrays created.
 DIArray DIFactory::GetOrCreateArray(DIDescriptor *Tys, unsigned NumTys) {
-  SmallVector<Value*, 16> Elts;
+  SmallVector<Constant*, 16> Elts;
   
-  if (NumTys == 0)
-    Elts.push_back(llvm::Constant::getNullValue(Type::getInt32Ty(VMContext)));
-  else
-    for (unsigned i = 0; i != NumTys; ++i)
-      Elts.push_back(Tys[i].getNode());
+  for (unsigned i = 0; i != NumTys; ++i)
+    Elts.push_back(getCastToEmpty(Tys[i]));
   
-  return DIArray(MDNode::get(VMContext,Elts.data(), Elts.size()));
+  Constant *Init = ConstantArray::get(ArrayType::get(EmptyStructPtr,
+                                                     Elts.size()),
+                                      Elts.data(), Elts.size());
+  // If we already have this array, just return the uniqued version.
+  DIDescriptor &Entry = SimpleConstantCache[Init];
+  if (!Entry.isNull()) return DIArray(Entry.getGV());
+
+  GlobalVariable *GV = new GlobalVariable(M, Init->getType(), true,
+                                          GlobalValue::InternalLinkage,
+                                          Init, "llvm.dbg.array");
+  GV->setSection("llvm.metadata");
+  Entry = DIDescriptor(GV);
+  return DIArray(GV);
 }
 
 /// GetOrCreateSubrange - Create a descriptor for a value range.  This
 /// implicitly uniques the values returned.
 DISubrange DIFactory::GetOrCreateSubrange(int64_t Lo, int64_t Hi) {
-  Value *Elts[] = {
+  Constant *Elts[] = {
     GetTagConstant(dwarf::DW_TAG_subrange_type),
     ConstantInt::get(Type::getInt64Ty(VMContext), Lo),
     ConstantInt::get(Type::getInt64Ty(VMContext), Hi)
   };
   
-  return DISubrange(MDNode::get(VMContext, &Elts[0], 3));
+  Constant *Init = ConstantStruct::get(VMContext, Elts,
+                                       sizeof(Elts)/sizeof(Elts[0]));
+
+  // If we already have this range, just return the uniqued version.
+  DIDescriptor &Entry = SimpleConstantCache[Init];
+  if (!Entry.isNull()) return DISubrange(Entry.getGV());
+  
+  M.addTypeName("llvm.dbg.subrange.type", Init->getType());
+
+  GlobalVariable *GV = new GlobalVariable(M, Init->getType(), true,
+                                          GlobalValue::InternalLinkage,
+                                          Init, "llvm.dbg.subrange");
+  GV->setSection("llvm.metadata");
+  Entry = DIDescriptor(GV);
+  return DISubrange(GV);
 }
 
 
@@ -506,31 +576,47 @@ DICompileUnit DIFactory::CreateCompileUnit(unsigned LangID,
                                            bool isOptimized,
                                            const char *Flags,
                                            unsigned RunTimeVer) {
-  Value *Elts[] = {
+  Constant *Elts[] = {
     GetTagConstant(dwarf::DW_TAG_compile_unit),
-    llvm::Constant::getNullValue(Type::getInt32Ty(VMContext)),
+    llvm::Constant::getNullValue(EmptyStructPtr),
     ConstantInt::get(Type::getInt32Ty(VMContext), LangID),
-    MDString::get(VMContext, Filename),
-    MDString::get(VMContext, Directory),
-    MDString::get(VMContext, Producer),
+    GetStringConstant(Filename),
+    GetStringConstant(Directory),
+    GetStringConstant(Producer),
     ConstantInt::get(Type::getInt1Ty(VMContext), isMain),
     ConstantInt::get(Type::getInt1Ty(VMContext), isOptimized),
-    MDString::get(VMContext, Flags),
+    GetStringConstant(Flags),
     ConstantInt::get(Type::getInt32Ty(VMContext), RunTimeVer)
   };
-
-  return DICompileUnit(MDNode::get(VMContext, &Elts[0], 10));
+  
+  Constant *Init = ConstantStruct::get(VMContext, Elts,
+                                       sizeof(Elts)/sizeof(Elts[0]));
+  
+  M.addTypeName("llvm.dbg.compile_unit.type", Init->getType());
+  GlobalVariable *GV = new GlobalVariable(M, Init->getType(), true,
+                                          GlobalValue::InternalLinkage,
+                                          Init, "llvm.dbg.compile_unit");
+  GV->setSection("llvm.metadata");
+  return DICompileUnit(GV);
 }
 
 /// CreateEnumerator - Create a single enumerator value.
 DIEnumerator DIFactory::CreateEnumerator(const std::string &Name, uint64_t Val){
-  Value *Elts[] = {
+  Constant *Elts[] = {
     GetTagConstant(dwarf::DW_TAG_enumerator),
-    MDString::get(VMContext, Name),
+    GetStringConstant(Name),
     ConstantInt::get(Type::getInt64Ty(VMContext), Val)
   };
-
-  return DIEnumerator(MDNode::get(VMContext, &Elts[0], 3));
+  
+  Constant *Init = ConstantStruct::get(VMContext, Elts,
+                                       sizeof(Elts)/sizeof(Elts[0]));
+  
+  M.addTypeName("llvm.dbg.enumerator.type", Init->getType());
+  GlobalVariable *GV = new GlobalVariable(M, Init->getType(), true,
+                                          GlobalValue::InternalLinkage,
+                                          Init, "llvm.dbg.enumerator");
+  GV->setSection("llvm.metadata");
+  return DIEnumerator(GV);
 }
 
 
@@ -543,11 +629,11 @@ DIBasicType DIFactory::CreateBasicType(DIDescriptor Context,
                                        uint64_t AlignInBits,
                                        uint64_t OffsetInBits, unsigned Flags,
                                        unsigned Encoding) {
-  Value *Elts[] = {
+  Constant *Elts[] = {
     GetTagConstant(dwarf::DW_TAG_base_type),
-    Context.getNode(),
-    MDString::get(VMContext, Name),
-    CompileUnit.getNode(),
+    getCastToEmpty(Context),
+    GetStringConstant(Name),
+    getCastToEmpty(CompileUnit),
     ConstantInt::get(Type::getInt32Ty(VMContext), LineNumber),
     ConstantInt::get(Type::getInt64Ty(VMContext), SizeInBits),
     ConstantInt::get(Type::getInt64Ty(VMContext), AlignInBits),
@@ -556,7 +642,15 @@ DIBasicType DIFactory::CreateBasicType(DIDescriptor Context,
     ConstantInt::get(Type::getInt32Ty(VMContext), Encoding)
   };
   
-  return DIBasicType(MDNode::get(VMContext, &Elts[0], 10));
+  Constant *Init = ConstantStruct::get(VMContext, Elts,
+                                       sizeof(Elts)/sizeof(Elts[0]));
+  
+  M.addTypeName("llvm.dbg.basictype.type", Init->getType());
+  GlobalVariable *GV = new GlobalVariable(M, Init->getType(), true,
+                                          GlobalValue::InternalLinkage,
+                                          Init, "llvm.dbg.basictype");
+  GV->setSection("llvm.metadata");
+  return DIBasicType(GV);
 }
 
 /// CreateDerivedType - Create a derived type like const qualified type,
@@ -571,20 +665,28 @@ DIDerivedType DIFactory::CreateDerivedType(unsigned Tag,
                                            uint64_t OffsetInBits,
                                            unsigned Flags,
                                            DIType DerivedFrom) {
-  Value *Elts[] = {
+  Constant *Elts[] = {
     GetTagConstant(Tag),
-    Context.getNode(),
-    MDString::get(VMContext, Name),
-    CompileUnit.getNode(),
+    getCastToEmpty(Context),
+    GetStringConstant(Name),
+    getCastToEmpty(CompileUnit),
     ConstantInt::get(Type::getInt32Ty(VMContext), LineNumber),
     ConstantInt::get(Type::getInt64Ty(VMContext), SizeInBits),
     ConstantInt::get(Type::getInt64Ty(VMContext), AlignInBits),
     ConstantInt::get(Type::getInt64Ty(VMContext), OffsetInBits),
     ConstantInt::get(Type::getInt32Ty(VMContext), Flags),
-    DerivedFrom.getNode(),
+    getCastToEmpty(DerivedFrom)
   };
-
-  return DIDerivedType(MDNode::get(VMContext, &Elts[0], 10));
+  
+  Constant *Init = ConstantStruct::get(VMContext, Elts,
+                                       sizeof(Elts)/sizeof(Elts[0]));
+  
+  M.addTypeName("llvm.dbg.derivedtype.type", Init->getType());
+  GlobalVariable *GV = new GlobalVariable(M, Init->getType(), true,
+                                          GlobalValue::InternalLinkage,
+                                          Init, "llvm.dbg.derivedtype");
+  GV->setSection("llvm.metadata");
+  return DIDerivedType(GV);
 }
 
 /// CreateCompositeType - Create a composite type like array, struct, etc.
@@ -601,22 +703,30 @@ DICompositeType DIFactory::CreateCompositeType(unsigned Tag,
                                                DIArray Elements,
                                                unsigned RuntimeLang) {
 
-  Value *Elts[] = {
+  Constant *Elts[] = {
     GetTagConstant(Tag),
-    Context.getNode(),
-    MDString::get(VMContext, Name),
-    CompileUnit.getNode(),
+    getCastToEmpty(Context),
+    GetStringConstant(Name),
+    getCastToEmpty(CompileUnit),
     ConstantInt::get(Type::getInt32Ty(VMContext), LineNumber),
     ConstantInt::get(Type::getInt64Ty(VMContext), SizeInBits),
     ConstantInt::get(Type::getInt64Ty(VMContext), AlignInBits),
     ConstantInt::get(Type::getInt64Ty(VMContext), OffsetInBits),
     ConstantInt::get(Type::getInt32Ty(VMContext), Flags),
-    DerivedFrom.getNode(),
-    Elements.getNode(),
+    getCastToEmpty(DerivedFrom),
+    getCastToEmpty(Elements),
     ConstantInt::get(Type::getInt32Ty(VMContext), RuntimeLang)
   };
-
-  return DICompositeType(MDNode::get(VMContext, &Elts[0], 12));
+  
+  Constant *Init = ConstantStruct::get(VMContext, Elts,
+                                       sizeof(Elts)/sizeof(Elts[0]));
+  
+  M.addTypeName("llvm.dbg.composite.type", Init->getType());
+  GlobalVariable *GV = new GlobalVariable(M, Init->getType(), true,
+                                          GlobalValue::InternalLinkage,
+                                          Init, "llvm.dbg.composite");
+  GV->setSection("llvm.metadata");
+  return DICompositeType(GV);
 }
 
 
@@ -632,21 +742,29 @@ DISubprogram DIFactory::CreateSubprogram(DIDescriptor Context,
                                          bool isLocalToUnit,
                                          bool isDefinition) {
 
-  Value *Elts[] = {
+  Constant *Elts[] = {
     GetTagConstant(dwarf::DW_TAG_subprogram),
-    llvm::Constant::getNullValue(Type::getInt32Ty(VMContext)),
-    Context.getNode(),
-    MDString::get(VMContext, Name),
-    MDString::get(VMContext, DisplayName),
-    MDString::get(VMContext, LinkageName),
-    CompileUnit.getNode(),
+    llvm::Constant::getNullValue(EmptyStructPtr),
+    getCastToEmpty(Context),
+    GetStringConstant(Name),
+    GetStringConstant(DisplayName),
+    GetStringConstant(LinkageName),
+    getCastToEmpty(CompileUnit),
     ConstantInt::get(Type::getInt32Ty(VMContext), LineNo),
-    Type.getNode(),
+    getCastToEmpty(Type),
     ConstantInt::get(Type::getInt1Ty(VMContext), isLocalToUnit),
     ConstantInt::get(Type::getInt1Ty(VMContext), isDefinition)
   };
   
-  return DISubprogram(MDNode::get(VMContext, &Elts[0], 11));
+  Constant *Init = ConstantStruct::get(VMContext, Elts,
+                                       sizeof(Elts)/sizeof(Elts[0]));
+  
+  M.addTypeName("llvm.dbg.subprogram.type", Init->getType());
+  GlobalVariable *GV = new GlobalVariable(M, Init->getType(), true,
+                                          GlobalValue::InternalLinkage,
+                                          Init, "llvm.dbg.subprogram");
+  GV->setSection("llvm.metadata");
+  return DISubprogram(GV);
 }
 
 /// CreateGlobalVariable - Create a new descriptor for the specified global.
@@ -657,29 +775,30 @@ DIFactory::CreateGlobalVariable(DIDescriptor Context, const std::string &Name,
                                 DICompileUnit CompileUnit,
                                 unsigned LineNo, DIType Type,bool isLocalToUnit,
                                 bool isDefinition, llvm::GlobalVariable *Val) {
-  Value *Elts[] = { 
+  Constant *Elts[] = {
     GetTagConstant(dwarf::DW_TAG_variable),
-    llvm::Constant::getNullValue(Type::getInt32Ty(VMContext)),
-    Context.getNode(),
-    MDString::get(VMContext, Name),
-    MDString::get(VMContext, DisplayName),
-    MDString::get(VMContext, LinkageName),
-    CompileUnit.getNode(),
+    llvm::Constant::getNullValue(EmptyStructPtr),
+    getCastToEmpty(Context),
+    GetStringConstant(Name),
+    GetStringConstant(DisplayName),
+    GetStringConstant(LinkageName),
+    getCastToEmpty(CompileUnit),
     ConstantInt::get(Type::getInt32Ty(VMContext), LineNo),
-    Type.getNode(),
+    getCastToEmpty(Type),
     ConstantInt::get(Type::getInt1Ty(VMContext), isLocalToUnit),
     ConstantInt::get(Type::getInt1Ty(VMContext), isDefinition),
-    Val
+    ConstantExpr::getBitCast(Val, EmptyStructPtr)
   };
-
-  Value *const *Vs = &Elts[0];
-  MDNode *Node = MDNode::get(VMContext,Vs, 12);
-
-  // Create a named metadata so that we do not lose this mdnode.
-  NamedMDNode *NMD = M.getOrInsertNamedMetadata("llvm.dbg.gv");
-  NMD->addElement(Node);
-
-  return DIGlobalVariable(Node);
+  
+  Constant *Init = ConstantStruct::get(VMContext, Elts,
+                                       sizeof(Elts)/sizeof(Elts[0]));
+  
+  M.addTypeName("llvm.dbg.global_variable.type", Init->getType());
+  GlobalVariable *GV = new GlobalVariable(M, Init->getType(), true,
+                                          GlobalValue::LinkOnceAnyLinkage,
+                                          Init, "llvm.dbg.global_variable");
+  GV->setSection("llvm.metadata");
+  return DIGlobalVariable(GV);
 }
 
 
@@ -688,28 +807,44 @@ DIVariable DIFactory::CreateVariable(unsigned Tag, DIDescriptor Context,
                                      const std::string &Name,
                                      DICompileUnit CompileUnit, unsigned LineNo,
                                      DIType Type) {
-  Value *Elts[] = {
+  Constant *Elts[] = {
     GetTagConstant(Tag),
-    Context.getNode(),
-    MDString::get(VMContext, Name),
-    CompileUnit.getNode(),
+    getCastToEmpty(Context),
+    GetStringConstant(Name),
+    getCastToEmpty(CompileUnit),
     ConstantInt::get(Type::getInt32Ty(VMContext), LineNo),
-    Type.getNode(),
+    getCastToEmpty(Type)
   };
   
-  return DIVariable(MDNode::get(VMContext, &Elts[0], 6));
+  Constant *Init = ConstantStruct::get(VMContext, Elts,
+                                       sizeof(Elts)/sizeof(Elts[0]));
+  
+  M.addTypeName("llvm.dbg.variable.type", Init->getType());
+  GlobalVariable *GV = new GlobalVariable(M, Init->getType(), true,
+                                          GlobalValue::InternalLinkage,
+                                          Init, "llvm.dbg.variable");
+  GV->setSection("llvm.metadata");
+  return DIVariable(GV);
 }
 
 
 /// CreateBlock - This creates a descriptor for a lexical block with the
 /// specified parent VMContext.
 DIBlock DIFactory::CreateBlock(DIDescriptor Context) {
-  Value *Elts[] = {
+  Constant *Elts[] = {
     GetTagConstant(dwarf::DW_TAG_lexical_block),
-    Context.getNode()
+    getCastToEmpty(Context)
   };
-
-  return DIBlock(MDNode::get(VMContext, &Elts[0], 2));
+  
+  Constant *Init = ConstantStruct::get(VMContext, Elts,
+                                       sizeof(Elts)/sizeof(Elts[0]));
+  
+  M.addTypeName("llvm.dbg.block.type", Init->getType());
+  GlobalVariable *GV = new GlobalVariable(M, Init->getType(), true,
+                                          GlobalValue::InternalLinkage,
+                                          Init, "llvm.dbg.block");
+  GV->setSection("llvm.metadata");
+  return DIBlock(GV);
 }
 
 
@@ -731,7 +866,7 @@ void DIFactory::InsertStopPoint(DICompileUnit CU, unsigned LineNo,
   Value *Args[] = {
     ConstantInt::get(llvm::Type::getInt32Ty(VMContext), LineNo),
     ConstantInt::get(llvm::Type::getInt32Ty(VMContext), ColNo),
-    CU.getNode()
+    getCastToEmpty(CU)
   };
   CallInst::Create(StopPointFn, Args, Args+3, "", BB);
 }
@@ -744,7 +879,7 @@ void DIFactory::InsertSubprogramStart(DISubprogram SP, BasicBlock *BB) {
     FuncStartFn = Intrinsic::getDeclaration(&M, Intrinsic::dbg_func_start);
   
   // Call llvm.dbg.func.start which also implicitly sets a stoppoint.
-  CallInst::Create(FuncStartFn, SP.getNode(), "", BB);
+  CallInst::Create(FuncStartFn, getCastToEmpty(SP), "", BB);
 }
 
 /// InsertRegionStart - Insert a new llvm.dbg.region.start intrinsic call to
@@ -755,7 +890,7 @@ void DIFactory::InsertRegionStart(DIDescriptor D, BasicBlock *BB) {
     RegionStartFn = Intrinsic::getDeclaration(&M, Intrinsic::dbg_region_start);
 
   // Call llvm.dbg.func.start.
-  CallInst::Create(RegionStartFn, D.getNode(), "", BB);
+  CallInst::Create(RegionStartFn, getCastToEmpty(D), "", BB);
 }
 
 /// InsertRegionEnd - Insert a new llvm.dbg.region.end intrinsic call to
@@ -766,7 +901,7 @@ void DIFactory::InsertRegionEnd(DIDescriptor D, BasicBlock *BB) {
     RegionEndFn = Intrinsic::getDeclaration(&M, Intrinsic::dbg_region_end);
 
   // Call llvm.dbg.region.end.
-  CallInst::Create(RegionEndFn, D.getNode(), "", BB);
+  CallInst::Create(RegionEndFn, getCastToEmpty(D), "", BB);
 }
 
 /// InsertDeclare - Insert a new llvm.dbg.declare intrinsic call.
@@ -777,10 +912,9 @@ void DIFactory::InsertDeclare(Value *Storage, DIVariable D, BasicBlock *BB) {
   if (!DeclareFn)
     DeclareFn = Intrinsic::getDeclaration(&M, Intrinsic::dbg_declare);
 
-  Value *Args[] = { Storage, D.getNode() };
+  Value *Args[] = { Storage, getCastToEmpty(D) };
   CallInst::Create(DeclareFn, Args, Args+2, "", BB);
 }
-
 
 //===----------------------------------------------------------------------===//
 // DebugInfoFinder implementations.
@@ -788,8 +922,7 @@ void DIFactory::InsertDeclare(Value *Storage, DIVariable D, BasicBlock *BB) {
 
 /// processModule - Process entire module and collect debug info.
 void DebugInfoFinder::processModule(Module &M) {
-
-
+  
   for (Module::iterator I = M.begin(), E = M.end(); I != E; ++I)
     for (Function::iterator FI = (*I).begin(), FE = (*I).end(); FI != FE; ++FI)
       for (BasicBlock::iterator BI = (*FI).begin(), BE = (*FI).end(); BI != BE;
@@ -805,13 +938,15 @@ void DebugInfoFinder::processModule(Module &M) {
         else if (DbgDeclareInst *DDI = dyn_cast<DbgDeclareInst>(BI))
           processDeclare(DDI);
       }
-
-  NamedMDNode *NMD = M.getNamedMetadata("llvm.dbg.gv");
-  if (!NMD)
-    return;
-
-  for (unsigned i = 0, e = NMD->getNumElements(); i != e; ++i) {
-    DIGlobalVariable DIG(cast<MDNode>(NMD->getElement(i)));
+  
+  for (Module::global_iterator GVI = M.global_begin(), GVE = M.global_end();
+       GVI != GVE; ++GVI) {
+    GlobalVariable *GV = GVI;
+    if (!GV->hasName() || !GV->isConstant() 
+        || strncmp(GV->getName().data(), "llvm.dbg.global_variable", 24)
+        || !GV->hasInitializer())
+      continue;
+    DIGlobalVariable DIG(GV);
     if (addGlobalVariable(DIG)) {
       addCompileUnit(DIG.getCompileUnit());
       processType(DIG.getType());
@@ -826,20 +961,20 @@ void DebugInfoFinder::processType(DIType DT) {
 
   addCompileUnit(DT.getCompileUnit());
   if (DT.isCompositeType(DT.getTag())) {
-    DICompositeType DCT(DT.getNode());
+    DICompositeType DCT(DT.getGV());
     processType(DCT.getTypeDerivedFrom());
     DIArray DA = DCT.getTypeArray();
     if (!DA.isNull())
       for (unsigned i = 0, e = DA.getNumElements(); i != e; ++i) {
         DIDescriptor D = DA.getElement(i);
-        DIType TypeE = DIType(D.getNode());
+        DIType TypeE = DIType(D.getGV());
         if (!TypeE.isNull())
           processType(TypeE);
         else 
-          processSubprogram(DISubprogram(D.getNode()));
+          processSubprogram(DISubprogram(D.getGV()));
       }
   } else if (DT.isDerivedType(DT.getTag())) {
-    DIDerivedType DDT(DT.getNode());
+    DIDerivedType DDT(DT.getGV());
     if (!DDT.isNull()) 
       processType(DDT.getTypeDerivedFrom());
   }
@@ -857,35 +992,35 @@ void DebugInfoFinder::processSubprogram(DISubprogram SP) {
 
 /// processStopPoint - Process DbgStopPointInst.
 void DebugInfoFinder::processStopPoint(DbgStopPointInst *SPI) {
-  MDNode *Context = dyn_cast<MDNode>(SPI->getContext());
+  GlobalVariable *Context = dyn_cast<GlobalVariable>(SPI->getContext());
   addCompileUnit(DICompileUnit(Context));
 }
 
 /// processFuncStart - Process DbgFuncStartInst.
 void DebugInfoFinder::processFuncStart(DbgFuncStartInst *FSI) {
-  MDNode *SP = dyn_cast<MDNode>(FSI->getSubprogram());
+  GlobalVariable *SP = dyn_cast<GlobalVariable>(FSI->getSubprogram());
   processSubprogram(DISubprogram(SP));
 }
 
 /// processRegionStart - Process DbgRegionStart.
 void DebugInfoFinder::processRegionStart(DbgRegionStartInst *DRS) {
-  MDNode *SP = dyn_cast<MDNode>(DRS->getContext());
+  GlobalVariable *SP = dyn_cast<GlobalVariable>(DRS->getContext());
   processSubprogram(DISubprogram(SP));
 }
 
 /// processRegionEnd - Process DbgRegionEnd.
 void DebugInfoFinder::processRegionEnd(DbgRegionEndInst *DRE) {
-  MDNode *SP = dyn_cast<MDNode>(DRE->getContext());
+  GlobalVariable *SP = dyn_cast<GlobalVariable>(DRE->getContext());
   processSubprogram(DISubprogram(SP));
 }
 
 /// processDeclare - Process DbgDeclareInst.
 void DebugInfoFinder::processDeclare(DbgDeclareInst *DDI) {
-  DIVariable DV(cast<MDNode>(DDI->getVariable()));
+  DIVariable DV(cast<GlobalVariable>(DDI->getVariable()));
   if (DV.isNull())
     return;
 
-  if (!NodesSeen.insert(DV.getNode()))
+  if (!NodesSeen.insert(DV.getGV()))
     return;
 
   addCompileUnit(DV.getCompileUnit());
@@ -897,10 +1032,10 @@ bool DebugInfoFinder::addType(DIType DT) {
   if (DT.isNull())
     return false;
 
-  if (!NodesSeen.insert(DT.getNode()))
+  if (!NodesSeen.insert(DT.getGV()))
     return false;
 
-  TYs.push_back(DT.getNode());
+  TYs.push_back(DT.getGV());
   return true;
 }
 
@@ -909,10 +1044,10 @@ bool DebugInfoFinder::addCompileUnit(DICompileUnit CU) {
   if (CU.isNull())
     return false;
 
-  if (!NodesSeen.insert(CU.getNode()))
+  if (!NodesSeen.insert(CU.getGV()))
     return false;
 
-  CUs.push_back(CU.getNode());
+  CUs.push_back(CU.getGV());
   return true;
 }
     
@@ -921,10 +1056,10 @@ bool DebugInfoFinder::addGlobalVariable(DIGlobalVariable DIG) {
   if (DIG.isNull())
     return false;
 
-  if (!NodesSeen.insert(DIG.getNode()))
+  if (!NodesSeen.insert(DIG.getGV()))
     return false;
 
-  GVs.push_back(DIG.getNode());
+  GVs.push_back(DIG.getGV());
   return true;
 }
 
@@ -933,10 +1068,10 @@ bool DebugInfoFinder::addSubprogram(DISubprogram SP) {
   if (SP.isNull())
     return false;
   
-  if (!NodesSeen.insert(SP.getNode()))
+  if (!NodesSeen.insert(SP.getGV()))
     return false;
 
-  SPs.push_back(SP.getNode());
+  SPs.push_back(SP.getGV());
   return true;
 }
 
@@ -989,17 +1124,31 @@ namespace llvm {
 
   Value *findDbgGlobalDeclare(GlobalVariable *V) {
     const Module *M = V->getParent();
-    NamedMDNode *NMD = M->getNamedMetadata("llvm.dbg.gv");
-    if (!NMD)
-      return 0;
     
-    for (unsigned i = 0, e = NMD->getNumElements(); i != e; ++i) {
-      DIGlobalVariable DIG(cast_or_null<MDNode>(NMD->getElement(i)));
-      if (DIG.isNull())
-        continue;
-      if (DIG.getGlobal() == V)
-        return DIG.getNode();
+    const Type *Ty = M->getTypeByName("llvm.dbg.global_variable.type");
+    if (!Ty) return 0;
+
+    Ty = PointerType::get(Ty, 0);
+
+    Value *Val = V->stripPointerCasts();
+    for (Value::use_iterator I = Val->use_begin(), E = Val->use_end();
+         I != E; ++I) {
+      if (ConstantExpr *CE = dyn_cast<ConstantExpr>(I)) {
+        if (CE->getOpcode() == Instruction::BitCast) {
+          Value *VV = CE;
+
+          while (VV->hasOneUse())
+            VV = *VV->use_begin();
+
+          if (VV->getType() == Ty)
+            return VV;
+        }
+      }
     }
+    
+    if (Val->getType() == Ty)
+      return Val;
+
     return 0;
   }
 
@@ -1036,7 +1185,7 @@ namespace llvm {
     if (GlobalVariable *GV = dyn_cast<GlobalVariable>(const_cast<Value*>(V))) {
       Value *DIGV = findDbgGlobalDeclare(GV);
       if (!DIGV) return false;
-      DIGlobalVariable Var(cast<MDNode>(DIGV));
+      DIGlobalVariable Var(cast<GlobalVariable>(DIGV));
 
       Var.getDisplayName(DisplayName);
       LineNo = Var.getLineNumber();
@@ -1045,7 +1194,7 @@ namespace llvm {
     } else {
       const DbgDeclareInst *DDI = findDbgDeclare(V);
       if (!DDI) return false;
-      DIVariable Var(cast<MDNode>(DDI->getVariable()));
+      DIVariable Var(cast<GlobalVariable>(DDI->getVariable()));
 
       Var.getName(DisplayName);
       LineNo = Var.getLineNumber();
@@ -1103,7 +1252,7 @@ namespace llvm {
     Value *Context = SPI.getContext();
 
     // If this location is already tracked then use it.
-    DebugLocTuple Tuple(cast<MDNode>(Context), SPI.getLine(), 
+    DebugLocTuple Tuple(cast<GlobalVariable>(Context), SPI.getLine(), 
                         SPI.getColumn());
     DenseMap<DebugLocTuple, unsigned>::iterator II
       = DebugLocInfo.DebugIdMap.find(Tuple);
@@ -1125,12 +1274,12 @@ namespace llvm {
     DebugLoc DL;
     Value *SP = FSI.getSubprogram();
 
-    DISubprogram Subprogram(cast<MDNode>(SP));
+    DISubprogram Subprogram(cast<GlobalVariable>(SP));
     unsigned Line = Subprogram.getLineNumber();
     DICompileUnit CU(Subprogram.getCompileUnit());
 
     // If this location is already tracked then use it.
-    DebugLocTuple Tuple(CU.getNode(), Line, /* Column */ 0);
+    DebugLocTuple Tuple(CU.getGV(), Line, /* Column */ 0);
     DenseMap<DebugLocTuple, unsigned>::iterator II
       = DebugLocInfo.DebugIdMap.find(Tuple);
     if (II != DebugLocInfo.DebugIdMap.end())
@@ -1146,7 +1295,7 @@ namespace llvm {
 
   /// isInlinedFnStart - Return true if FSI is starting an inlined function.
   bool isInlinedFnStart(DbgFuncStartInst &FSI, const Function *CurrentFn) {
-    DISubprogram Subprogram(cast<MDNode>(FSI.getSubprogram()));
+    DISubprogram Subprogram(cast<GlobalVariable>(FSI.getSubprogram()));
     if (Subprogram.describes(CurrentFn))
       return false;
 
@@ -1155,10 +1304,11 @@ namespace llvm {
 
   /// isInlinedFnEnd - Return true if REI is ending an inlined function.
   bool isInlinedFnEnd(DbgRegionEndInst &REI, const Function *CurrentFn) {
-    DISubprogram Subprogram(cast<MDNode>(REI.getContext()));
+    DISubprogram Subprogram(cast<GlobalVariable>(REI.getContext()));
     if (Subprogram.isNull() || Subprogram.describes(CurrentFn))
       return false;
 
     return true;
   }
+
 }

@@ -2015,10 +2015,10 @@ class DbgStopPointSDNode : public SDNode {
   SDUse Chain;
   unsigned Line;
   unsigned Column;
-  MDNode *CU;
+  Value *CU;
   friend class SelectionDAG;
   DbgStopPointSDNode(SDValue ch, unsigned l, unsigned c,
-                     MDNode *cu)
+                     Value *cu)
     : SDNode(ISD::DBG_STOPPOINT, DebugLoc::getUnknownLoc(),
       getSDVTList(MVT::Other)), Line(l), Column(c), CU(cu) {
     InitOperands(&Chain, ch);
@@ -2026,7 +2026,7 @@ class DbgStopPointSDNode : public SDNode {
 public:
   unsigned getLine() const { return Line; }
   unsigned getColumn() const { return Column; }
-  MDNode *getCompileUnit() const { return CU; }
+  Value *getCompileUnit() const { return CU; }
 
   static bool classof(const DbgStopPointSDNode *) { return true; }
   static bool classof(const SDNode *N) {

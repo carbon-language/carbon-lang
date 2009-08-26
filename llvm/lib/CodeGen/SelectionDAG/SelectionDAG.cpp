@@ -1286,7 +1286,7 @@ SDValue SelectionDAG::getRegister(unsigned RegNo, EVT VT) {
 
 SDValue SelectionDAG::getDbgStopPoint(DebugLoc DL, SDValue Root,
                                       unsigned Line, unsigned Col,
-                                      MDNode *CU) {
+                                      Value *CU) {
   SDNode *N = NodeAllocator.Allocate<DbgStopPointSDNode>();
   new (N) DbgStopPointSDNode(Root, Line, Col, CU);
   N->setDebugLoc(DL);

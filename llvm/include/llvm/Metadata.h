@@ -110,6 +110,7 @@ class MDNode : public MetadataBase {
   unsigned getNumOperands() { return User::getNumOperands();  }
 
   SmallVector<WeakVH, 4> Node;
+  
   friend struct ConstantCreator<MDNode, Type, std::vector<Value*> >;
 protected:
   explicit MDNode(LLVMContext &C, Value*const* Vals, unsigned NumVals);

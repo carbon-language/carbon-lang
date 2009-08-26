@@ -238,7 +238,7 @@ void PruningFunctionCloner::CloneBlock(const BasicBlock *BB,
     // Do not clone llvm.dbg.region.end. It will be adjusted by the inliner.
     if (const DbgFuncStartInst *DFSI = dyn_cast<DbgFuncStartInst>(II)) {
       if (DbgFnStart == NULL) {
-        DISubprogram SP(DFSI->getSubprogram());
+        DISubprogram SP(cast<GlobalVariable>(DFSI->getSubprogram()));
         if (SP.describes(BB->getParent()))
           DbgFnStart = DFSI->getSubprogram();
       }
