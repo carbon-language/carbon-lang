@@ -33,13 +33,13 @@ class raw_ostream;
 /// Note that this class must remain a simple POD value class, because we need
 /// it to live in unions etc.
 class MCValue {
-  MCSymbol *SymA, *SymB;
+  const MCSymbol *SymA, *SymB;
   int64_t Cst;
 public:
 
   int64_t getConstant() const { return Cst; }
-  MCSymbol *getSymA() const { return SymA; }
-  MCSymbol *getSymB() const { return SymB; }
+  const MCSymbol *getSymA() const { return SymA; }
+  const MCSymbol *getSymB() const { return SymB; }
 
   /// isAbsolute - Is this an absolute (as opposed to relocatable) value.
   bool isAbsolute() const { return !SymA && !SymB; }
@@ -60,7 +60,8 @@ public:
   /// dump - Print the value to stderr.
   void dump() const;
 
-  static MCValue get(MCSymbol *SymA, MCSymbol *SymB = 0, int64_t Val = 0) {
+  static MCValue get(const MCSymbol *SymA, const MCSymbol *SymB = 0,
+                     int64_t Val = 0) {
     MCValue R;
     assert((!SymB || SymA) && "Invalid relocatable MCValue!");
     R.Cst = Val;
