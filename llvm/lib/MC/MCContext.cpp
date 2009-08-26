@@ -54,16 +54,16 @@ MCSymbol *MCContext::LookupSymbol(const StringRef &Name) const {
   return Symbols.lookup(Name);
 }
 
-void MCContext::ClearSymbolValue(MCSymbol *Sym) {
+void MCContext::ClearSymbolValue(const MCSymbol *Sym) {
   SymbolValues.erase(Sym);
 }
 
-void MCContext::SetSymbolValue(MCSymbol *Sym, const MCValue &Value) {
+void MCContext::SetSymbolValue(const MCSymbol *Sym, const MCValue &Value) {
   SymbolValues[Sym] = Value;
 }
 
-const MCValue *MCContext::GetSymbolValue(MCSymbol *Sym) const {
-  DenseMap<MCSymbol*, MCValue>::iterator it = SymbolValues.find(Sym);
+const MCValue *MCContext::GetSymbolValue(const MCSymbol *Sym) const {
+  DenseMap<const MCSymbol*, MCValue>::iterator it = SymbolValues.find(Sym);
 
   if (it == SymbolValues.end())
     return 0;

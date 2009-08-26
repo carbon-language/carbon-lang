@@ -36,7 +36,7 @@ namespace llvm {
     /// SymbolValues - Bindings of symbols to values.
     //
     // FIXME: Is there a good reason to not just put this in the MCSymbol?
-    DenseMap<MCSymbol*, MCValue> SymbolValues;
+    DenseMap<const MCSymbol*, MCValue> SymbolValues;
 
     /// Allocator - Allocator object used for creating machine code objects.
     ///
@@ -70,17 +70,15 @@ namespace llvm {
     /// LookupSymbol - Get the symbol for @param Name, or null.
     MCSymbol *LookupSymbol(const StringRef &Name) const;
 
-    /// ClearSymbolValue - Erase a value binding for @param Symbol, if one
-    /// exists.
-    void ClearSymbolValue(MCSymbol *Symbol);
+    /// ClearSymbolValue - Erase a value binding for @arg Symbol, if one exists.
+    void ClearSymbolValue(const MCSymbol *Symbol);
 
-    /// SetSymbolValue - Set the value binding for @param Symbol to @param
-    /// Value.
-    void SetSymbolValue(MCSymbol *Symbol, const MCValue &Value);
+    /// SetSymbolValue - Set the value binding for @arg Symbol to @arg Value.
+    void SetSymbolValue(const MCSymbol *Symbol, const MCValue &Value);
 
-    /// GetSymbolValue - Return the current value for @param Symbol, or null if
+    /// GetSymbolValue - Return the current value for @arg Symbol, or null if
     /// none exists.
-    const MCValue *GetSymbolValue(MCSymbol *Symbol) const;
+    const MCValue *GetSymbolValue(const MCSymbol *Symbol) const;
 
     void *Allocate(unsigned Size, unsigned Align = 8) {
       return Allocator.Allocate(Size, Align);
