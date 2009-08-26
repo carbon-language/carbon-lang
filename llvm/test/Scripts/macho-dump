@@ -198,7 +198,7 @@ def dumpDysymtabCommand(f, opts):
    print "  ('_indirect_symbols', ["
    for i in range(nindirectsyms):
       print "    # Indirect Symbol %r" % i
-      print "    (('symbol_index', %r),)," % f.read32()
+      print "    (('symbol_index', %#x),)," % f.read32()
    print "  ])"
       
    f.seek(prev_pos)

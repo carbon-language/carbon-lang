@@ -244,25 +244,25 @@ sym_nlp_G:
 // CHECK:   ('nlocrel', 0)
 // CHECK:   ('_indirect_symbols', [
 // CHECK:     # Indirect Symbol 0
-// CHECK:     (('symbol_index', 5),),
+// CHECK:     (('symbol_index', 0x5),),
 // CHECK:     # Indirect Symbol 1
-// CHECK:     (('symbol_index', 4),),
+// CHECK:     (('symbol_index', 0x4),),
 // CHECK:     # Indirect Symbol 2
-// CHECK:     (('symbol_index', 0),),
+// CHECK:     (('symbol_index', 0x0),),
 // CHECK:     # Indirect Symbol 3
-// CHECK:     (('symbol_index', 6),),
+// CHECK:     (('symbol_index', 0x6),),
 // CHECK:     # Indirect Symbol 4
-// CHECK:     (('symbol_index', 2),),
+// CHECK:     (('symbol_index', 0x2),),
 // CHECK:     # Indirect Symbol 5
-// CHECK:     (('symbol_index', 8),),
+// CHECK:     (('symbol_index', 0x8),),
 // CHECK:     # Indirect Symbol 6
-// CHECK:     (('symbol_index', 7),),
+// CHECK:     (('symbol_index', 0x7),),
 // CHECK:     # Indirect Symbol 7
-// CHECK:     (('symbol_index', 2147483648),),
+// CHECK:     (('symbol_index', 0x80000000),),
 // CHECK:     # Indirect Symbol 8
-// CHECK:     (('symbol_index', 9),),
+// CHECK:     (('symbol_index', 0x9),),
 // CHECK:     # Indirect Symbol 9
-// CHECK:     (('symbol_index', 3),),
+// CHECK:     (('symbol_index', 0x3),),
 // CHECK:   ])
 // CHECK:  ),
 // CHECK: ])
