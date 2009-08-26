@@ -518,7 +518,9 @@ bool PPCAsmPrinter::PrintAsmMemoryOperand(const MachineInstr *MI, unsigned OpNo,
   if (ExtraCode && ExtraCode[0])
     return true; // Unknown modifier.
   assert (MI->getOperand(OpNo).isReg());
+  O << "0(";
   printOperand(MI, OpNo);
+  O << ")";
   return false;
 }
 
