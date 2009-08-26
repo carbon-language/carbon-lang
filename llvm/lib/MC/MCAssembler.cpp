@@ -333,7 +333,7 @@ public:
   }
 
   void BindIndirectSymbols(MCAssembler &Asm,
-                           DenseMap<MCSymbol*, MCSymbolData*> &SymbolMap) {
+                           DenseMap<const MCSymbol*,MCSymbolData*> &SymbolMap) {
     // This is the point where 'as' creates actual symbols for indirect symbols
     // (in the following two passes). It would be easier for us to do this
     // sooner when we see the attribute, but that makes getting the order in the
@@ -475,6 +475,15 @@ public:
     std::sort(ExternalSymbolData.begin(), ExternalSymbolData.end());
     std::sort(UndefinedSymbolData.begin(), UndefinedSymbolData.end());
 
+    // Set the symbol indices.
+    Index = 0;
+    for (unsigned i = 0, e = LocalSymbolData.size(); i != e; ++i)
+      LocalSymbolData[i].SymbolData->setIndex(Index++);
+    for (unsigned i = 0, e = ExternalSymbolData.size(); i != e; ++i)
+      ExternalSymbolData[i].SymbolData->setIndex(Index++);
+    for (unsigned i = 0, e = UndefinedSymbolData.size(); i != e; ++i)
+      UndefinedSymbolData[i].SymbolData->setIndex(Index++);
+
     // The string table is padded to a multiple of 4.
     //
     // FIXME: Check to see if this varies per arch.
@@ -488,7 +497,7 @@ public:
     // Compute the symbol -> symbol data map.
     //
     // FIXME: This should not be here.
-    DenseMap<MCSymbol*, MCSymbolData *> SymbolMap;
+    DenseMap<const MCSymbol*, MCSymbolData *> SymbolMap;
     for (MCAssembler::symbol_iterator it = Asm.symbol_begin(),
            ie = Asm.symbol_end(); it != ie; ++it)
       SymbolMap[&it->getSymbol()] = it;
@@ -576,24 +585,7 @@ public:
 
     // Write the symbol table data, if used.
     if (NumSymbols) {
-      // FIXME: We shouldn't need this index table.
-      DenseMap<MCSymbol*, unsigned> SymbolIndexMap;
-      for (unsigned i = 0, e = LocalSymbolData.size(); i != e; ++i) {
-        MCSymbol &Symbol = LocalSymbolData[i].SymbolData->getSymbol();
-        SymbolIndexMap.insert(std::make_pair(&Symbol, SymbolIndexMap.size()));
-      }
-      for (unsigned i = 0, e = ExternalSymbolData.size(); i != e; ++i) {
-        MCSymbol &Symbol = ExternalSymbolData[i].SymbolData->getSymbol();
-        SymbolIndexMap.insert(std::make_pair(&Symbol, SymbolIndexMap.size()));
-      }
-      for (unsigned i = 0, e = UndefinedSymbolData.size(); i != e; ++i) {
-        MCSymbol &Symbol = UndefinedSymbolData[i].SymbolData->getSymbol();
-        SymbolIndexMap.insert(std::make_pair(&Symbol, SymbolIndexMap.size()));
-      }
-
       // Write the indirect symbol entries.
-      //
-      // FIXME: We need the symbol index map for this.
       for (MCAssembler::indirect_symbol_iterator
              it = Asm.indirect_symbol_begin(),
              ie = Asm.indirect_symbol_end(); it != ie; ++it) {
@@ -615,7 +607,7 @@ public:
           }
         }
 
-        Write32(SymbolIndexMap[it->Symbol]);
+        Write32(SymbolMap[it->Symbol]->getIndex());
       }
 
       // FIXME: Check that offsets match computed ones.
@@ -678,7 +670,7 @@ MCSymbolData::MCSymbolData() : Symbol(*(MCSymbol*)0) {}
 MCSymbolData::MCSymbolData(MCSymbol &_Symbol, MCFragment *_Fragment,
                            uint64_t _Offset, MCAssembler *A)
   : Symbol(_Symbol), Fragment(_Fragment), Offset(_Offset),
-    IsExternal(false), IsPrivateExtern(false), Flags(0)
+    IsExternal(false), IsPrivateExtern(false), Flags(0), Index(0)
 {
   if (A)
     A->getSymbolList().push_back(this);

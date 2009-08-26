@@ -286,7 +286,7 @@ public:
   unsigned getAlignment() const { return Alignment; }
   void setAlignment(unsigned Value) { Alignment = Value; }
 
-  /// @name Section List Access
+  /// @name Fragment Access
   /// @{
 
   const FragmentListType &getFragmentList() const { return Fragments; }
@@ -324,7 +324,7 @@ public:
     assert(FileSize != ~UINT64_C(0) && "File size not set!");
     return FileSize;
   }
-  void setFileSize(uint64_t Value) { FileSize = Value; }
+  void setFileSize(uint64_t Value) { FileSize = Value; }  
 
   /// @}
 };
@@ -351,6 +351,9 @@ public:
   /// Flags - The Flags field is used by object file implementations to store
   /// additional per symbol information which is not easily classified.
   uint32_t Flags;
+
+  /// Index - Index field, for use by the object file implementation.
+  uint64_t Index;
 
 public:
   // Only for use as sentinel.
@@ -384,6 +387,12 @@ public:
 
   /// setFlags - Set the (implementation defined) symbol flags.
   void setFlags(uint32_t Value) { Flags = Value; }
+  
+  /// getIndex - Get the (implementation defined) index.
+  uint64_t getIndex() const { return Index; }
+
+  /// setIndex - Set the (implementation defined) index.
+  void setIndex(uint64_t Value) { Index = Value; }
   
   /// @}  
 };
