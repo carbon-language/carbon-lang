@@ -1694,18 +1694,35 @@ Sema::ActOnDestructorReferenceExpr(Scope *S, ExprArg Base,
                                    const CXXScopeSpec *SS) {
   if (SS && SS->isInvalid())
     return ExprError();
+
+  Expr *BaseExpr = (Expr *)Base.get();
   
-  // Since this might be a postfix expression, get rid of ParenListExprs.
-  Base = MaybeConvertParenListExprToParenExpr(S, move(Base));
+  if (BaseExpr->isTypeDependent() || 
+      (SS && isDependentScopeSpecifier(*SS))) {
+    // FIXME: Return an unresolved ref expr.
+    return ExprError();
+  }
+
+  TypeTy *BaseTy = getTypeName(*ClassName, ClassNameLoc, S, SS);
+  if (!BaseTy) {
+    Diag(ClassNameLoc, diag::err_ident_in_pseudo_dtor_not_a_type) 
+      << ClassName;
+    return ExprError();
+  }
   
-  Expr *BaseExpr = Base.takeAs<Expr>();
-  assert(BaseExpr && "no record expression");
+  QualType BaseType = GetTypeFromParser(BaseTy);
+  if (!BaseType->isRecordType()) {
+    Diag(ClassNameLoc, diag::err_type_in_pseudo_dtor_not_a_class_type)
+      << BaseType;
+    return ExprError();
+  }
   
-  // Perform default conversions.
-  DefaultFunctionArrayConversion(BaseExpr);
-  
-  QualType BaseType = BaseExpr->getType();
-  return ExprError();
+  CanQualType CanBaseType = Context.getCanonicalType(BaseType);
+  DeclarationName DtorName = 
+    Context.DeclarationNames.getCXXDestructorName(CanBaseType);
+
+  return BuildMemberReferenceExpr(S, move(Base), OpLoc, OpKind, ClassNameLoc,
+                                  DtorName, DeclPtrTy(), SS);
 }
 
 Sema::OwningExprResult Sema::ActOnFinishFullExpr(ExprArg Arg) {

@@ -1554,6 +1554,11 @@ def err_throw_incomplete_ptr : Error<
 def err_return_in_constructor_handler : Error<
   "return in the catch of a function try block of a constructor is illegal">;
 
+def err_ident_in_pseudo_dtor_not_a_type : Error<
+  "identifier %0 in pseudo-destructor expression does not name a type">;
+def err_type_in_pseudo_dtor_not_a_class_type : Error<
+  "type %0 in pseudo-destructor expression is not a class type">;
+
 def err_invalid_use_of_function_type : Error<
   "a function type is not allowed here">;
 def err_invalid_use_of_array_type : Error<"an array type is not allowed here">;
