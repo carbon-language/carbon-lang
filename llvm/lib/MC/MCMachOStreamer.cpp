@@ -168,6 +168,8 @@ void MCMachOStreamer::EmitSymbolAttribute(MCSymbol *Symbol,
   // Indirect symbols are handled differently, to match how 'as' handles
   // them. This makes writing matching .o files easier.
   if (Attribute == MCStreamer::IndirectSymbol) {
+    // Note that we intentionally cannot use the symbol data here; this is
+    // important for matching the string table that 'as' generates.
     IndirectSymbolData ISD;
     ISD.Symbol = Symbol;
     ISD.SectionData = CurSectionData;

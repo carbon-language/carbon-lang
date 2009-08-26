@@ -70,6 +70,13 @@ class MachObjectWriter {
     STF_PrivateExtern  = 0x10
   };
 
+  /// IndirectSymbolFlags - Flags for encoding special values in the indirect
+  /// symbol entry.
+  enum IndirectSymbolFlags {
+    ISF_Local    = 0x80000000,
+    ISF_Absolute = 0x40000000
+  };
+
   /// MachSymbolData - Helper struct for containing some precomputed information
   /// on symbols.
   struct MachSymbolData {
@@ -315,20 +322,14 @@ public:
     Write32(0); // FIXME: Value
   }
 
-  void BindIndirectSymbols(MCAssembler &Asm) {
+  void BindIndirectSymbols(MCAssembler &Asm,
+                           DenseMap<MCSymbol*, MCSymbolData*> &SymbolMap) {
     // This is the point where 'as' creates actual symbols for indirect symbols
     // (in the following two passes). It would be easier for us to do this
     // sooner when we see the attribute, but that makes getting the order in the
     // symbol table much more complicated than it is worth.
     //
     // FIXME: Revisit this when the dust settles.
-
-    // FIXME: This should not be needed.
-    DenseMap<MCSymbol*, MCSymbolData *> SymbolMap;
-
-    for (MCAssembler::symbol_iterator it = Asm.symbol_begin(),
-           ie = Asm.symbol_end(); it != ie; ++it)
-      SymbolMap[&it->getSymbol()] = it;
 
     // Bind non lazy symbol pointers first.
     for (MCAssembler::indirect_symbol_iterator it = Asm.indirect_symbol_begin(),
@@ -474,7 +475,16 @@ public:
   void WriteObject(MCAssembler &Asm) {
     unsigned NumSections = Asm.size();
 
-    BindIndirectSymbols(Asm);
+    // Compute the symbol -> symbol data map.
+    //
+    // FIXME: This should not be here.
+    DenseMap<MCSymbol*, MCSymbolData *> SymbolMap;
+    for (MCAssembler::symbol_iterator it = Asm.symbol_begin(),
+           ie = Asm.symbol_end(); it != ie; ++it)
+      SymbolMap[&it->getSymbol()] = it;
+
+    // Create symbol data for any indirect symbols.
+    BindIndirectSymbols(Asm, SymbolMap);
 
     // Compute symbol table information.
     SmallString<256> StringTable;
@@ -567,11 +577,47 @@ public:
 
     // Write the symbol table data, if used.
     if (NumSymbols) {
+      // FIXME: We shouldn't need this index table.
+      DenseMap<MCSymbol*, unsigned> SymbolIndexMap;
+      for (unsigned i = 0, e = LocalSymbolData.size(); i != e; ++i) {
+        MCSymbol &Symbol = LocalSymbolData[i].SymbolData->getSymbol();
+        SymbolIndexMap.insert(std::make_pair(&Symbol, SymbolIndexMap.size()));
+      }
+      for (unsigned i = 0, e = ExternalSymbolData.size(); i != e; ++i) {
+        MCSymbol &Symbol = ExternalSymbolData[i].SymbolData->getSymbol();
+        SymbolIndexMap.insert(std::make_pair(&Symbol, SymbolIndexMap.size()));
+      }
+      for (unsigned i = 0, e = UndefinedSymbolData.size(); i != e; ++i) {
+        MCSymbol &Symbol = UndefinedSymbolData[i].SymbolData->getSymbol();
+        SymbolIndexMap.insert(std::make_pair(&Symbol, SymbolIndexMap.size()));
+      }
+
       // Write the indirect symbol entries.
       //
       // FIXME: We need the symbol index map for this.
-      for (unsigned i = 0, e = Asm.indirect_symbol_size(); i != e; ++i)
-        Write32(0);
+      for (MCAssembler::indirect_symbol_iterator
+             it = Asm.indirect_symbol_begin(),
+             ie = Asm.indirect_symbol_end(); it != ie; ++it) {
+        // Indirect symbols in the non lazy symbol pointer section have some
+        // special handling.
+        const MCSectionMachO &Section =
+          static_cast<const MCSectionMachO&>(it->SectionData->getSection());
+        unsigned Type =
+          Section.getTypeAndAttributes() & MCSectionMachO::SECTION_TYPE;
+        if (Type == MCSectionMachO::S_NON_LAZY_SYMBOL_POINTERS) {
+          // If this symbol is defined and internal, mark it as such.
+          if (it->Symbol->isDefined() &&
+              !SymbolMap.lookup(it->Symbol)->isExternal()) {
+            uint32_t Flags = ISF_Local;
+            if (it->Symbol->isAbsolute())
+              Flags |= ISF_Absolute;
+            Write32(Flags);
+            continue;
+          }
+        }
+
+        Write32(SymbolIndexMap[it->Symbol]);
+      }
 
       // FIXME: Check that offsets match computed ones.
 
