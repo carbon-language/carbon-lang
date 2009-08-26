@@ -218,17 +218,17 @@ namespace llvm {
     // carry this is just plain insane.
     uint64_t getOffsetInBits() const    { return getUInt64Field(7); }
     unsigned getFlags() const           { return getUnsignedField(8); }
-    bool isPrivate() const              { return 
-        (getFlags() & FlagPrivate) != 0; 
+    bool isPrivate() const {
+      return (getFlags() & FlagPrivate) != 0; 
     }
-    bool isProtected() const            { 
+    bool isProtected() const {
       return (getFlags() & FlagProtected) != 0; 
     }
-    bool isForwardDecl() const          {
-        return (getFlags() & FlagFwdDecl) != 0; 
+    bool isForwardDecl() const {
+      return (getFlags() & FlagFwdDecl) != 0; 
     }
-    bool isClosure() const          {
-        return (getFlags() & FlagClosure) != 0; 
+    bool isClosure() const {
+      return (getFlags() & FlagClosure) != 0; 
     }
 
     /// dump - print type.
