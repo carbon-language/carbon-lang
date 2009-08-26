@@ -85,6 +85,7 @@ installsrc:
 	                        -type f -a -name .DS_Store -o \
 				-name \*~ -o -name .\#\* \) \
 	  -exec rm -rf {} \;
+	rm -rf "$(SRCROOT)/test"
 
 #######################################################################
 
