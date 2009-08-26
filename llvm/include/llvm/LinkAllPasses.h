@@ -51,6 +51,7 @@ namespace {
       (void) llvm::createStructRetPromotionPass();
       (void) llvm::createBasicAliasAnalysisPass();
       (void) llvm::createLibCallAliasAnalysisPass(0);
+      (void) llvm::createScalarEvolutionAliasAnalysisPass();
       (void) llvm::createBlockPlacementPass();
       (void) llvm::createBlockProfilerPass();
       (void) llvm::createBreakCriticalEdgesPass();

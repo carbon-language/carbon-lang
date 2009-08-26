@@ -74,6 +74,13 @@ namespace llvm {
 
   //===--------------------------------------------------------------------===//
   //
+  // createScalarEvolutionAliasAnalysisPass - This pass implements a simple
+  // alias analysis using ScalarEvolution queries.
+  //
+  FunctionPass *createScalarEvolutionAliasAnalysisPass();
+
+  //===--------------------------------------------------------------------===//
+  //
   // createAndersensPass - This pass implements Andersen's interprocedural alias
   // analysis.
   //
