@@ -72,6 +72,14 @@ public:
     : MCStreamer(Context), Assembler(_OS), CurSectionData(0) {}
   ~MCMachOStreamer() {}
 
+  const MCValue &AddValueSymbols(const MCValue &Value) {
+    if (Value.getSymA())
+      getSymbolData(*const_cast<MCSymbol*>(Value.getSymA()));
+    if (Value.getSymB())
+      getSymbolData(*const_cast<MCSymbol*>(Value.getSymB()));
+    return Value;
+  }
+
   /// @name MCStreamer Interface
   /// @{
 
@@ -265,7 +273,7 @@ void MCMachOStreamer::EmitBytes(const StringRef &Data) {
 }
 
 void MCMachOStreamer::EmitValue(const MCValue &Value, unsigned Size) {
-  new MCFillFragment(Value, Size, 1, CurSectionData);
+  new MCFillFragment(AddValueSymbols(Value), Size, 1, CurSectionData);
 }
 
 void MCMachOStreamer::EmitValueToAlignment(unsigned ByteAlignment,
@@ -283,7 +291,7 @@ void MCMachOStreamer::EmitValueToAlignment(unsigned ByteAlignment,
 
 void MCMachOStreamer::EmitValueToOffset(const MCValue &Offset,
                                         unsigned char Value) {
-  new MCOrgFragment(Offset, Value, CurSectionData);
+  new MCOrgFragment(AddValueSymbols(Offset), Value, CurSectionData);
 }
 
 void MCMachOStreamer::EmitInstruction(const MCInst &Inst) {
