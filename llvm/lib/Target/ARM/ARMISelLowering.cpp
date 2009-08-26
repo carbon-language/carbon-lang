@@ -483,12 +483,6 @@ const char *ARMTargetLowering::getTargetNodeName(unsigned Opcode) const {
   case ARMISD::VGETLANEs:     return "ARMISD::VGETLANEs";
   case ARMISD::VDUP:          return "ARMISD::VDUP";
   case ARMISD::VDUPLANE:      return "ARMISD::VDUPLANE";
-  case ARMISD::VLD2D:         return "ARMISD::VLD2D";
-  case ARMISD::VLD3D:         return "ARMISD::VLD3D";
-  case ARMISD::VLD4D:         return "ARMISD::VLD4D";
-  case ARMISD::VST2D:         return "ARMISD::VST2D";
-  case ARMISD::VST3D:         return "ARMISD::VST3D";
-  case ARMISD::VST4D:         return "ARMISD::VST4D";
   case ARMISD::VEXT:          return "ARMISD::VEXT";
   case ARMISD::VREV64:        return "ARMISD::VREV64";
   case ARMISD::VREV32:        return "ARMISD::VREV32";
@@ -1345,52 +1339,45 @@ SDValue ARMTargetLowering::LowerGLOBAL_OFFSET_TABLE(SDValue Op,
 }
 
 static SDValue LowerNeonVLDIntrinsic(SDValue Op, SelectionDAG &DAG,
-                                     unsigned Opcode) {
+                                     unsigned NumVecs) {
   SDNode *Node = Op.getNode();
   EVT VT = Node->getValueType(0);
-  DebugLoc dl = Op.getDebugLoc();
 
-  if (!VT.is64BitVector())
-    return SDValue(); // unimplemented
+  // No expansion needed for 64-bit vectors.
+  if (VT.is64BitVector())
+    return SDValue();
 
-  SDValue Ops[] = { Node->getOperand(0),
-                    Node->getOperand(2) };
-  return DAG.getNode(Opcode, dl, Node->getVTList(), Ops, 2);
+  // FIXME: We need to expand VLD3 and VLD4 of 128-bit vectors into separate
+  // operations to load the even and odd registers.
+  return SDValue();
 }
 
 static SDValue LowerNeonVSTIntrinsic(SDValue Op, SelectionDAG &DAG,
-                                     unsigned Opcode, unsigned NumVecs) {
+                                     unsigned NumVecs) {
   SDNode *Node = Op.getNode();
   EVT VT = Node->getOperand(3).getValueType();
-  DebugLoc dl = Op.getDebugLoc();
 
-  if (!VT.is64BitVector())
-    return SDValue(); // unimplemented
+  // No expansion needed for 64-bit vectors.
+  if (VT.is64BitVector())
+    return SDValue();
 
-  SmallVector<SDValue, 6> Ops;
-  Ops.push_back(Node->getOperand(0));
-  Ops.push_back(Node->getOperand(2));
-  for (unsigned N = 0; N < NumVecs; ++N)
-    Ops.push_back(Node->getOperand(N + 3));
-  return DAG.getNode(Opcode, dl, MVT::Other, Ops.data(), Ops.size());
+  // FIXME: We need to expand VST3 and VST4 of 128-bit vectors into separate
+  // operations to store the even and odd registers.
+  return SDValue();
 }
 
 SDValue
 ARMTargetLowering::LowerINTRINSIC_W_CHAIN(SDValue Op, SelectionDAG &DAG) {
   unsigned IntNo = cast<ConstantSDNode>(Op.getOperand(1))->getZExtValue();
   switch (IntNo) {
-  case Intrinsic::arm_neon_vld2:
-    return LowerNeonVLDIntrinsic(Op, DAG, ARMISD::VLD2D);
   case Intrinsic::arm_neon_vld3:
-    return LowerNeonVLDIntrinsic(Op, DAG, ARMISD::VLD3D);
+    return LowerNeonVLDIntrinsic(Op, DAG, 3);
   case Intrinsic::arm_neon_vld4:
-    return LowerNeonVLDIntrinsic(Op, DAG, ARMISD::VLD4D);
-  case Intrinsic::arm_neon_vst2:
-    return LowerNeonVSTIntrinsic(Op, DAG, ARMISD::VST2D, 2);
+    return LowerNeonVLDIntrinsic(Op, DAG, 4);
   case Intrinsic::arm_neon_vst3:
-    return LowerNeonVSTIntrinsic(Op, DAG, ARMISD::VST3D, 3);
+    return LowerNeonVSTIntrinsic(Op, DAG, 3);
   case Intrinsic::arm_neon_vst4:
-    return LowerNeonVSTIntrinsic(Op, DAG, ARMISD::VST4D, 4);
+    return LowerNeonVSTIntrinsic(Op, DAG, 4);
   default: return SDValue();    // Don't custom lower most intrinsics.
   }
 }

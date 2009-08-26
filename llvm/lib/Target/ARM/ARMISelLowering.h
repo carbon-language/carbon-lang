@@ -119,14 +119,6 @@ namespace llvm {
       VDUP,
       VDUPLANE,
 
-      // Vector load/store with (de)interleaving
-      VLD2D,
-      VLD3D,
-      VLD4D,
-      VST2D,
-      VST3D,
-      VST4D,
-
       // Vector shuffles:
       VEXT,         // extract
       VREV64,       // reverse elements within 64-bit doublewords
