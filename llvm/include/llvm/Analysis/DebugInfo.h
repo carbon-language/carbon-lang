@@ -173,7 +173,8 @@ namespace llvm {
     enum {
       FlagPrivate   = 1 << 0,
       FlagProtected = 1 << 1,
-      FlagFwdDecl   = 1 << 2
+      FlagFwdDecl   = 1 << 2,
+      FlagClosure   = 1 << 3
     };
 
   protected:
@@ -225,6 +226,9 @@ namespace llvm {
     }
     bool isForwardDecl() const          {
         return (getFlags() & FlagFwdDecl) != 0; 
+    }
+    bool isClosure() const          {
+        return (getFlags() & FlagClosure) != 0; 
     }
 
     /// dump - print type.
