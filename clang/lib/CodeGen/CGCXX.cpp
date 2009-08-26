@@ -362,9 +362,9 @@ CodeGenFunction::EmitCXXAggrConstructorCall(const CXXConstructorDecl *D,
   
   // Generate: if (loop-index < number-of-elements fall to the loop body,
   // otherwise, go to the block after the for-loop.
-  uint64_t NumElements = CA->getSize().getZExtValue();
+  uint64_t NumElements = getContext().getConstantArrayElementCount(CA);
   llvm::Value * NumElementsPtr = 
-  llvm::ConstantInt::get(llvm::Type::getInt64Ty(VMContext), NumElements);
+    llvm::ConstantInt::get(llvm::Type::getInt64Ty(VMContext), NumElements);
   llvm::Value *Counter = Builder.CreateLoad(IndexPtr);
   llvm::Value *IsLess = Builder.CreateICmpULT(Counter, NumElementsPtr, 
                                               "isless");
@@ -376,21 +376,8 @@ CodeGenFunction::EmitCXXAggrConstructorCall(const CXXConstructorDecl *D,
   llvm::BasicBlock *ContinueBlock = createBasicBlock("for.inc");
   // Inside the loop body, emit the constructor call on the array element.
   Counter = Builder.CreateLoad(IndexPtr);
-  if (const ConstantArrayType *CAT = 
-      dyn_cast<ConstantArrayType>(Array->getElementType())) {
-    uint64_t delta = getContext().getConstantArrayElementCount(CAT);
-    // Address = This + delta*Counter for current loop iteration.
-    llvm::Value *DeltaPtr = 
-      llvm::ConstantInt::get(llvm::Type::getInt64Ty(VMContext), delta);
-    DeltaPtr = Builder.CreateMul(Counter, DeltaPtr, "mul");
-    llvm::Value *Address = 
-      Builder.CreateInBoundsGEP(This, DeltaPtr, "arrayidx");
-    EmitCXXAggrConstructorCall(D, CAT, Address);
-  } 
-  else {
-    llvm::Value *Address = Builder.CreateInBoundsGEP(This, Counter, "arrayidx");
-    EmitCXXConstructorCall(D, Ctor_Complete, Address, 0, 0);
-  }
+  llvm::Value *Address = Builder.CreateInBoundsGEP(This, Counter, "arrayidx");
+  EmitCXXConstructorCall(D, Ctor_Complete, Address, 0, 0);
     
   EmitBlock(ContinueBlock);
   
@@ -1128,6 +1115,7 @@ llvm::Value *CodeGenFunction::GenerateVtable(const CXXRecordDecl *RD) {
 /// EmitClassAggrMemberwiseCopy - This routine generates code to copy a class
 /// array of objects from SrcValue to DestValue. Copying can be either a bitwise
 /// copy or via a copy constructor call.
+//  FIXME. Consolidate this with EmitCXXAggrConstructorCall.
 void CodeGenFunction::EmitClassAggrMemberwiseCopy(llvm::Value *Dest, 
                                             llvm::Value *Src,
                                             const ArrayType *Array,
