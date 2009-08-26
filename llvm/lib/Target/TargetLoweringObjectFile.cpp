@@ -655,12 +655,12 @@ getMachOSection(const StringRef &Segment, const StringRef &Section,
   
   // Form the name to look up.
   SmallString<64> Name;
-  Name.append(Segment.begin(), Segment.end());
+  Name += Segment;
   Name.push_back(',');
-  Name.append(Section.begin(), Section.end());
+  Name += Section;
   
   // Do the lookup, if we have a hit, return it.
-  const MCSectionMachO *&Entry = Map[StringRef(Name.data(), Name.size())];
+  const MCSectionMachO *&Entry = Map[Name.str()];
   if (Entry) return Entry;
 
   // Otherwise, return a new section.
