@@ -240,7 +240,9 @@ LValue CodeGenFunction::EmitLValue(const Expr *E) {
     return EmitArraySubscriptExpr(cast<ArraySubscriptExpr>(E));
   case Expr::ExtVectorElementExprClass:
     return EmitExtVectorElementExpr(cast<ExtVectorElementExpr>(E));
-  case Expr::MemberExprClass: return EmitMemberExpr(cast<MemberExpr>(E));
+  case Expr::MemberExprClass: 
+  case Stmt::CXXQualifiedMemberExprClass:
+    return EmitMemberExpr(cast<MemberExpr>(E));
   case Expr::CompoundLiteralExprClass:
     return EmitCompoundLiteralLValue(cast<CompoundLiteralExpr>(E));
   case Expr::ConditionalOperatorClass:

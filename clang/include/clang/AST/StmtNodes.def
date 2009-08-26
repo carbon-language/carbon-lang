@@ -134,6 +134,7 @@ EXPR(CXXBindTemporaryExpr   , Expr)
 EXPR(CXXExprWithTemporaries , Expr)
 EXPR(CXXTemporaryObjectExpr , CXXConstructExpr)
 EXPR(CXXUnresolvedConstructExpr, Expr)
+EXPR(CXXQualifiedMemberExpr, MemberExpr)
 EXPR(CXXUnresolvedMemberExpr, Expr)
 
 // Obj-C Expressions.

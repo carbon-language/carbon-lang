@@ -631,6 +631,7 @@ Sema::BuildAnonymousStructUnionMemberReference(SourceLocation Loc,
     if (BaseAddrSpace != MemberType.getAddressSpace())
       MemberType = Context.getAddrSpaceQualType(MemberType, BaseAddrSpace);
     MarkDeclarationReferenced(Loc, *FI);
+    // FIXME: Might this end up being a qualified name?
     Result = new (Context) MemberExpr(Result, BaseObjectIsPointer, *FI,
                                       OpLoc, MemberType);
     BaseObjectIsPointer = false;
@@ -874,6 +875,19 @@ Sema::PerformObjectMemberConversion(Expr *&From, NamedDecl *Member) {
   return false;
 }
 
+/// \brief Build a MemberExpr or CXXQualifiedMemberExpr, as appropriate.
+static MemberExpr *BuildMemberExpr(ASTContext &C, Expr *Base, bool isArrow, 
+                                   const CXXScopeSpec *SS, NamedDecl *Member, 
+                                   SourceLocation Loc, QualType Ty) {
+  if (SS && SS->isSet())
+    return new (C) CXXQualifiedMemberExpr(Base, isArrow, 
+                                          (NestedNameSpecifier *)SS->getScopeRep(),
+                                          SS->getRange(),
+                                          Member, Loc, Ty);
+  
+  return new (C) MemberExpr(Base, isArrow, Member, Loc, Ty);
+}
+
 /// \brief Complete semantic analysis for a reference to the given declaration.
 Sema::OwningExprResult
 Sema::BuildDeclarationNameExpr(SourceLocation Loc, NamedDecl *D,
@@ -985,8 +999,8 @@ Sema::BuildDeclarationNameExpr(SourceLocation Loc, NamedDecl *D,
             return ExprError();
           if (DiagnoseUseOfDecl(D, Loc))
             return ExprError();
-          return Owned(new (Context) MemberExpr(This, true, D,
-                                                Loc, MemberType));
+          return Owned(BuildMemberExpr(Context, This, true, SS, D,
+                                       Loc, MemberType));
         }
       }
     }
@@ -1953,7 +1967,7 @@ ObjCMethodDecl *Sema::FindMethodInNestedImplementations(
     return FindMethodInNestedImplementations(IFace->getSuperClass(), Sel);
   return Method;
 }
-
+                       
 Action::OwningExprResult 
 Sema::BuildMemberReferenceExpr(Scope *S, ExprArg Base, SourceLocation OpLoc,
                                tok::TokenKind OpKind, SourceLocation MemberLoc,
@@ -2112,37 +2126,37 @@ Sema::BuildMemberReferenceExpr(Scope *S, ExprArg Base, SourceLocation OpLoc,
       MarkDeclarationReferenced(MemberLoc, FD);
       if (PerformObjectMemberConversion(BaseExpr, FD))
         return ExprError();
-      return Owned(new (Context) MemberExpr(BaseExpr, OpKind == tok::arrow, FD,
-                                            MemberLoc, MemberType));
+      return Owned(BuildMemberExpr(Context, BaseExpr, OpKind == tok::arrow, SS, 
+                                   FD, MemberLoc, MemberType));
     }
     
     if (VarDecl *Var = dyn_cast<VarDecl>(MemberDecl)) {
       MarkDeclarationReferenced(MemberLoc, MemberDecl);
-      return Owned(new (Context) MemberExpr(BaseExpr, OpKind == tok::arrow,
-                                            Var, MemberLoc,
-                                         Var->getType().getNonReferenceType()));
+      return Owned(BuildMemberExpr(Context, BaseExpr, OpKind == tok::arrow, SS,
+                                   Var, MemberLoc,
+                                   Var->getType().getNonReferenceType()));
     }
     if (FunctionDecl *MemberFn = dyn_cast<FunctionDecl>(MemberDecl)) {
       MarkDeclarationReferenced(MemberLoc, MemberDecl);
-      return Owned(new (Context) MemberExpr(BaseExpr, OpKind == tok::arrow,
-                                            MemberFn, MemberLoc,
-                                            MemberFn->getType()));
+      return Owned(BuildMemberExpr(Context, BaseExpr, OpKind == tok::arrow, SS,
+                                   MemberFn, MemberLoc,
+                                   MemberFn->getType()));
     }
     if (FunctionTemplateDecl *FunTmpl 
           = dyn_cast<FunctionTemplateDecl>(MemberDecl)) {
       MarkDeclarationReferenced(MemberLoc, MemberDecl);
-      return Owned(new (Context) MemberExpr(BaseExpr, OpKind == tok::arrow,
-                                            FunTmpl, MemberLoc,
-                                            Context.OverloadTy));
+      return Owned(BuildMemberExpr(Context, BaseExpr, OpKind == tok::arrow, SS,
+                                   FunTmpl, MemberLoc,
+                                   Context.OverloadTy));
     }
     if (OverloadedFunctionDecl *Ovl
           = dyn_cast<OverloadedFunctionDecl>(MemberDecl))
-      return Owned(new (Context) MemberExpr(BaseExpr, OpKind == tok::arrow, Ovl,
-                                            MemberLoc, Context.OverloadTy));
+      return Owned(BuildMemberExpr(Context, BaseExpr, OpKind == tok::arrow, SS,
+                                   Ovl, MemberLoc, Context.OverloadTy));
     if (EnumConstantDecl *Enum = dyn_cast<EnumConstantDecl>(MemberDecl)) {
       MarkDeclarationReferenced(MemberLoc, MemberDecl);
-      return Owned(new (Context) MemberExpr(BaseExpr, OpKind == tok::arrow,
-                                            Enum, MemberLoc, Enum->getType()));
+      return Owned(BuildMemberExpr(Context, BaseExpr, OpKind == tok::arrow, SS,
+                                   Enum, MemberLoc, Enum->getType()));
     }
     if (isa<TypeDecl>(MemberDecl))
       return ExprError(Diag(MemberLoc,diag::err_typecheck_member_reference_type)
@@ -4802,6 +4816,7 @@ static NamedDecl *getPrimaryDecl(Expr *E) {
   case Stmt::QualifiedDeclRefExprClass:
     return cast<DeclRefExpr>(E)->getDecl();
   case Stmt::MemberExprClass:
+  case Stmt::CXXQualifiedMemberExprClass:
     // If this is an arrow operator, the address is an offset from
     // the base's value, so the object the base refers to is
     // irrelevant.

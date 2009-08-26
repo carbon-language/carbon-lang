@@ -1285,7 +1285,41 @@ public:
   virtual child_iterator child_end();
 };
 
-/// \brief 
+/// \brief Represents a C++ member access expression that was written using
+/// a qualified name, e.g., "x->Base::f()".
+class CXXQualifiedMemberExpr : public MemberExpr {
+  /// QualifierRange - The source range that covers the
+  /// nested-name-specifier.
+  SourceRange QualifierRange;
+  
+  /// \brief The nested-name-specifier that qualifies this declaration
+  /// name.
+  NestedNameSpecifier *Qualifier;
+  
+public:
+  CXXQualifiedMemberExpr(Expr *base, bool isarrow, NestedNameSpecifier *Qual,
+                         SourceRange QualRange, NamedDecl *memberdecl, 
+                         SourceLocation l, QualType ty) 
+    : MemberExpr(CXXQualifiedMemberExprClass, base, isarrow, memberdecl, l, ty),
+      QualifierRange(QualRange), Qualifier(Qual) { }
+
+  /// \brief Retrieve the source range of the nested-name-specifier that 
+  /// qualifies the member name.
+  SourceRange getQualifierRange() const { return QualifierRange; }
+  
+  /// \brief Retrieve the nested-name-specifier that qualifies the
+  /// member reference expression.
+  NestedNameSpecifier *getQualifier() const { return Qualifier; }
+  
+  static bool classof(const Stmt *T) {
+    return T->getStmtClass() == CXXQualifiedMemberExprClass;
+  }
+  static bool classof(const CXXQualifiedMemberExpr *) { return true; }  
+};
+  
+/// \brief Represents a C++ member access expression where the actual member
+/// referenced could not be resolved, e.g., because the base expression or the
+/// member name was dependent.
 class CXXUnresolvedMemberExpr : public Expr {
   /// \brief The expression for the base pointer or class reference,
   /// e.g., the \c x in x.f.

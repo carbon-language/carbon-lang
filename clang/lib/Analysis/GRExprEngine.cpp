@@ -408,6 +408,7 @@ void GRExprEngine::Visit(Stmt* S, ExplodedNode* Pred, ExplodedNodeSet& Dst) {
       break;
       
     case Stmt::MemberExprClass:
+    case Stmt::CXXQualifiedMemberExprClass:
       VisitMemberExpr(cast<MemberExpr>(S), Pred, Dst, false);
       break;
       
@@ -515,6 +516,7 @@ void GRExprEngine::VisitLValue(Expr* Ex, ExplodedNode* Pred,
       return;
       
     case Stmt::MemberExprClass:
+    case Stmt::CXXQualifiedMemberExprClass:
       VisitMemberExpr(cast<MemberExpr>(Ex), Pred, Dst, true);
       return;
       

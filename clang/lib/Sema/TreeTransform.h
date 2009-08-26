@@ -1421,6 +1421,28 @@ public:
                                                RParenLoc);
   }
   
+  /// \brief Build a new qualified member access expression.
+  /// 
+  /// By default, performs semantic analysis to build the new expression.
+  /// Subclasses may override this routine to provide different behavior.
+  OwningExprResult RebuildCXXQualifiedMemberExpr(ExprArg Base, 
+                                                 SourceLocation OpLoc,
+                                                 bool isArrow, 
+                                                NestedNameSpecifier *Qualifier,
+                                                 SourceRange QualifierRange,
+                                                 SourceLocation MemberLoc,
+                                                 NamedDecl *Member) {
+    CXXScopeSpec SS;
+    SS.setRange(QualifierRange);
+    SS.setScopeRep(Qualifier);
+    return getSema().ActOnMemberReferenceExpr(/*Scope=*/0, move(Base), OpLoc,
+                                              isArrow? tok::arrow : tok::period,
+                                              MemberLoc,
+                                              /*FIXME*/*Member->getIdentifier(),
+                                      /*FIXME?*/Sema::DeclPtrTy::make((Decl*)0),
+                                              &SS);
+  }
+  
   /// \brief Build a new member reference expression.
   ///
   /// By default, performs semantic analysis to build the new expression.
@@ -3992,6 +4014,44 @@ TreeTransform<Derived>::TransformCXXUnresolvedConstructExpr(
                                                         E->getRParenLoc());
 }
 
+template<typename Derived> 
+Sema::OwningExprResult 
+TreeTransform<Derived>::TransformCXXQualifiedMemberExpr(
+                                                  CXXQualifiedMemberExpr *E) { 
+  OwningExprResult Base = getDerived().TransformExpr(E->getBase());
+  if (Base.isInvalid())
+    return SemaRef.ExprError();
+  
+  NamedDecl *Member 
+    = cast_or_null<NamedDecl>(getDerived().TransformDecl(E->getMemberDecl()));
+  if (!Member)
+    return SemaRef.ExprError();
+ 
+  NestedNameSpecifier *Qualifier
+    = getDerived().TransformNestedNameSpecifier(E->getQualifier(),
+                                                E->getQualifierRange());
+  if (Qualifier == 0)
+    return SemaRef.ExprError();
+
+  if (!getDerived().AlwaysRebuild() &&
+      Base.get() == E->getBase() &&
+      Member == E->getMemberDecl() &&
+      Qualifier == E->getQualifier())
+    return SemaRef.Owned(E->Retain()); 
+ 
+  // FIXME: Bogus source location for the operator
+  SourceLocation FakeOperatorLoc
+    = SemaRef.PP.getLocForEndOfToken(E->getBase()->getSourceRange().getEnd());
+  
+  return getDerived().RebuildCXXQualifiedMemberExpr(move(Base), 
+                                                     FakeOperatorLoc,
+                                                     E->isArrow(),
+                                                     Qualifier,
+                                                     E->getQualifierRange(),
+                                                     E->getMemberLoc(),
+                                                     Member);
+}
+  
 template<typename Derived>
 Sema::OwningExprResult
 TreeTransform<Derived>::TransformCXXUnresolvedMemberExpr(

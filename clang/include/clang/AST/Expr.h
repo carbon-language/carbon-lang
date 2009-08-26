@@ -33,6 +33,7 @@ namespace clang {
   class BlockDecl;
   class CXXOperatorCallExpr;
   class CXXMemberCallExpr;
+  class CXXQualifiedMemberExpr;
 
 /// Expr - This represents one expression.  Note that Expr's are subclasses of
 /// Stmt.  This allows an expression to be transparently used any place a Stmt
@@ -1054,6 +1055,14 @@ class MemberExpr : public Expr {
   
   /// IsArrow - True if this is "X->F", false if this is "X.F".
   bool IsArrow;
+  
+protected:
+  MemberExpr(StmtClass SC, Expr *base, bool isarrow, NamedDecl *memberdecl, 
+             SourceLocation l, QualType ty) 
+    : Expr(SC, ty, 
+           base->isTypeDependent(), base->isValueDependent()),
+  Base(base), MemberDecl(memberdecl), MemberLoc(l), IsArrow(isarrow) {}
+  
 public:
   MemberExpr(Expr *base, bool isarrow, NamedDecl *memberdecl, SourceLocation l,
              QualType ty) 
@@ -1094,9 +1103,11 @@ public:
   virtual SourceLocation getExprLoc() const { return MemberLoc; }
 
   static bool classof(const Stmt *T) { 
-    return T->getStmtClass() == MemberExprClass; 
+    return T->getStmtClass() == MemberExprClass ||
+      T->getStmtClass() == CXXQualifiedMemberExprClass;
   }
   static bool classof(const MemberExpr *) { return true; }
+  static bool classof(const CXXQualifiedMemberExpr *) { return true; }
   
   // Iterators
   virtual child_iterator child_begin();

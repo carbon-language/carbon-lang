@@ -497,6 +497,7 @@ bool Expr::isUnusedResultAWarning(SourceLocation &Loc, SourceRange &R1,
   }
 
   case MemberExprClass:
+  case CXXQualifiedMemberExprClass:
     // If the base pointer or element is to a volatile pointer/field, accessing
     // it is a side effect.
     if (getType().isVolatileQualified())
@@ -684,7 +685,8 @@ Expr::isLvalueResult Expr::isLvalueInternal(ASTContext &Ctx) const {
       return LV_Valid;
     break;
   }
-  case MemberExprClass: { 
+  case MemberExprClass: 
+  case CXXQualifiedMemberExprClass: { 
     const MemberExpr *m = cast<MemberExpr>(this);
     if (Ctx.getLangOptions().CPlusPlus) { // C++ [expr.ref]p4:
       NamedDecl *Member = m->getMemberDecl();
@@ -948,7 +950,8 @@ bool Expr::hasGlobalStorage() const {
       return true;
     return false;
   }
-  case MemberExprClass: {
+  case MemberExprClass:
+  case CXXQualifiedMemberExprClass: {
     const MemberExpr *M = cast<MemberExpr>(this);
     return !M->isArrow() && M->getBase()->hasGlobalStorage();
   }
@@ -992,7 +995,8 @@ bool Expr::isOBJCGCCandidate(ASTContext &Ctx) const {
     }
     return false;
   }
-  case MemberExprClass: {
+  case MemberExprClass: 
+  case CXXQualifiedMemberExprClass: {
     const MemberExpr *M = cast<MemberExpr>(this);
     return M->getBase()->isOBJCGCCandidate(Ctx);
   }
