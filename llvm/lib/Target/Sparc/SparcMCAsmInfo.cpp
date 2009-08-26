@@ -24,6 +24,12 @@ SparcELFMCAsmInfo::SparcELFMCAsmInfo(const Target &T, const StringRef &TT) {
   COMMDirectiveTakesAlignment = true;
   
   SunStyleELFSectionSwitchSyntax = true;
+  UsesELFSectionDirectiveForBSS = true;
+
+  WeakRefDirective = "\t.weak\t";
+  SetDirective = "\t.set\t";
+
+  PrivateGlobalPrefix = ".L";
 }
 
 
