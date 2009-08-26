@@ -1024,6 +1024,7 @@ bool AsmParser::ParseDirectiveOrg() {
 /// ParseDirectiveAlign
 ///  ::= {.align, ...} expression [ , expression [ , expression ]]
 bool AsmParser::ParseDirectiveAlign(bool IsPow2, unsigned ValueSize) {
+  SMLoc AlignmentLoc = Lexer.getLoc();
   int64_t Alignment;
   if (ParseAbsoluteExpression(Alignment))
     return true;
@@ -1070,15 +1071,19 @@ bool AsmParser::ParseDirectiveAlign(bool IsPow2, unsigned ValueSize) {
   // Compute alignment in bytes.
   if (IsPow2) {
     // FIXME: Diagnose overflow.
-    Alignment = 1LL << Alignment;
+    if (Alignment >= 32) {
+      Error(AlignmentLoc, "invalid alignment value");
+      Alignment = 31;
+    }
+
+    Alignment = 1 << Alignment;
   }
 
-  // Diagnose non-sensical max bytes to fill, which are treated as missing (this
-  // matches 'as').
+  // Diagnose non-sensical max bytes to align.
   if (MaxBytesLoc.isValid()) {
     if (MaxBytesToFill < 1) {
-      Warning(MaxBytesLoc, "alignment directive can never be satisfied in this "
-              "many bytes, ignoring maximum bytes expression");
+      Error(MaxBytesLoc, "alignment directive can never be satisfied in this "
+            "many bytes, ignoring maximum bytes expression");
       MaxBytesToFill = 0;
     }
 
