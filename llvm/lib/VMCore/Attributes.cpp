@@ -55,6 +55,8 @@ std::string Attribute::getAsString(Attributes Attrs) {
     Result += "optsize ";
   if (Attrs & Attribute::NoInline)
     Result += "noinline ";
+  if (Attrs & Attribute::InlineHint)
+    Result += "inlinehint ";
   if (Attrs & Attribute::AlwaysInline)
     Result += "alwaysinline ";
   if (Attrs & Attribute::StackProtect)

@@ -1042,6 +1042,11 @@ define void @f() optsize
       function into callers whenever possible, ignoring any active inlining size
       threshold for this caller.</dd>
 
+  <dt><tt>inlinehint</tt></dt>
+  <dd>This attribute indicates that the source code contained a hint that inlining
+      this function is desirable (such as the "inline" keyword in C/C++).  It
+      is just a hint; it imposes no requirements on the inliner.</dd>
+
   <dt><tt>noinline</tt></dt>
   <dd>This attribute indicates that the inliner should never inline this
       function in any situation. This attribute may not be used together with
