@@ -37,7 +37,7 @@ class FunctionLoweringInfo;
 
 template<> struct ilist_traits<SDNode> : public ilist_default_traits<SDNode> {
 private:
-  mutable ILIST_NODE<SDNode> Sentinel;
+  mutable ilist_half_node<SDNode> Sentinel;
 public:
   SDNode *createSentinel() const {
     return static_cast<SDNode*>(&Sentinel);

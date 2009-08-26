@@ -15,15 +15,6 @@
 #ifndef LLVM_ADT_ILIST_NODE_H
 #define LLVM_ADT_ILIST_NODE_H
 
-#undef LLVM_COMPACTIFY_SENTINELS
-/// @brief activate small sentinel structs
-/// Comment out if you want better debuggability
-/// of ilist<> end() iterators.
-/// See also llvm/ADT/ilist.h, where the
-/// same change must be made.
-///
-#define LLVM_COMPACTIFY_SENTINELS 1
-
 namespace llvm {
 
 template<typename NodeTy>
@@ -59,18 +50,6 @@ class ilist_node : ilist_half_node<NodeTy> {
 protected:
   ilist_node() : Next(0) {}
 };
-
-/// When assertions are off, the Next field of sentinels
-/// will not be accessed. So it is not necessary to allocate
-/// space for it. The following macro selects the most
-/// efficient traits class. The LLVM_COMPACTIFY_SENTINELS
-/// preprocessor symbol controls this.
-///
-#if defined(LLVM_COMPACTIFY_SENTINELS) && LLVM_COMPACTIFY_SENTINELS
-#   define ILIST_NODE ilist_half_node
-#else
-#   define ILIST_NODE ilist_node
-#endif
 
 } // End llvm namespace
 

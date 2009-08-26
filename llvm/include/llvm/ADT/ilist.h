@@ -41,21 +41,6 @@
 #include "llvm/ADT/iterator.h"
 #include <cassert>
 
-#undef LLVM_COMPACTIFY_SENTINELS
-/// @brief activate small sentinel structs
-/// Comment out if you want better debuggability
-/// of ilist<> end() iterators.
-/// See also llvm/ADT/ilist_node.h, where the
-/// same change must be made.
-///
-#define LLVM_COMPACTIFY_SENTINELS 1
-
-#if defined(LLVM_COMPACTIFY_SENTINELS) && LLVM_COMPACTIFY_SENTINELS
-#   define sentinel_tail_assert(COND)
-#else
-#   define sentinel_tail_assert(COND) assert(COND)
-#endif
-
 namespace llvm {
 
 template<typename NodeTy, typename Traits> class iplist;
@@ -204,12 +189,10 @@ public:
 
   // Accessors...
   operator pointer() const {
-    sentinel_tail_assert(Traits::getNext(NodePtr) != 0 && "Dereferencing end()!");
     return NodePtr;
   }
 
   reference operator*() const {
-    sentinel_tail_assert(Traits::getNext(NodePtr) != 0 && "Dereferencing end()!");
     return *NodePtr;
   }
   pointer operator->() const { return &operator*(); }
@@ -230,7 +213,6 @@ public:
   }
   ilist_iterator &operator++() {      // preincrement - Advance
     NodePtr = Traits::getNext(NodePtr);
-    sentinel_tail_assert(NodePtr && "++'d off the end of an ilist!");
     return *this;
   }
   ilist_iterator operator--(int) {    // postdecrement operators...
