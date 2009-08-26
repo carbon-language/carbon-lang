@@ -208,20 +208,42 @@ def dumpSection32(f, i, opts):
    print "   (('section_name', %r)" % f.read(16)
    print "    ('segment_name', %r)" % f.read(16)
    print "    ('address', %r)" % f.read32()
-   print "    ('size', %r)" % f.read32()
-   print "    ('offset', %r)" % f.read32()
-   print "    ('alignment', %r)" % f.read32()
-   print "    ('reloc_offset', %r)" % f.read32()
-   print "    ('num_reloc', %r)" % f.read32()
+   size = f.read32()
+   print "    ('size', %r)" % size
+   offset = f.read32()
+   print "    ('offset', %r)" % offset
+   print "    ('alignment', %r)" % f.read32()   
+   reloc_offset = f.read32()
+   print "    ('reloc_offset', %r)" % reloc_offset
+   num_reloc = f.read32()
+   print "    ('num_reloc', %r)" % num_reloc
    print "    ('flags', %#x)" % f.read32()
    print "    ('reserved1', %r)" % f.read32()
    print "    ('reserved2', %r)" % f.read32()
    print "   ),"
+
+   prev_pos = f.tell()
+
+   f.seek(reloc_offset)
+   print "  ('_relocations', ["
+   for i in range(num_reloc):
+      print "    # Relocation %r" % i
+      print "    (('word-0', %#x)," % f.read32()
+      print "     ('word-1', %#x))," % f.read32()
+   print "  ])"
+
+   if opts.dumpSectionData:
+      f.seek(offset)
+      print "  ('_section_data', %r)" % f.read(size)
+      
+   f.seek(prev_pos)
    
 def main():
     from optparse import OptionParser, OptionGroup
     parser = OptionParser("usage: %prog [options] {files}")
-
+    parser.add_option("", "--dump-section-data", dest="dumpSectionData",
+                      help="Dump the contents of sections",
+                      action="store_true", default=False)    
     (opts, args) = parser.parse_args()
 
     if not args:
