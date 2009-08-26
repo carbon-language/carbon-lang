@@ -67,11 +67,14 @@ double ProfileInfo::getExecutionCount(const BasicBlock *BB) {
 }
 
 double ProfileInfo::getExecutionCount(const Function *F) {
-  if (F->isDeclaration()) return MissingValue;
   std::map<const Function*, double>::iterator J =
     FunctionInformation.find(F);
   if (J != FunctionInformation.end())
     return J->second;
+
+  // isDeclaration() is checked here and not at start of function to allow
+  // functions without a body still to have a execution count.
+  if (F->isDeclaration()) return MissingValue;
 
   double Count = getExecutionCount(&F->getEntryBlock());
   if (Count != MissingValue) FunctionInformation[F] = Count;
