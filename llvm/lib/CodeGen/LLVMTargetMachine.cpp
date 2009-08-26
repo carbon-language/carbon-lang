@@ -51,10 +51,10 @@ DisablePostRAScheduler("disable-post-RA-scheduler",
 
 // Enable or disable FastISel. Both options are needed, because
 // FastISel is enabled by default with -fast, and we wish to be
-// able to enable or disable fast-isel independently from -fast.
+// able to enable or disable fast-isel independently from -O0.
 static cl::opt<cl::boolOrDefault>
 EnableFastISelOption("fast-isel", cl::Hidden,
-  cl::desc("Enable the experimental \"fast\" instruction selector"));
+  cl::desc("Enable the \"fast\" instruction selector"));
 
 
 LLVMTargetMachine::LLVMTargetMachine(const Target &T,
