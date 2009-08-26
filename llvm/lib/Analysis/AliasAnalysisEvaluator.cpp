@@ -104,7 +104,7 @@ PrintModRefResults(const char *Msg, bool P, Instruction *I, Value *Ptr,
   if (P) {
     errs() << "  " << Msg << ":  Ptr: ";
     WriteAsOperand(errs(), Ptr, true, M);
-    errs() << "\t<->" << *I;
+    errs() << "\t<->" << *I << '\n';
   }
 }
 
