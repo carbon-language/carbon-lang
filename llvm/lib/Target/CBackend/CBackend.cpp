@@ -2173,7 +2173,8 @@ void CWriter::printFloatingPointConstants(const Constant *C) {
     << " = { 0x" << utohexstr(p[0]) 
     << "ULL, 0x" << utohexstr((uint16_t)p[1]) << ",{0,0,0}"
     << "}; /* Long double constant */\n";
-  } else if (FPC->getType() == Type::getPPC_FP128Ty(FPC->getContext())) {
+  } else if (FPC->getType() == Type::getPPC_FP128Ty(FPC->getContext()) ||
+             FPC->getType() == Type::getFP128Ty(FPC->getContext())) {
     APInt api = FPC->getValueAPF().bitcastToAPInt();
     const uint64_t *p = api.getRawData();
     Out << "static const ConstantFP128Ty FPConstant" << FPCounter++
