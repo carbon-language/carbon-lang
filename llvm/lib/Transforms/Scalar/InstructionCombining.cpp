@@ -1870,8 +1870,6 @@ struct AddMaskingAnd {
 
 static Value *FoldOperationIntoSelectOperand(Instruction &I, Value *SO,
                                              InstCombiner *IC) {
-  LLVMContext *Context = IC->getContext();
-  
   if (CastInst *CI = dyn_cast<CastInst>(&I)) {
     return IC->InsertCastBefore(CI->getOpcode(), SO, I.getType(), I);
   }

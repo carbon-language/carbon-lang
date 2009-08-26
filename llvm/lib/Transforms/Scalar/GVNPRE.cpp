@@ -800,8 +800,6 @@ void GVNPRE::val_replace(ValueNumberedSet& s, Value* v) {
 Value* GVNPRE::phi_translate(Value* V, BasicBlock* pred, BasicBlock* succ) {
   if (V == 0)
     return 0;
-    
-  LLVMContext &Context = V->getContext();
   
   // Unary Operations
   if (CastInst* U = dyn_cast<CastInst>(V)) {
@@ -1597,7 +1595,6 @@ void GVNPRE::buildsets(Function& F) {
 void GVNPRE::insertion_pre(Value* e, BasicBlock* BB,
                            DenseMap<BasicBlock*, Value*>& avail,
                     std::map<BasicBlock*, ValueNumberedSet>& new_sets) {
-  LLVMContext &Context = e->getContext();
   for (pred_iterator PI = pred_begin(BB), PE = pred_end(BB); PI != PE; ++PI) {
     Value* e2 = avail[*PI];
     if (!availableOut[*PI].test(VN.lookup(e2))) {
