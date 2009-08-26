@@ -750,7 +750,7 @@ static void InitializeLanguageStandard(LangOptions &Options, LangKind LK,
   
   if (Options.CPlusPlus) {
     Options.C99 = 0;
-    Options.HexFloats = Options.GNUMode;
+    Options.HexFloats = 0;
   }
   
   if (LangStd == lang_c89 || LangStd == lang_c94 || LangStd == lang_gnu89)
