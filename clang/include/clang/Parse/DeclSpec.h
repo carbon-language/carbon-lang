@@ -853,6 +853,9 @@ private:
   DeclaratorChunk::ParamInfo InlineParams[16];
   bool InlineParamsUsed;
 
+  /// Extension - true if the declaration is preceded by __extension__.
+  bool Extension : 1;
+
   friend struct DeclaratorChunk;
 
 public:
@@ -861,7 +864,7 @@ public:
       Kind(DK_Abstract),
       InvalidType(DS.getTypeSpecType() == DeclSpec::TST_error),
       GroupingParens(false), AttrList(0), AsmLabel(0), Type(0),
-      InlineParamsUsed(false) {
+      InlineParamsUsed(false), Extension(false) {
   }
   
   ~Declarator() {
@@ -1089,6 +1092,9 @@ public:
 
   void setAsmLabel(ActionBase::ExprTy *E) { AsmLabel = E; }
   ActionBase::ExprTy *getAsmLabel() const { return AsmLabel; }
+
+  void setExtension(bool Val = true) { Extension = Val; }
+  bool getExtension() const { return Extension; }
 
   ActionBase::TypeTy *getDeclaratorIdType() const { return Type; }
 

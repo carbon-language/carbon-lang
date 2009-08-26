@@ -256,6 +256,7 @@ public:
   /// entirely silenced, no matter how they are mapped.
   void IncrementAllExtensionsSilenced() { ++AllExtensionsSilenced; }
   void DecrementAllExtensionsSilenced() { --AllExtensionsSilenced; }
+  bool hasAllExtensionsSilenced() { return AllExtensionsSilenced != 0; }
   
   /// setDiagnosticMapping - This allows the client to specify that certain
   /// warnings are ignored.  Notes can never be mapped, errors can only be

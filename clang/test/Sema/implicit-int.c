@@ -24,7 +24,7 @@ h19_insline(n)  // expected-warning {{parameter 'n' was not declared, defaulting
 }
 
 struct foo {
- __extension__ __attribute__((packed)) x : 4; // expected-warning {{type specifier missing, defaults to 'int'}}
+ __extension__ __attribute__((packed)) x : 4;
 };
 
 

@@ -1509,10 +1509,19 @@ void Parser::ParseStructUnionBody(SourceLocation RecordLoc,
       // Convert them all to fields.
       for (unsigned i = 0, e = FieldDeclarators.size(); i != e; ++i) {
         FieldDeclarator &FD = FieldDeclarators[i];
+        DeclPtrTy Field;
         // Install the declarator into the current TagDecl.
-        DeclPtrTy Field = Actions.ActOnField(CurScope, TagDecl,
-                                             DS.getSourceRange().getBegin(),
-                                             FD.D, FD.BitfieldSize);
+        if (FD.D.getExtension()) {
+          // Silences extension warnings
+          ExtensionRAIIObject O(Diags);
+          Field = Actions.ActOnField(CurScope, TagDecl,
+                                     DS.getSourceRange().getBegin(),
+                                     FD.D, FD.BitfieldSize);
+        } else {
+          Field = Actions.ActOnField(CurScope, TagDecl,
+                                     DS.getSourceRange().getBegin(),
+                                     FD.D, FD.BitfieldSize);
+        }
         FieldDecls.push_back(Field);
       }
     } else { // Handle @defs
@@ -2016,6 +2025,8 @@ void Parser::ParseDeclarator(Declarator &D) {
 void Parser::ParseDeclaratorInternal(Declarator &D,
                                      DirectDeclParseFunction DirectDeclParser) {
 
+  if (Diags.hasAllExtensionsSilenced())
+    D.setExtension();
   // C++ member pointers start with a '::' or a nested-name.
   // Member pointers get special handling, since there's no place for the
   // scope spec in the generic path below.
