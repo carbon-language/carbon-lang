@@ -84,7 +84,7 @@ class PartialDiagnostic {
   void operator=(const PartialDiagnostic &); // DO NOT IMPLEMENT
 
 public:
-  explicit PartialDiagnostic(unsigned DiagID)
+  PartialDiagnostic(unsigned DiagID)
     : DiagID(DiagID), DiagStorage(0) { }
 
   PartialDiagnostic(const PartialDiagnostic &Other) 
