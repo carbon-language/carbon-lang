@@ -200,15 +200,9 @@ RValue CodeGenFunction::EmitCXXMemberCallExpr(const CXXMemberCallExpr *CE) {
 
   const FunctionProtoType *FPT = MD->getType()->getAsFunctionProtoType();
 
-  if (MD->isVirtual()) {
-    ErrorUnsupported(CE, "virtual dispatch");
-  }
-
   const llvm::Type *Ty = 
     CGM.getTypes().GetFunctionType(CGM.getTypes().getFunctionInfo(MD), 
                                    FPT->isVariadic());
-  llvm::Constant *Callee = CGM.GetAddrOfFunction(GlobalDecl(MD), Ty);
-  
   llvm::Value *This;
   
   if (ME->isArrow())
@@ -217,6 +211,13 @@ RValue CodeGenFunction::EmitCXXMemberCallExpr(const CXXMemberCallExpr *CE) {
     LValue BaseLV = EmitLValue(ME->getBase());
     This = BaseLV.getAddress();
   }
+
+  llvm::Value *Callee;
+  // FIXME: Someone needs to keep track of the qualifications.
+  if (MD->isVirtual() /* && !ME->NotQualified() */)
+    Callee = BuildVirtualCall(MD, This, Ty);
+  else
+    Callee = CGM.GetAddrOfFunction(GlobalDecl(MD), Ty);
   
   return EmitCXXMemberCall(MD, Callee, This, 
                            CE->arg_begin(), CE->arg_end());
@@ -826,6 +827,10 @@ llvm::Constant *CodeGenModule::GenerateRtti(const CXXRecordDecl *RD) {
 }
 
 class VtableBuilder {
+public:
+  /// Index_t - Vtable index type.
+  typedef uint64_t Index_t;
+private:
   std::vector<llvm::Constant *> &methods;
   llvm::Type *Ptr8Ty;
   /// Class - The most derived class that this vtable is being built for.
@@ -840,7 +845,7 @@ class VtableBuilder {
   CodeGenModule &CGM;  // Per-module state.
   /// Index - Maps a method decl into a vtable index.  Useful for virtual
   /// dispatch codegen.
-  llvm::DenseMap<const CXXMethodDecl *, int32_t> Index;
+  llvm::DenseMap<const CXXMethodDecl *, Index_t> Index;
   typedef CXXRecordDecl::method_iterator method_iter;
 public:
   VtableBuilder(std::vector<llvm::Constant *> &meth,
@@ -852,6 +857,7 @@ public:
     Ptr8Ty = llvm::PointerType::get(llvm::Type::getInt8Ty(VMContext), 0);
   }
 
+  llvm::DenseMap<const CXXMethodDecl *, Index_t> &getIndex() { return Index; }
   llvm::Constant *GenerateVcall(const CXXMethodDecl *MD,
                                 const CXXRecordDecl *RD,
                                 bool VBoundary,
@@ -932,17 +938,7 @@ public:
     SeenVBase.clear();
   }
 
-  inline uint32_t nottoobig(uint64_t t) {
-    assert(t < (uint32_t)-1ULL || "vtable too big");
-    return t;
-  }
-#if 0
-  inline uint32_t nottoobig(uint32_t t) {
-    return t;
-  }
-#endif
-
-  void AddMethod(const CXXMethodDecl *MD, int32_t FirstIndex) {
+  void AddMethod(const CXXMethodDecl *MD, Index_t AddressPoint) {
     typedef CXXMethodDecl::method_iterator meth_iter;
 
     llvm::Constant *m;
@@ -963,34 +959,34 @@ public:
       om = CGM.GetAddrOfFunction(GlobalDecl(OMD), Ptr8Ty);
       om = llvm::ConstantExpr::getBitCast(om, Ptr8Ty);
 
-      for (int32_t i = FirstIndex, e = nottoobig(methods.size()); i != e; ++i) {
+      for (Index_t i = AddressPoint, e = methods.size();
+           i != e; ++i) {
         // FIXME: begin_overridden_methods might be too lax, covariance */
         if (methods[i] == om) {
           methods[i] = m;
-          Index[MD] = i;
+          Index[MD] = i - AddressPoint;
           return;
         }
       }
     }
 
     // else allocate a new slot.
-    Index[MD] = methods.size();
+    Index[MD] = methods.size() - AddressPoint;
     methods.push_back(m);
   }
 
-  void GenerateMethods(const CXXRecordDecl *RD, int32_t FirstIndex) {
+  void GenerateMethods(const CXXRecordDecl *RD, Index_t AddressPoint) {
     for (method_iter mi = RD->method_begin(), me = RD->method_end(); mi != me;
          ++mi)
       if (mi->isVirtual())
-        AddMethod(*mi, FirstIndex);
+        AddMethod(*mi, AddressPoint);
   }
 
   int64_t GenerateVtableForBase(const CXXRecordDecl *RD,
                                 bool forPrimary,
                                 bool VBoundary,
                                 int64_t Offset,
-                                bool ForVirtualBase,
-                                int32_t FirstIndex) {
+                                bool ForVirtualBase) {
     llvm::Constant *m = llvm::Constant::getNullValue(Ptr8Ty);
     int64_t AddressPoint=0;
 
@@ -1023,8 +1019,9 @@ public:
       if (PrimaryBaseWasVirtual)
         IndirectPrimary.insert(PrimaryBase);
       Top = false;
-      AddressPoint = GenerateVtableForBase(PrimaryBase, true, PrimaryBaseWasVirtual|VBoundary,
-                                           Offset, PrimaryBaseWasVirtual, FirstIndex);
+      AddressPoint = GenerateVtableForBase(PrimaryBase, true,
+                                           PrimaryBaseWasVirtual|VBoundary,
+                                           Offset, PrimaryBaseWasVirtual);
     }
 
     if (Top) {
@@ -1041,7 +1038,7 @@ public:
     }
 
     // And add the virtuals for the class to the primary vtable.
-    GenerateMethods(RD, FirstIndex);
+    GenerateMethods(RD, AddressPoint);
 
     // and then the non-virtual bases.
     for (CXXRecordDecl::base_class_const_iterator i = RD->bases_begin(),
@@ -1053,8 +1050,7 @@ public:
       if (Base != PrimaryBase || PrimaryBaseWasVirtual) {
         uint64_t o = Offset + Layout.getBaseClassOffset(Base);
         StartNewTable();
-        FirstIndex = methods.size();
-        GenerateVtableForBase(Base, true, false, o, false, FirstIndex);
+        GenerateVtableForBase(Base, true, false, o, false);
       }
     }
     return AddressPoint;
@@ -1071,14 +1067,50 @@ public:
         IndirectPrimary.insert(Base);
         StartNewTable();
         int64_t BaseOffset = BLayout.getVBaseClassOffset(Base);
-        int32_t FirstIndex = methods.size();
-        GenerateVtableForBase(Base, false, true, BaseOffset, true, FirstIndex);
+        GenerateVtableForBase(Base, false, true, BaseOffset, true);
       }
       if (Base->getNumVBases())
         GenerateVtableForVBases(Base, Class);
     }
   }
 };
+
+class VtableInfo {
+public:
+  typedef VtableBuilder::Index_t Index_t;
+private:
+  CodeGenModule &CGM;  // Per-module state.
+  /// Index_t - Vtable index type.
+  typedef llvm::DenseMap<const CXXMethodDecl *, Index_t> ElTy;
+  typedef llvm::DenseMap<const CXXRecordDecl *, ElTy *> MapTy;
+  // FIXME: Move to Context.
+  static MapTy IndexFor;
+public:
+  VtableInfo(CodeGenModule &cgm) : CGM(cgm) { }
+  void register_index(const CXXRecordDecl *RD, const ElTy &e) {
+    assert(IndexFor.find(RD) == IndexFor.end() && "Don't compute vtbl twice");
+    // We own a copy of this, it will go away shortly.
+    new ElTy (e);
+    IndexFor[RD] = new ElTy (e);
+  }
+  Index_t lookup(const CXXMethodDecl *MD) {
+    const CXXRecordDecl *RD = MD->getParent();
+    MapTy::iterator I = IndexFor.find(RD);
+    if (I == IndexFor.end()) {
+      std::vector<llvm::Constant *> methods;
+      VtableBuilder b(methods, RD, CGM);
+      b.GenerateVtableForBase(RD, true, false, 0, false);
+      b.GenerateVtableForVBases(RD, RD);
+      register_index(RD, b.getIndex());
+      I = IndexFor.find(RD);
+    }
+    assert(I->second->find(MD)!=I->second->end() && "Can't find vtable index");
+    return (*I->second)[MD];
+  }
+};
+
+// FIXME: Move to Context.
+VtableInfo::MapTy VtableInfo::IndexFor;
 
 llvm::Value *CodeGenFunction::GenerateVtable(const CXXRecordDecl *RD) {
   llvm::SmallString<256> OutName;
@@ -1095,7 +1127,7 @@ llvm::Value *CodeGenFunction::GenerateVtable(const CXXRecordDecl *RD) {
   VtableBuilder b(methods, RD, CGM);
 
   // First comes the vtables for all the non-virtual bases...
-  Offset = b.GenerateVtableForBase(RD, true, false, 0, false, 0);
+  Offset = b.GenerateVtableForBase(RD, true, false, 0, false);
 
   // then the vtables for all the virtual bases.
   b.GenerateVtableForVBases(RD, RD);
@@ -1110,6 +1142,31 @@ llvm::Value *CodeGenFunction::GenerateVtable(const CXXRecordDecl *RD) {
                        llvm::ConstantInt::get(llvm::Type::getInt64Ty(VMContext),
                                               Offset*LLVMPointerWidth/8));
   return vtable;
+}
+
+// FIXME: move to Context
+static VtableInfo *vtableinfo;
+
+llvm::Value *
+CodeGenFunction::BuildVirtualCall(const CXXMethodDecl *MD, llvm::Value *&This,
+                                  const llvm::Type *Ty) {
+  // FIXME: If we know the dynamic type, we don't have to do a virtual dispatch.
+  
+  // FIXME: move to Context
+  if (vtableinfo == 0)
+    vtableinfo = new VtableInfo(CGM);
+
+  VtableInfo::Index_t Idx = vtableinfo->lookup(MD);
+
+  Ty = llvm::PointerType::get(Ty, 0);
+  Ty = llvm::PointerType::get(Ty, 0);
+  Ty = llvm::PointerType::get(Ty, 0);
+  llvm::Value *vtbl = Builder.CreateBitCast(This, Ty);
+  vtbl = Builder.CreateLoad(vtbl);
+  llvm::Value *vfn = Builder.CreateConstInBoundsGEP1_64(vtbl,
+                                                        Idx, "vfn");
+  vfn = Builder.CreateLoad(vfn);
+  return vfn;
 }
 
 /// EmitClassAggrMemberwiseCopy - This routine generates code to copy a class
