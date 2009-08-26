@@ -1188,7 +1188,11 @@ public:
     
     /// CK_BaseToDerivedMemberPointer - Member pointer in base class to
     /// member pointer in derived class.
-    CK_BaseToDerivedMemberPointer
+    CK_BaseToDerivedMemberPointer,
+
+    /// CK_Unknown - Conversion using a user defined type conversion
+    /// function.
+    CK_UserDefinedConversion
   };
   
   struct CastInfo {

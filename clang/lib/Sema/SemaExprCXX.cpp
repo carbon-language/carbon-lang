@@ -216,9 +216,10 @@ Sema::ActOnCXXTypeConstructExpr(SourceRange TypeRange, TypeTy *TypeRep,
       return ExprError();
     exprs.release();
     return Owned(new (Context) CXXFunctionalCastExpr(Ty.getNonReferenceType(),
-                                                     Ty, TyBeginLoc, Kind,
-                                                     Exprs[0], ConversionDecl, 
-                                                     RParenLoc));
+                                          Ty, TyBeginLoc, 
+                                          CastExpr::CK_UserDefinedConversion,
+                                          Exprs[0], ConversionDecl, 
+                                          RParenLoc));
   }
 
   if (const RecordType *RT = Ty->getAs<RecordType>()) {
@@ -906,9 +907,16 @@ Sema::PerformImplicitConversion(Expr *&From, QualType ToType,
     break;
 
   case ImplicitConversionSequence::UserDefinedConversion:
-    // FIXME: This is, of course, wrong. We'll need to actually call the
-    // constructor or conversion operator, and then cope with the standard
-    // conversions.
+      // FIXME. Support other kinds of user defined convesions.
+      if (CXXConversionDecl *CV = 
+            dyn_cast<CXXConversionDecl>(ICS.UserDefined.ConversionFunction))
+        // FIXME. Get actual Source Location.
+        From = 
+          new (Context) CXXFunctionalCastExpr(ToType.getNonReferenceType(),
+                                            ToType, SourceLocation(), 
+                                            CastExpr::CK_UserDefinedConversion,
+                                            From, CV,
+                                            SourceLocation());
     ImpCastExprToType(From, ToType.getNonReferenceType(), 
                       CastExpr::CK_Unknown,
                       ToType->isLValueReferenceType());
