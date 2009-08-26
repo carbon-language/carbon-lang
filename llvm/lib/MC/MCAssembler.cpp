@@ -42,6 +42,7 @@ class MachObjectWriter {
   static const unsigned SymtabLoadCommandSize = 24;
   static const unsigned DysymtabLoadCommandSize = 80;
   static const unsigned Nlist32Size = 12;
+  static const unsigned RelocationInfoSize = 8;
 
   enum HeaderFileType {
     HFT_Object = 0x1
@@ -75,6 +76,19 @@ class MachObjectWriter {
   enum IndirectSymbolFlags {
     ISF_Local    = 0x80000000,
     ISF_Absolute = 0x40000000
+  };
+
+  /// RelocationFlags - Special flags for addresses.
+  enum RelocationFlags {
+    RF_Scattered = 0x80000000
+  };
+
+  enum RelocationInfoType {
+    RIT_Vanilla             = 0,
+    RIT_Pair                = 1,
+    RIT_Difference          = 2,
+    RIT_PreboundLazyPointer = 3,
+    RIT_LocalDifference     = 4
   };
 
   /// MachSymbolData - Helper struct for containing some precomputed information
@@ -205,7 +219,8 @@ public:
     assert(OS.tell() - Start == SegmentLoadCommand32Size);
   }
 
-  void WriteSection32(const MCSectionData &SD, uint64_t FileOffset) {
+  void WriteSection32(const MCSectionData &SD, uint64_t FileOffset,
+                      uint64_t RelocationsStart, unsigned NumRelocations) {
     // struct section (68 bytes)
 
     uint64_t Start = OS.tell();
@@ -222,8 +237,8 @@ public:
 
     assert(isPowerOf2_32(SD.getAlignment()) && "Invalid alignment!");
     Write32(Log2_32(SD.getAlignment()));
-    Write32(0); // file offset of relocation entries
-    Write32(0); // number of relocation entrions
+    Write32(NumRelocations ? RelocationsStart : 0);
+    Write32(NumRelocations);
     Write32(Section.getTypeAndAttributes());
     Write32(0); // reserved1
     Write32(Section.getStubSize()); // reserved2
@@ -332,6 +347,126 @@ public:
     Write32(Address);
   }
 
+  struct MachRelocationEntry {
+    uint32_t Word0;
+    uint32_t Word1;
+  };
+  void ComputeScatteredRelocationInfo(MCAssembler &Asm,
+                                      MCSectionData::Fixup &Fixup,
+                             DenseMap<const MCSymbol*,MCSymbolData*> &SymbolMap,
+                                     std::vector<MachRelocationEntry> &Relocs) {
+    uint32_t Address = Fixup.Fragment->getOffset() + Fixup.Offset;
+    unsigned IsPCRel = 0;
+    unsigned Type = RIT_Vanilla;
+
+    // See <reloc.h>.
+
+    const MCSymbol *A = Fixup.Value.getSymA();
+    MCSymbolData *SD = SymbolMap.lookup(A);
+    uint32_t Value = SD->getFragment()->getAddress() + SD->getOffset();
+    uint32_t Value2 = 0;
+
+    if (const MCSymbol *B = Fixup.Value.getSymB()) {
+      Type = RIT_LocalDifference;
+
+      MCSymbolData *SD = SymbolMap.lookup(B);
+      Value2 = SD->getFragment()->getAddress() + SD->getOffset();
+    }
+
+    unsigned Log2Size = Log2_32(Fixup.Size);
+    assert((1U << Log2Size) == Fixup.Size && "Invalid fixup size!");
+
+    // The value which goes in the fixup is current value of the expression.
+    Fixup.FixedValue = Value - Value2 + Fixup.Value.getConstant();
+
+    MachRelocationEntry MRE;
+    MRE.Word0 = ((Address   <<  0) |
+                 (Type      << 24) |
+                 (Log2Size  << 28) |
+                 (IsPCRel   << 30) |
+                 RF_Scattered);
+    MRE.Word1 = Value;
+    Relocs.push_back(MRE);
+
+    if (Type == RIT_LocalDifference) {
+      Type = RIT_Pair;
+
+      MachRelocationEntry MRE;
+      MRE.Word0 = ((0         <<  0) |
+                   (Type      << 24) |
+                   (Log2Size  << 28) |
+                   (0   << 30) |
+                   RF_Scattered);
+      MRE.Word1 = Value2;
+      Relocs.push_back(MRE);
+    }
+  }
+
+  void ComputeRelocationInfo(MCAssembler &Asm,
+                             MCSectionData::Fixup &Fixup,
+                             DenseMap<const MCSymbol*,MCSymbolData*> &SymbolMap,
+                             std::vector<MachRelocationEntry> &Relocs) {
+    // If this is a local symbol plus an offset or a difference, then we need a
+    // scattered relocation entry.
+    if (Fixup.Value.getSymB()) // a - b
+      return ComputeScatteredRelocationInfo(Asm, Fixup, SymbolMap, Relocs);
+    if (Fixup.Value.getSymA() && Fixup.Value.getConstant())
+      if (!Fixup.Value.getSymA()->isUndefined())
+        return ComputeScatteredRelocationInfo(Asm, Fixup, SymbolMap, Relocs);
+        
+    // See <reloc.h>.
+    uint32_t Address = Fixup.Fragment->getOffset() + Fixup.Offset;
+    uint32_t Value = 0;
+    unsigned Index = 0;
+    unsigned IsPCRel = 0;
+    unsigned IsExtern = 0;
+    unsigned Type = 0;
+
+    if (Fixup.Value.isAbsolute()) { // constant
+      // SymbolNum of 0 indicates the absolute section.
+      Type = RIT_Vanilla;
+      Value = 0;
+      llvm_unreachable("FIXME: Not yet implemented!");
+    } else {
+      const MCSymbol *Symbol = Fixup.Value.getSymA();
+      MCSymbolData *SD = SymbolMap.lookup(Symbol);
+      
+      if (Symbol->isUndefined()) {
+        IsExtern = 1;
+        Index = SD->getIndex();
+        Value = 0;
+      } else {
+        // The index is the section ordinal.
+        //
+        // FIXME: O(N)
+        Index = 1;
+        for (MCAssembler::iterator it = Asm.begin(),
+               ie = Asm.end(); it != ie; ++it, ++Index)
+          if (&*it == SD->getFragment()->getParent())
+            break;
+        Value = SD->getFragment()->getAddress() + SD->getOffset();
+      }
+
+      Type = RIT_Vanilla;
+    }
+
+    // The value which goes in the fixup is current value of the expression.
+    Fixup.FixedValue = Value + Fixup.Value.getConstant();
+
+    unsigned Log2Size = Log2_32(Fixup.Size);
+    assert((1U << Log2Size) == Fixup.Size && "Invalid fixup size!");
+
+    // struct relocation_info (8 bytes)
+    MachRelocationEntry MRE;
+    MRE.Word0 = Address;
+    MRE.Word1 = ((Index     <<  0) |
+                 (IsPCRel   << 24) |
+                 (Log2Size  << 25) |
+                 (IsExtern  << 27) |
+                 (Type      << 28));
+    Relocs.push_back(MRE);
+  }
+  
   void BindIndirectSymbols(MCAssembler &Asm,
                            DenseMap<const MCSymbol*,MCSymbolData*> &SymbolMap) {
     // This is the point where 'as' creates actual symbols for indirect symbols
@@ -543,9 +678,31 @@ public:
     WriteSegmentLoadCommand32(NumSections, SectionDataStart, SectionDataSize);
   
     // ... and then the section headers.
-    for (MCAssembler::iterator it = Asm.begin(), ie = Asm.end(); it != ie; ++it)
-      WriteSection32(*it, SectionDataStart + it->getAddress());
+    // 
+    // We also compute the section relocations while we do this. Note that
+    // compute relocation info will also update the fixup to have the correct
+    // value; this will be overwrite the appropriate data in the fragment when
+    // it is written.
+    std::vector<MachRelocationEntry> RelocInfos;
+    uint64_t RelocTableEnd = SectionDataEnd;
+    for (MCAssembler::iterator it = Asm.begin(), ie = Asm.end(); it != ie;
+         ++it) {
+      MCSectionData &SD = *it;
 
+      // The assembler writes relocations in the reverse order they were seen.
+      //
+      // FIXME: It is probably more complicated than this.
+      unsigned NumRelocsStart = RelocInfos.size();
+      for (unsigned i = 0, e = SD.fixup_size(); i != e; ++i)
+        ComputeRelocationInfo(Asm, SD.getFixups()[e - i - 1], SymbolMap,
+                              RelocInfos);
+
+      unsigned NumRelocs = RelocInfos.size() - NumRelocsStart;
+      uint64_t SectionStart = SectionDataStart + SD.getAddress();
+      WriteSection32(SD, SectionStart, RelocTableEnd, NumRelocs);
+      RelocTableEnd += NumRelocs * RelocationInfoSize;
+    }
+    
     // Write the symbol table load command, if used.
     if (NumSymbols) {
       unsigned FirstLocalSymbol = 0;
@@ -562,10 +719,10 @@ public:
 
       // If used, the indirect symbols are written after the section data.
       if (NumIndirectSymbols)
-        IndirectSymbolOffset = SectionDataEnd;
+        IndirectSymbolOffset = RelocTableEnd;
 
       // The symbol table is written after the indirect symbol data.
-      uint64_t SymbolTableOffset = SectionDataEnd + IndirectSymbolSize;
+      uint64_t SymbolTableOffset = RelocTableEnd + IndirectSymbolSize;
 
       // The string table is written after symbol table.
       uint64_t StringTableOffset =
@@ -582,6 +739,12 @@ public:
     // Write the actual section data.
     for (MCAssembler::iterator it = Asm.begin(), ie = Asm.end(); it != ie; ++it)
       WriteFileData(OS, *it, *this);
+
+    // Write the relocation entries.
+    for (unsigned i = 0, e = RelocInfos.size(); i != e; ++i) {
+      Write32(RelocInfos[i].Word0);
+      Write32(RelocInfos[i].Word1);
+    }
 
     // Write the symbol table data, if used.
     if (NumSymbols) {
@@ -657,12 +820,35 @@ MCSectionData::MCSectionData(const MCSection &_Section, MCAssembler *A)
     Alignment(1),
     Address(~UINT64_C(0)),
     Size(~UINT64_C(0)),
-    FileSize(~UINT64_C(0))
+    FileSize(~UINT64_C(0)),
+    LastFixupLookup(~0)
 {
   if (A)
     A->getSectionList().push_back(this);
 }
 
+const MCSectionData::Fixup *
+MCSectionData::LookupFixup(const MCFragment *Fragment, uint64_t Offset) const {
+  // Use a one level cache to turn the common case of accessing the fixups in
+  // order into O(1) instead of O(N).
+  unsigned i = LastFixupLookup, Count = Fixups.size(), End = Fixups.size();
+  if (i >= End)
+    i = 0;
+  while (Count--) {
+    const Fixup &F = Fixups[i];
+    if (F.Fragment == Fragment && F.Offset == Offset) {
+      LastFixupLookup = i;
+      return &F;
+    }
+
+    ++i;
+    if (i == End)
+      i = 0;
+  }
+
+  return 0;
+}
+                                                       
 /* *** */
 
 MCSymbolData::MCSymbolData() : Symbol(*(MCSymbol*)0) {}
@@ -705,9 +891,26 @@ void MCAssembler::LayoutSection(MCSectionData &SD, unsigned NextAlign) {
     }
 
     case MCFragment::FT_Data:
-    case MCFragment::FT_Fill:
       F.setFileSize(F.getMaxFileSize());
       break;
+
+    case MCFragment::FT_Fill: {
+      MCFillFragment &FF = cast<MCFillFragment>(F);
+
+      F.setFileSize(F.getMaxFileSize());
+
+      // If the fill value is constant, thats it.
+      if (FF.getValue().isAbsolute())
+        break;
+
+      // Otherwise, add fixups for the values.
+      for (uint64_t i = 0, e = FF.getCount(); i != e; ++i) {
+        MCSectionData::Fixup Fix(F, i * FF.getValueSize(),
+                                 FF.getValue(),FF.getValueSize());
+        SD.getFixups().push_back(Fix);
+      }
+      break;
+    }
 
     case MCFragment::FT_Org: {
       MCOrgFragment &OF = cast<MCOrgFragment>(F);
@@ -778,11 +981,20 @@ static void WriteFileData(raw_ostream &OS, const MCFragment &F,
   case MCFragment::FT_Fill: {
     MCFillFragment &FF = cast<MCFillFragment>(F);
 
+    int64_t Value = 0;
     if (!FF.getValue().isAbsolute())
-      llvm_unreachable("FIXME: Not yet implemented!");
-    int64_t Value = FF.getValue().getConstant();
-
+      Value = FF.getValue().getConstant();
     for (uint64_t i = 0, e = FF.getCount(); i != e; ++i) {
+      if (!FF.getValue().isAbsolute()) {
+        // Find the fixup.
+        //
+        // FIXME: Find a better way to write in the fixes.
+        const MCSectionData::Fixup *Fixup =
+          F.getParent()->LookupFixup(&F, i * FF.getValueSize());
+        assert(Fixup && "Missing fixup for fill value!");
+        Value = Fixup->FixedValue;
+      }
+
       switch (FF.getValueSize()) {
       default:
         assert(0 && "Invalid size!");
