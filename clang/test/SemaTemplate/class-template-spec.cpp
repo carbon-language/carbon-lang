@@ -49,6 +49,25 @@ struct A<char> {
 
 A<char>::A() { }
 
+// Make sure we can see specializations defined before the primary template.
+namespace N{ 
+  template<typename T> struct A0;
+}
+
+namespace N {
+  template<>
+  struct A0<void> {
+    typedef void* pointer;
+  };
+}
+
+namespace N {
+  template<typename T>
+  struct A0 {
+    void foo(A0<void>::pointer p = 0);
+  };
+}
+
 // Diagnose specialization errors
 struct A<double> { }; // expected-error{{template specialization requires 'template<>'}}
 
