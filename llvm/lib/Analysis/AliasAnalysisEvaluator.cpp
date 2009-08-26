@@ -30,8 +30,7 @@
 #include "llvm/Support/CommandLine.h"
 #include "llvm/Support/Compiler.h"
 #include "llvm/Support/raw_ostream.h"
-#include <set>
-#include <sstream>
+#include "llvm/ADT/SetVector.h"
 using namespace llvm;
 
 static cl::opt<bool> PrintAll("print-all-alias-modref-info", cl::ReallyHidden);
@@ -112,8 +111,8 @@ PrintModRefResults(const char *Msg, bool P, Instruction *I, Value *Ptr,
 bool AAEval::runOnFunction(Function &F) {
   AliasAnalysis &AA = getAnalysis<AliasAnalysis>();
 
-  std::set<Value *> Pointers;
-  std::set<CallSite> CallSites;
+  SetVector<Value *> Pointers;
+  SetVector<CallSite> CallSites;
 
   for (Function::arg_iterator I = F.arg_begin(), E = F.arg_end(); I != E; ++I)
     if (isa<PointerType>(I->getType()))    // Add all pointer arguments
@@ -141,13 +140,13 @@ bool AAEval::runOnFunction(Function &F) {
            << " pointers, " << CallSites.size() << " call sites\n";
 
   // iterate over the worklist, and run the full (n^2)/2 disambiguations
-  for (std::set<Value *>::iterator I1 = Pointers.begin(), E = Pointers.end();
+  for (SetVector<Value *>::iterator I1 = Pointers.begin(), E = Pointers.end();
        I1 != E; ++I1) {
     unsigned I1Size = ~0u;
     const Type *I1ElTy = cast<PointerType>((*I1)->getType())->getElementType();
     if (I1ElTy->isSized()) I1Size = AA.getTypeStoreSize(I1ElTy);
 
-    for (std::set<Value *>::iterator I2 = Pointers.begin(); I2 != I1; ++I2) {
+    for (SetVector<Value *>::iterator I2 = Pointers.begin(); I2 != I1; ++I2) {
       unsigned I2Size = ~0u;
       const Type *I2ElTy =cast<PointerType>((*I2)->getType())->getElementType();
       if (I2ElTy->isSized()) I2Size = AA.getTypeStoreSize(I2ElTy);
@@ -169,11 +168,11 @@ bool AAEval::runOnFunction(Function &F) {
   }
 
   // Mod/ref alias analysis: compare all pairs of calls and values
-  for (std::set<CallSite>::iterator C = CallSites.begin(),
+  for (SetVector<CallSite>::iterator C = CallSites.begin(),
          Ce = CallSites.end(); C != Ce; ++C) {
     Instruction *I = C->getInstruction();
 
-    for (std::set<Value *>::iterator V = Pointers.begin(), Ve = Pointers.end();
+    for (SetVector<Value *>::iterator V = Pointers.begin(), Ve = Pointers.end();
          V != Ve; ++V) {
       unsigned Size = ~0u;
       const Type *ElTy = cast<PointerType>((*V)->getType())->getElementType();
