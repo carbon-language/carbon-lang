@@ -117,7 +117,6 @@ debug-opt-prof:
 dist-hook::
 	$(Echo) Eliminating files constructed by configure
 	$(Verb) $(RM) -f \
-	  $(TopDistDir)/include/llvm/ADT/iterator.h  \
 	  $(TopDistDir)/include/llvm/Config/config.h  \
 	  $(TopDistDir)/include/llvm/Support/DataTypes.h  \
 	  $(TopDistDir)/include/llvm/Support/ThreadSupport.h
@@ -136,8 +135,7 @@ FilesToConfig := \
   include/llvm/Config/config.h \
   include/llvm/Config/Targets.def \
 	include/llvm/Config/AsmPrinters.def \
-  include/llvm/Support/DataTypes.h \
-  include/llvm/ADT/iterator.h
+  include/llvm/Support/DataTypes.h
 FilesToConfigPATH  := $(addprefix $(LLVM_OBJ_ROOT)/,$(FilesToConfig))
 
 all-local:: $(FilesToConfigPATH)
