@@ -826,8 +826,6 @@ public:
                   const Decl *TargetDecl = 0);
   RValue EmitCallExpr(const CallExpr *E);
   
-  llvm::Value *BuildVirtualCall(const CXXMethodDecl *MD, llvm::Value *&This,
-                                const llvm::Type *Ty);
   RValue EmitCXXMemberCall(const CXXMethodDecl *MD,
                            llvm::Value *Callee,
                            llvm::Value *This,
