@@ -330,6 +330,9 @@ void StmtDumper::VisitCastExpr(CastExpr *Node) {
   case CastExpr::CK_BaseToDerivedMemberPointer:
     fprintf(F, "<BaseToDerivedMemberPointer>");
     break;
+  case CastExpr::CK_UserDefinedConversion:
+    fprintf(F, "<UserDefinedConversion>");
+    break;
   }
 }
 
