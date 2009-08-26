@@ -22,8 +22,6 @@
 #define LLVM_ANALYSIS_PROFILEINFO_H
 
 #include "llvm/BasicBlock.h"
-#include "llvm/Support/raw_ostream.h"
-#include "llvm/Support/Compiler.h"
 #include <cassert>
 #include <string>
 #include <map>
@@ -31,6 +29,7 @@
 namespace llvm {
   class Function;
   class Pass;
+  class raw_ostream;
 
   /// ProfileInfo Class - This class holds and maintains profiling
   /// information for some unit of code.
@@ -106,16 +105,7 @@ namespace llvm {
   /// it available to the optimizers.
   Pass *createProfileLoaderPass(const std::string &Filename);
 
-  static raw_ostream& operator<<(raw_ostream &O,
-                                 ProfileInfo::Edge E) ATTRIBUTE_USED;
-  static raw_ostream& operator<<(raw_ostream &O,
-                                 ProfileInfo::Edge E) {
-    O<<"(";
-    O<<(E.first?E.first->getNameStr():"0");
-    O<<",";
-    O<<(E.second?E.second->getNameStr():"0");
-    return O<<")";
-  }
+  raw_ostream& operator<<(raw_ostream &O, ProfileInfo::Edge E);
 
 } // End llvm namespace
 

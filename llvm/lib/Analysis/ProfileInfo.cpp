@@ -17,6 +17,7 @@
 #include "llvm/Pass.h"
 #include "llvm/Support/CFG.h"
 #include "llvm/Support/Compiler.h"
+#include "llvm/Support/raw_ostream.h"
 #include <set>
 using namespace llvm;
 
@@ -81,6 +82,13 @@ double ProfileInfo::getExecutionCount(const Function *F) {
   return Count;
 }
 
+raw_ostream& llvm::operator<<(raw_ostream &O, ProfileInfo::Edge E) {
+  O << "(";
+  O << (E.first ? E.first->getNameStr() : "0");
+  O << ",";
+  O << (E.second ? E.second->getNameStr() : "0");
+  return O << ")";
+}
 
 //===----------------------------------------------------------------------===//
 //  NoProfile ProfileInfo implementation
