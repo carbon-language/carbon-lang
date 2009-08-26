@@ -63,9 +63,16 @@ namespace llvm {
     /// @name Symbol Type
     /// @{
 
+    /// isDefined - Check if this symbol is defined (i.e., it has an address).
+    ///
+    /// Defined symbols are either absolute or in some section.
+    bool isDefined() const {
+      return Section != 0;
+    }
+
     /// isUndefined - Check if this symbol undefined (i.e., implicitly defined).
     bool isUndefined() const {
-      return Section == 0;
+      return !isDefined();
     }
 
     /// isAbsolute - Check if this this is an absolute symbol.
