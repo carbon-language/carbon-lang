@@ -591,9 +591,10 @@ public:
       // FIXME: "Leaked" on failure.
       if (C)
         C = new llvm::GlobalVariable(CGM.getModule(), C->getType(),
-                                     E->getType().isConstQualified(), 
+                                     E->getType().isConstant(CGM.getContext()),
                                      llvm::GlobalValue::InternalLinkage,
-                                     C, ".compoundliteral");
+                                     C, ".compoundliteral", 0, false,
+                                     E->getType().getAddressSpace());
       return C;
     }
     case Expr::DeclRefExprClass: 
