@@ -2523,9 +2523,7 @@ void Sema::AddCXXDirectInitializerToDecl(DeclPtrTy Dcl,
     return;
   }
 
-  // FIXME: Need to handle dependent types and expressions here.
-
-  // We will treat direct-initialization as a copy-initialization:
+  // We will represent direct-initialization similarly to copy-initialization:
   //    int x(1);  -as-> int x = 1;
   //    ClassType x(a,b,c); -as-> ClassType x = ClassType(a,b,c);
   //
@@ -2534,6 +2532,24 @@ void Sema::AddCXXDirectInitializerToDecl(DeclPtrTy Dcl,
   // A major benefit is that clients that don't particularly care about which
   // exactly form was it (like the CodeGen) can handle both cases without
   // special case code.
+
+  // If either the declaration has a dependent type or if any of the expressions
+  // is type-dependent, we represent the initialization via a ParenListExpr for
+  // later use during template instantiation.
+  if (VDecl->getType()->isDependentType() ||
+      Expr::hasAnyTypeDependentArguments((Expr **)Exprs.get(), Exprs.size())) {
+    // Let clients know that initialization was done with a direct initializer.
+    VDecl->setCXXDirectInitializer(true);
+    
+    // Store the initialization expressions as a ParenListExpr.
+    unsigned NumExprs = Exprs.size();
+    VDecl->setInit(Context, 
+                   new (Context) ParenListExpr(Context, LParenLoc,
+                                               (Expr **)Exprs.release(),
+                                               NumExprs, RParenLoc));
+    return;
+  }
+    
 
   // C++ 8.5p11:
   // The form of initialization (using parentheses or '=') is generally

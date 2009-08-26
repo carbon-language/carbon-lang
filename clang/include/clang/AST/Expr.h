@@ -2443,6 +2443,8 @@ public:
     return cast_or_null<Expr>(Exprs[Init]);
   }
 
+  Expr **getExprs() { return reinterpret_cast<Expr **>(Exprs); }
+  
   SourceLocation getLParenLoc() const { return LParenLoc; }
   SourceLocation getRParenLoc() const { return RParenLoc; }
 

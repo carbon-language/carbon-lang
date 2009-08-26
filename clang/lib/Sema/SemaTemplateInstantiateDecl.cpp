@@ -15,6 +15,7 @@
 #include "clang/AST/DeclTemplate.h"
 #include "clang/AST/DeclVisitor.h"
 #include "clang/AST/Expr.h"
+#include "clang/Lex/Preprocessor.h"
 #include "llvm/Support/Compiler.h"
 
 using namespace clang;
@@ -153,7 +154,31 @@ Decl *TemplateDeclInstantiator::VisitVarDecl(VarDecl *D) {
       = SemaRef.SubstExpr(D->getInit(), TemplateArgs);
     if (Init.isInvalid())
       Var->setInvalidDecl();
-    else
+    else if (ParenListExpr *PLE = dyn_cast<ParenListExpr>((Expr *)Init.get())) {
+      // FIXME: We're faking all of the comma locations, which is suboptimal. 
+      // Do we even need these comma locations?
+      llvm::SmallVector<SourceLocation, 4> FakeCommaLocs;
+      if (PLE->getNumExprs() > 0) {
+        FakeCommaLocs.reserve(PLE->getNumExprs() - 1);
+        for (unsigned I = 0, N = PLE->getNumExprs() - 1; I != N; ++I) {
+          Expr *E = PLE->getExpr(I)->Retain();
+          FakeCommaLocs.push_back(
+                                SemaRef.PP.getLocForEndOfToken(E->getLocEnd()));
+        }
+      }
+      
+      // Add the direct initializer to the declaration.
+      SemaRef.AddCXXDirectInitializerToDecl(Sema::DeclPtrTy::make(Var),
+                                            PLE->getLParenLoc(), 
+                                            Sema::MultiExprArg(SemaRef,
+                                                       (void**)PLE->getExprs(),
+                                                           PLE->getNumExprs()),
+                                            FakeCommaLocs.data(),
+                                            PLE->getRParenLoc());
+      
+      // When Init is destroyed, it will destroy the instantiated ParenListExpr;
+      // we've explicitly retained all of its subexpressions already.
+    } else
       SemaRef.AddInitializerToDecl(Sema::DeclPtrTy::make(Var), move(Init),
                                    D->hasCXXDirectInitializer());
   } else if (!Var->isStaticDataMember() || Var->isOutOfLine())
