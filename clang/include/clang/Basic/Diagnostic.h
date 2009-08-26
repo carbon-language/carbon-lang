@@ -24,11 +24,12 @@ namespace llvm {
 }
 
 namespace clang {
-  class DiagnosticClient;
-  class SourceRange;
   class DiagnosticBuilder;
+  class DiagnosticClient;
   class IdentifierInfo;
   class LangOptions;
+  class PartialDiagnostic;
+  class SourceRange;
   
   // Import the diagnostic enums themselves.
   namespace diag {
