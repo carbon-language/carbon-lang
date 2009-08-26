@@ -1190,8 +1190,8 @@ public:
     /// member pointer in derived class.
     CK_BaseToDerivedMemberPointer,
 
-    /// CK_Unknown - Conversion using a user defined type conversion
-    /// function.
+    /// CK_UserDefinedConversion - Conversion using a user defined type 
+    /// conversion function.
     CK_UserDefinedConversion
   };
   
