@@ -117,8 +117,7 @@ sym_nlp_G:
 // CHECK:     # Section 2
 // CHECK:    (('section_name', '__nl_symbol_ptr\x00')
 // CHECK:     ('segment_name', '__DATA\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00')
-        // FIXME: Enable this when fixed!
-// CHECX:     ('address', 20)
+// CHECK:     ('address', 20)
 // CHECK:     ('size', 20)
 // CHECK:     ('offset', 412)
 // CHECK:     ('alignment', 2)
@@ -145,8 +144,7 @@ sym_nlp_G:
 // CHECK:     ('n_type', 0xe)
 // CHECK:     ('n_sect', 2)
 // CHECK:     ('n_desc', 0)
-        // FIXME: Enable this when fixed!
-// CHECX:     ('n_value', 8)
+// CHECK:     ('n_value', 8)
 // CHECK:     ('_string', 'sym_lsp_C')
 // CHECK:    ),
 // CHECK:     # Symbol 1
@@ -154,8 +152,7 @@ sym_nlp_G:
 // CHECK:     ('n_type', 0xe)
 // CHECK:     ('n_sect', 3)
 // CHECK:     ('n_desc', 0)
-        // FIXME: Enable this when fixed!
-// CHECX:     ('n_value', 28)
+// CHECK:     ('n_value', 28)
 // CHECK:     ('_string', 'sym_nlp_C')
 // CHECK:    ),
 // CHECK:     # Symbol 2
@@ -163,8 +160,7 @@ sym_nlp_G:
 // CHECK:     ('n_type', 0xf)
 // CHECK:     ('n_sect', 2)
 // CHECK:     ('n_desc', 0)
-        // FIXME: Enable this when fixed!
-// CHECX:     ('n_value', 16)
+// CHECK:     ('n_value', 16)
 // CHECK:     ('_string', 'sym_lsp_G')
 // CHECK:    ),
 // CHECK:     # Symbol 3
@@ -172,8 +168,7 @@ sym_nlp_G:
 // CHECK:     ('n_type', 0xf)
 // CHECK:     ('n_sect', 3)
 // CHECK:     ('n_desc', 0)
-        // FIXME: Enable this when fixed!
-// CHECX:     ('n_value', 36)
+// CHECK:     ('n_value', 36)
 // CHECK:     ('_string', 'sym_nlp_G')
 // CHECK:    ),
 // CHECK:     # Symbol 4

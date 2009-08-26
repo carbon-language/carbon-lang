@@ -216,7 +216,7 @@ public:
       static_cast<const MCSectionMachO&>(SD.getSection());
     WriteString(Section.getSectionName(), 16);
     WriteString(Section.getSegmentName(), 16);
-    Write32(0); // address
+    Write32(SD.getAddress()); // address
     Write32(SD.getFileSize()); // size
     Write32(FileOffset);
 
@@ -287,7 +287,8 @@ public:
   }
 
   void WriteNlist32(MachSymbolData &MSD) {
-    MCSymbol &Symbol = MSD.SymbolData->getSymbol();
+    MCSymbolData &Data = *MSD.SymbolData;
+    MCSymbol &Symbol = Data.getSymbol();
     uint8_t Type = 0;
 
     // Set the N_TYPE bits. See <mach-o/nlist.h>.
@@ -302,11 +303,11 @@ public:
 
     // FIXME: Set STAB bits.
 
-    if (MSD.SymbolData->isPrivateExtern())
+    if (Data.isPrivateExtern())
       Type |= STF_PrivateExtern;
 
     // Set external bit.
-    if (MSD.SymbolData->isExternal() || Symbol.isUndefined())
+    if (Data.isExternal() || Symbol.isUndefined())
       Type |= STF_External;
 
     // struct nlist (12 bytes)
@@ -317,9 +318,18 @@ public:
     
     // The Mach-O streamer uses the lowest 16-bits of the flags for the 'desc'
     // value.
-    Write16(MSD.SymbolData->getFlags() & 0xFFFF);
+    Write16(Data.getFlags() & 0xFFFF);
 
-    Write32(0); // FIXME: Value
+    // Write the symbol address.
+    uint32_t Address = 0;
+    if (Symbol.isDefined()) {
+      if (Symbol.isAbsolute()) {
+        llvm_unreachable("FIXME: Not yet implemented!");
+      } else {
+        Address = Data.getFragment()->getAddress() + Data.getOffset();
+      }
+    }
+    Write32(Address);
   }
 
   void BindIndirectSymbols(MCAssembler &Asm,
@@ -640,15 +650,21 @@ public:
 MCFragment::MCFragment() : Kind(FragmentType(~0)) {
 }
 
-MCFragment::MCFragment(FragmentType _Kind, MCSectionData *SD)
+MCFragment::MCFragment(FragmentType _Kind, MCSectionData *_Parent)
   : Kind(_Kind),
+    Parent(_Parent),
     FileSize(~UINT64_C(0))
 {
-  if (SD)
-    SD->getFragmentList().push_back(this);
+  if (Parent)
+    Parent->getFragmentList().push_back(this);
 }
 
 MCFragment::~MCFragment() {
+}
+
+uint64_t MCFragment::getAddress() const {
+  assert(getParent() && "Missing Section!");
+  return getParent()->getAddress() + Offset;
 }
 
 /* *** */
@@ -658,6 +674,7 @@ MCSectionData::MCSectionData() : Section(*(MCSection*)0) {}
 MCSectionData::MCSectionData(const MCSection &_Section, MCAssembler *A)
   : Section(_Section),
     Alignment(1),
+    Address(~UINT64_C(0)),
     FileSize(~UINT64_C(0))
 {
   if (A)
@@ -824,8 +841,12 @@ static void WriteFileData(raw_ostream &OS, const MCSectionData &SD,
 
 void MCAssembler::Finish() {
   // Layout the sections and fragments.
-  for (iterator it = begin(), ie = end(); it != ie; ++it)
+  uint64_t Address = 0;
+  for (iterator it = begin(), ie = end(); it != ie; ++it) {
+    it->setAddress(Address);
     LayoutSection(*it);
+    Address += it->getFileSize();
+  }
 
   // Write the object file.
   MachObjectWriter MOW(OS);

@@ -39,6 +39,9 @@ public:
 private:
   FragmentType Kind;
 
+  /// Parent - The data for the section this fragment is in.
+  MCSectionData *Parent;
+
   /// @name Assembler Backend Data
   /// @{
   //
@@ -54,7 +57,7 @@ private:
   /// @}
 
 protected:
-  MCFragment(FragmentType _Kind, MCSectionData *SD = 0);
+  MCFragment(FragmentType _Kind, MCSectionData *_Parent = 0);
 
 public:
   // Only for sentinel.
@@ -62,6 +65,9 @@ public:
   virtual ~MCFragment();
 
   FragmentType getKind() const { return Kind; }
+
+  MCSectionData *getParent() const { return Parent; }
+  void setParent(MCSectionData *Value) { Parent = Value; }
 
   // FIXME: This should be abstract, fix sentinel.
   virtual uint64_t getMaxFileSize() const {
@@ -73,6 +79,8 @@ public:
   /// @{
   //
   // FIXME: This could all be kept private to the assembler implementation.
+
+  uint64_t getAddress() const;
 
   unsigned getFileSize() const { 
     assert(FileSize != ~UINT64_C(0) && "File size not set!");
@@ -255,6 +263,10 @@ private:
   //
   // FIXME: This could all be kept private to the assembler implementation.
 
+  /// Address - The computed address of this section. This is ~0 until
+  /// initialized.
+  uint64_t Address;
+
   /// FileSize - The size of this section in the object file. This is ~0 until
   /// initialized.
   uint64_t FileSize;
@@ -292,6 +304,12 @@ public:
   /// @{
   //
   // FIXME: This could all be kept private to the assembler implementation.
+
+  unsigned getAddress() const { 
+    assert(Address != ~UINT64_C(0) && "Address not set!");
+    return Address;
+  }
+  void setAddress(uint64_t Value) { Address = Value; }
 
   unsigned getFileSize() const { 
     assert(FileSize != ~UINT64_C(0) && "File size not set!");

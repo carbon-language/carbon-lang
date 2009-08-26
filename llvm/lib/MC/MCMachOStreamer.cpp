@@ -134,6 +134,7 @@ void MCMachOStreamer::SwitchSection(const MCSection *Section) {
 void MCMachOStreamer::EmitLabel(MCSymbol *Symbol) {
   assert(Symbol->isUndefined() && "Cannot define a symbol twice!");
 
+  // FIXME: We should also use offsets into Fill fragments.
   MCDataFragment *F = dyn_cast_or_null<MCDataFragment>(getCurrentFragment());
   if (!F)
     F = new MCDataFragment(CurSectionData);
