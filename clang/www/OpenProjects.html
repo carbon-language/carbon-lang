@@ -82,10 +82,10 @@ job, but there are lots of little pieces that can be picked off and implemented.
 <ul>
   <li>Fix bugs: there are a number of XFAIL'd test cases in Clang's repository (particularly in the CXX subdirectory). Pick a test case and fix Clang to make it work!</li>
   <li>Write tests: the CXX test subdirectory in Clang's repository has placeholders for tests of every paragraph in the C++ standard. Pick a paragraph, write a few tests, and see if they work! Even if they don't we'd still like the new tests (with XFAIL'd) so that we know what to fix.</li>
-  <li>Explicit calls to destructors and pseudo-destructor expressions (<code>x.~X()</code>).</li>
-  <li>AST representation for implicit C++ conversions: implicit conversions that involve non-trivial operations (e.g., invoking a user-defined conversion function, performing a base-to-derived or derived-to-base conversion) need explicit representation in Clang's AST.</li>
-  <li>Default arguments for function templates: these are currently ignored.</li>
   <li>Parsing and semantic analysis for using declarations in classes</li>
+  <li>Inherited conversion functions</li>
+  <li>Improved diagnostics for overloading failures and ambiguities</li>
+  <li>Improved template error messages, e.g., with more informative backtraces</li>
 </ul>
   
 Also, see the <a href="cxx_status.html">C++ status report page</a> to
