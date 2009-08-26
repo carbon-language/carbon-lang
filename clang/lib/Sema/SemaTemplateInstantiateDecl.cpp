@@ -165,6 +165,7 @@ Decl *TemplateDeclInstantiator::VisitVarDecl(VarDecl *D) {
           FakeCommaLocs.push_back(
                                 SemaRef.PP.getLocForEndOfToken(E->getLocEnd()));
         }
+        PLE->getExpr(PLE->getNumExprs() - 1)->Retain();
       }
       
       // Add the direct initializer to the declaration.
