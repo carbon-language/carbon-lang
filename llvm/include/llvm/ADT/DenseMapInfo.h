@@ -84,6 +84,20 @@ template<> struct DenseMapInfo<unsigned long> {
   }
 };
 
+// Provide DenseMapInfo for unsigned long longs.
+template<> struct DenseMapInfo<unsigned long long> {
+  static inline unsigned long long getEmptyKey() { return ~0LL; }
+  static inline unsigned long long getTombstoneKey() { return ~0LL - 1LL; }
+  static unsigned getHashValue(const unsigned long long& Val) {
+    return (unsigned)(Val * 37LL);
+  }
+  static bool isPod() { return true; }
+  static bool isEqual(const unsigned long long& LHS,
+                      const unsigned long long& RHS) {
+  return LHS == RHS;
+  }
+};
+
 // Provide DenseMapInfo for all pairs whose members have info.
 template<typename T, typename U>
 struct DenseMapInfo<std::pair<T, U> > {
