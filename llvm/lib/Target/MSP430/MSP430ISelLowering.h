@@ -84,6 +84,11 @@ namespace llvm {
     SDValue LowerSELECT_CC(SDValue Op, SelectionDAG &DAG);
     SDValue LowerSIGN_EXTEND(SDValue Op, SelectionDAG &DAG);
 
+    TargetLowering::ConstraintType
+    getConstraintType(const std::string &Constraint) const;
+    std::pair<unsigned, const TargetRegisterClass*>
+    getRegForInlineAsmConstraint(const std::string &Constraint, EVT VT) const;
+
     MachineBasicBlock* EmitInstrWithCustomInserter(MachineInstr *MI,
                                                    MachineBasicBlock *BB) const;
 
