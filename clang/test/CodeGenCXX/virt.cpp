@@ -137,8 +137,9 @@ void test12_foo() {
 // CHECK-LPOPT32-NEXT: movl (%eax), %ecx
 // CHECK-LPOPT32-NEXT: movl %eax, (%esp)
 // CHECK-LPOPT32-NEXT: call *4(%ecx)
-// FIXME: See EmitCXXMemberCallExpr
-// CHECK-LPOPT32-NEXT call __ZN8test12_A3fooEv
+// CHECK-LPOPT32-NEXT: movl _test12_pa, %eax
+// CHECK-LPOPT32-NEXT: movl %eax, (%esp)
+// CHECK-LPOPT32-NEXT: call L__ZN8test12_A3fooEv$stub
 
 // CHECK-LPOPT64:__Z10test12_foov:
 // CHECK-LPOPT64: movq _test12_pa(%rip), %rdi
@@ -159,8 +160,8 @@ void test12_foo() {
 // CHECK-LPOPT64-NEXT: movq _test12_pd(%rip), %rdi
 // CHECK-LPOPT64-NEXT: movq (%rdi), %rax
 // CHECK-LPOPT64-NEXT: call *8(%rax)
-// FIXME: See EmitCXXMemberCallExpr
-// CHECK-LPOPT64-NEXT call __ZN8test12_A3fooEv
+// CHECK-LPOPT64-NEXT: movq _test12_pa(%rip), %rdi
+// CHECK-LPOPT64-NEXT: call __ZN8test12_A3fooEv
 
 struct test6_B2 { virtual void funcB2(); char b[1000]; };
 struct test6_B1 : virtual test6_B2 { virtual void funcB1(); };
