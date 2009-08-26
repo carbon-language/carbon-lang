@@ -1,3 +1,17 @@
+//===--- PartialDiagnostic.h - Diagnostic "closures" ----------------------===//
+//
+//                     The LLVM Compiler Infrastructure
+//
+// This file is distributed under the University of Illinois Open Source
+// License. See LICENSE.TXT for details.
+//
+//===----------------------------------------------------------------------===//
+//
+//  This file implements a partial diagnostic that can be emitted anwyhere
+//  in a DiagnosticBuilder stream.
+//
+//===----------------------------------------------------------------------===//
+
 #ifndef LLVM_CLANG_PARTIALDIAGNOSTIC_H
 #define LLVM_CLANG_PARTIALDIAGNOSTIC_H
 
@@ -8,11 +22,9 @@
 namespace clang {
 
 class PartialDiagnostic {
-  unsigned DiagID;
-  
   struct Storage {
     Storage() : NumDiagArgs(0), NumDiagRanges(0) { }
-    
+
     enum {
         /// MaxArguments - The maximum number of arguments we can hold. We 
         /// currently only support up to 10 arguments (%0-%9).
@@ -43,9 +55,16 @@ class PartialDiagnostic {
     mutable const SourceRange *DiagRanges[10];
   };
 
+  /// DiagID - The diagnostic ID.
+  mutable unsigned DiagID;
+  
+  /// DiagStorare - Storge for args and ranges.
   mutable Storage *DiagStorage;
 
   void AddTaggedVal(intptr_t V, Diagnostic::ArgumentKind Kind) const {
+    if (!DiagStorage)
+      DiagStorage = new Storage;
+    
     assert(DiagStorage->NumDiagArgs < Storage::MaxArguments &&
            "Too many arguments to diagnostic!");
     DiagStorage->DiagArgumentsKind[DiagStorage->NumDiagArgs] = Kind;
@@ -53,6 +72,9 @@ class PartialDiagnostic {
   }
 
   void AddSourceRange(const SourceRange &R) const {
+    if (!DiagStorage)
+      DiagStorage = new Storage;
+
     assert(DiagStorage->NumDiagRanges < 
            llvm::array_lengthof(DiagStorage->DiagRanges) &&
            "Too many arguments to diagnostic!");
@@ -63,10 +85,11 @@ class PartialDiagnostic {
 
 public:
   explicit PartialDiagnostic(unsigned DiagID)
-    : DiagID(DiagID), DiagStorage(new Storage) { }
+    : DiagID(DiagID), DiagStorage(0) { }
 
   PartialDiagnostic(const PartialDiagnostic &Other) 
-    : DiagStorage(Other.DiagStorage) {
+    : DiagID(Other.DiagID), DiagStorage(Other.DiagStorage) {
+    Other.DiagID = 0;
     Other.DiagStorage = 0;
   }
 
@@ -74,6 +97,23 @@ public:
     delete DiagStorage;
   }
 
+  unsigned getDiagID() const { return DiagID; }
+
+  void Emit(const DiagnosticBuilder &DB) const {
+    if (!DiagStorage)
+      return;
+    
+    // Add all arguments.
+    for (unsigned i = 0, e = DiagStorage->NumDiagArgs; i != e; ++i) {
+      DB.AddTaggedVal(DiagStorage->DiagArgumentsVal[i],
+                      (Diagnostic::ArgumentKind)DiagStorage->DiagArgumentsKind[i]);
+    }
+    
+    // Add all ranges.
+    for (unsigned i = 0, e = DiagStorage->NumDiagRanges; i != e; ++i)
+      DB.AddSourceRange(*DiagStorage->DiagRanges[i]);
+  }
+  
   friend const PartialDiagnostic &operator<<(const PartialDiagnostic &PD,
                                                     QualType T) {
     PD.AddTaggedVal(reinterpret_cast<intptr_t>(T.getAsOpaquePtr()),
@@ -86,12 +126,19 @@ public:
     PD.AddSourceRange(R);
     return PD;
   }
+  
 };
 
-PartialDiagnostic PDiag(unsigned DiagID) {
+inline PartialDiagnostic PDiag(unsigned DiagID) {
   return PartialDiagnostic(DiagID);
 }
 
+inline const DiagnosticBuilder &operator<<(const DiagnosticBuilder &DB,
+                                           const PartialDiagnostic &PD) {
+  PD.Emit(DB);
+  return DB;
+}
+  
 
 }  // end namespace clang
 #endif 
