@@ -23,6 +23,7 @@
 
 #include "llvm/BasicBlock.h"
 #include "llvm/Support/raw_ostream.h"
+#include "llvm/Support/Compiler.h"
 #include <cassert>
 #include <string>
 #include <map>
