@@ -57,6 +57,8 @@ namespace llvm {
     /// reference and return it.
     ///
     /// @param Name - The symbol name, which must be unique across all symbols.
+    /// @param IsTemporary - Whether this symbol is an assembler temporary,
+    /// which should not survive into the symbol table for the translation unit.
     MCSymbol *GetOrCreateSymbol(const StringRef &Name);
     
     /// CreateTemporarySymbol - Create a new temporary symbol with the specified

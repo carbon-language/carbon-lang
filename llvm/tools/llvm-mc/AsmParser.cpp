@@ -129,6 +129,17 @@ bool AsmParser::ParseParenExpr(AsmExpr *&Res) {
   return false;
 }
 
+MCSymbol *AsmParser::CreateSymbol(StringRef Name) {
+  if (MCSymbol *S = Ctx.LookupSymbol(Name))
+    return S;
+
+  // If the label starts with L it is an assembler temporary label.
+  if (Name.startswith("L"))
+    return Ctx.CreateTemporarySymbol(Name);
+
+  return Ctx.CreateSymbol(Name);
+}
+
 /// ParsePrimaryExpr - Parse a primary expression and return it.
 ///  primaryexpr ::= (parenexpr
 ///  primaryexpr ::= symbol
@@ -148,7 +159,7 @@ bool AsmParser::ParsePrimaryExpr(AsmExpr *&Res) {
   case AsmToken::Identifier: {
     // This is a label, this should be parsed as part of an expression, to
     // handle things like LFOO+4.
-    MCSymbol *Sym = Ctx.GetOrCreateSymbol(Lexer.getTok().getIdentifier());
+    MCSymbol *Sym = CreateSymbol(Lexer.getTok().getIdentifier());
     
     Res = new AsmSymbolRefExpr(Sym);
     Lexer.Lex(); // Eat identifier.
@@ -371,13 +382,11 @@ bool AsmParser::ParseStatement() {
     // FIXME: Diagnostics. Note the location of the definition as a label.
     // FIXME: This doesn't diagnose assignment to a symbol which has been
     // implicitly marked as external.
-    MCSymbol *Sym = Ctx.GetOrCreateSymbol(IDVal);
+    MCSymbol *Sym = CreateSymbol(IDVal);
     if (!Sym->isUndefined())
       return Error(IDLoc, "invalid symbol redefinition");
     
-    // Since we saw a label, create a symbol and emit it.
-    // FIXME: If the label starts with L it is an assembler temporary label.
-    // Why does the client of this api need to know this?
+    // Emit the label.
     Out.EmitLabel(Sym);
    
     return ParseStatement();
@@ -683,7 +692,7 @@ bool AsmParser::ParseAssignment(const StringRef &Name, bool IsDotSet) {
   // FIXME: Diagnostics. Note the location of the definition as a label.
   // FIXME: Handle '.'.
   // FIXME: Diagnose assignment to protected identifier (e.g., register name).
-  MCSymbol *Sym = Ctx.GetOrCreateSymbol(Name);
+  MCSymbol *Sym = CreateSymbol(Name);
   if (!Sym->isUndefined() && !Sym->isAbsolute())
     return Error(EqualLoc, "symbol has already been defined");
 
@@ -1110,7 +1119,7 @@ bool AsmParser::ParseDirectiveSymbolAttribute(MCStreamer::SymbolAttr Attr) {
       if (ParseIdentifier(Name))
         return TokError("expected identifier in directive");
       
-      MCSymbol *Sym = Ctx.GetOrCreateSymbol(Name);
+      MCSymbol *Sym = CreateSymbol(Name);
 
       Out.EmitSymbolAttribute(Sym, Attr);
 
@@ -1135,7 +1144,7 @@ bool AsmParser::ParseDirectiveDarwinSymbolDesc() {
     return TokError("expected identifier in directive");
   
   // Handle the identifier as the key symbol.
-  MCSymbol *Sym = Ctx.GetOrCreateSymbol(Name);
+  MCSymbol *Sym = CreateSymbol(Name);
 
   if (Lexer.isNot(AsmToken::Comma))
     return TokError("unexpected token in '.desc' directive");
@@ -1166,7 +1175,7 @@ bool AsmParser::ParseDirectiveComm(bool IsLocal) {
     return TokError("expected identifier in directive");
   
   // Handle the identifier as the key symbol.
-  MCSymbol *Sym = Ctx.GetOrCreateSymbol(Name);
+  MCSymbol *Sym = CreateSymbol(Name);
 
   if (Lexer.isNot(AsmToken::Comma))
     return TokError("unexpected token in directive");
@@ -1258,7 +1267,7 @@ bool AsmParser::ParseDirectiveDarwinZerofill() {
   
   // handle the identifier as the key symbol.
   SMLoc IDLoc = Lexer.getLoc();
-  MCSymbol *Sym = Ctx.GetOrCreateSymbol(Lexer.getTok().getString());
+  MCSymbol *Sym = CreateSymbol(Lexer.getTok().getString());
   Lexer.Lex();
 
   if (Lexer.isNot(AsmToken::Comma))
@@ -1363,7 +1372,7 @@ bool AsmParser::ParseDirectiveDarwinLsym() {
     return TokError("expected identifier in directive");
   
   // Handle the identifier as the key symbol.
-  MCSymbol *Sym = Ctx.GetOrCreateSymbol(Name);
+  MCSymbol *Sym = CreateSymbol(Name);
 
   if (Lexer.isNot(AsmToken::Comma))
     return TokError("unexpected token in '.lsym' directive");

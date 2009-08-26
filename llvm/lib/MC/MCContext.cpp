@@ -38,7 +38,6 @@ MCSymbol *MCContext::GetOrCreateSymbol(const StringRef &Name) {
   return Entry = new (*this) MCSymbol(Name, false);
 }
 
-
 MCSymbol *MCContext::CreateTemporarySymbol(const StringRef &Name) {
   // If unnamed, just create a symbol.
   if (Name.empty())

@@ -557,6 +557,10 @@ public:
            ie = Asm.symbol_end(); it != ie; ++it) {
       MCSymbol &Symbol = it->getSymbol();
 
+      // Ignore assembler temporaries.
+      if (it->getSymbol().isTemporary())
+        continue;
+
       if (!it->isExternal() && !Symbol.isUndefined())
         continue;
 
@@ -588,6 +592,10 @@ public:
     for (MCAssembler::symbol_iterator it = Asm.symbol_begin(),
            ie = Asm.symbol_end(); it != ie; ++it) {
       MCSymbol &Symbol = it->getSymbol();
+
+      // Ignore assembler temporaries.
+      if (it->getSymbol().isTemporary())
+        continue;
 
       if (it->isExternal() || Symbol.isUndefined())
         continue;

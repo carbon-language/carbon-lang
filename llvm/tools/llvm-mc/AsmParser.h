@@ -69,6 +69,8 @@ public:
   /// }
 
 private:
+  MCSymbol *CreateSymbol(StringRef Name);
+
   bool ParseStatement();
 
   bool TokError(const char *Msg);

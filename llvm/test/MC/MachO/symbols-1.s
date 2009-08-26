@@ -13,8 +13,9 @@ sym_local_C:
 sym_globl_def_A: 
 sym_globl_def_B: 
 sym_globl_def_C: 
+Lsym_asm_temp:
         .long 0
-
+        
 // CHECK: ('cputype', 7)
 // CHECK: ('cpusubtype', 3)
 // CHECK: ('filetype', 1)

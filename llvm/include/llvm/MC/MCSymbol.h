@@ -63,6 +63,11 @@ namespace llvm {
     /// @name Symbol Type
     /// @{
 
+    /// isTemporary - Check if this is an assembler temporary symbol.
+    bool isTemporary() const {
+      return IsTemporary;
+    }
+
     /// isDefined - Check if this symbol is defined (i.e., it has an address).
     ///
     /// Defined symbols are either absolute or in some section.
