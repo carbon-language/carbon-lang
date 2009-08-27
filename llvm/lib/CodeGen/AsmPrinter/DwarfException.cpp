@@ -7,7 +7,7 @@
 //
 //===----------------------------------------------------------------------===//
 //
-// This file contains support for writing DWARF exception info into asm files.
+// This file contains support for writing dwarf exception info into asm files.
 //
 //===----------------------------------------------------------------------===//
 
@@ -98,19 +98,16 @@ void DwarfException::EmitCIE(const Function *Personality, unsigned Index) {
 
   // If there is a personality, we need to indicate the function's location.
   if (Personality) {
-    unsigned Encoding = 0;
     Asm->EmitULEB128Bytes(7);
     Asm->EOL("Augmentation Size");
 
     if (MAI->getNeedsIndirectEncoding()) {
-      Encoding = dwarf::DW_EH_PE_pcrel | dwarf::DW_EH_PE_sdata4 |
-        dwarf::DW_EH_PE_indirect;
-      Asm->EmitInt8(Encoding);
-      Asm->EOL("Personality", Encoding);
+      Asm->EmitInt8(dwarf::DW_EH_PE_pcrel | dwarf::DW_EH_PE_sdata4 |
+                    dwarf::DW_EH_PE_indirect);
+      Asm->EOL("Personality (pcrel sdata4 indirect)");
     } else {
-      Encoding = dwarf::DW_EH_PE_pcrel | dwarf::DW_EH_PE_sdata4;
-      Asm->EmitInt8(Encoding);
-      Asm->EOL("Personality", Encoding);
+      Asm->EmitInt8(dwarf::DW_EH_PE_pcrel | dwarf::DW_EH_PE_sdata4);
+      Asm->EOL("Personality (pcrel sdata4)");
     }
 
     PrintRelDirective(true);
@@ -121,20 +118,17 @@ void DwarfException::EmitCIE(const Function *Personality, unsigned Index) {
       O << "-" << MAI->getPCSymbol();
     Asm->EOL("Personality");
 
-    Encoding = dwarf::DW_EH_PE_pcrel | dwarf::DW_EH_PE_sdata4;
-    Asm->EmitInt8(Encoding);
-    Asm->EOL("LSDA Encoding", Encoding);
+    Asm->EmitInt8(dwarf::DW_EH_PE_pcrel | dwarf::DW_EH_PE_sdata4);
+    Asm->EOL("LSDA Encoding (pcrel sdata4)");
 
-    Encoding = dwarf::DW_EH_PE_pcrel | dwarf::DW_EH_PE_sdata4;
-    Asm->EmitInt8(Encoding);
-    Asm->EOL("FDE Encoding", Encoding);
+    Asm->EmitInt8(dwarf::DW_EH_PE_pcrel | dwarf::DW_EH_PE_sdata4);
+    Asm->EOL("FDE Encoding (pcrel sdata4)");
   } else {
     Asm->EmitULEB128Bytes(1);
     Asm->EOL("Augmentation Size");
 
-    unsigned Encoding = dwarf::DW_EH_PE_pcrel | dwarf::DW_EH_PE_sdata4;
-    Asm->EmitInt8(Encoding);
-    Asm->EOL("FDE Encoding", Encoding);
+    Asm->EmitInt8(dwarf::DW_EH_PE_pcrel | dwarf::DW_EH_PE_sdata4);
+    Asm->EOL("FDE Encoding (pcrel sdata4)");
   }
 
   // Indicate locations of general callee saved registers in frame.
@@ -604,17 +598,15 @@ void DwarfException::EmitExceptionTable() {
   }
 
   // Emit the header.
-  unsigned Encoding = dwarf::DW_EH_PE_omit;
-  Asm->EmitInt8(Encoding);
-  Asm->EOL("@LPStart format", Encoding);
+  Asm->EmitInt8(dwarf::DW_EH_PE_omit);
+  Asm->EOL("@LPStart format (DW_EH_PE_omit)");
 
 #if 0
   if (TypeInfos.empty() && FilterIds.empty()) {
     // If there are no typeinfos or filters, there is nothing to emit, optimize
     // by specifying the "omit" encoding.
-    Encoding = dwarf::DW_EH_PE_omit;
-    Asm->EmitInt8(Encoding);
-    Asm->EOL("@TType format", Encoding);
+    Asm->EmitInt8(dwarf::DW_EH_PE_omit);
+    Asm->EOL("@TType format (DW_EH_PE_omit)");
   } else {
     // Okay, we have actual filters or typeinfos to emit.  As such, we need to
     // pick a type encoding for them.  We're about to emit a list of pointers to
@@ -642,13 +634,12 @@ void DwarfException::EmitExceptionTable() {
     //
     if (LSDASection->isWritable() ||
         Asm->TM.getRelocationModel() == Reloc::Static) {
-      Encoding = DW_EH_PE_absptr;
-      Asm->EmitInt8(Encoding);
-      Asm->EOL("TType format", Encoding);
+      Asm->EmitInt8(DW_EH_PE_absptr);
+      Asm->EOL("TType format (DW_EH_PE_absptr)");
     } else {
-      Encoding = DW_EH_PE_pcrel | DW_EH_PE_indirect | DW_EH_PE_sdata4;
       Asm->EmitInt8(DW_EH_PE_pcrel | DW_EH_PE_indirect | DW_EH_PE_sdata4);
-      Asm->EOL("TType format", Encoding);
+      Asm->EOL("TType format (DW_EH_PE_pcrel | DW_EH_PE_indirect"
+               " | DW_EH_PE_sdata4)");
     }
     Asm->EmitULEB128Bytes(TypeOffset);
     Asm->EOL("TType base offset");
@@ -658,13 +649,11 @@ void DwarfException::EmitExceptionTable() {
   // say that we're omitting that bit.
   // FIXME: does this apply to Dwarf also? The above #if 0 implies yes?
   if (!HaveTTData) {
-    Encoding = dwarf::DW_EH_PE_omit;
-    Asm->EmitInt8(Encoding);
-    Asm->EOL("@TType format", Encoding);
+    Asm->EmitInt8(dwarf::DW_EH_PE_omit);
+    Asm->EOL("@TType format (DW_EH_PE_omit)");
   } else {
-    Encoding = dwarf::DW_EH_PE_absptr;
-    Asm->EmitInt8(Encoding);
-    Asm->EOL("@TType format", Encoding);
+    Asm->EmitInt8(dwarf::DW_EH_PE_absptr);
+    Asm->EOL("@TType format (DW_EH_PE_absptr)");
     Asm->EmitULEB128Bytes(TypeOffset);
     Asm->EOL("@TType base offset");
   }
@@ -672,9 +661,8 @@ void DwarfException::EmitExceptionTable() {
 
   // SjLj Exception handilng
   if (MAI->getExceptionHandlingType() == ExceptionHandling::SjLj) {
-    Encoding = dwarf::DW_EH_PE_udata4;
-    Asm->EmitInt8(Encoding);
-    Asm->EOL("Call site format", Encoding);
+    Asm->EmitInt8(dwarf::DW_EH_PE_udata4);
+    Asm->EOL("Call site format (DW_EH_PE_udata4)");
     Asm->EmitULEB128Bytes(SizeSites);
     Asm->EOL("Call site table length");
 
@@ -726,9 +714,8 @@ void DwarfException::EmitExceptionTable() {
     // will call `terminate()'.
 
     // Emit the landing pad call site table.
-    Encoding = dwarf::DW_EH_PE_udata4;
-    Asm->EmitInt8(Encoding);
-    Asm->EOL("Call site format", Encoding);
+    Asm->EmitInt8(dwarf::DW_EH_PE_udata4);
+    Asm->EOL("Call site format (DW_EH_PE_udata4)");
     Asm->EmitULEB128Bytes(SizeSites);
     Asm->EOL("Call site table size");
 
