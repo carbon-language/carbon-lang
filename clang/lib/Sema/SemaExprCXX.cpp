@@ -239,9 +239,8 @@ Sema::ActOnCXXTypeConstructExpr(SourceRange TypeRange, TypeTy *TypeRep,
   if (const RecordType *RT = Ty->getAs<RecordType>()) {
     CXXRecordDecl *Record = cast<CXXRecordDecl>(RT->getDecl());
 
-    // FIXME: We should always create a CXXTemporaryObjectExpr here unless
-    // both the ctor and dtor are trivial.
-    if (NumExprs > 1 || Record->hasUserDeclaredConstructor()) {
+    if (NumExprs > 1 || !Record->hasTrivialConstructor() || 
+        !Record->hasTrivialDestructor()) {
       CXXConstructorDecl *Constructor
         = PerformInitializationByConstructor(Ty, Exprs, NumExprs,
                                              TypeRange.getBegin(),
@@ -253,11 +252,13 @@ Sema::ActOnCXXTypeConstructExpr(SourceRange TypeRange, TypeTy *TypeRep,
       if (!Constructor)
         return ExprError();
 
-      exprs.release();
-      Expr *E = new (Context) CXXTemporaryObjectExpr(Context, Constructor, 
-                                                     Ty, TyBeginLoc, Exprs,
-                                                     NumExprs, RParenLoc);
-      return MaybeBindToTemporary(E);
+      OwningExprResult Result = 
+        BuildCXXTemporaryObjectExpr(Constructor, Ty, TyBeginLoc, 
+                                    move(exprs), RParenLoc);
+      if (Result.isInvalid())
+        return ExprError();
+      
+      return MaybeBindToTemporary(Result.takeAs<Expr>());
     }
 
     // Fall through to value-initialize an object of class type that

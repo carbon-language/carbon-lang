@@ -2467,7 +2467,7 @@ Sema::BuildCXXConstructExpr(QualType DeclInitType,
                                                                 Elidable,
                                                                 Exprs,
                                                                 NumExprs));
-  // default arguments must be added to constructor call expression.
+  // Default arguments must be added to constructor call expression.
   FunctionDecl *FDecl = cast<FunctionDecl>(Constructor);
   unsigned NumArgsInProto = FDecl->param_size();
   for (unsigned j = NumExprs; j != NumArgsInProto; j++) {
@@ -2483,6 +2483,37 @@ Sema::BuildCXXConstructExpr(QualType DeclInitType,
   }
   return move(Temp);
 }
+
+Sema::OwningExprResult
+Sema::BuildCXXTemporaryObjectExpr(CXXConstructorDecl *Constructor, 
+                                  QualType Ty, 
+                                  SourceLocation TyBeginLoc, 
+                                  MultiExprArg Args,
+                                  SourceLocation RParenLoc) {
+  CXXTemporaryObjectExpr *E 
+    = new (Context) CXXTemporaryObjectExpr(Context, Constructor, Ty, TyBeginLoc, 
+                                           (Expr **)Args.get(),
+                                           Args.size(), RParenLoc);
+  
+  ExprOwningPtr<CXXTemporaryObjectExpr> Temp(this, E);
+
+    // Default arguments must be added to constructor call expression.
+  FunctionDecl *FDecl = cast<FunctionDecl>(Constructor);
+  unsigned NumArgsInProto = FDecl->param_size();
+  for (unsigned j = Args.size(); j != NumArgsInProto; j++) {
+    ParmVarDecl *Param = FDecl->getParamDecl(j);
+
+    OwningExprResult ArgExpr = BuildCXXDefaultArgExpr(TyBeginLoc, FDecl, Param);
+    if (ArgExpr.isInvalid())
+      return ExprError();
+
+    Temp->setArg(j, ArgExpr.takeAs<Expr>());
+  }
+
+  Args.release();
+  return move(Temp);
+}
+
 
 bool Sema::InitializeVarWithConstructor(VarDecl *VD, 
                                         CXXConstructorDecl *Constructor,

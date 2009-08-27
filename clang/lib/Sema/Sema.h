@@ -1774,6 +1774,12 @@ public:
                                          bool Elidable,
                                          Expr **Exprs, unsigned NumExprs);
   
+  OwningExprResult BuildCXXTemporaryObjectExpr(CXXConstructorDecl *Cons, 
+                                               QualType writtenTy, 
+                                               SourceLocation tyBeginLoc, 
+                                               MultiExprArg Args,
+                                               SourceLocation rParenLoc);
+                                               
   /// BuildCXXDefaultArgExpr - Creates a CXXDefaultArgExpr, instantiating
   /// the default expr if needed.
   OwningExprResult BuildCXXDefaultArgExpr(SourceLocation CallLoc,
