@@ -8,7 +8,7 @@ int printf(const char*, ...);
 
 typedef void (^T) (void);
 
-void takeclosure(T);
+void takeblock(T);
 int takeintint(int (^C)(int)) { return C(4); }
 
 T somefunction() {
@@ -26,10 +26,10 @@ T somefunction() {
 void test2() {
 	int x = 4;
 
-	takeclosure(^{ printf("%d\n", x); });
+	takeblock(^{ printf("%d\n", x); });
 
   while (1) {
-	  takeclosure(^{ 
+	  takeblock(^{ 
       break;  // expected-error {{'break' statement not in loop or switch statement}}
 	    continue; // expected-error {{'continue' statement not in loop statement}}
 	    while(1) break;  // ok
@@ -39,9 +39,9 @@ void test2() {
 	}
 
 foo:
-	takeclosure(^{ x = 4; });  // expected-error {{variable is not assignable (missing __block type specifier)}}
+	takeblock(^{ x = 4; });  // expected-error {{variable is not assignable (missing __block type specifier)}}
   __block y = 7;    // expected-warning {{type specifier missing, defaults to 'int'}}
-  takeclosure(^{ y = 8; });
+  takeblock(^{ y = 8; });
 }
 
 
@@ -86,39 +86,3 @@ typedef void (^void_block_t)(void);
 static const void_block_t myBlock = ^{ };
 
 static const void_block_t myBlock2 = ^ void(void) { }; 
-
-#if 0
-// Old syntax. FIXME: convert/test.
-void test_byref() {
-  int i;
-  
-  X = ^{| g |};  // error {{use of undeclared identifier 'g'}}
-
-  X = ^{| i,i,i | };
-
-  X = ^{|i| i = 0; };
-
-}
-
-// TODO: global closures someday.
-void *A = ^{};
-void *B = ^(int){ A = 0; };
-
-
-// Closures can not take return types at this point.
-void test_retvals() {
-  // Explicit return value.
-  ^int{};   // error {{closure with explicit return type requires argument list}}
-  X = ^void(){};
-
-  // Optional specification of return type.
-  X = ^char{ return 'x'; };  // error {{closure with explicit return type requires argument list}}
-
-  X = ^/*missing declspec*/ *() { return (void*)0; };
-  X = ^void*() { return (void*)0; };
-  
-  //X = ^char(short c){ if (c) return c; else return (int)4; };
-  
-}
-
-#endif

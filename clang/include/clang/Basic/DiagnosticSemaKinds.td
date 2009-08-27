@@ -1663,8 +1663,6 @@ def warn_cannot_pass_non_pod_arg_to_vararg : Warning<
   "cannot pass object of non-POD type %0 through variadic "
   "%select{function|block|method}1; call will abort at runtime">;
 
-def err_typecheck_closure_too_many_args : Error<
-  "too many arguments to closure call">;
 def err_typecheck_call_invalid_ordered_compare : Error<
   "ordered compare requires two args of floating point type (%0 and %1)">;
 def err_typecheck_cond_expect_scalar : Error<
