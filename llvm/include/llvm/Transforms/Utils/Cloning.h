@@ -38,6 +38,7 @@ class TargetData;
 class Loop;
 class LoopInfo;
 class LLVMContext;
+class AllocaInst;
 template <typename T> class SmallVectorImpl;
 
 /// CloneModule - Return an exact copy of the specified module
@@ -168,9 +169,15 @@ void CloneAndPruneFunctionInto(Function *NewFunc, const Function *OldFunc,
 /// If a non-null callgraph pointer is provided, these functions update the
 /// CallGraph to represent the program after inlining.
 ///
-bool InlineFunction(CallInst *C, CallGraph *CG = 0, const TargetData *TD = 0);
-bool InlineFunction(InvokeInst *II, CallGraph *CG = 0, const TargetData *TD =0);
-bool InlineFunction(CallSite CS, CallGraph *CG = 0, const TargetData *TD = 0);
+/// If StaticAllocas is non-null, InlineFunction populates it with all of the
+/// static allocas that it inlines into the caller.
+///
+bool InlineFunction(CallInst *C, CallGraph *CG = 0, const TargetData *TD = 0,
+                    SmallVectorImpl<AllocaInst*> *StaticAllocas = 0);
+bool InlineFunction(InvokeInst *II, CallGraph *CG = 0, const TargetData *TD = 0,
+                    SmallVectorImpl<AllocaInst*> *StaticAllocas = 0);
+bool InlineFunction(CallSite CS, CallGraph *CG = 0, const TargetData *TD = 0,
+                    SmallVectorImpl<AllocaInst*> *StaticAllocas = 0);
 
 } // End llvm namespace
 

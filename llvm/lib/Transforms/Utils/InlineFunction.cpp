@@ -29,11 +29,13 @@
 #include "llvm/Support/CallSite.h"
 using namespace llvm;
 
-bool llvm::InlineFunction(CallInst *CI, CallGraph *CG, const TargetData *TD) {
-  return InlineFunction(CallSite(CI), CG, TD);
+bool llvm::InlineFunction(CallInst *CI, CallGraph *CG, const TargetData *TD,
+                          SmallVectorImpl<AllocaInst*> *StaticAllocas) {
+  return InlineFunction(CallSite(CI), CG, TD, StaticAllocas);
 }
-bool llvm::InlineFunction(InvokeInst *II, CallGraph *CG, const TargetData *TD) {
-  return InlineFunction(CallSite(II), CG, TD);
+bool llvm::InlineFunction(InvokeInst *II, CallGraph *CG, const TargetData *TD,
+                          SmallVectorImpl<AllocaInst*> *StaticAllocas) {
+  return InlineFunction(CallSite(II), CG, TD, StaticAllocas);
 }
 
 
@@ -265,7 +267,8 @@ static const DbgRegionEndInst *findFnRegionEndMarker(const Function *F) {
 // exists in the instruction stream.  Similiarly this will inline a recursive
 // function by one level.
 //
-bool llvm::InlineFunction(CallSite CS, CallGraph *CG, const TargetData *TD) {
+bool llvm::InlineFunction(CallSite CS, CallGraph *CG, const TargetData *TD,
+                          SmallVectorImpl<AllocaInst*> *StaticAllocas) {
   Instruction *TheCall = CS.getInstruction();
   LLVMContext &Context = TheCall->getContext();
   assert(TheCall->getParent() && TheCall->getParent()->getParent() &&
@@ -435,11 +438,17 @@ bool llvm::InlineFunction(CallSite CS, CallGraph *CG, const TargetData *TD) {
       if (!isa<Constant>(AI->getArraySize()))
         continue;
       
+      // Keep track of the static allocas that we inline into the caller if the
+      // StaticAllocas pointer is non-null.
+      if (StaticAllocas) StaticAllocas->push_back(AI);
+      
       // Scan for the block of allocas that we can move over, and move them
       // all at once.
       while (isa<AllocaInst>(I) &&
-             isa<Constant>(cast<AllocaInst>(I)->getArraySize()))
+             isa<Constant>(cast<AllocaInst>(I)->getArraySize())) {
+        if (StaticAllocas) StaticAllocas->push_back(cast<AllocaInst>(I));
         ++I;
+      }
 
       // Transfer all of the allocas over in a block.  Using splice means
       // that the instructions aren't removed from the symbol table, then
