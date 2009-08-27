@@ -16,7 +16,7 @@
 #include "llvm/Support/CallSite.h"
 #include "llvm/CallingConv.h"
 #include "llvm/IntrinsicInst.h"
-
+#include "llvm/ADT/SmallPtrSet.h"
 using namespace llvm;
 
 // CountCodeReductionForConstant - Figure out an approximation for how many
