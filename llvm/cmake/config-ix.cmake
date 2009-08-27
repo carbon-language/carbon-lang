@@ -181,6 +181,11 @@ configure_file(
   )
 
 configure_file(
+  ${LLVM_MAIN_INCLUDE_DIR}/llvm/ADT/iterator.cmake
+  ${LLVM_BINARY_DIR}/include/llvm/ADT/iterator.h
+  )
+
+configure_file(
   ${LLVM_MAIN_INCLUDE_DIR}/llvm/Support/DataTypes.h.cmake
   ${LLVM_BINARY_DIR}/include/llvm/Support/DataTypes.h
   )
