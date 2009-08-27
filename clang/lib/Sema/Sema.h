@@ -725,9 +725,9 @@ public:
                   OverloadedFunctionDecl::function_iterator &MatchedDecl);
   ImplicitConversionSequence 
   TryImplicitConversion(Expr* From, QualType ToType,
-                        bool SuppressUserConversions = false,
-                        bool AllowExplicit = false,
-                        bool ForceRValue = false);
+                        bool SuppressUserConversions,
+                        bool AllowExplicit,
+                        bool ForceRValue);
   bool IsStandardConversion(Expr *From, QualType ToType, 
                             StandardConversionSequence& SCS);
   bool IsIntegralPromotion(Expr *From, QualType FromType, QualType ToType);

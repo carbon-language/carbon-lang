@@ -884,11 +884,16 @@ Sema::PerformImplicitConversion(Expr *&From, QualType ToType,
   ImplicitConversionSequence ICS;
   ICS.ConversionKind = ImplicitConversionSequence::BadConversion;
   if (Elidable && getLangOptions().CPlusPlus0x) {
-    ICS = TryImplicitConversion(From, ToType, /*SuppressUserConversions*/false,
-                                AllowExplicit, /*ForceRValue*/true);
+    ICS = TryImplicitConversion(From, ToType, 
+                                /*SuppressUserConversions=*/false,
+                                AllowExplicit, 
+                                /*ForceRValue=*/true);
   }
   if (ICS.ConversionKind == ImplicitConversionSequence::BadConversion) {
-    ICS = TryImplicitConversion(From, ToType, false, AllowExplicit);
+    ICS = TryImplicitConversion(From, ToType, 
+                                /*SuppressUserConversions=*/false,
+                                AllowExplicit,
+                                /*ForceRValue=*/false);
   }
   return PerformImplicitConversion(From, ToType, ICS, Flavor);
 }
@@ -1244,7 +1249,10 @@ static bool TryClassUnification(Sema &Self, Expr *From, Expr *To,
 
     // Now try the implicit conversion.
     // FIXME: This doesn't detect ambiguities.
-    ICS = Self.TryImplicitConversion(From, TTy);
+    ICS = Self.TryImplicitConversion(From, TTy,
+                                     /*SuppressUserConversions=*/false,
+                                     /*AllowExplicit=*/false,
+                                     /*ForceRValue=*/false);
   }
   return false;
 }
@@ -1627,15 +1635,30 @@ QualType Sema::FindCompositePointerType(Expr *&E1, Expr *&E2) {
     }
   }
 
-  ImplicitConversionSequence E1ToC1 = TryImplicitConversion(E1, Composite1);
-  ImplicitConversionSequence E2ToC1 = TryImplicitConversion(E2, Composite1);
+  ImplicitConversionSequence E1ToC1 = 
+    TryImplicitConversion(E1, Composite1,
+                          /*SuppressUserConversions=*/false,
+                          /*AllowExplicit=*/false,
+                          /*ForceRValue=*/false);
+  ImplicitConversionSequence E2ToC1 = 
+    TryImplicitConversion(E2, Composite1,
+                          /*SuppressUserConversions=*/false,
+                          /*AllowExplicit=*/false,
+                          /*ForceRValue=*/false);
+  
   ImplicitConversionSequence E1ToC2, E2ToC2;
   E1ToC2.ConversionKind = ImplicitConversionSequence::BadConversion;
   E2ToC2.ConversionKind = ImplicitConversionSequence::BadConversion;
   if (Context.getCanonicalType(Composite1) !=
       Context.getCanonicalType(Composite2)) {
-    E1ToC2 = TryImplicitConversion(E1, Composite2);
-    E2ToC2 = TryImplicitConversion(E2, Composite2);
+    E1ToC2 = TryImplicitConversion(E1, Composite2,
+                                   /*SuppressUserConversions=*/false,
+                                   /*AllowExplicit=*/false,
+                                   /*ForceRValue=*/false);
+    E2ToC2 = TryImplicitConversion(E2, Composite2,
+                                   /*SuppressUserConversions=*/false,
+                                   /*AllowExplicit=*/false,
+                                   /*ForceRValue=*/false);
   }
 
   bool ToC1Viable = E1ToC1.ConversionKind !=

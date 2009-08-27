@@ -1929,7 +1929,9 @@ Sema::TryCopyInitialization(Expr *From, QualType ToType,
                        /*AllowExplicit=*/false, ForceRValue);
     return ICS;
   } else {
-    return TryImplicitConversion(From, ToType, SuppressUserConversions,
+    return TryImplicitConversion(From, ToType, 
+                                 SuppressUserConversions,
+                                 /*AllowExplicit=*/false,
                                  ForceRValue);
   }
 }
@@ -2064,7 +2066,11 @@ Sema::PerformObjectArgumentInitialization(Expr *&From, CXXMethodDecl *Method) {
 /// TryContextuallyConvertToBool - Attempt to contextually convert the
 /// expression From to bool (C++0x [conv]p3).
 ImplicitConversionSequence Sema::TryContextuallyConvertToBool(Expr *From) {
-  return TryImplicitConversion(From, Context.BoolTy, false, true);
+  return TryImplicitConversion(From, Context.BoolTy, 
+                               // FIXME: Are these flags correct?
+                               /*SuppressUserConversions=*/false,
+                               /*AllowExplicit=*/true, 
+                               /*ForceRValue=*/false);
 }
 
 /// PerformContextuallyConvertToBool - Perform a contextual conversion

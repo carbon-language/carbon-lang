@@ -788,8 +788,12 @@ TryStaticImplicitCast(Sema &Self, Expr *SrcExpr, QualType DestType,
   // reimplement more of this.
   // FIXME: This does not actually perform the conversion, and thus does not
   // check for ambiguity or access.
-  ImplicitConversionSequence ICS = Self.TryImplicitConversion(
-    SrcExpr, DestType);
+  ImplicitConversionSequence ICS = 
+    Self.TryImplicitConversion(SrcExpr, DestType,
+                               /*SuppressUserConversions=*/false,
+                               /*AllowExplicit=*/false,
+                               /*ForceRValue=*/false);
+  
   if (ICS.ConversionKind  == ImplicitConversionSequence::UserDefinedConversion)
     if (CXXConversionDecl *CV = 
           dyn_cast<CXXConversionDecl>(ICS.UserDefined.ConversionFunction))
