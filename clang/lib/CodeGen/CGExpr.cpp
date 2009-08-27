@@ -1174,12 +1174,22 @@ LValue CodeGenFunction::EmitConditionalOperator(const ConditionalOperator* E) {
 LValue CodeGenFunction::EmitCastLValue(const CastExpr *E) {
   // If this is an aggregate-to-aggregate cast, just use the input's address as
   // the lvalue.
-  if (getContext().hasSameUnqualifiedType(E->getType(),
-                                          E->getSubExpr()->getType()))
+  if (E->getCastKind() == CastExpr::CK_NoOp)
     return EmitLValue(E->getSubExpr());
 
+  // If this is an lvalue cast, treat it as a no-op.
+  // FIXME: We shouldn't need to check for this explicitly!
+  if (const ImplicitCastExpr *ICE = dyn_cast<ImplicitCastExpr>(E))
+    if (ICE->isLvalueCast())
+      return EmitLValue(E->getSubExpr());
+
+  // FIXME: Implement this properly!
+  if (E->getCastKind() == CastExpr::CK_UserDefinedConversion)
+    return EmitUnsupportedLValue(E, "user-defined conversion");
+
   // Otherwise, we must have a cast from scalar to union.
-  assert(E->getType()->isUnionType() && "Expected scalar-to-union cast");
+  assert(E->getCastKind() == CastExpr::CK_ToUnion &&
+         "Expected scalar-to-union cast");
   
   // Casts are only lvalues when the source and destination types are the same.
   llvm::Value *Temp = CreateTempAlloca(ConvertType(E->getType()));
