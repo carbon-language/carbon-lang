@@ -1228,7 +1228,9 @@ static bool TryClassUnification(Sema &Self, Expr *From, Expr *To,
       // Could still fail if there's no copy constructor.
       // FIXME: Is this a hard error then, or just a conversion failure? The
       // standard doesn't say.
-      ICS = Self.TryCopyInitialization(From, TTy);
+      ICS = Self.TryCopyInitialization(From, TTy, 
+                                       /*SuppressUserConversions=*/false,
+                                       /*ForceRValue=*/false);
     }
   } else {
     //     -- Otherwise: E1 can be converted to match E2 if E1 can be

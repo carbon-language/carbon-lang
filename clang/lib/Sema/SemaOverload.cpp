@@ -2430,7 +2430,11 @@ Sema::AddConversionCandidate(CXXConversionDecl *Conversion,
   CallExpr Call(Context, &ConversionFn, 0, 0, 
                 Conversion->getConversionType().getNonReferenceType(),
                 SourceLocation());
-  ImplicitConversionSequence ICS = TryCopyInitialization(&Call, ToType, true);
+  ImplicitConversionSequence ICS = 
+    TryCopyInitialization(&Call, ToType, 
+                          /*SuppressUserConversions=*/true,
+                          /*ForceRValue=*/false);
+  
   switch (ICS.ConversionKind) {
   case ImplicitConversionSequence::StandardConversion:
     Candidate.FinalConversion = ICS.Standard;
@@ -2543,7 +2547,8 @@ void Sema::AddSurrogateCandidate(CXXConversionDecl *Conversion,
       QualType ParamType = Proto->getArgType(ArgIdx);
       Candidate.Conversions[ArgIdx + 1] 
         = TryCopyInitialization(Args[ArgIdx], ParamType, 
-                                /*SuppressUserConversions=*/false);
+                                /*SuppressUserConversions=*/false,
+                                /*ForceRValue=*/false);
       if (Candidate.Conversions[ArgIdx + 1].ConversionKind 
             == ImplicitConversionSequence::BadConversion) {
         Candidate.Viable = false;
@@ -2674,7 +2679,8 @@ void Sema::AddBuiltinCandidate(QualType ResultTy, QualType *ParamTys,
     } else {
       Candidate.Conversions[ArgIdx] 
         = TryCopyInitialization(Args[ArgIdx], ParamTys[ArgIdx], 
-                                ArgIdx == 0 && IsAssignmentOperator);
+                                ArgIdx == 0 && IsAssignmentOperator,
+                                /*ForceRValue=*/false);
     }
     if (Candidate.Conversions[ArgIdx].ConversionKind 
         == ImplicitConversionSequence::BadConversion) {

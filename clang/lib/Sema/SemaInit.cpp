@@ -661,7 +661,10 @@ void InitListChecker::CheckSubElementType(InitListExpr *IList,
       //   an initializer-list. If the initializer can initialize a
       //   member, the member is initialized. [...]
       ImplicitConversionSequence ICS 
-        = SemaRef.TryCopyInitialization(expr, ElemType);
+        = SemaRef.TryCopyInitialization(expr, ElemType,
+                                        /*SuppressUserConversions=*/false,
+                                        /*ForceRValue=*/false);
+
       if (ICS.ConversionKind != ImplicitConversionSequence::BadConversion) {
         if (SemaRef.PerformImplicitConversion(expr, ElemType, ICS, 
                                                "initializing"))

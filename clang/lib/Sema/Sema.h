@@ -766,8 +766,7 @@ public:
 
   ImplicitConversionSequence 
   TryCopyInitialization(Expr* From, QualType ToType,
-                        bool SuppressUserConversions = false,
-                        bool ForceRValue = false);
+                        bool SuppressUserConversions, bool ForceRValue);
   bool PerformCopyInitialization(Expr *&From, QualType ToType, 
                                  const char *Flavor, bool Elidable = false);
 
