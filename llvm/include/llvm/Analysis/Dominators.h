@@ -352,7 +352,7 @@ public:
   /// Note that this is not a constant time operation!
   ///
   bool properlyDominates(const DomTreeNodeBase<NodeT> *A,
-                         DomTreeNodeBase<NodeT> *B) const {
+                         const DomTreeNodeBase<NodeT> *B) const {
     if (A == 0 || B == 0) return false;
     return dominatedBySlowTreeWalk(A, B);
   }
@@ -383,7 +383,7 @@ public:
   /// constant time operation!
   ///
   inline bool dominates(const DomTreeNodeBase<NodeT> *A,
-                        DomTreeNodeBase<NodeT> *B) {
+                        const DomTreeNodeBase<NodeT> *B) {
     if (B == A) 
       return true;  // A node trivially dominates itself.
 
@@ -764,7 +764,8 @@ public:
     //}
   }
 
-  inline bool properlyDominates(const DomTreeNode* A, DomTreeNode* B) const {
+  inline bool properlyDominates(const DomTreeNode* A,
+                                const DomTreeNode* B) const {
     return DT->properlyDominates(A, B);
   }
 
