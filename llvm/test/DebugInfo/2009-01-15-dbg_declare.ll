@@ -1,6 +1,4 @@
-
 ; RUN: llvm-as < %s | llc -o /dev/null
-; XFAIL: powerpc
 
         %llvm.dbg.variable.type = type { i32, { }*, i8*, { }*, i32, { }*, i8*, i8* }
 @llvm.dbg.variable24 = external constant %llvm.dbg.variable.type                ; <%llvm.dbg.variable.type*> [#uses=1]
