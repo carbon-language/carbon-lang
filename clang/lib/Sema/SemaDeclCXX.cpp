@@ -2103,7 +2103,14 @@ Sema::DeclPtrTy Sema::ActOnUsingDeclaration(Scope *S,
     Name = TargetName;
   else
     Name = Context.DeclarationNames.getCXXOperatorName(Op);
-  
+
+  // FIXME: Implement this properly!
+  if (isUnknownSpecialization(SS)) {
+    Diag(IdentLoc, diag::err_using_dependent_unsupported);
+    delete AttrList;
+    return DeclPtrTy::make((UsingDecl*)0);
+  }
+
   // Lookup target name.
   LookupResult R = LookupParsedName(S, &SS, Name, LookupOrdinaryName, false);
 

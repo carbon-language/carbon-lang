@@ -96,6 +96,8 @@ def err_using_requires_qualname : Error<
   "using declaration requires a qualified name">;
 def err_using_typename_non_type : Error<
   "'typename' keyword used on a non-type">;
+def err_using_dependent_unsupported : Error<
+  "dependent using declaration not supported yet">;
 
 def err_invalid_thread : Error<
   "'__thread' is only allowed on variable declarations">;
