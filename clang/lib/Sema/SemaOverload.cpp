@@ -2638,11 +2638,17 @@ void Sema::AddMemberOperatorCandidates(OverloadedOperatorKind Op,
   //        result of the qualified lookup of T1::operator@
   //        (13.3.1.1.1); otherwise, the set of member candidates is
   //        empty.
-  // FIXME: Lookup in base classes, too!
   if (const RecordType *T1Rec = T1->getAs<RecordType>()) {
-    DeclContext::lookup_const_iterator Oper, OperEnd;
-    for (llvm::tie(Oper, OperEnd) = T1Rec->getDecl()->lookup(OpName);
-         Oper != OperEnd; ++Oper)
+    // Complete the type if it can be completed. Otherwise, we're done.
+    if (RequireCompleteType(OpLoc, T1, PartialDiagnostic(0)))
+      return;
+    
+    LookupResult Operators = LookupQualifiedName(T1Rec->getDecl(), OpName, 
+                                                 LookupOrdinaryName, false);
+    for (LookupResult::iterator Oper = Operators.begin(), 
+                             OperEnd = Operators.end();
+         Oper != OperEnd;
+         ++Oper)
       AddMethodCandidate(cast<CXXMethodDecl>(*Oper), Args[0], 
                          Args+1, NumArgs - 1, CandidateSet,
                          /*SuppressUserConversions=*/false);

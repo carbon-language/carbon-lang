@@ -514,7 +514,9 @@ public:
   /// user-declared constructors. When true, a default constructor
   /// will not be implicitly declared.
   bool hasUserDeclaredConstructor() const { 
-    assert(isDefinition() && "Incomplete record decl!");
+    assert((isDefinition() ||
+            cast<RecordType>(getTypeForDecl())->isBeingDefined()) && 
+           "Incomplete record decl!");
     return UserDeclaredConstructor;
   }
 

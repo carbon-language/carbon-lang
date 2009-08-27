@@ -209,3 +209,7 @@ namespace M {
     (void)(x + x);
   }
 }
+
+struct AA { bool operator!=(AA&); };
+struct BB : AA {};
+bool x(BB y, BB z) { return y != z; }
