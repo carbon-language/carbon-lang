@@ -199,13 +199,6 @@ public:
   generateNodeInternal(const Stmt* S, const GRState* State, ExplodedNode* Pred,
                    ProgramPoint::Kind K = ProgramPoint::PostStmtKind,
                    const void *tag = 0);
-
-  ExplodedNode*
-  generateNodeInternal(const Stmt* S,const GRState* State,const void *tag = 0) {
-    ExplodedNode* N = getLastNode();
-    assert (N && "Predecessor of new node is infeasible.");
-    return generateNodeInternal(S, State, N, ProgramPoint::PostStmtKind, tag);
-  }
   
   /// getStmt - Return the current block-level expression associated with
   ///  this builder.
