@@ -556,16 +556,16 @@ void JITSlabAllocator::Deallocate(MemSlab *Slab) {
 }
 
 DefaultJITMemoryManager::DefaultJITMemoryManager()
-  : LastSlab(0, 0),
+  :
+#ifdef NDEBUG
+    PoisonMemory(false),
+#else
+    PoisonMemory(true),
+#endif
+    LastSlab(0, 0),
     BumpSlabAllocator(*this),
     StubAllocator(DefaultSlabSize, DefaultSizeThreshold, BumpSlabAllocator),
     DataAllocator(DefaultSlabSize, DefaultSizeThreshold, BumpSlabAllocator) {
-
-#ifdef NDEBUG
-  PoisonMemory = false;
-#else
-  PoisonMemory = true;
-#endif
 
   // Allocate space for code.
   sys::MemoryBlock MemBlock = allocateNewSlab(DefaultCodeSlabSize);
