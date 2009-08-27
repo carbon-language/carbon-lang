@@ -46,7 +46,7 @@ GRStateManager::RemoveDeadBindings(const GRState* state, Stmt* Loc,
   llvm::SmallVector<const MemRegion*, 10> RegionRoots;
   GRState NewState = *state;
 
-  NewState.Env = EnvMgr.RemoveDeadBindings(NewState.Env, Loc, SymReaper, *this,
+  NewState.Env = EnvMgr.RemoveDeadBindings(NewState.Env, Loc, SymReaper,
                                            state, RegionRoots);
 
   // Clean up the store.
@@ -58,14 +58,14 @@ GRStateManager::RemoveDeadBindings(const GRState* state, Stmt* Loc,
 
 const GRState *GRState::unbindLoc(Loc LV) const {
   Store OldStore = getStore();
-  Store NewStore = Mgr->StoreMgr->Remove(OldStore, LV);
+  Store NewStore = getStateManager().StoreMgr->Remove(OldStore, LV);
   
   if (NewStore == OldStore)
     return this;
   
   GRState NewSt = *this;
   NewSt.St = NewStore;
-  return Mgr->getPersistentState(NewSt);    
+  return getStateManager().getPersistentState(NewSt);    
 }
 
 SVal GRState::getSValAsScalarOrLoc(const MemRegion *R) const {
@@ -76,7 +76,7 @@ SVal GRState::getSValAsScalarOrLoc(const MemRegion *R) const {
     return UnknownVal();
 
   if (const TypedRegion *TR = dyn_cast<TypedRegion>(R)) {
-    QualType T = TR->getValueType(Mgr->getContext());
+    QualType T = TR->getValueType(getStateManager().getContext());
     if (Loc::IsLocType(T) || T->isIntegerType())
       return getSVal(R);
   }
@@ -85,38 +85,22 @@ SVal GRState::getSValAsScalarOrLoc(const MemRegion *R) const {
 }
 
 
-const GRState *GRState::bindExpr(const Stmt* Ex, SVal V, bool isBlkExpr,
-                                 bool Invalidate) const {
+const GRState *GRState::bindExpr(const Stmt* Ex, SVal V, bool Invalidate) const {
   
-  Environment NewEnv = Mgr->EnvMgr.BindExpr(Env, Ex, V, isBlkExpr, Invalidate);
+  Environment NewEnv = getStateManager().EnvMgr.BindExpr(Env, Ex, V,
+                                                         Invalidate);
   
   if (NewEnv == Env)
     return this;
   
   GRState NewSt = *this;
   NewSt.Env = NewEnv;
-  return Mgr->getPersistentState(NewSt);
-}
-
-const GRState *GRState::bindExpr(const Stmt* Ex, SVal V, CFG &cfg,
-                                 bool Invalidate) const {
-  
-  bool isBlkExpr = false;
-  
-  if (Ex == Mgr->CurrentStmt) {
-      // FIXME: Should this just be an assertion?  When would we want to set
-      // the value of a block-level expression if it wasn't CurrentStmt?
-    isBlkExpr = cfg.isBlkExpr(Ex);
-    
-    if (!isBlkExpr)
-      return this;
-  }
-  
-  return bindExpr(Ex, V, isBlkExpr, Invalidate);
+  return getStateManager().getPersistentState(NewSt);
 }
 
 const GRState* GRStateManager::getInitialState(const LocationContext *InitLoc) {
-  GRState State(this, EnvMgr.getInitialEnvironment(), 
+  GRState State(this, InitLoc->getAnalysisContext(),
+                EnvMgr.getInitialEnvironment(), 
                 StoreMgr->getInitialStore(InitLoc),
                 GDMFactory.GetEmptyMap());
 
@@ -141,7 +125,7 @@ const GRState* GRStateManager::getPersistentState(GRState& State) {
 const GRState* GRState::makeWithStore(Store store) const {
   GRState NewSt = *this;
   NewSt.St = store;
-  return Mgr->getPersistentState(NewSt);
+  return getStateManager().getPersistentState(NewSt);
 }
 
 //===----------------------------------------------------------------------===//
@@ -151,12 +135,17 @@ const GRState* GRState::makeWithStore(Store store) const {
 void GRState::print(llvm::raw_ostream& Out, const char* nl,
                     const char* sep) const {  
   // Print the store.
-  Mgr->getStoreManager().print(getStore(), Out, nl, sep);
+  GRStateManager &Mgr = getStateManager();
+  Mgr.getStoreManager().print(getStore(), Out, nl, sep);
+  
+  CFG &C = *getAnalysisContext().getCFG();
   
   // Print Subexpression bindings.
   bool isFirst = true;
   
-  for (seb_iterator I = seb_begin(), E = seb_end(); I != E; ++I) {        
+  for (Environment::iterator I = Env.begin(), E = Env.end(); I != E; ++I) {    
+    if (C.isBlkExpr(I.getKey()))
+      continue;
     
     if (isFirst) {
       Out << nl << nl << "Sub-Expressions:" << nl;
@@ -172,8 +161,10 @@ void GRState::print(llvm::raw_ostream& Out, const char* nl,
   
   // Print block-expression bindings.
   isFirst = true;
-  
-  for (beb_iterator I = beb_begin(), E = beb_end(); I != E; ++I) {      
+
+  for (Environment::iterator I = Env.begin(), E = Env.end(); I != E; ++I) {
+    if (!C.isBlkExpr(I.getKey()))
+      continue;
 
     if (isFirst) {
       Out << nl << nl << "Block-level Expressions:" << nl;
@@ -187,11 +178,11 @@ void GRState::print(llvm::raw_ostream& Out, const char* nl,
     Out << " : " << I.getData();
   }
   
-  Mgr->getConstraintManager().print(this, Out, nl, sep);
+  Mgr.getConstraintManager().print(this, Out, nl, sep);
   
   // Print checker-specific data.
-  for (std::vector<Printer*>::iterator I = Mgr->Printers.begin(),
-                                       E = Mgr->Printers.end(); I != E; ++I) {
+  for (std::vector<Printer*>::iterator I = Mgr.Printers.begin(),
+                                       E = Mgr.Printers.end(); I != E; ++I) {
     (*I)->Print(Out, this, nl, sep);
   }
 }

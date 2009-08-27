@@ -68,42 +68,18 @@ SVal Environment::GetSVal(const Stmt *E, ValueManager& ValMgr) const {
   return LookupExpr(E);
 }
 
-SVal Environment::GetBlkExprSVal(const Stmt *E, ValueManager& ValMgr) const {
-  
-  while (1) {
-    switch (E->getStmtClass()) {
-      case Stmt::ParenExprClass:
-        E = cast<ParenExpr>(E)->getSubExpr();
-        continue;
-        
-      case Stmt::CharacterLiteralClass: {
-        const CharacterLiteral* C = cast<CharacterLiteral>(E);
-        return ValMgr.makeIntVal(C->getValue(), C->getType());
-      }
-        
-      case Stmt::IntegerLiteralClass: {
-        return ValMgr.makeIntVal(cast<IntegerLiteral>(E));
-      }
-        
-      default:
-        return LookupBlkExpr(E);
-    }
-  }
-}
-
-Environment EnvironmentManager::BindExpr(const Environment& Env, const Stmt* E,
-                                         SVal V, bool isBlkExpr,
-                                         bool Invalidate) {  
-  assert (E);
+Environment EnvironmentManager::BindExpr(Environment Env, const Stmt *S,
+                                         SVal V, bool Invalidate) {  
+  assert(S);
   
   if (V.isUnknown()) {    
     if (Invalidate)
-      return isBlkExpr ? RemoveBlkExpr(Env, E) : RemoveSubExpr(Env, E);
+      return Environment(F.Remove(Env.ExprBindings, S));
     else
       return Env;
   }
 
-  return isBlkExpr ? AddBlkExpr(Env, E, V) : AddSubExpr(Env, E, V);
+  return Environment(F.Add(Env.ExprBindings, S, V));
 }
 
 namespace {
@@ -124,23 +100,34 @@ public:
 //   - Mark the region in DRoots if the binding is a loc::MemRegionVal.
 
 Environment 
-EnvironmentManager::RemoveDeadBindings(Environment Env, Stmt* Loc,
-                                       SymbolReaper& SymReaper,
-                                       GRStateManager& StateMgr,
-                                       const GRState *state,
-                              llvm::SmallVectorImpl<const MemRegion*>& DRoots) {
+EnvironmentManager::RemoveDeadBindings(Environment Env, const Stmt *S,
+                                       SymbolReaper &SymReaper,
+                                       const GRState *ST,
+                              llvm::SmallVectorImpl<const MemRegion*> &DRoots) {
   
-  // Drop bindings for subexpressions.
-  Env = RemoveSubExprBindings(Env);
-
+  CFG &C = *ST->getAnalysisContext().getCFG();
+  
+  // We construct a new Environment object entirely, as this is cheaper than
+  // individually removing all the subexpression bindings (which will greatly
+  // outnumber block-level expression bindings).
+  Environment NewEnv = getInitialEnvironment();
+  
   // Iterate over the block-expr bindings.
-  for (Environment::beb_iterator I = Env.beb_begin(), E = Env.beb_end(); 
+  for (Environment::iterator I = Env.begin(), E = Env.end(); 
        I != E; ++I) {
+    
     const Stmt *BlkExpr = I.getKey();
-
-    if (SymReaper.isLive(Loc, BlkExpr)) {
-      SVal X = I.getData();
-
+    
+    // Not a block-level expression?
+    if (!C.isBlkExpr(BlkExpr))
+      continue;
+    
+    const SVal &X = I.getData();
+        
+    if (SymReaper.isLive(S, BlkExpr)) {
+      // Copy the binding to the new map.
+      NewEnv.ExprBindings = F.Add(NewEnv.ExprBindings, BlkExpr, X);
+      
       // If the block expr's value is a memory region, then mark that region.
       if (isa<loc::MemRegionVal>(X)) {
         const MemRegion* R = cast<loc::MemRegionVal>(X).getRegion();
@@ -151,28 +138,23 @@ EnvironmentManager::RemoveDeadBindings(Environment Env, Stmt* Loc,
         // We only add one level super region for now.
 
         // FIXME: maybe multiple level of super regions should be added.
-        if (const SubRegion *SR = dyn_cast<SubRegion>(R)) {
+        if (const SubRegion *SR = dyn_cast<SubRegion>(R))
           DRoots.push_back(SR->getSuperRegion());
-        }
       }
 
       // Mark all symbols in the block expr's value live.
       MarkLiveCallback cb(SymReaper);
-      state->scanReachableSymbols(X, cb);
-    } else {
-      // The block expr is dead.
-      SVal X = I.getData();
-
-      // Do not misclean LogicalExpr or ConditionalOperator.  It is dead at the
-      // beginning of itself, but we need its UndefinedVal to determine its
-      // SVal.
-
-      if (X.isUndef() && cast<UndefinedVal>(X).getData())
-        continue;
-
-      Env = RemoveBlkExpr(Env, BlkExpr);
+      ST->scanReachableSymbols(X, cb);
+      continue;
     }
+
+    // Otherwise the expression is dead with a couple exceptions.
+    // Do not misclean LogicalExpr or ConditionalOperator.  It is dead at the
+    // beginning of itself, but we need its UndefinedVal to determine its
+    // SVal.
+    if (X.isUndef() && cast<UndefinedVal>(X).getData())
+      NewEnv.ExprBindings = F.Add(NewEnv.ExprBindings, BlkExpr, X);
   }
 
-  return Env;
+  return NewEnv;
 }

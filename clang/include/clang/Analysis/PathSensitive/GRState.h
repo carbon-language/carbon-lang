@@ -67,6 +67,15 @@ template <typename T> struct GRStateTrait {
 
 class GRStateManager;
   
+class GRStateContext : public std::pair<GRStateManager*, AnalysisContext*> {
+public:
+  GRStateContext(GRStateManager *Mgr, AnalysisContext *ACtx)
+    : std::pair<GRStateManager*, AnalysisContext*>(Mgr, ACtx) {}
+  
+  GRStateManager *getStateManager() const { return first; }
+  AnalysisContext *getAnalysisContext() const { return second; }
+};
+  
 /// GRState - This class encapsulates the actual data values for
 ///  for a "state" in our symbolic value tracking.  It is intended to be
 ///  used as a functional object; that is once it is created and made
@@ -81,7 +90,7 @@ private:
   
   friend class GRStateManager;
 
-  GRStateManager *Mgr;
+  GRStateContext StateCtx;
   Environment Env;
   Store St;
 
@@ -92,9 +101,9 @@ public:
 public:
   
   /// This ctor is used when creating the first GRState object.
-  GRState(GRStateManager *mgr, const Environment& env,  Store st,
-          GenericDataMap gdm)
-    : Mgr(mgr),
+  GRState(GRStateManager *mgr, AnalysisContext *actx, const Environment& env,
+          Store st, GenericDataMap gdm)
+    : StateCtx(mgr, actx),
       Env(env),
       St(st),
       GDM(gdm) {}
@@ -103,13 +112,21 @@ public:
   ///  in FoldingSetNode will also get copied.
   GRState(const GRState& RHS)
     : llvm::FoldingSetNode(),
-      Mgr(RHS.Mgr),
+      StateCtx(RHS.StateCtx),
       Env(RHS.Env),
       St(RHS.St),
       GDM(RHS.GDM) {}
   
   /// getStateManager - Return the GRStateManager associated with this state.
-  GRStateManager &getStateManager() const { return *Mgr; }
+  GRStateManager &getStateManager() const {
+    return *StateCtx.getStateManager();
+  }
+  
+  /// getAnalysisContext - Return the AnalysisContext associated with this
+  /// state.
+  AnalysisContext &getAnalysisContext() const {
+    return *StateCtx.getAnalysisContext();
+  }
   
   /// getEnvironment - Return the environment associated with this state.
   ///  The environment is the mapping from expressions to values.
@@ -129,6 +146,7 @@ public:
   /// Profile - Profile the contents of a GRState object for use
   ///  in a FoldingSet.
   static void Profile(llvm::FoldingSetNodeID& ID, const GRState* V) {
+    // FIXME: Do we need to include the AnalysisContext in the profile?
     V->Env.Profile(ID);
     ID.AddPointer(V->St);
     V->GDM.Profile(ID);
@@ -147,16 +165,7 @@ public:
   /// makeWithStore - Return a GRState with the same values as the current
   /// state with the exception of using the specified Store.
   const GRState *makeWithStore(Store store) const;
-  
-  // Iterators.
-  typedef Environment::seb_iterator seb_iterator;
-  seb_iterator seb_begin() const { return Env.seb_begin(); }
-  seb_iterator seb_end() const { return Env.beb_end(); }
-  
-  typedef Environment::beb_iterator beb_iterator;
-  beb_iterator beb_begin() const { return Env.beb_begin(); }
-  beb_iterator beb_end() const { return Env.beb_end(); }
-  
+    
   BasicValueFactory &getBasicVals() const;
   SymbolManager &getSymbolManager() const;
   GRTransferFuncs &getTransferFuncs() const;
@@ -216,16 +225,8 @@ public:
   const GRState* bindCompoundLiteral(const CompoundLiteralExpr* CL,
                                      SVal V) const;
   
-  const GRState *bindExpr(const Stmt* Ex, SVal V, bool isBlkExpr,
-                          bool Invalidate) const;
-  
-  const GRState *bindExpr(const Stmt* Ex, SVal V, CFG &cfg, 
-                          bool Invalidate = true) const;
-  
-  const GRState *bindBlkExpr(const Stmt *Ex, SVal V) const {
-    return bindExpr(Ex, V, true, false);
-  }
-  
+  const GRState *bindExpr(const Stmt *S, SVal V, bool Invalidate = true) const;
+    
   const GRState *bindDecl(const VarDecl *VD, const LocationContext *LC,
                           SVal V) const;
   
@@ -258,8 +259,6 @@ public:
   const llvm::APSInt *getSymVal(SymbolRef sym) const;
 
   SVal getSVal(const Stmt* Ex) const;
-  
-  SVal getBlkExprSVal(const Stmt* Ex) const;
   
   SVal getSValAsScalarOrLoc(const Stmt *Ex) const;
   
@@ -475,12 +474,6 @@ public:
   const GRState* RemoveDeadBindings(const GRState* St, Stmt* Loc, 
                                     SymbolReaper& SymReaper);
 
-  const GRState* RemoveSubExprBindings(const GRState* St) {
-    GRState NewSt = *St;
-    NewSt.Env = EnvMgr.RemoveSubExprBindings(NewSt.Env);
-    return getPersistentState(NewSt);
-  }
-  
 public:
 
   SVal ArrayToPointer(Loc Array) {
@@ -583,36 +576,36 @@ public:
 
 inline const VarRegion* GRState::getRegion(const VarDecl *D,
                                            const LocationContext *LC) const {
-  return Mgr->getRegionManager().getVarRegion(D, LC);
+  return getStateManager().getRegionManager().getVarRegion(D, LC);
 }
 
 inline const GRState *GRState::assume(SVal Cond, bool Assumption) const {
-  return Mgr->ConstraintMgr->Assume(this, Cond, Assumption);
+  return getStateManager().ConstraintMgr->Assume(this, Cond, Assumption);
 }
 
 inline const GRState *GRState::assumeInBound(SVal Idx, SVal UpperBound,
                                              bool Assumption) const {
-  return Mgr->ConstraintMgr->AssumeInBound(this, Idx, UpperBound, Assumption);
+  return getStateManager().ConstraintMgr->AssumeInBound(this, Idx, UpperBound, Assumption);
 } 
 
 inline const GRState *GRState::bindCompoundLiteral(const CompoundLiteralExpr* CL,
                                             SVal V) const {
-  return Mgr->StoreMgr->BindCompoundLiteral(this, CL, V);
+  return getStateManager().StoreMgr->BindCompoundLiteral(this, CL, V);
 }
   
 inline const GRState *GRState::bindDecl(const VarDecl* VD,
                                         const LocationContext *LC,
                                         SVal IVal) const {
-  return Mgr->StoreMgr->BindDecl(this, VD, LC, IVal);
+  return getStateManager().StoreMgr->BindDecl(this, VD, LC, IVal);
 }
 
 inline const GRState *GRState::bindDeclWithNoInit(const VarDecl* VD,
                                                   const LocationContext *LC) const {
-  return Mgr->StoreMgr->BindDeclWithNoInit(this, VD, LC);
+  return getStateManager().StoreMgr->BindDeclWithNoInit(this, VD, LC);
 }
   
 inline const GRState *GRState::bindLoc(Loc LV, SVal V) const {
-  return Mgr->StoreMgr->Bind(this, LV, V);
+  return getStateManager().StoreMgr->Bind(this, LV, V);
 }
 
 inline const GRState *GRState::bindLoc(SVal LV, SVal V) const {
@@ -621,39 +614,35 @@ inline const GRState *GRState::bindLoc(SVal LV, SVal V) const {
   
 inline SVal GRState::getLValue(const VarDecl* VD,
                                const LocationContext *LC) const {
-  return Mgr->StoreMgr->getLValueVar(this, VD, LC);
+  return getStateManager().StoreMgr->getLValueVar(this, VD, LC);
 }
 
 inline SVal GRState::getLValue(const StringLiteral *literal) const {
-  return Mgr->StoreMgr->getLValueString(this, literal);
+  return getStateManager().StoreMgr->getLValueString(this, literal);
 }
   
 inline SVal GRState::getLValue(const CompoundLiteralExpr *literal) const {
-  return Mgr->StoreMgr->getLValueCompoundLiteral(this, literal);
+  return getStateManager().StoreMgr->getLValueCompoundLiteral(this, literal);
 }
 
 inline SVal GRState::getLValue(const ObjCIvarDecl *D, SVal Base) const {
-  return Mgr->StoreMgr->getLValueIvar(this, D, Base);
+  return getStateManager().StoreMgr->getLValueIvar(this, D, Base);
 }
   
 inline SVal GRState::getLValue(SVal Base, const FieldDecl* D) const {
-  return Mgr->StoreMgr->getLValueField(this, Base, D);
+  return getStateManager().StoreMgr->getLValueField(this, Base, D);
 }
   
 inline SVal GRState::getLValue(QualType ElementType, SVal Base, SVal Idx) const{
-  return Mgr->StoreMgr->getLValueElement(this, ElementType, Base, Idx);
+  return getStateManager().StoreMgr->getLValueElement(this, ElementType, Base, Idx);
 }
   
 inline const llvm::APSInt *GRState::getSymVal(SymbolRef sym) const {
-  return Mgr->getSymVal(this, sym);
+  return getStateManager().getSymVal(this, sym);
 }
   
 inline SVal GRState::getSVal(const Stmt* Ex) const {
-  return Env.GetSVal(Ex, Mgr->ValueMgr);
-}
-
-inline SVal GRState::getBlkExprSVal(const Stmt* Ex) const {  
-  return Env.GetBlkExprSVal(Ex, Mgr->ValueMgr);
+  return Env.GetSVal(Ex, getStateManager().ValueMgr);
 }
 
 inline SVal GRState::getSValAsScalarOrLoc(const Stmt *S) const {
@@ -667,62 +656,62 @@ inline SVal GRState::getSValAsScalarOrLoc(const Stmt *S) const {
 }
 
 inline SVal GRState::getSVal(Loc LV, QualType T) const {
-  return Mgr->StoreMgr->Retrieve(this, LV, T).getSVal();
+  return getStateManager().StoreMgr->Retrieve(this, LV, T).getSVal();
 }
 
 inline SVal GRState::getSVal(const MemRegion* R) const {
-  return Mgr->StoreMgr->Retrieve(this, loc::MemRegionVal(R)).getSVal();
+  return getStateManager().StoreMgr->Retrieve(this, loc::MemRegionVal(R)).getSVal();
 }
   
 inline BasicValueFactory &GRState::getBasicVals() const {
-  return Mgr->getBasicVals();
+  return getStateManager().getBasicVals();
 }
 
 inline SymbolManager &GRState::getSymbolManager() const {
-  return Mgr->getSymbolManager();
+  return getStateManager().getSymbolManager();
 }
   
 inline GRTransferFuncs &GRState::getTransferFuncs() const {
-  return Mgr->getTransferFuncs();
+  return getStateManager().getTransferFuncs();
 }
 
 template<typename T>
 const GRState *GRState::add(typename GRStateTrait<T>::key_type K) const {
-  return Mgr->add<T>(this, K, get_context<T>());
+  return getStateManager().add<T>(this, K, get_context<T>());
 }
   
 template <typename T>
 typename GRStateTrait<T>::context_type GRState::get_context() const {
-  return Mgr->get_context<T>();
+  return getStateManager().get_context<T>();
 }
   
 template<typename T>
 const GRState *GRState::remove(typename GRStateTrait<T>::key_type K) const {
-  return Mgr->remove<T>(this, K, get_context<T>());
+  return getStateManager().remove<T>(this, K, get_context<T>());
 }
 
 template<typename T>
 const GRState *GRState::remove(typename GRStateTrait<T>::key_type K,
                                typename GRStateTrait<T>::context_type C) const {
-  return Mgr->remove<T>(this, K, C);
+  return getStateManager().remove<T>(this, K, C);
 }
   
 template<typename T>
 const GRState *GRState::set(typename GRStateTrait<T>::data_type D) const {
-  return Mgr->set<T>(this, D);
+  return getStateManager().set<T>(this, D);
 }
   
 template<typename T>
 const GRState *GRState::set(typename GRStateTrait<T>::key_type K,
                             typename GRStateTrait<T>::value_type E) const {
-  return Mgr->set<T>(this, K, E, get_context<T>());
+  return getStateManager().set<T>(this, K, E, get_context<T>());
 }
   
 template<typename T>
 const GRState *GRState::set(typename GRStateTrait<T>::key_type K,
                             typename GRStateTrait<T>::value_type E,
                             typename GRStateTrait<T>::context_type C) const {
-  return Mgr->set<T>(this, K, E, C);
+  return getStateManager().set<T>(this, K, E, C);
 }
   
 template <typename CB>
