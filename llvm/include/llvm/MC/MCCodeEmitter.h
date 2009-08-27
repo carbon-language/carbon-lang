@@ -11,6 +11,8 @@
 #define LLVM_MC_MCCODEEMITTER_H
 
 namespace llvm {
+class MCInst;
+class raw_ostream;
 
 /// MCCodeEmitter - Generic instruction encoding interface.
 class MCCodeEmitter {
