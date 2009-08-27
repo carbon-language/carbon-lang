@@ -33,6 +33,7 @@ using namespace llvm;
 
 STATISTIC(NumInlined, "Number of functions inlined");
 STATISTIC(NumDeleted, "Number of functions deleted because all callers found");
+STATISTIC(NumMergedAllocas, "Number of allocas merged together");
 
 static cl::opt<int>
 InlineLimit("inline-threshold", cl::Hidden, cl::init(200), cl::ZeroOrMore,
@@ -51,15 +52,25 @@ void Inliner::getAnalysisUsage(AnalysisUsage &Info) const {
   CallGraphSCCPass::getAnalysisUsage(Info);
 }
 
-// InlineCallIfPossible - If it is possible to inline the specified call site,
-// do so and update the CallGraph for this operation.
-bool Inliner::InlineCallIfPossible(CallSite CS, CallGraph &CG,
-                                 const SmallPtrSet<Function*, 8> &SCCFunctions,
-                                 const TargetData *TD) {
+
+typedef DenseMap<const ArrayType*, std::vector<AllocaInst*> >
+InlinedArrayAllocasTy;
+
+/// InlineCallIfPossible - If it is possible to inline the specified call site,
+/// do so and update the CallGraph for this operation.
+///
+/// This function also does some basic book-keeping to update the IR.  The
+/// InlinedArrayAllocas map keeps track of any 
+static bool InlineCallIfPossible(CallSite CS, CallGraph &CG,
+                                 const TargetData *TD,
+                                 InlinedArrayAllocasTy &InlinedArrayAllocas) {
   Function *Callee = CS.getCalledFunction();
   Function *Caller = CS.getCaller();
 
-  if (!InlineFunction(CS, &CG, TD))
+  // Try to inline the function.  Get the list of static allocas that were
+  // inlined.
+  SmallVector<AllocaInst*, 16> StaticAllocas;
+  if (!InlineFunction(CS, &CG, TD, &StaticAllocas))
     return false;
 
   // If the inlined function had a higher stack protection level than the
@@ -70,24 +81,89 @@ bool Inliner::InlineCallIfPossible(CallSite CS, CallGraph &CG,
            !Caller->hasFnAttr(Attribute::StackProtectReq))
     Caller->addFnAttr(Attribute::StackProtect);
 
-  // If we inlined the last possible call site to the function, delete the
-  // function body now.
-  if (Callee->use_empty() && 
-      (Callee->hasLocalLinkage() || Callee->hasAvailableExternallyLinkage()) &&
-      !SCCFunctions.count(Callee)) {
-    DEBUG(errs() << "    -> Deleting dead function: " 
-          << Callee->getName() << "\n");
-    CallGraphNode *CalleeNode = CG[Callee];
+  
+  // Look at all of the allocas that we inlined through this call site.  If we
+  // have already inlined other allocas through other calls into this function,
+  // then we know that they have disjoint lifetimes and that we can merge them.
+  //
+  // There are many heuristics possible for merging these allocas, and the
+  // different options have different tradeoffs.  One thing that we *really*
+  // don't want to hurt is SRoA: once inlining happens, often allocas are no
+  // longer address taken and so they can be promoted.
+  //
+  // Our "solution" for that is to only merge allocas whose outermost type is an
+  // array type.  These are usually not promoted because someone is using a
+  // variable index into them.  These are also often the most important ones to
+  // merge.
+  //
+  // A better solution would be to have real memory lifetime markers in the IR
+  // and not have the inliner do any merging of allocas at all.  This would
+  // allow the backend to do proper stack slot coloring of all allocas that
+  // *actually make it to the backend*, which is really what we want.
+  //
+  // Because we don't have this information, we do this simple and useful hack.
+  //
+  SmallPtrSet<AllocaInst*, 16> UsedAllocas;
+  
+  // Loop over all the allocas we have so far and see if they can be merged with
+  // a previously inlined alloca.  If not, remember that we had it.
+  for (unsigned AllocaNo = 0, e = StaticAllocas.size();
+       AllocaNo != e; ++AllocaNo) {
+    AllocaInst *AI = StaticAllocas[AllocaNo];
+    
+    // Don't bother trying to merge array allocations (they will usually be
+    // canonicalized to be an allocation *of* an array), or allocations whose
+    // type is not itself an array (because we're afraid of pessimizing SRoA).
+    const ArrayType *ATy = dyn_cast<ArrayType>(AI->getAllocatedType());
+    if (ATy == 0 || AI->isArrayAllocation())
+      continue;
+    
+    // Get the list of all available allocas for this array type.
+    std::vector<AllocaInst*> &AllocasForType = InlinedArrayAllocas[ATy];
+    
+    // Loop over the allocas in AllocasForType to see if we can reuse one.  Note
+    // that we have to be careful not to reuse the same "available" alloca for
+    // multiple different allocas that we just inlined, we use the 'UsedAllocas'
+    // set to keep track of which "available" allocas are being used by this
+    // function.  Also, AllocasForType can be empty of course!
+    bool MergedAwayAlloca = false;
+    for (unsigned i = 0, e = AllocasForType.size(); i != e; ++i) {
+      AllocaInst *AvailableAlloca = AllocasForType[i];
+      
+      // The available alloca has to be in the right function, not in some other
+      // function in this SCC.
+      if (AvailableAlloca->getParent() != AI->getParent())
+        continue;
+      
+      // If the inlined function already uses this alloca then we can't reuse
+      // it.
+      if (!UsedAllocas.insert(AvailableAlloca))
+        continue;
+      
+      // Otherwise, we *can* reuse it, RAUW AI into AvailableAlloca and declare
+      // success!
+      DEBUG(errs() << "    ***MERGED ALLOCA: " << *AI);
+      
+      AI->replaceAllUsesWith(AvailableAlloca);
+      AI->eraseFromParent();
+      MergedAwayAlloca = true;
+      ++NumMergedAllocas;
+      break;
+    }
 
-    // Remove any call graph edges from the callee to its callees.
-    CalleeNode->removeAllCalledFunctions();
+    // If we already nuked the alloca, we're done with it.
+    if (MergedAwayAlloca)
+      continue;
 
-    resetCachedCostInfo(CalleeNode->getFunction());
-
-    // Removing the node for callee from the call graph and delete it.
-    delete CG.removeFunctionFromModule(CalleeNode);
-    ++NumDeleted;
+    // If we were unable to merge away the alloca either because there are no
+    // allocas of the right type available or because we reused them all
+    // already, remember that this alloca came from an inlined function and mark
+    // it used so we don't reuse it for other allocas from this inline
+    // operation.
+    AllocasForType.push_back(AI);
+    UsedAllocas.insert(AI);
   }
+  
   return true;
 }
         
@@ -143,7 +219,7 @@ bool Inliner::runOnSCC(const std::vector<CallGraphNode*> &SCC) {
   // Scan through and identify all call sites ahead of time so that we only
   // inline call sites in the original functions, not call sites that result
   // from inlining other functions.
-  std::vector<CallSite> CallSites;
+  SmallVector<CallSite, 16> CallSites;
 
   for (unsigned i = 0, e = SCC.size(); i != e; ++i) {
     Function *F = SCC[i]->getFunction();
@@ -171,6 +247,9 @@ bool Inliner::runOnSCC(const std::vector<CallGraphNode*> &SCC) {
       if (SCCFunctions.count(F))
         std::swap(CallSites[i--], CallSites[--FirstCallInSCC]);
 
+  
+  InlinedArrayAllocasTy InlinedArrayAllocas;
+  
   // Now that we have all of the call sites, loop over them and inline them if
   // it looks profitable to do so.
   bool Changed = false;
@@ -181,7 +260,9 @@ bool Inliner::runOnSCC(const std::vector<CallGraphNode*> &SCC) {
     // calls to become direct calls.
     for (unsigned CSi = 0; CSi != CallSites.size(); ++CSi) {
       // We can only inline direct calls.
-      Function *Callee = CallSites[CSi].getCalledFunction();
+      CallSite CS = CallSites[CSi];
+      
+      Function *Callee = CS.getCalledFunction();
       if (!Callee) continue;
       
       // Calls to external functions are never inlinable.
@@ -199,14 +280,33 @@ bool Inliner::runOnSCC(const std::vector<CallGraphNode*> &SCC) {
 
       // If the policy determines that we should inline this function,
       // try to do so.
-      CallSite CS = CallSites[CSi];
       if (!shouldInline(CS))
         continue;
       
       Function *Caller = CS.getCaller();
       // Attempt to inline the function...
-      if (!InlineCallIfPossible(CS, CG, SCCFunctions, TD))
+      if (!InlineCallIfPossible(CS, CG, TD, InlinedArrayAllocas))
         continue;
+      
+      // If we inlined the last possible call site to the function, delete the
+      // function body now.
+      if (Callee->use_empty() && 
+          (Callee->hasLocalLinkage() ||
+           Callee->hasAvailableExternallyLinkage()) &&
+          !SCCFunctions.count(Callee)) {
+        DEBUG(errs() << "    -> Deleting dead function: "
+              << Callee->getName() << "\n");
+        CallGraphNode *CalleeNode = CG[Callee];
+        
+        // Remove any call graph edges from the callee to its callees.
+        CalleeNode->removeAllCalledFunctions();
+        
+        resetCachedCostInfo(Callee);
+        
+        // Removing the node for callee from the call graph and delete it.
+        delete CG.removeFunctionFromModule(CalleeNode);
+        ++NumDeleted;
+      }
       
       // Remove any cached cost info for this caller, as inlining the
       // callee has increased the size of the caller (which may be the

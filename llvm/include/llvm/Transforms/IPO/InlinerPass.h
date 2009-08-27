@@ -79,10 +79,6 @@ private:
   /// shouldInline - Return true if the inliner should attempt to
   /// inline at the given CallSite.
   bool shouldInline(CallSite CS);
-  
-  bool InlineCallIfPossible(CallSite CS, CallGraph &CG,
-                            const SmallPtrSet<Function*, 8> &SCCFunctions,
-                            const TargetData *TD);
 };
 
 } // End llvm namespace
