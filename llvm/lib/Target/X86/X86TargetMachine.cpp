@@ -47,6 +47,10 @@ extern "C" void LLVMInitializeX86Target() {
   // Register the target asm info.
   RegisterAsmInfoFn A(TheX86_32Target, createMCAsmInfo);
   RegisterAsmInfoFn B(TheX86_64Target, createMCAsmInfo);
+
+  // Register the code emitter.
+  TargetRegistry::RegisterCodeEmitter(TheX86_32Target, createX86MCCodeEmitter);
+  TargetRegistry::RegisterCodeEmitter(TheX86_64Target, createX86MCCodeEmitter);
 }
 
 
