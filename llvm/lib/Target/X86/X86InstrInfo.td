@@ -3256,7 +3256,7 @@ def DWARF_LOC   : I<0, Pseudo, (outs),
 // EH Pseudo Instructions
 //
 let isTerminator = 1, isReturn = 1, isBarrier = 1,
-    hasCtrlDep = 1 in {
+    hasCtrlDep = 1, isCodeGenOnly = 1 in {
 def EH_RETURN   : I<0xC3, RawFrm, (outs), (ins GR32:$addr),
                     "ret\t#eh_return, addr: $addr",
                     [(X86ehret GR32:$addr)]>;
