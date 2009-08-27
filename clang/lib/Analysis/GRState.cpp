@@ -85,7 +85,7 @@ SVal GRState::getSValAsScalarOrLoc(const MemRegion *R) const {
 }
 
 
-const GRState *GRState::bindExpr(const Stmt* Ex, SVal V, bool Invalidate) const{
+const GRState *GRState::BindExpr(const Stmt* Ex, SVal V, bool Invalidate) const{
   Environment NewEnv = getStateManager().EnvMgr.BindExpr(Env, Ex, V,
                                                          Invalidate);  
   if (NewEnv == Env)

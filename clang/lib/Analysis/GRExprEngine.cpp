@@ -341,7 +341,7 @@ void GRExprEngine::Visit(Stmt* S, ExplodedNode* Pred, ExplodedNodeSet& Dst) {
       }
       else if (B->getOpcode() == BinaryOperator::Comma) {
         const GRState* state = GetState(Pred);
-        MakeNode(Dst, B, Pred, state->bindExpr(B, state->getSVal(B->getRHS())));
+        MakeNode(Dst, B, Pred, state->BindExpr(B, state->getSVal(B->getRHS())));
         break;
       }
 
@@ -458,7 +458,7 @@ void GRExprEngine::Visit(Stmt* S, ExplodedNode* Pred, ExplodedNodeSet& Dst) {
                
       if (Expr* LastExpr = dyn_cast<Expr>(*SE->getSubStmt()->body_rbegin())) {
         const GRState* state = GetState(Pred);
-        MakeNode(Dst, SE, Pred, state->bindExpr(SE, state->getSVal(LastExpr)));
+        MakeNode(Dst, SE, Pred, state->BindExpr(SE, state->getSVal(LastExpr)));
       }
       else
         Dst.Add(Pred);
@@ -541,7 +541,7 @@ void GRExprEngine::VisitLValue(Expr* Ex, ExplodedNode* Pred,
     case Stmt::StringLiteralClass: {
       const GRState* state = GetState(Pred);
       SVal V = state->getLValue(cast<StringLiteral>(Ex));
-      MakeNode(Dst, Ex, Pred, state->bindExpr(Ex, V));
+      MakeNode(Dst, Ex, Pred, state->BindExpr(Ex, V));
       return;
     }
       
@@ -610,7 +610,7 @@ const GRState* GRExprEngine::MarkBranch(const GRState* state,
                  (Op == BinaryOperator::LOr && !branchTaken)  
                ? B->getRHS() : B->getLHS();
         
-      return state->bindExpr(B, UndefinedVal(Ex));
+      return state->BindExpr(B, UndefinedVal(Ex));
     }
       
     case Stmt::ConditionalOperatorClass: { // ?:
@@ -627,7 +627,7 @@ const GRState* GRExprEngine::MarkBranch(const GRState* state,
       else
         Ex = C->getRHS();
       
-      return state->bindExpr(C, UndefinedVal(Ex));
+      return state->BindExpr(C, UndefinedVal(Ex));
     }
       
     case Stmt::ChooseExprClass: { // ?:
@@ -635,7 +635,7 @@ const GRState* GRExprEngine::MarkBranch(const GRState* state,
       ChooseExpr* C = cast<ChooseExpr>(Terminator);
       
       Expr* Ex = branchTaken ? C->getLHS() : C->getRHS();      
-      return state->bindExpr(C, UndefinedVal(Ex));
+      return state->BindExpr(C, UndefinedVal(Ex));
     }
   }
 }
@@ -812,7 +812,7 @@ void GRExprEngine::VisitGuardedExpr(Expr* Ex, Expr* L, Expr* R,
   X = state->getSVal(SE);
   
   // Make sure that we invalidate the previous binding.
-  MakeNode(Dst, Ex, Pred, state->bindExpr(Ex, X, true));
+  MakeNode(Dst, Ex, Pred, state->BindExpr(Ex, X, true));
 }
 
 /// ProcessSwitch - Called by GRCoreEngine.  Used to generate successor
@@ -927,7 +927,7 @@ void GRExprEngine::VisitLogicalExpr(BinaryOperator* B, ExplodedNode* Pred,
     // Handle undefined values.
     
     if (X.isUndef()) {
-      MakeNode(Dst, B, Pred, state->bindExpr(B, X));
+      MakeNode(Dst, B, Pred, state->BindExpr(B, X));
       return;
     }
     
@@ -939,11 +939,11 @@ void GRExprEngine::VisitLogicalExpr(BinaryOperator* B, ExplodedNode* Pred,
     // the payoff is not likely to be large.  Instead, we do eager evaluation.        
     if (const GRState *newState = state->assume(X, true))
       MakeNode(Dst, B, Pred, 
-               newState->bindExpr(B, ValMgr.makeIntVal(1U, B->getType())));
+               newState->BindExpr(B, ValMgr.makeIntVal(1U, B->getType())));
       
     if (const GRState *newState = state->assume(X, false))
       MakeNode(Dst, B, Pred, 
-               newState->bindExpr(B, ValMgr.makeIntVal(0U, B->getType())));
+               newState->BindExpr(B, ValMgr.makeIntVal(0U, B->getType())));
   }
   else {
     // We took the LHS expression.  Depending on whether we are '&&' or
@@ -951,7 +951,7 @@ void GRExprEngine::VisitLogicalExpr(BinaryOperator* B, ExplodedNode* Pred,
     // the short-circuiting.
     X = ValMgr.makeIntVal(B->getOpcode() == BinaryOperator::LAnd ? 0U : 1U, 
                           B->getType());
-    MakeNode(Dst, B, Pred, state->bindExpr(B, X));
+    MakeNode(Dst, B, Pred, state->BindExpr(B, X));
   }
 }
  
@@ -971,7 +971,7 @@ void GRExprEngine::VisitDeclRefExpr(DeclRefExpr *Ex, ExplodedNode *Pred,
     SVal V = state->getLValue(VD, Pred->getLocationContext());
 
     if (asLValue)
-      MakeNode(Dst, Ex, Pred, state->bindExpr(Ex, V),
+      MakeNode(Dst, Ex, Pred, state->BindExpr(Ex, V),
                ProgramPoint::PostLValueKind);
     else
       EvalLoad(Dst, Ex, Pred, state, V);
@@ -981,13 +981,13 @@ void GRExprEngine::VisitDeclRefExpr(DeclRefExpr *Ex, ExplodedNode *Pred,
     assert(!asLValue && "EnumConstantDecl does not have lvalue.");
 
     SVal V = ValMgr.makeIntVal(ED->getInitVal());
-    MakeNode(Dst, Ex, Pred, state->bindExpr(Ex, V));
+    MakeNode(Dst, Ex, Pred, state->BindExpr(Ex, V));
     return;
 
   } else if (const FunctionDecl* FD = dyn_cast<FunctionDecl>(D)) {
     assert(asLValue);
     SVal V = ValMgr.getFunctionPointer(FD);
-    MakeNode(Dst, Ex, Pred, state->bindExpr(Ex, V),
+    MakeNode(Dst, Ex, Pred, state->BindExpr(Ex, V),
              ProgramPoint::PostLValueKind);
     return;
   }
@@ -1025,7 +1025,7 @@ void GRExprEngine::VisitArraySubscriptExpr(ArraySubscriptExpr* A,
                                 state->getSVal(Idx));
 
       if (asLValue)
-        MakeNode(Dst, A, *I2, state->bindExpr(A, V),
+        MakeNode(Dst, A, *I2, state->BindExpr(A, V),
                  ProgramPoint::PostLValueKind);
       else
         EvalLoad(Dst, A, *I2, state, V);
@@ -1057,7 +1057,7 @@ void GRExprEngine::VisitMemberExpr(MemberExpr* M, ExplodedNode* Pred,
     SVal L = state->getLValue(state->getSVal(Base), Field);
 
     if (asLValue)
-      MakeNode(Dst, M, *I, state->bindExpr(M, L),
+      MakeNode(Dst, M, *I, state->BindExpr(M, L),
                ProgramPoint::PostLValueKind);
     else
       EvalLoad(Dst, M, *I, state, L);
@@ -1141,7 +1141,7 @@ void GRExprEngine::EvalLoad(ExplodedNodeSet& Dst, Expr* Ex, ExplodedNode* Pred,
 
   if (location.isUnknown()) {
     // This is important.  We must nuke the old binding.
-    MakeNode(Dst, Ex, Pred, state->bindExpr(Ex, UnknownVal()),
+    MakeNode(Dst, Ex, Pred, state->BindExpr(Ex, UnknownVal()),
              K, tag);
   }
   else {
@@ -1159,7 +1159,7 @@ void GRExprEngine::EvalLoad(ExplodedNodeSet& Dst, Expr* Ex, ExplodedNode* Pred,
     //  V = EvalCast(V, Ex->getType());
     //}
     
-    MakeNode(Dst, Ex, Pred, state->bindExpr(Ex, V), K, tag);
+    MakeNode(Dst, Ex, Pred, state->BindExpr(Ex, V), K, tag);
   }
 }
 
@@ -1382,14 +1382,14 @@ static bool EvalOSAtomicCompareAndSwap(ExplodedNodeSet& Dst,
         ExplodedNode *predNew = *I2;
         const GRState *stateNew = predNew->getState();
         SVal Res = Engine.getValueManager().makeTruthVal(true, CE->getType());
-        Engine.MakeNode(Dst, CE, predNew, stateNew->bindExpr(CE, Res));
+        Engine.MakeNode(Dst, CE, predNew, stateNew->BindExpr(CE, Res));
       }
     }
     
     // Were they not equal?
     if (const GRState *stateNotEqual = stateLoad->assume(Cmp, false)) {
       SVal Res = Engine.getValueManager().makeTruthVal(false, CE->getType());
-      Engine.MakeNode(Dst, CE, N, stateNotEqual->bindExpr(CE, Res));
+      Engine.MakeNode(Dst, CE, N, stateNotEqual->BindExpr(CE, Res));
     }
   }
       
@@ -1604,7 +1604,7 @@ void GRExprEngine::VisitCallRec(CallExpr* CE, ExplodedNode* Pred,
             // For __builtin_expect, just return the value of the subexpression.
             assert (CE->arg_begin() != CE->arg_end());            
             SVal X = state->getSVal(*(CE->arg_begin()));
-            MakeNode(Dst, CE, *DI, state->bindExpr(CE, X));
+            MakeNode(Dst, CE, *DI, state->BindExpr(CE, X));
             continue;            
           }
             
@@ -1619,7 +1619,7 @@ void GRExprEngine::VisitCallRec(CallExpr* CE, ExplodedNode* Pred,
             // cannot represent values like symbol*8.
             SVal Extent = state->getSVal(*(CE->arg_begin()));
             state = getStoreManager().setExtent(state, R, Extent);
-            MakeNode(Dst, CE, *DI, state->bindExpr(CE, loc::MemRegionVal(R)));
+            MakeNode(Dst, CE, *DI, state->BindExpr(CE, loc::MemRegionVal(R)));
             continue;            
           }
             
@@ -1691,7 +1691,7 @@ void GRExprEngine::EvalEagerlyAssume(ExplodedNodeSet &Dst, ExplodedNodeSet &Src,
     if (isa<nonloc::SymExprVal>(V)) {
       // First assume that the condition is true.
       if (const GRState *stateTrue = state->assume(V, true)) {
-        stateTrue = stateTrue->bindExpr(Ex, 
+        stateTrue = stateTrue->BindExpr(Ex, 
                                         ValMgr.makeIntVal(1U, Ex->getType()));
         Dst.Add(Builder->generateNode(PostStmtCustom(Ex, 
                                 &EagerlyAssumeTag, Pred->getLocationContext()),
@@ -1700,7 +1700,7 @@ void GRExprEngine::EvalEagerlyAssume(ExplodedNodeSet &Dst, ExplodedNodeSet &Src,
         
       // Next, assume that the condition is false.
       if (const GRState *stateFalse = state->assume(V, false)) {
-        stateFalse = stateFalse->bindExpr(Ex, 
+        stateFalse = stateFalse->BindExpr(Ex, 
                                           ValMgr.makeIntVal(0U, Ex->getType()));
         Dst.Add(Builder->generateNode(PostStmtCustom(Ex, &EagerlyAssumeTag,
                                                    Pred->getLocationContext()),
@@ -1730,7 +1730,7 @@ void GRExprEngine::VisitObjCIvarRefExpr(ObjCIvarRefExpr* Ex,
     SVal location = state->getLValue(Ex->getDecl(), BaseVal);
     
     if (asLValue)
-      MakeNode(Dst, Ex, *I, state->bindExpr(Ex, location));
+      MakeNode(Dst, Ex, *I, state->BindExpr(Ex, location));
     else
       EvalLoad(Dst, Ex, *I, state, location);
   }
@@ -1806,11 +1806,11 @@ void GRExprEngine::VisitObjCForCollectionStmtAux(ObjCForCollectionStmt* S,
 
   // Handle the case where the container still has elements.
   SVal TrueV = ValMgr.makeTruthVal(1);
-  const GRState *hasElems = state->bindExpr(S, TrueV);
+  const GRState *hasElems = state->BindExpr(S, TrueV);
   
   // Handle the case where the container has no elements.
   SVal FalseV = ValMgr.makeTruthVal(0);
-  const GRState *noElems = state->bindExpr(S, FalseV);
+  const GRState *noElems = state->BindExpr(S, FalseV);
   
   if (loc::MemRegionVal* MV = dyn_cast<loc::MemRegionVal>(&ElementV))
     if (const TypedRegion* R = dyn_cast<TypedRegion>(MV->getRegion())) {
@@ -1962,7 +1962,7 @@ void GRExprEngine::VisitObjCMessageExprDispatchHelper(ObjCMessageExpr* ME,
               // of this case unless we have *a lot* more knowledge.
               //
               SVal V = ValMgr.makeZeroVal(ME->getType());
-              MakeNode(Dst, ME, Pred, StNull->bindExpr(ME, V));
+              MakeNode(Dst, ME, Pred, StNull->BindExpr(ME, V));
               return;
             }
           }
@@ -2099,7 +2099,7 @@ void GRExprEngine::VisitCast(Expr* CastE, Expr* Ex, ExplodedNode* Pred, Exploded
     const GRState* state = GetState(N);
     SVal V = state->getSVal(Ex);
     const SValuator::CastResult &Res = SVator.EvalCast(V, state, T, ExTy);
-    state = Res.getState()->bindExpr(CastE, Res.getSVal());
+    state = Res.getState()->BindExpr(CastE, Res.getSVal());
     MakeNode(Dst, CastE, N, state);
   }
 }
@@ -2118,9 +2118,9 @@ void GRExprEngine::VisitCompoundLiteralExpr(CompoundLiteralExpr* CL,
     state = state->bindCompoundLiteral(CL, ILV);
 
     if (asLValue)
-      MakeNode(Dst, CL, *I, state->bindExpr(CL, state->getLValue(CL)));
+      MakeNode(Dst, CL, *I, state->BindExpr(CL, state->getLValue(CL)));
     else
-      MakeNode(Dst, CL, *I, state->bindExpr(CL, ILV));
+      MakeNode(Dst, CL, *I, state->BindExpr(CL, ILV));
   }
 }
 
@@ -2244,7 +2244,7 @@ void GRExprEngine::VisitInitListExpr(InitListExpr* E, ExplodedNode* Pred,
     // e.g: static int* myArray[] = {};
     if (NumInitElements == 0) {
       SVal V = ValMgr.makeCompoundVal(T, StartVals);
-      MakeNode(Dst, E, Pred, state->bindExpr(E, V));
+      MakeNode(Dst, E, Pred, state->BindExpr(E, V));
       return;
     }      
     
@@ -2279,7 +2279,7 @@ void GRExprEngine::VisitInitListExpr(InitListExpr* E, ExplodedNode* Pred,
           SVal V = ValMgr.makeCompoundVal(T, NewVals);
 
           // Make final state and node.
-          MakeNode(Dst, E, *NI, state->bindExpr(E, V));
+          MakeNode(Dst, E, *NI, state->BindExpr(E, V));
         }
         else {
           // Still some initializer values to go.  Push them onto the worklist.
@@ -2298,7 +2298,7 @@ void GRExprEngine::VisitInitListExpr(InitListExpr* E, ExplodedNode* Pred,
     Visit(Init, Pred, Tmp);
     for (ExplodedNodeSet::iterator I = Tmp.begin(), EI = Tmp.end(); I != EI; ++I) {
       state = GetState(*I);
-      MakeNode(Dst, E, *I, state->bindExpr(E, state->getSVal(Init)));
+      MakeNode(Dst, E, *I, state->BindExpr(E, state->getSVal(Init)));
     }
     return;
   }
@@ -2339,7 +2339,7 @@ void GRExprEngine::VisitSizeOfAlignOfExpr(SizeOfAlignOfExpr* Ex,
     amt = getContext().getTypeAlign(T) / 8;
   
   MakeNode(Dst, Ex, Pred,
-           GetState(Pred)->bindExpr(Ex, ValMgr.makeIntVal(amt, Ex->getType())));
+           GetState(Pred)->BindExpr(Ex, ValMgr.makeIntVal(amt, Ex->getType())));
 }
 
 
@@ -2363,7 +2363,7 @@ void GRExprEngine::VisitUnaryOperator(UnaryOperator* U, ExplodedNode* Pred,
         SVal location = state->getSVal(Ex);
         
         if (asLValue)
-          MakeNode(Dst, U, *I, state->bindExpr(U, location),
+          MakeNode(Dst, U, *I, state->BindExpr(U, location),
                    ProgramPoint::PostLValueKind);
         else
           EvalLoad(Dst, U, *I, state, location);
@@ -2390,7 +2390,7 @@ void GRExprEngine::VisitUnaryOperator(UnaryOperator* U, ExplodedNode* Pred,
         // For all other types, UnaryOperator::Real is an identity operation.
         assert (U->getType() == Ex->getType());
         const GRState* state = GetState(*I);
-        MakeNode(Dst, U, *I, state->bindExpr(U, state->getSVal(Ex)));
+        MakeNode(Dst, U, *I, state->BindExpr(U, state->getSVal(Ex)));
       } 
       
       return;
@@ -2414,7 +2414,7 @@ void GRExprEngine::VisitUnaryOperator(UnaryOperator* U, ExplodedNode* Pred,
         assert (Ex->getType()->isIntegerType());
         const GRState* state = GetState(*I);
         SVal X = ValMgr.makeZeroVal(Ex->getType());
-        MakeNode(Dst, U, *I, state->bindExpr(U, X));
+        MakeNode(Dst, U, *I, state->BindExpr(U, X));
       }
       
       return;
@@ -2439,7 +2439,7 @@ void GRExprEngine::VisitUnaryOperator(UnaryOperator* U, ExplodedNode* Pred,
       
       for (ExplodedNodeSet::iterator I=Tmp.begin(), E=Tmp.end(); I!=E; ++I) {        
         const GRState* state = GetState(*I);
-        MakeNode(Dst, U, *I, state->bindExpr(U, state->getSVal(Ex)));
+        MakeNode(Dst, U, *I, state->BindExpr(U, state->getSVal(Ex)));
       }
       
       return;
@@ -2455,7 +2455,7 @@ void GRExprEngine::VisitUnaryOperator(UnaryOperator* U, ExplodedNode* Pred,
       for (ExplodedNodeSet::iterator I=Tmp.begin(), E=Tmp.end(); I!=E; ++I) {        
         const GRState* state = GetState(*I);
         SVal V = state->getSVal(Ex);
-        state = state->bindExpr(U, V);
+        state = state->BindExpr(U, V);
         MakeNode(Dst, U, *I, state);
       }
 
@@ -2478,7 +2478,7 @@ void GRExprEngine::VisitUnaryOperator(UnaryOperator* U, ExplodedNode* Pred,
         SVal V = state->getSVal(Ex);
 
         if (V.isUnknownOrUndef()) {
-          MakeNode(Dst, U, *I, state->bindExpr(U, V));
+          MakeNode(Dst, U, *I, state->BindExpr(U, V));
           continue;
         }
         
@@ -2500,12 +2500,12 @@ void GRExprEngine::VisitUnaryOperator(UnaryOperator* U, ExplodedNode* Pred,
             
           case UnaryOperator::Not:
             // FIXME: Do we need to handle promotions?
-            state = state->bindExpr(U, EvalComplement(cast<NonLoc>(V)));
+            state = state->BindExpr(U, EvalComplement(cast<NonLoc>(V)));
             break;            
             
           case UnaryOperator::Minus:
             // FIXME: Do we need to handle promotions?
-            state = state->bindExpr(U, EvalMinus(cast<NonLoc>(V)));
+            state = state->BindExpr(U, EvalMinus(cast<NonLoc>(V)));
             break;   
             
           case UnaryOperator::LNot:   
@@ -2527,7 +2527,7 @@ void GRExprEngine::VisitUnaryOperator(UnaryOperator* U, ExplodedNode* Pred,
                                  U->getType());
             }
             
-            state = state->bindExpr(U, Result);
+            state = state->BindExpr(U, Result);
             
             break;
         }
@@ -2562,7 +2562,7 @@ void GRExprEngine::VisitUnaryOperator(UnaryOperator* U, ExplodedNode* Pred,
         
       // Propagate unknown and undefined values.      
       if (V2.isUnknownOrUndef()) {
-        MakeNode(Dst, U, *I2, state->bindExpr(U, V2));
+        MakeNode(Dst, U, *I2, state->BindExpr(U, V2));
         continue;
       }
       
@@ -2608,7 +2608,7 @@ void GRExprEngine::VisitUnaryOperator(UnaryOperator* U, ExplodedNode* Pred,
         }        
       }
       
-      state = state->bindExpr(U, U->isPostfix() ? V2 : Result);
+      state = state->BindExpr(U, U->isPostfix() ? V2 : Result);
 
       // Perform the store.      
       EvalStore(Dst, U, *I2, state, V1, Result);
@@ -2832,7 +2832,7 @@ void GRExprEngine::VisitBinaryOperator(BinaryOperator* B,
           
           // Simulate the effects of a "store":  bind the value of the RHS
           // to the L-Value represented by the LHS.          
-          EvalStore(Dst, B, LHS, *I2, state->bindExpr(B, RightV), 
+          EvalStore(Dst, B, LHS, *I2, state->BindExpr(B, RightV), 
                     LeftV, RightV);
           continue;
         }
@@ -2885,7 +2885,7 @@ void GRExprEngine::VisitBinaryOperator(BinaryOperator* B,
           
           // Otherwise, create a new node.
           
-          MakeNode(Dst, B, *I2, state->bindExpr(B, Result));
+          MakeNode(Dst, B, *I2, state->BindExpr(B, Result));
           continue;
         }
       }
@@ -2933,14 +2933,14 @@ void GRExprEngine::VisitBinaryOperator(BinaryOperator* B,
         
         // Propagate undefined values (left-side).          
         if (V.isUndef()) {
-          EvalStore(Dst, B, LHS, *I3, state->bindExpr(B, V), 
+          EvalStore(Dst, B, LHS, *I3, state->BindExpr(B, V), 
                     location, V);
           continue;
         }
         
         // Propagate unknown values (left and right-side).
         if (RightV.isUnknown() || V.isUnknown()) {
-          EvalStore(Dst, B, LHS, *I3, state->bindExpr(B, UnknownVal()),
+          EvalStore(Dst, B, LHS, *I3, state->BindExpr(B, UnknownVal()),
                     location, UnknownVal());
           continue;
         }
@@ -2968,7 +2968,7 @@ void GRExprEngine::VisitBinaryOperator(BinaryOperator* B,
         // Evaluate operands and promote to result type.                    
         if (RightV.isUndef()) {            
           // Propagate undefined values (right-side).          
-          EvalStore(Dst, B, LHS, *I3, state->bindExpr(B, RightV), location,
+          EvalStore(Dst, B, LHS, *I3, state->BindExpr(B, RightV), location,
                     RightV);
           continue;
         }
@@ -3014,7 +3014,7 @@ void GRExprEngine::VisitBinaryOperator(BinaryOperator* B,
           llvm::tie(state, LHSVal) = SVator.EvalCast(Result, state, LTy, CTy);
         }
           
-        EvalStore(Dst, B, LHS, *I3, state->bindExpr(B, Result), 
+        EvalStore(Dst, B, LHS, *I3, state->BindExpr(B, Result), 
                   location, LHSVal);
       }
     }

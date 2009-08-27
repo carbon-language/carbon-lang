@@ -2900,7 +2900,7 @@ void CFRefCount::EvalSummary(ExplodedNodeSet& Dst,
         unsigned Count = Builder.getCurrentBlockCount();
         ValueManager &ValMgr = Eng.getValueManager();
         SVal X = ValMgr.getConjuredSymbolVal(Ex, T, Count);
-        state = state->bindExpr(Ex, X, false);
+        state = state->BindExpr(Ex, X, false);
       }      
       
       break;
@@ -2911,14 +2911,14 @@ void CFRefCount::EvalSummary(ExplodedNodeSet& Dst,
       assert (arg_end >= arg_beg);
       assert (idx < (unsigned) (arg_end - arg_beg));
       SVal V = state->getSValAsScalarOrLoc(*(arg_beg+idx));
-      state = state->bindExpr(Ex, V, false);
+      state = state->BindExpr(Ex, V, false);
       break;
     }
       
     case RetEffect::ReceiverAlias: {
       assert (Receiver);
       SVal V = state->getSValAsScalarOrLoc(Receiver);
-      state = state->bindExpr(Ex, V, false);
+      state = state->BindExpr(Ex, V, false);
       break;
     }
       
@@ -2930,7 +2930,7 @@ void CFRefCount::EvalSummary(ExplodedNodeSet& Dst,
       QualType RetT = GetReturnType(Ex, ValMgr.getContext());      
       state = state->set<RefBindings>(Sym, RefVal::makeOwned(RE.getObjKind(),
                                                             RetT));
-      state = state->bindExpr(Ex, ValMgr.makeLoc(Sym), false);
+      state = state->BindExpr(Ex, ValMgr.makeLoc(Sym), false);
 
       // FIXME: Add a flag to the checker where allocations are assumed to
       // *not fail.
@@ -2953,7 +2953,7 @@ void CFRefCount::EvalSummary(ExplodedNodeSet& Dst,
       QualType RetT = GetReturnType(Ex, ValMgr.getContext());      
       state = state->set<RefBindings>(Sym, RefVal::makeNotOwned(RE.getObjKind(),
                                                                RetT));
-      state = state->bindExpr(Ex, ValMgr.makeLoc(Sym), false);
+      state = state->BindExpr(Ex, ValMgr.makeLoc(Sym), false);
       break;
     }
   }

@@ -216,7 +216,7 @@ public:
   const GRState* bindCompoundLiteral(const CompoundLiteralExpr* CL,
                                      SVal V) const;
   
-  const GRState *bindExpr(const Stmt *S, SVal V, bool Invalidate = true) const;
+  const GRState *BindExpr(const Stmt *S, SVal V, bool Invalidate = true) const;
     
   const GRState *bindDecl(const VarDecl *VD, const LocationContext *LC,
                           SVal V) const;
