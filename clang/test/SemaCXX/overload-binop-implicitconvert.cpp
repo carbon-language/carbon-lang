@@ -1,4 +1,4 @@
-// RUN: clang-cc %s -emit-llvm
+// RUN: clang-cc %s -emit-llvm-only
 class T
 {};
 
