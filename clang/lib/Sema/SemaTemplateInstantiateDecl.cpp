@@ -265,6 +265,8 @@ Decl *TemplateDeclInstantiator::VisitFriendClassDecl(FriendClassDecl *D) {
   FriendClassDecl *NewD =
     FriendClassDecl::Create(SemaRef.Context, DC, D->getLocation(), T,
                             D->getFriendLoc());
+  NewD->setLexicalDeclContext(Owner);
+
   Owner->addDecl(NewD);
   return NewD;
 }

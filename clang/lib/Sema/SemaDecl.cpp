@@ -4311,7 +4311,10 @@ CreateNewDecl:
   New->setLexicalDeclContext(CurContext);
 
   // Set the access specifier.
-  if (!Invalid && TUK != TUK_Friend)
+  // FIXME: This used to be skipped for friend tag decls, but it led to an
+  // assertion in Decl::CheckAccessDeclContext(); once various issues with
+  // friend class decls are sorted out, this should be revisited.
+  if (!Invalid)
     SetMemberAccessSpecifier(New, PrevDecl, AS);
 
   if (TUK == TUK_Definition)
