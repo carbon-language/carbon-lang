@@ -39,6 +39,9 @@ static cl::opt<std::string>
 OutputFilename("o", cl::desc("Output filename"),
                cl::value_desc("filename"));
 
+static cl::opt<bool>
+ShowEncoding("show-encoding", cl::desc("Show instruction encodings"));
+
 enum OutputFileType {
   OFT_AssemblyFile,
   OFT_ObjectFile
@@ -244,7 +247,8 @@ static int AssembleInput(const char *ProgName) {
     assert(TAI && "Unable to create target asm info!");
 
     AP.reset(TheTarget->createAsmPrinter(*Out, *TM, TAI, true));
-    CE.reset(TheTarget->createCodeEmitter(*TM));
+    if (ShowEncoding)
+      CE.reset(TheTarget->createCodeEmitter(*TM));
     Str.reset(createAsmStreamer(Ctx, *Out, *TAI, AP.get(), CE.get()));
   } else {
     assert(FileType == OFT_ObjectFile && "Invalid file type!");
