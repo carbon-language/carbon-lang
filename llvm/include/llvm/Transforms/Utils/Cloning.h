@@ -104,9 +104,9 @@ BasicBlock *CloneBasicBlock(const BasicBlock *BB,
                             ClonedCodeInfo *CodeInfo = 0);
 
 
-/// CloneLoop - Clone Loop. Clone dominator info for loop insiders. Populate ValueMap
-/// using old blocks to new blocks mapping.
-Loop *CloneLoop(Loop *L, LPPassManager  *LPM, LoopInfo *LI, 
+/// CloneLoop - Clone Loop. Clone dominator info for loop insiders. Populate
+/// ValueMap using old blocks to new blocks mapping.
+Loop *CloneLoop(Loop *L, LPPassManager *LPM, LoopInfo *LI, 
                 DenseMap<const Value *, Value *> &ValueMap, Pass *P);
 
 /// CloneFunction - Return a copy of the specified function, but without
@@ -154,20 +154,6 @@ void CloneAndPruneFunctionInto(Function *NewFunc, const Function *OldFunc,
                                const char *NameSuffix = "", 
                                ClonedCodeInfo *CodeInfo = 0,
                                const TargetData *TD = 0);
-
-
-/// CloneTraceInto - Clone T into NewFunc. Original<->clone mapping is
-/// saved in ValueMap.
-///
-void CloneTraceInto(Function *NewFunc, Trace &T,
-                    DenseMap<const Value*, Value*> &ValueMap,
-                    const char *NameSuffix);
-
-/// CloneTrace - Returns a copy of the specified trace.
-/// It takes a vector of basic blocks clones the basic blocks, removes internal
-/// phi nodes, adds it to the same function as the original (although there is
-/// no jump to it) and returns the new vector of basic blocks.
-std::vector<BasicBlock *> CloneTrace(const std::vector<BasicBlock*> &origTrace);
 
 /// InlineFunction - This function inlines the called function into the basic
 /// block of the caller.  This returns false if it is not possible to inline
