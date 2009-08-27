@@ -408,10 +408,11 @@ Sema::IsOverload(FunctionDecl *New, Decl* OldD,
 /// If @p ForceRValue, then overloading is performed as if From was an rvalue,
 /// no matter its actual lvalueness.
 ImplicitConversionSequence
-Sema::TryImplicitConversion(Expr* From, QualType ToType,
-                            bool SuppressUserConversions,
-                            bool AllowExplicit, bool ForceRValue)
-{
+Sema::TryImplicitConversion(Expr* From, QualType ToType, unsigned Flags) {
+  bool SuppressUserConversions = Flags & ORF_SuppressUserConversions;
+  bool AllowExplicit = Flags & ORF_AllowExplicit;
+  bool ForceRValue = Flags & ORF_ForceRValue;
+  
   ImplicitConversionSequence ICS;
   if (IsStandardConversion(From, ToType, ICS.Standard))
     ICS.ConversionKind = ImplicitConversionSequence::StandardConversion;
@@ -1929,8 +1930,11 @@ Sema::TryCopyInitialization(Expr *From, QualType ToType,
                        /*AllowExplicit=*/false, ForceRValue);
     return ICS;
   } else {
-    return TryImplicitConversion(From, ToType, SuppressUserConversions,
-                                 ForceRValue);
+    unsigned Flags = ORF_None;
+    if (SuppressUserConversions) Flags |= ORF_SuppressUserConversions;
+    if (ForceRValue) Flags |= ORF_ForceRValue;
+    
+    return TryImplicitConversion(From, ToType, Flags);
   }
 }
 
@@ -2064,7 +2068,7 @@ Sema::PerformObjectArgumentInitialization(Expr *&From, CXXMethodDecl *Method) {
 /// TryContextuallyConvertToBool - Attempt to contextually convert the
 /// expression From to bool (C++0x [conv]p3).
 ImplicitConversionSequence Sema::TryContextuallyConvertToBool(Expr *From) {
-  return TryImplicitConversion(From, Context.BoolTy, false, true);
+  return TryImplicitConversion(From, Context.BoolTy, ORF_AllowExplicit);
 }
 
 /// PerformContextuallyConvertToBool - Perform a contextual conversion
