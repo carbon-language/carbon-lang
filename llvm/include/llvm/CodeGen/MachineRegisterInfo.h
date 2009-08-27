@@ -268,8 +268,10 @@ public:
     }
     friend class MachineRegisterInfo;
   public:
-    typedef std::iterator<std::forward_iterator_tag, MachineInstr, ptrdiff_t>::reference reference;
-    typedef std::iterator<std::forward_iterator_tag, MachineInstr, ptrdiff_t>::pointer pointer;
+    typedef std::iterator<std::forward_iterator_tag,
+                          MachineInstr, ptrdiff_t>::reference reference;
+    typedef std::iterator<std::forward_iterator_tag,
+                          MachineInstr, ptrdiff_t>::pointer pointer;
     
     defusechain_iterator(const defusechain_iterator &I) : Op(I.Op) {}
     defusechain_iterator() : Op(0) {}

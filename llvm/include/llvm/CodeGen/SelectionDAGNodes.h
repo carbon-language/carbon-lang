@@ -291,7 +291,7 @@ namespace ISD {
     EXTRACT_SUBVECTOR,
 
     /// VECTOR_SHUFFLE(VEC1, VEC2) - Returns a vector, of the same type as 
-    /// VEC1/VEC2.  A VECTOR_SHUFFLE node also contains an array of constant int 
+    /// VEC1/VEC2.  A VECTOR_SHUFFLE node also contains an array of constant int
     /// values that indicate which value (or undef) each result element will
     /// get.  These constant ints are accessible through the 
     /// ShuffleVectorSDNode class.  This is quite similar to the Altivec 
@@ -1134,8 +1134,10 @@ public:
     }
     friend class SDNode;
   public:
-    typedef std::iterator<std::forward_iterator_tag, SDUse, ptrdiff_t>::reference reference;
-    typedef std::iterator<std::forward_iterator_tag, SDUse, ptrdiff_t>::pointer pointer;
+    typedef std::iterator<std::forward_iterator_tag,
+                          SDUse, ptrdiff_t>::reference reference;
+    typedef std::iterator<std::forward_iterator_tag,
+                          SDUse, ptrdiff_t>::pointer pointer;
 
     use_iterator(const use_iterator &I) : Op(I.Op) {}
     use_iterator() : Op(0) {}
@@ -2353,7 +2355,8 @@ public:
 };
 
 
-class SDNodeIterator : public std::iterator<std::forward_iterator_tag, SDNode, ptrdiff_t> {
+class SDNodeIterator : public std::iterator<std::forward_iterator_tag,
+                                            SDNode, ptrdiff_t> {
   SDNode *Node;
   unsigned Operand;
 

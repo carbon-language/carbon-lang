@@ -158,7 +158,8 @@ public:
   void dump() const;
 
   /// Define an iterator for alias sets... this is just a forward iterator.
-  class iterator : public std::iterator<std::forward_iterator_tag, PointerRec, ptrdiff_t> {
+  class iterator : public std::iterator<std::forward_iterator_tag,
+                                        PointerRec, ptrdiff_t> {
     PointerRec *CurNode;
   public:
     explicit iterator(PointerRec *CN = 0) : CurNode(CN) {}

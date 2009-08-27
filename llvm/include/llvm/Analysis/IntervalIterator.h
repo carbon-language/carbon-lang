@@ -233,7 +233,8 @@ private:
 };
 
 typedef IntervalIterator<BasicBlock, Function> function_interval_iterator;
-typedef IntervalIterator<Interval, IntervalPartition> interval_part_interval_iterator;
+typedef IntervalIterator<Interval, IntervalPartition>
+                                          interval_part_interval_iterator;
 
 
 inline function_interval_iterator intervals_begin(Function *F,

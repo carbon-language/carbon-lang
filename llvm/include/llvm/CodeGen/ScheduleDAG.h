@@ -434,8 +434,8 @@ namespace llvm {
 
   class ScheduleDAG {
   public:
-    MachineBasicBlock *BB;                // The block in which to insert instructions.
-    MachineBasicBlock::iterator InsertPos;// The position to insert instructions.
+    MachineBasicBlock *BB;          // The block in which to insert instructions
+    MachineBasicBlock::iterator InsertPos;// The position to insert instructions
     const TargetMachine &TM;              // Target processor
     const TargetInstrInfo *TII;           // Target instruction information
     const TargetRegisterInfo *TRI;        // Target processor register info
@@ -506,8 +506,8 @@ namespace llvm {
     ///
     virtual void Schedule() = 0;
 
-    /// ForceUnitLatencies - Return true if all scheduling edges should be given a
-    /// latency value of one.  The default is to return false; schedulers may
+    /// ForceUnitLatencies - Return true if all scheduling edges should be given
+    /// a latency value of one.  The default is to return false; schedulers may
     /// override this as needed.
     virtual bool ForceUnitLatencies() const { return false; }
 
@@ -535,7 +535,8 @@ namespace llvm {
     void EmitLiveInCopies(MachineBasicBlock *MBB);
   };
 
-  class SUnitIterator : public std::iterator<std::forward_iterator_tag, SUnit, ptrdiff_t> {
+  class SUnitIterator : public std::iterator<std::forward_iterator_tag,
+                                             SUnit, ptrdiff_t> {
     SUnit *Node;
     unsigned Operand;
 
@@ -547,7 +548,7 @@ namespace llvm {
     bool operator!=(const SUnitIterator& x) const { return !operator==(x); }
 
     const SUnitIterator &operator=(const SUnitIterator &I) {
-      assert(I.Node == Node && "Cannot assign iterators to two different nodes!");
+      assert(I.Node==Node && "Cannot assign iterators to two different nodes!");
       Operand = I.Operand;
       return *this;
     }

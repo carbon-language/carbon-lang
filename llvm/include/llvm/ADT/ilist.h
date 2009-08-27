@@ -144,7 +144,8 @@ class ilist_iterator
 
 public:
   typedef ilist_traits<NodeTy> Traits;
-  typedef std::iterator<std::bidirectional_iterator_tag, NodeTy, ptrdiff_t> super;
+  typedef std::iterator<std::bidirectional_iterator_tag,
+                        NodeTy, ptrdiff_t> super;
 
   typedef typename super::value_type value_type;
   typedef typename super::difference_type difference_type;

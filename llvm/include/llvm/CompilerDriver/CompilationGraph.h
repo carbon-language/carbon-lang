@@ -241,7 +241,8 @@ namespace llvmc {
 
 
   /// NodeChildIterator - Another auxiliary class needed by GraphTraits.
-  class NodeChildIterator : public std::iterator<std::bidirectional_iterator_tag, Node, ptrdiff_t> {
+  class NodeChildIterator : public
+               std::iterator<std::bidirectional_iterator_tag, Node, ptrdiff_t> {
     typedef NodeChildIterator ThisType;
     typedef Node::container_type::iterator iterator;
 

@@ -233,7 +233,8 @@ public:
     return L1;
   }
 
-  class member_iterator : public std::iterator<std::forward_iterator_tag, ElemTy, ptrdiff_t> {
+  class member_iterator : public std::iterator<std::forward_iterator_tag,
+                                               ElemTy, ptrdiff_t> {
     typedef std::iterator<std::forward_iterator_tag, ElemTy, ptrdiff_t> super;
     const ECValue *Node;
     friend class EquivalenceClasses;

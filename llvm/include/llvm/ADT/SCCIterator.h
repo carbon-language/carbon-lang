@@ -34,11 +34,13 @@ namespace llvm {
 ///
 template<class GraphT, class GT = GraphTraits<GraphT> >
 class scc_iterator
-  : public std::iterator<std::forward_iterator_tag, std::vector<typename GT::NodeType>, ptrdiff_t> {
+  : public std::iterator<std::forward_iterator_tag,
+                         std::vector<typename GT::NodeType>, ptrdiff_t> {
   typedef typename GT::NodeType          NodeType;
   typedef typename GT::ChildIteratorType ChildItTy;
   typedef std::vector<NodeType*> SccTy;
-  typedef std::iterator<std::forward_iterator_tag, std::vector<typename GT::NodeType>, ptrdiff_t> super;
+  typedef std::iterator<std::forward_iterator_tag,
+                        std::vector<typename GT::NodeType>, ptrdiff_t> super;
   typedef typename super::reference reference;
   typedef typename super::pointer pointer;
 

@@ -158,7 +158,8 @@ template<> struct simplify_type<const Use> {
 
 
 template<typename UserTy>  // UserTy == 'User' or 'const User'
-class value_use_iterator : public std::iterator<std::forward_iterator_tag, UserTy*, ptrdiff_t> {
+class value_use_iterator : public std::iterator<std::forward_iterator_tag,
+                                                UserTy*, ptrdiff_t> {
   typedef std::iterator<std::forward_iterator_tag, UserTy*, ptrdiff_t> super;
   typedef value_use_iterator<UserTy> _Self;
 

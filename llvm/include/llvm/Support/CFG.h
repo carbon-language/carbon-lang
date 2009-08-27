@@ -21,12 +21,13 @@
 
 namespace llvm {
 
-//===--------------------------------------------------------------------===//
+//===----------------------------------------------------------------------===//
 // BasicBlock pred_iterator definition
-//===--------------------------------------------------------------------===//
+//===----------------------------------------------------------------------===//
 
 template <class _Ptr,  class _USE_iterator> // Predecessor Iterator
-class PredIterator : public std::iterator<std::forward_iterator_tag, _Ptr, ptrdiff_t> {
+class PredIterator : public std::iterator<std::forward_iterator_tag,
+                                          _Ptr, ptrdiff_t> {
   typedef std::iterator<std::forward_iterator_tag, _Ptr, ptrdiff_t> super;
   _USE_iterator It;
 public:
@@ -79,12 +80,13 @@ inline pred_const_iterator pred_end(const BasicBlock *BB) {
 
 
 
-//===--------------------------------------------------------------------===//
+//===----------------------------------------------------------------------===//
 // BasicBlock succ_iterator definition
-//===--------------------------------------------------------------------===//
+//===----------------------------------------------------------------------===//
 
 template <class Term_, class BB_>           // Successor Iterator
-class SuccIterator : public std::iterator<std::bidirectional_iterator_tag, BB_, ptrdiff_t> {
+class SuccIterator : public std::iterator<std::bidirectional_iterator_tag,
+                                          BB_, ptrdiff_t> {
   const Term_ Term;
   unsigned idx;
   typedef std::iterator<std::bidirectional_iterator_tag, BB_, ptrdiff_t> super;

@@ -42,9 +42,11 @@ template<class GraphT,
   class SetType = llvm::SmallPtrSet<typename GraphTraits<GraphT>::NodeType*, 8>,
   bool ExtStorage = false,
   class GT = GraphTraits<GraphT> >
-class po_iterator : public std::iterator<std::forward_iterator_tag, typename GT::NodeType, ptrdiff_t>,
+class po_iterator : public std::iterator<std::forward_iterator_tag,
+                                         typename GT::NodeType, ptrdiff_t>,
                     public po_iterator_storage<SetType, ExtStorage> {
-  typedef std::iterator<std::forward_iterator_tag, typename GT::NodeType, ptrdiff_t> super;
+  typedef std::iterator<std::forward_iterator_tag,
+                        typename GT::NodeType, ptrdiff_t> super;
   typedef typename GT::NodeType          NodeType;
   typedef typename GT::ChildIteratorType ChildItTy;
 
