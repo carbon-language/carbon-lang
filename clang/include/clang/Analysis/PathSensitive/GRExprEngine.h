@@ -77,9 +77,6 @@ class GRExprEngine : public GRSubEngine {
   llvm::OwningPtr<GRSimpleAPICheck> BatchAuditor;
   std::vector<Checker*> Checkers;
 
-  /// PurgeDead - Remove dead bindings before processing a statement.
-  bool PurgeDead;
-  
   /// BR - The BugReporter associated with this engine.  It is important that
   //   this object be placed at the very end of member variables so that its
   //   destructor is called before the rest of the GRExprEngine is destroyed.

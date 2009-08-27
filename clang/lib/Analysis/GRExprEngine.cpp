@@ -245,9 +245,9 @@ void GRExprEngine::ProcessStmt(Stmt* S, GRStmtNodeBuilder& builder) {
     
   // Create the cleaned state.  
   SymbolReaper SymReaper(*AMgr.getLiveVariables(), SymMgr);  
-  CleanedState = PurgeDead ? StateMgr.RemoveDeadBindings(EntryNode->getState(), 
-                                                         CurrentStmt, SymReaper)
-                           : EntryNode->getState();
+  CleanedState = AMgr.shouldPurgeDead()
+    ? StateMgr.RemoveDeadBindings(EntryNode->getState(), CurrentStmt, SymReaper)
+    : EntryNode->getState();
 
   // Process any special transfer function for dead symbols.
   ExplodedNodeSet Tmp;
