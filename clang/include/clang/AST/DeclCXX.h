@@ -513,7 +513,10 @@ public:
   /// hasUserDeclaredConstructor - Whether this class has any
   /// user-declared constructors. When true, a default constructor
   /// will not be implicitly declared.
-  bool hasUserDeclaredConstructor() const { return UserDeclaredConstructor; }
+  bool hasUserDeclaredConstructor() const { 
+    assert(isDefinition() && "Incomplete record decl!");
+    return UserDeclaredConstructor;
+  }
 
   /// hasUserDeclaredCopyConstructor - Whether this class has a
   /// user-declared copy constructor. When false, a copy constructor

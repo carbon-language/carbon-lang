@@ -203,7 +203,20 @@ Sema::ActOnCXXTypeConstructExpr(SourceRange TypeRange, TypeTy *TypeRep,
                                                     RParenLoc));
   }
 
-
+  if (Ty->isArrayType())
+    return ExprError(Diag(TyBeginLoc,
+                          diag::err_value_init_for_array_type) << FullRange);
+  if (!Ty->isVoidType() &&
+      RequireCompleteType(TyBeginLoc, Ty,
+                          PDiag(diag::err_invalid_incomplete_type_use)
+                            << FullRange))
+    return ExprError();
+  
+  if (RequireNonAbstractType(TyBeginLoc, Ty,
+                             diag::err_allocation_of_abstract_type))
+    return ExprError();
+  
+  
   // C++ [expr.type.conv]p1:
   // If the expression list is a single expression, the type conversion
   // expression is equivalent (in definedness, and if defined in meaning) to the
@@ -267,19 +280,6 @@ Sema::ActOnCXXTypeConstructExpr(SourceRange TypeRange, TypeTy *TypeRep,
   // complete object type or the (possibly cv-qualified) void type, creates an
   // rvalue of the specified type, which is value-initialized.
   //
-  if (Ty->isArrayType())
-    return ExprError(Diag(TyBeginLoc,
-                          diag::err_value_init_for_array_type) << FullRange);
-  if (!Ty->isDependentType() && !Ty->isVoidType() &&
-      RequireCompleteType(TyBeginLoc, Ty,
-                          PDiag(diag::err_invalid_incomplete_type_use)
-                            << FullRange))
-    return ExprError();
-
-  if (RequireNonAbstractType(TyBeginLoc, Ty,
-                             diag::err_allocation_of_abstract_type))
-    return ExprError();
-  
   exprs.release();
   return Owned(new (Context) CXXZeroInitValueExpr(Ty, TyBeginLoc, RParenLoc));
 }
