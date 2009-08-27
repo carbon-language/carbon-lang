@@ -312,14 +312,14 @@ MachineVerifier::visitMachineBasicBlockBefore(const MachineBasicBlock *MBB)
       if (MBB->empty()) {
         report("MBB doesn't fall through but is empty!", MBB);
       }
-    } else {
-      // Block falls through.
-      if (!MBB->empty() && MBB->back().getDesc().isBarrier()) {
-        report("MBB falls through but ends with a barrier instruction!", MBB);
-      }
-      if (TII->BlockHasNoFallThrough(*MBB)) {
+    }
+    if (TII->BlockHasNoFallThrough(*MBB)) {
+      if (MBB->empty()) {
         report("TargetInstrInfo says the block has no fall through, but the "
-               "CFG has a fall-through edge!", MBB);
+               "block is empty!", MBB);
+      } else if (!MBB->back().getDesc().isBarrier()) {
+        report("TargetInstrInfo says the block has no fall through, but the "
+               "block does not end in a barrier!", MBB);
       }
     }
   } else {
@@ -341,10 +341,13 @@ MachineVerifier::visitMachineBasicBlockBefore(const MachineBasicBlock *MBB)
       MachineFunction::const_iterator MBBI = MBB;
       ++MBBI;
       if (MBBI == MF->end()) {
-        // TODO: This condition is sometimes reached for functions which
-        // make noreturn calls or contain unreachable. Should AnalyzeBranch
-        // be changed to handle such cases differently?
-        report("MBB falls through out of function!", MBB);
+        // It's possible that the block legitimately ends with a noreturn
+        // call or an unreachable, in which case it won't actually fall
+        // out the bottom of the function.
+      } else if (MBB->succ_empty()) {
+        // It's possible that the block legitimately ends with a noreturn
+        // call or an unreachable, in which case it won't actuall fall
+        // out of the block.
       } else if (MBB->succ_size() != 1) {
         report("MBB exits via unconditional fall-through but doesn't have "
                "exactly one CFG successor!", MBB);
