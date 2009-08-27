@@ -102,7 +102,7 @@ namespace clang {
   /// in a RopePiece, then iterates over RopePiece's in a RopePieceBTreeLeaf,
   /// then iterates over RopePieceBTreeLeaf's in a RopePieceBTree.
   class RopePieceBTreeIterator :
-    public std::iterator<std::forward_iterator_tag, const char, ptrdiff_t> {
+      public std::iterator<std::forward_iterator_tag, const char, ptrdiff_t> {
     /// CurNode - The current B+Tree node that we are inspecting.
     const void /*RopePieceBTreeLeaf*/ *CurNode;
     /// CurPiece - The current RopePiece in the B+Tree node that we're
