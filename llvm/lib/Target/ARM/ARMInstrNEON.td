@@ -1733,6 +1733,26 @@ def : Pat<(v2f64 (scalar_to_vector DPR:$src)),
 def : Pat<(v4f32 (scalar_to_vector SPR:$src)),
           (INSERT_SUBREG (v4f32 (IMPLICIT_DEF)), SPR:$src, arm_ssubreg_0)>;
 
+def : Pat<(v8i8 (scalar_to_vector GPR:$src)),
+          (VSETLNi8  (v8i8  (IMPLICIT_DEF)), GPR:$src, (i32 0))>;
+def : Pat<(v4i16 (scalar_to_vector GPR:$src)),
+          (VSETLNi16 (v4i16 (IMPLICIT_DEF)), GPR:$src, (i32 0))>;
+def : Pat<(v2i32 (scalar_to_vector GPR:$src)),
+          (VSETLNi32 (v2i32 (IMPLICIT_DEF)), GPR:$src, (i32 0))>;
+
+def : Pat<(v16i8 (scalar_to_vector GPR:$src)),
+          (INSERT_SUBREG (v16i8 (IMPLICIT_DEF)),
+                         (VSETLNi8 (v8i8 (IMPLICIT_DEF)), GPR:$src, (i32 0)),
+                         arm_dsubreg_0)>;
+def : Pat<(v8i16 (scalar_to_vector GPR:$src)),
+          (INSERT_SUBREG (v8i16 (IMPLICIT_DEF)),
+                         (VSETLNi16 (v4i16 (IMPLICIT_DEF)), GPR:$src, (i32 0)),
+                         arm_dsubreg_0)>;
+def : Pat<(v4i32 (scalar_to_vector GPR:$src)),
+          (INSERT_SUBREG (v4i32 (IMPLICIT_DEF)),
+                         (VSETLNi32 (v2i32 (IMPLICIT_DEF)), GPR:$src, (i32 0)),
+                         arm_dsubreg_0)>;
+
 //   VDUP     : Vector Duplicate (from ARM core register to all elements)
 
 class VDUPD<bits<8> opcod1, bits<2> opcod3, string asmSize, ValueType Ty>
