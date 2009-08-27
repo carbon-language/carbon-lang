@@ -69,8 +69,8 @@ bool Inliner::InlineCallIfPossible(CallSite CS, CallGraph &CG,
 
   // If we inlined the last possible call site to the function, delete the
   // function body now.
-  if (Callee->use_empty() && (Callee->hasLocalLinkage() ||
-                              Callee->hasAvailableExternallyLinkage()) &&
+  if (Callee->use_empty() && 
+      (Callee->hasLocalLinkage() || Callee->hasAvailableExternallyLinkage()) &&
       !SCCFunctions.count(Callee)) {
     DEBUG(errs() << "    -> Deleting dead function: " 
           << Callee->getName() << "\n");
@@ -92,7 +92,6 @@ bool Inliner::InlineCallIfPossible(CallSite CS, CallGraph &CG,
 /// at the given CallSite.
 bool Inliner::shouldInline(CallSite CS) {
   InlineCost IC = getInlineCost(CS);
-  float FudgeFactor = getInlineFudgeFactor(CS);
   
   if (IC.isAlways()) {
     DEBUG(errs() << "    Inlining: cost=always"
@@ -114,15 +113,16 @@ bool Inliner::shouldInline(CallSite CS) {
       InlineThreshold != 50)
     CurrentThreshold = 50;
   
+  float FudgeFactor = getInlineFudgeFactor(CS);
   if (Cost >= (int)(CurrentThreshold * FudgeFactor)) {
     DEBUG(errs() << "    NOT Inlining: cost=" << Cost
           << ", Call: " << *CS.getInstruction() << "\n");
     return false;
-  } else {
-    DEBUG(errs() << "    Inlining: cost=" << Cost
-          << ", Call: " << *CS.getInstruction() << "\n");
-    return true;
   }
+  
+  DEBUG(errs() << "    Inlining: cost=" << Cost
+        << ", Call: " << *CS.getInstruction() << "\n");
+  return true;
 }
 
 bool Inliner::runOnSCC(const std::vector<CallGraphNode*> &SCC) {
@@ -142,16 +142,21 @@ bool Inliner::runOnSCC(const std::vector<CallGraphNode*> &SCC) {
   // from inlining other functions.
   std::vector<CallSite> CallSites;
 
-  for (unsigned i = 0, e = SCC.size(); i != e; ++i)
-    if (Function *F = SCC[i]->getFunction())
-      for (Function::iterator BB = F->begin(), E = F->end(); BB != E; ++BB)
-        for (BasicBlock::iterator I = BB->begin(); I != BB->end(); ++I) {
-          CallSite CS = CallSite::get(I);
-          if (CS.getInstruction() && !isa<DbgInfoIntrinsic>(I) &&
-                                     (!CS.getCalledFunction() ||
-                                      !CS.getCalledFunction()->isDeclaration()))
-            CallSites.push_back(CS);
-        }
+  for (unsigned i = 0, e = SCC.size(); i != e; ++i) {
+    Function *F = SCC[i]->getFunction();
+    if (!F) continue;
+    
+    for (Function::iterator BB = F->begin(), E = F->end(); BB != E; ++BB)
+      for (BasicBlock::iterator I = BB->begin(), E = BB->end(); I != E; ++I) {
+        CallSite CS = CallSite::get(I);
+        if (CS.getInstruction() == 0 || isa<DbgInfoIntrinsic>(I))
+          continue;
+        
+        if (CS.getCalledFunction() == 0 ||
+            !CS.getCalledFunction()->isDeclaration())
+          CallSites.push_back(CS);
+      }
+  }
 
   DEBUG(errs() << ": " << CallSites.size() << " call sites.\n");
 
@@ -171,51 +176,56 @@ bool Inliner::runOnSCC(const std::vector<CallGraphNode*> &SCC) {
     LocalChange = false;
     // Iterate over the outer loop because inlining functions can cause indirect
     // calls to become direct calls.
-    for (unsigned CSi = 0; CSi != CallSites.size(); ++CSi)
-      if (Function *Callee = CallSites[CSi].getCalledFunction()) {
-        // Calls to external functions are never inlinable.
-        if (Callee->isDeclaration()) {
-          if (SCC.size() == 1) {
-            std::swap(CallSites[CSi], CallSites.back());
-            CallSites.pop_back();
-          } else {
-            // Keep the 'in SCC / not in SCC' boundary correct.
-            CallSites.erase(CallSites.begin()+CSi);
-          }
-          --CSi;
-          continue;
+    for (unsigned CSi = 0; CSi != CallSites.size(); ++CSi) {
+      // We can only inline direct calls.
+      Function *Callee = CallSites[CSi].getCalledFunction();
+      if (!Callee) continue;
+      
+      // Calls to external functions are never inlinable.
+      if (Callee->isDeclaration()) {
+        if (SCC.size() == 1) {
+          std::swap(CallSites[CSi], CallSites.back());
+          CallSites.pop_back();
+        } else {
+          // Keep the 'in SCC / not in SCC' boundary correct.
+          CallSites.erase(CallSites.begin()+CSi);
         }
-
-        // If the policy determines that we should inline this function,
-        // try to do so.
-        CallSite CS = CallSites[CSi];
-        if (shouldInline(CS)) {
-          Function *Caller = CS.getCaller();
-          // Attempt to inline the function...
-          if (InlineCallIfPossible(CS, CG, SCCFunctions, TD)) {
-            // Remove any cached cost info for this caller, as inlining the
-            // callee has increased the size of the caller (which may be the
-            // same as the callee).
-            resetCachedCostInfo(Caller);
-
-            // Remove this call site from the list.  If possible, use 
-            // swap/pop_back for efficiency, but do not use it if doing so would
-            // move a call site to a function in this SCC before the
-            // 'FirstCallInSCC' barrier.
-            if (SCC.size() == 1) {
-              std::swap(CallSites[CSi], CallSites.back());
-              CallSites.pop_back();
-            } else {
-              CallSites.erase(CallSites.begin()+CSi);
-            }
-            --CSi;
-
-            ++NumInlined;
-            Changed = true;
-            LocalChange = true;
-          }
-        }
+        --CSi;
+        continue;
       }
+
+      // If the policy determines that we should inline this function,
+      // try to do so.
+      CallSite CS = CallSites[CSi];
+      if (!shouldInline(CS))
+        continue;
+      
+      Function *Caller = CS.getCaller();
+      // Attempt to inline the function...
+      if (!InlineCallIfPossible(CS, CG, SCCFunctions, TD))
+        continue;
+      
+      // Remove any cached cost info for this caller, as inlining the
+      // callee has increased the size of the caller (which may be the
+      // same as the callee).
+      resetCachedCostInfo(Caller);
+
+      // Remove this call site from the list.  If possible, use 
+      // swap/pop_back for efficiency, but do not use it if doing so would
+      // move a call site to a function in this SCC before the
+      // 'FirstCallInSCC' barrier.
+      if (SCC.size() == 1) {
+        std::swap(CallSites[CSi], CallSites.back());
+        CallSites.pop_back();
+      } else {
+        CallSites.erase(CallSites.begin()+CSi);
+      }
+      --CSi;
+
+      ++NumInlined;
+      Changed = true;
+      LocalChange = true;
+    }
   } while (LocalChange);
 
   return Changed;
@@ -227,47 +237,54 @@ bool Inliner::doFinalization(CallGraph &CG) {
   return removeDeadFunctions(CG);
 }
 
-  /// removeDeadFunctions - Remove dead functions that are not included in
-  /// DNR (Do Not Remove) list.
+/// removeDeadFunctions - Remove dead functions that are not included in
+/// DNR (Do Not Remove) list.
 bool Inliner::removeDeadFunctions(CallGraph &CG, 
-                                 SmallPtrSet<const Function *, 16> *DNR) {
-  std::set<CallGraphNode*> FunctionsToRemove;
+                                  SmallPtrSet<const Function *, 16> *DNR) {
+  SmallPtrSet<CallGraphNode*, 16> FunctionsToRemove;
 
   // Scan for all of the functions, looking for ones that should now be removed
   // from the program.  Insert the dead ones in the FunctionsToRemove set.
   for (CallGraph::iterator I = CG.begin(), E = CG.end(); I != E; ++I) {
     CallGraphNode *CGN = I->second;
-    if (Function *F = CGN ? CGN->getFunction() : 0) {
-      // If the only remaining users of the function are dead constants, remove
-      // them.
-      F->removeDeadConstantUsers();
+    if (CGN == 0 || CGN->getFunction() == 0)
+      continue;
+    
+    Function *F = CGN->getFunction();
+    
+    // If the only remaining users of the function are dead constants, remove
+    // them.
+    F->removeDeadConstantUsers();
 
-      if (DNR && DNR->count(F))
-        continue;
+    if (DNR && DNR->count(F))
+      continue;
+    if (!F->hasLinkOnceLinkage() && !F->hasLocalLinkage())
+      continue;
+    if (!F->use_empty())
+      continue;
+    
+    // Remove any call graph edges from the function to its callees.
+    CGN->removeAllCalledFunctions();
 
-      if ((F->hasLinkOnceLinkage() || F->hasLocalLinkage()) &&
-          F->use_empty()) {
+    // Remove any edges from the external node to the function's call graph
+    // node.  These edges might have been made irrelegant due to
+    // optimization of the program.
+    CG.getExternalCallingNode()->removeAnyCallEdgeTo(CGN);
 
-        // Remove any call graph edges from the function to its callees.
-        CGN->removeAllCalledFunctions();
-
-        // Remove any edges from the external node to the function's call graph
-        // node.  These edges might have been made irrelegant due to
-        // optimization of the program.
-        CG.getExternalCallingNode()->removeAnyCallEdgeTo(CGN);
-
-        // Removing the node for callee from the call graph and delete it.
-        FunctionsToRemove.insert(CGN);
-      }
-    }
+    // Removing the node for callee from the call graph and delete it.
+    FunctionsToRemove.insert(CGN);
   }
 
   // Now that we know which functions to delete, do so.  We didn't want to do
   // this inline, because that would invalidate our CallGraph::iterator
   // objects. :(
+  //
+  // Note that it doesn't matter that we are iterating over a non-stable set
+  // here to do this, it doesn't matter which order the functions are deleted
+  // in.
   bool Changed = false;
-  for (std::set<CallGraphNode*>::iterator I = FunctionsToRemove.begin(),
-         E = FunctionsToRemove.end(); I != E; ++I) {
+  for (SmallPtrSet<CallGraphNode*, 16>::iterator I = FunctionsToRemove.begin(),
+       E = FunctionsToRemove.end(); I != E; ++I) {
     resetCachedCostInfo((*I)->getFunction());
     delete CG.removeFunctionFromModule(*I);
     ++NumDeleted;
