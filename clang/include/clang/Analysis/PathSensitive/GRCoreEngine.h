@@ -190,17 +190,6 @@ public:
   ExplodedNode* generateNode(const Stmt* S, const GRState* St, ExplodedNode* Pred) {
     return generateNode(S, St, Pred, PointKind);
   }
-  
-  ExplodedNode* generateNode(const Stmt* S, const GRState* St, ProgramPoint::Kind K) {
-    HasGeneratedNode = true;
-    if (PurgingDeadSymbols) 
-      K = ProgramPoint::PostPurgeDeadSymbolsKind;      
-    return generateNodeInternal(S, St, K, Tag);
-  }
-  
-  ExplodedNode* generateNode(const Stmt* S, const GRState* St) {
-    return generateNode(S, St, PointKind);
-  }
 
   ExplodedNode*
   generateNodeInternal(const ProgramPoint &PP, const GRState* State,
@@ -211,15 +200,6 @@ public:
                    ProgramPoint::Kind K = ProgramPoint::PostStmtKind,
                    const void *tag = 0);
 
-  ExplodedNode*
-  generateNodeInternal(const Stmt* S, const GRState* State,
-                   ProgramPoint::Kind K = ProgramPoint::PostStmtKind,
-                   const void *tag = 0) {
-    ExplodedNode* N = getLastNode();
-    assert (N && "Predecessor of new node is infeasible.");
-    return generateNodeInternal(S, State, N, K, tag);
-  }
-  
   ExplodedNode*
   generateNodeInternal(const Stmt* S,const GRState* State,const void *tag = 0) {
     ExplodedNode* N = getLastNode();
