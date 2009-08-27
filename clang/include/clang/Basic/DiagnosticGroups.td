@@ -58,7 +58,7 @@ def : DiagGroup<"nonportable-cfstrings">;
 def : DiagGroup<"old-style-definition">;
 def : DiagGroup<"packed">;
 def Parentheses : DiagGroup<"parentheses">;
-def : DiagGroup<"pointer-arith">;
+def PointerArith : DiagGroup<"pointer-arith">;
 def : DiagGroup<"pointer-to-int-cast">;
 def : DiagGroup<"redundant-decls">;
 def ReturnType : DiagGroup<"return-type">;

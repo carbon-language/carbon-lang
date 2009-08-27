@@ -1225,9 +1225,9 @@ def err_func_def_incomplete_result : Error<
 
 // Expressions.
 def ext_sizeof_function_type : Extension<
-  "invalid application of 'sizeof' to a function type">;
+  "invalid application of 'sizeof' to a function type">, InGroup<PointerArith>;
 def ext_sizeof_void_type : Extension<
-  "invalid application of '%0' to a void type">;
+  "invalid application of '%0' to a void type">, InGroup<PointerArith>;
 // FIXME: merge with %select
 def err_sizeof_incomplete_type : Error<
   "invalid application of 'sizeof' to an incomplete type %0">;
@@ -1402,9 +1402,10 @@ def err_unexpected_interface : Error<
 def err_property_not_found : Error<
   "property %0 not found on object of type %1">;
 def ext_gnu_void_ptr : Extension<
-  "use of GNU void* extension">;
+  "use of GNU void* extension">, InGroup<PointerArith>;
 def ext_gnu_ptr_func_arith : Extension<
-  "arithmetic on pointer to function type %0 is a GNU extension">;
+  "arithmetic on pointer to function type %0 is a GNU extension">,
+  InGroup<PointerArith>;
 def error_readonly_property_assignment : Error<
   "assigning to property with 'readonly' attribute not allowed">;
 def ext_integer_increment_complex : Extension<
