@@ -21,10 +21,12 @@
 #include "llvm/Support/CallSite.h"
 #include "llvm/Target/TargetData.h"
 #include "llvm/Transforms/IPO/InlinerPass.h"
+#include "llvm/Transforms/Utils/InlineCost.h"
 #include "llvm/Transforms/Utils/Cloning.h"
 #include "llvm/Support/CommandLine.h"
 #include "llvm/Support/Debug.h"
 #include "llvm/Support/raw_ostream.h"
+#include "llvm/ADT/SmallPtrSet.h"
 #include "llvm/ADT/Statistic.h"
 #include <set>
 using namespace llvm;
@@ -57,7 +59,8 @@ bool Inliner::InlineCallIfPossible(CallSite CS, CallGraph &CG,
   Function *Callee = CS.getCalledFunction();
   Function *Caller = CS.getCaller();
 
-  if (!InlineFunction(CS, &CG, TD)) return false;
+  if (!InlineFunction(CS, &CG, TD))
+    return false;
 
   // If the inlined function had a higher stack protection level than the
   // calling function, then bump up the caller's stack protection level.

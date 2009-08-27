@@ -14,16 +14,17 @@
 //
 //===----------------------------------------------------------------------===//
 
-#ifndef INLINER_H
-#define INLINER_H
+#ifndef LLVM_TRANSFORMS_IPO_INLINERPASS_H
+#define LLVM_TRANSFORMS_IPO_INLINERPASS_H
 
 #include "llvm/CallGraphSCCPass.h"
-#include "llvm/Transforms/Utils/InlineCost.h"
-
 
 namespace llvm {
   class CallSite;
   class TargetData;
+  class InlineCost;
+  template<class PtrType, unsigned SmallSize>
+  class SmallPtrSet;
 
 /// Inliner - This class contains all of the helper code which is used to
 /// perform the inlining operations that do not depend on the policy.
@@ -44,11 +45,6 @@ struct Inliner : public CallGraphSCCPass {
   // doFinalization - Remove now-dead linkonce functions at the end of
   // processing to avoid breaking the SCC traversal.
   virtual bool doFinalization(CallGraph &CG);
-
-  // InlineCallIfPossible
-  bool InlineCallIfPossible(CallSite CS, CallGraph &CG,
-                            const SmallPtrSet<Function*, 8> &SCCFunctions,
-                            const TargetData *TD);
 
   /// This method returns the value specified by the -inline-threshold value,
   /// specified on the command line.  This is typically not directly needed.
@@ -83,6 +79,10 @@ private:
   /// shouldInline - Return true if the inliner should attempt to
   /// inline at the given CallSite.
   bool shouldInline(CallSite CS);
+  
+  bool InlineCallIfPossible(CallSite CS, CallGraph &CG,
+                            const SmallPtrSet<Function*, 8> &SCCFunctions,
+                            const TargetData *TD);
 };
 
 } // End llvm namespace

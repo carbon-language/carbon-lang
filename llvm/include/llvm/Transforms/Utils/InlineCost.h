@@ -14,7 +14,6 @@
 #ifndef LLVM_TRANSFORMS_UTILS_INLINECOST_H
 #define LLVM_TRANSFORMS_UTILS_INLINECOST_H
 
-#include "llvm/ADT/SmallPtrSet.h"
 #include <cassert>
 #include <climits>
 #include <map>
@@ -25,6 +24,8 @@ namespace llvm {
   class Value;
   class Function;
   class CallSite;
+  template<class PtrType, unsigned SmallSize>
+  class SmallPtrSet;
 
   /// InlineCost - Represent the cost of inlining a function. This
   /// supports special values for functions which should "always" or
