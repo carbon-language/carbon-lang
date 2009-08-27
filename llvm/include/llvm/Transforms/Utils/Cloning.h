@@ -18,7 +18,6 @@
 #ifndef LLVM_TRANSFORMS_UTILS_CLONING_H
 #define LLVM_TRANSFORMS_UTILS_CLONING_H
 
-#include <vector>
 #include "llvm/ADT/DenseMap.h"
 
 namespace llvm {
@@ -39,6 +38,7 @@ class TargetData;
 class Loop;
 class LoopInfo;
 class LLVMContext;
+template <typename T> class SmallVectorImpl;
 
 /// CloneModule - Return an exact copy of the specified module
 ///
@@ -137,7 +137,7 @@ inline Function *CloneFunction(const Function *F, ClonedCodeInfo *CodeInfo = 0){
 ///
 void CloneFunctionInto(Function *NewFunc, const Function *OldFunc,
                        DenseMap<const Value*, Value*> &ValueMap,
-                       std::vector<ReturnInst*> &Returns,
+                       SmallVectorImpl<ReturnInst*> &Returns,
                        const char *NameSuffix = "", 
                        ClonedCodeInfo *CodeInfo = 0);
 
@@ -150,7 +150,7 @@ void CloneFunctionInto(Function *NewFunc, const Function *OldFunc,
 /// used for things like CloneFunction or CloneModule.
 void CloneAndPruneFunctionInto(Function *NewFunc, const Function *OldFunc,
                                DenseMap<const Value*, Value*> &ValueMap,
-                               std::vector<ReturnInst*> &Returns,
+                               SmallVectorImpl<ReturnInst*> &Returns,
                                const char *NameSuffix = "", 
                                ClonedCodeInfo *CodeInfo = 0,
                                const TargetData *TD = 0);

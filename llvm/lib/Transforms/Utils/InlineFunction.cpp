@@ -307,7 +307,7 @@ bool llvm::InlineFunction(CallSite CS, CallGraph *CG, const TargetData *TD) {
 
   // Make sure to capture all of the return instructions from the cloned
   // function.
-  std::vector<ReturnInst*> Returns;
+  SmallVector<ReturnInst*, 8> Returns;
   ClonedCodeInfo InlinedFunctionInfo;
   Function::iterator FirstNewBlock;
 

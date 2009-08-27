@@ -73,7 +73,7 @@ BasicBlock *llvm::CloneBasicBlock(const BasicBlock *BB,
 //
 void llvm::CloneFunctionInto(Function *NewFunc, const Function *OldFunc,
                              DenseMap<const Value*, Value*> &ValueMap,
-                             std::vector<ReturnInst*> &Returns,
+                             SmallVectorImpl<ReturnInst*> &Returns,
                              const char *NameSuffix, ClonedCodeInfo *CodeInfo) {
   assert(NameSuffix && "NameSuffix cannot be null!");
 
@@ -166,7 +166,7 @@ Function *llvm::CloneFunction(const Function *F,
       ValueMap[I] = DestI++;        // Add mapping to ValueMap
     }
 
-  std::vector<ReturnInst*> Returns;  // Ignore returns cloned...
+  SmallVector<ReturnInst*, 8> Returns;  // Ignore returns cloned.
   CloneFunctionInto(NewF, F, ValueMap, Returns, "", CodeInfo);
   return NewF;
 }
@@ -180,7 +180,7 @@ namespace {
     Function *NewFunc;
     const Function *OldFunc;
     DenseMap<const Value*, Value*> &ValueMap;
-    std::vector<ReturnInst*> &Returns;
+    SmallVectorImpl<ReturnInst*> &Returns;
     const char *NameSuffix;
     ClonedCodeInfo *CodeInfo;
     const TargetData *TD;
@@ -188,7 +188,7 @@ namespace {
   public:
     PruningFunctionCloner(Function *newFunc, const Function *oldFunc,
                           DenseMap<const Value*, Value*> &valueMap,
-                          std::vector<ReturnInst*> &returns,
+                          SmallVectorImpl<ReturnInst*> &returns,
                           const char *nameSuffix, 
                           ClonedCodeInfo *codeInfo,
                           const TargetData *td)
@@ -361,7 +361,7 @@ ConstantFoldMappedInstruction(const Instruction *I) {
 /// used for things like CloneFunction or CloneModule.
 void llvm::CloneAndPruneFunctionInto(Function *NewFunc, const Function *OldFunc,
                                      DenseMap<const Value*, Value*> &ValueMap,
-                                     std::vector<ReturnInst*> &Returns,
+                                     SmallVectorImpl<ReturnInst*> &Returns,
                                      const char *NameSuffix, 
                                      ClonedCodeInfo *CodeInfo,
                                      const TargetData *TD) {
@@ -391,7 +391,7 @@ void llvm::CloneAndPruneFunctionInto(Function *NewFunc, const Function *OldFunc,
   // insert it into the new function in the right order.  If not, ignore it.
   //
   // Defer PHI resolution until rest of function is resolved.
-  std::vector<const PHINode*> PHIToResolve;
+  SmallVector<const PHINode*, 16> PHIToResolve;
   for (Function::const_iterator BI = OldFunc->begin(), BE = OldFunc->end();
        BI != BE; ++BI) {
     BasicBlock *NewBB = cast_or_null<BasicBlock>(ValueMap[BI]);
