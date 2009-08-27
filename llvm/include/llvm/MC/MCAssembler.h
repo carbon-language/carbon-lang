@@ -287,7 +287,7 @@ public:
 
 private:
   iplist<MCFragment> Fragments;
-  const MCSection &Section;
+  const MCSection *Section;
 
   /// Alignment - The maximum alignment seen in this section.
   unsigned Alignment;
@@ -321,7 +321,7 @@ public:
   MCSectionData();
   MCSectionData(const MCSection &Section, MCAssembler *A = 0);
 
-  const MCSection &getSection() const { return Section; }
+  const MCSection &getSection() const { return *Section; }
 
   unsigned getAlignment() const { return Alignment; }
   void setAlignment(unsigned Value) { Alignment = Value; }

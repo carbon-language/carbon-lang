@@ -829,10 +829,10 @@ uint64_t MCFragment::getAddress() const {
 
 /* *** */
 
-MCSectionData::MCSectionData() : Section(*(MCSection*)0) {}
+MCSectionData::MCSectionData() : Section(0) {}
 
 MCSectionData::MCSectionData(const MCSection &_Section, MCAssembler *A)
-  : Section(_Section),
+  : Section(&_Section),
     Alignment(1),
     Address(~UINT64_C(0)),
     Size(~UINT64_C(0)),
