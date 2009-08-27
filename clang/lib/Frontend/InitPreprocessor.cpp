@@ -313,6 +313,8 @@ static void InitializePredefinedMacros(const TargetInfo &TI,
       //   C++ translation unit.
       DefineBuiltinMacro(Buf, "__cplusplus=199711L");
     DefineBuiltinMacro(Buf, "__private_extern__=extern");
+    // Ugly hack to work with GNU libstdc++.
+    DefineBuiltinMacro(Buf, "_GNU_SOURCE=1");
   }
   
   // Filter out some microsoft extensions when trying to parse in ms-compat
