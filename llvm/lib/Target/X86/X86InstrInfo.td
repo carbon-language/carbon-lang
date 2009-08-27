@@ -1034,19 +1034,19 @@ let isTwoAddress = 1 in {
 
 // Conditional moves
 let Uses = [EFLAGS] in {
-let isCommutable = 1 in {
 
 // X86 doesn't have 8-bit conditional moves. Use a customDAGSchedInserter to
 // emit control flow. An alternative to this is to mark i8 SELECT as Promote,
 // however that requires promoting the operands, and can induce additional
 // i8 register pressure.
-let usesCustomDAGSchedInserter = 1 in
+let usesCustomDAGSchedInserter = 1, isTwoAddress = 0 in
 def CMOV_GR8 : I<0, Pseudo,
                  (outs GR8:$dst), (ins GR8:$src1, GR8:$src2, i8imm:$cond),
                  "#CMOV_GR8 PSEUDO!",
                  [(set GR8:$dst, (X86cmov GR8:$src1, GR8:$src2,
                                           imm:$cond, EFLAGS))]>;
 
+let isCommutable = 1 in {
 def CMOVB16rr : I<0x42, MRMSrcReg,       // if <u, GR16 = GR16
                   (outs GR16:$dst), (ins GR16:$src1, GR16:$src2),
                   "cmovb\t{$src2, $dst|$dst, $src2}",
