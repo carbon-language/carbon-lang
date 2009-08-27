@@ -13,6 +13,7 @@
 //===----------------------------------------------------------------------===//
 
 #include "llvm/MC/MCContext.h"
+#include "llvm/MC/MCCodeEmitter.h"
 #include "llvm/MC/MCSectionMachO.h"
 #include "llvm/MC/MCStreamer.h"
 #include "llvm/ADT/OwningPtr.h"
@@ -235,6 +236,7 @@ static int AssembleInput(const char *ProgName) {
   }
 
   OwningPtr<AsmPrinter> AP;
+  OwningPtr<MCCodeEmitter> CE;
   OwningPtr<MCStreamer> Str;
 
   if (FileType == OFT_AssemblyFile) {
@@ -242,7 +244,8 @@ static int AssembleInput(const char *ProgName) {
     assert(TAI && "Unable to create target asm info!");
 
     AP.reset(TheTarget->createAsmPrinter(*Out, *TM, TAI, true));
-    Str.reset(createAsmStreamer(Ctx, *Out, *TAI, AP.get()));
+    CE.reset(TheTarget->createCodeEmitter(*TM, TAI));
+    Str.reset(createAsmStreamer(Ctx, *Out, *TAI, AP.get(), CE.get()));
   } else {
     assert(FileType == OFT_ObjectFile && "Invalid file type!");
     Str.reset(createMachOStreamer(Ctx, *Out));

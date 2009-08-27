@@ -8,7 +8,9 @@
 //===----------------------------------------------------------------------===//
 
 #include "llvm/MC/MCStreamer.h"
+#include "llvm/ADT/SmallString.h"
 #include "llvm/CodeGen/AsmPrinter.h"
+#include "llvm/MC/MCCodeEmitter.h"
 #include "llvm/MC/MCContext.h"
 #include "llvm/MC/MCInst.h"
 #include "llvm/MC/MCSectionMachO.h"
@@ -17,6 +19,7 @@
 #include "llvm/MC/MCAsmInfo.h"
 #include "llvm/Support/ErrorHandling.h"
 #include "llvm/Support/MathExtras.h"
+#include "llvm/Support/Format.h"
 #include "llvm/Support/raw_ostream.h"
 using namespace llvm;
 
@@ -26,10 +29,12 @@ class MCAsmStreamer : public MCStreamer {
   raw_ostream &OS;
   const MCAsmInfo &MAI;
   AsmPrinter *Printer;
+  MCCodeEmitter *Emitter;
 public:
   MCAsmStreamer(MCContext &Context, raw_ostream &_OS, const MCAsmInfo &tai,
-                AsmPrinter *_AsmPrinter)
-    : MCStreamer(Context), OS(_OS), MAI(tai), Printer(_AsmPrinter) {}
+                AsmPrinter *_Printer, MCCodeEmitter *_Emitter)
+    : MCStreamer(Context), OS(_OS), MAI(tai), Printer(_Printer),
+      Emitter(_Emitter) {}
   ~MCAsmStreamer() {}
 
   /// @name MCStreamer Interface
@@ -290,6 +295,23 @@ static raw_ostream &operator<<(raw_ostream &OS, const MCOperand &Op) {
 void MCAsmStreamer::EmitInstruction(const MCInst &Inst) {
   assert(CurSection && "Cannot emit contents before setting section!");
 
+  // Show the encoding if we have a code emitter.
+  if (Emitter) {
+    SmallString<256> Code;
+    raw_svector_ostream VecOS(Code);
+    Emitter->EncodeInstruction(Inst, VecOS);
+    VecOS.flush();
+
+    OS.indent(20);
+    OS << " # encoding: [";
+    for (unsigned i = 0, e = Code.size(); i != e; ++i) {
+      if (i + 1 != e)
+        OS << ',';
+      OS << format("%#04x", Code[i]);
+    }
+    OS << "]\n";
+  }
+
   // If we have an AsmPrinter, use that to print.
   if (Printer) {
     Printer->printMCInst(&Inst);
@@ -314,6 +336,7 @@ void MCAsmStreamer::Finish() {
 }
     
 MCStreamer *llvm::createAsmStreamer(MCContext &Context, raw_ostream &OS,
-                                    const MCAsmInfo &MAI, AsmPrinter *AP) {
-  return new MCAsmStreamer(Context, OS, MAI, AP);
+                                    const MCAsmInfo &MAI, AsmPrinter *AP,
+                                    MCCodeEmitter *CE) {
+  return new MCAsmStreamer(Context, OS, MAI, AP, CE);
 }

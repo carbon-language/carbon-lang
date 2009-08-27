@@ -26,6 +26,7 @@
 namespace llvm {
   class AsmPrinter;
   class MCAsmParser;
+  class MCCodeEmitter;
   class Module;
   class MCAsmInfo;
   class TargetAsmParser;
@@ -57,6 +58,10 @@ namespace llvm {
                                             bool VerboseAsm);
     typedef TargetAsmParser *(*AsmParserCtorTy)(const Target &T,
                                                 MCAsmParser &P);
+    typedef MCCodeEmitter *(*CodeEmitterCtorTy)(const Target &T,
+                                                TargetMachine &TM,
+                                                const MCAsmInfo &MAI);
+
   private:
     /// Next - The next registered target in the linked list, maintained by the
     /// TargetRegistry.
@@ -89,7 +94,14 @@ namespace llvm {
     /// if registered.
     AsmParserCtorTy AsmParserCtorFn;
 
+    /// CodeEmitterCtorFn - Construction function for this target's CodeEmitter,
+    /// if registered.
+    CodeEmitterCtorTy CodeEmitterCtorFn;
+
   public:
+    /// @name Target Information
+    /// @{
+
     // getNext - Return the next registered target.
     const Target *getNext() const { return Next; }
 
@@ -99,6 +111,11 @@ namespace llvm {
     /// getShortDescription - Get a short description of the target.
     const char *getShortDescription() const { return ShortDesc; }
 
+    /// @}
+    /// @name Feature Predicates
+    /// @{
+
+    /// hasJIT - Check if this targets supports the just-in-time compilation.
     bool hasJIT() const { return HasJIT; }
 
     /// hasTargetMachine - Check if this target supports code generation.
@@ -110,6 +127,12 @@ namespace llvm {
     /// hasAsmParser - Check if this target supports .s parsing.
     bool hasAsmParser() const { return AsmParserCtorFn != 0; }
 
+    /// hasCodeEmitter - Check if this target supports instruction encoding.
+    bool hasCodeEmitter() const { return CodeEmitterCtorFn != 0; }
+
+    /// @}
+    /// @name Feature Constructors
+    /// @{
     
     /// createAsmInfo - Create a MCAsmInfo implementation for the specified
     /// target triple.
@@ -155,6 +178,16 @@ namespace llvm {
         return 0;
       return AsmParserCtorFn(*this, Parser);
     }
+
+    /// createCodeEmitter - Create a target specific code emitter.
+    MCCodeEmitter *createCodeEmitter(TargetMachine &TM,
+                                     const MCAsmInfo *MAI) const {
+      if (!CodeEmitterCtorFn)
+        return 0;
+      return CodeEmitterCtorFn(*this, TM, *MAI);
+    }
+
+    /// @}
   };
 
   /// TargetRegistry - Generic interface to target specific features.
@@ -303,6 +336,20 @@ namespace llvm {
         T.AsmParserCtorFn = Fn;
     }
 
+    /// RegisterCodeEmitter - Register a MCCodeEmitter implementation for the
+    /// given target.
+    /// 
+    /// Clients are responsible for ensuring that registration doesn't occur
+    /// while another thread is attempting to access the registry. Typically
+    /// this is done by initializing all targets at program startup.
+    ///
+    /// @param T - The target being registered.
+    /// @param Fn - A function to construct an AsmPrinter for the target.
+    static void RegisterCodeEmitter(Target &T, Target::CodeEmitterCtorTy Fn) {
+      if (!T.CodeEmitterCtorFn)
+        T.CodeEmitterCtorFn = Fn;
+    }
+
     /// @}
   };
 
@@ -428,6 +475,27 @@ namespace llvm {
   private:
     static TargetAsmParser *Allocator(const Target &T, MCAsmParser &P) {
       return new AsmParserImpl(T, P);
+    }
+  };
+
+  /// RegisterCodeEmitter - Helper template for registering a target specific
+  /// machine code emitter, for use in the target initialization
+  /// function. Usage:
+  ///
+  /// extern "C" void LLVMInitializeFooCodeEmitter() {
+  ///   extern Target TheFooTarget;
+  ///   RegisterCodeEmitter<FooCodeEmitter> X(TheFooTarget);
+  /// }
+  template<class CodeEmitterImpl>
+  struct RegisterCodeEmitter {
+    RegisterCodeEmitter(Target &T) {
+      TargetRegistry::RegisterCodeEmitter(T, &Allocator);
+    }
+
+  private:
+    static MCCodeEmitter *Allocator(const Target &T, TargetMachine &TM,
+                                    const MCAsmInfo &MAI) {
+      return new CodeEmitterImpl(T, TM, MAI);
     }
   };
 
