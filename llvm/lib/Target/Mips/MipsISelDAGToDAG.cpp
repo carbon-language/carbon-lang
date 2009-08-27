@@ -322,6 +322,7 @@ SDNode* MipsDAGToDAGISel::Select(SDValue N) {
     /// be loaded with 3 instructions. 
     case MipsISD::JmpLink: {
       if (TM.getRelocationModel() == Reloc::PIC_) {
+        //bool isCodeLarge = (TM.getCodeModel() == CodeModel::Large);
         SDValue Chain  = Node->getOperand(0);
         SDValue Callee = Node->getOperand(1);
         SDValue T9Reg = CurDAG->getRegister(Mips::T9, MVT::i32);

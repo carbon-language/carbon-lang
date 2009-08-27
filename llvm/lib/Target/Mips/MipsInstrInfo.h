@@ -130,38 +130,6 @@ namespace Mips {
   }
 }
 
-/// MipsII - This namespace holds all of the target specific flags that
-/// instruction info tracks.
-///
-namespace MipsII {
-  /// Target Operand Flag enum.
-  enum TOF {
-    //===------------------------------------------------------------------===//
-    // Mips Specific MachineOperand flags.
- 
-    MO_NO_FLAG = 0,
-
-    /// MO_GOT - Represents the offset into the global offset table at which
-    /// the address the relocation entry symbol resides during execution.
-    MO_GOT = 1,
-
-    /// MO_GOT_CALL - Represents the offset into the global offset table at 
-    /// which the address of a call site relocation entry symbol resides 
-    /// during execution. This is different from the above since this flag
-    /// can only be present in call instructions.
-    MO_GOT_CALL = 2,
-
-    /// MO_GPREL - Represents the offset from the current gp value to be used 
-    /// for the relocatable object file being produced.
-    MO_GPREL = 3,
-
-    /// MO_ABS_HILO - Represents the hi or low part of an absolute symbol
-    /// address. 
-    MO_ABS_HILO = 4
-
-  };
-}
-
 class MipsInstrInfo : public TargetInstrInfoImpl {
   MipsTargetMachine &TM;
   const MipsRegisterInfo RI;
