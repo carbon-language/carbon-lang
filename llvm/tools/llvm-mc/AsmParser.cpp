@@ -1287,15 +1287,10 @@ bool AsmParser::ParseDirectiveDarwinZerofill() {
   // If this is the end of the line all that was wanted was to create the
   // the section but with no symbol.
   if (Lexer.is(AsmToken::EndOfStatement)) {
-    // FIXME: CACHE THIS.
-    MCSection *S = 0; //Ctx.GetSection(Section);
-    if (S == 0)
-      S = MCSectionMachO::Create(Segment, Section,
-                                 MCSectionMachO::S_ZEROFILL, 0,
-                                 SectionKind(), Ctx);
-    
     // Create the zerofill section but no symbol
-    Out.EmitZerofill(S);
+    Out.EmitZerofill(getMachOSection(Segment, Section,
+                                     MCSectionMachO::S_ZEROFILL, 0,
+                                     SectionKind()));
     return false;
   }
 
@@ -1348,16 +1343,13 @@ bool AsmParser::ParseDirectiveDarwinZerofill() {
   if (!Sym->isUndefined())
     return Error(IDLoc, "invalid symbol redefinition");
 
-  // FIXME: Arch specific.
-  // FIXME: CACHE.
-  MCSection *S = 0; //Ctx.GetSection(Section);
-  if (S == 0)
-    S = MCSectionMachO::Create(Segment, Section,
-                               MCSectionMachO::S_ZEROFILL, 0,
-                               SectionKind(), Ctx);
-  
   // Create the zerofill Symbol with Size and Pow2Alignment
-  Out.EmitZerofill(S, Sym, Size, Pow2Alignment);
+  //
+  // FIXME: Arch specific.
+  Out.EmitZerofill(getMachOSection(Segment, Section,
+                                 MCSectionMachO::S_ZEROFILL, 0,
+                                 SectionKind()),
+                   Sym, Size, Pow2Alignment);
 
   return false;
 }
