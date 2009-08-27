@@ -22,6 +22,7 @@
 #include "llvm/Support/DebugLoc.h"
 
 namespace llvm {
+class raw_ostream;
 
 /// MCOperand - Instances of this class represent operands of the MCInst class.
 /// This is a simple discriminated union.
@@ -119,6 +120,9 @@ public:
     Op.MCValueVal = Val;
     return Op;
   }
+
+  void print(raw_ostream &OS) const;
+  void dump() const;
 };
 
   
@@ -142,6 +146,9 @@ public:
   void addOperand(const MCOperand &Op) {
     Operands.push_back(Op);
   }
+
+  void print(raw_ostream &OS) const;
+  void dump() const;
 };
 
 
