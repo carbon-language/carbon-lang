@@ -22,7 +22,7 @@ namespace llvm {
 
 class Constant;
 
-class constant_iterator : public forward_iterator<const Constant, ptrdiff_t> {
+class constant_iterator : public std::iterator<std::forward_iterator_tag, const Constant, ptrdiff_t> {
   const_inst_iterator InstI;                // Method instruction iterator
   unsigned OpIdx;                           // Operand index
 
