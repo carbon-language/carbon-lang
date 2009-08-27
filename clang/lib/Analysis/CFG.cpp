@@ -560,6 +560,9 @@ CFGBlock* CFGBuilder::VisitCompoundStmt(CompoundStmt* C) {
   for (CompoundStmt::reverse_body_iterator I=C->body_rbegin(), E=C->body_rend();
        I != E; ++I ) {
     LastBlock = addStmt(*I);
+    
+    if (badCFG)
+      return NULL;
   }  
   return LastBlock;
 }
