@@ -1047,19 +1047,24 @@ ARMBaseRegisterInfo::eliminateFrameIndex(MachineBasicBlock::iterator II,
   }
 
   // modify MI as necessary to handle as much of 'Offset' as possible
+  bool Done = false;
   if (!AFI->isThumbFunction())
-    Offset = rewriteARMFrameIndex(MI, i, FrameReg, Offset, TII);
+    Done = rewriteARMFrameIndex(MI, i, FrameReg, Offset, TII);
   else {
     assert(AFI->isThumb2Function());
-    Offset = rewriteT2FrameIndex(MI, i, FrameReg, Offset, TII);
+    Done = rewriteT2FrameIndex(MI, i, FrameReg, Offset, TII);
   }
-  if (Offset == 0)
+  if (Done)
     return;
+
+  const TargetInstrDesc &Desc = MI.getDesc();
+  unsigned AddrMode = (Desc.TSFlags & ARMII::AddrModeMask);
 
   // If we get here, the immediate doesn't fit into the instruction.  We folded
   // as much as possible above, handle the rest, providing a register that is
   // SP+LargeImm.
-  assert(Offset && "This code isn't needed if offset already handled!");
+  assert((Offset || AddrMode == ARMII::AddrMode4) &&
+         "This code isn't needed if offset already handled!");
 
   // Insert a set of r12 with the full address: r12 = sp + offset
   // If the offset we have is too large to fit into the instruction, we need
@@ -1073,15 +1078,20 @@ ARMBaseRegisterInfo::eliminateFrameIndex(MachineBasicBlock::iterator II,
   ARMCC::CondCodes Pred = (PIdx == -1)
     ? ARMCC::AL : (ARMCC::CondCodes)MI.getOperand(PIdx).getImm();
   unsigned PredReg = (PIdx == -1) ? 0 : MI.getOperand(PIdx+1).getReg();
-  if (!AFI->isThumbFunction())
-    emitARMRegPlusImmediate(MBB, II, MI.getDebugLoc(), ScratchReg, FrameReg,
-                            Offset, Pred, PredReg, TII);
+  if (Offset == 0)
+    // Must be addrmode4.
+    MI.getOperand(i).ChangeToRegister(FrameReg, false, false, false);
   else {
-    assert(AFI->isThumb2Function());
-    emitT2RegPlusImmediate(MBB, II, MI.getDebugLoc(), ScratchReg, FrameReg,
-                           Offset, Pred, PredReg, TII);
+    if (!AFI->isThumbFunction())
+      emitARMRegPlusImmediate(MBB, II, MI.getDebugLoc(), ScratchReg, FrameReg,
+                              Offset, Pred, PredReg, TII);
+    else {
+      assert(AFI->isThumb2Function());
+      emitT2RegPlusImmediate(MBB, II, MI.getDebugLoc(), ScratchReg, FrameReg,
+                             Offset, Pred, PredReg, TII);
+    }
+    MI.getOperand(i).ChangeToRegister(ScratchReg, false, false, true);
   }
-  MI.getOperand(i).ChangeToRegister(ScratchReg, false, false, true);
 }
 
 /// Move iterator pass the next bunch of callee save load / store ops for

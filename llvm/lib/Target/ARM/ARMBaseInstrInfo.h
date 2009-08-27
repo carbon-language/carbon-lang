@@ -317,15 +317,16 @@ void emitT2RegPlusImmediate(MachineBasicBlock &MBB,
 
 
 /// rewriteARMFrameIndex / rewriteT2FrameIndex -
-/// Rewrite MI to access 'Offset' bytes from the FP. Return the offset that
-/// could not be handled directly in MI.
-int rewriteARMFrameIndex(MachineInstr &MI, unsigned FrameRegIdx,
-                               unsigned FrameReg, int Offset,
-                               const ARMBaseInstrInfo &TII);
+/// Rewrite MI to access 'Offset' bytes from the FP. Return false if the
+/// offset could not be handled directly in MI, and return the left-over
+/// portion by reference.
+bool rewriteARMFrameIndex(MachineInstr &MI, unsigned FrameRegIdx,
+                          unsigned FrameReg, int &Offset,
+                          const ARMBaseInstrInfo &TII);
 
-int rewriteT2FrameIndex(MachineInstr &MI, unsigned FrameRegIdx,
-                        unsigned FrameReg, int Offset,
-                        const ARMBaseInstrInfo &TII);
+bool rewriteT2FrameIndex(MachineInstr &MI, unsigned FrameRegIdx,
+                         unsigned FrameReg, int &Offset,
+                         const ARMBaseInstrInfo &TII);
 
 } // End llvm namespace
 

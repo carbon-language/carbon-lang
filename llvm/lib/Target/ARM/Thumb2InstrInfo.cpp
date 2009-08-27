@@ -319,9 +319,9 @@ immediateOffsetOpcode(unsigned opcode)
   return 0;
 }
 
-int llvm::rewriteT2FrameIndex(MachineInstr &MI, unsigned FrameRegIdx,
-                              unsigned FrameReg, int Offset,
-                              const ARMBaseInstrInfo &TII) {
+bool llvm::rewriteT2FrameIndex(MachineInstr &MI, unsigned FrameRegIdx,
+                               unsigned FrameReg, int &Offset,
+                               const ARMBaseInstrInfo &TII) {
   unsigned Opcode = MI.getOpcode();
   const TargetInstrDesc &Desc = MI.getDesc();
   unsigned AddrMode = (Desc.TSFlags & ARMII::AddrModeMask);
@@ -340,7 +340,8 @@ int llvm::rewriteT2FrameIndex(MachineInstr &MI, unsigned FrameRegIdx,
       MI.setDesc(TII.get(ARM::tMOVgpr2gpr));
       MI.getOperand(FrameRegIdx).ChangeToRegister(FrameReg, false);
       MI.RemoveOperand(FrameRegIdx+1);
-      return 0;
+      Offset = 0;
+      return true;
     }
 
     if (Offset < 0) {
@@ -355,7 +356,8 @@ int llvm::rewriteT2FrameIndex(MachineInstr &MI, unsigned FrameRegIdx,
     if (ARM_AM::getT2SOImmVal(Offset) != -1) {
       MI.getOperand(FrameRegIdx).ChangeToRegister(FrameReg, false);
       MI.getOperand(FrameRegIdx+1).ChangeToImmediate(Offset);
-      return 0;
+      Offset = 0;
+      return true;
     }
     // Another common case: imm12.
     if (Offset < 4096) {
@@ -365,7 +367,8 @@ int llvm::rewriteT2FrameIndex(MachineInstr &MI, unsigned FrameRegIdx,
       MI.setDesc(TII.get(NewOpc));
       MI.getOperand(FrameRegIdx).ChangeToRegister(FrameReg, false);
       MI.getOperand(FrameRegIdx+1).ChangeToImmediate(Offset);
-      return 0;
+      Offset = 0;
+      return true;
     }
 
     // Otherwise, extract 8 adjacent bits from the immediate into this
@@ -387,7 +390,7 @@ int llvm::rewriteT2FrameIndex(MachineInstr &MI, unsigned FrameRegIdx,
       unsigned OffsetReg = MI.getOperand(FrameRegIdx+1).getReg();
       if (OffsetReg != 0) {
         MI.getOperand(FrameRegIdx).ChangeToRegister(FrameReg, false);
-        return Offset;
+        return Offset == 0;
       }
 
       MI.RemoveOperand(FrameRegIdx+1);
@@ -413,11 +416,14 @@ int llvm::rewriteT2FrameIndex(MachineInstr &MI, unsigned FrameRegIdx,
         NumBits = 12;
       }
     } else {
-      // VFP address modes.
-      assert(AddrMode == ARMII::AddrMode5);
-      int InstrOffs=ARM_AM::getAM5Offset(MI.getOperand(FrameRegIdx+1).getImm());
-      if (ARM_AM::getAM5Op(MI.getOperand(FrameRegIdx+1).getImm()) ==ARM_AM::sub)
-        InstrOffs *= -1;
+      // VFP and NEON address modes.
+      int InstrOffs = 0;
+      if (AddrMode == ARMII::AddrMode5) {
+        const MachineOperand &OffOp = MI.getOperand(FrameRegIdx+1);
+        InstrOffs = ARM_AM::getAM5Offset(OffOp.getImm());
+        if (ARM_AM::getAM5Op(OffOp.getImm()) == ARM_AM::sub)
+          InstrOffs *= -1;
+      }
       NumBits = 8;
       Scale = 4;
       Offset += InstrOffs * 4;
@@ -448,7 +454,8 @@ int llvm::rewriteT2FrameIndex(MachineInstr &MI, unsigned FrameRegIdx,
           ImmedOffset = -ImmedOffset;
       }
       ImmOp.ChangeToImmediate(ImmedOffset);
-      return 0;
+      Offset = 0;
+      return true;
     }
 
     // Otherwise, offset doesn't fit. Pull in what we can to simplify
@@ -468,5 +475,6 @@ int llvm::rewriteT2FrameIndex(MachineInstr &MI, unsigned FrameRegIdx,
     Offset &= ~(Mask*Scale);
   }
 
-  return (isSub) ? -Offset : Offset;
+  Offset = (isSub) ? -Offset : Offset;
+  return Offset == 0;
 }

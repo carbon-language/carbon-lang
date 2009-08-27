@@ -893,9 +893,9 @@ void llvm::emitARMRegPlusImmediate(MachineBasicBlock &MBB,
   }
 }
 
-int llvm::rewriteARMFrameIndex(MachineInstr &MI, unsigned FrameRegIdx,
-                               unsigned FrameReg, int Offset,
-                               const ARMBaseInstrInfo &TII) {
+bool llvm::rewriteARMFrameIndex(MachineInstr &MI, unsigned FrameRegIdx,
+                                unsigned FrameReg, int &Offset,
+                                const ARMBaseInstrInfo &TII) {
   unsigned Opcode = MI.getOpcode();
   const TargetInstrDesc &Desc = MI.getDesc();
   unsigned AddrMode = (Desc.TSFlags & ARMII::AddrModeMask);
@@ -912,7 +912,8 @@ int llvm::rewriteARMFrameIndex(MachineInstr &MI, unsigned FrameRegIdx,
       MI.setDesc(TII.get(ARM::MOVr));
       MI.getOperand(FrameRegIdx).ChangeToRegister(FrameReg, false);
       MI.RemoveOperand(FrameRegIdx+1);
-      return 0;
+      Offset = 0;
+      return true;
     } else if (Offset < 0) {
       Offset = -Offset;
       isSub = true;
@@ -924,7 +925,8 @@ int llvm::rewriteARMFrameIndex(MachineInstr &MI, unsigned FrameRegIdx,
       // Replace the FrameIndex with sp / fp
       MI.getOperand(FrameRegIdx).ChangeToRegister(FrameReg, false);
       MI.getOperand(FrameRegIdx+1).ChangeToImmediate(Offset);
-      return 0;
+      Offset = 0;
+      return true;
     }
 
     // Otherwise, pull as much of the immedidate into this ADDri/SUBri
@@ -962,7 +964,8 @@ int llvm::rewriteARMFrameIndex(MachineInstr &MI, unsigned FrameRegIdx,
       break;
     }
     case ARMII::AddrMode4:
-     break;
+      // Can't fold any offset even if it's zero.
+      return false;
     case ARMII::AddrMode5: {
       ImmIdx = FrameRegIdx+1;
       InstrOffs = ARM_AM::getAM5Offset(MI.getOperand(ImmIdx).getImm());
@@ -996,7 +999,8 @@ int llvm::rewriteARMFrameIndex(MachineInstr &MI, unsigned FrameRegIdx,
         if (isSub)
           ImmedOffset |= 1 << NumBits;
         ImmOp.ChangeToImmediate(ImmedOffset);
-        return 0;
+        Offset = 0;
+        return true;
       }
 
       // Otherwise, it didn't fit. Pull in what we can to simplify the immed.
@@ -1008,5 +1012,6 @@ int llvm::rewriteARMFrameIndex(MachineInstr &MI, unsigned FrameRegIdx,
     }
   }
 
-  return (isSub) ? -Offset : Offset;
+  Offset = (isSub) ? -Offset : Offset;
+  return Offset == 0;
 }
