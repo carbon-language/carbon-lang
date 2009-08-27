@@ -881,19 +881,14 @@ Sema::PerformImplicitConversion(Expr *&From, QualType ToType,
                                 const char *Flavor, bool AllowExplicit,
                                 bool Elidable)
 {
-  unsigned Flags = ORF_None;
-  if (AllowExplicit)
-    Flags |= ORF_AllowExplicit;
-  
   ImplicitConversionSequence ICS;
   ICS.ConversionKind = ImplicitConversionSequence::BadConversion;
   if (Elidable && getLangOptions().CPlusPlus0x) {
-    Flags |= ORF_ForceRValue;
-
-    ICS = TryImplicitConversion(From, ToType, Flags);
+    ICS = TryImplicitConversion(From, ToType, /*SuppressUserConversions*/false,
+                                AllowExplicit, /*ForceRValue*/true);
   }
   if (ICS.ConversionKind == ImplicitConversionSequence::BadConversion) {
-    ICS = TryImplicitConversion(From, ToType, Flags);
+    ICS = TryImplicitConversion(From, ToType, false, AllowExplicit);
   }
   return PerformImplicitConversion(From, ToType, ICS, Flavor);
 }

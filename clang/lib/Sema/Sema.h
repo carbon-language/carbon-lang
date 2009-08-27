@@ -721,17 +721,13 @@ public:
   bool MergeCXXFunctionDecl(FunctionDecl *New, FunctionDecl *Old);
 
   /// C++ Overloading.
-  enum OverloadResolutionFlags {
-    ORF_None = 0x0,
-    ORF_SuppressUserConversions = 0x1,
-    ORF_AllowExplicit = 0x2,
-    ORF_ForceRValue = 0x4
-  };
-  
   bool IsOverload(FunctionDecl *New, Decl* OldD, 
                   OverloadedFunctionDecl::function_iterator &MatchedDecl);
   ImplicitConversionSequence 
-  TryImplicitConversion(Expr* From, QualType ToType, unsigned Flags = ORF_None);
+  TryImplicitConversion(Expr* From, QualType ToType,
+                        bool SuppressUserConversions = false,
+                        bool AllowExplicit = false,
+                        bool ForceRValue = false);
   bool IsStandardConversion(Expr *From, QualType ToType, 
                             StandardConversionSequence& SCS);
   bool IsIntegralPromotion(Expr *From, QualType FromType, QualType ToType);

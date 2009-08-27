@@ -3144,10 +3144,7 @@ Sema::CheckReferenceInit(Expr *&Init, QualType DeclType,
     //   the argument expression. Any difference in top-level
     //   cv-qualification is subsumed by the initialization itself
     //   and does not constitute a conversion.
-    *ICS = TryImplicitConversion(Init, T1, 
-                                 SuppressUserConversions ? 
-                                 ORF_SuppressUserConversions : 
-                                 ORF_None);
+    *ICS = TryImplicitConversion(Init, T1, SuppressUserConversions);
     // Of course, that's still a reference binding.
     if (ICS->ConversionKind == ImplicitConversionSequence::StandardConversion) {
       ICS->Standard.ReferenceBinding = true;
