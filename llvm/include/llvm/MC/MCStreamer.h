@@ -251,7 +251,8 @@ namespace llvm {
 
   /// createMachOStream - Create a machine code streamer which will generative
   /// Mach-O format object files.
-  MCStreamer *createMachOStreamer(MCContext &Ctx, raw_ostream &OS);
+  MCStreamer *createMachOStreamer(MCContext &Ctx, raw_ostream &OS,
+                                  MCCodeEmitter *CE = 0);
 
   /// createELFStreamer - Create a machine code streamer which will generative
   /// ELF format object files.

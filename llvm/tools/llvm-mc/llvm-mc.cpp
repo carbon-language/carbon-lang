@@ -252,7 +252,8 @@ static int AssembleInput(const char *ProgName) {
     Str.reset(createAsmStreamer(Ctx, *Out, *TAI, AP.get(), CE.get()));
   } else {
     assert(FileType == OFT_ObjectFile && "Invalid file type!");
-    Str.reset(createMachOStreamer(Ctx, *Out));
+    CE.reset(TheTarget->createCodeEmitter(*TM));
+    Str.reset(createMachOStreamer(Ctx, *Out, CE.get()));
   }
 
   AsmParser Parser(SrcMgr, Ctx, *Str.get());

@@ -11,9 +11,12 @@
 
 #include "llvm/MC/MCAssembler.h"
 #include "llvm/MC/MCContext.h"
+#include "llvm/MC/MCCodeEmitter.h"
+#include "llvm/MC/MCInst.h"
 #include "llvm/MC/MCSection.h"
 #include "llvm/MC/MCSymbol.h"
 #include "llvm/Support/ErrorHandling.h"
+#include "llvm/Support/raw_ostream.h"
 using namespace llvm;
 
 namespace {
@@ -42,6 +45,8 @@ class MCMachOStreamer : public MCStreamer {
 private:
   MCAssembler Assembler;
 
+  MCCodeEmitter *Emitter;
+
   MCSectionData *CurSectionData;
 
   DenseMap<const MCSection*, MCSectionData*> SectionMap;
@@ -68,8 +73,9 @@ private:
   }
 
 public:
-  MCMachOStreamer(MCContext &Context, raw_ostream &_OS)
-    : MCStreamer(Context), Assembler(_OS), CurSectionData(0) {}
+  MCMachOStreamer(MCContext &Context, raw_ostream &_OS, MCCodeEmitter *_Emitter)
+    : MCStreamer(Context), Assembler(_OS), Emitter(_Emitter),
+      CurSectionData(0) {}
   ~MCMachOStreamer() {}
 
   const MCValue &AddValueSymbols(const MCValue &Value) {
@@ -302,13 +308,26 @@ void MCMachOStreamer::EmitValueToOffset(const MCValue &Offset,
 }
 
 void MCMachOStreamer::EmitInstruction(const MCInst &Inst) {
-  llvm_unreachable("FIXME: Not yet implemented!");
+  // Scan for values.
+  for (unsigned i = 0; i != Inst.getNumOperands(); ++i)
+    if (Inst.getOperand(i).isMCValue())
+      AddValueSymbols(Inst.getOperand(i).getMCValue());
+
+  if (!Emitter)
+    llvm_unreachable("no code emitter available!");
+
+  // FIXME: Relocations!
+  SmallString<256> Code;
+  raw_svector_ostream VecOS(Code);
+  Emitter->EncodeInstruction(Inst, VecOS);
+  EmitBytes(VecOS.str());
 }
 
 void MCMachOStreamer::Finish() {
   Assembler.Finish();
 }
 
-MCStreamer *llvm::createMachOStreamer(MCContext &Context, raw_ostream &OS) {
-  return new MCMachOStreamer(Context, OS);
+MCStreamer *llvm::createMachOStreamer(MCContext &Context, raw_ostream &OS,
+                                      MCCodeEmitter *CE) {
+  return new MCMachOStreamer(Context, OS, CE);
 }
