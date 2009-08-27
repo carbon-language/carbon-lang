@@ -16,6 +16,7 @@
 #include "llvm/ADT/SmallVector.h"
 
 #include <list>
+#include <string>
 
 namespace clang {
 namespace driver {
