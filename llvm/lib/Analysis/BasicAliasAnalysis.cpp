@@ -308,26 +308,15 @@ BasicAliasAnalysis::getModRefInfo(CallSite CS1, CallSite CS2) {
 AliasAnalysis::AliasResult
 BasicAliasAnalysis::alias(const Value *V1, unsigned V1Size,
                           const Value *V2, unsigned V2Size) {
-  // Strip off any constant expression casts if they exist
-  if (const ConstantExpr *CE = dyn_cast<ConstantExpr>(V1))
-    if (CE->isCast() && isa<PointerType>(CE->getOperand(0)->getType()))
-      V1 = CE->getOperand(0);
-  if (const ConstantExpr *CE = dyn_cast<ConstantExpr>(V2))
-    if (CE->isCast() && isa<PointerType>(CE->getOperand(0)->getType()))
-      V2 = CE->getOperand(0);
+  // Strip off any casts if they exist.
+  V1 = V1->stripPointerCasts();
+  V2 = V2->stripPointerCasts();
 
   // Are we checking for alias of the same value?
   if (V1 == V2) return MustAlias;
 
   if (!isa<PointerType>(V1->getType()) || !isa<PointerType>(V2->getType()))
     return NoAlias;  // Scalars cannot alias each other
-
-  // Strip off cast instructions.   Since V1 and V2 are pointers, they must be
-  // pointer<->pointer bitcasts.
-  if (const BitCastInst *I = dyn_cast<BitCastInst>(V1))
-    return alias(I->getOperand(0), V1Size, V2, V2Size);
-  if (const BitCastInst *I = dyn_cast<BitCastInst>(V2))
-    return alias(V1, V1Size, I->getOperand(0), V2Size);
 
   // Figure out what objects these things are pointing to if we can.
   const Value *O1 = V1->getUnderlyingObject();
