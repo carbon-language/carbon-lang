@@ -14,9 +14,9 @@
 #ifndef LLVM_CLANG_AST_STMT_ITR_H
 #define LLVM_CLANG_AST_STMT_ITR_H
 
-#include "llvm/ADT/iterator.h"
 #include "llvm/Support/DataTypes.h"
 #include <cassert>
+#include <iterator>
 
 namespace clang {
 

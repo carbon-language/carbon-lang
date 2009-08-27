@@ -21,7 +21,6 @@
 #include "clang/AST/StmtIterator.h"
 #include "clang/AST/DeclGroup.h"
 #include "llvm/ADT/SmallVector.h"
-#include "llvm/ADT/iterator.h"
 #include "clang/AST/ASTContext.h"
 #include <string>
 using llvm::dyn_cast_or_null;
