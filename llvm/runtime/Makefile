@@ -7,6 +7,8 @@
 # 
 ##===----------------------------------------------------------------------===##
 
+ifndef NO_RUNTIME_LIBS
+
 LEVEL = ..
 include $(LEVEL)/Makefile.config
 
@@ -22,3 +24,4 @@ include $(LEVEL)/Makefile.common
 
 install::
 
+endif
