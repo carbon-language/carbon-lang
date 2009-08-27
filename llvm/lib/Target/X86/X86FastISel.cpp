@@ -195,6 +195,7 @@ bool X86FastISel::X86FastEmitLoad(EVT VT, const X86AddressMode &AM,
   const TargetRegisterClass *RC = NULL;
   switch (VT.getSimpleVT().SimpleTy) {
   default: return false;
+  case MVT::i1:
   case MVT::i8:
     Opc = X86::MOV8rm;
     RC  = X86::GR8RegisterClass;
@@ -252,6 +253,14 @@ X86FastISel::X86FastEmitStore(EVT VT, unsigned Val,
   switch (VT.getSimpleVT().SimpleTy) {
   case MVT::f80: // No f80 support yet.
   default: return false;
+  case MVT::i1: {
+    // Mask out all but lowest bit.
+    unsigned AndResult = createResultReg(X86::GR8RegisterClass);
+    BuildMI(MBB, DL,
+            TII.get(X86::AND8ri), AndResult).addReg(Val).addImm(1);
+    Val = AndResult;
+  }
+  // FALLTHROUGH, handling i1 as i8.
   case MVT::i8:  Opc = X86::MOV8mr;  break;
   case MVT::i16: Opc = X86::MOV16mr; break;
   case MVT::i32: Opc = X86::MOV32mr; break;
@@ -277,8 +286,10 @@ bool X86FastISel::X86FastEmitStore(EVT VT, Value *Val,
   // If this is a store of a simple constant, fold the constant into the store.
   if (ConstantInt *CI = dyn_cast<ConstantInt>(Val)) {
     unsigned Opc = 0;
+    bool Signed = true;
     switch (VT.getSimpleVT().SimpleTy) {
     default: break;
+    case MVT::i1:  Signed = false;     // FALLTHROUGH to handle as i8.
     case MVT::i8:  Opc = X86::MOV8mi;  break;
     case MVT::i16: Opc = X86::MOV16mi; break;
     case MVT::i32: Opc = X86::MOV32mi; break;
@@ -291,7 +302,8 @@ bool X86FastISel::X86FastEmitStore(EVT VT, Value *Val,
     
     if (Opc) {
       addFullAddress(BuildMI(MBB, DL, TII.get(Opc)), AM)
-                             .addImm(CI->getSExtValue());
+                             .addImm(Signed ? CI->getSExtValue() :
+                                              CI->getZExtValue());
       return true;
     }
   }
@@ -606,7 +618,7 @@ bool X86FastISel::X86SelectCallAddress(Value *V, X86AddressMode &AM) {
 /// X86SelectStore - Select and emit code to implement store instructions.
 bool X86FastISel::X86SelectStore(Instruction* I) {
   EVT VT;
-  if (!isTypeLegal(I->getOperand(0)->getType(), VT))
+  if (!isTypeLegal(I->getOperand(0)->getType(), VT, /*AllowI1=*/true))
     return false;
 
   X86AddressMode AM;
@@ -620,7 +632,7 @@ bool X86FastISel::X86SelectStore(Instruction* I) {
 ///
 bool X86FastISel::X86SelectLoad(Instruction *I)  {
   EVT VT;
-  if (!isTypeLegal(I->getType(), VT))
+  if (!isTypeLegal(I->getType(), VT, /*AllowI1=*/true))
     return false;
 
   X86AddressMode AM;
