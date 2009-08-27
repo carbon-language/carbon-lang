@@ -947,39 +947,45 @@ void Sema::ActOnMemInitializers(DeclPtrTy ConstructorDecl,
     Diag(ColonLoc, diag::err_only_constructors_take_base_inits);
     return;
   }
-  llvm::DenseMap<void*, CXXBaseOrMemberInitializer *>Members;
-  bool err = false;
-  for (unsigned i = 0; i < NumMemInits; i++) {
-    CXXBaseOrMemberInitializer *Member = 
-      static_cast<CXXBaseOrMemberInitializer*>(MemInits[i]);
-    void *KeyToMember = GetKeyForMember(Member);
-    CXXBaseOrMemberInitializer *&PrevMember = Members[KeyToMember];
-    if (!PrevMember) {
-      PrevMember = Member;
-      continue;
-    }
-    if (FieldDecl *Field = Member->getMember())
-      Diag(Member->getSourceLocation(), 
-           diag::error_multiple_mem_initialization)
-      << Field->getNameAsString();
-    else {
-      Type *BaseClass = Member->getBaseClass();
-      assert(BaseClass && "ActOnMemInitializers - neither field or base");
-      Diag(Member->getSourceLocation(),  
-           diag::error_multiple_base_initialization)
-        << BaseClass->getDesugaredType(true);
-    }
-    Diag(PrevMember->getSourceLocation(), diag::note_previous_initializer)
-      << 0;
-    err = true;
-  }
   
-  if (err)
-    return;
+  if (!Constructor->isDependentContext()) {
+    llvm::DenseMap<void*, CXXBaseOrMemberInitializer *>Members;
+    bool err = false;
+    for (unsigned i = 0; i < NumMemInits; i++) {
+      CXXBaseOrMemberInitializer *Member = 
+        static_cast<CXXBaseOrMemberInitializer*>(MemInits[i]);
+      void *KeyToMember = GetKeyForMember(Member);
+      CXXBaseOrMemberInitializer *&PrevMember = Members[KeyToMember];
+      if (!PrevMember) {
+        PrevMember = Member;
+        continue;
+      }
+      if (FieldDecl *Field = Member->getMember())
+        Diag(Member->getSourceLocation(), 
+             diag::error_multiple_mem_initialization)
+        << Field->getNameAsString();
+      else {
+        Type *BaseClass = Member->getBaseClass();
+        assert(BaseClass && "ActOnMemInitializers - neither field or base");
+        Diag(Member->getSourceLocation(),  
+             diag::error_multiple_base_initialization)
+          << BaseClass->getDesugaredType(true);
+      }
+      Diag(PrevMember->getSourceLocation(), diag::note_previous_initializer)
+        << 0;
+      err = true;
+    }
+  
+    if (err)
+      return;
+  }
   
   BuildBaseOrMemberInitializers(Context, Constructor,
                       reinterpret_cast<CXXBaseOrMemberInitializer **>(MemInits), 
                       NumMemInits);
+  
+  if (Constructor->isDependentContext())
+    return;
   
   if (Diags.getDiagnosticLevel(diag::warn_base_initialized) == 
       Diagnostic::Ignored &&
