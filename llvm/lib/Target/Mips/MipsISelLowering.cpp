@@ -488,7 +488,6 @@ SDValue MipsTargetLowering::LowerGlobalAddress(SDValue Op, SelectionDAG &DAG) {
   // FIXME there isn't actually debug info here
   DebugLoc dl = Op.getDebugLoc();
   GlobalValue *GV = cast<GlobalAddressSDNode>(Op)->getGlobal();
-  SDValue GA = DAG.getTargetGlobalAddress(GV, MVT::i32);
 
   if (getTargetMachine().getRelocationModel() != Reloc::PIC_) {
     SDVTList VTs = DAG.getVTList(MVT::i32);
@@ -497,16 +496,20 @@ SDValue MipsTargetLowering::LowerGlobalAddress(SDValue Op, SelectionDAG &DAG) {
     
     // %gp_rel relocation
     if (TLOF.IsGlobalInSmallSection(GV, getTargetMachine())) { 
+      SDValue GA = DAG.getTargetGlobalAddress(GV, MVT::i32, MipsII::MO_GPREL);
       SDValue GPRelNode = DAG.getNode(MipsISD::GPRel, dl, VTs, &GA, 1);
       SDValue GOT = DAG.getGLOBAL_OFFSET_TABLE(MVT::i32);
       return DAG.getNode(ISD::ADD, dl, MVT::i32, GOT, GPRelNode); 
     }
     // %hi/%lo relocation
+    SDValue GA = DAG.getTargetGlobalAddress(GV, MVT::i32, MipsII::MO_ABS_HILO);
     SDValue HiPart = DAG.getNode(MipsISD::Hi, dl, VTs, &GA, 1);
+
     SDValue Lo = DAG.getNode(MipsISD::Lo, dl, MVT::i32, GA);
     return DAG.getNode(ISD::ADD, dl, MVT::i32, HiPart, Lo);
 
-  } else { // Abicall relocations, TODO: make this cleaner.
+  } else {
+    SDValue GA = DAG.getTargetGlobalAddress(GV, MVT::i32, MipsII::MO_GOT);
     SDValue ResNode = DAG.getLoad(MVT::i32, dl, 
                                   DAG.getEntryNode(), GA, NULL, 0);
     // On functions and global targets not internal linked only
@@ -684,6 +687,7 @@ MipsTargetLowering::LowerCall(SDValue Chain, SDValue Callee,
 
   MachineFunction &MF = DAG.getMachineFunction();
   MachineFrameInfo *MFI = MF.getFrameInfo();
+  bool IsPIC = getTargetMachine().getRelocationModel() == Reloc::PIC_;
 
   // Analyze operands of the call, assigning locations to each operand.
   SmallVector<CCValAssign, 16> ArgLocs;
@@ -792,10 +796,11 @@ MipsTargetLowering::LowerCall(SDValue Chain, SDValue Callee,
   // If the callee is a GlobalAddress/ExternalSymbol node (quite common, every
   // direct call is) turn it into a TargetGlobalAddress/TargetExternalSymbol 
   // node so that legalize doesn't hack it. 
+  unsigned char OpFlag = IsPIC ? MipsII::MO_GOT_CALL : MipsII::MO_NO_FLAG;
   if (GlobalAddressSDNode *G = dyn_cast<GlobalAddressSDNode>(Callee)) 
-    Callee = DAG.getTargetGlobalAddress(G->getGlobal(), getPointerTy());
+    Callee = DAG.getTargetGlobalAddress(G->getGlobal(), getPointerTy(), OpFlag);
   else if (ExternalSymbolSDNode *S = dyn_cast<ExternalSymbolSDNode>(Callee))
-    Callee = DAG.getTargetExternalSymbol(S->getSymbol(), getPointerTy());
+    Callee = DAG.getTargetExternalSymbol(S->getSymbol(),getPointerTy(), OpFlag);
 
   // MipsJmpLink = #chain, #target_address, #opt_in_flags...
   //             = Chain, Callee, Reg#1, Reg#2, ...  
@@ -826,7 +831,7 @@ MipsTargetLowering::LowerCall(SDValue Chain, SDValue Callee,
   // Create a stack location to hold GP when PIC is used. This stack 
   // location is used on function prologue to save GP and also after all 
   // emited CALL's to restore GP. 
-  if (getTargetMachine().getRelocationModel() == Reloc::PIC_) {
+  if (IsPIC) {
       // Function can have an arbitrary number of calls, so 
       // hold the LastArgStackLoc with the biggest offset.
       int FI;

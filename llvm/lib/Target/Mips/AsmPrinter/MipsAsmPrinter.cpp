@@ -306,44 +306,29 @@ void MipsAsmPrinter::printOperand(const MachineInstr *MI, int opNum) {
   const MachineOperand &MO = MI->getOperand(opNum);
   const TargetRegisterInfo  &RI = *TM.getRegisterInfo();
   bool closeP = false;
-  bool isPIC = (TM.getRelocationModel() == Reloc::PIC_);
-  bool isCodeLarge = (TM.getCodeModel() == CodeModel::Large);
 
-  // %hi and %lo used on mips gas to load global addresses on
-  // static code. %got is used to load global addresses when 
-  // using PIC_. %call16 is used to load direct call targets
-  // on PIC_ and small code size. %call_lo and %call_hi load 
-  // direct call targets on PIC_ and large code size.
-  if (MI->getOpcode() == Mips::LUi && !MO.isReg() && !MO.isImm()) {
-    if ((isPIC) && (isCodeLarge))
-      O << "%call_hi(";
-    else
-      O << "%hi(";
+  if (MO.getTargetFlags())
     closeP = true;
-  } else if ((MI->getOpcode() == Mips::ADDiu) && !MO.isReg() && !MO.isImm()) {
-    const MachineOperand &firstMO = MI->getOperand(opNum-1);
-    if (firstMO.getReg() == Mips::GP)
-      O << "%gp_rel(";
+
+  switch(MO.getTargetFlags()) {
+  default:
+    llvm_unreachable("Unknown target flag on GV operand");
+  case MipsII::MO_GPREL:    O << "%gp_rel("; break;
+  case MipsII::MO_GOT_CALL: O << "%call16("; break;
+  case MipsII::MO_GOT:
+    if (MI->getOpcode() == Mips::LW)
+      O << "%got(";
     else
       O << "%lo(";
-    closeP = true;
-  } else if ((isPIC) && (MI->getOpcode() == Mips::LW) &&
-             (!MO.isReg()) && (!MO.isImm())) {
-    const MachineOperand &firstMO = MI->getOperand(opNum-1);
-    const MachineOperand &lastMO  = MI->getOperand(opNum+1);
-    if ((firstMO.isReg()) && (lastMO.isReg())) {
-      if ((firstMO.getReg() == Mips::T9) && (lastMO.getReg() == Mips::GP) 
-          && (!isCodeLarge))
-        O << "%call16(";
-      else if ((firstMO.getReg() != Mips::T9) && (lastMO.getReg() == Mips::GP))
-        O << "%got(";
-      else if ((firstMO.getReg() == Mips::T9) && (lastMO.getReg() != Mips::GP) 
-               && (isCodeLarge))
-        O << "%call_lo(";
-      closeP = true;
-    }
+    break;
+  case MipsII::MO_ABS_HILO:
+    if (MI->getOpcode() == Mips::LUi)
+      O << "%hi(";
+    else
+      O << "%lo(";     
+    break;
   }
- 
+
   switch (MO.getType()) 
   {
     case MachineOperand::MO_Register:
