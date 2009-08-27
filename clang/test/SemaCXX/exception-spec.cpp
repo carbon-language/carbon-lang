@@ -118,3 +118,47 @@ struct Derived : Base
   virtual void g4() throw(A); // expected-error {{exception specification of overriding function is more lax}}
   virtual void g5() throw(P); // expected-error {{exception specification of overriding function is more lax}}
 };
+
+// Some functions to play with below.
+void s1() throw();
+void s2() throw(int);
+void s3() throw(A);
+void s4() throw(B1);
+void s5() throw(D);
+void s6();
+void s7() throw(int, float);
+void (*s8())() throw(B1); // s8 returns a pointer to function with spec
+void s9(void (*)() throw(B1)); // s9 takes pointer to function with spec
+
+void fnptrs()
+{
+  // Assignment and initialization of function pointers.
+  void (*t1)() throw() = &s1;    // valid
+  t1 = &s2;                      // invalid
+  t1 = &s3;                      // invalid
+  void (&t2)() throw() = s2;     // invalid
+  void (*t3)() throw(int) = &s2; // valid
+  void (*t4)() throw(A) = &s1;   // valid
+  t4 = &s3;                      // valid
+  t4 = &s4;                      // valid
+  t4 = &s5;                      // invalid
+  void (*t5)() = &s1;            // valid
+  t5 = &s2;                      // valid
+  t5 = &s6;                      // valid
+  t5 = &s7;                      // valid
+  t1 = t3;                       // invalid
+  t3 = t1;                       // valid
+  void (*t6)() throw(B1);
+  t6 = t4;                       // invalid
+  t4 = t6;                       // valid
+  t5 = t1;                       // valid
+  t1 = t5;                       // invalid
+
+  // return types and arguments must match exactly, no inheritance allowed
+  void (*(*t7)())() throw(B1) = &s8;       // valid
+  void (*(*t8)())() throw(A) = &s8;        // invalid
+  void (*(*t9)())() throw(D) = &s8;        // invalid
+  void (*t10)(void (*)() throw(B1)) = &s9; // valid   expected-warning{{disambiguated}}
+  void (*t11)(void (*)() throw(A)) = &s9;  // invalid expected-warning{{disambiguated}}
+  void (*t12)(void (*)() throw(D)) = &s9;  // invalid expected-warning{{disambiguated}}
+}
