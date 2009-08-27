@@ -78,7 +78,7 @@ void ARMTargetLowering::addTypeForNEON(EVT VT, EVT PromotedLdStVT,
     setOperationAction(ISD::EXTRACT_VECTOR_ELT, VT.getSimpleVT(), Custom);
   setOperationAction(ISD::BUILD_VECTOR, VT.getSimpleVT(), Custom);
   setOperationAction(ISD::VECTOR_SHUFFLE, VT.getSimpleVT(), Custom);
-  setOperationAction(ISD::SCALAR_TO_VECTOR, VT.getSimpleVT(), Expand);
+  setOperationAction(ISD::SCALAR_TO_VECTOR, VT.getSimpleVT(), Custom);
   setOperationAction(ISD::CONCAT_VECTORS, VT.getSimpleVT(), Custom);
   setOperationAction(ISD::EXTRACT_SUBVECTOR, VT.getSimpleVT(), Expand);
   if (VT.isInteger()) {
@@ -2706,6 +2706,12 @@ static SDValue LowerVECTOR_SHUFFLE(SDValue Op, SelectionDAG &DAG) {
 }
 
 static SDValue LowerSCALAR_TO_VECTOR(SDValue Op, SelectionDAG &DAG) {
+  EVT VT = Op.getValueType();
+  EVT EltVT = VT.getVectorElementType();
+
+  if (EltVT.isInteger())
+    return SDValue();
+
   return Op;
 }
 
