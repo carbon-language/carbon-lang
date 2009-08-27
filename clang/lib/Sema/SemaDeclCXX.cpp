@@ -2837,9 +2837,9 @@ Sema::CompareReferenceRelationship(QualType T1, QualType T2,
 /// When @p ForceRValue, we unconditionally treat the initializer as an rvalue.
 bool 
 Sema::CheckReferenceInit(Expr *&Init, QualType DeclType,
-                         ImplicitConversionSequence *ICS,
                          bool SuppressUserConversions,
-                         bool AllowExplicit, bool ForceRValue) {
+                         bool AllowExplicit, bool ForceRValue,
+                         ImplicitConversionSequence *ICS) {
   assert(DeclType->isReferenceType() && "Reference init needs a reference");
 
   QualType T1 = DeclType->getAs<ReferenceType>()->getPointeeType();

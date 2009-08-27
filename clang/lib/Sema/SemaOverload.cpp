@@ -1925,8 +1925,11 @@ Sema::TryCopyInitialization(Expr *From, QualType ToType,
                             bool SuppressUserConversions, bool ForceRValue) {
   if (ToType->isReferenceType()) {
     ImplicitConversionSequence ICS;
-    CheckReferenceInit(From, ToType, &ICS, SuppressUserConversions,
-                       /*AllowExplicit=*/false, ForceRValue);
+    CheckReferenceInit(From, ToType, 
+                       SuppressUserConversions,
+                       /*AllowExplicit=*/false,
+                       ForceRValue,
+                       &ICS);
     return ICS;
   } else {
     return TryImplicitConversion(From, ToType, 
@@ -1958,7 +1961,10 @@ bool Sema::PerformCopyInitialization(Expr *&From, QualType ToType,
   }
 
   if (ToType->isReferenceType())
-    return CheckReferenceInit(From, ToType);
+    return CheckReferenceInit(From, ToType,
+                              /*SuppressUserConversions=*/false,
+                              /*AllowExplicit=*/false,
+                              /*ForceRValue=*/false);
 
   if (!PerformImplicitConversion(From, ToType, Flavor,
                                  /*AllowExplicit=*/false, Elidable))

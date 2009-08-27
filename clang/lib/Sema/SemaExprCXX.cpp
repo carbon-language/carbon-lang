@@ -1201,7 +1201,10 @@ static bool TryClassUnification(Sema &Self, Expr *From, Expr *To,
     //   conversion the reference must bind directly to E1.
     if (!Self.CheckReferenceInit(From,
                             Self.Context.getLValueReferenceType(To->getType()),
-                            &ICS))
+                                 /*SuppressUserConversions=*/false,
+                                 /*AllowExplicit=*/false,
+                                 /*ForceRValue=*/false,
+                                 &ICS))
     {
       assert((ICS.ConversionKind ==
                   ImplicitConversionSequence::StandardConversion ||
@@ -1317,14 +1320,20 @@ static bool ConvertForConditional(Sema &Self, Expr *&E,
     // FIXME: CheckReferenceInit should be able to reuse the ICS instead of
     // redoing all the work.
     return Self.CheckReferenceInit(E, Self.Context.getLValueReferenceType(
-                                        TargetType(ICS)));
+                                        TargetType(ICS)),
+                                   /*SuppressUserConversions=*/false,
+                                   /*AllowExplicit=*/false,
+                                   /*ForceRValue=*/false);
   }
   if (ICS.ConversionKind == ImplicitConversionSequence::UserDefinedConversion &&
       ICS.UserDefined.After.ReferenceBinding) {
     assert(ICS.UserDefined.After.DirectBinding &&
            "TryClassUnification should never generate indirect ref bindings");
     return Self.CheckReferenceInit(E, Self.Context.getLValueReferenceType(
-                                        TargetType(ICS)));
+                                        TargetType(ICS)),
+                                   /*SuppressUserConversions=*/false,
+                                   /*AllowExplicit=*/false,
+                                   /*ForceRValue=*/false);
   }
   if (Self.PerformImplicitConversion(E, TargetType(ICS), ICS, "converting"))
     return true;

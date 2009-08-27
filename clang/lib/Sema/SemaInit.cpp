@@ -132,7 +132,10 @@ bool Sema::CheckInitializerTypes(Expr *&Init, QualType &DeclType,
   //   (8.3.2), shall be initialized by an object, or function, of
   //   type T or by an object that can be converted into a T.
   if (DeclType->isReferenceType())
-    return CheckReferenceInit(Init, DeclType, 0, false, DirectInit);
+    return CheckReferenceInit(Init, DeclType, 
+                              /*SuppressUserConversions=*/false,
+                              /*AllowExplicit=*/DirectInit,
+                              /*ForceRValue=*/false);
   
   // C99 6.7.8p3: The type of the entity to be initialized shall be an array
   // of unknown size ("[]") or an object type that is not a variable array type.
@@ -777,7 +780,10 @@ void InitListChecker::CheckReferenceType(InitListExpr *IList, QualType DeclType,
     } 
 
     Expr *savExpr = expr; // Might be promoted by CheckSingleInitializer.
-    if (SemaRef.CheckReferenceInit(expr, DeclType))
+    if (SemaRef.CheckReferenceInit(expr, DeclType,
+                                   /*SuppressUserConversions=*/false,
+                                   /*AllowExplicit=*/false,
+                                   /*ForceRValue=*/false))                                   
       hadError = true;
     else if (savExpr != expr) {
       // The type was promoted, update initializer list.

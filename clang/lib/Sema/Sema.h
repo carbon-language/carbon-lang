@@ -3371,10 +3371,10 @@ public:
                                                       bool& DerivedToBase);
 
   bool CheckReferenceInit(Expr *&simpleInit_or_initList, QualType declType,
-                          ImplicitConversionSequence *ICS = 0,
-                          bool SuppressUserConversions = false,
-                          bool AllowExplicit = false,
-                          bool ForceRValue = false);
+                          bool SuppressUserConversions,
+                          bool AllowExplicit,
+                          bool ForceRValue,
+                          ImplicitConversionSequence *ICS = 0);
 
   /// CheckCastTypes - Check type constraints for casting between types under
   /// C semantics, or forward to CXXCheckCStyleCast in C++.

@@ -763,7 +763,11 @@ TryStaticImplicitCast(Sema &Self, Expr *SrcExpr, QualType DestType,
     // the reinterpret_cast way. In that case, we pass an ICS so we don't
     // get error messages.
     ImplicitConversionSequence ICS;
-    bool failed = Self.CheckReferenceInit(SrcExpr, DestType, CStyle ? &ICS : 0);
+    bool failed = Self.CheckReferenceInit(SrcExpr, DestType, 
+                                          /*SuppressUserConversions=*/false,
+                                          /*AllowExplicit=*/false,
+                                          /*ForceRValue=*/false,
+                                          CStyle ? &ICS : 0);
     if (!failed)
       return TC_Success;
     if (CStyle)
