@@ -1238,7 +1238,8 @@ static bool TryClassUnification(Sema &Self, Expr *From, Expr *To,
       // standard doesn't say.
       ICS = Self.TryCopyInitialization(From, TTy, 
                                        /*SuppressUserConversions=*/false,
-                                       /*ForceRValue=*/false);
+                                       /*ForceRValue=*/false,
+                                       /*InOverloadResolution=*/false);
     }
   } else {
     //     -- Otherwise: E1 can be converted to match E2 if E1 can be

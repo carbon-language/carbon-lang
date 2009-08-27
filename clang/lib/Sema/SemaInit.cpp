@@ -666,7 +666,8 @@ void InitListChecker::CheckSubElementType(InitListExpr *IList,
       ImplicitConversionSequence ICS 
         = SemaRef.TryCopyInitialization(expr, ElemType,
                                         /*SuppressUserConversions=*/false,
-                                        /*ForceRValue=*/false);
+                                        /*ForceRValue=*/false,
+                                        /*InOverloadResolution=*/false);
 
       if (ICS.ConversionKind != ImplicitConversionSequence::BadConversion) {
         if (SemaRef.PerformImplicitConversion(expr, ElemType, ICS, 

@@ -1922,7 +1922,8 @@ Sema::CompareDerivedToBaseConversions(const StandardConversionSequence& SCS1,
 /// then we treat @p From as an rvalue, even if it is an lvalue.
 ImplicitConversionSequence 
 Sema::TryCopyInitialization(Expr *From, QualType ToType, 
-                            bool SuppressUserConversions, bool ForceRValue) {
+                            bool SuppressUserConversions, bool ForceRValue,
+                            bool InOverloadResolution) {
   if (ToType->isReferenceType()) {
     ImplicitConversionSequence ICS;
     CheckReferenceInit(From, ToType, 
@@ -2172,7 +2173,8 @@ Sema::AddOverloadCandidate(FunctionDecl *Function,
       QualType ParamType = Proto->getArgType(ArgIdx);
       Candidate.Conversions[ArgIdx] 
         = TryCopyInitialization(Args[ArgIdx], ParamType, 
-                                SuppressUserConversions, ForceRValue);
+                                SuppressUserConversions, ForceRValue,
+                                /*InOverloadResolution=*/true);
       if (Candidate.Conversions[ArgIdx].ConversionKind 
             == ImplicitConversionSequence::BadConversion) {
         Candidate.Viable = false;
@@ -2288,7 +2290,8 @@ Sema::AddMethodCandidate(CXXMethodDecl *Method, Expr *Object,
       QualType ParamType = Proto->getArgType(ArgIdx);
       Candidate.Conversions[ArgIdx + 1] 
         = TryCopyInitialization(Args[ArgIdx], ParamType, 
-                                SuppressUserConversions, ForceRValue);
+                                SuppressUserConversions, ForceRValue,
+                                /*InOverloadResolution=*/false);
       if (Candidate.Conversions[ArgIdx + 1].ConversionKind 
             == ImplicitConversionSequence::BadConversion) {
         Candidate.Viable = false;
@@ -2445,7 +2448,8 @@ Sema::AddConversionCandidate(CXXConversionDecl *Conversion,
   ImplicitConversionSequence ICS = 
     TryCopyInitialization(&Call, ToType, 
                           /*SuppressUserConversions=*/true,
-                          /*ForceRValue=*/false);
+                          /*ForceRValue=*/false,
+                          /*InOverloadResolution=*/false);
   
   switch (ICS.ConversionKind) {
   case ImplicitConversionSequence::StandardConversion:
@@ -2560,7 +2564,8 @@ void Sema::AddSurrogateCandidate(CXXConversionDecl *Conversion,
       Candidate.Conversions[ArgIdx + 1] 
         = TryCopyInitialization(Args[ArgIdx], ParamType, 
                                 /*SuppressUserConversions=*/false,
-                                /*ForceRValue=*/false);
+                                /*ForceRValue=*/false,
+                                /*InOverloadResolution=*/false);
       if (Candidate.Conversions[ArgIdx + 1].ConversionKind 
             == ImplicitConversionSequence::BadConversion) {
         Candidate.Viable = false;
@@ -2692,7 +2697,8 @@ void Sema::AddBuiltinCandidate(QualType ResultTy, QualType *ParamTys,
       Candidate.Conversions[ArgIdx] 
         = TryCopyInitialization(Args[ArgIdx], ParamTys[ArgIdx], 
                                 ArgIdx == 0 && IsAssignmentOperator,
-                                /*ForceRValue=*/false);
+                                /*ForceRValue=*/false,
+                                /*InOverloadResolution=*/false);
     }
     if (Candidate.Conversions[ArgIdx].ConversionKind 
         == ImplicitConversionSequence::BadConversion) {
