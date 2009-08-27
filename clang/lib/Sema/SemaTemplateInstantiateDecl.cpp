@@ -416,7 +416,11 @@ Decl *TemplateDeclInstantiator::VisitCXXRecordDecl(CXXRecordDecl *D) {
                             D->getLocation(), D->getIdentifier(),
                             D->getTagKeywordLoc(), PrevDecl);
   Record->setImplicit(D->isImplicit());
-  Record->setAccess(D->getAccess());
+  // FIXME: Check against AS_none is an ugly hack to work around the issue that
+  // the tag decls introduced by friend class declarations don't have an access
+  // specifier. Remove once this area of the code gets sorted out.
+  if (D->getAccess() != AS_none)
+    Record->setAccess(D->getAccess());
   if (!D->isInjectedClassName())
     Record->setInstantiationOfMemberClass(D);
 
