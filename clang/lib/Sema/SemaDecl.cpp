@@ -2534,10 +2534,11 @@ Sema::ActOnFunctionDeclarator(Scope* S, Declarator& D, DeclContext* DC,
       if (CheckTemplateDeclScope(S, TemplateParams))
         return 0;
       
-      FunctionTemplate = FunctionTemplateDecl::Create(Context, CurContext,
+      FunctionTemplate = FunctionTemplateDecl::Create(Context, DC,
                                                       NewFD->getLocation(),
                                                       Name, TemplateParams,
                                                       NewFD);
+      FunctionTemplate->setLexicalDeclContext(CurContext);
       NewFD->setDescribedFunctionTemplate(FunctionTemplate);
     } else {
       // FIXME: Handle function template specializations

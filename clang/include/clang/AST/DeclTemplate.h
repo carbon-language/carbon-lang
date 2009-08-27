@@ -552,9 +552,15 @@ protected:
   /// \brief Data that is common to all of the declarations of a given
   /// function template.
   struct Common {
+    Common() : InstantiatedFromMember(0) { }
+    
     /// \brief The function template specializations for this function
     /// template, including explicit specializations and instantiations.
     llvm::FoldingSet<FunctionTemplateSpecializationInfo> Specializations;
+    
+    /// \brief The member function template from which this was most
+    /// directly instantiated (or null).
+    FunctionTemplateDecl *InstantiatedFromMember;    
   };
   
   /// \brief A pointer to the previous declaration (if this is a redeclaration)
@@ -605,6 +611,37 @@ public:
   }
   
   virtual FunctionTemplateDecl *getCanonicalDecl();
+  
+  /// \brief Retrieve the member function template that this function template 
+  /// was instantiated from.
+  ///
+  /// This routine will return non-NULL for member function templates of
+  /// class templates.  For example, given:
+  ///
+  /// \code
+  /// template <typename T>
+  /// struct X {
+  ///   template <typename U> void f();
+  /// };
+  /// \endcode
+  ///
+  /// X<int>::A<float> is a CXXMethodDecl (whose parent is X<int>, a
+  /// ClassTemplateSpecializationDecl) for which getPrimaryTemplate() will 
+  /// return X<int>::f, a FunctionTemplateDecl (whose parent is again
+  /// X<int>) for which getInstantiatedFromMemberTemplate() will return
+  /// X<T>::f, a FunctionTemplateDecl (whose parent is X<T>, a 
+  /// ClassTemplateDecl).
+  ///
+  /// \returns NULL if this is not an instantiation of a member function 
+  /// template.
+  FunctionTemplateDecl *getInstantiatedFromMemberTemplate() {
+    return getCommonPtr()->InstantiatedFromMember;
+  }
+  
+  void setInstantiatedFromMemberTemplate(FunctionTemplateDecl *FTD) {
+    assert(!getCommonPtr()->InstantiatedFromMember);
+    getCommonPtr()->InstantiatedFromMember = FTD;
+  }
   
   /// Create a template function node.
   static FunctionTemplateDecl *Create(ASTContext &C, DeclContext *DC,

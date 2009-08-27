@@ -48,13 +48,15 @@ namespace {
     Decl *VisitFriendClassDecl(FriendClassDecl *D);
     Decl *VisitFunctionDecl(FunctionDecl *D);
     Decl *VisitCXXRecordDecl(CXXRecordDecl *D);
-    Decl *VisitCXXMethodDecl(CXXMethodDecl *D);
+    Decl *VisitCXXMethodDecl(CXXMethodDecl *D,
+                             TemplateParameterList *TemplateParams = 0);
     Decl *VisitCXXConstructorDecl(CXXConstructorDecl *D);
     Decl *VisitCXXDestructorDecl(CXXDestructorDecl *D);
     Decl *VisitCXXConversionDecl(CXXConversionDecl *D);
     ParmVarDecl *VisitParmVarDecl(ParmVarDecl *D);
     Decl *VisitOriginalParmVarDecl(OriginalParmVarDecl *D);
     Decl *VisitClassTemplateDecl(ClassTemplateDecl *D);
+    Decl *VisitFunctionTemplateDecl(FunctionTemplateDecl *D);
     Decl *VisitTemplateTypeParmDecl(TemplateTypeParmDecl *D);
 
     // Base case. FIXME: Remove once we can instantiate everything.
@@ -356,7 +358,8 @@ Decl *TemplateDeclInstantiator::VisitEnumConstantDecl(EnumConstantDecl *D) {
 Decl *TemplateDeclInstantiator::VisitClassTemplateDecl(ClassTemplateDecl *D) {
   TemplateParameterList *TempParams = D->getTemplateParameters();
   TemplateParameterList *InstParams = SubstTemplateParams(TempParams);
-  if (!InstParams) return NULL;
+  if (!InstParams) 
+    return NULL;
 
   CXXRecordDecl *Pattern = D->getTemplatedDecl();
   CXXRecordDecl *RecordInst
@@ -373,6 +376,32 @@ Decl *TemplateDeclInstantiator::VisitClassTemplateDecl(ClassTemplateDecl *D) {
 
   Owner->addDecl(Inst);
   return Inst;
+}
+
+Decl *
+TemplateDeclInstantiator::VisitFunctionTemplateDecl(FunctionTemplateDecl *D) {
+  TemplateParameterList *TempParams = D->getTemplateParameters();
+  TemplateParameterList *InstParams = SubstTemplateParams(TempParams);
+  if (!InstParams) 
+    return NULL;
+  
+  // FIXME: Handle instantiation of nested function templates that aren't 
+  // member function templates. This could happen inside a FriendDecl.
+  assert(isa<CXXMethodDecl>(D->getTemplatedDecl()));
+  CXXMethodDecl *InstMethod 
+    = cast_or_null<CXXMethodDecl>(
+                 VisitCXXMethodDecl(cast<CXXMethodDecl>(D->getTemplatedDecl()), 
+                                    InstParams));
+  if (!InstMethod)
+    return 0;
+
+  // Link the instantiated function template declaration to the function 
+  // template from which it was instantiated.
+  FunctionTemplateDecl *InstTemplate = InstMethod->getDescribedFunctionTemplate();
+  assert(InstTemplate && "VisitCXXMethodDecl didn't create a template!");
+  InstTemplate->setInstantiatedFromMemberTemplate(D);
+  Owner->addDecl(InstTemplate);
+  return InstTemplate;
 }
 
 Decl *TemplateDeclInstantiator::VisitCXXRecordDecl(CXXRecordDecl *D) {
@@ -481,12 +510,15 @@ Decl *TemplateDeclInstantiator::VisitFunctionDecl(FunctionDecl *D) {
   return Function;
 }
 
-Decl *TemplateDeclInstantiator::VisitCXXMethodDecl(CXXMethodDecl *D) {
-  // Check whether there is already a function template specialization for
-  // this declaration.
+Decl *
+TemplateDeclInstantiator::VisitCXXMethodDecl(CXXMethodDecl *D,
+                                      TemplateParameterList *TemplateParams) {
   FunctionTemplateDecl *FunctionTemplate = D->getDescribedFunctionTemplate();
   void *InsertPos = 0;
-  if (FunctionTemplate) {
+  if (FunctionTemplate && !TemplateParams) {
+    // We are creating a function template specialization from a function 
+    // template. Check whether there is already a function template 
+    // specialization for this particular set of template arguments.
     llvm::FoldingSetNodeID ID;
     FunctionTemplateSpecializationInfo::Profile(ID, 
                                           TemplateArgs.getFlatArgumentList(),
@@ -548,7 +580,28 @@ Decl *TemplateDeclInstantiator::VisitCXXMethodDecl(CXXMethodDecl *D) {
                                    D->isStatic(), D->isInline());
   }
 
-  if (!FunctionTemplate)
+  if (TemplateParams) {
+    // Our resulting instantiation is actually a function template, since we
+    // are substituting only the outer template parameters. For example, given
+    // 
+    //   template<typename T>
+    //   struct X {
+    //     template<typename U> void f(T, U);
+    //   };
+    //
+    //   X<int> x;
+    //
+    // We are instantiating the member template "f" within X<int>, which means
+    // substituting int for T, but leaving "f" as a member function template.
+    // Build the function template itself.
+    FunctionTemplate = FunctionTemplateDecl::Create(SemaRef.Context, Record,
+                                                    Method->getLocation(),
+                                                    Method->getDeclName(), 
+                                                    TemplateParams, Method);
+    if (D->isOutOfLine())
+      FunctionTemplate->setLexicalDeclContext(D->getLexicalDeclContext());
+    Method->setDescribedFunctionTemplate(FunctionTemplate);
+  } else if (!FunctionTemplate)
     Method->setInstantiationOfMemberFunction(D);
 
   // If we are instantiating a member function defined 
@@ -567,7 +620,7 @@ Decl *TemplateDeclInstantiator::VisitCXXMethodDecl(CXXMethodDecl *D) {
 
   NamedDecl *PrevDecl = 0;
   
-  if (!FunctionTemplate) {
+  if (!FunctionTemplate || TemplateParams) {
     PrevDecl = SemaRef.LookupQualifiedName(Owner, Name, 
                                            Sema::LookupOrdinaryName, true);
   
@@ -579,7 +632,7 @@ Decl *TemplateDeclInstantiator::VisitCXXMethodDecl(CXXMethodDecl *D) {
       PrevDecl = 0;
   }
 
-  if (FunctionTemplate)
+  if (FunctionTemplate && !TemplateParams)
     // Record this function template specialization.
     Method->setFunctionTemplateSpecialization(SemaRef.Context,
                                               FunctionTemplate,
