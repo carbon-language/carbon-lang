@@ -7595,6 +7595,8 @@ X86TargetLowering::EmitAtomicMinMaxWithCustomInserter(MachineInstr *mInstr,
   return nextMBB;
 }
 
+// FIXME: When we get size specific XMM0 registers, i.e. XMM0_V16I8
+// all of this code can be replaced with that in the .td file.
 MachineBasicBlock *
 X86TargetLowering::EmitPCMP(MachineInstr *MI, MachineBasicBlock *BB,
 			    unsigned numArgs, bool memArg) const {
