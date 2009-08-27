@@ -1,7 +1,5 @@
 // RUN: clang-cc -fsyntax-only -pedantic -verify %s
 
-#include <stddef.h>
-
 int test(char *C) { // nothing here should warn.
   return C != ((void*)0);
   return C != (void*)0;
