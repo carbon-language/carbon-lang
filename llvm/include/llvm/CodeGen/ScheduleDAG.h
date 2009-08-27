@@ -535,7 +535,7 @@ namespace llvm {
     void EmitLiveInCopies(MachineBasicBlock *MBB);
   };
 
-  class SUnitIterator : public forward_iterator<SUnit, ptrdiff_t> {
+  class SUnitIterator : public std::iterator<std::forward_iterator_tag, SUnit, ptrdiff_t> {
     SUnit *Node;
     unsigned Operand;
 

@@ -26,8 +26,8 @@
 #define LLVM_USE_H
 
 #include "llvm/Support/Casting.h"
-#include "llvm/ADT/iterator.h"
 #include "llvm/ADT/PointerIntPair.h"
+#include <iterator>
 
 namespace llvm {
 
@@ -158,8 +158,8 @@ template<> struct simplify_type<const Use> {
 
 
 template<typename UserTy>  // UserTy == 'User' or 'const User'
-class value_use_iterator : public forward_iterator<UserTy*, ptrdiff_t> {
-  typedef forward_iterator<UserTy*, ptrdiff_t> super;
+class value_use_iterator : public std::iterator<std::forward_iterator_tag, UserTy*, ptrdiff_t> {
+  typedef std::iterator<std::forward_iterator_tag, UserTy*, ptrdiff_t> super;
   typedef value_use_iterator<UserTy> _Self;
 
   Use *U;

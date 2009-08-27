@@ -18,7 +18,6 @@
 
 #include "llvm/ADT/GraphTraits.h"
 #include "llvm/ADT/IntrusiveRefCntPtr.h"
-#include "llvm/ADT/iterator.h"
 #include "llvm/ADT/SmallVector.h"
 #include "llvm/ADT/StringMap.h"
 #include "llvm/ADT/StringSet.h"
@@ -242,7 +241,7 @@ namespace llvmc {
 
 
   /// NodeChildIterator - Another auxiliary class needed by GraphTraits.
-  class NodeChildIterator : public bidirectional_iterator<Node, ptrdiff_t> {
+  class NodeChildIterator : public std::iterator<std::bidirectional_iterator_tag, Node, ptrdiff_t> {
     typedef NodeChildIterator ThisType;
     typedef Node::container_type::iterator iterator;
 

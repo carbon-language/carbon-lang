@@ -17,7 +17,6 @@
 #define LLVM_ADT_POSTORDERITERATOR_H
 
 #include "llvm/ADT/GraphTraits.h"
-#include "llvm/ADT/iterator.h"
 #include "llvm/ADT/SmallPtrSet.h"
 #include <set>
 #include <stack>
@@ -43,9 +42,9 @@ template<class GraphT,
   class SetType = llvm::SmallPtrSet<typename GraphTraits<GraphT>::NodeType*, 8>,
   bool ExtStorage = false,
   class GT = GraphTraits<GraphT> >
-class po_iterator : public forward_iterator<typename GT::NodeType, ptrdiff_t>,
+class po_iterator : public std::iterator<std::forward_iterator_tag, typename GT::NodeType, ptrdiff_t>,
                     public po_iterator_storage<SetType, ExtStorage> {
-  typedef forward_iterator<typename GT::NodeType, ptrdiff_t> super;
+  typedef std::iterator<std::forward_iterator_tag, typename GT::NodeType, ptrdiff_t> super;
   typedef typename GT::NodeType          NodeType;
   typedef typename GT::ChildIteratorType ChildItTy;
 

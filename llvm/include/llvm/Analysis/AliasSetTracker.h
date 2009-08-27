@@ -20,7 +20,6 @@
 #include "llvm/Support/CallSite.h"
 #include "llvm/Support/ValueHandle.h"
 #include "llvm/ADT/DenseMap.h"
-#include "llvm/ADT/iterator.h"
 #include "llvm/ADT/ilist.h"
 #include "llvm/ADT/ilist_node.h"
 #include <vector>
@@ -159,7 +158,7 @@ public:
   void dump() const;
 
   /// Define an iterator for alias sets... this is just a forward iterator.
-  class iterator : public forward_iterator<PointerRec, ptrdiff_t> {
+  class iterator : public std::iterator<std::forward_iterator_tag, PointerRec, ptrdiff_t> {
     PointerRec *CurNode;
   public:
     explicit iterator(PointerRec *CN = 0) : CurNode(CN) {}

@@ -15,7 +15,6 @@
 #ifndef LLVM_ADT_EQUIVALENCECLASSES_H
 #define LLVM_ADT_EQUIVALENCECLASSES_H
 
-#include "llvm/ADT/iterator.h"
 #include "llvm/Support/DataTypes.h"
 #include <set>
 
@@ -234,8 +233,8 @@ public:
     return L1;
   }
 
-  class member_iterator : public forward_iterator<ElemTy, ptrdiff_t> {
-    typedef forward_iterator<const ElemTy, ptrdiff_t> super;
+  class member_iterator : public std::iterator<std::forward_iterator_tag, ElemTy, ptrdiff_t> {
+    typedef std::iterator<std::forward_iterator_tag, ElemTy, ptrdiff_t> super;
     const ECValue *Node;
     friend class EquivalenceClasses;
   public:
@@ -249,7 +248,7 @@ public:
 
     reference operator*() const {
       assert(Node != 0 && "Dereferencing end()!");
-      return Node->getData();
+      return const_cast<reference>(Node->getData()); // FIXME
     }
     reference operator->() const { return operator*(); }
 

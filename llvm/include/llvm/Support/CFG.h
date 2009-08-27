@@ -18,7 +18,6 @@
 #include "llvm/ADT/GraphTraits.h"
 #include "llvm/Function.h"
 #include "llvm/InstrTypes.h"
-#include "llvm/ADT/iterator.h"
 
 namespace llvm {
 
@@ -27,8 +26,8 @@ namespace llvm {
 //===--------------------------------------------------------------------===//
 
 template <class _Ptr,  class _USE_iterator> // Predecessor Iterator
-class PredIterator : public forward_iterator<_Ptr, ptrdiff_t> {
-  typedef forward_iterator<_Ptr, ptrdiff_t> super;
+class PredIterator : public std::iterator<std::forward_iterator_tag, _Ptr, ptrdiff_t> {
+  typedef std::iterator<std::forward_iterator_tag, _Ptr, ptrdiff_t> super;
   _USE_iterator It;
 public:
   typedef PredIterator<_Ptr,_USE_iterator> _Self;
@@ -85,10 +84,10 @@ inline pred_const_iterator pred_end(const BasicBlock *BB) {
 //===--------------------------------------------------------------------===//
 
 template <class Term_, class BB_>           // Successor Iterator
-class SuccIterator : public bidirectional_iterator<BB_, ptrdiff_t> {
+class SuccIterator : public std::iterator<std::bidirectional_iterator_tag, BB_, ptrdiff_t> {
   const Term_ Term;
   unsigned idx;
-  typedef bidirectional_iterator<BB_, ptrdiff_t> super;
+  typedef std::iterator<std::bidirectional_iterator_tag, BB_, ptrdiff_t> super;
 public:
   typedef SuccIterator<Term_, BB_> _Self;
   typedef typename super::pointer pointer;

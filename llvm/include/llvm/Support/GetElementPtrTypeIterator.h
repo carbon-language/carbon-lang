@@ -21,8 +21,8 @@
 namespace llvm {
   template<typename ItTy = User::const_op_iterator>
   class generic_gep_type_iterator
-    : public forward_iterator<const Type *, ptrdiff_t> {
-    typedef forward_iterator<const Type*, ptrdiff_t> super;
+    : public std::iterator<std::forward_iterator_tag, const Type *, ptrdiff_t> {
+    typedef std::iterator<std::forward_iterator_tag, const Type *, ptrdiff_t> super;
 
     ItTy OpIt;
     const Type *CurTy;

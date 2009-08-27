@@ -19,8 +19,8 @@
 
 #include <cstddef> // for std::size_t
 #include <functional>
+#include <iterator>
 #include <utility> // for std::pair
-#include "llvm/ADT/iterator.h"
 
 namespace llvm {
 

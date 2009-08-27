@@ -22,7 +22,6 @@
 #include "llvm/Constants.h"
 #include "llvm/ADT/FoldingSet.h"
 #include "llvm/ADT/GraphTraits.h"
-#include "llvm/ADT/iterator.h"
 #include "llvm/ADT/ilist_node.h"
 #include "llvm/ADT/SmallVector.h"
 #include "llvm/ADT/STLExtras.h"
@@ -1129,14 +1128,14 @@ public:
   /// use_iterator - This class provides iterator support for SDUse
   /// operands that use a specific SDNode.
   class use_iterator
-    : public forward_iterator<SDUse, ptrdiff_t> {
+    : public std::iterator<std::forward_iterator_tag, SDUse, ptrdiff_t> {
     SDUse *Op;
     explicit use_iterator(SDUse *op) : Op(op) {
     }
     friend class SDNode;
   public:
-    typedef forward_iterator<SDUse, ptrdiff_t>::reference reference;
-    typedef forward_iterator<SDUse, ptrdiff_t>::pointer pointer;
+    typedef std::iterator<std::forward_iterator_tag, SDUse, ptrdiff_t>::reference reference;
+    typedef std::iterator<std::forward_iterator_tag, SDUse, ptrdiff_t>::pointer pointer;
 
     use_iterator(const use_iterator &I) : Op(I.Op) {}
     use_iterator() : Op(0) {}
@@ -2354,7 +2353,7 @@ public:
 };
 
 
-class SDNodeIterator : public forward_iterator<SDNode, ptrdiff_t> {
+class SDNodeIterator : public std::iterator<std::forward_iterator_tag, SDNode, ptrdiff_t> {
   SDNode *Node;
   unsigned Operand;
 

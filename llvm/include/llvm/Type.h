@@ -17,7 +17,6 @@
 #include "llvm/Support/DataTypes.h"
 #include "llvm/System/Atomic.h"
 #include "llvm/ADT/GraphTraits.h"
-#include "llvm/ADT/iterator.h"
 #include <string>
 #include <vector>
 
