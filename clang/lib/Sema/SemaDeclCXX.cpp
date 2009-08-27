@@ -1149,15 +1149,26 @@ namespace {
   }
 }
 
+
 bool Sema::RequireNonAbstractType(SourceLocation Loc, QualType T, 
                                   unsigned DiagID, AbstractDiagSelID SelID,
                                   const CXXRecordDecl *CurrentRD) {
+  if (SelID == -1)
+    return RequireNonAbstractType(Loc, T,
+                                  PDiag(DiagID), CurrentRD);
+  else
+    return RequireNonAbstractType(Loc, T,
+                                  PDiag(DiagID) << SelID, CurrentRD);
+}  
   
+bool Sema::RequireNonAbstractType(SourceLocation Loc, QualType T,
+                                  const PartialDiagnostic &PD,
+                                  const CXXRecordDecl *CurrentRD) {
   if (!getLangOptions().CPlusPlus)
     return false;
   
   if (const ArrayType *AT = Context.getAsArrayType(T))
-    return RequireNonAbstractType(Loc, AT->getElementType(), DiagID, SelID,
+    return RequireNonAbstractType(Loc, AT->getElementType(), PD,
                                   CurrentRD);
   
   if (const PointerType *PT = T->getAs<PointerType>()) {
@@ -1166,8 +1177,7 @@ bool Sema::RequireNonAbstractType(SourceLocation Loc, QualType T,
       PT = T;
     
     if (const ArrayType *AT = Context.getAsArrayType(PT->getPointeeType()))
-      return RequireNonAbstractType(Loc, AT->getElementType(), DiagID, SelID,
-                                    CurrentRD);
+      return RequireNonAbstractType(Loc, AT->getElementType(), PD, CurrentRD);
   }
   
   const RecordType *RT = T->getAs<RecordType>();
@@ -1184,7 +1194,7 @@ bool Sema::RequireNonAbstractType(SourceLocation Loc, QualType T,
   if (!RD->isAbstract())
     return false;
   
-  Diag(Loc, DiagID) << RD->getDeclName() << SelID;
+  Diag(Loc, PD) << RD->getDeclName();
   
   // Check if we've already emitted the list of pure virtual functions for this
   // class.

@@ -2211,6 +2211,10 @@ public:
     AbstractFieldType
   };
   
+  bool RequireNonAbstractType(SourceLocation Loc, QualType T,
+                              const PartialDiagnostic &PD,
+                              const CXXRecordDecl *CurrentRD = 0);
+  
   bool RequireNonAbstractType(SourceLocation Loc, QualType T, unsigned DiagID, 
                               AbstractDiagSelID SelID = AbstractNone,
                               const CXXRecordDecl *CurrentRD = 0);

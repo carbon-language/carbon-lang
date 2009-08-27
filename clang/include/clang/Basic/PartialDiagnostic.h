@@ -115,18 +115,23 @@ public:
   }
   
   friend const PartialDiagnostic &operator<<(const PartialDiagnostic &PD,
-                                                    QualType T) {
+                                             QualType T) {
     PD.AddTaggedVal(reinterpret_cast<intptr_t>(T.getAsOpaquePtr()),
                     Diagnostic::ak_qualtype);
     return PD;
   }
 
+  friend const PartialDiagnostic &operator<<(const PartialDiagnostic &PD,
+                                             unsigned I) {
+    PD.AddTaggedVal(I, Diagnostic::ak_uint);
+    return PD;
+  }
+  
   friend inline const PartialDiagnostic &operator<<(const PartialDiagnostic &PD,
                                                     const SourceRange &R) {
     PD.AddSourceRange(R);
     return PD;
   }
-  
 };
 
 inline PartialDiagnostic PDiag(unsigned DiagID) {
