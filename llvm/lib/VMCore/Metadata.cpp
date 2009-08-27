@@ -101,8 +101,8 @@ static std::vector<Value*> getValType(MDNode *N) {
 }
 
 MDNode::~MDNode() {
-  dropAllReferences();
   getType()->getContext().pImpl->MDNodes.remove(this);
+  dropAllReferences();
 }
 
 //===----------------------------------------------------------------------===//
