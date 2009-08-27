@@ -63,3 +63,6 @@ template<typename T, typename U>
 X0<T, U>::operator T*() const {
   return &value;
 }
+
+namespace N { template <class X> class A {void a();}; }
+namespace N { template <class X> void A<X>::a() {} }

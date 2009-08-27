@@ -578,12 +578,9 @@ public:
   /// inline namespaces.
   bool isTransparentContext() const;
 
-  bool Encloses(DeclContext *DC) const {
-    for (; DC; DC = DC->getParent())
-      if (DC == this)
-        return true;
-    return false;
-  }
+  /// \brief Determine whether this declaration context encloses the
+  /// declaration context DC.
+  bool Encloses(DeclContext *DC);
 
   /// getPrimaryContext - There may be many different
   /// declarations of the same entity (including forward declarations

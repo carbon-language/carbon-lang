@@ -448,6 +448,16 @@ bool DeclContext::isTransparentContext() const {
   return false;
 }
 
+bool DeclContext::Encloses(DeclContext *DC) {
+  if (getPrimaryContext() != this)
+    return getPrimaryContext()->Encloses(DC);
+  
+  for (; DC; DC = DC->getParent())
+    if (DC->getPrimaryContext() == this)
+      return true;
+  return false;  
+}
+
 DeclContext *DeclContext::getPrimaryContext() {
   switch (DeclKind) {
   case Decl::TranslationUnit:
