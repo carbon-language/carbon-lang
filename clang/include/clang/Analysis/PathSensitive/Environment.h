@@ -41,9 +41,10 @@ private:
 
   // Data.
   BindingsTy ExprBindings;
+  AnalysisContext *ACtx;
   
-  Environment(BindingsTy eb)
-    : ExprBindings(eb) {}
+  Environment(BindingsTy eb, AnalysisContext *aCtx)
+    : ExprBindings(eb), ACtx(aCtx) {}
   
 public:    
   typedef BindingsTy::iterator iterator;
@@ -56,6 +57,8 @@ public:
   }
   
   SVal GetSVal(const Stmt* Ex, ValueManager& ValMgr) const;
+  
+  AnalysisContext &getAnalysisContext() const { return *ACtx; }
   
   /// Profile - Profile the contents of an Environment object for use
   ///  in a FoldingSet.
@@ -83,8 +86,8 @@ public:
   EnvironmentManager(llvm::BumpPtrAllocator& Allocator) : F(Allocator) {}
   ~EnvironmentManager() {}
   
-  Environment getInitialEnvironment() {
-    return Environment(F.GetEmptyMap());
+  Environment getInitialEnvironment(AnalysisContext *ACtx) {
+    return Environment(F.GetEmptyMap(), ACtx);
   }
   
   Environment BindExpr(Environment Env, const Stmt *S, SVal V,

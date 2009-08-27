@@ -67,15 +67,6 @@ template <typename T> struct GRStateTrait {
 
 class GRStateManager;
   
-class GRStateContext : public std::pair<GRStateManager*, AnalysisContext*> {
-public:
-  GRStateContext(GRStateManager *Mgr, AnalysisContext *ACtx)
-    : std::pair<GRStateManager*, AnalysisContext*>(Mgr, ACtx) {}
-  
-  GRStateManager *getStateManager() const { return first; }
-  AnalysisContext *getAnalysisContext() const { return second; }
-};
-  
 /// GRState - This class encapsulates the actual data values for
 ///  for a "state" in our symbolic value tracking.  It is intended to be
 ///  used as a functional object; that is once it is created and made
@@ -90,7 +81,7 @@ private:
   
   friend class GRStateManager;
 
-  GRStateContext StateCtx;
+  GRStateManager *StateMgr;
   Environment Env;
   Store St;
 
@@ -101,9 +92,9 @@ public:
 public:
   
   /// This ctor is used when creating the first GRState object.
-  GRState(GRStateManager *mgr, AnalysisContext *actx, const Environment& env,
+  GRState(GRStateManager *mgr, const Environment& env,
           Store st, GenericDataMap gdm)
-    : StateCtx(mgr, actx),
+    : StateMgr(mgr),
       Env(env),
       St(st),
       GDM(gdm) {}
@@ -112,20 +103,20 @@ public:
   ///  in FoldingSetNode will also get copied.
   GRState(const GRState& RHS)
     : llvm::FoldingSetNode(),
-      StateCtx(RHS.StateCtx),
+      StateMgr(RHS.StateMgr),
       Env(RHS.Env),
       St(RHS.St),
       GDM(RHS.GDM) {}
   
   /// getStateManager - Return the GRStateManager associated with this state.
   GRStateManager &getStateManager() const {
-    return *StateCtx.getStateManager();
+    return *StateMgr;
   }
   
   /// getAnalysisContext - Return the AnalysisContext associated with this
   /// state.
   AnalysisContext &getAnalysisContext() const {
-    return *StateCtx.getAnalysisContext();
+    return Env.getAnalysisContext();
   }
   
   /// getEnvironment - Return the environment associated with this state.

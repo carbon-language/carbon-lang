@@ -85,22 +85,20 @@ SVal GRState::getSValAsScalarOrLoc(const MemRegion *R) const {
 }
 
 
-const GRState *GRState::bindExpr(const Stmt* Ex, SVal V, bool Invalidate) const {
-  
+const GRState *GRState::bindExpr(const Stmt* Ex, SVal V, bool Invalidate) const{
   Environment NewEnv = getStateManager().EnvMgr.BindExpr(Env, Ex, V,
-                                                         Invalidate);
-  
+                                                         Invalidate);  
   if (NewEnv == Env)
     return this;
-  
+
   GRState NewSt = *this;
   NewSt.Env = NewEnv;
   return getStateManager().getPersistentState(NewSt);
 }
 
 const GRState* GRStateManager::getInitialState(const LocationContext *InitLoc) {
-  GRState State(this, InitLoc->getAnalysisContext(),
-                EnvMgr.getInitialEnvironment(), 
+  GRState State(this,
+                EnvMgr.getInitialEnvironment(InitLoc->getAnalysisContext()), 
                 StoreMgr->getInitialStore(InitLoc),
                 GDMFactory.GetEmptyMap());
 
