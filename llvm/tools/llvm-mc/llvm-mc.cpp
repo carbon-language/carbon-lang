@@ -244,7 +244,7 @@ static int AssembleInput(const char *ProgName) {
     assert(TAI && "Unable to create target asm info!");
 
     AP.reset(TheTarget->createAsmPrinter(*Out, *TM, TAI, true));
-    CE.reset(TheTarget->createCodeEmitter(*TM, TAI));
+    CE.reset(TheTarget->createCodeEmitter(*TM));
     Str.reset(createAsmStreamer(Ctx, *Out, *TAI, AP.get(), CE.get()));
   } else {
     assert(FileType == OFT_ObjectFile && "Invalid file type!");

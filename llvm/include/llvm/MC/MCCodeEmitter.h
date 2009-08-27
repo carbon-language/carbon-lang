@@ -26,7 +26,7 @@ public:
 
   /// EncodeInstruction - Encode the given \arg Inst to bytes on the output
   /// stream \arg OS.
-  virtual void EncodeInstruction(const MCInst &Inst, raw_ostream &OS) = 0;
+  virtual void EncodeInstruction(const MCInst &Inst, raw_ostream &OS) const = 0;
 };
 
 } // End llvm namespace
