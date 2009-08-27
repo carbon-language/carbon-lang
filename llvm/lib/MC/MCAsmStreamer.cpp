@@ -295,26 +295,27 @@ static raw_ostream &operator<<(raw_ostream &OS, const MCOperand &Op) {
 void MCAsmStreamer::EmitInstruction(const MCInst &Inst) {
   assert(CurSection && "Cannot emit contents before setting section!");
 
-  // Show the encoding if we have a code emitter.
-  if (Emitter) {
-    SmallString<256> Code;
-    raw_svector_ostream VecOS(Code);
-    Emitter->EncodeInstruction(Inst, VecOS);
-    VecOS.flush();
-
-    OS.indent(20);
-    OS << " # encoding: [";
-    for (unsigned i = 0, e = Code.size(); i != e; ++i) {
-      if (i + 1 != e)
-        OS << ',';
-      OS << format("%#04x", Code[i]);
-    }
-    OS << "]\n";
-  }
-
   // If we have an AsmPrinter, use that to print.
   if (Printer) {
     Printer->printMCInst(&Inst);
+
+    // Show the encoding if we have a code emitter.
+    if (Emitter) {
+      SmallString<256> Code;
+      raw_svector_ostream VecOS(Code);
+      Emitter->EncodeInstruction(Inst, VecOS);
+      VecOS.flush();
+  
+      OS.indent(20);
+      OS << " # encoding: [";
+      for (unsigned i = 0, e = Code.size(); i != e; ++i) {
+        if (i)
+          OS << ',';
+        OS << format("%#04x", uint8_t(Code[i]));
+      }
+      OS << "]\n";
+    }
+
     return;
   }
 
