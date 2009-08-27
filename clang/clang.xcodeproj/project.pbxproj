@@ -496,6 +496,7 @@
 		84D9A8870C1A57E100AC7ABC /* AttributeList.cpp */ = {isa = PBXFileReference; fileEncoding = 30; indentWidth = 2; lastKnownFileType = sourcecode.cpp.cpp; name = AttributeList.cpp; path = lib/Parse/AttributeList.cpp; sourceTree = "<group>"; tabWidth = 2; };
 		84D9A88B0C1A581300AC7ABC /* AttributeList.h */ = {isa = PBXFileReference; fileEncoding = 30; indentWidth = 2; lastKnownFileType = sourcecode.c.h; name = AttributeList.h; path = clang/Parse/AttributeList.h; sourceTree = "<group>"; tabWidth = 2; };
 		8DD76F6C0486A84900D96B5E /* clang */ = {isa = PBXFileReference; explicitFileType = "compiled.mach-o.executable"; includeInIndex = 0; path = clang; sourceTree = BUILT_PRODUCTS_DIR; };
+		9012911510470FCE0083456D /* Index.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = Index.h; path = "clang-c/Index.h"; sourceTree = "<group>"; };
 		9063F2210F9E8BDF002F7251 /* ExternalSemaSource.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = ExternalSemaSource.h; path = clang/Sema/ExternalSemaSource.h; sourceTree = "<group>"; };
 		9063F2220F9E8BDF002F7251 /* SemaConsumer.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = SemaConsumer.h; path = clang/Sema/SemaConsumer.h; sourceTree = "<group>"; };
 		9063F2280F9E911F002F7251 /* OnDiskHashTable.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = OnDiskHashTable.h; sourceTree = "<group>"; };
@@ -1018,6 +1019,14 @@
 			name = Analyses;
 			sourceTree = "<group>";
 		};
+		9012911210470FAF0083456D /* clang-c */ = {
+			isa = PBXGroup;
+			children = (
+				9012911510470FCE0083456D /* Index.h */,
+			);
+			name = "clang-c";
+			sourceTree = "<group>";
+		};
 		90FD6D5E103C3D03005F5B73 /* Index */ = {
 			isa = PBXGroup;
 			children = (
@@ -1326,6 +1335,7 @@
 		DED7D72E0A524295003AD0FB /* include */ = {
 			isa = PBXGroup;
 			children = (
+				9012911210470FAF0083456D /* clang-c */,
 				90FD6D5E103C3D03005F5B73 /* Index */,
 				DED7D7300A524295003AD0FB /* Basic */,
 				DED7D7390A524295003AD0FB /* Lex */,
