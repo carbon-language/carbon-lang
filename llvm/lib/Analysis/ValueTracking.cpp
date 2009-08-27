@@ -37,7 +37,7 @@ using namespace llvm;
 /// this won't lose us code quality.
 void llvm::ComputeMaskedBits(Value *V, const APInt &Mask,
                              APInt &KnownZero, APInt &KnownOne,
-                             TargetData *TD, unsigned Depth) {
+                             const TargetData *TD, unsigned Depth) {
   const unsigned MaxDepth = 6;
   assert(V && "No Value?");
   assert(Depth <= MaxDepth && "Limit Search Depth");
@@ -609,7 +609,7 @@ void llvm::ComputeMaskedBits(Value *V, const APInt &Mask,
 /// this predicate to simplify operations downstream.  Mask is known to be zero
 /// for bits that V cannot have.
 bool llvm::MaskedValueIsZero(Value *V, const APInt &Mask,
-                             TargetData *TD, unsigned Depth) {
+                             const TargetData *TD, unsigned Depth) {
   APInt KnownZero(Mask.getBitWidth(), 0), KnownOne(Mask.getBitWidth(), 0);
   ComputeMaskedBits(V, Mask, KnownZero, KnownOne, TD, Depth);
   assert((KnownZero & KnownOne) == 0 && "Bits known to be one AND zero?"); 
@@ -626,7 +626,8 @@ bool llvm::MaskedValueIsZero(Value *V, const APInt &Mask,
 ///
 /// 'Op' must have a scalar integer type.
 ///
-unsigned llvm::ComputeNumSignBits(Value *V, TargetData *TD, unsigned Depth) {
+unsigned llvm::ComputeNumSignBits(Value *V, const TargetData *TD,
+                                  unsigned Depth) {
   assert((TD || V->getType()->isIntOrIntVector()) &&
          "ComputeNumSignBits requires a TargetData object to operate "
          "on non-integer values!");

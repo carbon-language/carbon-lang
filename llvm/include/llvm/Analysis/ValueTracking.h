@@ -30,14 +30,14 @@ namespace llvm {
   /// bit sets.  This code only analyzes bits in Mask, in order to short-circuit
   /// processing.
   void ComputeMaskedBits(Value *V, const APInt &Mask, APInt &KnownZero,
-                         APInt &KnownOne, TargetData *TD = 0,
+                         APInt &KnownOne, const TargetData *TD = 0,
                          unsigned Depth = 0);
   
   /// MaskedValueIsZero - Return true if 'V & Mask' is known to be zero.  We use
   /// this predicate to simplify operations downstream.  Mask is known to be
   /// zero for bits that V cannot have.
   bool MaskedValueIsZero(Value *V, const APInt &Mask, 
-                         TargetData *TD = 0, unsigned Depth = 0);
+                         const TargetData *TD = 0, unsigned Depth = 0);
 
   
   /// ComputeNumSignBits - Return the number of times the sign bit of the
@@ -48,7 +48,7 @@ namespace llvm {
   ///
   /// 'Op' must have a scalar integer type.
   ///
-  unsigned ComputeNumSignBits(Value *Op, TargetData *TD = 0,
+  unsigned ComputeNumSignBits(Value *Op, const TargetData *TD = 0,
                               unsigned Depth = 0);
 
   /// CannotBeNegativeZero - Return true if we can prove that the specified FP 
