@@ -233,13 +233,15 @@ bool llvm::isNoAliasCall(const Value *V) {
 
 /// isIdentifiedObject - Return true if this pointer refers to a distinct and
 /// identifiable object.  This returns true for:
-///    Global Variables and Functions
+///    Global Variables and Functions (but not Global Aliases)
 ///    Allocas and Mallocs
 ///    ByVal and NoAlias Arguments
 ///    NoAlias returns
 ///
 bool llvm::isIdentifiedObject(const Value *V) {
-  if (isa<GlobalValue>(V) || isa<AllocationInst>(V) || isNoAliasCall(V))
+  if (isa<AllocationInst>(V) || isNoAliasCall(V))
+    return true;
+  if (isa<GlobalValue>(V) && !isa<GlobalAlias>(V))
     return true;
   if (const Argument *A = dyn_cast<Argument>(V))
     return A->hasNoAliasAttr() || A->hasByValAttr();
