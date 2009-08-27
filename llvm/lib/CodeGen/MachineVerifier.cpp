@@ -300,6 +300,139 @@ MachineVerifier::visitMachineFunctionBefore()
 void
 MachineVerifier::visitMachineBasicBlockBefore(const MachineBasicBlock *MBB)
 {
+  const TargetInstrInfo *TII = MF->getTarget().getInstrInfo();
+
+  // Start with minimal CFG sanity checks.
+  MachineFunction::const_iterator MBBI = MBB;
+  ++MBBI;
+  if (MBBI != MF->end()) {
+    // Block is not last in function.
+    if (!MBB->isSuccessor(MBBI)) {
+      // Block does not fall through.
+      if (MBB->empty()) {
+        report("MBB doesn't fall through but is empty!", MBB);
+      }
+    } else {
+      // Block falls through.
+      if (!MBB->empty() && MBB->back().getDesc().isBarrier()) {
+        report("MBB falls through but ends with a barrier instruction!", MBB);
+      }
+      if (TII->BlockHasNoFallThrough(*MBB)) {
+        report("TargetInstrInfo says the block has no fall through, but the "
+               "CFG has a fall-through edge!", MBB);
+      }
+    }
+  } else {
+    // Block is last in function.
+    if (MBB->empty()) {
+      report("MBB is last in function but is empty!", MBB);
+    }
+  }
+
+  // Call AnalyzeBranch. If it succeeds, there several more conditions to check.
+  MachineBasicBlock *TBB = 0, *FBB = 0;
+  SmallVector<MachineOperand, 4> Cond;
+  if (!TII->AnalyzeBranch(*const_cast<MachineBasicBlock *>(MBB),
+                          TBB, FBB, Cond)) {
+    // Ok, AnalyzeBranch thinks it knows what's going on with this block. Let's
+    // check whether its answers match up with reality.
+    if (!TBB && !FBB) {
+      // Block falls through to its successor.
+      MachineFunction::const_iterator MBBI = MBB;
+      ++MBBI;
+      if (MBBI == MF->end()) {
+        // TODO: This condition is sometimes reached for functions which
+        // make noreturn calls or contain unreachable. Should AnalyzeBranch
+        // be changed to handle such cases differently?
+        report("MBB falls through out of function!", MBB);
+      } else if (MBB->succ_size() != 1) {
+        report("MBB exits via unconditional fall-through but doesn't have "
+               "exactly one CFG successor!", MBB);
+      } else if (MBB->succ_begin()[0] != MBBI) {
+        report("MBB exits via unconditional fall-through but its successor "
+               "differs from its CFG successor!", MBB);
+      }
+      if (!MBB->empty() && MBB->back().getDesc().isBarrier()) {
+        report("MBB exits via unconditional fall-through but ends with a "
+               "barrier instruction!", MBB);
+      }
+      if (!Cond.empty()) {
+        report("MBB exits via unconditional fall-through but has a condition!",
+               MBB);
+      }
+    } else if (TBB && !FBB && Cond.empty()) {
+      // Block unconditionally branches somewhere.
+      if (MBB->succ_size() != 1) {
+        report("MBB exits via unconditional branch but doesn't have "
+               "exactly one CFG successor!", MBB);
+      } else if (MBB->succ_begin()[0] != TBB) {
+        report("MBB exits via unconditional branch but the CFG "
+               "successor doesn't match the actual successor!", MBB);
+      }
+      if (MBB->empty()) {
+        report("MBB exits via unconditional branch but doesn't contain "
+               "any instructions!", MBB);
+      } else if (!MBB->back().getDesc().isBarrier()) {
+        report("MBB exits via unconditional branch but doesn't end with a "
+               "barrier instruction!", MBB);
+      } else if (!MBB->back().getDesc().isTerminator()) {
+        report("MBB exits via unconditional branch but the branch isn't a "
+               "terminator instruction!", MBB);
+      }
+    } else if (TBB && !FBB && !Cond.empty()) {
+      // Block conditionally branches somewhere, otherwise falls through.
+      MachineFunction::const_iterator MBBI = MBB;
+      ++MBBI;
+      if (MBBI == MF->end()) {
+        report("MBB conditionally falls through out of function!", MBB);
+      } if (MBB->succ_size() != 2) {
+        report("MBB exits via conditional branch/fall-through but doesn't have "
+               "exactly two CFG successors!", MBB);
+      } else if ((MBB->succ_begin()[0] == TBB && MBB->succ_end()[1] == MBBI) ||
+                 (MBB->succ_begin()[1] == TBB && MBB->succ_end()[0] == MBBI)) {
+        report("MBB exits via conditional branch/fall-through but the CFG "
+               "successors don't match the actual successors!", MBB);
+      }
+      if (MBB->empty()) {
+        report("MBB exits via conditional branch/fall-through but doesn't "
+               "contain any instructions!", MBB);
+      } else if (MBB->back().getDesc().isBarrier()) {
+        report("MBB exits via conditional branch/fall-through but ends with a "
+               "barrier instruction!", MBB);
+      } else if (!MBB->back().getDesc().isTerminator()) {
+        report("MBB exits via conditional branch/fall-through but the branch "
+               "isn't a terminator instruction!", MBB);
+      }
+    } else if (TBB && FBB) {
+      // Block conditionally branches somewhere, otherwise branches
+      // somewhere else.
+      if (MBB->succ_size() != 2) {
+        report("MBB exits via conditional branch/branch but doesn't have "
+               "exactly two CFG successors!", MBB);
+      } else if ((MBB->succ_begin()[0] == TBB && MBB->succ_end()[1] == FBB) ||
+                 (MBB->succ_begin()[1] == TBB && MBB->succ_end()[0] == FBB)) {
+        report("MBB exits via conditional branch/branch but the CFG "
+               "successors don't match the actual successors!", MBB);
+      }
+      if (MBB->empty()) {
+        report("MBB exits via conditional branch/branch but doesn't "
+               "contain any instructions!", MBB);
+      } else if (!MBB->back().getDesc().isBarrier()) {
+        report("MBB exits via conditional branch/branch but doesn't end with a "
+               "barrier instruction!", MBB);
+      } else if (!MBB->back().getDesc().isTerminator()) {
+        report("MBB exits via conditional branch/branch but the branch "
+               "isn't a terminator instruction!", MBB);
+      }
+      if (Cond.empty()) {
+        report("MBB exits via conditinal branch/branch but there's no "
+               "condition!", MBB);
+      }
+    } else {
+      report("AnalyzeBranch returned invalid data!", MBB);
+    }
+  }
+
   regsLive.clear();
   for (MachineBasicBlock::const_livein_iterator I = MBB->livein_begin(),
          E = MBB->livein_end(); I != E; ++I) {
