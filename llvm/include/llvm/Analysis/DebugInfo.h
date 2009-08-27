@@ -169,10 +169,10 @@ namespace llvm {
   class DIType : public DIDescriptor {
   public:
     enum {
-      FlagPrivate   = 1 << 0,
-      FlagProtected = 1 << 1,
-      FlagFwdDecl   = 1 << 2,
-      FlagClosure   = 1 << 3
+      FlagPrivate    = 1 << 0,
+      FlagProtected  = 1 << 1,
+      FlagFwdDecl    = 1 << 2,
+      FlagAppleBlock = 1 << 3
     };
 
   protected:
@@ -224,8 +224,9 @@ namespace llvm {
     bool isForwardDecl() const {
       return (getFlags() & FlagFwdDecl) != 0; 
     }
-    bool isClosure() const {
-      return (getFlags() & FlagClosure) != 0; 
+    // isAppleBlock - Return true if this is the Apple Blocks extension.
+    bool isAppleBlockExtension() const {
+      return (getFlags() & FlagAppleBlock) != 0; 
     }
 
     /// dump - print type.

@@ -689,7 +689,7 @@ void DwarfDebug::ConstructTypeDIE(CompileUnit *DW_Unit, DIE &Buffer,
       Buffer.AddChild(ElemDie);
     }
 
-    if (CTy.isClosure())
+    if (CTy.isAppleBlockExtension())
       AddUInt(&Buffer, dwarf::DW_AT_APPLE_block, dwarf::DW_FORM_flag, 1);
 
     unsigned RLang = CTy.getRunTimeLang();
