@@ -276,9 +276,9 @@ X86TargetLowering::X86TargetLowering(X86TargetMachine &TM)
   setOperationAction(ISD::BSWAP            , MVT::i16  , Expand);
 
   // These should be promoted to a larger select which is supported.
-  setOperationAction(ISD::SELECT           , MVT::i1   , Promote);
-  setOperationAction(ISD::SELECT           , MVT::i8   , Promote);
+  setOperationAction(ISD::SELECT          , MVT::i1   , Promote);
   // X86 wants to expand cmov itself.
+  setOperationAction(ISD::SELECT          , MVT::i8   , Custom);
   setOperationAction(ISD::SELECT          , MVT::i16  , Custom);
   setOperationAction(ISD::SELECT          , MVT::i32  , Custom);
   setOperationAction(ISD::SELECT          , MVT::f32  , Custom);
@@ -7707,6 +7707,7 @@ X86TargetLowering::EmitInstrWithCustomInserter(MachineInstr *MI,
   const TargetInstrInfo *TII = getTargetMachine().getInstrInfo();
   switch (MI->getOpcode()) {
   default: assert(false && "Unexpected instr type to insert");
+  case X86::CMOV_GR8:
   case X86::CMOV_V1I64:
   case X86::CMOV_FR32:
   case X86::CMOV_FR64:
