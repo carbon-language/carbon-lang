@@ -870,6 +870,18 @@ BuildSimilarlyQualifiedPointerType(const PointerType *FromPtr,
   return Context.getPointerType(CanonToPointee.getQualifiedType(Quals));
 }
 
+static bool isNullPointerConstantForConversion(Expr *Expr, 
+                                               bool InOverloadResolution,
+                                               ASTContext &Context) {
+  // Handle value-dependent integral null pointer constants correctly.
+  // http://www.open-std.org/jtc1/sc22/wg21/docs/cwg_active.html#903
+  if (Expr->isValueDependent() && !Expr->isTypeDependent() &&
+      Expr->getType()->isIntegralType())
+    return !InOverloadResolution;
+
+  return Expr->isNullPointerConstant(Context);
+}
+  
 /// IsPointerConversion - Determines whether the conversion of the
 /// expression From, which has the (possibly adjusted) type FromType,
 /// can be converted to the type ToType via a pointer conversion (C++
@@ -897,7 +909,7 @@ bool Sema::IsPointerConversion(Expr *From, QualType FromType, QualType ToType,
 
   // Conversion from a null pointer constant to any Objective-C pointer type. 
   if (ToType->isObjCObjectPointerType() && 
-      From->isNullPointerConstant(Context)) {
+      isNullPointerConstantForConversion(From, InOverloadResolution, Context)) {
     ConvertedType = ToType;
     return true;
   }
@@ -910,14 +922,16 @@ bool Sema::IsPointerConversion(Expr *From, QualType FromType, QualType ToType,
   }
   // Blocks: A null pointer constant can be converted to a block
   // pointer type.
-  if (ToType->isBlockPointerType() && From->isNullPointerConstant(Context)) {
+  if (ToType->isBlockPointerType() && 
+      isNullPointerConstantForConversion(From, InOverloadResolution, Context)) {
     ConvertedType = ToType;
     return true;
   }
 
   // If the left-hand-side is nullptr_t, the right side can be a null
   // pointer constant.
-  if (ToType->isNullPtrType() && From->isNullPointerConstant(Context)) {
+  if (ToType->isNullPtrType() && 
+      isNullPointerConstantForConversion(From, InOverloadResolution, Context)) {
     ConvertedType = ToType;
     return true;
   }
@@ -927,7 +941,7 @@ bool Sema::IsPointerConversion(Expr *From, QualType FromType, QualType ToType,
     return false;
 
   // A null pointer constant can be converted to a pointer type (C++ 4.10p1).
-  if (From->isNullPointerConstant(Context)) {
+  if (isNullPointerConstantForConversion(From, InOverloadResolution, Context)) {
     ConvertedType = ToType;
     return true;
   }
