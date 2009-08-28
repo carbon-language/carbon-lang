@@ -617,7 +617,8 @@ namespace {
 
 char Andersens::ID = 0;
 static RegisterPass<Andersens>
-X("anders-aa", "Andersen's Interprocedural Alias Analysis", false, true);
+X("anders-aa", "Andersen's Interprocedural Alias Analysis (experimental)",
+  false, true);
 static RegisterAnalysisGroup<AliasAnalysis> Y(X);
 
 // Initialize Timestamp Counter (static).
