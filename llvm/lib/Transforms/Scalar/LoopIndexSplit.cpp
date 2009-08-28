@@ -435,7 +435,7 @@ bool LoopIndexSplit::processOneIterationLoop() {
 
   CmpInst::Predicate C2P  = ExitCondition->getPredicate();
   BranchInst *LatchBR = cast<BranchInst>(Latch->getTerminator());
-  if (LatchBR->getOperand(0) != Header)
+  if (LatchBR->getOperand(1) != Header)
     C2P = CmpInst::getInversePredicate(C2P);
   Instruction *C2 = new ICmpInst(BR, C2P, SplitValue, ExitValue, "lisplit");
   Instruction *NSplitCond = BinaryOperator::CreateAnd(C1, C2, "lisplit", BR);
