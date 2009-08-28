@@ -33,7 +33,8 @@ public:
     FT_Data,
     FT_Align,
     FT_Fill,
-    FT_Org
+    FT_Org,
+    FT_ZeroFill
   };
 
 private:
@@ -218,6 +219,7 @@ public:
   MCOrgFragment(MCValue _Offset, int8_t _Value, MCSectionData *SD = 0)
     : MCFragment(FT_Org, SD),
       Offset(_Offset), Value(_Value) {}
+
   /// @name Accessors
   /// @{
 
@@ -236,6 +238,40 @@ public:
     return F->getKind() == MCFragment::FT_Org; 
   }
   static bool classof(const MCOrgFragment *) { return true; }
+};
+
+/// MCZeroFillFragment - Represent data which has a fixed size and alignment,
+/// but requires no physical space in the object file.
+class MCZeroFillFragment : public MCFragment {
+  /// Size - The size of this fragment.
+  uint64_t Size;
+
+  /// Alignment - The alignment for this fragment.
+  unsigned Alignment;
+
+public:
+  MCZeroFillFragment(uint64_t _Size, unsigned _Alignment, MCSectionData *SD = 0)
+    : MCFragment(FT_ZeroFill, SD),
+      Size(_Size), Alignment(_Alignment) {}
+
+  /// @name Accessors
+  /// @{
+
+  uint64_t getMaxFileSize() const {
+    // FIXME: This also doesn't make much sense, this method is misnamed.
+    return ~UINT64_C(0);
+  }
+
+  uint64_t getSize() const { return Size; }
+  
+  unsigned getAlignment() const { return Alignment; }
+
+  /// @}
+
+  static bool classof(const MCFragment *F) { 
+    return F->getKind() == MCFragment::FT_ZeroFill; 
+  }
+  static bool classof(const MCZeroFillFragment *) { return true; }
 };
 
 // FIXME: Should this be a separate class, or just merged into MCSection? Since

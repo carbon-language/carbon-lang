@@ -28,6 +28,15 @@ STATISTIC(EmittedFragments, "Number of emitted assembler fragments");
 static void WriteFileData(raw_ostream &OS, const MCSectionData &SD,
                           MachObjectWriter &MOW);
 
+/// isVirtualSection - Check if this is a section which does not actually exist
+/// in the object file.
+static bool isVirtualSection(const MCSection &Section) {
+  // FIXME: Lame.
+  const MCSectionMachO &SMO = static_cast<const MCSectionMachO&>(Section);
+  unsigned Type = SMO.getTypeAndAttributes() & MCSectionMachO::SECTION_TYPE;
+  return (Type == MCSectionMachO::S_ZEROFILL);
+}
+
 class MachObjectWriter {
   // See <mach-o/loader.h>.
   enum {
@@ -229,6 +238,12 @@ public:
 
   void WriteSection32(const MCSectionData &SD, uint64_t FileOffset,
                       uint64_t RelocationsStart, unsigned NumRelocations) {
+    // The offset is unused for virtual sections.
+    if (isVirtualSection(SD.getSection())) {
+      assert(SD.getFileSize() == 0 && "Invalid file size!");
+      FileOffset = 0;
+    }
+
     // struct section (68 bytes)
 
     uint64_t Start = OS.tell();
@@ -692,6 +707,9 @@ public:
 
       VMSize = std::max(VMSize, SD.getAddress() + SD.getSize());
 
+      if (isVirtualSection(SD.getSection()))
+        continue;
+
       SectionDataSize = std::max(SectionDataSize,
                                  SD.getAddress() + SD.getSize());
       SectionDataFileSize = std::max(SectionDataFileSize, 
@@ -922,7 +940,7 @@ void MCAssembler::LayoutSection(MCSectionData &SD) {
     case MCFragment::FT_Align: {
       MCAlignFragment &AF = cast<MCAlignFragment>(F);
       
-      uint64_t Size = RoundUpToAlignment(Address, AF.getAlignment()) - Address;
+      uint64_t Size = OffsetToAlignment(Address, AF.getAlignment());
       if (Size > AF.getMaxBytesToEmit())
         AF.setFileSize(0);
       else
@@ -968,6 +986,19 @@ void MCAssembler::LayoutSection(MCSectionData &SD) {
       F.setFileSize(OrgOffset - Offset);
       break;
     }      
+
+    case MCFragment::FT_ZeroFill: {
+      MCZeroFillFragment &ZFF = cast<MCZeroFillFragment>(F);
+
+      // Align the fragment offset; it is safe to adjust the offset freely since
+      // this is only in virtual sections.
+      uint64_t Aligned = RoundUpToAlignment(Address, ZFF.getAlignment());
+      F.setOffset(Aligned - SD.getAddress());
+
+      // FIXME: This is misnamed.
+      F.setFileSize(ZFF.getSize());
+      break;
+    }
     }
 
     Address += F.getFileSize();
@@ -975,7 +1006,10 @@ void MCAssembler::LayoutSection(MCSectionData &SD) {
 
   // Set the section sizes.
   SD.setSize(Address - SD.getAddress());
-  SD.setFileSize(Address - SD.getAddress());
+  if (isVirtualSection(SD.getSection()))
+    SD.setFileSize(0);
+  else
+    SD.setFileSize(Address - SD.getAddress());
 }
 
 /// WriteFileData - Write the \arg F data to the output file.
@@ -1055,6 +1089,11 @@ static void WriteFileData(raw_ostream &OS, const MCFragment &F,
 
     break;
   }
+
+  case MCFragment::FT_ZeroFill: {
+    assert(0 && "Invalid zero fill fragment in concrete section!");
+    break;
+  }
   }
 
   assert(OS.tell() - Start == F.getFileSize());
@@ -1063,6 +1102,12 @@ static void WriteFileData(raw_ostream &OS, const MCFragment &F,
 /// WriteFileData - Write the \arg SD data to the output file.
 static void WriteFileData(raw_ostream &OS, const MCSectionData &SD,
                           MachObjectWriter &MOW) {
+  // Ignore virtual sections.
+  if (isVirtualSection(SD.getSection())) {
+    assert(SD.getFileSize() == 0);
+    return;
+  }
+
   uint64_t Start = OS.tell();
   (void) Start;
       
@@ -1078,11 +1123,15 @@ static void WriteFileData(raw_ostream &OS, const MCSectionData &SD,
 }
 
 void MCAssembler::Finish() {
-  // Layout the sections and fragments.
+  // Layout the concrete sections and fragments.
   uint64_t Address = 0;
   MCSectionData *Prev = 0;
   for (iterator it = begin(), ie = end(); it != ie; ++it) {
     MCSectionData &SD = *it;
+
+    // Skip virtual sections.
+    if (isVirtualSection(SD.getSection()))
+      continue;
 
     // Align this section if necessary by adding padding bytes to the previous
     // section.
@@ -1098,6 +1147,18 @@ void MCAssembler::Finish() {
     Address += SD.getFileSize();
 
     Prev = &SD;
+  }
+
+  // Layout the virtual sections.
+  for (iterator it = begin(), ie = end(); it != ie; ++it) {
+    MCSectionData &SD = *it;
+
+    if (!isVirtualSection(SD.getSection()))
+      continue;
+
+    SD.setAddress(Address);
+    LayoutSection(SD);
+    Address += SD.getSize();
   }
 
   // Write the object file.

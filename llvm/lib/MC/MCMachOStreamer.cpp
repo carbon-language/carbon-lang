@@ -278,7 +278,27 @@ void MCMachOStreamer::EmitCommonSymbol(MCSymbol *Symbol, unsigned Size,
 
 void MCMachOStreamer::EmitZerofill(const MCSection *Section, MCSymbol *Symbol,
                                    unsigned Size, unsigned Pow2Alignment) {
-  llvm_unreachable("FIXME: Not yet implemented!");
+  unsigned ByteAlignment = 1 << Pow2Alignment;
+  MCSectionData &SectData = getSectionData(*Section);
+
+  // The symbol may not be present, which only creates the section.
+  if (!Symbol)
+    return;
+
+  // FIXME: Assert that this section has the zerofill type.
+
+  assert(Symbol->isUndefined() && "Cannot define a symbol twice!");
+
+  MCSymbolData &SD = getSymbolData(*Symbol);
+
+  MCFragment *F = new MCZeroFillFragment(Size, 1 << Pow2Alignment, &SectData);
+  SD.setFragment(F);
+
+  Symbol->setSection(*Section);
+
+  // Update the maximum alignment on the zero fill section if necessary.
+  if (ByteAlignment > SectData.getAlignment())
+    SectData.setAlignment(ByteAlignment);
 }
 
 void MCMachOStreamer::EmitBytes(const StringRef &Data) {
