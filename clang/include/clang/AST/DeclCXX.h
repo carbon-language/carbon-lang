@@ -1610,7 +1610,7 @@ public:
     return TargetNestedNameDecl; 
   }
   
-  /// isTypeName - Return true if using decl had 'typename'.
+  /// isTypeName - Return true if using decl has 'typename'.
   bool isTypeName() const { return IsTypeName; }
 
   static UsingDecl *Create(ASTContext &C, DeclContext *DC,
@@ -1651,6 +1651,23 @@ class UnresolvedUsingDecl : public NamedDecl {
     IsTypeName(IsTypeNameArg) { }
 
 public:
+  /// \brief Returns the source range that covers the nested-name-specifier
+  /// preceding the namespace name.
+  SourceRange getTargetNestedNameRange() const { return TargetNestedNameRange; }
+  
+  /// \brief Get target nested name declaration.
+  NestedNameSpecifier* getTargetNestedNameSpecifier() { 
+    return TargetNestedNameSpecifier; 
+  }
+  
+  /// \brief Returns the source location of the target declaration name.
+  SourceLocation getTargetNameLocation() const { return TargetNameLocation; }
+  
+  /// \brief Returns the source location of the target declaration name.
+  DeclarationName getTargetName() const { return TargetName; }
+
+  bool isTypeName() const { return IsTypeName; }
+
   static UnresolvedUsingDecl *Create(ASTContext &C, DeclContext *DC,
                                      SourceLocation UsingLoc,
                                      SourceRange TargetNNR,

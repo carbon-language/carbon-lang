@@ -58,7 +58,8 @@ namespace {
     Decl *VisitClassTemplateDecl(ClassTemplateDecl *D);
     Decl *VisitFunctionTemplateDecl(FunctionTemplateDecl *D);
     Decl *VisitTemplateTypeParmDecl(TemplateTypeParmDecl *D);
-
+    Decl *VisitUnresolvedUsingDecl(UnresolvedUsingDecl *D);
+      
     // Base case. FIXME: Remove once we can instantiate everything.
     Decl *VisitDecl(Decl *) { 
       assert(false && "Template instantiation of unknown declaration kind!");
@@ -738,6 +739,24 @@ Decl *TemplateDeclInstantiator::VisitTemplateTypeParmDecl(
   }
 
   return Inst;
+}
+
+Decl *
+TemplateDeclInstantiator::VisitUnresolvedUsingDecl(UnresolvedUsingDecl *D) {
+  NestedNameSpecifier *NNS = 
+    SemaRef.SubstNestedNameSpecifier(D->getTargetNestedNameSpecifier(), 
+                                     D->getTargetNestedNameRange(), 
+                                     TemplateArgs);
+  if (!NNS)
+    return 0;
+  
+  CXXScopeSpec SS;
+  SS.setRange(D->getTargetNestedNameRange());
+  SS.setScopeRep(NNS);
+  
+  return SemaRef.BuildUsingDeclaration(D->getLocation(), SS, 
+                                       D->getTargetNameLocation(), 
+                                       D->getTargetName(), 0, D->isTypeName());
 }
 
 Decl *Sema::SubstDecl(Decl *D, DeclContext *Owner,

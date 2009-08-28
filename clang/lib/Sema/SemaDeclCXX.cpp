@@ -2160,8 +2160,9 @@ NamedDecl *Sema::BuildUsingDeclaration(SourceLocation UsingLoc,
         << NNS << RD->getDeclName();
       return 0;
     }
-    
-    LookupContext = cast<RecordType>(Ty)->getDecl();
+
+    QualType BaseTy = Context.getCanonicalType(QualType(Ty, 0));
+    LookupContext = BaseTy->getAs<RecordType>()->getDecl();
   } else {
     // C++0x N2914 [namespace.udecl]p8:
     // A using-declaration for a class member shall be a member-declaration.
