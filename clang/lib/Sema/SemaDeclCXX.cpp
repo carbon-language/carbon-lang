@@ -2094,13 +2094,13 @@ void Sema::PushUsingDirective(Scope *S, UsingDirectiveDecl *UDir) {
 
 
 Sema::DeclPtrTy Sema::ActOnUsingDeclaration(Scope *S,
-                                          SourceLocation UsingLoc,
-                                          const CXXScopeSpec &SS,
-                                          SourceLocation IdentLoc,
-                                          IdentifierInfo *TargetName,
-                                          OverloadedOperatorKind Op,
-                                          AttributeList *AttrList,
-                                          bool IsTypeName) {
+                                            SourceLocation UsingLoc,
+                                            const CXXScopeSpec &SS,
+                                            SourceLocation IdentLoc,
+                                            IdentifierInfo *TargetName,
+                                            OverloadedOperatorKind Op,
+                                            AttributeList *AttrList,
+                                            bool IsTypeName) {
   assert(!SS.isInvalid() && "Invalid CXXScopeSpec.");
   assert((TargetName || Op) && "Invalid TargetName.");
   assert(IdentLoc.isValid() && "Invalid TargetName location.");
@@ -2118,24 +2118,73 @@ Sema::DeclPtrTy Sema::ActOnUsingDeclaration(Scope *S,
   if (isUnknownSpecialization(SS)) {
     Diag(IdentLoc, diag::err_using_dependent_unsupported);
     delete AttrList;
-    return DeclPtrTy::make((UsingDecl*)0);
+    return DeclPtrTy();
   }
+
+  if (SS.isEmpty()) {
+    Diag(IdentLoc, diag::err_using_requires_qualname);
+    return DeclPtrTy();
+  }
+  
+  NestedNameSpecifier *NNS = 
+    static_cast<NestedNameSpecifier *>(SS.getScopeRep());
+
+  DeclContext *LookupContext = 0;
+  
+  if (const CXXRecordDecl *RD = dyn_cast<CXXRecordDecl>(CurContext)) {
+    // C++0x N2914 [namespace.udecl]p3:
+    // A using-declaration used as a member-declaration shall refer to a member
+    // of a base class of the class being defined, shall refer to a member of an
+    // anonymous union that is a member of a base class of the class being
+    // defined, or shall refer to an enumerator for an enumeration type that is 
+    // a member of a base class of the class being defined.
+    const Type *Ty = NNS->getAsType();
+    if (!Ty || !IsDerivedFrom(Context.getTagDeclType(RD), QualType(Ty, 0))) {
+      Diag(SS.getRange().getBegin(),
+           diag::err_using_decl_nested_name_specifier_is_not_a_base_class)
+        << NNS << RD->getDeclName();
+      return DeclPtrTy();
+    }
+    
+    LookupContext = cast<RecordType>(Ty)->getDecl();
+  } else {
+    // C++0x N2914 [namespace.udecl]p8:
+    // A using-declaration for a class member shall be a member-declaration.
+    if (NNS->getKind() == NestedNameSpecifier::TypeSpec) {
+      Diag(IdentLoc, diag::err_using_decl_refers_to_class_member)
+        << SS.getRange();
+      return DeclPtrTy();
+    }
+    
+    // C++0x N2914 [namespace.udecl]p9:
+    // In a using-declaration, a prefix :: refers to the global namespace.
+    if (NNS->getKind() == NestedNameSpecifier::Global)
+      LookupContext = Context.getTranslationUnitDecl();
+    else
+      LookupContext = NNS->getAsNamespace();
+  }
+
 
   // Lookup target name.
-  LookupResult R = LookupParsedName(S, &SS, Name, LookupOrdinaryName, false);
-
-  if (NamedDecl *NS = R) {
-    if (IsTypeName && !isa<TypeDecl>(NS)) {
-      Diag(IdentLoc, diag::err_using_typename_non_type);
-    }
-    UsingAlias = UsingDecl::Create(Context, CurContext, IdentLoc, SS.getRange(),
-        NS->getLocation(), UsingLoc, NS,
-        static_cast<NestedNameSpecifier *>(SS.getScopeRep()),
-        IsTypeName);
-    PushOnScopeChains(UsingAlias, S);
-  } else {
-    Diag(IdentLoc, diag::err_using_requires_qualname) << SS.getRange();
+  LookupResult R = LookupQualifiedName(LookupContext, 
+                                       Name, LookupOrdinaryName);
+  
+  if (!R) {
+    Diag(IdentLoc, diag::err_typecheck_no_member) << Name << SS.getRange();
+    return DeclPtrTy();
   }
+
+  NamedDecl *ND = R.getAsDecl();
+  
+  if (IsTypeName && !isa<TypeDecl>(ND)) {
+    Diag(IdentLoc, diag::err_using_typename_non_type);
+    return DeclPtrTy();
+  }
+
+  UsingAlias = 
+    UsingDecl::Create(Context, CurContext, IdentLoc, SS.getRange(),
+                      ND->getLocation(), UsingLoc, ND, NNS, IsTypeName);
+  PushOnScopeChains(UsingAlias, S);
 
   // FIXME: We ignore attributes for now.
   delete AttrList;

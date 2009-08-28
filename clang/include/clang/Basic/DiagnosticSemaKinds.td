@@ -92,13 +92,19 @@ def warn_use_out_of_scope_declaration : Warning<
   "use of out-of-scope declaration of %0">;
 def err_inline_non_function : Error<
   "'inline' can only appear on functions">;
+  
+// C++ using declarations
 def err_using_requires_qualname : Error<
   "using declaration requires a qualified name">;
 def err_using_typename_non_type : Error<
   "'typename' keyword used on a non-type">;
 def err_using_dependent_unsupported : Error<
   "dependent using declaration not supported yet">;
-
+def err_using_decl_nested_name_specifier_is_not_a_base_class : Error<
+  "using declaration refers into %0, which is not a base class of %1">;
+def err_using_decl_refers_to_class_member : Error<
+  "using declaration refers to class member">;
+  
 def err_invalid_thread : Error<
   "'__thread' is only allowed on variable declarations">;
 def err_thread_non_global : Error<
