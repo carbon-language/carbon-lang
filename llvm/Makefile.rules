@@ -1058,9 +1058,9 @@ $(LibName.BCA): $(ObjectsBC) $(LibDir)/.dir $(LLVMLD) \
                 $(LLVMToolDir)/llvm-ar
 	$(Echo) Building $(BuildMode) Bytecode Archive $(notdir $@) \
 	  "(internalize)"
-	$(Verb) $(BCLinkLib) -o $(ObjDir)/$(LIBRARYNAME).o $(ObjectsBC)
+	$(Verb) $(BCLinkLib) -o $(ObjDir)/$(LIBRARYNAME).internalize $(ObjectsBC)
 	$(Verb) $(RM) -f $@
-	$(Verb) $(LArchive) $@ $(ObjDir)/$(LIBRARYNAME).o
+	$(Verb) $(LArchive) $@ $(ObjDir)/$(LIBRARYNAME).internalize.bc
 else
 $(LibName.BCA): $(ObjectsBC) $(LibDir)/.dir \
                 $(LLVMToolDir)/llvm-ar
