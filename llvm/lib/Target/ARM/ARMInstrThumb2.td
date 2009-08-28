@@ -384,13 +384,13 @@ multiclass T2I_st<string opc, PatFrag opnode> {
 /// T2I_picld - Defines the PIC load pattern.
 class T2I_picld<string opc, PatFrag opnode> :
       T2I<(outs GPR:$dst), (ins addrmodepc:$addr), IIC_iLoadi,
-          !strconcat("${addr:label}:\n\t", opc), " $dst, $addr",
+          !strconcat("\n${addr:label}:\n\t", opc), " $dst, $addr",
           [(set GPR:$dst, (opnode addrmodepc:$addr))]>;
 
 /// T2I_picst - Defines the PIC store pattern.
 class T2I_picst<string opc, PatFrag opnode> :
       T2I<(outs), (ins GPR:$src, addrmodepc:$addr), IIC_iStorer,
-          !strconcat("${addr:label}:\n\t", opc), " $src, $addr",
+          !strconcat("\n${addr:label}:\n\t", opc), " $src, $addr",
           [(opnode GPR:$src, addrmodepc:$addr)]>;
 
 

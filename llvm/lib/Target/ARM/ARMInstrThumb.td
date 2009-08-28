@@ -130,7 +130,7 @@ PseudoInst<(outs), (ins i32imm:$amt), NoItinerary,
 // For both thumb1 and thumb2.
 let isNotDuplicable = 1 in
 def tPICADD : TIt<(outs GPR:$dst), (ins GPR:$lhs, pclabel:$cp), IIC_iALUr,
-                 "$cp:\n\tadd $dst, pc",
+                 "\n$cp:\n\tadd $dst, pc",
                  [(set GPR:$dst, (ARMpic_add GPR:$lhs, imm:$cp))]>;
 
 // PC relative add.
