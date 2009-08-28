@@ -1002,7 +1002,7 @@ static void WriteFileData(raw_ostream &OS, const MCFragment &F,
     MCFillFragment &FF = cast<MCFillFragment>(F);
 
     int64_t Value = 0;
-    if (!FF.getValue().isAbsolute())
+    if (FF.getValue().isAbsolute())
       Value = FF.getValue().getConstant();
     for (uint64_t i = 0, e = FF.getCount(); i != e; ++i) {
       if (!FF.getValue().isAbsolute()) {
