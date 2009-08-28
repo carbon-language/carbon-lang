@@ -60,7 +60,10 @@ InlinedArrayAllocasTy;
 /// do so and update the CallGraph for this operation.
 ///
 /// This function also does some basic book-keeping to update the IR.  The
-/// InlinedArrayAllocas map keeps track of any 
+/// InlinedArrayAllocas map keeps track of any allocas that are already
+/// available from other  functions inlined into the caller.  If we are able to
+/// inline this call site we attempt to reuse already available allocas or add
+/// any new allocas to the set if not possible.
 static bool InlineCallIfPossible(CallSite CS, CallGraph &CG,
                                  const TargetData *TD,
                                  InlinedArrayAllocasTy &InlinedArrayAllocas) {
