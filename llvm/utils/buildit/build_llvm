@@ -95,6 +95,7 @@ if [ \! -f Makefile.config ]; then
         --enable-targets=arm,x86,powerpc,cbe \
         --enable-assertions=$LLVM_ASSERTIONS \
         --enable-optimized=$LLVM_OPTIMIZED \
+        --disable-bindings \
         || exit 1
 fi
 
