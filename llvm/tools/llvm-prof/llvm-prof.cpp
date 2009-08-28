@@ -30,7 +30,6 @@
 #include "llvm/Support/Format.h"
 #include "llvm/System/Signals.h"
 #include <algorithm>
-#include <iostream>
 #include <iomanip>
 #include <map>
 #include <set>
