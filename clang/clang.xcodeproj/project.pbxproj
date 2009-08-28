@@ -108,6 +108,8 @@
 		84AF36A10CB17A3B00C820A5 /* DeclObjC.h in CopyFiles */ = {isa = PBXBuildFile; fileRef = 84AF36A00CB17A3B00C820A5 /* DeclObjC.h */; };
 		84D9A8880C1A57E100AC7ABC /* AttributeList.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 84D9A8870C1A57E100AC7ABC /* AttributeList.cpp */; };
 		84D9A88C0C1A581300AC7ABC /* AttributeList.h in CopyFiles */ = {isa = PBXBuildFile; fileRef = 84D9A88B0C1A581300AC7ABC /* AttributeList.h */; };
+		9012911D1048068D0083456D /* ASTUnit.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 9012911C1048068D0083456D /* ASTUnit.cpp */; };
+		90129121104812F90083456D /* CIndex.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 9012911F104812F90083456D /* CIndex.cpp */; };
 		906BF4B00F83BA2E001071FA /* ConvertUTF.c in Sources */ = {isa = PBXBuildFile; fileRef = 906BF4AF0F83BA2E001071FA /* ConvertUTF.c */; };
 		90FD6D7B103C3D49005F5B73 /* Analyzer.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 90FD6D6D103C3D49005F5B73 /* Analyzer.cpp */; };
 		90FD6D7C103C3D49005F5B73 /* ASTLocation.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 90FD6D6E103C3D49005F5B73 /* ASTLocation.cpp */; };
@@ -497,6 +499,9 @@
 		84D9A88B0C1A581300AC7ABC /* AttributeList.h */ = {isa = PBXFileReference; fileEncoding = 30; indentWidth = 2; lastKnownFileType = sourcecode.c.h; name = AttributeList.h; path = clang/Parse/AttributeList.h; sourceTree = "<group>"; tabWidth = 2; };
 		8DD76F6C0486A84900D96B5E /* clang */ = {isa = PBXFileReference; explicitFileType = "compiled.mach-o.executable"; includeInIndex = 0; path = clang; sourceTree = BUILT_PRODUCTS_DIR; };
 		9012911510470FCE0083456D /* Index.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = Index.h; path = "clang-c/Index.h"; sourceTree = "<group>"; };
+		9012911C1048068D0083456D /* ASTUnit.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = ASTUnit.cpp; path = lib/Frontend/ASTUnit.cpp; sourceTree = "<group>"; };
+		9012911F104812F90083456D /* CIndex.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = CIndex.cpp; path = tools/CIndex/CIndex.cpp; sourceTree = "<group>"; };
+		90129120104812F90083456D /* CIndex.exports */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; name = CIndex.exports; path = tools/CIndex/CIndex.exports; sourceTree = "<group>"; };
 		9063F2210F9E8BDF002F7251 /* ExternalSemaSource.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = ExternalSemaSource.h; path = clang/Sema/ExternalSemaSource.h; sourceTree = "<group>"; };
 		9063F2220F9E8BDF002F7251 /* SemaConsumer.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = SemaConsumer.h; path = clang/Sema/SemaConsumer.h; sourceTree = "<group>"; };
 		9063F2280F9E911F002F7251 /* OnDiskHashTable.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = OnDiskHashTable.h; sourceTree = "<group>"; };
@@ -879,6 +884,7 @@
 		352246E00F5C6BC000D0D279 /* Frontend */ = {
 			isa = PBXGroup;
 			children = (
+				9012911C1048068D0083456D /* ASTUnit.cpp */,
 				1A2A54A40FD1DD1C00F4CE45 /* AnalysisConsumer.cpp */,
 				1A2A54A50FD1DD1C00F4CE45 /* ASTConsumers.cpp */,
 				1A2A54A60FD1DD1C00F4CE45 /* Backend.cpp */,
@@ -1025,6 +1031,15 @@
 				9012911510470FCE0083456D /* Index.h */,
 			);
 			name = "clang-c";
+			sourceTree = "<group>";
+		};
+		9012911E104812DA0083456D /* CIndex */ = {
+			isa = PBXGroup;
+			children = (
+				9012911F104812F90083456D /* CIndex.cpp */,
+				90129120104812F90083456D /* CIndex.exports */,
+			);
+			name = CIndex;
 			sourceTree = "<group>";
 		};
 		90FD6D5E103C3D03005F5B73 /* Index */ = {
@@ -1466,6 +1481,7 @@
 		DEDFE61F0F7B3AE10035BD10 /* Tools */ = {
 			isa = PBXGroup;
 			children = (
+				9012911E104812DA0083456D /* CIndex */,
 				90FD6DB4103D9763005F5B73 /* index-test */,
 				DEDFE6200F7B3AE90035BD10 /* clang-cc */,
 				DEDFE6210F7B3AF10035BD10 /* clang */,
@@ -1849,6 +1865,8 @@
 				90FD6D84103C3D49005F5B73 /* ResolveLocation.cpp in Sources */,
 				90FD6D85103C3D49005F5B73 /* SelectorMap.cpp in Sources */,
 				90FD6DB6103D977E005F5B73 /* index-test.cpp in Sources */,
+				9012911D1048068D0083456D /* ASTUnit.cpp in Sources */,
+				90129121104812F90083456D /* CIndex.cpp in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

@@ -13,23 +13,58 @@
 
 #include "clang-c/Index.h"
 
+#include "clang/Index/Program.h"
+#include "clang/Index/Indexer.h"
+
+#include "clang/Frontend/ASTUnit.h"
+#include "clang/Basic/FileManager.h"
+
+#include "clang/AST/DeclVisitor.h"
+
+using namespace clang;
+using namespace idx;
+
 extern "C" {
 
 CXIndex clang_createIndex() 
-{ 
-  return 0; 
+{
+  return new Indexer(*new Program(), *new FileManager());
 }
 
-CXTranslationUnit clang_loadTranslationUnitFromASTFile(
-  CXIndex, const char *ast_filename) 
+// FIXME: need to pass back error info.
+CXTranslationUnit clang_createTranslationUnit(
+  CXIndex CIdx, const char *ast_filename) 
 {
-  return 0;
+  assert(CIdx && "Passed null CXIndex");
+  Indexer *CXXIdx = static_cast<Indexer *>(CIdx);
+  std::string astName(ast_filename);
+  std::string ErrMsg;
+  
+  return ASTUnit::LoadFromPCHFile(astName, CXXIdx->getFileManager(), &ErrMsg);
 }
+
+class IdxVisitor : public DeclVisitor<IdxVisitor> {
+public:
+  IdxVisitor();
+  
+  void VisitNamedDecl(NamedDecl *ND) {
+    printf("NamedDecl (%s:", ND->getDeclKindName());
+    if (ND->getIdentifier())
+      printf("%s)\n", ND->getIdentifier()->getName());
+    else
+      printf("<no name>)\n");
+  }
+};
 
 void clang_loadTranslationUnit(
-  CXTranslationUnit, void (*callback)(CXTranslationUnit, CXCursor)
-)
+  CXTranslationUnit CTUnit, void (*callback)(CXTranslationUnit, CXCursor))
 {
+  assert(CTUnit && "Passed null CXTranslationUnit");
+  ASTUnit *CXXUnit = static_cast<ASTUnit *>(CTUnit);
+  ASTContext &Ctx = CXXUnit->getASTContext();
+  
+  IdxVisitor DVisit;
+  DVisit.Visit(Ctx.getTranslationUnitDecl());
 }
 
 void clang_loadDeclaration(CXDecl, void (*callback)(CXDecl, CXCursor))

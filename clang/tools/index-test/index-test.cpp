@@ -214,7 +214,7 @@ int main(int argc, char **argv) {
   FileManager FileMgr;
 
   Program Prog;
-  Indexer Idxer(Prog);
+  Indexer Idxer(Prog, FileMgr);
   llvm::SmallVector<TUnit*, 4> TUnits;
   
   // If no input was specified, read from stdin.

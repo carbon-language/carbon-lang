@@ -14,4 +14,4 @@ _clang_getEntityFromDecl
 _clang_getURI
 _clang_loadDeclaration
 _clang_loadTranslationUnit
-_clang_loadTranslationUnitFromASTFile
+_clang_createTranslationUnit

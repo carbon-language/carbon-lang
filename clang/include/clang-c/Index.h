@@ -33,13 +33,13 @@ extern "C" {
    Naming Conventions: To avoid namespace pollution, data types are prefixed 
    with "CX" and functions are prefixed with "clang_".
 */
-typedef void *CXIndex;            // An indexing instance.
+typedef void *CXIndex;            /* An indexing instance. */
 
-typedef void *CXTranslationUnit;  // A translation unit instance.
+typedef void *CXTranslationUnit;  /* A translation unit instance. */
 
-typedef void *CXCursor;  // An opaque cursor into the CXTranslationUnit.
+typedef void *CXCursor;  /* An opaque cursor into the CXTranslationUnit. */
 
-// Cursors represent declarations and references (provides line/column info).
+/* Cursors represent declarations and references (provides line/column info). */
 enum CXCursorKind {  
  CXCursor_Declaration,
  CXCursor_Reference,
@@ -49,9 +49,9 @@ enum CXCursorKind {
  CXCursor_ObjC_SelectorRef
 };
 
-typedef void *CXDecl;    // A specific declaration within a translation unit.
+typedef void *CXDecl;    /* A specific declaration within a translation unit. */
 
-enum CXDeclKind {  // The various kinds of declarations.
+enum CXDeclKind {  /* The various kinds of declarations. */
  CXDecl_any,
  CXDecl_typedef,
  CXDecl_enum,
@@ -73,12 +73,12 @@ enum CXDeclKind {  // The various kinds of declarations.
  CXDecl_ObjC_property_implementation
 };
 
-// A unique token for looking up "visible" CXDecls from a CXTranslationUnit.
+/* A unique token for looking up "visible" CXDecls from a CXTranslationUnit. */
 typedef void *CXEntity;     
 
 CXIndex clang_createIndex();
 
-CXTranslationUnit clang_loadTranslationUnitFromASTFile(
+CXTranslationUnit clang_createTranslationUnit(
   CXIndex, const char *ast_filename
 );
 
@@ -130,33 +130,35 @@ void clang_loadTranslationUnit(
 */
 void clang_loadDeclaration(CXDecl, void (*callback)(CXDecl, CXCursor));
 
-//
-// CXEntity Operations.
-//
+/*
+ * CXEntity Operations.
+ */
 const char *clang_getDeclarationName(CXEntity);
 const char *clang_getURI(CXEntity);
 CXEntity clang_getEntity(const char *URI);
-//
-// CXDecl Operations.
-//
+/*
+ * CXDecl Operations.
+ */
 CXCursor clang_getCursorFromDecl(CXDecl);
 CXEntity clang_getEntityFromDecl(CXDecl);
 enum CXDeclKind clang_getDeclKind(CXDecl);
 const char *clang_getDeclSpelling(CXDecl);
-//
-// CXCursor Operations.
-//
+/*
+ * CXCursor Operations.
+ */
 CXCursor clang_getCursor(CXTranslationUnit, const char *source_name, 
                          unsigned line, unsigned column);
 
-CXCursorKind clang_getCursorKind(CXCursor);
+enum CXCursorKind clang_getCursorKind(CXCursor);
 
 unsigned clang_getCursorLine(CXCursor);
 unsigned clang_getCursorColumn(CXCursor);
 const char *clang_getCursorSource(CXCursor);
 
-// If CXCursorKind == Cursor_Reference, then this will return the referenced declaration.
-// If CXCursorKind == Cursor_Declaration, then this will return the declaration.
+/*
+ * If CXCursorKind == Cursor_Reference, then this will return the referenced declaration.
+ * If CXCursorKind == Cursor_Declaration, then this will return the declaration.
+ */
 CXDecl clang_getCursorDecl(CXCursor);
 
 #ifdef __cplusplus

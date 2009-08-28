@@ -19,6 +19,7 @@
 #include "clang/Index/GlobalSelector.h"
 #include "llvm/ADT/SmallPtrSet.h"
 #include "llvm/ADT/DenseMap.h"
+#include "clang/Basic/FileManager.h"
 #include <map>
 
 namespace clang {
@@ -36,10 +37,13 @@ public:
   typedef std::map<Entity, TUSetTy> MapTy;
   typedef std::map<GlobalSelector, TUSetTy> SelMapTy;
 
-  explicit Indexer(Program &prog) : Prog(prog) { }
+  explicit Indexer(Program &prog, FileManager &FM) : 
+    Prog(prog), FileMgr(FM) { }
 
   Program &getProgram() const { return Prog; }
 
+  FileManager &getFileManager() const { return FileMgr; }
+  
   /// \brief Find all Entities and map them to the given translation unit.
   void IndexAST(TranslationUnit *TU);
 
@@ -50,6 +54,8 @@ public:
 
 private:
   Program &Prog;
+  FileManager &FileMgr;
+  
   MapTy Map;
   CtxTUMapTy CtxTUMap;
   SelMapTy SelMap;
