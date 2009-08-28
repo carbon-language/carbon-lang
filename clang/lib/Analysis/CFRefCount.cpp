@@ -1461,7 +1461,9 @@ void RetainSummaryManager::InitializeMethodSummaries() {
                          InitSumm);
   
   // The next methods are allocators.
-  RetainSummary *AllocSumm = getPersistentSummary(ObjCAllocRetE);  
+  RetainSummary *AllocSumm = getPersistentSummary(ObjCAllocRetE);
+  RetainSummary *CFAllocSumm = 
+    getPersistentSummary(RetEffect::MakeOwned(RetEffect::CF, true));
   
   // Create the "copy" selector.  
   addNSObjectMethSummary(GetNullarySelector("copy", Ctx), AllocSumm);  
@@ -1547,12 +1549,13 @@ void RetainSummaryManager::InitializeMethodSummaries() {
                      "createSnapshotImageOfType", NULL);
 
   // Create summaries for CIContext, 'createCGImage' and
-  // 'createCGLayerWithSize'.
-  addInstMethSummary("CIContext", AllocSumm,
+  // 'createCGLayerWithSize'.  These objects are CF objects, and are not
+  // automatically garbage collected.
+  addInstMethSummary("CIContext", CFAllocSumm,
                      "createCGImage", "fromRect", NULL);
-  addInstMethSummary("CIContext", AllocSumm,
+  addInstMethSummary("CIContext", CFAllocSumm,
                      "createCGImage", "fromRect", "format", "colorSpace", NULL);  
-  addInstMethSummary("CIContext", AllocSumm, "createCGLayerWithSize",
+  addInstMethSummary("CIContext", CFAllocSumm, "createCGLayerWithSize",
            "info", NULL);
 }
 
