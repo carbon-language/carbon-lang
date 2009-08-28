@@ -56,11 +56,8 @@ DIR=`pwd`
 DARWIN_VERS=`uname -r | sed 's/\..*//'`
 echo DARWIN_VERS = $DARWIN_VERS
 
-# If we can find an LLVM-GCC, prefer it.
-export CC=/Developer/usr/bin/llvm-gcc
-if [ ! -x $CC ] ; then unset CC ; fi
-export CXX=/Developer/usr/bin/llvm-g++
-if [ ! -x $CXX ] ; then unset CXX ; fi
+# If the user has CC set in their environment unset it now
+unset CC
 
 if [ "x$RC_ProjectName" = "xllvmCore_Embedded" ]; then
     DT_HOME=$DEST_DIR/Developer/Platforms/iPhoneOS.platform/Developer/usr
