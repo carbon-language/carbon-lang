@@ -1576,20 +1576,23 @@ public:
 /// UsingDecl - Represents a C++ using-declaration. For example:
 ///    using someNameSpace::someIdentifier;
 class UsingDecl : public NamedDecl {
-
   /// \brief The source range that covers the nested-name-specifier
   /// preceding the declaration name.
   SourceRange NestedNameRange;
+  
   /// \brief The source location of the target declaration name.
   SourceLocation TargetNameLocation;
+  
   /// \brief The source location of the "using" location itself.
   SourceLocation UsingLocation;
+  
   /// \brief Target declaration.
   NamedDecl* TargetDecl;
-  /// \brief Target declaration.
+  
+  /// \brief Target nested name specifier.
   NestedNameSpecifier* TargetNestedNameDecl;
 
-  // Had 'typename' keyword.
+  // \brief Has 'typename' keyword.
   bool IsTypeName;
 
   UsingDecl(DeclContext *DC, SourceLocation L, SourceRange NNR,
@@ -1634,6 +1637,47 @@ public:
     return D->getKind() == Decl::Using;
   }
   static bool classof(const UsingDecl *D) { return true; }
+};
+
+/// UnresolvedUsingDecl - Represents a using declaration whose name can not
+/// yet be resolved.
+class UnresolvedUsingDecl : public NamedDecl {
+  /// \brief The source range that covers the nested-name-specifier
+  /// preceding the declaration name.
+  SourceRange TargetNestedNameRange;
+  
+  /// \brief The source location of the target declaration name.
+  SourceLocation TargetNameLocation;
+  
+  NestedNameSpecifier *TargetNestedNameSpecifier;
+  
+  DeclarationName TargetName;
+  
+  // \brief Has 'typename' keyword.
+  bool IsTypeName;
+  
+  UnresolvedUsingDecl(DeclContext *DC, SourceLocation UsingLoc,
+                      SourceRange TargetNNR, NestedNameSpecifier *TargetNNS,
+                      SourceLocation TargetNameLoc, DeclarationName TargetName,
+                      bool IsTypeNameArg)
+  : NamedDecl(Decl::UnresolvedUsing, DC, UsingLoc, TargetName),
+    TargetNestedNameRange(TargetNNR), TargetNameLocation(TargetNameLoc), 
+    TargetNestedNameSpecifier(TargetNNS), TargetName(TargetName), 
+    IsTypeName(IsTypeNameArg) { }
+
+public:
+  static UnresolvedUsingDecl *Create(ASTContext &C, DeclContext *DC,
+                                     SourceLocation UsingLoc,
+                                     SourceRange TargetNNR,
+                                     NestedNameSpecifier *TargetNNS,
+                                     SourceLocation TargetNameLoc,
+                                     DeclarationName TargetName,
+                                     bool IsTypeNameArg);
+  
+  static bool classof(const Decl *D) {
+    return D->getKind() == Decl::UnresolvedUsing;
+  }
+  static bool classof(const UnresolvedUsingDecl *D) { return true; }
 };
   
 /// StaticAssertDecl - Represents a C++0x static_assert declaration.

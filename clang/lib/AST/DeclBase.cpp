@@ -191,6 +191,7 @@ unsigned Decl::getIdentifierNamespaceForKind(Kind DeclKind) {
     case OriginalParmVar:
     case NonTypeTemplateParm:
     case Using:
+    case UnresolvedUsing:
     case ObjCMethod:
     case ObjCContainer:
     case ObjCCategory:

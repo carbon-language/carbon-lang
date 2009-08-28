@@ -832,6 +832,17 @@ UsingDecl *UsingDecl::Create(ASTContext &C, DeclContext *DC,
       TargetNNS, IsTypeNameArg);
 }
 
+UnresolvedUsingDecl *UnresolvedUsingDecl::Create(ASTContext &C, DeclContext *DC,
+                                                 SourceLocation UsingLoc,
+                                                 SourceRange TargetNNR,
+                                                 NestedNameSpecifier *TargetNNS,
+                                                 SourceLocation TargetNameLoc,
+                                                 DeclarationName TargetName,
+                                                 bool IsTypeNameArg) {
+  return new (C) UnresolvedUsingDecl(DC, UsingLoc, TargetNNR, TargetNNS,
+                                     TargetNameLoc, TargetName, IsTypeNameArg);
+}
+
 StaticAssertDecl *StaticAssertDecl::Create(ASTContext &C, DeclContext *DC,
                                            SourceLocation L, Expr *AssertExpr,
                                            StringLiteral *Message) {
