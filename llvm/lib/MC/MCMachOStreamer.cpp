@@ -170,13 +170,12 @@ void MCMachOStreamer::EmitLabel(MCSymbol *Symbol) {
 
 void MCMachOStreamer::EmitAssemblerFlag(AssemblerFlag Flag) {
   switch (Flag) {
-  default:
-    llvm_unreachable("FIXME: Not yet implemented!");
-
   case SubsectionsViaSymbols:
     Assembler.setSubsectionsViaSymbols(true);
-    break;
+    return;
   }
+
+  assert(0 && "invalid assembler flag!");
 }
 
 void MCMachOStreamer::EmitAssignment(MCSymbol *Symbol,
@@ -268,7 +267,8 @@ void MCMachOStreamer::EmitSymbolDesc(MCSymbol *Symbol, unsigned DescValue) {
 }
 
 void MCMachOStreamer::EmitLocalSymbol(MCSymbol *Symbol, const MCValue &Value) {
-  llvm_unreachable("FIXME: Not yet implemented!");
+  // FIXME: Implement?
+  llvm_report_error("unsupported '.lsym' directive");
 }
 
 void MCMachOStreamer::EmitCommonSymbol(MCSymbol *Symbol, unsigned Size,
