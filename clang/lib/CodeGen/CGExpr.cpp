@@ -1172,6 +1172,11 @@ LValue CodeGenFunction::EmitConditionalOperator(const ConditionalOperator* E) {
 /// all the reasons that casts are permitted with aggregate result, including
 /// noop aggregate casts, and cast from scalar to union.
 LValue CodeGenFunction::EmitCastLValue(const CastExpr *E) {
+  if (E->getCastKind() == CastExpr::CK_UserDefinedConversion) {
+    const CXXFunctionalCastExpr *CXXFExpr = cast<CXXFunctionalCastExpr>(E);
+    return  LValue::MakeAddr(EmitCXXFunctionalCastExpr(CXXFExpr).getScalarVal(), 0);
+  }
+  
   // If this is an aggregate-to-aggregate cast, just use the input's address as
   // the lvalue.
   if (E->getCastKind() == CastExpr::CK_NoOp)

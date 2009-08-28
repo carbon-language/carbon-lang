@@ -1,6 +1,6 @@
 // RUN: clang-cc -fsyntax-only -verify %s
 
-struct A { int x; }; // expected-note 2 {{candidate}}
+struct A { int x; }; 
 
 class Base { 
 public:
@@ -36,7 +36,7 @@ template struct CStyleCast0<A, int>; // expected-note{{instantiation}}
 template<typename T, typename U>
 struct StaticCast0 {
   void f(T t) {
-    (void)static_cast<U>(t); // expected-error{{initialization of 'struct A'}}
+    (void)static_cast<U>(t); // expected-error{{static_cast from 'int' to 'struct A' is not allowed}}
   }
 };
 

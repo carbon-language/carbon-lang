@@ -228,12 +228,15 @@ Sema::ActOnCXXTypeConstructExpr(SourceRange TypeRange, TypeTy *TypeRep,
     if (CheckCastTypes(TypeRange, Ty, Exprs[0], Kind, ConversionDecl,
                        /*functional-style*/true))
       return ExprError();
-    exprs.release();
-    return Owned(new (Context) CXXFunctionalCastExpr(Ty.getNonReferenceType(),
+    // We done't build this AST for X(i) where we are constructing an object.
+    if (!ConversionDecl || !isa<CXXConstructorDecl>(ConversionDecl)) {
+      exprs.release();
+      return Owned(new (Context) CXXFunctionalCastExpr(Ty.getNonReferenceType(),
                                           Ty, TyBeginLoc, 
                                           CastExpr::CK_UserDefinedConversion,
                                           Exprs[0], ConversionDecl, 
                                           RParenLoc));
+    }
   }
 
   if (const RecordType *RT = Ty->getAs<RecordType>()) {

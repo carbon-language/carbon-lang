@@ -262,19 +262,20 @@ CodeGenFunction::EmitCXXFunctionalCastExpr(const CXXFunctionalCastExpr *E) {
          "EmitCXXFunctionalCastExpr - called with wrong cast");
   
   CXXMethodDecl *MD = E->getTypeConversionMethod();
+  assert(MD && "EmitCXXFunctionalCastExpr - null conversion method");
+  assert(isa<CXXConversionDecl>(MD) && "EmitCXXFunctionalCastExpr - not"
+         " method decl");
   const FunctionProtoType *FPT = MD->getType()->getAsFunctionProtoType();
-  llvm::Constant *Callee;
-  if (CXXConstructorDecl *CD = dyn_cast<CXXConstructorDecl>(MD))
-    Callee = CGM.GetAddrOfCXXConstructor(CD, Ctor_Complete); 
-  else {
-    const llvm::Type *Ty = 
-      CGM.getTypes().GetFunctionType(CGM.getTypes().getFunctionInfo(MD), 
-                                     FPT->isVariadic());
-    Callee = CGM.GetAddrOfFunction(GlobalDecl(MD), Ty);
-  }
-  llvm::Value *This = EmitLValue(E->getSubExpr()).getAddress();
   
-  return EmitCXXMemberCall(MD, Callee, This, 0, 0);
+  const llvm::Type *Ty = 
+    CGM.getTypes().GetFunctionType(CGM.getTypes().getFunctionInfo(MD), 
+                                   FPT->isVariadic());
+  llvm::Constant *Callee = CGM.GetAddrOfFunction(GlobalDecl(MD), Ty);
+  llvm::Value *This = EmitLValue(E->getSubExpr()).getAddress();
+  RValue RV = EmitCXXMemberCall(MD, Callee, This, 0, 0);
+  if (RV.isAggregate())
+    RV = RValue::get(RV.getAggregateAddr()); 
+  return RV;
 }
 
 llvm::Value *CodeGenFunction::LoadCXXThis() {

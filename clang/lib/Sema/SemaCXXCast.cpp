@@ -776,17 +776,6 @@ TryStaticImplicitCast(Sema &Self, Expr *SrcExpr, QualType DestType,
     msg = 0;
     return TC_Failed;
   }
-  if (DestType->isRecordType()) {
-    // There are no further possibilities for the target type being a class,
-    // neither in static_cast nor in a C-style cast. So we can fail here.
-    if ((ConversionDecl = 
-          Self.PerformInitializationByConstructor(DestType, &SrcExpr, 1,
-              OpRange.getBegin(), OpRange, DeclarationName(), Sema::IK_Direct)))
-      return TC_Success;
-    // The function already emitted an error.
-    msg = 0;
-    return TC_Failed;
-  }
 
   // FIXME: To get a proper error from invalid conversions here, we need to
   // reimplement more of this.
@@ -799,9 +788,9 @@ TryStaticImplicitCast(Sema &Self, Expr *SrcExpr, QualType DestType,
                                /*ForceRValue=*/false);
   
   if (ICS.ConversionKind  == ImplicitConversionSequence::UserDefinedConversion)
-    if (CXXConversionDecl *CV = 
-          dyn_cast<CXXConversionDecl>(ICS.UserDefined.ConversionFunction))
-      ConversionDecl = CV;
+    if (CXXMethodDecl *MD = 
+          dyn_cast<CXXMethodDecl>(ICS.UserDefined.ConversionFunction))
+      ConversionDecl = MD;
   return ICS.ConversionKind == ImplicitConversionSequence::BadConversion ?
     TC_NotApplicable : TC_Success;
 }
