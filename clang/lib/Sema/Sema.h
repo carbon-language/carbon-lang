@@ -18,6 +18,7 @@
 #include "IdentifierResolver.h"
 #include "CXXFieldCollector.h"
 #include "SemaOverload.h"
+#include "SemaTemplate.h"
 #include "clang/AST/Attr.h"
 #include "clang/AST/DeclBase.h"
 #include "clang/AST/Decl.h"
@@ -2626,7 +2627,7 @@ public:
   // C++ Template Instantiation
   //
 
-  const TemplateArgumentList &getTemplateInstantiationArgs(NamedDecl *D);
+  MultiLevelTemplateArgumentList getTemplateInstantiationArgs(NamedDecl *D);
 
   /// \brief A template instantiation that is currently in progress.
   struct ActiveTemplateInstantiation {

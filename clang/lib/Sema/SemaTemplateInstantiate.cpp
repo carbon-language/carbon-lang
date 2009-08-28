@@ -28,30 +28,39 @@ using namespace clang;
 
 /// \brief Retrieve the template argument list that should be used to
 /// instantiate the given declaration.
-const TemplateArgumentList &
+MultiLevelTemplateArgumentList
 Sema::getTemplateInstantiationArgs(NamedDecl *D) {
-  // Template arguments for a class template specialization.
-  if (ClassTemplateSpecializationDecl *Spec 
-        = dyn_cast<ClassTemplateSpecializationDecl>(D))
-    return Spec->getTemplateInstantiationArgs();
-
-  // Template arguments for a function template specialization.
-  if (FunctionDecl *Function = dyn_cast<FunctionDecl>(D))
-    if (const TemplateArgumentList *TemplateArgs
-          = Function->getTemplateSpecializationArgs())
-      return *TemplateArgs;
+  // Accumulate the set of template argument lists in this structure.
+  MultiLevelTemplateArgumentList Result;
+  
+  DeclContext *Ctx = dyn_cast<DeclContext>(D);
+  if (!Ctx)
+    Ctx = D->getDeclContext();
+  
+  for (; !Ctx->isFileContext(); Ctx = Ctx->getParent()) {
+    // Add template arguments from a class template instantiation.
+    if (ClassTemplateSpecializationDecl *Spec 
+          = dyn_cast<ClassTemplateSpecializationDecl>(Ctx)) {
+      // We're done when we hit an explicit specialization.
+      if (Spec->getSpecializationKind() == TSK_ExplicitSpecialization)
+        break;
       
-  // Template arguments for a member of a class template specialization.
-  DeclContext *EnclosingTemplateCtx = D->getDeclContext();
-  while (!isa<ClassTemplateSpecializationDecl>(EnclosingTemplateCtx)) {
-    assert(!EnclosingTemplateCtx->isFileContext() &&
-           "Tried to get the instantiation arguments of a non-template");
-    EnclosingTemplateCtx = EnclosingTemplateCtx->getParent();
+      Result.addOuterTemplateArguments(&Spec->getTemplateInstantiationArgs());
+      continue;
+    } 
+    
+    // Add template arguments from a function template specialization.
+    if (FunctionDecl *Function = dyn_cast<FunctionDecl>(Ctx)) {
+      // FIXME: Check whether this is an explicit specialization.
+      if (const TemplateArgumentList *TemplateArgs
+            = Function->getTemplateSpecializationArgs())
+        Result.addOuterTemplateArguments(TemplateArgs);
+      
+      continue;
+    }
   }
-
-  ClassTemplateSpecializationDecl *EnclosingTemplate 
-    = cast<ClassTemplateSpecializationDecl>(EnclosingTemplateCtx);
-  return EnclosingTemplate->getTemplateInstantiationArgs();
+  
+  return Result;
 }
 
 Sema::InstantiatingTemplate::

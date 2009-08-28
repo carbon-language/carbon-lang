@@ -20,3 +20,4 @@ void test_X0(int *ip, double *dp) {
   X0<void> xv;
   double *&dpr2 = xv.f1(ip, dp);
 }
+
