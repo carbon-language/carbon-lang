@@ -333,6 +333,9 @@ void StmtDumper::VisitCastExpr(CastExpr *Node) {
   case CastExpr::CK_UserDefinedConversion:
     fprintf(F, "<UserDefinedConversion>");
     break;
+  case CastExpr::CK_ConstructorConversion:
+    fprintf(F, "<ConstructorConversion>");
+    break;
   }
 }
 

@@ -1203,7 +1203,10 @@ public:
 
     /// CK_UserDefinedConversion - Conversion using a user defined type 
     /// conversion function.
-    CK_UserDefinedConversion
+    CK_UserDefinedConversion,
+
+    /// CK_ConstructorConversion - Conversion by constructor
+    CK_ConstructorConversion
   };
   
   struct CastInfo {

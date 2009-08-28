@@ -920,9 +920,10 @@ Sema::PerformImplicitConversion(Expr *&From, QualType ToType,
     break;
 
   case ImplicitConversionSequence::UserDefinedConversion:
-      // FIXME. Support other kinds of user defined convesions.
-      if (CXXConversionDecl *CV = 
-            dyn_cast<CXXConversionDecl>(ICS.UserDefined.ConversionFunction))
+    {
+      FunctionDecl *FD = ICS.UserDefined.ConversionFunction;
+      CastExpr::CastKind CastKind = CastExpr::CK_Unknown;
+      if (CXXConversionDecl *CV = dyn_cast<CXXConversionDecl>(FD)) {
         // FIXME. Get actual Source Location.
         From = 
           new (Context) CXXFunctionalCastExpr(ToType.getNonReferenceType(),
@@ -930,10 +931,22 @@ Sema::PerformImplicitConversion(Expr *&From, QualType ToType,
                                             CastExpr::CK_UserDefinedConversion,
                                             From, CV,
                                             SourceLocation());
-    ImpCastExprToType(From, ToType.getNonReferenceType(), 
-                      CastExpr::CK_Unknown,
-                      ToType->isLValueReferenceType());
-    return false;
+        CastKind = CastExpr::CK_UserDefinedConversion;
+      }
+      else if (CXXConstructorDecl *CD = dyn_cast<CXXConstructorDecl>(FD)) {
+        // FIXME. Do we need to check for isLValueReferenceType?
+        DefaultFunctionArrayConversion(From);
+        OwningExprResult InitResult = 
+          BuildCXXConstructExpr(ToType.getNonReferenceType(), 
+                                CD, &From, 1);
+        From = InitResult.takeAs<Expr>();
+        CastKind = CastExpr::CK_ConstructorConversion ;
+      }
+      ImpCastExprToType(From, ToType.getNonReferenceType(),
+                        CastKind,
+                        ToType->isLValueReferenceType());
+      return false;
+    }
 
   case ImplicitConversionSequence::EllipsisConversion:
     assert(false && "Cannot perform an ellipsis conversion");
