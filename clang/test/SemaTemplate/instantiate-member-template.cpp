@@ -54,7 +54,23 @@ struct X1 {
     }
   };
   
+  template<typename U>
+  struct Inner4;
 };
+
+template<typename T>
+template<typename U>
+struct X1<T>::Inner4 {
+  template<typename V>
+  V f2(T t, U u, V);
+};
+
+template<typename T>
+template<typename U>
+template<typename V>
+V X1<T>::Inner4<U>::f2(T t, U u, V) {
+  return t + u; // expected-error{{incompatible type}}
+}
 
 void test_X1(int *ip, int i, double *dp) {
   X1<void>::Inner0<int> *xvip; // okay
@@ -74,4 +90,7 @@ void test_X1(int *ip, int i, double *dp) {
   
   X1<int*>::Inner3<double*> id3b;
   id3b.f0(ip, dp); // expected-note{{instantiation}}
+  
+  X1<int*>::Inner4<int> id4;
+  id4.f2(ip, i, dp); // expected-note{{instantiation}}
 }
