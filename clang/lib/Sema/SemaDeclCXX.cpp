@@ -2101,29 +2101,42 @@ Sema::DeclPtrTy Sema::ActOnUsingDeclaration(Scope *S,
                                             OverloadedOperatorKind Op,
                                             AttributeList *AttrList,
                                             bool IsTypeName) {
-  assert(!SS.isInvalid() && "Invalid CXXScopeSpec.");
   assert((TargetName || Op) && "Invalid TargetName.");
-  assert(IdentLoc.isValid() && "Invalid TargetName location.");
   assert(S->getFlags() & Scope::DeclScope && "Invalid Scope.");
-
-  UsingDecl *UsingAlias = 0;
-
+  
   DeclarationName Name;
   if (TargetName)
     Name = TargetName;
   else
     Name = Context.DeclarationNames.getCXXOperatorName(Op);
+  
+  NamedDecl *UD = BuildUsingDeclaration(UsingLoc, SS, IdentLoc, 
+                                        Name, AttrList, IsTypeName);
+  if (UD)
+    PushOnScopeChains(UD, S);
+  
+  return DeclPtrTy::make(UD);
+}
+
+NamedDecl *Sema::BuildUsingDeclaration(SourceLocation UsingLoc,
+                                       const CXXScopeSpec &SS,
+                                       SourceLocation IdentLoc,
+                                       DeclarationName Name,
+                                       AttributeList *AttrList,
+                                       bool IsTypeName) {
+  assert(!SS.isInvalid() && "Invalid CXXScopeSpec.");
+  assert(IdentLoc.isValid() && "Invalid TargetName location.");
 
   // FIXME: Implement this properly!
   if (isUnknownSpecialization(SS)) {
     Diag(IdentLoc, diag::err_using_dependent_unsupported);
     delete AttrList;
-    return DeclPtrTy();
+    return 0;
   }
 
   if (SS.isEmpty()) {
     Diag(IdentLoc, diag::err_using_requires_qualname);
-    return DeclPtrTy();
+    return 0;
   }
   
   NestedNameSpecifier *NNS = 
@@ -2143,7 +2156,7 @@ Sema::DeclPtrTy Sema::ActOnUsingDeclaration(Scope *S,
       Diag(SS.getRange().getBegin(),
            diag::err_using_decl_nested_name_specifier_is_not_a_base_class)
         << NNS << RD->getDeclName();
-      return DeclPtrTy();
+      return 0;
     }
     
     LookupContext = cast<RecordType>(Ty)->getDecl();
@@ -2153,7 +2166,7 @@ Sema::DeclPtrTy Sema::ActOnUsingDeclaration(Scope *S,
     if (NNS->getKind() == NestedNameSpecifier::TypeSpec) {
       Diag(IdentLoc, diag::err_using_decl_can_not_refer_to_class_member)
         << SS.getRange();
-      return DeclPtrTy();
+      return 0;
     }
     
     // C++0x N2914 [namespace.udecl]p9:
@@ -2171,14 +2184,14 @@ Sema::DeclPtrTy Sema::ActOnUsingDeclaration(Scope *S,
   
   if (!R) {
     Diag(IdentLoc, diag::err_typecheck_no_member) << Name << SS.getRange();
-    return DeclPtrTy();
+    return 0;
   }
 
   NamedDecl *ND = R.getAsDecl();
   
   if (IsTypeName && !isa<TypeDecl>(ND)) {
     Diag(IdentLoc, diag::err_using_typename_non_type);
-    return DeclPtrTy();
+    return 0;
   }
 
   // C++0x N2914 [namespace.udecl]p6:
@@ -2186,17 +2199,14 @@ Sema::DeclPtrTy Sema::ActOnUsingDeclaration(Scope *S,
   if (isa<NamespaceDecl>(ND)) {
     Diag(IdentLoc, diag::err_using_decl_can_not_refer_to_namespace)
       << SS.getRange();
-    return DeclPtrTy();
+    return 0;
   }
   
-  UsingAlias = 
-    UsingDecl::Create(Context, CurContext, IdentLoc, SS.getRange(),
-                      ND->getLocation(), UsingLoc, ND, NNS, IsTypeName);
-  PushOnScopeChains(UsingAlias, S);
-
   // FIXME: We ignore attributes for now.
   delete AttrList;
-  return DeclPtrTy::make(UsingAlias);
+
+  return UsingDecl::Create(Context, CurContext, IdentLoc, SS.getRange(),
+                           ND->getLocation(), UsingLoc, ND, NNS, IsTypeName);
 }
 
 /// getNamespaceDecl - Returns the namespace a decl represents. If the decl

@@ -1738,14 +1738,21 @@ public:
                                            SourceLocation IdentLoc,
                                            IdentifierInfo *Ident);
 
+  NamedDecl *BuildUsingDeclaration(SourceLocation UsingLoc,
+                                   const CXXScopeSpec &SS,
+                                   SourceLocation IdentLoc,
+                                   DeclarationName Name,
+                                   AttributeList *AttrList,
+                                   bool IsTypeName);
+  
   virtual DeclPtrTy ActOnUsingDeclaration(Scope *CurScope,
-                                        SourceLocation UsingLoc,
-                                        const CXXScopeSpec &SS,
-                                        SourceLocation IdentLoc,
-                                        IdentifierInfo *TargetName,
-                                        OverloadedOperatorKind Op,
-                                        AttributeList *AttrList,
-                                        bool IsTypeName);
+                                          SourceLocation UsingLoc,
+                                          const CXXScopeSpec &SS,
+                                          SourceLocation IdentLoc,
+                                          IdentifierInfo *TargetName,
+                                          OverloadedOperatorKind Op,
+                                          AttributeList *AttrList,
+                                          bool IsTypeName);
   
   /// AddCXXDirectInitializerToDecl - This action is called immediately after 
   /// ActOnDeclarator, when a C++ direct initializer is present.
