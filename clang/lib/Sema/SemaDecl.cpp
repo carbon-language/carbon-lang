@@ -2899,7 +2899,7 @@ void Sema::CheckFunctionDeclaration(FunctionDecl *NewFD, NamedDecl *&PrevDecl,
     if (PrevDecl && 
         (!AllowOverloadingOfFunction(PrevDecl, Context) || 
          !IsOverload(NewFD, PrevDecl, MatchedDecl)) &&
-        !isa<UsingDecl>(PrevDecl)) {
+        !isa<UsingDecl>(PrevDecl) && !isa<UnresolvedUsingDecl>(PrevDecl)) {
       Redeclaration = true;
       Decl *OldDecl = PrevDecl;
 

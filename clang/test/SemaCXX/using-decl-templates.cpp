@@ -14,3 +14,9 @@ template<typename T> struct B : A<T> {
 };
 
 B<int> a; // expected-note{{in instantiation of template class 'struct B<int>' requested here}}
+
+template<typename T> struct C : A<T> {
+  using A<T>::f;
+  
+  void f() { };
+};
