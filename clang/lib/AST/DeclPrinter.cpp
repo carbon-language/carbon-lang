@@ -33,6 +33,8 @@ namespace {
     llvm::raw_ostream& Indent();
     void ProcessDeclGroup(llvm::SmallVectorImpl<Decl*>& Decls);
 
+    void Print(AccessSpecifier AS);
+    
   public:
     DeclPrinter(llvm::raw_ostream &Out, ASTContext &Context, 
                 const PrintingPolicy &Policy,
@@ -165,6 +167,15 @@ void DeclPrinter::ProcessDeclGroup(llvm::SmallVectorImpl<Decl*>& Decls) {
 
 }
 
+void DeclPrinter::Print(AccessSpecifier AS) {
+  switch(AS) {
+  case AS_none:      break;
+  case AS_public:    Out << "public"; break;
+  case AS_protected: Out << "protected"; break;
+  case AS_private:   Out << " private"; break;
+  }
+}
+
 //----------------------------------------------------------------------------
 // Common C declarations
 //----------------------------------------------------------------------------
@@ -173,6 +184,9 @@ void DeclPrinter::VisitDeclContext(DeclContext *DC, bool Indent) {
   if (Indent)
     Indentation += Policy.Indentation;
 
+  bool PrintAccess = isa<CXXRecordDecl>(DC);
+  AccessSpecifier CurAS = AS_none;
+  
   llvm::SmallVector<Decl*, 2> Decls;
   for (DeclContext::decl_iterator D = DC->decls_begin(), DEnd = DC->decls_end();
        D != DEnd; ++D) {
@@ -186,6 +200,15 @@ void DeclPrinter::VisitDeclContext(DeclContext *DC, bool Indent) {
         continue;
     }
 
+    if (PrintAccess) {
+      AccessSpecifier AS = D->getAccess();
+      if (AS != CurAS) {
+        Print(AS);
+        Out << ":\n";
+        CurAS = AS;
+      }
+    }
+    
     // The next bits of code handles stuff like "struct {int x;} a,b"; we're
     // forced to merge the declarations because there's no other way to
     // refer to the struct in question.  This limited merging is safe without
@@ -542,14 +565,8 @@ void DeclPrinter::VisitCXXRecordDecl(CXXRecordDecl *D) {
         if (Base->isVirtual())
           Out << "virtual ";
 
-        switch(Base->getAccessSpecifierAsWritten()) {
-        case AS_none:      break;
-        case AS_public:    Out << "public "; break;
-        case AS_protected: Out << "protected "; break;
-        case AS_private:   Out << " private "; break;
-        }
-
-        Out << Base->getType().getAsString(Policy);
+        Print(Base->getAccessSpecifierAsWritten());
+        Out << " " << Base->getType().getAsString(Policy);
       }
     }
 
