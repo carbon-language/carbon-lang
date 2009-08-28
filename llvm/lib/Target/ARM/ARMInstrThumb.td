@@ -701,13 +701,19 @@ def : T1Pat<(extloadi1  t_addrmode_s1:$addr),  (tLDRB t_addrmode_s1:$addr)>;
 def : T1Pat<(extloadi8  t_addrmode_s1:$addr),  (tLDRB t_addrmode_s1:$addr)>;
 def : T1Pat<(extloadi16 t_addrmode_s2:$addr),  (tLDRH t_addrmode_s2:$addr)>;
 
-// If it's possible to use [r,r] address mode for sextload, select to
+// If it's impossible to use [r,r] address mode for sextload, select to
 // ldr{b|h} + sxt{b|h} instead.
 def : T1Pat<(sextloadi8 t_addrmode_s1:$addr),
-            (tSXTB (tLDRB t_addrmode_s1:$addr))>;
+            (tSXTB (tLDRB t_addrmode_s1:$addr))>,
+      Requires<[IsThumb1Only, HasV6]>;
 def : T1Pat<(sextloadi16 t_addrmode_s2:$addr),
-            (tSXTH (tLDRH t_addrmode_s2:$addr))>;
+            (tSXTH (tLDRH t_addrmode_s2:$addr))>,
+      Requires<[IsThumb1Only, HasV6]>;
 
+def : T1Pat<(sextloadi8 t_addrmode_s1:$addr),
+            (tASRri (tLSLri (tLDRB t_addrmode_s1:$addr), 24), 24)>;
+def : T1Pat<(sextloadi16 t_addrmode_s1:$addr),
+            (tASRri (tLSLri (tLDRH t_addrmode_s1:$addr), 16), 16)>;
 
 // Large immediate handling.
 
