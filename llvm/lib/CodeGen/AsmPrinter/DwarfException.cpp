@@ -40,7 +40,7 @@ DwarfException::DwarfException(raw_ostream &OS, AsmPrinter *A,
   : Dwarf(OS, A, T, "eh"), shouldEmitTable(false), shouldEmitMoves(false),
     shouldEmitTableModule(false), shouldEmitMovesModule(false),
     ExceptionTimer(0) {
-  if (TimePassesIsEnabled) 
+  if (TimePassesIsEnabled)
     ExceptionTimer = new Timer("Dwarf Exception Writer",
                                getDwarfTimerGroup());
 }
@@ -148,13 +148,13 @@ void DwarfException::EmitCIE(const Function *Personality, unsigned Index) {
 
 /// EmitFDE - Emit the Frame Description Entry (FDE) for the function.
 void DwarfException::EmitFDE(const FunctionEHFrameInfo &EHFrameInfo) {
-  assert(!EHFrameInfo.function->hasAvailableExternallyLinkage() && 
+  assert(!EHFrameInfo.function->hasAvailableExternallyLinkage() &&
          "Should not emit 'available externally' functions at all");
 
   const Function *TheFunc = EHFrameInfo.function;
-  
+
   Asm->OutStreamer.SwitchSection(Asm->getObjFileLowering().getEHFrameSection());
-  
+
   // Externally visible entry into the functions eh frame info. If the
   // corresponding function is static, this should not be externally visible.
   if (!TheFunc->hasLocalLinkage())
@@ -218,7 +218,7 @@ void DwarfException::EmitFDE(const FunctionEHFrameInfo &EHFrameInfo) {
     }
 
     // Indicate locations of function specific callee saved registers in frame.
-    EmitFrameMoves("eh_func_begin", EHFrameInfo.Number, EHFrameInfo.Moves, 
+    EmitFrameMoves("eh_func_begin", EHFrameInfo.Number, EHFrameInfo.Moves,
                    true);
 
     // On Darwin the linker honors the alignment of eh_frame, which means it
@@ -486,7 +486,7 @@ ComputeCallSiteTable(SmallVectorImpl<CallSiteEntry> &CallSites,
 /// The general organization of the table is complex, but the basic concepts are
 /// easy.  First there is a header which describes the location and organization
 /// of the three components that follow.
-/// 
+///
 ///  1. The landing pad site information describes the range of code covered by
 ///     the try.  In our case it's an accumulation of the ranges covered by the
 ///     invokes in the try.  There is also a reference to the landing pad that
@@ -794,7 +794,7 @@ void DwarfException::EmitExceptionTable() {
   // associated switch value.
   //
   //  Action Record Fields:
-  //  
+  //
   //   * Filter Value
   //     Positive value, starting at 1. Index in the types table of the
   //     __typeinfo for the catch-clause type. 1 is the first word preceding
@@ -894,7 +894,7 @@ void DwarfException::BeginFunction(MachineFunction *MF) {
 /// EndFunction - Gather and emit post-function exception information.
 ///
 void DwarfException::EndFunction() {
-  if (TimePassesIsEnabled) 
+  if (TimePassesIsEnabled)
     ExceptionTimer->startTimer();
 
   if (shouldEmitMoves || shouldEmitTable) {
@@ -912,6 +912,6 @@ void DwarfException::EndFunction() {
                             MF->getFunction()));
   }
 
-  if (TimePassesIsEnabled) 
+  if (TimePassesIsEnabled)
     ExceptionTimer->stopTimer();
 }
