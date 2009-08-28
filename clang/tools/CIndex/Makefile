@@ -21,8 +21,8 @@ include $(LEVEL)/Makefile.config
 LINK_LIBS_IN_SHARED = 1
 SHARED_LIBRARY = 1
 
-LINK_COMPONENTS := support
-USEDLIBS = clangFrontend.a clangIndex.a clangAST.a clangLex.a clangBasic.a
+LINK_COMPONENTS := MC support
+USEDLIBS = clangFrontend.a clangIndex.a clangSema.a clangAST.a clangLex.a clangBasic.a
 
 include $(LEVEL)/Makefile.common
 
