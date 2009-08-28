@@ -44,7 +44,7 @@ namespace {
     virtual void EmitLocalSymbol(MCSymbol *Symbol, const MCValue &Value) {}
 
     virtual void EmitCommonSymbol(MCSymbol *Symbol, unsigned Size,
-                                  unsigned Pow2Alignment, bool IsLocal) {}
+                                  unsigned Pow2Alignment) {}
 
     virtual void EmitZerofill(const MCSection *Section, MCSymbol *Symbol = 0,
                               unsigned Size = 0, unsigned Pow2Alignment = 0) {}

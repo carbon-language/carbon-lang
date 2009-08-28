@@ -152,9 +152,8 @@ namespace llvm {
     /// @param Symbol - The common symbol to emit.
     /// @param Size - The size of the common symbol.
     /// @param Pow2Alignment - The alignment of the common symbol if non-zero.
-    /// @param IsLocal - If true, then the symbol is to be a local common
     virtual void EmitCommonSymbol(MCSymbol *Symbol, unsigned Size,
-                                  unsigned Pow2Alignment, bool IsLocal) = 0;
+                                  unsigned Pow2Alignment) = 0;
 
     /// EmitZerofill - Emit a the zerofill section and possiblity a symbol, if
     /// @param Symbol is non-NULL, for @param Size and with the @param

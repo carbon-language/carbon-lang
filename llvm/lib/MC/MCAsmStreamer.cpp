@@ -56,7 +56,7 @@ public:
   virtual void EmitLocalSymbol(MCSymbol *Symbol, const MCValue &Value);
 
   virtual void EmitCommonSymbol(MCSymbol *Symbol, unsigned Size,
-                                unsigned Pow2Alignment, bool IsLocal);
+                                unsigned Pow2Alignment);
 
   virtual void EmitZerofill(const MCSection *Section, MCSymbol *Symbol = 0,
                             unsigned Size = 0, unsigned Pow2Alignment = 0);
@@ -178,11 +178,8 @@ void MCAsmStreamer::EmitLocalSymbol(MCSymbol *Symbol, const MCValue &Value) {
 }
 
 void MCAsmStreamer::EmitCommonSymbol(MCSymbol *Symbol, unsigned Size,
-                                     unsigned Pow2Alignment, bool IsLocal) {
-  if (IsLocal)
-    OS << ".lcomm";
-  else
-    OS << ".comm";
+                                     unsigned Pow2Alignment) {
+  OS << ".comm";
   OS << ' ' << Symbol << ',' << Size;
   if (Pow2Alignment != 0)
     OS << ',' << Pow2Alignment;

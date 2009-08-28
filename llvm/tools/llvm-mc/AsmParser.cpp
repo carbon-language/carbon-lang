@@ -1258,7 +1258,13 @@ bool AsmParser::ParseDirectiveComm(bool IsLocal) {
     return Error(IDLoc, "invalid symbol redefinition");
 
   // Create the Symbol as a common or local common with Size and Pow2Alignment
-  Out.EmitCommonSymbol(Sym, Size, Pow2Alignment, IsLocal);
+  if (IsLocal)
+    Out.EmitZerofill(getMachOSection("__DATA", "__bss",
+                                     MCSectionMachO::S_ZEROFILL, 0,
+                                     SectionKind()),
+                     Sym, Size, Pow2Alignment);
+  else 
+    Out.EmitCommonSymbol(Sym, Size, Pow2Alignment);
 
   return false;
 }
