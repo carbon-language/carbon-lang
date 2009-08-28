@@ -452,6 +452,17 @@ public:
   /// IsPrivateExtern - True if this symbol is private extern.
   unsigned IsPrivateExtern : 1;
 
+  /// CommonSize - The size of the symbol, if it is 'common', or 0.
+  //
+  // FIXME: Pack this in with other fields? We could put it in offset, since a
+  // common symbol can never get a definition.
+  uint64_t CommonSize;
+
+  /// CommonAlign - The alignment of the symbol, if it is 'common'.
+  //
+  // FIXME: Pack this in with other fields?
+  unsigned CommonAlign;
+
   /// Flags - The Flags field is used by object file implementations to store
   /// additional per symbol information which is not easily classified.
   uint32_t Flags;
@@ -485,7 +496,31 @@ public:
   
   bool isPrivateExtern() const { return IsPrivateExtern; }
   void setPrivateExtern(bool Value) { IsPrivateExtern = Value; }
-  
+
+  /// isCommon - Is this a 'common' symbol.
+  bool isCommon() const { return CommonSize != 0; }
+
+  /// setCommon - Mark this symbol as being 'common'.
+  ///
+  /// \param Size - The size of the symbol.
+  /// \param Align - The alignment of the symbol.
+  void setCommon(uint64_t Size, unsigned Align) {
+    CommonSize = Size;
+    CommonAlign = Align;
+  }
+
+  /// getCommonSize - Return the size of a 'common' symbol.
+  uint64_t getCommonSize() const {
+    assert(isCommon() && "Not a 'common' symbol!");
+    return CommonSize;
+  }
+
+  /// getCommonAlignment - Return the alignment of a 'common' symbol.
+  unsigned getCommonAlignment() const {
+    assert(isCommon() && "Not a 'common' symbol!");
+    return CommonAlign;
+  }
+
   /// getFlags - Get the (implementation defined) symbol flags.
   uint32_t getFlags() const { return Flags; }
 

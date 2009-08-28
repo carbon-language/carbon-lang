@@ -25,6 +25,11 @@ class MachObjectWriter;
 
 STATISTIC(EmittedFragments, "Number of emitted assembler fragments");
 
+// FIXME FIXME FIXME: There are number of places in this file where we convert
+// what is a 64-bit assembler value used for computation into a value in the
+// object file, which may truncate it. We should detect that truncation where
+// invalid and report errors back.
+
 static void WriteFileData(raw_ostream &OS, const MCSectionData &SD,
                           MachObjectWriter &MOW);
 
@@ -328,6 +333,8 @@ public:
     MCSymbolData &Data = *MSD.SymbolData;
     MCSymbol &Symbol = Data.getSymbol();
     uint8_t Type = 0;
+    uint16_t Flags = Data.getFlags();
+    uint32_t Address = 0;
 
     // Set the N_TYPE bits. See <mach-o/nlist.h>.
     //
@@ -348,6 +355,30 @@ public:
     if (Data.isExternal() || Symbol.isUndefined())
       Type |= STF_External;
 
+    // Compute the symbol address.
+    if (Symbol.isDefined()) {
+      if (Symbol.isAbsolute()) {
+        llvm_unreachable("FIXME: Not yet implemented!");
+      } else {
+        Address = Data.getFragment()->getAddress() + Data.getOffset();
+      }
+    } else if (Data.isCommon()) {
+      // Common symbols are encoded with the size in the address
+      // field, and their alignment in the flags.
+      Address = Data.getCommonSize();
+
+      // Common alignment is packed into the 'desc' bits.
+      if (unsigned Align = Data.getCommonAlignment()) {
+        unsigned Log2Size = Log2_32(Align);
+        assert((1U << Log2Size) == Align && "Invalid 'common' alignment!");
+        if (Log2Size > 15)
+          llvm_report_error("invalid 'common' alignment '" +
+                            Twine(Align) + "'");
+        // FIXME: Keep this mask with the SymbolFlags enumeration.
+        Flags = (Flags & 0xF0FF) | (Log2Size << 8);
+      }
+    }
+
     // struct nlist (12 bytes)
 
     Write32(MSD.StringIndex);
@@ -356,17 +387,7 @@ public:
     
     // The Mach-O streamer uses the lowest 16-bits of the flags for the 'desc'
     // value.
-    Write16(Data.getFlags() & 0xFFFF);
-
-    // Write the symbol address.
-    uint32_t Address = 0;
-    if (Symbol.isDefined()) {
-      if (Symbol.isAbsolute()) {
-        llvm_unreachable("FIXME: Not yet implemented!");
-      } else {
-        Address = Data.getFragment()->getAddress() + Data.getOffset();
-      }
-    }
+    Write16(Flags);
     Write32(Address);
   }
 
@@ -910,7 +931,8 @@ MCSymbolData::MCSymbolData() : Symbol(*(MCSymbol*)0) {}
 MCSymbolData::MCSymbolData(MCSymbol &_Symbol, MCFragment *_Fragment,
                            uint64_t _Offset, MCAssembler *A)
   : Symbol(_Symbol), Fragment(_Fragment), Offset(_Offset),
-    IsExternal(false), IsPrivateExtern(false), Flags(0), Index(0)
+    IsExternal(false), IsPrivateExtern(false),
+    CommonSize(0), CommonAlign(0), Flags(0), Index(0)
 {
   if (A)
     A->getSymbolList().push_back(this);

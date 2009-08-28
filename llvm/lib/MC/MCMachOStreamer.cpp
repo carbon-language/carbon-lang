@@ -224,7 +224,7 @@ void MCMachOStreamer::EmitSymbolAttribute(MCSymbol *Symbol,
     break;
 
   case MCStreamer::Global:
-    getSymbolData(*Symbol).setExternal(true);
+    SD.setExternal(true);
     break;
 
   case MCStreamer::LazyReference:
@@ -273,7 +273,12 @@ void MCMachOStreamer::EmitLocalSymbol(MCSymbol *Symbol, const MCValue &Value) {
 
 void MCMachOStreamer::EmitCommonSymbol(MCSymbol *Symbol, unsigned Size,
                                        unsigned Pow2Alignment) {
-  llvm_unreachable("FIXME: Not yet implemented!");
+  // FIXME: Darwin 'as' does appear to allow redef of a .comm by itself.
+  assert(Symbol->isUndefined() && "Cannot define a symbol twice!");
+
+  MCSymbolData &SD = getSymbolData(*Symbol);
+  SD.setExternal(true);
+  SD.setCommon(Size, 1 << Pow2Alignment);
 }
 
 void MCMachOStreamer::EmitZerofill(const MCSection *Section, MCSymbol *Symbol,
