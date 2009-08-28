@@ -284,7 +284,7 @@ def DSubReg_f64_reg : SDNodeXForm<imm, [{
   return CurDAG->getTargetConstant(5 + N->getZExtValue(), MVT::i32);
 }]>;
 
-// Extract S sub-registers of Q registers.
+// Extract S sub-registers of Q/D registers.
 // (arm_ssubreg_0 is 1; arm_ssubreg_1 is 2; etc.)
 def SSubReg_f32_reg : SDNodeXForm<imm, [{
   return CurDAG->getTargetConstant(1 + N->getZExtValue(), MVT::i32);
@@ -1672,6 +1672,8 @@ def : Pat<(extractelt (v4i32 QPR:$src), imm:$lane),
           (VGETLNi32 (v2i32 (EXTRACT_SUBREG QPR:$src,
                              (DSubReg_i32_reg imm:$lane))),
                      (SubReg_i32_lane imm:$lane))>;
+def : Pat<(extractelt (v2f32 DPR:$src1), imm:$src2),
+          (EXTRACT_SUBREG DPR:$src1, (SSubReg_f32_reg imm:$src2))>;
 def : Pat<(extractelt (v4f32 QPR:$src1), imm:$src2),
           (EXTRACT_SUBREG QPR:$src1, (SSubReg_f32_reg imm:$src2))>;
 //def : Pat<(extractelt (v2i64 QPR:$src1), imm:$src2),
