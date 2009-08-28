@@ -502,11 +502,7 @@ private:
   /// LayoutSection - Assign offsets and sizes to the fragments in the section
   /// \arg SD, and update the section size. The section file offset should
   /// already have been computed.
-  ///
-  /// \param NextAlign - The alignment for the section end address, which may
-  /// add padding bytes to the section (these are included in the section "file"
-  /// size, but not its regular size).
-  void LayoutSection(MCSectionData &SD, unsigned NextAlign);
+  void LayoutSection(MCSectionData &SD);
 
 public:
   /// Construct a new assembler instance.

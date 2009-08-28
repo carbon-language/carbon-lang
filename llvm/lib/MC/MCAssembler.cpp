@@ -203,6 +203,7 @@ public:
   /// \arg NumSections - The number of sections in this segment.
   /// \arg SectionDataSize - The total size of the sections.
   void WriteSegmentLoadCommand32(unsigned NumSections,
+                                 uint64_t VMSize,
                                  uint64_t SectionDataStartOffset,
                                  uint64_t SectionDataSize) {
     // struct segment_command (56 bytes)
@@ -215,7 +216,7 @@ public:
 
     WriteString("", 16);
     Write32(0); // vmaddr
-    Write32(SectionDataSize); // vmsize
+    Write32(VMSize); // vmsize
     Write32(SectionDataStartOffset); // file offset
     Write32(SectionDataSize); // file size
     Write32(0x7); // maxprot
@@ -679,19 +680,35 @@ public:
       LoadCommandsSize += SymtabLoadCommandSize + DysymtabLoadCommandSize;
     }
 
+    // Compute the total size of the section data, as well as its file size and
+    // vm size.
     uint64_t SectionDataStart = Header32Size + LoadCommandsSize;
-    uint64_t SectionDataEnd = SectionDataStart;
     uint64_t SectionDataSize = 0;
-    if (!Asm.getSectionList().empty()) {
-      MCSectionData &SD = Asm.getSectionList().back();
-      SectionDataSize = SD.getAddress() + SD.getSize();
-      SectionDataEnd = SectionDataStart + SD.getAddress() + SD.getFileSize();
+    uint64_t SectionDataFileSize = 0;
+    uint64_t VMSize = 0;
+    for (MCAssembler::iterator it = Asm.begin(),
+           ie = Asm.end(); it != ie; ++it) {
+      MCSectionData &SD = *it;
+
+      VMSize = std::max(VMSize, SD.getAddress() + SD.getSize());
+
+      SectionDataSize = std::max(SectionDataSize,
+                                 SD.getAddress() + SD.getSize());
+      SectionDataFileSize = std::max(SectionDataFileSize, 
+                                     SD.getAddress() + SD.getFileSize());
     }
+
+    // The section data is passed to 4 bytes.
+    //
+    // FIXME: Is this machine dependent?
+    unsigned SectionDataPadding = OffsetToAlignment(SectionDataFileSize, 4);
+    SectionDataFileSize += SectionDataPadding;
 
     // Write the prolog, starting with the header and load command...
     WriteHeader32(NumLoadCommands, LoadCommandsSize,
                   Asm.getSubsectionsViaSymbols());
-    WriteSegmentLoadCommand32(NumSections, SectionDataStart, SectionDataSize);
+    WriteSegmentLoadCommand32(NumSections, VMSize,
+                              SectionDataStart, SectionDataSize);
   
     // ... and then the section headers.
     // 
@@ -700,7 +717,7 @@ public:
     // value; this will be overwrite the appropriate data in the fragment when
     // it is written.
     std::vector<MachRelocationEntry> RelocInfos;
-    uint64_t RelocTableEnd = SectionDataEnd;
+    uint64_t RelocTableEnd = SectionDataStart + SectionDataFileSize;
     for (MCAssembler::iterator it = Asm.begin(), ie = Asm.end(); it != ie;
          ++it) {
       MCSectionData &SD = *it;
@@ -755,6 +772,9 @@ public:
     // Write the actual section data.
     for (MCAssembler::iterator it = Asm.begin(), ie = Asm.end(); it != ie; ++it)
       WriteFileData(OS, *it, *this);
+
+    // Write the extra padding.
+    WriteZeros(SectionDataPadding);
 
     // Write the relocation entries.
     for (unsigned i = 0, e = RelocInfos.size(); i != e; ++i) {
@@ -889,7 +909,7 @@ MCAssembler::MCAssembler(raw_ostream &_OS)
 MCAssembler::~MCAssembler() {
 }
 
-void MCAssembler::LayoutSection(MCSectionData &SD, unsigned NextAlign) {
+void MCAssembler::LayoutSection(MCSectionData &SD) {
   uint64_t Address = SD.getAddress();
 
   for (MCSectionData::iterator it = SD.begin(), ie = SD.end(); it != ie; ++it) {
@@ -955,7 +975,7 @@ void MCAssembler::LayoutSection(MCSectionData &SD, unsigned NextAlign) {
 
   // Set the section sizes.
   SD.setSize(Address - SD.getAddress());
-  SD.setFileSize(RoundUpToAlignment(Address, NextAlign) - SD.getAddress());
+  SD.setFileSize(Address - SD.getAddress());
 }
 
 /// WriteFileData - Write the \arg F data to the output file.
@@ -1060,22 +1080,24 @@ static void WriteFileData(raw_ostream &OS, const MCSectionData &SD,
 void MCAssembler::Finish() {
   // Layout the sections and fragments.
   uint64_t Address = 0;
-  for (iterator it = begin(), ie = end(); it != ie;) {
+  MCSectionData *Prev = 0;
+  for (iterator it = begin(), ie = end(); it != ie; ++it) {
     MCSectionData &SD = *it;
 
-    // Select the amount of padding alignment we need, based on either the next
-    // sections alignment or the default alignment.
-    //
-    // FIXME: This should probably match the native word size.
-    unsigned NextAlign = 4;
-    ++it;
-    if (it != ie)
-      NextAlign = it->getAlignment();
+    // Align this section if necessary by adding padding bytes to the previous
+    // section.
+    if (uint64_t Pad = OffsetToAlignment(Address, it->getAlignment())) {
+      assert(Prev && "Missing prev section!");
+      Prev->setFileSize(Prev->getFileSize() + Pad);
+      Address += Pad;
+    }
 
     // Layout the section fragments and its size.
     SD.setAddress(Address);
-    LayoutSection(SD, NextAlign);
+    LayoutSection(SD);
     Address += SD.getFileSize();
+
+    Prev = &SD;
   }
 
   // Write the object file.
