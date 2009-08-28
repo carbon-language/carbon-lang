@@ -42,28 +42,20 @@ bool SVal::hasConjuredSymbol() const {
       SymbolRef sym = SR->getSymbol();
       if (isa<SymbolConjured>(sym))
         return true;
-    } else if (const CodeTextRegion *CTR = dyn_cast<CodeTextRegion>(R)) {
-      if (CTR->isSymbolic()) {
-        SymbolRef sym = CTR->getSymbol();
-        if (isa<SymbolConjured>(sym))
-          return true;
-      }
     }
   }
 
   return false;
 }
 
-const FunctionDecl* SVal::getAsFunctionDecl() const {
+const FunctionDecl *SVal::getAsFunctionDecl() const {
   if (const loc::MemRegionVal* X = dyn_cast<loc::MemRegionVal>(this)) {
     const MemRegion* R = X->getRegion();
-    if (const CodeTextRegion* CTR = R->getAs<CodeTextRegion>()) {
-      if (CTR->isDeclared())
-        return CTR->getDecl();
-    }
+    if (const CodeTextRegion *CTR = R->getAs<CodeTextRegion>())
+      return CTR->getDecl();
   }
 
-  return 0;
+  return NULL;
 }
 
 /// getAsLocSymbol - If this SVal is a location (subclasses Loc) and 

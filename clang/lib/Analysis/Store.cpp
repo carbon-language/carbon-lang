@@ -52,16 +52,12 @@ StoreManager::CastRegion(const GRState *state, const MemRegion* R,
     return CastResult(state, R->getBaseRegion());
 
   if (CastToTy->isBlockPointerType()) {
-    if (isa<CodeTextRegion>(R))
-      return CastResult(state, R);
-    
-    // FIXME: This may not be the right approach, depending on the symbol
+    // FIXME: We may need different solutions, depending on the symbol
     // involved.  Blocks can be casted to/from 'id', as they can be treated
-    // as Objective-C objects.
-    if (SymbolRef sym = loc::MemRegionVal(R).getAsSymbol()) {
-      R = MRMgr.getCodeTextRegion(sym, CastToTy);
+    // as Objective-C objects.  This could possibly be handled by enhancing
+    // our reasoning of downcasts of symbolic objects.    
+    if (isa<CodeTextRegion>(R) || isa<SymbolicRegion>(R))
       return CastResult(state, R);
-    }
 
     // We don't know what to make of it.  Return a NULL region, which
     // will be interpretted as UnknownVal.

@@ -80,11 +80,6 @@ SVal ValueManager::getRegionValueSymbolVal(const MemRegion* R, QualType T) {
     return UnknownVal();
 
   SymbolRef sym = SymMgr.getRegionValueSymbol(R, T);
-
-  // If T is of function pointer type or a block pointer type, create a
-  // CodeTextRegion wrapping that symbol.
-  if (T->isFunctionPointerType() || T->isBlockPointerType())
-    return loc::MemRegionVal(MemMgr.getCodeTextRegion(sym, T));
     
   if (Loc::IsLocType(T))
     return loc::MemRegionVal(MemMgr.getSymbolicRegion(sym));
@@ -92,7 +87,7 @@ SVal ValueManager::getRegionValueSymbolVal(const MemRegion* R, QualType T) {
   return nonloc::SymbolVal(sym);
 }
 
-SVal ValueManager::getConjuredSymbolVal(const Expr* E, unsigned Count) {
+SVal ValueManager::getConjuredSymbolVal(const Expr *E, unsigned Count) {
   QualType T = E->getType();
   
   if (!SymbolManager::canSymbolicate(T))
@@ -100,29 +95,19 @@ SVal ValueManager::getConjuredSymbolVal(const Expr* E, unsigned Count) {
   
   SymbolRef sym = SymMgr.getConjuredSymbol(E, Count);
 
-  // If T is of function pointer type or a block pointer type, create a
-  // CodeTextRegion wrapping a symbol.
-  if (T->isFunctionPointerType() || T->isBlockPointerType())
-    return loc::MemRegionVal(MemMgr.getCodeTextRegion(sym, T));
-
   if (Loc::IsLocType(T))
     return loc::MemRegionVal(MemMgr.getSymbolicRegion(sym));
 
   return nonloc::SymbolVal(sym);
 }
 
-SVal ValueManager::getConjuredSymbolVal(const Expr* E, QualType T,
+SVal ValueManager::getConjuredSymbolVal(const Expr *E, QualType T,
                                         unsigned Count) {
   
   if (!SymbolManager::canSymbolicate(T))
     return UnknownVal();
 
   SymbolRef sym = SymMgr.getConjuredSymbol(E, T, Count);
-
-  // If T is of function pointer type or a block pointer type, create a
-  // CodeTextRegion wrapping a symbol.
-  if (T->isFunctionPointerType() || T->isBlockPointerType())
-    return loc::MemRegionVal(MemMgr.getCodeTextRegion(sym, T));
 
   if (Loc::IsLocType(T))
     return loc::MemRegionVal(MemMgr.getSymbolicRegion(sym));
@@ -147,7 +132,6 @@ SVal ValueManager::getDerivedRegionValueSymbolVal(SymbolRef parentSymbol,
 }
 
 SVal ValueManager::getFunctionPointer(const FunctionDecl* FD) {
-  CodeTextRegion* R 
-    = MemMgr.getCodeTextRegion(FD, Context.getPointerType(FD->getType()));
+  CodeTextRegion *R  = MemMgr.getCodeTextRegion(FD);
   return loc::MemRegionVal(R);
 }

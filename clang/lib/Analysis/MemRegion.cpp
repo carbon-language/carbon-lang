@@ -126,15 +126,15 @@ void ElementRegion::Profile(llvm::FoldingSetNodeID& ID) const {
   ElementRegion::ProfileRegion(ID, ElementType, Index, superRegion);
 }
 
-void CodeTextRegion::ProfileRegion(llvm::FoldingSetNodeID& ID, const void* data,
-                                   QualType t, const MemRegion*) {
+void CodeTextRegion::ProfileRegion(llvm::FoldingSetNodeID& ID,
+                                   const FunctionDecl *FD,
+                                   const MemRegion*) {
   ID.AddInteger(MemRegion::CodeTextRegionKind);
-  ID.AddPointer(data);
-  ID.Add(t);
+  ID.AddPointer(FD);
 }
 
 void CodeTextRegion::Profile(llvm::FoldingSetNodeID& ID) const {
-  CodeTextRegion::ProfileRegion(ID, Data, LocationType, superRegion);
+  CodeTextRegion::ProfileRegion(ID, FD, superRegion);
 }
 
 //===----------------------------------------------------------------------===//
@@ -161,13 +161,7 @@ void AllocaRegion::dumpToStream(llvm::raw_ostream& os) const {
 }
 
 void CodeTextRegion::dumpToStream(llvm::raw_ostream& os) const {
-  os << "code{";
-  if (isDeclared())
-    os << getDecl()->getDeclName().getAsString();
-  else
-    os << '$' << getSymbol();
-
-  os << '}';
+  os << "code{" << getDecl()->getDeclName().getAsString() << '}';
 }
 
 void CompoundLiteralRegion::dumpToStream(llvm::raw_ostream& os) const {
@@ -293,13 +287,8 @@ MemRegionManager::getElementRegion(QualType elementType, SVal Idx,
   return R;
 }
 
-CodeTextRegion* MemRegionManager::getCodeTextRegion(const FunctionDecl* fd,
-                                                    QualType t) {
-  return getRegion<CodeTextRegion>(fd, t);
-}
-
-CodeTextRegion* MemRegionManager::getCodeTextRegion(SymbolRef sym, QualType t) {
-  return getRegion<CodeTextRegion>(sym, t);
+CodeTextRegion *MemRegionManager::getCodeTextRegion(const FunctionDecl *FD) {
+  return getRegion<CodeTextRegion>(FD);
 }
 
 /// getSymbolicRegion - Retrieve or create a "symbolic" memory region.

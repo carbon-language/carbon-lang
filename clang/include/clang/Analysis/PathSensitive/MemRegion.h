@@ -240,32 +240,12 @@ public:
 /// is a function declared in the program. Symbolic function is a function
 /// pointer that we don't know which function it points to.
 class CodeTextRegion : public TypedRegion {
-public:
-  enum CodeKind { Declared, Symbolic };
-
-private:
-  // The function pointer kind that this CodeTextRegion represents.
-  CodeKind codekind;
-
-  // Data may be a SymbolRef or FunctionDecl*.
-  const void* Data;
-
-  // Cached function pointer type.
-  QualType LocationType;
+  const FunctionDecl *FD;
 
 public:
 
-  CodeTextRegion(const FunctionDecl* fd, QualType t, const MemRegion* sreg)
-    : TypedRegion(sreg, CodeTextRegionKind), 
-      codekind(Declared),
-      Data(fd),
-      LocationType(t) {}
-
-  CodeTextRegion(SymbolRef sym, QualType t, const MemRegion* sreg)
-    : TypedRegion(sreg, CodeTextRegionKind), 
-      codekind(Symbolic),
-      Data(sym),
-      LocationType(t) {}
+  CodeTextRegion(const FunctionDecl* fd, const MemRegion* sreg)
+    : TypedRegion(sreg, CodeTextRegionKind), FD(fd) {}
 
   QualType getValueType(ASTContext &C) const {
     // Do not get the object type of a CodeTextRegion.
@@ -274,30 +254,21 @@ public:
   }
 
   QualType getLocationType(ASTContext &C) const {
-    return LocationType;
+    return C.getPointerType(FD->getType());
   }
 
-  bool isDeclared() const { return codekind == Declared; }
-  bool isSymbolic() const { return codekind == Symbolic; }
-
-  const FunctionDecl* getDecl() const {
-    assert(codekind == Declared);
-    return static_cast<const FunctionDecl*>(Data);
+  const FunctionDecl *getDecl() const {
+    return FD;
   }
-  
-  SymbolRef getSymbol() const {
-    assert(codekind == Symbolic);
-    return const_cast<SymbolRef>(static_cast<const SymbolRef>(Data));
-  }
-  
+    
   bool isBoundable() const { return false; }
   
   virtual void dumpToStream(llvm::raw_ostream& os) const;
 
   void Profile(llvm::FoldingSetNodeID& ID) const;
 
-  static void ProfileRegion(llvm::FoldingSetNodeID& ID, 
-                            const void* data, QualType t, const MemRegion*);
+  static void ProfileRegion(llvm::FoldingSetNodeID& ID, const FunctionDecl *FD,
+                            const MemRegion*);
 
   static bool classof(const MemRegion* R) {
     return R->getKind() == CodeTextRegionKind;
@@ -680,11 +651,10 @@ public:
   ///   a specified Objective-c instance variable.  'superRegion' corresponds
   ///   to the containing region (which typically represents the Objective-C
   ///   object).
-  ObjCIvarRegion* getObjCIvarRegion(const ObjCIvarDecl* ivd,
+  ObjCIvarRegion *getObjCIvarRegion(const ObjCIvarDecl* ivd,
                                     const MemRegion* superRegion);
   
-  CodeTextRegion* getCodeTextRegion(SymbolRef sym, QualType t);
-  CodeTextRegion* getCodeTextRegion(const FunctionDecl* fd, QualType t);
+  CodeTextRegion *getCodeTextRegion(const FunctionDecl *FD);
   
   template <typename RegionTy, typename A1>
   RegionTy* getRegion(const A1 a1);
@@ -832,7 +802,7 @@ template <> struct MemRegionManagerTrait<SymbolicRegion> {
 template<> struct MemRegionManagerTrait<CodeTextRegion> {
   typedef MemSpaceRegion SuperRegionTy;
   static const SuperRegionTy* getSuperRegion(MemRegionManager& MRMgr,
-                                             const FunctionDecl*, QualType) {
+                                             const FunctionDecl*) {
     return MRMgr.getCodeRegion();
   }
   static const SuperRegionTy* getSuperRegion(MemRegionManager& MRMgr,
