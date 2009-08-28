@@ -20,8 +20,8 @@ ifeq ($(ARCH), Sparc)
 PARALLEL_DIRS := $(filter-out libprofile, $(PARALLEL_DIRS))
 endif
 
-include $(LEVEL)/Makefile.common
-
 endif
+
+include $(LEVEL)/Makefile.common
 
 install::
