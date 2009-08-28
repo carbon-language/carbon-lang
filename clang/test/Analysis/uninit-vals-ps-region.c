@@ -15,3 +15,21 @@ void f4() {
   if (global.data == 0) // When the true branch is feasible 'a = 3'.
     g(a); // no-warning
 }
+
+
+// Test uninitialized value due to part of the structure being uninitialized.
+struct TestUninit { int x; int y; };
+struct TestUninit test_uninit_aux();
+void test_uninit_pos() {
+  struct TestUninit v1 = { 0, 0 };
+  struct TestUninit v2 = test_uninit_aux();
+  int z;
+  v1.y = z;
+  test_unit_aux2(v2.x + v1.y);  // expected-warning{{Pass-by-value argument in function call is undefined}}
+}
+void test_uninit_neg() {
+  struct TestUninit v1 = { 0, 0 };
+  struct TestUninit v2 = test_uninit_aux();
+  test_unit_aux2(v2.x + v1.y); // no-warning
+}
+
