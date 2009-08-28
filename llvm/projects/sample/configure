@@ -2320,15 +2320,15 @@ esac
 echo "$as_me: executing $ac_dest commands" >&6;}
   case $ac_dest in
     Makefile ) ${llvm_src}/autoconf/mkinstalldirs `dirname Makefile`
-   ${SHELL} ${llvm_src}/autoconf/install-sh -c ${srcdir}/Makefile Makefile ;;
+   ${SHELL} ${llvm_src}/autoconf/install-sh -m 0644 -c ${srcdir}/Makefile Makefile ;;
     lib/Makefile ) ${llvm_src}/autoconf/mkinstalldirs `dirname lib/Makefile`
-   ${SHELL} ${llvm_src}/autoconf/install-sh -c ${srcdir}/lib/Makefile lib/Makefile ;;
+   ${SHELL} ${llvm_src}/autoconf/install-sh -m 0644 -c ${srcdir}/lib/Makefile lib/Makefile ;;
     lib/sample/Makefile ) ${llvm_src}/autoconf/mkinstalldirs `dirname lib/sample/Makefile`
-   ${SHELL} ${llvm_src}/autoconf/install-sh -c ${srcdir}/lib/sample/Makefile lib/sample/Makefile ;;
+   ${SHELL} ${llvm_src}/autoconf/install-sh -m 0644 -c ${srcdir}/lib/sample/Makefile lib/sample/Makefile ;;
     tools/Makefile ) ${llvm_src}/autoconf/mkinstalldirs `dirname tools/Makefile`
-   ${SHELL} ${llvm_src}/autoconf/install-sh -c ${srcdir}/tools/Makefile tools/Makefile ;;
+   ${SHELL} ${llvm_src}/autoconf/install-sh -m 0644 -c ${srcdir}/tools/Makefile tools/Makefile ;;
     tools/sample/Makefile ) ${llvm_src}/autoconf/mkinstalldirs `dirname tools/sample/Makefile`
-   ${SHELL} ${llvm_src}/autoconf/install-sh -c ${srcdir}/tools/sample/Makefile tools/sample/Makefile ;;
+   ${SHELL} ${llvm_src}/autoconf/install-sh -m 0644 -c ${srcdir}/tools/sample/Makefile tools/sample/Makefile ;;
   esac
 done
 _ACEOF

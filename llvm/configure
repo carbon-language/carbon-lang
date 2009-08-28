@@ -36642,31 +36642,31 @@ echo "$as_me: executing $ac_file commands" >&6;}
 
   case $ac_file$ac_mode in
     "Makefile":C) ${llvm_src}/autoconf/mkinstalldirs `dirname Makefile`
-   ${SHELL} ${llvm_src}/autoconf/install-sh -c ${srcdir}/Makefile Makefile ;;
+   ${SHELL} ${llvm_src}/autoconf/install-sh -m 0644 -c ${srcdir}/Makefile Makefile ;;
     "Makefile.common":C) ${llvm_src}/autoconf/mkinstalldirs `dirname Makefile.common`
-   ${SHELL} ${llvm_src}/autoconf/install-sh -c ${srcdir}/Makefile.common Makefile.common ;;
+   ${SHELL} ${llvm_src}/autoconf/install-sh -m 0644 -c ${srcdir}/Makefile.common Makefile.common ;;
     "examples/Makefile":C) ${llvm_src}/autoconf/mkinstalldirs `dirname examples/Makefile`
-   ${SHELL} ${llvm_src}/autoconf/install-sh -c ${srcdir}/examples/Makefile examples/Makefile ;;
+   ${SHELL} ${llvm_src}/autoconf/install-sh -m 0644 -c ${srcdir}/examples/Makefile examples/Makefile ;;
     "lib/Makefile":C) ${llvm_src}/autoconf/mkinstalldirs `dirname lib/Makefile`
-   ${SHELL} ${llvm_src}/autoconf/install-sh -c ${srcdir}/lib/Makefile lib/Makefile ;;
+   ${SHELL} ${llvm_src}/autoconf/install-sh -m 0644 -c ${srcdir}/lib/Makefile lib/Makefile ;;
     "runtime/Makefile":C) ${llvm_src}/autoconf/mkinstalldirs `dirname runtime/Makefile`
-   ${SHELL} ${llvm_src}/autoconf/install-sh -c ${srcdir}/runtime/Makefile runtime/Makefile ;;
+   ${SHELL} ${llvm_src}/autoconf/install-sh -m 0644 -c ${srcdir}/runtime/Makefile runtime/Makefile ;;
     "test/Makefile":C) ${llvm_src}/autoconf/mkinstalldirs `dirname test/Makefile`
-   ${SHELL} ${llvm_src}/autoconf/install-sh -c ${srcdir}/test/Makefile test/Makefile ;;
+   ${SHELL} ${llvm_src}/autoconf/install-sh -m 0644 -c ${srcdir}/test/Makefile test/Makefile ;;
     "test/Makefile.tests":C) ${llvm_src}/autoconf/mkinstalldirs `dirname test/Makefile.tests`
-   ${SHELL} ${llvm_src}/autoconf/install-sh -c ${srcdir}/test/Makefile.tests test/Makefile.tests ;;
+   ${SHELL} ${llvm_src}/autoconf/install-sh -m 0644 -c ${srcdir}/test/Makefile.tests test/Makefile.tests ;;
     "unittests/Makefile":C) ${llvm_src}/autoconf/mkinstalldirs `dirname unittests/Makefile`
-   ${SHELL} ${llvm_src}/autoconf/install-sh -c ${srcdir}/unittests/Makefile unittests/Makefile ;;
+   ${SHELL} ${llvm_src}/autoconf/install-sh -m 0644 -c ${srcdir}/unittests/Makefile unittests/Makefile ;;
     "tools/Makefile":C) ${llvm_src}/autoconf/mkinstalldirs `dirname tools/Makefile`
-   ${SHELL} ${llvm_src}/autoconf/install-sh -c ${srcdir}/tools/Makefile tools/Makefile ;;
+   ${SHELL} ${llvm_src}/autoconf/install-sh -m 0644 -c ${srcdir}/tools/Makefile tools/Makefile ;;
     "utils/Makefile":C) ${llvm_src}/autoconf/mkinstalldirs `dirname utils/Makefile`
-   ${SHELL} ${llvm_src}/autoconf/install-sh -c ${srcdir}/utils/Makefile utils/Makefile ;;
+   ${SHELL} ${llvm_src}/autoconf/install-sh -m 0644 -c ${srcdir}/utils/Makefile utils/Makefile ;;
     "projects/Makefile":C) ${llvm_src}/autoconf/mkinstalldirs `dirname projects/Makefile`
-   ${SHELL} ${llvm_src}/autoconf/install-sh -c ${srcdir}/projects/Makefile projects/Makefile ;;
+   ${SHELL} ${llvm_src}/autoconf/install-sh -m 0644 -c ${srcdir}/projects/Makefile projects/Makefile ;;
     "bindings/Makefile":C) ${llvm_src}/autoconf/mkinstalldirs `dirname bindings/Makefile`
-   ${SHELL} ${llvm_src}/autoconf/install-sh -c ${srcdir}/bindings/Makefile bindings/Makefile ;;
+   ${SHELL} ${llvm_src}/autoconf/install-sh -m 0644 -c ${srcdir}/bindings/Makefile bindings/Makefile ;;
     "bindings/ocaml/Makefile.ocaml":C) ${llvm_src}/autoconf/mkinstalldirs `dirname bindings/ocaml/Makefile.ocaml`
-   ${SHELL} ${llvm_src}/autoconf/install-sh -c ${srcdir}/bindings/ocaml/Makefile.ocaml bindings/ocaml/Makefile.ocaml ;;
+   ${SHELL} ${llvm_src}/autoconf/install-sh -m 0644 -c ${srcdir}/bindings/ocaml/Makefile.ocaml bindings/ocaml/Makefile.ocaml ;;
 
   esac
 done # for ac_tag
