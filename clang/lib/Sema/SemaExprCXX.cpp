@@ -890,13 +890,15 @@ Sema::PerformImplicitConversion(Expr *&From, QualType ToType,
     ICS = TryImplicitConversion(From, ToType, 
                                 /*SuppressUserConversions=*/false,
                                 AllowExplicit, 
-                                /*ForceRValue=*/true);
+                                /*ForceRValue=*/true,
+                                /*InOverloadResolution=*/false);
   }
   if (ICS.ConversionKind == ImplicitConversionSequence::BadConversion) {
     ICS = TryImplicitConversion(From, ToType, 
                                 /*SuppressUserConversions=*/false,
                                 AllowExplicit,
-                                /*ForceRValue=*/false);
+                                /*ForceRValue=*/false,
+                                /*InOverloadResolution=*/false);
   }
   return PerformImplicitConversion(From, ToType, ICS, Flavor);
 }
@@ -1259,7 +1261,8 @@ static bool TryClassUnification(Sema &Self, Expr *From, Expr *To,
     ICS = Self.TryImplicitConversion(From, TTy,
                                      /*SuppressUserConversions=*/false,
                                      /*AllowExplicit=*/false,
-                                     /*ForceRValue=*/false);
+                                     /*ForceRValue=*/false,
+                                     /*InOverloadResolution=*/false);
   }
   return false;
 }
@@ -1652,12 +1655,14 @@ QualType Sema::FindCompositePointerType(Expr *&E1, Expr *&E2) {
     TryImplicitConversion(E1, Composite1,
                           /*SuppressUserConversions=*/false,
                           /*AllowExplicit=*/false,
-                          /*ForceRValue=*/false);
+                          /*ForceRValue=*/false,
+                          /*InOverloadResolution=*/false);
   ImplicitConversionSequence E2ToC1 = 
     TryImplicitConversion(E2, Composite1,
                           /*SuppressUserConversions=*/false,
                           /*AllowExplicit=*/false,
-                          /*ForceRValue=*/false);
+                          /*ForceRValue=*/false,
+                          /*InOverloadResolution=*/false);
   
   ImplicitConversionSequence E1ToC2, E2ToC2;
   E1ToC2.ConversionKind = ImplicitConversionSequence::BadConversion;
@@ -1667,11 +1672,13 @@ QualType Sema::FindCompositePointerType(Expr *&E1, Expr *&E2) {
     E1ToC2 = TryImplicitConversion(E1, Composite2,
                                    /*SuppressUserConversions=*/false,
                                    /*AllowExplicit=*/false,
-                                   /*ForceRValue=*/false);
+                                   /*ForceRValue=*/false,
+                                   /*InOverloadResolution=*/false);
     E2ToC2 = TryImplicitConversion(E2, Composite2,
                                    /*SuppressUserConversions=*/false,
                                    /*AllowExplicit=*/false,
-                                   /*ForceRValue=*/false);
+                                   /*ForceRValue=*/false,
+                                   /*InOverloadResolution=*/false);
   }
 
   bool ToC1Viable = E1ToC1.ConversionKind !=

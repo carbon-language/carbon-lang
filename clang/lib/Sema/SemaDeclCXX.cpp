@@ -3213,7 +3213,8 @@ Sema::CheckReferenceInit(Expr *&Init, QualType DeclType,
     //   and does not constitute a conversion.
     *ICS = TryImplicitConversion(Init, T1, SuppressUserConversions,
                                  /*AllowExplicit=*/false,
-                                 /*ForceRValue=*/false);
+                                 /*ForceRValue=*/false,
+                                 /*InOverloadResolution=*/false);
     
     // Of course, that's still a reference binding.
     if (ICS->ConversionKind == ImplicitConversionSequence::StandardConversion) {

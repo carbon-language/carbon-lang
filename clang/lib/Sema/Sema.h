@@ -727,13 +727,16 @@ public:
   TryImplicitConversion(Expr* From, QualType ToType,
                         bool SuppressUserConversions,
                         bool AllowExplicit,
-                        bool ForceRValue);
-  bool IsStandardConversion(Expr *From, QualType ToType, 
+                        bool ForceRValue,
+                        bool InOverloadResolution);
+  bool IsStandardConversion(Expr *From, QualType ToType,
+                            bool InOverloadResolution,
                             StandardConversionSequence& SCS);
   bool IsIntegralPromotion(Expr *From, QualType FromType, QualType ToType);
   bool IsFloatingPointPromotion(QualType FromType, QualType ToType);
   bool IsComplexPromotion(QualType FromType, QualType ToType);
   bool IsPointerConversion(Expr *From, QualType FromType, QualType ToType,
+                           bool InOverloadResolution,
                            QualType& ConvertedType, bool &IncompatibleObjC);
   bool isObjCPointerConversion(QualType FromType, QualType ToType,
                                QualType& ConvertedType, bool &IncompatibleObjC);

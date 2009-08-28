@@ -785,7 +785,8 @@ TryStaticImplicitCast(Sema &Self, Expr *SrcExpr, QualType DestType,
     Self.TryImplicitConversion(SrcExpr, DestType,
                                /*SuppressUserConversions=*/false,
                                /*AllowExplicit=*/false,
-                               /*ForceRValue=*/false);
+                               /*ForceRValue=*/false,
+                               /*InOverloadResolution=*/false);
   
   if (ICS.ConversionKind  == ImplicitConversionSequence::UserDefinedConversion)
     if (CXXMethodDecl *MD = 

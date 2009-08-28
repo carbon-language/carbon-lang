@@ -410,10 +410,11 @@ Sema::IsOverload(FunctionDecl *New, Decl* OldD,
 ImplicitConversionSequence
 Sema::TryImplicitConversion(Expr* From, QualType ToType,
                             bool SuppressUserConversions,
-                            bool AllowExplicit, bool ForceRValue)
+                            bool AllowExplicit, bool ForceRValue,
+                            bool InOverloadResolution)
 {
   ImplicitConversionSequence ICS;
-  if (IsStandardConversion(From, ToType, ICS.Standard))
+  if (IsStandardConversion(From, ToType, InOverloadResolution, ICS.Standard))
     ICS.ConversionKind = ImplicitConversionSequence::StandardConversion;
   else if (getLangOptions().CPlusPlus &&
            IsUserDefinedConversion(From, ToType, ICS.UserDefined, 
@@ -471,6 +472,7 @@ Sema::TryImplicitConversion(Expr* From, QualType ToType,
 /// routine will return false and the value of SCS is unspecified.
 bool 
 Sema::IsStandardConversion(Expr* From, QualType ToType, 
+                           bool InOverloadResolution,
                            StandardConversionSequence &SCS)
 {
   QualType FromType = From->getType();
@@ -621,8 +623,8 @@ Sema::IsStandardConversion(Expr* From, QualType ToType,
     // Complex-real conversions (C99 6.3.1.7)
     SCS.Second = ICK_Complex_Real;
     FromType = ToType.getUnqualifiedType();
-  } else if (IsPointerConversion(From, FromType, ToType, FromType, 
-                                 IncompatibleObjC)) {
+  } else if (IsPointerConversion(From, FromType, ToType, InOverloadResolution,
+                                 FromType, IncompatibleObjC)) {
     // Pointer conversions (C++ 4.10).
     SCS.Second = ICK_Pointer_Conversion;
     SCS.IncompatibleObjC = IncompatibleObjC;
@@ -885,6 +887,7 @@ BuildSimilarlyQualifiedPointerType(const PointerType *FromPtr,
 /// set if the conversion is an allowed Objective-C conversion that
 /// should result in a warning.
 bool Sema::IsPointerConversion(Expr *From, QualType FromType, QualType ToType,
+                               bool InOverloadResolution,
                                QualType& ConvertedType,
                                bool &IncompatibleObjC)
 {
@@ -1936,7 +1939,8 @@ Sema::TryCopyInitialization(Expr *From, QualType ToType,
     return TryImplicitConversion(From, ToType, 
                                  SuppressUserConversions,
                                  /*AllowExplicit=*/false,
-                                 ForceRValue);
+                                 ForceRValue,
+                                 InOverloadResolution);
   }
 }
 
@@ -2077,7 +2081,8 @@ ImplicitConversionSequence Sema::TryContextuallyConvertToBool(Expr *From) {
                                // FIXME: Are these flags correct?
                                /*SuppressUserConversions=*/false,
                                /*AllowExplicit=*/true, 
-                               /*ForceRValue=*/false);
+                               /*ForceRValue=*/false,
+                               /*InOverloadResolution=*/false);
 }
 
 /// PerformContextuallyConvertToBool - Perform a contextual conversion
@@ -2291,7 +2296,7 @@ Sema::AddMethodCandidate(CXXMethodDecl *Method, Expr *Object,
       Candidate.Conversions[ArgIdx + 1] 
         = TryCopyInitialization(Args[ArgIdx], ParamType, 
                                 SuppressUserConversions, ForceRValue,
-                                /*InOverloadResolution=*/false);
+                                /*InOverloadResolution=*/true);
       if (Candidate.Conversions[ArgIdx + 1].ConversionKind 
             == ImplicitConversionSequence::BadConversion) {
         Candidate.Viable = false;
