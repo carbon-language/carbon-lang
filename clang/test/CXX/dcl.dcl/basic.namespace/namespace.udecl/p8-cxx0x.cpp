@@ -6,10 +6,10 @@ struct X {
   static int a;
 };
 
-using X::i; // expected-error{{error: using declaration refers to class member}}
-using X::s; // expected-error{{error: using declaration refers to class member}}
+using X::i; // expected-error{{using declaration can not refer to class member}}
+using X::s; // expected-error{{using declaration can not refer to class member}}
 
 void f() {
-  using X::i; // expected-error{{error: using declaration refers to class member}}
-  using X::s; // expected-error{{error: using declaration refers to class member}}
+  using X::i; // expected-error{{using declaration can not refer to class member}}
+  using X::s; // expected-error{{using declaration can not refer to class member}}
 }

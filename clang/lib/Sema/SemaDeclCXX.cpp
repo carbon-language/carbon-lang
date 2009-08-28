@@ -2151,7 +2151,7 @@ Sema::DeclPtrTy Sema::ActOnUsingDeclaration(Scope *S,
     // C++0x N2914 [namespace.udecl]p8:
     // A using-declaration for a class member shall be a member-declaration.
     if (NNS->getKind() == NestedNameSpecifier::TypeSpec) {
-      Diag(IdentLoc, diag::err_using_decl_refers_to_class_member)
+      Diag(IdentLoc, diag::err_using_decl_can_not_refer_to_class_member)
         << SS.getRange();
       return DeclPtrTy();
     }
@@ -2181,6 +2181,14 @@ Sema::DeclPtrTy Sema::ActOnUsingDeclaration(Scope *S,
     return DeclPtrTy();
   }
 
+  // C++0x N2914 [namespace.udecl]p6:
+  // A using-declaration shall not name a namespace.
+  if (isa<NamespaceDecl>(ND)) {
+    Diag(IdentLoc, diag::err_using_decl_can_not_refer_to_namespace)
+      << SS.getRange();
+    return DeclPtrTy();
+  }
+  
   UsingAlias = 
     UsingDecl::Create(Context, CurContext, IdentLoc, SS.getRange(),
                       ND->getLocation(), UsingLoc, ND, NNS, IsTypeName);

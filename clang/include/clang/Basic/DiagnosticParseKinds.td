@@ -161,8 +161,8 @@ def err_use_of_tag_name_without_tag : Error<
   "use of tagged type %0 without '%1' tag">;
 def err_expected_ident_in_using : Error<
   "expected an identifier in using directive">;
-def err_unexpected_template_spec_in_using : Error<
-  "use of template specialization in using directive not allowed">;
+def err_using_decl_can_not_refer_to_template_spec : Error<
+  "using declaration can not refer to template specialization">;
 
 
 /// Objective-C parser diagnostics

@@ -282,7 +282,9 @@ Parser::DeclPtrTy Parser::ParseUsingDeclaration(unsigned Context,
     return DeclPtrTy();
   }
   if (Tok.is(tok::annot_template_id)) {
-    Diag(Tok, diag::err_unexpected_template_spec_in_using);
+    // C++0x N2914 [namespace.udecl]p5:
+    // A using-declaration shall not name a template-id. 
+    Diag(Tok, diag::err_using_decl_can_not_refer_to_template_spec);
     SkipUntil(tok::semi);
     return DeclPtrTy();
   }
