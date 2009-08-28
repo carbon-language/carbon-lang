@@ -1117,23 +1117,35 @@ static bool isInstantiationOf(ASTContext &Ctx, NamedDecl *D, Decl *Other) {
   if (D->getKind() != Other->getKind())
     return false;
 
-  if (CXXRecordDecl *Record = dyn_cast<CXXRecordDecl>(Other))
-    return Record->getInstantiatedFromMemberClass()->getCanonicalDecl()
-             == D->getCanonicalDecl();
+  if (CXXRecordDecl *Record = dyn_cast<CXXRecordDecl>(Other)) {
+    if (CXXRecordDecl *Pattern = Record->getInstantiatedFromMemberClass())
+      return Pattern->getCanonicalDecl() == D->getCanonicalDecl();
+    else
+      return false;
+  }
+  
+  if (FunctionDecl *Function = dyn_cast<FunctionDecl>(Other)) {
+    if (FunctionDecl *Pattern = Function->getInstantiatedFromMemberFunction())
+      return Pattern->getCanonicalDecl() == D->getCanonicalDecl();
+    else
+      return false;
+  }
 
-  if (FunctionDecl *Function = dyn_cast<FunctionDecl>(Other))
-    return Function->getInstantiatedFromMemberFunction()->getCanonicalDecl()
-             == D->getCanonicalDecl();
-
-  if (EnumDecl *Enum = dyn_cast<EnumDecl>(Other))
-    return Enum->getInstantiatedFromMemberEnum()->getCanonicalDecl()
-             == D->getCanonicalDecl();
+  if (EnumDecl *Enum = dyn_cast<EnumDecl>(Other)) {
+    if (EnumDecl *Pattern = Enum->getInstantiatedFromMemberEnum())
+      return Pattern->getCanonicalDecl() == D->getCanonicalDecl();
+    else
+      return false;
+  }
 
   if (VarDecl *Var = dyn_cast<VarDecl>(Other))
-    if (Var->isStaticDataMember())
-      return Var->getInstantiatedFromStaticDataMember()->getCanonicalDecl()
-               == D->getCanonicalDecl();
-      
+    if (Var->isStaticDataMember()) {
+      if (VarDecl *Pattern = Var->getInstantiatedFromStaticDataMember())
+        return Pattern->getCanonicalDecl() == D->getCanonicalDecl();
+      else
+        return false;
+    }
+
   // FIXME: How can we find instantiations of anonymous unions?
 
   return D->getDeclName() && isa<NamedDecl>(Other) &&
