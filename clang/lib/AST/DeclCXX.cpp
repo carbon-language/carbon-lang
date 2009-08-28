@@ -489,14 +489,14 @@ CXXConstructorDecl::isCopyConstructor(ASTContext &Context,
   return true;
 }
 
-bool CXXConstructorDecl::isConvertingConstructor() const {
+bool CXXConstructorDecl::isConvertingConstructor(bool AllowExplicit) const {
   // C++ [class.conv.ctor]p1:
   //   A constructor declared without the function-specifier explicit
   //   that can be called with a single parameter specifies a
   //   conversion from the type of its first parameter to the type of
   //   its class. Such a constructor is called a converting
   //   constructor.
-  if (isExplicit())
+  if (isExplicit() && !AllowExplicit)
     return false;
 
   return (getNumParams() == 0 && 

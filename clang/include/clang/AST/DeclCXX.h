@@ -1068,7 +1068,7 @@ public:
   /// isConvertingConstructor - Whether this constructor is a
   /// converting constructor (C++ [class.conv.ctor]), which can be
   /// used for user-defined conversions.
-  bool isConvertingConstructor() const;
+  bool isConvertingConstructor(bool AllowExplicit) const;
 
   // Implement isa/cast/dyncast/etc.
   static bool classof(const Decl *D) { 

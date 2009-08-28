@@ -1394,7 +1394,7 @@ bool Sema::IsUserDefinedConversion(Expr *From, QualType ToType,
           Constructor = cast<CXXConstructorDecl>(*Con);
         
         if (!Constructor->isInvalidDecl() &&
-            Constructor->isConvertingConstructor()) {
+            Constructor->isConvertingConstructor(AllowExplicit)) {
           if (ConstructorTmpl)
             AddTemplateOverloadCandidate(ConstructorTmpl, false, 0, 0, &From, 
                                          1, CandidateSet,

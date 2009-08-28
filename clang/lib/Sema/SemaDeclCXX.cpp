@@ -2785,7 +2785,8 @@ Sema::PerformInitializationByConstructor(QualType ClassType,
       Constructor = cast<CXXConstructorDecl>(*Con);
 
     if ((Kind == IK_Direct) ||
-        (Kind == IK_Copy && Constructor->isConvertingConstructor()) ||
+        (Kind == IK_Copy && 
+         Constructor->isConvertingConstructor(/*AllowExplicit=*/false)) ||
         (Kind == IK_Default && Constructor->isDefaultConstructor())) {
       if (ConstructorTmpl)
         AddTemplateOverloadCandidate(ConstructorTmpl, false, 0, 0, 
