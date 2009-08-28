@@ -4,7 +4,7 @@
 
 ; RUN: lli -load %llvmlibsdir/profile_rt%shlibext %t2
 ; RUN: lli -load %llvmlibsdir/profile_rt%shlibext %t2 1 2
-; RUN: llvm-prof -print-all-code %t1 | tee %t3 | FileCheck --check-prefix=PROF %s
+; RUN: llvm-prof -print-all-code %t1 | FileCheck --check-prefix=PROF %s
 
 ; PROF:  1.     2/4 oneblock
 ; PROF:  2.     2/4 main
