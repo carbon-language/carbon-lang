@@ -1,7 +1,7 @@
 ; RUN: llvm-as %s -o %t1
 ; RUN: opt %t1 -insert-edge-profiling -o %t2
 ; RUN: llvm-dis < %t2 | FileCheck --check-prefix=INST %s
-
+; RUN: rm llvmprof.out
 ; RUN: lli -load %llvmlibsdir/profile_rt%shlibext %t2
 ; RUN: lli -load %llvmlibsdir/profile_rt%shlibext %t2 1 2
 ; RUN: llvm-prof -print-all-code %t1 | FileCheck --check-prefix=PROF %s
