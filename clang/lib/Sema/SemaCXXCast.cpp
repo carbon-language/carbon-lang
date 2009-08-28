@@ -784,7 +784,7 @@ TryStaticImplicitCast(Sema &Self, Expr *SrcExpr, QualType DestType,
   ImplicitConversionSequence ICS = 
     Self.TryImplicitConversion(SrcExpr, DestType,
                                /*SuppressUserConversions=*/false,
-                               /*AllowExplicit=*/false,
+                               /*AllowExplicit=*/true,
                                /*ForceRValue=*/false,
                                /*InOverloadResolution=*/false);
   
