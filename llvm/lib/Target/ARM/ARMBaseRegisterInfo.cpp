@@ -1057,12 +1057,11 @@ ARMBaseRegisterInfo::eliminateFrameIndex(MachineBasicBlock::iterator II,
   if (Done)
     return;
 
-  const TargetInstrDesc &Desc = MI.getDesc();
-
   // If we get here, the immediate doesn't fit into the instruction.  We folded
   // as much as possible above, handle the rest, providing a register that is
   // SP+LargeImm.
-  assert((Offset || (Desc.TSFlags & ARMII::AddrModeMask) == ARMII::AddrMode4) &&
+  assert((Offset ||
+          (MI.getDesc().TSFlags & ARMII::AddrModeMask) == ARMII::AddrMode4) &&
          "This code isn't needed if offset already handled!");
 
   // Insert a set of r12 with the full address: r12 = sp + offset
