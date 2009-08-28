@@ -7,10 +7,10 @@
 # 
 ##===----------------------------------------------------------------------===##
 
-ifndef NO_RUNTIME_LIBS
-
 LEVEL = ..
 include $(LEVEL)/Makefile.config
+
+ifndef NO_RUNTIME_LIBS
 
 PARALLEL_DIRS  := libprofile
 
@@ -22,6 +22,6 @@ endif
 
 include $(LEVEL)/Makefile.common
 
-install::
-
 endif
+
+install::
