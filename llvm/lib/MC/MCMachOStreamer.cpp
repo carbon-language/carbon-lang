@@ -63,6 +63,15 @@ private:
     return 0;
   }
 
+  MCSectionData &getSectionData(const MCSection &Section) {
+    MCSectionData *&Entry = SectionMap[&Section];
+
+    if (!Entry)
+      Entry = new MCSectionData(Section, &Assembler);
+
+    return *Entry;
+  }
+
   MCSymbolData &getSymbolData(MCSymbol &Symbol) {
     MCSymbolData *&Entry = SymbolMap[&Symbol];
 
@@ -135,14 +144,9 @@ void MCMachOStreamer::SwitchSection(const MCSection *Section) {
   
   // If already in this section, then this is a noop.
   if (Section == CurSection) return;
-  
+
   CurSection = Section;
-  MCSectionData *&Entry = SectionMap[Section];
-
-  if (!Entry)
-    Entry = new MCSectionData(*Section, &Assembler);
-
-  CurSectionData = Entry;
+  CurSectionData = &getSectionData(*Section);
 }
 
 void MCMachOStreamer::EmitLabel(MCSymbol *Symbol) {
