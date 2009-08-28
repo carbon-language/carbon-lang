@@ -1319,7 +1319,8 @@ bool Sema::CheckTemplateArgumentList(TemplateDecl *Template,
 
         TemplateArgumentList TemplateArgs(Context, Converted,
                                           /*TakeArgs=*/false);
-        NTTPType = SubstType(NTTPType, TemplateArgs,
+        NTTPType = SubstType(NTTPType, 
+                             MultiLevelTemplateArgumentList(TemplateArgs),
                              NTTP->getLocation(),
                              NTTP->getDeclName());
         // If that worked, check the non-type template parameter type

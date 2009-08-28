@@ -38,7 +38,7 @@ namespace clang {
   /// template argument list (17) at depth 1.
   struct MultiLevelTemplateArgumentList {
     /// \brief The template argument lists, stored from the innermost template
-    /// argument list (first) to the outermost template argument list (last)
+    /// argument list (first) to the outermost template argument list (last).
     llvm::SmallVector<const TemplateArgumentList *, 4> TemplateArgumentLists;
     
   public:
@@ -46,6 +46,7 @@ namespace clang {
     MultiLevelTemplateArgumentList() { }
     
     /// \brief Construct a single-level template argument list.
+    explicit 
     MultiLevelTemplateArgumentList(const TemplateArgumentList &TemplateArgs) {
       TemplateArgumentLists.push_back(&TemplateArgs);
     }

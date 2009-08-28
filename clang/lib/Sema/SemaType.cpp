@@ -1787,14 +1787,9 @@ bool Sema::RequireCompleteType(SourceLocation Loc, QualType T,
     } else if (CXXRecordDecl *Rec 
                  = dyn_cast<CXXRecordDecl>(Record->getDecl())) {
       if (CXXRecordDecl *Pattern = Rec->getInstantiatedFromMemberClass()) {
-        // Find the class template specialization that surrounds this
-        // member class.
-        ClassTemplateSpecializationDecl *Spec = 0;
-        for (DeclContext *Parent = Rec->getDeclContext(); 
-             Parent && !Spec; Parent = Parent->getParent())
-          Spec = dyn_cast<ClassTemplateSpecializationDecl>(Parent);
-        assert(Spec && "Not a member of a class template specialization?");
-        return InstantiateClass(Loc, Rec, Pattern, Spec->getTemplateArgs(),
+        // This record was instantiated from a class within a template.
+        return InstantiateClass(Loc, Rec, Pattern, 
+                                getTemplateInstantiationArgs(Rec),
                                 /*ExplicitInstantiation=*/false,
                                 /*Complain=*/diag != 0);
       }

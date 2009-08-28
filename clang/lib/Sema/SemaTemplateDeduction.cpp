@@ -967,8 +967,9 @@ Sema::DeduceTemplateArguments(ClassTemplatePartialSpecializationDecl *Partial,
   for (unsigned I = 0, N = PartialTemplateArgs.flat_size(); I != N; ++I) {
     Decl *Param = const_cast<Decl *>(
                     ClassTemplate->getTemplateParameters()->getParam(I));
-    TemplateArgument InstArg = Subst(PartialTemplateArgs[I],
-                                     *DeducedArgumentList);
+    TemplateArgument InstArg 
+      = Subst(PartialTemplateArgs[I],
+              MultiLevelTemplateArgumentList(*DeducedArgumentList));
     if (InstArg.isNull()) {
       Info.Param = makeTemplateParameter(Param);
       Info.FirstArg = PartialTemplateArgs[I];
@@ -1118,10 +1119,10 @@ Sema::SubstituteExplicitTemplateArguments(
                                 PEnd = Function->param_end();
        P != PEnd;
        ++P) {
-    QualType ParamType = SubstType((*P)->getType(), 
-                                   *ExplicitArgumentList, 
-                                   (*P)->getLocation(), 
-                                   (*P)->getDeclName());
+    QualType ParamType 
+      = SubstType((*P)->getType(), 
+                  MultiLevelTemplateArgumentList(*ExplicitArgumentList),
+                  (*P)->getLocation(), (*P)->getDeclName());
     if (ParamType.isNull() || Trap.hasErrorOccurred())
       return TDK_SubstitutionFailure;
     
@@ -1136,10 +1137,11 @@ Sema::SubstituteExplicitTemplateArguments(
       = Function->getType()->getAsFunctionProtoType();
     assert(Proto && "Function template does not have a prototype?");
     
-    QualType ResultType = SubstType(Proto->getResultType(),
-                                    *ExplicitArgumentList,
-                                    Function->getTypeSpecStartLoc(),
-                                    Function->getDeclName());
+    QualType ResultType 
+      = SubstType(Proto->getResultType(),
+                  MultiLevelTemplateArgumentList(*ExplicitArgumentList),
+                  Function->getTypeSpecStartLoc(),
+                  Function->getDeclName());
     if (ResultType.isNull() || Trap.hasErrorOccurred())
       return TDK_SubstitutionFailure;
     
@@ -1215,7 +1217,7 @@ Sema::FinishTemplateArgumentDeduction(FunctionTemplateDecl *FunctionTemplate,
   Specialization = cast_or_null<FunctionDecl>(
                       SubstDecl(FunctionTemplate->getTemplatedDecl(),
                                 FunctionTemplate->getDeclContext(),
-                                *DeducedArgumentList));
+                         MultiLevelTemplateArgumentList(*DeducedArgumentList)));
   if (!Specialization)
     return TDK_SubstitutionFailure;
   

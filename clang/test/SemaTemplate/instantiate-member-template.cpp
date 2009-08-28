@@ -32,7 +32,14 @@ struct X1 {
   template<typename U>
   struct Inner1 {
     U x; // expected-error{{void}}
-    T y; 
+    T y;
+  };
+  
+  template<typename U>
+  struct Inner2 {
+    struct SuperInner {
+      U z; // expected-error{{void}}
+    };
   };
 };
 
@@ -42,4 +49,7 @@ void test_X1() {
   
   X1<int>::Inner1<void> *xivp; // okay
   X1<int>::Inner1<void> xiv; // expected-note{{instantiation}}
+  
+  X1<int>::Inner2<void>::SuperInner *xisivp; // okay
+  X1<int>::Inner2<void>::SuperInner xisiv; // expected-note{{instantiation}}
 }
