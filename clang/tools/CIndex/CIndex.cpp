@@ -43,10 +43,10 @@ CXTranslationUnit clang_createTranslationUnit(
   return ASTUnit::LoadFromPCHFile(astName, CXXIdx->getFileManager(), &ErrMsg);
 }
 
+namespace {
+
 class IdxVisitor : public DeclVisitor<IdxVisitor> {
 public:
-  IdxVisitor();
-  
   void VisitNamedDecl(NamedDecl *ND) {
     printf("NamedDecl (%s:", ND->getDeclKindName());
     if (ND->getIdentifier())
@@ -55,6 +55,8 @@ public:
       printf("<no name>)\n");
   }
 };
+
+}
 
 void clang_loadTranslationUnit(
   CXTranslationUnit CTUnit, void (*callback)(CXTranslationUnit, CXCursor))
