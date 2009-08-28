@@ -1243,7 +1243,8 @@ bool Sema::CheckTemplateArgumentList(TemplateDecl *Template,
 
           TemplateArgumentList TemplateArgs(Context, Converted,
                                             /*TakeArgs=*/false);
-          ArgType = SubstType(ArgType, TemplateArgs,
+          ArgType = SubstType(ArgType, 
+                              MultiLevelTemplateArgumentList(TemplateArgs),
                               TTP->getDefaultArgumentLoc(),
                               TTP->getDeclName());
         }
@@ -1265,8 +1266,9 @@ bool Sema::CheckTemplateArgumentList(TemplateDecl *Template,
         TemplateArgumentList TemplateArgs(Context, Converted,
                                           /*TakeArgs=*/false);
 
-        Sema::OwningExprResult E = SubstExpr(NTTP->getDefaultArgument(), 
-                                             TemplateArgs);
+        Sema::OwningExprResult E 
+          = SubstExpr(NTTP->getDefaultArgument(), 
+                      MultiLevelTemplateArgumentList(TemplateArgs));
         if (E.isInvalid())
           return true;
         

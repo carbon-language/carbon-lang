@@ -46,8 +46,8 @@ namespace clang {
     MultiLevelTemplateArgumentList() { }
     
     /// \brief Construct a single-level template argument list.
-    MultiLevelTemplateArgumentList(const TemplateArgumentList *TemplateArgs) {
-      TemplateArgumentLists.push_back(TemplateArgs);
+    MultiLevelTemplateArgumentList(const TemplateArgumentList &TemplateArgs) {
+      TemplateArgumentLists.push_back(&TemplateArgs);
     }
     
     /// \brief Determine the number of levels in this template argument
@@ -57,14 +57,32 @@ namespace clang {
     /// \brief Retrieve the template argument at a given depth and index.
     const TemplateArgument &operator()(unsigned Depth, unsigned Index) const {
       assert(Depth < TemplateArgumentLists.size());
-      assert(Index < TemplateArgumentLists[getNumLevels() - Depth]->size());
-      return TemplateArgumentLists[getNumLevels() - Depth]->get(Index);
+      assert(Index < TemplateArgumentLists[getNumLevels() - Depth - 1]->size());
+      return TemplateArgumentLists[getNumLevels() - Depth - 1]->get(Index);
+    }
+    
+    /// \brief Determine whether there is a non-NULL template argument at the
+    /// given depth and index.
+    ///
+    /// There must exist a template argument list at the given depth.
+    bool hasTemplateArgument(unsigned Depth, unsigned Index) const {
+      assert(Depth < TemplateArgumentLists.size());
+      
+      if (Index >= TemplateArgumentLists[getNumLevels() - Depth - 1]->size())
+        return false;
+      
+      return !(*this)(Depth, Index).isNull();
     }
     
     /// \brief Add a new outermost level to the multi-level template argument 
     /// list.
     void addOuterTemplateArguments(const TemplateArgumentList *TemplateArgs) {
       TemplateArgumentLists.push_back(TemplateArgs);
+    }
+    
+    /// \brief Retrieve the innermost template argument list.
+    const TemplateArgumentList &getInnermost() const {
+      return *TemplateArgumentLists.front();
     }
     
     // Implicit conversion to a single template argument list, to facilitate a

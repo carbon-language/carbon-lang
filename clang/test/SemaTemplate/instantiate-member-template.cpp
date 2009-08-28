@@ -21,3 +21,25 @@ void test_X0(int *ip, double *dp) {
   double *&dpr2 = xv.f1(ip, dp);
 }
 
+template<typename T>
+struct X1 {
+  template<typename U>
+  struct Inner0 {
+    U x; 
+    T y; // expected-error{{void}}
+  };
+
+  template<typename U>
+  struct Inner1 {
+    U x; // expected-error{{void}}
+    T y; 
+  };
+};
+
+void test_X1() {
+  X1<void>::Inner0<int> *xvip; // okay
+  X1<void>::Inner0<int> xvi; // expected-note{{instantiation}}
+  
+  X1<int>::Inner1<void> *xivp; // okay
+  X1<int>::Inner1<void> xiv; // expected-note{{instantiation}}
+}

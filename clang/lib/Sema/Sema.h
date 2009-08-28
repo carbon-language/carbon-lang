@@ -2903,29 +2903,28 @@ public:
 
   void PerformPendingImplicitInstantiations();
   
-  QualType SubstType(QualType T, const TemplateArgumentList &TemplateArgs,
+  QualType SubstType(QualType T, 
+                     const MultiLevelTemplateArgumentList &TemplateArgs,
                      SourceLocation Loc, DeclarationName Entity);
   
-  OwningExprResult SubstExpr(Expr *E, const TemplateArgumentList &TemplateArgs);
+  OwningExprResult SubstExpr(Expr *E, 
+                            const MultiLevelTemplateArgumentList &TemplateArgs);
 
-  OwningStmtResult SubstStmt(Stmt *S, const TemplateArgumentList &TemplateArgs);
+  OwningStmtResult SubstStmt(Stmt *S, 
+                            const MultiLevelTemplateArgumentList &TemplateArgs);
 
   Decl *SubstDecl(Decl *D, DeclContext *Owner,
-                  const TemplateArgumentList &TemplateArgs);
+                  const MultiLevelTemplateArgumentList &TemplateArgs);
 
   bool 
   SubstBaseSpecifiers(CXXRecordDecl *Instantiation,
                       CXXRecordDecl *Pattern,
-                      const TemplateArgumentList &TemplateArgs);
-
-  bool
-  InstantiateTemplatePattern(SourceLocation PointOfInstantiation,
-                             CXXRecordDecl *Pattern);
+                      const MultiLevelTemplateArgumentList &TemplateArgs);
 
   bool
   InstantiateClass(SourceLocation PointOfInstantiation,
                    CXXRecordDecl *Instantiation, CXXRecordDecl *Pattern,
-                   const TemplateArgumentList &TemplateArgs,
+                   const MultiLevelTemplateArgumentList &TemplateArgs,
                    bool ExplicitInstantiation,
                    bool Complain = true);
 
@@ -2936,7 +2935,7 @@ public:
 
   void InstantiateClassMembers(SourceLocation PointOfInstantiation,
                                CXXRecordDecl *Instantiation,
-                               const TemplateArgumentList &TemplateArgs);
+                            const MultiLevelTemplateArgumentList &TemplateArgs);
 
   void InstantiateClassTemplateSpecializationMembers(
                                           SourceLocation PointOfInstantiation,
@@ -2945,13 +2944,13 @@ public:
   NestedNameSpecifier *
   SubstNestedNameSpecifier(NestedNameSpecifier *NNS,
                            SourceRange Range,
-                           const TemplateArgumentList &TemplateArgs);
+                           const MultiLevelTemplateArgumentList &TemplateArgs);
 
   TemplateName
   SubstTemplateName(TemplateName Name, SourceLocation Loc,
-                    const TemplateArgumentList &TemplateArgs);
+                    const MultiLevelTemplateArgumentList &TemplateArgs);
   TemplateArgument Subst(TemplateArgument Arg,
-                         const TemplateArgumentList &TemplateArgs);
+                         const MultiLevelTemplateArgumentList &TemplateArgs);
 
   void InstantiateFunctionDefinition(SourceLocation PointOfInstantiation,
                                      FunctionDecl *Function,

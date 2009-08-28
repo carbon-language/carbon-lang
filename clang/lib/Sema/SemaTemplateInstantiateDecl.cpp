@@ -25,13 +25,13 @@ namespace {
     : public DeclVisitor<TemplateDeclInstantiator, Decl *> {
     Sema &SemaRef;
     DeclContext *Owner;
-    const TemplateArgumentList &TemplateArgs;
+    const MultiLevelTemplateArgumentList &TemplateArgs;
     
   public:
     typedef Sema::OwningExprResult OwningExprResult;
 
     TemplateDeclInstantiator(Sema &SemaRef, DeclContext *Owner,
-                             const TemplateArgumentList &TemplateArgs)
+                             const MultiLevelTemplateArgumentList &TemplateArgs)
       : SemaRef(SemaRef), Owner(Owner), TemplateArgs(TemplateArgs) { }
     
     // FIXME: Once we get closer to completion, replace these manually-written
@@ -457,8 +457,8 @@ Decl *TemplateDeclInstantiator::VisitFunctionDecl(FunctionDecl *D) {
   if (FunctionTemplate) {
     llvm::FoldingSetNodeID ID;
     FunctionTemplateSpecializationInfo::Profile(ID, 
-                                          TemplateArgs.getFlatArgumentList(),
-                                                TemplateArgs.flat_size(),
+                             TemplateArgs.getInnermost().getFlatArgumentList(),
+                                       TemplateArgs.getInnermost().flat_size(),
                                                 SemaRef.Context);
     
     FunctionTemplateSpecializationInfo *Info 
@@ -513,7 +513,7 @@ Decl *TemplateDeclInstantiator::VisitFunctionDecl(FunctionDecl *D) {
     // Record this function template specialization.
     Function->setFunctionTemplateSpecialization(SemaRef.Context,
                                                 FunctionTemplate,
-                                                &TemplateArgs,
+                                                &TemplateArgs.getInnermost(),
                                                 InsertPos);
   }
 
@@ -531,8 +531,8 @@ TemplateDeclInstantiator::VisitCXXMethodDecl(CXXMethodDecl *D,
     // specialization for this particular set of template arguments.
     llvm::FoldingSetNodeID ID;
     FunctionTemplateSpecializationInfo::Profile(ID, 
-                                          TemplateArgs.getFlatArgumentList(),
-                                                TemplateArgs.flat_size(),
+                            TemplateArgs.getInnermost().getFlatArgumentList(),
+                                      TemplateArgs.getInnermost().flat_size(),
                                                 SemaRef.Context);
     
     FunctionTemplateSpecializationInfo *Info 
@@ -646,7 +646,7 @@ TemplateDeclInstantiator::VisitCXXMethodDecl(CXXMethodDecl *D,
     // Record this function template specialization.
     Method->setFunctionTemplateSpecialization(SemaRef.Context,
                                               FunctionTemplate,
-                                              &TemplateArgs,
+                                              &TemplateArgs.getInnermost(),
                                               InsertPos);
   
   bool Redeclaration = false;
@@ -760,7 +760,7 @@ TemplateDeclInstantiator::VisitUnresolvedUsingDecl(UnresolvedUsingDecl *D) {
 }
 
 Decl *Sema::SubstDecl(Decl *D, DeclContext *Owner,
-                      const TemplateArgumentList &TemplateArgs) {
+                      const MultiLevelTemplateArgumentList &TemplateArgs) {
   TemplateDeclInstantiator Instantiator(*this, Owner, TemplateArgs);
   return Instantiator.Visit(D);
 }
