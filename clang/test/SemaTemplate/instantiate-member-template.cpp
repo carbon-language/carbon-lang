@@ -63,7 +63,13 @@ template<typename U>
 struct X1<T>::Inner4 {
   template<typename V>
   V f2(T t, U u, V);
+  
+  static U value;
 };
+
+template<typename T>
+template<typename U>
+U X1<T>::Inner4<U>::value; // expected-error{{reference variable}}
 
 template<typename T>
 template<typename U>
@@ -93,4 +99,7 @@ void test_X1(int *ip, int i, double *dp) {
   
   X1<int*>::Inner4<int> id4;
   id4.f2(ip, i, dp); // expected-note{{instantiation}}
+  
+  X1<int*>::Inner4<int>::value = 17;
+  i = X1<int*>::Inner4<int&>::value; // expected-note{{instantiation}}
 }

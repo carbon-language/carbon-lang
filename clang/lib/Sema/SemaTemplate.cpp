@@ -808,9 +808,6 @@ Sema::MatchTemplateParametersToScopeSpecifier(SourceLocation DeclStartLoc,
                                               const CXXScopeSpec &SS,
                                           TemplateParameterList **ParamLists,
                                               unsigned NumParamLists) {
-  // FIXME: This routine will need a lot more testing once we have support for
-  // member templates.
-  
   // Find the template-ids that occur within the nested-name-specifier. These
   // template-ids will match up with the template parameter lists.
   llvm::SmallVector<const TemplateSpecializationType *, 4>
