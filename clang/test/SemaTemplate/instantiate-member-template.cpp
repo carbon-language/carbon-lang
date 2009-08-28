@@ -41,9 +41,22 @@ struct X1 {
       U z; // expected-error{{void}}
     };
   };
+  
+  template<typename U>
+  struct Inner3 {
+    void f0(T t, U u) {
+      (void)(t + u); // expected-error{{invalid operands}}
+    }
+    
+    template<typename V>
+    V f1(T t, U u, V) {
+      return t + u; // expected-error{{incompatible type}}
+    }
+  };
+  
 };
 
-void test_X1() {
+void test_X1(int *ip, int i, double *dp) {
   X1<void>::Inner0<int> *xvip; // okay
   X1<void>::Inner0<int> xvi; // expected-note{{instantiation}}
   
@@ -52,4 +65,13 @@ void test_X1() {
   
   X1<int>::Inner2<void>::SuperInner *xisivp; // okay
   X1<int>::Inner2<void>::SuperInner xisiv; // expected-note{{instantiation}}
+  
+  X1<int*>::Inner3<int> id3;
+  id3.f0(ip, i);
+  id3.f0(dp, i); // expected-error{{incompatible type}}
+  id3.f1(ip, i, ip);
+  id3.f1(ip, i, dp); // expected-note{{instantiation}}
+  
+  X1<int*>::Inner3<double*> id3b;
+  id3b.f0(ip, dp); // expected-note{{instantiation}}
 }

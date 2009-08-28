@@ -947,9 +947,12 @@ void Sema::InstantiateFunctionDefinition(SourceLocation PointOfInstantiation,
   
   // Find the function body that we'll be substituting.
   const FunctionDecl *PatternDecl = 0;
-  if (FunctionTemplateDecl *Primary = Function->getPrimaryTemplate())
+  if (FunctionTemplateDecl *Primary = Function->getPrimaryTemplate()) {
+    while (Primary->getInstantiatedFromMemberTemplate())
+      Primary = Primary->getInstantiatedFromMemberTemplate();
+    
     PatternDecl = Primary->getTemplatedDecl();
-  else 
+  } else 
     PatternDecl = Function->getInstantiatedFromMemberFunction();
   Stmt *Pattern = 0;
   if (PatternDecl)
