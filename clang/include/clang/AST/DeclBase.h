@@ -79,7 +79,9 @@ public:
   /// namespaces, labels, tags, members and ordinary
   /// identifiers. These are meant as bitmasks, so that searches in
   /// C++ can look into the "tag" namespace during ordinary lookup. We
-  /// use additional namespaces for Objective-C entities.
+  /// use additional namespaces for Objective-C entities.  We also
+  /// put C++ friend declarations (of previously-undeclared entities) in
+  /// shadow namespaces.
   enum IdentifierNamespace {
     IDNS_Label = 0x1,
     IDNS_Tag = 0x2,
@@ -88,7 +90,8 @@ public:
     IDNS_ObjCProtocol = 0x10,
     IDNS_ObjCImplementation = 0x20,
     IDNS_ObjCCategoryImpl = 0x40,
-    IDNS_Friend = 0x80
+    IDNS_OrdinaryFriend = 0x80,
+    IDNS_TagFriend = 0x100
   };
   
   /// ObjCDeclQualifier - Qualifier used on types in method declarations
@@ -164,7 +167,7 @@ private:
 
 protected:
   /// IdentifierNamespace - This specifies what IDNS_* namespace this lives in.
-  unsigned IdentifierNamespace : 8;
+  unsigned IdentifierNamespace : 16;
   
 private:
 #ifndef NDEBUG
@@ -406,6 +409,42 @@ public:
 
   /// \brief Whether this declaration is a function or function template.
   bool isFunctionOrFunctionTemplate() const;
+
+  /// \brief Changes the namespace of this declaration to reflect that it's
+  /// the object of a friend declaration.
+  ///
+  /// These declarations appear in the lexical context of the friending
+  /// class, but in the semantic context of the actual entity.  This property
+  /// applies only to a specific decl object;  other redeclarations of the
+  /// same entity may not (and probably don't) share this property.
+  void setObjectOfFriendDecl(bool PreviouslyDeclared) {
+    unsigned OldNS = IdentifierNamespace;
+    assert((OldNS == IDNS_Tag || OldNS == IDNS_Ordinary)
+           && "unsupported namespace for undeclared friend");
+    if (!PreviouslyDeclared) IdentifierNamespace = 0;
+
+    if (OldNS == IDNS_Tag)
+      IdentifierNamespace |= IDNS_TagFriend;
+    else
+      IdentifierNamespace |= IDNS_OrdinaryFriend;
+  }
+
+  enum FriendObjectKind {
+    FOK_None, // not a friend object
+    FOK_Declared, // a friend of a previously-declared entity
+    FOK_Undeclared // a friend of a previously-undeclared entity
+  };
+
+  /// \brief Determines whether this declaration is the object of a
+  /// friend declaration and, if so, what kind.
+  ///
+  /// There is currently no direct way to find the associated FriendDecl.
+  FriendObjectKind getFriendObjectKind() const {
+    unsigned mask
+      = (IdentifierNamespace & (IDNS_TagFriend | IDNS_OrdinaryFriend));
+    if (!mask) return FOK_None;
+    return (mask & (IDNS_Tag | IDNS_Ordinary) ? FOK_Declared : FOK_Undeclared);
+  }
   
   // Implement isa/cast/dyncast/etc.
   static bool classof(const Decl *) { return true; }

@@ -45,7 +45,7 @@ namespace {
     Decl *VisitStaticAssertDecl(StaticAssertDecl *D);
     Decl *VisitEnumDecl(EnumDecl *D);
     Decl *VisitEnumConstantDecl(EnumConstantDecl *D);
-    Decl *VisitFriendClassDecl(FriendClassDecl *D);
+    Decl *VisitFriendDecl(FriendDecl *D);
     Decl *VisitFunctionDecl(FunctionDecl *D);
     Decl *VisitCXXRecordDecl(CXXRecordDecl *D);
     Decl *VisitCXXMethodDecl(CXXMethodDecl *D,
@@ -250,25 +250,35 @@ Decl *TemplateDeclInstantiator::VisitFieldDecl(FieldDecl *D) {
   return Field;
 }
 
-Decl *TemplateDeclInstantiator::VisitFriendClassDecl(FriendClassDecl *D) {
-  QualType T = D->getFriendType();
-  if (T->isDependentType())  {
-    T = SemaRef.SubstType(T, TemplateArgs, D->getLocation(),
-                          DeclarationName());
-    assert(T.isNull() || getLangOptions().CPlusPlus0x || T->isRecordType());
+Decl *TemplateDeclInstantiator::VisitFriendDecl(FriendDecl *D) {
+  FriendDecl::FriendUnion FU;
+
+  // Handle friend type expressions by simply substituting template
+  // parameters into the pattern type.
+  if (Type *Ty = D->getFriendType()) {
+    QualType T = SemaRef.SubstType(QualType(Ty,0), TemplateArgs,
+                                   D->getLocation(), DeclarationName());
+    if (T.isNull()) return 0;
+
+    assert(getLangOptions().CPlusPlus0x || T->isRecordType());
+    FU = T.getTypePtr();
+
+  // Handle everything else by appropriate substitution.
+  } else {
+    NamedDecl *ND = D->getFriendDecl();
+    assert(ND && "friend decl must be a decl or a type!");
+
+    Decl *NewND = Visit(ND);
+    if (!NewND) return 0;
+
+    FU = cast<NamedDecl>(NewND);
   }
-
-  // FIXME: the target context might be dependent.
-  DeclContext *DC = D->getDeclContext();
-  assert(DC->isFileContext());
-
-  FriendClassDecl *NewD =
-    FriendClassDecl::Create(SemaRef.Context, DC, D->getLocation(), T,
-                            D->getFriendLoc());
-  NewD->setLexicalDeclContext(Owner);
-
-  Owner->addDecl(NewD);
-  return NewD;
+  
+  FriendDecl *FD =
+    FriendDecl::Create(SemaRef.Context, Owner, D->getLocation(), FU,
+                       D->getFriendLoc());
+  Owner->addDecl(FD);
+  return FD;
 }
 
 Decl *TemplateDeclInstantiator::VisitStaticAssertDecl(StaticAssertDecl *D) {
@@ -424,10 +434,20 @@ Decl *TemplateDeclInstantiator::VisitCXXRecordDecl(CXXRecordDecl *D) {
   if (!D->isInjectedClassName())
     Record->setInstantiationOfMemberClass(D);
 
+  // If the original function was part of a friend declaration,
+  // inherit its namespace state.
+  if (Decl::FriendObjectKind FOK = D->getFriendObjectKind())
+    Record->setObjectOfFriendDecl(FOK == Decl::FOK_Declared);
+
   Owner->addDecl(Record);
   return Record;
 }
 
+/// Normal class members are of more specific types and therefore
+/// don't make it here.  This function serves two purposes:
+///   1) instantiating function templates
+///   2) substituting friend declarations
+/// FIXME: preserve function definitions in case #2
 Decl *TemplateDeclInstantiator::VisitFunctionDecl(FunctionDecl *D) {
   // Check whether there is already a function template specialization for
   // this declaration.
@@ -457,33 +477,27 @@ Decl *TemplateDeclInstantiator::VisitFunctionDecl(FunctionDecl *D) {
     return 0;
 
   // Build the instantiated method declaration.
-  FunctionDecl *Function;
-  if (FriendFunctionDecl* FFD = dyn_cast<FriendFunctionDecl>(D)) {
-    // The new decl's semantic context.  FIXME:  this might need
-    // to be instantiated.
-    DeclContext *DC = D->getDeclContext();
-
-    // This assert is bogus and exists only to catch cases we don't
-    // handle yet.
-    assert(!DC->isDependentContext());
-
-    Function =
-      FriendFunctionDecl::Create(SemaRef.Context, DC, D->getLocation(),
-                                 D->getDeclName(), T, D->getDeclaratorInfo(),
-                                 D->isInline(), FFD->getFriendLoc());
-    Function->setLexicalDeclContext(Owner);
-  } else {
-    Function =
-      FunctionDecl::Create(SemaRef.Context, Owner, D->getLocation(), 
+  DeclContext *DC = SemaRef.FindInstantiatedContext(D->getDeclContext());
+  FunctionDecl *Function =
+      FunctionDecl::Create(SemaRef.Context, DC, D->getLocation(), 
                            D->getDeclName(), T, D->getDeclaratorInfo(),
                            D->getStorageClass(),
                            D->isInline(), D->hasWrittenPrototype());
-  }
-  
+  Function->setLexicalDeclContext(Owner);
+
   // Attach the parameters
   for (unsigned P = 0; P < Params.size(); ++P)
     Params[P]->setOwningFunction(Function);
   Function->setParams(SemaRef.Context, Params.data(), Params.size());
+
+  // If the original function was part of a friend declaration,
+  // inherit its namespace state and add it to the owner.
+  if (Decl::FriendObjectKind FOK = D->getFriendObjectKind()) {
+    bool WasDeclared = (FOK == Decl::FOK_Declared);
+    Function->setObjectOfFriendDecl(WasDeclared);
+    if (!Owner->isDependentContext())
+      DC->makeDeclVisibleInContext(Function);
+  }
   
   if (InitFunctionInstantiation(Function, D))
     Function->setInvalidDecl();
@@ -500,17 +514,6 @@ Decl *TemplateDeclInstantiator::VisitFunctionDecl(FunctionDecl *D) {
                                                 FunctionTemplate,
                                                 &TemplateArgs,
                                                 InsertPos);
-  }
-
-  // If this was a friend function decl, it's a member which
-  // needs to be added.
-  if (isa<FriendFunctionDecl>(Function)) {
-    // If the new context is still dependent, this declaration
-    // needs to remain hidden.
-    if (Owner->isDependentContext())
-      Owner->addHiddenDecl(Function);
-    else
-      Owner->addDecl(Function);
   }
 
   return Function;
@@ -1127,6 +1130,17 @@ static NamedDecl *findInstantiationOf(ASTContext &Ctx,
   return 0;
 }
 
+/// \brief Finds the instantiation of the given declaration context
+/// within the current instantiation.
+///
+/// \returns NULL if there was an error
+DeclContext *Sema::FindInstantiatedContext(DeclContext* DC) {
+  if (NamedDecl *D = dyn_cast<NamedDecl>(DC)) {
+    Decl* ID = FindInstantiatedDecl(D);
+    return cast_or_null<DeclContext>(ID);
+  } else return DC;
+}
+
 /// \brief Find the instantiation of the given declaration within the
 /// current instantiation.
 ///
@@ -1161,13 +1175,8 @@ NamedDecl * Sema::FindInstantiatedDecl(NamedDecl *D) {
     return cast<NamedDecl>(CurrentInstantiationScope->getInstantiationOf(D));
   }
 
-  if (NamedDecl *ParentDecl = dyn_cast<NamedDecl>(ParentDC)) {
-    ParentDecl = FindInstantiatedDecl(ParentDecl);
-    if (!ParentDecl)
-      return 0;
-
-    ParentDC = cast<DeclContext>(ParentDecl);
-  }
+  ParentDC = FindInstantiatedContext(ParentDC);
+  if (!ParentDC) return 0;
 
   if (ParentDC != D->getDeclContext()) {
     // We performed some kind of instantiation in the parent context,

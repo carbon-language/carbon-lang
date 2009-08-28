@@ -1280,83 +1280,68 @@ public:
   static bool classof(const CXXConversionDecl *D) { return true; }
 };
 
-/// FriendFunctionDecl - Represents the declaration (and possibly
-/// the definition) of a friend function.  For example:
+/// FriendDecl - Represents the declaration of a friend entity,
+/// which can be a function, a type, or a templated function or type.
+//  For example:
 ///
 /// @code
-/// class A {
-///   friend int foo(int);
+/// template <typename T> class A {
+///   friend int foo(T);
+///   friend class B;
+///   friend T; // only in C++0x
+///   template <typename U> friend class C;
+///   template <typename U> friend A& operator+=(A&, const U&) { ... }
 /// };
 /// @endcode
-class FriendFunctionDecl : public FunctionDecl {
-  // Location of the 'friend' specifier.
-  const SourceLocation FriendLoc;
-
-  FriendFunctionDecl(DeclContext *DC, SourceLocation L,
-                     DeclarationName N, QualType T, DeclaratorInfo *DInfo,
-                     bool isInline, SourceLocation FriendL)
-    : FunctionDecl(FriendFunction, DC, L, N, T, DInfo, None, isInline),
-      FriendLoc(FriendL)
-  {}
-
+///
+/// The semantic context of a friend decl is its declaring class.
+class FriendDecl : public Decl {
 public:
-  static FriendFunctionDecl *Create(ASTContext &C, DeclContext *DC,
-                                    SourceLocation L, DeclarationName N,
-                                    QualType T, DeclaratorInfo *DInfo,
-                                    bool isInline, SourceLocation FriendL);
+  typedef llvm::PointerUnion<NamedDecl*,Type*> FriendUnion;
 
-  SourceLocation getFriendLoc() const {
-    return FriendLoc;
-  }
-
-  // Implement isa/cast/dyncast/etc.
-  static bool classof(const Decl *D) { 
-    return D->getKind() == FriendFunction;
-  }
-  static bool classof(const FriendFunctionDecl *D) { return true; }
-};
-  
-/// FriendClassDecl - Represents the declaration of a friend class.
-/// For example:
-/// 
-/// @code
-/// class X {
-///   friend class Y;
-/// };
-/// @endcode
-class FriendClassDecl : public Decl {
-  // The friended type.  In C++0x, this can be an arbitrary type,
-  // which we simply ignore if it's not a record type.
-  QualType FriendType;
+private:
+  // The declaration that's a friend of this class.
+  FriendUnion Friend;
 
   // Location of the 'friend' specifier.
   SourceLocation FriendLoc;
 
-  FriendClassDecl(DeclContext *DC, SourceLocation L,
-                  QualType T, SourceLocation FriendL)
-    : Decl(FriendClass, DC, L),
-      FriendType(T),
+  FriendDecl(DeclContext *DC, SourceLocation L, FriendUnion Friend,
+             SourceLocation FriendL)
+    : Decl(Decl::Friend, DC, L),
+      Friend(Friend),
       FriendLoc(FriendL)
   {}
 
 public:
-  static FriendClassDecl *Create(ASTContext &C, DeclContext *DC,
-                                 SourceLocation L, QualType T,
-                                 SourceLocation FriendL);
+  static FriendDecl *Create(ASTContext &C, DeclContext *DC,
+                            SourceLocation L, FriendUnion Friend_,
+                            SourceLocation FriendL);
 
-  QualType getFriendType() const {
-    return FriendType;
+  /// If this friend declaration names an (untemplated but
+  /// possibly dependent) type, return the type;  otherwise
+  /// return null.  This is used only for C++0x's unelaborated
+  /// friend type declarations.
+  Type *getFriendType() const {
+    return Friend.dyn_cast<Type*>();
   }
 
+  /// If this friend declaration doesn't name an unelaborated
+  /// type, return the inner declaration.
+  NamedDecl *getFriendDecl() const {
+    return Friend.dyn_cast<NamedDecl*>();
+  }
+
+  /// Retrieves the location of the 'friend' keyword.
   SourceLocation getFriendLoc() const {
     return FriendLoc;
   }
 
   // Implement isa/cast/dyncast/etc.
   static bool classof(const Decl *D) { 
-    return D->getKind() == FriendClass;
+    return D->getKind() == Decl::Friend;
   }
-  static bool classof(const FriendClassDecl *D) { return true; }
+  static bool classof(const FriendDecl *D) { return true; }
 };
   
 /// LinkageSpecDecl - This represents a linkage specification.  For example:

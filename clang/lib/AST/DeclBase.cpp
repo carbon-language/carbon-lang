@@ -200,10 +200,6 @@ unsigned Decl::getIdentifierNamespaceForKind(Kind DeclKind) {
     case ObjCCompatibleAlias:
       return IDNS_Ordinary;
 
-    case FriendClass:
-    case FriendFunction:
-      return IDNS_Friend;
-      
     case ObjCProtocol:
       return IDNS_ObjCProtocol;
       
@@ -233,6 +229,7 @@ unsigned Decl::getIdentifierNamespaceForKind(Kind DeclKind) {
       return IDNS_Tag | IDNS_Ordinary;
     
     // Never have names.
+    case Friend:
     case LinkageSpec:
     case FileScopeAsm:
     case StaticAssert:

@@ -3567,116 +3567,124 @@ Sema::DeclPtrTy Sema::ActOnStaticAssertDeclaration(SourceLocation AssertLoc,
 Sema::DeclPtrTy Sema::ActOnFriendDecl(Scope *S,
                        llvm::PointerUnion<const DeclSpec*,Declarator*> DU,
                                       bool IsDefinition) {
-  Declarator *D = DU.dyn_cast<Declarator*>();
-  const DeclSpec &DS = (D ? D->getDeclSpec() : *DU.get<const DeclSpec*>());
+  if (DU.is<Declarator*>())
+    return ActOnFriendFunctionDecl(S, *DU.get<Declarator*>(), IsDefinition);
+  else
+    return ActOnFriendTypeDecl(S, *DU.get<const DeclSpec*>(), IsDefinition);
+}
+
+Sema::DeclPtrTy Sema::ActOnFriendTypeDecl(Scope *S,
+                                          const DeclSpec &DS,
+                                          bool IsDefinition) {
+  SourceLocation Loc = DS.getSourceRange().getBegin();
 
   assert(DS.isFriendSpecified());
   assert(DS.getStorageClassSpec() == DeclSpec::SCS_unspecified);
 
-  // If there's no declarator, then this can only be a friend class
-  // declaration (or else it's just syntactically invalid).
-  if (!D) {
-    SourceLocation Loc = DS.getSourceRange().getBegin();
+  // Check to see if the decl spec was syntactically like "struct foo".
+  RecordDecl *RD = NULL;
 
-    QualType T;
-    DeclContext *DC;
+  switch (DS.getTypeSpecType()) {
+  case DeclSpec::TST_class:
+  case DeclSpec::TST_struct:
+  case DeclSpec::TST_union:
+    RD = dyn_cast_or_null<CXXRecordDecl>((Decl*) DS.getTypeRep());
+    if (!RD) return DeclPtrTy();
 
-    // In C++0x, we just accept any old type.
-    if (getLangOptions().CPlusPlus0x) {
-      bool invalid = false;
-      QualType T = ConvertDeclSpecToType(DS, Loc, invalid);
-      if (invalid)
-        return DeclPtrTy();
+    // The parser doesn't quite handle
+    //   friend class A {}
+    // as we'd like, because it might have been the (valid) prefix of
+    //   friend class A {} foo();
+    // So even in C++0x mode we don't want to 
+    IsDefinition |= RD->isDefinition();
+    break;
 
-      // The semantic context in which to create the decl.  If it's not
-      // a record decl (or we don't yet know if it is), create it in the
-      // current context.
-      DC = CurContext;
-      if (const RecordType *RT = T->getAs<RecordType>())
-        DC = RT->getDecl()->getDeclContext();
-
-    // The C++98 rules are somewhat more complex.
-    } else {
-      // C++ [class.friend]p2:
-      //   An elaborated-type-specifier shall be used in a friend declaration
-      //   for a class.*
-      //   * The class-key of the elaborated-type-specifier is required.
-      CXXRecordDecl *RD = 0;
-    
-      switch (DS.getTypeSpecType()) {
-      case DeclSpec::TST_class:
-      case DeclSpec::TST_struct:
-      case DeclSpec::TST_union:
-        RD = dyn_cast_or_null<CXXRecordDecl>((Decl*) DS.getTypeRep());
-        if (!RD) return DeclPtrTy();
-        break;
-        
-      case DeclSpec::TST_typename:
-        if (const RecordType *RT = 
-            ((const Type*) DS.getTypeRep())->getAs<RecordType>())
-          RD = dyn_cast<CXXRecordDecl>(RT->getDecl());
-        // fallthrough
-      default:
-        if (RD) {
-          Diag(DS.getFriendSpecLoc(), diag::err_unelaborated_friend_type)
-            << (RD->isUnion())
-            << CodeModificationHint::CreateInsertion(DS.getTypeSpecTypeLoc(),
-                                         RD->isUnion() ? " union" : " class");
-          return DeclPtrTy::make(RD);
-        }
-
-        Diag(DS.getFriendSpecLoc(), diag::err_unexpected_friend)
-          << DS.getSourceRange();
-        return DeclPtrTy();
-      }
-
-      // The record declaration we get from friend declarations is not
-      // canonicalized; see ActOnTag.
-
-      // C++ [class.friend]p2: A class shall not be defined inside
-      //   a friend declaration.
-      if (RD->isDefinition())
-        Diag(DS.getFriendSpecLoc(), diag::err_friend_decl_defines_class)
-          << RD->getSourceRange();
-
-      // C++98 [class.friend]p1: A friend of a class is a function
-      //   or class that is not a member of the class . . .
-      // But that's a silly restriction which nobody implements for
-      // inner classes, and C++0x removes it anyway, so we only report
-      // this (as a warning) if we're being pedantic.
-      // 
-      // Also, definitions currently get treated in a way that causes
-      // this error, so only report it if we didn't see a definition.
-      else if (RD->getDeclContext() == CurContext &&
-               !getLangOptions().CPlusPlus0x)
-        Diag(DS.getFriendSpecLoc(), diag::ext_friend_inner_class);
-      
-      T = QualType(RD->getTypeForDecl(), 0);
-      DC = RD->getDeclContext();
-    }
-
-    FriendClassDecl *FCD = FriendClassDecl::Create(Context, DC, Loc, T,
-                                                   DS.getFriendSpecLoc());
-    FCD->setLexicalDeclContext(CurContext);
-
-    if (CurContext->isDependentContext())
-      CurContext->addHiddenDecl(FCD);
-    else
-      CurContext->addDecl(FCD);
-
-    return DeclPtrTy::make(FCD);
+  default: break;
   }
 
-  // We have a declarator.
-  assert(D);
+  FriendDecl::FriendUnion FU = RD;
 
-  SourceLocation Loc = D->getIdentifierLoc();
+  // C++ [class.friend]p2:
+  //   An elaborated-type-specifier shall be used in a friend declaration
+  //   for a class.*
+  //   * The class-key of the elaborated-type-specifier is required.
+  // So if we didn't get a record decl above, we're invalid in C++98 mode.
+  if (!RD) {
+    bool invalid = false;
+    QualType T = ConvertDeclSpecToType(DS, Loc, invalid);
+    if (invalid) return DeclPtrTy();
+    
+    if (const RecordType *RT = T->getAs<RecordType>()) {
+      FU = RD = cast<CXXRecordDecl>(RT->getDecl());
+      
+      // Untagged typenames are invalid prior to C++0x, but we can
+      // suggest an easy fix which should work.
+      if (!getLangOptions().CPlusPlus0x) {
+        Diag(DS.getFriendSpecLoc(), diag::err_unelaborated_friend_type)
+          << (RD->isUnion())
+          << CodeModificationHint::CreateInsertion(DS.getTypeSpecTypeLoc(),
+                                        RD->isUnion() ? " union" : " class");
+        return DeclPtrTy();
+      }
+    }else if (!getLangOptions().CPlusPlus0x) {
+      Diag(DS.getFriendSpecLoc(), diag::err_unexpected_friend)
+          << DS.getSourceRange();
+      return DeclPtrTy();
+    }else {
+      FU = T.getTypePtr();
+    }
+  }
+
+  assert(FU && "should have a friend decl/type by here!");
+
+  // C++ [class.friend]p2: A class shall not be defined inside
+  //   a friend declaration.
+  if (IsDefinition) {
+    Diag(DS.getFriendSpecLoc(), diag::err_friend_decl_defines_class)
+      << DS.getSourceRange();
+    return DeclPtrTy();
+  }
+
+  // C++98 [class.friend]p1: A friend of a class is a function
+  //   or class that is not a member of the class . . .
+  // But that's a silly restriction which nobody implements for
+  // inner classes, and C++0x removes it anyway, so we only report
+  // this (as a warning) if we're being pedantic.
+  if (!getLangOptions().CPlusPlus0x) {
+    assert(RD && "must have a record decl in C++98 mode");
+    if (RD->getDeclContext() == CurContext)
+      Diag(DS.getFriendSpecLoc(), diag::ext_friend_inner_class);
+  }
+
+  FriendDecl *FD = FriendDecl::Create(Context, CurContext, Loc, FU,
+                                      DS.getFriendSpecLoc());
+  CurContext->addDecl(FD);
+
+  return DeclPtrTy::make(FD);
+}
+
+Sema::DeclPtrTy Sema::ActOnFriendFunctionDecl(Scope *S,
+                                              Declarator &D,
+                                              bool IsDefinition) {
+  const DeclSpec &DS = D.getDeclSpec();
+
+  assert(DS.isFriendSpecified());
+  assert(DS.getStorageClassSpec() == DeclSpec::SCS_unspecified);
+
+  SourceLocation Loc = D.getIdentifierLoc();
   DeclaratorInfo *DInfo = 0;
-  QualType T = GetTypeForDeclarator(*D, S, &DInfo);
+  QualType T = GetTypeForDeclarator(D, S, &DInfo);
 
   // C++ [class.friend]p1
   //   A friend of a class is a function or class....
   // Note that this sees through typedefs, which is intended.
+  // It *doesn't* see through dependent types, which is correct
+  // according to [temp.arg.type]p3:
+  //   If a declaration acquires a function type through a
+  //   type dependent on a template-parameter and this causes
+  //   a declaration that does not use the syntactic form of a
+  //   function declarator to have a function type, the program
+  //   is ill-formed.
   if (!T->isFunctionType()) {
     Diag(Loc, diag::err_unexpected_friend);
 
@@ -3700,8 +3708,8 @@ Sema::DeclPtrTy Sema::ActOnFriendDecl(Scope *S,
   //    declared as a friend, scopes outside the innermost enclosing
   //    namespace scope are not considered.
 
-  CXXScopeSpec &ScopeQual = D->getCXXScopeSpec();
-  DeclarationName Name = GetNameForDeclarator(*D);
+  CXXScopeSpec &ScopeQual = D.getCXXScopeSpec();
+  DeclarationName Name = GetNameForDeclarator(D);
   assert(Name);
 
   // The existing declaration we found.
@@ -3727,7 +3735,7 @@ Sema::DeclPtrTy Sema::ActOnFriendDecl(Scope *S,
     // TODO: better diagnostics for this case.  Suggesting the right
     // qualified scope would be nice...
     if (!Dec || Dec->getDeclContext() != DC) {
-      D->setInvalidType();
+      D.setInvalidType();
       Diag(Loc, diag::err_qualified_friend_not_found) << Name << T;
       return DeclPtrTy();
     }
@@ -3789,36 +3797,36 @@ Sema::DeclPtrTy Sema::ActOnFriendDecl(Scope *S,
     assert(DC->isFileContext());
 
     // This implies that it has to be an operator or function.
-    if (D->getKind() == Declarator::DK_Constructor ||
-        D->getKind() == Declarator::DK_Destructor ||
-        D->getKind() == Declarator::DK_Conversion) {
+    if (D.getKind() == Declarator::DK_Constructor ||
+        D.getKind() == Declarator::DK_Destructor ||
+        D.getKind() == Declarator::DK_Conversion) {
       Diag(Loc, diag::err_introducing_special_friend) <<
-        (D->getKind() == Declarator::DK_Constructor ? 0 :
-         D->getKind() == Declarator::DK_Destructor ? 1 : 2);
+        (D.getKind() == Declarator::DK_Constructor ? 0 :
+         D.getKind() == Declarator::DK_Destructor ? 1 : 2);
       return DeclPtrTy();
     }
   }
 
-  NamedDecl *ND = ActOnFunctionDeclarator(S, *D, DC, T, DInfo,
+  NamedDecl *ND = ActOnFunctionDeclarator(S, D, DC, T, DInfo,
                                           /* PrevDecl = */ FD,
                                           MultiTemplateParamsArg(*this),
                                           IsDefinition,
                                           Redeclaration);
-  FD = cast_or_null<FriendFunctionDecl>(ND);
+  if (!ND) return DeclPtrTy();
+  FD = cast<FunctionDecl>(ND);
 
   assert(FD->getDeclContext() == DC);
   assert(FD->getLexicalDeclContext() == CurContext);
 
-  // If this is a dependent context, just add the decl to the
-  // class's decl list and don't both with the lookup tables.  This
-  // doesn't affect lookup because any call that might find this
-  // function via ADL necessarily has to involve dependently-typed
-  // arguments and hence can't be resolved until
-  // template-instantiation anyway.
-  if (CurContext->isDependentContext())
-    CurContext->addHiddenDecl(FD);
-  else
-    CurContext->addDecl(FD);
+  // We only add the function declaration to the lookup tables, not
+  // the decl list, and only if the context isn't dependent.
+  if (!CurContext->isDependentContext())
+    DC->makeDeclVisibleInContext(FD);
+
+  FriendDecl *FrD = FriendDecl::Create(Context, CurContext,
+                                       D.getIdentifierLoc(), FD,
+                                       DS.getFriendSpecLoc());
+  CurContext->addDecl(FrD);
 
   return DeclPtrTy::make(FD);
 }

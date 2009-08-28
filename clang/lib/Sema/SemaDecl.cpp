@@ -735,7 +735,7 @@ bool Sema::MergeFunctionDecl(FunctionDecl *New, Decl *OldD) {
 
     const CXXMethodDecl* OldMethod = dyn_cast<CXXMethodDecl>(Old);
     const CXXMethodDecl* NewMethod = dyn_cast<CXXMethodDecl>(New);
-    if (OldMethod && NewMethod && 
+    if (OldMethod && NewMethod && !NewMethod->getFriendObjectKind() &&
         NewMethod->getLexicalDeclContext()->isRecord()) {
       //    -- Member function declarations with the same name and the 
       //       same parameter types cannot be overloaded if any of them 
@@ -2411,6 +2411,7 @@ Sema::ActOnFunctionDeclarator(Scope* S, Declarator& D, DeclContext* DC,
 
   bool isVirtualOkay = false;
   FunctionDecl *NewFD;
+
   if (isFriend) {
     // DC is the namespace in which the function is being declared.
     assert((DC->isFileContext() || PrevDecl) && "previously-undeclared "
@@ -2420,13 +2421,9 @@ Sema::ActOnFunctionDeclarator(Scope* S, Declarator& D, DeclContext* DC,
     //   A function can be defined in a friend declaration of a
     //   class . . . . Such a function is implicitly inline.
     isInline |= IsFunctionDefinition;
+  }
 
-    NewFD = FriendFunctionDecl::Create(Context, DC,
-                                       D.getIdentifierLoc(), Name, R, DInfo,
-                                       isInline,
-                                       D.getDeclSpec().getFriendSpecLoc());
-    
-  } else if (D.getKind() == Declarator::DK_Constructor) {
+  if (D.getKind() == Declarator::DK_Constructor) {
     // This is a C++ constructor declaration.
     assert(DC->isRecord() &&
            "Constructors can only be declared in a member context");
@@ -2514,9 +2511,12 @@ Sema::ActOnFunctionDeclarator(Scope* S, Declarator& D, DeclContext* DC,
     NewFD->setInvalidDecl();
   
   // Set the lexical context. If the declarator has a C++
-  // scope specifier, the lexical context will be different
-  // from the semantic context.
+  // scope specifier, or is the object of a friend declaration, the
+  // lexical context will be different from the semantic context.
   NewFD->setLexicalDeclContext(CurContext);
+
+  if (isFriend)
+    NewFD->setObjectOfFriendDecl(/* PreviouslyDeclared= */ PrevDecl != NULL);
 
   // Match up the template parameter lists with the scope specifier, then
   // determine whether we have a template or a template specialization.
@@ -4309,6 +4309,10 @@ CreateNewDecl:
   // Set the lexical context. If the tag has a C++ scope specifier, the
   // lexical context will be different from the semantic context.
   New->setLexicalDeclContext(CurContext);
+
+  // Mark this as a friend decl if applicable.
+  if (TUK == TUK_Friend)
+    New->setObjectOfFriendDecl(/* PreviouslyDeclared = */ PrevDecl != NULL);
 
   // Set the access specifier.
   if (!Invalid && TUK != TUK_Friend)

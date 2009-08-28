@@ -37,6 +37,9 @@ class A {
   friend void global_function();
   friend void global_c_function();
 
+  friend class UndeclaredSoFar;
+  UndeclaredSoFar x; // expected-error {{ unknown type name 'UndeclaredSoFar' }}
+
   void a_member();
   friend void A::a_member(); // expected-error {{ friends cannot be members of the declaring class }}
   friend void a_member(); // okay (because we ignore class scopes when looking up friends)
@@ -59,6 +62,10 @@ class A {
   typedef void ftypedef();
   friend ftypedef typedeffed_function; // okay (because it's not declared as a member)
 };
+
+class UndeclaredSoFar { };
+
+A::UndeclaredSoFar y; // expected-error {{ unknown type name 'UndeclaredSoFar' }}
 
 class PreDeclared;
 

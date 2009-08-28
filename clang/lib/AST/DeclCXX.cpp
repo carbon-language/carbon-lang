@@ -777,20 +777,20 @@ bool OverloadIterator::Equals(const OverloadIterator &Other) const {
   return !isa<OverloadedFunctionDecl>(D) || Iter == Other.Iter;
 }
 
-FriendFunctionDecl *FriendFunctionDecl::Create(ASTContext &C,
-                                               DeclContext *DC,
-                                               SourceLocation L,
-                                               DeclarationName N, QualType T,
-                                               DeclaratorInfo *DInfo,
-                                               bool isInline,
-                                               SourceLocation FriendL) {
-  return new (C) FriendFunctionDecl(DC, L, N, T, DInfo, isInline, FriendL);
-}
+FriendDecl *FriendDecl::Create(ASTContext &C, DeclContext *DC,
+                               SourceLocation L,
+                               FriendUnion Friend,
+                               SourceLocation FriendL) {
+  if (Friend.is<NamedDecl*>()) {
+    NamedDecl *D = Friend.get<NamedDecl*>();
+    assert(isa<FunctionDecl>(D) ||
+           isa<CXXRecordDecl>(D) ||
+           isa<FunctionTemplateDecl>(D) ||
+           isa<ClassTemplateDecl>(D));
+    assert(D->getFriendObjectKind());
+  }
 
-FriendClassDecl *FriendClassDecl::Create(ASTContext &C, DeclContext *DC,
-                                         SourceLocation L, QualType T,
-                                         SourceLocation FriendL) {
-  return new (C) FriendClassDecl(DC, L, T, FriendL);
+  return new (C) FriendDecl(DC, L, Friend, FriendL);
 }                                               
 
 LinkageSpecDecl *LinkageSpecDecl::Create(ASTContext &C,

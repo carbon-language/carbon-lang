@@ -643,6 +643,13 @@ Sema::CppLookupName(Scope *S, DeclarationName Name,
          "Can perform only C++ lookup");
   unsigned IDNS 
     = getIdentifierNamespacesFromLookupNameKind(NameKind, /*CPlusPlus*/ true);
+
+  // If we're testing for redeclarations, also look in the friend namespaces.
+  if (RedeclarationOnly) {
+    if (IDNS & Decl::IDNS_Tag) IDNS |= Decl::IDNS_TagFriend;
+    if (IDNS & Decl::IDNS_Ordinary) IDNS |= Decl::IDNS_OrdinaryFriend;
+  }
+
   Scope *Initial = S;
   DeclContext *OutOfLineCtx = 0;
   IdentifierResolver::iterator 
@@ -1769,9 +1776,9 @@ void Sema::ArgumentDependentLookup(DeclarationName Name,
     DeclContext::lookup_iterator I, E;
     for (llvm::tie(I, E) = (*NS)->lookup(Name); I != E; ++I) {
       Decl *D = *I;
-      // Only count friend declarations which were declared in
-      // associated classes.
-      if (D->isInIdentifierNamespace(Decl::IDNS_Friend)) {
+      // If the only declaration here is an ordinary friend, consider
+      // it only if it was declared in an associated classes.
+      if (D->getIdentifierNamespace() == Decl::IDNS_OrdinaryFriend) {
         DeclContext *LexDC = D->getLexicalDeclContext();
         if (!AssociatedClasses.count(cast<CXXRecordDecl>(LexDC)))
           continue;

@@ -2143,6 +2143,9 @@ public:
   virtual DeclPtrTy ActOnFriendDecl(Scope *S,
                           llvm::PointerUnion<const DeclSpec*,Declarator*> D,
                                     bool IsDefinition);
+  DeclPtrTy ActOnFriendTypeDecl(Scope *S, const DeclSpec& DS,
+                                bool IsDefinition);
+  DeclPtrTy ActOnFriendFunctionDecl(Scope *S, Declarator& D, bool IsDefinition);
 
   QualType CheckConstructorDeclarator(Declarator &D, QualType R,
                                       FunctionDecl::StorageClass& SC);
@@ -2955,6 +2958,7 @@ public:
                                      bool Recursive = false);
 
   NamedDecl *FindInstantiatedDecl(NamedDecl *D);
+  DeclContext *FindInstantiatedContext(DeclContext *DC);
     
   // Objective-C declarations.
   virtual DeclPtrTy ActOnStartClassInterface(SourceLocation AtInterfaceLoc,
