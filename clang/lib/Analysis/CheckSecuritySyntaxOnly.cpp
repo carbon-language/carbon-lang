@@ -274,8 +274,8 @@ void WalkAST::CheckUncheckedReturnValue(CallExpr *CE) {
   if (!FTP)
     return;
   
-  /* Verify that the function takes one or two arguments (depending on
-     the function).  */
+  // Verify that the function takes one or two arguments (depending on
+  //   the function).
   if (FTP->getNumArgs() != (identifierid < 4 ? 1 : 2))
     return;
 
