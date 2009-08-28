@@ -1069,32 +1069,8 @@ void Sema::InstantiateStaticDataMemberDefinition(
   DeclContext *PreviousContext = CurContext;
   CurContext = Var->getDeclContext();
   
-#if 0
-  // Instantiate the initializer of this static data member.
-  OwningExprResult Init 
-    = InstantiateExpr(Def->getInit(), getTemplateInstantiationArgs(Var));
-  if (Init.isInvalid()) {
-    // If instantiation of the initializer failed, mark the declaration invalid
-    // and don't instantiate anything else that was triggered by this 
-    // instantiation.
-    Var->setInvalidDecl();
-
-    // Restore the set of pending implicit instantiations.
-    PendingImplicitInstantiations.swap(SavedPendingImplicitInstantiations);
-    
-    return;
-  } 
-  
-  // Type-check the initializer.
-  if (Init.get())
-    AddInitializerToDecl(DeclPtrTy::make(Var), move(Init),
-                         Def->hasCXXDirectInitializer());
-  else 
-    ActOnUninitializedDecl(DeclPtrTy::make(Var), false);
-#else
   Var = cast_or_null<VarDecl>(SubstDecl(Def, Var->getDeclContext(),
                                           getTemplateInstantiationArgs(Var)));
-#endif
   
   CurContext = PreviousContext;
 
