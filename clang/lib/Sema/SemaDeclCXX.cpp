@@ -2127,13 +2127,9 @@ NamedDecl *Sema::BuildUsingDeclaration(SourceLocation UsingLoc,
   assert(!SS.isInvalid() && "Invalid CXXScopeSpec.");
   assert(IdentLoc.isValid() && "Invalid TargetName location.");
 
-  // FIXME: Implement this properly!
-  if (isUnknownSpecialization(SS)) {
-    Diag(IdentLoc, diag::err_using_dependent_unsupported);
-    delete AttrList;
-    return 0;
-  }
-
+  // FIXME: We ignore attributes for now.
+  delete AttrList;
+  
   if (SS.isEmpty()) {
     Diag(IdentLoc, diag::err_using_requires_qualname);
     return 0;
@@ -2142,6 +2138,12 @@ NamedDecl *Sema::BuildUsingDeclaration(SourceLocation UsingLoc,
   NestedNameSpecifier *NNS = 
     static_cast<NestedNameSpecifier *>(SS.getScopeRep());
 
+  if (isUnknownSpecialization(SS)) {
+    return UnresolvedUsingDecl::Create(Context, CurContext, UsingLoc,
+                                       SS.getRange(), NNS,
+                                       IdentLoc, Name, IsTypeName);
+  }
+  
   DeclContext *LookupContext = 0;
   
   if (const CXXRecordDecl *RD = dyn_cast<CXXRecordDecl>(CurContext)) {
@@ -2202,9 +2204,6 @@ NamedDecl *Sema::BuildUsingDeclaration(SourceLocation UsingLoc,
     return 0;
   }
   
-  // FIXME: We ignore attributes for now.
-  delete AttrList;
-
   return UsingDecl::Create(Context, CurContext, IdentLoc, SS.getRange(),
                            ND->getLocation(), UsingLoc, ND, NNS, IsTypeName);
 }
