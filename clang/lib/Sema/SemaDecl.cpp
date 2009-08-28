@@ -2736,7 +2736,7 @@ Sema::ActOnFunctionDeclarator(Scope* S, Declarator& D, DeclContext* DC,
   ProcessDeclAttributes(S, NewFD, D);
 
   // attributes declared post-definition are currently ignored
-  if (PrevDecl) {
+  if (Redeclaration && PrevDecl) {
     const FunctionDecl *Def, *PrevFD = dyn_cast<FunctionDecl>(PrevDecl);
     if (PrevFD && PrevFD->getBody(Def) && D.hasAttributes()) {
       Diag(NewFD->getLocation(), diag::warn_attribute_precede_definition);
