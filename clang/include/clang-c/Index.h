@@ -41,12 +41,12 @@ typedef void *CXCursor;  // An opaque cursor into the CXTranslationUnit.
 
 // Cursors represent declarations and references (provides line/column info).
 enum CXCursorKind {  
- Cursor_Declaration,
- Cursor_Reference,
- Cursor_ObjC_ClassRef,
- Cursor_ObjC_ProtocolRef,
- Cursor_ObjC_MessageRef,
- Cursor_ObjC_SelectorRef
+ CXCursor_Declaration,
+ CXCursor_Reference,
+ CXCursor_ObjC_ClassRef,
+ CXCursor_ObjC_ProtocolRef,
+ CXCursor_ObjC_MessageRef,
+ CXCursor_ObjC_SelectorRef
 };
 
 typedef void *CXDecl;    // A specific declaration within a translation unit.

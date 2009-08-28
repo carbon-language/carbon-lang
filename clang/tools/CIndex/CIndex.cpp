@@ -15,20 +15,6 @@
 
 extern "C" {
 
-// Some notes on CXEntity:
-//
-// - Since the 'ordinary' namespace includes functions, data, typedefs, ObjC interfaces, the
-// current algorithm is a bit naive (resulting in one entity for 2 different types). For example:
-//
-// module1.m: @interface Foo @end Foo *x;
-// module2.m: void Foo(int);
-//
-// - Since the unique name spans translation units, static data/functions within a CXTranslationUnit
-// are *not* currently represented by entities. As a result, there will be no entity for the following:
-//
-// module.m: static void Foo() { }
-//
-
 CXIndex clang_createIndex() 
 { 
   return 0; 
@@ -49,6 +35,23 @@ void clang_loadTranslationUnit(
 void clang_loadDeclaration(CXDecl, void (*callback)(CXDecl, CXCursor))
 {
 }
+
+// Some notes on CXEntity:
+//
+// - Since the 'ordinary' namespace includes functions, data, typedefs, 
+// ObjC interfaces, thecurrent algorithm is a bit naive (resulting in one 
+// entity for 2 different types). For example:
+//
+// module1.m: @interface Foo @end Foo *x;
+// module2.m: void Foo(int);
+//
+// - Since the unique name spans translation units, static data/functions 
+// within a CXTranslationUnit are *not* currently represented by entities.
+// As a result, there will be no entity for the following:
+//
+// module.m: static void Foo() { }
+//
+
 
 const char *clang_getDeclarationName(CXEntity)
 {
@@ -94,7 +97,7 @@ CXCursor clang_getCursor(CXTranslationUnit, const char *source_name,
 
 CXCursorKind clang_getCursorKind(CXCursor)
 {
-  return Cursor_Declaration;
+  return CXCursor_Declaration;
 }
 
 unsigned clang_getCursorLine(CXCursor)
