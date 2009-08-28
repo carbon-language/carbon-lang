@@ -84,14 +84,6 @@ namespace clang {
     const TemplateArgumentList &getInnermost() const {
       return *TemplateArgumentLists.front();
     }
-    
-    // Implicit conversion to a single template argument list, to facilitate a
-    // gradual transition to MultiLevelTemplateArgumentLists.
-    operator const TemplateArgumentList &() const {
-      assert(getNumLevels() == 1 && 
-             "Conversion only works with a single level of template arguments");
-      return *TemplateArgumentLists.front();
-    }
   };
 }
 
