@@ -22,14 +22,18 @@ using namespace clang;
 namespace {
 class VISIBILITY_HIDDEN WalkAST : public StmtVisitor<WalkAST> {
   BugReporter &BR;  
-  IdentifierInfo *II_gets;  
+  IdentifierInfo *II_gets;
+  enum { num_ids = 6 };
+  IdentifierInfo *II_setid[num_ids];
+  
 public:
   WalkAST(BugReporter &br) : BR(br),
-    II_gets(0) {}
+    II_gets(0), II_setid() {}
   
   // Statement visitor methods.
   void VisitCallExpr(CallExpr *CE);
   void VisitForStmt(ForStmt *S);
+  void VisitCompoundStmt (CompoundStmt *S);
   void VisitStmt(Stmt *S) { VisitChildren(S); }
 
   void VisitChildren(Stmt *S);
@@ -40,6 +44,7 @@ public:
   // Checker-specific methods.
   void CheckLoopConditionForFloat(const ForStmt *FS);
   void CheckCall_gets(const CallExpr *CE, const FunctionDecl *FD);
+  void CheckUncheckedReturnValue(CallExpr *CE);
 };
 } // end anonymous namespace
 
@@ -71,6 +76,16 @@ void WalkAST::VisitCallExpr(CallExpr *CE) {
   
   // Recurse and check children.
   VisitChildren(CE);
+}
+
+void WalkAST::VisitCompoundStmt(CompoundStmt *S) {
+  for (Stmt::child_iterator I = S->child_begin(), E = S->child_end(); I!=E; ++I)
+    if (Stmt *child = *I)
+      {
+	if (CallExpr *CE = dyn_cast<CallExpr>(child))
+	  CheckUncheckedReturnValue(CE);
+	Visit(child);
+      }
 }
 
 void WalkAST::VisitForStmt(ForStmt *FS) {
@@ -222,6 +237,69 @@ void WalkAST::CheckCall_gets(const CallExpr *CE, const FunctionDecl *FD) {
                      "Security",
                      "Call to function 'gets' is extremely insecure as it can "
                      "always result in a buffer overflow",
+                     CE->getLocStart(), &R, 1);
+}
+
+//===----------------------------------------------------------------------===//
+// Check: Should check whether privileges are dropped successfully.
+// Originally: <rdar://problem/6337132>
+//===----------------------------------------------------------------------===//
+
+void WalkAST::CheckUncheckedReturnValue(CallExpr *CE) {
+  const FunctionDecl *FD = CE->getDirectCallee();
+  if (!FD)
+    return;
+
+  if (II_setid[0] == NULL) {
+    static const char * const identifiers[num_ids] = {
+      "setuid", "setgid", "seteuid", "setegid",
+      "setreuid", "setregid"
+    };
+      
+    for (size_t i = 0; i < num_ids; i++)
+      II_setid[i] = &BR.getContext().Idents.get(identifiers[i]);  
+  }
+  
+  const IdentifierInfo *id = FD->getIdentifier();
+  size_t identifierid;
+
+  for (identifierid = 0; identifierid < num_ids; identifierid++)
+    if (id == II_setid[identifierid])
+      break;
+
+  if (identifierid >= num_ids)
+    return;
+  
+  const FunctionProtoType *FTP = dyn_cast<FunctionProtoType>(FD->getType());
+  if (!FTP)
+    return;
+  
+  /* Verify that the function takes one or two arguments (depending on
+     the function).  */
+  if (FTP->getNumArgs() != (identifierid < 4 ? 1 : 2))
+    return;
+
+  // The arguments must be integers.
+  for (unsigned i = 0; i < FTP->getNumArgs(); i++)
+    if (! FTP->getArgType(i)->isIntegerType())
+      return;
+
+  // Issue a warning.
+  std::string buf1;
+  llvm::raw_string_ostream os1(buf1);
+  os1 << "Return value is not checked in call to '" << FD->getNameAsString()
+     << "'";
+
+  std::string buf2;
+  llvm::raw_string_ostream os2(buf2);
+  os2 << "The return value from the call to '" << FD->getNameAsString()
+      << "' is not checked.  If an error occurs in '"
+      << FD->getNameAsString()
+      << "', the following code may execute with unexpected privileges";
+
+  SourceRange R = CE->getCallee()->getSourceRange();
+  
+  BR.EmitBasicReport(os1.str().c_str(), "Security", os2.str().c_str(),
                      CE->getLocStart(), &R, 1);
 }
 
