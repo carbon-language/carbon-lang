@@ -1739,11 +1739,10 @@ void AsmPrinter::EmitComments(const MachineInstr &MI) const {
   // Print source line info.
   O.PadToColumn(MAI->getCommentColumn());
   O << MAI->getCommentString() << " SrcLine ";
-  if (DLT.CompileUnit->hasInitializer()) {
-    Constant *Name = DLT.CompileUnit->getInitializer();
-    if (ConstantArray *NameString = dyn_cast<ConstantArray>(Name))
-      if (NameString->isString())
-        O << NameString->getAsString() << " ";
+  if (DLT.CompileUnit) {
+    std::string Str;
+    DICompileUnit CU(DLT.CompileUnit);
+    O << CU.getFilename(Str) << " ";
   }
   O << DLT.Line;
   if (DLT.Col != 0) 
@@ -1761,11 +1760,10 @@ void AsmPrinter::EmitComments(const MCInst &MI) const {
   // Print source line info
   O.PadToColumn(MAI->getCommentColumn());
   O << MAI->getCommentString() << " SrcLine ";
-  if (DLT.CompileUnit->hasInitializer()) {
-    Constant *Name = DLT.CompileUnit->getInitializer();
-    if (ConstantArray *NameString = dyn_cast<ConstantArray>(Name))
-      if (NameString->isString())
-        O << NameString->getAsString() << " ";
+  if (DLT.CompileUnit) {
+    std::string Str;
+    DICompileUnit CU(DLT.CompileUnit);
+    O << CU.getFilename(Str) << " ";
   }
   O << DLT.Line;
   if (DLT.Col != 0) 

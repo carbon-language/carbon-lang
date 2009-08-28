@@ -122,8 +122,8 @@ height="369">
 <p>The approach used by the LLVM implementation is to use a small set
    of <a href="#format_common_intrinsics">intrinsic functions</a> to define a
    mapping between LLVM program objects and the source-level objects.  The
-   description of the source-level program is maintained in LLVM global
-   variables in an <a href="#ccxx_frontend">implementation-defined format</a>
+   description of the source-level program is maintained in LLVM metadata
+   in an <a href="#ccxx_frontend">implementation-defined format</a>
    (the C/C++ front-end currently uses working draft 7 of
    the <a href="http://www.eagercon.com/dwarf/dwarf3std.htm">DWARF 3
    standard</a>).</p>
@@ -240,31 +240,21 @@ height="369">
 <p>LLVM debugging information has been carefully designed to make it possible
    for the optimizer to optimize the program and debugging information without
    necessarily having to know anything about debugging information.  In
-   particular, the global constant merging pass automatically eliminates
-   duplicated debugging information (often caused by header files), the global
-   dead code elimination pass automatically deletes debugging information for a
-   function if it decides to delete the function, and the linker eliminates
-   debug information when it merges <tt>linkonce</tt> functions.</p>
+   particular, te use of metadadta avoids duplicated dubgging information from
+   the beginning, and the global dead code elimination pass automatically 
+   deletes debugging information for a function if it decides to delete the 
+   function. </p>
 
 <p>To do this, most of the debugging information (descriptors for types,
    variables, functions, source files, etc) is inserted by the language
-   front-end in the form of LLVM global variables.  These LLVM global variables
-   are no different from any other global variables, except that they have a web
-   of LLVM intrinsic functions that point to them.  If the last references to a
-   particular piece of debugging information are deleted (for example, by the
-   <tt>-globaldce</tt> pass), the extraneous debug information will
-   automatically become dead and be removed by the optimizer.</p>
+   front-end in the form of LLVM metadata. </p>
 
 <p>Debug information is designed to be agnostic about the target debugger and
    debugging information representation (e.g. DWARF/Stabs/etc).  It uses a
-   generic machine debug information pass to decode the information that
-   represents variables, types, functions, namespaces, etc: this allows for
-   arbitrary source-language semantics and type-systems to be used, as long as
-   there is a module written for the target debugger to interpret the
-   information. In addition, debug global variables are declared in
-   the <tt>"llvm.metadata"</tt> section.  All values declared in this section
-   are stripped away after target debug information is constructed and before
-   the program object is emitted.</p>
+   generic pass to decode the information that represents variables, types, 
+   functions, namespaces, etc: this allows for arbitrary source-language 
+   semantics and type-systems to be used, as long as there is a module 
+   written for the target debugger to interpret the information. </p>
 
 <p>To provide basic functionality, the LLVM debugger does have to make some
    assumptions about the source-level language being debugged, though it keeps
@@ -288,9 +278,7 @@ height="369">
 <div class="doc_text">
 
 <p>In consideration of the complexity and volume of debug information, LLVM
-   provides a specification for well formed debug global variables.  The
-   constant value of each of these globals is one of a limited set of
-   structures, known as debug descriptors.</p>
+   provides a specification for well formed debug descriptors. </p>
 
 <p>Consumers of LLVM debug information expect the descriptors for program
    objects to start in a canonical format, but the descriptors can include
@@ -303,17 +291,14 @@ height="369">
    the range 0x1000 thru 0x2000 (there is a defined enum DW_TAG_user_base =
    0x1000.)</p>
 
-<p>The fields of debug descriptors used internally by LLVM (MachineModuleInfo)
+<p>The fields of debug descriptors used internally by LLVM 
    are restricted to only the simple data types <tt>int</tt>, <tt>uint</tt>,
-   <tt>bool</tt>, <tt>float</tt>, <tt>double</tt>, <tt>i8*</tt> and
-   <tt>{&nbsp;}*</tt>.  References to arbitrary values are handled using a
-   <tt>{&nbsp;}*</tt> and a cast to <tt>{&nbsp;}*</tt> expression; typically
-   references to other field descriptors, arrays of descriptors or global
-   variables.</p>
+   <tt>bool</tt>, <tt>float</tt>, <tt>double</tt>, <tt>mdstring</tt> and
+   <tt>mdnode</tt>. </p>
 
 <div class="doc_code">
 <pre>
-%llvm.dbg.object.type = type {
+!1 = metadata !{
   uint,   ;; A tag
   ...
 }
@@ -326,8 +311,8 @@ height="369">
    of tags are loosely bound to the tag values of DWARF information entries.
    However, that does not restrict the use of the information supplied to DWARF
    targets.  To facilitate versioning of debug information, the tag is augmented
-   with the current debug version (LLVMDebugVersion = 4 << 16 or 0x40000 or
-   262144.)</a></p>
+   with the current debug version (LLVMDebugVersion = 7 << 16 or 0x70000 or
+   458752.)</a></p>
 
 <p>The details of the various descriptors follow.</p>  
 
@@ -342,17 +327,18 @@ height="369">
 
 <div class="doc_code">
 <pre>
-%<a href="#format_compile_units">llvm.dbg.compile_unit.type</a> = type {
-  i32,    ;; Tag = 17 + <a href="#LLVMDebugVersion">LLVMDebugVersion</a> (DW_TAG_compile_unit)
-  {  }*,  ;; Compile unit anchor = cast = (%<a href="#format_anchors">llvm.dbg.anchor.type</a>* %<a href="#format_compile_units">llvm.dbg.compile_units</a> to {  }*)
-  i32,    ;; DWARF language identifier (ex. DW_LANG_C89) 
-  i8*,    ;; Source file name
-  i8*,    ;; Source file directory (includes trailing slash)
-  i8*     ;; Producer (ex. "4.0.1 LLVM (LLVM research group)")
-  i1,     ;; True if this is a main compile unit. 
-  i1,     ;; True if this is optimized.
-  i8*,    ;; Flags
-  i32     ;; Runtime version
+!0 = metadata !{
+  i32,       ;; Tag = 17 + <a href="#LLVMDebugVersion">LLVMDebugVersion</a> 
+             ;; (DW_TAG_compile_unit)
+  i32,       ;; Unused field. 
+  i32,       ;; DWARF language identifier (ex. DW_LANG_C89) 
+  metadata,  ;; Source file name
+  metadata,  ;; Source file directory (includes trailing slash)
+  metadata   ;; Producer (ex. "4.0.1 LLVM (LLVM research group)")
+  i1,        ;; True if this is a main compile unit. 
+  i1,        ;; True if this is optimized.
+  metadata,  ;; Flags
+  i32        ;; Runtime version
 }
 </pre>
 </div>
@@ -388,19 +374,20 @@ height="369">
 
 <div class="doc_code">
 <pre>
-%<a href="#format_global_variables">llvm.dbg.global_variable.type</a> = type {
-  i32,    ;; Tag = 52 + <a href="#LLVMDebugVersion">LLVMDebugVersion</a> (DW_TAG_variable)
-  {  }*,  ;; Global variable anchor = cast (%<a href="#format_anchors">llvm.dbg.anchor.type</a>* %<a href="#format_global_variables">llvm.dbg.global_variables</a> to {  }*),  
-  {  }*,  ;; Reference to context descriptor
-  i8*,    ;; Name
-  i8*,    ;; Display name (fully qualified C++ name)
-  i8*,    ;; MIPS linkage name (for C++)
-  {  }*,  ;; Reference to compile unit where defined
-  i32,    ;; Line number where defined
-  {  }*,  ;; Reference to type descriptor
-  i1,     ;; True if the global is local to compile unit (static)
-  i1,     ;; True if the global is defined in the compile unit (not extern)
-  {  }*   ;; Reference to the global variable
+!1 = metadata !{
+  i32,      ;; Tag = 52 + <a href="#LLVMDebugVersion">LLVMDebugVersion</a> 
+            ;; (DW_TAG_variable)
+  i32,      ;; Unused field.
+  metadata, ;; Reference to context descriptor
+  metadata, ;; Name
+  metadata, ;; Display name (fully qualified C++ name)
+  metadata, ;; MIPS linkage name (for C++)
+  metadata, ;; Reference to compile unit where defined
+  i32,      ;; Line number where defined
+  metadata, ;; Reference to type descriptor
+  i1,       ;; True if the global is local to compile unit (static)
+  i1,       ;; True if the global is defined in the compile unit (not extern)
+  {  }*     ;; Reference to the global variable
 }
 </pre>
 </div>
@@ -419,18 +406,19 @@ provide details such as name, type and where the variable is defined.</p>
 
 <div class="doc_code">
 <pre>
-%<a href="#format_subprograms">llvm.dbg.subprogram.type</a> = type {
-  i32,    ;; Tag = 46 + <a href="#LLVMDebugVersion">LLVMDebugVersion</a> (DW_TAG_subprogram)
-  {  }*,  ;; Subprogram anchor = cast (%<a href="#format_anchors">llvm.dbg.anchor.type</a>* %<a href="#format_subprograms">llvm.dbg.subprograms</a> to {  }*),  
-  {  }*,  ;; Reference to context descriptor
-  i8*,    ;; Name
-  i8*,    ;; Display name (fully qualified C++ name)
-  i8*,    ;; MIPS linkage name (for C++)
-  {  }*,  ;; Reference to compile unit where defined
-  i32,    ;; Line number where defined
-  {  }*,  ;; Reference to type descriptor
-  i1,     ;; True if the global is local to compile unit (static)
-  i1      ;; True if the global is defined in the compile unit (not extern)
+!2 = metadata !{
+  i32,      ;; Tag = 46 + <a href="#LLVMDebugVersion">LLVMDebugVersion</a>
+            ;; (DW_TAG_subprogram)
+  i32,      ;; Unused field.
+  metadata, ;; Reference to context descriptor
+  metadata, ;; Name
+  metadata, ;; Display name (fully qualified C++ name)
+  metadata, ;; MIPS linkage name (for C++)
+  metadata, ;; Reference to compile unit where defined
+  i32,      ;; Line number where defined
+  metadata, ;; Reference to type descriptor
+  i1,       ;; True if the global is local to compile unit (static)
+  i1        ;; True if the global is defined in the compile unit (not extern)
 }
 </pre>
 </div>
@@ -450,9 +438,9 @@ provide details such as name, type and where the variable is defined.</p>
 
 <div class="doc_code">
 <pre>
-%<a href="#format_blocks">llvm.dbg.block</a> = type {
-  i32,    ;; Tag = 13 + <a href="#LLVMDebugVersion">LLVMDebugVersion</a> (DW_TAG_lexical_block)
-  {  }*   ;; Reference to context descriptor
+!3 = metadata !{
+  i32,     ;; Tag = 13 + <a href="#LLVMDebugVersion">LLVMDebugVersion</a> (DW_TAG_lexical_block)
+  metadata ;; Reference to context descriptor
 }
 </pre>
 </div>
@@ -472,17 +460,18 @@ provide details such as name, type and where the variable is defined.</p>
 
 <div class="doc_code">
 <pre>
-%<a href="#format_basic_type">llvm.dbg.basictype.type</a> = type {
-  i32,    ;; Tag = 36 + <a href="#LLVMDebugVersion">LLVMDebugVersion</a> (DW_TAG_base_type)
-  {  }*,  ;; Reference to context (typically a compile unit)
-  i8*,    ;; Name (may be "" for anonymous types)
-  {  }*,  ;; Reference to compile unit where defined (may be NULL)
-  i32,    ;; Line number where defined (may be 0)
-  i64,    ;; Size in bits
-  i64,    ;; Alignment in bits
-  i64,    ;; Offset in bits
-  i32,    ;; Flags
-  i32     ;; DWARF type encoding
+!4 = metadata !{
+  i32,      ;; Tag = 36 + <a href="#LLVMDebugVersion">LLVMDebugVersion</a> 
+            ;; (DW_TAG_base_type)
+  metadata, ;; Reference to context (typically a compile unit)
+  metadata, ;; Name (may be "" for anonymous types)
+  metadata, ;; Reference to compile unit where defined (may be NULL)
+  i32,      ;; Line number where defined (may be 0)
+  i64,      ;; Size in bits
+  i64,      ;; Alignment in bits
+  i64,      ;; Offset in bits
+  i32,      ;; Flags
+  i32       ;; DWARF type encoding
 }
 </pre>
 </div>
@@ -523,16 +512,16 @@ DW_ATE_unsigned_char = 8
 
 <div class="doc_code">
 <pre>
-%<a href="#format_derived_type">llvm.dbg.derivedtype.type</a> = type {
-  i32,    ;; Tag (see below)
-  {  }*,  ;; Reference to context
-  i8*,    ;; Name (may be "" for anonymous types)
-  {  }*,  ;; Reference to compile unit where defined (may be NULL)
-  i32,    ;; Line number where defined (may be 0)
-  i32,    ;; Size in bits
-  i32,    ;; Alignment in bits
-  i32,    ;; Offset in bits
-  {  }*   ;; Reference to type derived from
+!5 = metadata !{
+  i32,      ;; Tag (see below)
+  metadata, ;; Reference to context
+  metadata, ;; Name (may be "" for anonymous types)
+  metadata, ;; Reference to compile unit where defined (may be NULL)
+  i32,      ;; Line number where defined (may be 0)
+  i32,      ;; Size in bits
+  i32,      ;; Alignment in bits
+  i32,      ;; Offset in bits
+  metadata  ;; Reference to type derived from
 }
 </pre>
 </div>
@@ -591,19 +580,19 @@ DW_TAG_restrict_type    = 55
 
 <div class="doc_code">
 <pre>
-%<a href="#format_composite_type">llvm.dbg.compositetype.type</a> = type {
-  i32,    ;; Tag (see below)
-  {  }*,  ;; Reference to context
-  i8*,    ;; Name (may be "" for anonymous types)
-  {  }*,  ;; Reference to compile unit where defined (may be NULL)
-  i32,    ;; Line number where defined (may be 0)
-  i64,    ;; Size in bits
-  i64,    ;; Alignment in bits
-  i64,    ;; Offset in bits
-  i32,    ;; Flags
-  {  }*,  ;; Reference to type derived from
-  {  }*,  ;; Reference to array of member descriptors
-  i32     ;; Runtime languages
+!6 = metadata !{
+  i32,      ;; Tag (see below)
+  metadata, ;; Reference to context
+  metadata, ;; Name (may be "" for anonymous types)
+  metadata, ;; Reference to compile unit where defined (may be NULL)
+  i32,      ;; Line number where defined (may be 0)
+  i64,      ;; Size in bits
+  i64,      ;; Alignment in bits
+  i64,      ;; Offset in bits
+  i32,      ;; Flags
+  metadata, ;; Reference to type derived from
+  metadata, ;; Reference to array of member descriptors
+  i32       ;; Runtime languages
 }
 </pre>
 </div>
@@ -702,10 +691,11 @@ DW_TAG_inheritance      = 28
 
 <div class="doc_code">
 <pre>
-%<a href="#format_enumeration">llvm.dbg.enumerator.type</a> = type {
-  i32,    ;; Tag = 40 + <a href="#LLVMDebugVersion">LLVMDebugVersion</a> (DW_TAG_enumerator)
-  i8*,    ;; Name
-  i64     ;; Value
+!6 = metadata !{
+  i32,      ;; Tag = 40 + <a href="#LLVMDebugVersion">LLVMDebugVersion</a> 
+            ;; (DW_TAG_enumerator)
+  metadata, ;; Name
+  i64       ;; Value
 }
 </pre>
 </div>
@@ -725,13 +715,13 @@ DW_TAG_inheritance      = 28
 
 <div class="doc_code">
 <pre>
-%<a href="#format_variables">llvm.dbg.variable.type</a> = type {
-  i32,     ;; Tag (see below)
-  {  }*,   ;; Context
-  i8*,     ;; Name
-  {  }*,   ;; Reference to compile unit where defined
-  i32,     ;; Line number where defined
-  {  }*    ;; Type descriptor
+!7 = metadata !{
+  i32,      ;; Tag (see below)
+  metadata, ;; Context
+  metadata, ;; Name
+  metadata, ;; Reference to compile unit where defined
+  i32,      ;; Line number where defined
+  metadata  ;; Type descriptor
 }
 </pre>
 </div>
@@ -778,14 +768,14 @@ DW_TAG_return_variable = 258
 
 <div class="doc_text">
 <pre>
-  void %<a href="#format_common_stoppoint">llvm.dbg.stoppoint</a>( uint, uint, { }* )
+  void %<a href="#format_common_stoppoint">llvm.dbg.stoppoint</a>( uint, uint, metadata)
 </pre>
 
 <p>This intrinsic is used to provide correspondence between the source file and
    the generated code.  The first argument is the line number (base 1), second
    argument is the column number (0 if unknown) and the third argument the
-   source <tt>%<a href="#format_compile_units">llvm.dbg.compile_unit</a>*</tt>
-   cast to a <tt>{&nbsp;}*</tt>.  Code following a call to this intrinsic will
+   source <tt>%<a href="#format_compile_units">llvm.dbg.compile_unit</a>.
+   Code following a call to this intrinsic will
    have been defined in close proximity of the line, column and file. This
    information holds until the next call
    to <tt>%<a href="#format_common_stoppoint">lvm.dbg.stoppoint</a></tt>.</p>
@@ -799,7 +789,7 @@ DW_TAG_return_variable = 258
 
 <div class="doc_text">
 <pre>
-  void %<a href="#format_common_func_start">llvm.dbg.func.start</a>( { }* )
+  void %<a href="#format_common_func_start">llvm.dbg.func.start</a>( metadata )
 </pre>
 
 <p>This intrinsic is used to link the debug information
@@ -823,7 +813,7 @@ DW_TAG_return_variable = 258
 
 <div class="doc_text">
 <pre>
-  void %<a href="#format_common_region_start">llvm.dbg.region.start</a>( { }* )
+  void %<a href="#format_common_region_start">llvm.dbg.region.start</a>( metadata )
 </pre>
 
 <p>This intrinsic is used to define the beginning of a declarative scope (ex.
@@ -843,7 +833,7 @@ DW_TAG_return_variable = 258
 
 <div class="doc_text">
 <pre>
-  void %<a href="#format_common_region_end">llvm.dbg.region.end</a>( { }* )
+  void %<a href="#format_common_region_end">llvm.dbg.region.end</a>( metadata )
 </pre>
 
 <p>This intrinsic is used to define the end of a declarative scope (ex. block)
@@ -864,14 +854,14 @@ DW_TAG_return_variable = 258
 
 <div class="doc_text">
 <pre>
-  void %<a href="#format_common_declare">llvm.dbg.declare</a>( { } *, { }* )
+  void %<a href="#format_common_declare">llvm.dbg.declare</a>( { } *, metadata )
 </pre>
 
 <p>This intrinsic provides information about a local element (ex. variable.) The
    first argument is the alloca for the variable, cast to a <tt>{ }*</tt>. The
    second argument is
    the <tt>%<a href="#format_variables">llvm.dbg.variable</a></tt> containing
-   the description of the variable, also cast to a <tt>{ }*</tt>.</p>
+   the description of the variable. </p>
 
 </div>
 
@@ -955,29 +945,29 @@ entry:
     
     ...
     
-    call void @<a href="#format_common_func_start">llvm.dbg.func.start</a>( %<a href="#format_subprograms">llvm.dbg.subprogram.type</a>* @llvm.dbg.subprogram )
+    call void @<a href="#format_common_func_start">llvm.dbg.func.start</a>( metadata !0)
     
-    call void @<a href="#format_common_stoppoint">llvm.dbg.stoppoint</a>( uint 2, uint 2, %<a href="#format_compile_units">llvm.dbg.compile_unit</a>* @llvm.dbg.compile_unit )
+    call void @<a href="#format_common_stoppoint">llvm.dbg.stoppoint</a>( uint 2, uint 2, metadata !1)
     
     call void @<a href="#format_common_declare">llvm.dbg.declare</a>({}* %X, ...)
     call void @<a href="#format_common_declare">llvm.dbg.declare</a>({}* %Y, ...)
     
     <i>;; Evaluate expression on line 2, assigning to X.</i>
     
-    call void @<a href="#format_common_stoppoint">llvm.dbg.stoppoint</a>( uint 3, uint 2, %<a href="#format_compile_units">llvm.dbg.compile_unit</a>* @llvm.dbg.compile_unit )
+    call void @<a href="#format_common_stoppoint">llvm.dbg.stoppoint</a>( uint 3, uint 2, metadata !1)
     
     <i>;; Evaluate expression on line 3, assigning to Y.</i>
     
     call void @<a href="#format_common_stoppoint">llvm.region.start</a>()
-    call void @<a href="#format_common_stoppoint">llvm.dbg.stoppoint</a>( uint 5, uint 4, %<a href="#format_compile_units">llvm.dbg.compile_unit</a>* @llvm.dbg.compile_unit )
+    call void @<a href="#format_common_stoppoint">llvm.dbg.stoppoint</a>( uint 5, uint 4, metadata !1)
     call void @<a href="#format_common_declare">llvm.dbg.declare</a>({}* %X, ...)
     
     <i>;; Evaluate expression on line 5, assigning to Z.</i>
     
-    call void @<a href="#format_common_stoppoint">llvm.dbg.stoppoint</a>( uint 7, uint 2, %<a href="#format_compile_units">llvm.dbg.compile_unit</a>* @llvm.dbg.compile_unit )
+    call void @<a href="#format_common_stoppoint">llvm.dbg.stoppoint</a>( uint 7, uint 2, metadata !1)
     call void @<a href="#format_common_region_end">llvm.region.end</a>()
     
-    call void @<a href="#format_common_stoppoint">llvm.dbg.stoppoint</a>( uint 9, uint 2, %<a href="#format_compile_units">llvm.dbg.compile_unit</a>* @llvm.dbg.compile_unit )
+    call void @<a href="#format_common_stoppoint">llvm.dbg.stoppoint</a>( uint 9, uint 2, metadata !1)
     
     call void @<a href="#format_common_region_end">llvm.region.end</a>()
     
@@ -1097,50 +1087,35 @@ int main(int argc, char *argv[]) {
 <pre>
 ...
 ;;
-;; Define types used.  In this case we need one for compile unit anchors and one
-;; for compile units.
-;;
-%<a href="#format_anchors">llvm.dbg.anchor.type</a> = type { uint, uint }
-%<a href="#format_compile_units">llvm.dbg.compile_unit.type</a> = type { uint, {  }*, uint, uint, i8*, i8*, i8* }
-...
-;;
-;; Define the anchor for compile units.  Note that the second field of the
-;; anchor is 17, which is the same as the tag for compile units
-;; (17 = DW_TAG_compile_unit.)
-;;
-%<a href="#format_compile_units">llvm.dbg.compile_units</a> = linkonce constant %<a href="#format_anchors">llvm.dbg.anchor.type</a> { uint 0, uint 17 }, section "llvm.metadata"
-
-;;
 ;; Define the compile unit for the source file "/Users/mine/sources/MySource.cpp".
 ;;
-%<a href="#format_compile_units">llvm.dbg.compile_unit1</a> = internal constant %<a href="#format_compile_units">llvm.dbg.compile_unit.type</a> {
-    uint add(uint 17, uint 262144), 
-    {  }* cast (%<a href="#format_anchors">llvm.dbg.anchor.type</a>* %<a href="#format_compile_units">llvm.dbg.compile_units</a> to {  }*), 
-    uint 1, 
-    uint 1, 
-    i8* getelementptr ([13 x i8]* %str1, i32 0, i32 0), 
-    i8* getelementptr ([21 x i8]* %str2, i32 0, i32 0), 
-    i8* getelementptr ([33 x i8]* %str3, i32 0, i32 0) }, section "llvm.metadata"
-    
+!3 = metadata !{
+  i32 458769,    ;; Tag
+  i32 0,         ;; Unused
+  i32 4,         ;; Language Id
+  metadata !"MySource.cpp", 
+  metadata !"/Users/mine/sources", 
+  metadata !"4.2.1 (Based on Apple Inc. build 5649) (LLVM build 00)", 
+  i1 true,       ;; Main Compile Unit
+  i1 false,      ;; Optimized compile unit
+  metadata !"",  ;; Compiler flags
+  i32 0}         ;; Runtime version
+
 ;;
 ;; Define the compile unit for the header file "/Users/mine/sources/MyHeader.h".
 ;;
-%<a href="#format_compile_units">llvm.dbg.compile_unit2</a> = internal constant %<a href="#format_compile_units">llvm.dbg.compile_unit.type</a> {
-    uint add(uint 17, uint 262144), 
-    {  }* cast (%<a href="#format_anchors">llvm.dbg.anchor.type</a>* %<a href="#format_compile_units">llvm.dbg.compile_units</a> to {  }*), 
-    uint 1, 
-    uint 1, 
-    i8* getelementptr ([11 x i8]* %str4, int 0, int 0), 
-    i8* getelementptr ([21 x i8]* %str2, int 0, int 0), 
-    i8* getelementptr ([33 x i8]* %str3, int 0, int 0) }, section "llvm.metadata"
+!1 = metadata !{
+  i32 458769,    ;; Tag
+  i32 0,         ;; Unused
+  i32 4,         ;; Language Id
+  metadata !"MyHeader.h", 
+  metadata !"/Users/mine/sources", 
+  metadata !"4.2.1 (Based on Apple Inc. build 5649) (LLVM build 00)", 
+  i1 false,      ;; Main Compile Unit
+  i1 false,      ;; Optimized compile unit
+  metadata !"",  ;; Compiler flags
+  i32 0}         ;; Runtime version
 
-;;
-;; Define each of the strings used in the compile units.
-;;
-%str1 = internal constant [13 x i8] c"MySource.cpp\00", section "llvm.metadata";
-%str2 = internal constant [21 x i8] c"/Users/mine/sources/\00", section "llvm.metadata";
-%str3 = internal constant [33 x i8] c"4.0.1 LLVM (LLVM research group)\00", section "llvm.metadata";
-%str4 = internal constant [11 x i8] c"MyHeader.h\00", section "llvm.metadata";
 ...
 </pre>
 </div>
@@ -1167,65 +1142,51 @@ int MyGlobal = 100;
 <div class="doc_code">
 <pre>
 ;;
-;; Define types used. One for global variable anchors, one for the global
-;; variable descriptor, one for the global's basic type and one for the global's
-;; compile unit.
-;;
-%<a href="#format_anchors">llvm.dbg.anchor.type</a> = type { uint, uint }
-%<a href="#format_global_variables">llvm.dbg.global_variable.type</a> = type { uint, {  }*, {  }*, i8*, {  }*, uint, {  }*, bool, bool, {  }*, uint }
-%<a href="#format_basic_type">llvm.dbg.basictype.type</a> = type { uint, {  }*, i8*, {  }*, int, uint, uint, uint, uint }
-%<a href="#format_compile_units">llvm.dbg.compile_unit.type</a> = ...
-...
-;;
 ;; Define the global itself.
 ;;
 %MyGlobal = global int 100
 ...
 ;;
-;; Define the anchor for global variables.  Note that the second field of the
-;; anchor is 52, which is the same as the tag for global variables
-;; (52 = DW_TAG_variable.)
+;; List of debug info of globals
 ;;
-%<a href="#format_global_variables">llvm.dbg.global_variables</a> = linkonce constant %<a href="#format_anchors">llvm.dbg.anchor.type</a> { uint 0, uint 52 }, section "llvm.metadata"
+!llvm.dbg.gv = !{!0}
 
 ;;
 ;; Define the global variable descriptor.  Note the reference to the global
 ;; variable anchor and the global variable itself.
 ;;
-%<a href="#format_global_variables">llvm.dbg.global_variable</a> = internal constant %<a href="#format_global_variables">llvm.dbg.global_variable.type</a> {
-    uint add(uint 52, uint 262144), 
-    {  }* cast (%<a href="#format_anchors">llvm.dbg.anchor.type</a>* %<a href="#format_global_variables">llvm.dbg.global_variables</a> to {  }*), 
-    {  }* cast (%<a href="#format_compile_units">llvm.dbg.compile_unit.type</a>* %<a href="#format_compile_units">llvm.dbg.compile_unit</a> to {  }*), 
-    i8* getelementptr ([9 x i8]* %str1, int 0, int 0), 
-    i8* getelementptr ([1 x i8]* %str2, int 0, int 0), 
-    {  }* cast (%<a href="#format_compile_units">llvm.dbg.compile_unit.type</a>* %<a href="#format_compile_units">llvm.dbg.compile_unit</a> to {  }*), 
-    uint 1,
-    {  }* cast (%<a href="#format_basic_type">llvm.dbg.basictype.type</a>* %<a href="#format_basic_type">llvm.dbg.basictype</a> to {  }*), 
-    bool false, 
-    bool true, 
-    {  }* cast (int* %MyGlobal to {  }*) }, section "llvm.metadata"
-    
+!0 = metadata !{
+  i32 458804,              ;; Tag
+  i32 0,                   ;; Unused
+  metadata !1,             ;; Context
+  metadata !"MyGlobal",    ;; Name
+  metadata !"MyGlobal",    ;; Display Name
+  metadata !"MyGlobal",    ;; Linkage Name
+  metadata !1,             ;; Compile Unit
+  i32 1,                   ;; Line Number
+  metadata !2,             ;; Type
+  i1 false,                ;; Is a local variable
+  i1 true,                 ;; Is this a definition
+  i32* @MyGlobal           ;; The global variable
+}
+
 ;;
 ;; Define the basic type of 32 bit signed integer.  Note that since int is an
 ;; intrinsic type the source file is NULL and line 0.
 ;;    
-%<a href="#format_basic_type">llvm.dbg.basictype</a> = internal constant %<a href="#format_basic_type">llvm.dbg.basictype.type</a> {
-    uint add(uint 36, uint 262144), 
-    {  }* cast (%<a href="#format_compile_units">llvm.dbg.compile_unit.type</a>* %<a href="#format_compile_units">llvm.dbg.compile_unit</a> to {  }*), 
-    i8* getelementptr ([4 x i8]* %str3, int 0, int 0), 
-    {  }* null, 
-    int 0, 
-    uint 32, 
-    uint 32, 
-    uint 0, 
-    uint 5 }, section "llvm.metadata"
+!2 = metadata !{
+  i32 458788,              ;; Tag
+  metadata !1,             ;; Context
+  metadata !"int",         ;; Name
+  metadata !1,             ;; Compile Unit
+  i32 0,                   ;; Line number
+  i64 32,                  ;; Size in Bits
+  i64 32,                  ;; Align in Bits
+  i64 0,                   ;; Offset in Bits
+  i32 0,                   ;; Flags
+  i32 5                    ;; Encoding
+}
 
-;;
-;; Define the names of the global variable and basic type.
-;;
-%str1 = internal constant [9 x i8] c"MyGlobal\00", section "llvm.metadata"
-%str2 = internal constant [1 x i8] c"\00", section "llvm.metadata"
-%str3 = internal constant [4 x i8] c"int\00", section "llvm.metadata"
 </pre>
 </div>
 
@@ -1253,46 +1214,27 @@ int main(int argc, char *argv[]) {
 <div class="doc_code">
 <pre>
 ;;
-;; Define types used. One for subprogram anchors, one for the subprogram
-;; descriptor, one for the global's basic type and one for the subprogram's
-;; compile unit.
-;;
-%<a href="#format_subprograms">llvm.dbg.subprogram.type</a> = type { uint, {  }*, {  }*, i8*, {  }*, bool, bool }
-%<a href="#format_anchors">llvm.dbg.anchor.type</a> = type { uint, uint }
-%<a href="#format_compile_units">llvm.dbg.compile_unit.type</a> = ...
-	
-;;
 ;; Define the anchor for subprograms.  Note that the second field of the
 ;; anchor is 46, which is the same as the tag for subprograms
 ;; (46 = DW_TAG_subprogram.)
 ;;
-%<a href="#format_subprograms">llvm.dbg.subprograms</a> = linkonce constant %<a href="#format_anchors">llvm.dbg.anchor.type</a> { uint 0, uint 46 }, section "llvm.metadata"
-
-;;
-;; Define the descriptor for the subprogram.  TODO - more details.
-;;
-%<a href="#format_subprograms">llvm.dbg.subprogram</a> = internal constant %<a href="#format_subprograms">llvm.dbg.subprogram.type</a> {
-    uint add(uint 46, uint 262144), 
-    {  }* cast (%<a href="#format_anchors">llvm.dbg.anchor.type</a>* %<a href="#format_subprograms">llvm.dbg.subprograms</a> to {  }*), 
-    {  }* cast (%<a href="#format_compile_units">llvm.dbg.compile_unit.type</a>* %<a href="#format_compile_units">llvm.dbg.compile_unit</a> to {  }*), 
-    i8* getelementptr ([5 x i8]* %str1, int 0, int 0), 
-    i8* getelementptr ([1 x i8]* %str2, int 0, int 0), 
-    {  }* cast (%<a href="#format_compile_units">llvm.dbg.compile_unit.type</a>* %<a href="#format_compile_units">llvm.dbg.compile_unit</a> to {  }*),
-    uint 1,
-    {  }* null, 
-    bool false, 
-    bool true }, section "llvm.metadata"
-
-;;
-;; Define the name of the subprogram.
-;;
-%str1 = internal constant [5 x i8] c"main\00", section "llvm.metadata"
-%str2 = internal constant [1 x i8] c"\00", section "llvm.metadata"
-
+!0 = metadata !{
+  i32 458798,        ;; Tag
+  i32 0,             ;; Unused
+  metadata !1,       ;; Context
+  metadata !"main",  ;; Name
+  metadata !"main",  ;; Display name
+  metadata !"main",  ;; Linkage name
+  metadata !1,       ;; Compile unit
+  i32 1,             ;; Line number
+  metadata !2,       ;; Type
+  i1 false,          ;; Is local 
+  i1 true            ;; Is definition
+}
 ;;
 ;; Define the subprogram itself.
 ;;
-int %main(int %argc, i8** %argv) {
+define i32 @main(i32 %argc, i8** %argv) {
 ...
 }
 </pre>
@@ -1320,17 +1262,18 @@ int %main(int %argc, i8** %argv) {
 
 <div class="doc_code">
 <pre>
-%<a href="#format_basic_type">llvm.dbg.basictype</a> = internal constant %<a href="#format_basic_type">llvm.dbg.basictype.type</a> {
-    uint add(uint 36, uint 262144), 
-    {  }* cast (%<a href="#format_compile_units">llvm.dbg.compile_unit.type</a>* %<a href="#format_compile_units">llvm.dbg.compile_unit</a> to {  }*), 
-    i8* getelementptr ([5 x i8]* %str1, int 0, int 0), 
-    {  }* null, 
-    int 0, 
-    uint 32, 
-    uint 32, 
-    uint 0, 
-    uint 2 }, section "llvm.metadata"
-%str1 = internal constant [5 x i8] c"bool\00", section "llvm.metadata"
+!2 = metadata !{
+  i32 458788,        ;; Tag
+  metadata !1,       ;; Context
+  metadata !"bool",  ;; Name
+  metadata !1,       ;; Compile Unit
+  i32 0,             ;; Line number
+  i64 8,             ;; Size in Bits
+  i64 8,             ;; Align in Bits
+  i64 0,             ;; Offset in Bits
+  i32 0,             ;; Flags
+  i32 2              ;; Encoding
+}
 </pre>
 </div>
 
@@ -1345,17 +1288,18 @@ int %main(int %argc, i8** %argv) {
 
 <div class="doc_code">
 <pre>
-%<a href="#format_basic_type">llvm.dbg.basictype</a> = internal constant %<a href="#format_basic_type">llvm.dbg.basictype.type</a> {
-    uint add(uint 36, uint 262144), 
-    {  }* cast (%<a href="#format_compile_units">llvm.dbg.compile_unit.type</a>* %<a href="#format_compile_units">llvm.dbg.compile_unit</a> to {  }*), 
-    i8* getelementptr ([5 x i8]* %str1, int 0, int 0), 
-    {  }* null, 
-    int 0, 
-    uint 8, 
-    uint 8, 
-    uint 0, 
-    uint 6 }, section "llvm.metadata"
-%str1 = internal constant [5 x i8] c"char\00", section "llvm.metadata"
+!2 = metadata !{
+  i32 458788,        ;; Tag
+  metadata !1,       ;; Context
+  metadata !"char",  ;; Name
+  metadata !1,       ;; Compile Unit
+  i32 0,             ;; Line number
+  i64 8,             ;; Size in Bits
+  i64 8,             ;; Align in Bits
+  i64 0,             ;; Offset in Bits
+  i32 0,             ;; Flags
+  i32 6              ;; Encoding
+}
 </pre>
 </div>
 
@@ -1370,17 +1314,18 @@ int %main(int %argc, i8** %argv) {
 
 <div class="doc_code">
 <pre>
-%<a href="#format_basic_type">llvm.dbg.basictype</a> = internal constant %<a href="#format_basic_type">llvm.dbg.basictype.type</a> {
-    uint add(uint 36, uint 262144), 
-    {  }* cast (%<a href="#format_compile_units">llvm.dbg.compile_unit.type</a>* %<a href="#format_compile_units">llvm.dbg.compile_unit</a> to {  }*), 
-    i8* getelementptr ([14 x i8]* %str1, int 0, int 0), 
-    {  }* null, 
-    int 0, 
-    uint 8, 
-    uint 8, 
-    uint 0, 
-    uint 8 }, section "llvm.metadata"
-%str1 = internal constant [14 x i8] c"unsigned char\00", section "llvm.metadata"
+!2 = metadata !{
+  i32 458788,        ;; Tag
+  metadata !1,       ;; Context
+  metadata !"unsigned char", 
+  metadata !1,       ;; Compile Unit
+  i32 0,             ;; Line number
+  i64 8,             ;; Size in Bits
+  i64 8,             ;; Align in Bits
+  i64 0,             ;; Offset in Bits
+  i32 0,             ;; Flags
+  i32 8              ;; Encoding
+}
 </pre>
 </div>
 
@@ -1395,17 +1340,18 @@ int %main(int %argc, i8** %argv) {
 
 <div class="doc_code">
 <pre>
-%<a href="#format_basic_type">llvm.dbg.basictype</a> = internal constant %<a href="#format_basic_type">llvm.dbg.basictype.type</a> {
-    uint add(uint 36, uint 262144), 
-    {  }* cast (%<a href="#format_compile_units">llvm.dbg.compile_unit.type</a>* %<a href="#format_compile_units">llvm.dbg.compile_unit</a> to {  }*), 
-    i8* getelementptr ([10 x i8]* %str1, int 0, int 0), 
-    {  }* null, 
-    int 0, 
-    uint 16, 
-    uint 16, 
-    uint 0, 
-    uint 5 }, section "llvm.metadata"
-%str1 = internal constant [10 x i8] c"short int\00", section "llvm.metadata"
+!2 = metadata !{
+  i32 458788,        ;; Tag
+  metadata !1,       ;; Context
+  metadata !"short int",
+  metadata !1,       ;; Compile Unit
+  i32 0,             ;; Line number
+  i64 16,            ;; Size in Bits
+  i64 16,            ;; Align in Bits
+  i64 0,             ;; Offset in Bits
+  i32 0,             ;; Flags
+  i32 5              ;; Encoding
+}
 </pre>
 </div>
 
@@ -1420,17 +1366,18 @@ int %main(int %argc, i8** %argv) {
 
 <div class="doc_code">
 <pre>
-%<a href="#format_basic_type">llvm.dbg.basictype</a> = internal constant %<a href="#format_basic_type">llvm.dbg.basictype.type</a> {
-    uint add(uint 36, uint 262144), 
-    {  }* cast (%<a href="#format_compile_units">llvm.dbg.compile_unit.type</a>* %<a href="#format_compile_units">llvm.dbg.compile_unit</a> to {  }*), 
-    i8* getelementptr ([19 x i8]* %str1, int 0, int 0), 
-    {  }* null, 
-    int 0, 
-    uint 16, 
-    uint 16, 
-    uint 0, 
-    uint 7 }, section "llvm.metadata"
-%str1 = internal constant [19 x i8] c"short unsigned int\00", section "llvm.metadata"
+!2 = metadata !{
+  i32 458788,        ;; Tag
+  metadata !1,       ;; Context
+  metadata !"short unsigned int",
+  metadata !1,       ;; Compile Unit
+  i32 0,             ;; Line number
+  i64 16,            ;; Size in Bits
+  i64 16,            ;; Align in Bits
+  i64 0,             ;; Offset in Bits
+  i32 0,             ;; Flags
+  i32 7              ;; Encoding
+}
 </pre>
 </div>
 
@@ -1445,17 +1392,18 @@ int %main(int %argc, i8** %argv) {
 
 <div class="doc_code">
 <pre>
-%<a href="#format_basic_type">llvm.dbg.basictype</a> = internal constant %<a href="#format_basic_type">llvm.dbg.basictype.type</a> {
-    uint add(uint 36, uint 262144), 
-    {  }* cast (%<a href="#format_compile_units">llvm.dbg.compile_unit.type</a>* %<a href="#format_compile_units">llvm.dbg.compile_unit</a> to {  }*), 
-    i8* getelementptr ([4 x i8]* %str1, int 0, int 0), 
-    {  }* null, 
-    int 0, 
-    uint 32, 
-    uint 32, 
-    uint 0, 
-    uint 5 }, section "llvm.metadata"
-%str1 = internal constant [4 x i8] c"int\00", section "llvm.metadata"
+!2 = metadata !{
+  i32 458788,        ;; Tag
+  metadata !1,       ;; Context
+  metadata !"int",   ;; Name
+  metadata !1,       ;; Compile Unit
+  i32 0,             ;; Line number
+  i64 32,            ;; Size in Bits
+  i64 32,            ;; Align in Bits
+  i64 0,             ;; Offset in Bits
+  i32 0,             ;; Flags
+  i32 5              ;; Encoding
+}
 </pre></div>
 
 </div>
@@ -1469,17 +1417,18 @@ int %main(int %argc, i8** %argv) {
 
 <div class="doc_code">
 <pre>
-%<a href="#format_basic_type">llvm.dbg.basictype</a> = internal constant %<a href="#format_basic_type">llvm.dbg.basictype.type</a> {
-    uint add(uint 36, uint 262144), 
-    {  }* cast (%<a href="#format_compile_units">llvm.dbg.compile_unit.type</a>* %<a href="#format_compile_units">llvm.dbg.compile_unit</a> to {  }*), 
-    i8* getelementptr ([13 x i8]* %str1, int 0, int 0), 
-    {  }* null, 
-    int 0, 
-    uint 32, 
-    uint 32, 
-    uint 0, 
-    uint 7 }, section "llvm.metadata"
-%str1 = internal constant [13 x i8] c"unsigned int\00", section "llvm.metadata"
+!2 = metadata !{
+  i32 458788,        ;; Tag
+  metadata !1,       ;; Context
+  metadata !"unsigned int",
+  metadata !1,       ;; Compile Unit
+  i32 0,             ;; Line number
+  i64 32,            ;; Size in Bits
+  i64 32,            ;; Align in Bits
+  i64 0,             ;; Offset in Bits
+  i32 0,             ;; Flags
+  i32 7              ;; Encoding
+}
 </pre>
 </div>
 
@@ -1494,17 +1443,18 @@ int %main(int %argc, i8** %argv) {
 
 <div class="doc_code">
 <pre>
-%<a href="#format_basic_type">llvm.dbg.basictype</a> = internal constant %<a href="#format_basic_type">llvm.dbg.basictype.type</a> {
-    uint add(uint 36, uint 262144), 
-    {  }* cast (%<a href="#format_compile_units">llvm.dbg.compile_unit.type</a>* %<a href="#format_compile_units">llvm.dbg.compile_unit</a> to {  }*), 
-    i8* getelementptr ([14 x i8]* %str1, int 0, int 0), 
-    {  }* null, 
-    int 0, 
-    uint 64, 
-    uint 64, 
-    uint 0, 
-    uint 5 }, section "llvm.metadata"
-%str1 = internal constant [14 x i8] c"long long int\00", section "llvm.metadata"
+!2 = metadata !{
+  i32 458788,        ;; Tag
+  metadata !1,       ;; Context
+  metadata !"long long int",
+  metadata !1,       ;; Compile Unit
+  i32 0,             ;; Line number
+  i64 64,            ;; Size in Bits
+  i64 64,            ;; Align in Bits
+  i64 0,             ;; Offset in Bits
+  i32 0,             ;; Flags
+  i32 5              ;; Encoding
+}
 </pre>
 </div>
 
@@ -1519,17 +1469,18 @@ int %main(int %argc, i8** %argv) {
 
 <div class="doc_code">
 <pre>
-%<a href="#format_basic_type">llvm.dbg.basictype</a> = internal constant %<a href="#format_basic_type">llvm.dbg.basictype.type</a> {
-    uint add(uint 36, uint 262144), 
-    {  }* cast (%<a href="#format_compile_units">llvm.dbg.compile_unit.type</a>* %<a href="#format_compile_units">llvm.dbg.compile_unit</a> to {  }*), 
-    i8* getelementptr ([23 x i8]* %str1, int 0, int 0), 
-    {  }* null, 
-    int 0, 
-    uint 64, 
-    uint 64, 
-    uint 0, 
-    uint 7 }, section "llvm.metadata"
-%str1 = internal constant [23 x 8] c"long long unsigned int\00", section "llvm.metadata"
+!2 = metadata !{
+  i32 458788,        ;; Tag
+  metadata !1,       ;; Context
+  metadata !"long long unsigned int",
+  metadata !1,       ;; Compile Unit
+  i32 0,             ;; Line number
+  i64 64,            ;; Size in Bits
+  i64 64,            ;; Align in Bits
+  i64 0,             ;; Offset in Bits
+  i32 0,             ;; Flags
+  i32 7              ;; Encoding
+}
 </pre>
 </div>
 
@@ -1544,17 +1495,18 @@ int %main(int %argc, i8** %argv) {
 
 <div class="doc_code">
 <pre>
-%<a href="#format_basic_type">llvm.dbg.basictype</a> = internal constant %<a href="#format_basic_type">llvm.dbg.basictype.type</a> {
-    uint add(uint 36, uint 262144), 
-    {  }* cast (%<a href="#format_compile_units">llvm.dbg.compile_unit.type</a>* %<a href="#format_compile_units">llvm.dbg.compile_unit</a> to {  }*), 
-    i8* getelementptr ([6 x i8]* %str1, int 0, int 0), 
-    {  }* null, 
-    int 0, 
-    uint 32, 
-    uint 32, 
-    uint 0, 
-    uint 4 }, section "llvm.metadata"
-%str1 = internal constant [6 x i8] c"float\00", section "llvm.metadata"
+!2 = metadata !{
+  i32 458788,        ;; Tag
+  metadata !1,       ;; Context
+  metadata !"float",
+  metadata !1,       ;; Compile Unit
+  i32 0,             ;; Line number
+  i64 32,            ;; Size in Bits
+  i64 32,            ;; Align in Bits
+  i64 0,             ;; Offset in Bits
+  i32 0,             ;; Flags
+  i32 4              ;; Encoding
+}
 </pre>
 </div>
 
@@ -1569,17 +1521,18 @@ int %main(int %argc, i8** %argv) {
 
 <div class="doc_code">
 <pre>
-%<a href="#format_basic_type">llvm.dbg.basictype</a> = internal constant %<a href="#format_basic_type">llvm.dbg.basictype.type</a> {
-    uint add(uint 36, uint 262144), 
-    {  }* cast (%<a href="#format_compile_units">llvm.dbg.compile_unit.type</a>* %<a href="#format_compile_units">llvm.dbg.compile_unit</a> to {  }*), 
-    8* getelementptr ([7 x 8]* %str1, int 0, int 0), 
-    {  }* null, 
-    int 0, 
-    uint 64, 
-    uint 64, 
-    uint 0, 
-    uint 4 }, section "llvm.metadata"
-%str1 = internal constant [7 x 8] c"double\00", section "llvm.metadata"
+!2 = metadata !{
+  i32 458788,        ;; Tag
+  metadata !1,       ;; Context
+  metadata !"double",;; Name
+  metadata !1,       ;; Compile Unit
+  i32 0,             ;; Line number
+  i64 64,            ;; Size in Bits
+  i64 64,            ;; Align in Bits
+  i64 0,             ;; Offset in Bits
+  i32 0,             ;; Flags
+  i32 4              ;; Encoding
+}
 </pre>
 </div>
 
@@ -1607,60 +1560,64 @@ typedef const int *IntPtr;
 ;;
 ;; Define the typedef "IntPtr".
 ;;
-%<a href="#format_derived_type">llvm.dbg.derivedtype1</a> = internal constant %<a href="#format_derived_type">llvm.dbg.derivedtype.type</a> {
-    uint add(uint 22, uint 262144), 
-    {  }* cast (%<a href="#format_compile_units">llvm.dbg.compile_unit.type</a>* %<a href="#format_compile_units">llvm.dbg.compile_unit</a> to {  }*), 
-    i8* getelementptr ([7 x 8]* %str1, int 0, int 0), 
-    {  }* cast (%<a href="#format_compile_units">llvm.dbg.compile_unit.type</a>* %<a href="#format_compile_units">llvm.dbg.compile_unit</a> to {  }*), 
-    int 1, 
-    uint 0, 
-    uint 0, 
-    uint 0, 
-    {  }* cast (%<a href="#format_derived_type">llvm.dbg.derivedtype.type</a>* %<a href="#format_derived_type">llvm.dbg.derivedtype2</a> to {  }*) }, section "llvm.metadata"
-%str1 = internal constant [7 x 8] c"IntPtr\00", section "llvm.metadata"
+!2 = metadata !{
+  i32 458774,          ;; Tag
+  metadata !1,         ;; Context
+  metadata !"IntPtr",  ;; Name
+  metadata !3,         ;; Compile unit
+  i32 0,               ;; Line number
+  i64 0,               ;; Size in bits
+  i64 0,               ;; Align in bits
+  i64 0,               ;; Offset in bits
+  i32 0,               ;; Flags
+  metadata !4          ;; Derived From type
+}
 
 ;;
 ;; Define the pointer type.
 ;;
-%<a href="#format_derived_type">llvm.dbg.derivedtype2</a> = internal constant %<a href="#format_derived_type">llvm.dbg.derivedtype.type</a> {
-    uint add(uint 15, uint 262144), 
-    {  }* cast (%<a href="#format_compile_units">llvm.dbg.compile_unit.type</a>* %<a href="#format_compile_units">llvm.dbg.compile_unit</a> to {  }*), 
-    i8* null, 
-    {  }* null, 
-    int 0, 
-    uint 32, 
-    uint 32, 
-    uint 0, 
-    {  }* cast (%<a href="#format_derived_type">llvm.dbg.derivedtype.type</a>* %<a href="#format_derived_type">llvm.dbg.derivedtype3</a> to {  }*) }, section "llvm.metadata"
-
+!4 = metadata !{
+  i32 458767,          ;; Tag
+  metadata !1,         ;; Context
+  metadata !"",        ;; Name
+  metadata !1,         ;; Compile unit
+  i32 0,               ;; Line number
+  i64 64,              ;; Size in bits
+  i64 64,              ;; Align in bits
+  i64 0,               ;; Offset in bits
+  i32 0,               ;; Flags
+  metadata !5          ;; Derived From type
+}
 ;;
 ;; Define the const type.
 ;;
-%<a href="#format_derived_type">llvm.dbg.derivedtype3</a> = internal constant %<a href="#format_derived_type">llvm.dbg.derivedtype.type</a> {
-    uint add(uint 38, uint 262144), 
-    {  }* cast (%<a href="#format_compile_units">llvm.dbg.compile_unit.type</a>* %<a href="#format_compile_units">llvm.dbg.compile_unit</a> to {  }*), 
-    i8* null, 
-    {  }* null, 
-    int 0, 
-    uint 0, 
-    uint 0, 
-    uint 0, 
-    {  }* cast (%<a href="#format_basic_type">llvm.dbg.basictype.type</a>* %<a href="#format_basic_type">llvm.dbg.basictype1</a> to {  }*) }, section "llvm.metadata"	
-
+!5 = metadata !{
+  i32 458790,          ;; Tag
+  metadata !1,         ;; Context
+  metadata !"",        ;; Name
+  metadata !1,         ;; Compile unit
+  i32 0,               ;; Line number
+  i64 32,              ;; Size in bits
+  i64 32,              ;; Align in bits
+  i64 0,               ;; Offset in bits
+  i32 0,               ;; Flags
+  metadata !6          ;; Derived From type
+}
 ;;
 ;; Define the int type.
 ;;
-%<a href="#format_basic_type">llvm.dbg.basictype1</a> = internal constant %<a href="#format_basic_type">llvm.dbg.basictype.type</a> {
-    uint add(uint 36, uint 262144), 
-    {  }* cast (%<a href="#format_compile_units">llvm.dbg.compile_unit.type</a>* %<a href="#format_compile_units">llvm.dbg.compile_unit</a> to {  }*), 
-    8* getelementptr ([4 x 8]* %str2, int 0, int 0), 
-    {  }* null, 
-    int 0, 
-    uint 32, 
-    uint 32, 
-    uint 0, 
-    uint 5 }, section "llvm.metadata"
-%str2 = internal constant [4 x 8] c"int\00", section "llvm.metadata"
+!6 = metadata !{
+  i32 458788,          ;; Tag
+  metadata !1,         ;; Context
+  metadata !"int",     ;; Name
+  metadata !1,         ;; Compile unit
+  i32 0,               ;; Line number
+  i64 32,              ;; Size in bits
+  i64 32,              ;; Align in bits
+  i64 0,               ;; Offset in bits
+  i32 0,               ;; Flags
+  5                    ;; Encoding
+}
 </pre>
 </div>
 
@@ -1692,86 +1649,88 @@ struct Color {
 ;;
 ;; Define basic type for unsigned int.
 ;;
-%<a href="#format_basic_type">llvm.dbg.basictype</a> = internal constant %<a href="#format_basic_type">llvm.dbg.basictype.type</a> {
-    uint add(uint 36, uint 262144), 
-    {  }* cast (%<a href="#format_compile_units">llvm.dbg.compile_unit.type</a>* %<a href="#format_compile_units">llvm.dbg.compile_unit</a> to {  }*), 
-    i8* getelementptr ([13 x i8]* %str1, int 0, int 0), 
-    {  }* null, 
-    int 0, 
-    uint 32, 
-    uint 32, 
-    uint 0, 
-    uint 7 }, section "llvm.metadata"
-%str1 = internal constant [13 x i8] c"unsigned int\00", section "llvm.metadata"
-
+!5 = metadata !{
+  i32 458788,        ;; Tag
+  metadata !1,       ;; Context
+  metadata !"unsigned int",
+  metadata !1,       ;; Compile Unit
+  i32 0,             ;; Line number
+  i64 32,            ;; Size in Bits
+  i64 32,            ;; Align in Bits
+  i64 0,             ;; Offset in Bits
+  i32 0,             ;; Flags
+  i32 7              ;; Encoding
+}
 ;;
 ;; Define composite type for struct Color.
 ;;
-%<a href="#format_composite_type">llvm.dbg.compositetype</a> = internal constant %<a href="#format_composite_type">llvm.dbg.compositetype.type</a> {
-    uint add(uint 19, uint 262144), 
-    {  }* cast (%<a href="#format_compile_units">llvm.dbg.compile_unit.type</a>* %<a href="#format_compile_units">llvm.dbg.compile_unit</a> to {  }*), 
-    i8* getelementptr ([6 x i8]* %str2, int 0, int 0), 
-    {  }* cast (%<a href="#format_compile_units">llvm.dbg.compile_unit.type</a>* %<a href="#format_compile_units">llvm.dbg.compile_unit</a> to {  }*), 
-    int 1, 
-    uint 96, 
-    uint 32, 
-    uint 0, 
-    {  }* null,
-    {  }* cast ([3 x {  }*]* %llvm.dbg.array to {  }*) }, section "llvm.metadata"
-%str2 = internal constant [6 x i8] c"Color\00", section "llvm.metadata"
+!2 = metadata !{
+  i32 458771,        ;; Tag
+  metadata !1,       ;; Context
+  metadata !"Color", ;; Name
+  metadata !1,       ;; Compile unit
+  i32 1,             ;; Line number
+  i64 96,            ;; Size in bits
+  i64 32,            ;; Align in bits
+  i64 0,             ;; Offset in bits
+  i32 0,             ;; Flags
+  null,              ;; Derived From
+  metadata !3,       ;; Elements
+  i32 0              ;; Runtime Language
+}
 
 ;;
 ;; Define the Red field.
 ;;
-%<a href="#format_derived_type">llvm.dbg.derivedtype1</a> = internal constant %<a href="#format_derived_type">llvm.dbg.derivedtype.type</a> {
-    uint add(uint 13, uint 262144), 
-    {  }* null, 
-    i8* getelementptr ([4 x i8]* %str3, int 0, int 0), 
-    {  }* cast (%<a href="#format_compile_units">llvm.dbg.compile_unit.type</a>* %<a href="#format_compile_units">llvm.dbg.compile_unit</a> to {  }*), 
-    int 2, 
-    uint 32, 
-    uint 32, 
-    uint 0, 
-    {  }* cast (%<a href="#format_basic_type">llvm.dbg.basictype.type</a>* %<a href="#format_basic_type">llvm.dbg.basictype</a> to {  }*) }, section "llvm.metadata"
-%str3 = internal constant [4 x i8] c"Red\00", section "llvm.metadata"
+!4 = metadata !{
+  i32 458765,        ;; Tag
+  metadata !1,       ;; Context
+  metadata !"Red",   ;; Name
+  metadata !1,       ;; Compile Unit
+  i32 2,             ;; Line number
+  i64 32,            ;; Size in bits
+  i64 32,            ;; Align in bits
+  i64 0,             ;; Offset in bits
+  i32 0,             ;; Flags
+  metadata !5        ;; Derived From type
+}
 
 ;;
 ;; Define the Green field.
 ;;
-%<a href="#format_derived_type">llvm.dbg.derivedtype2</a> = internal constant %<a href="#format_derived_type">llvm.dbg.derivedtype.type</a> {
-    uint add(uint 13, uint 262144), 
-    {  }* null, 
-    i8* getelementptr ([6 x i8]* %str4, int 0, int 0), 
-    {  }* cast (%<a href="#format_compile_units">llvm.dbg.compile_unit.type</a>* %<a href="#format_compile_units">llvm.dbg.compile_unit</a> to {  }*), 
-    int 3, 
-    uint 32, 
-    uint 32, 
-    uint 32, 
-    {  }* cast (%<a href="#format_basic_type">llvm.dbg.basictype.type</a>* %<a href="#format_basic_type">llvm.dbg.basictype</a> to {  }*) }, section "llvm.metadata"
-%str4 = internal constant [6 x i8] c"Green\00", section "llvm.metadata"
+!6 = metadata !{
+  i32 458765,        ;; Tag
+  metadata !1,       ;; Context
+  metadata !"Green", ;; Name
+  metadata !1,       ;; Compile Unit
+  i32 3,             ;; Line number
+  i64 32,            ;; Size in bits
+  i64 32,            ;; Align in bits
+  i64 32,             ;; Offset in bits
+  i32 0,             ;; Flags
+  metadata !5        ;; Derived From type
+}
 
 ;;
 ;; Define the Blue field.
 ;;
-%<a href="#format_derived_type">llvm.dbg.derivedtype3</a> = internal constant %<a href="#format_derived_type">llvm.dbg.derivedtype.type</a> {
-    uint add(uint 13, uint 262144), 
-    {  }* null, 
-    i8* getelementptr ([5 x i8]* %str5, int 0, int 0), 
-    {  }* cast (%<a href="#format_compile_units">llvm.dbg.compile_unit.type</a>* %<a href="#format_compile_units">llvm.dbg.compile_unit</a> to {  }*), 
-    int 4, 
-    uint 32, 
-    uint 32, 
-    uint 64, 
-    {  }* cast (%<a href="#format_basic_type">llvm.dbg.basictype.type</a>* %<a href="#format_basic_type">llvm.dbg.basictype</a> to {  }*) }, section "llvm.metadata"
-%str5 = internal constant [5 x 8] c"Blue\00", section "llvm.metadata"
+!7 = metadata !{
+  i32 458765,        ;; Tag
+  metadata !1,       ;; Context
+  metadata !"Blue",  ;; Name
+  metadata !1,       ;; Compile Unit
+  i32 4,             ;; Line number
+  i64 32,            ;; Size in bits
+  i64 32,            ;; Align in bits
+  i64 64,             ;; Offset in bits
+  i32 0,             ;; Flags
+  metadata !5        ;; Derived From type
+}
 
 ;;
 ;; Define the array of fields used by the composite type Color.
 ;;
-%llvm.dbg.array = internal constant [3 x {  }*] [
-      {  }* cast (%<a href="#format_derived_type">llvm.dbg.derivedtype.type</a>* %<a href="#format_derived_type">llvm.dbg.derivedtype1</a> to {  }*),
-      {  }* cast (%<a href="#format_derived_type">llvm.dbg.derivedtype.type</a>* %<a href="#format_derived_type">llvm.dbg.derivedtype2</a> to {  }*),
-      {  }* cast (%<a href="#format_derived_type">llvm.dbg.derivedtype.type</a>* %<a href="#format_derived_type">llvm.dbg.derivedtype3</a> to {  }*) ], section "llvm.metadata"
+!3 = metadata !{metadata !4, metadata !6, metadata !7}
 </pre>
 </div>
 
@@ -1803,53 +1762,41 @@ enum Trees {
 ;;
 ;; Define composite type for enum Trees
 ;;
-%<a href="#format_composite_type">llvm.dbg.compositetype</a> = internal constant %<a href="#format_composite_type">llvm.dbg.compositetype.type</a> {
-    uint add(uint 4, uint 262144), 
-    {  }* cast (%<a href="#format_compile_units">llvm.dbg.compile_unit.type</a>* %<a href="#format_compile_units">llvm.dbg.compile_unit</a> to {  }*), 
-    i8* getelementptr ([6 x i8]* %str1, int 0, int 0), 
-    {  }* cast (%<a href="#format_compile_units">llvm.dbg.compile_unit.type</a>* %<a href="#format_compile_units">llvm.dbg.compile_unit</a> to {  }*), 
-    int 1, 
-    uint 32, 
-    uint 32, 
-    uint 0, 
-    {  }* null, 
-    {  }* cast ([3 x {  }*]* %llvm.dbg.array to {  }*) }, section "llvm.metadata"
-%str1 = internal constant [6 x i8] c"Trees\00", section "llvm.metadata"
-
-;;
-;; Define Spruce enumerator.
-;;
-%<a href="#format_enumeration">llvm.dbg.enumerator1</a> = internal constant %<a href="#format_enumeration">llvm.dbg.enumerator.type</a> {
-    uint add(uint 40, uint 262144), 
-    i8* getelementptr ([7 x i8]* %str2, int 0, int 0), 
-    int 100 }, section "llvm.metadata"
-%str2 = internal constant [7 x i8] c"Spruce\00", section "llvm.metadata"
-
-;;
-;; Define Oak enumerator.
-;;
-%<a href="#format_enumeration">llvm.dbg.enumerator2</a> = internal constant %<a href="#format_enumeration">llvm.dbg.enumerator.type</a> {
-    uint add(uint 40, uint 262144), 
-    i8* getelementptr ([4 x i8]* %str3, int 0, int 0), 
-    int 200 }, section "llvm.metadata"
-%str3 = internal constant [4 x i8] c"Oak\00", section "llvm.metadata"
-
-;;
-;; Define Maple enumerator.
-;;
-%<a href="#format_enumeration">llvm.dbg.enumerator3</a> = internal constant %<a href="#format_enumeration">llvm.dbg.enumerator.type</a> {
-    uint add(uint 40, uint 262144), 
-    i8* getelementptr ([6 x i8]* %str4, int 0, int 0), 
-    int 300 }, section "llvm.metadata"
-%str4 = internal constant [6 x i8] c"Maple\00", section "llvm.metadata"
+!2 = metadata !{
+  i32 458756,        ;; Tag
+  metadata !1,       ;; Context
+  metadata !"Trees", ;; Name
+  metadata !1,       ;; Compile unit
+  i32 1,             ;; Line number
+  i64 32,            ;; Size in bits
+  i64 32,            ;; Align in bits
+  i64 0,             ;; Offset in bits
+  i32 0,             ;; Flags
+  null,              ;; Derived From type
+  metadata !3,       ;; Elements
+  i32 0              ;; Runtime language
+}
 
 ;;
 ;; Define the array of enumerators used by composite type Trees.
 ;;
-%llvm.dbg.array = internal constant [3 x {  }*] [
-  {  }* cast (%<a href="#format_enumeration">llvm.dbg.enumerator.type</a>* %<a href="#format_enumeration">llvm.dbg.enumerator1</a> to {  }*),
-  {  }* cast (%<a href="#format_enumeration">llvm.dbg.enumerator.type</a>* %<a href="#format_enumeration">llvm.dbg.enumerator2</a> to {  }*),
-  {  }* cast (%<a href="#format_enumeration">llvm.dbg.enumerator.type</a>* %<a href="#format_enumeration">llvm.dbg.enumerator3</a> to {  }*) ], section "llvm.metadata"
+!3 = metadata !{metadata !4, metadata !5, metadata !6}
+
+;;
+;; Define Spruce enumerator.
+;;
+!4 = metadata !{i32 458792, metadata !"Spruce", i64 100}
+
+;;
+;; Define Oak enumerator.
+;;
+!5 = metadata !{i32 458792, metadata !"Oak", i64 200}
+
+;;
+;; Define Maple enumerator.
+;;
+!6 = metadata !{i32 458792, metadata !"Maple", i64 300}
+
 </pre>
 </div>
 

@@ -139,25 +139,25 @@ class VISIBILITY_HIDDEN DwarfDebug : public Dwarf {
   DbgScope *FunctionDbgScope;
   
   /// DbgScopeMap - Tracks the scopes in the current function.
-  DenseMap<GlobalVariable *, DbgScope *> DbgScopeMap;
+  DenseMap<MDNode *, DbgScope *> DbgScopeMap;
 
   /// DbgAbstractScopeMap - Tracks abstract instance scopes in the current
   /// function.
-  DenseMap<GlobalVariable *, DbgScope *> DbgAbstractScopeMap;
+  DenseMap<MDNode *, DbgScope *> DbgAbstractScopeMap;
 
   /// DbgConcreteScopeMap - Tracks concrete instance scopes in the current
   /// function.
-  DenseMap<GlobalVariable *,
+  DenseMap<MDNode *,
            SmallVector<DbgScope *, 8> > DbgConcreteScopeMap;
 
   /// InlineInfo - Keep track of inlined functions and their location.  This
   /// information is used to populate debug_inlined section.
-  DenseMap<GlobalVariable *, SmallVector<unsigned, 4> > InlineInfo;
+  DenseMap<MDNode *, SmallVector<unsigned, 4> > InlineInfo;
 
   /// AbstractInstanceRootMap - Map of abstract instance roots of inlined
   /// functions. These are subroutine entries that contain a DW_AT_inline
   /// attribute.
-  DenseMap<const GlobalVariable *, DbgScope *> AbstractInstanceRootMap;
+  DenseMap<const MDNode *, DbgScope *> AbstractInstanceRootMap;
 
   /// AbstractInstanceRootList - List of abstract instance roots of inlined
   /// functions. These are subroutine entries that contain a DW_AT_inline
@@ -335,7 +335,7 @@ class VISIBILITY_HIDDEN DwarfDebug : public Dwarf {
 
   /// getOrCreateScope - Returns the scope associated with the given descriptor.
   ///
-  DbgScope *getOrCreateScope(GlobalVariable *V);
+  DbgScope *getOrCreateScope(MDNode *N);
 
   /// ConstructDbgScope - Construct the components of a scope.
   ///
@@ -448,11 +448,11 @@ class VISIBILITY_HIDDEN DwarfDebug : public Dwarf {
   unsigned GetOrCreateSourceID(const std::string &DirName,
                                const std::string &FileName);
 
-  void ConstructCompileUnit(GlobalVariable *GV);
+  void ConstructCompileUnit(MDNode *N);
 
-  void ConstructGlobalVariableDIE(GlobalVariable *GV);
+  void ConstructGlobalVariableDIE(MDNode *N);
 
-  void ConstructSubprogram(GlobalVariable *GV);
+  void ConstructSubprogram(MDNode *N);
 
 public:
   //===--------------------------------------------------------------------===//
@@ -506,13 +506,13 @@ public:
                                const std::string &FileName);
 
   /// RecordRegionStart - Indicate the start of a region.
-  unsigned RecordRegionStart(GlobalVariable *V);
+  unsigned RecordRegionStart(MDNode *N);
 
   /// RecordRegionEnd - Indicate the end of a region.
-  unsigned RecordRegionEnd(GlobalVariable *V);
+  unsigned RecordRegionEnd(MDNode *N);
 
   /// RecordVariable - Indicate the declaration of  a local variable.
-  void RecordVariable(GlobalVariable *GV, unsigned FrameIndex);
+  void RecordVariable(MDNode *N, unsigned FrameIndex);
 
   //// RecordInlinedFnStart - Indicate the start of inlined subroutine.
   unsigned RecordInlinedFnStart(DISubprogram &SP, DICompileUnit CU,

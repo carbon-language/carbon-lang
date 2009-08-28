@@ -80,13 +80,13 @@ unsigned DwarfWriter::RecordSourceLine(unsigned Line, unsigned Col,
 }
 
 /// RecordRegionStart - Indicate the start of a region.
-unsigned DwarfWriter::RecordRegionStart(GlobalVariable *V) {
-  return DD->RecordRegionStart(V);
+unsigned DwarfWriter::RecordRegionStart(MDNode *N) {
+  return DD->RecordRegionStart(N);
 }
 
 /// RecordRegionEnd - Indicate the end of a region.
-unsigned DwarfWriter::RecordRegionEnd(GlobalVariable *V) {
-  return DD->RecordRegionEnd(V);
+unsigned DwarfWriter::RecordRegionEnd(MDNode *N) {
+  return DD->RecordRegionEnd(N);
 }
 
 /// getRecordSourceLineCount - Count source lines.
@@ -96,8 +96,8 @@ unsigned DwarfWriter::getRecordSourceLineCount() {
 
 /// RecordVariable - Indicate the declaration of  a local variable.
 ///
-void DwarfWriter::RecordVariable(GlobalVariable *GV, unsigned FrameIndex) {
-  DD->RecordVariable(GV, FrameIndex);
+void DwarfWriter::RecordVariable(MDNode *N, unsigned FrameIndex) {
+  DD->RecordVariable(N, FrameIndex);
 }
 
 /// ShouldEmitDwarfDebug - Returns true if Dwarf debugging declarations should
@@ -106,8 +106,7 @@ bool DwarfWriter::ShouldEmitDwarfDebug() const {
   return DD && DD->ShouldEmitDwarfDebug();
 }
 
-//// RecordInlinedFnStart - Global variable GV is inlined at the location marked
-//// by LabelID label.
+//// RecordInlinedFnStart
 unsigned DwarfWriter::RecordInlinedFnStart(DISubprogram SP, DICompileUnit CU,
                                            unsigned Line, unsigned Col) {
   return DD->RecordInlinedFnStart(SP, CU, Line, Col);

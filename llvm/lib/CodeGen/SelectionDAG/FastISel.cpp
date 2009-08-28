@@ -335,7 +335,7 @@ bool FastISel::SelectCall(User *I) {
     if (isValidDebugInfoIntrinsic(*RSI, CodeGenOpt::None) && DW
         && DW->ShouldEmitDwarfDebug()) {
       unsigned ID = 
-        DW->RecordRegionStart(cast<GlobalVariable>(RSI->getContext()));
+        DW->RecordRegionStart(RSI->getContext());
       const TargetInstrDesc &II = TII.get(TargetInstrInfo::DBG_LABEL);
       BuildMI(MBB, DL, II).addImm(ID);
     }
@@ -346,7 +346,7 @@ bool FastISel::SelectCall(User *I) {
     if (isValidDebugInfoIntrinsic(*REI, CodeGenOpt::None) && DW
         && DW->ShouldEmitDwarfDebug()) {
      unsigned ID = 0;
-     DISubprogram Subprogram(cast<GlobalVariable>(REI->getContext()));
+     DISubprogram Subprogram(REI->getContext());
      if (isInlinedFnEnd(*REI, MF.getFunction())) {
         // This is end of an inlined function.
         const TargetInstrDesc &II = TII.get(TargetInstrInfo::DBG_LABEL);
@@ -359,7 +359,7 @@ bool FastISel::SelectCall(User *I) {
           BuildMI(MBB, DL, II).addImm(ID);
       } else {
         const TargetInstrDesc &II = TII.get(TargetInstrInfo::DBG_LABEL);
-        ID =  DW->RecordRegionEnd(cast<GlobalVariable>(REI->getContext()));
+        ID =  DW->RecordRegionEnd(REI->getContext());
         BuildMI(MBB, DL, II).addImm(ID);
       }
     }
@@ -384,7 +384,7 @@ bool FastISel::SelectCall(User *I) {
       setCurDebugLoc(ExtractDebugLocation(*FSI, MF.getDebugLocInfo()));
       
       DebugLocTuple PrevLocTpl = MF.getDebugLocTuple(PrevLoc);
-      DISubprogram SP(cast<GlobalVariable>(FSI->getSubprogram()));
+      DISubprogram SP(FSI->getSubprogram());
       unsigned LabelID = DW->RecordInlinedFnStart(SP,
                                                   DICompileUnit(PrevLocTpl.CompileUnit),
                                                   PrevLocTpl.Line,
@@ -398,7 +398,7 @@ bool FastISel::SelectCall(User *I) {
     MF.setDefaultDebugLoc(ExtractDebugLocation(*FSI, MF.getDebugLocInfo()));
     
     // llvm.dbg.func_start also defines beginning of function scope.
-    DW->RecordRegionStart(cast<GlobalVariable>(FSI->getSubprogram()));
+    DW->RecordRegionStart(FSI->getSubprogram());
     return true;
   }
   case Intrinsic::dbg_declare: {
@@ -419,10 +419,7 @@ bool FastISel::SelectCall(User *I) {
     if (SI == StaticAllocaMap.end()) break; // VLAs.
     int FI = SI->second;
     
-    // Determine the debug globalvariable.
-    GlobalValue *GV = cast<GlobalVariable>(Variable);
-    
-    DW->RecordVariable(cast<GlobalVariable>(GV), FI);
+    DW->RecordVariable(cast<MDNode>(Variable), FI);
     return true;
   }
   case Intrinsic::eh_exception: {

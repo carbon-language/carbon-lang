@@ -25,6 +25,7 @@
 #define LLVM_INTRINSICINST_H
 
 #include "llvm/Constants.h"
+#include "llvm/Metadata.h"
 #include "llvm/Function.h"
 #include "llvm/Instructions.h"
 #include "llvm/Intrinsics.h"
@@ -85,8 +86,8 @@ namespace llvm {
   struct DbgStopPointInst : public DbgInfoIntrinsic {
     Value *getLineValue() const { return const_cast<Value*>(getOperand(1)); }
     Value *getColumnValue() const { return const_cast<Value*>(getOperand(2)); }
-    Value *getContext() const {
-      return StripCast(getOperand(3));
+    MDNode *getContext() const {
+      return cast<MDNode>(getOperand(3));
     }
 
     unsigned getLine() const {
@@ -112,7 +113,7 @@ namespace llvm {
   /// DbgFuncStartInst - This represents the llvm.dbg.func.start instruction.
   ///
   struct DbgFuncStartInst : public DbgInfoIntrinsic {
-    Value *getSubprogram() const { return StripCast(getOperand(1)); }
+    MDNode *getSubprogram() const { return cast<MDNode>(getOperand(1)); }
 
     // Methods for support type inquiry through isa, cast, and dyn_cast:
     static inline bool classof(const DbgFuncStartInst *) { return true; }
@@ -127,7 +128,7 @@ namespace llvm {
   /// DbgRegionStartInst - This represents the llvm.dbg.region.start
   /// instruction.
   struct DbgRegionStartInst : public DbgInfoIntrinsic {
-    Value *getContext() const { return StripCast(getOperand(1)); }
+    MDNode *getContext() const { return cast<MDNode>(getOperand(1)); }
 
     // Methods for support type inquiry through isa, cast, and dyn_cast:
     static inline bool classof(const DbgRegionStartInst *) { return true; }
@@ -142,7 +143,7 @@ namespace llvm {
   /// DbgRegionEndInst - This represents the llvm.dbg.region.end instruction.
   ///
   struct DbgRegionEndInst : public DbgInfoIntrinsic {
-    Value *getContext() const { return StripCast(getOperand(1)); }
+    MDNode *getContext() const { return cast<MDNode>(getOperand(1)); }
 
     // Methods for support type inquiry through isa, cast, and dyn_cast:
     static inline bool classof(const DbgRegionEndInst *) { return true; }
@@ -158,7 +159,7 @@ namespace llvm {
   ///
   struct DbgDeclareInst : public DbgInfoIntrinsic {
     Value *getAddress()  const { return getOperand(1); }
-    Value *getVariable() const { return StripCast(getOperand(2)); }
+    MDNode *getVariable() const { return cast<MDNode>(getOperand(2)); }
 
     // Methods for support type inquiry through isa, cast, and dyn_cast:
     static inline bool classof(const DbgDeclareInst *) { return true; }
