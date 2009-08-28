@@ -164,7 +164,7 @@ namespace llvm {
     /// @param Symbol - The zerofill symbol to emit, if non-NULL.
     /// @param Size - The size of the zerofill symbol.
     /// @param Pow2Alignment - The alignment of the zerofill symbol if non-zero.
-    virtual void EmitZerofill(MCSection *Section, MCSymbol *Symbol = 0,
+    virtual void EmitZerofill(const MCSection *Section, MCSymbol *Symbol = 0,
                               unsigned Size = 0,unsigned Pow2Alignment = 0) = 0;
 
     /// @}

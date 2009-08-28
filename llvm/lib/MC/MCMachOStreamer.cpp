@@ -107,7 +107,7 @@ public:
   virtual void EmitCommonSymbol(MCSymbol *Symbol, unsigned Size,
                                 unsigned Pow2Alignment, bool IsLocal);
 
-  virtual void EmitZerofill(MCSection *Section, MCSymbol *Symbol = NULL,
+  virtual void EmitZerofill(const MCSection *Section, MCSymbol *Symbol = 0,
                             unsigned Size = 0, unsigned Pow2Alignment = 0);
 
   virtual void EmitBytes(const StringRef &Data);
@@ -273,7 +273,7 @@ void MCMachOStreamer::EmitCommonSymbol(MCSymbol *Symbol, unsigned Size,
   llvm_unreachable("FIXME: Not yet implemented!");
 }
 
-void MCMachOStreamer::EmitZerofill(MCSection *Section, MCSymbol *Symbol,
+void MCMachOStreamer::EmitZerofill(const MCSection *Section, MCSymbol *Symbol,
                                    unsigned Size, unsigned Pow2Alignment) {
   llvm_unreachable("FIXME: Not yet implemented!");
 }

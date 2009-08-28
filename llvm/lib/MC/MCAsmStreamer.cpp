@@ -58,7 +58,7 @@ public:
   virtual void EmitCommonSymbol(MCSymbol *Symbol, unsigned Size,
                                 unsigned Pow2Alignment, bool IsLocal);
 
-  virtual void EmitZerofill(MCSection *Section, MCSymbol *Symbol = NULL,
+  virtual void EmitZerofill(const MCSection *Section, MCSymbol *Symbol = 0,
                             unsigned Size = 0, unsigned Pow2Alignment = 0);
 
   virtual void EmitBytes(const StringRef &Data);
@@ -189,7 +189,7 @@ void MCAsmStreamer::EmitCommonSymbol(MCSymbol *Symbol, unsigned Size,
   OS << '\n';
 }
 
-void MCAsmStreamer::EmitZerofill(MCSection *Section, MCSymbol *Symbol,
+void MCAsmStreamer::EmitZerofill(const MCSection *Section, MCSymbol *Symbol,
                                  unsigned Size, unsigned Pow2Alignment) {
   // Note: a .zerofill directive does not switch sections.
   OS << ".zerofill ";
