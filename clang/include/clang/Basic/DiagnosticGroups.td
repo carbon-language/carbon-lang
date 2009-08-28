@@ -19,7 +19,9 @@ def Implicit : DiagGroup<"implicit", [
 
 
 // Empty DiagGroups: these are recognized by clang but ignored.
+def : DiagGroup<"address">;
 def : DiagGroup<"aggregate-return">;
+def : DiagGroup<"attributes">;
 def : DiagGroup<"bad-function-cast">;
 def : DiagGroup<"cast-align">;
 def : DiagGroup<"cast-qual">;
@@ -56,6 +58,7 @@ def : DiagGroup<"missing-field-initializers">;
 def NonNull : DiagGroup<"nonnull">;
 def : DiagGroup<"nonportable-cfstrings">;
 def : DiagGroup<"old-style-definition">;
+def : DiagGroup<"overflow">;
 def : DiagGroup<"packed">;
 def Parentheses : DiagGroup<"parentheses">;
 def PointerArith : DiagGroup<"pointer-arith">;
