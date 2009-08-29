@@ -38,7 +38,7 @@ namespace llvm {
     // easier for the OptimalEdgeProfileInstrumentation to use this MST to do
     // an optimal profiling.
     MaximumSpanningTree(Function *F, ProfileInfo *PI, bool invert);
-    virtual ~MaximumSpanningTree();
+    virtual ~MaximumSpanningTree() {}
 
     virtual MaxSpanTree::iterator begin();
     virtual MaxSpanTree::iterator end();

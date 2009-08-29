@@ -102,9 +102,6 @@ MaximumSpanningTree::MaximumSpanningTree(Function *F, ProfileInfo *PI,
   std::stable_sort(MST.begin(),MST.end());
 }
 
-MaximumSpanningTree::~MaximumSpanningTree() {
-}
-
 MaximumSpanningTree::MaxSpanTree::iterator MaximumSpanningTree::begin() {
   return MST.begin();
 }
