@@ -1379,6 +1379,10 @@ class EnumDecl : public TagDecl {
       IntegerType = QualType();
     }
 public:
+  EnumDecl *getCanonicalDecl() {
+    return cast<EnumDecl>(TagDecl::getCanonicalDecl());
+  }
+
   static EnumDecl *Create(ASTContext &C, DeclContext *DC,
                           SourceLocation L, IdentifierInfo *Id,
                           SourceLocation TKL, EnumDecl *PrevDecl);

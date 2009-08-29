@@ -1166,38 +1166,94 @@ Sema::InstantiateMemInitializers(CXXConstructorDecl *New,
                        NewInits.data(), NewInits.size()); 
 }
 
+// TODO: this could be templated if the various decl types used the
+// same method name.
+static bool isInstantiationOf(ClassTemplateDecl *Pattern,
+                              ClassTemplateDecl *Instance) {
+  Pattern = Pattern->getCanonicalDecl();
+
+  do {
+    Instance = Instance->getCanonicalDecl();
+    if (Pattern == Instance) return true;
+    Instance = Instance->getInstantiatedFromMemberTemplate();
+  } while (Instance);
+
+  return false;
+}
+
+static bool isInstantiationOf(CXXRecordDecl *Pattern,
+                              CXXRecordDecl *Instance) {
+  Pattern = Pattern->getCanonicalDecl();
+
+  do {
+    Instance = Instance->getCanonicalDecl();
+    if (Pattern == Instance) return true;
+    Instance = Instance->getInstantiatedFromMemberClass();
+  } while (Instance);
+
+  return false;
+}
+
+static bool isInstantiationOf(FunctionDecl *Pattern,
+                              FunctionDecl *Instance) {
+  Pattern = Pattern->getCanonicalDecl();
+
+  do {
+    Instance = Instance->getCanonicalDecl();
+    if (Pattern == Instance) return true;
+    Instance = Instance->getInstantiatedFromMemberFunction();
+  } while (Instance);
+
+  return false;
+}
+
+static bool isInstantiationOf(EnumDecl *Pattern,
+                              EnumDecl *Instance) {
+  Pattern = Pattern->getCanonicalDecl();
+
+  do {
+    Instance = Instance->getCanonicalDecl();
+    if (Pattern == Instance) return true;
+    Instance = Instance->getInstantiatedFromMemberEnum();
+  } while (Instance);
+
+  return false;
+}
+
+static bool isInstantiationOfStaticDataMember(VarDecl *Pattern,
+                                              VarDecl *Instance) {
+  assert(Instance->isStaticDataMember());
+
+  Pattern = Pattern->getCanonicalDecl();
+
+  do {
+    Instance = Instance->getCanonicalDecl();
+    if (Pattern == Instance) return true;
+    Instance = Instance->getInstantiatedFromStaticDataMember();
+  } while (Instance);
+
+  return false;
+}
+
 static bool isInstantiationOf(ASTContext &Ctx, NamedDecl *D, Decl *Other) {
   if (D->getKind() != Other->getKind())
     return false;
 
-  if (CXXRecordDecl *Record = dyn_cast<CXXRecordDecl>(Other)) {
-    if (CXXRecordDecl *Pattern = Record->getInstantiatedFromMemberClass())
-      return Pattern->getCanonicalDecl() == D->getCanonicalDecl();
-    else
-      return false;
-  }
+  if (CXXRecordDecl *Record = dyn_cast<CXXRecordDecl>(Other))
+    return isInstantiationOf(cast<CXXRecordDecl>(D), Record);
   
-  if (FunctionDecl *Function = dyn_cast<FunctionDecl>(Other)) {
-    if (FunctionDecl *Pattern = Function->getInstantiatedFromMemberFunction())
-      return Pattern->getCanonicalDecl() == D->getCanonicalDecl();
-    else
-      return false;
-  }
+  if (FunctionDecl *Function = dyn_cast<FunctionDecl>(Other))
+    return isInstantiationOf(cast<FunctionDecl>(D), Function);
 
-  if (EnumDecl *Enum = dyn_cast<EnumDecl>(Other)) {
-    if (EnumDecl *Pattern = Enum->getInstantiatedFromMemberEnum())
-      return Pattern->getCanonicalDecl() == D->getCanonicalDecl();
-    else
-      return false;
-  }
+  if (EnumDecl *Enum = dyn_cast<EnumDecl>(Other))
+    return isInstantiationOf(cast<EnumDecl>(D), Enum);
 
   if (VarDecl *Var = dyn_cast<VarDecl>(Other))
-    if (Var->isStaticDataMember()) {
-      if (VarDecl *Pattern = Var->getInstantiatedFromStaticDataMember())
-        return Pattern->getCanonicalDecl() == D->getCanonicalDecl();
-      else
-        return false;
-    }
+    if (Var->isStaticDataMember())
+      return isInstantiationOfStaticDataMember(cast<VarDecl>(D), Var);
+
+  if (ClassTemplateDecl *Temp = dyn_cast<ClassTemplateDecl>(Other))
+    return isInstantiationOf(cast<ClassTemplateDecl>(D), Temp);
 
   // FIXME: How can we find instantiations of anonymous unions?
 
@@ -1262,6 +1318,28 @@ NamedDecl * Sema::FindInstantiatedDecl(NamedDecl *D) {
     return cast<NamedDecl>(CurrentInstantiationScope->getInstantiationOf(D));
   }
 
+  if (CXXRecordDecl *Record = dyn_cast<CXXRecordDecl>(D))
+    if (ClassTemplateDecl *ClassTemplate 
+          = Record->getDescribedClassTemplate()) {
+      // When the declaration D was parsed, it referred to the current
+      // instantiation. Therefore, look through the current context,
+      // which contains actual instantiations, to find the
+      // instantiation of the "current instantiation" that D refers
+      // to. Alternatively, we could just instantiate the
+      // injected-class-name with the current template arguments, but
+      // such an instantiation is far more expensive.
+      for (DeclContext *DC = CurContext; !DC->isFileContext(); 
+           DC = DC->getParent()) {
+        if (ClassTemplateSpecializationDecl *Spec 
+              = dyn_cast<ClassTemplateSpecializationDecl>(DC))
+          if (isInstantiationOf(ClassTemplate, Spec->getSpecializedTemplate()))
+            return Spec;
+      }
+
+      assert(false && 
+             "Unable to find declaration for the current instantiation");
+    }
+
   ParentDC = FindInstantiatedContext(ParentDC);
   if (!ParentDC) return 0;
 
@@ -1286,32 +1364,10 @@ NamedDecl * Sema::FindInstantiatedDecl(NamedDecl *D) {
                                    ParentDC->decls_begin(),
                                    ParentDC->decls_end());
     }
+    
     assert(Result && "Unable to find instantiation of declaration!");
     D = Result;
   }
-
-  if (CXXRecordDecl *Record = dyn_cast<CXXRecordDecl>(D))
-    if (ClassTemplateDecl *ClassTemplate 
-          = Record->getDescribedClassTemplate()) {
-      // When the declaration D was parsed, it referred to the current
-      // instantiation. Therefore, look through the current context,
-      // which contains actual instantiations, to find the
-      // instantiation of the "current instantiation" that D refers
-      // to. Alternatively, we could just instantiate the
-      // injected-class-name with the current template arguments, but
-      // such an instantiation is far more expensive.
-      for (DeclContext *DC = CurContext; !DC->isFileContext(); 
-           DC = DC->getParent()) {
-        if (ClassTemplateSpecializationDecl *Spec 
-              = dyn_cast<ClassTemplateSpecializationDecl>(DC))
-          if (Spec->getSpecializedTemplate()->getCanonicalDecl()
-              == ClassTemplate->getCanonicalDecl())
-            return Spec;
-      }
-
-      assert(false && 
-             "Unable to find declaration for the current instantiation");
-    }
 
   return D;
 }

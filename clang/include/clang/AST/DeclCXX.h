@@ -405,8 +405,12 @@ public:
 
   /// reverse_base_class_iterator = Iterator that traverses the base classes
   /// of a class in reverse order.
- typedef std::reverse_iterator<base_class_const_iterator>
-   reverse_base_class_const_iterator;
+  typedef std::reverse_iterator<base_class_const_iterator>
+    reverse_base_class_const_iterator;
+
+  virtual CXXRecordDecl *getCanonicalDecl() {
+    return cast<CXXRecordDecl>(RecordDecl::getCanonicalDecl());
+  }
 
   static CXXRecordDecl *Create(ASTContext &C, TagKind TK, DeclContext *DC,
                                SourceLocation L, IdentifierInfo *Id,
@@ -712,7 +716,7 @@ public:
     
     return dyn_cast<FunctionDecl>(getDeclContext());
   }
-  
+
   /// viewInheritance - Renders and displays an inheritance diagram
   /// for this C++ class and all of its base classes (transitively) using
   /// GraphViz.
