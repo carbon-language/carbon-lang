@@ -65,6 +65,12 @@ bool Parser::ParseOptionalCXXScopeSpecifier(CXXScopeSpec &SS,
     // Parse the optional 'template' keyword, then make sure we have
     // 'identifier <' after it.
     if (Tok.is(tok::kw_template)) {
+      // If we don't have a scope specifier, this isn't a
+      // nested-name-specifier, since they aren't allowed to start with
+      // 'template'.
+      if (!HasScopeSpecifier)
+        break;
+
       SourceLocation TemplateKWLoc = ConsumeToken();
       
       if (Tok.isNot(tok::identifier)) {
@@ -86,6 +92,8 @@ bool Parser::ParseOptionalCXXScopeSpecifier(CXXScopeSpec &SS,
         = Actions.ActOnDependentTemplateName(TemplateKWLoc,
                                              *Tok.getIdentifierInfo(),
                                              Tok.getLocation(), SS);
+      if (!Template)
+        break;
       if (AnnotateTemplateIdToken(Template, TNK_Dependent_template_name,
                                   &SS, TemplateKWLoc, false))
         break;
