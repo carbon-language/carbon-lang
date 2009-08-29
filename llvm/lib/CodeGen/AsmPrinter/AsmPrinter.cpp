@@ -604,6 +604,56 @@ void AsmPrinter::EOL(const char* Comment) const {
   O << '\n';
 }
 
+static const char *DecodeDWARFEncoding(unsigned Encoding) {
+  switch (Encoding) {
+  case dwarf::DW_EH_PE_absptr:
+    return "absptr";
+  case dwarf::DW_EH_PE_omit:
+    return "omit";
+  case dwarf::DW_EH_PE_pcrel:
+    return "pcrel";
+  case dwarf::DW_EH_PE_pcrel | dwarf::DW_EH_PE_udata4:
+    return "pcrel udata4";
+  case dwarf::DW_EH_PE_pcrel | dwarf::DW_EH_PE_sdata4:
+    return "pcrel sdata4";
+  case dwarf::DW_EH_PE_pcrel | dwarf::DW_EH_PE_udata8:
+    return "pcrel udata8";
+  case dwarf::DW_EH_PE_pcrel | dwarf::DW_EH_PE_sdata8:
+    return "pcrel sdata8";
+  case dwarf::DW_EH_PE_indirect | dwarf::DW_EH_PE_pcrel |dwarf::DW_EH_PE_udata4:
+    return "indirect pcrel udata4";
+  case dwarf::DW_EH_PE_indirect | dwarf::DW_EH_PE_pcrel |dwarf::DW_EH_PE_sdata4:
+    return "indirect pcrel sdata4";
+  case dwarf::DW_EH_PE_indirect | dwarf::DW_EH_PE_pcrel |dwarf::DW_EH_PE_udata8:
+    return "indirect pcrel udata8";
+  case dwarf::DW_EH_PE_indirect | dwarf::DW_EH_PE_pcrel |dwarf::DW_EH_PE_sdata8:
+    return "indirect pcrel sdata8";
+  }
+
+  return 0;
+}
+
+void AsmPrinter::EOL(const std::string &Comment, unsigned Encoding) const {
+  if (VerboseAsm && !Comment.empty()) {
+    EOL(Comment.c_str(), Encoding);
+    return;
+  }
+  O << '\n';
+}
+
+void AsmPrinter::EOL(const char *Comment, unsigned Encoding) const {
+  if (VerboseAsm && *Comment) {
+    O.PadToColumn(MAI->getCommentColumn());
+    O << MAI->getCommentString()
+      << ' '
+      << Comment;
+
+    if (const char *EncStr = DecodeDWARFEncoding(Encoding))
+      O << " (" << EncStr << ')';
+  }
+  O << '\n';
+}
+
 /// EmitULEB128Bytes - Emit an assembler byte data directive to compose an
 /// unsigned leb128 value.
 void AsmPrinter::EmitULEB128Bytes(unsigned Value) const {
