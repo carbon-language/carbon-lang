@@ -1319,7 +1319,7 @@ Sema::GetDeclaratorInfoForDeclarator(Declarator &D, QualType T, unsigned Skip) {
   } else {
     //FIXME: Other typespecs.
     DefaultTypeSpecLoc &DTL = cast<DefaultTypeSpecLoc>(CurrTL);
-    DTL.setStartLoc(D.getDeclSpec().getTypeSpecTypeLoc());
+    DTL.setStartLoc(D.getDeclSpec().getSourceRange().getBegin());
   }
 
   return DInfo;
