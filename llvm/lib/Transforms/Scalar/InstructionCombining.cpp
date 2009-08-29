@@ -412,7 +412,7 @@ X("instcombine", "Combine redundant instructions");
 
 // getComplexity:  Assign a complexity or rank value to LLVM Values...
 //   0 -> undef, 1 -> Const, 2 -> Other, 3 -> Arg, 3 -> Unary, 4 -> OtherInst
-static unsigned getComplexity(LLVMContext *Context, Value *V) {
+static unsigned getComplexity(Value *V) {
   if (isa<Instruction>(V)) {
     if (BinaryOperator::isNeg(V) ||
         BinaryOperator::isFNeg(V) ||
@@ -512,8 +512,7 @@ static bool ValueRequiresCast(Instruction::CastOps opcode, const Value *V,
 //
 bool InstCombiner::SimplifyCommutative(BinaryOperator &I) {
   bool Changed = false;
-  if (getComplexity(Context, I.getOperand(0)) < 
-      getComplexity(Context, I.getOperand(1)))
+  if (getComplexity(I.getOperand(0)) < getComplexity(I.getOperand(1)))
     Changed = !I.swapOperands();
 
   if (!I.isAssociative()) return Changed;
@@ -551,8 +550,7 @@ bool InstCombiner::SimplifyCommutative(BinaryOperator &I) {
 /// so that theyare listed from right (least complex) to left (most complex).
 /// This puts constants before unary operators before binary operators.
 bool InstCombiner::SimplifyCompare(CmpInst &I) {
-  if (getComplexity(Context, I.getOperand(0)) >=
-      getComplexity(Context, I.getOperand(1)))
+  if (getComplexity(I.getOperand(0)) >= getComplexity(I.getOperand(1)))
     return false;
   I.swapOperands();
   // Compare instructions are not associative so there's nothing else we can do.
