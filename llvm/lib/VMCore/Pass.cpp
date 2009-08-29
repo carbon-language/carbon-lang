@@ -132,9 +132,7 @@ class PassRegistrar {
   
   /// AnalysisGroupInfo - Keep track of information for each analysis group.
   struct AnalysisGroupInfo {
-    const PassInfo *DefaultImpl;
     std::set<const PassInfo *> Implementations;
-    AnalysisGroupInfo() : DefaultImpl(0) {}
   };
   
   /// AnalysisGroupInfoMap - Information for each analysis group.
@@ -177,11 +175,10 @@ public:
            "Cannot add a pass to the same analysis group more than once!");
     AGI.Implementations.insert(ImplementationInfo);
     if (isDefault) {
-      assert(AGI.DefaultImpl == 0 && InterfaceInfo->getNormalCtor() == 0 &&
+      assert(InterfaceInfo->getNormalCtor() == 0 &&
              "Default implementation for analysis group already specified!");
       assert(ImplementationInfo->getNormalCtor() &&
            "Cannot specify pass as default if it does not have a default ctor");
-      AGI.DefaultImpl = ImplementationInfo;
       InterfaceInfo->setNormalCtor(ImplementationInfo->getNormalCtor());
     }
   }
@@ -253,10 +250,10 @@ void PassInfo::unregisterPass() {
 //
 RegisterAGBase::RegisterAGBase(const char *Name, intptr_t InterfaceID,
                                intptr_t PassID, bool isDefault)
-  : PassInfo(Name, InterfaceID),
-    ImplementationInfo(0), isDefaultImplementation(isDefault) {
+  : PassInfo(Name, InterfaceID) {
 
-  InterfaceInfo = const_cast<PassInfo*>(Pass::lookupPassInfo(InterfaceID));
+  PassInfo *InterfaceInfo =
+    const_cast<PassInfo*>(Pass::lookupPassInfo(InterfaceID));
   if (InterfaceInfo == 0) {
     // First reference to Interface, register it now.
     registerPass();
@@ -266,7 +263,7 @@ RegisterAGBase::RegisterAGBase(const char *Name, intptr_t InterfaceID,
          "Trying to join an analysis group that is a normal pass!");
 
   if (PassID) {
-    ImplementationInfo = Pass::lookupPassInfo(PassID);
+    const PassInfo *ImplementationInfo = Pass::lookupPassInfo(PassID);
     assert(ImplementationInfo &&
            "Must register pass before adding to AnalysisGroup!");
 

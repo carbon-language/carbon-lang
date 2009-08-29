@@ -190,14 +190,11 @@ struct RegisterPass : public PassInfo {
 /// a nice name with the interface.
 ///
 class RegisterAGBase : public PassInfo {
-  PassInfo *InterfaceInfo;
-  const PassInfo *ImplementationInfo;
-  bool isDefaultImplementation;
 protected:
-  explicit RegisterAGBase(const char *Name,
-                          intptr_t InterfaceID,
-                          intptr_t PassID = 0,
-                          bool isDefault = false);
+  RegisterAGBase(const char *Name,
+                 intptr_t InterfaceID,
+                 intptr_t PassID = 0,
+                 bool isDefault = false);
 };
 
 template<typename Interface, bool Default = false>
