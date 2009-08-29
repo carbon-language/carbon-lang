@@ -37,7 +37,7 @@ Sema::getTemplateInstantiationArgs(NamedDecl *D) {
   if (!Ctx)
     Ctx = D->getDeclContext();
   
-  for (; !Ctx->isFileContext(); Ctx = Ctx->getParent()) {
+  while (!Ctx->isFileContext()) {
     // Add template arguments from a class template instantiation.
     if (ClassTemplateSpecializationDecl *Spec 
           = dyn_cast<ClassTemplateSpecializationDecl>(Ctx)) {
@@ -46,18 +46,26 @@ Sema::getTemplateInstantiationArgs(NamedDecl *D) {
         break;
       
       Result.addOuterTemplateArguments(&Spec->getTemplateInstantiationArgs());
-      continue;
     } 
     
     // Add template arguments from a function template specialization.
-    if (FunctionDecl *Function = dyn_cast<FunctionDecl>(Ctx)) {
+    else if (FunctionDecl *Function = dyn_cast<FunctionDecl>(Ctx)) {
       // FIXME: Check whether this is an explicit specialization.
       if (const TemplateArgumentList *TemplateArgs
             = Function->getTemplateSpecializationArgs())
         Result.addOuterTemplateArguments(TemplateArgs);
-      
-      continue;
+
+      // If this is a friend declaration and it declares an entity at
+      // namespace scope, take arguments from its lexical parent
+      // instead of its semantic parent.
+      if (Function->getFriendObjectKind() &&
+          Function->getDeclContext()->isFileContext()) {
+        Ctx = Function->getLexicalDeclContext();
+        continue;
+      }
     }
+
+    Ctx = Ctx->getParent();
   }
   
   return Result;

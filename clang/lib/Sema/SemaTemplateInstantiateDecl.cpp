@@ -498,6 +498,8 @@ Decl *TemplateDeclInstantiator::VisitFunctionDecl(FunctionDecl *D) {
     Function->setObjectOfFriendDecl(WasDeclared);
     if (!Owner->isDependentContext())
       DC->makeDeclVisibleInContext(Function);
+
+    Function->setInstantiationOfMemberFunction(D);
   }
   
   if (InitFunctionInstantiation(Function, D))
