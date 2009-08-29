@@ -487,17 +487,11 @@ void SchedulePostRATDList::ScanInstruction(MachineInstr *MI,
       Classes[SubregReg] = 0;
       RegRefs.erase(SubregReg);
     }
-    // Conservatively mark super-registers as unusable. If
-    // initializing for kill updating, then mark all supers as defined
-    // as well.
+    // Conservatively mark super-registers as unusable.
     for (const unsigned *Super = TRI->getSuperRegisters(Reg);
          *Super; ++Super) {
       unsigned SuperReg = *Super;
       Classes[SuperReg] = reinterpret_cast<TargetRegisterClass *>(-1);
-      if (GenerateLivenessForKills) {
-        DefIndices[SuperReg] = Count;
-        KillIndices[SuperReg] = ~0u;
-      }
     }
   }
   for (unsigned i = 0, e = MI->getNumOperands(); i != e; ++i) {
@@ -787,21 +781,36 @@ void SchedulePostRATDList::FixupKills(MachineBasicBlock *MBB) {
 
   std::set<unsigned> killedRegs;
   BitVector ReservedRegs = TRI->getReservedRegs(MF);
-
+  
+  // Examine block from end to start...
   unsigned Count = MBB->size();
   for (MachineBasicBlock::iterator I = MBB->end(), E = MBB->begin();
        I != E; --Count) {
     MachineInstr *MI = --I;
 
-    // After regalloc, IMPLICIT_DEF instructions aren't safe to treat as
-    // dependence-breaking. In the case of an INSERT_SUBREG, the IMPLICIT_DEF
-    // is left behind appearing to clobber the super-register, while the
-    // subregister needs to remain live. So we just ignore them.
-    if (MI->getOpcode() == TargetInstrInfo::IMPLICIT_DEF)
-      continue;
-
-    PrescanInstruction(MI);
-    ScanInstruction(MI, Count);
+    DEBUG(MI->dump());
+    // Update liveness.  Registers that are defed but not used in this
+    // instruction are now dead. Mark register and all subregs as they
+    // are completely defined.
+    for (unsigned i = 0, e = MI->getNumOperands(); i != e; ++i) {
+      MachineOperand &MO = MI->getOperand(i);
+      if (!MO.isReg()) continue;
+      unsigned Reg = MO.getReg();
+      if (Reg == 0) continue;
+      if (!MO.isDef()) continue;
+      // Ignore two-addr defs.
+      if (MI->isRegTiedToUseOperand(i)) continue;
+      
+      DEBUG(errs() << "*** Handling Defs " << TM.getRegisterInfo()->get(Reg).Name << '\n');
+      
+      KillIndices[Reg] = ~0u;
+      
+      // Repeat for all subregs.
+      for (const unsigned *Subreg = TRI->getSubRegisters(Reg);
+           *Subreg; ++Subreg) {
+        KillIndices[*Subreg] = ~0u;
+      }
+    }
 
     // Examine all used registers and set kill flag. When a register
     // is used multiple times we only set the kill flag on the first
@@ -813,15 +822,49 @@ void SchedulePostRATDList::FixupKills(MachineBasicBlock *MBB) {
       unsigned Reg = MO.getReg();
       if ((Reg == 0) || ReservedRegs.test(Reg)) continue;
 
-      bool kill = ((KillIndices[Reg] == Count) && 
-                   (killedRegs.find(Reg) == killedRegs.end()));
+      DEBUG(errs() << "*** Handling Uses " << TM.getRegisterInfo()->get(Reg).Name << '\n');
+
+      bool kill = false;
+      if (killedRegs.find(Reg) == killedRegs.end()) {
+        kill = true;
+        // A register is not killed if any subregs are live...
+        for (const unsigned *Subreg = TRI->getSubRegisters(Reg);
+             *Subreg; ++Subreg) {
+          if (KillIndices[*Subreg] != ~0u) {
+            kill = false;
+            break;
+          }
+        }
+
+        // If subreg is not live, then register is killed if it became
+        // live in this instruction
+        if (kill)
+          kill = (KillIndices[Reg] == ~0u);
+      }
+      
       if (MO.isKill() != kill) {
         MO.setIsKill(kill);
         DEBUG(errs() << "Fixed " << MO << " in ");
         DEBUG(MI->dump());
       }
-
+      
       killedRegs.insert(Reg);
+    }
+    
+    // Mark any used register and subregs as now live...
+    for (unsigned i = 0, e = MI->getNumOperands(); i != e; ++i) {
+      MachineOperand &MO = MI->getOperand(i);
+      if (!MO.isReg() || !MO.isUse()) continue;
+      unsigned Reg = MO.getReg();
+      if ((Reg == 0) || ReservedRegs.test(Reg)) continue;
+
+      DEBUG(errs() << "Killing " << TM.getRegisterInfo()->get(Reg).Name << '\n');
+      KillIndices[Reg] = Count;
+      
+      for (const unsigned *Subreg = TRI->getSubRegisters(Reg);
+           *Subreg; ++Subreg) {
+        KillIndices[*Subreg] = Count;
+      }
     }
   }
 }
