@@ -324,6 +324,17 @@ void CodeGenFunction::EmitBranchOnBoolExpr(const Expr *Cond,
                                            llvm::BasicBlock *FalseBlock) {
   if (const ParenExpr *PE = dyn_cast<ParenExpr>(Cond))
     return EmitBranchOnBoolExpr(PE->getSubExpr(), TrueBlock, FalseBlock);
+  if (const CastExpr *E = dyn_cast<CastExpr>(Cond))
+    if (E->getCastKind() == CastExpr::CK_UserDefinedConversion) {
+      if (const CXXFunctionalCastExpr *CXXFExpr = 
+            dyn_cast<CXXFunctionalCastExpr>(E)) {
+          EmitCXXFunctionalCastExpr(CXXFExpr);
+        return;
+      }
+      else if (isa<CStyleCastExpr>(E))
+        return EmitBranchOnBoolExpr(E->getSubExpr(), TrueBlock, FalseBlock);
+      assert(false && "EmitBranchOnBoolExpr - Expected CStyleCastExpr");
+    }
   
   if (const BinaryOperator *CondBOp = dyn_cast<BinaryOperator>(Cond)) {
     // Handle X && Y in a condition.

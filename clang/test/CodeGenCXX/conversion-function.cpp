@@ -39,6 +39,22 @@ class Y { // ...
 
 Y y;
 
+int count=0;
+class O { // ...
+public: 
+	operator int(){ return ++iO; }
+        O() : iO(count++) {}
+	int iO;
+};
+
+void g(O a, O b)
+{
+        int i = (a) ? 1+a : 0; 
+        int j = (a&&b) ? a+b : i; 
+        if (a) { }
+	printf("i = %d j = %d a.iO = %d b.iO = %d\n", i, j, a.iO, b.iO);
+}
+
 int main() {
     int c = X(Z(y)); // OK: y.operator Z().operator X().operator int()
     printf("c = %d\n", c);
@@ -58,6 +74,8 @@ int main() {
 
     int e = (int)((X)((Z)y));
     printf("e = %d\n", e);
+    O o1, o2;
+    g(o1, o2);
 }
 // CHECK-LP64: .globl  __ZN1ScviEv
 // CHECK-LP64-NEXT: __ZN1ScviEv:
