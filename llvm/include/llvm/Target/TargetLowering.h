@@ -32,6 +32,7 @@
 #include "llvm/ADT/SmallVector.h"
 #include "llvm/ADT/STLExtras.h"
 #include "llvm/Support/DebugLoc.h"
+#include "llvm/Support/Dwarf.h"
 #include "llvm/Target/TargetMachine.h"
 #include <climits>
 #include <map>
@@ -750,7 +751,7 @@ public:
   /// getPICJumpTableRelocaBase - Returns relocation base for the given PIC
   /// jumptable.
   virtual SDValue getPICJumpTableRelocBase(SDValue Table,
-                                             SelectionDAG &DAG) const;
+                                           SelectionDAG &DAG) const;
 
   /// isOffsetFoldingLegal - Return true if folding a constant offset
   /// with the given GlobalAddress is legal.  It is frequently not legal in
@@ -759,6 +760,18 @@ public:
 
   /// getFunctionAlignment - Return the Log2 alignment of this function.
   virtual unsigned getFunctionAlignment(const Function *) const = 0;
+
+  /// getPreferredLSDADataFormat - Return the preferred exception handling data
+  /// format for the LSDA.
+  virtual unsigned getPreferredLSDADataFormat() const {
+    return dwarf::DW_EH_PE_absptr;
+  }
+
+  /// getPreferredFDEDataFormat - Return the preferred exception handling data
+  /// format for the FDE.
+  virtual unsigned getPreferredFDEDataFormat() const {
+    return dwarf::DW_EH_PE_absptr;
+  }
 
   //===--------------------------------------------------------------------===//
   // TargetLowering Optimization Methods

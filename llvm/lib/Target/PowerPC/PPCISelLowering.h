@@ -346,6 +346,14 @@ namespace llvm {
     /// getFunctionAlignment - Return the Log2 alignment of this function.
     virtual unsigned getFunctionAlignment(const Function *F) const;
 
+    /// getPreferredLSDADataFormat - Return the preferred exception handling data
+    /// format for the LSDA.
+    virtual unsigned getPreferredLSDADataFormat() const;
+
+    /// getPreferredFDEDataFormat - Return the preferred exception handling data
+    /// format for the FDE.
+    virtual unsigned getPreferredFDEDataFormat() const;
+
   private:
     SDValue getFramePointerFrameIndex(SelectionDAG & DAG) const;
     SDValue getReturnAddrFrameIndex(SelectionDAG & DAG) const;

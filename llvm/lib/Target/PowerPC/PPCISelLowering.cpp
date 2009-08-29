@@ -464,6 +464,40 @@ unsigned PPCTargetLowering::getFunctionAlignment(const Function *F) const {
     return 2;
 }
 
+/// getPreferredLSDADataFormat - Return the preferred exception handling data
+/// format for the LSDA.
+unsigned PPCTargetLowering::getPreferredLSDADataFormat() const {
+  if (getTargetMachine().getSubtarget<PPCSubtarget>().isDarwin())
+    return dwarf::DW_EH_PE_pcrel;
+
+  if (PPCSubTarget.isPPC64() ||
+      getTargetMachine().getRelocationModel() == Reloc::PIC_) {
+    unsigned DataTy =
+      (PPCSubTarget.isPPC64() ?
+       dwarf::DW_EH_PE_udata8 : dwarf::DW_EH_PE_udata4);
+    return dwarf::DW_EH_PE_pcrel | DataTy;
+  }
+
+  return dwarf::DW_EH_PE_absptr;
+}
+
+/// getPreferredFDEDataFormat - Return the preferred exception handling data
+/// format for the FDE.
+unsigned PPCTargetLowering::getPreferredFDEDataFormat() const {
+  if (getTargetMachine().getSubtarget<PPCSubtarget>().isDarwin())
+    return dwarf::DW_EH_PE_pcrel;
+
+  if (PPCSubTarget.isPPC64() ||
+      getTargetMachine().getRelocationModel() == Reloc::PIC_) {
+    unsigned DataTy =
+      (PPCSubTarget.isPPC64() ?
+       dwarf::DW_EH_PE_udata8 : dwarf::DW_EH_PE_udata4);
+    return dwarf::DW_EH_PE_pcrel | DataTy;
+  }
+
+  return dwarf::DW_EH_PE_absptr;
+}
+
 //===----------------------------------------------------------------------===//
 // Node matching predicates, for use by the tblgen matching code.
 //===----------------------------------------------------------------------===//
