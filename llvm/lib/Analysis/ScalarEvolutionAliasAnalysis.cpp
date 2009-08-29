@@ -69,9 +69,14 @@ ScalarEvolutionAliasAnalysis::runOnFunction(Function &F) {
   return false;
 }
 
+/// GetUnderlyingIdentifiedObject - Given an expression, try to find an
+/// "identified object" (see AliasAnalysis::isIdentifiedObject) base
+/// value. Return null is none was found.
 Value *
 ScalarEvolutionAliasAnalysis::GetUnderlyingIdentifiedObject(const SCEV *S) {
   if (const SCEVAddRecExpr *AR = dyn_cast<SCEVAddRecExpr>(S)) {
+    // In an addrec, assume that the base will be in the start, rather
+    // than the step.
     return GetUnderlyingIdentifiedObject(AR->getStart());
   } else if (const SCEVAddExpr *A = dyn_cast<SCEVAddExpr>(S)) {
     // If there's a pointer operand, it'll be sorted at the end of the list.
