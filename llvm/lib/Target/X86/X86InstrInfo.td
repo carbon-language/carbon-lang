@@ -1038,8 +1038,10 @@ let Uses = [EFLAGS] in {
 // X86 doesn't have 8-bit conditional moves. Use a customDAGSchedInserter to
 // emit control flow. An alternative to this is to mark i8 SELECT as Promote,
 // however that requires promoting the operands, and can induce additional
-// i8 register pressure.
-let usesCustomDAGSchedInserter = 1, isTwoAddress = 0 in
+// i8 register pressure. Note that CMOV_GR8 is conservatively considered to
+// clobber EFLAGS, because if one of the operands is zero, the expansion
+// could involve an xor.
+let usesCustomDAGSchedInserter = 1, isTwoAddress = 0, Defs = [EFLAGS] in
 def CMOV_GR8 : I<0, Pseudo,
                  (outs GR8:$dst), (ins GR8:$src1, GR8:$src2, i8imm:$cond),
                  "#CMOV_GR8 PSEUDO!",
