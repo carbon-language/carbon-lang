@@ -18,3 +18,9 @@ template<typename T> struct B {
 };
 
 B<int> b0;
+
+template <class T> struct AA { AA(int); };
+template <class T> class BB : public AA<T> {
+  BB() : AA<T>(1) {}
+};
+BB<int> x;

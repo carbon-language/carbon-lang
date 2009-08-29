@@ -1134,9 +1134,9 @@ Sema::InstantiateMemInitializers(CXXConstructorDecl *New,
     MemInitResult NewInit;
 
     if (Init->isBaseInitializer()) {
-      // FIXME: Type needs to be instantiated.
-      QualType BaseType = 
-        Context.getCanonicalType(QualType(Init->getBaseClass(), 0));
+      QualType BaseType(Init->getBaseClass(), 0);
+      BaseType = SubstType(BaseType, TemplateArgs, Init->getSourceLocation(),
+                           New->getDeclName());
 
       NewInit = BuildBaseInitializer(BaseType,
                                      (Expr **)NewArgs.data(), 
