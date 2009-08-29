@@ -245,7 +245,12 @@ public:
                    ExplodedNode *n, const Stmt *arg)
   : BuiltinBugReport(bt, shortDesc, desc, n), Arg(arg) {}  
   
-  const Stmt *getArg() const { return Arg; }    
+  const Stmt *getArg() const { return Arg; }  
+
+  void registerInitialVisitors(BugReporterContext& BRC,
+                               const ExplodedNode* N) {
+    registerTrackNullOrUndefValue(BRC, getArg(), N);
+  }    
 };
 
 class VISIBILITY_HIDDEN BadArg : public BuiltinBug {
@@ -629,6 +634,44 @@ public:
 };
 } // end anonymous namespace
 
+// Undefined arguments checking.
+namespace {
+class VISIBILITY_HIDDEN CheckUndefinedArg 
+  : public CheckerVisitor<CheckUndefinedArg> {
+
+  BugType *BT;
+
+public:
+  CheckUndefinedArg() : BT(0) {}
+  ~CheckUndefinedArg() {}
+
+  const void *getTag() {
+    static int x = 0;
+    return &x;
+  }
+
+  void PreVisitCallExpr(CheckerContext &C, const CallExpr *CE);
+};
+
+void CheckUndefinedArg::PreVisitCallExpr(CheckerContext &C, const CallExpr *CE){
+  for (CallExpr::const_arg_iterator I = CE->arg_begin(), E = CE->arg_end();
+       I != E; ++I) {
+    if (C.getState()->getSVal(*I).isUndef()) {
+      if (ExplodedNode *ErrorNode = C.generateNode(CE, C.getState(), true)) {
+        if (!BT)
+          BT = new BugType("Uninitialized argument.", "Logic Errors.");
+        // Generate a report for this bug.
+        ArgReport *Report = new ArgReport(*BT, 
+                     "Pass-by-value argument in function call is undefined.",
+                                          ErrorNode, *I);
+        Report->addRange((*I)->getSourceRange());
+        C.EmitReport(Report);
+      }
+    }
+  }
+}
+
+}
 //===----------------------------------------------------------------------===//
 // Check registration.
 //===----------------------------------------------------------------------===//
@@ -647,7 +690,6 @@ void GRExprEngine::RegisterInternalChecks() {
   BR.Register(new BadCall(this));
   BR.Register(new RetStack(this));
   BR.Register(new RetUndef(this));
-  BR.Register(new BadArg(this));
   BR.Register(new BadMsgExprArg(this));
   BR.Register(new BadReceiver(this));
   BR.Register(new OutOfBoundMemoryAccess(this));
@@ -661,4 +703,5 @@ void GRExprEngine::RegisterInternalChecks() {
   // automatically.  Note that the check itself is owned by the GRExprEngine
   // object.
   registerCheck(new CheckAttrNonNull());
+  registerCheck(new CheckUndefinedArg());
 }

@@ -1626,30 +1626,7 @@ void GRExprEngine::VisitCallRec(CallExpr* CE, ExplodedNode* Pred,
           default:
             break;
         }
-    }
-
-    // Check any arguments passed-by-value against being undefined.
-
-    bool badArg = false;
-    
-    for (CallExpr::arg_iterator I = CE->arg_begin(), E = CE->arg_end();
-         I != E; ++I) {
-
-      if (GetState(*DI)->getSVal(*I).isUndef()) {        
-        ExplodedNode* N = Builder->generateNode(CE, GetState(*DI), *DI);
-      
-        if (N) {
-          N->markAsSink();
-          UndefArgs[N] = *I;
-        }
-        
-        badArg = true;
-        break;
-      }
-    }
-    
-    if (badArg)
-      continue;        
+    }       
 
     // Dispatch to the plug-in transfer function.      
     
