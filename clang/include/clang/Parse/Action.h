@@ -1079,6 +1079,7 @@ public:
 
   /// ActOnUsingDirective - This is called when using-directive is parsed.
   virtual DeclPtrTy ActOnUsingDeclaration(Scope *CurScope,
+                                          AccessSpecifier AS,
                                           SourceLocation UsingLoc,
                                           const CXXScopeSpec &SS,
                                           SourceLocation IdentLoc,

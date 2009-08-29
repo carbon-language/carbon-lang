@@ -1750,6 +1750,7 @@ public:
                                    bool IsTypeName);
   
   virtual DeclPtrTy ActOnUsingDeclaration(Scope *CurScope,
+                                          AccessSpecifier AS,
                                           SourceLocation UsingLoc,
                                           const CXXScopeSpec &SS,
                                           SourceLocation IdentLoc,

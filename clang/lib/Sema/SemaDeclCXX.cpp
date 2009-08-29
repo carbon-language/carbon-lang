@@ -2094,6 +2094,7 @@ void Sema::PushUsingDirective(Scope *S, UsingDirectiveDecl *UDir) {
 
 
 Sema::DeclPtrTy Sema::ActOnUsingDeclaration(Scope *S,
+                                            AccessSpecifier AS,
                                             SourceLocation UsingLoc,
                                             const CXXScopeSpec &SS,
                                             SourceLocation IdentLoc,
@@ -2112,8 +2113,10 @@ Sema::DeclPtrTy Sema::ActOnUsingDeclaration(Scope *S,
   
   NamedDecl *UD = BuildUsingDeclaration(UsingLoc, SS, IdentLoc, 
                                         Name, AttrList, IsTypeName);
-  if (UD)
+  if (UD) {
     PushOnScopeChains(UD, S);
+    UD->setAccess(AS);
+  }
   
   return DeclPtrTy::make(UD);
 }

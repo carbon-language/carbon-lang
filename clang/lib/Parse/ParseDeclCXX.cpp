@@ -259,7 +259,8 @@ Parser::DeclPtrTy Parser::ParseUsingDirective(unsigned Context,
 ///
 Parser::DeclPtrTy Parser::ParseUsingDeclaration(unsigned Context,
                                                 SourceLocation UsingLoc,
-                                                SourceLocation &DeclEnd) {
+                                                SourceLocation &DeclEnd,
+                                                AccessSpecifier AS) {
   CXXScopeSpec SS;
   bool IsTypeName;
 
@@ -324,7 +325,7 @@ Parser::DeclPtrTy Parser::ParseUsingDeclaration(unsigned Context,
   ExpectAndConsume(tok::semi, diag::err_expected_semi_after,
                    AttrList ? "attributes list" : "namespace name", tok::semi);
 
-  return Actions.ActOnUsingDeclaration(CurScope, UsingLoc, SS,
+  return Actions.ActOnUsingDeclaration(CurScope, AS, UsingLoc, SS,
                                        IdentLoc, TargetName, Op,
                                        AttrList, IsTypeName);
 }
@@ -949,7 +950,7 @@ void Parser::ParseCXXClassMemberDeclaration(AccessSpecifier AS,
     else {
       SourceLocation DeclEnd;
       // Otherwise, it must be using-declaration.
-      ParseUsingDeclaration(Declarator::MemberContext, UsingLoc, DeclEnd);
+      ParseUsingDeclaration(Declarator::MemberContext, UsingLoc, DeclEnd, AS);
     }
     return;
   }

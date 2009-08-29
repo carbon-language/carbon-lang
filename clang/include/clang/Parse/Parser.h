@@ -1157,7 +1157,8 @@ private:
   DeclPtrTy ParseUsingDirective(unsigned Context, SourceLocation UsingLoc,
                                 SourceLocation &DeclEnd);
   DeclPtrTy ParseUsingDeclaration(unsigned Context, SourceLocation UsingLoc,
-                                  SourceLocation &DeclEnd);
+                                  SourceLocation &DeclEnd,
+                                  AccessSpecifier AS = AS_none);
   DeclPtrTy ParseStaticAssertDeclaration(SourceLocation &DeclEnd);
   DeclPtrTy ParseNamespaceAlias(SourceLocation NamespaceLoc,
                                 SourceLocation AliasLoc, IdentifierInfo *Alias,

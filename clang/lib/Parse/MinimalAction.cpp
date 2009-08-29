@@ -44,13 +44,14 @@ Action::DeclPtrTy Action::ActOnUsingDirective(Scope *CurScope,
 
 // Defined out-of-line here because of dependecy on AttributeList
 Action::DeclPtrTy Action::ActOnUsingDeclaration(Scope *CurScope,
-                                              SourceLocation UsingLoc,
-                                              const CXXScopeSpec &SS,
-                                              SourceLocation IdentLoc,
-                                              IdentifierInfo *TargetName,
-                                              OverloadedOperatorKind Op,
-                                              AttributeList *AttrList,
-                                              bool IsTypeName) {
+                                                AccessSpecifier AS,
+                                                SourceLocation UsingLoc,
+                                                const CXXScopeSpec &SS,
+                                                SourceLocation IdentLoc,
+                                                IdentifierInfo *TargetName,
+                                                OverloadedOperatorKind Op,
+                                                AttributeList *AttrList,
+                                                bool IsTypeName) {
   
   // FIXME: Parser seems to assume that Action::ActOn* takes ownership over
   // passed AttributeList, however other actions don't free it, is it
