@@ -926,44 +926,6 @@ Expr::isModifiableLvalue(ASTContext &Ctx, SourceLocation *Loc) const {
   return MLV_Valid;    
 }
 
-/// hasGlobalStorage - Return true if this expression has static storage
-/// duration.  This means that the address of this expression is a link-time
-/// constant.
-bool Expr::hasGlobalStorage() const {
-  switch (getStmtClass()) {
-  default:
-    return false;
-  case BlockExprClass:
-    return true;
-  case ParenExprClass:
-    return cast<ParenExpr>(this)->getSubExpr()->hasGlobalStorage();
-  case ImplicitCastExprClass:
-    return cast<ImplicitCastExpr>(this)->getSubExpr()->hasGlobalStorage();
-  case CompoundLiteralExprClass:
-    return cast<CompoundLiteralExpr>(this)->isFileScope();
-  case DeclRefExprClass:
-  case QualifiedDeclRefExprClass: {
-    const Decl *D = cast<DeclRefExpr>(this)->getDecl();
-    if (const VarDecl *VD = dyn_cast<VarDecl>(D))
-      return VD->hasGlobalStorage();
-    if (isa<FunctionDecl>(D))
-      return true;
-    return false;
-  }
-  case MemberExprClass:
-  case CXXQualifiedMemberExprClass: {
-    const MemberExpr *M = cast<MemberExpr>(this);
-    return !M->isArrow() && M->getBase()->hasGlobalStorage();
-  }
-  case ArraySubscriptExprClass:
-    return cast<ArraySubscriptExpr>(this)->getBase()->hasGlobalStorage();
-  case PredefinedExprClass:
-    return true;
-  case CXXDefaultArgExprClass:
-    return cast<CXXDefaultArgExpr>(this)->getExpr()->hasGlobalStorage();
-  }
-}
-
 /// isOBJCGCCandidate - Check if an expression is objc gc'able.
 ///
 bool Expr::isOBJCGCCandidate(ASTContext &Ctx) const {

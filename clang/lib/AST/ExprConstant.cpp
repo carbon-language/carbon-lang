@@ -187,14 +187,14 @@ static bool EvaluateLValue(const Expr* E, APValue& Result, EvalInfo &Info) {
 
 APValue LValueExprEvaluator::VisitDeclRefExpr(DeclRefExpr *E)
 {
-  if (!E->hasGlobalStorage())
-    return APValue();
-
   if (isa<FunctionDecl>(E->getDecl())) {
     return APValue(E, 0);
   } else if (VarDecl* VD = dyn_cast<VarDecl>(E->getDecl())) {
+    if (!VD->hasGlobalStorage())
+      return APValue();
     if (!VD->getType()->isReferenceType())
       return APValue(E, 0);
+    // FIXME: Check whether VD might be overridden!
     if (VD->getInit())
       return Visit(VD->getInit());
   }

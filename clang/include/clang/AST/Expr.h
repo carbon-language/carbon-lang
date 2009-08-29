@@ -257,11 +257,6 @@ public:
   /// cast to void*.
   bool isNullPointerConstant(ASTContext &Ctx) const;
 
-  /// hasGlobalStorage - Return true if this expression has static storage
-  /// duration.  This means that the address of this expression is a link-time
-  /// constant.
-  bool hasGlobalStorage() const;  
-
   /// isOBJCGCCandidate - Return true if this expression may be used in a read/
   /// write barrier. 
   bool isOBJCGCCandidate(ASTContext &Ctx) const;
