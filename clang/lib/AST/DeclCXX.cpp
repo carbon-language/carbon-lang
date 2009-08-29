@@ -400,8 +400,8 @@ QualType CXXMethodDecl::getThisType(ASTContext &C) const {
 CXXBaseOrMemberInitializer::
 CXXBaseOrMemberInitializer(QualType BaseType, Expr **Args, unsigned NumArgs,
                            CXXConstructorDecl *C,
-                           SourceLocation L) 
-  : Args(0), NumArgs(0), IdLoc(L) {
+                           SourceLocation L, SourceLocation R) 
+  : Args(0), NumArgs(0), IdLoc(L), RParenLoc(R) {
   BaseOrMember = reinterpret_cast<uintptr_t>(BaseType.getTypePtr());
   assert((BaseOrMember & 0x01) == 0 && "Invalid base class type pointer");
   BaseOrMember |= 0x01;
@@ -419,8 +419,8 @@ CXXBaseOrMemberInitializer(QualType BaseType, Expr **Args, unsigned NumArgs,
 CXXBaseOrMemberInitializer::
 CXXBaseOrMemberInitializer(FieldDecl *Member, Expr **Args, unsigned NumArgs,
                            CXXConstructorDecl *C,
-                           SourceLocation L)
-  : Args(0), NumArgs(0), IdLoc(L) {
+                           SourceLocation L, SourceLocation R)
+  : Args(0), NumArgs(0), IdLoc(L), RParenLoc(R) {
   BaseOrMember = reinterpret_cast<uintptr_t>(Member);
   assert((BaseOrMember & 0x01) == 0 && "Invalid member pointer");  
 
@@ -622,6 +622,7 @@ CXXConstructorDecl::setBaseOrMemberInitializers(
       CXXBaseOrMemberInitializer *Member = 
         new (C) CXXBaseOrMemberInitializer(VBase->getType(), 0, 0,
                                            VBaseDecl->getDefaultConstructor(C),
+                                           SourceLocation(),
                                            SourceLocation());
       AllToInit.push_back(Member);
     }
@@ -648,6 +649,7 @@ CXXConstructorDecl::setBaseOrMemberInitializers(
       CXXBaseOrMemberInitializer *Member = 
       new (C) CXXBaseOrMemberInitializer(Base->getType(), 0, 0,
                                          BaseDecl->getDefaultConstructor(C),
+                                         SourceLocation(),
                                          SourceLocation());
       AllToInit.push_back(Member);
     }
@@ -690,6 +692,7 @@ CXXConstructorDecl::setBaseOrMemberInitializers(
       CXXBaseOrMemberInitializer *Member = 
         new (C) CXXBaseOrMemberInitializer((*Field), 0, 0,
                                            Ctor,
+                                           SourceLocation(),
                                            SourceLocation());
       AllToInit.push_back(Member);
     } 

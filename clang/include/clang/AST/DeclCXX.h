@@ -841,18 +841,21 @@ class CXXBaseOrMemberInitializer {
   /// IdLoc - Location of the id in ctor-initializer list.
   SourceLocation IdLoc;
 
+  /// RParenLoc - Location of the right paren of the ctor-initializer.
+  SourceLocation RParenLoc;
+
 public:
   /// CXXBaseOrMemberInitializer - Creates a new base-class initializer.
   explicit 
   CXXBaseOrMemberInitializer(QualType BaseType, Expr **Args, unsigned NumArgs,
                              CXXConstructorDecl *C,
-                             SourceLocation L);
+                             SourceLocation L, SourceLocation R);
 
   /// CXXBaseOrMemberInitializer - Creates a new member initializer.
   explicit 
   CXXBaseOrMemberInitializer(FieldDecl *Member, Expr **Args, unsigned NumArgs,
                              CXXConstructorDecl *C,
-                             SourceLocation L);
+                             SourceLocation L, SourceLocation R);
 
   /// ~CXXBaseOrMemberInitializer - Destroy the base or member initializer.
   ~CXXBaseOrMemberInitializer();
@@ -923,6 +926,7 @@ public:
   const CXXConstructorDecl *getConstructor() const { return CtorToCall; }
   
   SourceLocation getSourceLocation() const { return IdLoc; }
+  SourceLocation getRParenLoc() const { return RParenLoc; }
   
   /// arg_begin() - Retrieve an iterator to the first initializer argument.
   arg_iterator       arg_begin()       { return Args; }

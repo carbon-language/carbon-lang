@@ -797,7 +797,7 @@ Sema::BuildMemberInitializer(FieldDecl *Member, Expr **Args,
   }
   // FIXME: Perform direct initialization of the member.
   return new (Context) CXXBaseOrMemberInitializer(Member, (Expr **)Args, 
-                                                  NumArgs, C, IdLoc);
+                                                  NumArgs, C, IdLoc, RParenLoc);
 }
 
 Sema::MemInitResult
@@ -880,7 +880,7 @@ Sema::BuildBaseInitializer(QualType BaseType, Expr **Args,
   }
 
   return new (Context) CXXBaseOrMemberInitializer(BaseType, (Expr **)Args, 
-                                                  NumArgs, C, IdLoc);
+                                                  NumArgs, C, IdLoc, RParenLoc);
 }
 
 void
