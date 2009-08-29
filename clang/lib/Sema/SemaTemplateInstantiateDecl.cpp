@@ -757,9 +757,14 @@ TemplateDeclInstantiator::VisitUnresolvedUsingDecl(UnresolvedUsingDecl *D) {
   SS.setRange(D->getTargetNestedNameRange());
   SS.setScopeRep(NNS);
   
-  return SemaRef.BuildUsingDeclaration(D->getLocation(), SS, 
-                                       D->getTargetNameLocation(), 
-                                       D->getTargetName(), 0, D->isTypeName());
+  NamedDecl *UD = 
+    SemaRef.BuildUsingDeclaration(D->getLocation(), SS, 
+                                  D->getTargetNameLocation(), 
+                                  D->getTargetName(), 0, D->isTypeName());
+  if (UD)
+    SemaRef.Context.setInstantiatedFromUnresolvedUsingDecl(cast<UsingDecl>(UD), 
+                                                           D);
+  return UD;
 }
 
 Decl *Sema::SubstDecl(Decl *D, DeclContext *Owner,
@@ -1220,6 +1225,12 @@ static bool isInstantiationOf(EnumDecl *Pattern,
   return false;
 }
 
+static bool isInstantiationOf(UnresolvedUsingDecl *Pattern,
+                              UsingDecl *Instance,
+                              ASTContext &C) {
+  return C.getInstantiatedFromUnresolvedUsingDecl(Instance) == Pattern;
+}
+
 static bool isInstantiationOfStaticDataMember(VarDecl *Pattern,
                                               VarDecl *Instance) {
   assert(Instance->isStaticDataMember());
@@ -1236,9 +1247,16 @@ static bool isInstantiationOfStaticDataMember(VarDecl *Pattern,
 }
 
 static bool isInstantiationOf(ASTContext &Ctx, NamedDecl *D, Decl *Other) {
-  if (D->getKind() != Other->getKind())
-    return false;
+  if (D->getKind() != Other->getKind()) {
+    if (UnresolvedUsingDecl *UUD = dyn_cast<UnresolvedUsingDecl>(D)) {
+      if (UsingDecl *UD = dyn_cast<UsingDecl>(Other)) {
+        return isInstantiationOf(UUD, UD, Ctx);
+      }
+    }
 
+    return false;
+  }
+  
   if (CXXRecordDecl *Record = dyn_cast<CXXRecordDecl>(Other))
     return isInstantiationOf(cast<CXXRecordDecl>(D), Record);
   

@@ -242,6 +242,24 @@ ASTContext::setInstantiatedFromStaticDataMember(VarDecl *Inst, VarDecl *Tmpl) {
   InstantiatedFromStaticDataMember[Inst] = Tmpl;
 }
 
+UnresolvedUsingDecl *
+ASTContext::getInstantiatedFromUnresolvedUsingDecl(UsingDecl *UUD) {
+  llvm::DenseMap<UsingDecl *, UnresolvedUsingDecl *>::iterator Pos 
+    = InstantiatedFromUnresolvedUsingDecl.find(UUD);
+  if (Pos == InstantiatedFromUnresolvedUsingDecl.end())
+    return 0;
+  
+  return Pos->second;
+}
+
+void
+ASTContext::setInstantiatedFromUnresolvedUsingDecl(UsingDecl *UD,
+                                                   UnresolvedUsingDecl *UUD) {
+  assert(!InstantiatedFromUnresolvedUsingDecl[UD] &&
+         "Already noted what using decl what instantiated from");
+  InstantiatedFromUnresolvedUsingDecl[UD] = UUD;
+}
+
 namespace {
   class BeforeInTranslationUnit 
     : std::binary_function<SourceRange, SourceRange, bool> {

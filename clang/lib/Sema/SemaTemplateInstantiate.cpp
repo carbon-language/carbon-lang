@@ -477,6 +477,11 @@ TemplateInstantiator::TransformDeclRefExpr(DeclRefExpr *E) {
   if (!InstD)
     return SemaRef.ExprError();
   
+  // If we instantiated an UnresolvedUsingDecl and got back an UsingDecl,
+  // we need to get the underlying decl. 
+  // FIXME: Is this correct? Maybe FindInstantiatedDecl should do this?
+  InstD = InstD->getUnderlyingDecl();
+  
   // FIXME: nested-name-specifier for QualifiedDeclRefExpr
   return SemaRef.BuildDeclarationNameExpr(E->getLocation(), InstD, 
                                           /*FIXME:*/false,
@@ -685,6 +690,8 @@ Sema::InstantiateClass(SourceLocation PointOfInstantiation,
         Invalid = true;
       else if (FieldDecl *Field = dyn_cast<FieldDecl>(NewMember))
         Fields.push_back(DeclPtrTy::make(Field));
+      else if (UsingDecl *UD = dyn_cast<UsingDecl>(NewMember))
+        Instantiation->addDecl(UD);
     } else {
       // FIXME: Eventually, a NULL return will mean that one of the
       // instantiations was a semantic disaster, and we'll want to set Invalid =

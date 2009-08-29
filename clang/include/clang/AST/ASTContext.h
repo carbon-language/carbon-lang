@@ -44,16 +44,18 @@ namespace clang {
   class TargetInfo;
   // Decls
   class Decl;
+  class FieldDecl;
+  class ObjCIvarDecl;
+  class ObjCIvarRefExpr;
   class ObjCPropertyDecl;
   class RecordDecl;
   class TagDecl;
+  class TemplateTypeParmDecl;
   class TranslationUnitDecl;
   class TypeDecl;
   class TypedefDecl;
-  class TemplateTypeParmDecl;
-  class FieldDecl;
-  class ObjCIvarRefExpr;
-  class ObjCIvarDecl;
+  class UnresolvedUsingDecl;
+  class UsingDecl;
   
   namespace Builtin { class Context; }
   
@@ -171,6 +173,29 @@ class ASTContext {
   /// class template X). 
   llvm::DenseMap<VarDecl *, VarDecl *> InstantiatedFromStaticDataMember;
   
+  /// \brief Keeps track of the UnresolvedUsingDecls from which UsingDecls
+  /// where created during instantiation.
+  ///
+  /// For example:
+  /// \code
+  /// template<typename T>
+  /// struct A {
+  ///   void f();
+  /// };
+  ///
+  /// template<typename T>
+  /// struct B : A<T> {
+  ///   using A<T>::f;
+  /// };
+  ///
+  /// template struct B<int>;
+  /// \endcode
+  ///
+  /// This mapping will contain an entry that maps from the UsingDecl in
+  /// B<int> to the UnresolvedUsingDecl in B<T>.
+  llvm::DenseMap<UsingDecl *, UnresolvedUsingDecl *>
+    InstantiatedFromUnresolvedUsingDecl;
+  
   TranslationUnitDecl *TUDecl;
 
   /// SourceMgr - The associated SourceManager object.
@@ -241,6 +266,10 @@ public:
   /// \brief Note that the static data member \p Inst is an instantiation of
   /// the static data member template \p Tmpl of a class template.
   void setInstantiatedFromStaticDataMember(VarDecl *Inst, VarDecl *Tmpl);  
+  
+  UnresolvedUsingDecl *getInstantiatedFromUnresolvedUsingDecl(UsingDecl *UUD);
+  void setInstantiatedFromUnresolvedUsingDecl(UsingDecl *UD,
+                                              UnresolvedUsingDecl *UUD);
   
   TranslationUnitDecl *getTranslationUnitDecl() const { return TUDecl; }
 
