@@ -3661,6 +3661,7 @@ Sema::DeclPtrTy Sema::ActOnFriendTypeDecl(Scope *S,
 
   FriendDecl *FD = FriendDecl::Create(Context, CurContext, Loc, FU,
                                       DS.getFriendSpecLoc());
+  FD->setAccess(AS_public);
   CurContext->addDecl(FD);
 
   return DeclPtrTy::make(FD);
@@ -3829,6 +3830,7 @@ Sema::DeclPtrTy Sema::ActOnFriendFunctionDecl(Scope *S,
   FriendDecl *FrD = FriendDecl::Create(Context, CurContext,
                                        D.getIdentifierLoc(), FD,
                                        DS.getFriendSpecLoc());
+  FrD->setAccess(AS_public);
   CurContext->addDecl(FrD);
 
   return DeclPtrTy::make(FD);

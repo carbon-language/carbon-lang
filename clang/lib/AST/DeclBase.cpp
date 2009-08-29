@@ -379,16 +379,8 @@ SourceLocation Decl::getBodyRBrace() const {
 
 #ifndef NDEBUG
 void Decl::CheckAccessDeclContext() const {
-  if (isa<TranslationUnitDecl>(this) ||
-      !isa<CXXRecordDecl>(getDeclContext()))
-    return;
-  
-  // FIXME: Should friend declarations have access specifiers?
-  if (isa<FriendDecl>(this) ||
-      getFriendObjectKind() != FOK_None)
-    return;
-  
-  assert(Access != AS_none &&
+  assert((Access != AS_none || isa<TranslationUnitDecl>(this) ||
+          !isa<CXXRecordDecl>(getDeclContext())) &&
          "Access specifier is AS_none inside a record decl");
 }
 

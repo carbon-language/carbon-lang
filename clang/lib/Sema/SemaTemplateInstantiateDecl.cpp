@@ -278,6 +278,7 @@ Decl *TemplateDeclInstantiator::VisitFriendDecl(FriendDecl *D) {
   FriendDecl *FD =
     FriendDecl::Create(SemaRef.Context, Owner, D->getLocation(), FU,
                        D->getFriendLoc());
+  FD->setAccess(AS_public);
   Owner->addDecl(FD);
   return FD;
 }
