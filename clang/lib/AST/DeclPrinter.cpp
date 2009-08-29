@@ -169,7 +169,7 @@ void DeclPrinter::ProcessDeclGroup(llvm::SmallVectorImpl<Decl*>& Decls) {
 
 void DeclPrinter::Print(AccessSpecifier AS) {
   switch(AS) {
-  case AS_none:      break;
+  case AS_none:      assert(0 && "No access specifier!"); break;
   case AS_public:    Out << "public"; break;
   case AS_protected: Out << "protected"; break;
   case AS_private:   Out << " private"; break;
@@ -565,7 +565,9 @@ void DeclPrinter::VisitCXXRecordDecl(CXXRecordDecl *D) {
         if (Base->isVirtual())
           Out << "virtual ";
 
-        Print(Base->getAccessSpecifierAsWritten());
+        AccessSpecifier AS = Base->getAccessSpecifierAsWritten();
+        if (AS != AS_none)
+          Print(AS);
         Out << " " << Base->getType().getAsString(Policy);
       }
     }
@@ -867,5 +869,3 @@ void DeclPrinter::VisitUnresolvedUsingDecl(UnresolvedUsingDecl *D) {
   D->getTargetNestedNameSpecifier()->print(Out, Policy);
   Out << D->getTargetName().getAsString();
 }
-
-
