@@ -71,12 +71,12 @@ OProfileJITEventListener::~OProfileJITEventListener() {
 class FilenameCache {
   // Holds the filename of each CompileUnit, so that we can pass the
   // pointer into oprofile.  These char*s are freed in the destructor.
-  DenseMap<GlobalVariable*, char*> Filenames;
+  DenseMap<MDNode*, char*> Filenames;
   // Used as the scratch space in DICompileUnit::getFilename().
   std::string TempFilename;
 
  public:
-  const char* getFilename(GlobalVariable *CompileUnit) {
+  const char* getFilename(MDNode *CompileUnit) {
     char *&Filename = Filenames[CompileUnit];
     if (Filename == NULL) {
       DICompileUnit CU(CompileUnit);
@@ -85,7 +85,7 @@ class FilenameCache {
     return Filename;
   }
   ~FilenameCache() {
-    for (DenseMap<GlobalVariable*, char*>::iterator
+    for (DenseMap<MDNode*, char*>::iterator
              I = Filenames.begin(), E = Filenames.end(); I != E;++I) {
       free(I->second);
     }
