@@ -2501,7 +2501,7 @@ bool LLParser::ParseFunctionHeader(Function *&Fn, bool isDefine) {
       }
     }
     
-  } else if (FunctionName.empty()) {
+  } else {
     // If this is a definition of a forward referenced function, make sure the
     // types agree.
     std::map<unsigned, std::pair<GlobalValue*, LocTy> >::iterator I
