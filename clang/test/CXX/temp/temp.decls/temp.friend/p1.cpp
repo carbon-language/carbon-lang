@@ -1,4 +1,4 @@
-// RUN: clang-cc %s
+// RUN: clang-cc -emit-llvm-only %s
 
 template <typename T> struct Num {
   T value_;
@@ -38,7 +38,7 @@ int calc1() {
 
 int calc2() {
   Num<int> x = 3;
-  Num<int>::Rep<char> n = (cast) 10;
+  Num<int>::Rep<char> n = (char) 10;
   Num<int> result = x * n;
   return result.get();
 }
