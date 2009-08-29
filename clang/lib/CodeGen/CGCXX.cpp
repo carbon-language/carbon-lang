@@ -1643,7 +1643,16 @@ void CodeGenFunction::EmitCtorPrologue(const CXXConstructorDecl *CD) {
         FieldType = getContext().getBaseElementType(FieldType);
       
       LoadOfThis = LoadCXXThis();
-      LValue LHS = EmitLValueForField(LoadOfThis, Field, false, 0);
+      LValue LHS;
+      if (FieldType->isReferenceType()) {
+        // FIXME: This is really ugly; should be refactored somehow
+        unsigned idx = CGM.getTypes().getLLVMFieldNo(Field);
+        llvm::Value *V = Builder.CreateStructGEP(LoadOfThis, idx, "tmp");
+        LHS = LValue::MakeAddr(V, FieldType.getCVRQualifiers(),
+                               QualType::GCNone, FieldType.getAddressSpace());
+      } else {
+        LHS = EmitLValueForField(LoadOfThis, Field, false, 0);
+      }
       if (FieldType->getAs<RecordType>()) {
         if (!Field->isAnonymousStructOrUnion()) {
           assert(Member->getConstructor() && 
@@ -1673,8 +1682,13 @@ void CodeGenFunction::EmitCtorPrologue(const CXXConstructorDecl *CD) {
       
       assert(Member->getNumArgs() == 1 && "Initializer count must be 1 only");
       Expr *RhsExpr = *Member->arg_begin();
-      llvm::Value *RHS = EmitScalarExpr(RhsExpr, true);
-      EmitStoreThroughLValue(RValue::get(RHS), LHS, FieldType);
+      RValue RHS;
+      if (FieldType->isReferenceType())
+        RHS = EmitReferenceBindingToExpr(RhsExpr, FieldType,
+                                        /*IsInitializer=*/true);
+      else
+        RHS = RValue::get(EmitScalarExpr(RhsExpr, true));
+      EmitStoreThroughLValue(RHS, LHS, FieldType);
     }
   }
 
