@@ -202,7 +202,10 @@ void DeclPrinter::VisitDeclContext(DeclContext *DC, bool Indent) {
 
     if (PrintAccess) {
       AccessSpecifier AS = D->getAccess();
-      if (AS != CurAS) {
+
+      if (AS != CurAS && 
+          // FIXME: This check shouldn't be necessary.
+          D->getFriendObjectKind() == Decl::FOK_Undeclared) {
         Print(AS);
         Out << ":\n";
         CurAS = AS;

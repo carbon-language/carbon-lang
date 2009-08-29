@@ -379,8 +379,18 @@ SourceLocation Decl::getBodyRBrace() const {
 
 #ifndef NDEBUG
 void Decl::CheckAccessDeclContext() const {
-  assert((Access != AS_none || isa<TranslationUnitDecl>(this) ||
-          !isa<CXXRecordDecl>(getDeclContext())) &&
+  // If the decl is the toplevel translation unit or if we're not in a
+  // record decl context, we don't need to check anything.
+  if (isa<TranslationUnitDecl>(this) ||
+      !isa<CXXRecordDecl>(getDeclContext()))
+    return;
+  
+  // FIXME: This check should not be necessary - If a friend decl refers to an
+  // undeclared decl, then that decl shouldn't be in any decl context.
+  if (getFriendObjectKind() == FOK_Undeclared)
+    return;
+  
+  assert(Access != AS_none && 
          "Access specifier is AS_none inside a record decl");
 }
 
