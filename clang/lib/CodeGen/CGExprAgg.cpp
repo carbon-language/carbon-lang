@@ -178,8 +178,12 @@ void AggExprEmitter::VisitCastExpr(CastExpr *E) {
     return;
   }
   if (E->getCastKind() == CastExpr::CK_UserDefinedConversion) {
-    CXXFunctionalCastExpr *CXXFExpr = cast<CXXFunctionalCastExpr>(E);
-    CGF.EmitCXXFunctionalCastExpr(CXXFExpr);
+    if (const CXXFunctionalCastExpr *CXXFExpr = 
+          dyn_cast<CXXFunctionalCastExpr>(E))
+      CGF.EmitCXXFunctionalCastExpr(CXXFExpr);
+    else 
+      if (isa<CStyleCastExpr>(E))
+        Visit(E->getSubExpr());
     return;
   }
   

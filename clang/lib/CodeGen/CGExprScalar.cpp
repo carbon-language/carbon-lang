@@ -228,8 +228,11 @@ public:
   }
   Value *VisitCastExpr(const CastExpr *E) {
     if (E->getCastKind() == CastExpr::CK_UserDefinedConversion) {
-      const CXXFunctionalCastExpr *CXXFExpr = cast<CXXFunctionalCastExpr>(E);
-      return CGF.EmitCXXFunctionalCastExpr(CXXFExpr).getScalarVal();
+      if (const CXXFunctionalCastExpr *CXXFExpr = 
+            dyn_cast<CXXFunctionalCastExpr>(E))
+        return CGF.EmitCXXFunctionalCastExpr(CXXFExpr).getScalarVal();
+      assert(isa<CStyleCastExpr>(E) && 
+             "VisitCastExpr - missing CStyleCastExpr");
     }
       
     // Make sure to evaluate VLA bounds now so that we have them for later.

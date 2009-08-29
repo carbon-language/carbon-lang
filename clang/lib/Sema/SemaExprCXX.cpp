@@ -939,6 +939,7 @@ Sema::PerformImplicitConversion(Expr *&From, QualType ToType,
         OwningExprResult InitResult = 
           BuildCXXConstructExpr(ToType.getNonReferenceType(), 
                                 CD, &From, 1);
+        // Take ownership of this expression.
         From = InitResult.takeAs<Expr>();
         CastKind = CastExpr::CK_ConstructorConversion ;
       }

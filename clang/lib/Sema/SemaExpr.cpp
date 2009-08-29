@@ -3060,6 +3060,19 @@ Sema::ActOnCastExpr(Scope *S, SourceLocation LParenLoc, TypeTy *Ty,
   if (CheckCastTypes(SourceRange(LParenLoc, RParenLoc), castType, castExpr, 
                      Kind, ConversionDecl))
     return ExprError();
+  if (ConversionDecl) {
+    // encounterred a c-style cast requiring a conversion function.
+    if (CXXConversionDecl *CD = dyn_cast<CXXConversionDecl>(ConversionDecl)) {
+      castExpr = 
+        new (Context) CXXFunctionalCastExpr(castType.getNonReferenceType(),
+                                            castType, LParenLoc, 
+                                            CastExpr::CK_UserDefinedConversion,
+                                            castExpr, CD,
+                                            RParenLoc);
+      Kind = CastExpr::CK_UserDefinedConversion;
+    }
+    // FIXME. AST for when dealing with conversion functions (FunctionDecl).
+  }
   
   Op.release();
   return Owned(new (Context) CStyleCastExpr(castType.getNonReferenceType(),

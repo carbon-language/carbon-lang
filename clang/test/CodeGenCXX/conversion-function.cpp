@@ -49,6 +49,15 @@ int main() {
     i = int(X(Z(y)));
     f = float(X(Z(y)));
     printf("i = %d float = %f\n", i,f);
+    f = (float)x;
+    i = (int)x;
+    printf("i = %d float = %f\n", i,f);
+
+    int d = (X)((Z)y);
+    printf("d = %d\n", d);
+
+    int e = (int)((X)((Z)y));
+    printf("e = %d\n", e);
 }
 // CHECK-LP64: .globl  __ZN1ScviEv
 // CHECK-LP64-NEXT: __ZN1ScviEv:

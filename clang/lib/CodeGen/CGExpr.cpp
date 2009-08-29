@@ -1173,8 +1173,13 @@ LValue CodeGenFunction::EmitConditionalOperator(const ConditionalOperator* E) {
 /// noop aggregate casts, and cast from scalar to union.
 LValue CodeGenFunction::EmitCastLValue(const CastExpr *E) {
   if (E->getCastKind() == CastExpr::CK_UserDefinedConversion) {
-    const CXXFunctionalCastExpr *CXXFExpr = cast<CXXFunctionalCastExpr>(E);
-    return  LValue::MakeAddr(EmitCXXFunctionalCastExpr(CXXFExpr).getScalarVal(), 0);
+    if (const CXXFunctionalCastExpr *CXXFExpr = 
+          dyn_cast<CXXFunctionalCastExpr>(E))
+      return  LValue::MakeAddr(
+                EmitCXXFunctionalCastExpr(CXXFExpr).getScalarVal(), 0);
+    assert(isa<CStyleCastExpr>(E) && 
+           "EmitCastLValue - Expected CStyleCastExpr");
+    return EmitLValue(E->getSubExpr());
   }
   
   // If this is an aggregate-to-aggregate cast, just use the input's address as
@@ -1187,10 +1192,6 @@ LValue CodeGenFunction::EmitCastLValue(const CastExpr *E) {
   if (const ImplicitCastExpr *ICE = dyn_cast<ImplicitCastExpr>(E))
     if (ICE->isLvalueCast())
       return EmitLValue(E->getSubExpr());
-
-  // FIXME: Implement this properly!
-  if (E->getCastKind() == CastExpr::CK_UserDefinedConversion)
-    return EmitUnsupportedLValue(E, "user-defined conversion");
 
   // Otherwise, we must have a cast from scalar to union.
   assert(E->getCastKind() == CastExpr::CK_ToUnion &&
