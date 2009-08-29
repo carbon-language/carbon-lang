@@ -1036,6 +1036,11 @@ Sema::BuildDeclarationNameExpr(SourceLocation Loc, NamedDecl *D,
   else if (TemplateDecl *Template = dyn_cast<TemplateDecl>(D))
     return BuildDeclRefExpr(Template, Context.OverloadTy, Loc,
                             false, false, SS);
+  else if (UnresolvedUsingDecl *UD = dyn_cast<UnresolvedUsingDecl>(D))
+    return BuildDeclRefExpr(UD, Context.DependentTy, Loc, 
+                            /*TypeDependent=*/true, 
+                            /*ValueDependent=*/true, SS);
+
   ValueDecl *VD = cast<ValueDecl>(D);
 
   // Check whether this declaration can be used. Note that we suppress

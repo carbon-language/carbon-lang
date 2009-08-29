@@ -28,3 +28,9 @@ template <typename T> struct D : A<T> {
 };
 
 template<typename T> void D<T>::f() { }
+
+template<typename T> struct E : A<T> {
+  using A<T>::f;
+
+  void g() { f(); }
+};
