@@ -2468,10 +2468,12 @@ static SDValue LowerBUILD_VECTOR(SDValue Op, SelectionDAG &DAG) {
   unsigned SplatBitSize;
   bool HasAnyUndefs;
   if (BVN->isConstantSplat(SplatBits, SplatUndef, SplatBitSize, HasAnyUndefs)) {
-    SDValue Val = isVMOVSplat(SplatBits.getZExtValue(),
-                              SplatUndef.getZExtValue(), SplatBitSize, DAG);
-    if (Val.getNode())
-      return BuildSplat(Val, VT, DAG, dl);
+    if (SplatBitSize <= 64) {
+      SDValue Val = isVMOVSplat(SplatBits.getZExtValue(),
+                                SplatUndef.getZExtValue(), SplatBitSize, DAG);
+      if (Val.getNode())
+        return BuildSplat(Val, VT, DAG, dl);
+    }
   }
 
   // If there are only 2 elements in a 128-bit vector, insert them into an
