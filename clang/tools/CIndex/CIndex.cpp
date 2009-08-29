@@ -12,15 +12,12 @@
 //===----------------------------------------------------------------------===//
 
 #include "clang-c/Index.h"
-
 #include "clang/Index/Program.h"
 #include "clang/Index/Indexer.h"
-
-#include "clang/Frontend/ASTUnit.h"
-#include "clang/Basic/FileManager.h"
-
 #include "clang/AST/DeclVisitor.h"
-
+#include "clang/Basic/FileManager.h"
+#include "clang/Frontend/ASTUnit.h"
+#include <cstdio>
 using namespace clang;
 using namespace idx;
 
