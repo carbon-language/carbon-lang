@@ -2960,6 +2960,10 @@ public:
                                      VarDecl *Var,
                                      bool Recursive = false);
 
+  void InstantiateMemInitializers(CXXConstructorDecl *New,
+                                  const CXXConstructorDecl *Tmpl,
+                            const MultiLevelTemplateArgumentList &TemplateArgs);
+  
   NamedDecl *FindInstantiatedDecl(NamedDecl *D);
   DeclContext *FindInstantiatedContext(DeclContext *DC);
     

@@ -992,9 +992,18 @@ void Sema::InstantiateFunctionDefinition(SourceLocation PointOfInstantiation,
   DeclContext *PreviousContext = CurContext;
   CurContext = Function;
 
+  MultiLevelTemplateArgumentList TemplateArgs = 
+    getTemplateInstantiationArgs(Function);
+
+  // If this is a constructor, instantiate the member initializers.
+  if (const CXXConstructorDecl *Ctor = 
+        dyn_cast<CXXConstructorDecl>(PatternDecl)) {
+    InstantiateMemInitializers(cast<CXXConstructorDecl>(Function), Ctor,
+                               TemplateArgs);
+  }      
+  
   // Instantiate the function body.
-  OwningStmtResult Body 
-    = SubstStmt(Pattern, getTemplateInstantiationArgs(Function));
+  OwningStmtResult Body = SubstStmt(Pattern, TemplateArgs);
 
   ActOnFinishFunctionBody(DeclPtrTy::make(Function), move(Body), 
                           /*IsInstantiation=*/true);
@@ -1090,6 +1099,71 @@ void Sema::InstantiateStaticDataMemberDefinition(
     // Restore the set of pending implicit instantiations.
     PendingImplicitInstantiations.swap(SavedPendingImplicitInstantiations);
   }  
+}
+
+void
+Sema::InstantiateMemInitializers(CXXConstructorDecl *New,
+                                 const CXXConstructorDecl *Tmpl,
+                           const MultiLevelTemplateArgumentList &TemplateArgs) {
+  
+  llvm::SmallVector<MemInitTy*, 4> NewInits;
+
+  // Instantiate all the initializers.
+  for (CXXConstructorDecl::init_const_iterator Inits = Tmpl->init_begin(),
+       InitsEnd = Tmpl->init_end(); Inits != InitsEnd; ++Inits) {
+    CXXBaseOrMemberInitializer *Init = *Inits;
+
+    ASTOwningVector<&ActionBase::DeleteExpr> NewArgs(*this);
+    
+    // Instantiate all the arguments.
+    for (ExprIterator Args = Init->arg_begin(), ArgsEnd = Init->arg_end();
+         Args != ArgsEnd; ++Args) {
+      OwningExprResult NewArg = SubstExpr(*Args, TemplateArgs);
+
+      if (NewArg.isInvalid())
+        New->setInvalidDecl();
+      else
+        NewArgs.push_back(NewArg.takeAs<Expr>());
+    }
+
+    MemInitResult NewInit;
+
+    if (Init->isBaseInitializer()) {
+      // FIXME: Type needs to be instantiated.
+      QualType BaseType = 
+        Context.getCanonicalType(QualType(Init->getBaseClass(), 0));
+
+      NewInit = BuildBaseInitializer(BaseType,
+                                     (Expr **)NewArgs.data(), 
+                                     NewArgs.size(),
+                                     Init->getSourceLocation(),
+                                     Init->getRParenLoc(),
+                                     New->getParent());
+    } else if (Init->isMemberInitializer()) {
+      FieldDecl *Member = 
+        cast<FieldDecl>(FindInstantiatedDecl(Init->getMember()));
+      
+      NewInit = BuildMemberInitializer(Member, (Expr **)NewArgs.data(), 
+                                       NewArgs.size(),
+                                       Init->getSourceLocation(),
+                                       Init->getRParenLoc());
+    }
+
+    if (NewInit.isInvalid())
+      New->setInvalidDecl();
+    else {
+      // FIXME: It would be nice if ASTOwningVector had a release function.
+      NewArgs.take();
+      
+      NewInits.push_back((MemInitTy *)NewInit.get());
+    }
+  }
+  
+  // Assign all the initializers to the new constructor.
+  ActOnMemInitializers(DeclPtrTy::make(New), 
+                       /*FIXME: ColonLoc */
+                       SourceLocation(),
+                       NewInits.data(), NewInits.size()); 
 }
 
 static bool isInstantiationOf(ASTContext &Ctx, NamedDecl *D, Decl *Other) {
