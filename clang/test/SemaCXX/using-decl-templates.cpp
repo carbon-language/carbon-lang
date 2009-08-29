@@ -20,3 +20,11 @@ template<typename T> struct C : A<T> {
   
   void f() { };
 };
+
+template <typename T> struct D : A<T> {
+  using A<T>::f;
+  
+  void f();
+};
+
+template<typename T> void D<T>::f() { }
