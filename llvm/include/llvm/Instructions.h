@@ -277,6 +277,11 @@ public:
   const Value *getPointerOperand() const { return getOperand(0); }
   static unsigned getPointerOperandIndex() { return 0U; }
 
+  unsigned getPointerAddressSpace() const {
+    return cast<PointerType>(getPointerOperand()->getType())->getAddressSpace();
+  }
+  
+  
   // Methods for support type inquiry through isa, cast, and dyn_cast:
   static inline bool classof(const LoadInst *) { return true; }
   static inline bool classof(const Instruction *I) {
@@ -341,6 +346,10 @@ public:
   const Value *getPointerOperand() const { return getOperand(1); }
   static unsigned getPointerOperandIndex() { return 1U; }
 
+  unsigned getPointerAddressSpace() const {
+    return cast<PointerType>(getPointerOperand()->getType())->getAddressSpace();
+  }
+  
   // Methods for support type inquiry through isa, cast, and dyn_cast:
   static inline bool classof(const StoreInst *) { return true; }
   static inline bool classof(const Instruction *I) {
