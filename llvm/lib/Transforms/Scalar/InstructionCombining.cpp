@@ -165,7 +165,7 @@ namespace {
     TargetData *TD;
     bool MustPreserveLCSSA;
   public:
-    /// WOrklist - All of the instructions that need to be simplified.
+    /// Worklist - All of the instructions that need to be simplified.
     InstCombineWorklist Worklist;
 
     /// Builder - This is an IRBuilder that automatically inserts new
