@@ -3461,6 +3461,9 @@ public:
                       QualType FieldTy, const Expr *BitWidth, 
                       bool *ZeroWidth = 0);
 
+  void DiagnoseMissingMember(SourceLocation MemberLoc, DeclarationName Member,
+                             NestedNameSpecifier *NNS, SourceRange Range);
+  
   //===--------------------------------------------------------------------===//
   // Extra semantic analysis beyond the C type system
 private:

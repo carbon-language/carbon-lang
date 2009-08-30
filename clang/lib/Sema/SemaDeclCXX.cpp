@@ -2189,7 +2189,7 @@ NamedDecl *Sema::BuildUsingDeclaration(SourceLocation UsingLoc,
                                        Name, LookupOrdinaryName);
   
   if (!R) {
-    Diag(IdentLoc, diag::err_typecheck_no_member) << Name << SS.getRange();
+    Diag(IdentLoc, diag::err_typecheck_no_member_deprecated) << Name << SS.getRange();
     return 0;
   }
 

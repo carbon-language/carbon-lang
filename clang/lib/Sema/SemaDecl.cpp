@@ -2205,8 +2205,10 @@ Sema::ActOnVariableDeclarator(Scope* S, Declarator& D, DeclContext* DC,
     }
   } else if (D.getCXXScopeSpec().isSet()) {
     // No previous declaration in the qualifying scope.
-    Diag(D.getIdentifierLoc(), diag::err_typecheck_no_member)
-      << Name << D.getCXXScopeSpec().getRange();
+    NestedNameSpecifier *NNS = 
+      (NestedNameSpecifier *)D.getCXXScopeSpec().getScopeRep();
+    DiagnoseMissingMember(D.getIdentifierLoc(), Name, NNS, 
+                          D.getCXXScopeSpec().getRange());
     NewVD->setInvalidDecl();
   }
 

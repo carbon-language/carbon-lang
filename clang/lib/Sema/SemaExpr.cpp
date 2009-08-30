@@ -789,10 +789,12 @@ Sema::ActOnDeclarationNameExpr(Scope *S, SourceLocation Loc,
     else {
       // If this name wasn't predeclared and if this is not a function call,
       // diagnose the problem.
-      if (SS && !SS->isEmpty())
-        return ExprError(Diag(Loc, diag::err_typecheck_no_member)
-          << Name << SS->getRange());
-      else if (Name.getNameKind() == DeclarationName::CXXOperatorName ||
+      if (SS && !SS->isEmpty()) {
+        DiagnoseMissingMember(Loc, Name, 
+                              (NestedNameSpecifier *)SS->getScopeRep(),
+                              SS->getRange());
+        return ExprError();
+      } else if (Name.getNameKind() == DeclarationName::CXXOperatorName ||
                Name.getNameKind() == DeclarationName::CXXConversionFunctionName)
         return ExprError(Diag(Loc, diag::err_undeclared_use)
           << Name.getAsString());
@@ -2088,7 +2090,7 @@ Sema::BuildMemberReferenceExpr(Scope *S, ExprArg Base, SourceLocation OpLoc,
     }
 
     if (!Result)
-      return ExprError(Diag(MemberLoc, diag::err_typecheck_no_member)
+      return ExprError(Diag(MemberLoc, diag::err_typecheck_no_member_deprecated)
                << MemberName << BaseExpr->getSourceRange());
     if (Result.isAmbiguous()) {
       DiagnoseAmbiguousLookup(Result, MemberName, MemberLoc,
@@ -5475,7 +5477,7 @@ Sema::OwningExprResult Sema::ActOnBuiltinOffsetOf(Scope *S,
                                         .getAsDecl());
       // FIXME: Leaks Res
       if (!MemberDecl)
-        return ExprError(Diag(BuiltinLoc, diag::err_typecheck_no_member)
+        return ExprError(Diag(BuiltinLoc, diag::err_typecheck_no_member_deprecated)
          << OC.U.IdentInfo << SourceRange(OC.LocStart, OC.LocEnd));
 
       // FIXME: C++: Verify that MemberDecl isn't a static field.
