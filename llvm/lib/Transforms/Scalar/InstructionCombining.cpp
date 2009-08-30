@@ -112,6 +112,16 @@ namespace {
       return I;
     }
 
+    /// AddUsersToWorkList - When an instruction is simplified, add all users of
+    /// the instruction to the work lists because they might get more simplified
+    /// now.
+    ///
+    void AddUsersToWorkList(Instruction &I) {
+      for (Value::use_iterator UI = I.use_begin(), UE = I.use_end();
+           UI != UE; ++UI)
+        Add(cast<Instruction>(*UI));
+    }
+    
     
     /// Zap - check that the worklist is empty and nuke the backing store for
     /// the map if it is large.
@@ -140,16 +150,6 @@ namespace {
 
     LLVMContext *Context;
     LLVMContext *getContext() const { return Context; }
-
-    /// AddUsersToWorkList - When an instruction is simplified, add all users of
-    /// the instruction to the work lists because they might get more simplified
-    /// now.
-    ///
-    void AddUsersToWorkList(Value &I) {
-      for (Value::use_iterator UI = I.use_begin(), UE = I.use_end();
-           UI != UE; ++UI)
-        Worklist.Add(cast<Instruction>(*UI));
-    }
 
     /// AddOperandsToWorkList - When an instruction is simplified, add operands
     /// to the work lists because they might get more simplified now.
@@ -312,7 +312,7 @@ namespace {
     // modified.
     //
     Instruction *ReplaceInstUsesWith(Instruction &I, Value *V) {
-      AddUsersToWorkList(I);         // Add all modified instrs to worklist
+      Worklist.AddUsersToWorkList(I);   // Add all modified instrs to worklist.
       
       // If we are replacing the instruction with itself, this must be in a
       // segment of unreachable code, so just clobber the instruction.
@@ -3239,8 +3239,8 @@ Instruction *InstCombiner::visitSRem(BinaryOperator &I) {
   Value *Op0 = I.getOperand(0), *Op1 = I.getOperand(1);
 
   // Handle the integer rem common cases
-  if (Instruction *common = commonIRemTransforms(I))
-    return common;
+  if (Instruction *Common = commonIRemTransforms(I))
+    return Common;
   
   if (Value *RHSNeg = dyn_castNegVal(Op1))
     if (!isa<Constant>(RHSNeg) ||
@@ -10349,7 +10349,7 @@ bool InstCombiner::transformConstExprCastCall(CallSite CS) {
         // Otherwise, it's a call, just insert cast right after the call instr
         InsertNewInstBefore(NC, *Caller);
       }
-      AddUsersToWorkList(*Caller);
+      Worklist.AddUsersToWorkList(*Caller);
     } else {
       NV = UndefValue::get(Caller->getType());
     }
@@ -13006,7 +13006,7 @@ bool InstCombiner::DoOneIteration(Function &F, unsigned Iteration) {
 
         // Push the new instruction and any users onto the worklist.
         Worklist.Add(Result);
-        AddUsersToWorkList(*Result);
+        Worklist.AddUsersToWorkList(*Result);
 
         // Move the name to the new instruction first.
         Result->takeName(I);
@@ -13034,7 +13034,7 @@ bool InstCombiner::DoOneIteration(Function &F, unsigned Iteration) {
           EraseInstFromFunction(*I);
         } else {
           Worklist.Add(I);
-          AddUsersToWorkList(*I);
+          Worklist.AddUsersToWorkList(*I);
         }
       }
       Changed = true;
