@@ -1419,8 +1419,8 @@ static void
 findmust(struct parse *p, struct re_guts *g)
 {
 	sop *scan;
-	sop *start;    /* start initialized in the default case, after that */
-	sop *newstart; /* newstart was initialized in the OCHAR case */
+	sop *start = 0; /* start initialized in the default case, after that */
+	sop *newstart = 0; /* newstart was initialized in the OCHAR case */
 	sopno newlen;
 	sop s;
 	char *cp;
