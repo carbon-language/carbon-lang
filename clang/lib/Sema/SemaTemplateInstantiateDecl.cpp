@@ -1137,6 +1137,7 @@ Sema::InstantiateMemInitializers(CXXConstructorDecl *New,
       QualType BaseType(Init->getBaseClass(), 0);
       BaseType = SubstType(BaseType, TemplateArgs, Init->getSourceLocation(),
                            New->getDeclName());
+      BaseType = Context.getCanonicalType(BaseType);
 
       NewInit = BuildBaseInitializer(BaseType,
                                      (Expr **)NewArgs.data(), 
