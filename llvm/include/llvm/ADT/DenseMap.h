@@ -93,6 +93,8 @@ public:
   void resize(size_t Size) { grow(Size); }
 
   void clear() {
+    if (NumEntries == 0 && NumTombstones == 0) return;
+    
     // If the capacity of the array is huge, and the # elements used is small,
     // shrink the array.
     if (NumEntries * 4 < NumBuckets && NumBuckets > 64) {
