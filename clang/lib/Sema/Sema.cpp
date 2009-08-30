@@ -354,16 +354,16 @@ void Sema::DiagnoseMissingMember(SourceLocation MemberLoc,
     const Type *Ty = Context.getCanonicalType(NNS->getAsType());
     RecordDecl *RD = cast<RecordType>(Ty)->getDecl();
     Diag(MemberLoc, diag::err_typecheck_record_no_member)
-      << RD->getTagKind() << RD << Member << Range;
+      << Member << RD->getTagKind() << RD << Range;
     break;
   }
   case NestedNameSpecifier::Namespace: {
     Diag(MemberLoc, diag::err_typecheck_namespace_no_member)
-      << NNS->getAsNamespace() << Member << Range;
+       << Member << NNS->getAsNamespace() << Range;
     break;
   }
   case NestedNameSpecifier::Global: {
-    Diag(MemberLoc, diag::err_typecheck_global_scope_no_member)
+    Diag(MemberLoc, diag::err_typecheck_global_namespace_no_member)
       << Member << Range;
     break;
   }

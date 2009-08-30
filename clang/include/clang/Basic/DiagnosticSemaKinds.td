@@ -1298,11 +1298,11 @@ def note_member_reference_needs_call : Note<
 def err_typecheck_incomplete_tag : Error<"incomplete definition of type %0">;
 def err_typecheck_no_member_deprecated : Error<"no member named %0">;
 def err_typecheck_record_no_member : Error<
-  "%select{struct|union|class}0 %q1 has no member named %2">;
+  "no member named %0 in %select{struct|union|class|enum}1 %q2">;
 def err_typecheck_namespace_no_member : Error<
-  "namespace %q0 has no member named %1">;
-def err_typecheck_global_scope_no_member : Error<
-  "the global scope has no member named %0">;
+  "no member named %0 in namespace %q1">;
+def err_typecheck_global_namespace_no_member : Error<
+  "no member named %0 in the global namespace">;
 
 def err_member_redeclared : Error<"class member cannot be redeclared">;
 def err_member_def_does_not_match : Error<
