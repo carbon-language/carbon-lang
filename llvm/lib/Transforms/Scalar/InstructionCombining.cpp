@@ -10982,21 +10982,6 @@ Instruction *InstCombiner::visitPHINode(PHINode &PN) {
   return 0;
 }
 
-static Value *InsertCastToIntPtrTy(Value *V, const Type *DTy,
-                                   Instruction *InsertPoint,
-                                   InstCombiner *IC) {
-  unsigned PtrSize = DTy->getScalarSizeInBits();
-  unsigned VTySize = V->getType()->getScalarSizeInBits();
-  // We must cast correctly to the pointer type. Ensure that we
-  // sign extend the integer value if it is smaller as this is
-  // used for address computation.
-  Instruction::CastOps opcode = 
-     (VTySize < PtrSize ? Instruction::SExt :
-      (VTySize == PtrSize ? Instruction::BitCast : Instruction::Trunc));
-  return IC->InsertCastBefore(opcode, V, DTy, *InsertPoint);
-}
-
-
 Instruction *InstCombiner::visitGetElementPtrInst(GetElementPtrInst &GEP) {
   Value *PtrOp = GEP.getOperand(0);
   // Is it 'getelementptr %P, i32 0'  or 'getelementptr %P'
@@ -11058,8 +11043,8 @@ Instruction *InstCombiner::visitGetElementPtrInst(GetElementPtrInst &GEP) {
 
     // Find out whether the last index in the source GEP is a sequential idx.
     bool EndsWithSequential = false;
-    for (gep_type_iterator I = gep_type_begin(*cast<User>(PtrOp)),
-           E = gep_type_end(*cast<User>(PtrOp)); I != E; ++I)
+    for (gep_type_iterator I = gep_type_begin(*Src), E = gep_type_end(*Src);
+         I != E; ++I)
       EndsWithSequential = !isa<StructType>(*I);
 
     // Can we combine the two pointer arithmetics offsets?
@@ -11075,28 +11060,12 @@ Instruction *InstCombiner::visitGetElementPtrInst(GetElementPtrInst &GEP) {
       } else if (GO1 == Constant::getNullValue(GO1->getType())) {
         Sum = SO1;
       } else {
-        // If they aren't the same type, convert both to an integer of the
-        // target's pointer size.
-        if (SO1->getType() != GO1->getType()) {
-          if (Constant *SO1C = dyn_cast<Constant>(SO1)) {
-            SO1 = ConstantExpr::getIntegerCast(SO1C, GO1->getType(), true);
-          } else if (Constant *GO1C = dyn_cast<Constant>(GO1)) {
-            GO1 = ConstantExpr::getIntegerCast(GO1C, SO1->getType(), true);
-          } else if (TD) {
-            unsigned PS = TD->getPointerSizeInBits();
-            if (TD->getTypeSizeInBits(SO1->getType()) == PS) {
-              // Convert GO1 to SO1's type.
-              GO1 = InsertCastToIntPtrTy(GO1, SO1->getType(), &GEP, this);
-            } else if (TD->getTypeSizeInBits(GO1->getType()) == PS) {
-              // Convert SO1 to GO1's type.
-              SO1 = InsertCastToIntPtrTy(SO1, GO1->getType(), &GEP, this);
-            } else {
-              const Type *PT = TD->getIntPtrType(GEP.getContext());
-              SO1 = InsertCastToIntPtrTy(SO1, PT, &GEP, this);
-              GO1 = InsertCastToIntPtrTy(GO1, PT, &GEP, this);
-            }
-          }
-        }
+        // If they aren't the same type, then the input hasn't been processed
+        // by the loop above yet (which canonicalizes sequential index types to
+        // intptr_t).  Just avoid transforming this until the input has been
+        // normalized.
+        if (SO1->getType() != GO1->getType())
+          return 0;
         if (isa<Constant>(SO1) && isa<Constant>(GO1))
           Sum = ConstantExpr::getAdd(cast<Constant>(SO1), cast<Constant>(GO1));
         else {
@@ -11105,21 +11074,21 @@ Instruction *InstCombiner::visitGetElementPtrInst(GetElementPtrInst &GEP) {
         }
       }
 
-      // Recycle the GEP we already have if possible.
+      // Update the GEP in place if possible.
       if (Src->getNumOperands() == 2) {
         GEP.setOperand(0, Src->getOperand(0));
         GEP.setOperand(1, Sum);
         return &GEP;
       }
-      Indices.insert(Indices.end(), Src->op_begin()+1, Src->op_end()-1);
+      Indices.append(Src->op_begin()+1, Src->op_end()-1);
       Indices.push_back(Sum);
-      Indices.insert(Indices.end(), GEP.op_begin()+2, GEP.op_end());
+      Indices.append(GEP.op_begin()+2, GEP.op_end());
     } else if (isa<Constant>(*GEP.idx_begin()) &&
                cast<Constant>(*GEP.idx_begin())->isNullValue() &&
                Src->getNumOperands() != 1) {
       // Otherwise we can do the fold if the first index of the GEP is a zero
-      Indices.insert(Indices.end(), Src->op_begin()+1, Src->op_end());
-      Indices.insert(Indices.end(), GEP.idx_begin()+1, GEP.idx_end());
+      Indices.append(Src->op_begin()+1, Src->op_end());
+      Indices.append(GEP.idx_begin()+1, GEP.idx_end());
     }
 
     if (!Indices.empty()) {
@@ -11208,8 +11177,7 @@ Instruction *InstCombiner::visitGetElementPtrInst(GetElementPtrInst &GEP) {
         ConstantInt *Scale = 0;
         if (ArrayEltSize == 1) {
           NewIdx = GEP.getOperand(1);
-          Scale = 
-               ConstantInt::get(cast<IntegerType>(NewIdx->getType()), 1);
+          Scale = ConstantInt::get(cast<IntegerType>(NewIdx->getType()), 1);
         } else if (ConstantInt *CI = dyn_cast<ConstantInt>(GEP.getOperand(1))) {
           NewIdx = ConstantInt::get(CI->getType(), 1);
           Scale = CI;
@@ -11237,9 +11205,7 @@ Instruction *InstCombiner::visitGetElementPtrInst(GetElementPtrInst &GEP) {
           Scale = ConstantInt::get(Scale->getType(),
                                    Scale->getZExtValue() / ArrayEltSize);
           if (Scale->getZExtValue() != 1) {
-            Constant *C =
-                   ConstantExpr::getIntegerCast(Scale, NewIdx->getType(),
-                                                       false /*ZExt*/);
+            Constant *C = ConstantExpr::getZExt(Scale, NewIdx->getType());
             Instruction *Sc = BinaryOperator::CreateMul(NewIdx, C, "idxscale");
             NewIdx = InsertNewInstBefore(Sc, GEP);
           }
