@@ -10784,8 +10784,7 @@ Instruction *InstCombiner::visitPHINode(PHINode &PN) {
 
 Instruction *InstCombiner::visitGetElementPtrInst(GetElementPtrInst &GEP) {
   Value *PtrOp = GEP.getOperand(0);
-  // Is it 'getelementptr %P, i32 0'  or 'getelementptr %P'
-  // If so, eliminate the noop.
+  // Eliminate 'getelementptr %P, i32 0' and 'getelementptr %P', they are noops.
   if (GEP.getNumOperands() == 1)
     return ReplaceInstUsesWith(GEP, PtrOp);
 
@@ -10896,15 +10895,15 @@ Instruction *InstCombiner::visitGetElementPtrInst(GetElementPtrInst &GEP) {
   // Handle gep(bitcast x) and gep(gep x, 0, 0, 0).
   if (Value *X = getBitCastOperand(PtrOp)) {
     assert(isa<PointerType>(X->getType()) && "Must be cast from pointer");
-           
+
+    // Transform: GEP (bitcast [10 x i8]* X to [0 x i8]*), i32 0, ...
+    // into     : GEP [10 x i8]* X, i32 0, ...
+    //
+    // Likewise, transform: GEP (bitcast i8* X to [0 x i8]*), i32 0, ...
+    //           into     : GEP i8* X, ...
+    // 
+    // This occurs when the program declares an array extern like "int X[];"
     if (HasZeroPointerIndex) {
-      // transform: GEP (bitcast [10 x i8]* X to [0 x i8]*), i32 0, ...
-      // into     : GEP [10 x i8]* X, i32 0, ...
-      //
-      // Likewise, transform: GEP (bitcast i8* X to [0 x i8]*), i32 0, ...
-      //           into     : GEP i8* X, ...
-      // 
-      // This occurs when the program declares an array extern like "int X[];"
       const PointerType *CPTy = cast<PointerType>(PtrOp->getType());
       const PointerType *XTy = cast<PointerType>(X->getType());
       if (const ArrayType *CATy =
@@ -10919,8 +10918,9 @@ Instruction *InstCombiner::visitGetElementPtrInst(GetElementPtrInst &GEP) {
           if (cast<GEPOperator>(&GEP)->isInBounds())
             cast<GEPOperator>(NewGEP)->setIsInBounds(true);
           return NewGEP;
-        } else if (const ArrayType *XATy =
-                 dyn_cast<ArrayType>(XTy->getElementType())) {
+        }
+        
+        if (const ArrayType *XATy = dyn_cast<ArrayType>(XTy->getElementType())){
           // GEP (bitcast [10 x i8]* X to [0 x i8]*), i32 0, ... ?
           if (CATy->getElementType() == XATy->getElementType()) {
             // -> GEP [10 x i8]* X, i32 0, ...
@@ -11271,7 +11271,7 @@ Instruction *InstCombiner::visitLoadInst(LoadInst &LI) {
       LI.setAlignment(KnownAlign);
   }
 
-  // load (cast X) --> cast (load X) iff safe
+  // load (cast X) --> cast (load X) iff safe.
   if (isa<CastInst>(Op))
     if (Instruction *Res = InstCombineLoadCast(*this, LI, TD))
       return Res;
