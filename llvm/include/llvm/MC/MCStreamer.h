@@ -198,11 +198,9 @@ namespace llvm {
     ///
     /// This is used to implement assembler directives such as .org.
     ///
-    /// @param Offset - The offset to reach.This may be an expression, but the
+    /// @param Offset - The offset to reach. This may be an expression, but the
     /// expression must be associated with the current section.
     /// @param Value - The value to use when filling bytes.
-    // 
-    // FIXME: How are we going to signal failures out of this?
     virtual void EmitValueToOffset(const MCValue &Offset, 
                                    unsigned char Value = 0) = 0;
     
