@@ -2691,13 +2691,20 @@ static SDValue LowerVECTOR_SHUFFLE(SDValue Op, SelectionDAG &DAG) {
 static SDValue LowerEXTRACT_VECTOR_ELT(SDValue Op, SelectionDAG &DAG) {
   EVT VT = Op.getValueType();
   DebugLoc dl = Op.getDebugLoc();
-  assert((VT == MVT::i8 || VT == MVT::i16) &&
-         "unexpected type for custom-lowering vector extract");
   SDValue Vec = Op.getOperand(0);
   SDValue Lane = Op.getOperand(1);
+
+  // FIXME: This is invalid for 8 and 16-bit elements - the information about
+  // sign / zero extension is lost!
   Op = DAG.getNode(ARMISD::VGETLANEu, dl, MVT::i32, Vec, Lane);
   Op = DAG.getNode(ISD::AssertZext, dl, MVT::i32, Op, DAG.getValueType(VT));
-  return DAG.getNode(ISD::TRUNCATE, dl, VT, Op);
+
+  if (VT.bitsLT(MVT::i32))
+    Op = DAG.getNode(ISD::TRUNCATE, dl, VT, Op);
+  else if (VT.bitsGT(MVT::i32))
+    Op = DAG.getNode(ISD::ANY_EXTEND, dl, VT, Op);
+
+  return Op;
 }
 
 static SDValue LowerCONCAT_VECTORS(SDValue Op, SelectionDAG &DAG) {
