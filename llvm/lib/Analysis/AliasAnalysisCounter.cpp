@@ -23,7 +23,7 @@
 using namespace llvm;
 
 static cl::opt<bool>
-PrintAll("count-aa-print-all-queries", cl::ReallyHidden);
+PrintAll("count-aa-print-all-queries", cl::ReallyHidden, cl::init(true));
 static cl::opt<bool>
 PrintAllFailures("count-aa-print-all-failed-queries", cl::ReallyHidden);
 
