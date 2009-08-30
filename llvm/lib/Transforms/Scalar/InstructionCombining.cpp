@@ -319,11 +319,6 @@ namespace {
       return C;
     }
         
-    Value *InsertBitCastBefore(Value *V, const Type *Ty, Instruction &Pos) {
-      return InsertCastBefore(Instruction::BitCast, V, Ty, Pos);
-    }
-
-
     // ReplaceInstUsesWith - This method is to be used when an instruction is
     // found to be dead, replacable with another preexisting expression.  Here
     // we add all uses of I to the worklist, replace all uses of I with the new
@@ -1896,9 +1891,8 @@ struct AddMaskingAnd {
 
 static Value *FoldOperationIntoSelectOperand(Instruction &I, Value *SO,
                                              InstCombiner *IC) {
-  if (CastInst *CI = dyn_cast<CastInst>(&I)) {
+  if (CastInst *CI = dyn_cast<CastInst>(&I))
     return IC->InsertCastBefore(CI->getOpcode(), SO, I.getType(), I);
-  }
 
   // Figure out if the constant is the left or the right argument.
   bool ConstIsRHS = isa<Constant>(I.getOperand(1));
@@ -6289,7 +6283,7 @@ Instruction *InstCombiner::visitICmpInst(ICmpInst &I) {
           Op1 = ConstantExpr::getBitCast(Op1C, Op0->getType());
         } else {
           // Otherwise, cast the RHS right before the icmp
-          Op1 = InsertBitCastBefore(Op1, Op0->getType(), I);
+          Op1 = Builder->CreateBitCast(Op1, Op0->getType());
         }
       }
       return new ICmpInst(I.getPredicate(), Op0, Op1);
@@ -7097,7 +7091,7 @@ Instruction *InstCombiner::visitICmpInstWithCastAndCast(ICmpInst &ICI) {
       RHSOp = RHSC->getOperand(0);
       // If the pointer types don't match, insert a bitcast.
       if (LHSCIOp->getType() != RHSOp->getType())
-        RHSOp = InsertBitCastBefore(RHSOp, LHSCIOp->getType(), ICI);
+        RHSOp = Builder->CreateBitCast(RHSOp, LHSCIOp->getType());
     }
 
     if (RHSOp)
@@ -9584,8 +9578,8 @@ Instruction *InstCombiner::SimplifyMemTransfer(MemIntrinsic *MI) {
   SrcAlign = std::max(SrcAlign, CopyAlign);
   DstAlign = std::max(DstAlign, CopyAlign);
   
-  Value *Src = InsertBitCastBefore(MI->getOperand(2), NewPtrTy, *MI);
-  Value *Dest = InsertBitCastBefore(MI->getOperand(1), NewPtrTy, *MI);
+  Value *Src = Builder->CreateBitCast(MI->getOperand(2), NewPtrTy);
+  Value *Dest = Builder->CreateBitCast(MI->getOperand(1), NewPtrTy);
   Instruction *L = new LoadInst(Src, "tmp", false, SrcAlign);
   InsertNewInstBefore(L, *MI);
   InsertNewInstBefore(new StoreInst(L, Dest, false, DstAlign), *MI);
@@ -9619,7 +9613,7 @@ Instruction *InstCombiner::SimplifyMemSet(MemSetInst *MI) {
     const Type *ITy = IntegerType::get(*Context, Len*8);  // n=1 -> i8.
     
     Value *Dest = MI->getDest();
-    Dest = InsertBitCastBefore(Dest, PointerType::getUnqual(ITy), *MI);
+    Dest = Builder->CreateBitCast(Dest, PointerType::getUnqual(ITy));
 
     // Alignment 0 is identity for alignment 1 for memset, but not store.
     if (Alignment == 0) Alignment = 1;
@@ -9720,9 +9714,8 @@ Instruction *InstCombiner::visitCallInst(CallInst &CI) {
     // Turn PPC lvx     -> load if the pointer is known aligned.
     // Turn X86 loadups -> load if the pointer is known aligned.
     if (GetOrEnforceKnownAlignment(II->getOperand(1), 16) >= 16) {
-      Value *Ptr = InsertBitCastBefore(II->getOperand(1),
-                                   PointerType::getUnqual(II->getType()),
-                                       CI);
+      Value *Ptr = Builder->CreateBitCast(II->getOperand(1),
+                                         PointerType::getUnqual(II->getType()));
       return new LoadInst(Ptr);
     }
     break;
@@ -9732,7 +9725,7 @@ Instruction *InstCombiner::visitCallInst(CallInst &CI) {
     if (GetOrEnforceKnownAlignment(II->getOperand(2), 16) >= 16) {
       const Type *OpPtrTy = 
         PointerType::getUnqual(II->getOperand(1)->getType());
-      Value *Ptr = InsertBitCastBefore(II->getOperand(2), OpPtrTy, CI);
+      Value *Ptr = Builder->CreateBitCast(II->getOperand(2), OpPtrTy);
       return new StoreInst(II->getOperand(1), Ptr);
     }
     break;
@@ -9743,7 +9736,7 @@ Instruction *InstCombiner::visitCallInst(CallInst &CI) {
     if (GetOrEnforceKnownAlignment(II->getOperand(1), 16) >= 16) {
       const Type *OpPtrTy = 
         PointerType::getUnqual(II->getOperand(2)->getType());
-      Value *Ptr = InsertBitCastBefore(II->getOperand(1), OpPtrTy, CI);
+      Value *Ptr = Builder->CreateBitCast(II->getOperand(1), OpPtrTy);
       return new StoreInst(II->getOperand(2), Ptr);
     }
     break;
@@ -9780,8 +9773,8 @@ Instruction *InstCombiner::visitCallInst(CallInst &CI) {
       
       if (AllEltsOk) {
         // Cast the input vectors to byte vectors.
-        Value *Op0 =InsertBitCastBefore(II->getOperand(1),Mask->getType(),CI);
-        Value *Op1 =InsertBitCastBefore(II->getOperand(2),Mask->getType(),CI);
+        Value *Op0 = Builder->CreateBitCast(II->getOperand(1), Mask->getType());
+        Value *Op1 = Builder->CreateBitCast(II->getOperand(2), Mask->getType());
         Value *Result = UndefValue::get(Op0->getType());
         
         // Only extract each element once.
@@ -12180,11 +12173,11 @@ Instruction *InstCombiner::visitExtractElementInst(ExtractElementInst &EI) {
                                           EI.getName()+".rhs");
           return BinaryOperator::Create(BO->getOpcode(), newEI0, newEI1);
         }
-      } else if (isa<LoadInst>(I)) {
-        unsigned AS = 
-          cast<PointerType>(I->getOperand(0)->getType())->getAddressSpace();
-        Value *Ptr = InsertBitCastBefore(I->getOperand(0),
-                                  PointerType::get(EI.getType(), AS),*I);
+      } else if (LoadInst *LI = dyn_cast<LoadInst>(I)) {
+        unsigned AS = LI->getPointerAddressSpace();
+        Value *Ptr = Builder->CreateBitCast(I->getOperand(0),
+                                            PointerType::get(EI.getType(), AS),
+                                            I->getOperand(0)->getName());
         Value *GEP =
           Builder->CreateGEP(Ptr, EI.getOperand(1), I->getName()+".gep");
         cast<GEPOperator>(GEP)->setIsInBounds(true);
@@ -12193,6 +12186,10 @@ Instruction *InstCombiner::visitExtractElementInst(ExtractElementInst &EI) {
 
         // Make sure the Load goes before the load instruction in the source,
         // not wherever the extract happens to be.
+        if (Instruction *P = dyn_cast<Instruction>(Ptr))
+          P->moveBefore(I);
+        if (Instruction *G = dyn_cast<Instruction>(GEP))
+          G->moveBefore(I);
         Load->moveBefore(I);
         
         return ReplaceInstUsesWith(EI, Load);
@@ -12204,8 +12201,7 @@ Instruction *InstCombiner::visitExtractElementInst(ExtractElementInst &EI) {
         return ReplaceInstUsesWith(EI, IE->getOperand(1));
       // If the inserted and extracted elements are constants, they must not
       // be the same value, extract from the pre-inserted value instead.
-      if (isa<Constant>(IE->getOperand(2)) &&
-          isa<Constant>(EI.getOperand(1))) {
+      if (isa<Constant>(IE->getOperand(2)) && isa<Constant>(EI.getOperand(1))) {
         Worklist.AddValue(EI.getOperand(0));
         EI.setOperand(0, IE->getOperand(0));
         return &EI;
@@ -12228,7 +12224,8 @@ Instruction *InstCombiner::visitExtractElementInst(ExtractElementInst &EI) {
           return ReplaceInstUsesWith(EI, UndefValue::get(EI.getType()));
         }
         return ExtractElementInst::Create(Src,
-                         ConstantInt::get(Type::getInt32Ty(*Context), SrcIdx, false));
+                         ConstantInt::get(Type::getInt32Ty(*Context), SrcIdx,
+                                          false));
       }
     }
     // FIXME: Canonicalize extractelement(bitcast) -> bitcast(extractelement)
