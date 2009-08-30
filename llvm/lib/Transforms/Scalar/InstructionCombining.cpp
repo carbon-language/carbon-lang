@@ -11015,56 +11015,30 @@ Instruction *InstCombiner::visitGetElementPtrInst(GetElementPtrInst &GEP) {
     return ReplaceInstUsesWith(GEP, PtrOp);
 
   // Eliminate unneeded casts for indices.
-  bool MadeChange = false;
-  
-  gep_type_iterator GTI = gep_type_begin(GEP);
-  for (User::op_iterator i = GEP.op_begin() + 1, e = GEP.op_end();
-       i != e; ++i, ++GTI) {
-    if (TD && isa<SequentialType>(*GTI)) {
-      if (CastInst *CI = dyn_cast<CastInst>(*i)) {
-        if (CI->getOpcode() == Instruction::ZExt ||
-            CI->getOpcode() == Instruction::SExt) {
-          const Type *SrcTy = CI->getOperand(0)->getType();
-          // We can eliminate a cast from i32 to i64 iff the target 
-          // is a 32-bit pointer target.
-          if (SrcTy->getScalarSizeInBits() >= TD->getPointerSizeInBits()) {
-            MadeChange = true;
-            *i = CI->getOperand(0);
-          }
-        }
-      }
+  if (TD) {
+    bool MadeChange = false;
+    unsigned PtrSize = TD->getPointerSizeInBits();
+    
+    gep_type_iterator GTI = gep_type_begin(GEP);
+    for (User::op_iterator I = GEP.op_begin() + 1, E = GEP.op_end();
+         I != E; ++I, ++GTI) {
+      if (!isa<SequentialType>(*GTI)) continue;
+      
       // If we are using a wider index than needed for this platform, shrink it
-      // to what we need.  If narrower, sign-extend it to what we need.
-      // If the incoming value needs a cast instruction,
-      // insert it.  This explicit cast can make subsequent optimizations more
-      // obvious.
-      Value *Op = *i;
-      if (TD->getTypeSizeInBits(Op->getType()) > TD->getPointerSizeInBits()) {
-        if (Constant *C = dyn_cast<Constant>(Op)) {
-          *i = ConstantExpr::getTrunc(C, TD->getIntPtrType(GEP.getContext()));
-          MadeChange = true;
-        } else {
-          Op = InsertCastBefore(Instruction::Trunc, Op, 
-                                TD->getIntPtrType(GEP.getContext()),
-                                GEP);
-          *i = Op;
-          MadeChange = true;
-        }
-      } else if (TD->getTypeSizeInBits(Op->getType()) 
-                  < TD->getPointerSizeInBits()) {
-        if (Constant *C = dyn_cast<Constant>(Op)) {
-          *i = ConstantExpr::getSExt(C, TD->getIntPtrType(GEP.getContext()));
-          MadeChange = true;
-        } else {
-          Op = InsertCastBefore(Instruction::SExt, Op, 
-                                TD->getIntPtrType(GEP.getContext()), GEP);
-          *i = Op;
-          MadeChange = true;
-        }
-      }
+      // to what we need.  If narrower, sign-extend it to what we need.  This
+      // explicit cast can make subsequent optimizations more obvious.
+      unsigned OpBits = cast<IntegerType>((*I)->getType())->getBitWidth();
+      
+      if (OpBits == PtrSize)
+        continue;
+      
+      Instruction::CastOps Opc =
+        OpBits > PtrSize ? Instruction::Trunc : Instruction::SExt;
+      *I = InsertCastBefore(Opc, *I, TD->getIntPtrType(GEP.getContext()), GEP);
+      MadeChange = true;
     }
+    if (MadeChange) return &GEP;
   }
-  if (MadeChange) return &GEP;
 
   // Combine Indices - If the source pointer to this getelementptr instruction
   // is a getelementptr instruction, combine the indices of the two
@@ -11132,8 +11106,7 @@ Instruction *InstCombiner::visitGetElementPtrInst(GetElementPtrInst &GEP) {
           }
         }
         if (isa<Constant>(SO1) && isa<Constant>(GO1))
-          Sum = ConstantExpr::getAdd(cast<Constant>(SO1), 
-                                            cast<Constant>(GO1));
+          Sum = ConstantExpr::getAdd(cast<Constant>(SO1), cast<Constant>(GO1));
         else {
           Sum = BinaryOperator::CreateAdd(SO1, GO1, PtrOp->getName()+".sum");
           InsertNewInstBefore(cast<Instruction>(Sum), GEP);
@@ -11145,12 +11118,11 @@ Instruction *InstCombiner::visitGetElementPtrInst(GetElementPtrInst &GEP) {
         GEP.setOperand(0, SrcGEPOperands[0]);
         GEP.setOperand(1, Sum);
         return &GEP;
-      } else {
-        Indices.insert(Indices.end(), SrcGEPOperands.begin()+1,
-                       SrcGEPOperands.end()-1);
-        Indices.push_back(Sum);
-        Indices.insert(Indices.end(), GEP.op_begin()+2, GEP.op_end());
       }
+      Indices.insert(Indices.end(), SrcGEPOperands.begin()+1,
+                     SrcGEPOperands.end()-1);
+      Indices.push_back(Sum);
+      Indices.insert(Indices.end(), GEP.op_begin()+2, GEP.op_end());
     } else if (isa<Constant>(*GEP.idx_begin()) &&
                cast<Constant>(*GEP.idx_begin())->isNullValue() &&
                SrcGEPOperands.size() != 1) {
@@ -11161,32 +11133,14 @@ Instruction *InstCombiner::visitGetElementPtrInst(GetElementPtrInst &GEP) {
     }
 
     if (!Indices.empty()) {
-      GetElementPtrInst *NewGEP = GetElementPtrInst::Create(SrcGEPOperands[0],
-                                                            Indices.begin(),
-                                                            Indices.end(),
-                                                            GEP.getName());
+      GetElementPtrInst *NewGEP =
+        GetElementPtrInst::Create(SrcGEPOperands[0], Indices.begin(),
+                                  Indices.end(), GEP.getName());
       if (BothInBounds)
         cast<GEPOperator>(NewGEP)->setIsInBounds(true);
       return NewGEP;
     }
 
-  } else if (GlobalValue *GV = dyn_cast<GlobalValue>(PtrOp)) {
-    // GEP of global variable.  If all of the indices for this GEP are
-    // constants, we can promote this to a constexpr instead of an instruction.
-
-    // Scan for nonconstants...
-    SmallVector<Constant*, 8> Indices;
-    User::op_iterator I = GEP.idx_begin(), E = GEP.idx_end();
-    for (; I != E && isa<Constant>(*I); ++I)
-      Indices.push_back(cast<Constant>(*I));
-
-    if (I == E) {  // If they are all constants...
-      Constant *CE = ConstantExpr::getGetElementPtr(GV,
-                                                    &Indices[0],Indices.size());
-
-      // Replace all uses of the GEP with the new constexpr...
-      return ReplaceInstUsesWith(GEP, CE);
-    }
   } else if (Value *X = getBitCastOperand(PtrOp)) {  // Is the operand a cast?
     if (!isa<PointerType>(X->getType())) {
       // Not interesting.  Source pointer must be a cast from pointer.
