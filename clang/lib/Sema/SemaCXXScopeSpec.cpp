@@ -310,9 +310,12 @@ Sema::CXXScopeTy *Sema::ActOnCXXNestedNameSpecifier(Scope *S,
   unsigned DiagID;
   if (SD)
     DiagID = diag::err_expected_class_or_namespace;
-  else if (SS.isSet())
-    DiagID = diag::err_typecheck_no_member_deprecated;
-  else
+  else if (SS.isSet()) {
+    DiagnoseMissingMember(IdLoc, DeclarationName(&II), 
+                          (NestedNameSpecifier *)SS.getScopeRep(), 
+                          SS.getRange());
+    return 0;
+  } else
     DiagID = diag::err_undeclared_var_use;
 
   if (SS.isSet())
