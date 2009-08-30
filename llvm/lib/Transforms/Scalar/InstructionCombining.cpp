@@ -94,6 +94,7 @@ namespace {
         Worklist.push_back(I);
     }
     
+    // Remove - remove I from the worklist if it exists.
     void Remove(Instruction *I) {
       DenseMap<Instruction*, unsigned>::iterator It = WorklistMap.find(I);
       if (It == WorklistMap.end()) return; // Not in worklist.
@@ -128,28 +129,18 @@ namespace {
   class VISIBILITY_HIDDEN InstCombiner
     : public FunctionPass,
       public InstVisitor<InstCombiner, Instruction*> {
-    // Worklist of all of the instructions that need to be simplified.
-    InstCombineWorklist Worklist;
     TargetData *TD;
     bool MustPreserveLCSSA;
   public:
+    // Worklist of all of the instructions that need to be simplified.
+    InstCombineWorklist Worklist;
+
     static char ID; // Pass identification, replacement for typeid
     InstCombiner() : FunctionPass(&ID) {}
 
     LLVMContext *Context;
     LLVMContext *getContext() const { return Context; }
 
-    /// AddToWorkList - Add the specified instruction to the worklist if it
-    /// isn't already in it.
-    void AddToWorkList(Instruction *I) {
-      Worklist.Add(I);
-    }
-    
-    // RemoveFromWorkList - remove I from the worklist if it exists.
-    void RemoveFromWorkList(Instruction *I) {
-      Worklist.Remove(I);
-    }
-    
     /// AddUsersToWorkList - When an instruction is simplified, add all users of
     /// the instruction to the work lists because they might get more simplified
     /// now.
@@ -157,7 +148,7 @@ namespace {
     void AddUsersToWorkList(Value &I) {
       for (Value::use_iterator UI = I.use_begin(), UE = I.use_end();
            UI != UE; ++UI)
-        AddToWorkList(cast<Instruction>(*UI));
+        Worklist.Add(cast<Instruction>(*UI));
     }
 
     /// AddUsesToWorkList - When an instruction is simplified, add operands to
@@ -166,7 +157,7 @@ namespace {
     void AddUsesToWorkList(Instruction &I) {
       for (User::op_iterator i = I.op_begin(), e = I.op_end(); i != e; ++i)
         if (Instruction *Op = dyn_cast<Instruction>(*i))
-          AddToWorkList(Op);
+          Worklist.Add(Op);
     }
     
     /// AddSoonDeadInstToWorklist - The specified instruction is about to become
@@ -180,7 +171,7 @@ namespace {
       
       for (User::op_iterator i = I.op_begin(), e = I.op_end(); i != e; ++i)
         if (Instruction *Op = dyn_cast<Instruction>(*i)) {
-          AddToWorkList(Op);
+          Worklist.Add(Op);
           // Set the operand to undef to drop the use.
           *i = UndefValue::get(Op->getType());
         }
@@ -309,7 +300,7 @@ namespace {
              "New instruction already inserted into a basic block!");
       BasicBlock *BB = Old.getParent();
       BB->getInstList().insert(&Old, New);  // Insert inst
-      AddToWorkList(New);
+      Worklist.Add(New);
       return New;
     }
 
@@ -324,7 +315,7 @@ namespace {
         return ConstantExpr::getCast(opc, CV, Ty);
       
       Instruction *C = CastInst::Create(opc, V, Ty, V->getName(), &Pos);
-      AddToWorkList(C);
+      Worklist.Add(C);
       return C;
     }
         
@@ -341,15 +332,14 @@ namespace {
     //
     Instruction *ReplaceInstUsesWith(Instruction &I, Value *V) {
       AddUsersToWorkList(I);         // Add all modified instrs to worklist
-      if (&I != V) {
-        I.replaceAllUsesWith(V);
-        return &I;
-      } else {
-        // If we are replacing the instruction with itself, this must be in a
-        // segment of unreachable code, so just clobber the instruction.
-        I.replaceAllUsesWith(UndefValue::get(I.getType()));
-        return &I;
-      }
+      
+      // If we are replacing the instruction with itself, this must be in a
+      // segment of unreachable code, so just clobber the instruction.
+      if (&I == V) 
+        V = UndefValue::get(I.getType());
+        
+      I.replaceAllUsesWith(V);
+      return &I;
     }
 
     // EraseInstFromFunction - When dealing with an instruction that has side
@@ -358,8 +348,11 @@ namespace {
     // this function.
     Instruction *EraseInstFromFunction(Instruction &I) {
       assert(I.use_empty() && "Cannot erase instruction that is used!");
-      AddUsesToWorkList(I);
-      RemoveFromWorkList(&I);
+      // Make sure that we reprocess all operands now that we reduced their
+      // use counts.
+      if (I.getNumOperands() < 8)
+        AddUsesToWorkList(I);
+      Worklist.Remove(&I);
       I.eraseFromParent();
       return 0;  // Don't do anything with FI
     }
@@ -572,7 +565,7 @@ bool InstCombiner::SimplifyCommutative(BinaryOperator &I) {
           Instruction *New = BinaryOperator::Create(Opcode, Op->getOperand(0),
                                                     Op1->getOperand(0),
                                                     Op1->getName(), &I);
-          AddToWorkList(New);
+          Worklist.Add(New);
           I.setOperand(0, New);
           I.setOperand(1, Folded);
           return true;
@@ -2020,7 +2013,7 @@ Instruction *InstCombiner::FoldOpIntoPhi(Instruction &I) {
         else
           llvm_unreachable("Unknown binop!");
         
-        AddToWorkList(cast<Instruction>(InV));
+        Worklist.Add(cast<Instruction>(InV));
       }
       NewPN->addIncoming(InV, PN->getIncomingBlock(i));
     }
@@ -2036,7 +2029,7 @@ Instruction *InstCombiner::FoldOpIntoPhi(Instruction &I) {
         InV = CastInst::Create(CI->getOpcode(), PN->getIncomingValue(i), 
                                I.getType(), "phitmp", 
                                NonConstBB->getTerminator());
-        AddToWorkList(cast<Instruction>(InV));
+        Worklist.Add(cast<Instruction>(InV));
       }
       NewPN->addIncoming(InV, PN->getIncomingBlock(i));
     }
@@ -2902,11 +2895,11 @@ bool InstCombiner::SimplifyDivRemOfSelect(BinaryOperator &I) {
          I != E; ++I) {
       if (*I == SI) {
         *I = SI->getOperand(NonNullOperand);
-        AddToWorkList(BBI);
+        Worklist.Add(BBI);
       } else if (*I == SelectCond) {
         *I = NonNullOperand == 1 ? ConstantInt::getTrue(*Context) :
                                    ConstantInt::getFalse(*Context);
-        AddToWorkList(BBI);
+        Worklist.Add(BBI);
       }
     }
     
@@ -5176,7 +5169,7 @@ Instruction *InstCombiner::visitXor(BinaryOperator &I) {
             Constant *CommonBits = ConstantExpr::getAnd(Op0CI, RHS);
             NewRHS = ConstantExpr::getAnd(NewRHS, 
                                        ConstantExpr::getNot(CommonBits));
-            AddToWorkList(Op0I);
+            Worklist.Add(Op0I);
             I.setOperand(0, Op0I->getOperand(0));
             I.setOperand(1, NewRHS);
             return &I;
@@ -6378,7 +6371,7 @@ Instruction *InstCombiner::visitICmpInst(ICmpInst &I) {
         // If we have (malloc != null), and if the malloc has a single use, we
         // can assume it is successful and remove the malloc.
         if (LHSI->hasOneUse() && isa<ConstantPointerNull>(RHSC)) {
-          AddToWorkList(LHSI);
+          Worklist.Add(LHSI);
           return ReplaceInstUsesWith(I, ConstantInt::get(Type::getInt1Ty(*Context),
                                                          !I.isTrueWhenEqual()));
         }
@@ -6778,7 +6771,7 @@ Instruction *InstCombiner::visitICmpInstWithInstAndIntCst(ICmpInst &ICI,
         // the operation, just stop using the Xor.
         if (!XorCST->getValue().isNegative()) {
           ICI.setOperand(0, CompareVal);
-          AddToWorkList(LHSI);
+          Worklist.Add(LHSI);
           return &ICI;
         }
         
@@ -6908,7 +6901,7 @@ Instruction *InstCombiner::visitICmpInstWithInstAndIntCst(ICmpInst &ICI,
               NewAndCST = ConstantExpr::getShl(AndCST, ShAmt);
             LHSI->setOperand(1, NewAndCST);
             LHSI->setOperand(0, Shift->getOperand(0));
-            AddToWorkList(Shift); // Shift is dead.
+            Worklist.Add(Shift); // Shift is dead.
             AddUsesToWorkList(ICI);
             return &ICI;
           }
@@ -7212,7 +7205,7 @@ Instruction *InstCombiner::visitICmpInstWithInstAndIntCst(ICmpInst &ICI,
     } else if (IntrinsicInst *II = dyn_cast<IntrinsicInst>(LHSI)) {
       // Handle icmp {eq|ne} <intrinsic>, intcst.
       if (II->getIntrinsicID() == Intrinsic::bswap) {
-        AddToWorkList(II);
+        Worklist.Add(II);
         ICI.setOperand(0, II->getOperand(1));
         ICI.setOperand(1, ConstantInt::get(*Context, RHSV.byteSwap()));
         return &ICI;
@@ -8262,7 +8255,7 @@ Instruction *InstCombiner::commonPointerCastTransforms(CastInst &CI) {
       // Changing the cast operand is usually not a good idea but it is safe
       // here because the pointer operand is being replaced with another 
       // pointer operand so the opcode doesn't need to change.
-      AddToWorkList(GEP);
+      Worklist.Add(GEP);
       CI.setOperand(0, GEP->getOperand(0));
       return &CI;
     }
@@ -10383,7 +10376,7 @@ bool InstCombiner::transformConstExprCastCall(CallSite CS) {
   if (Caller->getType() != Type::getVoidTy(*Context) && !Caller->use_empty())
     Caller->replaceAllUsesWith(NV);
   Caller->eraseFromParent();
-  RemoveFromWorkList(Caller);
+  Worklist.Remove(Caller);
   return true;
 }
 
@@ -10529,7 +10522,7 @@ Instruction *InstCombiner::transformCallThroughTrampoline(CallSite CS) {
       if (Caller->getType() != Type::getVoidTy(*Context) && !Caller->use_empty())
         Caller->replaceAllUsesWith(NewCaller);
       Caller->eraseFromParent();
-      RemoveFromWorkList(Caller);
+      Worklist.Remove(Caller);
       return 0;
     }
   }
@@ -11401,7 +11394,7 @@ Instruction *InstCombiner::visitFreeInst(FreeInst &FI) {
   // Change free (gep X, 0,0,0,0) into free(X)
   if (GetElementPtrInst *GEPI = dyn_cast<GetElementPtrInst>(Op)) {
     if (GEPI->hasAllZeroIndices()) {
-      AddToWorkList(GEPI);
+      Worklist.Add(GEPI);
       FI.setOperand(0, GEPI->getOperand(0));
       return &FI;
     }
@@ -11903,7 +11896,7 @@ Instruction *InstCombiner::visitStoreInst(StoreInst &SI) {
     if (!isa<UndefValue>(Val)) {
       SI.setOperand(0, UndefValue::get(Val->getType()));
       if (Instruction *U = dyn_cast<Instruction>(Val))
-        AddToWorkList(U);  // Dropped a use.
+        Worklist.Add(U);  // Dropped a use.
       ++NumCombined;
     }
     return 0;  // Do not modify these!
@@ -12080,41 +12073,34 @@ Instruction *InstCombiner::visitBranchInst(BranchInst &BI) {
   // Cannonicalize fcmp_one -> fcmp_oeq
   FCmpInst::Predicate FPred; Value *Y;
   if (match(&BI, m_Br(m_FCmp(FPred, m_Value(X), m_Value(Y)), 
-                             TrueDest, FalseDest)))
-    if ((FPred == FCmpInst::FCMP_ONE || FPred == FCmpInst::FCMP_OLE ||
-         FPred == FCmpInst::FCMP_OGE) && BI.getCondition()->hasOneUse()) {
-      FCmpInst *I = cast<FCmpInst>(BI.getCondition());
-      FCmpInst::Predicate NewPred = FCmpInst::getInversePredicate(FPred);
-      Instruction *NewSCC = new FCmpInst(I, NewPred, X, Y, "");
-      NewSCC->takeName(I);
-      // Swap Destinations and condition...
-      BI.setCondition(NewSCC);
+                             TrueDest, FalseDest)) &&
+      BI.getCondition()->hasOneUse())
+    if (FPred == FCmpInst::FCMP_ONE || FPred == FCmpInst::FCMP_OLE ||
+        FPred == FCmpInst::FCMP_OGE) {
+      FCmpInst *Cond = cast<FCmpInst>(BI.getCondition());
+      Cond->setPredicate(FCmpInst::getInversePredicate(FPred));
+      
+      // Swap Destinations and condition.
       BI.setSuccessor(0, FalseDest);
       BI.setSuccessor(1, TrueDest);
-      RemoveFromWorkList(I);
-      I->eraseFromParent();
-      AddToWorkList(NewSCC);
+      Worklist.Add(Cond);
       return &BI;
     }
 
   // Cannonicalize icmp_ne -> icmp_eq
   ICmpInst::Predicate IPred;
   if (match(&BI, m_Br(m_ICmp(IPred, m_Value(X), m_Value(Y)),
-                      TrueDest, FalseDest)))
-    if ((IPred == ICmpInst::ICMP_NE  || IPred == ICmpInst::ICMP_ULE ||
-         IPred == ICmpInst::ICMP_SLE || IPred == ICmpInst::ICMP_UGE ||
-         IPred == ICmpInst::ICMP_SGE) && BI.getCondition()->hasOneUse()) {
-      ICmpInst *I = cast<ICmpInst>(BI.getCondition());
-      ICmpInst::Predicate NewPred = ICmpInst::getInversePredicate(IPred);
-      Instruction *NewSCC = new ICmpInst(I, NewPred, X, Y, "");
-      NewSCC->takeName(I);
-      // Swap Destinations and condition...
-      BI.setCondition(NewSCC);
+                      TrueDest, FalseDest)) &&
+      BI.getCondition()->hasOneUse())
+    if (IPred == ICmpInst::ICMP_NE  || IPred == ICmpInst::ICMP_ULE ||
+        IPred == ICmpInst::ICMP_SLE || IPred == ICmpInst::ICMP_UGE ||
+        IPred == ICmpInst::ICMP_SGE) {
+      ICmpInst *Cond = cast<ICmpInst>(BI.getCondition());
+      Cond->setPredicate(ICmpInst::getInversePredicate(IPred));
+      // Swap Destinations and condition.
       BI.setSuccessor(0, FalseDest);
       BI.setSuccessor(1, TrueDest);
-      RemoveFromWorkList(I);
-      I->eraseFromParent();;
-      AddToWorkList(NewSCC);
+      Worklist.Add(Cond);
       return &BI;
     }
 
@@ -12132,7 +12118,7 @@ Instruction *InstCombiner::visitSwitchInst(SwitchInst &SI) {
                    ConstantExpr::getSub(cast<Constant>(SI.getOperand(i)),
                                                 AddRHS));
         SI.setOperand(0, I->getOperand(0));
-        AddToWorkList(I);
+        Worklist.Add(I);
         return &SI;
       }
   }
@@ -12882,7 +12868,7 @@ static void AddReachableCodeToWorklist(BasicBlock *BB,
         if (DBI_Prev
             && DBI_Prev->getIntrinsicID() == llvm::Intrinsic::dbg_stoppoint
             && DBI_Next->getIntrinsicID() == llvm::Intrinsic::dbg_stoppoint) {
-          IC.RemoveFromWorkList(DBI_Prev);
+          IC.Worklist.Remove(DBI_Prev);
           DBI_Prev->eraseFromParent();
         }
         DBI_Prev = DBI_Next;
@@ -12890,7 +12876,7 @@ static void AddReachableCodeToWorklist(BasicBlock *BB,
         DBI_Prev = 0;
       }
 
-      IC.AddToWorkList(Inst);
+      IC.Worklist.Add(Inst);
     }
 
     // Recursively visit successors.  If this is a branch or switch on a
@@ -12967,15 +12953,9 @@ bool InstCombiner::DoOneIteration(Function &F, unsigned Iteration) {
 
     // Check to see if we can DCE the instruction.
     if (isInstructionTriviallyDead(I)) {
-      // Add operands to the worklist.
-      if (I->getNumOperands() < 4)
-        AddUsesToWorkList(*I);
-      ++NumDeadInst;
-
       DEBUG(errs() << "IC: DCE: " << *I << '\n');
-
-      I->eraseFromParent();
-      RemoveFromWorkList(I);
+      EraseInstFromFunction(*I);
+      ++NumDeadInst;
       Changed = true;
       continue;
     }
@@ -12985,12 +12965,9 @@ bool InstCombiner::DoOneIteration(Function &F, unsigned Iteration) {
       DEBUG(errs() << "IC: ConstFold to: " << *C << " from: " << *I << '\n');
 
       // Add operands to the worklist.
-      AddUsesToWorkList(*I);
       ReplaceInstUsesWith(*I, C);
-
       ++NumConstProp;
-      I->eraseFromParent();
-      RemoveFromWorkList(I);
+      EraseInstFromFunction(*I);
       Changed = true;
       continue;
     }
@@ -13046,7 +13023,7 @@ bool InstCombiner::DoOneIteration(Function &F, unsigned Iteration) {
         I->replaceAllUsesWith(Result);
 
         // Push the new instruction and any users onto the worklist.
-        AddToWorkList(Result);
+        Worklist.Add(Result);
         AddUsersToWorkList(*Result);
 
         // Move the name to the new instruction first.
@@ -13062,16 +13039,7 @@ bool InstCombiner::DoOneIteration(Function &F, unsigned Iteration) {
 
         InstParent->getInstList().insert(InsertPos, Result);
 
-        // Make sure that we reprocess all operands now that we reduced their
-        // use counts.
-        AddUsesToWorkList(*I);
-
-        // Instructions can end up on the worklist more than once.  Make sure
-        // we do not process an instruction that has been deleted.
-        RemoveFromWorkList(I);
-
-        // Erase the old instruction.
-        InstParent->getInstList().erase(I);
+        EraseInstFromFunction(*I);
       } else {
 #ifndef NDEBUG
         DEBUG(errs() << "IC: Mod = " << OrigI << '\n'
@@ -13081,16 +13049,9 @@ bool InstCombiner::DoOneIteration(Function &F, unsigned Iteration) {
         // If the instruction was modified, it's possible that it is now dead.
         // if so, remove it.
         if (isInstructionTriviallyDead(I)) {
-          // Make sure we process all operands now that we are reducing their
-          // use counts.
-          AddUsesToWorkList(*I);
-
-          // Instructions may end up in the worklist more than once.  Erase all
-          // occurrences of this instruction.
-          RemoveFromWorkList(I);
-          I->eraseFromParent();
+          EraseInstFromFunction(*I);
         } else {
-          AddToWorkList(I);
+          Worklist.Add(I);
           AddUsersToWorkList(*I);
         }
       }
