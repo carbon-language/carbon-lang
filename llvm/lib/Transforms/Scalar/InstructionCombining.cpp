@@ -170,7 +170,8 @@ namespace {
 
     /// Builder - This is an IRBuilder that automatically inserts new
     /// instructions into the worklist when they are created.
-    IRBuilder<true, ConstantFolder, InstCombineIRInserter> *Builder;
+    typedef IRBuilder<true, ConstantFolder, InstCombineIRInserter> BuilderTy;
+    BuilderTy *Builder;
         
     static char ID; // Pass identification, replacement for typeid
     InstCombiner() : FunctionPass(&ID), TD(0), Builder(0) {}
@@ -7373,15 +7374,12 @@ Instruction *InstCombiner::FoldShiftByConstant(Value *Op0, ConstantInt *Op1,
           // Turn (Y + (X >> C)) << C  ->  (X + (Y << C)) & (~0 << C)
           if (isLeftShift && Op0BO->getOperand(1)->hasOneUse() &&
               match(Op0BO->getOperand(1), m_Shr(m_Value(V1),
-                    m_Specific(Op1)))){
-            Instruction *YS = BinaryOperator::CreateShl(
-                                            Op0BO->getOperand(0), Op1,
-                                            Op0BO->getName());
-            InsertNewInstBefore(YS, I); // (Y << C)
-            Instruction *X = 
-              BinaryOperator::Create(Op0BO->getOpcode(), YS, V1,
-                                     Op0BO->getOperand(1)->getName());
-            InsertNewInstBefore(X, I);  // (X + (Y << C))
+                    m_Specific(Op1)))) {
+            Value *YS =         // (Y << C)
+              Builder->CreateShl(Op0BO->getOperand(0), Op1, Op0BO->getName());
+            // (X + (Y << C))
+            Value *X = Builder->CreateBinOp(Op0BO->getOpcode(), YS, V1,
+                                            Op0BO->getOperand(1)->getName());
             uint32_t Op1Val = Op1->getLimitedValue(TypeBits);
             return BinaryOperator::CreateAnd(X, ConstantInt::get(*Context,
                        APInt::getHighBitsSet(TypeBits, TypeBits-Op1Val)));
@@ -7394,16 +7392,12 @@ Instruction *InstCombiner::FoldShiftByConstant(Value *Op0, ConstantInt *Op1,
                     m_And(m_Shr(m_Value(V1), m_Specific(Op1)),
                           m_ConstantInt(CC))) &&
               cast<BinaryOperator>(Op0BOOp1)->getOperand(0)->hasOneUse()) {
-            Instruction *YS = BinaryOperator::CreateShl(
-                                                     Op0BO->getOperand(0), Op1,
-                                                     Op0BO->getName());
-            InsertNewInstBefore(YS, I); // (Y << C)
-            Instruction *XM =
-              BinaryOperator::CreateAnd(V1,
-                                        ConstantExpr::getShl(CC, Op1),
-                                        V1->getName()+".mask");
-            InsertNewInstBefore(XM, I); // X & (CC << C)
-            
+            Value *YS =   // (Y << C)
+              Builder->CreateShl(Op0BO->getOperand(0), Op1,
+                                           Op0BO->getName());
+            // X & (CC << C)
+            Value *XM = Builder->CreateAnd(V1, ConstantExpr::getShl(CC, Op1),
+                                           V1->getName()+".mask");
             return BinaryOperator::Create(Op0BO->getOpcode(), YS, XM);
           }
         }
@@ -7414,14 +7408,11 @@ Instruction *InstCombiner::FoldShiftByConstant(Value *Op0, ConstantInt *Op1,
           if (isLeftShift && Op0BO->getOperand(0)->hasOneUse() &&
               match(Op0BO->getOperand(0), m_Shr(m_Value(V1),
                     m_Specific(Op1)))) {
-            Instruction *YS = BinaryOperator::CreateShl(
-                                                     Op0BO->getOperand(1), Op1,
-                                                     Op0BO->getName());
-            InsertNewInstBefore(YS, I); // (Y << C)
-            Instruction *X =
-              BinaryOperator::Create(Op0BO->getOpcode(), V1, YS,
-                                     Op0BO->getOperand(0)->getName());
-            InsertNewInstBefore(X, I);  // (X + (Y << C))
+            Value *YS =  // (Y << C)
+              Builder->CreateShl(Op0BO->getOperand(1), Op1, Op0BO->getName());
+            // (X + (Y << C))
+            Value *X = Builder->CreateBinOp(Op0BO->getOpcode(), V1, YS,
+                                            Op0BO->getOperand(0)->getName());
             uint32_t Op1Val = Op1->getLimitedValue(TypeBits);
             return BinaryOperator::CreateAnd(X, ConstantInt::get(*Context,
                        APInt::getHighBitsSet(TypeBits, TypeBits-Op1Val)));
@@ -7434,15 +7425,11 @@ Instruction *InstCombiner::FoldShiftByConstant(Value *Op0, ConstantInt *Op1,
                           m_ConstantInt(CC))) && V2 == Op1 &&
               cast<BinaryOperator>(Op0BO->getOperand(0))
                   ->getOperand(0)->hasOneUse()) {
-            Instruction *YS = BinaryOperator::CreateShl(
-                                                     Op0BO->getOperand(1), Op1,
-                                                     Op0BO->getName());
-            InsertNewInstBefore(YS, I); // (Y << C)
-            Instruction *XM =
-              BinaryOperator::CreateAnd(V1, 
-                                        ConstantExpr::getShl(CC, Op1),
-                                        V1->getName()+".mask");
-            InsertNewInstBefore(XM, I); // X & (CC << C)
+            Value *YS = // (Y << C)
+              Builder->CreateShl(Op0BO->getOperand(1), Op1, Op0BO->getName());
+            // X & (CC << C)
+            Value *XM = Builder->CreateAnd(V1, ConstantExpr::getShl(CC, Op1),
+                                           V1->getName()+".mask");
             
             return BinaryOperator::Create(Op0BO->getOpcode(), XM, YS);
           }
@@ -7484,9 +7471,8 @@ Instruction *InstCombiner::FoldShiftByConstant(Value *Op0, ConstantInt *Op1,
         if (isValid) {
           Constant *NewRHS = ConstantExpr::get(I.getOpcode(), Op0C, Op1);
           
-          Instruction *NewShift =
-            BinaryOperator::Create(I.getOpcode(), Op0BO->getOperand(0), Op1);
-          InsertNewInstBefore(NewShift, I);
+          Value *NewShift =
+            Builder->CreateBinOp(I.getOpcode(), Op0BO->getOperand(0), Op1);
           NewShift->takeName(Op0BO);
           
           return BinaryOperator::Create(Op0BO->getOpcode(), NewShift,
@@ -7525,22 +7511,24 @@ Instruction *InstCombiner::FoldShiftByConstant(Value *Op0, ConstantInt *Op1,
       
       return BinaryOperator::Create(I.getOpcode(), X,
                                     ConstantInt::get(Ty, AmtSum));
-    } else if (ShiftOp->getOpcode() == Instruction::LShr &&
-               I.getOpcode() == Instruction::AShr) {
+    }
+    
+    if (ShiftOp->getOpcode() == Instruction::LShr &&
+        I.getOpcode() == Instruction::AShr) {
       if (AmtSum >= TypeBits)
         return ReplaceInstUsesWith(I, Constant::getNullValue(I.getType()));
       
       // ((X >>u C1) >>s C2) -> (X >>u (C1+C2))  since C1 != 0.
       return BinaryOperator::CreateLShr(X, ConstantInt::get(Ty, AmtSum));
-    } else if (ShiftOp->getOpcode() == Instruction::AShr &&
-               I.getOpcode() == Instruction::LShr) {
+    }
+    
+    if (ShiftOp->getOpcode() == Instruction::AShr &&
+        I.getOpcode() == Instruction::LShr) {
       // ((X >>s C1) >>u C2) -> ((X >>s (C1+C2)) & mask) since C1 != 0.
       if (AmtSum >= TypeBits)
         AmtSum = TypeBits-1;
       
-      Instruction *Shift =
-        BinaryOperator::CreateAShr(X, ConstantInt::get(Ty, AmtSum));
-      InsertNewInstBefore(Shift, I);
+      Value *Shift = Builder->CreateAShr(X, ConstantInt::get(Ty, AmtSum));
 
       APInt Mask(APInt::getLowBitsSet(TypeBits, TypeBits - ShiftAmt2));
       return BinaryOperator::CreateAnd(Shift, ConstantInt::get(*Context, Mask));
@@ -7575,11 +7563,8 @@ Instruction *InstCombiner::FoldShiftByConstant(Value *Op0, ConstantInt *Op1,
         break;
       default: break;
       }
-      if (SExtType) {
-        Instruction *NewTrunc = new TruncInst(X, SExtType, "sext");
-        InsertNewInstBefore(NewTrunc, I);
-        return new SExtInst(NewTrunc, Ty);
-      }
+      if (SExtType)
+        return new SExtInst(Builder->CreateTrunc(X, SExtType, "sext"), Ty);
       // Otherwise, we can't handle it yet.
     } else if (ShiftAmt1 < ShiftAmt2) {
       uint32_t ShiftDiff = ShiftAmt2-ShiftAmt1;
@@ -7588,9 +7573,7 @@ Instruction *InstCombiner::FoldShiftByConstant(Value *Op0, ConstantInt *Op1,
       if (I.getOpcode() == Instruction::Shl) {
         assert(ShiftOp->getOpcode() == Instruction::LShr ||
                ShiftOp->getOpcode() == Instruction::AShr);
-        Instruction *Shift =
-          BinaryOperator::CreateShl(X, ConstantInt::get(Ty, ShiftDiff));
-        InsertNewInstBefore(Shift, I);
+        Value *Shift = Builder->CreateShl(X, ConstantInt::get(Ty, ShiftDiff));
         
         APInt Mask(APInt::getHighBitsSet(TypeBits, TypeBits - ShiftAmt2));
         return BinaryOperator::CreateAnd(Shift,
@@ -7600,9 +7583,7 @@ Instruction *InstCombiner::FoldShiftByConstant(Value *Op0, ConstantInt *Op1,
       // (X << C1) >>u C2  --> X >>u (C2-C1) & (-1 >> C2)
       if (I.getOpcode() == Instruction::LShr) {
         assert(ShiftOp->getOpcode() == Instruction::Shl);
-        Instruction *Shift =
-          BinaryOperator::CreateLShr(X, ConstantInt::get(Ty, ShiftDiff));
-        InsertNewInstBefore(Shift, I);
+        Value *Shift = Builder->CreateLShr(X, ConstantInt::get(Ty, ShiftDiff));
         
         APInt Mask(APInt::getLowBitsSet(TypeBits, TypeBits - ShiftAmt2));
         return BinaryOperator::CreateAnd(Shift,
@@ -7618,10 +7599,8 @@ Instruction *InstCombiner::FoldShiftByConstant(Value *Op0, ConstantInt *Op1,
       if (I.getOpcode() == Instruction::Shl) {
         assert(ShiftOp->getOpcode() == Instruction::LShr ||
                ShiftOp->getOpcode() == Instruction::AShr);
-        Instruction *Shift =
-          BinaryOperator::Create(ShiftOp->getOpcode(), X,
-                                 ConstantInt::get(Ty, ShiftDiff));
-        InsertNewInstBefore(Shift, I);
+        Value *Shift = Builder->CreateBinOp(ShiftOp->getOpcode(), X,
+                                            ConstantInt::get(Ty, ShiftDiff));
         
         APInt Mask(APInt::getHighBitsSet(TypeBits, TypeBits - ShiftAmt2));
         return BinaryOperator::CreateAnd(Shift,
@@ -7631,9 +7610,7 @@ Instruction *InstCombiner::FoldShiftByConstant(Value *Op0, ConstantInt *Op1,
       // (X << C1) >>u C2  --> X << (C1-C2) & (-1 >> C2)
       if (I.getOpcode() == Instruction::LShr) {
         assert(ShiftOp->getOpcode() == Instruction::Shl);
-        Instruction *Shift =
-          BinaryOperator::CreateShl(X, ConstantInt::get(Ty, ShiftDiff));
-        InsertNewInstBefore(Shift, I);
+        Value *Shift = Builder->CreateShl(X, ConstantInt::get(Ty, ShiftDiff));
         
         APInt Mask(APInt::getLowBitsSet(TypeBits, TypeBits - ShiftAmt2));
         return BinaryOperator::CreateAnd(Shift,
@@ -7653,7 +7630,8 @@ Instruction *InstCombiner::FoldShiftByConstant(Value *Op0, ConstantInt *Op1,
 ///
 static Value *DecomposeSimpleLinearExpr(Value *Val, unsigned &Scale,
                                         int &Offset, LLVMContext *Context) {
-  assert(Val->getType() == Type::getInt32Ty(*Context) && "Unexpected allocation size type!");
+  assert(Val->getType() == Type::getInt32Ty(*Context) && 
+         "Unexpected allocation size type!");
   if (ConstantInt *CI = dyn_cast<ConstantInt>(Val)) {
     Offset = CI->getZExtValue();
     Scale  = 0;
@@ -7696,6 +7674,9 @@ static Value *DecomposeSimpleLinearExpr(Value *Val, unsigned &Scale,
 Instruction *InstCombiner::PromoteCastOfAllocation(BitCastInst &CI,
                                                    AllocationInst &AI) {
   const PointerType *PTy = cast<PointerType>(CI.getType());
+  
+  BuilderTy AllocaBuilder(*Builder);
+  AllocaBuilder.SetInsertPoint(AI.getParent(), &AI);
   
   // Remove any uses of AI that are dead.
   assert(!CI.use_empty() && "Dead instructions should be removed earlier!");
@@ -7753,30 +7734,22 @@ Instruction *InstCombiner::PromoteCastOfAllocation(BitCastInst &CI,
   if (Scale == 1) {
     Amt = NumElements;
   } else {
-    // If the allocation size is constant, form a constant mul expression
     Amt = ConstantInt::get(Type::getInt32Ty(*Context), Scale);
-    if (isa<ConstantInt>(NumElements))
-      Amt = ConstantExpr::getMul(cast<ConstantInt>(NumElements),
-                                 cast<ConstantInt>(Amt));
-    // otherwise multiply the amount and the number of elements
-    else {
-      Instruction *Tmp = BinaryOperator::CreateMul(Amt, NumElements, "tmp");
-      Amt = InsertNewInstBefore(Tmp, AI);
-    }
+    // Insert before the alloca, not before the cast.
+    Amt = AllocaBuilder.CreateMul(Amt, NumElements, "tmp");
   }
   
   if (int Offset = (AllocElTySize*ArrayOffset)/CastElTySize) {
     Value *Off = ConstantInt::get(Type::getInt32Ty(*Context), Offset, true);
-    Instruction *Tmp = BinaryOperator::CreateAdd(Amt, Off, "tmp");
-    Amt = InsertNewInstBefore(Tmp, AI);
+    Amt = AllocaBuilder.CreateAdd(Amt, Off, "tmp");
   }
   
   AllocationInst *New;
   if (isa<MallocInst>(AI))
-    New = new MallocInst(CastElTy, Amt, AI.getAlignment());
+    New = AllocaBuilder.CreateMalloc(CastElTy, Amt);
   else
-    New = new AllocaInst(CastElTy, Amt, AI.getAlignment());
-  InsertNewInstBefore(New, AI);
+    New = AllocaBuilder.CreateAlloca(CastElTy, Amt);
+  New->setAlignment(AI.getAlignment());
   New->takeName(&AI);
   
   // If the allocation has one real use plus a dbg.declare, just remove the
@@ -7790,8 +7763,7 @@ Instruction *InstCombiner::PromoteCastOfAllocation(BitCastInst &CI,
   else if (!AI.hasOneUse()) {
     // New is the allocation instruction, pointer typed. AI is the original
     // allocation instruction, also pointer typed. Thus, cast to use is BitCast.
-    CastInst *NewCast = new BitCastInst(New, AI.getType(), "tmpcast");
-    InsertNewInstBefore(NewCast, AI);
+    Value *NewCast = AllocaBuilder.CreateBitCast(New, AI.getType(), "tmpcast");
     AI.replaceAllUsesWith(NewCast);
   }
   return ReplaceInstUsesWith(CI, New);
@@ -8135,12 +8107,10 @@ Instruction *InstCombiner::commonPointerCastTransforms(CastInst &CI) {
           // If we were able to index down into an element, create the GEP
           // and bitcast the result.  This eliminates one bitcast, potentially
           // two.
-          Instruction *NGEP = GetElementPtrInst::Create(OrigBase, 
-                                                        NewIndices.begin(),
-                                                        NewIndices.end(), "");
-          InsertNewInstBefore(NGEP, CI);
+          Value *NGEP = Builder->CreateGEP(OrigBase, NewIndices.begin(),
+                                           NewIndices.end());
           NGEP->takeName(GEP);
-          if (cast<GEPOperator>(GEP)->isInBounds())
+          if (isa<Instruction>(NGEP) && cast<GEPOperator>(GEP)->isInBounds())
             cast<GEPOperator>(NGEP)->setIsInBounds(true);
           
           if (isa<BitCastInst>(CI))
@@ -8365,7 +8335,7 @@ Instruction *InstCombiner::visitTrunc(TruncInst &CI) {
   // Canonicalize trunc x to i1 -> (icmp ne (and x, 1), 0)
   if (DestBitWidth == 1) {
     Constant *One = ConstantInt::get(Src->getType(), 1);
-    Src = InsertNewInstBefore(BinaryOperator::CreateAnd(Src, One, "tmp"), CI);
+    Src = Builder->CreateAnd(Src, One, "tmp");
     Value *Zero = Constant::getNullValue(Src->getType());
     return new ICmpInst(ICmpInst::ICMP_NE, Src, Zero);
   }
@@ -8413,18 +8383,13 @@ Instruction *InstCombiner::transformZExtICmp(ICmpInst *ICI, Instruction &CI,
       Value *In = ICI->getOperand(0);
       Value *Sh = ConstantInt::get(In->getType(),
                                    In->getType()->getScalarSizeInBits()-1);
-      In = InsertNewInstBefore(BinaryOperator::CreateLShr(In, Sh,
-                                                        In->getName()+".lobit"),
-                               CI);
+      In = Builder->CreateLShr(In, Sh, In->getName()+".lobit");
       if (In->getType() != CI.getType())
-        In = CastInst::CreateIntegerCast(In, CI.getType(),
-                                         false/*ZExt*/, "tmp", &CI);
+        In = Builder->CreateIntCast(In, CI.getType(), false/*ZExt*/, "tmp");
 
       if (ICI->getPredicate() == ICmpInst::ICMP_SGT) {
         Constant *One = ConstantInt::get(In->getType(), 1);
-        In = InsertNewInstBefore(BinaryOperator::CreateXor(In, One,
-                                                         In->getName()+".not"),
-                                 CI);
+        In = Builder->CreateXor(In, One, In->getName()+".not");
       }
 
       return ReplaceInstUsesWith(CI, In);
@@ -8467,15 +8432,13 @@ Instruction *InstCombiner::transformZExtICmp(ICmpInst *ICI, Instruction &CI,
         if (ShiftAmt) {
           // Perform a logical shr by shiftamt.
           // Insert the shift to put the result in the low bit.
-          In = InsertNewInstBefore(BinaryOperator::CreateLShr(In,
-                              ConstantInt::get(In->getType(), ShiftAmt),
-                                                   In->getName()+".lobit"), CI);
+          In = Builder->CreateLShr(In, ConstantInt::get(In->getType(),ShiftAmt),
+                                   In->getName()+".lobit");
         }
           
         if ((Op1CV != 0) == isNE) { // Toggle the low bit.
           Constant *One = ConstantInt::get(In->getType(), 1);
-          In = BinaryOperator::CreateXor(In, One, "tmp");
-          InsertNewInstBefore(cast<Instruction>(In), CI);
+          In = Builder->CreateXor(In, One, "tmp");
         }
           
         if (CI.getType() == In->getType())
@@ -8513,17 +8476,17 @@ Instruction *InstCombiner::visitZExt(ZExtInst &CI) {
     if (SrcSize < DstSize) {
       APInt AndValue(APInt::getLowBitsSet(SrcSize, MidSize));
       Constant *AndConst = ConstantInt::get(A->getType(), AndValue);
-      Instruction *And =
-        BinaryOperator::CreateAnd(A, AndConst, CSrc->getName()+".mask");
-      InsertNewInstBefore(And, CI);
+      Value *And = Builder->CreateAnd(A, AndConst, CSrc->getName()+".mask");
       return new ZExtInst(And, CI.getType());
-    } else if (SrcSize == DstSize) {
+    }
+    
+    if (SrcSize == DstSize) {
       APInt AndValue(APInt::getLowBitsSet(SrcSize, MidSize));
       return BinaryOperator::CreateAnd(A, ConstantInt::get(A->getType(),
                                                            AndValue));
-    } else if (SrcSize > DstSize) {
-      Instruction *Trunc = new TruncInst(A, CI.getType(), "tmp");
-      InsertNewInstBefore(Trunc, CI);
+    }
+    if (SrcSize > DstSize) {
+      Value *Trunc = Builder->CreateTrunc(A, CI.getType(), "tmp");
       APInt AndValue(APInt::getLowBitsSet(DstSize, MidSize));
       return BinaryOperator::CreateAnd(Trunc, 
                                        ConstantInt::get(Trunc->getType(),
@@ -8570,8 +8533,7 @@ Instruction *InstCombiner::visitZExt(ZExtInst &CI) {
             Value *TI0 = TI->getOperand(0);
             if (TI0->getType() == CI.getType()) {
               Constant *ZC = ConstantExpr::getZExt(C, CI.getType());
-              Instruction *NewAnd = BinaryOperator::CreateAnd(TI0, ZC, "tmp");
-              InsertNewInstBefore(NewAnd, *And);
+              Value *NewAnd = Builder->CreateAnd(TI0, ZC, "tmp");
               return BinaryOperator::CreateXor(NewAnd, ZC);
             }
           }
@@ -8642,8 +8604,7 @@ Instruction *InstCombiner::visitSExt(SExtInst &CI) {
       unsigned SrcDstSize = CI.getType()->getScalarSizeInBits();
       unsigned ShAmt = CA->getZExtValue()+SrcDstSize-MidSize;
       Constant *ShAmtV = ConstantInt::get(CI.getType(), ShAmt);
-      I = InsertNewInstBefore(BinaryOperator::CreateShl(I, ShAmtV,
-                                                        CI.getName()), CI);
+      I = Builder->CreateShl(I, ShAmtV, CI.getName());
       return BinaryOperator::CreateAShr(I, ShAmtV);
     }
   }
@@ -8789,9 +8750,9 @@ Instruction *InstCombiner::visitPtrToInt(PtrToIntInst &CI) {
   // pointers.
   if (TD &&
       CI.getType()->getScalarSizeInBits() < TD->getPointerSizeInBits()) {
-    Value *P = InsertNewInstBefore(new PtrToIntInst(CI.getOperand(0),
-                                             TD->getIntPtrType(CI.getContext()),
-                                                    "tmp"), CI);
+    Value *P = Builder->CreatePtrToInt(CI.getOperand(0),
+                                       TD->getIntPtrType(CI.getContext()),
+                                       "tmp");
     return new TruncInst(P, CI.getType());
   }
   
@@ -8804,12 +8765,10 @@ Instruction *InstCombiner::visitIntToPtr(IntToPtrInst &CI) {
   // allows the trunc to be exposed to other transforms.  Don't do this for
   // extending inttoptr's, because we don't know if the target sign or zero
   // extends to pointers.
-  if (TD &&
-      CI.getOperand(0)->getType()->getScalarSizeInBits() >
+  if (TD && CI.getOperand(0)->getType()->getScalarSizeInBits() >
       TD->getPointerSizeInBits()) {
-    Value *P = InsertNewInstBefore(new TruncInst(CI.getOperand(0),
-                                             TD->getIntPtrType(CI.getContext()),
-                                                 "tmp"), CI);
+    Value *P = Builder->CreateTrunc(CI.getOperand(0),
+                                    TD->getIntPtrType(CI.getContext()), "tmp");
     return new IntToPtrInst(P, CI.getType());
   }
   
@@ -8894,9 +8853,9 @@ Instruction *InstCombiner::visitBitCast(BitCastInst &CI) {
   if (const VectorType *SrcVTy = dyn_cast<VectorType>(SrcTy)) {
     if (SrcVTy->getNumElements() == 1) {
       if (!isa<VectorType>(DestTy)) {
-        Instruction *Elem =
-          ExtractElementInst::Create(Src, Constant::getNullValue(Type::getInt32Ty(*Context)));
-        InsertNewInstBefore(Elem, CI);
+        Value *Elem = 
+          Builder->CreateExtractElement(Src,
+                            Constant::getNullValue(Type::getInt32Ty(*Context)));
         return CastInst::Create(Instruction::BitCast, Elem, DestTy);
       }
     }
@@ -9692,8 +9651,6 @@ Instruction *InstCombiner::visitCallInst(CallInst &CI) {
     return &CI;
   }
   
-  
-  
   IntrinsicInst *II = dyn_cast<IntrinsicInst>(&CI);
   if (!II) return visitCallSite(&CI);
   
@@ -9838,18 +9795,16 @@ Instruction *InstCombiner::visitCallInst(CallInst &CI) {
           Idx &= 31;  // Match the hardware behavior.
           
           if (ExtractedElts[Idx] == 0) {
-            Instruction *Elt = 
-              ExtractElementInst::Create(Idx < 16 ? Op0 : Op1, 
-                  ConstantInt::get(Type::getInt32Ty(*Context), Idx&15, false), "tmp");
-            InsertNewInstBefore(Elt, CI);
-            ExtractedElts[Idx] = Elt;
+            ExtractedElts[Idx] = 
+              Builder->CreateExtractElement(Idx < 16 ? Op0 : Op1, 
+                  ConstantInt::get(Type::getInt32Ty(*Context), Idx&15, false),
+                                            "tmp");
           }
         
           // Insert this value into the result vector.
-          Result = InsertElementInst::Create(Result, ExtractedElts[Idx],
-                               ConstantInt::get(Type::getInt32Ty(*Context), i, false), 
-                               "tmp");
-          InsertNewInstBefore(cast<Instruction>(Result), CI);
+          Result = Builder->CreateInsertElement(Result, ExtractedElts[Idx],
+                         ConstantInt::get(Type::getInt32Ty(*Context), i, false),
+                                                "tmp");
         }
         return CastInst::Create(Instruction::BitCast, Result, CI.getType());
       }
@@ -10138,8 +10093,7 @@ bool InstCombiner::transformConstExprCastCall(CallSite CS) {
     } else {
       Instruction::CastOps opcode = CastInst::getCastOpcode(*AI,
           false, ParamTy, false);
-      CastInst *NewCast = CastInst::Create(opcode, *AI, ParamTy, "tmp");
-      Args.push_back(InsertNewInstBefore(NewCast, *Caller));
+      Args.push_back(Builder->CreateCast(opcode, *AI, ParamTy, "tmp"));
     }
 
     // Add any parameter attributes.
@@ -10148,26 +10102,24 @@ bool InstCombiner::transformConstExprCastCall(CallSite CS) {
   }
 
   // If the function takes more arguments than the call was taking, add them
-  // now...
+  // now.
   for (unsigned i = NumCommonArgs; i != FT->getNumParams(); ++i)
     Args.push_back(Constant::getNullValue(FT->getParamType(i)));
 
-  // If we are removing arguments to the function, emit an obnoxious warning...
+  // If we are removing arguments to the function, emit an obnoxious warning.
   if (FT->getNumParams() < NumActualArgs) {
     if (!FT->isVarArg()) {
       errs() << "WARNING: While resolving call to function '"
              << Callee->getName() << "' arguments were dropped!\n";
     } else {
-      // Add all of the arguments in their promoted form to the arg list...
+      // Add all of the arguments in their promoted form to the arg list.
       for (unsigned i = FT->getNumParams(); i != NumActualArgs; ++i, ++AI) {
         const Type *PTy = getPromotedType((*AI)->getType());
         if (PTy != (*AI)->getType()) {
           // Must promote to pass through va_arg area!
-          Instruction::CastOps opcode = CastInst::getCastOpcode(*AI, false, 
-                                                                PTy, false);
-          Instruction *Cast = CastInst::Create(opcode, *AI, PTy, "tmp");
-          InsertNewInstBefore(Cast, *Caller);
-          Args.push_back(Cast);
+          Instruction::CastOps opcode =
+            CastInst::getCastOpcode(*AI, false, PTy, false);
+          Args.push_back(Builder->CreateCast(opcode, *AI, PTy, "tmp"));
         } else {
           Args.push_back(*AI);
         }
@@ -10949,12 +10901,7 @@ Instruction *InstCombiner::visitGetElementPtrInst(GetElementPtrInst &GEP) {
         // normalized.
         if (SO1->getType() != GO1->getType())
           return 0;
-        if (isa<Constant>(SO1) && isa<Constant>(GO1))
-          Sum = ConstantExpr::getAdd(cast<Constant>(SO1), cast<Constant>(GO1));
-        else {
-          Sum = BinaryOperator::CreateAdd(SO1, GO1, PtrOp->getName()+".sum");
-          InsertNewInstBefore(cast<Instruction>(Sum), GEP);
-        }
+        Sum = Builder->CreateAdd(SO1, GO1, PtrOp->getName()+".sum");
       }
 
       // Update the GEP in place if possible.
@@ -11036,13 +10983,12 @@ Instruction *InstCombiner::visitGetElementPtrInst(GetElementPtrInst &GEP) {
         Value *Idx[2];
         Idx[0] = Constant::getNullValue(Type::getInt32Ty(*Context));
         Idx[1] = GEP.getOperand(1);
-        GetElementPtrInst *NewGEP =
-          GetElementPtrInst::Create(X, Idx, Idx + 2, GEP.getName());
+        Value *NewGEP =
+          Builder->CreateGEP(X, Idx, Idx + 2, GEP.getName());
         if (cast<GEPOperator>(&GEP)->isInBounds())
           cast<GEPOperator>(NewGEP)->setIsInBounds(true);
-        Value *V = InsertNewInstBefore(NewGEP, GEP);
         // V and GEP are both pointer types --> BitCast
-        return new BitCastInst(V, GEP.getType());
+        return new BitCastInst(NewGEP, GEP.getType());
       }
       
       // Transform things like:
@@ -11090,19 +11036,16 @@ Instruction *InstCombiner::visitGetElementPtrInst(GetElementPtrInst &GEP) {
           if (Scale->getZExtValue() != 1) {
             Constant *C = ConstantExpr::getIntegerCast(Scale, NewIdx->getType(),
                                                        false /*ZExt*/);
-            Instruction *Sc = BinaryOperator::CreateMul(NewIdx, C, "idxscale");
-            NewIdx = InsertNewInstBefore(Sc, GEP);
+            NewIdx = Builder->CreateMul(NewIdx, C, "idxscale");
           }
 
           // Insert the new GEP instruction.
           Value *Idx[2];
           Idx[0] = Constant::getNullValue(Type::getInt32Ty(*Context));
           Idx[1] = NewIdx;
-          Instruction *NewGEP =
-            GetElementPtrInst::Create(X, Idx, Idx + 2, GEP.getName());
+          Value *NewGEP = Builder->CreateGEP(X, Idx, Idx + 2, GEP.getName());
           if (cast<GEPOperator>(&GEP)->isInBounds())
             cast<GEPOperator>(NewGEP)->setIsInBounds(true);
-          NewGEP = InsertNewInstBefore(NewGEP, GEP);
           // The NewGEP must be pointer typed, so must the old one -> BitCast
           return new BitCastInst(NewGEP, GEP.getType());
         }
@@ -11150,13 +11093,13 @@ Instruction *InstCombiner::visitGetElementPtrInst(GetElementPtrInst &GEP) {
       const Type *InTy =
         cast<PointerType>(BCI->getOperand(0)->getType())->getElementType();
       if (FindElementAtOffset(InTy, Offset, NewIndices, TD, Context)) {
-        Instruction *NGEP =
-           GetElementPtrInst::Create(BCI->getOperand(0), NewIndices.begin(),
-                                     NewIndices.end());
-        if (NGEP->getType() == GEP.getType()) return NGEP;
+        Value *NGEP = Builder->CreateGEP(BCI->getOperand(0), NewIndices.begin(),
+                                         NewIndices.end());
         if (cast<GEPOperator>(&GEP)->isInBounds())
           cast<GEPOperator>(NGEP)->setIsInBounds(true);
-        InsertNewInstBefore(NGEP, GEP);
+        
+        if (NGEP->getType() == GEP.getType())
+          return ReplaceInstUsesWith(GEP, NGEP);
         NGEP->takeName(&GEP);
         return new BitCastInst(NGEP, GEP.getType());
       }
@@ -11176,13 +11119,12 @@ Instruction *InstCombiner::visitAllocationInst(AllocationInst &AI) {
 
       // Create and insert the replacement instruction...
       if (isa<MallocInst>(AI))
-        New = new MallocInst(NewTy, 0, AI.getAlignment(), AI.getName());
+        New = Builder->CreateMalloc(NewTy, 0, AI.getName());
       else {
         assert(isa<AllocaInst>(AI) && "Unknown type of allocation inst!");
-        New = new AllocaInst(NewTy, 0, AI.getAlignment(), AI.getName());
+        New = Builder->CreateAlloca(NewTy, 0, AI.getName());
       }
-
-      InsertNewInstBefore(New, AI);
+      New->setAlignment(AI.getAlignment());
 
       // Scan to the end of the allocation instructions, to skip over a block of
       // allocas if possible...also skip interleaved debug info
@@ -11344,9 +11286,8 @@ static Instruction *InstCombineLoadCast(InstCombiner &IC, LoadInst &LI,
         // Okay, we are casting from one integer or pointer type to another of
         // the same size.  Instead of casting the pointer before the load, cast
         // the result of the loaded value.
-        Value *NewLoad = IC.InsertNewInstBefore(new LoadInst(CastOp,
-                                                             CI->getName(),
-                                                         LI.isVolatile()),LI);
+        Value *NewLoad = 
+          IC.Builder->CreateLoad(CastOp, LI.isVolatile(), CI->getName());
         // Now cast the result of the load.
         return new BitCastInst(NewLoad, LI.getType());
       }
@@ -11468,10 +11409,10 @@ Instruction *InstCombiner::visitLoadInst(LoadInst &LI) {
       // load (select (Cond, &V1, &V2))  --> select(Cond, load &V1, load &V2).
       if (isSafeToLoadUnconditionally(SI->getOperand(1), SI) &&
           isSafeToLoadUnconditionally(SI->getOperand(2), SI)) {
-        Value *V1 = InsertNewInstBefore(new LoadInst(SI->getOperand(1),
-                                     SI->getOperand(1)->getName()+".val"), LI);
-        Value *V2 = InsertNewInstBefore(new LoadInst(SI->getOperand(2),
-                                     SI->getOperand(2)->getName()+".val"), LI);
+        Value *V1 = Builder->CreateLoad(SI->getOperand(1),
+                                        SI->getOperand(1)->getName()+".val");
+        Value *V2 = Builder->CreateLoad(SI->getOperand(2),
+                                        SI->getOperand(2)->getName()+".val");
         return SelectInst::Create(SI->getCondition(), V1, V2);
       }
 
@@ -11571,22 +11512,13 @@ static Instruction *InstCombineStoreToCast(InstCombiner &IC, StoreInst &SI) {
   // SIOp0 is a pointer to aggregate and this is a store to the first field,
   // emit a GEP to index into its first field.
   if (!NewGEPIndices.empty()) {
-    if (Constant *C = dyn_cast<Constant>(CastOp))
-      CastOp = ConstantExpr::getGetElementPtr(C, &NewGEPIndices[0], 
-                                              NewGEPIndices.size());
-    else
-      CastOp = IC.InsertNewInstBefore(
-              GetElementPtrInst::Create(CastOp, NewGEPIndices.begin(),
-                                        NewGEPIndices.end()), SI);
+    CastOp = IC.Builder->CreateGEP(CastOp, NewGEPIndices.begin(),
+                                   NewGEPIndices.end());
     cast<GEPOperator>(CastOp)->setIsInBounds(true);
   }
   
-  if (Constant *C = dyn_cast<Constant>(SIOp0))
-    NewCast = ConstantExpr::getCast(opcode, C, CastDstTy);
-  else
-    NewCast = IC.InsertNewInstBefore(
-      CastInst::Create(opcode, SIOp0, CastDstTy, SIOp0->getName()+".c"), 
-      SI);
+  NewCast = IC.Builder->CreateCast(opcode, SIOp0, CastDstTy,
+                                   SIOp0->getName()+".c");
   return new StoreInst(NewCast, CastOp);
 }
 
@@ -12039,10 +11971,8 @@ Instruction *InstCombiner::visitExtractValueInst(ExtractValueInst &EV) {
       // %E = insertvalue { i32 } %X, i32 42, 0
       // by switching the order of the insert and extract (though the
       // insertvalue should be left in, since it may have other uses).
-      Value *NewEV = InsertNewInstBefore(
-        ExtractValueInst::Create(IV->getAggregateOperand(),
-                                 EV.idx_begin(), EV.idx_end()),
-        EV);
+      Value *NewEV = Builder->CreateExtractValue(IV->getAggregateOperand(),
+                                                 EV.idx_begin(), EV.idx_end());
       return InsertValueInst::Create(NewEV, IV->getInsertedValueOperand(),
                                      insi, inse);
     }
@@ -12242,14 +12172,12 @@ Instruction *InstCombiner::visitExtractElementInst(ExtractElementInst &EI) {
       if (BinaryOperator *BO = dyn_cast<BinaryOperator>(I)) {
         bool isConstantElt = isa<ConstantInt>(EI.getOperand(1));
         if (CheapToScalarize(BO, isConstantElt)) {
-          ExtractElementInst *newEI0 = 
-            ExtractElementInst::Create(BO->getOperand(0), EI.getOperand(1),
-                                   EI.getName()+".lhs");
-          ExtractElementInst *newEI1 =
-            ExtractElementInst::Create(BO->getOperand(1), EI.getOperand(1),
-                                   EI.getName()+".rhs");
-          InsertNewInstBefore(newEI0, EI);
-          InsertNewInstBefore(newEI1, EI);
+          Value *newEI0 =
+            Builder->CreateExtractElement(BO->getOperand(0), EI.getOperand(1),
+                                          EI.getName()+".lhs");
+          Value *newEI1 =
+            Builder->CreateExtractElement(BO->getOperand(1), EI.getOperand(1),
+                                          EI.getName()+".rhs");
           return BinaryOperator::Create(BO->getOpcode(), newEI0, newEI1);
         }
       } else if (isa<LoadInst>(I)) {
@@ -12257,12 +12185,16 @@ Instruction *InstCombiner::visitExtractElementInst(ExtractElementInst &EI) {
           cast<PointerType>(I->getOperand(0)->getType())->getAddressSpace();
         Value *Ptr = InsertBitCastBefore(I->getOperand(0),
                                   PointerType::get(EI.getType(), AS),*I);
-        GetElementPtrInst *GEP =
-          GetElementPtrInst::Create(Ptr, EI.getOperand(1), I->getName()+".gep");
+        Value *GEP =
+          Builder->CreateGEP(Ptr, EI.getOperand(1), I->getName()+".gep");
         cast<GEPOperator>(GEP)->setIsInBounds(true);
-        InsertNewInstBefore(GEP, *I);
-        LoadInst* Load = new LoadInst(GEP, "tmp");
-        InsertNewInstBefore(Load, *I);
+        
+        LoadInst *Load = Builder->CreateLoad(GEP, "tmp");
+
+        // Make sure the Load goes before the load instruction in the source,
+        // not wherever the extract happens to be.
+        Load->moveBefore(I);
+        
         return ReplaceInstUsesWith(EI, Load);
       }
     }
