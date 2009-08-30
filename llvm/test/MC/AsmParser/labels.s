@@ -47,8 +47,10 @@ foo:
 // CHECK: .zerofill __DATA,__bss,"a 7",1
         .lcomm "a 7", 1
 
-// CHECK: .lsym "a 8",1
-        .lsym "a 8", 1
+// FIXME: We don't bother to support .lsym.
+        
+// CHECX: .lsym "a 8",1
+//        .lsym "a 8", 1
 
 // CHECK: set "a 9", a - b
         .set "a 9", a - b
