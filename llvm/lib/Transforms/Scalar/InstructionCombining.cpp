@@ -151,34 +151,15 @@ namespace {
         Worklist.Add(cast<Instruction>(*UI));
     }
 
-    /// AddUsesToWorkList - When an instruction is simplified, add operands to
-    /// the work lists because they might get more simplified now.
+    /// AddOperandsToWorkList - When an instruction is simplified, add operands
+    /// to the work lists because they might get more simplified now.
     ///
-    void AddUsesToWorkList(Instruction &I) {
+    void AddOperandsToWorkList(Instruction &I) {
       for (User::op_iterator i = I.op_begin(), e = I.op_end(); i != e; ++i)
         if (Instruction *Op = dyn_cast<Instruction>(*i))
           Worklist.Add(Op);
     }
     
-    /// AddSoonDeadInstToWorklist - The specified instruction is about to become
-    /// dead.  Add all of its operands to the worklist, turning them into
-    /// undef's to reduce the number of uses of those instructions.
-    ///
-    /// Return the specified operand before it is turned into an undef.
-    ///
-    Value *AddSoonDeadInstToWorklist(Instruction &I, unsigned op) {
-      Value *R = I.getOperand(op);
-      
-      for (User::op_iterator i = I.op_begin(), e = I.op_end(); i != e; ++i)
-        if (Instruction *Op = dyn_cast<Instruction>(*i)) {
-          Worklist.Add(Op);
-          // Set the operand to undef to drop the use.
-          *i = UndefValue::get(Op->getType());
-        }
-      
-      return R;
-    }
-
   public:
     virtual bool runOnFunction(Function &F);
     
@@ -351,7 +332,7 @@ namespace {
       // Make sure that we reprocess all operands now that we reduced their
       // use counts.
       if (I.getNumOperands() < 8)
-        AddUsesToWorkList(I);
+        AddOperandsToWorkList(I);
       Worklist.Remove(&I);
       I.eraseFromParent();
       return 0;  // Don't do anything with FI
@@ -1548,8 +1529,10 @@ Value *InstCombiner::SimplifyDemandedVectorElts(Value *V, APInt DemandedElts,
     // If this is inserting an element that isn't demanded, remove this
     // insertelement.
     unsigned IdxNo = Idx->getZExtValue();
-    if (IdxNo >= VWidth || !DemandedElts[IdxNo])
-      return AddSoonDeadInstToWorklist(*I, 0);
+    if (IdxNo >= VWidth || !DemandedElts[IdxNo]) {
+      Worklist.Add(I);
+      return I->getOperand(0);
+    }
     
     // Otherwise, the element inserted overwrites whatever was there, so the
     // input demanded set is simpler than the output set.
@@ -1771,7 +1754,6 @@ Value *InstCombiner::SimplifyDemandedVectorElts(Value *V, APInt DemandedElts,
               UndefValue::get(II->getType()), TmpV,
               ConstantInt::get(Type::getInt32Ty(*Context), 0U, false), II->getName());
           InsertNewInstBefore(New, *II);
-          AddSoonDeadInstToWorklist(*II, 0);
           return New;
         }            
       }
@@ -3265,7 +3247,7 @@ Instruction *InstCombiner::visitSRem(BinaryOperator &I) {
         (isa<ConstantInt>(RHSNeg) &&
          cast<ConstantInt>(RHSNeg)->getValue().isStrictlyPositive())) {
       // X % -Y -> X % Y
-      AddUsesToWorkList(I);
+      AddOperandsToWorkList(I);
       I.setOperand(1, RHSNeg);
       return &I;
     }
@@ -3303,7 +3285,7 @@ Instruction *InstCombiner::visitSRem(BinaryOperator &I) {
 
       Constant *NewRHSV = ConstantVector::get(Elts);
       if (NewRHSV != RHSV) {
-        AddUsesToWorkList(I);
+        AddOperandsToWorkList(I);
         I.setOperand(1, NewRHSV);
         return &I;
       }
@@ -6902,7 +6884,7 @@ Instruction *InstCombiner::visitICmpInstWithInstAndIntCst(ICmpInst &ICI,
             LHSI->setOperand(1, NewAndCST);
             LHSI->setOperand(0, Shift->getOperand(0));
             Worklist.Add(Shift); // Shift is dead.
-            AddUsesToWorkList(ICI);
+            AddOperandsToWorkList(ICI);
             return &ICI;
           }
         }
@@ -7932,7 +7914,7 @@ Instruction *InstCombiner::PromoteCastOfAllocation(BitCastInst &CI,
   // things that used it to use the new cast.  This will also hack on CI, but it
   // will die soon.
   else if (!AI.hasOneUse()) {
-    AddUsesToWorkList(AI);
+    AddOperandsToWorkList(AI);
     // New is the allocation instruction, pointer typed. AI is the original
     // allocation instruction, also pointer typed. Thus, cast to use is BitCast.
     CastInst *NewCast = new BitCastInst(New, AI.getType(), "tmpcast");
@@ -12419,7 +12401,7 @@ Instruction *InstCombiner::visitExtractElementInst(ExtractElementInst &EI) {
       // be the same value, extract from the pre-inserted value instead.
       if (isa<Constant>(IE->getOperand(2)) &&
           isa<Constant>(EI.getOperand(1))) {
-        AddUsesToWorkList(EI);
+        AddOperandsToWorkList(EI);
         EI.setOperand(0, IE->getOperand(0));
         return &EI;
       }
