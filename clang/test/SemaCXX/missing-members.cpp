@@ -18,3 +18,9 @@ int A::B::C::i = 10; // expected-error {{class 'A::B::C' has no member named 'i'
 int A::B::S::i = 10; // expected-error {{struct 'A::B::S' has no member named 'i'}}
 int A::B::U::i = 10; // expected-error {{union 'A::B::U' has no member named 'i'}}
 
+using A::B::D; // expected-error {{namespace 'A::B' has no member named 'D'}}
+
+struct S : A::B::C { 
+  using A::B::C::f; // expected-error {{class 'A::B::C' has no member named 'f'}}
+  
+};
