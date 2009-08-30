@@ -303,21 +303,6 @@ namespace {
       Worklist.Add(New);
       return New;
     }
-
-    /// InsertCastBefore - Insert a cast of V to TY before the instruction POS.
-    /// This also adds the cast to the worklist.  Finally, this returns the
-    /// cast.
-    Value *InsertCastBefore(Instruction::CastOps opc, Value *V, const Type *Ty,
-                            Instruction &Pos) {
-      if (V->getType() == Ty) return V;
-
-      if (Constant *CV = dyn_cast<Constant>(V))
-        return ConstantExpr::getCast(opc, CV, Ty);
-      
-      Instruction *C = CastInst::Create(opc, V, Ty, V->getName(), &Pos);
-      Worklist.Add(C);
-      return C;
-    }
         
     // ReplaceInstUsesWith - This method is to be used when an instruction is
     // found to be dead, replacable with another preexisting expression.  Here
@@ -1892,7 +1877,7 @@ struct AddMaskingAnd {
 static Value *FoldOperationIntoSelectOperand(Instruction &I, Value *SO,
                                              InstCombiner *IC) {
   if (CastInst *CI = dyn_cast<CastInst>(&I))
-    return IC->InsertCastBefore(CI->getOpcode(), SO, I.getType(), I);
+    return IC->Builder->CreateCast(CI->getOpcode(), SO, I.getType());
 
   // Figure out if the constant is the left or the right argument.
   bool ConstIsRHS = isa<Constant>(I.getOperand(1));
@@ -2764,14 +2749,8 @@ Instruction *InstCombiner::visitMul(BinaryOperator &I) {
 
         // If the multiply type is not the same as the source type, sign extend
         // or truncate to the multiply type.
-        if (I.getType() != V->getType()) {
-          uint32_t SrcBits = V->getType()->getPrimitiveSizeInBits();
-          uint32_t DstBits = I.getType()->getPrimitiveSizeInBits();
-          Instruction::CastOps opcode = 
-            (SrcBits == DstBits ? Instruction::BitCast : 
-             (SrcBits < DstBits ? Instruction::SExt : Instruction::Trunc));
-          V = InsertCastBefore(opcode, V, I.getType(), I);
-        }
+        if (I.getType() != V->getType())
+          V = Builder->CreateIntCast(V, I.getType(), true);
 
         Value *OtherOp = Op0 == BoolCast ? I.getOperand(1) : Op0;
         return BinaryOperator::CreateAnd(V, OtherOp);
@@ -8262,9 +8241,7 @@ Instruction *InstCombiner::commonIntCastTransforms(CastInst &CI) {
           return ReplaceInstUsesWith(CI, Res);
 
         // We need to emit a cast to truncate, then a cast to sext.
-        return CastInst::Create(Instruction::SExt,
-            InsertCastBefore(Instruction::Trunc, Res, Src->getType(), 
-                             CI), DestTy);
+        return new SExtInst(Builder->CreateTrunc(Res, Src->getType()), DestTy);
       }
       }
     }
@@ -8284,8 +8261,8 @@ Instruction *InstCombiner::commonIntCastTransforms(CastInst &CI) {
       // Don't insert two casts unless at least one can be eliminated.
       if (!ValueRequiresCast(CI.getOpcode(), Op1, DestTy, TD) ||
           !ValueRequiresCast(CI.getOpcode(), Op0, DestTy, TD)) {
-        Value *Op0c = InsertCastBefore(Instruction::Trunc, Op0, DestTy, *SrcI);
-        Value *Op1c = InsertCastBefore(Instruction::Trunc, Op1, DestTy, *SrcI);
+        Value *Op0c = Builder->CreateTrunc(Op0, DestTy, Op0->getName());
+        Value *Op1c = Builder->CreateTrunc(Op1, DestTy, Op1->getName());
         return BinaryOperator::Create(
             cast<BinaryOperator>(SrcI)->getOpcode(), Op0c, Op1c);
       }
@@ -8296,7 +8273,7 @@ Instruction *InstCombiner::commonIntCastTransforms(CastInst &CI) {
         SrcI->getOpcode() == Instruction::Xor &&
         Op1 == ConstantInt::getTrue(*Context) &&
         (!Op0->hasOneUse() || !isa<CmpInst>(Op0))) {
-      Value *New = InsertCastBefore(Instruction::ZExt, Op0, DestTy, CI);
+      Value *New = Builder->CreateZExt(Op0, DestTy, Op0->getName());
       return BinaryOperator::CreateXor(New,
                                       ConstantInt::get(CI.getType(), 1));
     }
@@ -8307,8 +8284,8 @@ Instruction *InstCombiner::commonIntCastTransforms(CastInst &CI) {
     ConstantInt *CI = dyn_cast<ConstantInt>(Op1);
     if (CI && DestBitSize < SrcBitSize &&
         CI->getLimitedValue(DestBitSize) < DestBitSize) {
-      Value *Op0c = InsertCastBefore(Instruction::Trunc, Op0, DestTy, *SrcI);
-      Value *Op1c = InsertCastBefore(Instruction::Trunc, Op1, DestTy, *SrcI);
+      Value *Op0c = Builder->CreateTrunc(Op0, DestTy, Op0->getName());
+      Value *Op1c = Builder->CreateTrunc(Op1, DestTy, Op1->getName());
       return BinaryOperator::CreateShl(Op0c, Op1c);
     }
     break;
@@ -8349,7 +8326,7 @@ Instruction *InstCombiner::visitTrunc(TruncInst &CI) {
       
       // Okay, we can shrink this.  Truncate the input, then return a new
       // shift.
-      Value *V1 = InsertCastBefore(Instruction::Trunc, ShiftOp, Ty, CI);
+      Value *V1 = Builder->CreateTrunc(ShiftOp, Ty, ShiftOp->getName());
       Value *V2 = ConstantExpr::getTrunc(ShAmtV, Ty);
       return BinaryOperator::CreateLShr(V1, V2);
     }
@@ -8500,8 +8477,8 @@ Instruction *InstCombiner::visitZExt(ZExtInst &CI) {
     if (LHS && RHS && LHS->hasOneUse() && RHS->hasOneUse() &&
         (transformZExtICmp(LHS, CI, false) ||
          transformZExtICmp(RHS, CI, false))) {
-      Value *LCast = InsertCastBefore(Instruction::ZExt, LHS, CI.getType(), CI);
-      Value *RCast = InsertCastBefore(Instruction::ZExt, RHS, CI.getType(), CI);
+      Value *LCast = Builder->CreateZExt(LHS, CI.getType(), LHS->getName());
+      Value *RCast = Builder->CreateZExt(RHS, CI.getType(), RHS->getName());
       return BinaryOperator::Create(Instruction::Or, LCast, RCast);
     }
   }
@@ -8671,10 +8648,8 @@ Instruction *InstCombiner::visitFPTrunc(FPTruncInst &CI) {
         // the cast, do this xform.
         if (LHSTrunc->getType()->getScalarSizeInBits() <= DstSize &&
             RHSTrunc->getType()->getScalarSizeInBits() <= DstSize) {
-          LHSTrunc = InsertCastBefore(Instruction::FPExt, LHSTrunc,
-                                      CI.getType(), CI);
-          RHSTrunc = InsertCastBefore(Instruction::FPExt, RHSTrunc,
-                                      CI.getType(), CI);
+          LHSTrunc = Builder->CreateFPExt(LHSTrunc, CI.getType());
+          RHSTrunc = Builder->CreateFPExt(RHSTrunc, CI.getType());
           return BinaryOperator::Create(OpI->getOpcode(), LHSTrunc, RHSTrunc);
         }
       }
@@ -8835,10 +8810,9 @@ Instruction *InstCombiner::visitBitCast(BitCastInst &CI) {
   if (const VectorType *DestVTy = dyn_cast<VectorType>(DestTy)) {
     if (DestVTy->getNumElements() == 1) {
       if (!isa<VectorType>(SrcTy)) {
-        Value *Elem = InsertCastBefore(Instruction::BitCast, Src,
-                                       DestVTy->getElementType(), CI);
+        Value *Elem = Builder->CreateBitCast(Src, DestVTy->getElementType());
         return InsertElementInst::Create(UndefValue::get(DestTy), Elem,
-                                         Constant::getNullValue(Type::getInt32Ty(*Context)));
+                            Constant::getNullValue(Type::getInt32Ty(*Context)));
       }
       // FIXME: Canonicalize bitcast(insertelement) -> insertelement(bitcast)
     }
@@ -8872,10 +8846,8 @@ Instruction *InstCombiner::visitBitCast(BitCastInst &CI) {
              Tmp->getOperand(0)->getType() == DestTy) ||
             ((Tmp = dyn_cast<CastInst>(SVI->getOperand(1))) && 
              Tmp->getOperand(0)->getType() == DestTy)) {
-          Value *LHS = InsertCastBefore(Instruction::BitCast,
-                                        SVI->getOperand(0), DestTy, CI);
-          Value *RHS = InsertCastBefore(Instruction::BitCast,
-                                        SVI->getOperand(1), DestTy, CI);
+          Value *LHS = Builder->CreateBitCast(SVI->getOperand(0), DestTy);
+          Value *RHS = Builder->CreateBitCast(SVI->getOperand(1), DestTy);
           // Return a new shuffle vector.  Use the same element ID's, as we
           // know the vector types match #elts.
           return new ShuffleVectorInst(LHS, RHS, SVI->getOperand(2));
@@ -10841,13 +10813,10 @@ Instruction *InstCombiner::visitGetElementPtrInst(GetElementPtrInst &GEP) {
       // to what we need.  If narrower, sign-extend it to what we need.  This
       // explicit cast can make subsequent optimizations more obvious.
       unsigned OpBits = cast<IntegerType>((*I)->getType())->getBitWidth();
-      
       if (OpBits == PtrSize)
         continue;
       
-      Instruction::CastOps Opc =
-        OpBits > PtrSize ? Instruction::Trunc : Instruction::SExt;
-      *I = InsertCastBefore(Opc, *I, TD->getIntPtrType(GEP.getContext()), GEP);
+      *I = Builder->CreateIntCast(*I, TD->getIntPtrType(GEP.getContext()),true);
       MadeChange = true;
     }
     if (MadeChange) return &GEP;
