@@ -2,13 +2,13 @@
 ; disambiguating some obvious cases.  If LICM is able to disambiguate the
 ; two pointers, then the load should be hoisted, and the store sunk.
 
-; RUN: llvm-as < %s | opt -basicaa -licm | llvm-dis | %prcontext @A 1 | not grep Loop
+; RUN: llvm-as < %s | opt -basicaa -licm | llvm-dis | FileCheck %s
 
 @A = global i32 7               ; <i32*> [#uses=3]
 @B = global i32 8               ; <i32*> [#uses=2]
 @C = global [2 x i32] [ i32 4, i32 8 ]          ; <[2 x i32]*> [#uses=2]
 
-define i32 @test(i1 %c) {
+define i32 @test1(i1 %c) {
         %Atmp = load i32* @A            ; <i32> [#uses=2]
         br label %Loop
 
@@ -20,6 +20,14 @@ Loop:           ; preds = %Loop, %0
 Out:            ; preds = %Loop
         %X = sub i32 %ToRemove, %Atmp           ; <i32> [#uses=1]
         ret i32 %X
+        
+; The Loop block should be empty after the load/store are promoted.
+; CHECK:     @test1
+; CHECK:        load i32* @B
+; CHECK:      Loop:
+; CHECK-NEXT:   br i1 %c, label %Out, label %Loop
+; CHECK:      Out:
+; CHECK:        store i32 %Atmp, i32* @B
 }
 
 define i32 @test2(i1 %c) {
@@ -37,5 +45,9 @@ Loop:           ; preds = %Loop, %0
 Out:            ; preds = %Loop
         %X = sub i32 %AVal, %BVal               ; <i32> [#uses=1]
         ret i32 %X
+; The Loop block should be empty after the load/store are promoted.
+; CHECK:     @test2
+; CHECK:      Loop:
+; CHECK-NEXT:   br i1 %c, label %Out, label %Loop
 }
 
