@@ -130,7 +130,7 @@ public:
   /// Insert - Insert and return the specified instruction.
   template<typename InstTy>
   InstTy *Insert(InstTy *I, const Twine &Name = "") const {
-    InsertHelper(I, Name, BB, InsertPt);
+    this->InsertHelper(I, Name, BB, InsertPt);
     return I;
   }
 
