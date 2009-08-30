@@ -11240,7 +11240,8 @@ Instruction *InstCombiner::visitGetElementPtrInst(GetElementPtrInst &GEP) {
           Scale = ConstantInt::get(Scale->getType(),
                                    Scale->getZExtValue() / ArrayEltSize);
           if (Scale->getZExtValue() != 1) {
-            Constant *C = ConstantExpr::getZExt(Scale, NewIdx->getType());
+            Constant *C = ConstantExpr::getIntegerCast(Scale, NewIdx->getType(),
+                                                       false /*ZExt*/);
             Instruction *Sc = BinaryOperator::CreateMul(NewIdx, C, "idxscale");
             NewIdx = InsertNewInstBefore(Sc, GEP);
           }
