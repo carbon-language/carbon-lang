@@ -570,6 +570,10 @@ public:
   static unsigned getPointerOperandIndex() {
     return 0U;                      // get index for modifying correct operand
   }
+  
+  unsigned getPointerAddressSpace() const {
+    return cast<PointerType>(getType())->getAddressSpace();
+  }
 
   /// getPointerOperandType - Method to return the pointer operand as a
   /// PointerType.

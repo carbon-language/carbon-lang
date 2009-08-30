@@ -132,7 +132,7 @@ static bool MarkAliveBlocks(BasicBlock *BB,
         
         if (isa<UndefValue>(Ptr) ||
             (isa<ConstantPointerNull>(Ptr) &&
-             cast<PointerType>(Ptr->getType())->getAddressSpace() == 0)) {
+             SI->getPointerAddressSpace() == 0)) {
           ChangeToUnreachable(SI, Context);
           Changed = true;
           break;

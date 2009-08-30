@@ -11289,8 +11289,7 @@ Instruction *InstCombiner::visitLoadInst(LoadInst &LI) {
   if (GetElementPtrInst *GEPI = dyn_cast<GetElementPtrInst>(Op)) {
     const Value *GEPI0 = GEPI->getOperand(0);
     // TODO: Consider a target hook for valid address spaces for this xform.
-    if (isa<ConstantPointerNull>(GEPI0) &&
-        cast<PointerType>(GEPI0->getType())->getAddressSpace() == 0) {
+    if (isa<ConstantPointerNull>(GEPI0) && GEPI->getPointerAddressSpace() == 0){
       // Insert a new store to null instruction before the load to indicate
       // that this code is not reachable.  We do this instead of inserting
       // an unreachable instruction directly because we cannot modify the
@@ -11304,8 +11303,8 @@ Instruction *InstCombiner::visitLoadInst(LoadInst &LI) {
   if (Constant *C = dyn_cast<Constant>(Op)) {
     // load null/undef -> undef
     // TODO: Consider a target hook for valid address spaces for this xform.
-    if (isa<UndefValue>(C) || (C->isNullValue() && 
-        cast<PointerType>(Op->getType())->getAddressSpace() == 0)) {
+    if (isa<UndefValue>(C) ||
+        (C->isNullValue() && LI.getPointerAddressSpace() == 0)) {
       // Insert a new store to null instruction before the load to indicate that
       // this code is not reachable.  We do this instead of inserting an
       // unreachable instruction directly because we cannot modify the CFG.
@@ -11640,8 +11639,7 @@ Instruction *InstCombiner::visitStoreInst(StoreInst &SI) {
   if (SI.isVolatile()) return 0;  // Don't hack volatile stores.
 
   // store X, null    -> turns into 'unreachable' in SimplifyCFG
-  if (isa<ConstantPointerNull>(Ptr) &&
-      cast<PointerType>(Ptr->getType())->getAddressSpace() == 0) {
+  if (isa<ConstantPointerNull>(Ptr) && SI.getPointerAddressSpace() == 0) {
     if (!isa<UndefValue>(Val)) {
       SI.setOperand(0, UndefValue::get(Val->getType()));
       if (Instruction *U = dyn_cast<Instruction>(Val))
