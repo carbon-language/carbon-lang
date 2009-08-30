@@ -156,7 +156,7 @@ public:
   void initialize(Module &M);
 
   void print(raw_ostream &o, Module *) const;
-
+  void dump() const;
 protected:
   // destroy - Release memory for the call graph
   virtual void destroy();

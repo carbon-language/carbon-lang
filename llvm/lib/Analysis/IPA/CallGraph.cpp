@@ -181,6 +181,9 @@ void CallGraph::print(raw_ostream &OS, Module*) const {
   for (CallGraph::const_iterator I = begin(), E = end(); I != E; ++I)
     I->second->print(OS);
 }
+void CallGraph::dump() const {
+  print(errs(), 0);
+}
 
 //===----------------------------------------------------------------------===//
 // Implementations of public modification methods
