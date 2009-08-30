@@ -1,4 +1,4 @@
-##===- bindings/ocaml/bitwriter/Makefile -------------------*- Makefile -*-===##
+##===- bindings/ocaml/llvm/Makefile ------------------------*- Makefile -*-===##
 # 
 #                     The LLVM Compiler Infrastructure
 #
