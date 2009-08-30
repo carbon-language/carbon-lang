@@ -94,6 +94,11 @@ namespace {
         Worklist.push_back(I);
     }
     
+    void AddValue(Value *V) {
+      if (Instruction *I = dyn_cast<Instruction>(V))
+        Add(I);
+    }
+    
     // Remove - remove I from the worklist if it exists.
     void Remove(Instruction *I) {
       DenseMap<Instruction*, unsigned>::iterator It = WorklistMap.find(I);
@@ -151,15 +156,6 @@ namespace {
     LLVMContext *Context;
     LLVMContext *getContext() const { return Context; }
 
-    /// AddOperandsToWorkList - When an instruction is simplified, add operands
-    /// to the work lists because they might get more simplified now.
-    ///
-    void AddOperandsToWorkList(Instruction &I) {
-      for (User::op_iterator i = I.op_begin(), e = I.op_end(); i != e; ++i)
-        if (Instruction *Op = dyn_cast<Instruction>(*i))
-          Worklist.Add(Op);
-    }
-    
   public:
     virtual bool runOnFunction(Function &F);
     
@@ -331,8 +327,11 @@ namespace {
       assert(I.use_empty() && "Cannot erase instruction that is used!");
       // Make sure that we reprocess all operands now that we reduced their
       // use counts.
-      if (I.getNumOperands() < 8)
-        AddOperandsToWorkList(I);
+      if (I.getNumOperands() < 8) {
+        for (User::op_iterator i = I.op_begin(), e = I.op_end(); i != e; ++i)
+          if (Instruction *Op = dyn_cast<Instruction>(*i))
+            Worklist.Add(Op);
+      }
       Worklist.Remove(&I);
       I.eraseFromParent();
       return 0;  // Don't do anything with FI
@@ -3247,7 +3246,7 @@ Instruction *InstCombiner::visitSRem(BinaryOperator &I) {
         (isa<ConstantInt>(RHSNeg) &&
          cast<ConstantInt>(RHSNeg)->getValue().isStrictlyPositive())) {
       // X % -Y -> X % Y
-      AddOperandsToWorkList(I);
+      Worklist.AddValue(I.getOperand(1));
       I.setOperand(1, RHSNeg);
       return &I;
     }
@@ -3285,7 +3284,7 @@ Instruction *InstCombiner::visitSRem(BinaryOperator &I) {
 
       Constant *NewRHSV = ConstantVector::get(Elts);
       if (NewRHSV != RHSV) {
-        AddOperandsToWorkList(I);
+        Worklist.AddValue(I.getOperand(1));
         I.setOperand(1, NewRHSV);
         return &I;
       }
@@ -6884,7 +6883,6 @@ Instruction *InstCombiner::visitICmpInstWithInstAndIntCst(ICmpInst &ICI,
             LHSI->setOperand(1, NewAndCST);
             LHSI->setOperand(0, Shift->getOperand(0));
             Worklist.Add(Shift); // Shift is dead.
-            AddOperandsToWorkList(ICI);
             return &ICI;
           }
         }
@@ -7914,7 +7912,6 @@ Instruction *InstCombiner::PromoteCastOfAllocation(BitCastInst &CI,
   // things that used it to use the new cast.  This will also hack on CI, but it
   // will die soon.
   else if (!AI.hasOneUse()) {
-    AddOperandsToWorkList(AI);
     // New is the allocation instruction, pointer typed. AI is the original
     // allocation instruction, also pointer typed. Thus, cast to use is BitCast.
     CastInst *NewCast = new BitCastInst(New, AI.getType(), "tmpcast");
@@ -12401,7 +12398,7 @@ Instruction *InstCombiner::visitExtractElementInst(ExtractElementInst &EI) {
       // be the same value, extract from the pre-inserted value instead.
       if (isa<Constant>(IE->getOperand(2)) &&
           isa<Constant>(EI.getOperand(1))) {
-        AddOperandsToWorkList(EI);
+        Worklist.AddValue(EI.getOperand(0));
         EI.setOperand(0, IE->getOperand(0));
         return &EI;
       }
