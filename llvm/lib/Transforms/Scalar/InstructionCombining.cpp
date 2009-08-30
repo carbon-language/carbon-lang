@@ -10896,6 +10896,13 @@ Instruction *InstCombiner::visitGetElementPtrInst(GetElementPtrInst &GEP) {
   if (Value *X = getBitCastOperand(PtrOp)) {
     assert(isa<PointerType>(X->getType()) && "Must be cast from pointer");
 
+    // If the input bitcast is actually "bitcast(bitcast(x))", then we don't 
+    // want to change the gep until the bitcasts are eliminated.
+    if (getBitCastOperand(X)) {
+      Worklist.AddValue(PtrOp);
+      return 0;
+    }
+    
     // Transform: GEP (bitcast [10 x i8]* X to [0 x i8]*), i32 0, ...
     // into     : GEP [10 x i8]* X, i32 0, ...
     //
