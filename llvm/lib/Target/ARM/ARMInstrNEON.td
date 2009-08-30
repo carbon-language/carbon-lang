@@ -1720,6 +1720,8 @@ def : Pat<(insertelt (v4i32 QPR:$src1), GPR:$src2, imm:$lane),
                              GPR:$src2, (SubReg_i32_lane imm:$lane)),
                   (DSubReg_i32_reg imm:$lane)))>;
 
+def : Pat<(v2f32 (insertelt DPR:$src1, SPR:$src2, imm:$src3)),
+          (INSERT_SUBREG DPR:$src1, SPR:$src2, (SSubReg_f32_reg imm:$src3))>;
 def : Pat<(v4f32 (insertelt QPR:$src1, SPR:$src2, imm:$src3)),
           (INSERT_SUBREG QPR:$src1, SPR:$src2, (SSubReg_f32_reg imm:$src3))>;
 
