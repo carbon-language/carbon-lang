@@ -11045,18 +11045,14 @@ Instruction *InstCombiner::visitGetElementPtrInst(GetElementPtrInst &GEP) {
   // getelementptr instructions into a single instruction.
   //
   if (GEPOperator *Src = dyn_cast<GEPOperator>(PtrOp)) {
-    SmallVector<Value*, 8> SrcGEPOperands;
-    
-    SrcGEPOperands.append(Src->op_begin(), Src->op_end());
-    
     // Note that if our source is a gep chain itself that we wait for that
     // chain to be resolved before we perform this transformation.  This
     // avoids us creating a TON of code in some cases.
     //
-    if (SrcGEPOperands.empty() ||
-        (isa<GetElementPtrInst>(SrcGEPOperands[0]) &&
-         cast<Instruction>(SrcGEPOperands[0])->getNumOperands() == 2))
-      return 0;   // Wait until our source is folded to completion.
+    if (GetElementPtrInst *SrcGEP =
+          dyn_cast<GetElementPtrInst>(Src->getOperand(0)))
+      if (SrcGEP->getNumOperands() == 2)
+        return 0;   // Wait until our source is folded to completion.
 
     SmallVector<Value*, 8> Indices;
 
@@ -11071,7 +11067,9 @@ Instruction *InstCombiner::visitGetElementPtrInst(GetElementPtrInst &GEP) {
       // Replace: gep (gep %P, long B), long A, ...
       // With:    T = long A+B; gep %P, T, ...
       //
-      Value *Sum, *SO1 = SrcGEPOperands.back(), *GO1 = GEP.getOperand(1);
+      Value *Sum;
+      Value *SO1 = Src->getOperand(Src->getNumOperands()-1);
+      Value *GO1 = GEP.getOperand(1);
       if (SO1 == Constant::getNullValue(SO1->getType())) {
         Sum = GO1;
       } else if (GO1 == Constant::getNullValue(GO1->getType())) {
@@ -11108,27 +11106,25 @@ Instruction *InstCombiner::visitGetElementPtrInst(GetElementPtrInst &GEP) {
       }
 
       // Recycle the GEP we already have if possible.
-      if (SrcGEPOperands.size() == 2) {
-        GEP.setOperand(0, SrcGEPOperands[0]);
+      if (Src->getNumOperands() == 2) {
+        GEP.setOperand(0, Src->getOperand(0));
         GEP.setOperand(1, Sum);
         return &GEP;
       }
-      Indices.insert(Indices.end(), SrcGEPOperands.begin()+1,
-                     SrcGEPOperands.end()-1);
+      Indices.insert(Indices.end(), Src->op_begin()+1, Src->op_end()-1);
       Indices.push_back(Sum);
       Indices.insert(Indices.end(), GEP.op_begin()+2, GEP.op_end());
     } else if (isa<Constant>(*GEP.idx_begin()) &&
                cast<Constant>(*GEP.idx_begin())->isNullValue() &&
-               SrcGEPOperands.size() != 1) {
+               Src->getNumOperands() != 1) {
       // Otherwise we can do the fold if the first index of the GEP is a zero
-      Indices.insert(Indices.end(), SrcGEPOperands.begin()+1,
-                     SrcGEPOperands.end());
+      Indices.insert(Indices.end(), Src->op_begin()+1, Src->op_end());
       Indices.insert(Indices.end(), GEP.idx_begin()+1, GEP.idx_end());
     }
 
     if (!Indices.empty()) {
       GetElementPtrInst *NewGEP =
-        GetElementPtrInst::Create(SrcGEPOperands[0], Indices.begin(),
+        GetElementPtrInst::Create(Src->getOperand(0), Indices.begin(),
                                   Indices.end(), GEP.getName());
       if (cast<GEPOperator>(&GEP)->isInBounds() && Src->isInBounds())
         cast<GEPOperator>(NewGEP)->setIsInBounds(true);
@@ -11136,7 +11132,8 @@ Instruction *InstCombiner::visitGetElementPtrInst(GetElementPtrInst &GEP) {
     }
   }
   
-  if (Value *X = getBitCastOperand(PtrOp)) {  // Is the operand a cast?
+  // Handle gep(bitcast x) and gep(gep x, 0, 0, 0).
+  if (Value *X = getBitCastOperand(PtrOp)) {
     assert(isa<PointerType>(X->getType()) && "Must be cast from pointer");
            
     if (HasZeroPointerIndex) {
