@@ -633,14 +633,6 @@ static const char *DecodeDWARFEncoding(unsigned Encoding) {
   return 0;
 }
 
-void AsmPrinter::EOL(const std::string &Comment, unsigned Encoding) const {
-  if (VerboseAsm && !Comment.empty()) {
-    EOL(Comment.c_str(), Encoding);
-    return;
-  }
-  O << '\n';
-}
-
 void AsmPrinter::EOL(const char *Comment, unsigned Encoding) const {
   if (VerboseAsm && *Comment) {
     O.PadToColumn(MAI->getCommentColumn());

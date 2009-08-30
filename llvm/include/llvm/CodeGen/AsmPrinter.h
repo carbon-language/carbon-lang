@@ -268,7 +268,6 @@ namespace llvm {
     void EOL() const;
     void EOL(const std::string &Comment) const;
     void EOL(const char* Comment) const;
-    void EOL(const std::string &Comment, unsigned Encoding) const;
     void EOL(const char *Comment, unsigned Encoding) const;
 
     /// EmitULEB128Bytes - Emit an assembler byte data directive to compose an
