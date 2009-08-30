@@ -74,12 +74,62 @@ STATISTIC(NumDeadStore, "Number of dead stores eliminated");
 STATISTIC(NumSunkInst , "Number of instructions sunk");
 
 namespace {
+  /// InstCombineWorklist - This is the worklist management logic for
+  /// InstCombine.
+  class InstCombineWorklist {
+    SmallVector<Instruction*, 256> Worklist;
+    DenseMap<Instruction*, unsigned> WorklistMap;
+    
+    void operator=(const InstCombineWorklist&RHS);   // DO NOT IMPLEMENT
+    InstCombineWorklist(const InstCombineWorklist&); // DO NOT IMPLEMENT
+  public:
+    InstCombineWorklist() {}
+    
+    bool isEmpty() const { return Worklist.empty(); }
+    
+    /// Add - Add the specified instruction to the worklist if it isn't already
+    /// in it.
+    void Add(Instruction *I) {
+      if (WorklistMap.insert(std::make_pair(I, Worklist.size())).second)
+        Worklist.push_back(I);
+    }
+    
+    void Remove(Instruction *I) {
+      DenseMap<Instruction*, unsigned>::iterator It = WorklistMap.find(I);
+      if (It == WorklistMap.end()) return; // Not in worklist.
+      
+      // Don't bother moving everything down, just null out the slot.
+      Worklist[It->second] = 0;
+      
+      WorklistMap.erase(It);
+    }
+    
+    Instruction *RemoveOne() {
+      Instruction *I = Worklist.back();
+      Worklist.pop_back();
+      WorklistMap.erase(I);
+      return I;
+    }
+
+    
+    /// Zap - check that the worklist is empty and nuke the backing store for
+    /// the map if it is large.
+    void Zap() {
+      assert(WorklistMap.empty() && "Worklist empty, but map not?");
+      
+      // Do an explicit clear, this shrinks the map if needed.
+      WorklistMap.clear();
+    }
+  };
+} // end anonymous namespace.
+
+
+namespace {
   class VISIBILITY_HIDDEN InstCombiner
     : public FunctionPass,
       public InstVisitor<InstCombiner, Instruction*> {
     // Worklist of all of the instructions that need to be simplified.
-    SmallVector<Instruction*, 256> Worklist;
-    DenseMap<Instruction*, unsigned> WorklistMap;
+    InstCombineWorklist Worklist;
     TargetData *TD;
     bool MustPreserveLCSSA;
   public:
@@ -92,28 +142,13 @@ namespace {
     /// AddToWorkList - Add the specified instruction to the worklist if it
     /// isn't already in it.
     void AddToWorkList(Instruction *I) {
-      if (WorklistMap.insert(std::make_pair(I, Worklist.size())).second)
-        Worklist.push_back(I);
+      Worklist.Add(I);
     }
     
     // RemoveFromWorkList - remove I from the worklist if it exists.
     void RemoveFromWorkList(Instruction *I) {
-      DenseMap<Instruction*, unsigned>::iterator It = WorklistMap.find(I);
-      if (It == WorklistMap.end()) return; // Not in worklist.
-      
-      // Don't bother moving everything down, just null out the slot.
-      Worklist[It->second] = 0;
-      
-      WorklistMap.erase(It);
+      Worklist.Remove(I);
     }
-    
-    Instruction *RemoveOneFromWorkList() {
-      Instruction *I = Worklist.back();
-      Worklist.pop_back();
-      WorklistMap.erase(I);
-      return I;
-    }
-
     
     /// AddUsersToWorkList - When an instruction is simplified, add all users of
     /// the instruction to the work lists because they might get more simplified
@@ -404,7 +439,7 @@ namespace {
                                         unsigned PrefAlign = 0);
 
   };
-}
+} // end anonymous namespace
 
 char InstCombiner::ID = 0;
 static RegisterPass<InstCombiner>
@@ -11227,7 +11262,7 @@ Instruction *InstCombiner::visitGetElementPtrInst(GetElementPtrInst &GEP) {
   }
   
   /// See if we can simplify:
-  ///   X = bitcast A to B*
+  ///   X = bitcast A* to B*
   ///   Y = gep X, <...constant indices...>
   /// into a gep of the original struct.  This is important for SROA and alias
   /// analysis of unions.  If "A" is also a bitcast, wait for A/X to be merged.
@@ -12925,8 +12960,8 @@ bool InstCombiner::DoOneIteration(Function &F, unsigned Iteration) {
       }
   }
 
-  while (!Worklist.empty()) {
-    Instruction *I = RemoveOneFromWorkList();
+  while (!Worklist.isEmpty()) {
+    Instruction *I = Worklist.RemoveOne();
     if (I == 0) continue;  // skip null values.
 
     // Check to see if we can DCE the instruction.
@@ -13062,10 +13097,7 @@ bool InstCombiner::DoOneIteration(Function &F, unsigned Iteration) {
     }
   }
 
-  assert(WorklistMap.empty() && "Worklist empty, but map not?");
-    
-  // Do an explicit clear, this shrinks the map if needed.
-  WorklistMap.clear();
+  Worklist.Zap();
   return Changed;
 }
 
