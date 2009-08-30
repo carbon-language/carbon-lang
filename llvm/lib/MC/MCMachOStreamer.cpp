@@ -111,13 +111,11 @@ public:
 
   virtual void EmitSymbolDesc(MCSymbol *Symbol, unsigned DescValue);
 
-  virtual void EmitLocalSymbol(MCSymbol *Symbol, const MCValue &Value);
-
   virtual void EmitCommonSymbol(MCSymbol *Symbol, unsigned Size,
-                                unsigned Pow2Alignment);
+                                unsigned ByteAlignment);
 
   virtual void EmitZerofill(const MCSection *Section, MCSymbol *Symbol = 0,
-                            unsigned Size = 0, unsigned Pow2Alignment = 0);
+                            unsigned Size = 0, unsigned ByteAlignment = 0);
 
   virtual void EmitBytes(const StringRef &Data);
 
@@ -266,24 +264,18 @@ void MCMachOStreamer::EmitSymbolDesc(MCSymbol *Symbol, unsigned DescValue) {
   getSymbolData(*Symbol).setFlags(DescValue & SF_DescFlagsMask);
 }
 
-void MCMachOStreamer::EmitLocalSymbol(MCSymbol *Symbol, const MCValue &Value) {
-  // FIXME: Implement?
-  llvm_report_error("unsupported '.lsym' directive");
-}
-
 void MCMachOStreamer::EmitCommonSymbol(MCSymbol *Symbol, unsigned Size,
-                                       unsigned Pow2Alignment) {
+                                       unsigned ByteAlignment) {
   // FIXME: Darwin 'as' does appear to allow redef of a .comm by itself.
   assert(Symbol->isUndefined() && "Cannot define a symbol twice!");
 
   MCSymbolData &SD = getSymbolData(*Symbol);
   SD.setExternal(true);
-  SD.setCommon(Size, 1 << Pow2Alignment);
+  SD.setCommon(Size, ByteAlignment);
 }
 
 void MCMachOStreamer::EmitZerofill(const MCSection *Section, MCSymbol *Symbol,
-                                   unsigned Size, unsigned Pow2Alignment) {
-  unsigned ByteAlignment = 1 << Pow2Alignment;
+                                   unsigned Size, unsigned ByteAlignment) {
   MCSectionData &SectData = getSectionData(*Section);
 
   // The symbol may not be present, which only creates the section.
@@ -296,7 +288,7 @@ void MCMachOStreamer::EmitZerofill(const MCSection *Section, MCSymbol *Symbol,
 
   MCSymbolData &SD = getSymbolData(*Symbol);
 
-  MCFragment *F = new MCZeroFillFragment(Size, 1 << Pow2Alignment, &SectData);
+  MCFragment *F = new MCZeroFillFragment(Size, ByteAlignment, &SectData);
   SD.setFragment(F);
 
   Symbol->setSection(*Section);

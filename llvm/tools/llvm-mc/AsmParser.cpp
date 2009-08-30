@@ -1257,15 +1257,17 @@ bool AsmParser::ParseDirectiveComm(bool IsLocal) {
   if (!Sym->isUndefined())
     return Error(IDLoc, "invalid symbol redefinition");
 
+  // '.lcomm' is equivalent to '.zerofill'.
   // Create the Symbol as a common or local common with Size and Pow2Alignment
-  if (IsLocal)
+  if (IsLocal) {
     Out.EmitZerofill(getMachOSection("__DATA", "__bss",
                                      MCSectionMachO::S_ZEROFILL, 0,
                                      SectionKind()),
-                     Sym, Size, Pow2Alignment);
-  else 
-    Out.EmitCommonSymbol(Sym, Size, Pow2Alignment);
+                     Sym, Size, 1 << Pow2Alignment);
+    return false;
+  }
 
+  Out.EmitCommonSymbol(Sym, Size, 1 << Pow2Alignment);
   return false;
 }
 
@@ -1355,7 +1357,7 @@ bool AsmParser::ParseDirectiveDarwinZerofill() {
   Out.EmitZerofill(getMachOSection(Segment, Section,
                                  MCSectionMachO::S_ZEROFILL, 0,
                                  SectionKind()),
-                   Sym, Size, Pow2Alignment);
+                   Sym, Size, 1 << Pow2Alignment);
 
   return false;
 }
@@ -1426,10 +1428,11 @@ bool AsmParser::ParseDirectiveDarwinLsym() {
   
   Lexer.Lex();
 
-  // Create the Sym with the value of the Expr
-  Out.EmitLocalSymbol(Sym, Expr);
-
-  return false;
+  // We don't currently support this directive.
+  //
+  // FIXME: Diagnostic location!
+  (void) Sym;
+  return TokError("directive '.lsym' is unsupported");
 }
 
 /// ParseDirectiveInclude

@@ -53,13 +53,11 @@ public:
 
   virtual void EmitSymbolDesc(MCSymbol *Symbol, unsigned DescValue);
 
-  virtual void EmitLocalSymbol(MCSymbol *Symbol, const MCValue &Value);
-
   virtual void EmitCommonSymbol(MCSymbol *Symbol, unsigned Size,
-                                unsigned Pow2Alignment);
+                                unsigned ByteAlignment);
 
   virtual void EmitZerofill(const MCSection *Section, MCSymbol *Symbol = 0,
-                            unsigned Size = 0, unsigned Pow2Alignment = 0);
+                            unsigned Size = 0, unsigned ByteAlignment = 0);
 
   virtual void EmitBytes(const StringRef &Data);
 
@@ -173,21 +171,17 @@ void MCAsmStreamer::EmitSymbolDesc(MCSymbol *Symbol, unsigned DescValue) {
   OS << ".desc" << ' ' << Symbol << ',' << DescValue << '\n';
 }
 
-void MCAsmStreamer::EmitLocalSymbol(MCSymbol *Symbol, const MCValue &Value) {
-  OS << ".lsym" << ' ' << Symbol << ',' << Value << '\n';
-}
-
 void MCAsmStreamer::EmitCommonSymbol(MCSymbol *Symbol, unsigned Size,
-                                     unsigned Pow2Alignment) {
+                                     unsigned ByteAlignment) {
   OS << ".comm";
   OS << ' ' << Symbol << ',' << Size;
-  if (Pow2Alignment != 0)
-    OS << ',' << Pow2Alignment;
+  if (ByteAlignment != 0)
+    OS << ',' << Log2_32(ByteAlignment);
   OS << '\n';
 }
 
 void MCAsmStreamer::EmitZerofill(const MCSection *Section, MCSymbol *Symbol,
-                                 unsigned Size, unsigned Pow2Alignment) {
+                                 unsigned Size, unsigned ByteAlignment) {
   // Note: a .zerofill directive does not switch sections.
   OS << ".zerofill ";
   
@@ -197,8 +191,8 @@ void MCAsmStreamer::EmitZerofill(const MCSection *Section, MCSymbol *Symbol,
   
   if (Symbol != NULL) {
     OS << ',' << Symbol << ',' << Size;
-    if (Pow2Alignment != 0)
-      OS << ',' << Pow2Alignment;
+    if (ByteAlignment != 0)
+      OS << ',' << Log2_32(ByteAlignment);
   }
   OS << '\n';
 }
