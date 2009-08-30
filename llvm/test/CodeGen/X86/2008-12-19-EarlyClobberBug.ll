@@ -1,6 +1,11 @@
-; RUN: llvm-as < %s | llc -mtriple=i386-apple-darwin | %prcontext End 2 | grep mov
+; RUN: llvm-as < %s | llc -mtriple=i386-apple-darwin | FileCheck %s
 ; PR3149
 ; Make sure the copy after inline asm is not coalesced away.
+
+; CHECK:         ## InlineAsm End
+; CHECK-NEXT: BB1_2:
+; CHECK-NEXT:    movl	%esi, %eax
+
 
 @"\01LC" = internal constant [7 x i8] c"n0=%d\0A\00"		; <[7 x i8]*> [#uses=1]
 @llvm.used = appending global [1 x i8*] [ i8* bitcast (i32 (i64, i64)* @umoddi3 to i8*) ], section "llvm.metadata"		; <[1 x i8*]*> [#uses=0]

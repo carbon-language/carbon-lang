@@ -1,11 +1,14 @@
-; RUN: llvm-as < %s | llc -march=x86 -asm-verbose | %prcontext je 1 | \
-; RUN:   grep BB1_1:
+; RUN: llvm-as < %s | llc -march=x86 -asm-verbose | FileCheck %s
 
 @str = internal constant [14 x i8] c"Hello world!\0A\00"		; <[14 x i8]*> [#uses=1]
 @str.upgrd.1 = internal constant [13 x i8] c"Blah world!\0A\00"		; <[13 x i8]*> [#uses=1]
 
-define i32 @main(i32 %argc, i8** %argv) {
+define i32 @test(i32 %argc, i8** %argv) nounwind {
 entry:
+; CHECK: cmpl	$2
+; CHECK-NEXT: je
+; CHECK-NEXT: LBB1_1
+
 	switch i32 %argc, label %UnifiedReturnBlock [
 		 i32 1, label %bb
 		 i32 2, label %bb2
