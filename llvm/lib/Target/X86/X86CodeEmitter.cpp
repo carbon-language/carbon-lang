@@ -971,6 +971,12 @@ public:
     if (!Op.isMCValue())
       return false;
 
+    const MCValue &Val = Op.getMCValue();
+    if (Val.isAbsolute()) {
+      Instr->addOperand(MachineOperand::CreateImm(Val.getConstant()));
+      return true;
+    }
+
     // FIXME: Relocation / fixup.
     Instr->addOperand(MachineOperand::CreateImm(0));
     return true;
