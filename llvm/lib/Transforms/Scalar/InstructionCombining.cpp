@@ -11044,21 +11044,18 @@ Instruction *InstCombiner::visitGetElementPtrInst(GetElementPtrInst &GEP) {
   // is a getelementptr instruction, combine the indices of the two
   // getelementptr instructions into a single instruction.
   //
-  SmallVector<Value*, 8> SrcGEPOperands;
-  bool BothInBounds = cast<GEPOperator>(&GEP)->isInBounds();
   if (GEPOperator *Src = dyn_cast<GEPOperator>(PtrOp)) {
+    SmallVector<Value*, 8> SrcGEPOperands;
+    
     SrcGEPOperands.append(Src->op_begin(), Src->op_end());
-    if (!Src->isInBounds())
-      BothInBounds = false;
-  }
-
-  if (!SrcGEPOperands.empty()) {
+    
     // Note that if our source is a gep chain itself that we wait for that
     // chain to be resolved before we perform this transformation.  This
     // avoids us creating a TON of code in some cases.
     //
-    if (isa<GetElementPtrInst>(SrcGEPOperands[0]) &&
-        cast<Instruction>(SrcGEPOperands[0])->getNumOperands() == 2)
+    if (SrcGEPOperands.empty() ||
+        (isa<GetElementPtrInst>(SrcGEPOperands[0]) &&
+         cast<Instruction>(SrcGEPOperands[0])->getNumOperands() == 2))
       return 0;   // Wait until our source is folded to completion.
 
     SmallVector<Value*, 8> Indices;
@@ -11084,17 +11081,14 @@ Instruction *InstCombiner::visitGetElementPtrInst(GetElementPtrInst &GEP) {
         // target's pointer size.
         if (SO1->getType() != GO1->getType()) {
           if (Constant *SO1C = dyn_cast<Constant>(SO1)) {
-            SO1 =
-                ConstantExpr::getIntegerCast(SO1C, GO1->getType(), true);
+            SO1 = ConstantExpr::getIntegerCast(SO1C, GO1->getType(), true);
           } else if (Constant *GO1C = dyn_cast<Constant>(GO1)) {
-            GO1 =
-                ConstantExpr::getIntegerCast(GO1C, SO1->getType(), true);
+            GO1 = ConstantExpr::getIntegerCast(GO1C, SO1->getType(), true);
           } else if (TD) {
             unsigned PS = TD->getPointerSizeInBits();
             if (TD->getTypeSizeInBits(SO1->getType()) == PS) {
               // Convert GO1 to SO1's type.
               GO1 = InsertCastToIntPtrTy(GO1, SO1->getType(), &GEP, this);
-
             } else if (TD->getTypeSizeInBits(GO1->getType()) == PS) {
               // Convert SO1 to GO1's type.
               SO1 = InsertCastToIntPtrTy(SO1, GO1->getType(), &GEP, this);
@@ -11136,15 +11130,16 @@ Instruction *InstCombiner::visitGetElementPtrInst(GetElementPtrInst &GEP) {
       GetElementPtrInst *NewGEP =
         GetElementPtrInst::Create(SrcGEPOperands[0], Indices.begin(),
                                   Indices.end(), GEP.getName());
-      if (BothInBounds)
+      if (cast<GEPOperator>(&GEP)->isInBounds() && Src->isInBounds())
         cast<GEPOperator>(NewGEP)->setIsInBounds(true);
       return NewGEP;
     }
-
-  } else if (Value *X = getBitCastOperand(PtrOp)) {  // Is the operand a cast?
-    if (!isa<PointerType>(X->getType())) {
-      // Not interesting.  Source pointer must be a cast from pointer.
-    } else if (HasZeroPointerIndex) {
+  }
+  
+  if (Value *X = getBitCastOperand(PtrOp)) {  // Is the operand a cast?
+    assert(isa<PointerType>(X->getType()) && "Must be cast from pointer");
+           
+    if (HasZeroPointerIndex) {
       // transform: GEP (bitcast [10 x i8]* X to [0 x i8]*), i32 0, ...
       // into     : GEP [10 x i8]* X, i32 0, ...
       //
