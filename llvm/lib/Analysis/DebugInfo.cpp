@@ -210,6 +210,22 @@ bool DIDescriptor::isGlobalVariable() const {
   return Tag == dwarf::DW_TAG_variable;
 }
 
+/// isScope - Return true if the specified tag is one of the scope 
+/// related tag.
+bool DIDescriptor::isScope() const {
+  assert (!isNull() && "Invalid descriptor!");
+  unsigned Tag = getTag();
+
+  switch (Tag) {
+    case dwarf::DW_TAG_compile_unit:
+    case dwarf::DW_TAG_lexical_block:
+    case dwarf::DW_TAG_subprogram:
+      return true;
+    default:
+      break;
+  }
+  return false;
+}
 
 //===----------------------------------------------------------------------===//
 // Simple Descriptor Constructors and other Methods

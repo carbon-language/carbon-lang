@@ -94,6 +94,7 @@ namespace llvm {
     bool isVariable() const;
     bool isSubprogram() const;
     bool isGlobalVariable() const;
+    bool isScope() const;
   };
 
   /// DISubrange - This is used to represent ranges, for array bounds.
@@ -115,6 +116,15 @@ namespace llvm {
     unsigned getNumElements() const;
     DIDescriptor getElement(unsigned Idx) const {
       return getDescriptorField(Idx);
+    }
+  };
+
+  /// DIScope - A base class for various scopes.
+  class DIScope : public DIDescriptor {
+  public:
+    explicit DIScope(MDNode *N = 0) : DIDescriptor (N) {
+      if (DbgNode && !isScope())
+        DbgNode = 0;
     }
   };
 
