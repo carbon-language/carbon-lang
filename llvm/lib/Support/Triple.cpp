@@ -186,6 +186,8 @@ void Triple::Parse() const {
     Arch = systemz;
   else if (ArchName == "tce")
     Arch = tce;
+  else if (ArchName == "xcore")
+    Arch = xcore;
   else
     Arch = UnknownArch;
 
