@@ -113,7 +113,7 @@ bool CGPassManager::RunPassOnSCC(Pass *P, std::vector<CallGraphNode*> &CurSCC,
   }
   StopPassTimer(P);
   
-  // The the function pass(es) modified the IR, they may have clobbered the
+  // The function pass(es) modified the IR, they may have clobbered the
   // callgraph.
   if (Changed && CallGraphUpToDate) {
     DEBUG(errs() << "CGSCCPASSMGR: Pass Dirtied SCC: "
@@ -134,7 +134,6 @@ void CGPassManager::RefreshCallGraph(std::vector<CallGraphNode*> &CurSCC,
         );
 
   bool MadeChange = false;
-  MadeChange = MadeChange;
   
   // Scan all functions in the SCC.
   for (unsigned sccidx = 0, e = CurSCC.size(); sccidx != e; ++sccidx) {
