@@ -72,7 +72,7 @@ private:
     return *Entry;
   }
 
-  MCSymbolData &getSymbolData(MCSymbol &Symbol) {
+  MCSymbolData &getSymbolData(const MCSymbol &Symbol) {
     MCSymbolData *&Entry = SymbolMap[&Symbol];
 
     if (!Entry)

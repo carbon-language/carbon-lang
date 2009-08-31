@@ -437,7 +437,7 @@ public:
 // FIXME: Same concerns as with SectionData.
 class MCSymbolData : public ilist_node<MCSymbolData> {
 public:
-  MCSymbol &Symbol;
+  const MCSymbol &Symbol;
 
   /// Fragment - The fragment this symbol's value is relative to, if any.
   MCFragment *Fragment;
@@ -474,13 +474,13 @@ public:
 public:
   // Only for use as sentinel.
   MCSymbolData();
-  MCSymbolData(MCSymbol &_Symbol, MCFragment *_Fragment, uint64_t _Offset,
+  MCSymbolData(const MCSymbol &_Symbol, MCFragment *_Fragment, uint64_t _Offset,
                MCAssembler *A = 0);
 
   /// @name Accessors
   /// @{
 
-  MCSymbol &getSymbol() const { return Symbol; }
+  const MCSymbol &getSymbol() const { return Symbol; }
 
   MCFragment *getFragment() const { return Fragment; }
   void setFragment(MCFragment *Value) { Fragment = Value; }
