@@ -22,7 +22,6 @@
 #include "llvm/Target/TargetData.h"
 #include "llvm/Target/TargetFrameInfo.h"
 #include "llvm/Target/TargetLoweringObjectFile.h"
-#include "llvm/Target/TargetLowering.h"
 #include "llvm/Target/TargetOptions.h"
 #include "llvm/Target/TargetRegisterInfo.h"
 #include "llvm/Support/Dwarf.h"
@@ -81,7 +80,6 @@ void DwarfException::EmitCIE(const Function *Personality, unsigned Index) {
   EmitLabel("eh_frame_common_begin", Index);
   Asm->EmitInt32((int)0);
   Asm->EOL("CIE Identifier Tag");
-
   Asm->EmitInt8(dwarf::DW_CIE_VERSION);
   Asm->EOL("CIE Version");
 
@@ -93,14 +91,10 @@ void DwarfException::EmitCIE(const Function *Personality, unsigned Index) {
   // Round out reader.
   Asm->EmitULEB128Bytes(1);
   Asm->EOL("CIE Code Alignment Factor");
-
   Asm->EmitSLEB128Bytes(stackGrowth);
   Asm->EOL("CIE Data Alignment Factor");
-
   Asm->EmitInt8(RI->getDwarfRegNum(RI->getRARegister(), true));
   Asm->EOL("CIE Return Address Column");
-
-  unsigned Encoding = 0;
 
   // If there is a personality, we need to indicate the function's location.
   if (Personality) {
@@ -108,14 +102,12 @@ void DwarfException::EmitCIE(const Function *Personality, unsigned Index) {
     Asm->EOL("Augmentation Size");
 
     if (MAI->getNeedsIndirectEncoding()) {
-      Encoding = dwarf::DW_EH_PE_pcrel | dwarf::DW_EH_PE_sdata4 |
-        dwarf::DW_EH_PE_indirect;
-      Asm->EmitInt8(Encoding);
-      Asm->EOL("Personality", Encoding);
+      Asm->EmitInt8(dwarf::DW_EH_PE_pcrel | dwarf::DW_EH_PE_sdata4 |
+                    dwarf::DW_EH_PE_indirect);
+      Asm->EOL("Personality (pcrel sdata4 indirect)");
     } else {
-      Encoding = dwarf::DW_EH_PE_pcrel | dwarf::DW_EH_PE_sdata4;
-      Asm->EmitInt8(Encoding);
-      Asm->EOL("Personality", Encoding);
+      Asm->EmitInt8(dwarf::DW_EH_PE_pcrel | dwarf::DW_EH_PE_sdata4);
+      Asm->EOL("Personality (pcrel sdata4)");
     }
 
     PrintRelDirective(true);
@@ -126,20 +118,17 @@ void DwarfException::EmitCIE(const Function *Personality, unsigned Index) {
       O << "-" << MAI->getPCSymbol();
     Asm->EOL("Personality");
 
-    Encoding = Asm->TM.getTargetLowering()->getPreferredLSDADataFormat();
-    Asm->EmitInt8(Encoding);
-    Asm->EOL("LSDA Encoding", Encoding);
+    Asm->EmitInt8(dwarf::DW_EH_PE_pcrel | dwarf::DW_EH_PE_sdata4);
+    Asm->EOL("LSDA Encoding (pcrel sdata4)");
 
-    Encoding = Asm->TM.getTargetLowering()->getPreferredFDEDataFormat();
-    Asm->EmitInt8(Encoding);
-    Asm->EOL("FDE Encoding", Encoding);
+    Asm->EmitInt8(dwarf::DW_EH_PE_pcrel | dwarf::DW_EH_PE_sdata4);
+    Asm->EOL("FDE Encoding (pcrel sdata4)");
   } else {
     Asm->EmitULEB128Bytes(1);
     Asm->EOL("Augmentation Size");
 
-    Encoding = Asm->TM.getTargetLowering()->getPreferredFDEDataFormat();
-    Asm->EmitInt8(Encoding);
-    Asm->EOL("FDE Encoding", Encoding);
+    Asm->EmitInt8(dwarf::DW_EH_PE_pcrel | dwarf::DW_EH_PE_sdata4);
+    Asm->EOL("FDE Encoding (pcrel sdata4)");
   }
 
   // Indicate locations of general callee saved registers in frame.
@@ -163,7 +152,6 @@ void DwarfException::EmitFDE(const FunctionEHFrameInfo &EHFrameInfo) {
          "Should not emit 'available externally' functions at all");
 
   const Function *TheFunc = EHFrameInfo.function;
-  bool is4Byte = TD->getPointerSize() == sizeof(int32_t);
 
   Asm->OutStreamer.SwitchSection(Asm->getObjFileLowering().getEHFrameSection());
 
@@ -207,22 +195,23 @@ void DwarfException::EmitFDE(const FunctionEHFrameInfo &EHFrameInfo) {
 
     Asm->EOL("FDE CIE offset");
 
-    EmitReference("eh_func_begin", EHFrameInfo.Number, true, is4Byte);
+    EmitReference("eh_func_begin", EHFrameInfo.Number, true, true);
     Asm->EOL("FDE initial location");
-
     EmitDifference("eh_func_end", EHFrameInfo.Number,
-                   "eh_func_begin", EHFrameInfo.Number, is4Byte);
+                   "eh_func_begin", EHFrameInfo.Number, true);
     Asm->EOL("FDE address range");
 
     // If there is a personality and landing pads then point to the language
     // specific data area in the exception table.
     if (MMI->getPersonalities()[0] != NULL) {
+      bool is4Byte = TD->getPointerSize() == sizeof(int32_t);
+
       Asm->EmitULEB128Bytes(is4Byte ? 4 : 8);
       Asm->EOL("Augmentation size");
 
-      if (EHFrameInfo.hasLandingPads) {
+      if (EHFrameInfo.hasLandingPads)
         EmitReference("exception", EHFrameInfo.Number, true, false);
-      } else {
+      else {
 	if (is4Byte)
 	  Asm->EmitInt32((int)0);
 	else
@@ -929,8 +918,6 @@ void DwarfException::EndFunction() {
                             MMI->getFrameMoves(),
                             MF->getFunction()));
   }
-
-  MF = 0;
 
   if (TimePassesIsEnabled)
     ExceptionTimer->stopTimer();
