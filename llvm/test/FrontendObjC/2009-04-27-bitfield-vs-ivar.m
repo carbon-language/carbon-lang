@@ -2,7 +2,7 @@
 // RUN: grep {OBJC_CLASS_RO_\\\$_I4} %t | grep {i32 0, i32 1, i32 2, i32 0}
 // RUN: grep {OBJC_CLASS_RO_\\\$_I2} %t | grep {i32 0, i32 1, i32 1, i32 0}
 // RUN: grep {OBJC_CLASS_RO_\\\$_I5} %t | grep {i32 0, i32 0, i32 0, i32 0}
-// XTARGETS: darwin
+// XTARGET: darwin
 
 // Test instance variable sizing when base class ends in bitfield
 @interface I3 {
