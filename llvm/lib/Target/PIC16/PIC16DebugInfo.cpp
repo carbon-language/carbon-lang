@@ -28,11 +28,11 @@ using namespace llvm;
 void PIC16DbgInfo::PopulateDebugInfo (DIType Ty, unsigned short &TypeNo,
                                       bool &HasAux, int Aux[], 
                                       std::string &TagName) {
-  if (Ty.isBasicType(Ty.getTag())) 
+  if (Ty.isBasicType())
     PopulateBasicTypeInfo (Ty, TypeNo);
-  else if (Ty.isDerivedType(Ty.getTag())) 
+  else if (Ty.isDerivedType())
     PopulateDerivedTypeInfo (Ty, TypeNo, HasAux, Aux, TagName);
-  else if (Ty.isCompositeType(Ty.getTag())) 
+  else if (Ty.isCompositeType())
     PopulateCompositeTypeInfo (Ty, TypeNo, HasAux, Aux, TagName);
   else {
     TypeNo = PIC16Dbg::T_NULL;

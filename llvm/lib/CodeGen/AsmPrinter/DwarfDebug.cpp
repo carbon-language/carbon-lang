@@ -547,12 +547,12 @@ void DwarfDebug::AddType(CompileUnit *DW_Unit, DIE *Entity, DIType Ty) {
 
   // Construct type.
   DIE Buffer(dwarf::DW_TAG_base_type);
-  if (Ty.isBasicType(Ty.getTag()))
+  if (Ty.isBasicType())
     ConstructTypeDIE(DW_Unit, Buffer, DIBasicType(Ty.getNode()));
-  else if (Ty.isCompositeType(Ty.getTag()))
+  else if (Ty.isCompositeType())
     ConstructTypeDIE(DW_Unit, Buffer, DICompositeType(Ty.getNode()));
   else {
-    assert(Ty.isDerivedType(Ty.getTag()) && "Unknown kind of DIType");
+    assert(Ty.isDerivedType() && "Unknown kind of DIType");
     ConstructTypeDIE(DW_Unit, Buffer, DIDerivedType(Ty.getNode()));
 
   }

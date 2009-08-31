@@ -87,6 +87,13 @@ namespace llvm {
 
     /// dump - print descriptor.
     void dump() const;
+
+    bool isDerivedType() const;
+    bool isCompositeType() const;
+    bool isBasicType() const;
+    bool isVariable() const;
+    bool isSubprogram() const;
+    bool isGlobalVariable() const;
   };
 
   /// DISubrange - This is used to represent ranges, for array bounds.
@@ -185,19 +192,6 @@ namespace llvm {
     DIType(MDNode *N, bool, bool) : DIDescriptor(N) {}
 
   public:
-    /// isDerivedType - Return true if the specified tag is legal for
-    /// DIDerivedType.
-    static bool isDerivedType(unsigned TAG);
-
-    /// isCompositeType - Return true if the specified tag is legal for
-    /// DICompositeType.
-    static bool isCompositeType(unsigned TAG);
-
-    /// isBasicType - Return true if the specified tag is legal for
-    /// DIBasicType.
-    static bool isBasicType(unsigned TAG) {
-      return TAG == dwarf::DW_TAG_base_type;
-    }
 
     /// Verify - Verify that a type descriptor is well formed.
     bool Verify() const;
@@ -257,7 +251,7 @@ namespace llvm {
   public:
     explicit DIDerivedType(MDNode *N = 0)
       : DIType(N, true, true) {
-      if (DbgNode && !isDerivedType(getTag()))
+      if (DbgNode && !isDerivedType())
         DbgNode = 0;
     }
 
@@ -282,7 +276,7 @@ namespace llvm {
   public:
     explicit DICompositeType(MDNode *N = 0)
       : DIDerivedType(N, true, true) {
-      if (N && !isCompositeType(getTag()))
+      if (N && !isCompositeType())
         DbgNode = 0;
     }
 
@@ -301,18 +295,6 @@ namespace llvm {
   protected:
     explicit DIGlobal(MDNode *N, unsigned RequiredTag)
       : DIDescriptor(N, RequiredTag) {}
-
-    /// isSubprogram - Return true if the specified tag is legal for
-    /// DISubprogram.
-    static bool isSubprogram(unsigned TAG) {
-      return TAG == dwarf::DW_TAG_subprogram;
-    }
-
-    /// isGlobalVariable - Return true if the specified tag is legal for
-    /// DIGlobalVariable.
-    static bool isGlobalVariable(unsigned TAG) {
-      return TAG == dwarf::DW_TAG_variable;
-    }
 
   public:
     virtual ~DIGlobal() {}
@@ -393,7 +375,7 @@ namespace llvm {
   public:
     explicit DIVariable(MDNode *N = 0)
       : DIDescriptor(N) {
-      if (DbgNode && !isVariable(getTag()))
+      if (DbgNode && !isVariable())
         DbgNode = 0;
     }
 
@@ -405,8 +387,6 @@ namespace llvm {
     unsigned getLineNumber() const      { return getUnsignedField(4); }
     DIType getType() const              { return getFieldAs<DIType>(5); }
 
-    /// isVariable - Return true if the specified tag is legal for DIVariable.
-    static bool isVariable(unsigned Tag);
 
     /// Verify - Verify that a variable descriptor is well formed.
     bool Verify() const;

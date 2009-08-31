@@ -124,22 +124,23 @@ GlobalVariable *DIDescriptor::getGlobalVariableField(unsigned Elt) const {
 }
 
 //===----------------------------------------------------------------------===//
-// Simple Descriptor Constructors and other Methods
+// Predicates
 //===----------------------------------------------------------------------===//
 
-// Needed by DIVariable::getType().
-DIType::DIType(MDNode *N) : DIDescriptor(N) {
-  if (!N) return;
-  unsigned tag = getTag();
-  if (tag != dwarf::DW_TAG_base_type && !DIDerivedType::isDerivedType(tag) &&
-      !DICompositeType::isCompositeType(tag)) {
-    DbgNode = 0;
-  }
+/// isBasicType - Return true if the specified tag is legal for
+/// DIBasicType.
+bool DIDescriptor::isBasicType() const {
+  assert (isNull() && "Invalid descriptor!");
+  unsigned Tag = getTag();
+  
+  return Tag == dwarf::DW_TAG_base_type;
 }
 
-/// isDerivedType - Return true if the specified tag is legal for
-/// DIDerivedType.
-bool DIType::isDerivedType(unsigned Tag) {
+/// isDerivedType - Return true if the specified tag is legal for DIDerivedType.
+bool DIDescriptor::isDerivedType() const {
+  assert (isNull() && "Invalid descriptor!");
+  unsigned Tag = getTag();
+
   switch (Tag) {
   case dwarf::DW_TAG_typedef:
   case dwarf::DW_TAG_pointer_type:
@@ -152,14 +153,17 @@ bool DIType::isDerivedType(unsigned Tag) {
     return true;
   default:
     // CompositeTypes are currently modelled as DerivedTypes.
-    return isCompositeType(Tag);
+    return isCompositeType();
   }
 }
 
 /// isCompositeType - Return true if the specified tag is legal for
 /// DICompositeType.
-bool DIType::isCompositeType(unsigned TAG) {
-  switch (TAG) {
+bool DIDescriptor::isCompositeType() const {
+  assert (isNull() && "Invalid descriptor!");
+  unsigned Tag = getTag();
+
+  switch (Tag) {
   case dwarf::DW_TAG_array_type:
   case dwarf::DW_TAG_structure_type:
   case dwarf::DW_TAG_union_type:
@@ -174,7 +178,10 @@ bool DIType::isCompositeType(unsigned TAG) {
 }
 
 /// isVariable - Return true if the specified tag is legal for DIVariable.
-bool DIVariable::isVariable(unsigned Tag) {
+bool DIDescriptor::isVariable() const {
+  assert (isNull() && "Invalid descriptor!");
+  unsigned Tag = getTag();
+
   switch (Tag) {
   case dwarf::DW_TAG_auto_variable:
   case dwarf::DW_TAG_arg_variable:
@@ -182,6 +189,36 @@ bool DIVariable::isVariable(unsigned Tag) {
     return true;
   default:
     return false;
+  }
+}
+
+/// isSubprogram - Return true if the specified tag is legal for
+/// DISubprogram.
+bool DIDescriptor::isSubprogram() const {
+  assert (isNull() && "Invalid descriptor!");
+  unsigned Tag = getTag();
+  
+  return Tag == dwarf::DW_TAG_subprogram;
+}
+
+/// isGlobalVariable - Return true if the specified tag is legal for
+/// DIGlobalVariable.
+bool DIDescriptor::isGlobalVariable() const {
+  assert (isNull() && "Invalid descriptor!");
+  unsigned Tag = getTag();
+
+  return Tag == dwarf::DW_TAG_variable;
+}
+
+
+//===----------------------------------------------------------------------===//
+// Simple Descriptor Constructors and other Methods
+//===----------------------------------------------------------------------===//
+
+DIType::DIType(MDNode *N) : DIDescriptor(N) {
+  if (!N) return;
+  if (!isBasicType() && !isDerivedType() && !isCompositeType()) {
+    DbgNode = 0;
   }
 }
 
@@ -366,11 +403,11 @@ void DIType::dump() const {
   if (isForwardDecl())
     errs() << " [fwd] ";
 
-  if (isBasicType(Tag))
+  if (isBasicType())
     DIBasicType(DbgNode).dump();
-  else if (isDerivedType(Tag))
+  else if (isDerivedType())
     DIDerivedType(DbgNode).dump();
-  else if (isCompositeType(Tag))
+  else if (isCompositeType())
     DICompositeType(DbgNode).dump();
   else {
     errs() << "Invalid DIType\n";
@@ -417,7 +454,7 @@ void DIGlobal::dump() const {
   if (isDefinition())
     errs() << " [def] ";
 
-  if (isGlobalVariable(Tag))
+  if (isGlobalVariable())
     DIGlobalVariable(DbgNode).dump();
 
   errs() << "\n";
@@ -818,7 +855,7 @@ void DebugInfoFinder::processType(DIType DT) {
     return;
 
   addCompileUnit(DT.getCompileUnit());
-  if (DT.isCompositeType(DT.getTag())) {
+  if (DT.isCompositeType()) {
     DICompositeType DCT(DT.getNode());
     processType(DCT.getTypeDerivedFrom());
     DIArray DA = DCT.getTypeArray();
@@ -831,7 +868,7 @@ void DebugInfoFinder::processType(DIType DT) {
         else 
           processSubprogram(DISubprogram(D.getNode()));
       }
-  } else if (DT.isDerivedType(DT.getTag())) {
+  } else if (DT.isDerivedType()) {
     DIDerivedType DDT(DT.getNode());
     if (!DDT.isNull()) 
       processType(DDT.getTypeDerivedFrom());
