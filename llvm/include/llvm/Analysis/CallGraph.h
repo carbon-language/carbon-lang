@@ -107,6 +107,7 @@ public:
   /// Returns the CallGraphNode which is used to represent undetermined calls
   /// into the callgraph.  Override this if you want behavioral inheritance.
   virtual CallGraphNode* getExternalCallingNode() const { return 0; }
+  virtual CallGraphNode* getCallsExternalNode()   const { return 0; }
 
   /// Return the root/main method in the module, or some other root node, such
   /// as the externalcallingnode.  Overload these if you behavioral
@@ -248,6 +249,10 @@ public:
   /// should be used sparingly.
   void removeCallEdgeFor(CallSite CS);
 
+  // FIXME: REMOVE THIS WHEN HACK IS REMOVED FROM CGSCCPASSMGR.
+  void removeCallEdgeFor(Instruction *CS);
+
+  
   /// removeAnyCallEdgeTo - This method removes all call edges from this node
   /// to the specified callee function.  This takes more time to execute than
   /// removeCallEdgeTo, so it should not be used unless necessary.

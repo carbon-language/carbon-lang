@@ -239,21 +239,31 @@ void CallGraphNode::dump() const { print(errs()); }
 /// specified call site.  Note that this method takes linear time, so it
 /// should be used sparingly.
 void CallGraphNode::removeCallEdgeFor(CallSite CS) {
-  // Scan for the call site.  Note that we aren't guaranteed to find the call
-  // site in this node, even in reasonable situations.  Passes like instcombine
-  // can adjust callsites (e.g. folding bitcasts into calls to make them direct)
-  // which can introduce new call sites.  Since instcombine is not callgraph
-  // aware, it doesn't know to tell CallGraph about this change.
-  for (CalledFunctionsVector::iterator I = CalledFunctions.begin();
-       I != CalledFunctions.end(); ++I) {
-    if (I->first != CS) continue;
-    
-    I->second->DropRef();
-    *I = CalledFunctions.back();
-    CalledFunctions.pop_back();
-    return;
+  for (CalledFunctionsVector::iterator I = CalledFunctions.begin(); ; ++I) {
+    assert(I != CalledFunctions.end() && "Cannot find callsite to remove!");
+    if (I->first == CS) {
+      I->second->DropRef();
+      *I = CalledFunctions.back();
+      CalledFunctions.pop_back();
+      return;
+    }
   }
 }
+
+// FIXME: REMOVE THIS WHEN HACK IS REMOVED FROM CGSCCPASSMGR.
+void CallGraphNode::removeCallEdgeFor(Instruction *CS) {
+  for (CalledFunctionsVector::iterator I = CalledFunctions.begin(); ; ++I) {
+    assert(I != CalledFunctions.end() && "Cannot find callsite to remove!");
+    if (I->first.getInstruction() == CS) {
+      I->second->DropRef();
+      *I = CalledFunctions.back();
+      CalledFunctions.pop_back();
+      return;
+    }
+  }
+  
+}
+
 
 
 // removeAnyCallEdgeTo - This method removes any call edges from this node to
@@ -291,18 +301,18 @@ void CallGraphNode::replaceCallSite(CallSite Old, CallSite New,
                                     CallGraphNode *NewCallee) {
   for (CalledFunctionsVector::iterator I = CalledFunctions.begin(); ; ++I) {
     assert(I != CalledFunctions.end() && "Cannot find callsite to replace!");
-    if (I->first == Old) {
-      I->first = New;
-      
-      // If the callee is changing, not just the callsite, then update it as
-      // well.
-      if (NewCallee) {
-        I->second->DropRef();
-        I->second = NewCallee;
-        I->second->AddRef();
-      }
-      return;
+    if (I->first != Old) continue;
+    
+    I->first = New;
+    
+    // If the callee is changing, not just the callsite, then update it as
+    // well.
+    if (NewCallee) {
+      I->second->DropRef();
+      I->second = NewCallee;
+      I->second->AddRef();
     }
+    return;
   }
 }
 
