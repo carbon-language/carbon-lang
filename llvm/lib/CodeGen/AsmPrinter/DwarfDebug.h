@@ -287,6 +287,14 @@ class VISIBILITY_HIDDEN DwarfDebug : public Dwarf {
   void AddAddress(DIE *Die, unsigned Attribute,
                   const MachineLocation &Location);
 
+  /// AddBlockByrefAddress - Start with the address based on the location
+  /// provided, and generate the DWARF information necessary to find the
+  /// actual Block variable (navigating the Block struct) based on the
+  /// starting location.  Add the DWARF information to the die.
+  ///
+  void AddBlockByrefAddress(DbgVariable *&DV, DIE *Die, unsigned Attribute,
+                            const MachineLocation &Location);
+
   /// AddType - Add a new type attribute to the specified entity.
   void AddType(CompileUnit *DW_Unit, DIE *Entity, DIType Ty);
 
@@ -453,6 +461,11 @@ class VISIBILITY_HIDDEN DwarfDebug : public Dwarf {
   void ConstructGlobalVariableDIE(MDNode *N);
 
   void ConstructSubprogram(MDNode *N);
+
+  /// Find the type the programmer originally declared the variable to be
+  /// and return that type.
+  ///
+  DIType GetBlockByrefType(DIType Ty, std::string Name);
 
 public:
   //===--------------------------------------------------------------------===//

@@ -191,7 +191,8 @@ namespace llvm {
       FlagPrivate    = 1 << 0,
       FlagProtected  = 1 << 1,
       FlagFwdDecl    = 1 << 2,
-      FlagAppleBlock = 1 << 3
+      FlagAppleBlock = 1 << 3,
+      FlagBlockByrefStruct = 1 << 4
     };
 
   protected:
@@ -234,6 +235,9 @@ namespace llvm {
     // isAppleBlock - Return true if this is the Apple Blocks extension.
     bool isAppleBlockExtension() const {
       return (getFlags() & FlagAppleBlock) != 0; 
+    }
+    bool isBlockByrefStruct() const {
+      return (getFlags() & FlagBlockByrefStruct) != 0;
     }
 
     /// dump - print type.
@@ -400,6 +404,12 @@ namespace llvm {
 
     /// Verify - Verify that a variable descriptor is well formed.
     bool Verify() const;
+
+    /// isBlockByrefVariable - Return true if the variable was declared as
+    /// a "__block" variable (Apple Blocks).
+    bool isBlockByrefVariable() const { 
+      return getType().isBlockByrefStruct(); 
+    }
 
     /// dump - print variable.
     void dump() const;
