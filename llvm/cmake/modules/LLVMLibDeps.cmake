@@ -29,7 +29,7 @@ set(MSVC_LIB_DEPS_LLVMInstrumentation LLVMCore LLVMScalarOpts LLVMSupport LLVMSy
 set(MSVC_LIB_DEPS_LLVMInterpreter LLVMCodeGen LLVMCore LLVMExecutionEngine LLVMSupport LLVMSystem LLVMTarget)
 set(MSVC_LIB_DEPS_LLVMJIT LLVMCodeGen LLVMCore LLVMExecutionEngine LLVMMC LLVMSupport LLVMSystem LLVMTarget)
 set(MSVC_LIB_DEPS_LLVMLinker LLVMArchive LLVMBitReader LLVMCore LLVMSupport LLVMSystem)
-set(MSVC_LIB_DEPS_LLVMMC LLVMSupport)
+set(MSVC_LIB_DEPS_LLVMMC LLVMSupport LLVMSystem)
 set(MSVC_LIB_DEPS_LLVMMSIL LLVMAnalysis LLVMCodeGen LLVMCore LLVMMSILInfo LLVMScalarOpts LLVMSupport LLVMSystem LLVMTarget LLVMTransformUtils LLVMipa)
 set(MSVC_LIB_DEPS_LLVMMSILInfo LLVMSupport)
 set(MSVC_LIB_DEPS_LLVMMSP430AsmPrinter LLVMAsmPrinter LLVMCodeGen LLVMCore LLVMMSP430Info LLVMSupport LLVMSystem LLVMTarget)
