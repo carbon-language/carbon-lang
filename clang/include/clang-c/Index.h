@@ -25,7 +25,7 @@ extern "C" {
    clangs PCH file (which contains AST's, or Abstract Syntax Trees). PCH files
    are created by the following command:
    
-   "clang -emit-pch <sourcefile.langsuffix> -o <sourcefile.ast>". 
+   "clang -S -Xclang -emit-pch <sourcefile.langsuffix> -o <sourcefile.ast>". 
    
    If the ast file format ends up diverging from the pch file format, we will 
    need to add a new switch (-emit-ast). For now, the contents are identical.

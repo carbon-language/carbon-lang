@@ -16,6 +16,7 @@
 #include "clang/Index/Indexer.h"
 #include "clang/AST/DeclVisitor.h"
 #include "clang/Basic/FileManager.h"
+#include "clang/Basic/SourceManager.h"
 #include "clang/Frontend/ASTUnit.h"
 #include <cstdio>
 using namespace clang;
@@ -208,17 +209,39 @@ unsigned clang_isDeclaration(enum CXCursorKind K)
 {
   return K >= CXCursor_FirstDecl && K <= CXCursor_LastDecl;
 }
-unsigned clang_getCursorLine(CXCursor)
+
+unsigned clang_getCursorLine(CXCursor C)
 {
-  return 0;
+  assert(C.decl && "CXCursor has null decl");
+  NamedDecl *ND = static_cast<NamedDecl *>(C.decl);
+  SourceLocation SLoc = ND->getLocation();
+  if (SLoc.isInvalid())
+    return 0;
+  SourceManager &SourceMgr = ND->getASTContext().getSourceManager();
+  SLoc = SourceMgr.getSpellingLoc(SLoc); // handles macro instantiations.
+  return SourceMgr.getSpellingLineNumber(SLoc);
 }
-unsigned clang_getCursorColumn(CXCursor)
+unsigned clang_getCursorColumn(CXCursor C)
 {
-  return 0;
+  assert(C.decl && "CXCursor has null decl");
+  NamedDecl *ND = static_cast<NamedDecl *>(C.decl);
+  SourceLocation SLoc = ND->getLocation();
+  if (SLoc.isInvalid())
+    return 0;
+  SourceManager &SourceMgr = ND->getASTContext().getSourceManager();
+  SLoc = SourceMgr.getSpellingLoc(SLoc); // handles macro instantiations.
+  return SourceMgr.getSpellingColumnNumber(SLoc);
 }
-const char *clang_getCursorSource(CXCursor) 
+const char *clang_getCursorSource(CXCursor C) 
 {
-  return "";
+  assert(C.decl && "CXCursor has null decl");
+  NamedDecl *ND = static_cast<NamedDecl *>(C.decl);
+  SourceLocation SLoc = ND->getLocation();
+  if (SLoc.isInvalid())
+    return "<invalid source location>";
+  SourceManager &SourceMgr = ND->getASTContext().getSourceManager();
+  SLoc = SourceMgr.getSpellingLoc(SLoc); // handles macro instantiations.
+  return SourceMgr.getBufferName(SLoc);
 }
 
 // If CXCursorKind == Cursor_Reference, then this will return the referenced declaration.
