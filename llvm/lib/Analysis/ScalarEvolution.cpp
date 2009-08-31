@@ -385,6 +385,10 @@ namespace {
     explicit SCEVComplexityCompare(LoopInfo *li) : LI(li) {}
 
     bool operator()(const SCEV *LHS, const SCEV *RHS) const {
+      // Fast-path: SCEVs are uniqued so we can do a quick equality check.
+      if (LHS == RHS)
+        return false;
+
       // Primarily, sort the SCEVs by their getSCEVType().
       if (LHS->getSCEVType() != RHS->getSCEVType())
         return LHS->getSCEVType() < RHS->getSCEVType();
@@ -2420,9 +2424,10 @@ ScalarEvolution::ForgetSymbolicName(Instruction *I, const SCEV *SymName) {
       // count information isn't going to change anything. In the later
       // case, createNodeForPHI will perform the necessary updates on its
       // own when it gets to that point.
-      if (!isa<PHINode>(I) || !isa<SCEVUnknown>(It->second))
+      if (!isa<PHINode>(I) || !isa<SCEVUnknown>(It->second)) {
+        ValuesAtScopes.erase(It->second);
         Scalars.erase(It);
-      ValuesAtScopes.erase(I);
+      }
     }
 
     PushDefUseChildren(I, Worklist);
@@ -3232,9 +3237,10 @@ ScalarEvolution::getBackedgeTakenInfo(const Loop *L) {
           // count information isn't going to change anything. In the later
           // case, createNodeForPHI will perform the necessary updates on its
           // own when it gets to that point.
-          if (!isa<PHINode>(I) || !isa<SCEVUnknown>(It->second))
+          if (!isa<PHINode>(I) || !isa<SCEVUnknown>(It->second)) {
+            ValuesAtScopes.erase(It->second);
             Scalars.erase(It);
-          ValuesAtScopes.erase(I);
+          }
           if (PHINode *PN = dyn_cast<PHINode>(I))
             ConstantEvolutionLoopExitValue.erase(PN);
         }
@@ -3264,8 +3270,8 @@ void ScalarEvolution::forgetLoopBackedgeTakenCount(const Loop *L) {
     std::map<SCEVCallbackVH, const SCEV*>::iterator It =
       Scalars.find(static_cast<Value *>(I));
     if (It != Scalars.end()) {
+      ValuesAtScopes.erase(It->second);
       Scalars.erase(It);
-      ValuesAtScopes.erase(I);
       if (PHINode *PN = dyn_cast<PHINode>(I))
         ConstantEvolutionLoopExitValue.erase(PN);
     }
@@ -3897,8 +3903,20 @@ ScalarEvolution::ComputeBackedgeTakenCountExhaustively(const Loop *L,
 /// In the case that a relevant loop exit value cannot be computed, the
 /// original value V is returned.
 const SCEV *ScalarEvolution::getSCEVAtScope(const SCEV *V, const Loop *L) {
-  // FIXME: this should be turned into a virtual method on SCEV!
+  // Check to see if we've folded this expression at this loop before.
+  std::map<const Loop *, const SCEV *> &Values = ValuesAtScopes[V];
+  std::pair<std::map<const Loop *, const SCEV *>::iterator, bool> Pair =
+    Values.insert(std::make_pair(L, static_cast<const SCEV *>(0)));
+  if (!Pair.second)
+    return Pair.first->second ? Pair.first->second : V;
 
+  // Otherwise compute it.
+  const SCEV *C = computeSCEVAtScope(V, L);
+  Pair.first->second = C;
+  return C;
+}
+
+const SCEV *ScalarEvolution::computeSCEVAtScope(const SCEV *V, const Loop *L) {
   if (isa<SCEVConstant>(V)) return V;
 
   // If this instruction is evolved from a constant-evolving PHI, compute the
@@ -3931,13 +3949,6 @@ const SCEV *ScalarEvolution::getSCEVAtScope(const SCEV *V, const Loop *L) {
       // the arguments into constants, and if so, try to constant propagate the
       // result.  This is particularly useful for computing loop exit values.
       if (CanConstantFold(I)) {
-        // Check to see if we've folded this instruction at this loop before.
-        std::map<const Loop *, Constant *> &Values = ValuesAtScopes[I];
-        std::pair<std::map<const Loop *, Constant *>::iterator, bool> Pair =
-          Values.insert(std::make_pair(L, static_cast<Constant *>(0)));
-        if (!Pair.second)
-          return Pair.first->second ? &*getSCEV(Pair.first->second) : V;
-
         std::vector<Constant*> Operands;
         Operands.reserve(I->getNumOperands());
         for (unsigned i = 0, e = I->getNumOperands(); i != e; ++i) {
@@ -3986,7 +3997,6 @@ const SCEV *ScalarEvolution::getSCEVAtScope(const SCEV *V, const Loop *L) {
           C = ConstantFoldInstOperands(I->getOpcode(), I->getType(),
                                        &Operands[0], Operands.size(),
                                        getContext());
-        Pair.first->second = C;
         return getSCEV(C);
       }
     }
@@ -5031,8 +5041,6 @@ void ScalarEvolution::SCEVCallbackVH::deleted() {
   assert(SE && "SCEVCallbackVH called with a null ScalarEvolution!");
   if (PHINode *PN = dyn_cast<PHINode>(getValPtr()))
     SE->ConstantEvolutionLoopExitValue.erase(PN);
-  if (Instruction *I = dyn_cast<Instruction>(getValPtr()))
-    SE->ValuesAtScopes.erase(I);
   SE->Scalars.erase(getValPtr());
   // this now dangles!
 }
@@ -5062,8 +5070,6 @@ void ScalarEvolution::SCEVCallbackVH::allUsesReplacedWith(Value *) {
       continue;
     if (PHINode *PN = dyn_cast<PHINode>(U))
       SE->ConstantEvolutionLoopExitValue.erase(PN);
-    if (Instruction *I = dyn_cast<Instruction>(U))
-      SE->ValuesAtScopes.erase(I);
     SE->Scalars.erase(U);
     for (Value::use_iterator UI = U->use_begin(), UE = U->use_end();
          UI != UE; ++UI)
@@ -5073,8 +5079,6 @@ void ScalarEvolution::SCEVCallbackVH::allUsesReplacedWith(Value *) {
   if (DeleteOld) {
     if (PHINode *PN = dyn_cast<PHINode>(Old))
       SE->ConstantEvolutionLoopExitValue.erase(PN);
-    if (Instruction *I = dyn_cast<Instruction>(Old))
-      SE->ValuesAtScopes.erase(I);
     SE->Scalars.erase(Old);
     // this now dangles!
   }
