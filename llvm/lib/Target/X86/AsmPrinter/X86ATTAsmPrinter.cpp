@@ -802,9 +802,10 @@ MCOperand X86ATTAsmPrinter::LowerGlobalAddressOperand(const MachineOperand &MO){
     Expr = MCBinaryExpr::CreateSub(Expr, MCSymbolRefExpr::Create(NegatedSymbol,
                                                                  OutContext),
                                    OutContext);
-  Expr = MCBinaryExpr::CreateAdd(Expr, MCConstantExpr::Create(MO.getOffset(),
-                                                              OutContext),
-                                 OutContext);
+  if (MO.getOffset())
+    Expr = MCBinaryExpr::CreateAdd(Expr, MCConstantExpr::Create(MO.getOffset(),
+                                                                OutContext),
+                                   OutContext);
   return MCOperand::CreateExpr(Expr);
 }
 
@@ -819,10 +820,12 @@ LowerExternalSymbolOperand(const MachineOperand &MO){
   MCSymbol *Sym = OutContext.GetOrCreateSymbol(Name);
   // FIXME: We would like an efficient form for this, so we don't have to do a
   // lot of extra uniquing.
-  const MCExpr *Expr =
-    MCBinaryExpr::CreateAdd(MCSymbolRefExpr::Create(Sym, OutContext),
-                            MCConstantExpr::Create(MO.getOffset(),OutContext),
-                            OutContext);
+  const MCExpr *Expr = MCSymbolRefExpr::Create(Sym, OutContext);
+  if (MO.getOffset())
+    Expr = MCBinaryExpr::CreateAdd(Expr,
+                                   MCConstantExpr::Create(MO.getOffset(),
+                                                          OutContext),
+                                   OutContext);
   return MCOperand::CreateExpr(Expr);
 }
 
