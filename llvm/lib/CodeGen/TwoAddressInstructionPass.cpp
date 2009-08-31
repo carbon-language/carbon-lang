@@ -985,13 +985,13 @@ bool TwoAddressInstructionPass::runOnMachineFunction(MachineFunction &MF) {
                 mi->getOperand(i).getReg() == regB)
               mi->getOperand(i).setReg(regA);
           }
+
+          assert(mi->getOperand(ti).isDef() && mi->getOperand(si).isUse());
+          mi->getOperand(ti).setReg(mi->getOperand(si).getReg());
+          MadeChange = true;
+
+          DEBUG(errs() << "\t\trewrite to:\t" << *mi);
         }
-
-        assert(mi->getOperand(ti).isDef() && mi->getOperand(si).isUse());
-        mi->getOperand(ti).setReg(mi->getOperand(si).getReg());
-        MadeChange = true;
-
-        DEBUG(errs() << "\t\trewrite to:\t" << *mi);
       }
 
       mi = nmi;
