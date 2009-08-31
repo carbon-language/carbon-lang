@@ -1126,7 +1126,7 @@ StmtPrinter::VisitCXXUnresolvedConstructExpr(
   OS << ")";
 }
 
-void StmtPrinter::VisitCXXQualifiedMemberExpr(CXXQualifiedMemberExpr *Node) {
+void StmtPrinter::VisitCXXAdornedMemberExpr(CXXAdornedMemberExpr *Node) {
   // FIXME: Suppress printing implicit bases (like "this")
   PrintExpr(Node->getBase());
   OS << (Node->isArrow() ? "->" : ".");

@@ -546,7 +546,7 @@ StmtProfiler::VisitCXXUnresolvedConstructExpr(CXXUnresolvedConstructExpr *S) {
   VisitType(S->getTypeAsWritten());
 }
 
-void StmtProfiler::VisitCXXQualifiedMemberExpr(CXXQualifiedMemberExpr *S) {
+void StmtProfiler::VisitCXXAdornedMemberExpr(CXXAdornedMemberExpr *S) {
   VisitMemberExpr(S);
   VisitNestedNameSpecifier(S->getQualifier());
 }

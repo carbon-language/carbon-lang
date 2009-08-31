@@ -216,9 +216,9 @@ RValue CodeGenFunction::EmitCXXMemberCallExpr(const CXXMemberCallExpr *CE) {
   //   Explicit qualification with the scope operator (5.1) suppresses the 
   //   virtual call mechanism.
   llvm::Value *Callee;
-  if (MD->isVirtual() && !isa<CXXQualifiedMemberExpr>(ME)) {
+  if (MD->isVirtual() && !ME->hasQualifier())
     Callee = BuildVirtualCall(MD, This, Ty);
-  } else
+  else
     Callee = CGM.GetAddrOfFunction(GlobalDecl(MD), Ty);
   
   return EmitCXXMemberCall(MD, Callee, This, 

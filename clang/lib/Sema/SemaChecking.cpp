@@ -1457,7 +1457,7 @@ static DeclRefExpr* EvalVal(Expr *E) {
   
   // Accesses to members are potential references to data on the stack.
   case Stmt::MemberExprClass: 
-  case Stmt::CXXQualifiedMemberExprClass: {
+  case Stmt::CXXAdornedMemberExprClass: {
     MemberExpr *M = cast<MemberExpr>(E);
       
     // Check for indirect access.  We only want direct field accesses.

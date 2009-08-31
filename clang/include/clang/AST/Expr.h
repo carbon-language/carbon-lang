@@ -33,7 +33,7 @@ namespace clang {
   class BlockDecl;
   class CXXOperatorCallExpr;
   class CXXMemberCallExpr;
-  class CXXQualifiedMemberExpr;
+  class CXXAdornedMemberExpr;
 
 /// Expr - This represents one expression.  Note that Expr's are subclasses of
 /// Stmt.  This allows an expression to be transparently used any place a Stmt
@@ -1078,6 +1078,11 @@ public:
   NamedDecl *getMemberDecl() const { return MemberDecl; }
   void setMemberDecl(NamedDecl *D) { MemberDecl = D; }
 
+  /// \brief Determines whether this adorned member expression actually had 
+  /// a C++ nested-name-specifier prior to the name of the member, e.g.,
+  /// x->Base::foo.
+  bool hasQualifier() const;
+  
   bool isArrow() const { return IsArrow; }
   void setArrow(bool A) { IsArrow = A; }
 
@@ -1099,10 +1104,10 @@ public:
 
   static bool classof(const Stmt *T) { 
     return T->getStmtClass() == MemberExprClass ||
-      T->getStmtClass() == CXXQualifiedMemberExprClass;
+      T->getStmtClass() == CXXAdornedMemberExprClass;
   }
   static bool classof(const MemberExpr *) { return true; }
-  static bool classof(const CXXQualifiedMemberExpr *) { return true; }
+  static bool classof(const CXXAdornedMemberExpr *) { return true; }
   
   // Iterators
   virtual child_iterator child_begin();

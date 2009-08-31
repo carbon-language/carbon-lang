@@ -12,6 +12,7 @@
 //===----------------------------------------------------------------------===//
 
 #include "clang/AST/Expr.h"
+#include "clang/AST/ExprCXX.h"
 #include "clang/AST/APValue.h"
 #include "clang/AST/ASTContext.h"
 #include "clang/AST/DeclObjC.h"
@@ -497,7 +498,7 @@ bool Expr::isUnusedResultAWarning(SourceLocation &Loc, SourceRange &R1,
   }
 
   case MemberExprClass:
-  case CXXQualifiedMemberExprClass:
+  case CXXAdornedMemberExprClass:
     // If the base pointer or element is to a volatile pointer/field, accessing
     // it is a side effect.
     if (getType().isVolatileQualified())
@@ -686,7 +687,7 @@ Expr::isLvalueResult Expr::isLvalueInternal(ASTContext &Ctx) const {
     break;
   }
   case MemberExprClass: 
-  case CXXQualifiedMemberExprClass: { 
+  case CXXAdornedMemberExprClass: { 
     const MemberExpr *m = cast<MemberExpr>(this);
     if (Ctx.getLangOptions().CPlusPlus) { // C++ [expr.ref]p4:
       NamedDecl *Member = m->getMemberDecl();
@@ -958,7 +959,7 @@ bool Expr::isOBJCGCCandidate(ASTContext &Ctx) const {
     return false;
   }
   case MemberExprClass: 
-  case CXXQualifiedMemberExprClass: {
+  case CXXAdornedMemberExprClass: {
     const MemberExpr *M = cast<MemberExpr>(this);
     return M->getBase()->isOBJCGCCandidate(Ctx);
   }
@@ -1915,6 +1916,13 @@ Stmt::child_iterator CallExpr::child_end() {
 // MemberExpr
 Stmt::child_iterator MemberExpr::child_begin() { return &Base; }
 Stmt::child_iterator MemberExpr::child_end() { return &Base+1; }
+
+bool MemberExpr::hasQualifier() const {
+  if (const CXXAdornedMemberExpr *A = dyn_cast<CXXAdornedMemberExpr>(this))
+    return A->hasQualifier();
+  
+  return false;
+}
 
 // ExtVectorElementExpr
 Stmt::child_iterator ExtVectorElementExpr::child_begin() { return &Base; }

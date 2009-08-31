@@ -1425,16 +1425,18 @@ public:
   /// 
   /// By default, performs semantic analysis to build the new expression.
   /// Subclasses may override this routine to provide different behavior.
-  OwningExprResult RebuildCXXQualifiedMemberExpr(ExprArg Base, 
-                                                 SourceLocation OpLoc,
-                                                 bool isArrow, 
-                                                NestedNameSpecifier *Qualifier,
-                                                 SourceRange QualifierRange,
-                                                 SourceLocation MemberLoc,
-                                                 NamedDecl *Member) {
+  OwningExprResult RebuildCXXAdornedMemberExpr(ExprArg Base, 
+                                               SourceLocation OpLoc,
+                                               bool isArrow, 
+                                               NestedNameSpecifier *Qualifier,
+                                               SourceRange QualifierRange,
+                                               SourceLocation MemberLoc,
+                                               NamedDecl *Member) {
     CXXScopeSpec SS;
-    SS.setRange(QualifierRange);
-    SS.setScopeRep(Qualifier);
+    if (Qualifier) {
+      SS.setRange(QualifierRange);
+      SS.setScopeRep(Qualifier);
+    }
     return getSema().BuildMemberReferenceExpr(/*Scope=*/0, move(Base), OpLoc,
                                               isArrow? tok::arrow : tok::period,
                                               MemberLoc,
@@ -1588,6 +1590,9 @@ template<typename Derived>
 NestedNameSpecifier *
 TreeTransform<Derived>::TransformNestedNameSpecifier(NestedNameSpecifier *NNS,
                                                      SourceRange Range) {
+  if (!NNS)
+    return 0;
+  
   // Transform the prefix of this nested name specifier.
   NestedNameSpecifier *Prefix = NNS->getPrefix();
   if (Prefix) {
@@ -4014,8 +4019,8 @@ TreeTransform<Derived>::TransformCXXUnresolvedConstructExpr(
 
 template<typename Derived> 
 Sema::OwningExprResult 
-TreeTransform<Derived>::TransformCXXQualifiedMemberExpr(
-                                                  CXXQualifiedMemberExpr *E) { 
+TreeTransform<Derived>::TransformCXXAdornedMemberExpr(
+                                                  CXXAdornedMemberExpr *E) { 
   OwningExprResult Base = getDerived().TransformExpr(E->getBase());
   if (Base.isInvalid())
     return SemaRef.ExprError();
@@ -4028,7 +4033,7 @@ TreeTransform<Derived>::TransformCXXQualifiedMemberExpr(
   NestedNameSpecifier *Qualifier
     = getDerived().TransformNestedNameSpecifier(E->getQualifier(),
                                                 E->getQualifierRange());
-  if (Qualifier == 0)
+  if (Qualifier == 0 && E->getQualifier() != 0)
     return SemaRef.ExprError();
 
   if (!getDerived().AlwaysRebuild() &&
@@ -4041,7 +4046,7 @@ TreeTransform<Derived>::TransformCXXQualifiedMemberExpr(
   SourceLocation FakeOperatorLoc
     = SemaRef.PP.getLocForEndOfToken(E->getBase()->getSourceRange().getEnd());
   
-  return getDerived().RebuildCXXQualifiedMemberExpr(move(Base), 
+  return getDerived().RebuildCXXAdornedMemberExpr(move(Base), 
                                                      FakeOperatorLoc,
                                                      E->isArrow(),
                                                      Qualifier,
