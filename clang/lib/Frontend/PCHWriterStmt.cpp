@@ -415,6 +415,7 @@ void PCHStmtWriter::VisitMemberExpr(MemberExpr *E) {
   Writer.AddDeclRef(E->getMemberDecl(), Record);
   Writer.AddSourceLocation(E->getMemberLoc(), Record);
   Record.push_back(E->isArrow());
+  // FIXME: C++ nested-name-specifier
   Code = pch::EXPR_MEMBER;
 }
 
