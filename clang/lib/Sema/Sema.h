@@ -1956,6 +1956,21 @@ public:
                                SourceLocation ClassNameLoc,
                                IdentifierInfo *ClassName,
                                const CXXScopeSpec *SS = 0);
+
+  virtual OwningExprResult
+  ActOnOverloadedOperatorReferenceExpr(Scope *S, ExprArg Base,
+                                       SourceLocation OpLoc,
+                                       tok::TokenKind OpKind,
+                                       SourceLocation ClassNameLoc,
+                                       OverloadedOperatorKind OverOpKind,
+                                       const CXXScopeSpec *SS = 0);
+  virtual OwningExprResult
+  ActOnConversionOperatorReferenceExpr(Scope *S, ExprArg Base,
+                                       SourceLocation OpLoc,
+                                       tok::TokenKind OpKind,
+                                       SourceLocation ClassNameLoc,
+                                       TypeTy *Ty,
+                                       const CXXScopeSpec *SS = 0);
   
   /// MaybeCreateCXXExprWithTemporaries - If the list of temporaries is 
   /// non-empty, will create a new CXXExprWithTemporaries expression.

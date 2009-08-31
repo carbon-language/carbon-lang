@@ -1794,6 +1794,43 @@ Sema::ActOnDestructorReferenceExpr(Scope *S, ExprArg Base,
                                   DtorName, DeclPtrTy(), SS);
 }
 
+Sema::OwningExprResult
+Sema::ActOnOverloadedOperatorReferenceExpr(Scope *S, ExprArg Base,
+                                           SourceLocation OpLoc,
+                                           tok::TokenKind OpKind,
+                                           SourceLocation ClassNameLoc,
+                                           OverloadedOperatorKind OverOpKind,
+                                           const CXXScopeSpec *SS) {
+  if (SS && SS->isInvalid())
+    return ExprError();
+
+  DeclarationName Name =
+    Context.DeclarationNames.getCXXOperatorName(OverOpKind);
+
+  return BuildMemberReferenceExpr(S, move(Base), OpLoc, OpKind, ClassNameLoc,
+                                  Name, DeclPtrTy(), SS);
+}
+
+Sema::OwningExprResult
+Sema::ActOnConversionOperatorReferenceExpr(Scope *S, ExprArg Base,
+                                           SourceLocation OpLoc,
+                                           tok::TokenKind OpKind,
+                                           SourceLocation ClassNameLoc,
+                                           TypeTy *Ty,
+                                           const CXXScopeSpec *SS) {
+  if (SS && SS->isInvalid())
+    return ExprError();
+
+  //FIXME: Preserve type source info.
+  QualType ConvType = GetTypeFromParser(Ty);
+  CanQualType ConvTypeCanon = Context.getCanonicalType(ConvType);
+  DeclarationName ConvName =
+    Context.DeclarationNames.getCXXConversionFunctionName(ConvTypeCanon);
+
+  return BuildMemberReferenceExpr(S, move(Base), OpLoc, OpKind, ClassNameLoc,
+                                  ConvName, DeclPtrTy(), SS);
+}
+
 Sema::OwningExprResult Sema::ActOnFinishFullExpr(ExprArg Arg) {
   Expr *FullExpr = Arg.takeAs<Expr>();
   if (FullExpr)

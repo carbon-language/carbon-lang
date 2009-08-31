@@ -1292,6 +1292,34 @@ public:
                                const CXXScopeSpec *SS = 0) {
     return ExprEmpty();
   }
+
+  /// ActOnOverloadedOperatorReferenceExpr - Parsed an overloaded operator
+  /// reference, for example:
+  ///
+  /// t.operator++();
+  virtual OwningExprResult
+  ActOnOverloadedOperatorReferenceExpr(Scope *S, ExprArg Base,
+                                       SourceLocation OpLoc,
+                                       tok::TokenKind OpKind,
+                                       SourceLocation ClassNameLoc,
+                                       OverloadedOperatorKind OverOpKind,
+                                       const CXXScopeSpec *SS = 0) {
+    return ExprEmpty();
+  }
+
+  /// ActOnConversionOperatorReferenceExpr - Parsed an overloaded conversion
+  /// function reference, for example:
+  ///
+  /// t.operator int();
+  virtual OwningExprResult
+  ActOnConversionOperatorReferenceExpr(Scope *S, ExprArg Base,
+                                       SourceLocation OpLoc,
+                                       tok::TokenKind OpKind,
+                                       SourceLocation ClassNameLoc,
+                                       TypeTy *Ty,
+                                       const CXXScopeSpec *SS = 0) {
+    return ExprEmpty();
+  }
   
   /// ActOnFinishFullExpr - Called whenever a full expression has been parsed.
   /// (C++ [intro.execution]p12).

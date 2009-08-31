@@ -939,6 +939,7 @@ Parser::ParsePostfixExpressionSuffix(OwningExprResult LHS) {
                                                  OpKind, Tok.getLocation(),
                                                  *Tok.getIdentifierInfo(),
                                                  ObjCImpDecl, &SS);
+        ConsumeToken();
       } else if (getLang().CPlusPlus && Tok.is(tok::tilde)) {
         // We have a C++ pseudo-destructor.
         
@@ -946,6 +947,8 @@ Parser::ParsePostfixExpressionSuffix(OwningExprResult LHS) {
         ConsumeToken();
         
         if (!Tok.is(tok::identifier)) {
+          if (getLang().CPlusPlus)
+            Actions.ActOnCXXExitMemberScope(CurScope, MemberSS);
           Diag(Tok, diag::err_expected_ident);
           return ExprError();
         }
@@ -956,15 +959,39 @@ Parser::ParsePostfixExpressionSuffix(OwningExprResult LHS) {
                                                      Tok.getLocation(), 
                                                      Tok.getIdentifierInfo(),
                                                      &SS);
+        ConsumeToken();
+      } else if (getLang().CPlusPlus && Tok.is(tok::kw_operator)) {
+        if (OverloadedOperatorKind Op = TryParseOperatorFunctionId()) {
+          if (!LHS.isInvalid())
+            LHS = Actions.ActOnOverloadedOperatorReferenceExpr(CurScope,
+                                                               move(LHS), OpLoc,
+                                                               OpKind,
+                                                           Tok.getLocation(),
+                                                               Op, &SS);
+          // TryParseOperatorFunctionId already consumed our token, so
+          // don't bother
+        } else if (TypeTy *ConvType = ParseConversionFunctionId()) {
+          if (!LHS.isInvalid())
+            LHS = Actions.ActOnConversionOperatorReferenceExpr(CurScope,
+                                                               move(LHS), OpLoc,
+                                                               OpKind,
+                                                           Tok.getLocation(),
+                                                               ConvType, &SS);
+        } else {
+          if (getLang().CPlusPlus)
+            Actions.ActOnCXXExitMemberScope(CurScope, MemberSS);
+          // Don't emit a diagnostic; ParseConversionFunctionId does it for us
+          return ExprError();
+        }
       } else {
+        if (getLang().CPlusPlus)
+          Actions.ActOnCXXExitMemberScope(CurScope, MemberSS);
         Diag(Tok, diag::err_expected_ident);
         return ExprError();
       }
 
       if (getLang().CPlusPlus)
         Actions.ActOnCXXExitMemberScope(CurScope, MemberSS);
-
-      ConsumeToken();
       break;
     }
     case tok::plusplus:    // postfix-expression: postfix-expression '++'
