@@ -46,7 +46,10 @@ namespace llvm {
   public:
     MCContext();
     ~MCContext();
-    
+
+    /// @name Symbol Managment
+    /// @{
+
     /// CreateSymbol - Create a new symbol with the specified @param Name.
     ///
     /// @param Name - The symbol name, which must be unique across all symbols.
@@ -72,6 +75,10 @@ namespace llvm {
     /// LookupSymbol - Get the symbol for @param Name, or null.
     MCSymbol *LookupSymbol(const StringRef &Name) const;
 
+    /// @}
+    /// @name Symbol Value Table
+    /// @{
+
     /// ClearSymbolValue - Erase a value binding for @arg Symbol, if one exists.
     void ClearSymbolValue(const MCSymbol *Symbol);
 
@@ -81,6 +88,8 @@ namespace llvm {
     /// GetSymbolValue - Return the current value for @arg Symbol, or null if
     /// none exists.
     const MCValue *GetSymbolValue(const MCSymbol *Symbol) const;
+
+    /// @}
 
     void *Allocate(unsigned Size, unsigned Align = 8) {
       return Allocator.Allocate(Size, Align);
