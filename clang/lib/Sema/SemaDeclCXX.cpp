@@ -3820,15 +3820,27 @@ Sema::DeclPtrTy Sema::ActOnFriendFunctionDecl(Scope *S,
                                           IsDefinition,
                                           Redeclaration);
   if (!ND) return DeclPtrTy();
+
+  assert(cast<FunctionDecl>(ND)->getPreviousDeclaration() == FD &&
+         "lost reference to previous declaration");
+
   FD = cast<FunctionDecl>(ND);
 
   assert(FD->getDeclContext() == DC);
   assert(FD->getLexicalDeclContext() == CurContext);
 
-  // We only add the function declaration to the lookup tables, not
-  // the decl list, and only if the context isn't dependent.
-  if (!CurContext->isDependentContext())
-    DC->makeDeclVisibleInContext(FD);
+  // Add the function declaration to the appropriate lookup tables,
+  // adjusting the redeclarations list as necessary.  We don't
+  // want to do this yet if the friending class is dependent.
+  // 
+  // Also update the scope-based lookup if the target context's
+  // lookup context is in lexical scope.
+  if (!CurContext->isDependentContext()) {
+    DC = DC->getLookupContext();
+    DC->makeDeclVisibleInContext(FD, /* Recoverable=*/ false);
+    if (Scope *EnclosingScope = getScopeForDeclContext(S, DC))
+      PushOnScopeChains(FD, EnclosingScope, /*AddToContext=*/ false);
+  }
 
   FriendDecl *FrD = FriendDecl::Create(Context, CurContext,
                                        D.getIdentifierLoc(), FD,

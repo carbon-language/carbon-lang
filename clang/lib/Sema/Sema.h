@@ -703,13 +703,25 @@ public:
   NamedDecl *getCurFunctionOrMethodDecl();
 
   /// Add this decl to the scope shadowed decl chains.
-  void PushOnScopeChains(NamedDecl *D, Scope *S);
+  void PushOnScopeChains(NamedDecl *D, Scope *S, bool AddToContext = true);
 
   /// isDeclInScope - If 'Ctx' is a function/method, isDeclInScope returns true
   /// if 'D' is in Scope 'S', otherwise 'S' is ignored and isDeclInScope returns
   /// true if 'D' belongs to the given declaration context.
   bool isDeclInScope(Decl *D, DeclContext *Ctx, Scope *S = 0) {
     return IdResolver.isDeclInScope(D, Ctx, Context, S);
+  }
+
+  /// Finds the scope corresponding to the given decl context, if it
+  /// happens to be an enclosing scope.  Otherwise return NULL.
+  Scope *getScopeForDeclContext(Scope *S, DeclContext *DC) {
+    DC = DC->getPrimaryContext();
+    do {
+      if (((DeclContext*) S->getEntity())->getPrimaryContext() == DC)
+        return S;
+    } while ((S = S->getParent()));
+
+    return NULL;
   }
 
 

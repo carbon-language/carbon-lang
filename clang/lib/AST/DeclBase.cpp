@@ -697,7 +697,7 @@ DeclContext *DeclContext::getEnclosingNamespaceContext() {
   return Ctx->getPrimaryContext();
 }
 
-void DeclContext::makeDeclVisibleInContext(NamedDecl *D) {
+void DeclContext::makeDeclVisibleInContext(NamedDecl *D, bool Recoverable) {
   // FIXME: This feels like a hack. Should DeclarationName support
   // template-ids, or is there a better way to keep specializations
   // from being visible?
@@ -706,20 +706,20 @@ void DeclContext::makeDeclVisibleInContext(NamedDecl *D) {
 
   DeclContext *PrimaryContext = getPrimaryContext();
   if (PrimaryContext != this) {
-    PrimaryContext->makeDeclVisibleInContext(D);
+    PrimaryContext->makeDeclVisibleInContext(D, Recoverable);
     return;
   }
 
   // If we already have a lookup data structure, perform the insertion
   // into it. Otherwise, be lazy and don't build that structure until
   // someone asks for it.
-  if (LookupPtr)
+  if (LookupPtr || !Recoverable)
     makeDeclVisibleInContextImpl(D);
 
   // If we are a transparent context, insert into our parent context,
   // too. This operation is recursive.
   if (isTransparentContext())
-    getParent()->makeDeclVisibleInContext(D);
+    getParent()->makeDeclVisibleInContext(D, Recoverable);
 }
 
 void DeclContext::makeDeclVisibleInContextImpl(NamedDecl *D) {

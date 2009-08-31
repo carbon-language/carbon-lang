@@ -280,7 +280,7 @@ static bool AllowOverloadingOfFunction(Decl *PrevDecl, ASTContext &Context) {
 }
 
 /// Add this decl to the scope shadowed decl chains.
-void Sema::PushOnScopeChains(NamedDecl *D, Scope *S) {
+void Sema::PushOnScopeChains(NamedDecl *D, Scope *S, bool AddToContext) {
   // Move up the scope chain until we find the nearest enclosing
   // non-transparent context. The declaration will be introduced into this
   // scope.
@@ -293,7 +293,8 @@ void Sema::PushOnScopeChains(NamedDecl *D, Scope *S) {
   // Add scoped declarations into their context, so that they can be
   // found later. Declarations without a context won't be inserted
   // into any context.
-  CurContext->addDecl(D);
+  if (AddToContext)
+    CurContext->addDecl(D);
 
   // C++ [basic.scope]p4:
   //   -- exactly one declaration shall declare a class name or

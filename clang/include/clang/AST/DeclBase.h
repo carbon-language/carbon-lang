@@ -905,7 +905,11 @@ public:
   /// visible from this context, as determined by
   /// NamedDecl::declarationReplaces, the previous declaration will be
   /// replaced with D.
-  void makeDeclVisibleInContext(NamedDecl *D);
+  ///
+  /// @param Recoverable true if it's okay to not add this decl to
+  /// the lookup tables because it can be easily recovered by walking
+  /// the declaration chains.
+  void makeDeclVisibleInContext(NamedDecl *D, bool Recoverable = true);
 
   /// udir_iterator - Iterates through the using-directives stored
   /// within this context.
