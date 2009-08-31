@@ -1130,7 +1130,7 @@ public:
                                         llvm::Value *src, llvm::Value *dest);
   virtual void EmitGCMemmoveCollectable(CodeGen::CodeGenFunction &CGF,
                                         llvm::Value *dest, llvm::Value *src,
-                                        unsigned long size);
+                                        QualType Ty);
 
   virtual LValue EmitObjCValueForIvar(CodeGen::CodeGenFunction &CGF,
                                       QualType ObjectTy,
@@ -1359,7 +1359,7 @@ public:
                                         llvm::Value *src, llvm::Value *dest);
   virtual void EmitGCMemmoveCollectable(CodeGen::CodeGenFunction &CGF,
                                         llvm::Value *dest, llvm::Value *src,
-                                        unsigned long size);
+                                        QualType Ty);
   virtual LValue EmitObjCValueForIvar(CodeGen::CodeGenFunction &CGF,
                                       QualType ObjectTy,
                                       llvm::Value *BaseValue,
@@ -2786,7 +2786,10 @@ void CGObjCMac::EmitObjCStrongCastAssign(CodeGen::CodeGenFunction &CGF,
 void CGObjCMac::EmitGCMemmoveCollectable(CodeGen::CodeGenFunction &CGF,
                                          llvm::Value *DestPtr,
                                          llvm::Value *SrcPtr,
-                                         unsigned long size) {
+                                         QualType Ty) {
+  // Get size info for this aggregate.
+  std::pair<uint64_t, unsigned> TypeInfo = CGM.getContext().getTypeInfo(Ty);
+  unsigned long size = TypeInfo.second/8;
   SrcPtr = CGF.Builder.CreateBitCast(SrcPtr, ObjCTypes.Int8PtrTy);
   DestPtr = CGF.Builder.CreateBitCast(DestPtr, ObjCTypes.Int8PtrTy);
   llvm::Value *N = llvm::ConstantInt::get(ObjCTypes.LongTy, size);
@@ -5315,7 +5318,10 @@ void CGObjCNonFragileABIMac::EmitGCMemmoveCollectable(
   CodeGen::CodeGenFunction &CGF,
   llvm::Value *DestPtr,
   llvm::Value *SrcPtr,
-  unsigned long size) {
+  QualType Ty) {
+  // Get size info for this aggregate.
+  std::pair<uint64_t, unsigned> TypeInfo = CGM.getContext().getTypeInfo(Ty);
+  unsigned long size = TypeInfo.second/8;
   SrcPtr = CGF.Builder.CreateBitCast(SrcPtr, ObjCTypes.Int8PtrTy);
   DestPtr = CGF.Builder.CreateBitCast(DestPtr, ObjCTypes.Int8PtrTy);
   llvm::Value *N = llvm::ConstantInt::get(ObjCTypes.LongTy, size);

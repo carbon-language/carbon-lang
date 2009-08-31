@@ -1,5 +1,5 @@
 // RUN: clang-cc -fnext-runtime -fobjc-gc -emit-llvm -o %t %s &&
-// RUN: grep objc_memmove_collectable %t | grep call | count 2
+// RUN: grep objc_memmove_collectable %t | grep call | count 3
 
 static int count;
 
@@ -38,5 +38,9 @@ struct type_s some = {{1234}, (id)0};
 struct type_s get(void)
 {
   return some;
+}
+
+void f(const struct type_s *in, struct type_s *out) {
+  *out = *in;
 }
 

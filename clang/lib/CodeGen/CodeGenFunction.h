@@ -897,12 +897,13 @@ public:
   /// aggregate type.  The result is computed into DestPtr.  Note that if
   /// DestPtr is null, the value of the aggregate expression is not needed.
   void EmitAggExpr(const Expr *E, llvm::Value *DestPtr, bool VolatileDest,
-                   bool IgnoreResult = false, bool IsInitializer = false);
+                   bool IgnoreResult = false, bool IsInitializer = false,
+                   bool RequiresGCollection = false);
 
   /// EmitGCMemmoveCollectable - Emit special API for structs with object
   /// pointers.
   void EmitGCMemmoveCollectable(llvm::Value *DestPtr, llvm::Value *SrcPtr,
-                                unsigned long);
+                                QualType Ty);
 
   /// EmitComplexExpr - Emit the computation of the specified expression of
   /// complex type, returning the result.

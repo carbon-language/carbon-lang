@@ -37,12 +37,13 @@ class VISIBILITY_HIDDEN AggExprEmitter : public StmtVisitor<AggExprEmitter> {
   bool VolatileDest;
   bool IgnoreResult;
   bool IsInitializer;
+  bool RequiresGCollection;
 public:
   AggExprEmitter(CodeGenFunction &cgf, llvm::Value *destPtr, bool v,
-                 bool ignore, bool isinit)
+                 bool ignore, bool isinit, bool requiresGCollection)
     : CGF(cgf), Builder(CGF.Builder),
       DestPtr(destPtr), VolatileDest(v), IgnoreResult(ignore),
-      IsInitializer(isinit) {
+      IsInitializer(isinit), RequiresGCollection(requiresGCollection) {
   }
 
   //===--------------------------------------------------------------------===//
@@ -145,6 +146,12 @@ void AggExprEmitter::EmitFinalDestCopy(const Expr *E, RValue Src, bool Ignore) {
     DestPtr = CGF.CreateTempAlloca(CGF.ConvertType(E->getType()), "agg.tmp");
   }
 
+  if (RequiresGCollection) {
+    CGF.CGM.getObjCRuntime().EmitGCMemmoveCollectable(CGF,
+                                              DestPtr, Src.getAggregateAddr(),
+                                              E->getType());
+    return;
+  }
   // If the result of the assignment is used, copy the LHS there also.
   // FIXME: Pass VolatileDest as well.  I think we also need to merge volatile
   // from the source as well, as we can't eliminate it if either operand
@@ -262,19 +269,15 @@ void AggExprEmitter::VisitBinAssign(const BinaryOperator *E) {
     CGF.EmitObjCPropertySet(LHS.getKVCRefExpr(), 
                             RValue::getAggregate(AggLoc, VolatileDest));
   } else {
+    bool RequiresGCollection = false;
     if (CGF.getContext().getLangOptions().NeXTRuntime) {
       QualType LHSTy = E->getLHS()->getType();
       if (const RecordType *FDTTy = LHSTy.getTypePtr()->getAs<RecordType>())
-        if (FDTTy->getDecl()->hasObjectMember()) {
-          LValue RHS = CGF.EmitLValue(E->getRHS());
-          CGF.CGM.getObjCRuntime().EmitGCMemmoveCollectable(CGF, LHS.getAddress(), 
-                                      RHS.getAddress(),
-                                      CGF.getContext().getTypeSize(LHSTy) / 8);
-          return;
-        }
+        RequiresGCollection = FDTTy->getDecl()->hasObjectMember(); 
     }
     // Codegen the RHS so that it stores directly into the LHS.
-    CGF.EmitAggExpr(E->getRHS(), LHS.getAddress(), LHS.isVolatileQualified());
+    CGF.EmitAggExpr(E->getRHS(), LHS.getAddress(), LHS.isVolatileQualified(),
+                    false, false, RequiresGCollection);
     EmitFinalDestCopy(E, LHS, true);
   }
 }
@@ -525,13 +528,15 @@ void AggExprEmitter::VisitInitListExpr(InitListExpr *E) {
 /// true, DestPtr cannot be 0.
 void CodeGenFunction::EmitAggExpr(const Expr *E, llvm::Value *DestPtr,
                                   bool VolatileDest, bool IgnoreResult,
-                                  bool IsInitializer) {
+                                  bool IsInitializer, 
+                                  bool RequiresGCollection) {
   assert(E && hasAggregateLLVMType(E->getType()) &&
          "Invalid aggregate expression to emit");
   assert ((DestPtr != 0 || VolatileDest == false)
           && "volatile aggregate can't be 0");
   
-  AggExprEmitter(*this, DestPtr, VolatileDest, IgnoreResult, IsInitializer)
+  AggExprEmitter(*this, DestPtr, VolatileDest, IgnoreResult, IsInitializer,
+                 RequiresGCollection)
     .Visit(const_cast<Expr*>(E));
 }
 
