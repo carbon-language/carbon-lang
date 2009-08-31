@@ -31,7 +31,6 @@ using namespace llvm;
 namespace {
 
 class CGPassManager : public ModulePass, public PMDataManager {
-
 public:
   static char ID;
   explicit CGPassManager(int Depth) 
@@ -73,11 +72,41 @@ public:
   virtual PassManagerType getPassManagerType() const { 
     return PMT_CallGraphPassManager; 
   }
+  
+private:
+  bool RunPassOnSCC(Pass *P, std::vector<CallGraphNode*> &CurSCC);
 };
 
-}
+} // end anonymous namespace.
 
 char CGPassManager::ID = 0;
+
+bool CGPassManager::RunPassOnSCC(Pass *P, std::vector<CallGraphNode*> &CurSCC) {
+  bool Changed = false;
+  if (CallGraphSCCPass *CGSP = dynamic_cast<CallGraphSCCPass*>(P)) {
+    StartPassTimer(P);
+    Changed = CGSP->runOnSCC(CurSCC);
+    StopPassTimer(P);
+    return Changed;
+  }
+  
+  StartPassTimer(P);
+  FPPassManager *FPP = dynamic_cast<FPPassManager *>(P);
+  assert(FPP && "Invalid CGPassManager member");
+  
+  // Run pass P on all functions in the current SCC.
+  for (unsigned i = 0, e = CurSCC.size(); i != e; ++i) {
+    if (Function *F = CurSCC[i]->getFunction()) {
+      dumpPassInfo(P, EXECUTION_MSG, ON_FUNCTION_MSG, F->getName());
+      Changed |= FPP->runOnFunction(*F);
+    }
+  }
+  StopPassTimer(P);
+  
+  return Changed;
+}
+
+
 /// run - Execute all of the passes scheduled for execution.  Keep track of
 /// whether any of the passes modifies the module, and if so, return true.
 bool CGPassManager::runOnModule(Module &M) {
@@ -86,7 +115,7 @@ bool CGPassManager::runOnModule(Module &M) {
 
   std::vector<CallGraphNode*> CurSCC;
   
-  // Walk SCC
+  // Walk the callgraph in bottom-up SCC order.
   for (scc_iterator<CallGraph*> CGI = scc_begin(&CG), E = scc_end(&CG);
        CGI != E;) {
     // Copy the current SCC and increment past it so that the pass can hack
@@ -94,31 +123,19 @@ bool CGPassManager::runOnModule(Module &M) {
     CurSCC = *CGI;
     ++CGI;
     
-    // Run all passes on current SCC
-    for (unsigned Index = 0; Index < getNumContainedPasses(); ++Index) {
-      Pass *P = getContainedPass(Index);
+    
+    // Run all passes on current SCC.
+    for (unsigned PassNo = 0, e = getNumContainedPasses();
+         PassNo != e; ++PassNo) {
+      Pass *P = getContainedPass(PassNo);
 
       dumpPassInfo(P, EXECUTION_MSG, ON_CG_MSG, "");
       dumpRequiredSet(P);
 
       initializeAnalysisImpl(P);
 
-      StartPassTimer(P);
-      if (CallGraphSCCPass *CGSP = dynamic_cast<CallGraphSCCPass *>(P))
-        Changed |= CGSP->runOnSCC(CurSCC);
-      else {
-        FPPassManager *FPP = dynamic_cast<FPPassManager *>(P);
-        assert (FPP && "Invalid CGPassManager member");
-
-        // Run pass P on all functions current SCC
-        for (unsigned i = 0, e = CurSCC.size(); i != e; ++i) {
-          if (Function *F = CurSCC[i]->getFunction()) {
-            dumpPassInfo(P, EXECUTION_MSG, ON_FUNCTION_MSG, F->getName());
-            Changed |= FPP->runOnFunction(*F);
-          }
-        }
-      }
-      StopPassTimer(P);
+      // Actually run this pass on the current SCC.
+      Changed |= RunPassOnSCC(P, CurSCC);
 
       if (Changed)
         dumpPassInfo(P, MODIFICATION_MSG, ON_CG_MSG, "");
