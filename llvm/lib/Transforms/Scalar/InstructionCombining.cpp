@@ -164,6 +164,7 @@ namespace {
       public InstVisitor<InstCombiner, Instruction*> {
     TargetData *TD;
     bool MustPreserveLCSSA;
+    bool MadeIRChange;
   public:
     /// Worklist - All of the instructions that need to be simplified.
     InstCombineWorklist Worklist;
@@ -339,6 +340,7 @@ namespace {
       }
       Worklist.Remove(&I);
       I.eraseFromParent();
+      MadeIRChange = true;
       return 0;  // Don't do anything with FI
     }
         
@@ -12676,7 +12678,7 @@ static void AddReachableCodeToWorklist(BasicBlock *BB,
 }
 
 bool InstCombiner::DoOneIteration(Function &F, unsigned Iteration) {
-  bool Changed = false;
+  MadeIRChange = false;
   TD = getAnalysisIfAvailable<TargetData>();
   
   DEBUG(errs() << "\n\nINSTCOMBINE ITERATION #" << Iteration << " on "
@@ -12703,7 +12705,7 @@ bool InstCombiner::DoOneIteration(Function &F, unsigned Iteration) {
           // going to do one without it.
           if (!isa<DbgInfoIntrinsic>(I)) {
             ++NumDeadInst;
-            Changed = true;
+            MadeIRChange = true;
           }
           if (!I->use_empty())
             I->replaceAllUsesWith(UndefValue::get(I->getType()));
@@ -12721,7 +12723,7 @@ bool InstCombiner::DoOneIteration(Function &F, unsigned Iteration) {
       DEBUG(errs() << "IC: DCE: " << *I << '\n');
       EraseInstFromFunction(*I);
       ++NumDeadInst;
-      Changed = true;
+      MadeIRChange = true;
       continue;
     }
 
@@ -12733,7 +12735,7 @@ bool InstCombiner::DoOneIteration(Function &F, unsigned Iteration) {
       ReplaceInstUsesWith(*I, C);
       ++NumConstProp;
       EraseInstFromFunction(*I);
-      Changed = true;
+      MadeIRChange = true;
       continue;
     }
 
@@ -12745,7 +12747,7 @@ bool InstCombiner::DoOneIteration(Function &F, unsigned Iteration) {
                                   F.getContext(), TD))
             if (NewC != CE) {
               i->set(NewC);
-              Changed = true;
+              MadeIRChange = true;
             }
     }
 
@@ -12768,7 +12770,7 @@ bool InstCombiner::DoOneIteration(Function &F, unsigned Iteration) {
         if (UserIsSuccessor && !isa<PHINode>(I->use_back()) &&
             next(pred_begin(UserParent)) == pred_end(UserParent))
           // Okay, the CFG is simple enough, try to sink this instruction.
-          Changed |= TryToSinkInstruction(I, UserParent);
+          MadeIRChange |= TryToSinkInstruction(I, UserParent);
       }
     }
 
@@ -12823,12 +12825,12 @@ bool InstCombiner::DoOneIteration(Function &F, unsigned Iteration) {
           Worklist.AddUsersToWorkList(*I);
         }
       }
-      Changed = true;
+      MadeIRChange = true;
     }
   }
 
   Worklist.Zap();
-  return Changed;
+  return MadeIRChange;
 }
 
 
