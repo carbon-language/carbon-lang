@@ -130,3 +130,19 @@ struct X0 {
 void test_X0(X0<int> x, IntegralConstant<int, sizeof(int)> ic) {
   x.f(5,ic);
 }
+
+namespace N8 {
+  struct X {
+    X operator+(const X&) const;
+  };
+  
+  template<typename T>
+  T test_plus(const T* xp, const T& x, const T& y) {
+    x.operator+(y);
+    return xp->operator+(y);
+  }
+  
+  void test_test_plus(X x) {
+    test_plus(&x, x, x);
+  }
+}

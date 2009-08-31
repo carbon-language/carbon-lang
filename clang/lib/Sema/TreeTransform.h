@@ -837,10 +837,10 @@ public:
   OwningExprResult RebuildMemberExpr(ExprArg Base, SourceLocation OpLoc,
                                      bool isArrow, SourceLocation MemberLoc,
                                      NamedDecl *Member) {
-    return getSema().ActOnMemberReferenceExpr(/*Scope=*/0, move(Base), OpLoc,
+    return getSema().BuildMemberReferenceExpr(/*Scope=*/0, move(Base), OpLoc,
                                               isArrow? tok::arrow : tok::period,
                                               MemberLoc,
-                                              /*FIXME*/*Member->getIdentifier(),
+                                              Member->getDeclName(),
                                      /*FIXME?*/Sema::DeclPtrTy::make((Decl*)0));
   }
   
@@ -1435,10 +1435,10 @@ public:
     CXXScopeSpec SS;
     SS.setRange(QualifierRange);
     SS.setScopeRep(Qualifier);
-    return getSema().ActOnMemberReferenceExpr(/*Scope=*/0, move(Base), OpLoc,
+    return getSema().BuildMemberReferenceExpr(/*Scope=*/0, move(Base), OpLoc,
                                               isArrow? tok::arrow : tok::period,
                                               MemberLoc,
-                                              /*FIXME*/*Member->getIdentifier(),
+                                              Member->getDeclName(),
                                       /*FIXME?*/Sema::DeclPtrTy::make((Decl*)0),
                                               &SS);
   }
@@ -1459,12 +1459,10 @@ public:
     if (Base.isInvalid())
       return SemaRef.ExprError();
     
-    assert(Name.getAsIdentifierInfo() && 
-           "Cannot transform member references with non-identifier members");
-    Base = SemaRef.ActOnMemberReferenceExpr(/*Scope=*/0,
+    Base = SemaRef.BuildMemberReferenceExpr(/*Scope=*/0,
                                             move(Base), OperatorLoc, OpKind,
-                                            MemberLoc, 
-                                            *Name.getAsIdentifierInfo(),
+                                            MemberLoc,
+                                            Name,
                                     /*FIXME?*/Sema::DeclPtrTy::make((Decl*)0));
     SemaRef.ActOnCXXExitMemberScope(0, SS);
     return move(Base);
