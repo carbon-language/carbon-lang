@@ -3912,7 +3912,7 @@ const SCEV *ScalarEvolution::getSCEVAtScope(const SCEV *V, const Loop *L) {
 
   // Otherwise compute it.
   const SCEV *C = computeSCEVAtScope(V, L);
-  Pair.first->second = C;
+  ValuesAtScopes[V][L] = C;
   return C;
 }
 
