@@ -342,11 +342,26 @@ namespace llvm {
   };
 
   /// DISubprogram - This is a wrapper for a subprogram (e.g. a function).
-  class DISubprogram : public DIGlobal {
+  class DISubprogram : public DIScope {
   public:
-    explicit DISubprogram(MDNode *N = 0)
-      : DIGlobal(N, dwarf::DW_TAG_subprogram) {}
+    explicit DISubprogram(MDNode *N = 0) {
+      DbgNode = N;
+      if (DbgNode && !isSubprogram())
+	DbgNode = 0;
+    }
 
+    DIDescriptor getContext() const     { return getDescriptorField(2); }
+    const std::string &getName(std::string &F) const {
+      return getStringField(3, F);
+    }
+    const std::string &getDisplayName(std::string &F) const {
+      return getStringField(4, F);
+    }
+    const std::string &getLinkageName(std::string &F) const {
+      return getStringField(5, F);
+    }
+    DICompileUnit getCompileUnit() const{ return getFieldAs<DICompileUnit>(6); }
+    unsigned getLineNumber() const      { return getUnsignedField(7); }
     DICompositeType getType() const { return getFieldAs<DICompositeType>(8); }
 
     /// getReturnTypeName - Subprogram return types are encoded either as
@@ -361,6 +376,11 @@ namespace llvm {
       DIType T(getFieldAs<DIType>(8));
       return T.getName(F);
     }
+
+    /// isLocalToUnit - Return true if this subprogram is local to the current
+    /// compile unit, like 'static' in C.
+    unsigned isLocalToUnit() const      { return getUnsignedField(9); }
+    unsigned isDefinition() const       { return getUnsignedField(10); }
 
     /// Verify - Verify that a subprogram descriptor is well formed.
     bool Verify() const;

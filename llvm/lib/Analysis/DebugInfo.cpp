@@ -494,7 +494,24 @@ void DIGlobal::dump() const {
 
 /// dump - Print subprogram.
 void DISubprogram::dump() const {
-  DIGlobal::dump();
+  std::string Res;
+  if (!getName(Res).empty())
+    errs() << " [" << Res << "] ";
+
+  unsigned Tag = getTag();
+  errs() << " [" << dwarf::TagString(Tag) << "] ";
+
+  // TODO : Print context
+  getCompileUnit().dump();
+  errs() << " [" << getLineNumber() << "] ";
+
+  if (isLocalToUnit())
+    errs() << " [local] ";
+
+  if (isDefinition())
+    errs() << " [def] ";
+
+  errs() << "\n";
 }
 
 /// dump - Print global variable.

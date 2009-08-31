@@ -487,6 +487,23 @@ void DwarfDebug::AddSourceLine(DIE *Die, const DIGlobal *G) {
   AddUInt(Die, dwarf::DW_AT_decl_file, 0, FileID);
   AddUInt(Die, dwarf::DW_AT_decl_line, 0, Line);
 }
+
+/// AddSourceLine - Add location information to specified debug information
+/// entry.
+void DwarfDebug::AddSourceLine(DIE *Die, const DISubprogram *SP) {
+  // If there is no compile unit specified, don't add a line #.
+  if (SP->getCompileUnit().isNull())
+    return;
+
+  unsigned Line = SP->getLineNumber();
+  unsigned FileID = FindCompileUnit(SP->getCompileUnit()).getID();
+  assert(FileID && "Invalid file id");
+  AddUInt(Die, dwarf::DW_AT_decl_file, 0, FileID);
+  AddUInt(Die, dwarf::DW_AT_decl_line, 0, Line);
+}
+
+/// AddSourceLine - Add location information to specified debug information
+/// entry.
 void DwarfDebug::AddSourceLine(DIE *Die, const DIType *Ty) {
   // If there is no compile unit specified, don't add a line #.
   DICompileUnit CU = Ty->getCompileUnit();

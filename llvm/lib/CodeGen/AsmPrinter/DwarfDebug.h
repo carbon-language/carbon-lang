@@ -275,11 +275,8 @@ class VISIBILITY_HIDDEN DwarfDebug : public Dwarf {
   /// AddSourceLine - Add location information to specified debug information
   /// entry.
   void AddSourceLine(DIE *Die, const DIVariable *V);
-
-  /// AddSourceLine - Add location information to specified debug information
-  /// entry.
   void AddSourceLine(DIE *Die, const DIGlobal *G);
-
+  void AddSourceLine(DIE *Die, const DISubprogram *SP);
   void AddSourceLine(DIE *Die, const DIType *Ty);
 
   /// AddAddress - Add an address attribute to a die based on the location
