@@ -24,7 +24,6 @@
 #include "llvm/CodeGen/Passes.h"
 #include "llvm/Transforms/Utils/BasicBlockUtils.h"
 #include "llvm/Transforms/Utils/Local.h"
-#include "llvm/ADT/DenseMap.h"
 #include "llvm/ADT/Statistic.h"
 #include "llvm/ADT/SmallVector.h"
 #include "llvm/Support/CommandLine.h"
@@ -70,7 +69,8 @@ namespace {
 
   private:
     void markInvokeCallSite(InvokeInst *II, unsigned InvokeNo,
-                            Value *CallSite);
+                            Value *CallSite,
+                            SwitchInst *CatchSwitch);
     void splitLiveRangesLiveAcrossInvokes(SmallVector<InvokeInst*,16> &Invokes);
     bool insertSjLjEHSupport(Function &F);
   };
@@ -126,9 +126,14 @@ bool SjLjEHPass::doInitialization(Module &M) {
 
 /// markInvokeCallSite - Insert code to mark the call_site for this invoke
 void SjLjEHPass::markInvokeCallSite(InvokeInst *II, unsigned InvokeNo,
-                                    Value *CallSite) {
+                                    Value *CallSite,
+                                    SwitchInst *CatchSwitch) {
   ConstantInt *CallSiteNoC= ConstantInt::get(Type::getInt32Ty(II->getContext()),
                                             InvokeNo);
+  // The runtime comes back to the dispatcher with the call_site - 1 in
+  // the context. Odd, but there it is.
+  ConstantInt *SwitchValC = ConstantInt::get(Type::getInt32Ty(II->getContext()),
+                                            InvokeNo - 1);
 
   // If the unwind edge has phi nodes, split the edge.
   if (isa<PHINode>(II->getUnwindDest()->begin())) {
@@ -145,6 +150,8 @@ void SjLjEHPass::markInvokeCallSite(InvokeInst *II, unsigned InvokeNo,
   // location afterward.
   new StoreInst(CallSiteNoC, CallSite, true, II);  // volatile
 
+  // Add a switch case to our unwind block.
+  CatchSwitch->addCase(SwitchValC, II->getUnwindDest());
   // We still want this to look like an invoke so we emit the LSDA properly
   // FIXME: ??? Or will this cause strangeness with mis-matched IDs like
   //  when it was in the front end?
@@ -311,6 +318,13 @@ bool SjLjEHPass::insertSjLjEHSupport(Function &F) {
   if (!Invokes.empty()) {
     // We have invokes, so we need to add register/unregister calls to get
     // this function onto the global unwind stack.
+    //
+    // First thing we need to do is scan the whole function for values that are
+    // live across unwind edges.  Each value that is live across an unwind edge
+    // we spill into a stack location, guaranteeing that there is nothing live
+    // across the unwind edge.  This process also splits all critical edges
+    // coming out of invoke's.
+    splitLiveRangesLiveAcrossInvokes(Invokes);
 
     BasicBlock *EntryBB = F.begin();
     // Create an alloca for the incoming jump buffer ptr and the new jump buffer
@@ -462,32 +476,11 @@ bool SjLjEHPass::insertSjLjEHSupport(Function &F) {
                        ContBlock->getTerminator());
     Register->setDoesNotThrow();
 
-    // At this point, we are all set up. Update the invoke instructions
+    // At this point, we are all set up, update the invoke instructions
     // to mark their call_site values, and fill in the dispatch switch
     // accordingly.
-    DenseMap<BasicBlock*,unsigned> PadSites;
-    unsigned NextCallSiteValue = 1;
-    for (SmallVector<InvokeInst*,16>::iterator I = Invokes.begin(),
-         E = Invokes.end(); I < E; ++I) {
-      unsigned CallSiteValue;
-      BasicBlock *LandingPad = (*I)->getSuccessor(1);
-      // landing pads can be shared. If we see a landing pad again, we
-      // want to make sure to use the same call site index so the dispatch
-      // will go to the right place.
-      CallSiteValue = PadSites[LandingPad];
-      if (!CallSiteValue) {
-        CallSiteValue = NextCallSiteValue++;
-        PadSites[LandingPad] = CallSiteValue;
-        // Add a switch case to our unwind block. The runtime comes back
-        // to the dispatcher with the call_site - 1 in the context. Odd,
-        // but there it is.
-        ConstantInt *SwitchValC =
-          ConstantInt::get(Type::getInt32Ty((*I)->getContext()),
-                           CallSiteValue - 1);
-        DispatchSwitch->addCase(SwitchValC, (*I)->getUnwindDest());
-      }
-      markInvokeCallSite(*I, CallSiteValue, CallSite);
-    }
+    for (unsigned i = 0, e = Invokes.size(); i != e; ++i)
+      markInvokeCallSite(Invokes[i], i+1, CallSite, DispatchSwitch);
 
     // The front end has likely added calls to _Unwind_Resume. We need
     // to find those calls and mark the call_site as -1 immediately prior.
@@ -514,13 +507,6 @@ bool SjLjEHPass::insertSjLjEHSupport(Function &F) {
       BranchInst::Create(UnwindBlock, Unwinds[i]);
       Unwinds[i]->eraseFromParent();
     }
-
-    // Scan the whole function for values that are live across unwind edges.
-    // Each value that is live across an unwind edge we spill into a stack
-    // location, guaranteeing that there is nothing live across the unwind
-    // edge.  This process also splits all critical edges coming out of 
-    // invoke's.
-    splitLiveRangesLiveAcrossInvokes(Invokes);
 
     // Finally, for any returns from this function, if this function contains an
     // invoke, add a call to unregister the function context.
