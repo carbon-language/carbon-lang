@@ -1,4 +1,4 @@
-//===- AsmExpr.cpp - Assembly file expressions ----------------------------===//
+//===- MCExpr.cpp - Assembly Level Expression Implementation --------------===//
 //
 //                     The LLVM Compiler Infrastructure
 //
@@ -7,16 +7,16 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include "AsmExpr.h"
+#include "llvm/MC/MCExpr.h"
 #include "llvm/MC/MCContext.h"
 #include "llvm/MC/MCSymbol.h"
 #include "llvm/MC/MCValue.h"
 using namespace llvm;
 
-AsmExpr::~AsmExpr() {
+MCExpr::~MCExpr() {
 }
 
-bool AsmExpr::EvaluateAsAbsolute(MCContext &Ctx, int64_t &Res) const {
+bool MCExpr::EvaluateAsAbsolute(MCContext &Ctx, int64_t &Res) const {
   MCValue Value;
   
   if (!EvaluateAsRelocatable(Ctx, Value) || !Value.isAbsolute())
@@ -48,17 +48,17 @@ static bool EvaluateSymbolicAdd(const MCValue &LHS, const MCSymbol *RHS_A,
   return true;
 }
 
-bool AsmExpr::EvaluateAsRelocatable(MCContext &Ctx, MCValue &Res) const {
+bool MCExpr::EvaluateAsRelocatable(MCContext &Ctx, MCValue &Res) const {
   switch (getKind()) {
   default:
     assert(0 && "Invalid assembly expression kind!");
 
   case Constant:
-    Res = MCValue::get(cast<AsmConstantExpr>(this)->getValue());
+    Res = MCValue::get(cast<MCConstantExpr>(this)->getValue());
     return true;
 
   case SymbolRef: {
-    MCSymbol *Sym = cast<AsmSymbolRefExpr>(this)->getSymbol();
+    MCSymbol *Sym = cast<MCSymbolRefExpr>(this)->getSymbol();
     if (const MCValue *Value = Ctx.GetSymbolValue(Sym))
       Res = *Value;
     else
@@ -67,31 +67,31 @@ bool AsmExpr::EvaluateAsRelocatable(MCContext &Ctx, MCValue &Res) const {
   }
 
   case Unary: {
-    const AsmUnaryExpr *AUE = cast<AsmUnaryExpr>(this);
+    const MCUnaryExpr *AUE = cast<MCUnaryExpr>(this);
     MCValue Value;
 
     if (!AUE->getSubExpr()->EvaluateAsRelocatable(Ctx, Value))
       return false;
 
     switch (AUE->getOpcode()) {
-    case AsmUnaryExpr::LNot:
+    case MCUnaryExpr::LNot:
       if (!Value.isAbsolute())
         return false;
       Res = MCValue::get(!Value.getConstant());
       break;
-    case AsmUnaryExpr::Minus:
+    case MCUnaryExpr::Minus:
       /// -(a - b + const) ==> (b - a - const)
       if (Value.getSymA() && !Value.getSymB())
         return false;
       Res = MCValue::get(Value.getSymB(), Value.getSymA(), 
                          -Value.getConstant()); 
       break;
-    case AsmUnaryExpr::Not:
+    case MCUnaryExpr::Not:
       if (!Value.isAbsolute())
         return false;
       Res = MCValue::get(~Value.getConstant()); 
       break;
-    case AsmUnaryExpr::Plus:
+    case MCUnaryExpr::Plus:
       Res = Value;
       break;
     }
@@ -100,7 +100,7 @@ bool AsmExpr::EvaluateAsRelocatable(MCContext &Ctx, MCValue &Res) const {
   }
 
   case Binary: {
-    const AsmBinaryExpr *ABE = cast<AsmBinaryExpr>(this);
+    const MCBinaryExpr *ABE = cast<MCBinaryExpr>(this);
     MCValue LHSValue, RHSValue;
     
     if (!ABE->getLHS()->EvaluateAsRelocatable(Ctx, LHSValue) ||
@@ -113,14 +113,14 @@ bool AsmExpr::EvaluateAsRelocatable(MCContext &Ctx, MCValue &Res) const {
       switch (ABE->getOpcode()) {
       default:
         return false;
-      case AsmBinaryExpr::Sub:
+      case MCBinaryExpr::Sub:
         // Negate RHS and add.
         return EvaluateSymbolicAdd(LHSValue,
                                    RHSValue.getSymB(), RHSValue.getSymA(),
                                    -RHSValue.getConstant(),
                                    Res);
 
-      case AsmBinaryExpr::Add:
+      case MCBinaryExpr::Add:
         return EvaluateSymbolicAdd(LHSValue,
                                    RHSValue.getSymA(), RHSValue.getSymB(),
                                    RHSValue.getConstant(),
@@ -134,24 +134,24 @@ bool AsmExpr::EvaluateAsRelocatable(MCContext &Ctx, MCValue &Res) const {
     int64_t LHS = LHSValue.getConstant(), RHS = RHSValue.getConstant();
     int64_t Result = 0;
     switch (ABE->getOpcode()) {
-    case AsmBinaryExpr::Add:  Result = LHS + RHS; break;
-    case AsmBinaryExpr::And:  Result = LHS & RHS; break;
-    case AsmBinaryExpr::Div:  Result = LHS / RHS; break;
-    case AsmBinaryExpr::EQ:   Result = LHS == RHS; break;
-    case AsmBinaryExpr::GT:   Result = LHS > RHS; break;
-    case AsmBinaryExpr::GTE:  Result = LHS >= RHS; break;
-    case AsmBinaryExpr::LAnd: Result = LHS && RHS; break;
-    case AsmBinaryExpr::LOr:  Result = LHS || RHS; break;
-    case AsmBinaryExpr::LT:   Result = LHS < RHS; break;
-    case AsmBinaryExpr::LTE:  Result = LHS <= RHS; break;
-    case AsmBinaryExpr::Mod:  Result = LHS % RHS; break;
-    case AsmBinaryExpr::Mul:  Result = LHS * RHS; break;
-    case AsmBinaryExpr::NE:   Result = LHS != RHS; break;
-    case AsmBinaryExpr::Or:   Result = LHS | RHS; break;
-    case AsmBinaryExpr::Shl:  Result = LHS << RHS; break;
-    case AsmBinaryExpr::Shr:  Result = LHS >> RHS; break;
-    case AsmBinaryExpr::Sub:  Result = LHS - RHS; break;
-    case AsmBinaryExpr::Xor:  Result = LHS ^ RHS; break;
+    case MCBinaryExpr::Add:  Result = LHS + RHS; break;
+    case MCBinaryExpr::And:  Result = LHS & RHS; break;
+    case MCBinaryExpr::Div:  Result = LHS / RHS; break;
+    case MCBinaryExpr::EQ:   Result = LHS == RHS; break;
+    case MCBinaryExpr::GT:   Result = LHS > RHS; break;
+    case MCBinaryExpr::GTE:  Result = LHS >= RHS; break;
+    case MCBinaryExpr::LAnd: Result = LHS && RHS; break;
+    case MCBinaryExpr::LOr:  Result = LHS || RHS; break;
+    case MCBinaryExpr::LT:   Result = LHS < RHS; break;
+    case MCBinaryExpr::LTE:  Result = LHS <= RHS; break;
+    case MCBinaryExpr::Mod:  Result = LHS % RHS; break;
+    case MCBinaryExpr::Mul:  Result = LHS * RHS; break;
+    case MCBinaryExpr::NE:   Result = LHS != RHS; break;
+    case MCBinaryExpr::Or:   Result = LHS | RHS; break;
+    case MCBinaryExpr::Shl:  Result = LHS << RHS; break;
+    case MCBinaryExpr::Shr:  Result = LHS >> RHS; break;
+    case MCBinaryExpr::Sub:  Result = LHS - RHS; break;
+    case MCBinaryExpr::Xor:  Result = LHS ^ RHS; break;
     }
 
     Res = MCValue::get(Result);

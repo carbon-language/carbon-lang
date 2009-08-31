@@ -22,9 +22,9 @@
 #include "llvm/MC/MCStreamer.h"
 
 namespace llvm {
-class AsmExpr;
 class AsmCond;
 class MCContext;
+class MCExpr;
 class MCInst;
 class MCStreamer;
 class MCValue;
@@ -66,7 +66,7 @@ public:
 
   virtual bool Error(SMLoc L, const Twine &Msg);
 
-  virtual bool ParseExpression(AsmExpr *&Res);
+  virtual bool ParseExpression(MCExpr *&Res);
 
   virtual bool ParseAbsoluteExpression(int64_t &Res);
 
@@ -104,9 +104,9 @@ private:
   /// @see ParseRelocatableExpression, ParseParenExpr.
   bool ParseParenRelocatableExpression(MCValue &Res);
 
-  bool ParsePrimaryExpr(AsmExpr *&Res);
-  bool ParseBinOpRHS(unsigned Precedence, AsmExpr *&Res);
-  bool ParseParenExpr(AsmExpr *&Res);
+  bool ParsePrimaryExpr(MCExpr *&Res);
+  bool ParseBinOpRHS(unsigned Precedence, MCExpr *&Res);
+  bool ParseParenExpr(MCExpr *&Res);
 
   /// ParseIdentifier - Parse an identifier or string (as a quoted identifier)
   /// and set \arg Res to the identifier contents.

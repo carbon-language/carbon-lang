@@ -1,4 +1,4 @@
-//===- AsmExpr.h - Assembly file expressions --------------------*- C++ -*-===//
+//===- MCExpr.h - Assembly Level Expressions --------------------*- C++ -*-===//
 //
 //                     The LLVM Compiler Infrastructure
 //
@@ -7,8 +7,8 @@
 //
 //===----------------------------------------------------------------------===//
 
-#ifndef ASMEXPR_H
-#define ASMEXPR_H
+#ifndef LLVM_MC_MCEXPR_H
+#define LLVM_MC_MCEXPR_H
 
 #include "llvm/Support/Casting.h"
 #include "llvm/Support/DataTypes.h"
@@ -18,11 +18,11 @@ class MCContext;
 class MCSymbol;
 class MCValue;
 
-/// AsmExpr - Base class for the full range of assembler expressions which are
+/// MCExpr - Base class for the full range of assembler expressions which are
 /// needed for parsing.  
-class AsmExpr {
+class MCExpr {
 public:
-  enum AsmExprKind {
+  enum ExprKind {
     Binary,    ///< Binary expressions.
     Constant,  ///< Constant expressions.
     SymbolRef, ///< References to labels and assigned expressions.
@@ -30,15 +30,15 @@ public:
   };
   
 private:
-  AsmExprKind Kind;
+  ExprKind Kind;
   
 protected:
-  AsmExpr(AsmExprKind _Kind) : Kind(_Kind) {}
+  MCExpr(ExprKind _Kind) : Kind(_Kind) {}
   
 public:
-  virtual ~AsmExpr();
+  virtual ~MCExpr();
 
-  AsmExprKind getKind() const { return Kind; }
+  ExprKind getKind() const { return Kind; }
 
   /// EvaluateAsAbsolute - Try to evaluate the expression to an absolute value.
   ///
@@ -53,48 +53,48 @@ public:
   /// @result - True on success.
   bool EvaluateAsRelocatable(MCContext &Ctx, MCValue &Res) const;
 
-  static bool classof(const AsmExpr *) { return true; }
+  static bool classof(const MCExpr *) { return true; }
 };
 
-//// AsmConstantExpr - Represent a constant integer expression.
-class AsmConstantExpr : public AsmExpr {
+//// MCConstantExpr - Represent a constant integer expression.
+class MCConstantExpr : public MCExpr {
   int64_t Value;
 
 public:
-  AsmConstantExpr(int64_t _Value) 
-    : AsmExpr(AsmExpr::Constant), Value(_Value) {}
+  MCConstantExpr(int64_t _Value) 
+    : MCExpr(MCExpr::Constant), Value(_Value) {}
   
   int64_t getValue() const { return Value; }
 
-  static bool classof(const AsmExpr *E) { 
-    return E->getKind() == AsmExpr::Constant; 
+  static bool classof(const MCExpr *E) { 
+    return E->getKind() == MCExpr::Constant; 
   }
-  static bool classof(const AsmConstantExpr *) { return true; }
+  static bool classof(const MCConstantExpr *) { return true; }
 };
 
-/// AsmSymbolRefExpr - Represent a reference to a symbol from inside an
+/// MCSymbolRefExpr - Represent a reference to a symbol from inside an
 /// expression.
 ///
 /// A symbol reference in an expression may be a use of a label, a use of an
 /// assembler variable (defined constant), or constitute an implicit definition
 /// of the symbol as external.
-class AsmSymbolRefExpr : public AsmExpr {
+class MCSymbolRefExpr : public MCExpr {
   MCSymbol *Symbol;
 
 public:
-  AsmSymbolRefExpr(MCSymbol *_Symbol) 
-    : AsmExpr(AsmExpr::SymbolRef), Symbol(_Symbol) {}
+  MCSymbolRefExpr(MCSymbol *_Symbol) 
+    : MCExpr(MCExpr::SymbolRef), Symbol(_Symbol) {}
   
   MCSymbol *getSymbol() const { return Symbol; }
 
-  static bool classof(const AsmExpr *E) { 
-    return E->getKind() == AsmExpr::SymbolRef; 
+  static bool classof(const MCExpr *E) { 
+    return E->getKind() == MCExpr::SymbolRef; 
   }
-  static bool classof(const AsmSymbolRefExpr *) { return true; }
+  static bool classof(const MCSymbolRefExpr *) { return true; }
 };
 
-/// AsmUnaryExpr - Unary assembler expressions.
-class AsmUnaryExpr : public AsmExpr {
+/// MCUnaryExpr - Unary assembler expressions.
+class MCUnaryExpr : public MCExpr {
 public:
   enum Opcode {
     LNot,  ///< Logical negation.
@@ -105,27 +105,27 @@ public:
 
 private:
   Opcode Op;
-  AsmExpr *Expr;
+  MCExpr *Expr;
 
 public:
-  AsmUnaryExpr(Opcode _Op, AsmExpr *_Expr)
-    : AsmExpr(AsmExpr::Unary), Op(_Op), Expr(_Expr) {}
-  ~AsmUnaryExpr() {
+  MCUnaryExpr(Opcode _Op, MCExpr *_Expr)
+    : MCExpr(MCExpr::Unary), Op(_Op), Expr(_Expr) {}
+  ~MCUnaryExpr() {
     delete Expr;
   }
 
   Opcode getOpcode() const { return Op; }
 
-  AsmExpr *getSubExpr() const { return Expr; }
+  MCExpr *getSubExpr() const { return Expr; }
 
-  static bool classof(const AsmExpr *E) { 
-    return E->getKind() == AsmExpr::Unary; 
+  static bool classof(const MCExpr *E) { 
+    return E->getKind() == MCExpr::Unary; 
   }
-  static bool classof(const AsmUnaryExpr *) { return true; }
+  static bool classof(const MCUnaryExpr *) { return true; }
 };
 
-/// AsmBinaryExpr - Binary assembler expressions.
-class AsmBinaryExpr : public AsmExpr {
+/// MCBinaryExpr - Binary assembler expressions.
+class MCBinaryExpr : public MCExpr {
 public:
   enum Opcode {
     Add,  ///< Addition.
@@ -150,12 +150,12 @@ public:
 
 private:
   Opcode Op;
-  AsmExpr *LHS, *RHS;
+  MCExpr *LHS, *RHS;
 
 public:
-  AsmBinaryExpr(Opcode _Op, AsmExpr *_LHS, AsmExpr *_RHS)
-    : AsmExpr(AsmExpr::Binary), Op(_Op), LHS(_LHS), RHS(_RHS) {}
-  ~AsmBinaryExpr() {
+  MCBinaryExpr(Opcode _Op, MCExpr *_LHS, MCExpr *_RHS)
+    : MCExpr(MCExpr::Binary), Op(_Op), LHS(_LHS), RHS(_RHS) {}
+  ~MCBinaryExpr() {
     delete LHS;
     delete RHS;
   }
@@ -163,15 +163,15 @@ public:
   Opcode getOpcode() const { return Op; }
 
   /// getLHS - Get the left-hand side expression of the binary operator.
-  AsmExpr *getLHS() const { return LHS; }
+  MCExpr *getLHS() const { return LHS; }
 
   /// getRHS - Get the right-hand side expression of the binary operator.
-  AsmExpr *getRHS() const { return RHS; }
+  MCExpr *getRHS() const { return RHS; }
 
-  static bool classof(const AsmExpr *E) { 
-    return E->getKind() == AsmExpr::Binary; 
+  static bool classof(const MCExpr *E) { 
+    return E->getKind() == MCExpr::Binary; 
   }
-  static bool classof(const AsmBinaryExpr *) { return true; }
+  static bool classof(const MCBinaryExpr *) { return true; }
 };
 
 } // end namespace llvm
