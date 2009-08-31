@@ -231,12 +231,18 @@ bool Inliner::runOnSCC(std::vector<CallGraphNode*> &SCC) {
     for (Function::iterator BB = F->begin(), E = F->end(); BB != E; ++BB)
       for (BasicBlock::iterator I = BB->begin(), E = BB->end(); I != E; ++I) {
         CallSite CS = CallSite::get(I);
-        if (CS.getInstruction() == 0 || isa<DbgInfoIntrinsic>(I))
+        // If this this isn't a call, or it is a call to an intrinsic, it can
+        // never be inlined.
+        if (CS.getInstruction() == 0 || isa<IntrinsicInst>(I))
           continue;
         
-        if (CS.getCalledFunction() == 0 ||
-            !CS.getCalledFunction()->isDeclaration())
-          CallSites.push_back(CS);
+        // If this is a direct call to an external function, we can never inline
+        // it.  If it is an indirect call, inlining may resolve it to be a
+        // direct call, so we keep it.
+        if (CS.getCalledFunction() && CS.getCalledFunction()->isDeclaration())
+          continue;
+        
+        CallSites.push_back(CS);
       }
   }
 
@@ -262,25 +268,12 @@ bool Inliner::runOnSCC(std::vector<CallGraphNode*> &SCC) {
     // Iterate over the outer loop because inlining functions can cause indirect
     // calls to become direct calls.
     for (unsigned CSi = 0; CSi != CallSites.size(); ++CSi) {
-      // We can only inline direct calls.
       CallSite CS = CallSites[CSi];
       
       Function *Callee = CS.getCalledFunction();
-      if (!Callee) continue;
+      // We can only inline direct calls to non-declarations.
+      if (Callee == 0 || Callee->isDeclaration()) continue;
       
-      // Calls to external functions are never inlinable.
-      if (Callee->isDeclaration()) {
-        if (SCC.size() == 1) {
-          std::swap(CallSites[CSi], CallSites.back());
-          CallSites.pop_back();
-        } else {
-          // Keep the 'in SCC / not in SCC' boundary correct.
-          CallSites.erase(CallSites.begin()+CSi);
-        }
-        --CSi;
-        continue;
-      }
-
       // If the policy determines that we should inline this function,
       // try to do so.
       if (!shouldInline(CS))
@@ -294,7 +287,9 @@ bool Inliner::runOnSCC(std::vector<CallGraphNode*> &SCC) {
       // If we inlined the last possible call site to the function, delete the
       // function body now.
       if (Callee->use_empty() && Callee->hasLocalLinkage() &&
+          // TODO: Can remove if in SCC now.
           !SCCFunctions.count(Callee) &&
+          
           // The function may be apparently dead, but if there are indirect
           // callgraph references to the node, we cannot delete it yet, this
           // could invalidate the CGSCC iterator.
