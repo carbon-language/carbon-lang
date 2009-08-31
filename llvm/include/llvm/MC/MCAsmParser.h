@@ -68,24 +68,6 @@ public:
   /// on error.
   /// @result - False on success.
   virtual bool ParseAbsoluteExpression(int64_t &Res) = 0;
-
-  /// ParseRelocatableExpression - Parse an expression which must be
-  /// relocatable.
-  ///
-  /// @param Res - The relocatable expression value. The result is undefined on
-  /// error.  
-  /// @result - False on success.
-  virtual bool ParseRelocatableExpression(MCValue &Res) = 0;
-
-  /// ParseParenRelocatableExpression - Parse an expression which must be
-  /// relocatable, assuming that an initial '(' has already been consumed.
-  ///
-  /// @param Res - The relocatable expression value. The result is undefined on
-  /// error.  
-  /// @result - False on success.
-  ///
-  /// @see ParseRelocatableExpression, ParseParenExpr.
-  virtual bool ParseParenRelocatableExpression(MCValue &Res) = 0;
 };
 
 } // End llvm namespace

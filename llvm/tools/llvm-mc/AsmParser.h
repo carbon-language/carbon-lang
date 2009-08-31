@@ -74,10 +74,6 @@ public:
 
   virtual bool ParseAbsoluteExpression(int64_t &Res);
 
-  virtual bool ParseRelocatableExpression(MCValue &Res);
-
-  virtual bool ParseParenRelocatableExpression(MCValue &Res);
-
   /// }
 
 private:
