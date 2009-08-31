@@ -52,7 +52,7 @@ foo:
 // CHECX: .lsym "a 8",1
 //        .lsym "a 8", 1
 
-// CHECK: "a 9" = a - b
+// CHECK: "a 9" = (a - b)
         .set "a 9", a - b
         
 // CHECK: .long "a 9"

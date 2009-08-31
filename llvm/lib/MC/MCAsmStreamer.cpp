@@ -17,7 +17,6 @@
 #include "llvm/MC/MCInst.h"
 #include "llvm/MC/MCSectionMachO.h"
 #include "llvm/MC/MCSymbol.h"
-#include "llvm/MC/MCValue.h"
 #include "llvm/Support/ErrorHandling.h"
 #include "llvm/Support/MathExtras.h"
 #include "llvm/Support/Format.h"
@@ -47,7 +46,7 @@ public:
 
   virtual void EmitAssemblerFlag(AssemblerFlag Flag);
 
-  virtual void EmitAssignment(MCSymbol *Symbol, const MCValue &Value);
+  virtual void EmitAssignment(MCSymbol *Symbol, const MCExpr *Value);
 
   virtual void EmitSymbolAttribute(MCSymbol *Symbol, SymbolAttr Attribute);
 
@@ -61,13 +60,13 @@ public:
 
   virtual void EmitBytes(const StringRef &Data);
 
-  virtual void EmitValue(const MCValue &Value, unsigned Size);
+  virtual void EmitValue(const MCExpr *Value, unsigned Size);
 
   virtual void EmitValueToAlignment(unsigned ByteAlignment, int64_t Value = 0,
                                     unsigned ValueSize = 1,
                                     unsigned MaxBytesToEmit = 0);
 
-  virtual void EmitValueToOffset(const MCValue &Offset, 
+  virtual void EmitValueToOffset(const MCExpr *Offset,
                                  unsigned char Value = 0);
   
   virtual void EmitInstruction(const MCInst &Inst);
@@ -86,7 +85,7 @@ static inline raw_ostream &operator<<(raw_ostream &os, const MCSymbol *S) {
 }
 
 /// Allow printing values directly to a raw_ostream.
-static inline raw_ostream &operator<<(raw_ostream &os, const MCValue &Value) {
+static inline raw_ostream &operator<<(raw_ostream &os, const MCExpr &Value) {
   Value.print(os);
   return os;
 }
@@ -96,9 +95,10 @@ static inline int64_t truncateToSize(int64_t Value, unsigned Bytes) {
   return Value & ((uint64_t) (int64_t) -1 >> (64 - Bytes * 8));
 }
 
-static inline MCValue truncateToSize(const MCValue &Value, unsigned Bytes) {
-  return MCValue::get(Value.getSymA(), Value.getSymB(), 
-                      truncateToSize(Value.getConstant(), Bytes));
+static inline const MCExpr *truncateToSize(const MCExpr *Value,
+                                           unsigned Bytes) {
+  // FIXME: Do we really need this routine?
+  return Value;
 }
 
 void MCAsmStreamer::SwitchSection(const MCSection *Section) {
@@ -125,12 +125,12 @@ void MCAsmStreamer::EmitAssemblerFlag(AssemblerFlag Flag) {
   OS << '\n';
 }
 
-void MCAsmStreamer::EmitAssignment(MCSymbol *Symbol, const MCValue &Value) {
+void MCAsmStreamer::EmitAssignment(MCSymbol *Symbol, const MCExpr *Value) {
   // Only absolute symbols can be redefined.
   assert((Symbol->isUndefined() || Symbol->isAbsolute()) &&
          "Cannot define a symbol twice!");
 
-  OS << Symbol << " = " << Value << '\n';
+  OS << Symbol << " = " << *Value << '\n';
 }
 
 void MCAsmStreamer::EmitSymbolAttribute(MCSymbol *Symbol, 
@@ -189,7 +189,7 @@ void MCAsmStreamer::EmitBytes(const StringRef &Data) {
     OS << ".byte " << (unsigned) (unsigned char) Data[i] << '\n';
 }
 
-void MCAsmStreamer::EmitValue(const MCValue &Value, unsigned Size) {
+void MCAsmStreamer::EmitValue(const MCExpr *Value, unsigned Size) {
   assert(CurSection && "Cannot emit contents before setting section!");
   // Need target hooks to know how to print this.
   switch (Size) {
@@ -201,7 +201,7 @@ void MCAsmStreamer::EmitValue(const MCValue &Value, unsigned Size) {
   case 8: OS << ".quad"; break;
   }
 
-  OS << ' ' << truncateToSize(Value, Size) << '\n';
+  OS << ' ' << *truncateToSize(Value, Size) << '\n';
 }
 
 void MCAsmStreamer::EmitValueToAlignment(unsigned ByteAlignment, int64_t Value,
@@ -251,10 +251,10 @@ void MCAsmStreamer::EmitValueToAlignment(unsigned ByteAlignment, int64_t Value,
   OS << '\n';
 }
 
-void MCAsmStreamer::EmitValueToOffset(const MCValue &Offset, 
+void MCAsmStreamer::EmitValueToOffset(const MCExpr *Offset,
                                       unsigned char Value) {
   // FIXME: Verify that Offset is associated with the current section.
-  OS << ".org " << Offset << ", " << (unsigned) Value << '\n';
+  OS << ".org " << *Offset << ", " << (unsigned) Value << '\n';
 }
 
 void MCAsmStreamer::EmitInstruction(const MCInst &Inst) {

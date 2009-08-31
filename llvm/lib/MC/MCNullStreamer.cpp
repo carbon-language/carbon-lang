@@ -13,7 +13,6 @@
 #include "llvm/MC/MCInst.h"
 #include "llvm/MC/MCSectionMachO.h"
 #include "llvm/MC/MCSymbol.h"
-#include "llvm/MC/MCValue.h"
 
 using namespace llvm;
 
@@ -34,7 +33,7 @@ namespace {
 
     virtual void EmitAssemblerFlag(AssemblerFlag Flag) {}
 
-    virtual void EmitAssignment(MCSymbol *Symbol, const MCValue &Value) {}
+    virtual void EmitAssignment(MCSymbol *Symbol, const MCExpr *Value) {}
 
     virtual void EmitSymbolAttribute(MCSymbol *Symbol, SymbolAttr Attribute) {}
 
@@ -48,13 +47,13 @@ namespace {
 
     virtual void EmitBytes(const StringRef &Data) {}
 
-    virtual void EmitValue(const MCValue &Value, unsigned Size) {}
+    virtual void EmitValue(const MCExpr *Value, unsigned Size) {}
 
     virtual void EmitValueToAlignment(unsigned ByteAlignment, int64_t Value = 0,
                                       unsigned ValueSize = 1,
                                       unsigned MaxBytesToEmit = 0) {}
 
-    virtual void EmitValueToOffset(const MCValue &Offset, 
+    virtual void EmitValueToOffset(const MCExpr *Offset,
                                    unsigned char Value = 0) {}
     
     virtual void EmitInstruction(const MCInst &Inst) {}

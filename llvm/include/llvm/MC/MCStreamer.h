@@ -21,10 +21,10 @@ namespace llvm {
   class MCAsmInfo;
   class MCCodeEmitter;
   class MCContext;
+  class MCExpr;
   class MCInst;
   class MCSection;
   class MCSymbol;
-  class MCValue;
   class StringRef;
   class raw_ostream;
 
@@ -116,7 +116,7 @@ namespace llvm {
     ///
     /// @param Symbol - The symbol being assigned to.
     /// @param Value - The value for the symbol.
-    virtual void EmitAssignment(MCSymbol *Symbol, const MCValue &Value) = 0;
+    virtual void EmitAssignment(MCSymbol *Symbol, const MCExpr *Value) = 0;
 
     /// EmitSymbolAttribute - Add the given @param Attribute to @param Symbol.
     virtual void EmitSymbolAttribute(MCSymbol *Symbol,
@@ -166,7 +166,7 @@ namespace llvm {
     /// @param Value - The value to emit.
     /// @param Size - The size of the integer (in bytes) to emit. This must
     /// match a native machine width.
-    virtual void EmitValue(const MCValue &Value, unsigned Size) = 0;
+    virtual void EmitValue(const MCExpr *Value, unsigned Size) = 0;
 
     /// EmitValueToAlignment - Emit some number of copies of @param Value until
     /// the byte alignment @param ByteAlignment is reached.
@@ -197,7 +197,7 @@ namespace llvm {
     /// @param Offset - The offset to reach. This may be an expression, but the
     /// expression must be associated with the current section.
     /// @param Value - The value to use when filling bytes.
-    virtual void EmitValueToOffset(const MCValue &Offset, 
+    virtual void EmitValueToOffset(const MCExpr *Offset,
                                    unsigned char Value = 0) = 0;
     
     /// @}

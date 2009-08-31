@@ -21,7 +21,6 @@
 #include "llvm/MC/MCSectionMachO.h"
 #include "llvm/MC/MCStreamer.h"
 #include "llvm/MC/MCSymbol.h"
-#include "llvm/MC/MCValue.h"
 #include "llvm/Support/SourceMgr.h"
 #include "llvm/Support/raw_ostream.h"
 #include "llvm/Target/TargetAsmParser.h"
@@ -712,15 +711,11 @@ bool AsmParser::ParseAssignment(const StringRef &Name) {
   // FIXME: Use better location, we should use proper tokens.
   SMLoc EqualLoc = Lexer.getLoc();
 
-  MCValue Value;
-  const MCExpr *Expr;
+  const MCExpr *Value;
   SMLoc StartLoc = Lexer.getLoc();
-  if (ParseExpression(Expr))
+  if (ParseExpression(Value))
     return true;
   
-  if (!Expr->EvaluateAsRelocatable(Ctx, Value))
-    return Error(StartLoc, "expected relocatable expression");
-
   if (Lexer.isNot(AsmToken::EndOfStatement))
     return TokError("unexpected token in assignment");
 
@@ -937,14 +932,10 @@ bool AsmParser::ParseDirectiveAscii(bool ZeroTerminated) {
 bool AsmParser::ParseDirectiveValue(unsigned Size) {
   if (Lexer.isNot(AsmToken::EndOfStatement)) {
     for (;;) {
-      MCValue Value;
-      const MCExpr *Expr;
+      const MCExpr *Value;
       SMLoc StartLoc = Lexer.getLoc();
-      if (ParseExpression(Expr))
+      if (ParseExpression(Value))
         return true;
-
-      if (!Expr->EvaluateAsRelocatable(Ctx, Value))
-        return Error(StartLoc, "expected relocatable expression");
 
       Out.EmitValue(Value, Size);
 
@@ -992,7 +983,7 @@ bool AsmParser::ParseDirectiveSpace() {
 
   // FIXME: Sometimes the fill expr is 'nop' if it isn't supplied, instead of 0.
   for (uint64_t i = 0, e = NumBytes; i != e; ++i)
-    Out.EmitValue(MCValue::get(FillExpr), 1);
+    Out.EmitValue(MCConstantExpr::Create(FillExpr, getContext()), 1);
 
   return false;
 }
@@ -1029,7 +1020,7 @@ bool AsmParser::ParseDirectiveFill() {
     return TokError("invalid '.fill' size, expected 1, 2, 4, or 8");
 
   for (uint64_t i = 0, e = NumValues; i != e; ++i)
-    Out.EmitValue(MCValue::get(FillExpr), FillSize);
+    Out.EmitValue(MCConstantExpr::Create(FillExpr, getContext()), FillSize);
 
   return false;
 }
@@ -1037,14 +1028,10 @@ bool AsmParser::ParseDirectiveFill() {
 /// ParseDirectiveOrg
 ///  ::= .org expression [ , expression ]
 bool AsmParser::ParseDirectiveOrg() {
-  MCValue Offset;
-  const MCExpr *Expr;
+  const MCExpr *Offset;
   SMLoc StartLoc = Lexer.getLoc();
-  if (ParseExpression(Expr))
+  if (ParseExpression(Offset))
     return true;
-
-  if (!Expr->EvaluateAsRelocatable(Ctx, Offset))
-    return Error(StartLoc, "expected relocatable expression");
 
   // Parse optional fill expression.
   int64_t FillExpr = 0;
@@ -1417,14 +1404,10 @@ bool AsmParser::ParseDirectiveDarwinLsym() {
     return TokError("unexpected token in '.lsym' directive");
   Lexer.Lex();
 
-  MCValue Value;
-  const MCExpr *Expr;
+  const MCExpr *Value;
   SMLoc StartLoc = Lexer.getLoc();
-  if (ParseExpression(Expr))
+  if (ParseExpression(Value))
     return true;
-
-  if (!Expr->EvaluateAsRelocatable(Ctx, Value))
-    return Error(StartLoc, "expected relocatable expression");
 
   if (Lexer.isNot(AsmToken::EndOfStatement))
     return TokError("unexpected token in '.lsym' directive");

@@ -16,6 +16,7 @@
 #include "llvm/MC/MCInst.h"
 #include "llvm/MC/MCSection.h"
 #include "llvm/MC/MCSymbol.h"
+#include "llvm/MC/MCValue.h"
 #include "llvm/Support/ErrorHandling.h"
 #include "llvm/Support/raw_ostream.h"
 using namespace llvm;
@@ -88,14 +89,6 @@ public:
       CurSectionData(0) {}
   ~MCMachOStreamer() {}
 
-  const MCValue &AddValueSymbols(const MCValue &Value) {
-    if (Value.getSymA())
-      getSymbolData(*const_cast<MCSymbol*>(Value.getSymA()));
-    if (Value.getSymB())
-      getSymbolData(*const_cast<MCSymbol*>(Value.getSymB()));
-    return Value;
-  }
-
   const MCExpr *AddValueSymbols(const MCExpr *Value) {
     switch (Value->getKind()) {
     case MCExpr::Constant:
@@ -129,7 +122,7 @@ public:
 
   virtual void EmitAssemblerFlag(AssemblerFlag Flag);
 
-  virtual void EmitAssignment(MCSymbol *Symbol, const MCValue &Value);
+  virtual void EmitAssignment(MCSymbol *Symbol, const MCExpr *Value);
 
   virtual void EmitSymbolAttribute(MCSymbol *Symbol, SymbolAttr Attribute);
 
@@ -143,13 +136,13 @@ public:
 
   virtual void EmitBytes(const StringRef &Data);
 
-  virtual void EmitValue(const MCValue &Value, unsigned Size);
+  virtual void EmitValue(const MCExpr *Value, unsigned Size);
 
   virtual void EmitValueToAlignment(unsigned ByteAlignment, int64_t Value = 0,
                                     unsigned ValueSize = 1,
                                     unsigned MaxBytesToEmit = 0);
 
-  virtual void EmitValueToOffset(const MCValue &Offset,
+  virtual void EmitValueToOffset(const MCExpr *Offset,
                                  unsigned char Value = 0);
 
   virtual void EmitInstruction(const MCInst &Inst);
@@ -200,7 +193,7 @@ void MCMachOStreamer::EmitAssemblerFlag(AssemblerFlag Flag) {
   assert(0 && "invalid assembler flag!");
 }
 
-void MCMachOStreamer::EmitAssignment(MCSymbol *Symbol, const MCValue &Value) {
+void MCMachOStreamer::EmitAssignment(MCSymbol *Symbol, const MCExpr *Value) {
   // Only absolute symbols can be redefined.
   assert((Symbol->isUndefined() || Symbol->isAbsolute()) &&
          "Cannot define a symbol twice!");
@@ -327,8 +320,13 @@ void MCMachOStreamer::EmitBytes(const StringRef &Data) {
   DF->getContents().append(Data.begin(), Data.end());
 }
 
-void MCMachOStreamer::EmitValue(const MCValue &Value, unsigned Size) {
-  new MCFillFragment(AddValueSymbols(Value), Size, 1, CurSectionData);
+void MCMachOStreamer::EmitValue(const MCExpr *Value, unsigned Size) {
+  MCValue RelocValue;
+
+  if (!AddValueSymbols(Value)->EvaluateAsRelocatable(getContext(), RelocValue))
+    return llvm_report_error("expected relocatable expression");
+
+  new MCFillFragment(RelocValue, Size, 1, CurSectionData);
 }
 
 void MCMachOStreamer::EmitValueToAlignment(unsigned ByteAlignment,
@@ -344,9 +342,15 @@ void MCMachOStreamer::EmitValueToAlignment(unsigned ByteAlignment,
     CurSectionData->setAlignment(ByteAlignment);
 }
 
-void MCMachOStreamer::EmitValueToOffset(const MCValue &Offset,
+void MCMachOStreamer::EmitValueToOffset(const MCExpr *Offset,
                                         unsigned char Value) {
-  new MCOrgFragment(AddValueSymbols(Offset), Value, CurSectionData);
+  MCValue RelocOffset;
+
+  if (!AddValueSymbols(Offset)->EvaluateAsRelocatable(getContext(),
+                                                      RelocOffset))
+    return llvm_report_error("expected relocatable expression");
+
+  new MCOrgFragment(RelocOffset, Value, CurSectionData);
 }
 
 void MCMachOStreamer::EmitInstruction(const MCInst &Inst) {
