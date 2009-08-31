@@ -130,7 +130,7 @@ GlobalVariable *DIDescriptor::getGlobalVariableField(unsigned Elt) const {
 /// isBasicType - Return true if the specified tag is legal for
 /// DIBasicType.
 bool DIDescriptor::isBasicType() const {
-  assert (isNull() && "Invalid descriptor!");
+  assert (!isNull() && "Invalid descriptor!");
   unsigned Tag = getTag();
   
   return Tag == dwarf::DW_TAG_base_type;
@@ -138,7 +138,7 @@ bool DIDescriptor::isBasicType() const {
 
 /// isDerivedType - Return true if the specified tag is legal for DIDerivedType.
 bool DIDescriptor::isDerivedType() const {
-  assert (isNull() && "Invalid descriptor!");
+  assert (!isNull() && "Invalid descriptor!");
   unsigned Tag = getTag();
 
   switch (Tag) {
@@ -160,7 +160,7 @@ bool DIDescriptor::isDerivedType() const {
 /// isCompositeType - Return true if the specified tag is legal for
 /// DICompositeType.
 bool DIDescriptor::isCompositeType() const {
-  assert (isNull() && "Invalid descriptor!");
+  assert (!isNull() && "Invalid descriptor!");
   unsigned Tag = getTag();
 
   switch (Tag) {
@@ -179,7 +179,7 @@ bool DIDescriptor::isCompositeType() const {
 
 /// isVariable - Return true if the specified tag is legal for DIVariable.
 bool DIDescriptor::isVariable() const {
-  assert (isNull() && "Invalid descriptor!");
+  assert (!isNull() && "Invalid descriptor!");
   unsigned Tag = getTag();
 
   switch (Tag) {
@@ -195,7 +195,7 @@ bool DIDescriptor::isVariable() const {
 /// isSubprogram - Return true if the specified tag is legal for
 /// DISubprogram.
 bool DIDescriptor::isSubprogram() const {
-  assert (isNull() && "Invalid descriptor!");
+  assert (!isNull() && "Invalid descriptor!");
   unsigned Tag = getTag();
   
   return Tag == dwarf::DW_TAG_subprogram;
@@ -204,7 +204,7 @@ bool DIDescriptor::isSubprogram() const {
 /// isGlobalVariable - Return true if the specified tag is legal for
 /// DIGlobalVariable.
 bool DIDescriptor::isGlobalVariable() const {
-  assert (isNull() && "Invalid descriptor!");
+  assert (!isNull() && "Invalid descriptor!");
   unsigned Tag = getTag();
 
   return Tag == dwarf::DW_TAG_variable;
