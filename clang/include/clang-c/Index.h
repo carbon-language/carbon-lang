@@ -37,41 +37,46 @@ typedef void *CXIndex;            /* An indexing instance. */
 
 typedef void *CXTranslationUnit;  /* A translation unit instance. */
 
-typedef void *CXCursor;  /* An opaque cursor into the CXTranslationUnit. */
-
-/* Cursors represent declarations and references (provides line/column info). */
-enum CXCursorKind {  
- CXCursor_Declaration,
- CXCursor_Reference,
- CXCursor_ObjC_ClassRef,
- CXCursor_ObjC_ProtocolRef,
- CXCursor_ObjC_MessageRef,
- CXCursor_ObjC_SelectorRef
-};
-
 typedef void *CXDecl;    /* A specific declaration within a translation unit. */
 
-enum CXDeclKind {  /* The various kinds of declarations. */
- CXDecl_any,
- CXDecl_typedef,
- CXDecl_enum,
- CXDecl_enum_constant,
- CXDecl_record,
- CXDecl_field,
- CXDecl_function,
- CXDecl_variable,
- CXDecl_parameter,
- CXDecl_ObjC_interface,
- CXDecl_ObjC_category,
- CXDecl_ObjC_protocol,
- CXDecl_ObjC_property,
- CXDecl_ObjC_instance_variable,
- CXDecl_ObjC_instance_method,
- CXDecl_ObjC_class_method,
- CXDecl_ObjC_category_implementation,
- CXDecl_ObjC_class_implementation,
- CXDecl_ObjC_property_implementation
+/* Cursors represent declarations and references (provides line/column info). */
+enum CXCursorKind {
+ CXCursor_Invalid                       = 0,
+ 
+ /* Declarations */
+ CXCursor_FirstDecl                     = 1,
+ CXCursor_TypedefDecl                   = 1,
+ CXCursor_EnumDecl                      = 2,
+ CXCursor_EnumConstantDecl              = 3,
+ CXCursor_RecordDecl                    = 4, /* struct/union/class */
+ CXCursor_FieldDecl                     = 5,
+ CXCursor_FunctionDecl                  = 6,
+ CXCursor_VarDecl                       = 7,
+ CXCursor_ParmDecl                      = 8,
+ CXCursor_ObjCInterfaceDecl             = 9,
+ CXCursor_ObjCCategoryDecl              = 10,
+ CXCursor_ObjCProtocolDecl              = 11,
+ CXCursor_ObjCPropertyDecl              = 12,
+ CXCursor_ObjCIvarDecl                  = 13,
+ CXCursor_ObjCMethodDecl                = 14,
+ CXCursor_LastDecl                      = 14,
+ 
+ /* References */
+ CXCursor_FirstRef                      = 19,
+ CXCursor_ObjCClassRef                  = 19,            
+ CXCursor_ObjCProtocolRef               = 20,
+ CXCursor_ObjCMessageRef                = 21,
+ CXCursor_ObjCSelectorRef               = 22,
+ CXCursor_LastRef                       = 23
 };
+
+/* A cursor into the CXTranslationUnit. */
+typedef struct {
+  enum CXCursorKind kind;
+  CXDecl decl;
+  
+  /* FIXME: Handle references. */
+} CXCursor;  
 
 /* A unique token for looking up "visible" CXDecls from a CXTranslationUnit. */
 typedef void *CXEntity;     
@@ -99,9 +104,8 @@ CXTranslationUnit clang_createTranslationUnit(
      clang_loadTranslationUnit(CXTranslationUnit, printObjCInterfaceNames);
    }
 */
-void clang_loadTranslationUnit(
-  CXTranslationUnit, void (*callback)(CXTranslationUnit, CXCursor)
-);
+typedef void (*CXTranslationUnitIterator)(CXTranslationUnit, CXCursor);
+void clang_loadTranslationUnit(CXTranslationUnit, CXTranslationUnitIterator);
 
 /*
    Usage: clang_loadDeclaration(). Will load the declaration, issuing a 
@@ -128,7 +132,9 @@ void clang_loadTranslationUnit(
      }
    }
 */
-void clang_loadDeclaration(CXDecl, void (*callback)(CXDecl, CXCursor));
+typedef void (*CXDeclIterator)(CXTranslationUnit, CXDecl, void *clientData);
+
+void clang_loadDeclaration(CXDecl, CXDeclIterator);
 
 /*
  * CXEntity Operations.
@@ -141,7 +147,6 @@ CXEntity clang_getEntity(const char *URI);
  */
 CXCursor clang_getCursorFromDecl(CXDecl);
 CXEntity clang_getEntityFromDecl(CXDecl);
-enum CXDeclKind clang_getDeclKind(CXDecl);
 const char *clang_getDeclSpelling(CXDecl);
 /*
  * CXCursor Operations.
@@ -150,10 +155,12 @@ CXCursor clang_getCursor(CXTranslationUnit, const char *source_name,
                          unsigned line, unsigned column);
 
 enum CXCursorKind clang_getCursorKind(CXCursor);
+unsigned clang_isDeclaration(enum CXCursorKind);
 
 unsigned clang_getCursorLine(CXCursor);
 unsigned clang_getCursorColumn(CXCursor);
 const char *clang_getCursorSource(CXCursor);
+const char *clang_getKindSpelling(enum CXCursorKind Kind);
 
 /*
  * If CXCursorKind == Cursor_Reference, then this will return the referenced declaration.

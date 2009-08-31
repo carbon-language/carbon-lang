@@ -21,6 +21,68 @@
 using namespace clang;
 using namespace idx;
 
+namespace {
+
+// Translation Unit Visitor.
+class TUVisitor : public DeclVisitor<TUVisitor> {
+  CXTranslationUnit TUnit;
+  CXTranslationUnitIterator Callback;
+public:
+  TUVisitor(CXTranslationUnit CTU, CXTranslationUnitIterator cback) : 
+    TUnit(CTU), Callback(cback) {}
+  
+  void VisitTranslationUnitDecl(TranslationUnitDecl *D) {
+    VisitDeclContext(dyn_cast<DeclContext>(D));
+  }
+  void VisitDeclContext(DeclContext *DC) {
+    for (DeclContext::decl_iterator
+           I = DC->decls_begin(), E = DC->decls_end(); I != E; ++I)
+      Visit(*I);
+  }
+  void VisitTypedefDecl(TypedefDecl *ND) {
+    CXCursor C = { CXCursor_TypedefDecl, ND };
+    Callback(TUnit, C);
+  }
+  void VisitTagDecl(TagDecl *ND) {
+    CXCursor C = { ND->isEnum() ? CXCursor_EnumDecl : CXCursor_RecordDecl, ND };
+    Callback(TUnit, C);
+  }
+  void VisitFunctionDecl(FunctionDecl *ND) {
+    CXCursor C = { CXCursor_FunctionDecl, ND };
+    Callback(TUnit, C);
+  }
+  void VisitObjCInterfaceDecl(ObjCInterfaceDecl *ND) {
+    CXCursor C = { CXCursor_ObjCInterfaceDecl, ND };
+    Callback(TUnit, C);
+  }
+  void VisitObjCCategoryDecl(ObjCCategoryDecl *ND) {
+    CXCursor C = { CXCursor_ObjCCategoryDecl, ND };
+    Callback(TUnit, C);
+  }
+  void VisitObjCProtocolDecl(ObjCProtocolDecl *ND) {
+    CXCursor C = { CXCursor_ObjCProtocolDecl, ND };
+    Callback(TUnit, C);
+  }
+};
+
+// Top-level declaration visitor.
+class TLDeclVisitor : public DeclVisitor<TLDeclVisitor> {
+public:
+  void VisitDeclContext(DeclContext *DC) {
+    for (DeclContext::decl_iterator
+           I = DC->decls_begin(), E = DC->decls_end(); I != E; ++I)
+      Visit(*I);
+  }
+  void VisitEnumConstantDecl(EnumConstantDecl *ND) {
+  }
+  void VisitFieldDecl(FieldDecl *ND) {
+  }
+  void VisitObjCIvarDecl(ObjCIvarDecl *ND) {
+  }
+};
+
+}
+
 extern "C" {
 
 CXIndex clang_createIndex() 
@@ -40,33 +102,19 @@ CXTranslationUnit clang_createTranslationUnit(
   return ASTUnit::LoadFromPCHFile(astName, CXXIdx->getFileManager(), &ErrMsg);
 }
 
-namespace {
-
-class IdxVisitor : public DeclVisitor<IdxVisitor> {
-public:
-  void VisitNamedDecl(NamedDecl *ND) {
-    printf("NamedDecl (%s:", ND->getDeclKindName());
-    if (ND->getIdentifier())
-      printf("%s)\n", ND->getIdentifier()->getName());
-    else
-      printf("<no name>)\n");
-  }
-};
-
-}
 
 void clang_loadTranslationUnit(
-  CXTranslationUnit CTUnit, void (*callback)(CXTranslationUnit, CXCursor))
+  CXTranslationUnit CTUnit, CXTranslationUnitIterator callback)
 {
   assert(CTUnit && "Passed null CXTranslationUnit");
   ASTUnit *CXXUnit = static_cast<ASTUnit *>(CTUnit);
   ASTContext &Ctx = CXXUnit->getASTContext();
   
-  IdxVisitor DVisit;
+  TUVisitor DVisit(CTUnit, callback);
   DVisit.Visit(Ctx.getTranslationUnitDecl());
 }
 
-void clang_loadDeclaration(CXDecl, void (*callback)(CXDecl, CXCursor))
+void clang_loadDeclaration(CXDecl, CXDeclIterator)
 {
 }
 
@@ -106,34 +154,60 @@ CXEntity clang_getEntity(const char *URI)
 //
 CXCursor clang_getCursorFromDecl(CXDecl)
 {
-  return 0;
+  return CXCursor();
 }
 CXEntity clang_getEntityFromDecl(CXDecl)
 {
   return 0;
 }
-enum CXDeclKind clang_getDeclKind(CXDecl)
+const char *clang_getDeclSpelling(CXDecl AnonDecl)
 {
-  return CXDecl_any;
+  assert(AnonDecl && "Passed null CXDecl");
+  NamedDecl *ND = static_cast<NamedDecl *>(AnonDecl);
+  if (ND->getIdentifier())
+    return ND->getIdentifier()->getName();
+  else
+    return "";
 }
-const char *clang_getDeclSpelling(CXDecl)
+const char *clang_getKindSpelling(enum CXCursorKind Kind)
 {
-  return "";
+  switch (Kind) {
+   case CXCursor_FunctionDecl: return "FunctionDecl";
+   case CXCursor_TypedefDecl: return "TypedefDecl";
+   case CXCursor_EnumDecl: return "EnumDecl";
+   case CXCursor_EnumConstantDecl: return "EnumConstantDecl";
+   case CXCursor_RecordDecl: return "RecordDecl";
+   case CXCursor_FieldDecl: return "FieldDecl";
+   case CXCursor_VarDecl: return "VarDecl";
+   case CXCursor_ParmDecl: return "ParmDecl";
+   case CXCursor_ObjCInterfaceDecl: return "ObjCInterfaceDecl";
+   case CXCursor_ObjCCategoryDecl: return "ObjCCategoryDecl";
+   case CXCursor_ObjCProtocolDecl: return "ObjCProtocolDecl";
+   case CXCursor_ObjCPropertyDecl: return "ObjCPropertyDecl";
+   case CXCursor_ObjCIvarDecl: return "ObjCIvarDecl";
+   case CXCursor_ObjCMethodDecl: return "ObjCMethodDecl";
+   default: return "<not implemented>";
+  }
 }
+
 //
 // CXCursor Operations.
 //
 CXCursor clang_getCursor(CXTranslationUnit, const char *source_name, 
                          unsigned line, unsigned column)
 {
-  return 0;
+  return CXCursor();
 }
 
 CXCursorKind clang_getCursorKind(CXCursor)
 {
-  return CXCursor_Declaration;
+  return CXCursor_Invalid;
 }
 
+unsigned clang_isDeclaration(enum CXCursorKind K)
+{
+  return K >= CXCursor_FirstDecl && K <= CXCursor_LastDecl;
+}
 unsigned clang_getCursorLine(CXCursor)
 {
   return 0;

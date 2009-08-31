@@ -111,6 +111,7 @@
 		9012911D1048068D0083456D /* ASTUnit.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 9012911C1048068D0083456D /* ASTUnit.cpp */; };
 		90129121104812F90083456D /* CIndex.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 9012911F104812F90083456D /* CIndex.cpp */; };
 		906BF4B00F83BA2E001071FA /* ConvertUTF.c in Sources */ = {isa = PBXBuildFile; fileRef = 906BF4AF0F83BA2E001071FA /* ConvertUTF.c */; };
+		90F9EFAA104ABDED00D09A15 /* c-index-test.c in Sources */ = {isa = PBXBuildFile; fileRef = 90F9EFA9104ABDED00D09A15 /* c-index-test.c */; };
 		90FD6D7B103C3D49005F5B73 /* Analyzer.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 90FD6D6D103C3D49005F5B73 /* Analyzer.cpp */; };
 		90FD6D7C103C3D49005F5B73 /* ASTLocation.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 90FD6D6E103C3D49005F5B73 /* ASTLocation.cpp */; };
 		90FD6D7D103C3D49005F5B73 /* DeclReferenceMap.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 90FD6D70103C3D49005F5B73 /* DeclReferenceMap.cpp */; };
@@ -509,6 +510,7 @@
 		9063F22A0F9E911F002F7251 /* TemplateKinds.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = TemplateKinds.h; sourceTree = "<group>"; };
 		906BF4AE0F83BA16001071FA /* ConvertUTF.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = ConvertUTF.h; sourceTree = "<group>"; };
 		906BF4AF0F83BA2E001071FA /* ConvertUTF.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = ConvertUTF.c; sourceTree = "<group>"; };
+		90F9EFA9104ABDED00D09A15 /* c-index-test.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = "c-index-test.c"; path = "tools/c-index-test/c-index-test.c"; sourceTree = "<group>"; };
 		90FB99DE0F98FB1D008F9415 /* DeclContextInternals.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = DeclContextInternals.h; path = clang/AST/DeclContextInternals.h; sourceTree = "<group>"; };
 		90FB99DF0F98FB1D008F9415 /* DeclVisitor.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = DeclVisitor.h; path = clang/AST/DeclVisitor.h; sourceTree = "<group>"; };
 		90FB99E00F98FB1D008F9415 /* ExternalASTSource.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = ExternalASTSource.h; path = clang/AST/ExternalASTSource.h; sourceTree = "<group>"; };
@@ -1042,6 +1044,14 @@
 			name = CIndex;
 			sourceTree = "<group>";
 		};
+		90F9EFA8104ABDC400D09A15 /* c-index-test */ = {
+			isa = PBXGroup;
+			children = (
+				90F9EFA9104ABDED00D09A15 /* c-index-test.c */,
+			);
+			name = "c-index-test";
+			sourceTree = "<group>";
+		};
 		90FD6D5E103C3D03005F5B73 /* Index */ = {
 			isa = PBXGroup;
 			children = (
@@ -1481,6 +1491,7 @@
 		DEDFE61F0F7B3AE10035BD10 /* Tools */ = {
 			isa = PBXGroup;
 			children = (
+				90F9EFA8104ABDC400D09A15 /* c-index-test */,
 				9012911E104812DA0083456D /* CIndex */,
 				90FD6DB4103D9763005F5B73 /* index-test */,
 				DEDFE6200F7B3AE90035BD10 /* clang-cc */,
@@ -1867,6 +1878,7 @@
 				90FD6DB6103D977E005F5B73 /* index-test.cpp in Sources */,
 				9012911D1048068D0083456D /* ASTUnit.cpp in Sources */,
 				90129121104812F90083456D /* CIndex.cpp in Sources */,
+				90F9EFAA104ABDED00D09A15 /* c-index-test.c in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
