@@ -1285,43 +1285,6 @@ public:
   virtual child_iterator child_end();
 };
 
-/// \brief Represents a C++ member access expression that was written using
-/// either a qualified name, e.g., "x->Base::f()" or originally had 
-/// explicitly-specified template arguments (TODO!).
-class CXXAdornedMemberExpr : public MemberExpr {
-  /// QualifierRange - The source range that covers the
-  /// nested-name-specifier.
-  SourceRange QualifierRange;
-  
-  /// \brief The nested-name-specifier that qualifies this declaration
-  /// name.
-  NestedNameSpecifier *Qualifier;
-  
-public:
-  CXXAdornedMemberExpr(Expr *base, bool isarrow, NestedNameSpecifier *Qual,
-                       SourceRange QualRange, NamedDecl *memberdecl, 
-                       SourceLocation l, QualType ty) 
-    : MemberExpr(CXXAdornedMemberExprClass, base, isarrow, memberdecl, l, ty),
-      QualifierRange(QualRange), Qualifier(Qual) { }
-
-  /// \brief Retrieve the source range of the nested-name-specifier that 
-  /// qualifies the member name.
-  SourceRange getQualifierRange() const { return QualifierRange; }
-  
-  /// \brief Retrieve the nested-name-specifier that qualifies the
-  /// member reference expression.
-  NestedNameSpecifier *getQualifier() const { return Qualifier; }
-  
-  /// \brief Determines whether this adorned C++ member expression has a 
-  /// nested-name-specifier associated with it.
-  bool hasQualifier() const { return getQualifier() != 0; }
-  
-  static bool classof(const Stmt *T) {
-    return T->getStmtClass() == CXXAdornedMemberExprClass;
-  }
-  static bool classof(const CXXAdornedMemberExpr *) { return true; }  
-};
-  
 /// \brief Represents a C++ member access expression where the actual member
 /// referenced could not be resolved, e.g., because the base expression or the
 /// member name was dependent.

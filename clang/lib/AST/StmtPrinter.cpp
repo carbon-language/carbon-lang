@@ -739,6 +739,9 @@ void StmtPrinter::VisitMemberExpr(MemberExpr *Node) {
   OS << (Node->isArrow() ? "->" : ".");
   // FIXME: Suppress printing references to unnamed objects
   // representing anonymous unions/structs
+  if (NestedNameSpecifier *Qualifier = Node->getQualifier())
+    Qualifier->print(OS, Policy);
+
   OS << Node->getMemberDecl()->getNameAsString();
 }
 void StmtPrinter::VisitObjCIsaExpr(ObjCIsaExpr *Node) {
@@ -1124,16 +1127,6 @@ StmtPrinter::VisitCXXUnresolvedConstructExpr(
     PrintExpr(*Arg);
   }
   OS << ")";
-}
-
-void StmtPrinter::VisitCXXAdornedMemberExpr(CXXAdornedMemberExpr *Node) {
-  // FIXME: Suppress printing implicit bases (like "this")
-  PrintExpr(Node->getBase());
-  OS << (Node->isArrow() ? "->" : ".");
-  // FIXME: Suppress printing references to unnamed objects
-  // representing anonymous unions/structs
-  Node->getQualifier()->print(OS, Policy);
-  OS << Node->getMemberDecl()->getNameAsString();
 }
 
 void StmtPrinter::VisitCXXUnresolvedMemberExpr(CXXUnresolvedMemberExpr *Node) {

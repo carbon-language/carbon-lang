@@ -878,15 +878,14 @@ Sema::PerformObjectMemberConversion(Expr *&From, NamedDecl *Member) {
   return false;
 }
 
-/// \brief Build a MemberExpr or CXXAdornedMemberExpr, as appropriate.
+/// \brief Build a MemberExpr AST node.
 static MemberExpr *BuildMemberExpr(ASTContext &C, Expr *Base, bool isArrow, 
                                    const CXXScopeSpec *SS, NamedDecl *Member, 
                                    SourceLocation Loc, QualType Ty) {
   if (SS && SS->isSet())
-    return new (C) CXXAdornedMemberExpr(Base, isArrow, 
-                                        (NestedNameSpecifier *)SS->getScopeRep(),
-                                        SS->getRange(),
-                                        Member, Loc, Ty);
+    return MemberExpr::Create(C, Base, isArrow, 
+                              (NestedNameSpecifier *)SS->getScopeRep(),
+                              SS->getRange(), Member, Loc, Ty);
   
   return new (C) MemberExpr(Base, isArrow, Member, Loc, Ty);
 }
@@ -4837,7 +4836,6 @@ static NamedDecl *getPrimaryDecl(Expr *E) {
   case Stmt::QualifiedDeclRefExprClass:
     return cast<DeclRefExpr>(E)->getDecl();
   case Stmt::MemberExprClass:
-  case Stmt::CXXAdornedMemberExprClass:
     // If this is an arrow operator, the address is an offset from
     // the base's value, so the object the base refers to is
     // irrelevant.

@@ -272,6 +272,7 @@ void StmtProfiler::VisitCallExpr(CallExpr *S) {
 void StmtProfiler::VisitMemberExpr(MemberExpr *S) {
   VisitExpr(S);
   VisitDecl(S->getMemberDecl());
+  VisitNestedNameSpecifier(S->getQualifier());
   ID.AddBoolean(S->isArrow());
 }
 
@@ -544,11 +545,6 @@ void
 StmtProfiler::VisitCXXUnresolvedConstructExpr(CXXUnresolvedConstructExpr *S) {
   VisitExpr(S);
   VisitType(S->getTypeAsWritten());
-}
-
-void StmtProfiler::VisitCXXAdornedMemberExpr(CXXAdornedMemberExpr *S) {
-  VisitMemberExpr(S);
-  VisitNestedNameSpecifier(S->getQualifier());
 }
 
 void StmtProfiler::VisitCXXUnresolvedMemberExpr(CXXUnresolvedMemberExpr *S) {

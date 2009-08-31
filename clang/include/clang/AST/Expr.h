@@ -33,7 +33,6 @@ namespace clang {
   class BlockDecl;
   class CXXOperatorCallExpr;
   class CXXMemberCallExpr;
-  class CXXAdornedMemberExpr;
 
 /// Expr - This represents one expression.  Note that Expr's are subclasses of
 /// Stmt.  This allows an expression to be transparently used any place a Stmt
@@ -1034,6 +1033,16 @@ public:
   virtual child_iterator child_end();
 };
 
+/// \brief Represents the qualifier that may precede a C++ name, e.g., the 
+/// "std::" in "std::sort".
+struct NameQualifier {
+  /// \brief The nested name specifier.
+  NestedNameSpecifier *NNS;
+  
+  /// \brief The source range covered by the nested name specifier.
+  SourceRange Range;
+};
+  
 /// MemberExpr - [C99 6.5.2.3] Structure and Union Members.  X->F and X.F.
 ///
 class MemberExpr : public Expr {
@@ -1049,25 +1058,48 @@ class MemberExpr : public Expr {
   SourceLocation MemberLoc;
   
   /// IsArrow - True if this is "X->F", false if this is "X.F".
-  bool IsArrow;
+  bool IsArrow : 1;
   
-protected:
-  MemberExpr(StmtClass SC, Expr *base, bool isarrow, NamedDecl *memberdecl, 
-             SourceLocation l, QualType ty) 
-    : Expr(SC, ty, 
-           base->isTypeDependent(), base->isValueDependent()),
-  Base(base), MemberDecl(memberdecl), MemberLoc(l), IsArrow(isarrow) {}
+  /// \brief True if this member expression used a nested-name-specifier to
+  /// refer to the member, e.g., "x->Base::f".
+  bool HasQualifier : 1;
   
+  /// \brief Retrieve the qualifier that preceded the member name, if any.
+  NameQualifier *getMemberQualifier() {
+    if (!HasQualifier)
+      return 0;
+    
+    return reinterpret_cast<NameQualifier *> (this + 1);
+  }
+
+  /// \brief Retrieve the qualifier that preceded the member name, if any.
+  const NameQualifier *getMemberQualifier() const {
+    if (!HasQualifier)
+      return 0;
+    
+    return reinterpret_cast<const NameQualifier *> (this + 1);
+  }
+  
+  MemberExpr(Expr *base, bool isarrow, NestedNameSpecifier *qual, 
+             SourceRange qualrange, NamedDecl *memberdecl, SourceLocation l,
+             QualType ty); 
+
 public:
   MemberExpr(Expr *base, bool isarrow, NamedDecl *memberdecl, SourceLocation l,
              QualType ty) 
     : Expr(MemberExprClass, ty, 
            base->isTypeDependent(), base->isValueDependent()),
-      Base(base), MemberDecl(memberdecl), MemberLoc(l), IsArrow(isarrow) {}
+      Base(base), MemberDecl(memberdecl), MemberLoc(l), IsArrow(isarrow),
+      HasQualifier(false) {}
 
   /// \brief Build an empty member reference expression.
   explicit MemberExpr(EmptyShell Empty) : Expr(MemberExprClass, Empty) { }
 
+  static MemberExpr *Create(ASTContext &C, Expr *base, bool isarrow, 
+                            NestedNameSpecifier *qual, SourceRange qualrange,
+                            NamedDecl *memberdecl, 
+                            SourceLocation l, QualType ty);
+  
   void setBase(Expr *E) { Base = E; }
   Expr *getBase() const { return cast<Expr>(Base); }
 
@@ -1081,7 +1113,27 @@ public:
   /// \brief Determines whether this adorned member expression actually had 
   /// a C++ nested-name-specifier prior to the name of the member, e.g.,
   /// x->Base::foo.
-  bool hasQualifier() const;
+  bool hasQualifier() const { return HasQualifier; }
+  
+  /// \brief If the member name was qualified, retrieves the source range of
+  /// the nested-name-specifier that precedes the member name. Otherwise,
+  /// returns an empty source range.
+  SourceRange getQualifierRange() const { 
+    if (!HasQualifier)
+      return SourceRange();
+    
+    return getMemberQualifier()->Range;
+  }
+  
+  /// \brief If the member name was qualified, retrieves the 
+  /// nested-name-specifier that precedes the member name. Otherwise, returns
+  /// NULL.
+  NestedNameSpecifier *getQualifier() const { 
+    if (!HasQualifier)
+      return 0;
+    
+    return getMemberQualifier()->NNS;
+  }
   
   bool isArrow() const { return IsArrow; }
   void setArrow(bool A) { IsArrow = A; }
@@ -1103,11 +1155,9 @@ public:
   virtual SourceLocation getExprLoc() const { return MemberLoc; }
 
   static bool classof(const Stmt *T) { 
-    return T->getStmtClass() == MemberExprClass ||
-      T->getStmtClass() == CXXAdornedMemberExprClass;
+    return T->getStmtClass() == MemberExprClass;
   }
   static bool classof(const MemberExpr *) { return true; }
-  static bool classof(const CXXAdornedMemberExpr *) { return true; }
   
   // Iterators
   virtual child_iterator child_begin();

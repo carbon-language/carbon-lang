@@ -262,6 +262,36 @@ QualType CallExpr::getCallReturnType() const {
   return FnType->getResultType();
 }
 
+MemberExpr::MemberExpr(Expr *base, bool isarrow, NestedNameSpecifier *qual, 
+                       SourceRange qualrange, NamedDecl *memberdecl, 
+                       SourceLocation l, QualType ty)
+  : Expr(MemberExprClass, ty, 
+         base->isTypeDependent() || (qual && qual->isDependent()),
+         base->isValueDependent() || (qual && qual->isDependent())),
+    Base(base), MemberDecl(memberdecl), MemberLoc(l), IsArrow(isarrow),
+    HasQualifier(qual != 0) {
+  // Initialize the qualifier, if any.
+  if (HasQualifier) {
+    NameQualifier *NQ = getMemberQualifier();
+    NQ->NNS = qual;
+    NQ->Range = qualrange;
+  }
+}
+
+MemberExpr *MemberExpr::Create(ASTContext &C, Expr *base, bool isarrow, 
+                               NestedNameSpecifier *qual, 
+                               SourceRange qualrange,
+                               NamedDecl *memberdecl, 
+                               SourceLocation l, QualType ty) {
+  std::size_t Size = sizeof(MemberExpr);
+  if (qual != 0)
+    Size += sizeof(NameQualifier);
+  
+  void *Mem = C.Allocate(Size, llvm::alignof<MemberExpr>());
+  return new (Mem) MemberExpr(base, isarrow, qual, qualrange, memberdecl, l, 
+                              ty);
+}
+
 /// getOpcodeStr - Turn an Opcode enum value into the punctuation char it
 /// corresponds to, e.g. "<<=".
 const char *BinaryOperator::getOpcodeStr(Opcode Op) {
@@ -498,7 +528,6 @@ bool Expr::isUnusedResultAWarning(SourceLocation &Loc, SourceRange &R1,
   }
 
   case MemberExprClass:
-  case CXXAdornedMemberExprClass:
     // If the base pointer or element is to a volatile pointer/field, accessing
     // it is a side effect.
     if (getType().isVolatileQualified())
@@ -686,8 +715,7 @@ Expr::isLvalueResult Expr::isLvalueInternal(ASTContext &Ctx) const {
       return LV_Valid;
     break;
   }
-  case MemberExprClass: 
-  case CXXAdornedMemberExprClass: { 
+  case MemberExprClass: {
     const MemberExpr *m = cast<MemberExpr>(this);
     if (Ctx.getLangOptions().CPlusPlus) { // C++ [expr.ref]p4:
       NamedDecl *Member = m->getMemberDecl();
@@ -958,8 +986,7 @@ bool Expr::isOBJCGCCandidate(ASTContext &Ctx) const {
     }
     return false;
   }
-  case MemberExprClass: 
-  case CXXAdornedMemberExprClass: {
+  case MemberExprClass: {
     const MemberExpr *M = cast<MemberExpr>(this);
     return M->getBase()->isOBJCGCCandidate(Ctx);
   }
@@ -1916,13 +1943,6 @@ Stmt::child_iterator CallExpr::child_end() {
 // MemberExpr
 Stmt::child_iterator MemberExpr::child_begin() { return &Base; }
 Stmt::child_iterator MemberExpr::child_end() { return &Base+1; }
-
-bool MemberExpr::hasQualifier() const {
-  if (const CXXAdornedMemberExpr *A = dyn_cast<CXXAdornedMemberExpr>(this))
-    return A->hasQualifier();
-  
-  return false;
-}
 
 // ExtVectorElementExpr
 Stmt::child_iterator ExtVectorElementExpr::child_begin() { return &Base; }
