@@ -1321,6 +1321,53 @@ public:
     return ExprEmpty();
   }
   
+  /// \brief Parsed a reference to a member template-id.
+  ///
+  /// This callback will occur instead of ActOnMemberReferenceExpr() when the 
+  /// member in question is a template for which the code provides an
+  /// explicitly-specified template argument list, e.g.,
+  ///
+  /// \code
+  /// x.f<int>()
+  /// \endcode
+  ///
+  /// \param S the scope in which the member reference expression occurs
+  ///
+  /// \param Base the expression to the left of the "." or "->".
+  ///
+  /// \param OpLoc the location of the "." or "->".
+  ///
+  /// \param OpKind the kind of operator, which will be "." or "->".
+  ///
+  /// \param SS the scope specifier that precedes the template-id in, e.g., 
+  /// \c x.Base::f<int>().
+  ///
+  /// \param Template the declaration of the template that is being referenced.
+  ///
+  /// \param TemplateNameLoc the location of the template name referred to by
+  /// \p Template.
+  ///
+  /// \param LAngleLoc the location of the left angle bracket ('<')
+  ///
+  /// \param TemplateArgs the (possibly-empty) template argument list provided
+  /// as part of the member reference.
+  ///
+  /// \param RAngleLoc the location of the right angle bracket ('>')
+  virtual OwningExprResult
+  ActOnMemberTemplateIdReferenceExpr(Scope *S, ExprArg Base,
+                                     SourceLocation OpLoc,
+                                     tok::TokenKind OpKind,
+                                     const CXXScopeSpec &SS,
+                                     // FIXME: "template" keyword?
+                                     TemplateTy Template,
+                                     SourceLocation TemplateNameLoc,
+                                     SourceLocation LAngleLoc,
+                                     ASTTemplateArgsPtr TemplateArgs,
+                                     SourceLocation *TemplateArgLocs,
+                                     SourceLocation RAngleLoc) {
+    return ExprEmpty();
+  }
+  
   /// ActOnFinishFullExpr - Called whenever a full expression has been parsed.
   /// (C++ [intro.execution]p12).
   virtual OwningExprResult ActOnFinishFullExpr(ExprArg Expr) {

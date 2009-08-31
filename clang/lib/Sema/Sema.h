@@ -1598,6 +1598,7 @@ public:
                                             DeclarationName MemberName,
                                             DeclPtrTy ImplDecl,
                                             const CXXScopeSpec *SS = 0);
+  
   virtual OwningExprResult ActOnMemberReferenceExpr(Scope *S, ExprArg Base,
                                                     SourceLocation OpLoc,
                                                     tok::TokenKind OpKind,
@@ -1971,6 +1972,19 @@ public:
                                        SourceLocation ClassNameLoc,
                                        TypeTy *Ty,
                                        const CXXScopeSpec *SS = 0);
+  
+  virtual OwningExprResult
+  ActOnMemberTemplateIdReferenceExpr(Scope *S, ExprArg Base,
+                                     SourceLocation OpLoc,
+                                     tok::TokenKind OpKind,
+                                     const CXXScopeSpec &SS,
+                                     // FIXME: "template" keyword?
+                                     TemplateTy Template,
+                                     SourceLocation TemplateNameLoc,
+                                     SourceLocation LAngleLoc,
+                                     ASTTemplateArgsPtr TemplateArgs,
+                                     SourceLocation *TemplateArgLocs,
+                                     SourceLocation RAngleLoc);
   
   /// MaybeCreateCXXExprWithTemporaries - If the list of temporaries is 
   /// non-empty, will create a new CXXExprWithTemporaries expression.

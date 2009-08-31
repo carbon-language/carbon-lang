@@ -1831,6 +1831,21 @@ Sema::ActOnConversionOperatorReferenceExpr(Scope *S, ExprArg Base,
                                   ConvName, DeclPtrTy(), SS);
 }
 
+Sema::OwningExprResult
+Sema::ActOnMemberTemplateIdReferenceExpr(Scope *S, ExprArg Base,
+                                         SourceLocation OpLoc,
+                                         tok::TokenKind OpKind,
+                                         const CXXScopeSpec &SS,
+                                         TemplateTy Template,
+                                         SourceLocation TemplateNameLoc,
+                                         SourceLocation LAngleLoc,
+                                         ASTTemplateArgsPtr TemplateArgs,
+                                         SourceLocation *TemplateArgLocs,
+                                         SourceLocation RAngleLoc) {
+  // FIXME: Implement!
+  return ExprError();
+}
+
 Sema::OwningExprResult Sema::ActOnFinishFullExpr(ExprArg Arg) {
   Expr *FullExpr = Arg.takeAs<Expr>();
   if (FullExpr)

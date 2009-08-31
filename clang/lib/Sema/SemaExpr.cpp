@@ -2005,7 +2005,7 @@ Sema::BuildMemberReferenceExpr(Scope *S, ExprArg Base, SourceLocation OpLoc,
       ImpCastExprToType(BaseExpr, BaseType);
     }
   } else if (BaseType->isObjCClassType() &&
-      BaseType != Context.ObjCClassRedefinitionType) {
+             BaseType != Context.ObjCClassRedefinitionType) {
     BaseType = Context.ObjCClassRedefinitionType;
     ImpCastExprToType(BaseExpr, BaseType);
   }

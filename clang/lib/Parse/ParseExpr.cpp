@@ -941,7 +941,7 @@ Parser::ParsePostfixExpressionSuffix(OwningExprResult LHS) {
                                                  ObjCImpDecl, &SS);
         ConsumeToken();
       } else if (getLang().CPlusPlus && Tok.is(tok::tilde)) {
-        // We have a C++ pseudo-destructor.
+        // We have a C++ pseudo-destructor or a destructor call, e.g., t.~T()
         
         // Consume the tilde.
         ConsumeToken();
@@ -961,6 +961,8 @@ Parser::ParsePostfixExpressionSuffix(OwningExprResult LHS) {
                                                      &SS);
         ConsumeToken();
       } else if (getLang().CPlusPlus && Tok.is(tok::kw_operator)) {
+        // We have a reference to a member operator, e.g., t.operator int or
+        // t.operator+.
         if (OverloadedOperatorKind Op = TryParseOperatorFunctionId()) {
           if (!LHS.isInvalid())
             LHS = Actions.ActOnOverloadedOperatorReferenceExpr(CurScope,
@@ -983,6 +985,27 @@ Parser::ParsePostfixExpressionSuffix(OwningExprResult LHS) {
           // Don't emit a diagnostic; ParseConversionFunctionId does it for us
           return ExprError();
         }
+      } else if (getLang().CPlusPlus && Tok.is(tok::annot_template_id)) {
+        // We have a reference to a member template along with explicitly-
+        // specified template arguments, e.g., t.f<int>.
+        TemplateIdAnnotation *TemplateId 
+          = static_cast<TemplateIdAnnotation *>(Tok.getAnnotationValue());
+        if (!LHS.isInvalid()) {
+          ASTTemplateArgsPtr TemplateArgsPtr(Actions, 
+                                             TemplateId->getTemplateArgs(),
+                                             TemplateId->getTemplateArgIsType(),
+                                             TemplateId->NumArgs);
+          
+          LHS = Actions.ActOnMemberTemplateIdReferenceExpr(CurScope, move(LHS),
+                                                           OpLoc, OpKind, SS,
+                                        TemplateTy::make(TemplateId->Template),
+                                                   TemplateId->TemplateNameLoc,
+                                                         TemplateId->LAngleLoc,
+                                                           TemplateArgsPtr,
+                                         TemplateId->getTemplateArgLocations(),
+                                                         TemplateId->RAngleLoc);
+        }
+        ConsumeToken();
       } else {
         if (getLang().CPlusPlus)
           Actions.ActOnCXXExitMemberScope(CurScope, MemberSS);

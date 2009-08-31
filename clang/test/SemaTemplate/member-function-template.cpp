@@ -40,5 +40,11 @@ void test_X_f1_address() {
   int& (X::*pm3)(float, int) = &X::f1;
 }
 
+void test_X_f0_explicit(X x, int i, long l) {
+  int &ir1 = x.f0<int>(i);
+  int &ir2 = x.f0<>(i);
+  int &ir3 = x.f0<long>(i);
+}
+
 // PR4608
 class A { template <class x> x a(x z) { return z+y; } int y; };
