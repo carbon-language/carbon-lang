@@ -1681,6 +1681,9 @@ def warn_cannot_pass_non_pod_arg_to_vararg : Warning<
 
 def err_typecheck_call_invalid_ordered_compare : Error<
   "ordered compare requires two args of floating point type (%0 and %1)">;
+def err_typecheck_call_invalid_unary_fp : Error<
+  "floating point classification requires argument of floating point type "
+  "(passed in %0)">;
 def err_typecheck_cond_expect_scalar : Error<
   "used type %0 where arithmetic or pointer type is required">;
 def ext_typecheck_cond_one_void : Extension<

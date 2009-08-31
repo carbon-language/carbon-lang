@@ -3494,6 +3494,7 @@ private:
                                                     CallExpr *TheCall);
   bool SemaBuiltinVAStart(CallExpr *TheCall);
   bool SemaBuiltinUnorderedCompare(CallExpr *TheCall);
+  bool SemaBuiltinUnaryFP(CallExpr *TheCall);
   bool SemaBuiltinStackAddress(CallExpr *TheCall);
 
 public:

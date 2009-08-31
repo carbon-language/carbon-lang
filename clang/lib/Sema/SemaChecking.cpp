@@ -125,6 +125,14 @@ Sema::CheckBuiltinFunctionCall(unsigned BuiltinID, CallExpr *TheCall) {
     if (SemaBuiltinUnorderedCompare(TheCall))
       return ExprError();
     break;
+  case Builtin::BI__builtin_isfinite:
+  case Builtin::BI__builtin_isinf:
+  case Builtin::BI__builtin_isinf_sign:
+  case Builtin::BI__builtin_isnan:
+  case Builtin::BI__builtin_isnormal:
+    if (SemaBuiltinUnaryFP(TheCall))
+      return ExprError();
+    break;
   case Builtin::BI__builtin_return_address:
   case Builtin::BI__builtin_frame_address:
     if (SemaBuiltinStackAddress(TheCall))
@@ -553,6 +561,33 @@ bool Sema::SemaBuiltinUnorderedCompare(CallExpr *TheCall) {
                 diag::err_typecheck_call_invalid_ordered_compare)
       << OrigArg0->getType() << OrigArg1->getType()
       << SourceRange(OrigArg0->getLocStart(), OrigArg1->getLocEnd());
+  
+  return false;
+}
+
+/// SemaBuiltinUnorderedCompare - Handle functions like __builtin_isnan and
+/// friends.  This is declared to take (...), so we have to check everything.
+bool Sema::SemaBuiltinUnaryFP(CallExpr *TheCall) {
+  if (TheCall->getNumArgs() < 1)
+    return Diag(TheCall->getLocEnd(), diag::err_typecheck_call_too_few_args)
+      << 0 /*function call*/;
+  if (TheCall->getNumArgs() > 1)
+    return Diag(TheCall->getArg(1)->getLocStart(), 
+                diag::err_typecheck_call_too_many_args)
+      << 0 /*function call*/
+      << SourceRange(TheCall->getArg(1)->getLocStart(),
+                     (*(TheCall->arg_end()-1))->getLocEnd());
+
+  Expr *OrigArg = TheCall->getArg(0);
+  
+  if (OrigArg->isTypeDependent())
+    return false;
+
+  // This operation requires a floating-point number
+  if (!OrigArg->getType()->isRealFloatingType())
+    return Diag(OrigArg->getLocStart(), 
+                diag::err_typecheck_call_invalid_unary_fp)
+      << OrigArg->getType() << OrigArg->getSourceRange();
   
   return false;
 }
