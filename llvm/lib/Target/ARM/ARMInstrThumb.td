@@ -250,7 +250,7 @@ let isBranch = 1, isTerminator = 1 in {
   let isBarrier = 1 in {
     let isPredicable = 1 in
     def tB   : T1I<(outs), (ins brtarget:$target), IIC_Br,
-                   "b.n $target", [(br bb:$target)]>;
+                   "b $target", [(br bb:$target)]>;
 
   // Far jump
   let Defs = [LR] in
@@ -268,7 +268,7 @@ let isBranch = 1, isTerminator = 1 in {
 // a two-value operand where a dag node expects two operands. :(
 let isBranch = 1, isTerminator = 1 in
   def tBcc : T1I<(outs), (ins brtarget:$target, pred:$cc), IIC_Br,
-                 "b$cc.n $target",
+                 "b$cc $target",
                  [/*(ARMbrcond bb:$target, imm:$cc)*/]>;
 
 //===----------------------------------------------------------------------===//
@@ -310,10 +310,9 @@ def tRestore : T1pIs<(outs tGPR:$dst), (ins t_addrmode_sp:$addr), IIC_iLoadi,
                     "ldr", " $dst, $addr", []>;
 
 // Load tconstpool
-// FIXME: Added .n suffix to workaround a Darwin assembler bug.
 let canFoldAsLoad = 1 in
 def tLDRpci : T1pIs<(outs tGPR:$dst), (ins i32imm:$addr), IIC_iLoadi,
-                  "ldr", ".n $dst, $addr",
+                  "ldr", " $dst, $addr",
                   [(set tGPR:$dst, (load (ARMWrapper tconstpool:$addr)))]>;
 
 // Special LDR for loads from non-pc-relative constpools.
