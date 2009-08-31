@@ -234,8 +234,9 @@ public:
   }
 
   class member_iterator : public std::iterator<std::forward_iterator_tag,
-                                               ElemTy, ptrdiff_t> {
-    typedef std::iterator<std::forward_iterator_tag, ElemTy, ptrdiff_t> super;
+                                               const ElemTy, ptrdiff_t> {
+    typedef std::iterator<std::forward_iterator_tag,
+                          const ElemTy, ptrdiff_t> super;
     const ECValue *Node;
     friend class EquivalenceClasses;
   public:
@@ -249,7 +250,7 @@ public:
 
     reference operator*() const {
       assert(Node != 0 && "Dereferencing end()!");
-      return const_cast<reference>(Node->getData()); // FIXME
+      return Node->getData();
     }
     reference operator->() const { return operator*(); }
 
