@@ -15,6 +15,7 @@
 namespace llvm {
 class MCAsmLexer;
 class MCContext;
+class MCExpr;
 class MCValue;
 class SMLoc;
 class Twine;
@@ -44,6 +45,21 @@ public:
   /// \return The return value is always true, as an idiomatic convenience to
   /// clients.
   virtual bool Error(SMLoc L, const Twine &Msg) = 0;
+
+  /// ParseExpression - Parse an arbitrary expression.
+  ///
+  /// @param Res - The value of the expression. The result is undefined
+  /// on error.
+  /// @result - False on success.
+  virtual bool ParseExpression(const MCExpr *&Res) = 0;
+
+  /// ParseParenExpression - Parse an arbitrary expression, assuming that an
+  /// initial '(' has already been consumed.
+  ///
+  /// @param Res - The value of the expression. The result is undefined
+  /// on error.
+  /// @result - False on success.
+  virtual bool ParseParenExpression(const MCExpr *&Res) = 0;
 
   /// ParseAbsoluteExpression - Parse an expression which must evaluate to an
   /// absolute value.

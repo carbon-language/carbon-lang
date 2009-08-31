@@ -70,6 +70,8 @@ public:
 
   virtual bool ParseExpression(const MCExpr *&Res);
 
+  virtual bool ParseParenExpression(const MCExpr *&Res);
+
   virtual bool ParseAbsoluteExpression(int64_t &Res);
 
   virtual bool ParseRelocatableExpression(MCValue &Res);

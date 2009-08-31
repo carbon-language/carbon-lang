@@ -21,6 +21,7 @@
 #include "llvm/MC/MCSectionMachO.h"
 #include "llvm/MC/MCStreamer.h"
 #include "llvm/MC/MCSymbol.h"
+#include "llvm/MC/MCValue.h"
 #include "llvm/Support/SourceMgr.h"
 #include "llvm/Support/raw_ostream.h"
 #include "llvm/Target/TargetAsmParser.h"
@@ -256,6 +257,13 @@ bool AsmParser::ParseExpression(const MCExpr *&Res) {
   Res = 0;
   return ParsePrimaryExpr(Res) ||
          ParseBinOpRHS(1, Res);
+}
+
+bool AsmParser::ParseParenExpression(const MCExpr *&Res) {
+  if (ParseParenExpr(Res))
+    return true;
+
+  return false;
 }
 
 bool AsmParser::ParseAbsoluteExpression(int64_t &Res) {
