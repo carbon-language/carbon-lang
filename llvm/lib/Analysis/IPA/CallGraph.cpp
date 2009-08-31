@@ -53,7 +53,7 @@ public:
     CallsExternalNode = new CallGraphNode(0);
     Root = 0;
   
-    // Add every function to the call graph...
+    // Add every function to the call graph.
     for (Module::iterator I = M.begin(), E = M.end(); I != E; ++I)
       addToCallGraph(I);
   
@@ -169,12 +169,12 @@ void CallGraph::initialize(Module &M) {
 }
 
 void CallGraph::destroy() {
-  if (!FunctionMap.empty()) {
-    for (FunctionMapTy::iterator I = FunctionMap.begin(), E = FunctionMap.end();
-        I != E; ++I)
-      delete I->second;
-    FunctionMap.clear();
-  }
+  if (FunctionMap.empty()) return;
+  
+  for (FunctionMapTy::iterator I = FunctionMap.begin(), E = FunctionMap.end();
+      I != E; ++I)
+    delete I->second;
+  FunctionMap.clear();
 }
 
 void CallGraph::print(raw_ostream &OS, Module*) const {
@@ -219,10 +219,11 @@ CallGraphNode *CallGraph::getOrInsertFunction(const Function *F) {
 
 void CallGraphNode::print(raw_ostream &OS) const {
   if (Function *F = getFunction())
-    OS << "Call graph node for function: '" << F->getName()
-       << "'<<0x" << this << ">>\n";
+    OS << "Call graph node for function: '" << F->getName() << "'";
   else
-    OS << "Call graph node <<null function: 0x" << this << ">>:\n";
+    OS << "Call graph node <<null function>>";
+  
+  OS << "<<0x" << this << ">>  #uses=" << getNumReferences() << '\n';
 
   for (const_iterator I = begin(), E = end(); I != E; ++I)
     if (Function *FI = I->second->getFunction())
@@ -241,7 +242,9 @@ void CallGraphNode::removeCallEdgeFor(CallSite CS) {
   for (CalledFunctionsVector::iterator I = CalledFunctions.begin(); ; ++I) {
     assert(I != CalledFunctions.end() && "Cannot find callsite to remove!");
     if (I->first == CS) {
-      CalledFunctions.erase(I);
+      I->second->DropRef();
+      *I = CalledFunctions.back();
+      CalledFunctions.pop_back();
       return;
     }
   }
@@ -254,6 +257,7 @@ void CallGraphNode::removeCallEdgeFor(CallSite CS) {
 void CallGraphNode::removeAnyCallEdgeTo(CallGraphNode *Callee) {
   for (unsigned i = 0, e = CalledFunctions.size(); i != e; ++i)
     if (CalledFunctions[i].second == Callee) {
+      Callee->DropRef();
       CalledFunctions[i] = CalledFunctions.back();
       CalledFunctions.pop_back();
       --i; --e;
@@ -266,8 +270,10 @@ void CallGraphNode::removeOneAbstractEdgeTo(CallGraphNode *Callee) {
   for (CalledFunctionsVector::iterator I = CalledFunctions.begin(); ; ++I) {
     assert(I != CalledFunctions.end() && "Cannot find callee to remove!");
     CallRecord &CR = *I;
-    if (CR.second == Callee && !CR.first.getInstruction()) {
-      CalledFunctions.erase(I);
+    if (CR.second == Callee && CR.first.getInstruction() == 0) {
+      Callee->DropRef();
+      *I = CalledFunctions.back();
+      CalledFunctions.pop_back();
       return;
     }
   }
@@ -285,8 +291,11 @@ void CallGraphNode::replaceCallSite(CallSite Old, CallSite New,
       
       // If the callee is changing, not just the callsite, then update it as
       // well.
-      if (NewCallee)
+      if (NewCallee) {
+        I->second->DropRef();
         I->second = NewCallee;
+        I->second->AddRef();
+      }
       return;
     }
   }

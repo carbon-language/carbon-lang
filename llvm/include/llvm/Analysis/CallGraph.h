@@ -77,7 +77,7 @@ protected:
 public:
   static char ID; // Class identification, replacement for typeinfo
   //===---------------------------------------------------------------------
-  // Accessors...
+  // Accessors.
   //
   typedef FunctionMapTy::iterator iterator;
   typedef FunctionMapTy::const_iterator const_iterator;
@@ -136,7 +136,7 @@ public:
   CallGraphNode *getOrInsertFunction(const Function *F);
 
   //===---------------------------------------------------------------------
-  // Pass infrastructure interface glue code...
+  // Pass infrastructure interface glue code.
   //
 protected:
   CallGraph() {}
@@ -163,19 +163,31 @@ class CallGraphNode {
   Function *F;
   typedef std::pair<CallSite,CallGraphNode*> CallRecord;
   std::vector<CallRecord> CalledFunctions;
+  
+  /// NumReferences - This is the number of times that this CallGraphNode occurs
+  /// in the CalledFunctions array of this or other CallGraphNodes.
+  unsigned NumReferences;
 
-  CallGraphNode(const CallGraphNode &);           // Do not implement
+  CallGraphNode(const CallGraphNode &);            // DO NOT IMPLEMENT
+  void operator=(const CallGraphNode &);           // DO NOT IMPLEMENT
+  
+  void DropRef() { --NumReferences; }
+  void AddRef() { ++NumReferences; }
 public:
   typedef std::vector<CallRecord> CalledFunctionsVector;
 
+  
+  // CallGraphNode ctor - Create a node for the specified function.
+  inline CallGraphNode(Function *f) : F(f), NumReferences(0) {}
+  
   //===---------------------------------------------------------------------
-  // Accessor methods...
+  // Accessor methods.
   //
 
   typedef std::vector<CallRecord>::iterator iterator;
   typedef std::vector<CallRecord>::const_iterator const_iterator;
 
-  // getFunction - Return the function that this call graph node represents...
+  // getFunction - Return the function that this call graph node represents.
   Function *getFunction() const { return F; }
 
   inline iterator begin() { return CalledFunctions.begin(); }
@@ -185,9 +197,14 @@ public:
   inline bool empty() const { return CalledFunctions.empty(); }
   inline unsigned size() const { return (unsigned)CalledFunctions.size(); }
 
-  // Subscripting operator - Return the i'th called function...
+  /// getNumReferences - Return the number of other CallGraphNodes in this
+  /// CallGraph that reference this node in their callee list.
+  unsigned getNumReferences() const { return NumReferences; }
+  
+  // Subscripting operator - Return the i'th called function.
   //
   CallGraphNode *operator[](unsigned i) const {
+    assert(i < CalledFunctions.size() && "Invalid index");
     return CalledFunctions[i].second;
   }
 
@@ -204,7 +221,10 @@ public:
   /// removeAllCalledFunctions - As the name implies, this removes all edges
   /// from this CallGraphNode to any functions it calls.
   void removeAllCalledFunctions() {
-    CalledFunctions.clear();
+    while (!CalledFunctions.empty()) {
+      CalledFunctions.back().second->DropRef();
+      CalledFunctions.pop_back();
+    }
   }
   
   /// stealCalledFunctionsFrom - Move all the callee information from N to this
@@ -220,6 +240,7 @@ public:
   /// one.
   void addCalledFunction(CallSite CS, CallGraphNode *M) {
     CalledFunctions.push_back(std::make_pair(CS, M));
+    M->AddRef();
   }
 
   /// removeCallEdgeFor - This method removes the edge in the node for the
@@ -240,11 +261,6 @@ public:
   /// New CallSite instead.  Note that this method takes linear time, so it
   /// should be used sparingly.
   void replaceCallSite(CallSite Old, CallSite New, CallGraphNode *NewCallee);
-
-  friend class CallGraph;
-
-  // CallGraphNode ctor - Create a node for the specified function.
-  inline CallGraphNode(Function *f) : F(f) {}
 };
 
 //===----------------------------------------------------------------------===//
