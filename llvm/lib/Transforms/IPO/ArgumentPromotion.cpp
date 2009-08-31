@@ -593,6 +593,10 @@ CallGraphNode *ArgPromotion::DoPromotion(Function *F,
   Function *NF = Function::Create(NFTy, F->getLinkage(), F->getName());
   NF->copyAttributesFrom(F);
 
+  
+  DEBUG(errs() << "ARG PROMOTION:  Promoting to:" << *NF << "\n"
+        << "From: " << *F);
+  
   // Recompute the parameter attributes list based on the new arguments for
   // the function.
   NF->setAttributes(AttrListPtr::get(AttributesVec.begin(), AttributesVec.end()));
