@@ -227,6 +227,14 @@ bool DIDescriptor::isScope() const {
   return false;
 }
 
+/// isCompileUnit - Return true if the specified tag is DW_TAG_compile_unit.
+bool DIDescriptor::isCompileUnit() const {
+  assert (!isNull() && "Invalid descriptor!");
+  unsigned Tag = getTag();
+
+  return Tag == dwarf::DW_TAG_compile_unit;
+}
+
 //===----------------------------------------------------------------------===//
 // Simple Descriptor Constructors and other Methods
 //===----------------------------------------------------------------------===//

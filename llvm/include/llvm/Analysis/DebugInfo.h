@@ -95,6 +95,7 @@ namespace llvm {
     bool isSubprogram() const;
     bool isGlobalVariable() const;
     bool isScope() const;
+    bool isCompileUnit() const;
   };
 
   /// DISubrange - This is used to represent ranges, for array bounds.
@@ -129,10 +130,13 @@ namespace llvm {
   };
 
   /// DICompileUnit - A wrapper for a compile unit.
-  class DICompileUnit : public DIDescriptor {
+  class DICompileUnit : public DIScope {
   public:
-    explicit DICompileUnit(MDNode *N = 0)
-      : DIDescriptor(N, dwarf::DW_TAG_compile_unit) {}
+    explicit DICompileUnit(MDNode *N = 0) {
+      DbgNode = N;
+      if (DbgNode && !isCompileUnit())
+	DbgNode = 0;
+    }
 
     unsigned getLanguage() const     { return getUnsignedField(2); }
     const std::string &getFilename(std::string &F) const {
