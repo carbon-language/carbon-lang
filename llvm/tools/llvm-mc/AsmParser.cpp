@@ -205,7 +205,7 @@ bool AsmParser::ParsePrimaryExpr(const MCExpr *&Res) {
     Lexer.Lex(); // Eat the operator.
     if (ParsePrimaryExpr(Res))
       return true;
-    Res = MCUnaryExpr::CreateLNot(Res, Ctx);
+    Res = MCUnaryExpr::CreateLNot(Res, getContext());
     return false;
   case AsmToken::String:
   case AsmToken::Identifier: {
@@ -213,12 +213,12 @@ bool AsmParser::ParsePrimaryExpr(const MCExpr *&Res) {
     // handle things like LFOO+4.
     MCSymbol *Sym = CreateSymbol(Lexer.getTok().getIdentifier());
     
-    Res = MCSymbolRefExpr::Create(Sym, Ctx);
+    Res = MCSymbolRefExpr::Create(Sym, getContext());
     Lexer.Lex(); // Eat identifier.
     return false;
   }
   case AsmToken::Integer:
-    Res = MCConstantExpr::Create(Lexer.getTok().getIntVal(), Ctx);
+    Res = MCConstantExpr::Create(Lexer.getTok().getIntVal(), getContext());
     Lexer.Lex(); // Eat token.
     return false;
   case AsmToken::LParen:
@@ -228,19 +228,19 @@ bool AsmParser::ParsePrimaryExpr(const MCExpr *&Res) {
     Lexer.Lex(); // Eat the operator.
     if (ParsePrimaryExpr(Res))
       return true;
-    Res = MCUnaryExpr::CreateMinus(Res, Ctx);
+    Res = MCUnaryExpr::CreateMinus(Res, getContext());
     return false;
   case AsmToken::Plus:
     Lexer.Lex(); // Eat the operator.
     if (ParsePrimaryExpr(Res))
       return true;
-    Res = MCUnaryExpr::CreatePlus(Res, Ctx);
+    Res = MCUnaryExpr::CreatePlus(Res, getContext());
     return false;
   case AsmToken::Tilde:
     Lexer.Lex(); // Eat the operator.
     if (ParsePrimaryExpr(Res))
       return true;
-    Res = MCUnaryExpr::CreateNot(Res, Ctx);
+    Res = MCUnaryExpr::CreateNot(Res, getContext());
     return false;
   }
 }
@@ -300,7 +300,8 @@ bool AsmParser::ParseParenRelocatableExpression(MCValue &Res) {
 static unsigned getBinOpPrecedence(AsmToken::TokenKind K, 
                                    MCBinaryExpr::Opcode &Kind) {
   switch (K) {
-  default: return 0;    // not a binop.
+  default:
+    return 0;    // not a binop.
 
     // Lowest Precedence: &&, ||
   case AsmToken::AmpAmp:
@@ -397,7 +398,7 @@ bool AsmParser::ParseBinOpRHS(unsigned Precedence, const MCExpr *&Res) {
     }
 
     // Merge LHS and RHS according to operator.
-    Res = MCBinaryExpr::Create(Kind, Res, RHS, Ctx);
+    Res = MCBinaryExpr::Create(Kind, Res, RHS, getContext());
   }
 }
 

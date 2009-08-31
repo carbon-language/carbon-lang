@@ -62,6 +62,8 @@ public:
 
   virtual MCAsmLexer &getLexer() { return Lexer; }
 
+  virtual MCContext &getContext() { return Ctx; }
+
   virtual void Warning(SMLoc L, const Twine &Meg);
 
   virtual bool Error(SMLoc L, const Twine &Msg);
@@ -71,6 +73,8 @@ public:
   virtual bool ParseAbsoluteExpression(int64_t &Res);
 
   virtual bool ParseRelocatableExpression(MCValue &Res);
+
+  virtual bool ParseParenRelocatableExpression(MCValue &Res);
 
   /// }
 
@@ -93,16 +97,6 @@ private:
   void EatToEndOfStatement();
   
   bool ParseAssignment(const StringRef &Name, bool IsDotSet);
-
-  /// ParseParenRelocatableExpression - Parse an expression which must be
-  /// relocatable, assuming that an initial '(' has already been consumed.
-  ///
-  /// @param Res - The relocatable expression value. The result is undefined on
-  /// error.  
-  /// @result - False on success.
-  ///
-  /// @see ParseRelocatableExpression, ParseParenExpr.
-  bool ParseParenRelocatableExpression(MCValue &Res);
 
   bool ParsePrimaryExpr(const MCExpr *&Res);
   bool ParseBinOpRHS(unsigned Precedence, const MCExpr *&Res);

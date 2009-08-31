@@ -14,6 +14,7 @@
 
 namespace llvm {
 class MCAsmLexer;
+class MCContext;
 class MCValue;
 class SMLoc;
 class Twine;
@@ -30,6 +31,8 @@ public:
   virtual ~MCAsmParser();
 
   virtual MCAsmLexer &getLexer() = 0;
+
+  virtual MCContext &getContext() = 0;
 
   /// Warning - Emit a warning at the location \arg L, with the message \arg
   /// Msg.
