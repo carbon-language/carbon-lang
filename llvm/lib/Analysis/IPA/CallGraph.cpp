@@ -206,20 +206,6 @@ Function *CallGraph::removeFunctionFromModule(CallGraphNode *CGN) {
   return F;
 }
 
-// changeFunction - This method changes the function associated with this
-// CallGraphNode, for use by transformations that need to change the prototype
-// of a Function (thus they must create a new Function and move the old code
-// over).
-void CallGraph::changeFunction(Function *OldF, Function *NewF) {
-  iterator I = FunctionMap.find(OldF);
-  CallGraphNode *&New = FunctionMap[NewF];
-  assert(I != FunctionMap.end() && I->second && !New &&
-         "OldF didn't exist in CG or NewF already does!");
-  New = I->second;
-  New->F = NewF;
-  FunctionMap.erase(I);
-}
-
 // getOrInsertFunction - This method is identical to calling operator[], but
 // it will insert a new CallGraphNode for the specified function if one does
 // not already exist.
@@ -233,7 +219,8 @@ CallGraphNode *CallGraph::getOrInsertFunction(const Function *F) {
 
 void CallGraphNode::print(raw_ostream &OS) const {
   if (Function *F = getFunction())
-    OS << "Call graph node for function: '" << F->getName() <<"'\n";
+    OS << "Call graph node for function: '" << F->getName()
+       << "'<<0x" << this << ">>\n";
   else
     OS << "Call graph node <<null function: 0x" << this << ">>:\n";
 
@@ -289,11 +276,17 @@ void CallGraphNode::removeOneAbstractEdgeTo(CallGraphNode *Callee) {
 /// replaceCallSite - Make the edge in the node for Old CallSite be for
 /// New CallSite instead.  Note that this method takes linear time, so it
 /// should be used sparingly.
-void CallGraphNode::replaceCallSite(CallSite Old, CallSite New) {
+void CallGraphNode::replaceCallSite(CallSite Old, CallSite New,
+                                    CallGraphNode *NewCallee) {
   for (CalledFunctionsVector::iterator I = CalledFunctions.begin(); ; ++I) {
     assert(I != CalledFunctions.end() && "Cannot find callsite to replace!");
     if (I->first == Old) {
       I->first = New;
+      
+      // If the callee is changing, not just the callsite, then update it as
+      // well.
+      if (NewCallee)
+        I->second = NewCallee;
       return;
     }
   }

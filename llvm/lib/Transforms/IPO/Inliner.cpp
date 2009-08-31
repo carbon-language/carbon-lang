@@ -207,7 +207,7 @@ bool Inliner::shouldInline(CallSite CS) {
   return true;
 }
 
-bool Inliner::runOnSCC(const std::vector<CallGraphNode*> &SCC) {
+bool Inliner::runOnSCC(std::vector<CallGraphNode*> &SCC) {
   CallGraph &CG = getAnalysis<CallGraph>();
   const TargetData *TD = getAnalysisIfAvailable<TargetData>();
 

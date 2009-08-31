@@ -84,10 +84,16 @@ bool CGPassManager::runOnModule(Module &M) {
   CallGraph &CG = getAnalysis<CallGraph>();
   bool Changed = doInitialization(CG);
 
+  std::vector<CallGraphNode*> CurSCC;
+  
   // Walk SCC
-  for (scc_iterator<CallGraph*> I = scc_begin(&CG), E = scc_end(&CG);
-       I != E; ++I) {
-
+  for (scc_iterator<CallGraph*> CGI = scc_begin(&CG), E = scc_end(&CG);
+       CGI != E;) {
+    // Copy the current SCC and increment past it so that the pass can hack
+    // on the SCC if it wants to without invalidating our iterator.
+    CurSCC = *CGI;
+    ++CGI;
+    
     // Run all passes on current SCC
     for (unsigned Index = 0; Index < getNumContainedPasses(); ++Index) {
       Pass *P = getContainedPass(Index);
@@ -99,16 +105,14 @@ bool CGPassManager::runOnModule(Module &M) {
 
       StartPassTimer(P);
       if (CallGraphSCCPass *CGSP = dynamic_cast<CallGraphSCCPass *>(P))
-        Changed |= CGSP->runOnSCC(*I);   // TODO : What if CG is changed ?
+        Changed |= CGSP->runOnSCC(CurSCC);
       else {
         FPPassManager *FPP = dynamic_cast<FPPassManager *>(P);
         assert (FPP && "Invalid CGPassManager member");
 
         // Run pass P on all functions current SCC
-        std::vector<CallGraphNode*> &SCC = *I;
-        for (unsigned i = 0, e = SCC.size(); i != e; ++i) {
-          Function *F = SCC[i]->getFunction();
-          if (F) {
+        for (unsigned i = 0, e = CurSCC.size(); i != e; ++i) {
+          if (Function *F = CurSCC[i]->getFunction()) {
             dumpPassInfo(P, EXECUTION_MSG, ON_FUNCTION_MSG, F->getName());
             Changed |= FPP->runOnFunction(*F);
           }

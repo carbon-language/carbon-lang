@@ -65,7 +65,7 @@ namespace {
       CallGraphSCCPass::getAnalysisUsage(AU);
     }
 
-    virtual bool runOnSCC(const std::vector<CallGraphNode *> &SCC);
+    virtual bool runOnSCC(std::vector<CallGraphNode *> &SCC);
     static char ID; // Pass identification, replacement for typeid
     explicit ArgPromotion(unsigned maxElements = 3)
       : CallGraphSCCPass(&ID), maxElements(maxElements) {}
@@ -74,11 +74,11 @@ namespace {
     typedef std::vector<uint64_t> IndicesVector;
 
   private:
-    bool PromoteArguments(CallGraphNode *CGN);
+    CallGraphNode *PromoteArguments(CallGraphNode *CGN);
     bool isSafeToPromoteArgument(Argument *Arg, bool isByVal) const;
-    Function *DoPromotion(Function *F,
-                          SmallPtrSet<Argument*, 8> &ArgsToPromote,
-                          SmallPtrSet<Argument*, 8> &ByValArgsToTransform);
+    CallGraphNode *DoPromotion(Function *F,
+                               SmallPtrSet<Argument*, 8> &ArgsToPromote,
+                               SmallPtrSet<Argument*, 8> &ByValArgsToTransform);
     /// The maximum number of elements to expand, or 0 for unlimited.
     unsigned maxElements;
   };
@@ -92,14 +92,17 @@ Pass *llvm::createArgumentPromotionPass(unsigned maxElements) {
   return new ArgPromotion(maxElements);
 }
 
-bool ArgPromotion::runOnSCC(const std::vector<CallGraphNode *> &SCC) {
+bool ArgPromotion::runOnSCC(std::vector<CallGraphNode *> &SCC) {
   bool Changed = false, LocalChange;
 
   do {  // Iterate until we stop promoting from this SCC.
     LocalChange = false;
     // Attempt to promote arguments from all functions in this SCC.
     for (unsigned i = 0, e = SCC.size(); i != e; ++i)
-      LocalChange |= PromoteArguments(SCC[i]);
+      if (CallGraphNode *CGN = PromoteArguments(SCC[i])) {
+        LocalChange = true;
+        SCC[i] = CGN;
+      }
     Changed |= LocalChange;               // Remember that we changed something.
   } while (LocalChange);
 
@@ -111,11 +114,11 @@ bool ArgPromotion::runOnSCC(const std::vector<CallGraphNode *> &SCC) {
 /// example, all callers are direct).  If safe to promote some arguments, it
 /// calls the DoPromotion method.
 ///
-bool ArgPromotion::PromoteArguments(CallGraphNode *CGN) {
+CallGraphNode *ArgPromotion::PromoteArguments(CallGraphNode *CGN) {
   Function *F = CGN->getFunction();
 
   // Make sure that it is local to this module.
-  if (!F || !F->hasLocalLinkage()) return false;
+  if (!F || !F->hasLocalLinkage()) return 0;
 
   // First check: see if there are any pointer arguments!  If not, quick exit.
   SmallVector<std::pair<Argument*, unsigned>, 16> PointerArgs;
@@ -124,12 +127,12 @@ bool ArgPromotion::PromoteArguments(CallGraphNode *CGN) {
        I != E; ++I, ++ArgNo)
     if (isa<PointerType>(I->getType()))
       PointerArgs.push_back(std::pair<Argument*, unsigned>(I, ArgNo));
-  if (PointerArgs.empty()) return false;
+  if (PointerArgs.empty()) return 0;
 
   // Second check: make sure that all callers are direct callers.  We can't
   // transform functions that have indirect callers.
   if (F->hasAddressTaken())
-    return false;
+    return 0;
 
   // Check to see which arguments are promotable.  If an argument is promotable,
   // add it to ArgsToPromote.
@@ -174,13 +177,10 @@ bool ArgPromotion::PromoteArguments(CallGraphNode *CGN) {
   }
 
   // No promotable pointer arguments.
-  if (ArgsToPromote.empty() && ByValArgsToTransform.empty()) return false;
+  if (ArgsToPromote.empty() && ByValArgsToTransform.empty()) 
+    return 0;
 
-  Function *NewF = DoPromotion(F, ArgsToPromote, ByValArgsToTransform);
-
-  // Update the call graph to know that the function has been transformed.
-  getAnalysis<CallGraph>().changeFunction(F, NewF);
-  return true;
+  return DoPromotion(F, ArgsToPromote, ByValArgsToTransform);
 }
 
 /// IsAlwaysValidPointer - Return true if the specified pointer is always legal
@@ -469,8 +469,8 @@ bool ArgPromotion::isSafeToPromoteArgument(Argument *Arg, bool isByVal) const {
 /// DoPromotion - This method actually performs the promotion of the specified
 /// arguments, and returns the new function.  At this point, we know that it's
 /// safe to do so.
-Function *ArgPromotion::DoPromotion(Function *F,
-                                    SmallPtrSet<Argument*, 8> &ArgsToPromote,
+CallGraphNode *ArgPromotion::DoPromotion(Function *F,
+                               SmallPtrSet<Argument*, 8> &ArgsToPromote,
                               SmallPtrSet<Argument*, 8> &ByValArgsToTransform) {
 
   // Start by computing a new prototype for the function, which is the same as
@@ -608,6 +608,10 @@ Function *ArgPromotion::DoPromotion(Function *F,
   // Get the callgraph information that we need to update to reflect our
   // changes.
   CallGraph &CG = getAnalysis<CallGraph>();
+  
+  // Get a new callgraph node for NF.
+  CallGraphNode *NF_CGN = CG.getOrInsertFunction(NF);
+  
 
   // Loop over all of the callers of the function, transforming the call sites
   // to pass in the loaded pointers.
@@ -720,7 +724,7 @@ Function *ArgPromotion::DoPromotion(Function *F,
     AA.replaceWithNewValue(Call, New);
 
     // Update the callgraph to know that the callsite has been transformed.
-    CG[Call->getParent()->getParent()]->replaceCallSite(Call, New);
+    CG[Call->getParent()->getParent()]->replaceCallSite(Call, New, NF_CGN);
 
     if (!Call->use_empty()) {
       Call->replaceAllUsesWith(New);
@@ -856,7 +860,11 @@ Function *ArgPromotion::DoPromotion(Function *F,
   // Tell the alias analysis that the old function is about to disappear.
   AA.replaceWithNewValue(F, NF);
 
+  
+  NF_CGN->stealCalledFunctionsFrom(CG[F]);
+  
   // Now that the old function is dead, delete it.
-  F->eraseFromParent();
-  return NF;
+  delete CG.removeFunctionFromModule(F);
+  
+  return NF_CGN;
 }

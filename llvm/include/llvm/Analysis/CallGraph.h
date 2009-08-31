@@ -130,12 +130,6 @@ public:
     return removeFunctionFromModule((*this)[F]);
   }
 
-  /// changeFunction - This method changes the function associated with this
-  /// CallGraphNode, for use by transformations that need to change the
-  /// prototype of a Function (thus they must create a new Function and move the
-  /// old code over).
-  void changeFunction(Function *OldF, Function *NewF);
-
   /// getOrInsertFunction - This method is identical to calling operator[], but
   /// it will insert a new CallGraphNode for the specified function if one does
   /// not already exist.
@@ -212,6 +206,15 @@ public:
   void removeAllCalledFunctions() {
     CalledFunctions.clear();
   }
+  
+  /// stealCalledFunctionsFrom - Move all the callee information from N to this
+  /// node.
+  void stealCalledFunctionsFrom(CallGraphNode *N) {
+    assert(CalledFunctions.empty() &&
+           "Cannot steal callsite information if I already have some");
+    std::swap(CalledFunctions, N->CalledFunctions);
+  }
+  
 
   /// addCalledFunction - Add a function to the list of functions called by this
   /// one.
@@ -236,7 +239,7 @@ public:
   /// replaceCallSite - Make the edge in the node for Old CallSite be for
   /// New CallSite instead.  Note that this method takes linear time, so it
   /// should be used sparingly.
-  void replaceCallSite(CallSite Old, CallSite New);
+  void replaceCallSite(CallSite Old, CallSite New, CallGraphNode *NewCallee);
 
   friend class CallGraph;
 

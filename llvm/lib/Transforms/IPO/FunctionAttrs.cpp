@@ -44,7 +44,7 @@ namespace {
     FunctionAttrs() : CallGraphSCCPass(&ID) {}
 
     // runOnSCC - Analyze the SCC, performing the transformation if possible.
-    bool runOnSCC(const std::vector<CallGraphNode *> &SCC);
+    bool runOnSCC(std::vector<CallGraphNode *> &SCC);
 
     // AddReadAttrs - Deduce readonly/readnone attributes for the SCC.
     bool AddReadAttrs(const std::vector<CallGraphNode *> &SCC);
@@ -339,7 +339,7 @@ bool FunctionAttrs::AddNoAliasAttrs(const std::vector<CallGraphNode *> &SCC) {
   return MadeChange;
 }
 
-bool FunctionAttrs::runOnSCC(const std::vector<CallGraphNode *> &SCC) {
+bool FunctionAttrs::runOnSCC(std::vector<CallGraphNode *> &SCC) {
   bool Changed = AddReadAttrs(SCC);
   Changed |= AddNoCaptureAttrs(SCC);
   Changed |= AddNoAliasAttrs(SCC);

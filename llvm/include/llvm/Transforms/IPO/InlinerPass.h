@@ -40,7 +40,7 @@ struct Inliner : public CallGraphSCCPass {
 
   // Main run interface method, this implements the interface required by the
   // Pass class.
-  virtual bool runOnSCC(const std::vector<CallGraphNode *> &SCC);
+  virtual bool runOnSCC(std::vector<CallGraphNode *> &SCC);
 
   // doFinalization - Remove now-dead linkonce functions at the end of
   // processing to avoid breaking the SCC traversal.

@@ -41,7 +41,7 @@ namespace {
     PruneEH() : CallGraphSCCPass(&ID) {}
 
     // runOnSCC - Analyze the SCC, performing the transformation if possible.
-    bool runOnSCC(const std::vector<CallGraphNode *> &SCC);
+    bool runOnSCC(std::vector<CallGraphNode *> &SCC);
 
     bool SimplifyFunction(Function *F);
     void DeleteBasicBlock(BasicBlock *BB);
@@ -55,7 +55,7 @@ X("prune-eh", "Remove unused exception handling info");
 Pass *llvm::createPruneEHPass() { return new PruneEH(); }
 
 
-bool PruneEH::runOnSCC(const std::vector<CallGraphNode *> &SCC) {
+bool PruneEH::runOnSCC(std::vector<CallGraphNode *> &SCC) {
   SmallPtrSet<CallGraphNode *, 8> SCCNodes;
   CallGraph &CG = getAnalysis<CallGraph>();
   bool MadeChange = false;
@@ -187,7 +187,7 @@ bool PruneEH::SimplifyFunction(Function *F) {
         UnwindBlock->removePredecessor(II->getParent());
 
         // Fix up the call graph.
-        CGN->replaceCallSite(II, Call);
+        CGN->replaceCallSite(II, Call, 0/*keep callee*/);
 
         // Insert a branch to the normal destination right before the
         // invoke.
