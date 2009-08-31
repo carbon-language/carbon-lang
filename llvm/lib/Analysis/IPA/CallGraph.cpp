@@ -196,7 +196,7 @@ void CallGraph::dump() const {
 // is to dropAllReferences before calling this.
 //
 Function *CallGraph::removeFunctionFromModule(CallGraphNode *CGN) {
-  assert(CGN->CalledFunctions.empty() && "Cannot remove function from call "
+  assert(CGN->empty() && "Cannot remove function from call "
          "graph if it references other functions!");
   Function *F = CGN->getFunction(); // Get the function for the call graph node
   delete CGN;                       // Delete the call graph node for this func
