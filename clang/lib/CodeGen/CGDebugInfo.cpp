@@ -870,7 +870,7 @@ void CGDebugInfo::EmitRegionStart(llvm::Function *Fn, CGBuilderTy &Builder) {
   llvm::DIDescriptor D;
   if (!RegionStack.empty())
     D = RegionStack.back();
-  D = DebugFactory.CreateBlock(D);
+  D = DebugFactory.CreateLexicalBlock(D);
   RegionStack.push_back(D);
   DebugFactory.InsertRegionStart(D, Builder.GetInsertBlock());
 }
