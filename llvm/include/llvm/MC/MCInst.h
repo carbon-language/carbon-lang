@@ -16,13 +16,13 @@
 #ifndef LLVM_MC_MCINST_H
 #define LLVM_MC_MCINST_H
 
-#include "llvm/MC/MCValue.h"
 #include "llvm/ADT/SmallVector.h"
 #include "llvm/Support/DataTypes.h"
 #include "llvm/Support/DebugLoc.h"
 
 namespace llvm {
 class raw_ostream;
+class MCExpr;
 
 /// MCOperand - Instances of this class represent operands of the MCInst class.
 /// This is a simple discriminated union.
@@ -32,14 +32,14 @@ class MCOperand {
     kRegister,                ///< Register operand.
     kImmediate,               ///< Immediate operand.
     kMBBLabel,                ///< Basic block label.
-    kMCValue                  ///< Relocatable immediate operand.
+    kExpr                     ///< Relocatable immediate operand.
   };
   unsigned char Kind;
   
   union {
     unsigned RegVal;
     int64_t ImmVal;
-    MCValue MCValueVal;
+    const MCExpr *ExprVal;
     struct {
       unsigned FunctionNo;
       unsigned BlockNo;
@@ -54,7 +54,7 @@ public:
   bool isReg() const { return Kind == kRegister; }
   bool isImm() const { return Kind == kImmediate; }
   bool isMBBLabel() const { return Kind == kMBBLabel; }
-  bool isMCValue() const { return Kind == kMCValue; }
+  bool isExpr() const { return Kind == kExpr; }
   
   /// getReg - Returns the register number.
   unsigned getReg() const {
@@ -78,21 +78,21 @@ public:
   }
   
   unsigned getMBBLabelFunction() const {
-    assert(isMBBLabel() && "Wrong accessor");
+    assert(isMBBLabel() && "This is not a machine basic block");
     return MBBLabel.FunctionNo; 
   }
   unsigned getMBBLabelBlock() const {
-    assert(isMBBLabel() && "Wrong accessor");
+    assert(isMBBLabel() && "This is not a machine basic block");
     return MBBLabel.BlockNo; 
   }
 
-  const MCValue &getMCValue() const {
-    assert(isMCValue() && "This is not an MCValue");
-    return MCValueVal;
+  const MCExpr *getExpr() const {
+    assert(isExpr() && "This is not an expression");
+    return ExprVal;
   }
-  void setMCValue(const MCValue &Val) {
-    assert(isMCValue() && "This is not an MCValue");
-    MCValueVal = Val;
+  void setExpr(const MCExpr *Val) {
+    assert(isExpr() && "This is not an expression");
+    ExprVal = Val;
   }
   
   static MCOperand CreateReg(unsigned Reg) {
@@ -114,10 +114,10 @@ public:
     Op.MBBLabel.BlockNo = MBB;
     return Op;
   }
-  static MCOperand CreateMCValue(const MCValue &Val) {
+  static MCOperand CreateExpr(const MCExpr *Val) {
     MCOperand Op;
-    Op.Kind = kMCValue;
-    Op.MCValueVal = Val;
+    Op.Kind = kExpr;
+    Op.ExprVal = Val;
     return Op;
   }
 

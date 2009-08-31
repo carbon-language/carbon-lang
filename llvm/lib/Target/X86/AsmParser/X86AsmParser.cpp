@@ -12,8 +12,8 @@
 #include "llvm/ADT/Twine.h"
 #include "llvm/MC/MCAsmLexer.h"
 #include "llvm/MC/MCAsmParser.h"
+#include "llvm/MC/MCExpr.h"
 #include "llvm/MC/MCInst.h"
-#include "llvm/MC/MCValue.h"
 #include "llvm/Support/SourceMgr.h"
 #include "llvm/Target/TargetRegistry.h"
 #include "llvm/Target/TargetAsmParser.h"
@@ -85,12 +85,12 @@ struct X86Operand {
     } Reg;
 
     struct {
-      MCValue Val;
+      const MCExpr *Val;
     } Imm;
 
     struct {
       unsigned SegReg;
-      MCValue Disp;
+      const MCExpr *Disp;
       unsigned BaseReg;
       unsigned IndexReg;
       unsigned Scale;
@@ -107,12 +107,12 @@ struct X86Operand {
     return Reg.RegNo;
   }
 
-  const MCValue &getImm() const {
+  const MCExpr *getImm() const {
     assert(Kind == Immediate && "Invalid access!");
     return Imm.Val;
   }
 
-  const MCValue &getMemDisp() const {
+  const MCExpr *getMemDisp() const {
     assert(Kind == Memory && "Invalid access!");
     return Mem.Disp;
   }
@@ -143,11 +143,12 @@ struct X86Operand {
     if (!isImm())
       return false;
 
-    if (!getImm().isAbsolute())
-      return true;
+    if (const MCConstantExpr *CE = dyn_cast<MCConstantExpr>(getImm())) {
+      int64_t Value = CE->getValue();
+      return Value == (int64_t) (int8_t) Value;
+    }
 
-    int64_t Value = getImm().getConstant();
-    return Value == (int64_t) (int8_t) Value;
+    return true;
   }
   
   bool isMem() const { return Kind == Memory; }
@@ -161,13 +162,13 @@ struct X86Operand {
 
   void addImmOperands(MCInst &Inst, unsigned N) const {
     assert(N == 1 && "Invalid number of operands!");
-    Inst.addOperand(MCOperand::CreateMCValue(getImm()));
+    Inst.addOperand(MCOperand::CreateExpr(getImm()));
   }
 
   void addImmSExt8Operands(MCInst &Inst, unsigned N) const {
     // FIXME: Support user customization of the render method.
     assert(N == 1 && "Invalid number of operands!");
-    Inst.addOperand(MCOperand::CreateMCValue(getImm()));
+    Inst.addOperand(MCOperand::CreateExpr(getImm()));
   }
 
   void addMemOperands(MCInst &Inst, unsigned N) const {
@@ -176,7 +177,7 @@ struct X86Operand {
     Inst.addOperand(MCOperand::CreateReg(getMemBaseReg()));
     Inst.addOperand(MCOperand::CreateImm(getMemScale()));
     Inst.addOperand(MCOperand::CreateReg(getMemIndexReg()));
-    Inst.addOperand(MCOperand::CreateMCValue(getMemDisp()));
+    Inst.addOperand(MCOperand::CreateExpr(getMemDisp()));
 
     // FIXME: What a hack.
     if (N == 5)
@@ -198,15 +199,16 @@ struct X86Operand {
     return Res;
   }
 
-  static X86Operand CreateImm(MCValue Val) {
+  static X86Operand CreateImm(const MCExpr *Val) {
     X86Operand Res;
     Res.Kind = Immediate;
     Res.Imm.Val = Val;
     return Res;
   }
 
-  static X86Operand CreateMem(unsigned SegReg, MCValue Disp, unsigned BaseReg,
-                              unsigned IndexReg, unsigned Scale) {
+  static X86Operand CreateMem(unsigned SegReg, const MCExpr *Disp,
+                              unsigned BaseReg, unsigned IndexReg,
+                              unsigned Scale) {
     // We should never just have a displacement, that would be an immediate.
     assert((SegReg || BaseReg || IndexReg) && "Invalid memory operand!");
 
@@ -257,8 +259,8 @@ bool X86ATTAsmParser::ParseOperand(X86Operand &Op) {
   case AsmToken::Dollar: {
     // $42 -> immediate.
     getLexer().Lex();
-    MCValue Val;
-    if (getParser().ParseRelocatableExpression(Val))
+    const MCExpr *Val;
+    if (getParser().ParseExpression(Val))
       return true;
     Op = X86Operand::CreateImm(Val);
     return false;
@@ -275,9 +277,9 @@ bool X86ATTAsmParser::ParseMemOperand(X86Operand &Op) {
   // of a memory operand with a missing displacement "(%ebx)" or "(,%eax)".  The
   // only way to do this without lookahead is to eat the ( and see what is after
   // it.
-  MCValue Disp = MCValue::get(0, 0, 0);
+  const MCExpr *Disp = MCConstantExpr::Create(0, getParser().getContext());
   if (getLexer().isNot(AsmToken::LParen)) {
-    if (getParser().ParseRelocatableExpression(Disp)) return true;
+    if (getParser().ParseExpression(Disp)) return true;
     
     // After parsing the base expression we could either have a parenthesized
     // memory address or not.  If not, return now.  If so, eat the (.
@@ -302,7 +304,7 @@ bool X86ATTAsmParser::ParseMemOperand(X86Operand &Op) {
       // memory operand consumed.
     } else {
       // It must be an parenthesized expression, parse it now.
-      if (getParser().ParseParenRelocatableExpression(Disp))
+      if (getParser().ParseParenExpression(Disp))
         return true;
       
       // After parsing the base expression we could either have a parenthesized

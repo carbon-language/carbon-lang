@@ -30,6 +30,7 @@
 #include "llvm/Function.h"
 #include "llvm/ADT/Statistic.h"
 #include "llvm/MC/MCCodeEmitter.h"
+#include "llvm/MC/MCExpr.h"
 #include "llvm/MC/MCInst.h"
 #include "llvm/Support/Compiler.h"
 #include "llvm/Support/Debug.h"
@@ -968,12 +969,12 @@ public:
       Instr->addOperand(MachineOperand::CreateImm(Op.getImm()));
       return true;
     }
-    if (!Op.isMCValue())
+    if (!Op.isExpr())
       return false;
 
-    const MCValue &Val = Op.getMCValue();
-    if (Val.isAbsolute()) {
-      Instr->addOperand(MachineOperand::CreateImm(Val.getConstant()));
+    const MCExpr *Expr = Op.getExpr();
+    if (const MCConstantExpr *CE = dyn_cast<MCConstantExpr>(Expr)) {
+      Instr->addOperand(MachineOperand::CreateImm(CE->getValue()));
       return true;
     }
 
@@ -1036,9 +1037,8 @@ public:
       if (CurOp < NumOps) {
         // Hack to make branches work.
         if (!(Desc.TSFlags & X86II::ImmMask) &&
-            MI.getOperand(0).isMCValue() && 
-            MI.getOperand(0).getMCValue().getSymA() &&
-            !MI.getOperand(0).getMCValue().getSymB())
+            MI.getOperand(0).isExpr() &&
+            isa<MCSymbolRefExpr>(MI.getOperand(0).getExpr()))
           Instr->addOperand(MachineOperand::CreateMBB(DummyMBB));
         else
           OK &= AddImmToInstr(MI, Instr, CurOp);

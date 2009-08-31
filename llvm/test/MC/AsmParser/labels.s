@@ -15,12 +15,12 @@ a:
 foo:    
 // CHECK: addl $24, "a$b"(%eax)
         addl $24, "a$b"(%eax)    
-// CHECK: addl $24, "a$b" + 10(%eax)
+// CHECK: addl $24, ("a$b" + 10)(%eax)
         addl $24, ("a$b" + 10)(%eax)
         
 // CHECK: "b$c" = 10
 "b$c" = 10
-// CHECK: addl $10, %eax
+// CHECK: addl $"b$c", %eax
         addl "b$c", %eax
         
 // CHECK: set "a 0", 11

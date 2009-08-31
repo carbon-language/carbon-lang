@@ -16,6 +16,7 @@
 #include "llvm/MC/MCInst.h"
 #include "X86ATTAsmPrinter.h"
 #include "llvm/MC/MCAsmInfo.h"
+#include "llvm/MC/MCExpr.h"
 #include "llvm/Support/ErrorHandling.h"
 #include "llvm/Support/FormattedStream.h"
 using namespace llvm;
@@ -55,8 +56,8 @@ void X86ATTAsmPrinter::print_pcrel_imm(const MCInst *MI, unsigned OpNo) {
   
   if (Op.isImm())
     O << Op.getImm();
-  else if (Op.isMCValue())
-    Op.getMCValue().print(O);
+  else if (Op.isExpr())
+    Op.getExpr()->print(O);
   else if (Op.isMBBLabel())
     // FIXME: Keep in sync with printBasicBlockLabel.  printBasicBlockLabel
     // should eventually call into this code, not the other way around.
@@ -90,9 +91,9 @@ void X86ATTAsmPrinter::printOperand(const MCInst *MI, unsigned OpNo,
     O << '$';
     O << Op.getImm();
     return;
-  } else if (Op.isMCValue()) {
+  } else if (Op.isExpr()) {
     O << '$';
-    Op.getMCValue().print(O);
+    Op.getExpr()->print(O);
     return;
   }
   
@@ -109,8 +110,8 @@ void X86ATTAsmPrinter::printLeaMemReference(const MCInst *MI, unsigned Op) {
     int64_t DispVal = DispSpec.getImm();
     if (DispVal || (!IndexReg.getReg() && !BaseReg.getReg()))
       O << DispVal;
-  } else if (DispSpec.isMCValue()) {
-    DispSpec.getMCValue().print(O);
+  } else if (DispSpec.isExpr()) {
+    DispSpec.getExpr()->print(O);
   } else {
     llvm_unreachable("non-immediate displacement for LEA?");
     //assert(DispSpec.isGlobal() || DispSpec.isCPI() ||

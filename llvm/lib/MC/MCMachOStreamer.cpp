@@ -12,6 +12,7 @@
 #include "llvm/MC/MCAssembler.h"
 #include "llvm/MC/MCContext.h"
 #include "llvm/MC/MCCodeEmitter.h"
+#include "llvm/MC/MCExpr.h"
 #include "llvm/MC/MCInst.h"
 #include "llvm/MC/MCSection.h"
 #include "llvm/MC/MCSymbol.h"
@@ -92,6 +93,30 @@ public:
       getSymbolData(*const_cast<MCSymbol*>(Value.getSymA()));
     if (Value.getSymB())
       getSymbolData(*const_cast<MCSymbol*>(Value.getSymB()));
+    return Value;
+  }
+
+  const MCExpr *AddValueSymbols(const MCExpr *Value) {
+    switch (Value->getKind()) {
+    case MCExpr::Constant:
+      break;
+
+    case MCExpr::Binary: {
+      const MCBinaryExpr *BE = cast<MCBinaryExpr>(Value);
+      AddValueSymbols(BE->getLHS());
+      AddValueSymbols(BE->getRHS());
+      break;
+    }
+
+    case MCExpr::SymbolRef:
+      getSymbolData(cast<MCSymbolRefExpr>(Value)->getSymbol());
+      break;
+
+    case MCExpr::Unary:
+      AddValueSymbols(cast<MCUnaryExpr>(Value)->getSubExpr());
+      break;
+    }
+
     return Value;
   }
 
@@ -330,8 +355,8 @@ void MCMachOStreamer::EmitValueToOffset(const MCValue &Offset,
 void MCMachOStreamer::EmitInstruction(const MCInst &Inst) {
   // Scan for values.
   for (unsigned i = 0; i != Inst.getNumOperands(); ++i)
-    if (Inst.getOperand(i).isMCValue())
-      AddValueSymbols(Inst.getOperand(i).getMCValue());
+    if (Inst.getOperand(i).isExpr())
+      AddValueSymbols(Inst.getOperand(i).getExpr());
 
   if (!Emitter)
     llvm_unreachable("no code emitter available!");

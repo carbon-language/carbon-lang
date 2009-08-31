@@ -10,13 +10,14 @@
 #include "llvm/MC/MCStreamer.h"
 #include "llvm/ADT/SmallString.h"
 #include "llvm/CodeGen/AsmPrinter.h"
+#include "llvm/MC/MCAsmInfo.h"
 #include "llvm/MC/MCCodeEmitter.h"
 #include "llvm/MC/MCContext.h"
+#include "llvm/MC/MCExpr.h"
 #include "llvm/MC/MCInst.h"
 #include "llvm/MC/MCSectionMachO.h"
 #include "llvm/MC/MCSymbol.h"
 #include "llvm/MC/MCValue.h"
-#include "llvm/MC/MCAsmInfo.h"
 #include "llvm/Support/ErrorHandling.h"
 #include "llvm/Support/MathExtras.h"
 #include "llvm/Support/Format.h"
@@ -271,18 +272,6 @@ void MCAsmStreamer::EmitValueToOffset(const MCValue &Offset,
   OS << ".org " << Offset << ", " << (unsigned) Value << '\n';
 }
 
-static raw_ostream &operator<<(raw_ostream &OS, const MCOperand &Op) {
-  if (Op.isReg())
-    return OS << "reg:" << Op.getReg();
-  if (Op.isImm())
-    return OS << "imm:" << Op.getImm();
-  if (Op.isMBBLabel())
-    return OS << "mbblabel:(" 
-              << Op.getMBBLabelFunction() << ", " << Op.getMBBLabelBlock();
-  assert(Op.isMCValue() && "Invalid operand!");
-  return OS << "val:" << Op.getMCValue();
-}
-
 void MCAsmStreamer::EmitInstruction(const MCInst &Inst) {
   assert(CurSection && "Cannot emit contents before setting section!");
 
@@ -312,15 +301,8 @@ void MCAsmStreamer::EmitInstruction(const MCInst &Inst) {
 
   // Otherwise fall back to a structural printing for now. Eventually we should
   // always have access to the target specific printer.
-  OS << "MCInst("
-     << "opcode=" << Inst.getOpcode() << ", "
-     << "operands=[";
-  for (unsigned i = 0, e = Inst.getNumOperands(); i != e; ++i) {
-    if (i)
-      OS << ", ";
-    OS << Inst.getOperand(i);
-  }
-  OS << "])\n";
+  Inst.print(OS);
+  OS << '\n';
 }
 
 void MCAsmStreamer::Finish() {

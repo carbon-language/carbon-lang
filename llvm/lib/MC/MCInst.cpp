@@ -8,6 +8,7 @@
 //===----------------------------------------------------------------------===//
 
 #include "llvm/MC/MCInst.h"
+#include "llvm/MC/MCExpr.h"
 #include "llvm/Support/raw_ostream.h"
 
 using namespace llvm;
@@ -23,9 +24,9 @@ void MCOperand::print(raw_ostream &OS) const {
   else if (isMBBLabel())
     OS << "MBB:(" << getMBBLabelFunction() << ","
        << getMBBLabelBlock() << ")";
-  else if (isMCValue()) {
-    OS << "Value:(";
-    getMCValue().print(OS);
+  else if (isExpr()) {
+    OS << "Expr:(";
+    getExpr()->print(OS);
     OS << ")";
   } else
     OS << "UNDEFINED";
