@@ -21,6 +21,7 @@
 namespace llvm {
 class raw_ostream;
 class MCAssembler;
+class MCContext;
 class MCSection;
 class MCSectionData;
 
@@ -559,6 +560,8 @@ private:
   MCAssembler(const MCAssembler&);    // DO NOT IMPLEMENT
   void operator=(const MCAssembler&); // DO NOT IMPLEMENT
 
+  MCContext &Context;
+
   raw_ostream &OS;
   
   iplist<MCSectionData> Sections;
@@ -584,8 +587,10 @@ public:
   // concrete and require clients to pass in a target like object. The other
   // option is to make this abstract, and have targets provide concrete
   // implementations as we do with AsmParser.
-  MCAssembler(raw_ostream &OS);
+  MCAssembler(MCContext &_Context, raw_ostream &OS);
   ~MCAssembler();
+
+  MCContext &getContext() const { return Context; }
 
   /// Finish - Do final processing and write the object to the output stream.
   void Finish();

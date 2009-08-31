@@ -83,7 +83,7 @@ private:
 
 public:
   MCMachOStreamer(MCContext &Context, raw_ostream &_OS, MCCodeEmitter *_Emitter)
-    : MCStreamer(Context), Assembler(_OS), Emitter(_Emitter),
+    : MCStreamer(Context), Assembler(Context, _OS), Emitter(_Emitter),
       CurSectionData(0) {}
   ~MCMachOStreamer() {}
 

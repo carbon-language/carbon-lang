@@ -940,9 +940,8 @@ MCSymbolData::MCSymbolData(MCSymbol &_Symbol, MCFragment *_Fragment,
 
 /* *** */
 
-MCAssembler::MCAssembler(raw_ostream &_OS)
-  : OS(_OS),
-    SubsectionsViaSymbols(false)
+MCAssembler::MCAssembler(MCContext &_Context, raw_ostream &_OS)
+  : Context(_Context), OS(_OS), SubsectionsViaSymbols(false)
 {
 }
 
