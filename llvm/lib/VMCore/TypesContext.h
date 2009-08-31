@@ -221,7 +221,6 @@ public:
     // PATypeHolder won't destroy non-abstract types.
     // We can't destroy them by simply iterating, because
     // they may contain references to each-other.
-#if 0
     for (std::multimap<unsigned, PATypeHolder>::iterator I
          = TypesByHash.begin(), E = TypesByHash.end(); I != E; ++I) {
       Type *Ty = const_cast<Type*>(I->second.Ty);
@@ -235,7 +234,6 @@ public:
         operator delete(Ty);
       }
     }
-#endif
   }
 
   void RemoveFromTypesByHash(unsigned Hash, const Type *Ty) {

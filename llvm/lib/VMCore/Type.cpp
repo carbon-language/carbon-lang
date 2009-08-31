@@ -500,7 +500,7 @@ void DerivedType::dropAllTypeUses() {
       
         llvm_release_global_lock();
       }
-    } else {
+    } else if (!AlwaysOpaqueTy) {
       AlwaysOpaqueTy = OpaqueType::get(getContext());
       Holder = new PATypeHolder(AlwaysOpaqueTy);
     } 

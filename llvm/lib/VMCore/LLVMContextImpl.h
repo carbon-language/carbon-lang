@@ -96,7 +96,6 @@ struct DenseMapAPFloatKeyInfo {
 class LLVMContextImpl {
 public:
   sys::SmartRWMutex<true> ConstantsLock;
-  
   typedef DenseMap<DenseMapAPIntKeyInfo::KeyTy, ConstantInt*, 
                          DenseMapAPIntKeyInfo> IntMapTy;
   IntMapTy IntConstants;
@@ -196,6 +195,28 @@ public:
     Int16Ty(C, 16),
     Int32Ty(C, 32),
     Int64Ty(C, 64) { }
+
+  ~LLVMContextImpl()
+  {
+    ExprConstants.freeConstants();
+    ArrayConstants.freeConstants();
+    StructConstants.freeConstants();
+    VectorConstants.freeConstants();
+
+    AggZeroConstants.freeConstants();
+    NullPtrConstants.freeConstants();
+    UndefValueConstants.freeConstants();
+    for (IntMapTy::iterator I=IntConstants.begin(), E=IntConstants.end(); 
+         I != E; ++I) {
+      if (I->second->use_empty())
+        delete I->second;
+    }
+    for (FPMapTy::iterator I=FPConstants.begin(), E=FPConstants.end(); 
+         I != E; ++I) {
+      if (I->second->use_empty())
+        delete I->second;
+    }
+  }
 };
 
 }

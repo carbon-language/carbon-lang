@@ -575,6 +575,14 @@ public:
   // to enforce proper synchronization.
   typename MapTy::iterator map_begin() { return Map.begin(); }
   typename MapTy::iterator map_end() { return Map.end(); }
+
+  void freeConstants() {
+    for (typename MapTy::iterator I=Map.begin(), E=Map.end();
+         I != E; ++I) {
+      if (I->second->use_empty())
+        delete I->second;
+    }
+  }
     
   /// InsertOrGetItem - Return an iterator for the specified element.
   /// If the element exists in the map, the returned iterator points to the
