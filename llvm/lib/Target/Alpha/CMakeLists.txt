@@ -19,9 +19,9 @@ add_llvm_target(AlphaCodeGen
   AlphaISelLowering.cpp
   AlphaJITInfo.cpp
   AlphaLLRP.cpp
+  AlphaMCAsmInfo.cpp
   AlphaRegisterInfo.cpp
   AlphaSubtarget.cpp
-  AlphaMCAsmInfo.cpp
   AlphaTargetMachine.cpp
   )
 

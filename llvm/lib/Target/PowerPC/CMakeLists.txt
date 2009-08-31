@@ -20,10 +20,10 @@ add_llvm_target(PowerPCCodeGen
   PPCISelLowering.cpp
   PPCJITInfo.cpp
   PPCMachOWriterInfo.cpp
+  PPCMCAsmInfo.cpp
   PPCPredicates.cpp
   PPCRegisterInfo.cpp
   PPCSubtarget.cpp
-  PPCMCAsmInfo.cpp
   PPCTargetMachine.cpp
   )
 

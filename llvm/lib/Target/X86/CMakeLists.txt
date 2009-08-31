@@ -22,9 +22,9 @@ set(sources
   X86ISelLowering.cpp
   X86InstrInfo.cpp
   X86JITInfo.cpp
+  X86MCAsmInfo.cpp
   X86RegisterInfo.cpp
   X86Subtarget.cpp
-  X86MCAsmInfo.cpp
   X86TargetMachine.cpp
   X86FastISel.cpp
   )

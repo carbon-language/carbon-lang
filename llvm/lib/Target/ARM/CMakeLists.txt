@@ -22,9 +22,9 @@ add_llvm_target(ARMCodeGen
   ARMISelLowering.cpp
   ARMJITInfo.cpp
   ARMLoadStoreOptimizer.cpp
+  ARMMCAsmInfo.cpp
   ARMRegisterInfo.cpp
   ARMSubtarget.cpp
-  ARMMCAsmInfo.cpp
   ARMTargetMachine.cpp
   NEONPreAllocPass.cpp
   Thumb1InstrInfo.cpp

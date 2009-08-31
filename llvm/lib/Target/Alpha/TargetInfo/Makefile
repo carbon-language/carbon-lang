@@ -1,4 +1,4 @@
-#===- lib/Target/Alpha/TargetInfo/Makefile -----------------*- Makefile -*-===##
+##===- lib/Target/Alpha/TargetInfo/Makefile ----------------*- Makefile -*-===##
 #
 #                     The LLVM Compiler Infrastructure
 #

@@ -1,4 +1,4 @@
-##===- lib/Target/PIC16/Makefile ----------------------------*- Makefile -*-===##
+##===- lib/Target/PIC16/AsmPrinter/Makefile ----------------*- Makefile -*-===##
 #
 #                     The LLVM Compiler Infrastructure
 #

@@ -1,4 +1,4 @@
-##===- lib/Target/PowerPC/TargetInfo/Makefile ------------------*- Makefile -*-===##
+##===- lib/Target/PowerPC/TargetInfo/Makefile --------------*- Makefile -*-===##
 #
 #                     The LLVM Compiler Infrastructure
 #

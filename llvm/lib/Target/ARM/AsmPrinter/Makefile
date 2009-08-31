@@ -1,4 +1,4 @@
-##===- lib/Target/ARM/Makefile -----------------------------*- Makefile -*-===##
+##===- lib/Target/ARM/AsmPrinter/Makefile ------------------*- Makefile -*-===##
 #
 #                     The LLVM Compiler Infrastructure
 #
