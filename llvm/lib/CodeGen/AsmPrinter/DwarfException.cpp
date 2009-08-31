@@ -826,7 +826,7 @@ void DwarfException::EmitExceptionTable() {
       std::string GLN;
       O << Asm->getGlobalLinkName(GV, GLN);
     } else {
-      O << "0";
+      O << "0x0";
     }
 
     Asm->EOL("TypeInfo");
