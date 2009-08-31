@@ -11,7 +11,74 @@
 #include "llvm/MC/MCContext.h"
 #include "llvm/MC/MCSymbol.h"
 #include "llvm/MC/MCValue.h"
+#include "llvm/Support/raw_ostream.h"
 using namespace llvm;
+
+void MCExpr::print(raw_ostream &OS) const {
+  switch (getKind()) {
+  case MCExpr::Constant:
+    OS << cast<MCConstantExpr>(*this).getValue();
+    return;
+
+  case MCExpr::SymbolRef:
+    cast<MCSymbolRefExpr>(*this).getSymbol().print(OS);
+    return;
+
+  case MCExpr::Unary: {
+    const MCUnaryExpr &UE = cast<MCUnaryExpr>(*this);
+    switch (UE.getOpcode()) {
+    default: assert(0 && "Invalid opcode!");
+    case MCUnaryExpr::LNot:  OS << '!'; break;
+    case MCUnaryExpr::Minus: OS << '-'; break;
+    case MCUnaryExpr::Not:   OS << '~'; break;
+    case MCUnaryExpr::Plus:  OS << '+'; break;
+    }
+    UE.getSubExpr()->print(OS);
+    return;
+  }
+
+  case MCExpr::Binary: {
+    const MCBinaryExpr &BE = cast<MCBinaryExpr>(*this);
+    OS << '(';
+    BE.getLHS()->print(OS);
+    OS << ' ';
+    switch (BE.getOpcode()) {
+    default: assert(0 && "Invalid opcode!");
+    case MCBinaryExpr::Add:  OS <<  '+'; break;
+    case MCBinaryExpr::And:  OS <<  '&'; break;
+    case MCBinaryExpr::Div:  OS <<  '/'; break;
+    case MCBinaryExpr::EQ:   OS << "=="; break;
+    case MCBinaryExpr::GT:   OS <<  '>'; break;
+    case MCBinaryExpr::GTE:  OS << ">="; break;
+    case MCBinaryExpr::LAnd: OS << "&&"; break;
+    case MCBinaryExpr::LOr:  OS << "||"; break;
+    case MCBinaryExpr::LT:   OS <<  '<'; break;
+    case MCBinaryExpr::LTE:  OS << "<="; break;
+    case MCBinaryExpr::Mod:  OS <<  '%'; break;
+    case MCBinaryExpr::Mul:  OS <<  '*'; break;
+    case MCBinaryExpr::NE:   OS << "!="; break;
+    case MCBinaryExpr::Or:   OS <<  '|'; break;
+    case MCBinaryExpr::Shl:  OS << "<<"; break;
+    case MCBinaryExpr::Shr:  OS << ">>"; break;
+    case MCBinaryExpr::Sub:  OS <<  '-'; break;
+    case MCBinaryExpr::Xor:  OS <<  '^'; break;
+    }
+    OS << ' ';
+    BE.getRHS()->print(OS);
+    OS << ')';
+    return;
+  }
+  }
+
+  assert(0 && "Invalid expression kind!");
+}
+
+void MCExpr::dump() const {
+  print(errs());
+  errs() << '\n';
+}
+
+/* *** */
 
 const MCBinaryExpr * MCBinaryExpr::Create(Opcode Opc,
                                           const MCExpr *LHS,

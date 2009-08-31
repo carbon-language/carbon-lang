@@ -17,6 +17,7 @@ namespace llvm {
 class MCContext;
 class MCSymbol;
 class MCValue;
+class raw_ostream;
 
 /// MCExpr - Base class for the full range of assembler expressions which are
 /// needed for parsing.
@@ -43,6 +44,13 @@ public:
   /// @{
 
   ExprKind getKind() const { return Kind; }
+
+  /// @}
+  /// @name Utility Methods
+  /// @{
+
+  void print(raw_ostream &OS) const;
+  void dump() const;
 
   /// @}
   /// @name Expression Evaluation
