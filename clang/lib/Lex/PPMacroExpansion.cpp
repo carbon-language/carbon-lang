@@ -484,6 +484,9 @@ static bool HasFeature(const Preprocessor &PP, const IdentifierInfo *II) {
   case 6:
     if (II->isStr("blocks")) return LangOpts.Blocks;
     return false;
+  case 19:
+    if (II->isStr("objc_nonfragile_abi")) return LangOpts.ObjCNonFragileABI;
+    return false;
   case 22:
     if (II->isStr("attribute_overloadable")) return true;
     return false;

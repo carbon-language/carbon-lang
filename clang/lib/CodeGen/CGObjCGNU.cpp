@@ -292,10 +292,7 @@ llvm::Value *CGObjCGNU::GetSelector(CGBuilderTy &Builder, const ObjCMethodDecl
 
 llvm::Constant *CGObjCGNU::MakeConstantString(const std::string &Str,
                                               const std::string &Name) {
-  llvm::Constant * ConstStr = llvm::ConstantArray::get(VMContext, Str);
-  ConstStr = new llvm::GlobalVariable(TheModule, ConstStr->getType(), true, 
-                                      llvm::GlobalValue::InternalLinkage,
-                                      ConstStr, Name);
+  llvm::Constant *ConstStr = CGM.GetAddrOfConstantCString(Str, Name.c_str());
   return llvm::ConstantExpr::getGetElementPtr(ConstStr, Zeros, 2);
 }
 
@@ -512,11 +509,9 @@ llvm::Constant *CGObjCGNU::GenerateMethodList(const std::string &ClassName,
       TheModule.getFunction(SymbolNameForMethod(ClassName, CategoryName,
                                                 MethodSels[i].getAsString(),
                                                 isClassMethodList))) {
-      llvm::Constant *C = 
-        CGM.GetAddrOfConstantCString(MethodSels[i].getAsString());
-      Elements.push_back(llvm::ConstantExpr::getGetElementPtr(C, Zeros, 2));
-      Elements.push_back(
-            llvm::ConstantExpr::getGetElementPtr(MethodTypes[i], Zeros, 2));
+      llvm::Constant *C = MakeConstantString(MethodSels[i].getAsString());
+      Elements.push_back(C);
+      Elements.push_back(MethodTypes[i]);
       Method = llvm::ConstantExpr::getBitCast(Method,
           llvm::PointerType::getUnqual(IMPTy));
       Elements.push_back(Method);
@@ -570,10 +565,8 @@ llvm::Constant *CGObjCGNU::GenerateIvarList(
   std::vector<llvm::Constant*> Elements;
   for (unsigned int i = 0, e = IvarNames.size() ; i < e ; i++) {
     Elements.clear();
-    Elements.push_back( llvm::ConstantExpr::getGetElementPtr(IvarNames[i],
-          Zeros, 2));
-    Elements.push_back( llvm::ConstantExpr::getGetElementPtr(IvarTypes[i],
-          Zeros, 2));
+    Elements.push_back(IvarNames[i]);
+    Elements.push_back(IvarTypes[i]);
     Elements.push_back(IvarOffsets[i]);
     Ivars.push_back(llvm::ConstantStruct::get(ObjCIvarTy, Elements));
   }
@@ -659,10 +652,8 @@ llvm::Constant *CGObjCGNU::GenerateProtocolMethodList(
   std::vector<llvm::Constant*> Elements;
   for (unsigned int i = 0, e = MethodTypes.size() ; i < e ; i++) {
     Elements.clear();
-    Elements.push_back(llvm::ConstantExpr::getGetElementPtr(MethodNames[i],
-          Zeros, 2)); 
-    Elements.push_back(
-          llvm::ConstantExpr::getGetElementPtr(MethodTypes[i], Zeros, 2));
+    Elements.push_back(MethodNames[i]); 
+    Elements.push_back(MethodTypes[i]);
     Methods.push_back(llvm::ConstantStruct::get(ObjCMethodDescTy, Elements));
   }
   llvm::ArrayType *ObjCMethodArrayTy = llvm::ArrayType::get(ObjCMethodDescTy,
@@ -758,8 +749,8 @@ void CGObjCGNU::GenerateProtocol(const ObjCProtocolDecl *PD) {
     std::string TypeStr;
     Context.getObjCEncodingForMethodDecl(*iter, TypeStr);
     InstanceMethodNames.push_back(
-        CGM.GetAddrOfConstantCString((*iter)->getSelector().getAsString()));
-    InstanceMethodTypes.push_back(CGM.GetAddrOfConstantCString(TypeStr));
+        MakeConstantString((*iter)->getSelector().getAsString()));
+    InstanceMethodTypes.push_back(MakeConstantString(TypeStr));
   }
   // Collect information about class methods:
   llvm::SmallVector<llvm::Constant*, 16> ClassMethodNames;
@@ -770,8 +761,8 @@ void CGObjCGNU::GenerateProtocol(const ObjCProtocolDecl *PD) {
     std::string TypeStr;
     Context.getObjCEncodingForMethodDecl((*iter),TypeStr);
     ClassMethodNames.push_back(
-        CGM.GetAddrOfConstantCString((*iter)->getSelector().getAsString()));
-    ClassMethodTypes.push_back(CGM.GetAddrOfConstantCString(TypeStr));
+        MakeConstantString((*iter)->getSelector().getAsString()));
+    ClassMethodTypes.push_back(MakeConstantString(TypeStr));
   }
 
   llvm::Constant *ProtocolList = GenerateProtocolList(Protocols);
@@ -813,7 +804,7 @@ void CGObjCGNU::GenerateCategory(const ObjCCategoryImplDecl *OCD) {
     InstanceMethodSels.push_back((*iter)->getSelector());
     std::string TypeStr;
     CGM.getContext().getObjCEncodingForMethodDecl(*iter,TypeStr);
-    InstanceMethodTypes.push_back(CGM.GetAddrOfConstantCString(TypeStr));
+    InstanceMethodTypes.push_back(MakeConstantString(TypeStr));
   }
 
   // Collect information about class methods
@@ -825,7 +816,7 @@ void CGObjCGNU::GenerateCategory(const ObjCCategoryImplDecl *OCD) {
     ClassMethodSels.push_back((*iter)->getSelector());
     std::string TypeStr;
     CGM.getContext().getObjCEncodingForMethodDecl(*iter,TypeStr);
-    ClassMethodTypes.push_back(CGM.GetAddrOfConstantCString(TypeStr));
+    ClassMethodTypes.push_back(MakeConstantString(TypeStr));
   }
 
   // Collect the names of referenced protocols
@@ -901,18 +892,16 @@ void CGObjCGNU::GenerateClass(const ObjCImplementationDecl *OID) {
   for (ObjCInterfaceDecl::ivar_iterator iter = ClassDecl->ivar_begin(),
       endIter = ClassDecl->ivar_end() ; iter != endIter ; iter++) {
       // Store the name
-      IvarNames.push_back(CGM.GetAddrOfConstantCString((*iter)
-                                                         ->getNameAsString()));
+      IvarNames.push_back(MakeConstantString((*iter)->getNameAsString()));
       // Get the type encoding for this ivar
       std::string TypeStr;
       Context.getObjCEncodingForType((*iter)->getType(), TypeStr);
-      IvarTypes.push_back(CGM.GetAddrOfConstantCString(TypeStr));
+      IvarTypes.push_back(MakeConstantString(TypeStr));
       // Get the offset
       uint64_t Offset;
       if (CGM.getContext().getLangOptions().ObjCNonFragileABI) {
-		Offset = ComputeIvarBaseOffset(CGM, ClassDecl, *iter) -
-			superInstanceSize;
-        ObjCIvarOffsetVariable(ClassDecl, *iter);
+        Offset = ComputeIvarBaseOffset(CGM, ClassDecl, *iter) -
+            superInstanceSize;
       } else {
         Offset = ComputeIvarBaseOffset(CGM, ClassDecl, *iter);
       }
@@ -929,7 +918,7 @@ void CGObjCGNU::GenerateClass(const ObjCImplementationDecl *OID) {
     InstanceMethodSels.push_back((*iter)->getSelector());
     std::string TypeStr;
     Context.getObjCEncodingForMethodDecl((*iter),TypeStr);
-    InstanceMethodTypes.push_back(CGM.GetAddrOfConstantCString(TypeStr));
+    InstanceMethodTypes.push_back(MakeConstantString(TypeStr));
   }
   for (ObjCImplDecl::propimpl_iterator 
          iter = OID->propimpl_begin(), endIter = OID->propimpl_end();
@@ -939,13 +928,13 @@ void CGObjCGNU::GenerateClass(const ObjCImplementationDecl *OID) {
       InstanceMethodSels.push_back(getter->getSelector());
       std::string TypeStr;
       Context.getObjCEncodingForMethodDecl(getter,TypeStr);
-      InstanceMethodTypes.push_back(CGM.GetAddrOfConstantCString(TypeStr));
+      InstanceMethodTypes.push_back(MakeConstantString(TypeStr));
     }
     if (ObjCMethodDecl *setter = property->getSetterMethodDecl()) {
       InstanceMethodSels.push_back(setter->getSelector());
       std::string TypeStr;
       Context.getObjCEncodingForMethodDecl(setter,TypeStr);
-      InstanceMethodTypes.push_back(CGM.GetAddrOfConstantCString(TypeStr));
+      InstanceMethodTypes.push_back(MakeConstantString(TypeStr));
     }
   }
 
@@ -958,7 +947,7 @@ void CGObjCGNU::GenerateClass(const ObjCImplementationDecl *OID) {
     ClassMethodSels.push_back((*iter)->getSelector());
     std::string TypeStr;
     Context.getObjCEncodingForMethodDecl((*iter),TypeStr);
-    ClassMethodTypes.push_back(CGM.GetAddrOfConstantCString(TypeStr));
+    ClassMethodTypes.push_back(MakeConstantString(TypeStr));
   }
   // Collect the names of referenced protocols
   llvm::SmallVector<std::string, 16> Protocols;
@@ -985,6 +974,43 @@ void CGObjCGNU::GenerateClass(const ObjCImplementationDecl *OID) {
       ClassMethodSels, ClassMethodTypes, true);
   llvm::Constant *IvarList = GenerateIvarList(IvarNames, IvarTypes,
       IvarOffsets);
+  // Irrespective of whether we are compiling for a fragile or non-fragile ABI, 
+  // we emit a symbol containing the offset for each ivar in the class.  This
+  // allows code compiled for the non-Fragile ABI to inherit from code compiled
+  // for the legacy ABI, without causing problems.  The converse is also
+  // possible, but causes all ivar accesses to be fragile.
+  int i = 0;
+  // Offset pointer for getting at the correct field in the ivar list when
+  // setting up the alias.  These are: The base address for the global, the
+  // ivar array (second field), the ivar in this list (set for each ivar), and
+  // the offset (third field in ivar structure)
+  const llvm::Type *IndexTy = llvm::Type::getInt32Ty(VMContext);
+  llvm::Constant *offsetPointerIndexes[] = {Zeros[0],
+      llvm::ConstantInt::get(IndexTy, 1), 0, 
+      llvm::ConstantInt::get(IndexTy, 2) };
+
+  for (ObjCInterfaceDecl::ivar_iterator iter = ClassDecl->ivar_begin(),
+      endIter = ClassDecl->ivar_end() ; iter != endIter ; iter++) {
+      const std::string Name = "__objc_ivar_offset_" + ClassName + '.'
+          +(*iter)->getNameAsString();
+      offsetPointerIndexes[2] = llvm::ConstantInt::get(IndexTy, i++);
+      // Get the correct ivar field
+      llvm::Constant *offsetValue = llvm::ConstantExpr::getGetElementPtr(
+              IvarList, offsetPointerIndexes, 4);
+      // Get the existing alias, if one exists.
+      llvm::GlobalVariable *offset = TheModule.getNamedGlobal(Name);
+      if (offset) {
+          offset->setInitializer(offsetValue);
+          // If this is the real definition, change its linkage type so that
+          // different modules will use this one, rather than their private
+          // copy.
+          offset->setLinkage(llvm::GlobalValue::ExternalLinkage);
+      } else {
+          // Add a new alias if there isn't one already.
+          offset = new llvm::GlobalVariable(TheModule, offsetValue->getType(),
+                  false, llvm::GlobalValue::ExternalLinkage, offsetValue, Name);
+      }
+  }
   //Generate metaclass for class methods
   llvm::Constant *MetaClassStruct = GenerateClassStructure(NULLPtr,
       NULLPtr, 0x2L, /*name*/"", 0, Zeros[0], GenerateIvarList(
@@ -1045,8 +1071,11 @@ llvm::Function *CGObjCGNU::ModuleInitFunction() {
     llvm::ArrayType *StaticsArrayTy = llvm::ArrayType::get(PtrToInt8Ty,
         ConstantStrings.size() + 1);
     ConstantStrings.push_back(NULLPtr);
-    Elements.push_back(MakeConstantString("NSConstantString",
-          ".objc_static_class_name"));
+
+    const char *StringClass = CGM.getLangOptions().ObjCConstantStringClass;
+    if (!StringClass) StringClass = "NXConstantString";
+    Elements.push_back(MakeConstantString(StringClass,
+                ".objc_static_class_name"));
     Elements.push_back(llvm::ConstantArray::get(StaticsArrayTy,
        ConstantStrings));
     llvm::StructType *StaticsListTy = 
@@ -1581,15 +1610,29 @@ llvm::GlobalVariable *CGObjCGNU::ObjCIvarOffsetVariable(
   // Emit the variable and initialize it with what we think the correct value
   // is.  This allows code compiled with non-fragile ivars to work correctly
   // when linked against code which isn't (most of the time).
-  llvm::GlobalVariable *IvarOffsetGV = CGM.getModule().getGlobalVariable(Name);
-  if (!IvarOffsetGV) {
+  llvm::GlobalVariable *IvarOffsetPointer = TheModule.getNamedGlobal(Name);
+  if (!IvarOffsetPointer) {
     uint64_t Offset = ComputeIvarBaseOffset(CGM, ID, Ivar);
     llvm::ConstantInt *OffsetGuess =
       llvm::ConstantInt::get(LongTy, Offset, "ivar");
-    IvarOffsetGV = new llvm::GlobalVariable(TheModule, LongTy, false,
-        llvm::GlobalValue::WeakAnyLinkage, OffsetGuess, Name);
+    // Don't emit the guess in non-PIC code because the linker will not be able
+    // to replace it with the real version for a library.  In non-PIC code you
+    // must compile with the fragile ABI if you want to use ivars from a
+    // GCC-compiled class.  
+    if (CGM.getLangOptions().PICLevel) {
+      llvm::GlobalVariable *IvarOffsetGV = new llvm::GlobalVariable(TheModule,
+            llvm::Type::getInt32Ty(VMContext), false,
+            llvm::GlobalValue::PrivateLinkage, OffsetGuess, Name+".guess");
+      IvarOffsetPointer = new llvm::GlobalVariable(TheModule,
+            IvarOffsetGV->getType(), false, llvm::GlobalValue::LinkOnceAnyLinkage,
+            IvarOffsetGV, Name);
+    } else {
+      IvarOffsetPointer = new llvm::GlobalVariable(TheModule,
+              llvm::PointerType::getUnqual(llvm::Type::getInt32Ty(VMContext)),
+              false, llvm::GlobalValue::ExternalLinkage, 0, Name);
+    }
   }
-  return IvarOffsetGV;
+  return IvarOffsetPointer;
 }
 
 LValue CGObjCGNU::EmitObjCValueForIvar(CodeGen::CodeGenFunction &CGF,
@@ -1622,10 +1665,10 @@ static const ObjCInterfaceDecl *FindIvarInterface(ASTContext &Context,
 llvm::Value *CGObjCGNU::EmitIvarOffset(CodeGen::CodeGenFunction &CGF,
                          const ObjCInterfaceDecl *Interface,
                          const ObjCIvarDecl *Ivar) {
-  if (CGF.getContext().getLangOptions().ObjCNonFragileABI) {
+  if (CGM.getLangOptions().ObjCNonFragileABI) {
     Interface = FindIvarInterface(CGM.getContext(), Interface, Ivar);
-    return CGF.Builder.CreateLoad(ObjCIvarOffsetVariable(Interface, Ivar),
-                                  false, "ivar");
+    return CGF.Builder.CreateLoad(CGF.Builder.CreateLoad(
+                ObjCIvarOffsetVariable(Interface, Ivar), false, "ivar"));
   }
   uint64_t Offset = ComputeIvarBaseOffset(CGF.CGM, Interface, Ivar);
   return llvm::ConstantInt::get(LongTy, Offset, "ivar");

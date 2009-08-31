@@ -361,6 +361,12 @@ ObjCExclusiveGC("fobjc-gc-only",
                 llvm::cl::desc("Use GC exclusively for Objective-C related "
                                "memory management"));
 
+static llvm::cl::opt<std::string>
+ObjCConstantStringClass("fconstant-string-class",
+                llvm::cl::value_desc("class name"),
+                llvm::cl::desc("Specify the class to use for constant "
+                               "Objective-C string objects."));
+
 static llvm::cl::opt<bool>
 ObjCEnableGC("fobjc-gc",
              llvm::cl::desc("Enable Objective-C garbage collection"));
@@ -817,6 +823,9 @@ static void InitializeLanguageStandard(LangOptions &Options, LangKind LK,
     Options.NeXTRuntime = 1;
   else if (GNURuntime)
     Options.NeXTRuntime = 0;
+
+  if (!ObjCConstantStringClass.empty())
+    Options.ObjCConstantStringClass = ObjCConstantStringClass.c_str();
 
   if (ObjCNonFragileABI)
     Options.ObjCNonFragileABI = 1;

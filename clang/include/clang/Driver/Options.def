@@ -373,6 +373,7 @@ OPTION("-fcolor-diagnostics", fcolor_diagnostics, Flag, f_Group, INVALID, "", 0,
 OPTION("-fcommon", fcommon, Flag, f_Group, INVALID, "", 0, 0, 0)
 OPTION("-fcompile-resource=", fcompile_resource_EQ, Joined, f_Group, INVALID, "", 0, 0, 0)
 OPTION("-fconstant-cfstrings", fconstant_cfstrings, Flag, clang_ignored_f_Group, INVALID, "", 0, 0, 0)
+OPTION("-fconstant-string-class=", fconstant_string_class_EQ, Joined, f_Group, INVALID, "", 0, 0, 0)
 OPTION("-fcreate-profile", fcreate_profile, Flag, f_Group, INVALID, "", 0, 0, 0)
 OPTION("-fdebug-pass-arguments", fdebug_pass_arguments, Flag, f_Group, INVALID, "", 0, 0, 0)
 OPTION("-fdebug-pass-structure", fdebug_pass_structure, Flag, f_Group, INVALID, "", 0, 0, 0)

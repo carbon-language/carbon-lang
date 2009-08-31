@@ -107,6 +107,8 @@ private:
 public:  
   unsigned InstantiationDepth;    // Maximum template instantiation depth.
 
+  const char *ObjCConstantStringClass;
+
   enum GCMode { NonGC, GCOnly, HybridGC };
   enum StackProtectorMode { SSPOff, SSPOn, SSPReq };
   enum VisibilityMode { 
@@ -120,6 +122,7 @@ public:
     GNUMode = ImplicitInt = Digraphs = 0;
     HexFloats = 0;
     GC = ObjC1 = ObjC2 = ObjCNonFragileABI = 0;
+    ObjCConstantStringClass = 0;
     C99 = Microsoft = CPlusPlus = CPlusPlus0x = 0;
     CXXOperatorNames = PascalStrings = WritableStrings = 0;
     Exceptions = NeXTRuntime = Freestanding = NoBuiltin = 0;
@@ -127,7 +130,7 @@ public:
     LaxVectorConversions = 1;
     HeinousExtensions = 0;
     AltiVec = OpenCL = StackProtector = 0;
-    
+
     SymbolVisibility = (unsigned) Default;
     
     // FIXME: The default should be 1.
