@@ -310,11 +310,11 @@ void SchedulePostRATDList::StartBlock(MachineBasicBlock *BB) {
     // prologue/epilogue insertion so there's no way to add additional
     // saved registers.
     //
-    // TODO: If the callee saves and restores these, then we can potentially
-    // use them between the save and the restore. To do that, we could scan
-    // the exit blocks to see which of these registers are defined.
-    // Alternatively, callee-saved registers that aren't saved and restored
-    // could be marked live-in in every block.
+    // TODO: there is a new method
+    // MachineFrameInfo::getPristineRegs(MBB). It gives you a list of
+    // CSRs that have not been saved when entering the MBB. The
+    // remaining CSRs have been saved and can be treated like call
+    // clobbered registers.
     for (const unsigned *I = TRI->getCalleeSavedRegs(); *I; ++I) {
       unsigned Reg = *I;
       Classes[Reg] = reinterpret_cast<TargetRegisterClass *>(-1);
@@ -788,7 +788,6 @@ void SchedulePostRATDList::FixupKills(MachineBasicBlock *MBB) {
        I != E; --Count) {
     MachineInstr *MI = --I;
 
-    DEBUG(MI->dump());
     // Update liveness.  Registers that are defed but not used in this
     // instruction are now dead. Mark register and all subregs as they
     // are completely defined.
@@ -800,8 +799,6 @@ void SchedulePostRATDList::FixupKills(MachineBasicBlock *MBB) {
       if (!MO.isDef()) continue;
       // Ignore two-addr defs.
       if (MI->isRegTiedToUseOperand(i)) continue;
-      
-      DEBUG(errs() << "*** Handling Defs " << TM.getRegisterInfo()->get(Reg).Name << '\n');
       
       KillIndices[Reg] = ~0u;
       
@@ -821,8 +818,6 @@ void SchedulePostRATDList::FixupKills(MachineBasicBlock *MBB) {
       if (!MO.isReg() || !MO.isUse()) continue;
       unsigned Reg = MO.getReg();
       if ((Reg == 0) || ReservedRegs.test(Reg)) continue;
-
-      DEBUG(errs() << "*** Handling Uses " << TM.getRegisterInfo()->get(Reg).Name << '\n');
 
       bool kill = false;
       if (killedRegs.find(Reg) == killedRegs.end()) {
@@ -851,14 +846,14 @@ void SchedulePostRATDList::FixupKills(MachineBasicBlock *MBB) {
       killedRegs.insert(Reg);
     }
     
-    // Mark any used register and subregs as now live...
+    // Mark any used register (that is not using undef) and subregs as
+    // now live...
     for (unsigned i = 0, e = MI->getNumOperands(); i != e; ++i) {
       MachineOperand &MO = MI->getOperand(i);
-      if (!MO.isReg() || !MO.isUse()) continue;
+      if (!MO.isReg() || !MO.isUse() || MO.isUndef()) continue;
       unsigned Reg = MO.getReg();
       if ((Reg == 0) || ReservedRegs.test(Reg)) continue;
 
-      DEBUG(errs() << "Killing " << TM.getRegisterInfo()->get(Reg).Name << '\n');
       KillIndices[Reg] = Count;
       
       for (const unsigned *Subreg = TRI->getSubRegisters(Reg);
