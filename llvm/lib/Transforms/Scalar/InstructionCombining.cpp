@@ -327,6 +327,8 @@ namespace {
     // instruction.  Instead, visit methods should return the value returned by
     // this function.
     Instruction *EraseInstFromFunction(Instruction &I) {
+      DEBUG(errs() << "IC: erase " << I);
+
       assert(I.use_empty() && "Cannot erase instruction that is used!");
       // Make sure that we reprocess all operands now that we reduced their
       // use counts.
@@ -10149,10 +10151,11 @@ bool InstCombiner::transformConstExprCastCall(CallSite CS) {
     }
   }
 
-  if (Caller->getType() != Type::getVoidTy(*Context) && !Caller->use_empty())
+  
+  if (!Caller->use_empty())
     Caller->replaceAllUsesWith(NV);
-  Caller->eraseFromParent();
-  Worklist.Remove(Caller);
+  
+  EraseInstFromFunction(*Caller);
   return true;
 }
 
