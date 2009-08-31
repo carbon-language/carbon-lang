@@ -19,7 +19,7 @@ class MCSymbol;
 class MCValue;
 
 /// MCExpr - Base class for the full range of assembler expressions which are
-/// needed for parsing.  
+/// needed for parsing.
 class MCExpr {
 public:
   enum ExprKind {
@@ -28,17 +28,25 @@ public:
     SymbolRef, ///< References to labels and assigned expressions.
     Unary      ///< Unary expressions.
   };
-  
+
 private:
   ExprKind Kind;
-  
+
+  MCExpr(const MCExpr&); // DO NOT IMPLEMENT
+  void operator=(const MCExpr&); // DO NOT IMPLEMENT
+
 protected:
   MCExpr(ExprKind _Kind) : Kind(_Kind) {}
-  
+
 public:
-  virtual ~MCExpr();
+  /// @name Accessors
+  /// @{
 
   ExprKind getKind() const { return Kind; }
+
+  /// @}
+  /// @name Expression Evaluation
+  /// @{
 
   /// EvaluateAsAbsolute - Try to evaluate the expression to an absolute value.
   ///
@@ -53,6 +61,8 @@ public:
   /// @result - True on success.
   bool EvaluateAsRelocatable(MCContext &Ctx, MCValue &Res) const;
 
+  /// @}
+
   static bool classof(const MCExpr *) { return true; }
 };
 
@@ -60,14 +70,25 @@ public:
 class MCConstantExpr : public MCExpr {
   int64_t Value;
 
-public:
-  MCConstantExpr(int64_t _Value) 
+  MCConstantExpr(int64_t _Value)
     : MCExpr(MCExpr::Constant), Value(_Value) {}
-  
+
+public:
+  /// @name Construction
+  /// @{
+
+  static const MCConstantExpr *Create(int64_t Value, MCContext &Ctx);
+
+  /// @}
+  /// @name Accessors
+  /// @{
+
   int64_t getValue() const { return Value; }
 
-  static bool classof(const MCExpr *E) { 
-    return E->getKind() == MCExpr::Constant; 
+  /// @}
+
+  static bool classof(const MCExpr *E) {
+    return E->getKind() == MCExpr::Constant;
   }
   static bool classof(const MCConstantExpr *) { return true; }
 };
@@ -79,16 +100,27 @@ public:
 /// assembler variable (defined constant), or constitute an implicit definition
 /// of the symbol as external.
 class MCSymbolRefExpr : public MCExpr {
-  MCSymbol *Symbol;
+  const MCSymbol *Symbol;
+
+  MCSymbolRefExpr(const MCSymbol *_Symbol)
+    : MCExpr(MCExpr::SymbolRef), Symbol(_Symbol) {}
 
 public:
-  MCSymbolRefExpr(MCSymbol *_Symbol) 
-    : MCExpr(MCExpr::SymbolRef), Symbol(_Symbol) {}
-  
-  MCSymbol *getSymbol() const { return Symbol; }
+  /// @name Construction
+  /// @{
 
-  static bool classof(const MCExpr *E) { 
-    return E->getKind() == MCExpr::SymbolRef; 
+  static const MCSymbolRefExpr *Create(const MCSymbol *Symbol, MCContext &Ctx);
+
+  /// @}
+  /// @name Accessors
+  /// @{
+
+  const MCSymbol &getSymbol() const { return *Symbol; }
+
+  /// @}
+
+  static bool classof(const MCExpr *E) {
+    return E->getKind() == MCExpr::SymbolRef;
   }
   static bool classof(const MCSymbolRefExpr *) { return true; }
 };
@@ -105,21 +137,44 @@ public:
 
 private:
   Opcode Op;
-  MCExpr *Expr;
+  const MCExpr *Expr;
+
+  MCUnaryExpr(Opcode _Op, const MCExpr *_Expr)
+    : MCExpr(MCExpr::Unary), Op(_Op), Expr(_Expr) {}
 
 public:
-  MCUnaryExpr(Opcode _Op, MCExpr *_Expr)
-    : MCExpr(MCExpr::Unary), Op(_Op), Expr(_Expr) {}
-  ~MCUnaryExpr() {
-    delete Expr;
+  /// @name Construction
+  /// @{
+
+  static const MCUnaryExpr *Create(Opcode Op, const MCExpr *Expr,
+                                   MCContext &Ctx);
+  static const MCUnaryExpr *CreateLNot(const MCExpr *Expr, MCContext &Ctx) {
+    return Create(LNot, Expr, Ctx);
+  }
+  static const MCUnaryExpr *CreateMinus(const MCExpr *Expr, MCContext &Ctx) {
+    return Create(Minus, Expr, Ctx);
+  }
+  static const MCUnaryExpr *CreateNot(const MCExpr *Expr, MCContext &Ctx) {
+    return Create(Not, Expr, Ctx);
+  }
+  static const MCUnaryExpr *CreatePlus(const MCExpr *Expr, MCContext &Ctx) {
+    return Create(Plus, Expr, Ctx);
   }
 
+  /// @}
+  /// @name Accessors
+  /// @{
+
+  /// getOpcode - Get the kind of this unary expression.
   Opcode getOpcode() const { return Op; }
 
-  MCExpr *getSubExpr() const { return Expr; }
+  /// getSubExpr - Get the child of this unary expression.
+  const MCExpr *getSubExpr() const { return Expr; }
 
-  static bool classof(const MCExpr *E) { 
-    return E->getKind() == MCExpr::Unary; 
+  /// @}
+
+  static bool classof(const MCExpr *E) {
+    return E->getKind() == MCExpr::Unary;
   }
   static bool classof(const MCUnaryExpr *) { return true; }
 };
@@ -150,26 +205,107 @@ public:
 
 private:
   Opcode Op;
-  MCExpr *LHS, *RHS;
+  const MCExpr *LHS, *RHS;
+
+  MCBinaryExpr(Opcode _Op, const MCExpr *_LHS, const MCExpr *_RHS)
+    : MCExpr(MCExpr::Binary), Op(_Op), LHS(_LHS), RHS(_RHS) {}
 
 public:
-  MCBinaryExpr(Opcode _Op, MCExpr *_LHS, MCExpr *_RHS)
-    : MCExpr(MCExpr::Binary), Op(_Op), LHS(_LHS), RHS(_RHS) {}
-  ~MCBinaryExpr() {
-    delete LHS;
-    delete RHS;
+  /// @name Construction
+  /// @{
+
+  static const MCBinaryExpr *Create(Opcode Op, const MCExpr *LHS,
+                                    const MCExpr *RHS, MCContext &Ctx);
+  static const MCBinaryExpr *CreateAdd(const MCExpr *LHS, const MCExpr *RHS,
+                                       MCContext &Ctx) {
+    return Create(Add, LHS, RHS, Ctx);
+  }
+  static const MCBinaryExpr *CreateAnd(const MCExpr *LHS, const MCExpr *RHS,
+                                       MCContext &Ctx) {
+    return Create(And, LHS, RHS, Ctx);
+  }
+  static const MCBinaryExpr *CreateDiv(const MCExpr *LHS, const MCExpr *RHS,
+                                       MCContext &Ctx) {
+    return Create(Div, LHS, RHS, Ctx);
+  }
+  static const MCBinaryExpr *CreateEQ(const MCExpr *LHS, const MCExpr *RHS,
+                                      MCContext &Ctx) {
+    return Create(EQ, LHS, RHS, Ctx);
+  }
+  static const MCBinaryExpr *CreateGT(const MCExpr *LHS, const MCExpr *RHS,
+                                      MCContext &Ctx) {
+    return Create(GT, LHS, RHS, Ctx);
+  }
+  static const MCBinaryExpr *CreateGTE(const MCExpr *LHS, const MCExpr *RHS,
+                                       MCContext &Ctx) {
+    return Create(GTE, LHS, RHS, Ctx);
+  }
+  static const MCBinaryExpr *CreateLAnd(const MCExpr *LHS, const MCExpr *RHS,
+                                        MCContext &Ctx) {
+    return Create(LAnd, LHS, RHS, Ctx);
+  }
+  static const MCBinaryExpr *CreateLOr(const MCExpr *LHS, const MCExpr *RHS,
+                                       MCContext &Ctx) {
+    return Create(LOr, LHS, RHS, Ctx);
+  }
+  static const MCBinaryExpr *CreateLT(const MCExpr *LHS, const MCExpr *RHS,
+                                      MCContext &Ctx) {
+    return Create(LT, LHS, RHS, Ctx);
+  }
+  static const MCBinaryExpr *CreateLTE(const MCExpr *LHS, const MCExpr *RHS,
+                                       MCContext &Ctx) {
+    return Create(LTE, LHS, RHS, Ctx);
+  }
+  static const MCBinaryExpr *CreateMod(const MCExpr *LHS, const MCExpr *RHS,
+                                       MCContext &Ctx) {
+    return Create(Mod, LHS, RHS, Ctx);
+  }
+  static const MCBinaryExpr *CreateMul(const MCExpr *LHS, const MCExpr *RHS,
+                                       MCContext &Ctx) {
+    return Create(Mul, LHS, RHS, Ctx);
+  }
+  static const MCBinaryExpr *CreateNE(const MCExpr *LHS, const MCExpr *RHS,
+                                      MCContext &Ctx) {
+    return Create(NE, LHS, RHS, Ctx);
+  }
+  static const MCBinaryExpr *CreateOr(const MCExpr *LHS, const MCExpr *RHS,
+                                      MCContext &Ctx) {
+    return Create(Or, LHS, RHS, Ctx);
+  }
+  static const MCBinaryExpr *CreateShl(const MCExpr *LHS, const MCExpr *RHS,
+                                       MCContext &Ctx) {
+    return Create(Shl, LHS, RHS, Ctx);
+  }
+  static const MCBinaryExpr *CreateShr(const MCExpr *LHS, const MCExpr *RHS,
+                                       MCContext &Ctx) {
+    return Create(Shr, LHS, RHS, Ctx);
+  }
+  static const MCBinaryExpr *CreateSub(const MCExpr *LHS, const MCExpr *RHS,
+                                       MCContext &Ctx) {
+    return Create(Sub, LHS, RHS, Ctx);
+  }
+  static const MCBinaryExpr *CreateXor(const MCExpr *LHS, const MCExpr *RHS,
+                                       MCContext &Ctx) {
+    return Create(Xor, LHS, RHS, Ctx);
   }
 
+  /// @}
+  /// @name Accessors
+  /// @{
+
+  /// getOpcode - Get the kind of this binary expression.
   Opcode getOpcode() const { return Op; }
 
   /// getLHS - Get the left-hand side expression of the binary operator.
-  MCExpr *getLHS() const { return LHS; }
+  const MCExpr *getLHS() const { return LHS; }
 
   /// getRHS - Get the right-hand side expression of the binary operator.
-  MCExpr *getRHS() const { return RHS; }
+  const MCExpr *getRHS() const { return RHS; }
 
-  static bool classof(const MCExpr *E) { 
-    return E->getKind() == MCExpr::Binary; 
+  /// @}
+
+  static bool classof(const MCExpr *E) {
+    return E->getKind() == MCExpr::Binary;
   }
   static bool classof(const MCBinaryExpr *) { return true; }
 };

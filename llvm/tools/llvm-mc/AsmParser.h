@@ -66,7 +66,7 @@ public:
 
   virtual bool Error(SMLoc L, const Twine &Msg);
 
-  virtual bool ParseExpression(MCExpr *&Res);
+  virtual bool ParseExpression(const MCExpr *&Res);
 
   virtual bool ParseAbsoluteExpression(int64_t &Res);
 
@@ -104,9 +104,9 @@ private:
   /// @see ParseRelocatableExpression, ParseParenExpr.
   bool ParseParenRelocatableExpression(MCValue &Res);
 
-  bool ParsePrimaryExpr(MCExpr *&Res);
-  bool ParseBinOpRHS(unsigned Precedence, MCExpr *&Res);
-  bool ParseParenExpr(MCExpr *&Res);
+  bool ParsePrimaryExpr(const MCExpr *&Res);
+  bool ParseBinOpRHS(unsigned Precedence, const MCExpr *&Res);
+  bool ParseParenExpr(const MCExpr *&Res);
 
   /// ParseIdentifier - Parse an identifier or string (as a quoted identifier)
   /// and set \arg Res to the identifier contents.

@@ -13,8 +13,29 @@
 #include "llvm/MC/MCValue.h"
 using namespace llvm;
 
-MCExpr::~MCExpr() {
+const MCBinaryExpr * MCBinaryExpr::Create(Opcode Opc,
+                                          const MCExpr *LHS,
+                                          const MCExpr *RHS,
+                                          MCContext &Ctx) {
+  return new (Ctx) MCBinaryExpr(Opc, LHS, RHS);
 }
+
+const MCUnaryExpr * MCUnaryExpr::Create(Opcode Opc,
+                                        const MCExpr *Expr,
+                                        MCContext &Ctx) {
+  return new (Ctx) MCUnaryExpr(Opc, Expr);
+}
+
+const MCConstantExpr *MCConstantExpr::Create(int64_t Value, MCContext &Ctx) {
+  return new (Ctx) MCConstantExpr(Value);
+}
+
+const MCSymbolRefExpr *MCSymbolRefExpr::Create(const MCSymbol *Sym,
+                                               MCContext &Ctx) {
+  return new (Ctx) MCSymbolRefExpr(Sym);
+}
+
+/* *** */
 
 bool MCExpr::EvaluateAsAbsolute(MCContext &Ctx, int64_t &Res) const {
   MCValue Value;
@@ -50,19 +71,16 @@ static bool EvaluateSymbolicAdd(const MCValue &LHS, const MCSymbol *RHS_A,
 
 bool MCExpr::EvaluateAsRelocatable(MCContext &Ctx, MCValue &Res) const {
   switch (getKind()) {
-  default:
-    assert(0 && "Invalid assembly expression kind!");
-
   case Constant:
     Res = MCValue::get(cast<MCConstantExpr>(this)->getValue());
     return true;
 
   case SymbolRef: {
-    MCSymbol *Sym = cast<MCSymbolRefExpr>(this)->getSymbol();
-    if (const MCValue *Value = Ctx.GetSymbolValue(Sym))
+    const MCSymbol &Sym = cast<MCSymbolRefExpr>(this)->getSymbol();
+    if (const MCValue *Value = Ctx.GetSymbolValue(&Sym))
       Res = *Value;
     else
-      Res = MCValue::get(Sym, 0, 0);
+      Res = MCValue::get(&Sym, 0, 0);
     return true;
   }
 
@@ -158,5 +176,7 @@ bool MCExpr::EvaluateAsRelocatable(MCContext &Ctx, MCValue &Res) const {
     return true;
   }
   }
-}
 
+  assert(0 && "Invalid assembly expression kind!");
+  return false;
+}
