@@ -54,7 +54,7 @@ namespace {
 
     // IsFunctionMallocLike - Does this function allocate new memory?
     bool IsFunctionMallocLike(Function *F,
-                              SmallPtrSet<CallGraphNode*, 8> &) const;
+                              SmallPtrSet<Function*, 8> &) const;
 
     // AddNoAliasAttrs - Deduce noalias attributes for the SCC.
     bool AddNoAliasAttrs(const std::vector<CallGraphNode *> &SCC);
@@ -93,13 +93,12 @@ bool FunctionAttrs::PointsToLocalMemory(Value *V) {
 
 /// AddReadAttrs - Deduce readonly/readnone attributes for the SCC.
 bool FunctionAttrs::AddReadAttrs(const std::vector<CallGraphNode *> &SCC) {
-  SmallPtrSet<CallGraphNode*, 8> SCCNodes;
-  CallGraph &CG = getAnalysis<CallGraph>();
+  SmallPtrSet<Function*, 8> SCCNodes;
 
   // Fill SCCNodes with the elements of the SCC.  Used for quickly
   // looking up whether a given CallGraphNode is in this SCC.
   for (unsigned i = 0, e = SCC.size(); i != e; ++i)
-    SCCNodes.insert(SCC[i]);
+    SCCNodes.insert(SCC[i]->getFunction());
 
   // Check if any of the functions in the SCC read or write memory.  If they
   // write memory then they can't be marked readnone or readonly.
@@ -133,9 +132,9 @@ bool FunctionAttrs::AddReadAttrs(const std::vector<CallGraphNode *> &SCC) {
       // Some instructions can be ignored even if they read or write memory.
       // Detect these now, skipping to the next instruction if one is found.
       CallSite CS = CallSite::get(I);
-      if (CS.getInstruction()) {
+      if (CS.getInstruction() && CS.getCalledFunction()) {
         // Ignore calls to functions in the same SCC.
-        if (SCCNodes.count(CG[CS.getCalledFunction()]))
+        if (SCCNodes.count(CS.getCalledFunction()))
           continue;
       } else if (LoadInst *LI = dyn_cast<LoadInst>(I)) {
         // Ignore loads from local memory.
@@ -226,9 +225,7 @@ bool FunctionAttrs::AddNoCaptureAttrs(const std::vector<CallGraphNode *> &SCC) {
 /// IsFunctionMallocLike - A function is malloc-like if it returns either null
 /// or a pointer that doesn't alias any other pointer visible to the caller.
 bool FunctionAttrs::IsFunctionMallocLike(Function *F,
-                              SmallPtrSet<CallGraphNode*, 8> &SCCNodes) const {
-  CallGraph &CG = getAnalysis<CallGraph>();
-
+                              SmallPtrSet<Function*, 8> &SCCNodes) const {
   UniqueVector<Value *> FlowsToReturn;
   for (Function::iterator I = F->begin(), E = F->end(); I != E; ++I)
     if (ReturnInst *Ret = dyn_cast<ReturnInst>(I->getTerminator()))
@@ -275,7 +272,7 @@ bool FunctionAttrs::IsFunctionMallocLike(Function *F,
           if (CS.paramHasAttr(0, Attribute::NoAlias))
             break;
           if (CS.getCalledFunction() &&
-              SCCNodes.count(CG[CS.getCalledFunction()]))
+              SCCNodes.count(CS.getCalledFunction()))
             break;
         } // fall-through
         default:
@@ -291,12 +288,12 @@ bool FunctionAttrs::IsFunctionMallocLike(Function *F,
 
 /// AddNoAliasAttrs - Deduce noalias attributes for the SCC.
 bool FunctionAttrs::AddNoAliasAttrs(const std::vector<CallGraphNode *> &SCC) {
-  SmallPtrSet<CallGraphNode*, 8> SCCNodes;
+  SmallPtrSet<Function*, 8> SCCNodes;
 
   // Fill SCCNodes with the elements of the SCC.  Used for quickly
   // looking up whether a given CallGraphNode is in this SCC.
   for (unsigned i = 0, e = SCC.size(); i != e; ++i)
-    SCCNodes.insert(SCC[i]);
+    SCCNodes.insert(SCC[i]->getFunction());
 
   // Check each function in turn, determining which functions return noalias
   // pointers.
