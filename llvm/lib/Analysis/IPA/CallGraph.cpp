@@ -239,14 +239,19 @@ void CallGraphNode::dump() const { print(errs()); }
 /// specified call site.  Note that this method takes linear time, so it
 /// should be used sparingly.
 void CallGraphNode::removeCallEdgeFor(CallSite CS) {
-  for (CalledFunctionsVector::iterator I = CalledFunctions.begin(); ; ++I) {
-    assert(I != CalledFunctions.end() && "Cannot find callsite to remove!");
-    if (I->first == CS) {
-      I->second->DropRef();
-      *I = CalledFunctions.back();
-      CalledFunctions.pop_back();
-      return;
-    }
+  // Scan for the call site.  Note that we aren't guaranteed to find the call
+  // site in this node, even in reasonable situations.  Passes like instcombine
+  // can adjust callsites (e.g. folding bitcasts into calls to make them direct)
+  // which can introduce new call sites.  Since instcombine is not callgraph
+  // aware, it doesn't know to tell CallGraph about this change.
+  for (CalledFunctionsVector::iterator I = CalledFunctions.begin();
+       I != CalledFunctions.end(); ++I) {
+    if (I->first != CS) continue;
+    
+    I->second->DropRef();
+    *I = CalledFunctions.back();
+    CalledFunctions.pop_back();
+    return;
   }
 }
 
