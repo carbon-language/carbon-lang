@@ -1222,7 +1222,7 @@ DbgScope *DwarfDebug::getOrCreateScope(MDNode *N) {
   if (Slot) return Slot;
 
   DbgScope *Parent = NULL;
-  DIBlock Block(N);
+  DILexicalBlock Block(N);
 
   // Don't create a new scope if we already created one for an inlined function.
   DenseMap<const MDNode *, DbgScope *>::iterator

@@ -235,6 +235,14 @@ bool DIDescriptor::isCompileUnit() const {
   return Tag == dwarf::DW_TAG_compile_unit;
 }
 
+/// isLexicalBlock - Return true if the specified tag is DW_TAG_lexical_block.
+bool DIDescriptor::isLexicalBlock() const {
+  assert (!isNull() && "Invalid descriptor!");
+  unsigned Tag = getTag();
+
+  return Tag == dwarf::DW_TAG_lexical_block;
+}
+
 //===----------------------------------------------------------------------===//
 // Simple Descriptor Constructors and other Methods
 //===----------------------------------------------------------------------===//
@@ -758,12 +766,12 @@ DIVariable DIFactory::CreateVariable(unsigned Tag, DIDescriptor Context,
 
 /// CreateBlock - This creates a descriptor for a lexical block with the
 /// specified parent VMContext.
-DIBlock DIFactory::CreateBlock(DIDescriptor Context) {
+DILexicalBlock DIFactory::CreateLexicalBlock(DIDescriptor Context) {
   Value *Elts[] = {
     GetTagConstant(dwarf::DW_TAG_lexical_block),
     Context.getNode()
   };
-  return DIBlock(MDNode::get(VMContext, &Elts[0], 2));
+  return DILexicalBlock(MDNode::get(VMContext, &Elts[0], 2));
 }
 
 

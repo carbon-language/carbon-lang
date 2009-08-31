@@ -96,6 +96,7 @@ namespace llvm {
     bool isGlobalVariable() const;
     bool isScope() const;
     bool isCompileUnit() const;
+    bool isLexicalBlock() const;
   };
 
   /// DISubrange - This is used to represent ranges, for array bounds.
@@ -419,12 +420,14 @@ namespace llvm {
     void dump() const;
   };
 
-  /// DIBlock - This is a wrapper for a block (e.g. a function, scope, etc).
-  class DIBlock : public DIDescriptor {
+  /// DILexicalBlock - This is a wrapper for a lexical block.
+  class DILexicalBlock : public DIScope {
   public:
-    explicit DIBlock(MDNode *N = 0)
-      : DIDescriptor(N, dwarf::DW_TAG_lexical_block) {}
-
+    explicit DILexicalBlock(MDNode *N = 0) {
+      DbgNode = N;
+      if (DbgNode && !isLexicalBlock()) 
+	DbgNode = 0;
+    }
     DIDescriptor getContext() const { return getDescriptorField(1); }
   };
 
@@ -524,9 +527,9 @@ namespace llvm {
                               DICompileUnit CompileUnit, unsigned LineNo,
                               DIType Type);
 
-    /// CreateBlock - This creates a descriptor for a lexical block with the
-    /// specified parent context.
-    DIBlock CreateBlock(DIDescriptor Context);
+    /// CreateLexicalBlock - This creates a descriptor for a lexical block 
+    /// with the specified parent context.
+    DILexicalBlock CreateLexicalBlock(DIDescriptor Context);
 
     /// InsertStopPoint - Create a new llvm.dbg.stoppoint intrinsic invocation,
     /// inserting it at the end of the specified basic block.
