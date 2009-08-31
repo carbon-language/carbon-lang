@@ -34,8 +34,7 @@ namespace {
 
     virtual void EmitAssemblerFlag(AssemblerFlag Flag) {}
 
-    virtual void EmitAssignment(MCSymbol *Symbol, const MCValue &Value,
-                                bool MakeAbsolute = false) {}
+    virtual void EmitAssignment(MCSymbol *Symbol, const MCValue &Value) {}
 
     virtual void EmitSymbolAttribute(MCSymbol *Symbol, SymbolAttr Attribute) {}
 

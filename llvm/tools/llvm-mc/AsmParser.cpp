@@ -431,7 +431,7 @@ bool AsmParser::ParseStatement() {
     // identifier '=' ... -> assignment statement
     Lexer.Lex();
 
-    return ParseAssignment(IDVal, false);
+    return ParseAssignment(IDVal);
 
   default: // Normal instruction or directive.
     break;
@@ -708,7 +708,7 @@ bool AsmParser::ParseStatement() {
   return false;
 }
 
-bool AsmParser::ParseAssignment(const StringRef &Name, bool IsDotSet) {
+bool AsmParser::ParseAssignment(const StringRef &Name) {
   // FIXME: Use better location, we should use proper tokens.
   SMLoc EqualLoc = Lexer.getLoc();
 
@@ -737,7 +737,7 @@ bool AsmParser::ParseAssignment(const StringRef &Name, bool IsDotSet) {
     return Error(EqualLoc, "symbol has already been defined");
 
   // Do the assignment.
-  Out.EmitAssignment(Sym, Value, IsDotSet);
+  Out.EmitAssignment(Sym, Value);
 
   return false;
 }
@@ -769,7 +769,7 @@ bool AsmParser::ParseDirectiveSet() {
     return TokError("unexpected token in '.set'");
   Lexer.Lex();
 
-  return ParseAssignment(Name, true);
+  return ParseAssignment(Name);
 }
 
 /// ParseDirectiveSection:

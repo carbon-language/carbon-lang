@@ -2,7 +2,7 @@
 
 # CHECK: TESTA:
 # CHECK: TEST0:
-# CHECK: .set a, 0
+# CHECK: a = 0
 # CHECK: TESTB:
 TESTA:  
 	.include       "directive_set.s"

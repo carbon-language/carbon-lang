@@ -116,11 +116,7 @@ namespace llvm {
     ///
     /// @param Symbol - The symbol being assigned to.
     /// @param Value - The value for the symbol.
-    /// @param MakeAbsolute - If true, then the symbol should be given the
-    /// absolute value of @param Value, even if @param Value would be
-    /// relocatable expression. This corresponds to the ".set" directive.
-    virtual void EmitAssignment(MCSymbol *Symbol, const MCValue &Value,
-                                bool MakeAbsolute = false) = 0;
+    virtual void EmitAssignment(MCSymbol *Symbol, const MCValue &Value) = 0;
 
     /// EmitSymbolAttribute - Add the given @param Attribute to @param Symbol.
     virtual void EmitSymbolAttribute(MCSymbol *Symbol,

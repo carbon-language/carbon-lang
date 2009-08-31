@@ -47,8 +47,7 @@ public:
 
   virtual void EmitAssemblerFlag(AssemblerFlag Flag);
 
-  virtual void EmitAssignment(MCSymbol *Symbol, const MCValue &Value,
-                              bool MakeAbsolute = false);
+  virtual void EmitAssignment(MCSymbol *Symbol, const MCValue &Value);
 
   virtual void EmitSymbolAttribute(MCSymbol *Symbol, SymbolAttr Attribute);
 
@@ -126,26 +125,12 @@ void MCAsmStreamer::EmitAssemblerFlag(AssemblerFlag Flag) {
   OS << '\n';
 }
 
-void MCAsmStreamer::EmitAssignment(MCSymbol *Symbol, const MCValue &Value,
-                                   bool MakeAbsolute) {
+void MCAsmStreamer::EmitAssignment(MCSymbol *Symbol, const MCValue &Value) {
   // Only absolute symbols can be redefined.
   assert((Symbol->isUndefined() || Symbol->isAbsolute()) &&
          "Cannot define a symbol twice!");
 
-  if (MakeAbsolute) {
-    OS << ".set " << Symbol << ", " << Value << '\n';
-
-    // HACK: If the value isn't already absolute, set the symbol value to
-    // itself, we want to use the .set absolute value, not the actual
-    // expression.
-    if (!Value.isAbsolute())
-      getContext().SetSymbolValue(Symbol, MCValue::get(Symbol));
-    else
-      getContext().SetSymbolValue(Symbol, Value);
-  } else {
-    OS << Symbol << " = " << Value << '\n';
-    getContext().SetSymbolValue(Symbol, Value);
-  }
+  OS << Symbol << " = " << Value << '\n';
 }
 
 void MCAsmStreamer::EmitSymbolAttribute(MCSymbol *Symbol, 

@@ -23,10 +23,10 @@ foo:
 // CHECK: addl $"b$c", %eax
         addl "b$c", %eax
         
-// CHECK: set "a 0", 11
+// CHECK: "a 0" = 11
         .set "a 0", 11
         
-// CHECK: .long 11
+// CHECK: .long "a 0"
         .long "a 0"
 
 // XXCHCK: .section "a 1,a 2"
@@ -44,7 +44,7 @@ foo:
 // CHECK: .comm "a 6",1
         .comm "a 6", 1
 
-// CHECK: .zerofill __DATA,__bss,"a 7",1
+// CHECK: .zerofill __DATA,__bss,"a 7",1,0
         .lcomm "a 7", 1
 
 // FIXME: We don't bother to support .lsym.
@@ -52,7 +52,7 @@ foo:
 // CHECX: .lsym "a 8",1
 //        .lsym "a 8", 1
 
-// CHECK: set "a 9", a - b
+// CHECK: "a 9" = a - b
         .set "a 9", a - b
         
 // CHECK: .long "a 9"

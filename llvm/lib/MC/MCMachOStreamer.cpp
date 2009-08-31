@@ -129,8 +129,7 @@ public:
 
   virtual void EmitAssemblerFlag(AssemblerFlag Flag);
 
-  virtual void EmitAssignment(MCSymbol *Symbol, const MCValue &Value,
-                              bool MakeAbsolute = false);
+  virtual void EmitAssignment(MCSymbol *Symbol, const MCValue &Value);
 
   virtual void EmitSymbolAttribute(MCSymbol *Symbol, SymbolAttr Attribute);
 
@@ -201,9 +200,7 @@ void MCMachOStreamer::EmitAssemblerFlag(AssemblerFlag Flag) {
   assert(0 && "invalid assembler flag!");
 }
 
-void MCMachOStreamer::EmitAssignment(MCSymbol *Symbol,
-                                     const MCValue &Value,
-                                     bool MakeAbsolute) {
+void MCMachOStreamer::EmitAssignment(MCSymbol *Symbol, const MCValue &Value) {
   // Only absolute symbols can be redefined.
   assert((Symbol->isUndefined() || Symbol->isAbsolute()) &&
          "Cannot define a symbol twice!");

@@ -94,7 +94,7 @@ private:
                                           SMLoc DirectiveLoc);
   void EatToEndOfStatement();
   
-  bool ParseAssignment(const StringRef &Name, bool IsDotSet);
+  bool ParseAssignment(const StringRef &Name);
 
   bool ParsePrimaryExpr(const MCExpr *&Res);
   bool ParseBinOpRHS(unsigned Precedence, const MCExpr *&Res);
