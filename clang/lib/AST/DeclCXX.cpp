@@ -799,6 +799,7 @@ FriendDecl *FriendDecl::Create(ASTContext &C, DeclContext *DC,
                                SourceLocation L,
                                FriendUnion Friend,
                                SourceLocation FriendL) {
+#ifndef NDEBUG
   if (Friend.is<NamedDecl*>()) {
     NamedDecl *D = Friend.get<NamedDecl*>();
     assert(isa<FunctionDecl>(D) ||
@@ -807,6 +808,7 @@ FriendDecl *FriendDecl::Create(ASTContext &C, DeclContext *DC,
            isa<ClassTemplateDecl>(D));
     assert(D->getFriendObjectKind());
   }
+#endif
 
   return new (C) FriendDecl(DC, L, Friend, FriendL);
 }                                               
