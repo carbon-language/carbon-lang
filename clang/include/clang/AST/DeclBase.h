@@ -617,6 +617,12 @@ public:
   /// inline namespaces.
   bool isTransparentContext() const;
 
+  /// \brief Determine whether this declaration context is equivalent
+  /// to the declaration context DC.
+  bool Equals(DeclContext *DC) {
+    return this->getPrimaryContext() == DC->getPrimaryContext();
+  }
+  
   /// \brief Determine whether this declaration context encloses the
   /// declaration context DC.
   bool Encloses(DeclContext *DC);
