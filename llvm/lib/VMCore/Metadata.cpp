@@ -77,13 +77,13 @@ MDNode::MDNode(LLVMContext &C, Value*const* Vals, unsigned NumVals)
 }
 
 MDNode *MDNode::get(LLVMContext &Context, Value*const* Vals, unsigned NumVals) {
-  LLVMContextImpl *pImpl = Context.pImpl;
   std::vector<Value*> V;
   V.reserve(NumVals);
   for (unsigned i = 0; i < NumVals; ++i)
     V.push_back(Vals[i]);
   
-  return pImpl->MDNodes.getOrCreate(Type::getMetadataTy(Context), V);
+  // FIXME : Avoid creating duplicate node.
+  return new MDNode(Context, &V[0], V.size());
 }
 
 /// dropAllReferences - Remove all uses and clear node vector.
@@ -92,16 +92,8 @@ void MDNode::dropAllReferences() {
   Node.clear();
 }
 
-static std::vector<Value*> getValType(MDNode *N) {
-  std::vector<Value*> Elements;
-  Elements.reserve(N->getNumElements());
-  for (unsigned i = 0, e = N->getNumElements(); i != e; ++i)
-    Elements.push_back(N->getElement(i));
-  return Elements;
-}
-
 MDNode::~MDNode() {
-  getType()->getContext().pImpl->MDNodes.remove(this);
+  getType()->getContext().pImpl->MDNodes.erase(this);
   dropAllReferences();
 }
 
