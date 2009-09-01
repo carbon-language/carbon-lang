@@ -1153,8 +1153,13 @@ Sema::InstantiateMemInitializers(CXXConstructorDecl *New,
                                      Init->getRParenLoc(),
                                      New->getParent());
     } else if (Init->isMemberInitializer()) {
-      FieldDecl *Member = 
-        cast<FieldDecl>(FindInstantiatedDecl(Init->getMember()));
+      FieldDecl *Member;
+      
+      // Is this an anonymous union?
+      if (FieldDecl *UnionInit = Init->getAnonUnionMember())
+        Member = cast<FieldDecl>(UnionInit);
+      else
+        Member = cast<FieldDecl>(FindInstantiatedDecl(Init->getMember()));
       
       NewInit = BuildMemberInitializer(Member, (Expr **)NewArgs.data(), 
                                        NewArgs.size(),

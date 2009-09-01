@@ -19,3 +19,15 @@ template <typename T> struct B {
 };
 
 B<int> b0;
+
+template <typename T> struct C {
+  union {
+    int a;
+    void* b;
+  };
+
+  C(int a) : a(a) { }
+  C(void* b) : b(b) { }
+};
+
+C<int> c0;
