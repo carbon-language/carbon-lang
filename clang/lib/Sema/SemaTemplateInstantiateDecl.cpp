@@ -1347,7 +1347,22 @@ DeclContext *Sema::FindInstantiatedContext(DeclContext* DC) {
 /// X<T>::<Kind>::KnownValue) to its instantiation
 /// (X<int>::<Kind>::KnownValue). InstantiateCurrentDeclRef() performs
 /// this mapping from within the instantiation of X<int>.
-NamedDecl * Sema::FindInstantiatedDecl(NamedDecl *D) {
+NamedDecl *Sema::FindInstantiatedDecl(NamedDecl *D) {
+  if (OverloadedFunctionDecl *Ovl = dyn_cast<OverloadedFunctionDecl>(D)) {
+    // Transform all of the elements of the overloaded function set.
+    OverloadedFunctionDecl *Result 
+      = OverloadedFunctionDecl::Create(Context, CurContext, Ovl->getDeclName());
+    
+    for (OverloadedFunctionDecl::function_iterator F = Ovl->function_begin(),
+                                                FEnd = Ovl->function_end();
+         F != FEnd; ++F) {
+      Result->addOverload(
+                  AnyFunctionDecl::getFromNamedDecl(FindInstantiatedDecl(*F)));
+    }
+    
+    return Result;
+  }  
+  
   DeclContext *ParentDC = D->getDeclContext();
   if (isa<ParmVarDecl>(D) || ParentDC->isFunctionOrMethod()) {
     // D is a local of some kind. Look into the map of local
@@ -1378,8 +1393,9 @@ NamedDecl * Sema::FindInstantiatedDecl(NamedDecl *D) {
     }
 
   ParentDC = FindInstantiatedContext(ParentDC);
-  if (!ParentDC) return 0;
-
+  if (!ParentDC) 
+    return 0;
+  
   if (ParentDC != D->getDeclContext()) {
     // We performed some kind of instantiation in the parent context,
     // so now we need to look into the instantiated parent context to

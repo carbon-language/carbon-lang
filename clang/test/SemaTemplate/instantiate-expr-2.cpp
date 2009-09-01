@@ -160,3 +160,21 @@ namespace N9 {
   
   template struct B<int>;  
 }
+
+namespace N10 {
+  template <typename T>
+  class A {
+    struct X { };
+    
+  public:
+    ~A() {
+      f(reinterpret_cast<X *>(0), reinterpret_cast<X *>(0));
+    }
+    
+  private:
+    void f(X *);
+    void f(X *, X *);
+  };
+  
+  template class A<int>;
+}

@@ -465,14 +465,6 @@ TemplateInstantiator::TransformDeclRefExpr(DeclRefExpr *E) {
                                               E->getSourceRange().getBegin()));
   }
   
-  if (OverloadedFunctionDecl *Ovl = dyn_cast<OverloadedFunctionDecl>(D)) {
-    // FIXME: instantiate each decl in the overload set
-    return SemaRef.Owned(new (SemaRef.Context) DeclRefExpr(Ovl,
-                                                     SemaRef.Context.OverloadTy,
-                                                     E->getLocation(),
-                                                     false, false));
-  }
-  
   NamedDecl *InstD = SemaRef.FindInstantiatedDecl(D);
   if (!InstD)
     return SemaRef.ExprError();
