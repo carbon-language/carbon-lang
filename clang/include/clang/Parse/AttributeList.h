@@ -113,16 +113,6 @@ public:
   
   AttributeList *getNext() const { return Next; }
   void setNext(AttributeList *N) { Next = N; }
-  
-  void addAttributeList(AttributeList *alist) {
-    assert((alist != 0) && "addAttributeList(): alist is null");
-    AttributeList *next = this, *prev;
-    do {
-      prev = next;
-      next = next->getNext();
-    } while (next);
-    prev->setNext(alist);
-  }
 
   /// getNumArgs - Return the number of actual arguments to this attribute.
   unsigned getNumArgs() const { return NumArgs; }
@@ -171,6 +161,24 @@ public:
     return arg_iterator(Args, NumArgs);
   }
 };
+
+/// addAttributeLists - Add two AttributeLists together
+/// The right-hand list is appended to the left-hand list, if any
+/// A pointer to the joined list is returned.
+/// Note: the lists are not left unmodified.
+inline AttributeList* addAttributeLists (AttributeList *Left,
+                                         AttributeList *Right) {
+  if (!Left)
+    return Right;
+
+  AttributeList *next = Left, *prev;
+  do {
+    prev = next;
+    next = next->getNext();
+  } while (next);
+  prev->setNext(Right);
+  return Left;
+}
 
 }  // end namespace clang
 

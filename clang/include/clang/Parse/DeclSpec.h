@@ -321,12 +321,7 @@ public:
   /// int __attribute__((may_alias)) __attribute__((aligned(16))) var;
   /// 
   void AddAttributes(AttributeList *alist) {
-    if (!alist)
-      return; // we parsed __attribute__(()) or had a syntax error
-      
-    if (AttrList) 
-      alist->addAttributeList(AttrList); 
-    AttrList = alist;
+    AttrList = addAttributeLists(AttrList, alist);
   }
   void SetAttributes(AttributeList *AL) { AttrList = AL; }
   const AttributeList *getAttributes() const { return AttrList; }
@@ -1067,12 +1062,7 @@ public:
   ///
   /// Also extends the range of the declarator.
   void AddAttributes(AttributeList *alist, SourceLocation LastLoc) { 
-    if (!alist)
-      return; // we parsed __attribute__(()) or had a syntax error
-
-    if (AttrList) 
-      alist->addAttributeList(AttrList); 
-    AttrList = alist;
+    AttrList = addAttributeLists(AttrList, alist);
 
     if (!LastLoc.isInvalid())
       SetRangeEnd(LastLoc);
