@@ -2,5 +2,6 @@
 llvm_start_func_profiling
 llvm_start_block_profiling
 llvm_start_edge_profiling
+llvm_start_opt_edge_profiling
 llvm_start_basic_block_tracing
 llvm_trace_basic_block
