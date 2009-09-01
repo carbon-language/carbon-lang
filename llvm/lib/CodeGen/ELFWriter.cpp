@@ -93,6 +93,24 @@ ELFWriter::ELFWriter(raw_ostream &o, TargetMachine &tm)
 ELFWriter::~ELFWriter() {
   delete ElfCE;
   delete &OutContext;
+
+  while(!SymbolList.empty()) {
+    delete SymbolList.back(); 
+    SymbolList.pop_back();
+  }
+
+  while(!PrivateSyms.empty()) {
+    delete PrivateSyms.back(); 
+    PrivateSyms.pop_back();
+  }
+
+  while(!SectionList.empty()) {
+    delete SectionList.back(); 
+    SectionList.pop_back();
+  }
+
+  // Release the name mangler object.
+  delete Mang; Mang = 0;
 }
 
 // doInitialization - Emit the file header and all of the global variables for
@@ -714,13 +732,6 @@ bool ELFWriter::doFinalization(Module &M) {
   // Dump the sections and section table to the .o file.
   OutputSectionsAndSectionTable();
 
-  // We are done with the abstract symbols.
-  SymbolList.clear();
-  SectionList.clear();
-  NumSections = 0;
-
-  // Release the name mangler object.
-  delete Mang; Mang = 0;
   return false;
 }
 
