@@ -865,12 +865,12 @@ bool TwoAddressInstructionPass::runOnMachineFunction(MachineFunction &MF) {
                       LV->addVirtualRegisterKilled(Kill, NewKill);
                   }
                 }
-              }
 
-              // We're really going to nuke the old inst. If regB was marked
-              // as a kill we need to update its Kills list.
-              if (mi->getOperand(si).isKill())
-                LV->removeVirtualRegisterKilled(regB, mi);
+                // We're really going to nuke the old inst. If regB was marked
+                // as a kill we need to update its Kills list.
+                if (mi->getOperand(si).isKill())
+                  LV->removeVirtualRegisterKilled(regB, mi);
+              }
 
               mbbi->erase(mi); // Nuke the old inst.
               mi = nmi;
