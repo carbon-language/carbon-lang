@@ -143,16 +143,11 @@ void CGPassManager::RefreshCallGraph(std::vector<CallGraphNode*> &CurSCC,
     
     // Walk the function body looking for call sites.  Sync up the call sites in
     // CGN with those actually in the function.
-
+    
     // Get the set of call sites currently in the function.
-    bool isLast = CGN->empty();
-    for (CallGraphNode::iterator I = CGN->begin(), E = CGN->end(), N; !isLast;){
-      // Take care not to use singular iterators.
-      N = I + 1;
-      isLast = N == E;
-
+    for (CallGraphNode::iterator I = CGN->begin(), E = CGN->end(); I != E; ){
       // If this call site is null, then the function pass deleted the call
-      // entirely and the WeakVH nulled it out.
+      // entirely and the WeakVH nulled it out.  
       if (I->first == 0 ||
           // If we've already seen this call site, then the FunctionPass RAUW'd
           // one call with another, which resulted in two "uses" in the edge
@@ -168,13 +163,13 @@ void CGPassManager::RefreshCallGraph(std::vector<CallGraphNode*> &CurSCC,
         E = CGN->end();
         continue;
       }
-
+      
       assert(!CallSites.count(I->first) &&
              "Call site occurs in node multiple times");
       CallSites.insert(std::make_pair(I->first, I->second));
-      I = N;
+      ++I;
     }
-
+    
     // Loop over all of the instructions in the function, getting the callsites.
     for (Function::iterator BB = F->begin(), E = F->end(); BB != E; ++BB)
       for (BasicBlock::iterator I = BB->begin(), E = BB->end(); I != E; ++I) {
