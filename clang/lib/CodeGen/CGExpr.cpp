@@ -1026,8 +1026,9 @@ LValue CodeGenFunction::EmitMemberExpr(const MemberExpr *E) {
     if (PTy->getPointeeType()->isUnionType())
       isUnion = true;
     CVRQualifiers = PTy->getPointeeType().getCVRQualifiers();
-  } else if (isa<ObjCPropertyRefExpr>(BaseExpr) ||
-             isa<ObjCImplicitSetterGetterRefExpr>(BaseExpr)) {
+  } else if (isa<ObjCPropertyRefExpr>(BaseExpr->IgnoreParens()) ||
+             isa<ObjCImplicitSetterGetterRefExpr>(
+               BaseExpr->IgnoreParens())) {
     RValue RV = EmitObjCPropertyGet(BaseExpr);
     BaseValue = RV.getAggregateAddr();
     if (BaseExpr->getType()->isUnionType())

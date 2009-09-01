@@ -327,6 +327,7 @@ RValue CodeGenFunction::EmitObjCSuperPropertyGet(const Expr *Exp,
 }
 
 RValue CodeGenFunction::EmitObjCPropertyGet(const Expr *Exp) {
+  Exp = Exp->IgnoreParens();
   // FIXME: Split it into two separate routines.
   if (const ObjCPropertyRefExpr *E = dyn_cast<ObjCPropertyRefExpr>(Exp)) {
     Selector S = E->getProperty()->getGetterName();
