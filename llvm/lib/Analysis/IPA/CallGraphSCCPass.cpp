@@ -125,7 +125,7 @@ bool CGPassManager::RunPassOnSCC(Pass *P, std::vector<CallGraphNode*> &CurSCC,
 
 void CGPassManager::RefreshCallGraph(std::vector<CallGraphNode*> &CurSCC,
                                      CallGraph &CG) {
-  DenseMap<Instruction*, CallGraphNode*> CallSites;
+  DenseMap<Value*, CallGraphNode*> CallSites;
   
   DEBUG(errs() << "CGSCCPASSMGR: Refreshing SCC with " << CurSCC.size()
                << " nodes:\n";
@@ -146,12 +146,28 @@ void CGPassManager::RefreshCallGraph(std::vector<CallGraphNode*> &CurSCC,
     
     // Get the set of call sites currently in the function.
     for (CallGraphNode::iterator I = CGN->begin(), E = CGN->end(); I != E; ++I){
-      assert(I->first.getInstruction() &&
-             "Call site record in function should not be abstract");
-      assert(!CallSites.count(I->first.getInstruction()) &&
+      // If this call site is null, then the function pass deleted the call
+      // entirely and the WeakVH nulled it out.  
+      if (I->first == 0 ||
+          // If we've already seen this call site, then the FunctionPass RAUW'd
+          // one call with another, which resulted in two "uses" in the edge
+          // list of the same call.
+          CallSites.count(I->first) ||
+
+          // If the call edge is not from a call or invoke, then the function
+          // pass RAUW'd a call with another value.  This can happen when
+          // constant folding happens of well known functions etc.
+          CallSite::get(I->first).getInstruction() == 0) {
+        // Just remove the edge from the set of callees.
+        CGN->removeCallEdge(I);
+        E = CGN->end();
+        --I;
+        continue;
+      }
+      
+      assert(!CallSites.count(I->first) &&
              "Call site occurs in node multiple times");
-      CallSites.insert(std::make_pair(I->first.getInstruction(),
-                                      I->second));
+      CallSites.insert(std::make_pair(I->first, I->second));
     }
     
     // Loop over all of the instructions in the function, getting the callsites.
@@ -162,7 +178,7 @@ void CGPassManager::RefreshCallGraph(std::vector<CallGraphNode*> &CurSCC,
         
         // If this call site already existed in the callgraph, just verify it
         // matches up to expectations and remove it from CallSites.
-        DenseMap<Instruction*, CallGraphNode*>::iterator ExistingIt =
+        DenseMap<Value*, CallGraphNode*>::iterator ExistingIt =
           CallSites.find(CS.getInstruction());
         if (ExistingIt != CallSites.end()) {
           CallGraphNode *ExistingNode = ExistingIt->second;
@@ -201,18 +217,14 @@ void CGPassManager::RefreshCallGraph(std::vector<CallGraphNode*> &CurSCC,
       }
     
     // After scanning this function, if we still have entries in callsites, then
-    // they are dangling pointers.  Crap.  Well, until we change CallGraph to
-    // use CallbackVH, we'll just zap them here.  When we have that, this should
-    // turn into an assertion.
-    if (CallSites.empty()) continue;
+    // they are dangling pointers.  WeakVH should save us for this, so abort if
+    // this happens.
+    assert(CallSites.empty() && "Dangling pointers found in call sites map");
     
-    for (DenseMap<Instruction*, CallGraphNode*>::iterator I = CallSites.begin(),
-         E = CallSites.end(); I != E; ++I)
-      // FIXME: I had to add a special horrible form of removeCallEdgeFor to
-      // support this.  Remove the Instruction* version of it when we can.
-      CGN->removeCallEdgeFor(I->first);
-    MadeChange = true;
-    CallSites.clear();
+    // Periodically do an explicit clear to remove tombstones when processing
+    // large scc's.
+    if ((sccidx & 15) == 0)
+      CallSites.clear();
   }
 
   DEBUG(if (MadeChange) {

@@ -212,7 +212,7 @@ static void UpdateCallGraphAfterInlining(CallSite CS,
   }
 
   for (; I != E; ++I) {
-    const Instruction *OrigCall = I->first.getInstruction();
+    const Value *OrigCall = I->first;
 
     DenseMap<const Value*, Value*>::iterator VMI = ValueMap.find(OrigCall);
     // Only copy the edge if the call was inlined!

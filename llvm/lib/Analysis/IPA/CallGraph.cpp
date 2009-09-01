@@ -241,7 +241,7 @@ void CallGraphNode::dump() const { print(errs()); }
 void CallGraphNode::removeCallEdgeFor(CallSite CS) {
   for (CalledFunctionsVector::iterator I = CalledFunctions.begin(); ; ++I) {
     assert(I != CalledFunctions.end() && "Cannot find callsite to remove!");
-    if (I->first == CS) {
+    if (I->first == CS.getInstruction()) {
       I->second->DropRef();
       *I = CalledFunctions.back();
       CalledFunctions.pop_back();
@@ -249,21 +249,6 @@ void CallGraphNode::removeCallEdgeFor(CallSite CS) {
     }
   }
 }
-
-// FIXME: REMOVE THIS WHEN HACK IS REMOVED FROM CGSCCPASSMGR.
-void CallGraphNode::removeCallEdgeFor(Instruction *CS) {
-  for (CalledFunctionsVector::iterator I = CalledFunctions.begin(); ; ++I) {
-    assert(I != CalledFunctions.end() && "Cannot find callsite to remove!");
-    if (I->first.getInstruction() == CS) {
-      I->second->DropRef();
-      *I = CalledFunctions.back();
-      CalledFunctions.pop_back();
-      return;
-    }
-  }
-  
-}
-
 
 
 // removeAnyCallEdgeTo - This method removes any call edges from this node to
@@ -285,7 +270,7 @@ void CallGraphNode::removeOneAbstractEdgeTo(CallGraphNode *Callee) {
   for (CalledFunctionsVector::iterator I = CalledFunctions.begin(); ; ++I) {
     assert(I != CalledFunctions.end() && "Cannot find callee to remove!");
     CallRecord &CR = *I;
-    if (CR.second == Callee && CR.first.getInstruction() == 0) {
+    if (CR.second == Callee && CR.first == 0) {
       Callee->DropRef();
       *I = CalledFunctions.back();
       CalledFunctions.pop_back();
@@ -301,9 +286,9 @@ void CallGraphNode::replaceCallSite(CallSite Old, CallSite New,
                                     CallGraphNode *NewCallee) {
   for (CalledFunctionsVector::iterator I = CalledFunctions.begin(); ; ++I) {
     assert(I != CalledFunctions.end() && "Cannot find callsite to replace!");
-    if (I->first != Old) continue;
+    if (I->first != Old.getInstruction()) continue;
     
-    I->first = New;
+    I->first = New.getInstruction();
     
     // If the callee is changing, not just the callsite, then update it as
     // well.

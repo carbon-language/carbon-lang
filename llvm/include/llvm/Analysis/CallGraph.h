@@ -55,6 +55,7 @@
 #include "llvm/ADT/STLExtras.h"
 #include "llvm/Pass.h"
 #include "llvm/Support/CallSite.h"
+#include "llvm/Support/ValueHandle.h"
 #include "llvm/System/IncludeFile.h"
 #include <map>
 
@@ -158,11 +159,16 @@ protected:
 };
 
 //===----------------------------------------------------------------------===//
-// CallGraphNode class definition
+// CallGraphNode class definition.
 //
 class CallGraphNode {
-  Function *F;
-  typedef std::pair<CallSite,CallGraphNode*> CallRecord;
+  AssertingVH<Function> F;
+  
+  // CallRecord - This is a pair of the calling instruction (a call or invoke)
+  // and the callgraph node being called.
+public:
+  typedef std::pair<WeakVH, CallGraphNode*> CallRecord;
+private:
   std::vector<CallRecord> CalledFunctions;
   
   /// NumReferences - This is the number of times that this CallGraphNode occurs
@@ -240,19 +246,22 @@ public:
   /// addCalledFunction - Add a function to the list of functions called by this
   /// one.
   void addCalledFunction(CallSite CS, CallGraphNode *M) {
-    CalledFunctions.push_back(std::make_pair(CS, M));
+    CalledFunctions.push_back(std::make_pair(CS.getInstruction(), M));
     M->AddRef();
   }
 
+  void removeCallEdge(iterator I) {
+    I->second->DropRef();
+    *I = CalledFunctions.back();
+    CalledFunctions.pop_back();
+  }
+  
+  
   /// removeCallEdgeFor - This method removes the edge in the node for the
   /// specified call site.  Note that this method takes linear time, so it
   /// should be used sparingly.
   void removeCallEdgeFor(CallSite CS);
 
-  // FIXME: REMOVE THIS WHEN HACK IS REMOVED FROM CGSCCPASSMGR.
-  void removeCallEdgeFor(Instruction *CS);
-
-  
   /// removeAnyCallEdgeTo - This method removes all call edges from this node
   /// to the specified callee function.  This takes more time to execute than
   /// removeCallEdgeTo, so it should not be used unless necessary.
@@ -278,7 +287,7 @@ public:
 template <> struct GraphTraits<CallGraphNode*> {
   typedef CallGraphNode NodeType;
 
-  typedef std::pair<CallSite, CallGraphNode*> CGNPairTy;
+  typedef CallGraphNode::CallRecord CGNPairTy;
   typedef std::pointer_to_unary_function<CGNPairTy, CallGraphNode*> CGNDerefFun;
 
   static NodeType *getEntryNode(CallGraphNode *CGN) { return CGN; }
