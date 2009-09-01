@@ -51,7 +51,7 @@ public:
   NSErrorCheck(const Decl &D, bool isNSError, GRExprEngine& eng)
     : BugType(isNSError ? "NSError** null dereference" 
                         : "CFErrorRef* null dereference",
-              "Coding Conventions (Apple)"),
+              "Coding conventions (Apple)"),
     CodeDecl(D),
     isNSErrorWarning(isNSError), 
     II(&eng.getContext().Idents.get(isNSErrorWarning ? "NSError":"CFErrorRef")),

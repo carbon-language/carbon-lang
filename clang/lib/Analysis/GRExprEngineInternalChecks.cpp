@@ -659,7 +659,7 @@ void CheckUndefinedArg::PreVisitCallExpr(CheckerContext &C, const CallExpr *CE){
     if (C.getState()->getSVal(*I).isUndef()) {
       if (ExplodedNode *ErrorNode = C.generateNode(CE, C.getState(), true)) {
         if (!BT)
-          BT = new BugType("Uninitialized argument.", "Logic Errors.");
+          BT = new BugType("Uninitialized argument.", "Logic errors");
         // Generate a report for this bug.
         ArgReport *Report = new ArgReport(*BT, 
                      "Pass-by-value argument in function call is undefined.",
