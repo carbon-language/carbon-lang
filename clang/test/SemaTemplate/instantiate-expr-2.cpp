@@ -146,3 +146,17 @@ namespace N8 {
     test_plus(&x, x, x);
   }
 }
+
+namespace N9 {
+  struct A {
+    bool operator==(int value);
+  };
+  
+  template<typename T> struct B {
+    bool f(A a) {
+      return a == 1;
+    }
+  };
+  
+  template struct B<int>;  
+}

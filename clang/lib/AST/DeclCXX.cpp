@@ -752,8 +752,10 @@ OverloadIterator::OverloadIterator(NamedDecl *ND) : D(0) {
   if (isa<FunctionDecl>(ND) || isa<FunctionTemplateDecl>(ND))
     D = ND;
   else if (OverloadedFunctionDecl *Ovl = dyn_cast<OverloadedFunctionDecl>(ND)) {
-    D = ND;
-    Iter = Ovl->function_begin();
+    if (Ovl->size() != 0) {
+      D = ND;
+      Iter = Ovl->function_begin();
+    }
   }
 }
 

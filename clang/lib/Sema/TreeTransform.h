@@ -4525,16 +4525,12 @@ TreeTransform<Derived>::RebuildCXXOperatorCallExpr(OverloadedOperatorKind Op,
   // used during overload resolution.
   Sema::FunctionSet Functions;
   
-  DeclRefExpr *DRE = cast<DeclRefExpr>((Expr *)Callee.get());
-  OverloadedFunctionDecl *Overloads 
-    = cast<OverloadedFunctionDecl>(DRE->getDecl());
+  DeclRefExpr *DRE 
+    = cast<DeclRefExpr>(((Expr *)Callee.get())->IgnoreParenCasts());
   
   // FIXME: Do we have to check
   // IsAcceptableNonMemberOperatorCandidate for each of these?
-  for (OverloadedFunctionDecl::function_iterator 
-       F = Overloads->function_begin(),
-       FEnd = Overloads->function_end();
-       F != FEnd; ++F)
+  for (OverloadIterator F(DRE->getDecl()), FEnd; F != FEnd; ++F)
     Functions.insert(*F);
   
   // Add any functions found via argument-dependent lookup.
