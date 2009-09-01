@@ -220,7 +220,12 @@ void Clang::ConstructJob(Compilation &C, const JobAction &JA,
     } else if (JA.getType() == types::TY_LLVMBC) {
       CmdArgs.push_back("-emit-llvm-bc");
     } else if (JA.getType() == types::TY_PP_Asm) {
-      CmdArgs.push_back("-S");
+      if (Inputs[0].getType() == types::TY_AST)
+        CmdArgs.push_back("-compile-ast");
+      else
+        CmdArgs.push_back("-S");
+    } else if (JA.getType() == types::TY_AST) {
+      CmdArgs.push_back("-emit-pch");
     }
   }
 
@@ -768,9 +773,12 @@ void gcc::Common::ConstructJob(Compilation &C, const JobAction &JA,
          it = Inputs.begin(), ie = Inputs.end(); it != ie; ++it) {
     const InputInfo &II = *it;
 
-    // Don't try to pass LLVM inputs to a generic gcc.
+    // Don't try to pass LLVM or AST inputs to a generic gcc.
     if (II.getType() == types::TY_LLVMBC)
       D.Diag(clang::diag::err_drv_no_linker_llvm_support)
+        << getToolChain().getTripleString().c_str();
+    else if (II.getType() == types::TY_AST)
+      D.Diag(clang::diag::err_drv_no_ast_support)
         << getToolChain().getTripleString().c_str();
 
     if (types::canTypeBeUserSpecified(II.getType())) {
@@ -1189,6 +1197,9 @@ void darwin::Compile::ConstructJob(Compilation &C, const JobAction &JA,
     CmdArgs.push_back("-emit-llvm");
   else if (Output.getType() == types::TY_LLVMBC)
     CmdArgs.push_back("-emit-llvm-bc");
+  else if (Output.getType() == types::TY_AST)
+    D.Diag(clang::diag::err_drv_no_ast_support)
+      << getToolChain().getTripleString().c_str();
 
   ArgStringList OutputArgs;
   if (Output.getType() != types::TY_PCH) {
@@ -1223,6 +1234,13 @@ void darwin::Compile::ConstructJob(Compilation &C, const JobAction &JA,
     for (InputInfoList::const_iterator
            it = Inputs.begin(), ie = Inputs.end(); it != ie; ++it) {
       const InputInfo &II = *it;
+
+      // Reject AST inputs.
+      if (II.getType() == types::TY_AST) {
+        D.Diag(clang::diag::err_drv_no_ast_support)
+          << getToolChain().getTripleString().c_str();
+        return;
+      }
 
       if (II.isPipe())
         CmdArgs.push_back("-");

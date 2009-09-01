@@ -83,6 +83,7 @@ bool types::isAcceptedByClang(ID Id) {
   case TY_ObjCHeader: case TY_PP_ObjCHeader:
   case TY_CXXHeader: case TY_PP_CXXHeader:
   case TY_ObjCXXHeader: case TY_PP_ObjCXXHeader:
+  case TY_AST:
     return true;
   }
 }
@@ -128,6 +129,7 @@ types::ID types::lookupTypeForExtension(const char *Ext) {
   case 3:
     if (memcmp(Ext, "ads", 3) == 0) return TY_Ada;
     if (memcmp(Ext, "adb", 3) == 0) return TY_Ada;
+    if (memcmp(Ext, "ast", 3) == 0) return TY_AST;
     if (memcmp(Ext, "cxx", 3) == 0) return TY_CXX;
     if (memcmp(Ext, "cpp", 3) == 0) return TY_CXX;
     if (memcmp(Ext, "CPP", 3) == 0) return TY_CXX;

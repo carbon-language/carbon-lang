@@ -43,6 +43,8 @@ def err_drv_invalid_version_number : Error<
   "invalid version number in '%0'">;
 def err_drv_no_linker_llvm_support : Error<
   "'%0': unable to pass LLVM bit-code files to linker">;
+def err_drv_no_ast_support : Error<
+  "'%0': unable to use AST files with this tool">;
 def err_drv_clang_unsupported : Error<
   "the clang compiler does not support '%0'">;
 def err_drv_command_failed : Error<

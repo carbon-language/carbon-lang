@@ -353,6 +353,8 @@ OPTION("-dynamiclib", dynamiclib, Flag, INVALID, INVALID, "", 0, 0, 0)
 OPTION("-dynamic", dynamic, Flag, INVALID, INVALID, "q", 0, 0, 0)
 OPTION("-d", d_Flag, Flag, d_Group, INVALID, "", 0, 0, 0)
 OPTION("-d", d_Joined, Joined, d_Group, INVALID, "", 0, 0, 0)
+OPTION("-emit-ast", emit_ast, Flag, INVALID, INVALID, "", 0,
+       "Emit Clang AST files for source inputs", 0)
 OPTION("-emit-llvm", emit_llvm, Flag, INVALID, INVALID, "", 0, 
        "Use the LLVM representation for assembler and object files", 0)
 OPTION("-exported_symbols_list", exported__symbols__list, Separate, INVALID, INVALID, "", 0, 0, 0)

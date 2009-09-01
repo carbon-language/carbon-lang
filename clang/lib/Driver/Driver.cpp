@@ -345,11 +345,13 @@ void Driver::PrintHelp(bool ShowHidden) const {
     OptionHelp.push_back(std::make_pair("-ccc-gcc-name",
                                         "Name for native GCC compiler"));
     OptionHelp.push_back(std::make_pair("-ccc-clang-cxx",
-                                        "Use the clang compiler for C++"));
+                                        "Enable the clang compiler for C++"));
+    OptionHelp.push_back(std::make_pair("-ccc-no-clang-cxx",
+                                        "Disable the clang compiler for C++"));
     OptionHelp.push_back(std::make_pair("-ccc-no-clang",
-                                        "Never use the clang compiler"));
+                                        "Disable the clang compiler"));
     OptionHelp.push_back(std::make_pair("-ccc-no-clang-cpp",
-                                        "Never use the clang preprocessor"));
+                                        "Disable the clang preprocessor"));
     OptionHelp.push_back(std::make_pair("-ccc-clang-archs",
                                         "Comma separate list of architectures "
                                         "to use the clang compiler for"));
@@ -764,10 +766,11 @@ void Driver::BuildActions(const ArgList &Args, ActionList &Actions) const {
       (FinalPhaseArg = Args.getLastArg(options::OPT_MM))) {
     FinalPhase = phases::Preprocess;
     
-    // -{fsyntax-only,-analyze,emit-llvm,S} only run up to the compiler.
+    // -{fsyntax-only,-analyze,emit-ast,S} only run up to the compiler.
   } else if ((FinalPhaseArg = Args.getLastArg(options::OPT_fsyntax_only)) ||
              (FinalPhaseArg = Args.getLastArg(options::OPT__analyze,
                                               options::OPT__analyze_auto)) ||
+             (FinalPhaseArg = Args.getLastArg(options::OPT_emit_ast)) ||
              (FinalPhaseArg = Args.getLastArg(options::OPT_S))) {
     FinalPhase = phases::Compile;
 
@@ -870,6 +873,8 @@ Action *Driver::ConstructPhaseAction(const ArgList &Args, phases::ID Phase,
       return new CompileJobAction(Input, types::TY_Nothing);
     } else if (Args.hasArg(options::OPT__analyze, options::OPT__analyze_auto)) {
       return new AnalyzeJobAction(Input, types::TY_Plist);
+    } else if (Args.hasArg(options::OPT_emit_ast)) {
+      return new CompileJobAction(Input, types::TY_AST);
     } else if (Args.hasArg(options::OPT_emit_llvm) ||
                Args.hasArg(options::OPT_flto) ||
                Args.hasArg(options::OPT_O4)) {
@@ -1275,7 +1280,7 @@ bool Driver::ShouldUseClangCompiler(const Compilation &C, const JobAction &JA,
 
   // Check if user requested no clang, or clang doesn't understand
   // this type (we only handle single inputs for now).
-  if (!CCCUseClang || JA.size() != 1 || 
+  if (!CCCUseClang || JA.size() != 1 ||
       !types::isAcceptedByClang((*JA.begin())->getType()))
     return false;
 
@@ -1294,10 +1299,9 @@ bool Driver::ShouldUseClangCompiler(const Compilation &C, const JobAction &JA,
     return false;
   }
 
-  // Always use clang for precompiling, regardless of archs. PTH is
-  // platform independent, and this allows the use of the static
-  // analyzer on platforms we don't have full IRgen support for.
-  if (isa<PrecompileJobAction>(JA))
+  // Always use clang for precompiling and AST generation, regardless of
+  // archs.
+  if (isa<PrecompileJobAction>(JA) || JA.getType() == types::TY_AST)
     return true;
 
   // Finally, don't use clang if this isn't one of the user specified

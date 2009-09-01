@@ -67,8 +67,9 @@ TYPE("f95-cpp-input",            Fortran,      PP_Fortran,      0,       "u")
 TYPE("java",                     Java,         INVALID,         0,       "u")
 
 // Misc.
-TYPE("llvm-asm",                 LLVMAsm,      INVALID,         "s",    "")
-TYPE("llvm-bc",                  LLVMBC,       INVALID,         "o",    "")
+TYPE("ast",                      AST,          INVALID,         "ast",   "u")
+TYPE("llvm-asm",                 LLVMAsm,      INVALID,         "s",     "")
+TYPE("llvm-bc",                  LLVMBC,       INVALID,         "o",     "")
 TYPE("plist",                    Plist,        INVALID,         "plist", "")
 TYPE("precompiled-header",       PCH,          INVALID,         "gch",   "A")
 TYPE("object",                   Object,       INVALID,         "o",     "")
