@@ -57,7 +57,7 @@ static void ReadProfilingBlock(const char *ToolName, FILE *F,
   // Make sure we have enough space... The space is initialised to -1 to
   // facitiltate the loading of missing values for OptimalEdgeProfiling.
   if (Data.size() < NumEntries)
-    Data.resize(NumEntries, -1);
+    Data.resize(NumEntries, ~0U);
 
   // Accumulate the data we just read into the data.
   if (!ShouldByteSwap) {
