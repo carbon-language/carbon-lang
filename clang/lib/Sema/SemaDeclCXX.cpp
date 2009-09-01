@@ -912,11 +912,21 @@ static void *GetKeyForTopLevelField(FieldDecl *Field) {
   return static_cast<void *>(Field);
 }
 
+static void *GetKeyForBase(QualType BaseType) {
+  if (const RecordType *RT = BaseType->getAs<RecordType>())
+    return (void *)RT;
+  
+  assert(0 && "Unexpected base type!");
+  return 0;
+}
+
 static void *GetKeyForMember(CXXBaseOrMemberInitializer *Member, 
-                             bool MemberMaybeAnon=false) {
+                             bool MemberMaybeAnon = false) {
   // For fields injected into the class via declaration of an anonymous union,
   // use its anonymous union class declaration as the unique key.
-  if (FieldDecl *Field = Member->getMember()) {
+  if (Member->isMemberInitializer()) {
+    FieldDecl *Field = Member->getMember();
+    
     // After BuildBaseOrMemberInitializers call, Field is the anonymous union
     // data member of the class. Data member used in the initializer list is 
     // in AnonUnionMember field.
@@ -929,7 +939,8 @@ static void *GetKeyForMember(CXXBaseOrMemberInitializer *Member,
     }
     return static_cast<void *>(Field);
   }
-  return static_cast<RecordType *>(Member->getBaseClass());
+  
+  return GetKeyForBase(QualType(Member->getBaseClass(), 0));
 }
 
 void Sema::ActOnMemInitializers(DeclPtrTy ConstructorDecl, 
@@ -1003,7 +1014,7 @@ void Sema::ActOnMemInitializers(DeclPtrTy ConstructorDecl,
   for (CXXRecordDecl::base_class_iterator VBase =
        ClassDecl->vbases_begin(),
        E = ClassDecl->vbases_end(); VBase != E; ++VBase)
-    AllBaseOrMembers.push_back(VBase->getType()->getAs<RecordType>());
+    AllBaseOrMembers.push_back(GetKeyForBase(VBase->getType()));
     
   for (CXXRecordDecl::base_class_iterator Base = ClassDecl->bases_begin(),
        E = ClassDecl->bases_end(); Base != E; ++Base) {
@@ -1011,7 +1022,7 @@ void Sema::ActOnMemInitializers(DeclPtrTy ConstructorDecl,
     // first.
     if (Base->isVirtual())
       continue;
-    AllBaseOrMembers.push_back(Base->getType()->getAs<RecordType>());
+    AllBaseOrMembers.push_back(GetKeyForBase(Base->getType()));
   }
   
   for (CXXRecordDecl::field_iterator Field = ClassDecl->field_begin(),

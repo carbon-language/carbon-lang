@@ -1145,7 +1145,6 @@ Sema::InstantiateMemInitializers(CXXConstructorDecl *New,
       QualType BaseType(Init->getBaseClass(), 0);
       BaseType = SubstType(BaseType, TemplateArgs, Init->getSourceLocation(),
                            New->getDeclName());
-      BaseType = Context.getCanonicalType(BaseType);
 
       NewInit = BuildBaseInitializer(BaseType,
                                      (Expr **)NewArgs.data(), 
@@ -1158,7 +1157,7 @@ Sema::InstantiateMemInitializers(CXXConstructorDecl *New,
       
       // Is this an anonymous union?
       if (FieldDecl *UnionInit = Init->getAnonUnionMember())
-        Member = cast<FieldDecl>(UnionInit);
+        Member = cast<FieldDecl>(FindInstantiatedDecl(UnionInit));
       else
         Member = cast<FieldDecl>(FindInstantiatedDecl(Init->getMember()));
       

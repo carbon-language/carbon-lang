@@ -1,6 +1,4 @@
-// RUN: clang-cc -fsyntax-only %s
-
-// FIXME: We need to test anonymous structs/unions in templates for real.
+// RUN: clang-cc -fsyntax-only %s -Wall
 
 template <typename T> class A { struct { }; };
 
@@ -30,4 +28,4 @@ template <typename T> struct C {
   C(void* b) : b(b) { }
 };
 
-C<int> c0;
+C<int> c0(0);
