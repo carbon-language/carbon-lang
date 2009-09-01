@@ -719,28 +719,7 @@ void CodeGenFunction::EmitCXXDeleteExpr(const CXXDeleteExpr *E) {
   EmitBlock(DeleteEnd);
 }
 
-static bool canGenerateCXXstructor(const CXXRecordDecl *RD, 
-                                   ASTContext &Context) {
-  // The class has base classes - we don't support that right now.
-  if (RD->getNumBases() > 0)
-    return false;
-  
-  for (CXXRecordDecl::field_iterator I = RD->field_begin(), E = RD->field_end();
-         I != E; ++I) {
-    // We don't support ctors for fields that aren't POD.
-    if (!I->getType()->isPODType())
-      return false;
-  }
-  
-  return true;
-}
-
 void CodeGenModule::EmitCXXConstructors(const CXXConstructorDecl *D) {
-  if (!canGenerateCXXstructor(D->getParent(), getContext())) {
-    ErrorUnsupported(D, "C++ constructor", true);
-    return;
-  }
-
   EmitGlobal(GlobalDecl(D, Ctor_Complete));
   EmitGlobal(GlobalDecl(D, Ctor_Base));
 }
@@ -778,11 +757,6 @@ const char *CodeGenModule::getMangledCXXCtorName(const CXXConstructorDecl *D,
 }
 
 void CodeGenModule::EmitCXXDestructors(const CXXDestructorDecl *D) {
-  if (!canGenerateCXXstructor(D->getParent(), getContext())) {
-    ErrorUnsupported(D, "C++ destructor", true);
-    return;
-  }
-  
   EmitCXXDestructor(D, Dtor_Complete);
   EmitCXXDestructor(D, Dtor_Base);
 }
@@ -1613,6 +1587,7 @@ void CodeGenFunction::SynthesizeCXXCopyAssignment(const CXXMethodDecl *CD,
 
 /// EmitCtorPrologue - This routine generates necessary code to initialize
 /// base classes and non-static data members belonging to this constructor.
+/// FIXME: This needs to take a CXXCtorType.
 void CodeGenFunction::EmitCtorPrologue(const CXXConstructorDecl *CD) {
   const CXXRecordDecl *ClassDecl = cast<CXXRecordDecl>(CD->getDeclContext());
   // FIXME: Add vbase initialization
@@ -1766,6 +1741,7 @@ void CodeGenFunction::EmitCtorPrologue(const CXXConstructorDecl *CD) {
 /// EmitDtorEpilogue - Emit all code that comes at the end of class's
 /// destructor. This is to call destructors on members and base classes 
 /// in reverse order of their construction.
+/// FIXME: This needs to take a CXXDtorType.
 void CodeGenFunction::EmitDtorEpilogue(const CXXDestructorDecl *DD) {
   const CXXRecordDecl *ClassDecl = cast<CXXRecordDecl>(DD->getDeclContext());
   assert(!ClassDecl->isPolymorphic() &&
