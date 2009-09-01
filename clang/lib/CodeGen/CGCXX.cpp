@@ -1744,8 +1744,8 @@ void CodeGenFunction::EmitCtorPrologue(const CXXConstructorDecl *CD) {
 /// FIXME: This needs to take a CXXDtorType.
 void CodeGenFunction::EmitDtorEpilogue(const CXXDestructorDecl *DD) {
   const CXXRecordDecl *ClassDecl = cast<CXXRecordDecl>(DD->getDeclContext());
-  assert(!ClassDecl->isPolymorphic() &&
-         "FIXME. polymorphic destruction not supported");
+  assert(!ClassDecl->getNumVBases() &&
+         "FIXME: Destruction of virtual bases not supported");
   (void)ClassDecl;  // prevent warning.
   
   for (CXXDestructorDecl::destr_const_iterator *B = DD->destr_begin(),
