@@ -56,6 +56,16 @@ EnablePostRAHazardAvoidance("avoid-hazards",
                       cl::desc("Enable exact hazard avoidance"),
                       cl::init(false), cl::Hidden);
 
+// If DebugDiv > 0 then only schedule MBB with (ID % DebugDiv) == DebugMod
+static cl::opt<int>
+DebugDiv("postra-sched-debugdiv",
+                      cl::desc("Debug control MBBs that are scheduled"),
+                      cl::init(0), cl::Hidden);
+static cl::opt<int>
+DebugMod("postra-sched-debugmod",
+                      cl::desc("Debug control MBBs that are scheduled"),
+                      cl::init(0), cl::Hidden);
+
 namespace {
   class VISIBILITY_HIDDEN PostRAScheduler : public MachineFunctionPass {
   public:
@@ -212,6 +222,17 @@ bool PostRAScheduler::runOnMachineFunction(MachineFunction &Fn) {
   // Loop over all of the basic blocks
   for (MachineFunction::iterator MBB = Fn.begin(), MBBe = Fn.end();
        MBB != MBBe; ++MBB) {
+#ifndef NDEBUG
+    // If DebugDiv > 0 then only schedule MBB with (ID % DebugDiv) == DebugMod
+    if (DebugDiv > 0) {
+      static int bbcnt = 0;
+      if (bbcnt++ % DebugDiv != DebugMod)
+        continue;
+      errs() << "*** DEBUG scheduling " << Fn.getFunction()->getNameStr() <<
+        ":MBB ID#" << MBB->getNumber() << " ***\n";
+    }
+#endif
+
     // Initialize register live-range state for scheduling in this block.
     Scheduler.GenerateLivenessForKills = false;
     Scheduler.StartBlock(MBB);
