@@ -43,13 +43,11 @@ bool llvm::InlineFunction(InvokeInst *II, CallGraph *CG, const TargetData *TD,
 /// an invoke, we have to check all of all of the calls that can throw into
 /// invokes.  This function analyze BB to see if there are any calls, and if so,
 /// it rewrites them to be invokes that jump to InvokeDest and fills in the PHI
-/// nodes in that block with the values specified in InvokeDestPHIValues.  If
-/// CallerCGN is specified, this function updates the call graph.
+/// nodes in that block with the values specified in InvokeDestPHIValues.
 ///
 static void HandleCallsInBlockInlinedThroughInvoke(BasicBlock *BB,
                                                    BasicBlock *InvokeDest,
-                             const SmallVectorImpl<Value*> &InvokeDestPHIValues,
-                                                   CallGraphNode *CallerCGN) {
+                           const SmallVectorImpl<Value*> &InvokeDestPHIValues) {
   for (BasicBlock::iterator BBI = BB->begin(), E = BB->end(); BBI != E; ) {
     Instruction *I = BBI++;
     
@@ -76,23 +74,9 @@ static void HandleCallsInBlockInlinedThroughInvoke(BasicBlock *BB,
     II->setCallingConv(CI->getCallingConv());
     II->setAttributes(CI->getAttributes());
     
-    // Make sure that anything using the call now uses the invoke!
+    // Make sure that anything using the call now uses the invoke!  This also
+    // updates the CallGraph if present.
     CI->replaceAllUsesWith(II);
-    
-    // Update the callgraph if present.
-    if (CallerCGN) {
-      // We should be able to do this:
-      //   (*CG)[Caller]->replaceCallSite(CI, II);
-      // but that fails if the old call site isn't in the call graph,
-      // which, because of LLVM bug 3601, it sometimes isn't.
-      for (CallGraphNode::iterator NI = CallerCGN->begin(), NE = CallerCGN->end();
-           NI != NE; ++NI) {
-        if (NI->first == CI) {
-          NI->first = II;
-          break;
-        }
-      }
-    }
     
     // Delete the unconditional branch inserted by splitBasicBlock
     BB->getInstList().pop_back();
@@ -120,8 +104,7 @@ static void HandleCallsInBlockInlinedThroughInvoke(BasicBlock *BB,
 /// block of the inlined code (the last block is the end of the function),
 /// and InlineCodeInfo is information about the code that got inlined.
 static void HandleInlinedInvoke(InvokeInst *II, BasicBlock *FirstNewBlock,
-                                ClonedCodeInfo &InlinedCodeInfo,
-                                CallGraph *CG) {
+                                ClonedCodeInfo &InlinedCodeInfo) {
   BasicBlock *InvokeDest = II->getUnwindDest();
   SmallVector<Value*, 8> InvokeDestPHIValues;
 
@@ -150,13 +133,10 @@ static void HandleInlinedInvoke(InvokeInst *II, BasicBlock *FirstNewBlock,
     return;
   }
   
-  CallGraphNode *CallerCGN = 0;
-  if (CG) CallerCGN = (*CG)[Caller];
-  
   for (Function::iterator BB = FirstNewBlock, E = Caller->end(); BB != E; ++BB){
     if (InlinedCodeInfo.ContainsCalls)
       HandleCallsInBlockInlinedThroughInvoke(BB, InvokeDest,
-                                             InvokeDestPHIValues, CallerCGN);
+                                             InvokeDestPHIValues);
 
     if (UnwindInst *UI = dyn_cast<UnwindInst>(BB->getTerminator())) {
       // An UnwindInst requires special handling when it gets inlined into an
@@ -539,7 +519,7 @@ bool llvm::InlineFunction(CallSite CS, CallGraph *CG, const TargetData *TD,
   // any inlined 'unwind' instructions into branches to the invoke exception
   // destination, and call instructions into invoke instructions.
   if (InvokeInst *II = dyn_cast<InvokeInst>(TheCall))
-    HandleInlinedInvoke(II, FirstNewBlock, InlinedFunctionInfo, CG);
+    HandleInlinedInvoke(II, FirstNewBlock, InlinedFunctionInfo);
 
   // If we cloned in _exactly one_ basic block, and if that block ends in a
   // return instruction, we splice the body of the inlined callee directly into
