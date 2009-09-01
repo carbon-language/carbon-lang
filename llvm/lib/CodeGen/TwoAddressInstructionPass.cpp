@@ -1032,7 +1032,8 @@ bool TwoAddressInstructionPass::runOnMachineFunction(MachineFunction &MF) {
         if (KillMO) {
           if (!FirstKeptMO) {
             // All uses of regB are being replaced; move the kill to prevMI.
-            if (LV && LV->removeVirtualRegisterKilled(regB, mi))
+            KillMO->setIsKill(false);
+            if (LV && LV->getVarInfo(regB).removeKill(mi))
               LV->addVirtualRegisterKilled(regB, prevMI);
           } else {
             if (!KillMOKept) {
