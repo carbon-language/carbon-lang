@@ -319,7 +319,7 @@ void ScheduleDAGSDNodes::AddOperand(MachineInstr *MI, SDValue Op,
     MI->addOperand(MachineOperand::CreateCPI(Idx, Offset,
                                              CP->getTargetFlags()));
   } else if (ExternalSymbolSDNode *ES = dyn_cast<ExternalSymbolSDNode>(Op)) {
-    MI->addOperand(MachineOperand::CreateES(ES->getSymbol(), 0,
+    MI->addOperand(MachineOperand::CreateES(ES->getSymbol(),
                                             ES->getTargetFlags()));
   } else {
     assert(Op.getValueType() != MVT::Other &&

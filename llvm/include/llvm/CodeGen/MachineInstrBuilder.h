@@ -116,9 +116,8 @@ public:
   }
 
   const MachineInstrBuilder &addExternalSymbol(const char *FnName,
-                                               int64_t Offset = 0,
                                           unsigned char TargetFlags = 0) const {
-    MI->addOperand(MachineOperand::CreateES(FnName, Offset, TargetFlags));
+    MI->addOperand(MachineOperand::CreateES(FnName, TargetFlags));
     return *this;
   }
 

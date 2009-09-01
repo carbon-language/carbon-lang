@@ -3237,7 +3237,7 @@ unsigned X86InstrInfo::getGlobalBaseReg(MachineFunction *MF) const {
     GlobalBaseReg = RegInfo.createVirtualRegister(X86::GR32RegisterClass);
     // Generate addl $__GLOBAL_OFFSET_TABLE_ + [.-piclabel], %some_register
     BuildMI(FirstMBB, MBBI, DL, TII->get(X86::ADD32ri), GlobalBaseReg)
-      .addReg(PC).addExternalSymbol("_GLOBAL_OFFSET_TABLE_", 0,
+      .addReg(PC).addExternalSymbol("_GLOBAL_OFFSET_TABLE_",
                                     X86II::MO_GOT_ABSOLUTE_ADDRESS);
   } else {
     GlobalBaseReg = PC;

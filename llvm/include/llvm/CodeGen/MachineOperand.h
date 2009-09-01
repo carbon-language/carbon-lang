@@ -432,11 +432,11 @@ public:
     Op.setTargetFlags(TargetFlags);
     return Op;
   }
-  static MachineOperand CreateES(const char *SymName, int64_t Offset = 0,
+  static MachineOperand CreateES(const char *SymName,
                                  unsigned char TargetFlags = 0) {
     MachineOperand Op(MachineOperand::MO_ExternalSymbol);
     Op.Contents.OffsetedInfo.Val.SymbolName = SymName;
-    Op.setOffset(Offset);
+    Op.setOffset(0); // Offset is always 0.
     Op.setTargetFlags(TargetFlags);
     return Op;
   }
