@@ -229,6 +229,29 @@ ICEXIFOrientation1 = 1,     ICEXIFOrientation2 = 2,     ICEXIFOrientation3 = 3, 
 @protocol ICScannerDeviceDelegate <ICDeviceDelegate>  @optional       - (void)scannerDeviceDidBecomeAvailable:(ICScannerDevice*)scanner;
 @end
 
+typedef long unsigned int __darwin_size_t;
+typedef __darwin_size_t size_t;
+typedef unsigned long CFTypeID;
+struct CGPoint {
+  CGFloat x;
+  CGFloat y;
+};
+typedef struct CGPoint CGPoint;
+typedef struct CGGradient *CGGradientRef;
+typedef uint32_t CGGradientDrawingOptions;
+extern CFTypeID CGGradientGetTypeID(void);
+extern CGGradientRef CGGradientCreateWithColorComponents(CGColorSpaceRef
+  space, const CGFloat components[], const CGFloat locations[], size_t count);
+extern CGGradientRef CGGradientCreateWithColors(CGColorSpaceRef space,
+  CFArrayRef colors, const CGFloat locations[]);
+extern CGGradientRef CGGradientRetain(CGGradientRef gradient);
+extern void CGGradientRelease(CGGradientRef gradient);
+typedef struct CGContext *CGContextRef;
+extern void CGContextDrawLinearGradient(CGContextRef context,
+    CGGradientRef gradient, CGPoint startPoint, CGPoint endPoint,
+    CGGradientDrawingOptions options);
+extern CGColorSpaceRef CGColorSpaceCreateDeviceRGB(void);
+
 //===----------------------------------------------------------------------===//
 // Test cases.
 //===----------------------------------------------------------------------===//
@@ -895,6 +918,52 @@ void rdar_7152619(CFStringRef str) {
   [number release];
   [number retain];
   CFRelease(attrString);  
+}
+
+//===----------------------------------------------------------------------===//
+// Test of handling CGGradientXXX functions.
+//===----------------------------------------------------------------------===//
+
+void rdar_7184450(CGContextRef myContext, CGFloat x, CGPoint myStartPoint,
+                  CGPoint myEndPoint) {
+  size_t num_locations = 6;
+  CGFloat locations[6] = { 0.0, 0.265, 0.28, 0.31, 0.36, 1.0 };
+  CGFloat components[28] = { 239.0/256.0, 167.0/256.0, 170.0/256.0,
+     x,  // Start color
+    207.0/255.0, 39.0/255.0, 39.0/255.0, x,
+    147.0/255.0, 21.0/255.0, 22.0/255.0, x,
+    175.0/255.0, 175.0/255.0, 175.0/255.0, x,
+    255.0/255.0,255.0/255.0, 255.0/255.0, x,
+    255.0/255.0,255.0/255.0, 255.0/255.0, x
+  }; // End color
+  
+  CGGradientRef myGradient =
+    CGGradientCreateWithColorComponents(CGColorSpaceCreateDeviceRGB(), // expected-warning{{leak}}
+      components, locations, num_locations);
+
+  CGContextDrawLinearGradient(myContext, myGradient, myStartPoint, myEndPoint,
+                              0);
+  CGGradientRelease(myGradient);
+}
+
+void rdar_7184450_pos(CGContextRef myContext, CGFloat x, CGPoint myStartPoint,
+                  CGPoint myEndPoint) {
+  size_t num_locations = 6;
+  CGFloat locations[6] = { 0.0, 0.265, 0.28, 0.31, 0.36, 1.0 };
+  CGFloat components[28] = { 239.0/256.0, 167.0/256.0, 170.0/256.0,
+     x,  // Start color
+    207.0/255.0, 39.0/255.0, 39.0/255.0, x,
+    147.0/255.0, 21.0/255.0, 22.0/255.0, x,
+    175.0/255.0, 175.0/255.0, 175.0/255.0, x,
+    255.0/255.0,255.0/255.0, 255.0/255.0, x,
+    255.0/255.0,255.0/255.0, 255.0/255.0, x
+  }; // End color
+  
+  CGGradientRef myGradient =
+   CGGradientCreateWithColorComponents(CGColorSpaceCreateDeviceRGB(), components, locations, num_locations); // expected-warning 2 {{leak}}
+
+  CGContextDrawLinearGradient(myContext, myGradient, myStartPoint, myEndPoint,
+                              0);
 }
 
 //===----------------------------------------------------------------------===//
