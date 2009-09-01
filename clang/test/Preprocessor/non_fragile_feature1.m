@@ -1,4 +1,4 @@
-// RUN: clang-cc %s
+// RUN: clang-cc -triple i386-unknown-unknown %s
 #ifndef __has_feature
 #error Should have __has_feature
 #endif
