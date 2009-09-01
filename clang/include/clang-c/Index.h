@@ -104,8 +104,11 @@ CXTranslationUnit clang_createTranslationUnit(
      clang_loadTranslationUnit(CXTranslationUnit, printObjCInterfaceNames);
    }
 */
-typedef void (*CXTranslationUnitIterator)(CXTranslationUnit, CXCursor);
-void clang_loadTranslationUnit(CXTranslationUnit, CXTranslationUnitIterator);
+typedef void *CXClientData;
+typedef void (*CXTranslationUnitIterator)(CXTranslationUnit, CXCursor, 
+                                          CXClientData);
+void clang_loadTranslationUnit(CXTranslationUnit, CXTranslationUnitIterator,
+                               CXClientData);
 
 /*
    Usage: clang_loadDeclaration(). Will load the declaration, issuing a 

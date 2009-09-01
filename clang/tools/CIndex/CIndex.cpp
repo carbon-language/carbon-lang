@@ -28,9 +28,16 @@ namespace {
 class TUVisitor : public DeclVisitor<TUVisitor> {
   CXTranslationUnit TUnit;
   CXTranslationUnitIterator Callback;
+  CXClientData CData;
+  
+  void Call(enum CXCursorKind CK, NamedDecl *ND) {
+    CXCursor C = { CK, ND };
+    Callback(TUnit, C, CData);
+  }
 public:
-  TUVisitor(CXTranslationUnit CTU, CXTranslationUnitIterator cback) : 
-    TUnit(CTU), Callback(cback) {}
+  TUVisitor(CXTranslationUnit CTU, 
+            CXTranslationUnitIterator cback, CXClientData D) : 
+    TUnit(CTU), Callback(cback), CData(D) {}
   
   void VisitTranslationUnitDecl(TranslationUnitDecl *D) {
     VisitDeclContext(dyn_cast<DeclContext>(D));
@@ -40,29 +47,23 @@ public:
            I = DC->decls_begin(), E = DC->decls_end(); I != E; ++I)
       Visit(*I);
   }
-  void VisitTypedefDecl(TypedefDecl *ND) {
-    CXCursor C = { CXCursor_TypedefDecl, ND };
-    Callback(TUnit, C);
+  void VisitTypedefDecl(TypedefDecl *ND) { 
+    Call(CXCursor_TypedefDecl, ND); 
   }
   void VisitTagDecl(TagDecl *ND) {
-    CXCursor C = { ND->isEnum() ? CXCursor_EnumDecl : CXCursor_RecordDecl, ND };
-    Callback(TUnit, C);
+    Call(ND->isEnum() ? CXCursor_EnumDecl : CXCursor_RecordDecl, ND);
   }
   void VisitFunctionDecl(FunctionDecl *ND) {
-    CXCursor C = { CXCursor_FunctionDecl, ND };
-    Callback(TUnit, C);
+    Call(CXCursor_FunctionDecl, ND);
   }
   void VisitObjCInterfaceDecl(ObjCInterfaceDecl *ND) {
-    CXCursor C = { CXCursor_ObjCInterfaceDecl, ND };
-    Callback(TUnit, C);
+    Call(CXCursor_ObjCInterfaceDecl, ND);
   }
   void VisitObjCCategoryDecl(ObjCCategoryDecl *ND) {
-    CXCursor C = { CXCursor_ObjCCategoryDecl, ND };
-    Callback(TUnit, C);
+    Call(CXCursor_ObjCCategoryDecl, ND);
   }
   void VisitObjCProtocolDecl(ObjCProtocolDecl *ND) {
-    CXCursor C = { CXCursor_ObjCProtocolDecl, ND };
-    Callback(TUnit, C);
+    Call(CXCursor_ObjCProtocolDecl, ND);
   }
 };
 
@@ -105,13 +106,14 @@ CXTranslationUnit clang_createTranslationUnit(
 
 
 void clang_loadTranslationUnit(
-  CXTranslationUnit CTUnit, CXTranslationUnitIterator callback)
+  CXTranslationUnit CTUnit, CXTranslationUnitIterator callback,
+  CXClientData CData)
 {
   assert(CTUnit && "Passed null CXTranslationUnit");
   ASTUnit *CXXUnit = static_cast<ASTUnit *>(CTUnit);
   ASTContext &Ctx = CXXUnit->getASTContext();
   
-  TUVisitor DVisit(CTUnit, callback);
+  TUVisitor DVisit(CTUnit, callback, CData);
   DVisit.Visit(Ctx.getTranslationUnitDecl());
 }
 
