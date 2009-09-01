@@ -228,7 +228,7 @@ void CGPassManager::RefreshCallGraph(std::vector<CallGraphNode*> &CurSCC,
           else
             CalleeNode = CG.getCallsExternalNode();
           
-          CGN->replaceCallSite(CS, CS, CalleeNode);
+          ExistingIt->second = CalleeNode;
           MadeChange = true;
           continue;
         }

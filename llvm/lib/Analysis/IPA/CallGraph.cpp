@@ -279,27 +279,5 @@ void CallGraphNode::removeOneAbstractEdgeTo(CallGraphNode *Callee) {
   }
 }
 
-/// replaceCallSite - Make the edge in the node for Old CallSite be for
-/// New CallSite instead.  Note that this method takes linear time, so it
-/// should be used sparingly.
-void CallGraphNode::replaceCallSite(CallSite Old, CallSite New,
-                                    CallGraphNode *NewCallee) {
-  for (CalledFunctionsVector::iterator I = CalledFunctions.begin(); ; ++I) {
-    assert(I != CalledFunctions.end() && "Cannot find callsite to replace!");
-    if (I->first != Old.getInstruction()) continue;
-    
-    I->first = New.getInstruction();
-    
-    // If the callee is changing, not just the callsite, then update it as
-    // well.
-    if (NewCallee) {
-      I->second->DropRef();
-      I->second = NewCallee;
-      I->second->AddRef();
-    }
-    return;
-  }
-}
-
 // Enuse that users of CallGraph.h also link with this file
 DEFINING_FILE_FOR(CallGraph)

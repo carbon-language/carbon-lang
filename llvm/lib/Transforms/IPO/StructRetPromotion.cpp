@@ -321,7 +321,9 @@ CallGraphNode *SRETPromotion::updateCallSites(Function *F, Function *NF) {
     New->takeName(Call);
 
     // Update the callgraph to know that the callsite has been transformed.
-    CG[Call->getParent()->getParent()]->replaceCallSite(Call, New, NF_CGN);
+    CallGraphNode *CalleeNode = CG[Call->getParent()->getParent()];
+    CalleeNode->removeCallEdgeFor(Call);
+    CalleeNode->addCalledFunction(New, NF_CGN);
     
     // Update all users of sret parameter to extract value using extractvalue.
     for (Value::use_iterator UI = FirstCArg->use_begin(), 

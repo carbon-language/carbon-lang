@@ -270,11 +270,6 @@ public:
   /// removeOneAbstractEdgeTo - Remove one edge associated with a null callsite
   /// from this node to the specified callee function.
   void removeOneAbstractEdgeTo(CallGraphNode *Callee);
-
-  /// replaceCallSite - Make the edge in the node for Old CallSite be for
-  /// New CallSite instead.  Note that this method takes linear time, so it
-  /// should be used sparingly.
-  void replaceCallSite(CallSite Old, CallSite New, CallGraphNode *NewCallee);
 };
 
 //===----------------------------------------------------------------------===//
