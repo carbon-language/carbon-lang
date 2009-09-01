@@ -791,6 +791,18 @@ DILexicalBlock DIFactory::CreateLexicalBlock(DIDescriptor Context) {
   return DILexicalBlock(MDNode::get(VMContext, &Elts[0], 2));
 }
 
+/// CreateLocation - Creates a debug info location.
+DILocation DIFactory::CreateLocation(unsigned LineNo, unsigned ColumnNo, 
+				     DIScope S, DILocation OrigLoc) {
+  Value *Elts[] = {
+    ConstantInt::get(Type::getInt32Ty(VMContext), LineNo),
+    ConstantInt::get(Type::getInt32Ty(VMContext), ColumnNo),
+    S.getNode(),
+    OrigLoc.getNode(),
+  };
+  return DILocation(MDNode::get(VMContext, &Elts[0], 4));
+}
+
 
 //===----------------------------------------------------------------------===//
 // DIFactory: Routines for inserting code into a function

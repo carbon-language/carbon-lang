@@ -471,8 +471,24 @@ namespace llvm {
     const std::string &getDirectory(std::string &D) const {
       return getContext().getDirectory(D);
     }
+  };
 
+  /// DILocation - This object holds location information. This object
+  /// is not associated with any DWARF tag.
+  class DILocation : public DIDescriptor {
+  public:
+    explicit DILocation(MDNode *L) { DbgNode = L; }
 
+    unsigned getLineNumber() const     { return getUnsignedField(0); }
+    unsigned getColumnNumber() const   { return getUnsignedField(1); }
+    DIScope  getScope() const          { return getFieldAs<DIScope>(3); }
+    DILocation getOrigLocation() const { return getFieldAs<DILocation>(4); }
+    std::string getFilename(std::string &F) const  { 
+      return getScope().getFilename(F); 
+    }
+    std::string getDirectory(std::string &D) const { 
+      return getScope().getDirectory(D); 
+    }
   };
 
   /// DIFactory - This object assists with the construction of the various
@@ -574,6 +590,10 @@ namespace llvm {
     /// CreateLexicalBlock - This creates a descriptor for a lexical block 
     /// with the specified parent context.
     DILexicalBlock CreateLexicalBlock(DIDescriptor Context);
+
+    /// CreateLocation - Creates a debug info location.
+    DILocation CreateLocation(unsigned LineNo, unsigned ColumnNo, 
+			      DIScope S, DILocation OrigLoc);
 
     /// InsertStopPoint - Create a new llvm.dbg.stoppoint intrinsic invocation,
     /// inserting it at the end of the specified basic block.
