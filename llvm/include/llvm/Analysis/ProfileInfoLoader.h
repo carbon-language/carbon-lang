@@ -33,6 +33,7 @@ class ProfileInfoLoader {
   std::vector<unsigned>    FunctionCounts;
   std::vector<unsigned>    BlockCounts;
   std::vector<unsigned>    EdgeCounts;
+  std::vector<unsigned>    OptimalEdgeCounts;
   std::vector<unsigned>    BBTrace;
   bool Warned;
 public:
@@ -66,6 +67,14 @@ public:
   const std::vector<unsigned> &getRawEdgeCounts() const {
     return EdgeCounts;
   }
+
+  // getEdgeOptimalCounts - This method is used by consumers of optimal edge 
+  // counting information.
+  //
+  const std::vector<unsigned> &getRawOptimalEdgeCounts() const {
+    return OptimalEdgeCounts;
+  }
+
 };
 
 } // End llvm namespace

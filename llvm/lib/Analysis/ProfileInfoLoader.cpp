@@ -54,17 +54,34 @@ static void ReadProfilingBlock(const char *ToolName, FILE *F,
     exit(1);
   }
 
-  // Make sure we have enough space...
+  // Make sure we have enough space... The space is initialised to -1 to
+  // facitiltate the loading of missing values for OptimalEdgeProfiling.
   if (Data.size() < NumEntries)
-    Data.resize(NumEntries);
+    Data.resize(NumEntries, -1);
 
   // Accumulate the data we just read into the data.
   if (!ShouldByteSwap) {
-    for (unsigned i = 0; i != NumEntries; ++i)
-      Data[i] += TempSpace[i];
+    for (unsigned i = 0; i != NumEntries; ++i) {
+      unsigned data = TempSpace[i];
+      if (data != (unsigned)-1) {       // only load data if its not MissingVal
+        if (Data[i] == (unsigned)-1) {
+          Data[i] = data;               // if data is still initialised
+        } else {
+          Data[i] += data;
+        }
+      }
+    }
   } else {
-    for (unsigned i = 0; i != NumEntries; ++i)
-      Data[i] += ByteSwap(TempSpace[i], true);
+    for (unsigned i = 0; i != NumEntries; ++i) {
+      unsigned data = ByteSwap(TempSpace[i], true);
+      if (data != (unsigned)-1) {       // only load data if its not MissingVal
+        if (Data[i] == (unsigned)-1) {
+          Data[i] = data;
+        } else {
+          Data[i] += data;
+        }
+      }
+    }
   }
 }
 
@@ -125,6 +142,10 @@ ProfileInfoLoader::ProfileInfoLoader(const char *ToolName,
 
     case EdgeInfo:
       ReadProfilingBlock(ToolName, F, ShouldByteSwap, EdgeCounts);
+      break;
+
+    case OptEdgeInfo:
+      ReadProfilingBlock(ToolName, F, ShouldByteSwap, OptimalEdgeCounts);
       break;
 
     case BBTraceInfo:
