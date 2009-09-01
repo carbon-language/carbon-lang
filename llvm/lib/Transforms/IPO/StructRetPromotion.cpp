@@ -322,7 +322,7 @@ CallGraphNode *SRETPromotion::updateCallSites(Function *F, Function *NF) {
 
     // Update the callgraph to know that the callsite has been transformed.
     CG[Call->getParent()->getParent()]->replaceCallSite(Call, New, NF_CGN);
-
+    
     // Update all users of sret parameter to extract value using extractvalue.
     for (Value::use_iterator UI = FirstCArg->use_begin(), 
            UE = FirstCArg->use_end(); UI != UE; ) {
@@ -331,23 +331,19 @@ CallGraphNode *SRETPromotion::updateCallSites(Function *F, Function *NF) {
       if (C2 && (C2 == Call))
         continue;
       
-      if (GetElementPtrInst *UGEP = dyn_cast<GetElementPtrInst>(U2)) {
-        ConstantInt *Idx = dyn_cast<ConstantInt>(UGEP->getOperand(2));
-        assert (Idx && "Unexpected getelementptr index!");
-        Value *GR = ExtractValueInst::Create(New, Idx->getZExtValue(),
-                                             "evi", UGEP);
-        while(!UGEP->use_empty()) {
-          // isSafeToUpdateAllCallers has checked that all GEP uses are
-          // LoadInsts
-          LoadInst *L = cast<LoadInst>(*UGEP->use_begin());
-          L->replaceAllUsesWith(GR);
-          L->eraseFromParent();
-        }
-        UGEP->eraseFromParent();
-        continue;
+      GetElementPtrInst *UGEP = cast<GetElementPtrInst>(U2);
+      ConstantInt *Idx = cast<ConstantInt>(UGEP->getOperand(2));
+      Value *GR = ExtractValueInst::Create(New, Idx->getZExtValue(),
+                                           "evi", UGEP);
+      while(!UGEP->use_empty()) {
+        // isSafeToUpdateAllCallers has checked that all GEP uses are
+        // LoadInsts
+        LoadInst *L = cast<LoadInst>(*UGEP->use_begin());
+        L->replaceAllUsesWith(GR);
+        L->eraseFromParent();
       }
-      
-      assert(0 && "Unexpected sret parameter use");
+      UGEP->eraseFromParent();
+      continue;
     }
     Call->eraseFromParent();
   }
