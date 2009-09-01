@@ -609,6 +609,19 @@ CXXConstructorDecl::setBaseOrMemberInitializers(
   }
 
   if (HasDependentBaseInit) {
+    // FIXME. This does not preserve the ordering of the initializers.
+    // Try (with -Wreorder)
+    // template<class X> struct A {};
+    // template<class X> struct B : A<X> { 
+    //   B() : x1(10), A<X>() {} 
+    //   int x1;
+    // };
+    // B<int> x;
+    // On seeing one dependent type, we should essentially exit this routine
+    // while preserving user-declared initializer list. When this routine is
+    // called during instantiatiation process, this routine will rebuild the
+    // oderdered initializer list correctly.
+    
     // If we have a dependent base initialization, we can't determine the
     // association between initializers and bases; just dump the known
     // initializers into the list, and don't try to deal with other bases.
