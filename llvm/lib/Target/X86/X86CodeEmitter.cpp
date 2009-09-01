@@ -340,18 +340,18 @@ void Emitter<CodeEmitter>::emitDisplacementField(const MachineOperand *RelocOp,
   } else if (RelocOp->isSymbol()) {
     unsigned rt = Is64BitMode ?
       (IsPCRel ? X86::reloc_pcrel_word : X86::reloc_absolute_word_sext)
-      : (IsPCRel ? X86::reloc_picrel_word : X86::reloc_absolute_word);
+      : (IsPIC ? X86::reloc_picrel_word : X86::reloc_absolute_word);
     emitExternalSymbolAddress(RelocOp->getSymbolName(), rt);
   } else if (RelocOp->isCPI()) {
     unsigned rt = Is64BitMode ?
       (IsPCRel ? X86::reloc_pcrel_word : X86::reloc_absolute_word_sext)
-      : (IsPCRel ? X86::reloc_picrel_word : X86::reloc_absolute_word);
+      : (IsPIC ? X86::reloc_picrel_word : X86::reloc_absolute_word);
     emitConstPoolAddress(RelocOp->getIndex(), rt,
                          RelocOp->getOffset(), Adj);
   } else if (RelocOp->isJTI()) {
     unsigned rt = Is64BitMode ?
       (IsPCRel ? X86::reloc_pcrel_word : X86::reloc_absolute_word_sext)
-      : (IsPCRel ? X86::reloc_picrel_word : X86::reloc_absolute_word);
+      : (IsPIC ? X86::reloc_picrel_word : X86::reloc_absolute_word);
     emitJumpTableAddress(RelocOp->getIndex(), rt, Adj);
   } else {
     llvm_unreachable("Unknown value to relocate!");
