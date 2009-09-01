@@ -78,7 +78,8 @@ public:
 private:
   bool RunPassOnSCC(Pass *P, std::vector<CallGraphNode*> &CurSCC,
                     CallGraph &CG, bool &CallGraphUpToDate);
-  void RefreshCallGraph(std::vector<CallGraphNode*> &CurSCC, CallGraph &CG);
+  void RefreshCallGraph(std::vector<CallGraphNode*> &CurSCC, CallGraph &CG,
+                        bool IsCheckingMode);
 };
 
 } // end anonymous namespace.
@@ -90,13 +91,21 @@ bool CGPassManager::RunPassOnSCC(Pass *P, std::vector<CallGraphNode*> &CurSCC,
   bool Changed = false;
   if (CallGraphSCCPass *CGSP = dynamic_cast<CallGraphSCCPass*>(P)) {
     if (!CallGraphUpToDate) {
-      RefreshCallGraph(CurSCC, CG);
+      RefreshCallGraph(CurSCC, CG, false);
       CallGraphUpToDate = true;
     }
     
     StartPassTimer(P);
     Changed = CGSP->runOnSCC(CurSCC);
     StopPassTimer(P);
+    
+    // After the CGSCCPass is done, when assertions are enabled, use
+    // RefreshCallGraph to verify that the callgraph was correctly updated.
+#ifndef NDEBUG
+    if (Changed)
+      RefreshCallGraph(CurSCC, CG, true);
+#endif
+    
     return Changed;
   }
   
@@ -123,8 +132,14 @@ bool CGPassManager::RunPassOnSCC(Pass *P, std::vector<CallGraphNode*> &CurSCC,
   return Changed;
 }
 
+
+/// RefreshCallGraph - Scan the functions in the specified CFG and resync the
+/// callgraph with the call sites found in it.  This is used after
+/// FunctionPasses have potentially munged the callgraph, and can be used after
+/// CallGraphSCC passes to verify that they correctly updated the callgraph.
+///
 void CGPassManager::RefreshCallGraph(std::vector<CallGraphNode*> &CurSCC,
-                                     CallGraph &CG) {
+                                     CallGraph &CG, bool CheckingMode) {
   DenseMap<Value*, CallGraphNode*> CallSites;
   
   DEBUG(errs() << "CGSCCPASSMGR: Refreshing SCC with " << CurSCC.size()
@@ -158,6 +173,9 @@ void CGPassManager::RefreshCallGraph(std::vector<CallGraphNode*> &CurSCC,
           // pass RAUW'd a call with another value.  This can happen when
           // constant folding happens of well known functions etc.
           CallSite::get(I->first).getInstruction() == 0) {
+        assert(!CheckingMode &&
+               "CallGraphSCCPass did not update the CallGraph correctly!");
+        
         // Just remove the edge from the set of callees.
         CGN->removeCallEdge(I);
         E = CGN->end();
@@ -190,6 +208,18 @@ void CGPassManager::RefreshCallGraph(std::vector<CallGraphNode*> &CurSCC,
           if (ExistingNode->getFunction() == CS.getCalledFunction())
             continue;
           
+          // If we are in checking mode, we are not allowed to actually mutate
+          // the callgraph.  If this is a case where we can infer that the
+          // callgraph is less precise than it could be (e.g. an indirect call
+          // site could be turned direct), don't reject it in checking mode, and
+          // don't tweak it to be more precise.
+          if (CheckingMode && CS.getCalledFunction() &&
+              ExistingNode->getFunction() == 0)
+            continue;
+          
+          assert(!CheckingMode &&
+                 "CallGraphSCCPass did not update the CallGraph correctly!");
+          
           // If not, we either went from a direct call to indirect, indirect to
           // direct, or direct to different direct.
           CallGraphNode *CalleeNode;
@@ -203,6 +233,9 @@ void CGPassManager::RefreshCallGraph(std::vector<CallGraphNode*> &CurSCC,
           continue;
         }
         
+        assert(!CheckingMode &&
+               "CallGraphSCCPass did not update the CallGraph correctly!");
+
         // If the call site didn't exist in the CGN yet, add it.  We assume that
         // newly introduced call sites won't be indirect.  This could be fixed
         // in the future.
@@ -289,7 +322,7 @@ bool CGPassManager::runOnModule(Module &M) {
     // If the callgraph was left out of date (because the last pass run was a
     // functionpass), refresh it before we move on to the next SCC.
     if (!CallGraphUpToDate)
-      RefreshCallGraph(CurSCC, CG);
+      RefreshCallGraph(CurSCC, CG, false);
   }
   Changed |= doFinalization(CG);
   return Changed;
