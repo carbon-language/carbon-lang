@@ -195,6 +195,7 @@ LValue CodeGenFunction::EmitLValue(const Expr *E) {
   case Expr::BinaryOperatorClass: 
     return EmitBinaryOperatorLValue(cast<BinaryOperator>(E));
   case Expr::CallExprClass: 
+  case Expr::CXXMemberCallExprClass:
   case Expr::CXXOperatorCallExprClass:
     return EmitCallExprLValue(cast<CallExpr>(E));
   case Expr::VAArgExprClass:
