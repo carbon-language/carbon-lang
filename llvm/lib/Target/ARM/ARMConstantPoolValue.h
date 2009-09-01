@@ -34,8 +34,8 @@ namespace ARMCP {
 class ARMConstantPoolValue : public MachineConstantPoolValue {
   GlobalValue *GV;         // GlobalValue being loaded.
   const char *S;           // ExtSymbol being loaded.
-  ARMCP::ARMCPKind Kind;   // Value or LSDA?
   unsigned LabelId;        // Label id of the load.
+  ARMCP::ARMCPKind Kind;   // Value or LSDA?
   unsigned char PCAdjust;  // Extra adjustment if constantpool is pc relative.
                            // 8 for ARM, 4 for Thumb.
   const char *Modifier;    // GV modifier i.e. (&GV(modifier)-(LPIC+8))
