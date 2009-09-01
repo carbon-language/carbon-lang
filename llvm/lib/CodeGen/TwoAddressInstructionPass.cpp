@@ -968,23 +968,67 @@ bool TwoAddressInstructionPass::runOnMachineFunction(MachineFunction &MF) {
         // Update DistanceMap.
         DistanceMap.insert(std::make_pair(prevMI, Dist));
         DistanceMap[mi] = ++Dist;
+          
+        // Scan the operands to find: (1) the use operand that kills regB (if
+        // any); (2) whether the kill operand is being replaced by regA on
+        // this iteration; and (3) the first use of regB that is not being
+        // replaced on this iteration.  A use of regB will not replaced if it
+        // is tied to a different destination register and will be handled on
+        // a later iteration.
+        MachineOperand *KillMO = NULL;
+        MachineOperand *FirstKeptMO = NULL;
+        bool KillMOKept = false;
+        for (unsigned i = 0, e = mi->getNumOperands(); i != e; ++i) {
+          MachineOperand &MO = mi->getOperand(i);
+          if (MO.isReg() && MO.getReg() == regB && MO.isUse()) {
+
+            // Check if this operand is tied to a different destination.
+            bool isKept = false;
+            unsigned dsti = 0;
+            if (mi->isRegTiedToDefOperand(i, &dsti) && dsti != ti) {
+              isKept = true;
+              if (!FirstKeptMO)
+                FirstKeptMO = &MO;
+            }
+
+            if (MO.isKill()) {
+              KillMO = &MO;
+              KillMOKept = isKept;
+            }
+          }
+        }
 
         // Update live variables for regB.
-        if (LV) {
-          if (LV->removeVirtualRegisterKilled(regB,  mi))
-            LV->addVirtualRegisterKilled(regB, prevMI);
-
-          if (LV->removeVirtualRegisterDead(regB, mi))
-            LV->addVirtualRegisterDead(regB, prevMI);
+        if (KillMO) {
+          if (!FirstKeptMO) {
+            // All uses of regB are being replaced; move the kill to prevMI.
+            if (LV && LV->removeVirtualRegisterKilled(regB, mi))
+              LV->addVirtualRegisterKilled(regB, prevMI);
+          } else {
+            if (!KillMOKept) {
+              // The kill marker is on an operand being replaced, but there
+              // are other uses of regB remaining.  Move the kill marker to
+              // one of them.
+              KillMO->setIsKill(false);
+              FirstKeptMO->setIsKill(true);
+            }
+          }
         }
 
         DEBUG(errs() << "\t\tprepend:\t" << *prevMI);
-          
-        // Replace all occurences of regB with regA.
+
+        // Replace uses of regB with regA.
         for (unsigned i = 0, e = mi->getNumOperands(); i != e; ++i) {
-          if (mi->getOperand(i).isReg() &&
-              mi->getOperand(i).getReg() == regB)
-            mi->getOperand(i).setReg(regA);
+          MachineOperand &MO = mi->getOperand(i);
+          if (MO.isReg() && MO.getReg() == regB && MO.isUse()) {
+
+            // Skip operands that are tied to other register definitions.
+            unsigned dsti = 0;
+            if (mi->isRegTiedToDefOperand(i, &dsti) && dsti != ti)
+              continue;
+
+            MO.setReg(regA);
+          }
         }
 
         assert(mi->getOperand(ti).isDef() && mi->getOperand(si).isUse());
