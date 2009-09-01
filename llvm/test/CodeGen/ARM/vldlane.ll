@@ -49,10 +49,10 @@ define <2 x float> @vld2lanef(float* %A, <2 x float>* %B) nounwind {
 	ret <2 x float> %tmp5
 }
 
-declare %struct.__builtin_neon_v8qi2 @llvm.arm.neon.vld2lane.v8i8(i8*) nounwind readonly
-declare %struct.__builtin_neon_v4hi2 @llvm.arm.neon.vld2lane.v4i16(i8*) nounwind readonly
-declare %struct.__builtin_neon_v2si2 @llvm.arm.neon.vld2lane.v2i32(i8*) nounwind readonly
-declare %struct.__builtin_neon_v2sf2 @llvm.arm.neon.vld2lane.v2f32(i8*) nounwind readonly
+declare %struct.__builtin_neon_v8qi2 @llvm.arm.neon.vld2lane.v8i8(i8*, <8 x i8>, <8 x i8>, i32) nounwind readonly
+declare %struct.__builtin_neon_v4hi2 @llvm.arm.neon.vld2lane.v4i16(i8*, <4 x i16>, <4 x i16>, i32) nounwind readonly
+declare %struct.__builtin_neon_v2si2 @llvm.arm.neon.vld2lane.v2i32(i8*, <2 x i32>, <2 x i32>, i32) nounwind readonly
+declare %struct.__builtin_neon_v2sf2 @llvm.arm.neon.vld2lane.v2f32(i8*, <2 x float>, <2 x float>, i32) nounwind readonly
 
 %struct.__builtin_neon_v8qi3 = type { <8 x i8>,  <8 x i8>,  <8 x i8> }
 %struct.__builtin_neon_v4hi3 = type { <4 x i16>, <4 x i16>, <4 x i16> }
@@ -111,10 +111,10 @@ define <2 x float> @vld3lanef(float* %A, <2 x float>* %B) nounwind {
 	ret <2 x float> %tmp7
 }
 
-declare %struct.__builtin_neon_v8qi3 @llvm.arm.neon.vld3lane.v8i8(i8*) nounwind readonly
-declare %struct.__builtin_neon_v4hi3 @llvm.arm.neon.vld3lane.v4i16(i8*) nounwind readonly
-declare %struct.__builtin_neon_v2si3 @llvm.arm.neon.vld3lane.v2i32(i8*) nounwind readonly
-declare %struct.__builtin_neon_v2sf3 @llvm.arm.neon.vld3lane.v2f32(i8*) nounwind readonly
+declare %struct.__builtin_neon_v8qi3 @llvm.arm.neon.vld3lane.v8i8(i8*, <8 x i8>, <8 x i8>, <8 x i8>, i32) nounwind readonly
+declare %struct.__builtin_neon_v4hi3 @llvm.arm.neon.vld3lane.v4i16(i8*, <4 x i16>, <4 x i16>, <4 x i16>, i32) nounwind readonly
+declare %struct.__builtin_neon_v2si3 @llvm.arm.neon.vld3lane.v2i32(i8*, <2 x i32>, <2 x i32>, <2 x i32>, i32) nounwind readonly
+declare %struct.__builtin_neon_v2sf3 @llvm.arm.neon.vld3lane.v2f32(i8*, <2 x float>, <2 x float>, <2 x float>, i32) nounwind readonly
 
 %struct.__builtin_neon_v8qi4 = type { <8 x i8>,  <8 x i8>,  <8 x i8>,  <8 x i8> }
 %struct.__builtin_neon_v4hi4 = type { <4 x i16>, <4 x i16>, <4 x i16>, <4 x i16> }
@@ -181,7 +181,7 @@ define <2 x float> @vld4lanef(float* %A, <2 x float>* %B) nounwind {
 	ret <2 x float> %tmp9
 }
 
-declare %struct.__builtin_neon_v8qi4 @llvm.arm.neon.vld4lane.v8i8(i8*) nounwind readonly
-declare %struct.__builtin_neon_v4hi4 @llvm.arm.neon.vld4lane.v4i16(i8*) nounwind readonly
-declare %struct.__builtin_neon_v2si4 @llvm.arm.neon.vld4lane.v2i32(i8*) nounwind readonly
-declare %struct.__builtin_neon_v2sf4 @llvm.arm.neon.vld4lane.v2f32(i8*) nounwind readonly
+declare %struct.__builtin_neon_v8qi4 @llvm.arm.neon.vld4lane.v8i8(i8*, <8 x i8>, <8 x i8>, <8 x i8>, <8 x i8>, i32) nounwind readonly
+declare %struct.__builtin_neon_v4hi4 @llvm.arm.neon.vld4lane.v4i16(i8*, <4 x i16>, <4 x i16>, <4 x i16>, <4 x i16>, i32) nounwind readonly
+declare %struct.__builtin_neon_v2si4 @llvm.arm.neon.vld4lane.v2i32(i8*, <2 x i32>, <2 x i32>, <2 x i32>, <2 x i32>, i32) nounwind readonly
+declare %struct.__builtin_neon_v2sf4 @llvm.arm.neon.vld4lane.v2f32(i8*, <2 x float>, <2 x float>, <2 x float>, <2 x float>, i32) nounwind readonly
