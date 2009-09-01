@@ -106,6 +106,15 @@ namespace {
                             MachineFunction::iterator &mbbi,
                             unsigned RegB, unsigned Dist);
 
+    typedef std::pair<std::pair<unsigned, bool>, MachineInstr*> NewKill;
+    bool canUpdateDeletedKills(SmallVector<unsigned, 4> &Kills,
+                               SmallVector<NewKill, 4> &NewKills,
+                               MachineBasicBlock *MBB, unsigned Dist);
+    bool DeleteUnusedInstr(MachineBasicBlock::iterator &mi,
+                           MachineBasicBlock::iterator &nmi,
+                           MachineFunction::iterator &mbbi,
+                           unsigned regB, unsigned regBIdx, unsigned Dist);
+
     void ProcessCopy(MachineInstr *MI, MachineBasicBlock *MBB,
                      SmallPtrSet<MachineInstr*, 8> &Processed);
 
@@ -736,6 +745,75 @@ static bool isSafeToDelete(MachineInstr *MI, unsigned Reg,
   return true;
 }
 
+/// canUpdateDeletedKills - Check if all the registers listed in Kills are
+/// killed by instructions in MBB preceding the current instruction at
+/// position Dist.  If so, return true and record information about the
+/// preceding kills in NewKills.
+bool TwoAddressInstructionPass::
+canUpdateDeletedKills(SmallVector<unsigned, 4> &Kills,
+                      SmallVector<NewKill, 4> &NewKills,
+                      MachineBasicBlock *MBB, unsigned Dist) {
+  while (!Kills.empty()) {
+    unsigned Kill = Kills.back();
+    Kills.pop_back();
+    if (TargetRegisterInfo::isPhysicalRegister(Kill))
+      return false;
+
+    MachineInstr *LastKill = FindLastUseInMBB(Kill, MBB, Dist);
+    if (!LastKill)
+      return false;
+
+    bool isModRef = LastKill->modifiesRegister(Kill);
+    NewKills.push_back(std::make_pair(std::make_pair(Kill, isModRef),
+                                      LastKill));
+  }
+  return true;
+}
+
+/// DeleteUnusedInstr - If an instruction with a tied register operand can
+/// be safely deleted, just delete it.
+bool
+TwoAddressInstructionPass::DeleteUnusedInstr(MachineBasicBlock::iterator &mi,
+                                             MachineBasicBlock::iterator &nmi,
+                                             MachineFunction::iterator &mbbi,
+                                             unsigned regB, unsigned regBIdx,
+                                             unsigned Dist) {
+  // Check if the instruction has no side effects and if all its defs are dead.
+  SmallVector<unsigned, 4> Kills;
+  if (!isSafeToDelete(mi, regB, TII, Kills))
+    return false;
+
+  // If this instruction kills some virtual registers, we need to
+  // update the kill information. If it's not possible to do so,
+  // then bail out.
+  SmallVector<NewKill, 4> NewKills;
+  if (!canUpdateDeletedKills(Kills, NewKills, &*mbbi, Dist))
+    return false;
+
+  if (LV) {
+    while (!NewKills.empty()) {
+      MachineInstr *NewKill = NewKills.back().second;
+      unsigned Kill = NewKills.back().first.first;
+      bool isDead = NewKills.back().first.second;
+      NewKills.pop_back();
+      if (LV->removeVirtualRegisterKilled(Kill, mi)) {
+        if (isDead)
+          LV->addVirtualRegisterDead(Kill, NewKill);
+        else
+          LV->addVirtualRegisterKilled(Kill, NewKill);
+      }
+    }
+
+    // If regB was marked as a kill, update its Kills list.
+    if (mi->getOperand(regBIdx).isKill())
+      LV->removeVirtualRegisterKilled(regB, mi);
+  }
+
+  mbbi->erase(mi); // Nuke the old inst.
+  mi = nmi;
+  return true;
+}
+
 /// runOnMachineFunction - Reduce two-address instructions to two operands.
 ///
 bool TwoAddressInstructionPass::runOnMachineFunction(MachineFunction &MF) {
@@ -822,61 +900,13 @@ bool TwoAddressInstructionPass::runOnMachineFunction(MachineFunction &MF) {
         // allow us to coalesce A and B together, eliminating the copy we are
         // about to insert.
         if (!isKilled(*mi, regB, MRI, TII)) {
+
           // If regA is dead and the instruction can be deleted, just delete
           // it so it doesn't clobber regB.
-          SmallVector<unsigned, 4> Kills;
           if (mi->getOperand(ti).isDead() &&
-              isSafeToDelete(mi, regB, TII, Kills)) {
-            SmallVector<std::pair<std::pair<unsigned, bool>
-              ,MachineInstr*>, 4> NewKills;
-            bool ReallySafe = true;
-            // If this instruction kills some virtual registers, we need
-            // update the kill information. If it's not possible to do so,
-            // then bail out.
-            while (!Kills.empty()) {
-              unsigned Kill = Kills.back();
-              Kills.pop_back();
-              if (TargetRegisterInfo::isPhysicalRegister(Kill)) {
-                ReallySafe = false;
-                break;
-              }
-              MachineInstr *LastKill = FindLastUseInMBB(Kill, &*mbbi, Dist);
-              if (LastKill) {
-                bool isModRef = LastKill->modifiesRegister(Kill);
-                NewKills.push_back(std::make_pair(std::make_pair(Kill,isModRef),
-                                                  LastKill));
-              } else {
-                ReallySafe = false;
-                break;
-              }
-            }
-
-            if (ReallySafe) {
-              if (LV) {
-                while (!NewKills.empty()) {
-                  MachineInstr *NewKill = NewKills.back().second;
-                  unsigned Kill = NewKills.back().first.first;
-                  bool isDead = NewKills.back().first.second;
-                  NewKills.pop_back();
-                  if (LV->removeVirtualRegisterKilled(Kill,  mi)) {
-                    if (isDead)
-                      LV->addVirtualRegisterDead(Kill, NewKill);
-                    else
-                      LV->addVirtualRegisterKilled(Kill, NewKill);
-                  }
-                }
-
-                // We're really going to nuke the old inst. If regB was marked
-                // as a kill we need to update its Kills list.
-                if (mi->getOperand(si).isKill())
-                  LV->removeVirtualRegisterKilled(regB, mi);
-              }
-
-              mbbi->erase(mi); // Nuke the old inst.
-              mi = nmi;
-              ++NumDeletes;
-              break; // Done with this instruction.
-            }
+              DeleteUnusedInstr(mi, nmi, mbbi, regB, si, Dist)) {
+            ++NumDeletes;
+            break; // Done with this instruction.
           }
 
           // If this instruction is commutative, check to see if C dies.  If
