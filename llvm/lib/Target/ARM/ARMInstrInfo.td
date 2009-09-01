@@ -906,6 +906,7 @@ let isReMaterializable = 1, isAsCheapAsAMove = 1 in
 def MOVi : AsI1<0b1101, (outs GPR:$dst), (ins so_imm:$src), DPFrm, IIC_iMOVi,
                  "mov", " $dst, $src", [(set GPR:$dst, so_imm:$src)]>, UnaryDP;
 
+let Uses = [CPSR] in
 def MOVrx : AsI1<0b1101, (outs GPR:$dst), (ins GPR:$src), Pseudo, IIC_iMOVsi,
                  "mov", " $dst, $src, rrx",
                  [(set GPR:$dst, (ARMrrx GPR:$src))]>, UnaryDP;
