@@ -176,8 +176,7 @@ void ProfileEstimatorPass::recurseBasicBlock(BasicBlock *BB) {
     EdgeInformation[BB->getParent()][edge] = BBWeight;
     printEdgeWeight(edge);
   }
-  for ( succ_iterator bbi = succ_begin(BB), bbe = succ_end(BB);
-        bbi != bbe; ++bbi ) {
+  for ( ; bbi != bbe; ++bbi ) {
     if (ProcessedSuccs.insert(*bbi).second) {
       Edge edge = getEdge(BB,*bbi);
       double w = getEdgeWeight(edge);
