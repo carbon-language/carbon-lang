@@ -317,6 +317,7 @@ namespace {
     // Helper fuctions
     bool processStore(StoreInst *SI, BasicBlock::iterator &BBI);
     bool processMemCpy(MemCpyInst *M);
+    bool processMemMove(MemMoveInst *M);
     bool performCallSlotOptzn(MemCpyInst *cpy, CallInst *C);
     bool iterateOnFunction(Function &F);
   };
@@ -431,9 +432,8 @@ bool MemCpyOpt::processStore(StoreInst *SI, BasicBlock::iterator &BBI) {
     BasicBlock::iterator InsertPt = BI;
   
     if (MemSetF == 0) {
-      const Type *Tys[] = {Type::getInt64Ty(SI->getContext())};
-      MemSetF = Intrinsic::getDeclaration(M, Intrinsic::memset,
-                                          Tys, 1);
+      const Type *Ty = Type::getInt64Ty(SI->getContext());
+      MemSetF = Intrinsic::getDeclaration(M, Intrinsic::memset, &Ty, 1);
    }
     
     // Get the starting pointer of the block.
@@ -679,11 +679,10 @@ bool MemCpyOpt::processMemCpy(MemCpyInst *M) {
     return false;
   
   // If all checks passed, then we can transform these memcpy's
-  const Type *Tys[1];
-  Tys[0] = M->getLength()->getType();
+  const Type *Ty = M->getLength()->getType();
   Function *MemCpyFun = Intrinsic::getDeclaration(
                                  M->getParent()->getParent()->getParent(),
-                                 M->getIntrinsicID(), Tys, 1);
+                                 M->getIntrinsicID(), &Ty, 1);
     
   Value *Args[4] = {
     M->getRawDest(), MDep->getRawSource(), M->getLength(), M->getAlignmentCst()
@@ -708,6 +707,36 @@ bool MemCpyOpt::processMemCpy(MemCpyInst *M) {
   return false;
 }
 
+/// processMemMove - Transforms memmove calls to memcpy calls when the src/dst
+/// are guaranteed not to alias.
+bool MemCpyOpt::processMemMove(MemMoveInst *M) {
+  AliasAnalysis &AA = getAnalysis<AliasAnalysis>();
+
+  // If the memmove is a constant size, use it for the alias query, this allows
+  // us to optimize things like: memmove(P, P+64, 64);
+  uint64_t MemMoveSize = ~0ULL;
+  if (ConstantInt *Len = dyn_cast<ConstantInt>(M->getLength()))
+    MemMoveSize = Len->getZExtValue();
+  
+  // See if the pointers alias.
+  if (AA.alias(M->getRawDest(), MemMoveSize, M->getRawSource(), MemMoveSize) !=
+      AliasAnalysis::NoAlias)
+    return false;
+  
+  DEBUG(errs() << "MemCpyOpt: Optimizing memmove -> memcpy: " << *M << "\n");
+  
+  // If not, then we know we can transform this.
+  Module *Mod = M->getParent()->getParent()->getParent();
+  const Type *Ty = M->getLength()->getType();
+  M->setOperand(0, Intrinsic::getDeclaration(Mod, Intrinsic::memcpy, &Ty, 1));
+  
+  // MemDep may have over conservative information about this instruction, just
+  // conservatively flush it from the cache.
+  getAnalysis<MemoryDependenceAnalysis>().removeInstruction(M);
+  return true;
+}
+  
+
 // MemCpyOpt::iterateOnFunction - Executes one iteration of GVN.
 bool MemCpyOpt::iterateOnFunction(Function &F) {
   bool MadeChange = false;
@@ -723,6 +752,12 @@ bool MemCpyOpt::iterateOnFunction(Function &F) {
         MadeChange |= processStore(SI, BI);
       else if (MemCpyInst *M = dyn_cast<MemCpyInst>(I))
         MadeChange |= processMemCpy(M);
+      else if (MemMoveInst *M = dyn_cast<MemMoveInst>(I)) {
+        if (processMemMove(M)) {
+          --BI;         // Reprocess the new memcpy.
+          MadeChange = true;
+        }
+      }
     }
   }
   
