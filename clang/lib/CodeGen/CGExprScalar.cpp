@@ -627,6 +627,10 @@ Value *ScalarExprEmitter::EmitCastExpr(const Expr *E, QualType DestTy,
   switch (Kind) {
   default:
     break;
+  case CastExpr::CK_BitCast: {
+    Value *Src = Visit(const_cast<Expr*>(E));
+    return Builder.CreateBitCast(Src, ConvertType(DestTy));
+  }
   case CastExpr::CK_ArrayToPointerDecay: {
     assert(E->getType()->isArrayType() &&
            "Array to pointer decay must have array source type!");

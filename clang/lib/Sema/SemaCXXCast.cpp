@@ -89,13 +89,15 @@ static TryCastResult TryStaticImplicitCast(Sema &Self, Expr *SrcExpr,
                                            CXXMethodDecl *&ConversionDecl);
 static TryCastResult TryStaticCast(Sema &Self, Expr *SrcExpr,
                                    QualType DestType, bool CStyle,
+                                   CastExpr::CastKind &Kind, 
                                    const SourceRange &OpRange,
-                                   CastExpr::CastKind &Kind, unsigned &msg,
+                                   unsigned &msg,
                                    CXXMethodDecl *&ConversionDecl);
 static TryCastResult TryConstCast(Sema &Self, Expr *SrcExpr, QualType DestType,
                                   bool CStyle, unsigned &msg);
 static TryCastResult TryReinterpretCast(Sema &Self, Expr *SrcExpr,
                                         QualType DestType, bool CStyle,
+                                        CastExpr::CastKind &Kind, 
                                         const SourceRange &OpRange,
                                         unsigned &msg);
 
@@ -347,8 +349,10 @@ CheckReinterpretCast(Sema &Self, Expr *&SrcExpr, QualType DestType,
   if (!DestType->isLValueReferenceType())
     Self.DefaultFunctionArrayConversion(SrcExpr);
 
+  CastExpr::CastKind Kind = CastExpr::CK_Unknown;
   unsigned msg = diag::err_bad_cxx_cast_generic;
-  if (TryReinterpretCast(Self, SrcExpr, DestType, /*CStyle*/false, OpRange, msg)
+  if (TryReinterpretCast(Self, SrcExpr, DestType, /*CStyle*/false, Kind,
+                         OpRange, msg)
       != TC_Success && msg != 0)
     Self.Diag(OpRange.getBegin(), msg) << CT_Reinterpret
       << SrcExpr->getType() << DestType << OpRange;
@@ -374,9 +378,8 @@ CheckStaticCast(Sema &Self, Expr *&SrcExpr, QualType DestType,
 
   unsigned msg = diag::err_bad_cxx_cast_generic;
   CXXMethodDecl *ConversionDecl = 0;
-  if (TryStaticCast(Self, SrcExpr, DestType, /*CStyle*/false, OpRange, 
-                    Kind, msg,
-                    ConversionDecl)
+  if (TryStaticCast(Self, SrcExpr, DestType, /*CStyle*/false, Kind, 
+                    OpRange, msg, ConversionDecl)
       != TC_Success && msg != 0)
     Self.Diag(OpRange.getBegin(), msg) << CT_Static
       << SrcExpr->getType() << DestType << OpRange;
@@ -387,8 +390,8 @@ CheckStaticCast(Sema &Self, Expr *&SrcExpr, QualType DestType,
 /// and casting away constness.
 static TryCastResult TryStaticCast(Sema &Self, Expr *SrcExpr,
                                    QualType DestType, bool CStyle,
-                                   const SourceRange &OpRange,
-                                   CastExpr::CastKind &Kind, unsigned &msg,
+                                   CastExpr::CastKind &Kind, 
+                                   const SourceRange &OpRange, unsigned &msg,
                                    CXXMethodDecl *&ConversionDecl)
 {
   // The order the tests is not entirely arbitrary. There is one conversion
@@ -864,6 +867,7 @@ static TryCastResult TryConstCast(Sema &Self, Expr *SrcExpr, QualType DestType,
 
 static TryCastResult TryReinterpretCast(Sema &Self, Expr *SrcExpr,
                                         QualType DestType, bool CStyle,
+                                        CastExpr::CastKind &Kind,
                                         const SourceRange &OpRange,
                                         unsigned &msg) {
   QualType OrigDestType = DestType, OrigSrcType = SrcExpr->getType();
@@ -1014,6 +1018,7 @@ static TryCastResult TryReinterpretCast(Sema &Self, Expr *SrcExpr,
   // Void pointers are not specified, but supported by every compiler out there.
   // So we finish by allowing everything that remains - it's got to be two
   // object pointers.
+  Kind = CastExpr::CK_BitCast;
   return TC_Success;
 }
 
@@ -1046,14 +1051,16 @@ bool Sema::CXXCheckCStyleCast(SourceRange R, QualType CastTy, Expr *&CastExpr,
   //   even if a cast resulting from that interpretation is ill-formed.
   // In plain language, this means trying a const_cast ...
   unsigned msg = diag::err_bad_cxx_cast_generic;
-  TryCastResult tcr = TryConstCast(*this, CastExpr, CastTy, /*CStyle*/true,msg);
+  TryCastResult tcr = TryConstCast(*this, CastExpr, CastTy, /*CStyle*/true,
+                                   msg);
   if (tcr == TC_NotApplicable) {
     // ... or if that is not possible, a static_cast, ignoring const, ...
-    tcr = TryStaticCast(*this, CastExpr, CastTy, /*CStyle*/true, R, Kind, msg,
+    tcr = TryStaticCast(*this, CastExpr, CastTy, /*CStyle*/true, Kind, R, msg,
                         ConversionDecl);
     if (tcr == TC_NotApplicable) {
       // ... and finally a reinterpret_cast, ignoring const.
-      tcr = TryReinterpretCast(*this, CastExpr, CastTy, /*CStyle*/true, R, msg);
+      tcr = TryReinterpretCast(*this, CastExpr, CastTy, /*CStyle*/true, Kind, 
+                               R, msg);
     }
   }
 
