@@ -28,8 +28,8 @@
 #include "llvm/Support/Mangler.h"
 #include "llvm/Support/Timer.h"
 #include "llvm/Support/raw_ostream.h"
+#include "llvm/ADT/SmallString.h"
 #include "llvm/ADT/StringExtras.h"
-#include <sstream>
 using namespace llvm;
 
 static TimerGroup &getDwarfTimerGroup() {
@@ -601,12 +601,10 @@ void DwarfException::EmitExceptionTable() {
 
   EmitLabel("exception", SubprogramCount);
   if (MAI->getExceptionHandlingType() == ExceptionHandling::SjLj) {
-    std::stringstream out;
-    out << Asm->getFunctionNumber();
-    std::string LSDAName =
-      Asm->Mang->makeNameProper(std::string("LSDA_") + out.str(),
-                                Mangler::Private);
-    O << LSDAName << ":\n";
+    SmallString<256> LSDAName;
+    raw_svector_ostream(LSDAName) << MAI->getPrivateGlobalPrefix() <<
+      "_LSDA_" << Asm->getFunctionNumber();
+    O << LSDAName.str() << ":\n";
   }
 
   // Emit the header.

@@ -1,5 +1,3 @@
-//===-- ARMAsmPrinter.cpp - ARM LLVM assembly writer ----------------------===//
-//
 //                     The LLVM Compiler Infrastructure
 //
 // This file is distributed under the University of Illinois Open Source
@@ -36,6 +34,7 @@
 #include "llvm/Target/TargetOptions.h"
 #include "llvm/Target/TargetRegistry.h"
 #include "llvm/ADT/SmallPtrSet.h"
+#include "llvm/ADT/SmallString.h"
 #include "llvm/ADT/Statistic.h"
 #include "llvm/ADT/StringSet.h"
 #include "llvm/Support/Compiler.h"
@@ -44,7 +43,6 @@
 #include "llvm/Support/MathExtras.h"
 #include "llvm/Support/FormattedStream.h"
 #include <cctype>
-#include <sstream>
 using namespace llvm;
 
 STATISTIC(EmittedInsts, "Number of machine instrs printed");
@@ -162,10 +160,10 @@ namespace {
       std::string Name;
 
       if (ACPV->isLSDA()) {
-        std::stringstream out;
-        out << getFunctionNumber();
-        Name = Mang->makeNameProper(std::string("LSDA_") + out.str(),
-                                    Mangler::Private);
+        SmallString<256> LSDAName;
+        raw_svector_ostream(LSDAName) << MAI->getPrivateGlobalPrefix() <<
+          "_LSDA_" << getFunctionNumber();
+        Name = LSDAName.str();
       } else if (GV) {
         bool isIndirect = Subtarget->isTargetDarwin() &&
           Subtarget->GVIsIndirectSymbol(GV,
