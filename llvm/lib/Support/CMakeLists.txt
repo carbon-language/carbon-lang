@@ -18,6 +18,7 @@ add_llvm_library(LLVMSupport
   MemoryBuffer.cpp
   PluginLoader.cpp
   PrettyStackTrace.cpp
+  Regex.cpp
   SlowOperationInformer.cpp
   SmallPtrSet.cpp
   SourceMgr.cpp
@@ -32,7 +33,6 @@ add_llvm_library(LLVMSupport
   Twine.cpp
   raw_os_ostream.cpp
   raw_ostream.cpp
-  Regex.cpp
   regcomp.c
   regerror.c
   regexec.c
