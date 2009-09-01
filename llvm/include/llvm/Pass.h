@@ -191,7 +191,7 @@ public:
   AnalysisType &getAnalysis() const; // Defined in PassAnalysisSupport.h
 
   template<typename AnalysisType>
-  AnalysisType &getAnalysis(Function &F); // Defined in PassanalysisSupport.h
+  AnalysisType &getAnalysis(Function &F); // Defined in PassAnalysisSupport.h
 
   template<typename AnalysisType>
   AnalysisType &getAnalysisID(const PassInfo *PI) const;
