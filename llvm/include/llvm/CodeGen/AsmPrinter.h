@@ -172,6 +172,10 @@ namespace llvm {
     /// 
     std::string getCurrentFunctionEHName(const MachineFunction *MF) const;
 
+    /// getFunctionNumber - Return a unique ID for the current function.
+    ///
+    unsigned getFunctionNumber() const { return FunctionNumber; }
+    
   protected:
     /// getAnalysisUsage - Record analysis usage.
     /// 
@@ -216,10 +220,6 @@ namespace llvm {
     /// SetupMachineFunction - This should be called when a new MachineFunction
     /// is being processed from runOnMachineFunction.
     void SetupMachineFunction(MachineFunction &MF);
-    
-    /// getFunctionNumber - Return a unique ID for the current function.
-    ///
-    unsigned getFunctionNumber() const { return FunctionNumber; }
     
     /// IncrementFunctionNumber - Increase Function Number.  AsmPrinters should
     /// not normally call this, as the counter is automatically bumped by

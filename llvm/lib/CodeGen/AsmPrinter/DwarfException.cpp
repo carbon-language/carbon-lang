@@ -25,9 +25,11 @@
 #include "llvm/Target/TargetOptions.h"
 #include "llvm/Target/TargetRegisterInfo.h"
 #include "llvm/Support/Dwarf.h"
+#include "llvm/Support/Mangler.h"
 #include "llvm/Support/Timer.h"
 #include "llvm/Support/raw_ostream.h"
 #include "llvm/ADT/StringExtras.h"
+#include <sstream>
 using namespace llvm;
 
 static TimerGroup &getDwarfTimerGroup() {
@@ -599,9 +601,12 @@ void DwarfException::EmitExceptionTable() {
 
   EmitLabel("exception", SubprogramCount);
   if (MAI->getExceptionHandlingType() == ExceptionHandling::SjLj) {
-    std::string SjLjName = "_lsda_";
-    SjLjName += MF->getFunction()->getName().str();
-    EmitLabel(SjLjName.c_str(), 0);
+    std::stringstream out;
+    out << Asm->getFunctionNumber();
+    std::string LSDAName =
+      Asm->Mang->makeNameProper(std::string("LSDA_") + out.str(),
+                                Mangler::Private);
+    EmitLabel(LSDAName.c_str(), 0, false);
   }
 
   // Emit the header.

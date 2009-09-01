@@ -21,12 +21,20 @@ namespace llvm {
 class GlobalValue;
 class LLVMContext;
 
+namespace ARMCP {
+  enum ARMCPKind {
+    CPValue,
+    CPLSDA
+  };
+}
+
 /// ARMConstantPoolValue - ARM specific constantpool value. This is used to
 /// represent PC relative displacement between the address of the load
 /// instruction and the global value being loaded, i.e. (&GV-(LPIC+8)).
 class ARMConstantPoolValue : public MachineConstantPoolValue {
   GlobalValue *GV;         // GlobalValue being loaded.
   const char *S;           // ExtSymbol being loaded.
+  ARMCP::ARMCPKind Kind;   // Value or LSDA?
   unsigned LabelId;        // Label id of the load.
   unsigned char PCAdjust;  // Extra adjustment if constantpool is pc relative.
                            // 8 for ARM, 4 for Thumb.
@@ -35,6 +43,7 @@ class ARMConstantPoolValue : public MachineConstantPoolValue {
 
 public:
   ARMConstantPoolValue(GlobalValue *gv, unsigned id,
+                       ARMCP::ARMCPKind Kind = ARMCP::CPValue,
                        unsigned char PCAdj = 0, const char *Modifier = NULL,
                        bool AddCurrentAddress = false);
   ARMConstantPoolValue(LLVMContext &C, const char *s, unsigned id,
@@ -52,6 +61,7 @@ public:
   bool mustAddCurrentAddress() const { return AddCurrentAddress; }
   unsigned getLabelId() const { return LabelId; }
   unsigned char getPCAdjustment() const { return PCAdjust; }
+  bool isLSDA() { return Kind == ARMCP::CPLSDA; }
 
   virtual unsigned getRelocationInfo() const {
     // FIXME: This is conservatively claiming that these entries require a

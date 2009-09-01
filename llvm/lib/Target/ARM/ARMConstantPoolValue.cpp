@@ -20,11 +20,12 @@
 using namespace llvm;
 
 ARMConstantPoolValue::ARMConstantPoolValue(GlobalValue *gv, unsigned id,
+                                           ARMCP::ARMCPKind K,
                                            unsigned char PCAdj,
                                            const char *Modif,
                                            bool AddCA)
   : MachineConstantPoolValue((const Type*)gv->getType()),
-    GV(gv), S(NULL), LabelId(id), PCAdjust(PCAdj),
+    GV(gv), S(NULL), LabelId(id), Kind(K), PCAdjust(PCAdj),
     Modifier(Modif), AddCurrentAddress(AddCA) {}
 
 ARMConstantPoolValue::ARMConstantPoolValue(LLVMContext &C,
@@ -33,12 +34,12 @@ ARMConstantPoolValue::ARMConstantPoolValue(LLVMContext &C,
                                            const char *Modif,
                                            bool AddCA)
   : MachineConstantPoolValue((const Type*)Type::getInt32Ty(C)),
-    GV(NULL), S(strdup(s)), LabelId(id), PCAdjust(PCAdj),
+    GV(NULL), S(strdup(s)), LabelId(id), Kind(ARMCP::CPValue), PCAdjust(PCAdj),
     Modifier(Modif), AddCurrentAddress(AddCA) {}
 
 ARMConstantPoolValue::ARMConstantPoolValue(GlobalValue *gv, const char *Modif)
   : MachineConstantPoolValue((const Type*)Type::getInt32Ty(gv->getContext())),
-    GV(gv), S(NULL), LabelId(0), PCAdjust(0),
+    GV(gv), S(NULL), Kind(ARMCP::CPValue), LabelId(0), PCAdjust(0),
     Modifier(Modif) {}
 
 int ARMConstantPoolValue::getExistingMachineCPValue(MachineConstantPool *CP,

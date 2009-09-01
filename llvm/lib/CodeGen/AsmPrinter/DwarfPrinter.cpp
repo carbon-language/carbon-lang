@@ -43,21 +43,27 @@ void Dwarf::PrintRelDirective(bool Force32Bit, bool isInSection) const {
 
 /// PrintLabelName - Print label name in form used by Dwarf writer.
 ///
-void Dwarf::PrintLabelName(const char *Tag, unsigned Number) const {
-  O << MAI->getPrivateGlobalPrefix() << Tag;
+void Dwarf::PrintLabelName(const char *Tag, unsigned Number,
+                           bool ForcePrivate) const {
+  if (ForcePrivate)
+    O << MAI->getPrivateGlobalPrefix();
+  O << Tag;
   if (Number) O << Number;
 }
 void Dwarf::PrintLabelName(const char *Tag, unsigned Number,
-                           const char *Suffix) const {
-  O << MAI->getPrivateGlobalPrefix() << Tag;
+                           const char *Suffix, bool ForcePrivate) const {
+  if (ForcePrivate)
+    O << MAI->getPrivateGlobalPrefix();
+  O << Tag;
   if (Number) O << Number;
   O << Suffix;
 }
 
 /// EmitLabel - Emit location label for internal use by Dwarf.
 ///
-void Dwarf::EmitLabel(const char *Tag, unsigned Number) const {
-  PrintLabelName(Tag, Number);
+void Dwarf::EmitLabel(const char *Tag, unsigned Number,
+                      bool ForcePrivate) const {
+  PrintLabelName(Tag, Number, ForcePrivate);
   O << ":\n";
 }
 

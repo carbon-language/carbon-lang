@@ -44,6 +44,7 @@
 #include "llvm/Support/MathExtras.h"
 #include "llvm/Support/FormattedStream.h"
 #include <cctype>
+#include <sstream>
 using namespace llvm;
 
 STATISTIC(EmittedInsts, "Number of machine instrs printed");
@@ -159,8 +160,13 @@ namespace {
       ARMConstantPoolValue *ACPV = static_cast<ARMConstantPoolValue*>(MCPV);
       GlobalValue *GV = ACPV->getGV();
       std::string Name;
-      
-      if (GV) {
+
+      if (ACPV->isLSDA()) {
+        std::stringstream out;
+        out << getFunctionNumber();
+        Name = Mang->makeNameProper(std::string("LSDA_") + out.str(),
+                                    Mangler::Private);
+      } else if (GV) {
         bool isIndirect = Subtarget->isTargetDarwin() &&
           Subtarget->GVIsIndirectSymbol(GV,
                                         TM.getRelocationModel() == Reloc::Static);
@@ -175,9 +181,7 @@ namespace {
           else
             GVNonLazyPtrs[SymName] = Name;
         }
-      } else if (!strncmp(ACPV->getSymbol(), "L_lsda_", 7))
-        Name = ACPV->getSymbol();
-      else
+      } else
         Name = Mang->makeNameProper(ACPV->getSymbol());
       O << Name;      
       

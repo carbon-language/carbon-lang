@@ -40,6 +40,7 @@
 #include "llvm/ADT/VectorExtras.h"
 #include "llvm/Support/ErrorHandling.h"
 #include "llvm/Support/MathExtras.h"
+#include <sstream>
 using namespace llvm;
 
 static bool CC_ARM_APCS_Custom_f64(unsigned &ValNo, EVT &ValVT, EVT &LocVT,
@@ -969,7 +970,8 @@ ARMTargetLowering::LowerCall(SDValue Chain, SDValue Callee,
     // tBX takes a register source operand.
     if (isARMFunc && Subtarget->isThumb1Only() && !Subtarget->hasV5TOps()) {
       ARMConstantPoolValue *CPV = new ARMConstantPoolValue(GV,
-                                                           ARMPCLabelIndex, 4);
+                                                           ARMPCLabelIndex,
+                                                           ARMCP::CPValue, 4);
       SDValue CPAddr = DAG.getTargetConstantPool(CPV, getPointerTy(), 4);
       CPAddr = DAG.getNode(ARMISD::Wrapper, dl, MVT::i32, CPAddr);
       Callee = DAG.getLoad(getPointerTy(), dl,
@@ -1166,7 +1168,7 @@ ARMTargetLowering::LowerToTLSGeneralDynamicModel(GlobalAddressSDNode *GA,
   unsigned char PCAdj = Subtarget->isThumb() ? 4 : 8;
   ARMConstantPoolValue *CPV =
     new ARMConstantPoolValue(GA->getGlobal(), ARMPCLabelIndex,
-                             PCAdj, "tlsgd", true);
+                             ARMCP::CPValue, PCAdj, "tlsgd", true);
   SDValue Argument = DAG.getTargetConstantPool(CPV, PtrVT, 4);
   Argument = DAG.getNode(ARMISD::Wrapper, dl, MVT::i32, Argument);
   Argument = DAG.getLoad(PtrVT, dl, DAG.getEntryNode(), Argument, NULL, 0);
@@ -1208,7 +1210,7 @@ ARMTargetLowering::LowerToTLSExecModels(GlobalAddressSDNode *GA,
     unsigned char PCAdj = Subtarget->isThumb() ? 4 : 8;
     ARMConstantPoolValue *CPV =
       new ARMConstantPoolValue(GA->getGlobal(), ARMPCLabelIndex,
-                               PCAdj, "gottpoff", true);
+                               ARMCP::CPValue, PCAdj, "gottpoff", true);
     Offset = DAG.getTargetConstantPool(CPV, PtrVT, 4);
     Offset = DAG.getNode(ARMISD::Wrapper, dl, MVT::i32, Offset);
     Offset = DAG.getLoad(PtrVT, dl, Chain, Offset, NULL, 0);
@@ -1284,7 +1286,7 @@ SDValue ARMTargetLowering::LowerGlobalAddressDarwin(SDValue Op,
   else {
     unsigned PCAdj = (RelocM != Reloc::PIC_) ? 0 : (Subtarget->isThumb()?4:8);
     ARMConstantPoolValue *CPV =
-      new ARMConstantPoolValue(GV, ARMPCLabelIndex, PCAdj);
+      new ARMConstantPoolValue(GV, ARMPCLabelIndex, ARMCP::CPValue, PCAdj);
     CPAddr = DAG.getTargetConstantPool(CPV, PtrVT, 4);
   }
   CPAddr = DAG.getNode(ARMISD::Wrapper, dl, MVT::i32, CPAddr);
@@ -1375,10 +1377,6 @@ ARMTargetLowering::LowerINTRINSIC_WO_CHAIN(SDValue Op, SelectionDAG &DAG) {
     return DAG.getNode(ARMISD::THREAD_POINTER, dl, PtrVT);
   }
   case Intrinsic::eh_sjlj_lsda: {
-    // blah. horrible, horrible hack with the forced magic name.
-    // really need to clean this up. It belongs in the target-independent
-    // layer somehow that doesn't require the coupling with the asm
-    // printer.
     MachineFunction &MF = DAG.getMachineFunction();
     EVT PtrVT = getPointerTy();
     DebugLoc dl = Op.getDebugLoc();
@@ -1386,13 +1384,9 @@ ARMTargetLowering::LowerINTRINSIC_WO_CHAIN(SDValue Op, SelectionDAG &DAG) {
     SDValue CPAddr;
     unsigned PCAdj = (RelocM != Reloc::PIC_)
       ? 0 : (Subtarget->isThumb() ? 4 : 8);
-    // Save off the LSDA name for the AsmPrinter to use when it's time
-    // to emit the table
-    std::string LSDAName = "L_lsda_";
-    LSDAName += MF.getFunction()->getName();
     ARMConstantPoolValue *CPV =
-      new ARMConstantPoolValue(*DAG.getContext(), LSDAName.c_str(), 
-                               ARMPCLabelIndex, PCAdj);
+      new ARMConstantPoolValue(MF.getFunction(), ARMPCLabelIndex,
+                               ARMCP::CPLSDA, PCAdj);
     CPAddr = DAG.getTargetConstantPool(CPV, PtrVT, 4);
     CPAddr = DAG.getNode(ARMISD::Wrapper, dl, MVT::i32, CPAddr);
     SDValue Result =
