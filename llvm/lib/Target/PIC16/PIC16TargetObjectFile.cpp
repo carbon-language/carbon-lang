@@ -20,8 +20,8 @@ using namespace llvm;
 
 
 MCSectionPIC16 *MCSectionPIC16::Create(const StringRef &Name, SectionKind K, 
-                                       int Address, MCContext &Ctx) {
-  return new (Ctx) MCSectionPIC16(Name, K, Address);
+                                       int Address, int Color, MCContext &Ctx) {
+  return new (Ctx) MCSectionPIC16(Name, K, Address, Color);
 }
 
 
@@ -38,12 +38,14 @@ PIC16TargetObjectFile::PIC16TargetObjectFile()
 }
 
 const MCSectionPIC16 *PIC16TargetObjectFile::
-getPIC16Section(const char *Name, SectionKind Kind, int Address) const {
+getPIC16Section(const char *Name, SectionKind Kind, 
+                int Address, int Color) const {
   MCSectionPIC16 *&Entry = SectionsByName[Name];
   if (Entry)
     return Entry;
 
-  return Entry = MCSectionPIC16::Create(Name, Kind, Address, getContext());
+  return Entry = MCSectionPIC16::Create(Name, Kind, Address, Color, 
+                                        getContext());
 }
 
 
@@ -51,10 +53,10 @@ void PIC16TargetObjectFile::Initialize(MCContext &Ctx, const TargetMachine &tm){
   TargetLoweringObjectFile::Initialize(Ctx, tm);
   TM = &tm;
   
-  BSSSection = getPIC16Section("udata.# UDATA", SectionKind::getBSS());
+  BSSSection = getPIC16Section("udata.# UDATA", MCSectionPIC16::UDATA_Kind());
   ReadOnlySection = getPIC16Section("romdata.# ROMDATA", 
-                                    SectionKind::getReadOnly());
-  DataSection = getPIC16Section("idata.# IDATA", SectionKind::getDataRel());
+                                    MCSectionPIC16::ROMDATA_Kind());
+  DataSection = getPIC16Section("idata.# IDATA", MCSectionPIC16::IDATA_Kind());
   
   // Need because otherwise a .text symbol is emitted by DwarfWriter
   // in BeginModule, and gpasm cribbs for that .text symbol.
@@ -63,6 +65,8 @@ void PIC16TargetObjectFile::Initialize(MCContext &Ctx, const TargetMachine &tm){
   ROSections.push_back(new PIC16Section((MCSectionPIC16*)ReadOnlySection));
   
   // FIXME: I don't know what the classification of these sections really is.
+  // These aren't really objects belonging to any section. Just emit them
+  // in AsmPrinter and remove this code from here. 
   ExternalVarDecls = new PIC16Section(getPIC16Section("ExternalVarDecls",
                                       SectionKind::getMetadata()));
   ExternalVarDefs = new PIC16Section(getPIC16Section("ExternalVarDefs",
@@ -107,7 +111,7 @@ PIC16TargetObjectFile::getBSSSectionForGlobal(const GlobalVariable *GV) const {
   if (!FoundBSS) {
     std::string name = PAN::getUdataSectionName(BSSSections.size());
     const MCSectionPIC16 *NewSection
-      = getPIC16Section(name.c_str(), /*FIXME*/ SectionKind::getMetadata());
+      = getPIC16Section(name.c_str(), MCSectionPIC16::UDATA_Kind());
 
     FoundBSS = new PIC16Section(NewSection);
 
@@ -148,7 +152,7 @@ PIC16TargetObjectFile::getIDATASectionForGlobal(const GlobalVariable *GV) const{
   if (!FoundIDATA) {
     std::string name = PAN::getIdataSectionName(IDATASections.size());
     const MCSectionPIC16 *NewSection =
-      getPIC16Section(name.c_str(), /*FIXME*/ SectionKind::getMetadata());
+      getPIC16Section(name.c_str(), MCSectionPIC16::IDATA_Kind());
 
     FoundIDATA = new PIC16Section(NewSection);
 
@@ -182,7 +186,7 @@ PIC16TargetObjectFile::getSectionForAuto(const GlobalVariable *GV) const {
   // No Auto section was found. Crate a new one.
   if (!FoundAutoSec) {
     const MCSectionPIC16 *NewSection =
-      getPIC16Section(name.c_str(), /*FIXME*/ SectionKind::getMetadata());
+      getPIC16Section(name.c_str(), MCSectionPIC16::UDATA_OVR_Kind());
 
     FoundAutoSec = new PIC16Section(NewSection);
 
@@ -333,7 +337,7 @@ PIC16TargetObjectFile::CreateBSSSectionForGlobal(const GlobalVariable *GV,
   PIC16Section *NewBSS = FoundBSS;
   if (NewBSS == NULL) {
     const MCSectionPIC16 *NewSection =
-      getPIC16Section(Name.c_str(), SectionKind::getBSS());
+      getPIC16Section(Name.c_str(), MCSectionPIC16::UDATA_Kind());
     NewBSS = new PIC16Section(NewSection);
     BSSSections.push_back(NewBSS);
   }
@@ -385,7 +389,7 @@ PIC16TargetObjectFile::CreateIDATASectionForGlobal(const GlobalVariable *GV,
   PIC16Section *NewIDATASec = FoundIDATASec;
   if (NewIDATASec == NULL) {
     const MCSectionPIC16 *NewSection =
-      getPIC16Section(Name.c_str(), /* FIXME */SectionKind::getMetadata());
+      getPIC16Section(Name.c_str(), MCSectionPIC16::IDATA_Kind());
     NewIDATASec = new PIC16Section(NewSection);
     IDATASections.push_back(NewIDATASec);
   }
@@ -424,7 +428,7 @@ PIC16TargetObjectFile::CreateROSectionForGlobal(const GlobalVariable *GV,
   PIC16Section *NewRomSec = FoundROSec;
   if (NewRomSec == NULL) {
     const MCSectionPIC16 *NewSection =
-      getPIC16Section(Name.c_str(), SectionKind::getReadOnly());
+      getPIC16Section(Name.c_str(), MCSectionPIC16::ROMDATA_Kind());
     NewRomSec = new PIC16Section(NewSection);
     ROSections.push_back(NewRomSec);
   }

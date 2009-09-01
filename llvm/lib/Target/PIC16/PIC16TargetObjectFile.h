@@ -54,7 +54,8 @@ namespace llvm {
     
     const MCSectionPIC16 *getPIC16Section(const char *Name,
                                           SectionKind K, 
-                                          int Address = -1) const;
+                                          int Address = -1, 
+                                          int Color = -1) const;
   public:
     mutable std::vector<PIC16Section*> BSSSections;
     mutable std::vector<PIC16Section*> IDATASections;

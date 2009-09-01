@@ -29,10 +29,9 @@ namespace llvm {
     /// Negative value here means user hasn't specified any. 
     int Address; 
 
-    /// FIXME: Keep overlay information here. uncomment the decl below.
     /// Overlay information - Sections with same color can be overlaid on
     /// one another.
-    /// std::string Color; 
+    int Color; 
 
     /// Conatined data objects.
     std::vector<const GlobalVariable *>Items;
@@ -40,8 +39,8 @@ namespace llvm {
     /// Total size of all data objects contained here.
     unsigned Size;
     
-    MCSectionPIC16(const StringRef &name, SectionKind K, int addr)
-      : MCSection(K), Name(name), Address(addr) {
+    MCSectionPIC16(const StringRef &name, SectionKind K, int addr, int color)
+      : MCSection(K), Name(name), Address(addr), Color(color) {
     }
     
   public:
@@ -50,6 +49,9 @@ namespace llvm {
 
     /// Return the Address of the section.
     int getAddress() const { return Address; }
+
+    /// Return the Color of the section.
+    int getColor() const { return Color; }
 
     /// PIC16 Terminology for section kinds is as below.
     /// UDATA - BSS
@@ -73,7 +75,7 @@ namespace llvm {
 
     /// This would be the only way to create a section. 
     static MCSectionPIC16 *Create(const StringRef &Name, SectionKind K, 
-                                  int Address, MCContext &Ctx);
+                                  int Address, int Color, MCContext &Ctx);
     
     /// Override this as PIC16 has its own way of printing switching
     /// to a section.
