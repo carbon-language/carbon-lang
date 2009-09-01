@@ -15,6 +15,7 @@
 #include "clang/AST/DeclTemplate.h"
 #include "clang/AST/DeclVisitor.h"
 #include "clang/AST/Expr.h"
+#include "clang/Basic/PrettyStackTrace.h"
 #include "clang/Lex/Preprocessor.h"
 #include "llvm/Support/Compiler.h"
 
@@ -1418,6 +1419,11 @@ void Sema::PerformPendingImplicitInstantiations() {
     
     // Instantiate function definitions
     if (FunctionDecl *Function = dyn_cast<FunctionDecl>(Inst.first)) {
+      PrettyStackTraceActionsDecl CrashInfo(DeclPtrTy::make(Function), 
+                                            Function->getLocation(), *this,
+                                            Context.getSourceManager(),
+                                           "instantiating function definition");
+      
       if (!Function->getBody())
         InstantiateFunctionDefinition(/*FIXME:*/Inst.second, Function, true);
       continue;
@@ -1426,6 +1432,13 @@ void Sema::PerformPendingImplicitInstantiations() {
     // Instantiate static data member definitions.
     VarDecl *Var = cast<VarDecl>(Inst.first);
     assert(Var->isStaticDataMember() && "Not a static data member?");
+
+    PrettyStackTraceActionsDecl CrashInfo(DeclPtrTy::make(Var), 
+                                          Var->getLocation(), *this,
+                                          Context.getSourceManager(),
+                                          "instantiating static data member "
+                                          "definition");
+    
     InstantiateStaticDataMemberDefinition(/*FIXME:*/Inst.second, Var, true);
   }
 }
