@@ -37,7 +37,7 @@ STATISTIC(NumMemSetInfer, "Number of memsets inferred");
 /// true for all i8 values obviously, but is also true for i32 0, i32 -1,
 /// i16 0xF0F0, double 0.0 etc.  If the value can't be handled with a repeated
 /// byte store (e.g. i16 0x1234), return null.
-static Value *isBytewiseValue(Value *V, LLVMContext& Context) {
+static Value *isBytewiseValue(Value *V, LLVMContext &Context) {
   // All byte-wide stores are splatable, even of arbitrary variables.
   if (V->getType() == Type::getInt8Ty(Context)) return V;
   
@@ -315,9 +315,9 @@ namespace {
     }
   
     // Helper fuctions
-    bool processStore(StoreInst *SI, BasicBlock::iterator& BBI);
-    bool processMemCpy(MemCpyInst* M);
-    bool performCallSlotOptzn(MemCpyInst* cpy, CallInst* C);
+    bool processStore(StoreInst *SI, BasicBlock::iterator &BBI);
+    bool processMemCpy(MemCpyInst *M);
+    bool performCallSlotOptzn(MemCpyInst *cpy, CallInst *C);
     bool iterateOnFunction(Function &F);
   };
   
@@ -336,7 +336,7 @@ static RegisterPass<MemCpyOpt> X("memcpyopt",
 /// some other patterns to fold away.  In particular, this looks for stores to
 /// neighboring locations of memory.  If it sees enough consequtive ones
 /// (currently 4) it attempts to merge them together into a memcpy/memset.
-bool MemCpyOpt::processStore(StoreInst *SI, BasicBlock::iterator& BBI) {
+bool MemCpyOpt::processStore(StoreInst *SI, BasicBlock::iterator &BBI) {
   if (SI->isVolatile()) return false;
   
   // There are two cases that are interesting for this code to handle: memcpy
@@ -495,26 +495,26 @@ bool MemCpyOpt::performCallSlotOptzn(MemCpyInst *cpy, CallInst *C) {
 
   // Deliberately get the source and destination with bitcasts stripped away,
   // because we'll need to do type comparisons based on the underlying type.
-  Value* cpyDest = cpy->getDest();
-  Value* cpySrc = cpy->getSource();
+  Value *cpyDest = cpy->getDest();
+  Value *cpySrc = cpy->getSource();
   CallSite CS = CallSite::get(C);
 
   // We need to be able to reason about the size of the memcpy, so we require
   // that it be a constant.
-  ConstantInt* cpyLength = dyn_cast<ConstantInt>(cpy->getLength());
+  ConstantInt *cpyLength = dyn_cast<ConstantInt>(cpy->getLength());
   if (!cpyLength)
     return false;
 
   // Require that src be an alloca.  This simplifies the reasoning considerably.
-  AllocaInst* srcAlloca = dyn_cast<AllocaInst>(cpySrc);
+  AllocaInst *srcAlloca = dyn_cast<AllocaInst>(cpySrc);
   if (!srcAlloca)
     return false;
 
   // Check that all of src is copied to dest.
-  TargetData* TD = getAnalysisIfAvailable<TargetData>();
+  TargetData *TD = getAnalysisIfAvailable<TargetData>();
   if (!TD) return false;
 
-  ConstantInt* srcArraySize = dyn_cast<ConstantInt>(srcAlloca->getArraySize());
+  ConstantInt *srcArraySize = dyn_cast<ConstantInt>(srcAlloca->getArraySize());
   if (!srcArraySize)
     return false;
 
@@ -527,9 +527,9 @@ bool MemCpyOpt::performCallSlotOptzn(MemCpyInst *cpy, CallInst *C) {
   // Check that accessing the first srcSize bytes of dest will not cause a
   // trap.  Otherwise the transform is invalid since it might cause a trap
   // to occur earlier than it otherwise would.
-  if (AllocaInst* A = dyn_cast<AllocaInst>(cpyDest)) {
+  if (AllocaInst *A = dyn_cast<AllocaInst>(cpyDest)) {
     // The destination is an alloca.  Check it is larger than srcSize.
-    ConstantInt* destArraySize = dyn_cast<ConstantInt>(A->getArraySize());
+    ConstantInt *destArraySize = dyn_cast<ConstantInt>(A->getArraySize());
     if (!destArraySize)
       return false;
 
@@ -538,13 +538,13 @@ bool MemCpyOpt::performCallSlotOptzn(MemCpyInst *cpy, CallInst *C) {
 
     if (destSize < srcSize)
       return false;
-  } else if (Argument* A = dyn_cast<Argument>(cpyDest)) {
+  } else if (Argument *A = dyn_cast<Argument>(cpyDest)) {
     // If the destination is an sret parameter then only accesses that are
     // outside of the returned struct type can trap.
     if (!A->hasStructRetAttr())
       return false;
 
-    const Type* StructTy = cast<PointerType>(A->getType())->getElementType();
+    const Type *StructTy = cast<PointerType>(A->getType())->getElementType();
     uint64_t destSize = TD->getTypeAllocSize(StructTy);
 
     if (destSize < srcSize)
@@ -560,14 +560,14 @@ bool MemCpyOpt::performCallSlotOptzn(MemCpyInst *cpy, CallInst *C) {
   SmallVector<User*, 8> srcUseList(srcAlloca->use_begin(),
                                    srcAlloca->use_end());
   while (!srcUseList.empty()) {
-    User* UI = srcUseList.back();
+    User *UI = srcUseList.back();
     srcUseList.pop_back();
 
     if (isa<BitCastInst>(UI)) {
       for (User::use_iterator I = UI->use_begin(), E = UI->use_end();
            I != E; ++I)
         srcUseList.push_back(*I);
-    } else if (GetElementPtrInst* G = dyn_cast<GetElementPtrInst>(UI)) {
+    } else if (GetElementPtrInst *G = dyn_cast<GetElementPtrInst>(UI)) {
       if (G->hasAllZeroIndices())
         for (User::use_iterator I = UI->use_begin(), E = UI->use_end();
              I != E; ++I)
@@ -581,8 +581,8 @@ bool MemCpyOpt::performCallSlotOptzn(MemCpyInst *cpy, CallInst *C) {
 
   // Since we're changing the parameter to the callsite, we need to make sure
   // that what would be the new parameter dominates the callsite.
-  DominatorTree& DT = getAnalysis<DominatorTree>();
-  if (Instruction* cpyDestInst = dyn_cast<Instruction>(cpyDest))
+  DominatorTree &DT = getAnalysis<DominatorTree>();
+  if (Instruction *cpyDestInst = dyn_cast<Instruction>(cpyDest))
     if (!DT.dominates(cpyDestInst, C))
       return false;
 
@@ -590,7 +590,7 @@ bool MemCpyOpt::performCallSlotOptzn(MemCpyInst *cpy, CallInst *C) {
   // unexpected manner, for example via a global, which we deduce from
   // the use analysis, we also need to know that it does not sneakily
   // access dest.  We rely on AA to figure this out for us.
-  AliasAnalysis& AA = getAnalysis<AliasAnalysis>();
+  AliasAnalysis &AA = getAnalysis<AliasAnalysis>();
   if (AA.getModRefInfo(C, cpy->getRawDest(), srcSize) !=
       AliasAnalysis::NoModRef)
     return false;
@@ -603,11 +603,11 @@ bool MemCpyOpt::performCallSlotOptzn(MemCpyInst *cpy, CallInst *C) {
         cpyDest = CastInst::CreatePointerCast(cpyDest, cpySrc->getType(),
                                               cpyDest->getName(), C);
       changedArgument = true;
-      if (CS.getArgument(i)->getType() != cpyDest->getType())
-        CS.setArgument(i, CastInst::CreatePointerCast(cpyDest, 
-                       CS.getArgument(i)->getType(), cpyDest->getName(), C));
-      else
+      if (CS.getArgument(i)->getType() == cpyDest->getType())
         CS.setArgument(i, cpyDest);
+      else
+        CS.setArgument(i, CastInst::CreatePointerCast(cpyDest, 
+                          CS.getArgument(i)->getType(), cpyDest->getName(), C));
     }
 
   if (!changedArgument)
@@ -615,7 +615,7 @@ bool MemCpyOpt::performCallSlotOptzn(MemCpyInst *cpy, CallInst *C) {
 
   // Drop any cached information about the call, because we may have changed
   // its dependence information by changing its parameter.
-  MemoryDependenceAnalysis& MD = getAnalysis<MemoryDependenceAnalysis>();
+  MemoryDependenceAnalysis &MD = getAnalysis<MemoryDependenceAnalysis>();
   MD.removeInstruction(C);
 
   // Remove the memcpy
@@ -630,22 +630,22 @@ bool MemCpyOpt::performCallSlotOptzn(MemCpyInst *cpy, CallInst *C) {
 /// copies X to Y, and memcpy B which copies Y to Z, then we can rewrite B to be
 /// a memcpy from X to Z (or potentially a memmove, depending on circumstances).
 ///  This allows later passes to remove the first memcpy altogether.
-bool MemCpyOpt::processMemCpy(MemCpyInst* M) {
-  MemoryDependenceAnalysis& MD = getAnalysis<MemoryDependenceAnalysis>();
+bool MemCpyOpt::processMemCpy(MemCpyInst *M) {
+  MemoryDependenceAnalysis &MD = getAnalysis<MemoryDependenceAnalysis>();
 
   // The are two possible optimizations we can do for memcpy:
-  //   a) memcpy-memcpy xform which exposes redundance for DSE
-  //   b) call-memcpy xform for return slot optimization
+  //   a) memcpy-memcpy xform which exposes redundance for DSE.
+  //   b) call-memcpy xform for return slot optimization.
   MemDepResult dep = MD.getDependency(M);
   if (!dep.isClobber())
     return false;
   if (!isa<MemCpyInst>(dep.getInst())) {
-    if (CallInst* C = dyn_cast<CallInst>(dep.getInst()))
+    if (CallInst *C = dyn_cast<CallInst>(dep.getInst()))
       return performCallSlotOptzn(M, C);
     return false;
   }
   
-  MemCpyInst* MDep = cast<MemCpyInst>(dep.getInst());
+  MemCpyInst *MDep = cast<MemCpyInst>(dep.getInst());
   
   // We can only transforms memcpy's where the dest of one is the source of the
   // other
@@ -654,8 +654,8 @@ bool MemCpyOpt::processMemCpy(MemCpyInst* M) {
   
   // Second, the length of the memcpy's must be the same, or the preceeding one
   // must be larger than the following one.
-  ConstantInt* C1 = dyn_cast<ConstantInt>(MDep->getLength());
-  ConstantInt* C2 = dyn_cast<ConstantInt>(M->getLength());
+  ConstantInt *C1 = dyn_cast<ConstantInt>(MDep->getLength());
+  ConstantInt *C2 = dyn_cast<ConstantInt>(M->getLength());
   if (!C1 || !C2)
     return false;
   
@@ -667,7 +667,7 @@ bool MemCpyOpt::processMemCpy(MemCpyInst* M) {
   
   // Finally, we have to make sure that the dest of the second does not
   // alias the source of the first
-  AliasAnalysis& AA = getAnalysis<AliasAnalysis>();
+  AliasAnalysis &AA = getAnalysis<AliasAnalysis>();
   if (AA.alias(M->getRawDest(), CpySize, MDep->getRawSource(), DepSize) !=
       AliasAnalysis::NoAlias)
     return false;
@@ -681,7 +681,7 @@ bool MemCpyOpt::processMemCpy(MemCpyInst* M) {
   // If all checks passed, then we can transform these memcpy's
   const Type *Tys[1];
   Tys[0] = M->getLength()->getType();
-  Function* MemCpyFun = Intrinsic::getDeclaration(
+  Function *MemCpyFun = Intrinsic::getDeclaration(
                                  M->getParent()->getParent()->getParent(),
                                  M->getIntrinsicID(), Tys, 1);
     
@@ -689,7 +689,7 @@ bool MemCpyOpt::processMemCpy(MemCpyInst* M) {
     M->getRawDest(), MDep->getRawSource(), M->getLength(), M->getAlignmentCst()
   };
   
-  CallInst* C = CallInst::Create(MemCpyFun, Args, Args+4, "", M);
+  CallInst *C = CallInst::Create(MemCpyFun, Args, Args+4, "", M);
   
   
   // If C and M don't interfere, then this is a valid transformation.  If they
@@ -708,41 +708,40 @@ bool MemCpyOpt::processMemCpy(MemCpyInst* M) {
   return false;
 }
 
-// MemCpyOpt::runOnFunction - This is the main transformation entry point for a
-// function.
-//
-bool MemCpyOpt::runOnFunction(Function& F) {
-  
-  bool changed = false;
-  bool shouldContinue = true;
-  
-  while (shouldContinue) {
-    shouldContinue = iterateOnFunction(F);
-    changed |= shouldContinue;
-  }
-  
-  return changed;
-}
-
-
-// MemCpyOpt::iterateOnFunction - Executes one iteration of GVN
+// MemCpyOpt::iterateOnFunction - Executes one iteration of GVN.
 bool MemCpyOpt::iterateOnFunction(Function &F) {
-  bool changed_function = false;
+  bool MadeChange = false;
 
-  // Walk all instruction in the function
+  // Walk all instruction in the function.
   for (Function::iterator BB = F.begin(), BBE = F.end(); BB != BBE; ++BB) {
     for (BasicBlock::iterator BI = BB->begin(), BE = BB->end();
          BI != BE;) {
-      // Avoid invalidating the iterator
-      Instruction* I = BI++;
+      // Avoid invalidating the iterator.
+      Instruction *I = BI++;
       
       if (StoreInst *SI = dyn_cast<StoreInst>(I))
-        changed_function |= processStore(SI, BI);
-      else if (MemCpyInst* M = dyn_cast<MemCpyInst>(I)) {
-        changed_function |= processMemCpy(M);
-      }
+        MadeChange |= processStore(SI, BI);
+      else if (MemCpyInst *M = dyn_cast<MemCpyInst>(I))
+        MadeChange |= processMemCpy(M);
     }
   }
   
-  return changed_function;
+  return MadeChange;
 }
+
+// MemCpyOpt::runOnFunction - This is the main transformation entry point for a
+// function.
+//
+bool MemCpyOpt::runOnFunction(Function &F) {
+  bool MadeChange = false;
+  while (1) {
+    if (!iterateOnFunction(F))
+      break;
+    MadeChange = true;
+  }
+  
+  return MadeChange;
+}
+
+
+
