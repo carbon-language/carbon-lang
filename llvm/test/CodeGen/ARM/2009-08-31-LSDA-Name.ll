@@ -1,4 +1,4 @@
-; RUN: llvm-as < %s | llc -march=arm -f | FileCheck %s
+; RUN: llvm-as < %s | llc -mtriple=arm-apple-darwin9 -march=arm -f | FileCheck %s
 
 %struct.A = type { i32* }
 
