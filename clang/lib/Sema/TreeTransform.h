@@ -840,6 +840,17 @@ public:
                                      SourceRange QualifierRange,
                                      SourceLocation MemberLoc,
                                      NamedDecl *Member) {
+    if (!Member->getDeclName()) {
+      // We have a reference to an unnamed field.
+      assert(!Qualifier && "Can't have an unnamed field with a qualifier!");
+      
+      MemberExpr *ME = 
+        new (getSema().Context) MemberExpr(Base.takeAs<Expr>(), isArrow,
+                                           Member, MemberLoc,
+                                           cast<FieldDecl>(Member)->getType());
+      return getSema().Owned(ME);
+    }
+      
     CXXScopeSpec SS;
     if (Qualifier) {
       SS.setRange(QualifierRange);

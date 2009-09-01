@@ -245,6 +245,11 @@ Decl *TemplateDeclInstantiator::VisitFieldDecl(FieldDecl *D) {
     if (Invalid)
       Field->setInvalidDecl();
     
+    if (!Field->getDeclName()) {
+      // Keep track of where this decl came from.
+      SemaRef.Context.setInstantiatedFromUnnamedFieldDecl(Field, D);
+    }
+    
     Owner->addDecl(Field);
   }
 
@@ -440,6 +445,8 @@ Decl *TemplateDeclInstantiator::VisitCXXRecordDecl(CXXRecordDecl *D) {
   // inherit its namespace state.
   if (Decl::FriendObjectKind FOK = D->getFriendObjectKind())
     Record->setObjectOfFriendDecl(FOK == Decl::FOK_Declared);
+
+  Record->setAnonymousStructOrUnion(D->isAnonymousStructOrUnion());
 
   Owner->addDecl(Record);
   return Record;
@@ -1274,8 +1281,14 @@ static bool isInstantiationOf(ASTContext &Ctx, NamedDecl *D, Decl *Other) {
   if (ClassTemplateDecl *Temp = dyn_cast<ClassTemplateDecl>(Other))
     return isInstantiationOf(cast<ClassTemplateDecl>(D), Temp);
 
-  // FIXME: How can we find instantiations of anonymous unions?
-
+  if (FieldDecl *Field = dyn_cast<FieldDecl>(Other)) {
+    if (!Field->getDeclName()) {
+      // This is an unnamed field.
+      return Ctx.getInstantiatedFromUnnamedFieldDecl(Field) == 
+        cast<FieldDecl>(D);
+    }
+  }
+  
   return D->getDeclName() && isa<NamedDecl>(Other) &&
     D->getDeclName() == cast<NamedDecl>(Other)->getDeclName();
 }

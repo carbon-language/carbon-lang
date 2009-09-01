@@ -196,6 +196,8 @@ class ASTContext {
   llvm::DenseMap<UsingDecl *, UnresolvedUsingDecl *>
     InstantiatedFromUnresolvedUsingDecl;
   
+  llvm::DenseMap<FieldDecl *, FieldDecl *> InstantiatedFromUnnamedFieldDecl;
+  
   TranslationUnitDecl *TUDecl;
 
   /// SourceMgr - The associated SourceManager object.
@@ -267,12 +269,23 @@ public:
   /// the static data member template \p Tmpl of a class template.
   void setInstantiatedFromStaticDataMember(VarDecl *Inst, VarDecl *Tmpl);  
   
+  /// \brief If this using decl is instantiated from an unresolved using decl,
+  /// return it.
   UnresolvedUsingDecl *getInstantiatedFromUnresolvedUsingDecl(UsingDecl *UUD);
-  void setInstantiatedFromUnresolvedUsingDecl(UsingDecl *UD,
-                                              UnresolvedUsingDecl *UUD);
+
+  /// \brief Note that the using decl \p Inst is an instantiation of
+  /// the unresolved using decl \p Tmpl of a class template.
+  void setInstantiatedFromUnresolvedUsingDecl(UsingDecl *Inst,
+                                              UnresolvedUsingDecl *Tmpl);
+  
+  
+  FieldDecl *getInstantiatedFromUnnamedFieldDecl(FieldDecl *Field);
+  
+  void setInstantiatedFromUnnamedFieldDecl(FieldDecl *Inst, FieldDecl *Tmpl);
   
   TranslationUnitDecl *getTranslationUnitDecl() const { return TUDecl; }
 
+  
   const char *getCommentForDecl(const Decl *D);
   
   // Builtin Types.

@@ -260,6 +260,25 @@ ASTContext::setInstantiatedFromUnresolvedUsingDecl(UsingDecl *UD,
   InstantiatedFromUnresolvedUsingDecl[UD] = UUD;
 }
 
+FieldDecl *ASTContext::getInstantiatedFromUnnamedFieldDecl(FieldDecl *Field) {
+  llvm::DenseMap<FieldDecl *, FieldDecl *>::iterator Pos
+    = InstantiatedFromUnnamedFieldDecl.find(Field);
+  if (Pos == InstantiatedFromUnnamedFieldDecl.end())
+    return 0;
+  
+  return Pos->second;
+}
+
+void ASTContext::setInstantiatedFromUnnamedFieldDecl(FieldDecl *Inst,
+                                                     FieldDecl *Tmpl) {
+  assert(!Inst->getDeclName() && "Instantiated field decl is not unnamed");
+  assert(!Tmpl->getDeclName() && "Template field decl is not unnamed");
+  assert(!InstantiatedFromUnnamedFieldDecl[Inst] &&
+         "Already noted what unnamed field was instantiated from");
+  
+  InstantiatedFromUnnamedFieldDecl[Inst] = Tmpl;
+}
+
 namespace {
   class BeforeInTranslationUnit 
     : std::binary_function<SourceRange, SourceRange, bool> {
