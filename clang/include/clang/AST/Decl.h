@@ -290,11 +290,13 @@ protected:
   /// default argument.
   struct UninstantiatedDefaultArgument;
 
+  typedef llvm::PointerUnion4<Stmt *, EvaluatedStmt *, 
+                              UnparsedDefaultArgument *, 
+                              UninstantiatedDefaultArgument *> InitType;
+  
   /// \brief The initializer for this variable or, for a ParmVarDecl, the 
   /// C++ default argument.
-  mutable llvm::PointerUnion4<Stmt *, EvaluatedStmt *, 
-                              UnparsedDefaultArgument *, 
-                              UninstantiatedDefaultArgument *> Init;
+  mutable InitType Init;
   
 private:
   // FIXME: This can be packed into the bitfields in Decl.
@@ -368,7 +370,15 @@ public:
   Stmt **getInitAddress() {
     if (EvaluatedStmt *ES = Init.dyn_cast<EvaluatedStmt*>())
       return &ES->Value;
-    return reinterpret_cast<Stmt **>(&Init); // FIXME: ugly hack
+    
+    // This union hack tip-toes around strict-aliasing rules.
+    union {
+      InitType *InitPtr;
+      Stmt **StmtPtr;
+    };
+    
+    InitPtr = &Init;
+    return StmtPtr;
   }
 
   void setInit(ASTContext &C, Expr *I);
