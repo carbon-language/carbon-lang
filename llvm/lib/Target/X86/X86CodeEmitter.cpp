@@ -337,6 +337,11 @@ void Emitter<CodeEmitter>::emitDisplacementField(const MachineOperand *RelocOp,
     bool Indirect = gvNeedsNonLazyPtr(*RelocOp, TM);
     emitGlobalAddress(RelocOp->getGlobal(), rt, RelocOp->getOffset(),
                       Adj, NeedStub, Indirect);
+  } else if (RelocOp->isSymbol()) {
+    unsigned rt = Is64BitMode ?
+      (IsPCRel ? X86::reloc_pcrel_word : X86::reloc_absolute_word_sext)
+      : (IsPCRel ? X86::reloc_picrel_word : X86::reloc_absolute_word);
+    emitExternalSymbolAddress(RelocOp->getSymbolName(), rt);
   } else if (RelocOp->isCPI()) {
     unsigned rt = Is64BitMode ?
       (IsPCRel ? X86::reloc_pcrel_word : X86::reloc_absolute_word_sext)
@@ -363,6 +368,8 @@ void Emitter<CodeEmitter>::emitMemModRMByte(const MachineInstr &MI,
   
   // Figure out what sort of displacement we have to handle here.
   if (Op3.isGlobal()) {
+    DispForReloc = &Op3;
+  } else if (Op3.isSymbol()) {
     DispForReloc = &Op3;
   } else if (Op3.isCPI()) {
     if (!MCE.earlyResolveAddresses() || Is64BitMode || IsPIC) {
