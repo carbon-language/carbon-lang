@@ -128,6 +128,14 @@ namespace llvm {
       if (DbgNode && !isScope())
         DbgNode = 0;
     }
+
+    virtual const std::string &getFilename(std::string &F) const {
+      return F;
+    }
+
+    virtual const std::string &getDirectory(std::string &D) const {
+      return D;
+    }
   };
 
   /// DICompileUnit - A wrapper for a compile unit.
@@ -382,6 +390,13 @@ namespace llvm {
     unsigned isLocalToUnit() const      { return getUnsignedField(9); }
     unsigned isDefinition() const       { return getUnsignedField(10); }
 
+    const std::string &getFilename(std::string &F) const {
+      return getCompileUnit().getFilename(F);
+    }
+    const std::string &getDirectory(std::string &F) const {
+      return getCompileUnit().getDirectory(F);
+    }
+
     /// Verify - Verify that a subprogram descriptor is well formed.
     bool Verify() const;
 
@@ -448,7 +463,16 @@ namespace llvm {
       if (DbgNode && !isLexicalBlock()) 
 	DbgNode = 0;
     }
-    DIDescriptor getContext() const { return getDescriptorField(1); }
+    DIScope getContext() const { return getFieldAs<DIScope>(1); }
+
+    const std::string &getFilename(std::string &F) const {
+      return getContext().getFilename(F);
+    }
+    const std::string &getDirectory(std::string &D) const {
+      return getContext().getDirectory(D);
+    }
+
+
   };
 
   /// DIFactory - This object assists with the construction of the various
