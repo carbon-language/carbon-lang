@@ -926,11 +926,11 @@ MCSectionData::LookupFixup(const MCFragment *Fragment, uint64_t Offset) const {
                                                        
 /* *** */
 
-MCSymbolData::MCSymbolData() : Symbol(*(const MCSymbol*)0) {}
+MCSymbolData::MCSymbolData() : Symbol(0) {}
 
 MCSymbolData::MCSymbolData(const MCSymbol &_Symbol, MCFragment *_Fragment,
                            uint64_t _Offset, MCAssembler *A)
-  : Symbol(_Symbol), Fragment(_Fragment), Offset(_Offset),
+  : Symbol(&_Symbol), Fragment(_Fragment), Offset(_Offset),
     IsExternal(false), IsPrivateExtern(false),
     CommonSize(0), CommonAlign(0), Flags(0), Index(0)
 {
