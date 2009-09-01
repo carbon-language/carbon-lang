@@ -305,7 +305,7 @@ struct test5_D  : virtual test5_B1, virtual test5_B21, virtual test5_B31 {
 // CHECK-LP32-NEXT: .long __ZN9test5_B237funcB23Ev
 // CHECK-LP32-NEXT: .long __ZN9test5_B227funcB22Ev
 // CHECK-LP32-NEXT: .long __ZN9test5_B217funcB21Ev
-// CHECK-LP32 .space 4
+// CHECK-LP32-NEXT: .space 4
 // CHECK-LP32: .long 8
 // CHECK-LP32 .space 4
 // CHECK-LP32 .space 4				FIXME
@@ -357,14 +357,14 @@ struct test5_D  : virtual test5_B1, virtual test5_B21, virtual test5_B31 {
 // CHECK-LP64-NEXT: .quad __ZN9test5_B237funcB23Ev
 // CHECK-LP64-NEXT: .quad __ZN9test5_B227funcB22Ev
 // CHECK-LP64-NEXT: .quad __ZN9test5_B217funcB21Ev
-// CHECK-LP64 .space 8
+// CHECK-LP64-NEXT: .space 8
 // CHECK-LP64: .quad 16
 // CHECK-LP64 .space 8
 // CHECK-LP64 .space 8
 // CHECK-LP64: .quad 8
 // CHECK-LP64-NEXT: .space 8
 // CHECK-LP64-NEXT: .space 8
-// CHECK-LP64: .quad 18446744073709551600
+// CHECK-LP64-NEXT: .quad 18446744073709551600
 // CHECK-LP64-NEXT: .quad __ZTI7test5_D
 // CHECK-LP64-NEXT: .quad __ZN9test5_B337funcB33Ev
 // CHECK-LP64-NEXT: .quad __ZN9test5_B327funcB32Ev
