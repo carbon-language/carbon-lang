@@ -459,8 +459,9 @@ ComputeCallSiteTable(SmallVectorImpl<CallSiteEntry> &CallSites,
           FirstActions[P.PadIndex]
         };
 
-        // Try to merge with the previous call-site.
-        if (PreviousIsInvoke) {
+        // Try to merge with the previous call-site. SJLJ doesn't do this
+        if (PreviousIsInvoke &&
+          MAI->getExceptionHandlingType() == ExceptionHandling::Dwarf) {
           CallSiteEntry &Prev = CallSites.back();
           if (Site.PadLabel == Prev.PadLabel && Site.Action == Prev.Action) {
             // Extend the range of the previous entry.
