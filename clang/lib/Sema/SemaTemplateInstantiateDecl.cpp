@@ -1123,7 +1123,8 @@ Sema::InstantiateMemInitializers(CXXConstructorDecl *New,
 
   // Instantiate all the initializers.
   for (CXXConstructorDecl::init_const_iterator Inits = Tmpl->init_begin(),
-       InitsEnd = Tmpl->init_end(); Inits != InitsEnd; ++Inits) {
+                                            InitsEnd = Tmpl->init_end();
+       Inits != InitsEnd; ++Inits) {
     CXXBaseOrMemberInitializer *Init = *Inits;
 
     ASTOwningVector<&ActionBase::DeleteExpr> NewArgs(*this);

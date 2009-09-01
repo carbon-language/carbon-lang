@@ -819,28 +819,25 @@ class CXXBaseOrMemberInitializer {
   Stmt **Args;
   unsigned NumArgs;
   
-  union {
-    /// CtorToCall - For a base or member needing a constructor for their
-    /// initialization, this is the constructor to call.
-    CXXConstructorDecl *CtorToCall;
-  
-    /// AnonUnionMember - When 'BaseOrMember' is class's anonymous union
-    /// data member, this field holds the FieldDecl for the member of the
-    /// anonymous union being initialized.
-    /// @code
-    /// struct X {
-    ///   X() : au_i1(123) {}
-    ///   union {
-    ///     int au_i1;
-    ///     float au_f1;
-    ///   };
-    /// };
-    /// @endcode
-    /// In above example, BaseOrMember holds the field decl. for anonymous union
-    /// and AnonUnionMember holds field decl for au_i1.
-    ///
-    FieldDecl *AnonUnionMember;
-  };
+  /// \brief Stores either the constructor to call to initialize this base or
+  /// member (a CXXConstructorDecl pointer), or stores the anonymous union of
+  /// which the initialized value is a member.
+  ///
+  /// When the value is a FieldDecl pointer, 'BaseOrMember' is class's 
+  /// anonymous union data member, this field holds the FieldDecl for the 
+  /// member of the anonymous union being initialized.
+  /// @code
+  /// struct X {
+  ///   X() : au_i1(123) {}
+  ///   union {
+  ///     int au_i1;
+  ///     float au_f1;
+  ///   };
+  /// };
+  /// @endcode
+  /// In above example, BaseOrMember holds the field decl. for anonymous union
+  /// and AnonUnionMember holds field decl for au_i1.
+  llvm::PointerUnion<CXXConstructorDecl *, FieldDecl *> CtorOrAnonUnion;
   
   /// IdLoc - Location of the id in ctor-initializer list.
   SourceLocation IdLoc;
@@ -921,13 +918,15 @@ public:
   }
   
   FieldDecl *getAnonUnionMember() const {
-    return AnonUnionMember;
+    return CtorOrAnonUnion.dyn_cast<FieldDecl *>();
   }
   void setAnonUnionMember(FieldDecl *anonMember) {
-    AnonUnionMember = anonMember;
+    CtorOrAnonUnion = anonMember;
   }
   
-  const CXXConstructorDecl *getConstructor() const { return CtorToCall; }
+  const CXXConstructorDecl *getConstructor() const { 
+    return CtorOrAnonUnion.dyn_cast<CXXConstructorDecl *>();
+  }
   
   SourceLocation getSourceLocation() const { return IdLoc; }
   SourceLocation getRParenLoc() const { return RParenLoc; }

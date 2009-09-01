@@ -401,7 +401,7 @@ CXXBaseOrMemberInitializer::
 CXXBaseOrMemberInitializer(QualType BaseType, Expr **Args, unsigned NumArgs,
                            CXXConstructorDecl *C,
                            SourceLocation L, SourceLocation R) 
-  : Args(0), NumArgs(0), IdLoc(L), RParenLoc(R) {
+  : Args(0), NumArgs(0), CtorOrAnonUnion(), IdLoc(L), RParenLoc(R) {
   BaseOrMember = reinterpret_cast<uintptr_t>(BaseType.getTypePtr());
   assert((BaseOrMember & 0x01) == 0 && "Invalid base class type pointer");
   BaseOrMember |= 0x01;
@@ -413,14 +413,14 @@ CXXBaseOrMemberInitializer(QualType BaseType, Expr **Args, unsigned NumArgs,
     for (unsigned Idx = 0; Idx < NumArgs; ++Idx)
       this->Args[Idx] = Args[Idx];
   }
-  CtorToCall = C;
+  CtorOrAnonUnion = C;
 }
 
 CXXBaseOrMemberInitializer::
 CXXBaseOrMemberInitializer(FieldDecl *Member, Expr **Args, unsigned NumArgs,
                            CXXConstructorDecl *C,
                            SourceLocation L, SourceLocation R)
-  : Args(0), NumArgs(0), IdLoc(L), RParenLoc(R) {
+  : Args(0), NumArgs(0), CtorOrAnonUnion(), IdLoc(L), RParenLoc(R) {
   BaseOrMember = reinterpret_cast<uintptr_t>(Member);
   assert((BaseOrMember & 0x01) == 0 && "Invalid member pointer");  
 
@@ -430,7 +430,7 @@ CXXBaseOrMemberInitializer(FieldDecl *Member, Expr **Args, unsigned NumArgs,
     for (unsigned Idx = 0; Idx < NumArgs; ++Idx)
       this->Args[Idx] = Args[Idx];
   }
-  CtorToCall = C;
+  CtorOrAnonUnion = C;
 }
 
 CXXBaseOrMemberInitializer::~CXXBaseOrMemberInitializer() {
