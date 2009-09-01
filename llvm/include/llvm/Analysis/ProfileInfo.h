@@ -63,8 +63,13 @@ namespace llvm {
 
     // getFunction() - Returns the Function for an Edge, checking for validity.
     static const Function* getFunction(Edge e) {
-      assert(e.second && "Invalid ProfileInfo::Edge");
-      return e.second->getParent();
+      if (e.first) {
+        return e.first->getParent();
+      } else if (e.second) {
+        return e.second->getParent();
+      }
+      assert(0 && "Invalid ProfileInfo::Edge");
+      return (const Function*)0;
     }
 
     // getEdge() - Creates an Edge from two BasicBlocks.

@@ -168,7 +168,14 @@ void ProfileEstimatorPass::recurseBasicBlock(BasicBlock *BB) {
   std::set<BasicBlock*> ProcessedSuccs;
 
   // Otherwise consider weight of outgoing edges and store them for
-  // distribution of remaining weight.
+  // distribution of remaining weight. In case the block has no successors
+  // create a (BB,0) edge.
+  succ_iterator bbi = succ_begin(BB), bbe = succ_end(BB);
+  if (bbi == bbe) {
+    Edge edge = getEdge(BB,0);
+    EdgeInformation[BB->getParent()][edge] = BBWeight;
+    printEdgeWeight(edge);
+  }
   for ( succ_iterator bbi = succ_begin(BB), bbe = succ_end(BB);
         bbi != bbe; ++bbi ) {
     if (ProcessedSuccs.insert(*bbi).second) {
