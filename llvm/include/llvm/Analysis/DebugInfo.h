@@ -128,6 +128,7 @@ namespace llvm {
       if (DbgNode && !isScope())
         DbgNode = 0;
     }
+    virtual ~DIScope() {}
 
     virtual const std::string &getFilename(std::string &F) const {
       return F;
