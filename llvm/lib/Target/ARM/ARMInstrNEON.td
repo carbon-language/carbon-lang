@@ -300,6 +300,40 @@ class VST4D<string OpcodeStr>
 def  VST4d8   : VST4D<"vst4.8">;
 def  VST4d16  : VST4D<"vst4.16">;
 def  VST4d32  : VST4D<"vst4.32">;
+
+//   VST2LN   : Vector Store (single 2-element structure from one lane)
+class VST2LND<string OpcodeStr>
+  : NLdSt<(outs), (ins addrmode6:$addr, DPR:$src1, DPR:$src2, nohash_imm:$lane),
+          NoItinerary,
+          !strconcat(OpcodeStr, "\t\\{$src1[$lane],$src2[$lane]\\}, $addr"),
+          "", []>;
+
+def VST2LNd8  : VST2LND<"vst2.8">;
+def VST2LNd16 : VST2LND<"vst2.16">;
+def VST2LNd32 : VST2LND<"vst2.32">;
+
+//   VST3LN   : Vector Store (single 3-element structure from one lane)
+class VST3LND<string OpcodeStr>
+  : NLdSt<(outs), (ins addrmode6:$addr, DPR:$src1, DPR:$src2, DPR:$src3,
+          nohash_imm:$lane), NoItinerary,
+          !strconcat(OpcodeStr,
+          "\t\\{$src1[$lane],$src2[$lane],$src3[$lane]\\}, $addr"), "", []>;
+
+def VST3LNd8  : VST3LND<"vst3.8">;
+def VST3LNd16 : VST3LND<"vst3.16">;
+def VST3LNd32 : VST3LND<"vst3.32">;
+
+//   VST4LN   : Vector Store (single 4-element structure from one lane)
+class VST4LND<string OpcodeStr>
+  : NLdSt<(outs), (ins addrmode6:$addr, DPR:$src1, DPR:$src2, DPR:$src3,
+          DPR:$src4, nohash_imm:$lane), NoItinerary,
+          !strconcat(OpcodeStr,
+          "\t\\{$src1[$lane],$src2[$lane],$src3[$lane],$src4[$lane]\\}, $addr"),
+          "", []>;
+
+def VST4LNd8  : VST4LND<"vst4.8">;
+def VST4LNd16 : VST4LND<"vst4.16">;
+def VST4LNd32 : VST4LND<"vst4.32">;
 }
 
 
