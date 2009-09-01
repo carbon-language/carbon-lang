@@ -1042,6 +1042,31 @@ struct NameQualifier {
   /// \brief The source range covered by the nested name specifier.
   SourceRange Range;
 };
+
+/// \brief Represents an explicit template argument list in C++, e.g.,
+/// the "<int>" in "sort<int>". 
+struct ExplicitTemplateArgumentList {
+  /// \brief The source location of the left angle bracket ('<');
+  SourceLocation LAngleLoc;
+  
+  /// \brief The source location of the right angle bracket ('>');
+  SourceLocation RAngleLoc;
+  
+  /// \brief The number of template arguments in TemplateArgs.
+  /// The actual template arguments (if any) are stored after the 
+  /// ExplicitTemplateArgumentList structure.
+  unsigned NumTemplateArgs;
+  
+  /// \brief Retrieve the template arguments
+  TemplateArgument *getTemplateArgs() { 
+    return reinterpret_cast<TemplateArgument *> (this + 1); 
+  }
+
+  /// \brief Retrieve the template arguments
+  const TemplateArgument *getTemplateArgs() const {
+    return reinterpret_cast<const TemplateArgument *> (this + 1); 
+  }
+};
   
 /// MemberExpr - [C99 6.5.2.3] Structure and Union Members.  X->F and X.F.
 ///
@@ -1061,8 +1086,16 @@ class MemberExpr : public Expr {
   bool IsArrow : 1;
   
   /// \brief True if this member expression used a nested-name-specifier to
-  /// refer to the member, e.g., "x->Base::f".
+  /// refer to the member, e.g., "x->Base::f". When true, a NameQualifier 
+  /// structure is allocated immediately after the MemberExpr.
   bool HasQualifier : 1;
+  
+  /// \brief True if this member expression specified a template argument list
+  /// explicitly, e.g., x->f<int>. When true, an ExplicitTemplateArgumentList
+  /// structure (and its TemplateArguments) are allocated immediately after
+  /// the MemberExpr or, if the member expression also has a qualifier, after
+  /// the NameQualifier structure.
+  bool HasExplicitTemplateArgumentList : 1;
   
   /// \brief Retrieve the qualifier that preceded the member name, if any.
   NameQualifier *getMemberQualifier() {
@@ -1074,15 +1107,33 @@ class MemberExpr : public Expr {
 
   /// \brief Retrieve the qualifier that preceded the member name, if any.
   const NameQualifier *getMemberQualifier() const {
-    if (!HasQualifier)
+    return const_cast<MemberExpr *>(this)->getMemberQualifier();
+  }
+  
+  /// \brief Retrieve the explicit template argument list that followed the
+  /// member template name, if any.
+  ExplicitTemplateArgumentList *getExplicitTemplateArgumentList() {
+    if (!HasExplicitTemplateArgumentList)
       return 0;
     
-    return reinterpret_cast<const NameQualifier *> (this + 1);
+    if (!HasQualifier)
+      return reinterpret_cast<ExplicitTemplateArgumentList *>(this + 1);
+    
+    return reinterpret_cast<ExplicitTemplateArgumentList *>(
+                                                      getMemberQualifier() + 1);
+  }
+  
+  /// \brief Retrieve the explicit template argument list that followed the
+  /// member template name, if any.
+  const ExplicitTemplateArgumentList *getExplicitTemplateArgumentList() const {
+    return const_cast<MemberExpr *>(this)->getExplicitTemplateArgumentList();
   }
   
   MemberExpr(Expr *base, bool isarrow, NestedNameSpecifier *qual, 
              SourceRange qualrange, NamedDecl *memberdecl, SourceLocation l,
-             QualType ty); 
+             bool has_explicit, SourceLocation langle, 
+             const TemplateArgument *targs, unsigned numtargs, 
+             SourceLocation rangle, QualType ty); 
 
 public:
   MemberExpr(Expr *base, bool isarrow, NamedDecl *memberdecl, SourceLocation l,
@@ -1090,7 +1141,7 @@ public:
     : Expr(MemberExprClass, ty, 
            base->isTypeDependent(), base->isValueDependent()),
       Base(base), MemberDecl(memberdecl), MemberLoc(l), IsArrow(isarrow),
-      HasQualifier(false) {}
+      HasQualifier(false), HasExplicitTemplateArgumentList(false) {}
 
   /// \brief Build an empty member reference expression.
   explicit MemberExpr(EmptyShell Empty) : Expr(MemberExprClass, Empty) { }
@@ -1098,7 +1149,13 @@ public:
   static MemberExpr *Create(ASTContext &C, Expr *base, bool isarrow, 
                             NestedNameSpecifier *qual, SourceRange qualrange,
                             NamedDecl *memberdecl, 
-                            SourceLocation l, QualType ty);
+                            SourceLocation l,
+                            bool has_explicit,
+                            SourceLocation langle,
+                            const TemplateArgument *targs,
+                            unsigned numtargs,
+                            SourceLocation rangle,
+                            QualType ty);
   
   void setBase(Expr *E) { Base = E; }
   Expr *getBase() const { return cast<Expr>(Base); }
@@ -1110,7 +1167,7 @@ public:
   NamedDecl *getMemberDecl() const { return MemberDecl; }
   void setMemberDecl(NamedDecl *D) { MemberDecl = D; }
 
-  /// \brief Determines whether this adorned member expression actually had 
+  /// \brief Determines whether this member expression actually had 
   /// a C++ nested-name-specifier prior to the name of the member, e.g.,
   /// x->Base::foo.
   bool hasQualifier() const { return HasQualifier; }
@@ -1134,6 +1191,48 @@ public:
     
     return getMemberQualifier()->NNS;
   }
+
+  /// \brief Determines whether this member expression actually had a C++
+  /// template argument list explicitly specified, e.g., x.f<int>.
+  bool hasExplicitTemplateArgumentList() { 
+    return HasExplicitTemplateArgumentList; 
+  }
+  
+  /// \brief Retrieve the location of the left angle bracket following the 
+  /// member name ('<'), if any.
+  SourceLocation getLAngleLoc() const { 
+    if (!HasExplicitTemplateArgumentList)
+      return SourceLocation();
+    
+    return getExplicitTemplateArgumentList()->LAngleLoc;
+  }
+  
+  /// \brief Retrieve the template arguments provided as part of this
+  /// template-id.
+  const TemplateArgument *getTemplateArgs() const { 
+    if (!HasExplicitTemplateArgumentList)
+      return 0;   
+    
+    return getExplicitTemplateArgumentList()->getTemplateArgs();
+  }
+  
+  /// \brief Retrieve the number of template arguments provided as part of this
+  /// template-id.
+  unsigned getNumTemplateArgs() const { 
+    if (!HasExplicitTemplateArgumentList)
+      return 0;   
+    
+    return getExplicitTemplateArgumentList()->NumTemplateArgs;
+  }
+  
+  /// \brief Retrieve the location of the right angle bracket following the 
+  /// template arguments ('>').
+  SourceLocation getRAngleLoc() const { 
+    if (!HasExplicitTemplateArgumentList)
+      return SourceLocation();
+    
+    return getExplicitTemplateArgumentList()->RAngleLoc;
+  }
   
   bool isArrow() const { return IsArrow; }
   void setArrow(bool A) { IsArrow = A; }
@@ -1146,10 +1245,14 @@ public:
   virtual SourceRange getSourceRange() const {
     // If we have an implicit base (like a C++ implicit this),
     // make sure not to return its location
+    SourceLocation EndLoc = MemberLoc;
+    if (HasExplicitTemplateArgumentList)
+      EndLoc = getRAngleLoc();
+    
     SourceLocation BaseLoc = getBase()->getLocStart();
     if (BaseLoc.isInvalid())
-      return SourceRange(MemberLoc, MemberLoc);
-    return SourceRange(BaseLoc, MemberLoc);
+      return SourceRange(MemberLoc, EndLoc);
+    return SourceRange(BaseLoc, EndLoc);
   }
   
   virtual SourceLocation getExprLoc() const { return MemberLoc; }

@@ -264,17 +264,33 @@ QualType CallExpr::getCallReturnType() const {
 
 MemberExpr::MemberExpr(Expr *base, bool isarrow, NestedNameSpecifier *qual, 
                        SourceRange qualrange, NamedDecl *memberdecl, 
-                       SourceLocation l, QualType ty)
+                       SourceLocation l, bool has_explicit,
+                       SourceLocation langle,
+                       const TemplateArgument *targs, unsigned numtargs,
+                       SourceLocation rangle, QualType ty)
   : Expr(MemberExprClass, ty, 
          base->isTypeDependent() || (qual && qual->isDependent()),
          base->isValueDependent() || (qual && qual->isDependent())),
     Base(base), MemberDecl(memberdecl), MemberLoc(l), IsArrow(isarrow),
-    HasQualifier(qual != 0) {
+    HasQualifier(qual != 0), HasExplicitTemplateArgumentList(has_explicit) {
   // Initialize the qualifier, if any.
   if (HasQualifier) {
     NameQualifier *NQ = getMemberQualifier();
     NQ->NNS = qual;
     NQ->Range = qualrange;
+  }
+      
+  // Initialize the explicit template argument list, if any.
+  if (HasExplicitTemplateArgumentList) {
+    ExplicitTemplateArgumentList *ETemplateArgs 
+      = getExplicitTemplateArgumentList();
+    ETemplateArgs->LAngleLoc = langle;
+    ETemplateArgs->RAngleLoc = rangle;
+    ETemplateArgs->NumTemplateArgs = numtargs;
+    
+    TemplateArgument *TemplateArgs = ETemplateArgs->getTemplateArgs();
+    for (unsigned I = 0; I < numtargs; ++I)
+      new (TemplateArgs + I) TemplateArgument(targs[I]);      
   }
 }
 
@@ -282,13 +298,24 @@ MemberExpr *MemberExpr::Create(ASTContext &C, Expr *base, bool isarrow,
                                NestedNameSpecifier *qual, 
                                SourceRange qualrange,
                                NamedDecl *memberdecl, 
-                               SourceLocation l, QualType ty) {
+                               SourceLocation l, 
+                               bool has_explicit,
+                               SourceLocation langle,
+                               const TemplateArgument *targs,
+                               unsigned numtargs,
+                               SourceLocation rangle,
+                               QualType ty) {
   std::size_t Size = sizeof(MemberExpr);
   if (qual != 0)
     Size += sizeof(NameQualifier);
   
+  if (has_explicit)
+    Size += sizeof(ExplicitTemplateArgumentList) + 
+    sizeof(TemplateArgument) * numtargs;
+  
   void *Mem = C.Allocate(Size, llvm::alignof<MemberExpr>());
-  return new (Mem) MemberExpr(base, isarrow, qual, qualrange, memberdecl, l, 
+  return new (Mem) MemberExpr(base, isarrow, qual, qualrange, memberdecl, l,
+                              has_explicit, langle, targs, numtargs, rangle,
                               ty);
 }
 

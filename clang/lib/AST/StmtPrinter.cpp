@@ -743,6 +743,12 @@ void StmtPrinter::VisitMemberExpr(MemberExpr *Node) {
     Qualifier->print(OS, Policy);
 
   OS << Node->getMemberDecl()->getNameAsString();
+  
+  if (Node->hasExplicitTemplateArgumentList())
+    OS << TemplateSpecializationType::PrintTemplateArgumentList(
+                                                    Node->getTemplateArgs(),
+                                                    Node->getNumTemplateArgs(),
+                                                                Policy);
 }
 void StmtPrinter::VisitObjCIsaExpr(ObjCIsaExpr *Node) {
   PrintExpr(Node->getBase());

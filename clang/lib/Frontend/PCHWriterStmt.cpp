@@ -416,6 +416,7 @@ void PCHStmtWriter::VisitMemberExpr(MemberExpr *E) {
   Writer.AddSourceLocation(E->getMemberLoc(), Record);
   Record.push_back(E->isArrow());
   // FIXME: C++ nested-name-specifier
+  // FIXME: C++ template argument list
   Code = pch::EXPR_MEMBER;
 }
 

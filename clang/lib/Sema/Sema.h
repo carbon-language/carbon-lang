@@ -1602,12 +1602,32 @@ public:
                                                    SourceLocation LLoc,
                                                    ExprArg Idx,
                                                    SourceLocation RLoc);
+
+  OwningExprResult BuildMemberReferenceExpr(Scope *S, ExprArg Base,
+                                            SourceLocation OpLoc,
+                                            tok::TokenKind OpKind,
+                                            SourceLocation MemberLoc,
+                                            DeclarationName MemberName,
+                                            DeclPtrTy ImplDecl,
+                                            const CXXScopeSpec *SS = 0) {
+    // FIXME: Temporary helper while we migrate existing calls to 
+    // BuildMemberReferenceExpr to support explicitly-specified template
+    // arguments.
+    return BuildMemberReferenceExpr(S, move(Base), OpLoc, OpKind, MemberLoc,
+                                    MemberName, false, SourceLocation(), 0, 0,
+                                    SourceLocation(), ImplDecl, SS);
+  }
   
   OwningExprResult BuildMemberReferenceExpr(Scope *S, ExprArg Base,
                                             SourceLocation OpLoc,
                                             tok::TokenKind OpKind,
                                             SourceLocation MemberLoc,
                                             DeclarationName MemberName,
+                                            bool HasExplicitTemplateArgs,
+                                            SourceLocation LAngleLoc,
+                                const TemplateArgument *ExplicitTemplateArgs,
+                                            unsigned NumExplicitTemplateArgs,
+                                            SourceLocation RAngleLoc,
                                             DeclPtrTy ImplDecl,
                                             const CXXScopeSpec *SS = 0);
   

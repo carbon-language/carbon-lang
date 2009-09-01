@@ -4563,9 +4563,11 @@ Sema::BuildCallToMemberFunction(Scope *S, Expr *MemExprE,
         AddMethodCandidate(Method, ObjectArg, Args, NumArgs, CandidateSet, 
                            /*SuppressUserConversions=*/false);
       else
-        AddMethodTemplateCandidate(cast<FunctionTemplateDecl>(*Func), 
-                                   /*FIXME:*/false, /*FIXME:*/0, 
-                                   /*FIXME:*/0, ObjectArg, Args, NumArgs,
+        AddMethodTemplateCandidate(cast<FunctionTemplateDecl>(*Func),
+                                   MemExpr->hasExplicitTemplateArgumentList(),
+                                   MemExpr->getTemplateArgs(),
+                                   MemExpr->getNumTemplateArgs(),
+                                   ObjectArg, Args, NumArgs,
                                    CandidateSet,
                                    /*SuppressUsedConversions=*/false);
     }

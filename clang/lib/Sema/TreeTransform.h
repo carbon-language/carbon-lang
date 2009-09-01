@@ -2964,7 +2964,7 @@ TreeTransform<Derived>::TransformMemberExpr(MemberExpr *E) {
     Qualifier 
       = getDerived().TransformNestedNameSpecifier(E->getQualifier(),
                                                   E->getQualifierRange());
-    if (Qualifier == 0);
+    if (Qualifier == 0)
       return SemaRef.ExprError();
   }
   

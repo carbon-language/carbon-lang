@@ -885,7 +885,10 @@ static MemberExpr *BuildMemberExpr(ASTContext &C, Expr *Base, bool isArrow,
   if (SS && SS->isSet())
     return MemberExpr::Create(C, Base, isArrow, 
                               (NestedNameSpecifier *)SS->getScopeRep(),
-                              SS->getRange(), Member, Loc, Ty);
+                              SS->getRange(), Member, Loc, 
+                              // FIXME: Explicit template argument lists
+                              false, SourceLocation(), 0, 0, SourceLocation(),
+                              Ty);
   
   return new (C) MemberExpr(Base, isArrow, Member, Loc, Ty);
 }
@@ -1980,6 +1983,11 @@ Action::OwningExprResult
 Sema::BuildMemberReferenceExpr(Scope *S, ExprArg Base, SourceLocation OpLoc,
                                tok::TokenKind OpKind, SourceLocation MemberLoc,
                                DeclarationName MemberName, 
+                               bool HasExplicitTemplateArgs,
+                               SourceLocation LAngleLoc,
+                               const TemplateArgument *ExplicitTemplateArgs,
+                               unsigned NumExplicitTemplateArgs,
+                               SourceLocation RAngleLoc,
                                DeclPtrTy ObjCImpDecl, const CXXScopeSpec *SS) {
   if (SS && SS->isInvalid())
     return ExprError();
@@ -2153,14 +2161,34 @@ Sema::BuildMemberReferenceExpr(Scope *S, ExprArg Base, SourceLocation OpLoc,
     if (FunctionTemplateDecl *FunTmpl 
           = dyn_cast<FunctionTemplateDecl>(MemberDecl)) {
       MarkDeclarationReferenced(MemberLoc, MemberDecl);
+      
+      if (HasExplicitTemplateArgs)
+        return Owned(MemberExpr::Create(Context, BaseExpr, OpKind == tok::arrow, 
+                             (NestedNameSpecifier *)(SS? SS->getScopeRep() : 0), 
+                                       SS? SS->getRange() : SourceRange(),
+                                        FunTmpl, MemberLoc, true, 
+                                        LAngleLoc, ExplicitTemplateArgs, 
+                                        NumExplicitTemplateArgs, RAngleLoc, 
+                                        Context.OverloadTy));
+      
       return Owned(BuildMemberExpr(Context, BaseExpr, OpKind == tok::arrow, SS,
                                    FunTmpl, MemberLoc,
                                    Context.OverloadTy));
     }
     if (OverloadedFunctionDecl *Ovl
-          = dyn_cast<OverloadedFunctionDecl>(MemberDecl))
+          = dyn_cast<OverloadedFunctionDecl>(MemberDecl)) {
+      if (HasExplicitTemplateArgs)
+        return Owned(MemberExpr::Create(Context, BaseExpr, OpKind == tok::arrow, 
+                             (NestedNameSpecifier *)(SS? SS->getScopeRep() : 0), 
+                                        SS? SS->getRange() : SourceRange(),
+                                        Ovl, MemberLoc, true, 
+                                        LAngleLoc, ExplicitTemplateArgs, 
+                                        NumExplicitTemplateArgs, RAngleLoc, 
+                                        Context.OverloadTy));
+
       return Owned(BuildMemberExpr(Context, BaseExpr, OpKind == tok::arrow, SS,
                                    Ovl, MemberLoc, Context.OverloadTy));
+    }
     if (EnumConstantDecl *Enum = dyn_cast<EnumConstantDecl>(MemberDecl)) {
       MarkDeclarationReferenced(MemberLoc, MemberDecl);
       return Owned(BuildMemberExpr(Context, BaseExpr, OpKind == tok::arrow, SS,
