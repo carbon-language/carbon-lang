@@ -109,6 +109,12 @@ namespace llvm {
 
   //===--------------------------------------------------------------------===//
   //
+  // createProfileVerifierPass - This pass verifies profiling information.
+  //
+  FunctionPass *createProfileVerifierPass();
+
+  //===--------------------------------------------------------------------===//
+  //
   // createDSAAPass - This pass implements simple context sensitive alias
   // analysis.
   //
