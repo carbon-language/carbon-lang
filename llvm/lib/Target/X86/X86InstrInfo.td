@@ -2753,6 +2753,13 @@ def TEST32rr : I<0x85, MRMDestReg, (outs),  (ins GR32:$src1, GR32:$src2),
                       (implicit EFLAGS)]>;
 }
 
+def TEST8i8  : Ii8<0xA8, RawFrm, (outs), (ins i8imm:$src),
+                   "test{b}\t{$src, %al|%al, $src}", []>;
+def TEST16i16 : Ii16<0xA9, RawFrm, (outs), (ins i16imm:$src),
+                     "test{w}\t{$src, %ax|%ax, $src}", []>, OpSize;
+def TEST32i32 : Ii32<0xA9, RawFrm, (outs), (ins i32imm:$src),
+                     "test{l}\t{$src, %eax|%eax, $src}", []>;
+
 def TEST8rm  : I<0x84, MRMSrcMem, (outs),  (ins GR8 :$src1, i8mem :$src2),
                      "test{b}\t{$src2, $src1|$src1, $src2}",
                      [(X86cmp (and GR8:$src1, (loadi8 addr:$src2)), 0),

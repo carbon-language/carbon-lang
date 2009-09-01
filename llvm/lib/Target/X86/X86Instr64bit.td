@@ -984,6 +984,8 @@ def XOR64mi32 : RIi32<0x81, MRM6m, (outs), (ins i64mem:$dst, i64i32imm:$src),
 
 // Integer comparison
 let Defs = [EFLAGS] in {
+def TEST64i32 : RI<0xa9, RawFrm, (outs), (ins i32imm:$src),
+                   "test{q}\t{$src, %rax|%rax, $src}", []>;
 let isCommutable = 1 in
 def TEST64rr : RI<0x85, MRMDestReg, (outs), (ins GR64:$src1, GR64:$src2),
                   "test{q}\t{$src2, $src1|$src1, $src2}",
