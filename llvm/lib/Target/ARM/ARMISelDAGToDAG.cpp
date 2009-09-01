@@ -1375,6 +1375,63 @@ SDNode *ARMDAGToDAGISel::Select(SDValue Op) {
       return CurDAG->getTargetNode(Opc, dl, ResTys, Ops, 4);
     }
 
+    case Intrinsic::arm_neon_vld2lane: {
+      SDValue MemAddr, MemUpdate, MemOpc;
+      if (!SelectAddrMode6(Op, N->getOperand(2), MemAddr, MemUpdate, MemOpc))
+        return NULL;
+      switch (VT.getSimpleVT().SimpleTy) {
+      default: llvm_unreachable("unhandled vld2lane type");
+      case MVT::v8i8:  Opc = ARM::VLD2LNd8; break;
+      case MVT::v4i16: Opc = ARM::VLD2LNd16; break;
+      case MVT::v2f32:
+      case MVT::v2i32: Opc = ARM::VLD2LNd32; break;
+      }
+      SDValue Chain = N->getOperand(0);
+      const SDValue Ops[] = { MemAddr, MemUpdate, MemOpc,
+                              N->getOperand(3), N->getOperand(4),
+                              N->getOperand(5), Chain };
+      return CurDAG->getTargetNode(Opc, dl, VT, VT, MVT::Other, Ops, 7);
+    }
+
+    case Intrinsic::arm_neon_vld3lane: {
+      SDValue MemAddr, MemUpdate, MemOpc;
+      if (!SelectAddrMode6(Op, N->getOperand(2), MemAddr, MemUpdate, MemOpc))
+        return NULL;
+      switch (VT.getSimpleVT().SimpleTy) {
+      default: llvm_unreachable("unhandled vld3lane type");
+      case MVT::v8i8:  Opc = ARM::VLD3LNd8; break;
+      case MVT::v4i16: Opc = ARM::VLD3LNd16; break;
+      case MVT::v2f32:
+      case MVT::v2i32: Opc = ARM::VLD3LNd32; break;
+      }
+      SDValue Chain = N->getOperand(0);
+      const SDValue Ops[] = { MemAddr, MemUpdate, MemOpc,
+                              N->getOperand(3), N->getOperand(4),
+                              N->getOperand(5), N->getOperand(6), Chain };
+      return CurDAG->getTargetNode(Opc, dl, VT, VT, VT, MVT::Other, Ops, 8);
+    }
+
+    case Intrinsic::arm_neon_vld4lane: {
+      SDValue MemAddr, MemUpdate, MemOpc;
+      if (!SelectAddrMode6(Op, N->getOperand(2), MemAddr, MemUpdate, MemOpc))
+        return NULL;
+      switch (VT.getSimpleVT().SimpleTy) {
+      default: llvm_unreachable("unhandled vld4lane type");
+      case MVT::v8i8:  Opc = ARM::VLD4LNd8; break;
+      case MVT::v4i16: Opc = ARM::VLD4LNd16; break;
+      case MVT::v2f32:
+      case MVT::v2i32: Opc = ARM::VLD4LNd32; break;
+      }
+      SDValue Chain = N->getOperand(0);
+      const SDValue Ops[] = { MemAddr, MemUpdate, MemOpc,
+                              N->getOperand(3), N->getOperand(4),
+                              N->getOperand(5), N->getOperand(6),
+                              N->getOperand(7), Chain };
+      std::vector<EVT> ResTys(4, VT);
+      ResTys.push_back(MVT::Other);
+      return CurDAG->getTargetNode(Opc, dl, ResTys, Ops, 9);
+    }
+
     case Intrinsic::arm_neon_vst2: {
       SDValue MemAddr, MemUpdate, MemOpc;
       if (!SelectAddrMode6(Op, N->getOperand(2), MemAddr, MemUpdate, MemOpc))

@@ -207,6 +207,44 @@ class VLD4D<string OpcodeStr>
 def  VLD4d8   : VLD4D<"vld4.8">;
 def  VLD4d16  : VLD4D<"vld4.16">;
 def  VLD4d32  : VLD4D<"vld4.32">;
+
+//   VLD2LN   : Vector Load (single 2-element structure to one lane)
+class VLD2LND<string OpcodeStr>
+  : NLdSt<(outs DPR:$dst1, DPR:$dst2),
+          (ins addrmode6:$addr, DPR:$src1, DPR:$src2, nohash_imm:$lane),
+          NoItinerary,
+          !strconcat(OpcodeStr, "\t\\{$dst1[$lane],$dst2[$lane]\\}, $addr"),
+          "$src1 = $dst1, $src2 = $dst2", []>;
+
+def VLD2LNd8  : VLD2LND<"vld2.8">;
+def VLD2LNd16 : VLD2LND<"vld2.16">;
+def VLD2LNd32 : VLD2LND<"vld2.32">;
+
+//   VLD3LN   : Vector Load (single 3-element structure to one lane)
+class VLD3LND<string OpcodeStr>
+  : NLdSt<(outs DPR:$dst1, DPR:$dst2, DPR:$dst3),
+          (ins addrmode6:$addr, DPR:$src1, DPR:$src2, DPR:$src3,
+          nohash_imm:$lane), NoItinerary,
+          !strconcat(OpcodeStr,
+          "\t\\{$dst1[$lane],$dst2[$lane],$dst3[$lane]\\}, $addr"),
+          "$src1 = $dst1, $src2 = $dst2, $src3 = $dst3", []>;
+
+def VLD3LNd8  : VLD3LND<"vld3.8">;
+def VLD3LNd16 : VLD3LND<"vld3.16">;
+def VLD3LNd32 : VLD3LND<"vld3.32">;
+
+//   VLD4LN   : Vector Load (single 4-element structure to one lane)
+class VLD4LND<string OpcodeStr>
+  : NLdSt<(outs DPR:$dst1, DPR:$dst2, DPR:$dst3, DPR:$dst4),
+          (ins addrmode6:$addr, DPR:$src1, DPR:$src2, DPR:$src3, DPR:$src4,
+          nohash_imm:$lane), NoItinerary,
+          !strconcat(OpcodeStr,
+          "\t\\{$dst1[$lane],$dst2[$lane],$dst3[$lane],$dst4[$lane]\\}, $addr"),
+          "$src1 = $dst1, $src2 = $dst2, $src3 = $dst3, $src4 = $dst4", []>;
+
+def VLD4LNd8  : VLD4LND<"vld4.8">;
+def VLD4LNd16 : VLD4LND<"vld4.16">;
+def VLD4LNd32 : VLD4LND<"vld4.32">;
 }
 
 //   VST1     : Vector Store (multiple single elements)

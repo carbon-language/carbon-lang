@@ -1350,6 +1350,26 @@ static SDValue LowerNeonVSTIntrinsic(SDValue Op, SelectionDAG &DAG,
   return SDValue();
 }
 
+static SDValue LowerNeonVLDLaneIntrinsic(SDValue Op, SelectionDAG &DAG,
+                                         unsigned NumVecs) {
+  SDNode *Node = Op.getNode();
+  EVT VT = Node->getValueType(0);
+
+  if (!VT.is64BitVector())
+    return SDValue(); // unimplemented
+
+  // Change the lane number operand to be a TargetConstant; otherwise it
+  // will be legalized into a register.
+  ConstantSDNode *Lane = dyn_cast<ConstantSDNode>(Node->getOperand(NumVecs+3));
+  if (!Lane) {
+    assert(false && "vld lane number must be a constant");
+    return SDValue();
+  }
+  SmallVector<SDValue, 8> Ops(Node->op_begin(), Node->op_end());
+  Ops[NumVecs+3] = DAG.getTargetConstant(Lane->getZExtValue(), MVT::i32);
+  return DAG.UpdateNodeOperands(Op, &Ops[0], Ops.size());
+}
+
 SDValue
 ARMTargetLowering::LowerINTRINSIC_W_CHAIN(SDValue Op, SelectionDAG &DAG) {
   unsigned IntNo = cast<ConstantSDNode>(Op.getOperand(1))->getZExtValue();
@@ -1358,6 +1378,12 @@ ARMTargetLowering::LowerINTRINSIC_W_CHAIN(SDValue Op, SelectionDAG &DAG) {
     return LowerNeonVLDIntrinsic(Op, DAG, 3);
   case Intrinsic::arm_neon_vld4:
     return LowerNeonVLDIntrinsic(Op, DAG, 4);
+  case Intrinsic::arm_neon_vld2lane:
+    return LowerNeonVLDLaneIntrinsic(Op, DAG, 2);
+  case Intrinsic::arm_neon_vld3lane:
+    return LowerNeonVLDLaneIntrinsic(Op, DAG, 3);
+  case Intrinsic::arm_neon_vld4lane:
+    return LowerNeonVLDLaneIntrinsic(Op, DAG, 4);
   case Intrinsic::arm_neon_vst3:
     return LowerNeonVSTIntrinsic(Op, DAG, 3);
   case Intrinsic::arm_neon_vst4:
