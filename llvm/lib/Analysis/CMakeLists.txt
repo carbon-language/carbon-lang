@@ -29,6 +29,7 @@ add_llvm_library(LLVMAnalysis
   ProfileInfo.cpp
   ProfileInfoLoader.cpp
   ProfileInfoLoaderPass.cpp
+  ProfileVerifierPass.cpp
   ScalarEvolution.cpp
   ScalarEvolutionAliasAnalysis.cpp
   ScalarEvolutionExpander.cpp
