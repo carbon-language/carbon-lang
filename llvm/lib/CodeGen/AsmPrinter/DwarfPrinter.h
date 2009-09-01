@@ -100,18 +100,16 @@ namespace llvm {
     void PrintLabelName(const DWLabel &Label) const {
       PrintLabelName(Label.getTag(), Label.getNumber());
     }
+    void PrintLabelName(const char *Tag, unsigned Number) const;
     void PrintLabelName(const char *Tag, unsigned Number,
-                        bool ForcePrivate = true) const;
-    void PrintLabelName(const char *Tag, unsigned Number,
-                        const char *Suffix, bool ForcePrivate = true) const;
+                        const char *Suffix) const;
 
     /// EmitLabel - Emit location label for internal use by Dwarf.
     ///
     void EmitLabel(const DWLabel &Label) const {
       EmitLabel(Label.getTag(), Label.getNumber());
     }
-    void EmitLabel(const char *Tag, unsigned Number,
-                   bool ForcePrivate = true) const;
+    void EmitLabel(const char *Tag, unsigned Number) const;
 
     /// EmitReference - Emit a reference to a label.
     ///

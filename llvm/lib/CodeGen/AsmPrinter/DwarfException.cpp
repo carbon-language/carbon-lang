@@ -459,9 +459,8 @@ ComputeCallSiteTable(SmallVectorImpl<CallSiteEntry> &CallSites,
           FirstActions[P.PadIndex]
         };
 
-        // Try to merge with the previous call-site. SJLJ doesn't do this
-        if (PreviousIsInvoke &&
-          MAI->getExceptionHandlingType() == ExceptionHandling::Dwarf) {
+        // Try to merge with the previous call-site.
+        if (PreviousIsInvoke) {
           CallSiteEntry &Prev = CallSites.back();
           if (Site.PadLabel == Prev.PadLabel && Site.Action == Prev.Action) {
             // Extend the range of the previous entry.
@@ -606,7 +605,7 @@ void DwarfException::EmitExceptionTable() {
     std::string LSDAName =
       Asm->Mang->makeNameProper(std::string("LSDA_") + out.str(),
                                 Mangler::Private);
-    EmitLabel(LSDAName.c_str(), 0, false);
+    O << LSDAName << ":\n";
   }
 
   // Emit the header.
