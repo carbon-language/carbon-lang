@@ -22,14 +22,10 @@ extern "C" {
 
 /*
    Clang indeX abstractions. The backing store for the following API's will be 
-   clangs PCH file (which contains AST's, or Abstract Syntax Trees). PCH files
-   are created by the following command:
+   clangs AST file (currently based on PCH). AST files are created as follows:
    
-   "clang -S -Xclang -emit-pch <sourcefile.langsuffix> -o <sourcefile.ast>". 
+   "clang -emit-ast <sourcefile.langsuffix> -o <sourcefile.ast>". 
    
-   If the ast file format ends up diverging from the pch file format, we will 
-   need to add a new switch (-emit-ast). For now, the contents are identical.
-
    Naming Conventions: To avoid namespace pollution, data types are prefixed 
    with "CX" and functions are prefixed with "clang_".
 */
