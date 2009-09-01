@@ -892,12 +892,9 @@ public:
     SeenVBase.clear();
   }
 
-  void AddMethod(const CXXMethodDecl *MD, Index_t AddressPoint,
-                 bool MorallyVirtual, Index_t Offset) {
+  bool OverrideMethod(const CXXMethodDecl *MD, llvm::Constant *m,
+                      bool MorallyVirtual, Index_t Offset) {
     typedef CXXMethodDecl::method_iterator meth_iter;
-
-    llvm::Constant *m;
-    m = wrap(CGM.GetAddrOfFunction(GlobalDecl(MD), Ptr8Ty));
 
     // FIXME: Don't like the nested loops.  For very large inheritance
     // heirarchies we could have a table on the side with the final overridder
@@ -925,11 +922,21 @@ public:
             VCalls[VCall[OMD]] = Offset/8 - VCallOffset[OMD];
           }
           // submethods[VCall[OMD]] = wrap(Offset/8 - VCallOffset[OMD]);
-          return;
+          return true;
         }
       }
     }
 
+    return false;
+  }
+
+  void AddMethod(const CXXMethodDecl *MD, Index_t AddressPoint,
+                 bool MorallyVirtual, Index_t Offset) {
+    llvm::Constant *m;
+    m = wrap(CGM.GetAddrOfFunction(GlobalDecl(MD), Ptr8Ty));
+    if (OverrideMethod(MD, m, MorallyVirtual, Offset))
+      return;
+    
     // else allocate a new slot.
     Index[MD] = submethods.size();
     // VCall[MD] = Offset;
