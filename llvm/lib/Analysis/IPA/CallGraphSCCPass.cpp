@@ -94,10 +94,10 @@ bool CGPassManager::RunPassOnSCC(Pass *P, std::vector<CallGraphNode*> &CurSCC,
       RefreshCallGraph(CurSCC, CG, false);
       CallGraphUpToDate = true;
     }
-    
-    StartPassTimer(P);
+
+    StartPassTimer(CGSP);
     Changed = CGSP->runOnSCC(CurSCC);
-    StopPassTimer(P);
+    StopPassTimer(CGSP);
     
     // After the CGSCCPass is done, when assertions are enabled, use
     // RefreshCallGraph to verify that the callgraph was correctly updated.
@@ -227,8 +227,15 @@ void CGPassManager::RefreshCallGraph(std::vector<CallGraphNode*> &CurSCC,
             CalleeNode = CG.getOrInsertFunction(Callee);
           else
             CalleeNode = CG.getCallsExternalNode();
-          
-          ExistingIt->second = CalleeNode;
+
+          // Update the edge target in CGN.
+          for (CallGraphNode::iterator I = CGN->begin(); ; ++I) {
+            assert(I != CGN->end() && "Didn't find call entry");
+            if (I->first == CS.getInstruction()) {
+              I->second = CalleeNode;
+              break;
+            }
+          }
           MadeChange = true;
           continue;
         }
