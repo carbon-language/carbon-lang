@@ -196,7 +196,8 @@ void Sema::DefaultFunctionArrayConversion(Expr *&E) {
   assert(!Ty.isNull() && "DefaultFunctionArrayConversion - missing type");
 
   if (Ty->isFunctionType())
-    ImpCastExprToType(E, Context.getPointerType(Ty));
+    ImpCastExprToType(E, Context.getPointerType(Ty), 
+                      CastExpr::CK_FunctionToPointerDecay);
   else if (Ty->isArrayType()) {
     // In C90 mode, arrays only promote to pointers if the array expression is
     // an lvalue.  The relevant legalese is C90 6.2.2.1p3: "an lvalue that has

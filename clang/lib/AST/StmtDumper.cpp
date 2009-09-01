@@ -324,6 +324,9 @@ void StmtDumper::VisitCastExpr(CastExpr *Node) {
   case CastExpr::CK_ArrayToPointerDecay:
     fprintf(F, "<ArrayToPointerDecay>");
     break;
+  case CastExpr::CK_FunctionToPointerDecay:
+    fprintf(F, "<FunctionToPointerDecay>");
+    break;
   case CastExpr::CK_NullToMemberPointer:
     fprintf(F, "<NullToMemberPointer>");
     break;

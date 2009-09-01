@@ -1016,7 +1016,7 @@ Sema::PerformImplicitConversion(Expr *&From, QualType ToType,
       FromType = From->getType();
     }
     FromType = Context.getPointerType(FromType);
-    ImpCastExprToType(From, FromType);
+    ImpCastExprToType(From, FromType, CastExpr::CK_FunctionToPointerDecay);
     break;
 
   default:

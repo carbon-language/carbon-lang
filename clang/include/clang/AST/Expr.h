@@ -1347,6 +1347,9 @@ public:
     /// CK_ArrayToPointerDecay - Array to pointer decay.
     CK_ArrayToPointerDecay,
     
+    // CK_FunctionToPointerDecay - Function to pointer decay.
+    CK_FunctionToPointerDecay,
+    
     /// CK_NullToMemberPointer - Null pointer to member pointer.
     CK_NullToMemberPointer,
     
