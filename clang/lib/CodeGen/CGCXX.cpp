@@ -930,10 +930,20 @@ public:
     return false;
   }
 
+  void OverrideMethods(const CXXRecordDecl *RD, Index_t AddressPoint,
+                       bool MorallyVirtual, Index_t Offset) {
+    for (method_iter mi = RD->method_begin(), me = RD->method_end(); mi != me;
+         ++mi)
+      if (mi->isVirtual()) {
+        const CXXMethodDecl *MD = *mi;
+        llvm::Constant *m = wrap(CGM.GetAddrOfFunction(GlobalDecl(MD), Ptr8Ty));
+        OverrideMethod(MD, m, MorallyVirtual, Offset);
+      }
+  }
+
   void AddMethod(const CXXMethodDecl *MD, Index_t AddressPoint,
                  bool MorallyVirtual, Index_t Offset) {
-    llvm::Constant *m;
-    m = wrap(CGM.GetAddrOfFunction(GlobalDecl(MD), Ptr8Ty));
+    llvm::Constant *m = wrap(CGM.GetAddrOfFunction(GlobalDecl(MD), Ptr8Ty));
     if (OverrideMethod(MD, m, MorallyVirtual, Offset))
       return;
     
@@ -953,19 +963,17 @@ public:
     submethods.push_back(m);
   }
 
-  void GenerateMethods(const CXXRecordDecl *RD, Index_t AddressPoint,
-                       bool MorallyVirtual, Index_t Offset) {
+  void AddMethods(const CXXRecordDecl *RD, Index_t AddressPoint,
+                  bool MorallyVirtual, Index_t Offset) {
     for (method_iter mi = RD->method_begin(), me = RD->method_end(); mi != me;
          ++mi)
       if (mi->isVirtual())
         AddMethod(*mi, AddressPoint, MorallyVirtual, Offset);
   }
 
-  int64_t GenerateVtableForBase(const CXXRecordDecl *RD,
-                                bool forPrimary, bool Bottom,
-                                bool MorallyVirtual,
-                                int64_t Offset,
-                                bool ForVirtualBase) {
+  int64_t GenerateVtableForBase(const CXXRecordDecl *RD, bool forPrimary,
+                                bool Bottom, bool MorallyVirtual,
+                                int64_t Offset, bool ForVirtualBase) {
     llvm::Constant *m = llvm::Constant::getNullValue(Ptr8Ty);
     int64_t AddressPoint=0;
 
@@ -995,7 +1003,7 @@ public:
     }
 
     // And add the virtuals for the class to the primary vtable.
-    GenerateMethods(RD, AddressPoint, MorallyVirtual, Offset);
+    AddMethods(RD, AddressPoint, MorallyVirtual, Offset);
 
     if (!Bottom)
       return AddressPoint;
@@ -1022,14 +1030,7 @@ public:
         methods.push_back(*i);
     }
 
-    int64_t BaseOffset;
-    if (ForVirtualBase) {
-      BaseOffset = -(BLayout.getVBaseClassOffset(RD) / 8);
-      // FIXME: The above is redundant with the other case.
-      assert(BaseOffset == -Offset/8);
-    } else
-      BaseOffset = -Offset/8;
-    m = wrap(BaseOffset);
+    m = wrap(-(Offset/8));
     methods.push_back(m);
     methods.push_back(rtti);
     AddressPoint = methods.size();
