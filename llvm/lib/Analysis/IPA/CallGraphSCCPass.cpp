@@ -22,6 +22,7 @@
 #include "llvm/PassManagers.h"
 #include "llvm/Function.h"
 #include "llvm/Support/Debug.h"
+#include "llvm/IntrinsicInst.h"
 #include "llvm/Support/raw_ostream.h"
 using namespace llvm;
 
@@ -192,7 +193,7 @@ void CGPassManager::RefreshCallGraph(std::vector<CallGraphNode*> &CurSCC,
     for (Function::iterator BB = F->begin(), E = F->end(); BB != E; ++BB)
       for (BasicBlock::iterator I = BB->begin(), E = BB->end(); I != E; ++I) {
         CallSite CS = CallSite::get(I);
-        if (!CS.getInstruction()) continue;
+        if (!CS.getInstruction() || isa<DbgInfoIntrinsic>(I)) continue;
         
         // If this call site already existed in the callgraph, just verify it
         // matches up to expectations and remove it from CallSites.
