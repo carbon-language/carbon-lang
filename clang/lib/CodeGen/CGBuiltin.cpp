@@ -271,6 +271,11 @@ RValue CodeGenFunction::EmitBuiltinExpr(const FunctionDecl *FD,
     return RValue::get(Builder.CreateZExt(LHS, ConvertType(E->getType()),
                                           "tmp"));
   }
+  case Builtin::BI__builtin_isnan: {
+    Value *V = EmitScalarExpr(E->getArg(0));
+    V = Builder.CreateFCmpUNO(V, V, "cmp");
+    return RValue::get(Builder.CreateZExt(V, ConvertType(E->getType()), "tmp"));
+  }
   case Builtin::BIalloca:
   case Builtin::BI__builtin_alloca: {
     // FIXME: LLVM IR Should allow alloca with an i64 size!

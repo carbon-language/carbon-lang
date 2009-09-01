@@ -54,6 +54,8 @@ int main() {
   P(islessgreater, (1., 2.));
   P(isunordered, (1., 2.));
 
+  P(isnan, (1.));
+
   // Bitwise & Numeric Functions
 
   P(abs, (N));
