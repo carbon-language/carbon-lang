@@ -160,7 +160,7 @@ namespace {
       std::string Name;
 
       if (ACPV->isLSDA()) {
-        SmallString<256> LSDAName;
+        SmallString<16> LSDAName;
         raw_svector_ostream(LSDAName) << MAI->getPrivateGlobalPrefix() <<
           "_LSDA_" << getFunctionNumber();
         Name = LSDAName.str();

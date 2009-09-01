@@ -601,7 +601,7 @@ void DwarfException::EmitExceptionTable() {
 
   EmitLabel("exception", SubprogramCount);
   if (MAI->getExceptionHandlingType() == ExceptionHandling::SjLj) {
-    SmallString<256> LSDAName;
+    SmallString<16> LSDAName;
     raw_svector_ostream(LSDAName) << MAI->getPrivateGlobalPrefix() <<
       "_LSDA_" << Asm->getFunctionNumber();
     O << LSDAName.str() << ":\n";
