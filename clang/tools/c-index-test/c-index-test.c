@@ -6,8 +6,8 @@
 static void DeclVisitor(CXDecl Dcl, CXCursor Cursor, CXClientData Filter) 
 {
   if (!Filter || (Cursor.kind == *(enum CXCursorKind *)Filter)) {
-    printf("%s => %s", clang_getKindSpelling(Cursor.kind),
-                       clang_getDeclSpelling(Cursor.decl));
+    printf("%s => %s", clang_getCursorKindSpelling(Cursor.kind),
+                       clang_getCursorSpelling(Cursor));
     printf(" (%s,%d:%d)\n", clang_getCursorSource(Cursor),
                             clang_getCursorLine(Cursor),
                             clang_getCursorColumn(Cursor));
@@ -17,8 +17,8 @@ static void TranslationUnitVisitor(CXTranslationUnit Unit, CXCursor Cursor,
                                    CXClientData Filter) 
 {
   if (!Filter || (Cursor.kind == *(enum CXCursorKind *)Filter)) {
-    printf("%s => %s", clang_getKindSpelling(Cursor.kind),
-                       clang_getDeclSpelling(Cursor.decl));
+    printf("%s => %s", clang_getCursorKindSpelling(Cursor.kind),
+                       clang_getCursorSpelling(Cursor));
     printf(" (%s,%d:%d)\n", clang_getCursorSource(Cursor),
                             clang_getCursorLine(Cursor),
                             clang_getCursorColumn(Cursor));

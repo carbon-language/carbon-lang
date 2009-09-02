@@ -15,4 +15,7 @@ _clang_loadDeclaration
 _clang_loadTranslationUnit
 _clang_createTranslationUnit
 _clang_isDeclaration
-_clang_getKindSpelling
+_clang_isReference
+_clang_isDefinition
+_clang_getCursorSpelling
+_clang_getCursorKindSpelling

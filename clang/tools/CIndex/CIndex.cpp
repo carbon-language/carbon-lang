@@ -103,6 +103,10 @@ public:
     CDecl(C), Callback(cback), CData(D) {}
     
   void VisitObjCInterfaceDecl(ObjCInterfaceDecl *D) {
+    // Issue callbacks for super class and protocols.
+    if (D->getSuperClass())
+      Call(CXCursor_ObjCSuperClassRef, D);
+
     VisitDeclContext(dyn_cast<DeclContext>(D));
   }
   void VisitTagDecl(TagDecl *D) {
@@ -241,7 +245,26 @@ const char *clang_getDeclSpelling(CXDecl AnonDecl)
   else 
     return "";
 }
-const char *clang_getKindSpelling(enum CXCursorKind Kind)
+
+const char *clang_getCursorSpelling(CXCursor C)
+{
+  assert(C.decl && "CXCursor has null decl");
+  NamedDecl *ND = static_cast<NamedDecl *>(C.decl);
+  
+  if (clang_isReference(C.kind)) {
+    switch (C.kind) {
+      case CXCursor_ObjCSuperClassRef:
+        ObjCInterfaceDecl *OID = dyn_cast<ObjCInterfaceDecl>(ND);
+        assert(OID && "clang_getCursorLine(): Missing interface decl");
+        return OID->getSuperClass()->getIdentifier()->getName();
+      default:
+        return "<not implemented>";
+    }
+  }
+  return clang_getDeclSpelling(C.decl);
+}
+
+const char *clang_getCursorKindSpelling(enum CXCursorKind Kind)
 {
   switch (Kind) {
    case CXCursor_FunctionDecl: return "FunctionDecl";
@@ -266,6 +289,7 @@ const char *clang_getKindSpelling(enum CXCursorKind Kind)
    case CXCursor_ObjCClassMethodDefn: return "ObjCClassMethodDefn";
    case CXCursor_ObjCClassDefn: return "ObjCClassDefn";
    case CXCursor_ObjCCategoryDefn: return "ObjCCategoryDefn";
+   case CXCursor_ObjCSuperClassRef: return "ObjCSuperClassRef";
    default: return "<not implemented>";
   }
 }
@@ -289,37 +313,65 @@ unsigned clang_isDeclaration(enum CXCursorKind K)
   return K >= CXCursor_FirstDecl && K <= CXCursor_LastDecl;
 }
 
+unsigned clang_isReference(enum CXCursorKind K)
+{
+  return K >= CXCursor_FirstRef && K <= CXCursor_LastRef;
+}
+
+unsigned clang_isDefinition(enum CXCursorKind K)
+{
+  return K >= CXCursor_FirstDefn && K <= CXCursor_LastDefn;
+}
+
+static SourceLocation getLocationFromCursor(CXCursor C, 
+                                            SourceManager &SourceMgr,
+                                            NamedDecl *ND) {
+  SourceLocation SLoc;
+  if (clang_isReference(C.kind)) {
+    switch (C.kind) {
+      case CXCursor_ObjCSuperClassRef:
+        ObjCInterfaceDecl *OID = dyn_cast<ObjCInterfaceDecl>(ND);
+        assert(OID && "clang_getCursorLine(): Missing interface decl");
+        SLoc = OID->getSuperClassLoc();
+        break;
+      default:
+        break;
+    }
+  } else { // We have a declaration or a definition.
+    SLoc = ND->getLocation();
+    if (SLoc.isInvalid())
+      return SourceLocation();
+    SLoc = SourceMgr.getSpellingLoc(SLoc); // handles macro instantiations.
+  }
+  return SLoc;
+}
+
 unsigned clang_getCursorLine(CXCursor C)
 {
   assert(C.decl && "CXCursor has null decl");
   NamedDecl *ND = static_cast<NamedDecl *>(C.decl);
-  SourceLocation SLoc = ND->getLocation();
-  if (SLoc.isInvalid())
-    return 0;
   SourceManager &SourceMgr = ND->getASTContext().getSourceManager();
-  SLoc = SourceMgr.getSpellingLoc(SLoc); // handles macro instantiations.
+  
+  SourceLocation SLoc = getLocationFromCursor(C, SourceMgr, ND);
   return SourceMgr.getSpellingLineNumber(SLoc);
 }
+
 unsigned clang_getCursorColumn(CXCursor C)
 {
   assert(C.decl && "CXCursor has null decl");
   NamedDecl *ND = static_cast<NamedDecl *>(C.decl);
-  SourceLocation SLoc = ND->getLocation();
-  if (SLoc.isInvalid())
-    return 0;
   SourceManager &SourceMgr = ND->getASTContext().getSourceManager();
-  SLoc = SourceMgr.getSpellingLoc(SLoc); // handles macro instantiations.
+  
+  SourceLocation SLoc = getLocationFromCursor(C, SourceMgr, ND);
   return SourceMgr.getSpellingColumnNumber(SLoc);
 }
 const char *clang_getCursorSource(CXCursor C) 
 {
   assert(C.decl && "CXCursor has null decl");
   NamedDecl *ND = static_cast<NamedDecl *>(C.decl);
-  SourceLocation SLoc = ND->getLocation();
-  if (SLoc.isInvalid())
-    return "<invalid source location>";
   SourceManager &SourceMgr = ND->getASTContext().getSourceManager();
-  SLoc = SourceMgr.getSpellingLoc(SLoc); // handles macro instantiations.
+  
+  SourceLocation SLoc = getLocationFromCursor(C, SourceMgr, ND);
   return SourceMgr.getBufferName(SLoc);
 }
 

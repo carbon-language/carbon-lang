@@ -71,11 +71,11 @@ enum CXCursorKind {
    
  /* References */
  CXCursor_FirstRef                      = 40,
- CXCursor_ObjCClassRef                  = 41,            
- CXCursor_ObjCProtocolRef               = 42,
- CXCursor_ObjCMessageRef                = 43,
- CXCursor_ObjCSelectorRef               = 44,
- CXCursor_LastRef                       = 44
+ CXCursor_ObjCSuperClassRef             = 40,            
+ CXCursor_ObjCProtocolRef               = 41,
+ CXCursor_ObjCMessageRef                = 42,
+ CXCursor_ObjCSelectorRef               = 43,
+ CXCursor_LastRef                       = 43
 };
 
 /* A cursor into the CXTranslationUnit. */
@@ -167,11 +167,15 @@ CXCursor clang_getCursor(CXTranslationUnit, const char *source_name,
 
 enum CXCursorKind clang_getCursorKind(CXCursor);
 unsigned clang_isDeclaration(enum CXCursorKind);
+unsigned clang_isReference(enum CXCursorKind);
+unsigned clang_isDefinition(enum CXCursorKind);
 
 unsigned clang_getCursorLine(CXCursor);
 unsigned clang_getCursorColumn(CXCursor);
 const char *clang_getCursorSource(CXCursor);
-const char *clang_getKindSpelling(enum CXCursorKind Kind);
+const char *clang_getCursorSpelling(CXCursor);
+
+const char *clang_getCursorKindSpelling(enum CXCursorKind Kind); /* for debug */
 
 /*
  * If CXCursorKind == Cursor_Reference, then this will return the referenced declaration.
