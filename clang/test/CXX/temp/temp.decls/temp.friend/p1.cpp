@@ -29,6 +29,10 @@ public:
   }
 };
 
+class A {
+  template <typename T> friend bool iszero(const A &a) throw();
+};
+
 int calc1() {
   Num<int> left = -1;
   Num<int> right = 1;

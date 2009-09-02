@@ -715,10 +715,11 @@ public:
   /// Finds the scope corresponding to the given decl context, if it
   /// happens to be an enclosing scope.  Otherwise return NULL.
   Scope *getScopeForDeclContext(Scope *S, DeclContext *DC) {
-    DC = DC->getPrimaryContext();
+    DeclContext *TargetDC = DC->getPrimaryContext();
     do {
-      if (((DeclContext*) S->getEntity())->getPrimaryContext() == DC)
-        return S;
+      if (DeclContext *ScopeDC = (DeclContext*) S->getEntity())
+        if (ScopeDC->getPrimaryContext() == TargetDC)
+          return S;
     } while ((S = S->getParent()));
 
     return NULL;
