@@ -53,14 +53,43 @@ namespace llvm {
   ModulePass *createBitcodeWriterPass(raw_ostream &Str);
   
   
-  /// isBitcodeWrapper - Return true fi this is a wrapper for LLVM IR bitcode
-  /// files.
-  static bool inline isBitcodeWrapper(unsigned char *BufPtr,
-                                      unsigned char *BufEnd) {
-    return (BufPtr != BufEnd && BufPtr[0] == 0xDE && BufPtr[1] == 0xC0 && 
-            BufPtr[2] == 0x17 && BufPtr[3] == 0x0B);
+  /// isBitcodeWrapper - Return true if the given bytes are the magic bytes
+  /// for an LLVM IR bitcode wrapper.
+  ///
+  static inline bool isBitcodeWrapper(const unsigned char *BufPtr,
+                                      const unsigned char *BufEnd) {
+    // See if you can find the hidden message in the magic bytes :-).
+    // (Hint: it's a little-endian encoding.)
+    return BufPtr != BufEnd &&
+           BufPtr[0] == 0xDE &&
+           BufPtr[1] == 0xC0 &&
+           BufPtr[2] == 0x17 &&
+           BufPtr[3] == 0x0B;
   }
-  
+
+  /// isRawBitcode - Return true if the given bytes are the magic bytes for
+  /// raw LLVM IR bitcode (without a wrapper).
+  ///
+  static inline bool isRawBitcode(const unsigned char *BufPtr,
+                                  const unsigned char *BufEnd) {
+    // These bytes sort of have a hidden message, but it's not in
+    // little-endian this time, and it's a little redundant.
+    return BufPtr != BufEnd &&
+           BufPtr[0] == 'B' &&
+           BufPtr[1] == 'C' &&
+           BufPtr[2] == 0xc0 &&
+           BufPtr[3] == 0xde;
+  }
+
+  /// isBitcode - Return true if the given bytes are the magic bytes for
+  /// LLVM IR bitcode, either with or without a wrapper.
+  ///
+  static bool inline isBitcode(const unsigned char *BufPtr,
+                               const unsigned char *BufEnd) {
+    return isBitcodeWrapper(BufPtr, BufEnd) ||
+           isRawBitcode(BufPtr, BufEnd);
+  }
+
   /// SkipBitcodeWrapperHeader - Some systems wrap bc files with a special
   /// header for padding or other reasons.  The format of this header is:
   ///
