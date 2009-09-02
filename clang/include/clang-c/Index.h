@@ -35,35 +35,47 @@ typedef void *CXTranslationUnit;  /* A translation unit instance. */
 
 typedef void *CXDecl;    /* A specific declaration within a translation unit. */
 
-/* Cursors represent declarations and references (provides line/column info). */
+/* Cursors represent declarations, definitions, and references. */
 enum CXCursorKind {
  CXCursor_Invalid                       = 0,
  
  /* Declarations */
  CXCursor_FirstDecl                     = 1,
- CXCursor_TypedefDecl                   = 1,
- CXCursor_EnumDecl                      = 2,
- CXCursor_EnumConstantDecl              = 3,
- CXCursor_RecordDecl                    = 4, /* struct/union/class */
- CXCursor_FieldDecl                     = 5,
- CXCursor_FunctionDecl                  = 6,
- CXCursor_VarDecl                       = 7,
- CXCursor_ParmDecl                      = 8,
- CXCursor_ObjCInterfaceDecl             = 9,
- CXCursor_ObjCCategoryDecl              = 10,
- CXCursor_ObjCProtocolDecl              = 11,
- CXCursor_ObjCPropertyDecl              = 12,
- CXCursor_ObjCIvarDecl                  = 13,
- CXCursor_ObjCMethodDecl                = 14,
- CXCursor_LastDecl                      = 14,
+ CXCursor_TypedefDecl                   = 2,
+ CXCursor_StructDecl                    = 3, 
+ CXCursor_UnionDecl                     = 4,
+ CXCursor_ClassDecl                     = 5,
+ CXCursor_EnumDecl                      = 6,
+ CXCursor_FieldDecl                     = 7,
+ CXCursor_EnumConstantDecl              = 8,
+ CXCursor_FunctionDecl                  = 9,
+ CXCursor_VarDecl                       = 10,
+ CXCursor_ParmDecl                      = 11,
+ CXCursor_ObjCInterfaceDecl             = 12,
+ CXCursor_ObjCCategoryDecl              = 13,
+ CXCursor_ObjCProtocolDecl              = 14,
+ CXCursor_ObjCPropertyDecl              = 15,
+ CXCursor_ObjCIvarDecl                  = 16,
+ CXCursor_ObjCInstanceMethodDecl        = 17,
+ CXCursor_ObjCClassMethodDecl           = 18,
+ CXCursor_LastDecl                      = 18,
  
+ /* Definitions */
+ CXCursor_FirstDefn                     = 32,
+ CXCursor_FunctionDefn                  = 32,
+ CXCursor_ObjCClassDefn                 = 33,
+ CXCursor_ObjCCategoryDefn              = 34,
+ CXCursor_ObjCInstanceMethodDefn        = 35,
+ CXCursor_ObjCClassMethodDefn           = 36,
+ CXCursor_LastDefn                      = 36,
+   
  /* References */
- CXCursor_FirstRef                      = 19,
- CXCursor_ObjCClassRef                  = 19,            
- CXCursor_ObjCProtocolRef               = 20,
- CXCursor_ObjCMessageRef                = 21,
- CXCursor_ObjCSelectorRef               = 22,
- CXCursor_LastRef                       = 23
+ CXCursor_FirstRef                      = 40,
+ CXCursor_ObjCClassRef                  = 41,            
+ CXCursor_ObjCProtocolRef               = 42,
+ CXCursor_ObjCMessageRef                = 43,
+ CXCursor_ObjCSelectorRef               = 44,
+ CXCursor_LastRef                       = 44
 };
 
 /* A cursor into the CXTranslationUnit. */
@@ -131,9 +143,9 @@ void clang_loadTranslationUnit(CXTranslationUnit, CXTranslationUnitIterator,
      }
    }
 */
-typedef void (*CXDeclIterator)(CXTranslationUnit, CXDecl, void *clientData);
+typedef void (*CXDeclIterator)(CXDecl, CXCursor, CXClientData);
 
-void clang_loadDeclaration(CXDecl, CXDeclIterator);
+void clang_loadDeclaration(CXDecl, CXDeclIterator, CXClientData);
 
 /*
  * CXEntity Operations.

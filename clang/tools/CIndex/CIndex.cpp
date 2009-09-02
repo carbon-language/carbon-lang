@@ -15,6 +15,7 @@
 #include "clang/Index/Program.h"
 #include "clang/Index/Indexer.h"
 #include "clang/AST/DeclVisitor.h"
+#include "clang/AST/Decl.h"
 #include "clang/Basic/FileManager.h"
 #include "clang/Basic/SourceManager.h"
 #include "clang/Frontend/ASTUnit.h"
@@ -51,10 +52,24 @@ public:
     Call(CXCursor_TypedefDecl, ND); 
   }
   void VisitTagDecl(TagDecl *ND) {
-    Call(ND->isEnum() ? CXCursor_EnumDecl : CXCursor_RecordDecl, ND);
+    switch (ND->getTagKind()) {
+      case TagDecl::TK_struct:
+        Call(CXCursor_StructDecl, ND);
+        break;
+      case TagDecl::TK_class:
+        Call(CXCursor_ClassDecl, ND);
+        break;
+      case TagDecl::TK_union:
+        Call(CXCursor_UnionDecl, ND);
+        break;
+      case TagDecl::TK_enum:
+        Call(CXCursor_EnumDecl, ND);
+        break;
+    }
   }
   void VisitFunctionDecl(FunctionDecl *ND) {
-    Call(CXCursor_FunctionDecl, ND);
+    Call(ND->isThisDeclarationADefinition() ? CXCursor_FunctionDefn
+                                            : CXCursor_FunctionDecl, ND);
   }
   void VisitObjCInterfaceDecl(ObjCInterfaceDecl *ND) {
     Call(CXCursor_ObjCInterfaceDecl, ND);
@@ -65,21 +80,65 @@ public:
   void VisitObjCProtocolDecl(ObjCProtocolDecl *ND) {
     Call(CXCursor_ObjCProtocolDecl, ND);
   }
+  void VisitObjCImplementationDecl(ObjCImplementationDecl *ND) {
+    Call(CXCursor_ObjCClassDefn, ND);
+  }
+  void VisitObjCCategoryImplDecl(ObjCCategoryImplDecl *ND) {
+    Call(CXCursor_ObjCCategoryDefn, ND);
+  }
 };
 
-// Top-level declaration visitor.
-class TLDeclVisitor : public DeclVisitor<TLDeclVisitor> {
+// Declaration visitor.
+class CDeclVisitor : public DeclVisitor<CDeclVisitor> {
+  CXDecl CDecl;
+  CXDeclIterator Callback;
+  CXClientData CData;
+  
+  void Call(enum CXCursorKind CK, NamedDecl *ND) {
+    CXCursor C = { CK, ND };
+    Callback(CDecl, C, CData);
+  }
 public:
+  CDeclVisitor(CXDecl C, CXDeclIterator cback, CXClientData D) : 
+    CDecl(C), Callback(cback), CData(D) {}
+    
+  void VisitObjCInterfaceDecl(ObjCInterfaceDecl *D) {
+    VisitDeclContext(dyn_cast<DeclContext>(D));
+  }
+  void VisitTagDecl(TagDecl *D) {
+    VisitDeclContext(dyn_cast<DeclContext>(D));
+  }
+  void VisitObjCImplementationDecl(ObjCImplementationDecl *D) {
+    VisitDeclContext(dyn_cast<DeclContext>(D));
+  }
+  void VisitObjCCategoryImplDecl(ObjCCategoryImplDecl *D) {
+    VisitDeclContext(dyn_cast<DeclContext>(D));
+  }
   void VisitDeclContext(DeclContext *DC) {
     for (DeclContext::decl_iterator
            I = DC->decls_begin(), E = DC->decls_end(); I != E; ++I)
       Visit(*I);
   }
   void VisitEnumConstantDecl(EnumConstantDecl *ND) {
+    Call(CXCursor_EnumConstantDecl, ND);
   }
   void VisitFieldDecl(FieldDecl *ND) {
+    Call(CXCursor_FieldDecl, ND);
+  }
+  void VisitObjCPropertyDecl(ObjCPropertyDecl *ND) {
+    Call(CXCursor_ObjCPropertyDecl, ND);
   }
   void VisitObjCIvarDecl(ObjCIvarDecl *ND) {
+    Call(CXCursor_ObjCIvarDecl, ND);
+  }
+  void VisitObjCMethodDecl(ObjCMethodDecl *ND) {
+    if (ND->getBody()) {
+      Call(ND->isInstanceMethod() ? CXCursor_ObjCInstanceMethodDefn
+                                  : CXCursor_ObjCClassMethodDefn, ND);
+      // FIXME: load body.
+    } else
+      Call(ND->isInstanceMethod() ? CXCursor_ObjCInstanceMethodDecl
+                                  : CXCursor_ObjCClassMethodDecl, ND);
   }
 };
 
@@ -105,9 +164,9 @@ CXTranslationUnit clang_createTranslationUnit(
 }
 
 
-void clang_loadTranslationUnit(
-  CXTranslationUnit CTUnit, CXTranslationUnitIterator callback,
-  CXClientData CData)
+void clang_loadTranslationUnit(CXTranslationUnit CTUnit, 
+                               CXTranslationUnitIterator callback,
+                               CXClientData CData)
 {
   assert(CTUnit && "Passed null CXTranslationUnit");
   ASTUnit *CXXUnit = static_cast<ASTUnit *>(CTUnit);
@@ -117,8 +176,14 @@ void clang_loadTranslationUnit(
   DVisit.Visit(Ctx.getTranslationUnitDecl());
 }
 
-void clang_loadDeclaration(CXDecl, CXDeclIterator)
+void clang_loadDeclaration(CXDecl Dcl, 
+                           CXDeclIterator callback, 
+                           CXClientData CData)
 {
+  assert(Dcl && "Passed null CXDecl");
+  
+  CDeclVisitor DVisit(Dcl, callback, CData);
+  DVisit.Visit(static_cast<Decl *>(Dcl));
 }
 
 // Some notes on CXEntity:
@@ -167,9 +232,13 @@ const char *clang_getDeclSpelling(CXDecl AnonDecl)
 {
   assert(AnonDecl && "Passed null CXDecl");
   NamedDecl *ND = static_cast<NamedDecl *>(AnonDecl);
+  
+  if (ObjCMethodDecl *OMD = dyn_cast<ObjCMethodDecl>(ND)) {
+    return OMD->getSelector().getAsString().c_str();
+  }    
   if (ND->getIdentifier())
     return ND->getIdentifier()->getName();
-  else
+  else 
     return "";
 }
 const char *clang_getKindSpelling(enum CXCursorKind Kind)
@@ -179,7 +248,9 @@ const char *clang_getKindSpelling(enum CXCursorKind Kind)
    case CXCursor_TypedefDecl: return "TypedefDecl";
    case CXCursor_EnumDecl: return "EnumDecl";
    case CXCursor_EnumConstantDecl: return "EnumConstantDecl";
-   case CXCursor_RecordDecl: return "RecordDecl";
+   case CXCursor_StructDecl: return "StructDecl";
+   case CXCursor_UnionDecl: return "UnionDecl";
+   case CXCursor_ClassDecl: return "ClassDecl";
    case CXCursor_FieldDecl: return "FieldDecl";
    case CXCursor_VarDecl: return "VarDecl";
    case CXCursor_ParmDecl: return "ParmDecl";
@@ -188,7 +259,13 @@ const char *clang_getKindSpelling(enum CXCursorKind Kind)
    case CXCursor_ObjCProtocolDecl: return "ObjCProtocolDecl";
    case CXCursor_ObjCPropertyDecl: return "ObjCPropertyDecl";
    case CXCursor_ObjCIvarDecl: return "ObjCIvarDecl";
-   case CXCursor_ObjCMethodDecl: return "ObjCMethodDecl";
+   case CXCursor_ObjCInstanceMethodDecl: return "ObjCInstanceMethodDecl";
+   case CXCursor_ObjCClassMethodDecl: return "ObjCClassMethodDecl";
+   case CXCursor_FunctionDefn: return "FunctionDefn";
+   case CXCursor_ObjCInstanceMethodDefn: return "ObjCInstanceMethodDefn";
+   case CXCursor_ObjCClassMethodDefn: return "ObjCClassMethodDefn";
+   case CXCursor_ObjCClassDefn: return "ObjCClassDefn";
+   case CXCursor_ObjCCategoryDefn: return "ObjCCategoryDefn";
    default: return "<not implemented>";
   }
 }
