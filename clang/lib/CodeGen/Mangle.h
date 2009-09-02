@@ -34,8 +34,8 @@ namespace clang {
   
   bool mangleName(const NamedDecl *D, ASTContext &Context, 
                   llvm::raw_ostream &os);
-  void mangleThunkName(const NamedDecl *D, bool Virtual, int64_t n,
-                       int64_t vn, ASTContext &Context, llvm::raw_ostream &os);
+  void mangleThunk(const NamedDecl *D, bool Virtual, int64_t n, int64_t vn,
+                   ASTContext &Context, llvm::raw_ostream &os);
   void mangleGuardVariable(const VarDecl *D, ASTContext &Context,
                            llvm::raw_ostream &os);
   void mangleCXXVtable(QualType T, ASTContext &Context, llvm::raw_ostream &os);
