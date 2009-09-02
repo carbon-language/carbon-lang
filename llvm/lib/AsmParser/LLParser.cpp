@@ -1701,6 +1701,7 @@ bool LLParser::PerFunctionState::SetInstName(int NameID,
       return P.Error(NameLoc, "instruction forward referenced with type '" + 
                      FI->second.first->getType()->getDescription() + "'");
     FI->second.first->replaceAllUsesWith(Inst);
+    delete FI->second.first;
     ForwardRefVals.erase(FI);
   }
   
