@@ -178,11 +178,11 @@ void CGPassManager::RefreshCallGraph(std::vector<CallGraphNode*> &CurSCC,
                "CallGraphSCCPass did not update the CallGraph correctly!");
         
         // Just remove the edge from the set of callees.
-        bool wasLast = I + 1 == E;
         CGN->removeCallEdge(I);
-        if (wasLast)
-          // I is now a singular iterator, do not compare with E.
-          break;
+        
+        // If we removed the last edge, get out of the loop.
+        if (CGN->empty()) break;
+        
         E = CGN->end();
         continue;
       }
