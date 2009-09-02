@@ -895,51 +895,56 @@ bool TwoAddressInstructionPass::runOnMachineFunction(MachineFunction &MF) {
                  mi->getOperand(i).getReg() != regA);
 #endif
 
-        // If this instruction is not the killing user of B, see if we can
-        // rearrange the code to make it so.  Making it the killing user will
-        // allow us to coalesce A and B together, eliminating the copy we are
-        // about to insert.
-        if (!isKilled(*mi, regB, MRI, TII)) {
+        // If regA is dead and the instruction can be deleted, just delete
+        // it so it doesn't clobber regB.
+        bool regBKilled = isKilled(*mi, regB, MRI, TII);
+        if (!regBKilled && mi->getOperand(ti).isDead() &&
+            DeleteUnusedInstr(mi, nmi, mbbi, regB, si, Dist)) {
+          ++NumDeletes;
+          break; // Done with this instruction.
+        }
 
-          // If regA is dead and the instruction can be deleted, just delete
-          // it so it doesn't clobber regB.
-          if (mi->getOperand(ti).isDead() &&
-              DeleteUnusedInstr(mi, nmi, mbbi, regB, si, Dist)) {
-            ++NumDeletes;
-            break; // Done with this instruction.
-          }
+        // Check if it is profitable to commute the operands.
+        unsigned SrcOp1, SrcOp2;
+        unsigned regC = 0;
+        bool TryCommute = false;
+        bool AggressiveCommute = false;
+        if (TID.isCommutable() && mi->getNumOperands() >= 3 &&
+            TII->findCommutedOpIndices(mi, SrcOp1, SrcOp2)) {
+          if (si == SrcOp1)
+            regC = mi->getOperand(SrcOp2).getReg();
+          else if (si == SrcOp2)
+            regC = mi->getOperand(SrcOp1).getReg();
 
-          // If this instruction is commutative, check to see if C dies.  If
-          // so, swap the B and C operands.  This makes the live ranges of A
-          // and C joinable.
-          // FIXME: This code also works for A := B op C instructions.
-          unsigned SrcOp1, SrcOp2;
-          if (TID.isCommutable() && mi->getNumOperands() >= 3 &&
-              TII->findCommutedOpIndices(mi, SrcOp1, SrcOp2)) {
-            unsigned regC = 0;
-            if (si == SrcOp1)
-              regC = mi->getOperand(SrcOp2).getReg();
-            else if (si == SrcOp2)
-              regC = mi->getOperand(SrcOp1).getReg();
-            if (isKilled(*mi, regC, MRI, TII)) {
-              if (CommuteInstruction(mi, mbbi, regB, regC, Dist)) {
-                ++NumCommuted;
-                regB = regC;
-                goto InstructionRearranged;
-              }
+          if (regC) {
+            if (!regBKilled && isKilled(*mi, regC, MRI, TII))
+              // If C dies but B does not, swap the B and C operands.
+              // This makes the live ranges of A and C joinable.
+              TryCommute = true;
+            else if (isProfitableToCommute(regB, regC, mi, mbbi, Dist)) {
+              TryCommute = true;
+              AggressiveCommute = true;
             }
           }
+        }
 
-          // If this instruction is potentially convertible to a true
-          // three-address instruction,
-          if (TID.isConvertibleTo3Addr()) {
+        // If it's profitable to commute, try to do so.
+        if (TryCommute && CommuteInstruction(mi, mbbi, regB, regC, Dist)) {
+          ++NumCommuted;
+          if (AggressiveCommute)
+            ++NumAggrCommuted;
+          regB = regC;
+        } else if (TID.isConvertibleTo3Addr()) {
+          // This instruction is potentially convertible to a true
+          // three-address instruction.  Check if it is profitable.
+          if (!regBKilled || isProfitableToConv3Addr(regA)) {
             // FIXME: This assumes there are no more operands which are tied
             // to another register.
 #ifndef NDEBUG
             for (unsigned i = si + 1, e = TID.getNumOperands(); i < e; ++i)
               assert(TID.getOperandConstraint(i, TOI::TIED_TO) == -1);
 #endif
-
+            // Try to convert it.
             if (ConvertInstTo3Addr(mi, nmi, mbbi, regB, Dist)) {
               ++NumConvertedTo3Addr;
               break; // Done with this instruction.
@@ -947,35 +952,6 @@ bool TwoAddressInstructionPass::runOnMachineFunction(MachineFunction &MF) {
           }
         }
 
-        // If it's profitable to commute the instruction, do so.
-        unsigned SrcOp1, SrcOp2;
-        if (TID.isCommutable() && mi->getNumOperands() >= 3 &&
-            TII->findCommutedOpIndices(mi, SrcOp1, SrcOp2)) {
-          unsigned regC = 0;
-          if (si == SrcOp1)
-            regC = mi->getOperand(SrcOp2).getReg();
-          else if (si == SrcOp2)
-            regC = mi->getOperand(SrcOp1).getReg();
-            
-          if (regC && isProfitableToCommute(regB, regC, mi, mbbi, Dist))
-            if (CommuteInstruction(mi, mbbi, regB, regC, Dist)) {
-              ++NumAggrCommuted;
-              ++NumCommuted;
-              regB = regC;
-              goto InstructionRearranged;
-            }
-        }
-
-        // If it's profitable to convert the 2-address instruction to a
-        // 3-address one, do so.
-        if (TID.isConvertibleTo3Addr() && isProfitableToConv3Addr(regA)) {
-          if (ConvertInstTo3Addr(mi, nmi, mbbi, regB, Dist)) {
-            ++NumConvertedTo3Addr;
-            break; // Done with this instruction.
-          }
-        }
-
-      InstructionRearranged:
         const TargetRegisterClass* rc = MRI->getRegClass(regB);
         MachineInstr *DefMI = MRI->getVRegDef(regB);
         // If it's safe and profitable, remat the definition instead of
