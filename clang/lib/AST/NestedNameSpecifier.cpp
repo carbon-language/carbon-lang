@@ -75,7 +75,17 @@ NestedNameSpecifier::Create(ASTContext &Context, NestedNameSpecifier *Prefix,
   Mockup.Specifier = T;
   return FindOrInsert(Context, Mockup);
 }
-  
+
+NestedNameSpecifier *
+NestedNameSpecifier::Create(ASTContext &Context, IdentifierInfo *II) {
+  assert(II && "Identifier cannot be NULL");
+  NestedNameSpecifier Mockup;
+  Mockup.Prefix.setPointer(0);
+  Mockup.Prefix.setInt(Identifier);
+  Mockup.Specifier = II;
+  return FindOrInsert(Context, Mockup);
+}
+
 NestedNameSpecifier *NestedNameSpecifier::GlobalSpecifier(ASTContext &Context) {
   if (!Context.GlobalNestedNameSpecifier)
     Context.GlobalNestedNameSpecifier = new (Context, 4) NestedNameSpecifier();

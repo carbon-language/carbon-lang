@@ -357,7 +357,8 @@ Sema::CXXScopeTy *Sema::ActOnCXXNestedNameSpecifier(Scope *S,
       // unqualified name lookup in the given scope.
       
       // FIXME: When we're instantiating a template, do we actually have to
-      // look in the scope of the template? Seems fishy...
+      // look in the scope of the template? Both EDG and GCC do it; GCC 
+      // requires the lookup to be successful, EDG doesn't.
       Found = LookupName(S, &II, LookupNestedNameSpecifierName);
       ObjectTypeSearchedInScope = true;
     }
@@ -366,6 +367,9 @@ Sema::CXXScopeTy *Sema::ActOnCXXNestedNameSpecifier(Scope *S,
     // base object type or prior nested-name-specifier, so this 
     // nested-name-specifier refers to an unknown specialization. Just build
     // a dependent nested-name-specifier.
+    if (!Prefix)
+      return NestedNameSpecifier::Create(Context, &II);
+    
     return NestedNameSpecifier::Create(Context, Prefix, &II);
   } else {
     // Perform unqualified name lookup in the current scope.

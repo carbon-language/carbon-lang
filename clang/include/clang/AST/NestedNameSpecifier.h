@@ -113,6 +113,14 @@ public:
                                      NestedNameSpecifier *Prefix, 
                                      bool Template, Type *T);
 
+  /// \brief Builds a specifier that consists of just an identifier.
+  ///
+  /// The nested-name-specifier is assumed to be dependent, but has no
+  /// prefix because the prefix is implied by something outside of the
+  /// nested name specifier, e.g., in "x->Base::f", the "x" has a dependent
+  /// type.
+  static NestedNameSpecifier *Create(ASTContext &Context, IdentifierInfo *II);
+  
   /// \brief Returns the nested name specifier representing the global
   /// scope.
   static NestedNameSpecifier *GlobalSpecifier(ASTContext &Context);
