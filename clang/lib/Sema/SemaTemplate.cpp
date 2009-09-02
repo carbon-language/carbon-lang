@@ -1137,9 +1137,7 @@ Sema::ActOnDependentTemplateName(SourceLocation TemplateKWLoc,
   NestedNameSpecifier *Qualifier 
     = static_cast<NestedNameSpecifier *>(SS.getScopeRep());
 
-  // FIXME: member of the current instantiation
-
-  if (!Qualifier->isDependent()) {
+  if (computeDeclContext(SS, false)) {
     // C++0x [temp.names]p5:
     //   If a name prefixed by the keyword template is not the name of
     //   a template, the program is ill-formed. [Note: the keyword
@@ -3010,10 +3008,16 @@ Sema::ActOnTypenameType(SourceLocation TypenameLoc, const CXXScopeSpec &SS,
     = T->getAsTemplateSpecializationType();
   assert(TemplateId && "Expected a template specialization type");
 
-  if (NNS->isDependent())
-    return Context.getTypenameType(NNS, TemplateId).getAsOpaquePtr();
-
-  return Context.getQualifiedNameType(NNS, T).getAsOpaquePtr();
+  if (computeDeclContext(SS, false)) {
+    // If we can compute a declaration context, then the "typename"
+    // keyword was superfluous. Just build a QualifiedNameType to keep
+    // track of the nested-name-specifier.
+    
+    // FIXME: Note that the QualifiedNameType had the "typename" keyword!
+    return Context.getQualifiedNameType(NNS, T).getAsOpaquePtr();
+  }
+  
+  return Context.getTypenameType(NNS, TemplateId).getAsOpaquePtr();
 }
 
 /// \brief Build the type that describes a C++ typename specifier,

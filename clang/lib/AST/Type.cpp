@@ -530,7 +530,7 @@ const TemplateSpecializationType *
 Type::getAsTemplateSpecializationType() const {
   // There is no sugar for class template specialization types, so
   // just return the canonical type pointer if it is the right class.
-  return dyn_cast<TemplateSpecializationType>(CanonicalType);
+  return this->getAs<TemplateSpecializationType>();
 }
 
 bool Type::isIntegerType() const {
