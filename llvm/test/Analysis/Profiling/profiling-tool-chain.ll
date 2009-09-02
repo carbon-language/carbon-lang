@@ -25,8 +25,6 @@
 ; PROF: 14. 2.63158%     2/76	main() - return
 
 ; ModuleID = '<stdin>'
-target datalayout = "e-p:64:64:64-i1:8:8-i8:8:8-i16:16:16-i32:32:32-i64:64:64-f32:32:32-f64:64:64-v64:64:64-v128:128:128-a0:0:64-s0:64:64-f80:128:128"
-target triple = "x86_64-unknown-linux-gnu"
 
 @.str = private constant [12 x i8] c"hello world\00", align 1 ; <[12 x i8]*> [#uses=1]
 @.str1 = private constant [6 x i8] c"franz\00", align 1 ; <[6 x i8]*> [#uses=1]
