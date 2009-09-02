@@ -13,5 +13,6 @@ current *pc;
 
 int foo()
 {
+        // FIXME. This should be OK in nonfragile-abi as well.
 	return pc->ivar2 + (*pc).ivar + pc->ivar1;
 }
