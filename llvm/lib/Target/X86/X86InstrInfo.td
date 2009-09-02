@@ -1647,6 +1647,14 @@ let isTwoAddress = 0 in {
                      "and{l}\t{$src, $dst|$dst, $src}",
                 [(store (and (load addr:$dst), i32immSExt8:$src), addr:$dst),
                  (implicit EFLAGS)]>;
+
+  def AND8i8 : Ii8<0x24, RawFrm, (outs), (ins i8imm:$src),
+                   "and{b}\t{$src, %al|%al, $src}", []>;
+  def AND16i16 : Ii16<0x25, RawFrm, (outs), (ins i16imm:$src),
+                      "and{w}\t{$src, %ax|%ax, $src}", []>, OpSize;
+  def AND32i32 : Ii32<0x25, RawFrm, (outs), (ins i32imm:$src),
+                      "and{l}\t{$src, %eax|%eax, $src}", []>;
+
 }
 
 
@@ -2396,11 +2404,11 @@ let isTwoAddress = 0 in {
 
   // addition to rAX
   def ADD8i8 : Ii8<0x04, RawFrm, (outs), (ins i8imm:$src),
-                   "add\t{$src, %al|%al, $src}", []>;
+                   "add{b}\t{$src, %al|%al, $src}", []>;
   def ADD16i16 : Ii16<0x05, RawFrm, (outs), (ins i16imm:$src),
-                      "add\t{$src, %ax|%ax, $src}", []>, OpSize;
+                      "add{w}\t{$src, %ax|%ax, $src}", []>, OpSize;
   def ADD32i32 : Ii32<0x05, RawFrm, (outs), (ins i32imm:$src),
-                      "add\t{$src, %eax|%eax, $src}", []>;
+                      "add{l}\t{$src, %eax|%eax, $src}", []>;
 }
 
 let Uses = [EFLAGS] in {
@@ -2991,6 +2999,13 @@ def SETNOm   : I<0x91, MRM0m,
 
 // Integer comparisons
 let Defs = [EFLAGS] in {
+def CMP8i8 : Ii8<0x3C, RawFrm, (outs), (ins i8imm:$src),
+                 "cmp{b}\t{$src, %al|%al, $src}", []>;
+def CMP16i16 : Ii16<0x3D, RawFrm, (outs), (ins i16imm:$src),
+                    "cmp{w}\t{$src, %ax|%ax, $src}", []>, OpSize;
+def CMP32i32 : Ii32<0x3D, RawFrm, (outs), (ins i32imm:$src),
+                    "cmp{l}\t{$src, %eax|%eax, $src}", []>;
+
 def CMP8rr  : I<0x38, MRMDestReg,
                 (outs), (ins GR8 :$src1, GR8 :$src2),
                 "cmp{b}\t{$src2, $src1|$src1, $src2}",
