@@ -22,22 +22,20 @@
 #include "llvm/Support/FormattedStream.h"
 #include "llvm/Support/Mangler.h"
 #include "llvm/ADT/SmallString.h"
-#include "llvm/ADT/StringExtras.h"  // fixme, kill utostr.
-
 using namespace llvm;
 
 MCSymbol *X86ATTAsmPrinter::GetPICBaseSymbol() {
   // FIXME: the actual label generated doesn't matter here!  Just mangle in
   // something unique (the function number) with Private prefix.
-  std::string Name;
+  SmallString<60> Name;
   
   if (Subtarget->isTargetDarwin()) {
-    Name = "L" + utostr(getFunctionNumber())+"$pb";
+    raw_svector_ostream(Name) << 'L' << getFunctionNumber() << "$pb";
   } else {
     assert(Subtarget->isTargetELF() && "Don't know how to print PIC label!");
-    Name = ".Lllvm$" + utostr(getFunctionNumber())+".$piclabel";
-  }     
-  return OutContext.GetOrCreateSymbol(Name);
+    raw_svector_ostream(Name) << ".Lllvm$" << getFunctionNumber()<<".$piclabel";
+  }
+  return OutContext.GetOrCreateSymbol(StringRef(Name.data(), Name.size()));
 }
 
 
