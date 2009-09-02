@@ -67,6 +67,8 @@ public:
 
   BuiltinBug(GRExprEngine *eng, const char* n)
     : BugType(n, "Logic errors"), Eng(*eng), desc(n) {}
+
+  const std::string &getDescription() const { return desc; }
   
   virtual void FlushReportsImpl(BugReporter& BR, GRExprEngine& Eng) = 0;
 
@@ -246,15 +248,13 @@ public:
   : BuiltinBugReport(bt, shortDesc, desc, n), Arg(arg) {}  
   
   const Stmt *getArg() const { return Arg; }  
-
-  void registerInitialVisitors(BugReporterContext& BRC,
-                               const ExplodedNode* N) {
-    registerTrackNullOrUndefValue(BRC, getArg(), N);
-  }    
 };
 
 class VISIBILITY_HIDDEN BadArg : public BuiltinBug {
 public:  
+  BadArg() : BuiltinBug(0, "Uninitialized argument",
+                    "Pass-by-value argument in function call is undefined.") {}
+
   BadArg(GRExprEngine* eng) : BuiltinBug(eng,"Uninitialized argument",  
     "Pass-by-value argument in function call is undefined.") {}
 
@@ -262,14 +262,6 @@ public:
     : BuiltinBug(eng,"Uninitialized argument", d) {}
   
   void FlushReportsImpl(BugReporter& BR, GRExprEngine& Eng) {
-    for (GRExprEngine::UndefArgsTy::iterator I = Eng.undef_arg_begin(),
-         E = Eng.undef_arg_end(); I!=E; ++I) {
-      // Generate a report for this bug.
-      ArgReport *report = new ArgReport(*this, desc.c_str(), I->first,
-                                        I->second);
-      report->addRange(I->second->getSourceRange());
-      BR.EmitReport(report);
-    }
   }
 
   void registerInitialVisitors(BugReporterContext& BRC,
@@ -639,7 +631,7 @@ namespace {
 class VISIBILITY_HIDDEN CheckUndefinedArg 
   : public CheckerVisitor<CheckUndefinedArg> {
 
-  BugType *BT;
+  BadArg *BT;
 
 public:
   CheckUndefinedArg() : BT(0) {}
@@ -659,10 +651,9 @@ void CheckUndefinedArg::PreVisitCallExpr(CheckerContext &C, const CallExpr *CE){
     if (C.getState()->getSVal(*I).isUndef()) {
       if (ExplodedNode *ErrorNode = C.generateNode(CE, C.getState(), true)) {
         if (!BT)
-          BT = new BugType("Uninitialized argument.", "Logic errors");
+          BT = new BadArg();
         // Generate a report for this bug.
-        ArgReport *Report = new ArgReport(*BT, 
-                     "Pass-by-value argument in function call is undefined.",
+        ArgReport *Report = new ArgReport(*BT, BT->getDescription().c_str(),
                                           ErrorNode, *I);
         Report->addRange((*I)->getSourceRange());
         C.EmitReport(Report);
