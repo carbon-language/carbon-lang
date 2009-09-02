@@ -39,7 +39,11 @@ namespace {
       : Context(C), Out(os), Structor(0), StructorType(0) { }
 
     bool mangle(const NamedDecl *D);
+    void mangleCalloffset(bool Virtual, int64_t nv, int64_t v);
     void mangleThunk(const NamedDecl *ND, bool Virtual, int64_t nv, int64_t v);
+    void mangleCovariantThunk(const NamedDecl *ND, bool VirtualThis,
+                              int64_t nv_t, int64_t v_t, bool VirtualResult,
+                              int64_t nv_r, int64_t v_r);
     void mangleGuardVariable(const VarDecl *D);
     
     void mangleCXXVtable(QualType Type);
@@ -237,24 +241,22 @@ void CXXNameMangler::mangleName(const NamedDecl *ND) {
     mangleNestedName(ND);
 }
 
-void CXXNameMangler::mangleThunk(const NamedDecl *D, bool Virtual, int64_t nv,
-                                 int64_t v) {
-  //  <special-name> ::= T <call-offset> <base encoding>
-  //                      # base is the nominal target function of thunk
+void CXXNameMangler::mangleCalloffset(bool Virtual, int64_t nv,
+                                      int64_t v) {
   //  <call-offset>  ::= h <nv-offset> _
   //                 ::= v <v-offset> _
   //  <nv-offset>    ::= <offset number>        # non-virtual base override
   //  <v-offset>     ::= <offset nubmer> _ <virtual offset number>
   //                      # virtual base override, with vcall offset
   if (!Virtual) {
-    Out << "_Th";
+    Out << "h";
     if (nv < 0) {
       Out << "n";
       nv = -nv;
     }
     Out << nv;
   } else {
-    Out << "_Tv";
+    Out << "v";
     if (nv < 0) {
       Out << "n";
       nv = -nv;
@@ -268,6 +270,28 @@ void CXXNameMangler::mangleThunk(const NamedDecl *D, bool Virtual, int64_t nv,
     Out << v;
   }
   Out << "_";
+}
+
+void CXXNameMangler::mangleThunk(const NamedDecl *D, bool Virtual, int64_t nv,
+                                 int64_t v) {
+  //  <special-name> ::= T <call-offset> <base encoding>
+  //                      # base is the nominal target function of thunk
+  Out << "_T";
+  mangleCalloffset(Virtual, nv, v);
+  mangleName(D);
+}
+
+  void CXXNameMangler::mangleCovariantThunk(const NamedDecl *D,
+                                            bool VirtualThis, int64_t nv_t,
+                                            int64_t v_t, bool VirtualResult,
+                                            int64_t nv_r, int64_t v_r) {
+  //  <special-name> ::= Tc <call-offset> <call-offset> <base encoding>
+  //                      # base is the nominal target function of thunk
+  //                      # first call-offset is 'this' adjustment
+  //                      # second call-offset is result adjustment
+  Out << "_Tc";
+  mangleCalloffset(VirtualThis, nv_t, v_t);
+  mangleCalloffset(VirtualResult, nv_r, v_r);
   mangleName(D);
 }
 
@@ -842,6 +866,24 @@ namespace clang {
     
     CXXNameMangler Mangler(Context, os);
     Mangler.mangleThunk(D, Virtual, nv, v);
+    os.flush();
+  }
+  
+  /// \brief Mangles the a covariant thunk for the declaration D and emits that
+  /// name to the given output stream.
+  void mangleCovariantThunk(const NamedDecl *D, bool VirtualThis, int64_t nv_t,
+                            int64_t v_t, bool VirtualResult, int64_t nv_r,
+                            int64_t v_r, ASTContext &Context,
+                            llvm::raw_ostream &os) {
+    // FIXME: Hum, we might have to thunk these, fix.
+    assert(!isa<CXXConstructorDecl>(D) &&
+           "Use mangleCXXCtor for constructor decls!");
+    assert(!isa<CXXDestructorDecl>(D) &&
+           "Use mangleCXXDtor for destructor decls!");
+    
+    CXXNameMangler Mangler(Context, os);
+    Mangler.mangleCovariantThunk(D, VirtualThis, nv_t, v_t, VirtualResult,
+                                 nv_r, v_r);
     os.flush();
   }
   
