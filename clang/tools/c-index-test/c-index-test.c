@@ -23,7 +23,6 @@ static void TranslationUnitVisitor(CXTranslationUnit Unit, CXCursor Cursor,
                             clang_getCursorLine(Cursor),
                             clang_getCursorColumn(Cursor));
 
-    enum CXCursorKind filterData = CXCursor_FieldDecl;
     clang_loadDeclaration(Cursor.decl, DeclVisitor, 0);
   }
 }
@@ -35,7 +34,6 @@ int main(int argc, char **argv) {
   CXIndex Idx = clang_createIndex();
   CXTranslationUnit TU = clang_createTranslationUnit(Idx, argv[1]);
   
-  enum CXCursorKind filterData = CXCursor_StructDecl;
   clang_loadTranslationUnit(TU, TranslationUnitVisitor, 0);
   return 1;
 }
