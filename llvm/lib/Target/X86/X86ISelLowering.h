@@ -738,6 +738,9 @@ namespace llvm {
                                                    MachineInstr *BInstr,
                                                    MachineBasicBlock *BB) const;
 
+    MachineBasicBlock *EmitLoweredSelect(MachineInstr *I,
+                                         MachineBasicBlock *BB) const;
+    
     /// Emit nodes that will be selected as "test Op0,Op0", or something
     /// equivalent, for use with the given x86 condition code.
     SDValue EmitTest(SDValue Op0, unsigned X86CC, SelectionDAG &DAG);
