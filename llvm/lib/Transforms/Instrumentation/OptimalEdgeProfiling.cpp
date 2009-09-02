@@ -72,11 +72,6 @@ bool OptimalEdgeProfiler::runOnModule(Module &M) {
     return false;  // No main, no instrumentation!
   }
 
-  // BlocksToInstrument stores all blocks that are in the function prior to
-  // instrumenting, since the spliting of critical edges adds new blocks (which
-  // have not to be instrumented), we have to remember them for later.
-  std::set<BasicBlock*> BlocksToInstrument;
-
   // NumEdges counts all the edges that may be instrumented. Later on its
   // decided which edges to actually instrument, to achieve optimal profiling.
   // For the entry block a virtual edge (0,entry) is reserved, for each block
@@ -93,7 +88,6 @@ bool OptimalEdgeProfiler::runOnModule(Module &M) {
       // Keep track of which blocks need to be instrumented.  We don't want to
       // instrument blocks that are added as the result of breaking critical
       // edges!
-      BlocksToInstrument.insert(BB);
       if (BB->getTerminator()->getNumSuccessors() == 0) {
         // Reserve space for (BB,0) edge.
         ++NumEdges;
@@ -151,9 +145,13 @@ bool OptimalEdgeProfiler::runOnModule(Module &M) {
       Initializer[i++] = (minusonec);
     }
 
+    // InsertedBlocks contains all blocks that were inserted for splitting an
+    // edge, this blocks do not have to be instrumented.
+    std::set<BasicBlock*> InsertedBlocks;
     for (Function::iterator BB = F->begin(), E = F->end(); BB != E; ++BB) {
-      // Do not count blocks that where introduced by spliting critical edges.
-      if (!BlocksToInstrument.count(BB)) continue;
+      // Check if block was not inserted and thus does not have to be
+      // instrumented.
+      if (InsertedBlocks.count(BB)) continue;
 
       // Okay, we have to add a counter of each outgoing edge not in MST. If
       // the outgoing edge is not critical don't split it, just insert the
@@ -176,8 +174,10 @@ bool OptimalEdgeProfiler::runOnModule(Module &M) {
         if (std::binary_search(MST.begin(), MST.end(), edge)) {
 
           // If the edge is critical, split it.
-          SplitCriticalEdge(TI,s,this);
+          bool wasInserted = SplitCriticalEdge(TI, s, this);
           Succ = TI->getSuccessor(s);
+          if(wasInserted)
+            InsertedBlocks.insert(Succ);
 
           // Okay, we are guaranteed that the edge is no longer critical.  If
           // we only have a single successor, insert the counter in this block,
