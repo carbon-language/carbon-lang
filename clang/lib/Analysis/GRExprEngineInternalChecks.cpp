@@ -70,7 +70,7 @@ public:
 
   const std::string &getDescription() const { return desc; }
   
-  virtual void FlushReportsImpl(BugReporter& BR, GRExprEngine& Eng) = 0;
+  virtual void FlushReportsImpl(BugReporter& BR, GRExprEngine& Eng) {}
 
   void FlushReports(BugReporter& BR) { FlushReportsImpl(BR, Eng); }
   
@@ -220,13 +220,9 @@ public:
   
 class VISIBILITY_HIDDEN BadCall : public BuiltinBug {
 public:
-  BadCall(GRExprEngine *eng)
+  BadCall(GRExprEngine *eng = 0)
   : BuiltinBug(eng, "Invalid function call",
         "Called function pointer is a null or undefined pointer value") {}
-  
-  void FlushReportsImpl(BugReporter& BR, GRExprEngine& Eng) {
-    Emit(BR, Eng.bad_calls_begin(), Eng.bad_calls_end());
-  }
   
   void registerInitialVisitors(BugReporterContext& BRC,
                                const ExplodedNode* N,
@@ -252,18 +248,12 @@ public:
 
 class VISIBILITY_HIDDEN BadArg : public BuiltinBug {
 public:  
-  BadArg() : BuiltinBug(0, "Uninitialized argument",
-                    "Pass-by-value argument in function call is undefined.") {}
-
-  BadArg(GRExprEngine* eng) : BuiltinBug(eng,"Uninitialized argument",  
+  BadArg(GRExprEngine* eng=0) : BuiltinBug(eng,"Uninitialized argument",  
     "Pass-by-value argument in function call is undefined.") {}
 
   BadArg(GRExprEngine* eng, const char* d)
     : BuiltinBug(eng,"Uninitialized argument", d) {}
   
-  void FlushReportsImpl(BugReporter& BR, GRExprEngine& Eng) {
-  }
-
   void registerInitialVisitors(BugReporterContext& BRC,
                                const ExplodedNode* N,
                                BuiltinBugReport *R) {
@@ -662,6 +652,34 @@ void CheckUndefinedArg::PreVisitCallExpr(CheckerContext &C, const CallExpr *CE){
   }
 }
 
+class VISIBILITY_HIDDEN CheckBadCall : public CheckerVisitor<CheckBadCall> {
+  BadCall *BT;
+
+public:
+  CheckBadCall() : BT(0) {}
+  ~CheckBadCall() {}
+
+  const void *getTag() {
+    static int x = 0;
+    return &x;
+  }
+
+  void PreVisitCallExpr(CheckerContext &C, const CallExpr *CE);
+};
+
+void CheckBadCall::PreVisitCallExpr(CheckerContext &C, const CallExpr *CE) {
+  const Expr *Callee = CE->getCallee()->IgnoreParens();
+  SVal L = C.getState()->getSVal(Callee);
+
+  if (L.isUndef() || isa<loc::ConcreteInt>(L)) {
+    if (ExplodedNode *N = C.generateNode(CE, C.getState(), true)) {
+      if (!BT)
+        BT = new BadCall();
+      C.EmitReport(new BuiltinBugReport(*BT, BT->getDescription().c_str(), N));
+    }
+  }
+}
+
 }
 //===----------------------------------------------------------------------===//
 // Check registration.
@@ -678,7 +696,6 @@ void GRExprEngine::RegisterInternalChecks() {
   BR.Register(new UndefBranch(this));
   BR.Register(new DivZero(this));
   BR.Register(new UndefResult(this));
-  BR.Register(new BadCall(this));
   BR.Register(new RetStack(this));
   BR.Register(new RetUndef(this));
   BR.Register(new BadMsgExprArg(this));
@@ -695,4 +712,5 @@ void GRExprEngine::RegisterInternalChecks() {
   // object.
   registerCheck(new CheckAttrNonNull());
   registerCheck(new CheckUndefinedArg());
+  registerCheck(new CheckBadCall());
 }

@@ -1493,20 +1493,7 @@ void GRExprEngine::VisitCallRec(CallExpr* CE, ExplodedNode* Pred,
 
     // FIXME: Add support for symbolic function calls (calls involving
     //  function pointer values that are symbolic).
-    
-    // Check for undefined control-flow or calls to NULL.
-    
-    if (L.isUndef() || isa<loc::ConcreteInt>(L)) {      
-      ExplodedNode* N = Builder->generateNode(CE, state, *DI);
-      
-      if (N) {
-        N->markAsSink();
-        BadCalls.insert(N);
-      }
-      
-      continue;
-    }
-    
+
     // Check for the "noreturn" attribute.
     
     SaveAndRestore<bool> OldSink(Builder->BuildSinks);

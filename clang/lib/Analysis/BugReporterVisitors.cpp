@@ -63,7 +63,8 @@ clang::bugreporter::GetDenomExpr(const ExplodedNode *N) {
 
 const Stmt*
 clang::bugreporter::GetCalleeExpr(const ExplodedNode *N) {
-  const Stmt *S = N->getLocationAs<PostStmt>()->getStmt();
+  // Callee is checked as a PreVisit to the CallExpr.
+  const Stmt *S = N->getLocationAs<PreStmt>()->getStmt();
   if (const CallExpr *CE = dyn_cast<CallExpr>(S))
     return CE->getCallee();
   return NULL;
