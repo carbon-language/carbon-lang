@@ -191,20 +191,20 @@ bool SymbolManager::canSymbolicate(QualType T) {
 }
 
 void SymbolReaper::markLive(SymbolRef sym) {
-  TheLiving = F.Add(TheLiving, sym);
-  TheDead = F.Remove(TheDead, sym);
+  TheLiving.insert(sym);
+  TheDead.erase(sym);
 }
 
 bool SymbolReaper::maybeDead(SymbolRef sym) {
   if (isLive(sym))
     return false;
   
-  TheDead = F.Add(TheDead, sym);
+  TheDead.insert(sym);
   return true;
 }
 
 bool SymbolReaper::isLive(SymbolRef sym) {
-  if (TheLiving.contains(sym))
+  if (TheLiving.count(sym))
     return true;
   
   if (const SymbolDerived *derived = dyn_cast<SymbolDerived>(sym)) {

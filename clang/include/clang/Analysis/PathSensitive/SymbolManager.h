@@ -21,8 +21,7 @@
 #include "llvm/Support/DataTypes.h"
 #include "llvm/Support/Allocator.h"
 #include "llvm/ADT/FoldingSet.h"
-#include "llvm/ADT/DenseMap.h"
-#include "llvm/ADT/ImmutableSet.h"
+#include "llvm/ADT/DenseSet.h"
 
 namespace llvm {
   class raw_ostream;
@@ -327,10 +326,8 @@ public:
 };
   
 class SymbolReaper {
-  typedef llvm::ImmutableSet<SymbolRef> SetTy;
-  typedef SetTy::Factory FactoryTy;
+  typedef llvm::DenseSet<SymbolRef> SetTy;
   
-  FactoryTy F;
   SetTy TheLiving;
   SetTy TheDead;
   LiveVariables& Liveness;
@@ -338,8 +335,9 @@ class SymbolReaper {
   
 public:
   SymbolReaper(LiveVariables& liveness, SymbolManager& symmgr)
-  : TheLiving(F.GetEmptySet()), TheDead(F.GetEmptySet()),
-    Liveness(liveness), SymMgr(symmgr) {}
+    : Liveness(liveness), SymMgr(symmgr) {}
+  
+  ~SymbolReaper() {}
 
   bool isLive(SymbolRef sym);
 
@@ -354,12 +352,12 @@ public:
   void markLive(SymbolRef sym);
   bool maybeDead(SymbolRef sym);
   
-  typedef SetTy::iterator dead_iterator;
+  typedef SetTy::const_iterator dead_iterator;
   dead_iterator dead_begin() const { return TheDead.begin(); }
   dead_iterator dead_end() const { return TheDead.end(); }
   
   bool hasDeadSymbols() const {
-    return !TheDead.isEmpty();
+    return !TheDead.empty();
   }
 };
   
