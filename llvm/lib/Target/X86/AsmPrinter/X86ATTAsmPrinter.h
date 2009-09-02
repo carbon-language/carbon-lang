@@ -64,7 +64,9 @@ class VISIBILITY_HIDDEN X86ATTAsmPrinter : public AsmPrinter {
   /// machine instruction was sufficiently described to print it, otherwise it
   /// returns false.
   void printInstruction(const MachineInstr *MI);
-  
+
+  void printInstructionThroughMCStreamer(const MachineInstr *MI);
+
   
   // New MCInst printing stuff.
   void printInstruction(const MCInst *MI);
