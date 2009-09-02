@@ -49,14 +49,15 @@ public:
     : Dst(dst), B(builder), Eng(eng), Pred(pred), 
       OldSink(B.BuildSinks), OldTag(B.Tag),
       OldPointKind(B.PointKind), OldHasGen(B.HasGeneratedNode) {
-        assert(Dst.empty());
+        //assert(Dst.empty()); // This is a fake assertion. 
+              // See GRExprEngine::CheckerVisit(), CurrSet is repeatedly used.
         B.Tag = tag;
         if (preVisit)
           B.PointKind = ProgramPoint::PreStmtKind;        
       }
   
   ~CheckerContext() {
-    if (!B.BuildSinks && Dst.empty() && !B.HasGeneratedNode)
+    if (!B.BuildSinks && !B.HasGeneratedNode)
       Dst.Add(Pred);
   }
   
@@ -71,8 +72,12 @@ public:
   ASTContext &getASTContext() {
     return Eng.getContext();
   }
+
+  ExplodedNode *GenerateNode(const Stmt *S, bool markAsSink = false) {
+    return GenerateNode(S, getState(), markAsSink);
+  }
   
-  ExplodedNode *generateNode(const Stmt* S, const GRState *state,
+  ExplodedNode *GenerateNode(const Stmt* S, const GRState *state,
                              bool markAsSink = false) {    
     ExplodedNode *node = B.generateNode(S, state, Pred);
     

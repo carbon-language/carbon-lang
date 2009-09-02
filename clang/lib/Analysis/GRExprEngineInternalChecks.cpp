@@ -193,13 +193,9 @@ public:
 
 class VISIBILITY_HIDDEN DivZero : public BuiltinBug {
 public:
-  DivZero(GRExprEngine* eng)
+  DivZero(GRExprEngine* eng = 0)
     : BuiltinBug(eng,"Division-by-zero",
                  "Division by zero or undefined value.") {}
-  
-  void FlushReportsImpl(BugReporter& BR, GRExprEngine& Eng) {
-    Emit(BR, Eng.explicit_bad_divides_begin(), Eng.explicit_bad_divides_end());
-  }
   
   void registerInitialVisitors(BugReporterContext& BRC,
                                const ExplodedNode* N,
@@ -575,7 +571,7 @@ public:
       if (stateNull && !stateNotNull) {
         // Generate an error node.  Check for a null node in case
         // we cache out.
-        if (ExplodedNode *errorNode = C.generateNode(CE, stateNull, true)) {
+        if (ExplodedNode *errorNode = C.GenerateNode(CE, stateNull, true)) {
                   
           // Lazily allocate the BugType object if it hasn't already been
           // created. Ownership is transferred to the BugReporter object once
@@ -611,7 +607,7 @@ public:
     // If we reach here all of the arguments passed the nonnull check.
     // If 'state' has been updated generated a new node.
     if (state != originalState)
-      C.addTransition(C.generateNode(CE, state));
+      C.addTransition(C.GenerateNode(CE, state));
   }
 };
 } // end anonymous namespace
@@ -639,7 +635,7 @@ void CheckUndefinedArg::PreVisitCallExpr(CheckerContext &C, const CallExpr *CE){
   for (CallExpr::const_arg_iterator I = CE->arg_begin(), E = CE->arg_end();
        I != E; ++I) {
     if (C.getState()->getSVal(*I).isUndef()) {
-      if (ExplodedNode *ErrorNode = C.generateNode(CE, C.getState(), true)) {
+      if (ExplodedNode *ErrorNode = C.GenerateNode(CE, true)) {
         if (!BT)
           BT = new BadArg();
         // Generate a report for this bug.
@@ -672,7 +668,7 @@ void CheckBadCall::PreVisitCallExpr(CheckerContext &C, const CallExpr *CE) {
   SVal L = C.getState()->getSVal(Callee);
 
   if (L.isUndef() || isa<loc::ConcreteInt>(L)) {
-    if (ExplodedNode *N = C.generateNode(CE, C.getState(), true)) {
+    if (ExplodedNode *N = C.GenerateNode(CE, true)) {
       if (!BT)
         BT = new BadCall();
       C.EmitReport(new BuiltinBugReport(*BT, BT->getDescription().c_str(), N));
@@ -680,6 +676,68 @@ void CheckBadCall::PreVisitCallExpr(CheckerContext &C, const CallExpr *CE) {
   }
 }
 
+class VISIBILITY_HIDDEN CheckBadDiv : public CheckerVisitor<CheckBadDiv> {
+  DivZero *BT;
+public:
+  CheckBadDiv() : BT(0) {}
+  ~CheckBadDiv() {}
+
+  const void *getTag() {
+    static int x;
+    return &x;
+  }
+
+  void PreVisitBinaryOperator(CheckerContext &C, const BinaryOperator *B);
+};
+
+void CheckBadDiv::PreVisitBinaryOperator(CheckerContext &C, 
+                                         const BinaryOperator *B) {
+  BinaryOperator::Opcode Op = B->getOpcode();
+  if (Op != BinaryOperator::Div &&
+      Op != BinaryOperator::Rem &&
+      Op != BinaryOperator::DivAssign &&
+      Op != BinaryOperator::RemAssign)
+    return;
+
+  if (!B->getRHS()->getType()->isIntegerType() ||
+      !B->getRHS()->getType()->isScalarType())
+    return;
+
+  printf("should not check!\n");
+
+  // Check for divide by undefined.
+  SVal Denom = C.getState()->getSVal(B->getRHS());
+
+  if (Denom.isUndef()) {
+    if (ExplodedNode *N = C.GenerateNode(B, true)) {
+      if (!BT)
+        BT = new DivZero();
+
+      C.EmitReport(new BuiltinBugReport(*BT, BT->getDescription().c_str(), N));
+    }
+    return;
+  }
+
+  // Check for divide by zero.
+  ConstraintManager &CM = C.getConstraintManager();
+  const GRState *stateNotZero, *stateZero;
+  llvm::tie(stateNotZero, stateZero) = CM.AssumeDual(C.getState(), 
+                                                     cast<DefinedSVal>(Denom));
+  
+  if (stateZero && !stateNotZero) {
+    if (ExplodedNode *N = C.GenerateNode(B, stateZero, true)) {
+      if (!BT)
+        BT = new DivZero();
+   
+      C.EmitReport(new BuiltinBugReport(*BT, BT->getDescription().c_str(), N));
+    }
+    return;
+  }
+
+  // If we get here, then the denom should not be zero.
+  if (stateNotZero != C.getState())
+    C.addTransition(C.GenerateNode(B, stateNotZero));
+}
 }
 //===----------------------------------------------------------------------===//
 // Check registration.
@@ -694,7 +752,6 @@ void GRExprEngine::RegisterInternalChecks() {
   BR.Register(new NullDeref(this));
   BR.Register(new UndefinedDeref(this));
   BR.Register(new UndefBranch(this));
-  BR.Register(new DivZero(this));
   BR.Register(new UndefResult(this));
   BR.Register(new RetStack(this));
   BR.Register(new RetUndef(this));
@@ -713,4 +770,5 @@ void GRExprEngine::RegisterInternalChecks() {
   registerCheck(new CheckAttrNonNull());
   registerCheck(new CheckUndefinedArg());
   registerCheck(new CheckBadCall());
+  registerCheck(new CheckBadDiv());
 }

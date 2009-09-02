@@ -55,7 +55,7 @@ clang::bugreporter::GetReceiverExpr(const ExplodedNode *N){
 
 const Stmt*
 clang::bugreporter::GetDenomExpr(const ExplodedNode *N) {
-  const Stmt *S = N->getLocationAs<PostStmt>()->getStmt();
+  const Stmt *S = N->getLocationAs<PreStmt>()->getStmt();
   if (const BinaryOperator *BE = dyn_cast<BinaryOperator>(S))
     return BE->getRHS();
   return NULL;
