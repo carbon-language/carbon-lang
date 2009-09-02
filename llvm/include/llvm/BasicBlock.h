@@ -231,6 +231,9 @@ public:
   /// cause a degenerate basic block to be formed, having a terminator inside of
   /// the basic block).
   ///
+  /// Also note that this doesn't preserve any passes. To split blocks while
+  /// keeping loop information consistent, use the SplitBlock utility function.
+  ///
   BasicBlock *splitBasicBlock(iterator I, const Twine &BBName = "");
 };
 
