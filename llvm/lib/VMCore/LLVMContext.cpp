@@ -13,6 +13,7 @@
 //===----------------------------------------------------------------------===//
 
 #include "llvm/LLVMContext.h"
+#include "llvm/Metadata.h"
 #include "llvm/Constants.h"
 #include "llvm/Instruction.h"
 #include "llvm/Support/ManagedStatic.h"
@@ -48,10 +49,10 @@ bool LLVMContext::RemoveDeadMetadata() {
   bool Changed = false;
   while (1) {
 
-    for (SmallPtrSet<const MDNode *, 8>::iterator
-           I = pImpl->MDNodes.begin(),
-           E = pImpl->MDNodes.end(); I != E; ++I) {
-      const MDNode *N = cast<MDNode>(*I);
+    for (FoldingSet<MDNode>::iterator 
+           I = pImpl->MDNodeSet.begin(),
+           E = pImpl->MDNodeSet.end(); I != E; ++I) {
+      const MDNode *N = &(*I);
       if (N->use_empty()) 
         DeadMDNodes.push_back(N);
     }

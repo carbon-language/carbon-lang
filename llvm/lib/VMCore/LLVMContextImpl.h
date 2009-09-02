@@ -19,6 +19,7 @@
 #include "LeaksContext.h"
 #include "TypesContext.h"
 #include "llvm/LLVMContext.h"
+#include "llvm/Metadata.h"
 #include "llvm/Constants.h"
 #include "llvm/DerivedTypes.h"
 #include "llvm/System/Mutex.h"
@@ -106,10 +107,12 @@ public:
   
   StringMap<MDString*> MDStringCache;
   
+  FoldingSet<MDNode> MDNodeSet;
+  
   ValueMap<char, Type, ConstantAggregateZero> AggZeroConstants;
 
   SmallPtrSet<const MDNode *, 8> MDNodes;
-  
+
   typedef ValueMap<std::vector<Constant*>, ArrayType, 
     ConstantArray, true /*largekey*/> ArrayConstantsTy;
   ArrayConstantsTy ArrayConstants;
@@ -199,7 +202,6 @@ public:
     ArrayConstants.freeConstants();
     StructConstants.freeConstants();
     VectorConstants.freeConstants();
-
     AggZeroConstants.freeConstants();
     NullPtrConstants.freeConstants();
     UndefValueConstants.freeConstants();
