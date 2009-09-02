@@ -30,7 +30,11 @@ namespace {
                     const ProfileInfo::EdgeWeight Y) const {
       if (X.second > Y.second) return true;
       if (X.second < Y.second) return false;
-#ifndef NDEBUG
+
+      // It would be enough to just compare the weights of the edges and be
+      // done. With edges of the same weight this may lead to a different MST
+      // each time the MST is created. To have more stable sorting (and thus
+      // more stable MSTs) furhter sort the edges.
       if (X.first.first != 0 && Y.first.first == 0) return true;
       if (X.first.first == 0 && Y.first.first != 0) return false;
       if (X.first.first == 0 && Y.first.first == 0) return false;
@@ -44,7 +48,7 @@ namespace {
 
       if (X.first.second->size() > Y.first.second->size()) return true;
       if (X.first.second->size() < Y.first.second->size()) return false;
-#endif
+
       return false;
     }
   };
