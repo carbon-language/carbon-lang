@@ -1015,12 +1015,12 @@ void Sema::ActOnMemInitializers(DeclPtrTy ConstructorDecl,
       continue;
     FieldDecl *Field = Member->getMember();
     QualType FT = Context.getBaseElementType(Field->getType());
-    if (const RecordType* RT = FT->getAs<RecordType>()) {
-      CXXConstructorDecl *Ctor =
-        cast<CXXRecordDecl>(RT->getDecl())->getDefaultConstructor(Context);
-      if (Ctor && !FT->isDependentType())
+    if (FT->isDependentType())
+      continue;
+    if (const RecordType* RT = FT->getAs<RecordType>())
+      if (CXXConstructorDecl *Ctor =
+            cast<CXXRecordDecl>(RT->getDecl())->getDefaultConstructor(Context))
         MarkDeclarationReferenced(Ctor->getLocation(), Ctor);
-    }
   }
   if (Diags.getDiagnosticLevel(diag::warn_base_initialized) == 
       Diagnostic::Ignored &&
