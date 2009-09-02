@@ -39,6 +39,8 @@ namespace {
       : Context(C), Out(os), Structor(0), StructorType(0) { }
 
     bool mangle(const NamedDecl *D);
+    void mangleThunkName(const NamedDecl *ND, bool Virtual, int64_t nv,
+                         int64_t v);
     void mangleGuardVariable(const VarDecl *D);
     
     void mangleCXXVtable(QualType Type);
@@ -87,8 +89,8 @@ static bool isInCLinkageSpecification(const Decl *D) {
 }
 
 bool CXXNameMangler::mangleFunctionDecl(const FunctionDecl *FD) {
-  // Clang's "overloadable" attribute extension to C/C++ implies
-  // name mangling (always).
+  // Clang's "overloadable" attribute extension to C/C++ implies name mangling
+  // (always).
   if (!FD->hasAttr<OverloadableAttr>()) {
     // C functions are not mangled, and "main" is never mangled.
     if (!Context.getLangOptions().CPlusPlus || FD->isMain(Context))
@@ -111,8 +113,8 @@ bool CXXNameMangler::mangleFunctionDecl(const FunctionDecl *FD) {
 }
 
 bool CXXNameMangler::mangle(const NamedDecl *D) {
-  // Any decl can be declared with __asm("foo") on it, and this takes
-  // precedence over all other naming in the .o file.
+  // Any decl can be declared with __asm("foo") on it, and this takes precedence
+  // over all other naming in the .o file.
   if (const AsmLabelAttr *ALA = D->getAttr<AsmLabelAttr>()) {
     // If we have an asm name, then we use it as the mangling.
     Out << '\01';  // LLVM IR Marker for __asm("foo")
@@ -185,9 +187,9 @@ void CXXNameMangler::mangleFunctionEncoding(const FunctionDecl *FD) {
   // <encoding> ::= <function name> <bare-function-type>
   mangleName(FD);
   
-  // Whether the mangling of a function type includes the return type depends 
-  // on the context and the nature of the function. The rules for deciding 
-  // whether the return type is included are:
+  // Whether the mangling of a function type includes the return type depends on
+  // the context and the nature of the function. The rules for deciding whether
+  // the return type is included are:
   // 
   //   1. Template functions (names or types) have return types encoded, with
   //   the exceptions listed below.
@@ -196,8 +198,8 @@ void CXXNameMangler::mangleFunctionEncoding(const FunctionDecl *FD) {
   //   exceptions listed below.
   //   3. Non-template function names do not have return types encoded.
   //
-  // The exceptions mentioned in (1) and (2) above, for which the return 
-  // type is never included, are
+  // The exceptions mentioned in (1) and (2) above, for which the return type is
+  // never included, are
   //   1. Constructors.
   //   2. Destructors.
   //   3. Conversion operator functions, e.g. operator int.
@@ -236,6 +238,40 @@ void CXXNameMangler::mangleName(const NamedDecl *ND) {
     mangleNestedName(ND);
 }
 
+void CXXNameMangler::mangleThunkName(const NamedDecl *D, bool Virtual,
+                                     int64_t nv, int64_t v) {
+  //  <special-name> ::= T <call-offset> <base encoding>
+  //                      # base is the nominal target function of thunk
+  //  <call-offset>  ::= h <nv-offset> _
+  //                 ::= v <v-offset> _
+  //  <nv-offset>    ::= <offset number>        # non-virtual base override
+  //  <v-offset>     ::= <offset nubmer> _ <virtual offset number>
+  //                      # virtual base override, with vcall offset
+  if (!Virtual) {
+    Out << "_Th";
+    if (nv < 0) {
+      Out << "n";
+      nv = -nv;
+    }
+    Out << nv;
+  } else {
+    Out << "_Tv";
+    if (nv < 0) {
+      Out << "n";
+      nv = -nv;
+    }
+    Out << nv;
+    Out << "_";
+    if (v < 0) {
+      Out << "n";
+      v = -v;
+    }
+    Out << v;
+  }
+  Out << "_";
+  mangleName(D);
+}
+
 void CXXNameMangler::mangleUnqualifiedName(const NamedDecl *ND) {
   //  <unqualified-name> ::= <operator-name>
   //                     ::= <ctor-dtor-name>  
@@ -254,8 +290,8 @@ void CXXNameMangler::mangleUnqualifiedName(const NamedDecl *ND) {
 
   case DeclarationName::CXXConstructorName:
     if (ND == Structor)
-      // If the named decl is the C++ constructor we're mangling, use the 
-      // type we were given.
+      // If the named decl is the C++ constructor we're mangling, use the type
+      // we were given.
       mangleCXXCtorType(static_cast<CXXCtorType>(StructorType));
     else
       // Otherwise, use the complete constructor name. This is relevant if a
@@ -265,8 +301,8 @@ void CXXNameMangler::mangleUnqualifiedName(const NamedDecl *ND) {
 
   case DeclarationName::CXXDestructorName:
     if (ND == Structor)
-      // If the named decl is the C++ destructor we're mangling, use the 
-      // type we were given.
+      // If the named decl is the C++ destructor we're mangling, use the type we
+      // were given.
       mangleCXXDtorType(static_cast<CXXDtorType>(StructorType));
     else
       // Otherwise, use the complete destructor name. This is relevant if a
@@ -637,8 +673,7 @@ void CXXNameMangler::mangleType(const TagType *T) {
   else
     mangleName(T->getDecl());
   
-  // If this is a class template specialization, mangle the template
-  // arguments.
+  // If this is a class template specialization, mangle the template arguments.
   if (ClassTemplateSpecializationDecl *Spec 
       = dyn_cast<ClassTemplateSpecializationDecl>(T->getDecl()))
     mangleTemplateArgumentList(Spec->getTemplateArgs());
@@ -773,14 +808,14 @@ void CXXNameMangler::mangleTemplateArgument(const TemplateArgument &A) {
 }
 
 namespace clang {
-  /// \brief Mangles the name of the declaration D and emits that name
-  /// to the given output stream.
+  /// \brief Mangles the name of the declaration D and emits that name to the
+  /// given output stream.
   ///
-  /// If the declaration D requires a mangled name, this routine will
-  /// emit that mangled name to \p os and return true. Otherwise, \p
-  /// os will be unchanged and this routine will return false. In this
-  /// case, the caller should just emit the identifier of the declaration
-  /// (\c D->getIdentifier()) as its name.
+  /// If the declaration D requires a mangled name, this routine will emit that
+  /// mangled name to \p os and return true. Otherwise, \p os will be unchanged
+  /// and this routine will return false. In this case, the caller should just
+  /// emit the identifier of the declaration (\c D->getIdentifier()) as its
+  /// name.
   bool mangleName(const NamedDecl *D, ASTContext &Context, 
                   llvm::raw_ostream &os) {
     assert(!isa<CXXConstructorDecl>(D) &&
@@ -794,6 +829,21 @@ namespace clang {
     
     os.flush();
     return true;
+  }
+  
+  /// \brief Mangles the a thunk with the offset n for the declaration D and
+  /// emits that name to the given output stream.
+  void mangleThunkName(const NamedDecl *D, bool Virtual, int64_t nv,
+                       int64_t v, ASTContext &Context, llvm::raw_ostream &os) {
+    // FIXME: Hum, we might have to thunk these, fix.
+    assert(!isa<CXXConstructorDecl>(D) &&
+           "Use mangleCXXCtor for constructor decls!");
+    assert(!isa<CXXDestructorDecl>(D) &&
+           "Use mangleCXXDtor for destructor decls!");
+    
+    CXXNameMangler Mangler(Context, os);
+    Mangler.mangleThunkName(D, Virtual, nv, v);
+    os.flush();
   }
   
   /// mangleGuardVariable - Returns the mangled name for a guard variable
