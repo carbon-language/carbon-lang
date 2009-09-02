@@ -19,6 +19,7 @@
 namespace llvm {
 
 class Module;
+class MemoryBuffer;
 class SMDiagnostic;
 class raw_ostream;
 class LLVMContext;
@@ -46,6 +47,17 @@ Module *ParseAssemblyString(
   Module *M,             ///< A module to add the assembly too.
   SMDiagnostic &Error,   ///< Error result info.
   LLVMContext &Context
+);
+
+/// This function is the low-level interface to the LLVM Assembly Parser.
+/// ParseAssemblyFile and ParseAssemblyString are wrappers around this function.
+/// @brief Parse LLVM Assembly from a MemoryBuffer.
+Module *ParseAssembly(
+    MemoryBuffer *F,     ///< The MemoryBuffer containing assembly
+    const std::string &Name, ///< The name of the original source file
+    Module *M,           ///< A module to add the assembly too.
+    SMDiagnostic &Err,   ///< Error result info.
+    LLVMContext &Context
 );
 
 } // End llvm namespace
