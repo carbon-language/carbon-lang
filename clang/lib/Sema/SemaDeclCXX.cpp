@@ -1003,7 +1003,25 @@ void Sema::ActOnMemInitializers(DeclPtrTy ConstructorDecl,
   
   if (Constructor->isDependentContext())
     return;
-  
+  // Mark all constructors used in initialization of class's members 
+  // as referenced. 
+  // FIXME. We can do this while building the initializer list. But
+  // MarkDeclarationReferenced is not accessible in ASTContext.
+  for (CXXConstructorDecl::init_const_iterator B = Constructor->init_begin(),
+       E = Constructor->init_end();
+       B != E; ++B) {
+    CXXBaseOrMemberInitializer *Member = (*B);
+    if (!Member->isMemberInitializer())
+      continue;
+    FieldDecl *Field = Member->getMember();
+    QualType FT = Context.getBaseElementType(Field->getType());
+    if (const RecordType* RT = FT->getAs<RecordType>()) {
+      CXXConstructorDecl *Ctor =
+        cast<CXXRecordDecl>(RT->getDecl())->getDefaultConstructor(Context);
+      if (Ctor && !FT->isDependentType())
+        MarkDeclarationReferenced(Ctor->getLocation(), Ctor);
+    }
+  }
   if (Diags.getDiagnosticLevel(diag::warn_base_initialized) == 
       Diagnostic::Ignored &&
       Diags.getDiagnosticLevel(diag::warn_field_initialized) == 
