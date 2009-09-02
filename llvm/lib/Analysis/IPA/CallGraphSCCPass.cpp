@@ -161,7 +161,7 @@ void CGPassManager::RefreshCallGraph(std::vector<CallGraphNode*> &CurSCC,
     // CGN with those actually in the function.
     
     // Get the set of call sites currently in the function.
-    for (CallGraphNode::iterator I = CGN->begin(), E = CGN->end(); I != E; ){
+    for (CallGraphNode::iterator I = CGN->begin(), E = CGN->end(); I != E; ) {
       // If this call site is null, then the function pass deleted the call
       // entirely and the WeakVH nulled it out.  
       if (I->first == 0 ||
@@ -178,7 +178,11 @@ void CGPassManager::RefreshCallGraph(std::vector<CallGraphNode*> &CurSCC,
                "CallGraphSCCPass did not update the CallGraph correctly!");
         
         // Just remove the edge from the set of callees.
+        bool wasLast = I + 1 == E;
         CGN->removeCallEdge(I);
+        if (wasLast)
+          // I is now a singular iterator, do not compare with E.
+          break;
         E = CGN->end();
         continue;
       }
