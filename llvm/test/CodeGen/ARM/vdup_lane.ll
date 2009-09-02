@@ -50,3 +50,27 @@ define <4 x float> @vduplaneQfloat(<2 x float>* %A) nounwind {
 	%tmp2 = shufflevector <2 x float> %tmp1, <2 x float> undef, <4 x i32> < i32 1, i32 1, i32 1, i32 1 >
 	ret <4 x float> %tmp2
 }
+
+define arm_apcscc <2 x i64> @foo(<2 x i64> %arg0_int64x1_t) nounwind readnone {
+entry:
+  %0 = shufflevector <2 x i64> %arg0_int64x1_t, <2 x i64> undef, <2 x i32> <i32 1, i32 1>
+  ret <2 x i64> %0
+}
+
+define arm_apcscc <2 x i64> @bar(<2 x i64> %arg0_int64x1_t) nounwind readnone {
+entry:
+  %0 = shufflevector <2 x i64> %arg0_int64x1_t, <2 x i64> undef, <2 x i32> <i32 0, i32 0>
+  ret <2 x i64> %0
+}
+
+define arm_apcscc <2 x double> @baz(<2 x double> %arg0_int64x1_t) nounwind readnone {
+entry:
+  %0 = shufflevector <2 x double> %arg0_int64x1_t, <2 x double> undef, <2 x i32> <i32 1, i32 1>
+  ret <2 x double> %0
+}
+
+define arm_apcscc <2 x double> @qux(<2 x double> %arg0_int64x1_t) nounwind readnone {
+entry:
+  %0 = shufflevector <2 x double> %arg0_int64x1_t, <2 x double> undef, <2 x i32> <i32 0, i32 0>
+  ret <2 x double> %0
+}
