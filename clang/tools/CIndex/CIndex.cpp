@@ -253,10 +253,12 @@ const char *clang_getCursorSpelling(CXCursor C)
   
   if (clang_isReference(C.kind)) {
     switch (C.kind) {
-      case CXCursor_ObjCSuperClassRef:
+      case CXCursor_ObjCSuperClassRef: 
+        {
         ObjCInterfaceDecl *OID = dyn_cast<ObjCInterfaceDecl>(ND);
         assert(OID && "clang_getCursorLine(): Missing interface decl");
         return OID->getSuperClass()->getIdentifier()->getName();
+        }
       default:
         return "<not implemented>";
     }
@@ -326,24 +328,23 @@ unsigned clang_isDefinition(enum CXCursorKind K)
 static SourceLocation getLocationFromCursor(CXCursor C, 
                                             SourceManager &SourceMgr,
                                             NamedDecl *ND) {
-  SourceLocation SLoc;
   if (clang_isReference(C.kind)) {
     switch (C.kind) {
       case CXCursor_ObjCSuperClassRef:
+        {
         ObjCInterfaceDecl *OID = dyn_cast<ObjCInterfaceDecl>(ND);
         assert(OID && "clang_getCursorLine(): Missing interface decl");
-        SLoc = OID->getSuperClassLoc();
-        break;
+        return OID->getSuperClassLoc();
+        }
       default:
-        break;
+        return SourceLocation();
     }
   } else { // We have a declaration or a definition.
-    SLoc = ND->getLocation();
+    SourceLocation SLoc = ND->getLocation();
     if (SLoc.isInvalid())
       return SourceLocation();
-    SLoc = SourceMgr.getSpellingLoc(SLoc); // handles macro instantiations.
+    return SourceMgr.getSpellingLoc(SLoc); // handles macro instantiations.
   }
-  return SLoc;
 }
 
 unsigned clang_getCursorLine(CXCursor C)
