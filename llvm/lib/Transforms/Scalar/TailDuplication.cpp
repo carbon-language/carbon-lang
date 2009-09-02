@@ -30,7 +30,6 @@
 #include "llvm/Analysis/ConstantFolding.h"
 #include "llvm/Transforms/Utils/Local.h"
 #include "llvm/Support/CommandLine.h"
-#include "llvm/Support/Compiler.h"
 #include "llvm/Support/Debug.h"
 #include "llvm/Support/raw_ostream.h"
 #include "llvm/ADT/Statistic.h"
@@ -46,7 +45,7 @@ TailDupThreshold("taildup-threshold",
                  cl::init(1), cl::Hidden);
 
 namespace {
-  class VISIBILITY_HIDDEN TailDup : public FunctionPass {
+  class TailDup : public FunctionPass {
     bool runOnFunction(Function &F);
   public:
     static char ID; // Pass identification, replacement for typeid

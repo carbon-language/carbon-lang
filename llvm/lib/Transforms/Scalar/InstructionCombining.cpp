@@ -55,7 +55,6 @@
 #include "llvm/Support/IRBuilder.h"
 #include "llvm/Support/MathExtras.h"
 #include "llvm/Support/PatternMatch.h"
-#include "llvm/Support/Compiler.h"
 #include "llvm/Support/raw_ostream.h"
 #include "llvm/ADT/DenseMap.h"
 #include "llvm/ADT/SmallVector.h"
@@ -159,9 +158,8 @@ namespace {
 
 
 namespace {
-  class VISIBILITY_HIDDEN InstCombiner
-    : public FunctionPass,
-      public InstVisitor<InstCombiner, Instruction*> {
+  class InstCombiner : public FunctionPass,
+                       public InstVisitor<InstCombiner, Instruction*> {
     TargetData *TD;
     bool MustPreserveLCSSA;
     bool MadeIRChange;

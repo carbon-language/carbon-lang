@@ -46,7 +46,6 @@
 #include "llvm/Analysis/ScalarEvolution.h"
 #include "llvm/Transforms/Utils/PromoteMemToReg.h"
 #include "llvm/Support/CFG.h"
-#include "llvm/Support/Compiler.h"
 #include "llvm/Support/CommandLine.h"
 #include "llvm/Support/raw_ostream.h"
 #include "llvm/Support/Debug.h"
@@ -74,7 +73,7 @@ EnableLICMConstantMotion("enable-licm-constant-variables", cl::Hidden,
                                   "global variables"));
 
 namespace {
-  struct VISIBILITY_HIDDEN LICM : public LoopPass {
+  struct LICM : public LoopPass {
     static char ID; // Pass identification, replacement for typeid
     LICM() : LoopPass(&ID) {}
 

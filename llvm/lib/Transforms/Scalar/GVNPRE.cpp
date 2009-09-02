@@ -37,7 +37,6 @@
 #include "llvm/ADT/Statistic.h"
 #include "llvm/Transforms/Utils/UnifyFunctionExitNodes.h"
 #include "llvm/Support/CFG.h"
-#include "llvm/Support/Compiler.h"
 #include "llvm/Support/Debug.h"
 #include "llvm/Support/ErrorHandling.h"
 #include <algorithm>
@@ -133,7 +132,7 @@ struct Expression {
 }
 
 namespace {
-  class VISIBILITY_HIDDEN ValueTable {
+  class ValueTable {
     private:
       DenseMap<Value*, uint32_t> valueNumbering;
       DenseMap<Expression, uint32_t> expressionNumbering;
@@ -675,8 +674,7 @@ class ValueNumberedSet {
 //===----------------------------------------------------------------------===//
 
 namespace {
-
-  class VISIBILITY_HIDDEN GVNPRE : public FunctionPass {
+  class GVNPRE : public FunctionPass {
     bool runOnFunction(Function &F);
   public:
     static char ID; // Pass identification, replacement for typeid

@@ -38,7 +38,6 @@
 #include "llvm/ADT/Statistic.h"
 #include "llvm/Support/CFG.h"
 #include "llvm/Support/Debug.h"
-#include "llvm/Support/Compiler.h"
 #include "llvm/Support/CommandLine.h"
 #include "llvm/Support/ValueHandle.h"
 #include "llvm/Support/raw_ostream.h"
@@ -65,7 +64,7 @@ namespace {
   /// IVInfo - This structure keeps track of one IV expression inserted during
   /// StrengthReduceStridedIVUsers. It contains the stride, the common base, as
   /// well as the PHI node and increment value created for rewrite.
-  struct VISIBILITY_HIDDEN IVExpr {
+  struct IVExpr {
     const SCEV *Stride;
     const SCEV *Base;
     PHINode    *PHI;
@@ -76,7 +75,7 @@ namespace {
 
   /// IVsOfOneStride - This structure keeps track of all IV expression inserted
   /// during StrengthReduceStridedIVUsers for a particular stride of the IV.
-  struct VISIBILITY_HIDDEN IVsOfOneStride {
+  struct IVsOfOneStride {
     std::vector<IVExpr> IVs;
 
     void addIV(const SCEV *const Stride, const SCEV *const Base, PHINode *PHI) {
@@ -84,7 +83,7 @@ namespace {
     }
   };
 
-  class VISIBILITY_HIDDEN LoopStrengthReduce : public LoopPass {
+  class LoopStrengthReduce : public LoopPass {
     IVUsers *IU;
     LoopInfo *LI;
     DominatorTree *DT;

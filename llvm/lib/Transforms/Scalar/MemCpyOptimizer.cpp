@@ -296,8 +296,7 @@ void MemsetRanges::addStore(int64_t Start, StoreInst *SI) {
 //===----------------------------------------------------------------------===//
 
 namespace {
-
-  class VISIBILITY_HIDDEN MemCpyOpt : public FunctionPass {
+  class MemCpyOpt : public FunctionPass {
     bool runOnFunction(Function &F);
   public:
     static char ID; // Pass identification, replacement for typeid

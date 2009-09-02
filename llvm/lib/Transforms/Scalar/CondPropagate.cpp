@@ -22,14 +22,13 @@
 #include "llvm/Transforms/Utils/Local.h"
 #include "llvm/ADT/Statistic.h"
 #include "llvm/ADT/SmallVector.h"
-#include "llvm/Support/Compiler.h"
 using namespace llvm;
 
 STATISTIC(NumBrThread, "Number of CFG edges threaded through branches");
 STATISTIC(NumSwThread, "Number of CFG edges threaded through switches");
 
 namespace {
-  struct VISIBILITY_HIDDEN CondProp : public FunctionPass {
+  struct CondProp : public FunctionPass {
     static char ID; // Pass identification, replacement for typeid
     CondProp() : FunctionPass(&ID) {}
 

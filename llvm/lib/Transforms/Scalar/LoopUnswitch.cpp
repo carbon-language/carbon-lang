@@ -44,7 +44,6 @@
 #include "llvm/ADT/SmallPtrSet.h"
 #include "llvm/ADT/STLExtras.h"
 #include "llvm/Support/CommandLine.h"
-#include "llvm/Support/Compiler.h"
 #include "llvm/Support/Debug.h"
 #include "llvm/Support/raw_ostream.h"
 #include <algorithm>
@@ -62,7 +61,7 @@ Threshold("loop-unswitch-threshold", cl::desc("Max loop size to unswitch"),
           cl::init(10), cl::Hidden);
   
 namespace {
-  class VISIBILITY_HIDDEN LoopUnswitch : public LoopPass {
+  class LoopUnswitch : public LoopPass {
     LoopInfo *LI;  // Loop information
     LPPassManager *LPM;
 

@@ -33,7 +33,6 @@
 #include "llvm/Assembly/Writer.h"
 #include "llvm/Support/CallSite.h"
 #include "llvm/Support/CommandLine.h"
-#include "llvm/Support/Compiler.h"
 #include "llvm/Support/Debug.h"
 #include "llvm/Support/GetElementPtrTypeIterator.h"
 #include "llvm/Support/PatternMatch.h"
@@ -45,7 +44,7 @@ static cl::opt<bool> FactorCommonPreds("split-critical-paths-tweak",
                                        cl::init(false), cl::Hidden);
 
 namespace {
-  class VISIBILITY_HIDDEN CodeGenPrepare : public FunctionPass {
+  class CodeGenPrepare : public FunctionPass {
     /// TLI - Keep a pointer of a TargetLowering to consult for determining
     /// transformation profitability.
     const TargetLowering *TLI;

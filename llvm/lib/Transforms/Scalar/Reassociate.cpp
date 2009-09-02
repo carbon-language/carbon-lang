@@ -31,7 +31,6 @@
 #include "llvm/Pass.h"
 #include "llvm/Assembly/Writer.h"
 #include "llvm/Support/CFG.h"
-#include "llvm/Support/Compiler.h"
 #include "llvm/Support/Debug.h"
 #include "llvm/Support/ValueHandle.h"
 #include "llvm/Support/raw_ostream.h"
@@ -47,7 +46,7 @@ STATISTIC(NumAnnihil, "Number of expr tree annihilated");
 STATISTIC(NumFactor , "Number of multiplies factored");
 
 namespace {
-  struct VISIBILITY_HIDDEN ValueEntry {
+  struct ValueEntry {
     unsigned Rank;
     Value *Op;
     ValueEntry(unsigned R, Value *O) : Rank(R), Op(O) {}
@@ -72,7 +71,7 @@ static void PrintOps(Instruction *I, const std::vector<ValueEntry> &Ops) {
 #endif
   
 namespace {
-  class VISIBILITY_HIDDEN Reassociate : public FunctionPass {
+  class Reassociate : public FunctionPass {
     std::map<BasicBlock*, unsigned> RankMap;
     std::map<AssertingVH<>, unsigned> ValueRankMap;
     bool MadeChange;

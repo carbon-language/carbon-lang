@@ -17,7 +17,6 @@
 #include "llvm/Transforms/Scalar.h"
 #include "llvm/Analysis/LoopInfo.h"
 #include "llvm/Analysis/LoopPass.h"
-#include "llvm/Support/Compiler.h"
 #include "llvm/Support/CommandLine.h"
 #include "llvm/Support/Debug.h"
 #include "llvm/Support/raw_ostream.h"
@@ -40,7 +39,7 @@ UnrollAllowPartial("unroll-allow-partial", cl::init(false), cl::Hidden,
            "-unroll-threshold loop size is reached."));
 
 namespace {
-  class VISIBILITY_HIDDEN LoopUnroll : public LoopPass {
+  class LoopUnroll : public LoopPass {
   public:
     static char ID; // Pass ID, replacement for typeid
     LoopUnroll() : LoopPass(&ID) {}

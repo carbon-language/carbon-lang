@@ -51,7 +51,6 @@
 //===----------------------------------------------------------------------===//
 
 #define DEBUG_TYPE "loop-index-split"
-
 #include "llvm/Transforms/Scalar.h"
 #include "llvm/IntrinsicInst.h"
 #include "llvm/LLVMContext.h"
@@ -61,7 +60,6 @@
 #include "llvm/Transforms/Utils/BasicBlockUtils.h"
 #include "llvm/Transforms/Utils/Cloning.h"
 #include "llvm/Transforms/Utils/Local.h"
-#include "llvm/Support/Compiler.h"
 #include "llvm/ADT/DepthFirstIterator.h"
 #include "llvm/ADT/Statistic.h"
 
@@ -73,8 +71,7 @@ STATISTIC(NumRestrictBounds, "Number of loop iteration space restricted");
 
 namespace {
 
-  class VISIBILITY_HIDDEN LoopIndexSplit : public LoopPass {
-
+  class LoopIndexSplit : public LoopPass {
   public:
     static char ID; // Pass ID, replacement for typeid
     LoopIndexSplit() : LoopPass(&ID) {}

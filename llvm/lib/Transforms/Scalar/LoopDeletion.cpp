@@ -15,19 +15,17 @@
 //===----------------------------------------------------------------------===//
 
 #define DEBUG_TYPE "loop-delete"
-
 #include "llvm/Transforms/Scalar.h"
 #include "llvm/Analysis/LoopPass.h"
 #include "llvm/Analysis/ScalarEvolution.h"
 #include "llvm/ADT/Statistic.h"
 #include "llvm/ADT/SmallVector.h"
-
 using namespace llvm;
 
 STATISTIC(NumDeleted, "Number of loops deleted");
 
 namespace {
-  class VISIBILITY_HIDDEN LoopDeletion : public LoopPass {
+  class LoopDeletion : public LoopPass {
   public:
     static char ID; // Pass ID, replacement for typeid
     LoopDeletion() : LoopPass(&ID) {}

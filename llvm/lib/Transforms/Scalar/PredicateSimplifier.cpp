@@ -93,7 +93,6 @@
 #include "llvm/Analysis/Dominators.h"
 #include "llvm/Assembly/Writer.h"
 #include "llvm/Support/CFG.h"
-#include "llvm/Support/Compiler.h"
 #include "llvm/Support/ConstantRange.h"
 #include "llvm/Support/Debug.h"
 #include "llvm/Support/InstVisitor.h"
@@ -377,12 +376,12 @@ namespace {
   }
 
   /// ValueNumbering stores the scope-specific value numbers for a given Value.
-  class VISIBILITY_HIDDEN ValueNumbering {
+  class ValueNumbering {
 
     /// VNPair is a tuple of {Value, index number, DomTreeDFS::Node}. It
     /// includes the comparison operators necessary to allow you to store it
     /// in a sorted vector.
-    class VISIBILITY_HIDDEN VNPair {
+    class VNPair {
     public:
       Value *V;
       unsigned index;
@@ -592,7 +591,7 @@ namespace {
   ///
   /// The InequalityGraph class may invalidate Node*s after any mutator call.
   /// @brief The InequalityGraph stores the relationships between values.
-  class VISIBILITY_HIDDEN InequalityGraph {
+  class InequalityGraph {
     ValueNumbering &VN;
     DomTreeDFS::Node *TreeRoot;
 
@@ -608,7 +607,7 @@ namespace {
     /// and contains a pointer to the other end. The edge contains a lattice
     /// value specifying the relationship and an DomTreeDFS::Node specifying
     /// the root in the dominator tree to which this edge applies.
-    class VISIBILITY_HIDDEN Edge {
+    class Edge {
     public:
       Edge(unsigned T, LatticeVal V, DomTreeDFS::Node *ST)
         : To(T), LV(V), Subtree(ST) {}
@@ -639,7 +638,7 @@ namespace {
     /// for the node, as well as the relationships with the neighbours.
     ///
     /// @brief A single node in the InequalityGraph.
-    class VISIBILITY_HIDDEN Node {
+    class Node {
       friend class InequalityGraph;
 
       typedef SmallVector<Edge, 4> RelationsType;
@@ -904,12 +903,12 @@ namespace {
 
   /// ValueRanges tracks the known integer ranges and anti-ranges of the nodes
   /// in the InequalityGraph.
-  class VISIBILITY_HIDDEN ValueRanges {
+  class ValueRanges {
     ValueNumbering &VN;
     TargetData *TD;
     LLVMContext *Context;
 
-    class VISIBILITY_HIDDEN ScopedRange {
+    class ScopedRange {
       typedef std::vector<std::pair<DomTreeDFS::Node *, ConstantRange> >
               RangeListType;
       RangeListType RangeList;
@@ -1270,7 +1269,7 @@ namespace {
   /// another discovered to be unreachable. This is used to cull the graph when
   /// analyzing instructions, and to mark blocks with the "unreachable"
   /// terminator instruction after the function has executed.
-  class VISIBILITY_HIDDEN UnreachableBlocks {
+  class UnreachableBlocks {
   private:
     std::vector<BasicBlock *> DeadBlocks;
 
@@ -1324,7 +1323,7 @@ namespace {
   /// variables, and forwards changes along to the InequalityGraph. It
   /// also maintains the correct choice for "canonical" in the IG.
   /// @brief VRPSolver calculates inferences from a new relationship.
-  class VISIBILITY_HIDDEN VRPSolver {
+  class VRPSolver {
   private:
     friend class ValueRanges;
 
@@ -2266,7 +2265,7 @@ namespace {
   /// one equivalent variable with another. It also tracks what
   /// can't be equal and will solve setcc instructions when possible.
   /// @brief Root of the predicate simplifier optimization.
-  class VISIBILITY_HIDDEN PredicateSimplifier : public FunctionPass {
+  class PredicateSimplifier : public FunctionPass {
     DomTreeDFS *DTDFS;
     bool modified;
     ValueNumbering *VN;
@@ -2295,7 +2294,7 @@ namespace {
     /// PredicateSimplifier::proceedToSuccessor(s) interface to enter the
     /// basic block.
     /// @brief Performs abstract execution of the program.
-    class VISIBILITY_HIDDEN Forwards : public InstVisitor<Forwards> {
+    class Forwards : public InstVisitor<Forwards> {
       friend class InstVisitor<Forwards>;
       PredicateSimplifier *PS;
       DomTreeDFS::Node *DTNode;

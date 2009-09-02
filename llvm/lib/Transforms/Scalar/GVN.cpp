@@ -35,7 +35,6 @@
 #include "llvm/Analysis/MemoryDependenceAnalysis.h"
 #include "llvm/Support/CFG.h"
 #include "llvm/Support/CommandLine.h"
-#include "llvm/Support/Compiler.h"
 #include "llvm/Support/Debug.h"
 #include "llvm/Support/ErrorHandling.h"
 #include "llvm/Support/raw_ostream.h"
@@ -62,7 +61,7 @@ static cl::opt<bool> EnableLoadPRE("enable-load-pre", cl::init(true));
 /// as an efficient mechanism to determine the expression-wise equivalence of
 /// two values.
 namespace {
-  struct VISIBILITY_HIDDEN Expression {
+  struct Expression {
     enum ExpressionOpcode { ADD, FADD, SUB, FSUB, MUL, FMUL,
                             UDIV, SDIV, FDIV, UREM, SREM,
                             FREM, SHL, LSHR, ASHR, AND, OR, XOR, ICMPEQ, 
@@ -119,7 +118,7 @@ namespace {
     }
   };
   
-  class VISIBILITY_HIDDEN ValueTable {
+  class ValueTable {
     private:
       DenseMap<Value*, uint32_t> valueNumbering;
       DenseMap<Expression, uint32_t> expressionNumbering;
@@ -678,7 +677,7 @@ void ValueTable::verifyRemoved(const Value *V) const {
 //===----------------------------------------------------------------------===//
 
 namespace {
-  struct VISIBILITY_HIDDEN ValueNumberScope {
+  struct ValueNumberScope {
     ValueNumberScope* parent;
     DenseMap<uint32_t, Value*> table;
     
@@ -688,7 +687,7 @@ namespace {
 
 namespace {
 
-  class VISIBILITY_HIDDEN GVN : public FunctionPass {
+  class GVN : public FunctionPass {
     bool runOnFunction(Function &F);
   public:
     static char ID; // Pass identification, replacement for typeid

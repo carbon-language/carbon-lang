@@ -26,7 +26,6 @@
 #include "llvm/BasicBlock.h"
 #include "llvm/Instructions.h"
 #include "llvm/ADT/Statistic.h"
-#include "llvm/Support/Compiler.h"
 #include "llvm/Support/CFG.h"
 #include <list>
 using namespace llvm;
@@ -35,7 +34,7 @@ STATISTIC(NumRegsDemoted, "Number of registers demoted");
 STATISTIC(NumPhisDemoted, "Number of phi-nodes demoted");
 
 namespace {
-  struct VISIBILITY_HIDDEN RegToMem : public FunctionPass {
+  struct RegToMem : public FunctionPass {
     static char ID; // Pass identification, replacement for typeid
     RegToMem() : FunctionPass(&ID) {}
 

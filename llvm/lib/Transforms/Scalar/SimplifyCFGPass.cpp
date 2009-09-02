@@ -30,7 +30,6 @@
 #include "llvm/Module.h"
 #include "llvm/Attributes.h"
 #include "llvm/Support/CFG.h"
-#include "llvm/Support/Compiler.h"
 #include "llvm/Pass.h"
 #include "llvm/ADT/SmallVector.h"
 #include "llvm/ADT/SmallPtrSet.h"
@@ -40,7 +39,7 @@ using namespace llvm;
 STATISTIC(NumSimpl, "Number of blocks simplified");
 
 namespace {
-  struct VISIBILITY_HIDDEN CFGSimplifyPass : public FunctionPass {
+  struct CFGSimplifyPass : public FunctionPass {
     static char ID; // Pass identification, replacement for typeid
     CFGSimplifyPass() : FunctionPass(&ID) {}
 

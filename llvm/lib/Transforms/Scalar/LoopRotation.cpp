@@ -32,7 +32,7 @@ using namespace llvm;
 STATISTIC(NumRotated, "Number of loops rotated");
 namespace {
 
-  class VISIBILITY_HIDDEN RenameData {
+  class RenameData {
   public:
     RenameData(Instruction *O, Value *P, Instruction *H) 
       : Original(O), PreHeader(P), Header(H) { }
@@ -42,8 +42,7 @@ namespace {
     Instruction *Header; // New header replacement
   };
   
-  class VISIBILITY_HIDDEN LoopRotate : public LoopPass {
-
+  class LoopRotate : public LoopPass {
   public:
     static char ID; // Pass ID, replacement for typeid
     LoopRotate() : LoopPass(&ID) {}

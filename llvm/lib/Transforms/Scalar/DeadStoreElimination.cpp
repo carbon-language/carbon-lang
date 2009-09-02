@@ -29,14 +29,13 @@
 #include "llvm/Analysis/MemoryDependenceAnalysis.h"
 #include "llvm/Target/TargetData.h"
 #include "llvm/Transforms/Utils/Local.h"
-#include "llvm/Support/Compiler.h"
 using namespace llvm;
 
 STATISTIC(NumFastStores, "Number of stores deleted");
 STATISTIC(NumFastOther , "Number of other instrs removed");
 
 namespace {
-  struct VISIBILITY_HIDDEN DSE : public FunctionPass {
+  struct DSE : public FunctionPass {
     TargetData *TD;
 
     static char ID; // Pass identification, replacement for typeid
