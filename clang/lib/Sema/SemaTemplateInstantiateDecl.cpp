@@ -242,17 +242,19 @@ Decl *TemplateDeclInstantiator::VisitFieldDecl(FieldDecl *D) {
                                             D->getTypeSpecStartLoc(),
                                             D->getAccess(),
                                             0);
-  if (Field) {
-    if (Invalid)
-      Field->setInvalidDecl();
+  if (!Field)
+    return 0;
+  
+  if (Invalid)
+    Field->setInvalidDecl();
     
-    if (!Field->getDeclName()) {
-      // Keep track of where this decl came from.
-      SemaRef.Context.setInstantiatedFromUnnamedFieldDecl(Field, D);
-    }
-    
-    Owner->addDecl(Field);
+  if (!Field->getDeclName()) {
+    // Keep track of where this decl came from.
+    SemaRef.Context.setInstantiatedFromUnnamedFieldDecl(Field, D);
   }
+    
+  Field->setImplicit(D->isImplicit());
+  Owner->addDecl(Field);
 
   return Field;
 }
