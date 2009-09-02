@@ -23,12 +23,15 @@ namespace {
 class VISIBILITY_HIDDEN WalkAST : public StmtVisitor<WalkAST> {
   BugReporter &BR;  
   IdentifierInfo *II_gets;
-  enum { num_ids = 6 };
-  IdentifierInfo *II_setid[num_ids];
+  enum { num_rands = 9 };
+  IdentifierInfo *II_rand[num_rands];
+  IdentifierInfo *II_random;
+  enum { num_setids = 6 };
+  IdentifierInfo *II_setid[num_setids];
   
 public:
   WalkAST(BugReporter &br) : BR(br),
-    II_gets(0), II_setid() {}
+    II_gets(0), II_rand(), II_random(0), II_setid() {}
   
   // Statement visitor methods.
   void VisitCallExpr(CallExpr *CE);
@@ -44,6 +47,8 @@ public:
   // Checker-specific methods.
   void CheckLoopConditionForFloat(const ForStmt *FS);
   void CheckCall_gets(const CallExpr *CE, const FunctionDecl *FD);
+  void CheckCall_rand(const CallExpr *CE, const FunctionDecl *FD);
+  void CheckCall_random(const CallExpr *CE, const FunctionDecl *FD);
   void CheckUncheckedReturnValue(CallExpr *CE);
 };
 } // end anonymous namespace
@@ -71,7 +76,9 @@ void WalkAST::VisitChildren(Stmt *S) {
 
 void WalkAST::VisitCallExpr(CallExpr *CE) {
   if (const FunctionDecl *FD = CE->getDirectCallee()) {
-    CheckCall_gets(CE, FD);    
+    CheckCall_gets(CE, FD);
+    CheckCall_rand(CE, FD);
+    CheckCall_random(CE, FD);
   }
   
   // Recurse and check children.
@@ -241,6 +248,96 @@ void WalkAST::CheckCall_gets(const CallExpr *CE, const FunctionDecl *FD) {
 }
 
 //===----------------------------------------------------------------------===//
+// Check: Linear congruent random number generators should not be used
+// Originally: <rdar://problem/63371000>
+// CWE-338: Use of cryptographically weak prng
+//===----------------------------------------------------------------------===//
+
+void WalkAST::CheckCall_rand(const CallExpr *CE, const FunctionDecl *FD) {
+  if (II_rand[0] == NULL) {
+    // This check applies to these functions
+    static const char * const identifiers[num_rands] = {
+      "drand48", "erand48", "jrand48", "lrand48", "mrand48", "nrand48",
+      "lcong48",
+      "rand", "rand_r"
+    };
+      
+    for (size_t i = 0; i < num_rands; i++)
+      II_rand[i] = &BR.getContext().Idents.get(identifiers[i]);  
+  }
+  
+  const IdentifierInfo *id = FD->getIdentifier();
+  size_t identifierid;
+
+  for (identifierid = 0; identifierid < num_rands; identifierid++)
+    if (id == II_rand[identifierid])
+      break;
+
+  if (identifierid >= num_rands)
+    return;
+  
+  const FunctionProtoType *FTP = dyn_cast<FunctionProtoType>(FD->getType());
+  if (!FTP)
+    return;
+  
+  if (FTP->getNumArgs() == 1) {
+    // Is the argument an 'unsigned short *'?
+    // (Actually any integer type is allowed.)
+    const PointerType *PT = dyn_cast<PointerType>(FTP->getArgType(0));
+    if (!PT)
+      return;
+      
+    if (! PT->getPointeeType()->isIntegerType())
+      return;
+  }
+  else if (FTP->getNumArgs() != 0) 
+    return;
+  
+  // Issue a warning.
+  std::string buf1;
+  llvm::raw_string_ostream os1(buf1);
+  os1 << "'" << FD->getNameAsString() << "' is a poor random number generator";
+
+  std::string buf2;
+  llvm::raw_string_ostream os2(buf2);
+  os2 << "Function '" << FD->getNameAsString()
+      << "' is obsolete because it implements a poor random number generator."
+      << "  Use 'arc4random' instead";
+
+  SourceRange R = CE->getCallee()->getSourceRange();
+  
+  BR.EmitBasicReport(os1.str().c_str(), "Security", os2.str().c_str(),
+                     CE->getLocStart(), &R, 1);
+}
+
+//===----------------------------------------------------------------------===//
+// Check: 'random' should not be used
+// Originally: <rdar://problem/63371000>
+//===----------------------------------------------------------------------===//
+
+void WalkAST::CheckCall_random(const CallExpr *CE, const FunctionDecl *FD) {
+  if (FD->getIdentifier() != GetIdentifier(II_random, "random"))
+    return;
+  
+  const FunctionProtoType *FTP = dyn_cast<FunctionProtoType>(FD->getType());
+  if (!FTP)
+    return;
+  
+  // Verify that the function takes no argument.
+  if (FTP->getNumArgs() != 0)
+    return;
+  
+  // Issue a warning.
+  SourceRange R = CE->getCallee()->getSourceRange();
+  BR.EmitBasicReport("'random' is not a secure random number generator",
+                     "Security",
+                     "The 'random' function produces a sequence of values that "
+                     "an adversary may be able to predict.  Use 'arc4random' "
+                     "instead",
+                     CE->getLocStart(), &R, 1);
+}
+
+//===----------------------------------------------------------------------===//
 // Check: Should check whether privileges are dropped successfully.
 // Originally: <rdar://problem/6337132>
 //===----------------------------------------------------------------------===//
@@ -251,23 +348,23 @@ void WalkAST::CheckUncheckedReturnValue(CallExpr *CE) {
     return;
 
   if (II_setid[0] == NULL) {
-    static const char * const identifiers[num_ids] = {
+    static const char * const identifiers[num_setids] = {
       "setuid", "setgid", "seteuid", "setegid",
       "setreuid", "setregid"
     };
       
-    for (size_t i = 0; i < num_ids; i++)
+    for (size_t i = 0; i < num_setids; i++)
       II_setid[i] = &BR.getContext().Idents.get(identifiers[i]);  
   }
   
   const IdentifierInfo *id = FD->getIdentifier();
   size_t identifierid;
 
-  for (identifierid = 0; identifierid < num_ids; identifierid++)
+  for (identifierid = 0; identifierid < num_setids; identifierid++)
     if (id == II_setid[identifierid])
       break;
 
-  if (identifierid >= num_ids)
+  if (identifierid >= num_setids)
     return;
   
   const FunctionProtoType *FTP = dyn_cast<FunctionProtoType>(FD->getType());

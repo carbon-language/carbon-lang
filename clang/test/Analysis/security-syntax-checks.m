@@ -60,3 +60,32 @@ void test_setuid()
   setreuid(2,2); // expected-warning{{The return value from the call to 'setreuid' is not checked.  If an error occurs in 'setreuid', the following code may execute with unexpected privileges}}
   setregid(2,2); // expected-warning{{The return value from the call to 'setregid' is not checked.  If an error occurs in 'setregid', the following code may execute with unexpected privileges}}
 }
+
+// <rdar://problem/6337100> CWE-338: Use of cryptographically weak prng
+int      rand(void);
+double   drand48(void);
+double   erand48(unsigned short[3]);
+long     jrand48(unsigned short[3]);
+void     lcong48(unsigned short[7]);
+long     lrand48(void);
+long     mrand48(void);
+long     nrand48(unsigned short[3]);
+long     random(void);
+int      rand_r(unsigned *);
+
+void test_rand()
+{
+  unsigned short a[7];
+  unsigned b;
+  
+  rand();	// expected-warning{{Function 'rand' is obsolete because it implements a poor random number generator.  Use 'arc4random' instead}}
+  drand48();	// expected-warning{{Function 'drand48' is obsolete because it implements a poor random number generator.  Use 'arc4random' instead}}
+  erand48(a);	// expected-warning{{Function 'erand48' is obsolete because it implements a poor random number generator.  Use 'arc4random' instead}}
+  jrand48(a);	// expected-warning{{Function 'jrand48' is obsolete because it implements a poor random number generator.  Use 'arc4random' instead}}
+  lcong48(a);	// expected-warning{{Function 'lcong48' is obsolete because it implements a poor random number generator.  Use 'arc4random' instead}}
+  lrand48();	// expected-warning{{Function 'lrand48' is obsolete because it implements a poor random number generator.  Use 'arc4random' instead}}
+  mrand48();	// expected-warning{{Function 'mrand48' is obsolete because it implements a poor random number generator.  Use 'arc4random' instead}}
+  nrand48(a);	// expected-warning{{Function 'nrand48' is obsolete because it implements a poor random number generator.  Use 'arc4random' instead}}
+  rand_r(&b);	// expected-warning{{Function 'rand_r' is obsolete because it implements a poor random number generator.  Use 'arc4random' instead}}
+  random();	// expected-warning{{The 'random' function produces a sequence of values that an adversary may be able to predict.  Use 'arc4random' instead}}
+}
