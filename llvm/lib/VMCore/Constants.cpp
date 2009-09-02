@@ -1880,7 +1880,7 @@ void ConstantArray::replaceUsesOfWithOnConstant(Value *From, Value *To,
       pImpl->ArrayConstants.InsertOrGetItem(Lookup, Exists);
     
     if (Exists) {
-      Replacement = I->second;
+      Replacement = cast<Constant>(I->second);
     } else {
       // Okay, the new shape doesn't exist in the system yet.  Instead of
       // creating a new constant array, inserting it, replaceallusesof'ing the
@@ -1967,7 +1967,7 @@ void ConstantStruct::replaceUsesOfWithOnConstant(Value *From, Value *To,
       pImpl->StructConstants.InsertOrGetItem(Lookup, Exists);
     
     if (Exists) {
-      Replacement = I->second;
+      Replacement = cast<Constant>(I->second);
     } else {
       // Okay, the new shape doesn't exist in the system yet.  Instead of
       // creating a new constant struct, inserting it, replaceallusesof'ing the
