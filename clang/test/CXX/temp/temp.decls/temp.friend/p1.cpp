@@ -27,6 +27,9 @@ public:
     value_ += b.value_;
     return *this;
   }
+
+  class Representation {};
+  friend class Representation;
 };
 
 class A {

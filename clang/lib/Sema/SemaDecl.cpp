@@ -4329,13 +4329,13 @@ CreateNewDecl:
   
   // If this has an identifier, add it to the scope stack.
   if (TUK == TUK_Friend) {
+    // We might be replacing an existing declaration in the lookup tables;
+    // if so, borrow its access specifier.
+    if (PrevDecl)
+      New->setAccess(PrevDecl->getAccess());
+
     // Friend tag decls are visible in fairly strange ways.
     if (!CurContext->isDependentContext()) {
-      // We might be replacing an existing declaration in the lookup tables;
-      // if so, borrow its access specifier.
-      if (PrevDecl)
-        New->setAccess(PrevDecl->getAccess());
-
       DeclContext *DC = New->getDeclContext()->getLookupContext();
       DC->makeDeclVisibleInContext(New, /* Recoverable = */ false);
       if (Scope *EnclosingScope = getScopeForDeclContext(S, DC))
