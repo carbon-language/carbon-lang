@@ -2162,11 +2162,13 @@ int main(int argc, char **argv) {
   llvm::sys::PrintStackTraceOnErrorSignal();
   llvm::PrettyStackTraceProgram X(argc, argv);
   llvm::LLVMContext &Context = llvm::getGlobalContext();
-  llvm::cl::ParseCommandLineOptions(argc, argv,
-                              "LLVM 'Clang' Compiler: http://clang.llvm.org\n");
-  
+
+  // Initialize targets first.
   llvm::InitializeAllTargets();
   llvm::InitializeAllAsmPrinters();
+
+  llvm::cl::ParseCommandLineOptions(argc, argv,
+                              "LLVM 'Clang' Compiler: http://clang.llvm.org\n");
   
   if (TimeReport)
     ClangFrontendTimer = new llvm::Timer("Clang front-end time");
