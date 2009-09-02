@@ -20,6 +20,7 @@
 #include "llvm/DerivedTypes.h"
 #include "llvm/Attributes.h"
 #include "llvm/BasicBlock.h"
+#include "llvm/CallingConv.h"
 #include "llvm/LLVMContext.h"
 #include "llvm/ADT/SmallVector.h"
 #include <iterator>
@@ -1042,9 +1043,11 @@ public:
 
   /// getCallingConv/setCallingConv - Get or set the calling convention of this
   /// function call.
-  unsigned getCallingConv() const { return SubclassData >> 1; }
-  void setCallingConv(unsigned CC) {
-    SubclassData = (SubclassData & 1) | (CC << 1);
+  CallingConv::ID getCallingConv() const {
+    return static_cast<CallingConv::ID>(SubclassData >> 1);
+  }
+  void setCallingConv(CallingConv::ID CC) {
+    SubclassData = (SubclassData & 1) | (static_cast<unsigned>(CC) << 1);
   }
 
   /// getAttributes - Return the parameter attributes for this call.
@@ -2382,9 +2385,11 @@ public:
 
   /// getCallingConv/setCallingConv - Get or set the calling convention of this
   /// function call.
-  unsigned getCallingConv() const { return SubclassData; }
-  void setCallingConv(unsigned CC) {
-    SubclassData = CC;
+  CallingConv::ID getCallingConv() const {
+    return static_cast<CallingConv::ID>(SubclassData);
+  }
+  void setCallingConv(CallingConv::ID CC) {
+    SubclassData = static_cast<unsigned>(CC);
   }
 
   /// getAttributes - Return the parameter attributes for this invoke.

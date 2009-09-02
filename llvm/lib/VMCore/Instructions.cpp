@@ -45,10 +45,10 @@ CallSite::CallSite(Instruction *C) {
   I.setPointer(C);
   I.setInt(isa<CallInst>(C));
 }
-unsigned CallSite::getCallingConv() const {
+CallingConv::ID CallSite::getCallingConv() const {
   CALLSITE_DELEGATE_GETTER(getCallingConv());
 }
-void CallSite::setCallingConv(unsigned CC) {
+void CallSite::setCallingConv(CallingConv::ID CC) {
   CALLSITE_DELEGATE_SETTER(setCallingConv(CC));
 }
 const AttrListPtr &CallSite::getAttributes() const {

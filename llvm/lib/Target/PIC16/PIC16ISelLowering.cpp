@@ -1255,7 +1255,7 @@ LowerDirectCallReturn(SDValue RetLabel, SDValue Chain, SDValue InFlag,
 
 SDValue
 PIC16TargetLowering::LowerReturn(SDValue Chain,
-                                 unsigned CallConv, bool isVarArg,
+                                 CallingConv::ID CallConv, bool isVarArg,
                                  const SmallVectorImpl<ISD::OutputArg> &Outs,
                                  DebugLoc dl, SelectionDAG &DAG) {
 
@@ -1347,7 +1347,7 @@ GetDataAddress(DebugLoc dl, SDValue Callee, SDValue &Chain,
 
 SDValue
 PIC16TargetLowering::LowerCall(SDValue Chain, SDValue Callee,
-                               unsigned CallConv, bool isVarArg,
+                               CallingConv::ID CallConv, bool isVarArg,
                                bool isTailCall,
                                const SmallVectorImpl<ISD::OutputArg> &Outs,
                                const SmallVectorImpl<ISD::InputArg> &Ins,
@@ -1603,7 +1603,7 @@ void PIC16TargetLowering::InitReservedFrameCount(const Function *F) {
 
 SDValue
 PIC16TargetLowering::LowerFormalArguments(SDValue Chain,
-                                          unsigned CallConv,
+                                          CallingConv::ID CallConv,
                                           bool isVarArg,
                                       const SmallVectorImpl<ISD::InputArg> &Ins,
                                           DebugLoc dl,

@@ -1116,7 +1116,7 @@ public:
   ///
   virtual SDValue
     LowerFormalArguments(SDValue Chain,
-                         unsigned CallConv, bool isVarArg,
+                         CallingConv::ID CallConv, bool isVarArg,
                          const SmallVectorImpl<ISD::InputArg> &Ins,
                          DebugLoc dl, SelectionDAG &DAG,
                          SmallVectorImpl<SDValue> &InVals) {
@@ -1147,8 +1147,9 @@ public:
   std::pair<SDValue, SDValue>
   LowerCallTo(SDValue Chain, const Type *RetTy, bool RetSExt, bool RetZExt,
               bool isVarArg, bool isInreg, unsigned NumFixedArgs,
-              unsigned CallConv, bool isTailCall, bool isReturnValueUsed,
-              SDValue Callee, ArgListTy &Args, SelectionDAG &DAG, DebugLoc dl);
+              CallingConv::ID CallConv, bool isTailCall,
+              bool isReturnValueUsed, SDValue Callee, ArgListTy &Args,
+              SelectionDAG &DAG, DebugLoc dl);
 
   /// LowerCall - This hook must be implemented to lower calls into the
   /// the specified DAG. The outgoing arguments to the call are described
@@ -1164,7 +1165,7 @@ public:
   ///
   virtual SDValue
     LowerCall(SDValue Chain, SDValue Callee,
-              unsigned CallConv, bool isVarArg, bool isTailCall,
+              CallingConv::ID CallConv, bool isVarArg, bool isTailCall,
               const SmallVectorImpl<ISD::OutputArg> &Outs,
               const SmallVectorImpl<ISD::InputArg> &Ins,
               DebugLoc dl, SelectionDAG &DAG,
@@ -1179,7 +1180,7 @@ public:
   /// value.
   ///
   virtual SDValue
-    LowerReturn(SDValue Chain, unsigned CallConv, bool isVarArg,
+    LowerReturn(SDValue Chain, CallingConv::ID CallConv, bool isVarArg,
                 const SmallVectorImpl<ISD::OutputArg> &Outs,
                 DebugLoc dl, SelectionDAG &DAG) {
     assert(0 && "Not Implemented");
@@ -1283,7 +1284,7 @@ public:
   /// should override this function.
   virtual bool
   IsEligibleForTailCallOptimization(SDValue Callee,
-                                    unsigned CalleeCC,
+                                    CallingConv::ID CalleeCC,
                                     bool isVarArg,
                                     const SmallVectorImpl<ISD::InputArg> &Ins,
                                     SelectionDAG& DAG) const {

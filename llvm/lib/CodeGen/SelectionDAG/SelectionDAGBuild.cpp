@@ -989,7 +989,8 @@ void SelectionDAGLowering::visitRet(ReturnInst &I) {
   }
 
   bool isVarArg = DAG.getMachineFunction().getFunction()->isVarArg();
-  unsigned CallConv = DAG.getMachineFunction().getFunction()->getCallingConv();
+  CallingConv::ID CallConv =
+    DAG.getMachineFunction().getFunction()->getCallingConv();
   Chain = TLI.LowerReturn(Chain, CallConv, isVarArg,
                           Outs, getCurDebugLoc(), DAG);
 
@@ -5613,7 +5614,7 @@ std::pair<SDValue, SDValue>
 TargetLowering::LowerCallTo(SDValue Chain, const Type *RetTy,
                             bool RetSExt, bool RetZExt, bool isVarArg,
                             bool isInreg, unsigned NumFixedArgs,
-                            unsigned CallConv, bool isTailCall,
+                            CallingConv::ID CallConv, bool isTailCall,
                             bool isReturnValueUsed,
                             SDValue Callee,
                             ArgListTy &Args, SelectionDAG &DAG, DebugLoc dl) {

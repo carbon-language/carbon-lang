@@ -26,6 +26,7 @@
 #include "llvm/Attributes.h"
 #include "llvm/ADT/PointerIntPair.h"
 #include "llvm/BasicBlock.h"
+#include "llvm/CallingConv.h"
 #include "llvm/Instruction.h"
 
 namespace llvm {
@@ -61,8 +62,8 @@ public:
 
   /// getCallingConv/setCallingConv - get or set the calling convention of the
   /// call.
-  unsigned getCallingConv() const;
-  void setCallingConv(unsigned CC);
+  CallingConv::ID getCallingConv() const;
+  void setCallingConv(CallingConv::ID CC);
 
   /// getAttributes/setAttributes - get or set the parameter attributes of
   /// the call.

@@ -1063,7 +1063,7 @@ unsigned X86TargetLowering::getFunctionAlignment(const Function *F) const {
 
 SDValue
 X86TargetLowering::LowerReturn(SDValue Chain,
-                               unsigned CallConv, bool isVarArg,
+                               CallingConv::ID CallConv, bool isVarArg,
                                const SmallVectorImpl<ISD::OutputArg> &Outs,
                                DebugLoc dl, SelectionDAG &DAG) {
 
@@ -1155,7 +1155,7 @@ X86TargetLowering::LowerReturn(SDValue Chain,
 ///
 SDValue
 X86TargetLowering::LowerCallResult(SDValue Chain, SDValue InFlag,
-                                   unsigned CallConv, bool isVarArg,
+                                   CallingConv::ID CallConv, bool isVarArg,
                                    const SmallVectorImpl<ISD::InputArg> &Ins,
                                    DebugLoc dl, SelectionDAG &DAG,
                                    SmallVectorImpl<SDValue> &InVals) {
@@ -1255,7 +1255,7 @@ ArgsAreStructReturn(const SmallVectorImpl<ISD::InputArg> &Ins) {
 
 /// IsCalleePop - Determines whether the callee is required to pop its
 /// own arguments. Callee pop is necessary to support tail calls.
-bool X86TargetLowering::IsCalleePop(bool IsVarArg, unsigned CallingConv) {
+bool X86TargetLowering::IsCalleePop(bool IsVarArg, CallingConv::ID CallingConv){
   if (IsVarArg)
     return false;
 
@@ -1273,7 +1273,7 @@ bool X86TargetLowering::IsCalleePop(bool IsVarArg, unsigned CallingConv) {
 
 /// CCAssignFnForNode - Selects the correct CCAssignFn for a the
 /// given CallingConvention value.
-CCAssignFn *X86TargetLowering::CCAssignFnForNode(unsigned CC) const {
+CCAssignFn *X86TargetLowering::CCAssignFnForNode(CallingConv::ID CC) const {
   if (Subtarget->is64Bit()) {
     if (Subtarget->isTargetWin64())
       return CC_X86_Win64_C;
@@ -1292,7 +1292,7 @@ CCAssignFn *X86TargetLowering::CCAssignFnForNode(unsigned CC) const {
 /// NameDecorationForCallConv - Selects the appropriate decoration to
 /// apply to a MachineFunction containing a given calling convention.
 NameDecorationStyle
-X86TargetLowering::NameDecorationForCallConv(unsigned CallConv) {
+X86TargetLowering::NameDecorationForCallConv(CallingConv::ID CallConv) {
   if (CallConv == CallingConv::X86_FastCall)
     return FastCall;
   else if (CallConv == CallingConv::X86_StdCall)
@@ -1316,7 +1316,7 @@ CreateCopyOfByValArgument(SDValue Src, SDValue Dst, SDValue Chain,
 
 SDValue
 X86TargetLowering::LowerMemArgument(SDValue Chain,
-                                    unsigned CallConv,
+                                    CallingConv::ID CallConv,
                                     const SmallVectorImpl<ISD::InputArg> &Ins,
                                     DebugLoc dl, SelectionDAG &DAG,
                                     const CCValAssign &VA,
@@ -1351,7 +1351,7 @@ X86TargetLowering::LowerMemArgument(SDValue Chain,
 
 SDValue
 X86TargetLowering::LowerFormalArguments(SDValue Chain,
-                                        unsigned CallConv,
+                                        CallingConv::ID CallConv,
                                         bool isVarArg,
                                       const SmallVectorImpl<ISD::InputArg> &Ins,
                                         DebugLoc dl,
@@ -1652,7 +1652,8 @@ EmitTailCallStoreRetAddr(SelectionDAG & DAG, MachineFunction &MF,
 
 SDValue
 X86TargetLowering::LowerCall(SDValue Chain, SDValue Callee,
-                             unsigned CallConv, bool isVarArg, bool isTailCall,
+                             CallingConv::ID CallConv, bool isVarArg,
+                             bool isTailCall,
                              const SmallVectorImpl<ISD::OutputArg> &Outs,
                              const SmallVectorImpl<ISD::InputArg> &Ins,
                              DebugLoc dl, SelectionDAG &DAG,
@@ -2097,12 +2098,12 @@ unsigned X86TargetLowering::GetAlignedArgumentStackSize(unsigned StackSize,
 /// optimization should implement this function.
 bool
 X86TargetLowering::IsEligibleForTailCallOptimization(SDValue Callee,
-                                                     unsigned CalleeCC,
+                                                     CallingConv::ID CalleeCC,
                                                      bool isVarArg,
                                       const SmallVectorImpl<ISD::InputArg> &Ins,
                                                      SelectionDAG& DAG) const {
   MachineFunction &MF = DAG.getMachineFunction();
-  unsigned CallerCC = MF.getFunction()->getCallingConv();
+  CallingConv::ID CallerCC = MF.getFunction()->getCallingConv();
   return CalleeCC == CallingConv::Fast && CallerCC == CalleeCC;
 }
 
@@ -6476,7 +6477,7 @@ SDValue X86TargetLowering::LowerTRAMPOLINE(SDValue Op,
   } else {
     const Function *Func =
       cast<Function>(cast<SrcValueSDNode>(Op.getOperand(5))->getValue());
-    unsigned CC = Func->getCallingConv();
+    CallingConv::ID CC = Func->getCallingConv();
     unsigned NestReg;
 
     switch (CC) {

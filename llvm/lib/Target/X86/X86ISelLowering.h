@@ -521,7 +521,7 @@ namespace llvm {
     /// optimization should implement this function.
     virtual bool
     IsEligibleForTailCallOptimization(SDValue Callee,
-                                      unsigned CalleeCC,
+                                      CallingConv::ID CalleeCC,
                                       bool isVarArg,
                                       const SmallVectorImpl<ISD::InputArg> &Ins,
                                       SelectionDAG& DAG) const;
@@ -578,12 +578,12 @@ namespace llvm {
     bool X86ScalarSSEf64;
 
     SDValue LowerCallResult(SDValue Chain, SDValue InFlag,
-                            unsigned CallConv, bool isVarArg,
+                            CallingConv::ID CallConv, bool isVarArg,
                             const SmallVectorImpl<ISD::InputArg> &Ins,
                             DebugLoc dl, SelectionDAG &DAG,
                             SmallVectorImpl<SDValue> &InVals);
     SDValue LowerMemArgument(SDValue Chain,
-                             unsigned CallConv,
+                             CallingConv::ID CallConv,
                              const SmallVectorImpl<ISD::InputArg> &ArgInfo,
                              DebugLoc dl, SelectionDAG &DAG,
                              const CCValAssign &VA,  MachineFrameInfo *MFI,
@@ -594,13 +594,13 @@ namespace llvm {
                              ISD::ArgFlagsTy Flags);
 
     // Call lowering helpers.
-    bool IsCalleePop(bool isVarArg, unsigned CallConv);
+    bool IsCalleePop(bool isVarArg, CallingConv::ID CallConv);
     SDValue EmitTailCallLoadRetAddr(SelectionDAG &DAG, SDValue &OutRetAddr,
                                 SDValue Chain, bool IsTailCall, bool Is64Bit,
                                 int FPDiff, DebugLoc dl);
 
-    CCAssignFn *CCAssignFnForNode(unsigned CallConv) const;
-    NameDecorationStyle NameDecorationForCallConv(unsigned CallConv);
+    CCAssignFn *CCAssignFnForNode(CallingConv::ID CallConv) const;
+    NameDecorationStyle NameDecorationForCallConv(CallingConv::ID CallConv);
     unsigned GetAlignedArgumentStackSize(unsigned StackSize, SelectionDAG &DAG);
 
     std::pair<SDValue,SDValue> FP_TO_INTHelper(SDValue Op, SelectionDAG &DAG,
@@ -659,13 +659,13 @@ namespace llvm {
 
     virtual SDValue
       LowerFormalArguments(SDValue Chain,
-                           unsigned CallConv, bool isVarArg,
+                           CallingConv::ID CallConv, bool isVarArg,
                            const SmallVectorImpl<ISD::InputArg> &Ins,
                            DebugLoc dl, SelectionDAG &DAG,
                            SmallVectorImpl<SDValue> &InVals);
     virtual SDValue
       LowerCall(SDValue Chain, SDValue Callee,
-                unsigned CallConv, bool isVarArg, bool isTailCall,
+                CallingConv::ID CallConv, bool isVarArg, bool isTailCall,
                 const SmallVectorImpl<ISD::OutputArg> &Outs,
                 const SmallVectorImpl<ISD::InputArg> &Ins,
                 DebugLoc dl, SelectionDAG &DAG,
@@ -673,7 +673,7 @@ namespace llvm {
 
     virtual SDValue
       LowerReturn(SDValue Chain,
-                  unsigned CallConv, bool isVarArg,
+                  CallingConv::ID CallConv, bool isVarArg,
                   const SmallVectorImpl<ISD::OutputArg> &Outs,
                   DebugLoc dl, SelectionDAG &DAG);
 

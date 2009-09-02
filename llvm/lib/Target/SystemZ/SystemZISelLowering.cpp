@@ -217,7 +217,7 @@ getRegForInlineAsmConstraint(const std::string &Constraint,
 
 SDValue
 SystemZTargetLowering::LowerFormalArguments(SDValue Chain,
-                                            unsigned CallConv,
+                                            CallingConv::ID CallConv,
                                             bool isVarArg,
                                             const SmallVectorImpl<ISD::InputArg>
                                               &Ins,
@@ -236,7 +236,7 @@ SystemZTargetLowering::LowerFormalArguments(SDValue Chain,
 
 SDValue
 SystemZTargetLowering::LowerCall(SDValue Chain, SDValue Callee,
-                                 unsigned CallConv, bool isVarArg,
+                                 CallingConv::ID CallConv, bool isVarArg,
                                  bool isTailCall,
                                  const SmallVectorImpl<ISD::OutputArg> &Outs,
                                  const SmallVectorImpl<ISD::InputArg> &Ins,
@@ -259,7 +259,7 @@ SystemZTargetLowering::LowerCall(SDValue Chain, SDValue Callee,
 // FIXME: varargs
 SDValue
 SystemZTargetLowering::LowerCCCArguments(SDValue Chain,
-                                         unsigned CallConv,
+                                         CallingConv::ID CallConv,
                                          bool isVarArg,
                                          const SmallVectorImpl<ISD::InputArg>
                                            &Ins,
@@ -349,7 +349,7 @@ SystemZTargetLowering::LowerCCCArguments(SDValue Chain,
 /// TODO: sret.
 SDValue
 SystemZTargetLowering::LowerCCCCallTo(SDValue Chain, SDValue Callee,
-                                      unsigned CallConv, bool isVarArg,
+                                      CallingConv::ID CallConv, bool isVarArg,
                                       bool isTailCall,
                                       const SmallVectorImpl<ISD::OutputArg>
                                         &Outs,
@@ -484,7 +484,7 @@ SystemZTargetLowering::LowerCCCCallTo(SDValue Chain, SDValue Callee,
 ///
 SDValue
 SystemZTargetLowering::LowerCallResult(SDValue Chain, SDValue InFlag,
-                                       unsigned CallConv, bool isVarArg,
+                                       CallingConv::ID CallConv, bool isVarArg,
                                        const SmallVectorImpl<ISD::InputArg>
                                          &Ins,
                                        DebugLoc dl, SelectionDAG &DAG,
@@ -528,7 +528,7 @@ SystemZTargetLowering::LowerCallResult(SDValue Chain, SDValue InFlag,
 
 SDValue
 SystemZTargetLowering::LowerReturn(SDValue Chain,
-                                   unsigned CallConv, bool isVarArg,
+                                   CallingConv::ID CallConv, bool isVarArg,
                                    const SmallVectorImpl<ISD::OutputArg> &Outs,
                                    DebugLoc dl, SelectionDAG &DAG) {
 

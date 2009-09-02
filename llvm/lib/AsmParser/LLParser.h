@@ -126,7 +126,7 @@ namespace llvm {
       bool HasLinkage; return ParseOptionalLinkage(Linkage, HasLinkage);
     }
     bool ParseOptionalVisibility(unsigned &Visibility);
-    bool ParseOptionalCallingConv(unsigned &CC);
+    bool ParseOptionalCallingConv(CallingConv::ID &CC);
     bool ParseOptionalAlignment(unsigned &Alignment);
     bool ParseOptionalCommaAlignment(unsigned &Alignment);
     bool ParseIndexList(SmallVectorImpl<unsigned> &Indices);

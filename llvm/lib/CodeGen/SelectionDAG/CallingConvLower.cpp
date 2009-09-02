@@ -20,7 +20,7 @@
 #include "llvm/Target/TargetMachine.h"
 using namespace llvm;
 
-CCState::CCState(unsigned CC, bool isVarArg, const TargetMachine &tm,
+CCState::CCState(CallingConv::ID CC, bool isVarArg, const TargetMachine &tm,
                  SmallVector<CCValAssign, 16> &locs, LLVMContext &C)
   : CallingConv(CC), IsVarArg(isVarArg), TM(tm),
     TRI(*TM.getRegisterInfo()), Locs(locs), Context(C) {

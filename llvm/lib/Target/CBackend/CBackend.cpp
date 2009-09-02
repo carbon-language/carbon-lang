@@ -2283,6 +2283,8 @@ void CWriter::printFunctionSignature(const Function *F, bool Prototype) {
    case CallingConv::X86_FastCall:
     Out << "__attribute__((fastcall)) ";
     break;
+   default:
+    break;
   }
   
   // Loop over the arguments, printing them...

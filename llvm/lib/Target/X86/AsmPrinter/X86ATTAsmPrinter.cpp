@@ -126,7 +126,7 @@ void X86ATTAsmPrinter::DecorateCygMingName(std::string &Name,
     CygMingStubs.insert(Name);
   
   // We don't want to decorate non-stdcall or non-fastcall functions right now
-  unsigned CC = F->getCallingConv();
+  CallingConv::ID CC = F->getCallingConv();
   if (CC != CallingConv::X86_StdCall && CC != CallingConv::X86_FastCall)
     return;
 
@@ -237,7 +237,7 @@ void X86ATTAsmPrinter::emitFunctionHeader(const MachineFunction &MF) {
 bool X86ATTAsmPrinter::runOnMachineFunction(MachineFunction &MF) {
   const Function *F = MF.getFunction();
   this->MF = &MF;
-  unsigned CC = F->getCallingConv();
+  CallingConv::ID CC = F->getCallingConv();
 
   SetupMachineFunction(MF);
   O << "\n\n";

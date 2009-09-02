@@ -270,7 +270,7 @@ std::string MSILWriter::getLabelName(const Value* V) {
 }
 
 
-std::string MSILWriter::getConvModopt(unsigned CallingConvID) {
+std::string MSILWriter::getConvModopt(CallingConv::ID CallingConvID) {
   switch (CallingConvID) {
   case CallingConv::C:
   case CallingConv::Cold:
@@ -1623,13 +1623,13 @@ const char* MSILWriter::getLibraryName(const Function* F) {
 
 
 const char* MSILWriter::getLibraryName(const GlobalVariable* GV) {
-  return getLibraryForSymbol(Mang->getMangledName(GV), false, 0);
+  return getLibraryForSymbol(Mang->getMangledName(GV), false, CallingConv::C);
 }
 
 
 const char* MSILWriter::getLibraryForSymbol(const StringRef &Name, 
                                             bool isFunction,
-                                            unsigned CallingConv) {
+                                            CallingConv::ID CallingConv) {
   // TODO: Read *.def file with function and libraries definitions.
   return "MSVCRT.DLL";  
 }

@@ -118,7 +118,7 @@ private:
   bool X86VisitIntrinsicCall(IntrinsicInst &I);
   bool X86SelectCall(Instruction *I);
 
-  CCAssignFn *CCAssignFnForCall(unsigned CC, bool isTailCall = false);
+  CCAssignFn *CCAssignFnForCall(CallingConv::ID CC, bool isTailCall = false);
 
   const X86InstrInfo *getInstrInfo() const {
     return getTargetMachine()->getInstrInfo();
@@ -169,7 +169,8 @@ bool X86FastISel::isTypeLegal(const Type *Ty, EVT &VT, bool AllowI1) {
 
 /// CCAssignFnForCall - Selects the correct CCAssignFn for a given calling
 /// convention.
-CCAssignFn *X86FastISel::CCAssignFnForCall(unsigned CC, bool isTaillCall) {
+CCAssignFn *X86FastISel::CCAssignFnForCall(CallingConv::ID CC,
+                                           bool isTaillCall) {
   if (Subtarget->is64Bit()) {
     if (Subtarget->isTargetWin64())
       return CC_X86_Win64_C;
@@ -1223,7 +1224,7 @@ bool X86FastISel::X86SelectCall(Instruction *I) {
 
   // Handle only C and fastcc calling conventions for now.
   CallSite CS(CI);
-  unsigned CC = CS.getCallingConv();
+  CallingConv::ID CC = CS.getCallingConv();
   if (CC != CallingConv::C &&
       CC != CallingConv::Fast &&
       CC != CallingConv::X86_FastCall)

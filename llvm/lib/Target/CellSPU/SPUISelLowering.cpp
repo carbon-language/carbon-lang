@@ -1015,7 +1015,7 @@ LowerConstantFP(SDValue Op, SelectionDAG &DAG) {
 
 SDValue
 SPUTargetLowering::LowerFormalArguments(SDValue Chain,
-                                        unsigned CallConv, bool isVarArg,
+                                        CallingConv::ID CallConv, bool isVarArg,
                                         const SmallVectorImpl<ISD::InputArg>
                                           &Ins,
                                         DebugLoc dl, SelectionDAG &DAG,
@@ -1144,7 +1144,7 @@ static SDNode *isLSAAddress(SDValue Op, SelectionDAG &DAG) {
 
 SDValue
 SPUTargetLowering::LowerCall(SDValue Chain, SDValue Callee,
-                             unsigned CallConv, bool isVarArg,
+                             CallingConv::ID CallConv, bool isVarArg,
                              bool isTailCall,
                              const SmallVectorImpl<ISD::OutputArg> &Outs,
                              const SmallVectorImpl<ISD::InputArg> &Ins,
@@ -1371,7 +1371,7 @@ SPUTargetLowering::LowerCall(SDValue Chain, SDValue Callee,
 
 SDValue
 SPUTargetLowering::LowerReturn(SDValue Chain,
-                               unsigned CallConv, bool isVarArg,
+                               CallingConv::ID CallConv, bool isVarArg,
                                const SmallVectorImpl<ISD::OutputArg> &Outs,
                                DebugLoc dl, SelectionDAG &DAG) {
 

@@ -161,7 +161,7 @@ SDValue BlackfinTargetLowering::LowerJumpTable(SDValue Op, SelectionDAG &DAG) {
 
 SDValue
 BlackfinTargetLowering::LowerFormalArguments(SDValue Chain,
-                                             unsigned CallConv, bool isVarArg,
+                                             CallingConv::ID CallConv, bool isVarArg,
                                             const SmallVectorImpl<ISD::InputArg>
                                                &Ins,
                                              DebugLoc dl, SelectionDAG &DAG,
@@ -218,7 +218,7 @@ BlackfinTargetLowering::LowerFormalArguments(SDValue Chain,
 
 SDValue
 BlackfinTargetLowering::LowerReturn(SDValue Chain,
-                                    unsigned CallConv, bool isVarArg,
+                                    CallingConv::ID CallConv, bool isVarArg,
                                     const SmallVectorImpl<ISD::OutputArg> &Outs,
                                     DebugLoc dl, SelectionDAG &DAG) {
 
@@ -275,7 +275,7 @@ BlackfinTargetLowering::LowerReturn(SDValue Chain,
 
 SDValue
 BlackfinTargetLowering::LowerCall(SDValue Chain, SDValue Callee,
-                                  unsigned CallConv, bool isVarArg,
+                                  CallingConv::ID CallConv, bool isVarArg,
                                   bool isTailCall,
                                   const SmallVectorImpl<ISD::OutputArg> &Outs,
                                   const SmallVectorImpl<ISD::InputArg> &Ins,

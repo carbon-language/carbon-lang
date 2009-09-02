@@ -998,7 +998,7 @@ bool LLParser::ParseOptionalVisibility(unsigned &Res) {
 ///   ::= 'arm_aapcs_vfpcc'
 ///   ::= 'cc' UINT
 ///
-bool LLParser::ParseOptionalCallingConv(unsigned &CC) {
+bool LLParser::ParseOptionalCallingConv(CallingConv::ID &CC) {
   switch (Lex.getKind()) {
   default:                       CC = CallingConv::C; return false;
   case lltok::kw_ccc:            CC = CallingConv::C; break;
@@ -1009,8 +1009,18 @@ bool LLParser::ParseOptionalCallingConv(unsigned &CC) {
   case lltok::kw_arm_apcscc:     CC = CallingConv::ARM_APCS; break;
   case lltok::kw_arm_aapcscc:    CC = CallingConv::ARM_AAPCS; break;
   case lltok::kw_arm_aapcs_vfpcc:CC = CallingConv::ARM_AAPCS_VFP; break;
-  case lltok::kw_cc:             Lex.Lex(); return ParseUInt32(CC);
+  case lltok::kw_cc: {
+      unsigned ArbitraryCC;
+      Lex.Lex();
+      if (ParseUInt32(ArbitraryCC)) {
+        return true;
+      } else
+        CC = static_cast<CallingConv::ID>(ArbitraryCC);
+        return false;
+    }
+    break;
   }
+  
   Lex.Lex();
   return false;
 }
@@ -2357,7 +2367,8 @@ bool LLParser::ParseFunctionHeader(Function *&Fn, bool isDefine) {
   LocTy LinkageLoc = Lex.getLoc();
   unsigned Linkage;
   
-  unsigned Visibility, CC, RetAttrs;
+  unsigned Visibility, RetAttrs;
+  CallingConv::ID CC;
   PATypeHolder RetType(Type::getVoidTy(Context));
   LocTy RetTypeLoc = Lex.getLoc();
   if (ParseOptionalLinkage(Linkage) ||
@@ -2917,7 +2928,8 @@ bool LLParser::ParseSwitch(Instruction *&Inst, PerFunctionState &PFS) {
 ///       OptionalAttrs 'to' TypeAndValue 'unwind' TypeAndValue
 bool LLParser::ParseInvoke(Instruction *&Inst, PerFunctionState &PFS) {
   LocTy CallLoc = Lex.getLoc();
-  unsigned CC, RetAttrs, FnAttrs;
+  unsigned RetAttrs, FnAttrs;
+  CallingConv::ID CC;
   PATypeHolder RetType(Type::getVoidTy(Context));
   LocTy RetTypeLoc;
   ValID CalleeID;
@@ -3265,7 +3277,8 @@ bool LLParser::ParsePHI(Instruction *&Inst, PerFunctionState &PFS) {
 ///       ParameterList OptionalAttrs
 bool LLParser::ParseCall(Instruction *&Inst, PerFunctionState &PFS,
                          bool isTail) {
-  unsigned CC, RetAttrs, FnAttrs;
+  unsigned RetAttrs, FnAttrs;
+  CallingConv::ID CC;
   PATypeHolder RetType(Type::getVoidTy(Context));
   LocTy RetTypeLoc;
   ValID CalleeID;

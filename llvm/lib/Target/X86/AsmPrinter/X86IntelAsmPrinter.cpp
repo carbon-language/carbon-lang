@@ -79,7 +79,7 @@ void X86IntelAsmPrinter::decorateName(std::string &Name,
   if (!F) return;
 
   // We don't want to decorate non-stdcall or non-fastcall functions right now
-  unsigned CC = F->getCallingConv();
+  CallingConv::ID CC = F->getCallingConv();
   if (CC != CallingConv::X86_StdCall && CC != CallingConv::X86_FastCall)
     return;
 
@@ -134,7 +134,7 @@ bool X86IntelAsmPrinter::runOnMachineFunction(MachineFunction &MF) {
 
   // Print out labels for the function.
   const Function *F = MF.getFunction();
-  unsigned CC = F->getCallingConv();
+  CallingConv::ID CC = F->getCallingConv();
   unsigned FnAlign = MF.getAlignment();
 
   // Populate function information map.  Actually, We don't want to populate

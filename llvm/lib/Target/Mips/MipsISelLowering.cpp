@@ -683,7 +683,7 @@ static bool CC_MipsO32(unsigned ValNo, EVT ValVT,
 /// TODO: isVarArg, isTailCall.
 SDValue
 MipsTargetLowering::LowerCall(SDValue Chain, SDValue Callee,
-                              unsigned CallConv, bool isVarArg,
+                              CallingConv::ID CallConv, bool isVarArg,
                               bool isTailCall,
                               const SmallVectorImpl<ISD::OutputArg> &Outs,
                               const SmallVectorImpl<ISD::InputArg> &Ins,
@@ -874,7 +874,7 @@ MipsTargetLowering::LowerCall(SDValue Chain, SDValue Callee,
 /// appropriate copies out of appropriate physical registers.
 SDValue
 MipsTargetLowering::LowerCallResult(SDValue Chain, SDValue InFlag,
-                                    unsigned CallConv, bool isVarArg,
+                                    CallingConv::ID CallConv, bool isVarArg,
                                     const SmallVectorImpl<ISD::InputArg> &Ins,
                                     DebugLoc dl, SelectionDAG &DAG,
                                     SmallVectorImpl<SDValue> &InVals) {
@@ -907,7 +907,7 @@ MipsTargetLowering::LowerCallResult(SDValue Chain, SDValue InFlag,
 /// TODO: isVarArg
 SDValue
 MipsTargetLowering::LowerFormalArguments(SDValue Chain,
-                                         unsigned CallConv, bool isVarArg,
+                                         CallingConv::ID CallConv, bool isVarArg,
                                          const SmallVectorImpl<ISD::InputArg>
                                            &Ins,
                                          DebugLoc dl, SelectionDAG &DAG,
@@ -1056,7 +1056,7 @@ MipsTargetLowering::LowerFormalArguments(SDValue Chain,
 
 SDValue
 MipsTargetLowering::LowerReturn(SDValue Chain,
-                                unsigned CallConv, bool isVarArg,
+                                CallingConv::ID CallConv, bool isVarArg,
                                 const SmallVectorImpl<ISD::OutputArg> &Outs,
                                 DebugLoc dl, SelectionDAG &DAG) {
 

@@ -19,6 +19,7 @@
 #define LLVM_FUNCTION_H
 
 #include "llvm/GlobalValue.h"
+#include "llvm/CallingConv.h"
 #include "llvm/BasicBlock.h"
 #include "llvm/Argument.h"
 #include "llvm/Attributes.h"
@@ -86,7 +87,7 @@ private:
   AttrListPtr AttributeList;              ///< Parameter attributes
 
   // The Calling Convention is stored in Value::SubclassData.
-  /*unsigned CallingConvention;*/
+  /*CallingConv::ID CallingConvention;*/
 
   friend class SymbolTableListTraits<Function, Module>;
 
@@ -150,12 +151,14 @@ public:
   unsigned getIntrinsicID() const;
   bool isIntrinsic() const { return getIntrinsicID() != 0; }
 
-  /// getCallingConv()/setCallingConv(uint) - These method get and set the
+  /// getCallingConv()/setCallingConv(CC) - These method get and set the
   /// calling convention of this function.  The enum values for the known
   /// calling conventions are defined in CallingConv.h.
-  unsigned getCallingConv() const { return SubclassData >> 1; }
-  void setCallingConv(unsigned CC) {
-    SubclassData = (SubclassData & 1) | (CC << 1);
+  CallingConv::ID getCallingConv() const {
+    return static_cast<CallingConv::ID>(SubclassData >> 1);
+  }
+  void setCallingConv(CallingConv::ID CC) {
+    SubclassData = (SubclassData & 1) | (static_cast<unsigned>(CC) << 1);
   }
   
   /// getAttributes - Return the attribute list for this Function.

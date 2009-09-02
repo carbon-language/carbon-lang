@@ -246,7 +246,7 @@ namespace llvm {
     SDValue GetF64FormalArgument(CCValAssign &VA, CCValAssign &NextVA,
                                  SDValue &Root, SelectionDAG &DAG, DebugLoc dl);
 
-    CCAssignFn *CCAssignFnForNode(unsigned CC, bool Return, bool isVarArg) const;
+    CCAssignFn *CCAssignFnForNode(CallingConv::ID CC, bool Return, bool isVarArg) const;
     SDValue LowerMemOpCallTo(SDValue Chain, SDValue StackPtr, SDValue Arg,
                              DebugLoc dl, SelectionDAG &DAG,
                              const CCValAssign &VA,
@@ -273,21 +273,21 @@ namespace llvm {
                                       const Value *DstSV, uint64_t DstSVOff,
                                       const Value *SrcSV, uint64_t SrcSVOff);
     SDValue LowerCallResult(SDValue Chain, SDValue InFlag,
-                            unsigned CallConv, bool isVarArg,
+                            CallingConv::ID CallConv, bool isVarArg,
                             const SmallVectorImpl<ISD::InputArg> &Ins,
                             DebugLoc dl, SelectionDAG &DAG,
                             SmallVectorImpl<SDValue> &InVals);
 
     virtual SDValue
       LowerFormalArguments(SDValue Chain,
-                           unsigned CallConv, bool isVarArg,
+                           CallingConv::ID CallConv, bool isVarArg,
                            const SmallVectorImpl<ISD::InputArg> &Ins,
                            DebugLoc dl, SelectionDAG &DAG,
                            SmallVectorImpl<SDValue> &InVals);
 
     virtual SDValue
       LowerCall(SDValue Chain, SDValue Callee,
-                unsigned CallConv, bool isVarArg,
+                CallingConv::ID CallConv, bool isVarArg,
                 bool isTailCall,
                 const SmallVectorImpl<ISD::OutputArg> &Outs,
                 const SmallVectorImpl<ISD::InputArg> &Ins,
@@ -296,7 +296,7 @@ namespace llvm {
 
     virtual SDValue
       LowerReturn(SDValue Chain,
-                  unsigned CallConv, bool isVarArg,
+                  CallingConv::ID CallConv, bool isVarArg,
                   const SmallVectorImpl<ISD::OutputArg> &Outs,
                   DebugLoc dl, SelectionDAG &DAG);
   };

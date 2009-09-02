@@ -35,7 +35,7 @@ using namespace llvm;
 
 SDValue
 SparcTargetLowering::LowerReturn(SDValue Chain,
-                                 unsigned CallConv, bool isVarArg,
+                                 CallingConv::ID CallConv, bool isVarArg,
                                  const SmallVectorImpl<ISD::OutputArg> &Outs,
                                  DebugLoc dl, SelectionDAG &DAG) {
 
@@ -81,7 +81,7 @@ SparcTargetLowering::LowerReturn(SDValue Chain,
 /// pass FP values in FP registers for fastcc functions.
 SDValue
 SparcTargetLowering::LowerFormalArguments(SDValue Chain,
-                                          unsigned CallConv, bool isVarArg,
+                                          CallingConv::ID CallConv, bool isVarArg,
                                           const SmallVectorImpl<ISD::InputArg>
                                             &Ins,
                                           DebugLoc dl, SelectionDAG &DAG,
@@ -246,7 +246,7 @@ SparcTargetLowering::LowerFormalArguments(SDValue Chain,
 
 SDValue
 SparcTargetLowering::LowerCall(SDValue Chain, SDValue Callee,
-                               unsigned CallConv, bool isVarArg,
+                               CallingConv::ID CallConv, bool isVarArg,
                                bool isTailCall,
                                const SmallVectorImpl<ISD::OutputArg> &Outs,
                                const SmallVectorImpl<ISD::InputArg> &Ins,

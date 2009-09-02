@@ -1417,7 +1417,7 @@ bool BitcodeReader::ParseModule(const std::string &ModuleID) {
       Function *Func = Function::Create(FTy, GlobalValue::ExternalLinkage,
                                         "", TheModule);
 
-      Func->setCallingConv(Record[1]);
+      Func->setCallingConv(static_cast<CallingConv::ID>(Record[1]));
       bool isProto = Record[2];
       Func->setLinkage(GetDecodedLinkage(Record[3]));
       Func->setAttributes(getAttributes(Record[4]));
@@ -1918,7 +1918,8 @@ bool BitcodeReader::ParseFunctionBody(Function *F) {
       
       I = InvokeInst::Create(Callee, NormalBB, UnwindBB,
                              Ops.begin(), Ops.end());
-      cast<InvokeInst>(I)->setCallingConv(CCInfo);
+      cast<InvokeInst>(I)->setCallingConv(
+        static_cast<CallingConv::ID>(CCInfo));
       cast<InvokeInst>(I)->setAttributes(PAL);
       break;
     }
@@ -2056,7 +2057,8 @@ bool BitcodeReader::ParseFunctionBody(Function *F) {
       }
       
       I = CallInst::Create(Callee, Args.begin(), Args.end());
-      cast<CallInst>(I)->setCallingConv(CCInfo>>1);
+      cast<CallInst>(I)->setCallingConv(
+        static_cast<CallingConv::ID>(CCInfo>>1));
       cast<CallInst>(I)->setTailCall(CCInfo & 1);
       cast<CallInst>(I)->setAttributes(PAL);
       break;

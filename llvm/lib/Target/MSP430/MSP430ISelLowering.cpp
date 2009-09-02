@@ -196,7 +196,7 @@ getRegForInlineAsmConstraint(const std::string &Constraint,
 
 SDValue
 MSP430TargetLowering::LowerFormalArguments(SDValue Chain,
-                                           unsigned CallConv,
+                                           CallingConv::ID CallConv,
                                            bool isVarArg,
                                            const SmallVectorImpl<ISD::InputArg>
                                              &Ins,
@@ -215,7 +215,7 @@ MSP430TargetLowering::LowerFormalArguments(SDValue Chain,
 
 SDValue
 MSP430TargetLowering::LowerCall(SDValue Chain, SDValue Callee,
-                                unsigned CallConv, bool isVarArg,
+                                CallingConv::ID CallConv, bool isVarArg,
                                 bool isTailCall,
                                 const SmallVectorImpl<ISD::OutputArg> &Outs,
                                 const SmallVectorImpl<ISD::InputArg> &Ins,
@@ -238,7 +238,7 @@ MSP430TargetLowering::LowerCall(SDValue Chain, SDValue Callee,
 // FIXME: varargs
 SDValue
 MSP430TargetLowering::LowerCCCArguments(SDValue Chain,
-                                        unsigned CallConv,
+                                        CallingConv::ID CallConv,
                                         bool isVarArg,
                                         const SmallVectorImpl<ISD::InputArg>
                                           &Ins,
@@ -318,7 +318,7 @@ MSP430TargetLowering::LowerCCCArguments(SDValue Chain,
 
 SDValue
 MSP430TargetLowering::LowerReturn(SDValue Chain,
-                                  unsigned CallConv, bool isVarArg,
+                                  CallingConv::ID CallConv, bool isVarArg,
                                   const SmallVectorImpl<ISD::OutputArg> &Outs,
                                   DebugLoc dl, SelectionDAG &DAG) {
 
@@ -367,7 +367,7 @@ MSP430TargetLowering::LowerReturn(SDValue Chain,
 /// TODO: sret.
 SDValue
 MSP430TargetLowering::LowerCCCCallTo(SDValue Chain, SDValue Callee,
-                                     unsigned CallConv, bool isVarArg,
+                                     CallingConv::ID CallConv, bool isVarArg,
                                      bool isTailCall,
                                      const SmallVectorImpl<ISD::OutputArg>
                                        &Outs,
@@ -493,7 +493,7 @@ MSP430TargetLowering::LowerCCCCallTo(SDValue Chain, SDValue Callee,
 ///
 SDValue
 MSP430TargetLowering::LowerCallResult(SDValue Chain, SDValue InFlag,
-                                      unsigned CallConv, bool isVarArg,
+                                      CallingConv::ID CallConv, bool isVarArg,
                                       const SmallVectorImpl<ISD::InputArg> &Ins,
                                       DebugLoc dl, SelectionDAG &DAG,
                                       SmallVectorImpl<SDValue> &InVals) {

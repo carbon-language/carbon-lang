@@ -611,7 +611,7 @@ SDValue XCoreTargetLowering::LowerFRAMEADDR(SDValue Op, SelectionDAG &DAG) {
 /// XCore call implementation
 SDValue
 XCoreTargetLowering::LowerCall(SDValue Chain, SDValue Callee,
-                               unsigned CallConv, bool isVarArg,
+                               CallingConv::ID CallConv, bool isVarArg,
                                bool isTailCall,
                                const SmallVectorImpl<ISD::OutputArg> &Outs,
                                const SmallVectorImpl<ISD::InputArg> &Ins,
@@ -636,7 +636,7 @@ XCoreTargetLowering::LowerCall(SDValue Chain, SDValue Callee,
 /// TODO: isTailCall, sret.
 SDValue
 XCoreTargetLowering::LowerCCCCallTo(SDValue Chain, SDValue Callee,
-                                    unsigned CallConv, bool isVarArg,
+                                    CallingConv::ID CallConv, bool isVarArg,
                                     bool isTailCall,
                                     const SmallVectorImpl<ISD::OutputArg> &Outs,
                                     const SmallVectorImpl<ISD::InputArg> &Ins,
@@ -761,7 +761,7 @@ XCoreTargetLowering::LowerCCCCallTo(SDValue Chain, SDValue Callee,
 /// appropriate copies out of appropriate physical registers.
 SDValue
 XCoreTargetLowering::LowerCallResult(SDValue Chain, SDValue InFlag,
-                                     unsigned CallConv, bool isVarArg,
+                                     CallingConv::ID CallConv, bool isVarArg,
                                      const SmallVectorImpl<ISD::InputArg> &Ins,
                                      DebugLoc dl, SelectionDAG &DAG,
                                      SmallVectorImpl<SDValue> &InVals) {
@@ -791,7 +791,7 @@ XCoreTargetLowering::LowerCallResult(SDValue Chain, SDValue InFlag,
 /// XCore formal arguments implementation
 SDValue
 XCoreTargetLowering::LowerFormalArguments(SDValue Chain,
-                                          unsigned CallConv,
+                                          CallingConv::ID CallConv,
                                           bool isVarArg,
                                       const SmallVectorImpl<ISD::InputArg> &Ins,
                                           DebugLoc dl,
@@ -814,7 +814,7 @@ XCoreTargetLowering::LowerFormalArguments(SDValue Chain,
 /// TODO: sret
 SDValue
 XCoreTargetLowering::LowerCCCArguments(SDValue Chain,
-                                       unsigned CallConv,
+                                       CallingConv::ID CallConv,
                                        bool isVarArg,
                                        const SmallVectorImpl<ISD::InputArg>
                                          &Ins,
@@ -928,7 +928,7 @@ XCoreTargetLowering::LowerCCCArguments(SDValue Chain,
 
 SDValue
 XCoreTargetLowering::LowerReturn(SDValue Chain,
-                                 unsigned CallConv, bool isVarArg,
+                                 CallingConv::ID CallConv, bool isVarArg,
                                  const SmallVectorImpl<ISD::OutputArg> &Outs,
                                  DebugLoc dl, SelectionDAG &DAG) {
 
