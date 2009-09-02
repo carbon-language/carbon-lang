@@ -235,13 +235,14 @@ void X86Subtarget::AutoDetectSubtargetFeatures() {
 
   X86::GetCpuIDAndInfo(0x1, &EAX, &EBX, &ECX, &EDX);
   
-  if ((EDX >> 23) & 0x1) X86SSELevel = MMX;
-  if ((EDX >> 25) & 0x1) X86SSELevel = SSE1;
-  if ((EDX >> 26) & 0x1) X86SSELevel = SSE2;
+  if ((EDX >> 15) & 1) HasCMov = true;
+  if ((EDX >> 23) & 1) X86SSELevel = MMX;
+  if ((EDX >> 25) & 1) X86SSELevel = SSE1;
+  if ((EDX >> 26) & 1) X86SSELevel = SSE2;
   if (ECX & 0x1)         X86SSELevel = SSE3;
-  if ((ECX >> 9)  & 0x1) X86SSELevel = SSSE3;
-  if ((ECX >> 19) & 0x1) X86SSELevel = SSE41;
-  if ((ECX >> 20) & 0x1) X86SSELevel = SSE42;
+  if ((ECX >> 9)  & 1) X86SSELevel = SSSE3;
+  if ((ECX >> 19) & 1) X86SSELevel = SSE41;
+  if ((ECX >> 20) & 1) X86SSELevel = SSE42;
 
   bool IsIntel = memcmp(text.c, "GenuineIntel", 12) == 0;
   bool IsAMD   = !IsIntel && memcmp(text.c, "AuthenticAMD", 12) == 0;
@@ -380,6 +381,7 @@ X86Subtarget::X86Subtarget(const std::string &TT, const std::string &FS,
   : PICStyle(PICStyles::None)
   , X86SSELevel(NoMMXSSE)
   , X863DNowLevel(NoThreeDNow)
+  , HasCMov(false)
   , HasX86_64(false)
   , HasSSE4A(false)
   , HasAVX(false)

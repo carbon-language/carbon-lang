@@ -19,12 +19,17 @@ include "llvm/Target/Target.td"
 //===----------------------------------------------------------------------===//
 // X86 Subtarget features.
 //===----------------------------------------------------------------------===//
- 
+
+def FeatureCMOV    : SubtargetFeature<"cmov","HasCMov", "true",
+                                      "Enable conditional move instructions">;
+
 def FeatureMMX     : SubtargetFeature<"mmx","X86SSELevel", "MMX",
                                       "Enable MMX instructions">;
 def FeatureSSE1    : SubtargetFeature<"sse", "X86SSELevel", "SSE1",
                                       "Enable SSE instructions",
-                                      [FeatureMMX]>;
+                                      // SSE codegen depends on cmovs, and all
+                                      // SSE1+ processors support them. 
+                                      [FeatureMMX, FeatureCMOV]>;
 def FeatureSSE2    : SubtargetFeature<"sse2", "X86SSELevel", "SSE2",
                                       "Enable SSE2 instructions",
                                       [FeatureSSE1]>;
@@ -76,8 +81,8 @@ def : Proc<"i586",            []>;
 def : Proc<"pentium",         []>;
 def : Proc<"pentium-mmx",     [FeatureMMX]>;
 def : Proc<"i686",            []>;
-def : Proc<"pentiumpro",      []>;
-def : Proc<"pentium2",        [FeatureMMX]>;
+def : Proc<"pentiumpro",      [FeatureCMOV]>;
+def : Proc<"pentium2",        [FeatureMMX, FeatureCMOV]>;
 def : Proc<"pentium3",        [FeatureSSE1]>;
 def : Proc<"pentium-m",       [FeatureSSE2, FeatureSlowBTMem]>;
 def : Proc<"pentium4",        [FeatureSSE2]>;

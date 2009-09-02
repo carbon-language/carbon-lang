@@ -55,6 +55,10 @@ protected:
   ///
   X863DNowEnum X863DNowLevel;
 
+  /// HasCMov - True if this processor has conditional move instructions
+  /// (generally pentium pro+).
+  bool HasCMov;
+  
   /// HasX86_64 - True if the processor supports X86-64 instructions.
   ///
   bool HasX86_64;
