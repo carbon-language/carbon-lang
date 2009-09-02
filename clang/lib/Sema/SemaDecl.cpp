@@ -4328,7 +4328,15 @@ CreateNewDecl:
     New->startDefinition();
   
   // If this has an identifier, add it to the scope stack.
-  if (Name && TUK != TUK_Friend) {
+  if (TUK == TUK_Friend) {
+    // Friend tag decls are visible in fairly strange ways.
+    if (!CurContext->isDependentContext()) {
+      DeclContext *DC = New->getDeclContext()->getLookupContext();
+      DC->makeDeclVisibleInContext(New, /* Recoverable = */ false);
+      if (Scope *EnclosingScope = getScopeForDeclContext(S, DC))
+        PushOnScopeChains(New, EnclosingScope, /* AddToContext = */ false);
+    }
+  } else if (Name) {
     S = getNonFieldDeclScope(S);
     PushOnScopeChains(New, S);
   } else {

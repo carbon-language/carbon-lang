@@ -385,11 +385,6 @@ void Decl::CheckAccessDeclContext() const {
       !isa<CXXRecordDecl>(getDeclContext()))
     return;
   
-  // FIXME: This check should not be necessary - If a friend decl refers to an
-  // undeclared decl, then that decl shouldn't be in any decl context.
-  if (getFriendObjectKind() == FOK_Undeclared)
-    return;
-  
   assert(Access != AS_none && 
          "Access specifier is AS_none inside a record decl");
 }

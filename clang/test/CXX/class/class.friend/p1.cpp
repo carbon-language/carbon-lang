@@ -63,8 +63,6 @@ class A {
   friend ftypedef typedeffed_function; // okay (because it's not declared as a member)
 };
 
-class UndeclaredSoFar { };
-
 A::UndeclaredSoFar y; // expected-error {{ unknown type name 'UndeclaredSoFar' }}
 
 class PreDeclared;
