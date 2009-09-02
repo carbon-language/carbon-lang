@@ -1058,6 +1058,11 @@ bool llvm::GetConstantStringInfo(Value *V, std::string &Str, uint64_t Offset,
                                  StopAtNul);
   }
   
+  if (MDString *MDStr = dyn_cast<MDString>(V)) {
+    Str = MDStr->getString();
+    return true;
+  }
+
   // The GEP instruction, constant or instruction, must reference a global
   // variable that is a constant and is initialized. The referenced constant
   // initializer is the array that we'll use for optimization.
