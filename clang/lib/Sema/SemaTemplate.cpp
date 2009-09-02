@@ -3033,6 +3033,12 @@ Sema::CheckTypenameType(NestedNameSpecifier *NNS, const IdentifierInfo &II,
     // instantiation, then build a typename type.
     if (!CurrentInstantiation)
       return Context.getTypenameType(NNS, &II);
+    
+    // The nested-name-specifier refers to the current instantiation, so the
+    // "typename" keyword itself is superfluous. In C++03, the program is
+    // actually ill-formed. However, DR 382 (in C++0x CD1) allows such 
+    // extraneous "typename" keywords, and we retroactively apply this DR to
+    // C++03 code.
   }
 
   DeclContext *Ctx = 0;
