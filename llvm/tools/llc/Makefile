@@ -15,7 +15,7 @@ TOOLNAME = llc
 # early so we can set up LINK_COMPONENTS before including Makefile.rules
 include $(LEVEL)/Makefile.config
 
-LINK_COMPONENTS := $(TARGETS_TO_BUILD) bitreader
+LINK_COMPONENTS := $(TARGETS_TO_BUILD) bitreader asmparser
 
 include $(LLVM_SRC_ROOT)/Makefile.rules
 
