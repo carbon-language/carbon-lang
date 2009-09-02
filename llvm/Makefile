@@ -88,10 +88,19 @@ cross-compile-build-tools:
 	$(Verb) if [ ! -f BuildTools/Makefile ]; then \
           $(MKDIR) BuildTools; \
 	  cd BuildTools ; \
-	  $(PROJ_SRC_DIR)/configure ; \
+	  $(PROJ_SRC_DIR)/configure --build=$(BUILD_TRIPLE) \
+		--host=$(BUILD_TRIPLE) --target=$(BUILD_TRIPLE); \
 	  cd .. ; \
 	fi; \
-        ($(MAKE) -C BuildTools BUILD_DIRS_ONLY=1 ) || exit 1;
+        ($(MAKE) -C BuildTools \
+	  BUILD_DIRS_ONLY=1 \
+	  UNIVERSAL= \
+	  ENABLE_OPTIMIZED=$(ENABLE_OPTIMIZED) \
+	  ENABLE_PROFILING=$(ENABLE_PROFILING) \
+	  ENABLE_COVERAGE=$(ENABLE_COVERAGE) \
+	  DISABLE_ASSERTIONS=$(DISABLE_ASSERTIONS) \
+	  ENABLE_EXPENSIVE_CHECKS=$(ENABLE_EXPENSIVE_CHECKS) \
+	) || exit 1;
 endif
 
 # Include the main makefile machinery.
