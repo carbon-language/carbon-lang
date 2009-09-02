@@ -22,6 +22,7 @@
 #include "llvm/Support/ManagedStatic.h"
 #include "llvm/Support/raw_ostream.h"
 #include "llvm/Target/TargetRegistry.h"
+#include "llvm/System/Host.h"
 #include "llvm/System/Path.h"
 #include "llvm/ADT/OwningPtr.h"
 #include "llvm/Config/config.h"
@@ -1135,6 +1136,7 @@ public:
 #endif
     outs() << ".\n"
            << "  Built " << __DATE__ << " (" << __TIME__ << ").\n"
+           << "  Host: " << sys::getHostTriple() << "\n"
            << "\n"
            << "  Registered Targets:\n";
 
