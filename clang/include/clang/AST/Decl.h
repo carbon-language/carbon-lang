@@ -542,7 +542,7 @@ public:
       if (isa<TranslationUnitDecl>(Ctx) || isa<NamespaceDecl>(Ctx) )
         return true;
     }
-    if (isStaticDataMember() && isOutOfLine())
+    if (isStaticDataMember())
       return true;
     
     return false;
