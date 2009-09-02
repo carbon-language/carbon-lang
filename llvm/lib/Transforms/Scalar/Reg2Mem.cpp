@@ -43,80 +43,83 @@ namespace {
       AU.addPreservedID(BreakCriticalEdgesID);
     }
 
-   bool valueEscapes(Instruction* i) {
-      BasicBlock* bb = i->getParent();
-      for (Value::use_iterator ii = i->use_begin(), ie = i->use_end();
-           ii != ie; ++ii)
-        if (cast<Instruction>(*ii)->getParent() != bb ||
-            isa<PHINode>(*ii))
+   bool valueEscapes(const Instruction *Inst) const {
+     const BasicBlock *BB = Inst->getParent();
+      for (Value::use_const_iterator UI = Inst->use_begin(),E = Inst->use_end();
+           UI != E; ++UI)
+        if (cast<Instruction>(*UI)->getParent() != BB ||
+            isa<PHINode>(*UI))
           return true;
       return false;
     }
 
-    virtual bool runOnFunction(Function &F) {
-      if (!F.isDeclaration()) {
-        // Insert all new allocas into entry block.
-        BasicBlock* BBEntry = &F.getEntryBlock();
-        assert(pred_begin(BBEntry) == pred_end(BBEntry) &&
-               "Entry block to function must not have predecessors!");
-
-        // Find first non-alloca instruction and create insertion point. This is
-        // safe if block is well-formed: it always have terminator, otherwise
-        // we'll get and assertion.
-        BasicBlock::iterator I = BBEntry->begin();
-        while (isa<AllocaInst>(I)) ++I;
-
-        CastInst *AllocaInsertionPoint =
-          CastInst::Create(Instruction::BitCast,
-                      Constant::getNullValue(Type::getInt32Ty(F.getContext())),
-                                             Type::getInt32Ty(F.getContext()),
-                           "reg2mem alloca point", I);
-
-        // Find the escaped instructions. But don't create stack slots for
-        // allocas in entry block.
-        std::list<Instruction*> worklist;
-        for (Function::iterator ibb = F.begin(), ibe = F.end();
-             ibb != ibe; ++ibb)
-          for (BasicBlock::iterator iib = ibb->begin(), iie = ibb->end();
-               iib != iie; ++iib) {
-            if (!(isa<AllocaInst>(iib) && iib->getParent() == BBEntry) &&
-                valueEscapes(iib)) {
-              worklist.push_front(&*iib);
-            }
-          }
-
-        // Demote escaped instructions
-        NumRegsDemoted += worklist.size();
-        for (std::list<Instruction*>::iterator ilb = worklist.begin(), 
-               ile = worklist.end(); ilb != ile; ++ilb)
-          DemoteRegToStack(**ilb, false, AllocaInsertionPoint);
-
-        worklist.clear();
-
-        // Find all phi's
-        for (Function::iterator ibb = F.begin(), ibe = F.end();
-             ibb != ibe; ++ibb)
-          for (BasicBlock::iterator iib = ibb->begin(), iie = ibb->end();
-               iib != iie; ++iib)
-            if (isa<PHINode>(iib))
-              worklist.push_front(&*iib);
-
-        // Demote phi nodes
-        NumPhisDemoted += worklist.size();
-        for (std::list<Instruction*>::iterator ilb = worklist.begin(), 
-               ile = worklist.end(); ilb != ile; ++ilb)
-          DemotePHIToStack(cast<PHINode>(*ilb), AllocaInsertionPoint);
-
-        return true;
-      }
-      return false;
-    }
+    virtual bool runOnFunction(Function &F);
   };
 }
   
 char RegToMem::ID = 0;
 static RegisterPass<RegToMem>
 X("reg2mem", "Demote all values to stack slots");
+
+
+bool RegToMem::runOnFunction(Function &F) {
+  if (F.isDeclaration()) 
+    return false;
+  
+  // Insert all new allocas into entry block.
+  BasicBlock *BBEntry = &F.getEntryBlock();
+  assert(pred_begin(BBEntry) == pred_end(BBEntry) &&
+         "Entry block to function must not have predecessors!");
+  
+  // Find first non-alloca instruction and create insertion point. This is
+  // safe if block is well-formed: it always have terminator, otherwise
+  // we'll get and assertion.
+  BasicBlock::iterator I = BBEntry->begin();
+  while (isa<AllocaInst>(I)) ++I;
+  
+  CastInst *AllocaInsertionPoint =
+    new BitCastInst(Constant::getNullValue(Type::getInt32Ty(F.getContext())),
+                    Type::getInt32Ty(F.getContext()),
+                    "reg2mem alloca point", I);
+  
+  // Find the escaped instructions. But don't create stack slots for
+  // allocas in entry block.
+  std::list<Instruction*> WorkList;
+  for (Function::iterator ibb = F.begin(), ibe = F.end();
+       ibb != ibe; ++ibb)
+    for (BasicBlock::iterator iib = ibb->begin(), iie = ibb->end();
+         iib != iie; ++iib) {
+      if (!(isa<AllocaInst>(iib) && iib->getParent() == BBEntry) &&
+          valueEscapes(iib)) {
+        WorkList.push_front(&*iib);
+      }
+    }
+  
+  // Demote escaped instructions
+  NumRegsDemoted += WorkList.size();
+  for (std::list<Instruction*>::iterator ilb = WorkList.begin(), 
+       ile = WorkList.end(); ilb != ile; ++ilb)
+    DemoteRegToStack(**ilb, false, AllocaInsertionPoint);
+  
+  WorkList.clear();
+  
+  // Find all phi's
+  for (Function::iterator ibb = F.begin(), ibe = F.end();
+       ibb != ibe; ++ibb)
+    for (BasicBlock::iterator iib = ibb->begin(), iie = ibb->end();
+         iib != iie; ++iib)
+      if (isa<PHINode>(iib))
+        WorkList.push_front(&*iib);
+  
+  // Demote phi nodes
+  NumPhisDemoted += WorkList.size();
+  for (std::list<Instruction*>::iterator ilb = WorkList.begin(), 
+       ile = WorkList.end(); ilb != ile; ++ilb)
+    DemotePHIToStack(cast<PHINode>(*ilb), AllocaInsertionPoint);
+  
+  return true;
+}
+
 
 // createDemoteRegisterToMemory - Provide an entry point to create this pass.
 //
