@@ -884,7 +884,8 @@ bool Parser::TryAnnotateTypeOrScopeToken(bool EnteringContext) {
     //            simple-template-id
     SourceLocation TypenameLoc = ConsumeToken();
     CXXScopeSpec SS;
-    bool HadNestedNameSpecifier = ParseOptionalCXXScopeSpecifier(SS, false);
+    bool HadNestedNameSpecifier 
+      = ParseOptionalCXXScopeSpecifier(SS, /*ObjectType=*/0, false);
     if (!HadNestedNameSpecifier) {
       Diag(Tok.getLocation(), diag::err_expected_qualified_after_typename);
       return false;
@@ -928,7 +929,7 @@ bool Parser::TryAnnotateTypeOrScopeToken(bool EnteringContext) {
 
   CXXScopeSpec SS;
   if (getLang().CPlusPlus)
-    ParseOptionalCXXScopeSpecifier(SS, EnteringContext);
+    ParseOptionalCXXScopeSpecifier(SS, /*ObjectType=*/0, EnteringContext);
 
   if (Tok.is(tok::identifier)) {
     // Determine whether the identifier is a type name.
@@ -959,8 +960,10 @@ bool Parser::TryAnnotateTypeOrScopeToken(bool EnteringContext) {
     if (NextToken().is(tok::less)) {
       TemplateTy Template;
       if (TemplateNameKind TNK 
-            = Actions.isTemplateName(*Tok.getIdentifierInfo(),
-                                     CurScope, &SS, EnteringContext, Template))
+            = Actions.isTemplateName(CurScope, *Tok.getIdentifierInfo(), 
+                                     Tok.getLocation(), &SS, 
+                                     /*ObjectType=*/0, EnteringContext, 
+                                     Template))
         if (AnnotateTemplateIdToken(Template, TNK, &SS)) {
           // If an unrecoverable error occurred, we need to return true here,
           // because the token stream is in a damaged state.  We may not return
@@ -1022,7 +1025,7 @@ bool Parser::TryAnnotateCXXScopeToken(bool EnteringContext) {
          "Cannot be a type or scope token!");
 
   CXXScopeSpec SS;
-  if (!ParseOptionalCXXScopeSpecifier(SS, EnteringContext))
+  if (!ParseOptionalCXXScopeSpecifier(SS, /*ObjectType=*/0, EnteringContext))
     return Tok.is(tok::annot_template_id);
 
   // Push the current token back into the token stream (or revert it if it is

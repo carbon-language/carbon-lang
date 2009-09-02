@@ -1754,6 +1754,48 @@ Expr *Sema::MaybeCreateCXXExprWithTemporaries(Expr *SubExpr,
   return E;
 }
 
+Sema::OwningExprResult 
+Sema::ActOnStartCXXMemberReference(Scope *S, ExprArg Base, SourceLocation OpLoc,
+                                   tok::TokenKind OpKind, TypeTy *&ObjectType) {
+  // Since this might be a postfix expression, get rid of ParenListExprs.
+  Base = MaybeConvertParenListExprToParenExpr(S, move(Base));
+  
+  Expr *BaseExpr = (Expr*)Base.get();
+  assert(BaseExpr && "no record expansion");
+  
+  QualType BaseType = BaseExpr->getType();
+  if (BaseType->isDependentType()) {
+    // FIXME: member of the current instantiation
+    ObjectType = BaseType.getAsOpaquePtr();
+    return move(Base);
+  }
+  
+  // C++ [over.match.oper]p8:
+  //   [...] When operator->returns, the operator-> is applied  to the value 
+  //   returned, with the original second operand.
+  if (OpKind == tok::arrow) {
+    while (BaseType->isRecordType()) {
+      Base = BuildOverloadedArrowExpr(S, move(Base), BaseExpr->getExprLoc());
+      BaseExpr = (Expr*)Base.get();
+      if (BaseExpr == NULL)
+        return ExprError();
+      BaseType = BaseExpr->getType();
+    }
+  }
+  
+  if (BaseType->isPointerType())
+    BaseType = BaseType->getPointeeType();
+  
+  // We could end up with various non-record types here, such as extended 
+  // vector types or Objective-C interfaces. Just return early and let
+  // ActOnMemberReferenceExpr do the work.
+  if (!BaseType->isRecordType())
+    return move(Base);
+    
+  ObjectType = BaseType.getAsOpaquePtr();
+  return move(Base);  
+}
+
 Sema::OwningExprResult
 Sema::ActOnDestructorReferenceExpr(Scope *S, ExprArg Base,
                                    SourceLocation OpLoc,

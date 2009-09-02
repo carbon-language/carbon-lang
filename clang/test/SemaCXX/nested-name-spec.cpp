@@ -13,7 +13,7 @@ namespace A {
 }
 
 A:: ; // expected-error {{expected unqualified-id}}
-::A::ax::undef ex3; // expected-error {{expected a class or namespace}} expected-error {{unknown type name 'undef'}}
+::A::ax::undef ex3; // expected-error {{no member named}} expected-error {{unknown type name 'undef'}}
 A::undef1::undef2 ex4; // expected-error {{no member named 'undef1'}} expected-error {{unknown type name 'undef2'}}
 
 int A::C::Ag1() { return 0; }

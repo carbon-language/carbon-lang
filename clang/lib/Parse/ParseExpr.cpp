@@ -923,14 +923,14 @@ Parser::ParsePostfixExpressionSuffix(OwningExprResult LHS) {
       tok::TokenKind OpKind = Tok.getKind();
       SourceLocation OpLoc = ConsumeToken();  // Eat the "." or "->" token.
 
-      CXXScopeSpec MemberSS;
       CXXScopeSpec SS;
+      Action::TypeTy *ObjectType = 0;
       if (getLang().CPlusPlus && !LHS.isInvalid()) {
-        LHS = Actions.ActOnCXXEnterMemberScope(CurScope, MemberSS, move(LHS),
-                                               OpKind);
+        LHS = Actions.ActOnStartCXXMemberReference(CurScope, move(LHS),
+                                                   OpLoc, OpKind, ObjectType);
         if (LHS.isInvalid())
           break;
-        ParseOptionalCXXScopeSpecifier(SS);
+        ParseOptionalCXXScopeSpecifier(SS, ObjectType, false);
       }
 
       if (Tok.is(tok::identifier)) {
@@ -947,8 +947,6 @@ Parser::ParsePostfixExpressionSuffix(OwningExprResult LHS) {
         ConsumeToken();
         
         if (!Tok.is(tok::identifier)) {
-          if (getLang().CPlusPlus)
-            Actions.ActOnCXXExitMemberScope(CurScope, MemberSS);
           Diag(Tok, diag::err_expected_ident);
           return ExprError();
         }
@@ -980,8 +978,6 @@ Parser::ParsePostfixExpressionSuffix(OwningExprResult LHS) {
                                                            Tok.getLocation(),
                                                                ConvType, &SS);
         } else {
-          if (getLang().CPlusPlus)
-            Actions.ActOnCXXExitMemberScope(CurScope, MemberSS);
           // Don't emit a diagnostic; ParseConversionFunctionId does it for us
           return ExprError();
         }
@@ -1007,14 +1003,9 @@ Parser::ParsePostfixExpressionSuffix(OwningExprResult LHS) {
         }
         ConsumeToken();
       } else {
-        if (getLang().CPlusPlus)
-          Actions.ActOnCXXExitMemberScope(CurScope, MemberSS);
         Diag(Tok, diag::err_expected_ident);
         return ExprError();
       }
-
-      if (getLang().CPlusPlus)
-        Actions.ActOnCXXExitMemberScope(CurScope, MemberSS);
       break;
     }
     case tok::plusplus:    // postfix-expression: postfix-expression '++'

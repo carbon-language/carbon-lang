@@ -16,10 +16,11 @@
 #include "clang/Parse/DeclSpec.h"
 using namespace clang;
 
-/// ParseOptionalCXXScopeSpecifier - Parse global scope or
-/// nested-name-specifier if present.  Returns true if a nested-name-specifier
-/// was parsed from the token stream.  Note that this routine will not parse
-/// ::new or ::delete, it will just leave them in the token stream.
+/// \brief Parse global scope or nested-name-specifier if present. 
+///
+/// Parses a C++ global scope specifier ('::') or nested-name-specifier (which
+/// may be preceded by '::'). Note that this routine will not parse ::new or 
+/// ::delete; it will just leave them in the token stream.
 ///
 ///       '::'[opt] nested-name-specifier
 ///       '::'
@@ -28,9 +29,22 @@ using namespace clang;
 ///         type-name '::'
 ///         namespace-name '::'
 ///         nested-name-specifier identifier '::'
-///         nested-name-specifier 'template'[opt] simple-template-id '::' [TODO]
+///         nested-name-specifier 'template'[opt] simple-template-id '::'
 ///
+///
+/// \param SS the scope specifier that will be set to the parsed 
+/// nested-name-specifier (or empty)
+///
+/// \param ObjectType if this nested-name-specifier is being parsed following 
+/// the "." or "->" of a member access expression, this parameter provides the
+/// type of the object whose members are being accessed.
+///
+/// \param EnteringContext whether we will be entering into the context of
+/// the nested-name-specifier after parsing it.
+///
+/// \returns true if a scope specifier was parsed.
 bool Parser::ParseOptionalCXXScopeSpecifier(CXXScopeSpec &SS,
+                                            Action::TypeTy *ObjectType,
                                             bool EnteringContext) {
   assert(getLang().CPlusPlus &&
          "Call sites of this function should be guarded by checking for C++");
@@ -59,16 +73,28 @@ bool Parser::ParseOptionalCXXScopeSpecifier(CXXScopeSpec &SS,
   }
 
   while (true) {
+    if (HasScopeSpecifier) {
+      // C++ [basic.lookup.classref]p5:
+      //   If the qualified-id has the form
+      //       ::class-name-or-namespace-name::...
+      //   the class-name-or-namespace-name is looked up in global scope as a
+      //   class-name or namespace-name.
+      //
+      // To implement this, we clear out the object type as soon as we've
+      // seen a leading '::' or part of a nested-name-specifier.
+      ObjectType = 0;
+    }
+    
     // nested-name-specifier:
     //   nested-name-specifier 'template'[opt] simple-template-id '::'
 
     // Parse the optional 'template' keyword, then make sure we have
     // 'identifier <' after it.
     if (Tok.is(tok::kw_template)) {
-      // If we don't have a scope specifier, this isn't a
+      // If we don't have a scope specifier or an object type, this isn't a
       // nested-name-specifier, since they aren't allowed to start with
       // 'template'.
-      if (!HasScopeSpecifier)
+      if (!HasScopeSpecifier && !ObjectType)
         break;
 
       SourceLocation TemplateKWLoc = ConsumeToken();
@@ -91,7 +117,8 @@ bool Parser::ParseOptionalCXXScopeSpecifier(CXXScopeSpec &SS,
       TemplateTy Template 
         = Actions.ActOnDependentTemplateName(TemplateKWLoc,
                                              *Tok.getIdentifierInfo(),
-                                             Tok.getLocation(), SS);
+                                             Tok.getLocation(), SS,
+                                             ObjectType);
       if (!Template)
         break;
       if (AnnotateTemplateIdToken(Template, TNK_Dependent_template_name,
@@ -173,7 +200,7 @@ bool Parser::ParseOptionalCXXScopeSpecifier(CXXScopeSpec &SS,
       
       SS.setScopeRep(
         Actions.ActOnCXXNestedNameSpecifier(CurScope, SS, IdLoc, CCLoc, II,
-                                            EnteringContext));
+                                            ObjectType, EnteringContext));
       SS.setEndLoc(CCLoc);
       continue;
     }
@@ -182,7 +209,10 @@ bool Parser::ParseOptionalCXXScopeSpecifier(CXXScopeSpec &SS,
     //   type-name '<'
     if (Next.is(tok::less)) {
       TemplateTy Template;
-      if (TemplateNameKind TNK = Actions.isTemplateName(II, CurScope, &SS,
+      if (TemplateNameKind TNK = Actions.isTemplateName(CurScope, II,
+                                                        Tok.getLocation(),
+                                                        &SS,
+                                                        ObjectType,
                                                         EnteringContext,
                                                         Template)) {
         // We have found a template name, so annotate this this token
@@ -267,7 +297,7 @@ Parser::OwningExprResult Parser::ParseCXXIdExpression(bool isAddressOfOperand) {
   //   '::' unqualified-id
   //
   CXXScopeSpec SS;
-  ParseOptionalCXXScopeSpecifier(SS);
+  ParseOptionalCXXScopeSpecifier(SS, /*ObjectType=*/0, false);
 
   // unqualified-id:
   //   identifier

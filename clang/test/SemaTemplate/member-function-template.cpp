@@ -48,3 +48,4 @@ void test_X_f0_explicit(X x, int i, long l) {
 
 // PR4608
 class A { template <class x> x a(x z) { return z+y; } int y; };
+

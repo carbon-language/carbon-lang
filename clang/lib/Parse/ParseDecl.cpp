@@ -743,7 +743,7 @@ void Parser::ParseDeclarationSpecifiers(DeclSpec &DS,
             ->Kind == TNK_Type_template) {
         // We have a qualified template-id, e.g., N::A<int>
         CXXScopeSpec SS;
-        ParseOptionalCXXScopeSpecifier(SS, true);
+        ParseOptionalCXXScopeSpecifier(SS, /*ObjectType=*/0, true);
         assert(Tok.is(tok::annot_template_id) && 
                "ParseOptionalCXXScopeSpecifier not working");
         AnnotateTemplateIdTokenAsType(&SS);
@@ -1596,7 +1596,7 @@ void Parser::ParseEnumSpecifier(SourceLocation StartLoc, DeclSpec &DS,
     Attr = ParseAttributes();
 
   CXXScopeSpec SS;
-  if (getLang().CPlusPlus && ParseOptionalCXXScopeSpecifier(SS)) {
+  if (getLang().CPlusPlus && ParseOptionalCXXScopeSpecifier(SS, 0, false)) {
     if (Tok.isNot(tok::identifier)) {
       Diag(Tok, diag::err_expected_ident);
       if (Tok.isNot(tok::l_brace)) {
@@ -2034,7 +2034,7 @@ void Parser::ParseDeclaratorInternal(Declarator &D,
       (Tok.is(tok::coloncolon) || Tok.is(tok::identifier) ||
        Tok.is(tok::annot_cxxscope))) {
     CXXScopeSpec SS;
-    if (ParseOptionalCXXScopeSpecifier(SS, true)) {
+    if (ParseOptionalCXXScopeSpecifier(SS, /*ObjectType=*/0, true)) {
       if(Tok.isNot(tok::star)) {
         // The scope spec really belongs to the direct-declarator.
         D.getCXXScopeSpec() = SS;
@@ -2191,7 +2191,8 @@ void Parser::ParseDirectDeclarator(Declarator &D) {
     if (D.mayHaveIdentifier()) {
       // ParseDeclaratorInternal might already have parsed the scope.
       bool afterCXXScope = D.getCXXScopeSpec().isSet() ||
-        ParseOptionalCXXScopeSpecifier(D.getCXXScopeSpec(), true);
+        ParseOptionalCXXScopeSpecifier(D.getCXXScopeSpec(), /*ObjectType=*/0, 
+                                       true);
       if (afterCXXScope) {
         // Change the declaration context for name lookup, until this function
         // is exited (and the declarator has been parsed).

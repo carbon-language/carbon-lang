@@ -21,122 +21,215 @@
 
 using namespace clang;
 
-/// isTemplateName - Determines whether the identifier II is a
-/// template name in the current scope, and returns the template
-/// declaration if II names a template. An optional CXXScope can be
-/// passed to indicate the C++ scope in which the identifier will be
-/// found. 
-TemplateNameKind Sema::isTemplateName(const IdentifierInfo &II, Scope *S,
+/// \brief Determine whether the declaration found is acceptable as the name
+/// of a template and, if so, return that template declaration. Otherwise,
+/// returns NULL.
+static NamedDecl *isAcceptableTemplateName(ASTContext &Context, NamedDecl *D) {
+  if (!D)
+    return 0;
+  
+  if (isa<TemplateDecl>(D))
+    return D;
+  
+  if (CXXRecordDecl *Record = dyn_cast<CXXRecordDecl>(D)) {
+    // C++ [temp.local]p1:
+    //   Like normal (non-template) classes, class templates have an
+    //   injected-class-name (Clause 9). The injected-class-name
+    //   can be used with or without a template-argument-list. When
+    //   it is used without a template-argument-list, it is
+    //   equivalent to the injected-class-name followed by the
+    //   template-parameters of the class template enclosed in
+    //   <>. When it is used with a template-argument-list, it
+    //   refers to the specified class template specialization,
+    //   which could be the current specialization or another
+    //   specialization.
+    if (Record->isInjectedClassName()) {
+      Record = cast<CXXRecordDecl>(Record->getCanonicalDecl());
+      if (Record->getDescribedClassTemplate())
+        return Record->getDescribedClassTemplate();
+
+      if (ClassTemplateSpecializationDecl *Spec
+            = dyn_cast<ClassTemplateSpecializationDecl>(Record))
+        return Spec->getSpecializedTemplate();
+    }
+    
+    return 0;
+  }
+  
+  OverloadedFunctionDecl *Ovl = dyn_cast<OverloadedFunctionDecl>(D);
+  if (!Ovl)
+    return 0;
+  
+  for (OverloadedFunctionDecl::function_iterator F = Ovl->function_begin(),
+                                              FEnd = Ovl->function_end();
+       F != FEnd; ++F) {
+    if (FunctionTemplateDecl *FuncTmpl = dyn_cast<FunctionTemplateDecl>(*F)) {
+      // We've found a function template. Determine whether there are
+      // any other function templates we need to bundle together in an
+      // OverloadedFunctionDecl
+      for (++F; F != FEnd; ++F) {
+        if (isa<FunctionTemplateDecl>(*F))
+          break;
+      }
+      
+      if (F != FEnd) {
+        // Build an overloaded function decl containing only the
+        // function templates in Ovl.
+        OverloadedFunctionDecl *OvlTemplate 
+          = OverloadedFunctionDecl::Create(Context,
+                                           Ovl->getDeclContext(),
+                                           Ovl->getDeclName());
+        OvlTemplate->addOverload(FuncTmpl);
+        OvlTemplate->addOverload(*F);
+        for (++F; F != FEnd; ++F) {
+          if (isa<FunctionTemplateDecl>(*F))
+            OvlTemplate->addOverload(*F);
+        }
+        
+        return OvlTemplate;
+      }
+
+      return FuncTmpl;
+    }
+  }
+  
+  return 0;
+}
+
+TemplateNameKind Sema::isTemplateName(Scope *S,
+                                      const IdentifierInfo &II, 
+                                      SourceLocation IdLoc,
                                       const CXXScopeSpec *SS,
+                                      TypeTy *ObjectTypePtr,
                                       bool EnteringContext,
-                                      TemplateTy &TemplateResult) {                                      
-  LookupResult Found = LookupParsedName(S, SS, &II, LookupOrdinaryName, 
-                                        false, false, SourceLocation(),
-                                        EnteringContext);
+                                      TemplateTy &TemplateResult) {
+  // Determine where to perform name lookup
+  DeclContext *LookupCtx = 0;
+  bool isDependent = false;
+  if (ObjectTypePtr) {
+    // This nested-name-specifier occurs in a member access expression, e.g.,
+    // x->B::f, and we are looking into the type of the object.
+    assert((!SS || !SS->isSet()) && 
+           "ObjectType and scope specifier cannot coexist");
+    QualType ObjectType = QualType::getFromOpaquePtr(ObjectTypePtr);
+    LookupCtx = computeDeclContext(ObjectType);
+    isDependent = ObjectType->isDependentType();
+  } else if (SS && SS->isSet()) {
+    // This nested-name-specifier occurs after another nested-name-specifier,
+    // so long into the context associated with the prior nested-name-specifier.
+
+    LookupCtx = computeDeclContext(*SS, EnteringContext);
+    isDependent = isDependentScopeSpecifier(*SS);
+  }
+  
+  LookupResult Found;
+  bool ObjectTypeSearchedInScope = false;
+  if (LookupCtx) {
+    // Perform "qualified" name lookup into the declaration context we
+    // computed, which is either the type of the base of a member access
+    // expression or the declaration context associated with a prior 
+    // nested-name-specifier.
+
+    // The declaration context must be complete.
+    if (!LookupCtx->isDependentContext() && RequireCompleteDeclContext(*SS))
+      return TNK_Non_template;
+    
+    Found = LookupQualifiedName(LookupCtx, &II, LookupOrdinaryName);
+    
+    if (ObjectTypePtr && Found.getKind() == LookupResult::NotFound) {
+      // C++ [basic.lookup.classref]p1:
+      //   In a class member access expression (5.2.5), if the . or -> token is
+      //   immediately followed by an identifier followed by a <, the 
+      //   identifier must be looked up to determine whether the < is the 
+      //   beginning of a template argument list (14.2) or a less-than operator.
+      //   The identifier is first looked up in the class of the object 
+      //   expression. If the identifier is not found, it is then looked up in 
+      //   the context of the entire postfix-expression and shall name a class
+      //   or function template.
+      //
+      // FIXME: When we're instantiating a template, do we actually have to
+      // look in the scope of the template? Seems fishy...
+      Found = LookupName(S, &II, LookupOrdinaryName);
+      ObjectTypeSearchedInScope = true;
+    }
+  } else if (isDependent) {
+    // We cannot look into a dependent object type or 
+    return TNK_Non_template;
+  } else {
+    // Perform unqualified name lookup in the current scope.
+    Found = LookupName(S, &II, LookupOrdinaryName);
+  }
   
   // FIXME: Cope with ambiguous name-lookup results.
   assert(!Found.isAmbiguous() && 
          "Cannot handle template name-lookup ambiguities");
-  
-  NamedDecl *IIDecl = Found;
-  
-  TemplateNameKind TNK = TNK_Non_template;
-  TemplateDecl *Template = 0;
 
-  if (IIDecl) {
-    if ((Template = dyn_cast<TemplateDecl>(IIDecl))) {
-      if (isa<FunctionTemplateDecl>(IIDecl))
-        TNK = TNK_Function_template;
-      else if (isa<ClassTemplateDecl>(IIDecl) || 
-               isa<TemplateTemplateParmDecl>(IIDecl))
-        TNK = TNK_Type_template;
-      else
-        assert(false && "Unknown template declaration kind");
-    } else if (CXXRecordDecl *Record = dyn_cast<CXXRecordDecl>(IIDecl)) {
-      // C++ [temp.local]p1:
-      //   Like normal (non-template) classes, class templates have an
-      //   injected-class-name (Clause 9). The injected-class-name
-      //   can be used with or without a template-argument-list. When
-      //   it is used without a template-argument-list, it is
-      //   equivalent to the injected-class-name followed by the
-      //   template-parameters of the class template enclosed in
-      //   <>. When it is used with a template-argument-list, it
-      //   refers to the specified class template specialization,
-      //   which could be the current specialization or another
-      //   specialization.
-      if (Record->isInjectedClassName()) {
-        Record = cast<CXXRecordDecl>(Record->getCanonicalDecl());
-        if ((Template = Record->getDescribedClassTemplate()))
-          TNK = TNK_Type_template;
-        else if (ClassTemplateSpecializationDecl *Spec
-                   = dyn_cast<ClassTemplateSpecializationDecl>(Record)) {
-          Template = Spec->getSpecializedTemplate();
-          TNK = TNK_Type_template;
-        }
+  NamedDecl *Template = isAcceptableTemplateName(Context, Found);
+  if (!Template)
+    return TNK_Non_template;
+
+  if (ObjectTypePtr && !ObjectTypeSearchedInScope) {
+    // C++ [basic.lookup.classref]p1:
+    //   [...] If the lookup in the class of the object expression finds a 
+    //   template, the name is also looked up in the context of the entire
+    //   postfix-expression and [...]
+    //
+    LookupResult FoundOuter = LookupName(S, &II, LookupOrdinaryName);
+    // FIXME: Handle ambiguities in this lookup better
+    NamedDecl *OuterTemplate = isAcceptableTemplateName(Context, FoundOuter);
+    
+    if (!OuterTemplate) {
+      //   - if the name is not found, the name found in the class of the 
+      //     object expression is used, otherwise
+    } else if (!isa<ClassTemplateDecl>(OuterTemplate)) {
+      //   - if the name is found in the context of the entire 
+      //     postfix-expression and does not name a class template, the name 
+      //     found in the class of the object expression is used, otherwise
+    } else {
+      //   - if the name found is a class template, it must refer to the same
+      //     entity as the one found in the class of the object expression, 
+      //     otherwise the program is ill-formed.
+      if (OuterTemplate->getCanonicalDecl() != Template->getCanonicalDecl()) {
+        Diag(IdLoc, diag::err_nested_name_member_ref_lookup_ambiguous)
+          << &II;
+        Diag(Template->getLocation(), diag::note_ambig_member_ref_object_type)
+          << QualType::getFromOpaquePtr(ObjectTypePtr);
+        Diag(OuterTemplate->getLocation(), diag::note_ambig_member_ref_scope);
+        
+        // Recover by taking the template that we found in the object 
+        // expression's type.
       }
-    } else if (OverloadedFunctionDecl *Ovl 
-                 = dyn_cast<OverloadedFunctionDecl>(IIDecl)) {
-      for (OverloadedFunctionDecl::function_iterator F = Ovl->function_begin(),
-                                                  FEnd = Ovl->function_end();
-           F != FEnd; ++F) {
-        if (FunctionTemplateDecl *FuncTmpl 
-              = dyn_cast<FunctionTemplateDecl>(*F)) {
-          // We've found a function template. Determine whether there are
-          // any other function templates we need to bundle together in an
-          // OverloadedFunctionDecl
-          for (++F; F != FEnd; ++F) {
-            if (isa<FunctionTemplateDecl>(*F))
-              break;
-          }
-          
-          if (F != FEnd) {
-            // Build an overloaded function decl containing only the
-            // function templates in Ovl.
-            OverloadedFunctionDecl *OvlTemplate 
-              = OverloadedFunctionDecl::Create(Context,
-                                               Ovl->getDeclContext(),
-                                               Ovl->getDeclName());
-            OvlTemplate->addOverload(FuncTmpl);
-            OvlTemplate->addOverload(*F);
-            for (++F; F != FEnd; ++F) {
-              if (isa<FunctionTemplateDecl>(*F))
-                OvlTemplate->addOverload(*F);
-            }
-
-            // Form the resulting TemplateName
-            if (SS && SS->isSet() && !SS->isInvalid()) {
-              NestedNameSpecifier *Qualifier 
-                = static_cast<NestedNameSpecifier *>(SS->getScopeRep());
-              TemplateResult 
-                = TemplateTy::make(Context.getQualifiedTemplateName(Qualifier, 
-                                                                    false,
-                                                                  OvlTemplate));              
-            } else {
-              TemplateResult = TemplateTy::make(TemplateName(OvlTemplate));
-            }
-            return TNK_Function_template;
-          }
-          
-          TNK = TNK_Function_template;
-          Template = FuncTmpl;
-          break;
-        }
-      }
-    }
-
-    if (TNK != TNK_Non_template) {
-      if (SS && SS->isSet() && !SS->isInvalid()) {
-        NestedNameSpecifier *Qualifier 
-          = static_cast<NestedNameSpecifier *>(SS->getScopeRep());
-        TemplateResult 
-          = TemplateTy::make(Context.getQualifiedTemplateName(Qualifier, 
-                                                              false,
-                                                              Template));
-      } else
-        TemplateResult = TemplateTy::make(TemplateName(Template));
-    }
+    }      
   }
-  return TNK;
+  
+  if (SS && SS->isSet() && !SS->isInvalid()) {
+    NestedNameSpecifier *Qualifier 
+      = static_cast<NestedNameSpecifier *>(SS->getScopeRep());
+    if (OverloadedFunctionDecl *Ovl 
+          = dyn_cast<OverloadedFunctionDecl>(Template))
+      TemplateResult 
+        = TemplateTy::make(Context.getQualifiedTemplateName(Qualifier, false,
+                                                            Ovl));
+    else
+      TemplateResult 
+        = TemplateTy::make(Context.getQualifiedTemplateName(Qualifier, false,
+                                                 cast<TemplateDecl>(Template)));    
+  } else if (OverloadedFunctionDecl *Ovl 
+               = dyn_cast<OverloadedFunctionDecl>(Template)) {
+    TemplateResult = TemplateTy::make(TemplateName(Ovl));
+  } else {
+    TemplateResult = TemplateTy::make(
+                                  TemplateName(cast<TemplateDecl>(Template)));
+  }
+  
+  if (isa<ClassTemplateDecl>(Template) || 
+      isa<TemplateTemplateParmDecl>(Template))
+    return TNK_Type_template;
+  
+  assert((isa<FunctionTemplateDecl>(Template) || 
+          isa<OverloadedFunctionDecl>(Template)) &&
+         "Unhandled template kind in Sema::isTemplateName");
+  return TNK_Function_template;
 }
 
 /// DiagnoseTemplateParameterShadow - Produce a diagnostic complaining
@@ -1130,14 +1223,11 @@ Sema::TemplateTy
 Sema::ActOnDependentTemplateName(SourceLocation TemplateKWLoc,
                                  const IdentifierInfo &Name,
                                  SourceLocation NameLoc,
-                                 const CXXScopeSpec &SS) {
-  if (!SS.isSet() || SS.isInvalid())
-    return TemplateTy();
-
-  NestedNameSpecifier *Qualifier 
-    = static_cast<NestedNameSpecifier *>(SS.getScopeRep());
-
-  if (computeDeclContext(SS, false)) {
+                                 const CXXScopeSpec &SS,
+                                 TypeTy *ObjectType) {
+  if ((ObjectType && 
+       computeDeclContext(QualType::getFromOpaquePtr(ObjectType))) ||
+      (SS.isSet() && computeDeclContext(SS, false))) {
     // C++0x [temp.names]p5:
     //   If a name prefixed by the keyword template is not the name of
     //   a template, the program is ill-formed. [Note: the keyword
@@ -1155,7 +1245,8 @@ Sema::ActOnDependentTemplateName(SourceLocation TemplateKWLoc,
     // "template" keyword is now permitted). We follow the C++0x
     // rules, even in C++03 mode, retroactively applying the DR.
     TemplateTy Template;
-    TemplateNameKind TNK = isTemplateName(Name, 0, &SS, false, Template);
+    TemplateNameKind TNK = isTemplateName(0, Name, NameLoc, &SS, ObjectType, 
+                                          false, Template);
     if (TNK == TNK_Non_template) {
       Diag(NameLoc, diag::err_template_kw_refers_to_non_template)
         << &Name;
@@ -1165,6 +1256,13 @@ Sema::ActOnDependentTemplateName(SourceLocation TemplateKWLoc,
     return Template;
   }
 
+  // FIXME: We need to be able to create a dependent template name with just
+  // an identifier, to handle the x->template f<T> case.
+  assert(!ObjectType && 
+      "Cannot handle dependent template names without a nested-name-specifier");
+  
+  NestedNameSpecifier *Qualifier 
+    = static_cast<NestedNameSpecifier *>(SS.getScopeRep());
   return TemplateTy::make(Context.getDependentTemplateName(Qualifier, &Name));
 }
 

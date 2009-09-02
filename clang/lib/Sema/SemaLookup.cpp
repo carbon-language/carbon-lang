@@ -1004,8 +1004,9 @@ Sema::LookupQualifiedName(DeclContext *LookupCtx, DeclarationName Name,
                           LookupNameKind NameKind, bool RedeclarationOnly) {
   assert(LookupCtx && "Sema::LookupQualifiedName requires a lookup context");
   
-  if (!Name) return LookupResult::CreateLookupResult(Context, 0);
-
+  if (!Name) 
+    return LookupResult::CreateLookupResult(Context, 0);
+  
   // If we're performing qualified name lookup (e.g., lookup into a
   // struct), find fields as part of ordinary name lookup.
   unsigned IDNS
@@ -1013,16 +1014,25 @@ Sema::LookupQualifiedName(DeclContext *LookupCtx, DeclarationName Name,
                                                 getLangOptions().CPlusPlus);
   if (NameKind == LookupOrdinaryName)
     IDNS |= Decl::IDNS_Member;
-
+  
+  // Make sure that the declaration context is complete.
+  assert((!isa<TagDecl>(LookupCtx) ||
+          LookupCtx->isDependentContext() ||
+          cast<TagDecl>(LookupCtx)->isDefinition() ||
+          Context.getTypeDeclType(cast<TagDecl>(LookupCtx))->getAs<TagType>()
+            ->isBeingDefined()) &&
+         "Declaration context must already be complete!");
+    
   // Perform qualified name lookup into the LookupCtx.
   DeclContext::lookup_iterator I, E;
   for (llvm::tie(I, E) = LookupCtx->lookup(Name); I != E; ++I)
     if (isAcceptableLookupResult(*I, NameKind, IDNS))
       return LookupResult::CreateLookupResult(Context, I, E);
 
-  // If this isn't a C++ class or we aren't allowed to look into base
-  // classes, we're done.
-  if (RedeclarationOnly || !isa<CXXRecordDecl>(LookupCtx))
+  // If this isn't a C++ class, we aren't allowed to look into base
+  // classes, we're done, or the lookup context is dependent, we're done.
+  if (RedeclarationOnly || !isa<CXXRecordDecl>(LookupCtx) || 
+      LookupCtx->isDependentContext())
     return LookupResult::CreateLookupResult(Context, 0);
 
   // Perform lookup into our base classes.
@@ -1152,24 +1162,9 @@ Sema::LookupParsedName(Scope *S, const CXXScopeSpec *SS,
     if (DeclContext *DC = computeDeclContext(*SS, EnteringContext)) {
       // We have resolved the scope specifier to a particular declaration 
       // contex, and will perform name lookup in that context.
-      
-      if (DC->isDependentContext()) {
-        // If this is a dependent context, then we are looking for a member of
-        // the current instantiation. This is a narrow search that looks into
-        // just the described declaration context (C++0x [temp.dep.type]).
-        unsigned IDNS = getIdentifierNamespacesFromLookupNameKind(NameKind, 
-                                                                  true);
-        DeclContext::lookup_iterator I, E;
-        for (llvm::tie(I, E) = DC->lookup(Name); I != E; ++I)
-          if (isAcceptableLookupResult(*I, NameKind, IDNS))
-            return LookupResult::CreateLookupResult(Context, I, E);
-      }
-      
-      // Qualified name lookup into the named declaration context.
-      // The declaration context must be complete.
-      if (RequireCompleteDeclContext(*SS))
+      if (!DC->isDependentContext() && RequireCompleteDeclContext(*SS))
         return LookupResult::CreateLookupResult(Context, 0);
-            
+                                    
       return LookupQualifiedName(DC, Name, NameKind, RedeclarationOnly);
     }
 

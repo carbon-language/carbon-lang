@@ -117,7 +117,7 @@ Parser::DeclPtrTy Parser::ParseNamespaceAlias(SourceLocation NamespaceLoc,
   
   CXXScopeSpec SS;
   // Parse (optional) nested-name-specifier.
-  ParseOptionalCXXScopeSpecifier(SS);
+  ParseOptionalCXXScopeSpecifier(SS, /*ObjectType=*/0, false);
 
   if (SS.isInvalid() || Tok.isNot(tok::identifier)) {
     Diag(Tok, diag::err_expected_namespace_name);
@@ -216,7 +216,7 @@ Parser::DeclPtrTy Parser::ParseUsingDirective(unsigned Context,
 
   CXXScopeSpec SS;
   // Parse (optional) nested-name-specifier.
-  ParseOptionalCXXScopeSpecifier(SS);
+  ParseOptionalCXXScopeSpecifier(SS, /*ObjectType=*/0, false);
 
   AttributeList *AttrList = 0;
   IdentifierInfo *NamespcName = 0;
@@ -273,7 +273,7 @@ Parser::DeclPtrTy Parser::ParseUsingDeclaration(unsigned Context,
     IsTypeName = false;
 
   // Parse nested-name-specifier.
-  ParseOptionalCXXScopeSpecifier(SS);
+  ParseOptionalCXXScopeSpecifier(SS, /*ObjectType=*/0, false);
 
   AttributeList *AttrList = 0;
 
@@ -538,7 +538,8 @@ void Parser::ParseClassSpecifier(tok::TokenKind TagTokKind,
   
   // Parse the (optional) nested-name-specifier.
   CXXScopeSpec SS;
-  if (getLang().CPlusPlus && ParseOptionalCXXScopeSpecifier(SS, true))
+  if (getLang().CPlusPlus && 
+      ParseOptionalCXXScopeSpecifier(SS, /*ObjectType=*/0, true))
     if (Tok.isNot(tok::identifier) && Tok.isNot(tok::annot_template_id))
       Diag(Tok, diag::err_expected_ident);
 
@@ -813,7 +814,7 @@ Parser::BaseResult Parser::ParseBaseSpecifier(DeclPtrTy ClassDecl) {
 
   // Parse optional '::' and optional nested-name-specifier.
   CXXScopeSpec SS;
-  ParseOptionalCXXScopeSpecifier(SS, true);
+  ParseOptionalCXXScopeSpecifier(SS, /*ObjectType=*/0, true);
 
   // The location of the base class itself.
   SourceLocation BaseLoc = Tok.getLocation();
@@ -1299,7 +1300,7 @@ void Parser::ParseConstructorInitializer(DeclPtrTy ConstructorDecl) {
 Parser::MemInitResult Parser::ParseMemInitializer(DeclPtrTy ConstructorDecl) {
   // parse '::'[opt] nested-name-specifier[opt]
   CXXScopeSpec SS;
-  ParseOptionalCXXScopeSpecifier(SS);
+  ParseOptionalCXXScopeSpecifier(SS, /*ObjectType=*/0, false);
   TypeTy *TemplateTypeTy = 0;
   if (Tok.is(tok::annot_template_id)) {
     TemplateIdAnnotation *TemplateId

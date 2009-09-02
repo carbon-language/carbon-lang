@@ -22,6 +22,20 @@
 #include "llvm/Support/raw_ostream.h"
 using namespace clang;
 
+/// \brief Compute the DeclContext that is associated with the given type.
+///
+/// \param T the type for which we are attempting to find a DeclContext.
+///
+/// \returns the declaration context represented by the type T, 
+/// or NULL if the declaration context cannot be computed (e.g., because it is
+/// dependent and not the current instantiation).
+DeclContext *Sema::computeDeclContext(QualType T) {
+  if (const TagType *Tag = T->getAs<TagType>())
+    return Tag->getDecl();
+  
+  return 0;
+}
+
 /// \brief Compute the DeclContext that is associated with the given
 /// scope specifier.
 ///
@@ -244,6 +258,36 @@ Sema::CXXScopeTy *Sema::ActOnCXXGlobalScopeSpecifier(Scope *S,
   return NestedNameSpecifier::GlobalSpecifier(Context);
 }
 
+/// \brief Determines whether the given declaration is an valid acceptable
+/// result for name lookup of a nested-name-specifier.
+bool isAcceptableNestedNameSpecifier(ASTContext &Context, NamedDecl *SD) {
+  if (!SD)
+    return false;
+  
+  // Namespace and namespace aliases are fine.
+  if (isa<NamespaceDecl>(SD) || isa<NamespaceAliasDecl>(SD))
+    return true;
+  
+  if (!isa<TypeDecl>(SD))
+    return false;
+  
+  // Determine whether we have a class (or, in C++0x, an enum) or
+  // a typedef thereof. If so, build the nested-name-specifier.
+  QualType T = Context.getTypeDeclType(cast<TypeDecl>(SD));
+  if (T->isDependentType())
+    return true;
+  else if (TypedefDecl *TD = dyn_cast<TypedefDecl>(SD)) {
+    if (TD->getUnderlyingType()->isRecordType() ||
+        (Context.getLangOptions().CPlusPlus0x && 
+         TD->getUnderlyingType()->isEnumeralType()))
+      return true;
+  } else if (isa<RecordDecl>(SD) || 
+             (Context.getLangOptions().CPlusPlus0x && isa<EnumDecl>(SD)))
+    return true;
+
+  return false;
+}
+
 /// ActOnCXXNestedNameSpecifier - Called during parsing of a
 /// nested-name-specifier. e.g. for "foo::bar::" we parsed "foo::" and now
 /// we want to resolve "bar::". 'SS' is empty or the previously parsed
@@ -255,58 +299,134 @@ Sema::CXXScopeTy *Sema::ActOnCXXNestedNameSpecifier(Scope *S,
                                                     SourceLocation IdLoc,
                                                     SourceLocation CCLoc,
                                                     IdentifierInfo &II,
+                                                    TypeTy *ObjectTypePtr,
                                                     bool EnteringContext) {
   NestedNameSpecifier *Prefix 
     = static_cast<NestedNameSpecifier *>(SS.getScopeRep());
+  
+  // Determine where to perform name lookup
+  DeclContext *LookupCtx = 0;
+  bool isDependent = false;
+  if (ObjectTypePtr) {
+    // This nested-name-specifier occurs in a member access expression, e.g.,
+    // x->B::f, and we are looking into the type of the object.
+    assert(!SS.isSet() && "ObjectType and scope specifier cannot coexist");
+    QualType ObjectType = QualType::getFromOpaquePtr(ObjectTypePtr);
+    LookupCtx = computeDeclContext(ObjectType);
+    isDependent = ObjectType->isDependentType();
+  } else if (SS.isSet()) {
+    // This nested-name-specifier occurs after another nested-name-specifier,
+    // so long into the context associated with the prior nested-name-specifier.
+    LookupCtx = computeDeclContext(SS, EnteringContext);
+    isDependent = isDependentScopeSpecifier(SS);
+  }
 
-  NamedDecl *SD = LookupParsedName(S, &SS, &II, LookupNestedNameSpecifierName,
-                                   false, false, SourceLocation(),
-                                   EnteringContext);
+  LookupResult Found;
+  bool ObjectTypeSearchedInScope = false;
+  if (LookupCtx) {
+    // Perform "qualified" name lookup into the declaration context we 
+    // computed, which is either the type of the base of a member access
+    // expression or the declaration context associated with a prior 
+    // nested-name-specifier.
+    
+    // The declaration context must be complete.
+    if (!LookupCtx->isDependentContext() && RequireCompleteDeclContext(SS))
+      return 0;
 
-  if (SD) {
+    Found = LookupQualifiedName(LookupCtx, &II, LookupNestedNameSpecifierName,
+                                false);
+    
+    if (ObjectTypePtr && Found.getKind() == LookupResult::NotFound && S) {
+      // C++ [basic.lookup.classref]p4:
+      //   If the id-expression in a class member access is a qualified-id of
+      //   the form 
+      //
+      //        class-name-or-namespace-name::...
+      //
+      //   the class-name-or-namespace-name following the . or -> operator is 
+      //   looked up both in the context of the entire postfix-expression and in 
+      //   the scope of the class of the object expression. If the name is found
+      //   only in the scope of the class of the object expression, the name 
+      //   shall refer to a class-name. If the name is found only in the 
+      //   context of the entire postfix-expression, the name shall refer to a
+      //   class-name or namespace-name. [...]
+      //
+      // Qualified name lookup into a class will not find a namespace-name,
+      // so we do not need to diagnoste that case specifically. However, 
+      // this qualified name lookup may find nothing. In that case, perform
+      // unqualified name lookup in the given scope.
+      
+      // FIXME: When we're instantiating a template, do we actually have to
+      // look in the scope of the template? Seems fishy...
+      Found = LookupName(S, &II, LookupNestedNameSpecifierName);
+      ObjectTypeSearchedInScope = true;
+    }
+  } else if (isDependent) {
+    // We were not able to compute the declaration context for a dependent
+    // base object type or prior nested-name-specifier, so this 
+    // nested-name-specifier refers to an unknown specialization. Just build
+    // a dependent nested-name-specifier.
+    return NestedNameSpecifier::Create(Context, Prefix, &II);
+  } else {
+    // Perform unqualified name lookup in the current scope.
+    Found = LookupName(S, &II, LookupNestedNameSpecifierName);
+  }
+  
+  // FIXME: Deal with ambiguities cleanly.
+  NamedDecl *SD = Found;
+  if (isAcceptableNestedNameSpecifier(Context, SD)) {
+    if (ObjectTypePtr && !ObjectTypeSearchedInScope && S) {
+      // C++ [basic.lookup.classref]p4:
+      //   [...] If the name is found in both contexts, the 
+      //   class-name-or-namespace-name shall refer to the same entity.
+      //
+      // We already found the name in the scope of the object. Now, look
+      // into the current scope (the scope of the postfix-expression) to
+      // see if we can find the same name there. 
+      LookupResult FoundOuter 
+        = LookupName(S, &II, LookupNestedNameSpecifierName);
+      
+      // FIXME: Handle ambiguities in FoundOuter!
+      NamedDecl *OuterDecl = FoundOuter;
+      if (isAcceptableNestedNameSpecifier(Context, OuterDecl) &&
+          OuterDecl->getCanonicalDecl() != SD->getCanonicalDecl() &&
+          (!isa<TypeDecl>(OuterDecl) || !isa<TypeDecl>(SD) ||
+           !Context.hasSameType(
+                          Context.getTypeDeclType(cast<TypeDecl>(OuterDecl)),
+                               Context.getTypeDeclType(cast<TypeDecl>(SD))))) {
+        Diag(IdLoc, diag::err_nested_name_member_ref_lookup_ambiguous)
+          << &II;
+        Diag(SD->getLocation(), diag::note_ambig_member_ref_object_type)
+          << QualType::getFromOpaquePtr(ObjectTypePtr);
+        Diag(OuterDecl->getLocation(), diag::note_ambig_member_ref_scope);
+             
+        // Fall through so that we'll pick the name we found in the object type,
+        // since that's probably what the user wanted anyway.
+      }
+    }
+    
     if (NamespaceDecl *Namespace = dyn_cast<NamespaceDecl>(SD))
       return NestedNameSpecifier::Create(Context, Prefix, Namespace);
 
-    if (TypeDecl *Type = dyn_cast<TypeDecl>(SD)) {
-      // Determine whether we have a class (or, in C++0x, an enum) or
-      // a typedef thereof. If so, build the nested-name-specifier.
-      QualType T = Context.getTypeDeclType(Type);
-      bool AcceptableType = false;
-      if (T->isDependentType())
-        AcceptableType = true;
-      else if (TypedefDecl *TD = dyn_cast<TypedefDecl>(SD)) {
-        if (TD->getUnderlyingType()->isRecordType() ||
-            (getLangOptions().CPlusPlus0x && 
-             TD->getUnderlyingType()->isEnumeralType()))
-          AcceptableType = true;
-      } else if (isa<RecordDecl>(Type) || 
-                 (getLangOptions().CPlusPlus0x && isa<EnumDecl>(Type)))
-        AcceptableType = true;
-
-      if (AcceptableType)
-        return NestedNameSpecifier::Create(Context, Prefix, false, 
-                                           T.getTypePtr());
-    }
-    
     // FIXME: It would be nice to maintain the namespace alias name, then
     // see through that alias when resolving the nested-name-specifier down to
     // a declaration context.
     if (NamespaceAliasDecl *Alias = dyn_cast<NamespaceAliasDecl>(SD))
       return NestedNameSpecifier::Create(Context, Prefix,
-                                         Alias->getNamespace());
 
-    // Fall through to produce an error: we found something that isn't
-    // a class or a namespace.
-  } else if (SS.isSet() && isDependentScopeSpecifier(SS))
-    return NestedNameSpecifier::Create(Context, Prefix, &II);
+                                         Alias->getNamespace());
+    
+    QualType T = Context.getTypeDeclType(cast<TypeDecl>(SD));
+    return NestedNameSpecifier::Create(Context, Prefix, false,
+                                       T.getTypePtr());
+  }
 
   // If we didn't find anything during our lookup, try again with
   // ordinary name lookup, which can help us produce better error
   // messages.
   if (!SD)
-    SD = LookupParsedName(S, &SS, &II, LookupOrdinaryName,
-                          false, false, SourceLocation(),
-                          EnteringContext);
+    SD = LookupName(S, &II, LookupOrdinaryName);
+  
   unsigned DiagID;
   if (SD)
     DiagID = diag::err_expected_class_or_namespace;
@@ -337,58 +457,6 @@ Sema::CXXScopeTy *Sema::ActOnCXXNestedNameSpecifier(Scope *S,
   return NestedNameSpecifier::Create(Context, Prefix, /*FIXME:*/false,
                                      T.getTypePtr());
 }
-
-Action::OwningExprResult
-Sema::ActOnCXXEnterMemberScope(Scope *S, CXXScopeSpec &SS, ExprArg Base,
-                               tok::TokenKind OpKind) {
-  // Since this might be a postfix expression, get rid of ParenListExprs.
-  Base = MaybeConvertParenListExprToParenExpr(S, move(Base));
-
-  Expr *BaseExpr = (Expr*)Base.get();
-  assert(BaseExpr && "no record expansion");
-
-  QualType BaseType = BaseExpr->getType();
-  // FIXME: handle dependent types
-  if (BaseType->isDependentType())
-    return move(Base);
-
-  // C++ [over.match.oper]p8:
-  //   [...] When operator->returns, the operator-> is applied  to the value 
-  //   returned, with the original second operand.
-  if (OpKind == tok::arrow) {
-    while (BaseType->isRecordType()) {
-      Base = BuildOverloadedArrowExpr(S, move(Base), BaseExpr->getExprLoc());
-      BaseExpr = (Expr*)Base.get();
-      if (BaseExpr == NULL)
-          return ExprError();
-      BaseType = BaseExpr->getType();
-    }
-  }
-
-  if (BaseType->isPointerType())
-    BaseType = BaseType->getPointeeType();
-
-  // We could end up with various non-record types here, such as extended 
-  // vector types or Objective-C interfaces. Just return early and let
-  // ActOnMemberReferenceExpr do the work.
-  if (!BaseType->isRecordType())
-    return move(Base);
-
-  SS.setRange(BaseExpr->getSourceRange());
-  SS.setScopeRep(
-    NestedNameSpecifier::Create(Context, 0, false, BaseType.getTypePtr())
-    );
-
-  if (S)
-    ActOnCXXEnterDeclaratorScope(S,SS);
-  return move(Base);
-}
-
-void Sema::ActOnCXXExitMemberScope(Scope *S, const CXXScopeSpec &SS) {
-  if (S && SS.isSet())
-    ActOnCXXExitDeclaratorScope(S,SS);
-}
-
 
 /// ActOnCXXEnterDeclaratorScope - Called when a C++ scope specifier (global
 /// scope or nested-name-specifier) is parsed, part of a declarator-id.

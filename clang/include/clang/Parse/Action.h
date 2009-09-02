@@ -209,10 +209,12 @@ public:
   /// \brief Determine whether the given identifier refers to the name of a
   /// template.
   ///
+  /// \param S the scope in which name lookup occurs
+  ///
   /// \param II the identifier that we are querying to determine whether it
   /// is a template.
   ///
-  /// \param S the scope in which name lookup occurs
+  /// \param IdLoc the source location of the identifier
   ///
   /// \param SS the C++ scope specifier that precedes the template name, if
   /// any.
@@ -224,8 +226,11 @@ public:
   /// of the template that the name refers to.
   ///
   /// \returns the kind of template that this name refers to.
-  virtual TemplateNameKind isTemplateName(const IdentifierInfo &II, Scope *S,
+  virtual TemplateNameKind isTemplateName(Scope *S,
+                                          const IdentifierInfo &II, 
+                                          SourceLocation IdLoc,
                                           const CXXScopeSpec *SS,
+                                          TypeTy *ObjectType,
                                           bool EnteringContext,
                                           TemplateTy &Template) = 0;
 
@@ -236,17 +241,39 @@ public:
     return 0;
   }
 
-  /// ActOnCXXNestedNameSpecifier - Called during parsing of a
-  /// nested-name-specifier. e.g. for "foo::bar::" we parsed "foo::" and now
-  /// we want to resolve "bar::". 'SS' is empty or the previously parsed
-  /// nested-name part ("foo::"), 'IdLoc' is the source location of 'bar',
-  /// 'CCLoc' is the location of '::' and 'II' is the identifier for 'bar'.
-  /// Returns a CXXScopeTy* object representing the C++ scope.
+  /// \brief Parsed an identifier followed by '::' in a C++
+  /// nested-name-specifier.
+  ///
+  /// \param S the scope in which the nested-name-specifier was parsed.
+  ///
+  /// \param SS the nested-name-specifier that precedes the identifier. For
+  /// example, if we are parsing "foo::bar::", \p SS will describe the "foo::"
+  /// that has already been parsed.
+  ///
+  /// \param IdLoc the location of the identifier we have just parsed (e.g.,
+  /// the "bar" in "foo::bar::".
+  ///
+  /// \param CCLoc the location of the '::' at the end of the 
+  /// nested-name-specifier.
+  ///
+  /// \param II the identifier that represents the scope that this 
+  /// nested-name-specifier refers to, e.g., the "bar" in "foo::bar::".
+  ///
+  /// \param ObjectType if this nested-name-specifier occurs as part of a 
+  /// C++ member access expression such as "x->Base::f", the type of the base
+  /// object (e.g., *x in the example, if "x" were a pointer).
+  /// 
+  /// \param EnteringContext if true, then we intend to immediately enter the
+  /// context of this nested-name-specifier, e.g., for an out-of-line 
+  /// definition of a class member.
+  ///
+  /// \returns a CXXScopeTy* object representing the C++ scope.
   virtual CXXScopeTy *ActOnCXXNestedNameSpecifier(Scope *S,
                                                   const CXXScopeSpec &SS,
                                                   SourceLocation IdLoc,
                                                   SourceLocation CCLoc,
                                                   IdentifierInfo &II,
+                                                  TypeTy *ObjectType,
                                                   bool EnteringContext) {
     return 0;
   }
@@ -265,27 +292,6 @@ public:
                                                   SourceRange TypeRange,
                                                   SourceLocation CCLoc) {
     return 0; 
-  }
-
-  /// ActOnCXXEnterMemberScope - Called when a C++ class member accessor ('.'
-  /// or '->') is parsed. After this method is called, according to
-  /// [C++ 3.4.5p4], qualified-ids should be looked up in the contexts of both
-  /// the entire postfix-expression and the scope of the class of the object
-  /// expression.
-  /// 'SS' should be an empty CXXScopeSpec to be filled with the class's scope.
-  virtual OwningExprResult ActOnCXXEnterMemberScope(Scope *S,
-                                                    CXXScopeSpec &SS,
-                                                    ExprArg Base,
-                                                    tok::TokenKind OpKind) {
-    return ExprEmpty();
-  }
-
-  /// ActOnCXXExitMemberScope - Called when a postfix-expression that previously
-  /// invoked ActOnCXXEnterMemberScope() is finished. 'SS' is the same
-  /// CXXScopeSpec that was passed to ActOnCXXEnterMemberScope. Used to
-  /// indicate that names should revert to being looked up in the defining
-  /// scope.
-  virtual void ActOnCXXExitMemberScope(Scope *S, const CXXScopeSpec &SS) {
   }
 
   /// ActOnCXXEnterDeclaratorScope - Called when a C++ scope specifier (global
@@ -1280,6 +1286,31 @@ public:
     return ExprEmpty();
   }
 
+  /// \brief Invoked when the parser is starting to parse a C++ member access 
+  /// expression such as x.f or x->f.
+  ///
+  /// \param S the scope in which the member access expression occurs.
+  ///
+  /// \param Base the expression in which a member is being accessed, e.g., the
+  /// "x" in "x.f".
+  ///
+  /// \param OpLoc the location of the member access operator ("." or "->")
+  ///
+  /// \param OpKind the kind of member access operator ("." or "->")
+  ///
+  /// \param ObjectType originally NULL. The action should fill in this type
+  /// with the type into which name lookup should look to find the member in 
+  /// the member access expression.
+  ///
+  /// \returns the (possibly modified) \p Base expression
+  virtual OwningExprResult ActOnStartCXXMemberReference(Scope *S,
+                                                        ExprArg Base,
+                                                        SourceLocation OpLoc,
+                                                        tok::TokenKind OpKind,
+                                                        TypeTy *&ObjectType) {
+    return ExprEmpty();
+  }
+  
   /// ActOnDestructorReferenceExpr - Parsed a destructor reference, for example:
   ///
   /// t->~T();
@@ -1597,10 +1628,26 @@ public:
   /// example, given "MetaFun::template apply", the scope specifier \p
   /// SS will be "MetaFun::", \p TemplateKWLoc contains the location
   /// of the "template" keyword, and "apply" is the \p Name.
+  ///
+  /// \param TemplateKWLoc the location of the "template" keyword (if any).
+  ///
+  /// \param Name the name of the template (an identifier)
+  ///
+  /// \param NameLoc the location of the identifier
+  ///
+  /// \param SS the nested-name-specifier that precedes the "template" keyword
+  /// or the template name. FIXME: If the dependent template name occurs in
+  /// a member access expression, e.g., "x.template f<T>", this 
+  /// nested-name-specifier will be empty.
+  ///
+  /// \param ObjectType if this dependent template name occurs in the 
+  /// context of a member access expression, the type of the object being
+  /// accessed.
   virtual TemplateTy ActOnDependentTemplateName(SourceLocation TemplateKWLoc,
                                                 const IdentifierInfo &Name,
                                                 SourceLocation NameLoc,
-                                                const CXXScopeSpec &SS) {
+                                                const CXXScopeSpec &SS,
+                                                TypeTy *ObjectType) {
     return TemplateTy();
   }
 
@@ -2128,26 +2175,11 @@ public:
   virtual bool isCurrentClassName(const IdentifierInfo& II, Scope *S,
                                   const CXXScopeSpec *SS);
 
-  /// \brief Determine whether the given identifier refers to the name of a
-  /// template.
-  ///
-  /// \param II the identifier that we are querying to determine whether it
-  /// is a template.
-  ///
-  /// \param S the scope in which name lookup occurs
-  ///
-  /// \param SS the C++ scope specifier that precedes the template name, if
-  /// any.
-  ///
-  /// \param EnteringContext whether we are potentially entering the context
-  /// referred to by the scope specifier \p SS
-  ///
-  /// \param Template if the name does refer to a template, the declaration
-  /// of the template that the name refers to.
-  ///
-  /// \returns the kind of template that this name refers to.
-  virtual TemplateNameKind isTemplateName(const IdentifierInfo &II, Scope *S,
+  virtual TemplateNameKind isTemplateName(Scope *S,
+                                          const IdentifierInfo &II, 
+                                          SourceLocation IdLoc,
                                           const CXXScopeSpec *SS,
+                                          TypeTy *ObjectType,                              
                                           bool EnteringContext,
                                           TemplateTy &Template);
 

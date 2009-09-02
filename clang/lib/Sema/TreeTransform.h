@@ -1454,7 +1454,10 @@ public:
     OwningExprResult Base = move(BaseE);
     tok::TokenKind OpKind = IsArrow? tok::arrow : tok::period;
     CXXScopeSpec SS;
-    Base = SemaRef.ActOnCXXEnterMemberScope(0, SS, move(Base), OpKind);
+    Sema::TypeTy *ObjectType = 0;
+    
+    Base = SemaRef.ActOnStartCXXMemberReference(0, move(Base), OperatorLoc,
+                                                OpKind, ObjectType);
     if (Base.isInvalid())
       return SemaRef.ExprError();
     
@@ -1463,7 +1466,6 @@ public:
                                             MemberLoc,
                                             Name,
                                     /*FIXME?*/Sema::DeclPtrTy::make((Decl*)0));
-    SemaRef.ActOnCXXExitMemberScope(0, SS);
     return move(Base);
   }
 
@@ -4410,6 +4412,7 @@ TreeTransform<Derived>::RebuildNestedNameSpecifier(NestedNameSpecifier *Prefix,
   return static_cast<NestedNameSpecifier *>(
                     SemaRef.ActOnCXXNestedNameSpecifier(0, SS, Range.getEnd(), 
                                                         Range.getEnd(), II,
+                                                        /*FIXME:ObjectType=*/0,
                                                         false));
 }
 
@@ -4467,7 +4470,11 @@ TreeTransform<Derived>::RebuildTemplateName(NestedNameSpecifier *Qualifier,
   SS.setRange(SourceRange(getDerived().getBaseLocation()));
   SS.setScopeRep(Qualifier);
   Sema::TemplateTy Template;
-  TemplateNameKind TNK = SemaRef.isTemplateName(II, 0, &SS, false, Template);
+  TemplateNameKind TNK = SemaRef.isTemplateName(0, II,
+                                     /*FIXME:*/getDerived().getBaseLocation(),
+                                                &SS, 
+                                                /*FIXME:ObjectType=*/0, false,
+                                                Template);
   if (TNK == TNK_Non_template) {
     SemaRef.Diag(getDerived().getBaseLocation(), 
                  diag::err_template_kw_refers_to_non_template)

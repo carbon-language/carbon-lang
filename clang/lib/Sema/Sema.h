@@ -1983,6 +1983,12 @@ public:
                                                TypeTy *Ty,
                                                SourceLocation RParen);
   
+  virtual OwningExprResult ActOnStartCXXMemberReference(Scope *S,
+                                                        ExprArg Base,
+                                                        SourceLocation OpLoc,
+                                                        tok::TokenKind OpKind,
+                                                        TypeTy *&ObjectType);
+    
   virtual OwningExprResult
   ActOnDestructorReferenceExpr(Scope *S, ExprArg Base,
                                SourceLocation OpLoc,
@@ -2029,6 +2035,7 @@ public:
 
   bool RequireCompleteDeclContext(const CXXScopeSpec &SS);
   
+  DeclContext *computeDeclContext(QualType T);
   DeclContext *computeDeclContext(const CXXScopeSpec &SS, 
                                   bool EnteringContext = false);
   bool isDependentScopeSpecifier(const CXXScopeSpec &SS);
@@ -2051,6 +2058,7 @@ public:
                                                   SourceLocation IdLoc,
                                                   SourceLocation CCLoc,
                                                   IdentifierInfo &II,
+                                                  TypeTy *ObjectType,
                                                   bool EnteringContext);
 
   /// ActOnCXXNestedNameSpecifier - Called during parsing of a
@@ -2066,23 +2074,6 @@ public:
                                                   TypeTy *Type,
                                                   SourceRange TypeRange,
                                                   SourceLocation CCLoc);
-
-  /// ActOnCXXEnterMemberScope - Called when a C++ class member accessor ('.'
-  /// or '->') is parsed. After this method is called, according to
-  /// [C++ 3.4.5p4], qualified-ids should be looked up in the contexts of both
-  /// the entire postfix-expression and the scope of the class of the object
-  /// expression.
-  /// 'SS' should be an empty CXXScopeSpec to be filled with the class's scope.
-  virtual OwningExprResult ActOnCXXEnterMemberScope(Scope *S, CXXScopeSpec &SS,
-                                                    ExprArg Base,
-                                                    tok::TokenKind OpKind);
-
-  /// ActOnCXXExitMemberScope - Called when a postfix-expression that previously
-  /// invoked ActOnCXXEnterMemberScope() is finished. 'SS' is the same
-  /// CXXScopeSpec that was passed to ActOnCXXEnterMemberScope. Used to
-  /// indicate that names should revert to being looked up in the defining
-  /// scope.
-  virtual void ActOnCXXExitMemberScope(Scope *S, const CXXScopeSpec &SS);
 
   /// ActOnCXXEnterDeclaratorScope - Called when a C++ scope specifier (global
   /// scope or nested-name-specifier) is parsed, part of a declarator-id.
@@ -2311,8 +2302,11 @@ public:
   //===--------------------------------------------------------------------===//
   // C++ Templates [C++ 14]
   //
-  virtual TemplateNameKind isTemplateName(const IdentifierInfo &II, Scope *S,
+  virtual TemplateNameKind isTemplateName(Scope *S,
+                                          const IdentifierInfo &II, 
+                                          SourceLocation IdLoc,
                                           const CXXScopeSpec *SS,
+                                          TypeTy *ObjectType,
                                           bool EnteringContext,
                                           TemplateTy &Template);
   bool DiagnoseTemplateParameterShadow(SourceLocation Loc, Decl *PrevDecl);
@@ -2400,7 +2394,8 @@ public:
   virtual TemplateTy ActOnDependentTemplateName(SourceLocation TemplateKWLoc,
                                                 const IdentifierInfo &Name,
                                                 SourceLocation NameLoc,
-                                                const CXXScopeSpec &SS);
+                                                const CXXScopeSpec &SS,
+                                                TypeTy *ObjectType);
 
   bool CheckClassTemplateSpecializationScope(ClassTemplateDecl *ClassTemplate,
                                     ClassTemplateSpecializationDecl *PrevDecl,

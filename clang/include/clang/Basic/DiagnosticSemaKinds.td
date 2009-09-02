@@ -366,6 +366,12 @@ def note_previous_access_declaration : Note<
 // C++ name lookup
 def err_incomplete_nested_name_spec : Error<
   "incomplete type %0 named in nested name specifier">;
+def err_nested_name_member_ref_lookup_ambiguous : Error<
+  "lookup of %0 in member access expression is ambiguous">;
+def note_ambig_member_ref_object_type : Note<
+  "lookup in the object type %0 refers here">;
+def note_ambig_member_ref_scope : Note<
+  "lookup from the current scope refers here">;
 
 // C++ class members
 def err_storageclass_invalid_for_member : Error<

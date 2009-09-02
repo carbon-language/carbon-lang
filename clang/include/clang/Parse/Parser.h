@@ -770,13 +770,9 @@ private:
   // C++ Expressions
   OwningExprResult ParseCXXIdExpression(bool isAddressOfOperand = false);
 
-  /// ParseOptionalCXXScopeSpecifier - Parse global scope or
-  /// nested-name-specifier if present.  Returns true if a nested-name-specifier
-  /// was parsed from the token stream.  Note that this routine will not parse
-  /// ::new or ::delete, it will just leave them in the token stream.
-  ///
   bool ParseOptionalCXXScopeSpecifier(CXXScopeSpec &SS, 
-                                      bool EnteringContext = false);
+                                      TypeTy *ObjectType,
+                                      bool EnteringContext);
   
   //===--------------------------------------------------------------------===//
   // C++ 5.2p1: C++ Casts
