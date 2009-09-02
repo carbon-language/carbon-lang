@@ -51,7 +51,8 @@ Module *ParseAssemblyString(
 
 /// This function is the low-level interface to the LLVM Assembly Parser.
 /// ParseAssemblyFile and ParseAssemblyString are wrappers around this function.
-/// @brief Parse LLVM Assembly from a MemoryBuffer.
+/// @brief Parse LLVM Assembly from a MemoryBuffer. This function *always*
+/// takes ownership of the MemoryBuffer.
 Module *ParseAssembly(
     MemoryBuffer *F,     ///< The MemoryBuffer containing assembly
     const std::string &Name, ///< The name of the original source file
