@@ -786,11 +786,17 @@ Sema::BuildMemberInitializer(FieldDecl *Member, Expr **Args,
       C = PerformInitializationByConstructor(
             FieldType, (Expr **)Args, NumArgs, IdLoc, 
             SourceRange(IdLoc, RParenLoc), Member->getDeclName(), IK_Direct);
-  } else if (NumArgs != 1) {
+  } else if (NumArgs != 1 && NumArgs != 0) {
     return Diag(IdLoc, diag::err_mem_initializer_mismatch) 
                 << Member->getDeclName() << SourceRange(IdLoc, RParenLoc);
   } else if (!HasDependentArg) {
-    Expr *NewExp = (Expr*)Args[0];
+    Expr *NewExp;
+    if (NumArgs == 0) {
+      NewExp = new (Context) CXXZeroInitValueExpr(FieldType, IdLoc, RParenLoc);
+      NumArgs = 1;
+    }
+    else
+      NewExp = (Expr*)Args[0];
     if (PerformCopyInitialization(NewExp, FieldType, "passing"))
       return true;
     Args[0] = NewExp;
