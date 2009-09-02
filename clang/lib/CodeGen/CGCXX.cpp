@@ -1658,7 +1658,8 @@ void CodeGenFunction::EmitCtorPrologue(const CXXConstructorDecl *CD) {
         else {
           // Initializing an anonymous union data member.
           FieldDecl *anonMember = Member->getAnonUnionMember();
-          LHS = EmitLValueForField(LHS.getAddress(), anonMember, false, 0);
+          LHS = EmitLValueForField(LHS.getAddress(), anonMember, 
+                                   /*IsUnion=*/true, 0);
           FieldType = anonMember->getType();
         }
       }
