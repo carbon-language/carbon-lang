@@ -247,6 +247,15 @@ public:
                                               QualType ObjectType = QualType(),
                                           NamedDecl *FirstQualifierInScope = 0);
   
+  /// \brief Transform the given declaration name.
+  ///
+  /// By default, transforms the types of conversion function, constructor,
+  /// and destructor names and then (if needed) rebuilds the declaration name.
+  /// Identifiers and selectors are returned unmodified. Sublcasses may
+  /// override this function to provide alternate behavior.
+  DeclarationName TransformDeclarationName(DeclarationName Name,
+                                           SourceLocation Loc);
+  
   /// \brief Transform the given template name.
   /// 
   /// By default, transforms the template name by transforming the declarations
@@ -1665,6 +1674,39 @@ TreeTransform<Derived>::TransformNestedNameSpecifier(NestedNameSpecifier *NNS,
   
   // Required to silence a GCC warning
   return 0;  
+}
+
+template<typename Derived>
+DeclarationName 
+TreeTransform<Derived>::TransformDeclarationName(DeclarationName Name,
+                                                 SourceLocation Loc) {
+  if (!Name)
+    return Name;
+
+  switch (Name.getNameKind()) {
+  case DeclarationName::Identifier:
+  case DeclarationName::ObjCZeroArgSelector:
+  case DeclarationName::ObjCOneArgSelector:
+  case DeclarationName::ObjCMultiArgSelector:
+  case DeclarationName::CXXOperatorName:
+  case DeclarationName::CXXUsingDirective:
+    return Name;
+      
+  case DeclarationName::CXXConstructorName:
+  case DeclarationName::CXXDestructorName:
+  case DeclarationName::CXXConversionFunctionName: {
+    TemporaryBase Rebase(*this, Loc, Name);
+    QualType T = getDerived().TransformType(Name.getCXXNameType());
+    if (T.isNull())
+      return DeclarationName();
+    
+    return SemaRef.Context.DeclarationNames.getCXXSpecialName(
+                                                           Name.getNameKind(), 
+                                          SemaRef.Context.getCanonicalType(T));
+  }      
+  }
+  
+  return DeclarationName();
 }
 
 template<typename Derived>
@@ -3838,8 +3880,10 @@ TreeTransform<Derived>::TransformUnresolvedDeclRefExpr(
   if (!NNS)
     return SemaRef.ExprError();
   
-  // FIXME: Transform the declaration name
-  DeclarationName Name = E->getDeclName();
+  DeclarationName Name 
+    = getDerived().TransformDeclarationName(E->getDeclName(), E->getLocation());
+  if (!Name)
+    return SemaRef.ExprError();
   
   if (!getDerived().AlwaysRebuild() && 
       NNS == E->getQualifier() &&
@@ -4078,9 +4122,11 @@ TreeTransform<Derived>::TransformCXXUnresolvedMemberExpr(
       return SemaRef.ExprError();
   }
   
-  // FIXME: Transform the declaration name
-  DeclarationName Name = E->getMember();
-    
+  DeclarationName Name 
+    = getDerived().TransformDeclarationName(E->getMember(), E->getMemberLoc());
+  if (!Name)
+    return SemaRef.ExprError();
+  
   if (!getDerived().AlwaysRebuild() &&
       Base.get() == E->getBase() &&
       Qualifier == E->getQualifier() &&

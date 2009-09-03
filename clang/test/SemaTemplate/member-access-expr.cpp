@@ -46,3 +46,16 @@ void test_f0_through_typedef2(X0 x0, X1 x1) {
 }
 
 
+struct X2 {
+  operator int() const;
+};
+
+template<typename T, typename U>
+T convert(const U& value) {
+  return value.operator T(); // expected-error{{operator long}}
+}
+
+void test_convert(X2 x2) {
+  convert<int>(x2);
+  convert<long>(x2); // expected-note{{instantiation}}
+}
