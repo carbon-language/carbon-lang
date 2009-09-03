@@ -565,7 +565,7 @@ let isTerminator = 1, isReturn = 1, isBarrier = 1,
                     [(X86retflag 0)]>;
   def RETI   : Ii16<0xC2, RawFrm, (outs), (ins i16imm:$amt, variable_ops),
                     "ret\t$amt",
-                    [(X86retflag imm:$amt)]>;
+                    [(X86retflag timm:$amt)]>;
 }
 
 // All branches are RawFrm, Void, Branch, and Terminators
@@ -4167,6 +4167,18 @@ def : Pat<(parallel (X86dec_flag GR32:$src), (implicit EFLAGS)),
 def : Pat<(parallel (store (i32 (X86dec_flag (loadi32 addr:$dst))), addr:$dst),
                     (implicit EFLAGS)),
           (DEC32m addr:$dst)>, Requires<[In32BitMode]>;
+
+// -disable-16bit support.
+def : Pat<(truncstorei16 (i32 imm:$src), addr:$dst),
+          (MOV16mi addr:$dst, imm:$src)>;
+def : Pat<(truncstorei16 GR32:$src, addr:$dst),
+          (MOV16mr addr:$dst, (EXTRACT_SUBREG GR32:$src, x86_subreg_16bit))>;
+def : Pat<(i32 (sextloadi16 addr:$dst)),
+          (MOVSX32rm16 addr:$dst)>;
+def : Pat<(i32 (zextloadi16 addr:$dst)),
+          (MOVZX32rm16 addr:$dst)>;
+def : Pat<(i32 (extloadi16 addr:$dst)),
+          (MOVZX32rm16 addr:$dst)>;
 
 //===----------------------------------------------------------------------===//
 // Floating Point Stack Support

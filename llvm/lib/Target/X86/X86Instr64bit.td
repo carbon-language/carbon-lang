@@ -2050,3 +2050,15 @@ let isTwoAddress = 1 in {
 }
 
 defm PINSRQ      : SS41I_insert64<0x22, "pinsrq">;
+
+// -disable-16bit support.
+def : Pat<(truncstorei16 (i64 imm:$src), addr:$dst),
+          (MOV16mi addr:$dst, imm:$src)>;
+def : Pat<(truncstorei16 GR64:$src, addr:$dst),
+          (MOV16mr addr:$dst, (EXTRACT_SUBREG GR64:$src, x86_subreg_16bit))>;
+def : Pat<(i64 (sextloadi16 addr:$dst)),
+          (MOVSX64rm16 addr:$dst)>;
+def : Pat<(i64 (zextloadi16 addr:$dst)),
+          (MOVZX64rm16 addr:$dst)>;
+def : Pat<(i64 (extloadi16 addr:$dst)),
+          (MOVZX64rm16 addr:$dst)>;
