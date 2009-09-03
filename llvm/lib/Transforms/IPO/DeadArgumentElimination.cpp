@@ -353,14 +353,14 @@ DAE::Liveness DAE::SurveyUse(Value::use_iterator U, UseVector &MaybeLiveUses,
         // argument, since if it was the function argument this would be an
         // indirect call and the we know can't be looking at a value of the
         // label type (for the invoke instruction).
-        unsigned ArgNo = CS.getArgumentNo(U);
+        unsigned ArgNo = CS.getArgumentNo(U.getOperandNo());
 
         if (ArgNo >= F->getFunctionType()->getNumParams())
           // The value is passed in through a vararg! Must be live.
           return Live;
 
-        assert(CS.getArgument(ArgNo)
-               == CS.getInstruction()->getOperand(U.getOperandNo())
+        assert(CS.getArgument(ArgNo) 
+               == CS.getInstruction()->getOperand(U.getOperandNo()) 
                && "Argument is not where we expected it");
 
         // Value passed to a normal call. It's only live when the corresponding

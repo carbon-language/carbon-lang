@@ -118,7 +118,7 @@ public:
   ///
   Value *getCalledValue() const {
     assert(getInstruction() && "Not a call or invoke instruction!");
-    return *getCallee();
+    return getInstruction()->getOperand(0);
   }
 
   /// getCalledFunction - Return the function being called if this is a direct
@@ -132,7 +132,7 @@ public:
   ///
   void setCalledFunction(Value *V) {
     assert(getInstruction() && "Not a call or invoke instruction!");
-    *getCallee() = V;
+    getInstruction()->setOperand(0, V);
   }
 
   Value *getArgument(unsigned ArgNo) const {
@@ -144,16 +144,6 @@ public:
     assert(getInstruction() && "Not a call or invoke instruction!");
     assert(arg_begin() + ArgNo < arg_end() && "Argument # out of range!");
     getInstruction()->setOperand(getArgumentOffset() + ArgNo, newVal);
-  }
-
-  /// Given a value use iterator, returns the argument that corresponds to it.
-  /// Iterator must actually correspond to an argument.
-  unsigned getArgumentNo(Value::use_iterator I) const {
-    assert(getInstruction() && "Not a call or invoke instruction!");
-    assert(arg_begin() <= &I.getUse() && &I.getUse() < arg_end()
-           && "Argument # out of range!");
-
-    return &I.getUse() - arg_begin();
   }
 
   /// Given an operand number, returns the argument that corresponds to it.
@@ -181,7 +171,7 @@ public:
     return getInstruction()->op_begin() + getArgumentOffset();
   }
 
-  arg_iterator arg_end() const { return getInstruction()->op_end() - getArgumentEndOffset(); }
+  arg_iterator arg_end() const { return getInstruction()->op_end(); }
   bool arg_empty() const { return arg_end() == arg_begin(); }
   unsigned arg_size() const { return unsigned(arg_end() - arg_begin()); }
 
@@ -190,25 +180,17 @@ public:
   }
 
   bool isCallee(Value::use_iterator UI) const {
-    return getCallee() == &UI.getUse();
+    return getInstruction()->op_begin() == &UI.getUse();
   }
+
 private:
   /// Returns the operand number of the first argument
   unsigned getArgumentOffset() const {
     if (isCall())
       return 1; // Skip Function
     else
-      return 0; // Args are at the front
+      return 3; // Skip Function, BB, BB
   }
-
-  unsigned getArgumentEndOffset() const {
-    if (isCall())
-      return 0; // Unchanged
-    else
-      return 3; // Skip BB, BB, Function
-  }
-
-  User::op_iterator getCallee() const;
 };
 
 } // End llvm namespace
