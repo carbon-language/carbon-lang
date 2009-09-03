@@ -225,7 +225,8 @@ void MCAsmStreamer::EmitValueToAlignment(unsigned ByteAlignment, int64_t Value,
       OS << Log2_32(ByteAlignment);
 
     if (Value || MaxBytesToEmit) {
-      OS << ", " << truncateToSize(Value, ValueSize);
+      OS << ", 0x";
+      OS.write_hex(truncateToSize(Value, ValueSize));
 
       if (MaxBytesToEmit) 
         OS << ", " << MaxBytesToEmit;
