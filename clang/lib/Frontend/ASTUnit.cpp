@@ -104,13 +104,15 @@ ASTUnit *ASTUnit::LoadFromPCHFile(const std::string &Filename,
   std::string Predefines;
   unsigned Counter;
 
+  llvm::OwningPtr<PCHReader>        Reader;
   llvm::OwningPtr<ExternalASTSource> Source;
 
-  AST->Reader.reset(new PCHReader(SourceMgr, FileMgr, Diags));
-  AST->Reader->setListener(new PCHInfoCollector(LangInfo, HeaderInfo, 
-                                                TargetTriple, Predefines, 
-                                                Counter));
-  switch (AST->Reader->ReadPCH(Filename)) {
+  Reader.reset(new PCHReader(SourceMgr, FileMgr, Diags));
+  AST->Reader.reset(Reader.get());
+  Reader->setListener(new PCHInfoCollector(LangInfo, HeaderInfo, TargetTriple,
+                                           Predefines, Counter));
+
+  switch (Reader->ReadPCH(Filename)) {
   case PCHReader::Success:
     break;
     
@@ -131,7 +133,7 @@ ASTUnit *ASTUnit::LoadFromPCHFile(const std::string &Filename,
 
   PP.setPredefines(Predefines);
   PP.setCounterValue(Counter);
-  AST->Reader->setPreprocessor(PP);
+  Reader->setPreprocessor(PP);
   
   // Create and initialize the ASTContext.
 
@@ -145,12 +147,12 @@ ASTUnit *ASTUnit::LoadFromPCHFile(const std::string &Filename,
                                 /* size_reserve = */0));
   ASTContext &Context = *AST->Ctx.get();
   
-  AST->Reader->InitializeContext(Context);
+  Reader->InitializeContext(Context);
   
   // Attach the PCH reader to the AST context as an external AST
   // source, so that declarations will be deserialized from the
   // PCH file as needed.
-  Source.reset(AST->Reader.get());
+  Source.reset(Reader.take());
   Context.setExternalSource(Source);
 
   return AST.take(); 
