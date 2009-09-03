@@ -619,7 +619,7 @@ let isCall = 1,
   Defs = [R0,  R1,  R2,  R3,  R12, LR,
           D0,  D1,  D2,  D3,  D4,  D5,  D6,  D7,
           D16, D17, D18, D19, D20, D21, D22, D23,
-          D24, D25, D26, D27, D28, D29, D30, D31, CPSR] in {
+          D24, D25, D26, D27, D28, D29, D30, D31, CPSR, FPSCR] in {
   def BL  : ABXI<0b1011, (outs), (ins i32imm:$func, variable_ops),
                 IIC_Br, "bl ${func:call}",
                 [(ARMcall tglobaladdr:$func)]>,
@@ -656,7 +656,7 @@ let isCall = 1,
   Defs = [R0,  R1,  R2,  R3,  R9,  R12, LR,
           D0,  D1,  D2,  D3,  D4,  D5,  D6,  D7,
           D16, D17, D18, D19, D20, D21, D22, D23,
-          D24, D25, D26, D27, D28, D29, D30, D31, CPSR] in {
+          D24, D25, D26, D27, D28, D29, D30, D31, CPSR, FPSCR] in {
   def BLr9  : ABXI<0b1011, (outs), (ins i32imm:$func, variable_ops),
                 IIC_Br, "bl ${func:call}",
                 [(ARMcall tglobaladdr:$func)]>, Requires<[IsARM, IsDarwin]>;
