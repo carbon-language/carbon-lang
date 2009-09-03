@@ -22,6 +22,7 @@
 #include "llvm/Support/Debug.h"
 #include "llvm/Transforms/Utils/BasicBlockUtils.h"
 #include "llvm/Transforms/Instrumentation.h"
+#include "llvm/ADT/DenseSet.h"
 #include "llvm/ADT/Statistic.h"
 #include "MaximumSpanningTree.h"
 #include <set>
@@ -32,7 +33,6 @@ STATISTIC(NumEdgesInserted, "The # of edges inserted.");
 namespace {
   class VISIBILITY_HIDDEN OptimalEdgeProfiler : public ModulePass {
     bool runOnModule(Module &M);
-    ProfileInfo *PI;
   public:
     static char ID; // Pass identification, replacement for typeid
     OptimalEdgeProfiler() : ModulePass(&ID) {}
@@ -128,8 +128,10 @@ bool OptimalEdgeProfiler::runOnModule(Module &M) {
     // The third parameter of MaximumSpanningTree() has the effect that not the
     // actual MST is returned but the edges _not_ in the MST.
 
-    PI = &getAnalysisID<ProfileInfo>(ProfileEstimatorPassID, *F);
-    MaximumSpanningTree MST = MaximumSpanningTree(&(*F), PI, true);
+    ProfileInfo::EdgeWeights ECs = 
+      getAnalysisID<ProfileInfo>(ProfileEstimatorPassID, *F).getEdgeWeights(F);
+    std::vector<ProfileInfo::EdgeWeight> EdgeVector(ECs.begin(), ECs.end());
+    MaximumSpanningTree MST = MaximumSpanningTree(EdgeVector);
 
     // Check if (0,entry) not in the MST. If not, instrument edge
     // (IncrementCounterInBlock()) and set the counter initially to zero, if
@@ -137,7 +139,7 @@ bool OptimalEdgeProfiler::runOnModule(Module &M) {
 
     BasicBlock *entry = &(F->getEntryBlock());
     ProfileInfo::Edge edge = ProfileInfo::getEdge(0,entry);
-    if (std::binary_search(MST.begin(), MST.end(), edge)) {
+    if (!std::binary_search(MST.begin(), MST.end(), edge)) {
       printEdgeCounter(edge,entry,i);
       IncrementCounterInBlock(entry, i, Counters); NumEdgesInserted++;
       Initializer[i++] = (zeroc);
@@ -147,7 +149,7 @@ bool OptimalEdgeProfiler::runOnModule(Module &M) {
 
     // InsertedBlocks contains all blocks that were inserted for splitting an
     // edge, this blocks do not have to be instrumented.
-    std::set<BasicBlock*> InsertedBlocks;
+    DenseSet<BasicBlock*> InsertedBlocks;
     for (Function::iterator BB = F->begin(), E = F->end(); BB != E; ++BB) {
       // Check if block was not inserted and thus does not have to be
       // instrumented.
@@ -160,7 +162,7 @@ bool OptimalEdgeProfiler::runOnModule(Module &M) {
       TerminatorInst *TI = BB->getTerminator();
       if (TI->getNumSuccessors() == 0) {
         ProfileInfo::Edge edge = ProfileInfo::getEdge(BB,0);
-        if (std::binary_search(MST.begin(), MST.end(), edge)) {
+        if (!std::binary_search(MST.begin(), MST.end(), edge)) {
           printEdgeCounter(edge,BB,i);
           IncrementCounterInBlock(BB, i, Counters); NumEdgesInserted++;
           Initializer[i++] = (zeroc);
@@ -171,12 +173,12 @@ bool OptimalEdgeProfiler::runOnModule(Module &M) {
       for (unsigned s = 0, e = TI->getNumSuccessors(); s != e; ++s) {
         BasicBlock *Succ = TI->getSuccessor(s);
         ProfileInfo::Edge edge = ProfileInfo::getEdge(BB,Succ);
-        if (std::binary_search(MST.begin(), MST.end(), edge)) {
+        if (!std::binary_search(MST.begin(), MST.end(), edge)) {
 
           // If the edge is critical, split it.
           bool wasInserted = SplitCriticalEdge(TI, s, this);
           Succ = TI->getSuccessor(s);
-          if(wasInserted)
+          if (wasInserted)
             InsertedBlocks.insert(Succ);
 
           // Okay, we are guaranteed that the edge is no longer critical.  If

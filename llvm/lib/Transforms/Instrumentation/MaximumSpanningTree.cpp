@@ -14,8 +14,6 @@
 //===----------------------------------------------------------------------===//
 #define DEBUG_TYPE "maximum-spanning-tree"
 #include "MaximumSpanningTree.h"
-#include "llvm/Pass.h"
-#include "llvm/Analysis/Passes.h"
 #include "llvm/ADT/EquivalenceClasses.h"
 #include "llvm/Support/Compiler.h"
 #include "llvm/Support/CFG.h"
@@ -64,12 +62,9 @@ static void inline printMSTEdge(ProfileInfo::EdgeWeight E,
 // MaximumSpanningTree() - Takes a function and returns a spanning tree
 // according to the currently active profiling information, the leaf edges are
 // NOT in the MST. MaximumSpanningTree uses the algorithm of Kruskal.
-MaximumSpanningTree::MaximumSpanningTree(Function *F, ProfileInfo *PI,
-                                         bool inverted = false) {
+MaximumSpanningTree::MaximumSpanningTree(std::vector<ProfileInfo::EdgeWeight>
+                                         &EdgeVector) {
 
-  // Copy edges to vector, sort them biggest first.
-  ProfileInfo::EdgeWeights ECs = PI->getEdgeWeights(F);
-  std::vector<ProfileInfo::EdgeWeight> EdgeVector(ECs.begin(), ECs.end());
   std::sort(EdgeVector.begin(), EdgeVector.end(), EdgeWeightCompare());
 
   // Create spanning tree, Forest contains a special data structure
@@ -92,12 +87,11 @@ MaximumSpanningTree::MaximumSpanningTree(Function *F, ProfileInfo *PI,
       Forest.unionSets(e.first, e.second);
       // So we know now that the edge is not already in a subtree (and not
       // (0,entry)), so we push the edge to the MST if it has some successors.
-      if (!inverted) { MST.push_back(e); }
+      MST.push_back(e);
       printMSTEdge(*bbi,"in MST");
     } else {
       // This edge is either (0,entry) or (BB,0) or would create a circle in a
       // subtree.
-      if (inverted) { MST.push_back(e); }
       printMSTEdge(*bbi,"*not* in MST");
     }
   }

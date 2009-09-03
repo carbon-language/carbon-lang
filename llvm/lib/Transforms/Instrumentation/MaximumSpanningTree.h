@@ -37,7 +37,7 @@ namespace llvm {
     // special also all leaf edges of the MST are not included, this makes it
     // easier for the OptimalEdgeProfileInstrumentation to use this MST to do
     // an optimal profiling.
-    MaximumSpanningTree(Function *F, ProfileInfo *PI, bool invert);
+    MaximumSpanningTree(std::vector<ProfileInfo::EdgeWeight>&);
     virtual ~MaximumSpanningTree() {}
 
     virtual MaxSpanTree::iterator begin();
