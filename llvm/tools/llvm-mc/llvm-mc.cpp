@@ -243,13 +243,13 @@ static int AssembleInput(const char *ProgName) {
   OwningPtr<MCStreamer> Str;
 
   if (FileType == OFT_AssemblyFile) {
-    const MCAsmInfo *TAI = TheTarget->createAsmInfo(TripleName);
-    assert(TAI && "Unable to create target asm info!");
+    const MCAsmInfo *MAI = TheTarget->createAsmInfo(TripleName);
+    assert(MAI && "Unable to create target asm info!");
 
-    AP.reset(TheTarget->createAsmPrinter(*Out, *TM, TAI, true));
+    AP.reset(TheTarget->createAsmPrinter(*Out, *TM, MAI, true));
     if (ShowEncoding)
       CE.reset(TheTarget->createCodeEmitter(*TM));
-    Str.reset(createAsmStreamer(Ctx, *Out, *TAI, AP.get(), CE.get()));
+    Str.reset(createAsmStreamer(Ctx, *Out, *MAI, AP.get(), CE.get()));
   } else {
     assert(FileType == OFT_ObjectFile && "Invalid file type!");
     CE.reset(TheTarget->createCodeEmitter(*TM));
