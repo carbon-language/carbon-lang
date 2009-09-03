@@ -158,9 +158,8 @@ unsigned X86Subtarget::getSpecialAddressLatency() const {
 
 /// GetCpuIDAndInfo - Execute the specified cpuid and return the 4 values in the
 /// specified arguments.  If we can't run cpuid on the host, return true.
-bool
-X86Subtarget::GetCpuIDAndInfo(unsigned value, unsigned *rEAX,
-                              unsigned *rEBX, unsigned *rECX, unsigned *rEDX) {
+static bool GetCpuIDAndInfo(unsigned value, unsigned *rEAX,
+                            unsigned *rEBX, unsigned *rECX, unsigned *rEDX) {
 #if defined(__x86_64__) || defined(_M_AMD64) || defined (_M_X64)
   #if defined(__GNUC__)
     // gcc doesn't know cpuid would clobber ebx/rbx. Preseve it manually.
@@ -240,7 +239,7 @@ void X86Subtarget::AutoDetectSubtargetFeatures() {
   if ((EDX >> 23) & 1) X86SSELevel = MMX;
   if ((EDX >> 25) & 1) X86SSELevel = SSE1;
   if ((EDX >> 26) & 1) X86SSELevel = SSE2;
-  if (ECX & 0x1)         X86SSELevel = SSE3;
+  if (ECX & 0x1)       X86SSELevel = SSE3;
   if ((ECX >> 9)  & 1) X86SSELevel = SSSE3;
   if ((ECX >> 19) & 1) X86SSELevel = SSE41;
   if ((ECX >> 20) & 1) X86SSELevel = SSE42;
@@ -265,7 +264,7 @@ void X86Subtarget::AutoDetectSubtargetFeatures() {
   }
 }
 
-const char *X86Subtarget::GetCurrentX86CPU() {
+static const char *GetCurrentX86CPU() {
   unsigned EAX = 0, EBX = 0, ECX = 0, EDX = 0;
   if (GetCpuIDAndInfo(0x1, &EAX, &EBX, &ECX, &EDX))
     return "generic";

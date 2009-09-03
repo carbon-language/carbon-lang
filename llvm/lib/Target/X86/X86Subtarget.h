@@ -214,14 +214,6 @@ public:
   /// indicating the number of scheduling cycles of backscheduling that
   /// should be attempted.
   unsigned getSpecialAddressLatency() const;
-
-private:
-  /// GetCpuIDAndInfo - Execute the specified cpuid and return the 4 values in
-  /// the specified arguments.  If we can't run cpuid on the host, return true.
-  bool GetCpuIDAndInfo(unsigned value, unsigned *rEAX, unsigned *rEBX,
-                       unsigned *rECX, unsigned *rEDX);
-
-  const char *GetCurrentX86CPU();
 };
 
 } // End llvm namespace
