@@ -31,6 +31,7 @@ using namespace llvm;
 
 STATISTIC(NumMemCpyInstr, "Number of memcpy instructions deleted");
 STATISTIC(NumMemSetInfer, "Number of memsets inferred");
+STATISTIC(NumMoveToCpy,   "Number of memmoves converted to memcpy");
 
 /// isBytewiseValue - If the specified value can be set by repeating the same
 /// byte in memory, return the i8 value that it is represented with.  This is
@@ -728,10 +729,12 @@ bool MemCpyOpt::processMemMove(MemMoveInst *M) {
   Module *Mod = M->getParent()->getParent()->getParent();
   const Type *Ty = M->getLength()->getType();
   M->setOperand(0, Intrinsic::getDeclaration(Mod, Intrinsic::memcpy, &Ty, 1));
-  
+
   // MemDep may have over conservative information about this instruction, just
   // conservatively flush it from the cache.
   getAnalysis<MemoryDependenceAnalysis>().removeInstruction(M);
+
+  ++NumMoveToCpy;
   return true;
 }
   
