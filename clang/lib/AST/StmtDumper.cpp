@@ -301,45 +301,7 @@ void StmtDumper::VisitExpr(Expr *Node) {
 
 void StmtDumper::VisitCastExpr(CastExpr *Node) {
   DumpExpr(Node);
-  fprintf(F, " ");
-  switch (Node->getCastKind()) {
-  case CastExpr::CK_Unknown:
-    fprintf(F, "<Unknown>");
-    break;
-  case CastExpr::CK_BitCast:
-    fprintf(F, "<BitCast>");
-    break;
-  case CastExpr::CK_NoOp:
-    fprintf(F, "<NoOp>");
-    break;
-  case CastExpr::CK_DerivedToBase:
-    fprintf(F, "<DerivedToBase>");
-    break;
-  case CastExpr::CK_Dynamic:
-    fprintf(F, "<Dynamic>");
-    break;
-  case CastExpr::CK_ToUnion:
-    fprintf(F, "<ToUnion>");
-    break;
-  case CastExpr::CK_ArrayToPointerDecay:
-    fprintf(F, "<ArrayToPointerDecay>");
-    break;
-  case CastExpr::CK_FunctionToPointerDecay:
-    fprintf(F, "<FunctionToPointerDecay>");
-    break;
-  case CastExpr::CK_NullToMemberPointer:
-    fprintf(F, "<NullToMemberPointer>");
-    break;
-  case CastExpr::CK_BaseToDerivedMemberPointer:
-    fprintf(F, "<BaseToDerivedMemberPointer>");
-    break;
-  case CastExpr::CK_UserDefinedConversion:
-    fprintf(F, "<UserDefinedConversion>");
-    break;
-  case CastExpr::CK_ConstructorConversion:
-    fprintf(F, "<ConstructorConversion>");
-    break;
-  }
+  fprintf(F, " <%s>", Node->getCastKindName());
 }
 
 void StmtDumper::VisitDeclRefExpr(DeclRefExpr *Node) {
@@ -480,8 +442,9 @@ void StmtDumper::VisitTypesCompatibleExpr(TypesCompatibleExpr *Node) {
 
 void StmtDumper::VisitCXXNamedCastExpr(CXXNamedCastExpr *Node) {
   DumpExpr(Node);
-  fprintf(F, " %s<%s>", Node->getCastName(),
-          Node->getTypeAsWritten().getAsString().c_str());
+  fprintf(F, " %s<%s> <%s>", Node->getCastName(),
+          Node->getTypeAsWritten().getAsString().c_str(),
+          Node->getCastKindName());
 }
 
 void StmtDumper::VisitCXXBoolLiteralExpr(CXXBoolLiteralExpr *Node) {

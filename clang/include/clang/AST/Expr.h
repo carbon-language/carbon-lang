@@ -1395,7 +1395,8 @@ protected:
 public:
   CastKind getCastKind() const { return Kind; }
   void setCastKind(CastKind K) { Kind = K; }
-  
+  const char *getCastKindName() const;
+
   Expr *getSubExpr() { return cast<Expr>(Op); }
   const Expr *getSubExpr() const { return cast<Expr>(Op); }
   void setSubExpr(Expr *E) { Op = E; }

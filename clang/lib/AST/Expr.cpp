@@ -319,6 +319,38 @@ MemberExpr *MemberExpr::Create(ASTContext &C, Expr *base, bool isarrow,
                               ty);
 }
 
+const char *CastExpr::getCastKindName() const {
+  switch (getCastKind()) {
+  case CastExpr::CK_Unknown:
+    return "Unknown";
+  case CastExpr::CK_BitCast:
+    return "BitCast";
+  case CastExpr::CK_NoOp:
+    return "NoOp";
+  case CastExpr::CK_DerivedToBase:
+    return "DerivedToBase";
+  case CastExpr::CK_Dynamic:
+    return "Dynamic";
+  case CastExpr::CK_ToUnion:
+    return "ToUnion";
+  case CastExpr::CK_ArrayToPointerDecay:
+    return "ArrayToPointerDecay";
+  case CastExpr::CK_FunctionToPointerDecay:
+    return "FunctionToPointerDecay";
+  case CastExpr::CK_NullToMemberPointer:
+    return "NullToMemberPointer";
+  case CastExpr::CK_BaseToDerivedMemberPointer:
+    return "BaseToDerivedMemberPointer";
+  case CastExpr::CK_UserDefinedConversion:
+    return "UserDefinedConversion";
+  case CastExpr::CK_ConstructorConversion:
+    return "ConstructorConversion";
+  }
+  
+  assert(0 && "Unhandled cast kind!");
+  return 0;
+}
+
 /// getOpcodeStr - Turn an Opcode enum value into the punctuation char it
 /// corresponds to, e.g. "<<=".
 const char *BinaryOperator::getOpcodeStr(Opcode Op) {
