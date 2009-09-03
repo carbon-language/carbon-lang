@@ -703,8 +703,6 @@ void CheckBadDiv::PreVisitBinaryOperator(CheckerContext &C,
       !B->getRHS()->getType()->isScalarType())
     return;
 
-  printf("should not check!\n");
-
   // Check for divide by undefined.
   SVal Denom = C.getState()->getSVal(B->getRHS());
 
