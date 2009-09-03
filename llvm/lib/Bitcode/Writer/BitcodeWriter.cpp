@@ -960,11 +960,11 @@ static void WriteInstruction(const Instruction &I, unsigned InstID,
     
     // Emit value #'s for the fixed parameters.
     for (unsigned i = 0, e = FTy->getNumParams(); i != e; ++i)
-      Vals.push_back(VE.getValueID(I.getOperand(i+3)));  // fixed param.
+      Vals.push_back(VE.getValueID(I.getOperand(i)));  // fixed param.
 
     // Emit type/value pairs for varargs params.
     if (FTy->isVarArg()) {
-      for (unsigned i = 3+FTy->getNumParams(), e = I.getNumOperands();
+      for (unsigned i = FTy->getNumParams(), e = I.getNumOperands()-3;
            i != e; ++i)
         PushValueAndType(I.getOperand(i), InstID, Vals, VE); // vararg
     }

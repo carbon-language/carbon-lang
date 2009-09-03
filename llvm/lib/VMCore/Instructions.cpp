@@ -95,6 +95,13 @@ bool CallSite::hasArgument(const Value *Arg) const {
   return false;
 }
 
+User::op_iterator CallSite::getCallee() const {
+  Instruction *II(getInstruction());
+  return isCall()
+    ? cast<CallInst>(II)->op_begin()
+    : cast<InvokeInst>(II)->op_end() - 3; // Skip BB, BB, Function
+}
+
 #undef CALLSITE_DELEGATE_GETTER
 #undef CALLSITE_DELEGATE_SETTER
 
@@ -435,10 +442,9 @@ bool CallInst::paramHasAttr(unsigned i, Attributes attr) const {
 void InvokeInst::init(Value *Fn, BasicBlock *IfNormal, BasicBlock *IfException,
                       Value* const *Args, unsigned NumArgs) {
   assert(NumOperands == 3+NumArgs && "NumOperands not set up?");
-  Use *OL = OperandList;
-  OL[0] = Fn;
-  OL[1] = IfNormal;
-  OL[2] = IfException;
+  Op<-3>() = Fn;
+  Op<-2>() = IfNormal;
+  Op<-1>() = IfException;
   const FunctionType *FTy =
     cast<FunctionType>(cast<PointerType>(Fn->getType())->getElementType());
   FTy = FTy;  // silence warning.
@@ -447,12 +453,13 @@ void InvokeInst::init(Value *Fn, BasicBlock *IfNormal, BasicBlock *IfException,
           (FTy->isVarArg() && NumArgs > FTy->getNumParams())) &&
          "Calling a function with bad signature");
 
+  Use *OL = OperandList;
   for (unsigned i = 0, e = NumArgs; i != e; i++) {
     assert((i >= FTy->getNumParams() || 
             FTy->getParamType(i) == Args[i]->getType()) &&
            "Invoking a function with a bad signature!");
     
-    OL[i+3] = Args[i];
+    OL[i] = Args[i];
   }
 }
 

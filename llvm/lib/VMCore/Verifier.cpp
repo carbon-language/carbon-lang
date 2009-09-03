@@ -1412,7 +1412,7 @@ void Verifier::visitInstruction(Instruction &I) {
                 "Instruction does not dominate all uses!", Op, &I);
       }
     } else if (isa<InlineAsm>(I.getOperand(i))) {
-      Assert1(i == 0 && (isa<CallInst>(I) || isa<InvokeInst>(I)),
+      Assert1((i == 0 && isa<CallInst>(I)) || (i + 3 == e && isa<InvokeInst>(I)),
               "Cannot take the address of an inline asm!", &I);
     }
   }

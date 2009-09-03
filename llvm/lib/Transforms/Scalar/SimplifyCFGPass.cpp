@@ -78,7 +78,7 @@ static void ChangeToUnreachable(Instruction *I, LLVMContext &Context) {
 /// ChangeToCall - Convert the specified invoke into a normal call.
 static void ChangeToCall(InvokeInst *II) {
   BasicBlock *BB = II->getParent();
-  SmallVector<Value*, 8> Args(II->op_begin()+3, II->op_end());
+  SmallVector<Value*, 8> Args(II->op_begin(), II->op_end() - 3);
   CallInst *NewCall = CallInst::Create(II->getCalledValue(), Args.begin(),
                                        Args.end(), "", II);
   NewCall->takeName(II);
