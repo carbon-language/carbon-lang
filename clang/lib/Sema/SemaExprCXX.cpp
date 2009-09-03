@@ -757,6 +757,10 @@ Sema::ActOnCXXDelete(SourceLocation StartLoc, bool UseGlobal,
                                  &DeleteArg, 1, Record, /*AllowMissing=*/true,
                                  OperatorDelete))
         return ExprError();
+      if (!Record->hasTrivialDestructor())
+        if (const CXXDestructorDecl *Dtor = Record->getDestructor(Context))
+          MarkDeclarationReferenced(StartLoc, 
+                                    const_cast<CXXDestructorDecl*>(Dtor));
     }
     
     if (!OperatorDelete) {

@@ -1095,12 +1095,13 @@ public:
 /// };
 /// @endcode
 class CXXDestructorDecl : public CXXMethodDecl {
+public:
   enum KindOfObjectToDestroy {
     VBASE = 0x1,
     DRCTNONVBASE = 0x2,
     ANYBASE = 0x3
   };
-
+private:
   /// ImplicitlyDefined - Whether this destructor was implicitly
   /// defined by the compiler. When false, the destructor was defined
   /// by the user. In C++03, this flag will have the same value as
@@ -1181,10 +1182,22 @@ public:
     return NumBaseOrMemberDestructions; 
   }
   
-  /// getBaseOrMember - get the generic 'member' representing either the field
-  /// or a base class.
+  /// setNumBaseOrMemberDestructions - Set number of base and non-static members
+  /// to destroy.
+  void setNumBaseOrMemberDestructions(unsigned numBaseOrMemberDestructions) {
+    NumBaseOrMemberDestructions = numBaseOrMemberDestructions;
+  }
+  
+  /// getBaseOrMemberToDestroy - get the generic 'member' representing either 
+  /// the field or a base class.
   uintptr_t* getBaseOrMemberToDestroy() const {
     return BaseOrMemberDestructions; 
+  }
+  
+  /// setBaseOrMemberToDestroy - set the generic 'member' representing either 
+  /// the field or a base class.
+  void setBaseOrMemberDestructions(uintptr_t* baseOrMemberDestructions) {
+    BaseOrMemberDestructions = baseOrMemberDestructions;
   }
   
   /// isVbaseToDestroy - returns true, if object is virtual base.
@@ -1229,12 +1242,6 @@ public:
       return reinterpret_cast<Type*>(Base  & ~0x02);
     return 0;
   }
-  
-  /// computeBaseOrMembersToDestroy - Compute information in current 
-  /// destructor decl's AST of bases and non-static data members which will be 
-  /// implicitly destroyed. We are storing the destruction in the order that
-  /// they should occur (which is the reverse of construction order).
-  void computeBaseOrMembersToDestroy(ASTContext &C);
                         
   // Implement isa/cast/dyncast/etc.
   static bool classof(const Decl *D) { 

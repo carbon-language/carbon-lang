@@ -22,12 +22,14 @@ struct B {
 template <typename T> class List {
 public:
   List(){ }	// List<BinomialNode<int>*>::List() remains undefined.
+  ~List() {}
 };
 
 template <typename T> class Node {
  int i;
 public:
  Node(){ }      // Node<BinomialNode<int>*>::Node() remains undefined.
+ ~Node() {}
 };
 
 
@@ -40,10 +42,15 @@ public:
 int main() {
   B<int> *n = new B<int>(4);
   BinomialNode<int> *node = new BinomialNode<int>(1);
+  delete node;
 }
 
+// CHECK-LP64: __ZN4ListIP12BinomialNodeIiEED1Ev:
+// CHECK-LP64: __ZN4ListIP12BinomialNodeIiEED2Ev:
 // CHECK-LP64:	__ZN4NodeIP12BinomialNodeIiEEC1Ev:
 // CHECK-LP64: __ZN4ListIP12BinomialNodeIiEEC1Ev:
 
+// CHECK-LP32: __ZN4ListIP12BinomialNodeIiEED1Ev:
+// CHECK-LP32: __ZN4ListIP12BinomialNodeIiEED2Ev:
 // CHECK-LP32: __ZN4NodeIP12BinomialNodeIiEEC1Ev:
 // CHECK-LP32: __ZN4ListIP12BinomialNodeIiEEC1Ev:

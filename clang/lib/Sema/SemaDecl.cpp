@@ -3758,7 +3758,7 @@ Sema::DeclPtrTy Sema::ActOnFinishFunctionBody(DeclPtrTy D, StmtArg BodyArg,
     DiagnoseReturnInConstructorExceptionHandler(cast<CXXTryStmt>(Body));
   
   if (CXXDestructorDecl *Destructor = dyn_cast<CXXDestructorDecl>(dcl))
-    Destructor->computeBaseOrMembersToDestroy(Context);
+    computeBaseOrMembersToDestroy(Destructor);
   return D;
 }
 

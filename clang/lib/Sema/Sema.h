@@ -2191,6 +2191,12 @@ public:
                               llvm::SmallVectorImpl<CXXBaseSpecifier *>& Bases,
                               llvm::SmallVectorImpl<FieldDecl *>&Members);
   
+  /// computeBaseOrMembersToDestroy - Compute information in current 
+  /// destructor decl's AST of bases and non-static data members which will be 
+  /// implicitly destroyed. We are storing the destruction in the order that
+  /// they should occur (which is the reverse of construction order).
+  void computeBaseOrMembersToDestroy(CXXDestructorDecl *Destructor);
+  
   void AddImplicitlyDeclaredMembersToClass(CXXRecordDecl *ClassDecl);
 
   virtual void ActOnMemInitializers(DeclPtrTy ConstructorDecl, 
