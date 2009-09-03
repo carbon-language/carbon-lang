@@ -608,6 +608,26 @@ FastISel::FastEmitBranch(MachineBasicBlock *MSucc) {
   MBB->addSuccessor(MSucc);
 }
 
+/// SelectFNeg - Emit an FNeg operation.
+///
+bool
+FastISel::SelectFNeg(User *I) {
+  unsigned OpReg = getRegForValue(BinaryOperator::getFNegArgument(I));
+  if (OpReg == 0) return false;
+
+  // Twiddle the sign bit with xor.
+  EVT VT = TLI.getValueType(I->getType());
+  if (VT.getSizeInBits() > 64) return false;
+  unsigned ResultReg = FastEmit_ri_(VT.getSimpleVT(), ISD::XOR, OpReg,
+                                    UINT64_C(1) << (VT.getSizeInBits()-1),
+                                    VT.getSimpleVT());
+  if (ResultReg == 0)
+    return false;
+
+  UpdateValueMap(I, ResultReg);
+  return true;
+}
+
 bool
 FastISel::SelectOperator(User *I, unsigned Opcode) {
   switch (Opcode) {
@@ -618,6 +638,9 @@ FastISel::SelectOperator(User *I, unsigned Opcode) {
   case Instruction::Sub:
     return SelectBinaryOp(I, ISD::SUB);
   case Instruction::FSub:
+    // FNeg is currently represented in LLVM IR as a special case of FSub.
+    if (BinaryOperator::isFNeg(I))
+      return SelectFNeg(I);
     return SelectBinaryOp(I, ISD::FSUB);
   case Instruction::Mul:
     return SelectBinaryOp(I, ISD::MUL);

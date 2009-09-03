@@ -300,6 +300,8 @@ protected:
 private:
   bool SelectBinaryOp(User *I, ISD::NodeType ISDOpcode);
 
+  bool SelectFNeg(User *I);
+
   bool SelectGetElementPtr(User *I);
 
   bool SelectCall(User *I);
