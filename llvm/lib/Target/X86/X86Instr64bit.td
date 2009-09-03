@@ -139,6 +139,9 @@ let isCall = 1 in
     def CALL64m       : I<0xFF, MRM2m, (outs), (ins i64mem:$dst, variable_ops),
                           "call\t{*}$dst", [(X86call (loadi64 addr:$dst))]>,
                         Requires<[NotWin64]>;
+                        
+    def FARCALL64   : RI<0xFF, MRM3m, (outs), (ins opaque80mem:$dst),
+                         "lcall{q}\t{*}$dst", []>;
   }
 
   // FIXME: We need to teach codegen about single list of call-clobbered registers.
@@ -189,6 +192,8 @@ let isBranch = 1, isTerminator = 1, isBarrier = 1, isIndirectBranch = 1 in {
                      [(brind GR64:$dst)]>;
   def JMP64m     : I<0xFF, MRM4m, (outs), (ins i64mem:$dst), "jmp{q}\t{*}$dst",
                      [(brind (loadi64 addr:$dst))]>;
+  def FARJMP64   : RI<0xFF, MRM5m, (outs), (ins opaque80mem:$dst),
+                      "ljmp{q}\t{*}$dst", []>;
 }
 
 //===----------------------------------------------------------------------===//

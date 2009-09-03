@@ -54,6 +54,10 @@ struct VISIBILITY_HIDDEN X86IntelAsmPrinter : public AsmPrinter {
   
   void print_pcrel_imm(const MachineInstr *MI, unsigned OpNo);
 
+  void printopaquemem(const MachineInstr *MI, unsigned OpNo) {
+    O << "OPAQUE PTR ";
+    printMemReference(MI, OpNo);
+  }
 
   void printi8mem(const MachineInstr *MI, unsigned OpNo) {
     O << "BYTE PTR ";

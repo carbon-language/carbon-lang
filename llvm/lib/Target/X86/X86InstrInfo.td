@@ -189,6 +189,10 @@ class X86MemOperand<string printMethod> : Operand<iPTR> {
   let ParserMatchClass = X86MemAsmOperand;
 }
 
+def opaque32mem : X86MemOperand<"printopaquemem">;
+def opaque48mem : X86MemOperand<"printopaquemem">;
+def opaque80mem : X86MemOperand<"printopaquemem">;
+
 def i8mem   : X86MemOperand<"printi8mem">;
 def i16mem  : X86MemOperand<"printi16mem">;
 def i32mem  : X86MemOperand<"printi32mem">;
@@ -580,6 +584,10 @@ let isBranch = 1, isTerminator = 1, isBarrier = 1, isIndirectBranch = 1 in {
                      [(brind GR32:$dst)]>;
   def JMP32m     : I<0xFF, MRM4m, (outs), (ins i32mem:$dst), "jmp{l}\t{*}$dst",
                      [(brind (loadi32 addr:$dst))]>;
+  def FARJMP16   : I<0xFF, MRM5m, (outs), (ins opaque32mem:$dst), 
+                     "ljmp{w}\t{*}$dst", []>, OpSize;
+  def FARJMP32   : I<0xFF, MRM5m, (outs), (ins opaque48mem:$dst),
+                     "ljmp{l}\t{*}$dst", []>;
 }
 
 // Conditional branches
@@ -660,6 +668,11 @@ let isCall = 1 in
                         "call\t{*}$dst", [(X86call GR32:$dst)]>;
     def CALL32m     : I<0xFF, MRM2m, (outs), (ins i32mem:$dst, variable_ops),
                         "call\t{*}$dst", [(X86call (loadi32 addr:$dst))]>;
+  
+    def FARCALL16   : I<0xFF, MRM3m, (outs), (ins opaque32mem:$dst),
+                        "lcall{w}\t{*}$dst", []>, OpSize;
+    def FARCALL32   : I<0xFF, MRM3m, (outs), (ins opaque48mem:$dst),
+                        "lcall{l}\t{*}$dst", []>;
   }
 
 // Tail call stuff.

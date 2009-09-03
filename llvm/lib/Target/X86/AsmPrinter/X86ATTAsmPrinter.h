@@ -86,6 +86,10 @@ class VISIBILITY_HIDDEN X86ATTAsmPrinter : public AsmPrinter {
   void printPICLabel(const MCInst *MI, unsigned Op);
   void print_pcrel_imm(const MCInst *MI, unsigned OpNo);
   
+  void printopaquemem(const MCInst *MI, unsigned OpNo) {
+    printMemReference(MI, OpNo);
+  }
+  
   void printi8mem(const MCInst *MI, unsigned OpNo) {
     printMemReference(MI, OpNo);
   }
@@ -129,6 +133,11 @@ class VISIBILITY_HIDDEN X86ATTAsmPrinter : public AsmPrinter {
   void printOperand(const MachineInstr *MI, unsigned OpNo,
                     const char *Modifier = 0);
   void print_pcrel_imm(const MachineInstr *MI, unsigned OpNo);
+
+  void printopaquemem(const MachineInstr *MI, unsigned OpNo) {
+    printMemReference(MI, OpNo);
+  }
+
   void printi8mem(const MachineInstr *MI, unsigned OpNo) {
     printMemReference(MI, OpNo);
   }
