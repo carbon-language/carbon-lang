@@ -408,8 +408,12 @@ TargetJITInfo::LazyResolverFn
 X86JITInfo::getLazyResolverFunction(JITCompilerFn F) {
   JITCompilerFunction = F;
 
-  return Subtarget->hasSSE1()
-    ? X86CompilationCallback_SSE : X86CompilationCallback;
+#if defined (X86_32_JIT) && !defined (_MSC_VER)
+  if (Subtarget->hasSSE1())
+    return X86CompilationCallback_SSE;
+#endif
+
+  return X86CompilationCallback;
 }
 
 X86JITInfo::X86JITInfo(X86TargetMachine &tm) : TM(tm) {
