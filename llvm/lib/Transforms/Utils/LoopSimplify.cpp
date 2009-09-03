@@ -255,7 +255,7 @@ ReprocessLoop:
   PHINode *PN;
   for (BasicBlock::iterator I = L->getHeader()->begin();
        (PN = dyn_cast<PHINode>(I++)); )
-    if (Value *V = PN->hasConstantValue()) {
+    if (Value *V = PN->hasConstantValue(DT)) {
       if (AA) AA->deleteValue(PN);
       PN->replaceAllUsesWith(V);
       PN->eraseFromParent();
@@ -417,14 +417,13 @@ static PHINode *FindPHIToPartitionLoops(Loop *L, DominatorTree *DT,
   for (BasicBlock::iterator I = L->getHeader()->begin(); isa<PHINode>(I); ) {
     PHINode *PN = cast<PHINode>(I);
     ++I;
-    if (Value *V = PN->hasConstantValue())
-      if (!isa<Instruction>(V) || DT->dominates(cast<Instruction>(V), PN)) {
-        // This is a degenerate PHI already, don't modify it!
-        PN->replaceAllUsesWith(V);
-        if (AA) AA->deleteValue(PN);
-        PN->eraseFromParent();
-        continue;
-      }
+    if (Value *V = PN->hasConstantValue(DT)) {
+      // This is a degenerate PHI already, don't modify it!
+      PN->replaceAllUsesWith(V);
+      if (AA) AA->deleteValue(PN);
+      PN->eraseFromParent();
+      continue;
+    }
 
     // Scan this PHI node looking for a use of the PHI node by itself.
     for (unsigned i = 0, e = PN->getNumIncomingValues(); i != e; ++i)

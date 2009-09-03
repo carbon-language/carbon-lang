@@ -17,6 +17,7 @@
 #include "llvm/Function.h"
 #include "llvm/Instructions.h"
 #include "llvm/Operator.h"
+#include "llvm/Analysis/Dominators.h"
 #include "llvm/Support/ErrorHandling.h"
 #include "llvm/Support/CallSite.h"
 #include "llvm/Support/ConstantRange.h"
@@ -226,7 +227,12 @@ void PHINode::resizeOperands(unsigned NumOps) {
 /// hasConstantValue - If the specified PHI node always merges together the same
 /// value, return the value, otherwise return null.
 ///
-Value *PHINode::hasConstantValue(bool AllowNonDominatingInstruction) const {
+/// If the PHI has undef operands, but all the rest of the operands are
+/// some unique value, return that value if it can be proved that the
+/// value dominates the PHI. If DT is null, use a conservative check,
+/// otherwise use DT to test for dominance.
+///
+Value *PHINode::hasConstantValue(DominatorTree *DT) const {
   // If the PHI node only has one incoming value, eliminate the PHI node...
   if (getNumIncomingValues() == 1) {
     if (getIncomingValue(0) != this)   // not  X = phi X
@@ -260,12 +266,19 @@ Value *PHINode::hasConstantValue(bool AllowNonDominatingInstruction) const {
   // instruction, we cannot always return X as the result of the PHI node.  Only
   // do this if X is not an instruction (thus it must dominate the PHI block),
   // or if the client is prepared to deal with this possibility.
-  if (HasUndefInput && !AllowNonDominatingInstruction)
-    if (Instruction *IV = dyn_cast<Instruction>(InVal))
-      // If it's in the entry block, it dominates everything.
-      if (IV->getParent() != &IV->getParent()->getParent()->getEntryBlock() ||
-          isa<InvokeInst>(IV))
-        return 0;   // Cannot guarantee that InVal dominates this PHINode.
+  if (HasUndefInput)
+    if (Instruction *IV = dyn_cast<Instruction>(InVal)) {
+      if (DT) {
+        // We have a DominatorTree. Do a precise test.
+        if (!DT->dominates(IV, this))
+          return 0;
+      } else {
+        // If it's in the entry block, it dominates everything.
+        if (IV->getParent() != &IV->getParent()->getParent()->getEntryBlock() ||
+            isa<InvokeInst>(IV))
+          return 0;   // Cannot guarantee that InVal dominates this PHINode.
+      }
+    }
 
   // All of the incoming values are the same, return the value now.
   return InVal;

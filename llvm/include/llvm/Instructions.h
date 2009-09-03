@@ -31,6 +31,7 @@ class ConstantInt;
 class ConstantRange;
 class APInt;
 class LLVMContext;
+class DominatorTree;
 
 //===----------------------------------------------------------------------===//
 //                             AllocationInst Class
@@ -1950,7 +1951,12 @@ public:
   /// hasConstantValue - If the specified PHI node always merges together the
   /// same value, return the value, otherwise return null.
   ///
-  Value *hasConstantValue(bool AllowNonDominatingInstruction = false) const;
+  /// If the PHI has undef operands, but all the rest of the operands are
+  /// some unique value, return that value if it can be proved that the
+  /// value dominates the PHI. If DT is null, use a conservative check,
+  /// otherwise use DT to test for dominance.
+  ///
+  Value *hasConstantValue(DominatorTree *DT = 0) const;
 
   /// Methods for support type inquiry through isa, cast, and dyn_cast:
   static inline bool classof(const PHINode *) { return true; }

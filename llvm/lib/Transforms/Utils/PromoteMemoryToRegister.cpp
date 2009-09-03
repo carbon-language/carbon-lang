@@ -494,17 +494,14 @@ void PromoteMem2Reg::run() {
       PHINode *PN = I->second;
       
       // If this PHI node merges one value and/or undefs, get the value.
-      if (Value *V = PN->hasConstantValue(true)) {
-        if (!isa<Instruction>(V) ||
-            properlyDominates(cast<Instruction>(V), PN)) {
-          if (AST && isa<PointerType>(PN->getType()))
-            AST->deleteValue(PN);
-          PN->replaceAllUsesWith(V);
-          PN->eraseFromParent();
-          NewPhiNodes.erase(I++);
-          EliminatedAPHI = true;
-          continue;
-        }
+      if (Value *V = PN->hasConstantValue(&DT)) {
+        if (AST && isa<PointerType>(PN->getType()))
+          AST->deleteValue(PN);
+        PN->replaceAllUsesWith(V);
+        PN->eraseFromParent();
+        NewPhiNodes.erase(I++);
+        EliminatedAPHI = true;
+        continue;
       }
       ++I;
     }

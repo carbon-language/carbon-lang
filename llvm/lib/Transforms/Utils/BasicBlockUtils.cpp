@@ -429,13 +429,10 @@ BasicBlock *llvm::SplitBlockPredecessors(BasicBlock *BB,
     PN->addIncoming(InVal, NewBB);
     
     // Check to see if we can eliminate this phi node.
-    if (Value *V = PN->hasConstantValue(DT != 0)) {
-      Instruction *I = dyn_cast<Instruction>(V);
-      if (!I || DT == 0 || DT->dominates(I, PN)) {
-        PN->replaceAllUsesWith(V);
-        if (AA) AA->deleteValue(PN);
-        PN->eraseFromParent();
-      }
+    if (Value *V = PN->hasConstantValue(DT)) {
+      PN->replaceAllUsesWith(V);
+      if (AA) AA->deleteValue(PN);
+      PN->eraseFromParent();
     }
   }
   

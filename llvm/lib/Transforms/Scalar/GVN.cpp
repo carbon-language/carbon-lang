@@ -769,7 +769,7 @@ static bool isSafeReplacement(PHINode* p, Instruction* inst) {
 }
 
 Value* GVN::CollapsePhi(PHINode* p) {
-  Value* constVal = p->hasConstantValue();
+  Value* constVal = p->hasConstantValue(DT);
   if (!constVal) return 0;
   
   Instruction* inst = dyn_cast<Instruction>(constVal);
