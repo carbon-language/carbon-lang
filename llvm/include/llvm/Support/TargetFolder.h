@@ -52,7 +52,7 @@ public:
     return Fold(ConstantExpr::getAdd(LHS, RHS));
   }
   Constant *CreateNSWAdd(Constant *LHS, Constant *RHS) const {
-    return Fold(ConstantExpr::getNSWAdd(LHS, RHS));
+    return Fold(ConstantExpr::getAdd(LHS, RHS));
   }
   Constant *CreateFAdd(Constant *LHS, Constant *RHS) const {
     return Fold(ConstantExpr::getFAdd(LHS, RHS));
@@ -76,7 +76,7 @@ public:
     return Fold(ConstantExpr::getSDiv(LHS, RHS));
   }
   Constant *CreateExactSDiv(Constant *LHS, Constant *RHS) const {
-    return Fold(ConstantExpr::getExactSDiv(LHS, RHS));
+    return Fold(ConstantExpr::getSDiv(LHS, RHS));
   }
   Constant *CreateFDiv(Constant *LHS, Constant *RHS) const {
     return Fold(ConstantExpr::getFDiv(LHS, RHS));
@@ -143,11 +143,11 @@ public:
 
   Constant *CreateInBoundsGetElementPtr(Constant *C, Constant* const *IdxList,
                                         unsigned NumIdx) const {
-    return Fold(ConstantExpr::getInBoundsGetElementPtr(C, IdxList, NumIdx));
+    return Fold(ConstantExpr::getGetElementPtr(C, IdxList, NumIdx));
   }
   Constant *CreateInBoundsGetElementPtr(Constant *C, Value* const *IdxList,
                                         unsigned NumIdx) const {
-    return Fold(ConstantExpr::getInBoundsGetElementPtr(C, IdxList, NumIdx));
+    return Fold(ConstantExpr::getGetElementPtr(C, IdxList, NumIdx));
   }
 
   //===--------------------------------------------------------------------===//

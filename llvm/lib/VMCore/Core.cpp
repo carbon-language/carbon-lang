@@ -535,13 +535,6 @@ LLVMValueRef LLVMConstAdd(LLVMValueRef LHSConstant, LLVMValueRef RHSConstant) {
                                    unwrap<Constant>(RHSConstant)));
 }
 
-LLVMValueRef LLVMConstNSWAdd(LLVMValueRef LHSConstant,
-                             LLVMValueRef RHSConstant) {
-  return wrap(ConstantExpr::getNSWAdd(
-                                      unwrap<Constant>(LHSConstant),
-                                      unwrap<Constant>(RHSConstant)));
-}
-
 LLVMValueRef LLVMConstFAdd(LLVMValueRef LHSConstant, LLVMValueRef RHSConstant) {
   return wrap(ConstantExpr::getFAdd(
                                     unwrap<Constant>(LHSConstant),
@@ -581,13 +574,6 @@ LLVMValueRef LLVMConstSDiv(LLVMValueRef LHSConstant, LLVMValueRef RHSConstant) {
   return wrap(ConstantExpr::getSDiv(
                                     unwrap<Constant>(LHSConstant),
                                     unwrap<Constant>(RHSConstant)));
-}
-
-LLVMValueRef LLVMConstExactSDiv(LLVMValueRef LHSConstant,
-                                LLVMValueRef RHSConstant) {
-  return wrap(ConstantExpr::getExactSDiv(
-                                         unwrap<Constant>(LHSConstant),
-                                         unwrap<Constant>(RHSConstant)));
 }
 
 LLVMValueRef LLVMConstFDiv(LLVMValueRef LHSConstant, LLVMValueRef RHSConstant) {
@@ -671,14 +657,6 @@ LLVMValueRef LLVMConstGEP(LLVMValueRef ConstantVal,
                                              unwrap<Constant>(ConstantIndices, 
                                                               NumIndices),
                                              NumIndices));
-}
-
-LLVMValueRef LLVMConstInBoundsGEP(LLVMValueRef ConstantVal,
-                                  LLVMValueRef *ConstantIndices,
-                                  unsigned NumIndices) {
-  Constant* Val = unwrap<Constant>(ConstantVal);
-  Constant** Idxs = unwrap<Constant>(ConstantIndices, NumIndices);
-  return wrap(ConstantExpr::getInBoundsGetElementPtr(Val, Idxs, NumIndices));
 }
 
 LLVMValueRef LLVMConstTrunc(LLVMValueRef ConstantVal, LLVMTypeRef ToType) {

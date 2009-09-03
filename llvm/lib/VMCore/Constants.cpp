@@ -631,24 +631,6 @@ Constant* ConstantVector::get(Constant* const* Vals, unsigned NumVals) {
   return get(std::vector<Constant*>(Vals, Vals+NumVals));
 }
 
-Constant* ConstantExpr::getNSWAdd(Constant* C1, Constant* C2) {
-  Constant *C = getAdd(C1, C2);
-  // Set nsw attribute, assuming constant folding didn't eliminate the
-  // Add.
-  if (AddOperator *Add = dyn_cast<AddOperator>(C))
-    Add->setHasNoSignedWrap(true);
-  return C;
-}
-
-Constant* ConstantExpr::getExactSDiv(Constant* C1, Constant* C2) {
-  Constant *C = getSDiv(C1, C2);
-  // Set exact attribute, assuming constant folding didn't eliminate the
-  // SDiv.
-  if (SDivOperator *SDiv = dyn_cast<SDivOperator>(C))
-    SDiv->setIsExact(true);
-  return C;
-}
-
 // Utility function for determining if a ConstantExpr is a CastOp or not. This
 // can't be inline because we don't want to #include Instruction.h into
 // Constant.h
@@ -1491,26 +1473,9 @@ Constant *ConstantExpr::getGetElementPtr(Constant *C, Value* const *Idxs,
   return getGetElementPtrTy(PointerType::get(Ty, As), C, Idxs, NumIdx);
 }
 
-Constant *ConstantExpr::getInBoundsGetElementPtr(Constant *C,
-                                                 Value* const *Idxs,
-                                                 unsigned NumIdx) {
-  Constant *Result = getGetElementPtr(C, Idxs, NumIdx);
-  // Set in bounds attribute, assuming constant folding didn't eliminate the
-  // GEP.
-  if (GEPOperator *GEP = dyn_cast<GEPOperator>(Result))
-    GEP->setIsInBounds(true);
-  return Result;
-}
-
 Constant *ConstantExpr::getGetElementPtr(Constant *C, Constant* const *Idxs,
                                          unsigned NumIdx) {
   return getGetElementPtr(C, (Value* const *)Idxs, NumIdx);
-}
-
-Constant *ConstantExpr::getInBoundsGetElementPtr(Constant *C,
-                                                 Constant* const *Idxs,
-                                                 unsigned NumIdx) {
-  return getInBoundsGetElementPtr(C, (Value* const *)Idxs, NumIdx);
 }
 
 Constant *

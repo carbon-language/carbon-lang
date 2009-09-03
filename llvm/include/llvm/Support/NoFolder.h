@@ -131,7 +131,7 @@ public:
 
   Constant *CreateInBoundsGetElementPtr(Constant *C, Constant* const *IdxList,
                                         unsigned NumIdx) const {
-    return ConstantExpr::getInBoundsGetElementPtr(C, IdxList, NumIdx);
+    return ConstantExpr::getGetElementPtr(C, IdxList, NumIdx);
   }
   Value *CreateInBoundsGetElementPtr(Constant *C, Value* const *IdxList,
                                      unsigned NumIdx) const {

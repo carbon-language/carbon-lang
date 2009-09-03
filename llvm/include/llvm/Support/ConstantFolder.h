@@ -36,7 +36,7 @@ public:
     return ConstantExpr::getAdd(LHS, RHS);
   }
   Constant *CreateNSWAdd(Constant *LHS, Constant *RHS) const {
-    return ConstantExpr::getNSWAdd(LHS, RHS);
+    return ConstantExpr::getAdd(LHS, RHS);
   }
   Constant *CreateFAdd(Constant *LHS, Constant *RHS) const {
     return ConstantExpr::getFAdd(LHS, RHS);
@@ -60,7 +60,7 @@ public:
     return ConstantExpr::getSDiv(LHS, RHS);
   }
   Constant *CreateExactSDiv(Constant *LHS, Constant *RHS) const {
-    return ConstantExpr::getExactSDiv(LHS, RHS);
+    return ConstantExpr::getSDiv(LHS, RHS);
   }
   Constant *CreateFDiv(Constant *LHS, Constant *RHS) const {
     return ConstantExpr::getFDiv(LHS, RHS);
@@ -127,11 +127,11 @@ public:
 
   Constant *CreateInBoundsGetElementPtr(Constant *C, Constant* const *IdxList,
                                         unsigned NumIdx) const {
-    return ConstantExpr::getInBoundsGetElementPtr(C, IdxList, NumIdx);
+    return ConstantExpr::getGetElementPtr(C, IdxList, NumIdx);
   }
   Constant *CreateInBoundsGetElementPtr(Constant *C, Value* const *IdxList,
                                         unsigned NumIdx) const {
-    return ConstantExpr::getInBoundsGetElementPtr(C, IdxList, NumIdx);
+    return ConstantExpr::getGetElementPtr(C, IdxList, NumIdx);
   }
 
   //===--------------------------------------------------------------------===//
