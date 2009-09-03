@@ -1091,7 +1091,7 @@ public:
 
     if (!OK) {
       errs() << "couldn't convert inst '";
-      MI.print(errs());
+      MI.dump();
       errs() << "' to machine instr:\n";
       Instr->dump();
     }
