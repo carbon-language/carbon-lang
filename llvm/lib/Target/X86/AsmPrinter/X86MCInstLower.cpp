@@ -160,7 +160,10 @@ GetConstantPoolIndexSymbol(const MachineOperand &MO) {
 
 MCOperand X86ATTAsmPrinter::LowerSymbolOperand(const MachineOperand &MO,
                                                MCSymbol *Sym) {
-  MCSymbol *NegatedSymbol = 0;
+  // FIXME: We would like an efficient form for this, so we don't have to do a
+  // lot of extra uniquing.
+  const MCExpr *Expr = MCSymbolRefExpr::Create(Sym, OutContext);
+  
   switch (MO.getTargetFlags()) {
   default: llvm_unreachable("Unknown target flag on GV operand");
   case X86II::MO_NO_FLAG:    // No flag.
@@ -183,24 +186,32 @@ MCOperand X86ATTAsmPrinter::LowerSymbolOperand(const MachineOperand &MO,
   case X86II::MO_DARWIN_NONLAZY_PIC_BASE:
   case X86II::MO_DARWIN_HIDDEN_NONLAZY_PIC_BASE:
     // Subtract the pic base.
-    NegatedSymbol = GetPICBaseSymbol();
+    Expr = MCBinaryExpr::CreateSub(Expr, 
+                                   MCSymbolRefExpr::Create(GetPICBaseSymbol(),
+                                                           OutContext),
+                                   OutContext);
     break;
-  case X86II::MO_GOT_ABSOLUTE_ADDRESS:
-    assert(0 && "Reloc mode unimp!");
-    //O << " + [.-";
-    //PrintPICBaseSymbol();
-    //O << ']';
+  case X86II::MO_GOT_ABSOLUTE_ADDRESS: {
+    // For this, we want to print something like:
+    //   MYSYMBOL + (. - PICBASE)
+    // However, we can't generate a ".", so just emit a new label here and refer
+    // to it.  We know that this operand flag occurs at most once per function.
+    SmallString<64> Name;
+    raw_svector_ostream(Name) << MAI->getPrivateGlobalPrefix() << "picbaseref"
+      << getFunctionNumber();
+    MCSymbol *DotSym = OutContext.GetOrCreateSymbol(Name.str());
+    OutStreamer.EmitLabel(DotSym);
+
+    const MCExpr *DotExpr = MCSymbolRefExpr::Create(DotSym, OutContext);
+    const MCExpr *PICBase = MCSymbolRefExpr::Create(GetPICBaseSymbol(),
+                                                    OutContext);
+    DotExpr = MCBinaryExpr::CreateSub(DotExpr, PICBase, OutContext);
+    Expr = MCBinaryExpr::CreateAdd(Expr, DotExpr, OutContext);
     break;      
   }
+  }
   
-  // FIXME: We would like an efficient form for this, so we don't have to do a
-  // lot of extra uniquing.
-  const MCExpr *Expr = MCSymbolRefExpr::Create(Sym, OutContext);
-  if (NegatedSymbol)
-    Expr = MCBinaryExpr::CreateSub(Expr, MCSymbolRefExpr::Create(NegatedSymbol,
-                                                                 OutContext),
-                                   OutContext);
-  if (!MO.isSymbol() && MO.getOffset())
+  if (MO.getOffset())
     Expr = MCBinaryExpr::CreateAdd(Expr, MCConstantExpr::Create(MO.getOffset(),
                                                                 OutContext),
                                    OutContext);
