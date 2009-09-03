@@ -2163,7 +2163,7 @@ int main(int argc, char **argv) {
   llvm::PrettyStackTraceProgram X(argc, argv);
   llvm::LLVMContext &Context = llvm::getGlobalContext();
 
-  // Initialize targets first.
+  // Initialize targets first, so that --version shows registered targets.
   llvm::InitializeAllTargets();
   llvm::InitializeAllAsmPrinters();
 
