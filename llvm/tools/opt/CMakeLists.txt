@@ -1,5 +1,5 @@
 set(LLVM_REQUIRES_EH 1)
-set(LLVM_LINK_COMPONENTS bitreader bitwriter instrumentation scalaropts ipo)
+set(LLVM_LINK_COMPONENTS bitreader asmparser bitwriter instrumentation scalaropts ipo)
 
 add_llvm_tool(opt
   AnalysisWrappers.cpp

@@ -26,6 +26,7 @@
 #include "llvm/Target/TargetMachine.h"
 #include "llvm/Support/PassNameParser.h"
 #include "llvm/System/Signals.h"
+#include "llvm/Support/IRReader.h"
 #include "llvm/Support/ManagedStatic.h"
 #include "llvm/Support/MemoryBuffer.h"
 #include "llvm/Support/PluginLoader.h"
@@ -342,22 +343,14 @@ int main(int argc, char **argv) {
     // FIXME: The choice of target should be controllable on the command line.
     std::auto_ptr<TargetMachine> target;
 
-    std::string ErrorMessage;
+    SMDiagnostic Err;
 
     // Load the input module...
     std::auto_ptr<Module> M;
-    if (MemoryBuffer *Buffer
-          = MemoryBuffer::getFileOrSTDIN(InputFilename, &ErrorMessage)) {
-      M.reset(ParseBitcodeFile(Buffer, Context, &ErrorMessage));
-      delete Buffer;
-    }
+    M.reset(ParseIRFile(InputFilename, Err, Context));
 
     if (M.get() == 0) {
-      errs() << argv[0] << ": ";
-      if (ErrorMessage.size())
-        errs() << ErrorMessage << "\n";
-      else
-        errs() << "bitcode didn't read correctly.\n";
+      Err.Print(argv[0], errs());
       return 1;
     }
 
