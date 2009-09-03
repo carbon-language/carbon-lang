@@ -517,6 +517,8 @@ void Clang::ConstructJob(Compilation &C, const JobAction &JA,
   Args.AddLastArg(CmdArgs, options::OPT_fvisibility_EQ);
   Args.AddLastArg(CmdArgs, options::OPT_fwritable_strings);
 
+  Args.AddLastArg(CmdArgs, options::OPT_pthread);
+
   // Forward stack protector flags.
   if (Arg *A = Args.getLastArg(options::OPT_fno_stack_protector,
                                options::OPT_fstack_protector_all,

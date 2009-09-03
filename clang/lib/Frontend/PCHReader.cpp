@@ -78,6 +78,7 @@ PCHValidator::ReadLanguageOptions(const LangOptions &LangOpts) {
   PARSE_LANGOPT_IMPORTANT(NoBuiltin, diag::warn_pch_builtins);
   PARSE_LANGOPT_IMPORTANT(ThreadsafeStatics, 
                           diag::warn_pch_thread_safe_statics);
+  PARSE_LANGOPT_IMPORTANT(POSIXThreads, diag::warn_pch_posix_threads);
   PARSE_LANGOPT_IMPORTANT(Blocks, diag::warn_pch_blocks);
   PARSE_LANGOPT_BENIGN(EmitAllDecls);
   PARSE_LANGOPT_IMPORTANT(MathErrno, diag::warn_pch_math_errno);

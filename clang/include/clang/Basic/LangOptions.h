@@ -54,6 +54,8 @@ public:
 
   unsigned ThreadsafeStatics : 1; // Whether static initializers are protected
                                   // by locks.
+  unsigned POSIXThreads      : 1; // Compiling with POSIX thread support
+                                  // (-pthread)
   unsigned Blocks            : 1; // block extension to C
   unsigned EmitAllDecls      : 1; // Emit all declarations, even if
                                   // they are unused.
@@ -135,6 +137,7 @@ public:
     
     // FIXME: The default should be 1.
     ThreadsafeStatics = 0;
+    POSIXThreads = 0;
     Blocks = 0;
     EmitAllDecls = 0;
     MathErrno = 1;

@@ -102,6 +102,9 @@ static void getDarwinDefines(std::vector<char> &Defs, const LangOptions &Opts) {
     Define(Defs, "__STATIC__");
   else
     Define(Defs, "__DYNAMIC__");
+
+  if (Opts.POSIXThreads)
+    Define(Defs, "_REENTRANT", "1");
 }
 
 static void getDarwinOSXDefines(std::vector<char> &Defs,
@@ -272,6 +275,8 @@ protected:
     DefineStd(Defs, "linux", Opts);
     Define(Defs, "__gnu_linux__");
     Define(Defs, "__ELF__", "1");
+    if (Opts.POSIXThreads)
+      Define(Defs, "_REENTRANT", "1");
   }
 public:
   LinuxTargetInfo(const std::string& triple) 
@@ -290,6 +295,8 @@ protected:
     Define(Defs, "__NetBSD__", "1");
     Define(Defs, "__unix__", "1");
     Define(Defs, "__ELF__", "1");
+    if (Opts.POSIXThreads)
+      Define(Defs, "_POSIX_THREADS", "1");
   }
 public:
   NetBSDTargetInfo(const std::string &triple) 
@@ -309,6 +316,8 @@ protected:
     Define(Defs, "__OpenBSD__", "1");
     DefineStd(Defs, "unix", Opts);
     Define(Defs, "__ELF__", "1");
+    if (Opts.POSIXThreads)
+      Define(Defs, "_POSIX_THREADS", "1");
   }
 public:
   OpenBSDTargetInfo(const std::string &triple) 

@@ -87,8 +87,11 @@ def warn_pch_builtins : Error<
     "PCH file was compiled with builtins %select{enabled|disabled}0 but "
     "builtins are currently %select{enabled|disabled}1">;
 def warn_pch_thread_safe_statics : Error<
-    "PCH file was compiled %select{without|with}0 thread-safe statics but"
+    "PCH file was compiled %select{without|with}0 thread-safe statics but "
     "thread-safe statics are currently %select{disabled|enabled}1">;
+def warn_pch_posix_threads : Error<
+    "PCH file was compiled %select{without|with}0 POSIX thread support but "
+    "POSIX threads are currently %select{disabled|enabled}1">;
 def warn_pch_blocks : Error<
     "blocks were %select{disabled|enabled}0 in PCH file but "
     "are currently %select{disabled|enabled}1">;
