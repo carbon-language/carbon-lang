@@ -108,14 +108,7 @@ ClassifyGlobalReference(const GlobalValue *GV, const TargetMachine &TM) const {
     // normal $non_lazy_ptr stub because this symbol might be resolved late.
     if (!GV->hasHiddenVisibility())  // Non-hidden $non_lazy_ptr reference.
       return X86II::MO_DARWIN_NONLAZY;
-    
-    // If symbol visibility is hidden, we have a stub for common symbol
-    // references and external declarations.
-    if (isDecl || GV->hasCommonLinkage()) {
-      // Hidden $non_lazy_ptr reference.
-      return X86II::MO_DARWIN_HIDDEN_NONLAZY;
-    }
-    
+
     // Otherwise, no stub.
     return X86II::MO_NO_FLAG;
   }

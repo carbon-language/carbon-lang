@@ -1299,7 +1299,7 @@ SDValue ARMTargetLowering::LowerGlobalAddressDarwin(SDValue Op,
     Result = DAG.getNode(ARMISD::PIC_ADD, dl, PtrVT, Result, PICLabel);
   }
 
-  if (Subtarget->GVIsIndirectSymbol(GV, RelocM == Reloc::Static))
+  if (Subtarget->GVIsIndirectSymbol(GV, RelocM))
     Result = DAG.getLoad(PtrVT, dl, Chain, Result, NULL, 0);
 
   return Result;

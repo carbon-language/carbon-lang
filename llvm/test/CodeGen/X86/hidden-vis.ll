@@ -1,20 +1,24 @@
-; RUN: llvm-as < %s | llc -mtriple=i686-pc-linux-gnu | \
-; RUN:   grep .hidden | count 2
-; RUN: llvm-as < %s | llc -mtriple=i686-apple-darwin8.8.0 | \
-; RUN:   grep .private_extern | count 2
+; RUN: llvm-as < %s | llc -mtriple=i686-pc-linux-gnu | FileCheck %s -check-prefix=LINUX
+; RUN: llvm-as < %s | llc -mtriple=i686-apple-darwin8 | FileCheck %s -check-prefix=DARWIN
 
-%struct.Person = type { i32 }
 @a = hidden global i32 0
 @b = external global i32
 
+define weak hidden void @t1() nounwind {
+; LINUX: .hidden t1
+; LINUX: t1:
 
-define weak hidden void @_ZN6Person13privateMethodEv(%struct.Person* %this) {
+; DARWIN: .private_extern _t1
+; DARWIN: t1:
   ret void
 }
 
-declare void @function(i32)
+define weak void @t2() nounwind {
+; LINUX: t2:
+; LINUX: .hidden a
 
-define weak void @_ZN6PersonC1Ei(%struct.Person* %this, i32 %_c) {
+; DARWIN: t2:
+; DARWIN: .private_extern _a
   ret void
 }
 

@@ -170,16 +170,11 @@ namespace X86II {
     /// a PIC-base-relative reference to a non-hidden dyld lazy pointer stub.
     MO_DARWIN_NONLAZY_PIC_BASE = 15,
     
-    /// MO_DARWIN_HIDDEN_NONLAZY - On a symbol operand "FOO", this indicates
-    /// that the reference is actually to the "FOO$non_lazy_ptr" symbol, which
-    /// is a non-PIC-base-relative reference to a hidden dyld lazy pointer stub.
-    MO_DARWIN_HIDDEN_NONLAZY = 16,
-    
     /// MO_DARWIN_HIDDEN_NONLAZY_PIC_BASE - On a symbol operand "FOO", this
     /// indicates that the reference is actually to "FOO$non_lazy_ptr -PICBASE",
     /// which is a PIC-base-relative reference to a hidden dyld lazy pointer
     /// stub.
-    MO_DARWIN_HIDDEN_NONLAZY_PIC_BASE = 17
+    MO_DARWIN_HIDDEN_NONLAZY_PIC_BASE = 16
   };
 }
 
@@ -193,7 +188,6 @@ inline static bool isGlobalStubReference(unsigned char TargetFlag) {
   case X86II::MO_DARWIN_NONLAZY_PIC_BASE:        // Normal $non_lazy_ptr ref.
   case X86II::MO_DARWIN_NONLAZY:                 // Normal $non_lazy_ptr ref.
   case X86II::MO_DARWIN_HIDDEN_NONLAZY_PIC_BASE: // Hidden $non_lazy_ptr ref.
-  case X86II::MO_DARWIN_HIDDEN_NONLAZY:          // Hidden $non_lazy_ptr ref.
     return true;
   default:
     return false;

@@ -95,11 +95,51 @@ ARMSubtarget::ARMSubtarget(const std::string &TT, const std::string &FS,
 }
 
 /// GVIsIndirectSymbol - true if the GV will be accessed via an indirect symbol.
-bool ARMSubtarget::GVIsIndirectSymbol(GlobalValue *GV, bool isStatic) const {
-  // If symbol visibility is hidden, the extra load is not needed if
-  // the symbol is definitely defined in the current translation unit.
-  bool isDecl = GV->isDeclaration() || GV->hasAvailableExternallyLinkage();
-  if (GV->hasHiddenVisibility() && (!isDecl && !GV->hasCommonLinkage()))
+bool
+ARMSubtarget::GVIsIndirectSymbol(GlobalValue *GV, Reloc::Model RelocM) const {
+  if (RelocM == Reloc::Static)
     return false;
-  return !isStatic && (isDecl || GV->isWeakForLinker());
+
+  // GV with ghost linkage (in JIT lazy compilation mode) do not require an
+  // extra load from stub.
+  bool isDecl = GV->isDeclaration() && !GV->hasNotBeenReadFromBitcode();
+
+  if (!isTargetDarwin()) {
+    // Extra load is needed for all externally visible.
+    if (GV->hasLocalLinkage() || GV->hasHiddenVisibility())
+      return false;
+    return true;
+  } else {
+    if (RelocM == Reloc::PIC_) {
+      // If this is a strong reference to a definition, it is definitely not
+      // through a stub.
+      if (!isDecl && !GV->isWeakForLinker())
+        return false;
+
+      // Unless we have a symbol with hidden visibility, we have to go through a
+      // normal $non_lazy_ptr stub because this symbol might be resolved late.
+      if (!GV->hasHiddenVisibility())  // Non-hidden $non_lazy_ptr reference.
+        return true;
+
+      // If symbol visibility is hidden, we have a stub for common symbol
+      // references and external declarations.
+      if (isDecl || GV->hasCommonLinkage())
+        // Hidden $non_lazy_ptr reference.
+        return true;
+
+      return false;
+    } else {
+      // If this is a strong reference to a definition, it is definitely not
+      // through a stub.
+      if (!isDecl && !GV->isWeakForLinker())
+        return false;
+    
+      // Unless we have a symbol with hidden visibility, we have to go through a
+      // normal $non_lazy_ptr stub because this symbol might be resolved late.
+      if (!GV->hasHiddenVisibility())  // Non-hidden $non_lazy_ptr reference.
+        return true;
+    }
+  }
+
+  return false;
 }

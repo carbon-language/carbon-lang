@@ -306,7 +306,6 @@ void X86ATTAsmPrinter::printSymbolOperand(const MachineOperand &MO) {
       Suffix = "$stub";
     else if (MO.getTargetFlags() == X86II::MO_DARWIN_NONLAZY ||
              MO.getTargetFlags() == X86II::MO_DARWIN_NONLAZY_PIC_BASE ||
-             MO.getTargetFlags() == X86II::MO_DARWIN_HIDDEN_NONLAZY ||
              MO.getTargetFlags() == X86II::MO_DARWIN_HIDDEN_NONLAZY_PIC_BASE)
       Suffix = "$non_lazy_ptr";
     
@@ -321,8 +320,7 @@ void X86ATTAsmPrinter::printSymbolOperand(const MachineOperand &MO) {
     if (MO.getTargetFlags() == X86II::MO_DARWIN_NONLAZY ||
         MO.getTargetFlags() == X86II::MO_DARWIN_NONLAZY_PIC_BASE)
       GVStubs[Name] = Mang->getMangledName(GV);
-    else if (MO.getTargetFlags() == X86II::MO_DARWIN_HIDDEN_NONLAZY ||
-             MO.getTargetFlags() == X86II::MO_DARWIN_HIDDEN_NONLAZY_PIC_BASE)
+    else if (MO.getTargetFlags() == X86II::MO_DARWIN_HIDDEN_NONLAZY_PIC_BASE)
       HiddenGVStubs[Name] = Mang->getMangledName(GV);
     else if (MO.getTargetFlags() == X86II::MO_DARWIN_STUB)
       FnStubs[Name] = Mang->getMangledName(GV);
@@ -360,7 +358,6 @@ void X86ATTAsmPrinter::printSymbolOperand(const MachineOperand &MO) {
   case X86II::MO_NO_FLAG:    // No flag.
     break;
   case X86II::MO_DARWIN_NONLAZY:
-  case X86II::MO_DARWIN_HIDDEN_NONLAZY:
   case X86II::MO_DLLIMPORT:
   case X86II::MO_DARWIN_STUB:
     // These affect the name of the symbol, not any suffix.

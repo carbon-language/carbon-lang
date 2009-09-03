@@ -166,8 +166,7 @@ namespace {
         Name = LSDAName.str();
       } else if (GV) {
         bool isIndirect = Subtarget->isTargetDarwin() &&
-          Subtarget->GVIsIndirectSymbol(GV,
-                                        TM.getRelocationModel() == Reloc::Static);
+          Subtarget->GVIsIndirectSymbol(GV, TM.getRelocationModel());
         if (!isIndirect)
           Name = Mang->getMangledName(GV);
         else {

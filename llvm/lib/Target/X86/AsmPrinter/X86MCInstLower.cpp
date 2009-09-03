@@ -62,7 +62,6 @@ MCSymbol *X86ATTAsmPrinter::GetGlobalAddressSymbol(const MachineOperand &MO) {
     Suffix = "$stub";
   else if (MO.getTargetFlags() == X86II::MO_DARWIN_NONLAZY ||
            MO.getTargetFlags() == X86II::MO_DARWIN_NONLAZY_PIC_BASE ||
-           MO.getTargetFlags() == X86II::MO_DARWIN_HIDDEN_NONLAZY ||
            MO.getTargetFlags() == X86II::MO_DARWIN_HIDDEN_NONLAZY_PIC_BASE)
     Suffix = "$non_lazy_ptr";
   
@@ -84,7 +83,6 @@ MCSymbol *X86ATTAsmPrinter::GetGlobalAddressSymbol(const MachineOperand &MO) {
   case X86II::MO_DARWIN_NONLAZY_PIC_BASE:
     GVStubs[Name] = Mang->getMangledName(GV);
     break;
-  case X86II::MO_DARWIN_HIDDEN_NONLAZY:
   case X86II::MO_DARWIN_HIDDEN_NONLAZY_PIC_BASE:
     HiddenGVStubs[Name] = Mang->getMangledName(GV);
     break;
@@ -169,7 +167,6 @@ MCOperand X86ATTAsmPrinter::LowerSymbolOperand(const MachineOperand &MO,
       
   // These affect the name of the symbol, not any suffix.
   case X86II::MO_DARWIN_NONLAZY:
-  case X86II::MO_DARWIN_HIDDEN_NONLAZY:
   case X86II::MO_DLLIMPORT:
   case X86II::MO_DARWIN_STUB:
   case X86II::MO_TLSGD:
