@@ -648,6 +648,9 @@ public:
   static Constant *getIntToPtr(Constant *C, const Type *Ty);
   static Constant *getBitCast (Constant *C, const Type *Ty);
 
+  static Constant* getNSWAdd(Constant* C1, Constant* C2);
+  static Constant* getExactSDiv(Constant* C1, Constant* C2);
+
   /// Transparently provide more efficient getOperand methods.
   DECLARE_TRANSPARENT_OPERAND_ACCESSORS(Constant);
 
@@ -733,6 +736,15 @@ public:
                                     Constant* const *IdxList, unsigned NumIdx);
   static Constant *getGetElementPtr(Constant *C,
                                     Value* const *IdxList, unsigned NumIdx);
+
+  /// Create an "inbounds" getelementptr. See the documentation for the
+  /// "inbounds" flag in LangRef.html for details.
+  static Constant *getInBoundsGetElementPtr(Constant *C,
+                                            Constant* const *IdxList,
+                                            unsigned NumIdx);
+  static Constant *getInBoundsGetElementPtr(Constant *C,
+                                            Value* const *IdxList,
+                                            unsigned NumIdx);
 
   static Constant *getExtractElement(Constant *Vec, Constant *Idx);
   static Constant *getInsertElement(Constant *Vec, Constant *Elt,Constant *Idx);

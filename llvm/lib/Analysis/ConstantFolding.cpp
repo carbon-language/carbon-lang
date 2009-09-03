@@ -203,21 +203,15 @@ static Constant *SymbolicallyEvaluateGEP(Constant* const* Ops, unsigned NumOps,
   if (Offset != 0)
     return 0;
 
-  // Create the GEP constant expr.
-  Constant *C = ConstantExpr::getGetElementPtr(Ptr,
-                                               &NewIdxs[0], NewIdxs.size());
-  assert(cast<PointerType>(C->getType())->getElementType() == Ty &&
-         "Computed GetElementPtr has unexpected type!");
-
   // If the base is the start of a GlobalVariable and all the array indices
   // remain in their static bounds, the GEP is inbounds. We can check that
   // all indices are in bounds by just checking the first index only
-  // because we've just normalized all the indices. We can mutate the
-  // Constant in place because we've proven that the indices are in bounds,
-  // so they'll always be in bounds.
-  if (isa<GlobalVariable>(Ptr) && NewIdxs[0]->isNullValue())
-    if (GEPOperator *GEP = dyn_cast<GEPOperator>(C))
-      GEP->setIsInBounds(true);
+  // because we've just normalized all the indices.
+  Constant *C = isa<GlobalVariable>(Ptr) && NewIdxs[0]->isNullValue() ?
+    ConstantExpr::getInBoundsGetElementPtr(Ptr, &NewIdxs[0], NewIdxs.size()) :
+    ConstantExpr::getGetElementPtr(Ptr, &NewIdxs[0], NewIdxs.size());
+  assert(cast<PointerType>(C->getType())->getElementType() == Ty &&
+         "Computed GetElementPtr has unexpected type!");
 
   // If we ended up indexing a member with a type that doesn't match
   // the type of what the original indices indexed, add a cast.

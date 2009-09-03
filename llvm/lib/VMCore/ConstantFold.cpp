@@ -122,7 +122,9 @@ static Constant *FoldBitCast(LLVMContext &Context,
         }
 
         if (ElTy == DPTy->getElementType())
-          return ConstantExpr::getGetElementPtr(V, &IdxList[0], IdxList.size());
+          // This GEP is inbounds because all indices are zero.
+          return ConstantExpr::getInBoundsGetElementPtr(V, &IdxList[0],
+                                                        IdxList.size());
       }
 
   // Handle casts from one vector constant to another.  We know that the src 
