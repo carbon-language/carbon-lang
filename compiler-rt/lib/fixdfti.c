@@ -30,10 +30,10 @@ __fixdfti(double a)
 {
     double_bits fb;
     fb.f = a;
-    int e = ((fb.u.high & 0x7FF00000) >> 20) - 1023;
+    int e = ((fb.u.s.high & 0x7FF00000) >> 20) - 1023;
     if (e < 0)
         return 0;
-    ti_int s = (si_int)(fb.u.high & 0x80000000) >> 31;
+    ti_int s = (si_int)(fb.u.s.high & 0x80000000) >> 31;
     ti_int r = 0x0010000000000000uLL | (0x000FFFFFFFFFFFFFuLL & fb.u.all);
     if (e > 52)
         r <<= (e - 52);

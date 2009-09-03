@@ -33,8 +33,8 @@ __fixunsdfti(double a)
 {
     double_bits fb;
     fb.f = a;
-    int e = ((fb.u.high & 0x7FF00000) >> 20) - 1023;
-    if (e < 0 || (fb.u.high & 0x80000000))
+    int e = ((fb.u.s.high & 0x7FF00000) >> 20) - 1023;
+    if (e < 0 || (fb.u.s.high & 0x80000000))
         return 0;
     tu_int r = 0x0010000000000000uLL | (fb.u.all & 0x000FFFFFFFFFFFFFuLL);
     if (e > 52)

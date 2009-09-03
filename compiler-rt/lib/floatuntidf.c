@@ -74,9 +74,9 @@ __floatuntidf(tu_int a)
         /* a is now rounded to DBL_MANT_DIG bits */
     }
     double_bits fb;
-    fb.u.high = ((e + 1023) << 20)      |        /* exponent */
+    fb.u.s.high = ((e + 1023) << 20)      |        /* exponent */
                 ((su_int)(a >> 32) & 0x000FFFFF); /* mantissa-high */
-    fb.u.low = (su_int)a;                         /* mantissa-low */
+    fb.u.s.low = (su_int)a;                         /* mantissa-low */
     return fb.f;
 }
 

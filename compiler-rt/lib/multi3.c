@@ -50,8 +50,8 @@ __multi3(ti_int a, ti_int b)
     twords y;
     y.all = b;
     twords r;
-    r.all = __mulddi3(x.low, y.low);
-    r.s.high += x.high * y.low + x.low * y.high;
+    r.all = __mulddi3(x.s.low, y.s.low);
+    r.s.high += x.s.high * y.s.low + x.s.low * y.s.high;
     return r.all;
 }
 

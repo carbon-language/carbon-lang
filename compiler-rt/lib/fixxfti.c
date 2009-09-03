@@ -32,10 +32,10 @@ __fixxfti(long double a)
 {
     long_double_bits fb;
     fb.f = a;
-    int e = (fb.u.high.low & 0x00007FFF) - 16383;
+    int e = (fb.u.high.s.low & 0x00007FFF) - 16383;
     if (e < 0)
         return 0;
-    ti_int s = -(si_int)((fb.u.high.low & 0x00008000) >> 15);
+    ti_int s = -(si_int)((fb.u.high.s.low & 0x00008000) >> 15);
     ti_int r = fb.u.low.all;
     if (e > 63)
         r <<= (e - 63);

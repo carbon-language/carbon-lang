@@ -28,13 +28,13 @@ __cmpti2(ti_int a, ti_int b)
     x.all = a;
     twords y;
     y.all = b;
-    if (x.high < y.high)
+    if (x.s.high < y.s.high)
         return 0;
-    if (x.high > y.high)
+    if (x.s.high > y.s.high)
         return 2;
-    if (x.low < y.low)
+    if (x.s.low < y.s.low)
         return 0;
-    if (x.low > y.low)
+    if (x.s.low > y.s.low)
         return 2;
     return 1;
 }

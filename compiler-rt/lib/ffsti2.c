@@ -25,13 +25,13 @@ __ffsti2(ti_int a)
 {
     twords x;
     x.all = a;
-    if (x.low == 0)
+    if (x.s.low == 0)
     {
-        if (x.high == 0)
+        if (x.s.high == 0)
             return 0;
-        return __builtin_ctzll(x.high) + (1 + sizeof(di_int) * CHAR_BIT);
+        return __builtin_ctzll(x.s.high) + (1 + sizeof(di_int) * CHAR_BIT);
     }
-    return __builtin_ctzll(x.low) + 1;
+    return __builtin_ctzll(x.s.low) + 1;
 }
 
 #endif /* __x86_64 */

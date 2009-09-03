@@ -25,7 +25,7 @@ __parityti2(ti_int a)
 {
     twords x;
     x.all = a;
-    return __paritydi2(x.high ^ x.low);
+    return __paritydi2(x.s.high ^ x.s.low);
 }
 
 #endif

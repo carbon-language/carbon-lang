@@ -76,7 +76,7 @@ __floatuntixf(tu_int a)
         /* a is now rounded to LDBL_MANT_DIG bits */
     }
     long_double_bits fb;
-    fb.u.high.low = (e + 16383);                  /* exponent */
+    fb.u.high.s.low = (e + 16383);                  /* exponent */
     fb.u.low.all = (du_int)a;                     /* mantissa */
     return fb.f;
 }
