@@ -1539,7 +1539,7 @@ const ABIInfo &CodeGenTypes::getABIInfo() const {
     case llvm::Triple::DragonFly:
     case llvm::Triple::MinGW32:
     case llvm::Triple::MinGW64:
-    case llvm::Triple::NetBSD:
+    case llvm::Triple::FreeBSD:
     case llvm::Triple::OpenBSD:
       return *(TheABIInfo = new X86_32ABIInfo(Context, false, true));
 
