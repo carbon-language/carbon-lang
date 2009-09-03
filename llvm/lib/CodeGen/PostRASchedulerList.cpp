@@ -54,7 +54,7 @@ EnableAntiDepBreaking("break-anti-dependencies",
 static cl::opt<bool>
 EnablePostRAHazardAvoidance("avoid-hazards",
                       cl::desc("Enable exact hazard avoidance"),
-                      cl::init(false), cl::Hidden);
+                      cl::init(true), cl::Hidden);
 
 // If DebugDiv > 0 then only schedule MBB with (ID % DebugDiv) == DebugMod
 static cl::opt<int>
@@ -166,11 +166,6 @@ namespace {
     ///
     void FinishBlock();
 
-    /// GenerateLivenessForKills - If true then generate Def/Kill
-    /// information for use in updating register kill. If false then
-    /// generate Def/Kill information for anti-dependence breaking.
-    bool GenerateLivenessForKills;
-
   private:
     void PrescanInstruction(MachineInstr *MI);
     void ScanInstruction(MachineInstr *MI, unsigned Count);
@@ -182,6 +177,7 @@ namespace {
     unsigned findSuitableFreeRegister(unsigned AntiDepReg,
                                       unsigned LastNewReg,
                                       const TargetRegisterClass *);
+    void StartBlockForKills(MachineBasicBlock *BB);
   };
 }
 
@@ -234,7 +230,6 @@ bool PostRAScheduler::runOnMachineFunction(MachineFunction &Fn) {
 #endif
 
     // Initialize register live-range state for scheduling in this block.
-    Scheduler.GenerateLivenessForKills = false;
     Scheduler.StartBlock(MBB);
 
     // Schedule each sequence of instructions not interrupted by a label
@@ -262,11 +257,8 @@ bool PostRAScheduler::runOnMachineFunction(MachineFunction &Fn) {
     // Clean up register live-range state.
     Scheduler.FinishBlock();
 
-    // Initialize register live-range state again and update register kills
-    Scheduler.GenerateLivenessForKills = true;
-    Scheduler.StartBlock(MBB);
+    // Update register kills
     Scheduler.FixupKills(MBB);
-    Scheduler.FinishBlock();
   }
 
   return true;
@@ -326,28 +318,26 @@ void SchedulePostRATDList::StartBlock(MachineBasicBlock *BB) {
         }
       }
 
-  if (!GenerateLivenessForKills) {
-    // Consider callee-saved registers as live-out, since we're running after
-    // prologue/epilogue insertion so there's no way to add additional
-    // saved registers.
-    //
-    // TODO: there is a new method
-    // MachineFrameInfo::getPristineRegs(MBB). It gives you a list of
-    // CSRs that have not been saved when entering the MBB. The
-    // remaining CSRs have been saved and can be treated like call
-    // clobbered registers.
-    for (const unsigned *I = TRI->getCalleeSavedRegs(); *I; ++I) {
-      unsigned Reg = *I;
-      Classes[Reg] = reinterpret_cast<TargetRegisterClass *>(-1);
-      KillIndices[Reg] = BB->size();
-      DefIndices[Reg] = ~0u;
-      // Repeat, for all aliases.
-      for (const unsigned *Alias = TRI->getAliasSet(Reg); *Alias; ++Alias) {
-        unsigned AliasReg = *Alias;
-        Classes[AliasReg] = reinterpret_cast<TargetRegisterClass *>(-1);
-        KillIndices[AliasReg] = BB->size();
-        DefIndices[AliasReg] = ~0u;
-      }
+  // Consider callee-saved registers as live-out, since we're running after
+  // prologue/epilogue insertion so there's no way to add additional
+  // saved registers.
+  //
+  // TODO: there is a new method
+  // MachineFrameInfo::getPristineRegs(MBB). It gives you a list of
+  // CSRs that have not been saved when entering the MBB. The
+  // remaining CSRs have been saved and can be treated like call
+  // clobbered registers.
+  for (const unsigned *I = TRI->getCalleeSavedRegs(); *I; ++I) {
+    unsigned Reg = *I;
+    Classes[Reg] = reinterpret_cast<TargetRegisterClass *>(-1);
+    KillIndices[Reg] = BB->size();
+    DefIndices[Reg] = ~0u;
+    // Repeat, for all aliases.
+    for (const unsigned *Alias = TRI->getAliasSet(Reg); *Alias; ++Alias) {
+      unsigned AliasReg = *Alias;
+      Classes[AliasReg] = reinterpret_cast<TargetRegisterClass *>(-1);
+      KillIndices[AliasReg] = BB->size();
+      DefIndices[AliasReg] = ~0u;
     }
   }
 }
@@ -794,6 +784,44 @@ bool SchedulePostRATDList::BreakAntiDependencies() {
   return Changed;
 }
 
+/// StartBlockForKills - Initialize register live-range state for updating kills
+///
+void SchedulePostRATDList::StartBlockForKills(MachineBasicBlock *BB) {
+  // Initialize the indices to indicate that no registers are live.
+  std::fill(KillIndices, array_endof(KillIndices), ~0u);
+
+  // Determine the live-out physregs for this block.
+  if (!BB->empty() && BB->back().getDesc().isReturn()) {
+    // In a return block, examine the function live-out regs.
+    for (MachineRegisterInfo::liveout_iterator I = MRI.liveout_begin(),
+           E = MRI.liveout_end(); I != E; ++I) {
+      unsigned Reg = *I;
+      KillIndices[Reg] = BB->size();
+      // Repeat, for all subregs.
+      for (const unsigned *Subreg = TRI->getSubRegisters(Reg);
+           *Subreg; ++Subreg) {
+        KillIndices[*Subreg] = BB->size();
+      }
+    }
+  }
+  else {
+    // In a non-return block, examine the live-in regs of all successors.
+    for (MachineBasicBlock::succ_iterator SI = BB->succ_begin(),
+           SE = BB->succ_end(); SI != SE; ++SI) {
+      for (MachineBasicBlock::livein_iterator I = (*SI)->livein_begin(),
+             E = (*SI)->livein_end(); I != E; ++I) {
+        unsigned Reg = *I;
+        KillIndices[Reg] = BB->size();
+        // Repeat, for all subregs.
+        for (const unsigned *Subreg = TRI->getSubRegisters(Reg);
+             *Subreg; ++Subreg) {
+          KillIndices[*Subreg] = BB->size();
+        }
+      }
+    }
+  }
+}
+
 /// FixupKills - Fix the register kill flags, they may have been made
 /// incorrect by instruction reordering.
 ///
@@ -802,6 +830,8 @@ void SchedulePostRATDList::FixupKills(MachineBasicBlock *MBB) {
 
   std::set<unsigned> killedRegs;
   BitVector ReservedRegs = TRI->getReservedRegs(MF);
+
+  StartBlockForKills(MBB);
   
   // Examine block from end to start...
   unsigned Count = MBB->size();
