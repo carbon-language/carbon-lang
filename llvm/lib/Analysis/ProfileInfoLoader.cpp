@@ -32,7 +32,7 @@ static inline unsigned ByteSwap(unsigned Var, bool Really) {
          ((Var & (255<<24)) >> 24);
 }
 
-static const unsigned AddCounts(unsigned A, unsigned B) {
+static unsigned AddCounts(unsigned A, unsigned B) {
   // If either value is undefined, use the other.
   if (A == ~0U) return B;
   if (B == ~0U) return A;
