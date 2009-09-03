@@ -331,6 +331,7 @@ private:
 
     uint32_t X = ComputeDigest(getLeft(), getRight(), getValue());
     Digest = X;
+    MarkedCachedDigest();
     return X;
   }
 };
