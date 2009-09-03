@@ -47,7 +47,7 @@ proc execOneLine { test PRS outcome lineno line } {
 # cases.
 proc substitute { line test tmpFile } {
   global srcroot objroot srcdir objdir subdir target_triplet prcontext
-  global llvmgcc llvmgxx llvmgcc_version llvmgccmajvers ocamlc
+  global llvmgcc llvmgxx llvmgcc_version llvmgccmajvers ocamlopt
   global gccpath gxxpath compile_c compile_cxx link shlibext llvmlibsdir
   global llvmdsymutil valgrind grep gas bugpoint_topts
   set path [file join $srcdir $subdir]
@@ -71,8 +71,8 @@ proc substitute { line test tmpFile } {
   regsub -all {%link} $new_line "$link" new_line
   #replace %shlibext with shared library extension
   regsub -all {%shlibext} $new_line "$shlibext" new_line
-  #replace %ocamlc with ocaml compiler command
-  regsub -all {%ocamlc} $new_line "$ocamlc" new_line
+  #replace %ocamlopt with ocaml compiler command
+  regsub -all {%ocamlopt} $new_line "$ocamlopt" new_line
   #replace %llvmdsymutil with dsymutil command
   regsub -all {%llvmdsymutil} $new_line "$llvmdsymutil" new_line
   #replace %llvmlibsdir with configure library directory

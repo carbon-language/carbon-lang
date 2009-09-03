@@ -1,9 +1,9 @@
-(* RUN: %ocamlc -warn-error A llvm.cma llvm_analysis.cma llvm_bitwriter.cma %s -o %t 2> /dev/null
+(* RUN: %ocamlopt -warn-error A llvm.cmxa llvm_analysis.cmxa llvm_bitwriter.cmxa %s -o %t
  * RUN: ./%t %t.bc
  * RUN: llvm-dis < %t.bc > %t.ll
  *)
 
-(* Note: It takes several seconds for ocamlc to link an executable with
+(* Note: It takes several seconds for ocamlopt to link an executable with
          libLLVMCore.a, so it's better to write a big test than a bunch of
          little ones. *)
 

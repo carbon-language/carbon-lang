@@ -1,4 +1,4 @@
-(* RUN: %ocamlc -warn-error A llvm.cma llvm_target.cma llvm_executionengine.cma %s -o %t 2> /dev/null
+(* RUN: %ocamlopt -warn-error A llvm.cmxa llvm_target.cmxa llvm_executionengine.cmxa %s -o %t
  * RUN: ./%t %t.bc
  *)
 

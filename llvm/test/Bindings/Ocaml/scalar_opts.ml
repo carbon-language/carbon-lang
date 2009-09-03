@@ -1,7 +1,7 @@
-(* RUN: %ocamlc -warn-error A llvm.cma llvm_scalar_opts.cma llvm_target.cma %s -o %t 2> /dev/null
+(* RUN: %ocamlopt -warn-error A llvm.cmxa llvm_scalar_opts.cmxa llvm_target.cmxa %s -o %t
  *)
 
-(* Note: It takes several seconds for ocamlc to link an executable with
+(* Note: It takes several seconds for ocamlopt to link an executable with
          libLLVMCore.a, so it's better to write a big test than a bunch of
          little ones. *)
 
