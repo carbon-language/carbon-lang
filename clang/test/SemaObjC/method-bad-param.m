@@ -1,4 +1,4 @@
-// RUN: clang-cc -triple i386-unknown-unknown -fsyntax-only -verify %s
+// RUN: clang-cc -fsyntax-only -verify %s
 
 @interface foo
 @end

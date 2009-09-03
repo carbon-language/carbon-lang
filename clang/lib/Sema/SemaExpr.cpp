@@ -5023,15 +5023,8 @@ QualType Sema::CheckIndirectionOperand(Expr *Op, SourceLocation OpLoc) {
   if (const PointerType *PT = Ty->getAs<PointerType>())
     return PT->getPointeeType();
 
-  if (const ObjCObjectPointerType *OPT = Ty->getAsObjCObjectPointerType()) {
-    QualType PTy = OPT->getPointeeType();
-    if (LangOpts.ObjCNonFragileABI && PTy->isObjCInterfaceType()) {
-      Diag(OpLoc, diag::err_indirection_requires_nonfragile_object)
-        << Ty << Op->getSourceRange();
-      return QualType();
-    }
-    return PTy;
-  }
+  if (const ObjCObjectPointerType *OPT = Ty->getAsObjCObjectPointerType())
+    return OPT->getPointeeType();
 
   Diag(OpLoc, diag::err_typecheck_indirection_requires_pointer)
     << Ty << Op->getSourceRange();

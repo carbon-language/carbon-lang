@@ -1,4 +1,5 @@
-// RUN: clang-cc -triple i386-unknown-unknown -ast-print %s
+// RUN: clang-cc -triple i386-unknown-unknown -ast-print %s &&
+// RUN: clang-cc -triple x86_64-apple-darwin10  -ast-print %s
 
 @interface current 
 {
@@ -13,6 +14,5 @@ current *pc;
 
 int foo()
 {
-        // FIXME. This should be OK in nonfragile-abi as well.
 	return pc->ivar2 + (*pc).ivar + pc->ivar1;
 }
