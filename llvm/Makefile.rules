@@ -436,6 +436,7 @@ ifdef ENABLE_EXPENSIVE_CHECKS
   # GNU libstdc++ uses RTTI if you define _GLIBCXX_DEBUG, which we did above.
   # See http://gcc.gnu.org/bugzilla/show_bug.cgi?id=40160
   CXX.Flags := $(filter-out -fno-rtti,$(CXX.Flags))
+  CXXFLAGS := $(filter-out -fno-rtti,$(CXXFLAGS))
 endif
 
 #--------------------------------------------------------------------
