@@ -9,11 +9,9 @@
 //
 // This file implements a simple pass that applies a variety of small
 // optimizations for calls to specific well-known function calls (e.g. runtime
-// library functions). For example, a call to the function "exit(3)" that
-// occurs within the main() function can be transformed into a simple "return 3"
-// instruction. Any optimization that takes this form (replace call to library
-// function with simpler code that provides the same result) belongs in this
-// file.
+// library functions).   Any optimization that takes the very simple form
+// "replace call to library function with simpler code that provides the same
+// result" belongs in this file.
 //
 //===----------------------------------------------------------------------===//
 
@@ -499,58 +497,12 @@ static bool IsOnlyUsedInZeroEqualityComparison(Value *V) {
 }
 
 //===----------------------------------------------------------------------===//
-// Miscellaneous LibCall Optimizations
-//===----------------------------------------------------------------------===//
-
-namespace {
-//===---------------------------------------===//
-// 'exit' Optimizations
-
-/// ExitOpt - int main() { exit(4); } --> int main() { return 4; }
-struct ExitOpt : public LibCallOptimization {
-  virtual Value *CallOptimizer(Function *Callee, CallInst *CI, IRBuilder<> &B) {
-    // Verify we have a reasonable prototype for exit.
-    if (Callee->arg_size() == 0 || !CI->use_empty())
-      return 0;
-
-    // Verify the caller is main, and that the result type of main matches the
-    // argument type of exit.
-    if (Caller->getName() != "main" || !Caller->hasExternalLinkage() ||
-        Caller->getReturnType() != CI->getOperand(1)->getType())
-      return 0;
-
-    TerminatorInst *OldTI = CI->getParent()->getTerminator();
-
-    // Drop all successor phi node entries.
-    for (unsigned i = 0, e = OldTI->getNumSuccessors(); i != e; ++i)
-      OldTI->getSuccessor(i)->removePredecessor(CI->getParent());
-
-    // Remove all instructions after the exit.
-    BasicBlock::iterator Dead = CI, E = OldTI; ++Dead;
-    while (Dead != E) {
-      BasicBlock::iterator Next = next(Dead);
-      if (Dead->getType() != Type::getVoidTy(*Context))
-        Dead->replaceAllUsesWith(UndefValue::get(Dead->getType()));
-      Dead->eraseFromParent();
-      Dead = Next;
-    }
-
-    // Insert a return instruction.
-    OldTI->eraseFromParent();
-    B.SetInsertPoint(B.GetInsertBlock());
-    B.CreateRet(CI->getOperand(1));
-
-    return CI;
-  }
-};
-
-//===----------------------------------------------------------------------===//
 // String and Memory LibCall Optimizations
 //===----------------------------------------------------------------------===//
 
 //===---------------------------------------===//
 // 'strcat' Optimizations
-
+namespace {
 struct StrCatOpt : public LibCallOptimization {
   virtual Value *CallOptimizer(Function *Callee, CallInst *CI, IRBuilder<> &B) {
     // Verify the "strcat" function prototype.
@@ -1554,8 +1506,6 @@ namespace {
   ///
   class SimplifyLibCalls : public FunctionPass {
     StringMap<LibCallOptimization*> Optimizations;
-    // Miscellaneous LibCall Optimizations
-    ExitOpt Exit; 
     // String and Memory LibCall Optimizations
     StrCatOpt StrCat; StrNCatOpt StrNCat; StrChrOpt StrChr; StrCmpOpt StrCmp;
     StrNCmpOpt StrNCmp; StrCpyOpt StrCpy; StrNCpyOpt StrNCpy; StrLenOpt StrLen;
@@ -1602,9 +1552,6 @@ FunctionPass *llvm::createSimplifyLibCallsPass() {
 /// Optimizations - Populate the Optimizations map with all the optimizations
 /// we know.
 void SimplifyLibCalls::InitOptimizations() {
-  // Miscellaneous LibCall Optimizations
-  Optimizations["exit"] = &Exit;
-  
   // String and Memory LibCall Optimizations
   Optimizations["strcat"] = &StrCat;
   Optimizations["strncat"] = &StrNCat;
