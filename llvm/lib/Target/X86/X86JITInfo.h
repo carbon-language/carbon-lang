@@ -20,16 +20,15 @@
 
 namespace llvm {
   class X86TargetMachine;
+  class X86Subtarget;
 
   class X86JITInfo : public TargetJITInfo {
     X86TargetMachine &TM;
+    const X86Subtarget *Subtarget;
     uintptr_t PICBase;
     char* TLSOffset;
   public:
-    explicit X86JITInfo(X86TargetMachine &tm) : TM(tm) {
-      useGOT = 0;
-      TLSOffset = 0;
-    }
+    explicit X86JITInfo(X86TargetMachine &tm);
 
     /// replaceMachineCodeForFunction - Make it so that calling the function
     /// whose machine code is at OLD turns into a call to NEW, perhaps by

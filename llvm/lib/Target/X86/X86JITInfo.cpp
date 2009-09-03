@@ -15,6 +15,7 @@
 #include "X86JITInfo.h"
 #include "X86Relocations.h"
 #include "X86Subtarget.h"
+#include "X86TargetMachine.h"
 #include "llvm/Function.h"
 #include "llvm/Support/Compiler.h"
 #include "llvm/Support/ErrorHandling.h"
@@ -407,24 +408,14 @@ TargetJITInfo::LazyResolverFn
 X86JITInfo::getLazyResolverFunction(JITCompilerFn F) {
   JITCompilerFunction = F;
 
-#if defined (X86_32_JIT) && !defined (_MSC_VER)
-  unsigned EAX = 0, EBX = 0, ECX = 0, EDX = 0;
-  union {
-    unsigned u[3];
-    char     c[12];
-  } text;
+  return Subtarget->hasSSE1()
+    ? X86CompilationCallback_SSE : X86CompilationCallback;
+}
 
-  if (!X86::GetCpuIDAndInfo(0, &EAX, text.u+0, text.u+2, text.u+1)) {
-    // FIXME: support for AMD family of processors.
-    if (memcmp(text.c, "GenuineIntel", 12) == 0) {
-      X86::GetCpuIDAndInfo(0x1, &EAX, &EBX, &ECX, &EDX);
-      if ((EDX >> 25) & 0x1)
-        return X86CompilationCallback_SSE;
-    }
-  }
-#endif
-
-  return X86CompilationCallback;
+X86JITInfo::X86JITInfo(X86TargetMachine &tm) : TM(tm) {
+  Subtarget = &TM.getSubtarget<X86Subtarget>();
+  useGOT = 0;
+  TLSOffset = 0;
 }
 
 void *X86JITInfo::emitGlobalValueIndirectSym(const GlobalValue* GV, void *ptr,

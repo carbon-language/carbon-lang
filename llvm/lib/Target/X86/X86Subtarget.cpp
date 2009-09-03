@@ -158,8 +158,9 @@ unsigned X86Subtarget::getSpecialAddressLatency() const {
 
 /// GetCpuIDAndInfo - Execute the specified cpuid and return the 4 values in the
 /// specified arguments.  If we can't run cpuid on the host, return true.
-bool X86::GetCpuIDAndInfo(unsigned value, unsigned *rEAX, unsigned *rEBX,
-                          unsigned *rECX, unsigned *rEDX) {
+bool
+X86Subtarget::GetCpuIDAndInfo(unsigned value, unsigned *rEAX,
+                              unsigned *rEBX, unsigned *rECX, unsigned *rEDX) {
 #if defined(__x86_64__) || defined(_M_AMD64) || defined (_M_X64)
   #if defined(__GNUC__)
     // gcc doesn't know cpuid would clobber ebx/rbx. Preseve it manually.
@@ -230,10 +231,10 @@ void X86Subtarget::AutoDetectSubtargetFeatures() {
     char     c[12];
   } text;
   
-  if (X86::GetCpuIDAndInfo(0, &EAX, text.u+0, text.u+2, text.u+1))
+  if (GetCpuIDAndInfo(0, &EAX, text.u+0, text.u+2, text.u+1))
     return;
 
-  X86::GetCpuIDAndInfo(0x1, &EAX, &EBX, &ECX, &EDX);
+  GetCpuIDAndInfo(0x1, &EAX, &EBX, &ECX, &EDX);
   
   if ((EDX >> 15) & 1) HasCMov = true;
   if ((EDX >> 23) & 1) X86SSELevel = MMX;
@@ -257,22 +258,22 @@ void X86Subtarget::AutoDetectSubtargetFeatures() {
     DetectFamilyModel(EAX, Family, Model);
     IsBTMemSlow = IsAMD || (Family == 6 && Model >= 13);
 
-    X86::GetCpuIDAndInfo(0x80000001, &EAX, &EBX, &ECX, &EDX);
+    GetCpuIDAndInfo(0x80000001, &EAX, &EBX, &ECX, &EDX);
     HasX86_64 = (EDX >> 29) & 0x1;
     HasSSE4A = IsAMD && ((ECX >> 6) & 0x1);
     HasFMA4 = IsAMD && ((ECX >> 16) & 0x1);
   }
 }
 
-static const char *GetCurrentX86CPU() {
+const char *X86Subtarget::GetCurrentX86CPU() {
   unsigned EAX = 0, EBX = 0, ECX = 0, EDX = 0;
-  if (X86::GetCpuIDAndInfo(0x1, &EAX, &EBX, &ECX, &EDX))
+  if (GetCpuIDAndInfo(0x1, &EAX, &EBX, &ECX, &EDX))
     return "generic";
   unsigned Family = 0;
   unsigned Model  = 0;
   DetectFamilyModel(EAX, Family, Model);
 
-  X86::GetCpuIDAndInfo(0x80000001, &EAX, &EBX, &ECX, &EDX);
+  GetCpuIDAndInfo(0x80000001, &EAX, &EBX, &ECX, &EDX);
   bool Em64T = (EDX >> 29) & 0x1;
   bool HasSSE3 = (ECX & 0x1);
 
@@ -281,7 +282,7 @@ static const char *GetCurrentX86CPU() {
     char     c[12];
   } text;
 
-  X86::GetCpuIDAndInfo(0, &EAX, text.u+0, text.u+2, text.u+1);
+  GetCpuIDAndInfo(0, &EAX, text.u+0, text.u+2, text.u+1);
   if (memcmp(text.c, "GenuineIntel", 12) == 0) {
     switch (Family) {
       case 3:
