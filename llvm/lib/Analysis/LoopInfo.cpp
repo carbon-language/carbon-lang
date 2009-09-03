@@ -300,6 +300,9 @@ bool Loop::isLoopSimplifyForm() const {
 ///
 void
 Loop::getUniqueExitBlocks(SmallVectorImpl<BasicBlock *> &ExitBlocks) const {
+  assert(isLoopSimplifyForm() &&
+         "getUniqueExitBlocks assumes the loop is in canonical form!");
+
   // Sort the blocks vector so that we can use binary search to do quick
   // lookups.
   SmallVector<BasicBlock *, 128> LoopBBs(block_begin(), block_end());
@@ -369,6 +372,13 @@ bool LoopInfo::runOnFunction(Function &) {
   releaseMemory();
   LI.Calculate(getAnalysis<DominatorTree>().getBase());    // Update
   return false;
+}
+
+void LoopInfo::verifyAnalysis() const {
+  for (iterator I = begin(), E = end(); I != E; ++I) {
+    assert(!(*I)->getParentLoop() && "Top-level loop has a parent!");
+    (*I)->verifyLoop();
+  }
 }
 
 void LoopInfo::getAnalysisUsage(AnalysisUsage &AU) const {

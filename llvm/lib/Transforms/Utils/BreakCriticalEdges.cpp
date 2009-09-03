@@ -122,9 +122,9 @@ bool llvm::isCriticalEdge(const TerminatorInst *TI, unsigned SuccNum,
 /// false otherwise.  This ensures that all edges to that dest go to one block
 /// instead of each going to a different block.
 //
-bool llvm::SplitCriticalEdge(TerminatorInst *TI, unsigned SuccNum, Pass *P,
-                             bool MergeIdenticalEdges) {
-  if (!isCriticalEdge(TI, SuccNum, MergeIdenticalEdges)) return false;
+BasicBlock *llvm::SplitCriticalEdge(TerminatorInst *TI, unsigned SuccNum,
+                                    Pass *P, bool MergeIdenticalEdges) {
+  if (!isCriticalEdge(TI, SuccNum, MergeIdenticalEdges)) return 0;
   BasicBlock *TIBB = TI->getParent();
   BasicBlock *DestBB = TI->getSuccessor(SuccNum);
 
@@ -172,7 +172,7 @@ bool llvm::SplitCriticalEdge(TerminatorInst *TI, unsigned SuccNum, Pass *P,
   
 
   // If we don't have a pass object, we can't update anything...
-  if (P == 0) return true;
+  if (P == 0) return NewBB;
 
   // Now update analysis information.  Since the only predecessor of NewBB is
   // the TIBB, TIBB clearly dominates NewBB.  TIBB usually doesn't dominate
@@ -254,9 +254,9 @@ bool llvm::SplitCriticalEdge(TerminatorInst *TI, unsigned SuccNum, Pass *P,
   
   // Update LoopInfo if it is around.
   if (LoopInfo *LI = P->getAnalysisIfAvailable<LoopInfo>()) {
-    // If one or the other blocks were not in a loop, the new block is not
-    // either, and thus LI doesn't need to be updated.
-    if (Loop *TIL = LI->getLoopFor(TIBB))
+    if (Loop *TIL = LI->getLoopFor(TIBB)) {
+      // If one or the other blocks were not in a loop, the new block is not
+      // either, and thus LI doesn't need to be updated.
       if (Loop *DestLoop = LI->getLoopFor(DestBB)) {
         if (TIL == DestLoop) {
           // Both in the same loop, the NewBB joins loop.
@@ -278,6 +278,55 @@ bool llvm::SplitCriticalEdge(TerminatorInst *TI, unsigned SuccNum, Pass *P,
             P->addBasicBlockToLoop(NewBB, LI->getBase());
         }
       }
+      // If TIBB is in a loop and DestBB is outside of that loop, split the
+      // other exit blocks of the loop that also have predecessors outside
+      // the loop, to maintain a LoopSimplify guarantee.
+      if (!TIL->contains(DestBB) &&
+          P->mustPreserveAnalysisID(LoopSimplifyID)) {
+        // For each unique exit block...
+        SmallVector<BasicBlock *, 4> ExitBlocks;
+        TIL->getExitBlocks(ExitBlocks);
+        for (unsigned i = 0, e = ExitBlocks.size(); i != e; ++i) {
+          // Collect all the preds that are inside the loop, and note
+          // whether there are any preds outside the loop.
+          SmallVector<BasicBlock *, 4> Preds;
+          bool AllPredsInLoop = false;
+          BasicBlock *Exit = ExitBlocks[i];
+          for (pred_iterator I = pred_begin(Exit), E = pred_end(Exit);
+               I != E; ++I)
+            if (TIL->contains(*I))
+              Preds.push_back(*I);
+            else
+              AllPredsInLoop = true;
+          // If there are any preds not in the loop, we'll need to split
+          // the edges. The Preds.empty() check is needed because a block
+          // may appear multiple times in the list. We can't use
+          // getUniqueExitBlocks above because that depends on LoopSimplify
+          // form, which we're in the process of restoring!
+          if (Preds.empty() || !AllPredsInLoop) continue;
+          BasicBlock *NewBB = SplitBlockPredecessors(Exit,
+                                                     Preds.data(), Preds.size(),
+                                                     "split", P);
+          // Update LCSSA form. This is fairly simple in LoopSimplify form:
+          // just move the existing LCSSA-mandated PHI nodes from the old exit
+          // block to the new one.
+          if (P->mustPreserveAnalysisID(LCSSAID))
+            for (BasicBlock::iterator I = Exit->begin();
+                 PHINode *PN = dyn_cast<PHINode>(I); ++I)
+              PN->moveBefore(NewBB->getTerminator());
+        }
+      }
+      // LCSSA form was updated above for the case where LoopSimplify is
+      // available, which means that all predecessors of loop exit blocks
+      // are within the loop. Without LoopSimplify form, it would be
+      // necessary to insert a new phi.
+      assert((!P->mustPreserveAnalysisID(LCSSAID) ||
+              P->mustPreserveAnalysisID(LoopSimplifyID)) &&
+             "SplitCriticalEdge doesn't know how to update LCCSA form "
+             "without LoopSimplify!");
+    }
+
   }
-  return true;
+
+  return NewBB;
 }
