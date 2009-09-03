@@ -19,6 +19,7 @@
 #include "llvm/Support/DataTypes.h"
 
 namespace llvm {
+  class MCAsmInfo;
   class MCSection;
   class MCContext;
   class raw_ostream;
@@ -106,7 +107,7 @@ namespace llvm {
     /// @}
 
     /// print - Print the value to the stream \arg OS.
-    void print(raw_ostream &OS) const;
+    void print(raw_ostream &OS, const MCAsmInfo *MAI) const;
 
     /// dump - Print the value to stderr.
     void dump() const;

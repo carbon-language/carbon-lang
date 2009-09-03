@@ -101,7 +101,8 @@ void MCAsmStreamer::EmitLabel(MCSymbol *Symbol) {
   assert(Symbol->isUndefined() && "Cannot define a symbol twice!");
   assert(CurSection && "Cannot emit before setting section!");
 
-  OS << Symbol << ":\n";
+  Symbol->print(OS, &MAI);
+  OS << ":\n";
   Symbol->setSection(*CurSection);
 }
 
@@ -118,8 +119,9 @@ void MCAsmStreamer::EmitAssignment(MCSymbol *Symbol, const MCExpr *Value) {
   assert((Symbol->isUndefined() || Symbol->isAbsolute()) &&
          "Cannot define a symbol twice!");
 
-  OS << Symbol << " = ";
-  Value->print(OS);
+  Symbol->print(OS, &MAI);
+  OS << " = ";
+  Value->print(OS, &MAI);
   OS << '\n';
 }
 
@@ -140,17 +142,22 @@ void MCAsmStreamer::EmitSymbolAttribute(MCSymbol *Symbol,
   case WeakReference: OS << ".weak_reference"; break;
   }
 
-  OS << ' ' << Symbol << '\n';
+  OS << ' ';
+  Symbol->print(OS, &MAI);
+  OS << '\n';
 }
 
 void MCAsmStreamer::EmitSymbolDesc(MCSymbol *Symbol, unsigned DescValue) {
-  OS << ".desc" << ' ' << Symbol << ',' << DescValue << '\n';
+  OS << ".desc" << ' ';
+  Symbol->print(OS, &MAI);
+  OS << ',' << DescValue << '\n';
 }
 
 void MCAsmStreamer::EmitCommonSymbol(MCSymbol *Symbol, unsigned Size,
                                      unsigned ByteAlignment) {
-  OS << ".comm";
-  OS << ' ' << Symbol << ',' << Size;
+  OS << ".comm ";
+  Symbol->print(OS, &MAI);
+  OS << ',' << Size;
   if (ByteAlignment != 0)
     OS << ',' << Log2_32(ByteAlignment);
   OS << '\n';
@@ -166,7 +173,9 @@ void MCAsmStreamer::EmitZerofill(const MCSection *Section, MCSymbol *Symbol,
   OS << MOSection->getSegmentName() << "," << MOSection->getSectionName();
   
   if (Symbol != NULL) {
-    OS << ',' << Symbol << ',' << Size;
+    OS << ',';
+    Symbol->print(OS, &MAI);
+    OS << ',' << Size;
     if (ByteAlignment != 0)
       OS << ',' << Log2_32(ByteAlignment);
   }
@@ -192,7 +201,7 @@ void MCAsmStreamer::EmitValue(const MCExpr *Value, unsigned Size) {
   }
 
   OS << ' ';
-  truncateToSize(Value, Size)->print(OS);
+  truncateToSize(Value, Size)->print(OS, &MAI);
   OS << '\n';
 }
 
@@ -248,7 +257,7 @@ void MCAsmStreamer::EmitValueToOffset(const MCExpr *Offset,
                                       unsigned char Value) {
   // FIXME: Verify that Offset is associated with the current section.
   OS << ".org ";
-  Offset->print(OS);
+  Offset->print(OS, &MAI);
   OS << ", " << (unsigned) Value << '\n';
 }
 
@@ -281,7 +290,7 @@ void MCAsmStreamer::EmitInstruction(const MCInst &Inst) {
 
   // Otherwise fall back to a structural printing for now. Eventually we should
   // always have access to the target specific printer.
-  Inst.print(OS);
+  Inst.print(OS, &MAI);
   OS << '\n';
 }
 

@@ -41,7 +41,7 @@ static inline bool NeedsQuoting(const StringRef &Str) {
   return false;
 }
 
-void MCSymbol::print(raw_ostream &OS) const {
+void MCSymbol::print(raw_ostream &OS, const MCAsmInfo *MAI) const {
   if (NeedsQuoting(getName()))
     OS << '"' << getName() << '"';
   else
@@ -49,5 +49,5 @@ void MCSymbol::print(raw_ostream &OS) const {
 }
 
 void MCSymbol::dump() const {
-  print(errs());
+  print(errs(), 0);
 }

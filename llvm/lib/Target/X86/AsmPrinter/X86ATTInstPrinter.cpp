@@ -57,7 +57,7 @@ void X86ATTAsmPrinter::print_pcrel_imm(const MCInst *MI, unsigned OpNo) {
   if (Op.isImm())
     O << Op.getImm();
   else if (Op.isExpr())
-    Op.getExpr()->print(O);
+    Op.getExpr()->print(O, MAI);
   else if (Op.isMBBLabel())
     // FIXME: Keep in sync with printBasicBlockLabel.  printBasicBlockLabel
     // should eventually call into this code, not the other way around.
@@ -93,7 +93,7 @@ void X86ATTAsmPrinter::printOperand(const MCInst *MI, unsigned OpNo,
     return;
   } else if (Op.isExpr()) {
     O << '$';
-    Op.getExpr()->print(O);
+    Op.getExpr()->print(O, MAI);
     return;
   }
   
@@ -111,7 +111,7 @@ void X86ATTAsmPrinter::printLeaMemReference(const MCInst *MI, unsigned Op) {
     if (DispVal || (!IndexReg.getReg() && !BaseReg.getReg()))
       O << DispVal;
   } else if (DispSpec.isExpr()) {
-    DispSpec.getExpr()->print(O);
+    DispSpec.getExpr()->print(O, MAI);
   } else {
     llvm_unreachable("non-immediate displacement for LEA?");
     //assert(DispSpec.isGlobal() || DispSpec.isCPI() ||

@@ -14,6 +14,7 @@
 #include "llvm/Support/DataTypes.h"
 
 namespace llvm {
+class MCAsmInfo;
 class MCContext;
 class MCSymbol;
 class MCValue;
@@ -49,7 +50,7 @@ public:
   /// @name Utility Methods
   /// @{
 
-  void print(raw_ostream &OS) const;
+  void print(raw_ostream &OS, const MCAsmInfo *MAI) const;
   void dump() const;
 
   /// @}

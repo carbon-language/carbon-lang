@@ -22,6 +22,7 @@
 
 namespace llvm {
 class raw_ostream;
+class MCAsmInfo;
 class MCExpr;
 
 /// MCOperand - Instances of this class represent operands of the MCInst class.
@@ -121,7 +122,7 @@ public:
     return Op;
   }
 
-  void print(raw_ostream &OS) const;
+  void print(raw_ostream &OS, const MCAsmInfo *MAI) const;
   void dump() const;
 };
 
@@ -147,7 +148,7 @@ public:
     Operands.push_back(Op);
   }
 
-  void print(raw_ostream &OS) const;
+  void print(raw_ostream &OS, const MCAsmInfo *MAI) const;
   void dump() const;
 };
 

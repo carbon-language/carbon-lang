@@ -14,14 +14,14 @@
 #include "llvm/Support/raw_ostream.h"
 using namespace llvm;
 
-void MCExpr::print(raw_ostream &OS) const {
+void MCExpr::print(raw_ostream &OS, const MCAsmInfo *MAI) const {
   switch (getKind()) {
   case MCExpr::Constant:
     OS << cast<MCConstantExpr>(*this).getValue();
     return;
 
   case MCExpr::SymbolRef:
-    cast<MCSymbolRefExpr>(*this).getSymbol().print(OS);
+    cast<MCSymbolRefExpr>(*this).getSymbol().print(OS, MAI);
     return;
 
   case MCExpr::Unary: {
@@ -33,14 +33,14 @@ void MCExpr::print(raw_ostream &OS) const {
     case MCUnaryExpr::Not:   OS << '~'; break;
     case MCUnaryExpr::Plus:  OS << '+'; break;
     }
-    UE.getSubExpr()->print(OS);
+    UE.getSubExpr()->print(OS, MAI);
     return;
   }
 
   case MCExpr::Binary: {
     const MCBinaryExpr &BE = cast<MCBinaryExpr>(*this);
     OS << '(';
-    BE.getLHS()->print(OS);
+    BE.getLHS()->print(OS, MAI);
     OS << ' ';
     switch (BE.getOpcode()) {
     default: assert(0 && "Invalid opcode!");
@@ -64,7 +64,7 @@ void MCExpr::print(raw_ostream &OS) const {
     case MCBinaryExpr::Xor:  OS <<  '^'; break;
     }
     OS << ' ';
-    BE.getRHS()->print(OS);
+    BE.getRHS()->print(OS, MAI);
     OS << ')';
     return;
   }
@@ -74,7 +74,7 @@ void MCExpr::print(raw_ostream &OS) const {
 }
 
 void MCExpr::dump() const {
-  print(errs());
+  print(errs(), 0);
   errs() << '\n';
 }
 

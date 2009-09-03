@@ -13,7 +13,7 @@
 
 using namespace llvm;
 
-void MCOperand::print(raw_ostream &OS) const {
+void MCOperand::print(raw_ostream &OS, const MCAsmInfo *MAI) const {
   OS << "<MCOperand ";
   if (!isValid())
     OS << "INVALID";
@@ -26,7 +26,7 @@ void MCOperand::print(raw_ostream &OS) const {
        << getMBBLabelBlock() << ")";
   else if (isExpr()) {
     OS << "Expr:(";
-    getExpr()->print(OS);
+    getExpr()->print(OS, MAI);
     OS << ")";
   } else
     OS << "UNDEFINED";
@@ -34,20 +34,20 @@ void MCOperand::print(raw_ostream &OS) const {
 }
 
 void MCOperand::dump() const {
-  print(errs());
+  print(errs(), 0);
   errs() << "\n";
 }
 
-void MCInst::print(raw_ostream &OS) const {
+void MCInst::print(raw_ostream &OS, const MCAsmInfo *MAI) const {
   OS << "<MCInst " << getOpcode();
   for (unsigned i = 0, e = getNumOperands(); i != e; ++i) {
     OS << " ";
-    getOperand(i).print(OS);
+    getOperand(i).print(OS, MAI);
   }
   OS << ">";
 }
 
 void MCInst::dump() const {
-  print(errs());
+  print(errs(), 0);
   errs() << "\n";
 }

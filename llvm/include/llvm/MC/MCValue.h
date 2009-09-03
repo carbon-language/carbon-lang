@@ -55,7 +55,7 @@ public:
   const MCSection *getAssociatedSection() const;
 
   /// print - Print the value to the stream \arg OS.
-  void print(raw_ostream &OS) const;
+  void print(raw_ostream &OS, const MCAsmInfo *MAI) const;
   
   /// dump - Print the value to stderr.
   void dump() const;
