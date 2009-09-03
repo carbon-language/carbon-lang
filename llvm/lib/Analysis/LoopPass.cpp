@@ -239,7 +239,9 @@ bool LPPassManager::runOnFunction(Function &F) {
         dumpPassInfo(P, MODIFICATION_MSG, ON_LOOP_MSG, "");
       dumpPreservedSet(P);
 
-      verifyPreservedAnalysis(LP);
+      if (!skipThisLoop)
+        verifyPreservedAnalysis(LP);
+
       removeNotPreservedAnalysis(P);
       recordAvailableAnalysis(P);
       removeDeadPasses(P, "", ON_LOOP_MSG);
