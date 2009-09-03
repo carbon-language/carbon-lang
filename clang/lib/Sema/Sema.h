@@ -2175,7 +2175,13 @@ public:
                                      unsigned NumArgs, SourceLocation IdLoc,
                                      SourceLocation RParenLoc,
                                      CXXRecordDecl *ClassDecl);
-
+  
+  void setBaseOrMemberInitializers(CXXConstructorDecl *Constructor,
+                              CXXBaseOrMemberInitializer **Initializers,
+                              unsigned NumInitializers,
+                              llvm::SmallVectorImpl<CXXBaseSpecifier *>& Bases,
+                              llvm::SmallVectorImpl<FieldDecl *>&Members);
+  
   void AddImplicitlyDeclaredMembersToClass(CXXRecordDecl *ClassDecl);
 
   virtual void ActOnMemInitializers(DeclPtrTy ConstructorDecl, 

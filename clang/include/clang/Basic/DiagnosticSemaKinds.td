@@ -714,6 +714,12 @@ def note_first_required_here : Note<
 def err_unintialized_member : Error<
   "cannot define the implicit default constructor for %0, because "
   "%select{reference|const}1 member %2 cannot be default-initialized">;
+def err_null_intialized_reference_member : Error<
+  "cannot initialize the member to null in default constructor because "
+  "reference member %0 cannot be null-initialized">;
+def err_unintialized_member_in_ctor : Error<
+  "constructor for %0 must explicitly initialize the "
+  "%select{reference|const}1 member %2 ">;
 
 def err_use_of_default_argument_to_function_declared_later : Error<
   "use of default argument to function %0 that is declared later in class %1">;

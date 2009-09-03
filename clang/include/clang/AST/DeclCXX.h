@@ -1039,12 +1039,13 @@ public:
       return NumBaseOrMemberInitializers; 
   }
   
-  void setBaseOrMemberInitializers(ASTContext &C,
-                              CXXBaseOrMemberInitializer **Initializers,
-                              unsigned NumInitializers,
-                              llvm::SmallVectorImpl<CXXBaseSpecifier *>& Bases,
-                              llvm::SmallVectorImpl<FieldDecl *>&Members);
+  void setNumBaseOrMemberInitializers(unsigned numBaseOrMemberInitializers) {
+    NumBaseOrMemberInitializers = numBaseOrMemberInitializers;
+  }
   
+  void setBaseOrMemberInitializers(CXXBaseOrMemberInitializer ** initializers) {
+    BaseOrMemberInitializers = initializers;
+  }
   /// isDefaultConstructor - Whether this constructor is a default
   /// constructor (C++ [class.ctor]p5), which can be used to
   /// default-initialize a class of this type.

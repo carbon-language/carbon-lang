@@ -792,6 +792,11 @@ Sema::BuildMemberInitializer(FieldDecl *Member, Expr **Args,
   } else if (!HasDependentArg) {
     Expr *NewExp;
     if (NumArgs == 0) {
+      if (FieldType->isReferenceType()) {
+        Diag(IdLoc, diag::err_null_intialized_reference_member)
+              << Member->getDeclName();
+        return Diag(Member->getLocation(), diag::note_declared_at);
+      }
       NewExp = new (Context) CXXZeroInitValueExpr(FieldType, IdLoc, RParenLoc);
       NumArgs = 1;
     }
@@ -890,6 +895,175 @@ Sema::BuildBaseInitializer(QualType BaseType, Expr **Args,
 }
 
 void
+Sema::setBaseOrMemberInitializers(CXXConstructorDecl *Constructor,
+                              CXXBaseOrMemberInitializer **Initializers,
+                              unsigned NumInitializers,
+                              llvm::SmallVectorImpl<CXXBaseSpecifier *>& Bases,          
+                              llvm::SmallVectorImpl<FieldDecl *>&Fields) {
+  // We need to build the initializer AST according to order of construction
+  // and not what user specified in the Initializers list.
+  CXXRecordDecl *ClassDecl = cast<CXXRecordDecl>(Constructor->getDeclContext());
+  llvm::SmallVector<CXXBaseOrMemberInitializer*, 32> AllToInit;
+  llvm::DenseMap<const void *, CXXBaseOrMemberInitializer*> AllBaseFields;
+  bool HasDependentBaseInit = false;
+  
+  for (unsigned i = 0; i < NumInitializers; i++) {
+    CXXBaseOrMemberInitializer *Member = Initializers[i];
+    if (Member->isBaseInitializer()) {
+      if (Member->getBaseClass()->isDependentType())
+        HasDependentBaseInit = true;
+      AllBaseFields[Member->getBaseClass()->getAs<RecordType>()] = Member;
+    } else {
+      AllBaseFields[Member->getMember()] = Member;
+    }
+  }
+  
+  if (HasDependentBaseInit) {
+    // FIXME. This does not preserve the ordering of the initializers.
+    // Try (with -Wreorder)
+    // template<class X> struct A {};
+    // template<class X> struct B : A<X> { 
+    //   B() : x1(10), A<X>() {} 
+    //   int x1;
+    // };
+    // B<int> x;
+    // On seeing one dependent type, we should essentially exit this routine
+    // while preserving user-declared initializer list. When this routine is
+    // called during instantiatiation process, this routine will rebuild the
+    // oderdered initializer list correctly.
+    
+    // If we have a dependent base initialization, we can't determine the
+    // association between initializers and bases; just dump the known
+    // initializers into the list, and don't try to deal with other bases.
+    for (unsigned i = 0; i < NumInitializers; i++) {
+      CXXBaseOrMemberInitializer *Member = Initializers[i];
+      if (Member->isBaseInitializer())
+        AllToInit.push_back(Member);
+    }
+  } else {
+    // Push virtual bases before others.
+    for (CXXRecordDecl::base_class_iterator VBase =
+         ClassDecl->vbases_begin(),
+         E = ClassDecl->vbases_end(); VBase != E; ++VBase) {
+      if (VBase->getType()->isDependentType())
+        continue;
+      if (CXXBaseOrMemberInitializer *Value = 
+          AllBaseFields.lookup(VBase->getType()->getAs<RecordType>()))
+        AllToInit.push_back(Value);
+      else {
+        CXXRecordDecl *VBaseDecl = 
+        cast<CXXRecordDecl>(VBase->getType()->getAs<RecordType>()->getDecl());
+        assert(VBaseDecl && "setBaseOrMemberInitializers - VBaseDecl null");
+        if (!VBaseDecl->getDefaultConstructor(Context))
+          Bases.push_back(VBase);
+        CXXBaseOrMemberInitializer *Member = 
+        new (Context) CXXBaseOrMemberInitializer(VBase->getType(), 0, 0,
+                                    VBaseDecl->getDefaultConstructor(Context),
+                                    SourceLocation(),
+                                    SourceLocation());
+        AllToInit.push_back(Member);
+      }
+    }
+    
+    for (CXXRecordDecl::base_class_iterator Base =
+         ClassDecl->bases_begin(),
+         E = ClassDecl->bases_end(); Base != E; ++Base) {
+      // Virtuals are in the virtual base list and already constructed.
+      if (Base->isVirtual())
+        continue;
+      // Skip dependent types.
+      if (Base->getType()->isDependentType())
+        continue;
+      if (CXXBaseOrMemberInitializer *Value = 
+          AllBaseFields.lookup(Base->getType()->getAs<RecordType>()))
+        AllToInit.push_back(Value);
+      else {
+        CXXRecordDecl *BaseDecl = 
+        cast<CXXRecordDecl>(Base->getType()->getAs<RecordType>()->getDecl());
+        assert(BaseDecl && "setBaseOrMemberInitializers - BaseDecl null");
+        if (!BaseDecl->getDefaultConstructor(Context))
+          Bases.push_back(Base);
+        CXXBaseOrMemberInitializer *Member = 
+        new (Context) CXXBaseOrMemberInitializer(Base->getType(), 0, 0,
+                                      BaseDecl->getDefaultConstructor(Context),
+                                      SourceLocation(),
+                                      SourceLocation());
+        AllToInit.push_back(Member);
+      }
+    }
+  }
+  
+  // non-static data members.
+  for (CXXRecordDecl::field_iterator Field = ClassDecl->field_begin(),
+       E = ClassDecl->field_end(); Field != E; ++Field) {
+    if ((*Field)->isAnonymousStructOrUnion()) {
+      if (const RecordType *FieldClassType = 
+          Field->getType()->getAs<RecordType>()) {
+        CXXRecordDecl *FieldClassDecl
+        = cast<CXXRecordDecl>(FieldClassType->getDecl());
+        for(RecordDecl::field_iterator FA = FieldClassDecl->field_begin(),
+            EA = FieldClassDecl->field_end(); FA != EA; FA++) {
+          if (CXXBaseOrMemberInitializer *Value = AllBaseFields.lookup(*FA)) {
+            // 'Member' is the anonymous union field and 'AnonUnionMember' is
+            // set to the anonymous union data member used in the initializer
+            // list.
+            Value->setMember(*Field);
+            Value->setAnonUnionMember(*FA);
+            AllToInit.push_back(Value);
+            break;
+          }
+        }
+      }
+      continue;
+    }
+    if (CXXBaseOrMemberInitializer *Value = AllBaseFields.lookup(*Field)) {
+      AllToInit.push_back(Value);
+      continue;
+    }
+    
+    QualType FT = Context.getBaseElementType((*Field)->getType());
+    if (const RecordType* RT = FT->getAs<RecordType>()) {
+      CXXConstructorDecl *Ctor =
+        cast<CXXRecordDecl>(RT->getDecl())->getDefaultConstructor(Context);
+      if (!Ctor && !FT->isDependentType())
+        Fields.push_back(*Field);
+      CXXBaseOrMemberInitializer *Member = 
+      new (Context) CXXBaseOrMemberInitializer((*Field), 0, 0,
+                                         Ctor,
+                                         SourceLocation(),
+                                         SourceLocation());
+      AllToInit.push_back(Member);
+      if (FT.isConstQualified() && (!Ctor || Ctor->isTrivial())) {
+        Diag(Constructor->getLocation(), diag::err_unintialized_member_in_ctor)
+          << Context.getTagDeclType(ClassDecl) << 1 << (*Field)->getDeclName();
+        Diag((*Field)->getLocation(), diag::note_declared_at);
+      }
+    }
+    else if (FT->isReferenceType()) {
+      Diag(Constructor->getLocation(), diag::err_unintialized_member_in_ctor)
+        << Context.getTagDeclType(ClassDecl) << 0 << (*Field)->getDeclName();
+      Diag((*Field)->getLocation(), diag::note_declared_at);
+    }
+    else if (FT.isConstQualified()) {
+      Diag(Constructor->getLocation(), diag::err_unintialized_member_in_ctor)
+        << Context.getTagDeclType(ClassDecl) << 1 << (*Field)->getDeclName();
+      Diag((*Field)->getLocation(), diag::note_declared_at);
+    }
+  }
+  
+  NumInitializers = AllToInit.size();
+  if (NumInitializers > 0) {
+    Constructor->setNumBaseOrMemberInitializers(NumInitializers);
+    CXXBaseOrMemberInitializer **baseOrMemberInitializers =
+      new (Context) CXXBaseOrMemberInitializer*[NumInitializers];
+    
+    Constructor->setBaseOrMemberInitializers(baseOrMemberInitializers);
+    for (unsigned Idx = 0; Idx < NumInitializers; ++Idx)
+      baseOrMemberInitializers[Idx] = AllToInit[Idx];
+  }
+}
+
+void
 Sema::BuildBaseOrMemberInitializers(ASTContext &C,
                                  CXXConstructorDecl *Constructor,
                                  CXXBaseOrMemberInitializer **Initializers,
@@ -898,9 +1072,8 @@ Sema::BuildBaseOrMemberInitializers(ASTContext &C,
   llvm::SmallVector<CXXBaseSpecifier *, 4>Bases;
   llvm::SmallVector<FieldDecl *, 4>Members;
   
-  Constructor->setBaseOrMemberInitializers(C, 
-                                           Initializers, NumInitializers,
-                                           Bases, Members);
+  setBaseOrMemberInitializers(Constructor, 
+                              Initializers, NumInitializers, Bases, Members);
   for (unsigned int i = 0; i < Bases.size(); i++)
     Diag(Bases[i]->getSourceRange().getBegin(), 
          diag::err_missing_default_constructor) << 0 << Bases[i]->getType();
