@@ -211,7 +211,7 @@ MCOperand X86ATTAsmPrinter::LowerSymbolOperand(const MachineOperand &MO,
   }
   }
   
-  if (MO.getOffset())
+  if (!MO.isJTI() && MO.getOffset())
     Expr = MCBinaryExpr::CreateAdd(Expr, MCConstantExpr::Create(MO.getOffset(),
                                                                 OutContext),
                                    OutContext);
