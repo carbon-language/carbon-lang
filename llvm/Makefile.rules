@@ -1370,12 +1370,12 @@ $(ObjDir)/%.s: %.c $(ObjDir)/.dir $(BUILT_SOURCES)
 ifdef DEBUG_RUNTIME
 $(ObjectsBC): $(ObjDir)/%.bc: $(ObjDir)/%.ll $(LLVMAS) $(LOPT)
 	$(Echo) "Compiling $*.ll to $*.bc for $(BuildMode) build (bytecode)"
-	$(Verb) $(LLVMAS) $< -o - | $(LOPT) -std-compile-opts -o $@ -f
+	$(Verb) $(LLVMAS) $< -o - | $(LOPT) -std-compile-opts -o $@
 else
 $(ObjectsBC): $(ObjDir)/%.bc: $(ObjDir)/%.ll $(LLVMAS) $(LOPT)
 	$(Echo) "Compiling $*.ll to $*.bc for $(BuildMode) build (bytecode)"
 	$(Verb) $(LLVMAS) $< -o - | \
-	   $(LOPT) -std-compile-opts -strip-debug -o $@ -f
+	   $(LOPT) -std-compile-opts -strip-debug -o $@
 endif
 
 
