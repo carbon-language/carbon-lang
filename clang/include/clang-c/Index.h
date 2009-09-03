@@ -75,7 +75,8 @@ enum CXCursorKind {
  CXCursor_ObjCProtocolRef               = 41,
  CXCursor_ObjCMessageRef                = 42,
  CXCursor_ObjCSelectorRef               = 43,
- CXCursor_LastRef                       = 43
+ CXCursor_ObjCClassRef                  = 44,
+ CXCursor_LastRef                       = 44
 };
 
 /* A cursor into the CXTranslationUnit. */
@@ -90,6 +91,8 @@ typedef struct {
 typedef void *CXEntity;     
 
 CXIndex clang_createIndex();
+
+const char *clang_getTranslationUnitSpelling(CXTranslationUnit CTUnit);
 
 CXTranslationUnit clang_createTranslationUnit(
   CXIndex, const char *ast_filename

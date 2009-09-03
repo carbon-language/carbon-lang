@@ -19,3 +19,4 @@ _clang_isReference
 _clang_isDefinition
 _clang_getCursorSpelling
 _clang_getCursorKindSpelling
+_clang_getTranslationUnitSpelling

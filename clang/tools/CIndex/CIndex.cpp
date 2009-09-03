@@ -67,6 +67,9 @@ public:
         break;
     }
   }
+  void VisitVarDecl(VarDecl *ND) {
+    Call(CXCursor_VarDecl, ND);
+  }
   void VisitFunctionDecl(FunctionDecl *ND) {
     Call(ND->isThisDeclarationADefinition() ? CXCursor_FunctionDefn
                                             : CXCursor_FunctionDecl, ND);
@@ -95,6 +98,9 @@ class CDeclVisitor : public DeclVisitor<CDeclVisitor> {
   CXClientData CData;
   
   void Call(enum CXCursorKind CK, NamedDecl *ND) {
+    // Disable the callback when the context is equal to the visiting decl.
+    if (CDecl == ND && !clang_isReference(CK))
+      return;
     CXCursor C = { CK, ND };
     Callback(CDecl, C, CData);
   }
@@ -102,11 +108,18 @@ public:
   CDeclVisitor(CXDecl C, CXDeclIterator cback, CXClientData D) : 
     CDecl(C), Callback(cback), CData(D) {}
     
+  void VisitObjCCategoryDecl(ObjCCategoryDecl *ND) {
+    // Issue callbacks for the containing class.
+    Call(CXCursor_ObjCClassRef, ND);
+    // FIXME: Issue callbacks for protocol refs.
+    VisitDeclContext(dyn_cast<DeclContext>(ND));
+  }
   void VisitObjCInterfaceDecl(ObjCInterfaceDecl *D) {
-    // Issue callbacks for super class and protocols.
+    // Issue callbacks for super class.
     if (D->getSuperClass())
       Call(CXCursor_ObjCSuperClassRef, D);
 
+    // FIXME: Issue callbacks for protocol refs.
     VisitDeclContext(dyn_cast<DeclContext>(D));
   }
   void VisitTagDecl(TagDecl *D) {
@@ -129,17 +142,28 @@ public:
   void VisitFieldDecl(FieldDecl *ND) {
     Call(CXCursor_FieldDecl, ND);
   }
+  void VisitVarDecl(VarDecl *ND) {
+    Call(CXCursor_VarDecl, ND);
+  }
+  void VisitParmVarDecl(ParmVarDecl *ND) {
+    Call(CXCursor_ParmDecl, ND);
+  }
   void VisitObjCPropertyDecl(ObjCPropertyDecl *ND) {
     Call(CXCursor_ObjCPropertyDecl, ND);
   }
   void VisitObjCIvarDecl(ObjCIvarDecl *ND) {
     Call(CXCursor_ObjCIvarDecl, ND);
   }
+  void VisitFunctionDecl(FunctionDecl *ND) {
+    if (ND->isThisDeclarationADefinition()) {
+      VisitDeclContext(dyn_cast<DeclContext>(ND));
+    }
+  }
   void VisitObjCMethodDecl(ObjCMethodDecl *ND) {
     if (ND->getBody()) {
       Call(ND->isInstanceMethod() ? CXCursor_ObjCInstanceMethodDefn
                                   : CXCursor_ObjCClassMethodDefn, ND);
-      // FIXME: load body.
+      VisitDeclContext(dyn_cast<DeclContext>(ND));
     } else
       Call(ND->isInstanceMethod() ? CXCursor_ObjCInstanceMethodDecl
                                   : CXCursor_ObjCClassMethodDecl, ND);
@@ -167,6 +191,13 @@ CXTranslationUnit clang_createTranslationUnit(
   return ASTUnit::LoadFromPCHFile(astName, CXXIdx->getFileManager(), &ErrMsg);
 }
 
+const char *clang_getTranslationUnitSpelling(CXTranslationUnit CTUnit)
+{
+  assert(CTUnit && "Passed null CXTranslationUnit");
+  //ASTUnit *CXXUnit = static_cast<ASTUnit *>(CTUnit);
+  //return CXXUnit->getOriginalSourceFileName().c_str();
+  return "<unimplemented>";
+}
 
 void clang_loadTranslationUnit(CXTranslationUnit CTUnit, 
                                CXTranslationUnitIterator callback,
@@ -259,6 +290,12 @@ const char *clang_getCursorSpelling(CXCursor C)
         assert(OID && "clang_getCursorLine(): Missing interface decl");
         return OID->getSuperClass()->getIdentifier()->getName();
         }
+      case CXCursor_ObjCClassRef: 
+        {
+        ObjCCategoryDecl *OID = dyn_cast<ObjCCategoryDecl>(ND);
+        assert(OID && "clang_getCursorLine(): Missing category decl");
+        return OID->getClassInterface()->getIdentifier()->getName();
+        }
       default:
         return "<not implemented>";
     }
@@ -292,6 +329,7 @@ const char *clang_getCursorKindSpelling(enum CXCursorKind Kind)
    case CXCursor_ObjCClassDefn: return "ObjCClassDefn";
    case CXCursor_ObjCCategoryDefn: return "ObjCCategoryDefn";
    case CXCursor_ObjCSuperClassRef: return "ObjCSuperClassRef";
+   case CXCursor_ObjCClassRef: return "ObjCClassRef";
    default: return "<not implemented>";
   }
 }
