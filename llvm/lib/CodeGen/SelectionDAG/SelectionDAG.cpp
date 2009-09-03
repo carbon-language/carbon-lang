@@ -2198,6 +2198,19 @@ unsigned SelectionDAG::ComputeNumSignBits(SDValue Op, unsigned Depth) const{
   return std::max(FirstAnswer, std::min(VTBits, Mask.countLeadingZeros()));
 }
 
+bool SelectionDAG::isKnownNeverNaN(SDValue Op) const {
+  // If we're told that NaNs won't happen, assume they won't.
+  if (FiniteOnlyFPMath())
+    return true;
+
+  // If the value is a constant, we can obviously see if it is a NaN or not.
+  if (const ConstantFPSDNode *C = dyn_cast<ConstantFPSDNode>(Op))
+    return !C->getValueAPF().isNaN();
+
+  // TODO: Recognize more cases here.
+
+  return false;
+}
 
 bool SelectionDAG::isVerifiedDebugInfoDesc(SDValue Op) const {
   GlobalAddressSDNode *GA = dyn_cast<GlobalAddressSDNode>(Op);

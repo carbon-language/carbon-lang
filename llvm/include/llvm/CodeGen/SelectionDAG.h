@@ -840,6 +840,9 @@ public:
   /// class to allow target nodes to be understood.
   unsigned ComputeNumSignBits(SDValue Op, unsigned Depth = 0) const;
 
+  /// isKnownNeverNan - Test whether the given SDValue is known to never be NaN.
+  bool isKnownNeverNaN(SDValue Op) const;
+
   /// isVerifiedDebugInfoDesc - Returns true if the specified SDValue has
   /// been verified as a debug information descriptor.
   bool isVerifiedDebugInfoDesc(SDValue Op) const;

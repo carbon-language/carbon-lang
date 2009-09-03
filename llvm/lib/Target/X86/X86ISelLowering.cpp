@@ -8250,8 +8250,18 @@ static SDValue PerformSELECTCombine(SDNode *N, SelectionDAG &DAG,
     } else if (LHS == Cond.getOperand(1) && RHS == Cond.getOperand(0)) {
       switch (CC) {
       default: break;
-      case ISD::SETOGT: // (X > Y) ? Y : X -> min
-      case ISD::SETUGT:
+      case ISD::SETOGT:
+        // This can use a min only if the LHS isn't NaN.
+        if (DAG.isKnownNeverNaN(LHS))
+          Opcode = X86ISD::FMIN;
+        else if (DAG.isKnownNeverNaN(RHS)) {
+          Opcode = X86ISD::FMIN;
+          // Put the potential NaN in the RHS so that SSE will preserve it.
+          std::swap(LHS, RHS);
+        }
+        break;
+
+      case ISD::SETUGT: // (X > Y) ? Y : X -> min
       case ISD::SETGT:
         if (!UnsafeFPMath) break;
         // FALL THROUGH.
@@ -8260,8 +8270,18 @@ static SDValue PerformSELECTCombine(SDNode *N, SelectionDAG &DAG,
         Opcode = X86ISD::FMIN;
         break;
 
-      case ISD::SETOLE:   // (X <= Y) ? Y : X -> max
       case ISD::SETULE:
+        // This can use a max only if the LHS isn't NaN.
+        if (DAG.isKnownNeverNaN(LHS))
+          Opcode = X86ISD::FMAX;
+        else if (DAG.isKnownNeverNaN(RHS)) {
+          Opcode = X86ISD::FMAX;
+          // Put the potential NaN in the RHS so that SSE will preserve it.
+          std::swap(LHS, RHS);
+        }
+        break;
+
+      case ISD::SETOLE:   // (X <= Y) ? Y : X -> max
       case ISD::SETLE:
         if (!UnsafeFPMath) break;
         // FALL THROUGH.
