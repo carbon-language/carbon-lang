@@ -1,4 +1,15 @@
-for ARCH in i386 x86_64 ppc; do
+#!/usr/bin/env bash
+
+ARCHS='<host>'
+if test `uname` = "Darwin"; then
+  ARCHS="i386 x86_64 ppc"
+fi
+
+for ARCH in $ARCHS; do
+  CFLAGS="-Os -nodefaultlibs"
+  if test "$ARCH" != '<host>'; then
+    CFLAGS="-arch $ARCH $CFLAGS"
+  fi
   for FILE in $(ls *.c); do
     # Use -nodefaultlibs to avoid using libgcc.a
     # Use -lSystem to link with libSystem.dylb.
@@ -16,7 +27,7 @@ for ARCH in i386 x86_64 ppc; do
       # this test requires an extra compiler option
       EXTRA="-fnested-functions"
     fi
-    if gcc -nodefaultlibs -arch $ARCH -Os $FILE ../../Release/libcompiler_rt.Optimized.a -lSystem $EXTRA
+    if gcc $CFLAGS $FILE ../../Release/libcompiler_rt.Optimized.a -lSystem $EXTRA
     then
       echo "Testing $FILE for $ARCH"
       if ./a.out
