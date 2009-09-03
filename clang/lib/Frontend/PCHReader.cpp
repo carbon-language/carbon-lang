@@ -1702,6 +1702,7 @@ bool PCHReader::ParseLanguageOptions(
     PARSE_LANGOPT(Freestanding);
     PARSE_LANGOPT(NoBuiltin);
     PARSE_LANGOPT(ThreadsafeStatics);
+    PARSE_LANGOPT(POSIXThreads);
     PARSE_LANGOPT(Blocks);
     PARSE_LANGOPT(EmitAllDecls);
     PARSE_LANGOPT(MathErrno);

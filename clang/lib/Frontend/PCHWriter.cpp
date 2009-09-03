@@ -590,6 +590,7 @@ void PCHWriter::WriteLanguageOptions(const LangOptions &LangOpts) {
 
   // Whether static initializers are protected by locks.
   Record.push_back(LangOpts.ThreadsafeStatics);
+  Record.push_back(LangOpts.POSIXThreads);
   Record.push_back(LangOpts.Blocks); // block extension to C
   Record.push_back(LangOpts.EmitAllDecls); // Emit all declarations, even if
                                   // they are unused.
