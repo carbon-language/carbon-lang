@@ -32,6 +32,13 @@ static inline unsigned ByteSwap(unsigned Var, bool Really) {
          ((Var & (255<<24)) >> 24);
 }
 
+static const unsigned AddCounts(unsigned A, unsigned B) {
+  // If either value is undefined, use the other.
+  if (A == ~0U) return B;
+  if (B == ~0U) return A;
+  return A + B;
+}
+
 static void ReadProfilingBlock(const char *ToolName, FILE *F,
                                bool ShouldByteSwap,
                                std::vector<unsigned> &Data) {
@@ -62,25 +69,11 @@ static void ReadProfilingBlock(const char *ToolName, FILE *F,
   // Accumulate the data we just read into the data.
   if (!ShouldByteSwap) {
     for (unsigned i = 0; i != NumEntries; ++i) {
-      unsigned data = TempSpace[i];
-      if (data != (unsigned)-1) {       // only load data if its not MissingVal
-        if (Data[i] == (unsigned)-1) {
-          Data[i] = data;               // if data is still initialised
-        } else {
-          Data[i] += data;
-        }
-      }
+      Data[i] = AddCounts(TempSpace[i], Data[i]);
     }
   } else {
     for (unsigned i = 0; i != NumEntries; ++i) {
-      unsigned data = ByteSwap(TempSpace[i], true);
-      if (data != (unsigned)-1) {       // only load data if its not MissingVal
-        if (Data[i] == (unsigned)-1) {
-          Data[i] = data;
-        } else {
-          Data[i] += data;
-        }
-      }
+      Data[i] = AddCounts(ByteSwap(TempSpace[i], true), Data[i]);
     }
   }
 }
