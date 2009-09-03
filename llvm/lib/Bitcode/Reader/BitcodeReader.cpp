@@ -332,6 +332,9 @@ void BitcodeReaderMDValueList::AssignValue(Value *V, unsigned Idx) {
   Value *PrevVal = OldV;
   OldV->replaceAllUsesWith(V);
   delete PrevVal;
+  // Deleting PrevVal sets Idx value in MDValuePtrs to null. Set new
+  // value for Idx.
+  MDValuePtrs[Idx] = V;
 }
 
 Value *BitcodeReaderMDValueList::getValueFwdRef(unsigned Idx) {
