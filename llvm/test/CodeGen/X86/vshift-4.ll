@@ -1,7 +1,4 @@
 ; RUN: llvm-as < %s | llc -march=x86 -mattr=+sse2 -disable-mmx | FileCheck %s
-; RUN: grep psllq %t | count 1
-; RUN: grep pslld %t | count 3
-; RUN: grep psllw %t | count 2
 
 ; test vector shifts converted to proper SSE2 vector shifts when the shift
 ; amounts are the same when using a shuffle splat.
