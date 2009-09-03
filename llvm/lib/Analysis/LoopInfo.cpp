@@ -308,7 +308,7 @@ Loop::getUniqueExitBlocks(SmallVectorImpl<BasicBlock *> &ExitBlocks) const {
   SmallVector<BasicBlock *, 128> LoopBBs(block_begin(), block_end());
   std::sort(LoopBBs.begin(), LoopBBs.end());
 
-  std::vector<BasicBlock *> switchExitBlocks;
+  SmallVector<BasicBlock *, 32> switchExitBlocks;
 
   for (block_iterator BI = block_begin(), BE = block_end(); BI != BE; ++BI) {
 
