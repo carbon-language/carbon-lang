@@ -62,6 +62,10 @@ Driver::Driver(const char *_Name, const char *_Dir,
   // Only use clang on i386 and x86_64 by default, in a "production" build.
   CCCClangArchs.insert("i386");
   CCCClangArchs.insert("x86_64");
+  CCCClangArchs.insert("arm");
+  CCCClangArchs.insert("armv5");
+  CCCClangArchs.insert("armv6");
+  CCCClangArchs.insert("armv7");
 #endif
 }
 
