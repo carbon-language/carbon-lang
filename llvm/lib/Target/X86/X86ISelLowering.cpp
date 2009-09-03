@@ -6359,9 +6359,23 @@ X86TargetLowering::LowerINTRINSIC_WO_CHAIN(SDValue Op, SelectionDAG &DAG) {
       break;
     }
     }
+
+    // The vector shift intrinsics with scalars uses 32b shift amounts but
+    // the sse2/mmx shift instructions reads 64 bits. Set the upper 32 bits
+    // to be zero.
+    SDValue ShOps[4];
+    ShOps[0] = ShAmt;
+    ShOps[1] = DAG.getConstant(0, MVT::i32);
+    if (ShAmtVT == MVT::v4i32) {
+      ShOps[2] = DAG.getUNDEF(MVT::i32);
+      ShOps[3] = DAG.getUNDEF(MVT::i32);
+      ShAmt =  DAG.getNode(ISD::BUILD_VECTOR, dl, ShAmtVT, &ShOps[0], 4);
+    } else {
+      ShAmt =  DAG.getNode(ISD::BUILD_VECTOR, dl, ShAmtVT, &ShOps[0], 2);
+    }
+
     EVT VT = Op.getValueType();
-    ShAmt = DAG.getNode(ISD::BIT_CONVERT, dl, VT,
-                        DAG.getNode(ISD::SCALAR_TO_VECTOR, dl, ShAmtVT, ShAmt));
+    ShAmt = DAG.getNode(ISD::BIT_CONVERT, dl, VT, ShAmt);
     return DAG.getNode(ISD::INTRINSIC_WO_CHAIN, dl, VT,
                        DAG.getConstant(NewIntNo, MVT::i32),
                        Op.getOperand(1), ShAmt);
@@ -8554,7 +8568,7 @@ static SDValue PerformShiftCombine(SDNode* N, SelectionDAG &DAG,
   SDValue ShAmtOp = N->getOperand(1);
   EVT EltVT = VT.getVectorElementType();
   DebugLoc DL = N->getDebugLoc();
-  SDValue BaseShAmt;
+  SDValue BaseShAmt = SDValue();
   if (ShAmtOp.getOpcode() == ISD::BUILD_VECTOR) {
     unsigned NumElts = VT.getVectorNumElements();
     unsigned i = 0;
@@ -8573,15 +8587,34 @@ static SDValue PerformShiftCombine(SDNode* N, SelectionDAG &DAG,
     }
   } else if (ShAmtOp.getOpcode() == ISD::VECTOR_SHUFFLE &&
              cast<ShuffleVectorSDNode>(ShAmtOp)->isSplat()) {
-    BaseShAmt = DAG.getNode(ISD::EXTRACT_VECTOR_ELT, DL, EltVT, ShAmtOp,
-                            DAG.getIntPtrConstant(0));
+    SDValue InVec = ShAmtOp.getOperand(0);
+    if (InVec.getOpcode() == ISD::BUILD_VECTOR) {
+      unsigned NumElts = InVec.getValueType().getVectorNumElements();
+      unsigned i = 0;
+      for (; i != NumElts; ++i) {
+        SDValue Arg = InVec.getOperand(i);
+        if (Arg.getOpcode() == ISD::UNDEF) continue;
+        BaseShAmt = Arg;
+        break;
+      }
+    } else if (InVec.getOpcode() == ISD::INSERT_VECTOR_ELT) {
+       if (ConstantSDNode *C = dyn_cast<ConstantSDNode>(InVec.getOperand(2))) {
+         unsigned SplatIdx = cast<ShuffleVectorSDNode>(ShAmtOp)->getSplatIndex();
+         if (C->getZExtValue() == SplatIdx)
+           BaseShAmt = InVec.getOperand(1);
+       }
+    }
+    if (BaseShAmt.getNode() == 0)
+      BaseShAmt = DAG.getNode(ISD::EXTRACT_VECTOR_ELT, DL, EltVT, ShAmtOp,
+                              DAG.getIntPtrConstant(0));
   } else
     return SDValue();
 
+  // The shift amount is an i32.
   if (EltVT.bitsGT(MVT::i32))
     BaseShAmt = DAG.getNode(ISD::TRUNCATE, DL, MVT::i32, BaseShAmt);
   else if (EltVT.bitsLT(MVT::i32))
-    BaseShAmt = DAG.getNode(ISD::ANY_EXTEND, DL, MVT::i32, BaseShAmt);
+    BaseShAmt = DAG.getNode(ISD::ZERO_EXTEND, DL, MVT::i32, BaseShAmt);
 
   // The shift amount is identical so we can do a vector shift.
   SDValue  ValOp = N->getOperand(0);
