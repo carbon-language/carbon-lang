@@ -230,20 +230,23 @@ struct X86Operand {
 
 
 bool X86ATTAsmParser::ParseRegister(X86Operand &Op) {
+  const AsmToken &TokPercent = getLexer().getTok();
+  assert(TokPercent.is(AsmToken::Percent) && "Invalid token kind!");
+  getLexer().Lex(); // Eat percent token.
+
   const AsmToken &Tok = getLexer().getTok();
-  assert(Tok.is(AsmToken::Register) && "Invalid token kind!");
+  assert(TokPercent.is(AsmToken::Identifier) && "Invalid token kind!");
 
   // FIXME: Validate register for the current architecture; we have to do
   // validation later, so maybe there is no need for this here.
   unsigned RegNo;
-  assert(Tok.getString().startswith("%") && "Invalid register name!");
 
-  RegNo = MatchRegisterName(Tok.getString().substr(1));
+  RegNo = MatchRegisterName(Tok.getString());
   if (RegNo == 0)
     return Error(Tok.getLoc(), "invalid register name");
 
   Op = X86Operand::CreateReg(RegNo);
-  getLexer().Lex(); // Eat register token.
+  getLexer().Lex(); // Eat identifier token.
 
   return false;
 }
@@ -252,7 +255,7 @@ bool X86ATTAsmParser::ParseOperand(X86Operand &Op) {
   switch (getLexer().getKind()) {
   default:
     return ParseMemOperand(Op);
-  case AsmToken::Register:
+  case AsmToken::Percent:
     // FIXME: if a segment register, this could either be just the seg reg, or
     // the start of a memory operand.
     return ParseRegister(Op);
@@ -299,7 +302,7 @@ bool X86ATTAsmParser::ParseMemOperand(X86Operand &Op) {
     // so we have to eat the ( to see beyond it.
     getLexer().Lex(); // Eat the '('.
     
-    if (getLexer().is(AsmToken::Register) || getLexer().is(AsmToken::Comma)) {
+    if (getLexer().is(AsmToken::Percent) || getLexer().is(AsmToken::Comma)) {
       // Nothing to do here, fall into the code below with the '(' part of the
       // memory operand consumed.
     } else {
@@ -327,7 +330,7 @@ bool X86ATTAsmParser::ParseMemOperand(X86Operand &Op) {
   // the rest of the memory operand.
   unsigned BaseReg = 0, IndexReg = 0, Scale = 1;
   
-  if (getLexer().is(AsmToken::Register)) {
+  if (getLexer().is(AsmToken::Percent)) {
     if (ParseRegister(Op))
       return true;
     BaseReg = Op.getReg();
@@ -342,7 +345,7 @@ bool X86ATTAsmParser::ParseMemOperand(X86Operand &Op) {
     //
     // Not that even though it would be completely consistent to support syntax
     // like "1(%eax,,1)", the assembler doesn't.
-    if (getLexer().is(AsmToken::Register)) {
+    if (getLexer().is(AsmToken::Percent)) {
       if (ParseRegister(Op))
         return true;
       IndexReg = Op.getReg();

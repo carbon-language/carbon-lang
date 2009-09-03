@@ -120,9 +120,6 @@ static int AsLexInput(const char *ProgName) {
     case AsmToken::Identifier:
       outs() << "identifier: " << Lexer.getTok().getString() << '\n';
       break;
-    case AsmToken::Register:
-      outs() << "register: " << Lexer.getTok().getString() << '\n';
-      break;
     case AsmToken::String:
       outs() << "string: " << Lexer.getTok().getString() << '\n';
       break;

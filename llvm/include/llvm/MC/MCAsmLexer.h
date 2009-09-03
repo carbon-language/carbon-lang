@@ -27,7 +27,6 @@ struct AsmToken {
 
     // String values.
     Identifier,
-    Register,
     String,
     
     // Integer values.

@@ -101,17 +101,6 @@ AsmToken AsmLexer::LexIdentifier() {
   return AsmToken(AsmToken::Identifier, StringRef(TokStart, CurPtr - TokStart));
 }
 
-/// LexPercent: Register: %[a-zA-Z0-9]+
-AsmToken AsmLexer::LexPercent() {
-  if (!isalnum(*CurPtr))
-    return AsmToken(AsmToken::Percent, StringRef(CurPtr, 1));  // Single %.
-  
-  while (isalnum(*CurPtr))
-    ++CurPtr;
-  
-  return AsmToken(AsmToken::Register, StringRef(TokStart, CurPtr - TokStart));
-}
-
 /// LexSlash: Slash: /
 ///           C-Style Comment: /* ... */
 AsmToken AsmLexer::LexSlash() {
@@ -298,7 +287,7 @@ AsmToken AsmLexer::LexToken() {
     if (*CurPtr == '=')
       return ++CurPtr, AsmToken(AsmToken::ExclaimEqual, StringRef(TokStart, 2));
     return AsmToken(AsmToken::Exclaim, StringRef(TokStart, 1));
-  case '%': return LexPercent();
+  case '%': return AsmToken(AsmToken::Percent, StringRef(TokStart, 1));
   case '/': return LexSlash();
   case '#': return LexLineComment();
   case '"': return LexQuote();

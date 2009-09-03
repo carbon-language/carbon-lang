@@ -64,7 +64,6 @@ private:
   AsmToken ReturnError(const char *Loc, const std::string &Msg);
 
   AsmToken LexIdentifier();
-  AsmToken LexPercent();
   AsmToken LexSlash();
   AsmToken LexLineComment();
   AsmToken LexDigit();
