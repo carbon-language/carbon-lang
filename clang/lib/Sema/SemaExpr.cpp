@@ -2025,7 +2025,9 @@ Sema::BuildMemberReferenceExpr(Scope *S, ExprArg Base, SourceLocation OpLoc,
     if (BaseType->isDependentType())
       return Owned(new (Context) CXXUnresolvedMemberExpr(Context,
                                                          BaseExpr, true, 
-                                                         OpLoc, 
+                                                         OpLoc,
+                            (NestedNameSpecifier *)(SS? SS->getScopeRep() : 0),
+                                            SS? SS->getRange() : SourceRange(),
                                                          MemberName,
                                                          MemberLoc));
     else if (const PointerType *PT = BaseType->getAs<PointerType>())
@@ -2053,6 +2055,8 @@ Sema::BuildMemberReferenceExpr(Scope *S, ExprArg Base, SourceLocation OpLoc,
         return Owned(new (Context) CXXUnresolvedMemberExpr(Context,
                                                            BaseExpr, false, 
                                                            OpLoc, 
+                            (NestedNameSpecifier *)(SS? SS->getScopeRep() : 0),
+                                            SS? SS->getRange() : SourceRange(),
                                                            MemberName,
                                                            MemberLoc));
     }
@@ -2082,21 +2086,6 @@ Sema::BuildMemberReferenceExpr(Scope *S, ExprArg Base, SourceLocation OpLoc,
     LookupResult Result
       = LookupQualifiedName(DC, MemberName, LookupMemberName, false);
 
-    if (SS && SS->isSet()) {
-      QualType BaseTypeCanon 
-        = Context.getCanonicalType(BaseType).getUnqualifiedType();
-      QualType MemberTypeCanon 
-        = Context.getCanonicalType(
-            Context.getTypeDeclType(
-                     dyn_cast<TypeDecl>(Result.getAsDecl()->getDeclContext())));
-
-      if (BaseTypeCanon != MemberTypeCanon &&
-          !IsDerivedFrom(BaseTypeCanon, MemberTypeCanon))
-        return ExprError(Diag(SS->getBeginLoc(),
-                              diag::err_not_direct_base_or_virtual)
-                         << MemberTypeCanon << BaseTypeCanon);
-    }
-
     if (!Result)
       return ExprError(Diag(MemberLoc, diag::err_typecheck_no_member_deprecated)
                << MemberName << BaseExpr->getSourceRange());
@@ -2104,6 +2093,21 @@ Sema::BuildMemberReferenceExpr(Scope *S, ExprArg Base, SourceLocation OpLoc,
       DiagnoseAmbiguousLookup(Result, MemberName, MemberLoc,
                               BaseExpr->getSourceRange());
       return ExprError();
+    }
+    
+    if (SS && SS->isSet()) {
+      QualType BaseTypeCanon 
+        = Context.getCanonicalType(BaseType).getUnqualifiedType();
+      QualType MemberTypeCanon 
+        = Context.getCanonicalType(
+                  Context.getTypeDeclType(
+                    dyn_cast<TypeDecl>(Result.getAsDecl()->getDeclContext())));
+      
+      if (BaseTypeCanon != MemberTypeCanon &&
+          !IsDerivedFrom(BaseTypeCanon, MemberTypeCanon))
+        return ExprError(Diag(SS->getBeginLoc(),
+                              diag::err_not_direct_base_or_virtual)
+                         << MemberTypeCanon << BaseTypeCanon);
     }
     
     NamedDecl *MemberDecl = Result;

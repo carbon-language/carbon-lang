@@ -1138,6 +1138,8 @@ StmtPrinter::VisitCXXUnresolvedConstructExpr(
 void StmtPrinter::VisitCXXUnresolvedMemberExpr(CXXUnresolvedMemberExpr *Node) {
   PrintExpr(Node->getBase());
   OS << (Node->isArrow() ? "->" : ".");
+  if (NestedNameSpecifier *Qualifier = Node->getQualifier())
+    Qualifier->print(OS, Policy);
   OS << Node->getMember().getAsString();
 }
 

@@ -550,6 +550,7 @@ StmtProfiler::VisitCXXUnresolvedConstructExpr(CXXUnresolvedConstructExpr *S) {
 void StmtProfiler::VisitCXXUnresolvedMemberExpr(CXXUnresolvedMemberExpr *S) {
   VisitExpr(S);
   ID.AddBoolean(S->isArrow());
+  VisitNestedNameSpecifier(S->getQualifier());
   VisitName(S->getMember());
 }
 

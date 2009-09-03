@@ -1300,23 +1300,31 @@ class CXXUnresolvedMemberExpr : public Expr {
   /// \brief The location of the '->' or '.' operator.
   SourceLocation OperatorLoc;
 
+  /// \brief The nested-name-specifier that precedes the member name, if any.
+  NestedNameSpecifier *Qualifier;
+  
+  /// \brief The source range covering the nested name specifier.
+  SourceRange QualifierRange;
+  
   /// \brief The member to which this member expression refers, which
   /// can be name, overloaded operator, or destructor.
-  /// FIXME: could also be a template-id, and we might have a 
-  /// nested-name-specifier as well.
+  /// FIXME: could also be a template-id
   DeclarationName Member;
 
   /// \brief The location of the member name.
   SourceLocation MemberLoc;
-
+  
 public:
   CXXUnresolvedMemberExpr(ASTContext &C, 
                           Expr *Base, bool IsArrow, 
                           SourceLocation OperatorLoc,
+                          NestedNameSpecifier *Qualifier,
+                          SourceRange QualifierRange,
                           DeclarationName Member,
                           SourceLocation MemberLoc)
     : Expr(CXXUnresolvedMemberExprClass, C.DependentTy, true, true),
       Base(Base), IsArrow(IsArrow), OperatorLoc(OperatorLoc),
+      Qualifier(Qualifier), QualifierRange(QualifierRange),
       Member(Member), MemberLoc(MemberLoc) { }
 
   /// \brief Retrieve the base object of this member expressions,
@@ -1333,6 +1341,14 @@ public:
   SourceLocation getOperatorLoc() const { return OperatorLoc; }
   void setOperatorLoc(SourceLocation L) { OperatorLoc = L; }
 
+  /// \brief Retrieve the nested-name-specifier that qualifies the member
+  /// name.
+  NestedNameSpecifier *getQualifier() const { return Qualifier; }
+  
+  /// \brief Retrieve the source range covering the nested-name-specifier
+  /// that qualifies the member name.
+  SourceRange getQualifierRange() const { return QualifierRange; }
+  
   /// \brief Retrieve the name of the member that this expression
   /// refers to.
   DeclarationName getMember() const { return Member; }

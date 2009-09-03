@@ -103,25 +103,22 @@ namespace C
         a.x();
         a->foo();
 
-#if 0
-        // FIXME: We need the notion of identifiers as dependent 
-        // nested-name-specifiers without a prefix for this code to work.
-      
-        // Things that work for the wrong reason
         a.A::sub::x();
         a.A::B::base::x();
         a->A::member::foo();
 
-        // Things that work, but shouldn't
-        a.bad::x();
-
-        // Things that fail, but shouldn't
-        a.sub::x(); // xpected-error{{use of undeclared identifier 'sub'}}
-        a.base::x(); // xpected-error{{use of undeclared identifier 'base'}}
+        a.bad::x(); // xpected-error{{direct or virtual}}
+        a.sub::x();
+        a.base::x();
         a.B::base::x(); // xpected-error{{use of undeclared identifier 'B'}}
-        a->member::foo(); // xpected-error{{use of undeclared identifier 'member'}}
-#endif
+        a->member::foo();
     }
+  
+  void test_fun5() {
+    // FIXME: Enable the following once we get the nested-name-specifier lookup
+    // right during template instantiation.
+    // fun5<A::sub>(); // xpected-note 2{{instantiation}}
+  }
 }
 
 // PR4703
