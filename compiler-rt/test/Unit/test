@@ -3,6 +3,9 @@
 ARCHS='<host>'
 if test `uname` = "Darwin"; then
   ARCHS="i386 x86_64 ppc"
+  LIBS="-lSystem"
+else
+  LIBS="-lc -lm"
 fi
 
 for ARCH in $ARCHS; do
@@ -27,7 +30,7 @@ for ARCH in $ARCHS; do
       # this test requires an extra compiler option
       EXTRA="-fnested-functions"
     fi
-    if gcc $CFLAGS $FILE ../../Release/libcompiler_rt.Optimized.a -lSystem $EXTRA
+    if gcc $CFLAGS $FILE ../../Release/libcompiler_rt.Optimized.a $LIBS $EXTRA
     then
       echo "Testing $FILE for $ARCH"
       if ./a.out
