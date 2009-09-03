@@ -18,8 +18,7 @@
 #include "llvm/Linker.h"
 #include "llvm/Module.h"
 #include "llvm/Pass.h"
-#include "llvm/Assembly/Parser.h"
-#include "llvm/Bitcode/ReaderWriter.h"
+#include "llvm/Support/IRReader.h"
 #include "llvm/Support/CommandLine.h"
 #include "llvm/Support/FileUtilities.h"
 #include "llvm/Support/MemoryBuffer.h"
@@ -82,17 +81,11 @@ BugDriver::BugDriver(const char *toolname, bool as_child, bool find_bugs,
 ///
 Module *llvm::ParseInputFile(const std::string &Filename,
                              LLVMContext& Ctxt) {
-  std::auto_ptr<MemoryBuffer> Buffer(MemoryBuffer::getFileOrSTDIN(Filename));
-  Module *Result = 0;
-  if (Buffer.get())
-    Result = ParseBitcodeFile(Buffer.get(), Ctxt);
-  
   SMDiagnostic Err;
-  if (!Result && !(Result = ParseAssemblyFile(Filename, Err, Ctxt))) {
-    Err.Print("bugpoint", errs()); 
-    Result = 0;
-  }
-  
+  Module *Result = ParseIRFile(Filename, Err, Ctxt);
+  if (!Result)
+    Err.Print("bugpoint", errs());
+
   // If we don't have an override triple, use the first one to configure
   // bugpoint, or use the host triple if none provided.
   if (Result) {
