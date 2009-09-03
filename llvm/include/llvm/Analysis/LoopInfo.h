@@ -230,74 +230,6 @@ public:
           ExitEdges.push_back(std::make_pair(*BI, *I));
   }
 
-  /// getUniqueExitBlocks - Return all unique successor blocks of this loop. 
-  /// These are the blocks _outside of the current loop_ which are branched to.
-  /// This assumes that loop is in canonical form.
-  ///
-  void getUniqueExitBlocks(SmallVectorImpl<BlockT*> &ExitBlocks) const {
-    // Sort the blocks vector so that we can use binary search to do quick
-    // lookups.
-    SmallVector<BlockT*, 128> LoopBBs(block_begin(), block_end());
-    std::sort(LoopBBs.begin(), LoopBBs.end());
-
-    std::vector<BlockT*> switchExitBlocks;  
-
-    for (block_iterator BI = block_begin(), BE = block_end(); BI != BE; ++BI) {
-
-      BlockT *current = *BI;
-      switchExitBlocks.clear();
-
-      typedef GraphTraits<BlockT*> BlockTraits;
-      typedef GraphTraits<Inverse<BlockT*> > InvBlockTraits;
-      for (typename BlockTraits::ChildIteratorType I =
-           BlockTraits::child_begin(*BI), E = BlockTraits::child_end(*BI);
-           I != E; ++I) {
-        if (std::binary_search(LoopBBs.begin(), LoopBBs.end(), *I))
-      // If block is inside the loop then it is not a exit block.
-          continue;
-      
-        typename InvBlockTraits::ChildIteratorType PI =
-                                                InvBlockTraits::child_begin(*I);
-        BlockT *firstPred = *PI;
-
-        // If current basic block is this exit block's first predecessor
-        // then only insert exit block in to the output ExitBlocks vector.
-        // This ensures that same exit block is not inserted twice into
-        // ExitBlocks vector.
-        if (current != firstPred) 
-          continue;
-
-        // If a terminator has more then two successors, for example SwitchInst,
-        // then it is possible that there are multiple edges from current block 
-        // to one exit block. 
-        if (std::distance(BlockTraits::child_begin(current),
-                          BlockTraits::child_end(current)) <= 2) {
-          ExitBlocks.push_back(*I);
-          continue;
-        }
-
-        // In case of multiple edges from current block to exit block, collect
-        // only one edge in ExitBlocks. Use switchExitBlocks to keep track of
-        // duplicate edges.
-        if (std::find(switchExitBlocks.begin(), switchExitBlocks.end(), *I) 
-            == switchExitBlocks.end()) {
-          switchExitBlocks.push_back(*I);
-          ExitBlocks.push_back(*I);
-        }
-      }
-    }
-  }
-
-  /// getUniqueExitBlock - If getUniqueExitBlocks would return exactly one
-  /// block, return that block. Otherwise return null.
-  BlockT *getUniqueExitBlock() const {
-    SmallVector<BlockT*, 8> UniqueExitBlocks;
-    getUniqueExitBlocks(UniqueExitBlocks);
-    if (UniqueExitBlocks.size() == 1)
-      return UniqueExitBlocks[0];
-    return 0;
-  }
-
   /// getLoopPreheader - If there is a preheader for this loop, return it.  A
   /// loop has a preheader if there is only one edge to the header of the loop
   /// from outside of the loop.  If this is the case, the block branching to the
@@ -568,6 +500,16 @@ public:
   /// the LoopSimplify form transforms loops to, which is sometimes called
   /// normal form.
   bool isLoopSimplifyForm() const;
+
+  /// getUniqueExitBlocks - Return all unique successor blocks of this loop. 
+  /// These are the blocks _outside of the current loop_ which are branched to.
+  /// This assumes that loop is in canonical form.
+  ///
+  void getUniqueExitBlocks(SmallVectorImpl<BasicBlock *> &ExitBlocks) const;
+
+  /// getUniqueExitBlock - If getUniqueExitBlocks would return exactly one
+  /// block, return that block. Otherwise return null.
+  BasicBlock *getUniqueExitBlock() const;
 
 private:
   friend class LoopInfoBase<BasicBlock, Loop>;
