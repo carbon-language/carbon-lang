@@ -95,6 +95,8 @@ CXTranslationUnit clang_createTranslationUnit(
   CXIndex, const char *ast_filename
 );
 
+const char *clang_getTranslationUnitSpelling(CXTranslationUnit CTUnit);
+
 /*
    Usage: clang_loadTranslationUnit(). Will load the toplevel declarations
    within a translation unit, issuing a 'callback' for each one.

@@ -67,6 +67,9 @@ public:
         break;
     }
   }
+  void VisitVarDecl(VarDecl *ND) {
+    Call(CXCursor_VarDecl, ND);
+  }
   void VisitFunctionDecl(FunctionDecl *ND) {
     Call(ND->isThisDeclarationADefinition() ? CXCursor_FunctionDefn
                                             : CXCursor_FunctionDecl, ND);
@@ -95,6 +98,9 @@ class CDeclVisitor : public DeclVisitor<CDeclVisitor> {
   CXClientData CData;
   
   void Call(enum CXCursorKind CK, NamedDecl *ND) {
+    // Disable the callback when the context is equal to the visiting decl.
+    if (CDecl == ND)
+      return;
     CXCursor C = { CK, ND };
     Callback(CDecl, C, CData);
   }
@@ -129,17 +135,28 @@ public:
   void VisitFieldDecl(FieldDecl *ND) {
     Call(CXCursor_FieldDecl, ND);
   }
+  void VisitVarDecl(VarDecl *ND) {
+    Call(CXCursor_VarDecl, ND);
+  }
+  void VisitParmVarDecl(ParmVarDecl *ND) {
+    Call(CXCursor_ParmDecl, ND);
+  }
   void VisitObjCPropertyDecl(ObjCPropertyDecl *ND) {
     Call(CXCursor_ObjCPropertyDecl, ND);
   }
   void VisitObjCIvarDecl(ObjCIvarDecl *ND) {
     Call(CXCursor_ObjCIvarDecl, ND);
   }
+  void VisitFunctionDecl(FunctionDecl *ND) {
+    if (ND->isThisDeclarationADefinition()) {
+      VisitDeclContext(dyn_cast<DeclContext>(ND));
+    }
+  }
   void VisitObjCMethodDecl(ObjCMethodDecl *ND) {
     if (ND->getBody()) {
       Call(ND->isInstanceMethod() ? CXCursor_ObjCInstanceMethodDefn
                                   : CXCursor_ObjCClassMethodDefn, ND);
-      // FIXME: load body.
+      VisitDeclContext(dyn_cast<DeclContext>(ND));
     } else
       Call(ND->isInstanceMethod() ? CXCursor_ObjCInstanceMethodDecl
                                   : CXCursor_ObjCClassMethodDecl, ND);
@@ -167,6 +184,12 @@ CXTranslationUnit clang_createTranslationUnit(
   return ASTUnit::LoadFromPCHFile(astName, CXXIdx->getFileManager(), &ErrMsg);
 }
 
+const char *clang_getTranslationUnitSpelling(CXTranslationUnit CTUnit) 
+{
+  assert(CTUnit && "Passed null CXTranslationUnit");
+  ASTUnit *CXXUnit = static_cast<ASTUnit *>(CTUnit);
+  return CXXUnit->getOriginalSourceFileName().c_str();
+}
 
 void clang_loadTranslationUnit(CXTranslationUnit CTUnit, 
                                CXTranslationUnitIterator callback,
