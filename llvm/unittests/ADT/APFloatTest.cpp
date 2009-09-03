@@ -15,6 +15,12 @@
 
 using namespace llvm;
 
+static double convertToDoubleFromString(const char *Str) {
+  llvm::APFloat F(0.0);
+  F.convertFromString(Str, llvm::APFloat::rmNearestTiesToEven);
+  return F.convertToDouble();
+}
+
 namespace {
 
 TEST(APFloatTest, Zero) {
@@ -303,6 +309,8 @@ TEST(APFloatTest, fromHexadecimalString) {
 
   EXPECT_EQ(1.0625, APFloat(APFloat::IEEEdouble, "0x1.1p0").convertToDouble());
   EXPECT_EQ(1.0, APFloat(APFloat::IEEEdouble, "0x1p0").convertToDouble());
+
+  EXPECT_EQ(2.71828, convertToDoubleFromString("2.71828"));
 }
 
 #ifdef GTEST_HAS_DEATH_TEST
