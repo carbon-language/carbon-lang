@@ -31,12 +31,11 @@
 #include "llvm/ValueSymbolTable.h"
 #include "llvm/TypeSymbolTable.h"
 #include "llvm/Transforms/Utils/Local.h"
-#include "llvm/Support/Compiler.h"
 #include "llvm/ADT/SmallPtrSet.h"
 using namespace llvm;
 
 namespace {
-  class VISIBILITY_HIDDEN StripSymbols : public ModulePass {
+  class StripSymbols : public ModulePass {
     bool OnlyDebugInfo;
   public:
     static char ID; // Pass identification, replacement for typeid
@@ -50,7 +49,7 @@ namespace {
     }
   };
 
-  class VISIBILITY_HIDDEN StripNonDebugSymbols : public ModulePass {
+  class StripNonDebugSymbols : public ModulePass {
   public:
     static char ID; // Pass identification, replacement for typeid
     explicit StripNonDebugSymbols()
@@ -63,7 +62,7 @@ namespace {
     }
   };
 
-  class VISIBILITY_HIDDEN StripDebugDeclare : public ModulePass {
+  class StripDebugDeclare : public ModulePass {
   public:
     static char ID; // Pass identification, replacement for typeid
     explicit StripDebugDeclare()
