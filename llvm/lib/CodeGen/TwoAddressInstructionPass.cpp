@@ -115,6 +115,12 @@ namespace {
                            MachineFunction::iterator &mbbi,
                            unsigned regB, unsigned regBIdx, unsigned Dist);
 
+    bool TryInstructionTransform(MachineBasicBlock::iterator &mi,
+                                 MachineBasicBlock::iterator &nmi,
+                                 MachineFunction::iterator &mbbi,
+                                 unsigned SrcIdx, unsigned DstIdx,
+                                 unsigned Dist);
+
     void ProcessCopy(MachineInstr *MI, MachineBasicBlock *MBB,
                      SmallPtrSet<MachineInstr*, 8> &Processed);
 
@@ -814,6 +820,80 @@ TwoAddressInstructionPass::DeleteUnusedInstr(MachineBasicBlock::iterator &mi,
   return true;
 }
 
+/// TryInstructionTransform - For the case where an instruction has a single
+/// pair of tied register operands, attempt some transformations that may
+/// either eliminate the tied operands or improve the opportunities for
+/// coalescing away the register copy.  Returns true if the tied operands
+/// are eliminated altogether.
+bool TwoAddressInstructionPass::
+TryInstructionTransform(MachineBasicBlock::iterator &mi,
+                        MachineBasicBlock::iterator &nmi,
+                        MachineFunction::iterator &mbbi,
+                        unsigned SrcIdx, unsigned DstIdx, unsigned Dist) {
+  const TargetInstrDesc &TID = mi->getDesc();
+  unsigned regA = mi->getOperand(DstIdx).getReg();
+  unsigned regB = mi->getOperand(SrcIdx).getReg();
+
+  assert(TargetRegisterInfo::isVirtualRegister(regB) &&
+         "cannot make instruction into two-address form");
+
+  // If regA is dead and the instruction can be deleted, just delete
+  // it so it doesn't clobber regB.
+  bool regBKilled = isKilled(*mi, regB, MRI, TII);
+  if (!regBKilled && mi->getOperand(DstIdx).isDead() &&
+      DeleteUnusedInstr(mi, nmi, mbbi, regB, SrcIdx, Dist)) {
+    ++NumDeletes;
+    return true; // Done with this instruction.
+  }
+
+  // Check if it is profitable to commute the operands.
+  unsigned SrcOp1, SrcOp2;
+  unsigned regC = 0;
+  unsigned regCIdx = ~0U;
+  bool TryCommute = false;
+  bool AggressiveCommute = false;
+  if (TID.isCommutable() && mi->getNumOperands() >= 3 &&
+      TII->findCommutedOpIndices(mi, SrcOp1, SrcOp2)) {
+    if (SrcIdx == SrcOp1)
+      regCIdx = SrcOp2;
+    else if (SrcIdx == SrcOp2)
+      regCIdx = SrcOp1;
+
+    if (regCIdx != ~0U) {
+      regC = mi->getOperand(regCIdx).getReg();
+      if (!regBKilled && isKilled(*mi, regC, MRI, TII))
+        // If C dies but B does not, swap the B and C operands.
+        // This makes the live ranges of A and C joinable.
+        TryCommute = true;
+      else if (isProfitableToCommute(regB, regC, mi, mbbi, Dist)) {
+        TryCommute = true;
+        AggressiveCommute = true;
+      }
+    }
+  }
+
+  // If it's profitable to commute, try to do so.
+  if (TryCommute && CommuteInstruction(mi, mbbi, regB, regC, Dist)) {
+    ++NumCommuted;
+    if (AggressiveCommute)
+      ++NumAggrCommuted;
+    return false;
+  }
+
+  if (TID.isConvertibleTo3Addr()) {
+    // This instruction is potentially convertible to a true
+    // three-address instruction.  Check if it is profitable.
+    if (!regBKilled || isProfitableToConv3Addr(regA)) {
+      // Try to convert it.
+      if (ConvertInstTo3Addr(mi, nmi, mbbi, regB, Dist)) {
+        ++NumConvertedTo3Addr;
+        return true; // Done with this instruction.
+      }
+    }
+  }
+  return false;
+}
+
 /// runOnMachineFunction - Reduce two-address instructions to two operands.
 ///
 bool TwoAddressInstructionPass::runOnMachineFunction(MachineFunction &MF) {
@@ -834,6 +914,10 @@ bool TwoAddressInstructionPass::runOnMachineFunction(MachineFunction &MF) {
   BitVector ReMatRegs;
   ReMatRegs.resize(MRI->getLastVirtReg()+1);
 
+  typedef DenseMap<unsigned, SmallVector<std::pair<unsigned, unsigned>, 4> >
+    TiedOperandMap;
+  TiedOperandMap TiedOperands(4);
+
   SmallPtrSet<MachineInstr*, 8> Processed;
   for (MachineFunction::iterator mbbi = MF.begin(), mbbe = MF.end();
        mbbi != mbbe; ++mbbi) {
@@ -852,199 +936,166 @@ bool TwoAddressInstructionPass::runOnMachineFunction(MachineFunction &MF) {
 
       ProcessCopy(&*mi, &*mbbi, Processed);
 
+      // First scan through all the tied register uses in this instruction
+      // and record a list of pairs of tied operands for each register.
       unsigned NumOps = (mi->getOpcode() == TargetInstrInfo::INLINEASM)
         ? mi->getNumOperands() : TID.getNumOperands();
-      for (unsigned si = 0; si < NumOps; ++si) {
-        unsigned ti = 0;
-        if (!mi->isRegTiedToDefOperand(si, &ti))
+      for (unsigned SrcIdx = 0; SrcIdx < NumOps; ++SrcIdx) {
+        unsigned DstIdx = 0;
+        if (!mi->isRegTiedToDefOperand(SrcIdx, &DstIdx))
           continue;
 
         if (FirstTied) {
+          FirstTied = false;
           ++NumTwoAddressInstrs;
           DEBUG(errs() << '\t' << *mi);
         }
 
-        FirstTied = false;
+        assert(mi->getOperand(SrcIdx).isReg() &&
+               mi->getOperand(SrcIdx).getReg() &&
+               mi->getOperand(SrcIdx).isUse() &&
+               "two address instruction invalid");
 
-        assert(mi->getOperand(si).isReg() && mi->getOperand(si).getReg() &&
-               mi->getOperand(si).isUse() && "two address instruction invalid");
+        unsigned regB = mi->getOperand(SrcIdx).getReg();
+        TiedOperandMap::iterator OI = TiedOperands.find(regB);
+        if (OI == TiedOperands.end()) {
+          SmallVector<std::pair<unsigned, unsigned>, 4> TiedPair;
+          OI = TiedOperands.insert(std::make_pair(regB, TiedPair)).first;
+        }
+        OI->second.push_back(std::make_pair(SrcIdx, DstIdx));
+      }
 
-        // If the two operands are the same, nothing needs to be done.
-        if (mi->getOperand(ti).getReg() == mi->getOperand(si).getReg())
-          continue;
+      // Now iterate over the information collected above.
+      for (TiedOperandMap::iterator OI = TiedOperands.begin(),
+             OE = TiedOperands.end(); OI != OE; ++OI) {
+        SmallVector<std::pair<unsigned, unsigned>, 4> &TiedPairs = OI->second;
 
-        // Rewrite:
-        //     a = b op c
-        // to:
-        //     a = b
-        //     a = a op c
-        unsigned regA = mi->getOperand(ti).getReg();
-        unsigned regB = mi->getOperand(si).getReg();
-        unsigned regASubIdx = mi->getOperand(ti).getSubReg();
+        // If the instruction has a single pair of tied operands, try some
+        // transformations that may either eliminate the tied operands or
+        // improve the opportunities for coalescing away the register copy.
+        if (TiedOperands.size() == 1 && TiedPairs.size() == 1) {
+          unsigned SrcIdx = TiedPairs[0].first;
+          unsigned DstIdx = TiedPairs[0].second;
 
-        assert(TargetRegisterInfo::isVirtualRegister(regB) &&
-               "cannot make instruction into two-address form");
+          // If the registers are already equal, nothing needs to be done.
+          if (mi->getOperand(SrcIdx).getReg() ==
+              mi->getOperand(DstIdx).getReg())
+            break; // Done with this instruction.
+
+          if (TryInstructionTransform(mi, nmi, mbbi, SrcIdx, DstIdx, Dist))
+            break; // The tied operands have been eliminated.
+        }
+
+        bool RemovedKillFlag = false;
+        bool AllUsesCopied = true;
+        unsigned LastCopiedReg = 0;
+        unsigned regB = OI->first;
+        for (unsigned tpi = 0, tpe = TiedPairs.size(); tpi != tpe; ++tpi) {
+          unsigned SrcIdx = TiedPairs[tpi].first;
+          unsigned DstIdx = TiedPairs[tpi].second;
+          unsigned regA = mi->getOperand(DstIdx).getReg();
+          // Grab regB from the instruction because it may have changed if the
+          // instruction was commuted.
+          regB = mi->getOperand(SrcIdx).getReg();
+
+          if (regA == regB) {
+            // The register is tied to multiple destinations (or else we would
+            // not have continued this far), but this use of the register
+            // already matches the tied destination.  Leave it.
+            AllUsesCopied = false;
+            continue;
+          }
+          LastCopiedReg = regA;
+
+          assert(TargetRegisterInfo::isVirtualRegister(regB) &&
+                 "cannot make instruction into two-address form");
 
 #ifndef NDEBUG
-        // First, verify that we don't have a use of a in the instruction (a =
-        // b + a for example) because our transformation will not work. This
-        // should never occur because we are in SSA form.
-        for (unsigned i = 0; i != mi->getNumOperands(); ++i)
-          assert(i == ti ||
-                 !mi->getOperand(i).isReg() ||
-                 mi->getOperand(i).getReg() != regA);
+          // First, verify that we don't have a use of "a" in the instruction
+          // (a = b + a for example) because our transformation will not
+          // work. This should never occur because we are in SSA form.
+          for (unsigned i = 0; i != mi->getNumOperands(); ++i)
+            assert(i == DstIdx ||
+                   !mi->getOperand(i).isReg() ||
+                   mi->getOperand(i).getReg() != regA);
 #endif
 
-        // If regA is dead and the instruction can be deleted, just delete
-        // it so it doesn't clobber regB.
-        bool regBKilled = isKilled(*mi, regB, MRI, TII);
-        if (!regBKilled && mi->getOperand(ti).isDead() &&
-            DeleteUnusedInstr(mi, nmi, mbbi, regB, si, Dist)) {
-          ++NumDeletes;
-          break; // Done with this instruction.
-        }
-
-        // Check if it is profitable to commute the operands.
-        unsigned SrcOp1, SrcOp2;
-        unsigned regC = 0;
-        bool TryCommute = false;
-        bool AggressiveCommute = false;
-        if (TID.isCommutable() && mi->getNumOperands() >= 3 &&
-            TII->findCommutedOpIndices(mi, SrcOp1, SrcOp2)) {
-          if (si == SrcOp1)
-            regC = mi->getOperand(SrcOp2).getReg();
-          else if (si == SrcOp2)
-            regC = mi->getOperand(SrcOp1).getReg();
-
-          if (regC) {
-            if (!regBKilled && isKilled(*mi, regC, MRI, TII))
-              // If C dies but B does not, swap the B and C operands.
-              // This makes the live ranges of A and C joinable.
-              TryCommute = true;
-            else if (isProfitableToCommute(regB, regC, mi, mbbi, Dist)) {
-              TryCommute = true;
-              AggressiveCommute = true;
-            }
-          }
-        }
-
-        // If it's profitable to commute, try to do so.
-        if (TryCommute && CommuteInstruction(mi, mbbi, regB, regC, Dist)) {
-          ++NumCommuted;
-          if (AggressiveCommute)
-            ++NumAggrCommuted;
-          regB = regC;
-        } else if (TID.isConvertibleTo3Addr()) {
-          // This instruction is potentially convertible to a true
-          // three-address instruction.  Check if it is profitable.
-          if (!regBKilled || isProfitableToConv3Addr(regA)) {
-            // FIXME: This assumes there are no more operands which are tied
-            // to another register.
-#ifndef NDEBUG
-            for (unsigned i = si + 1, e = TID.getNumOperands(); i < e; ++i)
-              assert(TID.getOperandConstraint(i, TOI::TIED_TO) == -1);
-#endif
-            // Try to convert it.
-            if (ConvertInstTo3Addr(mi, nmi, mbbi, regB, Dist)) {
-              ++NumConvertedTo3Addr;
-              break; // Done with this instruction.
-            }
-          }
-        }
-
-        const TargetRegisterClass* rc = MRI->getRegClass(regB);
-        MachineInstr *DefMI = MRI->getVRegDef(regB);
-        // If it's safe and profitable, remat the definition instead of
-        // copying it.
-        if (DefMI &&
-            DefMI->getDesc().isAsCheapAsAMove() &&
-            DefMI->isSafeToReMat(TII, regB) &&
-            isProfitableToReMat(regB, rc, mi, DefMI, mbbi, Dist)){
-          DEBUG(errs() << "2addr: REMATTING : " << *DefMI << "\n");
-          TII->reMaterialize(*mbbi, mi, regA, regASubIdx, DefMI);
-          ReMatRegs.set(regB);
-          ++NumReMats;
-        } else {
-          bool Emitted = TII->copyRegToReg(*mbbi, mi, regA, regB, rc, rc);
-          (void)Emitted;
-          assert(Emitted && "Unable to issue a copy instruction!\n");
-        }
-
-        MachineBasicBlock::iterator prevMI = prior(mi);
-        // Update DistanceMap.
-        DistanceMap.insert(std::make_pair(prevMI, Dist));
-        DistanceMap[mi] = ++Dist;
-          
-        // Scan the operands to find: (1) the use operand that kills regB (if
-        // any); (2) whether the kill operand is being replaced by regA on
-        // this iteration; and (3) the first use of regB that is not being
-        // replaced on this iteration.  A use of regB will not replaced if it
-        // is tied to a different destination register and will be handled on
-        // a later iteration.
-        MachineOperand *KillMO = NULL;
-        MachineOperand *FirstKeptMO = NULL;
-        bool KillMOKept = false;
-        for (unsigned i = 0, e = mi->getNumOperands(); i != e; ++i) {
-          MachineOperand &MO = mi->getOperand(i);
-          if (MO.isReg() && MO.getReg() == regB && MO.isUse()) {
-
-            // Check if this operand is tied to a different destination.
-            bool isKept = false;
-            unsigned dsti = 0;
-            if (mi->isRegTiedToDefOperand(i, &dsti) && dsti != ti) {
-              isKept = true;
-              if (!FirstKeptMO)
-                FirstKeptMO = &MO;
-            }
-
-            if (MO.isKill()) {
-              KillMO = &MO;
-              KillMOKept = isKept;
-            }
-          }
-        }
-
-        // Update live variables for regB.
-        if (KillMO) {
-          if (!FirstKeptMO) {
-            // All uses of regB are being replaced; move the kill to prevMI.
-            KillMO->setIsKill(false);
-            if (LV && LV->getVarInfo(regB).removeKill(mi))
-              LV->addVirtualRegisterKilled(regB, prevMI);
+          // Emit a copy or rematerialize the definition.
+          const TargetRegisterClass *rc = MRI->getRegClass(regB);
+          MachineInstr *DefMI = MRI->getVRegDef(regB);
+          // If it's safe and profitable, remat the definition instead of
+          // copying it.
+          if (DefMI &&
+              DefMI->getDesc().isAsCheapAsAMove() &&
+              DefMI->isSafeToReMat(TII, regB) &&
+              isProfitableToReMat(regB, rc, mi, DefMI, mbbi, Dist)){
+            DEBUG(errs() << "2addr: REMATTING : " << *DefMI << "\n");
+            unsigned regASubIdx = mi->getOperand(DstIdx).getSubReg();
+            TII->reMaterialize(*mbbi, mi, regA, regASubIdx, DefMI);
+            ReMatRegs.set(regB);
+            ++NumReMats;
           } else {
-            if (!KillMOKept) {
-              // The kill marker is on an operand being replaced, but there
-              // are other uses of regB remaining.  Move the kill marker to
-              // one of them.
-              KillMO->setIsKill(false);
-              FirstKeptMO->setIsKill(true);
+            bool Emitted = TII->copyRegToReg(*mbbi, mi, regA, regB, rc, rc);
+            (void)Emitted;
+            assert(Emitted && "Unable to issue a copy instruction!\n");
+          }
+
+          MachineBasicBlock::iterator prevMI = prior(mi);
+          // Update DistanceMap.
+          DistanceMap.insert(std::make_pair(prevMI, Dist));
+          DistanceMap[mi] = ++Dist;
+
+          DEBUG(errs() << "\t\tprepend:\t" << *prevMI);
+
+          MachineOperand &MO = mi->getOperand(SrcIdx);
+          assert(MO.isReg() && MO.getReg() == regB && MO.isUse() &&
+                 "inconsistent operand info for 2-reg pass");
+          if (MO.isKill()) {
+            MO.setIsKill(false);
+            RemovedKillFlag = true;
+          }
+          MO.setReg(regA);
+        }
+
+        if (AllUsesCopied) {
+          // Replace other (un-tied) uses of regB with LastCopiedReg.
+          for (unsigned i = 0, e = mi->getNumOperands(); i != e; ++i) {
+            MachineOperand &MO = mi->getOperand(i);
+            if (MO.isReg() && MO.getReg() == regB && MO.isUse()) {
+              if (MO.isKill()) {
+                MO.setIsKill(false);
+                RemovedKillFlag = true;
+              }
+              MO.setReg(LastCopiedReg);
+            }
+          }
+
+          // Update live variables for regB.
+          if (RemovedKillFlag && LV && LV->getVarInfo(regB).removeKill(mi))
+            LV->addVirtualRegisterKilled(regB, prior(mi));
+
+        } else if (RemovedKillFlag) {
+          // Some tied uses of regB matched their destination registers, so
+          // regB is still used in this instruction, but a kill flag was
+          // removed from a different tied use of regB, so now we need to add
+          // a kill flag to one of the remaining uses of regB.
+          for (unsigned i = 0, e = mi->getNumOperands(); i != e; ++i) {
+            MachineOperand &MO = mi->getOperand(i);
+            if (MO.isReg() && MO.getReg() == regB && MO.isUse()) {
+              MO.setIsKill(true);
+              break;
             }
           }
         }
-
-        DEBUG(errs() << "\t\tprepend:\t" << *prevMI);
-
-        // Replace uses of regB with regA.
-        for (unsigned i = 0, e = mi->getNumOperands(); i != e; ++i) {
-          MachineOperand &MO = mi->getOperand(i);
-          if (MO.isReg() && MO.getReg() == regB && MO.isUse()) {
-
-            // Skip operands that are tied to other register definitions.
-            unsigned dsti = 0;
-            if (mi->isRegTiedToDefOperand(i, &dsti) && dsti != ti)
-              continue;
-
-            MO.setReg(regA);
-          }
-        }
-
-        assert(mi->getOperand(ti).isDef() && mi->getOperand(si).isUse());
-        mi->getOperand(ti).setReg(mi->getOperand(si).getReg());
+          
         MadeChange = true;
 
         DEBUG(errs() << "\t\trewrite to:\t" << *mi);
       }
 
+      // Clear TiedOperands here instead of at the top of the loop
+      // since most instructions do not have tied operands.
+      TiedOperands.clear();
       mi = nmi;
     }
   }
