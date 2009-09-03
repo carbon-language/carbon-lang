@@ -431,58 +431,10 @@ private:
   // returned to the caller.
   //===--------------------------------------------------===//
 
-  TreeTy* CreateNode(TreeTy* L, value_type_ref V, TreeTy* R) {
-    // Search the FoldingSet bucket for a Tree with the same digest.
-    FoldingSetNodeID ID;
-    unsigned digest = TreeTy::ComputeDigest(L, R, V);
-    ID.AddInteger(digest);
-    unsigned hash = ID.ComputeHash();
-
-    typename CacheTy::bucket_iterator I = Cache.bucket_begin(hash);
-    typename CacheTy::bucket_iterator E = Cache.bucket_end(hash);
-
-    for (; I != E; ++I) {
-      TreeTy* T = &*I;
-
-      if (T->ComputeDigest() != digest)
-        continue;
-
-      // We found a collision.  Perform a comparison of Contents('T')
-      // with Contents('L')+'V'+Contents('R').
-      typename TreeTy::iterator TI = T->begin(), TE = T->end();
-
-      // First compare Contents('L') with the (initial) contents of T.
-      if (!CompareTreeWithSection(L, TI, TE))
-        continue;
-
-      // Now compare the new data element.
-      if (TI == TE || !TI->ElementEqual(V))
-        continue;
-
-      ++TI;
-
-      // Now compare the remainder of 'T' with 'R'.
-      if (!CompareTreeWithSection(R, TI, TE))
-        continue;
-
-      if (TI != TE)
-        continue; // Contents('R') did not match suffix of 'T'.
-
-      // Trees did match!  Return 'T'.
-      return T;
-    }
-
-    // No tree with the contents: Contents('L')+'V'+Contents('R').
-    // Create it.  Allocate the new tree node and insert it into the cache.
+  TreeTy* CreateNode(TreeTy* L, value_type_ref V, TreeTy* R) {   
     BumpPtrAllocator& A = getAllocator();
     TreeTy* T = (TreeTy*) A.Allocate<TreeTy>();
     new (T) TreeTy(L,R,V,IncrementHeight(L,R));
-
-    // We do not insert 'T' into the FoldingSet here.  This is because
-    // this tree is still mutable and things may get rebalanced.
-    // Because our digest is associative and based on the contents of
-    // the set, this should hopefully not cause any strange bugs.
-    // 'T' is inserted by 'MarkImmutable'.
     return T;
   }
 
@@ -615,12 +567,56 @@ private:
     T->MarkImmutable();
     MarkImmutable(Left(T));
     MarkImmutable(Right(T));
+  }
+  
+public:
+  TreeTy *GetCanonicalTree(TreeTy *TNew) {
+    if (!TNew)
+      return NULL;    
+    
+    // Search the FoldingSet bucket for a Tree with the same digest.
+    FoldingSetNodeID ID;
+    unsigned digest = TNew->ComputeDigest();
+    ID.AddInteger(digest);
+    unsigned hash = ID.ComputeHash();
+    
+    typename CacheTy::bucket_iterator I = Cache.bucket_begin(hash);
+    typename CacheTy::bucket_iterator E = Cache.bucket_end(hash);
+    
+    for (; I != E; ++I) {
+      TreeTy *T = &*I;
+      
+      if (T->ComputeDigest() != digest)
+        continue;
+      
+      // We found a collision.  Perform a comparison of Contents('T')
+      // with Contents('L')+'V'+Contents('R').
+      typename TreeTy::iterator TI = T->begin(), TE = T->end();
+      
+      // First compare Contents('L') with the (initial) contents of T.
+      if (!CompareTreeWithSection(TNew->getLeft(), TI, TE))
+        continue;
+      
+      // Now compare the new data element.
+      if (TI == TE || !TI->ElementEqual(TNew->getValue()))
+        continue;
+      
+      ++TI;
+      
+      // Now compare the remainder of 'T' with 'R'.
+      if (!CompareTreeWithSection(TNew->getRight(), TI, TE))
+        continue;
+      
+      if (TI != TE)
+        continue; // Contents('R') did not match suffix of 'T'.
+      
+      // Trees did match!  Return 'T'.
+      return T;
+    }
 
-    // Now that the node is immutable it can safely be inserted
-    // into the node cache.
-    llvm::FoldingSetNodeID ID;
-    ID.AddInteger(T->ComputeDigest());
-    Cache.InsertNode(T, (void*) &*Cache.bucket_end(ID.ComputeHash()));
+    // 'TNew' is the only tree of its kind.  Return it.
+    Cache.InsertNode(TNew, (void*) &*Cache.bucket_end(hash));
+    return TNew;
   }
 };
 
@@ -940,8 +936,8 @@ public:
   typedef ImutAVLTree<ValInfo> TreeTy;
 
 private:
-  TreeTy* Root;
-
+  TreeTy *Root;
+  
 public:
   /// Constructs a set from a pointer to a tree root.  In general one
   /// should use a Factory object to create sets instead of directly
@@ -969,7 +965,7 @@ public:
     ///  The memory allocated to represent the set is released when the
     ///  factory object that created the set is destroyed.
     ImmutableSet Add(ImmutableSet Old, value_type_ref V) {
-      return ImmutableSet(F.Add(Old.Root,V));
+      return ImmutableSet(F.GetCanonicalTree(F.Add(Old.Root,V)));
     }
 
     /// Remove - Creates a new immutable set that contains all of the values
@@ -980,7 +976,7 @@ public:
     ///  The memory allocated to represent the set is released when the
     ///  factory object that created the set is destroyed.
     ImmutableSet Remove(ImmutableSet Old, value_type_ref V) {
-      return ImmutableSet(F.Remove(Old.Root,V));
+      return ImmutableSet(F.GetCanonicalTree(F.Remove(Old.Root,V)));
     }
 
     BumpPtrAllocator& getAllocator() { return F.getAllocator(); }
@@ -1005,7 +1001,9 @@ public:
     return Root && RHS.Root ? Root->isNotEqual(*RHS.Root) : Root != RHS.Root;
   }
 
-  TreeTy* getRoot() const { return Root; }
+  TreeTy *getRoot() { 
+    return Root;
+  }
 
   /// isEmpty - Return true if the set contains no elements.
   bool isEmpty() const { return !Root; }
