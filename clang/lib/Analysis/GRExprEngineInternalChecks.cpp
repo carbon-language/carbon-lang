@@ -716,11 +716,16 @@ void CheckBadDiv::PreVisitBinaryOperator(CheckerContext &C,
     return;
   }
 
+  // Handle the case where 'Denom' is UnknownVal.
+  const DefinedSVal *DV = dyn_cast<DefinedSVal>(&Denom);
+
+  if (!DV)  
+    return;
+
   // Check for divide by zero.
   ConstraintManager &CM = C.getConstraintManager();
   const GRState *stateNotZero, *stateZero;
-  llvm::tie(stateNotZero, stateZero) = CM.AssumeDual(C.getState(), 
-                                                     cast<DefinedSVal>(Denom));
+  llvm::tie(stateNotZero, stateZero) = CM.AssumeDual(C.getState(), *DV);
   
   if (stateZero && !stateNotZero) {
     if (ExplodedNode *N = C.GenerateNode(B, stateZero, true)) {
