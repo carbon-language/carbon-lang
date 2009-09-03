@@ -194,9 +194,8 @@ CXTranslationUnit clang_createTranslationUnit(
 const char *clang_getTranslationUnitSpelling(CXTranslationUnit CTUnit)
 {
   assert(CTUnit && "Passed null CXTranslationUnit");
-  //ASTUnit *CXXUnit = static_cast<ASTUnit *>(CTUnit);
-  //return CXXUnit->getOriginalSourceFileName().c_str();
-  return "<unimplemented>";
+  ASTUnit *CXXUnit = static_cast<ASTUnit *>(CTUnit);
+  return CXXUnit->getOriginalSourceFileName().c_str();
 }
 
 void clang_loadTranslationUnit(CXTranslationUnit CTUnit, 

@@ -77,6 +77,9 @@ public:
 
 } // anonymous namespace
 
+const std::string &ASTUnit::getOriginalSourceFileName() {
+  return dyn_cast<PCHReader>(Ctx->getExternalSource())->getOriginalSourceFile();
+}
 
 ASTUnit *ASTUnit::LoadFromPCHFile(const std::string &Filename,
                                   FileManager &FileMgr,

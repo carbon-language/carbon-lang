@@ -58,6 +58,8 @@ public:
 
   const Diagnostic &getDiagnostic() const { return *Diags.get(); }
         Diagnostic &getDiagnostic()       { return *Diags.get(); }
+        
+  const std::string &getOriginalSourceFileName();
 
   /// \brief Create a ASTUnit from a PCH file.
   ///
