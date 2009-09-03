@@ -24,7 +24,14 @@ public:
   List(){ }	// List<BinomialNode<int>*>::List() remains undefined.
 };
 
-template<typename T> class BinomialNode {
+template <typename T> class Node {
+ int i;
+public:
+ Node(){ }      // Node<BinomialNode<int>*>::Node() remains undefined.
+};
+
+
+template<typename T> class BinomialNode : Node<BinomialNode<T>*> {
 public:
   BinomialNode(T value) {}
   List<BinomialNode<T>*> nodes;
@@ -35,7 +42,8 @@ int main() {
   BinomialNode<int> *node = new BinomialNode<int>(1);
 }
 
+// CHECK-LP64:	__ZN4NodeIP12BinomialNodeIiEEC1Ev:
 // CHECK-LP64: __ZN4ListIP12BinomialNodeIiEEC1Ev:
 
-// CHECK-LP32:__ZN4ListIP12BinomialNodeIiEEC1Ev:
-
+// CHECK-LP32: __ZN4NodeIP12BinomialNodeIiEEC1Ev:
+// CHECK-LP32: __ZN4ListIP12BinomialNodeIiEEC1Ev:
