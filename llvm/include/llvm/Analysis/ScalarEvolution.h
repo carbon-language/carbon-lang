@@ -382,7 +382,7 @@ namespace llvm {
     /// this is the pointer-sized integer type.
     const Type *getEffectiveSCEVType(const Type *Ty) const;
 
-    /// getSCEV - Return a SCEV expression handle for the full generality of the
+    /// getSCEV - Return a SCEV expression for the full generality of the
     /// specified expression.
     const SCEV *getSCEV(Value *V);
 
@@ -496,7 +496,7 @@ namespace llvm {
     const SCEV *getUMinFromMismatchedTypes(const SCEV *LHS,
                                            const SCEV *RHS);
 
-    /// getSCEVAtScope - Return a SCEV expression handle for the specified value
+    /// getSCEVAtScope - Return a SCEV expression for the specified value
     /// at the specified scope in the program.  The L value specifies a loop
     /// nest to evaluate the expression at, where null is the top-level or a
     /// specified loop is immediately inside of the loop.
