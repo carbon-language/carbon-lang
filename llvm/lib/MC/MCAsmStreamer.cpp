@@ -78,18 +78,6 @@ public:
 
 } // end anonymous namespace.
 
-/// Allow printing symbols directly to a raw_ostream with proper quoting.
-static inline raw_ostream &operator<<(raw_ostream &os, const MCSymbol *S) {
-  S->print(os);
-  return os;
-}
-
-/// Allow printing values directly to a raw_ostream.
-static inline raw_ostream &operator<<(raw_ostream &os, const MCExpr &Value) {
-  Value.print(os);
-  return os;
-}
-
 static inline int64_t truncateToSize(int64_t Value, unsigned Bytes) {
   assert(Bytes && "Invalid size!");
   return Value & ((uint64_t) (int64_t) -1 >> (64 - Bytes * 8));
@@ -130,7 +118,9 @@ void MCAsmStreamer::EmitAssignment(MCSymbol *Symbol, const MCExpr *Value) {
   assert((Symbol->isUndefined() || Symbol->isAbsolute()) &&
          "Cannot define a symbol twice!");
 
-  OS << Symbol << " = " << *Value << '\n';
+  OS << Symbol << " = ";
+  Value->print(OS);
+  OS << '\n';
 }
 
 void MCAsmStreamer::EmitSymbolAttribute(MCSymbol *Symbol, 
@@ -201,7 +191,9 @@ void MCAsmStreamer::EmitValue(const MCExpr *Value, unsigned Size) {
   case 8: OS << ".quad"; break;
   }
 
-  OS << ' ' << *truncateToSize(Value, Size) << '\n';
+  OS << ' ';
+  truncateToSize(Value, Size)->print(OS);
+  OS << '\n';
 }
 
 void MCAsmStreamer::EmitValueToAlignment(unsigned ByteAlignment, int64_t Value,
@@ -255,7 +247,9 @@ void MCAsmStreamer::EmitValueToAlignment(unsigned ByteAlignment, int64_t Value,
 void MCAsmStreamer::EmitValueToOffset(const MCExpr *Offset,
                                       unsigned char Value) {
   // FIXME: Verify that Offset is associated with the current section.
-  OS << ".org " << *Offset << ", " << (unsigned) Value << '\n';
+  OS << ".org ";
+  Offset->print(OS);
+  OS << ", " << (unsigned) Value << '\n';
 }
 
 void MCAsmStreamer::EmitInstruction(const MCInst &Inst) {
