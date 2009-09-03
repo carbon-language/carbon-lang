@@ -110,7 +110,7 @@ private:
         GlobalValue *GV;          // For MO_GlobalAddress.
         MDNode *Node;             // For MO_Metadata.
       } Val;
-      int64_t Offset;   // An offset from the object.
+      int64_t Offset;             // An offset from the object.
     } OffsetedInfo;
   } Contents;
   
@@ -298,6 +298,8 @@ public:
     return Contents.OffsetedInfo.Val.Node;
   }
   
+  /// getOffset - Return the offset from the symbol in this operand. This always
+  /// returns 0 for ExternalSymbol operands.
   int64_t getOffset() const {
     assert((isGlobal() || isSymbol() || isCPI()) &&
            "Wrong MachineOperand accessor");
