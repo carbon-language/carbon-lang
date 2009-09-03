@@ -159,7 +159,7 @@ void LoaderPass::recurseBasicBlock(const BasicBlock *BB) {
 void LoaderPass::readOrRememberEdge(ProfileInfo::Edge e,
                                     unsigned weight, unsigned ei,
                                     Function *F) {
-  if (weight != (unsigned)MissingValue) {
+  if (weight != ~0U) {
     EdgeInformation[F][e] += weight;
     DEBUG(errs()<<"--Read Edge Counter for " << e 
                 <<" (# "<<ei<<"): "<<(unsigned)getEdgeWeight(e)<<"\n");
