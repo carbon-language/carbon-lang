@@ -1789,9 +1789,20 @@ Sema::ActOnStartCXXMemberReference(Scope *S, ExprArg Base, SourceLocation OpLoc,
   // We could end up with various non-record types here, such as extended 
   // vector types or Objective-C interfaces. Just return early and let
   // ActOnMemberReferenceExpr do the work.
-  if (!BaseType->isRecordType())
+  if (!BaseType->isRecordType()) {
+    // C++ [basic.lookup.classref]p2:
+    //   [...] If the type of the object expression is of pointer to scalar
+    //   type, the unqualified-id is looked up in the context of the complete
+    //   postfix-expression.
+    ObjectType = 0;
     return move(Base);
+  }
     
+  // C++ [basic.lookup.classref]p2:
+  //   If the id-expression in a class member access (5.2.5) is an 
+  //   unqualified-id, and the type of the object expres- sion is of a class
+  //   type C (or of pointer to a class type C), the unqualified-id is looked
+  //   up in the scope of class C. [...]
   ObjectType = BaseType.getAsOpaquePtr();
   return move(Base);  
 }

@@ -1306,6 +1306,15 @@ class CXXUnresolvedMemberExpr : public Expr {
   /// \brief The source range covering the nested name specifier.
   SourceRange QualifierRange;
   
+  /// \brief In a qualified member access expression such as t->Base::f, this
+  /// member stores the resolves of name lookup in the context of the member 
+  /// access expression, to be used at instantiation time.
+  ///
+  /// FIXME: This member, along with the Qualifier and QualifierRange, could
+  /// be stuck into a structure that is optionally allocated at the end of
+  /// the CXXUnresolvedMemberExpr, to save space in the common case.
+  NamedDecl *FirstQualifierFoundInScope;
+  
   /// \brief The member to which this member expression refers, which
   /// can be name, overloaded operator, or destructor.
   /// FIXME: could also be a template-id
@@ -1320,11 +1329,13 @@ public:
                           SourceLocation OperatorLoc,
                           NestedNameSpecifier *Qualifier,
                           SourceRange QualifierRange,
+                          NamedDecl *FirstQualifierFoundInScope,
                           DeclarationName Member,
                           SourceLocation MemberLoc)
     : Expr(CXXUnresolvedMemberExprClass, C.DependentTy, true, true),
       Base(Base), IsArrow(IsArrow), OperatorLoc(OperatorLoc),
       Qualifier(Qualifier), QualifierRange(QualifierRange),
+      FirstQualifierFoundInScope(FirstQualifierFoundInScope),
       Member(Member), MemberLoc(MemberLoc) { }
 
   /// \brief Retrieve the base object of this member expressions,
@@ -1348,6 +1359,21 @@ public:
   /// \brief Retrieve the source range covering the nested-name-specifier
   /// that qualifies the member name.
   SourceRange getQualifierRange() const { return QualifierRange; }
+  
+  /// \brief Retrieve the first part of the nested-name-specifier that was
+  /// found in the scope of the member access expression when the member access
+  /// was initially parsed.
+  ///
+  /// This function only returns a useful result when member access expression
+  /// uses a qualified member name, e.g., "x.Base::f". Here, the declaration 
+  /// returned by this function describes what was found by unqualified name 
+  /// lookup for the identifier "Base" within the scope of the member access
+  /// expression itself. At template instantiation time, this information is
+  /// combined with the results of name lookup into the type of the object
+  /// expression itself (the class type of x).
+  NamedDecl *getFirstQualifierFoundInScope() const { 
+    return FirstQualifierFoundInScope;
+  }
   
   /// \brief Retrieve the name of the member that this expression
   /// refers to.

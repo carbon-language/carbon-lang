@@ -288,18 +288,45 @@ bool isAcceptableNestedNameSpecifier(ASTContext &Context, NamedDecl *SD) {
   return false;
 }
 
-/// ActOnCXXNestedNameSpecifier - Called during parsing of a
-/// nested-name-specifier. e.g. for "foo::bar::" we parsed "foo::" and now
-/// we want to resolve "bar::". 'SS' is empty or the previously parsed
-/// nested-name part ("foo::"), 'IdLoc' is the source location of 'bar',
-/// 'CCLoc' is the location of '::' and 'II' is the identifier for 'bar'.
-/// Returns a CXXScopeTy* object representing the C++ scope.
-Sema::CXXScopeTy *Sema::ActOnCXXNestedNameSpecifier(Scope *S,
+/// \brief If the given nested-name-specifier begins with a bare identifier
+/// (e.g., Base::), perform name lookup for that identifier as a 
+/// nested-name-specifier within the given scope, and return the result of that
+/// name lookup.
+NamedDecl *Sema::FindFirstQualifierInScope(Scope *S, NestedNameSpecifier *NNS) {
+  if (!S || !NNS)
+    return 0;
+  
+  while (NNS->getPrefix())
+    NNS = NNS->getPrefix();
+  
+  if (NNS->getKind() != NestedNameSpecifier::Identifier)
+    return 0;
+  
+  LookupResult Found 
+    = LookupName(S, NNS->getAsIdentifier(), LookupNestedNameSpecifierName);
+  assert(!Found.isAmbiguous() && "Cannot handle ambiguities here yet");
+
+  NamedDecl *Result = Found;
+  if (isAcceptableNestedNameSpecifier(Context, Result))
+    return Result;
+  
+  return 0;
+}
+
+/// \brief Build a new nested-name-specifier for "identifier::", as described
+/// by ActOnCXXNestedNameSpecifier.
+///
+/// This routine differs only slightly from ActOnCXXNestedNameSpecifier, in
+/// that it contains an extra parameter \p ScopeLookupResult, which provides
+/// the result of name lookup within the scope of the nested-name-specifier
+/// that was computed at template definitino time.
+Sema::CXXScopeTy *Sema::BuildCXXNestedNameSpecifier(Scope *S,
                                                     const CXXScopeSpec &SS,
                                                     SourceLocation IdLoc,
                                                     SourceLocation CCLoc,
                                                     IdentifierInfo &II,
-                                                    TypeTy *ObjectTypePtr,
+                                                    QualType ObjectType,
+                                                  NamedDecl *ScopeLookupResult,
                                                     bool EnteringContext) {
   NestedNameSpecifier *Prefix 
     = static_cast<NestedNameSpecifier *>(SS.getScopeRep());
@@ -307,11 +334,10 @@ Sema::CXXScopeTy *Sema::ActOnCXXNestedNameSpecifier(Scope *S,
   // Determine where to perform name lookup
   DeclContext *LookupCtx = 0;
   bool isDependent = false;
-  if (ObjectTypePtr) {
+  if (!ObjectType.isNull()) {
     // This nested-name-specifier occurs in a member access expression, e.g.,
     // x->B::f, and we are looking into the type of the object.
     assert(!SS.isSet() && "ObjectType and scope specifier cannot coexist");
-    QualType ObjectType = QualType::getFromOpaquePtr(ObjectTypePtr);
     LookupCtx = computeDeclContext(ObjectType);
     isDependent = ObjectType->isDependentType();
   } else if (SS.isSet()) {
@@ -320,7 +346,7 @@ Sema::CXXScopeTy *Sema::ActOnCXXNestedNameSpecifier(Scope *S,
     LookupCtx = computeDeclContext(SS, EnteringContext);
     isDependent = isDependentScopeSpecifier(SS);
   }
-
+  
   LookupResult Found;
   bool ObjectTypeSearchedInScope = false;
   if (LookupCtx) {
@@ -332,11 +358,11 @@ Sema::CXXScopeTy *Sema::ActOnCXXNestedNameSpecifier(Scope *S,
     // The declaration context must be complete.
     if (!LookupCtx->isDependentContext() && RequireCompleteDeclContext(SS))
       return 0;
-
+    
     Found = LookupQualifiedName(LookupCtx, &II, LookupNestedNameSpecifierName,
                                 false);
     
-    if (ObjectTypePtr && Found.getKind() == LookupResult::NotFound && S) {
+    if (!ObjectType.isNull() && Found.getKind() == LookupResult::NotFound) {
       // C++ [basic.lookup.classref]p4:
       //   If the id-expression in a class member access is a qualified-id of
       //   the form 
@@ -354,12 +380,14 @@ Sema::CXXScopeTy *Sema::ActOnCXXNestedNameSpecifier(Scope *S,
       // Qualified name lookup into a class will not find a namespace-name,
       // so we do not need to diagnoste that case specifically. However, 
       // this qualified name lookup may find nothing. In that case, perform
-      // unqualified name lookup in the given scope.
-      
-      // FIXME: When we're instantiating a template, do we actually have to
-      // look in the scope of the template? Both EDG and GCC do it; GCC 
-      // requires the lookup to be successful, EDG doesn't.
-      Found = LookupName(S, &II, LookupNestedNameSpecifierName);
+      // unqualified name lookup in the given scope (if available) or 
+      // reconstruct the result from when name lookup was performed at template
+      // definition time.
+      if (S)
+        Found = LookupName(S, &II, LookupNestedNameSpecifierName);
+      else
+        Found = LookupResult::CreateLookupResult(Context, ScopeLookupResult);
+        
       ObjectTypeSearchedInScope = true;
     }
   } else if (isDependent) {
@@ -379,16 +407,21 @@ Sema::CXXScopeTy *Sema::ActOnCXXNestedNameSpecifier(Scope *S,
   // FIXME: Deal with ambiguities cleanly.
   NamedDecl *SD = Found;
   if (isAcceptableNestedNameSpecifier(Context, SD)) {
-    if (ObjectTypePtr && !ObjectTypeSearchedInScope && S) {
+    if (!ObjectType.isNull() && !ObjectTypeSearchedInScope) {
       // C++ [basic.lookup.classref]p4:
       //   [...] If the name is found in both contexts, the 
       //   class-name-or-namespace-name shall refer to the same entity.
       //
       // We already found the name in the scope of the object. Now, look
       // into the current scope (the scope of the postfix-expression) to
-      // see if we can find the same name there. 
-      LookupResult FoundOuter 
-        = LookupName(S, &II, LookupNestedNameSpecifierName);
+      // see if we can find the same name there. As above, if there is no
+      // scope, reconstruct the result from the template instantiation itself.
+      LookupResult FoundOuter;
+      if (S)
+        FoundOuter = LookupName(S, &II, LookupNestedNameSpecifierName);
+      else
+        FoundOuter = LookupResult::CreateLookupResult(Context, 
+                                                      ScopeLookupResult);
       
       // FIXME: Handle ambiguities in FoundOuter!
       NamedDecl *OuterDecl = FoundOuter;
@@ -396,35 +429,35 @@ Sema::CXXScopeTy *Sema::ActOnCXXNestedNameSpecifier(Scope *S,
           OuterDecl->getCanonicalDecl() != SD->getCanonicalDecl() &&
           (!isa<TypeDecl>(OuterDecl) || !isa<TypeDecl>(SD) ||
            !Context.hasSameType(
-                          Context.getTypeDeclType(cast<TypeDecl>(OuterDecl)),
+                            Context.getTypeDeclType(cast<TypeDecl>(OuterDecl)),
                                Context.getTypeDeclType(cast<TypeDecl>(SD))))) {
-        Diag(IdLoc, diag::err_nested_name_member_ref_lookup_ambiguous)
-          << &II;
-        Diag(SD->getLocation(), diag::note_ambig_member_ref_object_type)
-          << QualType::getFromOpaquePtr(ObjectTypePtr);
-        Diag(OuterDecl->getLocation(), diag::note_ambig_member_ref_scope);
+             Diag(IdLoc, diag::err_nested_name_member_ref_lookup_ambiguous)
+               << &II;
+             Diag(SD->getLocation(), diag::note_ambig_member_ref_object_type)
+               << ObjectType;
+             Diag(OuterDecl->getLocation(), diag::note_ambig_member_ref_scope);
              
-        // Fall through so that we'll pick the name we found in the object type,
-        // since that's probably what the user wanted anyway.
-      }
+             // Fall through so that we'll pick the name we found in the object type,
+             // since that's probably what the user wanted anyway.
+           }
     }
     
     if (NamespaceDecl *Namespace = dyn_cast<NamespaceDecl>(SD))
       return NestedNameSpecifier::Create(Context, Prefix, Namespace);
-
+    
     // FIXME: It would be nice to maintain the namespace alias name, then
     // see through that alias when resolving the nested-name-specifier down to
     // a declaration context.
     if (NamespaceAliasDecl *Alias = dyn_cast<NamespaceAliasDecl>(SD))
       return NestedNameSpecifier::Create(Context, Prefix,
-
+                                         
                                          Alias->getNamespace());
     
     QualType T = Context.getTypeDeclType(cast<TypeDecl>(SD));
     return NestedNameSpecifier::Create(Context, Prefix, false,
                                        T.getTypePtr());
   }
-
+  
   // If we didn't find anything during our lookup, try again with
   // ordinary name lookup, which can help us produce better error
   // messages.
@@ -441,13 +474,31 @@ Sema::CXXScopeTy *Sema::ActOnCXXNestedNameSpecifier(Scope *S,
     return 0;
   } else
     DiagID = diag::err_undeclared_var_use;
-
+  
   if (SS.isSet())
     Diag(IdLoc, DiagID) << &II << SS.getRange();
   else
     Diag(IdLoc, DiagID) << &II;
-
+  
   return 0;
+}
+
+/// ActOnCXXNestedNameSpecifier - Called during parsing of a
+/// nested-name-specifier. e.g. for "foo::bar::" we parsed "foo::" and now
+/// we want to resolve "bar::". 'SS' is empty or the previously parsed
+/// nested-name part ("foo::"), 'IdLoc' is the source location of 'bar',
+/// 'CCLoc' is the location of '::' and 'II' is the identifier for 'bar'.
+/// Returns a CXXScopeTy* object representing the C++ scope.
+Sema::CXXScopeTy *Sema::ActOnCXXNestedNameSpecifier(Scope *S,
+                                                    const CXXScopeSpec &SS,
+                                                    SourceLocation IdLoc,
+                                                    SourceLocation CCLoc,
+                                                    IdentifierInfo &II,
+                                                    TypeTy *ObjectTypePtr,
+                                                    bool EnteringContext) {
+  return BuildCXXNestedNameSpecifier(S, SS, IdLoc, CCLoc, II, 
+                                     QualType::getFromOpaquePtr(ObjectTypePtr),
+                                     /*ScopeLookupResult=*/0, EnteringContext);
 }
 
 Sema::CXXScopeTy *Sema::ActOnCXXNestedNameSpecifier(Scope *S,

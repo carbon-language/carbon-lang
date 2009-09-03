@@ -107,18 +107,26 @@ namespace C
         a.A::B::base::x();
         a->A::member::foo();
 
-        a.bad::x(); // xpected-error{{direct or virtual}}
-        a.sub::x();
-        a.base::x();
-        a.B::base::x(); // xpected-error{{use of undeclared identifier 'B'}}
-        a->member::foo();
+        a.bad::x(); // expected-error{{direct or virtual}}
     }
-  
+
   void test_fun5() {
-    // FIXME: Enable the following once we get the nested-name-specifier lookup
-    // right during template instantiation.
-    // fun5<A::sub>(); // xpected-note 2{{instantiation}}
+    fun5<A::sub>(); // expected-note{{instantiation}}
   }
+  
+  template<typename T>
+  void fun6() {
+    T a;
+    a.sub::x();
+    a.base::x();
+    a->member::foo();
+    a.B::base::x(); // expected-error{{use of undeclared identifier 'B'}}
+   }
+  
+  void test_fun6() {
+    fun6<A::sub>(); // expected-note{{instantiation}}
+  }
+  
 }
 
 // PR4703

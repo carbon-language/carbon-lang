@@ -1610,13 +1610,15 @@ public:
                                             SourceLocation MemberLoc,
                                             DeclarationName MemberName,
                                             DeclPtrTy ImplDecl,
-                                            const CXXScopeSpec *SS = 0) {
+                                            const CXXScopeSpec *SS = 0,
+                                          NamedDecl *FirstQualifierInScope = 0) {
     // FIXME: Temporary helper while we migrate existing calls to 
     // BuildMemberReferenceExpr to support explicitly-specified template
     // arguments.
     return BuildMemberReferenceExpr(S, move(Base), OpLoc, OpKind, MemberLoc,
                                     MemberName, false, SourceLocation(), 0, 0,
-                                    SourceLocation(), ImplDecl, SS);
+                                    SourceLocation(), ImplDecl, SS,
+                                    FirstQualifierInScope);
   }
   
   OwningExprResult BuildMemberReferenceExpr(Scope *S, ExprArg Base,
@@ -1630,7 +1632,8 @@ public:
                                             unsigned NumExplicitTemplateArgs,
                                             SourceLocation RAngleLoc,
                                             DeclPtrTy ImplDecl,
-                                            const CXXScopeSpec *SS = 0);
+                                            const CXXScopeSpec *SS,
+                                          NamedDecl *FirstQualifierInScope = 0);
   
   virtual OwningExprResult ActOnMemberReferenceExpr(Scope *S, ExprArg Base,
                                                     SourceLocation OpLoc,
@@ -2047,12 +2050,18 @@ public:
   virtual CXXScopeTy *ActOnCXXGlobalScopeSpecifier(Scope *S,
                                                    SourceLocation CCLoc);
 
-  /// ActOnCXXNestedNameSpecifier - Called during parsing of a
-  /// nested-name-specifier. e.g. for "foo::bar::" we parsed "foo::" and now
-  /// we want to resolve "bar::". 'SS' is empty or the previously parsed
-  /// nested-name part ("foo::"), 'IdLoc' is the source location of 'bar',
-  /// 'CCLoc' is the location of '::' and 'II' is the identifier for 'bar'.
-  /// Returns a CXXScopeTy* object representing the C++ scope.
+  NamedDecl *FindFirstQualifierInScope(Scope *S, NestedNameSpecifier *NNS);
+  
+
+  CXXScopeTy *BuildCXXNestedNameSpecifier(Scope *S,
+                                          const CXXScopeSpec &SS,
+                                          SourceLocation IdLoc,
+                                          SourceLocation CCLoc,
+                                          IdentifierInfo &II,
+                                          QualType ObjectType,
+                                          NamedDecl *ScopeLookupResult,
+                                          bool EnteringContext);
+  
   virtual CXXScopeTy *ActOnCXXNestedNameSpecifier(Scope *S,
                                                   const CXXScopeSpec &SS,
                                                   SourceLocation IdLoc,

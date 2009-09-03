@@ -359,8 +359,10 @@ namespace {
 }
 
 Decl *TemplateInstantiator::TransformDecl(Decl *D) {
-  if (TemplateTemplateParmDecl *TTP 
-        = dyn_cast_or_null<TemplateTemplateParmDecl>(D)) {
+  if (!D)
+    return 0;
+  
+  if (TemplateTemplateParmDecl *TTP = dyn_cast<TemplateTemplateParmDecl>(D)) {
     if (TTP->getDepth() < TemplateArgs.getNumLevels()) {
       assert(TemplateArgs(TTP->getDepth(), TTP->getPosition()).getAsDecl() &&
              "Wrong kind of template template argument");
@@ -381,7 +383,7 @@ Decl *TemplateInstantiator::TransformDecl(Decl *D) {
       "Reducing depth of template template parameters is not yet implemented");
   }
   
-  return SemaRef.FindInstantiatedDecl(cast_or_null<NamedDecl>(D));
+  return SemaRef.FindInstantiatedDecl(cast<NamedDecl>(D));
 }
 
 Decl *TemplateInstantiator::TransformDefinition(Decl *D) {

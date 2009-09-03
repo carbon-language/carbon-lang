@@ -15,6 +15,7 @@
 
 #include "Sema.h"
 #include "clang/Sema/SemaDiagnostic.h"
+#include "clang/AST/Decl.h"
 #include "clang/AST/Expr.h"
 #include "clang/AST/ExprCXX.h"
 #include "clang/AST/ExprObjC.h"
@@ -243,7 +244,8 @@ public:
   /// alternate behavior.
   NestedNameSpecifier *TransformNestedNameSpecifier(NestedNameSpecifier *NNS,
                                                     SourceRange Range,
-                                              QualType ObjectType = QualType());
+                                              QualType ObjectType = QualType(),
+                                          NamedDecl *FirstQualifierInScope = 0);
   
   /// \brief Transform the given template name.
   /// 
@@ -499,7 +501,8 @@ public:
   NestedNameSpecifier *RebuildNestedNameSpecifier(NestedNameSpecifier *Prefix,
                                                   SourceRange Range,
                                                   IdentifierInfo &II,
-                                                  QualType ObjectType);
+                                                  QualType ObjectType,
+                                              NamedDecl *FirstQualifierInScope);
 
   /// \brief Build a new nested-name-specifier given the prefix and the
   /// namespace named in the next step in the nested-name-specifier.
@@ -1454,7 +1457,8 @@ public:
                                               NestedNameSpecifier *Qualifier,
                                                   SourceRange QualifierRange,
                                                   DeclarationName Name,
-                                                  SourceLocation MemberLoc) {
+                                                  SourceLocation MemberLoc,
+                                             NamedDecl *FirstQualifierInScope) {
     OwningExprResult Base = move(BaseE);
     tok::TokenKind OpKind = IsArrow? tok::arrow : tok::period;
 
@@ -1467,7 +1471,8 @@ public:
                                             MemberLoc,
                                             Name,
                                     /*FIXME?*/Sema::DeclPtrTy::make((Decl*)0),
-                                            &SS);
+                                            &SS,
+                                            FirstQualifierInScope);
     return move(Base);
   }
 
@@ -1591,7 +1596,8 @@ template<typename Derived>
 NestedNameSpecifier *
 TreeTransform<Derived>::TransformNestedNameSpecifier(NestedNameSpecifier *NNS,
                                                      SourceRange Range,
-                                                     QualType ObjectType) {
+                                                     QualType ObjectType,
+                                             NamedDecl *FirstQualifierInScope) {
   if (!NNS)
     return 0;
   
@@ -1599,13 +1605,15 @@ TreeTransform<Derived>::TransformNestedNameSpecifier(NestedNameSpecifier *NNS,
   NestedNameSpecifier *Prefix = NNS->getPrefix();
   if (Prefix) {
     Prefix = getDerived().TransformNestedNameSpecifier(Prefix, Range, 
-                                                       ObjectType);
+                                                       ObjectType,
+                                                       FirstQualifierInScope);
     if (!Prefix)
       return 0;
     
-    // Clear out the object type; it only applies to the first element in
-    // the nested-name-specifier.
+    // Clear out the object type and the first qualifier in scope; they only 
+    // apply to the first element in the nested-name-specifier.
     ObjectType = QualType();
+    FirstQualifierInScope = 0;
   }
   
   switch (NNS->getKind()) {
@@ -1618,7 +1626,8 @@ TreeTransform<Derived>::TransformNestedNameSpecifier(NestedNameSpecifier *NNS,
       
     return getDerived().RebuildNestedNameSpecifier(Prefix, Range, 
                                                    *NNS->getAsIdentifier(),
-                                                   ObjectType);
+                                                   ObjectType,
+                                                   FirstQualifierInScope);
       
   case NestedNameSpecifier::Namespace: {
     NamespaceDecl *NS 
@@ -4055,22 +4064,28 @@ TreeTransform<Derived>::TransformCXXUnresolvedMemberExpr(
   if (Base.isInvalid())
     return SemaRef.ExprError();
   
+  NamedDecl *FirstQualifierInScope
+    = cast_or_null<NamedDecl>(
+              getDerived().TransformDecl(E->getFirstQualifierFoundInScope()));
+  
   NestedNameSpecifier *Qualifier = 0;
   if (E->getQualifier()) {
     Qualifier = getDerived().TransformNestedNameSpecifier(E->getQualifier(),
                                                       E->getQualifierRange(),
-                                      QualType::getFromOpaquePtr(ObjectType));
+                                      QualType::getFromOpaquePtr(ObjectType),
+                                                        FirstQualifierInScope);
     if (!Qualifier)
       return SemaRef.ExprError();
   }
   
   // FIXME: Transform the declaration name
   DeclarationName Name = E->getMember();
-  
+    
   if (!getDerived().AlwaysRebuild() &&
       Base.get() == E->getBase() &&
       Qualifier == E->getQualifier() &&
-      Name == E->getMember())
+      Name == E->getMember() &&
+      FirstQualifierInScope == E->getFirstQualifierFoundInScope())
     return SemaRef.Owned(E->Retain()); 
   
   return getDerived().RebuildCXXUnresolvedMemberExpr(move(Base),
@@ -4079,7 +4094,8 @@ TreeTransform<Derived>::TransformCXXUnresolvedMemberExpr(
                                                      Qualifier,
                                                      E->getQualifierRange(),
                                                      Name,
-                                                     E->getMemberLoc());
+                                                     E->getMemberLoc(),
+                                                     FirstQualifierInScope);
 }
 
 template<typename Derived>
@@ -4435,15 +4451,17 @@ NestedNameSpecifier *
 TreeTransform<Derived>::RebuildNestedNameSpecifier(NestedNameSpecifier *Prefix,
                                                    SourceRange Range,
                                                    IdentifierInfo &II,
-                                                   QualType ObjectType) {
+                                                   QualType ObjectType,
+                                             NamedDecl *FirstQualifierInScope) {
   CXXScopeSpec SS;
   // FIXME: The source location information is all wrong.
   SS.setRange(Range);
   SS.setScopeRep(Prefix);
   return static_cast<NestedNameSpecifier *>(
-                    SemaRef.ActOnCXXNestedNameSpecifier(0, SS, Range.getEnd(), 
+                    SemaRef.BuildCXXNestedNameSpecifier(0, SS, Range.getEnd(), 
                                                         Range.getEnd(), II,
-                                                  ObjectType.getAsOpaquePtr(),
+                                                        ObjectType,
+                                                        FirstQualifierInScope,
                                                         false));
 }
 

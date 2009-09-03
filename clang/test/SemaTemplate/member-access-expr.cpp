@@ -1,5 +1,4 @@
 // RUN: clang-cc -fsyntax-only -verify %s
-// XFAIL
 template<typename T>
 void call_f0(T x) {
   x.Base::f0();
@@ -30,7 +29,8 @@ void test_f0_through_typedef(X0 x0) {
 template<typename TheBase, typename T>
 void call_f0_through_typedef2(T x) {
   typedef TheBase CrazyBase; // expected-note{{current scope}}
-  x.CrazyBase::f0(); // expected-error{{ambiguous}}
+  x.CrazyBase::f0(); // expected-error{{ambiguous}} \
+                     // expected-error 2{{no member named}}
 }
 
 struct OtherBase { };
@@ -41,8 +41,8 @@ struct X1 : Base, OtherBase {
 
 void test_f0_through_typedef2(X0 x0, X1 x1) {
   call_f0_through_typedef2<Base>(x0);
-  call_f0_through_typedef2<OtherBase>(x1);
-  call_f0_through_typedef2<Base>(x1); // expected-note{{here}}
+  call_f0_through_typedef2<OtherBase>(x1); // expected-note{{instantiation}}
+  call_f0_through_typedef2<Base>(x1); // expected-note{{instantiation}}
 }
 
 

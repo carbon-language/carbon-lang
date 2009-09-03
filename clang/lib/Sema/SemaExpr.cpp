@@ -1989,7 +1989,8 @@ Sema::BuildMemberReferenceExpr(Scope *S, ExprArg Base, SourceLocation OpLoc,
                                const TemplateArgument *ExplicitTemplateArgs,
                                unsigned NumExplicitTemplateArgs,
                                SourceLocation RAngleLoc,
-                               DeclPtrTy ObjCImpDecl, const CXXScopeSpec *SS) {
+                               DeclPtrTy ObjCImpDecl, const CXXScopeSpec *SS,
+                               NamedDecl *FirstQualifierInScope) {
   if (SS && SS->isInvalid())
     return ExprError();
 
@@ -2022,14 +2023,23 @@ Sema::BuildMemberReferenceExpr(Scope *S, ExprArg Base, SourceLocation OpLoc,
   // Get the type being accessed in BaseType.  If this is an arrow, the BaseExpr
   // must have pointer type, and the accessed type is the pointee.
   if (OpKind == tok::arrow) {
-    if (BaseType->isDependentType())
+    if (BaseType->isDependentType()) {
+      NestedNameSpecifier *Qualifier = 0;
+      if (SS) {
+        Qualifier = static_cast<NestedNameSpecifier *>(SS->getScopeRep());
+        if (!FirstQualifierInScope)
+          FirstQualifierInScope = FindFirstQualifierInScope(S, Qualifier);
+      }
+      
       return Owned(new (Context) CXXUnresolvedMemberExpr(Context,
                                                          BaseExpr, true, 
                                                          OpLoc,
-                            (NestedNameSpecifier *)(SS? SS->getScopeRep() : 0),
+                                                         Qualifier,
                                             SS? SS->getRange() : SourceRange(),
+                                                         FirstQualifierInScope,
                                                          MemberName,
                                                          MemberLoc));
+    }
     else if (const PointerType *PT = BaseType->getAs<PointerType>())
       BaseType = PT->getPointeeType();
     else if (BaseType->isObjCObjectPointerType())
@@ -2051,14 +2061,23 @@ Sema::BuildMemberReferenceExpr(Scope *S, ExprArg Base, SourceLocation OpLoc,
       const PointerType *PT = BaseType->getAs<PointerType>();
 
       if (!PT || (getLangOptions().ObjC1 && 
-                  !PT->getPointeeType()->isRecordType()))
+                  !PT->getPointeeType()->isRecordType())) {
+        NestedNameSpecifier *Qualifier = 0;
+        if (SS) {
+          Qualifier = static_cast<NestedNameSpecifier *>(SS->getScopeRep());
+          if (!FirstQualifierInScope)
+            FirstQualifierInScope = FindFirstQualifierInScope(S, Qualifier);
+        }
+        
         return Owned(new (Context) CXXUnresolvedMemberExpr(Context,
                                                            BaseExpr, false, 
                                                            OpLoc, 
-                            (NestedNameSpecifier *)(SS? SS->getScopeRep() : 0),
+                                                           Qualifier,
                                             SS? SS->getRange() : SourceRange(),
+                                                         FirstQualifierInScope,
                                                            MemberName,
                                                            MemberLoc));
+      }
     }
   }
 
