@@ -17,6 +17,7 @@
 #include "llvm/Constants.h"
 #include "llvm/Instruction.h"
 #include "llvm/Support/ManagedStatic.h"
+#include "llvm/Support/ValueHandle.h"
 #include "LLVMContextImpl.h"
 #include <set>
 
@@ -45,24 +46,25 @@ GetElementPtrConstantExpr::GetElementPtrConstantExpr
 }
 
 bool LLVMContext::RemoveDeadMetadata() {
-  std::vector<const MDNode *> DeadMDNodes;
+  std::vector<WeakVH> DeadMDNodes;
   bool Changed = false;
   while (1) {
 
     for (FoldingSet<MDNode>::iterator 
            I = pImpl->MDNodeSet.begin(),
            E = pImpl->MDNodeSet.end(); I != E; ++I) {
-      const MDNode *N = &(*I);
+      MDNode *N = &(*I);
       if (N->use_empty()) 
-        DeadMDNodes.push_back(N);
+        DeadMDNodes.push_back(WeakVH(N));
     }
     
     if (DeadMDNodes.empty())
       return Changed;
 
     while (!DeadMDNodes.empty()) {
-      const MDNode *N = DeadMDNodes.back(); DeadMDNodes.pop_back();
-      delete N;
+      const MDNode *N = cast<MDNode>(DeadMDNodes.back()); DeadMDNodes.pop_back();
+      if (N->use_empty())
+	delete N;
     }
   }
   return Changed;
