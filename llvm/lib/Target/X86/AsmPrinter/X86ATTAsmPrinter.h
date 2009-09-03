@@ -71,7 +71,7 @@ class VISIBILITY_HIDDEN X86ATTAsmPrinter : public AsmPrinter {
   // New MCInst printing stuff.
   void printInstruction(const MCInst *MI);
   MCSymbol *GetPICBaseSymbol();
-  MCOperand LowerGlobalAddressOperand(const MachineOperand &MO);
+  MCSymbol *GetGlobalAddressSymbol(const MachineOperand &MO);
   MCSymbol *GetExternalSymbolSymbol(const MachineOperand &MO);
   MCSymbol *GetJumpTableSymbol(const MachineOperand &MO);
   MCSymbol *GetConstantPoolIndexSymbol(const MachineOperand &MO);

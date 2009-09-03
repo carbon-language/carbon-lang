@@ -54,7 +54,7 @@ static void lower_lea64_32mem(MCInst *MI, unsigned OpNo) {
 
 /// LowerGlobalAddressOperand - Lower an MO_GlobalAddress operand to an
 /// MCOperand.
-MCOperand X86ATTAsmPrinter::LowerGlobalAddressOperand(const MachineOperand &MO){
+MCSymbol *X86ATTAsmPrinter::GetGlobalAddressSymbol(const MachineOperand &MO) {
   const GlobalValue *GV = MO.getGlobal();
   
   const char *Suffix = "";
@@ -70,74 +70,40 @@ MCOperand X86ATTAsmPrinter::LowerGlobalAddressOperand(const MachineOperand &MO){
   if (Subtarget->isTargetCygMing())
     DecorateCygMingName(Name, GV);
   
-  // Handle dllimport linkage.
-  if (MO.getTargetFlags() == X86II::MO_DLLIMPORT)
-    Name = "__imp_" + Name;
-  
-  if (MO.getTargetFlags() == X86II::MO_DARWIN_NONLAZY ||
-      MO.getTargetFlags() == X86II::MO_DARWIN_NONLAZY_PIC_BASE)
-    GVStubs[Name] = Mang->getMangledName(GV);
-  else if (MO.getTargetFlags() == X86II::MO_DARWIN_HIDDEN_NONLAZY ||
-           MO.getTargetFlags() == X86II::MO_DARWIN_HIDDEN_NONLAZY_PIC_BASE)
-    HiddenGVStubs[Name] = Mang->getMangledName(GV);
-  else if (MO.getTargetFlags() == X86II::MO_DARWIN_STUB)
-    FnStubs[Name] = Mang->getMangledName(GV);
-  
-  
-  // Handle target operand flags.
-  // FIXME: This should be common between external symbols, constant pool etc.
-  MCSymbol *NegatedSymbol = 0;
-  
   switch (MO.getTargetFlags()) {
-    default:
-      llvm_unreachable("Unknown target flag on GV operand");
-    case X86II::MO_NO_FLAG:    // No flag.
-      break;
-    case X86II::MO_DARWIN_NONLAZY:
-    case X86II::MO_DARWIN_HIDDEN_NONLAZY:
-    case X86II::MO_DLLIMPORT:
-    case X86II::MO_DARWIN_STUB:
-      // These affect the name of the symbol, not any suffix.
-      break;
-    case X86II::MO_GOT_ABSOLUTE_ADDRESS:
-      assert(0 && "Reloc mode unimp!");
-      //O << " + [.-";
-      //PrintPICBaseSymbol();
-      //O << ']';
-      break;      
-    case X86II::MO_PIC_BASE_OFFSET:
-    case X86II::MO_DARWIN_NONLAZY_PIC_BASE:
-    case X86II::MO_DARWIN_HIDDEN_NONLAZY_PIC_BASE:
-      // Subtract the pic base.
-      NegatedSymbol = GetPICBaseSymbol();
-      break;
-      
-      // FIXME: These probably should be a modifier on the symbol or something??
-    case X86II::MO_TLSGD:     Name += "@TLSGD";     break;
-    case X86II::MO_GOTTPOFF:  Name += "@GOTTPOFF";  break;
-    case X86II::MO_INDNTPOFF: Name += "@INDNTPOFF"; break;
-    case X86II::MO_TPOFF:     Name += "@TPOFF";     break;
-    case X86II::MO_NTPOFF:    Name += "@NTPOFF";    break;
-    case X86II::MO_GOTPCREL:  Name += "@GOTPCREL";  break;
-    case X86II::MO_GOT:       Name += "@GOT";       break;
-    case X86II::MO_GOTOFF:    Name += "@GOTOFF";    break;
-    case X86II::MO_PLT:       Name += "@PLT";       break;
+  default: llvm_unreachable("Unknown target flag on GV operand");
+  case X86II::MO_NO_FLAG:                // No flag.
+  case X86II::MO_GOT_ABSOLUTE_ADDRESS:   // Doesn't modify symbol name.
+  case X86II::MO_PIC_BASE_OFFSET:        // Doesn't modify symbol name.
+    break;
+  case X86II::MO_DLLIMPORT:
+    // Handle dllimport linkage.
+    Name = "__imp_" + Name;
+    break;
+  case X86II::MO_DARWIN_NONLAZY:
+  case X86II::MO_DARWIN_NONLAZY_PIC_BASE:
+    GVStubs[Name] = Mang->getMangledName(GV);
+    break;
+  case X86II::MO_DARWIN_HIDDEN_NONLAZY:
+  case X86II::MO_DARWIN_HIDDEN_NONLAZY_PIC_BASE:
+    HiddenGVStubs[Name] = Mang->getMangledName(GV);
+    break;
+  case X86II::MO_DARWIN_STUB:
+    FnStubs[Name] = Mang->getMangledName(GV);
+    break;
+  // FIXME: These probably should be a modifier on the symbol or something??
+  case X86II::MO_TLSGD:     Name += "@TLSGD";     break;
+  case X86II::MO_GOTTPOFF:  Name += "@GOTTPOFF";  break;
+  case X86II::MO_INDNTPOFF: Name += "@INDNTPOFF"; break;
+  case X86II::MO_TPOFF:     Name += "@TPOFF";     break;
+  case X86II::MO_NTPOFF:    Name += "@NTPOFF";    break;
+  case X86II::MO_GOTPCREL:  Name += "@GOTPCREL";  break;
+  case X86II::MO_GOT:       Name += "@GOT";       break;
+  case X86II::MO_GOTOFF:    Name += "@GOTOFF";    break;
+  case X86II::MO_PLT:       Name += "@PLT";       break;
   }
   
-  // Create a symbol for the name.
-  MCSymbol *Sym = OutContext.GetOrCreateSymbol(Name);
-  // FIXME: We would like an efficient form for this, so we don't have to do a
-  // lot of extra uniquing.
-  const MCExpr *Expr = MCSymbolRefExpr::Create(Sym, OutContext);
-  if (NegatedSymbol)
-    Expr = MCBinaryExpr::CreateSub(Expr, MCSymbolRefExpr::Create(NegatedSymbol,
-                                                                 OutContext),
-                                   OutContext);
-  if (MO.getOffset())
-    Expr = MCBinaryExpr::CreateAdd(Expr, MCConstantExpr::Create(MO.getOffset(),
-                                                                OutContext),
-                                   OutContext);
-  return MCOperand::CreateExpr(Expr);
+  return OutContext.GetOrCreateSymbol(Name);
 }
 
 MCSymbol *X86ATTAsmPrinter::GetExternalSymbolSymbol(const MachineOperand &MO) {
@@ -198,16 +164,36 @@ MCOperand X86ATTAsmPrinter::LowerSymbolOperand(const MachineOperand &MO,
                                                MCSymbol *Sym) {
   MCSymbol *NegatedSymbol = 0;
   switch (MO.getTargetFlags()) {
-    default:
-      llvm_unreachable("Unknown target flag on GV operand");
-    case X86II::MO_NO_FLAG:    // No flag.
-      break;
-    case X86II::MO_PIC_BASE_OFFSET:
-    case X86II::MO_DARWIN_NONLAZY_PIC_BASE:
-    case X86II::MO_DARWIN_HIDDEN_NONLAZY_PIC_BASE:
-      // Subtract the pic base.
-      NegatedSymbol = GetPICBaseSymbol();
-      break;
+  default: llvm_unreachable("Unknown target flag on GV operand");
+  case X86II::MO_NO_FLAG:    // No flag.
+      
+  // These affect the name of the symbol, not any suffix.
+  case X86II::MO_DARWIN_NONLAZY:
+  case X86II::MO_DARWIN_HIDDEN_NONLAZY:
+  case X86II::MO_DLLIMPORT:
+  case X86II::MO_DARWIN_STUB:
+  case X86II::MO_TLSGD:
+  case X86II::MO_GOTTPOFF:
+  case X86II::MO_INDNTPOFF:
+  case X86II::MO_TPOFF:
+  case X86II::MO_NTPOFF:
+  case X86II::MO_GOTPCREL:
+  case X86II::MO_GOT:
+  case X86II::MO_GOTOFF:
+  case X86II::MO_PLT:
+    break;
+  case X86II::MO_PIC_BASE_OFFSET:
+  case X86II::MO_DARWIN_NONLAZY_PIC_BASE:
+  case X86II::MO_DARWIN_HIDDEN_NONLAZY_PIC_BASE:
+    // Subtract the pic base.
+    NegatedSymbol = GetPICBaseSymbol();
+    break;
+  case X86II::MO_GOT_ABSOLUTE_ADDRESS:
+    assert(0 && "Reloc mode unimp!");
+    //O << " + [.-";
+    //PrintPICBaseSymbol();
+    //O << ']';
+    break;      
   }
   
   // FIXME: We would like an efficient form for this, so we don't have to do a
@@ -217,9 +203,12 @@ MCOperand X86ATTAsmPrinter::LowerSymbolOperand(const MachineOperand &MO,
     Expr = MCBinaryExpr::CreateSub(Expr, MCSymbolRefExpr::Create(NegatedSymbol,
                                                                  OutContext),
                                    OutContext);
+  if (!MO.isSymbol() && MO.getOffset())
+    Expr = MCBinaryExpr::CreateAdd(Expr, MCConstantExpr::Create(MO.getOffset(),
+                                                                OutContext),
+                                   OutContext);
   return MCOperand::CreateExpr(Expr);
 }
-
 
 void X86ATTAsmPrinter::
 printInstructionThroughMCStreamer(const MachineInstr *MI) {
@@ -288,7 +277,7 @@ printInstructionThroughMCStreamer(const MachineInstr *MI) {
                                        MO.getMBB()->getNumber());
       break;
     case MachineOperand::MO_GlobalAddress:
-      MCOp = LowerGlobalAddressOperand(MO);
+      MCOp = LowerSymbolOperand(MO, GetGlobalAddressSymbol(MO));
       break;
     case MachineOperand::MO_ExternalSymbol:
       MCOp = LowerSymbolOperand(MO, GetExternalSymbolSymbol(MO));
