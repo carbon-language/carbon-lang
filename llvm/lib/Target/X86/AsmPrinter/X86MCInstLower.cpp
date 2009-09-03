@@ -35,7 +35,7 @@ MCSymbol *X86ATTAsmPrinter::GetPICBaseSymbol() {
     assert(Subtarget->isTargetELF() && "Don't know how to print PIC label!");
     raw_svector_ostream(Name) << ".Lllvm$" << getFunctionNumber()<<".$piclabel";
   }
-  return OutContext.GetOrCreateSymbol(StringRef(Name.data(), Name.size()));
+  return OutContext.GetOrCreateSymbol(Name.str());
 }
 
 
