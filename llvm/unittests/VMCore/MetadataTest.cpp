@@ -85,7 +85,7 @@ TEST(MDNodeTest, Simple) {
   MDNode *n2 = MDNode::get(Context, &c1, 1);
   MDNode *n3 = MDNode::get(Context, &V[0], 3);
   EXPECT_NE(n1, n2);
-  // FIXME: Enable uniqueness test.  EXPECT_EQ(n1, n3);
+  EXPECT_EQ(n1, n3);
 
   EXPECT_EQ(3u, n1->getNumElements());
   EXPECT_EQ(s1, n1->getElement(0));

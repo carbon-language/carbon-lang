@@ -19,7 +19,9 @@
 #include "llvm/User.h"
 #include "llvm/Type.h"
 #include "llvm/OperandTraits.h"
+#include "llvm/ADT/FoldingSet.h"
 #include "llvm/ADT/SmallVector.h"
+#include "llvm/ADT/SmallPtrSet.h"
 #include "llvm/ADT/ilist_node.h"
 #include "llvm/Support/ErrorHandling.h"
 #include "llvm/Support/ValueHandle.h"
@@ -27,8 +29,6 @@
 namespace llvm {
 class Constant;
 class LLVMContext;
-template<class ConstantClass, class TypeClass, class ValType>
-struct ConstantCreator;
 
 //===----------------------------------------------------------------------===//
 // MetadataBase  - A base class for MDNode, MDString and NamedMDNode.
@@ -103,14 +103,32 @@ public:
 /// MDNode - a tuple of other values.
 /// These contain a list of the values that represent the metadata. 
 /// MDNode is always unnamed.
-class MDNode : public MetadataBase {
+class MDNode : public MetadataBase, public FoldingSetNode {
   MDNode(const MDNode &);                // DO NOT IMPLEMENT
   void *operator new(size_t, unsigned);  // DO NOT IMPLEMENT
   // getNumOperands - Make this only available for private uses.
   unsigned getNumOperands() { return User::getNumOperands();  }
 
-  SmallVector<WeakVH, 4> Node;
-  friend struct ConstantCreator<MDNode, Type, std::vector<Value*> >;
+  friend class ElementVH;
+  // Use CallbackVH to hold MDNOde elements.
+  struct ElementVH : public CallbackVH {
+    MDNode *Parent;
+    ElementVH(Value *V, MDNode *P) : CallbackVH(V), Parent(P) {}
+    ~ElementVH() {}
+
+    virtual void deleted() {
+      Parent->replaceElement(this->operator Value*(), 0);
+    }
+
+    virtual void allUsesReplacedWith(Value *NV) {
+      Parent->replaceElement(this->operator Value*(), NV);
+    }
+  };
+  // Replace each instance of F from the element list of this node with T.
+  void replaceElement(Value *F, Value *T);
+
+  SmallVector<ElementVH, 4> Node;
+
 protected:
   explicit MDNode(LLVMContext &C, Value*const* Vals, unsigned NumVals);
 public:
@@ -140,8 +158,8 @@ public:
   }
 
   // Element access
-  typedef SmallVectorImpl<WeakVH>::const_iterator const_elem_iterator;
-  typedef SmallVectorImpl<WeakVH>::iterator elem_iterator;
+  typedef SmallVectorImpl<ElementVH>::const_iterator const_elem_iterator;
+  typedef SmallVectorImpl<ElementVH>::iterator elem_iterator;
   /// elem_empty - Return true if MDNode is empty.
   bool elem_empty() const                { return Node.empty(); }
   const_elem_iterator elem_begin() const { return Node.begin(); }
@@ -155,6 +173,10 @@ public:
   virtual bool isNullValue() const {
     return false;
   }
+
+  /// Profile - calculate a unique identifier for this MDNode to collapse
+  /// duplicates
+  void Profile(FoldingSetNodeID &ID) const;
 
   virtual void replaceUsesOfWithOnConstant(Value *From, Value *To, Use *U) {
     llvm_unreachable("This should never be called because MDNodes have no ops");
