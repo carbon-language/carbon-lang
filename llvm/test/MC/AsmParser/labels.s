@@ -1,4 +1,4 @@
-// RUN: llvm-mc -triple i386-unknown-unknown %s | FileCheck %s
+// RUN: llvm-mc -triple i686-apple-darwin10 %s | FileCheck %s
 
         .data
 // CHECK: a:
