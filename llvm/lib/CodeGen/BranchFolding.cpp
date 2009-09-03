@@ -103,7 +103,8 @@ namespace {
 }
 
 FunctionPass *llvm::createBranchFoldingPass(bool DefaultEnableTailMerge) { 
-      return new BranchFolder(DefaultEnableTailMerge); }
+  return new BranchFolder(DefaultEnableTailMerge);
+}
 
 /// RemoveDeadBlock - Remove the specified dead machine basic block from the
 /// function, updating the CFG.
