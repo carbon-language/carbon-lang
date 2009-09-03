@@ -140,27 +140,17 @@ MCOperand X86ATTAsmPrinter::LowerGlobalAddressOperand(const MachineOperand &MO){
   return MCOperand::CreateExpr(Expr);
 }
 
-MCOperand X86ATTAsmPrinter::
-LowerExternalSymbolOperand(const MachineOperand &MO) {
+MCSymbol *X86ATTAsmPrinter::GetExternalSymbolSymbol(const MachineOperand &MO) {
   std::string Name = Mang->makeNameProper(MO.getSymbolName());
   if (MO.getTargetFlags() == X86II::MO_DARWIN_STUB) {
     FnStubs[Name+"$stub"] = Name;
     Name += "$stub";
   }
   
-  MCSymbol *Sym = OutContext.GetOrCreateSymbol(Name);
-  // FIXME: We would like an efficient form for this, so we don't have to do a
-  // lot of extra uniquing.
-  const MCExpr *Expr = MCSymbolRefExpr::Create(Sym, OutContext);
-  if (MO.getOffset())
-    Expr = MCBinaryExpr::CreateAdd(Expr,
-                                   MCConstantExpr::Create(MO.getOffset(),
-                                                          OutContext),
-                                   OutContext);
-  return MCOperand::CreateExpr(Expr);
+  return OutContext.GetOrCreateSymbol(Name);
 }
 
-MCOperand X86ATTAsmPrinter::LowerJumpTableOperand(const MachineOperand &MO) {
+MCSymbol *X86ATTAsmPrinter::GetJumpTableSymbol(const MachineOperand &MO) {
   SmallString<256> Name;
   raw_svector_ostream(Name) << MAI->getPrivateGlobalPrefix() << "JTI"
     << getFunctionNumber() << '_' << MO.getIndex();
@@ -170,50 +160,56 @@ MCOperand X86ATTAsmPrinter::LowerJumpTableOperand(const MachineOperand &MO) {
   default:
     llvm_unreachable("Unknown target flag on GV operand");
   case X86II::MO_NO_FLAG:    // No flag.
-    break;
   case X86II::MO_PIC_BASE_OFFSET:
   case X86II::MO_DARWIN_NONLAZY_PIC_BASE:
   case X86II::MO_DARWIN_HIDDEN_NONLAZY_PIC_BASE:
+    break;
     // Subtract the pic base.
     NegatedSymbol = GetPICBaseSymbol();
     break;
   }
   
   // Create a symbol for the name.
-  MCSymbol *Sym = OutContext.GetOrCreateSymbol(Name.str());
-  // FIXME: We would like an efficient form for this, so we don't have to do a
-  // lot of extra uniquing.
-  const MCExpr *Expr = MCSymbolRefExpr::Create(Sym, OutContext);
-  if (NegatedSymbol)
-    Expr = MCBinaryExpr::CreateSub(Expr, MCSymbolRefExpr::Create(NegatedSymbol,
-                                                                 OutContext),
-                                   OutContext);
-  return MCOperand::CreateExpr(Expr);
+  return OutContext.GetOrCreateSymbol(Name.str());
 }
 
 
-MCOperand X86ATTAsmPrinter::
-LowerConstantPoolIndexOperand(const MachineOperand &MO) {
+MCSymbol *X86ATTAsmPrinter::
+GetConstantPoolIndexSymbol(const MachineOperand &MO) {
   SmallString<256> Name;
   raw_svector_ostream(Name) << MAI->getPrivateGlobalPrefix() << "CPI"
   << getFunctionNumber() << '_' << MO.getIndex();
   
-  MCSymbol *NegatedSymbol = 0;
   switch (MO.getTargetFlags()) {
   default:
     llvm_unreachable("Unknown target flag on GV operand");
   case X86II::MO_NO_FLAG:    // No flag.
-    break;
   case X86II::MO_PIC_BASE_OFFSET:
   case X86II::MO_DARWIN_NONLAZY_PIC_BASE:
   case X86II::MO_DARWIN_HIDDEN_NONLAZY_PIC_BASE:
-    // Subtract the pic base.
-    NegatedSymbol = GetPICBaseSymbol();
     break;
   }
   
   // Create a symbol for the name.
-  MCSymbol *Sym = OutContext.GetOrCreateSymbol(Name.str());
+  return OutContext.GetOrCreateSymbol(Name.str());
+}
+
+MCOperand X86ATTAsmPrinter::LowerSymbolOperand(const MachineOperand &MO,
+                                               MCSymbol *Sym) {
+  MCSymbol *NegatedSymbol = 0;
+  switch (MO.getTargetFlags()) {
+    default:
+      llvm_unreachable("Unknown target flag on GV operand");
+    case X86II::MO_NO_FLAG:    // No flag.
+      break;
+    case X86II::MO_PIC_BASE_OFFSET:
+    case X86II::MO_DARWIN_NONLAZY_PIC_BASE:
+    case X86II::MO_DARWIN_HIDDEN_NONLAZY_PIC_BASE:
+      // Subtract the pic base.
+      NegatedSymbol = GetPICBaseSymbol();
+      break;
+  }
+  
   // FIXME: We would like an efficient form for this, so we don't have to do a
   // lot of extra uniquing.
   const MCExpr *Expr = MCSymbolRefExpr::Create(Sym, OutContext);
@@ -223,6 +219,7 @@ LowerConstantPoolIndexOperand(const MachineOperand &MO) {
                                    OutContext);
   return MCOperand::CreateExpr(Expr);
 }
+
 
 void X86ATTAsmPrinter::
 printInstructionThroughMCStreamer(const MachineInstr *MI) {
@@ -294,13 +291,13 @@ printInstructionThroughMCStreamer(const MachineInstr *MI) {
       MCOp = LowerGlobalAddressOperand(MO);
       break;
     case MachineOperand::MO_ExternalSymbol:
-      MCOp = LowerExternalSymbolOperand(MO);
+      MCOp = LowerSymbolOperand(MO, GetExternalSymbolSymbol(MO));
       break;
     case MachineOperand::MO_JumpTableIndex:
-      MCOp = LowerJumpTableOperand(MO);
+      MCOp = LowerSymbolOperand(MO, GetJumpTableSymbol(MO));
       break;
     case MachineOperand::MO_ConstantPoolIndex:
-      MCOp = LowerConstantPoolIndexOperand(MO);
+      MCOp = LowerSymbolOperand(MO, GetConstantPoolIndexSymbol(MO));
       break;
     }
     
