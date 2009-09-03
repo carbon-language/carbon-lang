@@ -163,18 +163,20 @@ LowerExternalSymbolOperand(const MachineOperand &MO) {
 MCOperand X86ATTAsmPrinter::LowerJumpTableOperand(const MachineOperand &MO) {
   SmallString<256> Name;
   raw_svector_ostream(Name) << MAI->getPrivateGlobalPrefix() << "JTI"
-  << getFunctionNumber() << '_' << MO.getIndex();
+    << getFunctionNumber() << '_' << MO.getIndex();
   
   MCSymbol *NegatedSymbol = 0;
   switch (MO.getTargetFlags()) {
-    default:
-      llvm_unreachable("Unknown target flag on GV operand");
-    case X86II::MO_PIC_BASE_OFFSET:
-    case X86II::MO_DARWIN_NONLAZY_PIC_BASE:
-    case X86II::MO_DARWIN_HIDDEN_NONLAZY_PIC_BASE:
-      // Subtract the pic base.
-      NegatedSymbol = GetPICBaseSymbol();
-      break;
+  default:
+    llvm_unreachable("Unknown target flag on GV operand");
+  case X86II::MO_NO_FLAG:    // No flag.
+    break;
+  case X86II::MO_PIC_BASE_OFFSET:
+  case X86II::MO_DARWIN_NONLAZY_PIC_BASE:
+  case X86II::MO_DARWIN_HIDDEN_NONLAZY_PIC_BASE:
+    // Subtract the pic base.
+    NegatedSymbol = GetPICBaseSymbol();
+    break;
   }
   
   // Create a symbol for the name.
@@ -189,6 +191,38 @@ MCOperand X86ATTAsmPrinter::LowerJumpTableOperand(const MachineOperand &MO) {
   return MCOperand::CreateExpr(Expr);
 }
 
+
+MCOperand X86ATTAsmPrinter::
+LowerConstantPoolIndexOperand(const MachineOperand &MO) {
+  SmallString<256> Name;
+  raw_svector_ostream(Name) << MAI->getPrivateGlobalPrefix() << "CPI"
+  << getFunctionNumber() << '_' << MO.getIndex();
+  
+  MCSymbol *NegatedSymbol = 0;
+  switch (MO.getTargetFlags()) {
+  default:
+    llvm_unreachable("Unknown target flag on GV operand");
+  case X86II::MO_NO_FLAG:    // No flag.
+    break;
+  case X86II::MO_PIC_BASE_OFFSET:
+  case X86II::MO_DARWIN_NONLAZY_PIC_BASE:
+  case X86II::MO_DARWIN_HIDDEN_NONLAZY_PIC_BASE:
+    // Subtract the pic base.
+    NegatedSymbol = GetPICBaseSymbol();
+    break;
+  }
+  
+  // Create a symbol for the name.
+  MCSymbol *Sym = OutContext.GetOrCreateSymbol(Name.str());
+  // FIXME: We would like an efficient form for this, so we don't have to do a
+  // lot of extra uniquing.
+  const MCExpr *Expr = MCSymbolRefExpr::Create(Sym, OutContext);
+  if (NegatedSymbol)
+    Expr = MCBinaryExpr::CreateSub(Expr, MCSymbolRefExpr::Create(NegatedSymbol,
+                                                                 OutContext),
+                                   OutContext);
+  return MCOperand::CreateExpr(Expr);
+}
 
 void X86ATTAsmPrinter::
 printInstructionThroughMCStreamer(const MachineInstr *MI) {
@@ -246,9 +280,6 @@ printInstructionThroughMCStreamer(const MachineInstr *MI) {
       O.flush();
       errs() << "Cannot lower operand #" << i << " of :" << *MI;
       llvm_unreachable("Unimp");
-    case MachineOperand::MO_JumpTableIndex:
-      MCOp = LowerJumpTableOperand(MO);
-      break;
     case MachineOperand::MO_Register:
       MCOp = MCOperand::CreateReg(MO.getReg());
       break;
@@ -264,6 +295,12 @@ printInstructionThroughMCStreamer(const MachineInstr *MI) {
       break;
     case MachineOperand::MO_ExternalSymbol:
       MCOp = LowerExternalSymbolOperand(MO);
+      break;
+    case MachineOperand::MO_JumpTableIndex:
+      MCOp = LowerJumpTableOperand(MO);
+      break;
+    case MachineOperand::MO_ConstantPoolIndex:
+      MCOp = LowerConstantPoolIndexOperand(MO);
       break;
     }
     
