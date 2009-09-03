@@ -440,8 +440,6 @@ void X86IntelAsmPrinter::printMachineInstruction(const MachineInstr *MI) {
 bool X86IntelAsmPrinter::doInitialization(Module &M) {
   bool Result = AsmPrinter::doInitialization(M);
 
-  Mang->markCharUnacceptable('.');
-
   O << "\t.686\n\t.MMX\n\t.XMM\n\t.model flat\n\n";
 
   // Emit declarations for external functions.
