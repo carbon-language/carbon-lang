@@ -23,6 +23,11 @@ else
   ArchsToTraverse := $(OnlyArchs)
 endif
 
+# If we are only targetting a single arch, only traverse that.
+ifneq ($(TargetArch),)
+  ArchsToTraverse := $(filter $(TargetArch), $(ArchsToTraverse))
+endif
+
 $(foreach config,$(ConfigsToTraverse), \
   $(foreach arch,$(ArchsToTraverse), \
     $(eval $(call CNA_subdir_template,$(config),$(arch),$(Dir)))))

@@ -44,19 +44,24 @@ $(call Set,ActiveLibGen,$(ActiveObjPath)/libcompiler_rt.Generic.a)
 $(call Set,ActiveLibOpt,$(ActiveObjPath)/libcompiler_rt.Optimized.a)
 
 # The sublibraries to use for a generic version.
-$(call Set,GenericInputs,$(foreach arch,$(Archs),$(ActiveObjPath)/$(arch)/libcompiler_rt.Generic.a))
+$(call Set,GenericInputs,$(foreach arch,$(TargetArchs),$(ActiveObjPath)/$(arch)/libcompiler_rt.Generic.a))
 # The sublibraries to use for an optimized version.
-$(call Set,OptimizedInputs,$(foreach arch,$(Archs),$(ActiveObjPath)/$(arch)/libcompiler_rt.Optimized.a))
+$(call Set,OptimizedInputs,$(foreach arch,$(TargetArchs),$(ActiveObjPath)/$(arch)/libcompiler_rt.Optimized.a))
 
-# Provide top-level fat archive targets.
+# Provide top-level fat archive targets. We make sure to not try to lipo if only
+# building one target arch.
 $(ActiveLibGen): $(GenericInputs) $(ActiveObjPath)/.dir
 	$(Summary) "  UNIVERSAL: $(ActiveConfig): $$@"
 	-$(Verb) $(RM) $$@
-	$(Verb) $(Lipo) -create -output $$@ $(GenericInputs)
+	$(if $(TargetArch), \
+	  $(Verb) $(CP) $(GenericInputs) $$@, \
+	  $(Verb) $(Lipo) -create -output $$@ $(GenericInputs))
 $(ActiveLibOpt): $(OptimizedInputs) $(ActiveObjPath)/.dir
 	$(Summary) "  UNIVERSAL: $(ActiveConfig): $$@"
 	-$(Verb) $(RM) $$@
-	$(Verb) $(Lipo) -create -output $$@ $(OptimizedInputs)
+	$(if $(TargetArch), \
+	  $(Verb) $(CP) $(GenericInputs) $$@, \
+	  $(Verb) $(Lipo) -create -output $$@ $(OptimizedInputs))
 .PRECIOUS: $(ActiveObjPath)/.dir
 
 # Add to target lists.
