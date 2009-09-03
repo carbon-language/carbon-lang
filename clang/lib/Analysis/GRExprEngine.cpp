@@ -2634,11 +2634,12 @@ void GRExprEngine::VisitAsmStmtHelperInputs(AsmStmt* A,
   
   ++I;
   
-  for (ExplodedNodeSet::iterator NI = Tmp.begin(), NE = Tmp.end(); NI != NE; ++NI)
+  for (ExplodedNodeSet::iterator NI = Tmp.begin(), NE = Tmp.end(); NI!=NE; ++NI)
     VisitAsmStmtHelperInputs(A, I, E, *NI, Dst);
 }
 
-void GRExprEngine::EvalReturn(ExplodedNodeSet& Dst, ReturnStmt* S, ExplodedNode* Pred) {
+void GRExprEngine::EvalReturn(ExplodedNodeSet& Dst, ReturnStmt* S,
+                              ExplodedNode* Pred) {
   assert (Builder && "GRStmtNodeBuilder must be defined.");
   
   unsigned size = Dst.size();  
@@ -2654,7 +2655,8 @@ void GRExprEngine::EvalReturn(ExplodedNodeSet& Dst, ReturnStmt* S, ExplodedNode*
     MakeNode(Dst, S, Pred, GetState(Pred));
 }
 
-void GRExprEngine::VisitReturnStmt(ReturnStmt* S, ExplodedNode* Pred, ExplodedNodeSet& Dst) {
+void GRExprEngine::VisitReturnStmt(ReturnStmt* S, ExplodedNode* Pred,
+                                   ExplodedNodeSet& Dst) {
 
   Expr* R = S->getRetValue();
   
@@ -2719,7 +2721,7 @@ void GRExprEngine::VisitBinaryOperator(BinaryOperator* B,
   else
     Visit(LHS, Pred, Tmp1);
 
-  for (ExplodedNodeSet::iterator I1=Tmp1.begin(), E1=Tmp1.end(); I1 != E1; ++I1) {
+  for (ExplodedNodeSet::iterator I1=Tmp1.begin(), E1=Tmp1.end(); I1!=E1; ++I1) {
 
     SVal LeftV = (*I1)->getState()->getSVal(LHS);
     
@@ -3129,7 +3131,8 @@ void GRExprEngine::ViewGraph(bool trim) {
 
     // Iterate through the reports and get their nodes.
     for (BugReporter::iterator I=BR.begin(), E=BR.end(); I!=E; ++I) {
-      for (BugType::const_iterator I2=(*I)->begin(), E2=(*I)->end(); I2!=E2; ++I2) {        
+      for (BugType::const_iterator I2=(*I)->begin(), E2=(*I)->end();
+           I2!=E2; ++I2) {        
         const BugReportEquivClass& EQ = *I2;
         const BugReport &R = **EQ.begin();
         ExplodedNode *N = const_cast<ExplodedNode*>(R.getEndNode());
