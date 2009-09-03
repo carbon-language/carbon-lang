@@ -28,7 +28,6 @@ namespace clang {
   class Preprocessor;
   class ASTContext;
   class Decl;
-  class PCHReader;
 
 /// \brief Utility class for loading a ASTContext from a PCH file.
 ///
@@ -40,7 +39,6 @@ class ASTUnit {
   llvm::OwningPtr<TargetInfo>       Target;
   llvm::OwningPtr<Preprocessor>     PP;
   llvm::OwningPtr<ASTContext>       Ctx;
-  llvm::OwningPtr<PCHReader>        Reader;
 
   ASTUnit(const ASTUnit&); // do not implement
   ASTUnit &operator=(const ASTUnit &); // do not implement
@@ -60,8 +58,6 @@ public:
 
   const Diagnostic &getDiagnostic() const { return *Diags.get(); }
         Diagnostic &getDiagnostic()       { return *Diags.get(); }
-
-  const std::string &getOriginalSourceFileName();
 
   /// \brief Create a ASTUnit from a PCH file.
   ///

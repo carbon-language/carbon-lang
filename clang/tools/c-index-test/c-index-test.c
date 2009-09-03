@@ -3,27 +3,25 @@
 #include "clang-c/Index.h"
 #include <stdio.h>
 
-static void PrintCursor(CXCursor Cursor) {
-  printf("%s => %s", clang_getCursorKindSpelling(Cursor.kind),
-                     clang_getCursorSpelling(Cursor));
-  printf(" (%s,%d:%d)\n", clang_getCursorSource(Cursor),
-                          clang_getCursorLine(Cursor),
-                          clang_getCursorColumn(Cursor));
-}
-
 static void DeclVisitor(CXDecl Dcl, CXCursor Cursor, CXClientData Filter) 
 {
-  printf("%s: ", clang_getDeclSpelling(Dcl));
-  if (!Filter || (Cursor.kind == *(enum CXCursorKind *)Filter))
-    PrintCursor(Cursor);
+  if (!Filter || (Cursor.kind == *(enum CXCursorKind *)Filter)) {
+    printf("%s => %s", clang_getCursorKindSpelling(Cursor.kind),
+                       clang_getCursorSpelling(Cursor));
+    printf(" (%s,%d:%d)\n", clang_getCursorSource(Cursor),
+                            clang_getCursorLine(Cursor),
+                            clang_getCursorColumn(Cursor));
+  }
 }
-
 static void TranslationUnitVisitor(CXTranslationUnit Unit, CXCursor Cursor,
                                    CXClientData Filter) 
 {
-  printf("%s: ", clang_getTranslationUnitSpelling(Unit));
   if (!Filter || (Cursor.kind == *(enum CXCursorKind *)Filter)) {
-    PrintCursor(Cursor);
+    printf("%s => %s", clang_getCursorKindSpelling(Cursor.kind),
+                       clang_getCursorSpelling(Cursor));
+    printf(" (%s,%d:%d)\n", clang_getCursorSource(Cursor),
+                            clang_getCursorLine(Cursor),
+                            clang_getCursorColumn(Cursor));
 
     clang_loadDeclaration(Cursor.decl, DeclVisitor, 0);
   }

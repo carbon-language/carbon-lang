@@ -77,9 +77,6 @@ public:
 
 } // anonymous namespace
 
-const std::string &ASTUnit::getOriginalSourceFileName() {
-  return Reader->getOriginalSourceFile();
-}
 
 ASTUnit *ASTUnit::LoadFromPCHFile(const std::string &Filename,
                                   FileManager &FileMgr,
@@ -104,11 +101,10 @@ ASTUnit *ASTUnit::LoadFromPCHFile(const std::string &Filename,
   std::string Predefines;
   unsigned Counter;
 
-  llvm::OwningPtr<PCHReader>        Reader;
+  llvm::OwningPtr<PCHReader> Reader;
   llvm::OwningPtr<ExternalASTSource> Source;
 
   Reader.reset(new PCHReader(SourceMgr, FileMgr, Diags));
-  AST->Reader.reset(Reader.get());
   Reader->setListener(new PCHInfoCollector(LangInfo, HeaderInfo, TargetTriple,
                                            Predefines, Counter));
 
