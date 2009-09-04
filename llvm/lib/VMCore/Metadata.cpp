@@ -72,6 +72,9 @@ MDNode::MDNode(LLVMContext &C, Value*const* Vals, unsigned NumVals)
     // Only record metadata uses.
     if (MetadataBase *MB = dyn_cast_or_null<MetadataBase>(Vals[i]))
       OperandList[NumOperands++] = MB;
+    else if(Vals[i] && 
+            Vals[i]->getType()->getTypeID() == Type::MetadataTyID)
+      OperandList[NumOperands++] = Vals[i];
     Node.push_back(ElementVH(Vals[i], this));
   }
 }
@@ -142,6 +145,27 @@ void MDNode::replaceElement(Value *From, Value *To) {
   {
     sys::SmartScopedWriter<true> Writer(pImpl->ConstantsLock);
     pImpl->MDNodeSet.RemoveNode(this);
+  }
+
+  // MDNode only lists metadata elements in operand list, because MDNode
+  // used by MDNode is considered a valid use. However on the side, MDNode
+  // using a non-metadata value is not considered a "use" of non-metadata
+  // value.
+  SmallVector<unsigned, 4> OpIndexes;
+  unsigned OpIndex = 0;
+  for (User::op_iterator OI = op_begin(), OE = op_end();
+       OI != OE; ++OI, OpIndex++) {
+    if (*OI == From)
+      OpIndexes.push_back(OpIndex);
+  }
+  if (MetadataBase *MDTo = dyn_cast_or_null<MetadataBase>(To)) {
+    for (SmallVector<unsigned, 4>::iterator OI = OpIndexes.begin(),
+           OE = OpIndexes.end(); OI != OE; ++OI)
+      setOperand(*OI, MDTo);
+  } else {
+    for (SmallVector<unsigned, 4>::iterator OI = OpIndexes.begin(),
+           OE = OpIndexes.end(); OI != OE; ++OI)
+      setOperand(*OI, 0);
   }
 
   // Replace From element(s) in place.

@@ -62,9 +62,10 @@ bool LLVMContext::RemoveDeadMetadata() {
       return Changed;
 
     while (!DeadMDNodes.empty()) {
-      const MDNode *N = cast<MDNode>(DeadMDNodes.back()); DeadMDNodes.pop_back();
-      if (N->use_empty())
-	delete N;
+      Value *V = DeadMDNodes.back(); DeadMDNodes.pop_back();
+      if (const MDNode *N = dyn_cast_or_null<MDNode>(V))
+        if (N->use_empty())
+          delete N;
     }
   }
   return Changed;
