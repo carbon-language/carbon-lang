@@ -33,36 +33,26 @@ def insertMinimumPadding(a, b, dist):
     Assumes dist(X, Y) -> int and non-negative.
     """
     
-    # Yay for simplicity over complexity.
+    def cost(a, b):
+        return sum(map(dist, a + [None] * (len(b) - len(a)), b))
 
-    def extend(aElt, bElt, solution):
-        d0,(a0,b0) = solution
-        return d0 + dist(aElt,bElt), (([aElt]+a0),([bElt]+b0))
+    # Normalize so a is shortest.
+    if len(b) < len(a):
+        b, a = insertMinimumPadding(b, a, dist)
+        return a,b
 
-    def f(a, b):
-        if len(a) == len(b):
-            return (sum(map(dist, a, b)), (a, b))
-        
-        if not a or not b:
-            if not a:
-                a += [None] * len(b)
-            else:
-                b += [None] * len(a)
-            return (sum(map(dist, a, b)), (a, b))
-
-        if int(dist(a[0], b[0])) == 0:
-            # Non-negative condition implies maximum is satisfied
-            # taking this.
-            return extend(a[0], b[0], f(a[1:], b[1:]))
-
-        if len(a) < len(b):
-            return min(f([None] + a, b),
-                       extend(a[0], b[0], f(a[1:], b[1:])))
-        else:
-            return min(f(a, [None] + b),
-                       extend(a[0], b[0], f(a[1:], b[1:])))
-            
-    return f(a, b)[1]
+    # For each None we have to insert...
+    for i in range(len(b) - len(a)):
+        # For each position we could insert it...
+        current = cost(a, b)
+        best = None
+        for j in range(len(a) + 1):
+            a_0 = a[:j] + [None] + a[j:]
+            candidate = cost(a_0, b)
+            if best is None or candidate < best[0]:
+                best = (candidate, a_0, j)
+        a = best[1]
+    return a,b
 
 class ZipperDiff(object):
     """ZipperDiff - Simple (slow) diff only accomodating inserts."""
@@ -131,7 +121,7 @@ def main():
 
     args = sys.argv[1:]
     driverA = os.getenv('DRIVER_A') or 'gcc'
-    driverB = os.getenv('DRIVER_B') or 'xcc'
+    driverB = os.getenv('DRIVER_B') or 'clang'
 
     infoA = captureDriverInfo(driverA, args)
     infoB = captureDriverInfo(driverB, args)
@@ -191,4 +181,4 @@ def main():
         sys.exit(1)
 
 if __name__ == '__main__':
-   main()
+    main()
