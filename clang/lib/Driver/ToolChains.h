@@ -43,8 +43,8 @@ public:
   virtual const char *GetForcedPicModel() const;
 };
 
-  /// Darwin_X86 - Darwin tool chain for i386 an x86_64.
-class VISIBILITY_HIDDEN Darwin_X86 : public ToolChain {
+/// Darwin - Darwin tool chain.
+class VISIBILITY_HIDDEN Darwin : public ToolChain {
   mutable llvm::DenseMap<unsigned, Tool*> Tools;
 
   /// Darwin version of tool chain.
@@ -63,10 +63,10 @@ class VISIBILITY_HIDDEN Darwin_X86 : public ToolChain {
   const char *getMacosxVersionMin() const;
 
 public:
-  Darwin_X86(const HostInfo &Host, const llvm::Triple& Triple, 
+  Darwin(const HostInfo &Host, const llvm::Triple& Triple, 
              const unsigned (&DarwinVersion)[3],
              const unsigned (&GCCVersion)[3]);
-  ~Darwin_X86();
+  ~Darwin();
 
   void getDarwinVersion(unsigned (&Res)[3]) const {
     Res[0] = DarwinVersion[0];

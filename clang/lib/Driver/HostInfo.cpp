@@ -157,9 +157,9 @@ ToolChain *DarwinHostInfo::getToolChain(const ArgList &Args,
     TCTriple.setArchName(ArchName);
                           
     if (strcmp(ArchName, "i386") == 0 || strcmp(ArchName, "x86_64") == 0)
-      TC = new toolchains::Darwin_X86(*this, TCTriple,
-                                      DarwinVersion,
-                                      GCCVersion);
+      TC = new toolchains::Darwin(*this, TCTriple,
+                                  DarwinVersion,
+                                  GCCVersion);
     else
       TC = new toolchains::Darwin_GCC(*this, TCTriple);
   }

@@ -1368,10 +1368,6 @@ static bool isMacosxVersionLT(unsigned (&A)[3],
   return isMacosxVersionLT(A, B);
 }
 
-const toolchains::Darwin_X86 &darwin::Link::getDarwinToolChain() const {
-  return reinterpret_cast<const toolchains::Darwin_X86&>(getToolChain());
-}
-
 void darwin::Link::AddDarwinArch(const ArgList &Args,
                                  ArgStringList &CmdArgs) const {
   // Derived from darwin_arch spec.

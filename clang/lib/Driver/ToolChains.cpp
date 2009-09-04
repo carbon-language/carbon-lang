@@ -25,11 +25,11 @@
 using namespace clang::driver;
 using namespace clang::driver::toolchains;
 
-/// Darwin_X86 - Darwin tool chain for i386 and x86_64.
+/// Darwin - Darwin tool chain for i386 and x86_64.
 
-Darwin_X86::Darwin_X86(const HostInfo &Host, const llvm::Triple& Triple,
-                       const unsigned (&_DarwinVersion)[3],
-                       const unsigned (&_GCCVersion)[3])
+Darwin::Darwin(const HostInfo &Host, const llvm::Triple& Triple,
+               const unsigned (&_DarwinVersion)[3],
+               const unsigned (&_GCCVersion)[3])
   : ToolChain(Host, Triple) {
   DarwinVersion[0] = _DarwinVersion[0];
   DarwinVersion[1] = _DarwinVersion[1];
@@ -89,15 +89,14 @@ Darwin_X86::Darwin_X86(const HostInfo &Host, const llvm::Triple& Triple,
   getProgramPaths().push_back(getHost().getDriver().Dir);
 }
 
-Darwin_X86::~Darwin_X86() {
+Darwin::~Darwin() {
   // Free tool implementations.
   for (llvm::DenseMap<unsigned, Tool*>::iterator
          it = Tools.begin(), ie = Tools.end(); it != ie; ++it)
     delete it->second;
 }
 
-Tool &Darwin_X86::SelectTool(const Compilation &C, 
-                              const JobAction &JA) const {
+Tool &Darwin::SelectTool(const Compilation &C, const JobAction &JA) const {
   Action::ActionClass Key;
   if (getHost().getDriver().ShouldUseClangCompiler(C, JA, getArchName()))
     Key = Action::AnalyzeJobClass;
@@ -129,7 +128,7 @@ Tool &Darwin_X86::SelectTool(const Compilation &C,
   return *T;
 }
 
-DerivedArgList *Darwin_X86::TranslateArgs(InputArgList &Args) const { 
+DerivedArgList *Darwin::TranslateArgs(InputArgList &Args) const {
   DerivedArgList *DAL = new DerivedArgList(Args, false);
   const OptTable &Opts = getHost().getDriver().getOpts();
 
@@ -284,21 +283,21 @@ DerivedArgList *Darwin_X86::TranslateArgs(InputArgList &Args) const {
   return DAL;
 } 
 
-bool Darwin_X86::IsMathErrnoDefault() const { 
+bool Darwin::IsMathErrnoDefault() const {
   return false; 
 }
 
-bool Darwin_X86::IsUnwindTablesDefault() const {
+bool Darwin::IsUnwindTablesDefault() const {
   // FIXME: Gross; we should probably have some separate target
   // definition, possibly even reusing the one in clang.
   return getArchName() == "x86_64";
 }
 
-const char *Darwin_X86::GetDefaultRelocationModel() const {
+const char *Darwin::GetDefaultRelocationModel() const {
   return "pic";
 }
 
-const char *Darwin_X86::GetForcedPicModel() const {
+const char *Darwin::GetForcedPicModel() const {
   if (getArchName() == "x86_64")
     return "pic";
   return 0;
@@ -362,7 +361,7 @@ Tool &Generic_GCC::SelectTool(const Compilation &C,
   return *T;
 }
 
-bool Generic_GCC::IsMathErrnoDefault() const { 
+bool Generic_GCC::IsMathErrnoDefault() const {
   return true; 
 }
 

@@ -21,7 +21,7 @@ namespace driver {
   class Driver;
 
 namespace toolchains {
-  class Darwin_X86;
+  class Darwin;
 }
 
 namespace tools {
@@ -201,7 +201,9 @@ namespace darwin {
     void AddDarwinSubArch(const ArgList &Args, ArgStringList &CmdArgs) const;
     void AddLinkArgs(const ArgList &Args, ArgStringList &CmdArgs) const;
 
-    const toolchains::Darwin_X86 &getDarwinToolChain() const;
+    const toolchains::Darwin &getDarwinToolChain() const {
+      return reinterpret_cast<const toolchains::Darwin&>(getToolChain());
+    }
 
   public:
     Link(const ToolChain &TC)
