@@ -2,7 +2,11 @@ LEVEL = ../../..
 include $(LEVEL)/Makefile.common
 
 # Test in all immediate subdirectories if unset.
+ifdef TESTSUITE
+TESTDIRS := $(TESTSUITE:%=$(PROJ_SRC_DIR)/%)
+else
 TESTDIRS ?= $(PROJ_SRC_DIR)
+endif
 
 ifndef TESTARGS
 ifdef VERBOSE
