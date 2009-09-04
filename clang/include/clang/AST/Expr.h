@@ -1144,7 +1144,9 @@ public:
       HasQualifier(false), HasExplicitTemplateArgumentList(false) {}
 
   /// \brief Build an empty member reference expression.
-  explicit MemberExpr(EmptyShell Empty) : Expr(MemberExprClass, Empty) { }
+  explicit MemberExpr(EmptyShell Empty) 
+    : Expr(MemberExprClass, Empty), HasQualifier(false), 
+      HasExplicitTemplateArgumentList(false) { }
 
   static MemberExpr *Create(ASTContext &C, Expr *base, bool isarrow, 
                             NestedNameSpecifier *qual, SourceRange qualrange,
