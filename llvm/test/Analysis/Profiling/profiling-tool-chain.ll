@@ -1,14 +1,23 @@
 ; RUN: llvm-as %s -o %t1
-; RUN: opt %t1 -insert-optimal-edge-profiling -o %t2
 
-; FIXME: These parts of the test are disabled for now, they aren't working on
+; FIXME: The RUX parts of the test are disabled for now, they aren't working on
 ; llvm-gcc-x86_64-darwin10-selfhost.
 
+; Test the edge optimal profiling instrumentation.
+; RUN: opt %t1 -insert-optimal-edge-profiling -o %t2
 ; RUX: llvm-dis < %t2 | FileCheck --check-prefix=INST %s
+
+; Test the creation, reading and displaying of profile
 ; RUX: rm -f llvmprof.out
 ; RUX: lli -load %llvmlibsdir/profile_rt%shlibext %t2
 ; RUX: lli -load %llvmlibsdir/profile_rt%shlibext %t2 1 2
 ; RUX: llvm-prof -print-all-code %t1 | FileCheck --check-prefix=PROF %s
+
+; Test the loaded profile also with verifier.
+; RUX  opt %t1 -profile-loader -profile-verifier -o %t3
+
+; Test profile estimator.
+; RUN: opt %t1 -profile-estimator -profile-verifier -o %t3
 
 ; PROF:  1.     2/4 oneblock
 ; PROF:  2.     2/4 main
