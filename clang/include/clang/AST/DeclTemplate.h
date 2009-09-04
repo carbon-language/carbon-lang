@@ -240,8 +240,7 @@ public:
     if (Kind != Type)
       return QualType();
     
-    return QualType::getFromOpaquePtr(
-                                      reinterpret_cast<void*>(TypeOrValue));
+    return QualType::getFromOpaquePtr(reinterpret_cast<void*>(TypeOrValue));
   }
   
   /// \brief Retrieve the template argument as a declaration.
