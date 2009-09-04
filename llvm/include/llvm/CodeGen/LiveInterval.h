@@ -63,9 +63,6 @@ namespace llvm {
     /// Print this index to the given raw_ostream.
     void print(raw_ostream &os) const;
 
-    /// Print this index to the given std::ostream.
-    void print(std::ostream &os) const;
-
     /// Compare two MachineInstrIndex objects for equality.
     bool operator==(MachineInstrIndex other) const {
       return ((index & ~PHI_BIT) == (other.index & ~PHI_BIT));
