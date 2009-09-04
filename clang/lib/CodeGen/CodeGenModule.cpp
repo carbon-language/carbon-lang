@@ -812,7 +812,7 @@ llvm::Constant *CodeGenModule::GetAddrOfFunction(GlobalDecl GD,
   // If there was no specific requested type, just convert it now.
   if (!Ty)
     Ty = getTypes().ConvertType(GD.getDecl()->getType());
-  return GetOrCreateLLVMFunction(getMangledName(GD.getDecl()), Ty, GD);
+  return GetOrCreateLLVMFunction(getMangledName(GD), Ty, GD);
 }
 
 /// CreateRuntimeFunction - Create a new runtime function with the specified

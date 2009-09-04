@@ -178,6 +178,11 @@ RValue CodeGenFunction::EmitCXXMemberCall(const CXXMethodDecl *MD,
   assert(MD->isInstance() && 
          "Trying to emit a member call expr on a static method!");
 
+  // A call to a trivial destructor requires no code generation.
+  if (const CXXDestructorDecl *Destructor = dyn_cast<CXXDestructorDecl>(MD))
+    if (Destructor->isTrivial())
+      return RValue::get(0);
+  
   const FunctionProtoType *FPT = MD->getType()->getAsFunctionProtoType();
   
   CallArgList Args;
@@ -218,6 +223,9 @@ RValue CodeGenFunction::EmitCXXMemberCallExpr(const CXXMemberCallExpr *CE) {
   llvm::Value *Callee;
   if (MD->isVirtual() && !ME->hasQualifier())
     Callee = BuildVirtualCall(MD, This, Ty);
+  else if (const CXXDestructorDecl *Destructor 
+             = dyn_cast<CXXDestructorDecl>(MD))
+    Callee = CGM.GetAddrOfFunction(GlobalDecl(Destructor, Dtor_Complete), Ty);
   else
     Callee = CGM.GetAddrOfFunction(GlobalDecl(MD), Ty);
   

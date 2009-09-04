@@ -2634,7 +2634,7 @@ void Sema::DefineImplicitDefaultConstructor(SourceLocation CurrentLocation,
 }
 
 void Sema::DefineImplicitDestructor(SourceLocation CurrentLocation,
-                                            CXXDestructorDecl *Destructor) {
+                                    CXXDestructorDecl *Destructor) {
   assert((Destructor->isImplicit() && !Destructor->isUsed()) &&
          "DefineImplicitDestructor - call it for implicit default dtor");
   

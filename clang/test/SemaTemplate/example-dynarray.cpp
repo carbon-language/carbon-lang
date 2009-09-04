@@ -1,4 +1,4 @@
-// RUN: clang-cc -fsyntax-only -verify %s
+// RUN: clang %s -o %t
 #include <stddef.h>
 #include <stdlib.h>
 #include <assert.h>
@@ -24,6 +24,9 @@ public:
   }
   
   ~dynarray() {
+    for (unsigned I = 0, N = size(); I != N; ++I)
+      Start[I].~T();
+    
     free(Start);
   }
 
@@ -33,7 +36,9 @@ public:
     for (unsigned I = 0, N = other.size(); I != N; ++I)
       new (NewStart + I) T(other[I]);
 
-    // FIXME: destroy everything in Start
+    for (unsigned I = 0, N = size(); I != N; ++I)
+      Start[I].~T();
+    
     free(Start);
     Start = NewStart;
     Last = End = NewStart + other.size();
@@ -46,8 +51,8 @@ public:
   void push_back(const T& value);
   
   void pop_back() {
-    // FIXME: destruct old value
     --Last;
+    Last->~T();
   }
 
   T& operator[](unsigned Idx) {
@@ -99,7 +104,8 @@ void dynarray<T>::push_back(const T& value) {
     for (unsigned I = 0; I != Size; ++I)
       new (NewStart + I) T(Start[I]);
     
-    // FIXME: destruct old values
+    for (unsigned I = 0, N = size(); I != N; ++I)
+      Start[I].~T();
     free(Start);
     
     Start = NewStart;
