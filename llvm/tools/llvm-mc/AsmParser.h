@@ -20,6 +20,7 @@
 #include "llvm/MC/MCAsmParser.h"
 #include "llvm/MC/MCSectionMachO.h"
 #include "llvm/MC/MCStreamer.h"
+#include "llvm/MC/MCAsmInfo.h"
 
 namespace llvm {
 class AsmCond;
@@ -27,6 +28,7 @@ class MCContext;
 class MCExpr;
 class MCInst;
 class MCStreamer;
+class MCAsmInfo;
 class MCValue;
 class TargetAsmParser;
 class Twine;
@@ -46,8 +48,9 @@ private:
   mutable void *SectionUniquingMap;
 
 public:
-  AsmParser(SourceMgr &_SM, MCContext &_Ctx, MCStreamer &_Out)
-    : Lexer(_SM), Ctx(_Ctx), Out(_Out), TargetParser(0),
+  AsmParser(SourceMgr &_SM, MCContext &_Ctx, MCStreamer &_Out,
+            const MCAsmInfo &_MAI)
+    : Lexer(_SM, _MAI), Ctx(_Ctx), Out(_Out), TargetParser(0),
       SectionUniquingMap(0) {}
   ~AsmParser();
 

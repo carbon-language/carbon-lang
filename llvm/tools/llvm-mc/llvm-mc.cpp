@@ -82,6 +82,18 @@ Action(cl::desc("Action to perform:"),
                              "Assemble a .s file (default)"),
                   clEnumValEnd));
 
+static const Target *GetTarget(const char *ProgName) {
+  // Get the target specific parser.
+  std::string Error;
+  const Target *TheTarget = TargetRegistry::lookupTarget(TripleName, Error);
+  if (TheTarget)
+    return TheTarget;
+
+  errs() << ProgName << ": error: unable to get target for '" << TripleName
+         << "', see --version and --triple.\n";
+  return 0;
+}
+
 static int AsLexInput(const char *ProgName) {
   std::string ErrorMessage;
   MemoryBuffer *Buffer = MemoryBuffer::getFileOrSTDIN(InputFilename,
@@ -104,7 +116,14 @@ static int AsLexInput(const char *ProgName) {
   // it later.
   SrcMgr.setIncludeDirs(IncludeDirs);
 
-  AsmLexer Lexer(SrcMgr);
+  const Target *TheTarget = GetTarget(ProgName);
+  if (!TheTarget)
+    return 1;
+
+  const MCAsmInfo *MAI = TheTarget->createAsmInfo(TripleName);
+  assert(MAI && "Unable to create target asm info!");
+
+  AsmLexer Lexer(SrcMgr, *MAI);
   
   bool Error = false;
   
@@ -160,18 +179,6 @@ static int AsLexInput(const char *ProgName) {
   }
   
   return Error;
-}
-
-static const Target *GetTarget(const char *ProgName) {
-  // Get the target specific parser.
-  std::string Error;
-  const Target *TheTarget = TargetRegistry::lookupTarget(TripleName, Error);
-  if (TheTarget)
-    return TheTarget;
-
-  errs() << ProgName << ": error: unable to get target for '" << TripleName
-         << "', see --version and --triple.\n";
-  return 0;
 }
 
 static formatted_raw_ostream *GetOutputStream() {
@@ -239,10 +246,10 @@ static int AssembleInput(const char *ProgName) {
   OwningPtr<MCCodeEmitter> CE;
   OwningPtr<MCStreamer> Str;
 
-  if (FileType == OFT_AssemblyFile) {
-    const MCAsmInfo *MAI = TheTarget->createAsmInfo(TripleName);
-    assert(MAI && "Unable to create target asm info!");
+  const MCAsmInfo *MAI = TheTarget->createAsmInfo(TripleName);
+  assert(MAI && "Unable to create target asm info!");
 
+  if (FileType == OFT_AssemblyFile) {
     AP.reset(TheTarget->createAsmPrinter(*Out, *TM, MAI, true));
     if (ShowEncoding)
       CE.reset(TheTarget->createCodeEmitter(*TM));
@@ -253,7 +260,7 @@ static int AssembleInput(const char *ProgName) {
     Str.reset(createMachOStreamer(Ctx, *Out, CE.get()));
   }
 
-  AsmParser Parser(SrcMgr, Ctx, *Str.get());
+  AsmParser Parser(SrcMgr, Ctx, *Str.get(), *MAI);
   OwningPtr<TargetAsmParser> TAP(TheTarget->createAsmParser(Parser));
   if (!TAP) {
     errs() << ProgName 

@@ -41,7 +41,7 @@ struct AsmToken {
     Star, Comma, Dollar, Equal, EqualEqual,
     
     Pipe, PipePipe, Caret, 
-    Amp, AmpAmp, Exclaim, ExclaimEqual, Percent, 
+    Amp, AmpAmp, Exclaim, ExclaimEqual, Percent, Hash,
     Less, LessEqual, LessLess, LessGreater,
     Greater, GreaterEqual, GreaterGreater
   };
