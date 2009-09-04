@@ -1420,6 +1420,9 @@ static bool EvalOSAtomic(ExplodedNodeSet& Dst,
 static void MarkNoReturnFunction(const FunctionDecl *FD, CallExpr *CE,
                                  const GRState *state, 
                                  GRStmtNodeBuilder *Builder) {
+  if (!FD)
+    return;
+
   if (FD->getAttr<NoReturnAttr>() || 
       FD->getAttr<AnalyzerNoReturnAttr>())
     Builder->BuildSinks = true;
@@ -1580,8 +1583,8 @@ void GRExprEngine::VisitCallRec(CallExpr* CE, ExplodedNode* Pred,
     
     SaveAndRestore<bool> OldSink(Builder->BuildSinks);
     const FunctionDecl* FD = L.getAsFunctionDecl();
-    if (FD)
-      MarkNoReturnFunction(FD, CE, state, Builder);
+
+    MarkNoReturnFunction(FD, CE, state, Builder);
     
     // Evaluate the call.
 
