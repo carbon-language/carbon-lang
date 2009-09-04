@@ -167,6 +167,7 @@ double ProfileVerifierPass::ReadOrAssert(ProfileInfo::Edge E) {
       return 0;
     } else { 
       assert(0 && Message);
+      return 0;
     }
   } else {
     return EdgeWeight;
