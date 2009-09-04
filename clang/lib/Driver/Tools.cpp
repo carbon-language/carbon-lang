@@ -1700,7 +1700,9 @@ void darwin::Link::ConstructJob(Compilation &C, const JobAction &JA,
             CmdArgs.push_back("-lcrt0.o");
           } else {
             // Derived from darwin_crt1 spec.
-            if (isMacosxVersionLT(MacosxVersion, 10, 5))
+            if (getDarwinToolChain().isIPhone()) {
+              CmdArgs.push_back("-lcrt1.o");
+            } else if (isMacosxVersionLT(MacosxVersion, 10, 5))
               CmdArgs.push_back("-lcrt1.o");
             else if (isMacosxVersionLT(MacosxVersion, 10, 6))
               CmdArgs.push_back("-lcrt1.10.5.o");
@@ -1789,7 +1791,11 @@ void darwin::Link::ConstructJob(Compilation &C, const JobAction &JA,
         CmdArgs.push_back("-lgcc_eh");
       } else if (Args.hasArg(options::OPT_miphoneos_version_min_EQ)) {
         // Derived from darwin_iphoneos_libgcc spec.
-        CmdArgs.push_back("-lgcc_s.10.5");
+        if (getDarwinToolChain().isIPhone()) {
+          CmdArgs.push_back("-lgcc_s.1");
+        } else {
+          CmdArgs.push_back("-lgcc_s.10.5");
+        }
       } else if (Args.hasArg(options::OPT_shared_libgcc) ||
                  // FIXME: -fexceptions -fno-exceptions means no exceptions
                  Args.hasArg(options::OPT_fexceptions) ||
@@ -1808,7 +1814,8 @@ void darwin::Link::ConstructJob(Compilation &C, const JobAction &JA,
           CmdArgs.push_back("-lgcc_s.10.5");
       }
 
-      if (isMacosxVersionLT(MacosxVersion, 10, 6)) {
+      if (getDarwinToolChain().isIPhone() ||
+          isMacosxVersionLT(MacosxVersion, 10, 6)) {
         CmdArgs.push_back("-lgcc");
         CmdArgs.push_back("-lSystem");
       } else {
