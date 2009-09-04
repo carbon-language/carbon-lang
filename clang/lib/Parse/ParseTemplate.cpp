@@ -25,7 +25,8 @@ Parser::ParseDeclarationStartingWithTemplate(unsigned Context,
                                              SourceLocation &DeclEnd,
                                              AccessSpecifier AS) {
   if (Tok.is(tok::kw_template) && NextToken().isNot(tok::less))
-    return ParseExplicitInstantiation(ConsumeToken(), DeclEnd);
+    return ParseExplicitInstantiation(SourceLocation(), ConsumeToken(), 
+                                      DeclEnd);
 
   return ParseTemplateDeclarationOrSpecialization(Context, DeclEnd, AS);
 }
@@ -186,7 +187,6 @@ Parser::ParseSingleDeclarationAfterTemplate(
   
   // Parse the declaration specifiers.
   DeclSpec DS;
-  // FIXME: Pass TemplateLoc through for explicit template instantiations
   ParseDeclarationSpecifiers(DS, TemplateInfo, AS);
 
   if (Tok.is(tok::semi)) {
@@ -871,11 +871,15 @@ Parser::ParseTemplateArgumentList(TemplateArgList &TemplateArgs,
 /// (C++ [temp.explicit]).
 ///
 ///       explicit-instantiation:
-///         'template' declaration
+///         'extern' [opt] 'template' declaration
+///
+/// Note that the 'extern' is a GNU extension and C++0x feature.
 Parser::DeclPtrTy 
-Parser::ParseExplicitInstantiation(SourceLocation TemplateLoc,
+Parser::ParseExplicitInstantiation(SourceLocation ExternLoc,
+                                   SourceLocation TemplateLoc,
                                    SourceLocation &DeclEnd) {
   return ParseSingleDeclarationAfterTemplate(Declarator::FileContext, 
-                                             ParsedTemplateInfo(TemplateLoc),
+                                             ParsedTemplateInfo(ExternLoc,
+                                                                TemplateLoc),
                                              DeclEnd, AS_none);
 }

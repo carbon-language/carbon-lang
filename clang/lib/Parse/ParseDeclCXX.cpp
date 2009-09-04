@@ -638,6 +638,7 @@ void Parser::ParseClassSpecifier(tok::TokenKind TagTokKind,
       // This is an explicit instantiation of a class template.
       TagOrTempResult
         = Actions.ActOnExplicitInstantiation(CurScope, 
+                                             TemplateInfo.ExternLoc,
                                              TemplateInfo.TemplateLoc, 
                                              TagType,
                                              StartLoc, 
@@ -734,6 +735,7 @@ void Parser::ParseClassSpecifier(tok::TokenKind TagTokKind,
     //
     TagOrTempResult
       = Actions.ActOnExplicitInstantiation(CurScope, 
+                                           TemplateInfo.ExternLoc,
                                            TemplateInfo.TemplateLoc, 
                                            TagType, StartLoc, SS, Name, 
                                            NameLoc, Attr);

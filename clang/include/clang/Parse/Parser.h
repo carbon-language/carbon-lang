@@ -607,9 +607,10 @@ private:
       : Kind(isSpecialization? ExplicitSpecialization : Template),
         TemplateParams(TemplateParams) { }
 
-    explicit ParsedTemplateInfo(SourceLocation TemplateLoc)
+    explicit ParsedTemplateInfo(SourceLocation ExternLoc,
+                                SourceLocation TemplateLoc)
       : Kind(ExplicitInstantiation), TemplateParams(0), 
-        TemplateLoc(TemplateLoc) { }
+        ExternLoc(ExternLoc), TemplateLoc(TemplateLoc) { }
 
     /// \brief The kind of template we are parsing.
     enum {
@@ -627,6 +628,10 @@ private:
     /// and explicit specializations.
     TemplateParameterLists *TemplateParams;
 
+    /// \brief The location of the 'extern' keyword, if any, for an explicit
+    /// instantiation
+    SourceLocation ExternLoc;
+    
     /// \brief The location of the 'template' keyword, for an explicit
     /// instantiation.
     SourceLocation TemplateLoc;
@@ -1241,7 +1246,8 @@ private:
                                  TemplateArgIsTypeList &TemplateArgIsType,
                                  TemplateArgLocationList &TemplateArgLocations);
   void *ParseTemplateArgument(bool &ArgIsType);
-  DeclPtrTy ParseExplicitInstantiation(SourceLocation TemplateLoc, 
+  DeclPtrTy ParseExplicitInstantiation(SourceLocation ExternLoc,
+                                       SourceLocation TemplateLoc, 
                                        SourceLocation &DeclEnd);
 
   //===--------------------------------------------------------------------===//

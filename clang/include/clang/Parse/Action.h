@@ -1749,6 +1749,9 @@ public:
   ///
   /// \param S the current scope
   ///
+  /// \param ExternLoc the location of the 'extern' keyword that specifies that
+  /// this is an extern template (if any).
+  ///
   /// \param TemplateLoc the location of the 'template' keyword that
   /// specifies that this is an explicit instantiation.
   ///
@@ -1774,7 +1777,9 @@ public:
   ///
   /// \param Attr attributes that apply to this instantiation.
   virtual DeclResult
-  ActOnExplicitInstantiation(Scope *S, SourceLocation TemplateLoc,
+  ActOnExplicitInstantiation(Scope *S, 
+                             SourceLocation ExternLoc,
+                             SourceLocation TemplateLoc,
                              unsigned TagSpec, 
                              SourceLocation KWLoc,
                              const CXXScopeSpec &SS,
@@ -1804,6 +1809,9 @@ public:
   ///
   /// \param S the current scope
   ///
+  /// \param ExternLoc the location of the 'extern' keyword that specifies that
+  /// this is an extern template (if any).
+  ///
   /// \param TemplateLoc the location of the 'template' keyword that
   /// specifies that this is an explicit instantiation.
   ///
@@ -1829,7 +1837,9 @@ public:
   ///
   /// \param Attr attributes that apply to this instantiation.
   virtual DeclResult
-  ActOnExplicitInstantiation(Scope *S, SourceLocation TemplateLoc,
+  ActOnExplicitInstantiation(Scope *S, 
+                             SourceLocation ExternLoc,
+                             SourceLocation TemplateLoc,
                              unsigned TagSpec, 
                              SourceLocation KWLoc,
                              const CXXScopeSpec &SS,

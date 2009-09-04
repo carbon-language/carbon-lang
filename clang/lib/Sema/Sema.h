@@ -2454,7 +2454,9 @@ public:
                                                     Declarator &D);
   
   virtual DeclResult
-  ActOnExplicitInstantiation(Scope *S, SourceLocation TemplateLoc,
+  ActOnExplicitInstantiation(Scope *S, 
+                             SourceLocation ExternLoc,
+                             SourceLocation TemplateLoc,
                              unsigned TagSpec, 
                              SourceLocation KWLoc,
                              const CXXScopeSpec &SS,
@@ -2467,7 +2469,9 @@ public:
                              AttributeList *Attr);
 
   virtual DeclResult
-  ActOnExplicitInstantiation(Scope *S, SourceLocation TemplateLoc,
+  ActOnExplicitInstantiation(Scope *S, 
+                             SourceLocation ExternLoc,
+                             SourceLocation TemplateLoc,
                              unsigned TagSpec, 
                              SourceLocation KWLoc,
                              const CXXScopeSpec &SS,

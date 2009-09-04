@@ -2849,8 +2849,11 @@ Sema::ActOnStartOfFunctionTemplateDef(Scope *FnBodyScope,
 }
 
 // Explicit instantiation of a class template specialization
+// FIXME: Implement extern template semantics
 Sema::DeclResult
-Sema::ActOnExplicitInstantiation(Scope *S, SourceLocation TemplateLoc,
+Sema::ActOnExplicitInstantiation(Scope *S, 
+                                 SourceLocation ExternLoc,
+                                 SourceLocation TemplateLoc,
                                  unsigned TagSpec, 
                                  SourceLocation KWLoc,
                                  const CXXScopeSpec &SS,
@@ -3034,8 +3037,11 @@ Sema::ActOnExplicitInstantiation(Scope *S, SourceLocation TemplateLoc,
 }
 
 // Explicit instantiation of a member class of a class template.
+// FIXME: Implement extern template semantics.
 Sema::DeclResult
-Sema::ActOnExplicitInstantiation(Scope *S, SourceLocation TemplateLoc,
+Sema::ActOnExplicitInstantiation(Scope *S, 
+                                 SourceLocation ExternLoc,
+                                 SourceLocation TemplateLoc,
                                  unsigned TagSpec, 
                                  SourceLocation KWLoc,
                                  const CXXScopeSpec &SS,

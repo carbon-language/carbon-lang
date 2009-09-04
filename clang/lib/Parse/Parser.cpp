@@ -391,6 +391,7 @@ void Parser::ParseTranslationUnit() {
 /// [C++0x] empty-declaration:
 ///           ';'
 ///
+/// [C++0x/GNU] 'extern' 'template' declaration
 Parser::DeclGroupPtrTy Parser::ParseExternalDeclaration() {
   DeclPtrTy SingleDecl;
   switch (Tok.getKind()) {
@@ -452,6 +453,20 @@ Parser::DeclGroupPtrTy Parser::ParseExternalDeclaration() {
       SourceLocation DeclEnd;
       return ParseDeclaration(Declarator::FileContext, DeclEnd);
     }
+  case tok::kw_extern:
+    if (getLang().CPlusPlus && NextToken().is(tok::kw_template)) {
+      // Extern templates
+      SourceLocation ExternLoc = ConsumeToken();
+      SourceLocation TemplateLoc = ConsumeToken();
+      SourceLocation DeclEnd;
+      return Actions.ConvertDeclToDeclGroup(
+                  ParseExplicitInstantiation(ExternLoc, TemplateLoc, DeclEnd));
+    }
+    
+    // FIXME: Detect C++ linkage specifications here?
+      
+    // Fall through to handle other declarations or function definitions.
+      
   default:
     // We can't tell whether this is a function-definition or declaration yet.
     return ParseDeclarationOrFunctionDefinition();
