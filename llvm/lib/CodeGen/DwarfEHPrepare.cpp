@@ -240,7 +240,9 @@ bool DwarfEHPrepare::LowerUnwinds() {
     }
 
     // Create the call...
-    CallInst::Create(RewindFunction, CreateReadOfExceptionValue(I), "", TI);
+    CallInst *CI = CallInst::Create(RewindFunction,
+				    CreateReadOfExceptionValue(I), "", TI);
+    CI->setCallingConv(TLI->getLibcallCallingConv(RTLIB::UNWIND_RESUME));
     // ...followed by an UnreachableInst.
     new UnreachableInst(TI->getContext(), TI);
 
