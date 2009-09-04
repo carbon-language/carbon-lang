@@ -12,6 +12,7 @@
 //===----------------------------------------------------------------------===//
 
 #define DEBUG_TYPE "ifcvt"
+#include "BranchFolding.h"
 #include "llvm/Function.h"
 #include "llvm/CodeGen/Passes.h"
 #include "llvm/CodeGen/MachineModuleInfo.h"
@@ -359,6 +360,13 @@ bool IfConverter::runOnMachineFunction(MachineFunction &MF) {
   Tokens.clear();
   Roots.clear();
   BBAnalysis.clear();
+
+  if (MadeChange) {
+    BranchFolder BF(false);
+    BF.OptimizeFunction(MF, TII,
+                        MF.getTarget().getRegisterInfo(),
+                        getAnalysisIfAvailable<MachineModuleInfo>());
+  }
 
   return MadeChange;
 }
