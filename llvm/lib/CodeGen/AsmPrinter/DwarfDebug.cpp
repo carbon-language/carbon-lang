@@ -1482,6 +1482,10 @@ void DwarfDebug::ConstructCompileUnit(MDNode *N) {
 
 void DwarfDebug::ConstructGlobalVariableDIE(MDNode *N) {
   DIGlobalVariable DI_GV(N);
+  
+  // If debug information is malformed then ignore it.
+  if (DI_GV.Verify() == false)
+    return;
 
   // Check for pre-existence.
   DIE *&Slot = ModuleCU->getDieMapSlotFor(DI_GV.getNode());
