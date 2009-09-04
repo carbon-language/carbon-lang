@@ -191,6 +191,10 @@ Compilation *Driver::BuildCompilation(int argc, const char **argv) {
       assert(Start+1 < End && "FIXME: -ccc- argument handling.");
       HostTriple = *++Start;
 
+    } else if (!strcmp(Opt, "install-dir")) {
+      assert(Start+1 < End && "FIXME: -ccc- argument handling.");
+      Dir = *++Start;
+
     } else {
       // FIXME: Error handling.
       llvm::errs() << "invalid option: " << *Start << "\n";
@@ -366,7 +370,9 @@ void Driver::PrintHelp(bool ShowHidden) const {
 
     OptionHelp.push_back(std::make_pair("\nDEBUG/DEVELOPMENT OPTIONS:",""));
     OptionHelp.push_back(std::make_pair("-ccc-host-triple",
-                                        "Simulate running on the given target"));
+                                       "Simulate running on the given target"));
+    OptionHelp.push_back(std::make_pair("-ccc-install-dir",
+                               "Simulate installation in the given directory"));
     OptionHelp.push_back(std::make_pair("-ccc-print-options",
                                         "Dump parsed command line arguments"));
     OptionHelp.push_back(std::make_pair("-ccc-print-phases",
