@@ -851,6 +851,108 @@ public:
   virtual child_iterator child_end();
 };
 
+/// \brief Represents a C++ pseudo-destructor (C++ [expr.pseudo]).
+///
+/// Example:
+///
+/// \code
+/// template<typename T> 
+/// void destroy(T* ptr) {
+///   ptr->~T();
+/// }
+/// \endcode
+///
+/// When the template is parsed, the expression \c ptr->~T will be stored as
+/// a member reference expression. If it then instantiated with a scalar type
+/// as a template argument for T, the resulting expression will be a 
+/// pseudo-destructor expression.
+class CXXPseudoDestructorExpr : public Expr {
+  /// \brief The base expression (that is being destroyed).
+  Stmt *Base;
+  
+  /// \brief Whether the operator was an arrow ('->'); otherwise, it was a
+  /// period ('.').
+  bool IsArrow : 1;
+  
+  /// \brief The location of the '.' or '->' operator.
+  SourceLocation OperatorLoc;
+  
+  /// \brief The nested-name-specifier that follows the operator, if present.
+  NestedNameSpecifier *Qualifier;
+  
+  /// \brief The source range that covers the nested-name-specifier, if 
+  /// present.
+  SourceRange QualifierRange;
+  
+  /// \brief The type being destroyed.
+  QualType DestroyedType;
+  
+  /// \brief The location of the type after the '~'.
+  SourceLocation DestroyedTypeLoc;
+    
+public:
+  CXXPseudoDestructorExpr(ASTContext &Context,
+                          Expr *Base, bool isArrow, SourceLocation OperatorLoc,
+                          NestedNameSpecifier *Qualifier,
+                          SourceRange QualifierRange,
+                          QualType DestroyedType, 
+                          SourceLocation DestroyedTypeLoc)
+    : Expr(CXXPseudoDestructorExprClass, 
+           Context.getPointerType(Context.getFunctionType(Context.VoidTy, 0, 0,
+                                                          false, 0)),
+           /*isTypeDependent=*/false,
+           /*isValueDependent=*/Base->isValueDependent()),
+      Base(static_cast<Stmt *>(Base)), IsArrow(isArrow), 
+      OperatorLoc(OperatorLoc), Qualifier(Qualifier),
+      QualifierRange(QualifierRange), DestroyedType(DestroyedType),
+      DestroyedTypeLoc(DestroyedTypeLoc) { }
+  
+  void setBase(Expr *E) { Base = E; }
+  Expr *getBase() const { return cast<Expr>(Base); }
+  
+  /// \brief Determines whether this member expression actually had 
+  /// a C++ nested-name-specifier prior to the name of the member, e.g.,
+  /// x->Base::foo.
+  bool hasQualifier() const { return Qualifier != 0; }
+  
+  /// \brief If the member name was qualified, retrieves the source range of
+  /// the nested-name-specifier that precedes the member name. Otherwise,
+  /// returns an empty source range.
+  SourceRange getQualifierRange() const { return QualifierRange; }
+  
+  /// \brief If the member name was qualified, retrieves the 
+  /// nested-name-specifier that precedes the member name. Otherwise, returns
+  /// NULL.
+  NestedNameSpecifier *getQualifier() const { return Qualifier; }
+    
+  /// \brief Determine whether this pseudo-destructor expression was written
+  /// using an '->' (otherwise, it used a '.').
+  bool isArrow() const { return IsArrow; }
+  void setArrow(bool A) { IsArrow = A; }
+
+  /// \brief Retrieve the location of the '.' or '->' operator.
+  SourceLocation getOperatorLoc() const { return OperatorLoc; }
+  
+  /// \brief Retrieve the type that is being destroyed.
+  QualType getDestroyedType() const { return DestroyedType; }
+  
+  /// \brief Retrieve the location of the type being destroyed.
+  SourceLocation getDestroyedTypeLoc() const { return DestroyedTypeLoc; }
+  
+  virtual SourceRange getSourceRange() const {
+    return SourceRange(Base->getLocStart(), DestroyedTypeLoc);
+  }
+  
+  static bool classof(const Stmt *T) { 
+    return T->getStmtClass() == CXXPseudoDestructorExprClass;
+  }
+  static bool classof(const CXXPseudoDestructorExpr *) { return true; }
+  
+  // Iterators
+  virtual child_iterator child_begin();
+  virtual child_iterator child_end();  
+};
+  
 /// \brief Represents the name of a function that has not been
 /// resolved to any declaration.
 ///

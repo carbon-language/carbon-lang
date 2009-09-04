@@ -1107,6 +1107,20 @@ void StmtPrinter::VisitCXXDeleteExpr(CXXDeleteExpr *E) {
   PrintExpr(E->getArgument());
 }
 
+void StmtPrinter::VisitCXXPseudoDestructorExpr(CXXPseudoDestructorExpr *E) {
+  PrintExpr(E->getBase());
+  if (E->isArrow())
+    OS << "->";
+  else
+    OS << '.';
+  if (E->getQualifier())
+    E->getQualifier()->print(OS, Policy);
+  
+  std::string TypeS;
+  E->getDestroyedType().getAsStringInternal(TypeS, Policy);
+  OS << TypeS;
+}
+
 void StmtPrinter::VisitUnresolvedFunctionNameExpr(UnresolvedFunctionNameExpr *E) {
   OS << E->getName().getAsString();
 }

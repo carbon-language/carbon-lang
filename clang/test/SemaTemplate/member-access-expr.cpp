@@ -59,3 +59,19 @@ void test_convert(X2 x2) {
   convert<int>(x2);
   convert<long>(x2); // expected-note{{instantiation}}
 }
+
+template<typename T>
+void destruct(T* ptr) {
+  ptr->~T();
+}
+
+template<typename T>
+void destruct_intptr(int *ip) {
+  ip->~T();
+}
+
+void test_destruct(X2 *x2p, int *ip) {
+  destruct(x2p);
+  destruct(ip);
+  destruct_intptr<int>(ip);
+}

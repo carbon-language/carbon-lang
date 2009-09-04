@@ -1821,26 +1821,19 @@ Sema::ActOnDestructorReferenceExpr(Scope *S, ExprArg Base,
   if (SS && SS->isInvalid())
     return ExprError();
 
-  Expr *BaseExpr = (Expr *)Base.get();
+  QualType BaseType;
+  if (SS && isUnknownSpecialization(*SS))
+    BaseType = Context.getTypenameType((NestedNameSpecifier *)SS->getScopeRep(),
+                                       ClassName);
+  else {
+    TypeTy *BaseTy = getTypeName(*ClassName, ClassNameLoc, S, SS);
+    if (!BaseTy) {
+      Diag(ClassNameLoc, diag::err_ident_in_pseudo_dtor_not_a_type) 
+        << ClassName;
+      return ExprError();
+    }
   
-  if (BaseExpr->isTypeDependent() || 
-      (SS && isDependentScopeSpecifier(*SS))) {
-    // FIXME: Return an unresolved ref expr.
-    return ExprError();
-  }
-
-  TypeTy *BaseTy = getTypeName(*ClassName, ClassNameLoc, S, SS);
-  if (!BaseTy) {
-    Diag(ClassNameLoc, diag::err_ident_in_pseudo_dtor_not_a_type) 
-      << ClassName;
-    return ExprError();
-  }
-  
-  QualType BaseType = GetTypeFromParser(BaseTy);
-  if (!BaseType->isRecordType()) {
-    Diag(ClassNameLoc, diag::err_type_in_pseudo_dtor_not_a_class_type)
-      << BaseType;
-    return ExprError();
+    BaseType = GetTypeFromParser(BaseTy);
   }
   
   CanQualType CanBaseType = Context.getCanonicalType(BaseType);

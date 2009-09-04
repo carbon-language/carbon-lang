@@ -305,7 +305,17 @@ public:
     CGF.EmitCXXDeleteExpr(E);
     return 0;
   }
-      
+  
+  Value *VisitCXXPseudoDestructorExpr(const CXXPseudoDestructorExpr *E) {
+    // C++ [expr.pseudo]p1:
+    //   The result shall only be used as the operand for the function call 
+    //   operator (), and the result of such a call has type void. The only
+    //   effect is the evaluation of the postfix-expression before the dot or
+    //   arrow.
+    CGF.EmitScalarExpr(E->getBase());
+    return 0;
+  }
+    
   // Binary Operators.
   Value *EmitMul(const BinOpInfo &Ops) {
     if (CGF.getContext().getLangOptions().OverflowChecking

@@ -1998,7 +1998,7 @@ Sema::BuildMemberReferenceExpr(Scope *S, ExprArg Base, SourceLocation OpLoc,
   Base = MaybeConvertParenListExprToParenExpr(S, move(Base));
 
   Expr *BaseExpr = Base.takeAs<Expr>();
-  assert(BaseExpr && "no record expression");
+  assert(BaseExpr && "no base expression");
   
   // Perform default conversions.
   DefaultFunctionArrayConversion(BaseExpr);
@@ -2230,6 +2230,47 @@ Sema::BuildMemberReferenceExpr(Scope *S, ExprArg Base, SourceLocation OpLoc,
       << MemberName << int(OpKind == tok::arrow));
   }
 
+  // Handle pseudo-destructors (C++ [expr.pseudo]). Since anything referring
+  // into a record type was handled above, any destructor we see here is a
+  // pseudo-destructor.
+  if (MemberName.getNameKind() == DeclarationName::CXXDestructorName) {
+    // C++ [expr.pseudo]p2:
+    //   The left hand side of the dot operator shall be of scalar type. The 
+    //   left hand side of the arrow operator shall be of pointer to scalar 
+    //   type.
+    if (!BaseType->isScalarType())
+      return Owned(Diag(OpLoc, diag::err_pseudo_dtor_base_not_scalar)
+                     << BaseType << BaseExpr->getSourceRange());
+    
+    //   [...] The type designated by the pseudo-destructor-name shall be the
+    //   same as the object type.
+    if (!MemberName.getCXXNameType()->isDependentType() &&
+        !Context.hasSameUnqualifiedType(BaseType, MemberName.getCXXNameType()))
+      return Owned(Diag(OpLoc, diag::err_pseudo_dtor_type_mismatch)
+                     << BaseType << MemberName.getCXXNameType()
+                     << BaseExpr->getSourceRange() << SourceRange(MemberLoc));
+    
+    //   [...] Furthermore, the two type-names in a pseudo-destructor-name of 
+    //   the form
+    //
+    //       ::[opt] nested-name-specifier[opt] type-name ::  ̃ type-name 
+    //   
+    //   shall designate the same scalar type.
+    //
+    // FIXME: DPG can't see any way to trigger this particular clause, so it
+    // isn't checked here.
+    
+    // FIXME: We've lost the precise spelling of the type by going through
+    // DeclarationName. Can we do better?
+    return Owned(new (Context) CXXPseudoDestructorExpr(Context, BaseExpr,
+                                                       OpKind == tok::arrow, 
+                                                       OpLoc,
+                            (NestedNameSpecifier *)(SS? SS->getScopeRep() : 0), 
+                                            SS? SS->getRange() : SourceRange(),
+                                                   MemberName.getCXXNameType(),
+                                                       MemberLoc));
+  }
+      
   // Handle properties on ObjC 'Class' types.
   if (OpKind == tok::period && BaseType->isObjCClassType()) {
     // Also must look for a getter name which uses property syntax.
@@ -2684,6 +2725,25 @@ Sema::ActOnCallExpr(Scope *S, ExprArg fn, SourceLocation LParenLoc,
   DeclarationName UnqualifiedName;
   
   if (getLangOptions().CPlusPlus) {
+    // If this is a pseudo-destructor expression, build the call immediately.
+    if (isa<CXXPseudoDestructorExpr>(Fn)) {
+      if (NumArgs > 0) {
+        // Pseudo-destructor calls should not have any arguments.
+        Diag(Fn->getLocStart(), diag::err_pseudo_dtor_call_with_args)
+          << CodeModificationHint::CreateRemoval(
+                                    SourceRange(Args[0]->getLocStart(),
+                                                Args[NumArgs-1]->getLocEnd()));
+        
+        for (unsigned I = 0; I != NumArgs; ++I)
+          Args[I]->Destroy(Context);
+        
+        NumArgs = 0;
+      }
+      
+      return Owned(new (Context) CallExpr(Context, Fn, 0, 0, Context.VoidTy,
+                                          RParenLoc));
+    }
+    
     // Determine whether this is a dependent call inside a C++ template,
     // in which case we won't do any semantic analysis now.
     // FIXME: Will need to cache the results of name lookup (including ADL) in

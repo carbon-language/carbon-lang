@@ -783,6 +783,36 @@ public:
     return getSema().ActOnParenExpr(LParen, RParen, move(SubExpr));
   }
 
+  /// \brief Build a new pseudo-destructor expression.
+  /// 
+  /// By default, performs semantic analysis to build the new expression.
+  /// Subclasses may override this routine to provide different behavior.
+  OwningExprResult RebuildCXXPseudoDestructorExpr(ExprArg Base,
+                                                  SourceLocation OperatorLoc,
+                                                  bool isArrow,
+                                              SourceLocation DestroyedTypeLoc,
+                                                  QualType DestroyedType,
+                                               NestedNameSpecifier *Qualifier,
+                                                  SourceRange QualifierRange) {
+    CXXScopeSpec SS;
+    if (Qualifier) {
+      SS.setRange(QualifierRange);
+      SS.setScopeRep(Qualifier);
+    }
+
+    DeclarationName Name 
+      = SemaRef.Context.DeclarationNames.getCXXDestructorName(
+                               SemaRef.Context.getCanonicalType(DestroyedType));
+    
+    return getSema().BuildMemberReferenceExpr(/*Scope=*/0, move(Base), 
+                                              OperatorLoc,
+                                              isArrow? tok::arrow : tok::period,
+                                              DestroyedTypeLoc,
+                                              Name,
+                                              Sema::DeclPtrTy::make((Decl *)0),
+                                              &SS);
+  }                                              
+  
   /// \brief Build a new unary operator expression.
   /// 
   /// By default, performs semantic analysis to build the new expression.
@@ -3812,6 +3842,43 @@ TreeTransform<Derived>::TransformCXXDeleteExpr(CXXDeleteExpr *E) {
                                            move(Operand));
 }
   
+template<typename Derived>
+Sema::OwningExprResult
+TreeTransform<Derived>::TransformCXXPseudoDestructorExpr(
+                                                CXXPseudoDestructorExpr *E) {
+  OwningExprResult Base = getDerived().TransformExpr(E->getBase());
+  if (Base.isInvalid())
+    return SemaRef.ExprError();
+  
+  NestedNameSpecifier *Qualifier
+    = getDerived().TransformNestedNameSpecifier(E->getQualifier(),
+                                                E->getQualifierRange());
+  if (E->getQualifier() && !Qualifier)
+    return SemaRef.ExprError();
+  
+  QualType DestroyedType;
+  {
+    TemporaryBase Rebase(*this, E->getDestroyedTypeLoc(), DeclarationName());
+    DestroyedType = getDerived().TransformType(E->getDestroyedType());
+    if (DestroyedType.isNull())
+      return SemaRef.ExprError();
+  }
+  
+  if (!getDerived().AlwaysRebuild() &&
+      Base.get() == E->getBase() &&
+      Qualifier == E->getQualifier() &&
+      DestroyedType == E->getDestroyedType())
+    return SemaRef.Owned(E->Retain());
+  
+  return getDerived().RebuildCXXPseudoDestructorExpr(move(Base),
+                                                     E->getOperatorLoc(),
+                                                     E->isArrow(),
+                                                     E->getDestroyedTypeLoc(),
+                                                     DestroyedType,
+                                                     Qualifier,
+                                                     E->getQualifierRange());
+}
+    
 template<typename Derived>
 Sema::OwningExprResult
 TreeTransform<Derived>::TransformUnresolvedFunctionNameExpr(

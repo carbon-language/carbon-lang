@@ -1588,9 +1588,15 @@ def err_return_in_constructor_handler : Error<
 
 def err_ident_in_pseudo_dtor_not_a_type : Error<
   "identifier %0 in pseudo-destructor expression does not name a type">;
-def err_type_in_pseudo_dtor_not_a_class_type : Error<
-  "type %0 in pseudo-destructor expression is not a class type">;
-
+def err_pseudo_dtor_base_not_scalar : Error<
+  "object expression of non-scalar type %0 cannot be used in a "
+  "pseudo-destructor expression">;
+def err_pseudo_dtor_type_mismatch : Error<
+  "the type of object expression (%0) does not match the type being destroyed "
+  "(%1) in pseudo-destructor expression">;
+def err_pseudo_dtor_call_with_args : Error<
+  "call to pseudo-destructor cannot have any arguments">;
+  
 def err_invalid_use_of_function_type : Error<
   "a function type is not allowed here">;
 def err_invalid_use_of_array_type : Error<"an array type is not allowed here">;

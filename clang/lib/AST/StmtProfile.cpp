@@ -502,6 +502,13 @@ void StmtProfiler::VisitCXXNewExpr(CXXNewExpr *S) {
   ID.AddInteger(S->getNumConstructorArgs());
 }
 
+void StmtProfiler::VisitCXXPseudoDestructorExpr(CXXPseudoDestructorExpr *S) {
+  VisitExpr(S);
+  ID.AddBoolean(S->isArrow());
+  VisitNestedNameSpecifier(S->getQualifier());
+  VisitType(S->getDestroyedType());
+}
+
 void 
 StmtProfiler::VisitUnresolvedFunctionNameExpr(UnresolvedFunctionNameExpr *S) {
   VisitExpr(S);

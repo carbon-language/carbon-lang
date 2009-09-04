@@ -116,6 +116,12 @@ Stmt::child_iterator CXXNewExpr::child_end() {
 Stmt::child_iterator CXXDeleteExpr::child_begin() { return &Argument; }
 Stmt::child_iterator CXXDeleteExpr::child_end() { return &Argument+1; }
 
+// CXXPseudoDestructorExpr
+Stmt::child_iterator CXXPseudoDestructorExpr::child_begin() { return &Base; }
+Stmt::child_iterator CXXPseudoDestructorExpr::child_end() {
+  return &Base + 1;
+}
+
 // UnresolvedFunctionNameExpr
 Stmt::child_iterator UnresolvedFunctionNameExpr::child_begin() { 
   return child_iterator(); 
