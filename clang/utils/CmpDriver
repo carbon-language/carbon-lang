@@ -97,7 +97,7 @@ class CompileInfo:
                 ln.startswith('Configured with: ') or
                 ln.startswith('Thread model: ') or
                 ln.startswith('gcc version') or
-                ln.startswith('ccc version')):
+                ln.startswith('clang version')):
                 pass
             elif ln.strip().startswith('"'):
                 self.commands.append(list(splitArgs(ln)))
@@ -131,15 +131,41 @@ def main():
     # Compare stdout.
     if infoA.stdout != infoB.stdout:
         print '-- STDOUT DIFFERS -'
-        print 'A: ',infoA.stdout
-        print 'B: ',infoB.stdout
+        print 'A OUTPUT: ',infoA.stdout
+        print 'B OUTPUT: ',infoB.stdout
+        print
+
+        diff = ZipperDiff(infoA.stdout.split('\n'),
+                          infoB.stdout.split('\n'))
+        for i,(aElt,bElt) in enumerate(diff.getDiffs()):
+            if aElt is None:
+                print 'A missing: %s' % bElt
+            elif bElt is None:
+                print 'B missing: %s' % aElt
+            else:
+                print 'mismatch: A: %s' % aElt
+                print '          B: %s' % bElt
+
         differ = True
 
     # Compare stderr.
     if infoA.stderr != infoB.stderr:
         print '-- STDERR DIFFERS -'
-        print 'A: ',infoA.stderr
-        print 'B: ',infoB.stderr
+        print 'A STDERR: ',infoA.stderr
+        print 'B STDERR: ',infoB.stderr
+        print
+
+        diff = ZipperDiff(infoA.stderr.split('\n'),
+                          infoB.stderr.split('\n'))
+        for i,(aElt,bElt) in enumerate(diff.getDiffs()):
+            if aElt is None:
+                print 'A missing: %s' % bElt
+            elif bElt is None:
+                print 'B missing: %s' % aElt
+            else:
+                print 'mismatch: A: %s' % aElt
+                print '          B: %s' % bElt
+
         differ = True
 
     # Compare commands.
