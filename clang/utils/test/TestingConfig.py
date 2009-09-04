@@ -20,6 +20,7 @@ class TestingConfig:
         self.root = None
         self.useValgrind = None
         self.useExternalShell = None
+        self.valgrindArgs = []
 
         # FIXME: These need to move into a substitutions mechanism.
         self.clang = None

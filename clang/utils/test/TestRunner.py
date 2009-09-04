@@ -149,9 +149,10 @@ def executeScript(cfg, script, commands, cwd):
         if cfg.useValgrind:
             # FIXME: Running valgrind on sh is overkill. We probably could just
             # run on clang with no real loss.
-            command = ['valgrind', '-q',
-                       '--tool=memcheck', '--leak-check=no', '--trace-children=yes',
-                       '--error-exitcode=123'] + command
+            valgrindArgs = ['valgrind', '-q',
+                            '--tool=memcheck', '--trace-children=yes',
+                            '--error-exitcode=123'] + cfg.valgrindArgs
+            command = valgrindArgs + command
 
     p = subprocess.Popen(command, cwd=cwd,
                          stdin=subprocess.PIPE,

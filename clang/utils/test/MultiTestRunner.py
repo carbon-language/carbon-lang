@@ -257,6 +257,9 @@ def main():
     group.add_option("", "--vg", dest="useValgrind",
                      help="Run tests under valgrind",
                      action="store_true", default=False)
+    group.add_option("", "--vg-arg", dest="valgrindArgs",
+                     help="Specify an extra argument for valgrind",
+                     type=str, action="append", default=[])
     group.add_option("", "--time-tests", dest="timeTests",
                      help="Track elapsed wall time for each test",
                      action="store_true", default=False)
@@ -320,6 +323,7 @@ def main():
     cfg.clang = opts.clang
     cfg.clangcc = opts.clangcc
     cfg.useValgrind = opts.useValgrind
+    cfg.valgrindArgs = opts.valgrindArgs
     cfg.useExternalShell = opts.useExternalShell
 
     # FIXME: It could be worth loading these in parallel with testing.
