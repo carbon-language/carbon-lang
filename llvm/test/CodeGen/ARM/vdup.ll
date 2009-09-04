@@ -1,7 +1,4 @@
 ; RUN: llvm-as < %s | llc -march=arm -mattr=+neon | FileCheck %s
-; RUN: grep vdup.8 %t | count 4
-; RUN: grep vdup.16 %t | count 4
-; RUN: grep vdup.32 %t | count 10
 
 define <8 x i8> @v_dup8(i8 %A) nounwind {
 ;CHECK: v_dup8:
