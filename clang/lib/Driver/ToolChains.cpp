@@ -29,7 +29,8 @@ using namespace clang::driver::toolchains;
 
 Darwin::Darwin(const HostInfo &Host, const llvm::Triple& Triple,
                const unsigned (&_DarwinVersion)[3],
-               const unsigned (&_GCCVersion)[3])
+               const unsigned (&_GCCVersion)[3],
+               bool _IsIPhone)
   : ToolChain(Host, Triple) {
   DarwinVersion[0] = _DarwinVersion[0];
   DarwinVersion[1] = _DarwinVersion[1];
@@ -37,9 +38,13 @@ Darwin::Darwin(const HostInfo &Host, const llvm::Triple& Triple,
   GCCVersion[0] = _GCCVersion[0];
   GCCVersion[1] = _GCCVersion[1];
   GCCVersion[2] = _GCCVersion[2];
+  IsIPhone = _IsIPhone;
 
   llvm::raw_string_ostream(MacosxVersionMin)
     << "10." << DarwinVersion[0] - 4 << '.' << DarwinVersion[1];
+
+  // FIXME: Lift default up.
+  IPhoneOSVersionMin = "3.0";
 
   ToolChainDir = "i686-apple-darwin";
   ToolChainDir += llvm::utostr(DarwinVersion[0]);
@@ -150,15 +155,21 @@ DerivedArgList *Darwin::TranslateArgs(InputArgList &Args) const {
   } else if (!OSXVersion && !iPhoneVersion) {
     // Chose the default version based on the arch.
     //
-    // FIXME: This will need to be fixed when we merge in arm support.
+    // FIXME: Are there iPhone overrides for this?
 
-    // Look for MACOSX_DEPLOYMENT_TARGET, otherwise use the version
-    // from the host.
-    const char *Version = ::getenv("MACOSX_DEPLOYMENT_TARGET");
-    if (!Version)
-      Version = MacosxVersionMin.c_str();
-    const Option *O = Opts.getOption(options::OPT_mmacosx_version_min_EQ);
-    DAL->append(DAL->MakeJoinedArg(0, O, Version));
+    if (!isIPhone()) {
+      // Look for MACOSX_DEPLOYMENT_TARGET, otherwise use the version
+      // from the host.
+      const char *Version = ::getenv("MACOSX_DEPLOYMENT_TARGET");
+      if (!Version)
+        Version = MacosxVersionMin.c_str();
+      const Option *O = Opts.getOption(options::OPT_mmacosx_version_min_EQ);
+      DAL->append(DAL->MakeJoinedArg(0, O, Version));
+    } else {
+      const char *Version = IPhoneOSVersionMin.c_str();
+      const Option *O = Opts.getOption(options::OPT_miphoneos_version_min_EQ);
+      DAL->append(DAL->MakeJoinedArg(0, O, Version));
+    }
   }
   
   for (ArgList::iterator it = Args.begin(), ie = Args.end(); it != ie; ++it) {

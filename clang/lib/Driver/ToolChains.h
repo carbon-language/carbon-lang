@@ -53,6 +53,9 @@ class VISIBILITY_HIDDEN Darwin : public ToolChain {
   /// GCC version to use.
   unsigned GCCVersion[3];
 
+  /// Whether this is this an iPhone toolchain.
+  bool IsIPhone;
+
   /// The directory suffix for this tool chain.
   std::string ToolChainDir;
 
@@ -60,12 +63,16 @@ class VISIBILITY_HIDDEN Darwin : public ToolChain {
   /// initialized.
   mutable std::string MacosxVersionMin;
 
+  /// The default iphoneos-version-min of this tool chain.
+  std::string IPhoneOSVersionMin;
+
   const char *getMacosxVersionMin() const;
 
 public:
   Darwin(const HostInfo &Host, const llvm::Triple& Triple, 
-             const unsigned (&DarwinVersion)[3],
-             const unsigned (&GCCVersion)[3]);
+         const unsigned (&DarwinVersion)[3],
+         const unsigned (&GCCVersion)[3],
+         bool IsIPhone);
   ~Darwin();
 
   void getDarwinVersion(unsigned (&Res)[3]) const {
@@ -84,9 +91,15 @@ public:
     return MacosxVersionMin.c_str();
   }
 
+  const char *getIPhoneOSVersionStr() const {
+    return IPhoneOSVersionMin.c_str();
+  }
+
   const std::string &getToolChainDir() const { 
     return ToolChainDir;
   }
+
+  bool isIPhone() const { return IsIPhone; }
 
   virtual DerivedArgList *TranslateArgs(InputArgList &Args) const;
 

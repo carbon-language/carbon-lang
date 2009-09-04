@@ -1457,22 +1457,22 @@ void darwin::Link::AddLinkArgs(const ArgList &Args,
   Args.AddAllArgs(CmdArgs, options::OPT_image__base);
   Args.AddAllArgs(CmdArgs, options::OPT_init);
 
-  if (!Args.hasArg(options::OPT_mmacosx_version_min_EQ)) {
-    if (!Args.hasArg(options::OPT_miphoneos_version_min_EQ)) {
-      // FIXME: I don't understand what is going on here. This is
-      // supposed to come from darwin_ld_minversion, but gcc doesn't
-      // seem to be following that; it must be getting overridden
-      // somewhere.
+  if (!Args.hasArg(options::OPT_mmacosx_version_min_EQ) &&
+      !Args.hasArg(options::OPT_miphoneos_version_min_EQ)) {
+    // Add default version min.
+    if (!getDarwinToolChain().isIPhone()) {
       CmdArgs.push_back("-macosx_version_min");
       CmdArgs.push_back(getDarwinToolChain().getMacosxVersionStr());
+    } else {
+      CmdArgs.push_back("-iphoneos_version_min");
+      CmdArgs.push_back(getDarwinToolChain().getIPhoneOSVersionStr());
     }
-  } else {
-    // Adding all arguments doesn't make sense here but this is what
-    // gcc does.
-    Args.AddAllArgsTranslated(CmdArgs, options::OPT_mmacosx_version_min_EQ,
-                              "-macosx_version_min");
   }
 
+  // Adding all arguments doesn't make sense here but this is what
+  // gcc does.
+  Args.AddAllArgsTranslated(CmdArgs, options::OPT_mmacosx_version_min_EQ,
+                              "-macosx_version_min");
   Args.AddAllArgsTranslated(CmdArgs, options::OPT_miphoneos_version_min_EQ,
                             "-iphoneos_version_min");
   Args.AddLastArg(CmdArgs, options::OPT_nomultidefs);

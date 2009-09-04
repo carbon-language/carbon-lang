@@ -155,11 +155,18 @@ ToolChain *DarwinHostInfo::getToolChain(const ArgList &Args,
   if (!TC) {
     llvm::Triple TCTriple(getTriple());
     TCTriple.setArchName(ArchName);
-                          
+
     if (strcmp(ArchName, "i386") == 0 || strcmp(ArchName, "x86_64") == 0)
       TC = new toolchains::Darwin(*this, TCTriple,
                                   DarwinVersion,
-                                  GCCVersion);
+                                  GCCVersion,
+                                  false);
+    else if (strncmp(ArchName, "arm", 3) == 0 ||
+             strncmp(ArchName, "thumb", 5) == 0)
+      TC = new toolchains::Darwin(*this, TCTriple,
+                                  DarwinVersion,
+                                  GCCVersion,
+                                  true);
     else
       TC = new toolchains::Darwin_GCC(*this, TCTriple);
   }
