@@ -120,7 +120,7 @@ Tool &Darwin_X86::SelectTool(const Compilation &C,
     case Action::AssembleJobClass:
       T = new tools::darwin::Assemble(*this); break;
     case Action::LinkJobClass:
-      T = new tools::darwin::Link(*this, MacosxVersionMin.c_str()); break;
+      T = new tools::darwin::Link(*this); break;
     case Action::LipoJobClass:
       T = new tools::darwin::Lipo(*this); break;
     }

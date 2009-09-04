@@ -201,15 +201,11 @@ namespace darwin {
     void AddDarwinSubArch(const ArgList &Args, ArgStringList &CmdArgs) const;
     void AddLinkArgs(const ArgList &Args, ArgStringList &CmdArgs) const;
 
-    /// The default macosx-version-min.
-    const char *MacosxVersionMin;
-
     const toolchains::Darwin_X86 &getDarwinToolChain() const;
 
   public:
-    Link(const ToolChain &TC,
-         const char *_MacosxVersionMin) 
-      : Tool("darwin::Link", TC), MacosxVersionMin(_MacosxVersionMin) {
+    Link(const ToolChain &TC)
+      : Tool("darwin::Link", TC) {
     }
 
     virtual bool acceptsPipedInput() const { return false; }
