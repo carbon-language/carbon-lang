@@ -246,8 +246,8 @@ CodeGenFunction::EmitCXXOperatorMemberCallExpr(const CXXOperatorCallExpr *E,
   
   const FunctionProtoType *FPT = MD->getType()->getAsFunctionProtoType();
   const llvm::Type *Ty = 
-  CGM.getTypes().GetFunctionType(CGM.getTypes().getFunctionInfo(MD), 
-                                 FPT->isVariadic());
+    CGM.getTypes().GetFunctionType(CGM.getTypes().getFunctionInfo(MD), 
+                                   FPT->isVariadic());
   llvm::Constant *Callee = CGM.GetAddrOfFunction(GlobalDecl(MD), Ty);
   
   llvm::Value *This = EmitLValue(E->getArg(0)).getAddress();
@@ -849,13 +849,15 @@ private:
   llvm::DenseMap<const CXXMethodDecl *, Index_t> VCallOffset;
   std::vector<Index_t> VCalls;
   typedef CXXRecordDecl::method_iterator method_iter;
+  // FIXME: Linkage should follow vtable
+  const bool Extern;
 public:
   VtableBuilder(std::vector<llvm::Constant *> &meth,
                 const CXXRecordDecl *c,
                 CodeGenModule &cgm)
     : methods(meth), Class(c), BLayout(cgm.getContext().getASTRecordLayout(c)),
       rtti(cgm.GenerateRtti(c)), VMContext(cgm.getModule().getContext()),
-      CGM(cgm) {
+      CGM(cgm), Extern(true) {
     Ptr8Ty = llvm::PointerType::get(llvm::Type::getInt8Ty(VMContext), 0);
   }
 
@@ -893,7 +895,9 @@ public:
   }
 
   bool OverrideMethod(const CXXMethodDecl *MD, llvm::Constant *m,
-                      bool MorallyVirtual, Index_t Offset) {
+                      bool MorallyVirtual, Index_t Offset,
+                      std::vector<llvm::Constant *> &submethods,
+                      Index_t AddressPoint) {
     typedef CXXMethodDecl::method_iterator meth_iter;
 
     // FIXME: Don't like the nested loops.  For very large inheritance
@@ -910,13 +914,18 @@ public:
       om = CGM.GetAddrOfFunction(GlobalDecl(OMD), Ptr8Ty);
       om = llvm::ConstantExpr::getBitCast(om, Ptr8Ty);
 
-      for (Index_t i = 0, e = submethods.size();
+      for (Index_t i = AddressPoint, e = submethods.size();
            i != e; ++i) {
         // FIXME: begin_overridden_methods might be too lax, covariance */
         if (submethods[i] == om) {
+          int64_t O = VCallOffset[OMD] - Offset/8;
           // FIXME: thunks
-          submethods[i] = m;
-          Index[MD] = i;
+          if (O) {
+            submethods[i] = CGM.BuildThunk(MD, Extern, true, 0, O);
+          } else
+            submethods[i] = m;
+          // FIXME: audit
+          Index[MD] = i - AddressPoint;
           if (MorallyVirtual) {
             VCallOffset[MD] = Offset/8;
             VCalls[VCall[OMD]] = Offset/8 - VCallOffset[OMD];
@@ -937,14 +946,14 @@ public:
       if (mi->isVirtual()) {
         const CXXMethodDecl *MD = *mi;
         llvm::Constant *m = wrap(CGM.GetAddrOfFunction(GlobalDecl(MD), Ptr8Ty));
-        OverrideMethod(MD, m, MorallyVirtual, Offset);
+        OverrideMethod(MD, m, MorallyVirtual, Offset, methods, AddressPoint);
       }
   }
 
   void AddMethod(const CXXMethodDecl *MD, Index_t AddressPoint,
                  bool MorallyVirtual, Index_t Offset) {
     llvm::Constant *m = wrap(CGM.GetAddrOfFunction(GlobalDecl(MD), Ptr8Ty));
-    if (OverrideMethod(MD, m, MorallyVirtual, Offset))
+    if (OverrideMethod(MD, m, MorallyVirtual, Offset, submethods, 0))
       return;
     
     // else allocate a new slot.
@@ -1048,7 +1057,9 @@ public:
       if (Base != PrimaryBase || PrimaryBaseWasVirtual) {
         uint64_t o = Offset + Layout.getBaseClassOffset(Base);
         StartNewTable();
-        GenerateVtableForBase(Base, true, true, false, o, false);
+        Index_t AP;
+        AP = GenerateVtableForBase(Base, true, true, MorallyVirtual, o, false);
+        OverrideMethods(RD, AP, MorallyVirtual, o);
       }
     }
     return AddressPoint;
@@ -1065,7 +1076,9 @@ public:
         IndirectPrimary.insert(Base);
         StartNewTable();
         int64_t BaseOffset = BLayout.getVBaseClassOffset(Base);
-        GenerateVtableForBase(Base, false, true, true, BaseOffset, true);
+        Index_t AP;
+        AP = GenerateVtableForBase(Base, false, true, true, BaseOffset, true);
+        OverrideMethods(RD, AP, true, BaseOffset);
       }
       if (Base->getNumVBases())
         GenerateVtableForVBases(Base, Class);
@@ -1144,6 +1157,62 @@ llvm::Value *CodeGenFunction::GenerateVtable(const CXXRecordDecl *RD) {
 
 // FIXME: move to Context
 static VtableInfo *vtableinfo;
+
+llvm::Constant *CodeGenFunction::GenerateThunk(llvm::Function *Fn,
+                                               const CXXMethodDecl *MD,
+                                               bool Extern, bool Virtual,
+                                               int64_t nv, int64_t v) {
+  QualType R = MD->getType()->getAsFunctionType()->getResultType();
+
+  FunctionArgList Args;
+  ImplicitParamDecl *ThisDecl =
+    ImplicitParamDecl::Create(getContext(), 0, SourceLocation(), 0,
+                              MD->getThisType(getContext()));
+  Args.push_back(std::make_pair(ThisDecl, ThisDecl->getType()));
+  for (FunctionDecl::param_const_iterator i = MD->param_begin(),
+         e = MD->param_end();
+       i != e; ++i) {
+    ParmVarDecl *D = *i;
+    Args.push_back(std::make_pair(D, D->getType()));
+  }
+  IdentifierInfo *II
+    = &CGM.getContext().Idents.get("__thunk_named_foo_");
+  FunctionDecl *FD = FunctionDecl::Create(getContext(),
+                                          getContext().getTranslationUnitDecl(),
+                                          SourceLocation(), II, R, 0,
+                                          Extern
+                                            ? FunctionDecl::Extern
+                                            : FunctionDecl::Static,
+                                          false, true);
+  StartFunction(FD, R, Fn, Args, SourceLocation());
+  // FIXME: generate body
+  FinishFunction();
+  return Fn;
+}
+
+llvm::Constant *CodeGenModule::BuildThunk(const CXXMethodDecl *MD,
+                                          bool Extern, bool Virtual, int64_t nv,
+                                          int64_t v) {
+  llvm::SmallString<256> OutName;
+  llvm::raw_svector_ostream Out(OutName);
+  mangleThunk(MD, Virtual, nv, v, getContext(), Out);
+  llvm::GlobalVariable::LinkageTypes linktype;
+  linktype = llvm::GlobalValue::WeakAnyLinkage;
+  if (!Extern)
+    linktype = llvm::GlobalValue::InternalLinkage;
+  llvm::Type *Ptr8Ty=llvm::PointerType::get(llvm::Type::getInt8Ty(VMContext),0);
+  const FunctionProtoType *FPT = MD->getType()->getAsFunctionProtoType();
+  const llvm::FunctionType *FTy =
+    getTypes().GetFunctionType(getTypes().getFunctionInfo(MD),
+                               FPT->isVariadic());
+
+  llvm::Function *Fn = llvm::Function::Create(FTy, linktype, Out.str(),
+                                              &getModule());
+  CodeGenFunction(*this).GenerateThunk(Fn, MD, Extern, Virtual, nv, v);
+  // Fn = Builder.CreateBitCast(Fn, Ptr8Ty);
+  llvm::Constant *m = llvm::ConstantExpr::getBitCast(Fn, Ptr8Ty);
+  return m;
+}
 
 llvm::Value *
 CodeGenFunction::BuildVirtualCall(const CXXMethodDecl *MD, llvm::Value *&This,
@@ -1309,8 +1378,7 @@ void CodeGenFunction::EmitClassAggrCopyAssignment(llvm::Value *Dest,
     // Push the Src ptr.
     CallArgs.push_back(std::make_pair(RValue::get(Src),
                                       MD->getParamDecl(0)->getType()));
-    QualType ResultType =
-    MD->getType()->getAsFunctionType()->getResultType();
+    QualType ResultType = MD->getType()->getAsFunctionType()->getResultType();
     EmitCall(CGM.getTypes().getFunctionInfo(ResultType, CallArgs),
              Callee, CallArgs, MD);
   }

@@ -364,6 +364,11 @@ public:
   /// GenerateVtable - Generate the vtable for the given type.
   llvm::Value *GenerateVtable(const CXXRecordDecl *RD);
 
+  /// GenerateThunk - Generate a thunk for the given method
+  llvm::Constant *GenerateThunk(llvm::Function *Fn, const CXXMethodDecl *MD,
+                                bool Extern, bool Virtual, int64_t nv,
+                                int64_t v);
+
   void EmitCtorPrologue(const CXXConstructorDecl *CD);
   
   void SynthesizeCXXCopyConstructor(const CXXConstructorDecl *CD,

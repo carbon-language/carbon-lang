@@ -235,6 +235,10 @@ public:
   /// GenerateRtti - Generate the rtti information for the given type.
   llvm::Constant *GenerateRtti(const CXXRecordDecl *RD);
 
+  /// BuildThunk - Build a thunk for the given method
+  llvm::Constant *BuildThunk(const CXXMethodDecl *MD, bool Extern, bool Virtual,
+                             int64_t nv, int64_t v);
+
   /// GetStringForStringLiteral - Return the appropriate bytes for a string
   /// literal, properly padded to match the literal type. If only the address of
   /// a constant is needed consider using GetAddrOfConstantStringLiteral.
