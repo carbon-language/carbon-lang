@@ -220,11 +220,6 @@ namespace llvm {
     return os;
   }
 
-  inline std::ostream& operator<<(std::ostream &os, MachineInstrIndex mi) {
-    mi.print(os);
-    return os;
-  }
-
   /// Densemap specialization for MachineInstrIndex.
   template <>
   struct DenseMapInfo<MachineInstrIndex> {
@@ -612,60 +607,6 @@ namespace llvm {
         }
       }
     }
-
-    /* REMOVE_ME
-    /// addKill - Add a kill instruction index to the specified value
-    /// number.
-    static void addKill(VNInfo *VNI, MachineInstrIndex killIdx) {
-      assert(killIdx.isUse() && "Kill must be a use.");
-      if (VNI->kills.empty()) {
-        VNI->kills.push_back(killIdx);
-      } else {
-        VNInfo::KillSet::iterator
-          I = std::lower_bound(VNI->kills.begin(), VNI->kills.end(), killIdx);
-        VNI->kills.insert(I, killIdx);
-      }
-    }
-
-    /// removeKill - Remove the specified kill from the list of kills of
-    /// the specified val#.
-    static bool removeKill(VNInfo *VNI, MachineInstrIndex Kill) {
-      
-      VNInfo::KillSet::iterator
-        I = std::lower_bound(VNI->kills.begin(), VNI->kills.end(), Kill);
-      if (I != VNI->kills.end() && (*I == Kill)) {
-        VNI->kills.erase(I);
-        return true;
-      }
-      return false;
-      
-    }
-    
-
-
-    /// removeKills - Remove all the kills in specified range
-    /// [Start, End] of the specified val#.
-    static void removeKills(VNInfo *VNI, MachineInstrIndex Start,
-                                         MachineInstrIndex End) {
-
-      VNInfo::KillSet &kills = VNI->kills;
-
-      VNInfo::KillSet::iterator
-        I = std::lower_bound(kills.begin(), kills.end(), Start);
-      VNInfo::KillSet::iterator
-        E = std::upper_bound(kills.begin(), kills.end(), End);
-      kills.erase(I, E);
-    }
-    
-
-    /// isKill - Return true if the specified index is a kill of the
-    /// specified val#.
-    static bool isKill(const VNInfo *VNI, MachineInstrIndex Kill) {
-      VNInfo::KillSet::const_iterator
-        I = std::lower_bound(VNI->kills.begin(), VNI->kills.end(), Kill);
-      return I != VNI->kills.end() && (*I == Kill);
-    }
-    */
 
     /// isOnlyLROfValNo - Return true if the specified live range is the only
     /// one defined by the its val#.
