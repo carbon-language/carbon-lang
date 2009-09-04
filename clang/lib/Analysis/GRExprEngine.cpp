@@ -1417,6 +1417,88 @@ static bool EvalOSAtomic(ExplodedNodeSet& Dst,
 //===----------------------------------------------------------------------===//
 // Transfer function: Function calls.
 //===----------------------------------------------------------------------===//
+static void MarkNoReturnFunction(const FunctionDecl *FD, CallExpr *CE,
+                                 const GRState *state, 
+                                 GRStmtNodeBuilder *Builder) {
+  if (FD->getAttr<NoReturnAttr>() || 
+      FD->getAttr<AnalyzerNoReturnAttr>())
+    Builder->BuildSinks = true;
+  else {
+    // HACK: Some functions are not marked noreturn, and don't return.
+    //  Here are a few hardwired ones.  If this takes too long, we can
+    //  potentially cache these results.
+    const char* s = FD->getIdentifier()->getName();
+    unsigned n = strlen(s);
+        
+    switch (n) {
+    default:
+      break;
+            
+    case 4:
+      if (!memcmp(s, "exit", 4)) Builder->BuildSinks = true;
+      break;
+
+    case 5:
+      if (!memcmp(s, "panic", 5)) Builder->BuildSinks = true;
+      else if (!memcmp(s, "error", 5)) {
+        if (CE->getNumArgs() > 0) {
+          SVal X = state->getSVal(*CE->arg_begin());
+          // FIXME: use Assume to inspect the possible symbolic value of
+          // X. Also check the specific signature of error().
+          nonloc::ConcreteInt* CI = dyn_cast<nonloc::ConcreteInt>(&X);
+          if (CI && CI->getValue() != 0)
+            Builder->BuildSinks = true;
+        }
+      }
+      break;
+
+    case 6:
+      if (!memcmp(s, "Assert", 6)) {
+        Builder->BuildSinks = true;
+        break;
+      }
+            
+      // FIXME: This is just a wrapper around throwing an exception.
+      //  Eventually inter-procedural analysis should handle this easily.
+      if (!memcmp(s, "ziperr", 6)) Builder->BuildSinks = true;
+
+      break;
+          
+    case 7:
+      if (!memcmp(s, "assfail", 7)) Builder->BuildSinks = true;
+      break;
+            
+    case 8:
+      if (!memcmp(s ,"db_error", 8) || 
+          !memcmp(s, "__assert", 8))
+        Builder->BuildSinks = true;
+      break;
+          
+    case 12:
+      if (!memcmp(s, "__assert_rtn", 12)) Builder->BuildSinks = true;
+      break;
+            
+    case 13:
+      if (!memcmp(s, "__assert_fail", 13)) Builder->BuildSinks = true;
+      break;
+            
+    case 14:
+      if (!memcmp(s, "dtrace_assfail", 14) ||
+          !memcmp(s, "yy_fatal_error", 14))
+        Builder->BuildSinks = true;
+      break;
+            
+    case 26:
+      if (!memcmp(s, "_XCAssertionFailureHandler", 26) ||
+          !memcmp(s, "_DTAssertionFailureHandler", 26) ||
+          !memcmp(s, "_TSAssertionFailureHandler", 26))
+        Builder->BuildSinks = true;
+
+      break;
+    }
+        
+  }
+}
 
 void GRExprEngine::EvalCall(ExplodedNodeSet& Dst, CallExpr* CE, SVal L, 
                             ExplodedNode* Pred) {
@@ -1498,86 +1580,8 @@ void GRExprEngine::VisitCallRec(CallExpr* CE, ExplodedNode* Pred,
     
     SaveAndRestore<bool> OldSink(Builder->BuildSinks);
     const FunctionDecl* FD = L.getAsFunctionDecl();
-    if (FD) {      
-      if (FD->getAttr<NoReturnAttr>() || 
-          FD->getAttr<AnalyzerNoReturnAttr>())
-        Builder->BuildSinks = true;
-      else {
-        // HACK: Some functions are not marked noreturn, and don't return.
-        //  Here are a few hardwired ones.  If this takes too long, we can
-        //  potentially cache these results.
-        const char* s = FD->getIdentifier()->getName();
-        unsigned n = strlen(s);
-        
-        switch (n) {
-          default:
-            break;
-            
-          case 4:
-            if (!memcmp(s, "exit", 4)) Builder->BuildSinks = true;
-            break;
-
-          case 5:
-            if (!memcmp(s, "panic", 5)) Builder->BuildSinks = true;
-            else if (!memcmp(s, "error", 5)) {
-              if (CE->getNumArgs() > 0) {
-                SVal X = state->getSVal(*CE->arg_begin());
-                // FIXME: use Assume to inspect the possible symbolic value of
-                // X. Also check the specific signature of error().
-                nonloc::ConcreteInt* CI = dyn_cast<nonloc::ConcreteInt>(&X);
-                if (CI && CI->getValue() != 0)
-                  Builder->BuildSinks = true;
-              }
-            }
-            break;
-
-          case 6:
-            if (!memcmp(s, "Assert", 6)) {
-              Builder->BuildSinks = true;
-              break;
-            }
-            
-            // FIXME: This is just a wrapper around throwing an exception.
-            //  Eventually inter-procedural analysis should handle this easily.
-            if (!memcmp(s, "ziperr", 6)) Builder->BuildSinks = true;
-
-            break;
-          
-          case 7:
-            if (!memcmp(s, "assfail", 7)) Builder->BuildSinks = true;
-            break;
-            
-          case 8:
-            if (!memcmp(s ,"db_error", 8) || 
-                !memcmp(s, "__assert", 8))
-              Builder->BuildSinks = true;
-            break;
-          
-          case 12:
-            if (!memcmp(s, "__assert_rtn", 12)) Builder->BuildSinks = true;
-            break;
-            
-          case 13:
-            if (!memcmp(s, "__assert_fail", 13)) Builder->BuildSinks = true;
-            break;
-            
-          case 14:
-            if (!memcmp(s, "dtrace_assfail", 14) ||
-                !memcmp(s, "yy_fatal_error", 14))
-              Builder->BuildSinks = true;
-            break;
-            
-          case 26:
-            if (!memcmp(s, "_XCAssertionFailureHandler", 26) ||
-                !memcmp(s, "_DTAssertionFailureHandler", 26) ||
-                !memcmp(s, "_TSAssertionFailureHandler", 26))
-              Builder->BuildSinks = true;
-
-            break;
-        }
-        
-      }
-    }
+    if (FD)
+      MarkNoReturnFunction(FD, CE, state, Builder);
     
     // Evaluate the call.
 
