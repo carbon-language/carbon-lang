@@ -157,6 +157,11 @@ CXXConstructorDecl *CXXRecordDecl::getCopyConstructor(ASTContext &Context,
   DeclContext::lookup_const_iterator Con, ConEnd;
   for (llvm::tie(Con, ConEnd) = this->lookup(ConstructorName);
        Con != ConEnd; ++Con) {
+    // C++ [class.copy]p2:
+    //   A non-template constructor for class X is a copy constructor if [...]
+    if (isa<FunctionTemplateDecl>(*Con))
+      continue;
+
     if (cast<CXXConstructorDecl>(*Con)->isCopyConstructor(Context, 
                                                           FoundTQs)) {
       if (((TypeQuals & QualType::Const) == (FoundTQs & QualType::Const)) ||
@@ -301,6 +306,10 @@ CXXRecordDecl::getDefaultConstructor(ASTContext &Context) {
   DeclContext::lookup_const_iterator Con, ConEnd;
   for (llvm::tie(Con, ConEnd) = lookup(ConstructorName);
        Con != ConEnd; ++Con) {
+    // FIXME: In C++0x, a constructor template can be a default constructor.
+    if (isa<FunctionTemplateDecl>(*Con))
+      continue;
+
     CXXConstructorDecl *Constructor = cast<CXXConstructorDecl>(*Con);
     if (Constructor->isDefaultConstructor())
       return Constructor;
