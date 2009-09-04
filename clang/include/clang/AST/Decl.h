@@ -715,6 +715,29 @@ public:
   static bool classof(const OriginalParmVarDecl *D) { return true; }
 };
   
+// \brief Describes the kind of template specialization that a
+// particular template specialization declaration represents.
+enum TemplateSpecializationKind {
+  /// This template specialization was formed from a template-id but
+  /// has not yet been declared, defined, or instantiated.
+  TSK_Undeclared = 0,
+  /// This template specialization was implicitly instantiated from a
+  /// template. (C++ [temp.inst]).
+  TSK_ImplicitInstantiation,
+  /// This template specialization was declared or defined by an
+  /// explicit specialization (C++ [temp.expl.spec]) or partial
+  /// specialization (C++ [temp.class.spec]).
+  TSK_ExplicitSpecialization,
+  /// This template specialization was instantiated from a template
+  /// due to an explicit instantiation declaration request 
+  /// (C++0x [temp.explicit]).
+  TSK_ExplicitInstantiationDeclaration,
+  /// This template specialization was instantiated from a template
+  /// due to an explicit instantiation definition request 
+  /// (C++ [temp.explicit]).
+  TSK_ExplicitInstantiationDefinition  
+};
+  
 /// FunctionDecl - An instance of this class is created to represent a
 /// function declaration or definition. 
 ///
@@ -1077,14 +1100,14 @@ public:
                                       const TemplateArgumentList *TemplateArgs,
                                          void *InsertPos);
 
-  /// \brief Determine whether this is an explicit specialization of a 
-  /// function template or a member function of a class template.
-  bool isExplicitSpecialization() const;
+  /// \brief Determine what kind of template instantiation this function
+  /// represents.
+  TemplateSpecializationKind getTemplateSpecializationKind() const;
 
-  /// \brief Note that this is an explicit specialization of a function template
-  /// or a member function of a class template.
-  void setExplicitSpecialization(bool ES);
-                                 
+  /// \brief Determine what kind of template instantiation this function
+  /// represents.
+  void setTemplateSpecializationKind(TemplateSpecializationKind TSK);
+                       
   // Implement isa/cast/dyncast/etc.
   static bool classof(const Decl *D) {
     return D->getKind() >= FunctionFirst && D->getKind() <= FunctionLast;

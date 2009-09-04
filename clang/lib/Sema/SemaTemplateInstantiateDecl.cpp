@@ -402,6 +402,8 @@ Decl *TemplateDeclInstantiator::VisitClassTemplateDecl(ClassTemplateDecl *D) {
 
 Decl *
 TemplateDeclInstantiator::VisitFunctionTemplateDecl(FunctionTemplateDecl *D) {
+  // FIXME: Dig out the out-of-line definition of this function template?
+  
   TemplateParameterList *TempParams = D->getTemplateParameters();
   TemplateParameterList *InstParams = SubstTemplateParams(TempParams);
   if (!InstParams) 
@@ -496,7 +498,7 @@ Decl *TemplateDeclInstantiator::VisitFunctionDecl(FunctionDecl *D) {
                            D->getStorageClass(),
                            D->isInline(), D->hasWrittenPrototype());
   Function->setLexicalDeclContext(Owner);
-
+  
   // Attach the parameters
   for (unsigned P = 0; P < Params.size(); ++P)
     Params[P]->setOwningFunction(Function);
@@ -622,7 +624,7 @@ TemplateDeclInstantiator::VisitCXXMethodDecl(CXXMethodDecl *D,
                                                     Method->getDeclName(), 
                                                     TemplateParams, Method);
     if (D->isOutOfLine())
-      FunctionTemplate->setLexicalDeclContext(D->getLexicalDeclContext());
+      FunctionTemplate->setLexicalDeclContext(D->getLexicalDeclContext());    
     Method->setDescribedFunctionTemplate(FunctionTemplate);
   } else if (!FunctionTemplate)
     Method->setInstantiationOfMemberFunction(D);
@@ -979,6 +981,15 @@ void Sema::InstantiateFunctionDefinition(SourceLocation PointOfInstantiation,
   if (!Pattern)
     return;
 
+  // C++0x [temp.explicit]p9:
+  //   Except for inline functions, other explicit instantiation declarations
+  //   have the effect of suppressing the implicit instantiation of the entity 
+  //   to which they refer.
+  if (Function->getTemplateSpecializationKind() 
+        == TSK_ExplicitInstantiationDeclaration &&
+      PatternDecl->isOutOfLine() && !PatternDecl->isInline())
+    return;
+  
   InstantiatingTemplate Inst(*this, PointOfInstantiation, Function);
   if (Inst)
     return;
@@ -1080,6 +1091,8 @@ void Sema::InstantiateStaticDataMemberDefinition(
     return;
   }
 
+  // FIXME: extern templates
+  
   InstantiatingTemplate Inst(*this, PointOfInstantiation, Var);
   if (Inst)
     return;

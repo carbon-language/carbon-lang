@@ -2934,7 +2934,8 @@ Sema::ActOnExplicitInstantiation(Scope *S,
 
   bool SpecializationRequiresInstantiation = true;
   if (PrevDecl) {
-    if (PrevDecl->getSpecializationKind() == TSK_ExplicitInstantiation) {
+    if (PrevDecl->getSpecializationKind() 
+          == TSK_ExplicitInstantiationDefinition) {
       // This particular specialization has already been declared or
       // instantiated. We cannot explicitly instantiate it.
       Diag(TemplateNameLoc, diag::err_explicit_instantiation_duplicate)
@@ -3028,16 +3029,19 @@ Sema::ActOnExplicitInstantiation(Scope *S,
   //
   // This check comes when we actually try to perform the
   // instantiation.
+  TemplateSpecializationKind TSK
+    = ExternLoc.isInvalid()? TSK_ExplicitInstantiationDefinition 
+                           : TSK_ExplicitInstantiationDeclaration;
   if (SpecializationRequiresInstantiation)
-    InstantiateClassTemplateSpecialization(Specialization, true);
+    InstantiateClassTemplateSpecialization(Specialization, TSK);
   else // Instantiate the members of this class template specialization.
-    InstantiateClassTemplateSpecializationMembers(TemplateLoc, Specialization);
+    InstantiateClassTemplateSpecializationMembers(TemplateLoc, Specialization,
+                                                  TSK);
 
   return DeclPtrTy::make(Specialization);
 }
 
 // Explicit instantiation of a member class of a class template.
-// FIXME: Implement extern template semantics.
 Sema::DeclResult
 Sema::ActOnExplicitInstantiation(Scope *S, 
                                  SourceLocation ExternLoc,
@@ -3092,17 +3096,21 @@ Sema::ActOnExplicitInstantiation(Scope *S,
     }
   }
 
+  TemplateSpecializationKind TSK
+    = ExternLoc.isInvalid()? TSK_ExplicitInstantiationDefinition 
+                           : TSK_ExplicitInstantiationDeclaration;
+  
   if (!Record->getDefinition(Context)) {
     // If the class has a definition, instantiate it (and all of its
     // members, recursively).
     Pattern = cast_or_null<CXXRecordDecl>(Pattern->getDefinition(Context));
     if (Pattern && InstantiateClass(TemplateLoc, Record, Pattern, 
                                     getTemplateInstantiationArgs(Record),
-                                    /*ExplicitInstantiation=*/true))
+                                    TSK))
       return true;
   } else // Instantiate all of the members of the class.
     InstantiateClassMembers(TemplateLoc, Record, 
-                            getTemplateInstantiationArgs(Record));
+                            getTemplateInstantiationArgs(Record), TSK);
 
   // FIXME: We don't have any representation for explicit instantiations of
   // member classes. Such a representation is not needed for compilation, but it

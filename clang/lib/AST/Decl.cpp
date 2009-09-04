@@ -640,7 +640,7 @@ FunctionDecl::setFunctionTemplateSpecialization(ASTContext &Context,
   
   Info->Function = this;
   Info->Template.setPointer(Template);
-  Info->Template.setInt(0); // Implicit instantiation, unless told otherwise
+  Info->Template.setInt(TSK_ImplicitInstantiation - 1);
   Info->TemplateArguments = TemplateArgs;
   TemplateOrSpecialization = Info;
   
@@ -649,24 +649,35 @@ FunctionDecl::setFunctionTemplateSpecialization(ASTContext &Context,
   Template->getSpecializations().InsertNode(Info, InsertPos);
 }
 
-bool FunctionDecl::isExplicitSpecialization() const {
-  // FIXME: check this property for explicit specializations of member
-  // functions of class templates.
-  FunctionTemplateSpecializationInfo *Info 
-    = TemplateOrSpecialization.dyn_cast<FunctionTemplateSpecializationInfo*>();
-  if (!Info)
-    return false;
-  
-  return Info->isExplicitSpecialization();
-}
-
-void FunctionDecl::setExplicitSpecialization(bool ES) {
-  // FIXME: set this property for explicit specializations of member functions
-  // of class templates.
+TemplateSpecializationKind FunctionDecl::getTemplateSpecializationKind() const {
+  // For a function template specialization, query the specialization 
+  // information object.
   FunctionTemplateSpecializationInfo *Info 
     = TemplateOrSpecialization.dyn_cast<FunctionTemplateSpecializationInfo*>();
   if (Info)
-    Info->setExplicitSpecialization(ES);
+    return Info->getTemplateSpecializationKind();
+  
+  if (!getInstantiatedFromMemberFunction())
+    return TSK_Undeclared;
+  
+  // Find the class template specialization corresponding to this instantiation
+  // of a member function.
+  const DeclContext *Parent = getDeclContext();
+  while (Parent && !isa<ClassTemplateSpecializationDecl>(Parent))
+    Parent = Parent->getParent();
+  
+  if (!Parent)
+    return TSK_Undeclared;
+
+  return cast<ClassTemplateSpecializationDecl>(Parent)->getSpecializationKind();
+}
+
+void 
+FunctionDecl::setTemplateSpecializationKind(TemplateSpecializationKind TSK) {
+  FunctionTemplateSpecializationInfo *Info 
+    = TemplateOrSpecialization.dyn_cast<FunctionTemplateSpecializationInfo*>();
+  assert(Info && "Not a function template specialization");
+  Info->setTemplateSpecializationKind(TSK);
 }
 
 //===----------------------------------------------------------------------===//

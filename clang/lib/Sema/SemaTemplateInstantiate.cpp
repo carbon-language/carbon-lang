@@ -623,8 +623,7 @@ Sema::SubstBaseSpecifiers(CXXRecordDecl *Instantiation,
 /// \param TemplateArgs The template arguments to be substituted into
 /// the pattern.
 ///
-/// \param ExplicitInstantiation whether this is an explicit instantiation
-/// (otherwise, it is an implicit instantiation).
+/// \param TSK the kind of implicit or explicit instantiation to perform.
 ///
 /// \param Complain whether to complain if the class cannot be instantiated due
 /// to the lack of a definition.
@@ -634,7 +633,7 @@ bool
 Sema::InstantiateClass(SourceLocation PointOfInstantiation,
                        CXXRecordDecl *Instantiation, CXXRecordDecl *Pattern,
                        const MultiLevelTemplateArgumentList &TemplateArgs,
-                       bool ExplicitInstantiation,
+                       TemplateSpecializationKind TSK,
                        bool Complain) {
   bool Invalid = false;
 
@@ -650,7 +649,7 @@ Sema::InstantiateClass(SourceLocation PointOfInstantiation,
       Diag(Pattern->getLocation(), diag::note_member_of_template_here);
     } else {
       Diag(PointOfInstantiation, diag::err_template_instantiate_undefined)
-        << ExplicitInstantiation
+        << (TSK != TSK_ImplicitInstantiation)
         << Context.getTypeDeclType(Instantiation);
       Diag(Pattern->getLocation(), diag::note_template_decl_here);
     }
@@ -708,9 +707,10 @@ Sema::InstantiateClass(SourceLocation PointOfInstantiation,
     Consumer.HandleTagDeclDefinition(Instantiation);
 
   // If this is an explicit instantiation, instantiate our members, too.
-  if (!Invalid && ExplicitInstantiation) {
+  if (!Invalid && TSK != TSK_ImplicitInstantiation) {
     Inst.Clear();
-    InstantiateClassMembers(PointOfInstantiation, Instantiation, TemplateArgs);
+    InstantiateClassMembers(PointOfInstantiation, Instantiation, TemplateArgs,
+                            TSK);
   }
 
   return Invalid;
@@ -719,7 +719,7 @@ Sema::InstantiateClass(SourceLocation PointOfInstantiation,
 bool 
 Sema::InstantiateClassTemplateSpecialization(
                            ClassTemplateSpecializationDecl *ClassTemplateSpec,
-                           bool ExplicitInstantiation,
+                           TemplateSpecializationKind TSK,
                            bool Complain) {
   // Perform the actual instantiation on the canonical declaration.
   ClassTemplateSpec = cast<ClassTemplateSpecializationDecl>(
@@ -798,14 +798,12 @@ Sema::InstantiateClassTemplateSpecialization(
   }
 
   // Note that this is an instantiation.
-  ClassTemplateSpec->setSpecializationKind(
-                        ExplicitInstantiation? TSK_ExplicitInstantiation 
-                                             : TSK_ImplicitInstantiation);
+  ClassTemplateSpec->setSpecializationKind(TSK);
 
   bool Result = InstantiateClass(ClassTemplateSpec->getLocation(),
                                  ClassTemplateSpec, Pattern, 
                               getTemplateInstantiationArgs(ClassTemplateSpec),
-                                 ExplicitInstantiation,
+                                 TSK,
                                  Complain);
   
   for (unsigned I = 0, N = Matched.size(); I != N; ++I) {
@@ -822,8 +820,10 @@ Sema::InstantiateClassTemplateSpecialization(
 /// or a member class of a template.
 void
 Sema::InstantiateClassMembers(SourceLocation PointOfInstantiation,
-                        CXXRecordDecl *Instantiation,
-                        const MultiLevelTemplateArgumentList &TemplateArgs) {
+                              CXXRecordDecl *Instantiation,
+                        const MultiLevelTemplateArgumentList &TemplateArgs,
+                              TemplateSpecializationKind TSK) {
+  // FIXME: extern templates
   for (DeclContext::decl_iterator D = Instantiation->decls_begin(),
                                DEnd = Instantiation->decls_end();
        D != DEnd; ++D) {
@@ -839,7 +839,8 @@ Sema::InstantiateClassMembers(SourceLocation PointOfInstantiation,
                "Missing instantiated-from-template information");
         InstantiateClass(PointOfInstantiation, Record,
                          Record->getInstantiatedFromMemberClass(),
-                         TemplateArgs, true);
+                         TemplateArgs,
+                         TSK);
       }
     }
   }
@@ -848,9 +849,11 @@ Sema::InstantiateClassMembers(SourceLocation PointOfInstantiation,
 /// \brief Instantiate the definitions of all of the members of the
 /// given class template specialization, which was named as part of an
 /// explicit instantiation.
-void Sema::InstantiateClassTemplateSpecializationMembers(
+void 
+Sema::InstantiateClassTemplateSpecializationMembers(
                                            SourceLocation PointOfInstantiation,
-                          ClassTemplateSpecializationDecl *ClassTemplateSpec) {
+                            ClassTemplateSpecializationDecl *ClassTemplateSpec,
+                                               TemplateSpecializationKind TSK) {
   // C++0x [temp.explicit]p7:
   //   An explicit instantiation that names a class template
   //   specialization is an explicit instantion of the same kind
@@ -860,7 +863,8 @@ void Sema::InstantiateClassTemplateSpecializationMembers(
   //   containing the explicit instantiation, except as described
   //   below.
   InstantiateClassMembers(PointOfInstantiation, ClassTemplateSpec,
-                          getTemplateInstantiationArgs(ClassTemplateSpec));
+                          getTemplateInstantiationArgs(ClassTemplateSpec),
+                          TSK);
 }
 
 Sema::OwningStmtResult 

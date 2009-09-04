@@ -510,9 +510,8 @@ public:
   /// \brief The function template from which this function template 
   /// specialization was generated.
   ///
-  /// The bit will be 0 for an implicit instantiation, 1 for an explicit 
-  /// specialization.
-  llvm::PointerIntPair<FunctionTemplateDecl *, 1> Template;
+  /// The two bits are contain the top 4 values of TemplateSpecializationKind.
+  llvm::PointerIntPair<FunctionTemplateDecl *, 2> Template;
   
   /// \brief The template arguments used to produce the function template
   /// specialization from the function template.
@@ -520,14 +519,17 @@ public:
   
   /// \brief Retrieve the template from which this function was specialized.
   FunctionTemplateDecl *getTemplate() const { return Template.getPointer(); }
-  
-  /// \brief Determine whether this is an explicit specialization.
-  bool isExplicitSpecialization() const { return Template.getInt(); }
-  
-  /// \brief Set whether this is an explicit specialization or an implicit
-  /// instantiation.
-  void setExplicitSpecialization(bool ES) {
-    Template.setInt(ES);
+
+  /// \brief Determine what kind of template specialization this is.
+  TemplateSpecializationKind getTemplateSpecializationKind() const {
+    return (TemplateSpecializationKind)(Template.getInt() + 1);
+  }
+
+  /// \brief Set the template specialization kind.
+  void setTemplateSpecializationKind(TemplateSpecializationKind TSK) {
+    assert(TSK != TSK_Undeclared && 
+         "Cannot encode TSK_Undeclared for a function template specialization");
+    Template.setInt(TSK - 1);
   }
   
   void Profile(llvm::FoldingSetNodeID &ID) {
@@ -871,24 +873,6 @@ public:
   static bool classof(const TemplateTemplateParmDecl *D) { return true; }
 };
 
-// \brief Describes the kind of template specialization that a
-// particular template specialization declaration represents.
-enum TemplateSpecializationKind {
-  /// This template specialization was formed from a template-id but
-  /// has not yet been declared, defined, or instantiated.
-  TSK_Undeclared = 0,
-  /// This template specialization was declared or defined by an
-  /// explicit specialization (C++ [temp.expl.spec]) or partial
-  /// specialization (C++ [temp.class.spec]).
-  TSK_ExplicitSpecialization,
-  /// This template specialization was implicitly instantiated from a
-  /// template. (C++ [temp.inst]).
-  TSK_ImplicitInstantiation,
-  /// This template specialization was instantiated from a template
-  /// due to an explicit instantiation request (C++ [temp.explicit]).
-  TSK_ExplicitInstantiation
-};
-
 /// \brief Represents a class template specialization, which refers to
 /// a class template with a given set of template arguments.
 ///
@@ -927,7 +911,7 @@ class ClassTemplateSpecializationDecl
 
   /// \brief The kind of specialization this declaration refers to.
   /// Really a value of type TemplateSpecializationKind.
-  unsigned SpecializationKind : 2;
+  unsigned SpecializationKind : 3;
 
 protected:
   ClassTemplateSpecializationDecl(ASTContext &Context, Kind DK,
@@ -972,7 +956,8 @@ public:
                      ClassTemplatePartialSpecializationDecl *>
   getInstantiatedFrom() const {
     if (getSpecializationKind() != TSK_ImplicitInstantiation &&
-        getSpecializationKind() != TSK_ExplicitInstantiation)
+        getSpecializationKind() != TSK_ExplicitInstantiationDefinition &&
+        getSpecializationKind() != TSK_ExplicitInstantiationDeclaration)
       return (ClassTemplateDecl*)0;
     
     if (SpecializedPartialSpecialization *PartialSpec 

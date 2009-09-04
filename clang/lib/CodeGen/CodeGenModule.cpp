@@ -250,9 +250,8 @@ GetLinkageForFunction(ASTContext &Context, const FunctionDecl *FD,
   // The kind of external linkage this function will have, if it is not
   // inline or static.
   CodeGenModule::GVALinkage External = CodeGenModule::GVA_StrongExternal;
-  if (Context.getLangOptions().CPlusPlus &&
-      (FD->getPrimaryTemplate() || FD->getInstantiatedFromMemberFunction()) &&
-      !FD->isExplicitSpecialization())
+  if (Context.getLangOptions().CPlusPlus && 
+      FD->getTemplateSpecializationKind() == TSK_ImplicitInstantiation)
     External = CodeGenModule::GVA_TemplateInstantiation;
       
   if (const CXXMethodDecl *MD = dyn_cast<CXXMethodDecl>(FD)) {

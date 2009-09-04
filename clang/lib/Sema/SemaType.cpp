@@ -1781,7 +1781,7 @@ bool Sema::RequireCompleteType(SourceLocation Loc, QualType T,
         if (Loc.isValid())
           ClassTemplateSpec->setLocation(Loc);
         return InstantiateClassTemplateSpecialization(ClassTemplateSpec,
-                                             /*ExplicitInstantiation=*/false,
+                                                      TSK_ImplicitInstantiation,
                                                       /*Complain=*/diag != 0);
       }
     } else if (CXXRecordDecl *Rec 
@@ -1790,7 +1790,7 @@ bool Sema::RequireCompleteType(SourceLocation Loc, QualType T,
         // This record was instantiated from a class within a template.
         return InstantiateClass(Loc, Rec, Pattern, 
                                 getTemplateInstantiationArgs(Rec),
-                                /*ExplicitInstantiation=*/false,
+                                TSK_ImplicitInstantiation,
                                 /*Complain=*/diag != 0);
       }
     }

@@ -3011,21 +3011,24 @@ public:
   InstantiateClass(SourceLocation PointOfInstantiation,
                    CXXRecordDecl *Instantiation, CXXRecordDecl *Pattern,
                    const MultiLevelTemplateArgumentList &TemplateArgs,
-                   bool ExplicitInstantiation,
+                   TemplateSpecializationKind TSK,
                    bool Complain = true);
 
   bool 
   InstantiateClassTemplateSpecialization(
                            ClassTemplateSpecializationDecl *ClassTemplateSpec,
-                           bool ExplicitInstantiation, bool Complain = true);
+                           TemplateSpecializationKind TSK,
+                           bool Complain = true);
 
   void InstantiateClassMembers(SourceLocation PointOfInstantiation,
                                CXXRecordDecl *Instantiation,
-                            const MultiLevelTemplateArgumentList &TemplateArgs);
+                            const MultiLevelTemplateArgumentList &TemplateArgs,
+                               TemplateSpecializationKind TSK);
 
   void InstantiateClassTemplateSpecializationMembers(
                                           SourceLocation PointOfInstantiation,
-                           ClassTemplateSpecializationDecl *ClassTemplateSpec);
+                           ClassTemplateSpecializationDecl *ClassTemplateSpec,
+                                                TemplateSpecializationKind TSK);
 
   NestedNameSpecifier *
   SubstNestedNameSpecifier(NestedNameSpecifier *NNS,
