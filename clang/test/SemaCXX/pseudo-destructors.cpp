@@ -32,3 +32,9 @@ void f(A* a, Foo *f, int *i) {
   
   f->::~Bar(17, 42); // expected-error{{cannot have any arguments}}
 }
+
+typedef int Integer;
+
+void destroy_without_call(int *ip) {
+  ip->~Integer; // expected-error{{called immediately}}
+}

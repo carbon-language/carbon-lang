@@ -1596,7 +1596,10 @@ def err_pseudo_dtor_type_mismatch : Error<
   "(%1) in pseudo-destructor expression">;
 def err_pseudo_dtor_call_with_args : Error<
   "call to pseudo-destructor cannot have any arguments">;
-  
+def err_dtor_expr_without_call : Error<
+  "%select{destructor reference|pseudo-destructor expression}0 must be "
+  "called immediately with '()'">;
+
 def err_invalid_use_of_function_type : Error<
   "a function type is not allowed here">;
 def err_invalid_use_of_array_type : Error<"an array type is not allowed here">;

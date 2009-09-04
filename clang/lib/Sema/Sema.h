@@ -1998,7 +1998,8 @@ public:
                                tok::TokenKind OpKind,
                                SourceLocation ClassNameLoc,
                                IdentifierInfo *ClassName,
-                               const CXXScopeSpec *SS = 0);
+                               const CXXScopeSpec &SS,
+                               bool HasTrailingLParen);
 
   virtual OwningExprResult
   ActOnOverloadedOperatorReferenceExpr(Scope *S, ExprArg Base,

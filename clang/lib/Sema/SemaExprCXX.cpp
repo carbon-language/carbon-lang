@@ -1817,16 +1817,17 @@ Sema::ActOnDestructorReferenceExpr(Scope *S, ExprArg Base,
                                    tok::TokenKind OpKind,
                                    SourceLocation ClassNameLoc,
                                    IdentifierInfo *ClassName,
-                                   const CXXScopeSpec *SS) {
-  if (SS && SS->isInvalid())
+                                   const CXXScopeSpec &SS,
+                                   bool HasTrailingLParen) {
+  if (SS.isInvalid())
     return ExprError();
 
   QualType BaseType;
-  if (SS && isUnknownSpecialization(*SS))
-    BaseType = Context.getTypenameType((NestedNameSpecifier *)SS->getScopeRep(),
+  if (isUnknownSpecialization(SS))
+    BaseType = Context.getTypenameType((NestedNameSpecifier *)SS.getScopeRep(),
                                        ClassName);
   else {
-    TypeTy *BaseTy = getTypeName(*ClassName, ClassNameLoc, S, SS);
+    TypeTy *BaseTy = getTypeName(*ClassName, ClassNameLoc, S, &SS);
     if (!BaseTy) {
       Diag(ClassNameLoc, diag::err_ident_in_pseudo_dtor_not_a_type) 
         << ClassName;
@@ -1840,8 +1841,23 @@ Sema::ActOnDestructorReferenceExpr(Scope *S, ExprArg Base,
   DeclarationName DtorName = 
     Context.DeclarationNames.getCXXDestructorName(CanBaseType);
 
-  return BuildMemberReferenceExpr(S, move(Base), OpLoc, OpKind, ClassNameLoc,
-                                  DtorName, DeclPtrTy(), SS);
+  OwningExprResult Result
+    = BuildMemberReferenceExpr(S, move(Base), OpLoc, OpKind, ClassNameLoc,
+                               DtorName, DeclPtrTy(), &SS);
+  if (Result.isInvalid() || HasTrailingLParen)
+    return move(Result);
+  
+  // The only way a reference to a destructor can be used is to 
+  // immediately call them. Since the next token is not a '(', produce a
+  // diagnostic and build the call now.
+  Expr *E = (Expr *)Result.get();
+  SourceLocation ExpectedLParenLoc = PP.getLocForEndOfToken(E->getLocEnd());
+  Diag(E->getLocStart(), diag::err_dtor_expr_without_call)
+    << isa<CXXPseudoDestructorExpr>(E)
+    << CodeModificationHint::CreateInsertion(ExpectedLParenLoc, "()");
+  
+  return ActOnCallExpr(0, move(Result), ExpectedLParenLoc, 
+                       MultiExprArg(*this, 0, 0), 0, ExpectedLParenLoc);
 }
 
 Sema::OwningExprResult

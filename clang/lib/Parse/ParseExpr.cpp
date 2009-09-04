@@ -956,7 +956,8 @@ Parser::ParsePostfixExpressionSuffix(OwningExprResult LHS) {
                                                      OpLoc, OpKind,
                                                      Tok.getLocation(), 
                                                      Tok.getIdentifierInfo(),
-                                                     &SS);
+                                                     SS,
+                                               NextToken().is(tok::l_paren));
         ConsumeToken();
       } else if (getLang().CPlusPlus && Tok.is(tok::kw_operator)) {
         // We have a reference to a member operator, e.g., t.operator int or
