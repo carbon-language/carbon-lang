@@ -18,6 +18,7 @@
 #define LLVM_CODEGEN_VIRTREGMAP_H
 
 #include "llvm/CodeGen/MachineFunctionPass.h"
+#include "llvm/CodeGen/LiveInterval.h"
 #include "llvm/Target/TargetRegisterInfo.h"
 #include "llvm/ADT/BitVector.h"
 #include "llvm/ADT/DenseMap.h"
@@ -79,7 +80,7 @@ namespace llvm {
 
     /// Virt2SplitKillMap - This is splitted virtual register to its last use
     /// (kill) index mapping.
-    IndexedMap<unsigned> Virt2SplitKillMap;
+    IndexedMap<MachineInstrIndex> Virt2SplitKillMap;
 
     /// ReMatMap - This is virtual register to re-materialized instruction
     /// mapping. Each virtual register whose definition is going to be
@@ -141,7 +142,7 @@ namespace llvm {
     VirtRegMap() : MachineFunctionPass(&ID), Virt2PhysMap(NO_PHYS_REG),
                    Virt2StackSlotMap(NO_STACK_SLOT), 
                    Virt2ReMatIdMap(NO_STACK_SLOT), Virt2SplitMap(0),
-                   Virt2SplitKillMap(0), ReMatMap(NULL),
+                   Virt2SplitKillMap(MachineInstrIndex()), ReMatMap(NULL),
                    ReMatId(MAX_STACK_SLOT+1),
                    LowSpillSlot(NO_STACK_SLOT), HighSpillSlot(NO_STACK_SLOT) { }
     virtual bool runOnMachineFunction(MachineFunction &MF);
@@ -265,17 +266,17 @@ namespace llvm {
     }
 
     /// @brief record the last use (kill) of a split virtual register.
-    void addKillPoint(unsigned virtReg, unsigned index) {
+    void addKillPoint(unsigned virtReg, MachineInstrIndex index) {
       Virt2SplitKillMap[virtReg] = index;
     }
 
-    unsigned getKillPoint(unsigned virtReg) const {
+    MachineInstrIndex getKillPoint(unsigned virtReg) const {
       return Virt2SplitKillMap[virtReg];
     }
 
     /// @brief remove the last use (kill) of a split virtual register.
     void removeKillPoint(unsigned virtReg) {
-      Virt2SplitKillMap[virtReg] = 0;
+      Virt2SplitKillMap[virtReg] = MachineInstrIndex();
     }
 
     /// @brief returns true if the specified MachineInstr is a spill point.

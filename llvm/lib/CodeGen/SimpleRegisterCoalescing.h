@@ -196,7 +196,7 @@ namespace llvm {
     /// TrimLiveIntervalToLastUse - If there is a last use in the same basic
     /// block as the copy instruction, trim the ive interval to the last use
     /// and return true.
-    bool TrimLiveIntervalToLastUse(unsigned CopyIdx,
+    bool TrimLiveIntervalToLastUse(MachineInstrIndex CopyIdx,
                                    MachineBasicBlock *CopyMBB,
                                    LiveInterval &li, const LiveRange *LR);
 
@@ -289,10 +289,13 @@ namespace llvm {
 
     /// lastRegisterUse - Returns the last use of the specific register between
     /// cycles Start and End or NULL if there are no uses.
-    MachineOperand *lastRegisterUse(unsigned Start, unsigned End, unsigned Reg,
-                                    unsigned &LastUseIdx) const;
+    MachineOperand *lastRegisterUse(MachineInstrIndex Start, MachineInstrIndex End,
+                                    unsigned Reg, MachineInstrIndex &LastUseIdx) const;
 
     void printRegName(unsigned reg) const;
+
+    /// Returns true if the given live interval is zero length.
+    bool isZeroLengthInterval(LiveInterval *li) const;
   };
 
 } // End llvm namespace

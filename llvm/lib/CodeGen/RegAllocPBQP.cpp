@@ -683,7 +683,8 @@ void PBQPRegAlloc::addStackInterval(const LiveInterval *spilled,
   if (stackInterval.getNumValNums() != 0)
     vni = stackInterval.getValNumInfo(0);
   else
-    vni = stackInterval.getNextValue(0, 0, false, lss->getVNInfoAllocator());
+    vni = stackInterval.getNextValue(
+      MachineInstrIndex(), 0, false, lss->getVNInfoAllocator());
 
   LiveInterval &rhsInterval = lis->getInterval(spilled->reg);
   stackInterval.MergeRangesInAsValue(rhsInterval, vni);

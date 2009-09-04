@@ -295,7 +295,7 @@ StrongPHIElimination::computeDomForest(
 static bool isLiveIn(unsigned r, MachineBasicBlock* MBB,
                      LiveIntervals& LI) {
   LiveInterval& I = LI.getOrCreateInterval(r);
-  unsigned idx = LI.getMBBStartIdx(MBB);
+  MachineInstrIndex idx = LI.getMBBStartIdx(MBB);
   return I.liveAt(idx);
 }
 
@@ -428,7 +428,7 @@ void StrongPHIElimination::processBlock(MachineBasicBlock* MBB) {
     }
 
     LiveInterval& PI = LI.getOrCreateInterval(DestReg);
-    unsigned pIdx = LI.getDefIndex(LI.getInstructionIndex(P));
+    MachineInstrIndex pIdx = LI.getDefIndex(LI.getInstructionIndex(P));
     VNInfo* PVN = PI.getLiveRangeContaining(pIdx)->valno;
     PhiValueNumber.insert(std::make_pair(DestReg, PVN->id));
 
@@ -748,7 +748,7 @@ void StrongPHIElimination::ScheduleCopies(MachineBasicBlock* MBB,
       
       LiveInterval& I = LI.getInterval(curr.second);
       MachineBasicBlock::iterator term = MBB->getFirstTerminator();
-      unsigned endIdx = 0;
+      MachineInstrIndex endIdx = MachineInstrIndex();
       if (term != MBB->end())
         endIdx = LI.getInstructionIndex(term);
       else
@@ -784,10 +784,10 @@ void StrongPHIElimination::ScheduleCopies(MachineBasicBlock* MBB,
        InsertedPHIDests.begin(), E = InsertedPHIDests.end(); I != E; ++I) {
     if (RegHandled.insert(I->first).second) {
       LiveInterval& Int = LI.getOrCreateInterval(I->first);
-      unsigned instrIdx = LI.getInstructionIndex(I->second);
+      MachineInstrIndex instrIdx = LI.getInstructionIndex(I->second);
       if (Int.liveAt(LiveIntervals::getDefIndex(instrIdx)))
         Int.removeRange(LiveIntervals::getDefIndex(instrIdx),
-                        LI.getMBBEndIdx(I->second->getParent())+1,
+                        LI.getNextSlot(LI.getMBBEndIdx(I->second->getParent())),
                         true);
       
       LiveRange R = LI.addLiveRangeToEndOfBlock(I->first, I->second);
@@ -831,11 +831,11 @@ void StrongPHIElimination::InsertCopies(MachineDomTreeNode* MDTN,
         VNInfo* FirstVN = *Int.vni_begin();
         FirstVN->setHasPHIKill(false);
         if (I->getOperand(i).isKill())
-          Int.addKill(FirstVN,
-                 LiveIntervals::getUseIndex(LI.getInstructionIndex(I)), false);
+          FirstVN->addKill(
+                 LiveIntervals::getUseIndex(LI.getInstructionIndex(I)));
         
         LiveRange LR (LI.getMBBStartIdx(I->getParent()),
-                      LiveIntervals::getUseIndex(LI.getInstructionIndex(I))+1,
+                      LI.getNextSlot(LI.getUseIndex(LI.getInstructionIndex(I))),
                       FirstVN);
         
         Int.addRange(LR);
@@ -870,8 +870,8 @@ bool StrongPHIElimination::mergeLiveIntervals(unsigned primary,
   for (LiveInterval::iterator I = RHS.begin(), E = RHS.end(); I != E; ++I) {
     LiveRange R = *I;
  
-    unsigned Start = R.start;
-    unsigned End = R.end;
+    MachineInstrIndex Start = R.start;
+    MachineInstrIndex End = R.end;
     if (LHS.getLiveRangeContaining(Start))
       return false;
     
@@ -968,11 +968,11 @@ bool StrongPHIElimination::runOnMachineFunction(MachineFunction &Fn) {
           LI.computeNumbering();
           
           LiveInterval& Int = LI.getOrCreateInterval(I->first);
-          unsigned instrIdx =
+          MachineInstrIndex instrIdx =
                      LI.getInstructionIndex(--SI->second->getFirstTerminator());
           if (Int.liveAt(LiveIntervals::getDefIndex(instrIdx)))
             Int.removeRange(LiveIntervals::getDefIndex(instrIdx),
-                            LI.getMBBEndIdx(SI->second)+1, true);
+                            LI.getNextSlot(LI.getMBBEndIdx(SI->second)), true);
 
           LiveRange R = LI.addLiveRangeToEndOfBlock(I->first,
                                             --SI->second->getFirstTerminator());
@@ -1012,7 +1012,7 @@ bool StrongPHIElimination::runOnMachineFunction(MachineFunction &Fn) {
       if (PI.containsOneValue()) {
         LI.removeInterval(DestReg);
       } else {
-        unsigned idx = LI.getDefIndex(LI.getInstructionIndex(PInstr));
+        MachineInstrIndex idx = LI.getDefIndex(LI.getInstructionIndex(PInstr));
         PI.removeRange(*PI.getLiveRangeContaining(idx), true);
       }
     } else {
@@ -1026,8 +1026,7 @@ bool StrongPHIElimination::runOnMachineFunction(MachineFunction &Fn) {
         LiveInterval& InputI = LI.getInterval(reg);
         if (MBB != PInstr->getParent() &&
             InputI.liveAt(LI.getMBBStartIdx(PInstr->getParent())) &&
-            InputI.expiredAt(LI.getInstructionIndex(PInstr) + 
-                             LiveInterval::InstrSlots::NUM))
+            InputI.expiredAt(LI.getNextIndex(LI.getInstructionIndex(PInstr))))
           InputI.removeRange(LI.getMBBStartIdx(PInstr->getParent()),
                              LI.getInstructionIndex(PInstr),
                              true);
@@ -1035,7 +1034,7 @@ bool StrongPHIElimination::runOnMachineFunction(MachineFunction &Fn) {
       
       // If the PHI is not dead, then the valno defined by the PHI
       // now has an unknown def.
-      unsigned idx = LI.getDefIndex(LI.getInstructionIndex(PInstr));
+      MachineInstrIndex idx = LI.getDefIndex(LI.getInstructionIndex(PInstr));
       const LiveRange* PLR = PI.getLiveRangeContaining(idx);
       PLR->valno->setIsPHIDef(true);
       LiveRange R (LI.getMBBStartIdx(PInstr->getParent()),

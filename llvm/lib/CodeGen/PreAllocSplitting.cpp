@@ -68,7 +68,7 @@ namespace {
     MachineBasicBlock     *BarrierMBB;
 
     // Barrier - Current barrier index.
-    unsigned              BarrierIdx;
+    MachineInstrIndex     BarrierIdx;
 
     // CurrLI - Current live interval being split.
     LiveInterval          *CurrLI;
@@ -83,7 +83,7 @@ namespace {
     DenseMap<unsigned, int> IntervalSSMap;
 
     // Def2SpillMap - A map from a def instruction index to spill index.
-    DenseMap<unsigned, unsigned> Def2SpillMap;
+    DenseMap<MachineInstrIndex, MachineInstrIndex> Def2SpillMap;
 
   public:
     static char ID;
@@ -129,22 +129,23 @@ namespace {
   private:
     MachineBasicBlock::iterator
       findNextEmptySlot(MachineBasicBlock*, MachineInstr*,
-                        unsigned&);
+                        MachineInstrIndex&);
 
     MachineBasicBlock::iterator
       findSpillPoint(MachineBasicBlock*, MachineInstr*, MachineInstr*,
-                     SmallPtrSet<MachineInstr*, 4>&, unsigned&);
+                     SmallPtrSet<MachineInstr*, 4>&, MachineInstrIndex&);
 
     MachineBasicBlock::iterator
-      findRestorePoint(MachineBasicBlock*, MachineInstr*, unsigned,
-                     SmallPtrSet<MachineInstr*, 4>&, unsigned&);
+      findRestorePoint(MachineBasicBlock*, MachineInstr*, MachineInstrIndex,
+                     SmallPtrSet<MachineInstr*, 4>&, MachineInstrIndex&);
 
     int CreateSpillStackSlot(unsigned, const TargetRegisterClass *);
 
-    bool IsAvailableInStack(MachineBasicBlock*, unsigned, unsigned, unsigned,
-                            unsigned&, int&) const;
+    bool IsAvailableInStack(MachineBasicBlock*, unsigned,
+                            MachineInstrIndex, MachineInstrIndex,
+                            MachineInstrIndex&, int&) const;
 
-    void UpdateSpillSlotInterval(VNInfo*, unsigned, unsigned);
+    void UpdateSpillSlotInterval(VNInfo*, MachineInstrIndex, MachineInstrIndex);
 
     bool SplitRegLiveInterval(LiveInterval*);
 
@@ -156,7 +157,7 @@ namespace {
     bool Rematerialize(unsigned vreg, VNInfo* ValNo,
                        MachineInstr* DefMI,
                        MachineBasicBlock::iterator RestorePt,
-                       unsigned RestoreIdx,
+                       MachineInstrIndex RestoreIdx,
                        SmallPtrSet<MachineInstr*, 4>& RefsInMBB);
     MachineInstr* FoldSpill(unsigned vreg, const TargetRegisterClass* RC,
                             MachineInstr* DefMI,
@@ -208,11 +209,12 @@ const PassInfo *const llvm::PreAllocSplittingID = &X;
 /// instruction index map. If there isn't one, return end().
 MachineBasicBlock::iterator
 PreAllocSplitting::findNextEmptySlot(MachineBasicBlock *MBB, MachineInstr *MI,
-                                     unsigned &SpotIndex) {
+                                     MachineInstrIndex &SpotIndex) {
   MachineBasicBlock::iterator MII = MI;
   if (++MII != MBB->end()) {
-    unsigned Index = LIs->findGapBeforeInstr(LIs->getInstructionIndex(MII));
-    if (Index) {
+    MachineInstrIndex Index =
+      LIs->findGapBeforeInstr(LIs->getInstructionIndex(MII));
+    if (Index != MachineInstrIndex()) {
       SpotIndex = Index;
       return MII;
     }
@@ -228,7 +230,7 @@ MachineBasicBlock::iterator
 PreAllocSplitting::findSpillPoint(MachineBasicBlock *MBB, MachineInstr *MI,
                                   MachineInstr *DefMI,
                                   SmallPtrSet<MachineInstr*, 4> &RefsInMBB,
-                                  unsigned &SpillIndex) {
+                                  MachineInstrIndex &SpillIndex) {
   MachineBasicBlock::iterator Pt = MBB->begin();
 
   MachineBasicBlock::iterator MII = MI;
@@ -241,7 +243,7 @@ PreAllocSplitting::findSpillPoint(MachineBasicBlock *MBB, MachineInstr *MI,
   if (MII == EndPt || RefsInMBB.count(MII)) return Pt;
     
   while (MII != EndPt && !RefsInMBB.count(MII)) {
-    unsigned Index = LIs->getInstructionIndex(MII);
+    MachineInstrIndex Index = LIs->getInstructionIndex(MII);
     
     // We can't insert the spill between the barrier (a call), and its
     // corresponding call frame setup.
@@ -274,9 +276,9 @@ PreAllocSplitting::findSpillPoint(MachineBasicBlock *MBB, MachineInstr *MI,
 /// found.
 MachineBasicBlock::iterator
 PreAllocSplitting::findRestorePoint(MachineBasicBlock *MBB, MachineInstr *MI,
-                                    unsigned LastIdx,
+                                    MachineInstrIndex LastIdx,
                                     SmallPtrSet<MachineInstr*, 4> &RefsInMBB,
-                                    unsigned &RestoreIndex) {
+                                    MachineInstrIndex &RestoreIndex) {
   // FIXME: Allow spill to be inserted to the beginning of the mbb. Update mbb
   // begin index accordingly.
   MachineBasicBlock::iterator Pt = MBB->end();
@@ -297,10 +299,10 @@ PreAllocSplitting::findRestorePoint(MachineBasicBlock *MBB, MachineInstr *MI,
   // FIXME: Limit the number of instructions to examine to reduce
   // compile time?
   while (MII != EndPt) {
-    unsigned Index = LIs->getInstructionIndex(MII);
+    MachineInstrIndex Index = LIs->getInstructionIndex(MII);
     if (Index > LastIdx)
       break;
-    unsigned Gap = LIs->findGapBeforeInstr(Index);
+    MachineInstrIndex Gap = LIs->findGapBeforeInstr(Index);
       
     // We can't insert a restore between the barrier (a call) and its 
     // corresponding call frame teardown.
@@ -309,7 +311,7 @@ PreAllocSplitting::findRestorePoint(MachineBasicBlock *MBB, MachineInstr *MI,
         if (MII == EndPt || RefsInMBB.count(MII)) return Pt;
         ++MII;
       } while (MII->getOpcode() != TRI->getCallFrameDestroyOpcode());
-    } else if (Gap) {
+    } else if (Gap != MachineInstrIndex()) {
       Pt = MII;
       RestoreIndex = Gap;
     }
@@ -342,7 +344,8 @@ int PreAllocSplitting::CreateSpillStackSlot(unsigned Reg,
   if (CurrSLI->hasAtLeastOneValue())
     CurrSValNo = CurrSLI->getValNumInfo(0);
   else
-    CurrSValNo = CurrSLI->getNextValue(0, 0, false, LSs->getVNInfoAllocator());
+    CurrSValNo = CurrSLI->getNextValue(MachineInstrIndex(), 0, false,
+                                       LSs->getVNInfoAllocator());
   return SS;
 }
 
@@ -350,8 +353,9 @@ int PreAllocSplitting::CreateSpillStackSlot(unsigned Reg,
 /// slot at the specified index.
 bool
 PreAllocSplitting::IsAvailableInStack(MachineBasicBlock *DefMBB,
-                                    unsigned Reg, unsigned DefIndex,
-                                    unsigned RestoreIndex, unsigned &SpillIndex,
+                                    unsigned Reg, MachineInstrIndex DefIndex,
+                                    MachineInstrIndex RestoreIndex,
+                                    MachineInstrIndex &SpillIndex,
                                     int& SS) const {
   if (!DefMBB)
     return false;
@@ -359,7 +363,8 @@ PreAllocSplitting::IsAvailableInStack(MachineBasicBlock *DefMBB,
   DenseMap<unsigned, int>::iterator I = IntervalSSMap.find(Reg);
   if (I == IntervalSSMap.end())
     return false;
-  DenseMap<unsigned, unsigned>::iterator II = Def2SpillMap.find(DefIndex);
+  DenseMap<MachineInstrIndex, MachineInstrIndex>::iterator
+    II = Def2SpillMap.find(DefIndex);
   if (II == Def2SpillMap.end())
     return false;
 
@@ -379,8 +384,8 @@ PreAllocSplitting::IsAvailableInStack(MachineBasicBlock *DefMBB,
 /// interval being split, and the spill and restore indicies, update the live
 /// interval of the spill stack slot.
 void
-PreAllocSplitting::UpdateSpillSlotInterval(VNInfo *ValNo, unsigned SpillIndex,
-                                           unsigned RestoreIndex) {
+PreAllocSplitting::UpdateSpillSlotInterval(VNInfo *ValNo, MachineInstrIndex SpillIndex,
+                                           MachineInstrIndex RestoreIndex) {
   assert(LIs->getMBBFromIndex(RestoreIndex) == BarrierMBB &&
          "Expect restore in the barrier mbb");
 
@@ -393,8 +398,8 @@ PreAllocSplitting::UpdateSpillSlotInterval(VNInfo *ValNo, unsigned SpillIndex,
   }
 
   SmallPtrSet<MachineBasicBlock*, 4> Processed;
-  unsigned EndIdx = LIs->getMBBEndIdx(MBB);
-  LiveRange SLR(SpillIndex, EndIdx+1, CurrSValNo);
+  MachineInstrIndex EndIdx = LIs->getMBBEndIdx(MBB);
+  LiveRange SLR(SpillIndex, LIs->getNextSlot(EndIdx), CurrSValNo);
   CurrSLI->addRange(SLR);
   Processed.insert(MBB);
 
@@ -413,7 +418,7 @@ PreAllocSplitting::UpdateSpillSlotInterval(VNInfo *ValNo, unsigned SpillIndex,
     WorkList.pop_back();
     if (Processed.count(MBB))
       continue;
-    unsigned Idx = LIs->getMBBStartIdx(MBB);
+    MachineInstrIndex Idx = LIs->getMBBStartIdx(MBB);
     LR = CurrLI->getLiveRangeContaining(Idx);
     if (LR && LR->valno == ValNo) {
       EndIdx = LIs->getMBBEndIdx(MBB);
@@ -423,7 +428,7 @@ PreAllocSplitting::UpdateSpillSlotInterval(VNInfo *ValNo, unsigned SpillIndex,
         CurrSLI->addRange(SLR);
       } else if (LR->end > EndIdx) {
         // Live range extends beyond end of mbb, process successors.
-        LiveRange SLR(Idx, EndIdx+1, CurrSValNo);
+        LiveRange SLR(Idx, LIs->getNextIndex(EndIdx), CurrSValNo);
         CurrSLI->addRange(SLR);
         for (MachineBasicBlock::succ_iterator SI = MBB->succ_begin(),
                SE = MBB->succ_end(); SI != SE; ++SI)
@@ -486,12 +491,12 @@ PreAllocSplitting::PerformPHIConstruction(MachineBasicBlock::iterator UseI,
     }
     
     // Once we've found it, extend its VNInfo to our instruction.
-    unsigned DefIndex = LIs->getInstructionIndex(Walker);
+    MachineInstrIndex DefIndex = LIs->getInstructionIndex(Walker);
     DefIndex = LiveIntervals::getDefIndex(DefIndex);
-    unsigned EndIndex = LIs->getMBBEndIdx(MBB);
+    MachineInstrIndex EndIndex = LIs->getMBBEndIdx(MBB);
     
     RetVNI = NewVNs[Walker];
-    LI->addRange(LiveRange(DefIndex, EndIndex+1, RetVNI));
+    LI->addRange(LiveRange(DefIndex, LIs->getNextSlot(EndIndex), RetVNI));
   } else if (!ContainsDefs && ContainsUses) {
     SmallPtrSet<MachineInstr*, 2>& BlockUses = Uses[MBB];
     
@@ -523,9 +528,9 @@ PreAllocSplitting::PerformPHIConstruction(MachineBasicBlock::iterator UseI,
                                               IsTopLevel, IsIntraBlock);
     }
 
-    unsigned UseIndex = LIs->getInstructionIndex(Walker);
+    MachineInstrIndex UseIndex = LIs->getInstructionIndex(Walker);
     UseIndex = LiveIntervals::getUseIndex(UseIndex);
-    unsigned EndIndex = 0;
+    MachineInstrIndex EndIndex;
     if (IsIntraBlock) {
       EndIndex = LIs->getInstructionIndex(UseI);
       EndIndex = LiveIntervals::getUseIndex(EndIndex);
@@ -537,12 +542,12 @@ PreAllocSplitting::PerformPHIConstruction(MachineBasicBlock::iterator UseI,
     RetVNI = PerformPHIConstruction(Walker, MBB, LI, Visited, Defs, Uses,
                                     NewVNs, LiveOut, Phis, false, true);
     
-    LI->addRange(LiveRange(UseIndex, EndIndex+1, RetVNI));
+    LI->addRange(LiveRange(UseIndex, LIs->getNextSlot(EndIndex), RetVNI));
     
     // FIXME: Need to set kills properly for inter-block stuff.
-    if (LI->isKill(RetVNI, UseIndex)) LI->removeKill(RetVNI, UseIndex);
+    if (RetVNI->isKill(UseIndex)) RetVNI->removeKill(UseIndex);
     if (IsIntraBlock)
-      LI->addKill(RetVNI, EndIndex, false);
+      RetVNI->addKill(EndIndex);
   } else if (ContainsDefs && ContainsUses) {
     SmallPtrSet<MachineInstr*, 2>& BlockDefs = Defs[MBB];
     SmallPtrSet<MachineInstr*, 2>& BlockUses = Uses[MBB];
@@ -583,10 +588,10 @@ PreAllocSplitting::PerformPHIConstruction(MachineBasicBlock::iterator UseI,
                                               IsTopLevel, IsIntraBlock);
     }
 
-    unsigned StartIndex = LIs->getInstructionIndex(Walker);
+    MachineInstrIndex StartIndex = LIs->getInstructionIndex(Walker);
     StartIndex = foundDef ? LiveIntervals::getDefIndex(StartIndex) :
                             LiveIntervals::getUseIndex(StartIndex);
-    unsigned EndIndex = 0;
+    MachineInstrIndex EndIndex;
     if (IsIntraBlock) {
       EndIndex = LIs->getInstructionIndex(UseI);
       EndIndex = LiveIntervals::getUseIndex(EndIndex);
@@ -599,12 +604,12 @@ PreAllocSplitting::PerformPHIConstruction(MachineBasicBlock::iterator UseI,
       RetVNI = PerformPHIConstruction(Walker, MBB, LI, Visited, Defs, Uses,
                                       NewVNs, LiveOut, Phis, false, true);
 
-    LI->addRange(LiveRange(StartIndex, EndIndex+1, RetVNI));
+    LI->addRange(LiveRange(StartIndex, LIs->getNextSlot(EndIndex), RetVNI));
     
-    if (foundUse && LI->isKill(RetVNI, StartIndex))
-      LI->removeKill(RetVNI, StartIndex);
+    if (foundUse && RetVNI->isKill(StartIndex))
+      RetVNI->removeKill(StartIndex);
     if (IsIntraBlock) {
-      LI->addKill(RetVNI, EndIndex, false);
+      RetVNI->addKill(EndIndex);
     }
   }
   
@@ -635,9 +640,10 @@ PreAllocSplitting::PerformPHIConstructionFallBack(MachineBasicBlock::iterator Us
   // assume that we are not intrablock here.
   if (Phis.count(MBB)) return Phis[MBB]; 
 
-  unsigned StartIndex = LIs->getMBBStartIdx(MBB);
+  MachineInstrIndex StartIndex = LIs->getMBBStartIdx(MBB);
   VNInfo *RetVNI = Phis[MBB] =
-    LI->getNextValue(0, /*FIXME*/ 0, false, LIs->getVNInfoAllocator());
+    LI->getNextValue(MachineInstrIndex(), /*FIXME*/ 0, false,
+                     LIs->getVNInfoAllocator());
 
   if (!IsIntraBlock) LiveOut[MBB] = RetVNI;
     
@@ -679,21 +685,21 @@ PreAllocSplitting::PerformPHIConstructionFallBack(MachineBasicBlock::iterator Us
     for (DenseMap<MachineBasicBlock*, VNInfo*>::iterator I =
            IncomingVNs.begin(), E = IncomingVNs.end(); I != E; ++I) {
       I->second->setHasPHIKill(true);
-      unsigned KillIndex = LIs->getMBBEndIdx(I->first);
-      if (!LiveInterval::isKill(I->second, KillIndex))
-        LI->addKill(I->second, KillIndex, false);
+      MachineInstrIndex KillIndex = LIs->getMBBEndIdx(I->first);
+      if (!I->second->isKill(KillIndex))
+        I->second->addKill(KillIndex);
     }
   }
       
-  unsigned EndIndex = 0;
+  MachineInstrIndex EndIndex;
   if (IsIntraBlock) {
     EndIndex = LIs->getInstructionIndex(UseI);
     EndIndex = LiveIntervals::getUseIndex(EndIndex);
   } else
     EndIndex = LIs->getMBBEndIdx(MBB);
-  LI->addRange(LiveRange(StartIndex, EndIndex+1, RetVNI));
+  LI->addRange(LiveRange(StartIndex, LIs->getNextSlot(EndIndex), RetVNI));
   if (IsIntraBlock)
-    LI->addKill(RetVNI, EndIndex, false);
+    RetVNI->addKill(EndIndex);
 
   // Memoize results so we don't have to recompute them.
   if (!IsIntraBlock)
@@ -727,7 +733,7 @@ void PreAllocSplitting::ReconstructLiveInterval(LiveInterval* LI) {
        DE = MRI->def_end(); DI != DE; ++DI) {
     Defs[(*DI).getParent()].insert(&*DI);
     
-    unsigned DefIdx = LIs->getInstructionIndex(&*DI);
+    MachineInstrIndex DefIdx = LIs->getInstructionIndex(&*DI);
     DefIdx = LiveIntervals::getDefIndex(DefIdx);
     
     assert(DI->getOpcode() != TargetInstrInfo::PHI &&
@@ -763,14 +769,14 @@ void PreAllocSplitting::ReconstructLiveInterval(LiveInterval* LI) {
   // Add ranges for dead defs
   for (MachineRegisterInfo::def_iterator DI = MRI->def_begin(LI->reg),
        DE = MRI->def_end(); DI != DE; ++DI) {
-    unsigned DefIdx = LIs->getInstructionIndex(&*DI);
+    MachineInstrIndex DefIdx = LIs->getInstructionIndex(&*DI);
     DefIdx = LiveIntervals::getDefIndex(DefIdx);
     
     if (LI->liveAt(DefIdx)) continue;
     
     VNInfo* DeadVN = NewVNs[&*DI];
-    LI->addRange(LiveRange(DefIdx, DefIdx+1, DeadVN));
-    LI->addKill(DeadVN, DefIdx, false);
+    LI->addRange(LiveRange(DefIdx, LIs->getNextSlot(DefIdx), DeadVN));
+    DeadVN->addKill(DefIdx);
   }
 }
 
@@ -802,13 +808,15 @@ void PreAllocSplitting::RenumberValno(VNInfo* VN) {
     // Locate two-address redefinitions
     for (VNInfo::KillSet::iterator KI = OldVN->kills.begin(),
          KE = OldVN->kills.end(); KI != KE; ++KI) {
-      assert(!KI->isPHIKill && "VN previously reported having no PHI kills.");
-      MachineInstr* MI = LIs->getInstructionFromIndex(KI->killIdx);
+      assert(!KI->isPHIIndex() &&
+             "VN previously reported having no PHI kills.");
+      MachineInstr* MI = LIs->getInstructionFromIndex(*KI);
       unsigned DefIdx = MI->findRegisterDefOperandIdx(CurrLI->reg);
       if (DefIdx == ~0U) continue;
       if (MI->isRegTiedToUseOperand(DefIdx)) {
         VNInfo* NextVN =
-          CurrLI->findDefinedVNInfo(LiveIntervals::getDefIndex(KI->killIdx));
+          CurrLI->findDefinedVNInfoForRegInt(
+            LiveIntervals::getDefIndex(*KI));
         if (NextVN == OldVN) continue;
         Stack.push_back(NextVN);
       }
@@ -840,7 +848,7 @@ void PreAllocSplitting::RenumberValno(VNInfo* VN) {
   for (MachineRegisterInfo::reg_iterator I = MRI->reg_begin(CurrLI->reg),
          E = MRI->reg_end(); I != E; ++I) {
     MachineOperand& MO = I.getOperand();
-    unsigned InstrIdx = LIs->getInstructionIndex(&*I);
+    MachineInstrIndex InstrIdx = LIs->getInstructionIndex(&*I);
     
     if ((MO.isUse() && NewLI.liveAt(LiveIntervals::getUseIndex(InstrIdx))) ||
         (MO.isDef() && NewLI.liveAt(LiveIntervals::getDefIndex(InstrIdx))))
@@ -868,12 +876,12 @@ void PreAllocSplitting::RenumberValno(VNInfo* VN) {
 bool PreAllocSplitting::Rematerialize(unsigned VReg, VNInfo* ValNo,
                                       MachineInstr* DefMI,
                                       MachineBasicBlock::iterator RestorePt,
-                                      unsigned RestoreIdx,
+                                      MachineInstrIndex RestoreIdx,
                                     SmallPtrSet<MachineInstr*, 4>& RefsInMBB) {
   MachineBasicBlock& MBB = *RestorePt->getParent();
   
   MachineBasicBlock::iterator KillPt = BarrierMBB->end();
-  unsigned KillIdx = 0;
+  MachineInstrIndex KillIdx;
   if (!ValNo->isDefAccurate() || DefMI->getParent() == BarrierMBB)
     KillPt = findSpillPoint(BarrierMBB, Barrier, NULL, RefsInMBB, KillIdx);
   else
@@ -886,9 +894,9 @@ bool PreAllocSplitting::Rematerialize(unsigned VReg, VNInfo* ValNo,
   LIs->InsertMachineInstrInMaps(prior(RestorePt), RestoreIdx);
   
   ReconstructLiveInterval(CurrLI);
-  unsigned RematIdx = LIs->getInstructionIndex(prior(RestorePt));
+  MachineInstrIndex RematIdx = LIs->getInstructionIndex(prior(RestorePt));
   RematIdx = LiveIntervals::getDefIndex(RematIdx);
-  RenumberValno(CurrLI->findDefinedVNInfo(RematIdx));
+  RenumberValno(CurrLI->findDefinedVNInfoForRegInt(RematIdx));
   
   ++NumSplits;
   ++NumRemats;
@@ -943,7 +951,8 @@ MachineInstr* PreAllocSplitting::FoldSpill(unsigned vreg,
     if (CurrSLI->hasAtLeastOneValue())
       CurrSValNo = CurrSLI->getValNumInfo(0);
     else
-      CurrSValNo = CurrSLI->getNextValue(0, 0, false, LSs->getVNInfoAllocator());
+      CurrSValNo = CurrSLI->getNextValue(MachineInstrIndex(), 0, false,
+                                         LSs->getVNInfoAllocator());
   }
   
   return FMI;
@@ -1052,7 +1061,7 @@ bool PreAllocSplitting::SplitRegLiveInterval(LiveInterval *LI) {
   }
 
   // Find a point to restore the value after the barrier.
-  unsigned RestoreIndex = 0;
+  MachineInstrIndex RestoreIndex;
   MachineBasicBlock::iterator RestorePt =
     findRestorePoint(BarrierMBB, Barrier, LR->end, RefsInMBB, RestoreIndex);
   if (RestorePt == BarrierMBB->end())
@@ -1066,7 +1075,7 @@ bool PreAllocSplitting::SplitRegLiveInterval(LiveInterval *LI) {
   // Add a spill either before the barrier or after the definition.
   MachineBasicBlock *DefMBB = DefMI ? DefMI->getParent() : NULL;
   const TargetRegisterClass *RC = MRI->getRegClass(CurrLI->reg);
-  unsigned SpillIndex = 0;
+  MachineInstrIndex SpillIndex;
   MachineInstr *SpillMI = NULL;
   int SS = -1;
   if (!ValNo->isDefAccurate()) {
@@ -1138,15 +1147,15 @@ bool PreAllocSplitting::SplitRegLiveInterval(LiveInterval *LI) {
   }
 
   // Update spill stack slot live interval.
-  UpdateSpillSlotInterval(ValNo, LIs->getUseIndex(SpillIndex)+1,
+  UpdateSpillSlotInterval(ValNo, LIs->getNextSlot(LIs->getUseIndex(SpillIndex)),
                           LIs->getDefIndex(RestoreIndex));
 
   ReconstructLiveInterval(CurrLI);
   
   if (!FoldedRestore) {
-    unsigned RestoreIdx = LIs->getInstructionIndex(prior(RestorePt));
+    MachineInstrIndex RestoreIdx = LIs->getInstructionIndex(prior(RestorePt));
     RestoreIdx = LiveIntervals::getDefIndex(RestoreIdx);
-    RenumberValno(CurrLI->findDefinedVNInfo(RestoreIdx));
+    RenumberValno(CurrLI->findDefinedVNInfoForRegInt(RestoreIdx));
   }
   
   ++NumSplits;
@@ -1232,7 +1241,7 @@ bool PreAllocSplitting::removeDeadSpills(SmallPtrSet<LiveInterval*, 8>& split) {
     // reaching definition (VNInfo).
     for (MachineRegisterInfo::use_iterator UI = MRI->use_begin((*LI)->reg),
          UE = MRI->use_end(); UI != UE; ++UI) {
-      unsigned index = LIs->getInstructionIndex(&*UI);
+      MachineInstrIndex index = LIs->getInstructionIndex(&*UI);
       index = LiveIntervals::getUseIndex(index);
       
       const LiveRange* LR = (*LI)->getLiveRangeContaining(index);
@@ -1382,7 +1391,7 @@ bool PreAllocSplitting::createsNewJoin(LiveRange* LR,
   if (LR->valno->hasPHIKill())
     return false;
   
-  unsigned MBBEnd = LIs->getMBBEndIdx(BarrierMBB);
+  MachineInstrIndex MBBEnd = LIs->getMBBEndIdx(BarrierMBB);
   if (LR->end < MBBEnd)
     return false;
   
