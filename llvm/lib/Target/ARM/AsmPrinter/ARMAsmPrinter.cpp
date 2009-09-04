@@ -180,8 +180,8 @@ namespace {
         }
       } else
         Name = Mang->makeNameProper(ACPV->getSymbol());
-      O << Name;      
-      
+      O << Name;
+
       if (ACPV->hasModifier()) O << "(" << ACPV->getModifier() << ")";
       if (ACPV->getPCAdjustment() != 0) {
         O << "-(" << MAI->getPrivateGlobalPrefix() << "PC"
@@ -193,7 +193,7 @@ namespace {
       }
       O << "\n";
     }
-    
+
     void getAnalysisUsage(AnalysisUsage &AU) const {
       AsmPrinter::getAnalysisUsage(AU);
       AU.setPreservesAll();
@@ -221,7 +221,7 @@ bool ARMAsmPrinter::runOnMachineFunction(MachineFunction &MF) {
   // instructions.
 
   O << '\n';
-  
+
   // Print out labels for the function.
   const Function *F = MF.getFunction();
   OutStreamer.SwitchSection(getObjFileLowering().SectionForGlobal(F, Mang, TM));
@@ -347,7 +347,7 @@ void ARMAsmPrinter::printOperand(const MachineInstr *MI, int OpNum,
   case MachineOperand::MO_ExternalSymbol: {
     bool isCallOp = Modifier && !strcmp(Modifier, "call");
     std::string Name = Mang->makeNameProper(MO.getSymbolName());
-    
+
     O << Name;
     if (isCallOp && Subtarget->isTargetELF() &&
         TM.getRelocationModel() == Reloc::PIC_)
@@ -408,9 +408,9 @@ void ARMAsmPrinter::printSOImm2PartOperand(const MachineInstr *MI, int OpNum) {
   O << "\n\torr";
   printPredicateOperand(MI, 2);
   O << " ";
-  printOperand(MI, 0); 
+  printOperand(MI, 0);
   O << ", ";
-  printOperand(MI, 0); 
+  printOperand(MI, 0);
   O << ", ";
   printSOImm(O, V2, VerboseAsm, MAI);
 }
@@ -466,7 +466,7 @@ void ARMAsmPrinter::printAddrMode2Operand(const MachineInstr *MI, int Op) {
   O << ", "
     << (char)ARM_AM::getAM2Op(MO3.getImm())
     << TRI->getAsmName(MO2.getReg());
-  
+
   if (unsigned ShImm = ARM_AM::getAM2Offset(MO3.getImm()))
     O << ", "
       << ARM_AM::getShiftOpcStr(ARM_AM::getAM2ShiftOpc(MO3.getImm()))
@@ -489,7 +489,7 @@ void ARMAsmPrinter::printAddrMode2OffsetOperand(const MachineInstr *MI, int Op){
 
   O << (char)ARM_AM::getAM2Op(MO2.getImm())
     << TRI->getAsmName(MO1.getReg());
-  
+
   if (unsigned ShImm = ARM_AM::getAM2Offset(MO2.getImm()))
     O << ", "
       << ARM_AM::getShiftOpcStr(ARM_AM::getAM2ShiftOpc(MO2.getImm()))
@@ -500,7 +500,7 @@ void ARMAsmPrinter::printAddrMode3Operand(const MachineInstr *MI, int Op) {
   const MachineOperand &MO1 = MI->getOperand(Op);
   const MachineOperand &MO2 = MI->getOperand(Op+1);
   const MachineOperand &MO3 = MI->getOperand(Op+2);
-  
+
   assert(TargetRegisterInfo::isPhysicalRegister(MO1.getReg()));
   O << "[" << TRI->getAsmName(MO1.getReg());
 
@@ -511,7 +511,7 @@ void ARMAsmPrinter::printAddrMode3Operand(const MachineInstr *MI, int Op) {
       << "]";
     return;
   }
-  
+
   if (unsigned ImmOffs = ARM_AM::getAM3Offset(MO3.getImm()))
     O << ", #"
       << (char)ARM_AM::getAM3Op(MO3.getImm())
@@ -535,7 +535,7 @@ void ARMAsmPrinter::printAddrMode3OffsetOperand(const MachineInstr *MI, int Op){
     << (char)ARM_AM::getAM3Op(MO2.getImm())
     << ImmOffs;
 }
-  
+
 void ARMAsmPrinter::printAddrMode4Operand(const MachineInstr *MI, int Op,
                                           const char *Modifier) {
   const MachineOperand &MO1 = MI->getOperand(Op);
@@ -571,7 +571,7 @@ void ARMAsmPrinter::printAddrMode5Operand(const MachineInstr *MI, int Op,
     printOperand(MI, Op);
     return;
   }
-  
+
   assert(TargetRegisterInfo::isPhysicalRegister(MO1.getReg()));
 
   if (Modifier && strcmp(Modifier, "submode") == 0) {
@@ -590,9 +590,9 @@ void ARMAsmPrinter::printAddrMode5Operand(const MachineInstr *MI, int Op,
       O << "!";
     return;
   }
-  
+
   O << "[" << TRI->getAsmName(MO1.getReg());
-  
+
   if (unsigned ImmOffs = ARM_AM::getAM5Offset(MO2.getImm())) {
     O << ", #"
       << (char)ARM_AM::getAM5Op(MO2.getImm())
@@ -854,7 +854,7 @@ void ARMAsmPrinter::printCPInstOperand(const MachineInstr *MI, int OpNum,
     unsigned CPI = MI->getOperand(OpNum).getIndex();
 
     const MachineConstantPoolEntry &MCPE = MCP->getConstants()[CPI];
-    
+
     if (MCPE.isMachineConstantPoolEntry()) {
       EmitMachineConstantPoolValue(MCPE.Val.MachineCPVal);
     } else {
@@ -989,7 +989,7 @@ bool ARMAsmPrinter::PrintAsmOperand(const MachineInstr *MI, unsigned OpNum,
       if (TM.getTargetData()->isBigEndian())
         break;
       // Fallthrough
-    case 'H': // Write second word of DI / DF reference.  
+    case 'H': // Write second word of DI / DF reference.
       // Verify that this operand has two consecutive registers.
       if (!MI->getOperand(OpNum).isReg() ||
           OpNum+1 == MI->getNumOperands() ||
@@ -998,7 +998,7 @@ bool ARMAsmPrinter::PrintAsmOperand(const MachineInstr *MI, unsigned OpNum,
       ++OpNum;   // Return the high-part.
     }
   }
-  
+
   printOperand(MI, OpNum);
   return false;
 }
@@ -1107,7 +1107,7 @@ void ARMAsmPrinter::PrintGlobalVariable(const GlobalVariable* GVar) {
 
   if (Subtarget->isTargetELF())
     O << "\t.type " << name << ",%object\n";
-  
+
   const MCSection *TheSection =
     getObjFileLowering().SectionForGlobal(GVar, Mang, TM);
   OutStreamer.SwitchSection(TheSection);
@@ -1172,7 +1172,7 @@ void ARMAsmPrinter::PrintGlobalVariable(const GlobalVariable* GVar) {
       return;
     }
   }
-  
+
   switch (GVar->getLinkage()) {
   case GlobalValue::CommonLinkage:
   case GlobalValue::LinkOnceAnyLinkage:
@@ -1218,9 +1218,9 @@ void ARMAsmPrinter::PrintGlobalVariable(const GlobalVariable* GVar) {
 bool ARMAsmPrinter::doFinalization(Module &M) {
   if (Subtarget->isTargetDarwin()) {
     // All darwin targets use mach-o.
-    TargetLoweringObjectFileMachO &TLOFMacho = 
+    TargetLoweringObjectFileMachO &TLOFMacho =
       static_cast<TargetLoweringObjectFileMachO &>(getObjFileLowering());
-    
+
     O << '\n';
 
     // Output non-lazy-pointers for external and common global variables.
@@ -1258,7 +1258,7 @@ bool ARMAsmPrinter::doFinalization(Module &M) {
 }
 
 // Force static initialization.
-extern "C" void LLVMInitializeARMAsmPrinter() { 
+extern "C" void LLVMInitializeARMAsmPrinter() {
   RegisterAsmPrinter<ARMAsmPrinter> X(TheARMTarget);
   RegisterAsmPrinter<ARMAsmPrinter> Y(TheThumbTarget);
 }
