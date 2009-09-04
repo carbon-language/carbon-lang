@@ -14,6 +14,8 @@
 #include "clang-c/Index.h"
 #include "clang/Index/Program.h"
 #include "clang/Index/Indexer.h"
+#include "clang/Index/ASTLocation.h"
+#include "clang/Index/Utils.h"
 #include "clang/AST/DeclVisitor.h"
 #include "clang/AST/Decl.h"
 #include "clang/Basic/FileManager.h"
@@ -119,8 +121,17 @@ public:
     if (D->getSuperClass())
       Call(CXCursor_ObjCSuperClassRef, D);
 
-    // FIXME: Issue callbacks for protocol refs.
+    for (ObjCProtocolDecl::protocol_iterator I = D->protocol_begin(), 
+         E = D->protocol_end(); I != E; ++I)
+      Call(CXCursor_ObjCProtocolRef, *I);
     VisitDeclContext(dyn_cast<DeclContext>(D));
+  }
+  void VisitObjCProtocolDecl(ObjCProtocolDecl *PID) {
+    for (ObjCProtocolDecl::protocol_iterator I = PID->protocol_begin(), 
+         E = PID->protocol_end(); I != E; ++I)
+      Call(CXCursor_ObjCProtocolRef, *I);
+      
+    VisitDeclContext(dyn_cast<DeclContext>(PID));
   }
   void VisitTagDecl(TagDecl *D) {
     VisitDeclContext(dyn_cast<DeclContext>(D));
@@ -295,6 +306,12 @@ const char *clang_getCursorSpelling(CXCursor C)
         assert(OID && "clang_getCursorLine(): Missing category decl");
         return OID->getClassInterface()->getIdentifier()->getName();
         }
+      case CXCursor_ObjCProtocolRef: 
+        {
+        ObjCProtocolDecl *OID = dyn_cast<ObjCProtocolDecl>(ND);
+        assert(OID && "clang_getCursorLine(): Missing protocol decl");
+        return OID->getIdentifier()->getName();
+        }
       default:
         return "<not implemented>";
     }
@@ -328,23 +345,57 @@ const char *clang_getCursorKindSpelling(enum CXCursorKind Kind)
    case CXCursor_ObjCClassDefn: return "ObjCClassDefn";
    case CXCursor_ObjCCategoryDefn: return "ObjCCategoryDefn";
    case CXCursor_ObjCSuperClassRef: return "ObjCSuperClassRef";
+   case CXCursor_ObjCProtocolRef: return "ObjCProtocolRef";
    case CXCursor_ObjCClassRef: return "ObjCClassRef";
    default: return "<not implemented>";
   }
 }
 
+static enum CXCursorKind TranslateKind(Decl *D) {
+  switch (D->getKind()) {
+    case Decl::Function: return CXCursor_FunctionDecl;
+    case Decl::Typedef: return CXCursor_TypedefDecl;
+    case Decl::Enum: return CXCursor_EnumDecl;
+    case Decl::EnumConstant: return CXCursor_EnumConstantDecl;
+    case Decl::Record: return CXCursor_StructDecl; // FIXME: union/class
+    case Decl::Field: return CXCursor_FieldDecl;
+    case Decl::Var: return CXCursor_VarDecl;
+    case Decl::ParmVar: return CXCursor_ParmDecl;
+    case Decl::ObjCInterface: return CXCursor_ObjCInterfaceDecl;
+    case Decl::ObjCMethod: {
+      ObjCMethodDecl *MD = dyn_cast<ObjCMethodDecl>(D);
+      if (MD->isInstanceMethod())
+        return CXCursor_ObjCInstanceMethodDecl;
+      return CXCursor_ObjCClassMethodDecl;
+    }
+    default: break;
+  }
+  return CXCursor_Invalid;
+}
 //
 // CXCursor Operations.
 //
-CXCursor clang_getCursor(CXTranslationUnit, const char *source_name, 
+CXCursor clang_getCursor(CXTranslationUnit CTUnit, const char *source_name, 
                          unsigned line, unsigned column)
 {
-  return CXCursor();
-}
-
-CXCursorKind clang_getCursorKind(CXCursor)
-{
-  return CXCursor_Invalid;
+  assert(CTUnit && "Passed null CXTranslationUnit");
+  ASTUnit *CXXUnit = static_cast<ASTUnit *>(CTUnit);
+  
+  FileManager &FMgr = CXXUnit->getFileManager();
+  const FileEntry *File = FMgr.getFile(source_name, 
+                                       source_name+strlen(source_name));
+  assert(File && "clang_getCursor(): FileManager returned 0");
+  
+  SourceLocation SLoc = 
+    CXXUnit->getSourceManager().getLocation(File, line, column);
+                                                                
+  ASTLocation ALoc = ResolveLocationInAST(CXXUnit->getASTContext(), SLoc);
+  
+  Decl *Dcl = ALoc.getDecl();
+  assert(Dcl && "clang_getCursor(): ASTLocation has a null decl");
+  
+  CXCursor C = { TranslateKind(Dcl), Dcl };
+  return C;
 }
 
 unsigned clang_isDeclaration(enum CXCursorKind K)
@@ -362,22 +413,55 @@ unsigned clang_isDefinition(enum CXCursorKind K)
   return K >= CXCursor_FirstDefn && K <= CXCursor_LastDefn;
 }
 
+CXCursorKind clang_getCursorKind(CXCursor C)
+{
+  return C.kind;
+}
+
+CXDecl clang_getCursorDecl(CXCursor C) 
+{
+  return C.decl;
+}
+
 static SourceLocation getLocationFromCursor(CXCursor C, 
                                             SourceManager &SourceMgr,
                                             NamedDecl *ND) {
   if (clang_isReference(C.kind)) {
     switch (C.kind) {
-      case CXCursor_ObjCSuperClassRef:
+      case CXCursor_ObjCSuperClassRef: 
         {
         ObjCInterfaceDecl *OID = dyn_cast<ObjCInterfaceDecl>(ND);
         assert(OID && "clang_getCursorLine(): Missing interface decl");
         return OID->getSuperClassLoc();
         }
+      case CXCursor_ObjCProtocolRef: 
+        {
+        ObjCProtocolDecl *OID = dyn_cast<ObjCProtocolDecl>(ND);
+        assert(OID && "clang_getCursorLine(): Missing protocol decl");
+        return OID->getLocation();
+        }
       default:
         return SourceLocation();
     }
   } else { // We have a declaration or a definition.
-    SourceLocation SLoc = ND->getLocation();
+    SourceLocation SLoc;
+    switch (ND->getKind()) {
+      case Decl::ObjCInterface: 
+        {
+        SLoc = dyn_cast<ObjCInterfaceDecl>(ND)->getClassLoc();
+        break;
+        }
+      case Decl::ObjCProtocol: 
+        {
+        SLoc = ND->getLocation(); /* FIXME: need to get the name location. */
+        break;
+        }
+      default: 
+        {
+        SLoc = ND->getLocation();
+        break;
+        }
+    }
     if (SLoc.isInvalid())
       return SourceLocation();
     return SourceMgr.getSpellingLoc(SLoc); // handles macro instantiations.
@@ -411,13 +495,6 @@ const char *clang_getCursorSource(CXCursor C)
   
   SourceLocation SLoc = getLocationFromCursor(C, SourceMgr, ND);
   return SourceMgr.getBufferName(SLoc);
-}
-
-// If CXCursorKind == Cursor_Reference, then this will return the referenced declaration.
-// If CXCursorKind == Cursor_Declaration, then this will return the declaration.
-CXDecl clang_getCursorDecl(CXCursor) 
-{
-  return 0;
 }
 
 } // end extern "C"

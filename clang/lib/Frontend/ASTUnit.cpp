@@ -81,6 +81,10 @@ const std::string &ASTUnit::getOriginalSourceFileName() {
   return dyn_cast<PCHReader>(Ctx->getExternalSource())->getOriginalSourceFile();
 }
 
+FileManager &ASTUnit::getFileManager() {
+  return HeaderInfo->getFileMgr();
+}
+
 ASTUnit *ASTUnit::LoadFromPCHFile(const std::string &Filename,
                                   FileManager &FileMgr,
                                   std::string *ErrMsg) {

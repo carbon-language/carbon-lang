@@ -39,12 +39,21 @@ static void TranslationUnitVisitor(CXTranslationUnit Unit, CXCursor Cursor,
 int main(int argc, char **argv) {
   CXIndex Idx = clang_createIndex();
   CXTranslationUnit TU = clang_createTranslationUnit(Idx, argv[1]);
-  
-  if (argc == 2)
-    clang_loadTranslationUnit(TU, TranslationUnitVisitor, 0);
-  else if (argc == 3) {
+
+  if (argc == 2) {
+    /* malloc - returns a cursor of type CXCursor_FunctionDecl */
+    CXCursor C = clang_getCursor(TU, "/usr/include/stdlib.h", 169, 7);
+    PrintCursor(C);
+    /* methodSignature - returns a cursor of type ObjCInstanceMethodDecl */
+    C = clang_getCursor(TU, "/System/Library/Frameworks/Foundation.framework/Headers/NSInvocation.h", 22, 1);
+    PrintCursor(C);
+  } else if (argc == 3) {
     enum CXCursorKind K = CXCursor_Invalid;
     
+    if (!strcmp(argv[2], "all")) {
+      clang_loadTranslationUnit(TU, TranslationUnitVisitor, 0);
+      return 1;
+    } 
     if (!strcmp(argv[2], "category")) K = CXCursor_ObjCCategoryDecl;
     else if (!strcmp(argv[2], "interface")) K = CXCursor_ObjCInterfaceDecl;
     else if (!strcmp(argv[2], "protocol")) K = CXCursor_ObjCProtocolDecl;
