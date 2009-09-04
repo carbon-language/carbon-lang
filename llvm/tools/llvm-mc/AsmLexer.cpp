@@ -277,6 +277,10 @@ AsmToken AsmLexer::LexToken() {
   case '~': return AsmToken(AsmToken::Tilde, StringRef(TokStart, 1));
   case '(': return AsmToken(AsmToken::LParen, StringRef(TokStart, 1));
   case ')': return AsmToken(AsmToken::RParen, StringRef(TokStart, 1));
+  case '[': return AsmToken(AsmToken::LBrac, StringRef(TokStart, 1));
+  case ']': return AsmToken(AsmToken::RBrac, StringRef(TokStart, 1));
+  case '{': return AsmToken(AsmToken::LCurly, StringRef(TokStart, 1));
+  case '}': return AsmToken(AsmToken::RCurly, StringRef(TokStart, 1));
   case '*': return AsmToken(AsmToken::Star, StringRef(TokStart, 1));
   case ',': return AsmToken(AsmToken::Comma, StringRef(TokStart, 1));
   case '$': return AsmToken(AsmToken::Dollar, StringRef(TokStart, 1));

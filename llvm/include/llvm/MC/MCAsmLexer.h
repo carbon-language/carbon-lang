@@ -37,7 +37,7 @@ struct AsmToken {
     Colon,
     Plus, Minus, Tilde,
     Slash,    // '/'
-    LParen, RParen,
+    LParen, RParen, LBrac, RBrac, LCurly, RCurly,
     Star, Comma, Dollar, Equal, EqualEqual,
     
     Pipe, PipePipe, Caret, 
