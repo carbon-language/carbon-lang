@@ -17,6 +17,7 @@
 #include "llvm/Module.h"
 #include "llvm/Pass.h"
 #include "llvm/Analysis/Passes.h"
+#include "llvm/Analysis/ProfileInfo.h"
 #include "llvm/Support/Compiler.h"
 #include "llvm/Support/raw_ostream.h"
 #include "llvm/Support/Debug.h"
@@ -131,7 +132,8 @@ bool OptimalEdgeProfiler::runOnModule(Module &M) {
     ProfileInfo::EdgeWeights ECs = 
       getAnalysisID<ProfileInfo>(ProfileEstimatorPassID, *F).getEdgeWeights(F);
     std::vector<ProfileInfo::EdgeWeight> EdgeVector(ECs.begin(), ECs.end());
-    MaximumSpanningTree MST = MaximumSpanningTree(EdgeVector);
+    MaximumSpanningTree<BasicBlock> MST (EdgeVector);
+    std::stable_sort(MST.begin(),MST.end());
 
     // Check if (0,entry) not in the MST. If not, instrument edge
     // (IncrementCounterInBlock()) and set the counter initially to zero, if
