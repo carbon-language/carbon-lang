@@ -496,7 +496,7 @@ public:
                                            Instruction *InsertBefore = 0) {
     GetElementPtrInst *GEP = Create(Ptr, IdxBegin, IdxEnd,
                                     NameStr, InsertBefore);
-    cast<GEPOperator>(GEP)->setIsInBounds(true);
+    GEP->setIsInBounds(true);
     return GEP;
   }
   template<typename InputIterator>
@@ -507,21 +507,21 @@ public:
                                            BasicBlock *InsertAtEnd) {
     GetElementPtrInst *GEP = Create(Ptr, IdxBegin, IdxEnd,
                                     NameStr, InsertAtEnd);
-    cast<GEPOperator>(GEP)->setIsInBounds(true);
+    GEP->setIsInBounds(true);
     return GEP;
   }
   static GetElementPtrInst *CreateInBounds(Value *Ptr, Value *Idx,
                                            const Twine &NameStr = "",
                                            Instruction *InsertBefore = 0) {
     GetElementPtrInst *GEP = Create(Ptr, Idx, NameStr, InsertBefore);
-    cast<GEPOperator>(GEP)->setIsInBounds(true);
+    GEP->setIsInBounds(true);
     return GEP;
   }
   static GetElementPtrInst *CreateInBounds(Value *Ptr, Value *Idx,
                                            const Twine &NameStr,
                                            BasicBlock *InsertAtEnd) {
     GetElementPtrInst *GEP = Create(Ptr, Idx, NameStr, InsertAtEnd);
-    cast<GEPOperator>(GEP)->setIsInBounds(true);
+    GEP->setIsInBounds(true);
     return GEP;
   }
 
@@ -601,6 +601,10 @@ public:
   /// constant integers.  If so, the result pointer and the first operand have
   /// a constant offset between them.
   bool hasAllConstantIndices() const;
+
+  /// setIsInBounds - Set or clear the inbounds flag on this GEP instruction.
+  /// See LangRef.html for the meaning of inbounds on a getelementptr.
+  void setIsInBounds(bool);
 
   // Methods for support type inquiry through isa, cast, and dyn_cast:
   static inline bool classof(const GetElementPtrInst *) { return true; }

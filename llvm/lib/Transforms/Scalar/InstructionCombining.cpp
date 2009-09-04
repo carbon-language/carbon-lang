@@ -8086,11 +8086,11 @@ Instruction *InstCombiner::commonPointerCastTransforms(CastInst &CI) {
           // If we were able to index down into an element, create the GEP
           // and bitcast the result.  This eliminates one bitcast, potentially
           // two.
-          Value *NGEP = Builder->CreateGEP(OrigBase, NewIndices.begin(),
-                                           NewIndices.end());
+          Value *NGEP = cast<GEPOperator>(GEP)->isInBounds() ?
+            Builder->CreateInBoundsGEP(OrigBase,
+                                       NewIndices.begin(), NewIndices.end()) :
+            Builder->CreateGEP(OrigBase, NewIndices.begin(), NewIndices.end());
           NGEP->takeName(GEP);
-          if (isa<Instruction>(NGEP) && cast<GEPOperator>(GEP)->isInBounds())
-            cast<GEPOperator>(NGEP)->setIsInBounds(true);
           
           if (isa<BitCastInst>(CI))
             return new BitCastInst(NGEP, CI.getType());
@@ -8805,11 +8805,8 @@ Instruction *InstCombiner::visitBitCast(BitCastInst &CI) {
     // If we found a path from the src to dest, create the getelementptr now.
     if (SrcElTy == DstElTy) {
       SmallVector<Value*, 8> Idxs(NumZeros+1, ZeroUInt);
-      Instruction *GEP = GetElementPtrInst::Create(Src,
-                                                   Idxs.begin(), Idxs.end(), "",
-                                                   ((Instruction*) NULL));
-      cast<GEPOperator>(GEP)->setIsInBounds(true);
-      return GEP;
+      return GetElementPtrInst::CreateInBounds(Src, Idxs.begin(), Idxs.end(), "",
+                                               ((Instruction*) NULL));
     }
   }
 
@@ -10481,12 +10478,11 @@ Instruction *InstCombiner::FoldPHIArgGEPIntoPHI(PHINode &PN) {
   }
   
   Value *Base = FixedOperands[0];
-  GetElementPtrInst *GEP =
+  return cast<GEPOperator>(FirstInst)->isInBounds() ?
+    GetElementPtrInst::CreateInBounds(Base, FixedOperands.begin()+1,
+                                      FixedOperands.end()) :
     GetElementPtrInst::Create(Base, FixedOperands.begin()+1,
                               FixedOperands.end());
-  if (cast<GEPOperator>(FirstInst)->isInBounds())
-    cast<GEPOperator>(GEP)->setIsInBounds(true);
-  return GEP;
 }
 
 
@@ -10889,14 +10885,13 @@ Instruction *InstCombiner::visitGetElementPtrInst(GetElementPtrInst &GEP) {
       Indices.append(GEP.idx_begin()+1, GEP.idx_end());
     }
 
-    if (!Indices.empty()) {
-      GetElementPtrInst *NewGEP =
+    if (!Indices.empty())
+      return (cast<GEPOperator>(&GEP)->isInBounds() &&
+              Src->isInBounds()) ?
+        GetElementPtrInst::CreateInBounds(Src->getOperand(0), Indices.begin(),
+                                          Indices.end(), GEP.getName()) :
         GetElementPtrInst::Create(Src->getOperand(0), Indices.begin(),
                                   Indices.end(), GEP.getName());
-      if (cast<GEPOperator>(&GEP)->isInBounds() && Src->isInBounds())
-        cast<GEPOperator>(NewGEP)->setIsInBounds(true);
-      return NewGEP;
-    }
   }
   
   // Handle gep(bitcast x) and gep(gep x, 0, 0, 0).
@@ -10926,12 +10921,11 @@ Instruction *InstCombiner::visitGetElementPtrInst(GetElementPtrInst &GEP) {
         if (CATy->getElementType() == XTy->getElementType()) {
           // -> GEP i8* X, ...
           SmallVector<Value*, 8> Indices(GEP.idx_begin()+1, GEP.idx_end());
-          GetElementPtrInst *NewGEP =
+          return cast<GEPOperator>(&GEP)->isInBounds() ?
+            GetElementPtrInst::CreateInBounds(X, Indices.begin(), Indices.end(),
+                                              GEP.getName()) :
             GetElementPtrInst::Create(X, Indices.begin(), Indices.end(),
                                       GEP.getName());
-          if (cast<GEPOperator>(&GEP)->isInBounds())
-            cast<GEPOperator>(NewGEP)->setIsInBounds(true);
-          return NewGEP;
         }
         
         if (const ArrayType *XATy = dyn_cast<ArrayType>(XTy->getElementType())){
@@ -10959,10 +10953,9 @@ Instruction *InstCombiner::visitGetElementPtrInst(GetElementPtrInst &GEP) {
         Value *Idx[2];
         Idx[0] = Constant::getNullValue(Type::getInt32Ty(*Context));
         Idx[1] = GEP.getOperand(1);
-        Value *NewGEP =
+        Value *NewGEP = cast<GEPOperator>(&GEP)->isInBounds() ?
+          Builder->CreateInBoundsGEP(X, Idx, Idx + 2, GEP.getName()) :
           Builder->CreateGEP(X, Idx, Idx + 2, GEP.getName());
-        if (cast<GEPOperator>(&GEP)->isInBounds())
-          cast<GEPOperator>(NewGEP)->setIsInBounds(true);
         // V and GEP are both pointer types --> BitCast
         return new BitCastInst(NewGEP, GEP.getType());
       }
@@ -11019,9 +11012,9 @@ Instruction *InstCombiner::visitGetElementPtrInst(GetElementPtrInst &GEP) {
           Value *Idx[2];
           Idx[0] = Constant::getNullValue(Type::getInt32Ty(*Context));
           Idx[1] = NewIdx;
-          Value *NewGEP = Builder->CreateGEP(X, Idx, Idx + 2, GEP.getName());
-          if (cast<GEPOperator>(&GEP)->isInBounds())
-            cast<GEPOperator>(NewGEP)->setIsInBounds(true);
+          Value *NewGEP = cast<GEPOperator>(&GEP)->isInBounds() ?
+            Builder->CreateInBoundsGEP(X, Idx, Idx + 2, GEP.getName()) :
+            Builder->CreateGEP(X, Idx, Idx + 2, GEP.getName());
           // The NewGEP must be pointer typed, so must the old one -> BitCast
           return new BitCastInst(NewGEP, GEP.getType());
         }
@@ -11069,10 +11062,11 @@ Instruction *InstCombiner::visitGetElementPtrInst(GetElementPtrInst &GEP) {
       const Type *InTy =
         cast<PointerType>(BCI->getOperand(0)->getType())->getElementType();
       if (FindElementAtOffset(InTy, Offset, NewIndices, TD, Context)) {
-        Value *NGEP = Builder->CreateGEP(BCI->getOperand(0), NewIndices.begin(),
-                                         NewIndices.end());
-        if (cast<GEPOperator>(&GEP)->isInBounds())
-          cast<GEPOperator>(NGEP)->setIsInBounds(true);
+        Value *NGEP = cast<GEPOperator>(&GEP)->isInBounds() ?
+          Builder->CreateInBoundsGEP(BCI->getOperand(0), NewIndices.begin(),
+                                     NewIndices.end()) :
+          Builder->CreateGEP(BCI->getOperand(0), NewIndices.begin(),
+                             NewIndices.end());
         
         if (NGEP->getType() == GEP.getType())
           return ReplaceInstUsesWith(GEP, NGEP);
@@ -11115,9 +11109,8 @@ Instruction *InstCombiner::visitAllocationInst(AllocationInst &AI) {
       Value *Idx[2];
       Idx[0] = NullIdx;
       Idx[1] = NullIdx;
-      Value *V = GetElementPtrInst::Create(New, Idx, Idx + 2,
-                                           New->getName()+".sub", It);
-      cast<GEPOperator>(V)->setIsInBounds(true);
+      Value *V = GetElementPtrInst::CreateInBounds(New, Idx, Idx + 2,
+                                                   New->getName()+".sub", It);
 
       // Now make everything use the getelementptr instead of the original
       // allocation.
@@ -11486,11 +11479,9 @@ static Instruction *InstCombineStoreToCast(InstCombiner &IC, StoreInst &SI) {
   
   // SIOp0 is a pointer to aggregate and this is a store to the first field,
   // emit a GEP to index into its first field.
-  if (!NewGEPIndices.empty()) {
-    CastOp = IC.Builder->CreateGEP(CastOp, NewGEPIndices.begin(),
-                                   NewGEPIndices.end());
-    cast<GEPOperator>(CastOp)->setIsInBounds(true);
-  }
+  if (!NewGEPIndices.empty())
+    CastOp = IC.Builder->CreateInBoundsGEP(CastOp, NewGEPIndices.begin(),
+                                           NewGEPIndices.end());
   
   NewCast = IC.Builder->CreateCast(opcode, SIOp0, CastDstTy,
                                    SIOp0->getName()+".c");
@@ -12160,8 +12151,7 @@ Instruction *InstCombiner::visitExtractElementInst(ExtractElementInst &EI) {
                                             PointerType::get(EI.getType(), AS),
                                             I->getOperand(0)->getName());
         Value *GEP =
-          Builder->CreateGEP(Ptr, EI.getOperand(1), I->getName()+".gep");
-        cast<GEPOperator>(GEP)->setIsInBounds(true);
+          Builder->CreateInBoundsGEP(Ptr, EI.getOperand(1), I->getName()+".gep");
         
         LoadInst *Load = Builder->CreateLoad(GEP, "tmp");
 

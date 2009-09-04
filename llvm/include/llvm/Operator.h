@@ -21,6 +21,8 @@
 namespace llvm {
 
 class GetElementPtrInst;
+class BinaryOperator;
+class ConstantExpr;
 
 /// Operator - This is a utility class that provides an abstraction for the
 /// common functionality between Instructions and ConstantExprs.
@@ -67,24 +69,37 @@ public:
 /// despite that operator having the potential for overflow.
 ///
 class OverflowingBinaryOperator : public Operator {
+public:
+  enum {
+    NoUnsignedWrap = (1 << 0),
+    NoSignedWrap   = (1 << 1)
+  };
+
+private:
   ~OverflowingBinaryOperator(); // do not implement
+
+  friend class BinaryOperator;
+  friend class ConstantExpr;
+  void setHasNoUnsignedWrap(bool B) {
+    SubclassOptionalData =
+      (SubclassOptionalData & ~NoUnsignedWrap) | (B * NoUnsignedWrap);
+  }
+  void setHasNoSignedWrap(bool B) {
+    SubclassOptionalData =
+      (SubclassOptionalData & ~NoSignedWrap) | (B * NoSignedWrap);
+  }
+
 public:
   /// hasNoUnsignedWrap - Test whether this operation is known to never
   /// undergo unsigned overflow, aka the nuw property.
   bool hasNoUnsignedWrap() const {
-    return SubclassOptionalData & (1 << 0);
-  }
-  void setHasNoUnsignedWrap(bool B) {
-    SubclassOptionalData = (SubclassOptionalData & ~(1 << 0)) | (B << 0);
+    return SubclassOptionalData & NoUnsignedWrap;
   }
 
   /// hasNoSignedWrap - Test whether this operation is known to never
   /// undergo signed overflow, aka the nsw property.
   bool hasNoSignedWrap() const {
-    return SubclassOptionalData & (1 << 1);
-  }
-  void setHasNoSignedWrap(bool B) {
-    SubclassOptionalData = (SubclassOptionalData & ~(1 << 1)) | (B << 1);
+    return SubclassOptionalData & NoSignedWrap;
   }
 
   static inline bool classof(const OverflowingBinaryOperator *) { return true; }
@@ -161,15 +176,25 @@ public:
 /// SDivOperator - An Operator with opcode Instruction::SDiv.
 ///
 class SDivOperator : public Operator {
+public:
+  enum {
+    IsExact = (1 << 0)
+  };
+
+private:
   ~SDivOperator(); // do not implement
+
+  friend class BinaryOperator;
+  friend class ConstantExpr;
+  void setIsExact(bool B) {
+    SubclassOptionalData = (SubclassOptionalData & ~IsExact) | (B * IsExact);
+  }
+
 public:
   /// isExact - Test whether this division is known to be exact, with
   /// zero remainder.
   bool isExact() const {
-    return SubclassOptionalData & (1 << 0);
-  }
-  void setIsExact(bool B) {
-    SubclassOptionalData = (SubclassOptionalData & ~(1 << 0)) | (B << 0);
+    return SubclassOptionalData & IsExact;
   }
 
   // Methods for support type inquiry through isa, cast, and dyn_cast:
@@ -187,15 +212,24 @@ public:
 };
 
 class GEPOperator : public Operator {
+  enum {
+    IsInBounds = (1 << 0)
+  };
+
   ~GEPOperator(); // do not implement
+
+  friend class GetElementPtrInst;
+  friend class ConstantExpr;
+  void setIsInBounds(bool B) {
+    SubclassOptionalData =
+      (SubclassOptionalData & ~IsInBounds) | (B * IsInBounds);
+  }
+
 public:
   /// isInBounds - Test whether this is an inbounds GEP, as defined
   /// by LangRef.html.
   bool isInBounds() const {
-    return SubclassOptionalData & (1 << 0);
-  }
-  void setIsInBounds(bool B) {
-    SubclassOptionalData = (SubclassOptionalData & ~(1 << 0)) | (B << 0);
+    return SubclassOptionalData & IsInBounds;
   }
 
   inline op_iterator       idx_begin()       { return op_begin()+1; }

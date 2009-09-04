@@ -53,10 +53,12 @@ public:
   void *operator new(size_t s) {
     return User::operator new(s, 2);
   }
-  BinaryConstantExpr(unsigned Opcode, Constant *C1, Constant *C2)
+  BinaryConstantExpr(unsigned Opcode, Constant *C1, Constant *C2,
+                     unsigned Flags)
     : ConstantExpr(C1->getType(), Opcode, &Op<0>(), 2) {
     Op<0>() = C1;
     Op<1>() = C2;
+    SubclassOptionalData = Flags;
   }
   /// Transparently provide more efficient getOperand methods.
   DECLARE_TRANSPARENT_OPERAND_ACCESSORS(Value);
@@ -206,9 +208,12 @@ class GetElementPtrConstantExpr : public ConstantExpr {
 public:
   static GetElementPtrConstantExpr *Create(Constant *C,
                                            const std::vector<Constant*>&IdxList,
-                                           const Type *DestTy) {
-    return
+                                           const Type *DestTy,
+                                           unsigned Flags) {
+    GetElementPtrConstantExpr *Result =
       new(IdxList.size() + 1) GetElementPtrConstantExpr(C, IdxList, DestTy);
+    Result->SubclassOptionalData = Flags;
+    return Result;
   }
   /// Transparently provide more efficient getOperand methods.
   DECLARE_TRANSPARENT_OPERAND_ACCESSORS(Value);
@@ -291,26 +296,32 @@ struct ExprMapKeyType {
 
   ExprMapKeyType(unsigned opc,
       const std::vector<Constant*> &ops,
-      unsigned short pred = 0,
+      unsigned short flags = 0,
+      unsigned short optionalflags = 0,
       const IndexList &inds = IndexList())
-        : opcode(opc), predicate(pred), operands(ops), indices(inds) {}
-  uint16_t opcode;
-  uint16_t predicate;
+        : opcode(opc), subclassoptionaldata(optionalflags), subclassdata(flags),
+        operands(ops), indices(inds) {}
+  uint8_t opcode;
+  uint8_t subclassoptionaldata;
+  uint16_t subclassdata;
   std::vector<Constant*> operands;
   IndexList indices;
   bool operator==(const ExprMapKeyType& that) const {
     return this->opcode == that.opcode &&
-           this->predicate == that.predicate &&
+           this->subclassdata == that.subclassdata &&
+           this->subclassoptionaldata == that.subclassoptionaldata &&
            this->operands == that.operands &&
            this->indices == that.indices;
   }
   bool operator<(const ExprMapKeyType & that) const {
-    return this->opcode < that.opcode ||
-      (this->opcode == that.opcode && this->predicate < that.predicate) ||
-      (this->opcode == that.opcode && this->predicate == that.predicate &&
-       this->operands < that.operands) ||
-      (this->opcode == that.opcode && this->predicate == that.predicate &&
-       this->operands == that.operands && this->indices < that.indices);
+    if (this->opcode != that.opcode) return this->opcode < that.opcode;
+    if (this->operands != that.operands) return this->operands < that.operands;
+    if (this->subclassdata != that.subclassdata)
+      return this->subclassdata < that.subclassdata;
+    if (this->subclassoptionaldata != that.subclassoptionaldata)
+      return this->subclassoptionaldata < that.subclassoptionaldata;
+    if (this->indices != that.indices) return this->indices < that.indices;
+    return false;
   }
 
   bool operator!=(const ExprMapKeyType& that) const {
@@ -354,7 +365,8 @@ struct ConstantCreator<ConstantExpr, Type, ExprMapKeyType> {
       return new UnaryConstantExpr(V.opcode, V.operands[0], Ty);
     if ((V.opcode >= Instruction::BinaryOpsBegin &&
          V.opcode < Instruction::BinaryOpsEnd))
-      return new BinaryConstantExpr(V.opcode, V.operands[0], V.operands[1]);
+      return new BinaryConstantExpr(V.opcode, V.operands[0], V.operands[1],
+                                    V.subclassoptionaldata);
     if (V.opcode == Instruction::Select)
       return new SelectConstantExpr(V.operands[0], V.operands[1], 
                                     V.operands[2]);
@@ -373,17 +385,18 @@ struct ConstantCreator<ConstantExpr, Type, ExprMapKeyType> {
       return new ExtractValueConstantExpr(V.operands[0], V.indices, Ty);
     if (V.opcode == Instruction::GetElementPtr) {
       std::vector<Constant*> IdxList(V.operands.begin()+1, V.operands.end());
-      return GetElementPtrConstantExpr::Create(V.operands[0], IdxList, Ty);
+      return GetElementPtrConstantExpr::Create(V.operands[0], IdxList, Ty,
+                                               V.subclassoptionaldata);
     }
 
     // The compare instructions are weird. We have to encode the predicate
     // value and it is combined with the instruction opcode by multiplying
     // the opcode by one hundred. We must decode this to get the predicate.
     if (V.opcode == Instruction::ICmp)
-      return new CompareConstantExpr(Ty, Instruction::ICmp, V.predicate, 
+      return new CompareConstantExpr(Ty, Instruction::ICmp, V.subclassdata,
                                      V.operands[0], V.operands[1]);
     if (V.opcode == Instruction::FCmp) 
-      return new CompareConstantExpr(Ty, Instruction::FCmp, V.predicate, 
+      return new CompareConstantExpr(Ty, Instruction::FCmp, V.subclassdata,
                                      V.operands[0], V.operands[1]);
     llvm_unreachable("Invalid ConstantExpr!");
     return 0;

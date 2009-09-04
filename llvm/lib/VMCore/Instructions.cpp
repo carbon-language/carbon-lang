@@ -1171,6 +1171,9 @@ bool GetElementPtrInst::hasAllConstantIndices() const {
   return true;
 }
 
+void GetElementPtrInst::setIsInBounds(bool B) {
+  cast<GEPOperator>(this)->setIsInBounds(B);
+}
 
 //===----------------------------------------------------------------------===//
 //                           ExtractElementInst Implementation
@@ -1714,6 +1717,18 @@ bool BinaryOperator::swapOperands() {
     return true; // Can't commute operands
   Op<0>().swap(Op<1>());
   return false;
+}
+
+void BinaryOperator::setHasNoUnsignedWrap(bool b) {
+  cast<OverflowingBinaryOperator>(this)->setHasNoUnsignedWrap(b);
+}
+
+void BinaryOperator::setHasNoSignedWrap(bool b) {
+  cast<OverflowingBinaryOperator>(this)->setHasNoSignedWrap(b);
+}
+
+void BinaryOperator::setIsExact(bool b) {
+  cast<SDivOperator>(this)->setIsExact(b);
 }
 
 //===----------------------------------------------------------------------===//
