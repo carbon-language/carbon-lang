@@ -373,7 +373,7 @@ namespace llvm {
     }
 
     static unsigned getTripleMatchQuality(const std::string &TT) {
-      if (Triple(TT.c_str()).getArch() == TargetArchType)
+      if (Triple(TT).getArch() == TargetArchType)
         return 20;
       return 0;
     }
