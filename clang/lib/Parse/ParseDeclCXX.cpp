@@ -536,6 +536,26 @@ void Parser::ParseClassSpecifier(tok::TokenKind TagTokKind,
   if (Tok.is(tok::kw___declspec))
     Attr = ParseMicrosoftDeclSpec(Attr);
   
+  if (TagType == DeclSpec::TST_struct && Tok.is(tok::kw___is_pod)) {
+    // GNU libstdc++ 4.2 uses __is_pod as the name of a struct template, but
+    // __is_pod is a keyword in GCC >= 4.3. Therefore, when we see the
+    // token sequence "struct __is_pod", make __is_pod into a normal 
+    // identifier rather than a keyword, to allow libstdc++ 4.2 to work
+    // properly.
+    Tok.getIdentifierInfo()->setTokenID(tok::identifier);
+    Tok.setKind(tok::identifier);
+  }
+
+  if (TagType == DeclSpec::TST_struct && Tok.is(tok::kw___is_empty)) {
+    // GNU libstdc++ 4.2 uses __is_empty as the name of a struct template, but
+    // __is_empty is a keyword in GCC >= 4.3. Therefore, when we see the
+    // token sequence "struct __is_empty", make __is_empty into a normal 
+    // identifier rather than a keyword, to allow libstdc++ 4.2 to work
+    // properly.
+    Tok.getIdentifierInfo()->setTokenID(tok::identifier);
+    Tok.setKind(tok::identifier);
+  }
+  
   // Parse the (optional) nested-name-specifier.
   CXXScopeSpec SS;
   if (getLang().CPlusPlus && 
