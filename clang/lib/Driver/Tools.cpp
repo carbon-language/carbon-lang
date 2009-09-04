@@ -1519,6 +1519,8 @@ void darwin::Link::AddLinkArgs(const ArgList &Args,
   Args.AddLastArg(CmdArgs, options::OPT_all__load);
   Args.AddAllArgs(CmdArgs, options::OPT_allowable__client);
   Args.AddLastArg(CmdArgs, options::OPT_bind__at__load);
+  if (getDarwinToolChain().isIPhone())
+    Args.AddLastArg(CmdArgs, options::OPT_arch__errors__fatal);
   Args.AddLastArg(CmdArgs, options::OPT_dead__strip);
   Args.AddLastArg(CmdArgs, options::OPT_no__dead__strip__inits__and__terms);
   Args.AddAllArgs(CmdArgs, options::OPT_dylib__file);
@@ -1572,14 +1574,22 @@ void darwin::Link::AddLinkArgs(const ArgList &Args,
   Args.AddAllArgs(CmdArgs, options::OPT_seg__addr__table__filename);
   Args.AddAllArgs(CmdArgs, options::OPT_sub__library);
   Args.AddAllArgs(CmdArgs, options::OPT_sub__umbrella);
+
   Args.AddAllArgsTranslated(CmdArgs, options::OPT_isysroot, "-syslibroot");
+  if (getDarwinToolChain().isIPhone()) {
+    if (!Args.hasArg(options::OPT_isysroot)) {
+      CmdArgs.push_back("-syslibroot");
+      CmdArgs.push_back("/Developer/SDKs/Extra");
+    }
+  }
+
   Args.AddLastArg(CmdArgs, options::OPT_twolevel__namespace);
   Args.AddLastArg(CmdArgs, options::OPT_twolevel__namespace__hints);
   Args.AddAllArgs(CmdArgs, options::OPT_umbrella);
   Args.AddAllArgs(CmdArgs, options::OPT_undefined);
   Args.AddAllArgs(CmdArgs, options::OPT_unexported__symbols__list);
-  Args.AddAllArgs(CmdArgs, options::OPT_weak__reference__mismatches);
 
+  Args.AddAllArgs(CmdArgs, options::OPT_weak__reference__mismatches);
   if (!Args.hasArg(options::OPT_weak__reference__mismatches)) {
     CmdArgs.push_back("-weak_reference_mismatches");
     CmdArgs.push_back("non-weak");
