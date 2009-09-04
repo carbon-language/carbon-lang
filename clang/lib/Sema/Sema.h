@@ -2396,7 +2396,9 @@ public:
                       SourceLocation LAngleLoc,
                       ASTTemplateArgsPtr TemplateArgs,
                       SourceLocation *TemplateArgLocs,
-                      SourceLocation RAngleLoc);
+                      SourceLocation RAngleLoc,
+                      DeclSpec::TST TagSpec,
+                      SourceLocation TagLoc);
   
   OwningExprResult BuildTemplateIdExpr(TemplateName Template,
                                        SourceLocation TemplateNameLoc,

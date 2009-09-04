@@ -1591,15 +1591,17 @@ public:
   /// \param Template  A template whose specialization results in a
   /// type, e.g., a class template or template template parameter.
   /// 
-  /// \param IsSpecialization true when we are naming the class
-  /// template specialization as part of an explicit class
-  /// specialization or class template partial specialization.
+  /// \param TagSpec The tag spec that was provided as part of the
+  /// elaborated-type-specifier, or TST_unspecified if this was not
+  /// an elaborated type.
   virtual TypeResult ActOnTemplateIdType(TemplateTy Template,
                                          SourceLocation TemplateLoc,
                                          SourceLocation LAngleLoc,
                                          ASTTemplateArgsPtr TemplateArgs,
                                          SourceLocation *TemplateArgLocs,
-                                         SourceLocation RAngleLoc) {
+                                         SourceLocation RAngleLoc,
+                        DeclSpec::TST TagSpec = DeclSpec::TST_unspecified,
+                        SourceLocation TagLoc = SourceLocation()) {
     return TypeResult();
   };
 

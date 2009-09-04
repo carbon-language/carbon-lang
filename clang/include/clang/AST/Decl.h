@@ -1340,6 +1340,11 @@ public:
     }
   }
 
+  /// getTagKindForTypeSpec - Converts a type specifier (DeclSpec::TST)
+  /// into a tag kind.  It is an error to provide a type specifier
+  /// which *isn't* a tag kind here.
+  static TagKind getTagKindForTypeSpec(unsigned TypeSpec);
+
   TagKind getTagKind() const {
     return TagKind(TagDeclKind);
   }

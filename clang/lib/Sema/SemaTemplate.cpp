@@ -1121,7 +1121,9 @@ Sema::ActOnTemplateIdType(TemplateTy TemplateD, SourceLocation TemplateLoc,
                           SourceLocation LAngleLoc, 
                           ASTTemplateArgsPtr TemplateArgsIn,
                           SourceLocation *TemplateArgLocs,
-                          SourceLocation RAngleLoc) {
+                          SourceLocation RAngleLoc,
+                          DeclSpec::TST TagSpec,
+                          SourceLocation TagLoc) {
   TemplateName Template = TemplateD.getAsVal<TemplateName>();
 
   // Translate the parser's template argument list in our AST format.
@@ -1136,6 +1138,25 @@ Sema::ActOnTemplateIdType(TemplateTy TemplateD, SourceLocation TemplateLoc,
 
   if (Result.isNull())
     return true;
+
+  // If we were given a tag specifier, verify it.
+  if (TagSpec != DeclSpec::TST_unspecified) {
+    TagDecl::TagKind TagKind = TagDecl::getTagKindForTypeSpec(TagSpec);
+
+    if (const RecordType *T = Result->getAs<RecordType>()) {
+      RecordDecl *D = T->getDecl();
+
+      IdentifierInfo *Id = D->getIdentifier();
+      assert(Id && "templated class must have an identifier");
+
+      if (!isAcceptableTagRedeclaration(D, TagKind, TagLoc, *Id)) {
+        Diag(TagLoc, diag::err_use_with_wrong_tag)
+          << Id
+          << CodeModificationHint::CreateReplacement(SourceRange(TagLoc),
+                                                     D->getKindName());
+      }
+    }
+  }
 
   return Result.getAsOpaquePtr();
 }
@@ -2497,6 +2518,8 @@ Sema::ActOnClassTemplateSpecialization(Scope *S, unsigned TagSpec,
                                        SourceLocation RAngleLoc,
                                        AttributeList *Attr,
                                MultiTemplateParamsArg TemplateParameterLists) {
+  assert(TUK == TUK_Declaration || TUK == TUK_Definition);
+
   // Find the class template we're specializing
   TemplateName Name = TemplateD.getAsVal<TemplateName>();
   ClassTemplateDecl *ClassTemplate 

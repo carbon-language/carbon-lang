@@ -3966,14 +3966,7 @@ Sema::DeclPtrTy Sema::ActOnTag(Scope *S, unsigned TagSpec, TagUseKind TUK,
          "Nameless record must be a definition!");
 
   OwnedDecl = false;
-  TagDecl::TagKind Kind;
-  switch (TagSpec) {
-  default: assert(0 && "Unknown tag type!");
-  case DeclSpec::TST_struct: Kind = TagDecl::TK_struct; break;
-  case DeclSpec::TST_union:  Kind = TagDecl::TK_union; break;
-  case DeclSpec::TST_class:  Kind = TagDecl::TK_class; break;
-  case DeclSpec::TST_enum:   Kind = TagDecl::TK_enum; break;
-  }
+  TagDecl::TagKind Kind = TagDecl::getTagKindForTypeSpec(TagSpec);
   
   if (TUK != TUK_Reference) {
     if (TemplateParameterList *TemplateParams

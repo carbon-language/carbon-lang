@@ -606,7 +606,7 @@ void Parser::ParseClassSpecifier(tok::TokenKind TagTokKind,
   // to turn that template-id into a type.
 
   bool Owned = false;
-  if (TemplateId && TUK != Action::TUK_Reference && TUK != Action::TUK_Friend) {
+  if (TemplateId) {
     // Explicit specialization, class template partial specialization,
     // or explicit instantiation.
     ASTTemplateArgsPtr TemplateArgsPtr(Actions, 
@@ -629,6 +629,31 @@ void Parser::ParseClassSpecifier(tok::TokenKind TagTokKind,
                                       TemplateId->getTemplateArgLocations(),
                                              TemplateId->RAngleLoc, 
                                              Attr);
+    } else if (TUK == Action::TUK_Reference || TUK == Action::TUK_Friend) {
+      Action::TypeResult TypeResult =
+        Actions.ActOnTemplateIdType(TemplateTy::make(TemplateId->Template),
+                                    TemplateId->TemplateNameLoc,
+                                    TemplateId->LAngleLoc,
+                                    TemplateArgsPtr,
+                                    TemplateId->getTemplateArgLocations(),
+                                    TemplateId->RAngleLoc,
+                                    TagType, StartLoc);
+
+      TemplateId->Destroy();
+
+      if (TypeResult.isInvalid()) {
+        DS.SetTypeSpecError();
+        return;
+      }
+  
+      const char *PrevSpec = 0;
+      unsigned DiagID;
+      if (DS.SetTypeSpecType(DeclSpec::TST_typename, StartLoc, PrevSpec,
+                             DiagID, TypeResult.get()))
+        Diag(StartLoc, DiagID) << PrevSpec;
+
+      return;
+      
     } else {
       // This is an explicit specialization or a class template
       // partial specialization.
