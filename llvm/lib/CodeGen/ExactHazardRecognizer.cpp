@@ -54,7 +54,7 @@ ExactHazardRecognizer::ExactHazardRecognizer(const InstrItineraryData &LItinData
 }
 
 ExactHazardRecognizer::~ExactHazardRecognizer() {
-  delete Scoreboard;
+  delete [] Scoreboard;
 }
 
 void ExactHazardRecognizer::Reset() {
