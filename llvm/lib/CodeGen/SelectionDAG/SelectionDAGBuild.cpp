@@ -3981,7 +3981,11 @@ SelectionDAGLowering::visitIntrinsicCall(CallInst &I, unsigned Intrinsic) {
     // Don't handle byval struct arguments or VLAs, for example.
     if (!AI)
       return 0;
-    int FI = FuncInfo.StaticAllocaMap[AI];
+    DenseMap<const AllocaInst*, int>::iterator SI =
+      FuncInfo.StaticAllocaMap.find(AI);
+    if (SI == FuncInfo.StaticAllocaMap.end()) 
+      return 0; // VLAs.
+    int FI = SI->second;
     DW->RecordVariable(cast<MDNode>(Variable), FI);
     return 0;
   }
