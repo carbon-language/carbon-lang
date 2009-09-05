@@ -1085,8 +1085,6 @@ public:
     const CXXRecordDecl *PrimaryBase = Layout.getPrimaryBase(); 
     const bool PrimaryBaseWasVirtual = Layout.getPrimaryBaseWasVirtual();
 
-    std::vector<llvm::Constant *> offsets;
-
     // vtables are composed from the chain of primaries.
     if (PrimaryBase) {
       if (PrimaryBaseWasVirtual)
