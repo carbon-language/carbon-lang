@@ -14,10 +14,10 @@
 #ifndef LLVM_CLANG_FRONTEND_INIT_HEADER_SEARCH_H_
 #define LLVM_CLANG_FRONTEND_INIT_HEADER_SEARCH_H_
 
+#include "clang/Lex/DirectoryLookup.h"
+#include "llvm/ADT/StringRef.h"
 #include <string>
 #include <vector>
-
-#include "clang/Lex/DirectoryLookup.h"
 
 namespace clang {
 
@@ -48,7 +48,7 @@ public:
     : Headers(HS), Verbose(verbose), isysroot(iSysroot) {}
 
   /// AddPath - Add the specified path to the specified group list.
-  void AddPath(const std::string &Path, IncludeDirGroup Group,
+  void AddPath(const llvm::StringRef &Path, IncludeDirGroup Group,
                bool isCXXAware, bool isUserSupplied,
                bool isFramework, bool IgnoreSysRoot = false);
 

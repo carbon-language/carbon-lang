@@ -15,12 +15,10 @@
 #define LLVM_CLANG_FILEMANAGER_H
 
 #include "llvm/ADT/StringMap.h"
+#include "llvm/ADT/StringRef.h"
 #include "llvm/ADT/OwningPtr.h"
 #include "llvm/Support/Allocator.h"
 #include "llvm/Config/config.h" // for mode_t
-#include <map>
-#include <set>
-#include <string>
 // FIXME: Enhance libsystem to support inode and other fields in stat.
 #include <sys/types.h>
 #include <sys/stat.h>
@@ -156,16 +154,16 @@ public:
   /// getDirectory - Lookup, cache, and verify the specified directory.  This
   /// returns null if the directory doesn't exist.
   /// 
-  const DirectoryEntry *getDirectory(const std::string &Filename) {
-    return getDirectory(&Filename[0], &Filename[0] + Filename.size());
+  const DirectoryEntry *getDirectory(const llvm::StringRef &Filename) {
+    return getDirectory(Filename.begin(), Filename.end());
   }
   const DirectoryEntry *getDirectory(const char *FileStart,const char *FileEnd);
   
   /// getFile - Lookup, cache, and verify the specified file.  This returns null
   /// if the file doesn't exist.
   /// 
-  const FileEntry *getFile(const std::string &Filename) {
-    return getFile(&Filename[0], &Filename[0] + Filename.size());
+  const FileEntry *getFile(const llvm::StringRef &Filename) {
+    return getFile(Filename.begin(), Filename.end());
   }
   const FileEntry *getFile(const char *FilenameStart,
                            const char *FilenameEnd);

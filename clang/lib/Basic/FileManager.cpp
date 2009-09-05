@@ -22,6 +22,9 @@
 #include "llvm/Support/raw_ostream.h"
 #include "llvm/System/Path.h"
 #include "llvm/Config/config.h"
+#include <map>
+#include <set>
+#include <string>
 using namespace clang;
 
 // FIXME: Enhance libsystem to support inode and other fields.

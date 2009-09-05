@@ -23,9 +23,10 @@
 #include <cstdio>
 using namespace clang;
 
-void InitHeaderSearch::AddPath(const std::string &Path, IncludeDirGroup Group,
-                               bool isCXXAware, bool isUserSupplied,
-                               bool isFramework, bool IgnoreSysRoot) {
+void InitHeaderSearch::AddPath(const llvm::StringRef &Path,
+                               IncludeDirGroup Group, bool isCXXAware,
+                               bool isUserSupplied, bool isFramework,
+                               bool IgnoreSysRoot) {
   assert(!Path.empty() && "can't handle empty path here");
   FileManager &FM = Headers.getFileMgr();
   
@@ -53,9 +54,7 @@ void InitHeaderSearch::AddPath(const std::string &Path, IncludeDirGroup Group,
   
   
   // If the directory exists, add it.
-  if (const DirectoryEntry *DE = FM.getDirectory(&MappedPath[0], 
-                                                 &MappedPath[0]+
-                                                 MappedPath.size())) {
+  if (const DirectoryEntry *DE = FM.getDirectory(MappedPath.str())) {
     IncludeGroup[Group].push_back(DirectoryLookup(DE, Type, isUserSupplied,
                                                   isFramework));
     return;
@@ -64,8 +63,7 @@ void InitHeaderSearch::AddPath(const std::string &Path, IncludeDirGroup Group,
   // Check to see if this is an apple-style headermap (which are not allowed to
   // be frameworks).
   if (!isFramework) {
-    if (const FileEntry *FE = FM.getFile(&MappedPath[0], 
-                                         &MappedPath[0]+MappedPath.size())) {
+    if (const FileEntry *FE = FM.getFile(MappedPath.str())) {
       if (const HeaderMap *HM = Headers.CreateHeaderMap(FE)) {
         // It is a headermap, add it to the search path.
         IncludeGroup[Group].push_back(DirectoryLookup(HM, Type,isUserSupplied));
@@ -90,8 +88,7 @@ void InitHeaderSearch::AddEnvVarPaths(const char *Name) {
     if (delim-at == 0)
       AddPath(".", Angled, false, true, false);
     else
-      AddPath(std::string(at, std::string::size_type(delim-at)), Angled, false,
-              true, false);
+      AddPath(llvm::StringRef(at, delim-at), Angled, false, true, false);
     at = delim + 1;
     delim = strchr(at, llvm::sys::PathSeparator);
   }
