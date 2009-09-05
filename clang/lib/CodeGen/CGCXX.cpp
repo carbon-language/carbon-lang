@@ -855,17 +855,23 @@ private:
   llvm::DenseMap<const CXXMethodDecl *, Index_t> Index;
   llvm::DenseMap<const CXXMethodDecl *, Index_t> VCall;
   llvm::DenseMap<const CXXMethodDecl *, Index_t> VCallOffset;
+  typedef llvm::DenseMap<const CXXMethodDecl *,
+                         std::pair<Index_t, Index_t> > Thunks_t;
+  Thunks_t Thunks;
   std::vector<Index_t> VCalls;
   typedef CXXRecordDecl::method_iterator method_iter;
   // FIXME: Linkage should follow vtable
   const bool Extern;
+  const uint32_t LLVMPointerWidth;
+  Index_t extra;
 public:
   VtableBuilder(std::vector<llvm::Constant *> &meth,
                 const CXXRecordDecl *c,
                 CodeGenModule &cgm)
     : methods(meth), Class(c), BLayout(cgm.getContext().getASTRecordLayout(c)),
       rtti(cgm.GenerateRtti(c)), VMContext(cgm.getModule().getContext()),
-      CGM(cgm), Extern(true) {
+      CGM(cgm), Extern(true),
+      LLVMPointerWidth(cgm.getContext().Target.getPointerWidth(0)) {
     Ptr8Ty = llvm::PointerType::get(llvm::Type::getInt8Ty(VMContext), 0);
   }
 
@@ -913,7 +919,6 @@ public:
     // and just replace each instance of an overridden method once.  Would be
     // nice to measure the cost/benefit on real code.
 
-    // If we can find a previously allocated slot for this, reuse it.
     for (meth_iter mi = MD->begin_overridden_methods(),
            e = MD->end_overridden_methods();
          mi != e; ++mi) {
@@ -925,26 +930,49 @@ public:
       for (Index_t i = AddressPoint, e = submethods.size();
            i != e; ++i) {
         // FIXME: begin_overridden_methods might be too lax, covariance */
-        if (submethods[i] == om) {
-          int64_t O = VCallOffset[OMD] - Offset/8;
-          // FIXME: thunks
-          if (O) {
-            submethods[i] = CGM.BuildThunk(MD, Extern, true, 0, O);
-          } else
-            submethods[i] = m;
-          // FIXME: audit
-          Index[MD] = i - AddressPoint;
-          if (MorallyVirtual) {
-            VCallOffset[MD] = Offset/8;
-            VCalls[VCall[OMD]] = Offset/8 - VCallOffset[OMD];
+        if (submethods[i] != om)
+          continue;
+        submethods[i] = m;
+        Index[MD] = i - AddressPoint;
+
+        Thunks.erase(OMD);
+        if (MorallyVirtual) {
+          VCallOffset[MD] = Offset/8;
+          Index_t &idx = VCall[OMD];
+          if (idx == 0) {
+            idx = VCalls.size()+1;
+            VCalls.push_back(0);
           }
-          // submethods[VCall[OMD]] = wrap(Offset/8 - VCallOffset[OMD]);
+          VCalls[idx] = Offset/8 - VCallOffset[OMD];
+          VCall[MD] = idx;
+          // FIXME: 0?
+          Thunks[MD] = std::make_pair(0, -((idx+extra+2)*LLVMPointerWidth/8));
           return true;
         }
+#if 0
+        // FIXME: finish off
+        int64_t O = VCallOffset[OMD] - Offset/8;
+        if (O) {
+          Thunks[MD] = std::make_pair(O, 0);
+        }
+#endif
+        return true;
       }
     }
 
     return false;
+  }
+
+  void InstallThunks(Index_t AddressPoint) {
+    for (Thunks_t::iterator i = Thunks.begin(), e = Thunks.end();
+         i != e; ++i) {
+      const CXXMethodDecl *MD = i->first;
+      Index_t idx = Index[MD];
+      Index_t nv_O = i->second.first;
+      Index_t v_O = i->second.second;
+      methods[AddressPoint + idx] = CGM.BuildThunk(MD, Extern, nv_O, v_O);
+    }
+    Thunks.clear();
   }
 
   void OverrideMethods(const CXXRecordDecl *RD, Index_t AddressPoint,
@@ -961,19 +989,18 @@ public:
   void AddMethod(const CXXMethodDecl *MD, Index_t AddressPoint,
                  bool MorallyVirtual, Index_t Offset) {
     llvm::Constant *m = wrap(CGM.GetAddrOfFunction(GlobalDecl(MD), Ptr8Ty));
+    // If we can find a previously allocated slot for this, reuse it.
     if (OverrideMethod(MD, m, MorallyVirtual, Offset, submethods, 0))
       return;
     
     // else allocate a new slot.
     Index[MD] = submethods.size();
-    // VCall[MD] = Offset;
     if (MorallyVirtual) {
       VCallOffset[MD] = Offset/8;
       Index_t &idx = VCall[MD];
       // Allocate the first one, after that, we reuse the previous one.
       if (idx == 0) {
         idx = VCalls.size()+1;
-        VCallOffset[MD] = Offset/8;
         VCalls.push_back(0);
       }
     }
@@ -986,6 +1013,27 @@ public:
          ++mi)
       if (mi->isVirtual())
         AddMethod(*mi, AddressPoint, MorallyVirtual, Offset);
+  }
+
+  void NonVirtualBases(const CXXRecordDecl *RD, const ASTRecordLayout &Layout,
+                       const CXXRecordDecl *PrimaryBase,
+                       bool PrimaryBaseWasVirtual, bool MorallyVirtual,
+                       int64_t Offset) {
+    for (CXXRecordDecl::base_class_const_iterator i = RD->bases_begin(),
+           e = RD->bases_end(); i != e; ++i) {
+      if (i->isVirtual())
+        continue;
+      const CXXRecordDecl *Base = 
+        cast<CXXRecordDecl>(i->getType()->getAs<RecordType>()->getDecl());
+      if (Base != PrimaryBase || PrimaryBaseWasVirtual) {
+        uint64_t o = Offset + Layout.getBaseClassOffset(Base);
+        StartNewTable();
+        Index_t AP;
+        AP = GenerateVtableForBase(Base, true, true, MorallyVirtual, o, false);
+        OverrideMethods(RD, AP, MorallyVirtual, o);
+        InstallThunks(AP);
+      }
+    }
   }
 
   int64_t GenerateVtableForBase(const CXXRecordDecl *RD, bool forPrimary,
@@ -1004,8 +1052,12 @@ public:
     std::vector<llvm::Constant *> offsets;
     // FIXME: Audit, is this right?
     if (Bottom && (PrimaryBase == 0 || forPrimary || !PrimaryBaseWasVirtual
-                   || Bottom))
+                   || Bottom)) {
+      extra = 0;
       GenerateVBaseOffsets(offsets, RD, Offset);
+      if (ForVirtualBase)
+        extra = offsets.size();
+    }
 
     bool Top = true;
 
@@ -1026,6 +1078,7 @@ public:
       return AddressPoint;
 
     StartNewTable();
+    extra = 0;
     // FIXME: Cleanup.
     if (!ForVirtualBase) {
       // then virtual base offsets...
@@ -1054,22 +1107,11 @@ public:
 
     methods.insert(methods.end(), submethods.begin(), submethods.end());
     submethods.clear();
+    InstallThunks(AddressPoint);
 
     // and then the non-virtual bases.
-    for (CXXRecordDecl::base_class_const_iterator i = RD->bases_begin(),
-           e = RD->bases_end(); i != e; ++i) {
-      if (i->isVirtual())
-        continue;
-      const CXXRecordDecl *Base = 
-        cast<CXXRecordDecl>(i->getType()->getAs<RecordType>()->getDecl());
-      if (Base != PrimaryBase || PrimaryBaseWasVirtual) {
-        uint64_t o = Offset + Layout.getBaseClassOffset(Base);
-        StartNewTable();
-        Index_t AP;
-        AP = GenerateVtableForBase(Base, true, true, MorallyVirtual, o, false);
-        OverrideMethods(RD, AP, MorallyVirtual, o);
-      }
-    }
+    NonVirtualBases(RD, Layout, PrimaryBase, PrimaryBaseWasVirtual, MorallyVirtual,
+                    Offset);
     return AddressPoint;
   }
 
@@ -1087,6 +1129,7 @@ public:
         Index_t AP;
         AP = GenerateVtableForBase(Base, false, true, true, BaseOffset, true);
         OverrideMethods(RD, AP, true, BaseOffset);
+        InstallThunks(AP);
       }
       if (Base->getNumVBases())
         GenerateVtableForVBases(Base, Class);
@@ -1168,8 +1211,8 @@ static VtableInfo *vtableinfo;
 
 llvm::Constant *CodeGenFunction::GenerateThunk(llvm::Function *Fn,
                                                const CXXMethodDecl *MD,
-                                               bool Extern, bool Virtual,
-                                               int64_t nv, int64_t v) {
+                                               bool Extern, int64_t nv,
+                                               int64_t v) {
   QualType R = MD->getType()->getAsFunctionType()->getResultType();
 
   FunctionArgList Args;
@@ -1198,12 +1241,11 @@ llvm::Constant *CodeGenFunction::GenerateThunk(llvm::Function *Fn,
   return Fn;
 }
 
-llvm::Constant *CodeGenModule::BuildThunk(const CXXMethodDecl *MD,
-                                          bool Extern, bool Virtual, int64_t nv,
-                                          int64_t v) {
+llvm::Constant *CodeGenModule::BuildThunk(const CXXMethodDecl *MD, bool Extern,
+                                          int64_t nv, int64_t v) {
   llvm::SmallString<256> OutName;
   llvm::raw_svector_ostream Out(OutName);
-  mangleThunk(MD, Virtual, nv, v, getContext(), Out);
+  mangleThunk(MD, nv, v, getContext(), Out);
   llvm::GlobalVariable::LinkageTypes linktype;
   linktype = llvm::GlobalValue::WeakAnyLinkage;
   if (!Extern)
@@ -1216,7 +1258,7 @@ llvm::Constant *CodeGenModule::BuildThunk(const CXXMethodDecl *MD,
 
   llvm::Function *Fn = llvm::Function::Create(FTy, linktype, Out.str(),
                                               &getModule());
-  CodeGenFunction(*this).GenerateThunk(Fn, MD, Extern, Virtual, nv, v);
+  CodeGenFunction(*this).GenerateThunk(Fn, MD, Extern, nv, v);
   // Fn = Builder.CreateBitCast(Fn, Ptr8Ty);
   llvm::Constant *m = llvm::ConstantExpr::getBitCast(Fn, Ptr8Ty);
   return m;

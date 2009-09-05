@@ -366,8 +366,7 @@ public:
 
   /// GenerateThunk - Generate a thunk for the given method
   llvm::Constant *GenerateThunk(llvm::Function *Fn, const CXXMethodDecl *MD,
-                                bool Extern, bool Virtual, int64_t nv,
-                                int64_t v);
+                                bool Extern, int64_t nv, int64_t v);
 
   void EmitCtorPrologue(const CXXConstructorDecl *CD);
   

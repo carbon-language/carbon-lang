@@ -34,7 +34,7 @@ namespace clang {
   
   bool mangleName(const NamedDecl *D, ASTContext &Context, 
                   llvm::raw_ostream &os);
-  void mangleThunk(const NamedDecl *D, bool Virtual, int64_t n, int64_t vn,
+  void mangleThunk(const NamedDecl *D, int64_t n, int64_t vn,
                    ASTContext &Context, llvm::raw_ostream &os);
   void mangleCovariantThunk(const NamedDecl *D, bool VirtualThis, int64_t nv_t,
                           int64_t v_t, bool VirtualResult, int64_t nv_r,
