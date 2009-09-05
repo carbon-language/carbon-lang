@@ -2730,6 +2730,11 @@ public:
       /// FIXME: Use a TemplateArgumentList
       DefaultTemplateArgumentInstantiation,
 
+      /// We are instantiating a default argument for a function.
+      /// The Entity is the ParmVarDecl, and TemplateArgs/NumTemplateArgs
+      /// provides the template arguments as specified.
+      DefaultFunctionArgumentInstantiation,
+
       /// We are substituting explicit template arguments provided for 
       /// a function template. The entity is a FunctionTemplateDecl.
       ExplicitTemplateArgumentSubstitution,
@@ -2778,7 +2783,9 @@ public:
       case DefaultTemplateArgumentInstantiation:
       case ExplicitTemplateArgumentSubstitution:
       case DeducedTemplateArgumentSubstitution:
+      case DefaultFunctionArgumentInstantiation:
         return X.TemplateArgs == Y.TemplateArgs;
+          
       }
 
       return true;
@@ -2848,6 +2855,12 @@ public:
     /// specialization.
     InstantiatingTemplate(Sema &SemaRef, SourceLocation PointOfInstantiation,
                           ClassTemplatePartialSpecializationDecl *PartialSpec,
+                          const TemplateArgument *TemplateArgs,
+                          unsigned NumTemplateArgs,
+                          SourceRange InstantiationRange = SourceRange());
+
+    InstantiatingTemplate(Sema &SemaRef, SourceLocation PointOfInstantiation,
+                          ParmVarDecl *Param,
                           const TemplateArgument *TemplateArgs,
                           unsigned NumTemplateArgs,
                           SourceRange InstantiationRange = SourceRange());

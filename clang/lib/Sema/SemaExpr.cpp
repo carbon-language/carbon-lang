@@ -2573,12 +2573,9 @@ Sema::OwningExprResult Sema::BuildCXXDefaultArgExpr(SourceLocation CallLoc,
 
       // Instantiate the expression.
       MultiLevelTemplateArgumentList ArgList = getTemplateInstantiationArgs(FD);
-      
-      // FIXME: We should really make a new InstantiatingTemplate ctor
-      // that has a better message - right now we're just piggy-backing 
-      // off the "default template argument" error message.
-      InstantiatingTemplate Inst(*this, CallLoc, FD->getPrimaryTemplate(),
-                                 ArgList.getInnermost().getFlatArgumentList(),
+
+      InstantiatingTemplate Inst(*this, CallLoc, Param, 
+                                 ArgList.getInnermost().getFlatArgumentList(), 
                                  ArgList.getInnermost().flat_size());
 
       OwningExprResult Result = SubstExpr(UninstExpr, ArgList);

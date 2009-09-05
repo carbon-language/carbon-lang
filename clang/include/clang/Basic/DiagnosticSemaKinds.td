@@ -977,6 +977,9 @@ def note_template_static_data_member_def_here : Note<
   
 def note_default_arg_instantiation_here : Note<
   "in instantiation of default argument for '%0' required here">;
+def note_default_function_arg_instantiation_here : Note<
+  "in instantiation of default function argument expression "
+  "for '%0' required here">;
 def note_explicit_template_arg_substitution_here : Note<
   "while substituting explicitly-specified template arguments into function "
   "template %f, here">;

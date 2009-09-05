@@ -10,28 +10,28 @@ template<typename T> void f3(T a, T b = T() + T()); // expected-error{{invalid o
 
 void g() {
   f1(10);
-  f1(S()); // expected-note{{in instantiation of default argument for 'f1<struct S>' required here}}
+  f1(S()); // expected-note{{in instantiation of default function argument expression for 'f1<struct S>' required here}}
   
   f2(10);
   f2(S());
   
   f3(10);
-  f3(S()); // expected-note{{in instantiation of default argument for 'f3<struct S>' required here}}
+  f3(S()); // expected-note{{in instantiation of default function argument expression for 'f3<struct S>' required here}}
 }
 
 template<typename T> struct F {
-	F(T t = 10);
+  F(T t = 10);
 };
 
 struct FD : F<int> { };
 
 void g2() {
-	F<int> f;
+  F<int> f;
   FD fd;
 }
 
 template<typename T> struct G {
-	G(T) {}
+  G(T) {}
 };
 
 void s(G<int> flags = 10) { }

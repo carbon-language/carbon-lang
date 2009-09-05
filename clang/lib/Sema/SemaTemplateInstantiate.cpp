@@ -164,6 +164,30 @@ Sema::InstantiatingTemplate::InstantiatingTemplate(Sema &SemaRef,
   }
 }
 
+Sema::InstantiatingTemplate::InstantiatingTemplate(Sema &SemaRef, 
+                                          SourceLocation PointOfInstantation,
+                                          ParmVarDecl *Param,
+                                          const TemplateArgument *TemplateArgs,
+                                          unsigned NumTemplateArgs,
+                                          SourceRange InstantiationRange)
+  : SemaRef(SemaRef) {
+    
+  Invalid = CheckInstantiationDepth(PointOfInstantation, InstantiationRange);
+
+  if (!Invalid) {
+    ActiveTemplateInstantiation Inst;
+    Inst.Kind
+      = ActiveTemplateInstantiation::DefaultFunctionArgumentInstantiation;
+    Inst.PointOfInstantiation = PointOfInstantation;
+    Inst.Entity = reinterpret_cast<uintptr_t>(Param);
+    Inst.TemplateArgs = TemplateArgs;
+    Inst.NumTemplateArgs = NumTemplateArgs;
+    Inst.InstantiationRange = InstantiationRange;
+    SemaRef.ActiveTemplateInstantiations.push_back(Inst);
+    Invalid = false;
+  }
+}
+
 void Sema::InstantiatingTemplate::Clear() {
   if (!Invalid) {
     SemaRef.ActiveTemplateInstantiations.pop_back();
@@ -266,6 +290,23 @@ void Sema::PrintInstantiationStack() {
       }
       break;
 
+    case ActiveTemplateInstantiation::DefaultFunctionArgumentInstantiation: {
+      ParmVarDecl *Param = cast<ParmVarDecl>((Decl *)Active->Entity);
+      FunctionDecl *FD = cast<FunctionDecl>(Param->getDeclContext());
+      TemplateDecl *Template = FD->getPrimaryTemplate();
+      
+      std::string TemplateArgsStr
+        = TemplateSpecializationType::PrintTemplateArgumentList(
+                                                         Active->TemplateArgs, 
+                                                      Active->NumTemplateArgs,
+                                                      Context.PrintingPolicy);
+      Diags.Report(FullSourceLoc(Active->PointOfInstantiation, SourceMgr),
+                   diag::note_default_function_arg_instantiation_here)
+        << (Template->getNameAsString() + TemplateArgsStr)
+        << Active->InstantiationRange;
+      break;
+    }
+        
     }
   }
 }
@@ -280,6 +321,8 @@ bool Sema::isSFINAEContext() const {
 
     switch(Active->Kind) {
     case ActiveTemplateInstantiation::TemplateInstantiation:
+    case ActiveTemplateInstantiation::DefaultFunctionArgumentInstantiation:
+
       // This is a template instantiation, so there is no SFINAE.
       return false;
         
