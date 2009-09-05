@@ -1077,6 +1077,32 @@ public:
     return AddressPoint;
   }
 
+  void Primaries(const CXXRecordDecl *RD, bool forPrimary,
+                 bool MorallyVirtual, int64_t Offset, bool ForVirtualBase) {
+    if (!RD->isDynamicClass())
+      return;
+
+    const ASTRecordLayout &Layout = CGM.getContext().getASTRecordLayout(RD);
+    const CXXRecordDecl *PrimaryBase = Layout.getPrimaryBase(); 
+    const bool PrimaryBaseWasVirtual = Layout.getPrimaryBaseWasVirtual();
+
+    std::vector<llvm::Constant *> offsets;
+
+    bool Top = true;
+
+    // vtables are composed from the chain of primaries.
+    if (PrimaryBase) {
+      if (PrimaryBaseWasVirtual)
+        IndirectPrimary.insert(PrimaryBase);
+      Top = false;
+      Primaries(PrimaryBase, true, PrimaryBaseWasVirtual|MorallyVirtual,
+                Offset, PrimaryBaseWasVirtual);
+    }
+
+    // And add the virtuals for the class to the primary vtable.
+    AddMethods(RD, MorallyVirtual, Offset);
+  }
+
   int64_t GenerateVtableForBase(const CXXRecordDecl *RD, bool forPrimary,
                                 bool Bottom, bool MorallyVirtual,
                                 int64_t Offset, bool ForVirtualBase) {
@@ -1089,8 +1115,7 @@ public:
 
     std::vector<llvm::Constant *> offsets;
     // FIXME: Audit, is this right?
-    if (Bottom && (PrimaryBase == 0 || forPrimary || !PrimaryBaseWasVirtual
-                   || Bottom)) {
+    if (Bottom) {
       extra = 0;
       GenerateVBaseOffsets(offsets, RD, Offset);
       if (ForVirtualBase)
@@ -1104,9 +1129,8 @@ public:
       if (PrimaryBaseWasVirtual)
         IndirectPrimary.insert(PrimaryBase);
       Top = false;
-      GenerateVtableForBase(PrimaryBase, true, false,
-                            PrimaryBaseWasVirtual|MorallyVirtual, Offset,
-                            PrimaryBaseWasVirtual);
+      Primaries(PrimaryBase, true, PrimaryBaseWasVirtual|MorallyVirtual,
+                Offset, PrimaryBaseWasVirtual);
     }
 
     // And add the virtuals for the class to the primary vtable.
