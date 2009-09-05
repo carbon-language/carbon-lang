@@ -986,8 +986,7 @@ public:
       }
   }
 
-  void AddMethod(const CXXMethodDecl *MD, Index_t AddressPoint,
-                 bool MorallyVirtual, Index_t Offset) {
+  void AddMethod(const CXXMethodDecl *MD, bool MorallyVirtual, Index_t Offset) {
     llvm::Constant *m = wrap(CGM.GetAddrOfFunction(GlobalDecl(MD), Ptr8Ty));
     // If we can find a previously allocated slot for this, reuse it.
     if (OverrideMethod(MD, m, MorallyVirtual, Offset, submethods, 0))
@@ -1007,12 +1006,12 @@ public:
     submethods.push_back(m);
   }
 
-  void AddMethods(const CXXRecordDecl *RD, Index_t AddressPoint,
-                  bool MorallyVirtual, Index_t Offset) {
+  void AddMethods(const CXXRecordDecl *RD, bool MorallyVirtual,
+                  Index_t Offset) {
     for (method_iter mi = RD->method_begin(), me = RD->method_end(); mi != me;
          ++mi)
       if (mi->isVirtual())
-        AddMethod(*mi, AddressPoint, MorallyVirtual, Offset);
+        AddMethod(*mi, MorallyVirtual, Offset);
   }
 
   void NonVirtualBases(const CXXRecordDecl *RD, const ASTRecordLayout &Layout,
@@ -1036,12 +1035,51 @@ public:
     }
   }
 
+  Index_t end(const CXXRecordDecl *RD, std::vector<llvm::Constant *> &offsets,
+              const ASTRecordLayout &Layout,
+              const CXXRecordDecl *PrimaryBase,
+              bool PrimaryBaseWasVirtual, bool MorallyVirtual,
+              int64_t Offset, bool ForVirtualBase) {
+    StartNewTable();
+    extra = 0;
+    // FIXME: Cleanup.
+    if (!ForVirtualBase) {
+      // then virtual base offsets...
+      for (std::vector<llvm::Constant *>::reverse_iterator i = offsets.rbegin(),
+             e = offsets.rend(); i != e; ++i)
+        methods.push_back(*i);
+    }
+
+    // The vcalls come first...
+    for (std::vector<Index_t>::iterator i=VCalls.begin(), e=VCalls.end();
+         i < e; ++i)
+      methods.push_back(wrap((0?600:0) + *i));
+    VCalls.clear();
+
+    if (ForVirtualBase) {
+      // then virtual base offsets...
+      for (std::vector<llvm::Constant *>::reverse_iterator i = offsets.rbegin(),
+             e = offsets.rend(); i != e; ++i)
+        methods.push_back(*i);
+    }
+
+    methods.push_back(wrap(-(Offset/8)));
+    methods.push_back(rtti);
+    Index_t AddressPoint = methods.size();
+
+    methods.insert(methods.end(), submethods.begin(), submethods.end());
+    submethods.clear();
+    InstallThunks(AddressPoint);
+
+    // and then the non-virtual bases.
+    NonVirtualBases(RD, Layout, PrimaryBase, PrimaryBaseWasVirtual,
+                    MorallyVirtual, Offset);
+    return AddressPoint;
+  }
+
   int64_t GenerateVtableForBase(const CXXRecordDecl *RD, bool forPrimary,
                                 bool Bottom, bool MorallyVirtual,
                                 int64_t Offset, bool ForVirtualBase) {
-    llvm::Constant *m = llvm::Constant::getNullValue(Ptr8Ty);
-    int64_t AddressPoint=0;
-
     if (RD && !RD->isDynamicClass())
       return 0;
 
@@ -1066,53 +1104,18 @@ public:
       if (PrimaryBaseWasVirtual)
         IndirectPrimary.insert(PrimaryBase);
       Top = false;
-      AddressPoint = GenerateVtableForBase(PrimaryBase, true, false,
-                                           PrimaryBaseWasVirtual|MorallyVirtual,
-                                           Offset, PrimaryBaseWasVirtual);
+      GenerateVtableForBase(PrimaryBase, true, false,
+                            PrimaryBaseWasVirtual|MorallyVirtual, Offset,
+                            PrimaryBaseWasVirtual);
     }
 
     // And add the virtuals for the class to the primary vtable.
-    AddMethods(RD, AddressPoint, MorallyVirtual, Offset);
+    AddMethods(RD, MorallyVirtual, Offset);
 
     if (!Bottom)
-      return AddressPoint;
-
-    StartNewTable();
-    extra = 0;
-    // FIXME: Cleanup.
-    if (!ForVirtualBase) {
-      // then virtual base offsets...
-      for (std::vector<llvm::Constant *>::reverse_iterator i = offsets.rbegin(),
-             e = offsets.rend(); i != e; ++i)
-        methods.push_back(*i);
-    }
-
-    // The vcalls come first...
-    for (std::vector<Index_t>::iterator i=VCalls.begin(), e=VCalls.end();
-         i < e; ++i)
-      methods.push_back(wrap((0?600:0) + *i));
-    VCalls.clear();
-
-    if (ForVirtualBase) {
-      // then virtual base offsets...
-      for (std::vector<llvm::Constant *>::reverse_iterator i = offsets.rbegin(),
-             e = offsets.rend(); i != e; ++i)
-        methods.push_back(*i);
-    }
-
-    m = wrap(-(Offset/8));
-    methods.push_back(m);
-    methods.push_back(rtti);
-    AddressPoint = methods.size();
-
-    methods.insert(methods.end(), submethods.begin(), submethods.end());
-    submethods.clear();
-    InstallThunks(AddressPoint);
-
-    // and then the non-virtual bases.
-    NonVirtualBases(RD, Layout, PrimaryBase, PrimaryBaseWasVirtual, MorallyVirtual,
-                    Offset);
-    return AddressPoint;
+      return 0;
+    return end(RD, offsets, Layout, PrimaryBase, PrimaryBaseWasVirtual,
+               MorallyVirtual, Offset, ForVirtualBase);
   }
 
   void GenerateVtableForVBases(const CXXRecordDecl *RD,
