@@ -1770,6 +1770,65 @@ public:
   static bool classof(const EnumType *) { return true; }
 };
 
+/// ElaboratedType - A non-canonical type used to represents uses of
+/// elaborated type specifiers in C++.  For example:
+///
+///   void foo(union MyUnion);
+///            ^^^^^^^^^^^^^
+///
+/// At the moment, for efficiency we do not create elaborated types in
+/// C, since outside of typedefs all references to structs would
+/// necessarily be elaborated.
+class ElaboratedType : public Type, public llvm::FoldingSetNode {
+public:
+  enum TagKind {
+    TK_struct,
+    TK_union,
+    TK_class,
+    TK_enum
+  };
+
+private:
+  /// The tag that was used in this elaborated type specifier.
+  TagKind Tag;
+
+  /// The underlying type.
+  QualType UnderlyingType;
+
+  explicit ElaboratedType(QualType Ty, TagKind Tag, QualType Canon)
+    : Type(Elaborated, Canon, Canon->isDependentType()),
+      Tag(Tag), UnderlyingType(Ty) { }
+  friend class ASTContext;   // ASTContext creates these.
+
+public:
+  TagKind getTagKind() const { return Tag; }
+  QualType getUnderlyingType() const { return UnderlyingType; }
+
+  static const char *getNameForTagKind(TagKind Kind) {
+    switch (Kind) {
+    default: assert(0 && "Unknown TagKind!");
+    case TK_struct: return "struct";
+    case TK_union:  return "union";
+    case TK_class:  return "class";
+    case TK_enum:   return "enum";
+    }
+  }
+
+  virtual void getAsStringInternal(std::string &InnerString, 
+                                   const PrintingPolicy &Policy) const;
+
+  void Profile(llvm::FoldingSetNodeID &ID) {
+    Profile(ID, getUnderlyingType(), getTagKind());
+  }
+  static void Profile(llvm::FoldingSetNodeID &ID, QualType T, TagKind Tag) {
+    ID.AddPointer(T.getAsOpaquePtr());
+    ID.AddInteger(Tag);
+  }
+
+  static bool classof(const ElaboratedType*) { return true; }
+  static bool classof(const Type *T) { return T->getTypeClass() == Elaborated; }
+};
+
 class TemplateTypeParmType : public Type, public llvm::FoldingSetNode {
   unsigned Depth : 15;
   unsigned Index : 16;

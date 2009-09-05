@@ -1267,12 +1267,12 @@ class TypedefDecl;
 class TagDecl 
   : public TypeDecl, public DeclContext, public Redeclarable<TagDecl> {
 public:
-  enum TagKind {
-    TK_struct,
-    TK_union,
-    TK_class,
-    TK_enum
-  };
+  // This is really ugly.
+  typedef ElaboratedType::TagKind TagKind;
+  static const TagKind TK_struct = ElaboratedType::TK_struct;
+  static const TagKind TK_union = ElaboratedType::TK_union;
+  static const TagKind TK_class = ElaboratedType::TK_class;
+  static const TagKind TK_enum = ElaboratedType::TK_enum;
 
 private:
   // FIXME: This can be packed into the bitfields in Decl.
@@ -1354,13 +1354,7 @@ public:
   TagDecl* getDefinition(ASTContext& C) const;
   
   const char *getKindName() const {
-    switch (getTagKind()) {
-    default: assert(0 && "Unknown TagKind!");
-    case TK_struct: return "struct";
-    case TK_union:  return "union";
-    case TK_class:  return "class";
-    case TK_enum:   return "enum";
-    }
+    return ElaboratedType::getNameForTagKind(getTagKind());
   }
 
   /// getTagKindForTypeSpec - Converts a type specifier (DeclSpec::TST)

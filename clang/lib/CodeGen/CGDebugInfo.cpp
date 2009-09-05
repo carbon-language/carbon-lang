@@ -792,6 +792,9 @@ llvm::DIType CGDebugInfo::getOrCreateType(QualType Ty,
   case Type::FunctionProto:
   case Type::FunctionNoProto:
     return Slot = CreateType(cast<FunctionType>(Ty), Unit);
+  case Type::Elaborated:
+    return Slot = getOrCreateType(cast<ElaboratedType>(Ty)->getUnderlyingType(),
+                                  Unit);
     
   case Type::ConstantArray:
   case Type::ConstantArrayWithExpr:

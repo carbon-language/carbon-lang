@@ -225,6 +225,12 @@ void PCHTypeWriter::VisitEnumType(const EnumType *T) {
   Code = pch::TYPE_ENUM;
 }
 
+void PCHTypeWriter::VisitElaboratedType(const ElaboratedType *T) {
+  Writer.AddTypeRef(T->getUnderlyingType(), Record);
+  Record.push_back(T->getTagKind());
+  Code = pch::TYPE_ELABORATED;
+}
+
 void 
 PCHTypeWriter::VisitTemplateSpecializationType(
                                        const TemplateSpecializationType *T) {

@@ -733,6 +733,10 @@ ASTContext::getTypeInfo(const Type *T) {
     break;
   }
 
+  case Type::Elaborated: {
+    return getTypeInfo(cast<ElaboratedType>(T)->getUnderlyingType().getTypePtr());
+  }
+
   case Type::Typedef: {
     const TypedefDecl *Typedef = cast<TypedefType>(T)->getDecl();
     if (const AlignedAttr *Aligned = Typedef->getAttr<AlignedAttr>()) {
@@ -1899,6 +1903,25 @@ ASTContext::getTypenameType(NestedNameSpecifier *NNS,
   Types.push_back(T);
   TypenameTypes.InsertNode(T, InsertPos);
   return QualType(T, 0);    
+}
+
+QualType
+ASTContext::getElaboratedType(QualType UnderlyingType,
+                              ElaboratedType::TagKind Tag) {
+  llvm::FoldingSetNodeID ID;
+  ElaboratedType::Profile(ID, UnderlyingType, Tag);
+  
+  void *InsertPos = 0;
+  ElaboratedType *T = ElaboratedTypes.FindNodeOrInsertPos(ID, InsertPos);
+  if (T)
+    return QualType(T, 0);
+
+  QualType Canon = getCanonicalType(UnderlyingType);
+
+  T = new (*this) ElaboratedType(UnderlyingType, Tag, Canon);
+  Types.push_back(T);
+  ElaboratedTypes.InsertNode(T, InsertPos);
+  return QualType(T, 0);
 }
 
 /// CmpProtocolNames - Comparison predicate for sorting protocols

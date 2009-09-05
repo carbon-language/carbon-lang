@@ -1941,6 +1941,13 @@ QualType PCHReader::ReadTypeRecord(uint64_t Offset) {
     assert(Record.size() == 1 && "incorrect encoding of enum type");
     return Context->getTypeDeclType(cast<EnumDecl>(GetDecl(Record[0])));
 
+  case pch::TYPE_ELABORATED: {
+    assert(Record.size() == 2 && "incorrect encoding of elaborated type");
+    unsigned Tag = Record[1];
+    return Context->getElaboratedType(GetType(Record[0]),
+                                      (ElaboratedType::TagKind) Tag);
+  }
+
   case pch::TYPE_OBJC_INTERFACE: {
     unsigned Idx = 0;
     ObjCInterfaceDecl *ItfD = cast<ObjCInterfaceDecl>(GetDecl(Record[Idx++]));

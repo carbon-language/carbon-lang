@@ -441,6 +441,11 @@ public:
   QualType RebuildEnumType(EnumDecl *Enum) {
     return SemaRef.Context.getTypeDeclType(Enum);
   }
+
+  /// \brief Build a new elaborated type.
+  QualType RebuildElaboratedType(QualType T, ElaboratedType::TagKind Tag) {
+    return SemaRef.Context.getElaboratedType(T, Tag);
+  }
   
   /// \brief Build a new typeof(expr) type. 
   ///
@@ -2328,6 +2333,21 @@ QualType TreeTransform<Derived>::TransformEnumType(const EnumType *T) {
   
   return getDerived().RebuildEnumType(Enum);
 }
+
+template <typename Derived>
+QualType TreeTransform<Derived>::TransformElaboratedType(
+                                                    const ElaboratedType *T) {
+  QualType Underlying = getDerived().TransformType(T->getUnderlyingType());
+  if (Underlying.isNull())
+    return QualType();
+  
+  if (!getDerived().AlwaysRebuild() &&
+      Underlying == T->getUnderlyingType())
+    return QualType(T, 0);
+  
+  return getDerived().RebuildElaboratedType(Underlying, T->getTagKind());
+}
+                                                 
   
 template<typename Derived>
 QualType TreeTransform<Derived>::TransformTemplateTypeParmType(

@@ -1674,6 +1674,16 @@ void ObjCObjectPointerType::getAsStringInternal(std::string &InnerString,
   InnerString = ObjCQIString + InnerString;
 }
 
+void ElaboratedType::getAsStringInternal(std::string &InnerString, 
+                                         const PrintingPolicy &Policy) const {
+  std::string TypeStr;
+  PrintingPolicy InnerPolicy(Policy);
+  InnerPolicy.SuppressTagKind = true;
+  UnderlyingType.getAsStringInternal(InnerString, InnerPolicy);
+
+  InnerString = std::string(getNameForTagKind(getTagKind())) + ' ' + InnerString;
+}
+
 void TagType::getAsStringInternal(std::string &InnerString, const PrintingPolicy &Policy) const {
   if (Policy.SuppressTag)
     return;

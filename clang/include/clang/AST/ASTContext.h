@@ -86,6 +86,7 @@ class ASTContext {
   llvm::FoldingSet<TypenameType> TypenameTypes;
   llvm::FoldingSet<ObjCInterfaceType> ObjCInterfaceTypes;
   llvm::FoldingSet<ObjCObjectPointerType> ObjCObjectPointerTypes;
+  llvm::FoldingSet<ElaboratedType> ElaboratedTypes;
   
   llvm::FoldingSet<QualifiedTemplateName> QualifiedTemplateNames;
   llvm::FoldingSet<DependentTemplateName> DependentTemplateNames;
@@ -471,6 +472,8 @@ public:
   QualType getTypenameType(NestedNameSpecifier *NNS, 
                            const TemplateSpecializationType *TemplateId,
                            QualType Canon = QualType());
+  QualType getElaboratedType(QualType UnderlyingType,
+                             ElaboratedType::TagKind Tag);
 
   QualType getObjCInterfaceType(const ObjCInterfaceDecl *Decl,
                                 ObjCProtocolDecl **Protocols = 0, 

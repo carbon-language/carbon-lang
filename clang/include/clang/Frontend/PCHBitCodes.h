@@ -399,7 +399,9 @@ namespace clang {
       /// \brief A ConstantArrayWithExprType record.
       TYPE_CONSTANT_ARRAY_WITH_EXPR = 24,
       /// \brief A ConstantArrayWithoutExprType record.
-      TYPE_CONSTANT_ARRAY_WITHOUT_EXPR = 25
+      TYPE_CONSTANT_ARRAY_WITHOUT_EXPR = 25,
+      /// \brief An ElaboratedType record.
+      TYPE_ELABORATED               = 26
     };
 
     /// \brief The type IDs for special types constructed by semantic
