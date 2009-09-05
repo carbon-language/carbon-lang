@@ -1293,7 +1293,7 @@ BugReportEquivClass::~BugReportEquivClass() {
   for (iterator I=begin(), E=end(); I!=E; ++I) delete *I;
 }
 
-GRBugReporter::~GRBugReporter() { FlushReports(); }
+GRBugReporter::~GRBugReporter() { }
 BugReporterData::~BugReporterData() {}
 
 ExplodedGraph &GRBugReporter::getGraph() { return Eng.getGraph(); }
