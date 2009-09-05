@@ -1812,13 +1812,17 @@ public:
                                     QualType DeclInitType, 
                                     Expr **Exprs, unsigned NumExprs);
 
-  OwningExprResult BuildCXXConstructExpr(QualType DeclInitType,
+  /// BuildCXXConstructExpr - Creates a complete call to a constructor,
+  /// including handling of its default argument expressions.
+  OwningExprResult BuildCXXConstructExpr(SourceLocation ConstructLoc, 
+                                         QualType DeclInitType,
                                          CXXConstructorDecl *Constructor,
                                          Expr **Exprs, unsigned NumExprs);
 
-  /// BuildCXXConstructExpr - Creates a complete call to a constructor,
-  /// including handling of its default argument expressions.
-  OwningExprResult BuildCXXConstructExpr(QualType DeclInitType,
+  // FIXME: Can re remove this and have the above BuildCXXConstructExpr check if
+  // the constructor can be elidable?
+  OwningExprResult BuildCXXConstructExpr(SourceLocation ConstructLoc, 
+                                         QualType DeclInitType,
                                          CXXConstructorDecl *Constructor,
                                          bool Elidable,
                                          Expr **Exprs, unsigned NumExprs);

@@ -1450,7 +1450,9 @@ public:
                                            MultiExprArg Args) {
     unsigned NumArgs = Args.size();
     Expr **ArgsExprs = (Expr **)Args.release();
-    return getSema().BuildCXXConstructExpr(T, Constructor, IsElidable,
+    return getSema().BuildCXXConstructExpr(/*FIXME:ConstructLoc*/
+                                           SourceLocation(),
+                                           T, Constructor, IsElidable,
                                            ArgsExprs, NumArgs);
   }
 

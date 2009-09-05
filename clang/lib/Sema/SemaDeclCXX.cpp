@@ -2808,7 +2808,7 @@ void Sema::DefineImplicitCopyConstructor(SourceLocation CurrentLocation,
 }
 
 Sema::OwningExprResult
-Sema::BuildCXXConstructExpr(QualType DeclInitType,
+Sema::BuildCXXConstructExpr(SourceLocation ConstructLoc, QualType DeclInitType,
                             CXXConstructorDecl *Constructor,
                             Expr **Exprs, unsigned NumExprs) {
   bool Elidable = false;
@@ -2830,18 +2830,16 @@ Sema::BuildCXXConstructExpr(QualType DeclInitType,
       Elidable = true;
   }
   
-  return BuildCXXConstructExpr(DeclInitType, Constructor, Elidable,
-                               Exprs, NumExprs);
+  return BuildCXXConstructExpr(ConstructLoc, DeclInitType, Constructor, 
+                               Elidable, Exprs, NumExprs);
 }
 
 /// BuildCXXConstructExpr - Creates a complete call to a constructor,
 /// including handling of its default argument expressions.
 Sema::OwningExprResult
-Sema::BuildCXXConstructExpr(QualType DeclInitType, 
-                            CXXConstructorDecl *Constructor,
-                            bool Elidable,
-                            Expr **Exprs, 
-                            unsigned NumExprs) {
+Sema::BuildCXXConstructExpr(SourceLocation ConstructLoc, QualType DeclInitType,
+                            CXXConstructorDecl *Constructor, bool Elidable,
+                            Expr **Exprs, unsigned NumExprs) {
   ExprOwningPtr<CXXConstructExpr> Temp(this, 
                                        CXXConstructExpr::Create(Context, 
                                                                 DeclInitType, 
@@ -2856,8 +2854,7 @@ Sema::BuildCXXConstructExpr(QualType DeclInitType,
     ParmVarDecl *Param = FDecl->getParamDecl(j);
 
     OwningExprResult ArgExpr = 
-      BuildCXXDefaultArgExpr(/*FIXME:*/SourceLocation(),
-                             FDecl, Param);
+      BuildCXXDefaultArgExpr(ConstructLoc, FDecl, Param);
     if (ArgExpr.isInvalid())
       return ExprError();
 
@@ -2901,8 +2898,9 @@ bool Sema::InitializeVarWithConstructor(VarDecl *VD,
                                         CXXConstructorDecl *Constructor,
                                         QualType DeclInitType, 
                                         Expr **Exprs, unsigned NumExprs) {
-  OwningExprResult TempResult = BuildCXXConstructExpr(DeclInitType, Constructor, 
-                                                      Exprs, NumExprs);
+  OwningExprResult TempResult = 
+    BuildCXXConstructExpr(/*FIXME: ConstructLoc*/ SourceLocation(),
+                          DeclInitType, Constructor, Exprs, NumExprs);
   if (TempResult.isInvalid())
     return true;
   

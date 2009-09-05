@@ -941,7 +941,8 @@ Sema::PerformImplicitConversion(Expr *&From, QualType ToType,
         // FIXME. Do we need to check for isLValueReferenceType?
         DefaultFunctionArrayConversion(From);
         OwningExprResult InitResult = 
-          BuildCXXConstructExpr(ToType.getNonReferenceType(), 
+          BuildCXXConstructExpr(/*FIXME:ConstructLoc*/SourceLocation(),
+                                ToType.getNonReferenceType(), 
                                 CD, &From, 1);
         // Take ownership of this expression.
         From = InitResult.takeAs<Expr>();
@@ -986,7 +987,8 @@ Sema::PerformImplicitConversion(Expr *&From, QualType ToType,
     assert(!ToType->isReferenceType());
     
     OwningExprResult FromResult = 
-      BuildCXXConstructExpr(ToType, SCS.CopyConstructor, &From, 1);
+      BuildCXXConstructExpr(/*FIXME:ConstructLoc*/SourceLocation(), 
+                            ToType, SCS.CopyConstructor, &From, 1);
     
     if (FromResult.isInvalid())
       return true;
