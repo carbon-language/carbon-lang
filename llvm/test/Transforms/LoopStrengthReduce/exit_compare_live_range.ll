@@ -2,8 +2,7 @@
 ; having overlapping live ranges that result in copies.  We want the setcc 
 ; instruction immediately before the conditional branch.
 ;
-; RUN: llvm-as < %s | opt -loop-reduce | llvm-dis | \
-; RUN:    %prcontext {br i1} 1 | grep icmp
+; RUN: opt -S -loop-reduce %s | FileCheck %s
 
 define void @foo(float* %D, i32 %E) {
 entry:
@@ -12,6 +11,8 @@ no_exit:		; preds = %no_exit, %entry
 	%indvar = phi i32 [ 0, %entry ], [ %indvar.next, %no_exit ]		; <i32> [#uses=1]
 	volatile store float 0.000000e+00, float* %D
 	%indvar.next = add i32 %indvar, 1		; <i32> [#uses=2]
+; CHECK: icmp
+; CHECK: br i1
 	%exitcond = icmp eq i32 %indvar.next, %E		; <i1> [#uses=1]
 	br i1 %exitcond, label %loopexit, label %no_exit
 loopexit:		; preds = %no_exit

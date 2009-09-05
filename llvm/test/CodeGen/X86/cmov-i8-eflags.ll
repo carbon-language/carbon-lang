@@ -1,4 +1,4 @@
-; RUN: llvm-as < %s | llc -march=x86-64 | %prcontext {setne	%al} 1 | grep test | count 2
+; RUN: llc -march=x86-64 < %s | FileCheck %s
 ; PR4814
 
 ; CodeGen shouldn't try to do a setne after an expanded 8-bit conditional
@@ -6,8 +6,8 @@
 ; move with control flow may clobber EFLAGS (e.g., with xor, to set the
 ; register to zero).
 
-; The prcontext usage above is a little awkward; the important part is that
-; there's a test before the setne.
+; The test is a little awkward; the important part is that there's a test before the
+; setne.
 
 target datalayout = "e-p:64:64:64-i1:8:8-i8:8:8-i16:16:16-i32:32:32-i64:64:64-f32:32:32-f64:64:64-v64:64:64-v128:128:128-a0:0:64-s0:64:64-f80:128:128"
 
@@ -33,6 +33,12 @@ entry:
 bb.i.i.i:                                         ; preds = %entry
   %4 = volatile load i8* @g_100, align 1          ; <i8> [#uses=0]
   br label %func_4.exit.i
+
+; CHECK: _g_100
+; CHECK: testb
+; CHECK: testb %al, %al
+; CHECK-NEXT: setne %al
+; CHECK-NEXT: testb
 
 func_4.exit.i:                                    ; preds = %bb.i.i.i, %entry
   %.not.i = xor i1 %2, true                       ; <i1> [#uses=1]

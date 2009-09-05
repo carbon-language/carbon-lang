@@ -1,9 +1,10 @@
-; RUN: llvm-as < %s | opt -tailcallelim | llvm-dis | \
-; RUN:    %prcontext alloca 1 | grep {i32 @foo}
+; RUN: opt -tailcallelim %s | llvm-dis | FileCheck %s
 
 declare void @bar(i32*)
 
 define i32 @foo() {
+; CHECK: i32 @foo()
+; CHECK: alloca
 	%A = alloca i32		; <i32*> [#uses=2]
 	store i32 17, i32* %A
 	call void @bar( i32* %A )

@@ -1,5 +1,4 @@
-; RUN: llvm-as < %s | opt -instcombine | llvm-dis | \
-; RUN:   %prcontext div 1 | grep ret
+; RUN: opt -instcombine %s | llvm-dis | FileCheck %s
 
 ;; This tests that the instructions in the entry blocks are sunk into each
 ;; arm of the 'if'.
@@ -14,6 +13,8 @@ then:           ; preds = %entry
         ret i32 %tmp.9
 
 endif:          ; preds = %entry
+; CHECK: sdiv i32
+; CHECK-NEXT: ret i32
         ret i32 %tmp.2
 }
 

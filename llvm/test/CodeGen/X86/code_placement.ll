@@ -1,4 +1,4 @@
-; RUN: llvm-as < %s | llc -march=x86 | %prcontext jmp 1 | grep align
+; RUN: llc -march=x86 < %s | FileCheck %s
 
 @Te0 = external global [256 x i32]		; <[256 x i32]*> [#uses=5]
 @Te1 = external global [256 x i32]		; <[256 x i32]*> [#uses=4]
@@ -12,6 +12,8 @@ entry:
 	%tmp15 = add i32 %r, -1		; <i32> [#uses=1]
 	%tmp.16 = zext i32 %tmp15 to i64		; <i64> [#uses=2]
 	br label %bb
+; CHECK: jmp
+; CHECK-NEXT: align
 
 bb:		; preds = %bb1, %entry
 	%indvar = phi i64 [ 0, %entry ], [ %indvar.next, %bb1 ]		; <i64> [#uses=3]

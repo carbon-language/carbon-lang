@@ -1,6 +1,4 @@
-; RUN: llvm-as < %s | opt -gvn -enable-load-pre | llvm-dis > %t
-; RUN: %prcontext bb3.backedge: 2 < %t | grep phi
-; RUN: %prcontext bb3.backedge: 2 < %t | not grep load
+; RUN: opt -S -gvn -enable-load-pre %s | FileCheck %s
 ;
 ; Make sure the load in bb3.backedge is removed and moved into bb1 after the 
 ; call.  This makes the non-call case faster. 
@@ -43,6 +41,9 @@ bb1:		; preds = %bb
 	br label %bb3.backedge
 
 bb3.backedge:		; preds = %bb, %bb1
+; CHECK: bb3.backedge:
+; CHECK-NEXT: phi
+; CHECK-NEXT: icmp
 	%7 = load i32* %0, align 4		; <i32> [#uses=2]
 	%8 = icmp eq i32 %7, 0		; <i1> [#uses=1]
 	br i1 %8, label %return, label %bb

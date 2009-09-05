@@ -1,7 +1,7 @@
 ; This test ensures that alloca instructions in the entry block for an inlined
 ; function are moved to the top of the function they are inlined into.
 ;
-; RUN: llvm-as < %s | opt -inline | llvm-dis | %prcontext alloca 1 | grep Entry:
+; RUN: opt -S -inline %s | FileCheck %s
 
 define i32 @func(i32 %i) {
         %X = alloca i32         ; <i32*> [#uses=1]
@@ -13,6 +13,8 @@ declare void @bar()
 
 define i32 @main(i32 %argc) {
 Entry:
+; CHECK: Entry
+; CHECK-NEXT: alloca
         call void @bar( )
         %X = call i32 @func( i32 7 )            ; <i32> [#uses=1]
         %Y = add i32 %X, %argc          ; <i32> [#uses=1]

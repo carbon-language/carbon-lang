@@ -1,4 +1,7 @@
-; RUN: llvm-as < %s | llc -march=x86-64 | %prcontext decq 1 | grep jne
+; RUN: llc -march=x86-64 < %s | FileCheck %s
+
+; CHECK: decq
+; CHECK-NEXT: jne
 
 @Te0 = external global [256 x i32]		; <[256 x i32]*> [#uses=5]
 @Te1 = external global [256 x i32]		; <[256 x i32]*> [#uses=4]
