@@ -1028,7 +1028,7 @@ public:
         uint64_t o = Offset + Layout.getBaseClassOffset(Base);
         StartNewTable();
         Index_t AP;
-        AP = GenerateVtableForBase(Base, true, MorallyVirtual, o, false);
+        AP = GenerateVtableForBase(Base, MorallyVirtual, o, false);
         OverrideMethods(RD, AP, MorallyVirtual, o);
         InstallThunks(AP);
       }
@@ -1096,7 +1096,7 @@ public:
     AddMethods(RD, MorallyVirtual, Offset);
   }
 
-  int64_t GenerateVtableForBase(const CXXRecordDecl *RD, bool forPrimary,
+  int64_t GenerateVtableForBase(const CXXRecordDecl *RD,
                                 bool MorallyVirtual, int64_t Offset,
                                 bool ForVirtualBase) {
     if (!RD->isDynamicClass())
@@ -1137,7 +1137,7 @@ public:
         StartNewTable();
         int64_t BaseOffset = BLayout.getVBaseClassOffset(Base);
         Index_t AP;
-        AP = GenerateVtableForBase(Base, false, true, BaseOffset, true);
+        AP = GenerateVtableForBase(Base, true, BaseOffset, true);
         OverrideMethods(RD, AP, true, BaseOffset);
         InstallThunks(AP);
       }
@@ -1171,7 +1171,7 @@ public:
     if (I == IndexFor.end()) {
       std::vector<llvm::Constant *> methods;
       VtableBuilder b(methods, RD, CGM);
-      b.GenerateVtableForBase(RD, true, false, 0, false);
+      b.GenerateVtableForBase(RD, false, 0, false);
       b.GenerateVtableForVBases(RD);
       register_index(RD, b.getIndex());
       I = IndexFor.find(RD);
@@ -1199,7 +1199,7 @@ llvm::Value *CodeGenFunction::GenerateVtable(const CXXRecordDecl *RD) {
   VtableBuilder b(methods, RD, CGM);
 
   // First comes the vtables for all the non-virtual bases...
-  Offset = b.GenerateVtableForBase(RD, true, false, 0, false);
+  Offset = b.GenerateVtableForBase(RD, false, 0, false);
 
   // then the vtables for all the virtual bases.
   b.GenerateVtableForVBases(RD);
