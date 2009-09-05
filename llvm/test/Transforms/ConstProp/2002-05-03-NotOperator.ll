@@ -4,7 +4,7 @@
 
 ; Fix #2: The unary not instruction now no longer exists. Change to xor.
 
-; RUN: llvm-as < $test | opt -constprop | llvm-dis | \
+; RUN: llvm-as < %s | opt -constprop | llvm-dis | \
 ; RUN:   not grep {i32 0}
 
 define i32 @test1() {
