@@ -2899,8 +2899,8 @@ bool Sema::InitializeVarWithConstructor(VarDecl *VD,
                                         QualType DeclInitType, 
                                         Expr **Exprs, unsigned NumExprs) {
   OwningExprResult TempResult = 
-    BuildCXXConstructExpr(/*FIXME: ConstructLoc*/ SourceLocation(),
-                          DeclInitType, Constructor, Exprs, NumExprs);
+    BuildCXXConstructExpr(VD->getLocation(), DeclInitType, Constructor, 
+                          Exprs, NumExprs);
   if (TempResult.isInvalid())
     return true;
   

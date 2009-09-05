@@ -20,7 +20,7 @@ void g() {
 }
 
 template<typename T> struct F {
-  F(T t = 10);
+  F(T t = 10); // expected-error{{cannot initialize 't' with an rvalue of type 'int'}}
   void f(T t = 10); // expected-error{{cannot initialize 't' with an rvalue of type 'int'}}
 };
 
@@ -34,6 +34,9 @@ void g2() {
 void g3(F<int> f, F<struct S> s) {
   f.f();
   s.f(); // expected-note{{in instantiation of default function argument expression for 'f<struct S>' required here}}
+  
+  F<int> f2;
+  F<S> s2; // expected-note{{in instantiation of default function argument expression for 'F<struct S>' required here}}
 }
 
 template<typename T> struct G {
