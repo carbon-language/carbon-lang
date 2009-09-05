@@ -143,6 +143,7 @@ NestedNameSpecifier::print(llvm::raw_ostream &OS,
 
     PrintingPolicy InnerPolicy(Policy);
     InnerPolicy.SuppressTagKind = true;
+    InnerPolicy.SuppressScope = true;
     
     // Nested-name-specifiers are intended to contain minimally-qualified
     // types. An actual QualifiedNameType will not occur, since we'll store

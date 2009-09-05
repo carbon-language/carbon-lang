@@ -581,6 +581,9 @@ void CXXNameMangler::mangleType(QualType T) {
   } else if (const ObjCInterfaceType *IT = 
              dyn_cast<ObjCInterfaceType>(T.getTypePtr())) {
     mangleType(IT);
+  } else if (const ElaboratedType *ET =
+             dyn_cast<ElaboratedType>(T.getTypePtr())) {
+    mangleType(ET->getUnderlyingType());
   }
   // FIXME:  ::= G <type>   # imaginary (C 2000)
   // FIXME:  ::= U <source-name> <type>     # vendor extended type qualifier

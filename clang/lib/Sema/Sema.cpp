@@ -52,6 +52,10 @@ static void ConvertArgToStringFn(Diagnostic::ArgumentKind Kind, intptr_t Val,
         // If the desugared type is a vector type, we don't want to expand it,
         // it will turn into an attribute mess. People want their "vec4".
         !isa<VectorType>(DesugaredTy) &&
+
+        // Don't aka just because we saw an elaborated type.
+        (!isa<ElaboratedType>(Ty) ||
+         cast<ElaboratedType>(Ty)->getUnderlyingType() != DesugaredTy) &&
       
         // Don't desugar magic Objective-C types.
         Ty.getUnqualifiedType() != Context.getObjCIdType() &&

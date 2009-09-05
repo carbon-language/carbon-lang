@@ -143,6 +143,8 @@ QualType QualType::getDesugaredType(bool ForDisplay) const {
 QualType Type::getDesugaredType(bool ForDisplay) const {
   if (const TypedefType *TDT = dyn_cast<TypedefType>(this))
     return TDT->LookThroughTypedefs().getDesugaredType();
+  if (const ElaboratedType *ET = dyn_cast<ElaboratedType>(this))
+    return ET->getUnderlyingType().getDesugaredType();
   if (const TypeOfExprType *TOE = dyn_cast<TypeOfExprType>(this))
     return TOE->getUnderlyingExpr()->getType().getDesugaredType();
   if (const TypeOfType *TOT = dyn_cast<TypeOfType>(this))
@@ -1575,6 +1577,7 @@ void QualifiedNameType::getAsStringInternal(std::string &InnerString, const Prin
   std::string TypeStr;
   PrintingPolicy InnerPolicy(Policy);
   InnerPolicy.SuppressTagKind = true;
+  InnerPolicy.SuppressScope = true;
   NamedType.getAsStringInternal(TypeStr, InnerPolicy);
 
   MyString += TypeStr;
@@ -1715,7 +1718,7 @@ void TagType::getAsStringInternal(std::string &InnerString, const PrintingPolicy
     InnerString = TemplateArgsStr + InnerString;
   }
 
-  if (Kind) {
+  if (!Policy.SuppressScope) {
     // Compute the full nested-name-specifier for this type. In C,
     // this will always be empty.
     std::string ContextStr;
@@ -1745,7 +1748,10 @@ void TagType::getAsStringInternal(std::string &InnerString, const PrintingPolicy
         ContextStr = MyPart + "::" + ContextStr;
     }
 
-    InnerString = std::string(Kind) + " " + ContextStr + ID + InnerString;
+    if (Kind)
+      InnerString = std::string(Kind) + ' ' + ContextStr + ID + InnerString;
+    else
+      InnerString = ContextStr + ID + InnerString;
   } else
     InnerString = ID + InnerString;
 }

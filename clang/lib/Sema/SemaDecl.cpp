@@ -3893,7 +3893,7 @@ TypedefDecl *Sema::ParseTypedefDecl(Scope *S, Declarator &D, QualType T) {
                                            D.getIdentifier(), 
                                            T);
   
-  if (TagType *TT = dyn_cast<TagType>(T)) {
+  if (const TagType *TT = T->getAs<TagType>()) {
     TagDecl *TD = TT->getDecl();
     
     // If the TagDecl that the TypedefDecl points to is an anonymous decl

@@ -36,8 +36,8 @@ struct PrintingPolicy {
   /// \brief Create a default printing policy for C.
   PrintingPolicy(const LangOptions &LO) 
     : Indentation(2), LangOpts(LO), SuppressSpecifiers(false),
-      SuppressTag(false), SuppressTagKind(false), Dump(false),
-      ConstantArraySizeAsWritten(false) { }
+      SuppressTag(false), SuppressTagKind(false), SuppressScope(false),
+      Dump(false), ConstantArraySizeAsWritten(false) { }
 
   /// \brief The number of spaces to use to indent each line.
   unsigned Indentation : 8;
@@ -74,6 +74,9 @@ struct PrintingPolicy {
   /// \brief If we are printing a tag type, suppresses printing of the
   /// kind of tag, e.g., "struct", "union", "enum".
   bool SuppressTagKind : 1;
+
+  /// \brief Suppresses printing of scope specifiers.
+  bool SuppressScope : 1;
 
   /// \brief True when we are "dumping" rather than "pretty-printing",
   /// where dumping involves printing the internal details of the AST

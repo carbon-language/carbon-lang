@@ -195,6 +195,13 @@ QualType Sema::ConvertDeclSpecToType(const DeclSpec &DS,
            "Can't handle qualifiers on typedef names yet!");
     // TypeQuals handled by caller.
     Result = Context.getTypeDeclType(cast<TypeDecl>(D));
+
+    // In C++, make an ElaboratedType.
+    if (getLangOptions().CPlusPlus) {
+      TagDecl::TagKind Tag
+        = TagDecl::getTagKindForTypeSpec(DS.getTypeSpecType());
+      Result = Context.getElaboratedType(Result, Tag);
+    }
     
     if (D->isInvalidDecl())
       isInvalid = true;
