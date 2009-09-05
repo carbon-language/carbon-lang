@@ -24,3 +24,8 @@ $ perl -pi -e 's|^#include "src/|#include "gtest/internal/|' *.cc
 $ rm -f gtest-all.cc gtest_main.cc
 
 $ mv COPYING LICENSE.TXT
+
+
+Modified as follows:
+* To GTestStreamToHelper in include/gtest/internal/gtest-internal.h,
+  added the ability to stream with raw_os_ostream.

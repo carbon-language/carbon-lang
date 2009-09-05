@@ -16,13 +16,6 @@ using namespace llvm;
 
 namespace {
 
-// Support APInt output to an std::ostream.
-inline std::ostream &operator<<(std::ostream &OS, const APInt &Value) {
-  raw_os_ostream RawOS(OS);
-  RawOS << Value;
-  return OS;
-}
-
 class ConstantRangeTest : public ::testing::Test {
 protected:
   static ConstantRange Full;
