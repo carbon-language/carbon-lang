@@ -1080,7 +1080,7 @@ public:
   int64_t GenerateVtableForBase(const CXXRecordDecl *RD, bool forPrimary,
                                 bool Bottom, bool MorallyVirtual,
                                 int64_t Offset, bool ForVirtualBase) {
-    if (RD && !RD->isDynamicClass())
+    if (!RD->isDynamicClass())
       return 0;
 
     const ASTRecordLayout &Layout = CGM.getContext().getASTRecordLayout(RD);
@@ -1118,8 +1118,7 @@ public:
                MorallyVirtual, Offset, ForVirtualBase);
   }
 
-  void GenerateVtableForVBases(const CXXRecordDecl *RD,
-                               const CXXRecordDecl *Class) {
+  void GenerateVtableForVBases(const CXXRecordDecl *RD) {
     for (CXXRecordDecl::base_class_const_iterator i = RD->bases_begin(),
            e = RD->bases_end(); i != e; ++i) {
       const CXXRecordDecl *Base = 
@@ -1135,7 +1134,7 @@ public:
         InstallThunks(AP);
       }
       if (Base->getNumVBases())
-        GenerateVtableForVBases(Base, Class);
+        GenerateVtableForVBases(Base);
     }
   }
 };
@@ -1165,7 +1164,7 @@ public:
       std::vector<llvm::Constant *> methods;
       VtableBuilder b(methods, RD, CGM);
       b.GenerateVtableForBase(RD, true, true, false, 0, false);
-      b.GenerateVtableForVBases(RD, RD);
+      b.GenerateVtableForVBases(RD);
       register_index(RD, b.getIndex());
       I = IndexFor.find(RD);
     }
@@ -1195,7 +1194,7 @@ llvm::Value *CodeGenFunction::GenerateVtable(const CXXRecordDecl *RD) {
   Offset = b.GenerateVtableForBase(RD, true, true, false, 0, false);
 
   // then the vtables for all the virtual bases.
-  b.GenerateVtableForVBases(RD, RD);
+  b.GenerateVtableForVBases(RD);
 
   llvm::Constant *C;
   llvm::ArrayType *type = llvm::ArrayType::get(Ptr8Ty, methods.size());
