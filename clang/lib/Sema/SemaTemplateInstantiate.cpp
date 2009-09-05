@@ -293,7 +293,6 @@ void Sema::PrintInstantiationStack() {
     case ActiveTemplateInstantiation::DefaultFunctionArgumentInstantiation: {
       ParmVarDecl *Param = cast<ParmVarDecl>((Decl *)Active->Entity);
       FunctionDecl *FD = cast<FunctionDecl>(Param->getDeclContext());
-      TemplateDecl *Template = FD->getPrimaryTemplate();
       
       std::string TemplateArgsStr
         = TemplateSpecializationType::PrintTemplateArgumentList(
@@ -302,7 +301,7 @@ void Sema::PrintInstantiationStack() {
                                                       Context.PrintingPolicy);
       Diags.Report(FullSourceLoc(Active->PointOfInstantiation, SourceMgr),
                    diag::note_default_function_arg_instantiation_here)
-        << (Template->getNameAsString() + TemplateArgsStr)
+        << (FD->getNameAsString() + TemplateArgsStr)
         << Active->InstantiationRange;
       break;
     }
