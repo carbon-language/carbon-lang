@@ -1628,7 +1628,7 @@ void GRExprEngine::VisitCallRec(CallExpr* CE, ExplodedNode* Pred,
     MarkNoReturnFunction(FD, CE, state, Builder);
     
     // Evaluate the call.
-    if (EvalBuiltinFunction(FD, CE, Pred, Dst))
+    if (EvalBuiltinFunction(FD, CE, *DI, Dst))
       continue;
 
     // Dispatch to the plug-in transfer function.      
