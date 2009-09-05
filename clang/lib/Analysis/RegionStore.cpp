@@ -1010,11 +1010,14 @@ SVal RegionStoreManager::RetrieveElement(const GRState* state,
     SVal Idx = R->getIndex();
     if (nonloc::ConcreteInt *CI = dyn_cast<nonloc::ConcreteInt>(&Idx)) {
       int64_t i = CI->getValue().getSExtValue();
-      char c;
-      if (i == Str->getByteLength())
-        c = '\0';
-      else
-        c = Str->getStrData()[i];
+      int64_t byteLength = Str->getByteLength();      
+      if (i > byteLength) {
+        // Buffer overflow checking in GRExprEngine should handle this case,
+        // but we shouldn't rely on it to not overflow here if that checking
+        // is disabled.
+        return UnknownVal();
+      }      
+      char c = (i == byteLength) ? '\0' : Str->getStrData()[i];
       return ValMgr.makeIntVal(c, getContext().CharTy);
     }
   }
