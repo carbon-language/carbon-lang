@@ -1,7 +1,7 @@
 ; RUN: llvm-as < %s | opt -lcssa | llvm-dis | \
-; RUN:   grep {%SJE.0.0.lcssa = phi .struct.SetJmpMapEntry}
+; RUN:   grep {%%SJE.0.0.lcssa = phi .struct.SetJmpMapEntry}
 ; RUN: llvm-as < %s | opt -lcssa | llvm-dis | \
-; RUN:   grep {%SJE.0.0.lcssa1 = phi .struct.SetJmpMapEntry}
+; RUN:   grep {%%SJE.0.0.lcssa1 = phi .struct.SetJmpMapEntry}
 
         %struct.SetJmpMapEntry = type { i8*, i32, %struct.SetJmpMapEntry* }
 
