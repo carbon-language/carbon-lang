@@ -34,7 +34,7 @@ bb.i.i.i:                                         ; preds = %entry
   %4 = volatile load i8* @g_100, align 1          ; <i8> [#uses=0]
   br label %func_4.exit.i
 
-; CHECK: _g_100
+; CHECK: g_100
 ; CHECK: testb
 ; CHECK: testb %al, %al
 ; CHECK-NEXT: setne %al
