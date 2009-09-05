@@ -578,6 +578,9 @@ protected:
   SVal EvalComplement(SVal X) {
     return X.isValid() ? SVator.EvalComplement(cast<NonLoc>(X)) : X;
   }
+
+  bool EvalBuiltinFunction(const FunctionDecl *FD, CallExpr *CE,
+                           ExplodedNode *Pred, ExplodedNodeSet &Dst);
   
 public:
   
