@@ -23,6 +23,7 @@
 #include "clang/Basic/SourceManager.h"
 #include "llvm/Support/Compiler.h"
 #include "llvm/Support/raw_ostream.h"
+#include "llvm/Support/ErrorHandling.h"
 using namespace clang;
 
 namespace {
@@ -64,14 +65,16 @@ namespace {
     void mangleOperatorName(OverloadedOperatorKind OO, unsigned Arity);
     void mangleCVQualifiers(unsigned Quals);
     void mangleType(QualType T);
-    void mangleType(const BuiltinType *T);
-    void mangleType(const FunctionType *T);
-    void mangleBareFunctionType(const FunctionType *T, bool MangleReturnType);
-    void mangleType(const TagType *T);
-    void mangleType(const ArrayType *T);
-    void mangleType(const MemberPointerType *T);
-    void mangleType(const TemplateTypeParmType *T);
-    void mangleType(const ObjCInterfaceType *T);
+
+    // Declare manglers for every type class.
+#define ABSTRACT_TYPE(CLASS, PARENT)
+#define NON_CANONICAL_TYPE(CLASS, PARENT)
+#define TYPE(CLASS, PARENT) void mangleType(const CLASS##Type *T);
+#include "clang/AST/TypeNodes.def"
+
+    void mangleType(const TagType*);
+    void mangleBareFunctionType(const FunctionType *T,
+                                bool MangleReturnType);
     void mangleExpression(Expr *E);
     void mangleCXXCtorType(CXXCtorType T);
     void mangleCXXDtorType(CXXDtorType T);
@@ -518,77 +521,24 @@ void CXXNameMangler::mangleType(QualType T) {
   // Only operate on the canonical type!
   T = Context.getCanonicalType(T);
 
-  // FIXME: Should we have a TypeNodes.def to make this easier? (YES!)
-
   //  <type> ::= <CV-qualifiers> <type>
   mangleCVQualifiers(T.getCVRQualifiers());
 
-  //         ::= <builtin-type>
-  if (const BuiltinType *BT = dyn_cast<BuiltinType>(T.getTypePtr()))
-    mangleType(BT);
-  //         ::= <function-type>
-  else if (const FunctionType *FT = dyn_cast<FunctionType>(T.getTypePtr()))
-    mangleType(FT);
-  //         ::= <class-enum-type>
-  else if (const TagType *TT = dyn_cast<TagType>(T.getTypePtr()))
-    mangleType(TT);
-  //         ::= <array-type>
-  else if (const ArrayType *AT = dyn_cast<ArrayType>(T.getTypePtr()))
-    mangleType(AT);
-  //         ::= <pointer-to-member-type>
-  else if (const MemberPointerType *MPT 
-             = dyn_cast<MemberPointerType>(T.getTypePtr()))
-    mangleType(MPT);
-  //         ::= <template-param>
-  else if (const TemplateTypeParmType *TypeParm 
-             = dyn_cast<TemplateTypeParmType>(T.getTypePtr()))
-    mangleType(TypeParm);
-  //  FIXME: ::= <template-template-param> <template-args>
-  //  FIXME: ::= <substitution> # See Compression below
-  //         ::= P <type>   # pointer-to
-  else if (const PointerType *PT = dyn_cast<PointerType>(T.getTypePtr())) {
-    Out << 'P';
-    mangleType(PT->getPointeeType());
+  switch (T->getTypeClass()) {
+#define ABSTRACT_TYPE(CLASS, PARENT)
+#define NON_CANONICAL_TYPE(CLASS, PARENT) \
+  case Type::CLASS: \
+    llvm::llvm_unreachable("can't mangle non-canonical type " #CLASS "Type"); \
+    return;
+#define TYPE(CLASS, PARENT) \
+  case Type::CLASS: \
+    return mangleType(static_cast<CLASS##Type*>(T.getTypePtr()));
+#include "clang/AST/TypeNodes.def"
   }
-  else if (const ObjCObjectPointerType *PT = 
-           dyn_cast<ObjCObjectPointerType>(T.getTypePtr())) {
-    Out << 'P';
-    mangleType(PT->getPointeeType());
-  }
-  //         ::= R <type>   # reference-to
-  else if (const LValueReferenceType *RT =
-           dyn_cast<LValueReferenceType>(T.getTypePtr())) {
-    Out << 'R';
-    mangleType(RT->getPointeeType());
-  }
-  //         ::= O <type>   # rvalue reference-to (C++0x)
-  else if (const RValueReferenceType *RT =
-           dyn_cast<RValueReferenceType>(T.getTypePtr())) {
-    Out << 'O';
-    mangleType(RT->getPointeeType());
-  }
-  //         ::= C <type>   # complex pair (C 2000)
-  else if (const ComplexType *CT = dyn_cast<ComplexType>(T.getTypePtr())) {
-    Out << 'C';
-    mangleType(CT->getElementType());
-  } else if (const VectorType *VT = dyn_cast<VectorType>(T.getTypePtr())) {
-    // GNU extension: vector types
-    Out << "U8__vector";
-    mangleType(VT->getElementType());
-  } else if (const ObjCInterfaceType *IT = 
-             dyn_cast<ObjCInterfaceType>(T.getTypePtr())) {
-    mangleType(IT);
-  } else if (const ElaboratedType *ET =
-             dyn_cast<ElaboratedType>(T.getTypePtr())) {
-    mangleType(ET->getUnderlyingType());
-  }
-  // FIXME:  ::= G <type>   # imaginary (C 2000)
-  // FIXME:  ::= U <source-name> <type>     # vendor extended type qualifier
-  else
-    assert(false && "Cannot mangle unknown type");
 }
 
 void CXXNameMangler::mangleType(const BuiltinType *T) {
+  //  <type>         ::= <builtin-type>
   //  <builtin-type> ::= v  # void
   //                 ::= w  # wchar_t
   //                 ::= b  # bool
@@ -655,29 +605,32 @@ void CXXNameMangler::mangleType(const BuiltinType *T) {
   }
 }
 
-void CXXNameMangler::mangleType(const FunctionType *T) {
-  // <function-type> ::= F [Y] <bare-function-type> E
+// <type>          ::= <function-type>
+// <function-type> ::= F [Y] <bare-function-type> E
+void CXXNameMangler::mangleType(const FunctionProtoType *T) {
   Out << 'F';
   // FIXME: We don't have enough information in the AST to produce the 'Y'
   // encoding for extern "C" function types.
   mangleBareFunctionType(T, /*MangleReturnType=*/true);
   Out << 'E';
 }
-
+void CXXNameMangler::mangleType(const FunctionNoProtoType *T) {
+  llvm::llvm_unreachable("Can't mangle K&R function prototypes");
+}
 void CXXNameMangler::mangleBareFunctionType(const FunctionType *T,
                                             bool MangleReturnType) {
+  // We should never be mangling something without a prototype.
+  const FunctionProtoType *Proto = cast<FunctionProtoType>(T);
+
   // <bare-function-type> ::= <signature type>+
   if (MangleReturnType)
-    mangleType(T->getResultType());
-
-  const FunctionProtoType *Proto = dyn_cast<FunctionProtoType>(T);
-  assert(Proto && "Can't mangle K&R function prototypes");
+    mangleType(Proto->getResultType());
 
   if (Proto->getNumArgs() == 0) {
     Out << 'v';
     return;
   }
-    
+  
   for (FunctionProtoType::arg_type_iterator Arg = Proto->arg_type_begin(),
                                          ArgEnd = Proto->arg_type_end(); 
        Arg != ArgEnd; ++Arg)
@@ -688,9 +641,15 @@ void CXXNameMangler::mangleBareFunctionType(const FunctionType *T,
     Out << 'z';
 }
 
+// <type>            ::= <class-enum-type>
+// <class-enum-type> ::= <name>  
+void CXXNameMangler::mangleType(const EnumType *T) {
+  mangleType(static_cast<const TagType*>(T));
+}
+void CXXNameMangler::mangleType(const RecordType *T) {
+  mangleType(static_cast<const TagType*>(T));
+}
 void CXXNameMangler::mangleType(const TagType *T) {
-  //  <class-enum-type> ::= <name>
-  
   if (!T->getDecl()->getIdentifier())
     mangleName(T->getDecl()->getTypedefForAnonDecl());
   else
@@ -702,24 +661,33 @@ void CXXNameMangler::mangleType(const TagType *T) {
     mangleTemplateArgumentList(Spec->getTemplateArgs());
 }
 
-void CXXNameMangler::mangleType(const ArrayType *T) {
-  // <array-type> ::= A <positive dimension number> _ <element type>
-  //              ::= A [<dimension expression>] _ <element type>
+// <type>       ::= <array-type>
+// <array-type> ::= A <positive dimension number> _ <element type>
+//              ::= A [<dimension expression>] _ <element type>
+void CXXNameMangler::mangleType(const ConstantArrayType *T) {
+  Out << 'A' << T->getSize() << '_';
+  mangleType(T->getElementType());
+}
+void CXXNameMangler::mangleType(const VariableArrayType *T) {
   Out << 'A';
-  if (const ConstantArrayType *CAT = dyn_cast<ConstantArrayType>(T))
-    Out << CAT->getSize();
-  else if (const VariableArrayType *VAT = dyn_cast<VariableArrayType>(T))
-    mangleExpression(VAT->getSizeExpr());
-  else if (const DependentSizedArrayType *DSAT 
-             = dyn_cast<DependentSizedArrayType>(T))
-    mangleExpression(DSAT->getSizeExpr());
-
+  mangleExpression(T->getSizeExpr());
   Out << '_';
   mangleType(T->getElementType());
 }
+void CXXNameMangler::mangleType(const DependentSizedArrayType *T) {
+  Out << 'A';
+  mangleExpression(T->getSizeExpr());
+  Out << '_';
+  mangleType(T->getElementType());
+}
+void CXXNameMangler::mangleType(const IncompleteArrayType *T) {
+  Out << 'A' << '_';
+  mangleType(T->getElementType());
+}
 
+// <type>                   ::= <pointer-to-member-type>
+// <pointer-to-member-type> ::= M <class type> <member type>
 void CXXNameMangler::mangleType(const MemberPointerType *T) {
-  //  <pointer-to-member-type> ::= M <class type> <member type>
   Out << 'M';
   mangleType(QualType(T->getClass(), 0));
   QualType PointeeType = T->getPointeeType();
@@ -730,22 +698,92 @@ void CXXNameMangler::mangleType(const MemberPointerType *T) {
     mangleType(PointeeType);
 }
 
+// <type>           ::= <template-param>
+// <template-param> ::= T_    # first template parameter
+//                  ::= T <parameter-2 non-negative number> _
 void CXXNameMangler::mangleType(const TemplateTypeParmType *T) {
-  // <template-param> ::= T_    # first template parameter
-  //                  ::= T <parameter-2 non-negative number> _
   if (T->getIndex() == 0)
     Out << "T_";
   else
     Out << 'T' << (T->getIndex() - 1) << '_';
 }
 
+// FIXME: <type> ::= <template-template-param> <template-args>
+// FIXME: <type> ::= <substitution> # See Compression below
+
+// <type> ::= P <type>   # pointer-to
+void CXXNameMangler::mangleType(const PointerType *T) {
+  Out << 'P';
+  mangleType(T->getPointeeType());
+}
+void CXXNameMangler::mangleType(const ObjCObjectPointerType *T) {
+  Out << 'P';
+  mangleType(T->getPointeeType());
+}
+
+// <type> ::= R <type>   # reference-to
+void CXXNameMangler::mangleType(const LValueReferenceType *T) {
+  Out << 'R';
+  mangleType(T->getPointeeType());
+}
+
+// <type> ::= O <type>   # rvalue reference-to (C++0x)
+void CXXNameMangler::mangleType(const RValueReferenceType *T) {
+  Out << 'O';
+  mangleType(T->getPointeeType());
+}
+
+// <type> ::= C <type>   # complex pair (C 2000)
+void CXXNameMangler::mangleType(const ComplexType *T) {
+  Out << 'C';
+  mangleType(T->getElementType());
+}
+
+// GNU extension: vector types
+void CXXNameMangler::mangleType(const VectorType *T) {
+  Out << "U8__vector";
+  mangleType(T->getElementType());
+}
+void CXXNameMangler::mangleType(const ExtVectorType *T) {
+  mangleType(static_cast<const VectorType*>(T));
+}
+void CXXNameMangler::mangleType(const DependentSizedExtVectorType *T) {
+  Out << "U8__vector";
+  mangleType(T->getElementType());
+}
+
 void CXXNameMangler::mangleType(const ObjCInterfaceType *T) {
   mangleSourceName(T->getDecl()->getIdentifier());
+}
+
+void CXXNameMangler::mangleType(const BlockPointerType *T) {
+  assert(false && "can't mangle block pointer types yet");
+}
+
+void CXXNameMangler::mangleType(const FixedWidthIntType *T) {
+  assert(false && "can't mangle arbitary-precision integer type yet");
+}
+
+void CXXNameMangler::mangleType(const TemplateSpecializationType *T) {
+  // TSTs are never canonical unless they're dependent.
+  assert(false && "can't mangle dependent template specializations yet");
+}
+
+void CXXNameMangler::mangleType(const TypenameType *T) {
+  assert(false && "can't mangle dependent typenames yet");
+}
+
+// FIXME: For now, just drop all extension qualifiers on the floor.
+void CXXNameMangler::mangleType(const ExtQualType *T) {
+  mangleType(QualType(T->getBaseType(), 0));
 }
 
 void CXXNameMangler::mangleExpression(Expr *E) {
   assert(false && "Cannot mangle expressions yet");
 }
+
+// FIXME: <type> ::= G <type>   # imaginary (C 2000)
+// FIXME: <type> ::= U <source-name> <type>     # vendor extended type qualifier
 
 void CXXNameMangler::mangleCXXCtorType(CXXCtorType T) {
   // <ctor-dtor-name> ::= C1  # complete object constructor
