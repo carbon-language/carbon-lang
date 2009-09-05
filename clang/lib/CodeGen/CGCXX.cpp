@@ -963,27 +963,32 @@ public:
     return false;
   }
 
-  void InstallThunks(Index_t AddressPoint) {
+  void InstallThunks() {
     for (Thunks_t::iterator i = Thunks.begin(), e = Thunks.end();
          i != e; ++i) {
       const CXXMethodDecl *MD = i->first;
       Index_t idx = Index[MD];
       Index_t nv_O = i->second.first;
       Index_t v_O = i->second.second;
-      methods[AddressPoint + idx] = CGM.BuildThunk(MD, Extern, nv_O, v_O);
+      submethods[idx] = CGM.BuildThunk(MD, Extern, nv_O, v_O);
     }
     Thunks.clear();
   }
 
-  void OverrideMethods(const CXXRecordDecl *RD, Index_t AddressPoint,
+  void OverrideMethods(std::vector<const CXXRecordDecl *> *Path,
                        bool MorallyVirtual, Index_t Offset) {
-    for (method_iter mi = RD->method_begin(), me = RD->method_end(); mi != me;
-         ++mi)
-      if (mi->isVirtual()) {
-        const CXXMethodDecl *MD = *mi;
-        llvm::Constant *m = wrap(CGM.GetAddrOfFunction(GlobalDecl(MD), Ptr8Ty));
-        OverrideMethod(MD, m, MorallyVirtual, Offset, methods, AddressPoint);
-      }
+    for (std::vector<const CXXRecordDecl *>::reverse_iterator i =Path->rbegin(),
+           e = Path->rend(); i != e; ++i) {
+      const CXXRecordDecl *RD = *i;
+      for (method_iter mi = RD->method_begin(), me = RD->method_end(); mi != me;
+           ++mi)
+        if (mi->isVirtual()) {
+          const CXXMethodDecl *MD = *mi;
+          llvm::Constant *m = wrap(CGM.GetAddrOfFunction(GlobalDecl(MD),
+                                                         Ptr8Ty));
+          OverrideMethod(MD, m, MorallyVirtual, Offset, submethods, 0);
+        }
+    }
   }
 
   void AddMethod(const CXXMethodDecl *MD, bool MorallyVirtual, Index_t Offset) {
@@ -1027,10 +1032,9 @@ public:
       if (Base != PrimaryBase || PrimaryBaseWasVirtual) {
         uint64_t o = Offset + Layout.getBaseClassOffset(Base);
         StartNewTable();
-        Index_t AP;
-        AP = GenerateVtableForBase(Base, MorallyVirtual, o, false, RD);
-        OverrideMethods(RD, AP, MorallyVirtual, o);
-        InstallThunks(AP);
+        std::vector<const CXXRecordDecl *> S;
+        S.push_back(RD);
+        GenerateVtableForBase(Base, MorallyVirtual, o, false, &S);
       }
     }
   }
@@ -1067,9 +1071,9 @@ public:
     methods.push_back(rtti);
     Index_t AddressPoint = methods.size();
 
+    InstallThunks();
     methods.insert(methods.end(), submethods.begin(), submethods.end());
     submethods.clear();
-    InstallThunks(AddressPoint);
 
     // and then the non-virtual bases.
     NonVirtualBases(RD, Layout, PrimaryBase, PrimaryBaseWasVirtual,
@@ -1099,7 +1103,7 @@ public:
   int64_t GenerateVtableForBase(const CXXRecordDecl *RD,
                                 bool MorallyVirtual = false, int64_t Offset = 0,
                                 bool ForVirtualBase = false,
-                                const CXXRecordDecl *FinalD = 0) {
+                                std::vector<const CXXRecordDecl *> *Path = 0) {
     if (!RD->isDynamicClass())
       return 0;
 
@@ -1123,11 +1127,23 @@ public:
     // And add the virtuals for the class to the primary vtable.
     AddMethods(RD, MorallyVirtual, Offset);
 
+    if (Path)
+      OverrideMethods(Path, MorallyVirtual, Offset);
+
     return end(RD, offsets, Layout, PrimaryBase, PrimaryBaseWasVirtual,
                MorallyVirtual, Offset, ForVirtualBase);
   }
 
-  void GenerateVtableForVBases(const CXXRecordDecl *RD) {
+  void GenerateVtableForVBases(const CXXRecordDecl *RD,
+                               std::vector<const CXXRecordDecl *> *Path = 0) {
+    bool alloc = false;
+    if (Path == 0) {
+      alloc = true;
+      Path = new std::vector<const CXXRecordDecl *>;
+    }
+    // FIXME: We also need to override using all paths to a virtual base,
+    // right now, we just process the first path
+    Path->push_back(RD);
     for (CXXRecordDecl::base_class_const_iterator i = RD->bases_begin(),
            e = RD->bases_end(); i != e; ++i) {
       const CXXRecordDecl *Base = 
@@ -1137,14 +1153,14 @@ public:
         IndirectPrimary.insert(Base);
         StartNewTable();
         int64_t BaseOffset = BLayout.getVBaseClassOffset(Base);
-        Index_t AP;
-        AP = GenerateVtableForBase(Base, true, BaseOffset, true, RD);
-        OverrideMethods(RD, AP, true, BaseOffset);
-        InstallThunks(AP);
+        GenerateVtableForBase(Base, true, BaseOffset, true, Path);
       }
       if (Base->getNumVBases())
-        GenerateVtableForVBases(Base);
+        GenerateVtableForVBases(Base, Path);
     }
+    Path->pop_back();
+    if (alloc)
+      delete Path;
   }
 };
 
@@ -1195,12 +1211,12 @@ llvm::Value *CodeGenFunction::GenerateVtable(const CXXRecordDecl *RD) {
   linktype = llvm::GlobalValue::WeakAnyLinkage;
   std::vector<llvm::Constant *> methods;
   llvm::Type *Ptr8Ty=llvm::PointerType::get(llvm::Type::getInt8Ty(VMContext),0);
-  int64_t Offset;
+  int64_t AddressPoint;
 
   VtableBuilder b(methods, RD, CGM);
 
   // First comes the vtables for all the non-virtual bases...
-  Offset = b.GenerateVtableForBase(RD);
+  AddressPoint = b.GenerateVtableForBase(RD);
 
   // then the vtables for all the virtual bases.
   b.GenerateVtableForVBases(RD);
@@ -1213,7 +1229,7 @@ llvm::Value *CodeGenFunction::GenerateVtable(const CXXRecordDecl *RD) {
   vtable = Builder.CreateBitCast(vtable, Ptr8Ty);
   vtable = Builder.CreateGEP(vtable,
                        llvm::ConstantInt::get(llvm::Type::getInt64Ty(VMContext),
-                                              Offset*LLVMPointerWidth/8));
+                                              AddressPoint*LLVMPointerWidth/8));
   return vtable;
 }
 
