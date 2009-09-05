@@ -66,6 +66,10 @@ NoOutput("disable-output",
          cl::desc("Do not write result bitcode file"), cl::Hidden);
 
 static cl::opt<bool>
+OutputAssembly("S",
+         cl::desc("Write output as LLVM assembly"), cl::Hidden);
+
+static cl::opt<bool>
 NoVerify("disable-verify", cl::desc("Do not verify result module"), cl::Hidden);
 
 static cl::opt<bool>
@@ -375,8 +379,9 @@ int main(int argc, char **argv) {
     // If the output is set to be emitted to standard out, and standard out is a
     // console, print out a warning message and refuse to do it.  We don't
     // impress anyone by spewing tons of binary goo to a terminal.
-    if (!Force && !NoOutput && CheckBitcodeOutputToConsole(*Out, !Quiet))
-      NoOutput = true;
+    if (!Force && !NoOutput && !OutputAssembly)
+      if (CheckBitcodeOutputToConsole(*Out, !Quiet))
+        NoOutput = true;
 
     // Create a PassManager to hold and optimize the collection of passes we are
     // about to build...
@@ -495,9 +500,13 @@ int main(int argc, char **argv) {
     if (!NoVerify && !VerifyEach)
       Passes.add(createVerifierPass());
 
-    // Write bitcode out to disk or outs() as the last step...
-    if (!NoOutput && !AnalyzeOnly)
-      Passes.add(createBitcodeWriterPass(*Out));
+    // Write bitcode or assembly  out to disk or outs() as the last step...
+    if (!NoOutput && !AnalyzeOnly) {
+      if (OutputAssembly)
+        Passes.add(createPrintModulePass(Out));
+      else
+        Passes.add(createBitcodeWriterPass(*Out));
+    }
 
     // Now that we have all of the passes ready, run them.
     Passes.run(*M.get());
