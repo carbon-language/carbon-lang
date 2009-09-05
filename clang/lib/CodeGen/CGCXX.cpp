@@ -1028,7 +1028,7 @@ public:
         uint64_t o = Offset + Layout.getBaseClassOffset(Base);
         StartNewTable();
         Index_t AP;
-        AP = GenerateVtableForBase(Base, true, true, MorallyVirtual, o, false);
+        AP = GenerateVtableForBase(Base, true, MorallyVirtual, o, false);
         OverrideMethods(RD, AP, MorallyVirtual, o);
         InstallThunks(AP);
       }
@@ -1087,13 +1087,10 @@ public:
 
     std::vector<llvm::Constant *> offsets;
 
-    bool Top = true;
-
     // vtables are composed from the chain of primaries.
     if (PrimaryBase) {
       if (PrimaryBaseWasVirtual)
         IndirectPrimary.insert(PrimaryBase);
-      Top = false;
       Primaries(PrimaryBase, PrimaryBaseWasVirtual|MorallyVirtual, Offset);
     }
 
@@ -1102,8 +1099,8 @@ public:
   }
 
   int64_t GenerateVtableForBase(const CXXRecordDecl *RD, bool forPrimary,
-                                bool Bottom, bool MorallyVirtual,
-                                int64_t Offset, bool ForVirtualBase) {
+                                bool MorallyVirtual, int64_t Offset,
+                                bool ForVirtualBase) {
     if (!RD->isDynamicClass())
       return 0;
 
@@ -1112,29 +1109,21 @@ public:
     const bool PrimaryBaseWasVirtual = Layout.getPrimaryBaseWasVirtual();
 
     std::vector<llvm::Constant *> offsets;
-    // FIXME: Audit, is this right?
-    if (Bottom) {
-      extra = 0;
-      GenerateVBaseOffsets(offsets, RD, Offset);
-      if (ForVirtualBase)
-        extra = offsets.size();
-    }
-
-    bool Top = true;
+    extra = 0;
+    GenerateVBaseOffsets(offsets, RD, Offset);
+    if (ForVirtualBase)
+      extra = offsets.size();
 
     // vtables are composed from the chain of primaries.
     if (PrimaryBase) {
       if (PrimaryBaseWasVirtual)
         IndirectPrimary.insert(PrimaryBase);
-      Top = false;
       Primaries(PrimaryBase, PrimaryBaseWasVirtual|MorallyVirtual, Offset);
     }
 
     // And add the virtuals for the class to the primary vtable.
     AddMethods(RD, MorallyVirtual, Offset);
 
-    if (!Bottom)
-      return 0;
     return end(RD, offsets, Layout, PrimaryBase, PrimaryBaseWasVirtual,
                MorallyVirtual, Offset, ForVirtualBase);
   }
@@ -1150,7 +1139,7 @@ public:
         StartNewTable();
         int64_t BaseOffset = BLayout.getVBaseClassOffset(Base);
         Index_t AP;
-        AP = GenerateVtableForBase(Base, false, true, true, BaseOffset, true);
+        AP = GenerateVtableForBase(Base, false, true, BaseOffset, true);
         OverrideMethods(RD, AP, true, BaseOffset);
         InstallThunks(AP);
       }
@@ -1184,7 +1173,7 @@ public:
     if (I == IndexFor.end()) {
       std::vector<llvm::Constant *> methods;
       VtableBuilder b(methods, RD, CGM);
-      b.GenerateVtableForBase(RD, true, true, false, 0, false);
+      b.GenerateVtableForBase(RD, true, false, 0, false);
       b.GenerateVtableForVBases(RD);
       register_index(RD, b.getIndex());
       I = IndexFor.find(RD);
@@ -1212,7 +1201,7 @@ llvm::Value *CodeGenFunction::GenerateVtable(const CXXRecordDecl *RD) {
   VtableBuilder b(methods, RD, CGM);
 
   // First comes the vtables for all the non-virtual bases...
-  Offset = b.GenerateVtableForBase(RD, true, true, false, 0, false);
+  Offset = b.GenerateVtableForBase(RD, true, false, 0, false);
 
   // then the vtables for all the virtual bases.
   b.GenerateVtableForVBases(RD);
