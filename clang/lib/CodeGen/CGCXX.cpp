@@ -1077,8 +1077,7 @@ public:
     return AddressPoint;
   }
 
-  void Primaries(const CXXRecordDecl *RD, bool forPrimary,
-                 bool MorallyVirtual, int64_t Offset, bool ForVirtualBase) {
+  void Primaries(const CXXRecordDecl *RD, bool MorallyVirtual, int64_t Offset) {
     if (!RD->isDynamicClass())
       return;
 
@@ -1095,8 +1094,7 @@ public:
       if (PrimaryBaseWasVirtual)
         IndirectPrimary.insert(PrimaryBase);
       Top = false;
-      Primaries(PrimaryBase, true, PrimaryBaseWasVirtual|MorallyVirtual,
-                Offset, PrimaryBaseWasVirtual);
+      Primaries(PrimaryBase, PrimaryBaseWasVirtual|MorallyVirtual, Offset);
     }
 
     // And add the virtuals for the class to the primary vtable.
@@ -1129,8 +1127,7 @@ public:
       if (PrimaryBaseWasVirtual)
         IndirectPrimary.insert(PrimaryBase);
       Top = false;
-      Primaries(PrimaryBase, true, PrimaryBaseWasVirtual|MorallyVirtual,
-                Offset, PrimaryBaseWasVirtual);
+      Primaries(PrimaryBase, PrimaryBaseWasVirtual|MorallyVirtual, Offset);
     }
 
     // And add the virtuals for the class to the primary vtable.
