@@ -774,7 +774,10 @@ namespace llvm {
     void ComputeJoinedWeight(const LiveInterval &Other);
 
     bool operator<(const LiveInterval& other) const {
-      return beginIndex() < other.beginIndex();
+      const MachineInstrIndex &thisIndex = beginIndex();
+      const MachineInstrIndex &otherIndex = other.beginIndex();
+      return (thisIndex < otherIndex ||
+              (thisIndex == otherIndex && reg < other.reg));
     }
 
     void print(raw_ostream &OS, const TargetRegisterInfo *TRI = 0) const;
