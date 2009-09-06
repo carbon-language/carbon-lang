@@ -26,7 +26,7 @@
 
 namespace llvm {
 
-  struct IdentityFunctor : std::unary_function<unsigned, unsigned> {
+  struct IdentityFunctor : public std::unary_function<unsigned, unsigned> {
     unsigned operator()(unsigned Index) const {
       return Index;
     }

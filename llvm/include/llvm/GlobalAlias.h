@@ -88,7 +88,7 @@ public:
 };
 
 template <>
-struct OperandTraits<GlobalAlias> : FixedNumOperandTraits<1> {
+struct OperandTraits<GlobalAlias> : public FixedNumOperandTraits<1> {
 };
 
 DEFINE_TRANSPARENT_OPERAND_ACCESSORS(GlobalAlias, Value)

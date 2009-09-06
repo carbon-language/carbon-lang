@@ -128,7 +128,7 @@ void Use::zap(Use *Start, const Use *Stop, bool del) {
 //                         AugmentedUse layout struct
 //===----------------------------------------------------------------------===//
 
-struct AugmentedUse : Use {
+struct AugmentedUse : public Use {
   PointerIntPair<User*, 1, Tag> ref;
   AugmentedUse(); // not implemented
 };

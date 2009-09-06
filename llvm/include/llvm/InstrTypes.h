@@ -130,7 +130,7 @@ public:
 };
 
 template <>
-struct OperandTraits<UnaryInstruction> : FixedNumOperandTraits<1> {
+struct OperandTraits<UnaryInstruction> : public FixedNumOperandTraits<1> {
 };
 
 DEFINE_TRANSPARENT_OPERAND_ACCESSORS(UnaryInstruction, Value)
@@ -298,7 +298,7 @@ public:
 };
 
 template <>
-struct OperandTraits<BinaryOperator> : FixedNumOperandTraits<2> {
+struct OperandTraits<BinaryOperator> : public FixedNumOperandTraits<2> {
 };
 
 DEFINE_TRANSPARENT_OPERAND_ACCESSORS(BinaryOperator, Value)
@@ -711,7 +711,7 @@ public:
 
 // FIXME: these are redundant if CmpInst < BinaryOperator
 template <>
-struct OperandTraits<CmpInst> : FixedNumOperandTraits<2> {
+struct OperandTraits<CmpInst> : public FixedNumOperandTraits<2> {
 };
 
 DEFINE_TRANSPARENT_OPERAND_ACCESSORS(CmpInst, Value)

@@ -363,7 +363,7 @@ public:
 };
 
 template <>
-struct OperandTraits<StoreInst> : FixedNumOperandTraits<2> {
+struct OperandTraits<StoreInst> : public FixedNumOperandTraits<2> {
 };
 
 DEFINE_TRANSPARENT_OPERAND_ACCESSORS(StoreInst, Value)
@@ -613,7 +613,7 @@ public:
 };
 
 template <>
-struct OperandTraits<GetElementPtrInst> : VariadicOperandTraits<1> {
+struct OperandTraits<GetElementPtrInst> : public VariadicOperandTraits<1> {
 };
 
 template<typename InputIterator>
@@ -1144,7 +1144,7 @@ public:
 };
 
 template <>
-struct OperandTraits<CallInst> : VariadicOperandTraits<1> {
+struct OperandTraits<CallInst> : public VariadicOperandTraits<1> {
 };
 
 template<typename InputIterator>
@@ -1241,7 +1241,7 @@ public:
 };
 
 template <>
-struct OperandTraits<SelectInst> : FixedNumOperandTraits<3> {
+struct OperandTraits<SelectInst> : public FixedNumOperandTraits<3> {
 };
 
 DEFINE_TRANSPARENT_OPERAND_ACCESSORS(SelectInst, Value)
@@ -1322,7 +1322,7 @@ public:
 };
 
 template <>
-struct OperandTraits<ExtractElementInst> : FixedNumOperandTraits<2> {
+struct OperandTraits<ExtractElementInst> : public FixedNumOperandTraits<2> {
 };
 
 DEFINE_TRANSPARENT_OPERAND_ACCESSORS(ExtractElementInst, Value)
@@ -1379,7 +1379,7 @@ public:
 };
 
 template <>
-struct OperandTraits<InsertElementInst> : FixedNumOperandTraits<3> {
+struct OperandTraits<InsertElementInst> : public FixedNumOperandTraits<3> {
 };
 
 DEFINE_TRANSPARENT_OPERAND_ACCESSORS(InsertElementInst, Value)
@@ -1435,7 +1435,7 @@ public:
 };
 
 template <>
-struct OperandTraits<ShuffleVectorInst> : FixedNumOperandTraits<3> {
+struct OperandTraits<ShuffleVectorInst> : public FixedNumOperandTraits<3> {
 };
 
 DEFINE_TRANSPARENT_OPERAND_ACCESSORS(ShuffleVectorInst, Value)
@@ -1770,7 +1770,7 @@ public:
 };
 
 template <>
-struct OperandTraits<InsertValueInst> : FixedNumOperandTraits<2> {
+struct OperandTraits<InsertValueInst> : public FixedNumOperandTraits<2> {
 };
 
 template<typename InputIterator>
@@ -1971,7 +1971,7 @@ public:
 };
 
 template <>
-struct OperandTraits<PHINode> : HungoffOperandTraits<2> {
+struct OperandTraits<PHINode> : public HungoffOperandTraits<2> {
 };
 
 DEFINE_TRANSPARENT_OPERAND_ACCESSORS(PHINode, Value)
@@ -2047,7 +2047,7 @@ public:
 };
 
 template <>
-struct OperandTraits<ReturnInst> : OptionalOperandTraits<> {
+struct OperandTraits<ReturnInst> : public OptionalOperandTraits<> {
 };
 
 DEFINE_TRANSPARENT_OPERAND_ACCESSORS(ReturnInst, Value)
@@ -2155,7 +2155,7 @@ private:
 };
 
 template <>
-struct OperandTraits<BranchInst> : VariadicOperandTraits<1> {};
+struct OperandTraits<BranchInst> : public VariadicOperandTraits<1> {};
 
 DEFINE_TRANSPARENT_OPERAND_ACCESSORS(BranchInst, Value)
 
@@ -2304,7 +2304,7 @@ private:
 };
 
 template <>
-struct OperandTraits<SwitchInst> : HungoffOperandTraits<2> {
+struct OperandTraits<SwitchInst> : public HungoffOperandTraits<2> {
 };
 
 DEFINE_TRANSPARENT_OPERAND_ACCESSORS(SwitchInst, Value)
@@ -2522,7 +2522,7 @@ private:
 };
 
 template <>
-struct OperandTraits<InvokeInst> : VariadicOperandTraits<3> {
+struct OperandTraits<InvokeInst> : public VariadicOperandTraits<3> {
 };
 
 template<typename InputIterator>

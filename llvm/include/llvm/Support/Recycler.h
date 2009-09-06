@@ -34,7 +34,8 @@ struct RecyclerStruct {
 };
 
 template<>
-struct ilist_traits<RecyclerStruct> : ilist_default_traits<RecyclerStruct> {
+struct ilist_traits<RecyclerStruct> :
+    public ilist_default_traits<RecyclerStruct> {
   static RecyclerStruct *getPrev(const RecyclerStruct *t) { return t->Prev; }
   static RecyclerStruct *getNext(const RecyclerStruct *t) { return t->Next; }
   static void setPrev(RecyclerStruct *t, RecyclerStruct *p) { t->Prev = p; }

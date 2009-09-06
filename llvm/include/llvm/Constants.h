@@ -397,7 +397,7 @@ public:
 };
 
 template <>
-struct OperandTraits<ConstantArray> : VariadicOperandTraits<> {
+struct OperandTraits<ConstantArray> : public VariadicOperandTraits<> {
 };
 
 DEFINE_TRANSPARENT_CASTED_OPERAND_ACCESSORS(ConstantArray, Constant)
@@ -447,7 +447,7 @@ public:
 };
 
 template <>
-struct OperandTraits<ConstantStruct> : VariadicOperandTraits<> {
+struct OperandTraits<ConstantStruct> : public VariadicOperandTraits<> {
 };
 
 DEFINE_TRANSPARENT_CASTED_OPERAND_ACCESSORS(ConstantStruct, Constant)
@@ -503,7 +503,7 @@ public:
 };
 
 template <>
-struct OperandTraits<ConstantVector> : VariadicOperandTraits<> {
+struct OperandTraits<ConstantVector> : public VariadicOperandTraits<> {
 };
 
 DEFINE_TRANSPARENT_CASTED_OPERAND_ACCESSORS(ConstantVector, Constant)
@@ -795,7 +795,7 @@ public:
 };
 
 template <>
-struct OperandTraits<ConstantExpr> : VariadicOperandTraits<1> {
+struct OperandTraits<ConstantExpr> : public VariadicOperandTraits<1> {
 };
 
 DEFINE_TRANSPARENT_CASTED_OPERAND_ACCESSORS(ConstantExpr, Constant)

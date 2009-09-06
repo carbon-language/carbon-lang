@@ -42,7 +42,7 @@ namespace llvm {
 
 template <unsigned ElementSize = 128>
 struct SparseBitVectorElement
-  : ilist_node<SparseBitVectorElement<ElementSize> > {
+  : public ilist_node<SparseBitVectorElement<ElementSize> > {
 public:
   typedef unsigned long BitWord;
   enum {

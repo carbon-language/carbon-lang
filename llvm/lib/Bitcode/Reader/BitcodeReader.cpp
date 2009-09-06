@@ -161,7 +161,7 @@ namespace {
 
 // FIXME: can we inherit this from ConstantExpr?
 template <>
-struct OperandTraits<ConstantPlaceHolder> : FixedNumOperandTraits<1> {
+struct OperandTraits<ConstantPlaceHolder> : public FixedNumOperandTraits<1> {
 };
 }
 

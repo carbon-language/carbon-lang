@@ -40,7 +40,7 @@ struct ilist_nextprev_traits;
 /// that use ilist_nextprev_traits or ilist_default_traits.
 ///
 template<typename NodeTy>
-class ilist_node : ilist_half_node<NodeTy> {
+class ilist_node : private ilist_half_node<NodeTy> {
   friend struct ilist_nextprev_traits<NodeTy>;
   friend struct ilist_traits<NodeTy>;
   NodeTy *Next;

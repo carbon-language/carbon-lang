@@ -687,7 +687,7 @@ public:
 
 
 // This is useful when building IndexedMaps keyed on virtual registers
-struct VirtReg2IndexFunctor : std::unary_function<unsigned, unsigned> {
+struct VirtReg2IndexFunctor : public std::unary_function<unsigned, unsigned> {
   unsigned operator()(unsigned Reg) const {
     return Reg - TargetRegisterInfo::FirstVirtualRegister;
   }

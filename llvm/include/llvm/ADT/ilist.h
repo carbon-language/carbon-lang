@@ -121,15 +121,15 @@ struct ilist_node_traits {
 /// for all common operations.
 ///
 template<typename NodeTy>
-struct ilist_default_traits : ilist_nextprev_traits<NodeTy>,
-                              ilist_sentinel_traits<NodeTy>,
-                              ilist_node_traits<NodeTy> {
+struct ilist_default_traits : public ilist_nextprev_traits<NodeTy>,
+                              public ilist_sentinel_traits<NodeTy>,
+                              public ilist_node_traits<NodeTy> {
 };
 
 // Template traits for intrusive list.  By specializing this template class, you
 // can change what next/prev fields are used to store the links...
 template<typename NodeTy>
-struct ilist_traits : ilist_default_traits<NodeTy> {};
+struct ilist_traits : public ilist_default_traits<NodeTy> {};
 
 // Const traits are the same as nonconst traits...
 template<typename Ty>

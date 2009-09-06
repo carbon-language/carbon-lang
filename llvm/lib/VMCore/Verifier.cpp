@@ -106,7 +106,7 @@ static const PassInfo *const PreVerifyID = &PreVer;
 
 namespace {
   struct VISIBILITY_HIDDEN
-     Verifier : public FunctionPass, InstVisitor<Verifier> {
+     Verifier : public FunctionPass, public InstVisitor<Verifier> {
     static char ID; // Pass ID, replacement for typeid
     bool Broken;          // Is this module found to be broken?
     bool RealPass;        // Are we not being run by a PassManager?
