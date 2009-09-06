@@ -403,8 +403,6 @@ CXXConstructExpr::CXXConstructExpr(ASTContext &C, StmtClass SC, QualType T,
       Args = new (C) Stmt*[NumArgs];
       for (unsigned i = 0; i < numargs; ++i)
         Args[i] = args[i];
-      for (unsigned i = numargs; i < NumArgs; ++i)
-        Args[0] = 0;
     }
 }
 
