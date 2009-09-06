@@ -4481,7 +4481,6 @@ SDValue DAGCombiner::visitBRCOND(SDNode *N) {
     if (Op0.getOpcode() == ISD::AND &&
         Op0.hasOneUse() &&
         Op1.getOpcode() == ISD::Constant) {
-      SDValue AndOp0 = Op0.getOperand(0);
       SDValue AndOp1 = Op0.getOperand(1);
 
       if (AndOp1.getOpcode() == ISD::Constant) {
@@ -5405,7 +5404,6 @@ SDValue DAGCombiner::visitEXTRACT_VECTOR_ELT(SDNode *N) {
 SDValue DAGCombiner::visitBUILD_VECTOR(SDNode *N) {
   unsigned NumInScalars = N->getNumOperands();
   EVT VT = N->getValueType(0);
-  EVT EltType = VT.getVectorElementType();
 
   // Check to see if this is a BUILD_VECTOR of a bunch of EXTRACT_VECTOR_ELT
   // operations.  If so, and if the EXTRACT_VECTOR_ELT vector inputs come from
@@ -5506,7 +5504,6 @@ SDValue DAGCombiner::visitVECTOR_SHUFFLE(SDNode *N) {
   unsigned NumElts = VT.getVectorNumElements();
 
   SDValue N0 = N->getOperand(0);
-  SDValue N1 = N->getOperand(1);
 
   assert(N0.getValueType().getVectorNumElements() == NumElts &&
         "Vector shuffle must be normalized in DAG");

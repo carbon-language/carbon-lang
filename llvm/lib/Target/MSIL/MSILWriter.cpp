@@ -1678,7 +1678,6 @@ void MSILWriter::printExternals() {
        E = ModulePtr->global_end(); I!=E; ++I) {
     if (!I->isDeclaration() || !I->hasDLLImportLinkage()) continue;
     // Use "LoadLibrary"/"GetProcAddress" to recive variable address.
-    std::string Label = "not_null$_"+utostr(getUniqID());
     std::string Tmp = getTypeName(I->getType())+getValueName(&*I);
     printSimpleInstruction("ldsflda",Tmp.c_str());
     Out << "\tldstr\t\"" << getLibraryName(&*I) << "\"\n";

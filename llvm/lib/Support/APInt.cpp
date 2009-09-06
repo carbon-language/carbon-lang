@@ -1481,9 +1481,7 @@ APInt::ms APInt::magic() const {
   const APInt& d = *this;
   unsigned p;
   APInt ad, anc, delta, q1, r1, q2, r2, t;
-  APInt allOnes = APInt::getAllOnesValue(d.getBitWidth());
   APInt signedMin = APInt::getSignedMinValue(d.getBitWidth());
-  APInt signedMax = APInt::getSignedMaxValue(d.getBitWidth());
   struct ms mag;
 
   ad = d.abs();

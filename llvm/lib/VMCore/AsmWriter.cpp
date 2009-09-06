@@ -1282,8 +1282,6 @@ public:
   void writeOperand(const Value *Op, bool PrintType);
   void writeParamOperand(const Value *Operand, Attributes Attrs);
 
-  const Module* getModule() { return TheModule; }
-
 private:
   void printModule(const Module *M);
   void printTypeSymbolTable(const TypeSymbolTable &ST);

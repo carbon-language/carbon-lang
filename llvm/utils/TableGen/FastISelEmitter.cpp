@@ -216,7 +216,6 @@ public:
   explicit FastISelMap(std::string InstNS);
 
   void CollectPatterns(CodeGenDAGPatterns &CGP);
-  void PrintClass(raw_ostream &OS);
   void PrintFunctionDefinitions(raw_ostream &OS);
 };
 

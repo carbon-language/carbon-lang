@@ -737,8 +737,7 @@ void Thumb1RegisterInfo::emitPrologue(MachineFunction &MF) const {
   // Darwin ABI requires FP to point to the stack slot that contains the
   // previous FP.
   if (STI.isTargetDarwin() || hasFP(MF)) {
-    MachineInstrBuilder MIB =
-      BuildMI(MBB, MBBI, dl, TII.get(ARM::tADDrSPi), FramePtr)
+    BuildMI(MBB, MBBI, dl, TII.get(ARM::tADDrSPi), FramePtr)
       .addFrameIndex(FramePtrSpillFI).addImm(0);
   }
 

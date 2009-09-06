@@ -1128,8 +1128,7 @@ private:
       return false;
 
     // Back-schedule reloads and remats.
-    MachineBasicBlock::iterator InsertLoc =
-      ComputeReloadLoc(MII, MBB.begin(), PhysReg, TRI, false, SS, TII, MF);
+    ComputeReloadLoc(MII, MBB.begin(), PhysReg, TRI, false, SS, TII, MF);
 
     // Load from SS to the spare physical register.
     TII->loadRegFromStackSlot(MBB, MII, PhysReg, SS, RC);

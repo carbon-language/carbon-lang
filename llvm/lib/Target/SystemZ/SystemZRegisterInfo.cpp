@@ -259,7 +259,6 @@ void SystemZRegisterInfo::emitEpilogue(MachineFunction &MF,
   SystemZMachineFunctionInfo *SystemZMFI =
     MF.getInfo<SystemZMachineFunctionInfo>();
   unsigned RetOpcode = MBBI->getOpcode();
-  DebugLoc DL = MBBI->getDebugLoc();
 
   switch (RetOpcode) {
   case SystemZ::RET: break;  // These are ok

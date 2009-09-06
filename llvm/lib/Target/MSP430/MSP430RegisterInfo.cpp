@@ -311,7 +311,6 @@ void MSP430RegisterInfo::emitEpilogue(MachineFunction &MF,
     NumBytes = StackSize - CSSize;
 
   // Skip the callee-saved pop instructions.
-  MachineBasicBlock::iterator LastCSPop = MBBI;
   while (MBBI != MBB.begin()) {
     MachineBasicBlock::iterator PI = prior(MBBI);
     unsigned Opc = PI->getOpcode();
