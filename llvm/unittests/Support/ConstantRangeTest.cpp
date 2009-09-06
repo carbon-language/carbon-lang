@@ -8,7 +8,6 @@
 //===----------------------------------------------------------------------===//
 
 #include "llvm/Support/ConstantRange.h"
-#include "llvm/Support/raw_os_ostream.h"
 
 #include "gtest/gtest.h"
 
