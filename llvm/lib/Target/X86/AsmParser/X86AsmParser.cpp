@@ -231,6 +231,7 @@ struct X86Operand {
 
 bool X86ATTAsmParser::ParseRegister(X86Operand &Op) {
   const AsmToken &TokPercent = getLexer().getTok();
+  (void)TokPercent; // Avoid warning when assertions are disabled.
   assert(TokPercent.is(AsmToken::Percent) && "Invalid token kind!");
   getLexer().Lex(); // Eat percent token.
 
