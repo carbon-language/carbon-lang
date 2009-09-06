@@ -45,6 +45,10 @@
 
 #include "regutils.h"
 
+#ifdef _MSC_VER
+#define snprintf _snprintf
+#endif
+
 static const char *regatoi(const llvm_regex_t *, char *, int);
 
 static struct rerr {

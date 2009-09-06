@@ -142,6 +142,7 @@ static char nuls[10];		/* place to point scanner in event of error */
 #else
 #define	DUPMAX	255
 #endif
+#define	INFINITY	(DUPMAX + 1)
 
 #ifndef NDEBUG
 static int never = 0;		/* for use in asserts; shuts lint up */
