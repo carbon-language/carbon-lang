@@ -127,9 +127,6 @@ MCSymbol *X86ATTAsmPrinter::GetJumpTableSymbol(const MachineOperand &MO) {
   case X86II::MO_DARWIN_NONLAZY_PIC_BASE:
   case X86II::MO_DARWIN_HIDDEN_NONLAZY_PIC_BASE:
     break;
-    // Subtract the pic base.
-    GetPICBaseSymbol();
-    break;
   }
   
   // Create a symbol for the name.
