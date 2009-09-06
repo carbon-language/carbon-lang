@@ -200,19 +200,19 @@ public:
   static BinaryOperator *CreateNSWAdd(Value *V1, Value *V2,
                                       const Twine &Name = "") {
     BinaryOperator *BO = CreateAdd(V1, V2, Name);
-    BO->setHasNoSignedWrap(true);
+    cast<AddOperator>(BO)->setHasNoSignedWrap(true);
     return BO;
   }
   static BinaryOperator *CreateNSWAdd(Value *V1, Value *V2,
                                       const Twine &Name, BasicBlock *BB) {
     BinaryOperator *BO = CreateAdd(V1, V2, Name, BB);
-    BO->setHasNoSignedWrap(true);
+    cast<AddOperator>(BO)->setHasNoSignedWrap(true);
     return BO;
   }
   static BinaryOperator *CreateNSWAdd(Value *V1, Value *V2,
                                       const Twine &Name, Instruction *I) {
     BinaryOperator *BO = CreateAdd(V1, V2, Name, I);
-    BO->setHasNoSignedWrap(true);
+    cast<AddOperator>(BO)->setHasNoSignedWrap(true);
     return BO;
   }
 
@@ -221,19 +221,19 @@ public:
   static BinaryOperator *CreateExactSDiv(Value *V1, Value *V2,
                                          const Twine &Name = "") {
     BinaryOperator *BO = CreateSDiv(V1, V2, Name);
-    BO->setIsExact(true);
+    cast<SDivOperator>(BO)->setIsExact(true);
     return BO;
   }
   static BinaryOperator *CreateExactSDiv(Value *V1, Value *V2,
                                          const Twine &Name, BasicBlock *BB) {
     BinaryOperator *BO = CreateSDiv(V1, V2, Name, BB);
-    BO->setIsExact(true);
+    cast<SDivOperator>(BO)->setIsExact(true);
     return BO;
   }
   static BinaryOperator *CreateExactSDiv(Value *V1, Value *V2,
                                          const Twine &Name, Instruction *I) {
     BinaryOperator *BO = CreateSDiv(V1, V2, Name, I);
-    BO->setIsExact(true);
+    cast<SDivOperator>(BO)->setIsExact(true);
     return BO;
   }
 
@@ -286,21 +286,6 @@ public:
   /// cannot be reversed (ie, it's a Div), then return true.
   ///
   bool swapOperands();
-
-  /// setHasNoUnsignedWrap - Set or clear the nsw flag on this instruction,
-  /// which must be an operator which supports this flag. See LangRef.html
-  /// for the meaning of this flag.
-  void setHasNoUnsignedWrap(bool);
-
-  /// setHasNoSignedWrap - Set or clear the nsw flag on this instruction,
-  /// which must be an operator which supports this flag. See LangRef.html
-  /// for the meaning of this flag.
-  void setHasNoSignedWrap(bool);
-
-  /// setIsExact - Set or clear the exact flag on this instruction,
-  /// which must be an operator which supports this flag. See LangRef.html
-  /// for the meaning of this flag.
-  void setIsExact(bool);
 
   // Methods for support type inquiry through isa, cast, and dyn_cast:
   static inline bool classof(const BinaryOperator *) { return true; }

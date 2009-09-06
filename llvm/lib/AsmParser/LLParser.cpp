@@ -2095,11 +2095,13 @@ bool LLParser::ParseValID(ValID &ID) {
     if (!Val0->getType()->isIntOrIntVector() &&
         !Val0->getType()->isFPOrFPVector())
       return Error(ID.Loc,"constexpr requires integer, fp, or vector operands");
-    unsigned Flags = 0;
-    if (NUW)   Flags |= OverflowingBinaryOperator::NoUnsignedWrap;
-    if (NSW)   Flags |= OverflowingBinaryOperator::NoSignedWrap;
-    if (Exact) Flags |= SDivOperator::IsExact;
-    Constant *C = ConstantExpr::get(Opc, Val0, Val1, Flags);
+    Constant *C = ConstantExpr::get(Opc, Val0, Val1);
+    if (NUW)
+      cast<OverflowingBinaryOperator>(C)->setHasNoUnsignedWrap(true);
+    if (NSW)
+      cast<OverflowingBinaryOperator>(C)->setHasNoSignedWrap(true);
+    if (Exact)
+      cast<SDivOperator>(C)->setIsExact(true);
     ID.ConstantVal = C;
     ID.Kind = ValID::t_Constant;
     return false;
@@ -2155,12 +2157,10 @@ bool LLParser::ParseValID(ValID &ID) {
                                              (Value**)(Elts.data() + 1),
                                              Elts.size() - 1))
         return Error(ID.Loc, "invalid indices for getelementptr");
-      ID.ConstantVal = InBounds ?
-        ConstantExpr::getInBoundsGetElementPtr(Elts[0],
-                                               Elts.data() + 1,
-                                               Elts.size() - 1) :
-        ConstantExpr::getGetElementPtr(Elts[0],
-                                       Elts.data() + 1, Elts.size() - 1);
+      ID.ConstantVal = ConstantExpr::getGetElementPtr(Elts[0],
+                                              Elts.data() + 1, Elts.size() - 1);
+      if (InBounds)
+        cast<GEPOperator>(ID.ConstantVal)->setIsInBounds(true);
     } else if (Opc == Instruction::Select) {
       if (Elts.size() != 3)
         return Error(ID.Loc, "expected three operands to select");
@@ -2681,9 +2681,9 @@ bool LLParser::ParseInstruction(Instruction *&Inst, BasicBlock *BB,
           return Error(ModifierLoc, "nsw only applies to integer operations");
       }
       if (NUW)
-        cast<BinaryOperator>(Inst)->setHasNoUnsignedWrap(true);
+        cast<OverflowingBinaryOperator>(Inst)->setHasNoUnsignedWrap(true);
       if (NSW)
-        cast<BinaryOperator>(Inst)->setHasNoSignedWrap(true);
+        cast<OverflowingBinaryOperator>(Inst)->setHasNoSignedWrap(true);
     }
     return Result;
   }
@@ -2698,7 +2698,7 @@ bool LLParser::ParseInstruction(Instruction *&Inst, BasicBlock *BB,
     bool Result = ParseArithmetic(Inst, PFS, KeywordVal, 1);
     if (!Result)
       if (Exact)
-        cast<BinaryOperator>(Inst)->setIsExact(true);
+        cast<SDivOperator>(Inst)->setIsExact(true);
     return Result;
   }
 
@@ -3501,7 +3501,7 @@ bool LLParser::ParseGetElementPtr(Instruction *&Inst, PerFunctionState &PFS) {
     return Error(Loc, "invalid getelementptr indices");
   Inst = GetElementPtrInst::Create(Ptr, Indices.begin(), Indices.end());
   if (InBounds)
-    cast<GetElementPtrInst>(Inst)->setIsInBounds(true);
+    cast<GEPOperator>(Inst)->setIsInBounds(true);
   return false;
 }
 

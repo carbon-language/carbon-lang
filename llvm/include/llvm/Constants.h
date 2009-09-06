@@ -571,17 +571,13 @@ protected:
   // These private methods are used by the type resolution code to create
   // ConstantExprs in intermediate forms.
   static Constant *getTy(const Type *Ty, unsigned Opcode,
-                         Constant *C1, Constant *C2,
-                         unsigned Flags = 0);
+                         Constant *C1, Constant *C2);
   static Constant *getCompareTy(unsigned short pred, Constant *C1,
                                 Constant *C2);
   static Constant *getSelectTy(const Type *Ty,
                                Constant *C1, Constant *C2, Constant *C3);
   static Constant *getGetElementPtrTy(const Type *Ty, Constant *C,
                                       Value* const *Idxs, unsigned NumIdxs);
-  static Constant *getInBoundsGetElementPtrTy(const Type *Ty, Constant *C,
-                                              Value* const *Idxs,
-                                              unsigned NumIdxs);
   static Constant *getExtractElementTy(const Type *Ty, Constant *Val,
                                        Constant *Idx);
   static Constant *getInsertElementTy(const Type *Ty, Constant *Val,
@@ -722,8 +718,7 @@ public:
   /// get - Return a binary or shift operator constant expression,
   /// folding if possible.
   ///
-  static Constant *get(unsigned Opcode, Constant *C1, Constant *C2,
-                       unsigned Flags = 0);
+  static Constant *get(unsigned Opcode, Constant *C1, Constant *C2);
 
   /// @brief Return an ICmp or FCmp comparison operator constant expression.
   static Constant *getCompare(unsigned short pred, Constant *C1, Constant *C2);
