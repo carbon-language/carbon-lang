@@ -40,7 +40,7 @@ bool llvm::InlineFunction(InvokeInst *II, CallGraph *CG, const TargetData *TD,
 
 
 /// HandleCallsInBlockInlinedThroughInvoke - When we inline a basic block into
-/// an invoke, we have to check all of all of the calls that can throw into
+/// an invoke, we have to turn all of the calls that can throw into
 /// invokes.  This function analyze BB to see if there are any calls, and if so,
 /// it rewrites them to be invokes that jump to InvokeDest and fills in the PHI
 /// nodes in that block with the values specified in InvokeDestPHIValues.
