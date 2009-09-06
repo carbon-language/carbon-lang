@@ -484,37 +484,36 @@ void BasedUser::RewriteInstructionToUseNewBase(const SCEV *const &NewBase,
       // loop because multiple copies sometimes do useful sinking of code in
       // that case(?).
       Instruction *OldLoc = dyn_cast<Instruction>(OperandValToReplace);
-      BasicBlock *PHIPred = PN->getIncomingBlock(i);
       if (L->contains(OldLoc->getParent())) {
         // If this is a critical edge, split the edge so that we do not insert
         // the code on all predecessor/successor paths.  We do this unless this
         // is the canonical backedge for this loop, as this can make some
         // inserted code be in an illegal position.
+        BasicBlock *PHIPred = PN->getIncomingBlock(i);
         if (e != 1 && PHIPred->getTerminator()->getNumSuccessors() > 1 &&
             (PN->getParent() != L->getHeader() || !L->contains(PHIPred))) {
 
           // First step, split the critical edge.
-          BasicBlock *NewBB = SplitCriticalEdge(PHIPred, PN->getParent(),
-                                                P, false);
+          SplitCriticalEdge(PHIPred, PN->getParent(), P, false);
 
           // Next step: move the basic block.  In particular, if the PHI node
           // is outside of the loop, and PredTI is in the loop, we want to
           // move the block to be immediately before the PHI block, not
           // immediately after PredTI.
-          if (L->contains(PHIPred) && !L->contains(PN->getParent()))
+          if (L->contains(PHIPred) && !L->contains(PN->getParent())) {
+            BasicBlock *NewBB = PN->getIncomingBlock(i);
             NewBB->moveBefore(PN->getParent());
+          }
 
           // Splitting the edge can reduce the number of PHI entries we have.
           e = PN->getNumIncomingValues();
-          PHIPred = NewBB;
-          i = PN->getBasicBlockIndex(PHIPred);
         }
       }
-      Value *&Code = InsertedCode[PHIPred];
+      Value *&Code = InsertedCode[PN->getIncomingBlock(i)];
       if (!Code) {
         // Insert the code into the end of the predecessor block.
         Instruction *InsertPt = (L->contains(OldLoc->getParent())) ?
-                                PHIPred->getTerminator() :
+                                PN->getIncomingBlock(i)->getTerminator() :
                                 OldLoc->getParent()->getTerminator();
         Code = InsertCodeForBaseAtPosition(NewBase, PN->getType(),
                                            Rewriter, InsertPt, L, LI);

@@ -58,7 +58,6 @@ namespace {
     DominatorTree *DT;
     std::vector<BasicBlock*> LoopBlocks;
     PredIteratorCache PredCache;
-    Loop *L;
     
     virtual bool runOnLoop(Loop *L, LPPassManager &LPM);
 
@@ -73,9 +72,9 @@ namespace {
       AU.setPreservesCFG();
       AU.addRequiredID(LoopSimplifyID);
       AU.addPreservedID(LoopSimplifyID);
-      AU.addRequiredTransitive<LoopInfo>();
+      AU.addRequired<LoopInfo>();
       AU.addPreserved<LoopInfo>();
-      AU.addRequiredTransitive<DominatorTree>();
+      AU.addRequired<DominatorTree>();
       AU.addPreserved<ScalarEvolution>();
       AU.addPreserved<DominatorTree>();
 
@@ -87,17 +86,6 @@ namespace {
       AU.addPreserved<DominanceFrontier>();
     }
   private:
-
-    /// verifyAnalysis() - Verify loop nest.
-    virtual void verifyAnalysis() const {
-#ifndef NDEBUG
-      // Sanity check: Check basic loop invariants.
-      L->verifyLoop();
-      // Check the special guarantees that LCSSA makes.
-      assert(L->isLCSSAForm());
-#endif
-    }
-
     void getLoopValuesUsedOutsideLoop(Loop *L,
                                       SetVector<Instruction*> &AffectedValues,
                                  const SmallVector<BasicBlock*, 8>& exitBlocks);
@@ -119,8 +107,7 @@ Pass *llvm::createLCSSAPass() { return new LCSSA(); }
 const PassInfo *const llvm::LCSSAID = &X;
 
 /// runOnFunction - Process all loops in the function, inner-most out.
-bool LCSSA::runOnLoop(Loop *l, LPPassManager &LPM) {
-  L = l;
+bool LCSSA::runOnLoop(Loop *L, LPPassManager &LPM) {
   PredCache.clear();
   
   LI = &LPM.getAnalysis<LoopInfo>();

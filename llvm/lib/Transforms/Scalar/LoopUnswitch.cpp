@@ -518,12 +518,7 @@ void LoopUnswitch::EmitPreheaderBranchOnCondition(Value *LIC, Constant *Val,
     std::swap(TrueDest, FalseDest);
 
   // Insert the new branch.
-  BranchInst *BI = BranchInst::Create(TrueDest, FalseDest, BranchVal, InsertPt);
-
-  // If either edge is critical, split it. This helps preserve LoopSimplify
-  // form for enclosing loops.
-  SplitCriticalEdge(BI, 0, this);
-  SplitCriticalEdge(BI, 1, this);
+  BranchInst::Create(TrueDest, FalseDest, BranchVal, InsertPt);
 }
 
 /// UnswitchTrivialCondition - Given a loop that has a trivial unswitchable
@@ -580,11 +575,47 @@ void LoopUnswitch::SplitExitEdges(Loop *L,
 
   for (unsigned i = 0, e = ExitBlocks.size(); i != e; ++i) {
     BasicBlock *ExitBlock = ExitBlocks[i];
-    SmallVector<BasicBlock *, 4> Preds(pred_begin(ExitBlock),
-                                       pred_end(ExitBlock));
-    SplitBlockPredecessors(ExitBlock, Preds.data(), Preds.size(),
-                           ".us-lcssa", this);
+    std::vector<BasicBlock*> Preds(pred_begin(ExitBlock), pred_end(ExitBlock));
+
+    for (unsigned j = 0, e = Preds.size(); j != e; ++j) {
+      BasicBlock* NewExitBlock = SplitEdge(Preds[j], ExitBlock, this);
+      BasicBlock* StartBlock = Preds[j];
+      BasicBlock* EndBlock;
+      if (NewExitBlock->getSinglePredecessor() == ExitBlock) {
+        EndBlock = NewExitBlock;
+        NewExitBlock = EndBlock->getSinglePredecessor();
+      } else {
+        EndBlock = ExitBlock;
+      }
+      
+      std::set<PHINode*> InsertedPHIs;
+      PHINode* OldLCSSA = 0;
+      for (BasicBlock::iterator I = EndBlock->begin();
+           (OldLCSSA = dyn_cast<PHINode>(I)); ++I) {
+        Value* OldValue = OldLCSSA->getIncomingValueForBlock(NewExitBlock);
+        PHINode* NewLCSSA = PHINode::Create(OldLCSSA->getType(),
+                                            OldLCSSA->getName() + ".us-lcssa",
+                                            NewExitBlock->getTerminator());
+        NewLCSSA->addIncoming(OldValue, StartBlock);
+        OldLCSSA->setIncomingValue(OldLCSSA->getBasicBlockIndex(NewExitBlock),
+                                   NewLCSSA);
+        InsertedPHIs.insert(NewLCSSA);
+      }
+
+      BasicBlock::iterator InsertPt = EndBlock->getFirstNonPHI();
+      for (BasicBlock::iterator I = NewExitBlock->begin();
+         (OldLCSSA = dyn_cast<PHINode>(I)) && InsertedPHIs.count(OldLCSSA) == 0;
+         ++I) {
+        PHINode *NewLCSSA = PHINode::Create(OldLCSSA->getType(),
+                                            OldLCSSA->getName() + ".us-lcssa",
+                                            InsertPt);
+        OldLCSSA->replaceAllUsesWith(NewLCSSA);
+        NewLCSSA->addIncoming(OldLCSSA, NewExitBlock);
+      }
+
+    }    
   }
+
 }
 
 /// UnswitchNontrivialCondition - We determined that the loop is profitable 
@@ -914,29 +945,27 @@ void LoopUnswitch::RewriteLoopBodyWithConditionConstant(Loop *L, Value *LIC,
               // FIXME: This is a hack.  We need to keep the successor around
               // and hooked up so as to preserve the loop structure, because
               // trying to update it is complicated.  So instead we preserve the
-              // loop structure and put the block on a dead code path.
-              BasicBlock *Switch = SI->getParent();
-              SplitEdge(Switch, SI->getSuccessor(i), this);
-              // Compute the successors instead of relying on the return value
-              // of SplitEdge, since it may have split the switch successor
-              // after PHI nodes.
-              BasicBlock *NewSISucc = SI->getSuccessor(i);
-              BasicBlock *OldSISucc = *succ_begin(NewSISucc);
-              // Create an "unreachable" destination.
-              BasicBlock *Abort = BasicBlock::Create(Context, "us-unreachable",
-                                                     Switch->getParent(),
-                                                     OldSISucc);
-              new UnreachableInst(Context, Abort);
-              // Force the new case destination to branch to the "unreachable"
-              // block while maintaining a (dead) CFG edge to the old block.
-              NewSISucc->getTerminator()->eraseFromParent();
-              BranchInst::Create(Abort, OldSISucc,
-                                 ConstantInt::getTrue(Context), NewSISucc);
-              // Release the PHI operands for this edge.
-              for (BasicBlock::iterator II = NewSISucc->begin();
-                   PHINode *PN = dyn_cast<PHINode>(II); ++II)
-                PN->setIncomingValue(PN->getBasicBlockIndex(Switch),
-                                     UndefValue::get(PN->getType()));
+              // loop structure and put the block on an dead code path.
+              
+              BasicBlock *SISucc = SI->getSuccessor(i);
+              BasicBlock* Old = SI->getParent();
+              BasicBlock* Split = SplitBlock(Old, SI, this);
+              
+              Instruction* OldTerm = Old->getTerminator();
+              BranchInst::Create(Split, SISucc,
+                                 ConstantInt::getTrue(Context), OldTerm);
+
+              LPM->deleteSimpleAnalysisValue(Old->getTerminator(), L);
+              Old->getTerminator()->eraseFromParent();
+              
+              PHINode *PN;
+              for (BasicBlock::iterator II = SISucc->begin();
+                   (PN = dyn_cast<PHINode>(II)); ++II) {
+                Value *InVal = PN->removeIncomingValue(Split, false);
+                PN->addIncoming(InVal, Old);
+              }
+
+              SI->removeCase(i);
               break;
             }
           }

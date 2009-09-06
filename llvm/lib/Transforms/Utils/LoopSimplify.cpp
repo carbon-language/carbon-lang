@@ -69,8 +69,8 @@ namespace {
 
     virtual void getAnalysisUsage(AnalysisUsage &AU) const {
       // We need loop information to identify the loops...
-      AU.addRequiredTransitive<LoopInfo>();
-      AU.addRequiredTransitive<DominatorTree>();
+      AU.addRequired<LoopInfo>();
+      AU.addRequired<DominatorTree>();
 
       AU.addPreserved<LoopInfo>();
       AU.addPreserved<DominatorTree>();
@@ -83,13 +83,9 @@ namespace {
     void verifyAnalysis() const {
 #ifndef NDEBUG
       LoopInfo *NLI = &getAnalysis<LoopInfo>();
-      for (LoopInfo::iterator I = NLI->begin(), E = NLI->end(); I != E; ++I) {
-        // Sanity check: Check basic loop invariants.
+      for (LoopInfo::iterator I = NLI->begin(), E = NLI->end(); I != E; ++I) 
         (*I)->verifyLoop();
-        // Check the special guarantees that LoopSimplify makes.
-        assert((*I)->isLoopSimplifyForm());
-      }
-#endif
+#endif  
     }
 
   private:
@@ -350,6 +346,15 @@ BasicBlock *LoopSimplify::InsertPreheaderForLoop(Loop *L) {
   BasicBlock *NewBB =
     SplitBlockPredecessors(Header, &OutsideBlocks[0], OutsideBlocks.size(),
                            ".preheader", this);
+  
+
+  //===--------------------------------------------------------------------===//
+  //  Update analysis results now that we have performed the transformation
+  //
+
+  // We know that we have loop information to update... update it now.
+  if (Loop *Parent = L->getParentLoop())
+    Parent->addBasicBlockToLoop(NewBB, LI->getBase());
 
   // Make sure that NewBB is put someplace intelligent, which doesn't mess up
   // code layout too horribly.
@@ -371,6 +376,17 @@ BasicBlock *LoopSimplify::RewriteLoopExitBlock(Loop *L, BasicBlock *Exit) {
   BasicBlock *NewBB = SplitBlockPredecessors(Exit, &LoopBlocks[0], 
                                              LoopBlocks.size(), ".loopexit",
                                              this);
+
+  // Update Loop Information - we know that the new block will be in whichever
+  // loop the Exit block is in.  Note that it may not be in that immediate loop,
+  // if the successor is some other loop header.  In that case, we continue 
+  // walking up the loop tree to find a loop that contains both the successor
+  // block and the predecessor block.
+  Loop *SuccLoop = LI->getLoopFor(Exit);
+  while (SuccLoop && !SuccLoop->contains(L->getHeader()))
+    SuccLoop = SuccLoop->getParentLoop();
+  if (SuccLoop)
+    SuccLoop->addBasicBlockToLoop(NewBB, LI->getBase());
 
   return NewBB;
 }
@@ -505,16 +521,16 @@ Loop *LoopSimplify::SeparateNestedLoop(Loop *L) {
   else
     LI->changeTopLevelLoop(L, NewOuter);
 
+  // This block is going to be our new header block: add it to this loop and all
+  // parent loops.
+  NewOuter->addBasicBlockToLoop(NewBB, LI->getBase());
+
   // L is now a subloop of our outer loop.
   NewOuter->addChildLoop(L);
 
   for (Loop::block_iterator I = L->block_begin(), E = L->block_end();
        I != E; ++I)
     NewOuter->addBlockEntry(*I);
-
-  // Now reset the header in L, which had been moved by
-  // SplitBlockPredecessors for the outer loop.
-  L->moveToHeader(Header);
 
   // Determine which blocks should stay in L and which should be moved out to
   // the Outer loop now.

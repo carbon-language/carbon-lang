@@ -24,7 +24,6 @@
 #include "llvm/Analysis/Dominators.h"
 #include "llvm/Target/TargetData.h"
 #include "llvm/Transforms/Utils/Local.h"
-#include "llvm/Transforms/Scalar.h"
 #include "llvm/Support/ErrorHandling.h"
 #include "llvm/Support/ValueHandle.h"
 #include <algorithm>
@@ -320,8 +319,7 @@ BasicBlock *llvm::SplitBlock(BasicBlock *Old, Instruction *SplitPt, Pass *P) {
     ++SplitIt;
   BasicBlock *New = Old->splitBasicBlock(SplitIt, Old->getName()+".split");
 
-  // The new block lives in whichever loop the old one did. This preserves
-  // LCSSA as well, because we force the split point to be after any PHI nodes.
+  // The new block lives in whichever loop the old one did.
   if (LoopInfo* LI = P->getAnalysisIfAvailable<LoopInfo>())
     if (Loop *L = LI->getLoopFor(Old))
       L->addBasicBlockToLoop(New, LI->getBase());
@@ -355,12 +353,8 @@ BasicBlock *llvm::SplitBlock(BasicBlock *Old, Instruction *SplitPt, Pass *P) {
 /// Preds array, which has NumPreds elements in it.  The new block is given a
 /// suffix of 'Suffix'.
 ///
-/// This currently updates the LLVM IR, AliasAnalysis, DominatorTree,
-/// DominanceFrontier, LoopInfo, and LCCSA but no other analyses.
-/// In particular, it does not preserve LoopSimplify (because it's
-/// complicated to handle the case where one of the edges being split
-/// is an exit of a loop with other exits).
-///
+/// This currently updates the LLVM IR, AliasAnalysis, DominatorTree and
+/// DominanceFrontier, but no other analyses.
 BasicBlock *llvm::SplitBlockPredecessors(BasicBlock *BB, 
                                          BasicBlock *const *Preds,
                                          unsigned NumPreds, const char *Suffix,
@@ -372,44 +366,19 @@ BasicBlock *llvm::SplitBlockPredecessors(BasicBlock *BB,
   // The new block unconditionally branches to the old block.
   BranchInst *BI = BranchInst::Create(BB, NewBB);
   
-  LoopInfo *LI = P ? P->getAnalysisIfAvailable<LoopInfo>() : 0;
-  Loop *L = LI ? LI->getLoopFor(BB) : 0;
-  bool PreserveLCSSA = P->mustPreserveAnalysisID(LCSSAID);
-
   // Move the edges from Preds to point to NewBB instead of BB.
-  // While here, if we need to preserve loop analyses, collect
-  // some information about how this split will affect loops.
-  bool HasLoopExit = false;
-  bool IsLoopEntry = !!L;
-  bool SplitMakesNewLoopHeader = false;
-  for (unsigned i = 0; i != NumPreds; ++i) {
+  for (unsigned i = 0; i != NumPreds; ++i)
     Preds[i]->getTerminator()->replaceUsesOfWith(BB, NewBB);
-
-    if (LI) {
-      // If we need to preserve LCSSA, determine if any of
-      // the preds is a loop exit.
-      if (PreserveLCSSA)
-        if (Loop *PL = LI->getLoopFor(Preds[i]))
-          if (!PL->contains(BB))
-            HasLoopExit = true;
-      // If we need to preserve LoopInfo, note whether any of the
-      // preds crosses an interesting loop boundary.
-      if (L) {
-        if (L->contains(Preds[i]))
-          IsLoopEntry = false;
-        else
-          SplitMakesNewLoopHeader = true;
-      }
-    }
-  }
-
+  
   // Update dominator tree and dominator frontier if available.
   DominatorTree *DT = P ? P->getAnalysisIfAvailable<DominatorTree>() : 0;
   if (DT)
     DT->splitBlock(NewBB);
   if (DominanceFrontier *DF = P ? P->getAnalysisIfAvailable<DominanceFrontier>():0)
     DF->splitBlock(NewBB);
-
+  AliasAnalysis *AA = P ? P->getAnalysisIfAvailable<AliasAnalysis>() : 0;
+  
+  
   // Insert a new PHI node into NewBB for every PHI node in BB and that new PHI
   // node becomes an incoming value for BB's phi node.  However, if the Preds
   // list is empty, we need to insert dummy entries into the PHI nodes in BB to
@@ -420,42 +389,20 @@ BasicBlock *llvm::SplitBlockPredecessors(BasicBlock *BB,
       cast<PHINode>(I)->addIncoming(UndefValue::get(I->getType()), NewBB);
     return NewBB;
   }
-
-  AliasAnalysis *AA = P ? P->getAnalysisIfAvailable<AliasAnalysis>() : 0;
-
-  if (L) {
-    if (IsLoopEntry) {
-      if (Loop *PredLoop = LI->getLoopFor(Preds[0])) {
-        // Add the new block to the nearest enclosing loop (and not an
-        // adjacent loop).
-        while (PredLoop && !PredLoop->contains(BB))
-          PredLoop = PredLoop->getParentLoop();
-        if (PredLoop)
-          PredLoop->addBasicBlockToLoop(NewBB, LI->getBase());
-      }
-    } else {
-      L->addBasicBlockToLoop(NewBB, LI->getBase());
-      if (SplitMakesNewLoopHeader)
-        L->moveToHeader(NewBB);
-    }
-  }
   
   // Otherwise, create a new PHI node in NewBB for each PHI node in BB.
   for (BasicBlock::iterator I = BB->begin(); isa<PHINode>(I); ) {
     PHINode *PN = cast<PHINode>(I++);
     
     // Check to see if all of the values coming in are the same.  If so, we
-    // don't need to create a new PHI node, unless it's needed for LCSSA.
-    Value *InVal = 0;
-    if (!HasLoopExit) {
-      InVal = PN->getIncomingValueForBlock(Preds[0]);
-      for (unsigned i = 1; i != NumPreds; ++i)
-        if (InVal != PN->getIncomingValueForBlock(Preds[i])) {
-          InVal = 0;
-          break;
-        }
-    }
-
+    // don't need to create a new PHI node.
+    Value *InVal = PN->getIncomingValueForBlock(Preds[0]);
+    for (unsigned i = 1; i != NumPreds; ++i)
+      if (InVal != PN->getIncomingValueForBlock(Preds[i])) {
+        InVal = 0;
+        break;
+      }
+    
     if (InVal) {
       // If all incoming values for the new PHI would be the same, just don't
       // make a new PHI.  Instead, just remove the incoming values from the old
@@ -480,6 +427,13 @@ BasicBlock *llvm::SplitBlockPredecessors(BasicBlock *BB,
     // Add an incoming value to the PHI node in the loop for the preheader
     // edge.
     PN->addIncoming(InVal, NewBB);
+    
+    // Check to see if we can eliminate this phi node.
+    if (Value *V = PN->hasConstantValue(DT)) {
+      PN->replaceAllUsesWith(V);
+      if (AA) AA->deleteValue(PN);
+      PN->eraseFromParent();
+    }
   }
   
   return NewBB;
