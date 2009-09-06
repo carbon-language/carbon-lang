@@ -361,6 +361,7 @@ dissect(struct match *m, char *start, char *stop, sopno startst, sopno stopst)
 			/* did innards match? */
 			if (slow(m, sp, rest, ssub, esub) != NULL) {
 				char *dp = dissect(m, sp, rest, ssub, esub);
+				(void)dp; /* avoid warning if assertions off */
 				assert(dp == rest);
 			} else		/* no */
 				assert(sp == rest);
@@ -400,6 +401,7 @@ dissect(struct match *m, char *start, char *stop, sopno startst, sopno stopst)
 			assert(slow(m, ssp, sep, ssub, esub) == rest);
 			{
 				char *dp = dissect(m, ssp, sep, ssub, esub);
+				(void)dp; /* avoid warning if assertions off */
 				assert(dp == sep);
 			}
 			sp = rest;
@@ -437,6 +439,7 @@ dissect(struct match *m, char *start, char *stop, sopno startst, sopno stopst)
 			}
 			{
 				char *dp = dissect(m, sp, rest, ssub, esub);
+				(void)dp; /* avoid warning if assertions off */
 				assert(dp == rest);
 			}
 			sp = rest;
