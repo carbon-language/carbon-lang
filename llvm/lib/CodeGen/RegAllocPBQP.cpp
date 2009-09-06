@@ -691,10 +691,6 @@ void PBQPRegAlloc::addStackInterval(const LiveInterval *spilled,
 }
 
 bool PBQPRegAlloc::mapPBQPToRegAlloc(const PBQP::Solution &solution) {
-
-  static unsigned round = 0;
-  (void) round;
-
   // Set to true if we have any spills
   bool anotherRoundNeeded = false;
 

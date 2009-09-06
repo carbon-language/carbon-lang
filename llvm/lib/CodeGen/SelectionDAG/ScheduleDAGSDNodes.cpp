@@ -243,10 +243,8 @@ void ScheduleDAGSDNodes::ComputeLatency(SUnit *SU) {
   // Compute the latency for the node.  We use the sum of the latencies for
   // all nodes flagged together into this SUnit.
   SU->Latency = 0;
-  bool SawMachineOpcode = false;
   for (SDNode *N = SU->getNode(); N; N = N->getFlaggedNode())
     if (N->isMachineOpcode()) {
-      SawMachineOpcode = true;
       SU->Latency += InstrItins.
         getStageLatency(TII->get(N->getMachineOpcode()).getSchedClass());
     }

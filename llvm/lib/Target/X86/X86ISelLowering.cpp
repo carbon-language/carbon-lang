@@ -5198,10 +5198,9 @@ SDValue X86TargetLowering::LowerFNEG(SDValue Op, SelectionDAG &DAG) {
   DebugLoc dl = Op.getDebugLoc();
   EVT VT = Op.getValueType();
   EVT EltVT = VT;
-  unsigned EltNum = 1;
   if (VT.isVector()) {
     EltVT = VT.getVectorElementType();
-    EltNum = VT.getVectorNumElements();
+    VT.getVectorNumElements();
   }
   std::vector<Constant*> CV;
   if (EltVT == MVT::f64) {

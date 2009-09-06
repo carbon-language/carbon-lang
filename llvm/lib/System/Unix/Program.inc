@@ -116,9 +116,7 @@ static bool RedirectIO(const Path *Path, int FD, std::string* ErrMsg) {
   return false;
 }
 
-static bool Timeout = false;
 static void TimeOutHandler(int Sig) {
-  Timeout = true;
 }
 
 static void SetMemoryLimits (unsigned size)
@@ -233,7 +231,6 @@ Program::Wait(unsigned secondsToWait,
 
   // Install a timeout handler.
   if (secondsToWait) {
-    Timeout = false;
     Act.sa_sigaction = 0;
     Act.sa_handler = TimeOutHandler;
     sigemptyset(&Act.sa_mask);

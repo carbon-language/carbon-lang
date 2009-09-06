@@ -1714,11 +1714,9 @@ bool SelectionDAGLowering::handleJTSwitchCase(CaseRec& CR,
   MachineFunction *CurMF = FuncInfo.MF;
 
   // Figure out which block is immediately after the current one.
-  MachineBasicBlock *NextBlock = 0;
   MachineFunction::iterator BBI = CR.CaseBB;
 
-  if (++BBI != FuncInfo.MF->end())
-    NextBlock = BBI;
+  if (++BBI != FuncInfo.MF->end()) {}
 
   const BasicBlock *LLVMBB = CR.CaseBB->getBasicBlock();
 
@@ -1787,11 +1785,9 @@ bool SelectionDAGLowering::handleBTSplitSwitchCase(CaseRec& CR,
   MachineFunction *CurMF = FuncInfo.MF;
 
   // Figure out which block is immediately after the current one.
-  MachineBasicBlock *NextBlock = 0;
   MachineFunction::iterator BBI = CR.CaseBB;
 
-  if (++BBI != FuncInfo.MF->end())
-    NextBlock = BBI;
+  if (++BBI != FuncInfo.MF->end()) {}
 
   Case& FrontCase = *CR.Range.first;
   Case& BackCase  = *(CR.Range.second-1);

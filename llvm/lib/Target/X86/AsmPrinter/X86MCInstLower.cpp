@@ -119,7 +119,6 @@ MCSymbol *X86ATTAsmPrinter::GetJumpTableSymbol(const MachineOperand &MO) {
   raw_svector_ostream(Name) << MAI->getPrivateGlobalPrefix() << "JTI"
     << getFunctionNumber() << '_' << MO.getIndex();
   
-  MCSymbol *NegatedSymbol = 0;
   switch (MO.getTargetFlags()) {
   default:
     llvm_unreachable("Unknown target flag on GV operand");
@@ -129,7 +128,7 @@ MCSymbol *X86ATTAsmPrinter::GetJumpTableSymbol(const MachineOperand &MO) {
   case X86II::MO_DARWIN_HIDDEN_NONLAZY_PIC_BASE:
     break;
     // Subtract the pic base.
-    NegatedSymbol = GetPICBaseSymbol();
+    GetPICBaseSymbol();
     break;
   }
   

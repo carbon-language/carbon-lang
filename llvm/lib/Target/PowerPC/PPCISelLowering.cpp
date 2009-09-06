@@ -2876,7 +2876,6 @@ PPCTargetLowering::LowerCall_Darwin(SDValue Chain, SDValue Callee,
 
   SmallVector<SDValue, 8> MemOpChains;
   for (unsigned i = 0; i != NumOps; ++i) {
-    bool inMem = false;
     SDValue Arg = Outs[i].Val;
     ISD::ArgFlagsTy Flags = Outs[i].Flags;
 
@@ -2963,7 +2962,6 @@ PPCTargetLowering::LowerCall_Darwin(SDValue Chain, SDValue Callee,
         LowerMemOpCallTo(DAG, MF, Chain, Arg, PtrOff, SPDiff, ArgOffset,
                          isPPC64, isTailCall, false, MemOpChains,
                          TailCallArguments, dl);
-        inMem = true;
       }
       ArgOffset += PtrByteSize;
       break;
@@ -3003,7 +3001,6 @@ PPCTargetLowering::LowerCall_Darwin(SDValue Chain, SDValue Callee,
         LowerMemOpCallTo(DAG, MF, Chain, Arg, PtrOff, SPDiff, ArgOffset,
                          isPPC64, isTailCall, false, MemOpChains,
                          TailCallArguments, dl);
-        inMem = true;
       }
       if (isPPC64)
         ArgOffset += 8;

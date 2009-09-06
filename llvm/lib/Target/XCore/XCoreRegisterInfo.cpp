@@ -226,7 +226,6 @@ void XCoreRegisterInfo::eliminateFrameIndex(MachineBasicBlock::iterator II,
     bool isUs = isImmUs(Offset);
     unsigned FramePtr = XCore::R10;
     
-    MachineInstr *New = 0;
     if (!isUs) {
       if (!RS) {
         std::string msg;
@@ -239,18 +238,18 @@ void XCoreRegisterInfo::eliminateFrameIndex(MachineBasicBlock::iterator II,
       loadConstant(MBB, II, ScratchReg, Offset, dl);
       switch (MI.getOpcode()) {
       case XCore::LDWFI:
-        New = BuildMI(MBB, II, dl, TII.get(XCore::LDW_3r), Reg)
+        BuildMI(MBB, II, dl, TII.get(XCore::LDW_3r), Reg)
               .addReg(FramePtr)
               .addReg(ScratchReg, RegState::Kill);
         break;
       case XCore::STWFI:
-        New = BuildMI(MBB, II, dl, TII.get(XCore::STW_3r))
+        BuildMI(MBB, II, dl, TII.get(XCore::STW_3r))
               .addReg(Reg, getKillRegState(isKill))
               .addReg(FramePtr)
               .addReg(ScratchReg, RegState::Kill);
         break;
       case XCore::LDAWFI:
-        New = BuildMI(MBB, II, dl, TII.get(XCore::LDAWF_l3r), Reg)
+        BuildMI(MBB, II, dl, TII.get(XCore::LDAWF_l3r), Reg)
               .addReg(FramePtr)
               .addReg(ScratchReg, RegState::Kill);
         break;
@@ -260,18 +259,18 @@ void XCoreRegisterInfo::eliminateFrameIndex(MachineBasicBlock::iterator II,
     } else {
       switch (MI.getOpcode()) {
       case XCore::LDWFI:
-        New = BuildMI(MBB, II, dl, TII.get(XCore::LDW_2rus), Reg)
+        BuildMI(MBB, II, dl, TII.get(XCore::LDW_2rus), Reg)
               .addReg(FramePtr)
               .addImm(Offset);
         break;
       case XCore::STWFI:
-        New = BuildMI(MBB, II, dl, TII.get(XCore::STW_2rus))
+        BuildMI(MBB, II, dl, TII.get(XCore::STW_2rus))
               .addReg(Reg, getKillRegState(isKill))
               .addReg(FramePtr)
               .addImm(Offset);
         break;
       case XCore::LDAWFI:
-        New = BuildMI(MBB, II, dl, TII.get(XCore::LDAWF_l2rus), Reg)
+        BuildMI(MBB, II, dl, TII.get(XCore::LDAWF_l2rus), Reg)
               .addReg(FramePtr)
               .addImm(Offset);
         break;

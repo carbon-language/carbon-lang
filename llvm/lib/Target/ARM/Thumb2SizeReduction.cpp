@@ -262,7 +262,6 @@ Thumb2SizeReduce::ReduceLoadStore(MachineBasicBlock &MBB, MachineInstr *MI,
   bool HasImmOffset = false;
   bool HasShift = false;
   bool isLdStMul = false;
-  bool isPopPush = false;
   unsigned Opc = Entry.NarrowOpc1;
   unsigned OpNum = 3; // First 'rest' of operands.
   switch (Entry.WideOpc) {
@@ -301,7 +300,6 @@ Thumb2SizeReduce::ReduceLoadStore(MachineBasicBlock &MBB, MachineInstr *MI,
     unsigned Mode = MI->getOperand(1).getImm();
     if (BaseReg == ARM::SP && ARM_AM::getAM4WBFlag(Mode)) {
       Opc = Entry.NarrowOpc2;
-      isPopPush = true;
       OpNum = 2;
     } else if (Entry.WideOpc == ARM::t2LDM_RET ||
                !isARMLowRegister(BaseReg) ||
