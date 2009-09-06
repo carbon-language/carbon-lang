@@ -89,7 +89,7 @@ public:
   MachineConstantPoolEntry(MachineConstantPoolValue *V, unsigned A)
     : Alignment(A) {
     Val.MachineCPVal = V; 
-    Alignment |= 1 << (sizeof(unsigned)*CHAR_BIT-1);
+    Alignment |= 1U << (sizeof(unsigned)*CHAR_BIT-1);
   }
 
   bool isMachineConstantPoolEntry() const {

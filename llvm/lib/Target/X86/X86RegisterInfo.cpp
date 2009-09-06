@@ -645,7 +645,7 @@ X86RegisterInfo::processFunctionBeforeCalleeSavedScan(MachineFunction &MF,
     //   }
     //   [EBP]
     MFI->CreateFixedObject(-TailCallReturnAddrDelta,
-                           (-1*SlotSize)+TailCallReturnAddrDelta);
+                           (-1U*SlotSize)+TailCallReturnAddrDelta);
   }
 
   if (hasFP(MF)) {

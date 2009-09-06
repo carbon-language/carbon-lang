@@ -26,10 +26,10 @@ using namespace llvm;
 //
 static inline unsigned ByteSwap(unsigned Var, bool Really) {
   if (!Really) return Var;
-  return ((Var & (255<< 0)) << 24) |
-         ((Var & (255<< 8)) <<  8) |
-         ((Var & (255<<16)) >>  8) |
-         ((Var & (255<<24)) >> 24);
+  return ((Var & (255U<< 0U)) << 24U) |
+         ((Var & (255U<< 8U)) <<  8U) |
+         ((Var & (255U<<16U)) >>  8U) |
+         ((Var & (255U<<24U)) >> 24U);
 }
 
 static unsigned AddCounts(unsigned A, unsigned B) {

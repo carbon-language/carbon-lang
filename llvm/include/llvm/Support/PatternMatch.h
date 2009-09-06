@@ -58,7 +58,7 @@ struct constantint_ty {
     if (const ConstantInt *CI = dyn_cast<ConstantInt>(V)) {
       const APInt &CIV = CI->getValue();
       if (Val >= 0)
-        return CIV == Val;
+        return CIV == static_cast<uint64_t>(Val);
       // If Val is negative, and CI is shorter than it, truncate to the right
       // number of bits.  If it is larger, then we have to sign extend.  Just
       // compare their negated values.

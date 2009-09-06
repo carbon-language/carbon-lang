@@ -118,7 +118,7 @@ class Briggs {
 
           if (!add) {
             udTarget = 1;
-            dir = -1;
+            dir = ~0;
           }
 
           EdgeData &linkEdgeData = g.getEdgeData(edgeItr).getHeuristicData();
