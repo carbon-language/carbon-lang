@@ -181,25 +181,28 @@ void Process::PreventCoreFiles() {
 bool Process::StandardInIsUserInput() {
 #if HAVE_ISATTY
   return isatty(0);
-#endif
+#else
   // If we don't have isatty, just return false.
   return false;
+#endif
 }
 
 bool Process::StandardOutIsDisplayed() {
 #if HAVE_ISATTY
   return isatty(1);
-#endif
+#else
   // If we don't have isatty, just return false.
   return false;
+#endif
 }
 
 bool Process::StandardErrIsDisplayed() {
 #if HAVE_ISATTY
   return isatty(2);
-#endif
+#else
   // If we don't have isatty, just return false.
   return false;
+#endif
 }
 
 static unsigned getColumns(int FileID) {

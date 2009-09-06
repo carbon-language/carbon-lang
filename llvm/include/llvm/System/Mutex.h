@@ -93,32 +93,36 @@ namespace llvm
         MutexImpl(rec), acquired(0), recursive(rec) { }
       
       bool acquire() {
-        if (!mt_only || llvm_is_multithreaded())
+        if (!mt_only || llvm_is_multithreaded()) {
           return MutexImpl::acquire();
-        
-        // Single-threaded debugging code.  This would be racy in multithreaded
-        // mode, but provides not sanity checks in single threaded mode.
-        assert((recursive || acquired == 0) && "Lock already acquired!!");
-        ++acquired;
-        return true;
+        } else {
+          // Single-threaded debugging code.  This would be racy in
+          // multithreaded mode, but provides not sanity checks in single
+          // threaded mode.
+          assert((recursive || acquired == 0) && "Lock already acquired!!");
+          ++acquired;
+          return true;
+        }
       }
 
       bool release() {
-        if (!mt_only || llvm_is_multithreaded())
+        if (!mt_only || llvm_is_multithreaded()) {
           return MutexImpl::release();
-        
-        // Single-threaded debugging code.  This would be racy in multithreaded
-        // mode, but provides not sanity checks in single threaded mode.
-        assert(((recursive && acquired) || (acquired == 1)) &&
-               "Lock not acquired before release!");
-        --acquired;
-        return true;
+        } else {
+          // Single-threaded debugging code.  This would be racy in
+          // multithreaded mode, but provides not sanity checks in single
+          // threaded mode.
+          assert(((recursive && acquired) || (acquired == 1)) &&
+                 "Lock not acquired before release!");
+          --acquired;
+          return true;
+        }
       }
 
       bool tryacquire() {
         if (!mt_only || llvm_is_multithreaded())
           return MutexImpl::tryacquire();
-        return true;
+        else return true;
       }
       
       private:
