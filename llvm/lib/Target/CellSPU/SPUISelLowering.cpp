@@ -42,8 +42,8 @@ namespace {
 
   //! EVT mapping to useful data for Cell SPU
   struct valtype_map_s {
-    const EVT   valtype;
-    const int   prefslot_byte;
+    EVT   valtype;
+    int   prefslot_byte;
   };
 
   const valtype_map_s valtype_map[] = {
