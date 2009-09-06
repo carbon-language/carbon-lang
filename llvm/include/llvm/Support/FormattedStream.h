@@ -26,12 +26,12 @@ namespace llvm
   public:
     /// DELETE_STREAM - Tell the destructor to delete the held stream.
     ///
-    const static bool DELETE_STREAM = true;
+    static const bool DELETE_STREAM = true;
 
     /// PRESERVE_STREAM - Tell the destructor to not delete the held
     /// stream.
     ///
-    const static bool PRESERVE_STREAM = false;
+    static const bool PRESERVE_STREAM = false;
 
   private:
     /// TheStream - The real stream we output to. We set it to be
