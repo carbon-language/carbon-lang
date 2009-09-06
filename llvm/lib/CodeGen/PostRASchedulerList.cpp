@@ -987,7 +987,7 @@ void SchedulePostRATDList::ListScheduleTopDown() {
 
   // In any cycle where we can't schedule any instructions, we must
   // stall or emit a noop, depending on the target.
-  bool CycleInstCnt = 0;
+  bool CycleHasInsts = false;
 
   // While Available queue is not empty, grab the node with the highest
   // priority. If it is not ready put it back.  Schedule the node.
@@ -1045,7 +1045,7 @@ void SchedulePostRATDList::ListScheduleTopDown() {
     if (FoundSUnit) {
       ScheduleNodeTopDown(FoundSUnit, CurCycle);
       HazardRec->EmitInstruction(FoundSUnit);
-      CycleInstCnt++;
+      CycleHasInsts = true;
 
       // If we are using the target-specific hazards, then don't
       // advance the cycle time just because we schedule a node. If
@@ -1056,7 +1056,7 @@ void SchedulePostRATDList::ListScheduleTopDown() {
           ++CurCycle;
       }
     } else {
-      if (CycleInstCnt > 0) {
+      if (CycleHasInsts) {
         DEBUG(errs() << "*** Finished cycle " << CurCycle << '\n');
         HazardRec->AdvanceCycle();
       } else if (!HasNoopHazards) {
@@ -1076,7 +1076,7 @@ void SchedulePostRATDList::ListScheduleTopDown() {
       }
 
       ++CurCycle;
-      CycleInstCnt = 0;
+      CycleHasInsts = false;
     }
   }
 
