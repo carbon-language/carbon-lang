@@ -12160,8 +12160,8 @@ Instruction *InstCombiner::visitExtractElementInst(ExtractElementInst &EI) {
                                             PointerType::get(EI.getType(), AS),
                                             I->getOperand(0)->getName());
         Value *GEP =
-          Builder->CreateGEP(Ptr, EI.getOperand(1), I->getName()+".gep");
-        cast<GEPOperator>(GEP)->setIsInBounds(true);
+          Builder->CreateInBoundsGEP(Ptr, EI.getOperand(1),
+                                     I->getName()+".gep");
         
         LoadInst *Load = Builder->CreateLoad(GEP, "tmp");
 
