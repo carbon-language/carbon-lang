@@ -77,9 +77,6 @@ namespace llvm {
     static listener *ListenerHead, *ListenerTail;
 
   public:
-    class iterator;
-
-
     /// Node in linked list of entries.
     ///
     class node {
