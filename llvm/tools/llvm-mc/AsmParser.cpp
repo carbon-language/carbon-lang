@@ -1111,7 +1111,7 @@ bool AsmParser::ParseDirectiveAlign(bool IsPow2, unsigned ValueSize) {
       Alignment = 31;
     }
 
-    Alignment = 1 << Alignment;
+    Alignment = 1ULL << Alignment;
   }
 
   // Diagnose non-sensical max bytes to align.
