@@ -90,11 +90,16 @@ MDNode *MDNode::get(LLVMContext &Context, Value*const* Vals, unsigned NumVals) {
   for (unsigned i = 0; i != NumVals; ++i)
     ID.AddPointer(Vals[i]);
 
+  // FIXME: MDNode uniquing disabled temporarily.
+#ifndef ENABLE_MDNODE_UNIQUING
+  return new MDNode(Context, Vals, NumVals);
+#endif
+
   pImpl->ConstantsLock.reader_acquire();
   void *InsertPoint;
   MDNode *N = pImpl->MDNodeSet.FindNodeOrInsertPos(ID, InsertPoint);
   pImpl->ConstantsLock.reader_release();
-  
+
   if (!N) {
     sys::SmartScopedWriter<true> Writer(pImpl->ConstantsLock);
     N = pImpl->MDNodeSet.FindNodeOrInsertPos(ID, InsertPoint);
@@ -115,12 +120,27 @@ void MDNode::dropAllReferences() {
 }
 
 MDNode::~MDNode() {
+  // FIXME: MDNode uniquing disabled temporarily.
+#ifdef ENABLE_MDNODE_UNIQUING
   getType()->getContext().pImpl->MDNodeSet.RemoveNode(this);
+#endif
   dropAllReferences();
 }
 
 // Replace value from this node's element list.
 void MDNode::replaceElement(Value *From, Value *To) {
+  // FIXME: MDNode uniquing disabled temporarily.
+#ifndef ENABLE_MDNODE_UNIQUING
+  if (From == To || !getType())
+    return;
+
+  for (SmallVector<ElementVH, 4>::iterator I = Node.begin(),
+         E = Node.end(); I != E; ++I)
+    if (*I && *I == From)
+      *I = ElementVH(To, this);
+  return;
+#endif
+
   if (From == To || !getType())
     return;
   LLVMContext &Context = getType()->getContext();
