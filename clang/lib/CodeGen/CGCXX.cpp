@@ -909,9 +909,7 @@ public:
   }
 
   bool OverrideMethod(const CXXMethodDecl *MD, llvm::Constant *m,
-                      bool MorallyVirtual, Index_t Offset,
-                      std::vector<llvm::Constant *> &submethods,
-                      Index_t AddressPoint) {
+                      bool MorallyVirtual, Index_t Offset) {
     typedef CXXMethodDecl::method_iterator meth_iter;
 
     // FIXME: Don't like the nested loops.  For very large inheritance
@@ -927,23 +925,25 @@ public:
       om = CGM.GetAddrOfFunction(GlobalDecl(OMD), Ptr8Ty);
       om = llvm::ConstantExpr::getBitCast(om, Ptr8Ty);
 
-      for (Index_t i = AddressPoint, e = submethods.size();
+      for (Index_t i = 0, e = submethods.size();
            i != e; ++i) {
         // FIXME: begin_overridden_methods might be too lax, covariance */
         if (submethods[i] != om)
           continue;
+        Index[MD] = i;
         submethods[i] = m;
-        Index[MD] = i - AddressPoint;
 
         Thunks.erase(OMD);
         if (MorallyVirtual) {
-          VCallOffset[MD] = Offset/8;
           Index_t &idx = VCall[OMD];
           if (idx == 0) {
+            VCallOffset[MD] = Offset/8;
             idx = VCalls.size()+1;
             VCalls.push_back(0);
+          } else {
+            VCallOffset[MD] = VCallOffset[OMD];
+            VCalls[idx-1] = -VCallOffset[OMD] + Offset/8;
           }
-          VCalls[idx] = Offset/8 - VCallOffset[OMD];
           VCall[MD] = idx;
           // FIXME: 0?
           Thunks[MD] = std::make_pair(0, -((idx+extra+2)*LLVMPointerWidth/8));
@@ -975,18 +975,20 @@ public:
     Thunks.clear();
   }
 
-  void OverrideMethods(std::vector<const CXXRecordDecl *> *Path,
-                       bool MorallyVirtual, Index_t Offset) {
-    for (std::vector<const CXXRecordDecl *>::reverse_iterator i =Path->rbegin(),
+  void OverrideMethods(std::vector<std::pair<const CXXRecordDecl *,
+                       int64_t> > *Path, bool MorallyVirtual) {
+      for (std::vector<std::pair<const CXXRecordDecl *,
+             int64_t> >::reverse_iterator i =Path->rbegin(),
            e = Path->rend(); i != e; ++i) {
-      const CXXRecordDecl *RD = *i;
+      const CXXRecordDecl *RD = i->first;
+      int64_t Offset = i->second;
       for (method_iter mi = RD->method_begin(), me = RD->method_end(); mi != me;
            ++mi)
         if (mi->isVirtual()) {
           const CXXMethodDecl *MD = *mi;
           llvm::Constant *m = wrap(CGM.GetAddrOfFunction(GlobalDecl(MD),
                                                          Ptr8Ty));
-          OverrideMethod(MD, m, MorallyVirtual, Offset, submethods, 0);
+          OverrideMethod(MD, m, MorallyVirtual, Offset);
         }
     }
   }
@@ -994,11 +996,12 @@ public:
   void AddMethod(const CXXMethodDecl *MD, bool MorallyVirtual, Index_t Offset) {
     llvm::Constant *m = wrap(CGM.GetAddrOfFunction(GlobalDecl(MD), Ptr8Ty));
     // If we can find a previously allocated slot for this, reuse it.
-    if (OverrideMethod(MD, m, MorallyVirtual, Offset, submethods, 0))
+    if (OverrideMethod(MD, m, MorallyVirtual, Offset))
       return;
     
     // else allocate a new slot.
     Index[MD] = submethods.size();
+    submethods.push_back(m);
     if (MorallyVirtual) {
       VCallOffset[MD] = Offset/8;
       Index_t &idx = VCall[MD];
@@ -1008,7 +1011,6 @@ public:
         VCalls.push_back(0);
       }
     }
-    submethods.push_back(m);
   }
 
   void AddMethods(const CXXRecordDecl *RD, bool MorallyVirtual,
@@ -1032,8 +1034,9 @@ public:
       if (Base != PrimaryBase || PrimaryBaseWasVirtual) {
         uint64_t o = Offset + Layout.getBaseClassOffset(Base);
         StartNewTable();
-        std::vector<const CXXRecordDecl *> S;
-        S.push_back(RD);
+        std::vector<std::pair<const CXXRecordDecl *,
+          int64_t> > S;
+        S.push_back(std::make_pair(RD, Offset));
         GenerateVtableForBase(Base, MorallyVirtual, o, false, &S);
       }
     }
@@ -1055,8 +1058,9 @@ public:
     }
 
     // The vcalls come first...
-    for (std::vector<Index_t>::iterator i=VCalls.begin(), e=VCalls.end();
-         i < e; ++i)
+    for (std::vector<Index_t>::reverse_iterator i=VCalls.rbegin(),
+           e=VCalls.rend();
+         i != e; ++i)
       methods.push_back(wrap((0?600:0) + *i));
     VCalls.clear();
 
@@ -1103,7 +1107,8 @@ public:
   int64_t GenerateVtableForBase(const CXXRecordDecl *RD,
                                 bool MorallyVirtual = false, int64_t Offset = 0,
                                 bool ForVirtualBase = false,
-                                std::vector<const CXXRecordDecl *> *Path = 0) {
+                                std::vector<std::pair<const CXXRecordDecl *,
+                                int64_t> > *Path = 0) {
     if (!RD->isDynamicClass())
       return 0;
 
@@ -1128,22 +1133,25 @@ public:
     AddMethods(RD, MorallyVirtual, Offset);
 
     if (Path)
-      OverrideMethods(Path, MorallyVirtual, Offset);
+      OverrideMethods(Path, MorallyVirtual);
 
     return end(RD, offsets, Layout, PrimaryBase, PrimaryBaseWasVirtual,
                MorallyVirtual, Offset, ForVirtualBase);
   }
 
   void GenerateVtableForVBases(const CXXRecordDecl *RD,
-                               std::vector<const CXXRecordDecl *> *Path = 0) {
+                               int64_t Offset = 0,
+                               std::vector<std::pair<const CXXRecordDecl *,
+                               int64_t> > *Path = 0) {
     bool alloc = false;
     if (Path == 0) {
       alloc = true;
-      Path = new std::vector<const CXXRecordDecl *>;
+      Path = new std::vector<std::pair<const CXXRecordDecl *,
+        int64_t> >;
     }
     // FIXME: We also need to override using all paths to a virtual base,
     // right now, we just process the first path
-    Path->push_back(RD);
+    Path->push_back(std::make_pair(RD, Offset));
     for (CXXRecordDecl::base_class_const_iterator i = RD->bases_begin(),
            e = RD->bases_end(); i != e; ++i) {
       const CXXRecordDecl *Base = 
@@ -1155,8 +1163,11 @@ public:
         int64_t BaseOffset = BLayout.getVBaseClassOffset(Base);
         GenerateVtableForBase(Base, true, BaseOffset, true, Path);
       }
+      int64_t BaseOffset = Offset;
+      if (i->isVirtual())
+        BaseOffset = BLayout.getVBaseClassOffset(Base);
       if (Base->getNumVBases())
-        GenerateVtableForVBases(Base, Path);
+        GenerateVtableForVBases(Base, BaseOffset, Path);
     }
     Path->pop_back();
     if (alloc)

@@ -41,8 +41,8 @@ namespace {
 
     bool mangle(const NamedDecl *D);
     void mangleCalloffset(int64_t nv, int64_t v);
-    void mangleThunk(const NamedDecl *ND, int64_t nv, int64_t v);
-    void mangleCovariantThunk(const NamedDecl *ND,
+    void mangleThunk(const FunctionDecl *FD, int64_t nv, int64_t v);
+    void mangleCovariantThunk(const FunctionDecl *FD,
                               int64_t nv_t, int64_t v_t,
                               int64_t nv_r, int64_t v_r);
     void mangleGuardVariable(const VarDecl *D);
@@ -274,25 +274,26 @@ void CXXNameMangler::mangleCalloffset(int64_t nv, int64_t v) {
   Out << "_";
 }
 
-void CXXNameMangler::mangleThunk(const NamedDecl *D, int64_t nv, int64_t v) {
+void CXXNameMangler::mangleThunk(const FunctionDecl *FD, int64_t nv,
+                                 int64_t v) {
   //  <special-name> ::= T <call-offset> <base encoding>
   //                      # base is the nominal target function of thunk
-  Out << "_T";
+  Out << "_ZT";
   mangleCalloffset(nv, v);
-  mangleName(D);
+  mangleFunctionEncoding(FD);
 }
 
-  void CXXNameMangler::mangleCovariantThunk(const NamedDecl *D,
+  void CXXNameMangler::mangleCovariantThunk(const FunctionDecl *FD,
                                             int64_t nv_t, int64_t v_t,
                                             int64_t nv_r, int64_t v_r) {
   //  <special-name> ::= Tc <call-offset> <call-offset> <base encoding>
   //                      # base is the nominal target function of thunk
   //                      # first call-offset is 'this' adjustment
   //                      # second call-offset is result adjustment
-  Out << "_Tc";
+  Out << "_ZTc";
   mangleCalloffset(nv_t, v_t);
   mangleCalloffset(nv_r, v_r);
-  mangleName(D);
+  mangleFunctionEncoding(FD);
 }
 
 void CXXNameMangler::mangleUnqualifiedName(const NamedDecl *ND) {
@@ -894,32 +895,32 @@ namespace clang {
   
   /// \brief Mangles the a thunk with the offset n for the declaration D and
   /// emits that name to the given output stream.
-  void mangleThunk(const NamedDecl *D, int64_t nv, int64_t v,
+  void mangleThunk(const FunctionDecl *FD, int64_t nv, int64_t v,
                    ASTContext &Context, llvm::raw_ostream &os) {
     // FIXME: Hum, we might have to thunk these, fix.
-    assert(!isa<CXXConstructorDecl>(D) &&
+    assert(!isa<CXXConstructorDecl>(FD) &&
            "Use mangleCXXCtor for constructor decls!");
-    assert(!isa<CXXDestructorDecl>(D) &&
+    assert(!isa<CXXDestructorDecl>(FD) &&
            "Use mangleCXXDtor for destructor decls!");
     
     CXXNameMangler Mangler(Context, os);
-    Mangler.mangleThunk(D, nv, v);
+    Mangler.mangleThunk(FD, nv, v);
     os.flush();
   }
   
   /// \brief Mangles the a covariant thunk for the declaration D and emits that
   /// name to the given output stream.
-  void mangleCovariantThunk(const NamedDecl *D, int64_t nv_t, int64_t v_t,
+  void mangleCovariantThunk(const FunctionDecl *FD, int64_t nv_t, int64_t v_t,
                             int64_t nv_r, int64_t v_r, ASTContext &Context,
                             llvm::raw_ostream &os) {
     // FIXME: Hum, we might have to thunk these, fix.
-    assert(!isa<CXXConstructorDecl>(D) &&
+    assert(!isa<CXXConstructorDecl>(FD) &&
            "Use mangleCXXCtor for constructor decls!");
-    assert(!isa<CXXDestructorDecl>(D) &&
+    assert(!isa<CXXDestructorDecl>(FD) &&
            "Use mangleCXXDtor for destructor decls!");
     
     CXXNameMangler Mangler(Context, os);
-    Mangler.mangleCovariantThunk(D, nv_t, v_t, nv_r, v_r);
+    Mangler.mangleCovariantThunk(FD, nv_t, v_t, nv_r, v_r);
     os.flush();
   }
   
