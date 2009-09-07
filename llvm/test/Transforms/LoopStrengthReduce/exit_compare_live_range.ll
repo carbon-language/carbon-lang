@@ -12,7 +12,7 @@ no_exit:		; preds = %no_exit, %entry
 	volatile store float 0.000000e+00, float* %D
 	%indvar.next = add i32 %indvar, 1		; <i32> [#uses=2]
 ; CHECK: icmp
-; CHECK: br i1
+; CHECK-NEXT: br i1
 	%exitcond = icmp eq i32 %indvar.next, %E		; <i1> [#uses=1]
 	br i1 %exitcond, label %loopexit, label %no_exit
 loopexit:		; preds = %no_exit
