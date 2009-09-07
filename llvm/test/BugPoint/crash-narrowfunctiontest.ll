@@ -1,6 +1,6 @@
 ; Test that bugpoint can narrow down the testcase to the important function
 ;
-; RUN: bugpoint %s -bugpoint-crashcalls -silence-passes > /dev/null
+; RUN: bugpoint %s -output-prefix %t -bugpoint-crashcalls -silence-passes > /dev/null
 
 define i32 @foo() { ret i32 1 }
 

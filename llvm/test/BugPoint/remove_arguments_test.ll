@@ -1,4 +1,4 @@
-; RUN: bugpoint %s -bugpoint-crashcalls -silence-passes
+; RUN: bugpoint %s -output-prefix %t -bugpoint-crashcalls -silence-passes
 
 ; Test to make sure that arguments are removed from the function if they are 
 ; unnecessary.
