@@ -2024,6 +2024,11 @@ static Constant *getVal(DenseMap<Value*, Constant*> &ComputedValues,
 /// we punt.  We basically just support direct accesses to globals and GEP's of
 /// globals.  This should be kept up to date with CommitValueTo.
 static bool isSimpleEnoughPointerToCommit(Constant *C, LLVMContext &Context) {
+  // Conservatively, avoid aggregate types. This is because we don't
+  // want to worry about them partially overlapping other stores.
+  if (!cast<PointerType>(C->getType())->getElementType()->isSingleValueType())
+    return false;
+
   if (GlobalVariable *GV = dyn_cast<GlobalVariable>(C))
     // Do not allow weak/linkonce/dllimport/dllexport linkage or
     // external globals.
