@@ -30,6 +30,7 @@
 using namespace llvm;
 
 namespace llvm {
+  extern cl::opt<std::string> OutputPrefix;
   extern cl::list<std::string> InputArgv;
 }
 
@@ -301,12 +302,15 @@ static bool ExtractLoops(BugDriver &BD,
              << " Please report a bug!\n";
       errs() << "      Continuing on with un-loop-extracted version.\n";
 
-      BD.writeProgramToFile("bugpoint-loop-extract-fail-tno.bc", ToNotOptimize);
-      BD.writeProgramToFile("bugpoint-loop-extract-fail-to.bc", ToOptimize);
-      BD.writeProgramToFile("bugpoint-loop-extract-fail-to-le.bc",
+      BD.writeProgramToFile(OutputPrefix + "-loop-extract-fail-tno.bc",
+                            ToNotOptimize);
+      BD.writeProgramToFile(OutputPrefix + "-loop-extract-fail-to.bc",
+                            ToOptimize);
+      BD.writeProgramToFile(OutputPrefix + "-loop-extract-fail-to-le.bc",
                             ToOptimizeLoopExtracted);
 
-      errs() << "Please submit the bugpoint-loop-extract-fail-*.bc files.\n";
+      errs() << "Please submit the " 
+             << OutputPrefix << "-loop-extract-fail-*.bc files.\n";
       delete ToOptimize;
       delete ToNotOptimize;
       delete ToOptimizeLoopExtracted;

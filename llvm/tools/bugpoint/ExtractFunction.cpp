@@ -37,6 +37,7 @@ using namespace llvm;
 
 namespace llvm {
   bool DisableSimplifyCFG = false;
+  extern cl::opt<std::string> OutputPrefix;
 } // End llvm namespace
 
 namespace {
@@ -324,7 +325,7 @@ Module *BugDriver::ExtractMappedBlocksFromModule(const
                                                  Module *M) {
   char *ExtraArg = NULL;
 
-  sys::Path uniqueFilename("bugpoint-extractblocks");
+  sys::Path uniqueFilename(OutputPrefix + "-extractblocks");
   std::string ErrMsg;
   if (uniqueFilename.createTemporaryFileOnDisk(true, &ErrMsg)) {
     outs() << "*** Basic Block extraction failed!\n";

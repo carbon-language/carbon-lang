@@ -37,6 +37,9 @@
 #include <fstream>
 using namespace llvm;
 
+namespace llvm {
+  extern cl::opt<std::string> OutputPrefix;
+}
 
 namespace {
   // ChildOutput - This option captures the name of the child output file that
@@ -68,7 +71,7 @@ void BugDriver::EmitProgressBitcode(const std::string &ID, bool NoFlyer) {
   // Output the input to the current pass to a bitcode file, emit a message
   // telling the user how to reproduce it: opt -foo blah.bc
   //
-  std::string Filename = "bugpoint-" + ID + ".bc";
+  std::string Filename = OutputPrefix + "-" + ID + ".bc";
   if (writeProgramToFile(Filename)) {
     errs() <<  "Error opening file '" << Filename << "' for writing!\n";
     return;
@@ -129,7 +132,7 @@ bool BugDriver::runPasses(const std::vector<const PassInfo*> &Passes,
                           const char * const *ExtraArgs) const {
   // setup the output file name
   outs().flush();
-  sys::Path uniqueFilename("bugpoint-output.bc");
+  sys::Path uniqueFilename(OutputPrefix + "-output.bc");
   std::string ErrMsg;
   if (uniqueFilename.makeUnique(true, &ErrMsg)) {
     errs() << getToolName() << ": Error making unique filename: "
@@ -139,7 +142,7 @@ bool BugDriver::runPasses(const std::vector<const PassInfo*> &Passes,
   OutputFilename = uniqueFilename.str();
 
   // set up the input file name
-  sys::Path inputFilename("bugpoint-input.bc");
+  sys::Path inputFilename(OutputPrefix + "-input.bc");
   if (inputFilename.makeUnique(true, &ErrMsg)) {
     errs() << getToolName() << ": Error making unique filename: "
            << ErrMsg << "\n";

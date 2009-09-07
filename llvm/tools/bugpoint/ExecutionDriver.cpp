@@ -100,6 +100,10 @@ namespace llvm {
   cl::list<std::string>
   InputArgv("args", cl::Positional, cl::desc("<program arguments>..."),
             cl::ZeroOrMore, cl::PositionalEatsArgs);
+
+  cl::opt<std::string>
+  OutputPrefix("output-prefix", cl::init("bugpoint"),
+            cl::desc("Prefix to use for outputs (default: 'bugpoint')"));
 }
 
 namespace {
@@ -274,7 +278,7 @@ bool BugDriver::initializeExecutionEnvironment() {
 ///
 void BugDriver::compileProgram(Module *M) {
   // Emit the program to a bitcode file...
-  sys::Path BitcodeFile ("bugpoint-test-program.bc");
+  sys::Path BitcodeFile (OutputPrefix + "-test-program.bc");
   std::string ErrMsg;
   if (BitcodeFile.makeUnique(true,&ErrMsg)) {
     errs() << ToolName << ": Error making unique filename: " << ErrMsg 
@@ -310,7 +314,7 @@ std::string BugDriver::executeProgram(std::string OutputFile,
   std::string ErrMsg;
   if (BitcodeFile.empty()) {
     // Emit the program to a bitcode file...
-    sys::Path uniqueFilename("bugpoint-test-program.bc");
+    sys::Path uniqueFilename(OutputPrefix + "-test-program.bc");
     if (uniqueFilename.makeUnique(true, &ErrMsg)) {
       errs() << ToolName << ": Error making unique filename: "
              << ErrMsg << "!\n";
@@ -330,7 +334,7 @@ std::string BugDriver::executeProgram(std::string OutputFile,
   sys::Path BitcodePath (BitcodeFile);
   FileRemover BitcodeFileRemover(BitcodePath, CreatedBitcode && !SaveTemps);
 
-  if (OutputFile.empty()) OutputFile = "bugpoint-execution-output";
+  if (OutputFile.empty()) OutputFile = OutputPrefix + "-execution-output";
 
   // Check to see if this is a valid output filename...
   sys::Path uniqueFile(OutputFile);
