@@ -2032,7 +2032,8 @@ static bool isSimpleEnoughPointerToCommit(Constant *C, LLVMContext &Context) {
   if (ConstantExpr *CE = dyn_cast<ConstantExpr>(C))
     // Handle a constantexpr gep.
     if (CE->getOpcode() == Instruction::GetElementPtr &&
-        isa<GlobalVariable>(CE->getOperand(0))) {
+        isa<GlobalVariable>(CE->getOperand(0)) &&
+        cast<GEPOperator>(CE)->isInBounds()) {
       GlobalVariable *GV = cast<GlobalVariable>(CE->getOperand(0));
       // Do not allow weak/linkonce/dllimport/dllexport linkage or
       // external globals.
