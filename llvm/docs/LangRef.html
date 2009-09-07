@@ -2016,13 +2016,109 @@ Classifications</a> </div>
 <div class="doc_subsection"><a name="undefvalues">Undefined Values</a></div>
 <div class="doc_text">
 
-<p>The string '<tt>undef</tt>' is recognized as a type-less constant that has no
-   specific value.  Undefined values may be of any type and be used anywhere a
-   constant is permitted.</p>
+<p>The string '<tt>undef</tt>' can be used anywhere a constant is expected, and
+   indicates that the user of the value may recieve an unspecified bit-pattern.
+   Undefined values may be of any type (other than label or void) and be used
+   anywhere a constant is permitted.</p>
 
-<p>Undefined values indicate to the compiler that the program is well defined no
-   matter what value is used, giving the compiler more freedom to optimize.</p>
+<p>Undefined values are useful, because it indicates to the compiler that the
+   program is well defined no matter what value is used.  This gives the
+   compiler more freedom to optimize.  Here are some examples of (potentially
+   surprising) transformations that are valid (in pseudo IR):</p>
 
+
+<div class="doc_code">
+<pre>
+  %A = add %X, undef
+  %B = sub %X, undef
+  %C = xor %X, undef
+Safe:
+  %A = undef
+  %B = undef
+  %C = undef
+</pre>
+</div>
+
+<p>This is safe because all of the output bits are affected by the undef bits.
+Any output bit can have a zero or one depending on the input bits.</p>
+
+<div class="doc_code">
+<pre>
+  %A = or %X, undef
+  %B = and %X, undef
+Safe:
+  %A = -1
+  %B = 0
+Unsafe:
+  %A = undef
+  %B = undef
+</pre>
+</div>
+
+<p>These logical operations have bits that are not always affected by the input.
+For example, if "%X" has a zero bit, then the output of the 'and' operation will
+always be a zero, no matter what the corresponding bit from the undef is.  As
+such, it is unsafe to optimizer or assume that the result of the and is undef.
+However, it is safe to assume that all bits of the undef are 0, and optimize the
+and to 0.  Likewise, it is safe to assume that all the bits of the undef operand
+to the or could be set, allowing the or to be folded to -1.</p>
+
+<div class="doc_code">
+<pre>
+  %A = select undef, %X, %Y
+  %B = select undef, 42, %Y
+  %C = select %X, %Y, undef
+Safe:
+  %A = %X     (or %Y)
+  %B = 42     (or %Y)
+  %C = %Y
+Unsafe:
+  %A = undef
+  %B = undef
+  %C = undef
+</pre>
+</div>
+
+<p>This set of examples show that undefined select (and conditional branch)
+conditions can go "either way" but they have to come from one of the two
+operands.  In the %A example, if %X and %Y were both known to have a clear low
+bit, then %A would have to have a cleared low bit.  However, in the %C example,
+the optimizer is allowed to assume that the undef operand could be the same as
+%Y, allowing the whole select to be eliminated.</p>
+
+
+<div class="doc_code">
+<pre>
+  %A = xor undef, undef
+  
+  %B = undef
+  %C = xor %B, %B
+
+  %D = undef
+  %E = icmp lt %D, 4
+  %F = icmp gte %D, 4
+
+Safe:
+  %A = undef
+  %B = undef
+  %C = undef
+  %D = undef
+  %E = undef
+  %F = undef
+</pre>
+</div>
+
+<p>This example points out that two undef operands are not necessarily the same.
+This can be surprising to people (and also matches C semantics) where they
+assume that "X^X" is always zero, even if X is undef.  This isn't true for a
+number of reasons, but the short answer is that an undef "variable" can
+arbitrarily change its value over its "live range".  This is true because the
+"variable" doesn't actually <em>have a live range</em>.  Instead, the value is
+logically read from arbitrary registers that happen to be around when needed,
+so the value is not neccesarily consistent over time.  In fact, %A and %C need
+to have the same semantics of the core LLVM "replace all uses with" concept
+would not hold.</p>
+  
 </div>
 
 <!-- ======================================================================= -->
