@@ -942,8 +942,8 @@ Sema::PerformImplicitConversion(Expr *&From, QualType ToType,
         DefaultFunctionArrayConversion(From);
         OwningExprResult InitResult = 
           BuildCXXConstructExpr(/*FIXME:ConstructLoc*/SourceLocation(),
-                                ToType.getNonReferenceType(), 
-                                CD, &From, 1);
+                                ToType.getNonReferenceType(), CD, 
+                                MultiExprArg(*this, (void**)&From, 1));
         // Take ownership of this expression.
         From = InitResult.takeAs<Expr>();
         CastKind = CastExpr::CK_ConstructorConversion ;
@@ -988,7 +988,8 @@ Sema::PerformImplicitConversion(Expr *&From, QualType ToType,
     
     OwningExprResult FromResult = 
       BuildCXXConstructExpr(/*FIXME:ConstructLoc*/SourceLocation(), 
-                            ToType, SCS.CopyConstructor, &From, 1);
+                            ToType, SCS.CopyConstructor, 
+                            MultiExprArg(*this, (void**)&From, 1));
     
     if (FromResult.isInvalid())
       return true;

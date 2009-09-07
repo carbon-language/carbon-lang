@@ -1810,14 +1810,14 @@ public:
   bool InitializeVarWithConstructor(VarDecl *VD, 
                                     CXXConstructorDecl *Constructor,
                                     QualType DeclInitType, 
-                                    Expr **Exprs, unsigned NumExprs);
+                                    MultiExprArg Exprs);
 
   /// BuildCXXConstructExpr - Creates a complete call to a constructor,
   /// including handling of its default argument expressions.
   OwningExprResult BuildCXXConstructExpr(SourceLocation ConstructLoc, 
                                          QualType DeclInitType,
                                          CXXConstructorDecl *Constructor,
-                                         Expr **Exprs, unsigned NumExprs);
+                                         MultiExprArg Exprs);
 
   // FIXME: Can re remove this and have the above BuildCXXConstructExpr check if
   // the constructor can be elidable?
@@ -1825,7 +1825,7 @@ public:
                                          QualType DeclInitType,
                                          CXXConstructorDecl *Constructor,
                                          bool Elidable,
-                                         Expr **Exprs, unsigned NumExprs);
+                                         MultiExprArg Exprs);
   
   OwningExprResult BuildCXXTemporaryObjectExpr(CXXConstructorDecl *Cons, 
                                                QualType writtenTy, 

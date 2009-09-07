@@ -3284,7 +3284,8 @@ void Sema::ActOnUninitializedDecl(DeclPtrTy dcl,
           Var->setInvalidDecl();
         else { 
           if (!RD->hasTrivialConstructor() || !RD->hasTrivialDestructor()) {
-            if (InitializeVarWithConstructor(Var, Constructor, InitType, 0, 0))
+            if (InitializeVarWithConstructor(Var, Constructor, InitType, 
+                                             MultiExprArg(*this)))
               Var->setInvalidDecl();
           }
           

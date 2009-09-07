@@ -182,7 +182,8 @@ bool Sema::CheckInitializerTypes(Expr *&Init, QualType &DeclType,
         
         OwningExprResult InitResult = 
           BuildCXXConstructExpr(/*FIXME:ConstructLoc*/SourceLocation(),
-                                DeclType, Constructor, &Init, 1);
+                                DeclType, Constructor, 
+                                MultiExprArg(*this, (void**)&Init, 1));
         if (InitResult.isInvalid())
           return true;
         

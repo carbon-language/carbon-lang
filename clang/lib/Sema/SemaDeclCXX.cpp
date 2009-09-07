@@ -2809,8 +2809,8 @@ void Sema::DefineImplicitCopyConstructor(SourceLocation CurrentLocation,
 
 Sema::OwningExprResult
 Sema::BuildCXXConstructExpr(SourceLocation ConstructLoc, QualType DeclInitType,
-                            CXXConstructorDecl *Constructor,
-                            Expr **Exprs, unsigned NumExprs) {
+                            CXXConstructorDecl *Constructor, 
+                            MultiExprArg ExprArgs) {
   bool Elidable = false;
   
   // [class.copy]p15:
@@ -2821,8 +2821,8 @@ Sema::BuildCXXConstructExpr(SourceLocation ConstructLoc, QualType DeclInitType,
   //all, even if the class copy constructor or destructor have side effects.
   
   // FIXME: Is this enough?
-  if (Constructor->isCopyConstructor(Context) && NumExprs == 1) {
-    Expr *E = Exprs[0];
+  if (Constructor->isCopyConstructor(Context) && ExprArgs.size() == 1) {
+    Expr *E = ((Expr **)ExprArgs.get())[0];
     while (CXXBindTemporaryExpr *BE = dyn_cast<CXXBindTemporaryExpr>(E))
       E = BE->getSubExpr();
     
@@ -2831,7 +2831,7 @@ Sema::BuildCXXConstructExpr(SourceLocation ConstructLoc, QualType DeclInitType,
   }
   
   return BuildCXXConstructExpr(ConstructLoc, DeclInitType, Constructor, 
-                               Elidable, Exprs, NumExprs);
+                               Elidable, move(ExprArgs));
 }
 
 /// BuildCXXConstructExpr - Creates a complete call to a constructor,
@@ -2839,7 +2839,10 @@ Sema::BuildCXXConstructExpr(SourceLocation ConstructLoc, QualType DeclInitType,
 Sema::OwningExprResult
 Sema::BuildCXXConstructExpr(SourceLocation ConstructLoc, QualType DeclInitType,
                             CXXConstructorDecl *Constructor, bool Elidable,
-                            Expr **Exprs, unsigned NumExprs) {
+                            MultiExprArg ExprArgs) {
+  unsigned NumExprs = ExprArgs.size();
+  Expr **Exprs = (Expr **)ExprArgs.release();
+  
   ExprOwningPtr<CXXConstructExpr> Temp(this, 
                                        CXXConstructExpr::Create(Context, 
                                                                 DeclInitType, 
@@ -2897,10 +2900,10 @@ Sema::BuildCXXTemporaryObjectExpr(CXXConstructorDecl *Constructor,
 bool Sema::InitializeVarWithConstructor(VarDecl *VD, 
                                         CXXConstructorDecl *Constructor,
                                         QualType DeclInitType, 
-                                        Expr **Exprs, unsigned NumExprs) {
+                                        MultiExprArg Exprs) {
   OwningExprResult TempResult = 
     BuildCXXConstructExpr(VD->getLocation(), DeclInitType, Constructor, 
-                          Exprs, NumExprs);
+                          move(Exprs));
   if (TempResult.isInvalid())
     return true;
   
@@ -3003,7 +3006,7 @@ void Sema::AddCXXDirectInitializerToDecl(DeclPtrTy Dcl,
     else {
       VDecl->setCXXDirectInitializer(true);
       if (InitializeVarWithConstructor(VDecl, Constructor, DeclInitType, 
-                                       (Expr**)Exprs.release(), NumExprs))
+                                       move(Exprs)))
         RealDecl->setInvalidDecl();
       FinalizeVarWithDestructor(VDecl, DeclInitType);
     }

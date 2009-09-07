@@ -1448,12 +1448,10 @@ public:
                                            CXXConstructorDecl *Constructor,
                                            bool IsElidable,
                                            MultiExprArg Args) {
-    unsigned NumArgs = Args.size();
-    Expr **ArgsExprs = (Expr **)Args.release();
     return getSema().BuildCXXConstructExpr(/*FIXME:ConstructLoc*/
                                            SourceLocation(),
                                            T, Constructor, IsElidable,
-                                           ArgsExprs, NumArgs);
+                                           move(Args));
   }
 
   /// \brief Build a new object-construction expression.
