@@ -26,6 +26,9 @@
 #include "llvm/LLVMContext.h"
 #include "llvm/Module.h"
 #include "llvm/ADT/DenseSet.h"
+#include "llvm/ADT/SetVector.h"
+#include "llvm/ADT/SmallString.h"
+#include "llvm/Support/raw_ostream.h"
 #include "llvm/Target/TargetData.h"
 #include <sstream>
 #include <cstdio>
@@ -790,13 +793,13 @@ protected:
 
   /// LazySymbols - Symbols to generate a lazy reference for. See
   /// DefinedSymbols and FinishModule().
-  std::set<IdentifierInfo*> LazySymbols;
+  llvm::SetVector<IdentifierInfo*> LazySymbols;
 
   /// DefinedSymbols - External symbols which are defined by this
   /// module. The symbols in this list and LazySymbols are used to add
   /// special linker symbols which ensure that Objective-C modules are
   /// linked properly.
-  std::set<IdentifierInfo*> DefinedSymbols;
+  llvm::SetVector<IdentifierInfo*> DefinedSymbols;
 
   /// ClassNames - uniqued class names.
   llvm::DenseMap<IdentifierInfo*, llvm::GlobalVariable*> ClassNames;
@@ -3491,25 +3494,25 @@ void CGObjCMac::FinishModule() {
   // Add assembler directives to add lazy undefined symbol references
   // for classes which are referenced but not defined. This is
   // important for correct linker interaction.
+  //
+  // FIXME: It would be nice if we had an LLVM construct for this.
+  if (!LazySymbols.empty() || !DefinedSymbols.empty()) {
+    llvm::SmallString<256> Asm;
+    Asm += CGM.getModule().getModuleInlineAsm();
+    if (!Asm.empty() && Asm.back() != '\n')
+      Asm += '\n';
 
-  // FIXME: Uh, this isn't particularly portable.
-  std::stringstream s;
+    llvm::raw_svector_ostream OS(Asm);
+    for (llvm::SetVector<IdentifierInfo*>::iterator I = LazySymbols.begin(),
+           e = LazySymbols.end(); I != e; ++I)
+      OS << "\t.lazy_reference .objc_class_name_" << (*I)->getName() << "\n";
+    for (llvm::SetVector<IdentifierInfo*>::iterator I = DefinedSymbols.begin(),
+           e = DefinedSymbols.end(); I != e; ++I)
+      OS << "\t.objc_class_name_" << (*I)->getName() << "=0\n"
+         << "\t.globl .objc_class_name_" << (*I)->getName() << "\n";
 
-  if (!CGM.getModule().getModuleInlineAsm().empty())
-    s << "\n";
-
-  // FIXME: This produces non-determinstic output.
-  for (std::set<IdentifierInfo*>::iterator I = LazySymbols.begin(),
-         e = LazySymbols.end(); I != e; ++I) {
-    s << "\t.lazy_reference .objc_class_name_" << (*I)->getName() << "\n";
+    CGM.getModule().setModuleInlineAsm(OS.str());
   }
-  for (std::set<IdentifierInfo*>::iterator I = DefinedSymbols.begin(),
-         e = DefinedSymbols.end(); I != e; ++I) {
-    s << "\t.objc_class_name_" << (*I)->getName() << "=0\n"
-      << "\t.globl .objc_class_name_" << (*I)->getName() << "\n";
-  }
-
-  CGM.getModule().appendModuleInlineAsm(s.str());
 }
 
 CGObjCNonFragileABIMac::CGObjCNonFragileABIMac(CodeGen::CodeGenModule &cgm)
