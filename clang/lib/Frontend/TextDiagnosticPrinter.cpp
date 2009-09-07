@@ -66,7 +66,7 @@ void TextDiagnosticPrinter::HighlightRange(const SourceRange &R,
 
   SourceLocation Begin = SM.getInstantiationLoc(R.getBegin());
   SourceLocation End = SM.getInstantiationLoc(R.getEnd());
-  
+
   // If the End location and the start location are the same and are a macro
   // location, then the range was something that came from a macro expansion
   // or _Pragma.  If this is an object-like macro, the best we can do is to
@@ -74,15 +74,15 @@ void TextDiagnosticPrinter::HighlightRange(const SourceRange &R,
   // highlight the arguments.
   if (Begin == End && R.getEnd().isMacroID())
     End = SM.getInstantiationRange(R.getEnd()).second;
-  
+
   unsigned StartLineNo = SM.getInstantiationLineNumber(Begin);
   if (StartLineNo > LineNo || SM.getFileID(Begin) != FID)
     return;  // No intersection.
-  
+
   unsigned EndLineNo = SM.getInstantiationLineNumber(End);
   if (EndLineNo < LineNo || SM.getFileID(End) != FID)
     return;  // No intersection.
-  
+
   // Compute the column number of the start.
   unsigned StartColNo = 0;
   if (StartLineNo == LineNo) {
@@ -94,21 +94,21 @@ void TextDiagnosticPrinter::HighlightRange(const SourceRange &R,
   while (StartColNo < SourceLine.size() &&
          (SourceLine[StartColNo] == ' ' || SourceLine[StartColNo] == '\t'))
     ++StartColNo;
-  
+
   // Compute the column number of the end.
   unsigned EndColNo = CaretLine.size();
   if (EndLineNo == LineNo) {
     EndColNo = SM.getInstantiationColumnNumber(End);
     if (EndColNo) {
       --EndColNo;  // Zero base the col #.
-      
+
       // Add in the length of the token, so that we cover multi-char tokens.
       EndColNo += Lexer::MeasureTokenLength(End, SM, *LangOpts);
     } else {
       EndColNo = CaretLine.size();
     }
   }
-  
+
   // Pick the last non-whitespace column.
   if (EndColNo <= SourceLine.size())
     while (EndColNo-1 &&
@@ -116,7 +116,7 @@ void TextDiagnosticPrinter::HighlightRange(const SourceRange &R,
       --EndColNo;
   else
     EndColNo = SourceLine.size();
-  
+
   // Fill the range with ~'s.
   assert(StartColNo <= EndColNo && "Invalid range!");
   for (unsigned i = StartColNo; i < EndColNo; ++i)
@@ -156,7 +156,7 @@ static void SelectInterestingSourceRegion(std::string &SourceLine,
     for (; FixItStart != FixItEnd; ++FixItStart)
       if (!isspace(FixItInsertionLine[FixItStart]))
         break;
-    
+
     for (; FixItEnd != FixItStart; --FixItEnd)
       if (!isspace(FixItInsertionLine[FixItEnd - 1]))
         break;
@@ -189,16 +189,16 @@ static void SelectInterestingSourceRegion(std::string &SourceLine,
       CaretStart = 0;
     else if (CaretStart > 1) {
       unsigned NewStart = CaretStart - 1;
-        
+
       // Skip over any whitespace we see here; we're looking for
       // another bit of interesting text.
       while (NewStart && isspace(SourceLine[NewStart]))
         --NewStart;
-      
+
       // Skip over this bit of "interesting" text.
       while (NewStart && !isspace(SourceLine[NewStart]))
         --NewStart;
-      
+
       // Move up to the non-whitespace character we just saw.
       if (NewStart)
         ++NewStart;
@@ -220,7 +220,7 @@ static void SelectInterestingSourceRegion(std::string &SourceLine,
       // another bit of interesting text.
       while (NewEnd != SourceLength && isspace(SourceLine[NewEnd - 1]))
         ++NewEnd;
-        
+
       // Skip over this bit of "interesting" text.
       while (NewEnd != SourceLength && !isspace(SourceLine[NewEnd - 1]))
         ++NewEnd;
@@ -244,7 +244,7 @@ static void SelectInterestingSourceRegion(std::string &SourceLine,
     CaretLine.erase(CaretEnd, std::string::npos);
   if (FixItInsertionLine.size() > CaretEnd)
     FixItInsertionLine.erase(CaretEnd, std::string::npos);
-  
+
   if (CaretStart > 2) {
     SourceLine.replace(0, CaretStart, "  ...");
     CaretLine.replace(0, CaretStart, "     ");
@@ -271,7 +271,7 @@ void TextDiagnosticPrinter::EmitCaretDiagnostic(SourceLocation Loc,
     EmitCaretDiagnostic(OneLevelUp, Ranges, NumRanges, SM, 0, 0, Columns);
 
     Loc = SM.getImmediateSpellingLoc(Loc);
-    
+
     // Map the ranges.
     for (unsigned i = 0; i != NumRanges; ++i) {
       SourceLocation S = Ranges[i].getBegin(), E = Ranges[i].getEnd();
@@ -279,10 +279,10 @@ void TextDiagnosticPrinter::EmitCaretDiagnostic(SourceLocation Loc,
       if (E.isMacroID()) E = SM.getImmediateSpellingLoc(E);
       Ranges[i] = SourceRange(S, E);
     }
-    
+
     if (ShowLocation) {
       std::pair<FileID, unsigned> IInfo = SM.getDecomposedInstantiationLoc(Loc);
-      
+
       // Emit the file/line/column that this expansion came from.
       OS << SM.getBuffer(IInfo.first)->getBufferIdentifier() << ':'
          << SM.getLineNumber(IInfo.first, IInfo.second) << ':';
@@ -291,75 +291,75 @@ void TextDiagnosticPrinter::EmitCaretDiagnostic(SourceLocation Loc,
       OS << ' ';
     }
     OS << "note: instantiated from:\n";
-    
+
     EmitCaretDiagnostic(Loc, Ranges, NumRanges, SM, Hints, NumHints, Columns);
     return;
   }
-  
+
   // Decompose the location into a FID/Offset pair.
   std::pair<FileID, unsigned> LocInfo = SM.getDecomposedLoc(Loc);
   FileID FID = LocInfo.first;
   unsigned FileOffset = LocInfo.second;
-  
+
   // Get information about the buffer it points into.
   std::pair<const char*, const char*> BufferInfo = SM.getBufferData(FID);
   const char *BufStart = BufferInfo.first;
 
   unsigned ColNo = SM.getColumnNumber(FID, FileOffset);
-  unsigned CaretEndColNo 
+  unsigned CaretEndColNo
     = ColNo + Lexer::MeasureTokenLength(Loc, SM, *LangOpts);
 
   // Rewind from the current position to the start of the line.
   const char *TokPtr = BufStart+FileOffset;
   const char *LineStart = TokPtr-ColNo+1; // Column # is 1-based.
-  
-  
+
+
   // Compute the line end.  Scan forward from the error position to the end of
   // the line.
   const char *LineEnd = TokPtr;
   while (*LineEnd != '\n' && *LineEnd != '\r' && *LineEnd != '\0')
     ++LineEnd;
-  
+
   // Copy the line of code into an std::string for ease of manipulation.
   std::string SourceLine(LineStart, LineEnd);
-  
+
   // Create a line for the caret that is filled with spaces that is the same
   // length as the line of source code.
   std::string CaretLine(LineEnd-LineStart, ' ');
-  
+
   // Highlight all of the characters covered by Ranges with ~ characters.
   if (NumRanges) {
     unsigned LineNo = SM.getLineNumber(FID, FileOffset);
-    
+
     for (unsigned i = 0, e = NumRanges; i != e; ++i)
       HighlightRange(Ranges[i], SM, LineNo, FID, CaretLine, SourceLine);
   }
-  
+
   // Next, insert the caret itself.
   if (ColNo-1 < CaretLine.size())
     CaretLine[ColNo-1] = '^';
   else
     CaretLine.push_back('^');
-  
+
   // Scan the source line, looking for tabs.  If we find any, manually expand
   // them to 8 characters and update the CaretLine to match.
   for (unsigned i = 0; i != SourceLine.size(); ++i) {
     if (SourceLine[i] != '\t') continue;
-    
+
     // Replace this tab with at least one space.
     SourceLine[i] = ' ';
-    
+
     // Compute the number of spaces we need to insert.
     unsigned NumSpaces = ((i+8)&~7) - (i+1);
     assert(NumSpaces < 8 && "Invalid computation of space amt");
-    
+
     // Insert spaces into the SourceLine.
     SourceLine.insert(i+1, NumSpaces, ' ');
-    
+
     // Insert spaces or ~'s into CaretLine.
     CaretLine.insert(i+1, NumSpaces, CaretLine[i] == '~' ? '~' : ' ');
   }
-  
+
   // If we are in -fdiagnostics-print-source-range-info mode, we are trying to
   // produce easily machine parsable output.  Add a space before the source line
   // and the caret to make it trivial to tell the main diagnostic line from what
@@ -368,7 +368,7 @@ void TextDiagnosticPrinter::EmitCaretDiagnostic(SourceLocation Loc,
     SourceLine = ' ' + SourceLine;
     CaretLine = ' ' + CaretLine;
   }
-    
+
   std::string FixItInsertionLine;
   if (NumHints && PrintFixItInfo) {
     for (const CodeModificationHint *Hint = Hints, *LastHint = Hints + NumHints;
@@ -376,15 +376,15 @@ void TextDiagnosticPrinter::EmitCaretDiagnostic(SourceLocation Loc,
       if (Hint->InsertionLoc.isValid()) {
         // We have an insertion hint. Determine whether the inserted
         // code is on the same line as the caret.
-        std::pair<FileID, unsigned> HintLocInfo 
+        std::pair<FileID, unsigned> HintLocInfo
           = SM.getDecomposedInstantiationLoc(Hint->InsertionLoc);
         if (SM.getLineNumber(HintLocInfo.first, HintLocInfo.second) ==
               SM.getLineNumber(FID, FileOffset)) {
           // Insert the new code into the line just below the code
           // that the user wrote.
-          unsigned HintColNo 
+          unsigned HintColNo
             = SM.getColumnNumber(HintLocInfo.first, HintLocInfo.second);
-          unsigned LastColumnModified 
+          unsigned LastColumnModified
             = HintColNo - 1 + Hint->CodeToInsert.size();
           if (LastColumnModified > FixItInsertionLine.size())
             FixItInsertionLine.resize(LastColumnModified, ' ');
@@ -407,7 +407,7 @@ void TextDiagnosticPrinter::EmitCaretDiagnostic(SourceLocation Loc,
   // Finally, remove any blank spaces from the end of CaretLine.
   while (CaretLine[CaretLine.size()-1] == ' ')
     CaretLine.erase(CaretLine.end()-1);
-  
+
   // Emit what we have computed.
   OS << SourceLine << '\n';
 
@@ -421,7 +421,7 @@ void TextDiagnosticPrinter::EmitCaretDiagnostic(SourceLocation Loc,
     if (UseColors)
       // Print fixit line in color
       OS.changeColor(fixitColor, false);
-    if (PrintRangeInfo) 
+    if (PrintRangeInfo)
       OS << ' ';
     OS << FixItInsertionLine << '\n';
     if (UseColors)
@@ -435,7 +435,7 @@ void TextDiagnosticPrinter::EmitCaretDiagnostic(SourceLocation Loc,
 /// \returns The index of the first non-whitespace character that is
 /// greater than or equal to Idx or, if no such character exists,
 /// returns the end of the string.
-static unsigned skipWhitespace(unsigned Idx, 
+static unsigned skipWhitespace(unsigned Idx,
 			       const llvm::SmallVectorImpl<char> &Str,
                                unsigned Length) {
   while (Idx < Length && isspace(Str[Idx]))
@@ -455,7 +455,7 @@ static inline char findMatchingPunctuation(char c) {
   case '`': return '\'';
   case '"':  return '"';
   case '(':  return ')';
-  case '[': return ']'; 
+  case '[': return ']';
   case '{': return '}';
   default: break;
   }
@@ -468,9 +468,9 @@ static inline char findMatchingPunctuation(char c) {
 ///
 /// \returns the index pointing one character past the end of the
 /// word.
-unsigned findEndOfWord(unsigned Start, 
+unsigned findEndOfWord(unsigned Start,
                        const llvm::SmallVectorImpl<char> &Str,
-                       unsigned Length, unsigned Column, 
+                       unsigned Length, unsigned Column,
                        unsigned Columns) {
   unsigned End = Start + 1;
 
@@ -535,13 +535,13 @@ unsigned findEndOfWord(unsigned Start,
 ///
 /// \returns true if word-wrapping was required, or false if the
 /// string fit on the first line.
-static bool PrintWordWrapped(llvm::raw_ostream &OS, 
-			     const llvm::SmallVectorImpl<char> &Str, 
-                             unsigned Columns, 
+static bool PrintWordWrapped(llvm::raw_ostream &OS,
+			     const llvm::SmallVectorImpl<char> &Str,
+                             unsigned Columns,
                              unsigned Column = 0,
                              unsigned Indentation = WordWrapIndentation) {
   unsigned Length = Str.size();
-  
+
   // If there is a newline in this message somewhere, find that
   // newline and split the message into the part before the newline
   // (which will be word-wrapped) and the part from the newline one
@@ -556,7 +556,7 @@ static bool PrintWordWrapped(llvm::raw_ostream &OS,
   llvm::SmallString<16> IndentStr;
   IndentStr.assign(Indentation, ' ');
   bool Wrapped = false;
-  for (unsigned WordStart = 0, WordEnd; WordStart < Length; 
+  for (unsigned WordStart = 0, WordEnd; WordStart < Length;
        WordStart = WordEnd) {
     // Find the beginning of the next word.
     WordStart = skipWhitespace(WordStart, Str, Length);
@@ -565,7 +565,7 @@ static bool PrintWordWrapped(llvm::raw_ostream &OS,
 
     // Find the end of this word.
     WordEnd = findEndOfWord(WordStart, Str, Length, Column, Columns);
-    
+
     // Does this word fit on the current line?
     unsigned WordLength = WordEnd - WordStart;
     if (Column + WordLength < Columns) {
@@ -587,7 +587,7 @@ static bool PrintWordWrapped(llvm::raw_ostream &OS,
     Column = Indentation + WordLength;
     Wrapped = true;
   }
-  
+
   if (Length == Str.size())
     return Wrapped; // We're done.
 
@@ -597,7 +597,7 @@ static bool PrintWordWrapped(llvm::raw_ostream &OS,
   return true;
 }
 
-void TextDiagnosticPrinter::HandleDiagnostic(Diagnostic::Level Level, 
+void TextDiagnosticPrinter::HandleDiagnostic(Diagnostic::Level Level,
                                              const DiagnosticInfo &Info) {
   // Keeps track of the the starting position of the location
   // information (e.g., "foo.c:10:4:") that precedes the error
@@ -611,7 +611,7 @@ void TextDiagnosticPrinter::HandleDiagnostic(Diagnostic::Level Level,
     const SourceManager &SM = Info.getLocation().getManager();
     PresumedLoc PLoc = SM.getPresumedLoc(Info.getLocation());
     unsigned LineNo = PLoc.getLine();
-    
+
     // First, if this diagnostic is not in the main file, print out the
     // "included from" lines.
     if (LastWarningLoc != PLoc.getIncludeLoc()) {
@@ -619,7 +619,7 @@ void TextDiagnosticPrinter::HandleDiagnostic(Diagnostic::Level Level,
       PrintIncludeStack(LastWarningLoc, SM);
       StartOfLocationInfo = OS.tell();
     }
-    
+
     // Compute the column number.
     if (ShowLocation) {
       if (UseColors)
@@ -628,12 +628,12 @@ void TextDiagnosticPrinter::HandleDiagnostic(Diagnostic::Level Level,
       if (ShowColumn)
         if (unsigned ColNo = PLoc.getColumn())
           OS << ColNo << ':';
-      
+
       if (PrintRangeInfo && Info.getNumRanges()) {
         FileID CaretFileID =
           SM.getFileID(SM.getInstantiationLoc(Info.getLocation()));
         bool PrintedRange = false;
-        
+
         for (unsigned i = 0, e = Info.getNumRanges(); i != e; ++i) {
           // Ignore invalid ranges.
           if (!Info.getRange(i).isValid()) continue;
@@ -642,7 +642,7 @@ void TextDiagnosticPrinter::HandleDiagnostic(Diagnostic::Level Level,
           SourceLocation E = Info.getRange(i).getEnd();
           B = SM.getInstantiationLoc(B);
           E = SM.getInstantiationLoc(E);
-          
+
           // If the End location and the start location are the same and are a
           // macro location, then the range was something that came from a macro
           // expansion or _Pragma.  If this is an object-like macro, the best we
@@ -653,22 +653,22 @@ void TextDiagnosticPrinter::HandleDiagnostic(Diagnostic::Level Level,
 
           std::pair<FileID, unsigned> BInfo = SM.getDecomposedLoc(B);
           std::pair<FileID, unsigned> EInfo = SM.getDecomposedLoc(E);
-          
+
           // If the start or end of the range is in another file, just discard
           // it.
           if (BInfo.first != CaretFileID || EInfo.first != CaretFileID)
             continue;
-          
+
           // Add in the length of the token, so that we cover multi-char tokens.
           unsigned TokSize = Lexer::MeasureTokenLength(E, SM, *LangOpts);
-          
+
           OS << '{' << SM.getLineNumber(BInfo.first, BInfo.second) << ':'
              << SM.getColumnNumber(BInfo.first, BInfo.second) << '-'
              << SM.getLineNumber(EInfo.first, EInfo.second) << ':'
              << (SM.getColumnNumber(EInfo.first, EInfo.second)+TokSize) << '}';
           PrintedRange = true;
         }
-        
+
         if (PrintedRange)
           OS << ':';
       }
@@ -688,7 +688,7 @@ void TextDiagnosticPrinter::HandleDiagnostic(Diagnostic::Level Level,
     case Diagnostic::Fatal:   OS.changeColor(fatalColor, true); break;
     }
   }
-  
+
   switch (Level) {
   case Diagnostic::Ignored: assert(0 && "Invalid diagnostic type");
   case Diagnostic::Note:    OS << "note: "; break;
@@ -702,14 +702,14 @@ void TextDiagnosticPrinter::HandleDiagnostic(Diagnostic::Level Level,
 
   llvm::SmallString<100> OutStr;
   Info.FormatDiagnostic(OutStr);
-  
+
   if (PrintDiagnosticOption)
     if (const char *Opt = Diagnostic::getWarningOptionForDiag(Info.getID())) {
       OutStr += " [-W";
       OutStr += Opt;
       OutStr += ']';
     }
-  
+
   if (UseColors) {
     // Print warnings, errors and fatal errors in bold, no color
     switch (Level) {
@@ -732,7 +732,7 @@ void TextDiagnosticPrinter::HandleDiagnostic(Diagnostic::Level Level,
   OS << '\n';
   if (UseColors)
     OS.resetColor();
-  
+
   // If caret diagnostics are enabled and we have location, we want to
   // emit the caret.  However, we only do this if the location moved
   // from the last diagnostic, if the last diagnostic was a note that
@@ -740,7 +740,7 @@ void TextDiagnosticPrinter::HandleDiagnostic(Diagnostic::Level Level,
   // diagnostic has ranges.  We don't want to emit the same caret
   // multiple times if one loc has multiple diagnostics.
   if (CaretDiagnostics && Info.getLocation().isValid() &&
-      ((LastLoc != Info.getLocation()) || Info.getNumRanges() || 
+      ((LastLoc != Info.getLocation()) || Info.getNumRanges() ||
        (LastCaretDiagnosticWasNote && Level != Diagnostic::Note) ||
        Info.getNumCodeModificationHints())) {
     // Cache the LastLoc, it allows us to omit duplicate source/caret spewage.
@@ -753,7 +753,7 @@ void TextDiagnosticPrinter::HandleDiagnostic(Diagnostic::Level Level,
     assert(NumRanges < 20 && "Out of space");
     for (unsigned i = 0; i != NumRanges; ++i)
       Ranges[i] = Info.getRange(i);
-    
+
     unsigned NumHints = Info.getNumCodeModificationHints();
     for (unsigned idx = 0; idx < NumHints; ++idx) {
       const CodeModificationHint &Hint = Info.getCodeModificationHint(idx);
@@ -768,6 +768,6 @@ void TextDiagnosticPrinter::HandleDiagnostic(Diagnostic::Level Level,
                         Info.getNumCodeModificationHints(),
                         MessageLength);
   }
-  
+
   OS.flush();
 }
