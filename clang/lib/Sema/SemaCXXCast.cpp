@@ -759,6 +759,14 @@ TryStaticImplicitCast(Sema &Self, Expr *SrcExpr, QualType DestType,
                       bool CStyle, const SourceRange &OpRange, unsigned &msg,
                       CXXMethodDecl *&ConversionDecl)
 {
+  if (DestType->isRecordType()) {
+    if (Self.RequireCompleteType(OpRange.getBegin(), DestType,
+                                 diag::err_bad_dynamic_cast_incomplete)) {
+      msg = 0;
+      return TC_Failed;
+    }
+  }
+  
   if (DestType->isReferenceType()) {
     // At this point of CheckStaticCast, if the destination is a reference,
     // this has to work. There is no other way that works.

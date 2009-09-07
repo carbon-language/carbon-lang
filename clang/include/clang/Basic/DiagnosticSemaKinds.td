@@ -1515,6 +1515,7 @@ def err_bad_static_cast_pointer_nonpointer : Error<
   "cannot cast from type %1 to pointer type %2">;
 def err_bad_static_cast_member_pointer_nonmp : Error<
   "cannot cast from type %1 to member pointer type %2">;
+def err_bad_static_cast_incomplete : Error<"%0 is an incomplete type">;
 
 // These messages don't adhere to the pattern.
 // FIXME: Display the path somehow better.
