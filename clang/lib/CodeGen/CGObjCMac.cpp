@@ -30,7 +30,6 @@
 #include "llvm/ADT/SmallString.h"
 #include "llvm/Support/raw_ostream.h"
 #include "llvm/Target/TargetData.h"
-#include <sstream>
 #include <cstdio>
 
 using namespace clang;
