@@ -883,19 +883,6 @@ bool BitcodeReader::ResolveGlobalAndAliasInits() {
   return false;
 }
 
-static void SetOptimizationFlags(Value *V, uint64_t Flags) {
-  if (OverflowingBinaryOperator *OBO =
-        dyn_cast<OverflowingBinaryOperator>(V)) {
-    if (Flags & (1 << bitc::OBO_NO_SIGNED_WRAP))
-      OBO->setHasNoSignedWrap(true);
-    if (Flags & (1 << bitc::OBO_NO_UNSIGNED_WRAP))
-      OBO->setHasNoUnsignedWrap(true);
-  } else if (SDivOperator *Div = dyn_cast<SDivOperator>(V)) {
-    if (Flags & (1 << bitc::SDIV_EXACT))
-      Div->setIsExact(true);
-  }
-}
-
 bool BitcodeReader::ParseConstants() {
   if (Stream.EnterSubBlock(bitc::CONSTANTS_BLOCK_ID))
     return Error("Malformed block record");
@@ -1047,10 +1034,22 @@ bool BitcodeReader::ParseConstants() {
       } else {
         Constant *LHS = ValueList.getConstantFwdRef(Record[1], CurTy);
         Constant *RHS = ValueList.getConstantFwdRef(Record[2], CurTy);
-        V = ConstantExpr::get(Opc, LHS, RHS);
+        unsigned Flags = 0;
+        if (Record.size() >= 4) {
+          if (Opc == Instruction::Add ||
+              Opc == Instruction::Sub ||
+              Opc == Instruction::Mul) {
+            if (Record[3] & (1 << bitc::OBO_NO_SIGNED_WRAP))
+              Flags |= OverflowingBinaryOperator::NoSignedWrap;
+            if (Record[3] & (1 << bitc::OBO_NO_UNSIGNED_WRAP))
+              Flags |= OverflowingBinaryOperator::NoUnsignedWrap;
+          } else if (Opc == Instruction::SDiv) {
+            if (Record[3] & (1 << bitc::SDIV_EXACT))
+              Flags |= SDivOperator::IsExact;
+          }
+        }
+        V = ConstantExpr::get(Opc, LHS, RHS, Flags);
       }
-      if (Record.size() >= 4)
-        SetOptimizationFlags(V, Record[3]);
       break;
     }  
     case bitc::CST_CODE_CE_CAST: {  // CE_CAST: [opcode, opty, opval]
@@ -1075,10 +1074,12 @@ bool BitcodeReader::ParseConstants() {
         if (!ElTy) return Error("Invalid CE_GEP record");
         Elts.push_back(ValueList.getConstantFwdRef(Record[i+1], ElTy));
       }
-      V = ConstantExpr::getGetElementPtr(Elts[0], &Elts[1], 
-                                               Elts.size()-1);
       if (BitCode == bitc::CST_CODE_CE_INBOUNDS_GEP)
-        cast<GEPOperator>(V)->setIsInBounds(true);
+        V = ConstantExpr::getInBoundsGetElementPtr(Elts[0], &Elts[1],
+                                                   Elts.size()-1);
+      else
+        V = ConstantExpr::getGetElementPtr(Elts[0], &Elts[1],
+                                           Elts.size()-1);
       break;
     }
     case bitc::CST_CODE_CE_SELECT:  // CE_SELECT: [opval#, opval#, opval#]
@@ -1610,8 +1611,19 @@ bool BitcodeReader::ParseFunctionBody(Function *F) {
       int Opc = GetDecodedBinaryOpcode(Record[OpNum++], LHS->getType());
       if (Opc == -1) return Error("Invalid BINOP record");
       I = BinaryOperator::Create((Instruction::BinaryOps)Opc, LHS, RHS);
-      if (OpNum < Record.size())
-        SetOptimizationFlags(I, Record[3]);
+      if (OpNum < Record.size()) {
+        if (Opc == Instruction::Add ||
+            Opc == Instruction::Sub ||
+            Opc == Instruction::Mul) {
+          if (Record[3] & (1 << bitc::OBO_NO_SIGNED_WRAP))
+            cast<BinaryOperator>(I)->setHasNoSignedWrap(true);
+          if (Record[3] & (1 << bitc::OBO_NO_UNSIGNED_WRAP))
+            cast<BinaryOperator>(I)->setHasNoUnsignedWrap(true);
+        } else if (Opc == Instruction::SDiv) {
+          if (Record[3] & (1 << bitc::SDIV_EXACT))
+            cast<BinaryOperator>(I)->setIsExact(true);
+        }
+      }
       break;
     }
     case bitc::FUNC_CODE_INST_CAST: {    // CAST: [opval, opty, destty, castopc]
@@ -1645,7 +1657,7 @@ bool BitcodeReader::ParseFunctionBody(Function *F) {
 
       I = GetElementPtrInst::Create(BasePtr, GEPIdx.begin(), GEPIdx.end());
       if (BitCode == bitc::FUNC_CODE_INST_INBOUNDS_GEP)
-        cast<GEPOperator>(I)->setIsInBounds(true);
+        cast<GetElementPtrInst>(I)->setIsInBounds(true);
       break;
     }
       

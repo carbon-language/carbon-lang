@@ -146,12 +146,6 @@ public:
   // Only use when in type resolution situations!
   void uncheckedReplaceAllUsesWith(Value *V);
 
-  /// clearOptionalData - Clear any optional optimization data from this Value.
-  /// Transformation passes must call this method whenever changing the IR
-  /// in a way that would affect the values produced by this Value, unless
-  /// it takes special care to ensure correctness in some other way.
-  void clearOptionalData() { SubclassOptionalData = 0; }
-
   //----------------------------------------------------------------------
   // Methods for handling the chain of uses of this Value.
   //
@@ -238,6 +232,13 @@ public:
   ///   the ValueTy enum.
   unsigned getValueID() const {
     return SubclassID;
+  }
+
+  /// getRawSubclassOptionalData - Return the raw optional flags value
+  /// contained in this value. This should only be used when testing two
+  /// Values for equivalence.
+  unsigned getRawSubclassOptionalData() const {
+    return SubclassOptionalData;
   }
 
   /// hasSameSubclassOptionalData - Test whether the optional flags contained
