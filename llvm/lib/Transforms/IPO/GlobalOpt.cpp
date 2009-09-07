@@ -2024,20 +2024,21 @@ static Constant *getVal(DenseMap<Value*, Constant*> &ComputedValues,
 /// we punt.  We basically just support direct accesses to globals and GEP's of
 /// globals.  This should be kept up to date with CommitValueTo.
 static bool isSimpleEnoughPointerToCommit(Constant *C, LLVMContext &Context) {
-  if (GlobalVariable *GV = dyn_cast<GlobalVariable>(C)) {
-    if (!GV->hasExternalLinkage() && !GV->hasLocalLinkage())
-      return false;  // do not allow weak/linkonce/dllimport/dllexport linkage.
-    return !GV->isDeclaration();  // reject external globals.
-  }
+  if (GlobalVariable *GV = dyn_cast<GlobalVariable>(C))
+    // Do not allow weak/linkonce/dllimport/dllexport linkage or
+    // external globals.
+    return GV->hasDefinitiveInitializer();
+
   if (ConstantExpr *CE = dyn_cast<ConstantExpr>(C))
     // Handle a constantexpr gep.
     if (CE->getOpcode() == Instruction::GetElementPtr &&
         isa<GlobalVariable>(CE->getOperand(0))) {
       GlobalVariable *GV = cast<GlobalVariable>(CE->getOperand(0));
-      if (!GV->hasExternalLinkage() && !GV->hasLocalLinkage())
-        return false;  // do not allow weak/linkonce/dllimport/dllexport linkage.
-      return GV->hasInitializer() &&
-             ConstantFoldLoadThroughGEPConstantExpr(GV->getInitializer(), CE,
+      // Do not allow weak/linkonce/dllimport/dllexport linkage or
+      // external globals.
+      if (!GV->hasDefinitiveInitializer())
+        return false;
+      return ConstantFoldLoadThroughGEPConstantExpr(GV->getInitializer(), CE,
                                                     Context);
     }
   return false;
