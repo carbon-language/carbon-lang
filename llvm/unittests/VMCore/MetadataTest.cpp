@@ -85,7 +85,11 @@ TEST(MDNodeTest, Simple) {
   MDNode *n2 = MDNode::get(Context, &c1, 1);
   MDNode *n3 = MDNode::get(Context, &V[0], 3);
   EXPECT_NE(n1, n2);
+#ifdef ENABLE_MDNODE_UNIQUING
   EXPECT_EQ(n1, n3);
+#else
+  (void) n3;
+#endif
 
   EXPECT_EQ(3u, n1->getNumElements());
   EXPECT_EQ(s1, n1->getElement(0));
