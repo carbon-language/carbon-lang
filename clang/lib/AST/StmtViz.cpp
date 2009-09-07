@@ -15,7 +15,6 @@
 #include "clang/AST/StmtGraphTraits.h"
 #include "clang/AST/Decl.h"
 #include "llvm/Support/GraphWriter.h"
-#include <sstream>
 
 using namespace clang;
 
