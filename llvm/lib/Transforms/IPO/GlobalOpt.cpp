@@ -2044,6 +2044,27 @@ static bool isSimpleEnoughPointerToCommit(Constant *C, LLVMContext &Context) {
       // external globals.
       if (!GV->hasDefinitiveInitializer())
         return false;
+
+      gep_type_iterator GEPI = gep_type_begin(CE), E = gep_type_end(CE);
+      User::op_iterator OI = next(CE->op_begin());
+
+      // The first index must be zero.
+      ConstantInt *CI = dyn_cast<ConstantInt>(*OI);
+      if (!CI || !CI->isZero()) return false;
+      ++GEPI;
+      ++OI;
+
+      // The remaining indices must be compile-time known integers within the
+      // bounds of the corresponding static array types.
+      for (; GEPI != E; ++GEPI, ++OI) {
+        CI = dyn_cast<ConstantInt>(*OI);
+        if (!CI) return false;
+        if (const ArrayType *ATy = dyn_cast<ArrayType>(*GEPI))
+          if (CI->getValue().getActiveBits() > 64 ||
+              CI->getZExtValue() >= ATy->getNumElements())
+            return false;
+      }
+
       return ConstantFoldLoadThroughGEPConstantExpr(GV->getInitializer(), CE,
                                                     Context);
     }
