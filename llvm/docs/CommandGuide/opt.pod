@@ -51,6 +51,10 @@ Print a summary of command line options.
 
 Specify the output filename.
 
+=item B<-S>
+
+Write output in LLVM intermediate language (instead of bitcode).
+
 =item B<-{passname}>
 
 B<opt> provides the ability to run any of LLVM's optimization or analysis passes
