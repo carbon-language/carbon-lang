@@ -1,10 +1,11 @@
 ; RUN: opt -tailcallelim %s | llvm-dis | FileCheck %s
+; PR615
 
 declare void @bar(i32*)
 
 define i32 @foo() {
 ; CHECK: i32 @foo()
-; CHECK: alloca
+; CHECK-NEXT: alloca
 	%A = alloca i32		; <i32*> [#uses=2]
 	store i32 17, i32* %A
 	call void @bar( i32* %A )
