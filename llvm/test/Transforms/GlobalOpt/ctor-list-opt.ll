@@ -43,9 +43,9 @@ define internal void @CTOR4() {
 }
 
 define internal void @CTOR5() {
-	%X.2p = getelementptr { i32, [2 x i32] }* @X, i32 0, i32 1, i32 0		; <i32*> [#uses=2]
+	%X.2p = getelementptr inbounds { i32, [2 x i32] }* @X, i32 0, i32 1, i32 0		; <i32*> [#uses=2]
 	%X.2 = load i32* %X.2p		; <i32> [#uses=1]
-	%X.1p = getelementptr { i32, [2 x i32] }* @X, i32 0, i32 0		; <i32*> [#uses=1]
+	%X.1p = getelementptr inbounds { i32, [2 x i32] }* @X, i32 0, i32 0		; <i32*> [#uses=1]
 	store i32 %X.2, i32* %X.1p
 	store i32 42, i32* %X.2p
 	ret void
