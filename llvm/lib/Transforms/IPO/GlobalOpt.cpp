@@ -2227,8 +2227,9 @@ static bool EvaluateFunction(Function *F, Constant *&RetVal,
       for (User::op_iterator i = GEP->op_begin() + 1, e = GEP->op_end();
            i != e; ++i)
         GEPOps.push_back(getVal(Values, *i));
-      InstResult =
-            ConstantExpr::getGetElementPtr(P, &GEPOps[0], GEPOps.size());
+      InstResult = cast<GEPOperator>(GEP)->isInBounds() ?
+          ConstantExpr::getInBoundsGetElementPtr(P, &GEPOps[0], GEPOps.size()) :
+          ConstantExpr::getGetElementPtr(P, &GEPOps[0], GEPOps.size());
     } else if (LoadInst *LI = dyn_cast<LoadInst>(CurInst)) {
       if (LI->isVolatile()) return false;  // no volatile accesses.
       InstResult = ComputeLoadResult(getVal(Values, LI->getOperand(0)),
