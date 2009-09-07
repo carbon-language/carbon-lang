@@ -866,8 +866,8 @@ void Verifier::visitSIToFPInst(SIToFPInst &I) {
   const Type *SrcTy = I.getOperand(0)->getType();
   const Type *DestTy = I.getType();
 
-  bool SrcVec = SrcTy->getTypeID() == Type::VectorTyID;
-  bool DstVec = DestTy->getTypeID() == Type::VectorTyID;
+  bool SrcVec = isa<VectorType>(SrcTy);
+  bool DstVec = isa<VectorType>(DestTy);
 
   Assert1(SrcVec == DstVec,
           "SIToFP source and dest must both be vector or scalar", &I);
