@@ -59,6 +59,8 @@ proc substitute { line test tmpFile } {
   regsub -all {%%} $new_line {_#MARKER#_} new_line
   #replace %prcontext with prcontext.tcl (Must replace before %p)
   regsub -all {%prcontext} $new_line $prcontext new_line
+  #replace %llvmgcc_only with actual path to llvmgcc
+  regsub -all {%llvmgcc_only} $new_line "$llvmgcc" new_line
   #replace %llvmgcc with actual path to llvmgcc
   regsub -all {%llvmgcc} $new_line "$llvmgcc -emit-llvm -w" new_line
   #replace %llvmgxx with actual path to llvmg++
