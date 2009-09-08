@@ -1447,12 +1447,10 @@ void Verifier::visitInstruction(Instruction &I) {
 /// VerifyType - Verify that a type is well formed.
 ///
 void Verifier::VerifyType(const Type *Ty) {
-  // We insert complex types into CheckedTypes even if they failed verification
-  // to prevent emitting messages about them multiple times if 
+  if (!CheckedTypes.insert(Ty)) return;
 
   switch (Ty->getTypeID()) {
   case Type::FunctionTyID: {
-    if (!CheckedTypes.insert(Ty)) return;
     const FunctionType *FTy = cast<FunctionType>(Ty);
 
     const Type *RetTy = FTy->getReturnType();
@@ -1468,7 +1466,6 @@ void Verifier::VerifyType(const Type *Ty) {
     }
   } break;
   case Type::StructTyID: {
-    if (!CheckedTypes.insert(Ty)) return;
     const StructType *STy = cast<StructType>(Ty);
     for (unsigned i = 0, e = STy->getNumElements(); i != e; ++i) {
       const Type *ElTy = STy->getElementType(i);
@@ -1478,28 +1475,25 @@ void Verifier::VerifyType(const Type *Ty) {
     }
   } break;
   case Type::ArrayTyID: {
-    if (!CheckedTypes.insert(Ty)) return;
     const ArrayType *ATy = cast<ArrayType>(Ty);
     Assert1(ArrayType::isValidElementType(ATy->getElementType()),
             "Array type with invalid element type", ATy);
     VerifyType(ATy->getElementType());
   } break;
   case Type::PointerTyID: {
-    if (!CheckedTypes.insert(Ty)) return;
     const PointerType *PTy = cast<PointerType>(Ty);
     Assert1(PointerType::isValidElementType(PTy->getElementType()),
             "Pointer type with invalid element type", PTy);
     VerifyType(PTy->getElementType());
-  }
+  } break;
   case Type::VectorTyID: {
-    if (!CheckedTypes.insert(Ty)) return;
     const VectorType *VTy = cast<VectorType>(Ty);
     Assert1(VectorType::isValidElementType(VTy->getElementType()),
             "Vector type with invalid element type", VTy);
     VerifyType(VTy->getElementType());
-  }
+  } break;
   default:
-    return;
+    break;
   }
 }
 
